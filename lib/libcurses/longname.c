@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)longname.c	5.4 (Berkeley) 6/1/90";
+/*static char sccsid[] = "from: @(#)longname.c	5.4 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: longname.c,v 1.2 1993/08/01 18:35:34 mycroft Exp $";
 #endif /* not lint */
 
 # define	reg	register

@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)tftp.c	5.10 (Berkeley) 3/1/91";
+/*static char sccsid[] = "from: @(#)tftp.c	5.10 (Berkeley) 3/1/91";*/
+static char rcsid[] = "$Id: tftp.c,v 1.3 1993/08/01 18:07:06 mycroft Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)terminal.h	4.3 (Berkeley) 4/26/91
+ *	from: @(#)terminal.h	4.3 (Berkeley) 4/26/91
+ *	$Id: terminal.h,v 1.2 1993/08/01 18:05:17 mycroft Exp $
  */
 
 #define	INCLUDED_TERMINAL

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)limits.h	5.9 (Berkeley) 4/3/91
+ *	from: @(#)limits.h	5.9 (Berkeley) 4/3/91
+ *	$Id: limits.h,v 1.2 1993/08/01 18:44:50 mycroft Exp $
  */
 
 #ifndef _LIMITS_H_

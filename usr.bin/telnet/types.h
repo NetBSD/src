@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)types.h	5.1 (Berkeley) 9/14/90
+ *	from: @(#)types.h	5.1 (Berkeley) 9/14/90
+ *	$Id: types.h,v 1.2 1993/08/01 18:07:27 mycroft Exp $
  */
 
 typedef struct {

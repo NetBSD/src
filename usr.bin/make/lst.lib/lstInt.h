@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lstInt.h	5.4 (Berkeley) 12/28/90
+ *	from: @(#)lstInt.h	5.4 (Berkeley) 12/28/90
+ *	$Id: lstInt.h,v 1.2 1993/08/01 18:12:41 mycroft Exp $
  */
 
 /*-

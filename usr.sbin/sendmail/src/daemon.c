@@ -38,9 +38,11 @@
 
 #ifndef lint
 #ifdef DAEMON
-static char sccsid[] = "@(#)daemon.c	8.2 (Berkeley) 7/13/93 (with daemon mode)";
+/*static char sccsid[] = "from: @(#)daemon.c	8.2 (Berkeley) 7/13/93 (with daemon mode)";*/
+static char rcsid[] = "$Id: daemon.c,v 1.4 1993/08/01 17:56:14 mycroft Exp $";
 #else
-static char sccsid[] = "@(#)daemon.c	8.2 (Berkeley) 7/13/93 (without daemon mode)";
+/*static char sccsid[] = "from: @(#)daemon.c	8.2 (Berkeley) 7/13/93 (without daemon mode)";*/
+static char rcsid[] = "$Id: daemon.c,v 1.4 1993/08/01 17:56:14 mycroft Exp $";
 #endif
 #endif /* not lint */
 

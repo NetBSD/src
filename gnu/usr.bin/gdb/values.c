@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)values.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)values.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: values.c,v 1.2 1993/08/01 18:47:30 mycroft Exp $";
 #endif /* not lint */
 
 /* Low level packing and unpacking of values for GDB.

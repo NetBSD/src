@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)timer.c	5.10 (Berkeley) 2/28/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/routed/Attic/timer.c,v 1.3 1993/03/23 00:30:46 cgd Exp $";
+/*static char sccsid[] = "from: @(#)timer.c	5.10 (Berkeley) 2/28/91";*/
+static char rcsid[] = "$Id: timer.c,v 1.4 1993/08/01 18:24:19 mycroft Exp $";
 #endif /* not lint */
 
 /*

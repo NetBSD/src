@@ -25,8 +25,10 @@
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
+ *
+ *	from: @(#)rpc_parse.h 1.3 87/03/09 (C) 1987 SMI
+ *	$Id: rpc_parse.h,v 1.2 1993/08/01 18:09:25 mycroft Exp $
  */
-/* @(#)rpc_parse.h 1.3 87/03/09 (C) 1987 SMI */
 
 /*
  * rpc_parse.h, Definitions for the RPCL parser 

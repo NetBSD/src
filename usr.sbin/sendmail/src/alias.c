@@ -37,7 +37,8 @@
 # include <pwd.h>
 
 #ifndef lint
-static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 7/13/93";
+/*static char sccsid[] = "from: @(#)alias.c	8.3 (Berkeley) 7/13/93";*/
+static char rcsid[] = "$Id: alias.c,v 1.5 1993/08/01 17:56:43 mycroft Exp $";
 #endif /* not lint */
 
 

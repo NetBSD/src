@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,12 +32,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
+/*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
+static char rcsid[] = "$Id: display.c,v 1.2 1993/08/01 18:14:49 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-
 #include <unistd.h>
 #include <errno.h>
 #include <ctype.h>
@@ -50,10 +50,88 @@ enum _vflag vflag = FIRST;
 
 static off_t address;			/* address/offset in stream */
 static off_t eaddress;			/* end address */
+static off_t savaddress;		/* saved address/offset in stream */
 
-static inline void print __P((PR *, u_char *));
+#define PRINT { \
+	switch(pr->flags) { \
+	case F_ADDRESS: \
+		(void)printf(pr->fmt, address); \
+		break; \
+	case F_BPAD: \
+		(void)printf(pr->fmt, ""); \
+		break; \
+	case F_C: \
+		conv_c(pr, bp); \
+		break; \
+	case F_CHAR: \
+		(void)printf(pr->fmt, *bp); \
+		break; \
+	case F_DBL: { \
+		double dval; \
+		float fval; \
+		switch(pr->bcnt) { \
+		case 4: \
+			bcopy((char *)bp, (char *)&fval, sizeof(fval)); \
+			(void)printf(pr->fmt, fval); \
+			break; \
+		case 8: \
+			bcopy((char *)bp, (char *)&dval, sizeof(dval)); \
+			(void)printf(pr->fmt, dval); \
+			break; \
+		} \
+		break; \
+	} \
+	case F_INT: { \
+		int ival; \
+		short sval; \
+		switch(pr->bcnt) { \
+		case 1: \
+			(void)printf(pr->fmt, (int)*bp); \
+			break; \
+		case 2: \
+			bcopy((char *)bp, (char *)&sval, sizeof(sval)); \
+			(void)printf(pr->fmt, (int)sval); \
+			break; \
+		case 4: \
+			bcopy((char *)bp, (char *)&ival, sizeof(ival)); \
+			(void)printf(pr->fmt, ival); \
+			break; \
+		} \
+		break; \
+	} \
+	case F_P: \
+		(void)printf(pr->fmt, isprint(*bp) ? *bp : '.'); \
+		break; \
+	case F_STR: \
+		(void)printf(pr->fmt, (char *)bp); \
+		break; \
+	case F_TEXT: \
+		(void)printf(pr->fmt); \
+		break; \
+	case F_U: \
+		conv_u(pr, bp); \
+		break; \
+	case F_UINT: { \
+		u_int ival; \
+		u_short sval; \
+		switch(pr->bcnt) { \
+		case 1: \
+			(void)printf(pr->fmt, (u_int)*bp); \
+			break; \
+		case 2: \
+			bcopy((char *)bp, (char *)&sval, sizeof(sval)); \
+			(void)printf(pr->fmt, (u_int)sval); \
+			break; \
+		case 4: \
+			bcopy((char *)bp, (char *)&ival, sizeof(ival)); \
+			(void)printf(pr->fmt, ival); \
+			break; \
+		} \
+		break; \
+	} \
+	} \
+}
 
-void
 display()
 {
 	extern FU *endfu;
@@ -63,7 +141,7 @@ display()
 	register int cnt;
 	register u_char *bp;
 	off_t saveaddress;
-	u_char savech, *savebp;
+	u_char savech, *savebp, *get();
 
 	while (bp = get())
 	    for (fs = fshead, savebp = bp, saveaddress = address; fs;
@@ -75,20 +153,20 @@ display()
 			    for (pr = fu->nextpr; pr; address += pr->bcnt,
 				bp += pr->bcnt, pr = pr->nextpr) {
 				    if (eaddress && address >= eaddress &&
-					!(pr->flags & (F_TEXT|F_BPAD)))
+					!(pr->flags&(F_TEXT|F_BPAD)))
 					    bpad(pr);
 				    if (cnt == 1 && pr->nospace) {
 					savech = *pr->nospace;
 					*pr->nospace = '\0';
 				    }
-				    print(pr, bp);
+				    PRINT;
 				    if (cnt == 1 && pr->nospace)
 					*pr->nospace = savech;
 			    }
 		    }
 	if (endfu) {
 		/*
-		 * If eaddress not set, error or file size was multiple of
+		 * if eaddress not set, error or file size was multiple of
 		 * blocksize, and no partial block ever found.
 		 */
 		if (!eaddress) {
@@ -99,7 +177,7 @@ display()
 		for (pr = endfu->nextpr; pr; pr = pr->nextpr)
 			switch(pr->flags) {
 			case F_ADDRESS:
-				(void)printf(pr->fmt, (quad_t)eaddress);
+				(void)printf(pr->fmt, eaddress);
 				break;
 			case F_TEXT:
 				(void)printf(pr->fmt);
@@ -108,99 +186,6 @@ display()
 	}
 }
 
-static inline void
-print(pr, bp)
-	PR *pr;
-	u_char *bp;
-{
-	   double f8;
-	    float f4;
-	  int16_t s2;
-	   int8_t s8;
-	  int32_t s4;
-	u_int16_t u2;
-	u_int32_t u4;
-	u_int64_t u8;
-
-	switch(pr->flags) {
-	case F_ADDRESS:
-		(void)printf(pr->fmt, (quad_t)address);
-		break;
-	case F_BPAD:
-		(void)printf(pr->fmt, "");
-		break;
-	case F_C:
-		conv_c(pr, bp);
-		break;
-	case F_CHAR:
-		(void)printf(pr->fmt, *bp);
-		break;
-	case F_DBL:
-		switch(pr->bcnt) {
-		case 4:
-			bcopy(bp, &f4, sizeof(f4));
-			(void)printf(pr->fmt, f4);
-			break;
-		case 8:
-			bcopy(bp, &f8, sizeof(f8));
-			(void)printf(pr->fmt, f8);
-			break;
-		}
-		break;
-	case F_INT:
-		switch(pr->bcnt) {
-		case 1:
-			(void)printf(pr->fmt, (quad_t)*bp);
-			break;
-		case 2:
-			bcopy(bp, &s2, sizeof(s2));
-			(void)printf(pr->fmt, (quad_t)s2);
-			break;
-		case 4:
-			bcopy(bp, &s4, sizeof(s4));
-			(void)printf(pr->fmt, (quad_t)s4);
-			break;
-		case 8:
-			bcopy(bp, &s8, sizeof(s8));
-			(void)printf(pr->fmt, s8);
-			break;
-		}
-		break;
-	case F_P:
-		(void)printf(pr->fmt, isprint(*bp) ? *bp : '.');
-		break;
-	case F_STR:
-		(void)printf(pr->fmt, (char *)bp);
-		break;
-	case F_TEXT:
-		(void)printf(pr->fmt);
-		break;
-	case F_U:
-		conv_u(pr, bp);
-		break;
-	case F_UINT:
-		switch(pr->bcnt) {
-		case 1:
-			(void)printf(pr->fmt, (u_quad_t)*bp);
-			break;
-		case 2:
-			bcopy(bp, &u2, sizeof(u2));
-			(void)printf(pr->fmt, (u_quad_t)u2);
-			break;
-		case 4:
-			bcopy(bp, &u4, sizeof(u4));
-			(void)printf(pr->fmt, (u_quad_t)u4);
-			break;
-		case 8:
-			bcopy(bp, &u8, sizeof(u8));
-			(void)printf(pr->fmt, u8);
-			break;
-		}
-		break;
-	}
-}
-
-void
 bpad(pr)
 	PR *pr;
 {
@@ -208,12 +193,11 @@ bpad(pr)
 	register char *p1, *p2;
 
 	/*
-	 * Remove all conversion flags; '-' is the only one valid
+	 * remove all conversion flags; '-' is the only one valid
 	 * with %s, and it's not useful here.
 	 */
 	pr->flags = F_BPAD;
-	pr->cchar[0] = 's';
-	pr->cchar[1] = '\0';
+	*pr->cchar = 's';
 	for (p1 = pr->fmt; *p1 != '%'; ++p1);
 	for (p2 = ++p1; *p1 && index(spec, *p1); ++p1);
 	while (*p2++ = *p1++);
@@ -233,13 +217,13 @@ get()
 	u_char *tmpp;
 
 	if (!curp) {
-		curp = emalloc(blocksize);
-		savp = emalloc(blocksize);
+		curp = (u_char *)emalloc(blocksize);
+		savp = (u_char *)emalloc(blocksize);
 	} else {
 		tmpp = curp;
 		curp = savp;
 		savp = tmpp;
-		address += blocksize;
+		address = savaddress += blocksize;
 	}
 	for (need = blocksize, nread = 0;;) {
 		/*
@@ -281,7 +265,7 @@ get()
 			if (vflag == WAIT)
 				(void)printf("*\n");
 			vflag = DUP;
-			address += blocksize;
+			address = savaddress += blocksize;
 			need = blocksize;
 			nread = 0;
 		}
@@ -292,11 +276,10 @@ get()
 
 extern off_t skip;			/* bytes to skip */
 
-int
 next(argv)
 	char **argv;
 {
-	extern int exitval;
+	extern int errno, exitval;
 	static int done;
 	int statok;
 
@@ -329,51 +312,50 @@ next(argv)
 	/* NOTREACHED */
 }
 
-void
 doskip(fname, statok)
 	char *fname;
 	int statok;
 {
-	register int cnt;
-	struct stat sb;
+	extern int errno;
+	struct stat sbuf;
 
 	if (statok) {
-		if (fstat(fileno(stdin), &sb))
-			err("%s: %s", fname, strerror(errno));
-		if (S_ISREG(sb.st_mode) && skip >= sb.st_size) {
-			address += sb.st_size;
-			skip -= sb.st_size;
+		if (fstat(fileno(stdin), &sbuf)) {
+			(void)fprintf(stderr, "hexdump: %s: %s.\n",
+			    fname, strerror(errno));
+			exit(1);
+		}
+		if (skip >= sbuf.st_size) {
+			skip -= sbuf.st_size;
+			address += sbuf.st_size;
 			return;
 		}
 	}
-	if (S_ISREG(sb.st_mode)) {
-		if (fseek(stdin, skip, SEEK_SET))
-			err("%s: %s", fname, strerror(errno));
-		address += skip;
-		skip = 0;
-	} else {
-		for (cnt = 0; cnt < skip; ++cnt)
-			if (getchar() == EOF)
-				break;
-		address += cnt;
-		skip -= cnt;
+	if (fseek(stdin, skip, SEEK_SET)) {
+		(void)fprintf(stderr, "hexdump: %s: %s.\n",
+		    fname, strerror(errno));
+		exit(1);
 	}
+	savaddress = address += skip;
+	skip = 0;
 }
 
-void *
+char *
 emalloc(size)
 	int size;
 {
-	void *p;
+	char *p;
 
-	if ((p = malloc((u_int)size)) == NULL)
+	if (!(p = malloc((u_int)size)))
 		nomem();
 	bzero(p, size);
 	return(p);
 }
 
-void
 nomem()
 {
-	err("%s", strerror(errno));
+	extern int errno;
+
+	(void)fprintf(stderr, "hexdump: %s.\n", strerror(errno));
+	exit(1);
 }

@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)config.h	5.9 (Berkeley) 6/1/90
+ *	from: @(#)config.h	5.9 (Berkeley) 6/1/90
+ *	$Id: config.h,v 1.2 1993/08/01 18:12:05 mycroft Exp $
  */
 
 #define	DEFSHELL	1			/* Bourne shell */

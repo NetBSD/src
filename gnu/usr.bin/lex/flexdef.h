@@ -24,9 +24,9 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ *	$Id: flexdef.h,v 1.3 1993/08/01 18:46:50 mycroft Exp $
  */
-
-/* @(#) $Header: /cvsroot/src/gnu/usr.bin/lex/Attic/flexdef.h,v 1.2 1993/05/04 07:44:46 cgd Exp $ (LBL) */
 
 #ifndef FILE
 #include <stdio.h>

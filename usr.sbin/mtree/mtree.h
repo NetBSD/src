@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mtree.h	5.7 (Berkeley) 5/25/90
+ *	from: @(#)mtree.h	5.7 (Berkeley) 5/25/90
+ *	$Id: mtree.h,v 1.2 1993/08/01 17:58:21 mycroft Exp $
  */
 
 #include <string.h>

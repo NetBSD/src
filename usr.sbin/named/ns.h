@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ns.h	4.33 (Berkeley) 8/23/90
+ *	from: @(#)ns.h	4.33 (Berkeley) 8/23/90
+ *	$Id: ns.h,v 1.2 1993/08/01 17:57:26 mycroft Exp $
  */
 
 /*

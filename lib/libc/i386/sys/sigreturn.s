@@ -35,7 +35,8 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	.asciz "@(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
+	/*.asciz "from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"*/
+	.asciz "$Id: sigreturn.s,v 1.2 1993/08/01 18:40:16 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"

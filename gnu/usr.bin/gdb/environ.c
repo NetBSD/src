@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)environ.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)environ.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: environ.c,v 1.2 1993/08/01 18:47:21 mycroft Exp $";
 #endif /* not lint */
 
 /* environ.c -- library for manipulating environments for GNU.

@@ -25,6 +25,10 @@
  * 4. This notice may not be removed or altered.
  */
 
+#ifndef	lint
+static char = "$Id: fsmagic.c,v 1.4 1993/08/01 18:16:25 mycroft Exp $";
+#endif	/* not lint */
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -43,11 +47,6 @@
 #endif	/*major*/
 
 #include "file.h"
-
-#ifndef	lint
-static char *moduleid = 
-	"@(#)$Id: fsmagic.c,v 1.3 1993/06/10 00:38:10 jtc Exp $";
-#endif	/* lint */
 
 int
 fsmagic(fn, sb)

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kvm.h	5.6 (Berkeley) 4/23/91
+ *	from: @(#)kvm.h	5.6 (Berkeley) 4/23/91
+ *	$Id: kvm.h,v 1.3 1993/08/01 18:44:51 mycroft Exp $
  */
 
 #ifndef _KVM_H_

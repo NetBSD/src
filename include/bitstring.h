@@ -17,7 +17,8 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *	@(#)bitstring.h	5.2 (Berkeley) 4/4/90
+ *	from: @(#)bitstring.h	5.2 (Berkeley) 4/4/90
+ *	$Id: bitstring.h,v 1.3 1993/08/01 18:44:58 mycroft Exp $
  */
 
 #ifndef _BITSTRING_H_

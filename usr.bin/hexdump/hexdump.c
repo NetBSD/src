@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,21 +32,18 @@
  */
 
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+char copyright[] =
+"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
+ All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
+/*static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: hexdump.c,v 1.2 1993/08/01 18:14:48 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
-
-#include <errno.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include "hexdump.h"
 
 FS *fshead;				/* head of format strings */
@@ -54,13 +51,13 @@ int blocksize;				/* data block size */
 int exitval;				/* final exit value */
 int length = -1;			/* max bytes to read */
 
-int
 main(argc, argv)
 	int argc;
-	char *argv[];
+	char **argv;
 {
+	extern int errno;
 	register FS *tfs;
-	char *p;
+	char *p, *rindex();
 
 	if (!(p = rindex(argv[0], 'o')) || strcmp(p, "od"))
 		newsyntax(argc, &argv);
@@ -80,33 +77,4 @@ main(argc, argv)
 	(void)next(argv);
 	display();
 	exit(exitval);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "hexdump: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }

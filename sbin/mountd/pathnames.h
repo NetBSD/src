@@ -30,10 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	6.5 (Berkeley) 6/27/90
- *
- *	$Header: /cvsroot/src/sbin/mountd/Attic/pathnames.h,v 1.3 1993/03/23 00:29:13 cgd Exp $
+ *	from: @(#)pathnames.h	6.5 (Berkeley) 6/27/90
+ *	$Id: pathnames.h,v 1.4 1993/08/01 18:26:19 mycroft Exp $
  */
+
 #include <paths.h>
 
 #define	_PATH_EXPORTS		"/etc/exports"

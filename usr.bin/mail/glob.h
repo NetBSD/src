@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)glob.h	5.20 (Berkeley) 6/25/90
+ *	from: @(#)glob.h	5.20 (Berkeley) 6/25/90
+ *	$Id: glob.h,v 1.2 1993/08/01 18:13:18 mycroft Exp $
  */
 
 /*

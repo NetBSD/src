@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fstab.h	5.12 (Berkeley) 4/3/91
+ *	from: @(#)fstab.h	5.12 (Berkeley) 4/3/91
+ *	$Id: fstab.h,v 1.2 1993/08/01 18:44:54 mycroft Exp $
  */
 
 #ifndef _FSTAB_H_

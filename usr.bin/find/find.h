@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)find.h	5.8 (Berkeley) 5/24/91
+ *	from: @(#)find.h	5.8 (Berkeley) 5/24/91
+ *	$Id: find.h,v 1.3 1993/08/01 18:16:17 mycroft Exp $
  */
 
 /* node type */

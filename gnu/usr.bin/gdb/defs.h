@@ -5,7 +5,8 @@
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
  *
- *	@(#)defs.h	6.3 (Berkeley) 5/8/91
+ *	from: @(#)defs.h	6.3 (Berkeley) 5/8/91
+ *	$Id: defs.h,v 1.2 1993/08/01 18:47:56 mycroft Exp $
  */
 
 /* Basic definitions for GDB, the GNU debugger.

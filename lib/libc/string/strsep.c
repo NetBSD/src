@@ -36,7 +36,8 @@
 #include <stdio.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char sccsid[] = "@(#)strsep.c	5.4 (Berkeley) 1/26/91";
+/*static const char sccsid[] = "from: @(#)strsep.c	5.4 (Berkeley) 1/26/91";*/
+static char rcsid[] = "$Id: strsep.c,v 1.2 1993/08/01 18:36:16 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*

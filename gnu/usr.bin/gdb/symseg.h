@@ -5,7 +5,8 @@
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
  *
- *	@(#)symseg.h	6.3 (Berkeley) 5/8/91
+ *	from: @(#)symseg.h	6.3 (Berkeley) 5/8/91
+ *	$Id: symseg.h,v 1.2 1993/08/01 18:47:52 mycroft Exp $
  */
 
 /* GDB symbol table format definitions.

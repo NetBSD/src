@@ -32,7 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)getprotoname.c	5.7 (Berkeley) 2/24/91";
+/*static char sccsid[] = "from: @(#)getprotoname.c	5.7 (Berkeley) 2/24/91";*/
+static char rcsid[] = "$Id: getprotoname.c,v 1.2 1993/08/01 18:39:45 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>

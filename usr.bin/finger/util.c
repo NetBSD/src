@@ -35,7 +35,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)util.c	5.14 (Berkeley) 1/17/91";
+/*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
+static char rcsid[] = "$Id: util.c,v 1.2 1993/08/01 18:15:57 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)infcmd.c	6.4 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)infcmd.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: infcmd.c,v 1.2 1993/08/01 18:47:17 mycroft Exp $";
 #endif /* not lint */
 
 /* Memory-access and commands for inferior process, for GDB.

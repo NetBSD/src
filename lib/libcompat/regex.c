@@ -42,7 +42,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)regex.c	5.1 (Berkeley) 3/29/92";
+/*static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
+static char rcsid[] = "$Id: regex.c,v 1.2 1993/08/01 18:36:06 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

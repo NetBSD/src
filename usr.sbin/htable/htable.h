@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)htable.h	5.5 (Berkeley) 2/6/91
+ *	from: @(#)htable.h	5.5 (Berkeley) 2/6/91
+ *	$Id: htable.h,v 1.2 1993/08/01 17:59:37 mycroft Exp $
  */
 
 #include <sys/types.h>

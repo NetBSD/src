@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fnmatch.h	5.1 (Berkeley) 6/28/92
+ *	from: @(#)fnmatch.h	5.1 (Berkeley) 6/28/92
+ *	$Id: fnmatch.h,v 1.2 1993/08/01 18:45:03 mycroft Exp $
  */
 
 #ifndef _FNMATCH_H_

@@ -4,7 +4,8 @@
  *
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  *
- *	@(#)i386-opcode.h	6.3 (Berkeley) 5/8/91
+ *	from: @(#)i386-opcode.h	6.3 (Berkeley) 5/8/91
+ *	$Id: i386-opcode.h,v 1.2 1993/08/01 18:48:53 mycroft Exp $
  */
 
 /* i386-opcode.h -- Intel 80386 opcode table

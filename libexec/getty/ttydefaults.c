@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ttydefaults.c	5.1 (Berkeley) 1/19/91";
+/*static char sccsid[] = "from: @(#)ttydefaults.c	5.1 (Berkeley) 1/19/91";*/
+static char rcsid[] = "$Id: ttydefaults.c,v 1.2 1993/08/01 18:30:18 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/termios.h>

@@ -6,7 +6,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)input-scrub.c	6.4 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)input-scrub.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: input-scrub.c,v 1.2 1993/08/01 18:48:44 mycroft Exp $";
 #endif /* not lint */
 
 /* input_scrub.c - layer between app and the rest of the world

@@ -1,7 +1,7 @@
 %{
 /*
- * Copyright (c) 1983, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1983 Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +33,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93";
+/*static char sccsid[] = "from: @(#)gram.y	5.6 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: gram.y,v 1.2 1993/08/01 18:09:44 mycroft Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -42,8 +43,6 @@ struct	cmd *cmds = NULL;
 struct	cmd *last_cmd;
 struct	namelist *last_n;
 struct	subcmd *last_sc;
-
-static char  *makestr __P((char *));
 
 %}
 
@@ -163,11 +162,13 @@ cmd:		  INSTALL options opt_namelist SM = {
 		}
 		| PATTERN namelist SM = {
 			struct namelist *nl;
+#ifdef nope
 			char *cp, *re_comp();
 
 			for (nl = $2; nl != NULL; nl = nl->n_next)
 				if ((cp = re_comp(nl->n_name)) != NULL)
 					yyerror(cp);
+#endif
 			$1->sc_args = expand($2, E_VARS);
 			$$ = $1;
 		}
@@ -200,7 +201,6 @@ opt_namelist:	  /* VOID */ = {
 int	yylineno = 1;
 extern	FILE *fin;
 
-int
 yylex()
 {
 	static char yytext[INMAX];
@@ -351,7 +351,6 @@ again:
 	return(c);
 }
 
-int
 any(c, str)
 	register int c;
 	register char *str;
@@ -365,7 +364,6 @@ any(c, str)
 /*
  * Insert or append ARROW command to list of hosts to be updated.
  */
-void
 insert(label, files, hosts, subcmds)
 	char *label;
 	struct namelist *files, *hosts;
@@ -416,7 +414,6 @@ insert(label, files, hosts, subcmds)
  * Append DCOLON command to the end of the command list since these are always
  * executed in the order they appear in the distfile.
  */
-void
 append(label, files, stamp, subcmds)
 	char *label;
 	struct namelist *files;
@@ -445,11 +442,12 @@ append(label, files, stamp, subcmds)
 /*
  * Error printing routine in parser.
  */
-void
 yyerror(s)
 	char *s;
 {
-	++nerrs;
+	extern int yychar;
+
+	nerrs++;
 	fflush(stdout);
 	fprintf(stderr, "rdist: line %d: %s\n", yylineno, s);
 }
@@ -457,7 +455,7 @@ yyerror(s)
 /*
  * Return a copy of the string.
  */
-static char *
+char *
 makestr(str)
 	char *str;
 {
@@ -492,9 +490,11 @@ makenl(name)
  * Make a sub command for lists of variables, commands, etc.
  */
 struct subcmd *
-makesubcmd(type)
+makesubcmd(type, name)
 	int type;
+	register char *name;
 {
+	register char *cp;
 	register struct subcmd *sc;
 
 	sc = ALLOC(subcmd);

@@ -5,7 +5,8 @@
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1991 by William Jolitz at UUNET Technologies, Inc.
  *
- *	@(#)m-i386bsd.h	6.7 (Berkeley) 5/8/91
+ *	from: @(#)m-i386bsd.h	6.7 (Berkeley) 5/8/91
+ *	$Id: m-i386bsd.h,v 1.3 1993/08/01 18:48:32 mycroft Exp $
  */
 
 /* Macro definitions for i386.

@@ -1,6 +1,3 @@
-/* @(#)mount.x	2.1 88/08/01 4.0 RPCSRC */
-/* @(#)mount.x 1.2 87/09/18 Copyr 1987 Sun Micro */
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,6 +26,11 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
+#ifndef lint
+/*static char sccsid[] = "from: @(#)mount.x 1.2 87/09/18 Copyr 1987 Sun Micro";*/
+/*static char sccsid[] = "from: @(#)mount.x	2.1 88/08/01 4.0 RPCSRC";*/
+static char rcsid[] = "$Id: mount.x,v 1.2 1993/08/01 18:45:39 mycroft Exp $";
+#endif /* not lint */
 
 /*
  * Protocol description for the mount program

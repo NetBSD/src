@@ -39,8 +39,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)wall.c	5.14 (Berkeley) 3/2/91";
-static char rcsid[] = "/b/source/CVS/src/usr.bin/rwall/rwall.c,v 1.2 1993/04/26 14:43:24 mycroft Exp";
+/*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
+static char rcsid[] = "$Id: rwall.c,v 1.4 1993/08/01 18:08:48 mycroft Exp $";
 #endif /* not lint */
 
 /*

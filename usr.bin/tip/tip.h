@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tip.h	5.7 (Berkeley) 3/27/91
+ *	from: @(#)tip.h	5.7 (Berkeley) 3/27/91
+ *	$Id: tip.h,v 1.2 1993/08/01 18:06:28 mycroft Exp $
  */
 
 /*

@@ -1,5 +1,6 @@
 /*
- * @(#)nmalloc.c 1 (Caltech) 2/21/82
+ *	from: @(#)nmalloc.c 1 (Caltech) 2/21/82
+ *	$Id: malloc.c,v 1.2 1993/08/01 18:10:10 mycroft Exp $
  *
  *	U of M Modified: 20 Jun 1983 ACT: strange hacks for Emacs
  *

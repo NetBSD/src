@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)map3270.h	4.2 (Berkeley) 4/26/91
+ *	from: @(#)map3270.h	4.2 (Berkeley) 4/26/91
+ *	$Id: map3270.h,v 1.2 1993/08/01 18:05:57 mycroft Exp $
  */
 
 /*

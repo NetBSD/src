@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)defs.h	5.3 (Berkeley) 8/28/92
+ *	from: @(#)defs.h	5.3 (Berkeley) 8/28/92
+ *	$Id: defs.h,v 1.3 1993/08/01 18:08:57 mycroft Exp $
  */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)err.h	5.1 (Berkeley) 3/4/93
+ *	from: @(#)err.h	5.1 (Berkeley) 3/4/93
+ *	$Id: err.h,v 1.3 1993/08/01 18:44:55 mycroft Exp $
  */
 
 #ifndef _ERR_H_

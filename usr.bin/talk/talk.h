@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)talk.h	5.7 (Berkeley) 3/1/91
+ *	from: @(#)talk.h	5.7 (Berkeley) 3/1/91
+ *	$Id: talk.h,v 1.2 1993/08/01 18:07:57 mycroft Exp $
  */
 
 #include <curses.h>

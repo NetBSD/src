@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)var.h	3.11 (Berkeley) 6/6/90
+ *	from: @(#)var.h	3.11 (Berkeley) 6/6/90
+ *	$Id: var.h,v 1.2 1993/08/01 18:01:30 mycroft Exp $
  */
 
 struct var {

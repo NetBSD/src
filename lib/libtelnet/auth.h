@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)auth.h	5.1 (Berkeley) 2/28/91
+ *	from: @(#)auth.h	5.1 (Berkeley) 2/28/91
+ *	$Id: auth.h,v 1.2 1993/08/01 18:32:55 mycroft Exp $
  */
 
 /*

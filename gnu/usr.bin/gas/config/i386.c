@@ -6,7 +6,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)i386.c	6.4 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)i386.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: i386.c,v 1.2 1993/08/01 18:48:51 mycroft Exp $";
 #endif /* not lint */
 
 /* i386.c -- Assemble code for the Intel 80386

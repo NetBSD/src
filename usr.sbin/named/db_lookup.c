@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)db_lookup.c	4.18 (Berkeley) 3/21/91";
+/*static char sccsid[] = "from: @(#)db_lookup.c	4.18 (Berkeley) 3/21/91";*/
+static char rcsid[] = "$Id: db_lookup.c,v 1.2 1993/08/01 17:57:30 mycroft Exp $";
 #endif /* not lint */
 
 /*

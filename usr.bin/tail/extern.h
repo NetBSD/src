@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	5.1 (Berkeley) 7/21/91
+ *	from: @(#)extern.h	5.1 (Berkeley) 7/21/91
+ *	$Id: extern.h,v 1.2 1993/08/01 18:08:05 mycroft Exp $
  */
 
 #define	WR(p, size) \

@@ -35,7 +35,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)parser3.c	3.9 (Berkeley) 6/6/90";
+/*static char sccsid[] = "from: @(#)parser3.c	3.9 (Berkeley) 6/6/90";*/
+static char rcsid[] = "$Id: parser3.c,v 1.2 1993/08/01 18:02:15 mycroft Exp $";
 #endif /* not lint */
 
 #include "parser.h"

@@ -1,4 +1,3 @@
-/* @(#)rpc_commondata.c	2.1 88/07/29 4.0 RPCSRC */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -27,6 +26,11 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
+#if !defined(lint) && defined(SCCSIDS)
+/*static char sccsid[] = "from: @(#)rpc_commondata.c	2.1 88/07/29 4.0 RPCSRC";*/
+static char rcsid[] = "$Id: rpc_commondata.c,v 1.2 1993/08/01 18:33:23 mycroft Exp $";
+#endif
+
 #include <rpc/rpc.h>
 /*
  * This file should only contain common data (global data) that is exported

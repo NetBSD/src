@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)glob.h	5.6 (Berkeley) 4/3/91
+ *	from: @(#)glob.h	5.6 (Berkeley) 4/3/91
+ *	$Id: glob.h,v 1.2 1993/08/01 18:44:53 mycroft Exp $
  */
 
 #ifndef _GLOB_H_

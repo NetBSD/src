@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)terminal.c	5.3 (Berkeley) 3/22/91";
+/*static char sccsid[] = "from: @(#)terminal.c	5.3 (Berkeley) 3/22/91";*/
+static char rcsid[] = "$Id: terminal.c,v 1.2 1993/08/01 18:07:17 mycroft Exp $";
 #endif /* not lint */
 
 #include <arpa/telnet.h>

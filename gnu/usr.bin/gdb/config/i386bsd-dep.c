@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)i386bsd-dep.c	6.10 (Berkeley) 6/26/91";
+/*static char sccsid[] = "from: @(#)i386bsd-dep.c	6.10 (Berkeley) 6/26/91";*/
+static char rcsid[] = "$Id: i386bsd-dep.c,v 1.2 1993/08/01 18:48:24 mycroft Exp $";
 #endif /* not lint */
 
 /* Low level interface to ptrace, for GDB when running on the Intel 386.

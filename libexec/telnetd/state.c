@@ -40,7 +40,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)state.c	5.10 (Berkeley) 3/22/91";
+/*static char sccsid[] = "from: @(#)state.c	5.10 (Berkeley) 3/22/91";*/
+static char rcsid[] = "$Id: state.c,v 1.3 1993/08/01 18:29:13 mycroft Exp $";
 #endif /* not lint */
 
 #include "telnetd.h"

@@ -1,8 +1,3 @@
-/* @(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC */
-#if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
-#endif
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,6 +26,11 @@ static char sccsid[] = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
+#if !defined(lint) && defined(SCCSIDS)
+/*static char sccsid[] = "from: @(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";*/
+/*static char sccsid[] = "from: @(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";*/
+static char rcsid[] = "$Id: svc_run.c,v 1.2 1993/08/01 18:34:12 mycroft Exp $";
+#endif
 
 /*
  * This is the rpc server side idle loop

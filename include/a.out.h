@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)a.out.h	5.6 (Berkeley) 4/30/91
+ *	from: @(#)a.out.h	5.6 (Berkeley) 4/30/91
+ *	$Id: a.out.h,v 1.6 1993/08/01 18:45:02 mycroft Exp $
  */
 
 #ifndef	_AOUT_H_

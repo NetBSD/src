@@ -1,4 +1,5 @@
-char *version_string = "@(#)Gnu Awk (gawk) 2.15";
+/*char *version_string = "from: @(#)Gnu Awk (gawk) 2.15";*/
+char *version_string = "$Id: version.c,v 1.2 1993/08/01 18:49:02 mycroft Exp $ 2.15";
 
 /* 1.02		fixed /= += *= etc to return the new Left Hand Side instead
 		of the Right Hand Side */

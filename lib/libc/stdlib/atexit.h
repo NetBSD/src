@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)atexit.h	5.1 (Berkeley) 5/15/90
+ *	from: @(#)atexit.h	5.1 (Berkeley) 5/15/90
+ *	$Id: atexit.h,v 1.2 1993/08/01 18:37:20 mycroft Exp $
  */
 
 /* must be at least 32 to guarantee ANSI conformance */

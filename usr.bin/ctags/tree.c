@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)tree.c	5.5 (Berkeley) 2/26/91";
+/*static char sccsid[] = "from: @(#)tree.c	5.5 (Berkeley) 2/26/91";*/
+static char rcsid[] = "$Id: tree.c,v 1.2 1993/08/01 18:17:03 mycroft Exp $";
 #endif /* not lint */
 
 #include <errno.h>

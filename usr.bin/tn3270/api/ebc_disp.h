@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ebc_disp.h	4.2 (Berkeley) 4/26/91
+ *	from: @(#)ebc_disp.h	4.2 (Berkeley) 4/26/91
+ *	$Id: ebc_disp.h,v 1.2 1993/08/01 18:06:08 mycroft Exp $
  */
 
 extern unsigned char

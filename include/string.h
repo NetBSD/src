@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)string.h	5.10 (Berkeley) 3/9/91
+ *	from: @(#)string.h	5.10 (Berkeley) 3/9/91
+ *	$Id: string.h,v 1.2 1993/08/01 18:45:15 mycroft Exp $
  */
 
 #ifndef _STRING_H_

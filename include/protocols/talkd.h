@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)talkd.h	5.7 (Berkeley) 4/3/91
+ *	from: @(#)talkd.h	5.7 (Berkeley) 4/3/91
+ *	$Id: talkd.h,v 1.2 1993/08/01 18:46:06 mycroft Exp $
  */
 
 #ifndef _TALKD_H_

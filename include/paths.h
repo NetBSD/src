@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)paths.h	5.15 (Berkeley) 5/29/91
+ *	from: @(#)paths.h	5.15 (Berkeley) 5/29/91
+ *	$Id: paths.h,v 1.4 1993/08/01 18:44:42 mycroft Exp $
  */
 
 #ifndef _PATHS_H_

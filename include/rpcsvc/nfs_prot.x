@@ -1,5 +1,3 @@
-/* @(#)nfs_prot.x	2.1 88/08/01 4.0 RPCSRC */
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -28,11 +26,12 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
+#ifndef lint
+/*static char sccsid[] = "from: @(#)nfs_prot.x 1.2 87/10/12 Copyr 1987 Sun Micro";*/
+/*static char sccsid[] = "from: @(#)nfs_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
+static char rcsid[] = "$Id: nfs_prot.x,v 1.2 1993/08/01 18:45:42 mycroft Exp $";
+#endif /* not lint */
 
-/*
- * nfs_prot.x 1.2 87/10/12
- * Copyright 1987 Sun Microsystems, Inc.
- */
 const NFS_PORT          = 2049;
 const NFS_MAXDATA       = 8192;
 const NFS_MAXPATHLEN    = 1024;

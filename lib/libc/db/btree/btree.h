@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)btree.h	8.1 (Berkeley) 6/4/93
+ *	from: @(#)btree.h	8.1 (Berkeley) 6/4/93
+ *	$Id: btree.h,v 1.3 1993/08/01 18:44:02 mycroft Exp $
  */
 
 #include <mpool.h>

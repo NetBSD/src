@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)netdb.h	5.15 (Berkeley) 4/3/91
+ *	from: @(#)netdb.h	5.15 (Berkeley) 4/3/91
+ *	$Id: netdb.h,v 1.2 1993/08/01 18:44:45 mycroft Exp $
  */
 
 #ifndef _NETDB_H_

@@ -36,9 +36,11 @@
 
 #ifndef lint
 #ifdef USERDB
-static char sccsid [] = "@(#)udb.c	8.1 (Berkeley) 6/7/93 (with USERDB)";
+/*static char sccsid [] = "from: @(#)udb.c	8.1 (Berkeley) 6/7/93 (with USERDB)";*/
+static char rcsid[] = "$Id: udb.c,v 1.2 1993/08/01 17:56:09 mycroft Exp $";
 #else
-static char sccsid [] = "@(#)udb.c	8.1 (Berkeley) 6/7/93 (without USERDB)";
+/*static char sccsid [] = "from: @(#)udb.c	8.1 (Berkeley) 6/7/93 (without USERDB)";*/
+static char rcsid[] = "$Id: udb.c,v 1.2 1993/08/01 17:56:09 mycroft Exp $";
 #endif
 #endif
 

@@ -35,7 +35,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)context.c	3.12 (Berkeley) 6/6/90";
+/*static char sccsid[] = "from: @(#)context.c	3.12 (Berkeley) 6/6/90";*/
+static char rcsid[] = "$Id: context.c,v 1.2 1993/08/01 18:02:23 mycroft Exp $";
 #endif /* not lint */
 
 #include "value.h"

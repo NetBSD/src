@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)DEFS.h	5.1 (Berkeley) 5/12/90
+ *	from: @(#)DEFS.h	5.1 (Berkeley) 5/12/90
+ *	$Id: DEFS.h,v 1.2 1993/08/01 18:41:01 mycroft Exp $
  */
 
 #ifdef PROF
