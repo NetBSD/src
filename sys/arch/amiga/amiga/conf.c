@@ -1,4 +1,4 @@
-/*-
+/*- 
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.12 1994/05/28 07:49:20 cgd Exp $
+ *	$Id: conf.c,v 1.13 1994/05/28 07:50:14 cgd Exp $
  */
 
 #include <sys/param.h>
