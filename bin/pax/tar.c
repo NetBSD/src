@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.38 2003/03/31 20:30:28 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.39 2003/04/20 21:41:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.38 2003/03/31 20:30:28 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.39 2003/04/20 21:41:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: tar.c,v 1.38 2003/03/31 20:30:28 christos Exp $");
  * Routines for reading, writing and header identify of various versions of tar
  */
 
-static int expandname(char *, size_t,  char **, const char *);
+static int expandname(char *, size_t,  char **, const char *, size_t);
 static void longlink(ARCHD *);
 static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
@@ -443,9 +443,9 @@ tar_rd(ARCHD *arcn, char *buf)
 	hd = (HD_TAR *)buf;
 	if (hd->linkflag != LONGLINKTYPE && hd->linkflag != LONGNAMETYPE) {
 		arcn->nlen = expandname(arcn->name, sizeof(arcn->name),
-		    &gnu_name_string, hd->name);
+		    &gnu_name_string, hd->name, sizeof(hd->name));
 		arcn->ln_nlen = expandname(arcn->ln_name, sizeof(arcn->ln_name),
-		    &gnu_link_string, hd->linkname);
+		    &gnu_link_string, hd->linkname, sizeof(hd->linkname));
 	}
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode,sizeof(hd->mode),OCT) &
 	    0xfff);
@@ -810,9 +810,9 @@ ustar_rd(ARCHD *arcn, char *buf)
 
 	if (hd->typeflag != LONGLINKTYPE && hd->typeflag != LONGNAMETYPE) {
 		arcn->nlen = expandname(dest, sizeof(arcn->name) - cnt,
-		    &gnu_name_string, hd->name);
+		    &gnu_name_string, hd->name, sizeof(hd->name));
 		arcn->ln_nlen = expandname(arcn->ln_name, sizeof(arcn->ln_name),
-		    &gnu_link_string, hd->linkname);
+		    &gnu_link_string, hd->linkname, sizeof(hd->linkname));
 	}
 
 	/*
@@ -933,13 +933,16 @@ ustar_rd(ARCHD *arcn, char *buf)
 }
 
 static int
-expandname(char *buf, size_t len,  char **gnu_name, const char *name)
+expandname(char *buf, size_t len, char **gnu_name, const char *name,
+    size_t nlen)
 {
 	if (*gnu_name) {
 		len = strlcpy(buf, *gnu_name, len);
 		free(*gnu_name);
 		*gnu_name = NULL;
 	} else {
+		if (len > ++nlen)
+			len = nlen;
 		len = strlcpy(buf, name, len);
 	}
 	return len;
