@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.5 1998/01/15 02:21:27 cgd Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.6 1998/07/01 17:16:47 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -79,14 +79,14 @@ atapi_interpret_sense(xs)
 	}
 	/* otherwise use the default */
 	switch (key) {
-		case 0x1: /* RECOVERED ERROR */
+		case SKEY_RECOVERABLE_ERROR:
 			msg = "soft error (corrected)";
-		case 0x0: /* NO SENSE */
+		case SKEY_NO_SENSE:
 			if (xs->resid == xs->datalen)
 				xs->resid = 0;  /* not short read */
-		error = 0;
-		break;
-		case 0x2:	/* NOT READY */
+			error = 0;
+			break;
+		case SKEY_NOT_READY:
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
@@ -96,15 +96,15 @@ atapi_interpret_sense(xs)
 			msg = "not ready";
 			error = EIO;
 			break;
-		case 0x03: /* MEDIUM ERROR */
+		case SKEY_MEDIUM_ERROR: /* MEDIUM ERROR */
 			msg = "medium error";
 			error = EIO;
 			break;
-		case 0x04:
+		case SKEY_HARDWARE_ERROR:
 			msg = "non-media hardware failure";
 			error = EIO;
 			break;
-		case 0x5:	/* ILLEGAL REQUEST */
+		case SKEY_ILLEGAL_REQUEST:
 			if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
 				return (0);
 			if ((xs->flags & SCSI_SILENT) != 0)
@@ -112,7 +112,7 @@ atapi_interpret_sense(xs)
 			msg = "illegal request";
 			error = EINVAL;
 			break;
-		case 0x6:	/* UNIT ATTENTION */
+		case SKEY_UNIT_ATTENTION:
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
@@ -124,11 +124,11 @@ atapi_interpret_sense(xs)
 			msg = "unit attention";
 			error = EIO;
 			break;
-		case 0x7:	/* DATA PROTECT */
+		case SKEY_WRITE_PROTECT:
 			msg = "readonly device";
 			error = EROFS;
 			break;
-		case 0xb:	/* COMMAND ABORTED */
+		case SKEY_ABORTED_COMMAND:
 			msg = "command aborted";
 			error = ERESTART;
 			break;
