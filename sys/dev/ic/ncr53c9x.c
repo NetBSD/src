@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.58 2000/11/30 23:12:43 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.59 2000/11/30 23:21:39 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,8 +86,6 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
 #include <sys/scsiio.h>
@@ -96,8 +94,6 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
-
-#include <machine/cpu.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
