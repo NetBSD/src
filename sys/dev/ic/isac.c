@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.12 2002/04/13 10:28:36 martin Exp $ 
+ *	$Id: isac.c,v 1.13 2002/04/13 11:03:54 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.12 2002/04/13 10:28:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.13 2002/04/13 11:03:54 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -677,6 +677,12 @@ isic_isac_init(struct isic_softc *sc)
 	v = ISAC_READ(I_ISTA);
 	if (v & ISAC_ISTA_EXI)
 		v = ISAC_READ(I_EXIR);
+
+	/* if we've just removed an interrupt status, make sure to cover
+	 * all traces of it */
+	if (sc->clearirq)
+		sc->clearirq(sc);
+
 	ISAC_WRITE(I_CMDR, ISAC_CMDR_RRES|ISAC_CMDR_XRES);
 	ISACCMDRWRDELAY();
 
