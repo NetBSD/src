@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.9 2003/07/24 21:01:39 nathanw Exp $	*/
+/*	$NetBSD: abtn.c,v 1.10 2003/07/28 13:21:29 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.9 2003/07/24 21:01:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.10 2003/07/28 13:21:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -127,25 +127,25 @@ abtn_adbcomplete(buffer, data, adb_command)
 
 #ifdef FORCE_FUNCTION_KEYS
 	switch (cmd & 0x7f) {
-	case 0xa: /* f1 */
+	case 0x0a: /* f1 */
 		key = 122;
 		break;
-	case 0x9: /* f2 */
+	case 0x09: /* f2 */
 		key = 120;
 		break;
-	case 0x8: /* f3 */
+	case 0x08: /* f3 */
 		key =  99;
 		break;
-	case 0x7: /* f4 */
+	case 0x07: /* f4 */
 		key = 118;
 		break;
-	case 0x6: /* f5 */
+	case 0x06: /* f5 */
 		key =  96;
 		break;
 	case 0x7f: /* f6 */
 		key = 97;
 		break;
-	case 0xb: /* f7 */
+	case 0x0b: /* f12 */
 		key = 111;
 		break;
 	}
