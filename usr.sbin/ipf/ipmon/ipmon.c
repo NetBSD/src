@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.9 1997/11/14 12:58:10 mrg Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.10 1998/02/04 15:27:28 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -70,6 +70,8 @@ extern	char	*sys_errlist[];
 #define	STRERROR(x)	strerror(x)
 #endif
 
+
+#define LEN (sizeof(line) - (t - line))
 
 struct	flags {
 	int	value;
@@ -238,13 +240,12 @@ int	blen;
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
+		(void) strftime(t, LEN, "%d/%m/%Y ", tm);
 		t += strlen(t);
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld @%hd ",
-		tm->tm_hour, tm->tm_min, tm->tm_sec, ipl->ipl_usec,
-		nl->nl_rule+1);
+	(void) strftime(t, LEN, "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld @%hd ", ipl->ipl_usec, nl->nl_rule + 1);
 	t += strlen(t);
 
 	if (nl->nl_type == NL_NEWMAP)
@@ -301,12 +302,12 @@ int	blen;
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
+		(void) strftime(t, LEN, "%d/%m/%Y ", tm);
 		t += strlen(t);
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld ",
-		tm->tm_hour, tm->tm_min, tm->tm_sec, ipl->ipl_usec);
+	(void) strftime(t, LEN, "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
 
 	if (sl->isl_type == ISL_NEW)
@@ -422,12 +423,12 @@ int	blen;
 #endif
 
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
+		(void) strftime(t, LEN, "%d/%m/%Y ", tm);
 		t += strlen(t);
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld ", tm->tm_hour, tm->tm_min,
-		tm->tm_sec, ipl->ipl_usec);
+	(void) strftime(t, LEN, "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
 	if (ipl->ipl_count > 1) {
 		(void) sprintf(t, "%dx ", ipl->ipl_count);
