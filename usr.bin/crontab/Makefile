@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.8 1994/01/12 19:29:31 cgd Exp $
+#	$Id: Makefile,v 1.9 1994/01/20 03:03:05 jtc Exp $
 
 PROG=	crontab
-SRCS=	crontab.c misc.c entry.c env.c compat.c
+SRCS=	crontab.c misc.c entry.c env.c
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../usr.sbin/cron -DDEBUGGING=1 
 BINOWN =root
 BINMODE=4111
