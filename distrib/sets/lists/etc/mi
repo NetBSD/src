@@ -96,6 +96,7 @@
 ./var/games/snake.log
 ./var/games/snakerawscores
 ./var/games/tetris.scores
+./var/log/aculog
 ./var/log/authlog
 ./var/log/lastlog
 ./var/log/lpd-errs
