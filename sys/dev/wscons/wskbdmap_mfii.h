@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.h,v 1.3 1998/04/18 10:57:13 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.h,v 1.4 1998/07/14 19:33:58 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -213,6 +213,44 @@ static const keysym_t pckbd_keydesc_dk_nodead[] = {
     KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
 
+static const keysym_t pckbd_keydesc_lk[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(1),	KS_grave,	KS_asciitilde, /* replace escape */
+    KC(143),	KS_Multi_key, /* left compose */
+    KC(157),	KS_Multi_key, /* right compose, replace right control */
+    KC(87),	KS_Cmd_Debugger,	KS_Escape, /* replace F11 */
+    KC(189),	KS_f13,
+    KC(190),	KS_f14,
+    KC(191),	KS_Help,
+    KC(192),	KS_Execute,
+    KC(193),	KS_f17,
+    KC(183),	KS_f18,
+    KC(70),	KS_f19, /* replace scroll lock */
+    KC(127),	KS_f20, /* replace break */
+    KC(69),	KS_KP_F1, /* replace num lock */
+    KC(181),	KS_KP_F2, /* replace divide */
+    KC(55),	KS_KP_F3, /* replace multiply */
+    KC(74),	KS_KP_F4, /* replace subtract */
+
+    /* keypad is numbers only - no num lock */
+    KC(71), 	KS_KP_7,
+    KC(72), 	KS_KP_8,
+    KC(73), 	KS_KP_9,
+    KC(75), 	KS_KP_4,
+    KC(76), 	KS_KP_5,
+    KC(77), 	KS_KP_6,
+    KC(79), 	KS_KP_1,
+    KC(80), 	KS_KP_2,
+    KC(81), 	KS_KP_3,
+    KC(82), 	KS_KP_0,
+    KC(83), 	KS_KP_Decimal,
+
+    KC(206),	KS_KP_Subtract,
+    KC(78),	KS_KP_Separator, /* replace add */
+    KC(199),	KS_Find, /* replace home */
+    KC(207),	KS_Select, /* replace end */
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -222,6 +260,7 @@ static const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
 	KBD_MAP(KB_DK,			KB_US,	pckbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
+	KBD_MAP(KB_US | KB_LK,		KB_US,	pckbd_keydesc_lk),
 };
 
 #undef KBD_MAP
