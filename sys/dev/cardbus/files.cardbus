@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.11 2000/04/19 08:44:32 haya Exp $
+#	$NetBSD: files.cardbus,v 1.12 2000/05/10 00:24:14 haya Exp $
 #
 # files.cardbus
 #
@@ -56,5 +56,5 @@ file	dev/cardbus/ahc_cardbus.c		ahc_cardbus
 # RealTek 8139
 #
 attach	rtk at cardbus with rtk_cardbus
-file	dev/cardbus/if_rl_cardbus.c		rtk_cardbus
+file	dev/cardbus/if_rtk_cardbus.c		rtk_cardbus
 

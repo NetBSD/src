@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rl_cardbus.c,v 1.8 2000/05/01 15:08:50 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.1 2000/05/10 00:24:15 haya Exp $	*/
 /*
  * Copyright (c) 2000 Masanori Kanaoka
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 /*
- * if_rl_cardbus.c:
+ * if_rtk_cardbus.c:
  *	Cardbus specific routines for RealTek 8139 ethernet adapter.
  *	Tested for 
  *		- elecom-Laneed	LD-10/100CBA (Accton MPX5030)
