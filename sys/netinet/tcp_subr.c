@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.127.4.3 2003/09/09 19:23:19 tron Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.127.4.4 2003/10/22 06:05:57 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.4.3 2003/09/09 19:23:19 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.4.4 2003/10/22 06:05:57 jmc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1005,6 +1005,32 @@ tcp_drop(tp, errno)
 }
 
 /*
+ * Return whether this tcpcb is marked as dead, indicating
+ * to the calling timer function that no further action should
+ * be taken, as we are about to release this tcpcb.  The release
+ * of the storage will be done if this is the last timer running.
+ *
+ * This is typically called from the callout handler function before
+ * callout_ack() is done, therefore we need to test the number of
+ * running timer functions against 1 below, not 0.
+ */
+int
+tcp_isdead(tp)
+	struct tcpcb *tp;
+{
+	int dead = (tp->t_flags & TF_DEAD);
+
+	if (__predict_false(dead)) {
+		if (tcp_timers_invoking(tp) > 1)
+				/* not quite there yet -- count separately? */
+			return dead;
+		tcpstat.tcps_delayed_free++;
+		pool_put(&tcpcb_pool, tp);
+	}
+	return dead;
+}
+
+/*
  * Close a TCP control block:
  *	discard all space held by the tcp
  *	discard internet protocol block
@@ -1122,7 +1148,11 @@ tcp_close(tp)
 		m_free(tp->t_template);
 		tp->t_template = NULL;
 	}
-	pool_put(&tcpcb_pool, tp);
+	if (tcp_timers_invoking(tp))
+		tp->t_flags |= TF_DEAD;
+	else
+		pool_put(&tcpcb_pool, tp);
+
 	if (inp) {
 		inp->inp_ppcb = 0;
 		soisdisconnected(so);
