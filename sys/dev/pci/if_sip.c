@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.79 2003/08/15 07:29:34 itojun Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.80 2003/08/25 20:36:47 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.79 2003/08/15 07:29:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.80 2003/08/25 20:36:47 itojun Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2316,9 +2316,9 @@ SIP_DECL(init)(struct ifnet *ifp)
 	sc->sc_rxcfg |= (sc->sc_rx_drain_thresh << RXCFG_DRTH_SHIFT);
 #ifndef DP83820
 	/*
-	* Accept packets >1518 bytes (including FCS) so we can handle
-	* 802.1q-tagged frames properly.
-	*/
+	 * Accept packets >1518 bytes (including FCS) so we can handle
+	 * 802.1q-tagged frames properly.
+	 */
 	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
 		sc->sc_rxcfg |= RXCFG_ALP;
 #endif
