@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)names.c	8.1 (Berkeley) 6/6/93
- *	$Id: names.c,v 1.13 1994/06/09 05:36:29 phil Exp $
+ *	$Id: names.c,v 1.14 1995/04/17 00:00:27 ragge Exp $
  */
 
-#if !defined(hp300) && !defined(tahoe) && !defined(vax) && \
-	!defined(luna68k) && !defined(mips)
+#if !defined(hp300) && !defined(tahoe) && !defined(luna68k) && !defined(mips)
 char *defdrives[] = { 0 };
 #endif
 
@@ -148,60 +147,6 @@ read_names()
 	return (1);
 }
 #endif /* tahoe */
-
-#ifdef vax
-#include <vax/uba/ubavar.h>
-#include <vax/mba/mbavar.h>
-
-char *defdrives[] = { "hp0", "hp1", "hp2", 0 };
-
-int
-read_names()
-{
-	register char *p;
-	unsigned long mp, up;
-	struct mba_device mdev;
-	struct mba_driver mdrv;
-	struct uba_device udev;
-	struct uba_driver udrv;
-	char name[10];
-	static char buf[BUFSIZ];
-
-	mp = namelist[X_MBDINIT].n_value;
-	up = namelist[X_UBDINIT].n_value;
-	if (mp == 0 && up == 0) {
-		(void)fprintf(stderr,
-		    "disk init info not in namelist\n");
-		return (0);
-	}
-	p = buf;
-	if (mp)
-		for (;; mp += sizeof mdev) {
-			(void)kvm_read(kd, mp, &mdev, sizeof mdev);
-			if (mdev.mi_driver == 0)
-				break;
-			if (mdev.mi_dk < 0 || mdev.mi_alive == 0)
-				continue;
-			(void)kvm_read(kd, mdev.mi_driver, &mdrv, sizeof mdrv);
-			(void)kvm_rea(kd, mdrv.md_dname, name, sizeof name);
-			dr_name[mdev.mi_dk] = p;
-			p += sprintf(p, "%s%d", name, mdev.mi_unit);
-		}
-	if (up)
-		for (;; up += sizeof udev) {
-			(void)kvm_read(kd, up, &udev, sizeof udev);
-			if (udev.ui_driver == 0)
-				break;
-			if (udev.ui_dk < 0 || udev.ui_alive == 0)
-				continue;
-			(void)kvm_read(kd, udev.ui_driver, &udrv, sizeof udrv);
-			(void)kvm_read(kd, udrv.ud_dname, name, sizeof name);
-			dr_name[udev.ui_dk] = p;
-			p += sprintf(p, "%s%d", name, udev.ui_unit);
-		}
-	return (1);
-}
-#endif /* vax */
 
 #ifdef sun
 #include <sundev/mbvar.h>
