@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.3 2000/04/02 19:37:49 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.4 2000/04/26 22:15:56 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -76,3 +76,15 @@ distrib/notes/common/sysinst			patch
 usr.bin/du/du.c					1.15
 
   Include -r flag in usage message.
+
+sys/arch/alpha/alpha/pmap.c			1.130
+sys/arch/i386/i386/pmap.new.c			patch (1.85 pmap.c)
+sys/arch/mips/mips/pmap.c			1.88
+sys/arch/pc532/pc532/pmap.new.c			patch (1.47 pmap.c)
+sys/uvm/uvm.h					1.19
+sys/uvm/uvm_page.c				1.32
+
+  Use a more reliable method to determine if uvm_page_init() has
+  completed.  This fixes a problem observed on some i386 configs
+  (typically with lots of memory) where the kernel page table needs
+  to grow during initialization.
