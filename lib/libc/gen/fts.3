@@ -1,4 +1,4 @@
-.\"	$NetBSD: fts.3,v 1.24 2003/08/07 16:42:48 agc Exp $
+.\"	$NetBSD: fts.3,v 1.25 2004/03/31 00:01:47 heas Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -207,6 +207,8 @@ The contents of the
 .Fa fts_statp
 field reference the file characteristic information for the symbolic link
 itself.
+.It Dv FTS_W
+A whiteout object.
 .El
 .It Fa fts_accpath
 A path for accessing the file from the current directory.
@@ -447,6 +449,8 @@ This option causes the
 routines to return
 .Fa FTSENT
 structures for them.
+.It Dv FTS_WHITEOUT
+Return whiteout entries, which are normally hidden.
 .It Dv FTS_XDEV
 This option prevents
 .Nm fts
