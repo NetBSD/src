@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.39 1997/09/06 06:51:54 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.40 1997/11/19 07:00:03 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,6 +103,7 @@ static void	scrolldown __P((void));
 static void	clear_screen __P((int));
 static void	clear_line __P((int));
 static void	reset_tabs __P((void));
+static void	clear_tabs __P((void));
 static void	vt100_reset __P((void));
 static void	putc_normal __P((char));
 static void	putc_esc __P((char));
@@ -566,8 +567,17 @@ reset_tabs()
 {
 	int i;
 
-	for (i = 0; i<= scrcols; i++)
+	for (i = 0; i < scrcols; i++)
 		tab_stops[i] = ((i % 8) == 0);
+}
+
+static void
+clear_tabs()
+{
+	int i;
+
+	for (i = 0; i < scrcols; i++)
+		tab_stops[i] = 0;
 }
 
 static void
@@ -595,10 +605,9 @@ putc_normal(ch)
 			x--;
 		break;
 	case '\t':		/* Tab			 */
-		do {
-			ite_putchar(' ');
+		do
 			x++;
-		} while ((tab_stops[x] == 0) && (x < scrcols));
+		while ((tab_stops[x] == 0) && (x < scrcols));
 		break;
 	case '\n':		/* Line feed		 */
 		if (y == scrreg_bottom)
@@ -656,6 +665,9 @@ putc_esc(ch)
 	case ')':
 		vt100state = ESsetG1;
 		break;
+	case 'E':		/* Next line		 */
+		x = 0;
+		/* FALLTHROUGH */
 	case 'D':		/* Line feed		 */
 		if (y == scrreg_bottom)
 			scrollup();
@@ -697,24 +709,14 @@ putc_gotpars(ch)
 	vt100state = ESnormal;
 	switch (ch) {
 	case 'A':		/* Up			 */
-		i = par[0];
-		do {
-			if (y == scrreg_top)
-				scrolldown();
-			else
-				y--;
-			i--;
-		} while (i > 0);
+		y -= par[0] ? par[0] : 1;
+		if (y < scrreg_top)
+			y = scrreg_top;
 		break;
 	case 'B':		/* Down			 */
-		i = par[0];
-		do {
-			if (y == scrreg_bottom)
-				scrollup();
-			else
-				y++;
-			i--;
-		} while (i > 0);
+		y += par[0] ? par[0] : 1;
+		if (y > scrreg_bottom)
+			y = scrreg_bottom;
 		break;
 	case 'C':		/* Right		 */
 		x+= par[0] ? par[0] : 1;
@@ -723,6 +725,7 @@ putc_gotpars(ch)
 		x-= par[0] ? par[0] : 1;
 		break;
 	case 'H':		/* Set cursor position	 */
+	case 'f':		/* Set cursor position   */
 		x = par[1] - 1;
 		y = par[0] - 1;
 		hanging_cursor = 0;
@@ -752,8 +755,12 @@ putc_gotpars(ch)
 			clear_line(0);
 		break;
 	case 'g':		/* Clear tab stops	 */
-		if (numpars >= 1 && par[0] == 3)
-			reset_tabs();
+		if (numpars >= 1) {
+			if (par[0] == 3)
+				clear_tabs();
+			else if (par[0] == 0)
+				tab_stops[x] = 0;
+		}
 		break;
 	case 'm':		/* Set attribute	 */
 		for (i = 0; i < numpars; i++) {
@@ -943,7 +950,7 @@ itematch(parent, cf, aux)
 		 * so it might be of the form 0xFssxxxxx.  Mask off the
 		 * slot number and duplicate it in bits 20-23, per IM:V
 		 * pp 459, 463, and IM:VI ch 30 p 17.
-		 * Note:  this is an ugly hack and I with I knew what
+		 * Note:  this is an ugly hack and I wish I knew what
 		 * to do about it.  -- sr
 		 */
 		pa = (vm_offset_t)(((u_long)pa & 0xff0fffff) |
