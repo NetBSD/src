@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.6 1998/08/10 23:55:16 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.7 1998/08/11 00:41:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,8 +82,22 @@ mii_phy_probe(parent, mii, capmask)
 		ma.mii_id2 = (*mii->mii_readreg)(parent, ma.mii_phyno,
 		    MII_PHYIDR2);
 		if (ma.mii_id1 == 0 || ma.mii_id1 == 0xffff ||
-		    ma.mii_id2 == 0 || ma.mii_id2 == 0xffff)
-			continue;
+		    ma.mii_id2 == 0 || ma.mii_id2 == 0xffff) {
+			/*
+			 * ARGH!!  3Com internal PHYs report 0/0 in their
+			 * ID registers!  If we spot this, check to see
+			 * if the BMSR has reasonable data in it.
+			 */
+			if (MII_OUI(ma.mii_id1, ma.mii_id2) == 0 &&
+			    MII_MODEL(ma.mii_id2) == 0) {
+				int bmsr = (*mii->mii_readreg)(parent,
+				    ma.mii_phyno, MII_BMSR);
+				if (bmsr == 0 || bmsr == 0xffff ||
+				    (bmsr & BMSR_MEDIAMASK) == 0)
+					continue;
+			} else
+				continue;
+		}
 
 		ma.mii_data = mii;
 		ma.mii_capmask = capmask;
@@ -123,8 +137,8 @@ mii_submatch(parent, cf, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (ma->mii_phyno != cf->cf_loc[MIIBUSCF_PHY] &&
-	    cf->cf_loc[MIIBUSCF_PHY] != MIIBUSCF_PHY_DEFAULT)
+	if (ma->mii_phyno != cf->cf_loc[MIICF_PHY] &&
+	    cf->cf_loc[MIICF_PHY] != MIICF_PHY_DEFAULT)
 		return (0);
 
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
