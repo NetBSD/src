@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.20 2000/06/28 17:09:43 mrg Exp $	*/
+/*	$NetBSD: qd.c,v 1.21 2000/11/02 00:01:45 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -869,7 +869,7 @@ qdopen(dev, flag, mode, p)
 		* enable intrpts, open line discipline 
 		*/
 		dga->csr |= GLOBAL_IE;	/* turn on the interrupts */
-		return ((*linesw[tp->t_line].l_open)(dev, tp));
+		return ((*tp->t_linesw->l_open)(dev, tp));
 	}
 	dga->csr |= GLOBAL_IE;	/* turn on the interrupts */
 	return(0);
@@ -1058,7 +1058,7 @@ qdclose(dev, flag, mode, p)
 		* this is the console 
 		*/
 		tp = qd_tty[minor_dev];
-		(*linesw[tp->t_line].l_close)(tp, flag);
+		(*tp->t_linesw->l_close)(tp, flag);
 		ttyclose(tp);
 		tp->t_state = 0;
 		qdflags[unit].inuse &= ~CONS_DEV;
@@ -1492,7 +1492,7 @@ qdioctl(dev, cmd, datap, flags, p)
 			tp = qd_tty[minor_dev];
 			error = 
 			   
-		   (*linesw[tp->t_line].l_ioctl)(tp, cmd, datap, flags, p);
+		   (*tp->t_linesw->l_ioctl)(tp, cmd, datap, flags, p);
 			if (error >= 0) {
 				return(error);
 			}
@@ -1609,7 +1609,7 @@ qdwrite(dev, uio, flag)
 		* this is the console...  
 		*/
 		tp = qd_tty[minor_dev];
-		return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+		return ((*tp->t_linesw->l_write)(tp, uio, flag));
 	} else if (qdflags[unit].inuse & GRAPHIC_DEV) {
 	       /*
 		* this is a DMA xfer from user space 
@@ -1638,7 +1638,7 @@ qdread(dev, uio, flag)
 		* this is the console
 		*/
 		tp = qd_tty[minor_dev];
-		return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+		return ((*tp->t_linesw->l_read)(tp, uio, flag));
 	} else if (qdflags[unit].inuse & GRAPHIC_DEV) {
 	       /*
 		* this is a bitmap-to-processor xfer 
@@ -2841,7 +2841,7 @@ GET_TBUTTON:
 				char *string;
 				string = q_special[chr & 0x7F];
 				while(*string)
-				    (*linesw[tp->t_line].l_rint)(*string++, tp);
+				    (*tp->t_linesw->l_rint)(*string++, tp);
 			}
 			else {
 #ifdef DDB
@@ -2854,9 +2854,9 @@ GET_TBUTTON:
 				    return;
 			   
 				if (j == 2)  /* Second char wasn't 'D' */
-				    (*linesw[tp->t_line].l_rint)(27, tp);
+				    (*tp->t_linesw->l_rint)(27, tp);
 #endif
-				(*linesw[tp->t_line].l_rint)(chr&0177, tp);
+				(*tp->t_linesw->l_rint)(chr&0177, tp);
 			}
 		}
 	}
