@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.71 1994/03/12 03:45:08 mycroft Exp $
+ *	$Id: wd.c,v 1.72 1994/03/12 22:32:48 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -841,14 +841,22 @@ wdopen(dev, flag, fmt, p)
 		wd->sc_state = RECAL;
 
 		/* Read label using "raw" partition. */
-#ifdef notdef
-		/* wdsetctlr(wd); */	/* Maybe do this TIH */
 		msg = readdisklabel(makewddev(major(dev), WDUNIT(dev), WDRAW),
 		    wdstrategy, &wd->sc_label, &wd->sc_cpulabel);
-		wdsetctlr(wd);
-#endif
-		if (msg = readdisklabel(makewddev(major(dev), WDUNIT(dev),
-		    WDRAW), wdstrategy, &wd->sc_label, &wd->sc_cpulabel)) {
+		if (msg) {
+			/*
+			 * This probably happened because the drive's default
+			 * geometry doesn't match the DOS geometry.  We
+			 * assume the DOS geometry is now in the label and try
+			 * again.  XXX This is a kluge.
+			 */
+			if (wd->sc_state > GEOMETRY)
+				wd->sc_state = GEOMETRY;
+			msg = readdisklabel(makewddev(major(dev), WDUNIT(dev),
+			    WDRAW), wdstrategy, &wd->sc_label,
+			    &wd->sc_cpulabel);
+		}
+		if (msg) {
 			log(LOG_WARNING, "%s: cannot find label (%s)\n",
 			    wd->sc_dev.dv_xname, msg);
 			if (part != WDRAW)
