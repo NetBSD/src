@@ -1,0 +1,10 @@
+.\"	$NetBSD: whatis,v 1.1.2.2 2002/06/19 01:17:34 lukem Exp $
+.
+This is the non-official release of
+.Nx*M .
+.Pp
+.Nx*M
+brings the
+NetBSD operating system to
+Brains mmEye systems, which uses
+Hitachi SH-3 CPU.
