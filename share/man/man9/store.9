@@ -1,4 +1,4 @@
-.\"	$NetBSD: copy.9,v 1.2 1996/01/09 03:23:04 thorpej Exp $
+.\"	$NetBSD: store.9,v 1.1 1996/01/09 03:23:06 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -33,92 +33,49 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd Jan 7, 1996
-.Dt COPY 9
+.Dt STORE 9
 .Os NetBSD
 .Sh NAME
-.Nm copy
-.Nd kernel copy functions
+.Nm store
+.Nd store data to user-space
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/systm.h>
 .Ft int
-.Fn copyin "void *uaddr" "void *kaddr" "size_t len"
+.Fn subyte "void *base"
 .Ft int
-.Fn copyout "void *kaddr" "void *uaddr" "size_t len"
+.Fn susword "void *base"
 .Ft int
-.Fn copystr "void *kfaddr" "void *kdaddr" "size_t len" "size_t *done"
+.Fn suswintr "void *base"
 .Ft int
-.Fn copyinstr "void *uaddr" "void *kaddr" "size_t len" "size_t *done"
-.Ft int
-.Fn copyoutstr "void *kaddr" "void *uaddr" "size_t len" "size_t *done"
+.Fn suword "void *base"
 .Sh DESCRIPTION
 The
 .Nm
-functions are designed to copy contiguous data from one address
-to another.  All but
-.Fn copystr
-copy data from user-space to kernel-space or vice-versa.
+functions are designed to copy small amounts of data to user-space.
 .Pp
 The
 .Nm
 routines provide the following functionality:
-.Bl -tag -width "copyoutstr()"
-.It Fn copyin
-Copies
-.Pa len
-bytes of data from the user-space address
-.Pa uaddr
-to the kernel-space address
-.Pa kaddr .
-.It Fn copyout
-Copies
-.Pa len
-bytes of data from the kernel-space address
-.Pa kaddr
-to the user-space address
-.Pa uaddr .
-.It Fn copystr
-Copies a NULL-terminated string, at most
-.Pa len
-bytes long, from kernel-space address
-.Pa kfaddr
-to kernel-space address
-.Pa kdaddr .
-The number of bytes actually copied, including the terminating
-NULL, is returned in
-.Pa *done .
-.It Fn copyinstr
-Copies a NULL-terminated string, at most
-.Pa len
-bytes long, from user-space address
-.Pa uaddr
-to kernel-space address
-.Pa kaddr .
-The number of bytes actually copied, including the terminating
-NULL, is returned in
-.Pa *done .
-.It Fn copyoutstr
-Copies a NULL-terminated string, at most
-bytes long, from kernel-space address
-.Pa kaddr
-to user-space address
-.Pa uaddr .
-The number of bytes actually copied, including the terminating
-NULL, is returned in
-.Pa *done .
+.Bl -tag -width "suswintr()"
+.It Fn subyte
+Stores a byte of data to the user-space address
+.Pa base .
+.It Fn susword
+Stores a short word of data to the user-space address
+.Pa base .
+.It Fn suswintr
+Stores a short word of data to the user-space address
+.Pa base .
+This function is safe to call during an interrupt context.
+.It Fn suword
+Stores a word of data to the user-space address
+.Pa base .
 .El
 .Sh RETURN VALUES
 The
 .Nm
-functions return 0 on success or EFAULT if a bad address is encountered.
-In addition, the
-.Fn copystr ,
-.Fn copyinstr ,
-and
-.Fn copyoutstr
-funtions return ENAMETOOLONG if the string is longer than
-.Pa len
-bytes.
+functions return 0 on success or -1 on failire.
 .Sh SEE ALSO
-.Xr fetch 9 ,
-.Xr store 9 .
+.Xr copy 9 ,
+.Xr fetch 9 .
