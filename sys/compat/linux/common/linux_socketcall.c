@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.18 1998/10/04 00:02:44 fvdl Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.19 1999/03/25 04:26:45 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ linux_sys_socketcall(p, v, retval)
 	case LINUX_SYS_bind:
 		return sys_bind(p, (void *)&lda, retval);
 	case LINUX_SYS_connect:
-		return sys_connect(p, (void *)&lda, retval);
+		return linux_sys_connect(p, (void *)&lda, retval);
 	case LINUX_SYS_listen:
 		return sys_listen(p, (void *)&lda, retval);
 	case LINUX_SYS_accept:
