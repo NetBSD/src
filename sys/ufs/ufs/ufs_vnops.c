@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.104 2003/08/07 16:34:47 agc Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.105 2003/08/09 19:02:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.104 2003/08/07 16:34:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.105 2003/08/09 19:02:55 dsl Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -2081,9 +2081,9 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 #ifdef QUOTA
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
-		PNBUF_PUT(cnp->cn_pnbuf);
 		VOP_VFREE(tvp, ip->i_number, mode);
 		vput(tvp);
+		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -2128,8 +2128,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	 * Write error occurred trying to update the inode
 	 * or the directory so must deallocate the inode.
 	 */
-	PNBUF_PUT(cnp->cn_pnbuf);
-	vput(dvp);
 	ip->i_ffs_effnlink = 0;
 	ip->i_nlink = 0;
 	DIP_ASSIGN(ip, nlink, 0);
@@ -2140,7 +2138,10 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 #endif
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);
+	tvp->v_type = VNON;		/* explodes later if VBLK */
 	vput(tvp);
+	PNBUF_PUT(cnp->cn_pnbuf);
+	vput(dvp);
 	return (error);
 }
 
