@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.81 2004/04/11 11:27:45 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.82 2004/04/12 03:57:53 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -837,3 +837,8 @@ lib/libc/gen/sysctl.c				1.25
 	gcc 3.3.3.
 	[he, ticket #128]
 
+sbin/raidctl/raidctl.8				1.39-1.40
+
+	Swapping to RAID 5 is happy now.  Remove indications to the contrary.
+	Bump date for last.
+	[oster, ticket #130]
