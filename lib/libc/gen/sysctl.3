@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.130 2004/01/07 21:25:14 atatat Exp $
+.\"	$NetBSD: sysctl.3,v 1.131 2004/01/08 09:21:35 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd December 31, 2003
+.Dd January 7, 2004
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -194,8 +194,8 @@ currently in use largely makes this particular
 interface obsolete.
 See
 .Xr sysctl 8
-and
-.Xr sysctl 9
+.\" and
+.\" .Xr sysctl 9
 for more information.
 .Sh CTL_VFS
 A distinguished second level name, VFS_GENERIC,
@@ -1938,8 +1938,8 @@ Valid flags are:
 .It SYSCTL\_READONLY	Node is read-only
 .It SYSCTL\_READONLY1	Node becomes read-only at securelevel 1
 .It SYSCTL\_READONLY2	Node becomes read-only at securelevel 2
-.It SYSCTL\_READWRITE	Node is writeable by the superuser
-.It SYSCTL\_ANYWRITE	Node is writeable by anyone
+.It SYSCTL\_READWRITE	Node is writable by the superuser
+.It SYSCTL\_ANYWRITE	Node is writable by anyone
 .It SYSCTL\_PRIVATE	Node is readable only by the superuser
 .It SYSCTL\_PERMANENT	Node cannot be removed (cannot be set by
 processes)
@@ -2056,8 +2056,8 @@ level is made.
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr tcp 4 ,
-.Xr sysctl 8 ,
-.Xr sysctl 9
+.Xr sysctl 8
+.\" .Xr sysctl 9
 .Sh HISTORY
 The
 .Nm
