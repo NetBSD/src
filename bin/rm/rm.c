@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rm.c	4.26 (Berkeley) 3/10/91";*/
-static char rcsid[] = "$Id: rm.c,v 1.7 1993/10/25 19:12:51 jtc Exp $";
+static char rcsid[] = "$Id: rm.c,v 1.8 1993/10/25 19:28:19 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -163,7 +163,7 @@ rmtree(argv)
 			continue;
 		/* Pre-order: give user chance to skip. */
 		case FTS_D:
-			if (iflag && !check(p->fts_path, p->fts_accpath,
+			if (!fflag && !check(p->fts_path, p->fts_accpath,
 			    p->fts_statp)) {
 				(void)fts_set(fts, p, FTS_SKIP);
 				p->fts_number = SKIPPED;
@@ -263,11 +263,10 @@ check(path, name, sp)
 		if (S_ISLNK(sp->st_mode) || !stdin_ok || !access(name, W_OK))
 			return(1);
 		strmode(sp->st_mode, modep);
-		if (!fflag)
-			(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
-			    modep + 1, modep[9] == ' ' ? "" : " ",
-			    user_from_uid(sp->st_uid, 0),
-			    group_from_gid(sp->st_gid, 0), path);
+		(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
+		    modep + 1, modep[9] == ' ' ? "" : " ",
+		    user_from_uid(sp->st_uid, 0),
+		    group_from_gid(sp->st_gid, 0), path);
 	}
 	(void)fflush(stderr);
 
@@ -292,7 +291,7 @@ checkdot(argv)
 		else
 			p = *t;
 		if (ISDOT(p)) {
-			if (!complained++ && !fflag)
+			if (!complained++)
 			    (void)fprintf(stderr,
 				"rm: \".\" and \"..\" may not be removed.\n");
 			retval = 1;
@@ -316,7 +315,6 @@ error(name, val)
 void
 usage()
 {
-	if (!fflag)
-		(void)fprintf(stderr, "usage: rm [-dfiRr] file ...\n");
+	(void)fprintf(stderr, "usage: rm [-dfiRr] file ...\n");
 	exit(1);
 }
