@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2var.h,v 1.1 2002/11/22 16:28:57 jmc Exp $	*/
+/*	$NetBSD: sbp2var.h,v 1.2 2002/12/09 07:23:24 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,16 +48,9 @@ struct sbp2_mapping {
 	u_int8_t rw;
 };
 
-struct sbp2_datamapping {
-	u_int16_t nmaps;
-	struct sbp2_mapping **maps;
-};
-
 /* Need a top level map per bus. */
 
 struct sbp2_map {
-	struct sbp2_datamapping datamaps;
-
 	unsigned char datamap[SBP_DATA_SIZE / SBP_DATA_BLOCK_SIZE / CHAR_BIT];
 	unsigned int next_data;
 	
