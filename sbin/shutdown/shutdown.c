@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.40 2003/08/07 10:04:39 agc Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.41 2004/10/09 02:51:19 dsainty Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.40 2003/08/07 10:04:39 agc Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.41 2004/10/09 02:51:19 dsainty Exp $");
 #endif
 #endif /* not lint */
 
@@ -323,7 +323,7 @@ timewarn(timeleft)
 
 	/*
 	 * play some games, just in case wall doesn't come back
-	 * probably unecessary, given that wall is careful.
+	 * probably unnecessary, given that wall is careful.
 	 */
 	if (!setjmp(alarmbuf)) {
 		(void)signal(SIGALRM, timeout);
