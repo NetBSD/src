@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ctermid.3	5.2 (Berkeley) 4/19/91
-.\"	$Id: cuserid.3,v 1.1 1994/05/19 06:20:26 jtc Exp $
+.\"	$Id: cuserid.3,v 1.2 1995/01/13 01:16:19 jtc Exp $
 .\"
 .Dd November 28, 1993
 .Dt CUSERID 3
@@ -43,6 +43,10 @@
 .Ft char *
 .Fn cuserid "char *buf"
 .Sh DESCRIPTION
+.Bf -symbolic
+This interface is available from the compatibility library, libcompat.
+.Ef
+.Pp
 The
 .Fn cuserid
 function returns a character string representation of the user name 
