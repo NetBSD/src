@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.11 2001/02/19 23:22:47 cgd Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.12 2001/09/19 16:16:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.11 2001/02/19 23:22:47 cgd Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.12 2001/09/19 16:16:03 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: screenblank.c,v 1.11 2001/02/19 23:22:47 cgd Exp $");
 #include <dev/wscons/wsconsio.h>
 
 #ifdef HAVE_FBIO
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #endif
 
 #include "pathnames.h"
