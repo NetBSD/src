@@ -1,4 +1,4 @@
-/*	$NetBSD: isatty.c,v 1.6 1997/07/21 14:07:19 jtc Exp $	*/
+/*	$NetBSD: isatty.c,v 1.7 1998/10/13 15:05:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,13 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)isatty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isatty.c,v 1.6 1997/07/21 14:07:19 jtc Exp $");
+__RCSID("$NetBSD: isatty.c,v 1.7 1998/10/13 15:05:02 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <termios.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(isatty,_isatty);
+#endif
 
 int
 isatty(fd)
