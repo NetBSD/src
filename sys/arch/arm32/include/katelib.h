@@ -1,4 +1,4 @@
-/* $NetBSD: katelib.h,v 1.4 1996/03/14 23:11:20 mark Exp $ */
+/* $NetBSD: katelib.h,v 1.5 1996/03/28 21:35:51 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -105,6 +105,15 @@ void outsw16 __P((u_int /*io*/, u_int /*src*/, u_int /*size*/));
 
 #define ReadByte(a) \
 (*((volatile unsigned char *)(a)))
+
+/* Define in/out macros */
+
+#define inb(port)		ReadByte((port))
+#define outb(port, byte)	WriteByte((port), (byte))
+#define inw(port)		ReadShort((port))
+#define outw(port, word)	WriteShort((port), (word))
+#define inl(port)		ReadWord((port))
+#define outl(port, lword)	WriteWord((port), (lword))
 
 /* Prototypes that are wandering the streets */
 
