@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.13 1997/11/05 04:23:35 thorpej Exp $	*/
+/*	$NetBSD: macros.h,v 1.14 1998/01/18 22:06:02 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -64,35 +64,6 @@ static __inline__ void _insque(void*p, void*q) {
                         : "memory" );
 }
 
-#define	bitset(bitnr,var)				\
-({	__asm__ __volatile ("bbss %0,%1,1f;1:;"		\
-			:				\
-			: "g" (bitnr), "g" (var));	\
-})
-
-#define	bitclear(bitnr,var)				\
-({      __asm__ __volatile ("bbsc %0,%1,1f;1:;"             \
-                        :                               \
-                        : "g" (bitnr), "g" (var));      \
-})
-
-#define	bitisset(bitnr,var)				\
-({							\
-	register int val;                               \
-	__asm__ __volatile ("clrl %0;bbc %1,%2,1f;incl %0;1:;" \
-			: "=g" (val)			\
-			: "g" (bitnr), "g" (var));	\
-	val;						\
-})
-
-#define bitisclear(bitnr,var)                                \
-({                                                      \
-        register int val;                               \
-        __asm__ __volatile ("clrl %0;bbs %1,%2,1f;incl %0;1:;" \
-                        : "=g" (val)                    \
-                        : "g" (bitnr), "g" (var));      \
-	val;						\
-})
 static __inline__ void bcopy(const void*from, void*toe, u_int len) {
 	__asm__ __volatile ("movc3 %0,(%1),(%2)"
 			:
@@ -148,68 +119,6 @@ static __inline__ int skpc(int mask, size_t size, u_char *cp){
 			: "r"(mask),"r"(size),"r"(cp)
 			: "r0","r1" );
 	return	ret;
-}
-#if 0
-static __inline__ int imin(int a, int b){
-	__asm__ __volatile("cmpl %0,%2;bleq 1f;movl %2,%0;1:"
-			: "=r"(a)
-			: "r"(a),"r"(b) );
-	return a;
-}
-
-static __inline__ int imax(int a, int b){
-        __asm__ __volatile("cmpl %0,%2;bgeq 1f;movl %2,%0;1:"
-                        : "=r"(a)
-                        : "r"(a),"r"(b) );
-        return a;
-}
-
-static __inline__ int min(int a, int b){
-        __asm__ __volatile("cmpl %0,%2;bleq 1f;movl %2,%0;1:"
-                        : "=r"(a)
-                        : "r"(a),"r"(b) );
-        return a;
-}
-
-static __inline__ int max(int a, int b){
-        __asm__ __volatile("cmpl %0,%2;bgeq 1f;movl %2,%0;1:"
-                        : "=r"(a)
-                        : "r"(a),"r"(b) );
-        return a;
-}
-#endif
-
-static __inline__ void blkcpy(const void*from, void*to, u_int len) {
-	__asm__ __volatile("
-			movl    %0,r1
-			movl    %1,r3
-			movl	%2,r6
-			jbr 2f
-		1:	subl2   r0,r6
-			movc3   r0,(r1),(r3)
-		2:	movzwl  $65535,r0
-			cmpl    r6,r0
-			jgtr    1b
-			movc3   r6,(r1),(r3)"
-			:
-			: "g" (from), "g" (to), "g" (len)
-			: "r0","r1","r2","r3","r4","r5", "r6" );
-}
-
-static __inline__ void blkclr(void *blk, int len) {
-	__asm__ __volatile("
-			movl	%0, r3
-			movl	%1, r6
-			jbr	2f
-		1:	subl2	r0, r6
-			movc5	$0,(r3),$0,r0,(r3)
-		2:	movzwl	$65535,r0
-			cmpl	r6, r0
-			jgtr	1b
-			movc5	$0,(r3),$0,r6,(r3)"
-			:
-			: "g" (blk), "g" (len)
-			: "r0","r1","r2","r3","r4","r5", "r6" );
 }
 
 #define	setrunqueue(p)	\
