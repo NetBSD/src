@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.27.2.9 2001/06/10 18:21:29 he Exp $
+.\"	$NetBSD: contents,v 1.27.2.10 2002/03/09 18:56:12 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -441,7 +441,7 @@ Note that it does not include any of the manual pages
 that are included in the other sets.
 .br
 .\" MI
-.Em 5.0 MB gzipped, 19.9 MB uncompressed
+.Em 5.6 MB gzipped, 22.7 MB uncompressed
 .
 .It Sy misc
 This set includes the (rather large) system dictionaries,
@@ -449,7 +449,7 @@ the typesettable document set, and other files from
 .Pa /usr/share .
 .br
 .\" MI
-.Em 2.6 MB gzipped, 10.1 MB uncompressed
+.Em 2.2 MB gzipped, 7.5 MB uncompressed
 .
 .It Sy text
 This set includes
