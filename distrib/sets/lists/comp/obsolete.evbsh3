@@ -1,2 +1,7 @@
-# $NetBSD: obsolete.evbsh3,v 1.1 2001/01/16 17:36:03 itojun Exp $
+# $NetBSD: obsolete.evbsh3,v 1.2 2002/05/03 12:11:22 wiz Exp $
+/usr/include/evbsh3/bootinfo.h
+/usr/include/evbsh3/cpufunc.h
 /usr/include/evbsh3/mmeye.h
+/usr/include/evbsh3/pio.h
+/usr/include/evbsh3/segments.h
+/usr/include/evbsh3/shbvar.h
