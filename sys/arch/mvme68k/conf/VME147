@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.4 1996/05/20 01:15:45 chuck Exp $
+#	$NetBSD: VME147,v 1.4.4.1 1996/05/29 05:14:37 chuck Exp $
 
 machine		mvme68k m68k
 
@@ -34,7 +34,11 @@ options		TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 options		COMPAT_09, COMPAT_10
 options		COMPAT_SUNOS
 
-config	netbsd		root on nfs swap on nfs
+## force NFS root and swap
+#config	netbsd		root on nfs swap on nfs
+## "generic" boot (put root on boot device)
+config netbsd		swap generic
+
 
 pseudo-device	sl
 pseudo-device	ppp 2

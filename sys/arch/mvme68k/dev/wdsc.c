@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.2 1996/04/26 19:00:20 chuck Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.2.4.1 1996/05/29 05:16:25 chuck Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -43,6 +43,8 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <machine/autoconf.h>
 
 #include <mvme68k/dev/dmavar.h>
 #include <mvme68k/dev/pccreg.h>
@@ -120,6 +122,7 @@ wdsc_pcc_attach(pdp, dp, auxp)
     struct sbic_softc   *sc = (struct sbic_softc *)dp;
     struct pcc_attach_args *pa = auxp;
     static int          attached = 0;
+    int tmp;
 
     if ( attached )
         panic("wdsc: Driver already attached!");
@@ -174,9 +177,14 @@ wdsc_pcc_attach(pdp, dp, auxp)
     sys_pcc->scsi_int = sc->sc_ipl | PCC_IENABLE | PCC_ICLEAR;
 
     /*
-     * Attach all scsi units on us
+     * Attach all scsi units on us, watching for boot device
+     * (see dk_establish).
      */
+    tmp = bootpart;
+    if (PCC_PADDR(pa->pa_offset) != bootaddr) 
+	bootpart = -1;		/* invalid flag to dk_establish */
     (void)config_found(dp, &sc->sc_link, wdscprint);
+    bootpart = tmp;		/* restore old value */
 }
 
 /*
