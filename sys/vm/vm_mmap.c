@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.59 1998/07/07 23:22:13 thorpej Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.59.2.1 1998/07/30 14:04:22 eeh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,16 +135,16 @@ sys_mmap(p, v, retval)
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vnode *vp;
-	vm_offset_t addr;
+	vaddr_t addr;
 	off_t pos;
-	vm_size_t size, pageoff;
+	vsize_t size, pageoff;
 	vm_prot_t prot, maxprot;
 	caddr_t handle;
 	int fd, flags, error;
-	vm_offset_t vm_min_address = VM_MIN_ADDRESS;
+	vaddr_t vm_min_address = VM_MIN_ADDRESS;
 
-	addr = (vm_offset_t) SCARG(uap, addr);
-	size = (vm_size_t) SCARG(uap, len);
+	addr = (vaddr_t) SCARG(uap, addr);
+	size = (vsize_t) SCARG(uap, len);
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
 	flags = SCARG(uap, flags);
 	fd = SCARG(uap, fd);
@@ -157,7 +157,7 @@ sys_mmap(p, v, retval)
 #endif
 
 	/* make sure mapping fits into numeric range */
-	if (pos + size > (vm_offset_t)-PAGE_SIZE) {
+	if (pos + size > (vaddr_t)-PAGE_SIZE) {
 #ifdef DEBUG
 		printf("mmap: pos=%qx, size=%lx too big\n", pos, size);
 #endif
@@ -173,7 +173,7 @@ sys_mmap(p, v, retval)
 
 	/* Adjust size for rounding (on both ends). */
 	size += pageoff;	/* low end... */
-	size = (vm_size_t) round_page(size); /* hi end */
+	size = (vsize_t) round_page(size); /* hi end */
 
 	/* Do not allow mappings that cause address wrap... */
 	if ((ssize_t)size < 0)
@@ -316,14 +316,14 @@ sys___msync13(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	vm_map_t map;
 	int rv, flags;
 	boolean_t syncio, invalidate;
 
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 	flags = SCARG(uap, flags);
 #ifdef DEBUG
 	if (mmapdebug & (MDB_FOLLOW|MDB_SYNC))
@@ -346,7 +346,7 @@ sys___msync13(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 
 	/* Disallow wrap-around. */
 	if (addr + size < addr)
@@ -420,14 +420,14 @@ sys_munmap(p, v, retval)
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	vm_map_t map;
-	vm_offset_t vm_min_address = VM_MIN_ADDRESS;
+	vaddr_t vm_min_address = VM_MIN_ADDRESS;
 	
 
-	addr = (vm_offset_t) SCARG(uap, addr);
-	size = (vm_size_t) SCARG(uap, len);
+	addr = (vaddr_t) SCARG(uap, addr);
+	size = (vsize_t) SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
 		printf("munmap(%d): addr %lx len %lx\n",
@@ -441,7 +441,7 @@ sys_munmap(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 	if ((int)size < 0)
 		return(EINVAL);
 	if (size == 0)
@@ -497,12 +497,12 @@ sys_mprotect(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) prot;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	register vm_prot_t prot;
 
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
@@ -516,7 +516,7 @@ sys_mprotect(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 	if ((int)size < 0)
 		return(EINVAL);
 
@@ -542,12 +542,12 @@ sys_minherit(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) inherit;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	register vm_inherit_t inherit;
 
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 	inherit = SCARG(uap, inherit);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
@@ -561,7 +561,7 @@ sys_minherit(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 	if ((int)size < 0)
 		return(EINVAL);
 
@@ -623,13 +623,13 @@ sys_mlock(p, v, retval)
 		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	int error;
 	extern int vm_page_max_wired;
 
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
 		printf("mlock(%d): addr %lx len %lx\n",
@@ -642,7 +642,7 @@ sys_mlock(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 
 	/* Disallow wrap-around. */
 	if (addr + (int)size < addr)
@@ -673,12 +673,12 @@ sys_munlock(p, v, retval)
 		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	int error;
 
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
 		printf("munlock(%d): addr %lx len %lx\n",
@@ -691,7 +691,7 @@ sys_munlock(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 
 	/* Disallow wrap-around. */
 	if (addr + (int)size < addr)
@@ -716,12 +716,12 @@ sys_munlock(p, v, retval)
 int
 vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 	register vm_map_t map;
-	register vm_offset_t *addr;
-	register vm_size_t size;
+	register vaddr_t *addr;
+	register vsize_t size;
 	vm_prot_t prot, maxprot;
 	register int flags;
 	caddr_t handle;		/* XXX should be vp */
-	vm_offset_t foff;
+	vaddr_t foff;
 {
 	register vm_pager_t pager;
 	boolean_t fitit;
@@ -865,7 +865,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		 */
 		else {
 			vm_map_t tmap;
-			vm_offset_t off;
+			vaddr_t off;
 
 			/* locate and allocate the target address space */
 			vm_map_lock(map);
@@ -884,7 +884,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 					PMAP_PREFER(foff, addr);
 #endif
 					rv = vm_map_insert(map, NULL,
-							   (vm_offset_t)0,
+							   (vaddr_t)0,
 							   *addr, *addr+size);
 					/*
 					 * vm_map_insert() may fail if
@@ -896,7 +896,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 						goto again;
 				}
 			} else {
-				rv = vm_map_insert(map, NULL, (vm_offset_t)0,
+				rv = vm_map_insert(map, NULL, (vaddr_t)0,
 						   *addr, *addr + size);
 
 #ifdef DEBUG
@@ -907,7 +907,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 				 */
 				if (rv == KERN_SUCCESS &&
 				    (mmapdebug & MDB_MAPIT)) {
-					vm_offset_t	paddr = *addr;
+					paddr_t	paddr = *addr;
 #ifdef	PMAP_PREFER
 					PMAP_PREFER(foff, &paddr);
 #endif
@@ -961,7 +961,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 				vm_map_t tmap;
 				vm_map_entry_t tentry;
 				vm_object_t tobject;
-				vm_offset_t toffset;
+				vaddr_t toffset;
 				vm_prot_t tprot;
 				boolean_t twired, tsu;
 

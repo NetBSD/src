@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.1 1998/04/15 20:16:34 drochner Exp $ */
+/* $NetBSD: tgavar.h,v 1.1.2.1 1998/07/30 14:04:02 eeh Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -63,16 +63,16 @@ struct tga_conf {
 	const struct tga_ramdac_conf
 		    *tgac_ramdac;	/* the RAMDAC type; see above */
 	int	    tgac_phys_depth;	/* physical frame buffer depth */
-	vm_size_t   tgac_cspace_size;	/* core space size */
-	vm_size_t   tgac_vvbr_units;	/* what '1' in the VVBR means */
+	vsize_t   tgac_cspace_size;	/* core space size */
+	vsize_t   tgac_vvbr_units;	/* what '1' in the VVBR means */
 
 	int	    tgac_ndbuf;		/* number of display buffers */
-	vm_offset_t tgac_dbuf[2];	/* display buffer offsets/addresses */
-	vm_size_t   tgac_dbufsz[2];	/* display buffer sizes */
+	vaddr_t tgac_dbuf[2];	/* display buffer offsets/addresses */
+	vsize_t   tgac_dbufsz[2];	/* display buffer sizes */
 
 	int	    tgac_nbbuf;		/* number of display buffers */
-	vm_offset_t tgac_bbuf[2];	/* back buffer offsets/addresses */
-	vm_size_t   tgac_bbufsz[2];	/* back buffer sizes */
+	vaddr_t tgac_bbuf[2];	/* back buffer offsets/addresses */
+	vsize_t   tgac_bbufsz[2];	/* back buffer sizes */
 };
 
 struct tga_devconfig {
@@ -87,14 +87,14 @@ struct tga_devconfig {
 	int	    dc_tga_type;	/* the device type; see below */
 	const struct tga_conf *dc_tgaconf; /* device buffer configuration */
 
-	vm_offset_t dc_vaddr;		/* memory space virtual base address */
-	vm_offset_t dc_paddr;		/* memory space physical base address */
+	vaddr_t dc_vaddr;		/* memory space virtual base address */
+	paddr_t dc_paddr;		/* memory space physical base address */
 
 	int	    dc_wid;		/* width of frame buffer */
 	int	    dc_ht;		/* height of frame buffer */
 	int	    dc_rowbytes;	/* bytes in a FB scan line */
 
-	vm_offset_t dc_videobase;	/* base of flat frame buffer */
+	vaddr_t dc_videobase;	/* base of flat frame buffer */
 
 	struct raster	dc_raster;	/* raster description */
 	struct rcons	dc_rcons;	/* raster blitter control info */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.8 1998/03/01 02:25:28 fvdl Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.8.2.1 1998/07/30 14:04:09 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -126,7 +126,7 @@
 
 struct uao_swhash_elt {
 	LIST_ENTRY(uao_swhash_elt) list;	/* the hash list */
-	vm_offset_t tag;			/* our 'tag' */
+	vaddr_t tag;			/* our 'tag' */
 	int count;				/* our number of active slots */
 	int slots[UAO_SWHASH_CLUSTER_SIZE];	/* the slots */
 };
@@ -148,7 +148,7 @@ LIST_HEAD(uao_swhash, uao_swhash_elt);
 
 struct uvm_aobj {
 	struct uvm_object u_obj; /* has: lock, pgops, memq, #pages, #refs */
-	vm_size_t u_pages;	 /* number of pages in entire object */
+	vsize_t u_pages;	 /* number of pages in entire object */
 	int u_flags;		 /* the flags (see uvm_aobj.h) */
 	int *u_swslots;		 /* array of offset->swapslot mappings */
 				 /*
@@ -168,12 +168,12 @@ static void			 uao_init __P((void));
 static struct uao_swhash_elt	*uao_find_swhash_elt __P((struct uvm_aobj *,
 							  int, boolean_t));
 static int			 uao_find_swslot __P((struct uvm_aobj *, 
-						      vm_offset_t));
+						      vaddr_t));
 static boolean_t		 uao_flush __P((struct uvm_object *, 
-						vm_offset_t, vm_offset_t, 
+						vaddr_t, vaddr_t, 
 						int));
 static void			 uao_free __P((struct uvm_aobj *));
-static int			 uao_get __P((struct uvm_object *, vm_offset_t,
+static int			 uao_get __P((struct uvm_object *, vaddr_t,
 					      vm_page_t *, int *, int, 
 					      vm_prot_t, int, int));
 static boolean_t		 uao_releasepg __P((struct vm_page *, 
@@ -273,7 +273,7 @@ uao_find_swhash_elt(aobj, pageidx, create)
 __inline static int
 uao_find_swslot(aobj, pageidx)
 	struct uvm_aobj *aobj;
-	vm_offset_t pageidx;
+	vaddr_t pageidx;
 {
 
 	/*
@@ -450,7 +450,7 @@ uao_free(aobj)
  */
 struct uvm_object *
 uao_create(size, flags)
-	vm_size_t size;
+	vsize_t size;
 	int flags;
 {
 	static struct uvm_aobj kernel_object_store;	/* home of kernel_object */
@@ -665,7 +665,7 @@ uao_detach(uobj)
 boolean_t
 uao_flush(uobj, start, end, flags)
 	struct uvm_object *uobj;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 	int flags;
 {
 
@@ -702,14 +702,14 @@ uao_flush(uobj, start, end, flags)
 static int
 uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	struct uvm_object *uobj;
-	vm_offset_t offset;
+	vaddr_t offset;
 	struct vm_page **pps;
 	int *npagesp;
 	int centeridx, advice, flags;
 	vm_prot_t access_type;
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
-	vm_offset_t current_offset;
+	vaddr_t current_offset;
 	vm_page_t ptmp;
 	int lcv, gotpages, maxpages, swslot, rv;
 	boolean_t done;

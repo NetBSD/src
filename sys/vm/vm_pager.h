@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.h,v 1.13 1998/03/01 02:24:02 fvdl Exp $	*/
+/*	$NetBSD: vm_pager.h,v 1.13.2.1 1998/07/30 14:04:25 eeh Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -73,7 +73,7 @@ struct	pagerops {
 	void		(*pgo_init)		/* Initialize pager. */
 			    __P((void));
 	vm_pager_t	(*pgo_alloc)		/* Allocate pager. */
-			    __P((caddr_t, vm_size_t, vm_prot_t, vm_offset_t));
+			    __P((caddr_t, vsize_t, vm_prot_t, vaddr_t));
 	void		(*pgo_dealloc)		/* Disassociate. */
 			    __P((vm_pager_t));
 	int		(*pgo_getpages)		/* Get (read) pages. */
@@ -81,10 +81,10 @@ struct	pagerops {
 	int		(*pgo_putpages)		/* Put (write) pages. */
 			    __P((vm_pager_t, vm_page_t *, int, boolean_t));
 	boolean_t  	(*pgo_haspage)		/* Does pager have page? */
-			    __P((vm_pager_t, vm_offset_t));
+			    __P((vm_pager_t, vaddr_t));
 	void		(*pgo_cluster)		/* Return range of cluster. */
-			    __P((vm_pager_t, vm_offset_t,
-				 vm_offset_t *, vm_offset_t *));
+			    __P((vm_pager_t, vaddr_t,
+				 vaddr_t *, vaddr_t *));
 	/*
 	 *	The following are an extension to the original Mach pager
 	 *	interface first seen in BSD/OS 2.1 (at least as far as I am
@@ -95,9 +95,9 @@ struct	pagerops {
 	 *	-- Niklas Hallqvist (niklas@appli.se).
 	 */
 	int		(*pgo_remove)		/* Don't manage range anymore */
-			    __P((vm_pager_t, vm_offset_t, vm_offset_t));
-	vm_offset_t	(*pgo_next)		/* Find next page in pager. */
-			    __P((vm_pager_t, vm_offset_t));
+			    __P((vm_pager_t, vaddr_t, vaddr_t));
+	vaddr_t	(*pgo_next)		/* Find next page in pager. */
+			    __P((vm_pager_t, vaddr_t));
 	int		(*pgo_count)		/* How many pages in pager? */
 			    __P((vm_pager_t));
 };
@@ -127,29 +127,29 @@ struct	pagerops {
 extern struct pagerops *dfltpagerops;
 
 vm_pager_t	 vm_pager_allocate
-		    __P((int, caddr_t, vm_size_t, vm_prot_t, vm_offset_t));
-vm_page_t	 vm_pager_atop __P((vm_offset_t));
+		    __P((int, caddr_t, vsize_t, vm_prot_t, vaddr_t));
+vm_page_t	 vm_pager_atop __P((vaddr_t));
 void		 vm_pager_cluster
-		    __P((vm_pager_t, vm_offset_t,
-			 vm_offset_t *, vm_offset_t *));
+		    __P((vm_pager_t, vaddr_t,
+			 vaddr_t *, vaddr_t *));
 void		 vm_pager_clusternull
-		    __P((vm_pager_t, vm_offset_t,
-			 vm_offset_t *, vm_offset_t *));
+		    __P((vm_pager_t, vaddr_t,
+			 vaddr_t *, vaddr_t *));
 void		 vm_pager_deallocate __P((vm_pager_t));
 int		 vm_pager_remove
-		    __P((vm_pager_t, vm_offset_t, vm_offset_t));
+		    __P((vm_pager_t, vaddr_t, vaddr_t));
 int		 vm_pager_count __P((vm_pager_t));
-vm_offset_t	 vm_pager_next __P((vm_pager_t, vm_offset_t));
+vaddr_t	 vm_pager_next __P((vm_pager_t, vaddr_t));
 int		 vm_pager_get_pages
 		    __P((vm_pager_t, vm_page_t *, int, boolean_t));
-boolean_t	 vm_pager_has_page __P((vm_pager_t, vm_offset_t));
+boolean_t	 vm_pager_has_page __P((vm_pager_t, vaddr_t));
 void		 vm_pager_init __P((void));
 vm_pager_t	 vm_pager_lookup __P((struct pagerlst *, caddr_t));
-vm_offset_t	 vm_pager_map_pages __P((vm_page_t *, int, boolean_t));
+vaddr_t	 vm_pager_map_pages __P((vm_page_t *, int, boolean_t));
 int		 vm_pager_put_pages
 		    __P((vm_pager_t, vm_page_t *, int, boolean_t));
 void		 vm_pager_sync __P((void));
-void		 vm_pager_unmap_pages __P((vm_offset_t, int));
+void		 vm_pager_unmap_pages __P((vaddr_t, int));
 
 #define vm_pager_cancluster(p, b)	((p)->pg_flags & (b))
 

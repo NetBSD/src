@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager_i.h,v 1.5 1998/03/09 00:58:59 mrg Exp $	*/
+/*	$NetBSD: uvm_pager_i.h,v 1.5.2.1 1998/07/30 14:04:15 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -58,9 +58,9 @@
 
 PAGER_INLINE struct vm_page *
 uvm_pageratop(kva)
-	vm_offset_t kva;
+	vaddr_t kva;
 {
-	vm_offset_t pa;
+	paddr_t pa;
  
 	pa = pmap_extract(pmap_kernel(), kva);
 	if (pa == 0)

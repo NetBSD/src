@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.5 1998/07/28 18:24:49 thorpej Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.5.2.1 1998/07/30 14:04:16 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -81,11 +81,11 @@ sys_obreak(p, v, retval)
 		syscallarg(char *) nsize;
 	} */ *uap = v;
 	register struct vmspace *vm = p->p_vmspace;
-	vm_offset_t new, old;
+	vaddr_t new, old;
 	int rv;
 	register int diff;
 
-	old = (vm_offset_t)vm->vm_daddr;
+	old = (vaddr_t)vm->vm_daddr;
 	new = round_page(SCARG(uap, nsize));
 	if ((int)(new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return(ENOMEM);
@@ -131,7 +131,7 @@ sys_obreak(p, v, retval)
 int
 uvm_grow(p, sp)
 	struct proc *p;
-	vm_offset_t sp;
+	vaddr_t sp;
 {
 	register struct vmspace *vm = p->p_vmspace;
 	register int si;
@@ -139,7 +139,7 @@ uvm_grow(p, sp)
 	/*
 	 * For user defined stacks (from sendsig).
 	 */
-	if (sp < (vm_offset_t)vm->vm_maxsaddr)
+	if (sp < (vaddr_t)vm->vm_maxsaddr)
 		return (0);
 
 	/*
@@ -192,7 +192,7 @@ uvm_coredump(p, vp, cred, chdr)
 	register struct vmspace *vm = p->p_vmspace;
 	register vm_map_t map = &vm->vm_map;
 	register vm_map_entry_t entry;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 	struct coreseg cseg;
 	off_t offset;
 	int flag, error = 0;
@@ -235,7 +235,7 @@ uvm_coredump(p, vp, cred, chdr)
 		if (end > VM_MAXUSER_ADDRESS)
 			end = VM_MAXUSER_ADDRESS;
 
-		if (start >= (vm_offset_t)vm->vm_maxsaddr) {
+		if (start >= (vaddr_t)vm->vm_maxsaddr) {
 			flag = CORE_STACK;
 			start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
 			if (start >= end)

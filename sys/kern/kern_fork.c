@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.43 1998/06/25 21:17:16 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.43.2.1 1998/07/30 14:04:04 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -121,7 +121,7 @@ fork1(p1, flags, retval, rnewprocp)
 	register uid_t uid;
 	struct proc *newproc;
 	int count;
-	vm_offset_t uaddr;
+	vaddr_t uaddr;
 	static int nextpid, pidchecked = 0;
 
 	/*

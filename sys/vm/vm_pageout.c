@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.29 1998/03/01 02:24:02 fvdl Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.29.2.1 1998/07/30 14:04:24 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -320,7 +320,7 @@ vm_pageout_page(m, object)
 	 */
 	if ((pager = object->pager) == NULL) {
 		pager = vm_pager_allocate(PG_DFLT, (caddr_t)0, object->size,
-					  VM_PROT_ALL, (vm_offset_t)0);
+					  VM_PROT_ALL, (vaddr_t)0);
 		if (pager != NULL)
 			vm_object_setpager(object, pager, 0, FALSE);
 	}
@@ -408,7 +408,7 @@ vm_pageout_cluster(m, object)
 	vm_page_t m;
 	vm_object_t object;
 {
-	vm_offset_t offset, loff, hoff;
+	vaddr_t offset, loff, hoff;
 	vm_page_t plist[MAXPOCLUSTER], *plistp, p;
 	int postatus, ix, count;
 

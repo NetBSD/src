@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.2 1998/07/07 03:05:05 eeh Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.2.2.1 1998/07/30 14:03:56 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -328,13 +328,13 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 	args.method = method;
 	args.ihandle = ihandle;
 	va_start(ap, nreturns);
-	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
+	for (ip = (int*)(args.args_n_results + (n = nargs)); --n >= 0;)
 		*--ip = va_arg(ap, int);
 	if (openfirmware(&args) == -1)
 		return -1;
 	if (args.args_n_results[nargs])
 		return args.args_n_results[nargs];
-	for (ip = args.args_n_results + nargs + (n = args.nreturns); --n > 0;)
+	for (ip = (int*)(args.args_n_results + nargs + (n = args.nreturns)); --n > 0;)
 		*va_arg(ap, int *) = *--ip;
 	va_end(ap);
 	return 0;
@@ -374,7 +374,7 @@ OF_call_method_1(method, ihandle, nargs, va_alist)
 	args.method = method;
 	args.ihandle = ihandle;
 	va_start(ap, nargs);
-	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
+	for (ip = (int*)(args.args_n_results + (n = nargs)); --n >= 0;)
 		*--ip = va_arg(ap, int);
 	va_end(ap);
 	if (openfirmware(&args) == -1)
@@ -613,6 +613,7 @@ OF_boot(bootspec)
 		panic("OF_boot");
 	args.bootspec = bootspec;
 	openfirmware(&args);
+	panic("OF_boot failed");
 }
 
 void
@@ -645,6 +646,7 @@ OF_exit()
 	};
 
 	openfirmware(&args);
+	panic("OF_exit failed");
 }
 
 void
@@ -661,6 +663,7 @@ OF_poweroff()
 	};
 
 	openfirmware(&args);
+	panic("OF_poweroff failed");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.34 1998/02/06 00:14:45 mrg Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.34.2.1 1998/07/30 14:04:18 eeh Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -95,7 +95,7 @@ struct swpagerclean {
 	int				spc_flags;
 	struct buf			*spc_bp;
 	sw_pager_t			spc_swp;
-	vm_offset_t			spc_kva;
+	vaddr_t			spc_kva;
 	vm_page_t			spc_m;
 	int				spc_npages;
 } swcleanlist[NPENDINGIO];
@@ -108,7 +108,7 @@ typedef struct swpagerclean *swp_clean_t;
 #define SPC_ERROR	0x04
 
 struct swtab {
-	vm_size_t st_osize;	/* size of object (bytes) */
+	vsize_t st_osize;	/* size of object (bytes) */
 	int	  st_bsize;	/* vs. size of swap block (DEV_BSIZE units) */
 #ifdef DEBUG
 	u_long	  st_inuse;	/* number in this range in use */
@@ -133,22 +133,22 @@ extern struct buf bswlist;		/* import from vm_swap.c */
 
 static void 		swap_pager_init __P((void));
 static vm_pager_t	swap_pager_alloc
-			    __P((caddr_t, vm_size_t, vm_prot_t, vm_offset_t));
+			    __P((caddr_t, vsize_t, vm_prot_t, vaddr_t));
 static void		swap_pager_clean __P((int));
 #ifdef DEBUG
 static void		swap_pager_clean_check __P((vm_page_t *, int, int));
 #endif
 static void		swap_pager_cluster
-			    __P((vm_pager_t, vm_offset_t,
-				 vm_offset_t *, vm_offset_t *));
+			    __P((vm_pager_t, vaddr_t,
+				 vaddr_t *, vaddr_t *));
 static void		swap_pager_dealloc __P((vm_pager_t));
 static int		swap_pager_remove
-			    __P((vm_pager_t, vm_offset_t, vm_offset_t));
-static vm_offset_t	swap_pager_next __P((vm_pager_t, vm_offset_t));
+			    __P((vm_pager_t, vaddr_t, vaddr_t));
+static vaddr_t	swap_pager_next __P((vm_pager_t, vaddr_t));
 static int		swap_pager_count __P((vm_pager_t));
 static int		swap_pager_getpage
 			    __P((vm_pager_t, vm_page_t *, int, boolean_t));
-static boolean_t	swap_pager_haspage __P((vm_pager_t, vm_offset_t));
+static boolean_t	swap_pager_haspage __P((vm_pager_t, vaddr_t));
 static int		swap_pager_io __P((sw_pager_t, vm_page_t *, int, int));
 static void		swap_pager_iodone __P((struct buf *));
 static int		swap_pager_putpage
@@ -221,7 +221,7 @@ swap_pager_init()
 			swtab[i].st_osize = 0;
 			break;
 		}
-		swtab[i].st_osize = (vm_size_t) (MAXDADDRS * dbtob(bsize));
+		swtab[i].st_osize = (vsize_t) (MAXDADDRS * dbtob(bsize));
 #ifdef DEBUG
 		if (swpagerdebug & SDB_INIT)
 			printf("swpg_init: ix %d, size %lx, bsize %x\n",
@@ -239,9 +239,9 @@ swap_pager_init()
 static vm_pager_t
 swap_pager_alloc(handle, size, prot, foff)
 	caddr_t handle;
-	register vm_size_t size;
+	register vsize_t size;
 	vm_prot_t prot;
-	vm_offset_t foff;
+	vaddr_t foff;
 {
 	register vm_pager_t pager;
 	register sw_pager_t swp;
@@ -474,7 +474,7 @@ swap_pager_putpage(pager, mlist, npages, sync)
 static boolean_t
 swap_pager_haspage(pager, offset)
 	vm_pager_t pager;
-	vm_offset_t offset;
+	vaddr_t offset;
 {
 	register sw_pager_t swp;
 	register sw_blk_t swb;
@@ -512,13 +512,13 @@ swap_pager_haspage(pager, offset)
 static void
 swap_pager_cluster(pager, offset, loffset, hoffset)
 	vm_pager_t	pager;
-	vm_offset_t	offset;
-	vm_offset_t	*loffset;
-	vm_offset_t	*hoffset;
+	vaddr_t	offset;
+	vaddr_t	*loffset;
+	vaddr_t	*hoffset;
 {
 	sw_pager_t swp;
 	register int bsize;
-	vm_offset_t loff, hoff;
+	vaddr_t loff, hoff;
 
 #ifdef DEBUG
 	if (swpagerdebug & (SDB_FOLLOW|SDB_CLUSTER))
@@ -566,7 +566,7 @@ swap_pager_io(swp, mlist, npages, flags)
 	int ix;
 	u_int mask;
 	boolean_t rv;
-	vm_offset_t kva, off;
+	vaddr_t kva, off;
 	swp_clean_t spc;
 	vm_page_t m;
 
@@ -1046,7 +1046,7 @@ swap_pager_iodone(bp)
 static int
 swap_pager_remove(pager, from, to)
 	vm_pager_t pager;
-	vm_offset_t from, to;
+	vaddr_t from, to;
 {
 	sw_pager_t swp;
 	sw_blk_t swb;
@@ -1155,10 +1155,10 @@ swap_pager_remove(pager, from, to)
  *	space (which by definition is larger than any page's
  *	offset).
  */
-static vm_offset_t
+static vaddr_t
 swap_pager_next(pager, offset)
 	vm_pager_t pager;
-	vm_offset_t offset;
+	vaddr_t offset;
 {
 	sw_pager_t swp;
 	sw_blk_t swb;

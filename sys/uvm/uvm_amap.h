@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.6 1998/03/09 00:58:56 mrg Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.6.2.1 1998/07/30 14:04:08 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -106,25 +106,25 @@
  * prototypes: the following prototypes define the interface to amaps
  */
 
-AMAP_INLINE vm_offset_t amap_add __P((struct vm_aref *, vm_offset_t,
+AMAP_INLINE vaddr_t amap_add __P((struct vm_aref *, vaddr_t,
 				      struct vm_anon *, int));
-struct vm_amap *amap_alloc __P((vm_offset_t, vm_offset_t, int));
+struct vm_amap *amap_alloc __P((vaddr_t, vaddr_t, int));
 void amap_copy __P((vm_map_t, vm_map_entry_t, int, boolean_t,
-			vm_offset_t, vm_offset_t));
+			vaddr_t, vaddr_t));
 void amap_cow_now __P((vm_map_t, vm_map_entry_t));
-void amap_extend __P((vm_map_entry_t, vm_size_t));
+void amap_extend __P((vm_map_entry_t, vsize_t));
 void amap_free __P((struct vm_amap *)); 
-AMAP_INLINE struct vm_anon *amap_lookup __P((struct vm_aref *, vm_offset_t));
-AMAP_INLINE void amap_lookups __P((struct vm_aref *, vm_offset_t, 
+AMAP_INLINE struct vm_anon *amap_lookup __P((struct vm_aref *, vaddr_t));
+AMAP_INLINE void amap_lookups __P((struct vm_aref *, vaddr_t, 
 				   struct vm_anon **, int));
 #ifdef VM_AMAP_PPREF
-void amap_pp_adjref __P((struct vm_amap *, int, vm_size_t, int));
+void amap_pp_adjref __P((struct vm_amap *, int, vsize_t, int));
 void amap_pp_establish __P((struct vm_amap *));
 #endif
 AMAP_INLINE void amap_ref __P((vm_map_entry_t, int));
 void amap_share_protect __P((vm_map_entry_t, vm_prot_t));
-void amap_splitref __P((struct vm_aref *, struct vm_aref *, vm_offset_t));
-AMAP_INLINE void amap_unadd __P((struct vm_amap *, vm_offset_t));
+void amap_splitref __P((struct vm_aref *, struct vm_aref *, vaddr_t));
+AMAP_INLINE void amap_unadd __P((struct vm_amap *, vaddr_t));
 AMAP_INLINE void amap_unref __P((vm_map_entry_t, int));
 void amap_wipeout __P((struct vm_amap *));
 #ifdef VM_AMAP_PPREF

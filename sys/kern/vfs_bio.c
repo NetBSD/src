@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.53 1998/02/07 02:44:48 chs Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.53.2.1 1998/07/30 14:04:05 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -638,7 +638,7 @@ allocbuf(bp, size)
 	int size;
 {
 	struct buf      *nbp;
-	vm_size_t       desired_size;
+	vsize_t       desired_size;
 	int	     s;
 
 	desired_size = roundup(size, CLBYTES);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1998/07/21 17:36:04 drochner Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3.2.1 1998/07/30 14:03:51 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -102,10 +102,11 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include <sparc64/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 #include <sparc64/dev/dmareg.h>
 #include <sparc64/dev/dmavar.h>
-#include <sparc64/dev/lebuffervar.h>
+
+#include <dev/sbus/lebuffervar.h>
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
@@ -180,9 +181,11 @@ struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch_byname, leattach_ledma
 };
 
+#if 0
 struct cfattach le_lebuffer_ca = {
 	sizeof(struct le_softc), lematch_byname, leattach_lebuffer
 };
+#endif
 
 struct cfattach le_obio_ca = {
 	sizeof(struct le_softc), lematch_obio, leattach_obio
@@ -578,6 +581,7 @@ leattach_ledma(parent, self, aux)
 #endif
 }
 
+#if 0
 void
 leattach_lebuffer(parent, self, aux)
 	struct device *parent, *self;
@@ -622,6 +626,7 @@ leattach_lebuffer(parent, self, aux)
 
 	leattach(lesc, sa->sa_pri);
 }
+#endif
 
 void
 leattach_obio(parent, self, aux)
@@ -678,7 +683,7 @@ leattach(lesc, pri)
 		}
 		error = bus_dmamem_map(lesc->sc_dmatag, &seg, rseg, MEMSIZE,
 				       (caddr_t *)&sc->sc_mem,
-				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT|BUS_DMA_WRITE|BUS_DMA_CACHE);
+				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 		if (error) {
 			printf("if_le: DMA buffer map error %d\n", error);
 			return;

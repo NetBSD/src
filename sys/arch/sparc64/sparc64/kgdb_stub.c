@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.1.1.1.2.1 1998/07/30 14:03:55 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,9 +84,9 @@ int kgdb_active = 0;		/* remote debugging active if != 0 */
 int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
 
 #if defined(SUN4M)
-#define getpte4m(va)		lda(((vm_offset_t)va & 0xFFFFF000) | \
+#define getpte4m(va)		lda(((vaddr_t)va & 0xFFFFF000) | \
 				     ASI_SRMMUFP_L3, ASI_SRMMUFP)
-void	setpte4m __P((vm_offset_t, int));
+void	setpte4m __P((vaddr_t, int));
 #endif
 
 #define	getpte4(va)		lda(va, ASI_PTE)
@@ -672,7 +672,7 @@ kdb_mkwrite(addr, len)
 	for (; len > 0; len -= NBPG, addr += NBPG)
 #if defined(SUN4M)
 		if (CPU_ISSUN4M)
-			setpte4m((vm_offset_t)addr,
+			setpte4m((vaddr_t)addr,
 				 getpte4m(addr) | PPROT_WRITE);
 		else
 #endif

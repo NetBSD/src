@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.8 1998/04/03 19:45:12 pk Exp $	*/
+/*	$NetBSD: db_break.c,v 1.8.2.1 1998/07/30 14:03:59 eeh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -296,7 +296,7 @@ db_map_current(map)
 
 vm_map_t
 db_map_addr(addr)
-	vm_offset_t addr;
+	vaddr_t addr;
 {
 #if 0
 	thread_t	thread;
