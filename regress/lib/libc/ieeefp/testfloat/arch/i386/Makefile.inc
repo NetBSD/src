@@ -1,5 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.1 2001/03/13 06:39:30 ross Exp $
+# $NetBSD: Makefile.inc,v 1.2 2001/03/22 12:05:36 ross Exp $
 
 CFLAGS+=	-ffloat-store -DFLOATX80 ## -DLONG_DOUBLE_IS_FLOATX80
 
-SRCS+=		systmodes.S systflags.S systfloat.S
+SRCS+=		systfloat.S systmodes.S
