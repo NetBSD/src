@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.11 2003/02/24 21:27:55 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.12 2003/02/24 21:52:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -72,21 +72,6 @@ static struct genfs_ops smbfs_genfsops = {
 };
 
 struct pool smbfs_node_pool;
-
-#define	FNV_32_PRIME ((u_int32_t) 0x01000193UL)
-#define	FNV1_32_INIT ((u_int32_t) 33554467UL)
-
-u_int32_t
-smbfs_hash(const u_char *name, int nmlen)
-{
-	u_int32_t v;
-
-	for (v = FNV1_32_INIT; nmlen; name++, nmlen--) {
-		v *= FNV_32_PRIME;
-		v ^= (u_int32_t)*name;
-	}
-	return v;
-}
 
 static inline char *
 smbfs_name_alloc(const u_char *name, int nmlen)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.5 2003/02/23 21:55:20 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.6 2003/02/24 21:52:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,6 +36,7 @@
 #ifndef _FS_SMBFS_NODE_H_
 #define _FS_SMBFS_NODE_H_
 
+#include <sys/hash.h>			/* for hash32_strn() */
 #include <miscfs/genfs/genfs_node.h>	/* for struct genfs_node */
 
 #define	SMBFS_ROOT_INO		2	/* just like in UFS */
@@ -89,7 +90,7 @@ int  smbfs_inactive(void *);
 int  smbfs_reclaim(void *);
 int smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
 	struct smbfattr *fap, struct vnode **vpp);
-u_int32_t smbfs_hash(const u_char *name, int nmlen);
+#define	smbfs_hash(x, y)	hash32_strn((x), (y), HASH32_STR_INIT)
 
 #ifndef __NetBSD__
 int  smbfs_getpages(void *);
