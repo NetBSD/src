@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.50 2003/07/27 07:45:08 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.51 2003/08/10 14:51:49 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,6 +82,10 @@
 #include "endian.h"
 
 #define NO_BOOTMENU (-0x100)
+
+#define MAXCYL		1023    /* Possibly 1024 */
+#define MAXHEAD		255     /* Possibly 256 */
+#define MAXSECTOR	63
 
 struct part_id {
 	int id;
@@ -1461,17 +1465,15 @@ convert_mbr_chs(int cyl, int head, int sec,
 {
 	unsigned int tcyl, temp, thead, tsec;
 
-	temp = cyl * head * sec - 1;
-	if (relsecs >= temp)
-		relsecs = temp;
-
 	temp = head * sec;
 	tcyl = relsecs / temp;
+	relsecs -= tcyl * temp;
 
-	relsecs %= temp;
 	thead = relsecs / sec;
+	tsec = relsecs - thead * sec + 1;
 
-	tsec = (relsecs % sec) + 1;
+	if (tcyl > MAXCYL)
+		tcyl = MAXCYL;
 
 	*cylp = MBR_PUT_LSCYL(tcyl);
 	*headp = thead;
@@ -1487,10 +1489,6 @@ convert_mbr_chs(int cyl, int head, int sec,
  * is not present, or a match could not be made with a NetBSD
  * device.
  */
-
-#define MAXCYL		1023    /* Possibly 1024 */
-#define MAXHEAD		255     /* Possibly 256 */
-#define MAXSECTOR	63
 
 int
 guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, int *sec)

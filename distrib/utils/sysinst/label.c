@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.39 2003/08/09 21:36:27 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.40 2003/08/10 14:51:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.39 2003/08/09 21:36:27 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.40 2003/08/10 14:51:49 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -471,8 +471,14 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 			wprintw(m->mw, "async ");
 		if (p->pi_flags & PIF_NOATIME)
 			wprintw(m->mw, "noatime ");
+		if (p->pi_flags & PIF_NODEV)
+			wprintw(m->mw, "nodev ");
 		if (p->pi_flags & PIF_NODEVMTIME)
 			wprintw(m->mw, "nodevmtime ");
+		if (p->pi_flags & PIF_NOEXEC)
+			wprintw(m->mw, "noexec ");
+		if (p->pi_flags & PIF_NOSUID)
+			wprintw(m->mw, "nosuid ");
 		if (p->pi_flags & PIF_SOFTDEP)
 			wprintw(m->mw, "softdep ");
 		break;
