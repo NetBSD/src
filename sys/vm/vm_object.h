@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_object.h,v 1.5 1993/12/20 12:40:17 cgd Exp $
+ *	$Id: vm_object.h,v 1.6 1994/01/07 22:22:26 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -161,7 +161,7 @@ void		vm_object_print();
 	simple_unlock(&(object)->Lock)
 #define	vm_object_lock_try(object) \
 	simple_lock_try(&(object)->Lock)
-#define	vm_object_sleep(event, object, interruptible) \
-	thread_sleep((event), &(object)->Lock, (interruptible))
+#define	vm_object_sleep(event, object) \
+	thread_sleep((event), &(object)->Lock)
 
 #endif /* !_VM_VM_OBJECT_H_ */
