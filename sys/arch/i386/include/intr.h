@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.3 2000/06/26 02:04:14 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.4 2000/08/12 16:13:01 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,6 +148,8 @@ spllower(ncpl)
 #define	splclock()	splraise(IPL_CLOCK)
 #define	splstatclock()	splclock()
 #define	splserial()	splraise(IPL_SERIAL)
+#define spllock() 	splraise(IPL_SERIAL) /* XXX XXX XXX XXX */
+#define splsched()	splraise(IPL_HIGH)
 
 #define spllpt()	spltty()
 
