@@ -1,4 +1,4 @@
- $NetBSD: mach_services.master,v 1.4 2003/11/17 01:52:14 manu Exp $
+ $NetBSD: mach_services.master,v 1.5 2003/11/18 01:40:18 manu Exp $
 ;
 ; Mach services list. 
 ;
@@ -15,6 +15,7 @@
 #include <compat/mach/mach_task.h>
 #include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_semaphore.h>
+#include <compat/mach/mach_notify.h>
 #include <compat/mach/mach_vm.h>
 #include <compat/mach/mach_services.h>
 
@@ -175,6 +176,15 @@
 ;
 2450	UNIMPL	samples
 2451	UNIMPL	notices
+
+;
+; Mach exception Replies. 
+; Defined because the kernel is the client here: 
+; it has to handle replies instead of reequest.
+;
+2501	STD	exception_raise
+2502	STD	exception_raise_state
+2503	STD	exception_raise_state_identity
 
 ;
 ; Mach IOKit
