@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.163 2000/05/10 14:27:51 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.164 2000/05/18 10:10:55 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1222,7 +1222,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	segs[0].ds_addr = 0;
 	segs[0].ds_len = 0;
 	segs[0]._ds_va = 0;
-	segs[0]._ds_alignment = round_page(alignment);
+	segs[0]._ds_alignment = (alignment == 0) ? NBPG : round_page(alignment);
 	segs[0]._ds_boundary = boundary;
 	*rsegs = 1;
 	return (0);
