@@ -27,7 +27,7 @@
  *	exec.h - supplemental program/script execution
  *	----------------------------------------------
  *
- *	$Id: exec.c,v 1.6 2003/10/06 04:19:41 itojun Exp $ 
+ *	$Id: exec.c,v 1.7 2003/10/06 09:18:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -120,8 +120,8 @@ exec_prog(char *prog, char **arglist)
 
 	for(a=1; arglist[a] != NULL; ++a )
 	{
-		strcat(tmp, " " );
-		strcat(tmp, arglist[a]);
+		strlcat(tmp, " ", sizeof(tmp));
+		strlcat(tmp, arglist[a], sizeof(tmp));
 	}
 
 	DBGL(DL_PROC, (logit(LL_DBG, "exec_prog: %s, args:%s", path, tmp)));
@@ -186,7 +186,7 @@ exec_connect_prog(struct cfg_entry *cep, const char *prog, int link_down)
 	if (s >= 0) {
 		if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) >= 0) {
 			struct sockaddr_in *sin = (struct sockaddr_in *)&ifr.ifr_addr;
-			strcpy(addr, inet_ntoa(sin->sin_addr));
+			strlcpy(addr, inet_ntoa(sin->sin_addr), sizeof(addr));
 			*av++ = "-a";
 			*av++ = addr;
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.4 2003/01/06 12:46:15 wiz Exp $ */
+/* $NetBSD: main.c,v 1.5 2003/10/06 09:18:41 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -337,7 +337,7 @@ connect_local(char *sockpath)
 
 	sa.sun_len = sizeof(sa);
 	sa.sun_family = AF_LOCAL;
-	strcpy(sa.sun_path, sockpath);
+	strlcpy(sa.sun_path, sockpath, sizeof(sa.sun_path));
 
 	if(connect(s, (struct sockaddr *)&sa, sizeof(sa)))
 	{
@@ -797,8 +797,8 @@ handle_event(u_int8_t *msg, int len)
 			
 			mprintf("\tentry %d: device %s\n", sub_state++, msg+I4B_MON_IDEV_NAME);
 
-			strcat(devbuf, msg+I4B_MON_IDEV_NAME);
-			/* strcat(devbuf, " "); */
+			strlcat(devbuf, msg+I4B_MON_IDEV_NAME, sizeof(devbuf));
+			/* strlcat(devbuf, " ", sizeof(devbuf)); */
 			
 			if(sub_state >= nentries)
 			{
