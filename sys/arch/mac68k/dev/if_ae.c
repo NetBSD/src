@@ -19,16 +19,15 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.7 1994/02/23 04:39:49 briggs Exp $
+ * $Id: if_ae.c,v 1.8 1994/02/26 03:01:22 briggs Exp $
  */
 
 /*
  * Modification history
  *
  * $Log: if_ae.c,v $
- * Revision 1.7  1994/02/23 04:39:49  briggs
- * Bail out in the probe since it's not safe at the moment (hangs on my
- * DaynaPort card).  Will fix when I get docs for the card.
+ * Revision 1.8  1994/02/26 03:01:22  briggs
+ * Cleaned up the probe a little by actually using data from the decl. ROMs.
  *
  * Revision 1.6  1994/02/22  01:15:00  briggs
  * Get rid of if_init assignment.
@@ -55,7 +54,6 @@
  */
  
 #include "ae.h"
-#if	NAE > 0
 /* bpfilter included here in case it is needed in future net includes */
 #include "bpfilter.h"
 
@@ -159,6 +157,46 @@ char ae_name[] = "8390 Nubus Ethernet card";
 static char zero = 0;
 static u_char ones = 0xff;
 
+struct vendor_S {
+	char	*manu;
+	int	len;
+	int	vendor;
+} vend[] = {
+	{ "Apple", 5, AE_VENDOR_APPLE },
+	{ "3Com",  4, AE_VENDOR_APPLE },
+	{ "Dayna", 5, AE_VENDOR_DAYNA },
+	{ "Inter", 5, AE_VENDOR_INTERLAN },
+};
+
+static int numvend = sizeof(vend)/sizeof(vend[0]);
+
+void
+ae_id_card(nu, sc)
+	struct nubus_hw	*nu;
+	struct ae_softc	*sc;
+{
+	int	i;
+
+	/*
+	 * Try to determine what type of card this is...
+	 */
+	sc->vendor = AE_VENDOR_UNKNOWN;
+	for (i=0 ; i<numvend ; i++) {
+		if (!strncmp(nu->Slot.manufacturer, vend[i].manu, vend[i].len)) {
+			sc->vendor = vend[i].vendor;
+			break;
+		}
+	}
+	sc->type = (char *) (nu->Slot.manufacturer);
+
+	/* see if it's an Interlan/GatorCard
+	sc->rom_addr = nu->addr + GC_ROM_OFFSET;
+	if (sc->rom_addr[0x18] == 0x0 &&
+	    sc->rom_addr[0x1c] == 0x55) {
+		sc->vendor = AE_VENDOR_INTERLAN;
+	} */
+}
+
 int
 ae_probe(parent, cf, aux)
 	struct cfdriver	*parent;
@@ -173,26 +211,13 @@ ae_probe(parent, cf, aux)
 	if (nu->Slot.type != NUBUS_NETWORK)
 		return 0;
 
-	/*
-	 * Try to determine what type of card this is...
-	sc->vendor == AE_VENDOR_APPLE;
-	 */
-
-	/* see if it's an Interlan/GatorCard */
-	sc->rom_addr = nu->addr + GC_ROM_OFFSET;
-	if (sc->rom_addr[0x18] == 0x0 &&
-	    sc->rom_addr[0x1c] == 0x55) {
-		sc->vendor = AE_VENDOR_INTERLAN;
-	}
-
-	sc->type = 0;
+	ae_id_card(nu, sc);
 
 	switch (sc->vendor) {
 	      case AE_VENDOR_INTERLAN:
 		sc->nic_addr = nu->addr + GC_NIC_OFFSET;
 		sc->rom_addr = nu->addr + GC_ROM_OFFSET;
 		sc->smem_start = nu->addr + GC_DATA_OFFSET;
-		sc->type_str = "Interlan";
 		memsize = 8192;
 
 		/* reset the NIC chip */
@@ -204,21 +229,33 @@ ae_probe(parent, cf, aux)
 		break;
 
 	      case AE_VENDOR_APPLE:
-	      default:
 		sc->nic_addr = nu->addr + AE_NIC_OFFSET;
 		sc->rom_addr = nu->addr + AE_ROM_OFFSET;
 		sc->smem_start = nu->addr + AE_DATA_OFFSET;
-		sc->type_str = "Apple";
 		memsize = 8192;
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
 			sc->arpcom.ac_enaddr[i] = *(sc->rom_addr + i*2);
 		break;
-	}
 
-printf("bailing in if_ae.c:ae_probe.\n");
-return 0;
+	      case AE_VENDOR_DAYNA:
+		printf("We think we are Dayna.\n");
+		sc->nic_addr = nu->addr + AE_NIC_OFFSET;
+		sc->rom_addr = nu->addr + AE_ROM_OFFSET;
+		sc->smem_start = nu->addr + AE_DATA_OFFSET;
+		memsize = 8192;
+
+		/* Get station address from on-board ROM */
+		for (i = 0; i < ETHER_ADDR_LEN; ++i)
+			sc->arpcom.ac_enaddr[i] = *(sc->rom_addr + i*2);
+		return 0; /* Since we don't work yet... */
+		break;
+
+	      default:
+		return 0;
+		break;
+	}
 
 	/*
 	 * allocate one xmit buffer if < 16k, two buffers otherwise
@@ -1372,5 +1409,3 @@ ae_ring_to_mbuf(sc,src,dst,total_len)
 	}
 	return (m);
 }
-#endif
-
