@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.38 2003/02/15 20:54:38 jdolecek Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.39 2003/05/20 17:42:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -73,6 +73,7 @@ struct	sigctx {
 	int	ps_flags;		/* signal flags, below */
 	int	ps_sig;			/* for core dump/debugger XXX */
 	long	ps_code;		/* for core dump/debugger XXX */
+	int	ps_lwp;			/* for core dump/debugger XXX */
 	void	*ps_sigcode;		/* address of signal trampoline */
 	sigset_t ps_sigmask;		/* Current signal mask. */
 	sigset_t ps_sigignore;		/* Signals being ignored. */

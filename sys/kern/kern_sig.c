@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.140 2003/04/23 21:32:10 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.141 2003/05/20 17:42:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.140 2003/04/23 21:32:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.141 2003/05/20 17:42:51 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -766,6 +766,7 @@ trapsignal(struct lwp *l, int signum, u_long code)
 	} else {
 		p->p_sigctx.ps_code = code;	/* XXX for core dump/debugger */
 		p->p_sigctx.ps_sig = signum;	/* XXX to verify code */
+		p->p_sigctx.ps_lwp = l->l_lid;
 		psignal(p, signum);
 	}
 }
@@ -1504,6 +1505,7 @@ postsig(int signum)
 		} else {
 			code = p->p_sigctx.ps_code;
 			p->p_sigctx.ps_code = 0;
+			p->p_sigctx.ps_lwp = 0;
 			p->p_sigctx.ps_sig = 0;
 		}
 		psendsig(l, signum, returnmask, code);
