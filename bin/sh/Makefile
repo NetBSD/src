@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 1996/10/22 13:22:19 cgd Exp $
+#	$NetBSD: Makefile,v 1.26 1997/04/17 08:13:26 thorpej Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -14,6 +14,11 @@ DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 LFLAGS= -8	# 8-bit lex scanner for arithmetic
 
 CFLAGS+=-DSHELL -I. -I${.CURDIR}
+
+# XXX
+.if (${MACHINE_ARCH} == "powerpc")
+CFLAGS+= -w
+.endif
 
 .PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
 
@@ -39,6 +44,18 @@ syntax.c syntax.h: mksyntax
 	./mksyntax
 
 parser.o: token.h
+
+mkinit: mkinit.c
+	${HOST_COMPILE.c} ${.CURDIR}/mkinit.c
+	${HOST_LINK.c} -o ${.TARGET} mkinit.o
+
+mknodes: mknodes.c
+	${HOST_COMPILE.c} ${.CURDIR}/mknodes.c
+	${HOST_LINK.c} -o ${.TARGET} mknodes.o
+
+mksyntax: mksyntax.c
+	${HOST_COMPILE.c} ${.CURDIR}/mksyntax.c
+	${HOST_LINK.c} -o ${.TARGET} mksyntax.o
 
 .include <bsd.prog.mk>
 
