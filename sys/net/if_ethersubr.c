@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.66 2000/10/11 16:53:41 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.67 2000/10/15 15:39:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -269,8 +269,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 			return(0);	/* if not yet resolves */
 #else
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
-			/* this must be impossible, so we bark */
-			printf("nd6_storelladdr failed\n");
+			/* something bad happened */
 			return(0);
 		}
 #endif /* OLDIP6OUTPUT */
