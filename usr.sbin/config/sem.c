@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.19 1998/01/12 07:37:45 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.20 1998/02/16 22:05:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,13 +181,17 @@ setmaxusers(n)
  * all locator lists include a dummy head node, which we discard here.
  */
 int
-defattr(name, locs)
+defattr(name, locs, devclass)
 	const char *name;
 	struct nvlist *locs;
+	int devclass;
 {
 	struct attr *a;
 	struct nvlist *nv;
 	int len;
+
+	if (locs != NULL && devclass)
+		panic("defattr(%s): locators and devclass", name);
 
 	a = emalloc(sizeof *a);
 	if (ht_insert(attrtab, name, a)) {
@@ -196,6 +200,7 @@ defattr(name, locs)
 		nvfreel(locs);
 		return (1);
 	}
+
 	a->a_name = name;
 	if (locs != NULL) {
 		a->a_iattr = 1;
@@ -205,6 +210,24 @@ defattr(name, locs)
 		a->a_iattr = 0;
 		a->a_locs = NULL;
 	}
+	if (devclass) {
+		char *classenum = alloca(strlen(name) + 4), *cp;
+		int errored = 0;
+
+		strcpy(classenum, "DV_");
+		strcat(classenum, name);
+		for (cp = classenum + 3; *cp; cp++) {
+			if (!errored &&
+			    (!isalnum(*cp) ||
+			      (isalpha(*cp) && !islower(*cp)))) {
+				error("device class names must be lower-case alphanumeric characters");
+				errored = 1;
+			}
+			*cp = toupper(*cp);
+		}
+		a->a_devclass = intern(classenum);
+	} else
+		a->a_devclass = NULL;
 	len = 0;
 	for (nv = a->a_locs; nv != NULL; nv = nv->nv_next)
 		len++;
@@ -271,37 +294,19 @@ addtoattr(l, dev)
  * attribute and/or refer to existing attributes.
  */
 void
-defdev(dev, class, loclist, attrs, ispseudo)
+defdev(dev, loclist, attrs, ispseudo)
 	struct devbase *dev;
-	const char *class;
 	struct nvlist *loclist, *attrs;
 	int ispseudo;
 {
-	char classenum[128];
 	struct nvlist *nv;
 	struct attr *a;
-	int i, j;
 
 	if (dev == &errdev)
 		goto bad;
 	if (dev->d_isdef) {
 		error("redefinition of `%s'", dev->d_name);
 		goto bad;
-	}
-
-	if (class != NULL) {
-		j = 0;
-		classenum[j++] = 'D';
-		classenum[j++] = 'V';
-		classenum[j++] = '_';
-		for (i = 0; class[i] != '\0'; i++) {
-			if (!isalpha(class[i]) || !islower(class[i])) {
-				error("invalid device class `%s'", class);
-				return;
-			}
-			classenum[j++] = toupper(class[i]);
-		}
-		classenum[j] = '\0';
 	}
 
 	dev->d_isdef = 1;
@@ -317,26 +322,38 @@ defdev(dev, class, loclist, attrs, ispseudo)
 	if (loclist != NULL) {
 		nv = loclist;
 		loclist = NULL;	/* defattr disposes of them for us */
-		if (defattr(dev->d_name, nv))
+		if (defattr(dev->d_name, nv, 0))
 			goto bad;
 		attrs = newnv(dev->d_name, NULL, getattr(dev->d_name), 0,
 		    attrs);
 	}
 
 	/* Committed!  Set up fields. */
-	dev->d_class = class != NULL ? intern(classenum) : NULL;
 	dev->d_ispseudo = ispseudo;
 	dev->d_attrs = attrs;
+	dev->d_classattr = NULL;		/* for now */
 
 	/*
 	 * For each interface attribute this device refers to, add this
 	 * device to its reference list.  This makes, e.g., finding all
 	 * "scsi"s easier.
+	 *
+	 * While looking through the attributes, set up the device
+	 * class if any are devclass attributes (and error out if the
+	 * device has two classes).
 	 */
 	for (nv = attrs; nv != NULL; nv = nv->nv_next) {
 		a = nv->nv_ptr;
 		if (a->a_iattr)
 			a->a_refs = addtoattr(a->a_refs, dev);
+		if (a->a_devclass != NULL) {
+			if (dev->d_classattr != NULL) {
+				error("device `%s' has multiple classes (`%s' and `%s')",
+				    dev->d_name, dev->d_classattr->a_name,
+				    a->a_name);
+			}
+			dev->d_classattr = a;
+		}
 	}
 	return;
 bad:
@@ -428,7 +445,7 @@ defdevattach(deva, dev, atlist, attrs)
 		a = nv->nv_ptr;
 		if (a == &errattr)
 			continue;		/* already complained */
-		if (a->a_iattr)
+		if (a->a_iattr || a->a_devclass != NULL)
 			error("`%s' is not a plain attribute", a->a_name);
 	}
 

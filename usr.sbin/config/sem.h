@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.10 1998/01/12 07:37:46 thorpej Exp $	*/
+/*	$NetBSD: sem.h,v 1.11 1998/02/16 22:05:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,8 +48,8 @@ void		enddefs __P((void));
 
 void		setdefmaxusers __P((int, int, int));
 void		setmaxusers __P((int));
-int		defattr __P((const char *, struct nvlist *));
-void		defdev __P((struct devbase *, const char *, struct nvlist *,
+int		defattr __P((const char *, struct nvlist *, int));
+void		defdev __P((struct devbase *, struct nvlist *,
 			struct nvlist *, int));
 void		defdevattach __P((struct deva *, struct devbase *,
 			struct nvlist *, struct nvlist *));
