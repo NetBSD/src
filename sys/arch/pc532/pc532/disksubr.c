@@ -32,7 +32,7 @@
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  *	
- *	$Id: disksubr.c,v 1.3 1994/03/10 21:39:58 phil Exp $
+ *	$Id: disksubr.c,v 1.4 1994/03/22 00:18:30 phil Exp $
  */
 
 #include "param.h"
@@ -158,6 +158,7 @@ writedisklabel(dev, strat, lp, osdep)
 	int labelpart;
 	int error = 0;
 
+printf ("write disk label ...");
 	labelpart = dkpart(dev);
 	if (lp->d_partitions[labelpart].p_offset != 0) {
 		if (lp->d_partitions[0].p_offset != 0)
@@ -187,6 +188,7 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	error = ESRCH;
 done:
+printf (" ... error = %d\n", error);
 	brelse(bp);
 	return (error);
 }
@@ -204,8 +206,15 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 	int maxsz = p->p_size,
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
-	/* We will let the disklabel be overwritten!!!! */
+if (bp->b_blkno + p->p_offset <= LABELSECTOR )
+printf ("access to sector 0\n");
 
+	/* Check to see if it is the label sector and it is write only. */
+        if (bp->b_blkno + p->p_offset <= LABELSECTOR &&
+            (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+                bp->b_error = EROFS;
+                goto bad;
+        }
 	/* beyond partition? */
         if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
                 /* if exactly at end of disk, return an EOF */

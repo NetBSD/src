@@ -882,7 +882,6 @@ _remque(element)
 {
 	((struct prochd *)(element->ph_link))->ph_rlink = element->ph_rlink;
 	((struct prochd *)(element->ph_rlink))->ph_link = element->ph_link;
-	element->ph_link  = (struct proc *)0;
 	element->ph_rlink = (struct proc *)0;
 }
 

@@ -58,8 +58,10 @@
 /* Net support. */
 #define DONET(s,c)  \
 	.globl c ;\
-	tbitd	s, _netisr(pc) ;\
-	bfc	1f ;\
+	movd	1<<s, r0 ;\
+	andd	_netisr(pc), r0 ;\
+	cmpqd	0, r0 ;\
+	beq	1f ;\
 	bsr	c ;\
 1:
 
@@ -90,11 +92,6 @@ __save_sp: 	.long 0
 __save_fp: 	.long 0
 __old_intbase:	.long 0
 __have_fpu:	.long 0
-
-#if NNCR > 0
-.globl _ncr_needs_finish
-_ncr_needs_finish: .long 0
-#endif
 
 /* spl... support.... */
 .globl	_PL_bio, _PL_tty, _PL_net, _PL_zero
@@ -445,6 +442,7 @@ tmp_nmi:				#come here if parity error
 .globl EX(whichqs)
 .globl EX(want_resched)
 .globl EX(want_softclock)
+.globl EX(want_softnet)
 .globl EX(spl0)
 
 
@@ -544,6 +542,7 @@ docopy:
 
 cifault:
 	movd	EFAULT, r0
+	movd	_curpcb(pc), r3
 	movqd	0, PCB_ONFAULT(r3)
 	exit	[r2,r3]
 	ret	0
@@ -1090,6 +1089,8 @@ do_soft_intr:
 	/* Net processing */
 	bsr	_splnet
 	movd	r0, tos
+	cmpqd	0, _want_softnet(pc)
+	beq	no_net
 
 	DONET(NETISR_RAW, _rawintr)
 #ifdef INET
@@ -1104,7 +1105,10 @@ do_soft_intr:
 #ifdef ISO
 	DONET(NETISR_ISO, _clnlintr)
 #endif
+	movqd	0, _want_softnet(pc)
+	movqd	0, _netisr(pc)
 
+no_net:
 	/* Run with interrupts on. */
 	bsr	_splx
 	movd	tos, r0
@@ -1266,7 +1270,10 @@ do_spl0:
 	movd	r1, Cur_pl(pc)
 	ints_on
 
-	/* Now for the software interrupts. ???? */
+	/* Now for the network software interrupts. */
+
+	cmpqd	0, _want_softnet(pc)
+	beq	no_net1
 
 	DONET(NETISR_RAW, _rawintr)
 #ifdef INET
@@ -1281,6 +1288,10 @@ do_spl0:
 #ifdef ISO
 	DONET(NETISR_ISO, _clnlintr)
 #endif
+	movqd	0, _want_softnet(pc)
+	movqd	0, _netisr(pc)
+
+no_net1:
 	ints_off
 	comd	_PL_zero(pc), r1
 	movw	r1, @ICU_ADR+IMSK

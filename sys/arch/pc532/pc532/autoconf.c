@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  *
- *	$Id: autoconf.c,v 1.4 1994/03/01 22:23:15 phil Exp $
+ *	$Id: autoconf.c,v 1.5 1994/03/22 00:18:25 phil Exp $
  */
 
 /*
@@ -139,7 +139,7 @@ static	char devname[][2] = {
 setroot()
 {
 #if 1
-	boothowto |= RB_SINGLE;
+/* 	boothowto |= RB_SINGLE;  */
 #else
 	int  majdev, mindev, unit, part, adaptor;
 	dev_t temp, orootdev;
