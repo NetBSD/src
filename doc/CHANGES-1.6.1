@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.34 2002/11/17 01:13:11 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.35 2002/11/18 03:02:02 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1203,3 +1203,132 @@ libexec/ld.elf_so/Makefile			patch
 
 	Fix typo in previous.
 	[zuntum, ticket #994]
+
+distrib/sets/makeflist				1.50
+
+	If ad.${machine_arch} exists, prefer it over ad.${machine_cpu}
+	because it will have more specific information.
+	[thorpej, ticket #664]
+
+sys/arch/i386/stand/lib/gate20.c		1.5
+
+	There are other systems besides the PS/2 L40 that enable
+	A20 via the Configuration Port, so restructure the code a
+	little to allow for them, and list at least one other system
+	that does (anything based on the AMD Elan SC520).
+	[thorpej, ticket #665]
+
+sys/arch/i386/conf/NET4501			1.15
+
+	The Elan SC520's PIT runs at 1.1892MHz; set TIMER_FREQ so
+	that time is kept properly.
+	[thorpej, ticket #666]
+
+sys/arch/arm/include/bswap.h			1.2
+sys/arch/arm/include/endian_machdep.h		1.4
+sys/arch/arm/include/byte_swap.h		1.1 (new)
+sys/arch/arm/include/Makefile			1.26
+
+	Byte-swapping optimizations, enabled if compiling with GCC:
+	 o Byte-swap 16-bit and 32-bit constants at compile-time
+	 o Inline 16-bit and 32-bit variable byte-swaps
+	[thorpej, ticket #667]
+
+distrib/sets/lists/comp/ad.arm			1.10
+
+	Add <arm/byte_swap.h>
+	[thorpej, ticket #668]
+
+sys/arch/arm/include/bswap.h			1.3
+sys/arch/arm/include/byte_swap.h		1.2
+sys/arch/arm/include/endian_machdep.h		1.5
+
+	Rename ``word'' -> 16 and ``long'' -> 32.
+	Replace __byte_swap_32_variable() with a C version that
+	generates nearly identical assembly.
+	[thorpej, ticket #673]
+
+sys/kern/kern_malloc_debug.c			1.7
+
+	Don't pass VM_PROT_EXEC to pmap_kenter_pa().
+	[thorpej, ticket #674]
+
+sys/uvm/uvm_km.c				1.57
+
+	Don't pass VM_PROT_EXEC to pmap_kenter_pa().
+	[thorpej, ticket #675]
+
+share/man/man9/pmap.9				1.15
+
+	o Document the existing requirement that machine-independent
+	  code not pmap_kenter_pa() a mapping at a virtual address
+	  for which a valid mapping already exists.
+	o Document the new requirement that machine-idependent code
+	  not pmap_kenter_pa() a mapping with VM_PROT_EXEC.
+	[thorpej, ticket #676]
+
+share/man/man9/pmap.9				1.16
+
+	Mdoc nits in last, and bump date for last commit.
+	[thorpej, ticket #677]
+
+sys/arch/arm/xscale/i80321_icu.c		1.4
+
+	Don't need to frob CPSR in _splraise().
+	[thorpej, ticket #679]
+
+sys/arch/evbarm/iq80310/iq80310_intr.c		1.16
+
+	Don't need to frob CPSR in _splraise().
+	[thorpej, ticket #680]
+
+sys/arch/arm/arm/cpufunc_asm_xscale.S		1.15
+
+	Fix a fencepost error in the cache flush routines, caused
+	by using the wrong condition on a branch.
+	[thorpej, ticket #681]
+
+sys/arch/arm/include/cpufunc.h			1.26
+
+	Garbage-collect some unused routines.
+	[thorpej, ticket #682]
+
+sys/arch/arm/arm/cpufunc.c			1.51
+
+	If __ARMEB__ is defined, always set CPU_CONTROL_BEND_ENABLE
+	in the CPU control register.
+	[thorpej, ticket #685]
+
+sys/arch/acorn26/acorn26/machdep.c		1.3
+
+	Disable IRQs and FIQs when rebooting.
+	[bjh21, ticket #686]
+
+sys/arch/acorn26/acorn26/stubs.c		1.2
+
+	The only caller of fuswintr() and suswintr(), addupc_intr(),
+	can handle their returning -1, so have them always do that
+	rather than panicking.
+	[bjh21, ticket #687]
+
+sys/arch/acorn26/acorn26/Locore.c		1.2
+sys/arch/acorn26/acorn26/machdep.c		1.4
+sys/arch/acorn26/acorn26/copyinout.S		1.3
+sys/arch/arm/arm/bcopyinout.S			1.1 (new)
+sys/arch/arm/conf/files.arm			1.62
+sys/arch/arm/arm32/bcopyinout.S			delete
+
+	New and much improved version of copyin(), copyout(), and
+	kcopy() which works on both 26-bit and 32-bit machines.
+	[bjh21, ticket #689]
+
+sys/arch/arm/arm/cpufunc_asm_sa1.S		1.7
+
+	Convert bpl's to bhi's, saves looping more than needed in
+	some cases.
+	[thorpej, ticket #690]
+
+crypto/dist/openssl/apps/progs.h		1.3
+
+	More NO_xx cleanup.
+	[itojun, ticket #696]
