@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.299 2002/01/24 03:40:42 jwise Exp $
+# $NetBSD: mi,v 1.300 2002/01/24 03:47:15 jwise Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -450,8 +450,6 @@
 ./usr/include/arpa		base-c-usr
 ./usr/include/cdk		base-c-usr
 ./usr/include/dev		base-c-usr
-./usr/include/dev/ofw		base-c-usr
-./usr/include/dev/usb		base-c-usr
 ./usr/include/fs		base-c-usr
 ./usr/include/fs/smbfs		base-c-usr
 ./usr/include/g++		base-cxx-usr
