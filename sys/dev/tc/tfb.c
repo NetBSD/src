@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.15 1999/08/02 04:19:03 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.16 1999/08/25 02:02:22 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.15 1999/08/02 04:19:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.16 1999/08/25 02:02:22 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,10 +203,10 @@ struct tfb_softc {
 #define	TX_MAP_REGISTER	0x040030
 #define	TX_PIP_OFFSET	0x0800c0
 #define	TX_SELECTION	0x100000
-#define	TX_8FB_OFFSET	0x200000
-#define	TX_8FB_SIZE	0x200000
-#define	TX_24FB_OFFSET	0x400000
-#define	TX_24FB_SIZE	0x400000
+#define	TX_8BPP_OFFSET	0x200000
+#define	TX_8BPP_SIZE	0x200000
+#define	TX_24BPP_OFFSET	0x400000
+#define	TX_24BPP_SIZE	0x600000
 #define	TX_VIDEO_ENABLE	0xa00000
 
 #define	TX_CTL_VIDEO_ON	0x80
@@ -347,7 +347,7 @@ tfb_getdevconfig(dense_addr, dc)
 	dc->dc_ht = 1024;
 	dc->dc_depth = 8;
 	dc->dc_rowbytes = 1280;
-	dc->dc_videobase = dc->dc_vaddr + TX_8FB_OFFSET;
+	dc->dc_videobase = dc->dc_vaddr + TX_8BPP_OFFSET;
 	dc->dc_blanked = 0;
 
 	/* initialize colormap and cursor resource */
@@ -500,9 +500,9 @@ tfbmmap(v, offset, prot)
 {
 	struct tfb_softc *sc = v;
 
-	if (offset >= TX_8FB_SIZE || offset < 0)
+	if (offset >= TX_8BPP_SIZE || offset < 0)
 		return (-1);
-	return machine_btop(sc->sc_dc->dc_paddr + TX_8FB_OFFSET + offset);
+	return machine_btop(sc->sc_dc->dc_paddr + TX_8BPP_OFFSET + offset);
 }
 
 int
