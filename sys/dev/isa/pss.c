@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.45 1998/06/17 08:17:25 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.46 1998/06/30 08:24:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -83,27 +83,28 @@
 #define PSS_LINE_IN_LVL		1
 #define PSS_DAC_LVL		2
 #define PSS_REC_LVL		3
-#define PSS_MON_LVL		4
+#define PSS_MONITOR_LVL		4
 #define PSS_MASTER_VOL		5
 #define PSS_MASTER_TREBLE	6
 #define PSS_MASTER_BASS		7
 #define PSS_MIC_IN_MUTE		8
 #define PSS_LINE_IN_MUTE	9
 #define PSS_DAC_MUTE		10
+#define PSS_MONITOR_MUTE	11
 
-#define PSS_OUTPUT_MODE		11
+#define PSS_OUTPUT_MODE		12
 #define 	PSS_SPKR_MONO	0
 #define 	PSS_SPKR_STEREO	1
 #define 	PSS_SPKR_PSEUDO	2
 #define 	PSS_SPKR_SPATIAL 3
 
-#define PSS_RECORD_SOURCE	12
+#define PSS_RECORD_SOURCE	13
 
 /* Classes */
-#define PSS_INPUT_CLASS		13
-#define PSS_RECORD_CLASS	14
-#define PSS_MONITOR_CLASS	15
-#define PSS_OUTPUT_CLASS	16
+#define PSS_INPUT_CLASS		14
+#define PSS_RECORD_CLASS	15
+#define PSS_MONITOR_CLASS	16
+#define PSS_OUTPUT_CLASS	17
 
 
 struct pss_softc {
@@ -1356,15 +1357,16 @@ pss_getdev(addr, retp)
 }
 
 static ad1848_devmap_t mappings[] = {
-{ PSS_MIC_IN_LVL, AD1848_KIND_LVL, AD1848_AUX2_CHANNEL },
-{ PSS_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_AUX1_CHANNEL },
-{ PSS_DAC_LVL, AD1848_KIND_LVL, AD1848_DAC_CHANNEL },
-{ PSS_MON_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
-{ PSS_MIC_IN_MUTE, AD1848_KIND_MUTE, AD1848_AUX2_CHANNEL },
-{ PSS_LINE_IN_MUTE, AD1848_KIND_MUTE, AD1848_AUX1_CHANNEL },
-{ PSS_DAC_MUTE, AD1848_KIND_MUTE, AD1848_DAC_CHANNEL },
-{ PSS_REC_LVL, AD1848_KIND_RECORDGAIN, -1 },
-{ PSS_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1}
+	{ PSS_MIC_IN_LVL, AD1848_KIND_LVL, AD1848_AUX2_CHANNEL },
+	{ PSS_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_AUX1_CHANNEL },
+	{ PSS_DAC_LVL, AD1848_KIND_LVL, AD1848_DAC_CHANNEL },
+	{ PSS_MONITOR_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
+	{ PSS_MIC_IN_MUTE, AD1848_KIND_MUTE, AD1848_AUX2_CHANNEL },
+	{ PSS_LINE_IN_MUTE, AD1848_KIND_MUTE, AD1848_AUX1_CHANNEL },
+	{ PSS_DAC_MUTE, AD1848_KIND_MUTE, AD1848_DAC_CHANNEL },
+	{ PSS_MONITOR_MUTE, AD1848_KIND_MUTE, AD1848_MONO_CHANNEL },
+	{ PSS_REC_LVL, AD1848_KIND_RECORDGAIN, -1 },
+	{ PSS_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1}
 };
 
 static int nummap = sizeof(mappings) / sizeof(mappings[0]);
@@ -1515,10 +1517,11 @@ pss_query_devinfo(addr, dip)
 	strcpy(dip->un.v.units.name, AudioNvolume);
 	break;
 
-    case PSS_MON_LVL:	/* monitor level */
+    case PSS_MONITOR_LVL:	/* monitor level */
 	dip->type = AUDIO_MIXER_VALUE;
 	dip->mixer_class = PSS_MONITOR_CLASS;
-	dip->next = dip->prev = AUDIO_MIXER_LAST;
+	dip->prev = AUDIO_MIXER_LAST;
+	dip->next = PSS_MONITOR_MUTE;
 	strcpy(dip->label.name, AudioNmonitor);
 	dip->un.v.num_channels = 1;
 	strcpy(dip->un.v.units.name, AudioNvolume);
@@ -1598,6 +1601,13 @@ pss_query_devinfo(addr, dip)
 	dip->mixer_class = PSS_INPUT_CLASS;
 	dip->type = AUDIO_MIXER_ENUM;
 	dip->prev = PSS_DAC_LVL;
+	dip->next = AUDIO_MIXER_LAST;
+	goto mute;
+
+    case PSS_MONITOR_MUTE:
+	dip->mixer_class = PSS_MONITOR_CLASS;
+	dip->type = AUDIO_MIXER_ENUM;
+	dip->prev = PSS_MONITOR_LVL;
 	dip->next = AUDIO_MIXER_LAST;
     mute:
 	strcpy(dip->label.name, AudioNmute);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.47 1998/06/09 00:05:47 thorpej Exp $	*/
+/*	$NetBSD: wss.c,v 1.48 1998/06/30 08:24:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -55,7 +55,9 @@
 #include <dev/isa/isadmavar.h>
 
 #include <dev/ic/ad1848reg.h>
+#include <dev/ic/cs4231reg.h>
 #include <dev/isa/ad1848var.h>
+#include <dev/isa/cs4231var.h>
 #include <dev/isa/wssreg.h>
 #include <dev/isa/wssvar.h>
 #include <dev/isa/madreg.h>
@@ -128,9 +130,11 @@ wssattach(sc)
 	ad1848_attach(&sc->sc_ad1848);
 	printf(": %s", sc->sc_ad1848.chip_name);
     
+#if 0 /* loses on CS423X chips */
 	version = bus_space_read_1(sc->sc_iot, sc->sc_ioh, WSS_STATUS) 
 		  & WSS_VERSMASK;
 	printf(" (vers %d)", version);
+#endif
 	switch(sc->mad_chip_type) {
 	case MAD_82C928:
 		printf(", 82C928");
@@ -167,10 +171,11 @@ static ad1848_devmap_t mappings[] = {
 	{ WSS_MIC_IN_LVL, AD1848_KIND_LVL, AD1848_AUX2_CHANNEL },
 	{ WSS_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_AUX1_CHANNEL },
 	{ WSS_DAC_LVL, AD1848_KIND_LVL, AD1848_DAC_CHANNEL },
-	{ WSS_MON_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
+	{ WSS_MONITOR_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
 	{ WSS_MIC_IN_MUTE, AD1848_KIND_MUTE, AD1848_AUX2_CHANNEL },
 	{ WSS_LINE_IN_MUTE, AD1848_KIND_MUTE, AD1848_AUX1_CHANNEL },
 	{ WSS_DAC_MUTE, AD1848_KIND_MUTE, AD1848_DAC_CHANNEL },
+	{ WSS_MONITOR_MUTE, AD1848_KIND_MUTE, AD1848_MONO_CHANNEL },
 	{ WSS_REC_LVL, AD1848_KIND_RECORDGAIN, -1 },
 	{ WSS_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1}
 };
@@ -245,10 +250,11 @@ wss_query_devinfo(addr, dip)
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
 		
-	case WSS_MON_LVL:	/* monitor level */
+	case WSS_MONITOR_LVL:	/* monitor level */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = WSS_MONITOR_CLASS;
-		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = WSS_MONITOR_MUTE;
 		strcpy(dip->label.name, AudioNmonitor);
 		dip->un.v.num_channels = 1;
 		strcpy(dip->un.v.units.name, AudioNvolume);
@@ -293,6 +299,13 @@ wss_query_devinfo(addr, dip)
 		dip->mixer_class = WSS_INPUT_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->prev = WSS_DAC_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+		goto mute;
+
+	case WSS_MONITOR_MUTE:
+		dip->mixer_class = WSS_MONITOR_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = WSS_MONITOR_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 	mute:
 		strcpy(dip->label.name, AudioNmute);
