@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.9 2002/05/22 22:43:19 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.10 2002/09/27 03:17:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.9 2002/05/22 22:43:19 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.10 2002/09/27 03:17:42 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -136,12 +136,12 @@ podulebussubmatch(parent, cf, aux)
 	/* Return priority 0 or 1 for wildcarded podule */
 
 	if (cf->cf_loc[PODULEBUSCF_SLOT] == PODULEBUSCF_SLOT_DEFAULT)
-		return((*cf->cf_attach->ca_match)(parent, cf, aux));
+		return(config_match(parent, cf, aux));
 
 	/* Return higher priority if we match the specific podule */
 
 	else if (cf->cf_loc[PODULEBUSCF_SLOT] == pa->pa_podule_number)
-		return((*cf->cf_attach->ca_match)(parent, cf, aux) * 8);
+		return(config_match(parent, cf, aux) * 8);
 
 	/* Fail */
 	return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.12 2002/09/27 02:24:28 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.13 2002/09/27 03:18:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ intio_search(parent, cf, aux)
 	ia->ia_dma = cf->cf_dma;
 	ia->ia_dmaintr = cf->cf_dmaintr;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ia) > 0)
+	if (config_match(parent, cf, ia) > 0)
 		config_attach(parent, cf, ia, intio_print);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.9 2002/06/08 16:20:24 yamt Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.10 2002/09/27 03:17:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ ucb1200_search(struct device *parent, struct cfdata *cf, void *aux)
 	ucba.ucba_sib	   = sc->sc_parent;
 	ucba.ucba_ucb	   = parent;
 	
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ucba))
+	if (config_match(parent, cf, &ucba))
 		config_attach(parent, cf, &ucba, ucb1200_print);
 
 	return (0);

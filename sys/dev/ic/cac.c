@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.21 2002/06/01 23:50:58 lukem Exp $	*/
+/*	$NetBSD: cac.c,v 1.22 2002/09/27 03:18:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.21 2002/06/01 23:50:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.22 2002/09/27 03:18:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ cac_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cacacf_unit != caca->caca_unit)
 		return (0);
 
-	return (cf->cf_attach->ca_match(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2002/09/27 02:24:19 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2002/09/27 03:18:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -91,7 +91,7 @@ mainbus_search(parent, cf, aux)
 	ma->ma_name = cf->cf_name;
 	ma->ma_systype = cf->cf_systype;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ma) > 0)
+	if (config_match(parent, cf, ma) > 0)
 		config_attach(parent, cf, ma, mainbus_print);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.24 2002/09/27 02:24:15 thorpej Exp $	*/
+/*	$NetBSD: vrip.c,v 1.25 2002/09/27 03:17:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -294,7 +294,7 @@ vrip_search(struct device *parent, struct cfdata *cf, void *aux)
 	va.va_cc = sc->sc_chipset.vc_cc;
 	va.va_ac = sc->sc_chipset.vc_ac;
 	va.va_dc = sc->sc_chipset.vc_dc;
-	if (((*cf->cf_attach->ca_match)(parent, cf, &va) == sc->sc_pri))
+	if ((config_match(parent, cf, &va) == sc->sc_pri))
 		config_attach(parent, cf, &va, vrip_print);
 
 	return (0);

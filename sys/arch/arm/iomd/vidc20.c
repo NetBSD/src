@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.4 2002/06/16 13:25:02 bjh21 Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.5 2002/09/27 03:17:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -108,7 +108,7 @@ static int
 vidcsearch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.26 2002/09/27 02:24:29 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.27 2002/09/27 03:18:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.26 2002/09/27 02:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.27 2002/09/27 03:18:10 thorpej Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -99,7 +99,7 @@ eisasubmatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (cf->eisacf_slot != EISA_UNKNOWN_SLOT &&
 	    cf->eisacf_slot != ea->ea_slot)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void

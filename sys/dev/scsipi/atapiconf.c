@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.49 2002/09/19 08:31:05 jmc Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.50 2002/09/27 03:18:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.49 2002/09/19 08:31:05 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.50 2002/09/27 03:18:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ atapibussubmatch(parent, cf, aux)
 	if (cf->cf_loc[ATAPIBUSCF_DRIVE] != ATAPIBUSCF_DRIVE_DEFAULT &&
 	    cf->cf_loc[ATAPIBUSCF_DRIVE] != periph->periph_target)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus.c,v 1.3 2002/09/27 02:16:28 thorpej Exp $	*/
+/*	$NetBSD: g2bus.c,v 1.4 2002/09/27 03:17:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -87,7 +87,7 @@ int
 g2bussearch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, aux) > 0)
+	if (config_match(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, g2busprint);
 
 	return (0);

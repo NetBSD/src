@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.9 2002/01/29 18:53:18 uch Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.10 2002/09/27 03:17:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -291,7 +291,7 @@ tx39sib_search(struct device *parent, struct cfdata *cf, void *aux)
 	}
 	
 	if (!(sc->sc_attached & (1 << sa.sa_slot)) &&/* not attached slot */
-	    (*cf->cf_attach->ca_match)(parent, cf, &sa)) {
+	    config_match(parent, cf, &sa)) {
 		config_attach(parent, cf, &sa, tx39sib_print);
 		sc->sc_attached |= (1 << sa.sa_slot);
 	}

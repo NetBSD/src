@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.42 2002/09/27 02:24:29 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.43 2002/09/27 03:18:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.42 2002/09/27 02:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.43 2002/09/27 03:18:09 thorpej Exp $");
 
 #include "opt_cardbus.h"
 
@@ -581,7 +581,7 @@ cardbussubmatch(struct device *parent, struct cfdata *cf, void *aux)
 		return (0);
 	}
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

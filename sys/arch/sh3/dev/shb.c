@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.2 2002/04/28 17:10:32 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.3 2002/09/27 03:18:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ int
 shb_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, shb_print);
 
 	return (0);

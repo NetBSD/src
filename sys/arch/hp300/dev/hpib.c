@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.20 2002/03/15 05:52:54 gmcgarry Exp $	*/
+/*	$NetBSD: hpib.c,v 1.21 2002/09/27 03:17:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.20 2002/03/15 05:52:54 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.21 2002/09/27 03:17:50 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ hpibbussearch(parent, cf, aux)
 	/* Make sure this is in a consistent state. */
 	ha->ha_punit = 0;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ha) > 0) {
+	if (config_match(parent, cf, ha) > 0) {
 		/*
 		 * The device probe has succeeded, and filled in
 		 * the punit information.  Make sure the configuration

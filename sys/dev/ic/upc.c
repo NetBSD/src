@@ -1,4 +1,4 @@
-/* $NetBSD: upc.c,v 1.3 2002/09/27 02:24:29 thorpej Exp $ */
+/* $NetBSD: upc.c,v 1.4 2002/09/27 03:18:13 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.3 2002/09/27 02:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.4 2002/09/27 03:18:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -224,7 +224,7 @@ upc_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(cf->cf_name, ua->ua_devtype) == 0 &&
 	    (cf->cf_loc[UPCCF_OFFSET] == UPCCF_OFFSET_DEFAULT ||
 	     cf->cf_loc[UPCCF_OFFSET] == ua->ua_offset))
-		return (*cf->cf_attach->ca_match)(parent, cf, aux);
+		return config_match(parent, cf, aux);
 	return 0;
 }
 
