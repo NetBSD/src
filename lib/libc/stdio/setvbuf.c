@@ -1,6 +1,8 @@
+/*	$NetBSD: setvbuf.c,v 1.7 1995/02/02 02:10:34 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)setvbuf.c	5.5 (Berkeley) 5/6/93";*/
-static char *rcsid = "$Id: setvbuf.c,v 1.6 1993/11/17 08:18:39 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
+#endif
+static char rcsid[] = "$NetBSD: setvbuf.c,v 1.7 1995/02/02 02:10:34 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
