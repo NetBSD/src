@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.221 2000/04/15 00:27:21 augustss Exp $
+# $NetBSD: mi,v 1.222 2000/04/15 22:02:15 tsarna Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -829,7 +829,6 @@
 ./usr/share/man/cat8/newfs_msdos.0
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0
-./usr/share/man/cat8/nfsiod.0
 ./usr/share/man/cat8/nis.0
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
@@ -1792,7 +1791,6 @@
 ./usr/share/man/man8/newfs_msdos.8
 ./usr/share/man/man8/newsyslog.8
 ./usr/share/man/man8/nfsd.8
-./usr/share/man/man8/nfsiod.8
 ./usr/share/man/man8/nis.8
 ./usr/share/man/man8/nologin.8
 ./usr/share/man/man8/nslookup.8

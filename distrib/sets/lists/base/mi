@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.154 2000/03/15 12:17:27 soren Exp $
+# $NetBSD: mi,v 1.155 2000/04/15 22:02:14 tsarna Exp $
 .
 ./altroot
 ./bin
@@ -600,7 +600,6 @@
 ./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nfsd
-./usr/sbin/nfsiod
 ./usr/sbin/ntpdate
 ./usr/sbin/ntpq
 ./usr/sbin/ntptime
