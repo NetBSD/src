@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.488 2002/10/04 19:27:05 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.489 2002/10/05 21:20:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.488 2002/10/04 19:27:05 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.489 2002/10/05 21:20:27 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2636,14 +2636,14 @@ union	descriptor *pentium_idt;
 extern  struct user *proc0paddr;
 
 void
-setgate(gd, func, args, type, dpl)
+setgate(gd, func, args, type, dpl, sel)
 	struct gate_descriptor *gd;
 	void *func;
-	int args, type, dpl;
+	int args, type, dpl, sel;
 {
 
 	gd->gd_looffset = (int)func;
-	gd->gd_selector = GSEL(GCODE_SEL, SEL_KPL);
+	gd->gd_selector = sel;
 	gd->gd_stkcpy = args;
 	gd->gd_xx = 0;
 	gd->gd_type = type;
@@ -2809,7 +2809,7 @@ initgdt(union descriptor *tgdt)
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
 #ifdef COMPAT_MACH
 	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
-	    SDT_SYS386CGT, SEL_UPL);
+	    SDT_SYS386CGT, SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 #endif
 #if NBIOSCALL > 0
 	/* bios trampoline GDT entries */
@@ -3312,7 +3312,7 @@ init386(first_avail)
 
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
-	    SDT_SYS386CGT, SEL_UPL);
+	    SDT_SYS386CGT, SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 
 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
 	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
@@ -3321,13 +3321,15 @@ init386(first_avail)
 	/* exceptions */
 	for (x = 0; x < 32; x++)
 		setgate(&idt[x].gd, IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
-		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL);
+		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
+		    GSEL(GCODE_SEL, SEL_KPL));
 
 	/* new-style interrupt gate for syscalls */
-	setgate(&idt[128].gd, &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
+	setgate(&idt[128].gd, &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
+	    GSEL(GCODE_SEL, SEL_KPL));
 #ifdef COMPAT_SVR4
 	setgate(&idt[0xd2].gd, &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
-	    SEL_UPL);
+	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 #endif /* COMPAT_SVR4 */
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
@@ -3583,7 +3585,8 @@ void idt_vec_set (vec, function)
 	int vec;
 	void (*function) __P((void));
 {
-	setgate (&idt[vec].gd, function, 0, SDT_SYS386IGT, SEL_KPL);
+	setgate(&idt[vec].gd, function, 0, SDT_SYS386IGT, SEL_KPL,
+	    GSEL(GCODE_SEL, SEL_KPL));
 }
 
 void
