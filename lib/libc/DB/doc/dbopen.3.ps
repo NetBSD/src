@@ -1,0 +1,506 @@
+%!PS-Adobe-3.0
+%%Creator: groff version 1.03
+%%DocumentNeededResources: font Times-Roman
+%%+ font Times-Bold
+%%+ font Times-Italic
+%%DocumentSuppliedResources: procset grops 1.03 0
+%%Pages: 4
+%%PageOrder: Ascend
+%%Orientation: Portrait
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset grops 1.03 0
+
+/setpacking where {
+	pop
+	currentpacking
+	true setpacking
+} if
+
+/grops 120 dict dup begin 
+
+% The ASCII code of the space character.
+/SC 32 def
+
+/A /show load def
+/B { 0 SC 3 -1 roll widthshow } bind def
+/C { 0 exch ashow } bind def
+/D { 0 exch 0 SC 5 2 roll awidthshow } bind def
+/E { 0 rmoveto show } bind def
+/F { 0 rmoveto 0 SC 3 -1 roll widthshow } bind def
+/G { 0 rmoveto 0 exch ashow } bind def
+/H { 0 rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/I { 0 exch rmoveto show } bind def
+/J { 0 exch rmoveto 0 SC 3 -1 roll widthshow } bind def
+/K { 0 exch rmoveto 0 exch ashow } bind def
+/L { 0 exch rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/M { rmoveto show } bind def
+/N { rmoveto 0 SC 3 -1 roll widthshow } bind def
+/O { rmoveto 0 exch ashow } bind def
+/P { rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/Q { moveto show } bind def 
+/R { moveto 0 SC 3 -1 roll widthshow } bind def
+/S { moveto 0 exch ashow } bind def
+/T { moveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+
+% name size font SF -
+
+/SF {
+	findfont exch
+	[ exch dup 0 exch 0 exch neg 0 0 ] makefont
+	dup setfont
+	[ exch /setfont cvx ] cvx bind def
+} bind def
+
+% name a c d font MF -
+
+/MF {
+	findfont
+	[ 5 2 roll
+	0 3 1 roll % b
+	neg 0 0 ] makefont
+	dup setfont
+	[ exch /setfont cvx ] cvx bind def
+} bind def
+
+/level0 0 def
+/RES 0 def
+/PL 0 def
+/LS 0 def
+
+% BP -
+
+/BP {
+	/level0 save def
+	1 setlinecap
+	1 setlinejoin
+	72 RES div dup scale
+	LS {
+		90 rotate
+	} {
+		0 PL translate
+	} ifelse
+	1 -1 scale
+} bind def
+
+/EP {
+	level0 restore
+	showpage
+} bind def
+
+
+% centerx centery radius startangle endangle DA -
+
+/DA {
+	newpath arcn stroke
+} bind def
+
+% x y SN - x' y'
+% round a position to nearest (pixel + (.25,.25))
+
+/SN {
+	transform 
+	.25 sub exch .25 sub exch
+	round .25 add exch round .25 add exch
+	itransform
+} bind def
+	
+% endx endy startx starty DL -
+% we round the endpoints of the line, so that parallel horizontal
+% and vertical lines will appear even
+
+/DL {
+	SN
+	moveto
+	SN
+	lineto stroke
+} bind def
+
+% centerx centery radius DC -
+
+/DC {
+	newpath 0 360 arc closepath
+} bind def
+
+
+/TM matrix def
+
+%  width height centerx centery DE -
+
+/DE {
+	TM currentmatrix pop
+	translate scale newpath 0 0 .5 0 360 arc closepath
+	TM setmatrix
+} bind def
+
+% these are for splines
+
+/RC /rcurveto load def
+/RL /rlineto load def
+/ST /stroke load def
+/MT /moveto load def
+/CL /closepath load def
+
+% fill the last path
+
+% amount FL -
+
+/FL {
+	currentgray exch setgray fill setgray
+} bind def
+
+% fill with the ``current color''
+
+/BL /fill load def
+
+/LW /setlinewidth load def
+% new_font_name encoding_vector old_font_name RE -
+
+/RE {
+	findfont
+	dup maxlength dict begin
+	{
+		1 index /FID ne { def } { pop pop } ifelse
+	} forall
+	/Encoding exch def
+	dup /FontName exch def
+	currentdict end definefont pop
+} bind def
+
+/DEFS 0 def
+
+% hpos vpos EBEGIN -
+
+/EBEGIN {
+	moveto
+	DEFS begin
+} bind def
+
+/EEND /end load def
+
+/CNT 0 def
+/level1 0 def
+
+% llx lly newwid wid newht ht newllx newlly PBEGIN -
+
+/PBEGIN {
+	/level1 save def
+	translate
+	div 3 1 roll div exch scale
+	neg exch neg exch translate
+	% set the graphics state to default values
+	0 setgray
+	0 setlinecap
+	1 setlinewidth
+	0 setlinejoin
+	10 setmiterlimit
+	[] 0 setdash
+	/setstrokeadjust where {
+		pop
+		false setstrokeadjust
+	} if
+	/setoverprint where {
+		pop
+		false setoverprint
+	} if
+	newpath
+	/CNT countdictstack def
+	userdict begin
+	/showpage {} def
+} bind def
+
+/PEND {
+	clear
+	countdictstack CNT sub { end } repeat
+	level1 restore
+} bind def
+
+end def
+
+/setpacking where {
+	pop
+	setpacking
+} if
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Times-Bold
+%%IncludeResource: font Times-Italic
+grops begin/DEFS 1 dict def DEFS begin/u{.001 mul}bind def end/RES 72 def/PL
+792 def/LS false def/ENC0[/asciicircum/asciitilde/Scaron/Zcaron/scaron/zcaron
+/Ydieresis/trademark/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/space/exclam
+/quotedbl/numbersign/dollar/percent/ampersand/quoteright/parenleft/parenright
+/asterisk/plus/comma/hyphen/period/slash/zero/one/two/three/four/five/six/seven
+/eight/nine/colon/semicolon/less/equal/greater/question/at/A/B/C/D/E/F/G/H/I/J
+/K/L/M/N/O/P/Q/R/S/T/U/V/W/X/Y/Z/bracketleft/backslash/bracketright/circumflex
+/underscore/quoteleft/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z
+/braceleft/bar/braceright/tilde/.notdef/quotesinglbase/guillemotleft
+/guillemotright/bullet/florin/fraction/perthousand/dagger/daggerdbl/endash
+/emdash/ff/fi/fl/ffi/ffl/dotlessi/dotlessj/grave/hungarumlaut/dotaccent/breve
+/caron/ring/ogonek/quotedblleft/quotedblright/oe/lslash/quotedblbase/OE/Lslash
+/.notdef/exclamdown/cent/sterling/currency/yen/brokenbar/section/dieresis
+/copyright/ordfeminine/guilsinglleft/logicalnot/minus/registered/macron/degree
+/plusminus/twosuperior/threesuperior/acute/mu/paragraph/periodcentered/cedilla
+/onesuperior/ordmasculine/guilsinglright/onequarter/onehalf/threequarters
+/questiondown/Agrave/Aacute/Acircumflex/Atilde/Adieresis/Aring/AE/Ccedilla
+/Egrave/Eacute/Ecircumflex/Edieresis/Igrave/Iacute/Icircumflex/Idieresis/Eth
+/Ntilde/Ograve/Oacute/Ocircumflex/Otilde/Odieresis/multiply/Oslash/Ugrave
+/Uacute/Ucircumflex/Udieresis/Yacute/Thorn/germandbls/agrave/aacute/acircumflex
+/atilde/adieresis/aring/ae/ccedilla/egrave/eacute/ecircumflex/edieresis/igrave
+/iacute/icircumflex/idieresis/eth/ntilde/ograve/oacute/ocircumflex/otilde
+/odieresis/divide/oslash/ugrave/uacute/ucircumflex/udieresis/yacute/thorn
+/ydieresis]def/Times-Italic@0 ENC0/Times-Italic RE/Times-Bold@0 ENC0/Times-Bold
+RE/Times-Roman@0 ENC0/Times-Roman RE
+%%EndSetup
+%%Page: 1 1
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 169.84(DBOPEN\(3\) 1992 DBOPEN\(3\))72 48 R/F1 9
+/Times-Bold@0 SF(NAME)72 84 Q F0(dbopen \255 database access methods)108 96 Q
+F1(SYNOPSIS)72 112.8 Q/F2 10/Times-Bold@0 SF(#include <sys/types.h>)108 124.8 Q
+(#include <limits.h>)108 136.8 Q(#include <db.h>)108 148.8 Q(DB *)108 172.8 Q
+(dbopen\(const char *\214le, int \215ags, int mode, DBTYPE type,)108 184.8 Q
+(const void *openinfo\);)158 196.8 Q F1(DESCRIPTION)72 213.6 Q/F3 10
+/Times-Italic@0 SF(Dbopen)108 225.6 Q F0 .026
+(is the library interface to database \214les.)2.526 F .025
+(The supported \214le formats are btree, hashed and UNIX \214le)5.025 F 2.82
+(oriented. The)108 237.6 R .32
+(btree format is a representation of a sorted, balanced tree structure.)2.82 F
+.321(The hashed format is an)5.321 F .389(extensible, dynamic hashing scheme.)
+108 249.6 R .389(The \215at-\214le format is a byte stream \214le with \214xed\
+ or variable length)5.389 F 2.88(records. The)108 261.6 R .38(formats and \214\
+le format speci\214c information are described in detail in their respective m\
+anual)2.88 F(pages)108 273.6 Q F3(btr)2.5 E(ee)-.37 E F0(\(3\),).18 E F3(hash)
+2.5 E F0(\(3\) and).23 E F3 -.37(re)2.5 G(cno).37 E F0(\(3\).).17 E .401
+(Dbopen opens)108 290.4 R F3(\214le)2.901 E F0 .401
+(for reading and/or writing.)2.901 F .4
+(Files never intended to be preserved on disk may be created)5.401 F
+(by setting the \214le parameter to NULL.)108 302.4 Q(The)108 319.2 Q F3
+(\215ags)4.613 E F0(and)4.613 E F3 2.113(mode ar)4.613 F(guments)-.37 E F0
+2.113(are as speci\214ed to the)4.613 F F3(open)4.613 E F0 2.114
+(\(2\) routine, however).21 F 4.614(,o)-.4 G 2.114(nly the O_CREA)460.122 319.2
+R -.74(T,)-1.11 G 2.519(O_EXCL, O_EXLOCK, O_RDONL)108 331.2 R 5.099 -1.29(Y, O)
+-1 H 2.519(_RDWR, O_SHLOCK and O_TRUNC \215ags are meaningful.)1.29 F
+(\(Note, opening a database \214le O_WRONL)108 343.2 Q 2.5(Yi)-1 G 2.5(sn)
+290.02 343.2 S(ot possible.\))301.41 343.2 Q(The)108 360 Q F3(type)5.315 E F0
+(ar)5.315 E 2.815(gument is of type DBTYPE \(as de\214ned in the <db.h> includ\
+e \214le\) and may be set to)-.18 F(DB_BTREE, DB_HASH or DB_RECNO.)108 372 Q
+(The)108 388.8 Q F3(openinfo)2.85 E F0(ar)2.85 E .349(gument is a pointer to a\
+n access method speci\214c structure described in the access method')-.18 F(s)
+-.55 E .024(manual page.)108 400.8 R(If)5.024 E F3(openinfo)2.524 E F0 .025(is\
+ NULL, each access method will use defaults appropriate for the system and the)
+2.524 F(access method.)108 412.8 Q F3(Dbopen)108 429.6 Q F0 .416
+(returns a pointer to a DB structure on success and NULL on error)2.917 F 5.416
+(.T)-.55 G .416(he DB structure is de\214ned in)423.21 429.6 R
+(the <db.h> include \214le, and contains at least the following \214elds:)108
+441.6 Q(typedef struct {)108 465.6 Q(DBTYPE type;)144 477.6 Q
+(int \(*close\)\(const DB *db\);)144 489.6 Q
+(int \(*del\)\(const DB *db, const DBT *key)144 501.6 Q 2.5(,u)-.65 G
+(_int \215ags\);)319.17 501.6 Q(int \(*get\)\(const DB *db, DBT *key)144 513.6
+Q 2.5(,D)-.65 G(BT *data, u_int \215ags\);)297.78 513.6 Q
+(int \(*put\)\(const DB *db, DBT *key)144 525.6 Q 2.5(,c)-.65 G
+(onst DBT *data,)295.56 525.6 Q(u_int \215ags\);)194 537.6 Q
+(int \(*sync\)\(const DB *db\);)144 549.6 Q
+(int \(*seq\)\(const DB *db, DBT *key)144 561.6 Q 2.5(,D)-.65 G
+(BT *data, u_int \215ags\);)298.89 561.6 Q 2.5(}D)108 573.6 S(B;)122.52 573.6 Q
+.084(These elements describe a database type and a set of functions performing\
+ various actions.)108 590.4 R .084(These functions)5.084 F .521
+(take a pointer to a structure as returned by)108 602.4 R F3(dbopen)3.021 E F0
+3.021(,a).21 G .52(nd sometimes one or more pointers to key/data struc-)323.09
+602.4 R(tures and a \215ag value.)108 614.4 Q 16.28(type The)108 631.2 R
+(type of the underlying access method \(and \214le format\).)2.5 E 12.95
+(close A)108 648 R .97(pointer to a routine to \215ush any cached information \
+to disk, free any allocated resources, and)3.47 F .09
+(close the underlying \214le\(s\).)144 660 R .089
+(Since key/data pairs may be cached in memory)5.09 F 2.589(,f)-.65 G .089
+(ailing to sync the \214le)455.754 660 R .494(with a)144 672 R F3(close)2.994 E
+F0(or)2.994 E F3(sync)2.994 E F0 .495
+(function may result in inconsistent or lost information.)2.994 F F3(Close)
+5.495 E F0 .495(routines return)2.995 F(-1 on error \(setting)144 684 Q F3
+(errno)2.5 E F0 2.5(\)a).17 G(nd 0 on success.)254.42 684 Q 21.28(del A)108
+700.8 R(pointer to a routine to remove key/data pairs from the database.)2.5 E
+(The parameter)144 717.6 Q F3(\215ag)2.5 E F0
+(may be set to the following value:)2.5 E 203.455(4, December)72 768 R(1)535
+768 Q EP
+%%Page: 2 2
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 169.84(DBOPEN\(3\) 1992 DBOPEN\(3\))72 48 R(R_CURSOR)
+144 84 Q .243(Delete the record referenced by the cursor)180 96 R 5.242(.T)-.55
+G .242(he cursor must have previously been initial-)363.018 96 R(ized.)180 108
+Q/F1 10/Times-Italic@0 SF(Delete)144 124.8 Q F0 .004
+(routines return -1 on error \(setting)2.504 F F1(errno)2.504 E F0 .004
+(\), 0 on success, and 1 if the speci\214ed).17 F F1(key)2.505 E F0 .005
+(was not in)2.505 F(the \214le.)144 136.8 Q 21.28(get A)108 153.6 R 1.006(poin\
+ter to a routine which is the interface for keyed retrieval from the database.)
+3.507 F 1.006(The address)6.006 F .417
+(and length of the data associated with the speci\214ed)144 165.6 R F1(key)
+2.917 E F0 .417(are returned in the structure referenced by)2.917 F F1(data)144
+177.6 Q F0(.).24 E F1(Get)5.478 E F0 .478
+(routines return -1 on error \(setting)2.978 F F1(errno)2.978 E F0 .477
+(\), 0 on success, and 1 if the).17 F F1(key)2.977 E F0 .477(was not in the)
+2.977 F(\214le.)144 189.6 Q 20.72(put A)108 206.4 R
+(pointer to a routine to store key/data pairs in the database.)2.5 E
+(The parameter)144 223.2 Q F1(\215ag)2.5 E F0
+(may be set to one of the following values:)2.5 E(R_CURSOR)144 240 Q 1.766
+(Replace the key/data pair referenced by the cursor)180 252 R 6.767(.T)-.55 G
+1.767(he cursor must have previously)407.952 252 R(been initialized.)180 264 Q
+(R_CURSORLOG)144 280.8 Q 1.923
+(Store the data into the tree after the record referenced by the cursor)180
+292.8 R 4.423(,c)-.4 G 1.923(reating a new)482.284 292.8 R 1.672(key/data pair\
+ if the database is empty or if the cursor references the last entry in the)180
+304.8 R 1.211(database, otherwise overwriting the record after the cursor)180
+316.8 R 6.211(.I)-.55 G 3.711(ft)433.228 316.8 S 1.21
+(he cursor is unitialized,)443.049 316.8 R .56
+(the \214rst record in the database is created or overwritten.)180 328.8 R .561
+(In any case, the cursor is set to)5.561 F .489(reference the stored record, a\
+nd the record number of the stored record is returned in the)180 340.8 R F1
+(key)180 352.8 Q F0 2.5(structure. \(Applicable)2.5 F
+(only to the DB_RECNO access method.\))2.5 E(R_IAFTER)144 369.6 Q 1.1
+(Append the data immediately after the data referenced by)180 381.6 R F1(key)
+3.6 E F0 3.6(,c).26 G 1.1(reating a new key/data)446.45 381.6 R(pair)180 393.6
+Q 6.019(.T)-.55 G 1.019
+(he record number of the appended key/data pair is returned in the)209.629
+393.6 R F1(key)3.518 E F0(structure.)3.518 E
+(\(Applicable only to the DB_RECNO access method.\))180 405.6 Q(R_IBEFORE)144
+422.4 Q 1.228(Insert the data immediately before the data referenced by)180
+434.4 R F1(key)3.729 E F0 3.729(,c).26 G 1.229(reating a new key/data)446.063
+434.4 R(pair)180 446.4 Q 6.495(.T)-.55 G 1.494
+(he record number of the inserted key/data pair is returned in the)210.105
+446.4 R F1(key)3.994 E F0(structure.)3.994 E
+(\(Applicable only to the DB_RECNO access method.\))180 458.4 Q(R_NOOVER)144
+475.2 Q(WRITE)-.55 E
+(Enter the new key/data pair only if the key does not previously exist.)180
+487.2 Q(R_SETCURSOR)144 504 Q 1.341(Store the key/data pair)180 516 R 3.841(,s)
+-.4 G 1.342(etting or initializing the position of the cursor to reference it.)
+284.114 516 R(\(Applicable only to the DB_BTREE and DB_RECNO access methods.\))
+180 528 Q .523(R_SETCURSOR is available only for the DB_BTREE and DB_RECNO acc\
+ess methods because)144 544.8 R
+(it implies that the keys have an inherent order which does not change.)144
+556.8 Q 1.353(R_CURSORLOG, R_IAFTER and R_IBEFORE are available only for the D\
+B_RECNO access)144 573.6 R .765(method because they each imply that the access\
+ method is able to create new keys.)144 585.6 R .765(This is only)5.765 F
+(true if the keys are ordered and independent, record numbers for example.)144
+597.6 Q .213(The default behavior of the)144 614.4 R F1(put)2.714 E F0 .214
+(routines is to enter the new key/data pair)2.714 F 2.714(,r)-.4 G .214
+(eplacing any previously)444.032 614.4 R(existing key)144 626.4 Q(.)-.65 E F1
+(Put)144 643.2 Q F0 .333(routines return -1 on error \(setting)2.834 F F1
+(errno)2.833 E F0 .333(\), 0 on success, and 1 if the R_NOOVER).17 F(WRITE)-.55
+E F1(\215ag)2.833 E F0(was set and the key already exists in the \214le.)144
+655.2 Q 20.17(seq A)108 672 R 2.128(pointer to a routine which is the interfac\
+e for sequential retrieval from the database.)4.628 F(The)7.128 E .541
+(address and length of the key are returned in the structure referenced by)144
+684 R F1(key)3.041 E F0 3.041(,a).26 G .541(nd the address and)464.227 684 R
+(length of the data are returned in the structure referenced by)144 696 Q F1
+(data)2.5 E F0(.).24 E .847(Sequential key/data pair retrieval may begin at an\
+y time, and the position of the `)144 712.8 R -2.13(`cursor ')-.74 F 3.348('i)
+-.74 G 3.348(sn)519.982 712.8 S(ot)532.22 712.8 Q(af)144 724.8 Q 1.587
+(fected by calls to the)-.18 F F1(del)4.087 E F0(,).48 E F1(get)4.087 E F0(,).6
+E F1(put)4.087 E F0 4.087(,o).6 G(r)308.446 724.8 Q F1(sync)4.087 E F0 4.087
+(routines. Modi\214cations)4.087 F 1.587(to the database during a)4.087 F
+203.455(4, December)72 768 R(2)535 768 Q EP
+%%Page: 3 3
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 169.84(DBOPEN\(3\) 1992 DBOPEN\(3\))72 48 R 1.404(sequ\
+ential scan will be re\215ected in the scan, i.e. records inserted behind the \
+cursor will not be)144 84 R
+(returned while records inserted in front of the cursor will be returned.)144
+96 Q(The \215ag value)144 112.8 Q/F1 10/Times-Bold@0 SF(must)2.5 E F0
+(be set to one of the following values:)2.5 E(R_CURSOR)144 129.6 Q .494
+(The data associated with the speci\214ed key is returned.)180 141.6 R .493
+(This dif)5.493 F .493(fers from the)-.18 F/F2 10/Times-Italic@0 SF(get)2.993 E
+F0(routines)2.993 E 1.129
+(in that it sets or initializes the cursor to the location of the key as well.)
+180 153.6 R 1.129(\(Note, for the)6.129 F 1.245(DB_BTREE access method, the re\
+turned key is not necessarily an exact match for the)180 165.6 R .548
+(speci\214ed key)180 177.6 R 5.548(.T)-.65 G .548
+(he returned key is the smallest key greater than or equal to the speci\214ed)
+246.546 177.6 R(key)180 189.6 Q 2.5(,p)-.65 G
+(ermitting partial key matches and range searches.\))203.79 189.6 Q(R_FIRST)144
+206.4 Q 1.028(The \214rst key/data pair of the database is returned, and the c\
+ursor is set or initialized to)180 218.4 R(reference it.)180 230.4 Q(R_LAST)144
+247.2 Q .07(The last key/data pair of the database is returned, and the cursor\
+ is set or initialized to ref-)180 259.2 R(erence it.)180 271.2 Q
+(\(Applicable only to the DB_BTREE and DB_RECNO access methods.\))5 E(R_NEXT)
+144 288 Q .264(Retrieve the key/data pair immediately after the cursor)180 300
+R 5.264(.I)-.55 G 2.764(ft)410.952 300 S .263
+(he cursor is not yet set, this is)419.826 300 R
+(the same as the R_FIRST \215ag.)180 312 Q(R_PREV)144 328.8 Q .411
+(Retrieve the key/data pair immediately before the cursor)180 340.8 R 5.411(.I)
+-.55 G 2.911(ft)419.348 340.8 S .412(he cursor is not yet set, this)428.369
+340.8 R .621(is the same as the R_LAST \215ag.)180 352.8 R .621
+(\(Applicable only to the DB_BTREE and DB_RECNO)5.621 F(access methods.\))180
+364.8 Q .873(R_LAST and R_PREV are available only for the DB_BTREE and DB_RECN\
+O access methods)144 381.6 R(because they each imply that the keys have an inh\
+erent order which does not change.)144 393.6 Q F2(Seq)144 410.4 Q F0 .049
+(routines return -1 on error \(setting)2.549 F F2(errno)2.549 E F0 .048
+(\), 0 on success and 1 if there are no key/data pairs less).17 F .333
+(than or greater than the speci\214ed or current key)144 422.4 R 5.334(.I)-.65
+G 2.834(ft)346.572 422.4 S .334(he DB_RECNO access method is being used,)
+355.516 422.4 R 1.562(and if the database \214le is a character special \214le\
+ and no complete key/data pairs are currently)144 434.4 R(available, the)144
+446.4 Q F2(seq)2.5 E F0(routines return 2.)2.5 E 15.17(sync A)108 463.2 R .449
+(pointer to a routine to \215ush any cached information to disk.)2.948 F .449
+(If the database is in memory only)5.449 F(,)-.65 E(the)144 475.2 Q F2(sync)
+3.414 E F0 .913(routine has no ef)3.414 F .913(fect and will always succeed.)
+-.18 F F2(Sync)5.913 E F0 .913(routines return -1 on error \(setting)3.413 F F2
+(errno)144 487.2 Q F0 2.5(\)a).17 G(nd 0 on success.)176.66 487.2 Q/F3 9
+/Times-Bold@0 SF(KEY/DA)72 504 Q 1.332 -.666(TA PA)-.666 H(IRS).666 E F0 .094
+(Access to all \214le types is based on key/data pairs.)108 516 R .095
+(Both keys and data are represented by the following data)5.095 F(structure:)
+108 528 Q(typedef struct {)108 544.8 Q(void *data;)144 556.8 Q(size_t size;)144
+568.8 Q 2.5(}D)108 580.8 S(BT)122.52 580.8 Q(;)-.55 E
+(The elements of the DBT structure are de\214ned as follows:)108 597.6 Q 16.84
+(data A)108 614.4 R(pointer to a byte string.)2.5 E 17.95(size The)108 631.2 R
+(length of the byte string.)2.5 E .788(Key and data byte strings may reference\
+ strings of essentially unlimited length although any two of them)108 648 R 1.1
+(must \214t into available memory at the same time.)108 660 R 1.101
+(It should be noted that the access methods provide no)6.101 F
+(guarantees about byte string alignment.)108 672 Q F3(ERRORS)72 688.8 Q F0(The)
+108 700.8 Q F2(dbopen)3.377 E F0 .876(routine may fail and set)3.377 F F2
+(errno)3.376 E F0 .876
+(for any of the errors speci\214ed for the library routines)3.376 F F2(open)
+3.376 E F0(\(2\)).21 E(and)108 712.8 Q F2(malloc)2.5 E F0
+(\(3\) or the following:).26 E 203.455(4, December)72 768 R(3)535 768 Q EP
+%%Page: 4 4
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 169.84(DBOPEN\(3\) 1992 DBOPEN\(3\))72 48 R([EFTYPE])
+108 84 Q 2.5<418c>144 96 S(le is incorrectly formatted.)159.28 96 Q([EINV)108
+112.8 Q(AL])-1.29 E 2.812(Ap)144 124.8 S .313(arameter has been speci\214ed \(\
+hash function, pad byte etc.\) that is incompatible with the current)159.032
+124.8 R .396(\214le speci\214cation or which is not meaningful for the functio\
+n \(for example, use of the cursor with-)144 136.8 R .084(out prior initializa\
+tion\) or there is a mismatch between the version number of \214le and the sof\
+tware.)144 148.8 R(The)108 165.6 Q/F1 10/Times-Italic@0 SF(close)3.455 E F0
+.955(routines may fail and set)3.455 F F1(errno)3.455 E F0 .955
+(for any of the errors speci\214ed for the library routines)3.455 F F1(close)
+3.455 E F0(\(2\),).18 E F1 -.37(re)108 177.6 S(ad).37 E F0(\(2\),).71 E F1
+(write)2.5 E F0(\(2\),).18 E F1(fr)2.5 E(ee)-.37 E F0(\(3\), or).18 E F1(fsync)
+2.5 E F0(\(2\).).26 E(The)108 194.4 Q F1(del)2.958 E F0(,).48 E F1(get)2.958 E
+F0(,).6 E F1(put)2.958 E F0(and)2.958 E F1(seq)2.958 E F0 .458
+(routines may fail and set)2.958 F F1(errno)2.958 E F0 .458
+(for any of the errors speci\214ed for the library rou-)2.958 F(tines)108 206.4
+Q F1 -.37(re)2.5 G(ad).37 E F0(\(2\),).71 E F1(write)2.5 E F0(\(2\),).18 E F1
+(fr)2.5 E(ee)-.37 E F0(\(3\) or).18 E F1(malloc)2.5 E F0(\(3\).).26 E(The)108
+223.2 Q F1(sync)2.5 E F0(routines may fail and set)2.5 E F1(errno)2.5 E F0
+(for any of the errors speci\214ed for the library routine)2.5 E F1(fsync)2.5 E
+F0(\(2\).).26 E/F2 9/Times-Bold@0 SF(SEE ALSO)72 240 Q F1(btr)108 252 Q(ee)-.37
+E F0(\(3\),).18 E F1(hash)2.5 E F0(\(3\),).23 E F1(mpool)2.5 E F0(\(3\),).48 E
+F1 -.37(re)2.5 G(cno).37 E F0(\(3\)).17 E F2(BUGS)72 268.8 Q F0 .394
+(The typedef DBT is a mnemonic for `)108 280.8 R .394(`data base thang')-.74 F
+.393(', and was used because noone could think of a rea-)-.74 F
+(sonable name that wasn')108 292.8 Q 2.5(ta)-.18 G(lready used.)216.13 292.8 Q
+(None of the access methods provide any form of concurrent access, locking, or\
+ transactions.)108 309.6 Q 203.455(4, December)72 768 R(4)535 768 Q EP
+%%Trailer
+end
+%%EOF

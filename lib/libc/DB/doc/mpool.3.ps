@@ -1,0 +1,369 @@
+%!PS-Adobe-3.0
+%%Creator: groff version 1.03
+%%DocumentNeededResources: font Times-Roman
+%%+ font Times-Bold
+%%+ font Times-Italic
+%%DocumentSuppliedResources: procset grops 1.03 0
+%%Pages: 2
+%%PageOrder: Ascend
+%%Orientation: Portrait
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset grops 1.03 0
+
+/setpacking where {
+	pop
+	currentpacking
+	true setpacking
+} if
+
+/grops 120 dict dup begin 
+
+% The ASCII code of the space character.
+/SC 32 def
+
+/A /show load def
+/B { 0 SC 3 -1 roll widthshow } bind def
+/C { 0 exch ashow } bind def
+/D { 0 exch 0 SC 5 2 roll awidthshow } bind def
+/E { 0 rmoveto show } bind def
+/F { 0 rmoveto 0 SC 3 -1 roll widthshow } bind def
+/G { 0 rmoveto 0 exch ashow } bind def
+/H { 0 rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/I { 0 exch rmoveto show } bind def
+/J { 0 exch rmoveto 0 SC 3 -1 roll widthshow } bind def
+/K { 0 exch rmoveto 0 exch ashow } bind def
+/L { 0 exch rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/M { rmoveto show } bind def
+/N { rmoveto 0 SC 3 -1 roll widthshow } bind def
+/O { rmoveto 0 exch ashow } bind def
+/P { rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/Q { moveto show } bind def 
+/R { moveto 0 SC 3 -1 roll widthshow } bind def
+/S { moveto 0 exch ashow } bind def
+/T { moveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+
+% name size font SF -
+
+/SF {
+	findfont exch
+	[ exch dup 0 exch 0 exch neg 0 0 ] makefont
+	dup setfont
+	[ exch /setfont cvx ] cvx bind def
+} bind def
+
+% name a c d font MF -
+
+/MF {
+	findfont
+	[ 5 2 roll
+	0 3 1 roll % b
+	neg 0 0 ] makefont
+	dup setfont
+	[ exch /setfont cvx ] cvx bind def
+} bind def
+
+/level0 0 def
+/RES 0 def
+/PL 0 def
+/LS 0 def
+
+% BP -
+
+/BP {
+	/level0 save def
+	1 setlinecap
+	1 setlinejoin
+	72 RES div dup scale
+	LS {
+		90 rotate
+	} {
+		0 PL translate
+	} ifelse
+	1 -1 scale
+} bind def
+
+/EP {
+	level0 restore
+	showpage
+} bind def
+
+
+% centerx centery radius startangle endangle DA -
+
+/DA {
+	newpath arcn stroke
+} bind def
+
+% x y SN - x' y'
+% round a position to nearest (pixel + (.25,.25))
+
+/SN {
+	transform 
+	.25 sub exch .25 sub exch
+	round .25 add exch round .25 add exch
+	itransform
+} bind def
+	
+% endx endy startx starty DL -
+% we round the endpoints of the line, so that parallel horizontal
+% and vertical lines will appear even
+
+/DL {
+	SN
+	moveto
+	SN
+	lineto stroke
+} bind def
+
+% centerx centery radius DC -
+
+/DC {
+	newpath 0 360 arc closepath
+} bind def
+
+
+/TM matrix def
+
+%  width height centerx centery DE -
+
+/DE {
+	TM currentmatrix pop
+	translate scale newpath 0 0 .5 0 360 arc closepath
+	TM setmatrix
+} bind def
+
+% these are for splines
+
+/RC /rcurveto load def
+/RL /rlineto load def
+/ST /stroke load def
+/MT /moveto load def
+/CL /closepath load def
+
+% fill the last path
+
+% amount FL -
+
+/FL {
+	currentgray exch setgray fill setgray
+} bind def
+
+% fill with the ``current color''
+
+/BL /fill load def
+
+/LW /setlinewidth load def
+% new_font_name encoding_vector old_font_name RE -
+
+/RE {
+	findfont
+	dup maxlength dict begin
+	{
+		1 index /FID ne { def } { pop pop } ifelse
+	} forall
+	/Encoding exch def
+	dup /FontName exch def
+	currentdict end definefont pop
+} bind def
+
+/DEFS 0 def
+
+% hpos vpos EBEGIN -
+
+/EBEGIN {
+	moveto
+	DEFS begin
+} bind def
+
+/EEND /end load def
+
+/CNT 0 def
+/level1 0 def
+
+% llx lly newwid wid newht ht newllx newlly PBEGIN -
+
+/PBEGIN {
+	/level1 save def
+	translate
+	div 3 1 roll div exch scale
+	neg exch neg exch translate
+	% set the graphics state to default values
+	0 setgray
+	0 setlinecap
+	1 setlinewidth
+	0 setlinejoin
+	10 setmiterlimit
+	[] 0 setdash
+	/setstrokeadjust where {
+		pop
+		false setstrokeadjust
+	} if
+	/setoverprint where {
+		pop
+		false setoverprint
+	} if
+	newpath
+	/CNT countdictstack def
+	userdict begin
+	/showpage {} def
+} bind def
+
+/PEND {
+	clear
+	countdictstack CNT sub { end } repeat
+	level1 restore
+} bind def
+
+end def
+
+/setpacking where {
+	pop
+	setpacking
+} if
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Times-Bold
+%%IncludeResource: font Times-Italic
+grops begin/DEFS 1 dict def DEFS begin/u{.001 mul}bind def end/RES 72 def/PL
+792 def/LS false def/ENC0[/asciicircum/asciitilde/Scaron/Zcaron/scaron/zcaron
+/Ydieresis/trademark/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/space/exclam
+/quotedbl/numbersign/dollar/percent/ampersand/quoteright/parenleft/parenright
+/asterisk/plus/comma/hyphen/period/slash/zero/one/two/three/four/five/six/seven
+/eight/nine/colon/semicolon/less/equal/greater/question/at/A/B/C/D/E/F/G/H/I/J
+/K/L/M/N/O/P/Q/R/S/T/U/V/W/X/Y/Z/bracketleft/backslash/bracketright/circumflex
+/underscore/quoteleft/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z
+/braceleft/bar/braceright/tilde/.notdef/quotesinglbase/guillemotleft
+/guillemotright/bullet/florin/fraction/perthousand/dagger/daggerdbl/endash
+/emdash/ff/fi/fl/ffi/ffl/dotlessi/dotlessj/grave/hungarumlaut/dotaccent/breve
+/caron/ring/ogonek/quotedblleft/quotedblright/oe/lslash/quotedblbase/OE/Lslash
+/.notdef/exclamdown/cent/sterling/currency/yen/brokenbar/section/dieresis
+/copyright/ordfeminine/guilsinglleft/logicalnot/minus/registered/macron/degree
+/plusminus/twosuperior/threesuperior/acute/mu/paragraph/periodcentered/cedilla
+/onesuperior/ordmasculine/guilsinglright/onequarter/onehalf/threequarters
+/questiondown/Agrave/Aacute/Acircumflex/Atilde/Adieresis/Aring/AE/Ccedilla
+/Egrave/Eacute/Ecircumflex/Edieresis/Igrave/Iacute/Icircumflex/Idieresis/Eth
+/Ntilde/Ograve/Oacute/Ocircumflex/Otilde/Odieresis/multiply/Oslash/Ugrave
+/Uacute/Ucircumflex/Udieresis/Yacute/Thorn/germandbls/agrave/aacute/acircumflex
+/atilde/adieresis/aring/ae/ccedilla/egrave/eacute/ecircumflex/edieresis/igrave
+/iacute/icircumflex/idieresis/eth/ntilde/ograve/oacute/ocircumflex/otilde
+/odieresis/divide/oslash/ugrave/uacute/ucircumflex/udieresis/yacute/thorn
+/ydieresis]def/Times-Italic@0 ENC0/Times-Italic RE/Times-Bold@0 ENC0/Times-Bold
+RE/Times-Roman@0 ENC0/Times-Roman RE
+%%EndSetup
+%%Page: 1 1
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 174.84(MPOOL\(3\) 1991 MPOOL\(3\))72 48 R/F1 9
+/Times-Bold@0 SF(NAME)72 84 Q F0(mpool \255 shared memory buf)108 96 Q
+(fer pool)-.18 E F1(SYNOPSIS)72 112.8 Q/F2 10/Times-Bold@0 SF(#include <db.h>)
+108 124.8 Q(#include <mpool.h>)108 136.8 Q(MPOOL *)108 160.8 Q
+(mpool_open \(DBT *key)108 172.8 Q 2.5(,i)-.55 G
+(nt fd, pgno_t pagesize, pgno_t maxcache\);)216.35 172.8 Q(void)108 196.8 Q
+(mpool_\214lter \(MPOOL *mp, void \(*pgin\)\(void *, pgno_t, void *\),)108
+208.8 Q(void \(*pgout\)\(void *, pgno_t, void *\), void *pgcookie\);)158 220.8
+Q(void *)108 244.8 Q(mpool_new \(MPOOL *mp, pgno_t *pgnoaddr\);)108 256.8 Q
+(void *)108 280.8 Q(mpool_get \(MPOOL *mp, pgno_t pgno, u_int \215ags\);)108
+292.8 Q(int)108 316.8 Q(mpool_put \(MPOOL *mp, void *pgaddr)108 328.8 Q 2.5(,u)
+-.92 G(_int \215ags\);)290.72 328.8 Q(int)108 352.8 Q
+(mpool_sync \(MPOOL *mp\);)108 364.8 Q(int)108 388.8 Q
+(mpool_close \(MPOOL *mp\);)108 400.8 Q F1(DESCRIPTION)72 417.6 Q/F3 10
+/Times-Italic@0 SF(Mpool)108 429.6 Q F0 .96
+(is the library interface intended to provide page oriented buf)3.46 F .96
+(fer management of \214les.)-.18 F .96(The buf)5.96 F(fers)-.18 E
+(may be shared between processes.)108 441.6 Q .382(The function)108 458.4 R F3
+(mpool_open)2.882 E F0 .382(initializes a memory pool.)2.882 F(The)5.382 E F3
+(key)2.882 E F0(ar)2.883 E .383(gument is the byte string used to negotiate)
+-.18 F .663(between multiple processes wishing to share buf)108 470.4 R 3.163
+(fers. If)-.18 F .662(the \214le buf)3.163 F .662
+(fers are mapped in shared memory)-.18 F 3.162(,a)-.65 G(ll)534.44 470.4 Q .8
+(processes using the same key will share the buf)108 482.4 R 3.301(fers. If)
+-.18 F F3(key)3.301 E F0 .801(is NULL, the buf)3.301 F .801
+(fers are mapped into private)-.18 F(memory)108 494.4 Q 5.095(.T)-.65 G(he)
+154.385 494.4 Q F3(fd)2.595 E F0(ar)2.595 E .094(gument is a \214le descriptor\
+ for the underlying \214le, which must be seekable.)-.18 F(If)5.094 E F3(key)
+2.594 E F0 .094(is non-)2.594 F
+(NULL and matches a \214le already being mapped, the)108 506.4 Q F3(fd)2.5 E F0
+(ar)2.5 E(gument is ignored.)-.18 E(The)108 523.2 Q F3(pagesize)3.305 E F0(ar)
+3.305 E .805(gument is the size, in bytes, of the pages into which the \214le \
+is broken up.)-.18 F(The)5.806 E F3(maxcache)3.306 E F0(ar)108 535.2 Q .132(gu\
+ment is the maximum number of pages from the underlying \214le to cache at any\
+ one time.)-.18 F .132(This value is)5.132 F .04
+(not relative to the number of processes which share a \214le')108 547.2 R
+2.541(sb)-.55 G(uf)350.342 547.2 Q .041(fers, but will be the lar)-.18 F .041
+(gest value speci\214ed by)-.18 F(any of the processes sharing the \214le.)108
+559.2 Q(The)108 576 Q F3(mpool_\214lter)3.248 E F0 .747(function is intended t\
+o make transparent input and output processing of the pages possi-)3.248 F
+3.082(ble. If)108 588 R(the)3.082 E F3(pgin)3.082 E F0 .583
+(function is speci\214ed, it is called each time a buf)3.083 F .583
+(fer is read into the memory pool from the)-.18 F .112(backing \214le.)108 600
+R .112(If the)5.112 F F3(pgout)2.612 E F0 .112
+(function is speci\214ed, it is called each time a buf)2.612 F .111
+(fer is written into the backing \214le.)-.18 F .276
+(Both functions are are called with the)108 612 R F3(pgcookie)2.777 E F0
+(pointer)2.777 E 2.777(,t)-.4 G .277
+(he page number and a pointer to the page to being)337.27 612 R
+(read or written.)108 624 Q .096(The function)108 640.8 R F3(mpool_new)2.596 E
+F0 .096(takes an MPOOL pointer and an address as ar)2.596 F 2.595(guments. If)
+-.18 F 2.595(an)2.595 G .095(ew page can be allo-)457.43 640.8 R .944(cated, a\
+ pointer to the page is returned and the page number is stored into the)108
+652.8 R F3(pgnoaddr)3.445 E F0 3.445(address. Other)3.445 F(-)-.2 E
+(wise, NULL is returned and errno is set.)108 664.8 Q 1.146(The function)108
+681.6 R F3(mpool_get)3.646 E F0 1.146
+(takes a MPOOL pointer and a page number as ar)3.646 F 3.646(guments. If)-.18 F
+1.145(the page exists, a)3.646 F .686(pointer to the page is returned.)108
+693.6 R .687(Otherwise, NULL is returned and errno is set.)5.686 F .687
+(The \215ags parameter is not)5.687 F(currently used.)108 705.6 Q 1.459
+(The function)108 722.4 R F3(mpool_put)3.959 E F0 1.459
+(unpins the page referenced by)3.959 F F3(pgaddr)3.959 E F0(.).53 E F3(Pgaddr)
+6.458 E F0 1.458(must be an address previously)3.958 F 197.615(12, September)72
+768 R(1)535 768 Q EP
+%%Page: 2 2
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 174.84(MPOOL\(3\) 1991 MPOOL\(3\))72 48 R(returned by)
+108 84 Q/F1 10/Times-Italic@0 SF(mpool_get)2.5 E F0(or)2.5 E F1(mpool_new)2.5 E
+F0 5(.T).33 G(he \215ag value is speci\214ed by)271.92 84 Q F1(or)2.5 E F0
+('ing any of the following values:).53 E(MPOOL_DIR)108 100.8 Q(TY)-.6 E
+(The page has been modi\214ed and needs to be written to the backing \214le.)
+144 112.8 Q F1(Mpool_put)108 129.6 Q F0
+(returns 0 on success and -1 if an error occurs.)2.5 E .247(The function)108
+146.4 R F1(mpool_sync)2.747 E F0 .247(writes all modi\214ed pages associated w\
+ith the MPOOL pointer to the backing \214le.)2.747 F F1(Mpool_sync)108 158.4 Q
+F0(returns 0 on success and -1 if an error occurs.)2.5 E(The)108 175.2 Q F1
+(mpool_close)2.688 E F0 .187(function free')2.688 F 2.687(su)-.55 G 2.687(pa)
+245.39 175.2 S .187
+(ny allocated memory associated with the memory pool cookie.)257.517 175.2 R
+(Modi-)5.187 E(\214ed pages are)108 187.2 Q/F2 10/Times-Bold@0 SF(not)2.5 E F0
+(written to the backing \214le.)2.5 E F1(Mpool_close)5 E F0
+(returns 0 on success and -1 if an error occurs.)2.5 E/F3 9/Times-Bold@0 SF
+(ERRORS)72 204 Q F0(The)108 216 Q F1(mpool_open)2.924 E F0 .424
+(function may fail and set)2.924 F F1(errno)2.924 E F0 .425
+(for any of the errors speci\214ed for the library routine)2.924 F F1(mal-)
+2.925 E(loc)108 228 Q F0(\(3\).).26 E(The)108 244.8 Q F1(mpool_get)2.5 E F0
+(function may fail and set)2.5 E F1(errno)2.5 E F0(for the following:)2.5 E
+([EINV)108 261.6 Q 29.92(AL] The)-1.29 F(requested record doesn')2.5 E 2.5(te)
+-.18 G(xist.)306.11 261.6 Q(The)108 278.4 Q F1(mpool_new)4.044 E F0(and)4.044 E
+F1(mpool_get)4.044 E F0 1.544(functions may fail and set)4.044 F F1(errno)4.044
+E F0 1.543(for any of the errors speci\214ed for the)4.043 F(library routines)
+108 290.4 Q F1 -.37(re)2.5 G(ad).37 E F0(\(2\)).71 E F1 2.5(,w)-.07 G(rite)
+213.81 290.4 Q F0(\(2\)).18 E F1(,)-.07 E F0(and)2.5 E F1(malloc)2.5 E F0
+(\(3\).).26 E(The)108 307.2 Q F1(mpool_sync)4.272 E F0 1.773
+(function may fail and set)4.273 F F1(errno)4.273 E F0 1.773
+(for any of the errors speci\214ed for the library routine)4.273 F F1(write)108
+319.2 Q F0(\(2\).).18 E(The)108 336 Q F1(mpool_close)4.11 E F0 1.61
+(function may fail and set)4.11 F F1(errno)4.11 E F0 1.609
+(for any of the errors speci\214ed for the library routine)4.109 F F1(fr)108
+348 Q(ee)-.37 E F0(\(3\).).18 E F3(SEE ALSO)72 364.8 Q F1(dbopen)108 376.8 Q F0
+(\(3\),).21 E F1(btr)2.5 E(ee)-.37 E F0(\(3\),).18 E F1(hash)2.5 E F0(\(3\),)
+.23 E F1 -.37(re)2.5 G(cno).37 E F0(\(3\)).17 E 197.615(12, September)72 768 R
+(2)535 768 Q EP
+%%Trailer
+end
+%%EOF
