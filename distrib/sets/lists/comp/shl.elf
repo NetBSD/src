@@ -1,7 +1,7 @@
-# $NetBSD: shl.elf,v 1.48 2004/01/03 15:21:30 lukem Exp $
+# $NetBSD: shl.elf,v 1.49 2004/01/04 00:54:18 lukem Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
-./lib/libcrypto.so		comp-c-lib
+./lib/libcrypto.so		comp-c-lib	crypto
 ./lib/libedit.so		comp-c-lib
 ./lib/libevent.so		comp-c-lib
 ./lib/libipsec.so		comp-c-lib
@@ -36,9 +36,9 @@
 ./usr/lib/libcdk.so		comp-c-lib
 ./usr/lib/libcom_err.so		comp-c-lib	kerberos
 ./usr/lib/libcrypt.so		comp-c-lib
-./usr/lib/libcrypto.so		comp-c-lib
+./usr/lib/libcrypto.so		comp-c-lib	crypto
 ./usr/lib/libcurses.so		comp-c-lib
-./usr/lib/libdes.so		comp-c-lib
+./usr/lib/libdes.so		comp-c-lib	crypto
 ./usr/lib/libedit.so		comp-c-lib
 ./usr/lib/libevent.so		comp-c-lib
 ./usr/lib/libform.so		comp-c-lib
@@ -71,7 +71,7 @@
 ./usr/lib/libskey.so		comp-c-lib	skey
 ./usr/lib/libsl.so		comp-c-lib	kerberos
 ./usr/lib/libss.so		comp-c-lib	kerberos
-./usr/lib/libssl.so		comp-c-lib
+./usr/lib/libssl.so		comp-c-lib	crypto
 ./usr/lib/libtermcap.so		comp-c-lib
 ./usr/lib/libtermlib.so		comp-c-lib
 ./usr/lib/libusbhid.so		comp-c-lib
