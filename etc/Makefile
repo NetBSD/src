@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.280 2004/02/06 15:36:52 itohy Exp $
+#	$NetBSD: Makefile,v 1.281 2004/02/07 07:59:17 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -192,12 +192,13 @@ CLEANFILES+=	etc-release
 etc-release: .EXEC
 	${_MKTARGET_CREATE}
 	@(	echo "NetBSD ${DISTRIBVER}/${MACHINE}"; \
-		echo "	$$(date -u)"; \
-		echo "	$${USER-root}@$$(hostname)"; \
 		echo ; \
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
 		echo "Build settings:"; \
+		printf "%20s   %s\n"  "Build date" "$$(date -u)"; \
+		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
+		echo ; \
 		(cd ${.CURDIR}; ${MAKE} ${MFLAGS} params); \
 	) >${.OBJDIR}/${.TARGET}
 
