@@ -1,4 +1,4 @@
-/*	$NetBSD: slstats.c,v 1.7 1996/06/07 00:44:26 thorpej Exp $	*/
+/*	$NetBSD: slstats.c,v 1.8 1996/12/08 13:54:42 mycroft Exp $	*/
 
 /*
  * print serial line IP statistics:
@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: slstats.c,v 1.7 1996/06/07 00:44:26 thorpej Exp $";
+static char rcsid[] = "$NetBSD: slstats.c,v 1.8 1996/12/08 13:54:42 mycroft Exp $";
 #endif
 
 #define INET
@@ -63,7 +63,7 @@ struct nlist nl[] = {
 	"",
 };
 
-extern	char __progname;	/* from crt0.o */
+extern	char *__progname;	/* from crt0.o */
 
 char	*kernel;		/* kernel for namelist */
 char	*kmemf;			/* memory file */
