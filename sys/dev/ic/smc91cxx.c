@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.40 2002/05/03 03:30:48 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.41 2002/09/04 14:54:37 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.40 2002/05/03 03:30:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.41 2002/09/04 14:54:37 scw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -964,6 +964,7 @@ smc91cxx_read(sc)
 	struct mbuf *m;
 	u_int16_t status, packetno, packetlen;
 	u_int8_t *data;
+	u_int32_t dr;
 
  again:
 	/*
@@ -977,8 +978,21 @@ smc91cxx_read(sc)
 	/*
 	 * First two words are status and packet length.
 	 */
-	status = bus_space_read_2(bst, bsh, DATA_REG_W);
-	packetlen = bus_space_read_2(bst, bsh, DATA_REG_W);
+	if ((sc->sc_flags & SMC_FLAGS_32BIT_READ) == 0) {
+		status = bus_space_read_2(bst, bsh, DATA_REG_W);
+		packetlen = bus_space_read_2(bst, bsh, DATA_REG_W);
+	} else {
+		dr = bus_space_read_4(bst, bsh, DATA_REG_W);
+#if BYTE_ORDER == LITTLE_ENDIAN
+		status = (u_int16_t)dr;
+		packetlen = (u_int16_t)(dr >> 16);
+#else
+		packetlen = (u_int16_t)dr;
+		status = (u_int16_t)(dr >> 16);
+#endif
+	}
+
+	packetlen &= RLEN_MASK;
 
 	/*
 	 * The packet length includes 3 extra words: status, length,
@@ -1026,17 +1040,31 @@ smc91cxx_read(sc)
 	 * Pull the packet off the interface.  Make sure the payload
 	 * is aligned.
 	 */
-	m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t) +
-	    sizeof(struct ether_header)) - sizeof(struct ether_header);
+	if ((sc->sc_flags & SMC_FLAGS_32BIT_READ) == 0) {
+		m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t) +
+		    sizeof(struct ether_header)) - sizeof(struct ether_header);
 
-	eh = mtod(m, struct ether_header *);
-	data = mtod(m, u_int8_t *);
-	if (packetlen > 1)
-		bus_space_read_multi_stream_2(bst, bsh, DATA_REG_W,
-		    (u_int16_t *)data, packetlen >> 1);
-	if (packetlen & 1) {
-		data += packetlen & ~1;
-		*data = bus_space_read_1(bst, bsh, DATA_REG_B);
+		eh = mtod(m, struct ether_header *);
+		data = mtod(m, u_int8_t *);
+		if (packetlen > 1)
+			bus_space_read_multi_stream_2(bst, bsh, DATA_REG_W,
+			    (u_int16_t *)data, packetlen >> 1);
+		if (packetlen & 1) {
+			data += packetlen & ~1;
+			*data = bus_space_read_1(bst, bsh, DATA_REG_B);
+		}
+	} else {
+		m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t));
+		eh = mtod(m, struct ether_header *);
+		data = mtod(m, u_int8_t *);
+		if (packetlen > 3)
+			bus_space_read_multi_stream_4(bst, bsh, DATA_REG_W,
+			    (u_int32_t *)data, packetlen >> 2);
+		if (packetlen & 3) {
+			data += packetlen & ~3;
+			*((u_int32_t *)data) =
+			    bus_space_read_stream_4(bst, bsh, DATA_REG_W);
+		}
 	}
 
 	ifp->if_ipackets++;
