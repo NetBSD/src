@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.5 2000/04/22 07:11:36 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.1.1.6 2000/06/10 18:04:50 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -799,12 +799,9 @@ struct option *parse_option_name (cfile, allocate, known)
 
 		/* Look up the option name hash table for the specified
 		   uname. */
-		universe = ((struct universe *)
-			    hash_lookup (universe_hash,
-					 (unsigned char *)uname, 0));
-		/* If it's not there, we can't parse the rest of the
-		   declaration. */
-		if (!universe) {
+		universe = (struct universe *)0;
+		if (!universe_hash_lookup (&universe, universe_hash,
+					   uname, 0, MDL)) {
 			parse_warn (cfile, "no option space named %s.", uname);
 			skip_to_semi (cfile);
 			return (struct option *)0;
@@ -817,8 +814,8 @@ struct option *parse_option_name (cfile, allocate, known)
 	}
 
 	/* Look up the actual option info... */
-	option = (struct option *)hash_lookup (universe -> hash,
-					       (const unsigned char *)val, 0);
+	option = (struct option *)0;
+	option_hash_lookup (&option, universe -> hash, val, 0, MDL);
 
 	/* If we didn't get an option structure, it's an undefined option. */
 	if (option) {
@@ -913,8 +910,7 @@ void parse_option_space_decl (cfile)
 	nu -> hash = new_hash (0, 0, 1);
 	if (!nu -> hash)
 		log_fatal ("Can't allocate %s option hash table.", nu -> name);
-	add_hash (universe_hash,
-		  (const unsigned char *)nu -> name, 0, (unsigned char *)nu);
+	universe_hash_add (universe_hash, nu -> name, 0, nu, MDL);
 	parse_semi (cfile);
 }
 
@@ -1125,9 +1121,9 @@ int parse_option_code_definition (cfile, option)
 		   XXX may start out static. */
 	}
 	option -> universe -> options [option -> code] = option;
-	add_hash (option -> universe -> hash,
-		  (const unsigned char *)option -> name,
-		  0, (unsigned char *)option);
+	option_hash_add (option -> universe -> hash,
+			 (const char *)option -> name,
+			 0, option, MDL);
 	return 1;
 }
 
@@ -1349,9 +1345,11 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			*lose = 1;
 			return 0;
 		}
-		cta = find_class (val);
-		if (!cta) {
-			parse_warn (cfile, "unknown class %s.", val);
+		cta = (struct class *)0;
+		status = find_class (&cta, val, MDL);
+		if (status != ISC_R_SUCCESS) {
+			parse_warn (cfile, "class %s: %s",
+				    val, isc_result_totext (status));
 			skip_to_semi (cfile);
 			*lose = 1;
 			return 0;
@@ -1697,9 +1695,9 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			
 	      default:
 		if (config_universe && is_identifier (token)) {
-			option = ((struct option *)
-				  hash_lookup (config_universe -> hash,
-					       (const unsigned char *)val, 0));
+			option = (struct option *)0;
+			option_hash_lookup (&option, config_universe -> hash,
+					    val, 0, MDL);
 			if (option) {
 				token = next_token (&val, cfile);
 				return parse_option_statement
