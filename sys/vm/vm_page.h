@@ -1,5 +1,4 @@
-/*	$OpenBSD: vm_page.h,v 1.3 1996/08/13 22:22:17 niklas Exp $	*/
-/*	$NetBSD: vm_page.h,v 1.18.4.1 1996/12/07 12:10:08 mrg Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.18.4.2 1996/12/09 09:36:02 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
