@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.10 2001/09/08 01:34:41 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.11 2001/12/26 02:06:45 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -40,8 +40,7 @@
 .Os
 .Sh NAME
 .Nm boot
-.Nd
-system bootstrapping procedures
+.Nd system bootstrapping procedures
 .Sh DESCRIPTION
 The
 .Nx
@@ -50,20 +49,22 @@ memory and transferring to the entry point.
 Since the system is not reenterable,
 it is necessary to read it in from disk or tape
 each time it is to be bootstrapped.
-.Pp
-.Sy Power fail and crash recovery
+.Ss Power fail and crash recovery
 Normally, the system will boot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
-.Pp
-.Sy Cold starts
+.Ss Cold starts
 At power up, all DECstation ROMs consult the
 .Nm haltaction
 environment
 variable in EEPROM to determine whether or not to attempt to boot
 automatically.   If this
-variable is set to \fBh\fR, the ROM prints a prompt on the console and
-waits for user commands.   If set to \fBb\fR, the ROM attempts to autoboot.
+variable is set to
+.Sq h ,
+the ROM prints a prompt on the console and
+waits for user commands.   If set to
+.Sq b ,
+the ROM attempts to autoboot.
 .Sh DECSTATION 2100 and 3100
 On the DECstation 2100 and 3100, the path used for automatic booting is
 stored in the
@@ -96,11 +97,7 @@ Generally, the kernel is named
 .Nm netbsd .
 .Pp
 An example bootpath setting would be:
-.nf
-.sp 1
-.ce 1
-setenv bootpath rz(0,1,0)netbsd
-.fi
+.Dl Ic setenv bootpath rz(0,1,0)netbsd
 .Pp
 At the PROM prompt, the user may boot
 .Nx
@@ -131,10 +128,7 @@ with the
 .Fl f
 flag, followed by the path of the kernel to boot, as described above.
 For example:
-.sp 1
-.ce 1
-boot -f rz(0,4,0)netbsd.new
-.Pp
+.Dl Ic boot -f rz(0,4,0)netbsd.new
 .Sh TURBOCHANNEL DECstations
 On TurboChannel machines (all DECstation 5000 models), the boot path
 is specified in the boot environment variable, along with any arguments
@@ -144,11 +138,7 @@ when setting the
 .Nm boot
 environment variable, the filename and arguments
 must be enclosed in quotes.   For example:
-.nf
-.sp 1
-.ce 1
-setenv boot "3/rz4/netbsd -a"
-.fi
+.Dl Ic setenv boot Dq Ic "3/rz4/netbsd -a"
 .Pp
 The device from which to boot is specified as the TurboChannel slot
 number, a TurboChannel-option-specific device name, and a path to the
@@ -179,34 +169,29 @@ kernel with the default arguments as set with
 If no boot environment variable is set or if an alternative kernel is to be
 booted, the path of that kernel may be specified after the boot command as
 described above, and any arguments may be passed similarly.   For example:
-.sp 1
-.ce 1
-boot 3/rz4/netbsd.new -a
+.Dl Ic boot 3/rz4/netbsd.new -a
 .Sh KERNEL ARGUMENTS
-
 The kernel supports the following arguments:
-.Bd -unfilled -offset indent
-a       Autoboot -- try and boot  to multi-user mode without
-        further input.
-m       use a miniroot already present in memory.
-
-
-n       Ask for names of boot and dump devices.
-N       Do not ask for the names of boot and dump devices.
-        If the configured-in devices are present, use them.
-s       Boot only to single-user mode.
-.Ed
+.Bl -tag -width xxx -offset indent
+.It a
+Autoboot -- try and boot to multi-user mode without
+further input.
+.It m
+use a miniroot already present in memory.
+.It n
+Ask for names of boot and dump devices.
+.It N
+Do not ask for the names of boot and dump devices.
+If the configured-in devices are present, use them.
+.It s
+Boot only to single-user mode.
+.El
 .Pp
-
 Since DECstation PROMs also parse any arguments with a leading
 "-", and reject unrecognized options, arguments other than "a" or "s"
 should be specified after the kernel name with no leading "-".
 For example:
-.nf
-.sp 10
-.ce 1
-boot 3/rz4/netbsd ns
-.fi
+.Dl Ic boot 3/rz4/netbsd \&ns
 .Sh SEE ALSO
 .Xr ddb 4 ,
 .Xr halt 8 ,
