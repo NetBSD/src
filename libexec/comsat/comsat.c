@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.20 2001/03/14 04:39:42 atatat Exp $	*/
+/*	$NetBSD: comsat.c,v 1.21 2001/03/16 21:39:08 atatat Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.20 2001/03/14 04:39:42 atatat Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.21 2001/03/16 21:39:08 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,13 +186,30 @@ void
 mailfor(char *name)
 {
 	struct utmp *utp = &utmp[nutmp];
-	char *cp;
+	char *cp, *fn;
 	off_t offset;
 
 	if (!(cp = strchr(name, '@')))
 		return;
 	*cp = '\0';
-	offset = atoi(cp + 1);
+	errno = 0;
+	offset = strtol(cp + 1, &fn, 10);
+	if (errno == ERANGE)
+		return;
+	if (fn && *fn) {
+		/*
+		 * Procmail sends messages to comsat with a trailing colon
+		 * and a pathname to the folder where the new message was
+		 * deposited.  Since we can't reliably open only regular
+		 * files, we need to ignore these.  With one exception:
+		 * if it mentions the user's system mailbox.
+		 */
+		char maildir[128];
+		int l = snprintf(maildir, sizeof(maildir), ":%s/%s",
+				 _PATH_MAILDIR, name);
+		if (l > sizeof(maildir) || strcmp(maildir, fn) != 0)
+			return;
+	}
 	while (--utp >= utmp)
 		if (!strncmp(utp->ut_name, name, sizeof(utmp[0].ut_name)))
 			notify(utp, offset);
@@ -286,6 +303,11 @@ jkfprintf(FILE *tp, char name[], off_t offset)
 			    (strncasecmp(line, "From:", 5) &&
 			    strncasecmp(line, "Subject:", 8)))
 				continue;
+		}
+		if (strncmp(line, "From ", 5) == 0) {
+			(void)fprintf(tp, "----%s", cr);
+			(void)fclose(fi);
+			return;
 		}
 		if (linecnt <= 0 || charcnt <= 0) {
 			(void)fprintf(tp, "...more...%s", cr);
