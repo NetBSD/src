@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.151 2002/03/22 02:03:30 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.152 2002/03/22 21:39:36 mjacob Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.151 2002/03/22 02:03:30 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.152 2002/03/22 21:39:36 mjacob Exp $");
 
 #include "opt_scsi.h"
 
@@ -939,6 +939,11 @@ st_unmount(st, eject)
 	}
 
 	if (eject) {
+		if (!(st->quirks & ST_Q_NOPREVENT)) {
+			scsipi_prevent(periph, PR_ALLOW,
+			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
+			    XS_CTL_IGNORE_NOT_READY);
+		}
 		st_load(st, LD_UNLOAD, XS_CTL_IGNORE_NOT_READY);
 		st->blkno = st->fileno = (daddr_t) -1;
 	} else {
