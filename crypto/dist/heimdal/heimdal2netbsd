@@ -1,0 +1,10 @@
+#! /bin/sh
+
+# $Id: heimdal2netbsd,v 1.1 2001/06/05 17:04:24 joda Exp $
+
+echo "`basename $0`: this doesn't do anything yet!" 1>&2
+exit 1
+
+# put manual notes below:
+
+# should probably rename $Id: heimdal2netbsd,v 1.1 2001/06/05 17:04:24 joda Exp $ to $Heimdal$ or similar
