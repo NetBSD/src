@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.100 2004/01/26 19:43:25 scw Exp $	*/
+/*	$NetBSD: npx.c,v 1.101 2004/01/28 10:48:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.100 2004/01/26 19:43:25 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.101 2004/01/28 10:48:55 yamt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -109,17 +109,17 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.100 2004/01/26 19:43:25 scw Exp $");
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
  *
  * We do lazy initialization and switching using the TS bit in cr0 and the
- * MDP_USEDFPU bit in mdproc.
+ * MDL_USEDFPU bit in mdlwp.
  *
  * DNA exceptions are handled like this:
  *
  * 1) If there is no NPX, return and go to the emulator.
  * 2) If someone else has used the NPX, save its state into that process's PCB.
- * 3a) If MDP_USEDFPU is not set, set it and initialize the NPX.
+ * 3a) If MDL_USEDFPU is not set, set it and initialize the NPX.
  * 3b) Otherwise, reload the process's previous NPX state.
  *
  * When a process is created or exec()s, its saved cr0 image has the TS bit
- * set and the MDP_USEDFPU bit clear.  The MDP_USEDFPU bit is set when the
+ * set and the MDL_USEDFPU bit clear.  The MDL_USEDFPU bit is set when the
  * process first gets a DNA and the NPX is initialized.  The TS bit is turned
  * off when the NPX is used, and turned on again later when the process's NPX
  * state is saved.
@@ -573,9 +573,9 @@ npxdna_xmm(struct cpu_info *ci)
 	l->l_addr->u_pcb.pcb_fpcpu = ci;
 	splx(s);
 
-	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
-		l->l_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDL_USEDFPU;
 	} else {
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
 	}
@@ -637,9 +637,9 @@ npxdna_s87(struct cpu_info *ci)
 	splx(s);
 
 
-	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw);
-		l->l_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDL_USEDFPU;
 	} else {
 		/*
 		 * The following frstor may cause an IRQ13 when the state being

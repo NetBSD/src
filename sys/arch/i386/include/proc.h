@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.24 2004/01/14 11:29:40 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.25 2004/01/28 10:48:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -50,7 +50,7 @@ struct mdlwp {
 };
 
 /* md_flags */
-#define	MDP_USEDFPU	0x0001	/* has used the FPU */
+#define	MDL_USEDFPU	0x0001	/* has used the FPU */
 
 struct mdproc {
 					/* Syscall handling function */
