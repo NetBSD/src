@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.163 1999/03/24 05:50:51 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.164 1999/03/26 00:15:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 1999/03/24 05:50:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164 1999/03/26 00:15:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,6 @@ u_int8_t	dec_3000_scsiid[2], dec_3000_scsifast[2];
 
 struct platform platform;
 
-u_int32_t vm_mbuf_size = _VM_MBUF_SIZE;
 u_int32_t vm_kmem_size = _VM_KMEM_SIZE;
 u_int32_t vm_phys_size = _VM_PHYS_SIZE;
 
@@ -717,7 +716,6 @@ nobootinfo:
 	 * It's for booting a GENERIC kernel on a large memory platform.
 	 */
 	if (physmem >= atop(128 * 1024 * 1024)) {
-		vm_mbuf_size <<= 1;
 		vm_kmem_size <<= 3;
 		vm_phys_size <<= 2;
 	}
@@ -1086,10 +1084,11 @@ cpu_startup()
 				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
 
 	/*
-	 * Finally, allocate mbuf cluster submap.
+	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
+	 * are allocated via the pool allocator, and we use K0SEG to
+	 * map those pages.
 	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
+
 	/*
 	 * Initialize callouts
 	 */

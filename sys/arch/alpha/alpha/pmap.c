@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.84 1999/03/24 05:50:51 mrg Exp $ */
+/* $NetBSD: pmap.c,v 1.85 1999/03/26 00:15:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 1999/03/24 05:50:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 1999/03/26 00:15:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -731,7 +731,7 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	 * This should be kept in sync.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
-	lev3mapsize = (VM_KMEM_SIZE + VM_MBUF_SIZE + VM_PHYS_SIZE +
+	lev3mapsize = (VM_KMEM_SIZE + VM_PHYS_SIZE +
 		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG + 512 +
 		(maxproc * UPAGES);
 
