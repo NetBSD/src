@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.h,v 1.12 2001/03/21 22:38:29 sakane Exp $	*/
+/*	$KAME: algorithm.h,v 1.19 2001/08/16 06:17:12 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,22 +29,6 @@
  * SUCH DAMAGE.
  */
 
-/* algorithm strength */
-enum {
-	algstrength_ehigh,
-	algstrength_high,
-	algstrength_normal,
-#define MAXALGSTRENGTH	3
-};
-
-struct algorithm_strength {
-	/*
-	 * algorithm type N is mapped to 1 << (N - 1).
-	 * N of 0 is not encoded, that is, it means nothing.
-	 */
-	u_int32_t algtype[MAXALGSTRENGTH];
-};
-
 /* algorithm class */
 enum {
 	algclass_ipsec_enc,
@@ -63,51 +47,144 @@ enum {
 
 /* algorithm type */
 enum {
-	/* enc */
 	algtype_nothing = 0,
-	algtype_des_iv64, algtype_des, algtype_3des,
-	algtype_rc5, algtype_idea, algtype_cast128, algtype_blowfish,
-	algtype_3idea, algtype_des_iv32, algtype_rc4, algtype_null_enc,
-	algtype_rijndael, algtype_twofish,
-};
 
-enum {
+	/* enc */
+	algtype_des_iv64,
+	algtype_des,
+	algtype_3des,
+	algtype_rc5,
+	algtype_idea,
+	algtype_cast128,
+	algtype_blowfish,
+	algtype_3idea,
+	algtype_des_iv32,
+	algtype_rc4,
+	algtype_null_enc,
+	algtype_rijndael,
+	algtype_twofish,
+
 	/* ipsec auth */
-	/* 0 is defined as algtype_nothing above. */
-	algtype_hmac_md5 = 1, algtype_hmac_sha1, algtype_des_mac, algtype_kpdk,
+	algtype_hmac_md5,
+	algtype_hmac_sha1,
+	algtype_des_mac,
+	algtype_kpdk,
 	algtype_non_auth,
-};
+	algtype_hmac_sha2_256,
+	algtype_hmac_sha2_384,
+	algtype_hmac_sha2_512,
 
-enum {
 	/* ipcomp */
-	/* 0 is defined as algtype_nothing above. */
-	algtype_oui = 1, algtype_deflate, algtype_lzs,
-};
+	algtype_oui,
+	algtype_deflate,
+	algtype_lzs,
 
-enum {
 	/* hash */
-	/* 0 is defined as algtype_nothing above. */
-	algtype_md5 = 1, algtype_sha1, algtype_tiger,
-};
+	algtype_md5,
+	algtype_sha1,
+	algtype_tiger,
+	algtype_sha2_256,
+	algtype_sha2_384,
+	algtype_sha2_512,
 
-enum {
 	/* dh_group */
-	/* 0 is defined as algtype_nothing above. */
-	algtype_modp768 = 1, algtype_modp1024,
-	algtype_ec2n155, algtype_ec2n185,
+	algtype_modp768,
+	algtype_modp1024,
+	algtype_ec2n155,
+	algtype_ec2n185,
 	algtype_modp1536,
+	algtype_modp2048,
+	algtype_modp3072,
+	algtype_modp4096,
+	algtype_modp8192,
+
+	/* authentication method. */
+	algtype_psk,
+	algtype_dsssig,
+	algtype_rsasig,
+	algtype_rsaenc,
+	algtype_rsarev,
+	algtype_gssapikrb
 };
 
-enum {
-	/* authentication method. */
-	/* 0 is defined as algtype_nothing above. */
-	algtype_psk = 1, algtype_dsssig, algtype_rsasig,
-	algtype_rsaenc, algtype_rsarev, algtype_gssapikrb
+struct hmac_algorithm {
+	char *name;
+	int type;
+	int doi;
+	caddr_t (*init) __P((vchar_t *));
+	void (*update) __P((caddr_t, vchar_t *));
+	vchar_t *(*final) __P((caddr_t));
+	int (*hashlen) __P((void));
+	vchar_t *(*one) __P((vchar_t *, vchar_t *));
 };
+
+struct hash_algorithm {
+	char *name;
+	int type;
+	int doi;
+	caddr_t (*init) __P((void));
+	void (*update) __P((caddr_t, vchar_t *));
+	vchar_t *(*final) __P((caddr_t));
+	int (*hashlen) __P((void));
+	vchar_t *(*one) __P((vchar_t *));
+};
+
+struct enc_algorithm {
+	char *name;
+	int type;
+	int doi;
+	int blocklen;
+	vchar_t *(*encrypt) __P((vchar_t *, vchar_t *, vchar_t *));
+	vchar_t *(*decrypt) __P((vchar_t *, vchar_t *, vchar_t *));
+	int (*weakkey) __P((vchar_t *));
+	int (*keylen) __P((int));
+};
+
+/* dh group */
+struct dh_algorithm {
+	char *name;
+	int type;
+	int doi;
+	struct dhgroup *dhgroup;
+};
+
+/* ipcomp, auth meth, dh group */
+struct misc_algorithm {
+	char *name;
+	int type;
+	int doi;
+};
+
+extern int alg_oakley_hashdef_ok __P((int));
+extern int alg_oakley_hashdef_doi __P((int));
+extern int alg_oakley_hashdef_hashlen __P((int));
+extern vchar_t *alg_oakley_hashdef_one __P((int, vchar_t *));
+
+extern int alg_oakley_hmacdef_doi __P((int));
+extern vchar_t *alg_oakley_hmacdef_one __P((int, vchar_t *, vchar_t *));
+
+extern int alg_oakley_encdef_ok __P((int));
+extern int alg_oakley_encdef_doi __P((int));
+extern int alg_oakley_encdef_keylen __P((int, int));
+extern int alg_oakley_encdef_blocklen __P((int));
+extern vchar_t *alg_oakley_encdef_decrypt __P((int, vchar_t *, vchar_t *, vchar_t *));
+extern vchar_t *alg_oakley_encdef_encrypt __P((int, vchar_t *, vchar_t *, vchar_t *));
+
+extern int alg_ipsec_encdef_doi __P((int));
+extern int alg_ipsec_encdef_keylen __P((int, int));
+
+extern int alg_ipsec_hmacdef_doi __P((int));
+extern int alg_ipsec_hmacdef_hashlen __P((int));
+
+extern int alg_ipsec_compdef_doi __P((int));
+
+extern int alg_oakley_dhdef_doi __P((int));
+extern int alg_oakley_dhdef_ok __P((int));
+extern struct dhgroup *alg_oakley_dhdef_group __P((int));
+
+extern int alg_oakley_authdef_doi __P((int));
 
 extern int default_keylen __P((int, int));
 extern int check_keylen __P((int, int, int));
 extern int algtype2doi __P((int, int));
 extern int algclass2doi __P((int));
-extern struct algorithm_strength **initalgstrength __P((void));
-extern void flushalgstrength __P((struct algorithm_strength **));

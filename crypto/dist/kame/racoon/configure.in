@@ -426,6 +426,9 @@ if test "x$crypto_dir" = "x"; then
 		fi
 		;;
 	esac
+else
+	LIBS="$LIBS -L${crypto_dir}/lib"
+	CFLAGS="-I${crypto_dir}/include $CFLAGS"
 fi
 if test "x$krb5_incdir" = "x"; then
 	case $host_os in
@@ -604,6 +607,7 @@ if test "$liblwres_dir" != "no"; then
 		exit 1
 	fi
 fi
+AC_CHECK_FUNCS(getrrsetbyname)
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -628,6 +632,20 @@ if test $signing = "yes"; then
 	AC_DEFINE(HAVE_SIGNING_C)
 fi
 AC_CHECK_HEADERS(openssl/cversion.h openssl/opensslv.h)
+
+dnl checking rijndael
+AC_SUBST(CRYPTOBJS)
+AC_CHECK_HEADER(openssl/rijndael.h, [], [
+	CPPFLAGS="$CPPFLAGS -I./missing"
+	CRYPTOBJS="$CRYPTOBJS rijndael-api-fst.o rijndael-alg-fst.o"
+])
+
+dnl checking sha2
+AC_SUBST(CRYPTOBJS)
+AC_CHECK_HEADER(openssl/sha2.h, [], [
+	CPPFLAGS="$CPPFLAGS -I./missing"
+	CRYPTOBJS="$CRYPTOBJS sha2.o"
+])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -658,7 +676,9 @@ AC_CHECK_FUNCS(getifaddrs)
 dnl defines package version
 AC_MSG_CHECKING(if --with-pkgversion option is specified)
 AC_ARG_WITH(pkgversion, [  --with-pkgversion=VERSION   specify package version],
-	[CPPFLAGS="$CPPFLAGS -DRACOON_PKG_VERSION=\"\\\"$withval\\\"\""],
-	[pkgversion=no])
+	[AC_MSG_RESULT($withval)
+	CPPFLAGS="$CPPFLAGS -DRACOON_PKG_VERSION=\"\\\"$withval\\\"\""],
+	[AC_MSG_RESULT(no)
+	pkgversion=no])
 
 AC_OUTPUT(Makefile samples/psk.txt samples/racoon.conf)

@@ -1,4 +1,4 @@
-/*	$KAME: session.c,v 1.24 2001/01/31 05:38:44 sakane Exp $	*/
+/*	$KAME: session.c,v 1.26 2001/08/13 10:50:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -177,7 +177,7 @@ close_session()
 	close_sockets();
 	backupsa_clean();
 
-	plog(LLV_INFO, LOCATION, NULL, "racoon shutdown");
+	plog(LLV_INFO, LOCATION, NULL, "racoon shutdown\n");
 	exit(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.55 2001/07/11 13:22:03 sakane Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.68 2001/08/20 06:46:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,6 +74,16 @@
 #endif
 #include <openssl/cast.h>
 #include <openssl/err.h>
+#ifdef HAVE_OPENSSL_RIJNDAEL_H
+#include <openssl/rijndael.h>
+#else
+#include "crypto/rijndael/rijndael-api-fst.h"
+#endif
+#ifdef HAVE_OPENSSL_SHA2_H
+#include <openssl/sha2.h>
+#else
+#include "crypto/sha2/sha2.h"
+#endif
 
 #include "var.h"
 #include "misc.h"
@@ -376,16 +386,16 @@ eay_get_x509asn1subjectname(cert)
 
    end:
 	if (error) {
-		if (name) {
-			vfree(name);
-			name = NULL;
-		}
-	}
 #ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
 #else
 		printf("%s\n", eay_strerror());
 #endif
+		if (name) {
+			vfree(name);
+			name = NULL;
+		}
+	}
 	if (x509)
 		X509_free(x509);
 
@@ -708,10 +718,18 @@ eay_check_x509sign(source, sig, cert)
 	bp = cert->v;
 
 	x509 = d2i_X509(NULL, &bp, cert->l);
-	if (x509 == NULL)
+	if (x509 == NULL) {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
+#endif
 		return -1;
+	}
 
 	evp = X509_get_pubkey(x509);
+#ifndef EAYDEBUG
+	if (evp == NULL)
+		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
+#endif
 	X509_free(x509);
 	if (evp == NULL)
 		return -1;
@@ -723,12 +741,19 @@ eay_check_x509sign(source, sig, cert)
 
 	xbuf = vmalloc(len);
 	if (xbuf == NULL) {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
+#endif
 		EVP_PKEY_free(evp);
 		return -1;
 	}
 
 	len = RSA_public_decrypt(sig->l, sig->v, xbuf->v,
 				evp->pkey.rsa, RSA_PKCS1_PADDING);
+#ifndef EAYDEBUG
+	if (len == 0 || len != source->l)
+		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
+#endif
 	EVP_PKEY_free(evp);
 	if (len == 0 || len != source->l) {
 		vfree(xbuf);
@@ -905,7 +930,7 @@ end:
 	return pkey;
 }
 #endif
-  
+
 /*
  * get error string
  * MUST load ERR_load_crypto_strings() first.
@@ -914,7 +939,7 @@ char *
 eay_strerror()
 {
 	static char ebuf[512];
-	int len = 0;
+	int len = 0, n;
 	unsigned long l;
 	char buf[200];
 #if OPENSSL_VERSION_NUMBER >= 0x00904100L
@@ -928,10 +953,13 @@ eay_strerror()
 	es = CRYPTO_thread_id();
 
 	while ((l = ERR_get_error_line_data(&file, &line, &data, &flags)) != 0){
-		len += snprintf(ebuf + len, sizeof(ebuf) - len,
+		n = snprintf(ebuf + len, sizeof(ebuf) - len,
 				"%lu:%s:%s:%d:%s ",
 				es, ERR_error_string(l, buf), file, line,
 				(flags & ERR_TXT_STRING) ? data : "");
+		if (n < 0 || n >= sizeof(ebuf) - len)
+			break;
+		len += n;
 		if (sizeof(ebuf) < len)
 			break;
 	}
@@ -950,8 +978,7 @@ eay_init_error()
  */
 vchar_t *
 eay_des_encrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	des_key_schedule ks;
@@ -965,15 +992,14 @@ eay_des_encrypt(data, key, iv)
 
 	/* decryption data */
 	des_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
-	                ks, (void *)iv, DES_ENCRYPT);
+	                ks, (void *)iv->v, DES_ENCRYPT);
 
 	return res;
 }
 
 vchar_t *
 eay_des_decrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	des_key_schedule ks;
@@ -987,7 +1013,7 @@ eay_des_decrypt(data, key, iv)
 
 	/* decryption data */
 	des_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
-	                ks, (void *)iv, DES_DECRYPT);
+	                ks, (void *)iv->v, DES_DECRYPT);
 
 	return res;
 }
@@ -999,14 +1025,22 @@ eay_des_weakkey(key)
 	return des_is_weak_key((void *)key->v);
 }
 
+int
+eay_des_keylen(len)
+	int len;
+{
+	if (len != 0 && len != 64)
+		return -1;
+	return 64;
+}
+
 #ifdef HAVE_OPENSSL_IDEA_H
 /*
  * IDEA-CBC
  */
 vchar_t *
 eay_idea_encrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	IDEA_KEY_SCHEDULE ks;
@@ -1019,15 +1053,14 @@ eay_idea_encrypt(data, key, iv)
 
 	/* decryption data */
 	idea_cbc_encrypt(data->v, res->v, data->l,
-	                &ks, iv, IDEA_ENCRYPT);
+	                &ks, iv->v, IDEA_ENCRYPT);
 
 	return res;
 }
 
 vchar_t *
 eay_idea_decrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	IDEA_KEY_SCHEDULE ks, dks;
@@ -1041,7 +1074,7 @@ eay_idea_decrypt(data, key, iv)
 
 	/* decryption data */
 	idea_cbc_encrypt(data->v, res->v, data->l,
-	                &dks, iv, IDEA_DECRYPT);
+	                &dks, iv->v, IDEA_DECRYPT);
 
 	return res;
 }
@@ -1052,6 +1085,15 @@ eay_idea_weakkey(key)
 {
 	return 0;	/* XXX */
 }
+
+int
+eay_idea_keylen(len)
+	int len;
+{
+	if (len != 0 && len != 128)
+		return -1;
+	return 128;
+}
 #endif
 
 /*
@@ -1059,8 +1101,7 @@ eay_idea_weakkey(key)
  */
 vchar_t *
 eay_bf_encrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	BF_KEY ks;
@@ -1073,15 +1114,14 @@ eay_bf_encrypt(data, key, iv)
 
 	/* decryption data */
 	BF_cbc_encrypt(data->v, res->v, data->l,
-		&ks, iv, BF_ENCRYPT);
+		&ks, iv->v, BF_ENCRYPT);
 
 	return res;
 }
 
 vchar_t *
 eay_bf_decrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	BF_KEY ks;
@@ -1094,7 +1134,7 @@ eay_bf_decrypt(data, key, iv)
 
 	/* decryption data */
 	BF_cbc_encrypt(data->v, res->v, data->l,
-		&ks, iv, BF_DECRYPT);
+		&ks, iv->v, BF_DECRYPT);
 
 	return res;
 }
@@ -1106,14 +1146,24 @@ eay_bf_weakkey(key)
 	return 0;	/* XXX to be done. refer to RFC 2451 */
 }
 
+int
+eay_bf_keylen(len)
+	int len;
+{
+	if (len == 0)
+		return 448;
+	if (len < 40 || len > 448)
+		return -1;
+	return len + 7 / 8;
+}
+
 #ifdef HAVE_OPENSSL_RC5_H
 /*
  * RC5-CBC
  */
 vchar_t *
 eay_rc5_encrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	RC5_32_KEY ks;
@@ -1127,15 +1177,14 @@ eay_rc5_encrypt(data, key, iv)
 
 	/* decryption data */
 	RC5_32_cbc_encrypt(data->v, res->v, data->l,
-		&ks, iv, RC5_ENCRYPT);
+		&ks, iv->v, RC5_ENCRYPT);
 
 	return res;
 }
 
 vchar_t *
 eay_rc5_decrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	RC5_32_KEY ks;
@@ -1149,7 +1198,7 @@ eay_rc5_decrypt(data, key, iv)
 
 	/* decryption data */
 	RC5_32_cbc_encrypt(data->v, res->v, data->l,
-		&ks, iv, RC5_DECRYPT);
+		&ks, iv->v, RC5_DECRYPT);
 
 	return res;
 }
@@ -1161,6 +1210,17 @@ eay_rc5_weakkey(key)
 	return 0;	/* No known weak keys when used with 16 rounds. */
 
 }
+
+int
+eay_rc5_keylen(len)
+	int len;
+{
+	if (len == 0)
+		return 128;
+	if (len < 40 || len > 2040)
+		return -1;
+	return len + 7 / 8;
+}
 #endif
 
 /*
@@ -1168,8 +1228,7 @@ eay_rc5_weakkey(key)
  */
 vchar_t *
 eay_3des_encrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	des_key_schedule ks1, ks2, ks3;
@@ -1190,15 +1249,14 @@ eay_3des_encrypt(data, key, iv)
 
 	/* decryption data */
 	des_ede3_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
-	                ks1, ks2, ks3, (void *)iv, DES_ENCRYPT);
+	                ks1, ks2, ks3, (void *)iv->v, DES_ENCRYPT);
 
 	return res;
 }
 
 vchar_t *
 eay_3des_decrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	des_key_schedule ks1, ks2, ks3;
@@ -1219,7 +1277,7 @@ eay_3des_decrypt(data, key, iv)
 
 	/* decryption data */
 	des_ede3_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
-	                ks1, ks2, ks3, (void *)iv, DES_DECRYPT);
+	                ks1, ks2, ks3, (void *)iv->v, DES_DECRYPT);
 
 	return res;
 }
@@ -1236,13 +1294,21 @@ eay_3des_weakkey(key)
 		|| des_is_weak_key((void *)(key->v + 16)));
 }
 
+int
+eay_3des_keylen(len)
+	int len;
+{
+	if (len != 0 && len != 192)
+		return -1;
+	return 192;
+}
+
 /*
  * CAST-CBC
  */
 vchar_t *
 eay_cast_encrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	CAST_KEY ks;
@@ -1255,15 +1321,14 @@ eay_cast_encrypt(data, key, iv)
 
 	/* decryption data */
 	CAST_cbc_encrypt(data->v, res->v, data->l,
-	                &ks, iv, DES_ENCRYPT);
+	                &ks, iv->v, DES_ENCRYPT);
 
 	return res;
 }
 
 vchar_t *
 eay_cast_decrypt(data, key, iv)
-	vchar_t *data, *key;
-	caddr_t iv;
+	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
 	CAST_KEY ks;
@@ -1276,7 +1341,7 @@ eay_cast_decrypt(data, key, iv)
 
 	/* decryption data */
 	CAST_cbc_encrypt(data->v, res->v, data->l,
-	                &ks, iv, DES_DECRYPT);
+	                &ks, iv->v, DES_DECRYPT);
 
 	return res;
 }
@@ -1286,6 +1351,112 @@ eay_cast_weakkey(key)
 	vchar_t *key;
 {
 	return 0;	/* No known weak keys. */
+}
+
+int
+eay_cast_keylen(len)
+	int len;
+{
+	if (len == 0)
+		return 128;
+	if (len < 40 || len > 128)
+		return -1;
+	return len + 7 / 8;
+}
+
+/*
+ * AES(RIJNDAEL)-CBC
+ */
+vchar_t *
+eay_aes_encrypt(data, key, iv)
+	vchar_t *data, *key, *iv;
+{
+	vchar_t *res;
+	keyInstance k;
+	cipherInstance c;
+
+	memset(&k, 0, sizeof(k));
+	if (rijndael_makeKey(&k, DIR_ENCRYPT, key->l << 3, key->v) < 0)
+		return NULL;
+
+	/* allocate buffer for result */
+	if ((res = vmalloc(data->l)) == NULL)
+		return NULL;
+
+	/* encryption data */
+	memset(&c, 0, sizeof(c));
+	if (rijndael_cipherInit(&c, MODE_CBC, iv->v) < 0)
+		return NULL;
+	if (rijndael_blockEncrypt(&c, &k, data->v, data->l << 3, res->v) < 0)
+		return NULL;
+
+	return res;
+}
+
+vchar_t *
+eay_aes_decrypt(data, key, iv)
+	vchar_t *data, *key, *iv;
+{
+	vchar_t *res;
+	keyInstance k;
+	cipherInstance c;
+
+	memset(&k, 0, sizeof(k));
+	if (rijndael_makeKey(&k, DIR_DECRYPT, key->l << 3, key->v) < 0)
+		return NULL;
+
+	/* allocate buffer for result */
+	if ((res = vmalloc(data->l)) == NULL)
+		return NULL;
+
+	/* decryption data */
+	memset(&c, 0, sizeof(c));
+	if (rijndael_cipherInit(&c, MODE_CBC, iv->v) < 0)
+		return NULL;
+	if (rijndael_blockDecrypt(&c, &k, data->v, data->l << 3, res->v) < 0)
+		return NULL;
+
+	return res;
+}
+
+int
+eay_aes_weakkey(key)
+	vchar_t *key;
+{
+	return 0;
+}
+
+int
+eay_aes_keylen(len)
+	int len;
+{
+	if (len == 0)
+		return 128;
+	if (len != 128 && len != 192 && len != 256)
+		return -1;
+	return len;
+}
+
+/* for ipsec part */
+int
+eay_null_hashlen()
+{
+	return 0;
+}
+
+int
+eay_kpdk_hashlen()
+{
+	return 0;
+}
+
+int
+eay_twofish_keylen(len)
+	int len;
+{
+	if (len < 0 || len > 256)
+		return -1;
+	return len;
 }
 
 /*
@@ -1301,6 +1472,186 @@ eay_hmac_init(key, md)
 	HMAC_Init(c, key->v, key->l, md);
 
 	return (caddr_t)c;
+}
+
+/*
+ * HMAC SHA2-512
+ */
+vchar_t *
+eay_hmacsha2_512_one(key, data)
+	vchar_t *key, *data;
+{
+	vchar_t *res;
+	caddr_t ctx;
+
+	ctx = eay_hmacsha2_512_init(key);
+	eay_hmacsha2_512_update(ctx, data);
+	res = eay_hmacsha2_512_final(ctx);
+
+	return(res);
+}
+
+caddr_t
+eay_hmacsha2_512_init(key)
+	vchar_t *key;
+{
+	return eay_hmac_init(key, EVP_sha2_512());
+}
+
+void
+eay_hmacsha2_512_update(c, data)
+	caddr_t c;
+	vchar_t *data;
+{
+	HMAC_Update((HMAC_CTX *)c, data->v, data->l);
+}
+
+vchar_t *
+eay_hmacsha2_512_final(c)
+	caddr_t c;
+{
+	vchar_t *res;
+	unsigned int l;
+
+	if ((res = vmalloc(SHA512_DIGEST_LENGTH)) == 0)
+		return NULL;
+
+	HMAC_Final((HMAC_CTX *)c, res->v, &l);
+	res->l = l;
+	(void)racoon_free(c);
+
+	if (SHA512_DIGEST_LENGTH != res->l) {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL,
+			"hmac sha2_512 length mismatch %d.\n", res->l);
+#else
+		printf("hmac sha2_512 length mismatch %d.\n", res->l);
+#endif
+		vfree(res);
+		return NULL;
+	}
+
+	return(res);
+}
+
+/*
+ * HMAC SHA2-384
+ */
+vchar_t *
+eay_hmacsha2_384_one(key, data)
+	vchar_t *key, *data;
+{
+	vchar_t *res;
+	caddr_t ctx;
+
+	ctx = eay_hmacsha2_384_init(key);
+	eay_hmacsha2_384_update(ctx, data);
+	res = eay_hmacsha2_384_final(ctx);
+
+	return(res);
+}
+
+caddr_t
+eay_hmacsha2_384_init(key)
+	vchar_t *key;
+{
+	return eay_hmac_init(key, EVP_sha2_384());
+}
+
+void
+eay_hmacsha2_384_update(c, data)
+	caddr_t c;
+	vchar_t *data;
+{
+	HMAC_Update((HMAC_CTX *)c, data->v, data->l);
+}
+
+vchar_t *
+eay_hmacsha2_384_final(c)
+	caddr_t c;
+{
+	vchar_t *res;
+	unsigned int l;
+
+	if ((res = vmalloc(SHA384_DIGEST_LENGTH)) == 0)
+		return NULL;
+
+	HMAC_Final((HMAC_CTX *)c, res->v, &l);
+	res->l = l;
+	(void)racoon_free(c);
+
+	if (SHA384_DIGEST_LENGTH != res->l) {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL,
+			"hmac sha2_384 length mismatch %d.\n", res->l);
+#else
+		printf("hmac sha2_384 length mismatch %d.\n", res->l);
+#endif
+		vfree(res);
+		return NULL;
+	}
+
+	return(res);
+}
+
+/*
+ * HMAC SHA2-256
+ */
+vchar_t *
+eay_hmacsha2_256_one(key, data)
+	vchar_t *key, *data;
+{
+	vchar_t *res;
+	caddr_t ctx;
+
+	ctx = eay_hmacsha2_256_init(key);
+	eay_hmacsha2_256_update(ctx, data);
+	res = eay_hmacsha2_256_final(ctx);
+
+	return(res);
+}
+
+caddr_t
+eay_hmacsha2_256_init(key)
+	vchar_t *key;
+{
+	return eay_hmac_init(key, EVP_sha2_256());
+}
+
+void
+eay_hmacsha2_256_update(c, data)
+	caddr_t c;
+	vchar_t *data;
+{
+	HMAC_Update((HMAC_CTX *)c, data->v, data->l);
+}
+
+vchar_t *
+eay_hmacsha2_256_final(c)
+	caddr_t c;
+{
+	vchar_t *res;
+	unsigned int l;
+
+	if ((res = vmalloc(SHA256_DIGEST_LENGTH)) == 0)
+		return NULL;
+
+	HMAC_Final((HMAC_CTX *)c, res->v, &l);
+	res->l = l;
+	(void)racoon_free(c);
+
+	if (SHA256_DIGEST_LENGTH != res->l) {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL,
+			"hmac sha2_256 length mismatch %d.\n", res->l);
+#else
+		printf("hmac sha2_256 length mismatch %d.\n", res->l);
+#endif
+		vfree(res);
+		return NULL;
+	}
+
+	return(res);
 }
 
 /*
@@ -1340,11 +1691,13 @@ eay_hmacsha1_final(c)
 	caddr_t c;
 {
 	vchar_t *res;
+	unsigned int l;
 
 	if ((res = vmalloc(SHA_DIGEST_LENGTH)) == 0)
 		return NULL;
 
-	HMAC_Final((HMAC_CTX *)c, res->v, &res->l);
+	HMAC_Final((HMAC_CTX *)c, res->v, &l);
+	res->l = l;
 	(void)racoon_free(c);
 
 	if (SHA_DIGEST_LENGTH != res->l) {
@@ -1398,11 +1751,13 @@ eay_hmacmd5_final(c)
 	caddr_t c;
 {
 	vchar_t *res;
+	unsigned int l;
 
 	if ((res = vmalloc(MD5_DIGEST_LENGTH)) == 0)
 		return NULL;
 
-	HMAC_Final((HMAC_CTX *)c, res->v, &res->l);
+	HMAC_Final((HMAC_CTX *)c, res->v, &l);
+	res->l = l;
 	(void)racoon_free(c);
 
 	if (MD5_DIGEST_LENGTH != res->l) {
@@ -1417,6 +1772,180 @@ eay_hmacmd5_final(c)
 	}
 
 	return(res);
+}
+
+/*
+ * SHA2-512 functions
+ */
+caddr_t
+eay_sha2_512_init()
+{
+	SHA512_CTX *c = racoon_malloc(sizeof(*c));
+
+	SHA512_Init(c);
+
+	return((caddr_t)c);
+}
+
+void
+eay_sha2_512_update(c, data)
+	caddr_t c;
+	vchar_t *data;
+{
+	SHA512_Update((SHA512_CTX *)c, data->v, data->l);
+
+	return;
+}
+
+vchar_t *
+eay_sha2_512_final(c)
+	caddr_t c;
+{
+	vchar_t *res;
+
+	if ((res = vmalloc(SHA512_DIGEST_LENGTH)) == 0)
+		return(0);
+
+	SHA512_Final(res->v, (SHA512_CTX *)c);
+	(void)racoon_free(c);
+
+	return(res);
+}
+
+vchar_t *
+eay_sha2_512_one(data)
+	vchar_t *data;
+{
+	caddr_t ctx;
+	vchar_t *res;
+
+	ctx = eay_sha2_512_init();
+	eay_sha2_512_update(ctx, data);
+	res = eay_sha2_512_final(ctx);
+
+	return(res);
+}
+
+int
+eay_sha2_512_hashlen()
+{
+	return SHA512_DIGEST_LENGTH << 3;
+}
+
+/*
+ * SHA2-384 functions
+ */
+caddr_t
+eay_sha2_384_init()
+{
+	SHA384_CTX *c = racoon_malloc(sizeof(*c));
+
+	SHA384_Init(c);
+
+	return((caddr_t)c);
+}
+
+void
+eay_sha2_384_update(c, data)
+	caddr_t c;
+	vchar_t *data;
+{
+	SHA384_Update((SHA384_CTX *)c, data->v, data->l);
+
+	return;
+}
+
+vchar_t *
+eay_sha2_384_final(c)
+	caddr_t c;
+{
+	vchar_t *res;
+
+	if ((res = vmalloc(SHA384_DIGEST_LENGTH)) == 0)
+		return(0);
+
+	SHA384_Final(res->v, (SHA384_CTX *)c);
+	(void)racoon_free(c);
+
+	return(res);
+}
+
+vchar_t *
+eay_sha2_384_one(data)
+	vchar_t *data;
+{
+	caddr_t ctx;
+	vchar_t *res;
+
+	ctx = eay_sha2_384_init();
+	eay_sha2_384_update(ctx, data);
+	res = eay_sha2_384_final(ctx);
+
+	return(res);
+}
+
+int
+eay_sha2_384_hashlen()
+{
+	return SHA384_DIGEST_LENGTH << 3;
+}
+
+/*
+ * SHA2-256 functions
+ */
+caddr_t
+eay_sha2_256_init()
+{
+	SHA256_CTX *c = racoon_malloc(sizeof(*c));
+
+	SHA256_Init(c);
+
+	return((caddr_t)c);
+}
+
+void
+eay_sha2_256_update(c, data)
+	caddr_t c;
+	vchar_t *data;
+{
+	SHA256_Update((SHA256_CTX *)c, data->v, data->l);
+
+	return;
+}
+
+vchar_t *
+eay_sha2_256_final(c)
+	caddr_t c;
+{
+	vchar_t *res;
+
+	if ((res = vmalloc(SHA256_DIGEST_LENGTH)) == 0)
+		return(0);
+
+	SHA256_Final(res->v, (SHA256_CTX *)c);
+	(void)racoon_free(c);
+
+	return(res);
+}
+
+vchar_t *
+eay_sha2_256_one(data)
+	vchar_t *data;
+{
+	caddr_t ctx;
+	vchar_t *res;
+
+	ctx = eay_sha2_256_init();
+	eay_sha2_256_update(ctx, data);
+	res = eay_sha2_256_final(ctx);
+
+	return(res);
+}
+
+int
+eay_sha2_256_hashlen()
+{
+	return SHA256_DIGEST_LENGTH << 3;
 }
 
 /*
@@ -1471,6 +2000,12 @@ eay_sha1_one(data)
 	return(res);
 }
 
+int
+eay_sha1_hashlen()
+{
+	return SHA_DIGEST_LENGTH << 3;
+}
+
 /*
  * MD5 functions
  */
@@ -1521,6 +2056,12 @@ eay_md5_one(data)
 	res = eay_md5_final(ctx);
 
 	return(res);
+}
+
+int
+eay_md5_hashlen()
+{
+	return MD5_DIGEST_LENGTH << 3;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$KAME: main.c,v 1.36 2001/06/01 08:26:05 sakane Exp $	*/
+/*	$KAME: main.c,v 1.41 2001/08/17 07:06:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -85,7 +85,7 @@ static char version[] = "@(#)racoon 20001216 " RACOON_VERSION ;
 #endif
 
 int main __P((int, char **));
-static void Usage __P((void));
+static void usage __P((void));
 static void parse __P((int, char **));
 static void restore_params __P((void));
 static void save_params __P((void));
@@ -93,10 +93,9 @@ static void saverestore_params __P((int));
 static void cleanup_pidfile __P((void));
 
 void
-Usage()
+usage()
 {
-	printf("Usage: %s [-dFv%s] %s[-f (file)] [-l (file)] [-p (port)]\n",
-		pname,
+	printf("usage: racoon [-BdFv%s] %s[-f (file)] [-l (file)] [-p (port)]\n",
 #ifdef INET6
 		"46",
 #else
@@ -107,23 +106,22 @@ Usage()
 #else
 		""
 #endif
-		"[-B]"
 		);
+	printf("   -B: install SA to the kernel from the file "
+		"specified by the configuration file.\n");
 	printf("   -d: debug level, more -d will generate more debug message.\n");
 	printf("   -F: run in foreground, do not become daemon.\n");
 	printf("   -v: be more verbose\n");
+#ifdef INET6
+	printf("   -4: IPv4 mode.\n");
+	printf("   -6: IPv6 mode.\n");
+#endif
 #ifdef ENABLE_ADMINPORT
 	printf("   -a: port number for admin port.\n");
 #endif
 	printf("   -f: pathname for configuration file.\n");
 	printf("   -l: pathname for log file.\n");
 	printf("   -p: port number for isakmp (default: %d).\n", PORT_ISAKMP);
-#ifdef INET6
-	printf("   -6: IPv6 mode.\n");
-	printf("   -4: IPv4 mode.\n");
-#endif
-	printf("   -B: install SA to the kernel from the file "
-		"specified by the configuration file.\n");
 	exit(1);
 }
 
@@ -134,6 +132,11 @@ main(ac, av)
 {
 	int error;
 
+	if (geteuid() != 0) {
+		errx(1, "must be root to invoke this program.");
+		/* NOTREACHED*/
+	}
+
 	/*
 	 * Don't let anyone read files I write.  Although some files (such as
 	 * the PID file) can be other readable, we dare to use the global mask,
@@ -141,8 +144,10 @@ main(ac, av)
 	 * at the creation time.
 	 */
 	umask(077);
-	if (umask(077) != 077)
+	if (umask(077) != 077) {
 		errx(1, "could not set umask");
+		/* NOTREACHED*/
+	}
 
 	initlcconf();
 	initrmconf();
@@ -159,12 +164,14 @@ main(ac, av)
 #endif
 	plog(LLV_INFO, LOCATION, NULL, "%s\n", version);
 	plog(LLV_INFO, LOCATION, NULL, "@(#)"
-	"This product linked %s (http://www.openssl.org/)"
-	"\n", eay_version());
+	    "This product linked %s (http://www.openssl.org/)"
+	    "\n", eay_version());
 
-	if (pfkey_init() < 0)
+	if (pfkey_init() < 0) {
 		errx(1, "something error happened "
 			"while pfkey initializing.");
+		/* NOTREACHED*/
+	}
 
 	/*
 	 * in order to prefer the parameters by command line,
@@ -189,7 +196,7 @@ main(ac, av)
 	if (f_foreground)
 		close(0);
 	else {
-		char *pid_file = _PATH_VARRUN "racoon.pid";
+		const char *pid_file = _PATH_VARRUN "racoon.pid";
 		pid_t pid;
 		FILE *fp;
 
@@ -238,7 +245,7 @@ main(ac, av)
 static void
 cleanup_pidfile()
 {
-	char *pid_file = _PATH_VARRUN "racoon.pid";
+	const char *pid_file = _PATH_VARRUN "racoon.pid";
 
 	(void) unlink(pid_file);
 }
@@ -329,15 +336,17 @@ parse(ac, av)
 			loading_sa++;
 			break;
 		default:
-			Usage();
-			break;
+			usage();
+			/* NOTREACHED */
 		}
 	}
 	ac -= optind;
 	av += optind;
 
-	optind = 1;
-	optarg = 0;
+	if (ac != 0) {
+		usage();
+		/* NOTREACHED */
+	}
 
 	return;
 }
