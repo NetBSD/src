@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.18 2000/04/16 14:43:57 mrg Exp $	*/
+/*	$NetBSD: scandir.c,v 1.19 2001/10/25 02:02:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.18 2000/04/16 14:43:57 mrg Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.19 2001/10/25 02:02:02 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,11 +89,13 @@ scandir(dirname, namelist, select, dcomp)
 
 	_DIAGASSERT(dirname != NULL);
 	_DIAGASSERT(namelist != NULL);
+	
+	nitems = 0;
 
 	if ((dirp = opendir(dirname)) == NULL)
 		return(-1);
 	if (fstat(dirp->dd_fd, &stb) < 0)
-		return(-1);
+		goto bad;
 
 	/*
 	 * estimate the array size by taking the size of the directory file
@@ -102,9 +104,8 @@ scandir(dirname, namelist, select, dcomp)
 	arraysz = (size_t)(stb.st_size / 24);
 	names = malloc(arraysz * sizeof(struct dirent *));
 	if (names == NULL)
-		return(-1);
+		goto bad;
 
-	nitems = 0;
 	while ((d = readdir(dirp)) != NULL) {
 		if (select != NULL && !(*select)(d))
 			continue;	/* just selected names */
@@ -113,7 +114,7 @@ scandir(dirname, namelist, select, dcomp)
 		 */
 		p = (struct dirent *)malloc(DIRSIZ(d));
 		if (p == NULL)
-			return(-1);
+			goto bad;
 		p->d_fileno = d->d_fileno;
 		p->d_reclen = d->d_reclen;
 		p->d_type = d->d_type;
@@ -124,13 +125,16 @@ scandir(dirname, namelist, select, dcomp)
 		 * realloc the maximum size.
 		 */
 		if (++nitems >= arraysz) {
+			struct dirent **newnames;
+
 			if (fstat(dirp->dd_fd, &stb) < 0)
-				return(-1);	/* just might have grown */
+				goto bad2;	/* just might have grown */
 			arraysz = (size_t)(stb.st_size / 12);
-			names = realloc(names,
+			newnames = realloc(names,
 			    arraysz * sizeof(struct dirent *));
-			if (names == NULL)
-				return(-1);
+			if (newnames == NULL)
+				goto bad2;
+			names = newnames;
 		}
 		names[nitems-1] = p;
 	}
@@ -139,6 +143,18 @@ scandir(dirname, namelist, select, dcomp)
 		qsort(names, nitems, sizeof(struct dirent *), dcomp);
 	*namelist = names;
 	return(nitems);
+bad2:
+	free(p);
+	nitems--;
+bad:
+	if (names) {
+		for (; nitems; )
+			free(names[--nitems]);
+		free(names);
+	}
+	if (dirp)
+		closedir(dirp);
+	return(-1);
 }
 
 /*
