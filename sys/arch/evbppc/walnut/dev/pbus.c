@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.5 2003/07/25 11:44:21 scw Exp $	*/
+/*	$NetBSD: pbus.c,v 1.6 2003/10/10 07:01:50 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.5 2003/07/25 11:44:21 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.6 2003/10/10 07:01:50 simonb Exp $");
 
 #include "locators.h"
 #include "pckbc.h"
@@ -91,7 +91,7 @@ const struct pbus_dev {
 	bus_addr_t addr;
 	int irq;
 } pbus_devs [] = {
-	{ "dsrtc",	NVRAM_BASE,	-1 },
+	{ "ds1743rtc",	NVRAM_BASE,	-1 },
 	{ "pckbc",	KEY_MOUSE_BASE,	25 }, /* XXX: really irq x..x+1 */
 	{ NULL }
 };
