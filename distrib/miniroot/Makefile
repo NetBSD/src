@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2002/04/12 02:34:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.57 2002/04/12 03:21:12 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -23,20 +23,21 @@ PARSELISTENV=	ARCHDIR=${ARCHDIR:Q} \
 
 .include "${ARCHDIR}/Makefile.inc"
 
+IMAGEBUILT=	image.built
+CLEANFILES+=	${IMAGEBUILT}
+IMAGE_MD_POST?=	true
 
-realall: check_DESTDIR .WAIT image
+realall: check_DESTDIR .WAIT ${IMAGEBUILT}
 
-release: check_RELEASEDIR .WAIT image
+release: check_RELEASEDIR .WAIT ${IMAGEBUILT}
 	mkdir -p ${RELEASEDIR}/installation/miniroot
 	gzip -c -9 < ${.OBJDIR}/miniroot.fs \
 		> ${RELEASEDIR}/installation/miniroot/miniroot.fs.gz
 	${MAKESUMS} -t ${RELEASEDIR}/installation/miniroot miniroot.fs.gz
 
-image:	${IMAGE} image_md_post
-
-image_md_post:
-# nothing here; refer to machine-dependant ${ARCHDIR}/Makefile.inc
-
+${IMAGEBUILT}: ${IMAGE}
+	${IMAGE_MD_POST} \
+	&& touch ${IMAGEBUILT}
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .if defined(MAKEDEVTARGETS)
