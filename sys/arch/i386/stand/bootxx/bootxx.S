@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.S,v 1.6 2004/08/19 10:34:36 junyoung Exp $	*/
+/*	$NetBSD: bootxx.S,v 1.7 2004/08/23 06:50:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ ENTRY(bootxx_magic)
 boot_params:				/* space for patchable variables */
 	.long	1f - boot_params	/* length of this data area */
 #include <boot_params.S>
-	.space	4 * 4			/* some spare */
+	. = bootxx + 0x80		/* Space for patching unknown params */
 
 1:	call	gdt_fixup
 
