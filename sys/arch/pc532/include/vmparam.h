@@ -161,6 +161,7 @@
  */
 #define	KLSDIST	3		/* klusters advance/retard for seq. fifo */
 
+#if 0 
 /*
  * Paging thresholds (see vm_sched.c).
  * Strategy of 1/19/85:
@@ -174,6 +175,7 @@
 #define	DESFREEFRACT	8
 #define	MINFREE		(64 * 1024)
 #define	MINFREEFRACT	2
+#endif
 
 /*
  * There are two clock hands, initially separated by HANDSPREAD bytes
