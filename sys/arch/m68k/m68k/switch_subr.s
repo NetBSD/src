@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.1.2.4 2001/12/02 10:43:01 scw Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.1.2.5 2001/12/02 12:40:47 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -529,6 +529,3 @@ ENTRY(m68k_make_fpu_idle_frame)
 	fnop
 	addql	#4,%sp
 	rts
-
-BSS(m68k_cached_fpu_idle_frame,FPF_SIZE)
-
