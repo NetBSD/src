@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.37 2000/02/02 14:23:48 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.38 2000/02/03 06:07:06 chopps Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1342,17 +1342,19 @@ pcic_chip_socket_enable(pch)
 	pcmcia_chipset_handle_t pch;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	int cardtype, win, intr;
+	int cardtype, win, intr, pwr;
 #if defined(DIAGNOSTIC) || defined(PCICDEBUG)
 	int reg;
 #endif
 
-	/* disable interrupts and put in a known state for power down */
-	intr = 0;
+	/* disable interrupts */
+	intr = pcic_read(h, PCIC_INTR);;
+	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
 	pcic_write(h, PCIC_INTR, intr);
 
 	/* power down the socket to reset it, clear the card reset pin */
-	pcic_write(h, PCIC_PWRCTL, 0);
+	pwr = 0;
+	pcic_write(h, PCIC_PWRCTL, pwr);
 
 	/* 
 	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
@@ -1369,10 +1371,9 @@ pcic_chip_socket_enable(pch)
 	pcic_write(h, 0x2f, pcic_read(h, 0x2f) & ~0x03);
 	printf("cvsr = %02x\n", pcic_read(h, 0x2f));
 #endif
-	
 	/* power up the socket */
-	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV |
-	    PCIC_PWRCTL_PWR_ENABLE);
+	pwr |= PCIC_PWRCTL_DISABLE_RESETDRV | PCIC_PWRCTL_PWR_ENABLE;
+	pcic_write(h, PCIC_PWRCTL, pwr);
 
 	/*
 	 * wait 100ms until power raise (Tpr) and 20ms to become
@@ -1382,24 +1383,27 @@ pcic_chip_socket_enable(pch)
 	 * (300ms is added here).
 	 */
 	pcic_delay(h, 100 + 20 + 300, "pccen1");
+	pwr |= PCIC_PWRCTL_OE;
+	pcic_write(h, PCIC_PWRCTL, pwr);
+
+	/* now make sure we have reset# active */
+	intr &= ~PCIC_INTR_RESET;
+	pcic_write(h, PCIC_INTR, intr);
 
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV |
 	    PCIC_PWRCTL_OE | PCIC_PWRCTL_PWR_ENABLE);
 	/*
-	 * hold RESET at least 10us.
+	 * hold RESET at least 10us, this is a min allow for slop in
+	 * delay routine.
 	 */
-	delay(10);
-	pcic_delay(h, 2 + 20, "pccen3");	/* XXX: TI1130 requires it. */
+	delay(20);
 
 	/* clear the reset flag */
 	intr |= PCIC_INTR_RESET;
 	pcic_write(h, PCIC_INTR, intr);
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
-
 	pcic_delay(h, 20, "pccen2");
-
-	/* wait for the chip to finish initializing */
 
 #ifdef DIAGNOSTIC
 	reg = pcic_read(h, PCIC_IF_STATUS);
@@ -1407,7 +1411,7 @@ pcic_chip_socket_enable(pch)
 		printf("pcic_chip_socket_enable: status %x", reg);
 	}
 #endif
-
+	/* wait for the chip to finish initializing */
 	pcic_wait_ready(h);
 
 	/* zero out the address windows */
@@ -1424,11 +1428,9 @@ pcic_chip_socket_enable(pch)
 	    ((cardtype == PCMCIA_IFTYPE_IO) ? "io" : "mem"), reg));
 
 	/* reinstall all the memory and io mappings */
-
 	for (win = 0; win < PCIC_MEM_WINS; win++)
 		if (h->memalloc & (1 << win))
 			pcic_chip_do_mem_map(h, win);
-
 	for (win = 0; win < PCIC_IO_WINS; win++)
 		if (h->ioalloc & (1 << win))
 			pcic_chip_do_io_map(h, win);
@@ -1443,8 +1445,14 @@ pcic_chip_socket_disable(pch)
 	pcmcia_chipset_handle_t pch;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
+	int intr;
 
 	DPRINTF(("pcic_chip_socket_disable\n"));
+
+	/* disable interrupts */
+	intr = pcic_read(h, PCIC_INTR);;
+	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
+	pcic_write(h, PCIC_INTR, intr);
 
 	/* power down the socket */
 	pcic_write(h, PCIC_PWRCTL, 0);
