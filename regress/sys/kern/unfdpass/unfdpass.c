@@ -1,4 +1,4 @@
-/*	$NetBSD: unfdpass.c,v 1.2 1998/01/07 23:38:54 thorpej Exp $	*/
+/*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ main(argc, argv)
 	/*
 	 * Create the listen socket.
 	 */
-	if ((listensock = socket(AF_LOCAL, SOCK_STREAM, 0)) == -1)
+	if ((listensock = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
 	(void) unlink(SOCK_NAME);
@@ -257,7 +257,7 @@ child()
 	/*
 	 * Create socket and connect to the receiver.
 	 */
-	if ((sock = socket(AF_LOCAL, SOCK_STREAM, 0)) == -1)
+	if ((sock = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
 		errx(1, "child socket");
 
 	(void) memset(&sun, 0, sizeof(sun));
