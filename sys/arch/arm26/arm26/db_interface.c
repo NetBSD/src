@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12 2001/11/22 18:00:00 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.13 2001/11/23 21:18:31 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -44,7 +44,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
