@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.44 1994/05/24 06:09:47 deraadt Exp $
+#	$Id: Makefile,v 1.45 1994/06/15 04:28:06 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -14,8 +14,8 @@ NOOBJ=	oobj
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1=	aliases bootptab csh.cshrc csh.login csh.logout daily dm.conf \
-	ftpusers ftpchroot gettytab group hosts hosts.equiv hosts.lpd \
+BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
+	dm.conf ftpusers ftpchroot gettytab group hosts hosts.equiv hosts.lpd \
 	inetd.conf man.conf monthly motd myname netstart newsyslog.conf \
 	phones printcap protocols rc rc.local remote rpc security services \
 	shells syslog.conf weekly etc.${MACHINE}/ttys etc.${MACHINE}/disktab
