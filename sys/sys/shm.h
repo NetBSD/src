@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.26 2000/06/02 15:53:05 simonb Exp $	*/
+/*	$NetBSD: shm.h,v 1.27 2001/03/29 21:16:06 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -126,6 +126,13 @@ struct shmid_ds14 {
 #endif /* _XOPEN_SOURCE */
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+/*
+ * Permission definitions.
+ * Provided for source compatibility only; do not use in new code!
+ */
+#define	SHM_R		IPC_R
+#define	SHM_W		IPC_W
+
 /*
  * System 5 style catch-all structure for shared memory constants that
  * might be of interest to user programs.  Do we really want/need this?
