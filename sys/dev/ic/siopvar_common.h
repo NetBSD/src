@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.4 2000/07/24 15:15:01 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.5 2000/10/06 16:35:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -83,6 +83,7 @@ struct siop_cmd {
 	struct scsipi_sense rs_cmd; /* request sense command buffer */
 	int       status;
 	int       flags;
+	int       reselslot; /* the reselect slot used */
 };
 
 /* command block descriptors: an array of siop_cmd + an array of siop_xfer */
