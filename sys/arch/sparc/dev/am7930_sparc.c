@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.6 1996/02/19 10:30:09 pk Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.7 1996/02/25 21:53:49 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -276,7 +276,7 @@ amd7930match(parent, vcf, aux)
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
-	if (cputyp==CPU_SUN4)
+	if (CPU_ISSUN4)
 		return (0);
 	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.13 1995/12/10 22:55:32 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.14 1996/02/25 21:53:52 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -199,8 +199,7 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 	case BUS_VME16:
 	case BUS_VME32:
 	case BUS_OBIO:
-#if defined(SUN4M)
-		if (cputyp == CPU_SUN4M) {   /* 4m has framebuffer on obio */
+		if (CPU_ISSUN4M) {   /* 4m has framebuffer on obio */
 			fb->fb_type.fb_width = getpropint(node, "width",
 							  def_width);
 			fb->fb_type.fb_height = getpropint(node, "height",
@@ -209,7 +208,6 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 			    (fb->fb_type.fb_width * depth) / 8);
 			break;
 		}
-#endif
 		/* Set up some defaults. */
 		fb->fb_type.fb_width = def_width;
 		fb->fb_type.fb_height = def_height;
@@ -218,12 +216,12 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 		 * This is not particularly useful on Sun 4 VME framebuffers.
 		 * The EEPROM only contains info about the built-in.
 		 */
-		if (cputyp == CPU_SUN4 && (bustype == BUS_VME16 ||
+		if (CPU_ISSUN4 && (bustype == BUS_VME16 ||
 		    bustype == BUS_VME32))
 			goto donesize;
 
 #if defined(SUN4)
-		if (cputyp==CPU_SUN4) {
+		if (CPU_ISSUN4) {
 			struct eeprom *eep = (struct eeprom *)eeprom_va;
 			if (eep != NULL) {
 				switch (eep->eeScreenSize) {
@@ -259,7 +257,7 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 		}
 #endif /* SUN4 */
 #if defined(SUN4M)
-		if (cputyp==CPU_SUN4M) {
+		if (CPU_ISSUN4M) {
 			/* XXX: need code to find 4/600 vme screen size */
 		}
 #endif /* SUN4M */
@@ -332,7 +330,7 @@ fbrcons_init(fb)
 	rc->rc_maxrow = rc->rc_height / rc->rc_font->height; 
 #else
 #if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 
 		if (eep == NULL) {
@@ -344,19 +342,18 @@ fbrcons_init(fb)
 		}
 	}
 #endif /* SUN4 */
-#if defined(SUN4C) || defined(SUN4M)
-	if (cputyp != CPU_SUN4) {
+
+	if (!CPU_ISSUN4) {
 		rc->rc_maxcol =
 		    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
 		rc->rc_maxrow =
 		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 	}
-#endif /* SUN4C || SUN4M */
 #endif /* RASTERCONS_FULLSCREEN || RASTERCONS_SMALLFONT */
 
 #if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
 	/* Determine addresses of prom emulator row and column */
-	if (cputyp == CPU_SUN4 ||
+	if (CPU_ISSUN4 ||
 	    romgetcursoraddr(&rc->rc_row, &rc->rc_col))
 #endif
 		rc->rc_row = rc->rc_col = NULL;

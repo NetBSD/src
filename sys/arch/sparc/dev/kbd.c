@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.20 1996/02/12 21:05:18 pk Exp $ */
+/*	$NetBSD: kbd.c,v 1.21 1996/02/25 21:53:53 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -261,7 +261,7 @@ kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
 	k->k_open = iopen;
 	k->k_close = iclose;
 
-	if (cputyp != CPU_SUN4) {
+	if (!CPU_ISSUN4) {
 		cp = getpropstring(optionsnode, "keyboard-click?");
 		if (cp && strcmp(cp, "true") == 0)
 			k->k_state.kbd_click = 1;
