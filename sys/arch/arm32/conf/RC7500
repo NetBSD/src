@@ -2,7 +2,7 @@
 #	RC7500 - Config for the VLSI RC7500 board
 #
 
-include	"std.arm32"
+include	"arch/arm32/conf/std.arm32"
 
 # estimated number of users
 
@@ -26,8 +26,8 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 
 # FPA options
 
-options		FPE		# Single precision FPE
-#options	ARMFPE		# ARM Ltd FPE
+#options		FPE		# Single precision FPE
+options		ARMFPE		# ARM Ltd FPE
 
 # File system options
 
@@ -61,16 +61,18 @@ options		INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 options		COMPAT_43	# 4.3BSD compatibility.
+options		COMPAT_12	# NetBSD 1.2 compatibility.
+#options	COMPAT_11	# NetBSD 1.1 compatibility.
 #options	COMPAT_10	# NetBSD 1.0 compatibility.
 #options	COMPAT_09	# NetBSD 0.9 compatibility.
 #options	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 # Shared memory options
 
-#options	SYSVMSG		# System V-like message queues
-#options	SYSVSEM		# System V-like semaphores
-#options	SYSVSHM		# System V-like memory sharing
-#options	SHMMAXPGS=1024	# 1024 pages is the default
+options		SYSVMSG		# System V-like message queues
+options		SYSVSEM		# System V-like semaphores
+options		SYSVSHM		# System V-like memory sharing
+options		SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
@@ -102,6 +104,9 @@ mainbus0 at root
 
 # The boot cpu
 cpu0 at mainbus?
+
+# The IOMD
+iomd0 at mainbus?
 
 # The vidc
 vidcvideo0	at mainbus?
