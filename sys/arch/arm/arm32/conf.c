@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 2002/07/19 16:38:17 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.15 2002/07/20 00:26:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -143,6 +143,10 @@
 /*#include "plcom.h"*/
 #ifndef NPLCOM
 #define NPLCOM	0
+#endif
+/*#include "ixpcom.h"*/
+#ifndef NIXPCOM
+#define NIXPCOM	0
 #endif
 
 /*
