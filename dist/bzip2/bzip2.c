@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.1.1.2 2002/03/15 01:35:24 mjl Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.2 2002/03/15 01:54:19 mjl Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -316,6 +316,7 @@ static void    copyFileName ( Char*, Char* );
 static void*   myMalloc     ( Int32 );
 
 
+FILE* fopen_output_safely ( Char*, const char* );
 
 /*---------------------------------------------------*/
 /*--- An implementation of 64-bit ints.  Sigh.    ---*/
