@@ -30,4 +30,4 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-exec ${CC-cc} -ansi ${1+$@}
+exec /usr/bin/cc -ansi ${1+$@}
