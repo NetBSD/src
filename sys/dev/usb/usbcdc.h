@@ -1,4 +1,4 @@
-/*	$NetBSD: usbcdc.h,v 1.2 1999/01/01 15:28:24 augustss Exp $	*/
+/*	$NetBSD: usbcdc.h,v 1.3 1999/01/03 01:09:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,9 +98,9 @@ typedef struct {
 #define UCDC_GET_LINE_CODING		0x21
 
 typedef struct {
-	uWord	wFeatures;
-#define UCDC_DATA_MULTIPLEXED		0x0001
-#define UCDC_IDLE_SETTING		0x0002
+	uWord	wState;
+#define UCDC_IDLE_SETTING		0x0001
+#define UCDC_DATA_MULTIPLEXED		0x0002
 } usb_cdc_abstract_state_t;
 
 typedef struct {
@@ -117,5 +117,24 @@ typedef struct {
 #define UCDC_PARITY_SPACE		4
 	uByte	bDataBits;
 } usb_cdc_line_state_t;
+
+typedef struct {
+	uByte	bmRequestType;
+#define UCDC_NOTIFICATION		0xa1
+	uByte	bNotification;
+#define UCDC_N_NETWORK_CONNECTION	0x00
+#define UCDC_N_RESPONSE_AVAILABLE	0x01
+#define UCDC_N_AUX_JACK_HOOK_STATE	0x08
+#define UCDC_N_RING_DETECT		0x09
+#define UCDC_N_SERIAL_STATE		0x20
+#define UCDC_N_CALL_STATE_CHANGED	0x28
+#define UCDC_N_LINE_STATE_CHANGED	0x29
+#define UCDC_N_CONNECTION_SPEED_CHANGE	0x2a
+	uWord	wValue;
+	uWord	wIndex;
+	uWord	wLength;
+	uByte	data[16];
+} usb_cdc_notification_t;
+#define UCDC_NOTIFICATION_LENGTH 8
 
 #endif /* _USBCDC_H_ */
