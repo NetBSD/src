@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.17.2.5 2004/09/21 13:39:23 skrll Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.17.2.6 2004/10/27 06:24:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.17.2.5 2004/09/21 13:39:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.17.2.6 2004/10/27 06:24:01 skrll Exp $");
 
 #include "opt_quota.h"
 
@@ -158,7 +158,7 @@ ufs_quotactl(mp, cmds, uid, arg, l)
 		break;
 
 	case Q_SYNC:
-		error = qsync(l, mp);
+		error = qsync(mp);
 		break;
 
 	default:

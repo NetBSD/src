@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.27.2.6 2004/09/21 13:39:22 skrll Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.27.2.7 2004/10/27 06:24:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.27.2.6 2004/09/21 13:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.27.2.7 2004/10/27 06:24:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -611,8 +611,7 @@ setuse(mp, id, type, addr)
  * Q_SYNC - sync quota files to disk.
  */
 int
-qsync(l, mp)
-	struct lwp *l;
+qsync(mp)
 	struct mount *mp;
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
