@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.18 1998/10/08 20:11:59 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.19 1998/10/08 20:43:42 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
 
 /* Socket Communications Products */
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
-product SOCKET DUAL_RS232	0x0012 Socket Communications Dual RS232
+product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 
 /* TDK Products */
 product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
