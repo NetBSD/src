@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.195 2000/02/24 03:00:10 itojun Exp $
+#	$NetBSD: mi,v 1.196 2000/02/26 15:46:02 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -507,6 +507,7 @@
 ./usr/include/histedit.h		comp-c-include
 ./usr/include/history.h		comp-c-include
 ./usr/include/ieeefp.h		comp-c-include
+./usr/include/ifaddrs.h		comp-c-include
 ./usr/include/inttypes.h		comp-c-include
 ./usr/include/iso646.h		comp-c-include
 ./usr/include/isofs		comp-c-include
