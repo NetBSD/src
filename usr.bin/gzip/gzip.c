@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.4 2003/12/23 15:02:40 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.5 2003/12/26 14:11:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.4 2003/12/23 15:02:40 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.5 2003/12/26 14:11:01 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -76,6 +76,7 @@ static	char	gzipflags[3];		/* `w' or `r', possible with [1-9] */
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
 static	int	fflag;			/* force mode */
+static	int	lflag;			/* list mode */
 static	int	nflag;			/* don't save name/timestamp */
 static	int	Nflag;			/* don't restore name/timestamp */
 static	int	qflag;			/* quiet mode */
@@ -105,6 +106,7 @@ static	void	handle_stdin(void);
 static	void	handle_stdout(void);
 static	void	print_verbage(char *, char *, ssize_t, ssize_t);
 static	void	print_test(char *, int);
+static	void	print_list(int fd, struct stat *sbp, const char *);
 
 int main(int, char *p[]);
 
@@ -115,6 +117,7 @@ static const struct option longopts[] = {
 	{ "uncompress",		no_argument,		0,	'd' },
 	{ "force",		no_argument,		0,	'f' },
 	{ "help",		no_argument,		0,	'h' },
+	{ "list",		no_argument,		0,	'l' },
 	{ "no-name",		no_argument,		0,	'n' },
 	{ "name",		no_argument,		0,	'N' },
 	{ "quiet",		no_argument,		0,	'q' },
@@ -132,7 +135,6 @@ static const struct option longopts[] = {
 	 * care to have a --license.
 	 */
 	{ "ascii",		no_argument,		0,	'a' },
-	{ "list",		no_argument,		0,	'l' },
 	{ "license",		no_argument,		0,	'L' },
 #endif
 };
@@ -172,6 +174,11 @@ main(int argc, char **argv)
 		case 'H':
 			usage();
 			/* NOTREACHED */
+		case 'l':
+			lflag = 1;
+			tflag = 1;
+			dflag = 1;
+			break;
 		case 'n':
 			nflag = 1;
 			Nflag = 0;
@@ -212,6 +219,9 @@ main(int argc, char **argv)
 	if (dflag)
 		gzipflags[0] = 'r';
 
+	if (lflag && vflag)
+		errx(1, "does not support --list and --verbose together yet");
+
 	suffix_len = strlen(Sflag) + 1;
 
 	if (argc == 0) {
@@ -222,7 +232,7 @@ main(int argc, char **argv)
 	} else {
 		do {
 			handle_pathname(argv[0]);
-		} while (argv++, --argc);
+		} while (*++argv);
 	}
 	exit(0);
 }
@@ -378,10 +388,10 @@ copymodes(const char *file, struct stat *sbp)
 static ssize_t
 file_compress(char *file)
 {
-	char outfile[MAXPATHLEN];
 	FILE *in;
 	gzFile out;
 	struct stat isb, osb;
+	char outfile[MAXPATHLEN];
 	ssize_t size;
 	u_int32_t mtime = 0;
 
@@ -466,14 +476,14 @@ static ssize_t
 file_uncompress(char *file)
 {
 	struct stat isb, osb;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 	char *outfile = buf, *s;
 	FILE *out;
 	gzFile in;
 	off_t size;
 	ssize_t len = strlen(file);
 
-	if (cflag == 0) {
+	if (cflag == 0 || lflag) {
 		s = &file[len - suffix_len + 1];
 		if (strncmp(s, Sflag, suffix_len) == 0) {
 			(void)strncpy(outfile, file, len - suffix_len + 1);
@@ -482,7 +492,7 @@ file_uncompress(char *file)
 			maybe_err(1, "unknown suffix %s", s);
 
 		/* gather the old name info */
-		if (Nflag) {
+		if (Nflag || lflag) {
 			int fd;
 			char header1[10], name[PATH_MAX + 1];
 
@@ -518,19 +528,32 @@ file_uncompress(char *file)
 		}
 
 		if (fflag == 0) {
-			if (stat(outfile, &isb) == 0) {
+			if (lflag == 0 && stat(outfile, &osb) == 0) {
 				maybe_warnx("%s already exists -- skipping",
 					    outfile);
 				goto lose;
 			}
-			if (stat(file, &isb) == 0 && isb.st_nlink > 1) {
-				maybe_warnx("%s has %d other link%s -- "
+			if (stat(file, &isb) == 0) {
+				if (isb.st_nlink > 1 && lflag == 0) {
+					maybe_warnx("%s has %d other link%s -- "
 					    "skipping", file, isb.st_nlink-1,
 					    isb.st_nlink == 1 ? "" : "s");
+					goto lose;
+				}
+			} else
 				goto lose;
-			}
 		}
 	}
+
+	if (lflag) {
+		int fd;
+
+		if ((fd = open(file, O_RDONLY)) == -1)
+			maybe_err(1, "open");
+		print_list(fd, &isb, outfile);
+		return 0;	/* XXX */
+	}
+
 	in = gzopen(file, gzipflags);
 	if (in == NULL)
 		maybe_err(1, "can't gzopen %s", file);
@@ -596,10 +619,20 @@ handle_stdin(void)
 {
 	gzFile *file;
 
-	if (fflag == 0 && isatty(STDIN_FILENO)) {
+	if (fflag == 0 && lflag == 0 && isatty(STDIN_FILENO)) {
 		maybe_warnx("standard input is a terminal -- ignoring");
 		return;
 	}
+
+	if (lflag) {
+		struct stat isb;
+
+		if (fstat(STDIN_FILENO, &isb) < 0)
+			maybe_err(1, "fstat");
+		print_list(STDIN_FILENO, &isb, "-");
+		return;
+	}
+
 	file = gzdopen(STDIN_FILENO, gzipflags);
 	if (file == NULL)
 		maybe_err(1, "can't gzdopen stdin");
@@ -732,10 +765,12 @@ handle_dir(char *dir, struct stat *sbp)
 static void
 print_verbage(char *file, char *nfile, ssize_t usize, ssize_t gsize)
 {
-	float percent = 100.0 - (100.0 * gsize / usize);
+	off_t percent = 1000 - (1000 * gsize / usize);
 
-	fprintf(stderr, "%s:%s  %4.1f%%", file,
-	    strlen(file) < 7 ? "\t\t" : "\t", percent);
+	fprintf(stderr, "%s:%s  %2lu.%1lu%%", file,
+	    strlen(file) < 7 ? "\t\t" : "\t",
+	    (unsigned long)percent / 10UL,
+	    (unsigned long)percent % 10);
 	if (nfile)
 		fprintf(stderr, " -- replaced with %s", nfile);
 	fprintf(stderr, "\n");
@@ -750,6 +785,43 @@ print_test(char *file, int ok)
 	fprintf(stderr, "%s:%s  %s\n", file,
 	    strlen(file) < 7 ? "\t\t" : "\t", ok ? "OK" : "NOT OK");
 	fflush(stderr);
+}
+
+/* print a file's info ala --list */
+/* eg:
+  compressed uncompressed  ratio uncompressed_name
+      354841      1679360  78.8% /usr/pkgsrc/distfiles/libglade-2.0.1.tar
+*/
+static void
+print_list(int fd, struct stat *sbp, const char *outfile)
+{
+	off_t percent;
+	static int first = 1;
+	off_t in, out;
+	int rv;
+
+	if (qflag == 0 && first)
+		printf("  compressed uncompressed  ratio uncompressed_name\n");
+	first = 0;
+
+	in = sbp->st_size;
+
+	/* read the last 4 bytes - this is the uncompressed size */
+	rv = lseek(fd, (off_t)(-4), SEEK_END);
+	if (rv != -1) {
+		unsigned char buf[4];
+		u_int32_t usize;
+
+		if (read(fd, (char *)buf, sizeof(buf)) != sizeof(buf))
+			maybe_err(1, "read of uncompressed size");
+		usize = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
+		out = (off_t)usize;
+	}
+
+	percent = 1000 - (1000 * in / out);
+	printf("%12llu %12llu %3lu.%1lu%% %s\n", (unsigned long long)in,
+	    (unsigned long long)out, (unsigned long)percent / 10UL,
+	    (unsigned long)percent % 10, outfile);
 }
 
 /* display the usage of NetBSD gzip */
