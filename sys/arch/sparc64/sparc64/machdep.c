@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2000/07/09 20:57:51 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.77 2000/07/09 22:39:17 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -322,6 +322,8 @@ setregs(p, pack, stack)
 	register struct trapframe64 *tf = p->p_md.md_tf;
 	register struct fpstate64 *fs;
 	register int64_t tstate;
+	int pstate = PSTATE_USER;
+	Elf_Ehdr *eh = epp->ep_hdr;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
@@ -333,8 +335,33 @@ setregs(p, pack, stack)
 	 *	%g1: address of PS_STRINGS (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
+#ifdef __arch64__
+	/* Check what memory model is requested */
+#define	EF_SPARCV9_MM	0x3
+#define	EF_SPARCV9_TSO	0x0
+#define	EF_SPARCV9_PSO	0x1
+#define	EF_SPARCV9_RMO	0x2
+#define	EF_SPARC_SUN_U1	0x000200
+#define	EF_SPARC_HAL_R1	0x000400
+
+	switch ((eh->e_flags & EF_SPARCV9_MM)) {
+	default:
+		printf("Unknown memory model %d\n", 
+		       (eh->e_flags & EF_SPARCV9_MM));
+		/* FALLTHROUGH */
+	case EF_SPARCV9_TSO:
+		pstate = PSTATE_MM_TSO|PSTATE_IE;
+		break;
+	case EF_SPARCV9_PSO:
+		pstate = PSTATE_MM_PSO|PSTATE_IE;
+		break;
+	case EF_SPARCV9_RMO:
+		pstate = PSTATE_MM_RMO|PSTATE_IE;
+		break;
+	}
+#endif
 	tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
-		((PSTATE_USER)<<TSTATE_PSTATE_SHIFT) | 
+		((pstate)<<TSTATE_PSTATE_SHIFT) | 
 		(tf->tf_tstate & TSTATE_CWP);
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		/*
@@ -823,7 +850,7 @@ cpu_dumpconf()
 	dumpsize = physmem;
 }
 
-#define	BYTES_PER_DUMP	(8 * 1024)	/* must be a multiple of pagesize */
+#define	BYTES_PER_DUMP	(NBPG)	/* must be a multiple of pagesize */
 static vaddr_t dumpspace;
 
 caddr_t
@@ -904,8 +931,10 @@ printf("dumping segment at %llx\n", maddr);
 				printf("%d ", i / (1024*1024));
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
 					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+printf("calling dump of %llx\n", maddr);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
+printf("%llx done\n", maddr);
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
 			if (error)
 				break;
