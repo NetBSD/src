@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.6 1999/06/18 20:25:25 augustss Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.7 2001/11/13 07:56:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.7 2001/11/13 07:56:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
