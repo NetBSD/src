@@ -1788,7 +1788,7 @@ fi
 if test "${enable_sim_powerpc+set}" = set; then
   enableval="$enable_sim_powerpc"
   case "${enableval}" in
-yes)	powerpc_sim=yes ;; SIM=../sim/ppc/libsim.a ; SIM_OBS=remote-sim.o ;;
+yes)	powerpc_sim=yes ; SIM=../sim/ppc/libsim.a ; SIM_OBS=remote-sim.o ;;
 no)	powerpc_sim=no ;;
 *)	{ echo "configure: error: bad value ${enableval} given for sim-powerpc option" 1>&2; exit 1; } ;;
 esac
