@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.6 2001/01/20 17:40:10 itojun Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.7 2001/02/06 18:48:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.6 2001/01/20 17:40:10 itojun Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.7 2001/02/06 18:48:41 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
@@ -65,8 +65,8 @@ __maskrune_w(c, f)
 	wint_t c;
 	unsigned long f;
 {
-	return ((c < 0 || c >= _CACHED_RUNES) ? ___runetype_mb(c) :
-		_CurrentRuneLocale->__runetype[c]) & f;
+	return (int)(((c < 0 || c >= _CACHED_RUNES) ? ___runetype_mb(c) :
+		_CurrentRuneLocale->__runetype[c]) & f);
 }
 
 static __inline wint_t
