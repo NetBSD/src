@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 #
-# $NetBSD: mkoldconf.awk,v 1.2 1995/02/23 17:50:59 ragge Exp $
+# $NetBSD: mkoldconf.awk,v 1.3 1995/03/29 22:50:51 ragge Exp $
 #
 
 /tmscd/{
@@ -19,6 +19,12 @@
 	deplats[nde]=$2;
 	deaddr[nde]=$5;
 	nde++;
+}
+
+/qecd/{
+	qeplats[nqe]=$2;
+	qeaddr[nqe]=$5;
+	nqe++;
 }
 
 {
@@ -40,7 +46,7 @@
 
 /tmscpcd/{
 	tmscpplats[ntmscp]=$2;
-	tmscpddr[ntmscp]=$5;
+	tmscpaddr[ntmscp]=$5;
 	ntmscp++;
 	tmssavenext=1;
 }
@@ -101,9 +107,11 @@ printf "int antal_tmscp=%d;\n",ntmscp-1
 
 printf "extern struct uba_driver udadriver;\n"
 printf "extern struct uba_driver dedriver;\n"
+printf "extern struct uba_driver qedriver;\n"
 if(ntms) printf "extern struct uba_driver tmscpdriver;\n"
 if(ntms) printf "int tmscpintr();\n"
 printf "int deintr();\n"
+printf "int qeintr();\n"
 printf "int udaintr();\n"
 printf "int udacd=0, racd=0, tmscpcd=0, tmscd=0;\n"
 printf "#define C (caddr_t)\n"
@@ -116,7 +124,7 @@ for(i=1;i<nuda;i++){
 }
 for(i=1;i<ntmscp;i++){
 	k=sprintf("%d",tmscpaddr[i])
-if(ntms)printf "        { &tmscpdriver, %d,0,0,tmscpintr,C %s},\n",
+if(ntms)printf "        { &tmscpdriver, %d,'?',0,tmscpintr,C %s},\n",
 	tmscpplats[i],loc[k+1]
 }
 printf "0};\n"
@@ -132,9 +140,14 @@ for(i=1;i<nde;i++){
 	printf "	{&dedriver,%d,-1,0,-1,deintr,C %s0,0},\n",deplats[i],
 		loc[k+1]
 }
+for(i=1;i<nqe;i++){
+	k=sprintf("%d",qeaddr[i])
+	printf "	{&qedriver,%d,-1,0,-1,qeintr,C %s0,0},\n",qeplats[i],
+		loc[k+1]
+}
 for(i=1;i<ntms;i++){
 	k=sprintf("%d",tmsaddr[i])
-	printf "	{&tmscpdriver,0,0,'?',0,0,C 0,1,0},\n"
+	printf "	{&tmscpdriver,%d,0,'?',0,0,C 0,1,0},\n",tmsplats[i]
 }
 printf "0};\n"
 
