@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# $NetBSD: mixerctl,v 1.1 2002/06/02 18:36:46 jmcneill Exp $
+#
+
+# PROVIDE: mixerctl
+
+. /etc/rc.subr
+
+name="mixerctl"
+start_cmd="mixerctl_start"
+stop_cmd=":"
+
+mixerctl_start()
+{
+	if [ -r /etc/mixerctl.conf ]; then
+		echo "Setting mixerctl variables..."
+		cat /etc/mixerctl.conf | (
+			while read setting; do
+				mixerctl -n -w "$setting"
+			done
+		)
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"
