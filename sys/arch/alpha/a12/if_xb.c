@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.4 2000/12/12 18:00:22 thorpej Exp $ */
+/* $NetBSD: if_xb.c,v 1.5 2001/01/14 17:37:41 thorpej Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.4 2000/12/12 18:00:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.5 2001/01/14 17:37:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %d\n", "$Revision: 1.4 $", xbi.if_mtu);
+	printf(": driver %s mtu %d\n", "$Revision: 1.5 $", xbi.if_mtu);
 }
 
 static void
@@ -359,8 +359,8 @@ int	s = 0;	/* XXX gcc */
 		xb_ibp   += 2;
 		if (xb_intr_rcv_state == XBIR_PKTHDR) {
 			if (XB_DEBUG) {
-				s = splimp();
-				if (s != splimp())
+				s = splnet();
+				if (s != splnet())
 					DIE();
 			}
 		      ++xbi.if_ipackets;
@@ -430,7 +430,7 @@ xb_ioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 	switch (cmd) {
 	case SIOCSIFADDR:
 		xbi.if_flags |= IFF_UP;
@@ -557,7 +557,7 @@ xb_output(ifp, m0, dst, rt0)
 		xbh += 16;
 	}
 	bcopy(&xbo_framesize, xbh, 8);
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
 	      ++ifp->if_oerrors;
