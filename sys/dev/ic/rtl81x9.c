@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.11 2000/05/21 13:00:46 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.12 2000/09/01 15:07:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -468,6 +468,9 @@ STATIC int rtk_phy_readreg(self, phy, reg)
 		case MII_ANAR:
 			rtk8139_reg = RTK_ANAR;
 			break;
+		case MII_ANER:
+			rtk8139_reg = RTK_ANER;
+			break;
 		case MII_ANLPAR:
 			rtk8139_reg = RTK_LPAR;
 			break;
@@ -512,6 +515,9 @@ STATIC void rtk_phy_writereg(self, phy, reg, data)
 			break;
 		case MII_ANAR:
 			rtk8139_reg = RTK_ANAR;
+			break;
+		case MII_ANER:
+			rtk8139_reg = RTK_ANER;
 			break;
 		case MII_ANLPAR:
 			rtk8139_reg = RTK_LPAR;
@@ -1367,17 +1373,8 @@ STATIC void rtk_init(xsc)
 	struct ifnet		*ifp = &sc->ethercom.ec_if;
 	int			s, i;
 	u_int32_t		rxcfg;
-	u_int16_t		phy_bmcr = 0;
 
 	s = splnet();
-
-	/*
-	 * XXX Hack for the 8139: the built-in autoneg logic's state
-	 * gets reset by rtk_init() when we don't want it to. Try
-	 * to preserve it.
-	 */
-	if (sc->rtk_type == RTK_8139)
-		phy_bmcr = rtk_phy_readreg((struct device *)sc, 7, MII_BMCR);
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1448,10 +1445,6 @@ STATIC void rtk_init(xsc)
 	/* Enable receiver and transmitter. */
 	CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_TX_ENB|RTK_CMD_RX_ENB);
 
-	/* Restore state of BMCR */
-	if (sc->rtk_type == RTK_8139)
-		rtk_phy_writereg((struct device *)sc, 7, MII_BMCR, phy_bmcr);
-
 	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD|RTK_CFG1_FULLDUPLEX);
 
 	/*
@@ -1474,13 +1467,8 @@ STATIC int rtk_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	struct rtk_softc	*sc;
-	struct ifmedia		*ifm;
 
 	sc = ifp->if_softc;
-	ifm = &sc->mii.mii_media;
-
-	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
-		return(EINVAL);
 
 	return (mii_mediachg(&sc->mii));
 }
@@ -1564,7 +1552,7 @@ STATIC int rtk_ioctl(ifp, command, data)
 
 	s = splnet();
 
-	switch(command) {
+	switch (command) {
 	case SIOCSIFADDR:
 	case SIOCGIFADDR:
 	case SIOCSIFMTU:
@@ -1585,8 +1573,18 @@ STATIC int rtk_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		rtk_setmulti(sc);
-		error = 0;
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->ethercom) :
+		    ether_delmulti(ifr, &sc->ethercom);
+
+		if (error == ENETRESET) { 
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			rtk_setmulti(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
@@ -1597,7 +1595,7 @@ STATIC int rtk_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }
