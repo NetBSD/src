@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.22 1998/08/13 02:10:51 eeh Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.23 1998/08/16 03:44:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -94,11 +94,7 @@ enum _pdq_type_t {
 #define PDQ_BUS_DMA
 #endif
 #if !defined(PDQ_BUS_DMA)
-#if defined(__NetBSD__) && defined(__alpha__) 
-#define	PDQ_OS_VA_TO_BUSPA(pdq, p)		(alpha_XXX_dmamap((vaddr_t)p))
-#else
 #define	PDQ_OS_VA_TO_BUSPA(pdq, p)		vtophys(p)
-#endif
 #endif
 #define	PDQ_OS_MEMALLOC(n)		malloc(n, M_DEVBUF, M_NOWAIT)
 #define	PDQ_OS_MEMFREE(p, n)		free((void *) p, M_DEVBUF)
@@ -162,6 +158,7 @@ typedef	bus_space_tag_t pdq_bus_t;
 typedef	bus_space_handle_t pdq_bus_ioport_t;
 typedef	bus_space_handle_t pdq_bus_memaddr_t;
 typedef bus_addr_t pdq_bus_memoffset_t;
+#define	PDQ_OS_SPL_RAISE()	splnet()
 #define	PDQ_OS_IOMEM
 #define PDQ_OS_IORD_32(t, base, offset)		bus_space_read_4  (t, base, offset)
 #define PDQ_OS_IOWR_32(t, base, offset, data)	bus_space_write_4 (t, base, offset, data)
@@ -249,6 +246,14 @@ extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *osctx, struct mbuf *m);
 
 #if !defined(PDQ_BPFATTACH)
 #define	PDQ_BPFATTACH(sc, t, s)	bpfattach(&(sc)->sc_bpf, &(sc)->sc_if, t, s)
+#endif
+
+#if !defined(PDQ_OS_SPL_RAISE)
+#define	PDQ_OS_SPL_RAISE()	splimp()
+#endif
+
+#if !defined(PDQ_OS_LOWER_SPL)
+#define	PDQ_OS_SPL_LOWER(s)	splx(s)
 #endif
 
 #if !defined(PDQ_FDDICOM)
