@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.6.2.6 2005/02/15 21:32:51 skrll Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.6.2.7 2005/03/04 16:39:09 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6.2.6 $"
+#ident 		"GENERIC-$Revision: 1.6.2.7 $"
 
 maxusers	32
 
@@ -52,6 +52,8 @@ options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_16
+options 	COMPAT_20
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX		# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -73,7 +75,7 @@ file-system 	UMAPFS
 file-system 	UNION
 
 options 	SOFTDEP		# FFS soft updates support.
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 options 	INET
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG

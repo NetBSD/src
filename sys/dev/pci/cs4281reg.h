@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281reg.h,v 1.3.28.1 2005/01/17 19:31:24 skrll Exp $	*/
+/*	$NetBSD: cs4281reg.h,v 1.3.28.2 2005/03/04 16:45:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 
-#define CS4281_BA0_SIZE		
+#define CS4281_BA0_SIZE
 #define CS4281_BA1_SIZE		0x10000
 #define CS4281_BUFFER_SIZE	0x10000
 

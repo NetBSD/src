@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.1.60.4 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.1.60.5 2005/03/04 16:38:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -118,8 +118,7 @@ struct	disklabel sdlabel;
 struct sd_softc sd_softc[NSCSI][NSD];
 
 static int
-sdinit(ctlr, unit)
-	int ctlr, unit;
+sdinit(int ctlr, int unit)
 {
 	struct sd_softc *ss = &sd_softc[ctlr][unit];
 	u_char stat;
@@ -157,8 +156,7 @@ sdinit(ctlr, unit)
 char io_buf[MAXBSIZE];
 
 static int
-sdgetinfo(ss)
-	struct sd_softc *ss;
+sdgetinfo(struct sd_softc *ss)
 {
 	struct sdminilabel *pi = &ss->sc_pinfo;
 	struct disklabel *lp = &sdlabel;
@@ -238,8 +236,7 @@ sdopen(struct open_file *f, ...)
 }
 
 int
-sdclose(f)
-	struct open_file *f;
+sdclose(struct open_file *f)
 {
 	struct sd_softc *ss = f->f_devdata;
 
@@ -254,13 +251,8 @@ sdclose(f)
 }
 
 int
-sdstrategy(devdata, func, dblk, size, v_buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *v_buf;
-	size_t *rsize;
+sdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+    size_t *rsize)
 {
 	struct sd_softc *ss = devdata;
 	char *buf = v_buf;

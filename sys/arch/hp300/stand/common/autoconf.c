@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.36.3 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.36.4 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -111,7 +111,7 @@ static void find_devs(void);
 
 #ifdef PRINTROMINFO
 void
-printrominfo()
+printrominfo(void)
 {
 	struct rominfo *rp = (struct rominfo *)ROMADDR;
 
@@ -123,7 +123,7 @@ printrominfo()
 #endif
 
 void
-configure()
+configure(void)
 {
 
 	switch (machineid) {
@@ -174,7 +174,7 @@ configure()
  *		(passed back via unused hw_pa field)
  */
 static u_long
-msustobdev()
+msustobdev(void)
 {
 	struct rominfo *rp = (struct rominfo *) ROMADDR;
 	u_long bdev = 0;
@@ -200,8 +200,7 @@ msustobdev()
 }
 
 int
-sctoaddr(sc)
-	int sc;
+sctoaddr(int sc)
 {
 
 	if (sc == -1)
@@ -222,7 +221,7 @@ sctoaddr(sc)
  * Note that we only care about displays, LANCEs, SCSIs and HP-IBs.
  */
 static void
-find_devs()
+find_devs(void)
 {
 	short sc, sctop;
 	u_char *id_reg;

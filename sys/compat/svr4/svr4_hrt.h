@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_hrt.h,v 1.2 1998/09/04 19:54:38 christos Exp $	 */
+/*	$NetBSD: svr4_hrt.h,v 1.2.46.1 2005/03/04 16:40:29 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -86,10 +86,10 @@ typedef struct {
 } svr4_hrt_time_t;
 
 #define	SVR4_HRT_DONE	1
-#define	SVR4_HRT_ERROR	2	
+#define	SVR4_HRT_ERROR	2
 
 #define SVR4_HRT_CLK_STD	1
 #define SVR4_HRT_CLK_USERVIRT	2
-#define SVR4_HRT_CLK_PROCVIRT	4	
+#define SVR4_HRT_CLK_PROCVIRT	4
 
 #endif /* !_SVR4_HRT_H_ */

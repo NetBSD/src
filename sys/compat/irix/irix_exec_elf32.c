@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.7.2.5 2005/01/13 08:33:11 skrll Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.7.2.6 2005/03/04 16:39:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.7.2.5 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.7.2.6 2005/03/04 16:39:38 skrll Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -71,8 +71,8 @@ ELFNAME2(irix,probe_o32)(l, epp, eh, itp, pos)
 	struct lwp *l;
 	struct exec_package *epp;
 	void *eh;
-	char *itp; 
-	vaddr_t *pos; 
+	char *itp;
+	vaddr_t *pos;
 {
 	int error = 0;
 
@@ -85,7 +85,7 @@ ELFNAME2(irix,probe_o32)(l, epp, eh, itp, pos)
 
 	if (itp) {
 		/* o32 binaries use /lib/libc.so.1 */
-		if (strncmp(itp, "/lib/libc.so", 12) && 
+		if (strncmp(itp, "/lib/libc.so", 12) &&
 		    strncmp(itp, "/usr/lib/libc.so", 16))
 			return ENOEXEC;
 		if ((error = emul_find_interp(l,
@@ -109,8 +109,8 @@ ELFNAME2(irix,probe_n32)(l, epp, eh, itp, pos)
 	struct lwp *l;
 	struct exec_package *epp;
 	void *eh;
-	char *itp; 
-	vaddr_t *pos; 
+	char *itp;
+	vaddr_t *pos;
 {
 	int error = 0;
 
@@ -155,7 +155,7 @@ ELFNAME2(irix,copyargs)(l, pack, arginfo, stackp, argp)
 	int error;
 
 	/*
-	 * IRIX seems to expect argc and **argv to be aligned on a 
+	 * IRIX seems to expect argc and **argv to be aligned on a
 	 * 16 bytes boundary. It seems there is no other way of
 	 * getting **argv aligned than duplicating and customizing
 	 * the code that sets up the stack in copyargs():
@@ -163,7 +163,7 @@ ELFNAME2(irix,copyargs)(l, pack, arginfo, stackp, argp)
 #ifdef DEBUG_IRIX
 	printf("irix_elf32_copyargs(): *stackp = %p\n", *stackp);
 #endif
-	/* 
+	/*
 	 * This is borrowed from sys/kern/kern_exec.c:copyargs()
 	 */
 	cpp = (char **)*stackp;

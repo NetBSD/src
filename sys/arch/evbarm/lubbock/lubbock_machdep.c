@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.1.2.4 2004/12/18 09:31:02 skrll Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.1.2.5 2005/03/04 16:38:25 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.1.2.4 2004/12/18 09:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.1.2.5 2005/03/04 16:38:25 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1147,20 +1147,19 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0) && defined(COM_PXA2X0)
 	paddr_t paddr = 0;
-	enum pxa2x0_uart_id uart_id;
 	uint32_t ckenreg = ioreg_read(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN);
 
 	if (0 == strcmp(kgdb_devname, "ffuart")) {
 		paddr = PXA2X0_FFUART_BASE;
-		clenreg |= CKEN_FFUART;
+		ckenreg |= CKEN_FFUART;
 	}
 	else if (0 == strcmp(kgdb_devname, "btuart")) {
 		paddr = PXA2X0_BTUART_BASE;
-		clenreg |= CKEN_BTUART;
+		ckenreg |= CKEN_BTUART;
 	}
 
 	if (paddr &&
-	    0 == com_kgdb_attach_pxa2x0(&pxa2x0_a4x_bs_tag, paddr,
+	    0 == com_kgdb_attach(&pxa2x0_a4x_bs_tag, paddr,
 		kgdb_rate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode)) {
 
 		ioreg_write(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN, ckenreg);

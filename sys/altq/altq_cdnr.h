@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.h,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
+/*	$NetBSD: altq_cdnr.h,v 1.2.26.1 2005/03/04 16:38:00 skrll Exp $	*/
 /*	$KAME: altq_cdnr.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ struct cdnr_tbmeter_stats {
 struct cdnr_add_trtcm {
 	struct cdnr_interface	iface;
 	struct tb_profile	cmtd_profile;	/* profile for committed tb */
-	struct tb_profile	peak_profile;	/* profile for peak tb */ 
+	struct tb_profile	peak_profile;	/* profile for peak tb */
 	struct tc_action	green_action;	/* action for green packets */
 	struct tc_action	yellow_action;	/* action for yellow packets */
 	struct tc_action	red_action;	/* action for red packets */
@@ -130,7 +130,7 @@ struct cdnr_modify_trtcm {
 	struct cdnr_interface	iface;
 	u_long			cdnr_handle;
 	struct tb_profile	cmtd_profile;	/* profile for committed tb */
-	struct tb_profile	peak_profile;	/* profile for peak tb */ 
+	struct tb_profile	peak_profile;	/* profile for peak tb */
 	int			coloraware;	/* color-aware/color-blind */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.11 2003/01/18 08:02:48 thorpej Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.11.2.1 2005/03/04 16:39:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11 2003/01/18 08:02:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11.2.1 2005/03/04 16:39:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -106,7 +106,7 @@ struct linux_user {
 	unsigned long int u_dsize;	/* Data segment size (pages). */
 	unsigned long int u_ssize;	/* Stack segment size (pages). */
 	unsigned long start_code;	/* Starting virtual address of text. */
-	unsigned long start_stack;	/* Starting virtual address of stack 
+	unsigned long start_stack;	/* Starting virtual address of stack
 					   area. This is actually the bottom of
 					   the stack, the top of the stack is
 					   always found in the esp register. */
@@ -188,7 +188,7 @@ linux_sys_ptrace_arch(l, v, retval)
 
 	/* XXX NJWLWP
 	 * The entire ptrace interface needs work to be useful to
-	 * a process with multiple LWPs. For the moment, we'll 
+	 * a process with multiple LWPs. For the moment, we'll
 	 * just kluge this and fail on others.
 	 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24.2.3 2004/09/21 13:14:40 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24.2.4 2005/03/04 16:38:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.2.3 2004/09/21 13:14:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.2.4 2005/03/04 16:38:14 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -116,7 +116,7 @@ void main(void) __attribute__((__noreturn__));
 void dreamcast_startup(void) __attribute__((__noreturn__));
 
 void
-dreamcast_startup()
+dreamcast_startup(void)
 {
 	extern char edata[], end[];
 	paddr_t kernend;
@@ -166,7 +166,7 @@ dreamcast_startup()
 }
 
 void
-consinit()
+consinit(void)
 {
 	static int initted;
 
@@ -178,7 +178,7 @@ consinit()
 }
 
 void
-cpu_startup()
+cpu_startup(void)
 {
 
 	strcpy(cpu_model, "SEGA Dreamcast\n");

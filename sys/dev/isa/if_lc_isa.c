@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.16.6.4 2005/02/04 11:46:08 skrll Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.16.6.5 2005/03/04 16:43:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16.6.4 2005/02/04 11:46:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16.6.5 2005/03/04 16:43:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ lemac_isa_probe(parent, match, aux)
 	lemac_softc_t sc;
 	snprintf(sc.sc_dv.dv_xname, sizeof(sc.sc_dv.dv_xname), "%s%d",
 	    lc_cd.cd_name, cf->cf_unit);
-    
+
 	return lemac_isa_find(&sc, ia, 0);
 }
 

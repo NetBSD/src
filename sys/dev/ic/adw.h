@@ -1,9 +1,9 @@
-/*      $NetBSD: adw.h,v 1.9.28.4 2005/02/04 11:45:23 skrll Exp $        */
+/*      $NetBSD: adw.h,v 1.9.28.5 2005/03/04 16:41:24 skrll Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. SCSI controllers
- * 
+ *
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -53,7 +53,7 @@ typedef void (* ADW_ASYNC_CALLBACK) (ADW_SOFTC *, u_int8_t);
  */
 #define ADW_MAX_SG_LIST		255
 
-/* 
+/*
  * Scatter-Gather Definitions per request.
  */
 
@@ -68,7 +68,7 @@ struct adw_ccb {
 	ADW_SCSI_REQ_Q		scsiq;
 	ADW_SG_BLOCK		sg_block[ADW_NUM_SG_BLOCK];
 
-	struct scsipi_sense_data scsi_sense;
+	struct scsi_sense_data scsi_sense;
 
 	TAILQ_ENTRY(adw_ccb)	chain;
 	struct adw_ccb		*nexthash;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.10 2003/01/18 08:02:50 thorpej Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.10.2.1 2005/03/04 16:40:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.10 2003/01/18 08:02:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.10.2.1 2005/03/04 16:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -64,37 +64,37 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.10 2003/01/18 08:02:50 thorpej Ex
 
 #include <lib/libkern/libkern.h>	/* for offsetof() */
 
-/* 
- * From Linux's include/asm-ppc/ptrace.h.  
- * structure used for storing reg context:  defined in linux_machdep.h 
+/*
+ * From Linux's include/asm-ppc/ptrace.h.
+ * structure used for storing reg context:  defined in linux_machdep.h
  * structure used for storing floating point context:
- * Linux just uses a double fpr[32], no struct 
+ * Linux just uses a double fpr[32], no struct
  */
- 
-/* 
- * user struct for linux process - this is used for Linux ptrace emulation 
- * most of it is junk only used by gdb 
- * 
- * From Linux's include/asm-ppc/user.h 
- * 
- * XXX u_ar0 was a struct reg in Linux/powerpc 
- * Can't find out what a struct regs is for Linux/powerpc, 
+
+/*
+ * user struct for linux process - this is used for Linux ptrace emulation
+ * most of it is junk only used by gdb
+ *
+ * From Linux's include/asm-ppc/user.h
+ *
+ * XXX u_ar0 was a struct reg in Linux/powerpc
+ * Can't find out what a struct regs is for Linux/powerpc,
  * so we use a struct pt_regs instead. don't know if this is right.
  */
 
 struct linux_user {
-	struct linux_pt_regs regs;		
+	struct linux_pt_regs regs;
 #define lusr_startgdb regs
-	size_t u_tsize;	 
-	size_t u_dsize;	 
-	size_t u_ssize;	 
+	size_t u_tsize;
+	size_t u_dsize;
+	size_t u_ssize;
 	unsigned long start_code;
 	unsigned long start_data;
 	unsigned long start_stack;
-	long int signal;	  
+	long int signal;
 	struct linux_pt_regs *u_ar0;		/* help gdb find registers */
-	unsigned long magic;		  
-	char u_comm[32];	 
+	unsigned long magic;
+	char u_comm[32];
 #define lu_comm_end u_comm[31]
 };
 
@@ -180,7 +180,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		if (error != 0)
 			goto out;
 
-		for (i=0; i<=31; i++) 
+		for (i=0; i<=31; i++)
 			linux_regs->lgpr[i] = regs->fixreg[i];
 		linux_regs->lnip = regs->pc;
 		linux_regs->lmsr = 0;
@@ -190,7 +190,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		linux_regs->llink = regs->lr;
 		linux_regs->lxer = regs->xer;
 		linux_regs->lccr = regs->cr;
-		linux_regs->lmq = 0; 
+		linux_regs->lmq = 0;
 		linux_regs->ltrap = 0;
 		linux_regs->ldar = 0;
 		linux_regs->ldsisr = 0;
@@ -210,7 +210,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		if (error != 0)
 			goto out;
 
-		for (i=0; i<=31; i++) 
+		for (i=0; i<=31; i++)
 			regs->fixreg[i] = linux_regs->lgpr[i];
 		regs->lr = linux_regs->llink;
 		regs->cr = linux_regs->lccr;
@@ -267,8 +267,8 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 
 		PHOLD(lt);	/* need full process info */
 		error = 0;
-		if ((addr < LUSR_OFF(lusr_startgdb)) || 
-		    (addr > LUSR_OFF(lu_comm_end))) 
+		if ((addr < LUSR_OFF(lusr_startgdb)) ||
+		    (addr > LUSR_OFF(lu_comm_end)))
 		 	error = 1;
 		else if (addr == LUSR_OFF(u_tsize))
 			*retval = p->p_vmspace->vm_tsize;
@@ -280,7 +280,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			*retval = (register_t) p->p_vmspace->vm_taddr;
 		else if (addr == LUSR_OFF(start_stack))
 			*retval = (register_t) p->p_vmspace->vm_minsaddr;
-		else if ((addr >= LUSR_REG_OFF(lpt_regs_fixreg_begin)) && 
+		else if ((addr >= LUSR_REG_OFF(lpt_regs_fixreg_begin)) &&
 		    (addr <= LUSR_REG_OFF(lpt_regs_fixreg_end)))
 			*retval = regs->fixreg[addr / sizeof (register_t)];
 		else if (addr == LUSR_REG_OFF(lnip))
@@ -313,7 +313,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		if (error)
 			goto out;
 
-		error = copyout (retval, 
+		error = copyout (retval,
 		    (caddr_t)SCARG(uap, data), sizeof retval);
 		*retval = SCARG(uap, data);
 
@@ -330,7 +330,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 
 		PHOLD(lt);       /* need full process info */
 		error = 0;
-		if ((addr < LUSR_OFF(lusr_startgdb)) || 
+		if ((addr < LUSR_OFF(lusr_startgdb)) ||
 		    (addr > LUSR_OFF(lu_comm_end)))
 		 	error = 1;
 		else if (addr == LUSR_OFF(u_tsize))
@@ -343,9 +343,9 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			error = 1;
 		else if (addr == LUSR_OFF(start_stack))
 			error = 1;
-		else if ((addr >= LUSR_REG_OFF(lpt_regs_fixreg_begin)) && 
+		else if ((addr >= LUSR_REG_OFF(lpt_regs_fixreg_begin)) &&
 		    (addr <= LUSR_REG_OFF(lpt_regs_fixreg_end)))
-			regs->fixreg[addr / sizeof (register_t)] = 
+			regs->fixreg[addr / sizeof (register_t)] =
 			    (register_t)SCARG(uap, data);
 		else if (addr == LUSR_REG_OFF(lnip))
 			regs->pc = (register_t)SCARG(uap, data);
@@ -373,7 +373,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		PRELE(lt);
 
 		error = process_write_regs(lt,regs);
-		if (error) 
+		if (error)
 			goto out;
 
 		break;

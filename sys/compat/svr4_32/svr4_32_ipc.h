@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.h,v 1.1 2001/02/06 16:37:58 eeh Exp $	*/
+/*	$NetBSD: svr4_32_ipc.h,v 1.1.26.1 2005/03/04 16:40:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ typedef netbsd32_caddr_t svr4_32_msgp;
 struct svr4_32_msg {
 	svr4_32_msgp	msg_next;
 	netbsd32_long	msg_type;
-	u_short		msg_ts;	
+	u_short		msg_ts;
 	short		msg_spot;
 };
 
@@ -75,7 +75,7 @@ struct svr4_32_msqid_ds {
 	svr4_32_pid_t		msg_lspid;
 	svr4_32_pid_t		msg_lrpid;
 	svr4_32_time_t		msg_stime;
-	netbsd32_long		msg_pad1;	
+	netbsd32_long		msg_pad1;
 	svr4_32_time_t		msg_rtime;
 	netbsd32_long		msg_pad2;
 	svr4_32_time_t		msg_ctime;

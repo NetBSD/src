@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.15.6.4 2005/01/17 08:25:44 skrll Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.15.6.5 2005/03/04 16:38:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.15.6.4 2005/01/17 08:25:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.15.6.5 2005/03/04 16:38:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,23 +125,23 @@ int	gdrom_read_sectors(struct gdrom_softc *, void *, int, int);
 int	gdrom_mount_disk(struct gdrom_softc *);
 int	gdrom_intr(void *);
 
-int gdrom_getstat()
+int gdrom_getstat(void)
 {
 	int s1, s2, s3;
 
 	if (GDROM_BUSY & 0x80)
-		return (-1);
+		return -1;
 	s1 = GDROM_STAT;
 	s2 = GDROM_STAT;
 	s3 = GDROM_STAT;
-	if(GDROM_BUSY & 0x80)
-		return (-1);
-	if(s1 == s2)
-		return (s1);
-	else if(s2 == s3)
-		return (s2);
+	if (GDROM_BUSY & 0x80)
+		return -1;
+	if (s1 == s2)
+		return s1;
+	else if (s2 == s3)
+		return s2;
 	else
-		return (-1);
+		return -1;
 }
 
 int
@@ -155,21 +155,21 @@ gdrom_intr(void *arg)
 #ifdef GDROMDEBUG
 	printf("GDROM: cond = %x\n", cond);
 #endif
-	if(!sc->cmd_active) {
+	if (!sc->cmd_active) {
 #ifdef GDROMDEBUG
 		printf("GDROM: inactive IRQ!?\n");
 #endif
 		splx(s);
-		return (0);
+		return 0;
 	}
 
-	if((cond & 8)) {
+	if ((cond & 8)) {
 		int cnt = (GDROM_CNTHI << 8) | GDROM_CNTLO;
 #ifdef GDROMDEBUG
 		printf("GDROM: cnt = %d\n", cnt);
 #endif
 		sc->cmd_actual += cnt;
-		if(cnt > 0 && sc->cmd_result_size > 0) {
+		if (cnt > 0 && sc->cmd_result_size > 0) {
 			int subcnt = (cnt > sc->cmd_result_size ?
 			    sc->cmd_result_size : cnt);
 			int16_t *ptr = sc->cmd_result_buf;
@@ -197,7 +197,7 @@ gdrom_intr(void *arg)
 	}
 
 	splx(s);
-	return (1);
+	return 1;
 }
 
 
@@ -218,7 +218,7 @@ int gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
 	sc->cmd_result_size = nbyt;
 
 	if (GDSTATSTAT(GDROM_STAT) == 6)
-		return (-1);
+		return -1;
 	
 	GDROM_COND = 0xa0;
 	for (i = 0; i < 64; i++)
@@ -239,7 +239,7 @@ int gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
 
 	splx(s);
 
-	return (sc->cmd_cond);
+	return sc->cmd_cond;
 }
 
 
@@ -263,14 +263,14 @@ int gdrom_command_sense(struct gdrom_softc *sc, void *req, void *buf,
 #ifdef GDROMDEBUG
 		printf("GDROM: not ready (2:58)\n");
 #endif
-		return (EIO);
+		return EIO;
 	}
 	
 	if ((cond & 1) == 0) {
 #ifdef GDROMDEBUG
 		printf("GDROM: no sense.  0:0\n");
 #endif
-		return (0);
+		return 0;
 	}
 	
 	memset(cmd, 0, sizeof(cmd));
@@ -286,7 +286,7 @@ int gdrom_command_sense(struct gdrom_softc *sc, void *req, void *buf,
 #ifdef GDROMDEBUG
 		printf("GDROM: aborted (ignored).  0:0\n");
 #endif
-		return (0);
+		return 0;
 	}
 	
 #ifdef GDROMDEBUG
@@ -294,7 +294,7 @@ int gdrom_command_sense(struct gdrom_softc *sc, void *req, void *buf,
 	printf("GDROM: %d\n", sense_specific);
 #endif
 	
-	return (sense_key == 0 ? 0 : EIO);
+	return sense_key == 0 ? 0 : EIO;
 }
 
 int gdrom_read_toc(struct gdrom_softc *sc, struct gd_toc *toc)
@@ -314,7 +314,7 @@ int gdrom_read_toc(struct gdrom_softc *sc, struct gd_toc *toc)
 	cmd[3] = sizeof(struct gd_toc) >> 8;
 	cmd[4] = sizeof(struct gd_toc) & 0xff;
 	
-	return (gdrom_command_sense(sc, cmd, toc, sizeof(struct gd_toc)));
+	return gdrom_command_sense(sc, cmd, toc, sizeof(struct gd_toc));
 }
 
 int gdrom_read_sectors(struct gdrom_softc *sc, void *buf, int sector, int cnt)
@@ -339,7 +339,7 @@ int gdrom_read_sectors(struct gdrom_softc *sc, void *buf, int sector, int cnt)
 	cmd[9] = cnt>>8;
 	cmd[10] = cnt;
 
-	return (gdrom_command_sense(sc, cmd, buf, cnt << 11));
+	return gdrom_command_sense(sc, cmd, buf, cnt << 11);
 }
 
 int gdrom_mount_disk(struct gdrom_softc *sc)
@@ -358,7 +358,7 @@ int gdrom_mount_disk(struct gdrom_softc *sc)
 	cmd[0] = 0x70;
 	cmd[1] = 0x1f;
 	
-	return (gdrom_command_sense(sc, cmd, NULL, 0));
+	return gdrom_command_sense(sc, cmd, NULL, 0);
 }
 
 int
@@ -368,17 +368,17 @@ gdrommatch(struct device *parent, struct cfdata *cf, void *aux)
 
 	/* Allow only once instance. */
 	if (gdrom_matched)
-		return (0);
+		return 0;
 	gdrom_matched = 1;
 
-	return (1);
+	return 1;
 }
 
 void
 gdromattach(struct device *parent, struct device *self, void *aux)
 {
 	struct gdrom_softc *sc;
-	u_int32_t p, x;
+	uint32_t p, x;
 
 	sc = (struct gdrom_softc *)self;
 
@@ -392,9 +392,9 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * reenable disabled drive
 	 */
-	*((__volatile u_int32_t *)0xa05f74e4) = 0x1fffff;
+	*((__volatile uint32_t *)0xa05f74e4) = 0x1fffff;
 	for (p = 0; p < 0x200000 / 4; p++)
-		x = ((__volatile u_int32_t *)0xa0000000)[p];
+		x = ((__volatile uint32_t *)0xa0000000)[p];
 
 	printf(": %s\n", sysasic_intr_string(IPL_BIO));
 	sysasic_intr_establish(SYSASIC_EVENT_GDROM, IPL_BIO, gdrom_intr, sc);
@@ -413,17 +413,17 @@ gdromopen(dev_t dev, int flags, int devtype, struct lwp *l)
 
 	unit = DISKUNIT(dev);
 	if (unit >= gdrom_cd.cd_ndevs)
-		return (ENXIO);
+		return ENXIO;
 
 	sc = gdrom_cd.cd_devs[unit];
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->is_open)
-		return (EBUSY);
+		return EBUSY;
 
 	s = splbio();
-	while(sc->is_busy)
+	while (sc->is_busy)
 		tsleep(&sc->is_busy, PRIBIO, "gdbusy", 0);
 	sc->is_busy = 1;
 	splx(s);
@@ -447,7 +447,7 @@ gdromopen(dev_t dev, int flags, int devtype, struct lwp *l)
 #ifdef GDROMDEBUG
 	printf("GDROM: open OK\n");
 #endif
-	return (0);
+	return 0;
 }
 
 int
@@ -463,7 +463,7 @@ gdromclose(dev_t dev, int flags, int devtype, struct lwp *l)
 
 	sc->is_open = 0;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -526,7 +526,7 @@ gdromioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		struct gd_toc toc;
 
 		if (sessno != 0)
-			return (EINVAL);
+			return EINVAL;
 
 		s = splbio();
 		while (sc->is_busy)
@@ -549,15 +549,15 @@ gdromioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 				break;
 
 		if (track < TOC_TRACK(toc.first) || track > 100)
-			return (ENXIO);
+			return ENXIO;
 
 		*(int *)addr = htonl(TOC_LBA(toc.entry[track-1])) -
 		    sc->openpart_start;
 
-		return (0);
+		return 0;
 	}
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 #ifdef DIAGNOSTIC
@@ -572,12 +572,12 @@ gdromread(dev_t dev, struct uio *uio, int flags)
 #ifdef GDROMDEBUG
 	printf("GDROM: read\n");
 #endif
-	return (physio(gdromstrategy, NULL, dev, B_READ, minphys, uio));
+	return physio(gdromstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
 int
 gdromwrite(dev_t dev, struct uio *uio, int flags)
 {
 
-	return (EROFS);
+	return EROFS;
 }

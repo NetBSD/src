@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.10.2.5 2005/02/04 11:46:38 skrll Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.10.2.6 2005/03/04 16:45:17 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -323,7 +323,7 @@
  * Altima chips, these bits do not revert until much later
  * in the bge driver's bge_reset() chip-reset state machine.
  */
-#define BGE_PCISTATE_RESERVED	((1 << 12) + (1 <<7)) 
+#define BGE_PCISTATE_RESERVED	((1 << 12) + (1 <<7))
 
 /*
  * PCI Clock Control register -- note, this register is read only
@@ -2167,19 +2167,19 @@ struct bge_gib {
  * Vital product data and structures.
  */
 #define BGE_VPD_FLAG		0x8000
- 
+
 /* VPD structures */
 struct vpd_res {
 	u_int8_t		vr_id;
 	u_int8_t		vr_len;
 	u_int8_t		vr_pad;
 };
- 
+
 struct vpd_key {
 	char			vk_key[2];
 	u_int8_t		vk_len;
 };
- 
+
 #define VPD_RES_ID	0x82	/* ID string */
 #define VPD_RES_READ	0x90	/* start of read only area */
 #define VPD_RES_WRITE	0x81	/* start of read/write area */
@@ -2251,7 +2251,7 @@ struct bge_ring_data {
  * chosen to make the total struct size an even power of two. It's
  * critical that no TxCB be split across a page boundary since
  * no attempt is made to allocate physically contiguous memory.
- * 
+ *
  */
 #ifdef _LP64
 #define BGE_NTXSEG      30

@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.17 2002/11/10 03:29:00 thorpej Exp $        */
+/*      $NetBSD: rndpool.c,v 1.17.6.1 2005/03/04 16:40:53 skrll Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.17 2002/11/10 03:29:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.17.6.1 2005/03/04 16:40:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ rndpool_get_poolsize(void)
  *
  * Each word to be added is xor'd with the output word of the LFSR
  * array (one tap at a time).
- * 
+ *
  * In order to facilitate distribution of entropy between the
  * bit-planes, a 32-bit rotate of this result is performed prior to
  * feedback. The rotation distance is incremented every RND_POOLWORDS
@@ -145,7 +145,7 @@ rndpool_get_poolsize(void)
  * pool, further permuting the LFSRs and spreading entropy through the
  * pool.  Any unknown bits anywhere in the pool are thus reflected
  * across all the LFSRs after output.
- * 
+ *
  * (The final XOR assignment into the pool for feedback is equivalent
  * to an additional LFSR tap of the MSB before shifting, in the case
  * where no rotation is done, once every 32 cycles. This LFSR runs for

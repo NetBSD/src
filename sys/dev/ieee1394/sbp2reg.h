@@ -1,11 +1,11 @@
-/*	$NetBSD: sbp2reg.h,v 1.6 2002/12/28 10:54:47 jmc Exp $	*/
+/*	$NetBSD: sbp2reg.h,v 1.6.2.1 2005/03/04 16:43:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

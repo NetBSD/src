@@ -1,4 +1,4 @@
-/*	$NetBSD: spectrum24t_cf.h,v 1.1 2002/04/15 14:58:51 onoe Exp $	*/
+/*	$NetBSD: spectrum24t_cf.h,v 1.1.14.1 2005/03/04 16:44:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Symbol Technologies Inc. -- http://www.symbol.com
@@ -24,7 +24,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 /*
  * Firmware for Symbol Wireless Networker Spectrum24t CF card.

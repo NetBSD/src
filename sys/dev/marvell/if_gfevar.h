@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.4.2.1 2005/02/04 11:46:29 skrll Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.4.2.2 2005/03/04 16:43:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -121,7 +121,7 @@ struct gfe_softc {
 	mii_data_t sc_mii;		/* mii interface */
 
 	/*
-	 * 
+	 *
 	 */
 	bus_space_tag_t sc_gt_memt;
 	bus_space_handle_t sc_gt_memh;

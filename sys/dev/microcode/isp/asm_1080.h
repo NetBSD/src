@@ -1,4 +1,4 @@
-/* $NetBSD: asm_1080.h,v 1.2 2001/02/12 23:19:55 mjacob Exp $ */
+/* $NetBSD: asm_1080.h,v 1.2.24.1 2005/03/04 16:44:05 skrll Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
  * All rights reserved.
@@ -23,7 +23,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 #ifndef	ISP_TARGET_MODE
 /************************************************************************

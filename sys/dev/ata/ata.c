@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.18.2.8 2005/02/04 11:45:22 skrll Exp $      */
+/*      $NetBSD: ata.c,v 1.18.2.9 2005/03/04 16:41:02 skrll Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18.2.8 2005/02/04 11:45:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18.2.9 2005/03/04 16:41:02 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18.2.8 2005/02/04 11:45:22 skrll Exp $");
 #include "atapibus.h"
 #include "ataraid.h"
 
-#if NATARAID > 0 
-#include <dev/ata/ata_raidvar.h> 
+#if NATARAID > 0
+#include <dev/ata/ata_raidvar.h>
 #endif
 
 #define DEBUG_FUNCS  0x08
@@ -117,7 +117,7 @@ int
 atabusprint(void *aux, const char *pnp)
 {
 	struct ata_channel *chan = aux;
-	
+
 	if (pnp)
 		aprint_normal("atabus at %s", pnp);
 	aprint_normal(" channel %d", chan->ch_channel);
@@ -153,7 +153,7 @@ ata_channel_attach(struct ata_channel *chp)
 
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
-	
+
 	callout_init(&chp->ch_callout);
 
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
@@ -396,11 +396,11 @@ atabus_match(struct device *parent, struct cfdata *cf, void *aux)
 
 	if (chp == NULL)
 		return (0);
-	
+
 	if (cf->cf_loc[ATACF_CHANNEL] != chp->ch_channel &&
 	    cf->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT)
 	    	return (0);
-	
+
 	return (1);
 }
 
@@ -455,7 +455,7 @@ atabus_activate(struct device *self, enum devact act)
 	case DVACT_ACTIVATE:
 		error = EOPNOTSUPP;
 		break;
-	
+
 	case DVACT_DEACTIVATE:
 		/*
 		 * We might deactivate the children of atapibus twice
@@ -515,7 +515,11 @@ atabus_detach(struct device *self, int flags)
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
 		(void) tsleep((void *)&chp->ch_flags, PRIBIO, "atadown", 0);
-	
+
+	/* power hook */
+	if (sc->sc_powerhook)
+	      powerhook_disestablish(sc->sc_powerhook);
+
 	/*
 	 * Detach atapibus and its children.
 	 */
@@ -797,7 +801,7 @@ atastart(struct ata_channel *chp)
 	}
 	chp->ch_queue->active_xfer = xfer;
 	TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
-	
+
 	if (atac->atac_cap & ATAC_CAP_NOIRQ)
 		KASSERT(xfer->c_flags & C_POLL);
 
@@ -938,7 +942,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 int
 ata_addref(struct ata_channel *chp)
 {
-	struct atac_softc *atac = chp->ch_atac; 
+	struct atac_softc *atac = chp->ch_atac;
 	struct scsipi_adapter *adapt = &atac->atac_atapi_adapter._generic;
 	int s, error = 0;
 
@@ -1054,7 +1058,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 
 /*
  * Probe drive's capabilities, for use by the controller later
- * Assumes drvp points to an existing drive. 
+ * Assumes drvp points to an existing drive.
  */
 void
 ata_probe_caps(struct ata_drive_datas *drvp)
@@ -1093,7 +1097,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
-	if (params.atap_ata_major > 0x01 && 
+	if (params.atap_ata_major > 0x01 &&
 	    params.atap_ata_major != 0xffff) {
 		for (i = 14; i > 0; i--) {
 			if (params.atap_ata_major & (1 << i)) {
@@ -1111,7 +1115,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		drvp->PIO_mode = 3;
 
 	/*
-	 * It's not in the specs, but it seems that some drive 
+	 * It's not in the specs, but it seems that some drive
 	 * returns 0xffff in atap_extensions when this field is invalid
 	 */
 	if (params.atap_extensions != 0xffff &&
@@ -1142,7 +1146,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				if (ata_set_mode(drvp, 0x08 | (i + 3),
 				   AT_WAIT) != CMD_OK)
 					continue;
-			if (!printed) { 
+			if (!printed) {
 				aprint_normal("%s: drive supports PIO mode %d",
 				    drv_dev->dv_xname, i + 3);
 				sep = ",";
@@ -1160,7 +1164,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			}
 		}
 		if (!printed) {
-			/* 
+			/*
 			 * We didn't find a valid PIO mode.
 			 * Assume the values returned for DMA are buggy too
 			 */
@@ -1239,10 +1243,10 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	s = splbio();
 	drvp->drive_flags &= ~DRIVE_NOSTREAM;
 	if (drvp->drive_flags & DRIVE_ATAPI) {
-		if (atac->atac_cap & ATAC_CAP_ATAPI_NOSTREAM)	
+		if (atac->atac_cap & ATAC_CAP_ATAPI_NOSTREAM)
 			drvp->drive_flags |= DRIVE_NOSTREAM;
 	} else {
-		if (atac->atac_cap & ATAC_CAP_ATA_NOSTREAM)	
+		if (atac->atac_cap & ATAC_CAP_ATA_NOSTREAM)
 			drvp->drive_flags |= DRIVE_NOSTREAM;
 	}
 	splx(s);
@@ -1302,11 +1306,11 @@ atabusopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
         struct atabus_softc *sc;
         int error, unit = minor(dev);
-   
+
         if (unit >= atabus_cd.cd_ndevs ||
             (sc = atabus_cd.cd_devs[unit]) == NULL)
                 return (ENXIO);
- 
+
         if (sc->sc_flags & ATABUSCF_OPEN)
                 return (EBUSY);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.53.2.5 2005/02/04 11:45:27 skrll Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.53.2.6 2005/03/04 16:41:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53.2.5 2005/02/04 11:45:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53.2.6 2005/03/04 16:41:33 skrll Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53.2.5 2005/02/04 11:45:27 skrll Exp
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -415,7 +415,7 @@ epic_start(ifp)
 		    dmamap-> dm_nsegs == EPIC_NFRAGS)) {
 			if (error == 0)
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
-			
+
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -806,7 +806,7 @@ epic_intr(arg)
 				printf("%s: lost carrier\n",
 				    sc->sc_dev.dv_xname);
 		}
-		
+
 		/* Update the dirty transmit buffer pointer. */
 		sc->sc_txdirty = i;
 
@@ -1209,7 +1209,7 @@ epic_read_eeprom(sc, word, wordcnt, data)
 		for (x = 6; x > 0; x--) {
 			reg = EECTL_ENABLE|EECTL_EECS;
 			if ((word + i) & (1 << (x - 1)))
-				reg |= EECTL_EEDI; 
+				reg |= EECTL_EEDI;
 			bus_space_write_4(st, sh, EPIC_EECTL, reg);
 			EEPROM_WAIT_READY(st, sh);
 			bus_space_write_4(st, sh, EPIC_EECTL, reg|EECTL_EESK);
@@ -1247,7 +1247,7 @@ epic_read_eeprom(sc, word, wordcnt, data)
  * Add a receive buffer to the indicated descriptor.
  */
 int
-epic_add_rxbuf(sc, idx)	
+epic_add_rxbuf(sc, idx)
 	struct epic_softc *sc;
 	int idx;
 {
@@ -1446,7 +1446,7 @@ epic_statchg(self)
 	/* On some cards we need manualy set fullduplex led */
 	if (sc->sc_hwflags & EPIC_DUPLEXLED_ON_694) {
 		miicfg = bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG);
-		if (IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) 
+		if (IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX)
 			miicfg |= MIICFG_ENABLE;
 		else
 			miicfg &= ~MIICFG_ENABLE;
@@ -1497,7 +1497,7 @@ epic_mediachange(ifp)
 		/* If we're not selecting serial interface, select MII mode */
 #ifdef EPICMEDIADEBUG
 		printf("%s: parallel mode\n", ifp->if_xname);
-#endif		
+#endif
 		miicfg = bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG);
 		miicfg &= ~MIICFG_SERMODEENA;
 		bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG, miicfg);

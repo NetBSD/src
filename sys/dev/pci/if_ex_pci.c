@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.35.2.4 2004/09/21 13:31:03 skrll Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.35.2.5 2005/03/04 16:45:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,12 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.35.2.4 2004/09/21 13:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.35.2.5 2005/03/04 16:45:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
@@ -79,7 +79,7 @@ struct ex_pci_softc {
 	bus_space_handle_t sc_funch;
 
 	pci_chipset_tag_t psc_pc;	/* pci chipset tag */
-	pcireg_t psc_regs[0x20>>2];	/* saved PCI config regs (sparse) */
+	pcireg_t psc_regs[0x40>>2];	/* saved PCI config regs (sparse) */
 	pcitag_t psc_tag;		/* pci device tag */
 
 	int psc_pwrmgmt_csr_reg;	/* ACPI power management register */
@@ -251,10 +251,10 @@ ex_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	psc->psc_pc = pc;
 	psc->psc_tag = pa->pa_tag;
-	psc->psc_regs[PCI_COMMAND_STATUS_REG>>2] = 
+	psc->psc_regs[PCI_COMMAND_STATUS_REG>>2] =
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	psc->psc_regs[PCI_BHLC_REG>>2] =
-	    pci_conf_read(pc, pa->pa_tag, PCI_BHLC_REG); 
+	    pci_conf_read(pc, pa->pa_tag, PCI_BHLC_REG);
 	psc->psc_regs[PCI_CBIO>>2] =
 	    pci_conf_read(pc, pa->pa_tag, PCI_CBIO);
 
@@ -329,18 +329,18 @@ ex_pci_attach(struct device *parent, struct device *self, void *aux)
 	ex_config(sc);
 
 	if (sc->ex_conf & EX_CONF_PCI_FUNCREG)
-		bus_space_write_4(psc->sc_funct, psc->sc_funch, PCI_INTR, 
+		bus_space_write_4(psc->sc_funct, psc->sc_funch, PCI_INTR,
 		    PCI_INTRACK);
 
 	if (sc->disable != NULL)
 		ex_disable(sc);
 }
 
-static void            
+static void
 ex_pci_intr_ack(struct ex_softc *sc)
 {
 	struct ex_pci_softc *psc = (struct ex_pci_softc *)sc;
-        
+
 	bus_space_write_4(psc->sc_funct, psc->sc_funch, PCI_INTR,
 	    PCI_INTRACK);
 }
@@ -381,7 +381,7 @@ ex_d3tod0(struct ex_softc *sc, struct pci_attach_args *pa)
 	pci_conf_write(pc, pa->pa_tag, PCI_EXP_ROM_BAR, romaddr);
 	pci_conf_write(pc, pa->pa_tag, PCI_INT_GNT_LAT, pci_int_lat);
 	pci_conf_write(pc, pa->pa_tag, PCI_CACHE_LAT_BIST, pci_cache_lat);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, 
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE));
 }
 

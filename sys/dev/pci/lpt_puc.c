@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.6.6.1 2005/02/04 11:46:38 skrll Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.6.6.2 2005/03/04 16:45:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,14 +31,14 @@
  */
 
 /*
- * Machine-independent parallel port ('lpt') driver attachment to "PCI 
+ * Machine-independent parallel port ('lpt') driver attachment to "PCI
  * Universal Communications" controller driver.
  *
  * Author: Christopher G. Demetriou, May 17, 1998.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6.6.1 2005/02/04 11:46:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.6.6.2 2005/03/04 16:45:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

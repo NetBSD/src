@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.6.2.4 2004/09/21 13:24:59 skrll Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.6.2.5 2005/03/04 16:39:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.6.2.4 2004/09/21 13:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.6.2.5 2005/03/04 16:39:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.6.2.4 2004/09/21 13:24:59 skrl
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_map.h> 
+#include <uvm/uvm_map.h>
 #include <uvm/uvm.h>
 
 #include <compat/darwin/darwin_commpage.h>
@@ -62,15 +62,15 @@ static struct uvm_object *darwin_commpage_uao = NULL;
 static void darwin_commpage_init(struct darwin_commpage *);
 
 int
-darwin_commpage_map(p) 
+darwin_commpage_map(p)
 	struct proc *p;
 {
 	int error;
 	vaddr_t kvaddr;
 	vaddr_t pvaddr;
 	size_t memsize;
-	
-	/* 
+
+	/*
 	 * XXX This crashes. For now we map only one page,
 	 * to avoid the crash, but this ought to be fixed
 	 */
@@ -142,12 +142,12 @@ darwin_commpage_init(dcp)
 	size_t sz;
 	int error;
 
-	/* 
+	/*
 	 * XXX Only one page is mapped yet (see higher in the file)
 	 */
 	bzero(dcp, sizeof(*dcp));
 
-	dcp->dcp_version = DARWIN_COMMPAGE_VERSION;	
+	dcp->dcp_version = DARWIN_COMMPAGE_VERSION;
 
 	name[0] = CTL_HW;
 	name[1] = HW_NCPU;
@@ -166,7 +166,7 @@ darwin_commpage_init(dcp)
 #endif
 
 #ifdef _LP64
-	dcp->dcp_64bit = 1; 
+	dcp->dcp_64bit = 1;
 	dcp->dcp_cap |= DARWIN_CAP_64BIT;
 #endif
 
@@ -186,11 +186,11 @@ darwin_commpage_init(dcp)
 	dcp->dcp_10pow6 = 1000000ULL;		/* 10^6 */
 
 	/*
-	 * On Darwin, these are maintained up to date by the kernel 
+	 * On Darwin, these are maintained up to date by the kernel
 	 */
-	dcp->dcp_timebase = 0; /* XXX */	
-	dcp->dcp_timestamp = 0; /* XXX */	
-	dcp->dcp_secpertick = hz; /* XXX Not sure */	
+	dcp->dcp_timebase = 0; /* XXX */
+	dcp->dcp_timestamp = 0; /* XXX */
+	dcp->dcp_secpertick = hz; /* XXX Not sure */
 
 	DCP_MEMCPY(mach_absolute_time);
 	DCP_MEMCPY(spinlock_try);

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.11.6.4 2005/02/04 11:46:09 skrll Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.11.6.5 2005/03/04 16:43:14 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,21 +26,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.11.6.4 2005/02/04 11:46:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.11.6.5 2005/03/04 16:43:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h> 
+#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
 
 #include <machine/bus.h>
 
-#include <dev/isa/isareg.h>  
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 #include <dev/ic/i8042reg.h>

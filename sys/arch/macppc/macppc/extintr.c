@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.38.2.6 2005/01/24 08:34:13 skrll Exp $	*/
+/*	$NetBSD: extintr.c,v 1.38.2.7 2005/03/04 16:38:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.38.2.6 2005/01/24 08:34:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.38.2.7 2005/03/04 16:38:48 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -199,18 +199,20 @@ uint32_t
 gc_read_irq()
 {
 	uint32_t rv = 0;
+	uint32_t int_state;
 	uint32_t events, e;
 	uint32_t levels;
 
 	/* Get the internal interrupts */
-	events = in32rb(INT_STATE_REG_L) & ~intr_level_mask;
+	int_state = in32rb(INT_STATE_REG_L);
+	events = int_state & ~intr_level_mask;
 
 	/* Get the enabled external interrupts */
 	levels = in32rb(INT_LEVEL_REG_L) & in32rb(INT_ENABLE_REG_L);
 	events = events | (levels & intr_level_mask);
 
-	/* Clear any interrupts that we've read (and all external ints) */
-	out32rb(INT_CLEAR_REG_L, events | intr_level_mask);
+	/* Clear any interrupts that we've read */
+	out32rb(INT_CLEAR_REG_L, events | int_state);
 	while (events) {
 		e = 31 - cntlzw(events);
 		rv |= 1 << virq[e];

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.59.2.5 2005/01/24 08:59:39 skrll Exp $	*/
+/*	$NetBSD: hil.c,v 1.59.2.6 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.59.2.5 2005/01/24 08:59:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.59.2.6 2005/03/04 16:38:26 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.59.2.5 2005/01/24 08:59:39 skrll Exp $");
 #include <machine/bus.h>
 #include <machine/cpu.h>
 
+#include "ioconf.h"
+
 static int	hilmatch(struct device *, struct cfdata *, void *);
 static void	hilattach(struct device *, struct device *, void *);
 
@@ -140,8 +142,6 @@ extern struct kbdmap kbd_map[];
 
 /* symbolic sleep message strings */
 static const char hilin[] = "hilin";
-
-extern struct cfdriver hil_cd;
 
 static dev_type_open(hilopen);
 static dev_type_close(hilclose);

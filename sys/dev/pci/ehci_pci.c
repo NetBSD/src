@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.13.2.3 2004/09/21 13:31:01 skrll Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.13.2.4 2005/03/04 16:45:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.13.2.3 2004/09/21 13:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.13.2.4 2005/03/04 16:45:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_EHCI)
 		return (1);
- 
+
 	return (0);
 }
 
@@ -176,7 +176,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	else
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
-	
+
 	/*
 	 * Find companion controllers.  According to the spec they always
 	 * have lower function numbers so they should be enumerated already.

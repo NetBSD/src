@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.11.6.5 2005/02/04 11:45:23 skrll Exp $	*/
+/*	$NetBSD: iopl.c,v 1.11.6.6 2005/03/04 16:41:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.11.6.5 2005/02/04 11:45:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.11.6.6 2005/03/04 16:41:15 skrll Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -341,7 +341,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_LAN_TRANSMIT_INFO,
 	    &param, sizeof(param), NULL);
-	if (rv != 0);
+	if (rv != 0)
 		return;
 
 	tmp = le32toh(param.p.ti.txmodes);
@@ -393,7 +393,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Set the pre-padding and "orphan" limits.  This is to ensure that
 	 * for received packets, the L3 payload will be aligned on a 32-bit
-	 * boundary, and the L2 header won't be split between buckets. 
+	 * boundary, and the L2 header won't be split between buckets.
 	 *
 	 * While here, enable error reporting for transmits.  We're not
 	 * interested in most errors (e.g. excessive collisions), but others
@@ -710,7 +710,7 @@ iopl_rx_post(struct iopl_softc *sc)
 
 			if (p + 2 + sc->sc_tx_maxsegs >= ep)
 				break;
-			if (--sc->sc_rx_freecnt <= 0) 
+			if (--sc->sc_rx_freecnt <= 0)
 				break;
 		}
 
@@ -920,7 +920,7 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 
 		/*
 		 * If this is a valid receive, go through the PDB entries
-		 * and re-assemble all the packet fragments that we find. 
+		 * and re-assemble all the packet fragments that we find.
 		 * Otherwise, just free up the buckets that we had posted -
 		 * we have probably received this reply because the
 		 * interface has been reset or suspended.
@@ -1571,7 +1571,7 @@ iopl_start(struct ifnet *ifp)
 
 	for (;;) {
 		/*
-		 * Grab a packet to send and a transmit descriptor for it. 
+		 * Grab a packet to send and a transmit descriptor for it.
 		 * If we don't get both, then bail out.
 		 */
 		if ((tx = SLIST_FIRST(&sc->sc_tx_free)) == NULL) {
@@ -1624,7 +1624,7 @@ iopl_start(struct ifnet *ifp)
 		if (size > frameleft) {
 			if (frameleft >= 0) {
 				/*
-				 * We have an old message frame to flush. 
+				 * We have an old message frame to flush.
 				 * Clear the pending list if we send it
 				 * successfully.
 				 */

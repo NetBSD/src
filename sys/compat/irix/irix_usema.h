@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.7 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.7.6.1 2005/03/04 16:39:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
-  
+
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_exec.h>
 
@@ -76,7 +76,7 @@ void	irix_usema_debug	__P((void));
 
 /* Semaphore internal structure: undocumented in IRIX */
 struct irix_semaphore {
-	int is_val;	/* Sempahore value */	
+	int is_val;	/* Sempahore value */
 	int is_uk1;	/* unknown, usually small integer < 3000  */
 	int is_uk2;	/* metric, debug or history pointer ? */
 	int is_uk3;	/* unknown, usually equal to 0 */
@@ -137,7 +137,7 @@ struct irix_usema_rec {
 #define IRIX_UIOCAUNBLOCKQ	(IRIX_UIOC|13)
 #define IRIX_UIOCIDADDR		(IRIX_UIOC|14)
 #define IRIX_UIOCSETSEMASTATE 	(IRIX_UIOC|15)
-#define IRIX_UIOCGETCOUNT	(IRIX_UIOC|16) 
+#define IRIX_UIOCGETCOUNT	(IRIX_UIOC|16)
 
 struct irix_usattach_s {
 	irix_dev_t	us_dev;

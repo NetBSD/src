@@ -1,4 +1,4 @@
-/*	$NetBSD: nec7210reg.h,v 1.1 2003/06/02 03:54:31 gmcgarry Exp $	*/
+/*	$NetBSD: nec7210reg.h,v 1.1.2.1 2005/03/04 16:41:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -91,8 +91,8 @@
 
 #define NEC7210_DIR		0	/* (R) data in */
 #define NEC7210_ISR1		1	/* (R) interrupt status 1 */
-#define 	ISR1_DI		0x01 
-#define 	ISR1_DO		0x02 
+#define 	ISR1_DI		0x01
+#define 	ISR1_DO		0x02
 #define 	ISR1_ERR	0x04
 #define  	ISR1_DEC	0x08
 #define  	ISR1_END	0x10

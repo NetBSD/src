@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155.2.5 2005/01/17 19:29:29 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155.2.6 2005/03/04 16:38:39 skrll Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.2.5 2005/01/17 19:29:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.2.6 2005/03/04 16:38:39 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3307,6 +3307,13 @@ pmap_enter(pmap, va, pa, prot, flags)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
+#if 1
+	if (flags & VM_PROT_ALL) {
+		npte |= PG_U;
+		if (flags & VM_PROT_WRITE)
+			npte |= PG_M;
+	}
+#endif
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();

@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.55.2.5 2005/02/04 11:46:10 skrll Exp $	*/
+/*	$NetBSD: wds.c,v 1.55.2.6 2005/03/04 16:43:16 skrll Exp $	*/
 
 /*
  * XXX
@@ -6,15 +6,15 @@
  * resets
  */
 
-/*-   
+/*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
- * 
- * Redistribution and use in source and binary forms, with or without  
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.55.2.5 2005/02/04 11:46:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.55.2.6 2005/03/04 16:43:16 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -385,7 +385,7 @@ wds_attach(sc, wpd)
 	struct wds_softc *sc;
 	struct wds_probe_data *wpd;
 {
-	struct scsipi_adapter *adapt = &sc->sc_adapter; 
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 
 	TAILQ_INIT(&sc->sc_free_scb);
@@ -1097,7 +1097,7 @@ wds_inquire_setup_information(sc)
 
 out:
 	printf("\n");
-	
+
 	/*
 	 * Free up the resources used by this scb.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.31.2.3 2004/09/21 13:27:56 skrll Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.31.2.4 2005/03/04 16:41:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,16 +37,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*                  
+/*
  * Copyright (c) 1995, David Greenman
  * All rights reserved.
- *              
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met:             
+ * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice unmodified, this list of conditions, and the following
- *    disclaimer.  
+ *    disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -245,7 +245,7 @@ struct fxp_softc {
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
 #endif
-	
+
 };
 
 #ifdef FXP_EVENT_COUNTERS

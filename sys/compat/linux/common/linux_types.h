@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.15.6.1 2004/09/24 10:53:18 skrll Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.15.6.2 2005/03/04 16:40:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ extern char linux_release[];
 extern char linux_version[];
 
 struct linux_tms {
-	linux_clock_t ltms_utime;	
+	linux_clock_t ltms_utime;
 	linux_clock_t ltms_stime;
 	linux_clock_t ltms_cutime;
 	linux_clock_t ltms_cstime;

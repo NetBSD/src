@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.10.2.7 2005/02/15 21:33:13 skrll Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.10.2.8 2005/03/04 16:45:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -227,7 +227,7 @@ void	pciide_common_attach(struct pciide_softc *, struct pci_attach_args *,
 int	pciide_chipen(struct pciide_softc *, struct pci_attach_args *);
 void	pciide_mapregs_compat(struct pci_attach_args *,
 	    struct pciide_channel *, int, bus_size_t *, bus_size_t*);
-void	pciide_mapregs_native(struct pci_attach_args *, 
+void	pciide_mapregs_native(struct pci_attach_args *,
 	    struct pciide_channel *, bus_size_t *, bus_size_t *,
 	    int (*pci_intr)(void *));
 void	pciide_mapreg_dma(struct pciide_softc *,

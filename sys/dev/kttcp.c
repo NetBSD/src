@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.13.2.5 2004/09/21 13:26:25 skrll Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.13.2.6 2005/03/04 16:40:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.13.2.5 2004/09/21 13:26:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.13.2.6 2005/03/04 16:40:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -340,7 +340,7 @@ nopages:
 					break;
 				}
 			} while (space > 0 && atomic);
-			
+
 			s = splsoftnet();
 
 			if (so->so_state & SS_CANTSENDMORE)
@@ -709,7 +709,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		splx(s);
 		goto restart;
 	}
-		
+
 	if (flagsp)
 		*flagsp |= flags;
  release:

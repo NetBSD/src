@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.2.26.1 2004/09/24 10:53:18 skrll Exp $ */
+/*	$NetBSD: linux_types.h,v 1.2.26.2 2005/03/04 16:40:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 #ifndef _POWERPC_LINUX_TYPES_H
 #define _POWERPC_LINUX_TYPES_H
 
-/* 
- * from Linux's include/asm-ppc/posix-types.h 
+/*
+ * from Linux's include/asm-ppc/posix-types.h
  */
 typedef unsigned int linux_uid_t;
 typedef unsigned int linux_gid_t;
@@ -53,18 +53,18 @@ typedef long linux_clock_t;
 typedef long linux_off_t;
 typedef int linux_pid_t;
 
-/* 
- * From Linux's include/asm-ppc/termbits.h 
+/*
+ * From Linux's include/asm-ppc/termbits.h
  */
 typedef unsigned char linux_cc_t;
 typedef unsigned int linux_speed_t;
 typedef unsigned int linux_tcflag_t;
 
-/* 
- * From Linux's include/asm-ppc/stat.h 
+/*
+ * From Linux's include/asm-ppc/stat.h
  */
 struct linux_stat {  /* warning: there is also a old_kernel_stat in Linux*/
-	linux_dev_t		lst_dev; 
+	linux_dev_t		lst_dev;
 	linux_ino_t		lst_ino;
 	linux_mode_t	lst_mode;
 	linux_nlink_t	lst_nlink;
@@ -84,21 +84,21 @@ struct linux_stat {  /* warning: there is also a old_kernel_stat in Linux*/
 	unsigned long	unused5;
 };
 
-/* 
+/*
  * This matches struct stat64 in glibc2.1, hence the absolutely
  * insane amounts of padding around dev_t's.
  *
- * Still from Linux'sinclude/asm-ppc/stat.h 
- */  
+ * Still from Linux'sinclude/asm-ppc/stat.h
+ */
 struct linux_stat64 {
-	unsigned long long lst_dev;   
+	unsigned long long lst_dev;
 	unsigned long long lst_ino;
 	unsigned int lst_mode;
 	unsigned int lst_nlink;
 	unsigned int lst_uid;
 	unsigned int lst_gid;
 	unsigned long long lst_rdev;
-	unsigned short	int __pad2;  
+	unsigned short	int __pad2;
 	long long lst_size;
 	long lst_blksize;
 	long long lst_blocks;	/* Number 512-byte blocks allocated. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasic.c,v 1.4.6.3 2004/09/21 13:14:40 skrll Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.4.6.4 2005/03/04 16:38:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.4.6.3 2004/09/21 13:14:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.4.6.4 2005/03/04 16:38:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ sysasic_intr_enable(void *arg, int on)
 	struct syh_eventhand *hnd = arg;
 	struct sysasic_intrhand *syh;
 	int event;
-	__volatile u_int32_t *masks, *stats;
+	__volatile uint32_t *masks, *stats;
 	int evmap;
 	unsigned evbit;
 
@@ -231,8 +231,8 @@ sysasic_intr_enable(void *arg, int on)
 		    event, SYSASIC_IRQ_INDEX_TO_IRQ(syh->syh_idx));
 #endif
 
-	masks = (__volatile u_int32_t *) SYSASIC_INTR_EN(syh->syh_idx);
-	stats = (__volatile u_int32_t *) SYSASIC_INTR_ST;
+	masks = (__volatile uint32_t *) SYSASIC_INTR_EN(syh->syh_idx);
+	stats = (__volatile uint32_t *) SYSASIC_INTR_ST;
 	evmap = SYSASIC_EVENT_INTR_MAP(event);
 	evbit = SYSASIC_EVENT_INTR_BIT(event);
 
@@ -263,8 +263,8 @@ sysasic_intr(void *arg)
 	struct sysasic_intrhand *syh = arg;
 	unsigned ev;
 	int n, pos;
-	u_int32_t *evwatched;
-	__volatile u_int32_t *evmap;
+	uint32_t *evwatched;
+	__volatile uint32_t *evmap;
 	struct syh_eventhand *evh;
 #ifdef DEBUG
 	int handled = 0;
@@ -275,7 +275,7 @@ sysasic_intr(void *arg)
 	evwatched = syh->syh_events;
 
 	/* status / clear */
-	evmap = (__volatile u_int32_t *) SYSASIC_INTR_ST;
+	evmap = (__volatile uint32_t *) SYSASIC_INTR_ST;
 
 	for (n = 0; n < (SYSASIC_EVENT_NMAP << 5); n |= 31, n++, evmap++) {
 		if ((ev = *evwatched++) && (ev &= *evmap)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.10.2.4 2004/09/21 13:14:39 skrll Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.10.2.5 2005/03/04 16:38:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.10.2.4 2004/09/21 13:14:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.10.2.5 2005/03/04 16:38:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ gaps_match(struct device *parent, struct cfdata *match, void *aux)
 	if(strncmp(idbuf, "GAPSPCI_BRIDGE_2", 16))
 		return 0;
 
-	return (1);
+	return 1;
 }
 
 void

@@ -1,27 +1,27 @@
-/* $NetBSD: bt459reg.h,v 1.2 1999/12/15 15:09:36 ad Exp $ */
+/* $NetBSD: bt459reg.h,v 1.2.28.1 2005/03/04 16:41:27 skrll Exp $ */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -56,7 +56,7 @@
 #define	BT459_IREG_CCOLOR_3		0x0183
 #define	BT459_IREG_ID			0x0200	/* read-only, gives "4a" */
 #define	BT459_IREG_COMMAND_0		0x0201
-#define	BT459_IREG_COMMAND_1		0x0202	
+#define	BT459_IREG_COMMAND_1		0x0202
 #define	BT459_IREG_COMMAND_2		0x0203
 #define	BT459_IREG_PRM			0x0204
 						/* 0205 reserved */

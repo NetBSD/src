@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.7.2.5 2005/01/13 08:33:11 skrll Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.7.2.6 2005/03/04 16:39:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.7.2.5 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.7.2.6 2005/03/04 16:39:38 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -93,7 +93,7 @@ irix_sys_getmountid(l, v, retval)
 	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred, l)) != 0)
 		goto bad;
 
-	/* 
+	/*
 	 * Return the address of the mount structure
 	 * as the unique ID for the filesystem
 	 */

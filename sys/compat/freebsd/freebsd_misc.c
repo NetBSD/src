@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.19.2.4 2004/09/21 13:25:10 skrll Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.19.2.5 2005/03/04 16:39:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.19.2.4 2004/09/21 13:25:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.19.2.5 2005/03/04 16:39:35 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -234,7 +234,7 @@ freebsd_sys_utrace(l, v, retval)
 	if (KTRPOINT(p, KTR_USER))
 		ktruser(l, "FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len),
 			0);
-	
+
 	return (0);
 #else
 	return (ENOSYS);

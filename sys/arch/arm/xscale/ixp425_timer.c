@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.1.2.3 2004/09/21 13:13:43 skrll Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.1.2.4 2005/03/04 16:38:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.1.2.3 2004/09/21 13:13:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.1.2.4 2005/03/04 16:38:04 skrll Exp $");
 
 #include "opt_perfctrs.h"
 
@@ -339,7 +339,7 @@ inittodr(time_t base)
 
 	if (!badbase) {
 		/*
-		 * See if we tained/lost two or more days; if
+		 * See if we gained/lost two or more days; if
 		 * so, assume something is amiss.
 		 */
 		deltat = time.tv_sec - base;

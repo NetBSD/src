@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.8.6.2 2005/02/09 08:26:13 skrll Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.8.6.3 2005/03/04 16:41:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.8.6.2 2005/02/09 08:26:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.8.6.3 2005/03/04 16:41:30 skrll Exp $");
 
 #include "rnd.h"
 
@@ -152,7 +152,7 @@ ld_cac_start(struct ld_softc *ld, struct buf *bp)
 	struct cac_softc *cac;
 	struct ld_cac_softc *sc;
 	struct cac_context cc;
-	
+
 	sc = (struct ld_cac_softc *)ld;
 	cac = (struct cac_softc *)ld->sc_dv.dv_parent;
 

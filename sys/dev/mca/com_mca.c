@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.9.6.4 2005/02/04 11:46:29 skrll Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.9.6.5 2005/03/04 16:43:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.9.6.4 2005/02/04 11:46:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.9.6.5 2005/03/04 16:43:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,9 +251,9 @@ ibm_modem_getcfg(ma, iobasep, irqp)
 	 * POS register 2: (adf pos0)
 	 * 7 6 5 4 3 2 1 0
 	 *         \__/  \__ enable: 0=adapter disabled, 1=adapter enabled
-	 *            \_____ Serial Configuration: XX=SERIAL_XX 
-	 */ 
-	
+	 *            \_____ Serial Configuration: XX=SERIAL_XX
+	 */
+
 	snum = (pos2 & 0x0e) >> 1;
 
 	*iobasep = MCA_SERIAL[snum].iobase;
@@ -292,8 +292,8 @@ neocom1_getcfg(ma, iobasep, irqp)
 	 * 7 6 5 4 3 2 1 0
 	 * \_____________/
 	 *               \__ I/O Address: bits 15-8
-	 */ 
-	
+	 */
+
 	*iobasep = (pos4 << 8) | (pos3 & 0xf8);
 	*irqp = neotech_irq[(pos2 & 0x06) >> 1];
 
@@ -319,9 +319,9 @@ ibm_mpcom_getcfg(ma, iobasep, irqp)
 	 * POS register 2: (adf pos0)
 	 * 7 6 5 4 3 2 1 0
 	 *       0 \__/  \__ enable: 0=adapter disabled, 1=adapter enabled
-	 *            \_____ Serial Configuration: XX=SERIAL_XX 
-	 */ 
-	
+	 *            \_____ Serial Configuration: XX=SERIAL_XX
+	 */
+
 	if (pos2 & 0x10) {
 		printf(": not set to SERIAL mode, ignored\n");
 		return (1);

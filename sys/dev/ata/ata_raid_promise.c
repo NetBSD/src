@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_promise.c,v 1.1.2.4 2004/11/02 07:51:19 skrll Exp $	*/
+/*	$NetBSD: ata_raid_promise.c,v 1.1.2.5 2005/03/04 16:41:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.1.2.4 2004/11/02 07:51:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.1.2.5 2005/03/04 16:41:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -76,7 +76,7 @@ ata_raid_read_config_promise(struct wd_softc *sc)
 	struct ataraid_disk_info *adi;
 
 	info = malloc(sizeof(*info), M_DEVBUF, M_WAITOK);
-	
+
 	bmajor = devsw_name2blk(sc->sc_dev.dv_xname, NULL, 0);
 
 	/* Get a vnode for the raw partition of this disk. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13.2.5 2005/01/24 08:34:26 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.13.2.6 2005/03/04 16:39:01 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.2.5 2005/01/24 08:34:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.2.6 2005/03/04 16:39:01 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -438,7 +438,8 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 	struct faultbuf env;
 
 	/* For bigger buffers use the faster copy */
-	if (len > 256) return (bigcopyin(udaddr, kaddr, len));
+	if (len > 256)
+		return (bigcopyin(udaddr, kaddr, len));
 
 	if (setfault(&env)) {
 		curpcb->pcb_onfault = 0;
@@ -518,7 +519,8 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 	struct faultbuf env;
 
 	/* For big copies use more efficient routine */
-	if (len > 256) return (bigcopyout(kaddr, udaddr, len));
+	if (len > 256)
+		return (bigcopyout(kaddr, udaddr, len));
 
 	if (setfault(&env)) {
 		curpcb->pcb_onfault = 0;

@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.3.6.4 2004/12/18 09:31:26 skrll Exp $        */
+/*      $NetBSD: sd.c,v 1.3.6.5 2005/03/04 16:39:00 skrll Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_disk.h>
@@ -72,14 +73,14 @@ int sdclose(struct open_file *f);
 int
 sdprobe(char target, char lun)
 {
-    struct scsipi_test_unit_ready cdb1;
+    struct scsi_test_unit_ready cdb1;
     struct scsipi_inquiry cdb2;
     struct scsipi_inquiry_data inq;
     int error, retries;
     int count;
 
     bzero(&cdb1, sizeof(cdb1));
-    cdb1.opcode =  TEST_UNIT_READY;
+    cdb1.opcode =  SCSI_TEST_UNIT_READY;
 
     retries = 0;
     do {

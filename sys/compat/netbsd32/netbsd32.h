@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.24.2.3 2004/09/21 13:25:53 skrll Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.24.2.4 2005/03/04 16:40:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -588,7 +588,7 @@ int	coredump_netbsd32(struct lwp *, struct vnode *, struct ucred *);
 
 void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
 int netbsd32_execve2(struct lwp *, struct sys_execve_args *, register_t *);
- 
+
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
 #endif /* SYSCTL_SETUP_PROTO */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.18.2.3 2004/09/21 13:30:40 skrll Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.18.2.4 2005/03/04 16:44:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.18.2.3 2004/09/21 13:30:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.18.2.4 2005/03/04 16:44:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ dmphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
 
-	mpd = mii_phy_match(ma, dmphys);  
+	mpd = mii_phy_match(ma, dmphys);
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 

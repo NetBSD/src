@@ -1,4 +1,4 @@
-/*	$NetBSD: des_setkey.c,v 1.8 2002/11/07 07:04:13 thorpej Exp $	*/
+/*	$NetBSD: des_setkey.c,v 1.8.6.1 2005/03/04 16:40:52 skrll Exp $	*/
 /*	$KAME: des_setkey.c,v 1.6 2001/07/03 14:27:53 itojun Exp $	*/
 
 /* crypto/des/set_key.c */
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: des_setkey.c,v 1.8 2002/11/07 07:04:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: des_setkey.c,v 1.8.6.1 2005/03/04 16:40:52 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -137,7 +137,7 @@ int des_is_weak_key(des_cblock *key)
 }
 
 /* NOW DEFINED IN des_local.h
- * See ecb_encrypt.c for a pseudo description of these macros. 
+ * See ecb_encrypt.c for a pseudo description of these macros.
  * #define PERM_OP(a,b,t,n,m) ((t)=((((a)>>(n))^(b))&(m)),\
  * 	(b)^=(t),\
  * 	(a)=((a)^((t)<<(n))))

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_time.c,v 1.8 2003/01/18 21:21:39 thorpej Exp $ */
+/* $NetBSD: linux_time.c,v 1.8.2.1 2005/03/04 16:40:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.8 2003/01/18 21:21:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.8.2.1 2005/03/04 16:40:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -60,11 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.8 2003/01/18 21:21:39 thorpej Exp $
 #if defined (__i386__) || defined (__m68k__) || \
     defined (__powerpc__) || defined (__mips__) || defined(__arm__)
 
-/* 
+/*
  * Linux keeps track of a system timezone in the kernel. It is readen
  * by gettimeofday and set by settimeofday. This emulates this behavior
  * See linux/kernel/time.c
- */ 
+ */
 struct timezone linux_sys_tz;
 
 int linux_sys_gettimeofday(l, v, retval)
@@ -80,15 +80,15 @@ int linux_sys_gettimeofday(l, v, retval)
 
 	if (SCARG(uap, tp)) {
 		error = sys_gettimeofday (l, v, retval);
-		if (error) 
+		if (error)
 			return (error);
 	}
 
 	if (SCARG(uap, tzp)) {
 		error = copyout(&linux_sys_tz, SCARG(uap, tzp), sizeof(linux_sys_tz));
-		if (error) 
+		if (error)
 			return (error);
-   }		
+   }
 
 	return (0);
 }
@@ -106,19 +106,19 @@ int linux_sys_settimeofday(l, v, retval)
 
 	if (SCARG(uap, tp)) {
 		error = sys_settimeofday(l, v, retval);
-		if (error) 
+		if (error)
 			return (error);
 	}
 
-	/* 
+	/*
 	 * If user is not the superuser, we returned
-	 * after the sys_settimeofday() call. 
+	 * after the sys_settimeofday() call.
 	 */
 	if (SCARG(uap, tzp)) {
 		error = copyin(SCARG(uap, tzp), &linux_sys_tz, sizeof(linux_sys_tz));
-		if (error) 
+		if (error)
 			return (error);
-   }		
+   }
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.36.2.4 2004/09/21 13:30:40 skrll Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.36.2.5 2005/03/04 16:44:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.36.2.4 2004/09/21 13:30:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.36.2.5 2005/03/04 16:44:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -347,7 +347,7 @@ mii_phy_reset(struct mii_softc *sc)
 
 	/* Wait another 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(sc, MII_BMCR); 
+		reg = PHY_READ(sc, MII_BMCR);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);
@@ -645,10 +645,10 @@ mii_phy_flowstatus(struct mii_softc *sc)
 	switch ((anlpar & ANLPAR_X_PAUSE_TOWARDS)) {
 	case ANLPAR_X_PAUSE_NONE:
 		return (0);
-	
+
 	case ANLPAR_X_PAUSE_ASYM:
 		return (IFM_FLOW|IFM_ETH_RXPAUSE);
-	
+
 	default:
 		return (IFM_FLOW|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE);
 	}

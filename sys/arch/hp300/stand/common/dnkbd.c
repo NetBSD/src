@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.5.6.3 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.5.6.4 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ u_char dnkbd_keymap[] = {
 int	dnkbd_ignore;		/* for ignoring mouse packets */
 
 int
-dnkbd_getc()
+dnkbd_getc(void)
 {
 	struct apciregs *apci =
 	    (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(0));
@@ -146,7 +146,7 @@ dnkbd_getc()
 #endif /* SMALL */
 
 void
-dnkbd_nmi()
+dnkbd_nmi(void)
 {
 
 	/*
@@ -155,7 +155,7 @@ dnkbd_nmi()
 }
 
 int
-dnkbd_init()
+dnkbd_init(void)
 {
 
 	/*

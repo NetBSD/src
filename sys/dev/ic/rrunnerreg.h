@@ -1,14 +1,14 @@
-/*	$NetBSD: rrunnerreg.h,v 1.3.44.3 2004/09/21 13:28:07 skrll Exp $	*/
+/*	$NetBSD: rrunnerreg.h,v 1.3.44.4 2005/03/04 16:41:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code contributed to The NetBSD Foundation by Kevin M. Lahey
- * of the Numerical Aerospace Simulation Facility, NASA Ames Research 
+ * of the Numerical Aerospace Simulation Facility, NASA Ames Research
  * Center.
  *
- * Partially based on a HIPPI driver written by Essential Communications 
+ * Partially based on a HIPPI driver written by Essential Communications
  * Corporation.  Thanks to Jason Thorpe, Matt Jacob, and Fred Templin
  * for invaluable advice and encouragement!
  *
@@ -41,7 +41,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Description of RoadRunner registers and hardware constucts.
  *
  * We're trying to support version 1 AND version 2 of the RunCode.
@@ -76,7 +76,7 @@
 #define RR_WRITE_HOST		0x80	/* 64-bit pointer to data on host */
 #define RR_READ_HOST		0x90
 #define RR_WRITE_LENGTH		0x9c	/* length of data to be moved */
-#define RR_READ_LENGTH		0xac	
+#define RR_READ_LENGTH		0xac
 #define RR_DMA_WRITE_STATE	0xa0	/* controls DMA */
 #define RR_DMA_READ_STATE	0xb0
 #define RR_WRITE_DST		0xa4	/* Internal destination of DMA */
@@ -115,8 +115,8 @@
 #define RR_MEMORY_WINDOW	0x800	/* Memory window */
 
 
-/* 
- * Event codes 
+/*
+ * Event codes
  */
 
 /* General events */
@@ -166,7 +166,7 @@
 #define RR_EC_PARITY_ERR	0x2b
 #define RR_EC_LLRC_ERR		0x2c
 #define RR_EC_IP_HDR_CKSUM_ERR	0x2d
-#define RR_EC_DATA_CKSUM_ERR	0x2e	
+#define RR_EC_DATA_CKSUM_ERR	0x2e
 #define RR_EC_SHORT_BURST_ERR	0x2f
 #define RR_EC_RECV_LINK_OFF	0x30
 #define RR_EC_FLAG_SYNC_ERR	0x31
@@ -183,7 +183,7 @@
 #define RR_EC_UNIMPLEMENTED	0x40
 
 
-/* 
+/*
  * Command codes
  */
 
@@ -194,7 +194,7 @@
 #define RR_CC_WATCHDOG		0x05
 #define RR_CC_TRACE		0x06
 #define RR_CC_SET_SEND_PRODUCER	0x07
-#define RR_CC_SET_RECV_PRODUCER	0x08	
+#define RR_CC_SET_RECV_PRODUCER	0x08
 #define RR_CC_DISABLE_RING	0x09
 #define RR_CC_ENABLE_RING	0x0a
 #define RR_CC_DISCARD_PKT	0x0b
@@ -272,7 +272,7 @@
 
 /* External Serial Data */
 
-/* 
+/*
  * This controls hardware that is external to the RoadRunner.
  * Bits 0-15 are set on write, 16-31 are read on read.
  */
@@ -374,7 +374,7 @@
 #define RR_EE_PCI_LAT_GNT	0x01a0	/* PCI max latency/ minimum grant */
 #define RR_EE_PCI_CHECKSUM	0x01f0	/* PCI area checksum */
 
-#define RR_EE_HEADER_FORMAT	0x0200	/* revision of header format 
+#define RR_EE_HEADER_FORMAT	0x0200	/* revision of header format
 					   (should be 1) */
 #define RR_EE_ULA_HI		0x0500	/* Universal LAN Address (ULA) */
 #define RR_EE_ULA_LO		0x0520
@@ -398,7 +398,7 @@
 #define RR_EE_DMA_READ_STATE	0x0f40	/* dma read config */
 #define RR_EE_DRIVER_PARAM	0x0f60	/* driver-specific params (unused) */
 
-#define RR_EE_HEADER_CHECKSUM	0x0fe0	/* checksum for manufacturing header 
+#define RR_EE_HEADER_CHECKSUM	0x0fe0	/* checksum for manufacturing header
 					   (0x200 - 0xfc0) */
 
 #define RR_EE_PHASE2_START	0x1040	/* phase 2 start in SRAM */
@@ -499,7 +499,7 @@ struct rr_ring_ctl {
 };
 
 /* Statistics block, for now, undifferentiated. */
- 
+
 struct rr_stats {
 	u_int32_t	rs_stats[128];
 };
@@ -530,7 +530,7 @@ struct rr_gen_info {
 /* NB:  All of the ring sizes have to be powers of two */
 
 #define RR_MAX_RECV_RING	32	/* maximum number of receive rings */
-#define RR_MAX_DESCR		256	/* maximum number of possible 
+#define RR_MAX_DESCR		256	/* maximum number of possible
 					   descriptors.  XXX:  increase
 					   with caution, as this allocates
 					   static space! */

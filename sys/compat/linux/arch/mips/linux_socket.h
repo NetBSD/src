@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.1.24.3 2004/09/21 13:25:27 skrll Exp $ */
+/*	$NetBSD: linux_socket.h,v 1.1.24.4 2005/03/04 16:39:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 #ifndef _MIPS_LINUX_SOCKET_H
 #define _MIPS_LINUX_SOCKET_H
 
-/* 
- * Everything is from Linux's include/asm-mips/socket.h 
+/*
+ * Everything is from Linux's include/asm-mips/socket.h
  */
 
 /*
@@ -50,8 +50,8 @@
 #define LINUX_SOL_SOCKET	0xffff
 
 /*
- * Options for [gs]etsockopt(2), socket level. 
- * In Linux, theses follow IRIX numbering scheme, 
+ * Options for [gs]etsockopt(2), socket level.
+ * In Linux, theses follow IRIX numbering scheme,
  * except numbers in decimal that are Linux specific
  */
 

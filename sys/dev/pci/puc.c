@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.18.2.4 2005/02/04 11:46:40 skrll Exp $	*/
+/*	$NetBSD: puc.c,v 1.18.2.5 2005/03/04 16:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.18.2.4 2005/02/04 11:46:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.18.2.5 2005/03/04 16:45:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,12 +293,12 @@ puc_attach(parent, self, aux)
 #ifdef PUCCN
 		    !com_is_console(sc->sc_bar_mappings[barindex].t,
 		    sc->sc_bar_mappings[barindex].a, &subregion_handle)
-		   && 
+		   &&
 #endif
 		    bus_space_subregion(sc->sc_bar_mappings[barindex].t,
 		    sc->sc_bar_mappings[barindex].h,
 		    sc->sc_desc->ports[i].offset,
-		    sc->sc_bar_mappings[barindex].s - 
+		    sc->sc_bar_mappings[barindex].s -
 		      sc->sc_desc->ports[i].offset,
 		    &subregion_handle) != 0) {
 			printf("%s: couldn't get subregion for port %d\n",
@@ -329,7 +329,7 @@ puc_print(aux, pnp)
 	const char *pnp;
 {
 	struct puc_attach_args *paa = aux;
-        
+
 	if (pnp)
 		aprint_normal("%s at %s", puc_port_type_name(paa->type), pnp);
 	aprint_normal(" port %d", paa->port);

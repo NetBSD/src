@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.89.2.6 2004/11/14 08:15:33 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.89.2.7 2005/03/04 16:39:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.6 2004/11/14 08:15:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.7 2005/03/04 16:39:51 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -237,7 +237,7 @@ linux_save_sigcontext(l, tf, mask, sc)
 #endif
 	{
 		sc->sc_gs = tf->tf_gs;
-		sc->sc_fs = tf->tf_fs;		
+		sc->sc_fs = tf->tf_fs;
 		sc->sc_es = tf->tf_es;
 		sc->sc_ds = tf->tf_ds;
 		sc->sc_eflags = tf->tf_eflags;
@@ -356,7 +356,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = ((int)p->p_sigctx.ps_sigcode) + 
+	tf->tf_eip = ((int)p->p_sigctx.ps_sigcode) +
 	    (linux_rt_sigcode - linux_sigcode);
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);

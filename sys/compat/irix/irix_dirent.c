@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.11.2.4 2005/01/13 08:33:11 skrll Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.11.2.5 2005/03/04 16:39:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.11.2.4 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.11.2.5 2005/03/04 16:39:38 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -60,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.11.2.4 2005/01/13 08:33:11 skrll E
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
 
-/* 
+/*
  * irix_sys_ngetdents() is nearly a plain copy of svr4_sys_getdents(), from
- * sys/compat/svr4/svr4_misc.c. We need a customized version to handle the 
+ * sys/compat/svr4/svr4_misc.c. We need a customized version to handle the
  * eof flag.
  * Obviously the code should be merged, but it would require some
  * change to the way COMPAT_SVR4 code is set up.
@@ -224,7 +224,7 @@ irix_sys_getdents(l, v, retval)
 
 
 /*
- * The 64 versions are very close to the 
+ * The 64 versions are very close to the
  * 32 bit versions (only 3 lines of diff)
  */
 int

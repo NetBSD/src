@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.21.2.8 2005/02/15 21:32:50 skrll Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.21.2.9 2005/03/04 16:38:49 skrll Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.21.2.8 $"
+#ident 		"GENERIC_TINY-$Revision: 1.21.2.9 $"
 
 maxusers	4
 
@@ -89,7 +89,7 @@ options 	NFSSERVER	# nfs server support
 options 	SOFTDEP		# ffs soft updates support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocols

@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751reg.h,v 1.3.2.3 2004/09/21 13:31:02 skrll Exp $	*/
+/*	$NetBSD: hifn7751reg.h,v 1.3.2.4 2005/03/04 16:45:17 skrll Exp $	*/
 /*	$OpenBSD: hifn7751reg.h,v 1.43 2003/06/02 15:58:41 deraadt Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  * MAX_COMMAND = base command + mac command + encrypt command +
  *			mac-key + rc4-key
  * MAX_RESULT  = base result + comp result + mac result + mac + encrypt result
- *			
+ *
  *
  */
 #define	HIFN_MAX_COMMAND	(8 + 8 + 8 + 64 + 260)
@@ -359,12 +359,12 @@ struct hifn_desc {
 #define	HIFN_RNGCFG_ENA		0x00000001	/* enable rng */
 
 /*
- * PLL config register 
+ * PLL config register
  */
-#define	HIFN_PLL_7956		0x00001d18	/* 7956 PLL config value */ 
+#define	HIFN_PLL_7956		0x00001d18	/* 7956 PLL config value */
 
 /*********************************************************************
- * Structs for board commands 
+ * Structs for board commands
  *
  *********************************************************************/
 

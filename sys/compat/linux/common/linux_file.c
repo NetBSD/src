@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.61.2.6 2004/12/18 09:31:45 skrll Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.61.2.7 2005/03/04 16:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.61.2.6 2004/12/18 09:31:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.61.2.7 2005/03/04 16:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ linux_sys_open(l, v, retval)
 	 * If we are a session leader, and we don't have a controlling
 	 * terminal yet, and the O_NOCTTY flag is not set, try to make
 	 * this the controlling terminal.
-	 */ 
+	 */
         if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
                 struct filedesc *fdp = p->p_fd;
                 struct file     *fp;
@@ -346,7 +346,7 @@ linux_sys_fcntl(l, v, retval)
 		 * memory to hold the data. This is compatible enough
 		 * with NetBSD semantics to not do anything about the
 		 * difference.
-		 * 
+		 *
 		 * Linux does NOT send SIGIO for pipes. Deal with socketpair
 		 * ones and DTYPE_PIPE ones. For these, we don't set
 		 * the underlying flags (we don't pass O_ASYNC flag down
@@ -417,7 +417,7 @@ linux_sys_fcntl(l, v, retval)
 		break;
 
 	case LINUX_F_SETOWN:
-	case LINUX_F_GETOWN:	
+	case LINUX_F_GETOWN:
 		/*
 		 * We need to route fcntl() for tty descriptors around normal
 		 * fcntl(), since NetBSD tty TIOC{G,S}PGRP semantics is too
@@ -791,7 +791,7 @@ linux_sys_chown16(l, v, retval)
 		(uid_t)-1 : SCARG(uap, uid);
 	SCARG(&bca, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
 		(gid_t)-1 : SCARG(uap, gid);
-	
+
 	return sys___posix_chown(l, &bca, retval);
 }
 
@@ -813,7 +813,7 @@ linux_sys_fchown16(l, v, retval)
 		(uid_t)-1 : SCARG(uap, uid);
 	SCARG(&bfa, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
 		(gid_t)-1 : SCARG(uap, gid);
-	
+
 	return sys___posix_fchown(l, &bfa, retval);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.8.2.6 2005/02/04 07:09:17 skrll Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.8.2.7 2005/03/04 16:40:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -34,13 +34,13 @@
  * Exec glue to provide compatibility with older NetBSD vax1k exectuables.
  *
  * Because NetBSD/vax now uses 4k page size, older binaries (that started
- * on an 1k boundary) cannot be mmap'ed. Therefore they are read in 
+ * on an 1k boundary) cannot be mmap'ed. Therefore they are read in
  * (via vn_rdwr) as OMAGIC binaries and executed. This will use a little
  * bit more memory, but otherwise won't affect the execution speed.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8.2.6 2005/02/04 07:09:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8.2.7 2005/03/04 16:40:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,21 +111,21 @@ exec_vax1k_makecmds(l, epp)
 
 #ifdef COMPAT_43
 	/*
-	 * 4.3BSD pre-dates CPU midmag (e.g. MID_VAX1K).   instead, we 
+	 * 4.3BSD pre-dates CPU midmag (e.g. MID_VAX1K).   instead, we
 	 * expect a magic number in native byte order.
 	 */
 	switch (execp->a_midmag) {
 	case ZMAGIC:
 		error = exec_vax1k_prep_anymagic(l, epp, VAX1K_LDPGSZ, 0);
 		goto done;
-	
+
 	case NMAGIC:
-		error = exec_vax1k_prep_anymagic(l, epp, 
+		error = exec_vax1k_prep_anymagic(l, epp,
 					 	sizeof(struct exec), 1);
 		goto done;
 
 	case OMAGIC:
-		error = exec_vax1k_prep_anymagic(l, epp, 
+		error = exec_vax1k_prep_anymagic(l, epp,
 					 	sizeof(struct exec), 0);
 		goto done;
 	}
@@ -161,13 +161,13 @@ exec_vax1k_prep_anymagic(l, epp, text_foffset, textpad)
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = epp->ep_taddr + epp->ep_tsize;
 	if (textpad)			/* pad for NMAGIC? */
-		epp->ep_daddr = (epp->ep_daddr + (VAX1K_LDPGSZ - 1)) & 
+		epp->ep_daddr = (epp->ep_daddr + (VAX1K_LDPGSZ - 1)) &
 						~(VAX1K_LDPGSZ - 1);
 	epp->ep_dsize = execp->a_data;
 	epp->ep_entry = execp->a_entry;
 
 	/* first allocate memory for text+data+bss */
-        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, 
+        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 		round_page(epp->ep_daddr + epp->ep_dsize + execp->a_bss) -
 			trunc_page(epp->ep_taddr),	/* size */
 		trunc_page(epp->ep_taddr), NULLVP,	/* addr, vnode */
@@ -181,7 +181,7 @@ exec_vax1k_prep_anymagic(l, epp, text_foffset, textpad)
 	/* next read the data */
 	if (epp->ep_dsize) {
         	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_readvn,
-			epp->ep_dsize, epp->ep_daddr, epp->ep_vp, 
+			epp->ep_dsize, epp->ep_daddr, epp->ep_vp,
 			text_foffset + epp->ep_tsize,
 			VM_PROT_WRITE|VM_PROT_READ|VM_PROT_EXECUTE);
 	}

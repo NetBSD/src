@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.32.2.5 2004/09/21 13:25:42 skrll Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.32.2.6 2005/03/04 16:40:12 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32.2.5 2004/09/21 13:25:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32.2.6 2005/03/04 16:40:12 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -124,8 +124,8 @@ const struct emul emul_mach = {
 /*
  * Copy arguments onto the stack in the normal way, but add some
  * extra information in case of dynamic binding.
- * XXX This needs a cleanup: it is not used anymore by the Darwin 
- * emulation, and it probably contains Darwin specific bits. 
+ * XXX This needs a cleanup: it is not used anymore by the Darwin
+ * emulation, and it probably contains Darwin specific bits.
  */
 int
 exec_mach_copyargs(l, pack, arginfo, stackp, argp)
@@ -140,14 +140,14 @@ exec_mach_copyargs(l, pack, arginfo, stackp, argp)
 	size_t len;
 	size_t zero = 0;
 	int error;
-	
+
 	*stackp = (char *)(((unsigned long)*stackp - 1) & ~0xfUL);
 
 	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
 	macho_hdr = (struct exec_macho_object_header *)emea->macho_hdr;
-	if ((error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr))) != 0) 
+	if ((error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr))) != 0)
 		return error;
-	
+
 	*stackp += sizeof(macho_hdr);
 
 	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0) {
@@ -159,7 +159,7 @@ exec_mach_copyargs(l, pack, arginfo, stackp, argp)
 		return error;
 	*stackp += sizeof(zero);
 
-	if ((error = copyoutstr(emea->filename, 
+	if ((error = copyoutstr(emea->filename,
 	    *stackp, MAXPATHLEN, &len)) != 0) {
 		DPRINTF(("mach: copyout path failed\n"));
 		return error;
@@ -172,12 +172,12 @@ exec_mach_copyargs(l, pack, arginfo, stackp, argp)
 
 	len = len % sizeof(zero);
 	if (len) {
-		if ((error = copyout(&zero, *stackp, len)) != 0) 
+		if ((error = copyout(&zero, *stackp, len)) != 0)
 			return error;
 		*stackp += len;
 	}
 
-	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) 
+	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0)
 		return error;
 	*stackp += sizeof(zero);
 
@@ -192,7 +192,7 @@ exec_mach_probe(path)
 	return 0;
 }
 
-void 
+void
 mach_e_proc_exec(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
@@ -211,11 +211,11 @@ mach_e_proc_fork(p, parent, forkflags)
 	struct proc *parent;
 	int forkflags;
 {
-	mach_e_proc_fork1(p, parent, 1);	
+	mach_e_proc_fork1(p, parent, 1);
 	return;
 }
 
-void 
+void
 mach_e_proc_fork1(p, parent, allocate)
 	struct proc *p;
 	struct proc *parent;
@@ -238,9 +238,9 @@ mach_e_proc_fork1(p, parent, allocate)
 	med1 = p->p_emuldata;
 	med2 = parent->p_emuldata;
 
-	/* 
+	/*
 	 * Exception ports are inherited between forks,
-	 * but we need to double their reference counts, 
+	 * but we need to double their reference counts,
 	 * since the ports are referenced by rights in the
 	 * parent and in the child.
 	 *
@@ -257,7 +257,7 @@ mach_e_proc_fork1(p, parent, allocate)
 	return;
 }
 
-void 
+void
 mach_e_proc_init(p, vmspace)
 	struct proc *p;
 	struct vmspace *vmspace;
@@ -265,9 +265,9 @@ mach_e_proc_init(p, vmspace)
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 
-	/* 
-	 * Initialize various things if needed. 
-	 * XXX Not the best place for this. 
+	/*
+	 * Initialize various things if needed.
+	 * XXX Not the best place for this.
 	 */
 	if (mach_cold == 1)
 		mach_init();
@@ -275,7 +275,7 @@ mach_e_proc_init(p, vmspace)
 	/*
 	 * For Darwin binaries, p->p_emuldata is always allocated:
 	 * from the previous program if it had the same emulation,
-	 * or from darwin_e_proc_exec(). In the latter situation, 
+	 * or from darwin_e_proc_exec(). In the latter situation,
 	 * everything has been set to zero.
 	 */
 	if (!p->p_emuldata) {
@@ -290,7 +290,7 @@ mach_e_proc_init(p, vmspace)
 	med = (struct mach_emuldata *)p->p_emuldata;
 
 	/*
-	 * p->p_emudata has med_inited set if we inherited it from 
+	 * p->p_emudata has med_inited set if we inherited it from
 	 * the program that called exec(). In that situation, we
 	 * must free anything that will not be used anymore.
 	 */
@@ -306,17 +306,17 @@ mach_e_proc_init(p, vmspace)
 		 * controller intend to keep in control even after exec().
 		 */
 	} else {
-		/* 
+		/*
 		 * p->p_emuldata is uninitialized. Go ahead and initialize it.
 		 */
 		LIST_INIT(&med->med_right);
 		lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
 		lockinit(&med->med_exclock, PZERO, "exclock", 0, 0);
 
-		/* 
-		 * For debugging purpose, it's convenient to have each process 
+		/*
+		 * For debugging purpose, it's convenient to have each process
 		 * using distinct port names, so we prefix the first port name
-		 * by the PID. Darwin does not do that, but we can remove it 
+		 * by the PID. Darwin does not do that, but we can remove it
 		 * when we want, it will not hurt.
 		 */
 		med->med_nextright = p->p_pid << 16;
@@ -344,11 +344,11 @@ mach_e_proc_init(p, vmspace)
 		MACH_PORT_REF(med->med_bootstrap);
 	}
 
-	/* 
+	/*
 	 * Exception ports are inherited accross exec() calls.
-	 * If the structure is initialized, the ports are just 
+	 * If the structure is initialized, the ports are just
 	 * here, so leave them untouched. If the structure is
-	 * uninitalized, the ports are all set to zero, which 
+	 * uninitalized, the ports are all set to zero, which
 	 * is the default, so do not touch them either.
 	 */
 
@@ -359,7 +359,7 @@ mach_e_proc_init(p, vmspace)
 	return;
 }
 
-void 
+void
 mach_e_proc_exit(p)
 	struct proc *p;
 {
@@ -387,9 +387,9 @@ mach_e_proc_exit(p)
 	if (lockstatus(&med->med_exclock) != 0)
 		wakeup(&med->med_exclock);
 
-	/* 
+	/*
 	 * If the kernel and host port are still referenced, remove
-	 * the pointer to this process' struct proc, as it will 
+	 * the pointer to this process' struct proc, as it will
 	 * become invalid once the process will exit.
 	 */
 	med->med_kernel->mp_datatype = MACH_MP_NONE;

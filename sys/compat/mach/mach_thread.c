@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.18.2.3 2004/09/21 13:25:42 skrll Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.18.2.4 2005/03/04 16:40:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.18.2.3 2004/09/21 13:25:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.18.2.4 2005/03/04 16:40:13 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,7 +76,7 @@ mach_sys_syscall_thread_switch(l, v, retval)
 	} */ *uap = v;
 	int timeout;
 	struct mach_emuldata *med;
-		
+
 	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 	timeout = SCARG(uap, option_time) * hz / 1000;
 
@@ -93,7 +93,7 @@ mach_sys_syscall_thread_switch(l, v, retval)
 	case MACH_SWITCH_OPTION_WAIT:
 		med->med_thpri = 1;
 		while (med->med_thpri != 0)
-			(void)tsleep(&med->med_thpri, PZERO|PCATCH, 
+			(void)tsleep(&med->med_thpri, PZERO|PCATCH,
 			    "thread_switch", timeout);
 		break;
 
@@ -124,7 +124,7 @@ mach_sys_swtch_pri(l, v, retval)
 #endif
 	int s;
 
-	/* 
+	/*
 	 * Copied from preempt(9). We cannot just call preempt
 	 * because we want to return mi_switch(9) return value.
 	 */
@@ -145,7 +145,7 @@ mach_sys_swtch_pri(l, v, retval)
 int
 mach_sys_swtch(l, v, retval)
 	struct lwp *l;
-	void *v; 
+	void *v;
 	register_t *retval;
 {
 	struct mach_sys_swtch_pri_args cup;
@@ -156,7 +156,7 @@ mach_sys_swtch(l, v, retval)
 }
 
 
-int 
+int
 mach_thread_policy(args)
 	struct mach_trap_args *args;
 {
@@ -184,7 +184,7 @@ mach_thread_policy(args)
 }
 
 /* XXX it might be possible to use this on another task */
-int 
+int
 mach_thread_create_running(args)
 	struct mach_trap_args *args;
 {
@@ -208,7 +208,7 @@ mach_thread_create_running(args)
 	if (MACH_REQMSG_OVERFLOW(args, req->req_state[end_offset]))
 		return mach_msg_error(args, EINVAL);
 
-	/* 
+	/*
 	 * Prepare the data we want to transmit to the child.
 	 */
 	mctc.mctc_flavor = req->req_flavor;
@@ -224,7 +224,7 @@ mach_thread_create_running(args)
 	if ((error = newlwp(l, p, uaddr, inmem, flags, NULL, 0,
 	    mach_create_thread_child, (void *)&mctc, &mctc.mctc_lwp)) != 0)
 		return mach_msg_error(args, error);
-		
+
 	/*
 	 * Make the child runnable.
 	 */
@@ -237,20 +237,20 @@ mach_thread_create_running(args)
 	p->p_nrlwps++;
 	simple_unlock(&p->p_lock);
 
-	/* 
-	 * Get the child's kernel port 
+	/*
+	 * Get the child's kernel port
 	 */
 	mle = mctc.mctc_lwp->l_emuldata;
 	child_mr = mach_right_get(mle->mle_kernel, l, MACH_PORT_TYPE_SEND, 0);
-	
-	/* 
+
+	/*
 	 * The child relies on some values in mctc, so we should not
 	 * exit until it is finished with it. We catch signals so that
 	 * the process can be killed with kill -9, but we loop to avoid
 	 * spurious wakeups due to other signals.
 	 */
 	while(mctc.mctc_child_done == 0)
-		(void)tsleep(&mctc.mctc_child_done, 
+		(void)tsleep(&mctc.mctc_child_done,
 		    PZERO|PCATCH, "mach_thread", 0);
 
 	*msglen = sizeof(*rep);
@@ -261,7 +261,7 @@ mach_thread_create_running(args)
 	return 0;
 }
 
-int 
+int
 mach_thread_info(args)
 	struct mach_trap_args *args;
 {
@@ -290,10 +290,10 @@ mach_thread_info(args)
 
 		tbi = (struct mach_thread_basic_info *)rep->rep_out;
 		tbi->user_time.seconds = tp->p_uticks * hz / 1000000;
-		tbi->user_time.microseconds = 
+		tbi->user_time.microseconds =
 		    (tp->p_uticks) * hz - tbi->user_time.seconds;
 		tbi->system_time.seconds = tp->p_sticks * hz / 1000000;
-		tbi->system_time.microseconds = 
+		tbi->system_time.microseconds =
 		    (tp->p_sticks) * hz - tbi->system_time.seconds;
 		tbi->cpu_usage = tp->p_pctcpu;
 		tbi->policy = MACH_THREAD_STANDARD_POLICY;
@@ -342,7 +342,7 @@ mach_thread_info(args)
 
 	case MACH_THREAD_SCHED_RR_INFO:
 	case MACH_THREAD_SCHED_FIFO_INFO:
-		uprintf("Unimplemented thread_info flavor %d\n", 
+		uprintf("Unimplemented thread_info flavor %d\n",
 		    req->req_flavor);
 	default:
 		return mach_msg_error(args, EINVAL);
@@ -358,7 +358,7 @@ int
 mach_thread_get_state(args)
 	struct mach_trap_args *args;
 {
-	mach_thread_get_state_request_t *req = args->smsg; 
+	mach_thread_get_state_request_t *req = args->smsg;
 	mach_thread_get_state_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
@@ -369,7 +369,7 @@ mach_thread_get_state(args)
 	if (req->req_count > 144)
 		return mach_msg_error(args, EINVAL);
 
-	if ((error = mach_thread_get_state_machdep(tl, 
+	if ((error = mach_thread_get_state_machdep(tl,
 	    req->req_flavor, &rep->rep_state, &size)) != 0)
 		return mach_msg_error(args, error);
 
@@ -385,7 +385,7 @@ int
 mach_thread_set_state(args)
 	struct mach_trap_args *args;
 {
-	mach_thread_set_state_request_t *req = args->smsg; 
+	mach_thread_set_state_request_t *req = args->smsg;
 	mach_thread_set_state_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
@@ -397,7 +397,7 @@ mach_thread_set_state(args)
 	if (MACH_REQMSG_OVERFLOW(args, req->req_state[end_offset]))
 		return mach_msg_error(args, EINVAL);
 
-	if ((error = mach_thread_set_state_machdep(tl, 
+	if ((error = mach_thread_set_state_machdep(tl,
 	    req->req_flavor, &req->req_state)) != 0)
 		return mach_msg_error(args, error);
 
@@ -415,7 +415,7 @@ int
 mach_thread_suspend(args)
 	struct mach_trap_args *args;
 {
-	mach_thread_suspend_request_t *req = args->smsg; 
+	mach_thread_suspend_request_t *req = args->smsg;
 	mach_thread_suspend_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
@@ -436,7 +436,7 @@ int
 mach_thread_resume(args)
 	struct mach_trap_args *args;
 {
-	mach_thread_resume_request_t *req = args->smsg; 
+	mach_thread_resume_request_t *req = args->smsg;
 	mach_thread_resume_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
@@ -455,7 +455,7 @@ int
 mach_thread_abort(args)
 	struct mach_trap_args *args;
 {
-	mach_thread_abort_request_t *req = args->smsg; 
+	mach_thread_abort_request_t *req = args->smsg;
 	mach_thread_abort_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
@@ -474,7 +474,7 @@ int
 mach_thread_set_policy(args)
 	struct mach_trap_args *args;
 {
-	mach_thread_set_policy_request_t *req = args->smsg; 
+	mach_thread_set_policy_request_t *req = args->smsg;
 	mach_thread_set_policy_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
@@ -498,7 +498,7 @@ mach_thread_set_policy(args)
 	mn = req->req_pset.name;
 	if ((mr = mach_right_check(mn, tl, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_msg_error(args, EINVAL);
-	
+
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 	rep->rep_retval = 0;

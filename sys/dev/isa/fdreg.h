@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.2.30.3 2004/09/21 13:29:43 skrll Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.2.30.4 2005/03/04 16:43:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -95,7 +95,7 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  *
- * From: FreeBSD: Id: ioctl_fd.h,v 1.7 1994/10/30 19:17:39 joerg Exp 
+ * From: FreeBSD: Id: ioctl_fd.h,v 1.7 1994/10/30 19:17:39 joerg Exp
  */
 
 #define FD_MAX_NSEC 36		/* highest known number of spt - allow for */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.42.2.6 2005/02/04 11:45:09 skrll Exp $	*/
+/*	$NetBSD: rnd.c,v 1.42.2.7 2005/03/04 16:40:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.42.2.6 2005/02/04 11:45:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.42.2.7 2005/03/04 16:40:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -194,7 +194,7 @@ rnd_counter(void)
 	if (rnd_ready) {
 		microtime(&tv);
 		return (tv.tv_sec * 1000000 + tv.tv_usec);
-	} 
+	}
 	/* when called from rnd_init, its too early to call microtime safely */
 	return (0);
 }
@@ -312,9 +312,9 @@ rnd_init(void)
 	if (rnd_ready)
 		return;
 
-	/* 
+	/*
 	 * take a counter early, hoping that there's some variance in
-	 * the following operations 
+	 * the following operations
 	 */
 	c = rnd_counter();
 
@@ -323,11 +323,11 @@ rnd_init(void)
 
 	rndpool_init(&rnd_pool);
 
-	/* Mix *something*, *anything* into the pool to help it get started. 
+	/* Mix *something*, *anything* into the pool to help it get started.
 	 * However, it's not safe for rnd_counter() to call microtime() yet,
 	 * so on some platforms we might just end up with zeros anyway.
 	 * XXX more things to add would be nice.
-	 */ 
+	 */
 	if (c) {
 		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
 		c = rnd_counter();
@@ -863,7 +863,7 @@ rnd_attach_source(rndsource_element_t *rs, char *name, u_int32_t type,
 	printf(")\n");
 #endif
 
-	/* 
+	/*
 	 * Again, put some more initial junk in the pool.
 	 * XXX Bogus, but harder to guess than zeros.
 	 */

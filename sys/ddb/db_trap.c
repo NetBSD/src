@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.21 2003/04/28 02:49:55 briggs Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.21.2.1 2005/03/04 16:40:52 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.21 2003/04/28 02:49:55 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.21.2.1 2005/03/04 16:40:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -86,7 +86,7 @@ db_trap(int type, int code)
 				db_printf("; curlwp = %p,"
 				    " curproc is NULL at\t", curlwp);
 			else
-				db_printf(" in pid %d.%d (%s) at\t", 
+				db_printf(" in pid %d.%d (%s) at\t",
 				    curproc->p_pid, curlwp->l_lid,
 				    curproc->p_comm);
 		} else if (bkpt)

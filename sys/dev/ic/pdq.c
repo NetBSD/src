@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.36 2003/01/17 02:43:40 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.36.2.1 2005/03/04 16:41:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -35,12 +35,12 @@
  * a flushing of memory or write buffers and/or has incoherent caches)
  * have yet to be made.
  *
- * However, it is expected that the PDQ_CSR_WRITE macro will cause a 
+ * However, it is expected that the PDQ_CSR_WRITE macro will cause a
  * flushing of the write buffers.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.36 2003/01/17 02:43:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.36.2.1 2005/03/04 16:41:32 skrll Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
@@ -76,7 +76,7 @@ static const char * const pdq_adapter_states[] = {
 };
 
 /*
- * The following are used in conjunction with 
+ * The following are used in conjunction with
  * unsolicited events
  */
 static const char * const pdq_entities[] = {
@@ -165,7 +165,7 @@ static const char * const pdq_pmd_types100[] = {
     "Unshielded Twisted Pair"
 };
 
-static const char * const * const pdq_pmd_types[] = { 
+static const char * const * const pdq_pmd_types[] = {
     pdq_pmd_types0, pdq_pmd_types100
 };
 
@@ -810,7 +810,7 @@ pdq_process_received_data(
 	     * the real length.
 	     */
 	    pdulen = datalen + (PDQ_RX_FC_OFFSET - PDQ_OS_HDR_OFFSET) - 4 /* CRC */;
-	    segcnt = (pdulen + PDQ_OS_HDR_OFFSET + PDQ_OS_DATABUF_SIZE - 1) / PDQ_OS_DATABUF_SIZE; 
+	    segcnt = (pdulen + PDQ_OS_HDR_OFFSET + PDQ_OS_DATABUF_SIZE - 1) / PDQ_OS_DATABUF_SIZE;
 	    PDQ_OS_DATABUF_ALLOC(pdq, npdu);
 	    if (npdu == NULL) {
 		PDQ_PRINTF(("discard: no databuf #0\n"));
@@ -830,7 +830,7 @@ pdq_process_received_data(
 	    }
 	    PDQ_OS_DATABUF_NEXT_SET(lpdu, NULL);
 	    for (idx = 0; idx < PDQ_RX_SEGCNT; idx++) {
-		buffers[(producer + idx) & ring_mask] = 
+		buffers[(producer + idx) & ring_mask] =
 		    buffers[(completion + idx) & ring_mask];
 		buffers[(completion + idx) & ring_mask] = NULL;
 	    }
@@ -896,8 +896,8 @@ pdq_process_received_data(
 	    rxd->rxd_pa_lo = htole32(PDQ_OS_DATABUF_BUSPA(pdq, buffers[rx->rx_producer]));
 	    PDQ_OS_RXPDU_PRESYNC(pdq, buffers[rx->rx_producer], 0, PDQ_OS_DATABUF_SIZE);
 	    PDQ_OS_DESC_PRESYNC(pdq, rxd, sizeof(*rxd));
-	    PDQ_ADVANCE(rx->rx_producer, 1, ring_mask);	
-	    PDQ_ADVANCE(producer, 1, ring_mask);	
+	    PDQ_ADVANCE(rx->rx_producer, 1, ring_mask);
+	    PDQ_ADVANCE(producer, 1, ring_mask);
 	    PDQ_ADVANCE(completion, 1, ring_mask);
 	}
     }
@@ -1158,7 +1158,7 @@ pdq_hwreset(
 }
 
 /*
- * The following routine brings the PDQ from whatever state it is 
+ * The following routine brings the PDQ from whatever state it is
  * in to DMA_UNAVAILABLE (ie. like a RESET but without doing a RESET).
  */
 pdq_state_t
@@ -1277,7 +1277,7 @@ pdq_stop(
     pdq->pdq_tx_info.tx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_transmits);
 
     /*
-     * Allow the DEFPA to do DMA.  Then program the physical 
+     * Allow the DEFPA to do DMA.  Then program the physical
      * addresses of the consumer and descriptor blocks.
      */
     if (pdq->pdq_type == PDQ_DEFPA) {
@@ -1333,7 +1333,7 @@ pdq_stop(
 	PDQ_OS_USEC_DELAY(1000);
     }
     PDQ_ASSERT(state == PDQS_DMA_AVAILABLE);
-    
+
     PDQ_CSR_WRITE(csrs, csr_host_int_type_0, 0xFF);
     pdq->pdq_intrmask = 0;
       /* PDQ_HOST_INT_STATE_CHANGE
@@ -1512,19 +1512,19 @@ pdq_interrupt(
 			PDQ_PRINTF(("    CMD Status           = %d (0x%x)\n",
 				    log_entry.error_log_get_status,
 				    log_entry.error_log_get_status));
-			PDQ_PRINTF(("    Event Status         = %d (0x%x)\n", 
+			PDQ_PRINTF(("    Event Status         = %d (0x%x)\n",
 				    log_entry.error_log_get_event_status,
 				    log_entry.error_log_get_event_status));
-			PDQ_PRINTF(("    Caller Id            = %d (0x%x)\n", 
+			PDQ_PRINTF(("    Caller Id            = %d (0x%x)\n",
 				    log_entry.error_log_get_caller_id,
 				    log_entry.error_log_get_caller_id));
-			PDQ_PRINTF(("    Write Count          = %d (0x%x)\n", 
+			PDQ_PRINTF(("    Write Count          = %d (0x%x)\n",
 				    log_entry.error_log_get_write_count,
 				    log_entry.error_log_get_write_count));
-			PDQ_PRINTF(("    FRU Implication Mask = %d (0x%x)\n", 
+			PDQ_PRINTF(("    FRU Implication Mask = %d (0x%x)\n",
 				    log_entry.error_log_get_fru_implication_mask,
 				    log_entry.error_log_get_fru_implication_mask));
-			PDQ_PRINTF(("    Test ID              = %d (0x%x)\n", 
+			PDQ_PRINTF(("    Test ID              = %d (0x%x)\n",
 				    log_entry.error_log_get_test_id,
 				    log_entry.error_log_get_test_id));
 		    }

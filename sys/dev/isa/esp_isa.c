@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.27.6.3 2005/02/04 11:46:08 skrll Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.27.6.4 2005/03/04 16:43:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.27.6.3 2005/02/04 11:46:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.27.6.4 2005/03/04 16:43:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,8 +135,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.27.6.3 2005/02/04 11:46:08 skrll Exp $
 
 #include <dev/isa/esp_isavar.h>
 
-int	esp_isa_match(struct device *, struct cfdata *, void *); 
-void	esp_isa_attach(struct device *, struct device *, void *);  
+int	esp_isa_match(struct device *, struct cfdata *, void *);
+void	esp_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(esp_isa, sizeof(struct esp_isa_softc),
     esp_isa_match, esp_isa_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.5.6.3 2004/09/21 13:30:16 skrll Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.5.6.4 2005/03/04 16:43:40 skrll Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.5.6.3 2004/09/21 13:30:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.5.6.4 2005/03/04 16:43:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/socket.h> 
+#include <sys/socket.h>
 
 #include "rnd.h"
 #if NRND > 0
@@ -112,7 +112,7 @@ cs_isapnp_attach(parent, self, aux)
 
 #ifdef notyet
 #ifdef DEBUG
-	printf("%s: nio=%u, nmem=%u, nmem32=%u, ndrq=%u, nirq=%u\n", DEVNAME(sc), 
+	printf("%s: nio=%u, nmem=%u, nmem32=%u, ndrq=%u, nirq=%u\n", DEVNAME(sc),
 		ipa->ipa_nio, ipa->ipa_nmem, ipa->ipa_nmem32, ipa->ipa_ndrq, ipa->ipa_nirq);
 #endif
 	isc->sc_ic = ipa->ipa_ic;
@@ -137,7 +137,7 @@ cs_isapnp_attach(parent, self, aux)
 			printf("%s: correct id(%u) from mem=%u\n",
 				 DEVNAME(sc), id, (u_int)ipa->ipa_mem[i].h);
 #endif
-			
+
 			sc->sc_memt = ipa->ipa_memt;
 			sc->sc_memh = ipa->ipa_mem[i].h;
 			sc->sc_pktpgaddr = ipa->ipa_mem[i].base;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dirent.h,v 1.8 2002/05/10 17:27:23 tron Exp $	*/
+/*	$NetBSD: linux_dirent.h,v 1.8.10.1 2005/03/04 16:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct linux_dirent {
 	char		d_name[LINUX_MAXNAMLEN + 1];
 };
 
-struct linux_dirent64 { 
+struct linux_dirent64 {
         unsigned long long	d_ino;
         long long		d_off;
         unsigned short		d_reclen;

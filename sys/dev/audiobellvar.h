@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobellvar.h,v 1.2.4.4 2004/09/21 13:26:24 skrll Exp $	*/
+/*	$NetBSD: audiobellvar.h,v 1.2.4.5 2005/03/04 16:40:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 Ben Harris
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.

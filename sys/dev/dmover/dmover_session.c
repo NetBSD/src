@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_session.c,v 1.1 2002/08/02 00:30:39 thorpej Exp $	*/
+/*	$NetBSD: dmover_session.c,v 1.1.12.1 2005/03/04 16:41:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_session.c,v 1.1 2002/08/02 00:30:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_session.c,v 1.1.12.1 2005/03/04 16:41:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -132,6 +132,6 @@ dmover_session_destroy(struct dmover_session *dses)
 	if (dses->__dses_npendreqs)
 		panic("dmover_session_destroy");
 
-	dmover_backend_release(dses); 
+	dmover_backend_release(dses);
 	pool_put(&dmover_session_pool, dses);
 }

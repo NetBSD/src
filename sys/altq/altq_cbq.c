@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.6.6.4 2004/09/21 13:11:19 skrll Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.6.6.5 2005/03/04 16:38:00 skrll Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -27,12 +27,12 @@
  * SUN MICROSYSTEMS DOES NOT CLAIM MERCHANTABILITY OF THIS SOFTWARE OR THE
  * SUITABILITY OF THIS SOFTWARE FOR ANY PARTICULAR PURPOSE.  The software is
  * provided "as is" without express or implied warranty of any kind.
- *  
+ *
  * These notices must be retained in any copies of any part of this software.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.6.6.4 2004/09/21 13:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.6.6.5 2005/03/04 16:38:00 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -378,11 +378,11 @@ cbq_delete_filter(dfp)
 {
 	char		*ifacename;
 	cbq_state_t	*cbqp;
-    
+
 	ifacename = dfp->cbq_iface.cbq_ifacename;
 	if ((cbqp = altq_lookup(ifacename, ALTQT_CBQ)) == NULL)
 		return (EBADF);
-    
+
 	return acc_delete_filter(&cbqp->cbq_classifier,
 				 dfp->cbq_filter_handle);
 }
@@ -632,7 +632,7 @@ cbq_ifattach(ifacep)
 	    sizeof(struct rm_class *) * CBQ_MAX_CLASSES);
 	new_cbqp->cbq_qlen = 0;
 	new_cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */
-       
+
 	/*
 	 * set CBQ to this ifnet structure.
 	 */
@@ -940,7 +940,7 @@ static void cbq_class_dump(i)
 		return;
 	}
 	cl = cbq_list->cbq_class_tbl[i];
-    
+
 	printf("class %d cl=%p\n", i, cl);
 	if (cl != NULL) {
 		s = &cl->stats_;

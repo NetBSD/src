@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.4.2.6 2005/01/17 19:29:29 skrll Exp $	*/
+/*	$NetBSD: est.c,v 1.4.2.7 2005/03/04 16:38:39 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.4.2.6 2005/01/17 19:29:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.4.2.7 2005/03/04 16:38:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,5 +498,6 @@ est_init(struct cpu_info *ci)
 
 	return;
  err:
+	free(freq_names, M_SYSCTLDATA);
 	aprint_normal("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.7.2.4 2004/09/21 13:31:02 skrll Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.7.2.5 2005/03/04 16:45:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.8 2004/04/02 23:57:10 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.7.2.4 2004/09/21 13:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.7.2.5 2005/03/04 16:45:17 skrll Exp $");
 #endif
 
 /*
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.7.2.4 2004/09/21 13:31:02 skrll Exp
 #include "opt_inet.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.7.2.4 2004/09/21 13:31:02 skrll Exp
 #include <sys/errno.h>
 
 #include <machine/bus.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.7.2.4 2004/09/21 13:31:02 skrll Exp
 #include <net80211/ieee80211_var.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #endif
 
 #include <dev/ic/athcompat.h>
@@ -149,7 +149,7 @@ ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	if (vendor == 0x128c)
 		vendor = PCI_VENDOR_ATHEROS;
 	devname = ath_hal_probe(vendor, ath_product(pa->pa_id));
-	if (devname) 
+	if (devname)
 		return 1;
 
 	return 0;
@@ -186,10 +186,10 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	/* 
+	/*
 	 * Setup memory-mapping of PCI registers.
 	 */
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh, 
+	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh,
 	    NULL, NULL)) {
 		aprint_error("cannot map register space\n");
 		goto bad;
@@ -207,7 +207,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad1;
 	}
 
-	intrstr = pci_intr_string(pc, ih); 
+	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ath_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error("couldn't map interrupt\n");

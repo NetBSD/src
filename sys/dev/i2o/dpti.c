@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.13.2.4 2004/09/21 13:27:46 skrll Exp $	*/
+/*	$NetBSD: dpti.c,v 1.13.2.5 2005/03/04 16:41:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.13.2.4 2004/09/21 13:27:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.13.2.5 2005/03/04 16:41:15 skrll Exp $");
 
 #include "opt_i2o.h"
 
@@ -607,7 +607,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 
 				bufs[nbuf].db_frags[nfrag].iov_len =
 				    p[0] & 0x00ffffff;
-				bufs[nbuf].db_frags[nfrag].iov_base = 
+				bufs[nbuf].db_frags[nfrag].iov_base =
 				    (void *)p[1];
 
 				sz += p[0] & 0x00ffffff;

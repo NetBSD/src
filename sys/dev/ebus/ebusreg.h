@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusreg.h,v 1.4.16.1 2005/01/17 19:30:39 skrll Exp $	*/
+/*	$NetBSD: ebusreg.h,v 1.4.16.2 2005/03/04 16:41:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -65,7 +65,7 @@
  * EBus address is represented in PROM by 2 cells: bar and offset.
  * "bar" specifies the EBus BAR register used to translate the
  * "offset" into PCI address space.
- * 
+ *
  * On Ultra the bar is the _offset_ of the BAR in PCI config space but
  * in (some?) ms-IIep systems (e.g. Krups) it's the _number_ of the
  * BAR - e.g. BAR1 is represented by 1 in Krups PROM, while on Ultra
@@ -109,7 +109,7 @@ struct ebus_interrupt_map_mask {
 
 /*
  * DMA controller registers.
- * 
+ *
  * The "next" registers are at the same locations.
  * Which one you write to depends on EN_NEXT bit in the DCSR.
  */
@@ -124,7 +124,7 @@ struct ebus_interrupt_map_mask {
 
 /*
  * DCSR bits (PCIO manual, Table 7-23, pp 134-135)
- * 
+ *
  * On Reset all the register bits except ID will be 0 and CYC_PENDING
  * will reflect the status of any pending requests.
  */
@@ -135,7 +135,7 @@ struct ebus_interrupt_map_mask {
 #define EBDMA_RESET		0x00000080 /* reset - write 0 to clear */
 #define EBDMA_WRITE		0x00000100 /* 0: mem->dev, 1: dev->mem */
 #define EBDMA_EN_DMA		0x00000200 /* enable DMA */
-#define EBDMA_CYC_PEND		0x00000400 /* DMA cycle pending 
+#define EBDMA_CYC_PEND		0x00000400 /* DMA cycle pending
 					      - not safe to clear reset */
 #define EBDMA_DIAG_RD_DONE	0x00000800 /* DIAG mode: DMA read completed */
 #define EBDMA_DIAG_WR_DONE	0x00001000 /* DIAG mode: DMA write completed */

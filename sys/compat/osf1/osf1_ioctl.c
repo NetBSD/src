@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.16 2003/01/18 08:32:04 thorpej Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.16.2.1 2005/03/04 16:40:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -35,17 +35,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.16 2003/01/18 08:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.16.2.1 2005/03/04 16:40:22 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -177,7 +177,7 @@ osf1_ioctl_f(l, uap, retval, cmd, dir, len)
 	case 127:			/* OSF/1 FIONREAD */
 		/* same as in NetBSD */
 		break;
-		
+
 	default:
 		return (ENOTTY);
 	}
@@ -245,7 +245,7 @@ osf1_ioctl_t(l, uap, retval, cmd, dir, len)
 	case 104:			/* OSF/1 TIOCGWINSZ */
 		/* same as in NetBSD */
 		break;
-		
+
 	default:
 		return (ENOTTY);
 	}

@@ -1,10 +1,10 @@
-/*	$NetBSD: freebsd_fork.c,v 1.2 2003/01/18 07:33:15 thorpej Exp $	*/
+/*	$NetBSD: freebsd_fork.c,v 1.2.2.1 2005/03/04 16:39:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without  
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
@@ -19,7 +19,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -31,10 +31,10 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */   
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.2 2003/01/18 07:33:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.2.2.1 2005/03/04 16:39:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.60.2.4 2005/01/24 11:58:29 simonb Exp $ */
+/*	$NetBSD: scn.c,v 1.60.2.5 2005/03/04 16:39:00 skrll Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.60.2.4 2005/01/24 11:58:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.60.2.5 2005/03/04 16:39:00 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -127,8 +127,8 @@ int     scnparam __P((struct tty *, struct termios *));
 void    scnstart __P((struct tty *));
 void	scncnprobe __P((struct consdev *));
 void	scncninit __P((struct consdev *));
-int     scncngetc __P((dev_t));
-void    scncnputc __P((dev_t, int));
+int     scncngetc __P((void *));
+void    scncnputc __P((void *, int));
 void	scncnpollc __P((dev_t, int));
 int	scninit __P((dev_t, int));
 void	scncnreinit __P((void *));
@@ -167,19 +167,22 @@ const struct cdevsw scn_cdevsw = {
 #define RECOVER()
 #endif
 
-int     scnconsole = SCN_CONSOLE;
 int     scndefaultrate = TTYDEF_SPEED;
 int     scnconsrate = CONSOLE_SPEED;
 
 #define SOFTC(UNIT) scn_cd.cd_devs[(UNIT)]
+#define SCN_ADDR2DUART(addr)	(((addr) >> 4) & 3)
+#define SCN_ADDR2CHAN(addr)	(((addr) >> 3) & 1)
+#define SCN_ISCONSOLE(addr) \
+	(SCN_ADDR2DUART(addr) == SCN_CONSDUART && (SCN_ADDR2CHAN(addr) == SCN_CONSCHAN))
 
 static void scnintr __P((void *));
 static void scnrxintr __P((void *));
-static int scn_rxintr __P((struct scn_softc *, int));
+static int scn_rxintr __P((struct scn_softc *));
 static void scnsoft __P((void *));
 static void scn_setchip __P((struct scn_softc *sc));
 static int scniter __P((int *, int, int*, int*, struct chan *, int));
-static int scn_config __P((int, int, int, u_char, u_char));
+static int scn_config __P((int, int, int, int, u_char, u_char));
 static void scn_rxenable __P((struct scn_softc *));
 static void scn_rxdisable __P((struct scn_softc *));
 static void dcd_int __P((struct scn_softc *, struct tty *, u_char));
@@ -346,21 +349,18 @@ const struct {
 
 extern struct tty *constty;
 
-/* TRUE and FALSE */
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
+#define SCN_MAXDUART 4
+static struct duart scn_duart[SCN_MAXDUART];
 
 #ifdef KGDB
 extern int kgdb_dev;
 extern int kgdb_rate;
 extern int kgdb_debug_init;
-int     scnkgdb = -1;
 #endif
-
+
+#define SCN_MAP_ADDR(addr) \
+	((addr) - SCN_FIRST_ADR + SCN_FIRST_MAP_ADR)
+
 /* RS-232 configuration routines */
 
 /*
@@ -388,7 +388,7 @@ scn_setchip(sc)
 		return;
 	}
 
-	chan = sc->sc_unit & 1;
+	chan = sc->sc_channel;
 	dp = sc->sc_duart;
 	if (dp->type == SC26C92) {
 		u_char nmr0a, mr0a;
@@ -579,17 +579,17 @@ scniter(index, wanted, counter, mode, other, c92)
  * rewritten 2/97 -plb
  */
 static int
-scn_config(unit, ispeed, ospeed, mr1, mr2)
+scn_config(unit, chan, ispeed, ospeed, mr1, mr2)
 	int unit;
+	int chan;
 	int ispeed;	/* input speed in bps */
 	int ospeed;	/* output speed in bps */
 	u_char mr1;	/* new bits for MR1 */
 	u_char mr2;	/* new bits for MR2 */
 {
-	register struct scn_softc *sc;
+	struct scn_softc *sc;
 	struct duart *dp;
-	int chan;		/* 0 or 1 */
-	int other;		/* 1 or 0 */
+	int other;		/* opposite of chan */
 	int mode;
 	int counter;
 	int i, o;		/* input, output iterator indexes */
@@ -603,22 +603,12 @@ scn_config(unit, ispeed, ospeed, mr1, mr2)
 	if (unit >= scn_cd.cd_ndevs)
 		return ENXIO;
 	sc = SOFTC(unit);
-	chan = unit & 1;
+	chan = sc->sc_channel;
 	other = chan ^ 1;
 	dp = sc->sc_duart;
 	ocp = &dp->chan[other];
+	otp = ocp->tty;
 	c92 = (dp->type == SC26C92);
-
-	/* ugh; keep tty pointers in duart.chan[n].tty? */
-	otp = NULL;
-	if ((unit ^ 1) < scn_cd.cd_ndevs) {
-		struct scn_softc *osc;
-
-		osc = SOFTC(unit ^ 1);
-		if (osc) {
-			otp = osc->sc_tty;
-		}
-	}
 
 	/*
 	 * Right now the first combination that works is used.
@@ -635,6 +625,7 @@ scn_config(unit, ispeed, ospeed, mr1, mr2)
 	 * leaving counter timer free, or not flipping A/B group?
 	 */
 	if (otp && (otp->t_state & TS_ISOPEN)) {
+
 		/*
 		 * Other channel open;
 		 * Find speed codes compatible with current mode/counter.
@@ -730,7 +721,7 @@ scn_config(unit, ispeed, ospeed, mr1, mr2)
 	splx(s);
 	return (0);
 }
-
+
 int
 scnprobe(parent, cf, aux)
 	struct device *parent;
@@ -738,15 +729,12 @@ scnprobe(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	int unit = cf->cf_unit;
+	volatile u_char *ch_base;
 	int mr1;
-	register volatile u_char *ch_base;
-
-	/* The pc532 doesn't have more than 8 lines. */
-	if (unit >= 8) return(0);
 
 	/* Now some black magic that should detect a scc26x2 channel. */
-	ch_base = (volatile u_char *) SCN_FIRST_MAP_ADR + CH_SZ * unit;
+	ca->ca_addr = SCN_MAP_ADDR(cf->cf_loc[MAINBUSCF_ADDR]);
+	ch_base = (volatile u_char *)ca->ca_addr;
 	ch_base[CH_CR] = CR_CMD_RESET_ERR;
 	RECOVER();
 	ch_base[CH_CR] = CR_CMD_RESET_BRK;
@@ -764,11 +752,7 @@ scnprobe(parent, cf, aux)
 	if (ch_base[CH_MR] == mr1)
 		return(0);
 
-	ca->ca_addr = (int)ch_base;
-	if (unit & 1)
-		ca->ca_irq = -1;
-	else
-		ca->ca_irq = scnints[unit >> 1] | (rxints[unit >> 1] << 4);
+	ca->ca_irq = cf->cf_loc[MAINBUSCF_IRQ];
 
 	return(1);
 }
@@ -785,7 +769,7 @@ scn_rxenable(sc)
 	int channel;
 
 	dp = sc->sc_duart;
-	channel = sc->sc_unit & 1;
+	channel = sc->sc_channel;
 
 	/* Outputs wire-ored and connected to ICU input for fast rx interrupt. */
 	if (channel == 0)
@@ -803,7 +787,7 @@ scn_rxdisable(sc)
 	int channel;
 
 	dp = sc->sc_duart;
-	channel = sc->sc_unit & 1;
+	channel = sc->sc_channel;
 
 	/* Outputs wire-ored and connected to ICU input for fast rx interrupt. */
 	if (channel == 0)
@@ -820,25 +804,32 @@ scnattach(parent, self, aux)
 	void   *aux;
 {
 	struct confargs *ca = aux;
-	register struct scn_softc *sc;
-	register volatile u_char *ch_base;
-	register volatile u_char *duart_base;
-	long scn_first_adr;
+	struct scn_softc *sc;
+	struct duart *duart;
+	volatile u_char *ch_base;
+	volatile u_char *duart_base;
 	int channel;
 	int speed;
 	int s;
+	int maj;
 	u_char unit;
-	u_char duart;
+	u_char duartno;
 	u_char delim = ':';
+	u_char mr1, mr2;
 	enum scntype scntype = SCNUNK;
 	char *duart_type = "Unknown";
 	char *intrname;
+	boolean_t console, first;
 
 	sc = (void *) self;
-	unit = self->dv_unit;	/* sc->sc_dev.dv_unit ??? */
+	unit = self->dv_unit;
 
-	duart = unit >> 1;	/* get chip number */
-	channel = unit & 1;	/* get channel on chip */
+	duartno = SCN_ADDR2DUART(ca->ca_addr);	/* get chip number */
+	channel = SCN_ADDR2CHAN(ca->ca_addr);	/* get channel on chip */
+
+	duart = sc->sc_duart = &scn_duart[duartno];
+	duart->chan[channel].sc = sc;
+	first =	(duart->base == NULL);
 
 	/* pick up "flags" (SCN_xxx) from config file */
 	if (self->dv_cfdata)	/* paranoia */
@@ -846,26 +837,19 @@ scnattach(parent, self, aux)
 	else
 		sc->sc_swflags = 0;
 
-	if (unit == scnconsole)	/* console? */
+	console = SCN_ISCONSOLE(ca->ca_addr);
+	if (console) {
+		sc->sc_isconsole = 1;
 		sc->sc_swflags |= SCN_SW_SOFTCAR;	/* ignore carrier */
+	}
 
-	/*
-         * Precalculate port numbers for speed.
-         * Magic numbers in the code (once).
-         *
-         * XXX get physical addr from "cfdata" (put there from config file)
-         * and pass to a map_regs() routine which returns virtual (mapped) addr?
-         */
-	scn_first_adr = SCN_FIRST_MAP_ADR;	/* to get around a gcc bug. */
+	ch_base = (volatile u_char *)ca->ca_addr;
+	duart_base = (volatile u_char *)(ca->ca_addr & ~0xf);
 
-	ch_base = (volatile u_char *) scn_first_adr + CH_SZ * unit;
-	duart_base = (volatile u_char *) scn_first_adr + DUART_SZ * duart;
-
-	if (channel == 0) {
+	if (first) {
 		/* Probe DUART type */
-		unsigned char mr1, mr2;
 		s = spltty();
-		if(unit == scnconsole) {
+		if (console) {
 			ch_base[CH_CR] = CR_DIS_TX;
 			delay(5 * 10000);
 		}
@@ -914,7 +898,7 @@ scnattach(parent, self, aux)
 		}
 
 		/* If a 2681, the CR_CMD_MR0 is interpreted as a TX_RESET */
-		if(unit == scnconsole) {
+		if (console) {
 			ch_base[CH_CR] = CR_ENA_TX;
 			RECOVER();
 		}
@@ -927,8 +911,8 @@ scnattach(parent, self, aux)
 		/* Arg 0 is special, so we must pass "unit + 1" */
 		intrname = malloc(sizeof("scnXX"), M_DEVBUF, M_NOWAIT);
 		snprintf(intrname, sizeof("scnXX"), "scn%d", unit);
-		intr_establish(scnints[duart], scnintr, (void *) (unit + 1),
-			       intrname, IPL_TTY, IPL_ZERO, LOW_LEVEL);
+		intr_establish(scnints[duartno], scnintr, duart, intrname, IPL_TTY,
+			       IPL_ZERO, LOW_LEVEL);
 
 		printf("%c %s", delim, duart_type);
 		delim = ',';
@@ -939,20 +923,18 @@ scnattach(parent, self, aux)
 		 */
 		intrname = malloc(sizeof("scnXXrx"), M_DEVBUF, M_NOWAIT);
 		snprintf(intrname, 8, "scn%drx", unit);
-		intr_establish(rxints[duart], scnrxintr, (void *) (unit + 1),
-			       intrname, IPL_ZERO, IPL_RTTY, LOW_LEVEL);
+		intr_establish(ca->ca_irq >> 4, scnrxintr, duart, intrname, IPL_ZERO,
+			       IPL_RTTY, LOW_LEVEL);
+
+  		duart->base = duart_base;
+		duart->type = scntype;
 	}
-	/* Record unit number, uart */
-	sc->sc_unit = unit;
+	/* Record channel, uart */
+	sc->sc_channel = channel;
 	sc->sc_chbase = ch_base;
 
 	/* Initialize modem/interrupt bit masks */
 	if (channel == 0) {
-		sc->sc_duart = malloc(sizeof(struct duart), M_DEVBUF, M_NOWAIT);
-		if (sc->sc_duart == NULL)
-			panic("scn%d: memory allocation for duart structure failed", unit);
-  		sc->sc_duart->base = duart_base;
-		sc->sc_duart->type = scntype;
 		sc->sc_op_rts = OP_RTSA;
 		sc->sc_op_dtr = OP_DTRA;
 		sc->sc_ip_cts = IP_CTSA;
@@ -960,8 +942,6 @@ scnattach(parent, self, aux)
 
 		sc->sc_tx_int = INT_TXA;
 	} else {
-		sc->sc_duart = ((struct scn_softc *)SOFTC(unit - 1))->sc_duart;
-
 		sc->sc_op_rts = OP_RTSB;
 		sc->sc_op_dtr = OP_DTRB;
 		sc->sc_ip_cts = IP_CTSB;
@@ -976,9 +956,10 @@ scnattach(parent, self, aux)
 	sc->sc_parity_errors = 0;
 	sc->sc_breaks = 0;
 
-	if (unit == scnconsole) {
+	if (console) {
 		DELAY(5 * 10000);	/* Let the output go out.... */
 	}
+
 	/*
          * Set up the hardware to a base state, in particular:
          * o reset transmitter and receiver
@@ -1008,29 +989,33 @@ scnattach(parent, self, aux)
 	ch_base[CH_MR] = 0;
 
 	/* Initialize the uart structure if this is channel A. */
-	if (channel == 0) {
+	if (first) {
 		/* Disable all interrupts. */
-		duart_base[DU_IMR] = sc->sc_duart->imr = 0;
+		duart_base[DU_IMR] = duart->imr = 0;
 
 		/* Output port config */
-		duart_base[DU_OPCR] = sc->sc_duart->opcr = 0;
+		duart_base[DU_OPCR] = duart->opcr = 0;
 
 		/* Speeds... */
-		sc->sc_duart->mode = 0;
+		duart->mode = 0;
+
 		/*
 		 * Set initial speed to an illegal code that can be changed to
 		 * any other baud.
 		 */
-		sc->sc_duart->chan[0].icode = sc->sc_duart->chan[0].ocode = 0x2f;
-		sc->sc_duart->chan[1].icode = sc->sc_duart->chan[1].ocode = 0x2f;
-		sc->sc_duart->chan[0].ispeed = sc->sc_duart->chan[0].ospeed = 0;
-		sc->sc_duart->chan[1].ispeed = sc->sc_duart->chan[1].ospeed = 0;
+		duart->chan[0].icode = duart->chan[0].ocode = 0x2f;
+		duart->chan[1].icode = duart->chan[1].ocode = 0x2f;
+		duart->chan[0].ispeed = duart->chan[0].ospeed = 0;
+		duart->chan[1].ispeed = duart->chan[1].ospeed = 0;
 
-		sc->sc_duart->acr = 0;
-		sc->sc_duart->acr |= ACR_CT_TCLK1;	/* timer mode 1x clk */
-		sc->sc_duart->acr |= ACR_DELTA_DCDA;	/* Set CD int */
+		duart->acr = 0;
+		duart->acr |= ACR_CT_TCLK1;	/* timer mode 1x clk */
+	}
+
+	if (channel == 0) {
+		duart->acr |= ACR_DELTA_DCDA;	/* Set CD int */
 	} else {
-		sc->sc_duart->acr |= ACR_DELTA_DCDB;	/* Set CD int */
+		duart->acr |= ACR_DELTA_DCDB;	/* Set CD int */
 	}
 
 	if (scnsir == -1) {
@@ -1039,27 +1024,27 @@ scnattach(parent, self, aux)
 				"softscn", IPL_TTY, IPL_TTY, 0);
 	}
 
-	duart_base[DU_ACR] = (sc->sc_duart->mode & ACR_BRG) | sc->sc_duart->acr;
+	duart_base[DU_ACR] = (duart->mode & ACR_BRG) | duart->acr;
 
-	if (unit == scnconsole)
+	if (console)
 		speed = scnconsrate;
 	else
 		speed = scndefaultrate;
 
-	scn_config(unit, speed, speed, MR1_PNONE | MR1_CS8, MR2_STOP1);
-	if (scnconsole == unit) {
-		int maj;
+	scn_config(unit, channel, speed, speed, MR1_PNONE | MR1_CS8, MR2_STOP1);
+	if (console) {
 		maj = cdevsw_lookup_major(&scn_cdevsw);
 		shutdownhook_establish(scncnreinit, (void *)makedev(maj, unit));
 		/* Make sure console can do scncngetc */
-		duart_base[DU_OPSET] = (unit & 1) ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
+		duart_base[DU_OPSET] = channel ? (OP_RTSB | OP_DTRB) :
+			(OP_RTSA | OP_DTRA);
 	}
 
 	/* Turn on the receiver and transmitters */
 	ch_base[CH_CR] = CR_ENA_RX | CR_ENA_TX;
 
 	/* Set up the interrupts. */
-	sc->sc_duart->imr |= INT_IP;
+	duart->imr |= INT_IP;
 	scn_rxdisable(sc);
 	splx(s);
 
@@ -1070,15 +1055,13 @@ scnattach(parent, self, aux)
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(cdevsw_lookup_major(&scn_cdevsw), unit)) {
-		if (scnconsole == unit)
+		if (console)
 			kgdb_dev = NODEV; /* can't debug over console port */
 		else {
 			scninit(kgdb_dev, kgdb_rate);
 			scn_rxenable(sc);
-			scnkgdb = DEV_UNIT(kgdb_dev);
-			kgdb_attach((int (*) __P((void *)))scncngetc,
-				    (void (*) __P((void *, int)))scncnputc,
-				    (void *)kgdb_dev);
+			scn->sc_iskgdb = 1;
+			kgdb_attach(scncngetc, scncnputc, kgdb_dev);
 			if (kgdb_debug_init) {
 				printf("%c ", delim);
 				kgdb_connect(1);
@@ -1099,9 +1082,9 @@ scnopen(dev, flag, mode, l)
 	int mode;
 	struct lwp *l;
 {
-	register struct tty *tp;
-	register int unit = DEV_UNIT(dev);
-	register struct scn_softc *sc;
+	struct tty *tp;
+	int unit = DEV_UNIT(dev);
+	struct scn_softc *sc;
 	int error = 0;
 	int hwset = 0;
 	int s;
@@ -1113,11 +1096,12 @@ scnopen(dev, flag, mode, l)
 		return ENXIO;
 
 	s = spltty();
-	if (!sc->sc_tty) {
-		tp = sc->sc_tty = ttymalloc();
+	tp = sc->sc_tty;
+	if (!tp) {
+		tp = ttymalloc();
+		sc->sc_tty = sc->sc_duart->chan[sc->sc_channel].tty = tp;
 		tty_attach(tp);
-	} else
-		tp = sc->sc_tty;
+	}
 
 	tp->t_oproc = scnstart;
 	tp->t_param = scnparam;
@@ -1137,7 +1121,7 @@ scnopen(dev, flag, mode, l)
 		if (sc->sc_swflags & SCN_SW_CRTSCTS)
 			tp->t_cflag |= CCTS_OFLOW | CRTS_IFLOW;
 		tp->t_lflag = TTYDEF_LFLAG;
-		if (unit == scnconsole)
+		if (sc->sc_isconsole)
 			tp->t_ispeed = tp->t_ospeed = scnconsrate;
 		else
 			tp->t_ispeed = tp->t_ospeed = scndefaultrate;
@@ -1245,9 +1229,9 @@ scnclose(dev, flag, mode, l)
 	int mode;
 	struct lwp *l;
 {
-	register int unit = DEV_UNIT(dev);
-	register struct scn_softc *sc = SOFTC(unit);
-	register struct tty *tp = sc->sc_tty;
+	int unit = DEV_UNIT(dev);
+	struct scn_softc *sc = SOFTC(unit);
+	struct tty *tp = sc->sc_tty;
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
 		return 0;
@@ -1285,8 +1269,8 @@ scnread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
-	register struct tty *tp = sc->sc_tty;
+	struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
+	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read) (tp, uio, flag));
 }
@@ -1297,8 +1281,8 @@ scnwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
-	register struct tty *tp = sc->sc_tty;
+	struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
+	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write) (tp, uio, flag));
 }
@@ -1309,8 +1293,8 @@ scnpoll(dev, events, l)
 	int events;
 	struct lwp *l;
 {
-	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
-	register struct tty *tp = sc->sc_tty;
+	struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
+	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
@@ -1319,7 +1303,7 @@ struct tty *
 scntty(dev)
 	dev_t dev;
 {
-	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
+	struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 
 	return sc->sc_tty;
 }
@@ -1378,8 +1362,9 @@ scnhwiflow(tp, stop)
 {
 	int unit = DEV_UNIT(tp->t_dev);
 	struct scn_softc *sc = SOFTC(unit);
-	int s = splrtty();
+	int s;
 
+	s = splrtty();
 	if (!stop) {
 		if (sc->sc_rbput - sc->sc_rbget - 1) {
 			setsoftscn();
@@ -1393,14 +1378,12 @@ static void
 scnintr(arg)
 	void *arg;
 {
-	int line1 = (int)arg;	/* NOTE: line _ONE_ */
-	register struct scn_softc *sc0 = SOFTC(line1 - 1);
-	register struct scn_softc *sc1 = SOFTC(line1);
+	struct duart *duart = arg;
+	struct scn_softc *sc0 = duart->chan[0].sc;
+	struct scn_softc *sc1 = duart->chan[1].sc;
 
-	register struct tty *tp0 = sc0->sc_tty;
-	register struct tty *tp1 = sc1->sc_tty;
-
-	register struct duart *duart = sc0->sc_duart;
+	struct tty *tp0 = sc0->sc_tty;
+	struct tty *tp1 = sc1->sc_tty;
 
 	char rs_work;
 	u_char rs_stat;
@@ -1418,8 +1401,8 @@ scnintr(arg)
 				tp0->t_state &= ~(TS_BUSY | TS_FLUSH);
 
 				/* disable tx ints */
-				sc0->sc_duart->imr &= ~sc0->sc_tx_int;
-				sc0->sc_duart->base[DU_IMR] = sc0->sc_duart->imr;
+				duart->imr &= ~sc0->sc_tx_int;
+				duart->base[DU_IMR] = duart->imr;
 
 				if (sc0->sc_heldchanges) {
 					scn_setchip(sc0);
@@ -1436,8 +1419,8 @@ scnintr(arg)
 				tp1->t_state &= ~(TS_BUSY | TS_FLUSH);
 
 				/* disable tx ints */
-				sc1->sc_duart->imr &= ~sc1->sc_tx_int;
-				sc1->sc_duart->base[DU_IMR] = sc1->sc_duart->imr;
+				duart->imr &= ~sc1->sc_tx_int;
+				duart->base[DU_IMR] = duart->imr;
 
 				if (sc1->sc_heldchanges) {
 					scn_setchip(sc1);
@@ -1477,12 +1460,10 @@ scnintr(arg)
  * IT'S A CANDIDATE FOR RECODING IN ASSEMBLER!!
  */
 static __inline int
-scn_rxintr(sc, line)
-     struct scn_softc *sc;
-     int line;
+scn_rxintr(struct scn_softc *sc)
 {
-	register char sr;
-	register int i, n;
+	char sr;
+	int i, n;
 	int work;
 
 	work = 0;
@@ -1502,13 +1483,13 @@ scn_rxintr(sc, line)
 		continue;
 	exception:
 #if defined(DDB)
-		if (line == scnconsole && (sr & SR_BREAK)) {
+		if (sc->sc_isconsole && (sr & SR_BREAK)) {
 			Debugger();
 			sr = sc->sc_chbase[CH_SR];
 		}
 #endif
 #if defined(KGDB)
-		if (line == scnkgdb && (sr & SR_RX_RDY)) {
+		if (sc->sc_iskgdb && (sr & SR_RX_RDY)) {
 			kgdb_connect(1);
 			sr = sc->sc_chbase[CH_SR];
 		}
@@ -1539,14 +1520,11 @@ static void
 scnrxintr(arg)
 	void *arg;
 {
+	struct duart *duart = arg;
 	int work = 0;
-	int line1 = (int)arg;	/* NOTE: line _ONE_ */
-	int line0 = line1 - 1;
-	register struct scn_softc *sc0 = SOFTC(line0);
-	register struct scn_softc *sc1 = SOFTC(line1);
 
-	work = scn_rxintr(sc0, line0);
-	work += scn_rxintr(sc1, (int)line1);
+	work += scn_rxintr(duart->chan[0].sc);
+	work += scn_rxintr(duart->chan[1].sc);
 	if (work > 0) {
 		setsoftscn();	/* trigger s/w intr */
 #ifdef SCN_TIMING
@@ -1577,7 +1555,7 @@ static void
 scnsoft(arg)
 	void *arg;
 {
-	int unit;
+	int s, unit;
 #ifdef SCN_TIMING
 	struct timeval tend;
 	u_long  t;
@@ -1592,9 +1570,9 @@ scnsoft(arg)
 #endif
 
 	for (unit = 0; unit < scn_cd.cd_ndevs; unit++) {
-		register struct scn_softc *sc;
-		register struct tty *tp;
-		register int n, get;
+		struct scn_softc *sc;
+		struct tty *tp;
+		int n, get;
 
 		sc = SOFTC(unit);
 		if (sc == NULL) {
@@ -1633,7 +1611,7 @@ scnsoft(arg)
 				sc->sc_ring_overruns++;
 			}
 			while (--n >= 0) {
-				register int c, sr;
+				int c, sr;
 
 				if (tp->t_state & TS_TBLOCK) {
 					sc->sc_rbget = get;
@@ -1663,7 +1641,7 @@ scnsoft(arg)
 					 * See DDB_CHECK() comments in
 					 * scnrxintr()
 					 */
-					if (unit == scnconsole)
+					if (sc->sc_isconsole)
 						Debugger();
 #endif
 					c = TTY_FE | 0;
@@ -1672,7 +1650,7 @@ scnsoft(arg)
 				(*tp->t_linesw->l_rint) (c, tp);
 
 				if (sc->sc_rx_blocked && n < SCN_RING_THRESH) {
-					int s = splrtty();
+					s = splrtty();
 					sc->sc_rx_blocked = 0;
 					SCN_OP_BIS(sc, sc->sc_op_rts);
 					splx(s);
@@ -1703,10 +1681,10 @@ scnioctl(dev, cmd, data, flag, l)
 	int flag;
 	struct lwp *l;
 {
-	register int unit = DEV_UNIT(dev);
-	register struct scn_softc *sc = SOFTC(unit);
-	register struct tty *tp = sc->sc_tty;
-	register int error;
+	int unit = DEV_UNIT(dev);
+	struct scn_softc *sc = SOFTC(unit);
+	struct tty *tp = sc->sc_tty;
+	int error;
 
 	error = (*tp->t_linesw->l_ioctl) (tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -1896,7 +1874,7 @@ scnparam(tp, t)
 		sc->sc_rbhiwat = 0;
 	}
 
-	error = scn_config(unit, t->c_ispeed, t->c_ospeed, mr1, mr2);
+	error = scn_config(unit, sc->sc_channel, t->c_ispeed, t->c_ospeed, mr1, mr2);
 
 	/* If successful, copy to tty */
 	if (!error) {
@@ -1950,8 +1928,9 @@ scnstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	int s = spltty();
+	int s;
 
+	s = spltty();
 	if (tp->t_state & TS_BUSY) {
 		if ((tp->t_state & TS_TTSTOP) == 0)
 			tp->t_state |= TS_FLUSH;
@@ -1970,8 +1949,9 @@ extern int _mapped;
 #define SCN_BASE	(SCN_FIRST_MAP_ADR)
 #endif
 
-#define	DUADDR(dev)	(u_char *)(SCN_BASE + (DEV_UNIT(dev) >> 1) * DUART_SZ)
-#define	CHADDR(dev)	(u_char *)(SCN_BASE + DEV_UNIT(dev) * CH_SZ)
+#define	DUADDR()	(u_char *)(SCN_BASE + SCN_CONSDUART * DUART_SZ)
+#define	CHADDR()	(u_char *)(SCN_BASE + \
+				   (SCN_CONSDUART * 2 + SCN_CONSCHAN) * CH_SZ)
 
 void
 scncnprobe(cp)
@@ -1986,11 +1966,9 @@ void
 scncnreinit(v)
 	void *v;
 {
-	dev_t dev = (dev_t)v;
-	int unit = DEV_UNIT(dev);
-	volatile u_char *du_base = DUADDR(dev);
+	volatile u_char *du_base = DUADDR();
 
-	du_base[DU_OPSET] = (unit & 1) ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
+	du_base[DU_OPSET] = SCN_CONSCHAN ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
 }
 
 void
@@ -1998,7 +1976,6 @@ scncninit(cp)
 	struct consdev *cp;
 {
 	scninit(cp->cn_dev, scnconsrate);
-	scnconsole = DEV_UNIT(cp->cn_dev);
 }
 
 /* Used by scncninit and kgdb startup. */
@@ -2007,11 +1984,11 @@ scninit(dev, rate)
 	dev_t dev;
 	int rate;
 {
-	volatile u_char *du_base = DUADDR(dev);
+	volatile u_char *du_base = DUADDR();
 	int unit = DEV_UNIT(dev);
 
-	du_base[DU_OPSET] = (unit & 1) ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
-	scn_config(unit, rate, rate, MR1_PNONE | MR1_CS8, MR2_STOP1);
+	du_base[DU_OPSET] = SCN_CONSCHAN ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
+	scn_config(unit, SCN_CONSCHAN, rate, rate, MR1_PNONE | MR1_CS8, MR2_STOP1);
 	return (0);
 }
 
@@ -2019,14 +1996,16 @@ scninit(dev, rate)
  * Console kernel input character routine.
  */
 int
-scncngetc(dev)
-	dev_t dev;
+scncngetc(void *arg)
 {
-	volatile u_char *ch_base = CHADDR(dev);
+	volatile u_char *ch_base = CHADDR();
 	char c;
-	int s = spltty();
+	int s;
 
-	while ((ch_base[CH_SR] & SR_RX_RDY) == 0);
+	s = spltty();
+
+	while ((ch_base[CH_SR] & SR_RX_RDY) == 0)
+		;
 	c = ch_base[CH_DAT];
 
 	splx(s);
@@ -2045,20 +2024,22 @@ scncnpollc(dev, on)
  * Console kernel output character routine.
  */
 void
-scncnputc(dev, c)
-	dev_t dev;
-	int c;
+scncnputc(void *arg, int c)
 {
-	volatile u_char *ch_base = CHADDR(dev);
-	volatile u_char *du_base = DUADDR(dev);
-	int s = spltty();
+	volatile u_char *ch_base = CHADDR();
+	volatile u_char *du_base = DUADDR();
+	int s;
+
+	s = spltty();
 
 	if (c == '\n')
-		scncnputc(dev, '\r');
+		scncnputc(arg, '\r');
 
-	while ((ch_base[CH_SR] & SR_TX_RDY) == 0);
+	while ((ch_base[CH_SR] & SR_TX_RDY) == 0)
+		;
 	ch_base[CH_DAT] = c;
-	while ((ch_base[CH_SR] & SR_TX_RDY) == 0);
+	while ((ch_base[CH_SR] & SR_TX_RDY) == 0)
+		;
 	du_base[DU_ISR];
 
 	splx(s);

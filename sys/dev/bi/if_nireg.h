@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nireg.h,v 1.3.20.3 2004/09/21 13:27:24 skrll Exp $	*/
+/*	$NetBSD: if_nireg.h,v 1.3.20.4 2005/03/04 16:41:02 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -131,25 +131,25 @@ struct ni_dg {
 	u_int8_t	nd_pad3;
 	u_int16_t	nd_len;
 	u_int16_t	nd_status2;
-	u_int32_t	nd_cmdref;	
-	u_int32_t	nd_ptdbidx;	
+	u_int32_t	nd_cmdref;
+	u_int32_t	nd_ptdbidx;
 	struct {
 		u_int16_t	_offset;
-		u_int16_t	_len;	
-		u_int16_t	_index; 
-		u_int16_t	_key;	
+		u_int16_t	_len;
+		u_int16_t	_index;
+		u_int16_t	_key;
 	} bufs[NTXFRAGS];
-};	
+};
 
 #define	NIDG_CHAIN	0x8000
 
 /* NI parameter block */
-struct ni_param {	
+struct ni_param {
 	u_int8_t	np_dpa[8];
 	u_int8_t	np_apa[8];
-	u_int8_t	np_lsa[8]; 
+	u_int8_t	np_lsa[8];
 	u_int8_t	np_bvc[8];
-	u_int16_t	np_curaddr;	
+	u_int16_t	np_curaddr;
 	u_int16_t	np_maxaddr;
 	u_int16_t	np_curptt;
 	u_int16_t	np_maxptt;
@@ -160,7 +160,7 @@ struct ni_param {
 	u_int32_t	np_flags;
 	u_int32_t	np_rcto;
 	u_int32_t	np_xmto;
-}; 
+};
 
 #define NP_ECT		0x01
 #define NP_PAD		0x02
@@ -195,20 +195,20 @@ struct ni_bbd {
 	u_int32_t	nb_len;		/* Buffer length */
 	u_int32_t	nb_pte;		/* start (vax) PTE for this buffer */
 	u_int32_t	nb_pad;
-};	
+};
 #define NIBD_OFFSET	0x1ff
 #define NIBD_VALID	0x8000
 
 
 /* Free Queue Block */
-struct ni_fqb { 
+struct ni_fqb {
 	u_int32_t	nf_mlen;
 	u_int32_t	nf_mpad;
 	u_int32_t	nf_mforw;
 	u_int32_t	nf_mback;
 	u_int32_t	nf_dlen;
 	u_int32_t	nf_dpad;
-	u_int32_t	nf_dforw;	
+	u_int32_t	nf_dforw;
 	u_int32_t	nf_dback;
 	u_int32_t	nf_rlen;
 	u_int32_t	nf_rpad;
@@ -218,23 +218,23 @@ struct ni_fqb {
 	u_int32_t	nf_ipad;
 	u_int32_t	nf_iforw;
 	u_int32_t	nf_iback;
-};	
+};
 
 /* DEBNx specific part of Generic VAX Port */
 struct ni_pqb {
 	u_int16_t	np_veclvl;	/* Interrupt vector + level */
 	u_int16_t	np_node;	/* Where to interrupt */
 	u_int32_t	np_freeq;
-	u_int32_t	np_vfqb;	/* Free queue block pointer */	
+	u_int32_t	np_vfqb;	/* Free queue block pointer */
 	u_int32_t	np_pad1[39];
 	u_int32_t	np_bvplvl;
 	u_int32_t	np_vpqb;	/* Virtual address of Generic PQB */
 	u_int32_t	np_vbdt;	/* Virtual address of descriptors */
-	u_int32_t	np_nbdr;	/* Number of descriptors */	
+	u_int32_t	np_nbdr;	/* Number of descriptors */
 	u_int32_t	np_spt;		/* System Page Table */
 	u_int32_t	np_sptlen;	/* System Page Table length */
 	u_int32_t	np_gpt;		/* Global Page Table */
-	u_int32_t	np_gptlen;	/* Global Page Table length */	
+	u_int32_t	np_gptlen;	/* Global Page Table length */
 	u_int32_t	np_mask;
 	u_int32_t	np_pad2[67];
 };

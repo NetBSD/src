@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_types.h,v 1.2.2.4 2004/09/21 13:24:59 skrll Exp $ */
+/*	$NetBSD: darwin_types.h,v 1.2.2.5 2005/03/04 16:39:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef	_DARWIN_TYPES_H_
 #define	_DARWIN_TYPES_H_
 
-#define darwin_major(x)		((int32_t)(((u_int32_t)(x) >> 24) & 0xff)) 
+#define darwin_major(x)		((int32_t)(((u_int32_t)(x) >> 24) & 0xff))
 #define darwin_minor(x)		((int32_t)((x) & 0xffffff))
 #define darwin_makedev(x,y)	((dev_t)(((x) << 24) | (y)))
 #define native_to_darwin_dev(x)	darwin_makedev(major(x),minor(x))

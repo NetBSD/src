@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.h,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
+/*	$NetBSD: altq_red.h,v 1.2.26.1 2005/03/04 16:38:00 skrll Exp $	*/
 /*	$KAME: altq_red.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ struct redstats {
 };
 
 
-/* 
+/*
  * IOCTLs for RED
  */
 #define	RED_IF_ATTACH		_IOW('Q', 1, struct red_interface)

@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.60.2.3 2004/09/21 13:28:03 skrll Exp $ */
+/* $NetBSD: ispvar.h,v 1.60.2.4 2005/03/04 16:41:30 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -225,7 +225,7 @@ typedef struct {
 	u_int8_t	isp_retry_count;
 	u_int8_t	isp_retry_delay;
 	struct {
-		u_int32_t	
+		u_int32_t
 			exc_throttle	:	8,
 					:	1,
 			dev_enable	:	1,	/* ignored */

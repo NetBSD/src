@@ -1,11 +1,11 @@
-/*	$NetBSD: ieee1394var.h,v 1.20.2.4 2005/02/04 11:46:07 skrll Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.20.2.5 2005/03/04 16:43:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,7 +52,7 @@ typedef void *ieee1394_ir_tag_t;
 typedef void *ieee1394_it_tag_t;
 struct ieee1394_it_datalist;
 
-/* These buffers have no reference counting.  It is assumed that 
+/* These buffers have no reference counting.  It is assumed that
  * the upper level buffer (struct buf or struct mbuf) will have the
  * requisite reference counting.
  */
@@ -64,11 +64,11 @@ struct ieee1394_abuf {
 	u_int64_t ab_retaddr;
 	u_int8_t ab_tcode;
 	u_int8_t ab_tlabel;
-	u_int32_t ab_length; 
+	u_int32_t ab_length;
 	u_int32_t ab_retlen;			/* length returned from read. */
 	u_int32_t ab_retries;
 	u_int8_t ab_subok;
-	
+
 	void (*ab_cb)(struct ieee1394_abuf *, int);
 	void *ab_cbarg;
 };
@@ -83,17 +83,17 @@ struct ieee1394_callbacks {
 };
 
 struct ieee1394_attach_args {
-	char name[7]; 
+	char name[7];
 	u_int8_t uid[8];
 	u_int16_t nodeid;
-};    
+};
 
 struct ieee1394_softc {
 	struct device sc1394_dev;
 	struct device *sc1394_if; /* Move to fwohci level. */
 	struct device *sc1394_iso; /* Move to fwohci level. */
 	void *sc1394_isoarg;	/* XXX */
-	
+
 	struct ieee1394_callbacks sc1394_callback; /* Nuke probably. */
 	u_int32_t *sc1394_configrom;
 	u_int32_t sc1394_configrom_len;  /* quadlets. */
@@ -101,7 +101,7 @@ struct ieee1394_softc {
 	u_int8_t sc1394_guid[8];
 	u_int8_t sc1394_link_speed;	/* IEEE1394_SPD_* */
 	u_int16_t sc1394_node_id;	/* my node id in network order */
-	
+
 	int (*sc1394_ifoutput)(struct device *, struct mbuf *,
 	    void (*)(struct device *, struct mbuf *)); /* Nuke. */
 	int (*sc1394_ifinreg)(struct device *, u_int32_t, u_int32_t,
@@ -125,13 +125,13 @@ struct ieee1394_softc {
 	int (*sc1394_it_writedata)(struct device *, int, int,
 	    struct ieee1394_it_datalist *, int);
 	int (*sc1394_it_close)(struct device *, ieee1394_it_tag_t);
-	
+
 	LIST_ENTRY(ieee1394_softc) sc1394_node;
 };
 
 struct ieee1394_node {
 	struct device node_dev;
-	
+
 	struct ieee1394_softc *node_sc;	/* owning bus */
 	u_int32_t *node_configrom;
 	size_t node_configrom_len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: icpreg.h,v 1.3 2003/06/13 05:57:30 thorpej Exp $	*/
+/*	$NetBSD: icpreg.h,v 1.3.2.1 2005/03/04 16:41:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
 #define ICP_RELEASE_ALL 17		/* release all devices */
 #define ICP_RESET_BUS	18		/* reset bus */
 #define ICP_SCAN_START	19		/* start device scan */
-#define ICP_SCAN_END	20		/* stop device scan */	
+#define ICP_SCAN_END	20		/* stop device scan */
 
 /* IOCTL command defines */
 #define ICP_SCSI_DR_INFO	0x00	/* SCSI drive info */
@@ -294,7 +294,7 @@ struct icp_cdevinfo {
 	u_int32_t	ld_last_error;
 	char		ld_name[8];
 	u_int8_t	ld_error;
-} __attribute__ ((__packed__));	
+} __attribute__ ((__packed__));
 
 struct icp_sg {
 	u_int32_t	sg_addr;
