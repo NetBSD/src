@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.51 2000/07/09 14:13:04 jhawk Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.52 2000/07/13 17:33:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -527,6 +527,10 @@ sys_setitimer(p, v, retval)
 	if (which == ITIMER_REAL) {
 		callout_stop(&p->p_realit_ch);
 		if (timerisset(&aitv.it_value)) {
+			/*
+			 * Don't need to check hzto() return value, here.
+			 * callout_reset() does it for us.
+			 */
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
 			callout_reset(&p->p_realit_ch, hzto(&aitv.it_value),
 			    realitexpire, p);
@@ -564,6 +568,10 @@ realitexpire(arg)
 		timeradd(&p->p_realtimer.it_value,
 		    &p->p_realtimer.it_interval, &p->p_realtimer.it_value);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
+			/*
+			 * Don't need to check hzto() return value, here.
+			 * callout_reset() does it for us.
+			 */
 			callout_reset(&p->p_realit_ch,
 			    hzto(&p->p_realtimer.it_value), realitexpire, p);
 			splx(s);

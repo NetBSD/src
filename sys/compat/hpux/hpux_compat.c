@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.50 2000/06/28 15:39:27 mrg Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.51 2000/07/13 17:32:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1217,6 +1217,10 @@ hpux_sys_alarm_6x(p, v, retval)
 	}
 	p->p_realtimer.it_value = time;
 	p->p_realtimer.it_value.tv_sec += SCARG(uap, deltat);
+	/*
+	 * We don't need to check the hzto() return value, here.
+	 * callout_reset() does it for us.
+	 */
 	callout_reset(&p->p_realit_ch, hzto(&p->p_realtimer.it_value),
 	    realitexpire, p);
 	splx(s);
