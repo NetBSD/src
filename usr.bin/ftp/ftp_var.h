@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.23 1998/01/18 22:09:41 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.24 1998/06/04 08:28:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -97,6 +97,7 @@ int	code;			/* return/reply code for ftp command */
 int	crflag;			/* if 1, strip car. rets. on ascii gets */
 char	pasv[64];		/* passive port for proxy data connection */
 int	passivemode;		/* passive mode enabled */
+int	activefallback;		/* fall back to active mode if passive fails */
 char   *altarg;			/* argv[1] with no shell-like preprocessing  */
 char	ntin[17];		/* input translation table */
 char	ntout[17];		/* output translation table */
@@ -115,8 +116,10 @@ char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* automatic anonymous login */
 int	dirchange;		/* remote directory changed by cd command */
+int	retry_connect;		/* seconds between retrying connection */
 int	ttywidth;		/* width of tty */
 char   *tmpdir;			/* temporary directory */
+FILE   *ttyout;			/* stdout, or stderr if retrieving to stdout */
 
 #ifndef SMALL
 int	  editing;		/* command line editing enabled */
@@ -175,6 +178,6 @@ struct macel {
 	char *mac_end;		/* end of macro in macbuf */
 };
 
-int macnum;			/* number of defined macros */
+int	macnum;			/* number of defined macros */
 struct macel macros[16];
-char macbuf[4096];
+char	macbuf[4096];
