@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.12 2001/12/12 17:21:36 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.13 2001/12/12 17:52:06 augustss Exp $	*/
 
 /*
  * TODO
@@ -801,6 +801,7 @@ irts_tekram(struct tty *tp, u_int speed)
 	default:     s = TEKRAM_9600; break;
 	}
 	irt_putc(tp, s);
+	irt_delay(tp, 100);
 	irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
 	if (speed != 9600)
 		irt_setspeed(tp, speed);
