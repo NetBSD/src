@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_malloc.c	7.25 (Berkeley) 5/8/91
- *	$Id: kern_malloc.c,v 1.5 1993/06/27 06:01:38 andrew Exp $
+ *	$Id: kern_malloc.c,v 1.6 1993/07/15 13:33:23 cgd Exp $
  */
 
 #include "param.h"
@@ -71,8 +71,6 @@ malloc(size, type, flags)
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
 	s = splimp();
-
-retrymalloc:
 #ifdef KMEMSTATS
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
@@ -93,16 +91,8 @@ retrymalloc:
 		va = (caddr_t) kmem_malloc(kmem_map, (vm_size_t)ctob(npg),
 					   !(flags & M_NOWAIT));
 		if (va == NULL) {
-			if (flags & M_NOWAIT) {
-				splx(s);
-				return ((void *) NULL);
-			}
-#ifdef KMEMSTATS
-			if (ksp->ks_mapblocks < 65535)
-				ksp->ks_mapblocks++;
-#endif
-			tsleep((caddr_t)kmem_map, PSWP+2, "kern_malloc", 0);
-			goto retrymalloc;
+			splx(s);
+			return ((void *) NULL);
 		}
 #ifdef KMEMSTATS
 		kbp->kb_total += kbp->kb_elmpercl;
@@ -213,7 +203,6 @@ free(addr, type)
 		ksp->ks_inuse--;
 		kbp->kb_total -= 1;
 #endif
-		wakeup((caddr_t)kmem_map);
 		splx(s);
 		return;
 	}
@@ -233,7 +222,6 @@ free(addr, type)
 #endif
 	*(caddr_t *)addr = kbp->kb_next;
 	kbp->kb_next = addr;
-	wakeup((caddr_t)kmem_map);
 	splx(s);
 }
 
