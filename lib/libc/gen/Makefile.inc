@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.135 2004/11/10 04:52:30 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.136 2004/11/10 04:57:17 lukem Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -29,7 +29,7 @@ SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
 	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
- 
+
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 	_sysconf.c _verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
@@ -81,7 +81,7 @@ MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
 	fpgetmask.3 fpsetmask.3  fpgetmask.3 fpsetround.3 \
 	fpgetmask.3 fpsetsticky.3
 MLINKS+=fts.3 fts_open.3 fts.3 fts_read.3 fts.3 fts_children.3 \
-	fts.3 fts_set.3 fts.3 fts_close.3 
+	fts.3 fts_set.3 fts.3 fts_close.3
 MLINKS+=getcap.3 cgetcap.3 getcap.3 cgetclose.3 getcap.3 cgetent.3 \
 	getcap.3 cgetfirst.3 getcap.3 cgetmatch.3 getcap.3 cgetnext.3 \
 	getcap.3 cgetnum.3 getcap.3 cgetset.3 getcap.3 cgetstr.3 \
