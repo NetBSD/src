@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.2.2 2002/03/18 17:23:25 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.2.3 2002/03/18 22:34:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -142,23 +142,23 @@ _C_LABEL(_rwlock_hash):
 
 /*
  * INTERLOCK_ACQUIRE expects the lock address to be in %o0.  %o0,
- * %o1, and %o2 are left alone.  %o6 must be preserved by the caller,
+ * %o1, and %o2 are left alone.  %o5 must be preserved by the caller,
  * as INTERLOCK_RELEASE will use it.
  *
  * XXX Should also block interrupts, but that will only matter when
  * XXX we have kernel preemption.
  */
 #define	INTERLOCK_ACQUIRE						\
-	srl	%o0, 2, %o6					;	\
-	and	%o6, 1023, %o6					;	\
+	srl	%o0, 2, %o5					;	\
+	and	%o5, 1023, %o5					;	\
 	set	_C_LABEL(_rwlock_hash), %o3			;	\
-	add	%o6, %o3, %o6					;	\
-	/* %o6 == interlock address */					\
-11:	ldstub	[%o6], %o3					;	\
+	add	%o5, %o3, %o5					;	\
+	/* %o5 == interlock address */					\
+11:	ldstub	[%o5], %o3					;	\
 	tst	%o3						;	\
 	bz	33f						;	\
 	/* spin until the lock clears */				\
-22:	ldub	[%o6], %o3					;	\
+22:	ldub	[%o5], %o3					;	\
 	tst	%o3						;	\
 	bz	11b						;	\
 	 nop							;	\
@@ -166,10 +166,10 @@ _C_LABEL(_rwlock_hash):
 33:	/* okay, have interlock! */
 
 #define	INTERLOCK_RELEASE						\
-	st	%g0, [%o6]
+	stb	%g0, [%o5]
 
 _ENTRY(_C_LABEL(_rwlock_cas))
-	INTERLOCK_ACQUIRE			! don't touch %o6!
+	INTERLOCK_ACQUIRE			! don't touch %o5!
 	ld	[%o0], %o4			! lock value
 	cmp	%o1, %o4			! same as expected value?
 	be,a	1f				! yes, store new value
@@ -182,7 +182,7 @@ _ENTRY(_C_LABEL(_rwlock_cas))
 	 or	%g0, 1, %o0
 
 _ENTRY(_C_LABEL(_rwlock_set_waiters))
-	INTERLOCK_ACQUIRE			! don't touch %o6!
+	INTERLOCK_ACQUIRE			! don't touch %o5!
 	ld	[%o0], %o4			! lock value
 	andcc	%o4, %o1, %g0			! need_wait set?
 	bz	1f				! nope, bail out
