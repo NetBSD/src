@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62 1996/05/08 15:13:22 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.63 1996/05/17 02:11:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,6 +76,14 @@
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
+
+/*
+ * This is for kvm_mkdb, and should be the address of the beginning
+ * of the kernel text segment (not necessarily the same as kernbase).
+ */
+	.text
+	.globl	_kernel_text
+_kernel_text:
 
 #include "assym.h"
 #include "vectors.s"
@@ -1793,11 +1801,8 @@ Lm68881rdone:
 
 /*
  * Handle the nitty-gritty of rebooting the machine.
- * Basically we just turn off the MMU and jump to the appropriate ROM routine.
- * Note that we must be running in an address range that is mapped one-to-one
- * logical to physical so that the PC is still valid immediately after the MMU
- * is turned off.  We have conveniently mapped the last page of physical
- * memory this way.
+ * Basically we just jump to the appropriate ROM routine after mapping
+ * the ROM into its proper home (back in machdep).
  */
 	.globl	_doboot, _ROMBase
 _doboot:
