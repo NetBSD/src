@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.49 1997/08/06 12:03:34 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.50 1997/08/17 18:13:25 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,18 +122,21 @@ static void kn02_errintr __P((void)), kn02ba_errintr __P((void));
 #ifdef DS5000_240
 static void kn03_errintr __P ((void));
 extern u_long kn03_tc3_imask;
+extern u_long ioasic_base;	/* Base address of I/O asic */
+#endif /*DS5000_240*/
 
 /*
-
  * IOASIC 40ns bus-cycle counter, used as hi-resolution clock:
  * may also be present on (some) XINE, 3min hardware, but not tested there.
+ * [doesn't work on my 5000/25 or 5000/50 - mhitch]
  */
-extern u_long ioasic_base;	/* Base address of I/O asic */
+#if defined(DS5000_240) || defined(DS5000_25)
 u_long latched_cycle_cnt;	/*
 				 * IOASIC cycle counter, latched on every
 				 * interrupt from RTC chip (64Hz).
+				 * [free-running counter on Maxine]
 				 */
-#endif /*DS5000_240*/
+#endif /*DS5000_240 || DS5000_25*/
 
 static unsigned kn02ba_recover_erradr __P((u_int phys, u_int mer));
 extern tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
@@ -454,6 +457,7 @@ kmin_intr(mask, pc, statusReg, causeReg)
 		MIPS_SR_INT_ENA_CUR);
 }
 
+#ifdef DS5000_25
 /*
  * Maxine hardware interrupts. (Personal DECstation 5000/xx)
  */
@@ -486,6 +490,8 @@ xine_intr(mask, pc, statusReg, causeReg)
 		temp = c->regc;	/* XXX clear interrupt bits */
 		cf.pc = pc;
 		cf.sr = statusReg;
+		latched_cycle_cnt =
+		    *(u_long*)(MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR));
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 		/* keep clock interrupts enabled when we return */
@@ -591,6 +597,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
 		MIPS_SR_INT_ENA_CUR);
 }
+#endif /* DS5000_25 */
 
 #ifdef DS5000_240
 /*

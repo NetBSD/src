@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 1997/08/12 01:52:10 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 1997/08/17 18:13:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -227,7 +227,7 @@ static	void asic_init __P((int isa_maxine));
 #endif
 extern	int	atoi __P((const char *cp));
 int	initcpu __P((void));
-#ifdef DS5000_240
+#if defined(DS5000_240) || defined(DS5000_25)
 static	u_long	clkread __P((void));	/* get usec-resolution clock */
 #endif
 void	dumpsys __P((void));		/* do a dump */
@@ -257,7 +257,6 @@ void	xine_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 
 #ifdef DS5000_240
 u_long	kn03_tc3_imask;
-extern	u_long latched_cycle_cnt;
 void	kn03_tc_reset __P((void));		/* XXX unused? */
 void	kn03_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 			       intr_arg_t sc, int onoff));
@@ -1185,12 +1184,13 @@ haltsys:
  * the current microsecond offset from time-of-day.
  */
 
-#ifndef DS5000_240
+#if !defined(DS5000_240) && !defined(DS5000_25)
 # define clkread() (0)
 #else
 
 /*
  * IOASIC TC cycle counter, latched on every interrupt from RTC chip.
+ * [Or free-running microsecond counter on Maxine.]
  */
 u_long latched_cycle_cnt;
 
@@ -1199,22 +1199,32 @@ u_long latched_cycle_cnt;
  * to interpolate micro-seconds since the  last RTC clock tick.
  * The interpolation base is the copy of the bus cycle-counter taken
  * by the RTC interrupt handler.
- * XXX on XINE, use the microsecond free-running counter.
+ * On XINE, use the microsecond free-running counter.
  *
  */
 static inline u_long
 clkread()
 {
 
+#ifdef DS5000_240
 	register u_long usec, cycles;	/* really 32 bits? */
+#endif
 
-	/* only support 5k/240 TC bus counter */
-	if (pmax_boardtype != DS_3MAXPLUS) {
+#ifdef DS5000_25
+	if (pmax_boardtype == DS_MAXINE)
+		return (*(u_long*)(MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR)) -
+		    latched_cycle_cnt);
+	else
+#endif
+#ifdef DS5000_240
+	if (pmax_boardtype == DS_3MAXPLUS)
+		/* 5k/240 TC bus counter */
+		cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
+	else
+#endif
 		return (0);
-	}
 
-	cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
-
+#ifdef DS5000_240
 	/* Compute difference in cycle count from last hardclock() to now */
 #if 1
 	/* my code, using u_ints */
@@ -1243,6 +1253,7 @@ clkread()
 	}
 #endif /*CLOCK_DEBUG*/
 	return usec;
+#endif /*DS5000_240*/
 }
 
 #if 0
@@ -1252,7 +1263,7 @@ microset()
 		latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
 }
 #endif
-#endif /*DS5000_240*/
+#endif /*DS5000_240 || DS5000_25*/
 
 
 /*
