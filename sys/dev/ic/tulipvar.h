@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.47 2002/04/09 05:57:21 chs Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.47.4.1 2003/07/28 17:42:42 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -310,6 +310,7 @@ struct tulip_srom_to_ifmedia {
 	const char	*tsti_name;	/* media name */
 
 	u_int32_t	tsti_opmode;	/* OPMODE bits for this media */
+	u_int32_t	tsti_sia_cap;	/* "MII" capabilities for this media */
 
 	/*
 	 * Settings for 21040, 21041, and 21142/21143 SIA, in the event
@@ -381,6 +382,7 @@ struct tulip_softc {
 	u_int8_t	sc_gp_dir;	/* GPIO pin direction bits (21140) */
 	int		sc_media_seen;	/* ISV media block types seen */
 	int		sc_tlp_minst;	/* Tulip internal media instance */
+	u_int32_t	sc_sia_cap;	/* SIA media capabilities (21143) */
 
 	/* Reset function. */
 	void		(*sc_reset) __P((struct tulip_softc *));
