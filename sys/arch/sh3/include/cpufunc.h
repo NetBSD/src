@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.6 2000/09/06 11:25:13 tsubai Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.7 2001/06/24 05:32:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -58,11 +58,10 @@ static __inline void breakpoint __P((void));
 static __inline void
 tlbflush(void)
 {
-#define TLB_FLUSH 0x04
 /* #define CACHE_FLUSH 0x80 */
 
 #ifdef SH4
-	SHREG_MMUCR = (SHREG_MMUCR | TLB_FLUSH) & MMUCR_VALIDBITS;
+	SHREG_MMUCR = (SHREG_MMUCR | MMUCR_TF) & MMUCR_VALIDBITS;
 	__asm __volatile("nop");
 	__asm __volatile("nop");
 	__asm __volatile("nop");
@@ -72,7 +71,7 @@ tlbflush(void)
 	__asm __volatile("nop");
 	__asm __volatile("nop");
 #else
-	SHREG_MMUCR |= TLB_FLUSH;
+	SHREG_MMUCR |= MMUCR_TF;
 #endif
 
 /*   SHREG_CCR |= CACHE_FLUSH; */
