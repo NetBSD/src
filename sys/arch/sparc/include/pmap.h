@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 1995/07/05 18:45:46 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.18 1996/02/28 22:44:33 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -166,7 +166,7 @@ extern vm_offset_t	vm_first_phys, vm_num_phys;
 
 void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
 int		pmap_count_ptes __P((struct pmap *));
-vm_offset_t	pmap_prefer __P((vm_offset_t, vm_offset_t));
+void	pmap_prefer __P((vm_offset_t, vm_offset_t *));
 int		pmap_pa_exists __P((vm_offset_t));
 int		pmap_dumpsize __P((void));
 int		pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
@@ -178,7 +178,7 @@ int		pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
 
 #define PMAP_ACTIVATE(pmap, pcb, iscurproc)
 #define PMAP_DEACTIVATE(pmap, pcb)
-#define PMAP_PREFER(pa, va)		pmap_prefer((pa), (va))
+#define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
 
 #endif /* _KERNEL */
 
