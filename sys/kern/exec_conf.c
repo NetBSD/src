@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.49 2000/12/01 12:57:55 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.50 2000/12/02 20:44:09 scw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,6 +40,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_aout.h"
+#include "opt_compat_aout_m68k.h"
 #include "opt_compat_vax1k.h"
 #include "opt_compat_pecoff.h"
 #include "opt_compat_osf1.h"
@@ -137,6 +138,9 @@ extern const struct emul emul_netbsd;
 #ifdef COMPAT_AOUT
 extern const struct emul emul_netbsd_aout;
 #endif
+#ifdef COMPAT_AOUT_M68K
+extern const struct emul emul_netbsd_aoutm68k;
+#endif
 
 const struct execsw execsw[] = {
 #ifdef EXEC_SCRIPT
@@ -152,6 +156,8 @@ const struct execsw execsw[] = {
 	{ sizeof(struct exec), exec_aout_makecmds, { NULL },
 #ifdef COMPAT_AOUT
 	  &emul_netbsd_aout,
+#elif defined(COMPAT_AOUT_M68K)
+	  &emul_netbsd_aoutm68k,
 #else
 	  &emul_netbsd,
 #endif /* COMPAT_AOUT */
