@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.201 2000/12/29 02:43:42 itojun Exp $
+# $NetBSD: mi,v 1.202 2000/12/29 03:16:40 itojun Exp $
 .
 ./altroot
 ./bin
@@ -862,6 +862,7 @@
 ./usr/share/examples/named
 ./usr/share/examples/openssl
 ./usr/share/examples/postfix
+./usr/share/examples/racoon
 ./usr/share/examples/supfiles
 ./usr/share/examples/syslogd
 ./usr/share/games
