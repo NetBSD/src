@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.29 1998/12/16 13:21:26 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.30 1999/02/02 16:13:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -74,6 +74,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_cmd_reg.h>
 #include <dev/pci/pciide_cy693_reg.h>
 #include <dev/pci/pciide_sis_reg.h>
+#include <dev/pci/pciide_acer_reg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
@@ -173,6 +174,11 @@ void sis_setup_cap __P((struct pciide_softc*));
 void sis_setup_chip __P((struct pciide_softc*));
 void sis_setup_channel __P((struct channel_softc*));
 void sis_channel_map __P((struct pci_attach_args *, struct pciide_channel *));
+
+void acer_setup_cap __P((struct pciide_softc*));
+void acer_setup_chip __P((struct pciide_softc*));
+void acer_setup_channel __P((struct channel_softc*));
+void acer_channel_map __P((struct pci_attach_args *, struct pciide_channel *));
 
 void pciide_channel_dma_setup __P((struct pciide_channel *));
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
@@ -338,6 +344,22 @@ const struct pciide_product_desc pciide_sis_products[] =  {
     }
 };
 
+const struct pciide_product_desc pciide_acer_products[] =  {
+    { PCI_PRODUCT_ALI_M5229,
+      0,
+      PCIIDE_NUM_CHANNELS,
+      "Acer Labs M5229 UDMA IDE Controller",
+      acer_setup_cap,
+      acer_setup_chip,
+      acer_channel_map
+    },
+    { 0,
+      0,
+      0,
+      NULL,
+    }
+};
+
 struct pciide_vendor_desc {
     u_int32_t ide_vendor;
     const struct pciide_product_desc *ide_products;
@@ -349,6 +371,7 @@ const struct pciide_vendor_desc pciide_vendors[] = {
     { PCI_VENDOR_VIATECH, pciide_via_products },
     { PCI_VENDOR_CONTAQ, pciide_cypress_products },
     { PCI_VENDOR_SIS, pciide_sis_products },
+    { PCI_VENDOR_ALI, pciide_acer_products },
     { 0, NULL }
 };
 
@@ -2056,6 +2079,149 @@ sis_channel_map(pa, cp)
 		else
 			sis_ctr0 &= ~SIS_CTRL0_CHAN1_EN;
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, SIS_CTRL0, sis_ctr0);
+	}
+	pciide_map_compat_intr(pa, cp, wdc_cp->channel, interface);
+}
+
+void
+acer_setup_cap(sc)
+	struct pciide_softc *sc;
+{
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
+	    WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 2;
+	sc->sc_wdcdev.set_modes = acer_setup_channel;
+}
+
+void
+acer_setup_chip(sc)
+	struct pciide_softc *sc;
+{
+	int channel;
+	u_int32_t cr;
+
+	/* Enable "microsoft register bits" R/W */
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CCAR3,
+	    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CCAR3) | ACER_CCAR3_PI);
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CCAR1,
+	    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CCAR1) &
+	    ~(ACER_CHANSTATUS_RO|PCIIDE_CHAN_RO(0)|PCIIDE_CHAN_RO(1)));
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CCAR2,
+	    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CCAR2) &
+	    ~ACER_CHANSTATUSREGS_RO);
+	cr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG);
+	cr |= (PCIIDE_CHANSTATUS_EN << PCI_INTERFACE_SHIFT);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG, cr);
+
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CDRC,
+	    (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CDRC) |
+		ACER_CDRC_DMA_EN) & ~ACER_CDRC_FIFO_DISABLE);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		acer_setup_channel(&sc->pciide_channels[channel].wdc_channel);
+	}
+}
+
+void
+acer_setup_channel(chp)
+	struct channel_softc *chp;
+{
+	struct ata_drive_datas *drvp;
+	int drive;
+	u_int32_t acer_fifo_udma;
+	u_int32_t idedma_ctl;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+
+	idedma_ctl = 0;
+	acer_fifo_udma = pci_conf_read(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA);
+	WDCDEBUG_PRINT(("acer_setup_chip: old fifo/udma reg 0x%x\n", 
+	    acer_fifo_udma), DEBUG_PROBE);
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		WDCDEBUG_PRINT(("acer_setup_chip: old timings reg for "
+		    "channel %d drive %d 0x%x\n", chp->channel, drive,
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag,
+		    ACER_IDETIM(chp->channel, drive))), DEBUG_PROBE);
+		/* clear FIFO/DMA mode */
+		acer_fifo_udma &= ~(ACER_FTH_OPL(chp->channel, drive, 0x3) |
+		    ACER_UDMA_EN(chp->channel, drive) |
+		    ACER_UDMA_TIM(chp->channel, drive, 0x7));
+
+		/* add timing values, setup DMA if needed */
+		if ((drvp->drive_flags & DRIVE_DMA) == 0 &&
+		    (drvp->drive_flags & DRIVE_UDMA) == 0) {
+			acer_fifo_udma |=
+			    ACER_FTH_OPL(chp->channel, drive, 0x1);
+			goto pio;
+		}
+
+		acer_fifo_udma |= ACER_FTH_OPL(chp->channel, drive, 0x2);
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
+			acer_fifo_udma |= ACER_UDMA_EN(chp->channel, drive);
+			acer_fifo_udma |= 
+			    ACER_UDMA_TIM(chp->channel, drive,
+				acer_udma[drvp->UDMA_mode]);
+		} else {
+			/*
+			 * use Multiword DMA
+			 * Timings will be used for both PIO and DMA,
+			 * so adjust DMA mode if needed
+			 */
+			if (drvp->PIO_mode > (drvp->DMA_mode + 2))
+				drvp->PIO_mode = drvp->DMA_mode + 2;
+			if (drvp->DMA_mode == 0)
+				drvp->PIO_mode = 0;
+		}
+		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
+		    ACER_IDETIM(chp->channel, drive),
+		    acer_pio[drvp->PIO_mode]);
+	}
+	WDCDEBUG_PRINT(("acer_setup_chip: old fifo/udma reg 0x%x\n",
+	    acer_fifo_udma), DEBUG_PROBE);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA, acer_fifo_udma);
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL, idedma_ctl);
+	}
+	pciide_print_modes(cp);
+}
+
+void
+acer_channel_map(pa, cp)
+	struct pci_attach_args *pa;
+	struct pciide_channel *cp;
+{
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	bus_size_t cmdsize, ctlsize;
+	struct channel_softc *wdc_cp = &cp->wdc_channel;
+	u_int32_t cr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG);
+	int interface = PCI_INTERFACE(cr);
+
+	if ((interface & PCIIDE_CHAN_EN(wdc_cp->channel)) == 0) {
+		printf("%s: %s channel ignored (disabled)\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		return;
+	}
+
+	pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize);
+	if (cp->hw_ok == 0)
+		return;
+	if (pciiide_chan_candisable(cp)) {
+		cr &= ~(PCIIDE_CHAN_EN(wdc_cp->channel) << PCI_INTERFACE_SHIFT);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG, cr);
 	}
 	pciide_map_compat_intr(pa, cp, wdc_cp->channel, interface);
 }
