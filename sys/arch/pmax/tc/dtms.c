@@ -1,4 +1,4 @@
-/*	$NetBSD: dtms.c,v 1.1.2.1 2002/03/15 14:22:49 ad Exp $	*/
+/*	$NetBSD: dtms.c,v 1.1.2.2 2002/03/15 15:46:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.1.2.1 2002/03/15 14:22:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.1.2.2 2002/03/15 15:46:49 ad Exp $");
 
 #include "locators.h"
 
@@ -102,7 +102,8 @@ dtms_match(struct device *parent, struct cfdata *cf, void *aux)
 	 */
 	if (cf->cf_loc[DTCF_ADDR] == DTCF_ADDR_DEFAULT &&
 	    (dta->dta_addr == DT_ADDR_KBD || dta->dta_addr == DT_ADDR_MOUSE)) {
-	    	dt_identify(dta->dta_addr, &ident);
+		if (dt_identify(dta->dta_addr, &ident))
+			return (0);
 		return (strncmp(ident.vendor, "DEC     ", 8) == 0 &&
 		    strncmp(ident.module, "VSXXX-", 6) == 0);
 	}
