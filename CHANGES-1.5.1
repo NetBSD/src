@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.4 2000/12/13 23:12:20 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.5 2000/12/15 00:26:34 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -73,3 +73,93 @@ sys/arch/hp300/stand/Makefile.inc		1.11
 sys/dev/pci/fms.c				1.8
 
   Make this build without ``mpu at fms''.
+
+usr.sbin/user/user.c				1.34
+
+  Don't try to create or move directory if only ``-d'' option is
+  given; documentation claims ``-m'' is also required.
+
+usr.bin/login/k5login.c				1.17
+
+  Use strlcpy() to copy environment variable into a fixed-length
+  buffer.  Fixes PR#11550.
+
+libexec/telnetd/sys_term.c			1.19-1.20
+
+  Fix buffer overflow and environment passing problems, and only
+  accept a limites set of environment variables and non-filename
+  TERMCAP variables.
+
+sys/arch/mac68k/nubus/nubus.h			1.52
+
+  Add the DrHw Apple 24AC "Boogie" video card.
+
+sys/arch/mac68k/nubus/grf_nubus.c		1.60
+
+  Clear interrupts on the Apple "Boogie" card.
+
+sys/coda/coda_vnops.c				1.21
+sys/kern/vfs_subr.c				1.140
+sys/kern/vfs_syscalls.c				1.162
+sys/miscfs/genfs/genfs_vnops.c			1.20
+sys/miscfs/genfs/layer_vnops.c			1.4
+sys/miscfs/specfs/spec_vnops.c			1.50
+sys/miscfs/syncfs/sync_subr.c			1.6
+sys/miscfs/syncfs/sync_vnops.c			1.4
+sys/miscfs/union/union_vnops.c			1.48
+sys/msdosfs/msdosfs_vfsops.c			1.70
+sys/ntfs/ntfs_vnops.c				1.30
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.39
+sys/ufs/lfs/lfs_vnops.c				1.45
+sys/ufs/ffs/ffs_balloc.c			1.22
+sys/ufs/ffs/ffs_inode.c				1.37
+sys/ufs/ffs/ffs_softdep.c			1.6	
+sys/ufs/ffs/ffs_vfsops.c			1.71
+sys/ufs/ffs/ffs_vnops.c				1.33,1.34
+sys/nfs/nfs_nqlease.c				1.33
+sys/nfs/nfs_serv.c				1.58
+sys/nfs/nfs.h					1.24
+sys/nfs/nfs_bio.c				1.52
+sys/nfs/nfs_node.c				1.36
+sys/nfs/nfs_subs.c				1.83
+sys/nfs/nfs_syscalls.c				1.44,1.45
+sys/nfs/nfs_var.h				1.18
+sys/nfs/nfs_vnops.c				1.120,1.123
+sys/nfs/nfs_vfsops.c				1.96
+sys/nfs/nfsnode.h				1.30
+sys/nfs/nfsproto.h				1.9
+sys/nfs/nfs_socket.c				1.60
+sys/nfs/nfs_subs.c				1.85,1.87
+sys/kern/vnode_if.src				1.25	
+sys/kern/vnode_if.c				regenerate
+sys/sys/vnode_if.h				regenerate
+
+  Improve NFS performance, possibly with as much as 100% in
+  throughput.  Please note: this implies a kernel interface change,
+  VOP_FSYNC gains two arguments.
+
+sys/nfs/nfs_boot.c				1.55
+sys/nfs/nfs_socket.c				1.63
+sys/kern/uipc_socket.c				1.51
+sys/kern/uipc_syscalls.c			1.56
+sys/sys/socketvar.h				1.41
+
+  Fix NFS+tcp client hangs on server or network outage.  Again,
+  please note that this introduces yet another kernel interface
+  change: sobind() gains an argument.
+
+usr.bin/passwd/krb5_passwd.c			1.10
+
+  Don't try to free an uninitialized context; fixes core dump when
+  called as ``yppasswd''.
+
+sys/dev/pcmcia/if_ray.c				1.24-1.25
+
+  Add a missing return after freeing an mbuf.
+  Add support for 802.11 authentication frames, required to
+  interoperate with Aviator Pro cards on Windows.
+
+sys/dev/pci/pccbb.c				1.47,1.49
+
+  Turn off power on shutdown, except on ToPIC (TI 113X) bridges on
+  shutdown to avoid hangs on some systems.
