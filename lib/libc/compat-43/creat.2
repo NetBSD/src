@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)creat.2	6.10 (Berkeley) 6/23/91
-.\"	$Id: creat.2,v 1.2 1993/08/01 07:45:50 mycroft Exp $
+.\"	$Id: creat.2,v 1.3 1993/10/04 18:13:02 jtc Exp $
 .\"
 .Dd June 23, 1991
 .Dt CREAT 2
@@ -53,6 +53,11 @@ open(path, O_CREAT | O_TRUNC | O_WRONLY, mode);
 .Ed
 .Sh SEE ALSO
 .Xr open 2
+.Sh STANDARDS
+The
+.Nm 
+function call conforms to
+.St -p1003.1-90 .
 .Sh HISTORY
 The
 .Nm
