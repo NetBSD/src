@@ -1,3 +1,5 @@
+/*	$NetBSD: mkmakefile.c,v 1.28 1995/08/17 17:22:18 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1980,1990 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.27 1995/05/08 19:30:31 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mkmakefile.c,v 1.28 1995/08/17 17:22:18 thorpej Exp $";
 #endif /* not lint */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.19 1995/08/17 17:22:08 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1980 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.18 1995/08/17 17:09:24 thorpej Exp $
  */
 
 /*
