@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.82 2001/11/10 16:54:56 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.83 2001/11/10 17:11:38 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -269,12 +269,6 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 	LIST_REMOVE(pipe, next);
 	pipe->endpoint->refcnt--;
 	pipe->methods->close(pipe);
-#if defined(__NetBSD__) && defined(DIAGNOSTIC)
-	if (callout_pending(&pipe->abort_handle)) {
-		callout_stop(&pipe->abort_handle);
-		printf("usbd_close_pipe: abort_handle pending");
-	}
-#endif
 	if (pipe->intrxfer != NULL)
 		usbd_free_xfer(pipe->intrxfer);
 	free(pipe, M_USB);
