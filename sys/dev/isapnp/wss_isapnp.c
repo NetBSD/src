@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.1 1998/06/30 17:28:00 augustss Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.2 1998/07/23 19:30:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/isa/ad1848var.h>
 #include <dev/isa/madreg.h>
@@ -80,12 +81,7 @@ wss_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-
-	if (strcmp(ipa->ipa_devlogic, "CSC0000") == 0)
-		return (1);
-
-	return (0);
+	return isapnp_devmatch(aux, &isapnp_wss_dev);
 }
 
 

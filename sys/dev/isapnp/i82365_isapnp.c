@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.3 1998/06/23 04:19:23 sommerfe Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.4 1998/07/23 19:30:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -48,6 +48,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -96,11 +97,7 @@ pcic_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-
-	if (strcmp(ipa->ipa_devlogic, "PNP0E00"))
-		return 0;
-	return 1;
+	return isapnp_devmatch(aux, &isapnp_pcic_devinfo);
 }
 
 void
