@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.7 2003/03/13 12:15:31 drochner Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.8 2003/03/13 14:05:53 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -56,7 +56,7 @@
 
 #include "netif_of.h"
 
-struct iodesc sockets[1];
+static struct iodesc sdesc;
 
 struct iodesc *
 socktodesc(sock)
@@ -64,7 +64,7 @@ socktodesc(sock)
 {
 	if (sock != 0)
 		return NULL;
-	return sockets;
+	return &sdesc;
 }
 
 int
@@ -79,7 +79,7 @@ netif_of_open(op)
 	printf("netif_open...");
 #endif
 	/* find a free socket */
-	io = sockets;
+	io = &sdesc;
 	if (io->io_netif) {
 #ifdef	NETIF_DEBUG
 		printf("device busy\n");
@@ -89,7 +89,7 @@ netif_of_open(op)
 	}
 	memset(io, 0, sizeof *io);
 
-	io->io_netif = op;
+	io->io_netif = (void *)op;
 
 	/* Put our ethernet address in io->myea */
 	OF_getprop(OF_instance_to_package(op->handle),
@@ -120,7 +120,7 @@ netif_of_close(fd)
 	}
 #endif
 
-	io = &sockets[fd];
+	io = &sdesc;
 	io->io_netif = NULL;
 
 #ifdef	NETIF_DEBUG
@@ -142,7 +142,7 @@ netif_put(desc, pkt, len)
 	ssize_t rv;
 	size_t sendlen;
 
-	op = desc->io_netif;
+	op = (struct of_dev *)desc->io_netif;
 
 #ifdef	NETIF_DEBUG
 	{
@@ -193,7 +193,7 @@ netif_get(desc, pkt, maxlen, timo)
 	int tick0, tmo_ms;
 	int len;
 
-	op = desc->io_netif;
+	op = (struct of_dev *)desc->io_netif;
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: pkt=0x%x, maxlen=%d, tmo=%d\n",
