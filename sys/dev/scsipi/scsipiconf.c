@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.19 2002/11/09 19:03:41 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.20 2003/01/18 12:05:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.19 2002/11/09 19:03:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20 2003/01/18 12:05:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,12 +91,12 @@ scsipi_command(periph, cmd, cmdlen, data_addr, datalen, retries, timeout, bp,
 		 * process must NOT be swapped out, as the device will
 		 * be accessing the stack.
 		 */
-		PHOLD(curproc);
+		PHOLD(curlwp);
 	}
 	error = (*periph->periph_channel->chan_bustype->bustype_cmd)(periph,
 	    cmd, cmdlen, data_addr, datalen, retries, timeout, bp, flags);
 	if ((flags & XS_CTL_DATA_ONSTACK) != 0)
-		PRELE(curproc);
+		PRELE(curlwp);
 	return (error);
 }
 
