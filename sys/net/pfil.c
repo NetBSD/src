@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.22 2004/07/18 11:36:04 yamt Exp $	*/
+/*	$NetBSD: pfil.c,v 1.23 2004/07/27 12:22:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.22 2004/07/18 11:36:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.23 2004/07/27 12:22:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -106,7 +106,7 @@ pfil_head_register(struct pfil_head *ph)
 	TAILQ_INIT(&ph->ph_in);
 	TAILQ_INIT(&ph->ph_out);
 	TAILQ_INIT(&ph->ph_ifaddr);
-	TAILQ_INIT(&ph->ph_newif);
+	TAILQ_INIT(&ph->ph_ifnetevent);
 
 	LIST_INSERT_HEAD(&pfil_head_list, ph, ph_list);
 
@@ -150,7 +150,8 @@ pfil_head_get(int type, u_long val)
  *	PFIL_OUT	call me on outgoing packets
  *	PFIL_ALL	call me on all of the above
  *	PFIL_IFADDR  	call me on interface reconfig (mbuf ** is ioctl #)
- *	PFIL_NEWIF  	call me on interface creation (mbuf ** is ignored)
+ *	PFIL_IFNET  	call me on interface attach/detach
+ *			(mbuf ** is PFIL_IFNET_*)
  *	PFIL_WAITOK	OK to call malloc with M_WAITOK.
  */
 int
@@ -173,8 +174,7 @@ pfil_add_hook(int (*func)(void *, struct mbuf **, struct ifnet *, int),
 		}
 	}
 	if (flags & PFIL_IFADDR) {
-		err = pfil_list_add(&ph->ph_ifaddr, func, arg,
-		    flags & ~PFIL_IFADDR);
+		err = pfil_list_add(&ph->ph_ifaddr, func, arg, flags);
 		if (err) {
 			if (flags & PFIL_IN)
 				pfil_list_remove(&ph->ph_in, func, arg);
@@ -183,9 +183,8 @@ pfil_add_hook(int (*func)(void *, struct mbuf **, struct ifnet *, int),
 			return err;
 		}
 	}
-	if (flags & PFIL_NEWIF) {
-		err = pfil_list_add(&ph->ph_newif, func, arg,
-		    flags & ~PFIL_NEWIF);
+	if (flags & PFIL_IFNET) {
+		err = pfil_list_add(&ph->ph_ifnetevent, func, arg, flags);
 		if (err) {
 			if (flags & PFIL_IN)
 				pfil_list_remove(&ph->ph_in, func, arg);
@@ -253,8 +252,8 @@ pfil_remove_hook(int (*func)(void *, struct mbuf **, struct ifnet *, int),
 		err = pfil_list_remove(&ph->ph_out, func, arg);
 	if ((err == 0) && (flags & PFIL_IFADDR))
 		err = pfil_list_remove(&ph->ph_ifaddr, func, arg);
-	if ((err == 0) && (flags & PFIL_NEWIF))
-		err = pfil_list_remove(&ph->ph_newif, func, arg);
+	if ((err == 0) && (flags & PFIL_IFNET))
+		err = pfil_list_remove(&ph->ph_ifnetevent, func, arg);
 	return err;
 }
 
