@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.10 1997/06/16 13:38:05 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.11 1997/07/05 05:38:14 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: fil.c,v 2.0.2.13 1997/05/24 07:33:37 darrenr Exp ";
+static	char	rcsid[] = "$Id: fil.c,v 1.11 1997/07/05 05:38:14 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -53,6 +53,7 @@ static	char	rcsid[] = "Id: fil.c,v 2.0.2.13 1997/05/24 07:33:37 darrenr Exp ";
 #include "netinet/ip_nat.h"
 #include "netinet/ip_frag.h"
 #include "netinet/ip_state.h"
+#include "netinet/ip_auth.h"
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
@@ -68,9 +69,9 @@ extern	int	opts;
 							  second; }
 # define	FR_VERBOSE(verb_pr)			verbose verb_pr
 # define	FR_DEBUG(verb_pr)			debug verb_pr
-# define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
-# define	SEND_RESET(ip, qif, q, if)		send_reset(ip, if)
+# define	SEND_RESET(ip, qif, if)		send_reset(ip, if)
 # define	IPLLOG(a, c, d, e)		ipllog()
+#  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
 # if SOLARIS
 #  define	ICMP_ERROR(b, ip, t, c, if, src) 	icmp_error(ip)
 # else
@@ -82,16 +83,17 @@ extern	int	opts;
 # define	FR_IFDEBUG(ex,second,verb_pr)	;
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
-# define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
 # define	IPLLOG(a, c, d, e)		ipllog(a, IPL_LOGIPF, c, d, e)
 # if SOLARIS
-extern	kmutex_t	ipf_mutex;
-#  define	SEND_RESET(ip, qif, q, if)	send_reset(ip, qif, q)
+extern	kmutex_t	ipf_mutex, ipf_auth;
+#  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, \
+							   ip, qif)
+#  define	SEND_RESET(ip, qif, if)		send_reset(ip, qif)
 #  define	ICMP_ERROR(b, ip, t, c, if, src) \
-			icmp_error(b, ip, t, c, if, src)
+			icmp_error(ip, t, c, if, src)
 # else
-#  define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
-#  define	SEND_RESET(ip, qif, q, if)	send_reset((struct tcpiphdr *)ip)
+#  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
+#  define	SEND_RESET(ip, qif, if)	send_reset((struct tcpiphdr *)ip)
 #  if BSD < 199103
 #   define	ICMP_ERROR(b, ip, t, c, if, src) \
 			icmp_error(mtod(b, ip_t *), t, c, if, src)
@@ -108,16 +110,15 @@ struct	frentry	*ipfilter[2][2] = { { NULL, NULL }, { NULL, NULL } },
 		*ipacct[2][2] = { { NULL, NULL }, { NULL, NULL } };
 int	fr_flags = IPF_LOGGING, fr_active = 0;
 #if defined(IPFILTER_DEFAULT_BLOCK)
-int	fr_pass = FR_NOMATCH;
+int	fr_pass = FR_NOMATCH|FR_BLOCK;
 #else
-int	fr_pass = FR_PASS;
+int	fr_pass = (IPF_DEFAULT_PASS|FR_NOMATCH);
 #endif
 
 fr_info_t	frcache[2];
 
 static	void	fr_makefrip __P((int, ip_t *, fr_info_t *));
 static	int	fr_tcpudpchk __P((frentry_t *, fr_info_t *));
-static	int	fr_scanlist __P((int, ip_t *, fr_info_t *, void *));
 
 
 /*
@@ -182,6 +183,7 @@ fr_info_t *fin;
 	fin->fin_data[0] = 0;
 	fin->fin_data[1] = 0;
 	fin->fin_rule = -1;
+	fin->fin_id = ip->ip_id;
 #ifdef	_KERNEL
 	fin->fin_icode = ipl_unreach;
 #endif
@@ -192,8 +194,8 @@ fr_info_t *fin;
 	tcp = (tcphdr_t *)((char *)ip + hlen);
 	fin->fin_dp = (void *)tcp;
 	(*(((u_short *)fi) + 1)) = (*(((u_short *)ip) + 4));
-	(*(((u_long *)fi) + 1)) = (*(((u_long *)ip) + 3));
-	(*(((u_long *)fi) + 2)) = (*(((u_long *)ip) + 4));
+	(*(((u_32_t *)fi) + 1)) = (*(((u_32_t *)ip) + 3));
+	(*(((u_32_t *)fi) + 2)) = (*(((u_32_t *)ip) + 4));
 
 	fi->fi_fl = (hlen > sizeof(struct ip)) ? FI_OPTIONS : 0;
 	off = (ip->ip_off & 0x1fff) << 3;
@@ -377,7 +379,7 @@ fr_info_t *fin;
  * Could be per interface, but this gets real nasty when you don't have
  * kernel sauce.
  */
-static int fr_scanlist(pass, ip, fin, m)
+int fr_scanlist(pass, ip, fin, m)
 int pass;
 ip_t *ip;
 register fr_info_t *fin;
@@ -385,18 +387,22 @@ void *m;
 {
 	register struct frentry *fr;
 	register fr_ip_t *fi = &fin->fin_fi;
-	int rulen, portcmp = 0, off;
+	int rulen, portcmp = 0, off, skip = 0;
 
 	fr = fin->fin_fr;
 	fin->fin_fr = NULL;
 	fin->fin_rule = 0;
 	off = ip->ip_off & 0x1fff;
-	pass |= (fi->fi_fl << 20);
+	pass |= (fi->fi_fl << 24);
 
 	if ((fi->fi_fl & FI_TCPUDP) && (fin->fin_dlen > 3) && !off)
 		portcmp = 1;
 
 	for (rulen = 0; fr; fr = fr->fr_next, rulen++) {
+		if (skip) {
+			skip--;
+			continue;
+		}
 		/*
 		 * In all checks below, a null (zero) value in the
 		 * filter struture is taken to mean a wildcard.
@@ -409,18 +415,19 @@ void *m;
 #else
 		if (opts & (OPT_VERBOSE|OPT_DEBUG))
 			printf("\n");
-		FR_VERBOSE(("%c", (pass & FR_PASS) ? 'p' : 'b'));
+		FR_VERBOSE(("%c", (pass & FR_PASS) ? 'p' : 
+				  (pass & FR_AUTH) ? 'a' : 'b'));
 		if (fr->fr_ifa && fr->fr_ifa != fin->fin_ifp)
 			continue;
 		FR_VERBOSE((":i"));
 #endif
 		{
-			register u_long	*ld, *lm, *lip;
+			register u_32_t	*ld, *lm, *lip;
 			register int i;
 
-			lip = (u_long *)fi;
-			lm = (u_long *)&fr->fr_mip;
-			ld = (u_long *)&fr->fr_ip;
+			lip = (u_32_t *)fi;
+			lm = (u_32_t *)&fr->fr_mip;
+			ld = (u_32_t *)&fr->fr_ip;
 			i = ((lip[0] & lm[0]) != ld[0]);
 			FR_IFDEBUG(i,continue,("0. %#08x & %#08x != %#08x\n",
 				   lip[0], lm[0], ld[0]));
@@ -468,7 +475,8 @@ void *m;
 		/*
 		 * Just log this packet...
 		 */
-		pass = fr->fr_flags;
+		if (!(skip = fr->fr_skip))
+			pass = fr->fr_flags;
 		if ((pass & FR_CALLNOW) && fr->fr_func)
 			pass = (*fr->fr_func)(pass, ip, fin);
 #ifdef  IPFILTER_LOG
@@ -499,20 +507,13 @@ void *m;
  * or not to pass it on or not.
  */
 int fr_check(ip, hlen, ifp, out
-#ifdef _KERNEL
-# if SOLARIS
-, qif, q, mp)
+#if defined(_KERNEL) && SOLARIS
+, qif, mp)
 qif_t *qif;
-queue_t *q;
-mblk_t **mp;
-# else
-, mp)
-struct mbuf **mp;
-# endif
 #else
 , mp)
-char *mp;
 #endif
+mb_t **mp;
 ip_t *ip;
 int hlen;
 struct ifnet *ifp;
@@ -524,14 +525,13 @@ int out;
 	fr_info_t frinfo, *fc;
 	register fr_info_t *fin = &frinfo;
 	frentry_t *fr = NULL;
-	int pass, changed;
-#ifndef	_KERNEL
-	char	*mc = mp, *m = mp;
+	int pass, changed, apass;
+#if !SOLARIS || !defined(_KERNEL)
+	register mb_t *m = *mp;
 #endif
 
 #ifdef	_KERNEL
 # if !defined(__SVR4) && !defined(__svr4__)
-	register struct mbuf *m = *mp;
 	struct mbuf *mc = NULL;
 
 	if ((ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP ||
@@ -560,33 +560,75 @@ int out;
 	fin->fin_mp = mp;
 
 	MUTEX_ENTER(&ipf_mutex);
+
+	/*
+	 * Check auth now.  This, combined with the check below to see if apass
+	 * is 0 is to ensure that we don't count the packet twice, which can
+	 * otherwise occur when we reprocess it.  As it is, we only count it
+	 * after it has no auth. table matchup.  This also stops NAT from
+	 * occuring until after the packet has been auth'd.
+	 */
+	apass = fr_checkauth(ip, fin);
+
 	if (!out) {
 		changed = ip_natin(ip, hlen, fin);
-		if ((fin->fin_fr = ipacct[0][fr_active]) &&
+		if (!apass && (fin->fin_fr = ipacct[0][fr_active]) &&
 		    (FR_SCANLIST(FR_NOMATCH, ip, fin, m) & FR_ACCOUNT))
 			frstats[0].fr_acct++;
 	}
 
-	if (!(pass = ipfr_knownfrag(ip, fin)) &&
+	if (apass || !(pass = ipfr_knownfrag(ip, fin)) &&
 	    !(pass = fr_checkstate(ip, fin))) {
-		fc = frcache + out;
-		if (fc->fin_fr && !bcmp((char *)fin, (char *)fc, FI_CSIZE)) {
-			/*
-			 * copy cached data so we can unlock the mutex
-			 * earlier.
-			 */
-			bcopy((char *)fc, (char *)fin, sizeof(*fin));
-			frstats[out].fr_chit++;
-			pass = fin->fin_fr->fr_flags;
-		} else {
-			pass = fr_pass;
-			if ((fin->fin_fr = ipfilter[out][fr_active]))
-				pass = FR_SCANLIST(fr_pass, ip, fin, m);
-			bcopy((char *)fin, (char *)fc, FI_CSIZE);
-			if (pass & FR_NOMATCH)
-				frstats[out].fr_nom++;
+		/*
+		 * If a packet is found in the auth table, then skip checking
+		 * the access lists for permission but we do need to consider
+		 * the result as if it were from the ACL's.
+		 */
+		if (!apass) {
+			fc = frcache + out;
+			if (fc->fin_fr &&
+			    !bcmp((char *)fin, (char *)fc, FI_CSIZE)) {
+				/*
+				 * copy cached data so we can unlock the mutex
+				 * earlier.
+				 */
+				bcopy((char *)fc, (char *)fin, sizeof(*fin));
+				frstats[out].fr_chit++;
+				pass = fin->fin_fr->fr_flags;
+			} else {
+				pass = fr_pass;
+				if ((fin->fin_fr = ipfilter[out][fr_active]))
+					pass = FR_SCANLIST(fr_pass, ip, fin, m);
+				bcopy((char *)fin, (char *)fc, FI_CSIZE);
+				if (pass & FR_NOMATCH)
+					frstats[out].fr_nom++;
+			}
+			fr = fin->fin_fr;
+		} else
+			pass = apass;
+
+		/*
+		 * If we fail to add a packet to the authorization queue,
+		 * then we drop the packet later.  However, if it was added
+		 * then pretend we've dropped it already.
+		 */
+		if ((pass & FR_AUTH))
+			if (FR_NEWAUTH(m, fin, ip, qif) != 0)
+#ifdef	_KERNEL
+				m = *mp = NULL;
+#else
+				;
+#endif
+
+		if (pass & FR_PREAUTH) {
+			MUTEX_ENTER(&ipf_auth);
+			if ((fin->fin_fr = ipauth) &&
+			    (pass = FR_SCANLIST(0, ip, fin, m)))
+				fr_authstats.fas_hits++;
+			else
+				fr_authstats.fas_miss++;
+			MUTEX_EXIT(&ipf_auth);
 		}
-		fr = fin->fin_fr;
 
 		if (pass & FR_KEEPFRAG) {
 			if (fin->fin_fi.fi_fl & FI_FRAG) {
@@ -608,7 +650,11 @@ int out;
 	if (fr && fr->fr_func && !(pass & FR_CALLNOW))
 		pass = (*fr->fr_func)(pass, ip, fin);
 
-	if (out) {
+	/*
+	 * Only count/translate packets which will be passed on, out the
+	 * interface.
+	 */
+	if (out && (pass & FR_PASS)) {
 		if ((fin->fin_fr = ipacct[1][fr_active]) &&
 		    (FR_SCANLIST(FR_NOMATCH, ip, fin, m) & FR_ACCOUNT))
 			frstats[1].fr_acct++;
@@ -686,7 +732,7 @@ logit:
 				frstats[0].fr_ret++;
 			} else if ((pass & FR_RETRST) &&
 				   !(fin->fin_fi.fi_fl & FI_SHORT)) {
-				if (SEND_RESET(ip, qif, q, ifp) == 0)
+				if (SEND_RESET(ip, qif, ifp) == 0)
 					frstats[1].fr_ret++;
 			}
 #else
@@ -744,6 +790,8 @@ logit:
 		return 1;
 	if (pass & FR_PASS)
 		return 0;
+	if (pass & FR_AUTH)
+		return -2;
 	return -1;
 #endif
 }
@@ -755,8 +803,8 @@ int dev;
 char *buf;
 int len;
 {
-	register char	*bufp = iplbuf[dev], *tp = iplt[dev], *hp = iplh[dev];
-	register int	clen, tail;
+	register char *bufp = iplbuf[dev], *tp = iplt[dev], *hp = iplh[dev];
+	register int clen, tail;
 
 	tail = (hp >= tp) ? (bufp + IPLLOGSIZE - hp) : (tp - hp);
 	clen = MIN(tail, len);
@@ -809,11 +857,7 @@ register int len;
  * odd sizes.
  */
 u_short fr_tcpsum(m, ip, tcp)
-#if SOLARIS
-mblk_t *m;
-#else
-struct mbuf *m;
-#endif
+mb_t *m;
 ip_t *ip;
 tcphdr_t *tcp;
 {

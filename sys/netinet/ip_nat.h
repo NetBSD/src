@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.7 1997/05/28 00:17:22 thorpej Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.8 1997/07/05 05:38:21 darrenr Exp $	*/
 
 /*
  * (C)opyright 1995-1997 by Darren Reed.
@@ -8,15 +8,11 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.0.2.12 1997/05/24 07:35:20 darrenr Exp 
+ * $Id: ip_nat.h,v 1.8 1997/07/05 05:38:21 darrenr Exp $
  */
 
 #ifndef	__IP_NAT_H__
 #define	__IP_NAT_H__
-
-#ifndef	__IP_PROXY_H__
-#include "netinet/ip_proxy.h"
-#endif
 
 #ifndef SOLARIS
 #define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
@@ -31,7 +27,6 @@
 #define SIOCGIPST	_IOR('r', 85, struct ips_stat)
 #define	SIOCFLNAT	_IOWR('r', 86, int)
 #define	SIOCCNATL	_IOWR('r', 87, int)
-
 #else
 #define	SIOCADNAT	_IOW(r, 80, struct ipnat)
 #define	SIOCRMNAT	_IOW(r, 81, struct ipnat)
@@ -44,6 +39,9 @@
 #endif
 
 #define	NAT_SIZE	367
+#ifndef	APR_LABELLEN
+#define	APR_LABELLEN	16
+#endif
 
 typedef	struct	nat	{
 	u_long	nat_age;
@@ -80,7 +78,7 @@ typedef	struct	ipnat	{
 	u_short	in_port[2];
 	struct	in_addr	in_in[2];
 	struct	in_addr	in_out[2];
-	struct	aproxy	*in_apr;
+	void	*in_apr;
 	int	in_redir; /* 0 if it's a mapping, 1 if it's a hard redir */
 	char	in_ifname[IFNAMSIZ];
 	char	in_plabel[APR_LABELLEN];	/* proxy label */
@@ -104,13 +102,16 @@ typedef	struct	ipnat	{
 #define	NAT_BIMAP	(NAT_MAP|NAT_REDIRECT)
 
 #define	IPN_CMPSIZ	(sizeof(struct in_addr) * 4 + sizeof(u_short) * 3 + \
-			 sizeof(int))
+			 sizeof(int) + IFNAMSIZ)
 
 typedef	struct	natlookup {
 	struct	in_addr	nl_inip;
 	struct	in_addr	nl_outip;
+	struct	in_addr	nl_realip;
+	int	nl_flags;
 	u_short	nl_inport;
 	u_short	nl_outport;
+	u_short	nl_realport;
 } natlookup_t;
 
 typedef	struct	natstat	{
@@ -152,26 +153,26 @@ typedef	struct	natlog {
 #define	NL_EXPIRE	0xffff
 
 
-extern u_long fr_defnatage;
-extern nat_t *nat_table[2][NAT_SIZE];
-#if defined(__NetBSD__)
-extern int nat_ioctl __P((caddr_t, u_long, int));
+extern	u_long	fr_defnatage;
+extern	nat_t	*nat_table[2][NAT_SIZE];
+#ifdef	__NetBSD__
+extern	int	nat_ioctl __P((caddr_t, u_long, int));
 #else
-extern int nat_ioctl __P((caddr_t, int, int));
+extern	int	nat_ioctl __P((caddr_t, int, int));
 #endif
-extern nat_t *nat_new __P((ipnat_t *, ip_t *, fr_info_t *, u_short, int));
-extern nat_t *nat_outlookup __P((void *, int, struct in_addr, u_short,
+extern	nat_t	*nat_new __P((ipnat_t *, ip_t *, fr_info_t *, u_short, int));
+extern	nat_t	*nat_outlookup __P((void *, int, struct in_addr, u_short,
 				 struct in_addr, u_short));
-extern nat_t *nat_inlookup __P((void *, int, struct in_addr, u_short,
+extern	nat_t	*nat_inlookup __P((void *, int, struct in_addr, u_short,
 				struct in_addr, u_short));
-extern nat_t *nat_lookupredir __P((natlookup_t *));
-extern nat_t *nat_lookupmapip __P((void *, int, struct in_addr, u_short,
+extern	nat_t	*nat_lookupredir __P((natlookup_t *));
+extern	nat_t	*nat_lookupmapip __P((void *, int, struct in_addr, u_short,
 				   struct in_addr, u_short));
 
-extern int ip_natout __P((ip_t *, int, fr_info_t *));
-extern int ip_natin __P((ip_t *, int, fr_info_t *));
-extern void ip_natunload __P((void)), ip_natexpire __P((void));
-extern void nat_log __P((struct nat *, u_short));
-extern void fix_incksum __P((u_short *, u_long));
-extern void fix_outcksum __P((u_short *, u_long));
+extern	int	ip_natout __P((ip_t *, int, fr_info_t *));
+extern	int	ip_natin __P((ip_t *, int, fr_info_t *));
+extern	void	ip_natunload __P((void)), ip_natexpire __P((void));
+extern	void	nat_log __P((struct nat *, u_short));
+extern	void	fix_incksum __P((u_short *, u_long));
+extern	void	fix_outcksum __P((u_short *, u_long));
 #endif /* __IP_NAT_H__ */

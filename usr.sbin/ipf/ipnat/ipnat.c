@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.7 1997/05/27 22:56:10 thorpej Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.8 1997/07/05 05:43:59 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -48,16 +48,16 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <ctype.h>
-#include <netinet/ip_compat.h>
-#include <netinet/ip_fil.h>
-#include <netinet/ip_proxy.h>
-#include <netinet/ip_nat.h>
+#include "netinet/ip_compat.h"
+#include "netinet/ip_fil.h"
+#include "netinet/ip_proxy.h"
+#include "netinet/ip_nat.h"
 #include "kmem.h"
 
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static  char    sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "Id: ipnat.c,v 2.0.2.9 1997/05/05 14:03:55 darrenr Exp ";
+static	char	rcsid[] = "$Id: ipnat.c,v 1.8 1997/07/05 05:43:59 darrenr Exp $";
 #endif
 
 #if	SOLARIS
@@ -100,8 +100,7 @@ int argc;
 char *argv[];
 {
 	char	*file = NULL;
-	int	c;
-	int	fd, opts = 1;
+	int	fd, opts = 1, c;
 
 	while ((c = getopt(argc, argv, "CFf:lnrsv")) != -1)
 		switch (c)
@@ -244,7 +243,7 @@ void *ptr;
 			printf(" proxy");
 			if (np->in_dport)
 				printf(" %hu", ntohs(np->in_dport));
-			printf(" %.*s/%d", sizeof(np->in_plabel),
+			printf(" %.*s/%d", (int)sizeof(np->in_plabel),
 				np->in_plabel, np->in_p);
 		} else if (np->in_pmin || np->in_pmax) {
 			printf(" portmap");
@@ -455,7 +454,7 @@ int	*resolved;
 		}
 		return np->n_net;
 	}
-	return *(u_long *)hp->h_addr;
+	return *(u_32_t *)hp->h_addr;
 }
 
 
@@ -657,8 +656,12 @@ char *line;
 		ipn.in_pnext = portnum(tport, proto); /* target port */
 		s = NULL; /* That's all she wrote! */
 	}
+	ipn.in_inip &= ipn.in_inmsk;
+	ipn.in_outip &= ipn.in_outmsk;
+
 	if (!s)
 		return &ipn;
+
 	if (ipn.in_redir == NAT_BIMAP) {
 		fprintf(stderr, "extra words at the end of bimap line: %s\n",
 			s);

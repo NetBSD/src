@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.3 1997/05/28 00:17:22 thorpej Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.4 1997/07/05 05:38:22 darrenr Exp $	*/
 
 /*
  * (C)opyright 1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "Id: ip_proxy.c,v 2.0.2.3 1997/05/24 07:36:22 darrenr Exp ";
+static	char	rcsid[] = "$Id: ip_proxy.c,v 1.4 1997/07/05 05:38:22 darrenr Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -233,7 +233,7 @@ nat_t *nat;
 
 
 aproxy_t *ap_match(pr, name)
-char pr;
+u_char pr;
 char *name;
 {
 	aproxy_t *ap;
@@ -268,7 +268,7 @@ void ap_unload()
 	int i;
 
 	for (i = 0; i < AP_SESS_SIZE; i++)
-		while ((aps = ap_sess_tab[i]) != NULL) {
+		while ((aps = ap_sess_tab[i])) {
 			ap_sess_tab[i] = aps->aps_next;
 			aps_free(aps);
 		}
