@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.20 2001/10/28 13:06:43 lukem Exp $	*/
+/*	$NetBSD: tar.c,v 1.21 2002/01/31 19:27:54 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.20 2001/10/28 13:06:43 lukem Exp $");
+__RCSID("$NetBSD: tar.c,v 1.21 2002/01/31 19:27:54 tv Exp $");
 #endif
 #endif /* not lint */
 

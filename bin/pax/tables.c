@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.16 2002/01/29 10:20:29 tv Exp $	*/
+/*	$NetBSD: tables.c,v 1.17 2002/01/31 19:27:54 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.16 2002/01/29 10:20:29 tv Exp $");
+__RCSID("$NetBSD: tables.c,v 1.17 2002/01/31 19:27:54 tv Exp $");
 #endif
 #endif /* not lint */
 
