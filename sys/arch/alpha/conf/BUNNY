@@ -1,4 +1,4 @@
-#	$NetBSD: BUNNY,v 1.10 1996/11/15 19:37:24 cgd Exp $
+#	$NetBSD: BUNNY,v 1.11 1996/11/19 04:43:56 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -66,7 +66,7 @@ pci*	at	apecs?
 # PCI devices
 de*	at	pci?
 ncr*	at	pci?
-pcivga*	at	pci?
+vga*	at	pci?
 sio*	at	pci?
 tga*	at	pci?
 
@@ -91,7 +91,7 @@ st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
-wscons*	at	pcivga?
+wscons*	at	vga?
 wscons*	at	tga?
 
 pseudo-device	bpfilter	16
