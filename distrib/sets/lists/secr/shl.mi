@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.5 2000/01/19 06:10:11 mycroft Exp $
+# $NetBSD: shl.mi,v 1.6 2000/05/02 12:46:07 simonb Exp $
 ./usr/lib/libacl.so.2.0
 ./usr/lib/libacl_pic.a
 ./usr/lib/libcom_err.so.2.0
@@ -36,8 +36,6 @@
 ./usr/lib/libkstream.so.1.0
 ./usr/lib/libkstream_pic.a
 ./usr/lib/libprofile_pic.a
-./usr/lib/libntp.so.0.0
-./usr/lib/libntp_pic.a
 ./usr/lib/libss.so.2.0
 ./usr/lib/libss_pic.a
 ./usr/lib/libssl.so.0.0

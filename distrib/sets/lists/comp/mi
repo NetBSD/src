@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.215 2000/05/02 04:52:16 sjg Exp $
+#	$NetBSD: mi,v 1.216 2000/05/02 12:46:05 simonb Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1075,8 +1075,6 @@
 ./usr/lib/libm_p.a	comp-c-proflib
 ./usr/lib/libmenu.a	comp-c-lib
 ./usr/lib/libmenu_p.a	comp-c-proflib
-./usr/lib/libntp.a	comp-c-lib
-./usr/lib/libntp_p.a	comp-c-proflib
 ./usr/lib/libobjc.a	comp-objc-lib
 ./usr/lib/libobjc_p.a	comp-objc-proflib
 ./usr/lib/libossaudio.a		comp-c-lib
@@ -1121,7 +1119,6 @@
 ./usr/libdata/lint/llib-lkvm.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-ll.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib
-./usr/libdata/lint/llib-lntp.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lpcap.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lposix.ln		comp-c-lintlib
