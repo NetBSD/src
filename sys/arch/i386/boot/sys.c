@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.10 1994/07/21 19:05:31 mycroft Exp $
+ *	$Id: sys.c,v 1.11 1994/07/21 20:25:17 mycroft Exp $
  */
 
 #include "boot.h"
@@ -203,6 +203,15 @@ openrd()
 	cnt = SBSIZE;
 	bnum = SBLOCK + boff;
 	devread();
+
+	/*
+	 * Deal with old file system format.  This is borrowed from
+	 * ffs_oldfscompat() in ufs/ffs/ffs_vfsops.c.
+	 */
+	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
+		fs->fs_qbmask = ~fs->fs_bmask;			/* XXX */
+		fs->fs_qfmask = ~fs->fs_fmask;			/* XXX */
+	}							/* XXX */
 
 	/***********************************************\
 	* Find the actual FILE on the mounted device	*
