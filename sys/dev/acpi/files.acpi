@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.21 2004/01/25 11:46:49 jdolecek Exp $
+#	$NetBSD: files.acpi,v 1.22 2004/01/31 13:59:20 jdolecek Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -53,7 +53,7 @@ file	dev/acpi/fdc_acpi.c		fdc_acpi
 attach	lpt at acpi with lpt_acpi
 file	dev/acpi/lpt_acpi.c		lpt_acpi & !ppbus
 
-attach	atppc at acpi with atppc_acpi
+attach	atppc at acpi with atppc_acpi: isadma
 file	dev/acpi/atppc_acpi.c		atppc_acpi
 
 # Keyboard controller
