@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.16 1998/03/01 02:23:25 fvdl Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.17 1998/06/09 07:46:33 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -35,7 +35,9 @@
  *	@(#)lfs_syscalls.c	8.10 (Berkeley) 5/14/95
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "fs_lfs.h"		/* for prototypes in syscallargs.h */
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
