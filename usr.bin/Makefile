@@ -1,6 +1,6 @@
 #	@(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 #
-# $Header: /cvsroot/src/usr.bin/Makefile,v 1.7 1993/04/04 20:14:43 cgd Exp $
+# $Header: /cvsroot/src/usr.bin/Makefile,v 1.8 1993/04/08 02:22:57 cgd Exp $
 
 # BROKEN: tn3270 rcs
 
@@ -13,7 +13,7 @@ SUBDIR=	ar awk biff basename cal calendar \
 	login logname lorder m4 machine mail make man mesg mkdep mkfifo \
 	mkstr more netstat nfsstat nice nm nohup pagesize \
 	passwd paste pr printenv printf ranlib \
-	rdist renice rlogin rpcgen rpcinfo rsh ruptime rwall rwho \
+	rdist ref renice rlogin rpcgen rpcinfo rsh ruptime rwall rwho \
 	script sed shar showmount size soelim sort split strings \
 	strip su symorder tail talk tar tee telnet tftp time \
 	tip touch tput tr true tsort tty ul unexpand unifdef uniq \
