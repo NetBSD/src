@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.23 1999/05/09 15:10:31 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.24 1999/06/26 00:09:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,8 @@ struct ums_softc {
 #define UMS_Z		0x01	/* z direction available */
 	int nbuttons;
 #define MAX_BUTTONS	7	/* chosen because sc_buttons is u_char */
+
+	char revz;		/* Z-axis is reversed */
 
 #if defined(__NetBSD__)
 	u_char sc_buttons;	/* mouse button status */
@@ -244,6 +246,8 @@ USB_ATTACH(ums)
 		       USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	sc->revz = (usbd_get_quirks(uaa->device)->uq_flags & UQ_MS_REVZ) != 0;
 
 	r = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (r != USBD_NORMAL_COMPLETION)
@@ -440,6 +444,8 @@ ums_intr(reqh, addr, status)
 	dx =  hid_get_data(ibuf, &sc->sc_loc_x);
 	dy = -hid_get_data(ibuf, &sc->sc_loc_y);
 	dz =  hid_get_data(ibuf, &sc->sc_loc_z);
+	if (sc->revz)
+		dz = -dz;
 	for (i = 0; i < sc->nbuttons; i++)
 		if (hid_get_data(ibuf, &sc->sc_loc_btn[i]))
 			buttons |= (1 << UMS_BUT(i));
