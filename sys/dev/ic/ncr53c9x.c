@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.96 2002/08/26 06:23:32 petrov Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.97 2002/09/16 21:49:15 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.96 2002/08/26 06:23:32 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.97 2002/09/16 21:49:15 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2645,11 +2645,9 @@ printf("<<RESELECT CONT'd>>");
 		break;
 
 	default:
-		/* Don't panic: reset. */
 		printf("%s: invalid state: %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_state);
-		ncr53c9x_scsi_reset(sc);
-		goto out;
+		goto reset;
 	}
 
 	/*
