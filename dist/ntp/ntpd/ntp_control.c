@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.4 2001/04/08 18:33:43 itojun Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.5 2002/04/19 20:45:54 drochner Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -47,7 +47,9 @@ struct ctl_proc {
  * Request processing routines
  */
 static	void	ctl_error	P((int));
+#ifdef REFCLOCK
 static	u_short ctlclkstatus	P((struct refclockstat *));
+#endif
 static	void	ctl_flushpkt	P((int));
 static	void	ctl_putdata	P((const char *, unsigned int, int));
 static	void	ctl_putstr	P((const char *, const char *,
@@ -711,7 +713,7 @@ ctlpeerstatus(
 	    peer->last_event);
 }
 
-
+#ifdef REFCLOCK
 /*
  * ctlclkstatus - return a status word for this clock
  */
@@ -723,7 +725,7 @@ ctlclkstatus(
 	return ((u_short)(this_clock->currentstatus) << 8) |
 	    (u_short)(this_clock->lastevent);
 }
-
+#endif
 
 /*
  * ctlsysstatus - return the system status word
