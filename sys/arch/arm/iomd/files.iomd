@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.7 2004/01/17 21:49:24 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.8 2004/01/25 13:51:29 bjh21 Exp $
 #
 # IOMD-specific configuration data
 #
@@ -58,11 +58,7 @@ attach	vidcvideo at vidc
 file	arch/arm/iomd/vidc20config.c		vidcvideo	needs-flag
 file	arch/arm/iomd/vidcvideo.c		vidcvideo	needs-flag
 
-# Audio devices
-device	beep
-attach	beep at vidc
-file	arch/arm/iomd/beep.c			beep		needs-flag
-
+# Audio device
 device	vidcaudio: audiobus, mulaw, aurateconv, audiobell
 attach	vidcaudio at vidc
 file	arch/arm/iomd/vidcaudio.c		vidcaudio	needs-flag
