@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.14 2003/08/21 00:00:52 elric Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.15 2003/10/18 06:39:12 itohy Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -141,7 +141,7 @@ cd9660_open(path, f)
 	struct file *fp = 0;
 	void *buf;
 	struct iso_primary_descriptor *vd;
-	size_t buf_size, read, psize, dsize;
+	size_t buf_size, nread, psize, dsize;
 	daddr_t bno;
 	int parent, ent;
 	struct ptable_ent *pp;
@@ -156,10 +156,10 @@ cd9660_open(path, f)
 		twiddle();
 #endif
 		rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ, cdb2devb(bno),
-					   ISO_DEFAULT_BLOCK_SIZE, buf, &read);
+					   ISO_DEFAULT_BLOCK_SIZE, buf, &nread);
 		if (rc)
 			goto out;
-		if (read != ISO_DEFAULT_BLOCK_SIZE) {
+		if (nread != ISO_DEFAULT_BLOCK_SIZE) {
 			rc = EIO;
 			goto out;
 		}
@@ -187,10 +187,10 @@ cd9660_open(path, f)
 	twiddle();
 #endif
 	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ, cdb2devb(bno),
-				   buf_size, buf, &read);
+				   buf_size, buf, &nread);
 	if (rc)
 		goto out;
-	if (read != buf_size) {
+	if (nread != buf_size) {
 		rc = EIO;
 		goto out;
 	}
@@ -240,10 +240,10 @@ cd9660_open(path, f)
 			rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 						   cdb2devb(bno),
 						   ISO_DEFAULT_BLOCK_SIZE,
-						   buf, &read);
+						   buf, &nread);
 			if (rc)
 				goto out;
-			if (read != ISO_DEFAULT_BLOCK_SIZE) {
+			if (nread != ISO_DEFAULT_BLOCK_SIZE) {
 				rc = EIO;
 				goto out;
 			}
@@ -315,7 +315,7 @@ cd9660_read(f, start, size, resid)
 	daddr_t bno;
 	char buf[ISO_DEFAULT_BLOCK_SIZE];
 	char *dp;
-	size_t read, off;
+	size_t nread, off;
 	
 	while (size) {
 		if (fp->off < 0 || fp->off >= fp->size)
@@ -330,20 +330,20 @@ cd9660_read(f, start, size, resid)
 		twiddle();	
 #endif
 		rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ, cdb2devb(bno),
-					   ISO_DEFAULT_BLOCK_SIZE, dp, &read);
+					   ISO_DEFAULT_BLOCK_SIZE, dp, &nread);
 		if (rc)
 			return rc;
-		if (read != ISO_DEFAULT_BLOCK_SIZE)
+		if (nread != ISO_DEFAULT_BLOCK_SIZE)
 			return EIO;
 		if (dp == buf) {
 			off = fp->off & (ISO_DEFAULT_BLOCK_SIZE - 1);
-			if (read > off + size)
-				read = off + size;
-			read -= off;
-			bcopy(buf + off, start, read);
-			start = (caddr_t)start + read;
-			fp->off += read;
-			size -= read;
+			if (nread > off + size)
+				nread = off + size;
+			nread -= off;
+			bcopy(buf + off, start, nread);
+			start = (caddr_t)start + nread;
+			fp->off += nread;
+			size -= nread;
 		} else {
 			start = (caddr_t)start + ISO_DEFAULT_BLOCK_SIZE;
 			fp->off += ISO_DEFAULT_BLOCK_SIZE;
