@@ -1,4 +1,4 @@
-#	$NetBSD: files.eisa,v 1.19 1999/09/29 20:38:51 ad Exp $
+#	$NetBSD: files.eisa,v 1.20 2000/03/15 02:04:43 fvdl Exp $
 #
 # Config file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -17,7 +17,7 @@ file	dev/eisa/ahb.c			ahb
 
 # Adaptec AHA-274x and aic7770 motherboard SCSI controllers
 # device declaration in sys/conf/files
-attach	ahc at eisa with ahc_eisa
+attach	ahc at eisa with ahc_eisa: ahc_aic77xx
 file	dev/eisa/ahc_eisa.c		ahc_eisa
 
 # BusLogic BT-7xx EISA family
