@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1998/09/01 15:05:21 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1998/10/19 22:09:19 tron Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,7 @@
 #include "opt_uvm.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

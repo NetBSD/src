@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 1998/09/30 20:20:03 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 1998/10/19 22:09:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -52,6 +52,7 @@
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_compat_netbsd.h"
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
