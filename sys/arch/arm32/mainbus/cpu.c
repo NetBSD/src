@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 1998/08/29 04:01:58 mark Exp $	*/
+/*	$NetBSD: cpu.c,v 1.20 1998/09/06 04:24:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -121,7 +121,7 @@ cpuattach(parent, self, aux)
 	int loop;
 
 	for (loop = 0; loop < MAX_CPUS; ++loop)
-		bzero(&cpus[loop], sizeof(cpu_t));
+		memset(&cpus[loop], 0, sizeof(cpu_t));
 
 	identify_master_cpu(CPU_MASTER, self->dv_xname);
 }
