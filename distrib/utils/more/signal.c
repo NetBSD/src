@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.2 1998/01/09 08:03:37 perry Exp $	*/
+/*	$NetBSD: signal.c,v 1.3 1998/02/04 11:09:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)signal.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: signal.c,v 1.3 1998/02/04 11:09:12 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -48,8 +53,11 @@ static char sccsid[] = "@(#)signal.c	8.1 (Berkeley) 6/6/93";
  * the signal is received, we call intread to interrupt the iread.
  */
 
-#include <less.h>
 #include <signal.h>
+#include <unistd.h>
+
+#include "less.h"
+#include "extern.h"
 
 /*
  * "sigs" contains bits indicating signals which need to be processed.
@@ -63,19 +71,17 @@ int sigs;
 #define S_WINCH		04
 #endif
 
-extern int sc_width, sc_height;
-extern int screen_trashed;
-extern int lnloop;
-extern int linenums;
-extern int scroll;
-extern int reading;
+
+static void purgeandquit __P((int));
 
 #ifdef SIGTSTP
+static void stop __P((int));
 /*
  * "Stop" (^Z) signal handler.
  */
 static void
-stop()
+stop(n)
+	int n;
 {
 	(void)signal(SIGTSTP, stop);
 	sigs |= S_STOP;
@@ -89,7 +95,8 @@ stop()
  * "Window" change handler
  */
 void
-winch()
+winch(n)
+	int n;
 {
 	(void)signal(SIGWINCH, winch);
 	sigs |= S_WINCH;
@@ -112,7 +119,8 @@ winch()
 #endif
 
 static void
-purgeandquit()
+purgeandquit(n)
+	int n;
 {
 
 	purge();	/* purge buffered output */
@@ -122,6 +130,7 @@ purgeandquit()
 /*
  * Set up the signal handlers.
  */
+void
 init_signals(on)
 	int on;
 {
@@ -163,9 +172,10 @@ init_signals(on)
  * Process any signals we have received.
  * A received signal cause a bit to be set in "sigs".
  */
+void
 psignals()
 {
-	register int tsignals;
+	int tsignals;
 
 	if ((tsignals = sigs) == 0)
 		return;

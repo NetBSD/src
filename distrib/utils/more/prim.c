@@ -1,4 +1,4 @@
-/*	$NetBSD: prim.c,v 1.3 1998/01/09 08:03:35 perry Exp $	*/
+/*	$NetBSD: prim.c,v 1.4 1998/02/04 11:09:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)prim.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: prim.c,v 1.4 1998/02/04 11:09:07 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -45,7 +50,9 @@ static char sccsid[] = "@(#)prim.c	8.1 (Berkeley) 6/6/93";
 #include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <less.h>
+
+#include "less.h"
+#include "extern.h"
 
 int back_scroll = -1;
 int hit_eof;		/* keeps track of how many times we hit end of file */
@@ -53,23 +60,16 @@ int screen_trashed;
 
 static int squished;
 
-extern int sigs;
-extern int top_scroll;
-extern int sc_width, sc_height;
-extern int caseless;
-extern int linenums;
-extern char *line;
-extern int retain_below;
 
-off_t position(), forw_line(), back_line(), forw_raw_line(), back_raw_line();
-off_t ch_length(), ch_tell();
-
-static match(char *, char *);
+static int match(char *, char *);
+static int badmark __P((int));
 
 /*
  * Check to see if the end of file is currently "displayed".
  */
+void
 eof_check()
+/*###72 [cc] conflicting types for `eof_check'%%%*/
 {
 	off_t pos;
 
@@ -91,7 +91,9 @@ eof_check()
  * of the screen; this can happen when we display a short file
  * for the first time.
  */
+void
 squish_check()
+/*###95 [cc] conflicting types for `squish_check'%%%*/
 {
 	if (squished) {
 		squished = 0;
@@ -104,12 +106,13 @@ squish_check()
  * input file.  "only_last" means display only the last screenful if
  * n > screen size.
  */
+void
 forw(n, pos, only_last)
-	register int n;
+/*###109 [cc] conflicting types for `forw'%%%*/
+	int n;
 	off_t pos;
 	int only_last;
 {
-	extern int short_file;
 	static int first_time = 1;
 	int eof = 0, do_repaint;
 
@@ -202,8 +205,10 @@ forw(n, pos, only_last)
 /*
  * Display n lines, scrolling backward.
  */
+void
 back(n, pos, only_last)
-	register int n;
+/*###207 [cc] conflicting types for `back'%%%*/
+	int n;
 	off_t pos;
 	int only_last;
 {
@@ -248,7 +253,9 @@ back(n, pos, only_last)
  * Display n more lines, forward.
  * Start just after the line currently displayed at the bottom of the screen.
  */
+void
 forward(n, only_last)
+/*###254 [cc] conflicting types for `forward'%%%*/
 	int n;
 	int only_last;
 {
@@ -276,7 +283,9 @@ forward(n, only_last)
  * Display n more lines, backward.
  * Start just before the line currently displayed at the top of the screen.
  */
+void
 backward(n, only_last)
+/*###283 [cc] conflicting types for `backward'%%%*/
 	int n;
 	int only_last;
 {
@@ -295,7 +304,9 @@ backward(n, only_last)
 /*
  * Repaint the screen, starting from a specified position.
  */
+void
 prepaint(pos)
+/*###303 [cc] conflicting types for `prepaint'%%%*/
 	off_t pos;
 {
 	hit_eof = 0;
@@ -306,7 +317,9 @@ prepaint(pos)
 /*
  * Repaint the screen.
  */
+void
 repaint()
+/*###315 [cc] conflicting types for `repaint'%%%*/
 {
 	/*
 	 * Start at the line currently at the top of the screen
@@ -320,7 +333,9 @@ repaint()
  * It is more convenient to paint the screen backward,
  * from the end of the file toward the beginning.
  */
+void
 jump_forw()
+/*###330 [cc] conflicting types for `jump_forw'%%%*/
 {
 	off_t pos;
 
@@ -340,10 +355,12 @@ jump_forw()
 /*
  * Jump to line n in the file.
  */
+void
 jump_back(n)
-	register int n;
+/*###351 [cc] conflicting types for `jump_back'%%%*/
+	int n;
 {
-	register int c, nlines;
+	int c, nlines;
 
 	/*
 	 * This is done the slow way, by starting at the beginning
@@ -385,11 +402,13 @@ jump_back(n)
  * This is a poor compensation for not being able to
  * quickly jump to a specific line number.
  */
+void
 jump_percent(percent)
+/*###397 [cc] conflicting types for `jump_percent'%%%*/
 	int percent;
 {
-	off_t pos, len, ch_length();
-	register int c;
+	off_t pos, len;
+	int c;
 
 	/*
 	 * Determine the position in the file
@@ -419,10 +438,12 @@ jump_percent(percent)
 /*
  * Jump to a specified position in the file.
  */
+void
 jump_loc(pos)
+/*###432 [cc] conflicting types for `jump_loc'%%%*/
 	off_t pos;
 {
-	register int nline;
+	int nline;
 	off_t tpos;
 
 	if ((nline = onscreen(pos)) >= 0) {
@@ -497,7 +518,9 @@ static off_t marks[NMARKS];
 /*
  * Initialize the mark table to show no marks are set.
  */
+void
 init_mark()
+/*###511 [cc] conflicting types for `init_mark'%%%*/
 {
 	int i;
 
@@ -508,7 +531,7 @@ init_mark()
 /*
  * See if a mark letter is valid (between a and z).
  */
-	static int
+static int
 badmark(c)
 	int c;
 {
@@ -523,7 +546,9 @@ badmark(c)
 /*
  * Set a mark.
  */
+void
 setmark(c)
+/*###538 [cc] conflicting types for `setmark'%%%*/
 	int c;
 {
 	if (badmark(c))
@@ -531,7 +556,9 @@ setmark(c)
 	marks[c-'a'] = position(TOP);
 }
 
+void
 lastmark()
+/*###547 [cc] conflicting types for `lastmark'%%%*/
 {
 	marks[LASTMARK] = position(TOP);
 }
@@ -539,7 +566,9 @@ lastmark()
 /*
  * Go to a previously set mark.
  */
+void
 gomark(c)
+/*###556 [cc] conflicting types for `gomark'%%%*/
 	int c;
 {
 	off_t pos;
@@ -567,6 +596,7 @@ gomark(c)
  * back_scroll, because the default case depends on sc_height and
  * top_scroll, as well as back_scroll.
  */
+int
 get_back_scroll()
 {
 	if (back_scroll >= 0)
@@ -580,15 +610,16 @@ get_back_scroll()
  * Search for the n-th occurence of a specified pattern, 
  * either forward or backward.
  */
+int
 search(search_forward, pattern, n, wantmatch)
-	register int search_forward;
-	register char *pattern;
-	register int n;
+	int search_forward;
+	char *pattern;
+	int n;
 	int wantmatch;
 {
 	off_t pos, linepos;
-	register char *p;
-	register char *q;
+	char *p;
+	char *q;
 	int linenum;
 	int linematch;
 #ifdef RECOMP
@@ -601,7 +632,6 @@ search(search_forward, pattern, n, wantmatch)
 #else
 	static char lpbuf[100];
 	static char *last_pattern = NULL;
-	char *strcpy();
 #endif
 #endif
 
@@ -815,11 +845,11 @@ search(search_forward, pattern, n, wantmatch)
  * We use this function to do simple pattern matching.
  * It supports no metacharacters like *, etc.
  */
-static
+static int
 match(pattern, buf)
 	char *pattern, *buf;
 {
-	register char *pp, *lp;
+	char *pp, *lp;
 
 	for ( ;  *buf != '\0';  buf++)
 	{
