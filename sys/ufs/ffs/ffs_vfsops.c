@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.49 1999/03/05 12:02:18 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.49.4.1 1999/06/07 04:25:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -962,6 +962,7 @@ ffs_vget(mp, ino, vpp)
 		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
 		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
 	}							/* XXX */
+	uvm_vnp_setsize(vp, ip->i_ffs_size);
 
 	*vpp = vp;
 	return (0);

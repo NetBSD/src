@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.8.2.2 1999/04/12 01:30:23 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.8 1999/04/12 01:30:22 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

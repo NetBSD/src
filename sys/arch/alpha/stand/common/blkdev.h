@@ -1,4 +1,4 @@
-/* $NetBSD: blkdev.h,v 1.1.2.2 1999/04/02 03:17:30 cgd Exp $ */
+/* $NetBSD: blkdev.h,v 1.1 1999/04/02 03:17:29 cgd Exp $ */
 
 #if 0	/* folded into devopen */
 int	blkdevopen __P((struct open_file *, ...));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.22 1999/03/24 05:51:31 mrg Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.22.4.1 1999/06/07 04:25:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -103,6 +103,29 @@ READ(v)
 	if (uio->uio_resid == 0)
 		return (0);
 
+	if (vp->v_type == VREG) {
+		error = 0;
+		while (uio->uio_resid > 0) {
+			void *win;
+			vsize_t bytelen = min(ip->i_ffs_size - uio->uio_offset,
+					      uio->uio_resid);
+
+			if (bytelen == 0)
+				break;
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_READ);
+#ifdef DIAGNOSTIC
+			if (win == NULL)
+				panic(READ_S ": ubc_alloc -> NULL");
+#endif
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error)
+				break;
+		}
+		goto out;
+	}
+
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		if ((bytesinfile = ip->i_ffs_size - uio->uio_offset) <= 0)
 			break;
@@ -122,9 +145,6 @@ READ(v)
 #else
 		if (lblktosize(fs, nextlbn) >= ip->i_ffs_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
-		else if (doclusterread)
-			error = cluster_read(vp,
-			    ip->i_ffs_size, lbn, size, NOCRED, &bp);
 		else if (lbn - 1 == vp->v_lastr) {
 			int nextsize = BLKSIZE(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
@@ -157,6 +177,8 @@ READ(v)
 	}
 	if (bp != NULL)
 		brelse(bp);
+
+out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
@@ -235,6 +257,44 @@ WRITE(v)
 	osize = ip->i_ffs_size;
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 
+	if (vp->v_type == VREG) {
+
+		/*
+		 * make sure the range of file offsets to be written
+		 * is fully allocated.  updating of ip->i_ffs_size
+		 * is handled by ffs_balloc_range().
+		 */
+
+		if ((error = ffs_balloc_range(ip, uio->uio_offset,
+					      uio->uio_resid, ap->a_cred, 0))) {
+			return error;
+		}
+
+		while (uio->uio_resid > 0) {
+			void *win;
+			vsize_t bytelen = uio->uio_resid;
+/* XXX if file is mapped and this is the last block, limit len to a page */
+
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_WRITE);
+#ifdef DIAGNOSTIC
+			if (win == NULL) {
+				panic(WRITE_S ": ubc_alloc -> NULL");
+			}
+#endif
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error) {
+				/*
+				 * XXX zero out any part of the current window
+				 * that we might have failed to copyin.
+				 */
+				break;
+			}
+		}
+		goto out;
+	}
+
 	for (error = 0; uio->uio_resid > 0;) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
@@ -250,8 +310,8 @@ WRITE(v)
 		else
 			flags &= ~B_CLRBUF;
 
-		error = ffs_balloc(ip,
-		    lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
+		error = ffs_balloc(ip, lbn, blkoffset + xfersize, ap->a_cred,
+				   &bp, NULL, flags);
 #endif
 		if (error)
 			break;
@@ -267,16 +327,23 @@ WRITE(v)
 
 		error =
 		    uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio);
+
+		/*
+		 * if we didn't clear the block and the uiomove failed,
+		 * the buf will now contain part of some other file,
+		 * so we need to invalidate it.
+		 */
+		if (error && (flags & B_CLRBUF) == 0) {
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+		} else
 #ifdef LFS_READWRITE
 		(void)VOP_BWRITE(bp);
 #else
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->fs_bsize)
-			if (doclusterwrite)
-				cluster_write(bp, ip->i_ffs_size);
-			else
-				bawrite(bp);
+			bawrite(bp);
 		else
 			bdwrite(bp);
 #endif
@@ -284,11 +351,13 @@ WRITE(v)
 			break;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+
 	/*
 	 * If we successfully wrote any data, and we are not the superuser
 	 * we clear the setuid and setgid bits as a precaution against
 	 * tampering.
 	 */
+out:
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_ffs_mode &= ~(ISUID | ISGID);
 	if (error) {

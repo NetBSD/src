@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.10 1999/01/28 14:46:27 chuck Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.10.4.1 1999/06/07 04:25:35 chs Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@ void		amap_lookups	/* lookup multiple anons */
 			     struct vm_anon **, int));
 AMAP_INLINE
 void		amap_ref	/* add a reference to an amap */
-			__P((vm_map_entry_t, int));
+			__P((struct vm_amap *, vaddr_t, vsize_t, int));
 int		amap_refs	/* get number of references of amap */
 			__P((struct vm_amap *));
 void		amap_share_protect /* protect pages in a shared amap */
@@ -123,7 +123,7 @@ void		amap_unlock	/* unlock amap */
 			__P((struct vm_amap *));
 AMAP_INLINE
 void		amap_unref	/* drop reference to an amap */
-			 __P((vm_map_entry_t, int));
+			 __P((struct vm_amap *, vaddr_t, vsize_t, int));
 void		amap_wipeout	/* remove all anons from amap */
 			__P((struct vm_amap *));
 

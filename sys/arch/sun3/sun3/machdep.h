@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.20.2.2 1999/04/09 04:01:10 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.20 1999/04/09 04:01:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.17.2.1 1999/04/16 16:29:34 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.17.2.1.2.1 1999/06/07 04:25:37 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -323,10 +323,11 @@ uvm_page_init(kvm_startp, kvm_endp)
 	*kvm_endp = trunc_page(virtual_space_end);
 
 	/*
-	 * step 6: init pagedaemon lock
+	 * step 6: init locks for kernel threads
 	 */
 
 	simple_lock_init(&uvm.pagedaemon_lock);
+	simple_lock_init(&uvm.aiodoned_lock);
 
 	/*
 	 * step 7: init reserve thresholds
@@ -837,9 +838,11 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	 * the pagedaemon.
 	 */
 
-	if (uvmexp.free < uvmexp.freemin || (uvmexp.free < uvmexp.freetarg &&
-	    uvmexp.inactive < uvmexp.inactarg))
-		thread_wakeup(&uvm.pagedaemon);
+	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
+	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
+	     uvmexp.inactive < uvmexp.inactarg)) {
+		wakeup(&uvm.pagedaemon);
+	}
 
 	/*
 	 * fail if any of these conditions is true:
@@ -976,13 +979,19 @@ uvm_pagerealloc(pg, newobj, newoff)
  * => assumes all valid mappings of pg are gone
  */
 
-void uvm_pagefree(pg)
-
-struct vm_page *pg;
-
+void
+uvm_pagefree(pg)
+	struct vm_page *pg;
 {
 	int s;
 	int saved_loan_count = pg->loan_count;
+
+#ifdef DEBUG
+	if (pg->uobject == (void *)0xdeadbeef &&
+	    pg->uanon == (void *)0xdeadbeef) {
+		panic("uvm_pagefree: freeing free page %p\n", pg);
+	}
+#endif
 
 	/*
 	 * if the page was an object page (and thus "TABLED"), remove it
@@ -992,7 +1001,7 @@ struct vm_page *pg;
 	if (pg->flags & PG_TABLED) {
 
 		/*
-		 * if the object page is on loan we are going to drop ownership.  
+		 * if the object page is on loan we are going to drop ownership.
 		 * it is possible that an anon will take over as owner for this
 		 * page later on.   the anon will want a !PG_CLEAN page so that
 		 * it knows it needs to allocate swap if it wants to page the 
@@ -1122,3 +1131,31 @@ uvm_page_own(pg, tag)
 	return;
 }
 #endif
+
+
+void show_all_pages(void);
+void
+show_all_pages()
+{
+	struct vm_page *pg;
+
+	printf("active pages:\n");
+
+	for (pg = TAILQ_FIRST(&uvm.page_active);
+	     pg != NULL;
+	     pg = TAILQ_NEXT(pg, pageq))
+	{
+		printf("0x%08lx  0x%08lx\n",
+		       (long)pg->uobject, (long)pg->offset);
+	}
+
+	printf("inactive pages:\n");
+
+	for (pg = TAILQ_FIRST(&uvm.page_inactive_obj);
+	     pg != NULL;
+	     pg = TAILQ_NEXT(pg, pageq))
+	{
+		printf("0x%08lx  0x%08lx\n",
+		       (long)pg->uobject, (long)pg->offset);
+	}
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.16 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.16.4.1 1999/06/07 04:25:37 chs Exp $	*/
 
 /*
  *
@@ -34,7 +34,6 @@
  * from: Id: uvm_pager.c,v 1.1.2.23 1998/02/02 20:38:06 chuck Exp
  */
 
-#include "opt_uvmhist.h"
 #include "opt_pmap_new.h"
 
 /*
@@ -45,6 +44,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -53,6 +53,8 @@
 #define UVM_PAGER
 #include <uvm/uvm.h>
 
+struct pool *uvm_aiobuf_pool;
+
 /*
  * list of uvm pagers in the system
  */
@@ -60,11 +62,13 @@
 extern struct uvm_pagerops aobj_pager;
 extern struct uvm_pagerops uvm_deviceops;
 extern struct uvm_pagerops uvm_vnodeops;
+extern struct uvm_pagerops ubc_pager;
 
 struct uvm_pagerops *uvmpagerops[] = {
 	&aobj_pager,
 	&uvm_deviceops,
 	&uvm_vnodeops,
+	&ubc_pager,
 };
 
 /*
@@ -90,16 +94,19 @@ uvm_pager_init()
 	 * init pager map
 	 */
 
-	 pager_map = uvm_km_suballoc(kernel_map, &uvm.pager_sva, &uvm.pager_eva,
-	 			PAGER_MAP_SIZE, FALSE, FALSE, NULL);
-	 simple_lock_init(&pager_map_wanted_lock);
-	 pager_map_wanted = FALSE;
+	pager_map = uvm_km_suballoc(kernel_map, &uvm.pager_sva, &uvm.pager_eva,
+				    PAGER_MAP_SIZE, FALSE, FALSE, NULL);
+	simple_lock_init(&pager_map_wanted_lock);
+	pager_map_wanted = FALSE;
 
 	/*
 	 * init ASYNC I/O queue
 	 */
 	
 	TAILQ_INIT(&uvm.aio_done);
+	uvm_aiobuf_pool = pool_create(sizeof(struct uvm_aiobuf),
+				      0, 0, 0, "aiobuf", 0, NULL, NULL, 0);
+
 
 	/*
 	 * call pager init functions
@@ -262,7 +269,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 {
 	struct vm_page **ppsp, *pclust;
 	vaddr_t lo, hi, curoff;
-	int center_idx, forward;
+	int center_idx, forward, incr;
 	UVMHIST_FUNC("uvm_mk_pcluster"); UVMHIST_CALLED(maphist);
 
 	/* 
@@ -284,7 +291,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 		if (hi > mhi)
 			hi = mhi;
 	}
-	if ((hi - lo) >> PAGE_SHIFT > *npages) {  /* pps too small, bail out! */
+	if ((hi - lo) >> PAGE_SHIFT > *npages) { /* pps too small, bail out! */
 #ifdef DIAGNOSTIC
 	    printf("uvm_mk_pcluster: provided page array too small (fixed)\n");
 #endif
@@ -302,7 +309,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	pps[center_idx] = center;	/* plug in the center page */
 	ppsp = &pps[center_idx];
 	*npages = 1;
-	
+
 	/*
 	 * attempt to cluster around the left [backward], and then 
 	 * the right side [forward].    
@@ -314,21 +321,23 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	 */
 
 	for (forward  = 0 ; forward <= 1 ; forward++) {
-
-		curoff = center->offset + (forward ? PAGE_SIZE : -PAGE_SIZE);
+		incr = forward ? PAGE_SIZE : -PAGE_SIZE;
+		curoff = center->offset + incr;
 		for ( ;(forward == 0 && curoff >= lo) ||
 		       (forward && curoff < hi);
-		      curoff += (forward ? 1 : -1) << PAGE_SHIFT) {
+		      curoff += incr) {
 
 			pclust = uvm_pagelookup(uobj, curoff); /* lookup page */
-			if (pclust == NULL)
+			if (pclust == NULL) {
 				break;			/* no page */
+			}
 			/* handle active pages */
 			/* NOTE: inactive pages don't have pmap mappings */
 			if ((pclust->pqflags & PQ_INACTIVE) == 0) {
-				if ((flags & PGO_DOACTCLUST) == 0)
+				if ((flags & PGO_DOACTCLUST) == 0) {
 					/* dont want mapped pages at all */
 					break;
+				}
 
 				/* make sure "clean" bit is sync'd */
 				if ((pclust->flags & PG_CLEANCHK) == 0) {
@@ -340,13 +349,19 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 					pclust->flags |= PG_CLEANCHK;
 				}
 			}
+
 			/* is page available for cleaning and does it need it */
-			if ((pclust->flags & (PG_CLEAN|PG_BUSY)) != 0)
+			if ((pclust->flags & (PG_CLEAN|PG_BUSY)) != 0) {
 				break;	/* page is already clean or is busy */
+			}
+
+			/* XXX for now, disable putpage clustering */
+			break;
 
 			/* yes!   enroll the page in our array */
 			pclust->flags |= PG_BUSY;		/* busy! */
 			UVM_PAGE_OWN(pclust, "uvm_mk_pcluster");
+
 			/* XXX: protect wired page?   see above comment. */
 			pmap_page_protect(PMAP_PGARG(pclust), VM_PROT_READ);
 			if (!forward) {
@@ -356,7 +371,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 				/* move forward one page */
 				ppsp[*npages] = pclust;
 			}
-			*npages = *npages + 1;
+			(*npages)++;
 		}
 	}
 	
@@ -449,7 +464,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	struct vm_page *pg, ***ppsp_ptr;/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;			/* IN */
-	vaddr_t start, stop;	/* IN, IN */
+	vaddr_t start, stop;		/* IN, IN */
 {
 	int result;
 	daddr_t swblk;
@@ -475,7 +490,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 		} else {
 			ppsp[0] = pg;
 			*npages = 1;
-		 }
+		}
 					  
 		swblk = 0;		/* XXX: keep gcc happy */
 
@@ -504,12 +519,13 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 ReTry:
 	if (uobj) {
 		/* object is locked */
-		result = uobj->pgops->pgo_put(uobj, ppsp, *npages,
-		    flags & PGO_SYNCIO);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
+		result = uobj->pgops->pgo_put(uobj, ppsp, *npages, flags);
 		/* object is now unlocked */
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 	} else {
 		/* nothing locked */
-		result = uvm_swap_put(swblk, ppsp, *npages, flags & PGO_SYNCIO);
+		result = uvm_swap_put(swblk, ppsp, *npages, flags);
 		/* nothing locked */
 	}
 
@@ -589,14 +605,14 @@ ReTry:
  */
 
 
-void uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
-
-struct uvm_object *uobj;	/* IN */
-struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
-int *npages;			/* IN/OUT */
-int flags;
-int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
-
+void
+uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
+	struct uvm_object *uobj;	/* IN */
+	struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
+	int *npages;			/* IN/OUT */
+	int flags;
+	int swblk;			/* valid if (uobj == NULL &&
+					   PGO_REALLOCSWAP) */
 {
 	int lcv;
 	boolean_t obj_is_alive; 
@@ -624,7 +640,8 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 
 	for (lcv = 0 ; lcv < *npages ; lcv++) {
 
-		if (ppsp[lcv] == pg)		/* skip "pg" */
+		/* skip "pg" or empty slot */
+		if (ppsp[lcv] == pg || ppsp[lcv] == NULL)
 			continue;
 	
 		/*
@@ -651,9 +668,10 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 		}
 
 		/* did someone want the page while we had it busy-locked? */
-		if (ppsp[lcv]->flags & PG_WANTED)
+		if (ppsp[lcv]->flags & PG_WANTED) {
 			/* still holding obj lock */
-			thread_wakeup(ppsp[lcv]);
+			wakeup(ppsp[lcv]);
+		}
 
 		/* if page was released, release it.  otherwise un-busy it */
 		if (ppsp[lcv]->flags & PG_RELEASED) {
@@ -705,7 +723,7 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 			continue;		/* next page */
 
 		} else {
-			ppsp[lcv]->flags &= ~(PG_BUSY|PG_WANTED);
+			ppsp[lcv]->flags &= ~(PG_BUSY|PG_WANTED|PG_FAKE);
 			UVM_PAGE_OWN(ppsp[lcv], NULL);
 		}
 
@@ -758,4 +776,51 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 			}
 		}
 	}
+}
+
+void
+uvm_aio_biodone(bp)
+	struct buf *bp;
+{
+	struct uvm_aiobuf *abp = (void *)bp;
+	int s;
+
+	s = splbio();
+	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
+	TAILQ_INSERT_TAIL(&uvm.aio_done, &abp->aio, aioq);
+	wakeup(&uvm.aiodoned);
+	simple_unlock(&uvm.aiodoned_lock);
+	splx(s);
+}
+
+void
+uvm_aio_aiodone(aio)
+	struct uvm_aiodesc *aio;
+{
+	struct uvm_aiobuf *abp = aio->pd_ptr;
+	struct vm_page *pgs[aio->npages];
+	int s, i;
+	boolean_t release;
+
+	release = (abp->buf.b_flags & (B_ERROR|B_READ)) == (B_ERROR|B_READ);
+	for (i = 0; i < aio->npages; i++) {
+		pgs[i] = uvm_pageratop(aio->kva + (i << PAGE_SHIFT));
+
+		/*
+		 * if this is an async read and we got an error,
+		 * mark the pages PG_RELEASED so that uvm_pager_dropcluster()
+		 * will free them.
+		 */
+
+		if (release) {
+			pgs[i]->flags |= PG_RELEASED;
+		}
+	}
+	uvm_pagermapout(aio->kva, aio->npages);
+	uvm_pager_dropcluster((struct uvm_object *)abp->buf.b_vp, NULL, pgs,
+			      &aio->npages, PGO_PDFREECLUST, 0);
+
+	s = splbio();
+	pool_put(uvm_aiobuf_pool, abp);
+	splx(s);
 }
