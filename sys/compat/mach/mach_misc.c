@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.5 2002/10/30 15:04:17 christos Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.6 2002/11/01 20:04:40 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.5 2002/10/30 15:04:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.6 2002/11/01 20:04:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,9 @@ int
 mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
 	struct mach_sys_msg_overwrite_trap_args *ap = v;
 	int error;
+#ifdef DEBUG_MACH
 	char buf[128];
+#endif
 	*r = 0;
 
 	DPRINTF(("mach_sys_msg_overwrite_trap(%p, %s,"
