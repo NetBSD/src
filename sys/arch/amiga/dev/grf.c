@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.41.4.2 2002/05/16 16:54:30 gehenna Exp $ */
+/*	$NetBSD: grf.c,v 1.41.4.3 2002/05/16 16:56:47 gehenna Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41.4.2 2002/05/16 16:54:30 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41.4.3 2002/05/16 16:56:47 gehenna Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41.4.2 2002/05/16 16:54:30 gehenna Exp $")
 #include <amiga/dev/viewioctl.h>
 
 #include <sys/conf.h>
-#include <machine/conf.h>
 
 #include "view.h"
 #include "grf.h"
@@ -99,6 +98,17 @@ struct grf_softc *grfsp[NGRF];
 
 struct cfattach grf_ca = {
 	sizeof(struct device), grfmatch, grfattach
+};
+
+dev_type_open(grfopen);
+dev_type_close(grfclose);
+dev_type_ioctl(grfioctl);
+dev_type_poll(grfpoll);
+dev_type_mmap(grfmmap);
+
+const struct cdevsw grf_cdevsw = {
+	grfopen, grfclose, nullread, nullwrite, grfioctl,
+	nostop, notty, grfpoll, grfmmap,
 };
 
 /*
@@ -137,9 +147,7 @@ grfattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * find our major device number
 	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == grfopen)
-			break;
+	maj = cdevsw_lookup_major(&grf_cdevsw);
 
 	gp->g_grfdev = makedev(maj, gp->g_unit);
 	if (dp != NULL) {
