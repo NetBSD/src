@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.10 2003/08/07 16:44:54 agc Exp $	*/
+/*	$NetBSD: auth.h,v 1.11 2005/02/06 05:53:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,12 +63,12 @@
 typedef struct XauthP {
 	int	type;
 	int	way;
-	int	(*init) __P((struct XauthP *, int));
-	int	(*send) __P((struct XauthP *));
-	void	(*is) __P((struct XauthP *, unsigned char *, int));
-	void	(*reply) __P((struct XauthP *, unsigned char *, int));
-	int	(*status) __P((struct XauthP *, char *, size_t, int));
-	void	(*printsub) __P((unsigned char *, int, unsigned char *, int));
+	int	(*init)(struct XauthP *, int);
+	int	(*send)(struct XauthP *);
+	void	(*is)(struct XauthP *, unsigned char *, int);
+	void	(*reply)(struct XauthP *, unsigned char *, int);
+	int	(*status)(struct XauthP *, char *, size_t, int);
+	void	(*printsub)(unsigned char *, int, unsigned char *, int);
 } Authenticator;
 
 #include "auth-proto.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: enc_des.c,v 1.11 2003/08/07 16:44:54 agc Exp $	*/
+/*	$NetBSD: enc_des.c,v 1.12 2005/02/06 05:53:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)enc_des.c	8.3 (Berkeley) 5/30/95"; */
 #else
-__RCSID("$NetBSD: enc_des.c,v 1.11 2003/08/07 16:44:54 agc Exp $");
+__RCSID("$NetBSD: enc_des.c,v 1.12 2005/02/06 05:53:07 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: enc_des.c,v 1.11 2003/08/07 16:44:54 agc Exp $");
 #include "misc-proto.h"
 
 #include <sys/cdefs.h>
-#define P __P
 
 #define	CFB	0
 #define	OFB	1
@@ -114,14 +113,14 @@ struct keyidlist {
 #define	FB64_IV_BAD	3
 
 
-void fb64_stream_iv P((Block, struct stinfo *));
-void fb64_init P((struct fb *));
-static int fb64_start P((struct fb *, int, int));
-int fb64_is P((unsigned char *, int, struct fb *));
-int fb64_reply P((unsigned char *, int, struct fb *));
-static void fb64_session P((Session_Key *, int, struct fb *));
-void fb64_stream_key P((Block *, struct stinfo *));
-int fb64_keyid P((int, unsigned char *, int *, struct fb *));
+void fb64_stream_iv(Block, struct stinfo *);
+void fb64_init(struct fb *);
+static int fb64_start(struct fb *, int, int);
+int fb64_is(unsigned char *, int, struct fb *);
+int fb64_reply(unsigned char *, int, struct fb *);
+static void fb64_session(Session_Key *, int, struct fb *);
+void fb64_stream_key(Block *, struct stinfo *);
+int fb64_keyid(int, unsigned char *, int *, struct fb *);
 
 	void
 cfb64_init(server)

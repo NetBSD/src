@@ -1,4 +1,4 @@
-/*	$NetBSD: misc-proto.h,v 1.9 2003/08/07 16:44:55 agc Exp $	*/
+/*	$NetBSD: misc-proto.h,v 1.10 2005/02/06 05:53:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,17 +56,17 @@
 
 #include <sys/cdefs.h>
 
-void auth_encrypt_init __P((const char *, const char *, const char *, int));
-void auth_encrypt_user __P((const char *));
-void auth_encrypt_connect __P((int));
-void printd __P((const unsigned char *, int));
+void auth_encrypt_init(const char *, const char *, const char *, int);
+void auth_encrypt_user(const char *);
+void auth_encrypt_connect(int);
+void printd(const unsigned char *, int);
 
 /*
  * These functions are imported from the application
  */
-int telnet_net_write __P((unsigned char *, int));
-void net_encrypt __P((void));
-int telnet_spin __P((void));
-char *telnet_getenv __P((char *));
-char *telnet_gets __P((char *, char *, int, int));
+int telnet_net_write(unsigned char *, int);
+void net_encrypt(void);
+int telnet_spin(void);
+char *telnet_getenv(char *);
+char *telnet_gets(char *, char *, int, int);
 #endif

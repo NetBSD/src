@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.16 2003/08/07 16:44:54 agc Exp $	*/
+/*	$NetBSD: auth.c,v 1.17 2005/02/06 05:53:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.16 2003/08/07 16:44:54 agc Exp $");
+__RCSID("$NetBSD: auth.c,v 1.17 2005/02/06 05:53:07 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ static	unsigned char	_auth_send_data[256];
 static	unsigned char	*auth_send_data;
 static	int	auth_send_cnt = 0;
 
-static void auth_intr P((int));
+static void auth_intr(int);
 
 /*
  * Authentication types supported.  Plese note that these are stored
