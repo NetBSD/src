@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.48 2001/01/23 01:56:17 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.49 2001/01/28 22:14:52 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -192,9 +192,8 @@ uvm_pageremove(pg)
 	simple_unlock(&uvm.hashlock);
 	splx(s);
 
-	if (pg->uobject->pgops == &uvm_vnodeops) {
+	if (UVM_OBJ_IS_VNODE(pg->uobject))
 		uvmexp.vnodepages--;
-	}
 
 	/* object should be locked */
 	TAILQ_REMOVE(&pg->uobject->memq, pg, listq);
