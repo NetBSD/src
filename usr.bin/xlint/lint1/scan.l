@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.15 2000/06/14 06:49:23 cgd Exp $ */
+/* $NetBSD: scan.l,v 1.16 2001/05/07 09:02:55 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.15 2000/06/14 06:49:23 cgd Exp $");
+__RCSID("$NetBSD: scan.l,v 1.16 2001/05/07 09:02:55 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -814,7 +814,7 @@ wccon()
  * string.
  *
  * Returns -1 if the end of the character constant or string is reached,
- * -2 if the EOF is reached, and the charachter otherwise.
+ * -2 if the EOF is reached, and the character otherwise.
  */
 static int
 getescc(d)
@@ -833,9 +833,12 @@ getescc(d)
 		return (-1);
 	switch (c) {
 	case '\n':
-		/* newline in string or char constant */
-		error(254);
-		return (-2);
+		if (tflag) {
+			/* newline in string or char constant */
+			error(254);
+			return (-2);
+		}
+		return (c);
 	case EOF:
 		return (-2);
 	case '\\':
