@@ -1,4 +1,4 @@
-/*	$NetBSD: echo.c,v 1.7 1997/07/20 06:07:03 thorpej Exp $	*/
+/*	$NetBSD: echo.c,v 1.8 1997/11/05 21:19:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)echo.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: echo.c,v 1.7 1997/07/20 06:07:03 thorpej Exp $");
+__RCSID("$NetBSD: echo.c,v 1.8 1997/11/05 21:19:56 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: echo.c,v 1.7 1997/07/20 06:07:03 thorpej Exp $");
 
 int	main __P((int, char *[]));
 
+/* ARGSUSED */
 int
 main(argc, argv)
 	int argc;
@@ -72,9 +73,10 @@ main(argc, argv)
 	while (*argv) {
 		(void)printf("%s", *argv);
 		if (*++argv)
-			putchar(' ');
+			(void)putchar(' ');
 	}
 	if (!nflag)
-		putchar('\n');
+		(void)putchar('\n');
 	exit(0);
+	/* NOTREACHED */
 }
