@@ -1,16 +1,17 @@
-#	$NetBSD: bsd.man.mk,v 1.27 1997/04/15 16:57:46 perry Exp $
+#	$NetBSD: bsd.man.mk,v 1.28 1997/05/06 20:54:37 mycroft Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
-
-MANTARGET?=	cat
-NROFF?=		nroff
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
-.MAIN: all
+.MAIN:		all
 .endif
+.PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman
+
+MANTARGET?=	cat
+NROFF?=		nroff
 
 .SUFFIXES: .1 .2 .3 .4 .5 .6 .7 .8 .9 \
 	   .cat1 .cat2 .cat3 .cat4 .cat5 .cat6 .cat7 .cat8 .cat9

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.33 1997/04/17 06:34:15 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.34 1997/05/06 20:54:39 mycroft Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -79,3 +79,6 @@ NOLINT=
 .if (${MACHINE_ARCH} == "powerpc")
 NOPROFILE=
 .endif
+
+TARGETS+=	all clean cleandir depend includes install lint obj realinstall tags
+.PHONY:		all clean cleandir depend includes install lint obj realinstall tags
