@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.48 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.49 2000/03/13 22:47:19 soren Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.48 1999/07/09 03:05:50 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.49 2000/03/13 22:47:19 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -912,7 +912,7 @@ numvar:
 
 
 /*
- * Record the the fact that we have to scan this region of the
+ * Record the fact that we have to scan this region of the
  * string for IFS characters.
  */
 
