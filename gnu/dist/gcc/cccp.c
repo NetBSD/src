@@ -1203,7 +1203,9 @@ print_help ()
   printf ("  -v                        Display the version number\n");
   printf ("  -H                        Print the name of header files as they are used\n");
   printf ("  -C                        Do not discard comments\n");
+#ifdef LINTCOMMENT
   printf ("  -CC                       Preserve comments in macro bodies\n");
+#endif
   printf ("  -dM                       Display a list of macro definitions active at end\n");
   printf ("  -dD                       Preserve macro definitions in output\n");
   printf ("  -dN                       As -dD except that only the names are preserved\n");
@@ -1663,12 +1665,16 @@ main (argc, argv)
 	break;
 
       case 'C':
+#ifdef LINTCOMMENT
 	if (!strcmp(argv[i] + 1, "CC")) {
 	  put_out_comments = 2;
 	}
 	else {
 	  put_out_comments = 1;
 	}
+#else
+	put_out_comments = 1;
+#endif
 	break;
 
       case 'E':			/* -E comes from cc -E; ignore it.  */
@@ -2878,7 +2884,12 @@ do { ip = &instack[indepth];		\
 	    RECACHE;
 	    continue;
 	  }
-	  if (!(traditional || put_out_comments == 2)) {
+#ifdef LINTCOMMENT
+	  if (!(traditional || put_out_comments == 2))
+#else
+	  if (!traditional)
+#endif
+	  {
 	    error_with_line (line_for_error (start_line),
 			     "unterminated string or character constant");
 	    if (multiline_string_line) {
@@ -2896,7 +2907,12 @@ do { ip = &instack[indepth];		\
 	  ++op->lineno;
 	  /* Traditionally, end of line ends a string constant with no error.
 	     So exit the loop and record the new line.  */
-	  if (traditional || put_out_comments == 2) {
+#ifdef LINTCOMMENT
+	  if (traditional || put_out_comments == 2)
+#else
+	  if (traditional)
+#endif
+	  {
 	    beg_of_line = ibp;
 	    goto while2end;
 	  }
@@ -2949,7 +2965,11 @@ do { ip = &instack[indepth];		\
       break;
 
     case '/':
+#ifdef LINTCOMMENT
       if (ip->macro != 0 && put_out_comments != 2)
+#else
+      if (ip->macro != 0)
+#endif
 	goto randomchar;
       if (*ibp == '\\' && ibp[1] == '\n')
 	newline_fix (ibp);
@@ -3787,8 +3807,12 @@ handle_directive (ip, op)
       limit = ip->buf + ip->length;
       unterminated = 0;
       already_output = 0;
+#ifdef LINTCOMMENT
       keep_comments = kt->type == T_DEFINE && (traditional ||
 	put_out_comments == 2);
+#else
+      keep_comments = traditional && kt->type == T_DEFINE;
+#endif
       /* #import is defined only in Objective C, or when on the NeXT.  */
       if (kt->type == T_IMPORT
 	  && !(objc || lookup ((U_CHAR *) "__NeXT__", -1, -1)))
@@ -4013,7 +4037,11 @@ handle_directive (ip, op)
 		while (xp != ip->bufp)
 		  *cp++ = *xp++;
 	      /* Delete or replace the slash.  */
+#ifdef LINTCOMMENT
 	      else if (traditional || put_out_comments == 2)
+#else
+	      else if (traditional)
+#endif
 		cp--;
 	      else
 		cp[-1] = ' ';
@@ -6145,6 +6173,7 @@ collect_expansion (buf, end, nargs, arglist)
 	    stringify = p;
 	}
 	break;
+#ifdef LINTCOMMENT
       case '/':
 	if (expected_delimiter != '\0') /* No comments inside strings.  */
 	  break;
@@ -6161,6 +6190,7 @@ collect_expansion (buf, end, nargs, arglist)
 	  }
 	}
         break;
+#endif
       }
     } else {
       /* In -traditional mode, recognize arguments inside strings and
@@ -6193,7 +6223,9 @@ collect_expansion (buf, end, nargs, arglist)
 	  /* If we find a comment that wasn't removed by handle_directive,
 	     this must be -traditional.  So replace the comment with
 	     nothing at all.  */
+#ifdef LINTCOMMENT
 	  if (put_out_comments != 2) {
+#endif
 	    exp_p--;
 	    while (++p < limit) {
 	      if (p[0] == '*' && p[1] == '/') {
@@ -6201,6 +6233,7 @@ collect_expansion (buf, end, nargs, arglist)
 		break;
 	      }
 	    }
+#ifdef LINTCOMMENT
 	  } else {
 	    while (p < limit) {
 	      *exp_p++ = *p++;
@@ -6211,6 +6244,7 @@ collect_expansion (buf, end, nargs, arglist)
 	      }
 	    }
 	  }
+#endif
 #if 0
 	  /* Mark this as a concatenation-point, as if it had been ##.  */
 	  concat = p;
@@ -7188,6 +7222,7 @@ eval_if_expression (buf, length)
   pcp_inside_if = 0;
   delete_macro (save_defined);	/* clean up special symbol */
 
+#ifdef LINTCOMMENT
   if (put_out_comments == 2) {
     char *ptr, *eptr = temp_obuf.buf + temp_obuf.length;
 
@@ -7206,6 +7241,7 @@ eval_if_expression (buf, length)
       }
     }
   }
+#endif
   temp_obuf.buf[temp_obuf.length] = '\n';
   value = parse_c_expression ((char *) temp_obuf.buf,
 			      warn_undef && !instack[indepth].system_header_p);
