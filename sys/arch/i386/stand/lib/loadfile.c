@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.6 1999/03/05 20:33:08 fvdl Exp $ */
+/* $NetBSD: loadfile.c,v 1.7 1999/03/07 20:03:44 he Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -446,7 +446,15 @@ aout_exec(fd, x, marks, flags)
 	paddr_t minp, maxp;
 	int cc;
 	paddr_t offset = marks[MARK_START];
+	u_long magic = N_GETMAGIC(*x);
+	int sub;
 
+	/* In OMAGIC, exec header isn't part of text segment */
+	if (magic == OMAGIC)
+		sub = 0;
+	else
+		sub = sizeof(*x);
+	
 	minp = maxp = ALIGNENTRY(entry);
 		
 	if (lseek(fd, sizeof(*x), SEEK_SET) == -1)  {
@@ -471,19 +479,18 @@ aout_exec(fd, x, marks, flags)
 	if (flags & LOAD_TEXT) {
 		PROGRESS(("%ld", x->a_text));
 
-		if (READ(fd, maxp, x->a_text - sizeof(*x)) !=
-		    x->a_text - sizeof(*x)) {
+		if (READ(fd, maxp, x->a_text - sub) != x->a_text - sub) {
 			WARN(("read text"));
 			return 1;
 		}
 	} else {
-		if (lseek(fd, x->a_text - sizeof(*x), SEEK_CUR) == -1) {
+		if (lseek(fd, x->a_text - sub, SEEK_CUR) == -1) {
 			WARN(("seek text"));
 			return 1;
 		}
 	}
 	if (flags & (LOAD_TEXT|COUNT_TEXT))
-		maxp += x->a_text - sizeof(*x);
+		maxp += x->a_text - sub;
 
 	/*
 	 * Read in the data segment.
