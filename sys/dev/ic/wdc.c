@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.87 2000/04/04 12:43:13 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.88 2000/04/05 06:27:36 mrg Exp $ */
 
 
 /*
@@ -480,7 +480,7 @@ wdcactivate(self, act)
 {
 	struct wdc_softc *wdc = (struct wdc_softc *)self;
 	struct channel_softc *chp;
-	struct device *sc;
+	struct device *sc = 0;
 	int s, i, j, error = 0;
 
 	s = splbio();
@@ -527,7 +527,7 @@ out:
 	splx(s);
 
 #ifdef WDCDEBUG
-	if (error != 0)
+	if (sc && error != 0)
 		WDCDEBUG_PRINT(("wdcactivate: %s: error %d deactivating %s\n",
 		    wdc->sc_dev.dv_xname, error, sc->dv_xname), DEBUG_DETACH);
 #endif
@@ -541,7 +541,7 @@ wdcdetach(self, flags)
 {
 	struct wdc_softc *wdc = (struct wdc_softc *)self;
 	struct channel_softc *chp;
-	struct device *sc;
+	struct device *sc = 0;
 	int i, j, error = 0;
 
 	for (i = 0; i < wdc->nchannels; i++) {
@@ -580,7 +580,7 @@ wdcdetach(self, flags)
 
 out:
 #ifdef WDCDEBUG
-	if (error != 0)
+	if (sc && error != 0)
 		WDCDEBUG_PRINT(("wdcdetach: %s: error %d detaching %s\n",
 		    wdc->sc_dev.dv_xname, error, sc->dv_xname), DEBUG_DETACH);
 #endif
@@ -920,10 +920,10 @@ wdctimeout(arg)
 	s = splbio();
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0) {
 		__wdcerror(chp, "lost interrupt");
-		printf("\ttype: %s\n", (xfer->c_flags & C_ATAPI) ?
-		    "atapi":"ata");
-		printf("\tc_bcount: %d\n", xfer->c_bcount);
-		printf("\tc_skip: %d\n", xfer->c_skip);
+		printf("\ttype: %s tc_bcount: %d tc_skip: %d\n",
+		    (xfer->c_flags & C_ATAPI) ?  "atapi" : "ata",
+		    xfer->c_bcount,
+		    xfer->c_skip);
 		if (chp->ch_flags & WDCF_DMA_WAIT) {
 			chp->wdc->dma_status =
 			    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
@@ -1534,6 +1534,7 @@ __wdcerror(chp, msg)
 	char *msg;
 {
 	struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
+
 	if (xfer == NULL)
 		printf("%s:%d: %s\n", chp->wdc->sc_dev.dv_xname, chp->channel,
 		    msg);
