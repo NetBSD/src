@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.11 1999/03/25 16:50:51 bouyer Exp $	*/
+/*	$NetBSD: eject.c,v 1.12 1999/03/26 09:14:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.11 1999/03/25 16:50:51 bouyer Exp $");
+__RCSID("$NetBSD: eject.c,v 1.12 1999/03/26 09:14:58 bouyer Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -68,7 +68,6 @@ struct nicknames_s {
 				   what ioctl to use. */
 #define TAPE 0x10
 #define DISK 0x20
-#define CDROM 0x40
     /* OR one of the above with one of the below: */
 #define NOTLOADABLE 0x00
 #define LOADABLE 0x01
@@ -78,9 +77,9 @@ struct nicknames_s {
     { "floppy", "fd", DISK | NOTLOADABLE },
     { "fd", "fd", DISK | NOTLOADABLE },
     { "sd", "sd", DISK | NOTLOADABLE },
-    { "cdrom", "cd", CDROM | LOADABLE },
-    { "cd", "cd", CDROM | LOADABLE },
-    { "mcd", "mcd", CDROM | LOADABLE }, /* XXX Is this true? */
+    { "cdrom", "cd", DISK | LOADABLE },
+    { "cd", "cd", DISK | LOADABLE },
+    { "mcd", "mcd", DISK | LOADABLE }, /* XXX Is this true? */
     { "tape", "st", TAPE | NOTLOADABLE },
     { "st", "st", TAPE | NOTLOADABLE },
     { "dat", "st", TAPE | NOTLOADABLE },
@@ -96,7 +95,7 @@ struct devtypes_s {
 } devtypes[] = {
     { "diskette", DISK | NOTLOADABLE },
     { "floppy", DISK | NOTLOADABLE },
-    { "cdrom", CDROM | LOADABLE },
+    { "cdrom", DISK | LOADABLE },
     { "disk", DISK | NOTLOADABLE },
     { "tape", TAPE | NOTLOADABLE },
 };
@@ -112,7 +111,7 @@ char *nick2rdev __P((char *));
 int guess_devtype __P((char *));
 char *guess_nickname __P((char *));
 void eject_tape __P((char *));
-void eject_disk __P((char *, int));
+void eject_disk __P((char *));
 void unmount_dev __P((char *));
 
 int
@@ -194,11 +193,11 @@ main(int argc,
     if(umount_f)
 	unmount_dev(devname);
 
-    /* XXX Tapes, cdroms  and disks have different ioctl's: */
+    /* XXX Tapes and disks have different ioctl's: */
     if((devtype & TYPEMASK) == TAPE)
 	eject_tape(devname);
     else
-	eject_disk(devname, devtype & TYPEMASK);
+	eject_disk(devname);
 
     if(verbose_f)
 	printf("done.\n");
@@ -375,7 +374,7 @@ eject_tape(char *name)
 }
 
 void
-eject_disk(char *name, int type)
+eject_disk(char *name)
 {
     int fd;
     char *dn;
@@ -401,17 +400,16 @@ eject_disk(char *name, int type)
     } else {
 	if(verbose_f)
 	    printf("Ejecting %s...\n", dn);
-
+	
 	arg = 0;
-	if (type == CDROM) {
-	    if(ioctl(fd, CDIOCEJECT, &arg) == -1)
-		err(1, "ioctl: CDIOCEJECT: %s", dn);
-	} else {
-	    if(ioctl(fd, DIOCLOCK, (char *)&arg) == -1)
-		err(1, "ioctl: DIOCLOCK: %s", dn);
-	    if(ioctl(fd, DIOCEJECT, &arg) == -1)
+	if (umount_f == 0) {
+	    /* force eject, unlock the device first */
+	    if(ioctl(fd, DIOCLOCK, &arg) == -1)
 		err(1, "ioctl: DIOCEJECT: %s", dn);
+	    arg = 1;
 	}
+	if(ioctl(fd, DIOCEJECT, &arg) == -1)
+	    err(1, "ioctl: DIOCEJECT: %s", dn);
     }
 
     close(fd);
