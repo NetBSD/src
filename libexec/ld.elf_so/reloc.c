@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.3 1998/11/24 11:34:30 tsubai Exp $	*/
+/*	$NetBSD: reloc.c,v 1.4 1999/01/10 18:18:56 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -52,7 +52,16 @@
 #include "debug.h"
 #include "rtld.h"
 
-#if defined(__alpha__) || defined(__powerpc__)
+#if defined(__alpha__) || defined(__powerpc__) || defined(__i386__)
+/*
+ * XXX: These don't work for the alpha and i386; don't know about powerpc
+ *	The alpha and the i386 avoid the problem by compiling everything PIC.
+ *	These relocation are supposed to be writing the address of the
+ *	function to be called on the bss.rel or bss.rela segment, but:
+ *		- st_size == 0
+ *		- on the i386 at least the call instruction is a direct call
+ *		  not an indirect call.
+ */
 static int
 _rtld_do_copy_relocation(
     const Obj_Entry *dstobj,
@@ -81,7 +90,7 @@ _rtld_do_copy_relocation(
     memcpy(dstaddr, srcaddr, size);
     return 0;
 }
-#endif /* __alpha__ || __powerpc__ */
+#endif /* __alpha__ || __powerpc__ || __i386__ */
 
 /*
  * Process the special R_xxx_COPY relocations in the main program.  These
@@ -96,7 +105,7 @@ _rtld_do_copy_relocations(
 {
     assert(dstobj->mainprog);	/* COPY relocations are invalid elsewhere */
 
-#if defined(__alpha__) || defined(__powerpc__) /* jrs */
+#if defined(__alpha__) || defined(__powerpc__) || defined(__i386__)
     if (dstobj->rel != NULL) {
 	const Elf_Rel *rel;
 	for (rel = dstobj->rel;  rel < dstobj->rellim;  ++rel) {
@@ -120,7 +129,7 @@ _rtld_do_copy_relocations(
 	    }
 	}
     }
-#endif /* jrs */
+#endif /* __alpha__ || __powerpc__ || __i386__ */
 
     return 0;
 }
@@ -138,7 +147,7 @@ _rtld_relocate_nonplt_object(
 	break;
 
 #ifdef __i386__
-    case R_386_GOT32: {
+    case R_TYPE(GOT32): {
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 
@@ -151,7 +160,7 @@ _rtld_relocate_nonplt_object(
 	break;
     }
 
-    case R_386_PC32:
+    case R_TYPE(PC32):
 	/*
 	 * I don't think the dynamic linker should ever see this
 	 * type of relocation.  But the binutils-2.6 tools sometimes
@@ -169,7 +178,20 @@ _rtld_relocate_nonplt_object(
 	    - (Elf_Addr) where;
 	break;
     }
-#endif
+
+    case R_TYPE(32): {
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+
+	def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj, &defobj, false);
+	if (def == NULL)
+	    return -1;
+
+	*where += (Elf_Addr)(defobj->relocbase + def->st_value);
+	break;
+    }
+#endif /* __i386__ */
+
 #ifdef __alpha__
     case R_ALPHA_REFQUAD: {
 	const Elf_Sym *def;
@@ -186,8 +208,9 @@ _rtld_relocate_nonplt_object(
 	    *where = tmp_value;
 	break;
     }
-/*#endif*/
+#endif /* __alpha__ */
 
+#if defined(__i386__) || defined(__alpha__)
     case R_TYPE(GLOB_DAT):
     {
 	const Elf_Sym *def;
@@ -227,7 +250,7 @@ _rtld_relocate_nonplt_object(
 	}
 	break;
     }
-#endif /* __alpha__ */
+#endif /* __i386__ || __alpha__ */
 
 #ifdef __mips__
     case R_TYPE(REL32): {
@@ -287,7 +310,7 @@ _rtld_relocate_nonplt_object(
 	*where = (Elf_Addr)obj->relocbase + rela->r_addend;
 	break;
     }
-#endif
+#endif /* __powerpc__ */
 
     default: {
 	const Elf_Sym *def;
@@ -296,7 +319,7 @@ _rtld_relocate_nonplt_object(
 	def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj, &defobj, true);
 	dbg("sym = %d, type = %d, offset = %p, addend = %p, contents = %p, symbol = %s",
 	    ELF_R_SYM(rela->r_info), ELF_R_TYPE(rela->r_info),
-	    rela->r_offset, rela->r_addend, *where,
+	    (void *)rela->r_offset, (void *)rela->r_addend, (void *)*where,
 	    def ? defobj->strtab + def->st_name : "??");
 	_rtld_error("%s: Unsupported relocation type %d in non-PLT relocations\n",
 	      obj->path, ELF_R_TYPE(rela->r_info));
@@ -321,12 +344,14 @@ _rtld_relocate_plt_object(
     return _rtld_reloc_powerpc_plt(obj, rela, bind_now);
 #endif
 
-#if defined(__alpha__)	/* (jrs) */
+#if defined(__alpha__)	|| defined(__i386__) /* (jrs) */
     if (bind_now || obj->pltgot == NULL) {
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 
+#if defined(__alpha__)
 	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
+#endif
 
 	def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj, &defobj, true);
 	if (def == NULL)
@@ -336,14 +361,21 @@ _rtld_relocate_plt_object(
 #if 0
 	dbg("fixup %s in %s --> %p in %s", 
 	    defobj->strtab + def->st_name, obj->path,
-	    new_value, defobj->path);
+	    (void *)new_value, defobj->path);
 #endif
     } else
 #endif	/* __alpha__ (jrs) */
-     if (!obj->mainprog) {
+    if (!obj->mainprog) {
 	/* Just relocate the GOT slots pointing into the PLT */
 	new_value = *where + (Elf_Addr) (obj->relocbase);
+#if 0
+	new_value += rela->r_offset;
+#endif
     } else {
+#ifdef __i386__
+	new_value = *where + (Elf_Addr) (obj->relocbase);
+	new_value += rela->r_offset;
+#endif
 	return 0;
     }
     /*

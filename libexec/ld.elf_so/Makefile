@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1998/11/24 11:34:30 tsubai Exp $
+#	$NetBSD: Makefile,v 1.18 1999/01/10 18:18:56 christos Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -7,11 +7,12 @@ PROG=	ld.elf_so
 .endif
 
 .if (${MACHINE} == "alpha") || (${MACHINE_ARCH} == "mips") || \
-    (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "sparc64")
+    (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "sparc64") || \
+    (${MACHINE} == "i386")
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
-.if exists(${.CURDIR}/${MACHINE_ARCH}/Makefile.inc)
-.include "${.CURDIR}/${MACHINE_ARCH}/Makefile.inc"
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
 .endif
 
 CLIBOBJ!=cd ${.CURDIR}/../../lib/libc; \
@@ -33,7 +34,7 @@ HDRS=	link.h
 
 STRIPFLAG=
 
-.PATH: ${.CURDIR}/${MACHINE_ARCH}
+.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}
 
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
