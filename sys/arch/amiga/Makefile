@@ -1,10 +1,11 @@
 #	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.8 1994/03/14 01:55:43 chopps Exp $
+#	$Id: Makefile,v 1.9 1994/05/08 05:47:07 chopps Exp $
 S=${BSDSRCDIR}/sys
 COMM=	$S/vm/*.[ch] $S/ufs/*.[ch] $S/sys/*.h $S/compat/sunos/*.[ch] \
 	$S/nfs/*.[ch] $S/netns/*.[ch] $S/netiso/*.[ch] \
 	$S/netiso/xebec/*.[ch] $S/netinet/*.[ch] $S/netccitt/*.[ch] \
-	$S/net/*.[ch] $S/miscfs/*/*.[ch] $S/kern/*.[ch]
+	$S/net/*.[ch] $S/miscfs/*/*.[ch] $S/kern/*.[ch] $S/dev/*.[ch] \
+	$S/scsi/*.[ch] $S/lib/libkern/m68k/*.[ch] $S/lib/libkern/*.[ch]
 
 # Makefile for amiga tags file
 
@@ -27,11 +28,11 @@ TAGS:
 	    >> ${TAMIGA}/tags
 
 tags:
-	-ctags -dtf ${TAMIGA}/tags ${COMM} ${SAMIGA}
+	-ctags -dtf ${TAMIGA} ${COMM} ${SAMIGA}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AAMIGA} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-	    >> ${TAMIGA}/tags
-	sort -o ${TAMIGA}/tags ${TAMIGA}/tags
+	    >> ${TAMIGA}
+	sort -o ${TAMIGA} ${TAMIGA}
 
 links:
 	-for i in ${DAMIGA}; do \
