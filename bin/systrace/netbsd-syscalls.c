@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.13 2003/08/25 09:12:45 cb Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.14 2003/10/21 02:11:21 fvdl Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.13 2003/08/25 09:12:45 cb Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.14 2003/10/21 02:11:21 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,7 +129,7 @@ static struct emulation emulations[] = {
 	{ "svr4",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL },
 	{ "svr4_32",	svr4_32_syscallnames,	SVR4_32_SYS_MAXSYSCALL },
 	{ "ultrix",	ultrix_syscallnames,	ULTRIX_SYS_MAXSYSCALL },
-	{ NULL,		NULL,			NULL }
+	{ NULL,		NULL,			0 }
 };
 
 struct nbsd_data {
