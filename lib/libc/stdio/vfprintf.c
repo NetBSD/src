@@ -280,10 +280,6 @@ vfprintf(fp, fmt0, ap)
 	static char zeroes[PADSIZE] =
 	 {'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'};
 
-#if __STDC__
-	va_start (ap, fmt);
-#endif
-
 	/*
 	 * BEWARE, these `goto error' on error, and PAD uses `n'.
 	 */
