@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.3 1998/01/09 08:06:12 perry Exp $	*/
+/*	$NetBSD: config.h,v 1.4 1999/04/17 17:48:23 drochner Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -65,16 +65,16 @@
 #define HAVE_CURSES_ADDNSTR 1
 
 /* Define if you have the curses(3) beep function. */
-/* #undef HAVE_CURSES_BEEP */
+#define HAVE_CURSES_BEEP 1
 
 /* Define if you have the curses(3) flash function. */
-/* #undef HAVE_CURSES_FLASH */
+#define HAVE_CURSES_FLASH 1
 
 /* Define if you have the curses(3) idlok function. */
 #define HAVE_CURSES_IDLOK 1
 
 /* Define if you have the curses(3) keypad function. */
-/* #undef HAVE_CURSES_KEYPAD */
+#define HAVE_CURSES_KEYPAD 1
 
 /* Define if you have the curses(3) newterm function. */
 /* #undef HAVE_CURSES_NEWTERM */
