@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.27 2001/12/19 18:30:05 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.28 2002/01/13 14:22:18 manu Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,6 +62,7 @@
 #	lpa*	interruptless lp
 #
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	fd	file descriptors
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
@@ -89,6 +90,7 @@ all)
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 lkm
 	sh $0 ipl random local raid0 raid1 raid2 raid3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 clockctl
 	;;
 
 std)
@@ -321,6 +323,13 @@ scsibus*)
 	mknod scsibus$unit c 36 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 39 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)

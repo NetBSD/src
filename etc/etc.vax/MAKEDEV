@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.38 2001/12/19 18:30:12 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.39 2002/01/13 14:30:28 manu Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -54,6 +54,7 @@
 # Call units:
 #	dn*	unibus dn11 and emulations (e.g. Able Quadracall)
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	ik*	unibus interface to ikonas frame buffer
 #	ps*	unibus interface to e&s picture system 2
 #	ad*	unibus interface to data translation a/d converter
@@ -81,6 +82,7 @@ all)
 	sh $0 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 rd0 rd1 rd2
 	sh $0 dz0 dl0 dhu0 rx0 rx1 raid0 raid1 raid2 raid3 md0 md1
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 clockctl
 	;;
 
 std)
@@ -540,6 +542,13 @@ scsibus*)
 	mknod scsibus$unit c 72 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 75 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)
