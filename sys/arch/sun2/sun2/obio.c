@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.3 2001/06/14 15:57:59 fredette Exp $	*/
+/*	$NetBSD: obio.c,v 1.4 2001/06/27 03:00:45 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,11 +44,13 @@
 
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
-#include <machine/idprom.h>
 #include <machine/pte.h>
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
+
+/* Does this machine have a Multibus? */
+extern int cpu_has_multibus;
 
 static int  obio_match __P((struct device *, struct cfdata *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
@@ -94,9 +96,9 @@ obio_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	return (ca->ca_name == NULL || strcmp(cf->cf_driver->cd_name, ca->ca_name) == 0);
+	return (ma->ma_name == NULL || strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
 
 static void
@@ -105,9 +107,9 @@ obio_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 	struct obio_softc *sc = (struct obio_softc *)self;
-	struct confargs sub_ca;
+	struct obio_attach_args oba;
 	const char *const *cpp;
 	static const char *const special[] = {
 		/* find these first */
@@ -123,8 +125,8 @@ obio_attach(parent, self, aux)
 	}
 	printf("\n");
 
-	sc->sc_bustag = ca->ca_bustag;
-	sc->sc_dmatag = ca->ca_dmatag;
+	sc->sc_bustag = ma->ma_bustag;
+	sc->sc_dmatag = ma->ma_dmatag;
 
 	obio_space_tag.cookie = sc;
 	obio_space_tag.parent = sc->sc_bustag;
@@ -135,20 +137,19 @@ obio_attach(parent, self, aux)
 	 * sun68k_bus_search about which locators must and must not
 	 * be defined.
 	 */
-	sub_ca = *ca;
-	sub_ca.ca_bustag = &obio_space_tag;
-	sub_ca.ca_intpri = LOCATOR_OPTIONAL;
-	sub_ca.ca_intvec = LOCATOR_FORBIDDEN;
+	oba = *ma;
+	oba.oba_bustag = &obio_space_tag;
+	oba.oba_pri = LOCATOR_OPTIONAL;
 
 	/* Find all `early' obio devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
-		sub_ca.ca_name = *cpp;
-		(void)config_search(sun68k_bus_search, self, &sub_ca);
+		oba.oba_name = *cpp;
+		(void)config_search(sun68k_bus_search, self, &oba);
 	}
 
 	/* Find all other obio devices */
-	sub_ca.ca_name = NULL;
-	(void)config_search(sun68k_bus_search, self, &sub_ca);
+	oba.oba_name = NULL;
+	(void)config_search(sun68k_bus_search, self, &oba);
 }
 
 int
@@ -203,12 +204,11 @@ _obio_addr_bad(t, h, o, s)
 
 	/*
 	 * Return nonzero if it's bad.  All sun2 Multibus
-	 * machines have all obio devices in the below 
-	 * range, and all sun2 VME machines have all obio
-	 * devices not in the below range.
+	 * machines have all obio devices below 0x7f0000,
+	 * and all sun2 VME machines have all obio
+	 * devices at or above 0x7f0000.
 	 */
-	return ((cpu_machine_id == SUN2_MACH_120) !=
-		(pa >= 0x2000 && pa <= 0x3800));
+	return ((!!cpu_has_multibus) != (pa < 0x7f0000));
 }
 	
 int

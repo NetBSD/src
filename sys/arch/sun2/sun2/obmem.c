@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.3 2001/06/14 15:57:59 fredette Exp $	*/
+/*	$NetBSD: obmem.c,v 1.4 2001/06/27 03:00:46 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,9 +86,9 @@ obmem_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	return (ca->ca_name == NULL || strcmp(cf->cf_driver->cd_name, ca->ca_name) == 0);
+	return (ma->ma_name == NULL || strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
 
 static void
@@ -97,9 +97,9 @@ obmem_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 	struct obmem_softc *sc = (struct obmem_softc *)self;
-	struct confargs sub_ca;
+	struct obmem_attach_args obma;
 	const char *const *cpp;
 	static const char *const special[] = {
 		/* find these first */
@@ -115,8 +115,8 @@ obmem_attach(parent, self, aux)
 	}
 	printf("\n");
 
-	sc->sc_bustag = ca->ca_bustag;
-	sc->sc_dmatag = ca->ca_dmatag;
+	sc->sc_bustag = ma->ma_bustag;
+	sc->sc_dmatag = ma->ma_dmatag;
 
 	obmem_space_tag.cookie = sc;
 	obmem_space_tag.parent = sc->sc_bustag;
@@ -127,20 +127,19 @@ obmem_attach(parent, self, aux)
 	 * sun68k_bus_search about which locators must and must not
 	 * be defined.
 	 */
-	sub_ca = *ca;
-	sub_ca.ca_bustag = &obmem_space_tag;
-	sub_ca.ca_intpri = LOCATOR_OPTIONAL;
-	sub_ca.ca_intvec = LOCATOR_FORBIDDEN;
+	obma = *ma;
+	obma.obma_bustag = &obmem_space_tag;
+	obma.obma_pri = LOCATOR_OPTIONAL;
 
 	/* Find all `early' obmem devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
-		sub_ca.ca_name = *cpp;
-		(void)config_search(sun68k_bus_search, self, &sub_ca);
+		obma.obma_name = *cpp;
+		(void)config_search(sun68k_bus_search, self, &obma);
 	}
 
 	/* Find all other obmem devices */
-	sub_ca.ca_name = NULL;
-	(void)config_search(sun68k_bus_search, self, &sub_ca);
+	obma.obma_name = NULL;
+	(void)config_search(sun68k_bus_search, self, &obma);
 }
 
 int
