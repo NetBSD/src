@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.13 1997/05/28 00:17:16 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.14 1997/05/28 04:48:48 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -320,6 +320,7 @@ extern	int	send_reset __P((struct ip *, struct ifnet *));
 extern	int	icmp_error __P((struct ip *, struct ifnet *));
 extern	int	ipllog __P((void));
 extern	void	ipfr_fastroute __P((struct ip *, fr_info_t *, frdest_t *));
+extern	struct ifnet *get_unit __P((char *));
 # if defined(__NetBSD__)
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));
 #else
