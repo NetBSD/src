@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam.conf.5,v 1.5 2005/03/09 00:11:31 christos Exp $
+.\"	$NetBSD: pam.conf.5,v 1.6 2005/03/09 17:07:00 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@ The
 file specifies how Pluggable Authentication Modules
 .Pq PAM
 should operate.
-For an overfiew of the Pluggable Authentication Modules framework, see
+For an overview of the Pluggable Authentication Modules framework, see
 .Xr pam 8 .
 .Pp
 PAM may be configured using a single
@@ -100,12 +100,12 @@ and
 .Pq session management .
 .Pp
 .Ar control-flag
-speficies the behavior of the processing chain upon success or failure
+specifies the behavior of the processing chain upon success or failure
 of the PAM module's authentication task.
 The following are valid values for
 .Ar control-flag :
 .Bl -tag -width sufficient
-.It binding 
+.It binding
 If the module succeeds and no earlier module in the chain
 has failed, the chain is immediately terminated and the
 request is granted.
@@ -148,13 +148,13 @@ default module location:
 .Pp
 .Ar options
 are additional options that may be specified for the module.
-Refer to the individual modules' docuementation for more information
+Refer to the individual modules' documentation for more information
 on available options.
 .Pp
-In addition to the standard configuration stanza format, there is an additional
-stanza format availble when
+In addition to the standard configuration stanza format, there is
+an additional stanza format available when
 .Pa /etc/pam.d/
-is in use:
+is used:
 .Bd -filled -offset indent
 .Ar module-type
 include
