@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_icu.c,v 1.4 2002/03/26 19:29:46 thorpej Exp $	*/
+/*	$NetBSD: i80200_icu.c,v 1.5 2002/06/25 19:39:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@ i80200_icu_init(void)
 		: "r" (intctl));
 
 	/* Steer PMU and BMU to IRQ. */
-	__asm __volatile("mcr p13, 0, %0, c2, c0"
+	__asm __volatile("mcr p13, 0, %0, c8, c0"
 		:
 		: "r" (0));
 
