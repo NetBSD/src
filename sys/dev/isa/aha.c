@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.2 1996/03/24 22:23:56 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.3 1996/03/25 07:11:12 mycroft Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -1110,11 +1110,9 @@ aha_scsi_cmd(xs)
 	struct aha_ccb *ccb;
 	struct aha_scat_gath *sg;
 	int seg;		/* scatter gather seg being worked on */
-	int thiskv;
-	u_long thisphys, nextphys;
+	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
 	struct iovec *iovp;
-	struct aha_mbx_out *mbo;
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("aha_scsi_cmd\n"));
