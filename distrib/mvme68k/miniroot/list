@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8.2.1 2002/05/29 04:58:59 lukem Exp $
+#	$NetBSD: list,v 1.8.2.2 2002/06/13 04:33:35 lukem Exp $
 
 # mvme68k's extras
 PROG	sbin/disklabel
@@ -25,6 +25,8 @@ SYMLINK	/tmp	var/tmp
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec		usr/mdec
+# ensure installboot is executable
+MTREE	./usr/mdec/installboot	mode=0555
 
 # the zoneinfo
 COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
