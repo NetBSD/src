@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2005/01/17 15:28:51 cube Exp $
+# $NetBSD: GENERIC,v 1.110 2005/01/28 03:19:49 rumble Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 maxusers	32		# estimated number of users
 
@@ -119,6 +119,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network filesystem server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags
 options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
