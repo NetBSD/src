@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.12 1997/10/17 15:51:48 lukem Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.13 1997/10/18 10:53:44 lukem Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.12 1997/10/17 15:51:48 lukem Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.13 1997/10/18 10:53:44 lukem Exp $");
 #endif
 #endif
 
@@ -305,7 +305,6 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 	}
 	print_ifclose(indent);
 }
-
 /* ARGSUSED */
 static void
 emit_enum(def)
@@ -418,7 +417,6 @@ emit_struct(def)
 			print_stat(1, &dl->decl);
 		return;
 	}
-
 	size = 0;
 	can_inline = 0;
 	for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
@@ -486,7 +484,7 @@ emit_struct(def)
 					if (sizestr == NULL)
 						sizestr = strdup(ptemp);
 					else {
-						sizestr = (char *)realloc(sizestr, strlen(sizestr) + strlen(ptemp) + 1);
+						sizestr = (char *) realloc(sizestr, strlen(sizestr) + strlen(ptemp) + 1);
 						if (sizestr == NULL) {
 
 							f_print(stderr, "Fatal error : no memory\n");
@@ -719,14 +717,14 @@ emit_single_in_line(decl, flag, rel)
 }
 
 
-char *
+char   *
 upcase(str)
 	char   *str;
 {
 	char   *ptr, *hptr;
 
 
-	ptr = (char *) malloc(strlen(str)+1);
+	ptr = (char *) malloc(strlen(str) + 1);
 	if (ptr == (char *) NULL) {
 		f_print(stderr, "malloc failed\n");
 		exit(1);
