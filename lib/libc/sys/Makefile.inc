@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111 2001/01/05 21:49:47 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.111.2.1 2001/03/05 23:34:39 nathanw Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -6,6 +6,7 @@
 
 # modules with non-default implementations on at least one architecture:
 SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S ptrace.S \
+	getcontext.S \
 	sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
 	sigpending.S sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S \
 	syscall.S __syscall.S
@@ -13,8 +14,10 @@ SRCS+=	cerror.S
 
 LSRCS+=	Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
 	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
+	Lint_getcontext.c \
 	Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
 DPSRCS+= Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
+	Lint_getcontext.c \
 	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
 	Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
 
@@ -36,7 +39,8 @@ SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
 	timer_getoverrun.c
 
 # namespace purity wrappers
-SRCS+=	_brk.c _fork.c _pipe.c _sbrk.c
+SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
+
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
@@ -59,8 +63,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	poll.o profil.o quotactl.o read.o \
 	readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o revoke.o \
 	rmdir.o select.o semconfig.o semget.o semop.o ____semctl13.o sendmsg.o \
-	sendto.o setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
-	setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
+	sendto.o setcontext.o setegid.o seteuid.o setgid.o setgroups.o \
+	setitimer.o setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
 	setsid.o setsockopt.o settimeofday.o setuid.o \
 	__shmctl13.o shmdt.o shmget.o shutdown.o __sigaction14.o \
 	__sigaltstack14.o __sigpending14.o __sigprocmask14.o __sigsuspend14.o \
@@ -68,7 +72,12 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	swapctl.o symlink.o sysarch.o umask.o undelete.o unlink.o \
 	unmount.o utimes.o utrace.o vadvise.o wait4.o write.o writev.o \
 	__sysctl.o \
-	__posix_chown.o __posix_fchown.o __posix_lchown.o __posix_rename.o
+	__posix_chown.o __posix_fchown.o __posix_lchown.o __posix_rename.o \
+	_lwp_create.o _lwp_exit.o _lwp_self.o _lwp_wait.o \
+	_lwp_suspend.o _lwp_continue.o \
+	sa_register.o sa_stacks.o sa_enable.o sa_setconcurrency.o sa_yield.o \
+	sa_preempt.o
+
 
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
@@ -110,8 +119,8 @@ ${ASM}: ${ARCHDIR}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
+	${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	rm -f ${.TARGET}.o
 
 ${PNOERR}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
@@ -190,7 +199,7 @@ LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 close.2 connect.2 \
 	dup.2 execve.2 _exit.2 fcntl.2 fdatasync.2 fhopen.2 \
-	flock.2 fork.2 fsync.2 getdents.2 getdirentries.3 \
+	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 getdirentries.3 \
 	getfh.2 getfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
 	getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
@@ -219,6 +228,7 @@ MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatfs.2
+MLINKS+=getcontext.2 setcontext.2
 MLINKS+=getgid.2 getegid.2
 MLINKS+=getitimer.2 setitimer.2
 MLINKS+=getlogin.2 setlogin.2

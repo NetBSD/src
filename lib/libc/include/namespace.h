@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.60 2001/02/19 22:11:40 cgd Exp $	*/
+/*	$NetBSD: namespace.h,v 1.60.2.1 2001/03/05 23:34:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #define fork		_fork
 #define fseeko		_fseeko
 #define ftello		_ftello
+#define getcontext	_getcontext
 #define inet_aton	_inet_aton
 #define inet_pton	_inet_pton
 #define pipe		_pipe
