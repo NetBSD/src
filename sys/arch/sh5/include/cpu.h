@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3.2.2 2002/07/16 00:41:15 gehenna Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3.2.3 2002/08/31 14:52:06 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -143,6 +143,7 @@ struct cpu_info {
 	vsid_t ci_curvsid;		/* current pmap's vsid */
 	u_int ci_want_resched;		/* current process pre-empted */
 	volatile u_int ci_intr_depth;	/* nesting level of interrupts */
+	paddr_t ci_panicstkphys;	/* panic stack top physical address */
 	struct exc_scratch_frame ci_escratch;	/* exception scratch area */
 	struct tlb_scratch_frame ci_tscratch;	/* TLB miss scratch area */
 };

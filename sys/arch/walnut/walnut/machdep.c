@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2002/05/13 07:04:25 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.2.1 2002/08/31 14:52:53 gehenna Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -107,6 +107,11 @@
 #include <ddb/db_extern.h>
 #endif
 
+#include "com.h"
+#if NCOM > 0
+#include <dev/ic/comreg.h>	/* For COM_FREQ */
+#endif
+
 /*
  * Global variables used here and there
  */
@@ -153,6 +158,7 @@ void
 initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 {
 	extern int defaulttrap, defaultsize;
+	extern int sctrap, scsize;
 	extern int alitrap, alisize;
 	extern int dsitrap, dsisize;
 	extern int isitrap, isisize;
@@ -212,6 +218,9 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 			/*
 			 * This one is (potentially) installed during autoconf
 			 */
+			break;
+		case EXC_SC:
+			memcpy((void *)EXC_SC, &sctrap, (size_t)&scsize);
 			break;
 		case EXC_ALI:
 			memcpy((void *)EXC_ALI, &alitrap, (size_t)&alisize);
@@ -325,7 +334,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 		ipkdb_connect(0);
 #endif
 	fake_mapiodev = 0;
-	printf("Done with initppc()\n");
 }
 
 static void
@@ -358,10 +366,9 @@ char msgbuf[MSGBUFSIZE];
 void
 cpu_startup(void)
 {
-	int sz, i;
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
-	int base, residual;
+	u_int sz, i, base, residual;
 	char pbuf[9];
 
 	proc0.p_addr = proc0paddr;
@@ -395,7 +402,7 @@ cpu_startup(void)
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys(NULL, NULL);
+	sz = (u_int)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
 	if (allocsys(v, NULL) - v != sz)
@@ -462,7 +469,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up the buffers.
@@ -487,7 +494,14 @@ cpu_startup(void)
 	if (board_info_set("processor-frequency", &board_data.processor_speed, 
 		sizeof(&board_data.processor_speed), PROP_CONST, 0))
 		panic("setting processor-frequency");
-
+#if NCOM > 0
+	{
+		unsigned int comfreq = COM_FREQ * 6;
+		if (board_info_set("com-opb-frequency", &comfreq,
+			sizeof(&comfreq), 0, 0))
+			panic("setting com-opb-frequency");
+	}
+#endif
 }
 
 
@@ -521,7 +535,6 @@ softnet(void)
 
 }
 
-#include "com.h"
 /*
  * Soft tty interrupts.
  */

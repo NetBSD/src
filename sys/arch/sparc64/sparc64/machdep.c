@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119.4.3 2002/07/17 02:11:31 gehenna Exp $ */
+/*	$NetBSD: machdep.c,v 1.119.4.4 2002/08/31 14:52:37 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -171,10 +171,9 @@ void	stackdump __P((void));
 void
 cpu_startup()
 {
-	unsigned i;
 	caddr_t v;
 	long sz;
-	int base, residual;
+	u_int i, base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -274,7 +273,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

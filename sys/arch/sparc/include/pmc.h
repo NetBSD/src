@@ -1,0 +1,3 @@
+/*	$NetBSD: pmc.h,v 1.1.4.2 2002/08/31 14:52:18 gehenna Exp $	*/
+
+/* No performance counters */

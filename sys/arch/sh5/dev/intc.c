@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.1.2.2 2002/07/16 00:41:12 gehenna Exp $	*/
+/*	$NetBSD: intc.c,v 1.1.2.3 2002/08/31 14:52:05 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -126,7 +126,7 @@ static void
 intcattach(struct device *parent, struct device *self, void *args)
 {
 	struct pbridge_attach_args *pa = args;
-	struct intc_softc *sc;
+	struct intc_softc *sc = (struct intc_softc *)self;
 
 	sc->sc_bust = pa->pa_bust;
 	bus_space_map(sc->sc_bust, pa->pa_offset, INTC_REG_SIZE,0,&sc->sc_bush);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.1.2.2 2002/07/16 00:41:19 gehenna Exp $	*/
+/*	$NetBSD: trap.h,v 1.1.2.3 2002/08/31 14:52:07 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,8 @@
 extern void	userret(struct proc *);
 extern void	trap(struct proc *, struct trapframe *);
 extern void	trapa(struct proc *, struct trapframe *);
-extern void	panic_trap(struct cpu_info *, struct trapframe *);
+extern void	panic_trap(struct cpu_info *, struct trapframe *,
+		    register_t, register_t);
 extern const char *trap_type(int);
 extern label_t	*onfault;
 #endif
