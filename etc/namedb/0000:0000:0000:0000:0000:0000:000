@@ -1,0 +1,10 @@
+;	$NetBSD: 0000:0000:0000:0000:0000:0000:000,v 1.1 2000/01/27 05:17:12 itojun Exp $
+
+@	IN	SOA	netbsd.org. hostmaster.netbsd.org.  (
+				1999012100	; Serial
+				3600		; Refresh
+				300		; Retry
+				3600000		; Expire
+				3600 )		; Minimum
+	IN	NS	localhost.
+1	IN	PTR	localhost.
