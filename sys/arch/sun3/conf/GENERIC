@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.51 1998/03/18 16:34:44 bouyer Exp $
+# $NetBSD: GENERIC,v 1.52 1998/06/11 19:02:35 fair Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
@@ -18,7 +18,7 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-#options 	LKM		# loadable kernel modules
+options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
 
