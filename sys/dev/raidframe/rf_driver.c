@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.56 2002/09/09 01:54:53 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.57 2002/09/11 02:22:49 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.56 2002/09/09 01:54:53 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.57 2002/09/11 02:22:49 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.56 2002/09/09 01:54:53 oster Exp $")
 #include "rf_engine.h"
 #include "rf_mcpair.h"
 #include "rf_nwayxor.h"
-#include "rf_debugprint.h"
 #include "rf_copyback.h"
 #include "rf_driver.h"
 #include "rf_options.h"
