@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.63 1998/04/25 21:27:40 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -48,8 +48,8 @@
 
 static void	via1_noint __P((void *));
 static void	via2_noint __P((void *));
-static void	slot_ignore __P((void *, int));
-static void	slot_noint __P((void *, int));
+static void	slot_ignore __P((void *));
+static void	slot_noint __P((void *));
 void	mrg_adbintr __P((void *));
 void	mrg_pmintr __P((void *));
 void	rtclock_intr __P((void *));
@@ -96,7 +96,7 @@ void		(*real_via2_intr) __P((struct frame *));
  * as a slot 15 interrupt; this slot is quite fictitious in real-world
  * Macs.  See also GMFH, pp. 165-167, and "Monster, Loch Ness."
  */
-void (*slotitab[7]) __P((void *, int)) = {
+void (*slotitab[7]) __P((void *)) = {
 	slot_noint,
 	slot_noint,
 	slot_noint,
@@ -107,8 +107,13 @@ void (*slotitab[7]) __P((void *, int)) = {
 };
 
 void *slotptab[7] = {
-	(void *) 0, (void *) 1, (void *) 2, (void *) 3,
-	(void *) 4, (void *) 5, (void *) 6
+	(void *)0,
+	(void *)1,
+	(void *)2,
+	(void *)3,
+	(void *)4,
+	(void *)5,
+	(void *)6
 };
 
 void
@@ -297,7 +302,7 @@ oss_intr(fp)
 	bitnum = 0;
 	do {
 		if (intbits & mask) {
-			(*slotitab[bitnum])(slotptab[bitnum], bitnum+9);
+			(*slotitab[bitnum])(slotptab[bitnum]);
 			via2_reg(rIFR) = mask;
 		}
 		mask <<= 1;
@@ -323,7 +328,7 @@ static int	nubus_intr_mask = 0;
 int
 add_nubus_intr(slot, func, client_data)
 	int slot;
-	void (*func) __P((void *, int));
+	void (*func) __P((void *));
 	void *client_data;
 {
 	int	s;
@@ -339,10 +344,13 @@ add_nubus_intr(slot, func, client_data)
 
 	s = splhigh();
 
-	slotitab[slot-9] = func;
-	slotptab[slot-9] = client_data;
+	slotitab[slot - 9] = func;
+	if (client_data == NULL)
+		slotptab[slot - 9] = (void *)(slot - 9);
+	else
+		slotptab[slot - 9] = client_data;
 
-	nubus_intr_mask |= (1 << (slot-9));
+	nubus_intr_mask |= (1 << (slot - 9));
 
 	splx(s);
 
@@ -374,7 +382,7 @@ via2_nubus_intr(bitarg)
 		mask = (1 << i);
 		do {
 			if (intbits & mask)
-				(*slotitab[i])(slotptab[i], i+9);
+				(*slotitab[i])(slotptab[i]);
 			i--;
 			mask >>= 1;
 		} while (mask);
@@ -395,7 +403,7 @@ rbv_nubus_intr(bitarg)
 		mask = (1 << i);
 		do {
 			if (intbits & mask)
-				(*slotitab[i])(slotptab[i], i+9);
+				(*slotitab[i])(slotptab[i]);
 			i--;
 			mask >>= 1;
 		} while (mask);
@@ -404,11 +412,10 @@ rbv_nubus_intr(bitarg)
 }
 
 static void
-slot_ignore(client_data, slot)
+slot_ignore(client_data)
 	void *client_data;
-	int slot;
 {
-	register int mask = (1 << (slot-9));
+	int mask = (1 << (int)client_data);
 
 	if (VIA2 == VIA2OFF) {
 		via2_reg(vDirA) |= mask;
@@ -419,10 +426,11 @@ slot_ignore(client_data, slot)
 }
 
 static void
-slot_noint(client_data, slot)
+slot_noint(client_data)
 	void *client_data;
-	int slot;
 {
+	int slot = (int)client_data + 9;
+
 	printf("slot_noint() slot %x\n", slot);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.7 1997/09/10 04:38:47 scottr Exp $	*/
+/*	$NetBSD: viareg.h,v 1.8 1998/04/25 21:27:40 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -194,7 +194,7 @@ void	via_init __P((void));
 int	rbv_vidstatus __P((void));
 void	via_shutdown __P((void));
 void	via_set_modem __P((int));
-int	add_nubus_intr   __P((int, void (*) __P((void *, int)), void *));
+int	add_nubus_intr   __P((int, void (*) __P((void *)), void *));
 void	enable_nubus_intr __P((void));
 void	via1_register_irq __P((int, void (*)(void *), void *));
 void	via2_register_irq __P((int, void (*)(void *), void *));

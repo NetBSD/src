@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.24 1997/11/02 00:29:59 thorpej Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.25 1998/04/25 21:27:40 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -71,7 +71,7 @@ static int	ae_nb_get_enaddr __P((bus_space_tag_t, bus_space_handle_t,
 static void	ae_nb_watchdog __P((struct ifnet *));
 #endif
 
-void		ae_nubus_intr __P((void *, int));
+void		ae_nubus_intr __P((void *));
 
 struct cfattach ae_nubus_ca = {
 	sizeof(struct dp8390_softc), ae_nubus_match, ae_nubus_attach
@@ -361,15 +361,13 @@ ae_nubus_attach(parent, self, aux)
 	add_nubus_intr(na->slot, ae_nubus_intr, sc);
 }
 
-/* ARGSUSED */
 void
-ae_nubus_intr(arg, slot)
+ae_nubus_intr(arg)
 	void *arg;
-	int slot;
 {
 	struct dp8390_softc *sc = (struct dp8390_softc *)arg;
 	
-	(void) dp8390_intr(sc);
+	(void)dp8390_intr(sc);
 }
 
 static int
@@ -467,7 +465,7 @@ ae_nb_watchdog(ifp)
  * sometimes.  This kludges around that by calling the handler
  * by hand if the watchdog is activated. -- XXX (akb)
  */
-	(*via2itab[1])((void *) 1);
+	(*via2itab[1])((void *)1);
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++ifp->if_oerrors;

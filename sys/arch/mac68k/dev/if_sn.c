@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.17 1998/01/12 19:22:10 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.18 1998/04/25 21:27:40 scottr Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -860,9 +860,8 @@ initialise_rra(sc)
 }
 
 void
-snintr(arg, slot)
+snintr(arg)
 	void	*arg;
-	int	slot;
 {
 	struct sn_softc *sc = (struct sn_softc *)arg;
 	int	isr;
