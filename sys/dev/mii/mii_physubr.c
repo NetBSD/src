@@ -1,7 +1,7 @@
-/*	$NetBSD: mii_physubr.c,v 1.22 2001/05/31 16:02:29 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.23 2001/05/31 18:44:48 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -58,17 +58,47 @@
 
 /*
  * Media to register setting conversion table.  Order matters.
- * XXX 802.3 doesn't specify ANAR or ANLPAR bits for 1000base.
  */
-const struct mii_media mii_media_table[] = {
-	{ BMCR_ISO,		ANAR_CSMA },		/* None */
-	{ BMCR_S10,		ANAR_CSMA|ANAR_10 },	/* 10baseT */
-	{ BMCR_S10|BMCR_FDX,	ANAR_CSMA|ANAR_10_FD },	/* 10baseT-FDX */
-	{ BMCR_S100,		ANAR_CSMA|ANAR_T4 },	/* 100baseT4 */
-	{ BMCR_S100,		ANAR_CSMA|ANAR_TX },	/* 100baseTX */
-	{ BMCR_S100|BMCR_FDX,	ANAR_CSMA|ANAR_TX_FD },	/* 100baseTX-FDX */
-	{ BMCR_S1000,		ANAR_CSMA },		/* 1000base */
-	{ BMCR_S1000|BMCR_FDX,	ANAR_CSMA },		/* 1000base-FDX */
+const struct mii_media mii_media_table[MII_NMEDIA] = {
+	/* None */
+	{ BMCR_ISO,		ANAR_CSMA,
+	  0, },
+
+	/* 10baseT */
+	{ BMCR_S10,		ANAR_CSMA|ANAR_10,
+	  0, },
+
+	/* 10baseT-FDX */
+	{ BMCR_S10|BMCR_FDX,	ANAR_CSMA|ANAR_10_FD,
+	  0, },
+
+	/* 100baseT4 */
+	{ BMCR_S100,		ANAR_CSMA|ANAR_T4,
+	  0, },
+
+	/* 100baseTX */
+	{ BMCR_S100,		ANAR_CSMA|ANAR_TX,
+	  0, },
+
+	/* 100baseTX-FDX */
+	{ BMCR_S100|BMCR_FDX,	ANAR_CSMA|ANAR_TX_FD,
+	  0, },
+
+	/* 1000baseX */
+	{ BMCR_S1000,		ANAR_CSMA,
+	  0, },
+
+	/* 1000baseX-FDX */
+	{ BMCR_S1000|BMCR_FDX,	ANAR_CSMA,
+	  0, },
+
+	/* 1000baseT */
+	{ BMCR_S1000,		ANAR_CSMA,
+	  GTCR_ADV_1000THDX },
+
+	/* 1000baseT-FDX */
+	{ BMCR_S1000,		ANAR_CSMA,
+	  GTCR_ADV_1000TFDX },
 };
 
 void	mii_phy_auto_timeout __P((void *));
@@ -79,7 +109,7 @@ mii_phy_setmedia(sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, anar;
+	int bmcr, anar, gtcr;
 
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0)
@@ -98,12 +128,39 @@ mii_phy_setmedia(sc)
 
 	anar = mii_media_table[ife->ifm_data].mm_anar;
 	bmcr = mii_media_table[ife->ifm_data].mm_bmcr;
+	gtcr = mii_media_table[ife->ifm_data].mm_gtcr;
+
+	if (mii->mii_media.ifm_media & IFM_ETH_MASTER) {
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
+		case IFM_1000_TX:
+			gtcr |= GTCR_MAN_MS|GTCR_ADV_MS;
+			break;
+
+		default:
+			panic("mii_phy_setmedia: MASTER on wrong media");
+		}
+	}
 
 	if (ife->ifm_media & IFM_LOOP)
 		bmcr |= BMCR_LOOP;
 
 	PHY_WRITE(sc, MII_ANAR, anar);
 	PHY_WRITE(sc, MII_BMCR, bmcr);
+	if (sc->mii_flags & MIIF_HAVE_GTCR)
+		PHY_WRITE(sc, MII_100T2CR, gtcr);
+}
+
+static int
+mii_phy_extcap_to_gtcr(struct mii_softc *sc)
+{
+	int gtcr = 0;
+
+	if (sc->mii_extcapabilities & EXTSR_1000TFDX)
+		gtcr |= GTCR_ADV_1000TFDX;
+	if (sc->mii_extcapabilities & EXTSR_1000THDX)
+		gtcr |= GTCR_ADV_1000THDX;
+
+	return (gtcr);
 }
 
 int
@@ -116,6 +173,8 @@ mii_phy_auto(sc, waitfor)
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		PHY_WRITE(sc, MII_ANAR,
 		    BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA);
+		if (sc->mii_flags & MIIF_HAVE_GTCR)
+			PHY_WRITE(sc, MII_100T2CR, mii_phy_extcap_to_gtcr(sc));
 		PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	}
 
@@ -378,25 +437,38 @@ mii_phy_add_media(sc)
 		if (sc->mii_extcapabilities & EXTSR_1000XHDX) {
 			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0,
-			    sc->mii_inst), MII_MEDIA_1000);
+			    sc->mii_inst), MII_MEDIA_1000_X);
 			PRINT("1000baseSX");
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000XFDX) {
 			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,
-			    sc->mii_inst), MII_MEDIA_1000_FDX);
+			    sc->mii_inst), MII_MEDIA_1000_X_FDX);
 			PRINT("1000baseSX-FDX");
 		}
+
+		/*
+		 * 1000baseT media needs to be able to manipulate
+		 * master/slave mode.  We set IFM_ETH_MASTER in
+		 * the "don't care mask" and filter it out when
+		 * the media is set.
+		 *
+		 * All 1000baseT PHYs have a 1000baseT control register.
+		 */
 		if (sc->mii_extcapabilities & EXTSR_1000THDX) {
 			sc->mii_anegticks = 10;
+			sc->mii_flags |= MIIF_HAVE_GTCR;
+			mii->mii_media.ifm_mask |= IFM_ETH_MASTER;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0,
-			    sc->mii_inst), MII_MEDIA_1000);
+			    sc->mii_inst), MII_MEDIA_1000_T);
 			PRINT("1000baseTX");
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000TFDX) {
 			sc->mii_anegticks = 10;
+			sc->mii_flags |= MIIF_HAVE_GTCR;
+			mii->mii_media.ifm_mask |= IFM_ETH_MASTER;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX,
-			    sc->mii_inst), MII_MEDIA_1000_FDX);
+			    sc->mii_inst), MII_MEDIA_1000_T_FDX);
 			PRINT("1000baseTX-FDX");
 		}
 	}
