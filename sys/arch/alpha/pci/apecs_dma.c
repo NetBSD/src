@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_dma.c,v 1.1.2.2 1997/06/03 07:07:35 thorpej Exp $ */
+/* $NetBSD: apecs_dma.c,v 1.1.2.3 1997/06/05 18:47:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.1.2.2 1997/06/03 07:07:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.1.2.3 1997/06/05 18:47:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ void	apecs_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
  */
 #define	APECS_TLB_INVALIDATE() \
 do { \
+	alpha_mb(); \
 	REGVAL(EPIC_TBIA) = 0; \
 	alpha_mb(); \
 } while (0)
