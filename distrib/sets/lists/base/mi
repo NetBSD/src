@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.324 2002/05/20 19:36:00 jwise Exp $
+# $NetBSD: mi,v 1.324.2.1 2002/06/07 18:53:45 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -685,8 +685,8 @@
 ./usr/sbin/mknetid		base-nis-bin
 ./usr/sbin/mld6query		base-netutil-bin
 ./usr/sbin/mlxctl		base-sysutil-bin
-./usr/sbin/mopa.out		base-bootserver-bin
 ./usr/sbin/mopchk		base-bootserver-bin
+./usr/sbin/mopcopy		base-bootserver-bin
 ./usr/sbin/mopd			base-bootserver-bin
 ./usr/sbin/mopprobe		base-bootserver-bin
 ./usr/sbin/moptrace		base-bootserver-bin
