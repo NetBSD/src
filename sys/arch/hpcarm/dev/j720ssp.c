@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.6 2002/07/19 08:49:49 toshii Exp $ */
+/* $NetBSD: j720ssp.c,v 1.7 2002/07/19 19:15:49 ichiro Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -87,10 +87,11 @@
 #include <machine/bootinfo.h>
 
 #include <hpcarm/dev/sed1356var.h>
-#include <hpcarm/sa11x0/sa11x0_var.h>
-#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
-#include <hpcarm/sa11x0/sa11x0_ppcreg.h>
-#include <hpcarm/sa11x0/sa11x0_sspreg.h>
+
+#include <arm/sa11x0/sa11x0_var.h>
+#include <arm/sa11x0/sa11x0_gpioreg.h>
+#include <arm/sa11x0/sa11x0_ppcreg.h>
+#include <arm/sa11x0/sa11x0_sspreg.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>

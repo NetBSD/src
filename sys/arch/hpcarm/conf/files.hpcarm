@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.43 2002/07/19 08:49:49 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.44 2002/07/19 19:15:48 ichiro Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -34,31 +34,8 @@ file	arch/hpcarm/hpcarm/stubs.c
 # HPCARM specific files
 file	arch/hpcarm/hpcarm/hpc_machdep.c
 
-# SA11[01]0 integrated peripherals
-# parent to sacom, gpio, fb, saost,  XXX
-# also provides irq and timer services
-device saip { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
-attach saip at mainbus
-file	arch/hpcarm/sa11x0/sa11x0.c		saip needs-flag
-file	arch/hpcarm/sa11x0/sa11x0_io.c		saip
-file	arch/hpcarm/sa11x0/sa11x0_io_asm.S	saip
-file	arch/hpcarm/sa11x0/sa11x0_irq.S		saip
-file	arch/hpcarm/sa11x0/sa11x0_irqhandler.c	saip
-
-# clock device
-device	saost
-attach	saost at saip
-file	arch/hpcarm/sa11x0/sa11x0_ost.c		saost needs-flag
-
-device	sacom: tty
-attach	sacom at saip
-file	arch/hpcarm/sa11x0/sa11x0_com.c		sacom needs-flag
-
-
-# SA11[01]0 companion chips
-device	sacc { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
-attach	sacc at saip
-file	arch/hpcarm/sa11x0/sa1111.c		sacc
+# Include hpcarm/StrongARM config definitions.
+include "arch/arm/conf/files.sa11x0"
 
 # iPAQ Virtual bus
 device	ipaqbus {}
@@ -84,33 +61,12 @@ device	sed: hpcfbif
 attach	sed at saip
 file	arch/hpcarm/dev/sed_saip.c		sed
 
-#
-# Workstation Console
-#
-include "dev/wscons/files.wscons"
-
 device	j720ssp: wskbddev, wsmousedev, tpcalib
 attach	j720ssp at saip
 file	arch/hpcarm/dev/j720ssp.c		j720ssp
 file	arch/hpcarm/dev/j720kbdmap.c		j720ssp
 
 file	dev/cninit.c
-
-# XXX this is a hack to use dev/pcmcia without fdc.c
-device	fdc
-
-# PCMCIA
-include "dev/pcmcia/files.pcmcia"
-
-device	sacpcic: pcmciabus
-attach	sacpcic at sacc
-file	arch/hpcarm/sa11x0/sa11x1_pcic.c	sacpcic needs-flag
-
-device	ipaqpcic: pcmciabus
-attach	ipaqpcic at ipaqbus
-file	arch/hpcarm/dev/ipaq_pcic.c		ipaqpcic needs-flag
-
-file	arch/hpcarm/sa11x0/sa11xx_pcic.c	sacpcic | ipaqpcic
 
 # Atmel microcontroller
 device	atmelgpioif {}
@@ -141,6 +97,3 @@ include "dev/i2o/files.i2o"
 
 # Include PCI stuff
 include "dev/pci/files.pci"
-
-# Include USB stuff
-include "dev/usb/files.usb"
