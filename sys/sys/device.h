@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.43 2000/07/06 00:42:35 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.44 2000/07/22 05:02:24 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -93,7 +93,7 @@ enum devclass {
 	DV_DISK,		/* disk drive (label, etc) */
 	DV_IFNET,		/* network interface */
 	DV_TAPE,		/* tape device */
-	DV_TTY			/* serial line interface (???) */
+	DV_TTY			/* serial line interface (?) */
 };
 
 /*
