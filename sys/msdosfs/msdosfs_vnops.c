@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.90 2000/02/01 10:33:19 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.91 2000/02/01 21:33:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1055,13 +1055,13 @@ abortit:
 				error = ENOTDIR;
 				goto bad;
 			}
-			cache_purge(tdvp);
 		} else if (doingdirectory) {
 			error = EISDIR;
 			goto bad;
 		}
 		if ((error = removede(dp, xp)) != 0)
 			goto bad;
+		cache_purge(tvp);
 		vput(tvp);
 		xp = NULL;
 	}
@@ -1150,6 +1150,7 @@ abortit:
 			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
+		cache_purge(fvp);
 		if (!doingdirectory) {
 			error = pcbmap(dp, de_cluster(pmp, to_diroffset), 0,
 				       &ip->de_dirclust, 0);
