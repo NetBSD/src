@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 1995/05/28 19:33:13 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 1995/09/02 19:44:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -844,7 +844,7 @@ child_return(p, frame)
 	frame.f_regs[D0] = 0;
 	frame.f_sr &= ~PSL_C;	/* carry bit */
 
-	userret(p, frame.f_pc, p->p_sticks);
+	userret(p, frame.f_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
