@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.1.1.1 1997/01/14 20:57:02 gwr Exp $	*/
+/*	$NetBSD: bw2.c,v 1.2 1997/04/09 04:43:52 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,10 +67,10 @@
 #include <machine/enable.h>
 #include <machine/fbio.h>
 #include <machine/idprom.h>
-#include <machine/pmap.h>
 
 #include "fbvar.h"
 #include "bw2reg.h"
+#include "pfourreg.h"
 
 cdev_decl(bw2);
 
@@ -149,6 +149,7 @@ bw2attach(parent, self, args)
 	fb->fb_driver = &bw2fbdriver;
 	fb->fb_private = sc;
 	fb->fb_name = sc->sc_dev.dv_xname;
+	fb->fb_pfour = bus_mapin(BUS_OBMEM, BW2_P4_PADDR, sizeof(u_int32_t));
 
 	fbt = &fb->fb_fbtype;
 	fbt->fb_type = FBTYPE_SUN2BW;
@@ -158,22 +159,6 @@ bw2attach(parent, self, args)
 	fbt->fb_width = 1152;
 	fbt->fb_height = 900;
 	fbt->fb_size = BW2_FBSIZE;
-
-	/*
-	 * Only the model 60 can have hi-res.
-	 * XXX - Use PROM screen size values?
-	 */
-#if 0	/* XXX - Need P4 reg stuff... */
-	if (cpu_machine_id == SUN3_MACH_60) {
-		int tmp;
-	    tmp = bus_peek(BUS_OBMEM, BW2_CR_PADDR, 1);
-		if ((tmp != -1) && (tmp & 0x80) == 0) {
-			fbt->fb_width = 1600;
-			fbt->fb_height = 1280;
-			fbt->fb_size = BW2_FBSIZE_HIRES;
-		}
-	}
-#endif
 
 	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
 	fb_attach(fb, 1);
@@ -242,9 +227,13 @@ static int bw2gvideo(fb, data)
 	struct fbdevice *fb;
 	void *data;
 {
-	int *on = data;
+	int *on = data, s;
+	volatile u_int32_t *reg = fb->fb_pfour;
 
-	*on = (*enable_reg & ENA_VIDEO) ? 1 : 0;
+	s = splhigh();
+	*on = (*reg & PFOUR_REG_VIDEO) ? 1 : 0;
+	splx(s);
+
 	return (0);
 }
 
@@ -253,12 +242,15 @@ static int bw2svideo(fb, data)
 	struct fbdevice *fb;
 	void *data;
 {
-	int *on = data;
+	int *on = data, s;
+	volatile u_int32_t *reg = fb->fb_pfour;
 
+	s = splhigh();
 	if (*on)
-		*enable_reg |= ENA_VIDEO;
+		*reg |= PFOUR_REG_VIDEO;
 	else
-		*enable_reg &= ~ENA_VIDEO;
+		*reg &= ~PFOUR_REG_VIDEO;
+	splx(s);
 
 	return(0);
 }
