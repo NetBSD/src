@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.2 2002/01/27 13:23:09 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.3 2002/01/30 14:01:33 reinoud Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"INSTALL-$Revision: 1.2 $"
+#ident		"INSTALL-$Revision: 1.3 $"
 
 # estimated number of users
 maxusers	32
@@ -36,6 +36,9 @@ options 	CPU_ARM6	# Support the ARM6 core
 options 	CPU_ARM7	# Support the ARM7 core
 #options 	CPU_ARM8	# Support the ARM8 core
 #options 	ARM6_LATE_ABORT	# ARM6XX late abort support
+
+# For StrongARM only kernels
+#makeoptions	COPTS="-O2 -march=armv3m -mtune=strongarm"
 
 # Architecture options
 options 	RISCPC		# We are a RiscPC
@@ -102,7 +105,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-# Bootloader options
+# Bootloader options (has to go !)
 #options 	COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
@@ -160,15 +163,6 @@ iomd0	at mainbus?
 # system clock via IOMD
 clock*	at iomd?
 
-# kbd via IOMD
-kbd*	at iomd?
-
-# quadrature mouse via IOMD
-qms*	at iomd?
-
-# PS2 mouse via IOMD
-opms*	at iomd?
-
 # IIC bus device
 iic*	at iomd?
 
@@ -181,16 +175,53 @@ todclock0	at rtc?
 # VIDC device
 vidc0		at mainbus?
 
-# The vidc
-vidcconsole0	at vidc?
+# WSCONS
+# ws console uses DUMB, SUN or VT100 terminal emulation
+#options 	WSEMUL_NODUMB
+#options 	WSEMUL_SUN
+options 	WSEMUL_VT100
+
+#options 	WSDISPLAY_COMPAT_RAWKBD
+
+#options 	FONT_BOLD8x16
+#options 	FONT_GALLANT12x22	# Very nice font
+#options 	FONT_LUCIDA16x29
+#options 	FONT_OMRON12x20		# looks funny
+#options 	FONT_QVSS8x15		# broken ?
+options 	FONT_SONY12x25		# looks like VT220 font
+options 	FONT_SONY8x16		# not tested
+#options 	FONT_VT220L8x8		# 8x8 font as in Arch. cons
+#options 	FONT_VT220L8x16		# 8x(2x8) font as in Arch. cons
+#options 	FONT_VT220L8x10		# not tested
+#options 	FONT_VT220L8x20		# not tested
+
+vidcvideo0	at vidc?		# wscons driver for VIDC
+wsdisplay*	at vidcvideo? console ?	# display itself
+
+rpckbd*		at iomd?		# based on old `kbd' driver
+wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
+
+wsqms*		at iomd?		# ws quadmouse driver
+wsmouse*	at wsqms?		# wsmouse on ws quadmouse
+
+pseudo-device	wsmux
+
+# The origional vidcconsole :
+# vidcconsole kbd at IOMD
+# vidcconsole PS2 mouse at IOMD
+#vidcconsole0	at vidc?		# display + vt100 emulation
+#kbd*		at iomd?		# PS/2 keyboard for vidcconsole
+#qms*		at iomd?		# RiscPC mouse for vidcconsole
+#opms*		at iomd?		# A7000/NC? mouse for vidcconsole
 
 # generic VT console device
-vt0	at vidc?
-vt1	at vidc?
-vt2	at vidc?
-vt3	at vidc?
-vt4	at vidc?
-vt5	at vidc?
+#vt0		at vidc?
+#vt1		at vidc?
+#vt2		at vidc?
+#vt3		at vidc?
+#vt4		at vidc?
+#vt5		at vidc?
+
 
 # Peripheral IO Controller
 pioc0	at mainbus? base 0x00210000
@@ -223,8 +254,8 @@ lpt*	at pioc? offset 0x0278 irq 0
 beep0	at vidc?
 
 # Audio device
-#vidcaudio0	at vidc?
-#audio*		at vidcaudio0
+vidcaudio0	at vidc?
+audio*		at vidcaudio0
 
 # System beep
 sysbeep0	at vidc?
