@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.43 1997/03/12 15:17:13 christos Exp $
+# 	$NetBSD: Makefile.sparc,v 1.44 1997/03/14 23:23:45 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -96,10 +96,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: ${SPARC}/sparc/genassym.cf $S/kern/genassym.sh
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	<${SPARC}/sparc/genassym.cf >assym.h || rm assym.h
-
+assym.h: $S/kern/genassym.sh ${SPARC}/sparc/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${SPARC}/sparc/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -116,9 +116,10 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean:
+clean: cleankernel
+cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
