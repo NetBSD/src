@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.27 2002/02/03 23:30:03 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.28 2002/02/03 23:37:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,14 +36,12 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
-#endif
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.27 2002/02/03 23:30:03 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.28 2002/02/03 23:37:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -413,7 +411,7 @@ el_source(EditLine *el, const char *fname)
 
 	fp = NULL;
 	if (fname == NULL) {
-#ifdef HAVE_ISSETUGID
+#if 1 /* HAVE_ISSETUGID */
 		static const char elpath[] = "/.editrc";
 		char path[MAXPATHLEN];
 
