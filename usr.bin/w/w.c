@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.22 1997/03/31 04:13:15 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.23 1997/04/13 13:44:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-static char rcsid[] = "$NetBSD: w.c,v 1.22 1997/03/31 04:13:15 christos Exp $";
+static char rcsid[] = "$NetBSD: w.c,v 1.23 1997/04/13 13:44:17 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -373,6 +373,7 @@ pr_header(nowp, nusers)
 	 */
 	(void)strftime(buf, sizeof(buf),
 	    __CONCAT("%l:%","M%p"), localtime(nowp));
+	buf[sizeof(buf) - 1] = '\0';
 	(void)printf("%s ", buf);
 
 	/*

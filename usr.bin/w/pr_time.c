@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.5 1996/11/14 07:34:46 mikel Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.6 1997/04/13 13:44:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$NetBSD: pr_time.c,v 1.5 1996/11/14 07:34:46 mikel Exp $";
+static char rcsid[] = "$NetBSD: pr_time.c,v 1.6 1997/04/13 13:44:13 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ pr_attime(started, now)
 		fmt = __CONCAT("%l:%", "M%p");
 
 	(void)strftime(buf, sizeof(buf), fmt, tp);
+	buf[sizeof(buf) - 1] = '\0';
 	(void)fputs(buf, stdout);
 }
 
