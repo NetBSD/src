@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.11 2000/05/27 21:33:26 jdolecek Exp $	*/
+/*	$NetBSD: config.c,v 1.12 2000/05/28 16:23:55 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: config.c,v 1.11 2000/05/27 21:33:26 jdolecek Exp $");
+__RCSID("$NetBSD: config.c,v 1.12 2000/05/28 16:23:55 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,12 +209,44 @@ addentry(tp, newent, head)
 	ENTRY *ep;
 
 	if ((ep = malloc(sizeof(*ep))) == NULL ||
-	    (ep->s = strdup(newent)) == NULL) 
+	    (ep->s = strdup(newent)) == NULL)
 		err(1, "malloc");
 	if (head)
 		TAILQ_INSERT_HEAD(&tp->list, ep, q);
 	else
 		TAILQ_INSERT_TAIL(&tp->list, ep, q);
+}
+
+void
+removelist(name)
+	const char *name;
+{
+	TAG *tp;
+	ENTRY *ep;
+
+	tp = getlist(name);
+	while ((ep = tp->list.tqh_first) != NULL) {
+		free(ep->s);
+		TAILQ_REMOVE(&tp->list, ep, q);
+	}
+	free(tp->s);
+	TAILQ_REMOVE(&head, tp, q);
+
+}
+
+TAG *
+renamelist(oldname, newname)
+	const char *oldname;
+	const char *newname;
+{
+	TAG *tp;
+
+	if(!(tp = getlist(oldname)))
+		return (NULL);
+	free(tp->s);
+	if(!(tp->s = strdup(newname)))
+		err(1, "malloc");
+	return (tp);
 }
 
 #ifdef MANDEBUG
