@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.632 2003/10/13 19:57:41 bouyer Exp $
+#	$NetBSD: mi,v 1.633 2003/10/14 14:59:03 wiz Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1346,6 +1346,7 @@
 ./usr/share/man/cat2/shutdown.0		comp-c-catman
 ./usr/share/man/cat2/sigaction.0	comp-c-catman
 ./usr/share/man/cat2/sigaltstack.0	comp-c-catman
+./usr/share/man/cat2/siginfo.0		comp-c-catman
 ./usr/share/man/cat2/sigpending.0	comp-c-catman
 ./usr/share/man/cat2/sigprocmask.0	comp-c-catman
 ./usr/share/man/cat2/sigreturn.0	comp-c-catman
@@ -1369,6 +1370,7 @@
 ./usr/share/man/cat2/timer_gettime.0	comp-c-catman
 ./usr/share/man/cat2/timer_settime.0	comp-c-catman
 ./usr/share/man/cat2/truncate.0		comp-c-catman
+./usr/share/man/cat2/ucontext.0		comp-c-catman
 ./usr/share/man/cat2/umask.0		comp-c-catman
 ./usr/share/man/cat2/undelete.0		comp-c-catman
 ./usr/share/man/cat2/unlink.0		comp-c-catman
@@ -4799,6 +4801,7 @@
 ./usr/share/man/man2/shutdown.2		comp-c-man
 ./usr/share/man/man2/sigaction.2		comp-c-man
 ./usr/share/man/man2/sigaltstack.2		comp-c-man
+./usr/share/man/man2/siginfo.2		comp-c-man
 ./usr/share/man/man2/sigpending.2		comp-c-man
 ./usr/share/man/man2/sigprocmask.2		comp-c-man
 ./usr/share/man/man2/sigreturn.2		comp-c-man
@@ -4822,6 +4825,7 @@
 ./usr/share/man/man2/timer_gettime.2	comp-c-man
 ./usr/share/man/man2/timer_settime.2	comp-c-man
 ./usr/share/man/man2/truncate.2		comp-c-man
+./usr/share/man/man2/ucontext.2		comp-c-man
 ./usr/share/man/man2/umask.2		comp-c-man
 ./usr/share/man/man2/undelete.2		comp-c-man
 ./usr/share/man/man2/unlink.2		comp-c-man
