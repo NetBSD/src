@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.13 1997/07/27 01:16:41 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.14 1997/07/28 03:51:11 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -15,6 +15,8 @@
 #include <compat/ossaudio/ossaudiovar.h>
 
 static struct audiodevinfo *getdevinfo __P((struct file *, struct proc *));
+
+static void setblocksize __P((struct file *, struct audio_info *, struct proc *));
 
 int
 oss_ioctl_audio(p, uap, retval)
@@ -100,6 +102,7 @@ oss_ioctl_audio(p, uap, retval)
 		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
 		if (error)
 			return error;
+		setblocksize(fp, &tmpinfo, p);
 		idat = tmpinfo.blocksize;
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error)
@@ -233,6 +236,7 @@ oss_ioctl_audio(p, uap, retval)
 		if (error)
 			return error;
 		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		setblocksize(fp, &tmpinfo, p);
 		if (error)
 			return error;
 		if (idat == 0)
@@ -273,18 +277,19 @@ oss_ioctl_audio(p, uap, retval)
 			return error;
 		break;
 	case OSS_SNDCTL_DSP_GETOSPACE:
+	case OSS_SNDCTL_DSP_GETISPACE:
 		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
 		if (error)
 			return error;
+		setblocksize(fp, &tmpinfo, p);
 		bufinfo.fragsize = tmpinfo.blocksize;
 		bufinfo.fragments = /* XXX */
 		bufinfo.fragstotal = tmpinfo.buffersize / bufinfo.fragsize;
-		bufinfo.bytes = bufinfo.fragments * bufinfo.fragsize;
+		bufinfo.bytes = tmpinfo.buffersize;
 		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
 		if (error)
 			return error;
 		break;
-	case OSS_SNDCTL_DSP_GETISPACE:
 	case OSS_SNDCTL_DSP_NONBLOCK:
 		return EINVAL; /* XXX unimplemented */
 	case OSS_SNDCTL_DSP_GETCAPS:
@@ -678,4 +683,26 @@ oss_ioctl_sequencer(p, uap, retval)
 	retval[0] = 0;
 
 	return EINVAL;
+}
+
+/*
+ * Check that the blocksize is a power of 2 as OSS wants.
+ * If not, set it to be.
+ */
+static void setblocksize(fp, info, p)
+	struct file *fp;
+	struct audio_info *info;
+	struct proc *p;
+{
+	struct audio_info set;
+	int s;
+
+	if (info->blocksize & (info->blocksize-1)) {
+		for(s = 32; s < info->blocksize; s <<= 1)
+			;
+		AUDIO_INITINFO(&set);
+		set.blocksize = s;
+		fp->f_ops->fo_ioctl(fp, AUDIO_SETINFO, (caddr_t)&set, p);
+		fp->f_ops->fo_ioctl(fp, AUDIO_GETINFO, (caddr_t)info, p);
+	}
 }
