@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.35 2000/05/31 15:03:54 pk Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.36 2000/05/31 15:29:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -404,7 +404,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	/*
 	 * Check arguments and construct default values.
 	 */
-	if (!powerof2(pagesz) || pagesz > PAGE_SIZE)
+	if (!powerof2(pagesz))
 		panic("pool_init: page size invalid (%lx)\n", (u_long)pagesz);
 
 	if (alloc == NULL && release == NULL) {
@@ -1024,6 +1024,9 @@ pool_prime_page(pp, storage)
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
 	int s, n;
+
+	if (((u_long)cp & (pp->pr_pagesz - 1)) != 0)
+		panic("pool_prime_page: %s: unaligned page", pp->pr_wchan);
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
 		ph = (struct pool_item_header *)(cp + pp->pr_phoffset);
