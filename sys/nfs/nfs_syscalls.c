@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.73 2004/03/17 10:42:37 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.74 2004/03/17 10:43:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.73 2004/03/17 10:42:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.74 2004/03/17 10:43:35 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -839,6 +839,10 @@ nfsrv_zapsock(slp)
 	int s;
 
 	simple_lock(&nfsd_slock);
+	if ((slp->ns_flag & SLP_VALID) != 0) {
+		simple_unlock(&nfsd_slock);
+		return;
+	}
 	if (slp->ns_flag & SLP_DOREC) {
 		TAILQ_REMOVE(&nfssvc_sockpending, slp, ns_pending);
 	}
