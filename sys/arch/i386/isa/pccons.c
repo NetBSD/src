@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.161 2003/02/19 04:07:56 gson Exp $	*/
+/*	$NetBSD: pccons.c,v 1.162 2003/02/26 22:23:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.161 2003/02/19 04:07:56 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.162 2003/02/26 22:23:04 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -2729,7 +2729,7 @@ pcmmap(dev, offset, nprot)
 
 	if (offset > 0x20000)
 		return (-1);
-	return (i386_btop(0xa0000 + offset));
+	return (x86_btop(0xa0000 + offset));
 }
 
 #ifdef XSERVER
