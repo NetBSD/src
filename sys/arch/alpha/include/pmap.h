@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.24 1998/09/22 03:58:11 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.25 1999/02/04 19:48:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,6 +152,15 @@ struct pv_head {
 #define	PGU_L3PT		4		/* level 3 page table */
 
 #define	PGU_ISPTPAGE(pgu)	((pgu) >= PGU_L1PT)
+
+#define	PGU_STRINGS							\
+{									\
+	"normal",							\
+	"pvent",							\
+	"l1pt",								\
+	"l2pt",								\
+	"l3pt",								\
+}
 
 struct pv_page_info {
 	TAILQ_ENTRY(pv_page) pgi_list;
