@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/15 01:20:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2002/12/11 05:49:25 thorpej Exp $
 
-KDIR=	/sys/altq
 INCSDIR= /usr/include/altq
 
 INCS=	altq.h altq_afmap.h altq_blue.h altq_cbq.h altq_cdnr.h \

@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile.arc.inc,v 1.4.2.4 2002/04/01 07:39:03 nathanw Exp $
+#	$NetBSD: Makefile.arc.inc,v 1.4.2.5 2002/12/11 05:52:07 thorpej Exp $
 
 CFLAGS+=	-mips2 -mcpu=r4000
 AFLAGS+=	-mips2
 
 # XXX
 SYSTEM_LD_TAIL_EXTRA=; \
+	echo "${DBSYM} $@ || true"; \
+	${DBSYM} $@ || true; \
 	echo ${OBJCOPY} -O ecoff-littlemips -R .mdebug -R .ident $@ $@.ecoff; \
 	${OBJCOPY} -O ecoff-littlemips -R .mdebug -R .ident $@ $@.ecoff
 

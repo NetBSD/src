@@ -1,4 +1,4 @@
-/* $NetBSD: aout_machdep.h,v 1.2 1997/04/06 08:47:16 cgd Exp $ */
+/* $NetBSD: aout_machdep.h,v 1.2.34.1 2002/12/11 05:51:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,6 +33,6 @@
 #define cpu_exec_aout_makecmds(p, epp)	ENOEXEC
 
 /* Size of a page in an object file. */
-#define	__LDPGSZ	8192
+#define	AOUT_LDPGSZ	8192
 
 #endif /* !_ALPHA_EXEC_H_ */

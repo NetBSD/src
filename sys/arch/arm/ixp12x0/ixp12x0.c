@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.2.2.2 2002/10/18 02:35:36 nathanw Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.2.2.3 2002/12/11 05:53:09 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -206,19 +206,19 @@ static struct pmap_ent	map_tbl_ixp12x0[] = {
 	  PTE_NOCACHE, },
 
 	{ "PCI Registers Accessible Through Memory Cycle Access",
-	  IXP12X0_PCI_MEM_VBASE, IXP12X0_PCI_MEM_VBASE,
+	  IXP12X0_PCI_MEM_VBASE, IXP12X0_PCI_MEM_HWBASE,
 	  IXP12X0_PCI_MEM_SIZE,
 	  VM_PROT_READ|VM_PROT_WRITE,
 	  PTE_NOCACHE, },
 
 	{ "PCI Type0 Configuration Space",
-	  IXP12X0_PCI_TYPE0_VBASE, IXP12X0_PCI_TYPE0_VBASE,
+	  IXP12X0_PCI_TYPE0_VBASE, IXP12X0_PCI_TYPE0_HWBASE,
 	  IXP12X0_PCI_TYPEX_SIZE,
 	  VM_PROT_READ|VM_PROT_WRITE,
 	  PTE_NOCACHE, },
 
 	{ "PCI Type1 Configuration Space",
-	  IXP12X0_PCI_TYPE1_VBASE, IXP12X0_PCI_TYPE1_VBASE,
+	  IXP12X0_PCI_TYPE1_VBASE, IXP12X0_PCI_TYPE1_HWBASE,
 	  IXP12X0_PCI_TYPEX_SIZE,
 	  VM_PROT_READ|VM_PROT_WRITE,
 	  PTE_NOCACHE, },

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.8.8 2002/11/11 21:58:12 nathanw Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.8.9 2002/12/11 05:58:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.8.8 2002/11/11 21:58:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.8.9 2002/12/11 05:58:37 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -847,7 +847,7 @@ filt_hilrdetach(struct knote *kn)
 	int s;
 
 	s = splhil();
-	SLIST_REMOVE(&dptr->hd_selr.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&dptr->hd_selr.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -919,12 +919,12 @@ hilkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &dptr->hd_selr.si_klist;
+		klist = &dptr->hd_selr.sel_klist;
 		kn->kn_fop = &hilread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &dptr->hd_selr.si_klist;
+		klist = &dptr->hd_selr.sel_klist;
 		kn->kn_fop = &hil_seltrue_filtops;
 		break;
 

@@ -1,9 +1,11 @@
-#	$NetBSD: PB1000,v 1.1.2.2 2002/09/17 21:14:19 nathanw Exp $
+#	$NetBSD: PB1000,v 1.1.2.3 2002/12/11 05:58:34 thorpej Exp $
+#
+# Kernel config for the Alchemy Semiconductor (AMD) PB1000 and PB1500
+# evaluation boards.
 
-#include 	"arch/evbmips/conf/std.pb1000.eb"	# big-endian mode
-include 	"arch/evbmips/conf/std.pb1000.el"	# little-endian mode
+include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"GENERIC-$Revision: 1.1.2.2 $"
+#ident 		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	32
 
@@ -133,6 +135,7 @@ options 	AUMAC_EVENT_COUNTERS
 # MII/PHY support
 amhphy*		at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy*		at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
+sqphy*		at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
 # USB
 ohci*		at aubus? addr ?		# USB Open Host Controller

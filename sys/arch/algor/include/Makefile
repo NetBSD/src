@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3.8.4 2002/08/13 01:02:38 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3.8.5 2002/12/11 05:51:55 thorpej Exp $
 
-KDIR=	/sys/arch/algor/include
 INCSDIR=/usr/include/algor
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \

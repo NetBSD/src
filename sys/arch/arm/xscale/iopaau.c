@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.7.2.2 2002/08/13 02:17:59 nathanw Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.7.2.3 2002/12/11 05:53:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.7.2.2 2002/08/13 02:17:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.7.2.3 2002/12/11 05:53:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -262,6 +262,9 @@ iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
 		    uio, BUS_DMA_NOWAIT|BUS_DMA_READ|BUS_DMA_STREAMING);
 		break;
 	    }
+
+	default:
+		error = EINVAL;
 	}
 
 	if (__predict_false(error != 0))
@@ -444,6 +447,9 @@ iopaau_func_xor_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 		    uio, BUS_DMA_NOWAIT|BUS_DMA_READ|BUS_DMA_STREAMING);
 		break;
 	    }
+
+	default:
+		error = EINVAL;
 	}
 
 	if (__predict_false(error != 0))
@@ -491,6 +497,9 @@ iopaau_func_xor_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 		}
 		break;
 	    }
+
+	default:
+		error = EINVAL;
 	}
 
 	if (__predict_false(error != 0)) {

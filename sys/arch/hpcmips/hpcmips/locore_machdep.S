@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.3.4.2 2002/02/28 04:09:57 nathanw Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3.4.3 2002/12/11 05:58:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,35 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
+#include <hpcmips/vr/vr_asm.h>
+
 	.set	noreorder
+/*
+ * void vr_hibernate(void *addr, int len)
+ *	wipe out all physical memory and hibernate
+ */
+LEAF_NOPROFILE(vr_hibernate)
+	la	t0, evr_hibernate
+	la	t1, vr_hibernate
+	subu	t0, t1			# t0 = length of this function
+	addu	a0, t0
+	subu	a1, t0
+
+1:	sw	zero, 0(a0)
+	subu	a1, 4
+	bnez	a1, 1b
+	addu	a0, 4			# BDSLOT
+
+	.word	VR_OPCODE_HIBERNATE
+	nop
+	nop
+	nop
+	nop
+	nop
+END(vr_hibernate)
+XLEAF(evr_hibernate)
+	.set	reorder
+
 	.align	2
 /*
  * Interrupt counters for vmstat.

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6.4.7 2002/10/18 02:35:19 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.6.4.8 2002/12/11 05:53:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.4.7 2002/10/18 02:35:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.4.8 2002/12/11 05:53:00 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -252,7 +252,7 @@ syscall(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		args = copyargs;
 	}
 
-	if ((error = trace_enter(l, code, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;

@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.1.4.6 2002/10/18 02:37:04 nathanw Exp $
+# $NetBSD: VR41XX,v 1.1.4.7 2002/12/11 05:58:40 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.1.4.6 $"
+#ident 		"GENERIC-$Revision: 1.1.4.7 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -109,7 +109,7 @@ options 	NFS_BOOT_DHCP
 config		netbsd		root on ? type ?
 
 # compile options
-makeoptions	DEFGP="-G 8"
+#makeoptions	DEFGP="-G 8"
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100

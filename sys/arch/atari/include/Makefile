@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.16.8.4 2002/08/13 02:18:01 nathanw Exp $
+#	$NetBSD: Makefile,v 1.16.8.5 2002/12/11 05:58:21 thorpej Exp $
 
-KDIR=	/sys/arch/atari/include
 INCSDIR= /usr/include/atari
 
 INCS=	ahdilabel.h ansi.h aout_machdep.h asm.h \

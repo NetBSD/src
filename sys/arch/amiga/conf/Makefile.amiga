@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.96.2.4 2002/06/20 03:37:51 nathanw Exp $
+#	$NetBSD: Makefile.amiga,v 1.96.2.5 2002/12/11 05:52:01 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -38,11 +38,7 @@ CMACHFLAGS=	-m68020
 CMACHFLAGS=	-m68060 -Wa,-m68030 -Wa,-m68851
 .endif
 CFLAGS+=	${CMACHFLAGS} -msoft-float
-.if defined(HAVE_GCC3)
-AFLAGS+=	-x assembler-with-cpp
-.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-.endif
 
 ##
 ## (3) libkern and compat

@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.1 2001/01/10 19:02:05 bjh21 Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.1.10.1 2002/12/11 05:53:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -35,7 +35,7 @@
 #ifndef	_ARM32_AOUT_MACHDEP_H_
 #define	_ARM32_AOUT_MACHDEP_H_
 
-#define	__LDPGSZ	4096
+#define	AOUT_LDPGSZ	4096
 
 /* Relocation format. */
 

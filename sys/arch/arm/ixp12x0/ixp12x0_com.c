@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.3.2.4 2002/11/11 21:56:53 nathanw Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.3.2.5 2002/12/11 05:53:09 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -142,6 +142,8 @@ static int ixpcomconsrate;
 static tcflag_t ixpcomconscflag;
 static struct cnm_state ixpcom_cnm_state;
 
+struct ixpcom_softc* ixpcom_sc = NULL;
+
 extern struct cfdriver ixpcom_cd;
 
 dev_type_open(ixpcomopen);
@@ -193,6 +195,8 @@ ixpcom_attach_subr(sc)
 	bus_addr_t iobase = sc->sc_baseaddr;
 	bus_space_tag_t iot = sc->sc_iot;
 	struct tty *tp;
+
+	ixpcom_sc = sc;
 
 	if (iot == ixpcomconstag && iobase == ixpcomconsaddr) {
 		ixpcomconsattached = 1;
@@ -896,7 +900,7 @@ ixpcomcnputc(dev, c)
 {
 	int s;
 
-	s = spltty();   /* XXX do we need this? */
+	s = splserial();
 
 	while(!(bus_space_read_4(ixpcomconstag, ixpcomconsioh, IXPCOM_SR)
 	    & SR_TXR))
@@ -922,7 +926,7 @@ ixpcomcngetc(dev)
 {
         int c, s;
 
-        s = spltty();   /* XXX do we need this? */
+        s = splserial();
 
 	while(!(bus_space_read_4(ixpcomconstag, ixpcomconsioh, IXPCOM_SR)
 	    & SR_RXR))

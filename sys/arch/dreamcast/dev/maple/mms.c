@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.2.8.2 2002/10/18 02:36:22 nathanw Exp $	*/
+/*	$NetBSD: mms.c,v 1.2.8.3 2002/12/11 05:58:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <dreamcast/dev/maple/mapleconf.h>
 
 struct mms_condition {
+	uint32_t func_code;	/* function code (big endian) */
 	uint32_t buttons;
 	uint16_t axis1;		/* X */
 	uint16_t axis2;		/* Y */
@@ -86,8 +87,8 @@ struct mms_condition {
 struct mms_softc {
 	struct device sc_dev;
 
-	int sc_port;
-	int sc_subunit;
+	struct device *sc_parent;
+	struct maple_unit *sc_unit;
 
 	uint32_t sc_oldbuttons;
 
@@ -96,9 +97,10 @@ struct mms_softc {
 
 int	mms_match(struct device *, struct cfdata *, void *);
 void	mms_attach(struct device *, struct device *, void *);
+int	mms_detach(struct device *, int);
 
 CFATTACH_DECL(mms, sizeof(struct mms_softc),
-    mms_match, mms_attach, NULL, NULL);
+    mms_match, mms_attach, mms_detach, NULL);
 
 int	mms_enable(void *);
 int	mms_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -110,14 +112,14 @@ const struct wsmouse_accessops mms_accessops = {
 	mms_disable,
 };
 
-void	mms_intr(void *, void *, int);
+void	mms_intr(void *, struct maple_response *, int, int);
 
 int
 mms_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
-	return ((ma->ma_function & MAPLE_FUNC_MOUSE) != 0);
+	return (ma->ma_function == MAPLE_FN_MOUSE ? MAPLE_MATCH_FUNC : 0);
 }
 
 void
@@ -130,11 +132,11 @@ mms_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": SEGA Dreamcast Mouse\n");
 
-	sc->sc_port = ma->ma_port;
-	sc->sc_subunit = ma->ma_subunit;
+	sc->sc_parent = parent;
+	sc->sc_unit = ma->ma_unit;
 
 	data = maple_get_function_data(ma->ma_devinfo,
-	    MAPLE_FUNC_MOUSE);
+	    MAPLE_FN_MOUSE);
 
 	printf("%s: buttons:", sc->sc_dev.dv_xname);
 	if (data & MMS_FUNCDATA_A)
@@ -161,22 +163,36 @@ mms_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	maple_set_condition_callback(parent, sc->sc_port, sc->sc_subunit,
-	    MAPLE_FUNC_MOUSE, mms_intr, sc);
+	maple_set_callback(parent, sc->sc_unit, MAPLE_FN_MOUSE, mms_intr, sc);
+}
+
+int
+mms_detach(struct device *self, int flags)
+{
+	struct mms_softc *sc = (void *) self;
+	int rv = 0;
+
+	if (sc->sc_wsmousedev != NULL)
+		rv = config_detach(sc->sc_wsmousedev, flags);
+
+	return rv;
 }
 
 int
 mms_enable(void *v)
 {
+	struct mms_softc *sc = v;
 
+	maple_enable_periodic(sc->sc_parent, sc->sc_unit, MAPLE_FN_MOUSE, 1);
 	return (0);
 }
 
 void
 mms_disable(void *v)
 {
+	struct mms_softc *sc = v;
 
-	/* Nothing to do here. */
+	maple_enable_periodic(sc->sc_parent, sc->sc_unit, MAPLE_FN_MOUSE, 0);
 }
 
 int
@@ -185,7 +201,7 @@ mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *) data = WSMOUSE_TYPE_USB;	/* XXX */
+		*(u_int *) data = WSMOUSE_TYPE_MAPLE;
 		break;
 
 	case WSMOUSEIO_SRES:
@@ -200,14 +216,15 @@ mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 void
-mms_intr(void *arg, void *buf, int size)
+mms_intr(void *arg, struct maple_response *response, int size, int flags)
 {
 	struct mms_softc *sc = arg;
-	struct mms_condition *data = buf;
+	struct mms_condition *data = (void *) response->data;
 	int dx = 0, dy = 0, dz = 0, buttons = 0;
 	uint32_t buttonchg;
 
-	if (size < sizeof(*data))
+	if ((flags & MAPLE_FLAG_PERIODIC) == 0 ||
+	    size < sizeof(*data))
 		return;
 
 	data->buttons &= MMS_BUTTON_MASK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.8.6.5 2002/11/11 21:57:51 nathanw Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.8.6.6 2002/12/11 05:58:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -196,7 +196,7 @@ gdrom_intr(void *arg)
 	}
 
 	splx(s);
-	return (0);
+	return (1);
 }
 
 
@@ -381,8 +381,6 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 
 	sc = (struct gdrom_softc *)self;
 
-	printf(": SH4 IRL 9\n");
-
 	/*
 	 * Initialize and attach the disk structure.
 	 */
@@ -397,7 +395,8 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 	for (p = 0; p < 0x200000 / 4; p++)
 		x = ((__volatile u_int32_t *)0xa0000000)[p];
 
-	sysasic_intr_establish(SYSASIC_EVENT_GDROM, gdrom_intr, sc);
+	printf(": %s\n", sysasic_intr_string(IPL_BIO));
+	sysasic_intr_establish(SYSASIC_EVENT_GDROM, IPL_BIO, gdrom_intr, sc);
 }
 
 int

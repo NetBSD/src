@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.1.4.2 2002/10/18 02:35:37 nathanw Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.1.4.3 2002/12/11 05:53:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -189,14 +189,14 @@ ixp12x0_mem_bs_map(t, bpa, size, cacheable, bshp)
 	paddr_t pa, endpa;
 	vaddr_t va;
 
-	if ((bpa + size) >= IXP12X0_PCI_MEM_SIZE)
+	if ((bpa + size) >= IXP12X0_PCI_MEM_VBASE + IXP12X0_PCI_MEM_SIZE)
 		return (EINVAL);
 	/*
 	 * PCI MEM space is mapped same address as real memory
 	 */
 
-	pa = trunc_page(bpa + IXP12X0_PCI_MEM_VBASE);
-	endpa = round_page((bpa + IXP12X0_PCI_MEM_VBASE) + size);
+	pa = trunc_page(bpa);
+	endpa = round_page(bpa + size);
 
 	/* XXX use extent manager to check duplicate mapping */
 
@@ -209,7 +209,8 @@ ixp12x0_mem_bs_map(t, bpa, size, cacheable, bshp)
 
 	for(; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 	}
 	pmap_update(pmap_kernel());
 

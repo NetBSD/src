@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:22:30 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2002/12/11 05:49:25 thorpej Exp $
 
-KDIR=	/sys/adosfs
 INCSDIR= /usr/include/adosfs
 
 INCS=	adosfs.h

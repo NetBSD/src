@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.18 2002/11/11 21:56:35 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.19 2002/12/11 05:53:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.18 2002/11/11 21:56:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.19 2002/12/11 05:53:02 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -172,7 +172,7 @@ void pmap_dump_pvlist(vaddr_t phys, char *m);
 #define	PDB_PVDUMP	0x8000
 
 int debugmap = 0;
-int pmapdebug = PDB_PARANOIA | PDB_FOLLOW;
+int pmapdebug = PDB_PARANOIA | PDB_FOLLOW | PDB_GROWKERN | PDB_ENTER | PDB_REMOVE;
 #define	NPDEBUG(_lev_,_stat_) \
 	if (pmapdebug & (_lev_)) \
         	((_stat_))
@@ -251,7 +251,7 @@ static struct simplelock pmaps_lock;
 TAILQ_HEAD(pv_pagelist, pv_page);
 static struct pv_pagelist pv_freepages;	/* list of pv_pages with free entrys */
 static struct pv_pagelist pv_unusedpgs; /* list of unused pv_pages */
-static int pv_nfpvents;			/* # of free pv entries */
+static unsigned int pv_nfpvents;	/* # of free pv entries */
 static struct pv_page *pv_initpage;	/* bootstrap page from kernel_map */
 static vaddr_t pv_cachedva;		/* cached VA for later use */
 
@@ -263,27 +263,27 @@ static vaddr_t pv_cachedva;		/* cached VA for later use */
  * local prototypes
  */
 
-static struct pv_entry	*pmap_add_pvpage __P((struct pv_page *, boolean_t));
-static struct pv_entry	*pmap_alloc_pv __P((struct pmap *, int)); /* see codes below */
+static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
+static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
 #define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
 #define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
-static struct pv_entry	*pmap_alloc_pvpage __P((struct pmap *, int));
-static void		 pmap_enter_pv __P((struct vm_page *,
-					    struct pv_entry *, struct pmap *,
-					    vaddr_t, struct vm_page *, int));
-static void		 pmap_free_pv __P((struct pmap *, struct pv_entry *));
-static void		 pmap_free_pvs __P((struct pmap *, struct pv_entry *));
-static void		 pmap_free_pv_doit __P((struct pv_entry *));
-static void		 pmap_free_pvpage __P((void));
-static boolean_t	 pmap_is_curpmap __P((struct pmap *));
-static struct pv_entry	*pmap_remove_pv __P((struct vm_page *, struct pmap *, 
-			vaddr_t));
+static struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
+static void		 pmap_enter_pv(struct vm_page *,
+				       struct pv_entry *, struct pmap *,
+				       vaddr_t, struct vm_page *, unsigned int);
+static void		 pmap_free_pv(struct pmap *, struct pv_entry *);
+static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
+static void		 pmap_free_pv_doit(struct pv_entry *);
+static void		 pmap_free_pvpage(void);
+static boolean_t	 pmap_is_curpmap(struct pmap *);
+static struct pv_entry	*pmap_remove_pv(struct vm_page *, struct pmap *, 
+					vaddr_t);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
-static u_int pmap_modify_pv __P((struct pmap *, vaddr_t, struct vm_page *,
-	u_int, u_int));
+static u_int pmap_modify_pv(struct pmap *, vaddr_t, struct vm_page *,
+			    u_int, u_int);
 
 /*
  * Structure that describes and L1 table.
@@ -298,14 +298,14 @@ struct l1pt {
 #define	PTFLAG_KPT		0x02		/* Kernel pt's are mapped */
 #define	PTFLAG_CLEAN		0x04		/* L1 is clean */
 
-static void pmap_free_l1pt __P((struct l1pt *));
-static int pmap_allocpagedir __P((struct pmap *));
-static int pmap_clean_page __P((struct pv_entry *, boolean_t));
-static void pmap_page_remove __P((struct vm_page *));
+static void	pmap_free_l1pt(struct l1pt *);
+static int	pmap_allocpagedir(struct pmap *);
+static int	pmap_clean_page(struct pv_entry *, boolean_t);
+static void	pmap_page_remove(struct vm_page *);
 
-static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t));
-static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t));
-__inline static void pmap_clearbit __P((struct vm_page *, unsigned int));
+static struct vm_page	*pmap_alloc_ptp(struct pmap *, vaddr_t);
+static struct vm_page	*pmap_get_ptp(struct pmap *, vaddr_t);
+__inline static void 	 pmap_clearbit(struct vm_page *, unsigned int);
 
 extern paddr_t physical_start;
 extern paddr_t physical_end;
@@ -332,26 +332,26 @@ static int l1pt_create_count;		    /* stat - L1's create count */
 static int l1pt_reuse_count;		    /* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
-void pmap_pinit __P((struct pmap *));
-void pmap_freepagedir __P((struct pmap *));
+void pmap_pinit(struct pmap *);
+void pmap_freepagedir(struct pmap *);
 
 /* Other function prototypes */
-extern void bzero_page __P((vaddr_t));
-extern void bcopy_page __P((vaddr_t, vaddr_t));
+extern void bzero_page(vaddr_t);
+extern void bcopy_page(vaddr_t, vaddr_t);
 
-struct l1pt *pmap_alloc_l1pt __P((void));
-static __inline void pmap_map_in_l1 __P((struct pmap *pmap, vaddr_t va,
-     vaddr_t l2pa, int));
+struct l1pt *pmap_alloc_l1pt(void);
+static __inline void pmap_map_in_l1(struct pmap *pmap, vaddr_t va,
+     				    vaddr_t l2pa, int);
 
-static pt_entry_t *pmap_map_ptes __P((struct pmap *));
-static void pmap_unmap_ptes __P((struct pmap *));
+static pt_entry_t *pmap_map_ptes(struct pmap *);
+static void 	   pmap_unmap_ptes(struct pmap *);
 
-__inline static void pmap_vac_me_harder __P((struct pmap *, struct vm_page *,
-    pt_entry_t *, boolean_t));
-static void pmap_vac_me_kpmap __P((struct pmap *, struct vm_page *,
-    pt_entry_t *, boolean_t));
-static void pmap_vac_me_user __P((struct pmap *, struct vm_page *,
-    pt_entry_t *, boolean_t));
+__inline static void pmap_vac_me_harder(struct pmap *, struct vm_page *,
+					pt_entry_t *, boolean_t);
+static void pmap_vac_me_kpmap(struct pmap *, struct vm_page *,
+			      pt_entry_t *, boolean_t);
+static void pmap_vac_me_user(struct pmap *, struct vm_page *,
+			     pt_entry_t *, boolean_t);
 
 /*
  * real definition of pv_entry.
@@ -534,7 +534,6 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 	struct vm_page *pg;
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
-	int s;
 
 	/*
 	 * if we need_entry and we've got unused pv_pages, allocate from there
@@ -564,6 +563,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 
 
 	if (pv_cachedva == 0) {
+		int s;
 		s = splvm();
 		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL,
 		    PAGE_SIZE, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
@@ -605,7 +605,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 static struct pv_entry *
 pmap_add_pvpage(struct pv_page *pvp, boolean_t need_entry)
 {
-	int tofree, lcv;
+	unsigned int tofree, lcv;
 
 	/* do we need to return one? */
 	tofree = (need_entry) ? PVE_PER_PVPAGE - 1 : PVE_PER_PVPAGE;
@@ -786,7 +786,7 @@ pmap_free_pvpage(void)
 
 __inline static void
 pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, struct pmap *pmap,
-    vaddr_t va, struct vm_page *ptp, int flags)
+    vaddr_t va, struct vm_page *ptp, unsigned int flags)
 {
 	pve->pv_pmap = pmap;
 	pve->pv_va = va;
@@ -1063,6 +1063,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
 	virtual_avail += PAGE_SIZE; pte++;
 
 	memhook = (char *) virtual_avail;	/* don't need pte */
+	*pte = 0;
 	virtual_avail += PAGE_SIZE; pte++;
 
 	msgbufaddr = (caddr_t) virtual_avail;	/* don't need pte */
@@ -1160,7 +1161,7 @@ pmap_init(void)
 void
 pmap_postinit(void)
 {
-	int loop;
+	unsigned int loop;
 	struct l1pt *pt;
 
 #ifdef PMAP_STATIC_L1S
@@ -1881,7 +1882,8 @@ pmap_zero_page_xscale(paddr_t phys)
 boolean_t
 pmap_pageidlezero(paddr_t phys)
 {
-	int i, *ptr;
+	unsigned int i;
+	int *ptr;
 	boolean_t rv = TRUE;
 #ifdef DEBUG
 	struct vm_page *pg;
@@ -2120,12 +2122,12 @@ static void
 pmap_vac_me_kpmap(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 	boolean_t clear_cache)
 {
-	int user_entries = 0;
-	int user_writable = 0;
-	int user_cacheable = 0;
-	int kernel_entries = 0;
-	int kernel_writable = 0;
-	int kernel_cacheable = 0;
+	unsigned int user_entries = 0;
+	unsigned int user_writable = 0;
+	unsigned int user_cacheable = 0;
+	unsigned int kernel_entries = 0;
+	unsigned int kernel_writable = 0;
+	unsigned int kernel_cacheable = 0;
 	struct pv_entry *pv;
 	struct pmap *last_pmap = pmap;
 
@@ -2227,11 +2229,11 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 {
 	struct pmap *kpmap = pmap_kernel();
 	struct pv_entry *pv, *npv;
-	int entries = 0;
-	int writable = 0;
-	int cacheable_entries = 0;
-	int kern_cacheable = 0;
-	int other_writable = 0;
+	unsigned int entries = 0;
+	unsigned int writable = 0;
+	unsigned int cacheable_entries = 0;
+	unsigned int kern_cacheable = 0;
+	unsigned int other_writable = 0;
 
 	pv = pg->mdpage.pvh_list;
 	KASSERT(ptes != NULL);
@@ -2303,7 +2305,7 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			cpu_tlb_flushID();
 		}
 		cpu_cpwait();
-	} else if (entries > 0) {
+	} else if (entries > cacheable_entries) {
 		/*
 		 * Turn cacheing back on for some pages.  If it is a kernel
 		 * page, only do so if there are no other writable pages.
@@ -2345,7 +2347,7 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 void
 pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
-	int cleanlist_idx = 0;
+	unsigned int cleanlist_idx = 0;
 	struct pagelist {
 		vaddr_t va;
 		pt_entry_t *pte;
@@ -2360,7 +2362,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	if (!pmap)
 		return;
 
-	PDEBUG(0, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
+	NPDEBUG(PDB_REMOVE, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
 	    pmap, sva, eva));
 
 	/*
@@ -2718,9 +2720,11 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	int error, nflags;
 	struct vm_page *ptp = NULL;
 
-	PDEBUG(5, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, wired = %d\n",
-	    va, pa, pmap, prot, wired));
+	NPDEBUG(PDB_ENTER, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, flags=%08x, wired = %d\n",
+	    va, pa, pmap, prot, flags, wired));
 
+	KDASSERT((flags & PMAP_WIRED) == 0 || (flags & VM_PROT_ALL) != 0);
+	
 #ifdef DIAGNOSTIC
 	/* Valid address ? */
 	if (va >= (pmap_curmaxkvaddr))

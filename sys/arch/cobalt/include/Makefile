@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.9.8.4 2002/09/17 21:14:09 nathanw Exp $
+#	$NetBSD: Makefile,v 1.9.8.5 2002/12/11 05:58:25 thorpej Exp $
 
-KDIR=	/sys/arch/cobalt/include
 INCSDIR= /usr/include/cobalt
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \

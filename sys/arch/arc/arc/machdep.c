@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64.2.8 2002/10/18 02:35:08 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64.2.9 2002/12/11 05:52:05 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 #include "opt_md.h"
 
 #include <sys/param.h>
@@ -163,7 +164,7 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 /* initialize bss, etc. from kernel start, before main() is called. */
-extern void mach_init __P((int, char **argv, char **));
+void mach_init __P((int, char **argv, char **));
 
 char *firmware_getenv __P((char *env));
 void arc_sysreset __P((bus_addr_t, bus_size_t));
@@ -345,6 +346,10 @@ mach_init(argc, argv, envv)
 	/* init symbols if present */
 	if (esym)
 		ddb_init(1000, &end, (int*)esym);
+#else
+#ifdef SYMTAB_SPACE
+	ddb_init(0, NULL, NULL);
+#endif
 #endif
 #endif
 
