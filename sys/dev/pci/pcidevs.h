@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.433.2.2 2002/06/11 01:13:37 lukem Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.3 2002/06/11 01:30:12 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1656,6 +1656,7 @@
 
 /* Netmos products */
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Dual UART and 1284 Printer port */
+#define	PCI_PRODUCT_NETMOS_NM9845	0x9845		/* Quad UART and 1284 Printer port */
 
 /* Network Security Technologies, Inc. */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
