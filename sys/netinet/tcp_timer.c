@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.52 2001/09/10 20:36:43 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.53 2001/09/10 22:14:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -221,87 +221,17 @@ tcp_delack(void *arg)
 void
 tcp_slowtimo()
 {
-	struct inpcb *inp, *ninp;
-	struct tcpcb *tp;
-#ifdef INET6
-	struct in6pcb *in6p, *nin6p;
-#endif
-	int s;
-	long i;
 	static int syn_cache_last = 0;
-	int skip, mask;
-
-	skip = mask = 0;
+	int s;
 
 	s = splsoftnet();
 	tcp_maxidle = tcp_keepcnt * tcp_keepintvl;
-	/*
-	 * Search through tcb's and update active timers.
-	 */
-	mask |= 1;
-	inp = tcbtable.inpt_queue.cqh_first;
-	if (inp == (struct inpcb *)0) {				/* XXX */
-		skip |= 1;
-		goto dotcb6;
-	}
-	for (; inp != (struct inpcb *)&tcbtable.inpt_queue; inp = ninp) {
-		ninp = inp->inp_queue.cqe_next;
-		tp = intotcpcb(inp);
-		if (tp == 0 || tp->t_state == TCPS_LISTEN)
-			continue;
-		for (i = 0; i < TCPT_NTIMERS; i++) {
-			if (TCP_TIMER_ISEXPIRED(tp, i)) {
-				TCP_TIMER_DISARM(tp, i);
-				(*(tcp_timer_funcs[i]))(tp);
-				/* XXX NOT MP SAFE */
-				if ((ninp == (void *)&tcbtable.inpt_queue &&
-				    tcbtable.inpt_queue.cqh_last != inp) ||
-				    ninp->inp_queue.cqe_prev != inp)
-					goto tpgone;
-			}
-		}
-tpgone:
-		;
-	}
-dotcb6:
-#ifdef INET6
-	mask |= 2;
-	in6p = tcb6.in6p_next;
-	if (in6p == (struct in6pcb *)0) {			/* XXX */
-		skip |= 2;
-		goto doiss;
-	}
-	for (; in6p != (struct in6pcb *)&tcb6; in6p = nin6p) {
-		nin6p = in6p->in6p_next;
-		tp = in6totcpcb(in6p);
-		if (tp == 0 || tp->t_state == TCPS_LISTEN)
-			continue;
-		for (i = 0; i < TCPT_NTIMERS; i++) {
-			if (TCP_TIMER_ISEXPIRED(tp, i)) {
-				TCP_TIMER_DISARM(tp, i);
-				(*(tcp_timer_funcs[i]))(tp);
-				/* XXX NOT MP SAFE */
-				if ((nin6p == (void *)&tcb6 &&
-				    tcb6.in6p_prev != in6p) ||
-				    nin6p->in6p_prev != in6p)
-					goto tp6gone;
-			}
-		}
-tp6gone:
-		;
-	}
-
-doiss:
-#endif
-	if (mask == skip)
-		goto done;
 	tcp_iss_seq += TCP_ISSINCR;			/* increment iss */
 	tcp_now++;					/* for timestamps */
 	if (++syn_cache_last >= tcp_syn_cache_interval) {
 		syn_cache_timer();
 		syn_cache_last = 0;
 	}
-done:
 	splx(s);
 }
 
@@ -339,6 +269,8 @@ tcp_timer_rexmt(void *arg)
 #endif
 
 	s = splsoftnet();
+
+	callout_deactivate(&tp->t_timer[TCPT_REXMT]);
 
 #ifdef TCP_DEBUG
 #ifdef INET
@@ -485,6 +417,8 @@ tcp_timer_persist(void *arg)
 
 	s = splsoftnet();
 
+	callout_deactivate(&tp->t_timer[TCPT_PERSIST]);
+
 #ifdef INET
 	if (tp->t_inpcb)
 		so = tp->t_inpcb->inp_socket;
@@ -546,6 +480,8 @@ tcp_timer_keep(void *arg)
 #endif
 
 	s = splsoftnet();
+
+	callout_deactivate(&tp->t_timer[TCPT_KEEP]);
 
 #ifdef TCP_DEBUG
 	ostate = tp->t_state;
@@ -628,6 +564,8 @@ tcp_timer_2msl(void *arg)
 #endif
 
 	s = splsoftnet();
+
+	callout_deactivate(&tp->t_timer[TCPT_2MSL]);
 
 #ifdef INET
 	if (tp->t_inpcb)

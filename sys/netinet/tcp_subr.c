@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.117 2001/09/10 20:36:43 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.118 2001/09/10 22:14:27 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1021,6 +1021,7 @@ tcp_close(tp)
 	(void) tcp_freeq(tp);
 	TCP_REASS_UNLOCK(tp);
 
+	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
 	syn_cache_cleanup(tp);
 
