@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.12 1999/05/18 04:49:41 jwise Exp $	*/
+/*	$NetBSD: parse.c,v 1.13 2003/03/27 22:32:59 jdolecek Exp $	*/
 
 /*
 ** parse.c                         This file contains the protocol parser
@@ -232,7 +232,7 @@ int parse(fp, laddr, faddr)
                gethost(faddr),
                lport, fport);
 
-      printf("%d , %d : USER-ID : OTHER :%s\r\n",
+      printf("%d , %d : USERID : OTHER :%s\r\n",
            lport, fport, lie_string);
       continue;
     }
