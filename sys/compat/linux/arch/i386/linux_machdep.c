@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.56 2000/12/22 22:58:57 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.57 2000/12/29 20:07:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -775,6 +775,8 @@ linux_machdepioctl(p, v, retval)
 		 * Unknown to us. If it's on a device, just pass it through
 		 * using PTIOCLINUX, the device itself might be able to
 		 * make some sense of it.
+		 * XXX hack: if the function returns EJUSTRETURN,
+		 * it has stuffed a sysctl return value in pt.data.
 		 */
 		FILE_USE(fp);
 		ioctlf = fp->f_ops->fo_ioctl;
@@ -782,6 +784,10 @@ linux_machdepioctl(p, v, retval)
 		pt.data = SCARG(uap, data);
 		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
 		FILE_UNUSE(fp, p);
+		if (error == EJUSTRETURN) {
+			retval[0] = (register_t)pt.data;
+			error = 0;
+		}
 
 		if (error == EINVAL)
 			printf("linux_machdepioctl: invalid ioctl %08lx\n",
