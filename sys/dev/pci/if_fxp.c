@@ -1,7 +1,7 @@
-/*	$NetBSD: if_fxp.c,v 1.27 1998/12/19 01:14:37 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.28 1999/02/13 02:12:59 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -173,6 +173,8 @@ static void fxp_80c24_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 static inline void fxp_scb_wait	__P((struct fxp_softc *));
 static int fxp_intr		__P((void *));
+static void fxp_rxintr		__P((struct fxp_softc *));
+static void fxp_txintr		__P((struct fxp_softc *));
 static void fxp_start		__P((struct ifnet *));
 static int fxp_ioctl		__P((struct ifnet *, u_long, caddr_t));
 static void fxp_init		__P((void *));
@@ -893,140 +895,40 @@ fxp_intr(arg)
 	void *arg;
 {
 	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t statack;
 	int claimed = 0;
 
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
 		claimed = 1;
 
-		/*
-		 * First ACK all the interrupts in this pass.
-		 */
+		/* First, ACK all the interrupts in this pass. */
 		CSR_WRITE_1(sc, FXP_CSR_SCB_STATACK, statack);
 
-		/*
-		 * Free any finished transmit mbuf chains.
-		 */
+		/* Handle transmit interrupts. */
 		if (statack & FXP_SCB_STATACK_CXTNO) {
-			struct fxp_cb_tx *txp;
-			bus_dmamap_t txmap;
+			fxp_txintr(sc);
 
-			for (txp = sc->cbl_first; sc->tx_queued;
-			    txp = txp->cb_soft.next) {
-				bus_dmamap_sync(sc->sc_dmat,
-				    sc->sc_dmamap, FXP_TXDESCOFF(sc, txp),
-				    FXP_TXDESCSIZE,
-				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-				if ((txp->cb_status & FXP_CB_STATUS_C) == 0)
-					break;
-				if (txp->cb_soft.mb_head != NULL) {
-					txmap = txp->cb_soft.dmamap;
-					bus_dmamap_sync(sc->sc_dmat, txmap,
-					    0, txmap->dm_mapsize,
-					    BUS_DMASYNC_POSTWRITE);
-					bus_dmamap_unload(sc->sc_dmat, txmap);
-					m_freem(txp->cb_soft.mb_head);
-					txp->cb_soft.mb_head = NULL;
-				}
-				sc->tx_queued--;
-			}
-			sc->cbl_first = txp;
+			/* Only a real interrupt clears the watchdog timer. */
 			ifp->if_timer = 0;
-			ifp->if_flags &= ~IFF_OACTIVE;
-			if (sc->tx_queued == 0) {
-				if (sc->need_mcsetup)
-					fxp_mc_setup(sc);
-			}
-			/*
-			 * Try to start more packets transmitting.
-			 */
-			if (ifp->if_snd.ifq_head != NULL)
-				fxp_start(ifp);
 		}
 
-		/*
-		 * Process receiver interrupts. If a no-resource (RNR)
-		 * condition exists, get whatever packets we can and
-		 * re-start the receiver.
-		 */
+		/* Handle receive interrupts. */
 		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR)) {
-			struct fxp_rxdesc *rxd;
-			struct mbuf *m;
-			struct fxp_rfa *rfa;
-			bus_dmamap_t rxmap;
- rcvloop:
-			rxd = sc->rfa_head;
-			rxmap = rxd->fr_dmamap;
-			m = rxd->fr_mbhead;
-			rfa = (struct fxp_rfa *)(m->m_ext.ext_buf +
-			    RFA_ALIGNMENT_FUDGE);
+			fxp_rxintr(sc);
 
-			bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
-			    rxmap->dm_mapsize,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-
-			if (rfa->rfa_status & FXP_RFA_STATUS_C) {
-				/*
-				 * Remove first packet from the chain.
-				 */
-				sc->rfa_head = rxd->fr_next;
-				rxd->fr_next = NULL;
-
-				/*
-				 * Add a new buffer to the receive chain.
-				 * If this fails, the old buffer is recycled
-				 * instead.
-				 */
-				if (fxp_add_rfabuf(sc, rxd) == 0) {
-					struct ether_header *eh;
-					u_int16_t total_len;
-
-					total_len = rfa->actual_size &
-					    (MCLBYTES - 1);
-					if (total_len <
-					    sizeof(struct ether_header)) {
-						m_freem(m);
-						goto rcvloop;
-					}
-					m->m_pkthdr.rcvif = ifp;
-					m->m_pkthdr.len = m->m_len =
-					    total_len -
-					    sizeof(struct ether_header);
-					eh = mtod(m, struct ether_header *);
-#if NBPFILTER > 0
-					if (ifp->if_bpf) {
-						bpf_tap(ifp->if_bpf,
-						    mtod(m, caddr_t),
-						    total_len); 
-						/*
-						 * Only pass this packet up
-						 * if it is for us.
-						 */
-						if ((ifp->if_flags &
-						    IFF_PROMISC) &&
-						    (rfa->rfa_status &
-						    FXP_RFA_STATUS_IAMATCH) &&
-						    (eh->ether_dhost[0] & 1)
-						    == 0) {
-							m_freem(m);
-							goto rcvloop;
-						}
-					}
-#endif /* NBPFILTER > 0 */
-					m->m_data +=
-					    sizeof(struct ether_header);
-					ether_input(ifp, eh, m);
-				}
-				goto rcvloop;
-			}
+			/*
+			 * If a no-resource (RNR) condition exists, we've
+			 * gotten the packets we can.  Now just restart
+			 * the receiver.
+			 */
 			if (statack & FXP_SCB_STATACK_RNR) {
 				fxp_scb_wait(sc);
 				CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-				    rxmap->dm_segs[0].ds_addr +
-				    RFA_ALIGNMENT_FUDGE);
+				  sc->rfa_head->fr_dmamap->dm_segs[0].ds_addr +
+				  RFA_ALIGNMENT_FUDGE);
 				CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND,
-				    FXP_SCB_COMMAND_RU_START);
+				  FXP_SCB_COMMAND_RU_START);
 			}
 		}
 	}
@@ -1036,6 +938,140 @@ fxp_intr(arg)
 		rnd_add_uint32(&sc->rnd_source, statack);
 #endif
 	return (claimed);
+}
+
+/*
+ * Process transmit interrupts.
+ */
+static void
+fxp_txintr(sc)
+	struct fxp_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct fxp_cb_tx *txp;
+	bus_dmamap_t txmap;
+	int oqueued;
+
+	oqueued = sc->tx_queued;
+
+	for (txp = sc->cbl_first; sc->tx_queued != 0;
+	     txp = txp->cb_soft.next) {
+		bus_dmamap_sync(sc->sc_dmat,
+		    sc->sc_dmamap, FXP_TXDESCOFF(sc, txp), FXP_TXDESCSIZE,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		if ((txp->cb_status & FXP_CB_STATUS_C) == 0)
+			break;
+		if (txp->cb_soft.mb_head != NULL) {
+			txmap = txp->cb_soft.dmamap;
+			bus_dmamap_sync(sc->sc_dmat, txmap, 0,
+			    txmap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, txmap);
+			m_freem(txp->cb_soft.mb_head);
+			txp->cb_soft.mb_head = NULL;
+		}
+		sc->tx_queued--;
+	}
+
+	/*
+	 * If we dequeued packets, advance the dirty pointer and notify
+	 * the upper layer that there are transmit slots available.
+	 */
+	if (sc->tx_queued != oqueued) {
+		sc->cbl_first = txp;
+		ifp->if_flags &= ~IFF_OACTIVE;
+	}
+
+	/*
+	 * If there are not pending transmissions, program the multicast
+	 * filter now, if necessary.
+	 */
+	if (sc->tx_queued == 0 && sc->need_mcsetup)
+		fxp_mc_setup(sc);
+
+	/* Try to start more packets transmitting. */
+	fxp_start(ifp);
+}
+
+/*
+ * Handle receive interrupts.
+ */
+static void
+fxp_rxintr(sc)
+	struct fxp_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct fxp_rxdesc *rxd;
+	struct mbuf *m;
+	struct fxp_rfa *rfa;
+	struct ether_header *eh;
+	u_int16_t total_len;
+	bus_dmamap_t rxmap;
+
+	for (;;) {
+		rxd = sc->rfa_head;
+		rxmap = rxd->fr_dmamap;
+		m = rxd->fr_mbhead;
+		rfa = (struct fxp_rfa *)(m->m_ext.ext_buf +
+		    RFA_ALIGNMENT_FUDGE);
+
+		bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
+		    rxmap->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		if ((rfa->rfa_status & FXP_RFA_STATUS_C) == 0) {
+			/*
+			 * We have processed all of the
+			 * receive buffers.
+			 */
+			break;
+		}
+
+		/* Remove first packet from the chain. */
+		sc->rfa_head = rxd->fr_next;
+		rxd->fr_next = NULL;
+
+		/*
+		 * Add a new buffer to the receive chain.  If this fails,
+		 * the old buffer is recycled instead.
+		 */
+		if (fxp_add_rfabuf(sc, rxd) != 0) {
+			ifp->if_ierrors++;
+			continue;
+		}
+
+		/*
+		 * Note, we rely on MCLBYTES being a power of 2 here.
+		 */
+		total_len = rfa->actual_size & (MCLBYTES - 1);
+		if (total_len < sizeof(struct ether_header)) {
+			m_freem(m);
+			continue;
+		}
+
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = total_len;
+		eh = mtod(m, struct ether_header *);
+
+#if NBPFILTER > 0
+		/*
+		 * Pass this up to any BPF listeners, but only
+		 * pass it up the stack if its for us.
+		 */
+		if (ifp->if_bpf) {
+			bpf_mtap(ifp->if_bpf, m);
+			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+			    (rfa->rfa_status & FXP_RFA_STATUS_IAMATCH) == 0 &&
+			    (eh->ether_dhost[0] & 1) == 0) {
+				m_freem(m);
+				continue;
+			}
+		}
+#endif /* NBPFILTER > 0 */
+
+		/* Remove the Ethernet header and pass it on. */
+		m_adj(m, sizeof(struct ether_header));
+		ether_input(ifp, eh, m);
+	}
 }
 
 /*
@@ -1056,8 +1092,6 @@ fxp_tick(arg)
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
 	struct fxp_stats *sp = &sc->control_data->fcd_stats;
-	struct fxp_cb_tx *txp;
-	bus_dmamap_t txmap;
 	int s = splnet();
 
 	ifp->if_opackets += sp->tx_good;
@@ -1085,33 +1119,6 @@ fxp_tick(arg)
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}
-	/*
-	 * Release any xmit buffers that have completed DMA.  This isn't
-	 * strictly necessary to do here, but it's advantagous for mbufs
-	 * with external storage to be released in a timely manner rather
-	 * than being defered for a potentially long time.  This limits
-	 * the delay to a maximum of one second.
-	 */
-	for (txp = sc->cbl_first; sc->tx_queued;
-	    txp = txp->cb_soft.next) {
-		bus_dmamap_sync(sc->sc_dmat,
-		    sc->sc_dmamap, FXP_TXDESCOFF(sc, txp),
-		    FXP_TXDESCSIZE,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		if ((txp->cb_status & FXP_CB_STATUS_C) == 0)
-			break;
-		if (txp->cb_soft.mb_head != NULL) {
-			txmap = txp->cb_soft.dmamap;
-			bus_dmamap_sync(sc->sc_dmat, txmap,
-			    0, txmap->dm_mapsize,
-			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, txmap);
-			m_freem(txp->cb_soft.mb_head);
-			txp->cb_soft.mb_head = NULL;
-		}
-		sc->tx_queued--;
-	}
-	sc->cbl_first = txp;
 
 	/*
 	 * If we haven't received any packets in FXP_MAC_RX_IDLE seconds,
@@ -1122,11 +1129,25 @@ fxp_tick(arg)
 	 * bits prior to the packet header. This bug is supposed to only
 	 * occur in 10Mbps mode, but has been seen to occur in 100Mbps
 	 * mode as well (perhaps due to a 10/100 speed transition).
+	 *
+	 * Note that the call to fxp_txintr() below will call
+	 * fxp_mc_setup() if there are no pending transmissions.  I.e.
+	 * we only need specify that setup is required.
 	 */
 	if (sc->rx_idle_secs > FXP_MAX_RX_IDLE) {
 		sc->rx_idle_secs = 0;
-		fxp_mc_setup(sc);
+		sc->need_mcsetup = 1;
 	}
+
+	/*
+	 * Release any xmit buffers that have completed DMA.  This isn't
+	 * strictly necessary to do here, but it's advantagous for mbufs
+	 * with external storage to be released in a timely manner rather
+	 * than being defered for a potentially long time.  This limits
+	 * the delay to a maximum of one second.
+	 */
+	fxp_txintr(sc);
+
 	/*
 	 * If there is no pending command, start another stats
 	 * dump. Otherwise punt for now.
