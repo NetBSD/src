@@ -35,14 +35,8 @@
 
 #include <machine/asm.h>
 
-ENTRY(cos)
-	fldpi				/* Pi */
-	fadd	%st(0),%st		/* 2 Pi */
-	fldl	4(%esp)			/* Theta */
-1:	fprem1
-	fstswl	%ax
-	sahf
-	jp	1b
-	fstpl	%st(1)
-	fcos
+ENTRY(atan)
+	fldl	4(%esp)
+	fld1
+	fpatan
 	ret
