@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.18 2002/04/21 22:05:45 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.19 2002/04/22 18:31:11 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -920,8 +920,8 @@ intr_exit:
 	mtlr	6
 	lwz	28,IFRAME_LR(1)		/* saved LR */
 	lwz	29,IFRAME_CR(1)		/* saved CR */
-	lwz	6,IFRAME_R5(1)
-	lwz	5,IFRAME_R6(1)
+	lwz	6,IFRAME_R6(1)
+	lwz	5,IFRAME_R5(1)
 	lwz	4,IFRAME_R4(1)
 	lwz	3,IFRAME_R3(1)
 	lwz	0,IFRAME_R0(1)
