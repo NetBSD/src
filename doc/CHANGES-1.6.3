@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.141 2005/03/19 10:24:20 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.142 2005/04/06 11:01:37 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1668,4 +1668,19 @@ sys/dev/pci/pcidevs_data.h			regen
 	Add support for Adaptec 2200S Vulcan 2M, Dell PERC
 	320/DC, Adaptec 2410SA and Adaptec 2810SA controllers.
 	[he, ticket #1755]
+
+sys/ufs/ext2fs/ext2fs_bmap.c			1.19
+
+	getblk() can return NULL if we are the pagedaemon. Check for this.
+	[bouyer, ticket #5728]
+
+lib/libc/net/rcmd.c				1.55 via patch
+
+	Retain the euid of the target user whilst reading the
+	.rhosts file. This allows it to have a mode of 600
+	and still function correctly even when used on an NFS
+	client with uid 0 mapped to another (anonymous) UID.
+	Patch from Brian Ginsbach <ginsbach@cray.com>,
+	and fixes [bin/14880] from Darren Reed <darrenr@>.
+	[ginsbach, ticket #5732]
 
