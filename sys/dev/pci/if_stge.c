@@ -1,5 +1,4 @@
-#define	STGE_EVENT_COUNTERS
-/*	$NetBSD: if_stge.c,v 1.1 2001/07/25 00:11:51 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.2 2001/07/25 00:12:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
