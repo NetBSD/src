@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.151 1999/08/17 09:42:14 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.152 1999/08/24 21:32:26 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.146 1999/08/17 09:40:25 drochner Exp 
+ *	NetBSD: pcidevs,v 1.147 1999/08/24 21:32:04 soren Exp 
  */
 
 /*
@@ -1748,6 +1748,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82443BX Host Bridge/Controller (AGP disabled)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I740,
+	    0,
+	    "Intel",
+	    "i740 Graphics Accelerator",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
