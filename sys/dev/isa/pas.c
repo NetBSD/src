@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.29 1997/07/27 01:17:02 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.30 1997/07/27 23:51:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -111,7 +111,7 @@ void	pasconf __P((int, int, int, int));
 struct audio_hw_if pas_hw_if = {
 	pasopen,
 	sbdsp_close,
-	NULL,
+	0,
 	sbdsp_query_encoding,
 	sbdsp_set_params,
 	sbdsp_round_blocksize,
@@ -119,9 +119,9 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_get_out_port,
 	sbdsp_set_in_port,
 	sbdsp_get_in_port,
-	sbdsp_commit_settings,
-	NULL,
-	NULL,
+	0,
+	0,
+	0,
 	sbdsp_dma_output,
 	sbdsp_dma_input,
 	sbdsp_haltdma,
@@ -130,7 +130,7 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_contdma,
 	sbdsp_speaker_ctl,
 	pas_getdev,
-	sbdsp_setfd,
+	0,
 	sbdsp_mixer_set_port,
 	sbdsp_mixer_get_port,
 	sbdsp_mixer_query_devinfo,

@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.12 1997/07/15 07:51:04 augustss Exp $	*/
+/*	$NetBSD: aucc.c,v 1.13 1997/07/27 23:51:48 augustss Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -185,7 +185,6 @@ int	aucc_halt_input __P((void *));
 int	aucc_cont_output __P((void *));
 int	aucc_cont_input __P((void *));
 int	aucc_getdev __P((void *, struct audio_device *));
-int	aucc_setfd __P((void *, int));
 int	aucc_set_port __P((void *, mixer_ctrl_t *));
 int	aucc_get_port __P((void *, mixer_ctrl_t *));
 int	aucc_query_devinfo __P((void *, mixer_devinfo_t *));
@@ -213,7 +212,7 @@ struct audio_hw_if sa_hw_if = {
 	aucc_cont_input,
 	NULL,
 	aucc_getdev,
-	aucc_setfd,
+	NULL,
 	aucc_set_port,
 	aucc_get_port,
 	aucc_query_devinfo,
@@ -713,14 +712,6 @@ aucc_getdev(addr, retp)
 {
         *retp = aucc_device;
         return 0;
-}
-
-int
-aucc_setfd(addr, flag)
-        void *addr;
-        int flag;
-{
-        return flag?EINVAL:0; /* Always half-duplex */
 }
 
 int

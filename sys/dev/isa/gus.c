@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.33 1997/07/27 01:16:55 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.34 1997/07/27 23:51:55 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -418,7 +418,6 @@ STATIC void	gus_start_playing __P((struct gus_softc *, int));
 STATIC int	gus_continue_playing __P((struct gus_softc *, int));
 STATIC u_char guspeek __P((int, u_long));
 STATIC u_long convert_to_16bit __P((u_long));
-STATIC int	gus_setfd __P((void *, int));
 STATIC int	gus_mixer_set_port __P((void *, mixer_ctrl_t *));
 STATIC int	gus_mixer_get_port __P((void *, mixer_ctrl_t *));
 STATIC int	gusmax_mixer_set_port __P((void *, mixer_ctrl_t *));
@@ -623,7 +622,7 @@ struct audio_hw_if gus_hw_if = {
 	gus_speaker_ctl,
 
 	gus_getdev,
-	gus_setfd,
+	NULL,
 	gus_mixer_set_port,
 	gus_mixer_get_port,
 	gus_mixer_query_devinfo,
@@ -2792,7 +2791,7 @@ gus_init_cs4231(sc)
 			gusmax_speaker_ctl,
 
 			gus_getdev,
-			gus_setfd,
+			NULL,
 			gusmax_mixer_set_port,
 			gusmax_mixer_get_port,
 			gusmax_mixer_query_devinfo,
@@ -3162,14 +3161,6 @@ gus_cont_in_dma(addr)
 	return EOPNOTSUPP;
 }
 
-
-STATIC int
-gus_setfd(addr, flag)
-	void *addr;
-	int flag;
-{
-    return(0);				/* nothing fancy to do. */
-}
 
 STATIC __inline int
 gus_to_vol(cp, vol)

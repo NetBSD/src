@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.27 1997/07/27 01:17:09 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.28 1997/07/27 23:52:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -139,7 +139,6 @@ struct audio_device wss_device = {
 
 int	wssopen __P((dev_t, int));
 int	wss_getdev __P((void *, struct audio_device *));
-int	wss_setfd __P((void *, int));
 
 int	wss_set_out_port __P((void *, int));
 int	wss_get_out_port __P((void *));
@@ -181,7 +180,7 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_cont_in_dma,
 	NULL,
 	wss_getdev,
-	wss_setfd,
+	NULL,
 	wss_mixer_set_port,
 	wss_mixer_get_port,
 	wss_query_devinfo,
@@ -384,16 +383,6 @@ wss_getdev(addr, retp)
     *retp = wss_device;
     return 0;
 }
-
-int
-wss_setfd(addr, flag)
-    void *addr;
-    int flag;
-{
-    /* Can't do full-duplex */
-    return(ENOTTY);
-}
-
 
 int
 wss_set_out_port(addr, port)

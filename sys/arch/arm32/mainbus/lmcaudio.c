@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.9 1997/07/27 01:16:32 augustss Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.10 1997/07/27 23:51:50 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -336,7 +336,6 @@ int    lmcaudio_set_out_port	 __P((void *, int));
 int    lmcaudio_get_out_port	 __P((void *));
 int    lmcaudio_set_in_port	 __P((void *, int));
 int    lmcaudio_get_in_port  	 __P((void *));
-int    lmcaudio_commit_settings  __P((void *));
 int    lmcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
 int    lmcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
 int    lmcaudio_halt_output	 __P((void *));
@@ -345,7 +344,6 @@ int    lmcaudio_cont_output	 __P((void *));
 int    lmcaudio_cont_input	 __P((void *));
 int    lmcaudio_speaker_ctl	 __P((void *, int));
 int    lmcaudio_getdev		 __P((void *, struct audio_device *));
-int    lmcaudio_setfd	 	 __P((void *, int));
 int    lmcaudio_set_port	 __P((void *, mixer_ctrl_t *));
 int    lmcaudio_get_port	 __P((void *, mixer_ctrl_t *));
 int    lmcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
@@ -441,16 +439,6 @@ lmcaudio_get_in_port(addr)
 {
 	register struct lmcaudio_softc *sc = addr;
 	return(sc->inport);
-}
-
-int
-lmcaudio_commit_settings(addr)
-	void *addr;
-{
-#ifdef DEBUG
-printf ( "DEBUG: committ_settings\n" );
-#endif
-	return(0);
 }
 
 #define ROUND(s)  ( ((int)s) & (~(NBPG-1)) )
@@ -569,15 +557,6 @@ lmcaudio_getdev(addr, retp)
 
 
 int
-lmcaudio_setfd(addr, flag)
-	void *addr;
-	int flag;
-{
-	/* Can't do full-duplex */
-	return(ENOTTY);
-}
-
-int
 lmcaudio_set_port(addr, cp)
 	void *addr;
 	mixer_ctrl_t *cp;
@@ -612,9 +591,9 @@ struct audio_hw_if lmcaudio_hw_if = {
 	lmcaudio_get_out_port,
 	lmcaudio_set_in_port,
 	lmcaudio_get_in_port,
-	lmcaudio_commit_settings,
-	NULL,
-	NULL,
+	0,
+	0,
+	0,
 	lmcaudio_start_output,
 	lmcaudio_start_input,
 	lmcaudio_halt_output,
@@ -623,7 +602,7 @@ struct audio_hw_if lmcaudio_hw_if = {
 	lmcaudio_cont_input,
 	lmcaudio_speaker_ctl,
 	lmcaudio_getdev,
-	lmcaudio_setfd,
+	0,
 	lmcaudio_set_port,
 	lmcaudio_get_port,
 	lmcaudio_query_devinfo,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.50 1997/07/27 01:17:05 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.51 1997/07/27 23:52:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -77,7 +77,7 @@ int	sb_getdev __P((void *, struct audio_device *));
 struct audio_hw_if sb_hw_if = {
 	sbopen,
 	sbdsp_close,
-	NULL,
+	0,
 	sbdsp_query_encoding,
 	sbdsp_set_params,
 	sbdsp_round_blocksize,
@@ -85,7 +85,7 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_get_out_port,
 	sbdsp_set_in_port,
 	sbdsp_get_in_port,
-	sbdsp_commit_settings,
+	0,
 	sbdsp_dma_init_output,
 	sbdsp_dma_init_input,
 	sbdsp_dma_output,
@@ -96,7 +96,7 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_contdma,
 	sbdsp_speaker_ctl,
 	sb_getdev,
-	sbdsp_setfd,
+	0,
 	sbdsp_mixer_set_port,
 	sbdsp_mixer_get_port,
 	sbdsp_mixer_query_devinfo,

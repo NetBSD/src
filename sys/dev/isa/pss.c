@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.29 1997/07/27 01:17:04 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.30 1997/07/27 23:51:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -185,7 +185,6 @@ int	mpuintr __P((void *));
 int	pss_speaker_ctl __P((void *, int));
 
 int	pss_getdev __P((void *, struct audio_device *));
-int	pss_setfd __P((void *, int));
 
 int	pss_set_out_port __P((void *, int));
 int	pss_get_out_port __P((void *));
@@ -252,7 +251,7 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_cont_in_dma,
 	pss_speaker_ctl,
 	pss_getdev,
-	pss_setfd,
+	NULL,
 	pss_mixer_set_port,
 	pss_mixer_get_port,
 	pss_query_devinfo,
@@ -1392,15 +1391,6 @@ pss_getdev(addr, retp)
 
     *retp = pss_device;
     return 0;
-}
-
-int
-pss_setfd(addr, flag)
-    void *addr;
-    int flag;
-{
-    /* Can't do full-duplex */
-    return(ENOTTY);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.23 1997/07/27 01:16:37 augustss Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.24 1997/07/27 23:51:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -222,7 +222,6 @@ int	amd7930_halt_input __P((void *));
 int	amd7930_cont_output __P((void *));
 int	amd7930_cont_input __P((void *));
 int	amd7930_getdev __P((void *, struct audio_device *));
-int	amd7930_setfd __P((void *, int));
 int	amd7930_set_port __P((void *, mixer_ctrl_t *));
 int	amd7930_get_port __P((void *, mixer_ctrl_t *));
 int	amd7930_query_devinfo __P((void *, mixer_devinfo_t *));
@@ -231,7 +230,7 @@ int	amd7930_query_devinfo __P((void *, mixer_devinfo_t *));
 struct audio_hw_if sa_hw_if = {
 	amd7930_open,
 	amd7930_close,
-	NULL,
+	0,
 	amd7930_query_encoding,
 	amd7930_set_params,
 	amd7930_round_blocksize,
@@ -240,17 +239,17 @@ struct audio_hw_if sa_hw_if = {
 	amd7930_set_in_port,
 	amd7930_get_in_port,
 	amd7930_commit_settings,
-	NULL,
-	NULL,
+	0,
+	0,
 	amd7930_start_output,
 	amd7930_start_input,
 	amd7930_halt_output,
 	amd7930_halt_input,
 	amd7930_cont_output,
 	amd7930_cont_input,
-	NULL,
+	0,
 	amd7930_getdev,
-	amd7930_setfd,
+	0,
 	amd7930_set_port,
 	amd7930_get_port,
 	amd7930_query_devinfo,
@@ -660,15 +659,6 @@ amd7930_getdev(addr, retp)
 {
         *retp = amd7930_device;
         return 0;
-}
-
-int
-amd7930_setfd(addr, flag)
-        void *addr;
-        int flag;
-{
-        /* Always full-duplex */
-        return(0);
 }
 
 int
