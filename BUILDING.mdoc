@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.5 2001/10/31 23:20:34 tv Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.6 2001/11/01 00:14:45 thorpej Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -771,6 +771,9 @@ before building (provides a clean starting point).  This will skip deleting
 .Sy DESTDIR
 if building on a native system to the root directory.
 .
+.It Sy -t
+Build and install tools only.  This option implies
+.Sy -b .
 .It Sy -u
 Set the
 .Sy UPDATE

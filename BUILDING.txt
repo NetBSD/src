@@ -423,6 +423,8 @@ BUILDING
                (provides a clean starting point).  This will skip deleting
                DESTDIR if building on a native system to the root directory.
 
+     -t        Build and install tools only.  This option implies -b.
+
      -u        Set the UPDATE variable.
 
      -w wrapper
