@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.32 2003/09/21 19:17:05 jdolecek Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.33 2003/09/22 12:59:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.32 2003/09/21 19:17:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.33 2003/09/22 12:59:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ logwakeup()
 		return;
 	selnotify(&logsoftc.sc_selp, 0);
 	if (logsoftc.sc_state & LOG_ASYNC)
-		fownsignal(logsoftc.sc_pgid, 0, 0, NULL);
+		fownsignal(logsoftc.sc_pgid, SIGIO, 0, 0, NULL);
 	if (logsoftc.sc_state & LOG_RDWAIT) {
 		wakeup((caddr_t)msgbufp);
 		logsoftc.sc_state &= ~LOG_RDWAIT;
