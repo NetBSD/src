@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.12 2002/11/15 13:51:29 ad Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.13 2002/11/15 17:51:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.12 2002/11/15 13:51:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.13 2002/11/15 17:51:33 itojun Exp $");
 
 #include "opt_i2o.h"
 
@@ -93,7 +93,7 @@ iop_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	 * Match DPT/Adaptec boards that don't conform exactly to the spec.
 	 */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DPT && 
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_I20 ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_I2O ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_2005S))
 		return (1);
 
