@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.11 1999/01/01 21:43:18 ragge Exp $      */
+/*      $NetBSD: pte.h,v 1.12 1999/05/23 23:03:44 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -71,7 +71,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define PG_W            0x00400000
 #define PG_U            0x00200000
 #define PG_FRAME        0x001fffff
-#define	PG_PFNUM(x)	((x) >> VAX_PGSHIFT)
+#define	PG_PFNUM(x)	(((unsigned long)(x) & 0x3ffffe00) >> VAX_PGSHIFT)
 
 #ifndef _LOCORE
 extern pt_entry_t *Sysmap;
@@ -80,13 +80,12 @@ extern pt_entry_t *Sysmap;
  */
 #endif
 
-#define	kvtopte(va) \
-	(&Sysmap[((unsigned)(va) & ~KERNBASE) >> VAX_PGSHIFT])
+#define	kvtopte(va) (&Sysmap[PG_PFNUM(va)])
 #define	ptetokv(pt) \
 	((((pt_entry_t *)(pt) - Sysmap) << VAX_PGSHIFT) + 0x80000000)
 #define	kvtophys(va) \
 	(((kvtopte(va))->pg_pfn << VAX_PGSHIFT) | ((int)(va) & VAX_PGOFSET))
 #define	uvtopte(va, pcb) \
-	(((unsigned)va < 0x40000000) || ((unsigned)va > 0x80000000) ? \
-	&((pcb->P0BR)[(unsigned)va >> VAX_PGSHIFT]) : \
-	&((pcb->P1BR)[((unsigned)va & 0x3fffffff) >> VAX_PGSHIFT]))
+	(((unsigned)va < 0x40000000) ? \
+	&((pcb->P0BR)[PG_PFNUM(va)]) : \
+	&((pcb->P1BR)[PG_PFNUM(va)]))
