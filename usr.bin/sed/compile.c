@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.25.2.1 2004/06/14 04:18:00 jmc Exp $	*/
+/*	$NetBSD: compile.c,v 1.25.2.2 2004/08/30 08:34:48 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.25.2.1 2004/06/14 04:18:00 jmc Exp $");
+__RCSID("$NetBSD: compile.c,v 1.25.2.2 2004/08/30 08:34:48 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -544,7 +544,7 @@ compile_subst(char *p, struct s_subst *s)
 		size += sp - op;
 		if (asize - size < _POSIX2_LINE_MAX + 1) {
 			asize *= 2;
-			text = xmalloc(asize);
+			text = xrealloc(text, asize);
 		}
 	} while (cu_fgets(p = lbuf, sizeof(lbuf)));
 	err(COMPILE, "unterminated substitute in regular expression");
