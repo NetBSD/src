@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/04/07 07:55:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1997/04/14 08:49:09 veego Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:47 vixie Exp 
 
 .PATH:	${.CURDIR}/../man
@@ -19,6 +19,7 @@ ndc: ndc.sh Makefile ${.CURDIR}/../Makefile.inc
 	    -e "s|%PS%|${PS}|" \
 	    -e "s|%DESTSBIN%|${BINDIR}|" \
 	    -e "s|%IOT%|${IOT}|" \
+	    -e "s|%INDOT%||" \
 	    < ${.CURDIR}/ndc.sh > $@
 	chmod +x $@
 
