@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.29 2002/03/05 04:13:01 itojun Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.30 2002/03/17 19:41:11 atatat Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -77,7 +77,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.29 2002/03/05 04:13:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.30 2002/03/17 19:41:11 atatat Exp $");
 
 #include "ppp.h"
 
@@ -413,7 +413,7 @@ ppptioctl(tp, cmd, data, flag, p)
     int error, s;
 
     if (sc == NULL || tp != (struct tty *) sc->sc_devp)
-	return -1;
+	return (EPASSTHROUGH);
 
     error = 0;
     switch (cmd) {

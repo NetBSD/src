@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.12 2001/07/22 11:29:46 wiz Exp $	*/
+/*	$NetBSD: ams.c,v 1.13 2002/03/17 19:40:44 atatat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -537,7 +537,7 @@ ams_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	return -1;
+	return EPASSTHROUGH;
 }
 
 void

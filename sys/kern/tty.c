@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.133 2002/03/08 20:48:41 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.134 2002/03/17 19:41:07 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.133 2002/03/08 20:48:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.134 2002/03/17 19:41:07 atatat Exp $");
 
 #include "opt_uconsole.h"
 
@@ -1019,7 +1019,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 #ifdef COMPAT_OLDTTY
 		return (ttcompat(tp, cmd, data, flag, p));
 #else
-		return (-1);
+		return (EPASSTHROUGH);
 #endif
 	}
 	return (0);

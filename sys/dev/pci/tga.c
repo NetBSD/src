@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
+/* $NetBSD: tga.c,v 1.41 2002/03/17 19:41:00 atatat Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.41 2002/03/17 19:41:00 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -608,7 +608,7 @@ tga_ioctl(v, cmd, data, flag, p)
 		return (*dcrf->ramdac_set_cursor)(dcrc,
 		    (struct wsdisplay_cursor *)data);
 	}
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 static int

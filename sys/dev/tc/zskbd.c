@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.4 2002/03/13 15:21:31 ad Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.5 2002/03/17 19:41:04 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.4 2002/03/13 15:21:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.5 2002/03/17 19:41:04 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ zskbd_ioctl(v, cmd, data, flag, p)
 		*(int *)data = sc->sc_itl->zsi_ks.kcvol;
 		return 0;
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 static void

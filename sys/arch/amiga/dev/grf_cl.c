@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.28 2002/01/28 09:56:55 aymeric Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.29 2002/03/17 19:40:28 atatat Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.28 2002/01/28 09:56:55 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.29 2002/03/17 19:40:28 atatat Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -730,7 +730,7 @@ cl_mode(gp, cmd, arg, a2, a3)
 		break;
 	}
 
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 int
@@ -774,7 +774,7 @@ cl_ioctl(gp, cmd, data)
                 return (cl_blank(gp, (int *)data));
 
 	}
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 int

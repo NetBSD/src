@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.193 2001/11/20 08:43:45 lukem Exp $	*/
+/*	$NetBSD: com.c,v 1.194 2002/03/17 19:40:57 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.193 2001/11/20 08:43:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.194 2002/03/17 19:40:57 atatat Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1024,11 +1024,11 @@ comioctl(dev, cmd, data, flag, p)
 		return (EIO);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
@@ -1172,7 +1172,7 @@ comioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

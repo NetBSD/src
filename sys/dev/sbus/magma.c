@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.14 2002/03/11 16:00:57 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.15 2002/03/17 19:41:01 atatat Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.14 2002/03/11 16:00:57 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.15 2002/03/17 19:41:01 atatat Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -1117,10 +1117,10 @@ mttyioctl(dev, cmd, data, flags, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, p);
-	if( error >= 0 ) return(error);
+	if( error != EPASSTHROUGH ) return(error);
 
 	error = ttioctl(tp, cmd, data, flags, p);
-	if( error >= 0 ) return(error);
+	if( error != EPASSTHROUGH ) return(error);
 
 	error = 0;
 
@@ -1173,7 +1173,7 @@ mttyioctl(dev, cmd, data, flags, p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 	}
 
 	return(error);

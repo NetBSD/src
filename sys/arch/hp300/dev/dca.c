@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.48 2002/03/15 05:36:38 gmcgarry Exp $	*/
+/*	$NetBSD: dca.c,v 1.49 2002/03/17 19:40:38 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.48 2002/03/15 05:36:38 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.49 2002/03/17 19:40:38 atatat Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -699,10 +699,11 @@ dcaioctl(dev, cmd, data, flag, p)
 	int error;
  
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -771,7 +772,7 @@ dcaioctl(dev, cmd, data, flag, p)
 	}
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.15 2001/09/16 05:32:18 uch Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.16 2002/03/17 19:40:39 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -878,7 +878,7 @@ ite8181_ioctl(v, cmd, data, flag, p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

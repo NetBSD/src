@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.61 2002/03/02 08:22:26 takemura Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.62 2002/03/17 19:41:05 atatat Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.61 2002/03/02 08:22:26 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.62 2002/03/17 19:41:05 atatat Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -867,7 +867,7 @@ wsdisplayioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 #ifdef WSDISPLAY_COMPAT_USL
 	error = wsdisplay_usl_ioctl1(sc, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 #endif
 
@@ -882,24 +882,23 @@ wsdisplayioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 /* printf("disc\n"); */
 		/* do the line discipline ioctls first */
 		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-		if (error >= 0)
+		if (error != EPASSTHROUGH)
 			return (error);
 
 /* printf("tty\n"); */
 		/* then the tty ioctls */
 		error = ttioctl(tp, cmd, data, flag, p);
-		if (error >= 0)
+		if (error != EPASSTHROUGH)
 			return (error);
 	}
 
 #ifdef WSDISPLAY_COMPAT_USL
 	error = wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 #endif
 
-	error = wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p);
-	return (error != -1 ? error : ENOTTY);
+	return (wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p));
 }
 
 int
@@ -936,7 +935,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	if (inp == NULL)
 		return (ENXIO);
 	error = wsevsrc_display_ioctl(inp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 #endif /* NWSKBD > 0 */
 
@@ -1107,7 +1106,7 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 #endif /* NWSKBD > 0 */
 
 	}
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.79 2002/01/14 18:19:16 kleink Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.80 2002/03/17 19:41:10 atatat Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.79 2002/01/14 18:19:16 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.80 2002/03/17 19:41:10 atatat Exp $");
 
 #include "sl.h"
 #if NSL > 0
@@ -308,7 +308,12 @@ slopen(dev, tp)
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 					softintr_disestablish(sc->sc_si);
 #endif
-					return(error);
+					/*
+					 * clalloc() might return -1 which
+					 * is no good, so we need to return
+					 * something else.
+					 */
+					return(ENOMEM); /* XXX ?! */
 				}
 			} else
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
@@ -387,7 +392,7 @@ sltioctl(tp, cmd, data, flag)
 		break;
 
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }
