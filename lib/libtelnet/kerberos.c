@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos.c,v 1.5 2001/01/06 23:36:37 christos Exp $	*/
+/*	$NetBSD: kerberos.c,v 1.6 2001/11/30 04:48:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kerberos.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: kerberos.c,v 1.5 2001/01/06 23:36:37 christos Exp $");
+__RCSID("$NetBSD: kerberos.c,v 1.6 2001/11/30 04:48:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,6 @@ static unsigned char str_name[1024] = { IAC, SB, TELOPT_AUTHENTICATION,
 
 #define KRB_SERVICE_NAME   "rcmd"
 
-static	KTEXT_ST auth;
 static	char name[ANAME_SZ];
 static	AUTH_DAT adat = { 0 };
 #ifdef	ENCRYPTION
@@ -267,6 +266,7 @@ kerberos4_is(ap, data, cnt)
 	Session_Key skey;
 	Block datablock;
 #endif	/* ENCRYPTION */
+	KTEXT_ST auth;
 	char realm[REALM_SZ];
 	char instance[INST_SZ];
 	int r;
@@ -436,16 +436,16 @@ kerberos4_reply(ap, data, cnt)
 }
 
 	int
-kerberos4_status(ap, name, level)
+kerberos4_status(ap, kname, level)
 	Authenticator *ap;
-	char *name;
+	char *kname;
 	int level;
 {
 	if (level < AUTH_USER)
 		return(level);
 
 	if (UserNameRequested && !kuserok(&adat, UserNameRequested)) {
-		strcpy(name, UserNameRequested);
+		strcpy(kname, UserNameRequested);
 		return(AUTH_VALID);
 	} else
 		return(AUTH_USER);
