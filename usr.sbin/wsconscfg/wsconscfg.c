@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.2 1999/03/13 17:25:55 drochner Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.3 1999/05/15 14:24:45 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -52,8 +52,8 @@ usage()
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-		"Usage: %s [-f wsdev] [-d [-F]] [-t type] [-e emul] vt\n",
-		      __progname);
+		      "Usage: %s [-f wsdev] [-d [-F]] [-k] [-t type] [-e emul]"
+		      " {vt | [kbd]}\n", __progname);
 	exit(1);
 }
 
@@ -63,23 +63,28 @@ main(argc, argv)
 	char **argv;
 {
 	char *wsdev;
-	int c, delete, idx, wsfd, res;
+	int c, delete, kbd, idx, wsfd, res;
 	struct wsdisplay_addscreendata asd;
 	struct wsdisplay_delscreendata dsd;
+	struct wsdisplay_kbddata kd;
 
 	wsdev = DEFDEV;
 	delete = 0;
+	kbd = 0;
 	asd.screentype = 0;
 	asd.emul = 0;
 	dsd.flags = 0;
 
-	while ((c = getopt(argc, argv, "f:dt:e:F")) != -1) {
+	while ((c = getopt(argc, argv, "f:dkt:e:F")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
 			break;
 		case 'd':
 			delete++;
+			break;
+		case 'k':
+			kbd++;
 			break;
 		case 't':
 			asd.screentype = optarg;
@@ -99,17 +104,24 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1)
+	if (kbd ? (argc > 1) : (argc != 1))
 		usage();
 
-	if (sscanf(argv[0], "%d", &idx) != 1)
+	idx = -1;
+	if (argc > 0 && sscanf(argv[0], "%d", &idx) != 1)
 		errx(1, "invalid index");
 
 	wsfd = open(wsdev, O_RDWR, 0);
 	if (wsfd < 0)
 		err(2, wsdev);
 
-	if (delete) {
+	if (kbd) {
+		kd.op = delete ? WSDISPLAY_KBD_DEL : WSDISPLAY_KBD_ADD;
+		kd.idx = idx;
+		res = ioctl(wsfd, WSDISPLAYIO_SETKEYBOARD, &kd);
+		if (res < 0)
+			err(3, "WSDISPLAYIO_SETKEYBOARD");
+	} else if (delete) {
 		dsd.idx = idx;
 		res = ioctl(wsfd, WSDISPLAYIO_DELSCREEN, &dsd);
 		if (res < 0)
