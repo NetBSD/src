@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.5 1993/12/21 03:16:01 briggs Exp $
+ * $Id: console.c,v 1.6 1994/01/13 12:59:30 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -78,9 +78,9 @@ char serial_boot_echo=0;
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include "device.h"
+#include <sys/device.h>
 #include "../mac68k/cons.h"
-#include "../mac68k/myframe.h"
+#include <machine/frame.h>
 #include "serreg.h"
 #include "console.h"
 
@@ -1656,7 +1656,7 @@ conintr(register int unit, int data)
    return 1;
 }
 
-ser_intr(struct my_frame *fp)
+ser_intr(struct frame *fp)
 {
    /* This function is called by locore.s on a level 4 interrupt. */
 
