@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.33 2003/11/10 08:51:51 wiz Exp $	*/
+/*	$NetBSD: lfs.c,v 1.34 2004/09/09 22:57:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.33 2003/11/10 08:51:51 wiz Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.34 2004/09/09 22:57:19 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ int ifibc;        /* Number of indirect blocks */
  * have a maximum of 2^31 blocks.
  */
 
-u_quad_t maxtable[] = {
+const uint64_t maxtable[] = {
 	/*    1 */ -1,
 	/*    2 */ -1,
 	/*    4 */ -1,
@@ -93,9 +93,9 @@ u_quad_t maxtable[] = {
 	/* 1024 */ NDADDR + 256 + 256 * 256 + 256 * 256 * 256,
 	/* 2048 */ NDADDR + 512 + 512 * 512 + 512 * 512 * 512,
 	/* 4096 */ NDADDR + 1024 + 1024 * 1024 + 1024 * 1024 * 1024,
-	/* 8192 */ 1 << 31,
-	/* 16 K */ 1 << 31,
-	/* 32 K */ 1 << 31,
+	/* 8192 */ UINT64_C(1) << 31,
+	/* 16 K */ UINT64_C(1) << 31,
+	/* 32 K */ UINT64_C(1) << 31,
 };
 
 static struct lfs lfs_default =  {
