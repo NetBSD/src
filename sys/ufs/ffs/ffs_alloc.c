@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.37 2000/11/27 08:39:54 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.38 2000/11/30 19:46:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -394,7 +394,7 @@ struct ctldebug debug15 = { "prtrealloc", &prtrealloc };
 #endif
 
 int doasyncfree = 1;
-int doreallocblks;
+int doreallocblks = 1;
 
 int
 ffs_reallocblks(v)
