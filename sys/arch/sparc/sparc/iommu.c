@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.15 1998/01/12 20:24:08 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.16 1998/03/21 12:21:18 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,7 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/iommureg.h>
+#include <sparc/sparc/iommuvar.h>
 
 struct iommu_softc {
 	struct device	sc_dev;		/* base device */
@@ -81,10 +82,10 @@ iommu_print(args, iommu)
 	void *args;
 	const char *iommu;
 {
-	register struct confargs *ca = args;
+	struct iommu_attach_args *ia = args;
 
 	if (iommu)
-		printf("%s at %s", ca->ca_ra.ra_name, iommu);
+		printf("%s at %s", ia->iom_name, iommu);
 	return (UNCONF);
 }
 
@@ -94,12 +95,11 @@ iommu_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct mainbus_attach_args *ma = aux;
 
 	if (CPU_ISSUN4OR4C)
 		return (0);
-	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
 
 /*
@@ -113,10 +113,10 @@ iommu_attach(parent, self, aux)
 {
 #if defined(SUN4M)
 	register struct iommu_softc *sc = (struct iommu_softc *)self;
-	struct confargs oca, *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct mainbus_attach_args *ma = aux;
 	register int node;
-	register char *name;
+	struct bootpath *bp;
+	bus_space_handle_t bh;
 	register u_int pbase, pa;
 	register int i, mmupcrsave, s;
 	register iopte_t *tpte_p;
@@ -133,7 +133,7 @@ iommu_attach(parent, self, aux)
 		printf(" unsupported\n");
 		return;
 	}
-	node = ra->ra_node;
+	node = ma->ma_node;
 
 #if 0
 	if (ra->ra_vaddr)
@@ -147,8 +147,18 @@ iommu_attach(parent, self, aux)
 	 * XXX struct iommureg is bigger than ra->ra_len; what are the
 	 *     other fields for?
 	 */
-	sc->sc_reg = (struct iommureg *)
-		mapiodev(ra->ra_reg, 0, ra->ra_len);
+	if (sparc_bus_map(
+			ma->ma_bustag,
+			ma->ma_iospace,
+			(bus_addr_t)ma->ma_paddr,
+			sizeof(struct iommureg),
+			0,
+			0,
+			&bh) != 0) {
+		printf("iommu_attach: cannot map registers\n");
+		return;
+	}
+	sc->sc_reg = (struct iommureg *)bh;
 #endif
 
 	sc->sc_hasiocache = node_has_property(node, "cache-coherence?");
@@ -239,20 +249,27 @@ iommu_attach(parent, self, aux)
 		sc->sc_range >> 20);
 
 	/* Propagate bootpath */
-	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "iommu") == 0)
-		oca.ca_ra.ra_bp = ra->ra_bp + 1;
+	if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, "iommu") == 0)
+		bp = ma->ma_bp + 1;
 	else
-		oca.ca_ra.ra_bp = NULL;
+		bp = NULL;
+printf("[[iommu: bootpath component: %s]]\n", bp?bp->name:"NULL!");
 
 	/*
 	 * Loop through ROM children (expect Sbus among them).
 	 */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		name = getpropstring(node, "name");
-		if (!romprop(&oca.ca_ra, name, node))
-			continue;
-		oca.ca_bustype = BUS_MAIN; /* ??? */
-		(void) config_found(&sc->sc_dev, (void *)&oca, iommu_print);
+		struct iommu_attach_args ia;
+
+		bzero(&ia, sizeof ia);
+		ia.iom_name = getpropstring(node, "name");
+
+		/* Propagate BUS & DMA tags */
+		ia.iom_bustag = ma->ma_bustag;
+		ia.iom_dmatag = ma->ma_dmatag;
+		ia.iom_node = node;
+		ia.iom_bp = bp;
+		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);
 	}
 #endif
 }
