@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.4 2001/02/04 19:26:04 christos Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.5 2003/01/04 23:43:02 wiz Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -307,7 +307,7 @@ c_read(wp)
 	 * the detection of eof.
 	 *
 	 * This is not compatiable with at&t ksh... the fd is kept so another
-	 * coproc can be started with same ouput, however, this means eof
+	 * coproc can be started with same output, however, this means eof
 	 * can't be detected...  This is why it is closed here.
 	 * If this call is removed, remove the eof check below, too.
 	* coproc_readw_close(fd);
