@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)wait.h	7.17 (Berkeley) 6/19/91
- *	$Id: wait.h,v 1.4 1993/10/11 18:18:10 jtc Exp $
+ *	from: @(#)wait.h	8.1 (Berkeley) 6/2/93
+ *	$Id: wait.h,v 1.5 1994/05/21 03:52:24 cgd Exp $
  */
-
-#ifndef _SYS_WAIT_H_
-#define _SYS_WAIT_H_
 
 /*
  * This file holds definitions relevent to the wait4 system call
@@ -69,7 +66,7 @@
 #endif
 
 /*
- * Option bits for the second argument of wait4.  WNOHANG causes the
+ * Option bits for the third argument of wait4.  WNOHANG causes the
  * wait to not hang if there are no stopped or terminated processes, rather
  * returning an error indication in this case (pid==0).  WUNTRACED
  * indicates that the caller should receive status about untraced children
@@ -89,9 +86,7 @@
 #define	WAIT_ANY	(-1)	/* any process */
 #define	WAIT_MYPGRP	0	/* any process in my process group */
 
-#ifndef BYTE_ORDER
 #include <machine/endian.h>
-#endif
 
 /*
  * Deprecated:
@@ -150,16 +145,13 @@ union wait {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+struct rusage;	/* forward declaration */
+
 pid_t	wait __P((int *));
 pid_t	waitpid __P((pid_t, int *, int));
-
 #ifndef _POSIX_SOURCE
-struct rusage;	/* forward declaration */
 pid_t	wait3 __P((int *, int, struct rusage *));
 pid_t	wait4 __P((pid_t, int *, int, struct rusage *));
-#endif /* !_POSIX_SOURCE */
+#endif
 __END_DECLS
-
-#endif /* !KERNEL */
-
-#endif /* !_SYS_WAIT_H_ */
+#endif

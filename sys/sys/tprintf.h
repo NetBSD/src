@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tprintf.h	7.2 (Berkeley) 5/4/91
- *	$Id: tprintf.h,v 1.3 1993/05/20 16:23:26 cgd Exp $
+ *	from: @(#)tprintf.h	8.1 (Berkeley) 6/2/93
+ *	$Id: tprintf.h,v 1.4 1994/05/21 03:52:13 cgd Exp $
  */
-
-#ifndef _SYS_TPRINTF_H_
-#define _SYS_TPRINTF_H_
 
 typedef struct session *tpr_t;
 
@@ -43,5 +40,3 @@ tpr_t	tprintf_open __P((struct proc *));
 void	tprintf_close __P((tpr_t));
 
 void	tprintf __P((tpr_t, const char *fmt, ...));
-
-#endif /* !_SYS_TPRINTF_H_ */

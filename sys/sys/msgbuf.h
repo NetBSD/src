@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981, 1984 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1984, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)msgbuf.h	7.5 (Berkeley) 5/2/91
- *	$Id: msgbuf.h,v 1.4 1993/08/27 23:45:55 brezak Exp $
+ *	from: @(#)msgbuf.h	8.1 (Berkeley) 6/2/93
+ *	$Id: msgbuf.h,v 1.5 1994/05/21 03:52:02 cgd Exp $
  */
-
-#ifndef _SYS_MSGBUF_H_
-#define _SYS_MSGBUF_H_
 
 #define	MSG_BSIZE	(4096 - 3 * sizeof(long))
 struct	msgbuf {
@@ -46,8 +43,5 @@ struct	msgbuf {
 	char	msg_bufc[MSG_BSIZE];	/* buffer */
 };
 #ifdef KERNEL
-extern struct	msgbuf *msgbufp;
-extern int	msgbufmapped;
+struct	msgbuf *msgbufp;
 #endif
-
-#endif /* !_SYS_MSGBUF_H_ */

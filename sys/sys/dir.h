@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,20 +30,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dir.h	7.3 (Berkeley) 2/5/91
- *	$Id: dir.h,v 1.5 1994/01/10 22:54:00 jtc Exp $
+ *	from: @(#)dir.h	8.2 (Berkeley) 1/4/94
+ *	$Id: dir.h,v 1.6 1994/05/21 03:51:54 cgd Exp $
  */
-
-#ifndef _SYS_DIR_H_
-#define	_SYS_DIR_H_
 
 /*
  * The information in this file should be obtained from <dirent.h>
  * and is provided solely (and temporarily) for backward compatibility.
  */
 
+#ifndef _SYS_DIR_H_
+#define	_SYS_DIR_H_
+
 #include <dirent.h>
 
+/*
+ * Backwards compatibility.
+ */
 #define direct dirent
 
 /*

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)trace.h	7.6 (Berkeley) 5/5/91
- *	$Id: trace.h,v 1.3 1993/05/20 16:23:28 cgd Exp $
+ *	from: @(#)trace.h	8.1 (Berkeley) 6/2/93
+ *	$Id: trace.h,v 1.4 1994/05/21 03:52:14 cgd Exp $
  */
-
-#ifndef _SYS_TRACE_H_
-#define _SYS_TRACE_H_
 
 /*
  * File system buffer tracing points; all trace <pack(dev, size), bn>
@@ -105,16 +102,16 @@
 
 #ifdef KERNEL
 #ifdef TRACE
-char	traceflags[TR_NFLAGS];
 struct	proc *traceproc;
-int	tracebuf[TRCSIZ];
-unsigned tracex;
-int	tracewhich;
+int	tracewhich, tracebuf[TRCSIZ];
+u_int	tracex;
+char	traceflags[TR_NFLAGS];
 #define	pack(v,b)	(((v)->v_mount->mnt_stat.f_fsid.val[0])<<16)|(b)
-#define	trace(a,b,c)	if (traceflags[a]) trace1(a,b,c)
+#define	trace(a,b,c) {							\
+	if (traceflags[a])						\
+		trace1(a,b,c);						\
+}
 #else
-#define	trace(a,b,c)	;
+#define	trace(a,b,c)
 #endif
 #endif
-
-#endif /* !_SYS_TRACE_H_ */

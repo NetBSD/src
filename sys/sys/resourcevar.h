@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1991, 1993
- *    The Regents of the University of California.  All rights reserved.
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)resourcevar.h		8.3 (Berkeley) 2/22/94
- *	$Id: resourcevar.h,v 1.6 1994/05/05 09:35:34 deraadt Exp $
+ *	from: @(#)resourcevar.h	8.3 (Berkeley) 2/22/94
+ *	$Id: resourcevar.h,v 1.7 1994/05/21 03:52:09 cgd Exp $
  */
 
-#ifndef _SYS_RESOURCEVAR_H_
-#define _SYS_RESOURCEVAR_H_
+#ifndef	_SYS_RESOURCEVAR_H_
+#define	_SYS_RESOURCEVAR_H_
 
 /*
  * Kernel per-process accounting / statistics
@@ -56,13 +56,11 @@ struct pstats {
 		u_long	pr_off;		/* pc offset */
 		u_long	pr_scale;	/* pc scaling */
 		u_long	pr_addr;	/* temp storage for addr until AST */
-		u_long	pr_ticks;       /* temp storage for ticks until AST */
+		u_long	pr_ticks;	/* temp storage for ticks until AST */
 	} p_prof;
 #define	pstat_endcopy	p_start
 	struct	timeval p_start;	/* starting time */
 };
-
-void addupc __P((int, struct uprof *, int));	/* process profiling */ 
 
 /*
  * Kernel shareable process resource limits.  Because this structure
@@ -80,7 +78,7 @@ struct plimit {
 };
 
 /* add user profiling from AST */
-#define ADDUPROF(p)							\
+#define	ADDUPROF(p)							\
 	addupc_task(p,							\
 	    (p)->p_stats->p_prof.pr_addr, (p)->p_stats->p_prof.pr_ticks)
 
@@ -90,4 +88,4 @@ void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
 struct plimit
 	*limcopy __P((struct plimit *lim));
 #endif
-#endif /* !_SYS_RESOURCEVAR_H_ */
+#endif	/* !_SYS_RESOURCEVAR_H_ */
