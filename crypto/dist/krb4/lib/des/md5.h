@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: md5.h,v 1.1.1.3 2001/09/17 12:10:01 assar Exp $ */
+/* $KTH-KRB: md5.h,v 1.8 2001/01/29 02:08:57 assar Exp $
+   $NetBSD: md5.h,v 1.1.1.4 2002/09/12 12:22:12 joda Exp $ */
 
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H

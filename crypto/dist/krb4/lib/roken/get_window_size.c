@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: get_window_size.c,v 1.1.1.2 2000/12/29 01:43:24 assar Exp $");
+__RCSID("$KTH-KRB: get_window_size.c,v 1.9 1999/12/02 16:58:46 joda Exp $"
+      "$NetBSD: get_window_size.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
 #endif
 
 #include <stdlib.h>

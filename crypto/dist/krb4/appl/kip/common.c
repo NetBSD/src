@@ -33,7 +33,8 @@
 
 #include "kip.h"
 
-RCSID("$Id: common.c,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $");
+__RCSID("$KTH-KRB: common.c,v 1.19 2001/09/17 04:58:48 assar Exp $"
+      "$NetBSD: common.c,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $");
 
 sig_atomic_t disconnect = 0;
 int isserver = 0;

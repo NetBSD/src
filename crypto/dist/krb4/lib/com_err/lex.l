@@ -44,7 +44,8 @@
 #include "parse.h"
 #include "lex.h"
 
-RCSID("$Id: lex.l,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $");
+__RCSID("$KTH-KRB: lex.l,v 1.6 2000/06/22 00:42:52 assar Exp $"
+      "$NetBSD: lex.l,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $");
 
 static unsigned lineno = 1;
 static int getstring(void);

@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: create_ticket.c,v 1.1.1.2 2000/12/29 01:43:12 assar Exp $");
+__RCSID("$KTH-KRB: create_ticket.c,v 1.14 1999/12/02 16:58:41 joda Exp $"
+      "$NetBSD: create_ticket.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * Create ticket takes as arguments information that should be in a

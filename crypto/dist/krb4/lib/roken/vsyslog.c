@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: vsyslog.c,v 1.1.1.3 2001/09/17 12:09:58 assar Exp $");
+__RCSID("$KTH-KRB: vsyslog.c,v 1.6 2000/05/22 22:09:25 assar Exp $"
+      "$NetBSD: vsyslog.c,v 1.1.1.4 2002/09/12 12:22:11 joda Exp $");
 #endif
 
 #ifndef HAVE_VSYSLOG

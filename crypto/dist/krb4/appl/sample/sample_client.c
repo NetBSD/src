@@ -23,7 +23,8 @@
 
 #include "sample.h"
 
-RCSID("$Id: sample_client.c,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $");
+__RCSID("$KTH-KRB: sample_client.c,v 1.23 2001/09/17 04:59:13 assar Exp $"
+      "$NetBSD: sample_client.c,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $");
 
 static void
 usage (void)

@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: ftp_locl.h,v 1.1.1.3 2001/09/17 12:09:50 assar Exp $ */
+/* $KTH-KRB: ftp_locl.h,v 1.36 2001/08/22 20:30:19 assar Exp $
+   $NetBSD: ftp_locl.h,v 1.1.1.4 2002/09/12 12:22:07 joda Exp $ */
 
 #ifndef __FTP_LOCL_H__
 #define __FTP_LOCL_H__

@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_tf_realm.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
+__RCSID("$KTH-KRB: get_tf_realm.c,v 1.5 1997/03/23 03:53:10 joda Exp $"
+      "$NetBSD: get_tf_realm.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * This file contains a routine to extract the realm of a kerberos

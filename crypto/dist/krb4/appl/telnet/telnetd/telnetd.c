@@ -33,7 +33,8 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: telnetd.c,v 1.1.1.3 2001/09/17 12:09:47 assar Exp $");
+__RCSID("$KTH-KRB: telnetd.c,v 1.69 2002/08/23 19:28:01 assar Exp $"
+      "$NetBSD: telnetd.c,v 1.1.1.4 2002/09/12 12:22:06 joda Exp $");
 
 #ifdef _SC_CRAY_SECURE_SYS
 #include <sys/sysv.h>
@@ -175,6 +176,11 @@ main(int argc, char **argv)
      */
     highpty = getnpty();
 #endif /* CRAY */
+
+    if (argc == 2 && strcmp(argv[1], "--version") == 0) {
+	print_version(NULL);
+	exit(0);
+    }
 
     while ((ch = getopt(argc, argv, valid_opts)) != -1) {
 	switch(ch) {
@@ -768,9 +774,9 @@ show_issue(void)
 {
     FILE *f;
     char buf[128];
-    f = fopen("/etc/issue.net", "r");
+    f = fopen(SYSCONFDIR "/issue.net", "r");
     if(f == NULL)
-	f = fopen("/etc/issue", "r");
+	f = fopen(SYSCONFDIR "/issue", "r");
     if(f){
 	while(fgets(buf, sizeof(buf)-2, f)){
 	    strcpy(buf + strcspn(buf, "\r\n"), "\r\n");

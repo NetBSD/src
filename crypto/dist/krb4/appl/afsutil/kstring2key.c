@@ -33,7 +33,8 @@
 
 #include "config.h"
 
-RCSID("$Id: kstring2key.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: kstring2key.c,v 1.18 2001/08/26 01:40:37 assar Exp $"
+      "$NetBSD: kstring2key.c,v 1.1.1.4 2002/09/12 12:22:03 joda Exp $");
 
 #include <stdio.h>
 #include <string.h>

@@ -33,7 +33,8 @@
 
 #include "kdb_locl.h"
 
-RCSID("$Id: copykey.c,v 1.1.1.2 2000/12/29 01:43:10 assar Exp $");
+__RCSID("$KTH-KRB: copykey.c,v 1.11 1999/12/02 16:58:40 joda Exp $"
+      "$NetBSD: copykey.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 void
 copy_from_key(des_cblock in, u_int32_t *lo, u_int32_t *hi)

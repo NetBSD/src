@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: k_getsockinst.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
+__RCSID("$KTH-KRB: k_getsockinst.c,v 1.14 2001/08/26 01:46:14 assar Exp $"
+      "$NetBSD: k_getsockinst.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * Return in inst the name of the local interface bound to socket

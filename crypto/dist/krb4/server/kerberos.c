@@ -9,7 +9,8 @@
 #include "config.h"
 #include "protos.h"
 
-RCSID("$Id: kerberos.c,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $");
+__RCSID("$KTH-KRB: kerberos.c,v 1.99 2001/09/17 04:42:50 assar Exp $"
+      "$NetBSD: kerberos.c,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $");
 
 /*
  * If support for really large numbers of network interfaces is

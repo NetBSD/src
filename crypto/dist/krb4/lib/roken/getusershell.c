@@ -35,7 +35,8 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: getusershell.c,v 1.1.1.3 2001/09/17 12:09:56 assar Exp $");
+__RCSID("$KTH-KRB: getusershell.c,v 1.10 2000/05/22 09:11:59 joda Exp $"
+      "$NetBSD: getusershell.c,v 1.1.1.4 2002/09/12 12:22:10 joda Exp $");
 
 #ifndef HAVE_GETUSERSHELL
 
