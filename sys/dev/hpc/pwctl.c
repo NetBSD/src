@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.4 2001/05/06 14:25:15 takemura Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.5 2001/06/04 18:59:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -51,7 +51,7 @@
 
 #define PWCTLVRGIUDEBUG
 #ifdef PWCTLVRGIUDEBUG
-int	pwctl_debug = 0;
+int	pwctl_debug = 1;
 #define	DPRINTF(arg) if (pwctl_debug) printf arg;
 #else
 #define	DPRINTF(arg)
@@ -70,44 +70,34 @@ struct pwctl_softc {
 	int sc_initvalue;
 };
 
-static int	pwctl_match __P((struct device *, struct cfdata *,
-				       void *));
-static void	pwctl_attach __P((struct device *, struct device *,
-					void *));
-static int	pwctl_hook __P((void *ctx, int type, long id,
-				      void *msg));
-static int	pwctl_ghook __P((void *ctx, int type, long id,
-				      void *msg));
-int	pwctl_hardpower __P((void *, int, long, void *));
+static int	pwctl_match(struct device *, struct cfdata *, void *);
+static void	pwctl_attach(struct device *, struct device *, void *);
+static int	pwctl_hook(void *, int, long, void *);
+static int	pwctl_ghook(void *, int, long, void *);
+int	pwctl_hardpower(void *, int, long, void *);
 
 struct cfattach pwctl_ca = {
 	sizeof(struct pwctl_softc), pwctl_match, pwctl_attach
 };
 
 int
-pwctl_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pwctl_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;
 
 	if (strcmp(haa->haa_busname, HPCIO_BUSNAME))
-		return 0;
+		return (0);
 	if (match->cf_loc[HPCIOIFCF_PLATFORM] == 0)
-		return 0;
+		return (0);
 	mask = PLATID_DEREF(match->cf_loc[HPCIOIFCF_PLATFORM]);
 	if (!platid_match(&platid, &mask))
-		return 0;
-	return 1;
+		return (0);
+	return (1);
 }
 
 void
-pwctl_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+pwctl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	int *loc;
@@ -120,83 +110,71 @@ pwctl_attach(parent, self, aux)
 	sc->sc_on = loc[HPCIOIFCF_ACTIVE] ? 1 : 0;
 	sc->sc_off = loc[HPCIOIFCF_ACTIVE] ? 0 : 1;
 	sc->sc_initvalue = loc[HPCIOIFCF_INITVALUE];
+
 	printf(" port=%d id=%ld on=%d%s",
-		 sc->sc_port, sc->sc_id, sc->sc_on,
-		 sc->sc_initvalue == -1 ? "" :
-		 sc->sc_initvalue ? " init=on" : " init=off");
+	    sc->sc_port, sc->sc_id, sc->sc_on,
+	    sc->sc_initvalue == -1 ? "" :
+	    sc->sc_initvalue ? " init=on" : " init=off");
 
 	if (sc->sc_port == HPCIOIFCF_PORT_DEFAULT ||
 	    sc->sc_id == HPCIOIFCF_ID_DEFAULT) {
 		printf(" (ignored)");
 	} else {
 		sc->sc_hook_tag = config_hook(CONFIG_HOOK_POWERCONTROL,
-					      sc->sc_id, CONFIG_HOOK_SHARE,
-					      pwctl_hook, sc);
+		    sc->sc_id, CONFIG_HOOK_SHARE, pwctl_hook, sc);
 		sc->sc_ghook_tag = config_hook(CONFIG_HOOK_GET,
-					      sc->sc_id, CONFIG_HOOK_SHARE,
-					      pwctl_ghook, sc);
+		    sc->sc_id, CONFIG_HOOK_SHARE, pwctl_ghook, sc);
 		sc->sc_hook_hardpower = config_hook(CONFIG_HOOK_PMEVENT,
-						CONFIG_HOOK_PMEVENT_HARDPOWER,
-						CONFIG_HOOK_SHARE,
-						pwctl_hardpower, sc);
-
+		    CONFIG_HOOK_PMEVENT_HARDPOWER, CONFIG_HOOK_SHARE,
+		    pwctl_hardpower, sc);
 	}
+
 	if (sc->sc_initvalue != -1)
 		hpcio_portwrite(sc->sc_hc, sc->sc_port,
-				sc->sc_initvalue ? sc->sc_on : sc->sc_off);
+		    sc->sc_initvalue ? sc->sc_on : sc->sc_off);
 	printf("\n");
 }
 
 int
-pwctl_hook(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+pwctl_hook(void *ctx, int type, long id, void *msg)
 {
 	struct pwctl_softc *sc = ctx;
 
 	DPRINTF(("pwctl hook: port %d %s(%d)", sc->sc_port,
-		 msg ? "ON" : "OFF", msg ? sc->sc_on : sc->sc_off));
+	    msg ? "ON" : "OFF", msg ? sc->sc_on : sc->sc_off));
 	hpcio_portwrite(sc->sc_hc, sc->sc_port,
-			msg ? sc->sc_on : sc->sc_off);
+	    msg ? sc->sc_on : sc->sc_off);
+
 	return (0);
 }
 
 int
-pwctl_ghook(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+pwctl_ghook(void *ctx, int type, long id, void *msg)
 {
 	struct pwctl_softc *sc = ctx;
 
 	if (CONFIG_HOOK_VALUEP(msg))
-		return 1;
+		return (1);
 
 	*(int*)msg = hpcio_portread(sc->sc_hc, sc->sc_port) == sc->sc_on;
 	DPRINTF(("pwctl ghook: port %d %s(%d)", sc->sc_port,
-		 *(int*)msg? "ON" : "OFF", *(int*)msg ? sc->sc_on : sc->sc_off));
-	return 0;
+	    *(int*)msg? "ON" : "OFF", *(int*)msg ? sc->sc_on : sc->sc_off));
+
+	return (0);
 }
 
 int
-pwctl_hardpower(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+pwctl_hardpower(void *ctx, int type, long id, void *msg)
 {
 	struct pwctl_softc *sc = ctx;
 	int why =(int)msg;
 
-#if 0
+#if 1
 	/* XXX debug print cause hang system... Huum...*/
 	DPRINTF(("pwctl hardpower: port %d %s: %s(%d)\n", sc->sc_port,
-		why == PWR_RESUME? "resume" 
-		: why == PWR_SUSPEND? "suspend" : "standby",
-		sc->sc_save == sc->sc_on ? "on": "off", sc->sc_save));
+	    why == PWR_RESUME? "resume" 
+	    : why == PWR_SUSPEND? "suspend" : "standby",
+	    sc->sc_save == sc->sc_on ? "on": "off", sc->sc_save));
 #endif /* 0 */
 	switch (why) {
 	case PWR_STANDBY:
@@ -209,5 +187,6 @@ pwctl_hardpower(ctx, type, id, msg)
 		hpcio_portwrite(sc->sc_hc, sc->sc_port, sc->sc_save);
 		break;
 	}
+
 	return (0);
 }

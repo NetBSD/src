@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.1 2001/04/30 11:42:17 takemura Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ struct cfattach hpcout_ca = {
 int
 hpcout_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -92,7 +92,7 @@ hpcout_attach(struct device *parent, struct device *self, void *aux)
 		hpcio_portwrite(sc->sc_hc, sc->sc_port, hma->hma_initvalue);
 
 	config_hook(sc->sc_type, sc->sc_id, CONFIG_HOOK_SHARE,
-		    hpcout_hook, sc);
+	    hpcout_hook, sc);
 }
 
 int
@@ -105,5 +105,5 @@ hpcout_hook(void *arg, int type, long id, void *msg)
 	hpcio_portwrite(sc->sc_hc, sc->sc_port,
 	    (int)msg ? sc->sc_on : sc->sc_off);
 
-	return 0;
+	return (0);
 }
