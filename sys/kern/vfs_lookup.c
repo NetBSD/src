@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.24 1997/10/11 00:08:08 enami Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.24.2.1 1997/10/31 07:50:45 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -168,10 +168,12 @@ namei(ndp)
 			error = ELOOP;
 			break;
 		}
-		error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
-		    cnp->cn_proc);
-		if (error != 0)
-			break;
+		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
+			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
+			    cnp->cn_proc);
+			if (error != 0)
+				break;
+		}
 		if (ndp->ni_pathlen > 1)
 			MALLOC(cp, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
 		else
