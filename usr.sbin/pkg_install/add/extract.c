@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.17 1999/05/29 20:44:20 christos Exp $	*/
+/*	$NetBSD: extract.c,v 1.18 1999/05/30 16:08:23 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.17 1999/05/29 20:44:20 christos Exp $");
+__RCSID("$NetBSD: extract.c,v 1.18 1999/05/30 16:08:23 tron Exp $");
 #endif
 #endif
 
@@ -69,10 +69,7 @@ rollback(char *name, char *home, plist_t *start, plist_t *stop)
     dir = home;
     for (q = start; q != stop; q = q->next) {
 	if (q->type == PLIST_FILE) {
-	    if (q->name[0] == '/')
-		snprintf(try, FILENAME_MAX, "%s", q->name);
-	    else
-		snprintf(try, FILENAME_MAX, "%s/%s", dir, q->name);
+	    snprintf(try, FILENAME_MAX, "%s/%s", dir, q->name);
 	    if (make_preserve_name(bup, FILENAME_MAX, name, try) && fexists(bup)) {
 		(void)chflags(try, 0);
 		(void)unlink(try);
@@ -143,12 +140,8 @@ extract_plist(char *home, package_t *pkg)
 
 	case PLIST_FILE:
 	    last_file = p->name;
-	    if (Verbose) {
-		if (p->name[0] == '/')
-		    printf("extract: %s\n", p->name);
-		else
-		    printf("extract: %s/%s\n", Directory, p->name);
-	    }
+	    if (Verbose)
+		printf("extract: %s/%s\n", Directory, p->name);
 	    if (!Fake) {
 		char try[FILENAME_MAX];
 
@@ -158,10 +151,7 @@ extract_plist(char *home, package_t *pkg)
 		}
 		
 		/* first try to rename it into place */
-		if (p->name[0] == '/')
-		    snprintf(try, FILENAME_MAX, "%s", p->name);
-		else
-		    snprintf(try, FILENAME_MAX, "%s/%s", Directory, p->name);
+		snprintf(try, FILENAME_MAX, "%s/%s", Directory, p->name);
 		if (fexists(try)) {
 		    (void)chflags(try, 0);	/* XXX hack - if truly immutable, rename fails */
 		    if (preserve && PkgName) {
@@ -181,17 +171,12 @@ extract_plist(char *home, package_t *pkg)
 		if (rename(p->name, try) == 0) {
 		    /* note in pkgdb */
 		    {
-			char *s, t[FILENAME_MAX], *u;
+			char *s, t[FILENAME_MAX];
 			int rc;
 			
-			if (p->name[0] == '/')
-			    u=p->name;
-			else {
-			    snprintf(t, FILENAME_MAX, "%s/%s", Directory, p->name);
-			    u=t;
-			}
+			snprintf(t, FILENAME_MAX, "%s/%s", Directory, p->name);
 			
-			s=pkgdb_retrieve(u);
+			s=pkgdb_retrieve(t);
 #ifdef PKGDB_DEBUG
  printf("pkgdb_retrieve(\"%s\")=\"%s\"\n", t, s); /* pkgdb-debug - HF */
 #endif
