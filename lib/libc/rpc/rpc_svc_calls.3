@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_calls 1.5 89/07/25 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_calls.3,v 1.1 2000/06/02 23:11:13 fvdl Exp $
+.\"	$NetBSD: rpc_svc_calls.3,v 1.2 2001/06/05 13:24:41 wiz Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CALLS 3
 .Os
@@ -80,7 +80,7 @@ data structure.
 This function allocates a duplicate request cache for the
 service endpoint
 .Fa xprt ,
-large enough to hold 
+large enough to hold
 .Fa cache_size
 entries.
 Once enabled, there is no way to disable caching.
@@ -162,7 +162,7 @@ It is called when
 has determined that an RPC request has arrived on some RPC
 file descriptors;
 .Fn pollretval
-is the return value from 
+is the return value from
 .Xr poll 2
 and
 .Fa pfdp
@@ -197,7 +197,9 @@ RPC service transport handle
 .Fa xprt .
 .Pp
 .It Fn __svc_getcallercreds
-.Bf Warning: this macro is specific to NetBSD and thus not portable.
+.Bf Warning: this macro is specific to
+.Nx
+and thus not portable.
 This macro returns a pointer to a sockcred structure, defined in
 .Fd <sys/socket.h> ,
 identifying the calling client. This only works if the client is
