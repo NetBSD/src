@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.4 2003/07/15 00:24:54 lukem Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.5 2004/12/09 04:40:20 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.4 2003/07/15 00:24:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.5 2004/12/09 04:40:20 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ i80321_pci_init(pci_chipset_tag_t pc, void *cookie)
 	if (busno == 0xff)
 		busno = 0;
 
-	ioext  = extent_create("pciio", sc->sc_ioout_xlate,
+	ioext  = extent_create("pciio", sc->sc_ioout_xlate + 0x1000,
 	    sc->sc_ioout_xlate + VERDE_OUT_XLATE_IO_WIN_SIZE - 1,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", sc->sc_owin[0].owin_xlate_lo,
