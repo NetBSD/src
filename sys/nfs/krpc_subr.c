@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.8 1995/04/24 21:55:05 gwr Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.9 1995/05/20 01:52:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -58,6 +58,7 @@
 
 #include <nfs/rpcv2.h>
 #include <nfs/krpc.h>
+#include <nfs/xdr_subs.h>
 
 /*
  * Kernel support for Sun RPC
@@ -144,9 +145,9 @@ krpc_portmap(sin,  prog, vers, portp)
 	m->m_len = sizeof(*sdata);
 
 	/* Do the RPC to get it. */
-	sdata->prog = htonl(prog);
-	sdata->vers = htonl(vers);
-	sdata->proto = htonl(IPPROTO_UDP);
+	sdata->prog = txdr_unsigned(prog);
+	sdata->vers = txdr_unsigned(vers);
+	sdata->proto = txdr_unsigned(IPPROTO_UDP);
 	sdata->port = 0;
 
 	sin->sin_port = htons(PMAPPORT);
@@ -281,12 +282,12 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	mhead->m_len = sizeof(*call);
 	bzero((caddr_t)call, sizeof(*call));
 	xid++;
-	call->rp_xid = htonl(xid);
+	call->rp_xid = txdr_unsigned(xid);
 	/* call->rp_direction = 0; */
-	call->rp_rpcvers = htonl(2);
-	call->rp_prog = htonl(prog);
-	call->rp_vers = htonl(vers);
-	call->rp_proc = htonl(func);
+	call->rp_rpcvers = txdr_unsigned(2);
+	call->rp_prog = txdr_unsigned(prog);
+	call->rp_vers = txdr_unsigned(vers);
+	call->rp_proc = txdr_unsigned(func);
 	/* call->rp_auth = 0; */
 	/* call->rp_verf = 0; */
 
@@ -362,22 +363,23 @@ krpc_call(sa, prog, vers, func, data, from_p)
 			reply = mtod(m, struct rpc_reply *);
 
 			/* Is it the right reply? */
-			if (reply->rp_direction != htonl(RPC_REPLY))
+			if (reply->rp_direction != txdr_unsigned(RPC_REPLY))
 				continue;
 
-			if (reply->rp_xid != htonl(xid))
+			if (reply->rp_xid != txdr_unsigned(xid))
 				continue;
 
 			/* Was RPC accepted? (authorization OK) */
 			if (reply->rp_astatus != 0) {
-				error = ntohl(reply->rp_u.rpu_errno);
+				error = fxdr_unsigned(u_int32_t, reply->rp_u.rpu_errno);
 				printf("rpc denied, error=%d\n", error);
 				continue;
 			}
 
 			/* Did the call succeed? */
-			if ((error = ntohl(reply->rp_u.rpu_ok.rp_rstatus)) != 0) {
-				printf("rpc status=%d\n", error);
+			if (reply->rp_u.rpu_ok.rp_rstatus != 0) {
+				error = fxdr_unsigned(u_int32_t, reply->rp_u.rpu_ok.rp_rstatus);
+				printf("rpc denied, status=%d\n", error);
 				continue;
 			}
 
@@ -405,7 +407,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	}
 	reply = mtod(m, struct rpc_reply *);
 	if (reply->rp_u.rpu_ok.rp_auth.rp_atype != 0) {
-		len += ntohl(reply->rp_u.rpu_ok.rp_auth.rp_alen);
+		len += fxdr_unsigned(u_int32_t, reply->rp_u.rpu_ok.rp_auth.rp_alen);
 		len = (len + 3) & ~3; /* XXX? */
 	}
 	m_adj(m, len);
@@ -462,7 +464,7 @@ xdr_string_encode(str, len)
 	}
 	xs = mtod(m, struct xdr_string *);
 	m->m_len = mlen;
-	xs->len = htonl(len);
+	xs->len = txdr_unsigned(len);
 	bcopy(str, xs->data, len);
 	return (m);
 }
@@ -483,7 +485,7 @@ xdr_string_decode(m, str, len_p)
 			return (NULL);
 	}
 	xs = mtod(m, struct xdr_string *);
-	slen = ntohl(xs->len);
+	slen = fxdr_unsigned(u_int32_t, xs->len);
 	mlen = 4 + ((slen + 3) & ~3);
 
 	if (slen > *len_p)
@@ -503,8 +505,8 @@ xdr_string_decode(m, str, len_p)
  * (Note, really four ints, NOT chars.  Blech.)
  */
 struct xdr_inaddr {
-	u_int32_t  atype;
-	int32_t	addr[4];
+	u_int32_t atype;
+	u_int32_t addr[4];
 };
 
 struct mbuf *
@@ -513,19 +515,19 @@ xdr_inaddr_encode(ia)
 {
 	struct mbuf *m;
 	struct xdr_inaddr *xi;
-	u_char *cp;
-	int32_t *ip;
+	u_int8_t *cp;
+	u_int32_t *ip;
 
 	m = m_get(M_WAIT, MT_DATA);
 	xi = mtod(m, struct xdr_inaddr *);
 	m->m_len = sizeof(*xi);
-	xi->atype = htonl(1);
+	xi->atype = txdr_unsigned(1);
 	ip = xi->addr;
-	cp = (u_char *)&ia->s_addr;
-	*ip++ = *cp++;
-	*ip++ = *cp++;
-	*ip++ = *cp++;
-	*ip++ = *cp++;
+	cp = (u_int8_t *)&ia->s_addr;
+	*ip++ = txdr_unsigned(*cp++);
+	*ip++ = txdr_unsigned(*cp++);
+	*ip++ = txdr_unsigned(*cp++);
+	*ip++ = txdr_unsigned(*cp++);
 
 	return (m);
 }
@@ -536,8 +538,8 @@ xdr_inaddr_decode(m, ia)
 	struct in_addr *ia;		/* already in network order */
 {
 	struct xdr_inaddr *xi;
-	u_char *cp;
-	int32_t *ip;
+	u_int8_t *cp;
+	u_int32_t *ip;
 
 	if (m->m_len < sizeof(*xi)) {
 		m = m_pullup(m, sizeof(*xi));
@@ -545,16 +547,16 @@ xdr_inaddr_decode(m, ia)
 			return (NULL);
 	}
 	xi = mtod(m, struct xdr_inaddr *);
-	if (xi->atype != htonl(1)) {
+	if (xi->atype != txdr_unsigned(1)) {
 		ia->s_addr = INADDR_ANY;
 		goto out;
 	}
 	ip = xi->addr;
-	cp = (u_char *)&ia->s_addr;
-	*cp++ = *ip++;
-	*cp++ = *ip++;
-	*cp++ = *ip++;
-	*cp++ = *ip++;
+	cp = (u_int8_t *)&ia->s_addr;
+	*cp++ = fxdr_unsigned(u_int8_t, *ip++);
+	*cp++ = fxdr_unsigned(u_int8_t, *ip++);
+	*cp++ = fxdr_unsigned(u_int8_t, *ip++);
+	*cp++ = fxdr_unsigned(u_int8_t, *ip++);
 
 out:
 	m_adj(m, sizeof(*xi));
