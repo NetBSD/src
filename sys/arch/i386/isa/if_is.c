@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.12 1993/09/06 18:24:35 mycroft Exp $
+ *	$Id: if_is.c,v 1.13 1993/09/06 18:27:22 mycroft Exp $
  */
 
 /* TODO
@@ -24,8 +24,6 @@
 
 #include "is.h"
 #if NIS > 0
-
-#include "bpfilter.h"
 
 #include "param.h"
 #include "errno.h"
@@ -52,6 +50,7 @@
 #include "netns/ns_if.h"
 #endif
 
+#include "bpfilter.h"
 #if NBPFILTER > 0
 #include "sys/select.h"
 #include "net/bpf.h"
