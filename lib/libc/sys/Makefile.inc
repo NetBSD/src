@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.30 1994/12/22 10:15:08 cgd Exp $
+#	$Id: Makefile.inc,v 1.31 1994/12/28 01:42:56 mycroft Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -29,9 +29,9 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	setpgid.o setpriority.o setrlimit.o setsid.o setsockopt.o \
 	settimeofday.o setuid.o shmat.o shmctl.o shmdt.o shmget.o shutdown.o \
 	sigaction.o sigaltstack.o socket.o socketpair.o stat.o statfs.o \
-	swapon.o symlink.o sync.o sysarch.o umask.o unlink.o unmount.o \
-	utimes.o vadvise.o wait4.o write.o writev.o __semctl.o __syscall.o \
-	__sysctl.o
+	swapon.o symlink.o sync.o sysarch.o umask.o undelete.o unlink.o \
+	unmount.o utimes.o vadvise.o wait4.o write.o writev.o __semctl.o \
+	__syscall.o __sysctl.o
 
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
