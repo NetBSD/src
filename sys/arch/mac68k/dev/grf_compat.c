@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.6 2001/03/15 06:10:41 chs Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.7 2001/04/30 17:12:03 wiz Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -387,7 +387,6 @@ grfunmap(dev, sc, addr, p)
 	struct proc *p;
 {
 	vm_size_t size;
-	int     rv;
 
 	addr -= sc->sc_dc->dc_offset;
 
