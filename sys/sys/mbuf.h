@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.83 2003/05/14 06:47:46 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.84 2003/06/26 09:55:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -873,6 +873,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_PF_ROUTED			12 /* PF routed, no route loops */
 #define PACKET_TAG_PF_FRAGCACHE			13 /* PF fragment cached */
 #define PACKET_TAG_PF_QID			14 /* PF queue id */
+#define PACKET_TAG_PF_TAG			15 /* PF tags */
 #endif /* _KERNEL */
 #endif /* !_SYS_MBUF_H_ */
 
