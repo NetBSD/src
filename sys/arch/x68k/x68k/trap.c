@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1999/12/05 11:56:37 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 2000/04/18 21:06:12 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_linux.h"
+#include "opt_m680x0.h"
 #include "opt_fpuemulate.h"
 
 #include <sys/param.h>
