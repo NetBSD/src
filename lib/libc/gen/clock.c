@@ -1,6 +1,8 @@
+/*	$NetBSD: clock.c,v 1.5 1995/02/25 15:39:09 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)clock.c	5.4 (Berkeley) 8/27/90";*/
-static char *rcsid = "$Id: clock.c,v 1.4 1993/08/26 00:44:17 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)clock.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: clock.c,v 1.5 1995/02/25 15:39:09 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

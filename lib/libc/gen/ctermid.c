@@ -1,6 +1,8 @@
+/*	$NetBSD: ctermid.c,v 1.4 1995/02/25 15:39:15 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)ctermid.c	5.2 (Berkeley) 2/20/91";*/
-static char *rcsid = "$Id: ctermid.c,v 1.3 1993/08/26 00:44:20 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)ctermid.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: ctermid.c,v 1.4 1995/02/25 15:39:15 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>

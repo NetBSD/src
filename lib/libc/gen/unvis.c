@@ -1,6 +1,8 @@
+/*	$NetBSD: unvis.c,v 1.4 1995/02/25 15:39:44 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)unvis.c	1.4 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: unvis.c,v 1.3 1993/08/26 00:45:22 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: unvis.c,v 1.4 1995/02/25 15:39:44 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -57,13 +62,9 @@ static char *rcsid = "$Id: unvis.c,v 1.3 1993/08/26 00:45:22 jtc Exp $";
  * unvis - decode characters previously encoded by vis
  */
 int
-#if __STDC__
-unvis(char *cp, char c, int *astate, int flag)
-#else
 unvis(cp, c, astate, flag)
-	char *cp, c;
-	int *astate, flag;
-#endif
+	char *cp;
+	int c, *astate, flag;
 {
 
 	if (flag & UNVIS_END) {

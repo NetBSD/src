@@ -1,6 +1,8 @@
+/*	$NetBSD: vis.c,v 1.6 1995/02/25 15:40:09 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)vis.c	5.6 (Berkeley) 2/5/92";*/
-static char *rcsid = "$Id: vis.c,v 1.5 1993/08/26 00:45:26 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 7/19/93";
+#else
+static char rcsid[] = "$NetBSD: vis.c,v 1.6 1995/02/25 15:40:09 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
