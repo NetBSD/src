@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.30 2002/09/17 05:56:37 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.31 2002/09/17 06:32:49 itojun Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.30 2002/09/17 05:56:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.31 2002/09/17 06:32:49 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -474,7 +474,6 @@ isrfc1918addr(in)
 	/*
 	 * returns 1 if private address range:
 	 * 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
-	 * (requirement from RFC3056 section 2 1st paragraph)
 	 */
 	if ((ntohl(in->s_addr) & 0xff000000) >> 24 == 10 ||
 	    (ntohl(in->s_addr) & 0xfff00000) >> 16 == 172 * 256 + 16 ||
