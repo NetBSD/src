@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930intr.s,v 1.13 1999/03/05 10:45:25 pk Exp $	*/
+/*	$NetBSD: amd7930intr.s,v 1.14 1999/03/07 22:36:04 pk Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@ savepc:
 	.seg	"text"
 	.align	4
 
-_ENTRY(amd7930_trap)
+_ENTRY(_C_LABEL(amd7930_trap))
 	sethi	%hi(savepc), %l7
 	st	%l2, [%l7 + %lo(savepc)]
 

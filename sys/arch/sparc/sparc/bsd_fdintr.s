@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.14 1999/03/05 10:45:25 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.15 1999/03/07 22:36:04 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -163,7 +163,7 @@ _C_LABEL(fdciop):
 	.seg	"text"
 	.align	4
 
-_ENTRY(fdchwintr)
+_ENTRY(_C_LABEL(fdchwintr))
 	set	save_l, %l7
 	std	%l0, [%l7]
 	st	%l2, [%l7 + 8]
