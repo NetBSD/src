@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.21 1997/05/05 21:08:26 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.22 1997/07/17 01:59:13 jtk Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -64,6 +64,8 @@
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
+
+#include "locators.h"
 
 struct scsi_softc {
 	struct	device sc_dev;		/* generic device glue */
@@ -423,12 +425,12 @@ scsisubmatch(parent, match, aux)
 {
 	struct oscsi_attach_args *osa = aux;
 
-	if (match->cf_loc[0] != -1 &&
-	    match->cf_loc[0] != osa->osa_target)
+	if (match->cf_loc[OSCSICF_TARGET] != OSCSICF_TARGET_DEFAULT &&
+	    match->cf_loc[OSCSICF_TARGET] != osa->osa_target)
 		return (0);
 
-	if (match->cf_loc[1] != -1 &&
-	    match->cf_loc[1] != osa->osa_lun)
+	if (match->cf_loc[OSCSICF_LUN] != OSCSICF_LUN_DEFAULT &&
+	    match->cf_loc[OSCSICF_LUN] != osa->osa_lun)
 		return (0);
 
 	return ((*match->cf_attach->ca_match)(parent, match, aux));
