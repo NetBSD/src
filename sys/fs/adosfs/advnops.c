@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.12 2004/09/14 10:58:45 skrll Exp $	*/
+/*	$NetBSD: advnops.c,v 1.13 2004/09/14 16:59:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.12 2004/09/14 10:58:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.13 2004/09/14 16:59:40 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -926,32 +926,32 @@ adosfs_pathconf(v)
 		struct vnode *a_vp;
 		int a_name;
 		register_t *a_retval;
-	} */ *sp = v;
+	} */ *ap = v;
 
-	switch (sp->a_name) {
+	switch (ap->a_name) {
 	case _PC_LINK_MAX:
-		*sp->a_retval = LINK_MAX;
+		*ap->a_retval = LINK_MAX;
 		return (0);
 	case _PC_NAME_MAX:
-		*sp->a_retval = sp->a_vp->v_mount->mnt_stat.f_namemax;
+		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_namemax;
 		return (0);
 	case _PC_PATH_MAX:
-		*sp->a_retval = PATH_MAX;
+		*ap->a_retval = PATH_MAX;
 		return (0);
 	case _PC_PIPE_BUF:
-		*sp->a_retval = PIPE_BUF;
+		*ap->a_retval = PIPE_BUF;
 		return (0);
 	case _PC_CHOWN_RESTRICTED:
-		*sp->a_retval = 1;
+		*ap->a_retval = 1;
 		return (0);
 	case _PC_VDISABLE:
-		*sp->a_retval = _POSIX_VDISABLE;
+		*ap->a_retval = _POSIX_VDISABLE;
 		return (0);
 	case _PC_SYNC_IO:
-		*sp->a_retval = 1;
+		*ap->a_retval = 1;
 		return (0);
 	case _PC_FILESIZEBITS:
-		*sp->a_retval = 32;
+		*ap->a_retval = 32;
 		return (0);
 	default:
 		return (EINVAL);
