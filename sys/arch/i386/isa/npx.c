@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.77 2001/08/02 21:04:45 thorpej Exp $	*/
+/*	$NetBSD: npx.c,v 1.78 2001/08/02 22:04:29 thorpej Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -114,7 +114,7 @@ fpu_save(union savefpu *addr)
 {
 
 #ifdef I686_CPU
-	if (cpu_use_fxsave) {
+	if (i386_use_fxsave) {
 		fxsave(&addr->sv_xmm);
 		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
 		fwait();	/* XXX needed? */
@@ -271,7 +271,7 @@ npxattach(struct npx_softc *sc)
 	i386_fpu_present = 1;
 
 #ifdef I686_CPU
-	if (cpu_use_fxsave)
+	if (i386_use_fxsave)
 		npxdna_func = npxdna_xmm;
 	else
 #endif /* I686_CPU */
@@ -348,7 +348,7 @@ npxintr(void *arg)
 	/*
 	 * Restore control word (was clobbered by fpu_save).
 	 */
-	if (cpu_use_fxsave)
+	if (i386_use_fxsave)
 		fldcw(&addr->sv_xmm.sv_env.en_cw);
 	else
 		fldcw(&addr->sv_87.sv_env.en_cw);
@@ -361,7 +361,7 @@ npxintr(void *arg)
 	 * preserved the control word and will copy the status and tag
 	 * words, so the complete exception state can be recovered.
 	 */
-	if (cpu_use_fxsave) {
+	if (i386_use_fxsave) {
 		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.en_sw;
 		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
 	} else {
@@ -514,7 +514,7 @@ npxdna_s87(struct proc *p)
 	npxproc = p;
 
 	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		if (cpu_use_fxsave)
+		if (i386_use_fxsave)
 		    fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
 		else
 		    fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw);
