@@ -41,6 +41,8 @@
 static reloc_howto_type * elf32_arm_reloc_type_lookup
   PARAMS ((bfd * abfd, bfd_reloc_code_real_type code));
 
+static boolean elf32_arm_object_p PARAMS ((bfd *));
+
 /* Note: code such as elf32_arm_reloc_type_lookup expect to use e.g.
    R_ARM_PC24 as an index into this, and find the R_ARM_PC24 HOWTO
    in that slot.  */
@@ -671,6 +673,32 @@ elf32_arm_reloc_type_lookup (abfd, code)
       return NULL;
    }
 }
+
+/* Return nonzero if ABFD represents an ARM ELF32 file.  */
+
+static boolean
+elf32_arm_object_p (abfd)
+     bfd *abfd;
+{
+  Elf_Internal_Ehdr * i_ehdrp;
+
+  i_ehdrp = elf_elfheader (abfd);
+  if (strcmp (bfd_get_target (abfd), "elf32-littlearm-nbsd") == 0
+   || strcmp (bfd_get_target (abfd), "elf32-bigarm-nbsd") == 0)
+    {
+      if (i_ehdrp->e_ident[EI_OSABI] != ARM_ELF_OS_ABI_VERSION_NBSD)
+	return false;
+    }
+  else
+    {
+      if (i_ehdrp->e_ident[EI_OSABI] != ARM_ELF_OS_ABI_VERSION)
+	return false;
+    }
+
+  return true;
+}
+
+#define elf_backend_object_p            elf32_arm_object_p
 
 #define TARGET_LITTLE_SYM               bfd_elf32_littlearm_vec
 #define TARGET_LITTLE_NAME              "elf32-littlearm"
