@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.31 1999/01/10 10:23:24 augustss Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.32 1999/03/22 07:40:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -204,6 +204,9 @@ isapnp_free_region(t, r)
 	bus_space_tag_t t;
 	struct isapnp_region *r;
 {
+	if (r->length == 0)
+		return;
+
 #ifdef _KERNEL
 	bus_space_unmap(t, r->h, r->length);
 #endif
@@ -219,6 +222,11 @@ isapnp_alloc_region(t, r)
 	struct isapnp_region *r;
 {
 	int error = 0;
+
+	if (r->length == 0) {
+		r->base = 0;
+		return 0;
+	}
 
 	for (r->base = r->minbase; r->base <= r->maxbase;
 	     r->base += r->align) {
