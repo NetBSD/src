@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.154 1999/09/17 20:04:53 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.155 1999/10/04 19:11:42 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -407,12 +407,18 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+	char *cp;
 
 	/* all sysctl names are this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);	/* overloaded */
 
 	switch (name[0]) {
+	case CPU_BOOTED_KERNEL:
+		cp = prom_getbootfile();
+		if (cp == NULL || cp[0] == '\0')
+			return (ENOENT);
+		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
 	default:
 		return (EOPNOTSUPP);
 	}
