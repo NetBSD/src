@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2003/08/26 18:13:25 jmmv Exp $	*/
+/*	$NetBSD: trap.c,v 1.31 2005/01/11 19:38:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.30 2003/08/26 18:13:25 jmmv Exp $");
+__RCSID("$NetBSD: trap.c,v 1.31 2005/01/11 19:38:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: trap.c,v 1.30 2003/08/26 18:13:25 jmmv Exp $");
 #include "error.h"
 #include "trap.h"
 #include "mystring.h"
+#include "var.h"
 
 
 /*
@@ -136,11 +137,13 @@ trapcmd(int argc, char **argv)
 	int signo;
 
 	if (argc <= 1) {
-		for (signo = 0 ; signo <= NSIG ; signo++) {
-			if (trap[signo] != NULL)
-				out1fmt("trap -- '%s' %s\n", trap[signo],
+		for (signo = 0 ; signo <= NSIG ; signo++)
+			if (trap[signo] != NULL) {
+				out1fmt("trap -- ");
+				print_quoted(trap[signo]);
+				out1fmt(" %s\n",
 				    (signo) ? sys_signame[signo] : "EXIT");
-		}
+			}
 		return 0;
 	}
 	ap = argv + 1;
