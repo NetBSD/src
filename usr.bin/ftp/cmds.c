@@ -1,4 +1,4 @@
-/*      $NetBSD: cmds.c,v 1.8 1995/09/08 01:06:05 tls Exp $      */
+/*      $NetBSD: cmds.c,v 1.9 1996/11/25 05:13:18 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.8 1995/09/08 01:06:05 tls Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.9 1996/11/25 05:13:18 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,6 +164,7 @@ setpeer(argc, argv)
 			verbose = -1;
 		if (command("SYST") == COMPLETE && overbose) {
 			char *cp, c;
+			c = 0;
 			cp = strchr(reply_string+4, ' ');
 			if (cp == NULL)
 				cp = strchr(reply_string+4, '\r');
@@ -200,7 +201,7 @@ setpeer(argc, argv)
 				unix_proxy = 0;
 			else
 				unix_server = 0;
-			if (overbose && 
+			if (overbose &&
 			    !strncmp(reply_string, "215 TOPS20", 10))
 				printf(
 "Remember to set tenex mode when transfering binary files from this machine.\n");
@@ -416,7 +417,7 @@ put(argc, argv)
 		goto usage;
 	if (argc < 3 && !another(&argc, &argv, "remote-file")) {
 usage:
-		printf("usage: %s local-file remote-file\n", argv[0]);
+		printf("usage: %s local-file [ remote-file ]\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -516,7 +517,7 @@ mput(argc, argv)
 		return;
 	}
 	for (i = 1; i < argc; i++) {
-		char **cpp, **gargs;
+		char **cpp;
 		glob_t gl;
 		int flags;
 
@@ -669,15 +670,15 @@ usage:
 					tm->tm_mon++;
 					if (tm->tm_year > yy%100)
 						return (1);
-					if ((tm->tm_year == yy%100 && 
+					if ((tm->tm_year == yy%100 &&
 					    tm->tm_mon > mo) ||
-					   (tm->tm_mon == mo && 
+					   (tm->tm_mon == mo &&
 					    tm->tm_mday > day) ||
-					   (tm->tm_mday == day && 
+					   (tm->tm_mday == day &&
 					    tm->tm_hour > hour) ||
-					   (tm->tm_hour == hour && 
+					   (tm->tm_hour == hour &&
 					    tm->tm_min > min) ||
-					   (tm->tm_min == min && 
+					   (tm->tm_min == min &&
 					    tm->tm_sec > sec))
 						return (1);
 				} else {
@@ -746,7 +747,7 @@ mget(argc, argv)
 		if (mflag && confirm(argv[0], cp)) {
 			tp = cp;
 			if (mcase) {
-				for (tp2 = tmpbuf; ch = *tp++;)
+				for (tp2 = tmpbuf; (ch = *tp++) != NULL; )
 					*tp2++ = isupper(ch) ? tolower(ch) : ch;
 				*tp2 = '\0';
 				tp = tmpbuf;
@@ -869,7 +870,7 @@ status(argc, argv)
 	}
 	printf("Mode: %s; Type: %s; Form: %s; Structure: %s\n",
 		modename, typename, formname, structname);
-	printf("Verbose: %s; Bell: %s; Prompting: %s; Globbing: %s\n", 
+	printf("Verbose: %s; Bell: %s; Prompting: %s; Globbing: %s\n",
 		onoff(verbose), onoff(bell), onoff(interactive),
 		onoff(doglob));
 	printf("Store unique: %s; Receive unique: %s\n", onoff(sunique),
@@ -887,8 +888,8 @@ status(argc, argv)
 	else {
 		printf("Nmap: off\n");
 	}
-	printf("Hash mark printing: %s; Use of PORT cmds: %s\n",
-		onoff(hash), onoff(sendport));
+	printf("Hash mark printing: %s; Mark count: %d\n", onoff(hash), mark);
+	printf("Use of PORT cmds: %s\n", onoff(sendport));
 	if (macnum > 0) {
 		printf("Macros:\n");
 		for (i=0; i<macnum; i++) {
@@ -929,7 +930,7 @@ settrace(argc, argv)
 }
 
 /*
- * Toggle hash mark printing during transfers.
+ * Toggle hash mark printing during transfers, or set hash mark bytecount.
  */
 /*VARARGS*/
 void
@@ -937,13 +938,25 @@ sethash(argc, argv)
 	int argc;
 	char *argv[];
 {
-
-	hash = !hash;
-	printf("Hash mark printing %s", onoff(hash));
-	code = hash;
-	if (hash)
-		printf(" (%d bytes/hash mark)", 1024);
-	printf(".\n");
+	if (argc == 1) {
+		hash = !hash;
+		printf("Hash mark printing %s", onoff(hash));
+		code = hash;
+		if (hash)
+			printf(" (%d bytes/hash mark)", mark);
+		printf(".\n");
+	} else if (argc != 2) {
+		printf("usage: %s [number of bytes].\n", argv[0]);
+	} else {
+		int nmark = atol(argv[1]);
+		if (nmark < 1)
+			printf( "A hash mark bytecount of %d"
+				" is rather pointless...\n", nmark);
+		else {
+			mark = nmark;
+			printf("Hash mark set to %d bytes/hash mark\n", mark);
+		}
+	}
 }
 
 /*
@@ -1002,7 +1015,7 @@ setglob(argc, argv)
 	int argc;
 	char *argv[];
 {
-	
+
 	doglob = !doglob;
 	printf("Globbing %s.\n", onoff(doglob));
 	code = doglob;
@@ -1205,6 +1218,9 @@ ls(argc, argv)
 			return;
 	}
 	recvrequest(cmd, argv[2], argv[1], "w", 0);
+
+	/* flush results in case commands are coming from a pipe */
+	fflush(stdout);
 }
 
 /*
@@ -1268,7 +1284,7 @@ shell(argc, argv)
 {
 	pid_t pid;
 	sig_t old1, old2;
-	char shellnam[40], *shell, *namep; 
+	char shellnam[40], *shell, *namep;
 	union wait status;
 
 	old1 = signal (SIGINT, SIG_IGN);
@@ -1908,7 +1924,7 @@ domap(name)
 				break;
 			case '[':
 LOOP:
-				if (*++cp2 == '$' && isdigit(*(cp2+1))) { 
+				if (*++cp2 == '$' && isdigit(*(cp2+1))) {
 					if (*++cp2 == '0') {
 						char *cp3 = name;
 
@@ -1927,7 +1943,7 @@ LOOP:
 					}
 				}
 				else {
-					while (*cp2 && *cp2 != ',' && 
+					while (*cp2 && *cp2 != ',' &&
 					    *cp2 != ']') {
 						if (*cp2 == '\\') {
 							cp2++;

@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.12 1996/11/25 05:13:26 lukem Exp $	*/
+
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.11 1996/05/07 00:16:55 pk Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.12 1996/11/25 05:13:26 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,6 +68,12 @@ static char rcsid[] = "$NetBSD: main.c,v 1.11 1996/05/07 00:16:55 pk Exp $";
 
 #include "ftp_var.h"
 
+extern char *__progname;		/* from crt0.o */
+
+char *portnum;				/* alternate port number */
+
+int auto_fetch __P((int, char **));
+
 int
 main(argc, argv)
 	int argc;
@@ -81,14 +89,20 @@ main(argc, argv)
 	doglob = 1;
 	interactive = 1;
 	autologin = 1;
+	passivemode = 0;
+	mark = HASHBYTES;
 
-	while ((ch = getopt(argc, argv, "dgintv")) != EOF) {
+	while ((ch = getopt(argc, argv, "adginpP:tv")) != EOF) {
 		switch (ch) {
+		case 'a':
+			anonftp = 1;
+			break;
+
 		case 'd':
 			options |= SO_DEBUG;
 			debug++;
 			break;
-			
+
 		case 'g':
 			doglob = 0;
 			break;
@@ -101,6 +115,14 @@ main(argc, argv)
 			autologin = 0;
 			break;
 
+		case 'p':
+			passivemode = 1;
+			break;
+
+		case 'P':
+			portnum = optarg;
+			break;
+
 		case 't':
 			trace++;
 			break;
@@ -111,7 +133,10 @@ main(argc, argv)
 
 		default:
 			(void)fprintf(stderr,
-				"usage: ftp [-dgintv] [host [port]]\n");
+			    "usage: %s [-adginptv] [-P port] [host [port]]\n"
+			    "       %s ftp://host[:port]/file\n"
+			    "       %s host:file\n",
+			    __progname, __progname, __progname);
 			exit(1);
 		}
 	}
@@ -123,7 +148,6 @@ main(argc, argv)
 		verbose++;
 	cpend = 0;	/* no pending replies */
 	proxy = 0;	/* proxy not active */
-	passivemode = 0; /* passive mode not active */
 	crflag = 1;	/* strip c.r. on ascii gets */
 	sendport = -1;	/* not using ports */
 	/*
@@ -139,9 +163,15 @@ main(argc, argv)
 		home = homedir;
 		(void) strcpy(home, pw->pw_dir);
 	}
+
+	/* Handle "automatic" transfers. */
+	if (argc > 0 && strchr(argv[0], ':') != NULL) {
+		anonftp = 1;
+		exit(auto_fetch(argc, argv));
+	}
+
 	if (argc > 0) {
 		char *xargv[5];
-		extern char *__progname;
 
 		if (setjmp(toplevel))
 			exit(0);
@@ -208,13 +238,15 @@ tail(filename)
 	char *filename;
 {
 	char *s;
-	
+
 	while (*filename) {
 		s = strrchr(filename, '/');
 		if (s == NULL)
 			break;
 		if (s[1])
 			return (s + 1);
+		if (s == filename)
+			break;		XXX
 		*s = '\0';
 	}
 	return (filename);
@@ -294,7 +326,7 @@ getcmd(name)
 	longest = 0;
 	nmatches = 0;
 	found = 0;
-	for (c = cmdtab; p = c->c_name; c++) {
+	for (c = cmdtab; (p = c->c_name) != NULL; c++) {
 		for (q = name; *q == *p++; q++)
 			if (*q == 0)		/* exact match? */
 				return (c);
@@ -534,4 +566,110 @@ help(argc, argv)
 			printf("%-*s\t%s\n", HELPINDENT,
 				c->c_name, c->c_help);
 	}
+}
+
+int
+auto_fetch(argc, argv)
+	int argc;
+	char **argv;
+{
+	char *xargv[5];
+	char *cp, *host, *dir, *file;
+	int rval, xargc;
+	size_t urllen;
+
+	urllen = strlen(FTPURL);
+	rval = 0;
+
+	if (setjmp(toplevel))
+		exit(0);
+	(void) signal(SIGINT, intr);
+	(void) signal(SIGPIPE, lostpeer);
+
+	/*
+	 * Loop through as long as there's files to fetch.
+	 */
+	while (argc > 0 && strchr(argv[0], ':') != NULL) {
+		host = dir = file = portnum = NULL;
+
+		/*
+		 * We muck with the string, so we make a copy.
+		 */
+		host = strdup(argv[0]);
+		if (host == NULL)
+			errx(1, "Can't allocate memory for auto-fetch.");
+
+		/*
+		 * Try URL-style arguments first, then host:file.
+		 */
+		if (strncmp(host, FTPURL, urllen) == 0) {
+			host += urllen;
+			cp = strchr(host, '/');
+
+			/* Look for a port number after the nost name. */
+			portnum = strchr(host, ':');
+			if (portnum != NULL)
+				*portnum++ = '\0';
+		} else
+			cp = strchr(host, ':');
+
+		/*
+		 * Extract the file and (if present) directory name.
+		 */
+		*cp++ = '\0';
+		dir = cp;
+		cp = strrchr(cp, '/');
+		if (cp != NULL) {
+			*cp++ = '\0';
+			file = cp;
+		} else {
+			file = dir;
+			dir = NULL;
+		}
+
+		/*
+		 * Set up the connection.
+		 */
+		xargv[0] = __progname;
+		xargv[1] = host;
+		xargv[2] = NULL;
+		xargc = 2;
+		if (portnum != NULL) {
+			xargv[2] = portnum;
+			xargv[3] = NULL;
+			xargc = 3;
+		}
+		setpeer(xargc, xargv);
+		if (connected == 0) {
+			warnx("Can't connect to host `%s'.", host);
+			rval = 1;
+			free(host);
+			continue;
+		}
+
+		/* Always use binary transfers. */
+		setbinary(0, NULL);
+
+		/* Change directories, if necessary. */
+		if (dir != NULL) {
+			xargv[0] = "cd";
+			xargv[1] = dir;
+			xargv[2] = NULL;
+			cd(2, xargv);
+			/* XXX SHOULD CHECK FOR ERROR CONDITION! */
+		}
+
+		/* Fetch the file. */
+		xargv[0] = "get";
+		xargv[1] = file;
+		xargv[2] = NULL;
+		get(2, xargv);
+
+		disconnect(0, NULL);
+		free(host);
+
+		--argc, ++argv;
+	}
+
+	return (rval);
 }
