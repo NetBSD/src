@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.47 2001/05/06 10:43:23 ichiro Exp $
+# $NetBSD: obsolete.mi,v 1.48 2001/05/16 13:48:53 ad Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -267,7 +267,6 @@
 /usr/include/dev/tc/ioasicreg.h
 /usr/include/dev/tc/ioasicvar.h
 /usr/include/dev/tc/sfbreg.h
-/usr/include/dev/tc/sticreg.h
 /usr/include/dev/tc/tcdevs.h
 /usr/include/dev/tc/tcdevs_data.h
 /usr/include/dev/tc/tcdsreg.h
