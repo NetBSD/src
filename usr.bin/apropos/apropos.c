@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.12 1998/06/19 23:00:25 kleink Exp $	*/
+/*	$NetBSD: apropos.c,v 1.13 1998/07/06 14:23:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.12 1998/06/19 23:00:25 kleink Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.13 1998/07/06 14:23:31 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,9 +124,13 @@ main(argc, argv)
 		ep = (tp = getlist("_whatdb")) == NULL ?
 		    NULL : tp->list.tqh_first;
 		for (; ep != NULL; ep = ep->q.tqe_next) {
-			if (glob(ep->s, GLOB_BRACE | GLOB_NOSORT, NULL,
-			    &pg) != 0)
-				err(1, "glob");
+			if ((rv = glob(ep->s, GLOB_BRACE | GLOB_NOSORT, NULL,
+			    &pg)) != 0) {
+				if (rv == GLOB_NOMATCH)
+					continue;
+				else
+					err(1, "glob"); 
+			}
 			if (pg.gl_pathc)
 				for (p = pg.gl_pathv; *p; p++)
 					apropos(argv, *p, 0);
