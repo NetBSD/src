@@ -30,7 +30,7 @@ GPROF.EX=/usr/src/usr.lib/libc/csu/hp300/gmon.ex
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
-HP300=	$S/hp300
+HP300=	../..
 
 INCLUDES= -I. -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Dhp300 -DFPCOPROC -DREFBIT
@@ -120,7 +120,7 @@ assym.s: genassym
 	./genassym >assym.s
 
 genassym:
-	${CC} ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Dhp300 -o genassym \
+	${CC} ${INCLUDES} ${IDENT} -DKERNEL ${PARAM} -Dmc68020 -Dhp300 -o genassym \
 	    ${HP300}/hp300/genassym.c
 
 depend: assym.s param.c
