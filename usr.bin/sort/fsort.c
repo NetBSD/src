@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.21 2002/09/30 05:09:25 enami Exp $	*/
+/*	$NetBSD: fsort.c,v 1.22 2002/10/10 22:41:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.21 2002/09/30 05:09:25 enami Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.22 2002/10/10 22:41:52 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ u_char *buffer = 0, *linebuf = 0;
 size_t bufsize = DEFBUFSIZE;
 size_t linebuf_size;
 struct tempfile fstack[MAXFCT];
-extern char *toutpath;
 #define FSORTMAX 4
 int PANIC = FSORTMAX;
 
