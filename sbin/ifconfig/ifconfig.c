@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.123 2002/05/06 20:14:36 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.124 2002/05/23 21:38:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.123 2002/05/06 20:14:36 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.124 2002/05/23 21:38:01 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ int	newaddr = -1;
 int	conflicting = 0;
 int	nsellength = 1;
 int	af;
-int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag;
+int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag, vflag;
 #ifdef INET6
 int	Lflag;
 #endif
@@ -409,8 +409,8 @@ main(argc, argv)
 	int ch;
 
 	/* Parse command-line options */
-	aflag = mflag = 0;
-	while ((ch = getopt(argc, argv, "AabCdlmsu"
+	aflag = mflag = vflag = 0;
+	while ((ch = getopt(argc, argv, "AabCdlmsuv"
 #ifdef INET6
 					"L"
 #endif
@@ -459,6 +459,10 @@ main(argc, argv)
 			uflag = 1;
 			break;
 
+		case 'v':
+			vflag = 1;
+			break;
+
 			
 		default:
 			usage();
@@ -477,7 +481,7 @@ main(argc, argv)
 	 *
 	 * -a means "print status of all interfaces".
 	 */
-	if ((lflag || Cflag) && (aflag || mflag || argc))
+	if ((lflag || Cflag) && (aflag || mflag || vflag || argc))
 		usage();
 #ifdef INET6
 	if ((lflag || Cflag) && Lflag)
@@ -1858,6 +1862,7 @@ status(sdl)
 {
 	struct afswtch *p = afp;
 	struct ifmediareq ifmr;
+	struct ifdatareq ifdr;
 	int *media_list, i;
 	char hbuf[NI_MAXHOST];
 
@@ -1896,12 +1901,12 @@ status(sdl)
 		/*
 		 * Interface doesn't support SIOC{G,S}IFMEDIA.
 		 */
-		goto proto_status;
+		goto iface_stats;
 	}
 
 	if (ifmr.ifm_count == 0) {
 		warnx("%s: no media types?", name);
-		goto proto_status;
+		goto iface_stats;
 	}
 
 	media_list = (int *)malloc(ifmr.ifm_count * sizeof(int));
@@ -1973,6 +1978,56 @@ status(sdl)
 	}
 
 	free(media_list);
+
+ iface_stats:
+	if (!vflag)
+		goto proto_status;
+
+	(void) strncpy(ifdr.ifdr_name, name, sizeof(ifdr.ifdr_name));
+
+	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifdr) != -1) {
+		struct if_data * const ifi = &ifdr.ifdr_data;
+#define	PLURAL(n)	((n) == 1 ? "" : "s")
+		printf("\tinput: %llu packet%s, %llu byte%s",
+		    (unsigned long long) ifi->ifi_ipackets,
+		    PLURAL(ifi->ifi_ipackets),
+		    (unsigned long long) ifi->ifi_ibytes,
+		    PLURAL(ifi->ifi_ibytes));
+		if (ifi->ifi_imcasts)
+			printf(", %llu multicast%s",
+			    (unsigned long long) ifi->ifi_imcasts,
+			    PLURAL(ifi->ifi_imcasts));
+		if (ifi->ifi_ierrors)
+			printf(", %llu error%s",
+			    (unsigned long long) ifi->ifi_ierrors,
+			    PLURAL(ifi->ifi_ierrors));
+		if (ifi->ifi_iqdrops)
+			printf(", %llu queue drop%s",
+			    (unsigned long long) ifi->ifi_iqdrops,
+			    PLURAL(ifi->ifi_iqdrops));
+		if (ifi->ifi_noproto)
+			printf(", %llu unknown protocol",
+			    (unsigned long long) ifi->ifi_noproto);
+		printf("\n\toutput: %llu packet%s, %llu byte%s",
+		    (unsigned long long) ifi->ifi_opackets,
+		    PLURAL(ifi->ifi_opackets),
+		    (unsigned long long) ifi->ifi_obytes,
+		    PLURAL(ifi->ifi_obytes));
+		if (ifi->ifi_omcasts)
+			printf(", %llu multicast%s",
+			    (unsigned long long) ifi->ifi_omcasts,
+			    PLURAL(ifi->ifi_omcasts));
+		if (ifi->ifi_oerrors)
+			printf(", %llu error%s",
+			    (unsigned long long) ifi->ifi_oerrors,
+			    PLURAL(ifi->ifi_oerrors));
+		if (ifi->ifi_collisions)
+			printf(", %llu collision%s",
+			    (unsigned long long) ifi->ifi_collisions,
+			    PLURAL(ifi->ifi_collisions));
+		printf("\n");
+#undef PLURAL
+	}
 
  proto_status:
 	if ((p = afp) != NULL) {
@@ -2807,7 +2862,7 @@ usage()
 	const char *progname = getprogname();
 
 	fprintf(stderr,
-	    "usage: %s [ -m ] "
+	    "usage: %s [ -m ] [ -v ]"
 #ifdef INET6
 		"[ -L ] "
 #endif
@@ -2825,7 +2880,7 @@ usage()
 		"\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
 		"\t[ tentative | -tentative ] [ pltime n ] [ vltime n ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
-		"       %s -a [ -m ] [ -d ] [ -u ] [ af ]\n"
+		"       %s -a [ -m ] [ -d ] [ -u ] [ -v ] [ af ]\n"
 		"       %s -l [ -b ] [ -d ] [ -u ] [ -s ]\n"
 		"       %s -C\n"
 		"       %s interface create\n"
