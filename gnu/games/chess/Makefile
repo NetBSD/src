@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.8 1996/10/18 02:52:25 thorpej Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.7 1994/12/22 09:31:26 cgd Exp $
 
 PROG=	chess
 SRCS=	gnuchess.c uxdsp.c move.c
