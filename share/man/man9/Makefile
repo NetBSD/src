@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.39 1998/04/29 04:17:26 kml Exp $
+#       $NetBSD: Makefile,v 1.40 1998/05/04 07:10:45 mrg Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -6,7 +6,8 @@ MAN=	access.9 arp.9 audio.9 bus_space.9 bus_dma.9 copy.9 cpu_reboot.9 \
 	ctxsw.9 disk.9 disklabel.9 doshutdownhooks.9 ethersubr.9 extent.9 \
 	fetch.9 fork1.9 inittodr.9 intro.9 log.9 malloc.9 mbuf.9 panic.9 \
 	pfil.9 physio.9 pool.9 psignal.9 resettodr.9 rnd.9 rt_timer.9 \
-	shutdownhook_establish.9 sleep.9 spl.9 store.9 time.9 timeout.9 vslock.9
+	shutdownhook_establish.9 sleep.9 spl.9 store.9 time.9 timeout.9 \
+	vslock.9 uvm.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
 MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
@@ -95,6 +96,24 @@ MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=timeout.9 untimeout.9
 MLINKS+=vslock.9 vsunlock.9
+MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
+	uvm.9 uvm_swap_init.9 uvm.9 uvm_map.9 uvm.9 uvm_map_pageable.9 \
+	uvm.9 uvm_map_checkprot.9 uvm.9 uvm_map_protect.9 \
+	uvm.9 uvm_deallocate.9 uvm.9 uvmspace_alloc.9 uvm.9 uvmspace_exec.9 \
+	uvm.9 uvmspace_fork.9 uvm.9 uvmspace_free.9 uvm.9 uvmspace_share.9 \
+	uvm.9 uvmspace_unshare.9 uvm.9 uvm_fault.9 uvm.9 uvn_attach.9 \
+	uvm.9 uvm_vnp_setsize.9 uvm.9 uvm_vnp_sync.9 uvm.9 uvm_vnp_terminate.9 \
+	uvm.9 uvm_io.9 uvm.9 uvm_km_alloc.9 uvm.9 uvm_km_zalloc.9 \
+	uvm.9 uvm_km_alloc1.9 uvm.9 uvm_km_kmemalloc.9 uvm.9 uvm_km_valloc.9 \
+	uvm.9 uvm_km_valloc_wait.9 uvm.9 uvm_km_suballoc.9 uvm.9 uvm_km_free.9 \
+	uvm.9 uvm_km_free_wakeup.9 uvm.9 uvm_pagealloc.9 \
+	uvm.9 uvm_pagerealloc.9 uvm.9 uvm_pagefree.9 uvm.9 uvm_pglistalloc.9 \
+	uvm.9 uvm_pglistfree.9 uvm.9 uvm_page_physload.9 uvm.9 uvm_pageout.9 \
+	uvm.9 uvm_scheduler.9 uvm.9 uvm_swapin.9 uvm.9 uao_create.9 \
+	uvm.9 uao_detach.9 uvm.9 uao_reference.9 uvm.9 uvm_chgkprot.9 \
+	uvm.9 uvm_kernacc.9 uvm.9 uvm_useracc.9 uvm.9 uvm_vslock.9 \
+	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 uvm.9 uvm_sysctl.9 \
+	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9
 
 SUBDIR= man9.sun3
 
