@@ -1,7 +1,5 @@
-#	from: @(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
-#	$Id: bsd.doc.mk,v 1.17 1994/02/09 23:50:35 cgd Exp $
-
-PRINTER_TYPE?=	ps
+#	from: @(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
+#	$Id: bsd.doc.mk,v 1.18 1994/06/19 01:07:24 cgd Exp $
 
 BIB?=		bib
 EQN?=		eqn
@@ -10,33 +8,47 @@ GRIND?=		vgrind -f
 INDXBIB?=	indxbib
 PIC?=		pic
 REFER?=		refer
-ROFF?=		groff -T${PRINTER_TYPE} ${MACROS} ${PAGES}
+ROFF?=		groff -M/usr/share/tmac -M/usr/old/lib/tmac ${MACROS} ${PAGES}
 SOELIM?=	soelim
 TBL?=		tbl
 
 .PATH: ${.CURDIR}
 
-all:	${DOC}.${PRINTER_TYPE}
-
-.if !target(print)
-print: ${DOC}.${PRINTER_TYPE}
-	lpr ${DOC}.${PRINTER_TYPE}
+.if !target(all)
+.MAIN: all
+all: paper.ps
 .endif
 
-clean:
-	rm -f ${DOC}.* [eE]rrs mklog ${CLEANFILES}
+.if !target(paper.ps)
+paper.ps: ${SRCS}
+	${ROFF} ${SRCS} > ${.TARGET}
+.endif
 
-cleandir: clean
+.if !target(print)
+print: paper.ps
+	lpr -P${PRINTER} paper.ps
+.endif
+
+.if !target(manpages)
+manpages:
+.endif
+
+.if !target(obj)
+obj:
+.endif
+
+clean cleandir:
+	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 
 FILES?=	${SRCS}
 install:
-	(cd ${.CURDIR}; install ${COPY} -o ${DOCOWN} -g ${DOCGRP} -m 444 \
-	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${DOCDIR}/${DIR} )
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR}
 
 spell: ${SRCS}
-	(cd ${.CURDIR}; spell ${SRCS}) | sort | \
-		comm -23 - ${.CURDIR}/spell.ok > ${DOC}.spell
+	spell ${SRCS} | sort | comm -23 - spell.ok > paper.spell
 
-depend tags lint:
-
-.include <bsd.obj.mk>
+BINDIR?=	/usr/share/doc
+BINGRP?=	bin
+BINOWN?=	bin
+BINMODE?=	444
