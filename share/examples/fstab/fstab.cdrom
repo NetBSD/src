@@ -1,0 +1,2 @@
+#	$NetBSD: fstab.cdrom,v 1.1 2005/04/03 14:12:14 hubertf Exp $
+/dev/cd0a	/cdrom	cd9660	ro,noauto	0 0

@@ -1,4 +1,4 @@
-#	$NetBSD: fstab.wd0.2,v 1.1 2002/05/04 19:44:36 jdolecek Exp $
+#	$NetBSD: fstab.wd0.2,v 1.2 2005/04/03 14:12:14 hubertf Exp $
 #
 # Sample fstab for IDE disk based system
 # see fstab(5) for details on what the fields mean
@@ -10,5 +10,8 @@
 /dev/wd0a	/	ffs	rw		1 1
 /dev/wd0b	none	swap	sw		0 0
 /dev/wd0e	/usr	ffs	rw		1 2
-kernfs		/kern	kernfs	rw		0 0
-procfs		/proc	procfs	rw		0 0
+#
+# Possibly include data from the following files here:
+# fstab.cdrom
+# fstab.pseudo
+# fstab.ramdisk
