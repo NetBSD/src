@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.8 1998/08/15 10:10:57 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.9 1998/09/14 05:49:21 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -311,7 +311,13 @@ scsipi_done(xs)
 		scsipi_user_done(xs); /* to take a copy of the sense etc. */
 		SC_DEBUG(sc_link, SDEV_DB3, ("returned from user done()\n "));
 
-		scsipi_free_xs(xs, SCSI_NOSLEEP); /* restarts queue too */
+		/*
+		 * If this was an asynchronous operation (i.e. adapter
+		 * returned SUCCESSFULLY_QUEUED when the command was
+		 * submitted), we need to free the scsipi_xfer here.
+		 */
+		if (xs->flags & SCSI_ASYNCREQ)
+			scsipi_free_xs(xs, SCSI_NOSLEEP);
 		SC_DEBUG(sc_link, SDEV_DB3, ("returning to adapter\n"));
 		return;
 	}
@@ -363,7 +369,13 @@ retry:
 		 */
 		(*sc_link->device->done)(xs);
 	}
-	scsipi_free_xs(xs, SCSI_NOSLEEP);
+	/*
+	 * If this was an asynchronous operation (i.e. adapter
+	 * returned SUCCESSFULLY_QUEUED when the command was
+	 * submitted), we need to free the scsipi_xfer here.
+	 */
+	if (xs->flags & SCSI_ASYNCREQ)
+		scsipi_free_xs(xs, SCSI_NOSLEEP);
 	if (bp)
 		biodone(bp);
 }
@@ -375,7 +387,7 @@ scsipi_execute_xs(xs)
 	int error;
 	int s;
 
-	xs->flags &= ~ITSDONE;
+	xs->flags &= ~(ITSDONE|SCSI_ASYNCREQ);
 	xs->error = XS_NOERROR;
 	xs->resid = xs->datalen;
 	xs->status = 0;
@@ -405,8 +417,14 @@ retry:
 #endif
 	switch (scsipi_command_direct(xs)) {
 	case SUCCESSFULLY_QUEUED:
-		if ((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
+		if ((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP) {
+			/*
+			 * The request will complete asynchronously.  In this
+			 * case, we need scsipi_done() to free the scsipi_xfer.
+			 */
+			xs->flags |= SCSI_ASYNCREQ;
 			return (EJUSTRETURN);
+		}
 #ifdef DIAGNOSTIC
 		if (xs->flags & SCSI_NOSLEEP)
 			panic("scsipi_execute_xs: NOSLEEP and POLL");
@@ -417,7 +435,7 @@ retry:
 		splx(s);
 	case COMPLETE:		/* Polling command completed ok */
 		if (xs->bp)
-			return (EJUSTRETURN);
+			return (0);
 	doit:
 		SC_DEBUG(xs->sc_link, SDEV_DB3, ("back in cmd()\n"));
 		if ((error = sc_err1(xs, 0)) != ERESTART)
