@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.5 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 18:52:46 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1993/08/10 02:40:55 mycroft Exp $";
 #endif /* not lint */
 
 # include	"robots.h"
@@ -155,17 +155,10 @@ char	**av;
 void
 quit()
 {
-	extern int	_putchar();
-
 	mvcur(0, COLS - 1, LINES - 1, 0);
-	if (CE) {
-		tputs(CE, 1, _putchar);
-		endwin();
-	}
-	else {
-		endwin();
-		putchar('\n');
-	}
+	insertln();
+	refresh();
+	endwin();
 	exit(0);
 	/* NOTREACHED */
 }
