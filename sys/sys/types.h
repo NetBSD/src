@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.45 2000/06/26 16:53:47 kleink Exp $	*/
+/*	$NetBSD: types.h,v 1.46 2000/07/28 09:33:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -85,14 +85,14 @@ typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 
 #ifndef	mode_t
 typedef	__mode_t	mode_t;		/* permissions */
-#define	mode_t		mode_t
+#define	mode_t		__mode_t
 #endif
 
 typedef	u_int32_t	nlink_t;	/* link count */
 
 #ifndef	off_t
 typedef	__off_t		off_t;		/* file offset */
-#define	off_t		off_t
+#define	off_t		__off_t
 #endif
 
 typedef	int32_t		pid_t;		/* process id */
