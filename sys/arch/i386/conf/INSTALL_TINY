@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.15 2000/02/27 20:26:07 mycroft Exp $
+#	$NetBSD: INSTALL_TINY,v 1.16 2000/03/16 15:05:18 ad Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -310,6 +310,9 @@ com2	at isa? port 0x3e8 irq 5
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# RAID controllers and devices
+#cac*	at pci? dev ? function ?	# Compaq array controller
+#ca*	at cac? unit ?			# Compaq array disk device
 
 # IDE and related devices
 

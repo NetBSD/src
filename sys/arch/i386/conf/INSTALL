@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.137 2000/02/27 20:26:07 mycroft Exp $
+#	$NetBSD: INSTALL,v 1.138 2000/03/16 15:05:18 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -354,6 +354,9 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# RAID controllers and devices
+cac*	at pci? dev ? function ?	# Compaq array controller
+ca*	at cac? unit ?			# Compaq array disk device
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
