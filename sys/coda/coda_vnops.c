@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.9.4.2 1999/10/18 05:04:48 cgd Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.9.4.3 2000/02/06 17:16:28 he Exp $	*/
 
 /*
  * 
@@ -56,6 +56,10 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.9.4.3  2000/02/06 17:16:28  he
+ * Apply patch (requested by christos):
+ *   Fix a compilation problem caused by the widening of v_usecount.
+ *
  * Revision 1.9.4.2  1999/10/18 05:04:48  cgd
  * pull up rev 1.14 from trunk (requested by wrstuden):
  *   In spec_close(), call the device's close routine with the vnode
@@ -1090,9 +1094,9 @@ coda_inactive(v)
 
     if (IS_UNMOUNTING(cp)) {
 #ifdef	DEBUG
-	printf("coda_inactive: IS_UNMOUNTING use %d: vp %p, cp %p\n", vp->v_usecount, vp, cp);
+	printf("coda_inactive: IS_UNMOUNTING use %ld: vp %p, cp %p\n", vp->v_usecount, vp, cp);
 	if (cp->c_ovp != NULL)
-	    printf("coda_inactive: cp->ovp != NULL use %d: vp %p, cp %p\n",
+	    printf("coda_inactive: cp->ovp != NULL use %ld: vp %p, cp %p\n",
 	    	   vp->v_usecount, vp, cp);
 #endif
 	lockmgr(&cp->c_lock, LK_RELEASE, &vp->v_interlock);
