@@ -305,12 +305,14 @@ arm_override_options ()
   if (flag_pic && ! TARGET_APCS_STACK)
     arm_pic_register = 10;
 
+#if 0 /* XXX this warning + -Werror causes lossage with NetBSD. -- cgd */
   /* Well, I'm about to have a go, but pic is NOT going to be compatible
      with APCS reentrancy, since that requires too much support in the
      assembler and linker, and the ARMASM assembler seems to lack some
      required directives.  */
   if (flag_pic)
     warning ("Position independent code not supported.  Ignored");
+#endif
 
   if (TARGET_APCS_FLOAT)
     warning ("Passing floating point arguments in fp regs not yet supported");
@@ -1294,10 +1296,12 @@ arm_finalize_pic ()
   l1 = gen_label_rtx ();
 
   global_offset_table = gen_rtx (SYMBOL_REF, Pmode, "_GLOBAL_OFFSET_TABLE_");
+  /* The PC contains 'dot'+8, but the label L1 is on the next
+     instruction, so the offset is only 'dot'+4.  */
   pic_tmp = gen_rtx (CONST, VOIDmode, 
 		     gen_rtx (PLUS, Pmode, 
 			      gen_rtx (LABEL_REF, VOIDmode, l1),
-			      GEN_INT (8)));
+			      GEN_INT (4)));
   pic_tmp2 = gen_rtx (CONST, VOIDmode,
 		      gen_rtx (PLUS, Pmode,
 			       global_offset_table,
