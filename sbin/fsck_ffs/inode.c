@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.40 2003/08/07 10:04:20 agc Exp $	*/
+/*	$NetBSD: inode.c,v 1.41 2003/09/19 08:35:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.40 2003/08/07 10:04:20 agc Exp $");
+__RCSID("$NetBSD: inode.c,v 1.41 2003/09/19 08:35:15 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -483,7 +483,7 @@ cacheino(dp, inumber)
 	ino_t inumber;
 {
 	struct inoinfo *inp;
-	struct inoinfo **inpp;
+	struct inoinfo **inpp, **ninpsort;
 	unsigned int blks;
 	int i;
 	int64_t size;
@@ -515,11 +515,12 @@ cacheino(dp, inumber)
 		for (i = 0; i < NIADDR; i++)
 			inp->i_blks[NDADDR + i] = DIP(dp, ib[i]);
 	if (inplast == listmax) {
-		listmax += 100;
-		inpsort = (struct inoinfo **)realloc((char *)inpsort,
-		    (unsigned)listmax * sizeof(struct inoinfo *));
+		ninpsort = (struct inoinfo **)realloc((char *)inpsort,
+		    (unsigned)(listmax + 100) * sizeof(struct inoinfo *));
 		if (inpsort == NULL)
 			errx(EEXIT, "cannot increase directory list");
+		inpsort = ninpsort;
+		listmax += 100;
 	}
 	inpsort[inplast++] = inp;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.37 2003/08/07 10:04:21 agc Exp $	*/
+/*	$NetBSD: pass5.c,v 1.38 2003/09/19 08:35:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.37 2003/08/07 10:04:21 agc Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.38 2003/09/19 08:35:15 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,9 @@ pass5(void)
 	struct inodesc idesc[4];
 	char buf[MAXBSIZE];
 	struct cg *newcg = (struct cg *)buf;
-	struct cg *cg = cgrp;
+	struct cg *cg = cgrp, *ncg;
 	struct inostat *info;
+	u_int32_t ncgsize;
 
 	inoinfo(WINO)->ino_state = USTATE;
 	memset(newcg, 0, (size_t)fs->fs_cgsize);
@@ -107,13 +108,13 @@ pass5(void)
 					if (preen)
 						pwarn("%sING CLUSTER MAPS\n",
 						    doit);
-					fs->fs_cgsize =
-					    fragroundup(fs, CGSIZE(fs));
-					cg = cgrp =
-					    realloc(cgrp, fs->fs_cgsize);
-					if (cg == NULL)
+					ncgsize = fragroundup(fs, CGSIZE(fs));
+					ncg = realloc(cgrp, ncgsize);
+					if (ncg == NULL)
 						errx(EEXIT,
 						"cannot reallocate cg space");
+					cg = cgrp = ncg;
+					fs->fs_cgsize = ncgsize;
 					doinglevel1 = 1;
 					sbdirty();
 				}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.34 2001/02/19 22:56:18 cgd Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.35 2003/09/19 08:37:25 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.34 2001/02/19 22:56:18 cgd Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.35 2003/09/19 08:37:25 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -330,7 +330,7 @@ do_all(action)
 	int action;
 {
 	FILE *f;
-	char *line, *cp, *vp, **argv;
+	char *line, *cp, *vp, **argv, **nargv;
 	int argc, rval;
 	size_t len;
 
@@ -357,11 +357,13 @@ do_all(action)
 			if (vp == NULL)
 				continue;
 
-			if ((argv = realloc(argv,
-			    sizeof(char *) * ++argc)) == NULL) {
+			if ((nargv = realloc(argv,
+			    sizeof(char *) * (argc + 1))) == NULL) {
 				warnx("no memory to configure ccds");
 				return (1);
 			}
+			argv = nargv;
+			argc++;
 			argv[argc - 1] = vp;
 
 			/*
