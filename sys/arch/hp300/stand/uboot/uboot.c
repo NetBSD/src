@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.5 2001/01/02 04:14:35 simonb Exp $	*/
+/*	$NetBSD: uboot.c,v 1.6 2001/07/01 01:38:14 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -152,6 +152,7 @@ exec_hp300(file, loadaddr, howto)
 	int howto;
 {
 	u_long marks[MARK_MAX];
+	struct btinfo_magic *bt;
 	int fd;
 
 	marks[MARK_START] = loadaddr;
@@ -162,6 +163,11 @@ exec_hp300(file, loadaddr, howto)
 	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n",
 	    marks[MARK_ENTRY], marks[MARK_NSYM],
 	    marks[MARK_SYM], marks[MARK_END]);
+
+	bt = (struct btinfo_magic *)lowram;
+        bt->common.type = BTINFO_MAGIC;
+        bt->magic1 = BOOTINFO_MAGIC1;
+        bt->magic2 = BOOTINFO_MAGIC2;
 
 	machdep_start((char *)marks[MARK_ENTRY], howto,
 	    (char *)loadaddr, (char *)marks[MARK_SYM],
