@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.35 2004/07/18 21:24:52 chs Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.36 2004/08/24 01:46:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.35 2004/07/18 21:24:52 chs Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.36 2004/08/24 01:46:30 nathanw Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -936,6 +936,8 @@ pthread__signal_tramp(void (*handler)(int, siginfo_t *, void *),
 	    uc->uc_sigmask.__bits[0]));
 
 	(*handler)(info->si_signo, info, uc);
+
+	pthread__self()->pt_flags |= PT_FLAG_SIGNALED;
 
 	/*
 	 * We've finished the handler, so this thread can restore the
