@@ -34,13 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00015
- * --------------------         -----   ----------------------
- *
- * 17 Mar 92	John Woods		Fix "make - make" bug
  */
 
 #ifndef lint
@@ -50,7 +43,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
+/*static char sccsid[] = "from: @(#)main.c	5.25 (Berkeley) 4/1/91";*/
+static char rcsid[] = "$Id: main.c,v 1.5 1993/08/01 18:11:47 mycroft Exp $";
 #endif /* not lint */
 
 /*-

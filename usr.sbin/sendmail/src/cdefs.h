@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cdefs.h	8.1 (Berkeley) 6/2/93
+ *	from: @(#)cdefs.h	8.1 (Berkeley) 6/2/93
+ *	$Id: cdefs.h,v 1.2 1993/08/01 17:56:04 mycroft Exp $
  */
 
 #ifndef	_CDEFS_H_

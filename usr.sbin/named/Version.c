@@ -34,7 +34,8 @@
  */
 
 #ifndef lint
-char sccsid[] = "@(#)named 4.8.3 %WHEN% %WHOANDWHERE%\n";
+/*char sccsid[] = "from: @(#)named 4.8.3 %WHEN% %WHOANDWHERE%\n";*/
+static char rcsid[] = "$Id: Version.c,v 1.2 1993/08/01 17:57:35 mycroft Exp $";
 #endif /* not lint */
 
 char Version[] = "named 4.8.3 %WHEN%\n\t%WHOANDWHERE%\n";

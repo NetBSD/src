@@ -31,7 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.h	8.3 (Berkeley) 7/13/93
+ *	from: @(#)conf.h	8.3 (Berkeley) 7/13/93
+ *	$Id: conf.h,v 1.5 1993/08/01 17:56:08 mycroft Exp $
  */
 
 /*

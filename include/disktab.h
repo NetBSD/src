@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)disktab.h	5.6 (Berkeley) 4/20/91
+ *	from: @(#)disktab.h	5.6 (Berkeley) 4/20/91
+ *	$Id: disktab.h,v 1.2 1993/08/01 18:44:56 mycroft Exp $
  */
 
 #ifndef	_DISKTAB_H_

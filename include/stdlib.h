@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdlib.h	5.13 (Berkeley) 6/4/91
+ *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
+ *	$Id: stdlib.h,v 1.4 1993/08/01 18:45:16 mycroft Exp $
  */
 
 #ifndef _STDLIB_H_

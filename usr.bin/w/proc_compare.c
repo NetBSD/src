@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)proc_compare.c	5.4 (Berkeley) 2/7/91";
+/*static char sccsid[] = "from: @(#)proc_compare.c	5.4 (Berkeley) 2/7/91";*/
+static char rcsid[] = "$Id: proc_compare.c,v 1.2 1993/08/01 18:03:16 mycroft Exp $";
 #endif /* not lint */
 
 /*

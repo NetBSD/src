@@ -29,7 +29,8 @@
 ; OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 ; SUCH DAMAGE.
 ;
-;	@(#)sqrt.s	5.4 (Berkeley) 10/9/90
+;	from: @(#)sqrt.s	5.4 (Berkeley) 10/9/90
+;	$Id: sqrt.s,v 1.2 1993/08/01 18:34:21 mycroft Exp $
 ;
 
 ; double sqrt(x)

@@ -4,12 +4,11 @@
  *
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
- *
- * $Header: /cvsroot/src/gnu/usr.bin/gdb/Attic/symtab.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $;
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)symtab.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)symtab.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: symtab.c,v 1.2 1993/08/01 18:47:38 mycroft Exp $";
 #endif /* not lint */
 
 /* Symbol table lookup for the GNU debugger, GDB.

@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)eval.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)eval.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: eval.c,v 1.2 1993/08/01 18:47:20 mycroft Exp $";
 #endif /* not lint */
 
 /* Evaluate expressions for GDB.

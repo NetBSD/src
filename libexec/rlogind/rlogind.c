@@ -38,13 +38,14 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)rlogind.c	5.53 (Berkeley) 4/20/91";
+/*static char sccsid[] = "from: @(#)rlogind.c	5.53 (Berkeley) 4/20/91";*/
+static char rcsid[] = "$Id: rlogind.c,v 1.2 1993/08/01 18:29:55 mycroft Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
 /* From:
  *	$Source: /cvsroot/src/libexec/rlogind/rlogind.c,v $
- *	$Header: /cvsroot/src/libexec/rlogind/rlogind.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
+ *	$Header: /cvsroot/src/libexec/rlogind/rlogind.c,v 1.2 1993/08/01 18:29:55 mycroft Exp $
  */
 #endif
 

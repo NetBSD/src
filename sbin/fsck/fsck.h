@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fsck.h	5.17 (Berkeley) 7/27/90
- *
- *	$Header: /cvsroot/src/sbin/fsck/Attic/fsck.h,v 1.3 1993/03/23 00:27:51 cgd Exp $
+ *	from: @(#)fsck.h	5.17 (Berkeley) 7/27/90
+ *	$Id: fsck.h,v 1.4 1993/08/01 18:27:27 mycroft Exp $
  */
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */

@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	5.3 (Berkeley) 6/1/90
- *
- *	$Header: /cvsroot/src/sbin/disklabel/pathnames.h,v 1.3 1993/03/23 00:26:48 cgd Exp $
+ *	from: @(#)pathnames.h	5.3 (Berkeley) 6/1/90
+ *	$Id: pathnames.h,v 1.4 1993/08/01 18:28:03 mycroft Exp $
  */
 
 #include <paths.h>

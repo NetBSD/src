@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)source.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)source.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: source.c,v 1.2 1993/08/01 18:47:41 mycroft Exp $";
 #endif /* not lint */
 
 /* List lines of source files for GDB, the GNU debugger.

@@ -38,10 +38,11 @@
  * 17 Dec 1992	Karl Lehenbauer 	Removed defines for rint() to
  *					add it's use in 386BSD.
  */
-  static char rcsid[] = "$Header: /cvsroot/src/lib/libm/common_source/Attic/floor.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
+  static char rcsid[] = "$Header: /cvsroot/src/lib/libm/common_source/Attic/floor.c,v 1.3 1993/08/01 18:34:45 mycroft Exp $";
 
 #ifndef lint
-static char sccsid[] = "@(#)floor.c	5.7 (Berkeley) 10/9/90";
+/*static char sccsid[] = "from: @(#)floor.c	5.7 (Berkeley) 10/9/90";*/
+static char rcsid[] = "$Id: floor.c,v 1.3 1993/08/01 18:34:45 mycroft Exp $";
 #endif /* not lint */
 
 #include "mathimpl.h"

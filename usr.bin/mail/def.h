@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)def.h	5.22 (Berkeley) 6/25/90
+ *	from: @(#)def.h	5.22 (Berkeley) 6/25/90
+ *	$Id: def.h,v 1.2 1993/08/01 18:13:19 mycroft Exp $
  */
 
 #include <sys/param.h>		/* includes <sys/types.h> */

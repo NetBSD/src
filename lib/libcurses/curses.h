@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)curses.h	5.9 (Berkeley) 7/1/90
+ *	from: @(#)curses.h	5.9 (Berkeley) 7/1/90
+ *	$Id: curses.h,v 1.3 1993/08/01 18:35:59 mycroft Exp $
  */
 
 #ifndef WINDOW

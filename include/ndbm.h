@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ndbm.h	8.1 (Berkeley) 6/2/93
+ *	from: @(#)ndbm.h	8.1 (Berkeley) 6/2/93
+ *	$Id: ndbm.h,v 1.4 1993/08/01 18:44:46 mycroft Exp $
  */
 
 #ifndef _NDBM_H_

@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)termcap.c	5.5 (Berkeley) 6/1/90";
+/*static char sccsid[] = "from: @(#)termcap.c	5.5 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: termcap.c,v 1.2 1993/08/01 18:32:09 mycroft Exp $";
 #endif /* not lint */
 
 #define	BUFSIZ		1024

@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)infrun.c	6.4 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)infrun.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: infrun.c,v 1.2 1993/08/01 18:47:49 mycroft Exp $";
 #endif /* not lint */
 
 /* Start and stop the inferior process, for GDB.

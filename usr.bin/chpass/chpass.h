@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)chpass.h	5.3 (Berkeley) 2/12/91
+ *	from: @(#)chpass.h	5.3 (Berkeley) 2/12/91
+ *	$Id: chpass.h,v 1.2 1993/08/01 18:18:01 mycroft Exp $
  */
 
 typedef struct _entry {

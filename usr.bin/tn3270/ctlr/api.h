@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)api.h	4.4 (Berkeley) 4/26/91
+ *	from: @(#)api.h	4.4 (Berkeley) 4/26/91
+ *	$Id: api.h,v 1.2 1993/08/01 18:05:45 mycroft Exp $
  */
 
 /*

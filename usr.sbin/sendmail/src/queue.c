@@ -36,9 +36,11 @@
 
 #ifndef lint
 #ifdef QUEUE
-static char sccsid[] = "@(#)queue.c	8.3 (Berkeley) 7/13/93 (with queueing)";
+/*static char sccsid[] = "from: @(#)queue.c	8.3 (Berkeley) 7/13/93 (with queueing)";*/
+static char rcsid[] = "$Id: queue.c,v 1.5 1993/08/01 17:56:27 mycroft Exp $";
 #else
-static char sccsid[] = "@(#)queue.c	8.3 (Berkeley) 7/13/93 (without queueing)";
+/*static char sccsid[] = "from: @(#)queue.c	8.3 (Berkeley) 7/13/93 (without queueing)";*/
+static char rcsid[] = "$Id: queue.c,v 1.5 1993/08/01 17:56:27 mycroft Exp $";
 #endif
 #endif /* not lint */
 

@@ -35,7 +35,8 @@
 #include <string.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char sccsid[] = "@(#)strcasecmp.c	5.10 (Berkeley) 1/26/91";
+/*static const char sccsid[] = "from: @(#)strcasecmp.c	5.10 (Berkeley) 1/26/91";*/
+static char rcsid[] = "$Id: strcasecmp.c,v 1.2 1993/08/01 18:36:29 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 typedef unsigned char u_char;

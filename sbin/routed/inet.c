@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)inet.c	5.8 (Berkeley) 6/1/90";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/routed/Attic/inet.c,v 1.3 1993/03/23 00:30:23 cgd Exp $";
+/*static char sccsid[] = "from: @(#)inet.c	5.8 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: inet.c,v 1.4 1993/08/01 18:24:29 mycroft Exp $";
 #endif /* not lint */
 
 /*

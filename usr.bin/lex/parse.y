@@ -31,8 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.bin/lex/Attic/parse.y,v 1.2 1993/05/04 07:45:09 cgd Exp $ (LBL)";
+static char rcsid[] = "$Id: parse.y,v 1.3 1993/08/01 18:46:36 mycroft Exp $";
 #endif
 
 #include "flexdef.h"

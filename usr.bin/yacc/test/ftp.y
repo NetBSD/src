@@ -14,7 +14,8 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *	@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
+ *	from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
+ *	$Id: ftp.y,v 1.2 1993/08/01 18:00:44 mycroft Exp $
  */
 
 /*
@@ -25,7 +26,8 @@
 %{
 
 #ifndef lint
-static char sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";
+/*static char sccsid[] = "from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";*/
+static char rcsid[] = "$Id: ftp.y,v 1.2 1993/08/01 18:00:44 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

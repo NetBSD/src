@@ -1,4 +1,3 @@
-/* @(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -28,7 +27,9 @@
  * Mountain View, California  94043
  */
 #if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";
+/*static char sccsid[] = "from: @(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";*/
+/*static char sccsid[] = "from: @(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";*/
+static char rcsid[] = "$Id: svc_udp.c,v 1.2 1993/08/01 18:34:08 mycroft Exp $";
 #endif
 
 /*

@@ -29,7 +29,8 @@
 ; OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 ; SUCH DAMAGE.
 ;
-;	@(#)support.s	5.4 (Berkeley) 10/9/90
+;	from: @(#)support.s	5.4 (Berkeley) 10/9/90
+;	$Id: support.s,v 1.2 1993/08/01 18:34:22 mycroft Exp $
 ;
 
 ; IEEE recommended functions

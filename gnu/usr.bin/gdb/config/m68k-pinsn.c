@@ -6,7 +6,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)m68k-pinsn.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)m68k-pinsn.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: m68k-pinsn.c,v 1.2 1993/08/01 18:48:22 mycroft Exp $";
 #endif /* not lint */
 
 /* Print m68k instructions for GDB, the GNU debugger.

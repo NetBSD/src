@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stddef.h	5.5 (Berkeley) 4/3/91
+ *	from: @(#)stddef.h	5.5 (Berkeley) 4/3/91
+ *	$Id: stddef.h,v 1.2 1993/08/01 18:45:18 mycroft Exp $
  */
 
 #ifndef _STDDEF_H_

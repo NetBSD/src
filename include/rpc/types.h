@@ -1,4 +1,3 @@
-/* @(#)types.h	2.3 88/08/15 4.0 RPCSRC */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -26,8 +25,11 @@
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
+ *
+ *	from: @(#)types.h 1.18 87/07/24 SMI
+ *	from: @(#)types.h	2.3 88/08/15 4.0 RPCSRC
+ *	$Id: types.h,v 1.5 1993/08/01 18:45:51 mycroft Exp $
  */
-/*      @(#)types.h 1.18 87/07/24 SMI      */
 
 /*
  * Rpc additions to <sys/types.h>

@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)db_glue.c	4.4 (Berkeley) 6/1/90";
+/*static char sccsid[] = "from: @(#)db_glue.c	4.4 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: db_glue.c,v 1.2 1993/08/01 17:57:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -23,6 +23,10 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 18:49:03 mycroft Exp $";
+#endif
+
 #include "getopt.h"
 #include "awk.h"
 #include "patchlevel.h"

@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)printcmd.c	6.5 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)printcmd.c	6.5 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: printcmd.c,v 1.2 1993/08/01 18:47:45 mycroft Exp $";
 #endif /* not lint */
 
 /* Print values for GNU debugger GDB.

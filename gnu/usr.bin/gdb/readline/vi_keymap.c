@@ -4,9 +4,12 @@
  *
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
- *
- *	@(#)vi_keymap.c	6.4 (Berkeley) 5/8/91
  */
+
+#ifndef lint
+/*static char sccsid[] = "from: @(#)vi_keymap.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: vi_keymap.c,v 1.2 1993/08/01 18:48:05 mycroft Exp $";
+#endif /* not lint */
 
 /* vi_keymap.c -- the keymap for vi_mode in readline (). */
 

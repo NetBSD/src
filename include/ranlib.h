@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ranlib.h	5.2 (Berkeley) 4/3/91
+ *	from: @(#)ranlib.h	5.2 (Berkeley) 4/3/91
+ *	$Id: ranlib.h,v 1.2 1993/08/01 18:45:26 mycroft Exp $
  */
 
 #ifndef _RANLIB_H_

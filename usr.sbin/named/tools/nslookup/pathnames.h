@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	5.1 (Berkeley) 5/28/90
+ *	from: @(#)pathnames.h	5.1 (Berkeley) 5/28/90
+ *	$Id: pathnames.h,v 1.2 1993/08/01 17:58:05 mycroft Exp $
  */
 
 #define	_PATH_HELPFILE	"/usr/share/misc/nslookup.help"

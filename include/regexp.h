@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)regexp.h	5.2 (Berkeley) 4/3/91
+ *	from: @(#)regexp.h	5.2 (Berkeley) 4/3/91
+ *	$Id: regexp.h,v 1.2 1993/08/01 18:45:25 mycroft Exp $
  */
 
 #ifndef	_REGEXP_H_

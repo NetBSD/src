@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)conv.c	8.1 (Berkeley) 6/6/93";
+/*static char sccsid[] = "from: @(#)conv.c	5.4 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: conv.c,v 1.2 1993/08/01 18:14:50 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
-
-#include <stdio.h>
 #include <ctype.h>
 #include "hexdump.h"
 
-void
 conv_c(pr, p)
 	PR *pr;
 	u_char *p;
@@ -92,7 +90,6 @@ strpr:		*pr->cchar = 's';
 	}
 }
 
-void
 conv_u(pr, p)
 	PR *pr;
 	u_char *p;
@@ -115,7 +112,7 @@ conv_u(pr, p)
 	} else if (*p == 0x7f) {
 		*pr->cchar = 's';
 		(void)printf(pr->fmt, "del");
-	} else if (deprecated && *p == 0x20) {	/* od replaced space with sp */
+	} else if (deprecated && *p == 0x20) {	/* od replace space with sp */
 		*pr->cchar = 's';
 		(void)printf(pr->fmt, " sp");
 	} else if (isprint(*p)) {

@@ -6,7 +6,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)read.c	6.4 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)read.c	6.4 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: read.c,v 1.2 1993/08/01 18:48:42 mycroft Exp $";
 #endif /* not lint */
 
 /* read.c - read a source file -

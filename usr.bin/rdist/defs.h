@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)defs.h	5.9 (Berkeley) 8/27/90
+ *	from: @(#)defs.h	5.9 (Berkeley) 8/27/90
+ *	$Id: defs.h,v 1.3 1993/08/01 18:09:48 mycroft Exp $
  */
 
 #include <sys/param.h>

@@ -31,7 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lang.l	5.8 (Berkeley) 4/19/91
+ *	from: @(#)lang.l	5.8 (Berkeley) 4/19/91
+ *	$Id: lang.l,v 1.3 1993/08/01 18:00:06 mycroft Exp $
  */
 
 #include <ctype.h>

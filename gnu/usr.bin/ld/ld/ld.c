@@ -1,4 +1,3 @@
-/*	BSDI $Id: ld.c,v 1.3 1993/06/18 06:49:59 cgd Exp $	*/
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -7,7 +6,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
+/*static char sccsid[] = "from: @(#)ld.c	6.10 (Berkeley) 5/22/91";*/
+static char rcsid[] = "$Id: ld.c,v 1.4 1993/08/01 18:46:55 mycroft Exp $";
 #endif /* not lint */
 
 /* Linker `ld' for GNU

@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)dbxread.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)dbxread.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: dbxread.c,v 1.3 1993/08/01 18:47:28 mycroft Exp $";
 #endif /* not lint */
 
 /* Read dbx symbol tables and convert to internal format, for GDB.

@@ -4,7 +4,8 @@
  *
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  *
- *	@(#)m-tahoe.h	6.4 (Berkeley) 5/8/91
+ *	from: @(#)m-tahoe.h	6.4 (Berkeley) 5/8/91
+ *	$Id: m-tahoe.h,v 1.2 1993/08/01 18:48:29 mycroft Exp $
  */
 
 /*

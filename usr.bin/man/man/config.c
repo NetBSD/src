@@ -29,17 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00008
- * --------------------         -----   ----------------------
- *
- * 03 Sep 92	James Dolter		Fixed 1K pathbuf bug
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)config.c	5.6 (Berkeley) 3/1/91";
+/*static char sccsid[] = "from: @(#)config.c	5.6 (Berkeley) 3/1/91";*/
+static char rcsid[] = "$Id: config.c,v 1.4 1993/08/01 18:11:20 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

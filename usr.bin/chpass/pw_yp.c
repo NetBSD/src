@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
+/*static char sccsid[] = "from: @(#)pw_yp.c	1.0 2/2/93";*/
+static char rcsid[] = "$Id: pw_yp.c,v 1.2 1993/08/01 18:17:53 mycroft Exp $";
 #endif /* not lint */
 
 #ifdef	YP

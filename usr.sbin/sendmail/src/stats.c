@@ -33,7 +33,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)stats.c	8.2 (Berkeley) 7/11/93";
+/*static char sccsid[] = "from: @(#)stats.c	8.2 (Berkeley) 7/11/93";*/
+static char rcsid[] = "$Id: stats.c,v 1.4 1993/08/01 17:56:20 mycroft Exp $";
 #endif /* not lint */
 
 # include "sendmail.h"

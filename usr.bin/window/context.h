@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)context.h	3.11 (Berkeley) 6/6/90
+ *	from: @(#)context.h	3.11 (Berkeley) 6/6/90
+ *	$Id: context.h,v 1.2 1993/08/01 18:01:37 mycroft Exp $
  */
 
 #include <stdio.h>

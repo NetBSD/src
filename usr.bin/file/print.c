@@ -25,6 +25,10 @@
  * 4. This notice may not be removed or altered.
  */
 
+#ifndef lint
+static char = "$Id: print.c,v 1.3 1993/08/01 18:16:24 mycroft Exp $";
+#endif  /* not lint */
+
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -36,11 +40,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "file.h"
-
-#ifndef lint
-static char *moduleid =
-	"@(#)$Id: print.c,v 1.2 1993/06/10 00:38:17 jtc Exp $";
-#endif  /* lint */
 
 void
 mdump(m)

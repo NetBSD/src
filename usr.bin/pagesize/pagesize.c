@@ -38,8 +38,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)pagesize.c	5.4 (Berkeley) 6/1/90";
-static char rcsid[] = "$Header: /cvsroot/src/usr.bin/pagesize/Attic/pagesize.c,v 1.2 1993/07/22 16:33:32 jtc Exp $";
+/*static char sccsid[] = "from: @(#)pagesize.c	5.4 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: pagesize.c,v 1.3 1993/08/01 18:10:22 mycroft Exp $";
 #endif /* not lint */
 
 main()

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tt.h	3.27 (Berkeley) 6/6/90
+ *	from: @(#)tt.h	3.27 (Berkeley) 6/6/90
+ *	$Id: tt.h,v 1.2 1993/08/01 18:01:32 mycroft Exp $
  */
 
 /*

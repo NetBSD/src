@@ -7,7 +7,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	6.6 (Berkeley) 5/13/91";
+/*static char sccsid[] = "from: @(#)main.c	6.6 (Berkeley) 5/13/91";*/
+static char rcsid[] = "$Id: main.c,v 1.3 1993/08/01 18:47:47 mycroft Exp $";
 #endif /* not lint */
 
 /* Top level for GDB, the GNU debugger.

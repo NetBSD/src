@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)locale.h	5.2 (Berkeley) 2/24/91
+ *	from: @(#)locale.h	5.2 (Berkeley) 2/24/91
+ *	$Id: locale.h,v 1.2 1993/08/01 18:44:49 mycroft Exp $
  */
 
 #ifndef _LOCALE_H_

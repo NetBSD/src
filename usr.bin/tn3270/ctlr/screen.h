@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)screen.h	4.3 (Berkeley) 4/26/91
+ *	from: @(#)screen.h	4.3 (Berkeley) 4/26/91
+ *	$Id: screen.h,v 1.2 1993/08/01 18:05:37 mycroft Exp $
  */
 
 #define	INCLUDED_SCREEN

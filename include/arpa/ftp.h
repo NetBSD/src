@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ftp.h	5.6 (Berkeley) 4/3/91
+ *	from: @(#)ftp.h	5.6 (Berkeley) 4/3/91
+ *	$Id: ftp.h,v 1.2 1993/08/01 18:46:23 mycroft Exp $
  */
 
 #ifndef _FTP_H_

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)scrnctlr.h	4.2 (Berkeley) 4/26/91
+ *	from: @(#)scrnctlr.h	4.2 (Berkeley) 4/26/91
+ *	$Id: scrnctlr.h,v 1.2 1993/08/01 18:05:35 mycroft Exp $
  */
 
 /*

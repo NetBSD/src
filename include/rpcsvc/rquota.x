@@ -1,5 +1,8 @@
-/* @(#)rquota.x	2.1 88/08/01 4.0 RPCSRC */
-/* @(#)rquota.x 1.2 87/09/20 Copyr 1987 Sun Micro */
+#ifndef lint
+/*static char sccsid[] = "from: @(#)rquota.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
+/*static char sccsid[] = "from: @(#)rquota.x	2.1 88/08/01 4.0 RPCSRC";*/
+static char rcsid[] = "$Id: rquota.x,v 1.2 1993/08/01 18:45:32 mycroft Exp $";
+#endif /* not lint */
 
 /*
  * Remote quota protocol

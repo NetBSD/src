@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)i386.h	5.1 (Berkeley) 4/18/91
+ *	from: @(#)i386.h	5.1 (Berkeley) 4/18/91
+ *	$Id: i386.h,v 1.2 1993/08/01 18:15:17 mycroft Exp $
  */
 
     /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)timed.h	1.10 (Berkeley) 4/3/91
+ *	from: @(#)timed.h	1.10 (Berkeley) 4/3/91
+ *	$Id: timed.h,v 1.2 1993/08/01 18:46:05 mycroft Exp $
  */
 
 #ifndef	_TIMED_H_

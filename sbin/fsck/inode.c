@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)inode.c	5.18 (Berkeley) 3/19/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/fsck/Attic/inode.c,v 1.4 1993/06/13 21:09:16 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)inode.c	5.18 (Berkeley) 3/19/91";*/
+static char rcsid[] = "$Id: inode.c,v 1.5 1993/08/01 18:27:24 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

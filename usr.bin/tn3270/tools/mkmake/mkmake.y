@@ -34,7 +34,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)mkmake.y	4.2 (Berkeley) 4/26/91";
+/*static char sccsid[] = "from: @(#)mkmake.y	4.2 (Berkeley) 4/26/91";*/
+static char rcsid[] = "$Id: mkmake.y,v 1.2 1993/08/01 18:04:51 mycroft Exp $";
 #endif /* not lint */
 
 typedef struct string {

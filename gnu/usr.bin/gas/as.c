@@ -6,7 +6,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)as.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)as.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: as.c,v 1.2 1993/08/01 18:48:46 mycroft Exp $";
 #endif /* not lint */
 
 /* as.c - GAS main program.

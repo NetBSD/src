@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
+ *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
+ *	$Id: SYS.h,v 1.2 1993/08/01 18:40:59 mycroft Exp $
  */
 
 #include <sys/syscall.h>

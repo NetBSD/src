@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)error.h	5.5 (Berkeley) 6/1/90
+ *	from: @(#)error.h	5.5 (Berkeley) 6/1/90
+ *	$Id: error.h,v 1.2 1993/08/01 18:16:46 mycroft Exp $
  */
 
 typedef	int	boolean;

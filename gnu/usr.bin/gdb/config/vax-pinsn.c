@@ -6,7 +6,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)vax-pinsn.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)vax-pinsn.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: vax-pinsn.c,v 1.2 1993/08/01 18:48:19 mycroft Exp $";
 #endif /* not lint */
 
 /* Print vax instructions for GDB, the GNU debugger.

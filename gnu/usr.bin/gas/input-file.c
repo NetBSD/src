@@ -6,7 +6,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)input-file.c	6.2 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)input-file.c	6.2 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: input-file.c,v 1.2 1993/08/01 18:48:45 mycroft Exp $";
 #endif /* not lint */
 
 /* input_file.c - Deal with Input Files -

@@ -35,7 +35,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)wwlabel.c	3.17 (Berkeley) 6/6/90";
+/*static char sccsid[] = "from: @(#)wwlabel.c	3.17 (Berkeley) 6/6/90";*/
+static char rcsid[] = "$Id: wwlabel.c,v 1.2 1993/08/01 18:01:39 mycroft Exp $";
 #endif /* not lint */
 
 #include "ww.h"

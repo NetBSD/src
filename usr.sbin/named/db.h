@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)db.h	4.16 (Berkeley) 6/1/90
+ *	from: @(#)db.h	4.16 (Berkeley) 6/1/90
+ *	$Id: db.h,v 1.2 1993/08/01 17:57:27 mycroft Exp $
  */
 
 /*

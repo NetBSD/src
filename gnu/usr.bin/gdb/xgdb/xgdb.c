@@ -4,12 +4,11 @@
  *
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
- *
- * static char rcsid[] = "$Header: /cvsroot/src/gnu/usr.bin/gdb/xgdb/Attic/xgdb.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)xgdb.c	6.3 (Berkeley) 5/8/91";
+/*static char sccsid[] = "from: @(#)xgdb.c	6.3 (Berkeley) 5/8/91";*/
+static char rcsid[] = "$Id: xgdb.c,v 1.2 1993/08/01 18:47:59 mycroft Exp $";
 #endif /* not lint */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)gprof.h	5.10 (Berkeley) 4/24/91
+ *	from: @(#)gprof.h	5.10 (Berkeley) 4/24/91
+ *	$Id: gprof.h,v 1.3 1993/08/01 18:15:19 mycroft Exp $
  */
 
 #include <sys/types.h>

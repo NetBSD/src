@@ -5,7 +5,8 @@
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
  *
- *	@(#)inferior.h	6.3 (Berkeley) 5/8/91
+ *	from: @(#)inferior.h	6.3 (Berkeley) 5/8/91
+ *	$Id: inferior.h,v 1.2 1993/08/01 18:47:55 mycroft Exp $
  */
 
 /* Variables that describe the inferior process running under GDB:

@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)gettytab.c	5.5 (Berkeley) 2/25/91";
+/*static char sccsid[] = "from: @(#)gettytab.c	5.5 (Berkeley) 2/25/91";*/
+static char rcsid[] = "$Id: gettytab.c,v 1.2 1993/08/01 18:30:25 mycroft Exp $";
 #endif /* not lint */
 
 #include <fcntl.h>

@@ -29,13 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)sigsetops.c	5.3 (Berkeley) 2/23/91
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)sigsetops.c	5.3 (Berkeley) 2/23/91";*/
-static char rcsid[] = "$Id: sigsetops.c,v 1.2 1993/07/30 08:23:29 mycroft Exp $";
+static char rcsid[] = "$Id: sigsetops.c,v 1.3 1993/08/01 18:43:04 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/signal.h>

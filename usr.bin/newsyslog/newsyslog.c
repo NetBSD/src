@@ -1,7 +1,7 @@
 /*
  * This file contains changes from the Open Software Foundation.
- * The RCS history log will appear at the end of this file.
- * @(#)newsyslog.c	$Revision: 1.3 $ $Date: 1993/05/22 03:52:20 $ $Locker:  $
+ *
+ *	$Id: newsyslog.c,v 1.4 1993/08/01 18:10:40 mycroft Exp $
  */
 
 /*
@@ -27,11 +27,11 @@ provided "as is" without express or implied warranty.
  *              keeping the a specified number of backup files around.
  *
  *      $Source: /cvsroot/src/usr.bin/newsyslog/newsyslog.c,v $
- *      $Author: cgd $
+ *      $Author: mycroft $
  */
 
 #if !defined(lint) && !defined(_NOIDENT)
-static char rcsid[] = "@(#)$RCSfile: newsyslog.c,v $ $Revision: 1.3 $ (OSF) $Date: 1993/05/22 03:52:20 $";
+static char rcsid[] = "@(#)$RCSfile: newsyslog.c,v $ $Revision: 1.4 $ (OSF) $Date: 1993/08/01 18:10:40 $";
 #endif
 
 #ifndef CONF
@@ -572,32 +572,5 @@ char *string;
 }
 
 #if !defined(__SABER__) && !defined(lint) && !defined(NO_WHAT_STRINGS)
-static char *what_string = "@(#)newsyslog.c\t$Revision: 1.3 $ $Date: 1993/05/22 03:52:20 $ $Locker:  $";
+static char rcsid[] = "$Id: newsyslog.c,v 1.4 1993/08/01 18:10:40 mycroft Exp $";
 #endif
-
-/*
- * HISTORY
- * $Log: newsyslog.c,v $
- * Revision 1.3  1993/05/22 03:52:20  cgd
- * add use of "COMPRESS_POSTFIX" define, to determine what postfix
- * (e.g. ".Z", ".z", etc.) to append to compressed log files.
- *
- * Revision 1.2  1993/05/21  14:47:30  cgd
- * use the correct (or so john brezak says) copyright.
- *
- * Revision 1.1  1993/05/21  14:44:02  cgd
- * initial import of this log-rotation program to NetBSD
- *
- * Revision 3.0.2.2  1993/02/06  04:14:51  brezak
- * 	Fix up rcsid.
- * 	[1993/02/06  04:14:03  brezak]
- *
- * Revision 3.0  1993/01/01  07:39:17  ede
- * 	Initial revision for OSF/1 R1.3
- * 
- * Revision 1.2  1991/08/16  09:50:26  devrcs
- * 	From John Brezak, brezak@apollo.com, originally from Project Athena
- * 	[91/07/24  09:33:18  meissner]
- * 
- * $EndLog$
- */

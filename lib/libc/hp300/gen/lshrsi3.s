@@ -36,7 +36,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)lshrsi3.s	5.1 (Berkeley) 6/7/90"
+	/*.asciz "from: @(#)lshrsi3.s	5.1 (Berkeley) 6/7/90"*/
+	.asciz "$Id: lshrsi3.s,v 1.2 1993/08/01 18:42:38 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"

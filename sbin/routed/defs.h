@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)defs.h	5.10 (Berkeley) 2/28/91
- *
- *	$Header: /cvsroot/src/sbin/routed/defs.h,v 1.3 1993/03/23 00:30:18 cgd Exp $
+ *	from: @(#)defs.h	5.10 (Berkeley) 2/28/91
+ *	$Id: defs.h,v 1.4 1993/08/01 18:24:36 mycroft Exp $
  */
 
 /*

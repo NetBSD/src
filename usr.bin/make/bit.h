@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bit.h	5.3 (Berkeley) 6/1/90
+ *	from: @(#)bit.h	5.3 (Berkeley) 6/1/90
+ *	$Id: bit.h,v 1.2 1993/08/01 18:12:06 mycroft Exp $
  */
 
 /*

@@ -1,6 +1,6 @@
-/*-
- * Copyright (c) 1985, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,15 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)pathnames.h	5.4 (Berkeley) 6/1/90
+ *	$Id: pathnames.h,v 1.2 1993/08/01 17:55:18 mycroft Exp $
  */
 
 #include <paths.h>
 
-#ifdef sgi
-#define	_PATH_MASTERLOG	"/usr/adm/timed.masterlog"
-#define	_PATH_TIMEDLOG	"/usr/adm/timed.log"
-#else
 #define	_PATH_MASTERLOG	"/var/log/timed.masterlog"
 #define	_PATH_TIMEDLOG	"/var/log/timed.log"
-#endif
