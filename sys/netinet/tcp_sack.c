@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.10 2005/03/16 00:39:56 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.11 2005/03/18 21:25:09 kurahone Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.10 2005/03/16 00:39:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.11 2005/03/18 21:25:09 kurahone Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -197,13 +197,18 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	tcp_seq left, right, acked;
 
 	/*
-	 * If we aren't processing SACK responses, or the peer
-	 * sends us a sack option with invalid length, don't
+	 * If we aren't processing SACK responses, this is not an ACK
+	 * or the peer sends us a sack option with invalid length, don't
 	 * update the scoreboard.
 	 */
-	if (!TCP_SACK_ENABLED(tp) || (optlen % 8 != 2 || optlen < 10)) {
+	if (!TCP_SACK_ENABLED(tp) || ((th->th_flags & TH_ACK) == 0) ||
+			(optlen % 8 != 2 || optlen < 10)) {
 		return;
 	}
+
+	/* If the ACK is outside [snd_una, snd_max], ignore the SACK options. */
+	if (SEQ_LT(th->th_ack, tp->snd_una) || SEQ_GT(th->th_ack, tp->snd_max))
+		return;
 
 	/*
 	 * Extract SACK blocks.
