@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.183 2003/11/29 19:27:57 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.184 2003/12/07 21:15:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.183 2003/11/29 19:27:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.184 2003/12/07 21:15:47 fvdl Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -443,22 +443,15 @@ nfs_open(v)
 		return (EACCES);
 	}
 
-	/*
-	 * Initialize read and write creds here, for swapfiles
-	 * and other paths that don't set the creds themselves.
-	 */
-
 	if (ap->a_mode & FREAD) {
-		if (np->n_rcred) {
+		if (np->n_rcred != NULL)
 			crfree(np->n_rcred);
-		}
 		np->n_rcred = ap->a_cred;
 		crhold(np->n_rcred);
 	}
 	if (ap->a_mode & FWRITE) {
-		if (np->n_wcred) {
+		if (np->n_wcred != NULL)
 			crfree(np->n_wcred);
-		}
 		np->n_wcred = ap->a_cred;
 		crhold(np->n_wcred);
 	}
@@ -1186,8 +1179,7 @@ nfs_readrpc(vp, uiop)
 			*tl++ = txdr_unsigned(len);
 			*tl = 0;
 		}
-		nfsm_request(np, NFSPROC_READ, uiop->uio_procp,
-			     VTONFS(vp)->n_rcred);
+		nfsm_request(np, NFSPROC_READ, uiop->uio_procp, np->n_rcred);
 		if (v3) {
 			nfsm_postop_attr(vp, attrflag, NAC_NOTRUNC);
 			if (error) {
@@ -1350,8 +1342,7 @@ retry:
 		} else {
 			nfsm_uiotom(uiop, len);
 		}
-		nfsm_request(np, NFSPROC_WRITE, uiop->uio_procp,
-			     VTONFS(vp)->n_wcred);
+		nfsm_request(np, NFSPROC_WRITE, uiop->uio_procp, np->n_wcred);
 		if (v3) {
 			wccflag = NFSV3_WCCCHK;
 			nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC);
@@ -2954,7 +2945,7 @@ nfs_commit(vp, offset, cnt, procp)
 	txdr_hyper(offset, tl);
 	tl += 2;
 	*tl = txdr_unsigned(cnt);
-	nfsm_request(np, NFSPROC_COMMIT, procp, VTONFS(vp)->n_wcred);
+	nfsm_request(np, NFSPROC_COMMIT, procp, np->n_wcred);
 	nfsm_wcc_data(vp, wccflag, 0);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
