@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.6 1997/10/20 02:08:29 lukem Exp $	*/
+/*	$NetBSD: ul.c,v 1.7 1998/12/19 23:21:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.6 1997/10/20 02:08:29 lukem Exp $");
+__RCSID("$NetBSD: ul.c,v 1.7 1998/12/19 23:21:24 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -296,10 +296,12 @@ flushln()
 			lastmode = obuf[i].c_mode;
 		}
 		if (obuf[i].c_char == '\0') {
-			if (upln)
+			if (upln) {
 				PRINT(CURS_RIGHT);
-			else
+			}
+			else {
 				outc(' ');
+			}
 		} else
 			outc(obuf[i].c_char);
 	}
