@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.83 2001/07/25 23:28:02 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.84 2001/09/17 17:27:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -284,7 +284,7 @@ udp_input(m, va_alist)
 	 */
 	if (uh->uh_sum) {
 		switch (m->m_pkthdr.csum_flags &
-			((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_UDPv4) |
+			((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_UDPv4) |
 			 M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
 		case M_CSUM_UDPv4|M_CSUM_TCP_UDP_BAD:
 			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_bad);
