@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.81 2000/03/16 16:49:00 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.82 2000/03/18 15:01:33 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.82 2000/03/16 16:38:41 onoe Exp 
+ *	NetBSD: pcmciadevs,v 1.83 2000/03/18 15:00:31 mycroft Exp 
  */
 
 /*-
@@ -323,6 +323,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Melco Corporation",
 	    "Melco LPC3-TX"	},
+	},
+	{
+	    PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC002,
+	    PCMCIA_CIS_PANASONIC_KXLC002,
+	    0,
+	    "Matsushita Electric Industrial Co.",
+	    "Panasonic 4X CD-ROM Interface Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_USROBOTICS, PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
@@ -721,6 +728,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Fujitsu Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_PANASONIC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Matsushita Electric Industrial Co.",
 	    NULL,
 	},
 	{
