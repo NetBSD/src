@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.51 2002/08/26 14:25:00 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.52 2002/09/11 02:46:45 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.51 2002/08/26 14:25:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.52 2002/09/11 02:46:45 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -124,7 +124,7 @@ in6_pcballoc(so, head)
 
 	MALLOC(in6p, struct in6pcb *, sizeof(*in6p), M_PCB, M_NOWAIT);
 	if (in6p == NULL)
-		return(ENOBUFS);
+		return (ENOBUFS);
 	bzero((caddr_t)in6p, sizeof(*in6p));
 	in6p->in6p_head = head;
 	in6p->in6p_socket = so;
@@ -146,7 +146,7 @@ in6_pcballoc(so, head)
 	if (ip6_v6only)
 		in6p->in6p_flags |= IN6P_IPV6_V6ONLY;
 	so->so_pcb = (caddr_t)in6p;
-	return(0);
+	return (0);
 }
 
 int
@@ -162,7 +162,7 @@ in6_pcbbind(in6p, nam, p)
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 
 	if (in6p->in6p_lport || !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
-		return(EINVAL);
+		return (EINVAL);
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
 	   ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
 	    (so->so_options & SO_ACCEPTCONN) == 0))
@@ -170,13 +170,13 @@ in6_pcbbind(in6p, nam, p)
 	if (nam) {
 		sin6 = mtod(nam, struct sockaddr_in6 *);
 		if (nam->m_len != sizeof(*sin6))
-			return(EINVAL);
+			return (EINVAL);
 		/*
 		 * We should check the family, but old programs
 		 * incorrectly fail to intialize it.
 		 */
 		if (sin6->sin6_family != AF_INET6)
-			return(EAFNOSUPPORT);
+			return (EAFNOSUPPORT);
 
 		/*
 		 * since we do not check port number duplicate with IPv4 space,
@@ -185,7 +185,7 @@ in6_pcbbind(in6p, nam, p)
 		 * other users.
 		 */
 		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
-			return(EADDRNOTAVAIL);
+			return (EADDRNOTAVAIL);
 
 		/* KAME hack: embed scopeid */
 		if (in6_embedscope(&sin6->sin6_addr, sin6, in6p, NULL) != 0)
@@ -222,7 +222,7 @@ in6_pcbbind(in6p, nam, p)
 			sin6->sin6_port = 0;		/* yech... */
 			if ((in6p->in6p_flags & IN6P_FAITH) == 0 &&
 			    (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
-				return(EADDRNOTAVAIL);
+				return (EADDRNOTAVAIL);
 
 			/*
 			 * bind to an anycast address might accidentally
@@ -240,7 +240,7 @@ in6_pcbbind(in6p, nam, p)
 			if (ia &&
 			    ((struct in6_ifaddr *)ia)->ia6_flags &
 			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
-				return(EADDRNOTAVAIL);
+				return (EADDRNOTAVAIL);
 		}
 		if (lport) {
 #ifndef IPNOPRIVPORTS
@@ -253,7 +253,7 @@ in6_pcbbind(in6p, nam, p)
 			priv = (p && !suser(p->p_ucred, &p->p_acflag)) ? 1 : 0;
 			/* GROSS */
 			if (ntohs(lport) < IPV6PORT_RESERVED && !priv)
-				return(EACCES);
+				return (EACCES);
 #endif
 
 			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
@@ -274,7 +274,7 @@ in6_pcbbind(in6p, nam, p)
 				t = in6_pcblookup(head, &zeroin6_addr, 0,
 						  &sin6->sin6_addr, lport, wild);
 				if (t && (reuseport & t->in6p_socket->so_options) == 0)
-					return(EADDRINUSE);
+					return (EADDRINUSE);
 			}
 		}
 		in6p->in6p_laddr = sin6->sin6_addr;
@@ -283,13 +283,13 @@ in6_pcbbind(in6p, nam, p)
 	if (lport == 0) {
 		int e;
 		if ((e = in6_pcbsetport(&in6p->in6p_laddr, in6p, p)) != 0)
-			return(e);
+			return (e);
 	}
 	else
 		in6p->in6p_lport = lport;
 
 	in6p->in6p_flowinfo = sin6 ? sin6->sin6_flowinfo : 0;	/*XXX*/
-	return(0);
+	return (0);
 }
 
 /*
@@ -315,11 +315,11 @@ in6_pcbconnect(in6p, nam)
 	(void)&in6a;				/* XXX fool gcc */
 
 	if (nam->m_len != sizeof(*sin6))
-		return(EINVAL);
+		return (EINVAL);
 	if (sin6->sin6_family != AF_INET6)
-		return(EAFNOSUPPORT);
+		return (EAFNOSUPPORT);
 	if (sin6->sin6_port == 0)
-		return(EADDRNOTAVAIL);
+		return (EADDRNOTAVAIL);
 
 	/* sanity check for mapped address case */
 	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
@@ -359,7 +359,7 @@ in6_pcbconnect(in6p, nam)
 		if (sinp == 0) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
-			return(error);
+			return (error);
 		}
 		bzero(&mapped, sizeof(mapped));
 		mapped.s6_addr16[5] = htons(0xffff);
@@ -382,7 +382,7 @@ in6_pcbconnect(in6p, nam)
 		if (in6a == 0) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
-			return(error);
+			return (error);
 		}
 	}
 	if (in6p->in6p_route.ro_rt)
@@ -397,7 +397,7 @@ in6_pcbconnect(in6p, nam)
 			  in6a : &in6p->in6p_laddr,
 			 in6p->in6p_lport,
 			 0))
-		return(EADDRINUSE);
+		return (EADDRINUSE);
 	if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)
 	 || (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)
 	  && in6p->in6p_laddr.s6_addr32[3] == 0))
@@ -425,7 +425,7 @@ in6_pcbconnect(in6p, nam)
 	if (in6p->in6p_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(in6p->in6p_sp);
 #endif
-	return(0);
+	return (0);
 }
 
 void
@@ -827,7 +827,7 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 				break;
 		}
 	}
-	return(match);
+	return (match);
 }
 
 struct rtentry *

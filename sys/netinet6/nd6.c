@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.72 2002/09/04 07:22:28 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.73 2002/09/11 02:46:46 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.72 2002/09/04 07:22:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.73 2002/09/11 02:46:46 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -678,7 +678,7 @@ nd6_lookup(addr6, create, ifp)
 			struct ifaddr *ifa =
 			    ifaof_ifpforaddr((struct sockaddr *)&sin6, ifp);
 			if (ifa == NULL)
-				return(NULL);
+				return (NULL);
 
 			/*
 			 * Create a new route.  RTF_LLINFO is necessary
@@ -696,17 +696,17 @@ nd6_lookup(addr6, create, ifp)
 				    "neighbor(%s), errno=%d\n",
 				    ip6_sprintf(addr6), e);
 #endif
-				return(NULL);
+				return (NULL);
 			}
 			if (rt == NULL)
-				return(NULL);
+				return (NULL);
 			if (rt->rt_llinfo) {
 				struct llinfo_nd6 *ln =
 				    (struct llinfo_nd6 *)rt->rt_llinfo;
 				ln->ln_state = ND6_LLINFO_NOSTATE;
 			}
 		} else
-			return(NULL);
+			return (NULL);
 	}
 	rt->rt_refcnt--;
 	/*
@@ -730,9 +730,9 @@ nd6_lookup(addr6, create, ifp)
 			    ip6_sprintf(addr6),
 			    ifp ? if_name(ifp) : "unspec");
 		}
-		return(NULL);
+		return (NULL);
 	}
-	return(rt);
+	return (rt);
 }
 
 /*
@@ -755,7 +755,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 */
 	if (IN6_IS_ADDR_LINKLOCAL(&addr->sin6_addr) &&
 	    ntohs(*(u_int16_t *)&addr->sin6_addr.s6_addr[2]) == ifp->if_index)
-		return(1);
+		return (1);
 
 	/*
 	 * If the address matches one of our on-link prefixes, it should be a
@@ -781,7 +781,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 */
 	if (!ip6_forwarding && TAILQ_FIRST(&nd_defrouter) == NULL &&
 	    nd6_defifindex == ifp->if_index) {
-		return(1);
+		return (1);
 	}
 
 	/*
@@ -789,9 +789,9 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * in the neighbor cache.
 	 */
 	if ((rt = nd6_lookup(&addr->sin6_addr, 0, ifp)) != NULL)
-		return(1);
+		return (1);
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -836,7 +836,7 @@ nd6_free(rt, gc)
 			 */
 			ln->ln_expire = dr->expire;
 			splx(s);
-			return(ln->ln_next);
+			return (ln->ln_next);
 		}
 
 		if (ln->ln_router || dr) {
@@ -896,7 +896,7 @@ nd6_free(rt, gc)
 	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
 	    rt_mask(rt), 0, (struct rtentry **)0);
 
-	return(next);
+	return (next);
 }
 
 /*
@@ -1415,10 +1415,10 @@ nd6_ioctl(cmd, data, ifp)
 		ndif->ifindex = nd6_defifindex;
 		break;
 	case SIOCSDEFIFACE_IN6:	/* XXX: should be implemented as a sysctl? */
-		return(nd6_setdefaultiface(ndif->ifindex));
+		return (nd6_setdefaultiface(ndif->ifindex));
 		break;
 	}
-	return(error);
+	return (error);
 }
 
 /*
@@ -1854,15 +1854,15 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 		    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
 		nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
 	}
-	return(0);
+	return (0);
 
   sendpkt:
 
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
-		return((*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
+		return ((*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
 					 rt));
 	}
-	return((*ifp->if_output)(ifp, m, (struct sockaddr *)dst, rt));
+	return ((*ifp->if_output)(ifp, m, (struct sockaddr *)dst, rt));
 
   bad:
 	if (m)
@@ -1888,9 +1888,9 @@ nd6_need_cache(ifp)
 	case IFT_FDDI:
 	case IFT_IEEE1394:
 	case IFT_GIF:		/* XXX need more cases? */
-		return(1);
+		return (1);
 	default:
-		return(0);
+		return (0);
 	}
 }
 
@@ -1910,28 +1910,28 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 		case IFT_FDDI:
 			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr,
 						 desten);
-			return(1);
+			return (1);
 		case IFT_IEEE1394:
 			bcopy(ifp->if_broadcastaddr, desten, ifp->if_addrlen);
-			return(1);
+			return (1);
 		case IFT_ARCNET:
 			*desten = 0;
-			return(1);
+			return (1);
 		default:
 			m_freem(m);
-			return(0);
+			return (0);
 		}
 	}
 
 	if (rt == NULL) {
 		/* this could happen, if we could not allocate memory */
 		m_freem(m);
-		return(0);
+		return (0);
 	}
 	if (rt->rt_gateway->sa_family != AF_LINK) {
 		printf("nd6_storelladdr: something odd happens\n");
 		m_freem(m);
-		return(0);
+		return (0);
 	}
 	sdl = SDL(rt->rt_gateway);
 	if (sdl->sdl_alen == 0) {
@@ -1939,11 +1939,11 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 		printf("nd6_storelladdr: sdl_alen == 0, dst=%s, if=%s\n",
 		    ip6_sprintf(&SIN6(dst)->sin6_addr), if_name(ifp));
 		m_freem(m);
-		return(0);
+		return (0);
 	}
 
 	bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
-	return(1);
+	return (1);
 }
 
 int
@@ -1993,7 +1993,7 @@ nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 	if (p)
 		free(p, M_TEMP);
 
-	return(error);
+	return (error);
 }
 
 static int
@@ -2044,7 +2044,7 @@ fill_drlist(oldp, oldlenp, ol)
 
 	splx(s);
 
-	return(error);
+	return (error);
 }
 
 static int
@@ -2146,5 +2146,5 @@ fill_prlist(oldp, oldlenp, ol)
 
 	splx(s);
 
-	return(error);
+	return (error);
 }

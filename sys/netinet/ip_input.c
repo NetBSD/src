@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.156 2002/09/11 02:41:19 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.157 2002/09/11 02:46:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.156 2002/09/11 02:41:19 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.157 2002/09/11 02:46:43 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -1889,13 +1889,13 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		    &hostzeroisbroadcast));
 #if NGIF > 0
 	case IPCTL_GIF_TTL:
-		return(sysctl_int(oldp, oldlenp, newp, newlen,
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip_gif_ttl));
 #endif
 
 #if NGRE > 0
 	case IPCTL_GRE_TTL:
-		return(sysctl_int(oldp, oldlenp, newp, newlen,
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip_gre_ttl));
 #endif
 

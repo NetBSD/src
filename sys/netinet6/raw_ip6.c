@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.50 2002/09/11 02:41:28 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.51 2002/09/11 02:46:47 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.50 2002/09/11 02:41:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.51 2002/09/11 02:46:47 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -534,7 +534,7 @@ rip6_output(m, va_alist)
 		RTFREE(optp->ip6po_route.ro_rt);
 	if (control)
 		m_freem(control);
-	return(error);
+	return (error);
 }
 
 /*
@@ -836,7 +836,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 		/*
 		 * stat: don't bother with a blocksize
 		 */
-		return(0);
+		return (0);
 	/*
 	 * Not supported.
 	 */
@@ -861,5 +861,5 @@ rip6_usrreq(so, req, m, nam, control, p)
 	}
 	if (m != NULL)
 		m_freem(m);
-	return(error);
+	return (error);
 }

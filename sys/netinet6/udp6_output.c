@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.9 2002/08/26 14:25:01 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.10 2002/09/11 02:46:47 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.9 2002/08/26 14:25:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.10 2002/09/11 02:46:47 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_inet.h"
@@ -407,5 +407,5 @@ releaseopt:
 		in6p->in6p_outputopts = stickyopt;
 		m_freem(control);
 	}
-	return(error);
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.18 2002/03/21 04:41:03 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.19 2002/09/11 02:46:48 itojun Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.18 2002/03/21 04:41:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.19 2002/09/11 02:46:48 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -108,7 +108,7 @@ key_usrreq(so, req, m, nam, control, p)
 			free((caddr_t)kp, M_PCB);
 			so->so_pcb = (caddr_t) 0;
 			splx(s);
-			return(error);
+			return (error);
 		}
 
 		kp->kp_promisc = kp->kp_registered = 0;
@@ -122,7 +122,7 @@ key_usrreq(so, req, m, nam, control, p)
 		so->so_options |= SO_USELOOPBACK;
 	}
 	splx(s);
-	return(error);
+	return (error);
 }
 
 /*

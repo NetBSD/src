@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.74 2002/08/20 08:17:02 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.75 2002/09/11 02:46:47 itojun Exp $	*/
 /*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.74 2002/08/20 08:17:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.75 2002/09/11 02:46:47 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2278,7 +2278,7 @@ key_newsah(saidx)
 	newsah->state = SADB_SASTATE_MATURE;
 	LIST_INSERT_HEAD(&sahtree, newsah, chain);
 
-	return(newsah);
+	return (newsah);
 }
 
 /*
@@ -2514,7 +2514,7 @@ key_getsah(saidx)
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
 		if (key_cmpsaidx_exactly(&sah->saidx, saidx))
-			return(sah);
+			return (sah);
 	}
 
 	return NULL;
@@ -2923,7 +2923,7 @@ key_mature(sav)
 		if (sav->alg_enc != SADB_EALG_NONE) {
 			ipseclog((LOG_DEBUG, "key_mature: "
 			    "protocol and algorithm mismated.\n"));
-			return(EINVAL);
+			return (EINVAL);
 		}
 		checkmask = 2;
 		mustmask = 2;
@@ -2932,12 +2932,12 @@ key_mature(sav)
 		if (sav->alg_auth != SADB_AALG_NONE) {
 			ipseclog((LOG_DEBUG, "key_mature: "
 				"protocol and algorithm mismated.\n"));
-			return(EINVAL);
+			return (EINVAL);
 		}
 		if ((sav->flags & SADB_X_EXT_RAWCPI) == 0
 		 && ntohl(sav->spi) >= 0x10000) {
 			ipseclog((LOG_DEBUG, "key_mature: invalid cpi for IPComp.\n"));
-			return(EINVAL);
+			return (EINVAL);
 		}
 		checkmask = 4;
 		mustmask = 4;
