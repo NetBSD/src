@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 2003/06/03 12:53:47 reinoud Exp $
+$NetBSD: version,v 1.7.4.1 2004/05/22 17:12:16 he Exp $
 
 0.90:	Experimental C version
 0.91:	General cleanup
@@ -23,3 +23,4 @@ $NetBSD: version,v 1.7 2003/06/03 12:53:47 reinoud Exp $
 3.06:	fixed non 1Mb-alignment problems for the top 1Mb in the memorymap
 3.10:	Serious loading problems fixed and cleanup code
 3.20:	Redone videomem mapping and top memory search; esp. for smaller machines
+3.30:	Use qsort to significantly speed memory sort
