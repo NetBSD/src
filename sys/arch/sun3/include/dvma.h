@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.1 1995/09/26 04:02:08 gwr Exp $	*/
+/*	$NetBSD: dvma.h,v 1.2 1996/02/16 20:18:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -54,7 +54,7 @@
  */
 
 /*
- * This range could be managed as whole MMU segments.
+ * This range is managed as whole MMU segments.
  * The last segment is pre-allocated (see below)
  */
 #define DVMA_SEGMAP_BASE	0x0FF00000
