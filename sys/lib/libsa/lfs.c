@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.9 2003/02/23 22:47:44 simonb Exp $ */
+/* $NetBSD: lfs.c,v 1.10 2003/02/23 23:17:42 simonb Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -90,7 +90,6 @@
 #define LIBSA_NO_FS_SYMLINK
 #endif
 
-
 /*
  * In-core LFS superblock.  This exists only to placate the macros in lfs.h,
  * and to diff easily against the UFS code.
@@ -99,12 +98,49 @@ struct fs {
 	struct dlfs	lfs_dlfs;
 };
 #define	fs_magic	lfs_magic
-#define	fs_bsize	lfs_bsize
 #define fs_maxsymlinklen lfs_maxsymlinklen
 
 #define	FS_MAGIC	LFS_MAGIC
 #define	SBSIZE		LFS_SBPAD
 #define	SBLOCK		(LFS_LABELPAD / DEV_BSIZE)
+
+
+#if defined(LIBSA_LFSv1)		/* XXX not tested */
+
+#undef fsbtodb
+#define	fsbtodb(fs, daddr)	(daddr)		/* LFSv1 uses sectors for addresses */
+#define	lfs_open		lfsv1_open
+#define	lfs_close		lfsv1_close
+#define	lfs_read		lfsv1_read
+#define	lfs_write		lfsv1_write
+#define	lfs_seek		lfsv1_seek
+#define	lfs_stat		lfsv1_stat
+
+#define	REQUIRED_LFS_VERSION	1
+#define	fs_bsize		lfs_ibsize
+#define	IFILE			IFILE_V1
+
+#elif defined(LIBSA_LFSv2)
+
+#define	lfs_open		lfsv2_open
+#define	lfs_close		lfsv2_close
+#define	lfs_read		lfsv2_read
+#define	lfs_write		lfsv2_write
+#define	lfs_seek		lfsv2_seek
+#define	lfs_stat		lfsv2_stat
+
+#define	REQUIRED_LFS_VERSION	2
+#define	fs_bsize		lfs_bsize
+
+#ifdef LFS_IFILE_FRAG_ADDRESSING	/* XXX see sys/ufs/lfs/ -- not tested */
+#undef INOPB
+#define	INOPB INOPF
+#endif
+
+#else
+#error Must define one of LIBSA_LFSv1, LIBSA_LFSv2
+#endif
+
 
 /*
  * In-core open file.
@@ -161,12 +197,7 @@ find_inode_sector(ino_t inumber, struct open_file *f, daddr_t *isp)
 	if (buf_after_ent < sizeof (IFILE))
 		return (EINVAL);
 
-#if 0	/* LFS daddr_t's are in sectors, fsbtodb() shouldn't be used on them */
 	*isp = fsbtodb(fs, ((IFILE *)ent_in_buf)->if_daddr);
-#else
-	*isp = ((IFILE *)ent_in_buf)->if_daddr;
-#endif
-
 	if (*isp == LFS_UNUSED_DADDR)	/* again, something badly wrong */
 		return (EINVAL);
 	return (0);
@@ -189,7 +220,7 @@ read_inode(inumber, f)
 	int rc, cnt;
 
 	if (inumber == fs->lfs_ifile)
-		inode_sector = fs->lfs_idaddr;
+		inode_sector = fsbtodb(fs, fs->lfs_idaddr);
 	else if ((rc = find_inode_sector(inumber, f, &inode_sector)) != 0)
 		return (rc);
 
@@ -320,11 +351,7 @@ block_map(f, file_block, disk_block_p)
 			twiddle();
 #endif
 			rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-#if 0	/* LFS daddr_t's are in sectors, fsbtodb() shouldn't be used on them */
 				fsbtodb(fp->f_fs, ind_block_num),
-#else
-				ind_block_num,
-#endif
 				fs->fs_bsize,
 				fp->f_blk[level],
 				&fp->f_blksize[level]);
@@ -390,11 +417,7 @@ buf_read_file(f, buf_p, size_p)
 			twiddle();
 #endif
 			rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-#if 0	/* LFS daddr_t's are in sectors, fsbtodb() shouldn't be used on them */
 				fsbtodb(fs, disk_block),
-#else
-				disk_block,
-#endif
 				block_size, fp->f_buf, &fp->f_buf_size);
 			if (rc)
 				return (rc);
@@ -512,10 +535,19 @@ lfs_open(path, f)
 		goto out;
 
 	if (buf_size != SBSIZE || fs->fs_magic != FS_MAGIC ||
-	    fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
+	    fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs) ||
+	    fs->lfs_version != REQUIRED_LFS_VERSION) {
 		rc = EINVAL;
 		goto out;
 	}
+#ifdef LIBSA_LFSv2
+	/*
+	 * XXX	We should check the second superblock and use the eldest
+	 *	of the two.  See comments near the top of lfs_mountfs()
+	 *	in sys/ufs/lfs/lfs_vfsops.c.
+	 *      This may need a LIBSA_LFS_SMALL check as well.
+	 */
+#endif
 	/*
 	 * Calculate indirect block levels.
 	 */
@@ -627,11 +659,7 @@ lfs_open(path, f)
 				twiddle();
 #endif
 				rc = DEV_STRATEGY(f->f_dev)(f->f_devdata,
-#if 0	/* LFS daddr_t's are in sectors, fsbtodb() shouldn't be used on them */
 					F_READ, fsbtodb(fs, disk_block),
-#else
-					F_READ, disk_block,
-#endif
 					fs->fs_bsize, buf, &buf_size);
 				if (rc)
 					goto out;
