@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.45 2004/03/16 05:32:09 simonb Exp $
+ * $Id: ahc_pci.c,v 1.45.2.1 2004/11/12 05:55:47 jmc Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.45 2004/03/16 05:32:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.45.2.1 2004/11/12 05:55:47 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.45 2004/03/16 05:32:09 simonb Exp $");
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
+
+/* XXXX some i386 on-board chips act weird when memory-mapped */
+#ifndef __i386__
+#define AHC_ALLOW_MEMIO
+#endif
 
 #define AHC_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHC_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -799,7 +805,8 @@ ahc_pci_attach(parent, self, aux)
 	/* Keep information about the PCI bus */
 	bd = malloc(sizeof (struct ahc_pci_busdata), M_DEVBUF, M_NOWAIT);
 	if (bd == NULL) {
-		printf("%s: unable to allocate bus-specific data\n", ahc_name(ahc));
+		printf("%s: unable to allocate bus-specific data\n",
+		    ahc_name(ahc));
 		return;
 	}
 	memset(bd, 0, sizeof(struct ahc_pci_busdata));
@@ -837,8 +844,9 @@ ahc_pci_attach(parent, self, aux)
 				    PCI_MAPREG_TYPE_IO, 0, &iot, 
 				    &ioh, NULL, NULL) == 0);
 #if 0
-	printf("%s: mem mapping: memt 0x%x, memh 0x%x, iot 0x%x, ioh 0x%lx\n",
-	       ahc_name(ahc), memt, (u_int32_t)memh, (u_int32_t)iot, ioh);
+	printf("%s: bus info: memt 0x%lx, memh 0x%lx, iot 0x%lx, ioh 0x%lx\n",
+	    ahc_name(ahc), (u_long)memt, (u_long)memh, (u_long)iot,
+	    (u_long)ioh);
 #endif
 
 	if (ioh_valid) {
@@ -1375,7 +1383,8 @@ ahc_pci_test_register_access(struct ahc_softc *ahc)
 
 fail:
 	/* Silently clear any latched errors. */
-	status1 = pci_conf_read(ahc->bd->pc, ahc->bd->tag, PCI_COMMAND_STATUS_REG + 1);
+	status1 = pci_conf_read(ahc->bd->pc, ahc->bd->tag,
+	    PCI_COMMAND_STATUS_REG + 1);
 	ahc_pci_write_config(ahc->dev_softc, PCIR_STATUS + 1,
 			     status1, /*bytes*/1);
 	ahc_outb(ahc, CLRINT, CLRPARERR);
@@ -1395,7 +1404,8 @@ ahc_pci_intr(struct ahc_softc *ahc)
 	if ((error & PCIERRSTAT) == 0)
 		return;
 
-	status1 = pci_conf_read(ahc->bd->pc, ahc->bd->tag, PCI_COMMAND_STATUS_REG);
+	status1 = pci_conf_read(ahc->bd->pc, ahc->bd->tag,
+	    PCI_COMMAND_STATUS_REG);
 
 	printf("%s: PCI error Interrupt at seqaddr = 0x%x\n",
 	      ahc_name(ahc),
@@ -1423,7 +1433,8 @@ ahc_pci_intr(struct ahc_softc *ahc)
 	}
 
 	/* Clear latched errors. */
-	pci_conf_write(ahc->bd->pc, ahc->bd->tag,  PCI_COMMAND_STATUS_REG, status1);
+	pci_conf_write(ahc->bd->pc, ahc->bd->tag,  PCI_COMMAND_STATUS_REG,
+	    status1);
 
 	if ((status1 & (DPE|SSE|RMA|RTA|STA|DPR)) == 0) {
 		printf("%s: Latched PCIERR interrupt with "
@@ -1621,9 +1632,11 @@ ahc_aic7895_setup(struct ahc_softc *ahc)
 		 * we have.  Disabling MWI reduces performance, so
 		 * turn it on again.
 		 */
-		command = pci_conf_read(ahc->bd->pc, ahc->bd->tag, PCI_COMMAND_STATUS_REG);
+		command = pci_conf_read(ahc->bd->pc, ahc->bd->tag,
+		    PCI_COMMAND_STATUS_REG);
 		command |=  PCI_COMMAND_INVALIDATE_ENABLE;
-		pci_conf_write(ahc->bd->pc, ahc->bd->tag, PCI_COMMAND_STATUS_REG, command);
+		pci_conf_write(ahc->bd->pc, ahc->bd->tag,
+		    PCI_COMMAND_STATUS_REG, command);
 		ahc->bugs |= AHC_PCI_MWI_BUG;
 	}
 	/*
