@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.15 1997/02/07 05:07:13 mikel Exp $ */
+/*	$NetBSD: arp.c,v 1.16 1997/03/07 07:04:43 mikel Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -43,8 +43,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$NetBSD: arp.c,v 1.15 1997/02/07 05:07:13 mikel Exp $";
+/* static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95"; */
+static char *rcsid = "$NetBSD: arp.c,v 1.16 1997/03/07 07:04:43 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -74,20 +74,20 @@ static char *rcsid = "$NetBSD: arp.c,v 1.15 1997/02/07 05:07:13 mikel Exp $";
 #include <string.h>
 #include <unistd.h>
 
-int delete __P((const char *, const char *));
-void dump __P((u_long));
-void ether_print __P((const u_char *));
-int file __P((char *));
-void get __P((const char *));
-int getinetaddr __P((const char *, struct in_addr *));
-void getsocket __P((void));
-int rtmsg __P((int));
-int set __P((int, char **));
-void usage __P((void));
-
 static int pid;
 static int nflag;
 static int s = -1;
+
+int	delete __P((const char *, const char *));
+void	dump __P((u_long));
+void	ether_print __P((const u_char *));
+int	file __P((char *));
+void	get __P((const char *));
+int	getinetaddr __P((const char *, struct in_addr *));
+void	getsocket __P((void));
+int	rtmsg __P((int));
+int	set __P((int, char **));
+void	usage __P((void));
 
 int
 main(argc, argv)
@@ -413,7 +413,7 @@ dump(addr)
 		}
 		(void)printf("%s (%s) at ", host, inet_ntoa(sin->sin_addr));
 		if (sdl->sdl_alen)
-			ether_print(LLADDR(sdl));
+			ether_print((u_char *)LLADDR(sdl));
 		else
 			(void)printf("(incomplete)");
 		if (rtm->rtm_rmx.rmx_expire == 0)
