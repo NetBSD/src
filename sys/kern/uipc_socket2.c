@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.44 2002/07/03 21:36:58 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.45 2002/07/03 21:39:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.44 2002/07/03 21:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.45 2002/07/03 21:39:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,7 +850,7 @@ sbdrop(struct sockbuf *sb, int len)
 	} else
 		sb->sb_mb = next;
 	/*
-	 * First part is an inline SB_UPDATE_TAIL().  Second part
+	 * First part is an inline SB_EMPTY_FIXUP().  Second part
 	 * makes sure sb_lastrecord is up-to-date if we dropped
 	 * part of the last record.
 	 */
@@ -879,7 +879,7 @@ sbdroprecord(struct sockbuf *sb)
 			MFREE(m, mn);
 		} while ((m = mn) != NULL);
 	}
-	SB_UPDATE_TAIL(sb);
+	SB_EMPTY_FIXUP(sb);
 }
 
 /*
