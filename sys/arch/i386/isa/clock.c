@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.13 1993/10/15 03:04:26 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.14 1993/10/15 03:48:43 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -263,6 +263,7 @@ timerattach(parent, self, aux)
 		findcpuspeed(iobase);	/* use the clock (while it's free)
 					   to find the cpu speed XXXX */
 
+		--limit;
 		outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 		outb(iobase + TIMER_CNTR0, limit);
 		outb(iobase + TIMER_CNTR0, limit>>8);
@@ -328,7 +329,7 @@ findcpuspeed(iobase)
 	 * Formula for delaycount is:
 	 * (loopcount * timer clock speed) / (counter ticks * 1000)
 	 */
-	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
+	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0x10000 - remainder);
 }
 
 /*
