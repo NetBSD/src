@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.11 1997/10/20 02:53:03 lukem Exp $	*/
+/*	$NetBSD: vacation.c,v 1.12 1997/12/31 06:13:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.11 1997/10/20 02:53:03 lukem Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.12 1997/12/31 06:13:24 thorpej Exp $");
 #endif /* not lint */
 
 /*
@@ -430,7 +430,7 @@ sendmessage(myname)
 		    NULL);
 		syslog(LOG_ERR, "vacation: can't exec %s: %s",
 		    _PATH_SENDMAIL, strerror(errno));
-		exit(1);
+		_exit(1);
 	}
 	close(pvect[0]);
 	sfp = fdopen(pvect[1], "w");
