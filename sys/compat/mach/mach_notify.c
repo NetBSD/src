@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.8 2003/11/25 17:09:24 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.9 2003/11/25 23:17:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.8 2003/11/25 17:09:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.9 2003/11/25 23:17:40 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -256,6 +256,7 @@ mach_exception(l, exc, code)
 	size_t msglen;
 	struct mach_right *exc_mr;
 	struct mach_emuldata *med;
+	struct mach_emuldata *catcher_med;
 	struct mach_right *kernel_mr;
 	struct lwp *catcher_lwp;
 	struct mach_right *task;
@@ -266,10 +267,6 @@ mach_exception(l, exc, code)
 	med = l->l_proc->p_emuldata;
 	if ((exc_port = med->med_exc[exc]) == NULL)
 		return EINVAL;
-
-	/* XXX Thread and task should have different ports */
-	task = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
-	thread = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
 
 #ifdef DIAGNOSTIC
 	if (exc_port->mp_datatype != MACH_MP_EXC_FLAGS)
@@ -283,9 +280,15 @@ mach_exception(l, exc, code)
 	 * the process with receive right for exc_port.
 	 */
 	catcher_lwp = exc_port->mp_recv->mr_lwp;
-	med = catcher_lwp->l_proc->p_emuldata;
+	catcher_med = catcher_lwp->l_proc->p_emuldata;
 	exc_mr = mach_right_get(exc_port, catcher_lwp, MACH_PORT_TYPE_SEND, 0);
-	kernel_mr = mach_right_get(med->med_kernel, 
+	kernel_mr = mach_right_get(catcher_med->med_kernel, 
+	    catcher_lwp, MACH_PORT_TYPE_SEND, 0);
+
+	/* XXX Thread and task should have different ports */
+	task = mach_right_get(med->med_kernel, 
+	    catcher_lwp, MACH_PORT_TYPE_SEND, 0);
+	thread = mach_right_get(med->med_kernel, 
 	    catcher_lwp, MACH_PORT_TYPE_SEND, 0);
 
 	switch (behavior) {
