@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.15 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: mca.c,v 1.16 2004/08/30 18:27:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.15 2004/08/30 15:05:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.16 2004/08/30 18:27:21 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,13 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.15 2004/08/30 15:05:19 drochner Exp $");
 #include <dev/mca/mcavar.h>
 #include <dev/mca/mcadevs.h>
 
+#include "locators.h"
+
 int	mca_match __P((struct device *, struct cfdata *, void *));
 void	mca_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(mca, sizeof(struct device),
     mca_match, mca_attach, NULL, NULL);
 
-int	mca_submatch __P((struct device *, struct cfdata *, void *));
+int	mca_submatch __P((struct device *, struct cfdata *,
+			  const locdesc_t *, void *));
 int	mca_print __P((void *, const char *));
 
 int
@@ -115,15 +118,15 @@ mca_print(aux, pnp)
 }
 
 int
-mca_submatch(parent, cf, aux)
+mca_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
-	struct mca_attach_args *ma = aux;
 
-	if (cf->mcacf_slot != MCA_UNKNOWN_SLOT &&
-	    cf->mcacf_slot != ma->ma_slot)
+	if (cf->cf_loc[MCACF_SLOT] != MCACF_SLOT_DEFAULT &&
+	    cf->cf_loc[MCACF_SLOT] != ldesc->locs[MCACF_SLOT])
 		return 0;
 	return (config_match(parent, cf, aux));
 }
@@ -159,6 +162,8 @@ mca_attach(parent, self, aux)
 	for (slot = 0; slot < MCA_MAX_SLOTS; slot++) {
 		struct mca_attach_args ma;
 		int reg;
+		int help[2];
+		locdesc_t *ldesc = (void *)help; /* XXX */
 
 		ma.ma_iot = iot;
 		ma.ma_memt = memt;
@@ -173,9 +178,13 @@ mca_attach(parent, self, aux)
 		if (ma.ma_id == 0xffff)	/* no adapter here */
 			continue;
 
+		ldesc->len = 1;
+		ldesc->locs[MCACF_SLOT] = slot;
+
 		if (ma.ma_pos[2] & MCA_POS2_ENABLE
 		    || mca_match_disabled(ma.ma_id))
-			config_found_sm(self, &ma, mca_print, mca_submatch);
+			config_found_sm_loc(self, "mca", ldesc, &ma,
+					    mca_print, mca_submatch);
 		else {
 			mca_print(&ma, self->dv_xname);
 			printf(" disabled\n");
