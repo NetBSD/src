@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/06 06:46:52 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/03/03 08:38:10 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/codeconv
 
@@ -7,14 +7,9 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/codeconv
 .include <bsd.own.mk>
 
 LIB=	VISCII
-.PATH:	${X11SRCDIR.xc}/extras/X-TrueType/VISCII
 
+.PATH:	${X11SRCDIR.xc}/extras/X-TrueType/VISCII
 SRCS=	main.c VISCIItoUCS2.c
 
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts/codeconv \
-		-I${X11SRCDIR.xc}/extras/FreeType/lib \
-		-I${X11SRCDIR.xc}/extras/FreeType/lib/extend
+.include "../Makefile.xtt"
 
-.include <bsd.x11.mk>
-LIBDIR=	${XMODULEDIR}
-.include <bsd.lib.mk>
