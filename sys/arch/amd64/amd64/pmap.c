@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2004/05/31 13:42:27 sekiya Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2004/06/04 07:42:33 sekiya Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2004/05/31 13:42:27 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2004/06/04 07:42:33 sekiya Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -434,6 +434,24 @@ static vaddr_t pv_cachedva;		/* cached VA for later use */
 #define PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
 #define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
 					/* high water mark */
+
+static __inline int
+pv_compare(struct pv_entry *a, struct pv_entry *b)
+{
+	if (a->pv_pmap < b->pv_pmap)
+		return (-1);
+	else if (a->pv_pmap > b->pv_pmap)
+		return (1);
+	else if (a->pv_va < b->pv_va)
+		return (-1);  
+	else if (a->pv_va > b->pv_va)
+		return (1);
+	else
+		return (0);
+}
+
+SPLAY_PROTOTYPE(pvtree, pv_entry, pv_node, pv_compare); 
+SPLAY_GENERATE(pvtree, pv_entry, pv_node, pv_compare);
 
 /*
  * linked list of all non-kernel pmaps
@@ -1340,7 +1358,7 @@ pmap_alloc_pv(pmap, mode)
 		}
 		pv = pvpage->pvinfo.pvpi_pvfree;
 		KASSERT(pv);
-		pvpage->pvinfo.pvpi_pvfree = pv->pv_next;
+		pvpage->pvinfo.pvpi_pvfree = SPLAY_RIGHT(pv, pv_node);
 		pv_nfpvents--;  /* took one from pool */
 	} else {
 		pv = NULL;		/* need more of them */
@@ -1400,7 +1418,7 @@ pmap_alloc_pvpage(pmap, mode)
 		pvpage->pvinfo.pvpi_nfree--;	/* can't go to zero */
 		pv = pvpage->pvinfo.pvpi_pvfree;
 		KASSERT(pv);
-		pvpage->pvinfo.pvpi_pvfree = pv->pv_next;
+		pvpage->pvinfo.pvpi_pvfree = SPLAY_RIGHT(pv, pv_node);
 		pv_nfpvents--;  /* took one from pool */
 		return(pv);
 	}
@@ -1465,7 +1483,8 @@ pmap_add_pvpage(pvp, need_entry)
 	pvp->pvinfo.pvpi_pvfree = NULL;
 	pvp->pvinfo.pvpi_nfree = tofree;
 	for (lcv = 0 ; lcv < tofree ; lcv++) {
-		pvp->pvents[lcv].pv_next = pvp->pvinfo.pvpi_pvfree;
+		SPLAY_RIGHT(&pvp->pvents[lcv], pv_node) =
+			pvp->pvinfo.pvpi_pvfree;
 		pvp->pvinfo.pvpi_pvfree = &pvp->pvents[lcv];
 	}
 	if (need_entry)
@@ -1501,7 +1520,7 @@ pmap_free_pv_doit(pv)
 	}
 
 	/* free it */
-	pv->pv_next = pvp->pvinfo.pvpi_pvfree;
+	SPLAY_RIGHT(pv, pv_node) = pvp->pvinfo.pvpi_pvfree;
 	pvp->pvinfo.pvpi_pvfree = pv;
 
 	/*
@@ -1555,7 +1574,7 @@ pmap_free_pvs(pmap, pvs)
 	simple_lock(&pvalloc_lock);
 
 	for ( /* null */ ; pvs != NULL ; pvs = nextpv) {
-		nextpv = pvs->pv_next;
+		nextpv = SPLAY_RIGHT(pvs, pv_node);
 		pmap_free_pv_doit(pvs);
 	}
 
@@ -1652,10 +1671,7 @@ pmap_enter_pv(pvh, pve, pmap, va, ptp)
 	pve->pv_pmap = pmap;
 	pve->pv_va = va;
 	pve->pv_ptp = ptp;			/* NULL for kernel pmap */
-	simple_lock(&pvh->pvh_lock);		/* lock pv_head */
-	pve->pv_next = pvh->pvh_list;		/* add to ... */
-	pvh->pvh_list = pve;			/* ... locked list */
-	simple_unlock(&pvh->pvh_lock);		/* unlock, done! */
+	SPLAY_INSERT(pvtree, &pvh->pvh_root, pve); /* add to locked list */
 }
 
 /*
@@ -1674,18 +1690,14 @@ pmap_remove_pv(pvh, pmap, va)
 	struct pmap *pmap;
 	vaddr_t va;
 {
-	struct pv_entry *pve, **prevptr;
+	struct pv_entry tmp, *pve;
 
-	prevptr = &pvh->pvh_list;		/* previous pv_entry pointer */
-	pve = *prevptr;
-	while (pve) {
-		if (pve->pv_pmap == pmap && pve->pv_va == va) {	/* match? */
-			*prevptr = pve->pv_next;		/* remove it! */
-			break;
-		}
-		prevptr = &pve->pv_next;		/* previous pointer */
-		pve = pve->pv_next;			/* advance */
-	}
+	tmp.pv_pmap = pmap;
+	tmp.pv_va = va;
+	pve = SPLAY_FIND(pvtree, &pvh->pvh_root, &tmp);
+	if (pve == NULL)
+		return (NULL);
+	SPLAY_REMOVE(pvtree, &pvh->pvh_root, pve);
 	return(pve);				/* return removed pve */
 }
 
@@ -2491,7 +2503,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		simple_unlock(&vm_physmem[bank].pmseg.pvhead[off].pvh_lock);
 
 		if (pve) {
-			pve->pv_next = pv_tofree;
+			SPLAY_RIGHT(pve, pv_node) = pv_tofree;
 			pv_tofree = pve;
 		}
 
@@ -2733,7 +2745,7 @@ pmap_page_remove(pg)
 {
 	int bank, off;
 	struct pv_head *pvh;
-	struct pv_entry *pve, *npve, **prevptr, *killlist = NULL;
+	struct pv_entry *pve, *npve, *killlist = NULL;
 	pt_entry_t *ptes, opte;
 	pd_entry_t **pdes;
 #ifdef DIAGNOSTIC
@@ -2743,13 +2755,11 @@ pmap_page_remove(pg)
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1) {
-		printf("pmap_page_remove: unmanaged page?\n");
-		return;
-	}
+	if (bank == -1)
+		panic("pmap_page_remove: unmanaged page?");
 
 	pvh = &vm_physmem[bank].pmseg.pvhead[off];
-	if (pvh->pvh_list == NULL) {
+	if (SPLAY_ROOT(&pvh->pvh_root) == NULL) {
 		return;
 	}
 
@@ -2759,9 +2769,8 @@ pmap_page_remove(pg)
 	/* XXX: needed if we hold head->map lock? */
 	simple_lock(&pvh->pvh_lock);
 
-	for (prevptr = &pvh->pvh_list, pve = pvh->pvh_list;
-	    pve != NULL; pve = npve) {
-		npve = pve->pv_next;
+	for (pve = SPLAY_MIN(pvtree, &pvh->pvh_root); pve != NULL; pve = npve) {
+		npve = SPLAY_NEXT(pvtree, &pvh->pvh_root, pve);
 		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);	/* locks pmap */
 
 #ifdef DIAGNOSTIC
@@ -2799,12 +2808,11 @@ pmap_page_remove(pg)
 			}
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
-		*prevptr = npve;			/* remove it */
-		pve->pv_next = killlist;		/* mark it for death */
+		SPLAY_REMOVE(pvtree, &pvh->pvh_root, pve); /* remove it */
+		SPLAY_RIGHT(pve, pv_node) = killlist;	/* mark it for death */
 		killlist = pve;
 	}
 	pmap_free_pvs(NULL, killlist);
-	pvh->pvh_list = NULL;
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(cpumask);
@@ -2837,10 +2845,8 @@ pmap_test_attrs(pg, testbits)
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1) {
-		printf("pmap_test_attrs: unmanaged page?\n");
-		return(FALSE);
-	}
+	if (bank == -1)
+		panic("pmap_test_attrs: unmanaged page?");
 
 	/*
 	 * before locking: see if attributes are already set and if so,
@@ -2853,7 +2859,7 @@ pmap_test_attrs(pg, testbits)
 
 	/* test to see if there is a list before bothering to lock */
 	pvh = &vm_physmem[bank].pmseg.pvhead[off];
-	if (pvh->pvh_list == NULL) {
+	if (SPLAY_ROOT(&pvh->pvh_root) == NULL) {
 		return(FALSE);
 	}
 
@@ -2862,8 +2868,9 @@ pmap_test_attrs(pg, testbits)
 	/* XXX: needed if we hold head->map lock? */
 	simple_lock(&pvh->pvh_lock);
 
-	for (pve = pvh->pvh_list; pve != NULL && (*myattrs & testbits) == 0;
-	     pve = pve->pv_next) {
+	for (pve = SPLAY_MIN(pvtree, &pvh->pvh_root);
+	     pve != NULL && (*myattrs & testbits) == 0;
+	     pve = SPLAY_NEXT(pvtree, &pvh->pvh_root, pve)) {
 		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);
 		pte = ptes[pl1_i(pve->pv_va)];
 		pmap_unmap_ptes(pve->pv_pmap);
@@ -2903,10 +2910,8 @@ pmap_clear_attrs(pg, clearbits)
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1) {
-		printf("pmap_change_attrs: unmanaged page?\n");
-		return(FALSE);
-	}
+	if (bank == -1)
+		panic("pmap_change_attrs: unmanaged page?");
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	pvh = &vm_physmem[bank].pmseg.pvhead[off];
@@ -2917,7 +2922,7 @@ pmap_clear_attrs(pg, clearbits)
 	result = *myattrs & clearbits;
 	*myattrs &= ~clearbits;
 
-	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
+	SPLAY_FOREACH(pve, pvtree, &pvh->pvh_root) {
 		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);	/* locks pmap */
 #ifdef DIAGNOSTIC
 		if (!pmap_pdes_valid(pve->pv_va, pdes, NULL))

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2004/03/23 18:54:32 drochner Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2004/06/04 07:42:34 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,8 @@
 
 #ifndef _VMPARAM_H_
 #define _VMPARAM_H_
+
+#include <sys/tree.h>
 
 /*
  * Machine dependent constants for 386.
@@ -122,6 +124,25 @@
 #define	VM_FREELIST_FIRST16	1
 
 #define __HAVE_PMAP_PHYSSEG
+
+#define __HAVE_VM_PAGE_MD
+#define VM_MDPAGE_INIT(pg)                                      \
+        memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));         \
+        simple_lock_init(&(pg)->mdpage.mp_pvhead.pvh_lock);     \
+        SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
+
+struct pv_entry;
+
+struct pv_head {
+        struct simplelock pvh_lock;     /* locks every pv in this tree */
+        SPLAY_HEAD(pvtree, pv_entry) pvh_root;
+                                        /* head of tree (locked by pvh_lock) */
+};
+
+struct vm_page_md {
+        struct pv_head mp_pvhead;
+        int mp_attrs;
+};
 
 /*
  * pmap specific data stored in the vm_physmem[] array
