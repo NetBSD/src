@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)bt_put.c	8.3 (Berkeley) 9/16/93"; */
-static char *rcsid = "$Id: bt_put.c,v 1.5 1993/09/17 01:06:26 cgd Exp $";
+static char sccsid[] = "@(#)bt_put.c	8.4 (Berkeley) 5/31/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -77,7 +76,7 @@ __bt_put(dbp, key, data, flags)
 	PAGE *h;
 	indx_t index, nxtindex;
 	pgno_t pg;
-	size_t nbytes;
+	u_int32_t nbytes;
 	int dflags, exact, status;
 	char *dest, db[NOVFLSIZE], kb[NOVFLSIZE];
 
@@ -126,7 +125,7 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 			tkey.size = NOVFLSIZE;
 			memmove(kb, &pg, sizeof(pgno_t));
 			memmove(kb + sizeof(pgno_t),
-			    &key->size, sizeof(size_t));
+			    &key->size, sizeof(u_int32_t));
 			dflags |= P_BIGKEY;
 			key = &tkey;
 		}
@@ -137,7 +136,7 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 			tdata.size = NOVFLSIZE;
 			memmove(db, &pg, sizeof(pgno_t));
 			memmove(db + sizeof(pgno_t),
-			    &data->size, sizeof(size_t));
+			    &data->size, sizeof(u_int32_t));
 			dflags |= P_BIGDATA;
 			data = &tdata;
 		}
@@ -268,7 +267,7 @@ bt_fast(t, key, data, exactp)
 	int *exactp;
 {
 	PAGE *h;
-	size_t nbytes;
+	u_int32_t nbytes;
 	int cmp;
 
 	if ((h = mpool_get(t->bt_mp, t->bt_last.pgno, 0)) == NULL) {

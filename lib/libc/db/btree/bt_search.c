@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)bt_search.c	8.4 (Berkeley) 12/10/93"; */
-static char *rcsid = "$Id: bt_search.c,v 1.5 1994/01/24 03:59:45 cgd Exp $";
+static char sccsid[] = "@(#)bt_search.c	8.6 (Berkeley) 3/15/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -68,10 +67,10 @@ __bt_search(t, key, exactp)
 	const DBT *key;
 	int *exactp;
 {
-	PAGE *h, *n;
-	indx_t index;
+	PAGE *h;
+	indx_t base, index, lim;
 	pgno_t pg;
-	int base, cmp, lim;
+	int cmp;
 
 	BT_CLR(t);
 	for (pg = P_ROOT;;) {

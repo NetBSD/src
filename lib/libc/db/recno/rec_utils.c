@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)rec_utils.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: rec_utils.c,v 1.4 1993/09/09 02:42:29 cgd Exp $";
+static char sccsid[] = "@(#)rec_utils.c	8.4 (Berkeley) 6/20/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -84,7 +83,10 @@ __rec_ret(t, e, nrec, key, data)
 	} else if (ISSET(t, B_DB_LOCK)) {
 		/* Use +1 in case the first record retrieved is 0 length. */
 		if (rl->dsize + 1 > t->bt_dbufsz) {
-			if ((p = realloc(t->bt_dbuf, rl->dsize + 1)) == NULL)
+			p = (void *)(t->bt_dbuf == NULL ?
+			    malloc(rl->dsize + 1) :
+			    realloc(t->bt_dbuf, rl->dsize + 1));
+			if (p == NULL)
 				return (RET_ERROR);
 			t->bt_dbuf = p;
 			t->bt_dbufsz = rl->dsize + 1;
@@ -102,7 +104,10 @@ retkey:	if (key == NULL)
 
 	/* We have to copy the key, it's not on the page. */
 	if (sizeof(recno_t) > t->bt_kbufsz) {
-		if ((p = realloc(t->bt_kbuf, sizeof(recno_t))) == NULL)
+		p = (void *)(t->bt_kbuf == NULL ?
+		    malloc(sizeof(recno_t)) :
+		    realloc(t->bt_kbuf, sizeof(recno_t)));
+		if (p == NULL)
 			return (RET_ERROR);
 		t->bt_kbuf = p;
 		t->bt_kbufsz = sizeof(recno_t);

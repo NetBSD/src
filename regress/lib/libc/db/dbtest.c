@@ -38,8 +38,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)dbtest.c	8.6 (Berkeley) 9/16/93"; */
-static char *rcsid = "$Id: dbtest.c,v 1.5 1993/09/16 23:15:57 cgd Exp $";
+static char sccsid[] = "@(#)dbtest.c	8.8 (Berkeley) 2/21/94";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,9 +54,6 @@ static char *rcsid = "$Id: dbtest.c,v 1.5 1993/09/16 23:15:57 cgd Exp $";
 #include <unistd.h>
 
 #include <db.h>
-#ifdef notdef
-#include "../PORT/include/compat.h"
-#endif
 
 enum S { COMMAND, COMPARE, GET, PUT, REMOVE, SEQ, SEQFLAG, KEY, DATA };
 
@@ -452,7 +448,7 @@ u_int
 setflags(s)
 	char *s;
 {
-	char *p;
+	char *p, *index();
 
 	for (; isspace(*s); ++s);
 	if (*s == '\n')
@@ -503,7 +499,7 @@ setinfo(type, s)
 	static BTREEINFO ib;
 	static HASHINFO ih;
 	static RECNOINFO rh;
-	char *eq;
+	char *eq, *index();
 
 	if ((eq = index(s, '=')) == NULL)
 		err("%s: illegal structure set statement", s);
@@ -599,7 +595,7 @@ rfile(name, lenp)
 	struct stat sb;
 	void *p;
 	int fd;
-	char *np;
+	char *np, *index();
 
 	for (; isspace(*name); ++name);
 	if ((np = index(name, '\n')) != NULL)
@@ -611,7 +607,7 @@ rfile(name, lenp)
 	if (sb.st_size > (off_t)SIZE_T_MAX)
 		err("%s: %s\n", name, strerror(E2BIG));
 #endif
-	if ((p = malloc((u_int)sb.st_size)) == NULL)
+	if ((p = (void *)malloc((u_int)sb.st_size)) == NULL)
 		err("%s", strerror(errno));
 	(void)read(fd, p, (int)sb.st_size);
 	*lenp = sb.st_size;
@@ -626,7 +622,7 @@ xmalloc(text, len)
 {
 	void *p;
 
-	if ((p = malloc(len)) == NULL)
+	if ((p = (void *)malloc(len)) == NULL)
 		err("%s", strerror(errno));
 	memmove(p, text, len);
 	return (p);

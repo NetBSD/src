@@ -1,11 +1,11 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.8 1994/01/24 03:50:04 cgd Exp $
+#	$Id: Makefile,v 1.9 1994/08/18 00:38:04 cgd Exp $
 
 PROG=	dbtest
 
 # add -DSTATISTICS to CFLAGS to get usage statistics.  Note that
 # for this to work, libc must be compiled with -DSTATISTICS as well
-CFLAGS= -g -DDEBUG
+CFLAGS= -g -D__DBINTERFACE_PRIVATE -DDEBUG
 NOMAN=  noman
 CLEANFILES+= t1 t2 t3
 

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bt_debug.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: bt_debug.c,v 1.3 1993/08/26 00:43:18 jtc Exp $";
+static char sccsid[] = "@(#)bt_debug.c	8.3 (Berkeley) 5/31/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -215,14 +214,14 @@ __bt_dpage(h)
 				(void)fprintf(stderr,
 				    "big key page %lu size %u/",
 				    *(pgno_t *)bl->bytes,
-				    *(size_t *)(bl->bytes + sizeof(pgno_t)));
+				    *(u_int32_t *)(bl->bytes + sizeof(pgno_t)));
 			else if (bl->ksize)
 				(void)fprintf(stderr, "%s/", bl->bytes);
 			if (bl->flags & P_BIGDATA)
 				(void)fprintf(stderr,
 				    "big data page %lu size %u",
 				    *(pgno_t *)(bl->bytes + bl->ksize),
-				    *(size_t *)(bl->bytes + bl->ksize +
+				    *(u_int32_t *)(bl->bytes + bl->ksize +
 				    sizeof(pgno_t)));
 			else if (bl->dsize)
 				(void)fprintf(stderr, "%.*s",
@@ -234,7 +233,7 @@ __bt_dpage(h)
 				(void)fprintf(stderr,
 				    "big data page %lu size %u",
 				    *(pgno_t *)rl->bytes,
-				    *(size_t *)(rl->bytes + sizeof(pgno_t)));
+				    *(u_int32_t *)(rl->bytes + sizeof(pgno_t)));
 			else if (rl->dsize)
 				(void)fprintf(stderr,
 				    "%.*s", (int)rl->dsize, rl->bytes);
@@ -256,9 +255,8 @@ void
 __bt_stat(dbp)
 	DB *dbp;
 {
-	extern u_long bt_cache_hit, bt_cache_miss;
-	extern u_long bt_rootsplit, bt_split, bt_sortsplit;
-	extern u_long bt_pfxsaved;
+	extern u_long bt_cache_hit, bt_cache_miss, bt_pfxsaved, bt_rootsplit;
+	extern u_long bt_sortsplit, bt_split;
 	BTREE *t;
 	PAGE *h;
 	pgno_t i, pcont, pinternal, pleaf;

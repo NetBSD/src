@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)hsearch.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: hsearch.c,v 1.5 1993/09/09 02:42:09 cgd Exp $";
+static char sccsid[] = "@(#)hsearch.c	8.3 (Berkeley) 2/21/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,7 +43,6 @@ static char *rcsid = "$Id: hsearch.c,v 1.5 1993/09/09 02:42:09 cgd Exp $";
 #include <fcntl.h>
 #include <string.h>
 
-#define	__DBINTERFACE_PRIVATE
 #include <db.h>
 #include "search.h"
 

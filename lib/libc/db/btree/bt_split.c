@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,13 +35,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bt_split.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: bt_split.c,v 1.3 1993/08/26 00:43:29 jtc Exp $";
+static char sccsid[] = "@(#)bt_split.c	8.6 (Berkeley) 6/16/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
-#define	__DBINTERFACE_PRIVATE
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,12 +50,12 @@ static char *rcsid = "$Id: bt_split.c,v 1.3 1993/08/26 00:43:29 jtc Exp $";
 
 static int	 bt_broot __P((BTREE *, PAGE *, PAGE *, PAGE *));
 static PAGE	*bt_page
-		    __P((BTREE *, PAGE *, PAGE **, PAGE **, u_int *, size_t));
+		    __P((BTREE *, PAGE *, PAGE **, PAGE **, indx_t *, size_t));
 static int	 bt_preserve __P((BTREE *, pgno_t));
 static PAGE	*bt_psplit
-		    __P((BTREE *, PAGE *, PAGE *, PAGE *, u_int *, size_t));
+		    __P((BTREE *, PAGE *, PAGE *, PAGE *, indx_t *, size_t));
 static PAGE	*bt_root
-		    __P((BTREE *, PAGE *, PAGE **, PAGE **, u_int *, size_t));
+		    __P((BTREE *, PAGE *, PAGE **, PAGE **, indx_t *, size_t));
 static int	 bt_rroot __P((BTREE *, PAGE *, PAGE *, PAGE *));
 static recno_t	 rec_total __P((PAGE *));
 
@@ -81,13 +79,13 @@ u_long	bt_rootsplit, bt_split, bt_sortsplit, bt_pfxsaved;
  *	RET_ERROR, RET_SUCCESS
  */
 int
-__bt_split(t, sp, key, data, flags, ilen, skip)
+__bt_split(t, sp, key, data, flags, ilen, argskip)
 	BTREE *t;
 	PAGE *sp;
 	const DBT *key, *data;
-	u_long flags;
+	int flags;
 	size_t ilen;
-	u_int skip;
+	u_int32_t argskip;
 {
 	BINTERNAL *bi;
 	BLEAF *bl, *tbl;
@@ -95,7 +93,8 @@ __bt_split(t, sp, key, data, flags, ilen, skip)
 	EPGNO *parent;
 	PAGE *h, *l, *r, *lchild, *rchild;
 	indx_t nxtindex;
-	size_t n, nbytes, nksize;
+	u_int16_t skip;
+	u_int32_t n, nbytes, nksize;
 	int parentsplit;
 	char *dest;
 
@@ -105,6 +104,7 @@ __bt_split(t, sp, key, data, flags, ilen, skip)
 	 * skip set to the offset which should be used.  Additionally, l and r
 	 * are pinned.
 	 */
+	skip = argskip;
 	h = sp->pgno == P_ROOT ?
 	    bt_root(t, sp, &l, &r, &skip, ilen) :
 	    bt_page(t, sp, &l, &r, &skip, ilen);
@@ -344,7 +344,7 @@ static PAGE *
 bt_page(t, h, lp, rp, skip, ilen)
 	BTREE *t;
 	PAGE *h, **lp, **rp;
-	u_int *skip;
+	indx_t *skip;
 	size_t ilen;
 {
 	PAGE *l, *r, *tp;
@@ -386,7 +386,7 @@ bt_page(t, h, lp, rp, skip, ilen)
 	}
 
 	/* Put the new left page for the split into place. */
-	if ((l = malloc(t->bt_psize)) == NULL) {
+	if ((l = (PAGE *)malloc(t->bt_psize)) == NULL) {
 		mpool_put(t->bt_mp, r, 0);
 		return (NULL);
 	}
@@ -446,7 +446,7 @@ static PAGE *
 bt_root(t, h, lp, rp, skip, ilen)
 	BTREE *t;
 	PAGE *h, **lp, **rp;
-	u_int *skip;
+	indx_t *skip;
 	size_t ilen;
 {
 	PAGE *l, *r, *tp;
@@ -536,7 +536,7 @@ bt_broot(t, h, l, r)
 {
 	BINTERNAL *bi;
 	BLEAF *bl;
-	size_t nbytes;
+	u_int32_t nbytes;
 	char *dest;
 
 	/*
@@ -610,7 +610,7 @@ static PAGE *
 bt_psplit(t, h, l, r, pskip, ilen)
 	BTREE *t;
 	PAGE *h, *l, *r;
-	u_int *pskip;
+	indx_t *pskip;
 	size_t ilen;
 {
 	BINTERNAL *bi;
@@ -620,7 +620,7 @@ bt_psplit(t, h, l, r, pskip, ilen)
 	PAGE *rval;
 	void *src;
 	indx_t full, half, nxt, off, skip, top, used;
-	size_t nbytes;
+	u_int32_t nbytes;
 	int bigkeycnt, isbigkey;
 
 	/*

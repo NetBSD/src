@@ -1,5 +1,6 @@
-#	from: @(#)Makefile.inc	8.1 (Berkeley) 6/2/93
-#	$Id: Makefile.inc,v 1.3 1993/08/01 05:41:09 mycroft Exp $
+#	@(#)Makefile.inc	8.2 (Berkeley) 2/21/94
+#
+CFLAGS+=-D__DBINTERFACE_PRIVATE
 
 .include "${.CURDIR}/db/btree/Makefile.inc"
 .include "${.CURDIR}/db/db/Makefile.inc"

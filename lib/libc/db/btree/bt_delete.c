@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)bt_delete.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: bt_delete.c,v 1.4 1993/09/09 02:41:22 cgd Exp $";
+static char sccsid[] = "@(#)bt_delete.c	8.4 (Berkeley) 5/31/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -280,12 +279,11 @@ int
 __bt_dleaf(t, h, index)
 	BTREE *t;
 	PAGE *h;
-	int index;
+	indx_t index;
 {
 	register BLEAF *bl;
-	register indx_t *ip, offset;
-	register size_t nbytes;
-	register int cnt;
+	register indx_t cnt, *ip, offset;
+	register u_int32_t nbytes;
 	char *from;
 	void *to;
 

@@ -1,5 +1,13 @@
-#	@(#)README	8.1 (Berkeley) 6/4/93
+#	@(#)README	8.4 (Berkeley) 6/20/94
 
+To run the tests, enter "make regress".
+
+Fairly large files (the command files) are built in this directory during
+the test runs, and even larger files (the database files) are created in
+"/var/tmp".  If the latter directory doesn't exist, set the environmental
+variable TMPDIR to a directory where the files can be built.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 The script file consists of lines with a initial character which is
 the "command" for that line.  Legal characters are as follows:
 

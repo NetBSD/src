@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)recno.h	8.1 (Berkeley) 6/4/93
- *	$Id: recno.h,v 1.2 1993/08/01 18:43:17 mycroft Exp $
+ *	@(#)recno.h	8.1 (Berkeley) 6/4/93
  */
 
 enum SRCHOP { SDELETE, SINSERT, SEARCH};	/* Rec_search operation. */
