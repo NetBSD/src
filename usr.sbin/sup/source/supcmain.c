@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.17 2002/07/10 20:19:44 wiz Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.18 2002/07/10 21:28:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -359,7 +359,8 @@ int
 main(int argc, char **argv)
 {
 	char *progname, *supfname;
-	int restart, sfdev = 0, sfino = 0, sfmtime = 0;
+	int restart, sfdev = 0, sfino = 0;
+	time_t sfmtime = 0;
 	struct stat sbuf;
 	struct sigaction ign;
 
@@ -438,7 +439,7 @@ main(int argc, char **argv)
 			free(thisC->Cpswd);
 		if (thisC->Ccrypt)
 			free(thisC->Ccrypt);
-		free((char *) thisC);
+		free(thisC);
 	}
 	exit(0);
 }
@@ -665,10 +666,10 @@ init(int argc, char **argv)
 			continue;
 		}
 		if (cwant) {
-			TREE *t;
-			if ((t = Tsearch(collT, arg)) == NULL)
+			TREE *mytree;
+			if ((mytree = Tsearch(collT, arg)) == NULL)
 				continue;
-			t->Tcount++;
+			mytree->Tcount++;
 		}
 		c = (COLLECTION *) malloc(sizeof(COLLECTION));
 		if (firstC == NULL)
