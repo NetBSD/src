@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.17 2001/02/22 18:38:01 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.18 2001/05/21 18:37:30 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -476,6 +476,9 @@ plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			cmap_work_free(r, g, b, rgb);
 			return  (ENOMEM);
 		}
+		copyin(cmap->red,   r, cnt);
+		copyin(cmap->green, g, cnt);
+		copyin(cmap->blue,  b, cnt);
 		rgb24_compose(rgb, r, g, b, cnt);
 		plumvideo_clut_set(sc, rgb, idx, cnt);
 
