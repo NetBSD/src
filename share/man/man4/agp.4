@@ -1,4 +1,4 @@
-.\"     $NetBSD: agp.4,v 1.1 2001/09/10 21:12:30 gmcgarry Exp $
+.\"     $NetBSD: agp.4,v 1.2 2001/09/10 22:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@ bus.  It currently supports a peak bandwidth of 528 MB/s.
 .Pp
 The
 .Nm
-driver also provides an interfrace to user processes for use by X
+driver also provides an interface to user processes for use by X
 servers.  A user process communicates to the device initially by means
 of
 .Xr ioctl 2
@@ -99,9 +99,9 @@ typedef struct _agp_allocate {
         int key;                /* tag of allocation            */
         size_t pg_count;        /* number of pages              */
         u_int32_t type;         /* 0 == normal, other devspec   */
-        paddr_t physical;       /* device specific (some devices  
-                                 * need a phys address of the     
-                                 * actual page behind the gatt    
+        paddr_t physical;       /* device specific (some devices
+                                 * need a phys address of the
+                                 * actual page behind the gatt
                                  * table)                       */
 } agp_allocate;
 .Ed
