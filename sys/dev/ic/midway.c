@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.28 1997/04/28 17:04:06 mycroft Exp $	*/
+/*	$NetBSD: midway.c,v 1.29 1997/07/07 22:52:17 cgd Exp $	*/
 /*	(sync'd to midway.c 1.67)	*/
 
 /*
@@ -240,29 +240,36 @@ static struct en_dmatab *en_dmaplan = en_dma_planA;
  * prototypes
  */
 
-STATIC	int en_b2sz __P((int));
+STATIC INLINE	int en_b2sz __P((int)) __attribute__ ((unused));
 #ifdef EN_DDBHOOK
-int	en_dump __P((int,int));
-int	en_dumpmem __P((int,int,int));
+		int en_dump __P((int,int));
+		int en_dumpmem __P((int,int,int));
 #endif
-STATIC	void en_dmaprobe __P((struct en_softc *));
-STATIC	int en_dmaprobe_doit __P((struct en_softc *, u_int8_t *, 
-							u_int8_t *, int));
-STATIC	int en_dqneed __P((struct en_softc *, caddr_t, u_int, u_int));
-STATIC	void en_init __P((struct en_softc *));
-STATIC	int en_ioctl __P((struct ifnet *, EN_IOCTL_CMDT, caddr_t));
-STATIC	int en_k2sz __P((int));
-STATIC	void en_loadvc __P((struct en_softc *, int));
-STATIC	int en_mfix __P((struct en_softc *, struct mbuf **, struct mbuf *));
-STATIC	struct mbuf *en_mget __P((struct en_softc *, u_int, u_int *));
-STATIC	u_int32_t en_read __P((struct en_softc *, u_int32_t));
-STATIC	int en_rxctl __P((struct en_softc *, struct atm_pseudoioctl *, int));
-STATIC	void en_txdma __P((struct en_softc *, int));
-STATIC	void en_txlaunch __P((struct en_softc *, int, struct en_launch *));
-STATIC	void en_service __P((struct en_softc *));
-STATIC	void en_start __P((struct ifnet *));
-STATIC	int en_sz2b __P((int));
-STATIC	void en_write __P((struct en_softc *, u_int32_t, u_int32_t));
+STATIC		void en_dmaprobe __P((struct en_softc *));
+STATIC		int en_dmaprobe_doit __P((struct en_softc *, u_int8_t *, 
+		    u_int8_t *, int));
+STATIC INLINE	int en_dqneed __P((struct en_softc *, caddr_t, u_int,
+		    u_int)) __attribute__ ((unused));
+STATIC		void en_init __P((struct en_softc *));
+STATIC		int en_ioctl __P((struct ifnet *, EN_IOCTL_CMDT, caddr_t));
+STATIC INLINE	int en_k2sz __P((int)) __attribute__ ((unused));
+STATIC		void en_loadvc __P((struct en_softc *, int));
+STATIC		int en_mfix __P((struct en_softc *, struct mbuf **,
+		    struct mbuf *));
+STATIC INLINE	struct mbuf *en_mget __P((struct en_softc *, u_int,
+		    u_int *)) __attribute__ ((unused));
+STATIC INLINE	u_int32_t en_read __P((struct en_softc *,
+		    u_int32_t)) __attribute__ ((unused));
+STATIC		int en_rxctl __P((struct en_softc *, struct atm_pseudoioctl *,
+		    int));
+STATIC		void en_txdma __P((struct en_softc *, int));
+STATIC		void en_txlaunch __P((struct en_softc *, int,
+		    struct en_launch *));
+STATIC		void en_service __P((struct en_softc *));
+STATIC		void en_start __P((struct ifnet *));
+STATIC INLINE	int en_sz2b __P((int)) __attribute__ ((unused));
+STATIC INLINE	void en_write __P((struct en_softc *, u_int32_t,
+		    u_int32_t)) __attribute__ ((unused));
 
 /*
  * macros/inline
