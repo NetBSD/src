@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 1999/09/13 10:31:26 itojun Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1999/09/14 10:22:36 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,7 +52,6 @@
 #include <sys/dkstat.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
@@ -104,7 +103,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, dev_name2blk);
+	setroot(booted_device, booted_partition);
 }
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
