@@ -1,3 +1,9 @@
+/* $NetBSD: bitdomain.c,v 1.1.1.4 2003/06/01 14:01:45 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: bitdomain.c,v 1.1.1.4 2003/06/01 14:01:45 atatat Exp $");
+#endif
+
 /*
  * By John G. Myers, jgm+@cmu.edu
  * Version 1.2

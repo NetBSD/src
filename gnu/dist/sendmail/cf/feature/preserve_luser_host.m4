@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: preserve_luser_host.m4,v 1.3 2002/04/14 13:22:58 ca Exp')
+VERSIONID(`$NetBSD: preserve_luser_host.m4,v 1.1.1.2 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 ifdef(`LUSER_RELAY', `',

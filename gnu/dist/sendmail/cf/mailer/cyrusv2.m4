@@ -22,6 +22,7 @@ POPDIVERT
 #########################################
 
 VERSIONID(`Id: cyrusv2.m4,v 1.1 2002/06/01 21:14:57 ca Exp')
+VERSIONID(`$NetBSD: cyrusv2.m4,v 1.1.1.2 2003/06/01 14:01:44 atatat Exp $')
 
 Mcyrusv2,	P=[IPC], F=_MODMF_(CONCAT(_DEF_CYRUSV2_MAILER_FLAGS, CYRUSV2_MAILER_FLAGS), `CYRUSV2'),
 		S=EnvFromSMTP/HdrFromL, R=EnvToL/HdrToL, E=\r\n,
