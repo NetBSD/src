@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2003/02/18 08:13:13 shin Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2003/02/18 08:18:31 shin Exp $
 
 DBG=		-Os
 
@@ -11,7 +11,7 @@ MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.rcons \
 		${DESTDIR}/.profile ${DESTDIR}/boot.pmax \
 		${DESTDIR}/etc/disktab \
-		${KERNOBJDIR}/GENERIC/netbsd.aout \
+		${KERNOBJDIR}/GENERIC/netbsd \
 		${KERNOBJDIR}/GENERIC/netbsd.ecoff \
 		${KERNOBJDIR}/INSTALL/nfsnetbsd.ecoff
 
