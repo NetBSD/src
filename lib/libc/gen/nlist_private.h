@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_private.h,v 1.5 1998/07/12 01:43:26 thorpej Exp $	*/
+/*	$NetBSD: nlist_private.h,v 1.6 1999/01/29 22:23:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,10 +37,13 @@
 #  define	NLIST_AOUT
 #  define	NLIST_ECOFF
 #  define	NLIST_ELF32
-#elif defined(__i386__) || defined (__m68k__) || defined(__powerpc__) || \
-    defined(__sparc__)
+#elif defined(__i386__) || defined (__m68k__) || defined(__powerpc__)
 #  define	NLIST_AOUT
 #  define	NLIST_ELF32
+#elif defined(__sparc__)
+#  define	NLIST_AOUT
+#  define	NLIST_ELF32
+#  define	NLIST_ELF64
 #else
 #  define	NLIST_AOUT
 /* #define	NLIST_ECOFF */
