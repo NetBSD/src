@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.520 2003/04/16 19:07:34 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.521 2003/04/16 21:37:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.520 2003/04/16 19:07:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.521 2003/04/16 21:37:37 dsl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -273,6 +273,7 @@ void	initgdt __P((union descriptor *));
 void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
 #endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
+extern int time_adjusted;
 
 /*
  * Machine-dependent startup code
@@ -860,6 +861,12 @@ cpu_reboot(howto, bootstr)
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
+		if (time_adjusted != 0)
+			resettodr();
 	}
 
 	/* Disable interrupts. */
