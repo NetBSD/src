@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: grammar.y,v 1.4 1997/03/15 18:34:03 is Exp $	*/
+/*	$NetBSD: grammar.y,v 1.5 1997/10/03 15:53:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -22,9 +22,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  */
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: grammar.y,v 1.54 96/07/17 00:11:34 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: grammar.y,v 1.56 96/11/02 21:54:55 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: grammar.y,v 1.5 1997/10/03 15:53:07 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>
@@ -69,7 +74,7 @@ static void
 yyerror(char *msg)
 {
 	++n_errors;
-	bpf_error(msg);
+	bpf_error("%s", msg);
 	/* NOTREACHED */
 }
 

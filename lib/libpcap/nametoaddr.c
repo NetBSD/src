@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.6 1997/03/15 18:34:04 is Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.7 1997/10/03 15:53:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,14 +24,20 @@
  * These functions are not time critical.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: nametoaddr.c,v 1.43 96/07/17 00:11:41 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: nametoaddr.c,v 1.47 97/06/13 13:16:19 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: nametoaddr.c,v 1.7 1997/10/03 15:53:09 christos Exp $");
+#endif
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>				/* concession to AIX */
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #if __STDC__
 struct mbuf;
@@ -195,7 +201,6 @@ struct eproto eproto_db[] = {
 	{ "sprite", ETHERTYPE_SPRITE },
 	{ "mopdl", ETHERTYPE_MOPDL },
 	{ "moprc", ETHERTYPE_MOPRC },
-	{ "atalk", ETHERTYPE_ATALK },
 	{ "decnet", ETHERTYPE_DN },
 	{ "lat", ETHERTYPE_LAT },
 	{ "sca", ETHERTYPE_SCA },
@@ -351,7 +356,7 @@ pcap_ether_hostton(const char *name)
 	if (ether_hostton((char *)name, (struct ether_addr *)a) == 0) {
 		ap = (u_char *)malloc(6);
 		if (ap != NULL)
-			memcpy(ap, a, 6);
+			memcpy((char *)ap, (char *)a, 6);
 	}
 	return (ap);
 }
