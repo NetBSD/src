@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.17 1994/11/18 22:03:23 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.18 1994/12/12 04:39:52 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -284,6 +284,7 @@ found:
 	outb(iobase + DEPCA_CSR, DEPCA_CSR_NORMAL);
 
 	ia->ia_iosize = 16;
+	ia->ia_drq = DRQUNK;
 	return 1;
 }
 
@@ -399,7 +400,7 @@ leattach(parent, self, aux)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
-	if (sc->sc_card != DEPCA)
+	if (ia->ia_drq != DRQUNK)
 		isa_dmacascade(ia->ia_drq);
 
 	/* Attach the interface. */
@@ -871,7 +872,8 @@ lerint(sc)
 			    (int)cdm->mcnt);
 			sc->sc_arpcom.ac_if.if_ipackets++;
 		}
-			
+
+		cdm->bcnt = -BUFSIZE;
 		cdm->mcnt = 0;
 		cdm->flags |= LE_OWN;
 		NEXTRDS;
