@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.120 2003/05/13 06:51:10 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.121 2003/05/13 07:13:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.120 2003/05/13 06:51:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.121 2003/05/13 07:13:49 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -116,6 +116,7 @@ static void wi_media_status(struct ifnet *, struct ifmediareq *);
 
 static void wi_rx_intr(struct wi_softc *);
 static void wi_tx_intr(struct wi_softc *);
+static void wi_tx_ex_intr(struct wi_softc *);
 static void wi_info_intr(struct wi_softc *);
 
 static int  wi_get_cfg(struct ifnet *, u_long, caddr_t);
@@ -150,6 +151,10 @@ wi_write_val(struct wi_softc *sc, int rid, u_int16_t val)
 	val = htole16(val);
 	return wi_write_rid(sc, rid, &val, sizeof(val));
 }
+
+static	struct timeval lasttxerror;	/* time of last tx error msg */
+static	int curtxeps;			/* current tx error msgs/sec */
+static	int wi_txerate = 0;		/* tx error rate: max msgs/sec */
 
 #ifdef WI_DEBUG
 int wi_debug = 0;
@@ -518,6 +523,9 @@ wi_intr(void *arg)
 
 		if (status & WI_EV_ALLOC)
 			wi_tx_intr(sc);
+
+		if (status & WI_EV_TX_EXC)
+			wi_tx_ex_intr(sc);
 
 		if (status & WI_EV_INFO)
 			wi_info_intr(sc);
@@ -1291,6 +1299,51 @@ wi_rx_intr(struct wi_softc *sc)
 		wi_sync_bssid(sc, wh->i_addr3);
 
 	ieee80211_input(ifp, m, rssi, rstamp);
+}
+
+static void
+wi_tx_ex_intr(struct wi_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct wi_frame frmhdr;
+	int fid;
+
+	fid = CSR_READ_2(sc, WI_TX_CMP_FID);
+	/* Read in the frame header */
+	if (wi_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) == 0) {
+		u_int16_t status = le16toh(frmhdr.wi_status);
+
+		/*
+		 * Spontaneous station disconnects appear as xmit
+		 * errors.  Don't announce them and/or count them
+		 * as an output error.
+		 */
+		if ((status & WI_TXSTAT_DISCONNECT) == 0) {
+			if (ppsratecheck(&lasttxerror, &curtxeps, wi_txerate)) {
+				printf("%s: tx failed", sc->sc_dev.dv_xname);
+				if (status & WI_TXSTAT_RET_ERR)
+					printf(", retry limit exceeded");
+				if (status & WI_TXSTAT_AGED_ERR)
+					printf(", max transmit lifetime exceeded");
+				if (status & WI_TXSTAT_DISCONNECT)
+					printf(", port disconnected");
+				if (status & WI_TXSTAT_FORM_ERR)
+					printf(", invalid format (data len %u src %s)",
+						le16toh(frmhdr.wi_dat_len),
+						ether_sprintf(frmhdr.wi_ehdr.ether_shost));
+				if (status & ~0xf)
+					printf(", status=0x%x", status);
+				printf("\n");
+			}
+			ifp->if_oerrors++;
+		} else {
+			DPRINTF(("port disconnected\n"));
+			ifp->if_collisions++;	/* XXX */
+		}
+	} else
+		DPRINTF(("wi_tx_ex_intr: read fid %x failed\n", fid));
+	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_TX_EXC);
 }
 
 static void
