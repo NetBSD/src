@@ -1,10 +1,10 @@
-#	$NetBSD: JURA,v 1.8 1996/08/21 16:25:10 cgd Exp $
+#	$NetBSD: JURA,v 1.9 1996/09/27 17:08:34 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 #
 # THIS KERNEL DOES NOT CURRENTLY WORK, OR EVEN CONFIGURE!
 
-include	"std.alpha"
+include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
 

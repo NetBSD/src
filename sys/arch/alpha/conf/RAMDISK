@@ -1,8 +1,8 @@
-#	$NetBSD: RAMDISK,v 1.2 1996/09/16 16:30:45 cgd Exp $
+#	$NetBSD: RAMDISK,v 1.3 1996/09/27 17:08:36 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
-include	"std.alpha"
+include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
 

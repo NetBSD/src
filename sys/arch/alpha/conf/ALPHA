@@ -1,8 +1,8 @@
-#	$NetBSD: ALPHA,v 1.23 1996/09/16 16:34:15 cgd Exp $
+#	$NetBSD: ALPHA,v 1.24 1996/09/27 17:08:32 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
-include	"std.alpha"
+include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
 

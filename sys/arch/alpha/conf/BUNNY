@@ -1,11 +1,11 @@
-#	$NetBSD: BUNNY,v 1.8 1996/09/16 16:30:41 cgd Exp $
+#	$NetBSD: BUNNY,v 1.9 1996/09/27 17:08:35 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
 # Trimmed down kernel for AlphaStation [24]xx systems, with lots
 # of buffer cache.
 
-include	"std.alpha"
+include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
 

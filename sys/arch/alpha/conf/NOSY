@@ -1,9 +1,9 @@
-#	$NetBSD: NOSY,v 1.8 1996/08/21 16:25:11 cgd Exp $
+#	$NetBSD: NOSY,v 1.9 1996/09/27 17:08:34 cgd Exp $
 #
 # Jason's DEC 3000/400 in the lab...
 #
 
-include	"std.alpha"
+include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
 
