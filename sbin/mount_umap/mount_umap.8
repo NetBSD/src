@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_umap.8,v 1.5 1997/05/29 01:48:38 cgd Exp $
+.\"	$NetBSD: mount_umap.8,v 1.6 1997/09/15 06:10:23 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Nm mount_umap
 .Nd sample file system layer
 .Sh SYNOPSIS
-.Nm mount_umap
+.Nm
 .Op Fl o Ar options
 -u
 .Ar uid-mapfile
@@ -54,7 +54,7 @@
 .Ar mount-point
 .Sh DESCRIPTION
 The
-.Nm mount_umap
+.Nm
 command is used to mount a sub-tree of an existing file system
 that uses a different set of uids and gids than the local system.
 Such a file system could be mounted from a remote site via NFS or
@@ -73,13 +73,13 @@ man page for possible options and their meanings.
 .El
 .Pp
 The
-.Nm mount_umap
+.Nm
 command uses a set of files provided by the user to make correspondences
 between uids and gids in the sub-tree's original environment and
 some other set of ids in the local environment.  For instance, user
 smith might have uid 1000 in the original environment, while having
 uid 2000 in the local environment.  The
-.Nm mount_umap
+.Nm
 command allows the subtree from smith's original environment to be
 mapped in such a way that all files with owning uid 1000 look like
 they are actually owned by uid 2000.  
@@ -115,13 +115,13 @@ at most 16 groups can be mapped by a given subtree.
 .Pp
 The mapfiles can be located anywhere in the file hierarchy, but they
 must be owned by root, and they must be writable only by root.  
-.Nm mount_umap
+.Nm
 will refuse to map the sub-tree if the ownership or permissions on
 these files are improper.  It will also balk if the count of mappings
 in the first line of the map files is not correct.
 .Pp
 The layer created by the
-.Nm mount_umap
+.Nm
 command is meant to serve as a simple example of file system layering.
 It is not meant for production use.  The implementation is not very
 sophisticated.
@@ -130,5 +130,5 @@ sophisticated.
 .Xr mount_null 8
 .Sh HISTORY
 The
-.Nm mount_umap
+.Nm
 utility first appeared in 4.4BSD.
