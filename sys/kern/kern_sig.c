@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.155 2003/09/16 12:07:11 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.156 2003/09/16 15:59:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.155 2003/09/16 12:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.156 2003/09/16 15:59:28 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -874,7 +874,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
 			ktrpsig(p, signum, SIGACTION_PS(ps, signum).sa_handler,
-			    &p->p_sigctx.ps_sigmask, ktr->ktr_trap);
+			    &p->p_sigctx.ps_sigmask, ksi->ksi_trap);
 #endif
 		kpsendsig(l, ksi, &p->p_sigctx.ps_sigmask);
 		(void) splsched();	/* XXXSMP */
