@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.10 2002/07/29 13:03:51 blymn Exp $	*/
+/*	$NetBSD: post.c,v 1.11 2003/03/09 01:08:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -25,6 +25,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: post.c,v 1.11 2003/03/09 01:08:48 lukem Exp $");
 
 #include <menu.h>
 #include <stdlib.h>
