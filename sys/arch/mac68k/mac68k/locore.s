@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.67 1996/09/16 18:00:28 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.68 1996/10/07 01:37:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -332,8 +332,8 @@ _fpfault:
 	movl	_curpcb,a0	| current pcb
 	lea	a0@(PCB_FPCTX),a0 | address of FP savearea
 	fsave	a0@		| save state
-#if defined(M68040) || defined(M68040)
-	cmpl	#MMU_68040, _mmutype	| if 68040, (060 ha!), etc...
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| if 68040, (060 ha!), etc...
 	jle	Lfptnull
 #endif
 	tstb	a0@		| null state frame?
@@ -895,12 +895,12 @@ start:
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	movc	d0, cacr
 
-	movel	#0x0, d0
-	.word	0x4e7b, 0x0004		| Disable itt0
-	.word	0x4e7b, 0x0005		| Disable itt1
-	.word	0x4e7b, 0x0006		| Disable dtt0
-	.word	0x4e7b, 0x0007		| Disable dtt1
-	.word	0x4e7b, 0x0003		| Disable MMU
+	movql	#0, d0
+	.long	0x4e7b0004		| movc d0,itt0 ;Disable itt0
+	.long	0x4e7b0005		| movc d0,itt1 ;Disable itt1
+	.long	0x4e7b0006		| movc d0,dtt0 ;Disable dtt0
+	.long	0x4e7b0007		| movc d0,dtt1 ;Disable dtt1
+	.long	0x4e7b0003		| movc d0,tc   ;Disable MMU
 
 	movl	#0x0,sp@-		| Fake unenabled MMU
 	jra	do_bootstrap
@@ -1728,7 +1728,7 @@ ENTRY(probeva)
 	.word	0xf548		| ptestw (a0)
 	moveq	#FC_USERD,d0		| restore DFC to user space
 	movc	d0,dfc
-	.word	0x4e7a,0x0805	| movec  MMUSR,d0
+	.long	0x4e7a0805	| movec  MMUSR,d0
 	rts
 
 /*
@@ -1831,9 +1831,22 @@ Lm68881rdone:
 	.globl	_doboot, _ROMBase
 _doboot:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
+
+#if defined(M68040)
+	cmpl	#MMU_68040, _mmutype	| Set in _getenvvars ONLY if 040.
+	jne	Ldobootnot040		| It's not an '040
+	.word	0xf4f8			| cpusha bc - push and invalidate caches
+
+	movl	#CACHE40_OFF,d0		| 68040 cache disable
+	movc	d0, cacr
+	jra	Ldoboot1
+Ldobootnot040:
+#endif
+
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
 
+Ldoboot1:
 	movl	_MacOSROMBase, _ROMBase	| Load MacOS ROMBase
 
 	movl	#0x90,a1		| offset of ROM reset routine
