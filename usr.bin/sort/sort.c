@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.15 2001/01/12 19:41:13 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.16 2001/01/13 11:19:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.15 2001/01/12 19:41:13 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.16 2001/01/13 11:19:41 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -236,15 +236,14 @@ main(argc, argv)
 		outfile = outpath = toutpath;
 	} else if (!(ch = access(outpath, 0)) &&
 	    strncmp(_PATH_DEV, outpath, 5)) {
-		struct sigaction act = {0};
-		int sigtable[] = {SIGHUP, SIGINT, SIGPIPE, SIGXCPU, SIGXFSZ,
-		    SIGVTALRM, SIGPROF, 0};
+		static const struct sigaction act =
+				{ onsignal, {{0}}, SA_RESTART | SA_RESETHAND };
+		static const int sigtable[] = {SIGHUP, SIGINT, SIGPIPE, SIGXCPU,
+			SIGXFSZ, SIGVTALRM, SIGPROF, 0};
 		int outfd;
 		errno = 0;
 		if (access(outpath, W_OK))
 			err(2, "%s", outpath);
-		act.sa_handler = onsignal;
-		act.sa_flags = SA_RESTART | SA_RESETHAND;
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXX", outpath);
 		if ((outfd = mkstemp(toutpath)) < 0 ||
 		    (outfp = fdopen(outfd, "w")) == 0)
