@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.63 2003/10/04 00:50:34 wiz Exp $ */
+/* $NetBSD: lib.h,v 1.64 2003/12/20 00:47:19 grant Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -152,6 +152,14 @@ typedef enum pl_ent_t {
 	PLIST_PKGCFL,		/* 17 */
 	PLIST_BLDDEP		/* 18 */
 }       pl_ent_t;
+
+/* Enumerated constants for build info */
+typedef enum bi_ent_t {
+	BI_OPSYS,		/*  0 */
+	BI_OS_VERSION,		/*  1 */
+	BI_MACHINE_ARCH,	/*  2 */
+	BI_ENUM_COUNT,		/*  3 */
+}	bi_ent_t;
 
 /* Types */
 typedef unsigned int Boolean;

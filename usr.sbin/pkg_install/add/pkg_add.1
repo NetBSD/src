@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.47 2003/10/03 15:42:22 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.48 2003/12/20 00:47:19 grant Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd October 3, 2003
+.Dd December 20, 2003
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -112,6 +112,8 @@ Although
 .Nm
 will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
+This flag also overrides the fatal error when the operating system or
+architecture the package was built on differ from that of the host.
 .It Fl I
 If an installation script exists for a given package, do not execute it.
 .It Fl K Ar pkg_dbdir
@@ -357,6 +359,16 @@ If
 .Cm @option extract-in-place
 is enabled, the package is now extracted directly into its
 final location, otherwise it is extracted into the staging area.
+.It
+The package build information is extracted from the
+.Pa +BUILD_INFO
+file and compared against the result of
+.Xr uname 3 .
+If the operating system or architecture of the package differ from
+that of the host, installation is aborted.
+This behavior is overridable with the
+.Fl f
+flag.
 .It
 If the package contains a
 .Ar require
