@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.14 2001/07/10 00:36:10 bjh21 Exp $	*/
+/*	$NetBSD: iomd.c,v 1.15 2001/07/10 21:31:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -171,7 +171,6 @@ iomdattach(parent, self, aux)
 	/* Get the ID */
 	sc->sc_id = bus_space_read_1(iot, ioh, IOMD_ID0)
 		  | (bus_space_read_1(iot, ioh, IOMD_ID1) << 8);
-
 	printf(": ");
 
 	/* Identify it and get the DRAM refresh rate */
@@ -197,8 +196,7 @@ iomdattach(parent, self, aux)
 		arm7500_ioc_found = 0;		/* just in case */
 		break;
 	}
-	
-	printf("\n");
+	printf("version %d\n", bus_space_read_1(iot, ioh, IOMD_VERSION));
 
 	/* Report the DRAM refresh rate */
 	printf("%s: ", self->dv_xname);
