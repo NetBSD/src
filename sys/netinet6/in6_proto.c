@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_proto.c,v 1.17.4.2 2000/10/17 21:40:26 tv Exp $	*/
-/*	$KAME: in6_proto.c,v 1.64 2000/06/20 16:20:27 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.17.4.3 2001/03/11 21:12:19 he Exp $	*/
+/*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@ struct ip6protosw inet6sw[] = {
   ip6_init,	0,		frag6_slowtimo,	frag6_drain,
   ip6_sysctl,
 },
-{ SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC | PR_ADDR,
+{ SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
   udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
   udp6_usrreq,	udp6_init,
   0,		0,		0,
@@ -177,13 +177,13 @@ struct ip6protosw inet6sw[] = {
   tcp_sysctl,
 },
 #endif /*TCP6*/
-{ SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC | PR_ADDR,
+{ SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
   rip6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
   rip6_usrreq,
   0,		0,		0,		0,
 },
-{ SOCK_RAW,	&inet6domain,	IPPROTO_ICMPV6,	PR_ATOMIC | PR_ADDR,
-  icmp6_input,	rip6_output,	0,		rip6_ctloutput,
+{ SOCK_RAW,	&inet6domain,	IPPROTO_ICMPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+  icmp6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
   rip6_usrreq,
   icmp6_init,	icmp6_fasttimo,	0,		0,
   icmp6_sysctl,
@@ -226,13 +226,13 @@ struct ip6protosw inet6sw[] = {
 },
 #endif /* IPSEC */
 #ifdef INET
-{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap6_input,	rip6_output, 	0,		rip6_ctloutput,
   rip6_usrreq,
   0,		0,		0,		0,
 },
 #endif
-{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap6_input, rip6_output,	 0,		rip6_ctloutput,
   rip6_usrreq,
 #ifndef INET6
@@ -241,13 +241,13 @@ struct ip6protosw inet6sw[] = {
   encap_init,	0,		0,		0,
 #endif
 },
-{ SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   pim6_input,    rip6_output,	0,              rip6_ctloutput, 
   rip6_usrreq,
   0,            0,              0,              0,
 },
 /* raw wildcard */
-{ SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC | PR_ADDR,
+{ SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,
   rip6_init,	0,		0,		0,
