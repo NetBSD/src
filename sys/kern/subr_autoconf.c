@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.74 2002/09/30 17:36:33 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.75 2002/10/01 18:11:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.74 2002/09/30 17:36:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.75 2002/10/01 18:11:58 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -152,6 +152,15 @@ struct deferred_config_head interrupt_config_queue;
 static void config_process_deferred(struct deferred_config_head *,
 	struct device *);
 
+/* Hooks to finalize configuration once all real devices have been found. */
+struct finalize_hook {
+	TAILQ_ENTRY(finalize_hook) f_list;
+	int (*f_func)(struct device *);
+	struct device *f_dev;
+};
+static TAILQ_HEAD(, finalize_hook) config_finalize_list;
+static int config_finalize_done;
+
 /* list of all devices */
 struct devicelist alldevs;
 
@@ -190,6 +199,7 @@ config_init(void)
 
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&interrupt_config_queue);
+	TAILQ_INIT(&config_finalize_list);
 	TAILQ_INIT(&alldevs); 
 
 	config_initialized = 1;
@@ -945,6 +955,62 @@ config_pending_decr(void)
 	config_pending--;
 	if (config_pending == 0)
 		wakeup((void *)&config_pending);
+}
+
+/*
+ * Register a "finalization" routine.  Finalization routines are
+ * called iteratively once all real devices have been found during
+ * autoconfiguration, for as long as any one finalizer has done
+ * any work.
+ */
+int
+config_finalize_register(struct device *dev, int (*fn)(struct device *))
+{
+	struct finalize_hook *f;
+
+	/*
+	 * If finalization has already been done, invoke the
+	 * callback function now.
+	 */
+	if (config_finalize_done) {
+		while ((*fn)(dev) != 0)
+			/* loop */ ;
+	}
+
+	/* Ensure this isn't already on the list. */
+	TAILQ_FOREACH(f, &config_finalize_list, f_list) {
+		if (f->f_func == fn && f->f_dev == dev)
+			return (EEXIST);
+	}
+
+	f = malloc(sizeof(*f), M_TEMP, M_WAITOK);
+	f->f_func = fn;
+	f->f_dev = dev;
+	TAILQ_INSERT_TAIL(&config_finalize_list, f, f_list);
+
+	return (0);
+}
+
+void
+config_finalize(void)
+{
+	struct finalize_hook *f;
+	int rv;
+
+	/* Run the hooks until none of them does any work. */
+	do {
+		rv = 0;
+		TAILQ_FOREACH(f, &config_finalize_list, f_list)
+			rv |= (*f->f_func)(f->f_dev);
+	} while (rv != 0);
+
+	config_finalize_done = 1;
+
+	/* Now free all the hooks. */
+	while ((f = TAILQ_FIRST(&config_finalize_list)) != NULL) {
+		TAILQ_REMOVE(&config_finalize_list, f, f_list);
+		free(f, M_TEMP);
+	}
 }
 
 /*

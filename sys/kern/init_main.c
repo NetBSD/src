@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.207 2002/09/25 22:21:40 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.208 2002/10/01 18:11:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.207 2002/09/25 22:21:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.208 2002/10/01 18:11:58 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -432,6 +432,13 @@ main(void)
 	 */
 	while (config_pending)
 		(void) tsleep((void *)&config_pending, PWAIT, "cfpend", 0);
+
+	/*
+	 * Finalize configuration now that all real devices have been
+	 * found.  This needs to be done before the root device is
+	 * selected, since finalization may create the root device.
+	 */
+	config_finalize();
 
 	/*
 	 * Now that autoconfiguration has completed, we can determine
