@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.45 2004/11/08 06:20:58 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.46 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.45 2004/11/08 06:20:58 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.46 2004/11/10 04:20:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -638,12 +638,9 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				/* ok */
 			} else if (p->channels == 2) {
 				/* ok */
-			} else if (p->channels == 4
-				&& ext_id & AC97_EXT_AUDIO_SDAC) {
+			} else if (p->channels == 4 && AC97_IS_4CH(codec)) {
 				/* ok */
-#define BITS_6CH	(AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_LDAC)
-			} else if (p->channels == 6
-				&& (ext_id & BITS_6CH) == BITS_6CH) {
+			} else if (p->channels == 6 && AC97_IS_6CH(codec)) {
 				/* ok */
 			} else {
 				return (EINVAL);
@@ -656,7 +653,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		    (p->precision != 8 && p->precision != 16))
 			return (EINVAL);
 
-		if (IS_FIXED_RATE(codec)) {
+		if (AC97_IS_FIXED_RATE(codec)) {
 			/* Enable aurateconv */
 			p->hw_sample_rate = AC97_SINGLE_RATE;
 		} else {
@@ -715,7 +712,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				p->sw_code = mulaw_to_slinear16_le;
 				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 				p->hw_precision = 16;
-			} else if (!IS_FIXED_RATE(codec)) {
+			} else if (!AC97_IS_FIXED_RATE(codec)) {
 				p->sw_code = ulinear8_to_mulaw;
 				p->hw_encoding = AUDIO_ENCODING_ULINEAR;
 			} else {
@@ -734,7 +731,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				p->sw_code = alaw_to_slinear16_le;
 				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 				p->hw_precision = 16;
-			} else if (!IS_FIXED_RATE(codec)) {
+			} else if (!AC97_IS_FIXED_RATE(codec)) {
 				p->sw_code = ulinear8_to_alaw;
 				p->hw_encoding = AUDIO_ENCODING_ULINEAR;
 			} else {
@@ -961,7 +958,7 @@ auvia_get_props(void *addr)
 	 * rate because of aurateconv.  Applications can't know what rate the
 	 * device can process in the case of mmap().
 	 */
-	if (!IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }

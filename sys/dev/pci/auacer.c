@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.2 2004/11/09 15:57:11 kent Exp $	*/
+/*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.2 2004/11/09 15:57:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,15 +144,6 @@ struct auacer_softc {
 #define WRITE1(sc, a, v) bus_space_write_1(sc->iot, sc->aud_ioh, a, v)
 #define WRITE2(sc, a, v) bus_space_write_2(sc->iot, sc->aud_ioh, a, v)
 #define WRITE4(sc, a, v) bus_space_write_4(sc->iot, sc->aud_ioh, a, v)
-
-#define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
-				& AC97_EXT_AUDIO_VRA)
-#define SUPPORTS_4CH(codec)	((codec)->vtbl->get_extcaps(codec) \
-				& AC97_EXT_AUDIO_SDAC)
-#define AC97_6CH_DACS		(AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC \
-				| AC97_EXT_AUDIO_LDAC)
-#define SUPPORTS_6CH(codec)	(((codec)->vtbl->get_extcaps(codec) \
-				& AC97_6CH_DACS) == AC97_6CH_DACS)
 
 /* Debug */
 #ifdef AUACER_DEBUG
@@ -610,11 +601,11 @@ auacer_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			case 2:
 				break;
 			case 4:
-				if (!SUPPORTS_4CH(sc->codec_if))
+				if (!AC97_IS_4CH(sc->codec_if))
 					return EINVAL;
 				break;
 			case 6:
-				if (!SUPPORTS_6CH(sc->codec_if))
+				if (!AC97_IS_6CH(sc->codec_if))
 					return EINVAL;
 				break;
 			default:
@@ -698,7 +689,7 @@ auacer_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			return (EINVAL);
 		}
 
-		if (IS_FIXED_RATE(sc->codec_if)) {
+		if (AC97_IS_FIXED_RATE(sc->codec_if)) {
 			p->hw_sample_rate = AC97_SINGLE_RATE;
 			/* If hw_sample_rate is changed, aurateconv works. */
 		} else {
@@ -899,7 +890,7 @@ auacer_get_props(void *v)
 	 * rate because of aurateconv.  Applications can't know what rate the
 	 * device can process in the case of mmap().
 	 */
-	if (!IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }

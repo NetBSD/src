@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.74 2004/11/06 08:41:14 xtraeme Exp $	*/
+/*	$NetBSD: auich.c,v 1.75 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.74 2004/11/06 08:41:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.75 2004/11/10 04:20:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,15 +222,6 @@ struct auich_softc {
 	uint32_t sc_ac97_clock;
 	int sc_ac97_clock_mib;
 };
-
-#define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
-				& AC97_EXT_AUDIO_VRA)
-#define SUPPORTS_4CH(codec)	((codec)->vtbl->get_extcaps(codec) \
-				& AC97_EXT_AUDIO_SDAC)
-#define AC97_6CH_DACS		(AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC \
-				| AC97_EXT_AUDIO_LDAC)
-#define SUPPORTS_6CH(codec)	(((codec)->vtbl->get_extcaps(codec) \
-				& AC97_6CH_DACS) == AC97_6CH_DACS)
 
 /* Debug */
 #ifdef AUICH_DEBUG
@@ -527,7 +518,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	config_interrupts(self, auich_finish_attach);
 
 	/* sysctl setup */
-	if (IS_FIXED_RATE(sc->codec_if))
+	if (AC97_IS_FIXED_RATE(sc->codec_if))
 		return;
 	err = sysctl_createv(&sc->sc_log, 0, NULL, NULL, 0,
 			     CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0,
@@ -605,7 +596,7 @@ auich_finish_attach(struct device *self)
 {
 	struct auich_softc *sc = (void *)self;
 
-	if (!IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		auich_calibrate(sc);
 
 	sc->sc_audiodev = audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
@@ -821,11 +812,11 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			case 2:
 				break;
 			case 4:
-				if (!SUPPORTS_4CH(sc->codec_if))
+				if (!AC97_IS_4CH(sc->codec_if))
 					return EINVAL;
 				break;
 			case 6:
-				if (!SUPPORTS_6CH(sc->codec_if))
+				if (!AC97_IS_6CH(sc->codec_if))
 					return EINVAL;
 				break;
 			default:
@@ -909,7 +900,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			return (EINVAL);
 		}
 
-		if (IS_FIXED_RATE(sc->codec_if)) {
+		if (AC97_IS_FIXED_RATE(sc->codec_if)) {
 			p->hw_sample_rate = AC97_SINGLE_RATE;
 			/* If hw_sample_rate is changed, aurateconv works. */
 		} else {
@@ -1083,7 +1074,7 @@ auich_get_props(void *v)
 	 * rate because of aurateconv.  Applications can't know what rate the
 	 * device can process in the case of mmap().
 	 */
-	if (!IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }

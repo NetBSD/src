@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.6 2004/10/17 08:46:39 kent Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.7 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,8 +78,5 @@ struct auvia_softc {
 	void *sc_powerhook;
 	int sc_suspend;
 };
-
-#define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
-				  & AC97_EXT_AUDIO_VRA)
 
 #endif /* !_DEV_PCI_AUVIAVAR_H_ */
