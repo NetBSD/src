@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.22 2003/09/22 14:18:42 cl Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.23 2003/09/25 22:04:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.22 2003/09/22 14:18:42 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23 2003/09/25 22:04:17 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -173,7 +173,7 @@ buildcontext(struct lwp *l, void *catcher, void *fp)
 }
 
 static void
-sendsig_siginfo(ksiginfo_t *ksi, sigset_t *mask)
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -227,7 +227,7 @@ sendsig_siginfo(ksiginfo_t *ksi, sigset_t *mask)
 }
 
 void
-sendsig(ksiginfo_t *ksi, sigset_t *mask)
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 #ifdef COMPAT_16
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
