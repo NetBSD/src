@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.55 1997/02/04 05:08:50 perry Exp $
+#	$NetBSD: Makefile.sun3,v 1.56 1997/02/04 17:15:38 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -150,7 +150,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean::
+clean:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
@@ -174,7 +174,7 @@ links:
 SRCS=	${SUN3}/sun3/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 
-depend:: .depend
+depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${CPPFLAGS} ${SUN3}/sun3/genassym.c
