@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.4 2001/10/15 16:13:40 minoura Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.5 2002/01/07 04:00:30 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -54,7 +54,6 @@ static int check_unit(int);
 #else
 #define DPRINTF(x)	
 #endif
-#define alloca		__builtin_alloca
 
 static int
 check_unit(int id)
