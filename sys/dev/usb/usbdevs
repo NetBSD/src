@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.362 2004/01/04 01:26:23 augustss Exp $
+$NetBSD: usbdevs,v 1.363 2004/01/05 01:50:00 schmonz Exp $
 
 /*
  * Copyright (c) 1998-2003 The NetBSD Foundation, Inc.
@@ -601,6 +601,7 @@ product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
 product COMPAQ A1500		0x0012	A1500
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
 product COMPAQ IPAQLINUX	0x505a	iPAQ Linux
+product COMPAQ HNE200		0x8511	HNE-200 USB Ethernet adapter
 
 /* Concord Camera products */
 product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
