@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.11 1995/03/26 15:52:21 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.12 1995/04/20 15:27:43 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -721,6 +721,13 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 	dprintf ("itewrite: enter\n");
 	return (*linesw[ite_tty->t_line].l_write)(ite_tty, uio, flag);
 	dprintf ("itewrite: exit\n");
+}
+
+struct tty *
+itetty(dev)
+	dev_t dev;
+{
+	return (ite_tty);
 }
 
 iteioctl(dev_t dev, int cmd, caddr_t addr, int flag, struct proc *p)
