@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.14 1999/10/27 17:59:24 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.15 1999/11/03 23:06:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ typedef	void (*ifm_stat_cb_t) __P((struct ifnet *ifp, struct ifmediareq *req));
  * In-kernel representation of a single supported media type.
  */
 struct ifmedia_entry {
-	LIST_ENTRY(ifmedia_entry) ifm_list;
+	TAILQ_ENTRY(ifmedia_entry) ifm_list;
 	int	ifm_media;	/* description of this media attachment */
 	int	ifm_data;	/* for driver-specific use */
 	void	*ifm_aux;	/* for driver-specific use */
@@ -114,7 +114,7 @@ struct ifmedia {
 	int	ifm_mask;	/* mask of changes we don't care about */
 	int	ifm_media;	/* current user-set media word */
 	struct ifmedia_entry *ifm_cur;	/* currently selected media */
-	LIST_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
+	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
 	ifm_change_cb_t	ifm_change;	/* media change driver callback */
 	ifm_stat_cb_t	ifm_status;	/* media status driver callback */
 };
