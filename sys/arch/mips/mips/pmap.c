@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 1999/09/25 00:00:39 shin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 1999/10/18 17:17:09 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 1999/09/25 00:00:39 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 1999/10/18 17:17:09 soren Exp $");
 
 /*
  *	Manages physical address maps.
@@ -458,7 +458,7 @@ pmap_create()
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		printf("pmap_create(%lx)\n", size);
+		printf("pmap_create(%p)\n", pmap);
 #endif
 
 	pmap = (pmap_t)malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
