@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.21 1996/04/11 07:47:50 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.22 1996/04/12 08:44:42 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -81,7 +81,6 @@ svr4_getcontext(p, uc, mask, oonstack)
 		r[SVR4_X86_ES] = tf->tf_vm86_es;
 		r[SVR4_X86_DS] = tf->tf_vm86_ds;
 		r[SVR4_X86_EFL] = get_vflags(p);
-		tf->tf_eflags &= ~PSL_VM;
 	} else
 #endif
 	{
@@ -375,15 +374,13 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_esp = (int)fp;
-	tf->tf_eip = (int)(((char *)PS_STRINGS) -
-				(svr4_esigcode - svr4_sigcode));
-#ifdef VM86
-	tf->tf_eflags &= ~PSL_VM;
-#endif
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_eip = (int)(((char *)PS_STRINGS) -
+	     (svr4_esigcode - svr4_sigcode));
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM);
+	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
