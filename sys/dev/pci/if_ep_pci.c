@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.14 1996/12/05 01:25:25 cgd Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.15 1996/12/29 13:42:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -151,6 +151,11 @@ ep_pci_attach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->bustype = EP_BUS_PCI;
 
+	/*
+	 * The EP_W3_RESET_OPTIONS register is mapped into PCI
+	 * configuration space.  Read RESET_OPTIONS to get
+	 * the media types present on this card.
+	 */
 	i = pci_conf_read(pc, pa->pa_tag, PCI_CONN);
 
 	/*
@@ -163,6 +168,14 @@ ep_pci_attach(parent, self, aux)
 		conn |= IS_BNC;
 	if (i & IS_PCI_UTP)
 		conn |= IS_UTP;
+	if (i & IS_PCI_100BASE_TX)
+		conn |= TX;
+	if (i & IS_PCI_100BASE_T4)
+		conn |= T4;
+	if (i & IS_PCI_100BASE_FX)
+		conn |= FX;
+	if (i & IS_PCI_100BASE_MII)
+		conn |= MII;
 
 	GO_WINDOW(0);
 
@@ -171,6 +184,8 @@ ep_pci_attach(parent, self, aux)
 		model = "3Com 3C590 Ethernet";
 		break;
 	case PCI_PRODUCT_3COM_3C595TX:
+	case PCI_PRODUCT_3COM_3C595T4:
+	case PCI_PRODUCT_3COM_3C595MII:
 		model = "3Com 3C595 Ethernet";
 		break;
 	case PCI_PRODUCT_3COM_3C900TPO:
