@@ -1,6 +1,7 @@
-/*	$NetBSD: vfs_subr.c,v 1.57 1996/10/13 02:32:53 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.58 1997/01/31 02:50:36 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -60,6 +61,7 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/syscallargs.h>
+#include <sys/device.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -90,6 +92,8 @@ TAILQ_HEAD(freelst, vnode) vnode_free_list =	/* vnode free list */
     TAILQ_HEAD_INITIALIZER(vnode_free_list);
 struct mntlist mountlist =			/* mounted filesystem list */
     CIRCLEQ_HEAD_INITIALIZER(mountlist);
+
+struct device *root_device;			/* root device */
 
 int vfs_lock __P((struct mount *));
 void vfs_unlock __P((struct mount *));
@@ -1617,4 +1621,81 @@ vfs_shutdown()
 		printf("giving up\n");
 	else
 		printf("done\n");
+}
+
+/*
+ * Mount the root file system.  If the operator didn't specify a
+ * file system to use, try all possible file systems until one
+ * succeeds.
+ */
+int
+vfs_mountroot()
+{
+	extern int (*mountroot) __P((void));
+	int i;
+
+	if (root_device == NULL)
+		panic("vfs_mountroot: root device unknown");
+
+	switch (root_device->dv_class) {
+	case DV_IFNET:
+		if (rootdev != NODEV)
+			panic("vfs_mountroot: rootdev set for DV_IFNET");
+		break;
+
+	case DV_DISK:
+		if (rootdev == NODEV)
+			panic("vfs_mountroot: rootdev not set for DV_DISK");
+		break;
+
+	default:
+		printf("%s: inappropriate for root file system\n",
+		    root_device->dv_xname);
+		return (ENODEV);
+	}
+
+	/*
+	 * If user specified a file system, use it.
+	 */
+	if (mountroot != NULL)
+		return ((*mountroot)());
+
+	/*
+	 * Try each file system currently configured into the kernel.
+	 */
+	for (i = 0; i < nvfssw; i++) {
+		if (vfssw[i] == NULL || vfssw[i]->vfs_mountroot == NULL)
+			continue;
+#ifdef DEBUG
+		printf("mountroot: trying %s...\n", vfssw[i]->vfs_name);
+#endif
+		if ((*vfssw[i]->vfs_mountroot)() == 0) {
+			printf("root file system type: %s\n",
+			    vfssw[i]->vfs_name);
+			return (0);
+		}
+	}
+
+	printf("no file system for %s", root_device->dv_xname);
+	if (root_device->dv_class == DV_DISK)
+		printf(" (dev 0x%x)", rootdev);
+	printf("\n");
+	return (EFTYPE);
+}
+
+/*
+ * Given a file system name, look up the vfsops for that
+ * file system, or return NULL if file system isn't present
+ * in the kernel.
+ */
+struct vfsops *
+vfs_getopsbyname(name)
+	const char *name;
+{
+	int i;
+
+	for (i = 0; i < nvfssw; i++)
+		if (vfssw[i] != NULL && strcmp(vfssw[i]->vfs_name, name) == 0)
+			return (vfssw[i]);
+	return (NULL);
 }
