@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.16 2000/11/02 00:28:01 eeh Exp $	*/
+/*	$NetBSD: msc.c,v 1.17 2001/01/13 02:09:27 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1993 Zik.
@@ -418,7 +418,7 @@ mscopen(dev, flag, mode, p)
 	 */
 	tp->t_dev = dev;
 
-	return((*tp->t_linesw->l_open)(dev, tp));
+	return tp->t_linesw->l_open(dev, tp);
 }
 
 
@@ -447,7 +447,7 @@ mscclose(dev, flag, mode, p)
 	ms = &msc->board->Status[msc->port];
   
 	tp = msc_tty[MSCTTY(dev)];
-	(*tp->t_linesw->l_close)(tp, flag);
+	tp->t_linesw->l_close(tp, flag);
 
 	(void) mscmctl(dev, 0, DMSET);
 
@@ -475,7 +475,7 @@ mscread(dev, uio, flag)
 	if (! tp)
 	 return ENXIO;
 
-	return((*tp->t_linesw->l_read)(tp, uio, flag));
+	return tp->t_linesw->l_read(tp, uio, flag);
 }
  
 
@@ -492,7 +492,7 @@ mscwrite(dev, uio, flag)
 	if (! tp)
 		return ENXIO;
 
-	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+	return tp->t_linesw->l_write(tp, uio, flag);
 }
 
 
@@ -560,7 +560,7 @@ mscmint (data)
 				if (MSCDIALIN(tp->t_dev))
 #endif
 				{
-				    if ((*tp->t_linesw->l_modem)(tp, 0) == 0) {
+				    if (tp->t_linesw->l_modem(tp, 0) == 0) {
 					/* clear RTS and DTR, bitbucket output */
 					ms = &msc->board->Status[msc->port];
 					ms->Command = (ms->Command & ~MSCCMD_CMask) |
@@ -579,7 +579,7 @@ mscmint (data)
 			    if ((tp = msc_tty[MSCTTYSLOT(MSCSLOTUL(unit, i))]) &&
 				(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
 				    if (MSCDIALIN(tp->t_dev))
-					(*tp->t_linesw->l_modem)(tp, 1);
+					tp->t_linesw->l_modem(tp, 1);
 			    } /* if tp valid and port open */
 			}		/* CD on/off */
 		    } /* if CD changed for this line */
@@ -625,7 +625,7 @@ mscmint (data)
 			    case MSCINCTL_EVENT:
 				switch (ibuf[bufpos++]) {
 				    case MSCEVENT_Break:
-					(*tp->t_linesw->l_rint)(TTY_FE, tp);
+					tp->t_linesw->l_rint(TTY_FE, tp);
 					break;
 
 				    default:
@@ -638,7 +638,7 @@ mscmint (data)
 				if (tp->t_state & TS_TBLOCK) {
 				    goto NoRoomForYa;
 				}
-				(*tp->t_linesw->l_rint)((int)ibuf[bufpos++], tp);
+				tp->t_linesw->l_rint((int)ibuf[bufpos++], tp);
 				break;
 
 			    default:
@@ -661,8 +661,8 @@ NoRoomForYa:
 		if (tp->t_state & TS_BUSY) {
 		    if (bufpos < IOBUFLOWWATER) {
 			tp->t_state &= ~TS_BUSY;	/* not busy any more */
-			if (tp->t_line)
-			    (*tp->t_linesw->l_start)(tp);
+			if (tp->t_linesw)
+			    tp->t_linesw->l_start(tp);
 			else
 			    mscstart(tp);
 		    }
@@ -757,7 +757,7 @@ mscioctl(dev, cmd, data, flag, p)
 	if (!(tp = msc_tty[MSCTTY(dev)]))
 		return ENXIO;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
 
 	if (error >= 0)
 		return (error);
