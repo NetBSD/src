@@ -274,3 +274,6 @@ number of SCBs.  Also, recognize more boards/chips.
 bound violations.  Also, fix directory lease eviction in NQNFS.
 
 [ kernel/i386 ] Recognize more ep boards.
+
+[ kernel/nfs ] Attempting to make a cross-device link into NFS would
+panic the client.  Fix this.
