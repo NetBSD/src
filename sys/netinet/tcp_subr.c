@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.87 2000/02/06 08:06:43 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.88 2000/02/29 05:25:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -503,9 +503,10 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	th->th_x2 = 0;
 	if ((flags & TH_SYN) == 0) {
 		if (tp)
-			th->th_win = htons((u_int16_t) (win >> tp->rcv_scale));
-		else
-			th->th_win = htons((u_int16_t)win);
+			win >>= tp->rcv_scale;
+		if (win > TCP_MAXWIN)
+			win = TCP_MAXWIN;
+		th->th_win = htons((u_int16_t)win);
 		th->th_off = sizeof (struct tcphdr) >> 2;
 		tlen += sizeof (struct tcphdr);
 	} else
