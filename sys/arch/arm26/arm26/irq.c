@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.10 2001/01/12 00:11:42 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.11 2001/01/22 23:08:26 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.10 2001/01/12 00:11:42 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.11 2001/01/22 23:08:26 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -196,6 +196,7 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 #endif
 	MALLOC(new, struct irq_handler *, sizeof(struct irq_handler),
 	       M_DEVBUF, M_WAITOK);
+	bzero(new, sizeof(*new));
 	new->irqnum = irqnum;
 	new->mask = 1 << irqnum;
 #if NUNIXBP > 0
@@ -205,7 +206,8 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 	new->ipl = ipl;
 	new->func = func;
 	new->arg = arg;
-	evcnt_attach_dynamic(&new->ev, EVCNT_TYPE_INTR, NULL, "irq", name);
+	if (name != NULL)
+		evcnt_attach_dynamic(&new->ev, EVCNT_TYPE_INTR, NULL, name, "irq");
 	new->enabled = 1;
 	if (irq_list_head.lh_first == NULL ||
 	    irq_list_head.lh_first->ipl <= ipl)
@@ -344,7 +346,8 @@ irq_stat(void (*pr)(const char *, ...))
 
 	for (h = irq_list_head.lh_first; h != NULL; h = h->link.le_next)
 		(*pr)("%12s: ipl %2d, IRQ %2d, mask 0x%05x, count %llu\n",
-		    h->ev.ev_name, h->ipl, h->irqnum, h->mask, h->ev.ev_count);
+		    h->ev.ev_group ? h->ev.ev_group : "", h->ipl, h->irqnum,
+		    h->mask, h->ev.ev_count);
 	(*pr)("\n");
 	last = -1;
 	for (i = 0; i < NIPL; i++)
