@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.109 2003/07/20 09:26:49 lukem Exp $
+#	$NetBSD: build.sh,v 1.110 2003/07/28 12:33:42 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -784,7 +784,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.109 2003/07/20 09:26:49 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.110 2003/07/28 12:33:42 lukem Exp $
 #
 
 EOF
@@ -818,6 +818,7 @@ buildtools()
 	${runcmd} "${makewrapper}" ${cleandir} dependall install ||
 	    bomb "Failed to make tools"
 	statusmsg "Tools built to ${TOOLDIR}"
+	${runcmd} cd "${TOP}"
 }
 
 getkernelconf()
@@ -899,9 +900,7 @@ releasekernel()
 	kernelreldir="${RELEASEDIR}/${MACHINE}/binary/kernel"
 	${runcmd} mkdir -p "${kernelreldir}"
 	kernlist=$(awk '$1 == "config" { print $2 }' ${kernelconfpath})
-echo "releasekernel: conf ${kernelconf}, name ${kernelconfname}, build ${kernelbuildpath}"
 	for kern in ${kernlist:-netbsd}; do
-echo "  checking ${kern} in ${kernelbuildpath}"
 		builtkern="${kernelbuildpath}/${kern}"
 		[ -f "${builtkern}" ] || continue
 		releasekern="${kernelreldir}/${kern}-${kernelconfname}.gz"
