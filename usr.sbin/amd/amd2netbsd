@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.1.1.1 1997/07/24 21:20:06 christos Exp $
+#	$NetBSD: amd2netbsd,v 1.2 1997/07/28 00:46:55 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -313,9 +313,10 @@ CLEANFILES+=conf_tok.c conf_parse.c conf_parse.h y.tab.h
 
 conf_tok.o: conf_parse.h
 
-conf_parse.h:	y.tab.h
-	@rm -f ${.TARGET}
-	@cp -p ${.ALLSRC} ${.TARGET}
+conf_parse.c conf_parse.h: conf_parse.y
+	${YACC} -d ${.ALLSRC}
+	mv y.tab.c conf_parse.c
+	mv y.tab.h conf_parse.h
 
 .include <bsd.prog.mk>
 %% file usr.sbin/amd/amq/Makefile
@@ -360,9 +361,10 @@ CLEANFILES+=fsi_lex.c fsi_gram.c fsi_gram.h y.tab.h
 
 fsi_lex.o: fsi_gram.h
 
-fsi_gram.h:	y.tab.h
-	@rm -f ${.TARGET}
-	@cp -p ${.ALLSRC} ${.TARGET}
+fsi_gram.c fsi_gram.h: fsi_gram.y
+	${YACC} -d ${.ALLSRC}
+	mv y.tab.c fsi_gram.c
+	mv y.tab.h fsi_gram.h
 
 .include <bsd.prog.mk>
 %% file usr.sbin/amd/libamu/Makefile
@@ -374,6 +376,8 @@ LIB= amu
 config_local.h: mkconf
 	@rm -f ${.TARGET}
 	sh ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+=config_local.h
 
 .include <bsd.lib.mk>
 LDADD=
