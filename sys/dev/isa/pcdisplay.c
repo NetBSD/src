@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.3 1998/06/26 21:08:09 drochner Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.4 1998/07/24 16:22:51 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -206,6 +206,8 @@ pcdisplay_init(dc, iot, memt, mono)
 	/* make sure we have a valid cursor position */
 	if (cpos < 0 || cpos >= pcdisplay_scr.nrows * pcdisplay_scr.ncols)
 		cpos = 0;
+
+	dc->pcs.dispoffset = 0;
 
 	dc->pcs.vc_crow = cpos / pcdisplay_scr.ncols;
 	dc->pcs.vc_ccol = cpos % pcdisplay_scr.ncols;
