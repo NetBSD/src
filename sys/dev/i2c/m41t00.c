@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.2 2003/10/20 16:24:10 briggs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -63,9 +63,9 @@ struct m41t00_softc {
 static int  m41t00_match(struct device *, struct cfdata *, void *);
 static void m41t00_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(m41t, sizeof(struct m41t00_softc),
+CFATTACH_DECL(m41trtc, sizeof(struct m41t00_softc),
 	m41t00_match, m41t00_attach, NULL, NULL);
-extern struct cfdriver m41t_cd;
+extern struct cfdriver m41trtc_cd;
 
 dev_type_open(m41t00_open);
 dev_type_close(m41t00_close);
@@ -125,7 +125,7 @@ m41t00_open(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct m41t00_softc *sc;
 
-	if ((sc = device_lookup(&m41t_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup(&m41trtc_cd, minor(dev))) == NULL)
 		return ENXIO;
 
 	/* XXX: Locking */
@@ -143,7 +143,7 @@ m41t00_close(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct m41t00_softc *sc;
 
-	if ((sc = device_lookup(&m41t_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup(&m41trtc_cd, minor(dev))) == NULL)
 		return ENXIO;
 
 	sc->sc_open = 0;
@@ -158,7 +158,7 @@ m41t00_read(dev_t dev, struct uio *uio, int flags)
 	u_int8_t ch, cmdbuf[1];
 	int a, error;
 
-	if ((sc = device_lookup(&m41t_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup(&m41trtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= M41T00_NBYTES)
@@ -197,7 +197,7 @@ m41t00_write(dev_t dev, struct uio *uio, int flags)
 	u_int8_t cmdbuf[2];
 	int a, error;
 
-	if ((sc = device_lookup(&m41t_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup(&m41trtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= M41T00_NBYTES)
