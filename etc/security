@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.66 2001/10/05 01:06:17 lukem Exp $
+#	$NetBSD: security,v 1.67 2001/10/12 05:18:23 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -20,21 +20,31 @@ if [ -s /etc/security.conf ]; then
 	. /etc/security.conf
 fi
 
+# Set reasonable defaults (if they're not set in security.conf)
+#
+backup_dir=${backup_dir:-/var/backups}
+pkgdb_dir=${pkgdb_dir:-/var/db/pkg}
+max_loginlen=${max_loginlen:-8}
+max_grouplen=${max_grouplen:-8}
+
+# Other configurable variables
+#
+special_files="/etc/mtree/special /etc/mtree/special.local"
+MP=/etc/master.passwd
+CHANGELIST=""
+work_dir=$backup_dir/work
+
+if [ ! -d "$work_dir" ]; then
+	mkdir -p "$work_dir"
+fi
+
 SECUREDIR=`mktemp -d /tmp/_securedir.XXXXXX` || exit 1
 
-trap "/bin/rm -rf $SECUREDIR ; exit 0" EXIT INT QUIT
+trap "/bin/rm -rf $SECUREDIR ; exit 0" EXIT INT QUIT PIPE
 
 if ! cd "$SECUREDIR"; then
 	echo "Can not cd to $SECUREDIR".
 	exit 1
-fi
-
-if [ -z "$max_loginlen" ];then
-	max_loginlen=8
-fi
-
-if [ -z "$max_grouplen" ]; then
-	max_grouplen=8
 fi
 
 ERR=secure1.$$
@@ -46,17 +56,120 @@ LIST=secure6.$$
 OUTPUT=secure7.$$
 LABELS=secure8.$$
 PKGS=secure9.$$
+CHANGEFILES=secure10.$$
 
-# Handle backup_dir not being set in .conf file
-backup_dir=${backup_dir:-/var/backups}
-CHANGELIST=""
-pkgdb_dir=${pkgdb_dir:-/var/db/pkg}
 
-MP=/etc/master.passwd
+# migrate_file old new
+#	Determine if the "${old}" path name needs to be migrated to the
+#	"${new}" path. Also checks if "${old}.current" needs migrating,
+#	and if so, migrate it and possibly "${old}.current,v" and
+#	"${old}.backup".
+#
+migrate_file()
+{
+	_old=$1
+	_new=$2
+	if [ -z "$_old" -o -z "$_new" ]; then
+		err 3 "USAGE: migrate_file old new"
+	fi
+	if [ ! -d "${_new%/*}" ]; then
+		mkdir -p "${_new%/*}"
+	fi
+	if [ -f "${_old}" -a ! -f "${_new}" ]; then
+		echo "==> migrating ${_old}"
+		echo "           to ${_new}"
+		mv "${_old}" "${_new}"
+	fi
+	if [ -f "${_old}.current" -a ! -f "${_new}.current" ]; then
+		echo "==> migrating ${_old}.current"
+		echo "           to ${_new}.current"
+		mv "${_old}.current" "${_new}.current"
+		if [ -f "${_old}.current,v" -a ! -f "${_new}.current,v" ]; then
+			echo "==> migrating ${_old}.current,v"
+			echo "           to ${_new}.current,v"
+			mv "${_old}.current,v" "${_new}.current,v"
+		fi
+		if [ -f "${_old}.backup" -a ! -f "${_new}.backup" ]; then
+			echo "==> migrating ${_old}.backup"
+			echo "           to ${_new}.backup"
+			mv "${_old}.backup" "${_new}.backup"
+		fi
+	fi
+}
 
-# these is used several times.
+
+# backup_and_diff file printdiff
+#	Determine if file needs backing up, and if so, do it.
+#	If printdiff is yes, display the diffs, otherwise 
+#	just print a message saying "[changes omitted]".
+#
+backup_and_diff()
+{
+	_file=$1
+	_printdiff=$2
+	if [ -z "$_file" -o -z "$_printdiff" ]; then
+		err 3 "USAGE: backup_and_diff file printdiff"
+	fi
+	! checkyesno _printdiff
+	_printdiff=$?
+
+	_old=$backup_dir/${_file##*/}
+	case "$_file" in
+	$work_dir/*)
+		_new=$_file
+		migrate_file "$backup_dir/$_old" "$_new"
+		migrate_file "$_old" "$_new"
+		;;
+	*)
+		_new=$backup_dir/$_file
+		migrate_file "$_old" "$_new"
+		;;
+	esac
+	CUR=${_new}.current
+	BACK=${_new}.backup
+	if [ -f $_file ]; then
+		if [ -f $CUR ] ; then
+			if [ "$_printdiff" -ne 0 ]; then
+				diff $CUR $_file > $OUTPUT
+			else
+				if ! cmp -s $CUR $_file; then
+					echo "[changes omitted]"
+				fi > $OUTPUT
+			fi
+			if [ -s $OUTPUT ] ; then
+				printf \
+			"\n======\n%s diffs (OLD < > NEW)\n======\n" $_file
+				cat $OUTPUT
+				backup_file update $_file $CUR $BACK
+			fi
+		else
+			printf "\n======\n%s added\n======\n" $_file
+			if [ "$_printdiff" -ne 0 ]; then
+				diff /dev/null $_file
+			else
+				echo "[changes omitted]"
+			fi
+			backup_file add $_file $CUR $BACK
+		fi
+	else
+		if [ -f $CUR ]; then
+			printf "\n======\n%s removed\n======\n" $_file
+			if [ "$_printdiff" -ne 0 ]; then
+				diff $CUR /dev/null
+			else
+				echo "[changes omitted]"
+			fi
+			backup_file remove $_file $CUR $BACK
+		fi
+	fi
+}
+
+
+# These are used several times.
+#
 awk -F: '!/^+/ { print $1 " " $3 }' $MP | sort -k2n > $MPBYUID
 awk -F: '{ print $1 " " $9 }' $MP | sort -k2 > $MPBYPATH
+
 
 # Check the master password file syntax.
 #
@@ -134,22 +247,6 @@ if checkyesno check_passwd; then
 	fi
 fi
 
-# Backup the master password file; a special case, the normal backup
-# mechanisms also print out file differences and we don't want to do
-# that because this file has encrypted passwords in it.
-#
-CUR=$backup_dir/${MP##*/}.current
-BACK=$backup_dir/${MP##*/}.backup
-if [ -s $CUR ] ; then
-	if cmp -s $CUR $MP; then
-		:
-	else
-		backup_file update $MP $CUR $BACK
-	fi
-else
-	backup_file add $MP $CUR $BACK
-fi
-
 # Check the group file syntax.
 #
 if checkyesno check_group; then
@@ -190,37 +287,27 @@ fi
 # of '.' in the path, the path tests should go away.
 #
 if checkyesno check_rootdotfiles; then
-	> $OUTPUT
-	rhome=`csh -fc "echo ~root"`
+	rhome=~root
 	umaskset=no
 	list="/etc/csh.cshrc /etc/csh.login ${rhome}/.cshrc ${rhome}/.login"
 	for i in $list ; do
 		if [ -f $i ] ; then
-			if egrep '^[ \t]*umask[ \t]+[0-7]+' $i > /dev/null ; then
+			if egrep '^[ \t]*umask[ \t]+[0-7]+' $i > /dev/null ;
+			then
 				umaskset=yes
 			fi
 			# Double check the umask value itself; ensure that
-			# both the 020 and 002 bits are set.
-			# We handle this in decimal initially to extract the
-			# digits, and then extract the `2' bit of each digit.
-			# This is made especially painful because
-			# bitwise operations were left out of awk.
+			# both the group and other write bits are set.
+			#
 			egrep '^[ \t]*umask[ \t]+[0-7]+' $i |
 			awk '{
-				g= ($2 % 100) - ($2 % 10);
-				g /= 10;
-				g = g % 4;
-				g -= g % 2;
-				if (g != 2) {
+				if ($2 ~ /^.$/ || $2 ~! /[^2367].$/) {
 					print "\tRoot umask is group writeable"
 				}
-				o = ($2 % 10);
-				o = o % 4;
-				o -= o % 2;
-				if (o != 2) {
+				if ($2 ~ /[^2367]$/) {
 					print "\tRoot umask is other writeable"
 			    	}
-			    }' | sort -u >> $OUTPUT
+			    }' | sort -u
 			SAVE_PATH=$PATH
 			unset PATH
 			/bin/csh -f -s << end-of-csh > /dev/null 2>&1
@@ -238,9 +325,9 @@ end-of-csh
 		{ print "\tRoot path directory " $10 " is group writeable." } \
 			     $1 ~ /^d.......w/ \
 		{ print "\tRoot path directory " $10 " is other writeable." }' \
-			< $TMP1 >> $OUTPUT
+			< $TMP1
 		fi
-	done
+	done > $OUTPUT
 	if [ $umaskset = "no" -o -s $OUTPUT ] ; then
 		printf "\nChecking root csh paths, umask values:\n$list\n\n"
 		if [ -s $OUTPUT ]; then
@@ -251,8 +338,6 @@ end-of-csh
 		fi
 	fi
 
-	> $OUTPUT
-	rhome=/root
 	umaskset=no
 	list="/etc/profile ${rhome}/.profile"
 	for i in $list; do
@@ -261,11 +346,10 @@ end-of-csh
 				umaskset=yes
 			fi
 			egrep umask $i |
-			awk '$2 % 100 < 20 \
+			awk '$2 ~ /^.$/ || $2 ~ /[^2367].$/ \
 				{ print "\tRoot umask is group writeable" } \
-			     $2 % 10 < 2 \
-				{ print "\tRoot umask is other writeable" }' \
-			    >> $OUTPUT
+			     $2 ~ /[^2367]$/ \
+				{ print "\tRoot umask is other writeable" }'
 			SAVE_PATH=$PATH
 			unset PATH
 			/bin/sh << end-of-sh > /dev/null 2>&1
@@ -285,10 +369,10 @@ end-of-sh
 		{ print "\tRoot path directory " $10 " is group writeable." } \
 			     $1 ~ /^d.......w/ \
 		{ print "\tRoot path directory " $10 " is other writeable." }' \
-			< $TMP1 >> $OUTPUT
+			< $TMP1
 
 		fi
-	done
+	done > $OUTPUT
 	if [ $umaskset = "no" -o -s $OUTPUT ] ; then
 		printf "\nChecking root sh paths, umask values:\n$list\n"
 		if [ -s $OUTPUT ]; then
@@ -303,13 +387,12 @@ fi
 # Root and uucp should both be in /etc/ftpusers.
 #
 if checkyesno check_ftpusers; then
-	> $OUTPUT
 	list="uucp "`awk '$2 == 0 { print $1 }' $MPBYUID`
 	for i in $list; do
 		if /usr/libexec/ftpd -C $i ; then
-			printf "\t$i is not denied\n" >> $OUTPUT
+			printf "\t$i is not denied\n"
 		fi
-	done
+	done > $OUTPUT
 	if [ -s $OUTPUT ]; then
 		printf "\nChecking the /etc/ftpusers configuration:\n"
 		cat $OUTPUT
@@ -388,7 +471,7 @@ if checkyesno check_homes; then
 	fi
 
 	# Files that should not be owned by someone else or readable.
-	list=".Xauthority .netrc"
+	list=".Xauthority .netrc .ssh/id_dsa .ssh/id_rsa .ssh/identity"
 	while read uid homedir; do
 		for f in $list ; do
 			file=${homedir}/${f}
@@ -412,8 +495,10 @@ if checkyesno check_homes; then
 	# Files that should not be owned by someone else or writeable.
 	list=".bash_history .bash_login .bash_logout .bash_profile .bashrc \
 	      .cshrc .emacs .exrc .forward .history .klogin .login .logout \
-	      .profile .qmail .rc_history .rhosts .tcshrc .twmrc .xinitrc \
-	      .xsession"
+	      .profile .qmail .rc_history .rhosts .shosts ssh .tcshrc .twmrc \
+	      .xinitrc .xsession .ssh/authorized_keys .ssh/authorized_keys2 \
+	      .ssh/config .ssh/id_dsa.pub .ssh/id_rsa.pub .ssh/identity.pub \
+	      .ssh/known_hosts .ssh/known_hosts2"
 	while read uid homedir; do
 		for f in $list ; do
 			file=${homedir}/${f}
@@ -504,9 +589,10 @@ if checkyesno check_devices; then
 			printf "\nUudecode is setuid.\n" >> $ERR
 		fi
 
-		CUR=$backup_dir/setuid.current
-		BACK=$backup_dir/setuid.backup
-
+		file=$work_dir/setuid
+		migrate_file "$backup_dir/setuid" "$file"
+		CUR=${file}.current
+		BACK=${file}.backup
 		if [ -s $CUR ] ; then
 			if cmp -s $CUR $TMP1 ; then
 				:
@@ -568,8 +654,10 @@ if checkyesno check_devices; then
 	# Display any changes in the device file list.
 	egrep '^[bc]' $LIST | sort -k11 > $TMP1
 	if [ -s $TMP1 ] ; then
-		CUR=$backup_dir/device.current
-		BACK=$backup_dir/device.backup
+		file=$work_dir/device
+		migrate_file "$backup_dir/device" "$file"
+		CUR=${file}.current
+		BACK=${file}.backup
 
 		if [ -s $CUR ] ; then
 			if cmp -s $CUR $TMP1 ; then
@@ -624,10 +712,9 @@ fi
 # Check system binaries.
 #
 # Create the mtree tree specifications using:
-#
-#	mtree -cx -pDIR -kcksum,gid,mode,nlink,size,link,time,uid > DIR.secure
+#	mtree -cx -pDIR -kmd5,uid,gid,mode,nlink,size,link,time > DIR.secure
 #	chown root:wheel DIR.secure
-#	chmod 600 DIR.secure
+#	chmod u+r,go= DIR.secure
 #
 # Note, this is not complete protection against Trojan horsed binaries, as
 # the hacker can modify the tree specification to match the replaced binary.
@@ -635,22 +722,24 @@ fi
 # the mtree(8) manual page.
 #
 if checkyesno check_mtree; then
-	mtree -e -l -p / -f /etc/mtree/special > $OUTPUT
+	for file in $special_files; do
+		[ ! -s $file ] && continue
+		mtree -e -l -p / -f $file
+	done > $OUTPUT
 	if [ -s $OUTPUT ]; then
 		printf "\nChecking special files and directories.\n"
 		cat $OUTPUT
 	fi
 
-	> $OUTPUT
 	for file in /etc/mtree/*.secure; do
 		[ $file = '/etc/mtree/*.secure' ] && continue
 		tree=`sed -n -e '3s/.* //p' -e 3q $file`
 		mtree -f $file -p $tree > $TMP1
 		if [ -s $TMP1 ]; then
-			printf "\nChecking $tree:\n" >> $OUTPUT
-			cat $TMP1 >> $OUTPUT
+			printf "\nChecking $tree:\n"
+			cat $TMP1
 		fi
-	done
+	done > $OUTPUT
 	if [ -s $OUTPUT ]; then
 		printf "\nChecking system binaries:\n"
 		cat $OUTPUT
@@ -660,88 +749,105 @@ fi
 # Backup disklabels of available disks
 #
 if checkyesno check_disklabels; then
-		# generate list of old disklabels and remove them
-	ls -1d $backup_dir/disklabel.* 2>/dev/null |
+		# migrate old disklabels
+	for file in `ls -1d $backup_dir/$backup_dir/disklabel.* \
+	    $backup_dir/disklabel.* 2>/dev/null`; do
+		migrate_file "$file" "$work_dir/${file##*/}"
+	done
+
+		# generate list of old disklabels & fdisks and remove them
+	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* 2>/dev/null |
 	    egrep -v '\.(backup|current)(,v)?$' > $LABELS
 	xargs rm < $LABELS
 
+		# generate disklabels of all disks excluding:	cd fd md
 	disks=`iostat -x | awk 'NR > 1 && $1 !~ /^[cfm]d/ { print $1; }'`
 	for i in $disks; do
-		dlf="$backup_dir/disklabel.$i"
-		disklabel $i > $dlf 2>/dev/null
+		disklabel $i > "$work_dir/disklabel.$i" 2>/dev/null
 	done
 
-		# append list of new disklabels, sort list
-	ls -1d $backup_dir/disklabel.* 2>/dev/null |
+		# if fdisk is available, generate fdisks for:	ed ld sd wd
+	if [ -x /sbin/fdisk ]; then
+		disks=`iostat -x| awk 'NR > 1 && $1 ~ /^[elsw]d/ { print $1; }'`
+		for i in $disks; do
+			/sbin/fdisk $i > "$work_dir/fdisk.$i" 2>/dev/null
+		done
+	fi
+
+		# append list of new disklabels and fdisks
+	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* 2>/dev/null |
 	    egrep -v '\.(backup|current)(,v)?$' >> $LABELS
-	sort -u -o $LABELS $LABELS
 	CHANGELIST="$LABELS $CHANGELIST"
 fi
 
 # Check for changes in the list of installed pkgs
 #
 if checkyesno check_pkgs && [ -d $pkgdb_dir ]; then
-	pkgs=$backup_dir/pkgs
+	pkgs=$work_dir/pkgs
+	migrate_file "$backup_dir/pkgs" "$pkgs"
 	(	cd $pkgdb_dir
 		pkg_info | sort
 		echo ""
 		find . \( -name +REQUIRED_BY -o -name +CONTENTS \) -print0 |
 			xargs -0 ls -l | sort -t. +1 | sed -e 's, \./, ,'
 	 ) > $pkgs
-	echo $pkgs > $PKGS
+	echo "$pkgs" > $PKGS
 	CHANGELIST="$PKGS $CHANGELIST"
 fi
 
-# List of files that get backed up and checked for any modifications.  Each
-# file is expected to have two backups, $backup_dir/file.{current,backup}.
+# List of files that get backed up and checked for any modifications.
 # Any changes cause the files to rotate.
 #
-if checkyesno check_changelist && [ -s /etc/changelist ] ; then
-	CHANGELIST="/etc/changelist $CHANGELIST"
+if checkyesno check_changelist ; then
+	for file in $special_files; do
+		[ ! -s $file ] && continue
+		mtree -D -k type -f $file -E exclude |
+		    sed '/^type=file/!d ; s/type=file \.//'
+	done > $CHANGEFILES
+
+		# Add other files which might dynamically exist, including:
+		#	/etc/ifconfig.*
+		#	/etc/raid*.conf
+		#	/etc/rc.conf.d/*
+	ls -1d $backup_dir/etc/ifconfig.*.current \
+	    $backup_dir/etc/raid*.conf.current \
+	    $backup_dir/etc/rc.conf.d/*.current		2>/dev/null |
+	    sed "s,^$backup_dir/,/, ; s,\.current$,," >> $CHANGEFILES
+	ls -1d /etc/ifconfig.* /etc/raid*.conf /etc/rc.conf.d/* \
+	    2>/dev/null >> $CHANGEFILES
+
+	CHANGELIST="$CHANGEFILES $CHANGELIST"
 fi
 
+# Special case backups, including the master password file and
+# ssh private host keys. The normal backup mechanisms for
+# $check_changelist (see below) also print out the actual file
+# differences and we don't want to do that for these files
+#
+echo $MP > $TMP1			# always add /etc/master.passwd
+for file in $special_files; do
+	[ ! -s $file ] && continue
+	mtree -D -k type -f $file -I nomail |
+	    sed '/^type=file/!d ; s/type=file \.//'
+done >> $TMP1
+for file in `sort -u $TMP1`; do
+	backup_and_diff "$file" no
+done
+
+
 if [ -n "$CHANGELIST" ]; then
-	for file in `egrep -hv "^#|$MP" $CHANGELIST`; do
-		# old changelist backup names
-		OCUR=$backup_dir/${file##*/}.current
-		OBACK=$backup_dir/${file##*/}.backup
-		# new changelist backup names
-		CUR=$backup_dir$file.current
-		BACK=$backup_dir$file.backup
-		# roll over old backups
-		if [ ! -d ${CUR%/*} ]; then
-			mkdir -p ${CUR%/*}
-		fi
-		if [ -f $OCUR -a ! -f $CUR ]; then
-			mv $OCUR $CUR
-		fi
-		if [ -f $OCUR,v -a ! -f $CUR,v ]; then
-			mv $OCUR,v $CUR,v
-		fi
-		if [ -f $OBACK -a ! -f $BACK ]; then
-			mv $OBACK $BACK
-		fi
-		# and down to work
-		if [ -f $file ]; then
-			if [ -f $CUR ] ; then
-				diff $CUR $file > $OUTPUT
-				if [ -s $OUTPUT ] ; then
-		printf "\n======\n%s diffs (OLD < > NEW)\n======\n" $file
-					cat $OUTPUT
-					backup_file update $file $CUR $BACK
-				fi
-			else
-		printf "\n======\n%s added\n======\n" $file
-				diff /dev/null $file
-				backup_file add $file $CUR $BACK
-			fi
-		else
-			if [ -f $CUR ]; then
-		printf "\n======\n%s removed\n======\n" $file
-				diff $CUR /dev/null
-				backup_file remove $file $CUR $BACK
-			fi
-		fi
+	cat $CHANGELIST | sort -u > $TMP1
+
+	echo "$MP" > $TMP2		# always exclude /etc/master.passwd
+	for file in $special_files; do
+		[ ! -s $file ] && continue
+		mtree -D -k type -f $file -I nomail |
+		    sed '/^type=file/!d ; s/type=file \.//'
+	done >> $TMP2
+	sort -u -o $TMP2 $TMP2
+
+	for file in `comm -23 $TMP1 $TMP2`; do
+		backup_and_diff "$file" yes
 	done
 fi
 
