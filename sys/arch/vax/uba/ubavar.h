@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.7 1995/11/10 19:25:51 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.8 1995/12/01 19:23:01 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -43,8 +43,6 @@
  * Each unibus controller which is not a device has a uba_ctlr structure.
  * Each unibus device has a uba_device structure.
  */
-
-#ifndef LOCORE
 
 #include "sys/buf.h"
 #include "sys/device.h"
@@ -186,7 +184,19 @@ struct uba_driver {
 	short	ud_keepbdp;		/* hang on to bdp's once allocated */
 	int	(*ud_ubamem)();		/* see if dedicated memory is present */
 };
-#endif
+
+/*
+ * uba_attach_args is used during autoconfiguration. It is sent
+ * from ubascan() to each (possible) device.
+ */
+struct uba_attach_args {
+	caddr_t	ua_addr;
+	void	(*ua_ivec)();
+	int	ua_iarg;
+	int	ua_iaddr;
+	int	ua_br;
+	int	ua_cvec;
+};
 
 /*
  * Flags to UBA map/bdp allocation routines
@@ -233,6 +243,8 @@ extern	struct	uba_ctlr ubminit[];
 extern	struct	uba_device ubdinit[];
 
 extern	struct cfdriver	ubacd;
+
+void	ubainit __P((struct uba_softc *));
 
 #endif /* _KERNEL */
 #endif !LOCORE
