@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2002/03/25 06:52:41 kent Exp $
+# $NetBSD: Makefile,v 1.20 2002/11/30 13:41:40 jdolecek Exp $
 
 .if (${MACHINE_ARCH} == "sparc64")
 SUBDIR+=	netbsd32 sunos32 svr4 svr4_32
@@ -35,6 +35,10 @@ SUBDIR+=	ultrix
 
 .if (${MACHINE_ARCH} == "sparc")
 SUBDIR+=	sunos svr4
+.endif
+
+.if (${MACHINE} == "sgimips")
+SUBDIR+=	irix
 .endif
 
 .if (${MACHINE_ARCH} == "vax")
