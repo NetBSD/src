@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.24 2001/01/02 18:52:44 augustss Exp $
+#	$NetBSD: files.usb,v 1.25 2001/01/11 06:00:31 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -41,11 +41,14 @@ device	ucom
 attach	ucom at ucombus
 file	dev/usb/ucom.c			ucom | ucombus	needs-flag
 
+
 # Generic devices
 device	ugen
 attach	ugen at uhub
 file	dev/usb/ugen.c			ugen		needs-flag
 
+
+# HID
 # Generic HID devices
 device	uhid
 attach	uhid at uhub
@@ -57,26 +60,25 @@ attach	ukbd at uhub
 file	dev/usb/ukbd.c			ukbd		needs-flag
 file	dev/usb/ukbdmap.c		ukbd
 
+# Mice
+device	ums: wsmousedev
+attach	ums at uhub
+file	dev/usb/ums.c			ums
+
+
 # Printers
 device	ulpt
 attach	ulpt at uhub
 file	dev/usb/ulpt.c			ulpt		needs-flag
+
 
 # Mass storage
 device	umass: scsi, atapi
 attach	umass at uhub
 file	dev/usb/umass.c			umass
 
-# Modems
-device	umodem: ucombus
-attach	umodem at uhub
-file	dev/usb/umodem.c		umodem
 
-# Mice
-device	ums: wsmousedev
-attach	ums at uhub
-file	dev/usb/ums.c			ums
-
+# Misc
 # Diamond Multimedia Rio 500
 device	urio
 attach	urio at uhub
@@ -86,6 +88,12 @@ file	dev/usb/urio.c			urio		needs-flag
 device	uvisor: ucombus
 attach	uvisor at uhub
 file	dev/usb/uvisor.c		uvisor
+
+# YAP phone firmware loader
+device	uyap: ezload
+attach	uyap at uhub
+file	dev/usb/uyap.c			uyap
+
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus
@@ -108,18 +116,26 @@ device	upl: ifnet
 attach	upl at uhub
 file	dev/usb/if_upl.c		upl
 
+
 # Serial drivers
+# Modems
+device	umodem: ucombus
+attach	umodem at uhub
+file	dev/usb/umodem.c		umodem
+
 # FTDI serial driver
 device	uftdi: ucombus
 attach	uftdi at uhub
 file	dev/usb/uftdi.c			uftdi
 
+
 # Scanners
+# Generic scanner support
 device	uscanner
 attach	uscanner at uhub
 file	dev/usb/uscanner.c		uscanner	needs-flag
 
-# YAP phone firmware loader
-device	uyap: ezload
-attach	uyap at uhub
-file	dev/usb/uyap.c			uyap
+# Avision SCSI over USB, HP5300
+device	usscanner: scsi
+attach	usscanner at uhub
+file	dev/usb/usscanner.c		usscanner
