@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1997/06/23 21:24:24 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1997/07/29 18:07:48 phil Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -8,6 +8,8 @@ MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
+VND_CDEV=	/dev/${VND}d
+VND_CRDEV=	/dev/r${VND}d
 IMAGE?=		xxx-${REV}.fs
 KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
@@ -23,7 +25,8 @@ CLEANFILES+=	netbsd.ram.gz
 
 all:	netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} bs=100k count=12
-	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
+	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -m 0 -o space -i 6144 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -35,7 +38,7 @@ all:	netbsd.ram.gz
 	-rm -f ${MOUNT_POINT}/boot
 	umount ${MOUNT_POINT}
 	/usr/mdec/installboot -v -f /usr/mdec/biosboot.sym ${VND_RDEV}
-	vnconfig -u ${VND_DEV}
+	vnconfig -u ${VND_CDEV}
 	cat /*bin/* > /dev/null
 
 unconfig:
