@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.151 2001/06/26 15:51:06 wrstuden Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.152 2001/06/26 19:14:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -271,8 +271,7 @@ vfs_rootmountalloc(fstypename, devname, mpp)
 	struct vfsops *vfsp = NULL;
 	struct mount *mp;
 
-	for (vfsp = LIST_FIRST(&vfs_list); vfsp != NULL;
-	     vfsp = LIST_NEXT(vfsp, vfs_list))
+	LIST_FOREACH(vfsp, &vfs_list, vfs_list)
 		if (!strncmp(vfsp->vfs_name, fstypename, MFSNAMELEN))
 			break;
 
