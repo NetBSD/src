@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.92 2000/05/10 00:19:55 haya Exp $
+#	$NetBSD: files.pci,v 1.93 2000/05/15 08:27:26 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -95,9 +95,13 @@ device	ncr: scsi
 attach	ncr at pci
 file	dev/pci/ncr.c			ncr
 
+# common code for siop/esiop pci front end
+define siop_pci_common
+file	dev/pci/siop_pci_common.c	siop_pci_common
+
 # Symbios 53c8xx SCSI chips
 # device declaration in sys/conf/files
-attach	siop at pci with siop_pci
+attach	siop at pci with siop_pci: siop_pci_common
 file	dev/pci/siop_pci.c	siop_pci
 
 # PCI IDE controllers
