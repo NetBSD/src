@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.12 2004/09/29 04:45:05 mrg Exp $	*/
+/*	$NetBSD: auxio.c,v 1.13 2004/10/14 17:58:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.12 2004/09/29 04:45:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.13 2004/10/14 17:58:06 bouyer Exp $");
 
 #include "opt_auxio.h"
 
@@ -117,10 +117,8 @@ auxio_blink(x)
 		led = le32toh(bus_space_read_4(sc->sc_tag, sc->sc_led, 0));
 	else
 		led = bus_space_read_1(sc->sc_tag, sc->sc_led, 0);
-	if (led & AUXIO_LED_LED)
-		led = 0;
-	else
-		led = AUXIO_LED_LED;
+
+	led = led ^ AUXIO_LED_LED;
 	if (sc->sc_flags & AUXIO_EBUS)
 		bus_space_write_4(sc->sc_tag, sc->sc_led, 0, htole32(led));
 	else
