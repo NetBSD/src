@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.21 1998/01/08 11:36:27 mrg Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.22 1998/01/08 23:03:27 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -250,14 +250,6 @@ vm_offset_t last_phys_addr;		/* physical address for last_page */
 #if defined(MACHINE_NEW_NONCONTIG)
 static struct vm_page *PHYS_TO_VM_PAGE __P((vm_offset_t));
 static int vm_physseg_find __P((vm_offset_t, int *));
-#endif
-
-/* XXX probably should be elsewhere. */
-#if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
-vm_offset_t	 pmap_steal_memory __P((vm_size_t));
-#if !defined(MACHINE_NEW_NONCONTIG)
-void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
-#endif
 #endif
 
 void		 vm_page_activate __P((vm_page_t));
