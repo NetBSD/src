@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.6 1996/05/09 23:48:47 cgd Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.7 1996/06/17 10:57:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,7 @@
 #include <vm/vm.h>
 
 #include <sys/exec_ecoff.h>
+#include <sys/exec_elf.h>
 #ifdef COMPAT_09
 #include <machine/bsd-aout.h>
 #endif
@@ -77,7 +78,7 @@ cpu_exec_aout_makecmds(p, epp)
 		/* If it's not a.out, maybe it's ELF.  (This wants to
 		   be moved up to the machine independent code as soon
 		   as possible.)  XXX */
-		return mips_elf_makecmds (p, epp);
+		return exec_elf_makecmds (p, epp);
 
 #ifdef COMPAT_09
 	epp -> ep_taddr = 0x1000;
