@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)getfh.2	6.4 (Berkeley) 7/23/91
-.\"	$Id: getfh.2,v 1.4 1994/04/19 00:11:02 jtc Exp $
+.\"	$Id: getfh.2,v 1.5 1994/04/22 00:13:35 jtc Exp $
 .\"
 .Dd July 23, 1991
 .Dt GETFH 2
@@ -62,9 +62,6 @@ fails if one or more of the following are true:
 A component of the path prefix of
 .Fa path
 is not a directory.
-.It Bq EINVAL
-.Fa path
-contains a character with the high-order bit set.
 .It Bq ENAMETOOLONG
 The length of a component of
 .Fa path

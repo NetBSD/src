@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mkdir.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: mkdir.2,v 1.6 1994/04/19 00:11:05 jtc Exp $
+.\"	$Id: mkdir.2,v 1.7 1994/04/22 00:13:37 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt MKDIR 2
@@ -65,8 +65,6 @@ will fail and no directory will be created if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
-.It Bq Er EINVAL
-The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 
 .Dv {NAME_MAX}
@@ -79,10 +77,6 @@ A component of the path prefix does not exist.
 Search permission is denied for a component of the path prefix.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
-.It Bq Er EPERM
-The
-.Fa path
-argument contains a byte with the high-order bit set.
 .It Bq Er EROFS
 The named file resides on a read-only file system.
 .It Bq Er EEXIST

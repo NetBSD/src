@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)quotactl.2	6.13 (Berkeley) 7/23/91
-.\"	$Id: quotactl.2,v 1.6 1994/04/19 00:11:14 jtc Exp $
+.\"	$Id: quotactl.2,v 1.7 1994/04/22 00:13:43 jtc Exp $
 .\"
 .Dd July 23, 1991
 .Dt QUOTACTL 2
@@ -157,8 +157,6 @@ The quota table cannot be expanded.
 .It Bq Er EINVAL
 .Fa Cmd
 or the command type is invalid.
-.It Bq Er EINVAL
-A pathname contains a character with the high-order bit set.
 .It Bq Er EACCES
 In
 .Dv Q_QUOTAON ,

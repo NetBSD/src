@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rename.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: rename.2,v 1.5 1994/04/19 00:11:17 jtc Exp $
+.\"	$Id: rename.2,v 1.6 1994/04/22 00:13:46 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt RENAME 2
@@ -106,8 +106,6 @@ indicates the reason for the failure.
 will fail and neither of the argument files will be
 affected if:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-Either pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 
 .Dv {NAME_MAX}

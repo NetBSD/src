@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mount.2	6.12 (Berkeley) 3/15/91
-.\"	$Id: mount.2,v 1.6 1994/04/19 00:11:10 jtc Exp $
+.\"	$Id: mount.2,v 1.7 1994/04/22 00:13:42 jtc Exp $
 .\"
 .Dd March 15, 1991
 .Dt MOUNT 2
@@ -199,8 +199,6 @@ is not a directory,
 or a path prefix of
 .Ar special
 is not a directory.
-.It Bq Er EINVAL
-A pathname contains a character with the high-order bit set.
 .It Bq Er EBUSY
 Another process currently holds a reference to
 .Fa dir .
@@ -283,8 +281,6 @@ may fail with one of the following errors:
 The caller is not the super-user.
 .It Bq Er ENOTDIR
 A component of the path is not a directory.
-.It Bq Er EINVAL
-The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 
 .Dv {NAME_MAX}

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mkfifo.2	6.4 (Berkeley) 7/23/91
-.\"	$Id: mkfifo.2,v 1.6 1994/04/19 00:11:07 jtc Exp $
+.\"	$Id: mkfifo.2,v 1.7 1994/04/22 00:13:39 jtc Exp $
 .\"
 .Dd July 23, 1991
 .Dt MKFIFO 2
@@ -69,8 +69,6 @@ will fail and no fifo will be created if:
 The kernel has not been configured to support fifo's.
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
-.It Bq Er EINVAL
-The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 
 .Dv {NAME_MAX}
@@ -83,10 +81,6 @@ A component of the path prefix does not exist.
 Search permission is denied for a component of the path prefix.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
-.It Bq Er EPERM
-The
-.Fa path
-argument contains a byte with the high-order bit set.
 .It Bq Er EROFS
 The named file resides on a read-only file system.
 .It Bq Er EEXIST

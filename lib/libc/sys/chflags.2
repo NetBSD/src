@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)chflags.2	6.6 (Berkeley) 7/25/91
-.\"	$Id: chflags.2,v 1.4 1994/04/19 00:10:52 jtc Exp $
+.\"	$Id: chflags.2,v 1.5 1994/04/22 00:13:27 jtc Exp $
 .\"
 .Dd July 25, 1991
 .Dt CHFLAGS 2
@@ -68,8 +68,6 @@ fails if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
-.It Bq Er EINVAL
-The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 
 .Dv {NAME_MAX}
