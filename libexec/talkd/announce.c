@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.11 1998/07/04 19:31:05 mrg Exp $	*/
+/*	$NetBSD: announce.c,v 1.11.2.1 2000/10/11 18:45:16 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.11 1998/07/04 19:31:05 mrg Exp $");
+__RCSID("$NetBSD: announce.c,v 1.11.2.1 2000/10/11 18:45:16 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ print_mesg(tty, request, remote_machine)
 	struct iovec iovec;
 	char line_buf[N_LINES][N_CHARS];
 	int sizes[N_LINES];
-	char big_buf[N_LINES*N_CHARS];
+	char big_buf[(N_LINES + 1) *N_CHARS];
 	char *bptr, *lptr, *vis_user;
 	int i, j, max_size;
 
