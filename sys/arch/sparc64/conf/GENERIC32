@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.47 2002/09/25 11:49:54 martti Exp $
+# 	$NetBSD: GENERIC32,v 1.48 2002/09/29 04:03:37 chs Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.47 $"
+#ident 		"GENERIC-$Revision: 1.48 $"
 
 maxusers	64
 
@@ -59,10 +59,10 @@ options 	LKM
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 #### Debugging options
 
