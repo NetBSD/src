@@ -1,4 +1,4 @@
-/*	$NetBSD: consdefs.h,v 1.1 1997/02/04 03:52:18 thorpej Exp $	*/
+/*	$NetBSD: consdefs.h,v 1.2 1997/05/12 07:45:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -53,6 +53,12 @@ void	dcaprobe __P((struct consdev *));
 void	dcainit __P((struct consdev *));
 int	dcagetchar __P((dev_t));
 void	dcaputchar __P((dev_t, int));
+#endif
+#ifdef APCICONSOLE
+void	apciprobe __P((struct consdev *));
+void	apciinit __P((struct consdev *));
+int	apcigetchar __P((dev_t));
+void	apciputchar __P((dev_t, int));
 #endif
 #ifdef DCMCONSOLE
 void	dcmprobe __P((struct consdev *));
