@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5 1995/05/01 19:45:42 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.6 1995/05/06 18:17:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -240,4 +240,25 @@ linux_sigreturn(p, uap, retval)
 	tf->tf_ss     = context.lsc_ss;
 
 	return (EJUSTRETURN);
+}
+
+int
+linux_modify_ldt(p, uap, retval)
+	struct proc *p;
+	struct linux_modify_ldt_args /* {
+		syscallarg(int) func;
+		syscallarg(void *) ptr;
+		syscallarg(size_t) bytecount;
+	} */ *uap;
+	register_t *retval;
+{
+
+	switch (SCARG(uap, func)) {
+	case 0:
+		/* read */
+	case 1:
+		/* write */
+	default:
+		return (ENOSYS);
+	}
 }
