@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 1998/09/01 19:47:38 itohy Exp $
+#	$NetBSD: Makefile,v 1.6 1998/12/14 19:04:58 itohy Exp $
 
 KDIR=	/sys/arch/x68k/include
 INCSDIR= /usr/include/x68k
 
 INCS=	ansi.h aout_machdep.h asm.h bootinfo.h bsd_audioio.h cdefs.h cpu.h \
 	cpufunc.h db_machdep.h disklabel.h elf_machdep.h endian.h float.h \
-	frame.h grfioctl.h ieeefp.h iteioctl.h kbd.h kbio.h kcore.h \
+	frame.h grfioctl.h ieeefp.h intr.h iteioctl.h kbd.h kbio.h kcore.h \
 	limits.h opmbellio.h param.h parioctl.h pcb.h pci_machdep.h pmap.h \
 	powioctl.h proc.h profile.h psl.h pte.h ptrace.h reg.h remote-sl.h \
 	setjmp.h signal.h sram.h stdarg.h trap.h types.h varargs.h vmparam.h \
