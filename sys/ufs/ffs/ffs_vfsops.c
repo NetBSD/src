@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.74 2000/12/03 19:52:06 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.75 2000/12/04 09:37:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -945,7 +945,8 @@ loop:
 		if (vp->v_type == VNON ||
 		    ((ip->i_flag &
 		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
-		     LIST_EMPTY(&vp->v_dirtyblkhd)))
+		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
+		     vp->v_uvm.u_obj.uo_npages == 0))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
