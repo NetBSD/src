@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.145 2002/10/07 13:29:59 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.146 2002/11/16 03:10:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.145 2002/10/07 13:29:59 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.146 2002/11/16 03:10:34 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,7 @@ main(int argc, char *argv[])
 	krb5_error_code	kerror;
 #endif
 	char		*p;
+	long		l;
 
 	connections = 1;
 	debug = 0;
@@ -336,13 +337,17 @@ main(int argc, char *argv[])
 			break;
 
 		case 'P':
-			dataport = (int)strtol(optarg, &p, 10);
-			if (*p != '\0' || dataport < IPPORT_RESERVED ||
-			    dataport > IPPORT_ANONMAX) {
+			errno = 0;
+			p = NULL;
+			l = strtol(optarg, &p, 10);
+			if (errno || *optarg == '\0' || *p != '\0' ||
+			    l < IPPORT_RESERVED ||
+			    l > IPPORT_ANONMAX) {
 				syslog(LOG_WARNING, "Invalid dataport %s",
 				    optarg);
 				dataport = 0;
 			}
+			dataport = (int)l;
 			break;
 
 		case 'q':
@@ -2732,13 +2737,15 @@ extended_port(const char *arg)
 	}
 
 			/* some more sanity checks */
+	errno = 0;
 	p = NULL;
 	(void)strtoul(result[2], &p, 10);
-	if (!*result[2] || *p)
+	if (errno || !*result[2] || *p)
 		goto parsefail;
+	errno = 0;
 	p = NULL;
 	proto = strtoul(result[0], &p, 10);
-	if (!*result[0] || *p)
+	if (errno || !*result[0] || *p)
 		goto protounsupp;
 	 
 	memset(&hints, 0, sizeof(hints));
