@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.78 2002/09/26 13:42:05 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.79 2002/09/26 13:43:52 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -79,7 +79,7 @@ Obj_Entry      *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
-const char     *_rtld_path = _PATH_RTLD;
+char           *_rtld_path = _PATH_RTLD;
 Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
 
