@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.21 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hunt.c,v 1.22 2004/02/08 22:23:50 jsm Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.21 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.22 2004/02/08 22:23:50 jsm Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -752,7 +752,7 @@ bad_ver()
  */
 SIGNAL_TYPE
 sigterm(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	leavex(0, (char *) NULL);
 	/* NOTREACHED */
@@ -765,7 +765,7 @@ sigterm(dummy)
  */
 SIGNAL_TYPE
 sigusr1(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	leavex(1, "Unable to start driver.  Try again.");
 	/* NOTREACHED */
@@ -778,7 +778,7 @@ sigusr1(dummy)
  */
 SIGNAL_TYPE
 sigalrm(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	return;
 }
@@ -805,7 +805,7 @@ rmnl(s)
  */
 SIGNAL_TYPE
 intr(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	int	ch;
 	int	explained;
