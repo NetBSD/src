@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.525 2003/04/15 23:13:50 augustss Exp $
+$NetBSD: pcidevs,v 1.526 2003/04/15 23:15:23 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2358,6 +2358,7 @@ product VIATECH VT8366		0x3099	VT8366 (Apollo KT266) CPU-PCI Bridge
 product VIATECH VT8653		0x3101	VT8653 (Apollo Pro 266T) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT8235		0x3177	VT8235 (Apollo KT400) PCI-ISA Bridge
+product VIATECH VT8377		0x3189	VT8377 Apollo KT400 CPU to PCI Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8231		0x8231	VT8231 IDE Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 KT133 PCI to AGP Bridge
@@ -2368,7 +2369,7 @@ product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) CPU-AGP Bridge
 product VIATECH VT8605AGP	0x8605	VT8605 (Apollo ProMedia 133) Host-AGP Bridge
 product VIATECH VT8633AGP	0xb091	VT8633 (Apollo Pro 266) CPU-AGP Bridge
 product VIATECH VT8366AGP	0xb099	VT8366 CPU-AGP Bridge
-product VIATECH VT8377		0xb168	VT8377 CPU-AGP Bridge
+product VIATECH VT8377AGP	0xb168	VT8377 CPU-AGP Bridge
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_60x0		0x0000	GDT6000/6020/6050
