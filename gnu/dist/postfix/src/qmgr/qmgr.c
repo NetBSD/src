@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.6 2004/05/31 00:24:43 heas Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.7 2004/07/28 22:49:25 heas Exp $	*/
 
 /*++
 /* NAME
@@ -52,7 +52,7 @@
 /*	These files are maintained by the \fBdefer\fR(8) daemon.
 /* .IP \fBtrace\fR
 /*	Per-recipient status information as requested with the
-/*	Postfix "\fBsendmail -v\fR" or "\fBsendmail -bv" command\fR.
+/*	Postfix "\fBsendmail -v\fR" or "\fBsendmail -bv\fR" command.
 /*	These files are maintained by the \fBtrace\fR(8) daemon.
 /* .PP
 /*	The \fBqmgr\fR daemon is responsible for asking the
@@ -285,7 +285,7 @@
 /* SEE ALSO
 /*	trivial-rewrite(8), address routing
 /*	bounce(8), delivery status reports
-/*	postconf(5) configuration parameters
+/*	postconf(5), configuration parameters
 /*	master(8), process manager
 /*	syslogd(8) system logging
 /* README FILES
