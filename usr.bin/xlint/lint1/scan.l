@@ -1,7 +1,8 @@
 %{
-/*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
+/*	$NetBSD: scan.l,v 1.9 1996/12/22 11:31:24 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
  *
@@ -33,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $";
+static char rcsid[] = "$NetBSD: scan.l,v 1.9 1996/12/22 11:31:24 cgd Exp $";
 #endif
 
 #include <stdlib.h>
@@ -54,13 +55,13 @@ static char rcsid[] = "$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $";
 extern	u_quad_t strtouq __P((const char *, char **, int));
 
 /* Current position (its also updated when an included file is parsed) */
-pos_t	curr_pos = { 1, "" };
+pos_t	curr_pos = { 1, "", 0 };
 
 /*
  * Current position in C source (not updated when an included file is
  * parsed).
  */
-pos_t	csrc_pos = { 1, "" };
+pos_t	csrc_pos = { 1, "", 0 };
 
 static	void	incline __P((void));
 static	void	badchar __P((int));
@@ -162,8 +163,11 @@ static void
 incline()
 {
 	curr_pos.p_line++;
-	if (curr_pos.p_file == csrc_pos.p_file)
+	curr_pos.p_uniq = 0;
+	if (curr_pos.p_file == csrc_pos.p_file) {
 		csrc_pos.p_line++;
+		csrc_pos.p_uniq = 0;
+	}
 }
 
 static void
@@ -968,6 +972,12 @@ directive()
 		if (c != '\0')
 			warning("extra character(s) after directive");
 #endif
+
+		/* empty string means stdin */
+		if (fnl == 0) {
+			fn = "{standard input}";
+			fnl = 16;			/* strlen (fn) */
+		}
 		curr_pos.p_file = fnnalloc(fn, fnl);
 		/*
 		 * If this is the first directive, the name is the name
@@ -981,8 +991,11 @@ directive()
 		}
 	}
 	curr_pos.p_line = (int)ln - 1;
-	if (curr_pos.p_file == csrc_pos.p_file)
+	curr_pos.p_uniq = 0;
+	if (curr_pos.p_file == csrc_pos.p_file) {
 		csrc_pos.p_line = (int)ln - 1;
+		csrc_pos.p_uniq = 0;
+	}
 }
 
 /*
@@ -1270,7 +1283,7 @@ getsym(sb)
 		di = dcs;
 	}
 
-	STRUCT_ASSIGN(sym->s_dpos, curr_pos);
+	UNIQUE_CURR_POS(sym->s_dpos);
 	if ((sym->s_kind = symtyp) != FLAB)
 		sym->s_type = gettyp(INT);
 
@@ -1382,7 +1395,7 @@ pushdown(sym)
 	if (sym->s_blklev > blklev)
 		lerror("pushdown()");
 	nsym->s_name = sym->s_name;
-	STRUCT_ASSIGN(nsym->s_dpos, curr_pos);
+	UNIQUE_CURR_POS(nsym->s_dpos);
 	nsym->s_kind = sym->s_kind;
 	nsym->s_blklev = blklev;
 
