@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.4 1996/03/20 18:46:58 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.5 1996/03/27 22:07:26 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -532,6 +532,8 @@ podulebusattach(parent, self, aux)
 	poduleirq.ih_func = poduleirqhandler;
 	poduleirq.ih_arg = NULL;
 	poduleirq.ih_level = IPL_NONE;
+	poduleirq.ih_name = "podulebus";
+
 	if (irq_claim(IRQ_PODULE, &poduleirq))
 		panic("Cannot claim IRQ for podulebus%d\n", IRQ_PODULE, parent->dv_unit);
 
