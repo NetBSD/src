@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.8.2.2 2000/12/08 09:13:04 bouyer Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.8.2.3 2001/02/11 19:16:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -550,7 +550,7 @@ int	lease_check	__P((void *));
  * Global vfs data structures for filecore
  */
 int (**filecore_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, filecore_lookup },		/* lookup */
 	{ &vop_create_desc, filecore_create },		/* create */
@@ -599,5 +599,5 @@ struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_size_desc, genfs_size },			/* size */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc filecore_vnodeop_opv_desc =
+const struct vnodeopv_desc filecore_vnodeop_opv_desc =
 	{ &filecore_vnodeop_p, filecore_vnodeop_entries };

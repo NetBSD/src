@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4.22.1 2000/11/20 20:19:21 bouyer Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.4.22.2 2001/02/11 19:11:28 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -1135,7 +1135,7 @@ void db_formatAsm(insn, loc, altfmt)
 	for (i = 0; i < 4 && insn->i_opr[i].o_mode != AMODE_NONE; i++) {
 		if (insn->i_opr[i].o_mode == AMODE_MSPC ||
 		    insn->i_opr[i].o_mode == AMODE_RREL) {
-			register struct db_variable *regp;
+			register const struct db_variable *regp;
 			db_expr_t	value;
 			
 			if (strcmp(db_regs->name, "pc") == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2.2.1 2000/11/20 20:24:31 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2.2.2 2001/02/11 19:12:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -123,12 +123,8 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
-#define VM_PHYSSEG_MAX		1
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD		/* no more after vm_mem_init */
-
-#define VM_NFREELIST		1
-#define VM_FREELIST_DEFAULT	0
 
 /*
  * pmap specific data stored in the vm_physmem[] array

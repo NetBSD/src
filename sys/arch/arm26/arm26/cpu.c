@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.6.5 2001/01/05 17:34:00 bouyer Exp $ */
+/* $NetBSD: cpu.c,v 1.1.6.6 2001/02/11 19:08:52 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,14 +33,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.5 2001/01/05 17:34:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.6 2001/02/11 19:08:52 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/user.h>
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include <machine/machdep.h>
 #include <machine/pcb.h>
 
@@ -70,11 +70,13 @@ struct cfattach cpu_ca = {
 /* cf_flags bits */
 #define CFF_NOCACHE	0x00000001
 
+struct cpu_softc *the_cpu;
+
 static int
 cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	if (cf->cf_unit == 0)
+	if (the_cpu == NULL)
 		return 1;
 	return 0;
 }
@@ -84,10 +86,11 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	int supported;
 
+	the_cpu = (struct cpu_softc *)self;
 	printf(": ");
 	cpu_type = cpu_identify();
 	supported = 0;
-	switch (cpu_type & CPU_ID_CPU_MASK) {
+	switch (cpu_type) {
 	case CPU_ID_ARM2:
 		printf("ARM2");
 #ifdef CPU_ARM2

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.2.2 2001/01/08 14:56:19 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.3 2001/02/11 19:09:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,6 +56,8 @@ bdev_decl(ccd);
 bdev_decl(raid);
 #include "md.h"
 bdev_decl(md);
+#include "gdrom.h"
+bdev_decl(gdrom);
 
 struct bdevsw	bdevsw[] =
 {
@@ -78,6 +80,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_disk_init(NRAID,raid),	/* 18: RAIDframe disk driver */
+	bdev_disk_init(NGDROM,gdrom),   /* 19: GDROM */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -136,8 +139,22 @@ cdev_decl(esh_fp);
 #include "scsibus.h"
 cdev_decl(scsibus);
 
+#include "pvr.h"
+#include "mkbd.h"
+
 #include "ipfilter.h"
 #include "rnd.h"
+
+#include "wsdisplay.h"
+cdev_decl(wsdisplay);
+#include "wskbd.h"
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
+#include "wsmux.h"
+cdev_decl(wsmux);
+
+cdev_decl(gdrom);
 
 struct cdevsw	cdevsw[] =
 {
@@ -193,6 +210,13 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 49: RAIDframe disk driver */
 	cdev_esh_init(NESH, esh_fp),	/* 50: HIPPI (esh) raw device */
 	cdev_wdog_init(NWDOG,wdog),	/* 51: watchdog timer */
+
+	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay), /* 52: frame buffers, etc. */
+	cdev_mouse_init(NWSKBD, wskbd), /* 53: keyboards */
+	cdev_mouse_init(NWSMOUSE, wsmouse),       /* 54: mice */
+	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 55: svr4 net pseudo-device */
+	cdev_mouse_init(NWSMUX, wsmux),  /* 56: ws multiplexor */
+	cdev_disk_init(NGDROM,gdrom),	/* 57: GDROM */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -285,6 +309,13 @@ static int chrtoblktbl[] = {
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	NODEV,
+	/* 57 */	19,
 };
 
 /*
@@ -308,11 +339,32 @@ chrtoblk(dev)
 
 #define scicnpollc	nullcnpollc
 #define scifcnpollc	nullcnpollc
+
+#if NPVR > 0
+#if NWSKBD > 0
+#define pvrcngetc wskbd_cngetc
+#else
+static int
+pvrcngetc(dev_t dev)
+{
+	return 0;
+}
+#endif
+
+#define pvrcnputc wsdisplay_cnputc
+#define	pvrcnpollc nullcnpollc
+#endif
+
+
 cons_decl(sci);
 cons_decl(scif);
 cons_decl(com);
+cons_decl(pvr);
 
 struct consdev constab[] = {
+#if NPVR > 0
+	cons_init(pvr),
+#endif
 #if NSCI > 0
 	cons_init(sci),
 #endif

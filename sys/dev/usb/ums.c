@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.33.2.2 2001/01/05 17:36:33 bouyer Exp $	*/
+/*	$NetBSD: ums.c,v 1.33.2.3 2001/02/11 19:16:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -305,10 +305,10 @@ USB_ATTACH(ums)
 	a.accessops = &ums_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

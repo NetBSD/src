@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.26 1999/09/30 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.26.2.1 2001/02/11 19:09:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -78,17 +78,9 @@ void asc_dmastop __P((struct sbic_softc *));
 int asc_dmanext __P((struct sbic_softc *));
 int asc_dmaintr __P((struct sbic_softc *));
 int asc_dmago	__P((struct sbic_softc *, char *, int, int));
-int asc_scsicmd __P((struct scsipi_xfer *xs));
+void asc_scsipi_request __P((struct scsipi_channel *,
+                                scsipi_adapter_req_t, void *));
 int asc_intr	__P((void *arg));
-void asc_minphys __P((struct buf *bp));
-
-struct scsipi_device asc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
-
 
 #ifdef DEBUG
 int	asc_dmadebug = 0;

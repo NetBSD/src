@@ -58,7 +58,8 @@ static int syscall_load __P((struct lkm_table *, int));
  * have 0 arguments to our system call.
  */
 static struct sysent newent = {
-	0, 0,	example_syscall		/* # of args, args size, fn. pointer */
+	/* # of args, args size, MP-safe, fn. pointer */
+	0, 0, 0, example_syscall
 };
 
 MOD_SYSCALL( "syscall_example", -1, &newent)

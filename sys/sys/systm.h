@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.97.2.4 2001/01/18 09:24:03 bouyer Exp $	*/
+/*	$NetBSD: systm.h,v 1.97.2.5 2001/02/11 19:17:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -132,6 +132,7 @@ typedef int	sy_call_t(struct proc *, void *, register_t *);
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
 	short	sy_argsize;	/* total size of arguments */
+	int	sy_flags;	/* flags. see below */
 	sy_call_t *sy_call;     /* implementing function */
 } sysent[];
 extern int nsysent;
@@ -142,6 +143,8 @@ extern int nsysent;
 #else
 #error	"what byte order is this machine?"
 #endif
+
+#define	SYCALL_MPSAFE	0x0001	/* syscall is MP-safe */
 
 extern int boothowto;		/* reboot flags, from console subsystem */
 #define	bootverbose	(boothowto & AB_VERBOSE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.10.6.2 2000/11/20 11:43:20 bouyer Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.10.6.3 2001/02/11 19:16:22 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -123,6 +123,8 @@ struct kue_ether_desc {
 
 #define KUE_CTL_READ		0x01
 #define KUE_CTL_WRITE		0x02
+
+#define KUE_WARM_REV		0x0202
 
 /*
  * The interrupt endpoint is currently unused

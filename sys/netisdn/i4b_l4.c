@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.1.1.1.2.2 2001/01/08 14:57:54 bouyer Exp $ 
+ *	$Id: i4b_l4.c,v 1.1.1.1.2.3 2001/02/11 19:17:32 bouyer Exp $ 
  *
  * $FreeBSD$
  *
@@ -397,7 +397,7 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 	int s;
 	struct mbuf *m;
 
-	s = SPLI4B();
+	s = splnet();
 
 	cd->last_active_time = cd->connect_time = SECOND;
 
@@ -910,7 +910,7 @@ i4b_idle_check(call_desc_t *cd)
 	if(cd->cdid == CDID_UNUSED)
 		return;
 	
-	s = SPLI4B();
+	s = splnet();
 
 	/* failsafe */
 

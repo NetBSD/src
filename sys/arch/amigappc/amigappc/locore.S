@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.5.2.2 2000/11/20 19:59:35 bouyer Exp $   */
+/*      $NetBSD: locore.S,v 1.5.2.3 2001/02/11 19:08:49 bouyer Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -97,7 +97,7 @@ _C_LABEL(kernel_text):
 /*
  * Startup entry
  * This is where bootloader jumps after successful kernel loading.
- * Must b the first address in text segment
+ * Must be the first address in text segment
  */
 	.text
 	.globl	__start

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.7.8.1 2000/11/20 18:10:30 bouyer Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.7.8.2 2001/02/11 19:17:15 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -119,11 +119,6 @@
 # if (__FreeBSD_version >= 300000)
 #  include <sys/malloc.h>
 # endif
-
-# ifndef MIN
-#  define	MIN(a,b)	(((a)<(b))?(a):(b))
-# endif
-
 
 # if SOLARIS || defined(__sgi)
 extern	kmutex_t	ipl_mutex;

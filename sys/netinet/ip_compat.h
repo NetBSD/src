@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.16.10.1 2000/11/20 18:10:24 bouyer Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.16.10.2 2001/02/11 19:17:13 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -199,10 +199,6 @@ union	i6addr	{
 #define	IP6CMP(a,b)	bcmp((char *)&(a), (char *)&(b), sizeof(a))
 #define	IP6EQ(a,b)	(bcmp((char *)&(a), (char *)&(b), sizeof(a)) == 0)
 #define	IP6NEQ(a,b)	(bcmp((char *)&(a), (char *)&(b), sizeof(a)) != 0)
-
-#ifndef	MAX
-#define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
-#endif
 
 /*
  * Security Options for Intenet Protocol (IPSO) as defined in RFC 1108.

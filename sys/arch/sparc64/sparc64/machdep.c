@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51.2.4 2001/01/18 09:23:04 bouyer Exp $ */
+/*	$NetBSD: machdep.c,v 1.51.2.5 2001/02/11 19:12:39 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -146,6 +146,14 @@ extern vaddr_t avail_end;
 int	physmem;
 
 extern	caddr_t msgbufaddr;
+
+/*
+ * Maximum number of DMA segments we'll allow in dmamem_load()
+ * routines.  Can be overridden in config files, etc.
+ */
+#ifndef MAX_DMA_SEGS
+#define MAX_DMA_SEGS	20
+#endif
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -366,14 +374,6 @@ setregs(p, pack, stack)
 	 */
 #ifdef __arch64__
 	/* Check what memory model is requested */
-#define	EF_SPARCV9_MM		0x3
-#define	EF_SPARCV9_TSO		0x0
-#define	EF_SPARCV9_PSO		0x1
-#define	EF_SPARCV9_RMO		0x2
-#define	EF_SPARC_SUN_US1	0x000200
-#define	EF_SPARC_HAL_R1		0x000400
-#define	EF_SPARC_SUN_US3	0x000800
-
 	switch ((eh->e_flags & EF_SPARCV9_MM)) {
 	default:
 		printf("Unknown memory model %d\n", 
@@ -785,6 +785,7 @@ cpu_reboot(howto, user_boot_string)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;
+		extern int sparc_clock_time_is_ok;
 
 		/* XXX protect against curproc->p_stats.foo refs in sync() */
 		if (curproc == NULL)
@@ -795,8 +796,12 @@ cpu_reboot(howto, user_boot_string)
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
+		 * Do this only if the TOD clock has already been read out
+		 * successfully by inittodr() or set by an explicit call
+		 * to resettodr() (e.g. from settimeofday()).
 		 */
-		resettodr();
+		if (sparc_clock_time_is_ok)
+			resettodr();
 	}
 	(void) splhigh();		/* ??? */
 
@@ -1196,12 +1201,14 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	i = 0;
 	map->dm_segs[i].ds_addr = NULL;
 	map->dm_segs[i].ds_len = 0;
-	while (buflen > 0 && i < map->_dm_segcnt) {
+	while (sgsize > 0 && i < map->_dm_segcnt) {
 		paddr_t pa;
 
 		(void) pmap_extract(pmap_kernel(), vaddr, &pa);
-		buflen -= NBPG;
+		sgsize -= NBPG;
 		vaddr += NBPG;
+		if (map->dm_segs[i].ds_len == 0)
+			map->dm_segs[i].ds_addr = pa;
 		if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
 		    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
 			/* Hey, waddyaknow, they're contiguous */
@@ -1227,47 +1234,58 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	int flags;
 {
 #if 1
+	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i;
 	size_t len;
 
+	/* Record mbuf for *_unload */
+	map->_dm_type = _DM_TYPE_MBUF;
+	map->_dm_source = (void *)m;
+
 	i = 0;
-	map->dm_segs[i].ds_addr = NULL;
-	map->dm_segs[i].ds_len = 0;
 	len = 0;
 	while (m) {
 		vaddr_t vaddr = mtod(m, vaddr_t);
-		bus_size_t buflen = m->m_len;
+		long buflen = (long)m->m_len;
 
 		len += buflen;
-		while (buflen > 0 && i < map->_dm_segcnt) {
+		while (buflen > 0 && i < MAX_DMA_SEGS) {
 			paddr_t pa;
+			long incr;
 
+			incr = min(buflen, NBPG);
 			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
-			buflen -= NBPG;
-			vaddr += NBPG;
+			buflen -= incr;
+			vaddr += incr;
 
-			if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
-			    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+			if (i > 0 && pa == (segs[i-1].ds_addr + segs[i-1].ds_len)
+			    && ((segs[i-1].ds_len + incr) < map->_dm_maxsegsz)) {
 				/* Hey, waddyaknow, they're contiguous */
-				map->dm_segs[i].ds_len += NBPG;
+				segs[i-1].ds_len += incr;
 				continue;
 			}
-			map->dm_segs[++i].ds_addr = pa;
-			map->dm_segs[i].ds_len = NBPG;
+			segs[i].ds_addr = pa;
+			segs[i].ds_len = incr;
+			segs[i]._ds_boundary = 0;
+			segs[i]._ds_align = 0;
+			segs[i]._ds_mlist = NULL;
+			i++;
 		}
-		if (i >= map->_dm_segcnt) 
-			/* Exceeded the size of our dmamap */
-			return E2BIG;
-
 		m = m->m_next;
+		if (m && i >= MAX_DMA_SEGS) {
+			/* Exceeded the size of our dmamap */
+			map->_dm_type = 0;
+			map->_dm_source = NULL;
+			return E2BIG;
+		}
 	}
-	map->dm_nsegs = i;
-	bus_dmamap_load_raw(t, map, map->dm_segs, map->dm_nsegs, 
-			    (bus_size_t)len, flags);
+
+	return (bus_dmamap_load_raw(t, map, segs, i,
+			    (bus_size_t)len, flags));
 #else
 	panic("_bus_dmamap_load_mbuf: not implemented");
-#endif
 	return 0;
+#endif
 }
 
 /*
@@ -1280,50 +1298,89 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-#if 1
+/* 
+ * XXXXXXX The problem with this routine is that it needs to 
+ * lock the user address space that is being loaded, but there
+ * is no real way for us to unlock it during the unload process.
+ */
+#if 0
+	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i, j;
 	size_t len;
 	struct proc *p = uio->uio_procp;
 	struct pmap *pm;
 
-	if (uio->uio_segflg == UIO_USERSPACE) 
+	/*
+	 * Check user read/write access to the data buffer.
+	 */
+	if (uio->uio_segflg == UIO_USERSPACE) {
 		pm = p->p_vmspace->vm_map.pmap;
-	else
+		for (i = 0; i < uio->uio_iovcnt; i++) {
+			/* XXXCDC: map not locked, rethink */
+			if (__predict_false(!uvm_useracc(uio->uio_iov[i].iov_base,
+				     uio->uio_iov[i].iov_len,
+/* XXX is UIO_WRITE correct? */
+				     (uio->uio_rw == UIO_WRITE) ? B_WRITE : B_READ)))
+				return (EFAULT);
+		}
+	} else
 		pm = pmap_kernel();
 
 	i = 0;
-	map->dm_segs[i].ds_addr = NULL;
-	map->dm_segs[i].ds_len = 0;
 	len = 0;
 	for (j=0; j<uio->uio_iovcnt; j++) {
 		struct iovec *iov = &uio->uio_iov[j];
 		vaddr_t vaddr = (vaddr_t)iov->iov_base;
 		bus_size_t buflen = iov->iov_len;
 
+		/*
+		 * Lock the part of the user address space involved
+		 *    in the transfer.
+		 */
+		PHOLD(p);
+		if (__predict_false(uvm_vslock(p, vaddr, buflen,
+			    (uio->uio_rw == UIO_WRITE) ?
+			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ)
+			    != KERN_SUCCESS)) {
+				goto after_vsunlock;
+			}
+		
 		len += buflen;
-		while (buflen > 0 && i < map->_dm_segcnt) {
+		while (buflen > 0 && i < MAX_DMA_SEGS) {
 			paddr_t pa;
+			long incr;
 
+			incr = min(buflen, NBPG);
 			(void) pmap_extract(pm, vaddr, &pa);
-			buflen -= NBPG;
-			vaddr += NBPG;
+			buflen -= incr;
+			vaddr += incr;
+			if (segs[i].ds_len == 0)
+				segs[i].ds_addr = pa;
 
-			if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
-			    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+
+			if (i > 0 && pa == (segs[i-1].ds_addr + segs[i-1].ds_len)
+			    && ((segs[i-1].ds_len + incr) < map->_dm_maxsegsz)) {
 				/* Hey, waddyaknow, they're contiguous */
-				map->dm_segs[i].ds_len += NBPG;
+				segs[i-1].ds_len += incr;
 				continue;
 			}
-			map->dm_segs[++i].ds_addr = pa;
-			map->dm_segs[i].ds_len = NBPG;
+			segs[i].ds_addr = pa;
+			segs[i].ds_len = incr;
+			segs[i]._ds_boundary = 0;
+			segs[i]._ds_align = 0;
+			segs[i]._ds_mlist = NULL;
+			i++;
 		}
-		if (i >= map->_dm_segcnt) 
+		uvm_vsunlock(p, bp->b_data, todo);
+		PRELE(p);
+ 		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
 			return E2BIG;
 	}
-	map->dm_nsegs = i;
-	bus_dmamap_load_raw(t, map, map->dm_segs, map->dm_nsegs, 
-			    (bus_size_t)len, flags);
+	map->_dm_type = DM_TYPE_UIO;
+	map->_dm_source = (void *)uio;
+	return (bus_dmamap_load_raw(t, map, segs, i, 
+				    (bus_size_t)len, flags));
 #endif
 	return 0;
 }
@@ -1358,9 +1415,6 @@ _bus_dmamap_unload(t, map)
 	vm_page_t m;
 	struct pglist *mlist;
 	paddr_t pa;
-
-	if (map->dm_nsegs != 1)
-		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
 
 	for (i=0; i<map->dm_nsegs; i++) {
 		if ((mlist = map->dm_segs[i]._ds_mlist) == NULL) {

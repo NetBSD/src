@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_errno.h,v 1.3 1998/10/23 03:22:59 erh Exp $	*/
+/*	$NetBSD: ibcs2_errno.h,v 1.3.12.1 2001/02/11 19:13:30 bouyer Exp $	*/
 
 /*
  * ibcs2_errno.h
@@ -150,6 +150,6 @@
 #define IBCS2_ESTALE		151
 #define IBCS2_EIORESID		500
 
-extern int native_to_ibcs2_errno[];
+extern const int native_to_ibcs2_errno[];
 
 #endif /* _IBCS2_ERRNO_H */

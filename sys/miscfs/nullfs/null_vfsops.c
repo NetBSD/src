@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.24.2.2 2000/11/22 16:05:45 bouyer Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.24.2.3 2001/02/11 19:16:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -269,9 +269,9 @@ nullfs_unmount(mp, mntflags, p)
 	return 0;
 }
 
-extern struct vnodeopv_desc null_vnodeop_opv_desc;
+extern const struct vnodeopv_desc null_vnodeop_opv_desc;
 
-struct vnodeopv_desc *nullfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const nullfs_vnodeopv_descs[] = {
 	&null_vnodeop_opv_desc,
 	NULL,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.2.12.2 2001/01/05 17:34:05 bouyer Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.2.12.3 2001/02/11 19:09:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -245,12 +245,12 @@ footbridge_pci_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
-	void *pcv = pa->pa_pc;
-	pcitag_t intrtag = pa->pa_intrtag;
 	int pin = pa->pa_intrpin, line = pa->pa_intrline;
 	int intr = -1;
 
 #ifdef PCI_DEBUG
+	void *pcv = pa->pa_pc;
+	pcitag_t intrtag = pa->pa_intrtag;
 	int bus, device, function;
 
 	footbridge_pci_decompose_tag(pcv, intrtag, &bus, &device, &function);

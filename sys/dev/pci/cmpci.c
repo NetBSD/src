@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.4.2.3 2001/01/05 17:36:02 bouyer Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.4.2.4 2001/02/11 19:15:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -247,7 +247,7 @@ cmpci_reg_clear_4(sc, no, mask)
 
 
 /* rate */
-static struct {
+static const struct {
 	int rate;
 	int divider;
 } cmpci_rate_table[CMPCI_REG_NUMRATE] = {

@@ -27,7 +27,7 @@
  *	i4b - mbuf handling support routines
  *	------------------------------------
  *
- *	$Id: i4b_mbuf.c,v 1.1.1.1.2.2 2001/01/08 14:57:56 bouyer Exp $ 
+ *	$Id: i4b_mbuf.c,v 1.1.1.1.2.3 2001/02/11 19:17:32 bouyer Exp $ 
  *
  * $FreeBSD$
  *
@@ -146,7 +146,7 @@ void
 i4b_Dcleanifq(struct ifqueue *ifq)
 {
 	struct mbuf *m;
-	int x = splimp();
+	int x = splnet();
 	
 	while(!IF_QEMPTY(ifq))
 	{
@@ -228,7 +228,7 @@ void
 i4b_Bcleanifq(struct ifqueue *ifq)
 {
 	struct mbuf *m;
-	int x = splimp();
+	int x = splnet();
 	
 	while(!IF_QEMPTY(ifq))
 	{

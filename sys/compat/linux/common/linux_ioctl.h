@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.11.8.2 2001/01/18 09:23:13 bouyer Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.11.8.3 2001/02/11 19:14:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@ __END_DECLS
 #include <compat/linux/arch/m68k/linux_ioctl.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_ioctl.h>
+#elif defined(__powerpc__)
+#include <compat/linux/arch/powerpc/linux_ioctl.h>
 #else
 #error Undefined linux_ioctl.h machine type.
 #endif

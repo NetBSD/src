@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.4.2.3 2001/01/05 17:37:02 bouyer Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.4.2.4 2001/02/11 19:17:47 bouyer Exp $	*/
 
 /*
  *
@@ -150,6 +150,8 @@ uvm_anon_remove(count)
 
 /*
  * allocate an anon
+ *
+ * => new anon is returned locked!
  */
 struct vm_anon *
 uvm_analloc()
@@ -164,6 +166,8 @@ uvm_analloc()
 		a->an_ref = 1;
 		a->an_swslot = 0;
 		a->u.an_page = NULL;		/* so we can free quickly */
+		LOCK_ASSERT(simple_lock_held(&a->an_lock) == 0);
+		simple_lock(&a->an_lock);
 	}
 	simple_unlock(&uvm.afreelock);
 	return(a);
@@ -184,6 +188,9 @@ uvm_anfree(anon)
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_anfree"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(anon=0x%x)", anon, 0,0,0);
+
+	KASSERT(anon->an_ref == 0);
+	LOCK_ASSERT(simple_lock_held(&anon->an_lock) == 0);
 
 	/*
 	 * get page
@@ -274,9 +281,9 @@ uvm_anon_dropswap(anon)
 	struct vm_anon *anon;
 {
 	UVMHIST_FUNC("uvm_anon_dropswap"); UVMHIST_CALLED(maphist);
-	if (anon->an_swslot == 0) {
+
+	if (anon->an_swslot == 0)
 		return;
-	}
 
 	UVMHIST_LOG(maphist,"freeing swap for anon %p, paged to swslot 0x%x",
 		    anon, anon->an_swslot, 0, 0);
@@ -314,6 +321,8 @@ uvm_anon_lockloanpg(anon)
 {
 	struct vm_page *pg;
 	boolean_t locked = FALSE;
+
+	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
 
 	/*
 	 * loop while we have a resident page that has a non-zero loan count.
@@ -469,7 +478,10 @@ anon_pagein(anon)
 	int rv;
 
 	/* locked: anon */
+	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
+
 	rv = uvmfault_anonget(NULL, NULL, anon);
+
 	/*
 	 * if rv == VM_PAGER_OK, anon is still locked, else anon
 	 * is unlocked
@@ -514,7 +526,6 @@ anon_pagein(anon)
 	 */
 
 	pmap_clear_reference(pg);
-	pmap_page_protect(pg, VM_PROT_NONE);
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();

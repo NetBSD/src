@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1.2.2 2000/11/22 16:01:35 bouyer Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.1.2.3 2001/02/11 19:12:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -46,7 +46,7 @@
 extern char _start[], etext[];
 void db_nextframe(db_addr_t, db_addr_t *, db_addr_t *);
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
  { "r0",   (long *)&ddb_regs.tf_r0,   FCN_NULL },
  { "r1",   (long *)&ddb_regs.tf_r1,   FCN_NULL },
  { "r2",   (long *)&ddb_regs.tf_r2,   FCN_NULL },
@@ -70,7 +70,7 @@ struct db_variable db_regs[] = {
  { "macl", (long *)&ddb_regs.tf_macl, FCN_NULL },
 };
 
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
 db_stack_trace_print(addr, have_addr, count, modif, print)

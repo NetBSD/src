@@ -1,0 +1,7 @@
+#	$NetBSD: files.bicons,v 1.1.2.2 2001/02/11 19:15:22 bouyer Exp $
+
+file	dev/hpc/bicons.c
+file	dev/hpc/bifont.c
+
+defpseudo	biconsdev
+file	dev/hpc/biconsdev.c	biconsdev	needs-count

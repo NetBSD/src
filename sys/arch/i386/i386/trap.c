@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133.2.4 2000/12/13 15:49:30 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.133.2.5 2001/02/11 19:10:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ trap(frame)
 		    IDTVEC(osyscall)[];
 	struct trapframe *vframe;
 	int resume;
+	caddr_t onfault;
 
 	uvmexp.traps++;
 
@@ -403,7 +404,10 @@ trap(frame)
 		}
 
 		/* Fault the original page in. */
+		onfault = p->p_addr->u_pcb.pcb_onfault;
+		p->p_addr->u_pcb.pcb_onfault = NULL;
 		rv = uvm_fault(map, va, 0, ftype);
+		p->p_addr->u_pcb.pcb_onfault = onfault;
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;

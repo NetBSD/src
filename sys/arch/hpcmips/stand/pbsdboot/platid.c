@@ -1,2 +1,3 @@
 #include <stand.h>
-#include "../../hpcmips/platid.c"
+
+#include "../../../hpc/hpc/platid.c"

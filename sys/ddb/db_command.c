@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.31.2.2 2000/12/08 09:09:51 bouyer Exp $	*/
+/*	$NetBSD: db_command.c,v 1.31.2.3 2001/02/11 19:15:12 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -104,16 +104,16 @@ db_skip_to_eol()
  */
 int
 db_cmd_search(name, table, cmdp)
-	char			*name;
-	struct db_command	*table;
-	struct db_command	**cmdp;	/* out */
+	const char		*name;
+	const struct db_command	*table;
+	const struct db_command	**cmdp;	/* out */
 {
-	struct db_command	*cmd;
+	const struct db_command	*cmd;
 	int			result = CMD_NONE;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
-	    char *lp;
-	    char *rp;
+	    const char *lp;
+	    const char *rp;
 	    int  c;
 
 	    lp = name;
@@ -152,10 +152,10 @@ db_cmd_search(name, table, cmdp)
 
 void
 db_cmd_list(table)
-	struct db_command *table;
+	const struct db_command *table;
 {
 	int	 i, j, w, columns, lines, width=0, items, numcmds;
-	char	*p;
+	const char	*p;
 
 	for (numcmds = 0; table[numcmds].name != NULL; numcmds++) {
 		w = strlen(table[numcmds].name);
@@ -189,10 +189,10 @@ db_cmd_list(table)
 
 void
 db_command(last_cmdp, cmd_table)
-	struct db_command	**last_cmdp;	/* IN_OUT */
-	struct db_command	*cmd_table;
+	const struct db_command	**last_cmdp;	/* IN_OUT */
+	const struct db_command	*cmd_table;
 {
-	struct db_command	*cmd;
+	const struct db_command	*cmd;
 	int		t;
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
@@ -457,13 +457,13 @@ db_uvmexp_print_cmd(addr, have_addr, count, modif)
  * 'show' commands
  */
 
-struct db_command db_show_all_cmds[] = {
+static const struct db_command db_show_all_cmds[] = {
 	{ "callout",	db_show_callout,	0, NULL },
 	{ "procs",	db_show_all_procs,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
-struct db_command db_show_cmds[] = {
+static const struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
 #if defined(INET) && (NARP > 0)
 	{ "arptab",	db_show_arptab,		0,	NULL },
@@ -482,7 +482,7 @@ struct db_command db_show_cmds[] = {
 	{ NULL,		NULL,			0,	NULL }
 };
 
-struct db_command db_command_table[] = {
+static const struct db_command db_command_table[] = {
 	{ "break",	db_breakpoint_cmd,	0,		NULL },
 	{ "c",		db_continue_cmd,	0,		NULL },
 	{ "call",	db_fncall,		CS_OWN,		NULL },
@@ -494,7 +494,7 @@ struct db_command db_command_table[] = {
 	{ "examine",	db_examine_cmd,		CS_SET_DOT, 	NULL },
 	{ "kill",	db_kill_proc,		CS_OWN,		NULL },
 #ifdef DB_MACHINE_COMMANDS
-	{ "machine",    NULL,                   0,     		NULL },
+	{ "machine",    NULL,                   0, db_machine_command_table },
 #endif
 	{ "match",	db_trace_until_matching_cmd,0,		NULL },
 	{ "next",	db_trace_until_matching_cmd,0,		NULL },
@@ -518,29 +518,7 @@ struct db_command db_command_table[] = {
 	{ NULL, 	NULL,			0,		NULL }
 };
 
-#ifdef DB_MACHINE_COMMANDS
-
-/*
- * this function should be called to install the machine dependent
- * commands. It should be called before the debugger is enabled
- */
-void
-db_machine_commands_install(ptr)
-	struct db_command *ptr;
-{
-	struct db_command *cmd;
-
-	for (cmd = db_command_table; cmd != 0; cmd++) {
-		if (strcmp(cmd->name, "machine") == 0) {
-			cmd->more = ptr;
-			break;
-		}
-	}
-}
-
-#endif
-
-struct db_command	*db_last_command = 0;
+const struct db_command	*db_last_command = NULL;
 
 void
 db_command_loop()

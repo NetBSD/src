@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141.2.2 2001/01/18 09:22:08 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141.2.3 2001/02/11 19:08:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1399,7 +1399,7 @@ intrhand(sr)
 			clrsoftint();
 			s = splhigh();
 			ssir_active = ssir;
-			siroff(SIR_NET | SIR_CLOCK | SIR_CBACK);
+			siroff(SIR_NET | SIR_CBACK);
 			splx(s);
 			if (ssir_active & SIR_NET) {
 #ifdef REALLYDEBUG

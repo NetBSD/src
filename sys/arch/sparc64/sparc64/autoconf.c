@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22.2.2 2001/01/22 18:25:15 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.22.2.3 2001/02/11 19:12:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -106,6 +106,8 @@ extern	int kgdb_debug_panic;
 #endif
 
 static	int rootnode;
+char platform_type[32];
+
 static	char *str2hex __P((char *, int *));
 static	int mbprint __P((void *, const char *));
 static	void crazymap __P((char *, int *));
@@ -217,9 +219,9 @@ bootstrap(nctx)
 
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
-	 * We can do this because ddb_machine_init() and 
-	 * ddb_init() do not allocate anything, just initialze
-	 * some pointers to important things like the symtab.
+	 * We can do this because ddb_init() does not allocate anything,
+	 * just initialze some pointers to important things
+	 * like the symtab.
 	 *
 	 * By doing this first and installing the OBP callbacks
 	 * we get to do symbolic debugging of pmap_bootstrap().
@@ -231,7 +233,6 @@ bootstrap(nctx)
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
 #ifdef DDB
-	db_machine_init();
 #ifdef DB_ELF_SYMBOLS
 	ddb_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
 #else
@@ -635,7 +636,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		NULL
 	};
 
-	printf(": %s\n", getpropstringA(findroot(), "name", namebuf));
+	printf(": %s\n", getpropstringA(findroot(), "name", platform_type));
 
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.21.2.2 2000/12/08 09:20:10 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.21.2.3 2001/02/11 19:17:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -72,6 +72,7 @@
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 
+extern int prtactive;
 
 static int ext2fs_chmod
 	__P((struct vnode *, int, struct ucred *, struct proc *));
@@ -1392,7 +1393,6 @@ ext2fs_reclaim(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip;
-	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0) 
 		vprint("ext2fs_reclaim: pushing active", vp);
@@ -1417,7 +1417,7 @@ ext2fs_reclaim(v)
 
 /* Global vfs data structures for ext2fs. */
 int (**ext2fs_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ext2fs_lookup },		/* lookup */
 	{ &vop_create_desc, ext2fs_create },		/* create */
@@ -1468,11 +1468,11 @@ struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_size_desc, genfs_size },			/* size */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
+const struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
 	{ &ext2fs_vnodeop_p, ext2fs_vnodeop_entries };
 
 int (**ext2fs_specop_p) __P((void *));
-struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
+const struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
@@ -1519,11 +1519,11 @@ struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc ext2fs_specop_opv_desc =
+const struct vnodeopv_desc ext2fs_specop_opv_desc =
 	{ &ext2fs_specop_p, ext2fs_specop_entries };
 
 int (**ext2fs_fifoop_p) __P((void *));
-struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
+const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
 	{ &vop_create_desc, fifo_create },		/* create */
@@ -1570,5 +1570,5 @@ struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc ext2fs_fifoop_opv_desc =
+const struct vnodeopv_desc ext2fs_fifoop_opv_desc =
 	{ &ext2fs_fifoop_p, ext2fs_fifoop_entries };

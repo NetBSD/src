@@ -1,4 +1,4 @@
-/* $Id: linux_exec_alpha.c,v 1.1.2.2 2000/11/22 16:02:35 bouyer Exp $ */
+/*	$NetBSD: linux_exec_alpha.c,v 1.1.2.3 2001/02/11 19:13:38 bouyer Exp $	*/
 
 #define ELFSIZE 64
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.1.6.3 2000/12/08 09:26:23 bouyer Exp $	*/
+/*	$NetBSD: iic.c,v 1.1.6.4 2001/02/11 19:08:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iic.c,v 1.1.6.3 2000/12/08 09:26:23 bouyer Exp $");
+__RCSID("$NetBSD: iic.c,v 1.1.6.4 2001/02/11 19:08:59 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -91,8 +91,6 @@ static int iicprint(void *, const char *);
 static int  iic_get_state(struct device *);
 static void iic_set_state_and_ack(struct device *, int, int);
 static void iic_set_state(struct device *, int, int);
-
-extern struct cfdriver iic_cd;
 
 /*
  * iic device probe function

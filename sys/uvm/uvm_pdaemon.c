@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.18.2.3 2001/01/05 17:37:03 bouyer Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.18.2.4 2001/02/11 19:17:50 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -80,8 +80,6 @@
 #include <sys/buf.h>
 
 #include <uvm/uvm.h>
-
-extern struct uvm_pagerops uvm_vnodeops;
 
 /*
  * UVMPD_NUMDIRTYREACTS is how many dirty pages the pagedeamon will reactivate
@@ -446,14 +444,24 @@ uvmpd_scan_inactive(pglst)
 		}
 
 		if (p) {	/* if (we have a new page to consider) */
-
 			/*
 			 * we are below target and have a new page to consider.
 			 */
-
 			uvmexp.pdscans++;
 			nextpg = TAILQ_NEXT(p, pageq);
 
+			/*
+			 * move referenced pages back to active queue and
+			 * skip to next page (unlikely to happen since
+			 * inactive pages shouldn't have any valid mappings
+			 * and we cleared reference before deactivating).
+			 */
+			if (pmap_is_referenced(p)) {
+				uvm_pageactivate(p);
+				uvmexp.pdreact++;
+				continue;
+			}
+			
 			/*
 			 * first we attempt to lock the object that this page
 			 * belongs to.  if our attempt fails we skip on to
@@ -504,7 +512,7 @@ uvmpd_scan_inactive(pglst)
 				uobj = p->uobject;
 				KASSERT(uobj != NULL);
 				if (vnode_only &&
-				    uobj->pgops != &uvm_vnodeops) {
+				    UVM_OBJ_IS_VNODE(uobj) == 0) {
 					uvm_pageactivate(p);
 					continue;
 				}
@@ -523,9 +531,15 @@ uvmpd_scan_inactive(pglst)
 
 			/*
 			 * we now have the object and the page queues locked.
-			 * the page is not busy.   if the page is clean we
-			 * can free it now and continue.
+			 * the page is not busy.  remove all the permissions
+			 * from the page so we can sync the modified info
+			 * without any race conditions.  if the page is clean
+			 * we can free it now and continue.
 			 */
+
+			pmap_page_protect(p, VM_PROT_NONE);
+			if ((p->flags & PG_CLEAN) != 0 && pmap_is_modified(p))
+				p->flags &= ~PG_CLEAN;
 
 			if (p->flags & PG_CLEAN) {
 				if (p->pqflags & PQ_SWAPBACKED) {
@@ -1088,12 +1102,13 @@ uvmpd_scan()
 		}
 
 		/*
-		 * deactivate this page if there's a shortage of
-		 * inactive pages.
+		 * If the page has not been referenced since the
+		 * last scan, deactivate the page if there is a
+		 * shortage of inactive pages.
 		 */
 
-		if (inactive_shortage > 0) {
-			pmap_page_protect(p, VM_PROT_NONE);
+		if (inactive_shortage > 0 &&
+		    pmap_clear_reference(p) == FALSE) {
 			/* no need to check wire_count as pg is "active" */
 			uvm_pagedeactivate(p);
 			uvmexp.pddeact++;

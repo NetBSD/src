@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.77.2.2 2000/12/08 09:19:43 bouyer Exp $	*/
+/*	$NetBSD: mount.h,v 1.77.2.3 2001/02/11 19:17:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -289,7 +289,7 @@ struct vfsconf {
 
 #endif
 
-#ifdef __STDC__
+#if __STDC__
 struct nameidata;
 struct mbuf;
 struct vnodeopv_desc;
@@ -323,7 +323,7 @@ struct vfsops {
 	int	(*vfs_mountroot) __P((void));
 	int	(*vfs_checkexp) __P((struct mount *mp, struct mbuf *nam,
 				    int *extflagsp, struct ucred **credanonp));
-	struct vnodeopv_desc **vfs_opv_descs;
+	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
 };
@@ -443,8 +443,8 @@ extern	struct simplelock spechash_slock;
 long	makefstype __P((const char *));
 int	dounmount __P((struct mount *, int, struct proc *));
 void	vfsinit __P((void));
-void	vfs_opv_init __P((struct vnodeopv_desc **));
-void	vfs_opv_free __P((struct vnodeopv_desc **));
+void	vfs_opv_init __P((const struct vnodeopv_desc * const *));
+void	vfs_opv_free __P((const struct vnodeopv_desc * const *));
 #ifdef DEBUG
 void	vfs_bufstats __P((void));
 #endif

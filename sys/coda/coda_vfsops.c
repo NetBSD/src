@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.8.2.1 2000/11/20 18:08:05 bouyer Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.8.2.2 2001/02/11 19:13:15 bouyer Exp $	*/
 
 /*
  * 
@@ -88,9 +88,9 @@ struct coda_op_stats coda_vfsopstats[CODA_VFSOPS_SIZE];
 extern int coda_nc_initialized;     /* Set if cache has been initialized */
 extern int vc_nb_open __P((dev_t, int, int, struct proc *));
 extern struct cdevsw cdevsw[];    /* For sanity check in coda_mount */
-extern struct vnodeopv_desc coda_vnodeop_opv_desc;
+extern const struct vnodeopv_desc coda_vnodeop_opv_desc;
 
-struct vnodeopv_desc *coda_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const coda_vnodeopv_descs[] = {
 	&coda_vnodeop_opv_desc,
 	NULL,
 };

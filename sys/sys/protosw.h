@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.18.2.2 2000/11/22 16:06:40 bouyer Exp $	*/
+/*	$NetBSD: protosw.h,v 1.18.2.3 2001/02/11 19:17:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -260,6 +260,7 @@ struct protosw *pffindtype __P((int, int));
 struct domain *pffinddomain __P((int));
 extern struct protosw inetsw[];
 void pfctlinput __P((int, struct sockaddr *));
+void pfctlinput2 __P((int, struct sockaddr *, void *));
 #endif /* _KERNEL */
 
 #endif /* !_SYS_PROTOSW_H_ */

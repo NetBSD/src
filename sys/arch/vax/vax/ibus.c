@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.2.2.1 2000/11/20 20:33:18 bouyer Exp $ */
+/*	$NetBSD: ibus.c,v 1.2.2.2 2001/02/11 19:13:06 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -78,11 +78,6 @@ ibus_attach(struct device *parent, struct device *self, void *aux)
 	vaddr_t va;
 
 	printf("\n");
-#if 0
-	if (...) {
-		ibus_dma_init(sc);
-	}
-#endif
 	/*
 	 * There may be a SGEC. Is badaddr() enough here?
 	 */
@@ -109,6 +104,7 @@ ibus_attach(struct device *parent, struct device *self, void *aux)
 	if (badaddr((caddr_t)va + 0x48, 4) == 0)
 		config_found(self, &bp, ibus_print);
 	vax_unmap_physmem(va, 1);
+
 	/*
 	 * All MV's have a Qbus.
 	 */

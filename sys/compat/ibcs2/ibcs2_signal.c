@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.10.12.2 2001/01/05 17:35:22 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.10.12.3 2001/02/11 19:13:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -51,7 +51,7 @@
 #define ibcs2_sigismember(s, n)	(*(s) & ibcs2_sigmask(n))
 #define ibcs2_sigaddset(s, n)	(*(s) |= ibcs2_sigmask(n))
 
-int native_to_ibcs2_sig[NSIG] = {
+int const native_to_ibcs2_sig[NSIG] = {
 	0,			/* 0 */
 	IBCS2_SIGHUP,		/* 1 */
 	IBCS2_SIGINT,		/* 2 */
@@ -87,7 +87,7 @@ int native_to_ibcs2_sig[NSIG] = {
 	IBCS2_SIGPWR,		/* 32 */
 };
 
-int ibcs2_to_native_sig[IBCS2_NSIG] = {
+int const ibcs2_to_native_sig[IBCS2_NSIG] = {
 	0,			/* 0 */
 	SIGHUP,			/* 1 */
 	SIGINT,			/* 2 */

@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.1.1.1.2.2 2001/01/08 14:57:46 bouyer Exp $
+ *	$Id: i4b_ipr.c,v 1.1.1.1.2.3 2001/02/11 19:17:31 bouyer Exp $
  *
  * $FreeBSD$
  *
@@ -325,8 +325,9 @@ i4biprattach()
 		sc->sc_if.if_ioctl = i4biprioctl;
 		sc->sc_if.if_output = i4biproutput;
 
-		sc->sc_if.if_snd.ifq_maxlen = I4BIPRMAXQLEN;
+		IFQ_SET_MAXLEN(&sc->sc_if.if_snd, I4BIPRMAXQLEN);
 		sc->sc_fastq.ifq_maxlen = I4BIPRMAXQLEN;
+		IFQ_SET_READY(&sc->sc_if.if_snd);
 		
 		sc->sc_if.if_ipackets = 0;
 		sc->sc_if.if_ierrors = 0;
@@ -407,7 +408,7 @@ i4biproutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct ip *ip;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	
-	s = SPLI4B();
+	s = splnet();
 
 #if defined(__FreeBSD__) || defined(__bsdi__)
 	unit = ifp->if_unit;
@@ -527,6 +528,7 @@ i4biproutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			splx(s);
 			return(ENOBUFS);
 		}
+		IF_ENQUEUE(ifq, m);
 	} else {
 		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, &pktattr, rv);
 		if (rv != 0) {
@@ -536,9 +538,7 @@ i4biproutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		}
 	}
 	
-	NDBGL4(L4_IPRDBG, "ipr%d: add packet to send queue!", unit);
-	
-	IF_ENQUEUE(ifq, m);
+	NDBGL4(L4_IPRDBG, "ipr%d: added packet to send queue!", unit);
 
 	ipr_tx_queue_empty(unit);
 
@@ -569,7 +569,7 @@ i4biprioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s;
 	int error = 0;
 
-	s = SPLI4B();
+	s = splnet();
 	
 	switch (cmd)
 	{
@@ -669,7 +669,7 @@ iprclearqueues(struct ipr_softc *sc)
 	
 	for(;;)
 	{
-		x = splimp();
+		x = splnet();
 		IF_DEQUEUE(&sc->sc_fastq, m);
 		splx(x);
 
@@ -681,8 +681,8 @@ iprclearqueues(struct ipr_softc *sc)
 
 	for(;;)
 	{
-		x = splimp();
-		IF_DEQUEUE(&sc->sc_if.if_snd, m);
+		x = splnet();
+		IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 		splx(x);
 
 		if(m)
@@ -758,7 +758,7 @@ iprwatchdog(struct ifnet *ifp)
 static void
 i4bipr_connect_startio(struct ipr_softc *sc)
 {
-	int s = SPLI4B();
+	int s = splnet();
 	
 	if(sc->sc_state == ST_CONNECTED_W)
 	{
@@ -780,7 +780,7 @@ ipr_connect(int unit, void *cdp)
 
 	sc->sc_cdp = (call_desc_t *)cdp;
 
-	s = SPLI4B();
+	s = splnet();
 
 	NDBGL4(L4_DIALST, "ipr%d: setting dial state to ST_CONNECTED", unit);
 
@@ -914,7 +914,7 @@ ipr_updown(int unit, int updown)
  *	this routine is called from the HSCX interrupt handler
  *	when a new frame (mbuf) has been received and was put on
  *	the rx queue. It is assumed that this routines runs at
- *	pri level splimp() ! Keep it short !
+ *	appropriate protection level! Keep it short !
  *---------------------------------------------------------------------------*/
 static void
 ipr_rx_data_rdy(int unit)
@@ -1130,7 +1130,7 @@ ipr_tx_queue_empty(int unit)
 		}
 		else
 		{
-			IF_DEQUEUE(&sc->sc_if.if_snd, m);
+			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 			if(m == NULL)
 				break;
 		}

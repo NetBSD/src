@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.19.2.2 2001/01/05 17:36:25 bouyer Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.19.2.3 2001/02/11 19:16:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.19.2.2 2001/01/05 17:36:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.19.2.3 2001/02/11 19:16:17 bouyer Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -277,6 +277,11 @@ rasops_reconfig(ri, wantrows, wantcols)
 		rasops2_init(ri);
 		break;
 #endif
+#if NRASOPS4 > 0
+	case 4:
+		rasops4_init(ri);
+		break;
+#endif
 #if NRASOPS8 > 0
 	case 8:
 		rasops8_init(ri);
@@ -326,6 +331,16 @@ rasops_mapchar(cookie, c, cp)
 	if (ri->ri_font == NULL)
 		panic("rasops_mapchar: no font selected\n");
 #endif
+	if (ri->ri_font->encoding != WSDISPLAY_FONTENC_ISO) {
+
+		if ( (c = wsfont_map_unichar(ri->ri_font, c)) < 0) {
+
+			*cp = ' ';
+			return (0);
+
+		}
+	}
+
 
 	if (c < ri->ri_font->firstchar) {
 		*cp = ' ';

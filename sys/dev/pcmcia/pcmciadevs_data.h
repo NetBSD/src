@@ -1,11 +1,12 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.5 2001/01/18 09:23:32 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.6 2001/02/11 19:16:13 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.110 2001/01/16 15:56:48 nonaka Exp 
+ *	NetBSD: pcmciadevs,v 1.118 2001/02/10 14:08:10 ichiro Exp 
  */
+/*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,6 +130,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Compaq Netelligent 10/100 Ethernet"	},
 	},
 	{
+	    PCMCIA_VENDOR_COMPAQ, PCMCIA_PRODUCT_COMPAQ_NC5004,
+	    PCMCIA_CIS_COMPAQ_NC5004,
+	    0,
+	    "Compaq",
+	    "Compaq Agency NC5004 Wireless Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
 	    PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
 	    0,
@@ -197,6 +205,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Motorola Corporation",
 	    "Motorola Personal Messenger 100C CDPD Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE2,
+	    PCMCIA_CIS_KINGSTON_KNE2,
+	    0,
+	    "Kingston",
+	    "Kingston KNE-PC2 Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA501,
@@ -479,6 +494,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "TDK LAC-CF010"	},
 	},
 	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD011WL,
+	    PCMCIA_CIS_TDK_LAK_CD011WL,
+	    0,
+	    "TDK Corporation",
+	    "TDK LAK-CD011WL"	},
+	},
+	{
 	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE,
 	    PCMCIA_CIS_XIRCOM_CE,
 	    0,
@@ -498,6 +520,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Xircom",
 	    "Xircom CreditCard 10/100 Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CT2,
+	    PCMCIA_CIS_XIRCOM_CT2,
+	    0,
+	    "Xircom",
+	    "Xircom CreditCard Token Ring II"	},
 	},
 	{
 	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CEM,
@@ -582,6 +611,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Contec",
 	    "Contec C-NET(PC)C"	},
+	},
+	{
+	    PCMCIA_VENDOR_CONTEC, PCMCIA_PRODUCT_CONTEC_FX_DS110_PCC,
+	    PCMCIA_CIS_CONTEC_FX_DS110_PCC,
+	    0,
+	    "Contec",
+	    "Contec FLEXLAN/FX-DS110-PCC"	},
 	},
 	{
 	    PCMCIA_VENDOR_ROLAND, PCMCIA_PRODUCT_ROLAND_SCP55,
@@ -808,6 +844,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Corega Wireless LAN PCC-11"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
+	    PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
+	    0,
+	    "Corega K.K.",
+	    "Corega Wireless LAN PCCA-11"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_COMBOCARD,
 	    PCMCIA_CIS_SVEC_COMBOCARD,
 	    0,
@@ -827,6 +870,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "SVEC/Hawking Technology",
 	    "SVEC PN650TX 10/100 Dual Speed Fast Ethernet PC Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NAKAGAWAMETAL_LNT10TN,
+	    PCMCIA_CIS_NAKAGAWAMETAL_LNT10TN,
+	    0,
+	    "NAKAGAWA METAL",
+	    "NAKAGAWA METAL LNT-10TN NE2000 Compatible Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMBICOM_AMB8002T,
@@ -925,6 +975,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "",
 	    "NANOSPEED ROOT-RZ2000 WLAN Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NEC_CMZ_RT_WP,
+	    PCMCIA_CIS_NEC_CMZ_RT_WP,
+	    0,
+	    "",
+	    "NEC Wireless Card CMZ-RT-WP"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NTT_ME_WLAN,
+	    PCMCIA_CIS_NTT_ME_WLAN,
+	    0,
+	    "",
+	    "NTT-ME 11Mbps Wireless LAN PC Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
@@ -1085,6 +1149,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Compaq",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_KINGSTON, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Kingston",
 	    NULL,
 	},
 	{
@@ -1302,6 +1373,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "SVEC/Hawking Technology",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_NAKAGAWAMETAL, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "NAKAGAWA METAL",
 	    NULL,
 	},
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.47.2.5 2001/01/18 09:23:12 bouyer Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.47.2.6 2001/02/11 19:13:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
 #include <sys/disklabel.h>
+#include <sys/ioctl.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -93,7 +94,6 @@
 #include "wsdisplay.h"
 #endif
 #if (NWSDISPLAY > 0)
-#include <sys/ioctl.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
 #if defined(_KERNEL) && !defined(_LKM)
@@ -470,7 +470,7 @@ linux_fakedev(dev)
  * That's not complete, but enough to get an X server running.
  */
 #define NR_KEYS 128
-static u_short plain_map[NR_KEYS] = {
+static const u_short plain_map[NR_KEYS] = {
 	0x0200,	0x001b,	0x0031,	0x0032,	0x0033,	0x0034,	0x0035,	0x0036,
 	0x0037,	0x0038,	0x0039,	0x0030,	0x002d,	0x003d,	0x007f,	0x0009,
 	0x0b71,	0x0b77,	0x0b65,	0x0b72,	0x0b74,	0x0b79,	0x0b75,	0x0b69,
@@ -540,7 +540,7 @@ static u_short plain_map[NR_KEYS] = {
 	0x0200,	0x0200,	0x0200,	0x0200,	0x0200,	0x0200,	0x0200,	0x0200,
 };
 
-u_short *linux_keytabs[] = {
+const u_short * const linux_keytabs[] = {
 	plain_map, shift_map, altgr_map, altgr_map, ctrl_map
 };
 #endif
@@ -797,7 +797,7 @@ linux_machdepioctl(p, v, retval)
 			error = 0;
 		}
 
-		if (error == EINVAL)
+		if (error == ENOTTY)
 			printf("linux_machdepioctl: invalid ioctl %08lx\n",
 			    com);
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 1998/11/25 13:09:14 mycroft Exp $	*/
+/*	$NetBSD: frame.h,v 1.6.10.1 2001/02/11 19:09:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -46,9 +46,9 @@
 #ifndef _ARM32_FRAME_H_
 #define _ARM32_FRAME_H_
 
-#ifndef _LOCORE
+#include <arm/frame.h>		/* Common ARM stack frames */
 
-#include <sys/signal.h>
+#ifndef _LOCORE
 
 /*
  * System stack frames.
@@ -77,40 +77,6 @@ typedef struct irqframe {
 } irqframe_t;
 
 #define clockframe irqframe
-
-typedef struct trapframe {
-	unsigned int tf_spsr;
-	unsigned int tf_r0;
-	unsigned int tf_r1;
-	unsigned int tf_r2;
-	unsigned int tf_r3;
-	unsigned int tf_r4;
-	unsigned int tf_r5;
-	unsigned int tf_r6;
-	unsigned int tf_r7;
-	unsigned int tf_r8;
-	unsigned int tf_r9;
-	unsigned int tf_r10;
-	unsigned int tf_r11;
-	unsigned int tf_r12;
-	unsigned int tf_usr_sp;
-	unsigned int tf_usr_lr;
-	unsigned int tf_svc_sp;
-	unsigned int tf_svc_lr;
-	unsigned int tf_pc;
-} trapframe_t;
-
-/*
- * Signal frame
- */
-
-struct sigframe {
-	int		sf_signum;
-	int		sf_code;
-	struct	sigcontext *sf_scp;
-	sig_t	sf_handler;
-	struct	sigcontext sf_sc;
-};
 
 /*
  * Switch frame

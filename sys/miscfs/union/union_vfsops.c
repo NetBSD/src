@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.23.2.1 2000/11/20 18:09:51 bouyer Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.23.2.2 2001/02/11 19:17:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -560,9 +560,9 @@ union_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	return (EOPNOTSUPP);
 }
 
-extern struct vnodeopv_desc union_vnodeop_opv_desc;
+extern const struct vnodeopv_desc union_vnodeop_opv_desc;
 
-struct vnodeopv_desc *union_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const union_vnodeopv_descs[] = {
 	&union_vnodeop_opv_desc,
 	NULL,
 };

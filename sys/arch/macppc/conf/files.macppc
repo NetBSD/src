@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.25.2.3 2001/01/18 09:22:41 bouyer Exp $
+#	$NetBSD: files.macppc,v 1.25.2.4 2001/02/11 19:11:03 bouyer Exp $
 #
 # macppc-specific configuration info
 
@@ -27,6 +27,18 @@ file dev/cons.c
 #
 file dev/md_root.c				memory_disk_hooks
 major {md = 9}
+
+#
+# Compatibility modules
+#
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/powerpc/files.linux_powerpc"
+file arch/powerpc/powerpc/linux_sigcode.S        compat_linux
 
 #
 # RAIDframe

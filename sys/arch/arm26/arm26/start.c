@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.4.2.5 2001/01/05 17:34:01 bouyer Exp $ */
+/* $NetBSD: start.c,v 1.4.2.6 2001/02/11 19:08:54 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,14 +32,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4.2.5 2001/01/05 17:34:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4.2.6 2001/02/11 19:08:54 bouyer Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include <machine/boot.h>
 #include <machine/machdep.h>
 #include <machine/memcreg.h>

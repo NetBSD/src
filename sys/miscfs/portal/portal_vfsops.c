@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.22.2.1 2000/11/20 18:09:48 bouyer Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.22.2.2 2001/02/11 19:17:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -347,9 +347,9 @@ portal_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	return (EOPNOTSUPP);
 }
 
-extern struct vnodeopv_desc portal_vnodeop_opv_desc;
+extern const struct vnodeopv_desc portal_vnodeop_opv_desc;
 
-struct vnodeopv_desc *portal_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const portal_vnodeopv_descs[] = {
 	&portal_vnodeop_opv_desc,
 	NULL,
 };

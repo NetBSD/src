@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.6.2.7 2001/01/18 09:22:15 bouyer Exp $
+# $NetBSD: files.arm26,v 1.6.2.8 2001/02/11 19:08:55 bouyer Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -143,8 +143,7 @@ device	arclpt
 attach	arclpt at ioc
 
 # VIDC/MEMC audio/video subsystems.
-# XXX: should be rasops4 as well
-device	arcvideo: rasops1, rasops2, rasops8, wsemuldisplaydev
+device	arcvideo: rasops1, rasops2, rasops4, rasops8, wsemuldisplaydev
 attach	arcvideo at root
 file	arch/arm26/vidc/arcvideo.c		arcvideo	needs-flag
 

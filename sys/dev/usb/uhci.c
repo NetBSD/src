@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.61.2.4 2001/01/05 17:36:31 bouyer Exp $	*/
+/*	$NetBSD: uhci.c,v 1.61.2.5 2001/02/11 19:16:25 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ Static void		uhci_root_intr_done(usbd_xfer_handle);
 
 Static usbd_status	uhci_open(usbd_pipe_handle);
 Static void		uhci_poll(struct usbd_bus *);
-Static void		uhci_softintr(struct usbd_bus *);
+Static void		uhci_softintr(void *);
 
 Static usbd_status	uhci_device_request(usbd_xfer_handle xfer);
 
@@ -688,7 +688,7 @@ uhci_power(int why, void *v)
 	int cmd;
 	int s;
 
-	s = splusb();
+	s = splhardusb();
 	cmd = UREAD2(sc, UHCI_CMD);
 
 	DPRINTF(("uhci_power: sc=%p, why=%d (was %d), cmd=0x%x\n", 
@@ -1207,10 +1207,9 @@ uhci_intr(void *arg)
 
 	}
 
-	if (ack)	/* acknowledge the ints */
-		UWRITE2(sc, UHCI_STS, ack);
-	else	/* nothing to acknowledge */
-		return (0);
+	if (!ack)
+		return (0);	/* nothing to acknowledge */
+	UWRITE2(sc, UHCI_STS, ack); /* acknowledge the ints */
 
 	sc->sc_bus.no_intrs++;
 	usb_schedsoftintr(&sc->sc_bus);
@@ -1221,9 +1220,9 @@ uhci_intr(void *arg)
 }
 
 void
-uhci_softintr(struct usbd_bus *bus)
+uhci_softintr(void *v)
 {
-	uhci_softc_t *sc = (uhci_softc_t *)bus;
+	uhci_softc_t *sc = v;
 	uhci_intr_info_t *ii;
 
 	DPRINTFN(10,("%s: uhci_softintr\n", USBDEVNAME(sc->sc_bus.bdev)));
@@ -1511,7 +1510,7 @@ uhci_run(uhci_softc_t *sc, int run)
 	u_int16_t cmd;
 
 	run = run != 0;
-	s = splusb();
+	s = splhardusb();
 	DPRINTF(("uhci_run: setting run=%d\n", run));
 	cmd = UREAD2(sc, UHCI_CMD);
 	if (run)

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.22.2.2 2000/11/22 16:00:01 bouyer Exp $ */
+/* $NetBSD: if_eb.c,v 1.22.2.3 2001/02/11 19:09:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1035,7 +1035,7 @@ ebtxpacket(sc)
 	len = max(len, ETHER_MIN_LEN);
 	
 	if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN))
-		log(LOG_WARNING, "ea: oversize packet = %d bytes\n", len);
+		log(LOG_WARNING, "eb: oversize packet = %d bytes\n", len);
 
 /* Ok we now have a packet len bytes long in our packet buffer */
 
@@ -1477,7 +1477,7 @@ eb_ioctl(ifp, cmd, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			dprintf(("Interface ea is stopping\n"));
+			dprintf(("Interface eb is stopping\n"));
 			eb_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&

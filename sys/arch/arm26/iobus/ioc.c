@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.3.2.4 2001/01/18 09:22:16 bouyer Exp $ */
+/* $NetBSD: ioc.c,v 1.3.2.5 2001/02/11 19:08:57 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.3.2.4 2001/01/18 09:22:16 bouyer Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.3.2.5 2001/02/11 19:08:57 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -64,7 +64,9 @@ struct ioc_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	struct irq_handler	*sc_clkirq;
+	struct evcnt		sc_clkev;
 	struct irq_handler	*sc_sclkirq;
+	struct evcnt		sc_sclkev;
 	u_int8_t		sc_ctl;
 };
 
@@ -72,7 +74,7 @@ struct cfattach ioc_ca = {
 	sizeof(struct ioc_softc), ioc_match, ioc_attach
 };
 
-extern struct cfdriver ioc_cd;
+struct device *the_ioc;
 
 /*
  * Autoconfiguration glue
@@ -89,10 +91,9 @@ ioc_match(struct device *parent, struct cfdata *cf, void *aux)
 	 * _much_ of a problem with the IOC, since all machines I know
 	 * of have exactly one.
 	 */
-	if (cf->cf_unit == 0)
+	if (the_ioc == NULL)
 		return 1;
-	else
-		return 0;
+	return 0;
 }
 
 static void
@@ -103,6 +104,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 
+	the_ioc = self;
 	sc->sc_bst = ioa->ioa_tag;
 	if (bus_space_map(ioa->ioa_tag, ioa->ioa_base, 0x00200000,
 			  0, &(sc->sc_bsh)) != 0)
@@ -226,9 +228,9 @@ ioc_ctl_write(struct device *self, u_int value, u_int mask)
  */
 
 int
-ioc_irq_status(struct device *self, int irq)
+ioc_irq_status(int irq)
 {
-	struct ioc_softc *sc = (void *)self;
+	struct ioc_softc *sc = (void *)the_ioc;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 
@@ -241,9 +243,9 @@ ioc_irq_status(struct device *self, int irq)
 }
 
 u_int32_t
-ioc_irq_status_full(struct device *self)
+ioc_irq_status_full()
 {
-	struct ioc_softc *sc = (void *)self;
+	struct ioc_softc *sc = (void *)the_ioc;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 
@@ -257,9 +259,9 @@ ioc_irq_status_full(struct device *self)
 }
 
 void
-ioc_irq_setmask(struct device *self, u_int32_t mask)
+ioc_irq_setmask(u_int32_t mask)
 {
-	struct ioc_softc *sc = (void *)self;
+	struct ioc_softc *sc = (void *)the_ioc;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 
@@ -268,16 +270,16 @@ ioc_irq_setmask(struct device *self, u_int32_t mask)
 }
 
 void
-ioc_irq_waitfor(struct device *self, int irq)
+ioc_irq_waitfor(int irq)
 {
 
-	while (!ioc_irq_status(self, irq));
+	while (!ioc_irq_status(irq));
 }
 
 void
-ioc_irq_clear(struct device *self, int mask)
+ioc_irq_clear(int mask)
 {
-	struct ioc_softc *sc = (void *)self;
+	struct ioc_softc *sc = (void *)the_ioc;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 
@@ -346,34 +348,34 @@ static int t0_count;
 void
 cpu_initclocks(void)
 {
-	struct device *self;
 	struct ioc_softc *sc;
 
-#ifdef DIAGNOSTIC
-	if (ioc_cd.cd_ndevs <= 0 || ioc_cd.cd_devs[0] == NULL)
-		panic("cpu_initclocks: no ioc0");
-#endif
-	self = ioc_cd.cd_devs[0];
-	sc = (struct ioc_softc *)self;
+	KASSERT(the_ioc != NULL);
+	sc = (struct ioc_softc *)the_ioc;
 	stathz = hz; /* XXX what _should_ it be? */
 
 	if (hz == 0 || IOC_TIMER_RATE % hz != 0 ||
 	    (t0_count = IOC_TIMER_RATE / hz) > 65535)
 		panic("ioc_initclocks: Impossible clock rate: %d Hz", hz);
-	ioc_counter_start(self, 0, t0_count);
+	ioc_counter_start(the_ioc, 0, t0_count);
+	evcnt_attach_dynamic(&sc->sc_clkev, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "clock");
 	sc->sc_clkirq = irq_establish(IOC_IRQ_TM0, IPL_CLOCK, ioc_irq_clock,
-	    NULL, "hardclock");
+	    NULL, &sc->sc_clkev);
 	if (bootverbose)
 		printf("%s: %d Hz clock interrupting at %s\n",
-		    self->dv_xname, hz, irq_string(sc->sc_clkirq));
+		    the_ioc->dv_xname, hz, irq_string(sc->sc_clkirq));
 	
 	if (stathz) {
 		setstatclockrate(stathz);
+		evcnt_attach_dynamic(&sc->sc_sclkev, EVCNT_TYPE_INTR, NULL,
+		    sc->sc_dev.dv_xname, "statclock");
 		sc->sc_sclkirq = irq_establish(IOC_IRQ_TM1, IPL_STATCLOCK,
-		    ioc_irq_statclock, NULL, "statclock");
+		    ioc_irq_statclock, NULL, &sc->sc_sclkev);
 		if (bootverbose)
 			printf("%s: %d Hz statclock interrupting at %s\n",
-			    self->dv_xname, stathz, irq_string(sc->sc_sclkirq));
+			    the_ioc->dv_xname, stathz,
+			    irq_string(sc->sc_sclkirq));
 	}
 }
 
@@ -396,20 +398,14 @@ ioc_irq_statclock(void *cookie)
 void
 setstatclockrate(int hzrate)
 {
-	struct device *self;
 	int count;
 
-#ifdef DIAGNOSTIC
-	if (ioc_cd.cd_ndevs <= 0 || ioc_cd.cd_devs[0] == NULL)
-		panic("setstatclockrate: no ioc0");
-#endif
-	self = ioc_cd.cd_devs[0];
-
+	KASSERT(the_ioc != NULL);
 	/* XXX This currently restarts the counter -- should it? */
 	if (hzrate == 0 || IOC_TIMER_RATE % hzrate != 0 ||
 	    (count = IOC_TIMER_RATE / hz) > 65535)
 		panic("Impossible statclock rate: %d Hz", hzrate);
-	ioc_counter_start(self, 1, count);
+	ioc_counter_start(the_ioc, 1, count);
 }
 
 void
@@ -421,11 +417,8 @@ microtime(struct timeval *tv)
 	bus_space_handle_t bsh;
 	int t0, s, intbefore, intafter;
 
-#ifdef DIAGNOSTIC
-	if (ioc_cd.cd_ndevs <= 0 || ioc_cd.cd_devs[0] == NULL)
-		panic("microtime: no ioc0");
-#endif
-	self = ioc_cd.cd_devs[0];
+	KASSERT(the_ioc != NULL);
+	self = the_ioc;
 	sc = (struct ioc_softc *)self;
 
 	bst = sc->sc_bst;
@@ -435,11 +428,11 @@ microtime(struct timeval *tv)
 
 	*tv = time;
 
-	intbefore = ioc_irq_status(self, IOC_IRQ_TM0);
+	intbefore = ioc_irq_status(IOC_IRQ_TM0);
 	bus_space_write_1(bst, bsh, IOC_T0LATCH, 0);
 	t0 = bus_space_read_1(bst, bsh, IOC_T0LOW);
 	t0 += bus_space_read_1(bst, bsh, IOC_T0HIGH) << 8;
-	intafter = ioc_irq_status(self, IOC_IRQ_TM0);
+	intafter = ioc_irq_status(IOC_IRQ_TM0);
 
 	splx(s);
 

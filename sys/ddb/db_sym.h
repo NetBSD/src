@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.11.2.1 2000/11/20 18:08:49 bouyer Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.11.2.2 2001/02/11 19:15:13 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -145,8 +145,8 @@ boolean_t db_line_at_pc __P((db_sym_t, char **, int *, db_expr_t));
 int db_sym_numargs __P((db_sym_t, int *, char **));
 
 #ifdef DB_AOUT_SYMBOLS
-extern	db_symformat_t db_symformat_aout;
+extern	const db_symformat_t db_symformat_aout;
 #endif
 #ifdef DB_ELF_SYMBOLS
-extern	db_symformat_t db_symformat_elf;
+extern	const db_symformat_t db_symformat_elf;
 #endif

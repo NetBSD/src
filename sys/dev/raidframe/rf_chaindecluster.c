@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.c,v 1.3.8.1 2000/11/20 11:42:51 bouyer Exp $	*/
+/*	$NetBSD: rf_chaindecluster.c,v 1.3.8.2 2001/02/11 19:16:14 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,6 +33,9 @@
  *****************************************************************************/
 
 #include "rf_archs.h"
+
+#if (RF_INCLUDE_CHAINDECLUSTER > 0) 
+
 #include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_chaindecluster.h"
@@ -258,8 +261,7 @@ rf_RAIDCDagSelect(
 #if 0
 	void    (**createFunc) (RF_Raid_t *, RF_AccessStripeMap_t *,
             RF_DagHeader_t *, void *, RF_RaidAccessFlags_t,
-/**INDENT** Warning@258: Extra ) */
-            RF_AllocListElem_t *))
+            RF_AllocListElem_t *)
 #endif
 {
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
@@ -284,3 +286,4 @@ rf_RAIDCDagSelect(
 	} else
 		*createFunc = (RF_VoidFuncPtr) rf_CreateRaidOneWriteDAG;
 }
+#endif /* (RF_INCLUDE_CHAINDECLUSTER > 0) */

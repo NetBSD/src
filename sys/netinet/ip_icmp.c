@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.38.2.1 2000/11/20 18:10:28 bouyer Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.38.2.2 2001/02/11 19:17:14 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -839,7 +839,7 @@ icmp_send(m, opts)
 #endif
 #ifdef IPSEC
 	/* Don't lookup socket */
-	ipsec_setsocket(m, NULL);
+	(void)ipsec_setsocket(m, NULL);
 #endif
 	(void) ip_output(m, opts, NULL, 0, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.10.2.2 2000/11/22 16:05:04 bouyer Exp $	*/
+/*	$NetBSD: ucom.c,v 1.10.2.3 2001/02/11 19:16:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -163,6 +163,8 @@ USB_ATTACH(ucom)
 
 	if (uca->portno != UCOM_UNK_PORTNO)
 		printf(": portno %d", uca->portno);
+	if (uca->info != NULL)
+		printf(", %s", uca->info);
 	printf("\n");
 
 	sc->sc_udev = uca->device;
@@ -196,24 +198,28 @@ USB_ATTACH(ucom)
 USB_DETACH(ucom)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
+	struct tty *tp = sc->sc_tty;
 	int maj, mn;
 	int s;
 
-	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p\n", 
-		 sc, flags, sc->sc_tty));
+	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p, pipe=%d,%d\n", 
+		 sc, flags, tp, sc->sc_bulkin_no, sc->sc_bulkout_no));
 
 	sc->sc_dying = 1;
 
-#ifdef DIAGNOSTIC
-	if (sc->sc_tty == NULL) {
-		DPRINTF(("ucom_detach: no tty\n"));
-		return (0);
-	}
-#endif
+	if (sc->sc_bulkin_pipe != NULL)
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+	if (sc->sc_bulkout_pipe != NULL)
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
 
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
-		/* Wake everyone.. how? */
+		/* Wake up anyone waiting */
+		if (tp != NULL) {
+			CLR(tp->t_state, TS_CARR_ON);
+			CLR(tp->t_cflag, CLOCAL | MDMBUF);
+			ttyflush(tp, FREAD|FWRITE);
+		}
 		/* Wait for processes to go away. */
 		usb_detach_wait(USBDEV(sc->sc_dev));
 	}
@@ -232,9 +238,11 @@ USB_DETACH(ucom)
 	vdevgone(maj, mn | UCOMCALLUNIT_MASK, mn | UCOMCALLUNIT_MASK, VCHR);
 
 	/* Detach and free the tty. */
-	tty_detach(sc->sc_tty);
-	ttyfree(sc->sc_tty);
-	sc->sc_tty = 0;
+	if (tp != NULL) {
+		tty_detach(tp);
+		ttyfree(tp);
+		sc->sc_tty = NULL;
+	}
 
 	/* Detach the random source */
 #if defined(__NetBSD__) && NRND > 0
@@ -244,11 +252,12 @@ USB_DETACH(ucom)
 	return (0);
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ucom_activate(device_ptr_t self, enum devact act)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
+
+	DPRINTFN(5,("ucom_activate: %d\n", act));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -261,7 +270,6 @@ ucom_activate(device_ptr_t self, enum devact act)
 	}
 	return (0);
 }
-#endif
 
 void
 ucom_shutdown(struct ucom_softc *sc)
@@ -446,12 +454,16 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 fail_4:
 	usbd_free_xfer(sc->sc_oxfer);
+	sc->sc_oxfer = NULL;
 fail_3:
 	usbd_free_xfer(sc->sc_ixfer);
+	sc->sc_ixfer = NULL;
 fail_2:
 	usbd_close_pipe(sc->sc_bulkout_pipe);
+	sc->sc_bulkout_pipe = NULL;
 fail_1:
 	usbd_close_pipe(sc->sc_bulkin_pipe);
+	sc->sc_bulkin_pipe = NULL;
 fail_0:
 	sc->sc_opening = 0;
 	wakeup(&sc->sc_opening);
@@ -943,7 +955,7 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	DPRINTFN(5,("ucomwritecb: status=%d\n", status));
 
-	if (status == USBD_CANCELLED)
+	if (status == USBD_CANCELLED || sc->sc_dying)
 		return;
 
 	if (status) {
@@ -1001,11 +1013,20 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	u_char *cp;
 	int s;
 
-	if (status == USBD_CANCELLED)
+	DPRINTFN(5,("ucomreadcb: status=%d\n", status));
+
+	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
+	    sc->sc_dying) {
+		DPRINTF(("ucomreadcb: dying\n"));
+		/* Send something to wake upper layer */
+		s = spltty();
+		(*rint)('\n', tp);
+		ttwakeup(tp);
+		splx(s);
 		return;
+	}
 
 	if (status) {
-		DPRINTF(("ucomreadcb: status=%d\n", status));
 		usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
 		/* XXX we should restart after some delay. */
 		return;
@@ -1046,12 +1067,24 @@ ucom_cleanup(struct ucom_softc *sc)
 	DPRINTF(("ucom_cleanup: closing pipes\n"));
 
 	ucom_shutdown(sc);
-	usbd_abort_pipe(sc->sc_bulkin_pipe);
-	usbd_close_pipe(sc->sc_bulkin_pipe);
-	usbd_abort_pipe(sc->sc_bulkout_pipe);
-	usbd_close_pipe(sc->sc_bulkout_pipe);
-	usbd_free_xfer(sc->sc_ixfer);
-	usbd_free_xfer(sc->sc_oxfer);
+	if (sc->sc_bulkin_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
+	}
+	if (sc->sc_bulkout_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
+		usbd_close_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
+	}
+	if (sc->sc_ixfer != NULL) {
+		usbd_free_xfer(sc->sc_ixfer);
+		sc->sc_ixfer = NULL;
+	}
+	if (sc->sc_oxfer != NULL) {
+		usbd_free_xfer(sc->sc_oxfer);
+		sc->sc_oxfer = NULL;
+	}
 }
 
 #endif /* NUCOM > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.3 2001/01/18 09:22:50 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.4 2001/02/11 19:11:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.3 2001/01/18 09:22:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.4 2001/02/11 19:11:24 bouyer Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -288,10 +288,6 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 #endif
 
 #ifdef DDB
-	/*
-	 * Initialize machine-dependent DDB commands, in case of early panic.
-	 */
-	db_machine_init();
 	if (nsym)
 		ddb_init(esym - ssym, ssym, esym);
 #endif
@@ -713,19 +709,3 @@ cpu_intr(status, cause, pc, ipending)
 		softclock(NULL);
 	}
 }
-
-#ifdef EXEC_ECOFF
-#include <sys/exec_ecoff.h>
-
-int
-cpu_exec_ecoff_hook(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	extern struct emul emul_netbsd;
-
-	epp->ep_emul = &emul_netbsd;
-
-	return 0;
-}
-#endif

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.54.2.7 2001/01/18 09:23:40 bouyer Exp $
+$NetBSD: usbdevs,v 1.54.2.8 2001/02/11 19:16:30 bouyer Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ vendor FTDI		0x0403	Future Technology Devices
 vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak Corp.
 vendor MELCO		0x0411	Melco, Inc.
+vendor CREATIVE		0x041e	Creative
 vendor ADI		0x0422	ADI Systems, Inc.
 vendor CATC		0x0423	Computer Access Technology Corp.
 vendor GRAVIS		0x0428	Advanced Gravis Computer Tech. Ltd.
@@ -81,6 +82,7 @@ vendor COMPAQ		0x049f	Compaq Computers
 vendor ACERP		0x04a5	Acer Peripherals, Inc.
 vendor VISIONEER	0x04a7	Visioneer
 vendor CANON		0x04a9	Canon, Inc.
+vendor NIKON		0x04b0	Nikon
 vendor IBM		0x04b3	IBM Corporation
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
@@ -217,6 +219,7 @@ vendor BUG		0x07c8	B.U.G., Inc.
 vendor ALLIEDTELESYN	0x07c9	Allied Telesyn International
 vendor AVERMEDIA	0x07ca	AVerMedia Technologies, Inc.
 vendor SIIG		0x07cc	SIIG
+vendor CASIO		0x07cf	CASIO
 vendor APTIO		0x07d2	Aptio Products, Inc.
 vendor ARASAN		0x07da	Arasan Chip Systems
 vendor ALLIEDCABLE	0x07e6	Allied Cable Corp.
@@ -286,7 +289,6 @@ vendor HP2		0xf003	Hewlett Packard
 product 3COM HOMECONN		0x009d	HomeConnect USB Camera
 product 3COM 3C19250		0x03E8	3C19250 Ethernet adapter
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
-
 product 3COM 3C460		0x11f8	HomeConnect Ethernet USB Adapter
 
 product 3COMUSR OFFICECONN	0x0082	3Com OfficeConnect Analog Modem
@@ -294,6 +296,8 @@ product 3COMUSR USRISDN		0x008f	3Com U.S. Robotics Pro ISDN TA
 product 3COMUSR HOMECONN	0x009d	3Com HomeConnect camera
 product 3COMUSR USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
+/* AboCom products */
+product ABOCOM URE450		0x4000	URE450 Ethernet Adapter
 
 /* Acer Peripherals, Inc. products */
 product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
@@ -381,6 +385,9 @@ product CATC NETMATE2		0x000c	Netmate2 ethernet adapter
 product CATC CHIEF		0x000d	USB Chief Bus & Protocol Analyzer
 product CATC ANDROMEDA		0x1237	Andromeda hub
 
+/* CASIO products */
+product	CASIO NAMELAND		0x4001	CASIO Nameland EZ-USB
+
 /* Cherry products */
 product CHERRY MY3000KBD	0x0001	My3000 keyboard
 product CHERRY MY3000HUB	0x0003	My3000 hub
@@ -401,6 +408,9 @@ product CONNECTIX QUICKCAM	0x0001	QuickCam
 /* Corega products */
 product COREGA ETHER_USB_T	0x0001	Ether USB-T
 product COREGA FETHER_USB_TX	0x0004	FEther USB-TX
+
+/* Creative products */
+product CREATIVE NOMAD_II	0x1002	Nomad II MP3 player
 
 /* CTX products */
 product CTX EX1300		0x9999	Ex1300 hub
@@ -469,7 +479,7 @@ product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
 /* Griffin Technology */
-product GRIFFIN IMATE		0x0405	iMate, ABD adapter
+product GRIFFIN IMATE		0x0405	iMate, ADB adapter
 
 /* Freecom products */
 product FREECOM DVD		0xfc01	Connector for DVD drive
@@ -518,6 +528,7 @@ product INTEL TESTBOARD		0x9890	82930 test board
 /* I/O DATA products */
 product IODATA USBETT		0x0901	USB ETT
 product IODATA USBETTX		0x0904	USB ETTX
+product	IODATA USBRSAQ		0x0a03	USB serial adapter USB-RSAQ1
 
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
@@ -653,6 +664,9 @@ product NETCHIP TURBOCONNECT	0x1080	Turbo-Connect
 /* Netgear products */
 product NETGEAR EA101		0x1001	Ethernet adapter
 
+/* Nikon products */
+product NIKON E990		0x0102	Digital Camera E990
+
 /* OmniVision Technologies, Inc. products */
 product OMNIVISION OV511	0x0511	OV511 Camera
 product OMNIVISION OV511PLUS	0xa511	OV511+ Camera
@@ -672,6 +686,9 @@ product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
 product PHILIPS PCVC680K	0x0308	PCVC680K Vesta Pro PC Camera
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
+
+/* Philips Semiconductor products */
+product PHILIPSSEMI HUB1122	0x1122	hub
 
 /* P.I. Engineering products */
 product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
@@ -699,6 +716,7 @@ product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
 /* Prolific products */
 product PROLIFIC PL2301		0x0000	PL2301 Host-Host interface
 product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
+product PROLIFIC PL2303		0x04bb	PL2303 Serial adapter (IODATA USB-RSAQ2)
 product PROLIFIC PL2305		0x2305	Parallel printer adapter
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 

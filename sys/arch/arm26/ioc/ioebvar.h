@@ -1,4 +1,4 @@
-/* $NetBSD: ioebvar.h,v 1.1.2.2 2000/11/20 20:02:52 bouyer Exp $ */
+/* $NetBSD: ioebvar.h,v 1.1.2.3 2001/02/11 19:08:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,5 +33,7 @@
 
 #define IOEB_IRQ_CLEARABLE_MASK 0x0001
 
-extern void ioeb_irq_clear(struct device *self, int mask);
+extern void ioeb_irq_clear(int mask);
+
+extern struct device *the_ioeb;
 #endif

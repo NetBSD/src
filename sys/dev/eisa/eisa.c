@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.21.14.1 2000/11/20 11:39:57 bouyer Exp $	*/
+/*	$NetBSD: eisa.c,v 1.21.14.2 2001/02/11 19:15:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -213,7 +213,7 @@ eisa_devinfo(const char *id, char *cp)
 {
 #ifdef EISAVERBOSE
 	const char *name;
-	struct eisa_knowndev *edp;
+	const struct eisa_knowndev *edp;
 	int match, onlyvendor;
 
 	onlyvendor = 0;

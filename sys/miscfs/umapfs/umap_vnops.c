@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.16 1999/08/16 21:24:53 wrstuden Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.16.2.1 2001/02/11 19:17:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ int	umap_rename	__P((void *));
  *
  */
 int (**umap_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_default_desc,	umap_bypass },
 
 	{ &vop_lookup_desc,	umap_lookup },
@@ -94,7 +94,7 @@ struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 
 	{ (struct vnodeop_desc*) NULL, (int(*) __P((void *))) NULL }
 };
-struct vnodeopv_desc umapfs_vnodeop_opv_desc =
+const struct vnodeopv_desc umapfs_vnodeop_opv_desc =
 	{ &umap_vnodeop_p, umap_vnodeop_entries };
 
 /*
@@ -421,7 +421,7 @@ umap_getattr(v)
 	u_long (*mapdata)[2];
 	u_long (*gmapdata)[2];
 	struct vnode **vp1p;
-	struct vnodeop_desc *descp = ap->a_desc;
+	const struct vnodeop_desc *descp = ap->a_desc;
 
 	if ((error = umap_bypass(ap)) != 0)
 		return (error);

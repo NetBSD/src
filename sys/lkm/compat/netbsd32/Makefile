@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2001/01/08 14:57:06 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2001/02/11 19:16:54 bouyer Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/netbsd32 $S/arch/${MACHINE}/${MACHINE}
 
-CPPFLAGS+=	-DVM86 -DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_NETBSD32
+CPPFLAGS+=	-DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_NETBSD32
 CPPFLAGS+=	-DCOMPAT_12 -DCOMPAT_43
 CPPFLAGS+=	-DEXEC_AOUT -DEXEC_ELF32 # for netbsd32_exec.c
 CPPFLAGS+=	-nostdinc

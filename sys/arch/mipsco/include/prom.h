@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.4.2.3 2000/12/08 09:28:24 bouyer Exp $	*/
+/*	$NetBSD: prom.h,v 1.4.2.4 2001/02/11 19:11:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -318,7 +318,7 @@ extern void prom_init __P((void));
 #define MIPS_PROM_NVGET		MIPS_PROM_ENTRY(53)
 #define MIPS_PROM_NVSET		MIPS_PROM_ENTRY(54)
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(__ASSEMBLER__)
 extern void prom_init (void);
 extern int prom_getconsole (void);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.3.12.1 2000/11/20 18:08:48 bouyer Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.3.12.2 2001/02/11 19:15:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@ db_addr_t db_disasm __P((db_addr_t, boolean_t));
 
 /* arch/<arch>/<arch>/db_interface.c */
 void db_machine_init __P((void));
+#ifdef DB_MACHINE_COMMANDS
+extern const struct db_command db_machine_command_table[];
+#endif
 
 /* arch/<arch>/<arch>/db_trace.c */
 /* arch/vax/vax/db_machdep.c */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.12.2.3 2001/01/18 09:23:38 bouyer Exp $
+#	$NetBSD: files.usb,v 1.12.2.4 2001/02/11 19:16:21 bouyer Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -35,6 +35,12 @@ file	dev/usb/ezload.c		ezload
 device	uaudio: audio, auconv, mulaw
 attach	uaudio at uhub
 file	dev/usb/uaudio.c		uaudio
+
+# MIDI devices
+device	umidi: midibus
+attach	umidi at uhub
+file	dev/usb/umidi.c			umidi
+file	dev/usb/umidi_quirks.c		umidi
 
 # Modem and com serial port
 device	ucom
@@ -128,6 +134,10 @@ device	uftdi: ucombus
 attach	uftdi at uhub
 file	dev/usb/uftdi.c			uftdi
 
+# Prolific PL2303 serial driver
+device	uplcom: ucombus
+attach	uplcom at uhub
+file	dev/usb/uplcom.c		uplcom
 
 # Scanners
 # Generic scanner support

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.18.2.7 2001/01/18 09:23:20 bouyer Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.18.2.8 2001/02/11 19:15:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -564,7 +564,9 @@ STATIC void rtk_setmulti(sc)
 
 	rxfilt = CSR_READ_4(sc, RTK_RXCFG);
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
+allmulti:
+		ifp->if_flags |= IFF_ALLMULTI;
 		rxfilt |= RTK_RXCFG_RX_MULTI;
 		CSR_WRITE_4(sc, RTK_RXCFG, rxfilt);
 		CSR_WRITE_4(sc, RTK_MAR0, 0xFFFFFFFF);
@@ -581,7 +583,7 @@ STATIC void rtk_setmulti(sc)
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0)
-			continue;
+			goto allmulti;
 
 		h = rtk_calchash(enm->enm_addrlo);
 		if (h < 32)
@@ -591,6 +593,8 @@ STATIC void rtk_setmulti(sc)
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (mcnt)
 		rxfilt |= RTK_RXCFG_RX_MULTI;
@@ -627,6 +631,7 @@ rtk_attach(sc)
 	struct rtk_softc *sc;
 {
 	struct ifnet *ifp;
+	struct rtk_tx_desc *txd;
 	u_int16_t val;
 	u_int8_t eaddr[ETHER_ADDR_LEN];
 	int error;
@@ -664,7 +669,7 @@ rtk_attach(sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg,
-	    RTK_RXBUFLEN + 16, (caddr_t *)&sc->rtk_cdata.rtk_rx_buf,
+	    RTK_RXBUFLEN + 16, (caddr_t *)&sc->rtk_rx_buf,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map recv buffer, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -680,21 +685,28 @@ rtk_attach(sc)
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->recv_dmamap,
-	    sc->rtk_cdata.rtk_rx_buf, RTK_RXBUFLEN + 16,
+	    sc->rtk_rx_buf, RTK_RXBUFLEN + 16,
 	    NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load recv buffer DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
 
-	for (i = 0; i < RTK_TX_LIST_CNT; i++)
+	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
+		txd = &sc->rtk_tx_descs[i];
 		if ((error = bus_dmamap_create(sc->sc_dmat,
 		    MCLBYTES, 1, MCLBYTES, 0, BUS_DMA_NOWAIT,
-		    &sc->snd_dmamap[i])) != 0) {
+		    &txd->txd_dmamap)) != 0) {
 			printf("%s: can't create snd buffer DMA map,"
 			    " error = %d\n", sc->sc_dev.dv_xname, error);
 			goto fail_4;
 		}
+		txd->txd_txaddr = RTK_TXADDR0 + (i * 4);
+		txd->txd_txstat = RTK_TXSTAT0 + (i * 4);
+	}
+	SIMPLEQ_INIT(&sc->rtk_tx_free);
+	SIMPLEQ_INIT(&sc->rtk_tx_dirty);
+
 	/*
 	 * From this point forward, the attachment cannot fail. A failure
 	 * before this releases all resources thar may have been
@@ -762,13 +774,15 @@ rtk_attach(sc)
 
 	return;
  fail_4:
-	for (i = 0; i < RTK_TX_LIST_CNT; i++)
-		if (sc->snd_dmamap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->snd_dmamap[i]);
+	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
+		txd = &sc->rtk_tx_descs[i];
+		if (txd->txd_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, txd->txd_dmamap);
+	}
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_cdata.rtk_rx_buf,
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
@@ -782,18 +796,19 @@ rtk_attach(sc)
 STATIC int rtk_list_tx_init(sc)
 	struct rtk_softc	*sc;
 {
-	struct rtk_chain_data	*cd;
-	int			i;
+	struct rtk_tx_desc *txd;
+	int i;
 
-	cd = &sc->rtk_cdata;
+	while ((txd = SIMPLEQ_FIRST(&sc->rtk_tx_dirty)) != NULL)
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd, txd_q);
+	while ((txd = SIMPLEQ_FIRST(&sc->rtk_tx_free)) != NULL)
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_free, txd, txd_q);
+
 	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
-		cd->rtk_tx_chain[i] = NULL;
-		CSR_WRITE_4(sc,
-		    RTK_TXADDR0 + (i * sizeof(u_int32_t)), 0x0000000);
+		txd = &sc->rtk_tx_descs[i];
+		CSR_WRITE_4(sc, txd->txd_txaddr, 0);
+		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_free, txd, txd_q);
 	}
-
-	sc->rtk_cdata.cur_tx = 0;
-	sc->rtk_cdata.last_tx = 0;
 
 	return (0);
 }
@@ -834,6 +849,7 @@ rtk_detach(sc)
 	struct rtk_softc *sc;
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct rtk_tx_desc *txd;
 	int i;
 
 	/*
@@ -854,11 +870,13 @@ rtk_detach(sc)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	for (i = 0; i < RTK_TX_LIST_CNT; i++)
-		if (sc->snd_dmamap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->snd_dmamap[i]);
+	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
+		txd = &sc->rtk_tx_descs[i];
+		if (txd->txd_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, txd->txd_dmamap);
+	}
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_cdata.rtk_rx_buf,
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
 
@@ -984,7 +1002,7 @@ STATIC void rtk_rxeof(sc)
 		max_bytes = limit - cur_rx;
 
 	while((CSR_READ_1(sc, RTK_COMMAND) & RTK_CMD_EMPTY_RXBUF) == 0) {
-		rxbufpos = sc->rtk_cdata.rtk_rx_buf + cur_rx;
+		rxbufpos = sc->rtk_rx_buf + cur_rx;
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap, cur_rx,
 		    RTK_RXSTAT_LEN, BUS_DMASYNC_POSTREAD);
 		rxstat = le32toh(*(u_int32_t *)rxbufpos);
@@ -1047,14 +1065,14 @@ STATIC void rtk_rxeof(sc)
 		 * Skip the status word, wrapping around to the beginning
 		 * of the Rx area, if necessary.
 		 */
-		cur_rx += RTK_RXSTAT_LEN;
-		rxbufpos = sc->rtk_cdata.rtk_rx_buf + (cur_rx % RTK_RXBUFLEN);
+		cur_rx = (cur_rx + RTK_RXSTAT_LEN) % RTK_RXBUFLEN;
+		rxbufpos = sc->rtk_rx_buf + cur_rx;
 
 		/*
 		 * Compute the number of bytes at which the packet
 		 * will wrap to the beginning of the ring buffer.
 		 */
-		wrap = RTK_RXBUFLEN - (cur_rx % RTK_RXBUFLEN);
+		wrap = RTK_RXBUFLEN - cur_rx;
 
 		/*
 		 * Compute where the next pending packet is.
@@ -1104,7 +1122,7 @@ STATIC void rtk_rxeof(sc)
 			bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
 			    cur_rx, wrap, BUS_DMASYNC_PREREAD);
 			cur_rx = 0;
-			rxbufpos = sc->rtk_cdata.rtk_rx_buf;
+			rxbufpos = sc->rtk_rx_buf;
 			total_len -= wrap;
 			dst += wrap;
 		}
@@ -1149,8 +1167,9 @@ STATIC void rtk_rxeof(sc)
 STATIC void rtk_txeof(sc)
 	struct rtk_softc	*sc;
 {
-	struct ifnet		*ifp;
-	u_int32_t		txstat;
+	struct ifnet *ifp;
+	struct rtk_tx_desc *txd;
+	u_int32_t txstat;
 
 	ifp = &sc->ethercom.ec_if;
 
@@ -1161,20 +1180,19 @@ STATIC void rtk_txeof(sc)
 	 * Go through our tx list and free mbufs for those
 	 * frames that have been uploaded.
 	 */
-	do {
-		txstat = CSR_READ_4(sc, RTK_LAST_TXSTAT(sc));
+	while ((txd = SIMPLEQ_FIRST(&sc->rtk_tx_dirty)) != NULL) {
+		txstat = CSR_READ_4(sc, txd->txd_txstat);
 		if ((txstat & (RTK_TXSTAT_TX_OK|
 		    RTK_TXSTAT_TX_UNDERRUN|RTK_TXSTAT_TXABRT)) == 0)
 			break;
 
-		bus_dmamap_sync(sc->sc_dmat,
-		    sc->snd_dmamap[sc->rtk_cdata.last_tx], 0,
-		    sc->snd_dmamap[sc->rtk_cdata.last_tx]->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat,
-		    sc->snd_dmamap[sc->rtk_cdata.last_tx]);
-		m_freem(RTK_LAST_TXMBUF(sc));
-		RTK_LAST_TXMBUF(sc) = NULL;
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd, txd_q);
+
+		bus_dmamap_sync(sc->sc_dmat, txd->txd_dmamap, 0,
+		    txd->txd_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, txd->txd_dmamap);
+		m_freem(txd->txd_mbuf);
+		txd->txd_mbuf = NULL;
 
 		ifp->if_collisions += (txstat & RTK_TXSTAT_COLLCNT) >> 24;
 
@@ -1185,9 +1203,9 @@ STATIC void rtk_txeof(sc)
 			if (txstat & (RTK_TXSTAT_TXABRT|RTK_TXSTAT_OUTOFWIN))
 				CSR_WRITE_4(sc, RTK_TXCFG, RTK_TXCFG_CONFIG);
 		}
-		RTK_INC(sc->rtk_cdata.last_tx);
+		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_free, txd, txd_q);
 		ifp->if_flags &= ~IFF_OACTIVE;
-	} while (sc->rtk_cdata.last_tx != sc->rtk_cdata.cur_tx);
+	}
 }
 
 int rtk_intr(arg)
@@ -1246,19 +1264,18 @@ int rtk_intr(arg)
 STATIC void rtk_start(ifp)
 	struct ifnet		*ifp;
 {
-	struct rtk_softc	*sc;
-	struct mbuf		*m_head = NULL, *m_new;
-	int			error, idx, len;
+	struct rtk_softc *sc;
+	struct rtk_tx_desc *txd;
+	struct mbuf *m_head = NULL, *m_new;
+	int error, len;
 
 	sc = ifp->if_softc;
 
-	while(RTK_CUR_TXMBUF(sc) == NULL) {
+	while ((txd = SIMPLEQ_FIRST(&sc->rtk_tx_free)) != NULL) {
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 		m_new = NULL;
-
-		idx = sc->rtk_cdata.cur_tx;
 
 		/*
 		 * Load the DMA map.  If this fails, the packet didn't
@@ -1266,7 +1283,7 @@ STATIC void rtk_start(ifp)
 		 * the packet must also be aligned.
 		 */
 		if ((mtod(m_head, bus_addr_t) & 3) != 0 ||
-		    bus_dmamap_load_mbuf(sc->sc_dmat, sc->snd_dmamap[idx],
+		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmamap,
 			m_head, BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 			if (m_new == NULL) {
@@ -1288,7 +1305,7 @@ STATIC void rtk_start(ifp)
 			m_new->m_pkthdr.len = m_new->m_len =
 			    m_head->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat,
-			    sc->snd_dmamap[idx], m_new, BUS_DMA_NOWAIT);
+			    txd->txd_dmamap, m_new, BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -1300,8 +1317,10 @@ STATIC void rtk_start(ifp)
 			m_freem(m_head);
 			m_head = m_new;
 		}
+		txd->txd_mbuf = m_head;
 
-		RTK_CUR_TXMBUF(sc) = m_head;
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_free, txd, txd_q);
+		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_dirty, txd, txd_q);
 
 #if NBPFILTER > 0
 		/*
@@ -1309,24 +1328,22 @@ STATIC void rtk_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, RTK_CUR_TXMBUF(sc));
+			bpf_mtap(ifp->if_bpf, m_head);
 #endif
 		/*
 		 * Transmit the frame.
 	 	 */
 		bus_dmamap_sync(sc->sc_dmat,
-		    sc->snd_dmamap[idx], 0, sc->snd_dmamap[idx]->dm_mapsize,
+		    txd->txd_dmamap, 0, txd->txd_dmamap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
-		len = sc->snd_dmamap[idx]->dm_segs[0].ds_len;
+		len = txd->txd_dmamap->dm_segs[0].ds_len;
 		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
 			len = (ETHER_MIN_LEN - ETHER_CRC_LEN);
 
-		CSR_WRITE_4(sc, RTK_CUR_TXADDR(sc),
-		    sc->snd_dmamap[idx]->dm_segs[0].ds_addr);
-		CSR_WRITE_4(sc, RTK_CUR_TXSTAT(sc), RTK_TX_EARLYTHRESH | len);
-
-		RTK_INC(sc->rtk_cdata.cur_tx);
+		CSR_WRITE_4(sc, txd->txd_txaddr,
+		    txd->txd_dmamap->dm_segs[0].ds_addr);
+		CSR_WRITE_4(sc, txd->txd_txstat, RTK_TX_EARLYTHRESH | len);
 	}
 
 	/*
@@ -1334,7 +1351,7 @@ STATIC void rtk_start(ifp)
 	 * full. Mark the NIC as busy until it drains some of the
 	 * packets from the queue.
 	 */
-	if (RTK_CUR_TXMBUF(sc) != NULL)
+	if (SIMPLEQ_FIRST(&sc->rtk_tx_free) == NULL)
 		ifp->if_flags |= IFF_OACTIVE;
 
 	/*
@@ -1532,7 +1549,7 @@ STATIC void rtk_stop(ifp, disable)
 	int disable;
 {
 	struct rtk_softc *sc = ifp->if_softc;
-	int i;
+	struct rtk_tx_desc *txd;
 
 	callout_stop(&sc->rtk_tick_ch);
 
@@ -1544,13 +1561,12 @@ STATIC void rtk_stop(ifp, disable)
 	/*
 	 * Free the TX list buffers.
 	 */
-	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
-		if (sc->rtk_cdata.rtk_tx_chain[i] != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, sc->snd_dmamap[i]);
-			m_freem(sc->rtk_cdata.rtk_tx_chain[i]);
-			sc->rtk_cdata.rtk_tx_chain[i] = NULL;
-			CSR_WRITE_4(sc, RTK_TXADDR0 + i, 0x0000000);
-		}
+	while ((txd = SIMPLEQ_FIRST(&sc->rtk_tx_dirty)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd, txd_q);
+		bus_dmamap_unload(sc->sc_dmat, txd->txd_dmamap);
+		m_freem(txd->txd_mbuf);
+		txd->txd_mbuf = NULL;
+		CSR_WRITE_4(sc, txd->txd_txaddr, 0);
 	}
 
 	if (disable)

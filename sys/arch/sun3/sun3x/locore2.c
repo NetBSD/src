@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.21.14.1 2000/11/20 20:28:08 bouyer Exp $	*/
+/*	$NetBSD: locore2.c,v 1.21.14.2 2001/02/11 19:12:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,10 +71,9 @@ char *esym;	/* DDB */
  * XXX: m68k common code needs these...
  * ... but this port does not need to deal with anything except
  * an mc68030, so these two variables are always ignored.
- * XXX: Need to do something about <m68k/include/cpu.h>
  */
-int cputype =  1;	/* CPU_68030 */
-int mmutype = -1;	/* MMU_68030 */
+int cputype = CPU_68030;
+int mmutype = MMU_68030;
 
 /*
  * Now our own stuff.

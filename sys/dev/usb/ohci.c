@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.52.2.4 2001/01/05 17:36:29 bouyer Exp $	*/
+/*	$NetBSD: ohci.c,v 1.52.2.5 2001/02/11 19:16:23 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ Static void		ohci_shutdown(void *v);
 Static void		ohci_power(int, void *);
 Static usbd_status	ohci_open(usbd_pipe_handle);
 Static void		ohci_poll(struct usbd_bus *);
-Static void		ohci_softintr(struct usbd_bus *);
+Static void		ohci_softintr(void *);
 Static void		ohci_waitintr(ohci_softc_t *, usbd_xfer_handle);
 Static void		ohci_add_done(ohci_softc_t *, ohci_physaddr_t);
 Static void		ohci_rhsc(ohci_softc_t *, usbd_xfer_handle);
@@ -948,7 +948,7 @@ ohci_power(int why, void *v)
 	ohci_dumpregs(sc);
 #endif
 
-	s = splusb();
+	s = splhardusb();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
@@ -1077,7 +1077,12 @@ ohci_intr1(ohci_softc_t *sc)
 		     (u_int)eintrs));
 
 	if (eintrs & OHCI_SO) {
-		printf("%s: scheduling overrun\n",USBDEVNAME(sc->sc_bus.bdev));
+		sc->sc_overrun_cnt++;
+		if (usbd_ratecheck(&sc->sc_overrun_ntc)) {
+			printf("%s: %u scheduling overruns\n",
+			    USBDEVNAME(sc->sc_bus.bdev), sc->sc_overrun_cnt);
+			sc->sc_overrun_cnt = 0;
+		}
 		/* XXX do what */
 		intrs &= ~OHCI_SO;
 	}
@@ -1189,9 +1194,9 @@ ohci_add_done(ohci_softc_t *sc, ohci_physaddr_t done)
 }
 
 void
-ohci_softintr(struct usbd_bus *bus)
+ohci_softintr(void *v)
 {
-	ohci_softc_t *sc = (ohci_softc_t *)bus;
+	ohci_softc_t *sc = v;
 	ohci_soft_itd_t *sitd, *sidone, *sitdnext;
 	ohci_soft_td_t  *std,  *sdone,  *stdnext;
 	usbd_xfer_handle xfer;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.9.8.1 2000/11/20 11:42:48 bouyer Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.9.8.2 2001/02/11 19:16:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -202,9 +202,9 @@ struct pcmcia_softc {
 struct pcmcia_cis_quirk {
 	int32_t manufacturer;
 	int32_t product;
-	char *cis1_info[4];
-	struct pcmcia_function *pf;
-	struct pcmcia_config_entry *cfe;
+	const char *cis1_info[4];
+	const struct pcmcia_function *pf;
+	const struct pcmcia_config_entry *cfe;
 };
 
 struct pcmcia_attach_args {

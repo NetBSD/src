@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.9.2.2 2001/01/05 17:34:39 bouyer Exp $	*/
+/*	$NetBSD: akbd.c,v 1.9.2.3 2001/02/11 19:11:03 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -470,6 +470,7 @@ kbd_intr(event)
 	type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
 
 	switch (key) {
+	case 57:	/* Caps Lock pressed */
 	case 185:	/* Caps Lock released */
 		type = WSCONS_EVENT_KEY_DOWN;
 		wskbd_input(sc->sc_wskbddev, type, val);

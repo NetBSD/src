@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.31.8.2 2001/01/18 09:23:48 bouyer Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.31.8.3 2001/02/11 19:17:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -130,7 +130,6 @@ procfs_mount(mp, path, data, ndp, p)
 	memcpy(mp->mnt_stat.f_mntfromname, "procfs", sizeof("procfs"));
 
 	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
-	pmnt->pmnt_mp = mp;
 	pmnt->pmnt_flags = args.flags;
 
 	return (0);
@@ -307,9 +306,9 @@ procfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	return (EOPNOTSUPP);
 }
 
-extern struct vnodeopv_desc procfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc procfs_vnodeop_opv_desc;
 
-struct vnodeopv_desc *procfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const procfs_vnodeopv_descs[] = {
 	&procfs_vnodeop_opv_desc,
 	NULL,
 };

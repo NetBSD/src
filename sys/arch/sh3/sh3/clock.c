@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3.2.2 2001/01/18 09:23:00 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.3.2.3 2001/02/11 19:12:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -326,8 +326,6 @@ cpu_initclocks()
 	SHREG_TSTR |= TSTR_STR1;
 
 	(void)shb_intr_establish(TMU1_IRQ, IST_EDGE, IPL_CLOCK, clockintr, 0);
-
-	printf("cpu_initclocks completed\n");
 }
 
 void
@@ -351,7 +349,7 @@ void
 inittodr(base)
 	time_t base;
 {
-#ifdef DREAMCAST
+#ifdef dreamcast
 	volatile unsigned int *rtc = (volatile unsigned int *)0xa0710000;
 	unsigned int old = 0, new;
 #else
@@ -373,23 +371,22 @@ inittodr(base)
 		base = 17*SECYR + 186*SECDAY + SECDAY/2;
 	}
 
-#ifdef DREAMCAST
-
-	for(;;) {
-	  int i;
-	  for(i=0; i<3; i++) {
-	    new = ((rtc[0]&0xffff)<<16)|(rtc[1]&0xffff);
-	    if(new != old)
-	      break;
-	  }
-	  if(i<3)
-	    old = new;
-	  else
-	    break;
+#ifdef dreamcast
+	for (;;) {
+		int i;
+		for (i = 0; i < 3; i++) {
+			new = ((rtc[0] & 0xffff) << 16) | (rtc[1] & 0xffff);
+			if (new != old)
+				break;
+		}
+		if (i < 3)
+			old = new;
+		else
+			break;
 	}
-	
-	time.tv_sec = new-631152000;
-	
+
+	/* offset 20 years */
+	time.tv_sec = new - 631152000;
 #else
 #ifdef SH4
 #define	FROMBCD2(x)	((((x) & 0xf000) >> 12) * 1000 + \

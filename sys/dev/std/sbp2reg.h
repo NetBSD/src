@@ -1,3 +1,5 @@
+/*	$NetBSD: sbp2reg.h,v 1.1.2.3 2001/02/11 19:16:20 bouyer Exp $	*/
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.

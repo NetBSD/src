@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.14.2.2 2000/11/22 16:02:21 bouyer Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.14.2.3 2001/02/11 19:13:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,9 +58,8 @@
  * Search an alternate path before passing pathname arguments on
  * to system calls. Useful for keeping a separate 'emulation tree'.
  *
- * If cflag is set, we check if an attempt can be made to create
- * the named file, i.e. we check if the directory it should
- * be in exists.
+ * According to sflag, we either check for existance of the file or if
+ * it can be created or if the file is symlink.
  *
  * In case of success, emul_find returns 0:
  * 	If sgp is provided, the path is in user space, and pbuf gets
@@ -70,13 +69,13 @@
  * In case of error, the error number is returned and *pbuf = path.
  */
 int
-emul_find(p, sgp, prefix, path, pbuf, cflag)
+emul_find(p, sgp, prefix, path, pbuf, sflag)
 	struct proc	 *p;
 	caddr_t		 *sgp;		/* Pointer to stackgap memory */
 	const char	 *prefix;
 	const char	 *path;
 	const char	**pbuf;
-	int		  cflag;
+	int		  sflag;
 {
 	struct nameidata	 nd;
 	struct nameidata	 ndroot;
@@ -127,11 +126,12 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 	 * We know that there is a / somewhere in this pathname.
 	 * Search backwards for it, to find the file's parent dir
 	 * to see if it exists in the alternate tree. If it does,
-	 * and we want to create a file (cflag is set). We don't
+	 * and we want to create a file (sflag is set). We don't
 	 * need to worry about the root comparison in this case.
 	 */
 
-	if (cflag) {
+	switch (sflag) {
+	case CHECK_ALT_FL_CREAT:
 		for (cp = &ptr[len] - 1; *cp != '/'; cp--)
 			;
 		*cp = '\0';
@@ -142,9 +142,12 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 			goto bad;
 
 		*cp = '/';
-	}
-	else {
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, p);
+		break;
+	case CHECK_ALT_FL_EXISTS:
+	case CHECK_ALT_FL_SYMLINK:
+		NDINIT(&nd, LOOKUP,	
+			(sflag == CHECK_ALT_FL_SYMLINK) ? NOFOLLOW : FOLLOW,
+			UIO_SYSSPACE, buf, p);
 
 		if ((error = namei(&nd)) != 0)
 			goto bad;
@@ -174,10 +177,12 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 			error = ENOENT;
 			goto bad3;
 		}
+
+		break;
 	}
 
 	vrele(nd.ni_vp);
-	if (!cflag)
+	if (sflag == CHECK_ALT_FL_EXISTS)
 		vrele(ndroot.ni_vp);
 
 good:

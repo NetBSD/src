@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.27.2.6 2001/01/15 09:24:43 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.27.2.7 2001/02/11 19:16:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -46,6 +46,7 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/dvdio.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -351,6 +352,15 @@ wdc_atapi_scsipi_request(chan, req, arg)
 			xfer->c_flags |= C_POLL;
 		xfer->drive = drive;
 		xfer->c_flags |= C_ATAPI;
+		if (sc_xfer->cmd->opcode == GPCMD_REPORT_KEY ||
+		    sc_xfer->cmd->opcode == GPCMD_SEND_KEY ||
+		    sc_xfer->cmd->opcode == GPCMD_READ_DVD_STRUCTURE) {
+			/*
+			 * DVD authentication commands must always be done in
+			 * PIO mode.
+			 */
+			xfer->c_flags |= C_FORCEPIO;
+		}
 		xfer->cmd = sc_xfer;
 		xfer->databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
@@ -386,7 +396,7 @@ wdc_atapi_start(chp, xfer)
 	    sc_xfer->xs_control), DEBUG_XFERS);
 	/* Adjust C_DMA, it may have changed if we are requesting sense */
 	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    sc_xfer->datalen > 0) {
+	    sc_xfer->datalen > 0 && !(xfer->c_flags & C_FORCEPIO)) {
 		if (drvp->n_xfers <= NXFER)
 			drvp->n_xfers++;
 		xfer->c_flags |= C_DMA;

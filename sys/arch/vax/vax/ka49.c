@@ -63,7 +63,7 @@ struct	cpu_dep ka49_calls = {
 	ka49_conf,
 	chip_clkread,
 	chip_clkwrite,
-	16,      /* ~VUPS */
+	32,      /* ~VUPS */
 	2,	/* SCB pages */
 	ka49_halt,
 	ka49_reboot,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.h,v 1.1.2.2 2001/01/05 17:36:29 bouyer Exp $	*/
+/*	$NetBSD: ezload.h,v 1.1.2.3 2001/02/11 19:16:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,5 +43,5 @@ struct ezdata {
 };
 
 usbd_status ezload_reset(usbd_device_handle, int);
-usbd_status ezload_download(usbd_device_handle, struct ezdata *);
-usbd_status ezload_downloads_and_reset(usbd_device_handle, struct ezdata **);
+usbd_status ezload_download(usbd_device_handle, const struct ezdata *);
+usbd_status ezload_downloads_and_reset(usbd_device_handle, const struct ezdata **);

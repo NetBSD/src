@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28.2.1 2000/11/20 20:33:13 bouyer Exp $	 */
+/*	$NetBSD: clock.c,v 1.28.2.2 2001/02/11 19:13:01 bouyer Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -215,7 +215,8 @@ numtoyear(num)
 	return y;
 }
 
-#if VAX750 || VAX780 || VAX8600 || VAX650 || VAX660 || VAX670 || VAX680
+#if VAX750 || VAX780 || VAX8600 || VAX650 || \
+    VAX660 || VAX670 || VAX680 || VAX53
 /*
  * Reads the TODR register; returns a (probably) true tick value,
  * or CLKREAD_BAD if failed. The year is based on the argument

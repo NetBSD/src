@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.1.2.2 2000/12/08 09:12:32 bouyer Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.1.2.3 2001/02/11 19:15:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
  */
 
 #include "rnd.h"
-#include "opt_twe.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +56,6 @@
 
 #include <machine/bus.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <dev/ldvar.h>
 
 #include <dev/pci/twereg.h>
@@ -70,8 +67,8 @@ struct ld_twe_softc {
 };
 
 static void	ld_twe_attach(struct device *, struct device *, void *);
-static int	ld_twe_dobio(struct ld_twe_softc *, int, void *, int, int,
-			      int, struct twe_context *);
+static int	ld_twe_dobio(struct ld_twe_softc *, void *, int, int, int,
+			     struct buf *);
 static int	ld_twe_dump(struct ld_softc *, void *, int, int);
 static void	ld_twe_handler(struct twe_ccb *, int);
 static int	ld_twe_match(struct device *, struct cfdata *, void *);
@@ -106,8 +103,7 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	ld->sc_maxxfer = TWE_MAX_XFER;
 	ld->sc_secperunit = twe->sc_dsize[twea->twea_unit];
 	ld->sc_secsize = TWE_SECTOR_SIZE;
-	ld->sc_maxqueuecnt =
-	    min((twe->sc_nccbs - 1) / twe->sc_nunits, TWE_MAX_PU_QUEUECNT);
+	ld->sc_maxqueuecnt = (TWE_MAX_QUEUECNT - 1) / twe->sc_nunits;
 	ld->sc_start = ld_twe_start;
 	ld->sc_dump = ld_twe_dump;
 
@@ -127,8 +123,8 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
-	      int blkno, int dowrite, struct twe_context *tx)
+ld_twe_dobio(struct ld_twe_softc *sc, void *data, int datasize, int blkno,
+	     int dowrite, struct buf *bp)
 {
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
@@ -147,7 +143,7 @@ ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
 
 	/* Build the command. */
 	tc->tc_size = 3;
-	tc->tc_unit = unit;
+	tc->tc_unit = sc->sc_hwunit;
 	tc->tc_count = htole16(datasize / TWE_SECTOR_SIZE);
 	tc->tc_args.io.lba = htole32(blkno);
 
@@ -162,19 +158,20 @@ ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
 		return (rv);
 	}
 
-	if (tx == NULL) {
+	if (bp == NULL) {
 		/*
 		 * Polled commands must not sit on the software queue.  Wait
 		 * up to 2 seconds for the command to complete.
 		 */
 		s = splbio();
-		if ((rv = twe_ccb_submit(twe, ccb)) == 0)
-			rv = twe_ccb_poll(twe, ccb, 2000);
+		rv = twe_ccb_poll(twe, ccb, 2000);
 		twe_ccb_unmap(twe, ccb);
 		twe_ccb_free(twe, ccb);
 		splx(s);
 	} else {
-		memcpy(&ccb->ccb_tx, tx, sizeof(struct twe_context));
+		ccb->ccb_tx.tx_handler = ld_twe_handler;
+		ccb->ccb_tx.tx_context = bp;
+		ccb->ccb_tx.tx_dv = (struct device *)sc;
 		twe_ccb_enqueue(twe, ccb);
 		rv = 0;
 	}
@@ -185,19 +182,9 @@ ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
 static int
 ld_twe_start(struct ld_softc *ld, struct buf *bp)
 {
-	struct twe_context tx;
-	struct ld_twe_softc *sc;
-	struct twe_softc *twe;
 
-	sc = (struct ld_twe_softc *)ld;
-	twe = (struct twe_softc *)ld->sc_dv.dv_parent;
-
-	tx.tx_handler = ld_twe_handler;
-	tx.tx_context = bp;
-	tx.tx_dv = &ld->sc_dv;
-
-	return (ld_twe_dobio(sc, sc->sc_hwunit, bp->b_data, bp->b_bcount,
-	    bp->b_rawblkno, (bp->b_flags & B_READ) == 0, &tx));
+	return (ld_twe_dobio((struct ld_twe_softc *)ld, bp->b_data,
+	    bp->b_bcount, bp->b_rawblkno, (bp->b_flags & B_READ) == 0, bp));
 }
 
 static void
@@ -229,10 +216,7 @@ ld_twe_handler(struct twe_ccb *ccb, int error)
 static int
 ld_twe_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 {
-	struct ld_twe_softc *sc;
 
-	sc = (struct ld_twe_softc *)ld;
-
-	return (ld_twe_dobio(sc, sc->sc_hwunit, data, blkcnt * ld->sc_secsize,
-	    blkno, 1, NULL));
+	return (ld_twe_dobio((struct ld_twe_softc *)ld, data,
+	    blkcnt * ld->sc_secsize, blkno, 1, NULL));
 }

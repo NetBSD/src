@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.27.12.2 2000/12/08 09:19:24 bouyer Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.27.12.3 2001/02/11 19:17:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -222,9 +222,9 @@ int	nfs_readlink	__P((void *));
 #define	nfs_abortop	genfs_abortop
 int	nfs_inactive	__P((void *));
 int	nfs_reclaim	__P((void *));
-#define nfs_lock	genfs_nolock
-#define nfs_unlock	genfs_nounlock
-#define nfs_islocked	genfs_noislocked
+#define nfs_lock	genfs_lock
+#define nfs_unlock	genfs_unlock
+#define nfs_islocked	genfs_islocked
 int	nfs_bmap	__P((void *));
 int	nfs_strategy	__P((void *));
 int	nfs_print	__P((void *));

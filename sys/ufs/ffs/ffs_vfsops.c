@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.53.2.4 2001/01/18 09:24:04 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.53.2.5 2001/02/11 19:17:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -83,7 +83,7 @@ extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ffs_specop_opv_desc;
 extern struct vnodeopv_desc ffs_fifoop_opv_desc;
 
-struct vnodeopv_desc *ffs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const ffs_vnodeopv_descs[] = {
 	&ffs_vnodeop_opv_desc,
 	&ffs_specop_opv_desc,
 	&ffs_fifoop_opv_desc,
@@ -804,9 +804,6 @@ ffs_unmount(mp, mntflags, p)
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	if (LIST_FIRST(&ump->um_devvp->v_dirtyblkhd)) {
-		panic("ffs_unmount: flush left dirty bufs %p", ump->um_devvp);
-	}
 	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vput(ump->um_devvp);

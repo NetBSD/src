@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.53.2.1 2000/11/20 18:09:03 bouyer Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.53.2.2 2001/02/11 19:16:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -53,6 +53,15 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+/*
+ * Maximum process data and stack limits.
+ * They are variables so they are patchable.
+ *
+ * XXXX Do we really need them to be patchable?
+ */
+rlim_t maxdmap = MAXDSIZ;
+rlim_t maxsmap = MAXSSIZ;
 
 /*
  * Resource controls and accounting.
@@ -236,7 +245,6 @@ dosetrlimit(p, cred, which, limp)
 	struct rlimit *limp;
 {
 	struct rlimit *alimp;
-	extern unsigned maxdmap, maxsmap;
 	struct plimit *newplim;
 	int error;
 

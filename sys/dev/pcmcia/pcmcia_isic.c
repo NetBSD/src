@@ -33,7 +33,7 @@
  *	pcmcia_isic.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: pcmcia_isic.c,v 1.1.1.1.2.2 2001/01/05 17:36:23 bouyer Exp $ 
+ *	$Id: pcmcia_isic.c,v 1.1.1.1.2.3 2001/02/11 19:16:12 bouyer Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -120,6 +120,10 @@ static const struct isic_pcmcia_card_entry card_list[] = {
     	{ "ELSA AG, Aachen", "MicroLink ISDN/MC ", NULL, NULL },
         "ELSA MicroLink ISDN/MC", PCMCIA_FUNCTION_NETWORK,
 	CARD_TYPEP_ELSAMLIMC, isic_attach_elsaisdnmc },
+    {	PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+    	{ "ELSA AG (Aachen, Germany)", "MicroLink ISDN/MC ", NULL, NULL },
+        "ELSA MicroLink ISDN/MC", PCMCIA_FUNCTION_NETWORK,
+	CARD_TYPEP_ELSAMLIMC, isic_attach_elsaisdnmc },
 #endif
 
 #ifdef ISICPCMCIA_ELSA_MCALL
@@ -127,6 +131,13 @@ static const struct isic_pcmcia_card_entry card_list[] = {
         { "ELSA", "MicroLink MC all", NULL, NULL },
         "ELSA MicroLink MCall", PCMCIA_FUNCTION_NETWORK,
 	CARD_TYPEP_ELSAMLMCALL, isic_attach_elsamcall },
+#endif
+
+#ifdef ISICPCMCIA_SBSPEEDSTAR2
+    {	0x020e, 0x0002,
+        { "SEDLBAUER", "speed star II", NULL, NULL },
+        "SEDLBAUER speed star II", PCMCIA_FUNCTION_NETWORK,
+	CARD_TYPEP_SWS, isic_attach_sbspeedstar2 },
 #endif
 
 };
@@ -192,10 +203,12 @@ pcmcia_isic_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	const struct isic_pcmcia_card_entry * cde;
+	int s;
 
 	/* Which card is it? */
 	cde = find_matching_card(pa);
-	if (cde == NULL) return; /* oops - not found?!? */
+	if (cde == NULL)
+		return; /* oops - not found?!? */
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
@@ -212,11 +225,17 @@ pcmcia_isic_attach(parent, self, aux)
 	/* Announce card name */
 	printf(": %s\n", cde->name);
 
+	/* XXX - we generate interrupts during card initialization.
+	   Block them for now, until the handler is established. */
+	s = splhigh();
+	
 	/* MI initilization */
-	pcmcia_isicattach(sc);
+	if (pcmcia_isicattach(sc) == 0) {
+		/* setup interrupt */
+		psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
+	}
 
-	/* setup interrupt */
-	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*
@@ -271,8 +290,7 @@ pcmcia_isicattach(struct l1_softc *sc)
 		default:
 			printf(ISIC_FMT "Error, ISAC version %d unknown!\n",
 				ISIC_PARM, sc->sc_isac_version);
-			return(0);
-			break;
+			return(EIO);
 	}
 
 	sc->sc_hscx_version = HSCX_READ(0, H_VSTR) & 0xf;
@@ -288,8 +306,7 @@ pcmcia_isicattach(struct l1_softc *sc)
 		default:
 			printf(ISIC_FMT "Error, HSCX version %d unknown!\n",
 				ISIC_PARM, sc->sc_hscx_version);
-			return(0);
-			break;
+			return(EIO);
 	};
 
 	/* ISAC setup */
@@ -364,6 +381,6 @@ pcmcia_isicattach(struct l1_softc *sc)
 				HSCXversion[sc->sc_hscx_version]);
 	}
 
-	return(1);
+	return(0);
 }
 

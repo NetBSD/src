@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.3.8.1 2000/11/20 11:42:55 bouyer Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.3.8.2 2001/02/11 19:16:16 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -86,8 +86,7 @@ typedef struct RF_LayoutSW_s {
 	            RF_AccessStripeMap_t *,
 	            RF_DagHeader_t *, void *,
 	            RF_RaidAccessFlags_t,
-/**INDENT** Warning@88: Extra ) */
-	            RF_AllocListElem_t *));
+	            RF_AllocListElem_t *);
 
 #endif
 

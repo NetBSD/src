@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.131.2.5 2001/01/18 09:23:34 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.131.2.6 2001/02/11 19:16:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ void	cdminphys __P((struct buf *));
 void	cdgetdefaultlabel __P((struct cd_softc *, struct disklabel *));
 void	cdgetdisklabel __P((struct cd_softc *));
 void	cddone __P((struct scsipi_xfer *));
+int	cd_interpret_sense __P((struct scsipi_xfer *));
 u_long	cd_size __P((struct cd_softc *, int));
 void	lba2msf __P((u_long, u_char *, u_char *, u_char *));
 u_long	msf2lba __P((u_char, u_char, u_char));
@@ -138,7 +139,7 @@ extern struct cfdriver cd_cd;
 struct dkdriver cddkdriver = { cdstrategy };
 
 const struct scsipi_periphsw cd_switch = {
-	NULL,			/* use default error handler */
+	cd_interpret_sense,	/* use our error handler first */
 	cdstart,		/* we have a queue, which is started by this */
 	NULL,			/* we do not have an async handler */
 	cddone,			/* deal with stats at interrupt time */
@@ -742,6 +743,45 @@ cddone(xs)
 		rnd_add_uint32(&cd->rnd_source, xs->bp->b_rawblkno);
 #endif
 	}
+}
+
+int cd_interpret_sense(xs)
+	struct scsipi_xfer *xs;
+{
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
+	int retval = EJUSTRETURN;
+
+	/*
+	 * If it isn't a extended or extended/deferred error, let
+	 * the generic code handle it.
+	 */
+	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
+	    (sense->error_code & SSD_ERRCODE) != 0x71) {	/* DEFFERRED */
+		return (retval);
+	}
+
+	/*
+	 * If we got a "Unit not ready" (SKEY_NOT_READY) and "Logical Unit
+	 * Is In The Process of Becoming Ready" (Sense code 0x04,0x01), then
+	 * wait a bit for the drive to spin up
+	 */
+
+	if ((sense->flags & SSD_KEY) == SKEY_NOT_READY &&
+	    sense->add_sense_code == 0x4 &&
+	    sense->add_sense_code_qual == 0x01)	{
+		/*
+		 * Sleep for 5 seconds to wait for the drive to spin up
+		 */
+
+		SC_DEBUG(sc_link, SDEV_DB1, ("Waiting 5 sec for CD "
+						"spinup\n"));
+		scsipi_periph_freeze(periph, 1);
+		callout_reset(&periph->periph_callout,
+		    5 * hz, scsipi_periph_timed_thaw, periph);
+		retval = ERESTART;
+	}
+	return (retval);
 }
 
 void

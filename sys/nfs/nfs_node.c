@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.29.2.3 2000/12/08 09:19:21 bouyer Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.29.2.4 2001/02/11 19:17:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -65,6 +65,8 @@ struct lock nfs_hashlock;
 
 struct pool nfs_node_pool;		/* memory pool for nfs nodes */
 struct pool nfs_vattr_pool;		/* memory pool for nfs vattrs */
+
+extern int prtactive;
 
 #define TRUE	1
 #define	FALSE	0
@@ -156,7 +158,6 @@ loop:
 		lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 		return (error);
 	}
-	nvp->v_vnlock = 0;	/* XXX At least untill we do locking */
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	memset(np, 0, sizeof *np);
@@ -176,6 +177,8 @@ loop:
 	np->n_fhsize = fhsize;
 	np->n_accstamp = -1;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
+
+	lockmgr(&vp->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
 
 	/*
 	 * XXXUBC doing this while holding the nfs_hashlock is bad,
@@ -203,46 +206,32 @@ nfs_inactive(v)
 	struct nfsnode *np;
 	struct sillyrename *sp;
 	struct proc *p = ap->a_p;
-	extern int prtactive;
+	struct vnode *vp = ap->a_vp;
 
-	np = VTONFS(ap->a_vp);
-	if (prtactive && ap->a_vp->v_usecount != 0)
-		vprint("nfs_inactive: pushing active", ap->a_vp);
-	if (ap->a_vp->v_type != VDIR) {
+	np = VTONFS(vp);
+	if (prtactive && vp->v_usecount != 0)
+		vprint("nfs_inactive: pushing active", vp);
+	if (vp->v_type != VDIR) {
 		sp = np->n_sillyrename;
 		np->n_sillyrename = (struct sillyrename *)0;
 	} else
 		sp = (struct sillyrename *)0;
 	if (sp) {
-		/*
-		 * If the usecount is greater than zero, then we are
-		 * being inactivated by a forcible unmount and do not
-		 * have to get our own reference. In the normal case,
-		 * we need a reference to keep the vnode from being
-		 * recycled by getnewvnode while we do the I/O
-		 * associated with discarding the buffers.
-		 */
-		if (ap->a_vp->v_usecount > 0)
-			(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
-		else if (vget(ap->a_vp, 0))
-                        panic("nfs_inactive: lost vnode");
-		else {
-			(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
-			vrele(ap->a_vp);
-		}
-
+		nfs_vinvalbuf(vp, 0, sp->s_cred, p, 1);
 
 		/*
 		 * Remove the silly file that was rename'd earlier
 		 */
+
+		vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_RETRY);
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
-		vrele(sp->s_dvp);
+		vput(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(vp, 0);
 	return (0);
 }
 
@@ -259,7 +248,6 @@ nfs_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);

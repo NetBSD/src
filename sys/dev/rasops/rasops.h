@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.7.2.1 2000/11/20 11:43:01 bouyer Exp $ */
+/* 	$NetBSD: rasops.h,v 1.7.2.2 2001/02/11 19:16:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ struct rasops_info {
  */
 void	rasops1_init __P((struct rasops_info *));
 void	rasops2_init __P((struct rasops_info *));
+void	rasops4_init __P((struct rasops_info *));
 void	rasops8_init __P((struct rasops_info *));
 void	rasops15_init __P((struct rasops_info *));
 void	rasops24_init __P((struct rasops_info *));

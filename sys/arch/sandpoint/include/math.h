@@ -1,0 +1,3 @@
+/*	$NetBSD: math.h,v 1.1.2.2 2001/02/11 19:11:52 bouyer Exp $	*/
+
+#include <powerpc/math.h>

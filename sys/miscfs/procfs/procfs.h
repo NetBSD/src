@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.27.2.3 2001/01/18 09:23:47 bouyer Exp $	*/
+/*	$NetBSD: procfs.h,v 1.27.2.4 2001/02/11 19:17:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -103,12 +103,10 @@ struct procfs_args {
 
 struct procfsmount {
 	void *pmnt_exechook;
-	struct mount *pmnt_mp;
 	int pmnt_flags;
 };
 
 #define VFSTOPROC(mp)	((struct procfsmount *)(mp)->mnt_data)
-#define PROCTOVFS(pp)	((pp)->pmnt_mp)
 
 /*
  * Convert between pfsnode vnode
@@ -123,7 +121,7 @@ struct vfs_namemap {
 };
 
 int vfs_getuserstr __P((struct uio *, char *, int *));
-vfs_namemap_t *vfs_findname __P((vfs_namemap_t *, char *, int));
+const vfs_namemap_t *vfs_findname __P((const vfs_namemap_t *, const char *, int));
 
 #define PFIND(pid) ((pid) ? pfind(pid) : &proc0)
 int procfs_freevp __P((struct vnode *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.25.2.4 2001/01/18 09:24:06 bouyer Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.25.2.5 2001/02/11 19:17:50 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -103,8 +103,6 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  */
 boolean_t vm_page_zero_enable = FALSE;
 
-extern struct uvm_pagerops uvm_vnodeops;
-
 /*
  * local variables
  */
@@ -192,9 +190,8 @@ uvm_pageremove(pg)
 	simple_unlock(&uvm.hashlock);
 	splx(s);
 
-	if (pg->uobject->pgops == &uvm_vnodeops) {
+	if (UVM_OBJ_IS_VNODE(pg->uobject))
 		uvmexp.vnodepages--;
-	}
 
 	/* object should be locked */
 	TAILQ_REMOVE(&pg->uobject->memq, pg, listq);
@@ -889,6 +886,10 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(off == trunc_page(off));
+
+	LOCK_ASSERT(obj == NULL || simple_lock_held(&obj->vmobjlock));
+	LOCK_ASSERT(anon == NULL || simple_lock_held(&anon->an_lock));
+
 	s = uvm_lock_fpageq();
 
 	/*

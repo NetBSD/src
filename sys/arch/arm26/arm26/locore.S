@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.4.2.6 2001/01/18 09:22:14 bouyer Exp $ */
+/* $NetBSD: locore.S,v 1.4.2.7 2001/02/11 19:08:54 bouyer Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -41,7 +41,8 @@
 /* RCSID is at the end of the file in case it gets put in the text segment. */
 
 #include <sys/syscall.h>
-#include <machine/armreg.h>
+#include <arm/armreg.h>
+#include <arm/trap.h>
 #include "assym.h"
 
 #include "opt_cputypes.h"
@@ -156,15 +157,35 @@ _C_LABEL(page0_end):
 #define TRAP_REGS r0-r14	
 	.macro	HANDLER	handler, lr_fixup
 	sub	lr, lr, #\lr_fixup	/* Compensate for prefetch */
-	sub	sp, sp, #TF_SIZE	/* Adjust SP */
-	str	lr, [sp, #TF_R15]	/* Push return address */
+	sub	sp, sp, #(TF_SIZE-TF_R0)	/* Adjust SP */
+	str	lr, [sp, #(TF_R15-TF_R0)]	/* Push return address */
 	stmia	sp, {TRAP_REGS}^	/* Push user mode registers */
+	mov	r0, #0
+	str	r0, [sp, #(TF_SPSR-TF_R0)]! /* Push fake SPSR and adjust SP */
+#if TF_SPSR != 0			/* Shouldn't happen */
+	sub	sp, sp, #TF_SPSR
+#endif
 
 	mov	r0, sp			/* Supply handler with argument */
 	tst	lr, #R15_MODE		/* If the trap was from USR mode... */
 	moveq	fp, #0			/* ... this is the end of the stack */
 	bl	\handler
+	b	pull_trapframe
+	.endm
 
+/*
+ * Generic routine to take a trapframe and return to the context it
+ * represents.  This should probably include AST processing.
+ * On entry:
+ *   SVC mode.
+ *   IRQs disabled.
+ *   r13_svc points to the trapframe to restore.
+ * On exit:
+ *   r0-r12, r13_usr, r14_usr and r15 have been restored.
+ *   r13_svc points above the trapframe.
+ *   r14_svc is corrupted.
+ */
+pull_trapframe:
 /*
  * AST handling stuff.  We have to disable IRQs between loading the
  * flag and returning to user mode, since otherwise an IRQ might
@@ -186,11 +207,11 @@ _C_LABEL(page0_end):
 2:
 	ldr	lr, [sp, #TF_R15]	/* Pull return address */
 3:					/* ... which we may have done above */
+	add	sp, sp, #TF_R0		/* Skip fake SPSR */
 	ldmia	sp, {TRAP_REGS}^	/* Restore USR mode registers */
 	USR_LDM_NOP
-	add	sp, sp, #TF_SIZE	/* Adjust SP */
+	add	sp, sp, #(TF_SIZE-TF_R0)	/* Adjust SP */
 	movs	pc, lr			
-	.endm
 
 Lastpending:
 	.word	_C_LABEL(astpending)
@@ -231,7 +252,7 @@ address_exception_entry:
  * IRQs can happen in SVC mode, and we need to do a bit of juggling to
  * save R14_svc before we enter the IRQ handler.
  *
- * The "R15" slot in the irqframe hols the value of R15 to return to.
+ * The "R15" slot in the irqframe holds the value of R15 to return to.
  * Conceptually, IRQs happen at the start of an instruction.
  */
 
@@ -302,24 +323,18 @@ Lirq_from_usr:
 
 Lirq_to_ast:
 	ldmia	sp, {IRQ_REGS_USR}	/* Slurp up irqframe */
-	sub	sp, sp, #(TF_SIZE - IF_SIZE)
+	sub	sp, sp, #(TF_SIZE - IF_SIZE - TF_R0)
 	stmia	sp, {TRAP_REGS}^	/* Spit out trapframe */
+	mov	r0, #0
+	str	r0, [sp, #(TF_SPSR-TF_R0)]! /* Push fake SPSR and adjust SP */
+#if TF_SPSR != 0			/* Shouldn't happen */
+	sub	sp, sp, #TF_SPSR
+#endif
 
 	mov	fp, #0
-Last_again:
 	mov	r0, sp
 	bl	_C_LABEL(ast_handler)
-
-	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
-	ldr	r0, Lastpending
-	ldr	r0, [r0]
-	cmp	r0, #0
-	bne	Last_again
-	ldr	lr, [sp, #TF_R15]	/* Pull return address */
-	ldmia	sp, {TRAP_REGS}^	/* Restore USR mode registers */
-	USR_LDM_NOP
-	add	sp, sp, #TF_SIZE	/* Adjust SP */
-	movs	pc, lr			
+	b	pull_trapframe
 
 ENTRY(atomic_set_bit)
 	/* disable interrupts */
@@ -384,7 +399,7 @@ ENTRY(cpu_loswitch)
 	/*
 	 * This funny little routine implements starting a process.
 	 * It's called by cpu_loswitch returning from a faked
-	 * switchframe set up by cpu_fork() and cpu_set_kpc(), and gets
+	 * switchframe set up by cpu_fork(), and gets
 	 * the function it's meant to enter passed in R4 with its
 	 * argument in R5.  If that function's NULL, or if it returns,
 	 * we hope there's a trapframe on the stack that'll take us
@@ -400,11 +415,7 @@ ENTRY(proc_trampoline)
 	mov	r14, pc			/* Save return address */
 	mov	pc, r4			/* Call function */
 Lproc_trampoline_nofunc:
-	ldr	lr, [sp, #TF_R15]	/* Pull return address */
-	ldmia	sp, {r0-r14}^		/* Restore USR mode registers */
-	USR_LDM_NOP
-	add	sp, sp, #TF_SIZE	/* Adjust SP */
-	movs	pc, lr			
+	b	pull_trapframe
 
 /* int setjmp(label_t *); */
 ENTRY(setjmp)
@@ -423,11 +434,7 @@ ENTRY(longjmp)
 /* void cpu_Debugger(void); */
 ENTRY(cpu_Debugger)
 	stmfd	r13!, {r14}
-	stmfd	r13!, {r0-r15}		/* Save all SVC-mode regs */
-	mov	r1, r13
-	mov	r0, #0
-	bl	_C_LABEL(kdb_trap)
-	add	r13, r13, #(4 * 16)
+	.word	KERNEL_BREAKPOINT
 	ldmfd	r13!, {pc}^
 #endif
 
@@ -443,4 +450,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.4.2.6 2001/01/18 09:22:14 bouyer Exp $")
+RCSID("$NetBSD: locore.S,v 1.4.2.7 2001/02/11 19:08:54 bouyer Exp $")

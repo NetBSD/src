@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_pcb.h,v 1.5.2.1 2000/11/20 18:10:49 bouyer Exp $	*/
-/*	$KAME: in6_pcb.h,v 1.28 2000/06/09 01:10:12 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.5.2.2 2001/02/11 19:17:23 bouyer Exp $	*/
+/*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -110,7 +110,9 @@ struct	in6pcb {
 	int	in6p_cksum;		/* IPV6_CHECKSUM setsockopt */
 };
 
+#ifdef _KERNEL
 #define in6p_ip6_nxt in6p_ip6.ip6_nxt  /* for KAME src sync over BSD*'s */
+#endif
 
 /*
  * Flags in in6p_flags
@@ -162,7 +164,7 @@ struct	in6pcb *
 			   struct in6_addr *, u_int, struct in6_addr *,
 			   u_int, int));
 int	in6_pcbnotify __P((struct in6pcb *, struct sockaddr *,
-			   u_int, struct in6_addr *, u_int, int,
+			   u_int, struct sockaddr *, u_int, int, void *,
 			   void (*)(struct in6pcb *, int)));
 void	in6_pcbpurgeif __P((struct in6pcb *, struct ifnet *));
 void	in6_rtchange __P((struct in6pcb *, int));
@@ -177,10 +179,6 @@ struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
 				     struct in6_addr *, int *));
 int	in6_selecthlim __P((struct in6pcb *, struct ifnet *));
 int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *));
-int in6_embedscope __P((struct in6_addr *, const struct sockaddr_in6 *,
-	struct in6pcb *, struct ifnet **));
-int in6_recoverscope __P((struct sockaddr_in6 *, const struct in6_addr *,
-	struct ifnet *));
 
 extern struct rtentry *
 	in6_pcbrtentry __P((struct in6pcb *));

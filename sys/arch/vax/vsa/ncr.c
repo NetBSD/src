@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.22.2.1 2000/11/20 20:33:39 bouyer Exp $	*/
+/*	$NetBSD: ncr.c,v 1.22.2.2 2001/02/11 19:13:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ si_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	volatile char *si_csr = (char *) va->va_addr;
 
 	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_46
-	    || vax_boardtype == VAX_BTYP_48)
+	    || vax_boardtype == VAX_BTYP_48 || vax_boardtype == VAX_BTYP_53)
 		return 0;
 	/* This is the way Linux autoprobes the interrupt MK-990321 */
 	si_csr[12] = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.2.2.3 2000/12/08 09:30:33 bouyer Exp $	*/
+/*	$NetBSD: psycho.c,v 1.2.2.4 2001/02/11 19:12:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -924,7 +924,7 @@ psycho_intr_map(tag, pin, line, ihp)
 {
 
 	if (line < 0 || line > 0x32)
-		panic("psycho_intr_map: line line < 0 || line > 0x32");
+		panic("psycho_intr_map: line %d line < 0 || line > 0x32", line);
 
 	/* UltraSPARC IIi does not use this register, but we have set it */
 	(*ihp) = line;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.21.2.2 2000/11/22 16:02:14 bouyer Exp $	*/
+/*	$NetBSD: gencons.c,v 1.21.2.3 2001/02/11 19:13:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -244,6 +244,7 @@ gencnprobe(struct consdev *cndev)
 	    (vax_boardtype == VAX_BTYP_630) ||
 	    (vax_boardtype == VAX_BTYP_660) ||
 	    (vax_boardtype == VAX_BTYP_670) ||
+	    (vax_boardtype == VAX_BTYP_680) ||
 	    (vax_boardtype == VAX_BTYP_650)) {
 		cndev->cn_dev = makedev(25, 0);
 		cndev->cn_pri = CN_NORMAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.37.2.3 2001/01/05 17:36:35 bouyer Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.37.2.4 2001/02/11 19:16:34 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ struct usbd_endpoint {
 
 struct usbd_bus_methods {
 	usbd_status	      (*open_pipe)(struct usbd_pipe *pipe);
-	void		      (*soft_intr)(struct usbd_bus *);
+	void		      (*soft_intr)(void *);
 	void		      (*do_poll)(struct usbd_bus *);
 	usbd_status	      (*allocm)(struct usbd_bus *, usb_dma_t *,
 					u_int32_t bufsize);
@@ -114,7 +114,15 @@ struct usbd_bus {
 #define USBREV_1_0	2
 #define USBREV_1_1	3
 #define USBREV_2_0	4
-#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1" }
+#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0" }
+
+#ifdef USB_USE_SOFTINTR
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	void		       *soft; /* soft interrupt cookie */
+#else
+	struct callout		softi;
+#endif
+#endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_dma_tag_t		dmatag;	/* DMA tag */
@@ -139,7 +147,7 @@ struct usbd_device {
 	struct usbd_interface  *ifaces;        /* array of all interfaces */
 	usb_device_descriptor_t ddesc;         /* device descriptor */
 	usb_config_descriptor_t *cdesc;	       /* full config descr */
-	struct usbd_quirks     *quirks;        /* device quirks, always set */
+	const struct usbd_quirks     *quirks;  /* device quirks, always set */
 	struct usbd_hub	       *hub;           /* only if this is a hub */
 	device_ptr_t	       *subdevs;       /* sub-devices, 0 terminated */
 };
@@ -240,7 +248,7 @@ void		usb_transfer_complete(usbd_xfer_handle xfer);
 void		usb_disconnect_port(struct usbd_port *up, device_ptr_t);
 
 /* Routines from usb.c */
-void		usb_needs_explore(usbd_bus_handle);
+void		usb_needs_explore(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
 
 /*

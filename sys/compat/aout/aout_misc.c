@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_misc.c,v 1.3.8.1 2000/12/08 09:08:07 bouyer Exp $	*/
+/*	$NetBSD: aout_misc.c,v 1.3.8.2 2001/02/11 19:13:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -365,7 +365,7 @@ aout_sys_readlink(p, v, retval)
 	struct aout_sys_readlink_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
 	return sys_readlink(p, v, retval);
 }
@@ -649,7 +649,7 @@ aout_sys_lchmod(p, v, retval)
 	struct aout_sys_lchmod_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
 	return sys_lchmod(p, v, retval);
 }
@@ -664,7 +664,7 @@ aout_sys_lchown(p, v, retval)
 	struct aout_sys_lchown_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
 	return sys_lchown(p, v, retval);
 }
@@ -679,7 +679,7 @@ aout_sys_lutimes(p, v, retval)
 	struct aout_sys_lutimes_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
 	return sys_lutimes(p, v, retval);
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_mmap.h,v 1.1 1998/09/30 21:55:59 erh Exp $	*/
+/* $NetBSD: linux_mmap.h,v 1.1.12.1 2001/02/11 19:13:52 bouyer Exp $   */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Eric Haszlakiewicz and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,13 +36,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PPC_LINUX_MMAP_H
-#define _PPC_LINUX_MMAP_H
+#ifndef _POWERPC_LINUX_MMAP_H
+#define _POWERPC_LINUX_MMAP_H
 
-/* LINUX_PROT_* defined in common/linux_mmap.h */
+/* 
+ * LINUX_PROT_* are defined in common/linux_mmap.h 
+ * LINUX_MAP_SHARED/PRIVATE are defined in common/linux_mmap.h 
+ */
 
-/* LINUX_MAP_SHARED/PRIVATE defined in common/linux_mmap.h */
-
+/* 
+ * From Linux's include/asm-ppc/mman.h 
+ */
 #define LINUX_MAP_FIXED		0x0010
 #define LINUX_MAP_ANON		0x0020
 
@@ -52,6 +56,20 @@
 #define LINUX_MAP_DENYWRITE	0x0800
 #define	LINUX_MAP_EXECUTABLE	0x1000
 
-#define LINUX_MAP_IGNMASK	0x1940
+/* 
+ * On the PowerPC, we have a problem with the offset argument. It's 32 bit
+ * long on Linux and 64 bit long on NetBSD. Therefore we use a wrapper
+ * function linux_sys_powerpc_mmap() to linux_sys_mmap()
+ * 
+ * Linux's off_t is __kernel_off_t (include/linux/types.h) which in turn
+ * is a long (include/asm-ppc/posix_types.h)
+ */
+#define linux_off_t long
 
-#endif /* !_PPC_LINUX_MMAP_H */
+#ifdef _KERNEL
+__BEGIN_DECLS 
+int linux_sys_powerpc_mmap(struct proc *, void *, register_t *);
+__END_DECLS
+#endif /* !_KERNEL */ 
+
+#endif /* !_POWERPC_LINUX_MMAP_H */

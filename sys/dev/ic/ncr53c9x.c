@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.12 2001/01/15 09:25:36 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.13 2001/02/11 19:15:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -442,7 +442,7 @@ ncr53c9x_init(sc, doreset)
 			T_NEED_TO_RESET;
 #ifdef DEBUG
 		if (ncr53c9x_notag)
-			ti->flags |= T_TAGOFF;
+			ti->flags &= ~T_TAG;
 #endif
 		ti->period = sc->sc_minsync;
 		ti->offset = 0;
@@ -871,9 +871,9 @@ ncr53c9x_scsipi_request(chan, req, arg)
 
 		if ((sc->sc_cfflags & (1<<(xm->xm_target+16))) == 0 &&
 		    (xm->xm_mode & PERIPH_CAP_TQING))
-			ti->flags &= ~T_TAGOFF;
+			ti->flags |= T_TAG;
 		else
-			ti->flags |= T_TAGOFF;
+			ti->flags &= ~T_TAG;
 
 		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
 		    (ti->flags & T_SYNCHOFF) == 0) {
@@ -911,7 +911,7 @@ ncr53c9x_update_xfer_mode(sc, target)
 		xm.xm_period = ti->period;
 		xm.xm_offset = ti->offset;
 	}
-	if ((ti->flags & (T_RSELECTOFF|T_TAGOFF)) == 0)
+	if ((ti->flags & (T_RSELECTOFF|T_TAG)) != (T_RSELECTOFF|T_TAG))
 		xm.xm_mode |= PERIPH_CAP_TQING;
 
 	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
@@ -1007,7 +1007,9 @@ ncr53c9x_sched(sc)
 		lun = periph->periph_lun;
 
 		/* Select type of tag for this command */
-		if ((ti->flags & (T_RSELECTOFF|T_TAGOFF)) != 0) 
+		if ((ti->flags & (T_RSELECTOFF)) != 0) 
+			tag = 0;
+		else if ((ti->flags & (T_TAG)) == 0)
 			tag = 0;
 		else if ((ecb->flags & ECB_SENSE) != 0)
 			tag = 0;
@@ -1481,7 +1483,7 @@ gotit:
 				NCR_MSGS(("(rejected sent tag)"));
 				NCRCMD(sc, NCRCMD_FLUSH);
 				DELAY(1);
-				ti->flags |= T_TAGOFF;
+				ti->flags &= ~T_TAG;
 				lun = ecb->xs->xs_periph->periph_lun;
 				li = TINFO_LUN(ti, lun);
 				if (ecb->tag[0] &&

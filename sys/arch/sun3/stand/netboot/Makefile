@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.14.1 2000/11/20 20:27:56 bouyer Exp $
+#	$NetBSD: Makefile,v 1.10.14.2 2001/02/11 19:12:46 bouyer Exp $
 
 SA_PROG= netboot
 
@@ -6,9 +6,11 @@ SA_PROG= netboot
 SRCS= conf.c
 
 # Build these locally
-SRCS+= dev_net.c bootparam.c globals.c nfs.c rpc.c
+SRCS+= dev_net.c bootparam.c globals.c nfs.c rpc.c udp.c
 
-all:	${SA_PROG}.bin
+PROG=	${SA_PROG} ${SA_PROG}.bin
+MKMAN= no
+NOMAN= yes
 
 .include <bsd.prog.mk>
 

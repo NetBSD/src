@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.11.2.1 2000/11/20 20:33:03 bouyer Exp $	*/
+/*	$NetBSD: sid.h,v 1.11.2.2 2001/02/11 19:12:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -32,6 +32,7 @@
 
 /*
  * Board-Type (?_BTYP_?) and Sub-Type (?_STYP_?) are synonima.
+ * Michael Kukat changed this 01/27/2001, STYP is really a subtype now.
  * other synonima are:
  */
 #define cpudata	    vax_cpudata
@@ -155,10 +156,14 @@
 #define VAX_TYP_NVAX	19
 #define VAX_TYP_V13	19
  
-#define VAX_BTYP_680	0x13000001	/* VAX 4000 model 500 */
-#define VAX_BTYP_1301	0x13000001	/* VAX 4000 model 100 */
+#define VAX_BTYP_680	0x13000001	/* VAX 4000 model [45]00 */
+#define	VAX_STYP_675	0x0c		/* VAX 4000 model 400 */
+#define	VAX_STYP_680	0x06		/* VAX 4000 model 500 */
 #define VAX_BTYP_1302	0x13000002
 #define VAX_BTYP_53	0x13000003	/* VAX 4000 model 105A */
+#define	VAX_STYP_51	0x09		/* MicroVAX 3100 model 90 / 95 */
+#define	VAX_STYP_52	0x0a		/* VAX 4000 model 100 */
+#define	VAX_STYP_53	0x0b		/* VAX 4000 model 105A */
 #define VAX_BTYP_49	0x13000004	/* MicroVAX 3100 model 90 */
 
 /*

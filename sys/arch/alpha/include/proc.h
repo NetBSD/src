@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.5.2.3 2001/01/05 17:33:46 bouyer Exp $ */
+/* $NetBSD: proc.h,v 1.5.2.4 2001/02/11 19:08:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,7 +37,9 @@ struct mdproc {
 	u_long	md_flags;
 	struct	trapframe *md_tf;	/* trap/syscall registers */
 	struct pcb *md_pcbpaddr;	/* phys addr of the pcb */
-	void	(*md_syscall) __P((struct proc *, u_int64_t, struct trapframe *));
+					/* this process's syscall vector */
+	void	(*md_syscall)(struct proc *, u_int64_t, struct trapframe *);
+	__volatile int md_astpending;	/* AST pending for this process */
 };
 
 #define	MDP_FPUSED	0x0001		/* Process used the FPU */

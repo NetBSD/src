@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.1.2.2 2000/11/22 16:04:54 bouyer Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.1.2.3 2001/02/11 19:16:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -398,6 +398,7 @@ sysmon_wdog_setmode(struct sysmon_wdog *smw, int mode, u_int period)
 		smw->smw_mode = omode;
 	} else {
 		if ((mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+			sysmon_armed_wdog = NULL;
 			smw->smw_tickler = (pid_t) -1;
 			smw->smw_refcnt--;
 			if ((omode & WDOG_MODE_MASK) == WDOG_MODE_KTICKLE)

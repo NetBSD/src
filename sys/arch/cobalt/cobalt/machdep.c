@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.4 2001/01/18 09:22:27 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.5 2001/02/11 19:09:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -185,11 +185,6 @@ mach_init(memsize)
 	}
 
 #ifdef DDB
-	/*
-	 * Initialize machine-dependent DDB commands, in case of early panic.
-	 */
-	db_machine_init();
-
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

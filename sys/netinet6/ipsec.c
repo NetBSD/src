@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.10.2.2 2000/11/22 16:06:24 bouyer Exp $	*/
-/*	$KAME: ipsec.c,v 1.83 2000/11/09 17:45:30 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.10.2.3 2001/02/11 19:17:26 bouyer Exp $	*/
+/*	$KAME: ipsec.c,v 1.90 2001/02/05 08:21:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -156,6 +156,9 @@ static int ipsec4_encapsulate __P((struct mbuf *, struct secasvar *));
 #ifdef INET6
 static int ipsec6_encapsulate __P((struct mbuf *, struct secasvar *));
 #endif
+static struct mbuf *ipsec_addaux __P((struct mbuf *));
+static struct mbuf *ipsec_findaux __P((struct mbuf *));
+static void ipsec_optaux __P((struct mbuf *, struct mbuf *));
 
 /*
  * For OUTBOUND packet having a socket. Searching SPD for packet,
@@ -1574,6 +1577,8 @@ ipsec_in_reject(sp, m)
 	need_conf = 0;
 	need_icv = 0;
 
+	/* XXX should compare policy against ipsec header history */
+
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
 
 		/* get current level */
@@ -2408,9 +2413,6 @@ ipsec4_output(state, sp, flags)
 	struct secasindex saidx;
 	int s;
 	int error;
-#ifdef IPSEC_SRCSEL
-	struct in_ifaddr *ia;
-#endif
 	struct sockaddr_in *dst4;
 	struct sockaddr_in *sin;
 
@@ -2552,19 +2554,11 @@ ipsec4_output(state, sp, flags)
 				goto bad;
 			}
 
-#ifdef IPSEC_SRCSEL
-			/*
-			 * Which address in SA or in routing table should I
-			 * select from ?  But I had set from SA at
-			 * ipsec4_encapsulate().
-			 */
-			ia = (struct in_ifaddr *)(state->ro->ro_rt->rt_ifa);
+			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst4 = (struct sockaddr_in *)state->dst;
 			}
-			ip->ip_src = IA_SIN(ia)->sin_addr;
-#endif
 		} else
 			splx(s);
 
@@ -2709,6 +2703,18 @@ ipsec6_output_trans(state, nexthdrp, mprev, sp, flags, tun)
 			 */
 			ipsec6stat.out_nosa++;
 			error = ENOENT;
+
+			/*
+			 * Notify the fact that the packet is discarded
+			 * to ourselves. I believe this is better than
+			 * just silently discarding. (jinmei@kame.net)
+			 * XXX: should we restrict the error to TCP packets?
+			 * XXX: should we directly notify sockets via
+			 *      pfctlinputs?
+			 */
+			icmp6_error(state->m, ICMP6_DST_UNREACH,
+				    ICMP6_DST_UNREACH_ADMIN, 0);
+			state->m = NULL; /* icmp6_error freed the mbuf */
 			goto bad;
 		}
 
@@ -2799,9 +2805,6 @@ ipsec6_output_tunnel(state, sp, flags)
 	struct secasindex saidx;
 	int error = 0;
 	int plen;
-#ifdef IPSEC_SRCSEL
-	struct in6_addr *ia6;
-#endif
 	struct sockaddr_in6* dst6;
 	int s;
 
@@ -2921,28 +2924,12 @@ ipsec6_output_tunnel(state, sp, flags)
 				error = EHOSTUNREACH;
 				goto bad;
 			}
-#if 0	/* XXX Is the following need ? */
+
+			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst6 = (struct sockaddr_in6 *)state->dst;
 			}
-#endif
-#ifdef IPSEC_SRCSEL
-			/*
-			 * Which address in SA or in routing table should I
-			 * select from ?  But I had set from SA at
-			 * ipsec6_encapsulate().
-			 */
-			ia6 = in6_selectsrc(dst6, NULL, NULL,
-					    (struct route_in6 *)state->ro,
-					    NULL, &error);
-			if (ia6 == NULL) {
-				ip6stat.ip6s_noroute++;
-				ipsec6stat.out_noroute++;
-				goto bad;
-			}
-			ip6->ip6_src = *ia6;
-#endif
 		} else
 			splx(s);
 
@@ -3213,7 +3200,7 @@ ipsec_copypkt(m)
 				 */
 				remain = n->m_len;
 				copied = 0;
-				while(1) {
+				while (1) {
 					int len;
 					struct mbuf *mn;
 
@@ -3266,27 +3253,78 @@ ipsec_copypkt(m)
 	return(NULL);
 }
 
+static struct mbuf *
+ipsec_addaux(m)
+	struct mbuf *m;
+{
+	struct mbuf *n;
+
+	n = m_aux_find(m, AF_INET, IPPROTO_ESP);
+	if (!n)
+		n = m_aux_add(m, AF_INET, IPPROTO_ESP);
+	if (!n)
+		return n;	/* ENOBUFS */
+	n->m_len = sizeof(struct socket *);
+	bzero(mtod(n, void *), n->m_len);
+	return n;
+}
+
+static struct mbuf *
+ipsec_findaux(m)
+	struct mbuf *m;
+{
+	struct mbuf *n;
+
+	n = m_aux_find(m, AF_INET, IPPROTO_ESP);
+#ifdef DIAGNOSTIC
+	if (n && n->m_len < sizeof(struct socket *))
+		panic("invalid ipsec m_aux");
+#endif
+	return n;
+}
+
 void
+ipsec_delaux(m)
+	struct mbuf *m;
+{
+	struct mbuf *n;
+
+	n = m_aux_find(m, AF_INET, IPPROTO_ESP);
+	if (n)
+		m_aux_delete(m, n);
+}
+
+/* if the aux buffer is unnecessary, nuke it. */
+static void
+ipsec_optaux(m, n)
+	struct mbuf *m;
+	struct mbuf *n;
+{
+
+	if (!n)
+		return;
+	if (n->m_len == sizeof(struct socket *) && !*mtod(n, struct socket **))
+		ipsec_delaux(m);
+}
+
+int
 ipsec_setsocket(m, so)
 	struct mbuf *m;
 	struct socket *so;
 {
 	struct mbuf *n;
 
-	n = m_aux_find(m, AF_INET, IPPROTO_ESP);
-	if (so && !n)
-		n = m_aux_add(m, AF_INET, IPPROTO_ESP);
-	if (n) {
-		if (so) {
-			*mtod(n, struct socket **) = so;
-			/*
-			 * XXX think again about it when we put decryption
-			 * histrory into aux mbuf
-			 */
-			n->m_len = sizeof(struct socket *);
-		} else
-			m_aux_delete(m, n);
-	}
+	/* if so == NULL, don't insist on getting the aux mbuf */
+	if (so) {
+		n = ipsec_addaux(m);
+		if (!n)
+			return ENOBUFS;
+	} else
+		n = ipsec_findaux(m);
+	if (n && n->m_len >= sizeof(struct socket *))
+		*mtod(n, struct socket **) = so;
+	ipsec_optaux(m, n);
+	return 0;
 }
 
 struct socket *
@@ -3295,11 +3333,68 @@ ipsec_getsocket(m)
 {
 	struct mbuf *n;
 
-	n = m_aux_find(m, AF_INET, IPPROTO_ESP);
+	n = ipsec_findaux(m);
 	if (n && n->m_len >= sizeof(struct socket *))
 		return *mtod(n, struct socket **);
 	else
 		return NULL;
+}
+
+int
+ipsec_addhist(m, proto, spi)
+	struct mbuf *m;
+	int proto;
+	u_int32_t spi;
+{
+	struct mbuf *n;
+	struct ipsec_history *p;
+
+	n = ipsec_addaux(m);
+	if (!n)
+		return ENOBUFS;
+	if (M_TRAILINGSPACE(n) < sizeof(*p))
+		return ENOSPC;	/*XXX*/
+	p = (struct ipsec_history *)(mtod(n, caddr_t) + n->m_len);
+	n->m_len += sizeof(*p);
+	bzero(p, sizeof(*p));
+	p->ih_proto = proto;
+	p->ih_spi = spi;
+	return 0;
+}
+
+struct ipsec_history *
+ipsec_gethist(m, lenp)
+	struct mbuf *m;
+	int *lenp;
+{
+	struct mbuf *n;
+	int l;
+
+	n = ipsec_findaux(m);
+	if (!n)
+		return NULL;
+	l = n->m_len;
+	if (sizeof(struct socket *) > l)
+		return NULL;
+	if ((l - sizeof(struct socket *)) % sizeof(struct ipsec_history))
+		return NULL;
+	/* XXX does it make more sense to divide by sizeof(ipsec_history)? */
+	if (lenp)
+		*lenp = l - sizeof(struct socket *);
+	return (struct ipsec_history *)
+	    (mtod(n, caddr_t) + sizeof(struct socket *));
+}
+
+void
+ipsec_clearhist(m)
+	struct mbuf *m;
+{
+	struct mbuf *n;
+
+	n = ipsec_findaux(m);
+	if ((n) && n->m_len > sizeof(struct socket *))
+		n->m_len = sizeof(struct socket *);
+	ipsec_optaux(m, n);
 }
 
 /*

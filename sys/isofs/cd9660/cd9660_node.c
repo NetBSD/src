@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.21.2.2 2000/11/22 16:05:13 bouyer Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.21.2.3 2001/02/11 19:16:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -73,7 +73,7 @@ u_long idvhash;
 #define	DNOHASH(device, inum)	(((device) + ((inum)>>12)) & idvhash)
 #endif
 
-int prtactive;	/* 1 => print out reclaim of active vnodes */
+extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
 struct pool cd9660_node_pool;
 

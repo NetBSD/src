@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.26.2.1 2000/11/20 18:08:46 bouyer Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.26.2.2 2001/02/11 19:15:11 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -54,7 +54,7 @@ boolean_t	db_aout_sym_numargs __P((db_symtab_t *, db_sym_t, int *,
 void		db_aout_forall __P((db_symtab_t *,
 		    db_forall_func_t db_forall_func, void *));
 
-db_symformat_t db_symformat_aout = {
+const db_symformat_t db_symformat_aout = {
 	"a.out",
 	db_aout_sym_init,
 	db_aout_lookup,

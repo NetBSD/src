@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6.h,v 1.5.2.2 2001/01/18 09:23:58 bouyer Exp $	*/
-/*	$KAME: nd6.h,v 1.23 2000/06/04 12:54:57 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.5.2.3 2001/02/11 19:17:28 bouyer Exp $	*/
+/*	$KAME: nd6.h,v 1.46 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -237,6 +237,9 @@ extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
+extern int nd6_debug;
+
+#define nd6log(x)	do { if (nd6_debug) log x; } while (0)
 
 extern struct callout nd6_timer_ch;
 
@@ -280,7 +283,7 @@ struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
 void nd6_setmtu __P((struct ifnet *));
 void nd6_timer __P((void *));
 void nd6_purge __P((struct ifnet *));
-void nd6_free __P((struct rtentry *));
+struct llinfo_nd6 *nd6_free __P((struct rtentry *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,
 		     struct mbuf *, struct sockaddr *, u_char *));
@@ -304,6 +307,7 @@ void nd6_ns_output __P((struct ifnet *, struct in6_addr *,
 			struct in6_addr *, struct llinfo_nd6 *, int));
 caddr_t nd6_ifptomac __P((struct ifnet *));
 void nd6_dad_start __P((struct ifaddr *, int *));
+void nd6_dad_stop __P((struct ifaddr *));
 void nd6_dad_duplicated __P((struct ifaddr *));
 
 /* nd6_rtr.c */

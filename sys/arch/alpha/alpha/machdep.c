@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.184.2.4 2001/01/05 17:33:39 bouyer Exp $ */
+/* $NetBSD: machdep.c,v 1.184.2.5 2001/02/11 19:08:34 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.4 2001/01/05 17:33:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.5 2001/02/11 19:08:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,7 +767,6 @@ nobootinfo:
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
 #ifdef DDB
-	db_machine_init();
 	ddb_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
 	    ksym_start, ksym_end);
 	if (boothowto & RB_KDB)

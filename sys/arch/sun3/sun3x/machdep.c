@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52.2.2 2000/11/22 16:02:07 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52.2.3 2001/02/11 19:12:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -142,7 +142,6 @@ consinit()
 	cninit();
 
 #ifdef DDB
-	db_machine_init();
 	{
 		extern int end[];
 		extern char *esym;

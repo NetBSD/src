@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.28.2.6 2000/11/20 09:59:23 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.28.2.7 2001/02/11 19:16:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -74,7 +74,7 @@ extern struct cfdriver atapibus_cd;
 
 int atapibusprint __P((void *, const char *));
 
-struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
+const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"},	PQUIRK_NOTUR},
 	{{T_CDROM, T_REMOV,

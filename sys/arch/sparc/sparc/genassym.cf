@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22.2.1 2000/11/20 20:25:44 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.22.2.2 2001/02/11 19:12:23 bouyer Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ define	V_FAULTS	offsetof(struct uvmexp, faults)
 
 # CPU info structure
 define	CPUINFO_STRUCTSIZE	sizeof(struct cpu_info)
-define	CPUINFO_CPUNO		offsetof(struct cpu_info, cpu_no)
+define	CPUINFO_CPUNO		offsetof(struct cpu_info, ci_cpuid)
 define	CPUINFO_GETSYNCFLT	offsetof(struct cpu_info, get_syncflt)
 define	CPUINFO_GETASYNCFLT	offsetof(struct cpu_info, get_asyncflt)
 define	CPUINFO_PURE_VCACHE_FLS	offsetof(struct cpu_info, pure_vcache_flush)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.112.2.4 2001/01/18 09:23:46 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.112.2.5 2001/02/11 19:16:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -747,8 +747,8 @@ vtruncbuf(vp, lbn, slpflag, slptimeo)
 	if (vp->v_type == VREG) {
 		simple_lock(&uobj->vmobjlock);
 		rv = (uobj->pgops->pgo_flush)(uobj,
-		    round_page(lbn << vp->v_mount->mnt_fs_bshift),
-		    vp->v_uvm.u_size, PGO_FREE|PGO_SYNCIO);
+		    round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift), 0,
+		    PGO_FREE|PGO_SYNCIO);
 		simple_unlock(&uobj->vmobjlock);
 		if (!rv) {
 			splx(s);

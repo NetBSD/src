@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.42.2.2 2000/12/13 15:50:35 bouyer Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.42.2.3 2001/02/11 19:17:19 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -484,7 +484,15 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * After a receive, possibly send window update to peer.
 	 */
 	case PRU_RCVD:
-		(void) tcp_output(tp);
+		/*
+		 * soreceive() calls this function when a user receives
+		 * ancillary data on a listening socket. We don't call
+		 * tcp_output in such a case, since there is no header
+		 * template for a listening socket and hence the kernel
+		 * will panic.
+		 */
+		if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) != 0)
+			(void) tcp_output(tp);
 		break;
 
 	/*
@@ -929,7 +937,7 @@ tcp_usrclosed(tp)
 	return (tp);
 }
 
-static struct {
+static const struct {
 	 unsigned int valid : 1;
 	 unsigned int rdonly : 1;
 	 int *var;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22.2.4 2001/01/05 17:35:05 bouyer Exp $ */
+/*	$NetBSD: db_interface.c,v 1.22.2.5 2001/02/11 19:12:35 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -76,7 +76,7 @@ extern struct traptrace {
 
 static int nil;
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "tstate", (long *)&DDB_TF->tf_tstate, FCN_NULL, },
 	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
 	{ "npc", (long *)&DDB_TF->tf_npc, FCN_NULL, },
@@ -115,7 +115,7 @@ struct db_variable db_regs[] = {
 	{ "i6", (long *)&DDB_FR->fr_arg[6], FCN_NULL, },
 	{ "i7", (long *)&DDB_FR->fr_arg[7], FCN_NULL, },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 extern label_t	*db_recover;
 
@@ -863,7 +863,7 @@ db_uvmhistdump(addr, have_addr, count, modif)
 extern void db_esp(db_expr_t, int, db_expr_t, char*);
 #endif
 
-struct db_command sparc_db_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
@@ -889,12 +889,6 @@ struct db_command sparc_db_command_table[] = {
 	{ "window",	db_dump_window,	0,	0 },
 	{ (char *)0, }
 };
-
-void
-db_machine_init()
-{
-	db_machine_commands_install(sparc_db_command_table);
-}
 
 /*
  * support for SOFTWARE_SSTEP:

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155.2.2 2001/01/05 17:35:02 bouyer Exp $ */
+/*	$NetBSD: machdep.c,v 1.155.2.3 2001/02/11 19:12:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -621,6 +621,7 @@ cpu_reboot(howto, user_boot_string)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;
+		extern int sparc_clock_time_is_ok;
 
 		/* XXX protect against curproc->p_stats.foo refs in sync() */
 		if (curproc == NULL)
@@ -631,8 +632,12 @@ cpu_reboot(howto, user_boot_string)
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
+		 * Do this only if the TOD clock has already been read out
+		 * successfully by inittodr() or set by an explicit call
+		 * to resettodr() (e.g. from settimeofday()).
 		 */
-		resettodr();
+		if (sparc_clock_time_is_ok)
+			resettodr();
 	}
 
 	/* Disable interrupts. */
@@ -1318,8 +1323,11 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 #endif
 
 	/* XXX - Implement this! */
-	if (boundary)
-		panic("_bus_dma_valloc_skewed: not implemented");
+	if (boundary) {
+		printf("_bus_dma_valloc_skewed: "
+			"boundary check not implemented");
+		return (0);
+	}
 
 	/*
 	 * First, find a region large enough to contain any aligned chunk
@@ -1327,7 +1335,7 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 	oversize = size + align - PAGE_SIZE;
 	sva = uvm_km_valloc(kernel_map, oversize);
 	if (sva == 0)
-		return (ENOMEM);
+		return (0);
 
 	/*
 	 * Compute start of aligned region
@@ -1388,8 +1396,23 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * XXX Need to implement "don't dma across this boundry".
 		 */
-		if (map->_dm_boundary != 0)
-			panic("bus_dmamap_load: boundaries not implemented");
+		if (map->_dm_boundary != 0) {
+			bus_addr_t baddr;
+
+			/* Calculate first boundary line after `buf' */
+			baddr = ((bus_addr_t)va + map->_dm_boundary) &
+					-map->_dm_boundary;
+
+			/*
+			 * If the requested segment crosses the boundary,
+			 * we can't grant a direct map. For now, steal some
+			 * space from the `24BIT' map instead.
+			 *
+			 * (XXX - no overflow detection here)
+			 */
+			if (buflen > (baddr - (bus_addr_t)va))
+				goto no_fit;
+		}
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = 1;
 		map->dm_segs[0].ds_addr = (bus_addr_t)va;
@@ -1398,6 +1421,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 		return (0);
 	}
 
+no_fit:
 	sgsize = round_page(buflen + (va & (pagesz - 1)));
 
 	if (extent_alloc(dvmamap24, sgsize, pagesz, map->_dm_boundary,

@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.5.2.2 2000/12/13 15:50:36 bouyer Exp $	*/
-/*	$KAME: ah_input.c,v 1.37 2000/10/19 00:37:50 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.5.2.3 2001/02/11 19:17:20 bouyer Exp $	*/
+/*	$KAME: ah_input.c,v 1.51 2001/02/08 14:24:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -384,7 +384,7 @@ ah4_input(m, va_alist)
 	}
 
 	/* was it transmitted over the IPsec tunnel SA? */
-	if (ipsec4_tunnel_validate(ip, nxt, sav) && nxt == IPPROTO_IPV4) {
+	if (ipsec4_tunnel_validate(ip, nxt, sav)) {
 		/*
 		 * strip off all the headers that precedes AH.
 		 *	IP xx AH IP' payload -> IP' payload
@@ -456,6 +456,11 @@ ah4_input(m, va_alist)
 #endif
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
+		    ipsec_addhist(m, IPPROTO_IPV4, 0) != 0) {
+			ipsecstat.in_nomem++;
+			goto fail;
+		}
 
 		s = splimp();
 		if (IF_QFULL(&ipintrq)) {
@@ -538,6 +543,10 @@ ah4_input(m, va_alist)
 		/* forget about IP hdr checksum, the check has already been passed */
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0) {
+			ipsecstat.in_nomem++;
+			goto fail;
+		}
 
 		if (nxt != IPPROTO_DONE)
 			(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
@@ -853,7 +862,7 @@ ah6_input(mp, offp, proto)
 	}
 
 	/* was it transmitted over the IPsec tunnel SA? */
-	if (ipsec6_tunnel_validate(ip6, nxt, sav) && nxt == IPPROTO_IPV6) {
+	if (ipsec6_tunnel_validate(ip6, nxt, sav)) {
 		/*
 		 * strip off all the headers that precedes AH.
 		 *	IP6 xx AH IP6' payload -> IP6' payload
@@ -915,6 +924,11 @@ ah6_input(mp, offp, proto)
 #endif
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
+		    ipsec_addhist(m, IPPROTO_IPV6, 0) != 0) {
+			ipsec6stat.in_nomem++;
+			goto fail;
+		}
 
 		s = splimp();
 		if (IF_QFULL(&ip6intrq)) {
@@ -993,6 +1007,10 @@ ah6_input(mp, offp, proto)
 		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0) {
+			ipsec6stat.in_nomem++;
+			goto fail;
+		}
 	}
 
 	*offp = off;
@@ -1028,9 +1046,9 @@ ah6_ctlinput(cmd, sa, d)
 	struct secasvar *sav;
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
+	struct ip6ctlparam *ip6cp = NULL;
 	int off;
-	struct in6_addr finaldst;
-	struct in6_addr s;
+	struct sockaddr_in6 sa6_src, sa6_dst;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -1040,20 +1058,10 @@ ah6_ctlinput(cmd, sa, d)
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
-		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
+		ip6cp = (struct ip6ctlparam *)d;
 		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
-
-		/* translate addresses into internal form */
-		bcopy(ip6cp->ip6c_finaldst, &finaldst, sizeof(finaldst));
-		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
-			finaldst.s6_addr16[1] =
-			    htons(m->m_pkthdr.rcvif->if_index);
-		}
-		bcopy(&ip6->ip6_src, &s, sizeof(s));
-		if (IN6_IS_ADDR_LINKLOCAL(&s))
-			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 	} else {
 		m = NULL;
 		ip6 = NULL;
@@ -1086,8 +1094,10 @@ ah6_ctlinput(cmd, sa, d)
 			 * Check to see if we have a valid SA corresponding to
 			 * the address in the ICMP message payload.
 			 */
-			sav = key_allocsa(AF_INET6, (caddr_t)&s,
-			    (caddr_t)&finaldst, IPPROTO_AH, ahp->ah_spi);
+			sav = key_allocsa(AF_INET6,
+					  (caddr_t)&sa6_src.sin6_addr,
+					  (caddr_t)&sa6_dst.sin6_addr,
+					  IPPROTO_AH, ahp->ah_spi);
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||
 				    sav->state == SADB_SASTATE_DYING)
@@ -1098,14 +1108,13 @@ ah6_ctlinput(cmd, sa, d)
 			/* XXX Further validation? */
 
 			/*
-			 * Now that we've validated that we are actually
-			 * communicating with the host indicated in the ICMPv6
-			 * message, recalculate the new MTU, and create the
-			 * corresponding routing entry.
+			 * Depending on the value of "valid" and routing table
+			 * size (mtudisc_{hi,lo}wat), we will:
+			 * - recalcurate the new MTU and create the
+			 *   corresponding routing entry, or
+			 * - ignore the MTU change notification.
 			 */
 			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
-
-			return;
 		}
 
 		/* we normally notify single pcb here */

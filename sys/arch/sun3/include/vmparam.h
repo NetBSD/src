@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23.8.2 2000/11/22 16:02:02 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.23.8.3 2001/02/11 19:12:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,12 @@
 #endif	/* SUN3X */
 #ifdef	_LKM
 #define	USRSTACK KERNBASE
+/* Be conservative. If an LKM is gonna be built for sun3x, define this first */
+#ifndef MAXDSIZ
+#define MAXDSIZ         (32*1024*1024)          /* max data size */
+#endif
 extern	char KERNBASE[];
+#define      VM_NFREELIST            1
 #endif	/* _LKM */
 
 /* This is needed by some LKMs. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.4.2.2 2001/01/18 09:23:41 bouyer Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.4.2.3 2001/02/11 19:16:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -325,12 +325,12 @@ USB_ATTACH(usscanner)
 	sc->sc_link.scsipi_scsi.max_target = USSCANNER_SCSIID_DEVICE;
 	sc->sc_link.scsipi_scsi.max_lun = 0;
 	
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
 	DPRINTFN(10, ("usscanner_attach: %p\n", sc->sc_udev));
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.13.2.1 2000/11/20 11:43:21 bouyer Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.13.2.2 2001/02/11 19:16:24 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -124,6 +124,9 @@ typedef struct ohci_softc {
 	void *sc_powerhook;		/* cookie from power hook */
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
 #endif
+
+	u_int sc_overrun_cnt;
+	struct timeval sc_overrun_ntc;
 
 	device_ptr_t sc_child;
 

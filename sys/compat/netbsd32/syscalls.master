@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10.2.3 2000/12/13 15:49:52 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.10.2.4 2001/02/11 19:14:23 bouyer Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -84,7 +84,7 @@
 17	STD		{ int netbsd32_break(netbsd32_charp nsize); }
 18	STD		{ int netbsd32_getfsstat(netbsd32_statfsp_t buf, netbsd32_long bufsize, int flags); }
 19	COMPAT_43	{ netbsd32_long netbsd32_olseek(int fd, netbsd32_long offset, int whence); }
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
 21	STD		{ int netbsd32_mount(const netbsd32_charp type, const netbsd32_charp path, int flags, netbsd32_voidp data); }
 22	STD		{ int netbsd32_unmount(const netbsd32_charp path, int flags); }
 23	STD		{ int netbsd32_setuid(uid_t uid); }
@@ -496,3 +496,46 @@
 #else
 303	EXCL		__shmctl13
 #endif
+304	STD		{ int netbsd32_lchflags(const netbsd32_charp path, netbsd32_u_long flags); }
+305	STD		{ int sys_issetugid(void); }
+306	STD		{ int netbsd32_utrace(const netbsd32_charp label, netbsd32_voidp addr, \
+				netbsd32_size_t len); }
+;
+; Syscalls 307 and 308 are reserved for getcontext and setcontext
+;
+307	UNIMPL
+308	UNIMPL
+;
+; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
+;
+309	UNIMPL
+310	UNIMPL
+311	UNIMPL
+312	UNIMPL
+313	UNIMPL
+314	UNIMPL
+315	UNIMPL
+316	UNIMPL
+317	UNIMPL
+318	UNIMPL
+319	UNIMPL
+320	UNIMPL
+321	UNIMPL
+322	UNIMPL
+323	UNIMPL
+324	UNIMPL
+325	UNIMPL
+326	UNIMPL
+327	UNIMPL
+328	UNIMPL
+329	UNIMPL
+330	UNIMPL
+331	UNIMPL
+332	UNIMPL
+333	UNIMPL
+334	UNIMPL
+335	UNIMPL
+336	UNIMPL
+337	UNIMPL
+338	UNIMPL
+339	UNIMPL
