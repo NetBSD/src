@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.261 2004/07/22 14:41:36 symka Exp $
+.\"	$NetBSD: main,v 1.262 2004/07/30 06:19:14 ian Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1929,6 +1929,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Shin Takemura Ta Mt takemura@NetBSD.org
 .It Ta TAMURA Kent Ta Mt kent@NetBSD.org
 .It Ta Shin'ichiro TAYA Ta Mt taya@NetBSD.org
+.It Ta Ian Lance Taylor Ta Mt ian@NetBSD.org
 .It Ta Matt Thomas Ta Mt matt@NetBSD.org
 .It Ta Jason Thorpe Ta Mt thorpej@NetBSD.org
 .It Ta Christoph Toshok Ta Mt toshok@NetBSD.org
