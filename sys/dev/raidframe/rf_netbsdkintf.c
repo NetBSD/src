@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.117 2002/03/08 20:48:39 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.118 2002/05/22 15:40:50 wiz Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.117 2002/03/08 20:48:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.118 2002/05/22 15:40:50 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1271,7 +1271,7 @@ raidioctl(dev, cmd, data, flag, p)
 		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
 		if (rrcopy == NULL)
 			return(ENOMEM);
-		bcopy(rr, rrcopy, sizeof(*rr));
+		memcpy(rrcopy, rr, sizeof(*rr));
 		rrcopy->raidPtr = (void *) raidPtr;
 
 		retcode = RF_CREATE_THREAD(raidPtr->recon_thread,
