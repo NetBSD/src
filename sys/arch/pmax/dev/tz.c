@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.16 1998/03/30 19:50:47 mhitch Exp $	*/
+/*	$NetBSD: tz.c,v 1.17 1998/08/29 16:14:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -781,7 +781,7 @@ tzioctl(dev, cmd, data, flag, p)
 	struct mtop *mtop;
 	struct mtget *mtget;
 	int code, count;
-	static tzops[] = {
+	static int tzops[] = {
 		SCSI_WRITE_EOF, SCSI_SPACE, SCSI_SPACE, SCSI_SPACE, SCSI_SPACE,
 		SCSI_REWIND, SCSI_REWIND, SCSI_TEST_UNIT_READY
 	};
