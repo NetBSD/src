@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.2 1995/10/04 23:57:23 pk Exp $ */
+/*	$NetBSD: rcons.h,v 1.3 1995/10/05 13:17:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,6 @@ struct rconsole {
 	int	rc_ras_blank;		/* current screen blank raster op */
 
 	struct	raster_font *rc_font;	/* font and related info */
-	int	rc_font_ascent;		/* distance from font to char origin */
 };
 
 #define FB_INESC	0x001		/* processing an escape sequence */
