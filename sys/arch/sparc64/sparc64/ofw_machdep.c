@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.6 1999/01/09 23:33:29 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.7 1999/01/10 14:41:45 mrg Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -69,8 +69,10 @@ static u_int get_mmu_handle __P((void));
 static u_int get_memory_handle __P((void));
 
 static u_int 
-get_mmu_handle() {
+get_mmu_handle()
+{
 	u_int chosen;
+
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
 		prom_printf("get_mmu_handle: cannot get /chosen\r\n");
 		return -1;
@@ -83,8 +85,10 @@ get_mmu_handle() {
 }
 
 static u_int 
-get_memory_handle() {
+get_memory_handle()
+{
 	u_int chosen;
+
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
 		prom_printf("get_mmu_handle: cannot get /chosen\r\n");
 		return -1;
@@ -102,7 +106,7 @@ get_memory_handle() {
  */
 int
 prom_set_trap_table(tba)
-vaddr_t tba;
+	vaddr_t tba;
 {
 	struct {
 		cell_t name;
@@ -125,7 +129,7 @@ vaddr_t tba;
  */
 paddr_t
 prom_vtop(vaddr)
-vaddr_t vaddr;
+	vaddr_t vaddr;
 {
 	struct {
 		cell_t name;
@@ -169,8 +173,8 @@ vaddr_t vaddr;
  */
 vaddr_t
 prom_claim_virt(vaddr, len)
-vaddr_t vaddr;
-int len;
+	vaddr_t vaddr;
+	int len;
 {
 	struct {
 		cell_t name;
@@ -197,7 +201,7 @@ int len;
 	args.align = 0;
 	args.len = len;
 	args.vaddr = ADR2CELL(vaddr);
-	if(openfirmware(&args) != 0)
+	if (openfirmware(&args) != 0)
 		return 0;
 	return (paddr_t)args.retaddr;
 }
@@ -209,8 +213,8 @@ int len;
  */
 vaddr_t
 prom_alloc_virt(len, align)
-int len;
-int align;
+	int len;
+	int align;
 {
 	static int retaddr;
 	struct {
@@ -237,7 +241,7 @@ int align;
 	args.align = align;
 	args.len = len;
 	args.retaddr = ADR2CELL(&retaddr);
-	if(openfirmware(&args) != 0)
+	if (openfirmware(&args) != 0)
 		return -1;
 	return retaddr; /* Kluge till we go 64-bit */
 }
@@ -249,8 +253,8 @@ int align;
  */
 int
 prom_free_virt(vaddr, len)
-vaddr_t vaddr;
-int len;
+	vaddr_t vaddr;
+	int len;
 {
 	struct {
 		cell_t name;
@@ -284,8 +288,8 @@ int len;
  */
 int
 prom_unmap_virt(vaddr, len)
-vaddr_t vaddr;
-int len;
+	vaddr_t vaddr;
+	int len;
 {
 	struct {
 		cell_t name;
@@ -318,10 +322,10 @@ int len;
  */
 int
 prom_map_phys(paddr, size, vaddr, mode)
-paddr_t paddr;
-off_t size;
-vaddr_t vaddr;
-int mode;
+	paddr_t paddr;
+	off_t size;
+	vaddr_t vaddr;
+	int mode;
 {
 	struct {
 		cell_t name;
@@ -368,8 +372,8 @@ int mode;
  */
 paddr_t
 prom_alloc_phys(len, align)
-int len;
-int align;
+	int len;
+	int align;
 {
 	struct {
 		cell_t name;
@@ -395,7 +399,7 @@ int align;
 	args.ihandle = HDL2CELL(memh);
 	args.align = align;
 	args.len = len;
-	if(openfirmware(&args) != 0)
+	if (openfirmware(&args) != 0)
 		return 0;
 	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
 }
@@ -407,8 +411,8 @@ int align;
  */
 paddr_t
 prom_claim_phys(phys, len)
-paddr_t phys;
-int len;
+	paddr_t phys;
+	int len;
 {
 	struct {
 		cell_t name;
@@ -438,7 +442,7 @@ int len;
 	args.len = len;
 	args.phys_hi = HDL2CELL(phys>>32);
 	args.phys_lo = HDL2CELL(phys);
-	if(openfirmware(&args) != 0)
+	if (openfirmware(&args) != 0)
 		return -1;
 	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
 }
@@ -450,8 +454,8 @@ int len;
  */
 int
 prom_free_phys(phys, len)
-paddr_t phys;
-int len;
+	paddr_t phys;
+	int len;
 {
 	struct {
 		cell_t name;
@@ -486,8 +490,8 @@ int len;
  */
 paddr_t
 prom_get_msgbuf(len, align)
-int len;
-int align;
+	int len;
+	int align;
 {
 	struct {
 		cell_t name;
@@ -527,7 +531,7 @@ int align;
 	/* Allocate random memory -- page zero avail?*/
 	addr = prom_claim_phys(0x000, len);
 	prom_printf("prom_get_msgbuf: allocated new buf at %08x\r\n", (int)addr); 
-	if( addr == -1 ) {
+	if (addr == -1) {
 		prom_printf("prom_get_msgbuf: cannot get allocate physmem\r\n");
 		return -1;
 	}
@@ -546,7 +550,8 @@ static u_int stdout = NULL;
 int 
 OF_stdin() 
 {
-	if( stdin == NULL ) {
+
+	if (stdin == NULL) {
 		u_int chosen;
 		
 		chosen = OF_finddevice("/chosen");
@@ -558,7 +563,8 @@ OF_stdin()
 int
 OF_stdout()
 {
-	if( stdout == NULL ) {
+
+	if (stdout == NULL) {
 		u_int chosen;
 		
 		chosen = OF_finddevice("/chosen");
