@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.5 1996/08/27 21:56:18 cgd Exp $	*/
+/*	$NetBSD: pcc.c,v 1.6 1996/09/12 05:04:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe
@@ -121,7 +121,7 @@ pccattach(parent, self, args)
 	struct pccsoftc *pccsc;
 	struct pcc_attach_args npa;
 	caddr_t kva;
-	int i, error;
+	int i;
 
 	if (sys_pcc)
 		panic("pccattach: pcc already attached!");
@@ -165,20 +165,7 @@ pccattach(parent, self, args)
 
 		/* Check for hardware. (XXX is this really necessary?) */
 		kva = PCC_VADDR(npa.pa_offset);
-		/* XXX should change interface to badaddr() */
-		switch (pcc_devices[i].pcc_bytes) {
-		case 1:
-			error = badbaddr(kva);
-			break;
-
-		case 2:
-			error = badaddr(kva);
-			break;
-
-		default:
-			panic("pccattach: bad probe size");
-		}
-		if (error) {
+		if (badaddr(kva, pcc_devices[i].pcc_bytes)) {
 			/*
 			 * Hardware not present.
 			 */
