@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.138 2002/05/02 13:38:57 enami Exp $	*/
+/*	$NetBSD: tty.c,v 1.139 2002/07/21 20:43:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.138 2002/05/02 13:38:57 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.139 2002/07/21 20:43:53 jdolecek Exp $");
 
 #include "opt_uconsole.h"
 
@@ -987,6 +987,10 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    ((p->p_session->s_ttyvp || tp->t_session) &&
 		    (tp->t_session != p->p_session)))
 			return (EPERM);
+
+		if (tp->t_session)
+			SESSRELE(tp->t_session);
+
 		SESSHOLD(p->p_session);
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
