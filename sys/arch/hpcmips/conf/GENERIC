@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.98 2001/11/21 11:28:09 uch Exp $
+# 	$NetBSD: GENERIC,v 1.99 2001/11/23 05:00:25 atatat Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 maxusers	16
 
@@ -391,4 +391,4 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan
 
 ## Simple inter-network traffic bridging
-#pseudo-device	bridge
+pseudo-device	bridge

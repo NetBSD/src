@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11 2001/11/20 12:56:28 lukem Exp $
+#	$NetBSD: GENERIC,v 1.12 2001/11/23 05:00:25 atatat Exp $
 #
 #	GENERIC kernel for SH3+HD64461 based machines.
 #
@@ -134,7 +134,7 @@ pseudo-device	biconsdev	1	# build-in console device
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
