@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.46 2003/09/26 12:02:57 simonb Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.47 2003/09/27 00:57:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@
 struct sigacts {
 	struct sigact_sigdesc {
 		struct sigaction sd_sigact;
-		void *sd_tramp;
+		const void *sd_tramp;
 		int sd_vers;
 	} sa_sigdesc[NSIG];		/* disposition of signals */
 
@@ -164,7 +164,7 @@ int	killpg1 __P((struct proc *, struct ksiginfo *, int, int));
 struct lwp *proc_unstop __P((struct proc *p));
 
 int	sigaction1 __P((struct proc *, int, const struct sigaction *,
-	    struct sigaction *, void *, int));
+	    struct sigaction *, const void *, int));
 int	sigprocmask1 __P((struct proc *, int, const sigset_t *, sigset_t *));
 void	sigpending1 __P((struct proc *, sigset_t *));
 int	sigsuspend1 __P((struct proc *, const sigset_t *));
