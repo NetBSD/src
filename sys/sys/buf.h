@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.77 2004/10/28 07:07:46 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.78 2004/12/18 03:08:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -203,6 +203,12 @@ do {									\
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
 #define	B_XXX		0x02000000	/* Debugging flag. */
 #define	B_VFLUSH	0x04000000	/* Buffer is being synced. */
+
+#define BUF_FLAGBITS \
+    "\20\1AGE\3ASYNC\4BAD\5BUSY\6SCANNED\7CALL\10DELWRI" \
+    "\11DIRTY\12DONE\13EINTR\14ERROR\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
+    "\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED\32XXX\33VFLUSH"
+
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
