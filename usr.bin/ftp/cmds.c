@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.43 1998/09/01 14:25:52 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.44 1998/10/08 14:45:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.43 1998/09/01 14:25:52 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.44 1998/10/08 14:45:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -843,6 +843,8 @@ sethash(argc, argv)
 	if (hash)
 		fprintf(ttyout, " (%d bytes/hash mark)", mark);
 	fputs(".\n", ttyout);
+	if (hash)
+		progress = 0;
 	code = hash;
 }
 
@@ -883,6 +885,8 @@ setprogress(argc, argv)
 {
 
 	code = togglevar(argc, argv, &progress, "Progress bar");
+	if (progress)
+		hash = 0;
 }
 
 /*
