@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.5 1996/10/13 13:13:50 jonathan Exp $	*/
+/*	$NetBSD: bt459.c,v 1.6 1997/06/15 17:58:56 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,6 +94,8 @@
 #include <pmax/dev/fbreg.h>
 
 #include <pmax/dev/bt459.h>
+
+#include <machine/locore.h>	/* XXX wbflush() */
 
 /*
  * Forward references.
