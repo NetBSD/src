@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.53 1999/07/12 21:55:20 kleink Exp $
+	$NetBSD: syscalls.master,v 1.54 2000/04/09 06:47:39 mrg Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -61,13 +61,13 @@
 10	NOARGS		{ int sys_unlink(char *path); }
 11	STD		{ int sunos_sys_execv(const char *path, char **argp); }
 12	NOARGS		{ int sys_chdir(char *path); }
-13	OBSOL		time
+13	OBSOL		old_time
 14	STD		{ int sunos_sys_mknod(const char *path, int mode, \
 			    int dev); }
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
 16	NOARGS		{ int sys_chown(char *path, int uid, int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
-18	OBSOL		stat
+18	OBSOL		old_stat
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, int whence); }
 20	NOARGS		{ pid_t sys_getpid(void); }
 21	OBSOL		sunos_old_mount
@@ -77,15 +77,15 @@
 25	STD		{ int sunos_sys_stime(time_t *tp); }
 26	STD		{ long sunos_sys_ptrace(int req, pid_t pid, \
 			    caddr_t addr, int data, char *addr2); }
-27	UNIMPL		sunos_alarm
-28	UNIMPL		sunos_fstat
-29	UNIMPL		sunos_pause
-30	UNIMPL		sunos_utime
-31	UNIMPL		sunos_stty
-32	UNIMPL		sunos_gtty
+27	UNIMPL		old_sunos_alarm
+28	UNIMPL		old_sunos_fstat
+29	UNIMPL		old_sunos_pause
+30	UNIMPL		old_sunos_utime
+31	UNIMPL		old_sunos_stty
+32	UNIMPL		old_sunos_gtty
 33	STD		{ int sunos_sys_access(const char *path, int flags); }
-34	UNIMPL		sunos_nice
-35	UNIMPL		sunos_ftime
+34	UNIMPL		old_sunos_nice
+35	UNIMPL		old_sunos_ftime
 36	NOARGS		{ int sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
 38	STD		{ int sunos_sys_stat(const char *path, \
