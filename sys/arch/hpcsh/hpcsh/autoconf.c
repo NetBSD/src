@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2003/07/15 02:29:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)autoconf.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2003/07/15 02:29:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

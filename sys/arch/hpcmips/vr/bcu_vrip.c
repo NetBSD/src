@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.19 2002/10/02 05:26:52 thorpej Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.20 2003/07/15 02:29:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.20 2003/07/15 02:29:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

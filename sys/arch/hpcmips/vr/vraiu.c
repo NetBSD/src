@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.5 2003/05/03 18:10:49 wiz Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.6 2003/07/15 02:29:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.6 2003/07/15 02:29:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.5 2003/01/01 01:35:42 thorpej Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.6 2003/07/15 02:29:24 lukem Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -33,6 +33,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.6 2003/07/15 02:29:24 lukem Exp $");
 
 #define MONGOOSE_DEBUG 9
 

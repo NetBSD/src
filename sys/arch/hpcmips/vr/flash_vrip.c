@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.1 2003/05/01 07:02:03 igy Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.2 2003/07/15 02:29:34 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Flash Memory Driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.2 2003/07/15 02:29:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.15 2003/01/01 01:40:25 thorpej Exp $ */
+/*	$NetBSD: apmdev.c,v 1.16 2003/07/15 02:29:28 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
 /*
  * from: sys/arch/i386/i386/apm.c,v 1.49 2000/05/08
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.16 2003/07/15 02:29:28 lukem Exp $");
 
 #include "opt_apmdev.h"
 

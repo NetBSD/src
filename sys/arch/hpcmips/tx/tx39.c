@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.32 2003/04/02 03:58:12 thorpej Exp $ */
+/*	$NetBSD: tx39.c,v 1.33 2003/07/15 02:29:32 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.33 2003/07/15 02:29:32 lukem Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"

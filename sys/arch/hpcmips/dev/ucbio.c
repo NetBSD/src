@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbio.c,v 1.7 2002/10/02 05:26:47 thorpej Exp $	*/
+/*	$NetBSD: ucbio.c,v 1.8 2003/07/15 02:29:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Device driver for PHILIPS UCB1200 Advanced modem/audio analog front-end
  *	General Purpose I/O part.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ucbio.c,v 1.8 2003/07/15 02:29:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

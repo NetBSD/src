@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.8 2002/10/02 05:26:45 thorpej Exp $ */
+/*	$NetBSD: m38813c.c,v 1.9 2003/07/15 02:29:29 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Device driver for MITUBISHI M38813 controller
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.9 2003/07/15 02:29:29 lukem Exp $");
 
 #include "opt_use_poll.h"
 

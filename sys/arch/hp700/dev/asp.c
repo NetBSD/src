@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.5 2002/10/02 05:17:47 thorpej Exp $	*/
+/*	$NetBSD: asp.c,v 1.6 2003/07/15 02:29:24 lukem Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -39,6 +39,9 @@
  *    Hewlett-Packard
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.6 2003/07/15 02:29:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

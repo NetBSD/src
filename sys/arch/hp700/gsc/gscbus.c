@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.6 2002/10/02 05:17:49 thorpej Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.7 2003/07/15 02:29:25 lukem Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -70,6 +70,9 @@
  * fffbf000 -- mem0
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.7 2003/07/15 02:29:25 lukem Exp $");
 
 #define GSCDEBUG
 

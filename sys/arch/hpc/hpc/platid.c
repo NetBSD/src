@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.3 2001/09/27 16:31:23 uch Exp $	*/
+/*	$NetBSD: platid.c,v 1.4 2003/07/15 02:29:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: platid.c,v 1.4 2003/07/15 02:29:27 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
