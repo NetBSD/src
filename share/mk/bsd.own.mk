@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.329 2003/04/27 10:15:01 fvdl Exp $
+#	$NetBSD: bsd.own.mk,v 1.330 2003/04/29 14:59:02 scw Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -355,7 +355,6 @@ NOPIC=		# defined
 
 # The sh5 port is incomplete.
 .if ${MACHINE_CPU} == "sh5"
-NOPIC=		# defined
 NOPROFILE=	# defined
 .endif
 
