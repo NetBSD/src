@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.43 1996/10/10 22:54:17 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.44 1996/10/13 02:21:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -401,7 +401,7 @@ procfs_print(v)
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 
-	kprintf("tag VT_PROCFS, type %d, pid %d, mode %x, flags %lx\n",
+	printf("tag VT_PROCFS, type %d, pid %d, mode %x, flags %lx\n",
 	    pfs->pfs_type, pfs->pfs_pid, pfs->pfs_mode, pfs->pfs_flags);
 	return 0;
 }
@@ -556,7 +556,7 @@ procfs_getattr(v)
 		vap->va_uid = 0;
 		vap->va_gid = 0;
 		vap->va_size = vap->va_bytes =
-		    ksprintf(buf, "%ld", (long)curproc->p_pid);
+		    sprintf(buf, "%ld", (long)curproc->p_pid);
 		break;
 	}
 
@@ -877,7 +877,7 @@ procfs_readdir(v)
 						goto done;
 				}
 				d.d_fileno = PROCFS_FILENO(p->p_pid, Pproc);
-				d.d_namlen = ksprintf(d.d_name, "%ld",
+				d.d_namlen = sprintf(d.d_name, "%ld",
 				    (long)p->p_pid);
 				d.d_type = DT_REG;
 				p = p->p_list.le_next;
@@ -926,7 +926,7 @@ procfs_readlink(v)
 	if (VTOPFS(ap->a_vp)->pfs_fileno != PROCFS_FILENO(0, Pcurproc))
 		return (EINVAL);
 
-	len = ksprintf(buf, "%ld", (long)curproc->p_pid);
+	len = sprintf(buf, "%ld", (long)curproc->p_pid);
 
 	return (uiomove((caddr_t)buf, len, ap->a_uio));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.22 1996/10/10 22:54:13 christos Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.23 1996/10/13 02:21:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,7 +178,7 @@ portal_closefd(p, fd)
 	 * we could do if we got one, so just print a message.
 	 */
 	if (error)
-		kprintf("portal_closefd: error = %d\n", error);
+		printf("portal_closefd: error = %d\n", error);
 }
 
 /*
@@ -474,7 +474,7 @@ portal_open(v)
 		 * Close extra fds.
 		 */
 		int i;
-		kprintf("portal_open: %d extra fds\n", newfds - 1);
+		printf("portal_open: %d extra fds\n", newfds - 1);
 		for (i = 1; i < newfds; i++) {
 			portal_closefd(p, *ip);
 			ip++;
@@ -671,7 +671,7 @@ int
 portal_print(v)
 	void *v;
 {
-	kprintf("tag VT_PORTAL, portal vnode\n");
+	printf("tag VT_PORTAL, portal vnode\n");
 	return (0);
 }
 
