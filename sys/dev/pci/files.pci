@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.210 2004/03/12 13:46:52 ragge Exp $
+#	$NetBSD: files.pci,v 1.211 2004/05/28 15:35:41 toshii Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -703,3 +703,7 @@ file	dev/pci/if_bce.c		bce
 device	dge: ether, ifnet, arp
 attach	dge at pci
 file	dev/pci/if_dge.c		dge
+
+# Realtek 8129/8139 Ethernet controllers
+attach	re at pci
+file	dev/pci/if_re.c			re
