@@ -1,7 +1,7 @@
-/*	$Id: vector.s,v 1.12 1993/12/19 06:58:41 mycroft Exp $ */
+/*	$Id: vector.s,v 1.13 1994/04/02 08:04:32 mycroft Exp $ */
 
-#include "i386/isa/icu.h"
-#include "i386/isa/isa.h"
+#include <i386/isa/icu.h>
+#include <i386/isa/isa.h>
 #include "vector.h"
 
 #define	ICU_EOI			0x20	/* XXX - define elsewhere */
@@ -84,14 +84,11 @@
 	movl	$KDSEL,%eax ; \
 	movl	%ax,%ds ; \
 	movl	%ax,%es ; \
-	SHOW_CLI ;		/* although it interferes with "ASAP" */ \
 	pushl	$unit ; \
 	call	handler ;	/* do the work ASAP */ \
 	enable_icus ;		/* (re)enable ASAP (helps edge trigger?) */ \
 	addl	$4,%esp ; \
 	incl	_cnt+V_INTR ;	/* book-keeping can wait */ \
-	COUNT_INTR(_intrcnt_actv, id_num) ; \
-	SHOW_STI ; \
 	popl	%es ; \
 	popl	%ds ; \
 	popl	%edx; \
@@ -103,11 +100,9 @@
 	pushl	$0 ;		/* dummy error code */ \
 	pushl	$T_ASTFLT ; \
 	INTRENTRY ; \
-	SHOW_CLI ;		/* interrupt did an implicit cli */ \
 	movb	_imen + IRQ_BYTE(irq_num),%al ; \
 	orb	$IRQ_BIT(irq_num),%al ; \
 	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
-	SHOW_IMEN ; \
 	FASTER_NOP ; \
 	outb	%al,$icu+1 ; \
 	enable_icus ; \
@@ -116,32 +111,26 @@
 	testb	$IRQ_BIT(irq_num),%reg ; \
 	jne	2f ; \
 1: ; \
-	COUNT_INTR(_intrcnt_actv, id_num) ; \
 	movl	_cpl,%eax ; \
 	pushl	%eax ; \
 	pushl	$unit ; \
 	orl	mask,%eax ; \
 	movl	%eax,_cpl ; \
-	SHOW_CPL ; \
-	SHOW_STI ; \
 	sti ; \
 	call	handler ; \
 	movb	_imen + IRQ_BYTE(irq_num),%al ; \
 	andb	$~IRQ_BIT(irq_num),%al ; \
 	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
-	SHOW_IMEN ; \
 	FASTER_NOP ; \
 	outb	%al,$icu+1 ; \
 	INTREXIT ; \
 ; \
 	ALIGN_TEXT ; \
 2: ; \
-	COUNT_EVENT(_intrcnt_pend, id_num) ; \
 	movl	$1b,%eax ;	/* register resume address */ \
 				/* XXX - someday do it at attach time */ \
 	movl	%eax,Vresume + (irq_num) * 4 ;	\
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num) ; \
-	SHOW_IPENDING ; \
 	INTRFASTEXIT
 
 /*
@@ -264,15 +253,6 @@ _intrcnt_stray:	.space	4	/* total count of stray interrupts */
 	.globl	_intrcnt_actv
 _intrcnt_actv:	.space	NR_REAL_INT_HANDLERS * 4	/* active interrupts */
 
-#ifdef INTR_DEBUG
-	.globl	_intrcnt_pend
-_intrcnt_pend:	.space	NR_REAL_INT_HANDLERS * 4	/* pending interrupts */
-	.globl	_intrcnt_spl
-_intrcnt_spl:	.space	32 * 4	/* XXX 32 should not be hard coded ? */
-	.globl	_intrcnt_show
-_intrcnt_show:	.space	8 * 4	/* XXX 16 should not be hard coded ? */
-#endif /* INTR_DEBUG */
-
 	.globl	_eintrcnt
 _eintrcnt:			/* used by vmstat to calc size of table */
 
@@ -301,64 +281,4 @@ _intrnames:
 	BUILD_VECTOR(stray,,,,,,,,)
 	BUILD_VECTORS
 
-#ifdef INTR_DEBUG
-
-#undef BUILD_FAST_VECTOR
-#define BUILD_FAST_VECTOR	BUILD_VECTOR
-
-#undef BUILD_VECTOR
-#define	BUILD_VECTOR(name, unit, irq_num, id_num, mask, handler, \
-		     icu_num, icu_enables, reg) \
-	.asciz	"name pend"
-
-	BUILD_VECTORS
-
-/*
- * now the spl names
- */
-	.asciz	"unpend_v"
-	.asciz	"doreti"
-	.asciz	"p0!ni"
-	.asciz	"!p0!ni"
-	.asciz	"p0ni"
-	.asciz	"netisr_raw"
-	.asciz	"netisr_ip"
-	.asciz	"netisr_imp"
-	.asciz	"netisr_ns"
-	.asciz	"softclock"
-	.asciz	"trap"
-	.asciz	"doreti_exit2"
-	.asciz	"splbio"
-	.asciz	"splclock"
-	.asciz	"splhigh"
-	.asciz	"splimp"
-	.asciz	"splnet"
-	.asciz	"splsoftclock"
-	.asciz	"spltty"
-	.asciz	"spl0"
-	.asciz	"netisr_raw2"
-	.asciz	"netisr_ip2"
-	.asciz	"splx"
-	.asciz	"splx!0"
-	.asciz	"unpend_V"
-	.asciz	"netisr_iso"
-	.asciz	"netisr_imp2"
-	.asciz	"netisr_ns2"
-	.asciz	"netisr_iso2"
-	.asciz	"spl29"		/* spl29-spl31 are spares */
-	.asciz	"spl30"
-	.asciz	"spl31"
-/*
- * now the mask names
- */
-	.asciz	"cli"
-	.asciz	"cpl"
-	.asciz	"imen"
-	.asciz	"ipending"
-	.asciz	"sti"
-	.asciz	"mask5"		/* mask5-mask7 are spares */
-	.asciz	"mask6"
-	.asciz	"mask7"
-#endif /* INTR_DEBUG */
-	
 _eintrnames:

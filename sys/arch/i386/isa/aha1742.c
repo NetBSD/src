@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.24 1994/03/30 04:07:48 mycroft Exp $
+ *      $Id: aha1742.c,v 1.25 1994/04/02 08:04:26 mycroft Exp $
  */
 
 /*
@@ -537,6 +537,7 @@ ahbattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct ahb_softc *ahb = (void *)self;
+	u_char x;
 
 	ahb_init(ahb);
 
@@ -549,14 +550,19 @@ ahbattach(parent, self, aux)
 	ahb->sc_link.device = &ahb_dev;
 
 	printf(": ");
-	switch (inb(ahb->baseport + HID2)) {
+	x = inb(ahb->baseport + HID2);
+	switch (x) {
 	case PRODUCT_1742:
 		printf("model 1740 or 1742");
 		break;
 	case PRODUCT_1744:
 		printf("model 1744");
+		break;
+	default:
+		printf("unknown model 0x%02x", x);
 	}
-	printf(", revision %d\n", inb(ahb->baseport + HID3));
+	x = inb(ahb->baseport + HID3);
+	printf(", revision %d\n", x);
 
 #ifdef NEWCONFIG
 	isa_establish(&ahb->sc_id, &ahb->sc_dev);
