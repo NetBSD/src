@@ -31,7 +31,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: dpme.h,v 1.1.1.1 1993/09/29 06:09:14 briggs Exp $"
 
 /* parts Copyright (c) 1988 Apple Computer */
 

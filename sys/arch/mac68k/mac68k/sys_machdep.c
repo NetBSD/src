@@ -63,9 +63,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: sys_machdep.c,v 1.1.1.1 1993/09/29 06:09:15 briggs Exp $"
 /*
- *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
+ *	from: from: @(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
+ *	$Id: sys_machdep.c,v 1.2 1993/11/29 00:41:05 briggs Exp $
+ *	$Id: sys_machdep.c,v 1.2 1993/11/29 00:41:05 briggs Exp $
  */
 
 #include "sys/param.h"
@@ -170,4 +171,12 @@ cachectl(req, addr, len)
 		break;
 	}
 	return(error);
+}
+
+int sysarch(p, uap, retval)
+	struct proc *p;
+	void	    *uap;
+	int	    *retval;
+{
+	return ENOSYS;
 }

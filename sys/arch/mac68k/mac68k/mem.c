@@ -35,11 +35,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ident "$Id: mem.c,v 1.1.1.1 1993/09/29 06:09:16 briggs Exp $"
 /*
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
- *	@(#)mem.c	7.5 (Berkeley) 5/7/91
+ *	from: @(#)mem.c	7.5 (Berkeley) 5/7/91
+ *	$Id: mem.c,v 1.2 1993/11/29 00:40:56 briggs Exp $
  */
 
 /*

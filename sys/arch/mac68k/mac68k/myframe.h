@@ -31,7 +31,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: myframe.h,v 1.1.1.1 1993/09/29 06:09:16 briggs Exp $"
 
 struct my_frame {
 	unsigned long dregs[8]; /* Offset 0 */
