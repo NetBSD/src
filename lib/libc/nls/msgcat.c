@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.9 1994/12/23 12:56:31 cgd Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.10 1994/12/23 13:01:33 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -240,11 +240,11 @@ char	*_catgets( catd, setId, msgId, dflt)
 nl_catd catd;
 int setId;
 int msgId;
-__const char *dflt;
+char *dflt;
 {
     MCMsgT	*msg;
     MCCatT	*cat = (MCCatT *) catd;
-    __const char *cptr;
+    char	*cptr;
 
     msg = MCGetMsg(MCGetSet(cat, setId), msgId);
     if (msg) cptr = msg->msg.str;
