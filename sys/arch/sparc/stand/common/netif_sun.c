@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.5 2003/02/26 17:39:08 pk Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.6 2003/03/13 12:02:54 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -133,7 +133,7 @@ netif_put(desc, pkt, len)
 	ssize_t rv;
 	size_t sendlen;
 
-	pd = (struct promdata *)desc->io_netif->nif_devdata;
+	pd = (struct promdata *)((struct netif *)desc->io_netif)->nif_devdata;
 
 #ifdef NETIF_DEBUG
 	if (netif_debug) {
@@ -181,7 +181,7 @@ netif_get(desc, pkt, maxlen, timo)
 	int tick0;
 	ssize_t len;
 
-	pd = (struct promdata *)desc->io_netif->nif_devdata;
+	pd = (struct promdata *)((struct netif *)desc->io_netif)->nif_devdata;
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
