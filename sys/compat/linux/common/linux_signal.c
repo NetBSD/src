@@ -1,6 +1,7 @@
-/*	$NetBSD: linux_signal.c,v 1.13 1998/09/29 14:15:49 tv Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.14 1998/10/01 02:27:33 erh Exp $	*/
 
 /*
+ * Copyright (c) 1998 Eric Haszlakiewicz
  * Copyright (c) 1995 Frank van der Linden
  * All rights reserved.
  *
@@ -33,6 +34,21 @@
  * heavily from: svr4_signal.c,v 1.7 1995/01/09 01:04:21 christos Exp
  */
 
+/*
+ *   Functions in multiarch:
+ *	linux_sys_signal	: linux_sig_notalpha.c
+ *	linux_sys_siggetmask	: linux_sig_notalpha.c
+ *	linux_sys_sigsetmask	: linux_sig_notalpha.c
+ *	linux_sys_pause		: linux_sig_notalpha.c
+ *	linux_sys_sigaction	: linux_sigaction.c
+ *
+ */
+
+/*
+ *   Unimplemented:
+ *	linux_sys_rt_sigtimedwait	: sigsuspend w/timeout.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -52,11 +68,15 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 
+/* Locally used defines (in bsd<->linux conversion functions): */
+/* XXX XAX rename to linux_old.  Add stuff for new type linux_sigset_t
+	handle _NSIG_WORDS > 1 */
 #define	linux_sigmask(n)	(1 << ((n) - 1))
 #define	linux_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
 #define	linux_sigismember(s, n)	(*(s) & linux_sigmask(n))
 #define	linux_sigaddset(s, n)	(*(s) |= linux_sigmask(n))
 
+/* Note: linux_to_native_sig[] is in <arch>/linux_sigarray.c */
 int native_to_linux_sig[NSIG] = {
 	0,
 	LINUX_SIGHUP,
@@ -93,48 +113,13 @@ int native_to_linux_sig[NSIG] = {
 	LINUX_SIGPWR,
 };
 
-int linux_to_native_sig[LINUX_NSIG] = {
-	0,
-	SIGHUP,
-	SIGINT,
-	SIGQUIT,
-	SIGILL,
-	SIGTRAP,
-	SIGABRT,
-	SIGBUS,
-	SIGFPE,
-	SIGKILL,
-	SIGUSR1,
-	SIGSEGV,
-	SIGUSR2,
-	SIGPIPE,
-	SIGALRM,
-	SIGTERM,
-	0,			/* SIGSTKFLT */
-	SIGCHLD,
-	SIGCONT,
-	SIGSTOP,
-	SIGTSTP,
-	SIGTTIN,
-	SIGTTOU,
-	SIGURG,
-	SIGXCPU,
-	SIGXFSZ,
-	SIGVTALRM,
-	SIGPROF,
-	SIGWINCH,
-	SIGIO,
-	SIGPWR,
-	0,			/* SIGUNUSED */
-};
-
-/* linux_signal.c */
-void linux_to_native_sigaction __P((struct linux_sigaction *, struct sigaction *));
-void native_to_linux_sigaction __P((struct sigaction *, struct linux_sigaction *));
-
+/*
+ * Ok, we know that Linux and BSD signals both are just an unsigned int.
+ * Don't bother to use the sigismember() stuff for now.
+ */
 void
-linux_to_native_sigset(lss, bss)
-	const linux_sigset_t *lss;
+linux_old_to_native_sigset(lss, bss)
+	const linux_old_sigset_t *lss;
 	sigset_t *bss;
 {
 	int i, newsig;
@@ -150,9 +135,9 @@ linux_to_native_sigset(lss, bss)
 }
 
 void
-native_to_linux_sigset(bss, lss)
+native_to_linux_old_sigset(bss, lss)
 	const sigset_t *bss;
-	linux_sigset_t *lss;
+	linux_old_sigset_t *lss;
 {
 	int i, newsig;
 	
@@ -167,9 +152,65 @@ native_to_linux_sigset(bss, lss)
 }
 
 /*
- * Convert between Linux and BSD sigaction structures. Linux has
- * one extra field (sa_restorer) which we don't support.
+ * Convert between Linux and BSD sigaction structures. Linux sometimes
+ * has one extra field (sa_restorer) which we don't support.
  */
+void
+linux_old_to_native_sigaction(lsa, bsa)
+	struct linux_old_sigaction *lsa;
+	struct sigaction *bsa;
+{
+
+	bsa->sa_handler = lsa->sa_handler;
+	linux_old_to_native_sigset(&lsa->sa_mask, &bsa->sa_mask);
+	bsa->sa_flags = 0;
+	if ((lsa->sa_flags & LINUX_SA_NOCLDSTOP) != 0)
+		bsa->sa_flags |= SA_NOCLDSTOP;
+	if ((lsa->sa_flags & LINUX_SA_ONSTACK) != 0)
+		bsa->sa_flags |= SA_ONSTACK;
+	if ((lsa->sa_flags & LINUX_SA_RESTART) != 0)
+		bsa->sa_flags |= SA_RESTART;
+	if ((lsa->sa_flags & LINUX_SA_ONESHOT) != 0)
+		bsa->sa_flags |= SA_RESETHAND;
+	if ((lsa->sa_flags & LINUX_SA_NOMASK) != 0)
+		bsa->sa_flags |= SA_NODEFER;
+	if ((lsa->sa_flags & LINUX_SA_SIGINFO) != 0)
+		bsa->sa_flags |= SA_SIGINFO;
+#ifdef DEBUG
+	if ((lsa->sa_flags & ~LINUX_SA_ALLBITS) != 0)
+/*XXX*/		printf("linux_old_to_native_sigaction: extra bits ignored\n");
+	if (lsa->sa_restorer != 0)
+/*XXX*/		printf("linux_old_to_native_sigaction: sa_restorer ignored\n");
+#endif
+}
+
+void
+native_to_linux_old_sigaction(bsa, lsa)
+	struct sigaction *bsa;
+	struct linux_old_sigaction *lsa;
+{
+
+	/* Clear sa_flags and sa_restorer (if it exists) */
+	bzero(lsa, sizeof(struct linux_old_sigaction));
+
+	/* ...and fill in the mask and flags */
+	native_to_linux_old_sigset(&bsa->sa_mask, &lsa->sa_mask);
+	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
+		lsa->sa_flags |= LINUX_SA_NOCLDSTOP;
+	if ((bsa->sa_flags & SA_ONSTACK) != 0)
+		lsa->sa_flags |= LINUX_SA_ONSTACK;
+	if ((bsa->sa_flags & SA_RESTART) != 0)
+		lsa->sa_flags |= LINUX_SA_RESTART;
+	if ((bsa->sa_flags & SA_NODEFER) != 0)
+		lsa->sa_flags |= LINUX_SA_NOMASK;
+	if ((bsa->sa_flags & SA_RESETHAND) != 0)
+		lsa->sa_flags |= LINUX_SA_ONESHOT;
+	if ((bsa->sa_flags & SA_SIGINFO) != 0)
+		lsa->sa_flags |= LINUX_SA_SIGINFO;
+	lsa->sa_handler = bsa->sa_handler;
+}
+
+/* ...and the new sigaction conversion funcs. */
 void
 linux_to_native_sigaction(lsa, bsa)
 	struct linux_sigaction *lsa;
@@ -189,6 +230,8 @@ linux_to_native_sigaction(lsa, bsa)
 		bsa->sa_flags |= SA_RESETHAND;
 	if ((lsa->sa_flags & LINUX_SA_NOMASK) != 0)
 		bsa->sa_flags |= SA_NODEFER;
+	if ((lsa->sa_flags & LINUX_SA_SIGINFO) != 0)
+		bsa->sa_flags |= SA_SIGINFO;
 #ifdef DEBUG
 	if ((lsa->sa_flags & ~LINUX_SA_ALLBITS) != 0)
 /*XXX*/		printf("linux_to_native_sigaction: extra bits ignored\n");
@@ -203,9 +246,11 @@ native_to_linux_sigaction(bsa, lsa)
 	struct linux_sigaction *lsa;
 {
 
-	lsa->sa_handler = bsa->sa_handler;
+	/* Clear sa_flags and sa_restorer (if it exists) */
+	bzero(lsa, sizeof(struct linux_sigaction));
+
+	/* ...and fill in the mask and flags */
 	native_to_linux_sigset(&bsa->sa_mask, &lsa->sa_mask);
-	lsa->sa_flags = 0;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
 		lsa->sa_flags |= LINUX_SA_NOCLDSTOP;
 	if ((bsa->sa_flags & SA_ONSTACK) != 0)
@@ -216,9 +261,12 @@ native_to_linux_sigaction(bsa, lsa)
 		lsa->sa_flags |= LINUX_SA_NOMASK;
 	if ((bsa->sa_flags & SA_RESETHAND) != 0)
 		lsa->sa_flags |= LINUX_SA_ONESHOT;
-	lsa->sa_restorer = NULL;
+	if ((bsa->sa_flags & SA_SIGINFO) != 0)
+		lsa->sa_flags |= LINUX_SA_SIGINFO;
+	lsa->sa_handler = bsa->sa_handler;
 }
 
+/* ----------------------------------------------------------------------- */
 
 /*
  * The Linux sigaction() system call. Do the usual conversions,
@@ -226,19 +274,24 @@ native_to_linux_sigaction(bsa, lsa)
  * ignored (see above).
  */
 int
-linux_sys_sigaction(p, v, retval)
+linux_sys_rt_sigaction(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_sigaction_args /* {
+	struct linux_sys_rt_sigaction_args /* {
 		syscallarg(int) signum;
 		syscallarg(const struct linux_sigaction *) nsa;
 		syscallarg(struct linux_sigaction *) osa;
+		syscallarg(size_t) sigsetsize;
 	} */ *uap = v;
 	struct linux_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
 	int error;
+
+	/* XXX XAX linux_sigset_t or struct linux_sigaction here? */
+	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
+		return (EINVAL);
 
 	if (SCARG(uap, nsa)) {
 		error = copyin(SCARG(uap, nsa), &nlsa, sizeof(nlsa));
@@ -259,35 +312,17 @@ linux_sys_sigaction(p, v, retval)
 	return (0);
 }
 
-/*
- * The Linux signal() system call. I think that the signal() in the C
- * library actually calls sigaction, so I doubt this one is ever used.
- * But hey, it can't hurt having it here. The same restrictions as for
- * sigaction() apply.
- */
 int
-linux_sys_signal(p, v, retval)
+linux_sys_rt_sigprocmask(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_signal_args /* {
-		syscallarg(int) sig;
-		syscallarg(linux_handler_t) handler;
-	} */ *uap = v;
-	struct sigaction nbsa, obsa;
-	int error;
-
-	nbsa.sa_handler = SCARG(uap, handler);
-	sigemptyset(&nbsa.sa_mask);
-	nbsa.sa_flags = SA_RESETHAND | SA_NODEFER;
-	error = sigaction1(p, linux_to_native_sig[SCARG(uap, sig)],
-	    &nbsa, &obsa);
-	if (error)
-		return (error);
-	*retval = (int)obsa.sa_handler;
-	return (0);
+	/* Use non-rt function: sigsetsize is ignored. */
+	/* Assume sizeof(linux_sigset_t) == sizeof(linux_old_sigset_t) */
+	return(linux_sys_sigprocmask(p, v, retval));
 }
+
 
 int
 linux_sys_sigprocmask(p, v, retval)
@@ -297,10 +332,10 @@ linux_sys_sigprocmask(p, v, retval)
 {
 	struct linux_sys_sigprocmask_args /* {
 		syscallarg(int) how;
-		syscallarg(const linux_sigset_t *) set;
-		syscallarg(linux_sigset_t *) oset;
+		syscallarg(const linux_old_sigset_t *) set;
+		syscallarg(linux_old_sigset_t *) oset;
 	} */ *uap = v;
-	linux_sigset_t nlss, olss;
+	linux_old_sigset_t nlss, olss;
 	sigset_t nbss, obss;
 	int how;
 	int error;
@@ -323,14 +358,14 @@ linux_sys_sigprocmask(p, v, retval)
 		error = copyin(SCARG(uap, set), &nlss, sizeof(nlss));
 		if (error)
 			return (error);
-		linux_to_native_sigset(&nlss, &nbss);
+		linux_old_to_native_sigset(&nlss, &nbss);
 	}
 	error = sigprocmask1(p, how,
 	    SCARG(uap, set) ? &nbss : 0, SCARG(uap, oset) ? &obss : 0);
 	if (error)
 		return (error); 
 	if (SCARG(uap, oset)) {
-		native_to_linux_sigset(&obss, &olss);
+		native_to_linux_old_sigset(&obss, &olss);
 		error = copyout(&olss, SCARG(uap, oset), sizeof(olss));
 		if (error)
 			return (error);
@@ -338,54 +373,26 @@ linux_sys_sigprocmask(p, v, retval)
 	return (error);
 }
 
-/* ARGSUSED */
 int
-linux_sys_siggetmask(p, v, retval)
+linux_sys_rt_sigpending(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
+	struct linux_sys_rt_sigpending_args /* {
+		syscallarg(linux_sigset_t *) set;
+		syscallarg(size_t) sigsetsize;
+	} */ *uap = v;
 	sigset_t bss;
 	linux_sigset_t lss;
-	int error;
 
-	error = sigprocmask1(p, SIG_SETMASK, 0, &bss);
-	if (error)
-		return (error);
+	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
+		return (EINVAL);
+
+	sigpending1(p, &bss);
 	native_to_linux_sigset(&bss, &lss);
-	*retval = lss;
-	return (0);
+	return copyout(&lss, SCARG(uap, set), sizeof(lss));
 }
-
-/*
- * The following three functions fiddle with a process' signal mask.
- * Convert the signal masks because of the different signal
- * values for Linux. The need for this is the reason why
- * they are here, and have not been mapped directly.
- */
-int
-linux_sys_sigsetmask(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_sigsetmask_args /* {
-		syscallarg(linux_sigset_t) mask;
-	} */ *uap = v;
-	sigset_t nbss, obss;
-	linux_sigset_t nlss, olss;
-	int error;
-
-	nlss = SCARG(uap, mask);
-	linux_to_native_sigset(&nlss, &nbss);
-	error = sigprocmask1(p, SIG_SETMASK, &nbss, &obss);
-	if (error)
-		return (error);
-	native_to_linux_sigset(&obss, &olss);
-	*retval = olss;
-	return (0);
-}
-
 int
 linux_sys_sigpending(p, v, retval)
 	register struct proc *p;
@@ -393,13 +400,13 @@ linux_sys_sigpending(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_sigpending_args /* {
-		syscallarg(linux_sigset_t *) set;
+		syscallarg(linux_old_sigset_t *) mask;
 	} */ *uap = v;
 	sigset_t bss;
-	linux_sigset_t lss;
+	linux_old_sigset_t lss;
 
 	sigpending1(p, &bss);
-	native_to_linux_sigset(&bss, &lss);
+	native_to_linux_old_sigset(&bss, &lss);
 	return copyout(&lss, SCARG(uap, set), sizeof(lss));
 }
 
@@ -414,31 +421,63 @@ linux_sys_sigsuspend(p, v, retval)
 		syscallarg(int) oldmask;
 		syscallarg(int) mask;
 	} */ *uap = v;
+	linux_old_sigset_t lss;
+	sigset_t bss;
+
+	lss = SCARG(uap, mask);
+	linux_old_to_native_sigset(&lss, &bss);
+	return (sigsuspend1(p, &bss));
+}
+int
+linux_sys_rt_sigsuspend(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_rt_sigsuspend_args /* {
+		syscallarg(linux_sigset_t *) unewset;
+		syscallarg(size_t) sigsetsize;
+	} */ *uap = v;
 	linux_sigset_t lss;
 	sigset_t bss;
-	
-	lss = SCARG(uap, mask);
+	int error;
+
+	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
+		return (EINVAL);
+
+	error = copyin(SCARG(uap, unewset), &lss, sizeof(linux_sigset_t));
+	if (error)
+		return (error);
+
 	linux_to_native_sigset(&lss, &bss);
+
 	return (sigsuspend1(p, &bss));
 }
 
 /*
- * The deprecated pause(2), which is really just an instance
- * of sigsuspend(2).
+ * Once more: only a signal conversion is needed.
+ * Note: also used as sys_rt_queueinfo.  The info field is ignored.
  */
 int
-linux_sys_pause(p, v, retval)
+linux_sys_rt_queueinfo(p, v, retval)
 	register struct proc *p;
-	void *v;	
+	void *v;
 	register_t *retval;
-{	
+{
+	/* XXX XAX This isn't this really int, int, siginfo_t *, is it? */
+#if 0
+	struct linux_sys_rt_queueinfo_args /* {
+		syscallarg(int) pid;
+		syscallarg(int) signum;
+		syscallarg(siginfo_t *) uinfo;
+	} */ *uap = v;
+#endif
 
-	return (sigsuspend1(p, 0));
+	/* XXX To really implement this we need to	*/
+	/* XXX keep a list of queued signals somewhere.	*/
+	return (linux_sys_kill(p, v, retval));
 }
 
-/*
- * Once more: only a signal conversion is needed.
- */
 int
 linux_sys_kill(p, v, retval)
 	register struct proc *p;
