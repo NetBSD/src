@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.68 2001/10/24 15:31:06 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.69 2001/10/24 21:02:18 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #include <dev/wscons/wsksymvar.h>
 
 #include "opt_wsdisplay_compat.h"
+#include "opt_ddb.h"
 
 #ifdef UKBD_DEBUG
 #define DPRINTF(x)	if (ukbddebug) logprintf x
@@ -527,7 +528,7 @@ ukbd_intr(xfer, addr, status)
 		return;
 	}
 
-	if (sc->sc_debounce) {
+	if (sc->sc_debounce && !sc->sc_polling) {
 		/*
 		 * Some keyboards have a peculiar quirk.  They sometimes
 		 * generate a key up followed by a key down for the same
@@ -536,6 +537,17 @@ ukbd_intr(xfer, addr, status)
 		 */
 		sc->sc_data = *ud;
 		callout_reset(&sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
+#if DDB
+	} else if (sc->sc_console_keyboard && !sc->sc_polling) {
+		/*
+		 * For the console keyboard we can't deliver CTL-ALT-ESC
+		 * from the interrupt routine.  Doing so would start
+		 * polling from inside the interrupt routine and that
+		 * loses bigtime.
+		 */
+		sc->sc_data = *ud;
+		callout_reset(&sc->sc_delay, 0, ukbd_delayed_decode, sc);
+#endif
 	} else {
 		ukbd_decode(sc, ud);
 	}
