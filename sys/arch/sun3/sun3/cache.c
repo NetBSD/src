@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.7 1997/01/27 19:41:11 gwr Exp $	*/
+/*	$NetBSD: cache.c,v 1.8 1997/01/27 20:43:51 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,8 +56,7 @@
 #include <machine/pte.h>
 #include <machine/control.h>
 #include <machine/vmparam.h>
-
-#include "machdep.h"
+#include <machine/machdep.h>
 
 #define	CACHE_LINE	16	/* bytes */
 #define	VAC_FLUSH_INCR	512	/* bytes */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.15 1997/01/27 19:41:13 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.16 1997/01/27 20:43:53 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,10 +61,9 @@
 #include <machine/control.h>
 #include <machine/pte.h>
 #include <machine/db_machdep.h>
+#include <machine/machdep.h>
 
 #include <ddb/db_access.h>
-
-#include "machdep.h"
 
 extern char etext[];	/* defined by the linker */
 extern char	kernel_text[];	/* locore.s */

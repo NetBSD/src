@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.35 1997/01/20 18:38:31 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.36 1997/01/27 20:43:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -55,9 +55,9 @@
 #include <machine/mon.h>
 #include <machine/vmparam.h>
 #include <machine/dvma.h>
+#include <machine/machdep.h>
 
 #include "buserr.h"
-#include "machdep.h"
 
 /* Note: Avoid /usr/include for cross compilation! */
 extern void printf __P((char *fmt, ...));
