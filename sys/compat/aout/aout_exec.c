@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.16 2003/08/24 17:52:40 chs Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.17 2003/09/23 14:33:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aout_exec.c,v 1.16 2003/08/24 17:52:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aout_exec.c,v 1.17 2003/09/23 14:33:34 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -55,7 +56,9 @@ extern struct sysent aout_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const aout_syscallnames[];
 #endif
+#ifdef COMPAT_16
 extern char sigcode[], esigcode[];
+#endif
 #ifdef __HAVE_SYSCALL_INTERN
 void syscall_intern __P((struct proc *));
 #else
@@ -81,8 +84,13 @@ const struct emul emul_netbsd_aout = {
 #endif
 	sendsig,
 	trapsignal,
+#ifdef COMPAT_16
 	sigcode,
 	esigcode,
+#else
+	NULL,
+	NULL,
+#endif
 	&emul_netbsd_aout_object,
 	setregs,
 	NULL,
