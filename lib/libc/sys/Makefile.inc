@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.41 1996/09/19 04:50:02 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.42 1996/10/13 20:28:55 cgd Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -54,10 +54,17 @@ ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
+.if (${MACHINE_ARCH} != "alpha")
 ${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
+.else
+${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
+	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
+.endif
 
 ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
@@ -73,10 +80,17 @@ ${PPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
+.if (${MACHINE_ARCH} != "alpha")
 ${SPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
+.else
+${SPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
+	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
+.endif
 
 ${PSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
