@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.19 2001/02/19 22:46:14 cgd Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.20 2002/01/31 17:37:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.19 2001/02/19 22:46:14 cgd Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.20 2002/01/31 17:37:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,6 +146,8 @@ getfrom(pathname)
 				printf("%-60s\tUNKNOWN\n", pathname);
 			return;
 		}
+		if (len < 3)
+			continue;
 		if (line[0] != '.')
 			continue;
 		if ((line[1] == 'T' && line[2] == 'H') ||
@@ -176,6 +178,8 @@ oldman(pathname, name)
 				warnx("missing .SH section in `%s'", pathname);
 			return;
 		}
+		if (len < 4)
+			continue;
 		if (line[0] != '.')
 			continue;
 		if (line[1] == 'S' && line[2] == 'H')
