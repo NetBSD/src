@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.7 1999/09/24 18:27:22 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.8 1999/09/27 19:02:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -239,19 +239,35 @@ struct tulip_desc {
 #define	TULIP_ROM_IL_MEDIAn_BLOCK_BASE		3
 
 #define	SELECT_CONN_TYPE_TP		0x0000
-#define	SELECT_CONN_TYPE_TP_AUTONEG	0x0100
-#define	SELECT_CONN_TYPE_TP_FDX		0x0204
-#define	SELECT_CONN_TYPE_TP_NOLINKPASS	0x0400
 #define	SELECT_CONN_TYPE_BNC		0x0001
 #define	SELECT_CONN_TYPE_AUI		0x0002
+#define	SELECT_CONN_TYPE_100TX		0x0003
+#define	SELECT_CONN_TYPE_100T4		0x0006
+#define	SELECT_CONN_TYPE_100FX		0x0007
+#define	SELECT_CONN_TYPE MII_10T	0x0009
+#define	SELECT_CONN_TYPE_MII_100TX	0x000d
+#define	SELECT_CONN_TYPE_MII_100T4	0x000f
+#define	SELECT_CONN_TYPE_MII_100FX	0x0010
+#define	SELECT_CONN_TYPE_TP_AUTONEG	0x0100
+#define	SELECT_CONN_TYPE_TP_FDX		0x0204
+#define	SELECT_CONN_TYPE_MII_10T_FDX	0x020a
+#define	SELECT_CONN_TYPE_100TX_FDX	0x020e
+#define	SELECT_CONN_TYPE_MII_100TX_FDX	0x0211
+#define	SELECT_CONN_TYPE_TP_NOLINKPASS	0x0400
 #define	SELECT_CONN_TYPE_ASENSE		0x0800
+#define	SELECT_CONN_TYPE_ASENSE_POWERUP	0x8800
 #define	SELECT_CONN_TYPE_ASENSE_AUTONEG	0x0900
 
 #define	TULIP_ROM_MB_MEDIA_CODE		0x3f
 #define	TULIP_ROM_MB_MEDIA_TP		0x00
 #define	TULIP_ROM_MB_MEDIA_BNC		0x01
 #define	TULIP_ROM_MB_MEDIA_AUI		0x02
+#define	TULIP_ROM_MB_MEDIA_100TX	0x03
 #define	TULIP_ROM_MB_MEDIA_TP_FDX	0x04
+#define	TULIP_ROM_MB_MEDIA_100TX_FDX	0x05
+#define	TULIP_ROM_MB_MEDIA_100T4	0x06
+#define	TULIP_ROM_MB_MEDIA_100FX	0x07
+#define	TULIP_ROM_MB_MEDIA_100FX_FDX	0x08
 
 #define	TULIP_ROM_MB_EXT		0x40
 
@@ -260,6 +276,12 @@ struct tulip_desc {
 #define	TULIP_ROM_MB_CSR15		5			/* W */
 
 #define	TULIP_ROM_MB_SIZE(mc)		(((mc) & TULIP_ROM_MB_EXT) ? 7 : 1)
+
+#define	TULIP_ROM_MB_NOINDICATOR	0x8000
+#define	TULIP_ROM_MB_DEFAULT		0x4000
+#define	TULIP_ROM_MB_POLARITY		0x0080
+#define	TULIP_ROM_MB_OPMODE(x)		(((x) & 0x71) << 18)
+#define	TULIP_ROM_MB_BITPOS(x)		(1 << (((x) & 0x0e) >> 1))
 
 #define	TULIP_ROM_MB_21140_GPR		0	/* 21140[A] GPR block */
 #define	TULIP_ROM_MB_21140_MII		1	/* 21140[A] MII block */
@@ -480,6 +502,9 @@ struct tulip_desc {
 #define	OPMODE_SC		0x80000000	/* special capture effect
 						   enable (21041+) */
 #define	OPMODE_WINB_REIO	0x80000000	/* receive early intr on */
+
+/* Shorthand for media-related OPMODE bits */
+#define	OPMODE_MEDIA_BITS	(OPMODE_PS|OPMODE_PCS|OPMODE_SCR)
 
 /* CSR7 - Interrupt Enable */
 #define	CSR_INTEN		TULIP_CSR7
