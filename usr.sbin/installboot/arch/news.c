@@ -1,4 +1,4 @@
-/*	$NetBSD: news.c,v 1.1 2002/05/20 16:05:27 lukem Exp $ */
+/*	$NetBSD: news.c,v 1.2 2002/05/21 00:38:08 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: news.c,v 1.1 2002/05/20 16:05:27 lukem Exp $");
+__RCSID("$NetBSD: news.c,v 1.2 2002/05/21 00:38:08 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -57,8 +57,7 @@ __RCSID("$NetBSD: news.c,v 1.1 2002/05/20 16:05:27 lukem Exp $");
 
 #include "installboot.h"
 
-static int	news_clearboot(ib_params *, struct bbinfo_params *, uint8_t *);
-static int	news_setboot(ib_params *, struct bbinfo_params *, uint8_t *);
+static int news_copydisklabel(ib_params *, struct bbinfo_params *, uint8_t *);
 
 
 /*
@@ -67,10 +66,10 @@ static int	news_setboot(ib_params *, struct bbinfo_params *, uint8_t *);
 
 static struct bbinfo_params news68k_bbparams = {
 	NEWS68K_BBINFO_MAGIC,
-	0,				/* write all 8K (including disklabel) */
+	NEWS_BOOT_BLOCK_OFFSET,		/* write all 8K (including disklabel) */
 	NEWS_BOOT_BLOCK_BLOCKSIZE,
 	NEWS_BOOT_BLOCK_MAX_SIZE,
-	NEWS_BOOT_BLOCK_OFFSET,		/* but load bootxx here */
+	0,
 	BBINFO_BIG_ENDIAN,
 };
 
@@ -86,7 +85,7 @@ news68k_clearboot(ib_params *params)
 		return (0);
 	}
 	return (shared_bbinfo_clearboot(params, &news68k_bbparams,
-	    news_clearboot));
+	    news_copydisklabel));
 }
 
 int
@@ -100,7 +99,8 @@ news68k_setboot(ib_params *params)
 		    params->machine->name);
 		return (0);
 	}
-	return (shared_bbinfo_setboot(params, &news68k_bbparams, news_setboot));
+	return (shared_bbinfo_setboot(params, &news68k_bbparams,
+	    news_copydisklabel));
 }
 
 
@@ -110,10 +110,10 @@ news68k_setboot(ib_params *params)
 
 static struct bbinfo_params newsmips_bbparams = {
 	NEWSMIPS_BBINFO_MAGIC,
-	0,				/* write all 8K (including disklabel) */
+	NEWS_BOOT_BLOCK_OFFSET,		/* write all 8K (including disklabel) */
 	NEWS_BOOT_BLOCK_BLOCKSIZE,
 	NEWS_BOOT_BLOCK_MAX_SIZE,
-	NEWS_BOOT_BLOCK_OFFSET,		/* but load bootxx here */
+	0,
 	BBINFO_BIG_ENDIAN,
 };
 
@@ -129,7 +129,7 @@ newsmips_clearboot(ib_params *params)
 		return (0);
 	}
 	return (shared_bbinfo_clearboot(params, &newsmips_bbparams,
-	    news_clearboot));
+	    news_copydisklabel));
 }
 
 int
@@ -144,29 +144,18 @@ newsmips_setboot(ib_params *params)
 		return (0);
 	}
 	return (shared_bbinfo_setboot(params, &newsmips_bbparams,
-	    news_setboot));
+	    news_copydisklabel));
 }
 
 
 /*
- * news common code
+ * news_copydisklabel --
+ *	copy disklabel from existing location on disk into bootstrap,
+ *	as the primary bootstrap contains the disklabel.
  */
-
 static int
-news_clearboot(ib_params *params, struct bbinfo_params *bbparams, uint8_t *bb)
-{
-
-	assert(params != NULL);
-	assert(bbparams != NULL);
-	assert(bb != NULL);
-
-		/* Clear out first sector to disklabel */
-	memset(bb, 0, NEWS_BOOT_BLOCK_LABELOFFSET);
-	return (1);
-}
-
-static int
-news_setboot(ib_params *params, struct bbinfo_params *bbparams, uint8_t *bb)
+news_copydisklabel(ib_params *params, struct bbinfo_params *bbparams,
+	uint8_t *bb)
 {
 	uint8_t	boot00[NEWS_BOOT_BLOCK_OFFSET];
 	ssize_t	rv;
@@ -176,7 +165,7 @@ news_setboot(ib_params *params, struct bbinfo_params *bbparams, uint8_t *bb)
 	assert(bbparams != NULL);
 	assert(bb != NULL);
 
-		/* Read label sector to overwrite jump instruction */
+		/* Read label sector to copy disklabel from */
 	memset(boot00, 0, sizeof(boot00));
 	rv = pread(params->fsfd, boot00, sizeof(boot00), 0);
 	if (rv == -1) {
