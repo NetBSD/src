@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.38 2000/06/27 17:29:22 mrg Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.39 2000/08/12 17:46:25 sommerfeld Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -436,6 +436,10 @@ loop:
 			}
 		}
 	}
+	/*
+	 * XXXSMP: possible unlock/sleep race between here and the
+	 * "scheduler" tsleep below..
+	 */
 	proclist_unlock_read();
 
 #ifdef DEBUG
