@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.34 2000/01/05 11:19:36 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.35 2000/03/06 21:37:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.34 2000/01/05 11:19:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.35 2000/03/06 21:37:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -204,7 +204,7 @@ static void (*wsdisplay_cons_kbd_pollc) __P((dev_t, int));
 
 static struct consdev wsdisplay_cons = {
 	NULL, NULL, wsdisplay_getc_dummy, wsdisplay_cnputc,
-	wsdisplay_pollc, NODEV, CN_NORMAL
+	wsdisplay_pollc, NULL, NODEV, CN_NORMAL
 };
 
 #ifndef WSDISPLAY_DEFAULTSCREENS
@@ -1761,11 +1761,13 @@ wsdisplay_pollc(dev, on)
 }
 
 void
-wsdisplay_set_cons_kbd(get, poll)
+wsdisplay_set_cons_kbd(get, poll, bell)
 	int (*get) __P((dev_t));
 	void (*poll) __P((dev_t, int));
+	void (*bell) __P((dev_t, u_int, u_int, u_int));
 {
 	wsdisplay_cons.cn_getc = get;
+	wsdisplay_cons.cn_bell = bell;
 	wsdisplay_cons_kbd_pollc = poll;
 }
 
@@ -1773,6 +1775,7 @@ void
 wsdisplay_unset_cons_kbd()
 {
 	wsdisplay_cons.cn_getc = wsdisplay_getc_dummy;
+	wsdisplay_cons.cn_bell = NULL;
 	wsdisplay_cons_kbd_pollc = 0;
 }
 
