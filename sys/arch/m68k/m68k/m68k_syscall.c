@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.4 2002/07/17 21:21:46 fredette Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.5 2002/11/15 20:06:02 manu Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -362,7 +362,7 @@ syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(p, code, args, rval)) != 0)
+	if ((error = trace_enter(p, code, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
