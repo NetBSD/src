@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: db_machdep.h,v 1.4 1994/04/03 18:58:55 mycroft Exp $
+ *	$Id: db_machdep.h,v 1.5 1994/04/03 22:31:01 mycroft Exp $
  */
 
 #ifndef	_I386_DB_MACHDEP_H_
@@ -33,12 +33,8 @@
  * Machine-dependent defines for new kernel debugger.
  */
 
-
-#include <vm/vm_prot.h>
-#include <vm/vm_param.h>
-#include <vm/vm_inherit.h>
-#include <vm/lock.h>
-#include <machine/cpu.h>
+#include <sys/param.h>
+#include <vm/vm.h>
 #include <machine/trap.h>
 
 #define i386_saved_state trapframe
