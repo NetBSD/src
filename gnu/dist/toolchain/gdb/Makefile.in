@@ -725,7 +725,7 @@ uninstall: force $(CONFIG_UNINSTALL)
 #
 
 INIT_FILES = $(OBS) $(TSOBS) $(CONFIG_INITS)
-init.c: $(INIT_FILES)
+init.c: Makefile
 	@echo Making init.c
 	@rm -f init.c-tmp init.l-tmp
 	@-echo $(INIT_FILES) | \
