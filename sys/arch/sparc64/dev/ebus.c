@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.22 2001/06/04 20:56:52 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.23 2001/07/20 00:07:12 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -49,7 +49,7 @@
 #define EDB_BUSMAP	0x08
 #define EDB_BUSDMA	0x10
 #define EDB_INTR	0x20
-int ebus_debug = 0;
+int ebus_debug = 0x0;
 #define DPRINTF(l, s)   do { if (ebus_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -67,6 +67,7 @@ int ebus_debug = 0;
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/openfirm.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -124,12 +125,23 @@ ebus_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
+	int node;
 
+	/* Only attach if there's a PROM node. */
+	node = PCITAG_NODE(pa->pa_tag);
+	if (node == -1) return (0);
+
+	/* Match a real ebus */
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS &&
-	    ebus_find_node(pa))
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS)
 		return (1);
+
+	/* Or a PCI-ISA bridge XXX I hope this is on-board. */
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA) {
+		return (1);
+	}
 
 	return (0);
 }
@@ -157,12 +169,13 @@ ebus_attach(parent, self, aux)
 	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_parent = (struct psycho_softc *)parent;
-	sc->sc_bustag = pa->pa_memt;
+	sc->sc_memtag = pa->pa_memt;
+	sc->sc_iotag = pa->pa_iot;
 	sc->sc_childbustag = ebus_alloc_bus_tag(sc, PCI_MEMORY_BUS_SPACE);
 	sc->sc_dmatag = ebus_alloc_dma_tag(sc, pa->pa_dmat);
 
-	node = ebus_find_node(pa);
-	if (node == 0)
+	node = PCITAG_NODE(pa->pa_tag);
+	if (node == -1)
 		panic("could not find ebus node");
 
 	sc->sc_node = node;
@@ -295,6 +308,7 @@ ebus_print(aux, p)
 	return (UNCONF);
 }
 
+
 /*
  * find the INO values for each interrupt and fill them in.
  *
@@ -313,11 +327,11 @@ ebus_find_ino(sc, ea)
 	int i, j, k;
 
 	if (sc->sc_nintmap == 0) {
-		/*
-		 * If there is no interrupt map in the ebus node,
-		 * assume that the child's `interrupt' property is
-		 * already in a format suitable for the parent bus.
-		 */
+		for (i = 0; i < ea->ea_nintrs; i++) {
+			OF_mapintr(ea->ea_node, &ea->ea_intrs[i],
+				sizeof(ea->ea_intrs[0]),
+				sizeof(ea->ea_intrs[0]));
+		}
 		return;
 	}
 
@@ -358,72 +372,6 @@ next_intr:;
 	}
 }
 
-/*
- * what is our OFW node?  this depends on our pci chipset tag
- * having it's "node" value set to the OFW node of the PCI bus,
- * see the simba driver.
- */
-int
-ebus_find_node(pa)
-	struct pci_attach_args *pa;
-{
-	int node = pa->pa_pc->node;
-	int n, *ap;
-	int pcibus, bus, dev, fn;
-
-	DPRINTF(EDB_PROM, ("ebus_find_node: looking at pci node %08x\n", node));
-
-	/* pull the PCI bus out of the pa_tag */
-	pcibus = (pa->pa_tag >> 16) & 0xff;
-	DPRINTF(EDB_PROM, ("; pcibus %d dev %d fn %d\n", pcibus, pa->pa_device,
-	    pa->pa_function));
-
-	for (node = firstchild(node); node; node = nextsibling(node)) {
-		char *name = getpropstring(node, "name");
-
-		DPRINTF(EDB_PROM,
-		   ("ebus_find_node: looking at PCI device `%s', node = %08x\n",
-		   name, node));
-
-		DPRINTF(EDB_PROM,
-		    ("; looking at PCI device `%s', node = %08x\n",
-		    name, node));
-		/* must be "ebus" */
-		if (strcmp(name, "ebus") != 0)
-			continue;
-
-		/* pull the PCI bus out of the pa_tag */
-		pcibus = (pa->pa_tag >> 16) & 0xff;
-		DPRINTF(EDB_PROM, ("; pcibus %d dev %d fn %d\n", pcibus,
-		    pa->pa_device, pa->pa_function));
-
-		/* get the PCI bus/device/function for this node */
-		ap = NULL;
-		if (getprop(node, "reg", sizeof(int), &n,
-		    (void **)&ap))
-			continue;
-
-		bus = (ap[0] >> 16) & 0xff;
-		dev = (ap[0] >> 11) & 0x1f;
-		fn = (ap[0] >> 8) & 0x7;
-		free(ap, M_DEVBUF);
-
-		DPRINTF(EDB_PROM,
-		    ("; looking at ebus node: bus %d dev %d fn %d\n",
-		    bus, dev, fn));
-		if (pa->pa_device != dev ||
-		    pa->pa_function != fn ||
-		    pcibus != bus)
-			continue;
-
-		DPRINTF(EDB_PROM, ("; found it, returning %08x\n", node));
-		/* found it! */
-		return (node);
-	}
-
-	/* damn! */
-	return (0);
-}
 
 /*
  * bus space and bus dma below here
@@ -442,7 +390,7 @@ ebus_alloc_bus_tag(sc, type)
 
 	bzero(bt, sizeof *bt);
 	bt->cookie = sc;
-	bt->parent = sc->sc_bustag;
+	bt->parent = sc->sc_memtag;
 	bt->type = type;
 	bt->sparc_bus_map = _ebus_bus_map;
 	bt->sparc_bus_mmap = ebus_bus_mmap;
@@ -500,7 +448,7 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 {
 	struct ebus_softc *sc = t->cookie;
 	bus_addr_t hi, lo;
-	int i;
+	int i, ss;
 
 	DPRINTF(EDB_BUSMAP,
 	    ("\n_ebus_bus_map: type %d off %016llx sz %x flags %d va %p",
@@ -520,15 +468,31 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 		      (sc->sc_range[i].child_lo + sc->sc_range[i].size))
 			continue;
 
+		/* Isolate address space and find the right tag */
+		ss = (sc->sc_range[i].phys_hi>>24)&3;
+		switch (ss) {
+		case 1:	/* I/O space */
+			t = sc->sc_iotag;
+			break;
+		case 2:	/* Memory space */
+			t = sc->sc_memtag;
+			break;
+		case 0:	/* Config space */
+		case 3:	/* 64-bit Memory space */
+		default: /* WTF? */
+			/* We don't handle these */
+			panic("_ebus_bus_map: illegal space %x", ss);
+			break;
+		}
 		pciaddr = ((bus_addr_t)sc->sc_range[i].phys_mid << 32UL) |
 				       sc->sc_range[i].phys_lo;
 		pciaddr += lo;
 		DPRINTF(EDB_BUSMAP,
-		    ("\n_ebus_bus_map: mapping paddr offset %qx pciaddr %qx\n",
-		    (unsigned long long)offset, (unsigned long long)pciaddr));
+		    ("\n_ebus_bus_map: mapping space %x paddr offset %qx pciaddr %qx\n",
+		    ss, (unsigned long long)offset, (unsigned long long)pciaddr));
 		/* pass it onto the psycho */
-		return (bus_space_map2(sc->sc_bustag, t->type, pciaddr,
-					size, flags, vaddr, hp));
+		return (bus_space_map2(t, sc->sc_range[i].phys_hi, 
+			pciaddr, size, flags, vaddr, hp));
 	}
 	DPRINTF(EDB_BUSMAP, (": FAILED\n"));
 	return (EINVAL);
@@ -555,7 +519,7 @@ ebus_bus_mmap(t, btype, paddr, flags, hp)
 
 		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n",
 		    (unsigned long long)paddr));
-		return (bus_space_mmap(sc->sc_bustag, 0, paddr,
+		return (bus_space_mmap(sc->sc_memtag, 0, paddr,
 				       flags, hp));
 	}
 
