@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.5 1998/08/30 09:19:39 veego Exp $	*/
+/*	$NetBSD: cards.c,v 1.6 1999/08/21 09:23:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,10 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.5 1998/08/30 09:19:39 veego Exp $");
+__RCSID("$NetBSD: cards.c,v 1.6 1999/08/21 09:23:44 simonb Exp $");
 #endif
 #endif /* not lint */
 
+# include	<sys/types.h>
+# include	<sys/endian.h>
 # include	"monop.ext"
 # include	"pathnames.h"
 
@@ -69,14 +71,22 @@ static void printmes __P((void));
 void
 init_decks()
 {
+	int32_t nc;
 
 	if ((deckf=fopen(cardfile, "r")) == NULL) {
 file_err:
 		perror(cardfile);
 		exit(1);
 	}
-	if (fread(deck, sizeof (DECK), 2, deckf) != 2)
+
+	/* read number of community chest cards... */
+	if (fread(&nc, sizeof(nc), 1, deckf) != 1)
 		goto file_err;
+	CC_D.num_cards = be32toh(nc);
+	/* ... and number of community chest cards. */
+	if (fread(&nc, sizeof(nc), 1, deckf) != 1)
+		goto file_err;
+	CH_D.num_cards = be32toh(nc);
 	set_up(&CC_D);
 	set_up(&CH_D);
 }
@@ -90,15 +100,19 @@ DECK	*dp; {
 	int	r1, r2;
 	int	i;
 
-	dp->offsets = (long *) calloc(sizeof (long), dp->num_cards);
-	if (fread(dp->offsets, sizeof(long), dp->num_cards, deckf) != dp->num_cards) {
+	dp->offsets = (off_t *) calloc(sizeof (off_t), dp->num_cards);
+	if (fread(dp->offsets, sizeof(off_t), dp->num_cards, deckf) !=
+	    dp->num_cards) {
 		perror(cardfile);
 		exit(1);
 	}
+	/* convert offsets from big-endian byte order */
+	for (i = 0; i < dp->num_cards; i++)
+		BE64TOH(dp->offsets[i]);
 	dp->last_card = 0;
 	dp->gojf_used = FALSE;
 	for (i = 0; i < dp->num_cards; i++) {
-		long	temp;
+		off_t	temp;
 
 		r1 = roll(1, dp->num_cards) - 1;
 		r2 = roll(1, dp->num_cards) - 1;
