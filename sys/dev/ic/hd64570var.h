@@ -1,4 +1,4 @@
-/*	$Id: hd64570var.h,v 1.1 1998/07/26 03:26:57 explorer Exp $	*/
+/*	$NetBSD: hd64570var.h,v 1.2 1998/10/28 16:26:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -36,8 +36,8 @@
  * ``http://www.vix.com''.
  */
 
-#ifndef _HD64570VAR_H_
-#define _HD64570VAR_H_
+#ifndef _DEV_IC_HD64570VAR_H_
+#define _DEV_IC_HD64570VAR_H_
 
 #include "bpfilter.h"
 
@@ -149,4 +149,4 @@ void	sca_port_attach(struct sca_softc *, u_int);
 int	sca_hardintr(struct sca_softc *);
 void	sca_shutdown(struct sca_softc *);
 
-#endif /* _HD64570VAR_H_ */
+#endif /* _DEV_IC_HD64570VAR_H_ */
