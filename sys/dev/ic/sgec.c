@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.13 2001/04/15 15:01:35 ragge Exp $ */
+/*      $NetBSD: sgec.c,v 1.14 2001/07/07 05:35:41 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -627,7 +627,7 @@ ze_setup(sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
 			ifp->if_flags |= IFF_ALLMULTI;
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.51 2001/06/12 22:32:50 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.52 2001/07/07 05:35:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -734,7 +734,7 @@ ex_set_mc(sc)
 	} else {
 		ETHER_FIRST_MULTI(estep, ec, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN) != 0)
 				goto out;
 			i = ex_mchash(enm->enm_addrlo);
