@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.9 1999/08/07 10:36:48 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.10 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -63,7 +63,6 @@ static	void	ka46_reboot __P((int));
 static	void	ka46_cache_enable __P((void));
 
 struct	vs_cpu *ka46_cpu;
-extern  short *clk_page;
 
 /* 
  * Declaration of 46-specific calls.
@@ -85,8 +84,6 @@ struct	cpu_dep ka46_calls = {
 void
 ka46_conf()
 {
-        extern  int clk_adrshift, clk_tweak;
-
 	printf("cpu: KA46\n");
 	ka46_cpu = (void *)vax_map_physmem(VS_REGS, 1);
 	printf("cpu: turning on floating point chip\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.18 1999/08/07 10:36:48 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -90,8 +90,6 @@ struct	cpu_dep ka43_calls = {
  * but before leving ka43_steal_pages() we reset them to virtual addresses.
  */
 static	volatile struct	ka43_cpu   *ka43_cpu	= (void*)KA43_CPU_BASE;
-extern  short *clk_page;
-
 static	volatile u_int	*ka43_creg = (void*)KA43_CH2_CREG;
 static	volatile u_int	*ka43_ctag = (void*)KA43_CT2_BASE;
 
@@ -303,8 +301,6 @@ ka43_cache_enable()
 void
 ka43_conf()
 {
-        extern  int clk_adrshift, clk_tweak;
-
 	printf("cpu: KA43\n");
 	ka43_cpu = (void *)vax_map_physmem(VS_REGS, 1);
 
