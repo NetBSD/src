@@ -30,11 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)player.h	8.1 (Berkeley) 5/31/93
+ *	@(#)player.h	8.2 (Berkeley) 5/3/95
  */
 
 #include <curses.h>
-#include "externs.h"
+#include "extern.h"
 
 /* sizes and coordinates for the screen */
 

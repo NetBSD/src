@@ -32,10 +32,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 #include "pathnames.h"
 
 #define distance(x,y) (abs(x) >= abs(y) ? abs(x) + abs(y)/2 : abs(y) + abs(x)/2)
