@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.3 2003/03/16 07:05:33 matt Exp $	*/
+/*	$NetBSD: gt.c,v 1.4 2003/06/12 19:14:37 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -327,8 +327,10 @@ gt_attach_common(struct gt_softc *gt)
 	gt_comm_intr_enb(gt);
 	gt_devbus_intr_enb(gt);
 
+	gt_watchdog_disable();
 	config_search(gt_cfsearch, &gt->gt_dev, NULL);
 	gt_watchdog_service();
+	gt_watchdog_enable();
 }
 
 void
