@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.55 1999/03/27 22:48:36 dbj Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.56 2000/03/29 03:43:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -83,7 +83,6 @@
 #include <sys/file.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #if __NetBSD__
 #include <sys/systm.h>
 #endif
