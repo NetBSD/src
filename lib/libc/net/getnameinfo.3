@@ -30,11 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
-.\"     KAME Id: getnameinfo.3,v 1.4 1999/12/10 04:04:31 itojun Exp
+.\"     KAME Id: getnameinfo.3,v 1.7 2000/01/17 08:13:04 itojun Exp
 .\"
 .Dd May 25, 1995
 .Dt GETNAMEINFO 3
-.Os KAME
+.Os
 .\"
 .Sh NAME
 .Nm getnameinfo
@@ -59,7 +59,7 @@ Its functionality is a reverse conversion of
 .Xr getaddrinfo 3 ,
 and implements similar functionality with
 .Xr gethostbyaddr 3 and
-.Xr getservbyport 3 
+.Xr getservbyport 3
 in more sophisticated manner.
 .Pp
 This function looks up an IP address and port number provided by the
@@ -144,7 +144,7 @@ the numeric form of the host's address is returned instead of its name
 .Po
 e.g., by calling
 .Fn inet_ntop
-instead of 
+instead of
 .Fn getnodebyaddr
 .Pc .
 If the
@@ -194,6 +194,35 @@ Refer to
 .Xr getaddrinfo 3
 for the notation.
 .\"
+.Sh EXAMPLES
+The following code tries to get numeric hostname, and service name,
+for given socket address.
+Observe that there is no hardcoded reference to particular address family.
+.Bd -literal -offset indent
+struct sockaddr *sa;	/* input */
+char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+
+if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), sbuf,
+		sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV)) {
+	errx(1, "could not get numeric hostname");
+	/*NOTREACHED*/
+}
+printf("host=%s, serv=%s\\n", hbuf, sbuf);
+.Ed
+.Pp
+The following version checks if the socket address has reverse address mapping.
+.Bd -literal -offset indent
+struct sockaddr *sa;	/* input */
+char hbuf[NI_MAXHOST];
+
+if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
+		NI_NAMEREQD)) {
+	errx(1, "could not resolve hostname");
+	/*NOTREACHED*/
+}
+printf("host=%s\\n", hbuf);
+.Ed
+.\"
 .Sh FILES
 .Bl -tag -width /etc/resolv.conf -compact
 .It Pa /etc/hosts
@@ -222,6 +251,14 @@ a non-zero return value indicates failure.
 .%T Basic Socket Interface Extensions for IPv6
 .%R RFC2553
 .%D March 1999
+.Re
+.Rs
+.%A Tatsuya Jinmei
+.%A Atsushi Onoe
+.%T "An Extension of Format for IPv6 Scoped Addresses"
+.%R internet draft
+.%N draft-ietf-ipngwg-scopedaddr-format-00.txt
+.%O work in progress material
 .Re
 .\"
 .Sh HISTORY
