@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/03/28 09:35:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/29 02:30:09 jmc Exp $
 
 PROG=		ippool
 SRCS=		ippool_y.c ippool_l.c kmem.c ippool.c
@@ -10,7 +10,7 @@ CLEANFILES+=	ippool_y.c ippool_y.h
 CLEANFILES+=	ippool_l.c ippool_l.h
 
 ippool_y.c ippool_y.h: ippool_y.y ippool_l.h
-	yacc -d ${NETBSDSRCDIR}/dist/ipf/tools/ippool_y.y
+	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/tools/ippool_y.y
 	sed -e 's/yy/ippool_yy/g' \
 	    -e 's/"ippool_y.y"/"..\/tools\/ippool_y.y"/' \
 		y.tab.c > ippool_y.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2004/03/28 09:35:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2004/03/29 02:30:09 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ CLEANFILES+=	iplang_l.c
 		${NETBSDSRCDIR}/dist/ipf/iplang
 
 iplang_y.c iplang_y.h: iplang_y.y
-	yacc -d ${NETBSDSRCDIR}/dist/ipf/iplang/iplang_y.y
+	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/iplang/iplang_y.y
 	mv y.tab.c iplang_y.c
 	mv y.tab.h iplang_y.h
 
