@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.33 2002/07/05 18:45:17 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.34 2002/08/06 06:26:20 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -93,6 +93,8 @@ extern u_int *heathrow_FCR;
 #else
 volatile int cpl, ipending;
 #endif
+
+#define IPI_VECTOR 64
 
 #define interrupt_reg	(obio_base + 0x10)
 
@@ -349,9 +351,6 @@ intr_typename(type)
 		return "level-triggered";
 	default:
 		panic("intr_typename: invalid type %d", type);
-#if 1 /* XXX */
-		return "unknown";
-#endif
 	}
 }
 
@@ -477,7 +476,6 @@ ext_intr()
 #ifdef MULTIPROCESSOR
 	/* Only cpu0 can handle external interrupts. */
 	if (cpu_number() != 0) {
-		/* XXX IPI should be maskable */
 		out32(HH_INTR_SECONDARY, ~0);
 		cpuintr(NULL);
 		return;
@@ -485,13 +483,12 @@ ext_intr()
 #endif
 
 	pcpl = cpl;
-	asm volatile ("mfmsr %0" : "=r"(msr));
+	msr = mfmsr();
 
 	int_state = gc_read_irq();
 #ifdef MULTIPROCESSOR
 	r_imen = 1 << virq[GC_IPI_IRQ];
 	if (int_state & r_imen) {
-		/* XXX IPI should be maskable */
 		int_state &= ~r_imen;
 		cpuintr(NULL);
 	}
@@ -508,7 +505,7 @@ start:
 		gc_disable_irq(hwirq[irq]);
 	} else {
 		splraise(intrmask[irq]);
-		asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
+		mtmsr(msr | PSL_EE);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		ih = intrhand[irq];
 		while (ih) {
@@ -516,7 +513,7 @@ start:
 			ih = ih->ih_next;
 		}
 		KERNEL_UNLOCK();
-		asm volatile ("mtmsr %0" :: "r"(msr));
+		mtmsr(msr);
 		cpl = pcpl;
 
 		uvmexp.intrs++;
@@ -527,9 +524,9 @@ start:
 	if (int_state)
 		goto start;
 
-	asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
+	mtmsr(msr | PSL_EE);
 	splx(pcpl);	/* Process pendings. */
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 }
 
 void
@@ -539,14 +536,25 @@ ext_intr_openpic()
 	int pcpl, msr, r_imen;
 	struct intrhand *ih;
 
+	msr = mfmsr();
+
 #ifdef MULTIPROCESSOR
 	/* Only cpu0 can handle interrupts. */
-	if (cpu_number() != 0)
-		return;
+	if (cpu_number() != 0) {
+		realirq = openpic_read_irq(cpu_number());
+		while (realirq == IPI_VECTOR) {
+			openpic_eoi(cpu_number());
+			cpuintr(NULL);
+			realirq = openpic_read_irq(cpu_number());
+		}
+		if (realirq == 255) {
+			return;
+		}
+		panic("non-IPI intr %d on cpu%d", realirq, cpu_number());
+	}
 #endif
 
 	pcpl = cpl;
-	asm volatile ("mfmsr %0" : "=r"(msr));
 
 	realirq = openpic_read_irq(0);
 	if (realirq == 255) {
@@ -555,7 +563,19 @@ ext_intr_openpic()
 	}
 
 start:
-	irq = virq[realirq];		/* XXX check range */
+#ifdef MULTIPROCESSOR
+	while (realirq == IPI_VECTOR) {
+		openpic_eoi(0);
+		cpuintr(NULL);
+
+		realirq = openpic_read_irq(0);
+		if (realirq == 255) {
+			return;
+		}
+	}
+#endif
+	irq = virq[realirq];
+	KASSERT(realirq < ICU_LEN);
 	r_imen = 1 << irq;
 
 	if ((pcpl & r_imen) != 0) {
@@ -563,7 +583,7 @@ start:
 		openpic_disable_irq(realirq);
 	} else {
 		splraise(intrmask[irq]);
-		asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
+		mtmsr(msr | PSL_EE);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		ih = intrhand[irq];
 		while (ih) {
@@ -571,7 +591,7 @@ start:
 			ih = ih->ih_next;
 		}
 		KERNEL_UNLOCK();
-		asm volatile ("mtmsr %0" :: "r"(msr));
+		mtmsr(msr);
 		cpl = pcpl;
 
 		uvmexp.intrs++;
@@ -584,9 +604,9 @@ start:
 	if (realirq != 255)
 		goto start;
 
-	asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
+	mtmsr(msr | PSL_EE);
 	splx(pcpl);	/* Process pendings. */
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 }
 
 static void
@@ -604,9 +624,9 @@ do_pending_int()
 		return;
 
 	processing[cpu_id] = 1;
-	asm volatile("mfmsr %0" : "=r"(emsr));
+	emsr = mfmsr();
 	dmsr = emsr & ~PSL_EE;
-	asm volatile("mtmsr %0" :: "r"(dmsr));
+	mtmsr(dmsr);
 
 	pcpl = cpl;
 again:
@@ -622,7 +642,7 @@ again:
 
 		ipending &= ~(1 << irq);
 		splraise(intrmask[irq]);
-		asm volatile("mtmsr %0" :: "r"(emsr));
+		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		ih = intrhand[irq];
 		while(ih) {
@@ -630,7 +650,7 @@ again:
 			ih = ih->ih_next;
 		}
 		KERNEL_UNLOCK();
-		asm volatile("mtmsr %0" :: "r"(dmsr));
+		mtmsr(dmsr);
 		cpl = pcpl;
 
 		intrcnt[hwirq[irq]]++;
@@ -644,11 +664,11 @@ again:
 	if ((ipending & ~pcpl) & (1 << SIR_SERIAL)) {
 		ipending &= ~(1 << SIR_SERIAL);
 		splsoftserial();
-		asm volatile("mtmsr %0" :: "r"(emsr));
+		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		softserial();
 		KERNEL_UNLOCK();
-		asm volatile("mtmsr %0" :: "r"(dmsr));
+		mtmsr(dmsr);
 		cpl = pcpl;
 		intrcnt[CNT_SOFTSERIAL]++;
 		goto again;
@@ -659,11 +679,11 @@ again:
 		splsoftnet();
 		pisr = netisr;
 		netisr = 0;
-		asm volatile("mtmsr %0" :: "r"(emsr));
+		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		softnet(pisr);
 		KERNEL_UNLOCK();
-		asm volatile("mtmsr %0" :: "r"(dmsr));
+		mtmsr(dmsr);
 		cpl = pcpl;
 		intrcnt[CNT_SOFTNET]++;
 		goto again;
@@ -671,11 +691,11 @@ again:
 	if ((ipending & ~pcpl) & (1 << SIR_CLOCK)) {
 		ipending &= ~(1 << SIR_CLOCK);
 		splsoftclock();
-		asm volatile("mtmsr %0" :: "r"(emsr));
+		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		softclock(NULL);
 		KERNEL_UNLOCK();
-		asm volatile("mtmsr %0" :: "r"(dmsr));
+		mtmsr(dmsr);
 		cpl = pcpl;
 		intrcnt[CNT_SOFTCLOCK]++;
 		goto again;
@@ -689,7 +709,7 @@ again:
 #endif
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	processing[cpu_id] = 0;
-	asm volatile("mtmsr %0" :: "r"(emsr));
+	mtmsr(emsr);
 }
 
 int
@@ -740,10 +760,10 @@ softintr(ipl)
 {
 	int msrsave;
 
-	asm volatile("mfmsr %0" : "=r"(msrsave));
-	asm volatile("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
+	msrsave = mfmsr();
+	mtmsr(msrsave & ~PSL_EE);
 	ipending |= 1 << ipl;
-	asm volatile("mtmsr %0" :: "r"(msrsave));
+	mtmsr(msrsave);
 }
 
 void
@@ -776,9 +796,6 @@ openpic_init()
 		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 	}
 
-	/* XXX IPI */
-	/* XXX set spurious intr vector */
-
 	openpic_set_priority(0, 0);
 
 	/* clear all pending interrunts */
@@ -789,6 +806,15 @@ openpic_init()
 
 	for (irq = 0; irq < ICU_LEN; irq++)
 		openpic_disable_irq(irq);
+
+#ifdef MULTIPROCESSOR
+	x = openpic_read(OPENPIC_IPI_VECTOR(1));
+	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
+	x |= (15 << OPENPIC_PRIORITY_SHIFT) | IPI_VECTOR;
+	openpic_write(OPENPIC_IPI_VECTOR(1), x);
+#endif
+
+	/* XXX set spurious intr vector */
 
 	mpc6xx_install_extint(ext_intr_openpic);
 }
