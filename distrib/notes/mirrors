@@ -16,7 +16,7 @@ gatekeeper.dec.com	Anonymous FTP
 wipux2.wifo.uni-mannheim.de	Anonymous FTP, SUP
 
 	Anon-FTP path: pub/NetBSD/NetBSD-1.0
-	SUP: get the file pub/misc/sup/supfile.example via 
+	SUP: get the file pub/misc/sup/supfile.example via
 		anonymous FTP and read it as an example.
 
 ftp.demon.co.uk		Anonymous FTP, possibly SUP
@@ -43,6 +43,10 @@ flick.lerc.nasa.gov	Anonymous FTP
 coombs.anu.edu.au	Anonymous FTP
 
 	Anon-FTP path: pub/NetBSD/NetBSD-1.0
+
+ftp.funet.fi		Anonymous FTP
+
+	Anon-FTP path: pub/unix/NetBSD/NetBSD-1.0
 
 ftp.netbsd.org		Anonymous FTP, SUP
 
