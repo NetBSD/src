@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.19 1998/07/12 04:56:06 mrg Exp $	*/
+/*	$NetBSD: quota.c,v 1.20 1998/07/26 22:17:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.19 1998/07/12 04:56:06 mrg Exp $");
+__RCSID("$NetBSD: quota.c,v 1.20 1998/07/26 22:17:53 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,12 +99,12 @@ int	getnfsquota __P((struct statfs *, struct fstab *, struct quotause *,
 struct quotause	*getprivs __P((long id, int quotatype));
 int	getufsquota __P((struct statfs *, struct fstab *, struct quotause *,
 	    long, int));
-void	heading __P((int, u_long, char *, char *));
+void	heading __P((int, u_long, const char *, const char *));
 void	showgid __P((gid_t));
-void	showgrpname __P((char *));
-void	showquotas __P((int, u_long, char *));
+void	showgrpname __P((const char *));
+void	showquotas __P((int, u_long, const char *));
 void	showuid __P((uid_t));
-void	showusrname __P((char *));
+void	showusrname __P((const char *));
 char   *timeprt __P((time_t seconds));
 int	ufshasquota __P((struct fstab *, int, char **));
 void	usage __P((void));
@@ -204,7 +204,7 @@ showuid(uid)
 	uid_t uid;
 {
 	struct passwd *pwd = getpwuid(uid);
-	char *name;
+	const char *name;
 
 	if (pwd == NULL)
 		name = "(no account)";
@@ -222,7 +222,7 @@ showuid(uid)
  */
 void
 showusrname(name)
-	char *name;
+	const char *name;
 {
 	struct passwd *pwd = getpwnam(name);
 
@@ -248,7 +248,7 @@ showgid(gid)
 	int ngroups;
 	gid_t mygid, gidset[NGROUPS];
 	int i;
-	char *name;
+	const char *name;
 
 	if (grp == NULL)
 		name = "(no entry)";
@@ -277,7 +277,7 @@ showgid(gid)
  */
 void
 showgrpname(name)
-	char *name;
+	const char *name;
 {
 	struct group *grp = getgrnam(name);
 	int ngroups;
@@ -311,7 +311,7 @@ void
 showquotas(type, id, name)
 	int type;
 	u_long id;
-	char *name;
+	const char *name;
 {
 	struct quotause *qup;
 	struct quotause *quplist;
@@ -396,7 +396,7 @@ void
 heading(type, id, name, tag)
 	int type;
 	u_long id;
-	char *name, *tag;
+	const char *name, *tag;
 {
 
 	printf("Disk quotas for %s %s (%cid %ld): %s\n", qfextension[type],
