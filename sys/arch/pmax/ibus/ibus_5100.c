@@ -1,6 +1,6 @@
-/*	$NetBSD: ibus_5100.c,v 1.1 1998/04/19 02:52:45 jonathan Exp $	*/
+/*	$NetBSD: ibus_5100.c,v 1.2 1998/10/23 23:01:45 jonathan Exp $	*/
 
-/*	$NetBSD: ibus_5100.c,v 1.1 1998/04/19 02:52:45 jonathan Exp $	*/
+/*	$NetBSD: ibus_5100.c,v 1.2 1998/10/23 23:01:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_5100.c,v 1.1 1998/04/19 02:52:45 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_5100.c,v 1.2 1998/10/23 23:01:45 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,18 +68,18 @@ extern ibus_intr_disestablish_t	dec_5100_intr_disestablish;
 #define KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
 
 static struct ibus_attach_args kn230_devs[] = {
-	/* name     slot    addr			cookie  */
+	/* name     cookie   addr			  */
 
 #if 0	/* Be sure to avoid memory fault probing for pm */
-	{ "pm",		0, KV(KN01_PHYS_FBUF_START),	3,  },
+	{ "pm",		0, KV(KN01_PHYS_FBUF_START)	},
 #endif
 
-	{ "dc",  	1, KV(KN01_SYS_DZ),		1,  },
-	{ "lance", 	2, KV(KN01_SYS_LANCE),		2,  },
-	{ "sii",	3, KV(KN01_SYS_SII),		3,  },
-	{ "mc146818",	4, KV(KN01_SYS_CLOCK),		4, },
-	{ "dc",  	5, KV(0x15000000),		5,  },
-	{ "dc",  	6, KV(0x15200000),		6,  },
+	{ "dc",  	1, KV(KN01_SYS_DZ)		},
+	{ "lance", 	2, KV(KN01_SYS_LANCE)		},
+	{ "sii",	3, KV(KN01_SYS_SII)		},
+	{ "mc146818",	4, KV(KN01_SYS_CLOCK),		},
+	{ "dc",  	5, KV(0x15000000),		},
+	{ "dc",  	6, KV(0x15200000),		},
 #ifdef notyet
 	/*
 	 * XXX Ultrix configures at 0x86400400. the first 0x400 byte are
