@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.30 1999/09/28 23:43:07 ad Exp $
+# $NetBSD: INSTALL,v 1.31 1999/11/05 21:30:21 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -146,9 +146,16 @@ pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+rl*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
+sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
+tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 
@@ -190,6 +197,7 @@ ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
 ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
+tlp*	at	eisa? slot ?			# DEC DE-425 Ethernet
 uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # SCSI bus support
