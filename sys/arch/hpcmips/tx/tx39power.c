@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.4 2000/01/03 18:24:04 uch Exp $ */
+/*	$NetBSD: tx39power.c,v 1.5 2000/01/16 21:47:00 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
@@ -27,6 +27,7 @@
  */
 #include "opt_tx39_debug.h"
 #include "opt_tx39powerdebug.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +40,8 @@
 #include <hpcmips/tx/tx39icureg.h>
 #include <hpcmips/tx/tx39powerreg.h>
 #include <hpcmips/tx/tx39spireg.h>
+
+#undef POWERBUTTON_IS_DEBUGGER
 
 #define ISSET(x, v)	((x) & (v))
 #define ISSETPRINT(r, m) __is_set_print(r, TX39_POWERCTRL_##m, #m)
@@ -158,9 +161,11 @@ tx39power_attach(parent, self, aux)
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGPWROKINT),
 			    IST_EDGE, IPL_CLOCK,			    
 			    tx39power_ok_intr, sc);
+#if 0
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSONBUTNINT),
 			    IST_EDGE, IPL_CLOCK,
 			    tx39power_button_intr, sc);
+#endif
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGONBUTNINT),
 			    IST_EDGE, IPL_CLOCK,			    
 			    tx39power_button_intr, sc);
@@ -172,6 +177,9 @@ tx39power_button_intr(arg)
 	void *arg;
 {
 	printf("power button\n");
+#if defined DDB && defined POWERBUTTON_IS_DEBUGGER
+	cpu_Debugger();
+#endif	
 	return 0;
 }
 
@@ -187,6 +195,6 @@ int
 tx39power_ok_intr(arg)
 	void *arg;
 {
-	printf("power ok\n");
+	printf("power NG\n");
 	return 0;
 }
