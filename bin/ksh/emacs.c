@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.9 1999/11/08 23:56:41 jdolecek Exp $	*/
+/*	$NetBSD: emacs.c,v 1.10 1999/11/09 00:01:49 jdolecek Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1848,7 +1848,6 @@ do_complete(flags, type)
 			if (nlen > 0) {
 				x_goto(xbuf + start);
 				x_delete(end - start, FALSE);
-				printf("jsem tu: nw=%d\n");
 				x_escape(words[0], nlen, x_emacs_putbuf);
 				x_adjust();
 				/* If single match is not a directory, add a
