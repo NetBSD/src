@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 1999/01/15 01:23:12 castor Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11 1999/01/28 05:52:06 nisimura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -55,6 +55,7 @@ mips_reg_t kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
 
 void db_halt_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_tlbdump_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_trapdump_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 extern int	kdbpeek __P((vaddr_t addr));
 extern void	kdbpoke __P((vaddr_t addr, int newval));
@@ -168,7 +169,6 @@ kdb_trap(type, tfp)
 		f->f_regs[SP] = kdbaux[8];
 		f->f_regs[S8] = kdbaux[9];
 		f->f_regs[GP] = kdbaux[10];
-		/* XXX SR, CAUSE and VADDR XXX */
 	}
 
 	db_active++;
@@ -177,7 +177,7 @@ kdb_trap(type, tfp)
 	cnpollc(0);
 	db_active--;
 
-	tfp[21] = f->f_regs[PC]; /* resume */
+	tfp[21] = f->f_regs[PC]; /* XXX resume XXX */
 
 	return (1);
 }
@@ -321,8 +321,19 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 #endif
 }
 
+void
+db_trapdump_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	db_printf("trap history is not available.\n");
+}
+
 struct db_command mips_db_command_table[] = {
 	{ "halt",	db_halt_cmd,		0,	0 },
+	{ "trapdump",	db_trapdump_cmd,	0,	0 },
 	{ "tlb",	db_tlbdump_cmd,		0,	0 },
 	{ (char *)0, }
 };
@@ -333,6 +344,9 @@ db_machine_init()
 	db_machine_commands_install(mips_db_command_table);
 }
 
+/*
+ * Determine whether the instruction involves a delay slot.
+ */
 boolean_t
 inst_branch(inst)
 	int inst;
@@ -369,6 +383,9 @@ inst_branch(inst)
 	return delay;
 }
 
+/*
+ * Determine whether the instruction calls a function.
+ */
 boolean_t
 inst_call(inst)
 	int inst;
@@ -387,6 +404,9 @@ inst_call(inst)
 	return call;
 }
 
+/*
+ * Determine whether the instruction makes a jump.
+ */
 boolean_t
 inst_unconditional_flow_transfer(inst)
 	int inst;
@@ -399,6 +419,10 @@ inst_unconditional_flow_transfer(inst)
 	return jump;
 }
 
+/*
+ * Return the next pc if the given branch is taken.
+ * MachEmulateBranch() runs analysis for branch delay slot.
+ */
 db_addr_t
 branch_taken(inst, pc, regs)
 	int inst;
@@ -413,8 +437,14 @@ branch_taken(inst, pc, regs)
 	return ra;
 }
 
+/*
+ * Return the next pc of arbitrary instructions.
+ * MachEmulateBranch() runs analysis for branch delay slots.
+ */
 db_addr_t
-next_instr_address(db_addr_t pc, boolean_t bd)
+next_instr_address(pc, bd)
+	db_addr_t pc;
+	boolean_t bd;
 {
 	vaddr_t ra;
 	unsigned fpucsr;
