@@ -87,7 +87,25 @@ hexadecimal, seperated by colons.   For example:
 or
   option dhcp-client-identifier 43:4c:49:45:54:2d:46:4f:4f;
 .fi
+.SH SETTING OPTION VALUES USING EXPRESSIONS
+Sometimes it's helpful to be able to set the value of a DHCP option
+based on some value that the client has sent.   To do this, you can
+use expression evaluation.   The 
+.B dhcp-eval(5)
+manual page describes how to write expressions.   To assign the result
+of an evaluation to an option, define the option as follows:
+.nf
+.sp 1
+  \fBoption \fImy-option \fB= \fIexpression \fB;\fR
+.fi
 .PP
+For example:
+.nf
+.sp 1
+  option hostname = binary-to-ascii (16, 8, "-",
+                                     substring (hardware, 1, 6));
+.fi
+.SH STANDARD DHCP OPTIONS
 The documentation for the various options mentioned below is taken
 from the latest IETF draft document on DHCP options.   Options which
 are not listed by name may be defined by the name option-\fInnn\fR,
