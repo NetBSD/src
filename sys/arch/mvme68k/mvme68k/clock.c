@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.4 1996/05/08 05:58:12 thorpej Exp $	*/
+/*      $NetBSD: clock.c,v 1.5 1996/09/12 05:10:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <mvme68k/mvme68k/clockreg.h>
@@ -61,7 +62,22 @@
 static	struct clockreg *RTCbase = NULL;
 static	caddr_t NVRAMbase = NULL;
 static	int NVRAMsize;
-static	void (*cpu_initclocks_hook) __P((void));
+static	void (*cpu_initclocks_hook) __P((int, int));
+
+struct	evcnt clock_profcnt;
+struct	evcnt clock_statcnt;
+
+/*
+ * Statistics clock interval and variance, in usec.  Variance must be a
+ * power of two.  Since this gives us an even number, not an odd number,
+ * we discard one case and compensate.  That is, a variance of 1024 would 
+ * give us offsets in [0..1023].  Instead, we take offsets in [1..1023].
+ * This is symmetric about the point 512, or statvar/2, and thus averages
+ * to that value (assuming uniform random numbers).
+ */
+/* XXX fix comment to match value */
+int	clock_statvar = 8192;
+int	clock_statmin;		/* statclock interval - (1/2 * variance) */
 
 /*
  * autoconf
@@ -71,6 +87,19 @@ struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL, 0
 };
 
+struct chiptime {
+        int     sec;
+        int     min;
+        int     hour;
+        int     wday;
+        int     day;
+        int     mon;
+        int     year;
+};
+
+static void timetochip __P((struct chiptime *));
+static long chiptotime __P((int, int, int, int, int, int));
+
 /*
  * Common parts of clock autoconfiguration.
  */
@@ -79,7 +108,7 @@ clock_config(dev, clockregs, nvram, nvramsize, initfunc)
 	struct device *dev;
 	caddr_t clockregs, nvram;
 	int nvramsize;
-	void (*initfunc) __P((void));
+	void (*initfunc) __P((int, int));
 {
 	extern int delay_divisor;	/* from machdep.c */
 
@@ -92,6 +121,9 @@ clock_config(dev, clockregs, nvram, nvramsize, initfunc)
 	NVRAMsize = nvramsize;
 	cpu_initclocks_hook = initfunc;
 
+	evcnt_attach(dev, "profintr", &clock_profcnt);
+	evcnt_attach(dev, "statintr", &clock_statcnt);
+
 	/* Print info about the clock. */
 	printf(": Mostek MK48T0%d, %d bytes of NVRAM\n", (nvramsize / 1024),
 	    nvramsize);
@@ -99,36 +131,49 @@ clock_config(dev, clockregs, nvram, nvramsize, initfunc)
 }
 
 /*
- * Set up real-time clock; we don't have a statistics clock at
- * present.
+ * Set up the real-time and statistics clocks.  Leave stathz 0 only
+ * if no alternative timer is available.
+ *
+ * The frequencies of these clocks must be an even number of microseconds.
  */
+void
 cpu_initclocks()
 {
-	register struct clockreg *rtc = RTCbase;
+	register int statint, minint;
 
-	if (rtc == NULL)
+	if (RTCbase == NULL)
 		panic("clock not configured");
-	if (hz != 100) {
-		printf("%d Hz clock not available; using 100 Hz\n", hz);
+
+	if (1000000 % hz) {
+		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
+		tick = 1000000 / hz;
 	}
+	if (stathz == 0)
+		stathz = hz;
+	if (1000000 % stathz) {
+		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
+		stathz = 100;
+	}
+	profhz = stathz;	/* always */ 
+
+	statint = 1000000 / stathz;
+	minint = statint / 2 + 100;
+	while (clock_statvar > minint)
+		clock_statvar >>= 1;
+
+	clock_statmin = statint - (clock_statvar >> 1);
 
 	/* Call the machine-specific initclocks hook. */
-	(*cpu_initclocks_hook)();
-
-	stathz = 0;
+	(*cpu_initclocks_hook)(tick, statint);
 }
 
 void
 setstatclockrate(newhz)
 	int newhz;
 {
-}
 
-void
-statintr(fp)
-	struct clockframe *fp;
-{
+	/* XXX should we do something here? XXX */
 }
 
 /*
@@ -142,7 +187,8 @@ statintr(fp)
  * previous call.
  */
 
-void microtime(tvp)
+void
+microtime(tvp)
 	register struct timeval *tvp;
 {
 	int s = splhigh();
@@ -181,7 +227,8 @@ void microtime(tvp)
 const short dayyr[12] =
     { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
-static u_long chiptotime(sec, min, hour, day, mon, year)
+static long
+chiptotime(sec, min, hour, day, mon, year)
 	register int sec, min, hour, day, mon, year;
 {
 	register int days, yr;
@@ -206,16 +253,7 @@ static u_long chiptotime(sec, min, hour, day, mon, year)
 	return (days * SECDAY + hour * 3600 + min * 60 + sec);
 }
 
-struct chiptime {
-        int     sec;
-        int     min;
-        int     hour;
-        int     wday;
-        int     day;
-        int     mon;
-        int     year;
-};
-
+static void
 timetochip(c)
         register struct chiptime *c;
 {
@@ -261,10 +299,10 @@ timetochip(c)
         c->year = TOBCD(c->year - YEAR0);
 }
 
-
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
+void
 inittodr(base)
         time_t base;
 {
@@ -320,6 +358,7 @@ inittodr(base)
  * and when rebooting.  Do nothing if the time is not yet known, e.g.,
  * when crashing during autoconfig.
  */
+void
 resettodr()
 {
         register struct clockreg *cl;
