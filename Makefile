@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 1995/10/09 02:11:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.26 1995/12/09 22:39:46 tls Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -23,8 +23,10 @@ regression-tests:
 
 .include <bsd.own.mk>	# for NOMAN, if it's there.
 
-#beforeinstall:
-#	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
+beforeinstall:
+.ifndef DESTDIR
+	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
+.endif
 
 afterinstall:
 .ifndef NOMAN
@@ -32,6 +34,9 @@ afterinstall:
 .endif
 
 build:
+.if exists(domestic)
+	{cd ${.CURDIR}/domestic/include && ${MAKE} install)
+.endif
 	(cd ${.CURDIR}/include && ${MAKE} install)
 	${MAKE} cleandir
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
@@ -39,9 +44,9 @@ build:
 .if exists(domestic)
 	(cd ${.CURDIR}/domestic/libcrypt && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .endif
-.if exists(kerberosIV)
-	(cd ${.CURDIR}/kerberosIV && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.endif
+#.if exists(kerberosIV)
+#	(cd ${.CURDIR}/kerberosIV && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+#.endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 
 .include <bsd.subdir.mk>
