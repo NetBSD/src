@@ -33,14 +33,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00089
- * --------------------         -----   ----------------------
- *
- * 27 Feb 93    Joerg Wunsch	Implement strtod, fix atof.
- *
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -153,7 +145,7 @@ strtod(p, endp)
 	/* according to ANSI, check for over-/underflow */
 	if(exp > 0) {
 		if(endp)
-			*endp = oldp;
+			*endp = (char *)oldp;
 		errno = ERANGE;
 		return neg < 0? -HUGE_VAL: HUGE_VAL;
 	}
@@ -166,7 +158,7 @@ strtod(p, endp)
 	fl = ldexp(fl, bexp);
 
 	if(endp)
-		*endp = p;
+		*endp = (char *)(p - 1);
 	return neg < 0 ? -fl : fl;
 }
 
