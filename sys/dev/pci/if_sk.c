@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.12 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.13 2005/01/23 03:06:07 fredb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -255,6 +255,7 @@ static const struct sk_product {
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2, },
 	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET, },
+	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN, },
 	{ 0, 0, }
 };
 
@@ -1570,6 +1571,9 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 				sk_win_write_4(sc,SK_EP_ADDR,flashaddr);
 			}
 		}
+		break;
+	case PCI_ID_CODE(PCI_VENDOR_GALILEO,PCI_PRODUCT_GALILEO_BELKIN):
+		sc->sk_name = sc->sk_vpd_prodname;
 		break;
  	default:
 		sc->sk_name = "Unkown Marvell";
