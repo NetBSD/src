@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.4 2001/12/03 23:32:32 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.5 2001/12/04 19:56:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ irframe_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_methods->im_write == NULL ||
 	    sc->sc_methods->im_poll == NULL ||
 	    sc->sc_methods->im_set_params == NULL ||
-	    sc->sc_methods->im_reset_params == NULL ||
 	    sc->sc_methods->im_get_speeds == NULL ||
 	    sc->sc_methods->im_get_turnarounds == NULL)
 		panic("%s: missing methods\n", sc->sc_dev.dv_xname);
@@ -232,6 +231,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct irframe_softc *sc;
 	void *vaddr = addr;
+	struct irda_params params;
 	int error;
 
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
@@ -251,7 +251,10 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	case IRDA_RESET_PARAMS:
-		error = sc->sc_methods->im_reset_params(sc->sc_handle);
+		params.speed = IRDA_DEFAULT_SPEED;
+		params.ebofs = IRDA_DEFAULT_EBOFS;
+		params.maxsize = IRDA_DEFAULT_SIZE;
+		error = sc->sc_methods->im_set_params(sc->sc_handle, &params);
 		break;
 
 	case IRDA_GET_SPEEDMASK:

@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.2 2001/12/02 20:29:55 augustss Exp $	*/
+/*	$NetBSD: oboe.c,v 1.3 2001/12/04 19:56:18 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@ int oboe_close(void *h, int flag, int mode, struct proc *p);
 int oboe_read(void *h, struct uio *uio, int flag);
 int oboe_write(void *h, struct uio *uio, int flag);
 int oboe_set_params(void *h, struct irda_params *params);
-int oboe_reset_params(void *h);
 int oboe_get_speeds(void *h, int *speeds);
 int oboe_get_turnarounds(void *h, int *times);
 int oboe_poll(void *h, int events, struct proc *p);
@@ -157,8 +156,7 @@ struct cfattach oboe_ca = {
 
 struct irframe_methods oboe_methods = {
 	oboe_open, oboe_close, oboe_read, oboe_write, oboe_poll, 
-	oboe_set_params, oboe_reset_params, oboe_get_speeds, 
-	oboe_get_turnarounds
+	oboe_set_params, oboe_get_speeds, oboe_get_turnarounds
 };
 
 int
@@ -425,19 +423,6 @@ oboe_set_params(void *h, struct irda_params *p)
 	splx(s);
 
 	/* ignore ebofs and maxsize for now */
-	return (0);
-}
-
-int
-oboe_reset_params(void *h)
-{
-	struct oboe_softc *sc = h;
-	int s = splir();
-
-	oboe_setbaud(sc, 9600);
-
-	splx(s);
-
 	return (0);
 }
 

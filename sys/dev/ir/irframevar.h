@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.3 2001/12/02 20:06:00 augustss Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.4 2001/12/04 19:56:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@ struct irframe_methods {
 	int (*im_write)(void *h, struct uio *uio, int flag);
 	int (*im_poll)(void *h, int events, struct proc *p);
 	int (*im_set_params)(void *h, struct irda_params *params);
-	int (*im_reset_params)(void *h);
 	int (*im_get_speeds)(void *h, int *speeds);
 	int (*im_get_turnarounds)(void *h, int *times);
 };
@@ -53,7 +52,6 @@ struct irframe_softc {
 	struct	irframe_methods	*sc_methods;
 	void			*sc_handle;
 	char			sc_open;
-	struct	selinfo		sc_rdsel;
 };
 
 void irframe_frame_available(struct device *);
