@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 1997/01/11 09:57:08 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 1997/07/06 18:25:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.5 1997/01/11 09:57:08 lukem Exp $";
+__RCSID("$NetBSD: parse.c,v 1.6 1997/07/06 18:25:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.4 1997/04/11 17:52:47 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.5 1997/07/06 18:25:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: read.c,v 1.4 1997/04/11 17:52:47 christos Exp $";
+__RCSID("$NetBSD: read.c,v 1.5 1997/07/06 18:25:32 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -119,10 +120,14 @@ read__fixio(fd, e)
 # endif /* F_SETFL && O_NDELAY */
 
 # ifdef FIONBIO
-	if (ioctl(fd, FIONBIO, (ioctl_t) &e) == -1)
-	    return -1;
-	else
-	    e = 1;
+	{
+		int zero = 0;
+
+		if (ioctl(fd, FIONBIO, (ioctl_t) &zero) == -1)
+		    return -1;
+		else
+		    e = 1;
+	}
 # endif	/* FIONBIO */
 
 #endif /* TRY_AGAIN */
