@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.50 2002/02/03 08:33:14 veego Exp $
+#	$NetBSD: special,v 1.51 2002/02/19 21:33:13 veego Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -69,6 +69,7 @@
 ./etc/ifaliases			type=file mode=0644 optional
 ./etc/inetd.conf		type=file mode=0644
 ./etc/ipf.conf			type=file mode=0644 optional
+./etc/ipf6.conf			type=file mode=0644 optional
 ./etc/ipnat.conf		type=file mode=0644 optional
 ./etc/ipsec.conf		type=file mode=0644 optional
 ./etc/kerberosIV		type=dir  mode=0755 ignore optional
