@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.24 2001/12/18 11:32:47 ichiro Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.25 2001/12/23 09:25:19 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.24 2001/12/18 11:32:47 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.25 2001/12/23 09:25:19 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,8 @@ struct mbe_pcmcia_get_enaddr_args {
 int	mbe_pcmcia_get_enaddr_from_cis __P((struct pcmcia_tuple *, void *));
 int	mbe_pcmcia_get_enaddr_from_mem __P((struct mbe_pcmcia_softc *,
 	    struct mbe_pcmcia_get_enaddr_args *));
+int	mbe_pcmcia_get_enaddr_from_io __P((struct mbe_pcmcia_softc *,
+	    struct mbe_pcmcia_get_enaddr_args *));
 
 static const struct mbe_pcmcia_product {
 	const char	*mpp_name;		/* product name */
@@ -98,6 +100,8 @@ static const struct mbe_pcmcia_product {
 	const char	*mpp_cisinfo[4];	/* CIS information */
 	u_int32_t	mpp_ioalign;		/* required alignment */
 	int		mpp_enet_maddr;
+	int		flags;
+#define MBH10302	0x0001			/* FUJITSU MBH10302 */
 } mbe_pcmcia_products[] = {
 	{ PCMCIA_STR_TDK_LAK_CD021BX,		PCMCIA_VENDOR_TDK,
 	  PCMCIA_PRODUCT_TDK_LAK_CD021BX,	PCMCIA_CIS_TDK_LAK_CD021BX,
@@ -110,7 +114,7 @@ static const struct mbe_pcmcia_product {
 #if 0 /* XXX 86960-based? */
 	{ PCMCIA_STR_TDK_LAK_DFL9610,		PCMCIA_VENDOR_TDK,
 	  PCMCIA_PRODUCT_TDK_LAK_DFL9610,	PCMCIA_CIS_TDK_DFL9610,
-	  0, -1 },
+	  0, -1, MBH10302 /* XXX */ },
 #endif
 
 	{ PCMCIA_STR_CONTEC_CNETPC,		PCMCIA_VENDOR_CONTEC,
@@ -121,13 +125,25 @@ static const struct mbe_pcmcia_product {
 	  PCMCIA_PRODUCT_FUJITSU_LA501,		PCMCIA_CIS_FUJITSU_LA501,
 	  0x20, -1 },
 
-	{ PCMCIA_STR_FUJITSU_LA10S,		PCMCIA_VENDOR_FUJITSU,
-	  PCMCIA_PRODUCT_FUJITSU_LA10S,		PCMCIA_CIS_FUJITSU_LA10S,
-	  0, -1 },
+	{ PCMCIA_STR_FUJITSU_FMV_J181,		PCMCIA_VENDOR_FUJITSU,
+	  PCMCIA_PRODUCT_FUJITSU_FMV_J181,	PCMCIA_CIS_FUJITSU_FMV_J181,
+	  0x20, -1, MBH10302 },
+
+	{ PCMCIA_STR_FUJITSU_FMV_J182,		PCMCIA_VENDOR_FUJITSU,
+	  PCMCIA_PRODUCT_FUJITSU_FMV_J182,	PCMCIA_CIS_FUJITSU_FMV_J182,
+	  0, 0xf2c },
+
+	{ PCMCIA_STR_FUJITSU_FMV_J182A,		PCMCIA_VENDOR_FUJITSU,
+	  PCMCIA_PRODUCT_FUJITSU_FMV_J182A,	PCMCIA_CIS_FUJITSU_FMV_J182A,
+	  0, 0x1cc },
 
 	{ PCMCIA_STR_FUJITSU_ITCFJ182A,		PCMCIA_VENDOR_FUJITSU,
 	  PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,	PCMCIA_CIS_FUJITSU_ITCFJ182A,
 	  0, 0x1cc },
+
+	{ PCMCIA_STR_FUJITSU_LA10S,		PCMCIA_VENDOR_FUJITSU,
+	  PCMCIA_PRODUCT_FUJITSU_LA10S,		PCMCIA_CIS_FUJITSU_LA10S,
+	  0, -1 },
 
 	{ PCMCIA_STR_RATOC_REX_R280,		PCMCIA_VENDOR_RATOC,
 	  PCMCIA_PRODUCT_RATOC_REX_R280,	PCMCIA_CIS_RATOC_REX_R280,
@@ -151,7 +167,9 @@ mbe_pcmcia_lookup(pa)
 		    strcmp(pa->card->cis1_info[0], mpp->mpp_cisinfo[0]) == 0 &&
 		    pa->card->cis1_info[1] != NULL &&
 		    mpp->mpp_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], mpp->mpp_cisinfo[1]) == 0)
+		    strcmp(pa->card->cis1_info[1], mpp->mpp_cisinfo[1]) == 0 &&
+		   (mpp->mpp_cisinfo[2] == NULL ||
+		    strcmp(pa->card->cis1_info[2], mpp->mpp_cisinfo[2]) == 0))
 			return (mpp);
 
 		/* match by vendor/product id */
@@ -226,7 +244,8 @@ mbe_pcmcia_attach(parent, self, aux)
 	 * Don't bother checking flags; the back-end sets the chip
 	 * into 16-bit mode.
 	 */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, 0, cfe->iospace[0].length,
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, 0,
+	    mpp->mpp_ioalign ? mpp->mpp_ioalign : cfe->iospace[0].length,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		goto iomap_failed;
@@ -234,12 +253,20 @@ mbe_pcmcia_attach(parent, self, aux)
 
 	printf(": %s\n", mpp->mpp_name);
 
-	/* Read station address from mem or CIS. */
+	/* Read station address from io/mem or CIS. */
 	if (mpp->mpp_enet_maddr >= 0) {
 		pgea.maddr = mpp->mpp_enet_maddr;
 		if (mbe_pcmcia_get_enaddr_from_mem(psc, &pgea) != 0) {
 			printf("%s: Couldn't get ethernet address "
 			    "from mem\n", sc->sc_dev.dv_xname);
+			goto no_enaddr;
+		}
+	} else if ((mpp->flags & MBH10302) != 0) {
+		bus_space_write_1(sc->sc_bst, sc->sc_bsh, FE_MBH0 ,
+				  FE_MBH0_MASK | FE_MBH0_INTR_ENABLE);
+		if (mbe_pcmcia_get_enaddr_from_io(psc, &pgea) != 0) {
+			printf("%s: Couldn't get ethernet address "
+			    "from io\n", sc->sc_dev.dv_xname);
 			goto no_enaddr;
 		}
 	} else {
@@ -266,7 +293,10 @@ mbe_pcmcia_attach(parent, self, aux)
 	}
 
 	/* Perform generic initialization. */
-	mb86960_attach(sc, MB86960_TYPE_86965, pgea.enaddr);
+	if ((mpp->flags & MBH10302) != 0) 
+		mb86960_attach(sc, MB86960_TYPE_86960, pgea.enaddr);
+	else
+		mb86960_attach(sc, MB86960_TYPE_86965, pgea.enaddr);
 
 	mb86960_config(sc, NULL, 0, 0);
 
@@ -367,6 +397,22 @@ mbe_pcmcia_get_enaddr_from_cis(tuple, arg)
 			p->enaddr[i] = pcmcia_tuple_read_1(tuple, i + 2);
 		return (1);
 	}
+	return (0);
+}
+
+int
+mbe_pcmcia_get_enaddr_from_io(psc, ea)
+	struct mbe_pcmcia_softc *psc;
+	struct mbe_pcmcia_get_enaddr_args *ea;
+{                       
+	int i;
+
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		ea->enaddr[i] = bus_space_read_1(psc->sc_pcioh.iot,
+		    psc->sc_pcioh.ioh, FE_MBH_ENADDR + i);
+
+	if (ea->enaddr == NULL)
+		return (1);
 	return (0);
 }
 
