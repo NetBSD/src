@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.284 2004/06/21 06:19:28 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.285 2004/06/21 09:24:25 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4076,3 +4076,13 @@ distrib/notes/common/postinstall			1.56 via patch
 
 	Add sparc64 tags.
 	[mbw, ticket #481]
+
+gnu/dist/groff/Makefile.in			1.7
+
+	groff's configure happily accepts and uses CPPFLAGS for it's tests but
+	then doesn't substitute that into Makefile.in anywhere. This will cause
+	it to lose when compiling as a host tools and CPPFLAGS contains -I's
+	into the compat area (solaris loses here for instance). Fix by adding
+	CPPFLAGS onto CFLAGS and CCFLAGS definitions
+	[jmc, ticket #526]
+
