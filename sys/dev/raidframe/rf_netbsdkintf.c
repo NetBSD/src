@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.173 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.174 2004/02/08 04:37:56 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.173 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.174 2004/02/08 04:37:56 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1035,6 +1035,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		   */
 
 		raidid = raidPtr->raidid;
+#if DEBUG
 		printf("raid%d: Got component label:\n", raidid);
 		printf("raid%d: Version: %d\n", raidid, clabel->version);
 		printf("raid%d: Serial Number: %d\n", raidid, clabel->serial_number);
@@ -1043,7 +1044,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		printf("raid%d: Num Columns: %d\n", raidid, clabel->num_columns);
 		printf("raid%d: Clean: %d\n", raidid, clabel->clean);
 		printf("raid%d: Status: %d\n", raidid, clabel->status);
-
+#endif
 		clabel->row = 0;
 		column = clabel->column;
 
