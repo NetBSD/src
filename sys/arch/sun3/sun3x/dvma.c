@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.5 1997/10/10 01:36:32 jeremy Exp $	*/
+/*	$NetBSD: dvma.c,v 1.6 1997/10/16 16:11:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -145,9 +145,22 @@ dvma_kvtopa(kva, bustype)
 	addr = (u_long)kva;
 	if ((addr & DVMA_SPACE_START) != DVMA_SPACE_START)
 		panic("dvma_kvtopa: bad dmva addr=0x%x\n", addr);
-
-	/* Everything has just 24 bits. */
 	mask = DVMA_SLAVE_MASK;
+
+	/* XXX: Only support a 24 bit mask for now. */
+	switch (bustype) {
+	case BUS_OBIO:
+	case BUS_OBMEM:
+	case BUS_VME32D32:
+	case BUS_VME24D32:
+	case BUS_VME24D16:
+		break;
+
+	case BUS_VME16D32:
+	case BUS_VME16D16:
+	default:
+		panic("dvma_kvtopa: bustype=%d\n", bustype);
+	}
 
 	return(addr & mask);
 }
