@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.9 1996/10/11 00:09:24 christos Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.10 1996/10/11 20:50:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -31,9 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "grfcc.h"
-#if NGRFCC > 0
-
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
@@ -55,6 +52,8 @@
 #include <atari/dev/font.h>
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
+
+#include "grfcc.h"
 
 /*
  * This is what ip->priv points to;
@@ -90,6 +89,8 @@ extern font_info	font_info_8x16;
 
 static void view_init __P((struct ite_softc *));
 static void view_deinit __P((struct ite_softc *));
+static int  itecc_ioctl __P((struct ite_softc *, u_long, caddr_t, int,
+							struct proc *));
 static int  ite_newsize __P((struct ite_softc *, struct itewinsize *));
 static void cursor32 __P((struct ite_softc *, int));
 static void putc8 __P((struct ite_softc *, int, int, int, int));
@@ -337,6 +338,8 @@ register struct ite_softc *ip;
 	if((cci = ip->priv) != NULL)
 		return;
 
+	ip->itexx_ioctl = itecc_ioctl;
+
 #if defined(KFONT_8X8)
 	ip->font = font_info_8x8;
 #else
@@ -459,7 +462,7 @@ struct itewinsize	*winsz;
 }
 
 int
-ite_grf_ioctl(ip, cmd, addr, flag, p)
+itecc_ioctl(ip, cmd, addr, flag, p)
 struct ite_softc	*ip;
 u_long			cmd;
 caddr_t			addr;
@@ -475,14 +478,6 @@ struct proc		*p;
 #endif
 
 	switch (cmd) {
-	case ITEIOCGWINSZ:
-		is         = (struct itewinsize *)addr;
-		is->x      = view->display.x;
-		is->y      = view->display.y;
-		is->width  = view->display.width;
-		is->height = view->display.height;
-		is->depth  = view->bitmap->depth;
-		break;
 	case ITEIOCSWINSZ:
 		is = (struct itewinsize *)addr;
 
@@ -501,12 +496,6 @@ struct proc		*p;
 			 */
 			iteioctl(ip->grf->g_itedev,TIOCSWINSZ,(caddr_t)&ws,0,p);
 		}
-		break;
-	case ITEIOCDSPWIN:
-		ip->grf->g_mode(ip->grf, GM_GRFON, NULL, 0, 0);
-		break;
-	case ITEIOCREMWIN:
-		ip->grf->g_mode(ip->grf, GM_GRFOFF, NULL, 0, 0);
 		break;
 	case ITEIOCGBELL:
 #if 0 /* LWP */
@@ -594,7 +583,8 @@ cursor32(struct ite_softc *ip, int flag)
 	 * draw the cursor
 	 */
 	cend = min(ip->curx, ip->cols-1);
-	if (ip->cursorx == cend && ip->cursory == ip->cury)
+	if (flag == DRAW_CURSOR
+		&& ip->cursorx == cend && ip->cursory == ip->cury)
 		return;
 	ip->cursorx = cend;
 	ip->cursory = ip->cury;
@@ -853,6 +843,3 @@ scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, sho
 		    *clr_y++ = 0;
     }
 }
-#else
-#error Must be defined
-#endif /* NGRFCC */
