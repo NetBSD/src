@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1997/10/19 18:15:23 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.7.2.1 1997/11/11 06:18:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.7 1997/10/19 18:15:23 mycroft Exp $");
+__RCSID("$NetBSD: conf.c,v 1.7.2.1 1997/11/11 06:18:53 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -274,6 +274,8 @@ parse_conf(findclass)
 				continue;
 			}
 			curclass.umask = umask;
+		} else if (strcasecmp(word, "checkportcmd") == 0) {
+			curclass.checkportcmd = 1;
 		} else {
 			syslog(LOG_WARNING,
 			    "%s line %d: unknown directive '%s'",
