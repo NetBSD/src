@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.33 1999/02/11 09:35:21 christos Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.34 1999/02/23 18:19:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -136,7 +136,7 @@ struct execsw execsw[] = {
 	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, },	/* coff binaries */
 	{ XOUT_HDR_SIZE, exec_ibcs2_xout_makecmds, },	/* x.out binaries */
 #endif
-#ifdef COMPAT_FREEBSD
+#if defined(COMPAT_FREEBSD) && defined(EXEC_AOUT)
 	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, },	/* a.out */
 #endif
 #ifdef COMPAT_HPUX
