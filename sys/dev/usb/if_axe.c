@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.4 2004/10/24 12:53:26 augustss Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.5 2004/10/26 17:20:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -38,6 +38,7 @@
  *
  * Manuals available from:
  * http://www.asix.com.tw/datasheet/mac/Ax88172.PDF
+ * (also http://people.freebsd.org/~wpaul/ASIX/Ax88172.PDF)
  * Note: you need the manual for the AX88170 chip (USB 1.x ethernet
  * controller) to find the definitions for the RX control register.
  * http://www.asix.com.tw/datasheet/mac/Ax88170.PDF
@@ -72,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.4 2004/10/24 12:53:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.5 2004/10/26 17:20:47 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -269,10 +270,13 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	if (sc->axe_phyaddrs[0] != 0xFF && sc->axe_phyaddrs[0] != phy)
 		return (0);
 
+	val = 0;
 
+	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 	err = axe_cmd(sc, AXE_CMD_MII_READ_REG, reg, phy, (void *)&val);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_HW, 0, 0, NULL);
+	axe_unlock_mii(sc);
 
 	if (err) {
 		printf("%s: read PHY failed\n", USBDEVNAME(sc->axe_dev));
@@ -294,27 +298,35 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 	if (sc->axe_dying)
 		return;
 
+	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 	err = axe_cmd(sc, AXE_CMD_MII_WRITE_REG, reg, phy, (void *)&val);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_HW, 0, 0, NULL);
+	axe_unlock_mii(sc);
 
 	if (err) {
 		printf("%s: write PHY failed\n", USBDEVNAME(sc->axe_dev));
 		return;
 	}
-
-	return;
 }
 
 Static void
 axe_miibus_statchg(device_ptr_t dev)
 {
-#ifdef notdef
 	struct axe_softc	*sc = USBGETSOFTC(dev);
 	struct mii_data		*mii = GET_MII(sc);
-#endif
-	/* doesn't seem to be necessary */
-	return;
+	int val, err;
+
+	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+		val = AXE_MEDIA_FULL_DUPLEX;
+	else
+		val = 0;
+	DPRINTF(("axe_miibus_statchg: val=0x%x\n", val));
+	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
+	if (err) {
+		printf("%s: media change failed\n", USBDEVNAME(sc->axe_dev));
+		return;
+	}
 }
 
 /*
@@ -454,7 +466,7 @@ USB_ATTACH(axe)
 	}
 
 	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
-	lockinit(&sc->axe_mii_lock, PZERO, "axemii", 0, 0);
+	lockinit(&sc->axe_mii_lock, PZERO, "axemii", 0, LK_CANRECURSE);
 	usb_init_task(&sc->axe_stop_task, (void (*)(void *))axe_stop, sc);
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
