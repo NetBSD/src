@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.34 1997/01/21 09:37:17 thorpej Exp $
+#	$NetBSD: files.alpha,v 1.35 1997/01/21 23:45:54 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -152,6 +152,15 @@ file	arch/alpha/isa/pms.c		pms
 attach	vga at isa with vga_isa
 file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
 
+# Floppy disk controller
+device	fdc { drive = -1 }
+attach	fdc at isa
+device	fd: disk, isadma
+attach	fd at fdc
+#file	arch/alpha/isa/fd.c		fdc needs-flag
+major	{ fd = 0 }
+
+# PC speaker
 #
 # EISA Bus support
 #
