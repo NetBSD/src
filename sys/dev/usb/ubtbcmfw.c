@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.6 2003/06/29 22:30:55 fvdl Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.7 2003/12/01 01:09:24 atatat Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.6 2003/06/29 22:30:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.7 2003/12/01 01:09:24 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.6 2003/06/29 22:30:55 fvdl Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/ubtbcmfw.h>
 
 /*
  * Download firmware to BCM2033.
@@ -295,28 +294,3 @@ ubtbcmfw_read(usbd_device_handle dev, usbd_pipe_handle in,
 	usbd_free_xfer(xfer);
 	return (err);
 }
-
-int
-hw_dev_ubtbcmfw_sysctl(int *name, u_int nlen, void *oldp,
-    size_t *oldlenp, void *newp, size_t newlen, struct proc *p)
-{
-	int error;
-
-	/* Must be super user. */
-	error = suser(p->p_ucred, &p->p_acflag);
-	if (error)
-		return error;
-
-	/* all sysctl names at this level are terminal */
-	if (nlen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case HW_DEV_UBTBCMFW_FWPATH:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    ubtbcmfw_fwpath, sizeof(ubtbcmfw_fwpath));
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
