@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 1999/07/08 18:08:58 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 1999/07/11 17:44:08 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -99,7 +99,7 @@ vtophys(va)
 
 	/* XXX should check battable */
 
-	if ((pa = pmap_extract(pmap_kernel(), va)) != 0)
+	if (pmap_extract(pmap_kernel(), va, &pa))
 		return pa;
 	return va;
 }
