@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.110 2003/02/14 02:58:53 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.111 2003/02/14 22:36:51 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3671,3 +3671,16 @@ distrib/utils/sysinst/util.c			1.82
 	[grant, ticket #1166]
 
 (Moved RC1 tag for these last 6 files)
+
+sys/arch/acorn32/acorn32/rpc_machdep.c		revert 1.39
+sys/arch/arm/arm32/pmap.c			revert 1.110
+sys/arch/cats/cats/cats_machdep.c		revert 1.33
+sys/arch/evbarm/integrator/integrator_machdep.c	revert 1.26
+sys/arch/evbarm/iq80310/iq80310_machdep.c	revert 1.43
+sys/arch/evbarm/iq80321/iq80321_machdep.c	revert 1.10
+sys/arch/hpcarm/hpcarm/hpc_machdep.c		revert 1.52
+sys/arch/netwinder/netwinder/netwinder_machdep.c revert 1.35
+sys/arch/shark/ofw/ofw.c			revert 1.18
+
+  Revert pull-up of cached memory access to L1 tables, this causes
+  instability on the release branch.
