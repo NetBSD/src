@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.57 2002/04/12 18:50:31 thorpej Exp $
+#	$NetBSD: files.arm,v 1.58 2002/04/12 18:56:58 thorpej Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -52,11 +52,15 @@ file	arch/arm/mainbus/cpu_mainbus.c		cpu_mainbus & arm32
 # files related to debugging
 file	arch/arm/arm/disassem.c
 
+# bus_space(9)
+define	bus_space_generic
+file	arch/arm/arm/bus_space_asm_generic.S	bus_space_generic
+file	arch/arm/arm/bus_space_notimpl.S	arm32
+
 file	arch/arm/arm/arm_machdep.c
 file	arch/arm/arm/ast.c
 file	arch/arm/arm/blockio.S
 file	arch/arm/arm/bootconfig.c
-file	arch/arm/arm/bus_space_notimpl.S	arm32
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
