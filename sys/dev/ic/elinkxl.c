@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.37 2000/08/25 09:01:59 haya Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.38 2000/08/29 08:54:50 haya Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -215,9 +215,16 @@ ex_config(sc)
 	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(macaddr));
 
-	if (sc->intr_ack) { /* 3C575BTX specific */
+	if (sc->intr_ack != NULL) { /* CardBus card specific */
 	    GO_WINDOW(2);
-	    bus_space_write_2(sc->sc_iot, ioh, 12, 0x10|bus_space_read_2(sc->sc_iot, ioh, 12));
+	    if (sc->ex_conf & EX_CONF_INV_LED_POLARITY) {
+		    bus_space_write_2(sc->sc_iot, ioh, 12,
+			0x10|bus_space_read_2(sc->sc_iot, ioh, 12));
+	    }
+	    if (sc->ex_conf & EX_CONF_PHY_POWER) {
+		    bus_space_write_2(sc->sc_iot, ioh, 12,
+			0x4000|bus_space_read_2(sc->sc_iot, ioh, 12));
+	    }
 	}
 
 	attach_stage = 0;
@@ -655,6 +662,22 @@ ex_init(sc)
 	bus_space_write_4(iot, ioh, ELINK_UPLISTPTR, sc->sc_upddma);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, RX_ENABLE);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_UPUNSTALL);
+
+	if (sc->ex_conf & (EX_CONF_PHY_POWER | EX_CONF_INV_LED_POLARITY)) {
+		u_int16_t cbcard_config;
+
+		GO_WINDOW(2);
+		cbcard_config = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0x0c);
+		if (sc->ex_conf & EX_CONF_PHY_POWER) {
+			cbcard_config |= 0x4000; /* turn on PHY power */
+		}
+		if (sc->ex_conf & EX_CONF_INV_LED_POLARITY) {
+			cbcard_config |= 0x0020; /* invert LED polarity */
+		}
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0x0c, cbcard_config);
+
+		GO_WINDOW(3);
+	}
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
