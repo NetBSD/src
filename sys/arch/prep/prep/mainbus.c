@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2001/11/28 23:48:35 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2002/02/24 11:22:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,6 +58,9 @@ union mainbus_attach_args {
 	struct pcibus_attach_args mba_pba;
 };
 
+/* There can be only one. */
+int	mainbus_found;
+
 /*
  * Probe for the mainbus; always succeeds.
  */
@@ -67,10 +70,10 @@ mainbus_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
 
-	if (cf->cf_unit > 0)
+	if (mainbus_found)
 		return 0;
+
 	return 1;
 }
 
@@ -88,6 +91,8 @@ mainbus_attach(parent, self, aux)
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
 #endif
+
+	mainbus_found = 1;
 
 	printf("\n");
 
