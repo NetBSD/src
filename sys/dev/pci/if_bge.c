@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.29.2.5 2003/06/16 13:23:30 grant Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.29.2.6 2003/10/20 05:02:44 cyber Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1593,9 +1593,6 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_SDI_STATS_ENABLE_MASK, 0x007FFFFF);
 	CSR_WRITE_4(sc, BGE_SDI_STATS_CTL,
 	    BGE_SDISTATSCTL_ENABLE|BGE_SDISTATSCTL_FASTER);
-
-	/* init LED register */
-	CSR_WRITE_4(sc, BGE_MAC_LED_CTL, 0x00000000);
 
 	/* ack/clear link change events */
 	CSR_WRITE_4(sc, BGE_MAC_STS, BGE_MACSTAT_SYNC_CHANGED|
