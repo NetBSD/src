@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)vfscanf.c	5.6 (Berkeley) 2/24/91";
+static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -50,12 +50,8 @@ static char sccsid[] = "@(#)vfscanf.c	5.6 (Berkeley) 2/24/91";
 
 #define FLOATING_POINT
 
-#ifdef FLOATING_POINT
 #include "floatio.h"
-#define	BUF	(MAXEXP+MAXFRACT+3)	/* 3 = sign + decimal point + NUL */
-#else
-#define	BUF	40
-#endif
+#define	BUF		513	/* Maximum length of numeric string. */
 
 /*
  * Flags used during conversion.
@@ -635,7 +631,7 @@ literal:
 				double res;
 
 				*p = 0;
-				res = atof(buf);
+				res = strtod(buf,(char **) NULL);
 				if (flags & LONG)
 					*va_arg(ap, double *) = res;
 				else

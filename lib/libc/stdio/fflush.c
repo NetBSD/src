@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,10 +35,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)fflush.c	5.1 (Berkeley) 1/20/91";
+static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/errno.h>
+#include <errno.h>
 #include <stdio.h>
 #include "local.h"
 
@@ -46,10 +46,10 @@ static char sccsid[] = "@(#)fflush.c	5.1 (Berkeley) 1/20/91";
 fflush(fp)
 	register FILE *fp;
 {
+
 	if (fp == NULL)
 		return (_fwalk(__sflush));
-
-	if ((fp->_flags & __SWR) == 0) {
+	if ((fp->_flags & (__SWR | __SRW)) == 0) {
 		errno = EBADF;
 		return (EOF);
 	}
