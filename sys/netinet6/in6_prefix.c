@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_prefix.c,v 1.5 2000/01/06 15:46:09 itojun Exp $	*/
+/*	$NetBSD: in6_prefix.c,v 1.6 2000/02/03 12:13:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -386,7 +386,7 @@ assigne_ra_entry(struct rr_prefix *rpp, int iilen, struct in6_ifaddr *ia)
 #if 0 /* Can't do this now, because rpp may be on th stack. should fix it? */
 	ia->ia6_ifpr = rp2ifpr(rpp);
 #endif
-	s = splnet();
+	s = splsoftnet();
 	LIST_INSERT_HEAD(&rpp->rp_addrhead, rap, ra_entry);
 	splx(s);
 
@@ -481,7 +481,7 @@ in6_prefix_remove_ifid(int iilen, struct in6_ifaddr *ia)
 		return;
 	rap = search_ifidwithprefix(ifpr2rp(ia->ia6_ifpr), IA6_IN6(ia));
 	if (rap != NULL) {
-		int s = splnet();
+		int s = splsoftnet();
 		LIST_REMOVE(rap, ra_entry);
 		splx(s);
 		free(rap, M_RR_ADDR);
@@ -615,7 +615,7 @@ rrpr_update(struct socket *so, struct rr_prefix *new)
 				free(rap, M_RR_ADDR);
 				continue;
 			}
-			s = splnet();
+			s = splsoftnet();
 			LIST_INSERT_HEAD(&rpp->rp_addrhead, rap, ra_entry);
 			splx(s);
 		}
@@ -660,7 +660,7 @@ rrpr_update(struct socket *so, struct rr_prefix *new)
 			rp2ifpr(rpp)->ifpr_type = IN6_PREFIX_RR;
 		}
 		/* link rr_prefix entry to rr_prefix list */
-		s = splnet();
+		s = splsoftnet();
 		LIST_INSERT_HEAD(&rr_prefix, rpp, rp_entry);
 		splx(s);
 	}
@@ -697,7 +697,7 @@ rp_remove(struct rr_prefix *rpp)
 {
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 	/* unlink rp_entry from if_prefixlist */
 	{
 		struct ifnet *ifp = rpp->rp_ifp;
@@ -791,7 +791,7 @@ free_rp_entries(struct rr_prefix *rpp)
 {
 	/*
 	 * This func is only called with rpp on stack(not on list).
-	 * So no splnet() here
+	 * So no splsoftnet() here
 	 */
 	while (rpp->rp_addrhead.lh_first != NULL)
 	{
@@ -857,7 +857,7 @@ delete_each_prefix(struct socket *so, struct rr_prefix *rpp, u_char origin)
 		struct rp_addr *rap;
 		int s;
 
-		s = splnet();
+		s = splsoftnet();
 		rap = LIST_FIRST(&rpp->rp_addrhead);
 		if (rap == NULL)
 			break;
@@ -1073,7 +1073,7 @@ in6_rr_timer(void *ignored_arg)
 
 	timeout(in6_rr_timer, (caddr_t)0, ip6_rr_prune * hz);
 
-	s = splnet();
+	s = splsoftnet();
 	/* expire */
 	rpp = LIST_FIRST(&rr_prefix);
 	while (rpp) {
