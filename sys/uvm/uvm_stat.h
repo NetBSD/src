@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.33 2004/11/23 04:51:56 yamt Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.34 2004/11/23 04:57:17 yamt Exp $	*/
 
 /*
  *
@@ -54,9 +54,9 @@
 struct uvm_history_ent {
 	struct timeval tv; 		/* time stamp */
 	int cpunum;
-	char *fmt; 			/* printf format */
+	const char *fmt;		/* printf format */
 	size_t fmtlen;			/* length of printf format */
-	char *fn;			/* function name */
+	const char *fn;			/* function name */
 	size_t fnlen;			/* length of function name */
 	u_long call;			/* function call number */
 	u_long v[4];			/* values */
@@ -187,7 +187,7 @@ do { \
 
 #define UVMHIST_FUNC(FNAME) \
 	static int _uvmhist_cnt = 0; \
-	static char *const _uvmhist_name = FNAME; \
+	static const char *const _uvmhist_name = FNAME; \
 	int _uvmhist_call;
 
 static __inline void uvmhist_print(struct uvm_history_ent *);
