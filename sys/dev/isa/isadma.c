@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.46 2000/11/14 18:28:16 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.47 2001/02/12 15:49:19 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -357,13 +357,15 @@ _isa_dmastart(ids, chan, addr, nbytes, p, flags, busdmaflags)
 	if (chan & 4) {
 		if (nbytes > (1 << 17) || nbytes & 1 || (u_long)addr & 1) {
 			printf("%s: drq %d, nbytes 0x%lx, addr %p\n",
-			    ids->ids_dev->dv_xname, chan, nbytes, addr);
+			    ids->ids_dev->dv_xname, chan,
+			    (unsigned long) nbytes, addr);
 			goto lose;
 		}
 	} else {
 		if (nbytes > (1 << 16)) {
 			printf("%s: drq %d, nbytes 0x%lx\n",
-			    ids->ids_dev->dv_xname, chan, nbytes);
+			    ids->ids_dev->dv_xname, chan,
+			    (unsigned long) nbytes);
 			goto lose;
 		}
 	}
