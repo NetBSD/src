@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.107 1998/12/08 00:19:27 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.108 1999/01/10 21:46:39 tron Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2079,7 +2079,7 @@ st_rdpos(st, hard, blkptr)
 	 * which are too stupid to recognize a zero count
 	 * for writing filemarks as a no-op.
 	 */
-	if (error != 0 && error != EACCES)
+	if (error != 0 && error != EACCES && error != EROFS)
 		return (error);
 
 	bzero(&cmd, sizeof(cmd));
@@ -2129,7 +2129,7 @@ st_setpos(st, hard, blkptr)
 	 * which are too stupid to recognize a zero count
 	 * for writing filemarks as a no-op.
 	 */
-	if (error != 0 && error != EACCES)
+	if (error != 0 && error != EACCES && error != EROFS)
 		return (error);
 
 	bzero(&cmd, sizeof(cmd));
