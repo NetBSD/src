@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.12 2004/11/14 11:12:16 yamt Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.13 2004/12/04 14:26:01 peter Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.130 2004/09/09 22:08:42 dhartmei Exp $ */
 
 /*
@@ -242,42 +242,80 @@ pfattach(int num)
 }
 
 #ifdef _LKM
-#define TAILQ_DRAIN(list, element)				\
-	do {							\
-		while ((element = TAILQ_FIRST(list)) != NULL) {	\
-			TAILQ_REMOVE(list, element, entries);	\
-			free(element, M_TEMP);			\
-		}						\
-	} while (0)
-
 void
 pfdetach(void)
 {
-	struct pf_pooladdr	*pooladdr_e;
-	struct pf_altq		*altq_e;
-	struct pf_anchor	*anchor_e;
+	struct pf_anchor	*anchor;
+	struct pf_state		*state;
+	struct pf_src_node	*node;
+	struct pfioc_table	 pt;
+	u_int32_t		 ticket;
+	int			 i;
+	char			 r = '\0';
 
 	(void)pf_pfil_detach();
 
 	callout_stop(&pf_expire_to);
-	pf_normalize_destroy();
-	pf_osfp_destroy();
-	pfi_destroy();
+	pf_status.running = 0;
 
-	TAILQ_DRAIN(&pf_pabuf, pooladdr_e);
-	TAILQ_DRAIN(&pf_altqs[1], altq_e);
-	TAILQ_DRAIN(&pf_altqs[0], altq_e);
-	while ((anchor_e = RB_ROOT(&pf_anchors)) != NULL) {
-		RB_REMOVE(pf_anchor_global, &pf_anchors, anchor_e);
-		free(anchor_e, M_TEMP);
+	/* clear the rulesets */
+	for (i = 0; i < PF_RULESET_MAX; i++)
+		if (pf_begin_rules(&ticket, i, &r) == 0)
+			pf_commit_rules(ticket, i, &r);
+#ifdef ALTQ
+	if (pf_begin_altq(&ticket) == 0)
+		pf_commit_altq(ticket);
+#endif
+
+	/* clear states */
+	RB_FOREACH(state, pf_state_tree_id, &tree_id) {
+		state->timeout = PFTM_PURGE;
+#if NPFSYNC
+		state->sync_flags = PFSTATE_NOSYNC;
+#endif
 	}
-	/* pf_remove_if_empty_ruleset(&pf_main_ruleset); */
-	pfr_destroy();
+	pf_purge_expired_states();
+#if NPFSYNC
+	pfsync_clear_states(pf_status.hostid, NULL);
+#endif
+
+	/* clear source nodes */
+	RB_FOREACH(state, pf_state_tree_id, &tree_id) {
+		state->src_node = NULL;
+		state->nat_src_node = NULL;
+	}
+	RB_FOREACH(node, pf_src_tree, &tree_src_tracking) {
+		node->expire = 1;
+		node->states = 0;
+	}
+	pf_purge_expired_src_nodes();
+
+	/* clear tables */
+	memset(&pt, '\0', sizeof(pt));
+	pfr_clr_tables(&pt.pfrio_table, &pt.pfrio_ndel, pt.pfrio_flags);
+
+	/* destroy anchors */
+	while ((anchor = RB_MIN(pf_anchor_global, &pf_anchors)) != NULL) {
+		for (i = 0; i < PF_RULESET_MAX; i++)
+			if (pf_begin_rules(&ticket, i, anchor->name) == 0)
+				pf_commit_rules(ticket, i, anchor->name);
+	}
+
+	/* destroy main ruleset */
+	pf_remove_if_empty_ruleset(&pf_main_ruleset);
+
+	/* destroy the pools */
 	pool_destroy(&pf_pooladdr_pl);
 	pool_destroy(&pf_altq_pl);
 	pool_destroy(&pf_state_pl);
 	pool_destroy(&pf_rule_pl);
 	pool_destroy(&pf_src_tree_pl);
+
+	/* destroy subsystems */
+	pf_normalize_destroy();
+	pf_osfp_destroy();
+	pfr_destroy();
+	pfi_destroy();
 }
 #endif
 
