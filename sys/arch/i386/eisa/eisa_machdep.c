@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.5.8.1 1997/05/13 02:45:54 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.5.8.2 1997/05/18 23:35:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -114,8 +114,7 @@ eisa_attach_hook(parent, self, eba)
 	struct eisabus_attach_args *eba;
 {
 
-	/* Give the MI code the bus DMA tag. */
-	eba->eba_dmat = &eisa_bus_dma_tag;
+	/* Nothing to do. */
 }
 
 int
