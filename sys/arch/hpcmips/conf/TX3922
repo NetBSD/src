@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.17 2000/04/27 19:38:24 uch Exp $
+#	$NetBSD: TX3922,v 1.18 2000/05/02 17:50:52 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -217,8 +217,7 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # WS console uses SUN or VT100 terminal emulation
-bivideo*	at plumvideo?
-hpcfb*		at bivideo?
+hpcfb*		at plumvideo?
 wsdisplay*	at hpcfb?
 wskbd*		at skbd? mux 1
 btnmgr0		at mainbus0

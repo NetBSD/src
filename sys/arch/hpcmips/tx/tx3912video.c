@@ -1,8 +1,7 @@
-/*	$NetBSD: tx3912video.c,v 1.10 2000/04/24 13:02:13 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.11 2000/05/02 17:50:52 uch Exp $ */
 
-/*
- * Copyright (c) 1999, 2000 UCHIYAMA Yasushi
- * All rights reserved.
+/*-
+ * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,6 +11,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -21,9 +22,8 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "opt_tx39_debug.h"
@@ -34,6 +34,8 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 
+#include <sys/ioctl.h>
+
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
 
@@ -41,13 +43,9 @@
 #include <hpcmips/tx/tx3912videovar.h>
 #include <hpcmips/tx/tx3912videoreg.h>
 
-#if NHPCFB > 0
 #include <dev/wscons/wsconsio.h>
 #include <arch/hpcmips/dev/hpcfbvar.h>
 #include <arch/hpcmips/dev/hpcfbio.h>
-#include <arch/hpcmips/dev/bivideovar.h>
-#endif
-#include <machine/autoconf.h> /* XXX */
 
 #define TX3912VIDEO_DEBUG
 
@@ -60,29 +58,38 @@ static struct tx3912video_chip {
 	int vc_fbwidth;
 	int vc_fbheight;
 
-	void (*vc_drawline) __P((int, int, int, int));
-	void (*vc_drawdot) __P((int, int));
+	void (*vc_drawline) __P((int, int, int, int)); /* for debug */
+	void (*vc_drawdot) __P((int, int)); /* for debug */
 } tx3912video_chip;
 
 struct tx3912video_softc {
 	struct device sc_dev;
-
+	struct hpcfb_fbconf sc_fbconf;
+	struct hpcfb_dspconf sc_dspconf;
 	struct tx3912video_chip *sc_chip;
 };
 
-void tx3912video_framebuffer_init __P((struct tx3912video_chip *));
-int  tx3912video_framebuffer_alloc __P((struct tx3912video_chip *, paddr_t,
+void	tx3912video_framebuffer_init __P((struct tx3912video_chip *));
+int	tx3912video_framebuffer_alloc __P((struct tx3912video_chip *, paddr_t,
 					paddr_t *));
-void tx3912video_reset __P((struct tx3912video_chip *));
-void tx3912video_resolution_init __P((struct tx3912video_chip *));
+void	tx3912video_reset __P((struct tx3912video_chip *));
+void	tx3912video_resolution_init __P((struct tx3912video_chip *));
 
 int	tx3912video_match __P((struct device *, struct cfdata *, void *));
 void	tx3912video_attach __P((struct device *, struct device *, void *));
 int	tx3912video_print __P((void *, const char *));
 
+void	tx3912video_hpcfbinit __P((struct tx3912video_softc *));
+int	tx3912video_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	tx3912video_mmap __P((void *, off_t, int));
+
 struct cfattach tx3912video_ca = {
 	sizeof(struct tx3912video_softc), tx3912video_match, 
 	tx3912video_attach
+};
+
+struct hpcfb_accessops tx3912video_ha = {
+	tx3912video_ioctl, tx3912video_mmap
 };
 
 void	__tx3912video_attach_drawfunc __P((struct tx3912video_chip*));
@@ -110,6 +117,8 @@ tx3912video_attach(parent, self, aux)
 		[TX3912_VIDEOCTRL1_BITSEL_4BITGREYSCALE] = "4bit greyscale",
 		[TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR] = "8bit color"
 	};
+	struct hpcfb_attach_args ha;
+	int console = (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) ? 0 : 1;
 
 	sc->sc_chip = chip = &tx3912video_chip;
 
@@ -121,7 +130,7 @@ tx3912video_attach(parent, self, aux)
 
 	/* if serial console, power off video module */
 #ifndef TX3912VIDEO_DEBUG
-	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
+	if (!console) {
 		tx_chipset_tag_t tc = ta->ta_tc;
 		txreg_t reg;
 		printf("%s: power off\n", sc->sc_dev.dv_xname);
@@ -136,26 +145,78 @@ tx3912video_attach(parent, self, aux)
 	__tx3912video_attach_drawfunc(sc->sc_chip);
 	
 	/* Attach frame buffer device */
-#if NHPCFB > 0
-	if (!(bootinfo->bi_cnuse & BI_CNUSE_SERIAL)) {
-		if (hpcfb_cnattach(0, 0, 0, 0)) {
-			panic("tx3912video_attach: can't init fb console");
-		}
+	tx3912video_hpcfbinit(sc);
+
+	if (console && hpcfb_cnattach(&sc->sc_fbconf) != 0) {
+		panic("tx3912video_attach: can't init fb console");
 	}
-	{
-		struct mainbus_attach_args ma; /* XXX */
-		ma.ma_name = "bivideo"; /* XXX */
-		config_found(self, &ma, tx3912video_print);
-	}
-#endif /* NHPCFB > 0 */
+
+	ha.ha_console = console;
+	ha.ha_accessops = &tx3912video_ha;
+	ha.ha_accessctx = sc;
+	ha.ha_curfbconf = 0;
+	ha.ha_nfbconf = 1;
+	ha.ha_fbconflist = &sc->sc_fbconf;
+	ha.ha_curdspconf = 0;
+	ha.ha_ndspconf = 1;
+	ha.ha_dspconflist = &sc->sc_dspconf;
+
+	config_found(self, &ha, hpcfbprint);
 }
 
-int
-tx3912video_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+void
+tx3912video_hpcfbinit(sc)
+	struct tx3912video_softc *sc;
 {
-	return (pnp ? QUIET : UNCONF);
+	struct tx3912video_chip *chip = sc->sc_chip;
+	struct hpcfb_fbconf *fb = &sc->sc_fbconf;
+	caddr_t fbcaddr = (caddr_t)MIPS_PHYS_TO_KSEG1(chip->vc_fbaddr);
+	
+	memset(fb, 0, sizeof(struct hpcfb_fbconf));
+	
+	fb->hf_conf_index	= 0;	/* configuration index		*/
+	fb->hf_nconfs		= 1;   	/* how many configurations	*/
+	strcpy(fb->hf_name, "TX3912 built-in video");
+					/* frame buffer name		*/
+	strcpy(fb->hf_conf_name, "LCD");
+					/* configuration name		*/
+	fb->hf_height		= chip->vc_fbheight;
+	fb->hf_width		= chip->vc_fbwidth;
+	fb->hf_baseaddr		= mips_ptob(mips_btop(fbcaddr));
+	fb->hf_offset		= (u_long)fbcaddr - fb->hf_baseaddr;
+					/* frame buffer start offset   	*/
+	fb->hf_bytes_per_line	= (chip->vc_fbwidth * chip->vc_fbdepth) / NBBY;
+	fb->hf_nplanes		= 1;
+	fb->hf_bytes_per_plane	= chip->vc_fbheight * fb->hf_bytes_per_line;
+
+	fb->hf_access_flags |= HPCFB_ACCESS_BYTE;
+	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
+	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
+
+	fb->hf_access_flags |= HPCFB_ACCESS_REVERSE; /* XXX */
+	switch (chip->vc_fbdepth) {
+	default:
+		panic("tx3912video_hpcfbinit: not supported color depth\n");
+		/* NOTREACHED */
+	case 2:
+		fb->hf_class = HPCFB_CLASS_GRAYSCALE;
+		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
+		fb->hf_pack_width = 8;
+		fb->hf_pixels_per_pack = 4;
+		fb->hf_pixel_width = 2;
+		fb->hf_class_data_length = sizeof(struct hf_gray_tag);
+		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
+		break;
+	case 8:
+		fb->hf_class = HPCFB_CLASS_INDEXCOLOR; /* XXX */
+		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
+		fb->hf_pack_width = 8;
+		fb->hf_pixels_per_pack = 1;
+		fb->hf_pixel_width = 8;
+		fb->hf_class_data_length = sizeof(struct hf_indexed_tag);
+		fb->hf_u.hf_indexed.hf_flags = 0; /* reserved for future use */
+		break;
+	}
 }
 
 int
@@ -369,10 +430,100 @@ tx3912video_reset(chip)
 	delay(1000);
 }
 
+int
+tx3912video_ioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	struct tx3912video_softc *sc = (struct tx3912video_softc *)v;
+	struct hpcfb_fbconf *fbconf;
+	struct hpcfb_dspconf *dspconf;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GETCMAP:
+		/* XXX not implemented yet */
+		return (EINVAL);
+		
+	case WSDISPLAYIO_PUTCMAP:
+		/* XXX not implemented yet */
+		return (EINVAL);
+
+	case HPCFBIO_GCONF:
+		fbconf = (struct hpcfb_fbconf *)data;
+		if (fbconf->hf_conf_index != 0 &&
+		    fbconf->hf_conf_index != HPCFB_CURRENT_CONFIG) {
+			return (EINVAL);
+		}
+		*fbconf = sc->sc_fbconf;	/* structure assignment */
+		return (0);
+
+	case HPCFBIO_SCONF:
+		fbconf = (struct hpcfb_fbconf *)data;
+		if (fbconf->hf_conf_index != 0 &&
+		    fbconf->hf_conf_index != HPCFB_CURRENT_CONFIG) {
+			return (EINVAL);
+		}
+		/*
+		 * nothing to do because we have only one configration
+		 */
+		return (0);
+
+	case HPCFBIO_GDSPCONF:
+		dspconf = (struct hpcfb_dspconf *)data;
+		if ((dspconf->hd_unit_index != 0 &&
+		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    (dspconf->hd_conf_index != 0 &&
+		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			return (EINVAL);
+		}
+		*dspconf = sc->sc_dspconf;	/* structure assignment */
+		return (0);
+
+	case HPCFBIO_SDSPCONF:
+		dspconf = (struct hpcfb_dspconf *)data;
+		if ((dspconf->hd_unit_index != 0 &&
+		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    (dspconf->hd_conf_index != 0 &&
+		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			return (EINVAL);
+		}
+		/*
+		 * nothing to do
+		 * because we have only one unit and one configration
+		 */
+		return (0);
+
+	case HPCFBIO_GOP:
+	case HPCFBIO_SOP:
+		/* XXX not implemented yet */
+		return (EINVAL);
+	}
+
+	return (ENOTTY);
+}
+
+int
+tx3912video_mmap(ctx, offset, prot)
+	void *ctx;
+	off_t offset;
+	int prot;
+{
+	struct tx3912video_softc *sc = (struct tx3912video_softc *)ctx;
+
+	if (offset < 0 || (sc->sc_fbconf.hf_bytes_per_plane +
+			   sc->sc_fbconf.hf_offset) <  offset) {
+		return (-1);
+	}
+
+	return (mips_btop(sc->sc_chip->vc_fbaddr + offset));
+}
+
 /*
  * Debug routines.
  */
-
 void
 tx3912video_calibration_pattern()
 {
