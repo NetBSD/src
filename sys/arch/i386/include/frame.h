@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)frame.h	5.2 (Berkeley) 1/18/91
- *	$Id: frame.h,v 1.2 1993/05/22 08:00:19 cgd Exp $
+ *	$Id: frame.h,v 1.3 1993/06/27 01:24:55 andrew Exp $
  */
 
 /*
@@ -108,7 +108,7 @@ struct syscframe {
 	int	sf_eax;
 	int	sf_eflags;
 	/* below portion defined in 386 hardware */
-/*	int	sf_args[N]; 	/* if call gate copy args enabled!*/
+/*	int	sf_args[N]; 	 * if call gate copy args enabled!*/
 	int	sf_eip;
 	int	sf_cs;
 	/* below only when transitting rings (e.g. user to kernel) */
