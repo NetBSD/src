@@ -4,7 +4,7 @@
 
 machine		"i386"
 cpu		"i386"
-ident		GENERICISA
+ident		GENERICAHBBT
 timezone	8 dst
 maxusers	10
 options		INET,ISOFS,NFSCLIENT
