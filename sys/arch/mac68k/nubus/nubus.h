@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.25 1997/05/02 00:54:28 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.26 1997/05/11 19:11:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -113,7 +113,6 @@ typedef struct _nubus_slot {
 	u_int32_t	crc;
 	u_int32_t	length;
 	u_int32_t	directory_offset;
-	vm_offset_t	virtual_base;
 } nubus_slot;
 
 /*
@@ -256,14 +255,20 @@ struct nubus_softc {
 };
 
 void	nubus_get_main_dir __P((nubus_slot *slot, nubus_dir *dir_return));
-int	nubus_find_rsrc __P((nubus_slot *slot, nubus_dir *dir, u_int8_t rsrcid,
-			     nubus_dirent *dirent_return));
 void	nubus_get_dir_from_rsrc __P((nubus_slot *slot, nubus_dirent *dirent,
-				     nubus_dir *dir_return));
-int	nubus_get_ind_data __P((nubus_slot *slot, nubus_dirent *dirent,
-				caddr_t data_return, int nbytes));
-int	nubus_get_c_string __P((nubus_slot *slot, nubus_dirent *dirent,
-				caddr_t data_return, int max_bytes));
-char	*nubus_get_vendor __P((nubus_slot *slot, int rsrc));
-char	*nubus_get_card_name __P((nubus_slot *slot));
+	    nubus_dir *dir_return));
 
+int	nubus_find_rsrc __P((bus_space_tag_t, bus_space_handle_t,
+	    nubus_slot *slot, nubus_dir *dir, u_int8_t rsrcid,
+	    nubus_dirent *dirent_return));
+int	nubus_get_ind_data __P((bus_space_tag_t, bus_space_handle_t,
+	    nubus_slot *slot, nubus_dirent *dirent,
+	    caddr_t data_return, int nbytes));
+int	nubus_get_c_string __P((bus_space_tag_t, bus_space_handle_t,
+	    nubus_slot *slot, nubus_dirent *dirent,
+	    caddr_t data_return, int max_bytes));
+
+char	*nubus_get_vendor __P((bus_space_tag_t, bus_space_handle_t,
+	    nubus_slot *slot, int rsrc));
+char	*nubus_get_card_name __P((bus_space_tag_t, bus_space_handle_t,
+	    nubus_slot *slot));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.12 1997/05/01 18:17:13 briggs Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -57,7 +57,8 @@
 
 static int	sn_nubus_match __P((struct device *, struct cfdata *, void *));
 static void	sn_nubus_attach __P((struct device *, struct device *, void *));
-static int	sn_nb_card_vendor __P((struct nubus_attach_args *));
+static int	sn_nb_card_vendor __P((bus_space_tag_t, bus_space_handle_t,
+		    struct nubus_attach_args *));
 
 struct cfattach sn_nubus_ca = {
 	sizeof(struct sn_softc), sn_nubus_match, sn_nubus_attach
@@ -82,7 +83,7 @@ sn_nubus_match(parent, cf, aux)
 
 	if (na->category == NUBUS_CATEGORY_NETWORK &&
 	    na->type == NUBUS_TYPE_ETHERNET) {
-		switch (sn_nb_card_vendor(na)) {
+		switch (sn_nb_card_vendor(na->na_tag, bsh, na)) {
 		default:
 			break;
 
@@ -129,7 +130,7 @@ sn_nubus_attach(parent, self, aux)
 	sc->bitmode = 1;		/* 32-bit card */
 	sc->slotno = na->slot;
 
-	switch (sn_nb_card_vendor(na)) {
+	switch (sn_nb_card_vendor(bst, bsh, na)) {
 	case SN_VENDOR_DAYNA:
 		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
 		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
@@ -212,7 +213,9 @@ sn_nubus_attach(parent, self, aux)
 }
 
 static int
-sn_nb_card_vendor(na)
+sn_nb_card_vendor(bst, bsh, na)
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
 	struct nubus_attach_args *na;
 {
 	int vendor = SN_VENDOR_UNKNOWN;
@@ -229,7 +232,8 @@ sn_nb_card_vendor(na)
 		break;
 	case NUBUS_DRSW_GATOR:
 		if (na->drhw == NUBUS_DRHW_KINETICS &&
-		    strncmp(nubus_get_card_name(na->fmt), "EtherPort", 9) != 0)
+		    strncmp(nubus_get_card_name(bst, bsh, na->fmt),
+		    "EtherPort", 9) != 0)
 			vendor = SN_VENDOR_DAYNA;
 		break;
 	case NUBUS_DRSW_DAYNA:
