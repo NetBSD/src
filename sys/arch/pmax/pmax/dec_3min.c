@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.51 2003/12/13 23:04:38 ad Exp $ */
+/* $NetBSD: dec_3min.c,v 1.52 2005/01/11 08:05:14 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.51 2003/12/13 23:04:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.52 2005/01/11 08:05:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 #define CHECKINTR(slot, bits)					\
     do {							\
 	if (can_serve & (bits)) {				\
-		intrcnt[slot] += 1;				\
+		intrtab[slot].ih_count.ev_count++;		\
 		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
 	}							\
     } while (0)
@@ -478,16 +478,16 @@ dec_3min_intr(status, cause, pc, ipending)
 	}
 	if ((ipending & MIPS_INT_MASK_0) && intrtab[SYS_DEV_OPT0].ih_func) {
 		(*intrtab[SYS_DEV_OPT0].ih_func)(intrtab[SYS_DEV_OPT0].ih_arg);
-		intrcnt[SYS_DEV_OPT0]++;
+		intrtab[SYS_DEV_OPT0].ih_count.ev_count++;
  	}
 
 	if ((ipending & MIPS_INT_MASK_1) && intrtab[SYS_DEV_OPT1].ih_func) {
 		(*intrtab[SYS_DEV_OPT1].ih_func)(intrtab[SYS_DEV_OPT1].ih_arg);
-		intrcnt[SYS_DEV_OPT1]++;
+		intrtab[SYS_DEV_OPT1].ih_count.ev_count++;
 	}
 	if ((ipending & MIPS_INT_MASK_2) && intrtab[SYS_DEV_OPT2].ih_func) {
 		(*intrtab[SYS_DEV_OPT2].ih_func)(intrtab[SYS_DEV_OPT2].ih_arg);
-		intrcnt[SYS_DEV_OPT2]++;
+		intrtab[SYS_DEV_OPT2].ih_count.ev_count++;
 	}
 
 done:
