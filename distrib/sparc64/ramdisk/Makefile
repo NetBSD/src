@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/08/10 14:38:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2000/08/19 13:17:38 mrg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -13,7 +13,8 @@ RAW_PART=	c
 .endif
 
 # Need to add more cases
-.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "m68k"
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "m68k" || \
+    ${MACHINE_ARCH} == "sparc64"
 FS_END=		be
 .else		# i386, pmax
 FS_END=		le
@@ -26,6 +27,10 @@ AUXDEPENDS= 	dot.profile disktab.preinstall termcap.mini \
 AUXCLEAN=	list ${CBIN}.conf dot.profile
 
 CBIN=		ramdiskbin
+
+.if ${MACHINE_ARCH} == "sparc64"
+CSIZE?=		10240
+.endif
 
 MOUNT_POINT?=	/mnt
 # DEV/RDEV file system device, CDEV/RDEV vnconfig device
@@ -58,7 +63,7 @@ all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} dot.profile
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	@echo "installing new bootblocks"
-	${MDEC}/binstall -u -v ffs ${MOUNT_POINT}
+	${MDEC}/binstall -m ${DESTDIR}/usr/mdec -u -v ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
 
