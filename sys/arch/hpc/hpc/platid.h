@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.h,v 1.1 2001/01/28 02:52:21 uch Exp $	*/
+/*	$NetBSD: platid.h,v 1.2 2001/03/25 12:17:35 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifndef _HPC_PLATID_H_
+#define _HPC_PLATID_H_
 
 #include <sys/cdefs.h>
 
@@ -145,3 +148,4 @@ __END_DECLS
 
 #include <machine/platid_generated.h>
 
+#endif /* _HPC_PLATID_H_ */
