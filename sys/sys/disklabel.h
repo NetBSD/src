@@ -1,4 +1,3 @@
-/*	$NetBSD: disklabel.h,v 1.60 2000/05/16 04:55:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -298,6 +297,36 @@ static const char *const fscknames[] = {
 	NULL		/* NULL */
 };
 #define FSMAXNAMES	(sizeof(fscknames) / sizeof(fscknames[0]) - 1)
+
+#endif
+
+#ifdef MOUNTNAMES
+/* These are the names MOUNT_XXX from <sys/mount.h> */
+static const char *const mountnames[] = {
+	NULL,		/* unused */
+	NULL,		/* swap */
+	NULL,		/* Version 6 */
+	NULL,		/* Version 7 */
+	NULL,		/* System V */
+	NULL,		/* 4.1BSD */
+	NULL,		/* Eighth edition */
+	"ffs",		/* 4.2BSD */
+	"msdos",	/* MSDOS */
+	"lfs",		/* 4.4LFS */
+	NULL,		/* unknown */
+	NULL,		/* HPFS */
+	"cd9660",	/* ISO9660 */
+	NULL,		/* boot */
+	"ados",		/* ADOS */
+	NULL,		/* HFS */
+	"filecore",	/* FILECORE */
+	"ext2fs",	/* Linux Ext2 */
+	"ntfs",		/* Windows/NT */
+	NULL,		/* RAID Component */
+	NULL,		/* concatenated disk component */
+	NULL		/* NULL */
+};
+#define FSMAXMOUNTNAMES	(sizeof(mountnames) / sizeof(mountnames[0]) - 1)
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.47 1999/11/16 11:53:17 enami Exp $	*/
+/*	$NetBSD: mount.c,v 1.48 2000/09/18 10:48:24 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.47 1999/11/16 11:53:17 enami Exp $");
+__RCSID("$NetBSD: mount.c,v 1.48 2000/09/18 10:48:24 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,11 @@ __RCSID("$NetBSD: mount.c,v 1.47 1999/11/16 11:53:17 enami Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#define MOUNTNAMES
+#include <fcntl.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+
 #include "pathnames.h"
 
 int	debug, verbose;
@@ -72,6 +77,8 @@ struct statfs
 int	hasopt __P((const char *, const char *));
 const char
       **makevfslist __P((char *));
+const static char *
+	getfslab __P((const char *str));
 static void
 	mangle __P((char *, int *, const char ***, int *));
 int	mountfs __P((const char *, const char *, const char *,
@@ -247,8 +254,15 @@ main(argc, argv)
 		 * a ':' or a '@' then assume that an NFS filesystem is being
 		 * specified ala Sun.
 		 */
-		if (vfslist == NULL && strpbrk(argv[0], ":@") != NULL)
-			vfstype = "nfs";
+		if (vfslist == NULL) {
+			if (strpbrk(argv[0], ":@") != NULL)
+				vfstype = "nfs";
+			else {
+				vfstype = getfslab(argv[0]);
+				if (vfstype == NULL)
+					vfstype = ffs_fstype;
+			}
+		}
 		rval = mountfs(vfstype,
 		    argv[0], argv[1], init_flags, options, NULL, 0);
 		break;
@@ -559,6 +573,39 @@ mangle(options, argcp, argvp, maxargcp)
 	*argcp = argc;
 	*argvp = argv;
 	*maxargcp = maxargc;
+}
+
+const static char *
+getfslab(str)
+	const char *str;
+{
+	struct disklabel dl;
+	int fd;
+	int part;
+	const char *vfstype;
+	u_char fstype;
+
+	/* deduce the filesystem type from the disk label */
+	if ((fd = open(str, O_RDONLY)) == -1)
+		err(1, "cannot open `%s'", str);
+
+	if (ioctl(fd, DIOCGDINFO, &dl) == -1)
+		err(1, "cannot get disklabel for `%s'", str);
+
+	(void) close(fd);
+
+	part = str[strlen(str) - 1] - 'a';
+
+	if (part < 0 || part >= dl.d_npartitions)
+		errx(1, "partition `%s' is not defined on disk", str);
+
+	/* Return NULL for unknown types - caller can fall back to ffs */
+	if ((fstype = dl.d_partitions[part].p_fstype) >= FSMAXMOUNTNAMES)
+		vfstype = NULL;
+	else
+		vfstype = mountnames[fstype];
+
+	return vfstype;
 }
 
 void
