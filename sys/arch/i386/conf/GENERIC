@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.500 2002/07/01 13:19:05 christos Exp $
+# $NetBSD: GENERIC,v 1.501 2002/07/10 08:37:40 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.500 $"
+#ident 		"GENERIC-$Revision: 1.501 $"
 
 maxusers	32		# estimated number of users
 
@@ -355,7 +355,7 @@ vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
-wskbd* 		at pckbd? console ?
+wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
 pcppi0		at isa?
@@ -1027,4 +1027,3 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-
