@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.4 1994/10/26 05:44:59 cgd Exp $	*/
+/*	$NetBSD: rarp.c,v 1.5 1995/02/20 11:04:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -52,8 +52,8 @@
 #include "net.h"
 #include "netif.h"
 
-static int rarpsend(struct iodesc *, void *, int);
-static int rarprecv(struct iodesc *, void *, int);
+static size_t rarpsend __P((struct iodesc *, void *, size_t));
+static size_t rarprecv __P((struct iodesc *, void *, size_t, time_t));
 
 /*
  * Ethernet (Reverse) Address Resolution Protocol (see RFC 903, and 826).
@@ -64,18 +64,13 @@ rarp_getipaddress(sock)
 {
 	struct iodesc *d;
 	register struct ether_arp *ap;
-	register void *pkt;
 	struct {
 		u_char header[HEADER_SIZE];
 		struct ether_arp wrarp;
 	} wbuf;
-	union {
-		u_char buffer[RECV_SIZE];
-		struct {
-			u_char header[HEADER_SIZE];
-			struct ether_arp xrrarp;
-		}xrbuf;
-#define rrarp  xrbuf.xrrarp
+	struct {
+		u_char header[HEADER_SIZE];
+		struct ether_arp rrarp;
 	} rbuf;
 
 #ifdef RARP_DEBUG
@@ -90,10 +85,8 @@ rarp_getipaddress(sock)
  	if (debug)
 		printf("rarp: d=%x\n", (u_int)d);
 #endif
-	ap = &wbuf.wrarp;
-	pkt = &rbuf.rrarp;
-	pkt -= HEADER_SIZE;
 
+	ap = &wbuf.wrarp;
 	bzero(ap, sizeof(*ap));
 
 	ap->arp_hrd = htons(ARPHRD_ETHER);
@@ -105,72 +98,73 @@ rarp_getipaddress(sock)
 	bcopy(d->myea, ap->arp_tha, 6);
 
 	if (sendrecv(d,
-		     rarpsend, ap, sizeof(*ap),
-		     rarprecv, pkt, RECV_SIZE) < 0) {
+	    rarpsend, ap, sizeof(*ap),
+	    rarprecv, &rbuf.rrarp, sizeof(rbuf.rrarp)) < 0) {
 		printf("No response for RARP request\n");
 		return(INADDR_ANY);
 	}
 
-	return(myip);
+	return (myip);
 }
 
 /*
  * Broadcast a RARP request (i.e. who knows who I am)
  */
-static int
+static size_t
 rarpsend(d, pkt, len)
 	register struct iodesc *d;
 	register void *pkt;
-	register int len;
+	register size_t len;
 {
+
 #ifdef RARP_DEBUG
  	if (debug)
- 	    printf("rarpsend: called\n");
+		printf("rarpsend: called\n");
 #endif
+
 	return (sendether(d, pkt, len, bcea, ETHERTYPE_REVARP));
 }
 
 /*
  * Called when packet containing RARP is received
  */
-static int
-rarprecv(d, pkt, len)
+static size_t
+rarprecv(d, pkt, len, tleft)
 	register struct iodesc *d;
 	register void *pkt;
-	register int len;
+	register size_t len;
+	time_t tleft;
 {
-	register struct ether_header *ep;
+	register struct ether_header *eh;
 	register struct ether_arp *ap;
 
 #ifdef RARP_DEBUG
  	if (debug)
- 	    printf("rarprecv: called\n");
+ 		printf("rarprecv: called\n");
 #endif
-	if (len < sizeof(struct ether_header) + sizeof(struct ether_arp)) {
-		errno = 0;
-		return (-1);
-	}
 
-	ep = (struct ether_header *)pkt;
-	if (ntohs(ep->ether_type) != ETHERTYPE_REVARP) {
-		errno = 0;
-		return (-1);
-	}
+	len = readether(d, pkt, len, tleft);
+	if (len == -1 || len < sizeof(struct ether_arp))
+		goto bad;
 
-	ap = (struct ether_arp *)(ep + 1);
+	eh = (struct ether_header *)pkt - 1;
+	if (ntohs(eh->ether_type) != ETHERTYPE_REVARP)
+		goto bad;
+
+	ap = (struct ether_arp *)pkt;
 	if (ntohs(ap->arp_op) != ARPOP_REPLY ||
-	    ntohs(ap->arp_pro) != ETHERTYPE_IP)  {
-		errno = 0;
-		return (-1);
-	}
+	    ntohs(ap->arp_pro) != ETHERTYPE_IP)
+		goto bad;
 
-	if (bcmp(ap->arp_tha, d->myea, 6)) {
-		errno = 0;
-		return (-1);
-	}
+	if (bcmp(ap->arp_tha, d->myea, 6))
+		goto bad;
 
 	bcopy(ap->arp_tpa, (char *)&myip, sizeof(myip));
 	bcopy(ap->arp_spa, (char *)&rootip, sizeof(rootip));
 
-	return(0);
+	return (0);
+
+bad:
+	errno = 0;
+	return (-1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.2 1994/10/26 05:44:52 cgd Exp $	*/
+/*	$NetBSD: net.h,v 1.3 1995/02/20 11:04:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -80,12 +80,13 @@ extern struct iodesc sockets[SOPEN_MAX];
 
 u_char	*arpwhohas __P((struct iodesc *, n_long));
 
-int	sendether __P((struct iodesc *, void *, int, u_char *, int));
-int	sendudp __P((struct iodesc *, void *, int));
-int	recvudp __P((struct iodesc *, void *, int, time_t));
-int	sendrecv __P((struct iodesc *, int (*)(struct iodesc *, void *, int),
-	    void *, int, int (*)(struct iodesc *, void *, int), void *, int));
-void	*checkudp __P((struct iodesc *, void *, int *));
+size_t	sendether __P((struct iodesc *, void *, size_t, u_char *, int));
+size_t	readether __P((struct iodesc *, void *, size_t, time_t));
+size_t	sendudp __P((struct iodesc *, void *, size_t));
+size_t	readudp __P((struct iodesc *, void *, size_t, time_t));
+size_t	sendrecv __P((struct iodesc *, size_t (*)(struct iodesc *, void *, size_t),
+	    void *, size_t, size_t (*)(struct iodesc *, void *, size_t, time_t),
+	    void *, size_t));
 
 /* utilties: */
 

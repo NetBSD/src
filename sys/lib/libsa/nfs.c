@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.5 1995/02/19 23:51:39 mycroft Exp $	*/
+/*	$NetBSD: nfs.c,v 1.6 1995/02/20 11:04:12 mycroft Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -39,6 +39,7 @@
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
+#include <nfs/xdr_subs.h>
 
 #include "stand.h"
 #include "net.h"
@@ -62,19 +63,6 @@ struct nfs_reply_data {
 };
 #define NFSREAD_SIZE sizeof(((struct nfs_reply_data *)0)->data)
 
-/* max number of nfs reads pending */
-#define NFS_COUNT 10
-
-static struct nfsstate {
-	u_long	off;
-	u_long	len;
-	int	done;
-	void	*addr;
-	u_long	xid;
-} nfsstate[NFS_COUNT];
-
-static u_long nfscc;
-
 struct nfs_iodesc {
 	off_t	off;
 	size_t	size;
@@ -93,36 +81,37 @@ getmountfh(d, path, fhp)
 	struct {
 		u_long	len;
 		char	path[FNAME_SIZE];
-	} sdata;
+	} wbuf;
 	struct {
 		u_long	errno;
 		u_char	fh[NFS_FHSIZE];
-	} rdata;
-	int cc;
+	} rbuf;
+	size_t cc;
 	
 #ifdef NFS_DEBUG
 	if (debug)
-	    printf("getmountfh: called\n");
+		printf("getmountfh: called\n");
 #endif
-	bzero(&sdata, sizeof(sdata));
+
+	bzero(&wbuf, sizeof(wbuf));
 	len = strlen(path);
-	if (len > sizeof(sdata.path))
-		len = sizeof(sdata.path);
-	bcopy(path, sdata.path, len);
-	sdata.len = htonl(len);
-	len = sizeof(sdata) - sizeof(sdata.path) + roundup(len, sizeof(long));
+	if (len > sizeof(wbuf.path))
+		len = sizeof(wbuf.path);
+	bcopy(path, wbuf.path, len);
+	wbuf.len = htonl(len);
+	len = sizeof(wbuf) - sizeof(wbuf.path) + roundup(len, sizeof(long));
 
 	if ((cc = callrpc(d, RPCPROG_MNT, RPCMNT_VER1, RPCMNT_MOUNT,
-	    &sdata, len, &rdata, sizeof(rdata))) < 0)
-		    return(-1);
-	if (cc < sizeof(rdata.errno))
+	    &wbuf, len, &rbuf, sizeof(rbuf))) == -1)
+		    return (-1);
+	if (cc < sizeof(rbuf.errno))
 		panic("getmountfh: callrpc small read");
-	if (rdata.errno) {
-		errno = ntohl(rdata.errno);
-		return(-1);
+	if (rbuf.errno) {
+		errno = ntohl(rbuf.errno);
+		return (-1);
 	}
-	bcopy(rdata.fh, fhp, sizeof(rdata.fh));
-	return(0);
+	bcopy(rbuf.fh, fhp, sizeof(rbuf.fh));
+	return (0);
 }
 
 /* Fetch file timestamp and size */
@@ -140,45 +129,43 @@ getnfsinfo(d, tp, sp, fp, mp, up, gp)
 	struct {
 		u_long	errno;
 		struct	nfsv2_fattr fa;
-	} rdata;
-	int cc;
+	} rbuf;
+	size_t cc;
 
 #ifdef NFS_DEBUG
  	if (debug)
  	    printf("getnfsinfo: called\n");
 #endif
-	rlen = sizeof(rdata);
-#ifdef NFSX_FATTR
+	rlen = sizeof(rbuf);
 #if NFSX_FATTR(1) > NFSX_FATTR(0)
 	/* nqnfs makes this more painful than it needs to be */
 	rlen -= NFSX_FATTR(1) - NFSX_FATTR(0);
 #endif
-#endif
 	if ((cc = callrpc(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_GETATTR,
-		          d->fh, NFS_FHSIZE, &rdata, rlen)) < 0)
-		return(-1);
-	if (cc < sizeof(rdata.errno))
+	    d->fh, NFS_FHSIZE, &rbuf, rlen)) == -1)
+		return (-1);
+	if (cc < sizeof(rbuf.errno))
 		panic("getnfsinfo: callrpc small read");
-	if (rdata.errno) {
-		errno = ntohl(rdata.errno);
-		return(-1);
+	if (rbuf.errno) {
+		errno = ntohl(rbuf.errno);
+		return (-1);
 	}
 	if (tp) {
-		*tp = ntohl(rdata.fa.fa_nfsmtime.nfs_sec);
-		t = ntohl(rdata.fa.fa_nfsatime.nfs_sec);
+		*tp = ntohl(rbuf.fa.fa_nfsmtime.nfs_sec);
+		t = ntohl(rbuf.fa.fa_nfsatime.nfs_sec);
 		if (*tp < t)
 			*tp = t;
 	}
 	if (sp)
-		*sp = ntohl(rdata.fa.fa_nfssize);
+		*sp = ntohl(rbuf.fa.fa_nfssize);
 	if (fp)
-		*fp = ntohl(rdata.fa.fa_type);
+		*fp = ntohl(rbuf.fa.fa_type);
 	if (mp)
-		*mp = ntohl(rdata.fa.fa_mode);
+		*mp = ntohl(rbuf.fa.fa_mode);
 	if (up)
-		*up = ntohl(rdata.fa.fa_uid);
+		*up = ntohl(rbuf.fa.fa_uid);
 	if (gp)
-		*gp = ntohl(rdata.fa.fa_gid);
+		*gp = ntohl(rbuf.fa.fa_gid);
 	return(0);
 }
 
@@ -196,266 +183,82 @@ lookupfh(d, name, fhp, tp, sp, fp)
 		u_char	fh[NFS_FHSIZE];
 		u_long	len;
 		char	name[FNAME_SIZE];
-	} sdata;
+	} wbuf;
 	struct {
 		u_long	errno;
 		u_char	fh[NFS_FHSIZE];
 		struct	nfsv2_fattr fa;
-	} rdata;
-	int cc;
+	} rbuf;
+	size_t cc;
 	
 #ifdef NFS_DEBUG
 	if (debug)
-	    printf("lookupfh: called\n");
+		printf("lookupfh: called\n");
 #endif
 
-	bzero(&sdata, sizeof(sdata));
-	bcopy(d->fh, sdata.fh, sizeof(sdata.fh));
+	bzero(&wbuf, sizeof(wbuf));
+	bcopy(d->fh, wbuf.fh, sizeof(wbuf.fh));
 	len = strlen(name);
-	if (len > sizeof(sdata.name))
-		len = sizeof(sdata.name);
-	bcopy(name, sdata.name, len);
-	sdata.len = htonl(len);
-	len = sizeof(sdata) - sizeof(sdata.name) + roundup(len, sizeof(long));
+	if (len > sizeof(wbuf.name))
+		len = sizeof(wbuf.name);
+	bcopy(name, wbuf.name, len);
+	wbuf.len = htonl(len);
+	len = sizeof(wbuf) - sizeof(wbuf.name) + roundup(len, sizeof(long));
 
-	rlen = sizeof(rdata);
-#if 0
+	rlen = sizeof(rbuf);
 #ifdef NFSX_FATTR
 #if NFSX_FATTR(1) > NFSX_FATTR(0)
 	/* nqnfs makes this more painful than it needs to be */
 	rlen -= NFSX_FATTR(1) - NFSX_FATTR(0);
 #endif
 #endif
-#endif
+
 	if ((cc = callrpc(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_LOOKUP,
-	    &sdata, len, &rdata, rlen)) < 0)
+	    &wbuf, len, &rbuf, rlen)) == -1)
 		return (-1);
-	if (cc < sizeof(rdata.errno))
+	if (cc < sizeof(rbuf.errno))
 		panic("lookupfh: callrpc small read");
-	if (rdata.errno) {
-		errno = ntohl(rdata.errno);
-		return(-1);
+	if (rbuf.errno) {
+		errno = ntohl(rbuf.errno);
+		return (-1);
 	}
-	bcopy(rdata.fh, fhp, sizeof(rdata.fh));
+	bcopy(rbuf.fh, fhp, sizeof(rbuf.fh));
 	if (tp)
-		*tp = ntohl(rdata.fa.fa_nfsctime.nfs_sec);
+		*tp = ntohl(rbuf.fa.fa_nfsctime.nfs_sec);
 	if (sp)
-		*sp = ntohl(rdata.fa.fa_nfssize);
+		*sp = ntohl(rbuf.fa.fa_nfssize);
 	if (fp)
-		*fp = ntohl(rdata.fa.fa_type);
+		*fp = ntohl(rbuf.fa.fa_type);
 	return (0);
 }
 
-static int
-sendreaddata(d, pkt, len)
-	register struct nfs_iodesc *d;
-	register void *pkt;
-	register int len;
-{
-	register int i;
-	register u_long cc;
-	register struct rpc_call *rpc;
-	register struct nfs_call_data *nfs;
-	register struct nfsstate *ns;
-
-#ifdef NFS_DEBUG
-	if (debug)
-	    printf("sendreaddata: called\n");
-#endif
-
-	if (len != sizeof(*rpc) + sizeof(*nfs))
-		panic("sendreaddata: bad buffer (%d != %d)",
-		    len, sizeof(*rpc) + sizeof(*nfs));
-	rpc = pkt;
-	nfs = (struct nfs_call_data *)(rpc + 1);
-	for (i = 0, ns = nfsstate; i < NFS_COUNT; ++i, ++ns) {
-		if (ns->done)
-			continue;
-
-		rpc->rp_xid = ns->xid;
-		nfs->off = htonl(ns->off);
-		nfs->len = htonl(ns->len);
-		cc = sendudp(d->iodesc, rpc, len);
-
-		if (cc != len)
-			panic("sendreaddata: short write (%d != %d)", cc, len);
-	}
-	/* XXX we may have actually sent a lot more bytes... */
-
-	return (len);
-}
-
-/* Returns char count if done else -1 (and errno == 0) */
-static int
-recvreaddata(d, pkt, len)
-	register struct nfs_iodesc *d;
-	register void *pkt;
-	int len;
-{
-	register int i;
-	register struct rpc_reply *rpc;
-	register struct nfs_reply_data *nfs;
-	register struct nfsstate *ns;
-
-#ifdef NFS_DEBUG
-	if (debug)
-	    printf("recvreaddata: called\n");
-#endif
-	rpc = (struct rpc_reply *)checkudp(d->iodesc, pkt, &len);
-	if (rpc == NULL || len < sizeof(*rpc)) {
-		errno = 0;
-		return (-1);
-	}
-	len -= sizeof(*rpc);
-
-	NTOHL(rpc->rp_direction);
-	NTOHL(rpc->rp_stat);
-
-	if (rpc->rp_direction != REPLY || rpc->rp_stat != MSG_ACCEPTED) {
-		errno = 0;
-		return (-1);
-	}
-
-	for (i = 0, ns = nfsstate; i < NFS_COUNT; ++i, ++ns)
-		if (rpc->rp_xid == ns->xid)
-			break;
-	if (i >= NFS_COUNT) {
-		errno = 0;
-		return (-1);
-	}
-
-	if (ns->done) {
-		errno = 0;
-		return (-1);
-	}
-#ifdef NFS_DEBUG
-	if (debug)
-	    printf("recvreaddata: ns=%x\n", (u_int)ns);
-#endif
-	nfs = (struct nfs_reply_data *)(rpc + 1);
-	if (len < sizeof(nfs->errno))
-		panic("recvreaddata: bad read %d", len);
-	if (nfs->errno) {
-		errno = ntohl(nfs->errno);
-		return (-1);
-	}
-	if (len < sizeof(*nfs) - sizeof(nfs->data))
-		panic("recvreaddata: less than nfs sized %d", len);
-	len -= sizeof(*nfs) - sizeof(nfs->data);
-
-	if (len < nfs->count)
-		panic("recvreaddata: short read (%d < %d)", len, nfs->count);
-	len = nfs->count;
-	if (len > ns->len)
-		panic("recvreaddata: huge read (%d > %d)", len, ns->len);
-
-	
-#ifdef NFS_DEBUG
-	if (debug)
-	    printf("recvreaddata: read %d bytes.\n", len);
-#endif
-	bcopy(nfs->data, ns->addr, len);
-	ns->done = 1;
-	nfscc += len;
-
-	if (len < ns->len) {
-		/* If first packet assume no more data to read */
-		if (i == 0)
-			return (0);
-
-		/* Short read, assume we are at EOF */
-		++i;
-		++ns;
-		while (i < NFS_COUNT) {
-			ns->done = 1;
-			++i;
-			++ns;
-		}
-	}
-
-	for (i = 0, ns = nfsstate; i < NFS_COUNT; ++i, ++ns)
-		if (!ns->done) {
-			errno = 0;
-			return (-1);
-		}
-
-	/* Return data count (thus indicating success) */
-	return (nfscc);
-}
-
 /* Read data from a file */
-static int
+static size_t
 readdata(d, off, addr, len)
 	register struct nfs_iodesc *d;
 	register off_t off;
 	register void *addr;
-	register u_long len;
+	register size_t len;
 {
-	register int i, cc;
-	register struct rpc_call *rpc;
-	register struct nfsstate *ns;
-	struct {
-		u_char	header[HEADER_SIZE];
-		struct	rpc_call rpc;
-		struct	nfs_call_data nfs;
-	} sdata;
-	struct {
-		u_char	header[HEADER_SIZE];
-		struct	rpc_call rpc;
-		struct	nfs_reply_data nfs;
-	} rdata;
+	size_t cc;
+	struct nfs_call_data wbuf;
+	struct nfs_reply_data rbuf;
 
-#ifdef NFS_DEBUG
-	if (debug)
-	    printf("readdata: addr=%x, off=%d len=%d\n", (u_int)addr, (u_int)off, len);
-#endif
-	if (len == 0)
-		return (0);
-	d->iodesc->destport = getport(d->iodesc, NFS_PROG, NFS_VER2);
+	bcopy(d->fh, wbuf.fh, NFS_FHSIZE);
+	wbuf.off = txdr_unsigned(off);
+	if (len > NFSREAD_SIZE)
+		len = NFSREAD_SIZE;
+	wbuf.len = txdr_unsigned(len);
+	wbuf.xxx = txdr_unsigned(0);
 
-	bzero(&sdata, sizeof(sdata));
+	cc = callrpc(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_READ,
+	    &wbuf, sizeof(wbuf),
+	    &rbuf, sizeof(rbuf) - NFSREAD_SIZE + len);
+	if (cc == -1 || cc < sizeof(rbuf) - NFSREAD_SIZE)
+		return (-1);
 
-	for (i = 0, ns = nfsstate; i < NFS_COUNT; ++i, ++ns) {
-		if (len <= 0) {
-			ns->done = 1;
-			continue;
-		}
-		ns->done = 0;
-
-		ns->xid = d->iodesc->xid;
-		++d->iodesc->xid;
-
-		ns->off = (u_int)off;
-		ns->len = len;
-		if (ns->len > NFSREAD_SIZE)
-			ns->len = NFSREAD_SIZE;
-#ifdef notdef
-/* XXX to align or not align? It doesn't seem to speed things up... */
-		if ((ns->off % NFSREAD_SIZE) != 0)
-			ns->len -= off % NFSREAD_SIZE;
-#endif
-
-		off += ns->len;
-		len -= ns->len;
-
-		ns->addr = addr;
-		addr += NFSREAD_SIZE;
-	}
-
-	rpc = &sdata.rpc;
-	rpc->rp_rpcvers = htonl(RPC_MSG_VERSION);
-	rpc->rp_prog = htonl(NFS_PROG);
-	rpc->rp_vers = htonl(NFS_VER2);
-	rpc->rp_proc = htonl(NFSPROC_READ);
-	bcopy(d->fh, sdata.nfs.fh, sizeof(sdata.nfs.fh));
-
-	nfscc = 0;
-	cc = sendrecv(d->iodesc,
-		      sendreaddata, &sdata.rpc,
-		      sizeof(struct rpc_call) + sizeof(struct nfs_call_data),
-		      recvreaddata,
-			((u_char *)&rdata.rpc) - HEADER_SIZE, HEADER_SIZE +
-			  sizeof(struct rpc_call) + sizeof(struct nfs_reply_data));
+	cc -= sizeof(rbuf) - NFSREAD_SIZE;
+	bcopy(rbuf.data, addr, cc);
 	return (cc);
 }
 
@@ -598,7 +401,7 @@ nfs_read(f, addr, size, resid)
 	u_int *resid;	/* out */
 {
 	register struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
-	register int cc;
+	register size_t cc;
 	
 #ifdef NFS_DEBUG
 	if (debug)
@@ -606,16 +409,15 @@ nfs_read(f, addr, size, resid)
 #endif
 	while (size > 0) {
 		cc = readdata(fp->iodesc, fp->off, (void *)addr, size);
-		if (cc <= 0) {
-			/* XXX maybe should retry on certain errors */
-			if (cc < 0) {
+		/* XXX maybe should retry on certain errors */
+		if (cc == -1) {
 #ifdef NFS_DEBUG
-				if (debug)
-					printf("nfs_read: read: %s",
-						strerror(errno));
+			if (debug)
+				printf("nfs_read: read: %s", strerror(errno));
 #endif
-				return (-1);
-			}
+			return (-1);
+		}
+		if (cc == 0) {
 			if (debug)
 				printf("nfs_read: hit EOF unexpectantly");
 			goto ret;
@@ -681,8 +483,9 @@ nfs_stat(f, sb)
 
 #ifdef NFS_DEBUG
  	if (debug)
- 	    printf("nfs_stat: called\n");
+		printf("nfs_stat: called\n");
 #endif
+
 	if (getnfsinfo(fp, &mounttime, &sb->st_size, &ftype, &mode, &sb->st_uid, &sb->st_gid) < 0)
 		return(-1);
 
