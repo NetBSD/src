@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.70 2004/03/21 12:50:14 martin Exp $	*/
+/*	$NetBSD: psycho.c,v 1.71 2004/03/22 12:21:58 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.70 2004/03/21 12:50:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.71 2004/03/22 12:21:58 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -231,19 +231,22 @@ psycho_dump_intmap(struct psycho_softc *sc)
 	for (intrmapptr = &sc->sc_regs->scsi_int_map;
 	     intrmapptr < &sc->sc_regs->ue_int_map;
 	     intrmapptr++)
-		printf("%p: %lx\n", intrmapptr, *intrmapptr);
+		printf("%p: %llx\n", intrmapptr,
+		    (unsigned long long)*intrmapptr);
 
 	printf("\tintmap:pci\n");
 	for (intrmapptr = &sc->sc_regs->pcia_slot0_int;
 	     intrmapptr <= &sc->sc_regs->pcib_slot3_int;
 	     intrmapptr++)
-		printf("%p: %lx\n", intrmapptr, *intrmapptr);
+		printf("%p: %llx\n", intrmapptr,
+		    (unsigned long long)*intrmapptr);
 
 	printf("\tintmap:ffb\n");
 	for (intrmapptr = &sc->sc_regs->ffb0_int_map;
 	     intrmapptr <= &sc->sc_regs->ffb1_int_map;
 	     intrmapptr++)
-		printf("%p: %lx\n", intrmapptr, *intrmapptr);
+		printf("%p: %llx\n", intrmapptr,
+		    (unsigned long long)*intrmapptr);
 }
 #endif
 
