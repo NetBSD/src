@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 2000/04/06 12:17:26 mrg Exp $ */
+/*	$NetBSD: fpu.c,v 1.5 2000/04/10 13:34:19 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,7 +170,9 @@ fpu_cleanup(p, fs)
 		case NOTFPU:
 #ifdef DEBUG
 			printf("fpu_cleanup: not an FPU error -- sending SIGILL\n", p);
+#ifdef DDB
 			Debugger();
+#endif
 #endif
 			trapsignal(p, SIGILL, 0);	/* ??? code?  */
 			break;

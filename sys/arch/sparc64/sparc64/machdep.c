@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2000/04/06 12:17:27 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.58 2000/04/10 13:34:20 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -377,7 +377,9 @@ setregs(p, pack, stack)
 #ifdef NOTDEF_DEBUG
 	printf("setregs: setting tf %p sp %p pc %p\n", (long)tf, 
 	       (long)tf->tf_out[6], (long)tf->tf_pc);
+#ifdef DDB
 	Debugger();
+#endif
 #endif
 }
 
@@ -499,7 +501,9 @@ sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc, oldsp);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 
@@ -567,7 +571,9 @@ sendsig(catcher, sig, mask, code)
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig: window save or copyout error\n");
 		printf("sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
@@ -598,7 +604,9 @@ sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, addr);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 }
@@ -633,7 +641,9 @@ sys___sigreturn14(p, v, retval)
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 		sigexit(p, SIGILL);
 	}
@@ -641,7 +651,9 @@ sys___sigreturn14(p, v, retval)
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sigreturn14: %s[%d], sigcntxp %p\n",
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 	scp = SCARG(uap, sigcntxp);
@@ -649,7 +661,9 @@ sys___sigreturn14(p, v, retval)
 #ifdef DEBUG
 	{
 		printf("sigreturn14: copyin failed: scp=%p\n", scp);
+#ifdef DDB
 		Debugger();
+#endif
 		return (EINVAL);
 	}
 #else
@@ -667,7 +681,9 @@ sys___sigreturn14(p, v, retval)
 #ifdef DEBUG
 	{
 		printf("sigreturn14: pc %p or npc %p invalid\n", sc.sc_pc, sc.sc_npc);
+#ifdef DDB
 		Debugger();
+#endif
 		return (EINVAL);
 	}
 #else
@@ -684,7 +700,9 @@ sys___sigreturn14(p, v, retval)
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sigreturn14: return trapframe pc=%p sp=%p tstate=%llx\n",
 		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 
@@ -1094,7 +1112,9 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	{ 
 #ifdef DEBUG
 		printf("_bus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 		return (EINVAL);
 	}		
