@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.109 2001/01/11 11:32:56 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.110 2001/01/16 15:56:48 nonaka Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ vendor COMPEX			0x8a01	Compex Corporation
 vendor MELCO			0x8a01	Melco Corporation
 vendor CONTEC			0xc001	Contec
 vendor MACNICA			0xc00b	MACNICA
+vendor ROLAND			0xc00c	Roland
 vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
@@ -227,6 +228,9 @@ product SMC EZCARD		0x8022 SMC EZCard 10 PCMCIA
 
 /* Contec C-NET(PC) */
 product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
+
+/* Roland */
+product ROLAND SCP55		0x0001 Roland SCP-55
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
