@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.121 2000/10/07 17:18:17 deberg Exp $
+#	$NetBSD: Makefile,v 1.122 2001/05/08 02:04:08 sommerfeld Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -132,7 +132,7 @@ build: buildmsg beforeinstall
 	${MAKE} ${_J} ${_M} cleandir
 .endif
 .if ${MKOBJDIRS} != "no"
-	${MAKE} ${_M} obj
+	${MAKE} ${_J} ${_M} obj
 .endif
 .if empty(HAVE_EGCS)
 .if defined(DESTDIR)
