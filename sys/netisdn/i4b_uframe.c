@@ -27,7 +27,7 @@
  *	i4b_uframe.c - routines for handling U-frames
  *	-----------------------------------------------
  *
- *	$Id: i4b_uframe.c,v 1.1.1.1 2001/01/05 12:50:06 martin Exp $ 
+ *	$Id: i4b_uframe.c,v 1.2 2001/03/24 12:40:33 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -62,7 +62,6 @@
 #endif
 
 #include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -73,9 +72,8 @@
  *	process a received U-frame
  *---------------------------------------------------------------------------*/
 void
-i4b_rxd_u_frame(int unit, struct mbuf *m)
+i4b_rxd_u_frame(l2_softc_t *l2sc, struct mbuf *m)
 {
-	l2_softc_t *l2sc = &l2_softc[unit];
 	u_char *ptr = m->m_data;
 
 	int sapi = GETSAPI(*(ptr + OFF_SAPI));
@@ -105,7 +103,7 @@ i4b_rxd_u_frame(int unit, struct mbuf *m)
 			{
 				/* layer 2 management (SAPI = 63) */
 				l2sc->stat.rx_tei++;
-				i4b_tei_rxframe(unit, m);
+				i4b_tei_rxframe(l2sc, m);
 			}
 			else if(sapi == SAPI_CCP && tei == GROUP_TEI)
 			{
@@ -114,7 +112,7 @@ i4b_rxd_u_frame(int unit, struct mbuf *m)
 				/* strip ui header */
 				m_adj(m, UI_HDR_LEN);
 				/* to upper layer */
-				DL_Unit_Data_Ind(unit, m);
+				i4b_dl_unit_data_ind(l2sc->bri, m);
 			}
 			else
 			{
@@ -237,7 +235,7 @@ i4b_tx_sabme(l2_softc_t *l2sc, pbit_t pbit)
 	l2sc->stat.tx_sabme++;
 	NDBGL2(L2_U_MSG, "tx SABME, tei = %d", l2sc->tei);
 	m = i4b_build_u_frame(l2sc, CR_CMD_TO_NT, pbit, SABME);
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 }
 
 /*---------------------------------------------------------------------------*
@@ -251,7 +249,7 @@ i4b_tx_dm(l2_softc_t *l2sc, fbit_t fbit)
 	l2sc->stat.tx_dm++;	
 	NDBGL2(L2_U_MSG, "tx DM, tei = %d", l2sc->tei);
 	m = i4b_build_u_frame(l2sc, CR_RSP_TO_NT, fbit, DM);
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 }
 
 /*---------------------------------------------------------------------------*
@@ -265,7 +263,7 @@ i4b_tx_disc(l2_softc_t *l2sc, pbit_t pbit)
 	l2sc->stat.tx_disc++;
 	NDBGL2(L2_U_MSG, "tx DISC, tei = %d", l2sc->tei);
 	m = i4b_build_u_frame(l2sc, CR_CMD_TO_NT, pbit, DISC);
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 }
 
 /*---------------------------------------------------------------------------*
@@ -279,7 +277,7 @@ i4b_tx_ua(l2_softc_t *l2sc, fbit_t fbit)
 	l2sc->stat.tx_ua++;
 	NDBGL2(L2_U_MSG, "tx UA, tei = %d", l2sc->tei);
 	m = i4b_build_u_frame(l2sc, CR_RSP_TO_NT, fbit, UA);
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 }
 
 /*---------------------------------------------------------------------------*
@@ -293,7 +291,7 @@ i4b_tx_frmr(l2_softc_t *l2sc, fbit_t fbit)
 	l2sc->stat.tx_frmr++;
 	NDBGL2(L2_U_MSG, "tx FRMR, tei = %d", l2sc->tei);
 	m = i4b_build_u_frame(l2sc, CR_RSP_TO_NT, fbit, FRMR);
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 }
 
 #endif /* NI4BQ921 > 0 */

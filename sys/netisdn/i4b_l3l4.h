@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.1.1.1 2001/01/05 12:49:52 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.2 2001/03/24 12:40:32 martin Exp $
  *
  * $FreeBSD$
  *
@@ -59,12 +59,12 @@ typedef struct bchan_statistics {
  * table of things the driver needs to know about the b channel
  * it is connected to for data transfer
  *---------------------------------------------------------------------------*/
-typedef struct i4l_isdn_bchan_linktab {
-	int unit;
+typedef struct i4b_isdn_bchan_linktab {
+	void* l1token;
 	int channel;
-	void (*bch_config)(int unit, int channel, int bprot, int updown);
-	void (*bch_tx_start)(int unit, int channel);
-	void (*bch_stat)(int unit, int channel, bchan_statistics_t *bsp);	
+	void (*bch_config)(void*, int channel, int bprot, int updown);
+	void (*bch_tx_start)(void*, int channel);
+	void (*bch_stat)(void*, int channel, bchan_statistics_t *bsp);	
 	struct ifqueue *tx_queue;
 	struct ifqueue *rx_queue;	/* data xfer for NON-HDLC traffic   */
 	struct mbuf **rx_mbuf;		/* data xfer for HDLC based traffic */
@@ -74,23 +74,23 @@ typedef struct i4l_isdn_bchan_linktab {
  * table of things the b channel handler needs to know  about
  * the driver it is connected to for data transfer
  *---------------------------------------------------------------------------*/
-typedef struct i4l_driver_bchan_linktab {
+typedef struct i4b_driver_bchan_linktab {
 	int unit;
-	void (*bch_rx_data_ready)(int unit);
-	void (*bch_tx_queue_empty)(int unit);
-	void (*bch_activity)(int unit, int rxtx);
+	void (*bch_rx_data_ready)(int);
+	void (*bch_tx_queue_empty)(int);
+	void (*bch_activity)(int, int rxtx);
 #define ACT_RX 0
 #define ACT_TX 1
-	void (*line_connected)(int unit, void *cde);
-	void (*line_disconnected)(int unit, void *cde);
-	void (*dial_response)(int unit, int stat, cause_t cause);
-	void (*updown_ind)(int unit, int updown);		
+	void (*line_connected)(int, void *cde);
+	void (*line_disconnected)(int, void *cde);
+	void (*dial_response)(int, int stat, cause_t cause);
+	void (*updown_ind)(int, int updown);		
 } drvr_link_t;
 
 /* global linktab functions for controller types (aka hardware drivers) */
 struct ctrl_type_desc {
-	isdn_link_t* (*get_linktab)(int unit, int channel);
-	void (*set_linktab)(int unit, int channel, drvr_link_t *dlt);
+	isdn_link_t* (*get_linktab)(void*, int channel);
+	void (*set_linktab)(void*, int channel, drvr_link_t *dlt);
 };
 extern struct ctrl_type_desc ctrl_types[];
 
@@ -101,30 +101,18 @@ void rbch_set_linktab(int unit, isdn_link_t *ilt);
 
 /* global linktab functions for IPR network driver */
 
-drvr_link_t *ipr_ret_linktab(int unit);
-void ipr_set_linktab(int unit, isdn_link_t *ilt);
+drvr_link_t *ipr_ret_linktab(int);
+void ipr_set_linktab(int, isdn_link_t *ilt);
 
 /* global linktab functions for TEL userland driver */
 
-drvr_link_t *tel_ret_linktab(int unit);
-void tel_set_linktab(int unit, isdn_link_t *ilt);
+drvr_link_t *tel_ret_linktab(int);
+void tel_set_linktab(int, isdn_link_t *ilt);
 
 /* global linktab functions for ISPPP userland driver */
 
-drvr_link_t *i4bisppp_ret_linktab(int unit);
-void i4bisppp_set_linktab(int unit, isdn_link_t *ilt);
-
-#ifdef __bsdi__
-/* global linktab functions for IBC userland driver */
-
-drvr_link_t *ibc_ret_linktab(int unit);
-void ibc_set_linktab(int unit, isdn_link_t *ilt);
-#endif
-
-/* global linktab functions for ING network driver */
-
-drvr_link_t *ing_ret_linktab(int unit);
-void ing_set_linktab(int unit, isdn_link_t *ilt);
+drvr_link_t *i4bisppp_ret_linktab(int);
+void i4bisppp_set_linktab(int, isdn_link_t *ilt);
 
 
 /*---------------------------------------------------------------------------*
@@ -134,7 +122,7 @@ void ing_set_linktab(int unit, isdn_link_t *ilt);
 typedef struct
 {
 	u_int	cdid;			/* call descriptor id		*/
-	int	controller;		/* isdn controller number	*/
+	int	bri;			/* isdn controller number	*/
 	int	cr;			/* call reference value		*/
 
 	int	crflag;			/* call reference flag		*/
@@ -190,19 +178,6 @@ typedef struct
 
 	int	timeout_active;		/* idle timeout() active flag	*/
 
-#if (defined(__FreeBSD_version) && __FreeBSD_version >= 300001) || \
-	(!defined(__FreeBSD_version) && defined(__FreeBSD__) && __FreeBSD__ >= 3)
-	struct	callout_handle	idle_timeout_handle;
-	struct	callout_handle	T303_callout;
-	struct	callout_handle	T305_callout;
-	struct	callout_handle	T308_callout;
-	struct	callout_handle	T309_callout;
-	struct	callout_handle	T310_callout;
-	struct	callout_handle	T313_callout;
-	struct	callout_handle	T400_callout;
-	int	callouts_inited;		/* must init before use */
-#endif
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 	struct	callout	idle_timeout_handle;
 	struct	callout	T303_callout;
 	struct	callout	T305_callout;
@@ -212,7 +187,6 @@ typedef struct
 	struct	callout	T313_callout;
 	struct	callout	T400_callout;
 	int	callouts_inited;		/* must init before use */
-#endif
 
 	int	idletime_state;		/* wait for idle_time begin	*/
 #define IST_IDLE	0	/* shorthold mode disabled 	*/
@@ -253,7 +227,8 @@ struct isdn_dr_prot;
  *---------------------------------------------------------------------------*/
 typedef struct
 {
-	int	unit;			/* unit number of this contr.	*/
+	void*	l1_token;		/* softc of hardware driver	*/
+	int	bri;
 	int	ctrl_type;		/* controller type   (CTRL_XXX)	*/
 	int	card_type;		/* card manufacturer (CARD_XXX) */
 
@@ -275,10 +250,12 @@ typedef struct
 	void	(*N_CONNECT_REQUEST)	(unsigned int);	
 	void	(*N_CONNECT_RESPONSE)	(unsigned int, int, int);
 	void	(*N_DISCONNECT_REQUEST)	(unsigned int, int);
-	void	(*N_ALERT_REQUEST)	(unsigned int);	
-	int     (*N_DOWNLOAD)		(int unit, int numprotos, struct isdn_dr_prot *protocols);
-	int     (*N_DIAGNOSTICS)	(int unit, struct isdn_diagnostic_request*);
-	void	(*N_MGMT_COMMAND)	(int unit, int cmd, void *);
+	void	(*N_ALERT_REQUEST)	(unsigned int);
+#if 0
+	int     (*N_DOWNLOAD)		(void*, int numprotos, struct isdn_dr_prot *protocols);
+	int     (*N_DIAGNOSTICS)	(void*, struct isdn_diagnostic_request*);
+#endif
+	void	(*N_MGMT_COMMAND)	(int bri, int cmd, void *);
 } ctrl_desc_t;
 
 extern ctrl_desc_t ctrl_desc[MAX_CONTROLLERS];

@@ -1,3 +1,5 @@
+/* $NetBSD: isic_l1.h,v 1.2 2001/03/24 12:40:29 martin Exp $ */
+
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
  *
@@ -22,30 +24,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *---------------------------------------------------------------------------*
- *
- *	i4b_l1.h - isdn4bsd layer 1 header file
- *	---------------------------------------
- *
- *	$Id: isic_l1.h,v 1.1 2001/02/20 22:24:37 martin Exp $ 
- *
- *      last edit-date: [Fri Jan  5 11:36:11 2001]
- *
- *---------------------------------------------------------------------------*/
+ */
 
-#ifndef I4B_L1_H_
-#define I4B_L1_H_
-
-#ifdef __bsdi__
-#include <sys/device.h>		/* XXX */
-#ifndef ISA_NPORT_CHECK		/* Double yuck XXX */
-#include <i386/isa/isavar.h>	/* XXX */
-#endif
-#endif
+#ifndef _ISIC_L1_H
+#define _ISIC_L1_H
 
 #include <netisdn/i4b_l3l4.h>
-
-#define ISIC_MAXUNIT	4
 
 /*---------------------------------------------------------------------------
  *	kernel config file flags definition
@@ -82,7 +66,6 @@
 #define min(a,b)		((a)<(b)?(a):(b))
 #endif
 
-#if !defined(__FreeBSD__) && !defined(__bsdi__)
 /* We try to map as few as possible as small as possible io and/or
    memory regions. Each card defines its own interpretation of this
    mapping array. At probe time we have a fixed size array, later
@@ -106,11 +89,6 @@ struct isic_attach_args {
 	int ia_num_mappings;		/* number of io mappings provided */
 	struct isic_io_map ia_maps[ISIC_MAX_IO_MAPS];
 };
-#endif
-
-#ifdef __FreeBSD__
-extern int next_isic_unit;
-#endif
 
 /*---------------------------------------------------------------------------*
  *	isic_Bchan: the state of one B channel
@@ -120,10 +98,6 @@ typedef struct
 	int		unit;		/* cards unit number	*/
 	int		channel;	/* which channel is this*/
 	
-#if defined(__FreeBSD__) || defined(__bsdi__)
-	caddr_t		hscx;		/* HSCX address		*/
-#endif
-
 	u_char		hscx_mask;	/* HSCX interrupt mask	*/
 
 	int		bprot;		/* B channel protocol	*/
@@ -179,32 +153,17 @@ typedef struct
  *---------------------------------------------------------------------------*/
 struct l1_softc
 {
-#if !defined(__FreeBSD__)
-	/* We are inherited from this class. All drivers must have this
-	   as their first entry in struct softc. */
 	struct device	sc_dev;
-#endif
-
+	void	      * sc_l2;		/* layer 2 token for our BRI */
 	int		sc_unit;	/* unit number		*/
 	int		sc_irq;		/* interrupt vector	*/
 
-#ifdef __FreeBSD__
-	int		sc_port;	/* port base address	*/
-#elif defined(__bsdi__)
-	struct isadev	sc_id;		/* ISA/PCI device */
-	struct intrhand	sc_ih;		/* interrupt vectoring */
-	int		sc_flags;
-	int		sc_port;
-	caddr_t		sc_maddr;
-	int		sc_abustype;	/* PCI, ISA etcetera */
-#else
 	u_int		sc_maddr;	/* "memory address" for card config register */
 	int sc_num_mappings;		/* number of io mappings provided */
 	struct isic_io_map *sc_maps;
 
 #define	MALLOC_MAPS(sc)	\
 	(sc)->sc_maps = (struct isic_io_map*)malloc(sizeof((sc)->sc_maps[0])*(sc)->sc_num_mappings, M_DEVBUF, 0)
-#endif
 
 	int		sc_cardtyp;	/* CARD_TYPEP_xxxx	*/
 
@@ -222,15 +181,6 @@ struct l1_softc
 
 	int		sc_init_tries;	/* no of out tries to access S0 */
 	
-#if defined(__FreeBSD__) || defined(__bsdi__)
-	caddr_t		sc_vmem_addr;	/* card RAM virtual memory base */
-	caddr_t		sc_isac;	/* ISAC port base addr	*/
-#define ISAC_BASE	(sc->sc_isac)
-
-	caddr_t		sc_ipacbase;	/* IPAC port base addr	*/
-#define IPAC_BASE	(sc->sc_ipacbase)
-#endif
-
 	u_char		sc_isac_mask;	/* ISAC IRQ mask	*/
 #define ISAC_IMASK	(sc->sc_isac_mask)
 
@@ -259,21 +209,10 @@ struct l1_softc
 	int		sc_I430state;	/* I.430 state F3 .... F8 */
 
 	int		sc_I430T3;	/* I.430 Timer T3 running */	
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
-	struct callout_handle sc_T3_callout;
-#endif
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 	struct callout sc_T3_callout;
-#endif
 	
 	int		sc_I430T4;	/* Timer T4 running */	
-
-#if defined(__FreeBSD__) && __FreeBSD__ >=3
-	struct callout_handle sc_T4_callout;
-#endif
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 	struct callout sc_T4_callout;
-#endif
 
 	/*
 	 * byte fields for the AVM Fritz!Card PCI. These are packed into
@@ -288,29 +227,6 @@ struct l1_softc
 	int		sc_ipac;	/* flag, running on ipac */
 	int		sc_bfifolen;	/* length of b channel fifos */
 	
-#if defined(__FreeBSD__) || defined(__bsdi__)
-
-	u_char		(*readreg)(u_char *, u_int);
-	void		(*writereg)(u_char *, u_int, u_int);
-	void		(*readfifo)(void *, const void *, size_t);
-	void		(*writefifo)(void *, const void *, size_t);
-	void		(*clearirq)(void *);
-
-#define	ISAC_READ(r)		(*sc->readreg)(ISAC_BASE, (r))
-#define	ISAC_WRITE(r,v)		(*sc->writereg)(ISAC_BASE, (r), (v));
-#define	ISAC_RDFIFO(b,s)	(*sc->readfifo)((b), ISAC_BASE, (s))
-#define	ISAC_WRFIFO(b,s)	(*sc->writefifo)(ISAC_BASE, (b), (s))
-
-#define	HSCX_READ(n,r)		(*sc->readreg)(sc->sc_chan[(n)].hscx, (r))
-#define	HSCX_WRITE(n,r,v)	(*sc->writereg)(sc->sc_chan[(n)].hscx, (r), (v))
-#define	HSCX_RDFIFO(n,b,s)	(*sc->readfifo)((b), sc->sc_chan[(n)].hscx, (s))
-#define	HSCX_WRFIFO(n,b,s)	(*sc->writefifo)(sc->sc_chan[(n)].hscx, (b), (s))
-
-#define	IPAC_READ(r)		(*sc->readreg)(IPAC_BASE, (r))
-#define	IPAC_WRITE(r,v)		(*sc->writereg)(IPAC_BASE, (r), (v));
-
-#else	/* ! __FreeBSD__ */
-
 #define	ISIC_WHAT_ISAC	0
 #define	ISIC_WHAT_HSCXA	1
 #define	ISIC_WHAT_HSCXB	2
@@ -335,7 +251,6 @@ struct l1_softc
 #define IPAC_READ(r)		(*sc->readreg)(sc, ISIC_WHAT_IPAC, (r))
 #define IPAC_WRITE(r, v)	(*sc->writereg)(sc, ISIC_WHAT_IPAC, (r), (v))
 
-#endif	/* __FreeBSD__ */
 };
 
 /*---------------------------------------------------------------------------*
@@ -382,115 +297,6 @@ enum I430commands {
 
 #define N_COMMANDS CMD_ILL
 
-#ifdef __FreeBSD__
-
-extern struct l1_softc l1_sc[];
-
-extern void isic_recover(struct l1_softc *sc);
-extern int isic_realattach(struct isa_device *dev, unsigned int iobase2);
-extern int isic_attach_avma1 ( struct isa_device *dev );
-extern int isic_attach_fritzpcmcia ( struct isa_device *dev );
-extern int isic_attach_Cs0P ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_attach_Dyn ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_attach_s016 ( struct isa_device *dev );
-extern int isic_attach_s0163 ( struct isa_device *dev );
-extern int isic_attach_s0163P ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_attach_s08 ( struct isa_device *dev );
-extern int isic_attach_usrtai ( struct isa_device *dev );
-extern int isic_attach_itkix1 ( struct isa_device *dev );
-extern int isic_attach_drnngo ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_attach_sws ( struct isa_device *dev );
-extern int isic_attach_Eqs1pi(struct isa_device *dev, unsigned int iobase2);
-extern int isic_attach_avm_pnp(struct isa_device *dev, unsigned int iobase2);
-extern int isic_attach_siemens_isurf(struct isa_device *dev, unsigned int iobase2);
-extern int isic_attach_Eqs1pp(int unit, unsigned int iobase1, unsigned int iobase2);
-extern int isic_attach_asi(struct isa_device *dev, unsigned int iobase2);
-extern void isic_bchannel_setup (int unit, int hscx_channel, int bprot, int activate );
-extern int isic_hscx_fifo(l1_bchan_state_t *, struct l1_softc *);
-extern void isic_hscx_init ( struct l1_softc *sc, int hscx_channel, int activate );
-extern void isic_hscx_irq ( struct l1_softc *sc, u_char ista, int hscx_channel, u_char ex_irq );
-extern int isic_hscx_silence ( unsigned char *data, int len );
-extern void isic_hscx_cmd( struct l1_softc *sc, int h_chan, unsigned char cmd );
-extern void isic_hscx_waitxfw( struct l1_softc *sc, int h_chan );
-extern void isic_init_linktab ( struct l1_softc *sc );
-extern int isic_isac_init ( struct l1_softc *sc );
-extern void isic_isac_irq ( struct l1_softc *sc, int r );
-extern void isic_isac_l1_cmd ( struct l1_softc *sc, int command );
-extern void isic_next_state ( struct l1_softc *sc, int event );
-extern char *isic_printstate ( struct l1_softc *sc );
-extern int isic_probe_avma1 ( struct isa_device *dev );
-extern int isic_probe_avma1_pcmcia ( struct isa_device *dev );
-extern int isic_probe_avm_pnp ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_probe_siemens_isurf ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_probe_Cs0P ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_probe_Dyn ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_probe_s016 ( struct isa_device *dev );
-extern int isic_probe_s0163 ( struct isa_device *dev );
-extern int isic_probe_s0163P ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_probe_s08 ( struct isa_device *dev );
-extern int isic_probe_usrtai ( struct isa_device *dev );
-extern int isic_probe_itkix1 ( struct isa_device *dev );
-extern int isic_probe_drnngo ( struct isa_device *dev, unsigned int iobase2);
-extern int isic_probe_sws ( struct isa_device *dev );
-extern int isic_probe_Eqs1pi(struct isa_device *dev, unsigned int iobase2);
-extern int isic_probe_asi(struct isa_device *dev, unsigned int iobase2);
-
-#elif defined(__bsdi__)
-
-extern struct l1_softc *l1_sc[];
-#define isic_find_sc(unit)	(l1_sc[(unit)])
-
-#define ATTACHARGS struct device *, struct device *, struct isa_attach_args *
-#define MATCHARGS struct device *, struct cfdata *, struct isa_attach_args *
-extern int isa_isicmatch(MATCHARGS);
-extern int isa_isicattach(ATTACHARGS);
-extern int isicintr(void *);
-extern void isic_recover(struct l1_softc *sc);
-extern int isic_realattach(ATTACHARGS);
-extern int isic_attach_avma1(ATTACHARGS);
-extern int isic_attach_fritzpcmcia(ATTACHARGS);
-extern int isic_attach_Cs0P(ATTACHARGS);
-extern int isic_attach_Dyn(ATTACHARGS);
-extern int isic_attach_s016(ATTACHARGS);
-extern int isic_attach_s0163(ATTACHARGS);
-extern int isic_attach_s0163P(ATTACHARGS);
-extern int isic_attach_s08(ATTACHARGS);
-extern int isic_attach_usrtai(ATTACHARGS);
-extern int isic_attach_itkix1(ATTACHARGS);
-extern int isic_attach_drnngo(ATTACHARGS);
-extern int isic_attach_sws(ATTACHARGS);
-extern int isic_attach_Eqs1pi(ATTACHARGS);
-extern int isic_attach_Eqs1pp(ATTACHARGS);
-extern void isic_bchannel_setup(int unit, int hscx_channel, int bprot, int activate );
-extern void isic_hscx_init(struct l1_softc *sc, int hscx_channel, int activate );
-extern void isic_hscx_irq(struct l1_softc *sc, u_char ista, int hscx_channel, u_char ex_irq );
-extern int isic_hscx_silence(unsigned char *data, int len );
-extern void isic_hscx_cmd(struct l1_softc *sc, int h_chan, unsigned char cmd );
-extern void isic_hscx_waitxfw(struct l1_softc *sc, int h_chan );
-extern void isic_init_linktab(struct l1_softc *sc );
-extern int isic_isac_init(struct l1_softc *sc );
-extern void isic_isac_irq(struct l1_softc *sc, int r );
-extern void isic_isac_l1_cmd(struct l1_softc *sc, int command );
-extern void isic_next_state(struct l1_softc *sc, int event );
-extern char *isic_printstate(struct l1_softc *sc );
-extern int isic_probe_avma1(MATCHARGS);
-extern int isic_probe_avma1_pcmcia(MATCHARGS);
-extern int isic_probe_Cs0P(MATCHARGS);
-extern int isic_probe_Dyn(MATCHARGS);
-extern int isic_probe_s016(MATCHARGS);
-extern int isic_probe_s0163(MATCHARGS);
-extern int isic_probe_s0163P(MATCHARGS);
-extern int isic_probe_s08(MATCHARGS);
-extern int isic_probe_usrtai(MATCHARGS);
-extern int isic_probe_itkix1(MATCHARGS);
-extern int isic_probe_drnngo(MATCHARGS);
-extern int isic_probe_sws(MATCHARGS);
-extern int isic_probe_Eqs1pi(MATCHARGS);
-
-#undef MATCHARGS
-#undef ATTACHARGS
-#else /* not FreeBSD/__bsdi__ */
-
 extern void isic_recover __P((struct l1_softc *sc));
 extern int isicintr __P((void *));
 extern int isicprobe __P((struct isic_attach_args *ia));
@@ -500,7 +306,7 @@ extern int isic_attach_s0163 __P((struct l1_softc *sc));
 extern int isic_attach_s08 __P((struct l1_softc *sc));
 extern int isic_attach_usrtai __P((struct l1_softc *sc));
 extern int isic_attach_itkix1 __P((struct l1_softc *sc));
-extern void isic_bchannel_setup __P((int unit, int hscx_channel, int bprot, int activate));
+extern void isic_bchannel_setup __P((void*, int hscx_channel, int bprot, int activate));
 extern void isic_hscx_init __P((struct l1_softc *sc, int hscx_channel, int activate));
 extern void isic_hscx_irq __P((struct l1_softc *sc, u_char ista, int hscx_channel, u_char ex_irq));
 extern int isic_hscx_silence __P(( unsigned char *data, int len ));
@@ -519,10 +325,5 @@ extern int isic_probe_s08 __P((struct isic_attach_args *ia));
 extern int isic_probe_usrtai __P((struct isic_attach_args *ia));
 extern int isic_probe_itkix1 __P((struct isic_attach_args *ia));
 
-extern struct l1_softc *l1_sc[];
+#endif /* !_ISIC_L1_H */
 
-#define isic_find_sc(unit)	(l1_sc[(unit)])
-
-#endif /*  __FreeBSD__ */
-
-#endif /* I4B_L1_H_ */

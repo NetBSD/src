@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.429 2001/03/23 19:08:53 jdolecek Exp $
+#	$NetBSD: files,v 1.430 2001/03/24 12:40:29 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1169,7 +1169,8 @@ file	netisdn/i4b_rbch.c		i4brbch			needs-count
 file	netisdn/i4b_tel.c		i4btel			needs-count
 file	netisdn/i4b_trace.c		i4btrc			needs-count
 
-file	netisdn/i4b_mbuf.c		i4btrc			needs-count
+file	netisdn/i4b_l1l2.c		passive_isdn
+file	netisdn/i4b_mbuf.c		passive_isdn
 file	netisdn/i4b_l2.c		passive_isdn
 file	netisdn/i4b_l2fsm.c		passive_isdn
 file	netisdn/i4b_uframe.c		passive_isdn

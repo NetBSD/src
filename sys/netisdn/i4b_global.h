@@ -27,7 +27,7 @@
  *	i4b_global.h - i4b global include file
  *	--------------------------------------
  *
- *	$Id: i4b_global.h,v 1.2 2001/01/19 12:44:45 martin Exp $
+ *	$Id: i4b_global.h,v 1.3 2001/03/24 12:40:31 martin Exp $
  *
  * $FreeBSD$
  *
@@ -73,7 +73,7 @@
 
 #define TIMEOUT_FUNC_T	void *
 #define SECOND		time.tv_sec
-#define MICROTIME(x)	(x) = time
+#define MICROTIME(x)	microtime(&(x))
 
 #endif /* __NetBSD__ */
 
