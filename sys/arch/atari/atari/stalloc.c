@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.5 1996/04/12 08:46:44 leo Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.6 1996/04/12 09:05:16 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -38,7 +38,7 @@
 #include <sys/systm.h>
 #include <sys/queue.h>
 
-#include <atari/atari/misc.h>
+#include <atari/atari/stalloc.h>
 
 /*
  * St-mem allocator.
