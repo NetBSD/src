@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.5 2002/10/02 15:52:26 thorpej Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.6 2002/11/12 01:22:26 simonb Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -42,6 +42,9 @@
 #include <machine/swarm.h>
 #include <mips/sibyte/dev/sbsmbusvar.h>
 
+#include <dev/smbus/x1241reg.h>
+#include <dev/smbus/m41t81reg.h>
+
 #include "locators.h"
 
 static int smbus_match(struct device *, struct cfdata *, void *);
@@ -60,7 +63,8 @@ struct smbus_attach_locs {
 
 /* XXX XXX this table should be imported from machine-specific code XXX XXX */
 static const struct smbus_attach_locs smbus_devs[] = {
-	{ X1240_SMBUS_CHAN,	X1240_RTC_SMBUS_DEV },
+	{ X1241_SMBUS_CHAN,	X1241_RTC_SLAVEADDR },
+	{ M41T81_SMBUS_CHAN,	M41T81_SLAVEADDR },
 };
 static const int smbus_dev_count = sizeof smbus_devs / sizeof smbus_devs[0];
 
