@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 1997/02/28 16:24:03 mycroft Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 1997/03/21 04:34:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -33,18 +33,19 @@
 #define _I386_INTR_H_
 
 /* Interrupt priority `levels'. */
-#define	IPL_NONE	8	/* nothing */
-#define	IPL_SOFTCLOCK	7	/* timeouts */
-#define	IPL_SOFTNET	6	/* protocol stacks */
-#define	IPL_BIO		5	/* block I/O */
-#define	IPL_NET		4	/* network */
-#define	IPL_SOFTSERIAL	3	/* serial */
-#define	IPL_TTY		2	/* terminal */
-#define	IPL_IMP		2	/* memory allocation */
+#define	IPL_NONE	9	/* nothing */
+#define	IPL_SOFTCLOCK	8	/* timeouts */
+#define	IPL_SOFTNET	7	/* protocol stacks */
+#define	IPL_BIO		6	/* block I/O */
+#define	IPL_NET		5	/* network */
+#define	IPL_SOFTSERIAL	4	/* serial */
+#define	IPL_TTY		3	/* terminal */
+#define	IPL_IMP		3	/* memory allocation */
+#define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
 #define	IPL_HIGH	1	/* everything */
 #define	IPL_SERIAL	0	/* serial */
-#define	NIPL		9
+#define	NIPL		10
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -118,10 +119,10 @@ spllower(ncpl)
 #define	splbio()	splraise(imask[IPL_BIO])
 #define	splnet()	splraise(imask[IPL_NET])
 #define	spltty()	splraise(imask[IPL_TTY])
+#define	splaudio()	splraise(imask[IPL_AUDIO])
 #define	splclock()	splraise(imask[IPL_CLOCK])
-#define	splimp()	splraise(imask[IPL_IMP])
-#define	splserial()	splraise(imask[IPL_SERIAL])
 #define	splstatclock()	splclock()
+#define	splserial()	splraise(imask[IPL_SERIAL])
 
 /*
  * Software interrupt masks
@@ -136,6 +137,7 @@ spllower(ncpl)
 /*
  * Miscellaneous
  */
+#define	splimp()	splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		spllower(0)
 
