@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.76 2004/04/08 09:26:59 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.77 2004/04/21 17:45:38 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.76 2004/04/08 09:26:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.77 2004/04/21 17:45:38 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -5253,7 +5253,7 @@ sppp_cp_type_name(u_char type)
 	case ECHO_REPLY: return "echo-reply";
 	case DISC_REQ:   return "discard-req";
 	}
-	sprintf (buf, "0x%x", type);
+	snprintf(buf, sizeof(buf), "0x%x", type);
 	return buf;
 }
 
@@ -5276,7 +5276,7 @@ sppp_auth_type_name(u_short proto, u_char type)
 		case PAP_NAK:		return "nak";
 		}
 	}
-	sprintf (buf, "0x%x", type);
+	snprintf(buf, sizeof(buf), "0x%x", type);
 	return buf;
 }
 
@@ -5293,7 +5293,7 @@ sppp_lcp_opt_name(u_char opt)
 	case LCP_OPT_PROTO_COMP:	return "proto-comp";
 	case LCP_OPT_ADDR_COMP:		return "addr-comp";
 	}
-	sprintf (buf, "0x%x", opt);
+	snprintf(buf, sizeof(buf), "0x%x", opt);
 	return buf;
 }
 
@@ -5306,7 +5306,7 @@ sppp_ipcp_opt_name(u_char opt)
 	case IPCP_OPT_COMPRESSION:	return "compression";
 	case IPCP_OPT_ADDRESS:		return "address";
 	}
-	sprintf (buf, "0x%x", opt);
+	snprintf(buf, sizeof(buf), "0x%x", opt);
 	return buf;
 }
 
@@ -5319,7 +5319,7 @@ sppp_ipv6cp_opt_name(u_char opt)
 	case IPV6CP_OPT_IFID:		return "ifid";
 	case IPV6CP_OPT_COMPRESSION:	return "compression";
 	}
-	sprintf (buf, "0x%x", opt);
+	snprintf(buf, sizeof(buf), "0x%x", opt);
 	return buf;
 }
 #endif
@@ -5366,7 +5366,7 @@ sppp_proto_name(u_short proto)
 	case PPP_CHAP:	return "chap";
 	case PPP_IPV6CP: return "ipv6cp";
 	}
-	sprintf(buf, "0x%x", (unsigned)proto);
+	snprintf(buf, sizeof(buf), "0x%x", (unsigned)proto);
 	return buf;
 }
 
@@ -5399,7 +5399,7 @@ static const char *
 sppp_dotted_quad(u_int32_t addr)
 {
 	static char s[16];
-	sprintf(s, "%d.%d.%d.%d",
+	snprintf(s, sizeof(s), "%d.%d.%d.%d",
 		(int)((addr >> 24) & 0xff),
 		(int)((addr >> 16) & 0xff),
 		(int)((addr >> 8) & 0xff),
