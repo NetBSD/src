@@ -30,8 +30,8 @@ subdirectory of the NetBSD 1.2 distribution tree, and are as follows:
 		everything described below.
 		[ 7.2M gzipped, 20.7M uncompressed ]
 
-	comp12	The NetBSD/mac68k Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN.
+	comp12	The NetBSD/mac68k Compiler tools; all of the tools
+		relating to C and C++.
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
 		and the various system libraries (except the shared
