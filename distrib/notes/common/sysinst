@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.32.2.2 2002/06/10 16:18:46 tv Exp $
+.\"	$NetBSD: sysinst,v 1.32.2.3 2002/06/10 16:49:42 tv Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ for the installation and as such covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
-.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .It
 .To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
@@ -246,7 +246,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" r_i386
-.\} \" ! \n[macppc]:\[mvme68k]:\[news68k]:\n[pmax]:\n[sgimips]:\n[x68k]
+.\} \" ! \n[acorn26]:\n[macppc]:\[mvme68k]:\[news68k]:\n[pmax]:\n[sgimips]:\n[x68k]
 .It
 .To 2 General
 .Em General
@@ -287,7 +287,7 @@ The distribution sets (in this example, they are on CD).
 .It
 .ie r_alpha Two floppy disks.
 .el .ie r_i386 Two 1.44 MB 3.5" floppy disks.
-.el .ie \n[macppc]:\n[sparc] Some form of bootable media, described above.
+.el .ie \n[acorn26]:\n[macppc]:\n[sparc] Some form of bootable media, described above.
 .el One 1.44 MB 3.5" floppy.
 .\} \" ! r_pmax
 .if r_i386 \{\
@@ -296,9 +296,10 @@ A PC with a 386 or newer processor.
 .\} \" r_i386
 .It
 A CD-ROM drive
-.ie \n[alpha]:\n[i386]:\n[macppc] (SCSI or ATAPI),
+.ie \n[acorn26]:\n[alpha]:\n[i386]:\n[macppc] (SCSI or ATAPI),
 .el (SCSI),
 a harddisk and a minimum of
+.if r_acorn26 8 MB
 .if r_alpha 32 MB
 .if r_i386 4 MB
 .if r_macppc 8 MB
@@ -310,6 +311,7 @@ a harddisk and a minimum of
 of memory installed.
 .It
 The harddisk should have at least
+.if r_acorn26 200
 .if r_alpha 200
 .if r_i386 70
 .if r_macppc 200
@@ -371,7 +373,7 @@ system, you would type something like:
 .It
 The Quick Installation
 .(bullet
-.ie \n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
+.ie \n[acorn26]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
 Boot the system as described above.  You
 should be at the
 .Ic sysinst
@@ -436,7 +438,8 @@ After your disk has been prepared, choose
 .Me Unmounted filesystem
 as the medium.  The CD-ROM device is usually cd0 and the partition 'a'
 .Pq i.e. cd0a .
-.el
+.\}
+.el \{\
 .Me CD-ROM
 as the medium. The default values for the path and device should be ok.
 .\}
@@ -493,15 +496,15 @@ Further information can be found on
 .Em Booting NetBSD
 .
 .
-.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
 devices, so that they won't be found by
 .Nx .
 .pcmcia)
-.\} \" !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
-.ie \n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
+.\} \" !\n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
+.ie \n[acorn26]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
 .Pp
 Boot the system as described in the previous section.
 .Pp
@@ -509,7 +512,7 @@ You may want to read the
 boot messages, to notice your disk's name and capacity. Its name
 will be something like
 .Li sd0
-.if r_macppc \{\
+.if \n[acorn26]:\n[macppc] \{\
 or
 .Li wd0
 .\}
@@ -523,7 +526,7 @@ You will also need to know the name, to tell
 on which disk
 to install.
 The most important thing to know is that
-.if r_macppc \{\
+.if \n[acorn26]:\n[macppc] \{\
 .Li wd0
 is
 .Nx 's
@@ -617,12 +620,12 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
-.\} \" ! \n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
+.\} \" ! \n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
@@ -808,7 +811,7 @@ or
 .Li rz1
 .\}
 .el \{\
-.if \n[alpha]:\n[i386]:\n[macppc] \{\
+.if \n[acorn26]:\n[alpha]:\n[i386]:\n[macppc] \{\
 .Li wd0 ,
 .Li wd1 ,
 .\}
@@ -1209,12 +1212,13 @@ instead of a hostname for the NFS server.
 .To 2 "Installation from CD-ROM"
 .Em Installation from CD-ROM
 .Pp
-.if r_sgimips \{\
+.ie r_sgimips \{\
 The bootable CD-ROM distribution for
 .Nx*M
 is not ISO-9660 formatted.
 This function cannot be used for installation.  Use the 
 "Installation from an unmounted file system" selection.
+.\}
 .el \{\
 When installing from a CD-ROM, you will be asked to specify
 the device name for your CD-ROM player
