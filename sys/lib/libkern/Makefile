@@ -1,9 +1,17 @@
-#	$Id: Makefile,v 1.8 1994/05/14 06:00:34 cgd Exp $
+#	$Id: Makefile,v 1.9 1994/05/16 06:25:21 deraadt Exp $
 
 LIB=	kern
 NOPIC=
 OBJMACHINE=
-CFLAGS+=	-DKERNEL
+CFLAGS+= -I${.CURDIR} -Imachine/.. -I. -I${.CURDIR}/../..
+
+machine-links:
+	-rm -f machine &&
+	    ln -s ${.CURDIR}/../../arch/${MACHINE}/include machine
+	-rm -f ${MACHINE_ARCH} && \
+	    ln -s ${.CURDIR}/../../arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+
+all:	machine-links
 
 .if exists (${.CURDIR}/${MACHINE_ARCH}/Makefile.inc)
 .PATH:	${.CURDIR}/${MACHINE_ARCH}
