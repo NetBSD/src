@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.7 1996/10/13 03:06:13 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.8 1996/10/15 21:26:25 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -50,6 +50,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <vm/vm_kern.h>
+#include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/katelib.h>
 #include <machine/cpu.h>
@@ -58,8 +59,8 @@
 #include <machine/cpus.h>
 
 #include "cpu.h"
-#if NCPU < 1
-#error Need at least 1 CPU configured
+#if NCPU != 1
+#error Need 1 CPU configured
 #endif
 
 /* Array of cpu structures, one per possible cpu */
@@ -70,8 +71,6 @@ char cpu_model[48];
 extern int cpu_ctrl;		/* Control bits for boot CPU */
 volatile int undefined_test;	/* Used for FPA test */
 
-extern char *boot_args;
-
 /* Declare prototypes */
 
 /* Prototypes */
@@ -79,7 +78,6 @@ extern char *boot_args;
 void identify_master_cpu __P((int /*cpu_number*/));
 void identify_arm_cpu	__P((int /*cpu_number*/));
 void identify_arm_fpu	__P((int /*cpu_number*/));
-char *strstr		__P((char */*s1*/, char */*s2*/));
 
 extern int initialise_arm_fpe	__P((cpu_t *cpu));
 extern int initialise_fpe	__P((cpu_t *cpu));
@@ -136,10 +134,10 @@ struct cfdriver cpu_cd = {
 
 
 /*
- * Used to test for an FPA. The following function is installed as a coproc1 handler
- * on the undefined instruction vector and then we issue a FPA instruction.
- * If undefined_test is non zero then the FPA did not handle the instruction so
- * must be absent.
+ * Used to test for an FPA. The following function is installed as a coproc1
+ * handler on the undefined instruction vector and then we issue a FPA
+ * instruction. If undefined_test is non zero then the FPA did not handle
+ * the instruction so must be absent.
  */
 
 int
@@ -159,10 +157,11 @@ fpa_test(address, instruction, frame)
  */
 
 int
-fpa_handler(address, instruction, frame)
+fpa_handler(address, instruction, frame, fault_code)
 	u_int address;
 	u_int instruction;
 	trapframe_t *frame;
+	int fault_code;
 {
 	u_int fpsr;
     
@@ -198,9 +197,7 @@ identify_master_cpu(cpu_number)
 	strcpy(cpu_model, cpus[cpu_number].cpu_model);
 
 	if (cpus[cpu_number].cpu_class == CPU_CLASS_SARM)
-		panic("NetBSD/arm32 does not fully support the StrongARM yet.\n"
-		    "If this is a problem, send mark at SA-110 cpu card and he "
-		    "will be happy to complete the support.\n");
+		printf("cpu0: StrongARM support is highly experimental\n");
 
 /*
  * Ok now we test for an FPA
@@ -227,18 +224,6 @@ identify_master_cpu(cpu_number)
 	        switch (fpsr >> 24) {
 		case 0x81 :
 			cpus[cpu_number].fpu_class = FPU_CLASS_FPA;
-
-#if 0
-/* Experimental stuff used when playing with an ARM700+FPA11 */
-			printf("FPA11: FPSR=%08x\n", fpsr);
-			fpsr=0x00070400;
-			__asm __volatile("wfs %0" : "=r" (fpsr));
-			__asm __volatile("rfc %0" : "=r" (fpsr));
-			printf("FPA11: FPCR=%08x", fpsr);
-			__asm __volatile("stmfd sp!, {r0}; mov r0, #0x00000e00 ; wfc r0; ldmfd sp!, {r0}");
-			__asm __volatile("rfc %0" : "=r" (fpsr));
-			printf("FPA11: FPCR=%08x", fpsr);
-#endif
 			break;
 
 		default :
@@ -251,17 +236,18 @@ identify_master_cpu(cpu_number)
 		cpus[cpu_number].fpu_class = FPU_CLASS_NONE;
 		cpus[cpu_number].fpu_flags = 0;
 
-/* Ok if ARMFPE is defined and the boot options request the ARM FPE then it will
- * be installed as the FPE. If the installation fails the existing FPE is used as
- * a fall back.
- * If either ARMFPE is not defined or the boot args did not request it the old FPE
- * is installed.
+/*
+ * Ok if ARMFPE is defined and the boot options request the ARM FPE then
+ * it will be installed as the FPE. If the installation fails the existing
+ * FPE is used as a fall back.
+ * If either ARMFPE is not defined or the boot args did not request it the
+ * old FPE is installed.
  * This is just while I work on integrating the new FPE.
  * It means the new FPE gets installed if compiled int (ARMFPE defined)
  * and also gives me a on/off option when I boot in case the new FPE is
  * causing panics.
- * In all cases it falls back on the existing FPE is the ARMFPE was not successfully
- * installed.
+ * In all cases it falls back on the existing FPE is the ARMFPE was not
+ * successfully installed.
  */
 
 #ifdef ARMFPE
@@ -302,9 +288,9 @@ identify_master_cpu(cpu_number)
 
 
 /*
- * Report the type of the specifed arm processor. This uses the generic and arm specific
- * information in the cpu structure to identify the processor. The remaining fields
- * in the cpu structure are filled in appropriately.
+ * Report the type of the specifed arm processor. This uses the generic and
+ * arm specific information in the cpu structure to identify the processor.
+ * The remaining fields in the cpu structure are filled in appropriately.
  */
 
 void
@@ -319,7 +305,7 @@ identify_arm_cpu(cpu_number)
 		printf("No installed processor\n");
 		return;
 	}
-	if (cpu->cpu_class != CPU_CLASS_ARM) {
+	if (cpu->cpu_class != CPU_CLASS_ARM && cpu->cpu_class != CPU_CLASS_SARM) {
 		printf("identify_arm_cpu: Can only identify ARM CPU's\n");
 		return;
 	}
@@ -330,8 +316,8 @@ identify_arm_cpu(cpu_number)
 		return;
 	}
 
-	if ((cpuid & CPU_ID_DESIGNER_MASK) != CPU_ID_ARM_LTD)
-		printf("Unrecognised designer ID = %08x\n", cpuid);
+/*	if ((cpuid & CPU_ID_DESIGNER_MASK) != CPU_ID_ARM_LTD)
+		printf("Unrecognised designer ID = %08x\n", cpuid);*/
 
 	switch (cpuid & CPU_ID_CPU_MASK) {
         case ID_ARM610:
@@ -384,16 +370,16 @@ identify_arm_cpu(cpu_number)
 	else
 		strcat(cpu->cpu_model, " EABT");
 
-/* Print the info */
+	/* Print the info */
 
 	printf(": %s\n", cpu->cpu_model);
 }
 
 
 /*
- * Report the type of the specifed arm fpu. This uses the generic and arm specific
- * information in the cpu structure to identify the fpu. The remaining fields
- * in the cpu structure are filled in appropriately.
+ * Report the type of the specifed arm fpu. This uses the generic and arm
+ * specific information in the cpu structure to identify the fpu. The
+ * remaining fields in the cpu structure are filled in appropriately.
  */
 
 void
@@ -408,29 +394,31 @@ identify_arm_fpu(cpu_number)
 		return;
 	}
 
-	if (cpu->cpu_class != CPU_CLASS_ARM) {
-		printf("identify_arm_cpu: Can only identify ARM FPU's\n");
+	if (cpu->cpu_class != CPU_CLASS_ARM && cpu->cpu_class != CPU_CLASS_SARM) {
+		printf("identify_arm_cpu: Can only identify ARM hosted FPUs\n");
 		return;
 	}
 
-/* Now for the FP info */
+	/* Now for the FP info */
 
 	switch (cpu->fpu_class) {
 	case FPU_CLASS_NONE :
 		strcpy(cpu->fpu_model, "None");
 		break;
 	case FPU_CLASS_FPE :
-		printf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number, cpu->fpu_model);
+		printf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number,
+		    cpu->fpu_model);
 		printf("fpe%d: no hardware found\n", cpu_number);
 		break;
 	case FPU_CLASS_FPA :
-		printf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number, cpu->fpu_model);
+		printf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number,
+		    cpu->fpu_model);
 		if (cpu->fpu_type == FPU_TYPE_FPA11) {
 			strcpy(cpu->fpu_model, "FPA11");
-			printf("fpe%d: fpa11 found\n", cpu_number);
+			printf("fpe%d: FPA11 found\n", cpu_number);
 		} else {
 			strcpy(cpu->fpu_model, "FPA");
-			printf("fpe%d: fpa10 found\n", cpu_number);
+			printf("fpe%d: FPA10 found\n", cpu_number);
 		}
 		if ((cpu->fpu_flags & 4) == 0)
 			strcat(cpu->fpu_model, "");
@@ -438,8 +426,10 @@ identify_arm_fpu(cpu_number)
 			strcat(cpu->fpu_model, " clk/2");
 		break;
 	case FPU_CLASS_FPU :
-		sprintf(cpu->fpu_model, "Unknown FPU (ID=%02x)\n", cpu->fpu_type);
-		printf("fpu%d at cpu%d: %s\n", cpu_number, cpu_number, cpu->fpu_model);
+		sprintf(cpu->fpu_model, "Unknown FPU (ID=%02x)\n",
+		    cpu->fpu_type);
+		printf("fpu%d at cpu%d: %s\n", cpu_number, cpu_number,
+		    cpu->fpu_model);
 		break;
 	}
 }
