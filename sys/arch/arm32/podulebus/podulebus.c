@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.46 2001/07/04 13:58:04 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.47 2001/07/09 21:46:20 reinoud Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -357,15 +357,11 @@ podulescan(dev)
 			switch (loop) {
 			case 0:
 				podule->dma_channel = 2;
-#ifndef CPU_ARM7500
 				podule->dma_interrupt = IRQ_DMACH2;
-#endif
 				break;
 			case 1:
 				podule->dma_channel = 3;
-#ifndef CPU_ARM7500
 				podule->dma_interrupt = IRQ_DMACH3;
-#endif
 				break;
 			}
 		}

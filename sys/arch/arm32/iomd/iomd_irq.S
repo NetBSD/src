@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.23 2001/04/19 20:46:07 chris Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.24 2001/07/09 21:46:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -111,6 +111,9 @@ Lspl_masks:
 Liomd_base:
 	.word	_C_LABEL(iomd_base)
 
+Larm7500_ioc_found:
+	.word	_C_LABEL(arm7500_ioc_found)
+
 ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
@@ -123,7 +126,13 @@ ASENTRY_NP(irq_entry)
 	ldrb	r8, [r10, #(IOMD_IRQRQA << 2)]	/* Get IRQ request A */
 	ldrb	r9, [r10, #(IOMD_IRQRQB << 2)]	/* Get IRQ request B */
 	orr	r8, r8, r9, lsl #8
-#ifdef CPU_ARM7500
+
+	ldr	r9, Larm7500_ioc_found
+	ldr	r9, [r9]			/* get the flag      */
+	cmp	r9, #0
+	beq	skip_extended_IRQs_reading
+
+	/* ARM 7500 only */
 	ldrb	r9, [r10, #(IOMD_IRQRQC << 2)]	/* Get IRQ request C */
 	orr	r8, r8, r9, lsl #16
 	ldrb	r9, [r10, #(IOMD_IRQRQD << 2)]	/* Get IRQ request D */
@@ -131,10 +140,13 @@ ASENTRY_NP(irq_entry)
 	ldrb	r9, [r10, #(IOMD_DMARQ << 2)]	/* Get DMA Request */
 	tst	r9, #0x10
 	orrne	r8, r8, r9, lsl #27
-#else
+	b	irq_entry_continue
+
+skip_extended_IRQs_reading:
+	/* non ARM7500 machines */
 	ldrb	r9, [r10, #(IOMD_DMARQ << 2)]	/* Get DMA Request */
 	orr	r8, r8, r9, lsl #16
-#endif	/* CPU_ARM7500 */
+irq_entry_continue:
 
 	and	r0, r8, #0x7d		/* Clear IOMD IRQA bits */
 	strb	r0, [r10, #(IOMD_IRQRQA << 2)]
@@ -200,15 +212,17 @@ Lfind_highest_ipl:
 	msr	cpsr_all, r0
 
 	ldr	r7, [pc, #Lirqhandlers - . - 8]
+
 	/* 
 	 * take a copy of the IRQ request so that we can strip bits out of it
 	 * note that we only use 24 bits with iomd2 chips
 	 */
-#ifdef  CPU_ARM7500
-	mov	r11, r8
-#else
-	bic	r11, r8, #0xff000000
-#endif
+	ldr	r4, Larm7500_ioc_found
+	ldr	r4, [r4]			/* get the flag      */
+	cmp	r4, #0
+	movne	r11, r8				/* ARM7500  -> copy all bits   */
+	biceq	r11, r8, #0xff000000		/* !ARM7500 -> only use 24 bit */
+
 	/* ffs routine to find first irq to service */
 	/* standard trick to isolate bottom bit in a0 or 0 if a0 = 0 on entry */
 	rsb	r4, r11, #0
@@ -405,7 +419,13 @@ ENTRY(irq_setmasks)
 	mov	r1, r1, lsr #8
 	strb	r1, [r0, #(IOMD_IRQMSKB << 2)]	/* Set IRQ mask B */
 	mov	r1, r1, lsr #8
-#ifdef CPU_ARM7500
+
+	ldr	r2, Larm7500_ioc_found
+	ldr	r2, [r2]
+	cmp	r2, #0
+	beq	skip_setting_extended_DMA_mask
+
+	/* only for ARM7500's */
 	strb	r1, [r0, #(IOMD_IRQMSKC << 2)]
 	mov	r1, r1, lsr #8
 	and	r2, r1, #0xef
@@ -413,9 +433,13 @@ ENTRY(irq_setmasks)
 	mov	r1, r1, lsr #3
 	and	r2, r1, #0x10
 	strb	r2, [r0, #(IOMD_DMAMSK << 2)]	/* Set DMA mask */
-#else
+	b	continue_setting_masks
+
+skip_setting_extended_DMA_mask:
+	/* non ARM7500's */
 	strb	r1, [r0, #(IOMD_DMAMSK << 2)]	/* Set DMA mask */
-#endif	/* CPU_ARM7500 */
+
+continue_setting_masks:
 
 	/* Restore old cpsr and exit */
 	msr	cpsr_all, r3

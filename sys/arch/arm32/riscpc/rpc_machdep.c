@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.48 2001/06/19 13:45:54 wiz Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.49 2001/07/09 21:46:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -529,11 +529,6 @@ initarm_new_bootloader(bootconf)
 	case ARM7500_IOC_ID:
 #ifndef CPU_ARM7500
 		panic2(("Encountered ARM7500 IOMD but no ARM7500 kernel support"));
-#endif	/* CPU_ARM7500 */
-		break;
-	case RPC600_IOMD_ID:
-#ifdef CPU_ARM7500
-		panic2(("Encountered ARM6/7 IOMD and ARM7500 kernel support"));
 #endif	/* CPU_ARM7500 */
 		break;
 	}
@@ -1415,11 +1410,6 @@ initarm_old_bootloader(bootconf)
 	case ARM7500_IOC_ID:
 #ifndef CPU_ARM7500
 		panic("Encountered ARM7500 IOMD but no ARM7500 kernel support");
-#endif	/* CPU_ARM7500 */
-		break;
-	case RPC600_IOMD_ID:
-#ifdef CPU_ARM7500
-		panic("Encountered ARM6/7 IOMD and ARM7500 kernel support");
 #endif	/* CPU_ARM7500 */
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.17 2001/05/30 12:28:40 mrg Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.18 2001/07/09 21:46:19 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -60,10 +60,10 @@
 
 #if defined(RISCPC) || defined(CPU_ARM7500)
 
-#ifdef CPU_ARM7500
+/* Only for ARM7500 : */
 
 /*#define IRQ_PRINTER	0x00*/
-#define IRQ_RESERVED0	0x01
+/*#define IRQ_RESERVED0	0x01*/
 #define IRQ_BUTTON	0x02
 #define IRQ_FLYBACK	0x03
 #define IRQ_POR		0x04
@@ -93,8 +93,9 @@
 #define IRQ_ATOD	0x1A
 #define IRQ_CLOCK	0x1B
 #define IRQ_PANIC	0x1C
-#define IRQ_RESERVED2	0x1D
-#define IRQ_RESERVED3	0x1E
+/*#define IRQ_RESERVED2	0x1D*/
+/*#define IRQ_RESERVED3	0x1E*/
+
 
 /*
  * Note that Sound DMA IRQ is on the 31st vector.
@@ -111,34 +112,39 @@
 
 #else	/* RC7500 */
 
-#define IRQ_RESERVED1	0x07
+/*#define IRQ_RESERVED1	0x07 */
 #define IRQ_EXTENDED	0x0B
 #define IRQ_PODULE	0x0D
 
-#define IRQ_EXPCARD0	0x20
-#define IRQ_EXPCARD1	0x21
-#define IRQ_EXPCARD2	0x22
-#define IRQ_EXPCARD3	0x23
-#define IRQ_EXPCARD4	0x24
-#define IRQ_EXPCARD5	0x25
-#define IRQ_EXPCARD6	0x26
-#define IRQ_EXPCARD7	0x27
+#define ARM7500_IOC_IRQ_EXPCARD0	0x20
+/*
+	define IRQ_EXPCARD1	0x21
+	define IRQ_EXPCARD2	0x22
+	define IRQ_EXPCARD3	0x23
+	define IRQ_EXPCARD4	0x24
+	define IRQ_EXPCARD5	0x25
+	define IRQ_EXPCARD6	0x26
+	define IRQ_EXPCARD7	0x27
+*/
 
 #endif	/* RC7500 */
 
-#else	/* CPU_ARM7500 */
+
+
+
+/* for non ARM7500 machines : */
 
 #ifdef	RISCPC
 /*#define IRQ_PRINTER	0x00*/
-#define IRQ_RESERVED0	0x01
+/*#define IRQ_RESERVED0	0x01*/
 /*#define IRQ_FLOPPYIDX	0x02*/
 #define IRQ_FLYBACK	0x03
 #define IRQ_POR		0x04
 #define IRQ_TIMER0	0x05
 #define IRQ_TIMER1	0x06
-#define IRQ_RESERVED1	0x07
+/*#define IRQ_RESERVED1	0x07*/
 
-#define IRQ_RESERVED2	0x08
+/*#define IRQ_RESERVED2	0x08*/
 /*#define IRQ_HD	0x09*/
 /*#define IRQ_SERIAL	0x0A*/
 #define IRQ_EXTENDED	0x0B
@@ -153,20 +159,21 @@
 #define IRQ_DMACH3	0x13
 #define IRQ_DMASCH0	0x14
 #define IRQ_DMASCH1	0x15
-#define IRQ_RESERVED3	0x16
-#define IRQ_RESERVED4	0x17
+/*#define IRQ_RESERVED3	0x16*/
+/*#define IRQ_RESERVED4	0x17*/
 
-#define IRQ_EXPCARD0	0x18
-#define IRQ_EXPCARD1	0x19
-#define IRQ_EXPCARD2	0x1A
-#define IRQ_EXPCARD3	0x1B
-#define IRQ_EXPCARD4	0x1C
-#define IRQ_EXPCARD5	0x1D
-#define IRQ_EXPCARD6	0x1E
-#define IRQ_EXPCARD7	0x1F
+#define RPC600_IOMD_IRQ_EXPCARD0	0x18
+/*
+	define IRQ_EXPCARD1	0x19
+	define IRQ_EXPCARD2	0x1A
+	define IRQ_EXPCARD3	0x1B
+	define IRQ_EXPCARD4	0x1C
+	define IRQ_EXPCARD5	0x1D
+	define IRQ_EXPCARD6	0x1E
+	define IRQ_EXPCARD7	0x1F
+*/
+
 #endif	/* RISCPC */
-
-#endif	/* CPU_ARM7500 */
 
 #endif	/* RISPC || CPU_ARM7500 */
 

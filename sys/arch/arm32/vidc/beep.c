@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.23 2001/02/27 20:23:12 reinoud Exp $	*/
+/*	$NetBSD: beep.c,v 1.24 2001/07/09 21:46:21 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -119,11 +119,10 @@ beepprobe(parent, cf, aux)
 	case ARM7500FE_IOC_ID:
 		sdma_channel = IRQ_SDMA;
 		return(1);
-#else
+#endif
 	case RPC600_IOMD_ID:
 		sdma_channel = IRQ_DMASCH0;
 		return(1);
-#endif
 	default:
 		printf("beep: Unknown IOMD id=%04x\n", id);
 		break;
