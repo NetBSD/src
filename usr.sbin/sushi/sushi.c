@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.22 2005/01/12 17:38:40 peter Exp $       */
+/*      $NetBSD: sushi.c,v 1.23 2005/01/12 17:47:07 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,12 +110,9 @@ main(int argc, char **argv)
 	}
 	if (argc > 1) {
 		mte = tree_gettreebyname(cqMenuHeadp, argv[1]);
-		if (mte == NULL) {
-			printf("QuickName %s not found in any menus.\n",
+		if (mte == NULL)
+			bailout("QuickName %s not found in any menus.",
 				argv[1]);
-			catclose(catalog);
-			exit(EXIT_FAILURE);
-		}
 	}
 
 	if (mte == NULL)
@@ -396,5 +393,6 @@ bailout(const char *fmt, ...)
 		vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
+	catclose(catalog);
 	exit(EXIT_FAILURE);
 }
