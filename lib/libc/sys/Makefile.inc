@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.88 1999/02/11 15:20:47 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.89 1999/02/11 20:42:49 carrel Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -170,7 +170,7 @@ LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
-	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.c close.2 connect.2 \
+	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 close.2 connect.2 \
 	dup.2 execve.2 _exit.2 fcntl.2 fdatasync.2 flock.2 fork.2 fsync.2 \
 	getdents.2 getdirentries.3 getfh.2 getfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
