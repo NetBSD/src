@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.S,v 1.6 2002/07/14 19:55:24 matt Exp $	*/
+/*	$NetBSD: n_sincos.S,v 1.7 2003/02/21 06:40:47 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,9 +51,9 @@
 #include <machine/asm.h>
 
 ENTRY(sinf, 0)
-	cvtfd	4(%ap),-(sp)
-	calls	$2,sin
-	cvtdf	r0,r0
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(sin)
+	cvtdf	%r0,%r0
 	ret
 
 ENTRY(sin, 0xfc0)
@@ -86,9 +86,9 @@ ENTRY(sin, 0xfc0)
  */
 
 ENTRY(cosf, 0)
-	cvtfd	4(%ap),-(sp)
-	calls	$2,cos
-	cvtdf	r0,r0
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(cos)
+	cvtdf	%r0,%r0
 	ret
 
 ENTRY(cos, 0x0fc0)
