@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.7 2001/11/13 01:06:21 lukem Exp $
+ *	$Id: i4b_isppp.c,v 1.8 2002/01/04 12:21:26 martin Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.7 2001/11/13 01:06:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.8 2002/01/04 12:21:26 martin Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.7 2001/11/13 01:06:21 lukem Exp $");
 #include <sys/sockio.h>
 #include <sys/kernel.h>
 #include <sys/protosw.h>
+#include <sys/callout.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -86,16 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.7 2001/11/13 01:06:21 lukem Exp $");
 
 #include <net/slcompress.h>
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-#ifndef USE_ISPPP
-#include <net/if_sppp.h>
-#else
-#include <machine/i4b_isppp.h>
-#endif /* USE_ISPPP */
-#else
-#include <net/if_sppp.h>
-#endif
-
+#include <net/if_spppvar.h>
 
 #if defined(__FreeBSD_version) &&  __FreeBSD_version >= 400008                
 #include "bpf.h"     
