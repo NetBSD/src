@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.14 2003/10/05 15:38:08 tsutsui Exp $	*/
+/*	$NetBSD: macepci.c,v 1.15 2003/10/25 16:15:07 chs Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.14 2003/10/05 15:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.15 2003/10/25 16:15:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -127,7 +127,7 @@ macepci_attach(parent, self, aux)
 	int device, rev;
 
 	if (bus_space_subregion(maa->maa_st, maa->maa_sh,
-	    maa->maa_offset, NULL, &pc->ioh) )
+	    maa->maa_offset, 0, &pc->ioh) )
 		panic("macepci_attach: couldn't map");
 
 	pc->iot = maa->maa_st;
