@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2001/07/23 20:34:00 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.66 2001/07/30 21:25:08 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1386,6 +1386,7 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 
 	*pte = npte;
+	TBIS(va);
 }
 
 void
@@ -2037,6 +2038,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	if (pmap_pte_w(pte))
 		pmap->pm_stats.wired_count--;
 	pmap->pm_stats.resident_count--;
+
+	if ((flags & PRM_CFLUSH)) {
+		DCFP(pa);
+		ICPP(pa);
+	}
 
 	/*
 	 * Invalidate the PTE after saving the reference modify info.
