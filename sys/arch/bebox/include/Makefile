@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2001/05/03 13:11:26 soren Exp $
+#	$NetBSD: Makefile,v 1.14 2002/04/03 14:28:57 bjh21 Exp $
 
 KDIR=	/sys/arch/bebox/include
 INCSDIR= /usr/include/bebox
 
 INCS=   ansi.h aout_machdep.h asm.h \
-	bat.h bootinfo.h bswap.h bus.h \
+	bootinfo.h bswap.h bus.h \
 	cdefs.h conf.h cpu.h cpufunc.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
