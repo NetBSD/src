@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.12 1994/12/14 08:27:28 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.13 1994/12/24 15:08:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -131,6 +131,7 @@ struct clockinfo {
 #ifdef KERNEL
 int	itimerfix __P((struct timeval *tv));
 int	itimerdecr __P((struct itimerval *itp, int usec));
+void	microtime __P((struct timeval *tv));
 #else /* !KERNEL */
 #include <time.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.34 1994/10/30 19:09:45 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.35 1994/12/24 15:08:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -273,8 +273,14 @@ struct	prochd {
 struct proc *pfind __P((pid_t));	/* Find process by id. */
 struct pgrp *pgfind __P((pid_t));	/* Find process group by id. */
 
+int	chgproccnt __P((uid_t uid, int diff));
+int	enterpgrp __P((struct proc *p, pid_t pgid, int mksess));
 void	fixjobc __P((struct proc *p, struct pgrp *pgrp, int entering));
+int	inferior __P((struct proc *p));
+int	leavepgrp __P((struct proc *p));
 void	mi_switch __P((void));
+void	pgdelete __P((struct pgrp *pgrp));    
+void	procinit __P((void));
 void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
