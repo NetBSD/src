@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 1997/09/24 19:49:08 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 1997/09/27 15:52:54 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -963,7 +963,7 @@ Lunshadow:
 	.word	0xf4f8		| cpusha bc - push & invalidate caches
 	movl	#CACHE40_ON,d0
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jeq	Lcacheon
 	movl	#CACHE60_ON,d0
 #endif
@@ -1246,7 +1246,7 @@ Lsw2:
 	fsave	a2@				| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jne	Lsavfp60
 #endif
 	tstb	a2@				| null state frame?
@@ -1307,7 +1307,7 @@ Lres2:
 |	movl	#CACHE40_ON,d0
 |	movc	d0,cacr				| invalidate cache(s)
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jeq	Lres3
 	movc	cacr,d2
 	orl	#IC60_CUBC,d2			| clear user btc
@@ -1342,7 +1342,7 @@ Lresnonofpatall:
 	lea	a1@(PCB_FPCTX),a0		| pointer to FP save area
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jne	Lresfp60rest1
 #endif
 	tstb	a0@				| null state frame?
@@ -1392,7 +1392,7 @@ ENTRY(savectx)
 	fsave	a0@				| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jne	Lsavctx60
 #endif
 	tstb	a0@				| null state frame?
@@ -1518,7 +1518,7 @@ Lmc68851a:
 Ltbia040:
 	.word	0xf518				| pflusha
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jeq	Ltbiano60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0			| and clear all btc entries
@@ -1555,7 +1555,7 @@ Ltbis040:
 	movc	d0,dfc
 	.word	0xf508				| pflush a0@
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jeq	Ltbisno60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0			| and clear all btc entries
@@ -1587,7 +1587,7 @@ Ltbias040:
 | 68040 cannot specify supervisor/user on pflusha, so we flush all
 	.word	0xf518				| pflusha
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jeq	Ltbiasno60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0			| and clear all btc entries
@@ -1619,7 +1619,7 @@ Ltbiau040:
 | 68040 cannot specify supervisor/user on pflusha, so we flush all
 	.word	0xf518				| pflusha
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jeq	Ltbiauno60
 	movc	cacr,d0
 	orl	#IC60_CUBC,d0			| but only user btc entries
@@ -1786,7 +1786,7 @@ ENTRY(loadustp)
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0				| convert to addr
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jne	Lldustp060
 #endif
 	cmpl	#MMU_68040,_mmutype
@@ -1814,7 +1814,7 @@ Lldustp040:
  */
 ENTRY(flushustp)
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jne	Lflustp060
 #endif
 	cmpl	#MMU_68040,_mmutype
@@ -1856,7 +1856,7 @@ ENTRY(m68881_save)
 	fsave	a0@				| save state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jne	Lm68060fpsave
 #endif
 	tstb	a0@				| null state frame?
@@ -1883,7 +1883,7 @@ ENTRY(m68881_restore)
 	movl	sp@(4),a0			| save area pointer
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
-	btst	#7,_machineid+3
+	cmpl	#CPU_68060,_cputype
 	jne	Lm68060fprestore
 #endif
 	tstb	a0@				| null state frame?
