@@ -1,4 +1,4 @@
-/*	$NetBSD: crtfm.c,v 1.1 2002/01/13 20:05:42 thorpej Exp $	*/
+/*	$NetBSD: crtfm.c,v 1.2 2002/01/14 01:31:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,14 +40,29 @@
  */
 
 #include <sys/types.h>
-#include <ieeefp.h>
 
 #include <machine/fpu.h>
+#include <machine/sysarch.h>
+
+/*
+ * Must provide this wrapper around sysarch(2) so that statically-linked
+ * programs work properly.
+ */
+
+extern void __alpha_sysarch(int, void *);
+
+__asm(".ent __alpha_sysarch 0	;\n"
+"__alpha_sysarch:		;\n"
+"	ldiq	$0, 165		;\n" /* v0 = SYS_sysarch */
+"	call_pal 0x0083		;\n" /* PAL_OSF1_callsys */
+"	ret	$31,($26),1	;\n"
+".end __alpha_sysarch");
 
 static void __attribute__((__constructor__))
 __alpha_set_fast_math(void)
 {
+	struct alpha_fp_c_args args;
 
-	/* XXX NEED INTERNAL NAME FOR fpsetmask()!! */
-	fpsetmask(IEEE_MAP_DMZ|IEEE_MAP_UMZ);
+	args.fp_c = IEEE_MAP_DMZ|IEEE_MAP_UMZ;
+	__alpha_sysarch(ALPHA_SET_FP_C, &args);
 }
