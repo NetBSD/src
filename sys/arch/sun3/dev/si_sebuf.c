@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.7 1998/11/19 21:49:46 thorpej Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.8 1999/04/09 04:26:27 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -561,15 +561,10 @@ out:
 static void
 se_minphys(struct buf *bp)
 {
-	if (bp->b_bcount > MAX_DMA_LEN) {
-#ifdef	DEBUG
-		if (se_debug) {
-			printf("se_minphys len = 0x%x.\n", bp->b_bcount);
-			Debugger();
-		}
-#endif
+
+	if (bp->b_bcount > MAX_DMA_LEN)
 		bp->b_bcount = MAX_DMA_LEN;
-	}
+
 	return (minphys(bp));
 }
 
@@ -594,9 +589,6 @@ se_intr(void *arg)
 #ifdef	DEBUG
 		if (!claimed) {
 			printf("se_intr: spurious from SBC\n");
-			if (se_debug & 4) {
-				Debugger();	/* XXX */
-			}
 		}
 #endif
 		/* Yes, we DID cause this interrupt. */
@@ -653,7 +645,6 @@ se_dma_alloc(ncr_sc)
 	 */
 	if (xlen > MAX_DMA_LEN) {
 		printf("se_dma_alloc: excessive xlen=0x%x\n", xlen);
-		Debugger();
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
 
