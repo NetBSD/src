@@ -1,3 +1,5 @@
+$NetBSD: To.Do,v 1.2 1994/10/26 08:23:51 cgd Exp $
+
 This is the "To Do" list for NetBSD/pc532
   (Order is not in order of importance.)
 

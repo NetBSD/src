@@ -1,3 +1,5 @@
+/*	$NetBSD: asm.h,v 1.5 1994/10/26 08:24:22 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -24,8 +26,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
- *
- *	asm.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
 /*

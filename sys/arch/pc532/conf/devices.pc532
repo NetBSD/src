@@ -1,6 +1,6 @@
-# Swap device numbers
+#	$NetBSD: devices.pc532,v 1.2 1994/10/26 08:24:03 cgd Exp $
 #
-#	$Id: devices.pc532,v 1.1.1.1 1993/09/09 23:53:45 phil Exp $
+# Swap device numbers
 #
 sd	0
 st	2

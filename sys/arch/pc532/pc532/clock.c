@@ -1,5 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 1994/10/19 17:15:16 phil Exp $
-*/
+/*	$NetBSD: clock.c,v 1.8 1994/10/26 08:24:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,3 +1,5 @@
+/*	$NetBSD: scn.c,v 1.12 1994/10/26 08:24:18 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.11 1994/05/17 17:29:37 phil Exp $
+ *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
 
 #include "scn.h"

@@ -1,7 +1,6 @@
+#	$NetBSD: NEWCONF,v 1.4 1994/10/26 08:24:01 cgd Exp $
 #
 # TINY 532 Distribution, used only for early testing and initial distribution.
-#
-#	TINY_NS,v 1.2 1993/09/13 07:23:47 phil Exp
 #
 machine		"pc532"
 

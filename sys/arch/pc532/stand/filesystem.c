@@ -1,3 +1,5 @@
+/*	$NetBSD: filesystem.c,v 1.2 1994/10/26 08:25:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
@@ -27,10 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	filesystem.c
- *
- *	$Id: filesystem.c,v 1.1 1994/05/30 19:58:49 phil Exp $
  */
 
 #include <stand.h>

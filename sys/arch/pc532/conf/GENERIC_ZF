@@ -1,7 +1,6 @@
+#	$NetBSD: GENERIC_ZF,v 1.3 1994/10/26 08:23:59 cgd Exp $
 #
 # GENERIC 532 Distribution - sd0 version, 19200 console
-#
-#	$Id: GENERIC_ZF,v 1.2 1994/05/25 00:00:52 phil Exp $
 #
 machine		"pc532"
 cpu		"ns532"

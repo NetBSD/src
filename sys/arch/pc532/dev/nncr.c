@@ -1,3 +1,5 @@
+/*	$NetBSD: nncr.c,v 1.3 1994/10/26 08:24:15 cgd Exp $	*/
+
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
@@ -29,9 +31,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: nncr.c,v 1.2 1994/07/01 04:24:11 phil Exp $
- *
  */
 
 /* Modified for use with the pc532 by Phil Nelson, June 94. */
