@@ -1,4 +1,4 @@
-/*	$NetBSD: fclose.c,v 1.9 1998/10/18 19:27:33 dbj Exp $	*/
+/*	$NetBSD: fclose.c,v 1.10 1998/10/18 23:48:18 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fclose.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: fclose.c,v 1.9 1998/10/18 19:27:33 dbj Exp $");
+__RCSID("$NetBSD: fclose.c,v 1.10 1998/10/18 23:48:18 dbj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -56,10 +56,6 @@ fclose(fp)
 {
 	int r;
 
-	if (!fp) {
-		errno = EBADF;
-		return (EOF);
-	}
 	FLOCKFILE(fp);
 	if (fp->_flags == 0) {	/* not open! */
 		errno = EBADF;
