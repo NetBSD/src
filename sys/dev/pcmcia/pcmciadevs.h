@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.90 2000/06/05 23:05:30 gmcgarry Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.91 2000/06/09 13:05:03 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.90 2000/06/05 23:04:04 gmcgarry Exp 
+ *	NetBSD: pcmciadevs,v 1.91 2000/06/06 17:19:59 soren Exp 
  */
 
 /*-
@@ -62,6 +62,7 @@
 #define	PCMCIA_VENDOR_SMC	0x0108	/* Standard Microsystems Corporation */
 #define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics Corporation */
 #define	PCMCIA_VENDOR_MEGAHERTZ2	0x0128	/* Megahertz Corporation */
+#define	PCMCIA_VENDOR_OLICOM	0x0121	/* Olicom */
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
@@ -73,6 +74,7 @@
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_FARALLON	0x0200	/* Farallon Communications */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
@@ -207,6 +209,11 @@
 #define	PCMCIA_PRODUCT_IODATA_PCLATE	0x2216
 #define	PCMCIA_STR_IODATA_PCLATE	"I-O DATA PCLA/TE"
 
+/* Farallon */
+#define	PCMCIA_CIS_FARALLON_SKYLINE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FARALLON_SKYLINE	0x0a01
+#define	PCMCIA_STR_FARALLON_SKYLINE	"SkyLINE Wireless"
+
 /* Lexar Media */
 #define	PCMCIA_CIS_LEXARMEDIA_COMPATFLASH	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LEXARMEDIA_COMPATFLASH	0x0100
@@ -252,6 +259,11 @@
 #define	PCMCIA_CIS_NOKIA_C020_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NOKIA_C020_WLAN	0x20c0
 #define	PCMCIA_STR_NOKIA_C020_WLAN	"Nokia C020 WLAN Card"
+
+/* Olicom Products */
+#define	PCMCIA_CIS_OLICOM_TR	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_OLICOM_TR	0x2132
+#define	PCMCIA_STR_OLICOM_TR	"GoCard Token Ring 16/4"
 
 /* Panasonic Products */
 #define	PCMCIA_CIS_PANASONIC_KXLC002	{ NULL, NULL, NULL, NULL }
