@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 1997/03/06 05:16:34 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 1997/03/13 17:40:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -473,7 +473,7 @@ mmuC2tmgr(mmuCtbl)
 /* This is now a function call below.
  * #define pa2pv(pa) \
  *	(&pvbase[(unsigned long)\
- *		sun3x_btop(pa)\
+ *		_btop(pa)\
  *	])
  */
 
@@ -494,7 +494,7 @@ pa2pv(pa)
 		bank = bank->pmem_next;
 
 	pa -= bank->pmem_start;
-	idx = bank->pmem_pvbase + sun3x_btop(pa);
+	idx = bank->pmem_pvbase + _btop(pa);
 #ifdef	PMAP_DEBUG
 	if ((idx < 0) || (idx >= physmem))
 		panic("pa2pv");
@@ -591,7 +591,7 @@ u_int  pmap_free_pages __P((void));
 
 /* pmap_bootstrap			INTERNAL
  **
- * Initializes the pmap system.  Called at boot time from sun3x_vm_init()
+ * Initializes the pmap system.  Called at boot time from _vm_init()
  * in _startup.c.
  *
  * Reminder: having a pmap_bootstrap_alloc() and also having the VM
@@ -624,7 +624,7 @@ pmap_bootstrap(nextva)
 	 * the first instructions of locore.s).
 	 * That is plenty for our bootstrap work.
 	 */
-	virtual_avail = sun3x_round_page(nextva);
+	virtual_avail = _round_page(nextva);
 	virtual_contig_end = KERNBASE + 0x400000; /* +4MB */
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 	/* Don't need avail_start til later. */
@@ -695,7 +695,7 @@ pmap_bootstrap(nextva)
 	 */
 	avail_end = pmap_membank->pmem_end -
 		(total_phys_mem - *romVectorPtr->memoryAvail);
-	avail_end = sun3x_trunc_page(avail_end);
+	avail_end = _trunc_page(avail_end);
 
 	/*
 	 * First allocate enough kernel MMU tables to map all
@@ -865,7 +865,7 @@ pmap_bootstrap(nextva)
 	 * sharing the same page.  Therefore, the last page of kernel text
 	 * has to be mapped as read/write, to accomodate the data.
 	 */
-	eva = sun3x_trunc_page((vm_offset_t)etext);
+	eva = _trunc_page((vm_offset_t)etext);
 	for (; va < eva; va += NBPG, pa += NBPG)
 		pmap_enter_kernel(va, pa, VM_PROT_READ|VM_PROT_EXECUTE);
 
@@ -931,7 +931,7 @@ pmap_alloc_pv()
 	 */
 	total_mem = 0;
 	for (i = 0; i < SUN3X_80_MEM_BANKS; i++) {
-		avail_mem[i].pmem_pvbase = sun3x_btop(total_mem);
+		avail_mem[i].pmem_pvbase = _btop(total_mem);
 		total_mem += avail_mem[i].pmem_end -
 			avail_mem[i].pmem_start;
 		if (avail_mem[i].pmem_next == NULL)
@@ -943,7 +943,7 @@ pmap_alloc_pv()
 #endif
 	
 	pvbase = (pv_t *) pmap_bootstrap_alloc(sizeof(pv_t) *
-		sun3x_btop(total_phys_mem));
+		_btop(total_phys_mem));
 }
 
 /* pmap_alloc_usertmgr			INTERNAL
@@ -993,9 +993,9 @@ pmap_bootstrap_copyprom()
 	 * Note: mon_ctbl[0] maps MON_KDB_START
 	 */
 	mon_ctbl = *romp->monptaddr;
-	i = sun3x_btop(MON_KDB_START - KERNBASE);
+	i = _btop(MON_KDB_START - KERNBASE);
 	kpte = &kernCbase[i];
-	len = sun3x_btop(MONEND - MON_KDB_START);
+	len = _btop(MONEND - MON_KDB_START);
 
 	for (i = 0; i < len; i++) {
 		kpte[i].attr.raw = mon_ctbl[i];
@@ -1008,9 +1008,9 @@ pmap_bootstrap_copyprom()
 	 * I'm not sure yet if it is or not. -gwr
 	 */
 	mon_ctbl = *romp->shadowpteaddr;
-	i = sun3x_btop(MON_DVMA_BASE - KERNBASE);
+	i = _btop(MON_DVMA_BASE - KERNBASE);
 	kpte = &kernCbase[i];
-	len = sun3x_btop(MON_DVMA_SIZE);
+	len = _btop(MON_DVMA_SIZE);
 
 	for (i = 0; i < len; i++) {
 		kpte[i].attr.raw = mon_ctbl[i];
@@ -1191,7 +1191,7 @@ pmap_init_pv()
 	int	i;
 
 	/* Initialize every PV head. */
-	for (i = 0; i < sun3x_btop(total_phys_mem); i++) {
+	for (i = 0; i < _btop(total_phys_mem); i++) {
 		pvbase[i].pv_idx = PVE_EOL;	/* Indicate no mappings */
 		pvbase[i].pv_flags = 0;		/* Zero out page flags  */
 	}
@@ -2098,7 +2098,7 @@ pmap_enter_kernel(va, pa, prot)
 	/*
 	 * Calculate the index of the PTE being modified.
 	 */
-	pte_idx = (u_long) sun3x_btop(va - KERNBASE);
+	pte_idx = (u_long) _btop(va - KERNBASE);
 
 	/* XXX - This array is traditionally named "Sysmap" */
 	pte = &kernCbase[pte_idx];
@@ -2343,7 +2343,7 @@ pmap_protect_kernel(startva, endva, prot)
 	vm_offset_t va;
 	mmu_short_pte_t *pte;
 
-	pte = &kernCbase[(unsigned long) sun3x_btop(startva - KERNBASE)];
+	pte = &kernCbase[(unsigned long) _btop(startva - KERNBASE)];
 	for (va = startva; va < endva; va += NBPG, pte++) {
 		if (MMU_VALID_DT(*pte)) {
 		    switch (prot) {
@@ -2908,7 +2908,7 @@ pmap_get_pteinfo(idx, pmap, tbl)
 		 */
 		*pmap = pmap_kernel();
 
-		va = sun3x_ptob(idx);
+		va = _ptob(idx);
 		va += KERNBASE;
 	}
 		
@@ -3052,7 +3052,7 @@ pmap_extract_kernel(va)
 {
 	mmu_short_pte_t *pte;
 
-	pte = &kernCbase[(u_int) sun3x_btop(va - KERNBASE)];
+	pte = &kernCbase[(u_int) _btop(va - KERNBASE)];
 	return MMU_PTE_PA(*pte);
 }
 
@@ -3073,8 +3073,8 @@ pmap_remove_kernel(sva, eva)
 		panic("pmap_remove_kernel: alignment");
 #endif
 
-	idx  = sun3x_btop(sva - KERNBASE);
-	eidx = sun3x_btop(eva - KERNBASE);
+	idx  = _btop(sva - KERNBASE);
+	eidx = _btop(eva - KERNBASE);
 
 	while (idx < eidx)
 		pmap_remove_pte(&kernCbase[idx++]);
@@ -3627,7 +3627,7 @@ pmap_free_pages()
 			 */
 			avail = avail_mem[i].pmem_start;
 		}
-		left += sun3x_btop(avail_mem[i].pmem_end - avail);
+		left += _btop(avail_mem[i].pmem_end - avail);
 		if (avail_mem[i].pmem_next == NULL)
 			break;
 		i++;
@@ -3662,7 +3662,7 @@ pmap_page_index(pa)
 		bank = bank->pmem_next;
 	pa -= bank->pmem_start;
 
-	return (bank->pmem_pvbase + sun3x_btop(pa));
+	return (bank->pmem_pvbase + _btop(pa));
 }
 
 /* pmap_next_page			INTERFACE
@@ -3800,7 +3800,7 @@ set_pte(va, pte)
 	if (va < KERNBASE)
 		return;
 
-	idx = (unsigned long) sun3x_btop(va - KERNBASE);
+	idx = (unsigned long) _btop(va - KERNBASE);
 	kernCbase[idx].attr.raw = pte;
 }
 
