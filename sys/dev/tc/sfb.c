@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.14 1999/03/29 07:22:02 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.15 1999/05/07 08:00:31 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.14 1999/03/29 07:22:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.15 1999/05/07 08:00:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,17 +106,18 @@ struct fb_devconfig {
 	int	    dc_blanked;		/* currently has video disabled */
 };
 
-struct hwcmap {
+struct hwcmap256 {
 #define	CMAP_SIZE	256	/* 256 R/G/B entries */
 	u_int8_t r[CMAP_SIZE];
 	u_int8_t g[CMAP_SIZE];
 	u_int8_t b[CMAP_SIZE];
 };
 
-struct hwcursor {
+struct hwcursor64 {
 	struct wsdisplay_curpos cc_pos;
 	struct wsdisplay_curpos cc_hot;
 	struct wsdisplay_curpos cc_size;
+	struct wsdisplay_curpos cc_magic;
 #define	CURSOR_MAX_SIZE	64
 	u_int8_t cc_color[6];
 	u_int64_t cc_image[64 + 64];
@@ -125,8 +126,8 @@ struct hwcursor {
 struct sfb_softc {
 	struct device sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration */
-	struct hwcmap sc_cmap;		/* software copy of colormap */
-	struct hwcursor sc_cursor;	/* software copy of cursor */
+	struct hwcmap256 sc_cmap;	/* software copy of colormap */
+	struct hwcursor64 sc_cursor;	/* software copy of cursor */
 	int sc_curenb;			/* cursor sprite enabled */
 	int sc_changed;			/* need update of colormap */
 #define	DATA_ENB_CHANGED	0x01	/* cursor enable changed */
@@ -135,10 +136,10 @@ struct sfb_softc {
 #define	DATA_CMAP_CHANGED	0x08	/* colormap changed */
 #define	DATA_ALL_CHANGED	0x0f
 	int nscreens;
-	short magic_x, magic_y;		/* HX cursor location offset */
+};
+
 #define	HX_MAGIC_X 368
 #define	HX_MAGIC_Y 38
-};
 
 int  sfbmatch __P((struct device *, struct cfdata *, void *));
 void sfbattach __P((struct device *, struct device *, void *));
@@ -342,9 +343,9 @@ sfbattach(parent, self, aux)
 	struct sfb_softc *sc = (struct sfb_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap *cm;
+	struct hwcmap256 *cm;
 	caddr_t sfbasic;
-	int console, i;
+	int console;
 
 	console = (ta->ta_addr == sfb_consaddr);
 	if (console) {
@@ -360,11 +361,11 @@ sfbattach(parent, self, aux)
 	    sc->sc_dc->dc_depth);
 
 	cm = &sc->sc_cmap;
-	cm->r[0] = cm->g[0] = cm->b[0] = 0;
-	for (i = 1; i < CMAP_SIZE; i++) {
-		cm->r[i] = cm->g[i] = cm->b[i] = 0xff;
-	}
-	sc->magic_x = HX_MAGIC_X; sc->magic_y = HX_MAGIC_Y;
+	memset(cm, 255, sizeof(struct hwcmap256));	/* XXX */
+	cm->r[0] = cm->g[0] = cm->b[0] = 0;		/* XXX */
+
+	sc->sc_cursor.cc_magic.x = HX_MAGIC_X;
+	sc->sc_cursor.cc_magic.y = HX_MAGIC_Y;
 
         tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, sfbintr, sc);
 
@@ -593,7 +594,7 @@ sfbintr(arg)
 		}
 	}
 	if (v & DATA_CMAP_CHANGED) {
-		struct hwcmap *cm = &sc->sc_cmap;
+		struct hwcmap256 *cm = &sc->sc_cmap;
 		int index;
 
 		BT459_SELECT(vdac, 0);
@@ -828,7 +829,9 @@ bt459_set_curpos(sc)
 
 	x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
 	y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
-	x += sc->magic_x; y += sc->magic_y; /* magic offset of HX coordinate */
+
+	x += sc->sc_cursor.cc_magic.x;
+	y += sc->sc_cursor.cc_magic.y;
 	
 	s = spltty();
 
