@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.6 1995/08/14 01:11:53 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.7 1995/08/14 02:26:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -99,5 +99,7 @@ struct ibcs2_sigaction {
 
 /* sa_flags */
 #define IBCS2_SA_NOCLDSTOP	1
+
+extern int bsd_to_ibcs2_sig[];
 
 #endif /* _IBCS2_SIGNAL_H */
