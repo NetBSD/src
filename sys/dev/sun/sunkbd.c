@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.19 2003/08/07 16:31:27 agc Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.20 2005/02/20 22:17:28 heas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.19 2003/08/07 16:31:27 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.20 2005/02/20 22:17:28 heas Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,8 +274,7 @@ sunkbdinput(c, tp)
 	}
 
 	/* Pass this up to the "middle" layer. */
-	kbd_sun_input(k, c);
-	return (-1);
+	return(kbd_sun_input(k, c));
 
 send_reset:
 	/* Send a reset to resync translation. */

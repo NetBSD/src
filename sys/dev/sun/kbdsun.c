@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsun.c,v 1.3 2003/08/07 16:31:25 agc Exp $	*/
+/*	$NetBSD: kbdsun.c,v 1.4 2005/02/20 22:17:28 heas Exp $	*/
 /*	NetBSD: kbd.c,v 1.29 2001/11/13 06:54:32 lukem Exp	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.3 2003/08/07 16:31:25 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.4 2005/02/20 22:17:28 heas Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,7 +385,7 @@ kbd_sun_start_tx(k)
  * which passes us the raw hardware make/break codes.
  * Called at spltty()
  */
-void
+int
 kbd_sun_input(k, code)
 	struct kbd_sun_softc *k;
 	int code;
@@ -407,7 +407,7 @@ kbd_sun_input(k, code)
 			kbd_sun_new_layout(k);
 		}
 		k->k_expect = 0;
-		return;
+		return(0);
 	}
 
 	/* Is this one of the "special" input codes? */
@@ -426,7 +426,7 @@ kbd_sun_input(k, code)
 		case KBD_ERROR:
 			log(LOG_WARNING, "%s: received error indicator\n",
 			    kbd->k_dev.dv_xname);
-			return;
+			return(-1);
 
 		case KBD_IDLE:
 			/* Let this go to the translator. */
@@ -435,6 +435,7 @@ kbd_sun_input(k, code)
 	}
 
 	kbd_input(kbd, code);
+	return(0);
 }
 
 
@@ -478,6 +479,9 @@ kbd_sun_was_reset(k)
 			kbd_sun_start_tx(k);
 		}
 		break;
+	default:
+		printf("%s: unknown keyboard type ID %u\n",
+			k->k_kbd.k_dev.dv_xname, (unsigned int)ks->kbd_id);
 	}
 
 	/* LEDs are off after reset. */
