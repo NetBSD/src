@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.8 2003/10/25 13:27:53 simonb Exp $
+#	$NetBSD: PB1000,v 1.9 2003/10/25 14:33:14 simonb Exp $
 #
-# Kernel config for the Alchemy Semiconductor (AMD) PB1000 and PB1500
-# evaluation boards.
+# Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
+# DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	32
 
@@ -105,16 +105,17 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options         SCSIVERBOSE     # human readable SCSI error messages
-#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	NFS_BOOT_DHCP
 
 # Pretty much only one device to use for the root file system.
-#config		netbsd	root on aumac0 type ?
-config		netbsd	root on ? type ?
+config		netbsd		root on ? type ?
+config		netbsd-aumac0	root on aumac0 type nfs
 
 mainbus0 	at root
 
@@ -141,17 +142,51 @@ sqphy*		at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 ohci*		at aubus? addr ?		# USB Open Host Controller
 
 # USB bus support
-#usb*		at uhci?
 usb*		at ohci?
 
 # USB Hubs
-#uhub*		at usb?
-#uhub*		at uhub? port ? configuration ? interface ?
+uhub*		at usb?
+uhub*		at uhub? port ? configuration ? interface ?
 
-# ....
+# USB HID device
+uhidev* at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*    at uhidev? reportid ?   
+wsmouse* at ums? mux 0
+
+# USB Keyboards
+ukbd*   at uhidev? reportid ? 
+wskbd*  at ukbd? console ? mux 1
+
+# USB Generic HID devices
+uhid*   at uhidev? reportid ?
+
+# USB Printer
+ulpt*   at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem* at uhub? port ? configuration ?
+ucom*   at umodem?
+
+# USB Mass Storage
+umass*  at uhub? port ? configuration ? interface ?
+scsibus* at scsi?
+sd*	at scsibus? target ? lun ?
+
+# USB audio
+#uaudio* at uhub? port ? configuration ?
+
+# USB MIDI
+#umidi* at uhub? port ? configuration ?
+
+# USB IrDA
+# USB-IrDA bridge spec
+#uirda* at uhub? port ? configuration ? interface ?
+#irframe* at uirda?
 
 # USB Generic driver
-#ugen*		at uhub? port ?
+ugen*		at uhub? port ?
 
 # Audio support
 auaudio*	at aubus? addr ?		# STAC9745 audio codec
