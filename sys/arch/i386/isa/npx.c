@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.73 2000/06/29 08:44:57 mrg Exp $	*/
+/*	$NetBSD: npx.c,v 1.74 2001/01/17 00:03:02 fvdl Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -117,7 +117,9 @@ static	int			npx_nointr;
 volatile u_int			npx_intrs_while_probing;
 volatile u_int			npx_traps_while_probing;
 
-extern int			i386_fpu_present;
+extern int i386_fpu_present;
+extern int i386_fpu_exception;
+extern int i386_fpu_fdivbug;
 
 struct npx_softc		*npx_softc;	/* XXXSMP: per-cpu */
 
@@ -193,6 +195,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 				 * Good, exception 16 works.
 				 */
 				rv = NPX_EXCEPTION;
+				i386_fpu_exception = 1;
 			} else if (npx_intrs_while_probing != 0) {
 				/*
 				 * Bad, we are stuck with IRQ13.
@@ -231,8 +234,10 @@ npxattach(struct npx_softc *sc)
 
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();
-	if (npx586bug1(4195835, 3145727) != 0)
+	if (npx586bug1(4195835, 3145727) != 0) {
+		i386_fpu_fdivbug = 1;
 		printf("WARNING: Pentium FDIV bug detected!\n");
+	}
 	lcr0(rcr0() | (CR0_TS));
 	i386_fpu_present = 1;
 }
