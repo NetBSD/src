@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.41 1998/07/17 22:52:01 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.42 1998/07/17 23:00:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -200,6 +200,8 @@ tcp_output(tp)
 		 * to a pre-determined allowed burst size plus that count.
 		 * This prevents bursting once all pending packets have
 		 * been acknowledged (i.e. transmission is idle).
+		 *
+		 * XXX Link this to Initial Window?
 		 */
 		tp->snd_cwnd = min(tp->snd_cwnd,
 		    (tcp_cwm_burstsize * txsegsize) +
