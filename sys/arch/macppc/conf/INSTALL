@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.9 1999/02/04 15:04:58 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.10 1999/02/22 20:25:43 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -32,7 +32,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	NMBCLUSTERS=1024
 options 	NFS_BOOT_DHCP, NFS_BOOT_BOOTPARAM
 
-options 	ZS_TXDMA	# Use dma on zs output
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
 
 # Kernel root file system and dump configuration.
@@ -42,49 +41,50 @@ config		netbsd	root on ? type ?
 # Device configuration
 #
 
-mainbus0 at root
+mainbus* at root
 
-cpu*	at mainbus0
-pci*	at mainbus0 bus ?
+cpu*	at mainbus?
+pci*	at mainbus? bus ?
+pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-pci*	at ppb? bus ?
 
 #de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
-ep*	at pci? dev ? function ?
+ep*	at pci? dev ? function ?	# 3Com 3c59x
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
+ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+obio0	at pci? dev ? function ?
+
+nsphy*	at mii? phy ?			# NS83840 PHYs
+
+bm*	at obio?			# bmac ethernet
+mc*	at obio?			# MACE ethernet
+esp*	at obio? flags 0x00ff		# 53c9x SCSI
+mesh*	at obio? flags 0xffff		# MESH SCSI
+nvram*	at obio?			# nvram
+adb*	at obio?			# Apple Desktop Bus
+akbd*	at adb?				# ADB keyboard
+ams*	at adb?				# ADB mouse
+zsc*	at obio?
+zstty*	at zsc? channel ?
+
+wsdisplay0 at ofb? console ?
+wskbd0	at akbd? console ?
 
 scsibus* at adv?
 scsibus* at ahc?
-
-obio0	at pci? dev ? function ?
-nvram0	at obio0			# nvram
-
-adb0	at obio0			# Apple Desktop Bus
-akbd*	at adb?				# ADB keyboard
-ams*	at adb?				# ADB mouse
-
-ofb0	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
-wsdisplay* at ofb? console ?
-wskbd0	at akbd? console ?
-
-mc0	at obio0			# MACE ethernet
-bm0	at obio0			# bmac ethernet
-esp0	at obio0 flags 0x00ff		# 53c9x SCSI
-scsibus0 at esp0
-
-zsc0	at obio0
-zstty0	at zsc0 channel 0
-zstty1	at zsc0 channel 1
+scsibus* at esp?
+scsibus* at mesh?
+scsibus* at pcscp?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
-st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
-wdc*	at obio0 flags 0x0
+wdc*	at obio? flags 0x0
 wd*	at wdc? channel ? drive ? flags 0x0000
 
 atapibus* at wdc? channel ?
@@ -95,4 +95,4 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 pseudo-device	md		1	# memory disk
 pseudo-device	loop			# network loopback
 pseudo-device	sl		2	# Serial Line IP
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty		16	# pseudo-terminals
