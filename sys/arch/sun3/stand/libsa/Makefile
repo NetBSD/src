@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2001/10/02 06:30:04 chs Exp $
+#	$NetBSD: Makefile,v 1.32 2001/10/07 04:50:40 tsutsui Exp $
 
 LIB=sa
 
@@ -20,13 +20,13 @@ DIR_KERN=${S}/lib/libkern
 
 .PATH:  ${DIR_SA} ${DIR_KERN}
 
-# DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
+# DEBUG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 #  -DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG -DDEBUG_PROM
 
 DEFS= -Dsun3 -D_STANDALONE
 INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S}
-CFLAGS= -O2 -msoft-float -fno-defer-pop
-CPPFLAGS= ${DEFS} ${DBG} ${INCL}
+CFLAGS= -Os -msoft-float -fno-defer-pop
+CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 CLEANFILES= SRT0.o SRT1.o vers.c
 
 SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
