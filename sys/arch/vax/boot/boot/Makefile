@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2003/12/11 17:34:09 matt Exp $
+#	$NetBSD: Makefile,v 1.35 2004/04/21 22:01:44 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -42,10 +42,10 @@ vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -NM ${.CURDIR}/version "${MACHINE}"
 
 ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -e ${START} -o ${PROG}.sym ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	${STRIP} -o ${PROG} ${PROG}.sym
-	${SIZE} ${PROG}
 
 install:
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
