@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.4 2002/07/16 23:04:21 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.5 2002/07/28 07:05:06 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -79,7 +79,6 @@ ASENTRY(Idle)
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
 	mtmsr	3
-
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
@@ -118,8 +117,7 @@ ENTRY(switchexit)
  * void cpu_switch(struct proc *p)
  * Find a runnable process and switch to it.
  */
-/* XXX noprofile?  --thorpej@netbsd.org */
-ENTRY(cpu_switch)
+ENTRY_NOPROFILE(cpu_switch)
 	mflr	0			/* save lr */
 	stw	0,4(1)
 	stwu	1,-16(1)
@@ -164,7 +162,7 @@ ENTRY(cpu_switch)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
-	xor	3,3,3
+	xor	3,3,3			/* spl0() */
 	bl	_C_LABEL(lcsplx)
 #if !defined(MULTIPROCESSOR)
 	stw	3,PCB_SPL(31)		/* save spl */
@@ -219,11 +217,6 @@ ENTRY(cpu_switch)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* Unlock the sched_lock, but leave interrupts off, for now. */
-	bl	_C_LABEL(sched_unlock_idle)
-#endif
-
 #if defined(MULTIPROCESSOR)
 	GET_CPUINFO(4)
 	stw	4,P_CPU(31)		/* p->p_cpu = curcpu() */
@@ -242,10 +235,6 @@ ENTRY(cpu_switch)
 #endif
 	lwz	4,P_ADDR(31)
 
-	mfmsr	3
-	ori	3,3,PSL_EE@l		/* Now we can interrupt again */
-	mtmsr	3
-
 #if !defined(MULTIPROCESSOR)		/* XXX */
 	cmpl	0,31,30			/* is it the same process? */
 	beq	switch_return
@@ -260,13 +249,9 @@ ENTRY(cpu_switch)
 	stmw	10,8(1)
 	lwz	3,P_ADDR(30)
 	stw	1,PCB_SP(3)		/* save SP */
-#endif
 
 switch_exited:
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while
-					   actually switching */
-	mtmsr	3
+#endif
 
 	/* indicate new pcb */
 #if defined(MULTIPROCESSOR)
@@ -286,27 +271,9 @@ switch_exited:
 	stwu	5,_C_LABEL(curpm)@l(6)
 #endif
 	stwcx.	5,0,6			/* clear possible reservation */
-
-#if 0
-	addic.	5,5,64
-	li	6,0
-	mfsr	8,KERNEL_SR		/* save kernel SR */
-1:
-	addis	6,6,-0x10000000@ha	/* set new procs segment registers */
-	or.	6,6,6			/* This is done from the real
-					   address pmap */
-	lwzu	7,-4(5)			/* so we don't have to worry */
-	mtsrin	7,6			/* about accessibility */
-	bne	1b
-	mtsr	KERNEL_SR,8		/* restore kernel SR */
-#endif
 	isync
 
 	lwz	1,PCB_SP(4)		/* get new procs SP */
-
-	ori	3,3,PSL_EE@l		/* interrupts are okay again */
-	mtmsr	3
-
 	lmw	10,8(1)			/* get other regs */
 	lwz	1,0(1)			/* get saved SP */
 	mr	2,12			/* get saved r2 */
@@ -316,6 +283,15 @@ switch_exited:
 	isync
 
 switch_return:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/* Unlock the sched_lock, but leave interrupts off, for now. */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+	mfmsr	3
+	ori	3,3,PSL_EE@l		/* interrupts are okay again */
+	mtmsr	3
+
 	mr	30,7			/* save proc pointer */
 	lwz	3,PCB_SPL(4)
 	bl	_C_LABEL(lcsplx)
