@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.9 2000/09/25 13:54:51 abs Exp $
+#	$NetBSD: INSTALL,v 1.10 2000/10/02 18:43:36 abs Exp $
 #
 # INSTALL
 
@@ -182,4 +182,4 @@ pseudo-device	ppp		1 	# Point-to-Point Protocol
 pseudo-device	sl		1 	# Serial Line IP
 
 # miscellaneous pseudo-devices
-pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.38 2000/09/25 14:05:32 simonb Exp $
+# 	$NetBSD: INSTALL,v 1.39 2000/10/02 18:43:37 abs Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -138,7 +138,7 @@ include 	"arch/pmax/conf/scsi.pmax"
 # Pseudo-devices							#
 #########################################################################
 
-pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
 pseudo-device	ccd		 4	# concatenated disks
