@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.2 2000/01/13 06:13:30 mjl Exp $
+.\"	$NetBSD: login.conf.5,v 1.3 2000/01/22 09:31:35 mjl Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" BSDI login.conf.5,v 2.19 1998/02/19 23:39:39 prb Exp
 .\"
-.Dd January 13, 2000
+.Dd January 14, 2000
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -212,8 +212,9 @@ to the capability name (e.g.,
 and
 .Va openfiles-cur Ns No ).
 .Pp
-\*(oSwill never define capabilities which start with
-Li x-
+.Nx
+will never define capabilities which start with
+.Li x-
 or
 .Li X- ,
 these are reserved for external use (unless included through contributed
