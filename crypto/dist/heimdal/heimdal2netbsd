@@ -1,12 +1,45 @@
 #! /bin/sh
 
-# $Id: heimdal2netbsd,v 1.2 2001/06/05 17:08:07 wiz Exp $
+# $Id: heimdal2netbsd,v 1.3 2002/09/12 14:12:18 joda Exp $
 
-echo "`basename $0`: this doesn't do anything yet!" 1>&2
-exit 1
+if [ \! -f kuser/kinit.c ]; then 
+	echo "`basename $0`: should be run in top src directory" 1>&2
+	exit 1
+fi
 
-# put manual notes below:
+if ! type perl > /dev/null 2>&1 ; then
+	echo "`basename $0`: you need perl to run this" 1>&2
+	exit 1
+fi
 
-# should probably rename <$>Id<$> to $Heimdal$ or similar
-# Remove 'HEIMDAL' after .Os in the man pages (NetBSD man pages should just
-# have '.Os')
+
+echo 'Removing preformatted man pages.'
+find . -name '*.cat[1358]' | xargs rm -f
+rm doc/heimdal.info
+
+echo 'Fixing .Os in man pages.'
+perl -i~ -p -e 's/\.Os HEIMDAL/.Os/' `find . -name '*.[1358]'`
+
+echo 'Changing $Id: heimdal2netbsd,v 1.3 2002/09/12 14:12:18 joda Exp $ to $Heimdal$.'
+## Ugh!
+set -- 'RCSID\("'	'"\)'	'__RCSID("'	'"\n        "\$NetBSD\$")' \
+	'/\* '		' \*/'	'/* '		'\n   \$NetBSD\$ */'       \
+	'# '		''	'# '		'\n# \$NetBSD\$'           \
+	'\.\\" '	''	'.\\" '		'\n.\\" \$NetBSD\$'        \
+	'dnl '		''	'dnl '		'\ndnl \$NetBSD\$'
+
+
+e=
+while [ $# -gt 0 ]; do
+	e="${e}s,$1\\\$Id([^\\\$]*)\\\$$2,$3\\\$Heimdal\\1\\\$$4,;"
+	shift 4
+done
+
+perl -i~ -p -e "$e" `find . -type f`
+
+echo 'Inlining <krb5-types.h> in krb5.h and gssapi.h.'
+perl -i~ -p -e 's,#include <krb5-types.h>,#include <sys/types.h>\n#include <inttypes.h>\n#include <sys/socket.h>\ntypedef socklen_t krb5_socklen_t;\ntypedef ssize_t krb5_ssize_t;,' lib/gssapi/gssapi.h lib/krb5/krb5.h
+
+echo 'Remember to update files in basesrc/include/heimdal/.'
+
+exit 0
