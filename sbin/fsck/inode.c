@@ -33,14 +33,16 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inode.c	5.18 (Berkeley) 3/19/91";*/
-static char rcsid[] = "$Id: inode.c,v 1.5 1993/08/01 18:27:24 mycroft Exp $";
+static char rcsid[] = "$Id: inode.c,v 1.6 1994/04/18 06:08:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <ufs/dinode.h>
 #include <ufs/fs.h>
 #include <ufs/dir.h>
+#ifndef SMALL
 #include <pwd.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include "fsck.h"
@@ -423,9 +425,11 @@ pinode(ino)
 		return;
 	dp = ginode(ino);
 	printf(" OWNER=");
+#ifndef SMALL
 	if ((pw = getpwuid((int)dp->di_uid)) != 0)
 		printf("%s ", pw->pw_name);
 	else
+#endif
 		printf("%u ", (unsigned)dp->di_uid);
 	printf("MODE=%o\n", dp->di_mode);
 	if (preen)
