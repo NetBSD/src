@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.1 2001/03/05 22:49:43 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.2 2001/03/29 01:09:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1502,9 +1502,6 @@ fill_eproc(p, ep)
 	struct tty *tp;
 	struct lwp *l;
 
-	/* Pick a "representative" LWP */
-	l = proc_representative_lwp(p);
-
 	ep->e_paddr = p;
 	ep->e_sess = p->p_session;
 	ep->e_pcred = *p->p_cred;
@@ -1522,6 +1519,12 @@ fill_eproc(p, ep)
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
+
+		/* Pick a "representative" LWP */
+		l = proc_representative_lwp(p);
+		
+		if (l->l_wmesg)
+			strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
@@ -1537,8 +1540,6 @@ fill_eproc(p, ep)
 		ep->e_tsess = tp->t_session;
 	} else
 		ep->e_tdev = NODEV;
-	if (l->l_wmesg)
-		strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);
 
 	ep->e_xsize = ep->e_xrssize = 0;
 	ep->e_xccount = ep->e_xswrss = 0;
@@ -1560,19 +1561,11 @@ fill_kproc2(p, ki)
 	struct lwp *l;
 	memset(ki, 0, sizeof(*ki));
 
-	/* Pick a "representative" LWP */
-	l = proc_representative_lwp(p);
-
 	/* XXX NJWLWP
 	* These are likely not what the caller was looking for.
 	* The perils of playing with the kernel data structures...
 	*/
-	ki->p_forw = PTRTOINT64(l->l_forw);
-	ki->p_back = PTRTOINT64(l->l_back);
-
 	ki->p_paddr = PTRTOINT64(p);
-
-	ki->p_addr = PTRTOINT64(l->l_addr);
 	ki->p_fd = PTRTOINT64(p->p_fd);
 	ki->p_cwdi = PTRTOINT64(p->p_cwdi);
 	ki->p_stats = PTRTOINT64(p->p_stats);
@@ -1620,13 +1613,6 @@ fill_kproc2(p, ki)
 	ki->p_rtime_usec = p->p_rtime.tv_usec;
 	ki->p_cpticks = p->p_cpticks;
 	ki->p_pctcpu = p->p_pctcpu;
-	ki->p_swtime = l->l_swtime;
-	ki->p_slptime = l->l_slptime;
-	if (l->l_stat == LSONPROC) {
-		KDASSERT(l->l_cpu != NULL);
-		ki->p_schedflags = l->l_cpu->ci_schedstate.spc_flags;
-	} else
-		ki->p_schedflags = 0;
 
 	ki->p_uticks = p->p_uticks;
 	ki->p_sticks = p->p_sticks;
@@ -1635,7 +1621,6 @@ fill_kproc2(p, ki)
 	ki->p_tracep = PTRTOINT64(p->p_tracep);
 	ki->p_traceflag = p->p_traceflag;
 
-	ki->p_holdcnt = l->l_holdcnt;
 
 	memcpy(&ki->p_siglist, &p->p_sigctx.ps_siglist, sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigmask, &p->p_sigctx.ps_sigmask, sizeof(ki_sigset_t));
@@ -1643,8 +1628,6 @@ fill_kproc2(p, ki)
 	memcpy(&ki->p_sigcatch, &p->p_sigctx.ps_sigcatch, sizeof(ki_sigset_t));
 
 	ki->p_stat = p->p_stat;
-	ki->p_priority = l->l_priority;
-	ki->p_usrpri = l->l_usrpri;
 	ki->p_nice = p->p_nice;
 
 	ki->p_xstat = p->p_xstat;
@@ -1652,10 +1635,6 @@ fill_kproc2(p, ki)
 
 	strncpy(ki->p_comm, p->p_comm,
 	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
-
-	if (l->l_wmesg)
-		strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
-	ki->p_wchan = PTRTOINT64(l->l_wchan);
 
 	strncpy(ki->p_login, p->p_session->s_login, sizeof(ki->p_login));
 
@@ -1671,6 +1650,26 @@ fill_kproc2(p, ki)
 		ki->p_vm_tsize = vm->vm_tsize;
 		ki->p_vm_dsize = vm->vm_dsize;
 		ki->p_vm_ssize = vm->vm_ssize;
+
+		/* Pick a "representative" LWP */
+		l = proc_representative_lwp(p);
+		ki->p_forw = PTRTOINT64(l->l_forw);
+		ki->p_back = PTRTOINT64(l->l_back);
+		ki->p_addr = PTRTOINT64(l->l_addr);
+		ki->p_swtime = l->l_swtime;
+		ki->p_slptime = l->l_slptime;
+		if (l->l_stat == LSONPROC) {
+			KDASSERT(l->l_cpu != NULL);
+			ki->p_schedflags = l->l_cpu->ci_schedstate.spc_flags;
+		} else
+			ki->p_schedflags = 0;
+		ki->p_holdcnt = l->l_holdcnt;
+		ki->p_priority = l->l_priority;
+		ki->p_usrpri = l->l_usrpri;
+		if (l->l_wmesg)
+			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
+		ki->p_wchan = PTRTOINT64(l->l_wchan);
+
 	}
 
 	if (p->p_session->s_ttyvp)
@@ -1679,7 +1678,7 @@ fill_kproc2(p, ki)
 		ki->p_eflag |= EPROC_SLEADER;
 
 	/* XXX Is this double check necessary? */
-	if ((l->l_flag & L_INMEM) == 0 || P_ZOMBIE(p)) {
+	if (P_ZOMBIE(p)) {
 		ki->p_uvalid = 0;
 	} else {
 		ki->p_uvalid = 1;
