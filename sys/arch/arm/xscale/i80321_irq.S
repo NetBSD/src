@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_irq.S,v 1.1 2002/03/27 21:45:47 thorpej Exp $	*/
+/*	$NetBSD: i80321_irq.S,v 1.2 2002/07/29 22:00:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
 /*
  * irq_entry:
  *
- *	Main entry point for the IRQ vector.
+ *	Main entry point for the IRQ vector on i80321 CPUs.
  */
 
 	.text
