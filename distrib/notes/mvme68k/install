@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.13 2001/07/24 18:02:56 nra Exp $
+.\"	$NetBSD: install,v 1.14 2001/10/23 22:13:35 scw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,7 +91,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.13 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.14 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -484,7 +484,7 @@ For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.13 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.14 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -573,13 +573,13 @@ and then run the other program in the foreground with its output to
 The result looks like this:
 .Pp
 .Dl ssh: Ic "run -bg dd obs=8k if=/dev/pipe of=/dev/rsd0b"
-.Dl ssh: Ic "run -o /dev/pipe zcat /mnt/install/miniroot.gz"
+.Dl ssh: Ic "run -o /dev/pipe zcat /mnt/install/miniroot.fs.gz"
 .Pp
 To load the miniroot using rsh to the server, you would use a pair
 of commands similar to the above. Here is another example:
 .Pp
 .Dl ssh: Ic "run -b dd obs=8k if=/dev/pipe of=/dev/rsd0b"
-.Dl ssh: Ic "run -o /dev/pipe rsh 192.168.1.1 zcat miniroot.gz"
+.Dl ssh: Ic "run -o /dev/pipe rsh 192.168.1.1 zcat miniroot.fs.gz"
 .Pp
 You must now make the disk bootable. Refer to the previous section on
 installing from tape, where it describes how to run
