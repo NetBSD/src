@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.1 1998/07/27 19:26:32 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.2 1998/07/28 00:44:39 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,9 +48,8 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <sparc/bus.h>
-#include <sparc/autoconf.h>
-#include <sparc/cpu.h>
+#include <machine/bus.h>
+#include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/qecreg.h>
@@ -107,7 +106,6 @@ qecattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#if defined(SUN4C) || defined(SUN4M)
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *sc = (void *)self;
 	int node;
@@ -220,7 +218,6 @@ qecattach(parent, self, aux)
 		(void)config_found(&sc->sc_dev, (void *)&sa, qecprint);
 	}
 	free(rr, M_DEVBUF);
-#endif /* SUN4C || SUN4M */
 }
 
 int
