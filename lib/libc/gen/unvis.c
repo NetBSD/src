@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.5 1995/02/25 17:18:31 cgd Exp $	*/
+/*	$NetBSD: unvis.c,v 1.6 1997/07/13 19:41:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: unvis.c,v 1.5 1995/02/25 17:18:31 cgd Exp $";
+__RCSID("$NetBSD: unvis.c,v 1.6 1997/07/13 19:41:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -232,7 +233,7 @@ strunvis(dst, src)
 	char *start = dst;
 	int state = 0;
 
-	while (c = *src++) {
+	while ((c = *src++) != '\0') {
 	again:
 		switch (unvis(dst, c, &state, 0)) {
 		case UNVIS_VALID:
