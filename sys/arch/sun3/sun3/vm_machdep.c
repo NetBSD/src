@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 1995/04/13 22:07:35 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28 1995/05/24 21:08:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -47,8 +47,8 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/vnode.h>
 #include <sys/buf.h>
+#include <sys/vnode.h>
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -63,106 +63,167 @@
 #include <machine/pmap.h>
 #include "cache.h"
 
-extern int fpu_type;
+/* XXX - Put these in some header file? */
+void cpu_set_kpc __P((struct proc *p, u_long func));
+void child_return __P((struct proc *p));
+
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
  * ready to run, and marking it so that it can return differently
  * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
  */
+int
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
-	/* kernel virtual address of new u-area */
-	register struct user *up = p2->p_addr;
-	int offset;
-	extern caddr_t getsp();
-	extern char kstack[];
+	register struct pcb *pcb2 = &p2->p_addr->u_pcb;
+	register struct trapframe *p2tf;
+	register struct switchframe *p2sf;
+	extern void proc_do_uret();
 
 	/* copy over the machdep part of struct proc */
-	p2->p_md.md_regs = p1->p_md.md_regs;
-	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
+	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/*
-	 * Copy pcb and stack from proc p1 to p2. 
-	 * We do this as cheaply as possible, copying only the active
-	 * part of the stack.  The stack and pcb need to agree;
-	 * this is tricky, as the final pcb is constructed by savectx,
-	 * but its frame isn't yet on the stack when the stack is copied.
-	 * cpu_switch compensates for this when the child eventually runs.
-	 * This should be done differently, with a single call
-	 * that copies and updates the pcb+stack,
-	 * replacing the bcopy and savectx.
+	 * Copy pcb from proc p1 to p2.
+	 * XXX - Note, if we have never called cpu_switch()
+	 * then our own pcb will not have been initialized.
+	 * Make sure it is valid or the child will die in
+	 * cpu_switch() when it loads the new sr value.
+	 * (Accidently clears the supervisor bit...)
 	 *
-	 * XXX - Note that all proc->p_addr mappings are
-	 *       NON-CACHEABLE aliases of kstack...
+	 * We can just save our context into p2, based on
+	 * the assumption that p1 == curproc (verify that).
 	 */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	offset = getsp() - kstack;
-	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
-	    (unsigned) ctob(UPAGES) - offset);
+	if (p1 != curproc)	/* XXX */
+		panic("cpu_fork: bad p1");
+	savectx(pcb2);
 
 	/*
-	 * Cache the PTEs for the user area in the machine dependent
-	 * part of the proc struct so cpu_switch() can quickly map in
-	 * the user struct and kernel stack. Note: if the virtual address
-	 * translation changes (e.g. swapout) we have to update this.
+	 * Our cpu_switch MUST always call PMAP_ACTIVATE on a
+	 * process switch so there is no need to do it here.
+	 * (Our PMAP_ACTIVATE call allocates an MMU context.)
 	 */
-	save_u_area(p2, p2->p_addr);
 
 	/*
-	 * Arrange for a non-local goto when the new process
-	 * is started, to resume here, returning nonzero from setjmp.
+	 * Create the child's kernel stack, from scratch.
+	 * Pick a stack pointer, leaving room for a trapframe;
+	 * copy trapframe from parent so return to user mode
+	 * will be to right address, with correct registers.
+	 * Leave one word at the end just to be like proc0...
 	 */
-	if (savectx(up, 1)) {
-		/*
-		 * Return 1 in child.
-		 */
-		return (1);
-	}
+	p2tf = (struct trapframe *)((char*)p2->p_addr + USPACE-4) - 1;
+	p2->p_md.md_regs = (int *)p2tf;
+	bcopy(p1->p_md.md_regs, p2tf, sizeof(*p2tf));
+
+	/*
+	 * Create a "switch frame" such that when cpu_switch returns,
+	 * this process will be in proc_do_uret() going to user mode.
+	 */
+	p2sf = (struct switchframe *)p2tf - 1;
+	p2sf->sf_pc = (u_int)proc_do_uret;
+	pcb2->pcb_regs[11] = (int)p2sf;		/* SSP */
+
+#if 1	/* XXX - Which way is better? */
+	cpu_set_kpc(p2, (long)child_return);
+#else
+	/*
+	 * Set up return-value registers as fork() libc stub expects.
+	 */
+	p2tf->tf_regs[D0] = 0;
+	p2tf->tf_sr &= ~PSL_C;
+	p2tf->tf_format = FMT0;
+#endif
 	return (0);
 }
 
 /*
- * Finish a swapin operation.
- * We neded to update the cached PTEs for the user area in the
- * machine dependent part of the proc structure.
+ * cpu_set_kpc:
+ *
+ * Arrange for in-kernel execution of a process to continue in the
+ * named function, as if that function were called with one argument,
+ * the current process's process pointer.
+ *
+ * Note that it's assumed that when the named process returns,
+ * rei() should be invoked, to return to user mode.  That is
+ * accomplished by having cpu_fork set the initial frame with a
+ * return address pointing to rei() which eventually does an rte.
+ *
+ * The design allows this function to be implemented as a general
+ * "kernel sendsig" utility, that can "push" a call to a kernel
+ * function onto any other process kernel stack, in a way very
+ * similar to how signal delivery works on a user stack.  When
+ * the named process is switched to, it will call the function
+ * we "pushed" and then proc_trampoline will pop the args that
+ * were pushed here and return to where it would have returned
+ * before we "pushed" this call.
  */
 void
-cpu_swapin(p)
-	register struct proc *p;
+cpu_set_kpc(proc, func)
+	struct proc *proc;
+	u_long func;
 {
-	/*
-	 * Cache the PTEs for the user area in the machine dependent
-	 * part of the proc struct so cpu_switch() can quickly map in
-	 * the user struct and kernel stack.
-	 */
-	save_u_area(p, p->p_addr);
+	struct pcb *pcbp;
+	struct switchframe *sf;
+	extern void proc_trampoline();
+	struct ksigframe {
+		struct switchframe sf;
+		u_long func;
+		void *proc;
+	} *ksfp;
+
+#ifdef	DIAGNOSTIC
+	if (proc == curproc)
+		panic("cpu_set_kpc self");
+#endif
+
+	pcbp = &proc->p_addr->u_pcb;
+
+	/* Push a ksig frame onto the kernel stack. */
+	ksfp = (struct ksigframe *)pcbp->pcb_regs[11] - 1;
+	pcbp->pcb_regs[11] = (int)ksfp;
+
+	/* Now fill it in for proc_trampoline. */
+	ksfp->sf.sf_pc = (u_int)proc_trampoline;
+	ksfp->func = func;
+	ksfp->proc = proc;
 }
 
 /*
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Once finished, we call switch_exit, which switches to a temporary
- * pcb and stack and never returns.  We block memory allocation
- * until switch_exit has made things safe again.
+ * block context switches and then call switch_exit() which will
+ * free our stack and user area and switch to another process
+ * thus we never return.
  */
 void
 cpu_exit(p)
 	struct proc *p;
 {
-	extern volatile void switch_exit();
+
 	vmspace_free(p->p_vmspace);
 
-	(void) splimp();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	(void)splimp();	/* XXX - splhigh() ? */
+	cnt.v_swtch++;
 	switch_exit(p);
 	/* NOTREACHED */
+}
+
+/*
+ * Do any additional state-saving necessary before swapout.
+ */
+void
+cpu_swapout(p)
+	register struct proc *p;
+{
+
+	/*
+	 * This will have real work to do when we implement the
+	 * context-switch optimization of not switching FPU state
+	 * until the new process actually uses FPU instructions.
+	 */
 }
 
 /*
@@ -188,6 +249,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct coreseg cseg;
 	register struct user *up = p->p_addr;
 	register i;
+	extern int fpu_type;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.40 1995/04/26 23:42:35 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.41 1995/05/24 21:08:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -320,7 +320,6 @@ void sun3_vm_init()
 	/*
 	 * Virtual and physical pages for proc[0] u-area (already mapped)
 	 * Make these non-cached at their full-time mapping address.
-	 * The running proc's upages are also mapped cached at kstack.
 	 */
 	proc0paddr = (struct user *) virtual_avail;
 	proc0_user_pa = avail_start;
@@ -437,32 +436,14 @@ void sun3_vm_init()
 		set_pte(va, PG_INVAL);
 
 	/*
-	 * Reserve VA space for the u-area of the current process,
-	 * and map proc[0]'s u-pages at the standard address.
-	 */
-	u_area_va = high_segment_alloc(UPAGES);
-	if (u_area_va != UADDR)
-		mon_panic("sun3_vm_init: u-area vaddr taken?\n");
-
-	/*
+	 * Initialize the "u-area" pages.
 	 * Must initialize p_addr before autoconfig or
 	 * the fault handler will get a NULL reference.
 	 */
+	bzero((caddr_t)proc0paddr, USPACE);
 	proc0.p_addr = proc0paddr;
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
-
-	/* Initialize cached PTEs for u-area mapping. */
-	save_u_area(&proc0, proc0paddr);
-
-	/*
-	 * Map proc0's u-area at the standard address (UADDR).
-	 * Note that this uses curproc to get the PTEs.
-	 */
-	load_u_area();
-
-	/* Initialize the "u-area" pages. */
-	bzero((caddr_t)UADDR, UPAGES*NBPG);
 
 	/*
 	 * XXX  It might be possible to move much of what is
@@ -517,11 +498,6 @@ void sun3_vm_init()
 
 	/* Finally, duplicate the mappings into all contexts. */
 	sun3_context_equiv();
-}
-
-void kstack_fall_off()
-{
-	mon_printf("kstack: fell off\n");
 }
 
 void sun3_verify_hardware()
