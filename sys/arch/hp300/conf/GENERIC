@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.33 1997/08/20 18:40:06 mjacob Exp $
+#	$NetBSD: GENERIC,v 1.34 1997/08/23 19:18:24 mjacob Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -36,7 +36,7 @@ options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
 options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 options 	LKM		# Loadable kernel modules
-#options	SCSIVERBOSE	# Verbose SCSI errors
+#options 	SCSIVERBOSE	# Verbose SCSI errors
 
 # Filesystems
 file-system	FFS		# fast filesystem
