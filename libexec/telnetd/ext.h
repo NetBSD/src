@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.8 1997/10/16 06:59:09 mikel Exp $	*/
+/*	$NetBSD: ext.h,v 1.9 1999/02/12 05:30:11 dean Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,8 +59,8 @@ extern int	diagnostic;	/* telnet diagnostic capabilities */
 #ifdef BFTPDAEMON
 extern int	bftpd;		/* behave as bftp daemon */
 #endif /* BFTPDAEMON */
-#if	defined(SecurID)
-extern int	require_SecurID;
+#if	defined(SECURELOGIN)
+extern int	require_secure_login;
 #endif
 #if	defined(AUTHENTICATION)
 extern int	auth_level;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnetd.8,v 1.14 1998/11/17 16:26:51 msaitoh Exp $
+.\"	$NetBSD: telnetd.8,v 1.15 1999/02/12 05:30:12 dean Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -273,9 +273,7 @@ from
 .It Fl s
 This option is only enabled if
 .Nm
-is compiled with support for
-.Tn SecurID
-cards.
+is compiled with support for secure logins.
 It causes the
 .Fl s
 option to be passed on to
@@ -285,7 +283,7 @@ and thus is only useful if
 supports the
 .Fl s
 flag to indicate that only
-.Tn SecurID
+Kerberos or S/Key
 validated logins are allowed, and is
 usually useful for controlling remote logins
 from outside of a firewall.
@@ -536,6 +534,7 @@ to execute site-specific commands.
 .Sh "SEE ALSO"
 .Xr telnet 1 ,
 .Xr login 1 ,
+.Xr skey 1 ,
 .Xr ttyaction 3
 .Sh STANDARDS
 .Bl -tag -compact -width RFC-1572
