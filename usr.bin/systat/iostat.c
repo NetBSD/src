@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.19.4.1 2002/06/10 16:31:28 tv Exp $	*/
+/*	$NetBSD: iostat.c,v 1.19.4.2 2002/06/30 05:47:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.19.4.1 2002/06/10 16:31:28 tv Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.19.4.2 2002/06/30 05:47:15 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -190,18 +190,12 @@ showiostat(void)
 		return;
 	dkswap();
 
-	etime = 0;
-	for(i = 0; i < CPUSTATES; i++) {
-		etime += cur.cp_time[i];
-	}
-	if (etime == 0.0)
-		etime = 1.0;
-	etime /= (float) hz;
+	etime = cur.cp_etime;
 	row = 1;
 
 	/*
 	 * Interrupt CPU state not calculated yet.
-	 */ 
+	 */
 	for (i = 0; i < CPUSTATES; i++)
 		stat1(row++, i);
 	if (!numbers) {
