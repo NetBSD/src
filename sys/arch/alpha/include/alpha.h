@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.15 2001/04/26 03:10:46 ross Exp $ */
+/* $NetBSD: alpha.h,v 1.16 2001/05/14 19:56:23 ross Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,7 @@ typedef union alpha_t_float {
 #ifdef _KERNEL
 
 #include <machine/bus.h>
+#include <machine/stdarg.h>
 
 struct pcb;
 struct proc;
@@ -117,6 +118,7 @@ void	fpusave_cpu(struct cpu_info *, int);
 void	fpusave_proc(struct proc *, int);
 
 /* Multiprocessor glue; cpu.c */
+
 struct cpu_info;
 int	cpu_iccb_send(long, const char *);
 void	cpu_iccb_receive(void);
@@ -144,6 +146,10 @@ void alpha_write_fp_c(struct proc *, u_int64_t);
 
 void alpha_enable_fp(struct proc *, int);
 int alpha_fp_complete(u_long, u_long, struct proc *, u_int64_t *);
+
+/* Security sensitive rate limiting printf */
+
+void rlprintf(struct timeval *t, const char *fmt, ...);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_H_ */
