@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.34 1999/12/13 15:22:55 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.35 2000/01/17 18:24:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.34 1999/12/13 15:22:55 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.35 2000/01/17 18:24:37 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,6 +261,29 @@ intpr(interval, ifnetaddr, pfunc)
 				else
 					n = 17;
 				printf("%-*.*s ", n, n, cp);
+				if (aflag) {
+					u_long multiaddr;
+					struct in6_multi inm;
+		
+					multiaddr = (u_long)
+					    ifaddr.in6.ia6_multiaddrs.lh_first;
+					while (multiaddr != 0) {
+						kread(multiaddr, (char *)&inm,
+						   sizeof inm);
+						inet_ntop(AF_INET6, &inm.in6m_addr,
+						    hbuf, sizeof(hbuf));
+						cp = hbuf;
+						if (vflag)
+						    n = strlen(cp) < 17
+							? 17 : strlen(cp);
+						else
+						    n = 17;
+						printf("\n%25s %-*.*s ", "",
+						    n, n, cp);
+						multiaddr =
+						   (u_long)inm.in6m_entry.le_next;
+					}
+				}
 				break;
 #endif /*INET6*/
 #ifndef SMALL
