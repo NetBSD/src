@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.24 1998/07/18 05:04:36 lukem Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.25 1998/07/26 19:05:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.24 1998/07/18 05:04:36 lukem Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.25 1998/07/26 19:05:08 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,7 +75,7 @@ int	orcmd __P((char **, u_short, const char *, const char *, const char *,
 	    int *));
 int	__ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
 static	int rshrcmd __P((char **, u_short, const char *, const char *,
-	    const char *, int *, char *));
+	    const char *, int *, const char *));
 static	int hprcmd __P((struct hostent *, char **, u_short, const char *,
 	    const char *, const char *, int *));
 static	int __icheckhost __P((u_int32_t, const char *));
@@ -282,7 +282,7 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 	u_short	rport;
 	const	char *locuser, *remuser, *cmd;
 	int	*fd2p;
-	char	*rshcmd;
+	const	char *rshcmd;
 {
 	pid_t pid;
 	int sp[2], ep[2];
