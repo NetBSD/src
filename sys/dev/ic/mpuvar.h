@@ -1,4 +1,4 @@
-/*	$NetBSD: mpuvar.h,v 1.2 1999/08/02 17:37:42 augustss Exp $	*/
+/*	$NetBSD: mpuvar.h,v 1.3 1999/10/05 03:29:22 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,12 +44,19 @@ struct mpu_softc {
 	int	open;
 	void	(*intr)__P((void *, int)); /* midi input intr handler */
 	void	*arg;			/* arg for intr() */
+
+#ifndef AUDIO_NO_POWER_CTL
+	int	(*powerctl)__P((void *, int));
+	void	*powerarg;
+#endif
 };
 
-struct midi_hw_if mpu_midi_hw_if;
+#ifdef _KERNEL
+extern struct midi_hw_if mpu_midi_hw_if;
 
 int	mpu_find __P((struct mpu_softc *));
 void	mpu_attach __P((struct mpu_softc *));
 int	mpu_intr __P((void *));
+#endif
 
 #define MPU401_NPORT	2
