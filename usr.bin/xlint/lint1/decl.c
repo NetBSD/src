@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.18 2000/07/05 22:50:59 christos Exp $ */
+/* $NetBSD: decl.c,v 1.19 2001/02/24 00:43:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: decl.c,v 1.19 2001/02/24 00:43:50 cgd Exp $");
 #endif
 
 #include <sys/param.h>
