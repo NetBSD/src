@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.2 1996/03/02 01:20:58 cgd Exp 
+ *	NetBSD: tcdevs,v 1.3 1996/03/05 23:15:59 cgd Exp 
  */
 
 /*
@@ -39,23 +39,73 @@
 struct tc_knowndev tc_knowndevs[] = {
 	{
 	    "KZTSA-AA",
-	    TC_PRODUCT_KZTSA_AA,
+	    TC_DEVICE_KZTSA_AA,
+	    TC_DESCRIPTION_KZTSA_AA,
 	},
 	{
 	    "PMAD-AA ",
-	    TC_PRODUCT_PMAD_AA,
+	    TC_DEVICE_PMAD_AA,
+	    TC_DESCRIPTION_PMAD_AA,
 	},
 	{
-	    "PMAGB-BA",
-	    TC_PRODUCT_PMAGB_BA,
+	    "PMAF-AA ",
+	    TC_DEVICE_PMAF_AA,
+	    TC_DESCRIPTION_PMAF_AA,
 	},
 	{
 	    "PMAG-AA ",
-	    TC_PRODUCT_PMAG_AA,
+	    TC_DEVICE_PMAG_AA,
+	    TC_DESCRIPTION_PMAG_AA,
 	},
 	{
 	    "PMAG-BA ",
-	    TC_PRODUCT_PMAG_BA,
+	    TC_DEVICE_PMAG_BA,
+	    TC_DESCRIPTION_PMAG_BA,
 	},
-	{ NULL, NULL, }
+	{
+	    "PMAG-CA ",
+	    TC_DEVICE_PMAG_CA,
+	    TC_DESCRIPTION_PMAG_CA,
+	},
+	{
+	    "PMAG-DA ",
+	    TC_DEVICE_PMAG_DA,
+	    TC_DESCRIPTION_PMAG_DA,
+	},
+	{
+	    "PMAG-FA ",
+	    TC_DEVICE_PMAG_FA,
+	    TC_DESCRIPTION_PMAG_FA,
+	},
+	{
+	    "PMAG-DV ",
+	    TC_DEVICE_PMAG_DV,
+	    TC_DESCRIPTION_PMAG_DV,
+	},
+	{
+	    "PMAGB-BA",
+	    TC_DEVICE_PMAGB_BA,
+	    TC_DESCRIPTION_PMAGB_BA,
+	},
+	{
+	    "PMAZ-AA ",
+	    TC_DEVICE_PMAZ_AA,
+	    TC_DESCRIPTION_PMAZ_AA,
+	},
+	{
+	    "T3PKT   ",
+	    TC_DEVICE_T3PKT,
+	    TC_DESCRIPTION_T3PKT,
+	},
+	{
+	    "T1D4PKT ",
+	    TC_DEVICE_T1D4PKT,
+	    TC_DESCRIPTION_T1D4PKT,
+	},
+	{
+	    "FORE_ATM",
+	    TC_DEVICE_FORE_ATM,
+	    TC_DESCRIPTION_FORE_ATM,
+	},
+	{ NULL, NULL, NULL, }
 };
