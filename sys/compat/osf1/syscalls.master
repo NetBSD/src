@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 1999/04/29 17:19:47 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.22 1999/04/29 22:08:49 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -50,6 +50,7 @@
 			    u_int nbyte); }
 5	UNIMPL		old open
 6	NOARGS		{ int sys_close(int fd); }
+; XXX
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
 8	UNIMPL		old creat
@@ -100,6 +101,7 @@
 			    int mode); }
 46	OBSOL		sigaction
 47	NOARGS		{ gid_t sys_getgid(void); }
+; XXX
 48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
 			    sigset13_t mask); }
 49	NOARGS		{ int sys___getlogin(char *namebuf, u_int namelen); }
@@ -145,8 +147,9 @@
 81	UNIMPL		old getpgrp
 ; OSF/1 setpgrp(); identical in function to setpgid().  XXX
 82	NOARGS		{ int sys_setpgid(int pid, int pgid); } setpgrp
-83	NOARGS		{ int sys_setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
+83	STD		{ int osf1_sys_setitimer(u_int which, \
+			    struct osf1_itimerval *itv, \
+			    struct osf1_itimerval *oitv); }
 84	UNIMPL		old wait
 85	UNIMPL		table
 86	UNIMPL		getitimer
@@ -160,6 +163,7 @@
 92	STD		{ int osf1_sys_fcntl(int fd, int cmd, void *arg); }
 93	STD		{ int osf1_sys_select(u_int nd, fd_set *in, \
 			    fd_set *ou, fd_set *ex, struct osf1_timeval *tv); }
+; maybe XXX
 94	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 95	NOARGS		{ int sys_fsync(int fd); }
@@ -193,6 +197,7 @@
 			    struct osf1_timezone *tzp); }
 117	STD		{ int osf1_sys_getrusage(int who, \
 			    struct osf1_rusage *rusage); }
+; XXX
 118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
 			    caddr_t val, int *avalsize); }
 119	UNIMPL
@@ -230,8 +235,10 @@
 			    caddr_t asa, int *alen); }
 142	NOARGS		{ int32_t compat_43_sys_gethostid(void); }
 143	NOARGS		{ int compat_43_sys_sethostid(int32_t hostid); }
+; XXX
 144	STD		{ int osf1_sys_getrlimit(u_int which, \
 			    struct rlimit *rlp); }
+; XXX
 145	STD		{ int osf1_sys_setrlimit(u_int which, \
 			    struct rlimit *rlp); }
 146	UNIMPL		old killpg
@@ -338,7 +345,7 @@
 238	UNIMPL		sigsendset
 239	UNIMPL		set_speculative
 240	UNIMPL		msfs_syscall
-241	UNIMPL		sysinfo
+241	STD		{ int osf1_sys_sysinfo(int cmd, char *buf, long len); }
 242	UNIMPL		uadmin
 243	UNIMPL		fuser
 244	UNIMPL		proplist_syscall
