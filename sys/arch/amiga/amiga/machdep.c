@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.2.1 1997/09/08 23:27:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -656,6 +656,7 @@ sendsig(catcher, sig, mask, code)
 	register struct sigframe *fp, *kfp;
 	register struct frame *frame;
 	register struct sigacts *psp = p->p_sigacts;
+	register struct sigaction *sa = &psp->ps_sigact[sig];
 	register short ft;
 	int oonstack;
 	extern short exframesize[];
@@ -668,7 +669,7 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate and validate space for the signal handler
@@ -678,10 +679,10 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 	 * the space with a `brk'.
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && oonstack == 0 &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    (sa->sa_flags & SA_ONSTACK)) {
+		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size - sizeof(struct sigframe));
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)frame->f_regs[SP] - 1;
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -703,8 +704,6 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 		 */
 		SIGACTION(p, SIGILL) = SIG_DFL;
 		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
 		p->p_sigmask &= ~sig;
 		psignal(p, SIGILL);
 		return;
@@ -843,9 +842,9 @@ sys_sigreturn(p, v, retval)
 	 * Restore the user supplied information
 	 */
 	if (scp->sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else 
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;

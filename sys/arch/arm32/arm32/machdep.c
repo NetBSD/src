@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1997/07/31 02:59:06 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24.2.1 1997/09/08 23:29:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -2652,6 +2652,7 @@ sendsig(catcher, sig, mask, code)
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
+	struct sigaction *sa = &psp->ps_sigact[sig];
 	int oonstack;
 	extern char sigcode[], esigcode[];
 
@@ -2660,17 +2661,17 @@ sendsig(catcher, sig, mask, code)
 		    sig, mask, (u_int)catcher, (u_int)code);
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SA_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
 
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+	    (sa->sa_flags & SA_ONSTACK)) {
+		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size - sizeof(struct sigframe));
+		p->p_sigstk.ss_flags |= SA_ONSTACK;
 	} else {
 		fp = (struct sigframe *)tf->tf_usr_sp - 1;
 	}
@@ -2788,9 +2789,9 @@ sys_sigreturn(p, v, retval)
 		return(EINVAL);
 
 	if (context.sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigstk.ss_flags |= SA_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	/*
