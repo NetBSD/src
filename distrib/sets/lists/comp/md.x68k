@@ -1,11 +1,10 @@
-# $NetBSD: md.x68k,v 1.40 2001/12/28 02:10:26 minoura Exp $
+# $NetBSD: md.x68k,v 1.41 2002/03/24 15:01:04 isaki Exp $
 ./usr/include/x68k	comp-c-include
 ./usr/include/x68k/_G_config.h	comp-c-include
 ./usr/include/x68k/ansi.h	comp-c-include
 ./usr/include/x68k/aout_machdep.h	comp-c-include
 ./usr/include/x68k/asm.h	comp-c-include
 ./usr/include/x68k/bootinfo.h	comp-c-include
-./usr/include/x68k/bsd_audioio.h	comp-c-include
 ./usr/include/x68k/bswap.h	comp-c-include
 ./usr/include/x68k/bus.h	comp-c-include
 ./usr/include/x68k/cdefs.h	comp-c-include
