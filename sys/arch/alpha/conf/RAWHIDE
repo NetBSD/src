@@ -1,33 +1,20 @@
-# $NetBSD: RAWHIDE,v 1.2 1998/05/05 20:29:18 mjacob Exp $
+# $NetBSD: RAWHIDE,v 1.3 1998/05/05 22:00:28 mjacob Exp $
 #
-# Alpha kernel for an AlphaServer 4100.
-
+# Alpha 4100 stripped for action server kernel.
+#
 include	"arch/alpha/conf/std.alpha"
-
-maxusers 32
-
+maxusers	64
 #makeoptions	DEBUG="-g"
-
-# CPU Support
 options		DEC_KN300	# KN300:	AlphaServer 4100
+options 	KTRACE		# System call tracing support
+options 	DEBUG		# Expensive debugging checks/support
+options 	KMEMSTATS	# Collect kmem usage statistics
+options 	DIAGNOSTIC	# Cheap kernel consistency checks
+options		DDB		# Kernel Dynamic Debugger
 
-# Standard system options
-options 	KTRACE			# System call tracing support
-
-# Diagnostic/debugging support options
-options 	DIAGNOSTIC		# Cheap kernel consistency checks
-options 	DEBUG			# Expensive debugging checks/support
-options 	KMEMSTATS		# Collect kmem usage statistics
-options 	DDB			# Kernel Dynamic Debugger
-#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-
-# File systems
 file-system	FFS		# Fast file system
 file-system	MFS		# Memory-based file system
-file-system	LFS		# Log-structured file system
 file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
-file-system	ADOSFS		# AmigaDOS-compatible file system
-file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	EXT2FS		# Linux ext2 file system
 file-system	NFS		# Sun NFS-compatible file system client
 file-system	NULLFS		# Null file system layer
@@ -38,79 +25,30 @@ file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
 
-# File system options
-options 	FIFO		# POSIX fifo support (in all file systems)
-options 	QUOTA		# User and group quotas for the FFS
-options 	NFSSERVER	# Sun NFS-compatible file system server
-
-# Networking options
-options 	INET		# Internet protocol suite
-options 	NS		# Xerox NS protocol suite
-options 	ISO,TPIP,EON	# ISO protocol suite
-options 	CCITT,LLC,HDLC	# CCITT protocol suite
-options 	NETATALK	# AppleTalk networking protocols
-#options 	GATEWAY		# packet forwarding and more mbuf space
-options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-options 	PPP_DEFLATE	# Deflate compression support for PPP
-options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
-#options 	TCP_COMPAT_42
-
-# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options 	INET
+options 	GATEWAY
 options 	COMPAT_43
-
-# Binary compatibility with previous versions of NetBSD.
 options 	COMPAT_12
 options 	COMPAT_13
-
-# System V-like message queues
 options 	SYSVMSG
-
-# System V-like semaphores
 options 	SYSVSEM
-
-# System V-like shared memory
 options 	SYSVSHM
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
-
-# Loadable Kernel Modules
-options 	LKM
-
-# Disable kernel security.
-#options 	INSECURE
-
-# Misc. options
-options 	EISAVERBOSE		# recognize "unknown" EISA devices
-#options 	EXTENT_DEBUG		# extent alloc/dealloc code debugging
-options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
-#options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
-options 	PCIVERBOSE		# recognize "unknown" PCI devices
-options 	SCSIVERBOSE		# Verbose SCSI errors
-options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+options 	EISAVERBOSE
+options 	PCIVERBOSE
+options 	SCSIVERBOSE
+options 	UCONSOLE
 
 config		netbsd	root on ? type ?
-#config		netbsd	root on sd0 type ffs
-#config		netbsd	root on ? type nfs
 
 mainbus0 at	root
 cpu*	at	mainbus0
-
-# MCBUS bus support
 mcbus*	at	mainbus0
 mcmem*	at	mcbus? mid ?
-
 #i2c	at	mcbus?
-
-# PCI host bus adapter support
 mcpcia*	at	mcbus? mid ?
-
-# PCI bus support
 pci*	at	ppb?
 pci*	at	mcpcia?
 
-# PCI devices
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
@@ -120,57 +58,32 @@ ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
-le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
-tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
-vga*	at	pci? dev ? function ?		# PCI VGA Graphics
-
-# ISA/EISA bus support
 isa*	at	pceb?
 eisa*	at	pceb?
-
-# ISA devices
+isa*	at	sio?
 mcclock* at	isa? port 0x70
-pcppi*	at	isa?				# PC prog. periph. interface
-pckbd*	at	pcppi?				# PC keyboard (kbd port)
-pms*	at	pcppi?				# PS/2-style mouse (aux port)
-com*	at	isa? port 0x3f8 irq 4		# standard serial ports
+com*	at	isa? port 0x3f8 irq 4
 com*	at	isa? port 0x2f8 irq 3
-lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
-vga*	at	isa?				# ISA (EISA: XXX) VGA
 
-# SCSI bus support
 scsibus* at	ahc?
 scsibus* at	bha?
 scsibus* at	isp?
 scsibus* at	ncr?
-
-# SCSI devices
-cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
-ch*	at	scsibus? target ? lun ?		# SCSI autochangers
-sd*	at	scsibus? target ? lun ?		# SCSI disk drives
-st*	at	scsibus? target ? lun ?		# SCSI tape drives
-
-# Workstation Console attachments
-wsdisplay*	at	vga?
-wskbd*		at	pckbd?
-wsmouse*	at	psm?
+cd*	at	scsibus? target ? lun ?
+sd*	at	scsibus? target ? lun ?
+st*	at	scsibus? target ? lun ?
+ch*	at	scsibus? target ? lun ?
 
 pseudo-device	bpfilter	16
-pseudo-device	ccd		4
+pseudo-device	ccd		16
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
 pseudo-device	ppp		4
 pseudo-device	pty		64
 pseudo-device	sl		4
-pseudo-device	strip		4
-pseudo-device	tun		4
 pseudo-device	vnd		4
-
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
-#options 	RND_COM			# use "com" randomness too
