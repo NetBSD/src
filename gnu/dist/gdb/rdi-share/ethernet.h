@@ -8,8 +8,8 @@
 
 /* -*-C-*-
  *
- * $Revision: 1.1.1.1 $
- *     $Date: 1999/02/10 22:09:21 $
+ * $Revision: 1.2 $
+ *     $Date: 1999/02/10 22:18:21 $
  *
  *
  * ethernet.h:  Angel drivers for Ethernet using Fusion UDP/IP stack

@@ -80,7 +80,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      char *core_reg_sect;
      unsigned core_reg_size;
      int which;
-     unsigned int reg_addr;	/* Unused in this version */
+     CORE_ADDR reg_addr;	/* Unused in this version */
 {
   struct md_core *core_reg;
 

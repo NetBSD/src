@@ -8,8 +8,8 @@
 
 /* -*-C-*-
  *
- * $Revision: 1.1.1.1 $
- *     $Date: 1999/02/10 22:09:21 $
+ * $Revision: 1.2 $
+ *     $Date: 1999/02/10 22:18:20 $
  *
  *
  * drivers.c - declares a NULL terminated list of device driver

@@ -44,9 +44,11 @@ extern CORE_ADDR m68k_skip_prologue PARAMS ((CORE_ADDR ip));
 
 #ifdef __STDC__
 struct frame_info;
+struct frame_saved_regs;
 #endif
 
 extern CORE_ADDR m68k_saved_pc_after_call PARAMS ((struct frame_info *));
+extern void m68k_find_saved_regs PARAMS ((struct frame_info *, struct frame_saved_regs *));
 
 #define SAVED_PC_AFTER_CALL(frame) \
   m68k_saved_pc_after_call(frame)
@@ -54,6 +56,10 @@ extern CORE_ADDR m68k_saved_pc_after_call PARAMS ((struct frame_info *));
 /* Stack grows downward.  */
 
 #define INNER_THAN <
+
+/* Stack must be kept short aligned when doing function calls.  */
+
+#define STACK_ALIGN(ADDR) (((ADDR) + 1) & ~1)
 
 /* Sequence of bytes for breakpoint instruction.
    This is a TRAP instruction.  The last 4 bits (0xf below) is the
@@ -155,30 +161,36 @@ extern CORE_ADDR m68k_saved_pc_after_call PARAMS ((struct frame_info *));
    to virtual format with type TYPE in buffer TO.  */
 
 #define REGISTER_CONVERT_TO_VIRTUAL(REGNUM,TYPE,FROM,TO) \
-{ \
-  double dbl_tmp_val; \
-  floatformat_to_double (&floatformat_m68881_ext, (FROM), &dbl_tmp_val); \
-  store_floating ((TO), TYPE_LENGTH (TYPE), dbl_tmp_val); \
-}
+do									\
+  {									\
+    DOUBLEST dbl_tmp_val;							\
+    floatformat_to_doublest (&floatformat_m68881_ext, (FROM), &dbl_tmp_val); \
+    store_floating ((TO), TYPE_LENGTH (TYPE), dbl_tmp_val);		\
+  } while (0)
 
 /* Convert data from virtual format with type TYPE in buffer FROM
    to raw format for register REGNUM in buffer TO.  */
 
 #define REGISTER_CONVERT_TO_RAW(TYPE,REGNUM,FROM,TO)	\
-{ \
-  double dbl_tmp_val = extract_floating ((FROM), TYPE_LENGTH (TYPE)); \
-  floatformat_from_double (&floatformat_m68881_ext, &dbl_tmp_val, (TO)); \
-}
+do									\
+  {									\
+    DOUBLEST dbl_tmp_val;						\
+    dbl_tmp_val = extract_floating ((FROM), TYPE_LENGTH (TYPE));	\
+    floatformat_from_doublest (&floatformat_m68881_ext, &dbl_tmp_val, (TO)); \
+  } while (0)
 
-/* Return the GDB type object for the "standard" data type
-   of data in register N.  */
-/* Note, for registers which contain addresses return
-   pointer to void, not pointer to char, because we don't
-   want to attempt to print the string after printing the address.  */
+/* Return the GDB type object for the "standard" data type of data 
+   in register N.  This should be int for D0-D7, double for FP0-FP7,
+   and void pointer for all others (A0-A7, PC, SR, FPCONTROL etc).
+   Note, for registers which contain addresses return pointer to void, 
+   not pointer to char, because we don't want to attempt to print 
+   the string after printing the address.  */
+
 #define REGISTER_VIRTUAL_TYPE(N) \
- (((unsigned)(N) - FP0_REGNUM) < 8 ? builtin_type_double :           \
-  (N) == PC_REGNUM || (N) == FP_REGNUM || (N) == SP_REGNUM ?         \
-  lookup_pointer_type (builtin_type_void) : builtin_type_int)
+  ((unsigned) (N) >= FPC_REGNUM ? lookup_pointer_type (builtin_type_void) : \
+   (unsigned) (N) >= FP0_REGNUM ? builtin_type_double :                     \
+   (unsigned) (N) >=  A0_REGNUM ? lookup_pointer_type (builtin_type_void) : \
+   builtin_type_int)
 
 /* Initializer for an array of names of registers.
    Entries beyond the first NUM_REGS are ignored.  */
@@ -372,3 +384,5 @@ extern void m68k_pop_frame PARAMS ((void));
 /* Offset from SP to first arg on stack at first instruction of a function */
 
 #define SP_ARG0 (1 * 4)
+
+#define TARGET_M68K
