@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.16 2001/01/22 01:33:13 augustss Exp $
+.\" $NetBSD: midi.4,v 1.17 2001/01/31 04:32:18 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,6 +49,7 @@
 .Cd "midi* at opl?"
 .Cd "midi* at pcppi?"
 .Cd "midi* at sb?"
+.Cd "midi* at umidi?"
 .\" .Cd "midi* at wss?"
 .Cd "pseudo-device sequencer"
 .Pp
@@ -104,6 +105,7 @@ interface.
 .Xr midiplay 1 ,
 .Xr mpu 4 ,
 .Xr opl 4 ,
+.Xr umidi 4 ,
 .Xr ossaudio 3 .
 .br
 For ports using the ISA bus:
