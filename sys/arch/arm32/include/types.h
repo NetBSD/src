@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 1998/08/13 02:10:37 eeh Exp $	*/
+/*	$NetBSD: types.h,v 1.8 1998/10/12 03:12:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,5 +74,7 @@ typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
 
 typedef int32_t                 register_t;
+
+#define __HAVE_NWSCONS
 
 #endif	/* _ARM32_TYPES_H_ */
