@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.10 1996/09/06 18:01:07 thorpej Exp 
+ *	NetBSD: eisadevs,v 1.11 1997/02/16 20:01:14 jonathan Exp 
  */
 
 /*
@@ -80,7 +80,7 @@
 #define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
 #define	EISA_PRODUCT_TCM5920	"3Com 3C592 Ethernet /* XXX low-order bit*/"
-#define	EISA_PRODUCT_TCM5970	"3Com 3C592 Fast Ethernet /* XXX low-order bit*/"
+#define	EISA_PRODUCT_TCM5970	"3Com 3C597 Fast Ethernet /* XXX low-order bit*/"
 
 /* UltraStor products */
 #define	EISA_PRODUCT_USC0240	"UltraStor 24f SCSI"
