@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.36.2.2 2001/03/29 09:02:55 bouyer Exp $	*/
+/*	$NetBSD: sbic.c,v 1.36.2.3 2001/03/29 09:57:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -375,7 +375,7 @@ sbic_scsipi_request(chan, req, arg)
 	int flags, s, stat;
 
 	switch (req) {
-	case ADAPTER_REQ_RUN_XFER;
+	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
 		periph = xs->xs_periph;
 
@@ -443,7 +443,7 @@ sbic_scsipi_request(chan, req, arg)
 		if (dev->sc_nexus) {
 			splx(s);
 			SBIC_TRACE(dev);
-			return(SUCCESSFULLY_QUEUED);
+			return;
 		}
 
 		/*
@@ -460,7 +460,7 @@ sbic_scsipi_request(chan, req, arg)
 #endif
 		return;
 
-	case ADAPTER_REQ_GROW_RESOURCES;
+	case ADAPTER_REQ_GROW_RESOURCES:
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
@@ -493,8 +493,8 @@ sbic_sched(dev)
 
 			TAILQ_REMOVE(&dev->ready_list, acb, chain);
 			dev->sc_nexus = acb;
-			ti = &dev->sc_tinfo[periph->perih_target];
-			ti->lubusy |= (1 << periph->perih_lun);
+			ti = &dev->sc_tinfo[periph->periph_target];
+			ti->lubusy |= (1 << periph->periph_lun);
 			acb->sc_pa.dc_addr = acb->pa_addr;	/* XXXX check */
 			break;
 		}
@@ -546,7 +546,7 @@ sbic_scsidone(acb, stat)
 
 	xs = acb->xs;
 	periph = xs->xs_periph;
-	dev = slp->adapter_softc;
+	dev = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	SBIC_TRACE(dev);
 #ifdef DIAGNOSTIC
 	if (acb == NULL || xs == NULL) {
@@ -573,7 +573,7 @@ sbic_scsidone(acb, stat)
 
 	if (xs->error == XS_NOERROR) {
 		if (stat == SCSI_CHECK || stat == SCSI_BUSY)
-		xs->error == XS_BUSY;
+			xs->error = XS_BUSY;
 	}
 
 	/*

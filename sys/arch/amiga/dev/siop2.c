@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.14.2.2 2001/03/29 09:02:56 bouyer Exp $	*/
+/*	$NetBSD: siop2.c,v 1.14.2.3 2001/03/29 09:57:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -84,7 +84,7 @@ void siopngreset __P((struct siop_softc *));
 void siopngsetdelay __P((int));
 void siopng_scsidone __P((struct siop_acb *, int));
 void siopng_sched __P((struct siop_softc *));
-int  siopng_poll __P((struct siop_softc *, struct siop_acb *));
+void siopng_poll __P((struct siop_softc *, struct siop_acb *));
 void siopngintr __P((struct siop_softc *));
 void scsi_period_to_siopng __P((struct siop_softc *, int));
 void siopng_start __P((struct siop_softc *, int, int, u_char *, int, u_char *, int)); 
@@ -248,7 +248,7 @@ siopng_scsipi_request(chan, req, arg)
 	}
 }
 
-int
+void
 siopng_poll(sc, acb)
 	struct siop_softc *sc;
 	struct siop_acb *acb;
@@ -286,7 +286,7 @@ siopng_poll(sc, acb)
 				--to;
 				if (to <= 0) {
 					siopngreset(sc);
-					return(COMPLETE);
+					return;
 				}
 			}
 			delay(20);
@@ -308,7 +308,6 @@ siopng_poll(sc, acb)
 			break;
 	}
 	splx(s);
-	return (COMPLETE);
 }
 
 /*
@@ -385,14 +384,14 @@ siopng_scsidone(acb, stat)
 		return;
 	}
 	periph = xs->xs_periph;
-	sc = (void *)periph->periph_chan->chan_adapter->adapt_dev;
+	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
 	xs->status = stat;
 	xs->resid = 0;		/* XXXX */
 
 	if (xs->error == XS_NOERROR) {
 		if (stat == SCSI_CHECK || stat == SCSI_BUSY)
-			xs->error == XS_BUSY;
+			xs->error = XS_BUSY;
 	}
 
 	/*
@@ -616,9 +615,9 @@ siopngreset(sc)
 	rp->siop_dmode = 0xc0;		/* XXX burst length */
 	rp->siop_sien = 0x00;	/* don't enable interrupts yet */
 	rp->siop_dien = 0x00;	/* don't enable interrupts yet */
-	rp->siop_scid = sc->sc_channel->chan_id |
+	rp->siop_scid = sc->sc_channel.chan_id |
 	    SIOP_SCID_RRE | SIOP_SCID_SRE;
-	rp->siop_respid = 1 << sc->channel->chan_id;
+	rp->siop_respid = 1 << sc->sc_channel.chan_id;
 	rp->siop_dwt = 0x00;
 	rp->siop_stime0 = 0x0c;		/* XXXXX check */
 
@@ -640,7 +639,7 @@ siopngreset(sc)
 	 */
 	if ((rp->siop_sbdl & 0x00ff) == 0x00ff) {
 		printf(" no SCSI termination, host adapter deactivated.\n");
-		sc->sc_channel->chan_ntargets = 0;	/* XXX */
+		sc->sc_channel.chan_ntargets = 0;	/* XXX */
 		sc->sc_flags &= ~(SIOP_ALIVE|SIOP_INTDEFER|SIOP_INTSOFF);
 		/* disable SCSI and DMA interrupts */
 		sc->sc_sien = 0;
@@ -658,7 +657,7 @@ siopngreset(sc)
 	if ((rp->siop_sbdl & 0xff00) == 0xff00) {
 		printf(" NO WIDE TERM");
 		/* XXX need to restrict maximum target ID as well? */
-		sc->sc_channel->chan_ntargets = 8;
+		sc->sc_channel.chan_ntargets = 8;
 		for (i = 0; i < 16; ++i) {
 			siopng_allow_disc[i] = 0;
 			siopng_inhibit_wide[i] |= 0x80;
@@ -667,7 +666,7 @@ siopngreset(sc)
 
 	printf("siopng type %s id %d reset V%d\n",
 	    siopng_chips[rp->siop_macntl>>4],
-	    sc->sc_channel->chan_ntargets,
+	    sc->sc_channel.chan_ntargets,
 	    rp->siop_ctest3 >> 4);
 
 	if ((sc->sc_flags & SIOP_ALIVE) == 0) {

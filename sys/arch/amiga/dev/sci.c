@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.21.2.2 2001/03/29 09:02:56 bouyer Exp $	*/
+/*	$NetBSD: sci.c,v 1.21.2.3 2001/03/29 09:57:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -122,7 +122,6 @@ sci_scsipi_request(chan, req, arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	struct sci_pending *pendp;
 	struct sci_softc *dev = (void *)chan->chan_adapter->adapt_dev;
 	int flags, s;
 
@@ -165,6 +164,7 @@ sci_scsipi_request(chan, req, arg)
 
 	case ADAPTER_REQ_SET_XFER_MODE:
 		return;
+	}
 }
 
 /*
