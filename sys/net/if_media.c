@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.3 1998/08/30 07:39:39 enami Exp $	*/
+/*	$NetBSD: if_media.c,v 1.4 1999/04/30 17:30:49 abs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -260,7 +260,8 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		 *     Similarly, if best match changed (kernel debugger?).
 		 */
 		if ((IFM_SUBTYPE(newmedia) != IFM_AUTO) &&
-		    (newmedia == ifm->ifm_media) &&
+		    (newmedia == ifm->ifm_media || (ifm->ifm_media == 0 &&
+		    LIST_NEXT(ifm->ifm_list.lh_first,ifm_list)==0)) &&
 		    (match == ifm->ifm_cur))
 			return 0;
 
