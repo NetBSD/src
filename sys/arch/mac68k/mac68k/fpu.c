@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 1994/10/26 08:47:01 cgd Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5 1994/12/03 23:28:37 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -47,7 +47,7 @@
 #include <sys/ktrace.h>
 #endif
 
-#define PRINTF(x)
+#define PRINTF(x) printf x
 
 int fancy (unsigned short buf[])
 {
@@ -134,7 +134,11 @@ FPUemul(frame)
 
   PRINTF ( ("FPUemul() - "));
 
-  copyin ((char *)frame.f_pc, buf, sizeof (buf));
+  if (frame.f_sr & 0x2000) {
+    bcopy ((char *)frame.f_pc, buf, sizeof (buf));
+  } else {
+    copyin ((char *)frame.f_pc, buf, sizeof (buf));
+  }
 
   PRINTF ( ("Word 0: %x, ", (int)buf[0]));
   PRINTF ( ("Word 1: %x, ", (int)buf[1]));
