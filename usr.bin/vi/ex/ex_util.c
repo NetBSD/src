@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_util.c,v 1.9 2001/03/31 11:37:51 aymeric Exp $	*/
+/*	$NetBSD: ex_util.c,v 1.10 2001/05/02 21:15:19 windsor Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -142,7 +142,7 @@ ex_ncheck(sp, force)
 
 		for (ap = sp->cargv + 1; *ap != NULL; ++ap);
 		msgq(sp, M_ERR,
-		    "167|%d more files to edit", (ap - sp->cargv) - 1);
+		    "167|%ld more files to edit", (long)((ap - sp->cargv) - 1));
 
 		return (1);
 	}
