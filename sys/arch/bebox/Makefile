@@ -1,10 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 1998/06/12 23:22:35 cgd Exp $
-#
-NOPROG=	noprog
-NOMAN=	noman
+#	$NetBSD: Makefile,v 1.4 1998/09/01 08:43:48 sakamoto Exp $
 
 SUBDIR=	include stand
 
-obj:	_SUBDIRUSE
-
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>
