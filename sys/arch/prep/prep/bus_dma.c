@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2000/02/29 15:21:47 nonaka Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2000/03/19 09:45:30 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,44 +39,20 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/exec.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/callout.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/extent.h>
-#include <sys/syscallargs.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/mbuf.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/sysctl.h>
-
 #define _PREP_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-
-#include <machine/cpu.h>
-#include <machine/pio.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
-
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
+#include <machine/intr.h>
 
 int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int));
@@ -172,7 +148,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 
 	seg = 0;
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
-	    &lastaddr, &seg, 1);
+		&lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -371,8 +347,8 @@ _bus_dmamem_free(t, segs, nsegs)
 	 */
 	TAILQ_INIT(&mlist);
 	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		for (addr = PCI_MEM_TO_PHYS(segs[curseg].ds_addr);
+		    addr < (PCI_MEM_TO_PHYS(segs[curseg].ds_addr) + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
 			m = PHYS_TO_VM_PAGE(addr);
 			TAILQ_INSERT_TAIL(&mlist, m, pageq);
@@ -400,7 +376,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int curseg;
 
 	size = round_page(size);
-	va = uvm_km_valloc(kmem_map, size);
+
+	va = uvm_km_valloc(kernel_map, size);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -408,8 +385,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	*kvap = (caddr_t)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		for (addr = PCI_MEM_TO_PHYS(segs[curseg].ds_addr);
+		    addr < (PCI_MEM_TO_PHYS(segs[curseg].ds_addr) + segs[curseg].ds_len);
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
@@ -458,7 +435,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 #ifdef DIAGNOSTIC
 		if (off & PGOFSET)
 			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
+		if (PCI_MEM_TO_PHYS(segs[i].ds_addr) & PGOFSET)
 			panic("_bus_dmamem_mmap: segment unaligned");
 		if (segs[i].ds_len & PGOFSET)
 			panic("_bus_dmamem_mmap: segment size not multiple"
@@ -469,7 +446,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (PCI_MEM_TO_PHYS((int)segs[i].ds_addr + off));
+		return (PCI_MEM_TO_PHYS(segs[i].ds_addr) + off);
 	}
 
 	/* Page not found. */
@@ -483,7 +460,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 /*
  * Utility function to load a linear buffer.  lastaddrp holds state
  * between invocations (for multiple-buffer loads).  segp contains
- * the starting segment on entrace, and the ending segment on exit.
+ * the starting segment on entrance, and the ending segment on exit.
  * first indicates if this is the first invocation of this function.
  */
 int
@@ -502,21 +479,19 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
-	pmap_t pmap;
-
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
-	else
-		pmap = pmap_kernel();
 
 	lastaddr = *lastaddrp;
-	bmask  = ~(map->_dm_boundary - 1);
+	bmask = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0 ; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
-		(void) pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
+		if (p != NULL)
+			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+			    vaddr, (paddr_t *)&curaddr);
+		else
+			curaddr = vtophys(vaddr);
 
 		/*
 		 * If we're beyond the bounce threshold, notify
@@ -544,10 +519,10 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 
 		/*
 		 * Insert chunk into a segment, coalescing with
-		 * previous segment if possible.
+		 * the previous segment if possible.
 		 */
 		if (first) {
-			map->dm_segs[seg].ds_addr = curaddr;
+			map->dm_segs[seg].ds_addr = PHYS_TO_PCI_MEM(curaddr);
 			map->dm_segs[seg].ds_len = sgsize;
 			first = 0;
 		} else {
@@ -561,7 +536,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 			else {
 				if (++seg >= map->_dm_segcnt)
 					break;
-				map->dm_segs[seg].ds_addr = curaddr;
+				map->dm_segs[seg].ds_addr = PHYS_TO_PCI_MEM(curaddr);
 				map->dm_segs[seg].ds_len = sgsize;
 			}
 		}
@@ -621,7 +596,8 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 */
 	m = mlist.tqh_first;
 	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
+	lastaddr = VM_PAGE_TO_PHYS(m);
+	segs[curseg].ds_addr = PHYS_TO_PCI_MEM(lastaddr);
 	segs[curseg].ds_len = PAGE_SIZE;
 	m = m->pageq.tqe_next;
 
@@ -631,14 +607,14 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 		if (curaddr < low || curaddr >= high) {
 			printf("vm_page_alloc_memory returned non-sensical"
 			    " address 0x%lx\n", curaddr);
-			panic("_bus_dmamem_alloc_range");
+			panic("_bus_dmamem_alloc");
 		}
 #endif
 		if (curaddr == (lastaddr + PAGE_SIZE))
 			segs[curseg].ds_len += PAGE_SIZE;
 		else {
 			curseg++;
-			segs[curseg].ds_addr = curaddr;
+			segs[curseg].ds_addr = PHYS_TO_PCI_MEM(curaddr);
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
 		lastaddr = curaddr;
@@ -648,3 +624,4 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 
 	return (0);
 }
+
