@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.35 1999/12/13 04:52:20 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.36 2000/01/27 19:20:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.35 1999/12/13 04:52:20 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.36 2000/01/27 19:20:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2138,7 +2138,7 @@ status(argc, argv)
 	}
     }
     if (In3270 && transcom) {
-       printf("Transparent mode command is '%s'.\n", transcom);
+	printf("Transparent mode command is '%s'.\n", transcom);
     }
 #   endif /* defined(unix) */
     (void) fflush(stdout);
@@ -2263,45 +2263,49 @@ tn(argc, argv)
 	hostname = hostp;
 
     if (!portp) {
-      telnetport = 1;
-      portp = "telnet";
+	telnetport = 1;
+	portp = "telnet";
     } else if (portp[0] == '-') {
-      /* use telnet negotiation if port number/name preceded by minus sign */
-      telnetport = 1;
-      portp++;
+	/* use telnet negotiation if port number/name preceded by minus sign */
+	telnetport = 1;
+	portp++;
     }
 
     memset(&hints, 0, sizeof(hints));
-    hints.ai_flags = AI_NUMERICHOST;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = 0;
+    hints.ai_flags = AI_NUMERICHOST;	/* avoid forward lookup */
     error = getaddrinfo(hostname, portp, &hints, &res0);
     if (!error) {
-	/*numeric*/
-	freeaddrinfo(res0);
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_flags = doaddrlookup ? AI_CANONNAME : 0; /*reverse lookup*/
-	hints.ai_flags |= AI_NUMERICHOST;
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = 0;
-	error = getaddrinfo(hostname, portp, &hints, &res0);
+	/* numeric */
+	if (doaddrlookup &&
+	    getnameinfo(res0->ai_addr, res0->ai_addrlen,
+		_hostname, sizeof(_hostname), NULL, 0, NI_NAMEREQD) == 0)
+	    ; /* okay */
+	else {
+	    strncpy(_hostname, hostname, sizeof(_hostname) - 1);
+	    _hostname[sizeof(_hostname) - 1] = '\0';
+	}
     } else {
-	/*non-numeric*/
+	/* FQDN - try again with forward DNS lookup */
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
+	hints.ai_flags = AI_CANONNAME;
 	error = getaddrinfo(hostname, portp, &hints, &res0);
+	if (error) {
+	    fprintf(stderr, "%s: %s\n", hostname, gai_strerror(error));
+	    return 0;
+	}
+	if (res0->ai_canonname) {
+	    (void) strncpy(_hostname, res0->ai_canonname,
+	        sizeof(_hostname) - 1);
+	} else
+	    (void) strncpy(_hostname, hostname, sizeof(_hostname) - 1);
+	_hostname[sizeof(_hostname) - 1] = '\0';
     }
-    if (error) {
-      fprintf(stderr, "%s: %s\n", hostname, gai_strerror(error));
-      return 0;
-    }
-
-    if (res0->ai_canonname)
-	(void) strcpy(_hostname, res0->ai_canonname);
     hostname = _hostname;
 
     net = -1;
@@ -2878,7 +2882,6 @@ sourceroute(ai, arg, cpp, protop, optp)
 			return -1;
 		}
 		if (ai->ai_family != res->ai_family) {
-			fprintf(stderr, "%s: address family mismach\n", cp);
 			freeaddrinfo(res);
 			return -1;
 		}
