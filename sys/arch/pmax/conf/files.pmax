@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.43 1997/06/16 00:35:10 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.44 1997/06/22 09:34:34 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -49,9 +49,10 @@ file	arch/pmax/tc/asic.c		ioasic
 
 # Real-time clock (not optional)
 device	clock
-attach	clock at ioasic, tc, mainbus
-file	arch/pmax/pmax/clock.c		clock
-
+attach	clock at ioasic, mainbus with mcclock_ioasic
+file	arch/pmax/pmax/clock.c
+file	arch/pmax/pmax/mcclock.c	clock
+file	arch/pmax/tc/mcclock_ioasic.c	mcclock_ioasic
 
 #
 # Machine-independent SCSI driver.
