@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.14 2004/06/12 17:16:44 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.15 2004/06/12 17:18:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 2004/06/12 17:16:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2004/06/12 17:18:13 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -144,14 +144,8 @@ static __inline int _bus_dmamap_load_paddr(bus_dma_tag_t, bus_dmamap_t,
  * Create a DMA map.
  */
 int
-_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct x86_bus_dma_cookie *cookie;
 	bus_dmamap_t map;
@@ -235,9 +229,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * Destroy an ISA DMA map.
  */
 void
-_bus_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 
@@ -257,13 +249,8 @@ _bus_dmamap_destroy(t, map)
  * Load an ISA DMA map with a linear buffer.
  */
 int
-_bus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map; 
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 	int error;
@@ -386,11 +373,8 @@ again:
  * Like _bus_dmamap_load(), but for mbufs.
  */
 int
-_bus_dmamap_load_mbuf(t, map, m0, flags)  
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m0;
-	int flags;
+_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
+    int flags)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 	int error;
@@ -526,11 +510,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
  * Like _bus_dmamap_load(), but for uios.
  */
 int
-_bus_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
+    int flags)
 {
 	int i, error;
 	bus_size_t minlen, resid;
@@ -615,13 +596,8 @@ _bus_dmamap_load_uio(t, map, uio, flags)
  * bus_dmamem_alloc().
  */
 int
-_bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
+    int nsegs, bus_size_t size, int flags)
 {
 
 	panic("_bus_dmamap_load_raw: not implemented");
@@ -631,9 +607,7 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
  * Unload an ISA DMA map.
  */
 void
-_bus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 
@@ -653,12 +627,8 @@ _bus_dmamap_unload(t, map)
  * Synchronize an ISA DMA map.
  */
 void
-_bus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 
@@ -811,13 +781,9 @@ _bus_dmamap_sync(t, map, offset, len, ops)
  * Allocate memory safe for ISA DMA.
  */
 int
-_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
 	paddr_t high;
 
@@ -831,11 +797,8 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 }
 
 static int
-_bus_dma_alloc_bouncebuf(t, map, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_size_t size;
-	int flags;
+_bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_size_t size, int flags)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 	int error = 0;
@@ -870,9 +833,7 @@ _bus_dma_alloc_bouncebuf(t, map, size, flags)
 }
 
 static void
-_bus_dma_free_bouncebuf(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 
@@ -897,11 +858,7 @@ _bus_dma_free_bouncebuf(t, map)
  * direction, and does not update the uio structure.
  */
 static int
-_bus_dma_uiomove(buf, uio, n, direction)
-	void *buf;
-	struct uio *uio;
-	size_t n;
-	int direction;
+_bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 {
 	struct iovec *iov;
 	int error;
@@ -960,10 +917,7 @@ _bus_dma_uiomove(buf, uio, n, direction)
  * bus-specific DMA memory free functions.
  */
 void
-_bus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+_bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	struct vm_page *m;
 	bus_addr_t addr;
@@ -992,13 +946,8 @@ _bus_dmamem_free(t, segs, nsegs)
  * This supports BUS_DMA_NOCACHE.
  */
 int
-_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    size_t size, caddr_t *kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -1056,10 +1005,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
  */
 
 void
-_bus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 	pt_entry_t *pte;
 	vaddr_t va, endva;
@@ -1097,12 +1043,8 @@ _bus_dmamem_unmap(t, kva, size)
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
-_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot, flags;
+_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    off_t off, int prot, int flags)
 {
 	int i;
 
@@ -1139,13 +1081,8 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 static int
-_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr;
@@ -1196,16 +1133,9 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags)
  * Called by DMA-safe memory allocation methods.
  */
 int
-_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
-    flags, low, high)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-	paddr_t low;
-	paddr_t high;
+_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags, paddr_t low, paddr_t high)
 {
 	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
