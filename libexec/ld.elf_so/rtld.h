@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.11 1999/05/31 14:48:16 kleink Exp $	 */
+/*	$NetBSD: rtld.h,v 1.12 1999/06/16 15:41:24 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,9 +77,10 @@ extern int _rtld_pagesz;
  * C++ has mandated the use of the following keywords for its new boolean
  * type.  We might as well follow their lead.
  */
-typedef unsigned char bool;
-#define false	0
-#define true	1
+typedef enum {
+	false = 0,
+	true = 1
+} bool;
 
 struct Struct_Obj_Entry;
 
