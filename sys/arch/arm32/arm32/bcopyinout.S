@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.14 1998/07/29 00:56:08 mark Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.15 1998/11/26 19:34:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -116,7 +116,7 @@ do_copyinout:
 	moveq	r0, #0x00000000
 	moveq	pc, lr
 
-	stmfd	sp!, {r4}
+	stmfd	sp!, {r4, r5}
 	ldr	r4, Lcurpcb
 	ldr	r4, [r4]
 
@@ -125,6 +125,7 @@ do_copyinout:
 	beq	Lcopyinoutpcbfault
 #endif	/* DIAGNOSTIC */
 
+	ldr	r5, [r4, #PCB_ONFAULT]
 	add	r3, pc, #Lcopyinoutfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
@@ -159,15 +160,14 @@ Lslow_copyinout_loop:
 
 Lcopyinout_exit:
 	mov	r0, #0x00000000
-	str	r0, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4}
+	str	r5, [r4, #PCB_ONFAULT]
+	ldmfd	sp!, {r4, r5}
 	mov	pc, lr
 
 /* A fault occurred during the copy */
 Lcopyinoutfault:
-	mov	r0, #0x00000000
-	str	r0, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4}
+	str	r5, [r4, #PCB_ONFAULT]
+	ldmfd	sp!, {r4, r5}
 
 	/* FALLTHROUGH */
 
