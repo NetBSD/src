@@ -1,8 +1,8 @@
-/*	$NetBSD: stab.h,v 1.4 1994/10/26 00:56:25 cgd Exp $	*/
+/*	$NetBSD: stab.h,v 1.5 1998/02/02 21:07:50 perry Exp $	*/
 
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stab.h	5.2 (Berkeley) 4/4/91
+ *	@(#)stab.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef _STAB_H_

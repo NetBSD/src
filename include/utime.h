@@ -1,8 +1,8 @@
-/*	$NetBSD: utime.h,v 1.4 1996/06/11 02:14:05 jtc Exp $	*/
+/*	$NetBSD: utime.h,v 1.5 1998/02/02 21:08:16 perry Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)utime.h	5.4 (Berkeley) 4/3/91
+ *	@(#)utime.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef	_UTIME_H_

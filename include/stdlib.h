@@ -1,8 +1,8 @@
-/*	$NetBSD: stdlib.h,v 1.29 1998/01/31 20:36:47 thorpej Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.30 1998/02/02 21:07:55 perry Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdlib.h	5.13 (Berkeley) 6/4/91
+ *	@(#)stdlib.h	8.5 (Berkeley) 5/19/95
  */
 
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
-#include <machine/ansi.h>
 
 #if !defined(_ANSI_SOURCE)	/* for quad_t, etc. */
 #include <sys/types.h>
 #endif
+
+#include <machine/ansi.h>
 
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
@@ -80,14 +81,20 @@ typedef struct {
 
 #define	RAND_MAX	0x7fffffff
 
+#if 0	/* no wide char stuff (yet) */
+extern int __mb_cur_max;
+#define	MB_CUR_MAX	__mb_cur_max
+#else
 #define	MB_CUR_MAX	1	/* XXX */
+#endif
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 __dead void
 	 abort __P((void));
-int	 abs __P((int));
+__pure int
+	 abs __P((int));
 int	 atexit __P((void (*)(void)));
 double	 atof __P((const char *));
 int	 atoi __P((const char *));
@@ -100,7 +107,8 @@ __dead void
 	 exit __P((int));
 void	 free __P((void *));
 char	*getenv __P((const char *));
-long	 labs __P((long));
+__pure long
+	 labs __P((long));
 ldiv_t	 ldiv __P((long, long));
 void	*malloc __P((size_t));
 void	 qsort __P((void *, size_t, size_t,
@@ -115,7 +123,7 @@ unsigned long
 	 strtoul __P((const char *, char **, int));
 int	 system __P((const char *));
 
-/* these are currently just stubs */
+/* These are currently just stubs. */
 int	 mblen __P((const char *, size_t));
 size_t	 mbstowcs __P((wchar_t *, const char *, size_t));
 int	 wctomb __P((char *, wchar_t));
@@ -149,15 +157,6 @@ long	 a64l __P((const char *));
 char	*l64a __P((long));
 
 void	 cfree __P((void *));
-
-int	 getopt __P((int, char * const *, const char *));
-extern	 char *optarg;			/* getopt(3) external variables */
-extern	 int opterr;
-extern	 int optind;
-extern	 int optopt;
-extern	 int optreset;
-int	 getsubopt __P((char **, char * const *, char **));
-extern	 char *suboptarg;		/* getsubopt(3) external variable */
 
 int	 heapsort __P((void *, size_t, size_t,
 	    int (*)(const void *, const void *)));

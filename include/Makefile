@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.70 1997/11/02 16:34:21 kleink Exp $
-#	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
+#	$NetBSD: Makefile,v 1.71 1998/02/02 21:07:13 perry Exp $
+#	@(#)Makefile	8.2 (Berkeley) 1/4/94
+
+# Doing a make includes builds /usr/include
 
 # Missing: mp.h
 

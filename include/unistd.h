@@ -1,8 +1,8 @@
-/*	$NetBSD: unistd.h,v 1.48 1998/01/12 16:05:40 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.49 1998/02/02 21:08:14 perry Exp $	*/
 
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)unistd.h	5.13 (Berkeley) 6/17/91
+ *	@(#)unistd.h	8.12 (Berkeley) 4/27/95
  */
 
 #ifndef _UNISTD_H_
@@ -53,7 +53,7 @@
 __BEGIN_DECLS
 __dead void	 _exit __P((int)) __attribute__((noreturn));
 int	 access __P((const char *, int));
-unsigned alarm __P((unsigned));
+unsigned int	 alarm __P((unsigned int));
 int	 chdir __P((const char *));
 int	 chown __P((const char *, uid_t, gid_t));
 int	 close __P((int));
@@ -68,13 +68,13 @@ int	 execv __P((const char *, char * const *));
 int	 execve __P((const char *, char * const *, char * const *));
 int	 execvp __P((const char *, char * const *));
 pid_t	 fork __P((void));
-long	 fpathconf __P((int, int));		/* not yet */
+long	 fpathconf __P((int, int));
 char	*getcwd __P((char *, size_t));
 gid_t	 getegid __P((void));
 uid_t	 geteuid __P((void));
 gid_t	 getgid __P((void));
 int	 getgrouplist __P((const char *, gid_t, gid_t *, int *));
-int	 getgroups __P((int, gid_t *));
+int	 getgroups __P((int, gid_t []));
 char	*getlogin __P((void));
 pid_t	 getpgrp __P((void));
 pid_t	 getpid __P((void));
@@ -83,7 +83,7 @@ uid_t	 getuid __P((void));
 int	 isatty __P((int));
 int	 link __P((const char *, const char *));
 off_t	 lseek __P((int, off_t, int));
-long	 pathconf __P((const char *, int));	/* not yet */
+long	 pathconf __P((const char *, int));
 int	 pause __P((void));
 int	 pipe __P((int *));
 ssize_t	 read __P((int, void *, size_t));
@@ -92,8 +92,8 @@ int	 setgid __P((gid_t));
 int	 setpgid __P((pid_t, pid_t));
 pid_t	 setsid __P((void));
 int	 setuid __P((uid_t));
-unsigned sleep __P((unsigned));
-long	 sysconf __P((int));			/* not yet */
+unsigned int	 sleep __P((unsigned int));
+long	 sysconf __P((int));
 pid_t	 tcgetpgrp __P((int));
 int	 tcsetpgrp __P((int, pid_t));
 char	*ttyname __P((int));
@@ -101,10 +101,9 @@ int	 unlink __P((const char *));
 ssize_t	 write __P((int, const void *, size_t));
 
 #ifndef	_POSIX_SOURCE
-
-/* structure timeval required for select() */
-#include <sys/time.h>
-
+#ifdef	__STDC__
+struct timeval;				/* select(2) */
+#endif
 int	 acct __P((const char *));
 char	*brk __P((const char *));
 int	 chroot __P((const char *));
@@ -123,13 +122,15 @@ int	 getdtablesize __P((void));
 long	 gethostid __P((void));
 int	 gethostname __P((char *, int));
 mode_t	 getmode __P((const void *, mode_t));
-int	 getpagesize __P((void));
+__pure int
+	 getpagesize __P((void));
 char	*getpass __P((const char *));
 char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
 int	 lchown __P((const char *, uid_t, gid_t));
+int	 mknod __P((const char *, mode_t, dev_t));
 int	 mkstemp __P((char *));
 char	*mktemp __P((char *));
 int	 nfssvc __P((int, void *));
@@ -177,6 +178,7 @@ int	 ttyslot __P((void));
 useconds_t ualarm __P((useconds_t, useconds_t));
 int	 undelete __P((const char *));
 int	 usleep __P((useconds_t));
+int	 unwhiteout __P((const char *));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
 #ifdef __LIBC12_SOURCE__
 pid_t	 vfork __P((void));
