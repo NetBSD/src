@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/02/22 03:11:24 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2001/03/30 06:38:25 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -21,11 +21,6 @@ CPPFLAGS+=-I${TCPDUMPSRCDIR} -I${TCPDUMPSRCDIR}/lbl -DHAVE_PRINT_ISAKMP_C=1
 .if (${MKKERBEROS} != "no")
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 .endif
-
-# for debugging malloc/free
-#.if exists(/usr/pkg/lib/libefence.a) || exists(/usr/pkg/lib/libefence.so)
-#LDADD+=-L/usr/pkg/lib -lefence
-#.endif
 
 LIBPFKEYDIR!=	cd ${.CURDIR}/../libpfkey; ${PRINTOBJDIR}
 LDADD+=	-L${LIBPFKEYDIR} -lpfkey
@@ -50,6 +45,16 @@ YFLAGS+=-d
 
 # Certificate support
 CPPFLAGS+=-DHAVE_SIGNING_C=1 -DHAVE_OPENSSL_PEM_H=1 -DHAVE_OPENSSL_X509_H=1
+
+# for debugging malloc/free
+#.if exists(/usr/pkg/lib/libefence.a) || exists(/usr/pkg/lib/libefence.so)
+#LDADD+=-L/usr/pkg/lib -lefence
+#.endif
+#.if exists(/usr/pkg/lib/libleak.a)
+#CPPFLAGS+= -DGC -I/usr/pkg/include
+#LDADD+=-L/usr/pkg/lib -lleak
+#LDSTATIC= -static
+#.endif
 
 .include <bsd.prog.mk>
 
