@@ -1,7 +1,7 @@
-/* $NetBSD: stand.ldscript.be,v 1.1 2000/05/21 02:50:13 soren Exp $ */
+/* $NetBSD: stand.ldscript.be,v 1.2 2000/07/11 01:15:47 soren Exp $ */
 
 /*  ldscript for NetBSD/mipsbe stand-alone programs */
-OUTPUT_FORMAT("elf32-littlemips", "elf32-bigmips",
+OUTPUT_FORMAT("elf32-bigmips", "elf32-bigmips",
 	      "elf32-littlemips")
 OUTPUT_ARCH(mips)
 ENTRY(_start)
