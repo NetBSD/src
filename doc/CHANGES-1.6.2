@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.9 2003/06/02 15:23:52 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.10 2003/06/15 13:12:45 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -187,4 +187,73 @@ usr.sbin/rtadvd/rtadvd.c			1.27-1.28
 	Add missing ND option length validation.  from kame
 	correct use of sizeof
 	[itojun, ticket #1212]
+
+share/misc/style				1.23
+
+	Return value style update (no parentheses)
+	[mason, ticket #1191]
+
+sys/dev/pci/if_sip.c				1.78
+
+	Add a work-around for the "short cable problem" that some DP83815
+	revisions have, as discussed on the soekris-tech mailing list a
+	while ago, whereby one can experience excessive recieve erros when
+	using < 30m cables.  The patch detects overflow in a DSP filter
+	parameter, and corrects it by writing a known good value.
+	[thorpej, ticket #1228]
+
+crypto/dist/ssh/auth.c				1.18
+
+	Add missing
+		hp = strtok(NULL, ",");
+	to end of while loop which parses "host.allow" from login.conf(5).
+	Otherwise, sshd(8) would just infinite loop unless there was a
+	(positive or negative) match in the first word of the "host.allow"
+	list...
+	[lukem, ticket #1231]
+
+libexec/lfs_cleanerd/cleanerd.c			1.40
+
+	For -b, use ssize instead of segshift.
+	Segshift is invalid for v2 filesystems.
+	[toshii, ticket #1232]
+
+usr.bin/mail/popen.c				1.15
+
+	Fix a bug introduced by Christos Zoulas in version 1.4.
+	He accidently moved the call to block the SIGCHLD to the wrong side of
+	the call to findchild().
+	Caused a coredump in one in every N thousand invocations of mail,
+	which I have been hunting for literally years.
+	Fixes PR 19696 from Mason Loring Bliss, too.
+	[perry, ticket #1236]
+
+share/man/man8/man8.amiga/boot.8		1.8
+share/man/man8/man8.amiga/installboot.8		1.19
+
+	Fix typos reported by Igor Sobrado (PR port-amiga/20950).
+	[is, ticket #1238]
+
+sys/uvm/uvm.h					1.32
+
+	Protect "struct uvm" with _KERNEL.
+	[cjep, ticket #1240]
+
+sys/netinet6/in6_pcb.c				1.53
+
+	Include opt_inet.h -- found by David Laight
+	[itojun, ticket #1241]
+
+etc/rc.d/bootconf.sh				1.7
+
+	Variable substitution happens at trap installation time, not at trap
+	execution time - so it used to print "Using default configuration of
+	/etc/passwd".
+	[is, ticket #1242]
+
+bin/csh/csh.1					1.37
+
+	Additional text & formatting for the csh "limit" command;
+	hopefully this satisfies PR 11658
+	[fair, ticket #1243]
 
