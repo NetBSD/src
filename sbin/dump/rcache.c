@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.10 2001/12/23 12:29:56 lukem Exp $	*/
+/*	$NetBSD: rcache.c,v 1.11 2002/02/19 23:11:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*-----------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: rcache.c,v 1.11 2002/02/19 23:11:28 lukem Exp $");
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/mman.h>
