@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.11 1993/10/15 13:05:40 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.12 1993/10/16 03:44:55 mycroft Exp $
  */
 
 /*
@@ -69,6 +69,7 @@ struct cfdriver isacd =
 static void isa_defaultirq __P((void));
 static int isaprint __P((void *, char *));
 static void isa_flushintrs __P((void));
+static void isa_intrmaskwickedness __P((void));
 
 /*
  * We think there might be an ISA bus here.  Check it out.
@@ -106,8 +107,7 @@ isaattach(parent, self, aux)
 	/* Iterate ``isasubmatch'' over all devices configured here. */
 	(void)config_search(isasubmatch, self, (void *)NULL);
 
-	printf("biomask %x ttymask %x netmask %x impmask %x astmask %s\n",
-	       biomask, ttymask, netmask, impmask, astmask);
+	isa_intrmaskwickedness();
 
 	isa_flushintrs();
 	enable_intr();
@@ -144,7 +144,7 @@ isasubmatch(isa, cf, aux)
 	}
 #endif
 
-	/* Init the info needed in the device probe routine. */
+	/* Init the info needed in the device probe and attach routines. */
 	ia.ia_iobase = cf->cf_iobase;
 	ia.ia_iosize = cf->cf_iosize;
 	if (cf->cf_irq == -1)
@@ -159,14 +159,21 @@ isasubmatch(isa, cf, aux)
 	if (!cf->cf_driver->cd_match(isa, cf, &ia))
 		return 0;
 
-	/* Driver says it is there.  Try to reserve ports and memory. */
-	if (isa_portcheck(ia.ia_iobase, ia.ia_iosize) &&
-	    isa_memcheck(ia.ia_maddr, ia.ia_msize)) {
-		isa_portalloc(ia.ia_iobase, ia.ia_iosize);
-		config_attach(isa, cf, &ia, isaprint);	/* victory! */
-	}
+	/* Check for port or shared memory conflicts. */
+	if (ia.ia_iosize && !isa_portcheck(ia.ia_iobase, ia.ia_iosize))
+		return 0;
+	if (ia.ia_msize && !isa_memcheck(ia.ia_maddr, ia.ia_msize))
+		return 0;
 
-	/* In any case, move on to next config entry. */
+	/* Reserve I/O ports and/or shared memory. */
+	if (ia.ia_iosize)
+		isa_portalloc(ia.ia_iobase, ia.ia_iosize);
+	if (ia.ia_msize)
+		isa_memalloc(ia.ia_maddr, ia.ia_msize);
+
+	/* Configure device. */
+	config_attach(isa, cf, &ia, isaprint);
+
 	return 0;
 }
 
@@ -187,6 +194,10 @@ isaprint(aux, isaname)
 		printf(" port 0x%x", ia->ia_iobase);
 	if (ia->ia_iosize > 1)
 		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
+	if (ia->ia_msize)
+		printf(" iomem 0x%x", ia->ia_maddr);
+	if (ia->ia_msize > 1)
+		printf("-0x%x", ia->ia_maddr + ia->ia_msize - 1);
 #ifdef DIAGNOSTIC
 	if (ia->ia_irq == IRQUNK)
 		printf(" THIS IS A BUG ->");
@@ -195,14 +206,82 @@ isaprint(aux, isaname)
 		printf(" irq %d", ffs(ia->ia_irq) - 1);
 	if (ia->ia_drq != DRQUNK)
 		printf(" drq %d", ia->ia_drq);
-	if (ia->ia_msize)
-		printf(" iomem 0x%x", ia->ia_maddr);
-	if (ia->ia_msize > 1)
-		printf("-0x%x", ia->ia_maddr + ia->ia_msize - 1);
 	/* XXXX print flags */
 	return QUIET;	/* actually, our return value is irrelevant. */
 }
 
+int isa_portcheck __P((u_int, u_int));
+int isa_memcheck __P((u_int, u_int));
+void isa_portalloc __P((u_int, u_int));
+void isa_memalloc __P((u_int, u_int));
+
+int	intrmask[NIRQ];
+struct	intrhand *intrhand[NIRQ];
+
+/*
+ * Register an interrupt handler.
+ */
+void
+intr_establish(intr, handler, class)
+	int intr;
+	struct intrhand *handler;
+	enum devclass class;
+{
+	int irqnum = ffs(intr) - 1;
+
+#ifdef DIAGNOSTIC
+	if (intr == IRQUNK || intr == IRQNONE ||
+	    (intr &~ (1 << irqnum)) != IRQNONE)
+		panic("intr_establish: weird irq");
+#endif
+
+	handler->ih_count = 0;
+	handler->ih_next = intrhand[irqnum];
+	intrhand[irqnum] = handler;
+
+	switch (class) {
+	    case DV_DULL:
+		break;
+	    case DV_DISK:
+	    case DV_TAPE:
+		biomask |= intr;
+		break;
+	    case DV_IFNET:
+		netmask |= intr;
+		break;
+	    case DV_TTY:
+		ttymask |= intr;
+		break;
+	    case DV_CPU:
+	    default:
+		panic("intrhand: weird devclass");
+	}
+}
+
+/*
+ * Set up the masks for each interrupt handler based on the information
+ * recorded by intr_establish().
+ */
+static void
+isa_intrmaskwickedness()
+{
+	int irq, mask;
+
+	for (irq = 0; irq < NIRQ; irq++) {
+		mask = (1 << irq) | astmask;
+		if (biomask & (1 << irq))
+			mask |= biomask;
+		if (ttymask & (1 << irq))
+			mask |= ttymask;
+		if (netmask & (1 << irq))
+			mask |= netmask;
+		intrmask[irq] = mask;
+	}
+
+	impmask = netmask | ttymask;
+	printf("biomask %x ttymask %x netmask %x impmask %x astmask %s\n",
+	       biomask, ttymask, netmask, impmask, astmask);
+}
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
