@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.64 2004/01/01 20:25:22 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.65 2004/01/01 21:57:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -27,11 +27,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.64 2004/01/01 20:25:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.65 2004/01/01 21:57:42 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -53,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.64 2004/01/01 20:25:22 thorpej Exp $
 #include <machine/bus.h>
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
-#define    bus_space_write_multi_stream_2    bus_space_write_multi_2
-#define    bus_space_write_multi_stream_4    bus_space_write_multi_4
-#define    bus_space_read_multi_stream_2    bus_space_read_multi_2
-#define    bus_space_read_multi_stream_4    bus_space_read_multi_4
+#define	bus_space_write_multi_stream_2	bus_space_write_multi_2
+#define	bus_space_write_multi_stream_4	bus_space_write_multi_4
+#define	bus_space_read_multi_stream_2	bus_space_read_multi_2
+#define	bus_space_read_multi_stream_4	bus_space_read_multi_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 #include <dev/ata/atareg.h>
@@ -82,24 +81,25 @@ int wdcdebug_atapi_mask = 0;
 
 #define ATAPI_DELAY 10	/* 10 ms, this is used only before sending a cmd */
 #define ATAPI_MODE_DELAY 1000	/* 1s, timeout for SET_FEATYRE cmds */
-int   wdc_atapi_get_params __P((struct scsipi_channel *, int,
-				struct ataparams *));
-void  wdc_atapi_probe_device __P((struct atapibus_softc *, int));
-void  wdc_atapi_minphys  __P((struct buf *bp));
-void  wdc_atapi_start	__P((struct channel_softc *,struct ata_xfer *));
-int   wdc_atapi_intr	 __P((struct channel_softc *, struct ata_xfer *, int));
-void  wdc_atapi_kill_xfer __P((struct channel_softc *, struct ata_xfer *));
-void  wdc_atapi_phase_complete __P((struct ata_xfer *));
-void  wdc_atapi_done	 __P((struct channel_softc *, struct ata_xfer *));
-void  wdc_atapi_reset	 __P((struct channel_softc *, struct ata_xfer *));
-void  wdc_atapi_scsipi_request __P((struct scsipi_channel *,
-	scsipi_adapter_req_t, void *));
-void  wdc_atapi_kill_pending __P((struct scsipi_periph *));
-static void  wdc_atapi_polldsc __P((void *arg));
+
+static int	wdc_atapi_get_params(struct scsipi_channel *, int,
+				     struct ataparams *);
+static void	wdc_atapi_probe_device(struct atapibus_softc *, int);
+static void	wdc_atapi_minphys (struct buf *bp);
+static void	wdc_atapi_start(struct channel_softc *,struct ata_xfer *);
+static int	wdc_atapi_intr(struct channel_softc *, struct ata_xfer *, int);
+static void	wdc_atapi_kill_xfer(struct channel_softc *, struct ata_xfer *);
+static void	wdc_atapi_phase_complete(struct ata_xfer *);
+static void	wdc_atapi_done(struct channel_softc *, struct ata_xfer *);
+static void	wdc_atapi_reset(struct channel_softc *, struct ata_xfer *);
+static void	wdc_atapi_scsipi_request(struct scsipi_channel *,
+					 scsipi_adapter_req_t, void *);
+static void	wdc_atapi_kill_pending(struct scsipi_periph *);
+static void	wdc_atapi_polldsc(void *arg);
 
 #define MAX_SIZE MAXPHYS
 
-const struct scsipi_bustype wdc_atapi_bustype = {
+static const struct scsipi_bustype wdc_atapi_bustype = {
 	SCSIPI_BUSTYPE_ATAPI,
 	atapi_scsipi_cmd,
 	atapi_interpret_sense,
@@ -108,8 +108,7 @@ const struct scsipi_bustype wdc_atapi_bustype = {
 };
 
 void
-wdc_atapibus_attach(ata_sc)
-	struct atabus_softc *ata_sc;
+wdc_atapibus_attach(struct atabus_softc *ata_sc)
 {
 	struct channel_softc *chp = ata_sc->sc_chan;
 	struct wdc_softc *wdc = chp->wdc;
@@ -143,9 +142,8 @@ wdc_atapibus_attach(ata_sc)
 	chp->atapibus = config_found(&ata_sc->sc_dev, chan, atapiprint);
 }
 
-void
-wdc_atapi_minphys(bp)
-	struct buf *bp;
+static void
+wdc_atapi_minphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > MAX_SIZE)
@@ -158,9 +156,8 @@ wdc_atapi_minphys(bp)
  *
  * Must be called at splbio().
  */
-void
-wdc_atapi_kill_pending(periph)
-	struct scsipi_periph *periph;
+static void
+wdc_atapi_kill_pending(struct scsipi_periph *periph)
 {
 	struct wdc_softc *wdc =
 	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
@@ -170,10 +167,8 @@ wdc_atapi_kill_pending(periph)
 	wdc_kill_pending(chp);
 }
 
-void
-wdc_atapi_kill_xfer(chp, xfer)
-	struct channel_softc *chp;
-	struct ata_xfer *xfer;
+static void
+wdc_atapi_kill_xfer(struct channel_softc *chp, struct ata_xfer *xfer)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 
@@ -184,11 +179,9 @@ wdc_atapi_kill_xfer(chp, xfer)
 	scsipi_done(sc_xfer);
 }
 
-int
-wdc_atapi_get_params(chan, drive, id)
-	struct scsipi_channel *chan;
-	int drive;
-	struct ataparams *id;
+static int
+wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
+    struct ataparams *id)
 {
 	struct wdc_softc *wdc = (void *)chan->chan_adapter->adapt_dev;
 	struct channel_softc *chp = wdc->channels[chan->chan_channel];
@@ -236,10 +229,8 @@ wdc_atapi_get_params(chan, drive, id)
 	return 0;
 }
 
-void
-wdc_atapi_probe_device(sc, target)
-	struct atapibus_softc *sc;
-	int target;
+static void
+wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 {
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
@@ -314,11 +305,9 @@ wdc_atapi_probe_device(sc, target)
 	}
 }
 
-void
-wdc_atapi_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+static void
+wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 	struct scsipi_periph *periph;
@@ -400,10 +389,8 @@ wdc_atapi_scsipi_request(chan, req, arg)
 	}
 }
 
-void
-wdc_atapi_start(chp, xfer)
-	struct channel_softc *chp;
-	struct ata_xfer *xfer;
+static void
+wdc_atapi_start(struct channel_softc *chp, struct ata_xfer *xfer)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
@@ -566,11 +553,8 @@ error:
 	return;
 }
 
-int
-wdc_atapi_intr(chp, xfer, irq)
-	struct channel_softc *chp;
-	struct ata_xfer *xfer;
-	int irq;
+static int
+wdc_atapi_intr(struct channel_softc *chp, struct ata_xfer *xfer, int irq)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
@@ -885,9 +869,8 @@ again:
 	return (1);
 }
 
-void
-wdc_atapi_phase_complete(xfer)
-	struct ata_xfer *xfer;
+static void
+wdc_atapi_phase_complete(struct ata_xfer *xfer)
 {
 	struct channel_softc *chp = xfer->c_chp;
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
@@ -963,10 +946,8 @@ wdc_atapi_phase_complete(xfer)
 	wdc_atapi_done(chp, xfer);
 }
 
-void
-wdc_atapi_done(chp, xfer)
-	struct channel_softc *chp;
-	struct ata_xfer *xfer;
+static void
+wdc_atapi_done(struct channel_softc *chp, struct ata_xfer *xfer)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 
@@ -984,10 +965,8 @@ wdc_atapi_done(chp, xfer)
 	wdcstart(chp);
 }
 
-void
-wdc_atapi_reset(chp, xfer)
-	struct channel_softc *chp;
-	struct ata_xfer *xfer;
+static void
+wdc_atapi_reset(struct channel_softc *chp, struct ata_xfer *xfer)
 {
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
@@ -1005,8 +984,8 @@ wdc_atapi_reset(chp, xfer)
 }
 
 static void
-wdc_atapi_polldsc(arg)
-	void *arg;
+wdc_atapi_polldsc(void *arg)
 {
+
 	wdc_atapi_phase_complete(arg);
 }
