@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.55 2001/03/03 01:46:04 eeh Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.56 2001/05/15 02:00:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -179,19 +179,19 @@ const struct execsw execsw_builtin[] = {
 #ifdef EXEC_ECOFF
 #ifdef COMPAT_OSF1
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds,
-	  { ecoff_probe_func: osf1_exec_ecoff_probe },
+	  { .ecoff_probe_func = osf1_exec_ecoff_probe },
 	  &emul_osf1, EXECSW_PRIO_ANY,
   	  howmany(OSF1_MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) +
 	    2 * (MAXPATHLEN + 1), sizeof (char *)), /* exec & loader names */
 	  osf1_copyargs, cpu_exec_ecoff_setregs }, /* OSF1 ecoff binaries */
 #endif /* COMPAT_OSF1 */
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds,
-	  { ecoff_probe_func: cpu_exec_ecoff_probe },
+	  { .ecoff_probe_func = cpu_exec_ecoff_probe },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
 	  0, copyargs, cpu_exec_ecoff_setregs },	/* ecoff binaries */
 #ifdef COMPAT_ULTRIX
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds,
-	  { ecoff_probe_func: ultrix_exec_ecoff_probe },
+	  { .ecoff_probe_func = ultrix_exec_ecoff_probe },
 	  &emul_ultrix, EXECSW_PRIO_LAST, /* XXX probe func alw. succeeds */
   	  0, copyargs, cpu_exec_ecoff_setregs }, /* Ultrix ecoff binaries */
 #endif /* COMPAT_ULTRIX */
@@ -200,48 +200,48 @@ const struct execsw execsw_builtin[] = {
 	/* 32bit ELF bins */
 #ifdef COMPAT_NETBSD32
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
-	  { elf_probe_func: ELF32NAME2(netbsd32,probe) },
+	  { ELF32NAME2(netbsd32,probe) },
 	  &emul_netbsd32, EXECSW_PRIO_FIRST,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  netbsd32_elf32_copyargs, netbsd32_setregs }, /* NetBSD32 32bit ELF bins */
 	  /* This one should go first so it matches instead of netbsd */
 #endif
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
-	  { elf_probe_func: ELF32NAME2(netbsd,probe) },
+	  { ELF32NAME2(netbsd,probe) },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  elf32_copyargs, setregs },	/* NetBSD 32bit ELF bins */
 #ifdef COMPAT_FREEBSD
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
-	  { elf_probe_func: ELF32NAME2(freebsd,probe) },
+	  { ELF32NAME2(freebsd,probe) },
 	  &emul_freebsd, EXECSW_PRIO_ANY,
 	  FREEBSD_ELF_AUX_ARGSIZ,
 	  elf32_copyargs, freebsd_setregs },	/* FreeBSD 32bit ELF bins (not 64bit safe )*/
 #endif
 #ifdef COMPAT_LINUX
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
-	  { elf_probe_func: ELF32NAME2(linux,probe) },
+	  { ELF32NAME2(linux,probe) },
 	  &emul_linux, EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
 	  LINUX_COPYARGS_FUNCTION, setregs },	/* Linux 32bit ELF bins */
 #endif
 #ifdef COMPAT_SVR4_32
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
-	  { elf_probe_func: ELF32NAME2(svr4_32,probe) },
+	  { ELF32NAME2(svr4_32,probe) },
 	  &emul_svr4_32, EXECSW_PRIO_ANY,
 	  SVR4_32_AUX_ARGSIZ,
 	  svr4_32_copyargs, svr4_32_setregs },	/* SVR4 32bit ELF bins (not 64bit safe) */
 #endif
 #ifdef COMPAT_SVR4
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
-	  { elf_probe_func: ELF32NAME2(svr4,probe) },
+	  { ELF32NAME2(svr4,probe) },
 	  &emul_svr4, EXECSW_PRIO_ANY,
 	  SVR4_AUX_ARGSIZ,
 	  svr4_copyargs, svr4_setregs },	/* SVR4 32bit ELF bins (not 64bit safe) */
 #endif
 #ifdef COMPAT_IBCS2
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
-	  { elf_probe_func: ELF32NAME2(ibcs2,probe) },
+	  { ELF32NAME2(ibcs2,probe) },
 	  &emul_ibcs2, EXECSW_PRIO_ANY,
 	  IBCS2_ELF_AUX_ARGSIZ, elf32_copyargs, setregs },
 				/* SCO 32bit ELF bins (not 64bit safe) */
@@ -254,20 +254,20 @@ const struct execsw execsw_builtin[] = {
 #ifdef EXEC_ELF64
 	/* 64bit ELF bins */
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
-	  { elf_probe_func: ELF64NAME2(netbsd,probe) },
+	  { ELF64NAME2(netbsd,probe) },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
 	  elf64_copyargs, setregs }, /* NetBSD 64bit ELF bins */
 #ifdef COMPAT_LINUX
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
-	  { elf_probe_func: ELF64NAME2(linux,probe) },
+	  { ELF64NAME2(linux,probe) },
 	  &emul_linux, EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
 	  linux_elf64_copyargs, setregs }, /* Linux 64bit ELF bins */
 #endif
 #ifdef COMPAT_SVR4
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
-	  { elf_probe_func: ELF64NAME2(svr4,probe) },
+	  { ELF64NAME2(svr4,probe) },
 	  &emul_svr4, EXECSW_PRIO_ANY,
 	  SVR4_AUX_ARGSIZ64,
 	  svr4_copyargs64, svr4_setregs },	/* SVR4 64bit ELF bins (not 64bit safe) */

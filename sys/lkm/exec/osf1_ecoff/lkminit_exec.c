@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:45 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2 2001/05/15 02:00:14 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ int exec_osf1_ecoff_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_osf1_ecoff =
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds,
-	  { ecoff_probe_func: osf1_exec_ecoff_probe },
+	  { .ecoff_probe_func = osf1_exec_ecoff_probe },
 	  NULL, EXECSW_PRIO_ANY,
   	  howmany(OSF1_MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) +
 	    2 * (MAXPATHLEN + 1), sizeof (char *)), /* exec & loader names */
