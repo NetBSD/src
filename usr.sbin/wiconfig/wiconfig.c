@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.20 2002/03/03 05:00:03 dbj Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.21 2002/03/04 01:24:53 dbj Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.20 2002/03/03 05:00:03 dbj Exp $";
+	"@(#) $Id: wiconfig.c,v 1.21 2002/03/04 01:24:53 dbj Exp $";
 #endif
 
 struct wi_table {
@@ -244,7 +244,7 @@ static void wi_apscan(iface)
 		       "\t                        [dBm]:\t[ %d / %d / %d ]\n", 
 			w->quality, w->signal, w->noise,
 			w->quality, w->signal - 149, w->noise - 149);
-		printf("\tBSS Beacon Interval [Kusec]:\t[ %d ]\n", w->interval); 
+		printf("\tBSS Beacon Interval [msec]:\t[ %d ]\n", w->interval); 
 		printf("\tCapinfo:\t\t\t[ "); 
 			if (w->capinfo & IEEE80211_CAPINFO_ESS)
 				printf("ESS ");
@@ -617,7 +617,7 @@ static struct wi_table wi_table[] = {
 	{ WI_RID_TX_RATE, WI_WORDS, "TX rate (selection):\t\t\t",
 	    't', "TX rate" },
 	{ WI_RID_CUR_TX_RATE, WI_WORDS, "TX rate (actual speed):\t\t\t"},
-	{ WI_RID_OWN_BEACON_INT, WI_WORDS, "Beacon Interval (current) [Kusec]:\t"},
+	{ WI_RID_OWN_BEACON_INT, WI_WORDS, "Beacon Interval (current) [msec]:\t"},
 	{ WI_RID_MAX_DATALEN, WI_WORDS, "Maximum data length:\t\t\t",
 	    'd', "maximum data length" },
 	{ WI_RID_RTS_THRESH, WI_WORDS, "RTS/CTS handshake threshold:\t\t",
