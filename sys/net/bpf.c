@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.41 1998/08/06 04:24:25 perry Exp $	*/
+/*	$NetBSD: bpf.c,v 1.42 1998/08/06 04:25:55 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -126,7 +126,7 @@ static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
-static void	bpf_mcpy __P((const void *, void *, size_t));
+static void	bpf_mcpy __P((void *, const void *, size_t));
 static int	bpf_movein __P((struct uio *, int, int,
 			        struct mbuf **, struct sockaddr *));
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
