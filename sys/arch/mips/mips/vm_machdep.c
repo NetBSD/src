@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.105.4.1 2005/01/31 12:15:52 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.105.4.2 2005/03/09 23:06:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105.4.1 2005/01/31 12:15:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105.4.2 2005/03/09 23:06:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,8 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	len = mips_round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
 	pmap_update(pmap_kernel());
-	uvm_unmap1(phys_map, kva, len, UVM_FLAG_QUANTUM | UVM_FLAG_VAONLY);
+	uvm_unmap1(phys_map, kva, kva + len,
+	    UVM_FLAG_QUANTUM | UVM_FLAG_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
