@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.60 2001/11/03 20:49:56 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.61 2001/11/29 01:12:35 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd August 20, 2001
+.Dd November 29, 2001
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -204,6 +204,10 @@ which may be shortened when you use gensolpkg. Only add SVR4_PKGNAME if
 .Pa ${PKGNAME}
 does not produce an unique package name on a SVR4 system.
 The lenght of SVR4_PKGNAME is limited to 5 characters.
+.It PKGREVISION
+This number indicates the package's revision within the NetBSD
+Packages Collection (pkgsrc). If set, this well be attached to the
+PKGNAME variable seperate by a "nb". 
 .It EXTRACT_ONLY
 If defined, a subset of
 .Pa ${DISTFILES}
