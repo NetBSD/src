@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.92 2003/08/07 16:32:49 agc Exp $	*/
+/*	$NetBSD: if.h,v 1.93 2003/11/10 20:03:29 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -805,5 +805,34 @@ char *	if_indextoname __P((unsigned int, char *));
 struct	if_nameindex * if_nameindex __P((void));
 void	if_freenameindex __P((struct if_nameindex *));
 __END_DECLS
+#endif /* _KERNEL */ /* XXX really ALTQ? */
+
+#ifdef _KERNEL
+/*
+ * ifq sysctl support
+ */
+int	sysctl_ifq __P((int *name, u_int namelen, void *oldp,
+		       size_t *oldlenp, void *newp, size_t newlen,
+		       struct ifqueue *ifq));
+/* symbolic names for terminal (per-protocol) CTL_IFQ_ nodes */
+#define IFQCTL_LEN 1
+#define IFQCTL_MAXLEN 2
+#define IFQCTL_PEAK 3
+#define IFQCTL_DROPS 4
+#define IFQCTL_MAXID 5
+
 #endif /* _KERNEL */
+
+#ifdef _NETBSD_SOURCE
+/*
+ * sysctl for ifq (per-protocol packet input queue variant of ifqueue) 
+ */
+#define CTL_IFQ_NAMES  { \
+	{ 0, 0 }, \
+	{ "len", CTLTYPE_INT }, \
+	{ "maxlen", CTLTYPE_INT }, \
+	{ "peak", CTLTYPE_INT }, \
+	{ "drops", CTLTYPE_INT }, \
+}
+#endif /* _NETBSD_SOURCE */
 #endif /* !_NET_IF_H_ */

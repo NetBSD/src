@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.132 2003/10/13 08:02:56 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.133 2003/11/10 20:03:29 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.132 2003/10/13 08:02:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.133 2003/11/10 20:03:29 jonathan Exp $");
 
 #include "opt_inet.h"
 
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.132 2003/10/13 08:02:56 dyoung Exp $");
 #include <sys/protosw.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1693,3 +1694,40 @@ ifconf(cmd, data)
 		ifc->ifc_len = space;
 	return (error);
 }
+
+int
+sysctl_ifq(name, namelen, oldp, oldlenp, newp, newlen, ifq)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct ifqueue *ifq;
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case IFQCTL_LEN:
+		return (sysctl_rdint(oldp, oldlenp, newp,
+			ifq->ifq_len));
+#ifdef notyet
+	case IFQCTL_PEAK:
+		return (sysctl_rdint(oldp, oldlenp, newp,
+			ifq->ifq_peak));
+#endif
+	case IFQCTL_MAXLEN:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+			&ifq->ifq_maxlen));
+
+	case IFQCTL_DROPS:
+		return (sysctl_rdint(oldp, oldlenp, newp,
+			ifq->ifq_drops));
+	default:
+		return (EOPNOTSUPP);
+	}
+  	/* NOTREACHED */
+}
+
