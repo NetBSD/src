@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.2 2004/03/28 09:01:26 martti Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.3 2004/04/21 18:16:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -128,7 +128,7 @@ main(argc, argv)
 	bzero((char *)&b, sizeof(b));
 	bzero((char *)&ip, sizeof(ip));
 	bzero((char *)&op, sizeof(op));
-	strcpy(op.iplo_name, "0");
+	strlcpy(op.iplo_name, "0", sizeof(op.iplo_name));
 
 	if (ip_pool_create(&op) == 0)
 		ipo = ip_pool_find(0, "0");
