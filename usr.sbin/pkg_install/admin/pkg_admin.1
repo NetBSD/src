@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.24 2003/09/08 08:57:42 wiz Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.25 2003/09/13 05:48:50 jlam Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -51,6 +51,18 @@ Packages System.
 .Sh OPTIONS
 The following command-line options are supported:
 .Bl -tag -width indent
+.It Fl b
+Print only the basenames when matching package names for
+.Cm lsall
+and
+.Cm lsbest .
+.It Fl d Ar lsdir
+Set
+.Ar lsdir
+as the path to the directory in which to find matching package names for
+.Cm lsall
+and
+.Cm lsbest .
 .It Fl K Ar pkg_dbdir
 Set
 .Ar pkg_dbdir
@@ -104,12 +116,17 @@ Columns are printed for the keyfield used in the pkgdb - the filename -,
 and the data field - the package the file belongs to.
 .It Cm lsall Ar /dir/pkgpattern
 .It Cm lsbest Ar /dir/pkgpattern
-List all/best package matching pattern in the given directory.
+List all/best package matching pattern in the given directory
+.Pa /dir .
+If the
+.Fl d
+flag is given, then that directory path overrides
+.Pa /dir .
 Can be used to work around limitations of /bin/sh and other
 filename globbing mechanisms.
 This option implements matching of
-pkg-wildcards against arbitrary files, useful mainly in the build
-system itself.
+pkg-wildcards against arbitrary files and directories, useful mainly in
+the build system itself.
 See
 .Xr pkg_info 1
 for a description of the pattern.
