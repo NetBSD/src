@@ -1,8 +1,14 @@
-/*	$NetBSD: config.h,v 1.3 1998/12/30 01:19:18 kristerw Exp $	*/
+/*	$NetBSD: config.h,v 1.4 1999/02/02 20:00:39 tv Exp $	*/
 
 /****************/
 /* bfd config.h */
 /****************/
+
+/* Name of package.  */
+#define PACKAGE "bfd"
+
+/* Version of package.  */
+#define VERSION "2.9.1"
 
 /* Whether strstr must be declared even if <string.h> is included.  */
 /* #undef NEED_DECLARATION_STRSTR */
@@ -42,6 +48,9 @@
 
 /* Define if you have the fcntl function.  */
 #define HAVE_FCNTL 1
+
+/* Define if you have the fdopen function.  */
+#define HAVE_FDOPEN 1
 
 /* Define if you have the getpagesize function.  */
 #define HAVE_GETPAGESIZE 1

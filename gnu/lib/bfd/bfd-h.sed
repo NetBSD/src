@@ -1,7 +1,7 @@
-#	$NetBSD: bfd-h.sed,v 1.5 1999/01/23 20:51:57 eeh Exp $
+#	$NetBSD: bfd-h.sed,v 1.6 1999/02/02 20:00:39 tv Exp $
 # Preparse bfd.h such that it can be used on multiple machines.
 
-s/@VERSION@/2.8.1/
+s/@VERSION@/2.9.1/
 /@wordsize@/{
 	i\
 #if defined(__alpha__) || defined (__sparc_v9__)\
