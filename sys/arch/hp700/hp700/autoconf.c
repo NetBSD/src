@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2003/11/18 04:04:42 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2003/11/24 02:51:35 chs Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2003/11/18 04:04:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2003/11/24 02:51:35 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2003/11/18 04:04:42 chs Exp $");
 #include <hp700/hp700/intr.h>
 #include <hp700/dev/cpudevs.h>
 
-void (*cold_hook) __P((void)); /* see below */
+void (*cold_hook)(void); /* see below */
 register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
 
 /*
@@ -127,7 +127,7 @@ register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
 #ifdef USELEDS
 int _hp700_led_on_cycles[_HP700_LEDS_BLINKABLE];
 static struct callout hp700_led_callout;
-static void hp700_led_blinker __P((void *));
+static void hp700_led_blinker(void *);
 extern int hz;
 #endif
 
@@ -139,7 +139,7 @@ struct device *booted_device;
  * called at boot time, configure all devices on system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	/*
@@ -213,8 +213,7 @@ hp700_led_ctl(int off, int on, int toggle)
  * This callout handler blinks LEDs.
  */
 static void
-hp700_led_blinker(arg)
-	void *arg;
+hp700_led_blinker(void *arg)
 {
 	u_int led_cycle = (u_int) arg;
 	int leds, led_i, led;
@@ -270,7 +269,7 @@ hp700_led_blinker(arg)
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	extern int dumpsize;
@@ -310,11 +309,11 @@ bad:
 /****************************************************************/
 
 /* This takes the args: name, ctlr, unit */
-typedef struct device * (*findfunc_t) __P((char *, int, int));
+typedef struct device * (*findfunc_t)(char *, int, int);
 
-static struct device * find_dev_byname __P((char *));
-static struct device * net_find  __P((char *, int, int));
-static struct device * scsi_find __P((char *, int, int));
+static struct device * find_dev_byname(char *);
+static struct device * net_find(char *, int, int);
+static struct device * scsi_find(char *, int, int);
 
 struct prom_n2f {
 	const char name[4];
@@ -332,7 +331,7 @@ static struct prom_n2f prom_dev_table[] = {
  * Choose root and swap devices.
  */
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	struct prom_n2f *nf;
 	struct device *boot_device;
@@ -384,9 +383,7 @@ cpu_rootconf()
  * Network device:  Just use controller number.
  */
 static struct device *
-net_find(name, ctlr, unit)
-	char *name;
-	int ctlr, unit;
+net_find(char *name, int ctlr, int unit)
 {
 	char tname[16];
 
@@ -400,9 +397,7 @@ net_find(name, ctlr, unit)
  * scsibus number, and the unit number is (targ*8 + LUN).
  */
 static struct device *
-scsi_find(name, ctlr, unit)
-	char *name;
-	int ctlr, unit;
+scsi_find(char *name, int ctlr, int unit)
 {
 	struct device *scsibus;
 	struct scsibus_softc *sbsc;
@@ -429,9 +424,7 @@ scsi_find(name, ctlr, unit)
 }
 #else
 static struct device *
-scsi_find(name, ctlr, unit)
-	char *name;
-	int ctlr, unit;
+scsi_find(char *name, int ctlr, int unit)
 {
 
 	return (NULL);
@@ -443,13 +436,11 @@ scsi_find(name, ctlr, unit)
  * XXX - Move this to some common file?
  */
 static struct device *
-find_dev_byname(name)
-	char *name;
+find_dev_byname(char *name)
 {
 	struct device *dv;
 
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (!strcmp(dv->dv_xname, name)) {
 			return(dv);
 		}
@@ -462,10 +453,8 @@ find_dev_byname(name)
 #endif
 
 void
-pdc_scanbus_memory_map(self, ca, callback)
-	struct device *self;
-	struct confargs *ca;
-	void (*callback) __P((struct device *, struct confargs *));
+pdc_scanbus_memory_map(struct device *self, struct confargs *ca,
+    void (*callback)(struct device *, struct confargs *))
 {
 	int i;
 	struct confargs nca;
@@ -473,7 +462,7 @@ pdc_scanbus_memory_map(self, ca, callback)
 	struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
 
 	for (i = 0; i < 16; i++) {
-		bzero(&nca, sizeof(nca));
+		memset(&nca, 0, sizeof(nca));
 		nca.ca_dp.dp_bc[0] = -1;
 		nca.ca_dp.dp_bc[1] = -1;
 		nca.ca_dp.dp_bc[2] = -1;
@@ -504,10 +493,8 @@ pdc_scanbus_memory_map(self, ca, callback)
 }
 
 void
-pdc_scanbus_system_map(self, ca, callback)
-	struct device *self;
-	struct confargs *ca;
-	void (*callback) __P((struct device *, struct confargs *));
+pdc_scanbus_system_map(struct device *self, struct confargs *ca,
+    void (*callback)(struct device *, struct confargs *))
 {
 	int i;
 	int ia;
@@ -517,7 +504,7 @@ pdc_scanbus_system_map(self, ca, callback)
 	struct pdc_system_map_find_addr pdc_find_addr PDC_ALIGNMENT;
 
 	for (i = 0; i <= 64; i++) {
-		bzero(&nca, sizeof(nca));
+		memset(&nca, 0, sizeof(nca));
 		nca.ca_dp.dp_bc[0] = ca->ca_dp.dp_bc[1];
 		nca.ca_dp.dp_bc[1] = ca->ca_dp.dp_bc[2];
 		nca.ca_dp.dp_bc[2] = ca->ca_dp.dp_bc[3];
@@ -570,8 +557,7 @@ static const struct hppa_mod_info hppa_knownmods[] = {
 };
 
 const char *
-hppa_mod_info(type, sv)
-	int type, sv;
+hppa_mod_info(int type, int sv)
 {
 	const struct hppa_mod_info *mi;
 	static char fakeid[32];
