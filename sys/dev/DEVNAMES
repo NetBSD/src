@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.168 2004/12/08 15:54:39 cube Exp $
+#	$NetBSD: DEVNAMES,v 1.169 2005/01/08 04:04:00 joff Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -325,6 +325,10 @@ empsc			amigappc
 emuxki			MI
 en			MI		
 ep			MI		
+epclk			evbarm
+epcom			evbarm
+epe			evbarm
+epsoc			evbarm
 epic			MI		
 es			amiga
 es			amigappc
@@ -1168,7 +1172,10 @@ tr_isa			MI		Attribute
 trm			MI
 ts			MI
 tsc			alpha
+tscs			MI
 tsp			alpha
+tspld			evbarm
+tsrtc			evbarm
 tt			pmax
 ttwoga			alpha
 ttwopci			alpha
