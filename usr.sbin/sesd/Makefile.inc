@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2000/02/22 05:26:55 erh Exp $
+# $NetBSD: Makefile.inc,v 1.6 2000/02/22 06:06:06 mjacob Exp $
 # $OpenBSD: $
 # $FreeBSD: $
 #
@@ -34,18 +34,7 @@
 # mjacob@feral.com
 #
 
-SYS	!=	uname -s
-
-.if ${SYS} == OpenBSD
-#COPTS	+=	-I${DESTDIR}/usr/include/scsi -DSESINC="<ses.h>"
-COPTS	+=	-DSESINC"<scsi/ses.h>"
-.elif	${SYS} == NetBSD
-#COPTS	+=	-I${DESTDIR}/usr/include/dev/scsipi -DSESINC="<ses.h>"
 COPTS	+=	-DSESINC="<dev/scsipi/ses.h>"
-.else
-#COPTS	+=	-I${DESTDIR}/usr/include/cam/scsi -DSESINC="<scsi_ses.h>"
-COPTS	+=	-DSESINC="<cam/scsi/scsi_ses.h>"
-.endif
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

@@ -1,4 +1,4 @@
-/* $NetBSD: getencstat.c,v 1.1 2000/02/21 08:10:28 mjacob Exp $ */ 
+/* $NetBSD: getencstat.c,v 1.2 2000/02/22 06:06:07 mjacob Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -43,6 +43,7 @@
 
 extern char *geteltnm __P((int));
 extern char *stat2ascii __P((int, u_char *));
+int main __P((int, char **));
 
 int
 main(a, v)

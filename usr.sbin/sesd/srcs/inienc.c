@@ -1,4 +1,4 @@
-/* $NetBSD: inienc.c,v 1.1 2000/02/21 08:10:29 mjacob Exp $ */ 
+/* $NetBSD: inienc.c,v 1.2 2000/02/22 06:06:07 mjacob Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -40,6 +40,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include SESINC
+
+int __P((int, char **));
 
 int
 main(a, v)

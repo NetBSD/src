@@ -1,4 +1,4 @@
-/* $NetBSD: getnobj.c,v 1.1 2000/02/21 08:10:28 mjacob Exp $ */ 
+/* $NetBSD: getnobj.c,v 1.2 2000/02/22 06:06:07 mjacob Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -41,6 +41,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include SESINC
+
+int main __P((int, char **));
 
 int
 main(argc, argv)
