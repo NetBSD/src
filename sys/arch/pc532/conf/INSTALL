@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.31 2003/09/06 03:25:29 itojun Exp $
+#	$NetBSD: INSTALL,v 1.32 2004/07/15 03:53:50 atatat Exp $
 #
 # INSTALL -- install kernel
 #
@@ -35,6 +35,7 @@ options 	INET				# IP + ICMP + TCP + UDP
 
 options 	USERCONF			# userconf(4) support
 options		PIPE_SOCKETPAIR			# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # pc532 special options

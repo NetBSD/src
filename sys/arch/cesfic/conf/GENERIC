@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25 2004/06/28 21:07:47 bouyer Exp $
+# $NetBSD: GENERIC,v 1.26 2004/07/15 03:53:45 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -32,6 +32,7 @@ options 	FPSP
 # Standard system options
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

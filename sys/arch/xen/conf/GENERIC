@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13 2004/06/26 07:32:09 abs Exp $
+# $NetBSD: GENERIC,v 1.14 2004/07/15 03:53:52 atatat Exp $
 # NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
@@ -23,7 +23,7 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -76,6 +76,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Beep when it is safe to power down the system (requires sysbeep)
 #options 	BEEP_ONHALT

@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.17 2004/01/30 14:25:36 augustss Exp $
+#	$NetBSD: PMPPC,v 1.18 2004/07/15 03:53:51 atatat Exp $
 #
 #	PMPPC
 #
@@ -28,6 +28,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
