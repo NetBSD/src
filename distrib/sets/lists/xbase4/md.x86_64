@@ -1,0 +1,13 @@
+# $NetBSD: md.x86_64,v 1.1 2003/03/08 20:49:14 fvdl Exp $
+./usr/X11R6/man/cat1/scanpci.0
+./usr/X11R6/bin/gtf
+./usr/X11R6/bin/inb
+./usr/X11R6/bin/inl
+./usr/X11R6/bin/inw
+./usr/X11R6/bin/ioport
+./usr/X11R6/bin/mmapr
+./usr/X11R6/bin/mmapw
+./usr/X11R6/bin/outb
+./usr/X11R6/bin/outl
+./usr/X11R6/bin/outw
+./usr/X11R6/man/cat1/gtf.0
