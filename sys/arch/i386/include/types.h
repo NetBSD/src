@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)types.h	7.5 (Berkeley) 3/9/91
- *	$Id: types.h,v 1.5 1994/05/24 00:51:36 cgd Exp $
+ *	$Id: types.h,v 1.5.2.1 1994/07/20 05:48:42 cgd Exp $
  */
 
 #ifndef	_MACHTYPES_H_
@@ -52,6 +52,7 @@ typedef	unsigned long	vm_size_t;
  * Basic integral types.  Omit the typedef if
  * not possible for a machine/compiler combination.
  */
+#define	__BIT_TYPES_DEFINED__
 typedef	__signed char		   int8_t;
 typedef	unsigned char		 u_int8_t;
 typedef	short			  int16_t;
