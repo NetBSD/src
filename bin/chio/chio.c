@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.5 1997/09/29 17:32:24 mjacob Exp $	*/
+/*	$NetBSD: chio.c,v 1.6 1998/01/04 23:53:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.5 1997/09/29 17:32:24 mjacob Exp $");
+__RCSID("$NetBSD: chio.c,v 1.6 1998/01/04 23:53:58 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -155,6 +155,7 @@ main(argc, argv)
 	/* Skip over the command name and call handler. */
 	++argv; --argc;
 	exit ((*commands[i].cc_handler)(commands[i].cc_name, argc, argv));
+	/* NOTREACHED */
 }
 
 static int
@@ -180,7 +181,7 @@ do_move(cname, argc, argv)
 		warnx("%s: too many arguments", cname);
 		goto usage;
 	}
-	memset(&cmd, 0, sizeof(cmd));
+	(void) memset(&cmd, 0, sizeof(cmd));
 
 	/* <from ET>  */
 	cmd.cm_fromtype = parse_element_type(*argv);
@@ -214,13 +215,13 @@ do_move(cname, argc, argv)
 	}
 
 	/* Send command to changer. */
-	if (ioctl(changer_fd, CHIOMOVE, (char *)&cmd))
+	if (ioctl(changer_fd, CHIOMOVE, &cmd))
 		err(1, "%s: CHIOMOVE", changer_name);
 
 	return (0);
 
  usage:
-	fprintf(stderr, "usage: %s %s "
+	(void) fprintf(stderr, "usage: %s %s "
 	    "<from ET> <from EU> <to ET> <to EU> [inv]\n", __progname, cname);
 	return (1);
 }
@@ -248,7 +249,7 @@ do_exchange(cname, argc, argv)
 		warnx("%s: too many arguments", cname);
 		goto usage;
 	}
-	memset(&cmd, 0, sizeof(cmd));
+	(void) memset(&cmd, 0, sizeof(cmd));
 
 	/* <src ET>  */
 	cmd.ce_srctype = parse_element_type(*argv);
@@ -307,13 +308,14 @@ do_exchange(cname, argc, argv)
 	}
 
 	/* Send command to changer. */
-	if (ioctl(changer_fd, CHIOEXCHANGE, (char *)&cmd))
+	if (ioctl(changer_fd, CHIOEXCHANGE, &cmd))
 		err(1, "%s: CHIOEXCHANGE", changer_name);
 
 	return (0);
 
  usage:
-	fprintf(stderr, "usage: %s %s <src ET> <src EU> <dst1 ET> <dst1 EU>\n"
+	(void) fprintf(stderr,
+	    "usage: %s %s <src ET> <src EU> <dst1 ET> <dst1 EU>\n"
 	    "       [<dst2 ET> <dst2 EU>] [inv1] [inv2]\n",
 	    __progname, cname);
 	return (1);
@@ -342,7 +344,7 @@ do_position(cname, argc, argv)
 		warnx("%s: too many arguments", cname);
 		goto usage;
 	}
-	memset(&cmd, 0, sizeof(cmd));
+	(void) memset(&cmd, 0, sizeof(cmd));
 
 	/* <to ET>  */
 	cmd.cp_type = parse_element_type(*argv);
@@ -368,17 +370,18 @@ do_position(cname, argc, argv)
 	}
 
 	/* Send command to changer. */
-	if (ioctl(changer_fd, CHIOPOSITION, (char *)&cmd))
+	if (ioctl(changer_fd, CHIOPOSITION, &cmd))
 		err(1, "%s: CHIOPOSITION", changer_name);
 
 	return (0);
 
  usage:
-	fprintf(stderr, "usage: %s %s <to ET> <to EU> [inv]\n",
+	(void) fprintf(stderr, "usage: %s %s <to ET> <to EU> [inv]\n",
 	    __progname, cname);
 	return (1);
 }
 
+/* ARGSUSED */
 static int
 do_params(cname, argc, argv)
 	char *cname;
@@ -394,27 +397,29 @@ do_params(cname, argc, argv)
 	}
 
 	/* Get params from changer and display them. */
-	memset(&data, 0, sizeof(data));
-	if (ioctl(changer_fd, CHIOGPARAMS, (char *)&data))
+	(void) memset(&data, 0, sizeof(data));
+	if (ioctl(changer_fd, CHIOGPARAMS, &data))
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
-	printf("%s: %d slot%s, %d drive%s, %d picker%s",
+	(void) printf("%s: %d slot%s, %d drive%s, %d picker%s",
 	    changer_name,
 	    data.cp_nslots, (data.cp_nslots > 1) ? "s" : "",
 	    data.cp_ndrives, (data.cp_ndrives > 1) ? "s" : "",
 	    data.cp_npickers, (data.cp_npickers > 1) ? "s" : "");
 	if (data.cp_nportals)
-		printf(", %d portal%s", data.cp_nportals,
+		(void) printf(", %d portal%s", data.cp_nportals,
 		    (data.cp_nportals > 1) ? "s" : "");
-	printf("\n%s: current picker: %d\n", changer_name, data.cp_curpicker);
+	(void) printf("\n%s: current picker: %d\n", changer_name,
+	    data.cp_curpicker);
 
 	return (0);
 
  usage:
-	fprintf(stderr, "usage: %s %s\n", __progname, cname);
+	(void) fprintf(stderr, "usage: %s %s\n", __progname, cname);
 	return (1);
 }
 
+/* ARGSUSED */
 static int
 do_getpicker(cname, argc, argv)
 	char *cname;
@@ -430,15 +435,15 @@ do_getpicker(cname, argc, argv)
 	}
 
 	/* Get current picker from changer and display it. */
-	if (ioctl(changer_fd, CHIOGPICKER, (char *)&picker))
+	if (ioctl(changer_fd, CHIOGPICKER, &picker))
 		err(1, "%s: CHIOGPICKER", changer_name);
 
-	printf("%s: current picker: %d\n", changer_name, picker);
+	(void) printf("%s: current picker: %d\n", changer_name, picker);
 
 	return (0);
 
  usage:
-	fprintf(stderr, "usage: %s %s\n", __progname, cname);
+	(void) fprintf(stderr, "usage: %s %s\n", __progname, cname);
 	return (1);
 }
 
@@ -461,13 +466,13 @@ do_setpicker(cname, argc, argv)
 	picker = parse_element_unit(*argv);
 
 	/* Set the changer picker. */
-	if (ioctl(changer_fd, CHIOSPICKER, (char *)&picker))
+	if (ioctl(changer_fd, CHIOSPICKER, &picker))
 		err(1, "%s: CHIOSPICKER", changer_name);
 
 	return (0);
 
  usage:
-	fprintf(stderr, "usage: %s %s <picker>\n", __progname, cname);
+	(void) fprintf(stderr, "usage: %s %s <picker>\n", __progname, cname);
 	return (1);
 }
 
@@ -480,7 +485,8 @@ do_status(cname, argc, argv)
 	struct changer_element_status cmd;
 	struct changer_params data;
 	u_int8_t *statusp;
-	int i, count, chet, schet, echet;
+	int i, chet, schet, echet;
+	size_t count;
 	char *description;
 
 	/*
@@ -502,8 +508,8 @@ do_status(cname, argc, argv)
 	 * Get params from changer.  Specifically, we need the element
 	 * counts.
 	 */
-	memset(&data, 0, sizeof(data));
-	if (ioctl(changer_fd, CHIOGPARAMS, (char *)&data))
+	(void) memset(&data, 0, sizeof(data));
+	if (ioctl(changer_fd, CHIOGPARAMS, &data))
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
 	if (argc)
@@ -545,7 +551,7 @@ do_status(cname, argc, argv)
 			if (argc == 0)
 				continue;
 			else {
-				printf("%s: no %s elements\n",
+				(void) printf("%s: no %s elements\n",
 				    changer_name, description);
 				return (0);
 			}
@@ -555,20 +561,20 @@ do_status(cname, argc, argv)
 		if ((statusp = (u_int8_t *)malloc(count)) == NULL)
 			errx(1, "can't allocate status storage");
 
-		memset(statusp, 0, count);
-		memset(&cmd, 0, sizeof(cmd));
+		(void) memset(statusp, 0, count);
+		(void) memset(&cmd, 0, sizeof(cmd));
 
 		cmd.ces_type = chet;
 		cmd.ces_data = statusp;
 
-		if (ioctl(changer_fd, CHIOGSTATUS, (char *)&cmd)) {
+		if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
 			free(statusp);
 			err(1, "%s: CHIOGSTATUS", changer_name);
 		}
 
 		/* Dump the status for each element of this type. */
 		for (i = 0; i < count; ++i) {
-			printf("%s %d: %s\n", description, i,
+			(void) printf("%s %d: %s\n", description, i,
 			    bits_to_string(statusp[i], CESTATUS_BITS));
 		}
 
@@ -578,18 +584,19 @@ do_status(cname, argc, argv)
 	return (0);
 
  usage:
-	fprintf(stderr, "usage: %s %s [<element type>]\n", __progname,
+	(void) fprintf(stderr, "usage: %s %s [<element type>]\n", __progname,
 	    cname);
 	return (1);
 }
 
+/* ARGSUSED */
 static int
 do_ielem(cname, argc, argv)
 	char *cname;
 	int argc;
 	char **argv;
 {
-	if (ioctl(changer_fd, CHIOIELEM, (char *)NULL))
+	if (ioctl(changer_fd, CHIOIELEM, NULL))
 		err(1, "%s: CHIOIELEM", changer_name);
 
 	return (0);
@@ -607,6 +614,7 @@ parse_element_type(cp)
 			return (elements[i].et_type);
 
 	errx(1, "invalid element type `%s'", cp);
+	/* NOTREACHED */
 }
 
 static int
@@ -634,6 +642,7 @@ parse_special(cp)
 		return (val);
 
 	errx(1, "invalid modifier `%s'", cp);
+	/* NOTREACHED */
 }
 
 static int
@@ -659,7 +668,7 @@ bits_to_string(v, cp)
 	static char buf[128];
 
 	bp = buf;
-	memset(buf, 0, sizeof(buf));
+	(void) memset(buf, 0, sizeof(buf));
 
 	for (sep = '<'; (f = *cp++) != 0; cp = np) {
 		for (np = cp; *np >= ' ';)
@@ -686,10 +695,10 @@ static void
 usage()
 {
 
-	fprintf(stderr, "usage: %s command arg1 arg2 ...\n", __progname);
-	fprintf(stderr, "Examples:\n");
-	fprintf(stderr, "\tchio -f /dev/ch0 move slot 1 drive 0\n");
-	fprintf(stderr, "\tchio ielem\n");
-	fprintf(stderr, "\tchio -f /dev/ch1 status\n");
+	(void) fprintf(stderr, "usage: %s command arg1 arg2 ...\n", __progname);
+	(void) fprintf(stderr, "Examples:\n");
+	(void) fprintf(stderr, "\tchio -f /dev/ch0 move slot 1 drive 0\n");
+	(void) fprintf(stderr, "\tchio ielem\n");
+	(void) fprintf(stderr, "\tchio -f /dev/ch1 status\n");
 	exit(1);
 }
