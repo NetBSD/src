@@ -1,4 +1,4 @@
-/*	$NetBSD: __assert.c,v 1.4 1999/04/13 19:00:30 drochner Exp $	*/
+/*	$NetBSD: __assert.c,v 1.5 2000/03/29 03:19:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,9 +36,6 @@
 
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
-#else
-void __assert __P((const char *, const char *, int, const char *))
-	__attribute__((__noreturn__)); /* XXX */
 #endif
 
 void
