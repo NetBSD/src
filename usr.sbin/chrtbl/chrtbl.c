@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.1 1997/06/02 10:16:45 kleink Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.2 1997/06/06 06:55:07 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -537,7 +537,7 @@ main(argc, argv)
 			error |= 1;
 			continue;
 		}
-		error |= !(*t->func)(&ct, token, t->arg, p, lnum);
+		error |= (*t->func)(&ct, token, t->arg, p, lnum);
 	}
 	(void) fclose(fp);
 
