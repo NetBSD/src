@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/08/30 23:51:49 jhawk Exp $
+#	$NetBSD: Makefile,v 1.6 2000/11/01 07:57:57 garbled Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,6 +23,8 @@ MDEC=		${DESTDIR}/usr/mdec
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 DISKTYPE=	floppy3
 
@@ -57,7 +59,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
