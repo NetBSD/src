@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.26.10.6 2001/12/29 23:31:07 sommerfeld Exp $	*/
+/*	$NetBSD: pcb.h,v 1.26.10.7 2002/02/24 00:17:46 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ struct pcb {
 #define	pcb_ebp	pcb_tss.tss_ebp
 #define	pcb_ldt_sel	pcb_tss.tss_ldt
 	int	pcb_cr0;		/* saved image of CR0 */
-	int	pcb_pad0;		/* align pcb_savefpu to 16 bytes */
+	int	pcb_cr2;		/* page fault address (CR2) */
 	union	savefpu pcb_savefpu;	/* floating point state for FPU */
 	struct	emcsts pcb_saveemc;	/* Cyrix EMC state */
 /*
