@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.30 1999/08/25 02:07:44 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.31 1999/10/14 18:29:02 erh Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.64 1999/08/13 06:46:16 paulus Exp "
 #else
-__RCSID("$NetBSD: options.c,v 1.30 1999/08/25 02:07:44 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.31 1999/10/14 18:29:02 erh Exp $");
 #endif
 #endif
 
@@ -687,7 +687,8 @@ process_option(opt, argv)
 		    break;
 		case OPT_LIMITS:
 		    option_error("%s value must be%s between %d and %d",
-				opt->name, opt->lower_limit, opt->upper_limit);
+				opt->name, zok, opt->lower_limit,
+				opt->upper_limit);
 		    break;
 		}
 		return 0;
