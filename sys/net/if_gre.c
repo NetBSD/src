@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.25 2001/11/24 15:46:08 martin Exp $ */
+/*	$NetBSD: if_gre.c,v 1.26 2002/02/24 17:22:20 martin Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.25 2001/11/24 15:46:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.26 2002/02/24 17:22:20 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.25 2001/11/24 15:46:08 martin Exp $");
 #define LINK_MASK (IFF_LINK0|IFF_LINK1|IFF_LINK2)
 
 struct gre_softc_head gre_softc_list;
+int ip_gre_ttl = GRE_TTL;
 
 int	gre_clone_create __P((struct if_clone *, int));
 void	gre_clone_destroy __P((struct ifnet *));
@@ -189,7 +190,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct gre_softc *sc = ifp->if_softc;
 	struct greip *gh;
 	struct ip *inp;
-	u_char ttl, osrc;
+	u_char osrc;
 	u_short etype = 0;
 	struct mobile_h mob_h;
 
@@ -214,7 +215,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 #endif
 
-	ttl = 255;
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	if (sc->g_proto == IPPROTO_MOBILE) {
 		if (dst->sa_family == AF_INET) {
@@ -281,7 +282,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		switch (dst->sa_family) {
 		case AF_INET:
 			inp = mtod(m, struct ip *);
-			ttl = inp->ip_ttl;
 			etype = ETHERTYPE_IP;
 			break;
 #ifdef NETATALK
@@ -325,7 +325,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		gh->gi_src = sc->g_src;
 		gh->gi_dst = sc->g_dst;
 		((struct ip*)gh)->ip_hl = (sizeof(struct ip)) >> 2;
-		((struct ip*)gh)->ip_ttl = ttl;
+		((struct ip*)gh)->ip_ttl = ip_gre_ttl;
 		((struct ip*)gh)->ip_tos = inp->ip_tos;
 		gh->gi_len = m->m_pkthdr.len;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.143 2002/02/21 08:39:33 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.144 2002/02/24 17:22:21 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.143 2002/02/21 08:39:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.144 2002/02/24 17:22:21 martin Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -139,6 +139,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.143 2002/02/21 08:39:33 itojun Exp $"
 /* just for gif_ttl */
 #include <netinet/in_gif.h>
 #include "gif.h"
+#include <net/if_gre.h>
+#include "gre.h"
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
@@ -1854,6 +1856,12 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_GIF_TTL:
 		return(sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip_gif_ttl));
+#endif
+
+#if NGRE > 0
+	case IPCTL_GRE_TTL:
+		return(sysctl_int(oldp, oldlenp, newp, newlen,
+				  &ip_gre_ttl));
 #endif
 
 #ifndef IPNOPRIVPORTS
