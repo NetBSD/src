@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.46 1999/10/13 14:28:07 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.47 1999/10/13 23:46:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -705,6 +705,7 @@ usbd_ar_pipe(pipe)
 	if (usbdebug > 5)
 		usbd_dump_queue(pipe);
 #endif
+	pipe->repeat = 0;
 	while ((reqh = SIMPLEQ_FIRST(&pipe->queue))) {
 		DPRINTFN(2,("usbd_ar_pipe: pipe=%p reqh=%p (methods=%p)\n", 
 			    pipe, reqh, pipe->methods));
@@ -722,6 +723,7 @@ usb_transfer_complete(reqh)
 {
 	usbd_pipe_handle pipe = reqh->pipe;
 	usb_dma_t *dmap = &reqh->dmabuf;
+	int repeat = pipe->repeat;
 	int polling;
 
 	SPLUSBCHECK;
@@ -754,7 +756,7 @@ usb_transfer_complete(reqh)
 
 	/* if we allocated the buffer in usbd_transfer() we free it here. */
 	if (reqh->rqflags & URQ_AUTO_DMABUF) {
-		if (!pipe->repeat) {
+		if (!repeat) {
 			struct usbd_bus *bus = pipe->device->bus;
 			bus->methods->freem(bus, dmap);
 			reqh->rqflags &= ~URQ_AUTO_DMABUF;
@@ -764,12 +766,15 @@ usb_transfer_complete(reqh)
 	if (pipe->methods->done)
 		pipe->methods->done(reqh);
 
-	/* Remove request from queue. */
-#ifdef DIAGNOSTICx
-	if (reqh != SIMPLEQ_FIRST(&pipe->queue))
-		printf("usb_transfer_complete: bad dequeue\n");
+	if (!repeat) {
+		/* Remove request from queue. */
+#ifdef DIAGNOSTIC
+		if (reqh != SIMPLEQ_FIRST(&pipe->queue))
+			printf("usb_transfer_complete: bad dequeue %p != %p\n",
+			       reqh, SIMPLEQ_FIRST(&pipe->queue));
 #endif
-	SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
+		SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
+	}
 
 	/* Count completed transfers. */
 	++pipe->device->bus->stats.requests
@@ -790,7 +795,7 @@ usb_transfer_complete(reqh)
 	if ((reqh->flags & USBD_SYNCHRONOUS) && !polling)
 		wakeup(reqh);
 
-	if (!pipe->repeat) {
+	if (!repeat) {
 		/* XXX should we stop the queue on all errors? */
 		if (reqh->status == USBD_CANCELLED ||
 		    reqh->status == USBD_TIMEOUT)
