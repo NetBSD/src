@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)err.h	5.1 (Berkeley) 3/4/93
- *	$Id: err.h,v 1.3 1993/08/01 18:44:55 mycroft Exp $
+ *	$Id: err.h,v 1.4 1993/08/04 17:33:37 jtc Exp $
  */
 
 #ifndef _ERR_H_
@@ -50,10 +50,10 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-volatile void	err __P((int, const char *, ...));
-volatile void	verr __P((int, const char *, _VA_LIST_));
-volatile void	errx __P((int, const char *, ...));
-volatile void	verrx __P((int, const char *, _VA_LIST_));
+__dead void	err __P((int, const char *, ...));
+__dead void	verr __P((int, const char *, _VA_LIST_));
+__dead void	errx __P((int, const char *, ...));
+__dead void	verrx __P((int, const char *, _VA_LIST_));
 void		warn __P((const char *, ...));
 void		vwarn __P((const char *, _VA_LIST_));
 void		warnx __P((const char *, ...));
