@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 2001/06/27 03:00:45 fredette Exp $	*/
+/*	$NetBSD: obio.c,v 1.5 2001/07/12 19:24:40 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -204,11 +204,11 @@ _obio_addr_bad(t, h, o, s)
 
 	/*
 	 * Return nonzero if it's bad.  All sun2 Multibus
-	 * machines have all obio devices below 0x7f0000,
-	 * and all sun2 VME machines have all obio
-	 * devices at or above 0x7f0000.
+	 * machines have all obio devices between 0x2000
+	 * and 0x4000, and all sun2 VME machines have all 
+	 * obio devices outside of this range.
 	 */
-	return ((!!cpu_has_multibus) != (pa < 0x7f0000));
+	return ((!!cpu_has_multibus) != (pa >= 0x2000 && pa < 0x4000));
 }
 	
 int
