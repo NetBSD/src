@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.8 2002/11/07 06:51:51 thorpej Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.9 2003/12/31 13:51:28 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.8 2002/11/07 06:51:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9 2003/12/31 13:51:28 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.8 2002/11/07 06:51:51 thorpej Exp $
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
 
-#undef AURATECONV_DEBUG
 #ifdef AURATECONV_DEBUG
 #define DPRINTF(x)	printf x
 #else
