@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.6 1998/04/02 11:55:52 kleink Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.7 1999/01/11 22:40:01 kleink Exp $");
 #endif
 
 
@@ -35,13 +35,13 @@ __RCSID("$NetBSD: readfile.c,v 1.6 1998/04/02 11:55:52 kleink Exp $");
  */
 
 
-#include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <netinet/in.h>
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

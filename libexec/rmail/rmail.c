@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.12 1998/08/25 19:11:12 ross Exp $	*/
+/*	$NetBSD: rmail.c,v 1.13 1999/01/11 22:40:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.12 1998/08/25 19:11:12 ross Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.13 1999/01/11 22:40:00 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,12 +68,12 @@ __RCSID("$NetBSD: rmail.c,v 1.12 1998/08/25 19:11:12 ross Exp $");
  * The err(3) routine is included here deliberately to make this code
  * a bit more portable.
  */
-#include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>

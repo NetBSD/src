@@ -19,18 +19,18 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: hilinfo.c 1.3 94/04/04$
- *	$NetBSD: hilinfo.c,v 1.2 1997/10/17 07:06:04 lukem Exp $
+ *	$NetBSD: hilinfo.c,v 1.3 1999/01/11 22:40:01 kleink Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hilinfo.c,v 1.2 1997/10/17 07:06:04 lukem Exp $");
+__RCSID("$NetBSD: hilinfo.c,v 1.3 1999/01/11 22:40:01 kleink Exp $");
 #endif
 
 #include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <dev/hilioctl.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -106,7 +106,6 @@ int
 getinfo()
 {
 	int f;
-	extern int errno;
 
 	f = open(dname, 0);
 	if (f < 0 || ioctl(f, HILIOCID, &hi) < 0) {
