@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.1 1998/08/26 10:20:36 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.2 1998/11/24 13:18:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -207,10 +207,10 @@ struct	sparc32_ifreq {
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
 };
 #if 0
-/* from <dev/pci/if_devar.h>
+/* from <dev/pci/if_devar.h> */
 #define	SIOCGADDRROM		_IOW('i', 240, struct ifreq)	/* get 128 bytes of ROM */
 #define	SIOCGCHIPID		_IOWR('i', 241, struct ifreq)	/* get chipid */
-/* from <sys/sockio.h>
+/* from <sys/sockio.h> */
 #define	SIOCSIFADDR	 _IOW('i', 12, struct ifreq)	/* set ifnet address */
 #define	OSIOCGIFADDR	_IOWR('i', 13, struct ifreq)	/* get ifnet address */
 #define	SIOCGIFADDR	_IOWR('i', 33, struct ifreq)	/* get ifnet address */
@@ -238,7 +238,7 @@ struct	sparc32_ifreq {
 /* from <net/bpf.h> */
 #define BIOCGETIF	_IOR('B',107, struct ifreq)
 #define BIOCSETIF	_IOW('B',108, struct ifreq)
-/* from <netatalk/phase2.h>
+/* from <netatalk/phase2.h> */
 #define SIOCPHASE1	_IOW('i', 100, struct ifreq)	/* AppleTalk phase 1 */
 #define SIOCPHASE2	_IOW('i', 101, struct ifreq)	/* AppleTalk phase 2 */
 #endif
