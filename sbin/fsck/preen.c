@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.26 2004/10/28 19:59:09 dsl Exp $	*/
+/*	$NetBSD: preen.c,v 1.27 2005/01/13 22:56:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.26 2004/10/28 19:59:09 dsl Exp $");
+__RCSID("$NetBSD: preen.c,v 1.27 2005/01/13 22:56:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 	int ret, pid, retcode, passno, sumstatus, status;
 	void *auxarg;
 	const char *name;
+	int error = 0;
 
 	TAILQ_INIT(&badh);
 	TAILQ_INIT(&diskh);
@@ -120,8 +121,12 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 				sumstatus = (*checkit)(fs->fs_vfstype,
 				    name, fs->fs_file, auxarg, NULL);
 
-				if (sumstatus)
-					return (sumstatus);
+				if (sumstatus) {
+					if ((flags & CHECK_NOFIX) == 0)
+						return (sumstatus);
+					else
+						error |= sumstatus;
+				}
 			} else if (passno == 2 && fs->fs_passno > 1) {
 				if (name == NULL) {
 					(void) fprintf(stderr,
@@ -134,7 +139,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 			}
 		}
 		if ((flags & CHECK_PREEN) == 0)
-			return 0;
+			return error;
 	}
 
 	if (flags & CHECK_DEBUG)
@@ -147,8 +152,12 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 			maxrun = ndisks;
 		nextdisk = TAILQ_FIRST(&diskh);
 		for (passno = 0; passno < maxrun; ++passno) {
-			if ((ret = startdisk(nextdisk, checkit)) != 0)
-				return ret;
+			if ((ret = startdisk(nextdisk, checkit)) != 0) {
+				if ((flags & CHECK_NOFIX) == 0)
+					return ret;
+				else
+					error |= ret;
+			}
 			nextdisk = TAILQ_NEXT(nextdisk, d_entries);
 		}
 
@@ -202,7 +211,12 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 			if (nextdisk == NULL) {
 				if (TAILQ_FIRST(&d->d_part) != NULL) {
 					if ((ret = startdisk(d, checkit)) != 0)
-						return ret;
+					{
+						if ((flags & CHECK_NOFIX) == 0)
+							return ret;
+						else
+							error |= ret;
+					}
 				}
 			} else if (nrun < maxrun && nrun < ndisks) {
 				for ( ;; ) {
@@ -215,7 +229,12 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 						break;
 				}
 				if ((ret = startdisk(nextdisk, checkit)) != 0)
-					return ret;
+				{
+					if ((flags & CHECK_NOFIX) == 0)
+						return ret;
+					else
+						error |= ret;
+				}
 			}
 		}
 	}
@@ -237,7 +256,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 		return sumstatus;
 	}
 	(void) endfsent();
-	return (0);
+	return error;
 }
 
 
