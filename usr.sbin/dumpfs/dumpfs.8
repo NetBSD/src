@@ -1,4 +1,4 @@
-.\"	$NetBSD: dumpfs.8,v 1.13 2003/08/07 11:25:19 agc Exp $
+.\"	$NetBSD: dumpfs.8,v 1.14 2003/08/30 10:30:52 dsl Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dumpfs.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd November 9, 2001
+.Dd August 30, 2003
 .Dt DUMPFS 8
 .Os
 .Sh NAME
@@ -37,16 +37,39 @@
 .Nd dump file system information
 .Sh SYNOPSIS
 .Nm
-.Op Fl F
+.Op Fl Fcimsv
 .Ar filesys No \&| Ar device
 .Op Ar \&.\&.\&.
 .Sh DESCRIPTION
 .Nm
-prints out the super block and cylinder group information
-for the specified file systems or special devices, or if
-.Fl F
-is used, file system images.
-The listing is very long and detailed.
+prints out detailed information about the specified filesystems.
+.Pp
+Options:
+.Bl -tag -width Ds
+.It Fl F
+Dump a file system image from a file, not a special device.
+.It Fl c
+Print details of each cylinder group.
+.It Fl i
+Print details of each allocated inode.
+.It Fl m
+Print details of the cylinder group summary.
+.It Fl s
+Print details of the superblock.
+.It Fl v
+Be even more verbose.
+.El
+.Pp
+If none of
+.Fl c ,
+.Fl i ,
+.Fl m 
+or
+.Fl s
+are given, then
+.Nm
+defaults to
+.Fl cms .
 .Pp
 .Nm
 is useful mostly for finding out certain file system
@@ -56,8 +79,9 @@ can be upgraded with the
 .Fl c
 option of
 .Xr fsck_ffs 8 .
-All of this information can be found within the first twenty
-lines of the output.
+All of this information is output by
+.Nm
+.Fl s .
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr fs 5 ,
@@ -71,3 +95,10 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
+The
+.Fl c ,
+.Fl i ,
+.Fl m
+and
+.Fl s
+options, and the inode dump were added for NetBSD 2.0.
