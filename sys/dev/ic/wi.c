@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.22 2001/07/26 19:46:01 jdolecek Exp $	*/
+/*	$NetBSD: wi.c,v 1.23 2001/08/13 22:52:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1713,7 +1713,7 @@ wi_get_id(sc)
 		LE16TOH(ver.wi_ver[1]);
 		LE16TOH(ver.wi_ver[2]);
 		LE16TOH(ver.wi_ver[3]);
-		printf(" ,Firmware: %i.%i variant %i\n", ver.wi_ver[2],
+		printf(", Firmware: %i.%i variant %i\n", ver.wi_ver[2],
 		       ver.wi_ver[3], ver.wi_ver[1]);
 		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
 				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
