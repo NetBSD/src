@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.41 2001/12/12 15:53:28 wiz Exp $
+.\" $NetBSD: usb.4,v 1.42 2001/12/29 03:10:41 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -130,6 +130,8 @@ driver for FTDI based serial adapters.
 generic driver for
 .Tn USB
 devices.
+.It uhidev
+top level HID driver.
 .It uhid
 generic driver for Human Interface Devices.
 .It uirda
@@ -473,8 +475,10 @@ specifications can be found at:
 .Xr pci 4 ,
 .Xr uaudio 4 ,
 .Xr ugen 4 ,
+.Xr ucom 4 ,
 .Xr uhci 4 ,
 .Xr uhid 4 ,
+.Xr uhidev 4 ,
 .Xr uirda 4 ,
 .Xr ukbd 4 ,
 .Xr ulpt 4 ,
