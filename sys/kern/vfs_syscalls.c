@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.195 2003/10/13 18:02:20 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.196 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.195 2003/10/13 18:02:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.196 2003/10/14 14:02:56 dbj Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -312,7 +312,7 @@ sys_mount(l, v, retval)
 	if (SCARG(uap, flags) & MNT_RDONLY)
 		mp->mnt_flag |= MNT_RDONLY;
 	else if (mp->mnt_flag & MNT_RDONLY)
-		mp->mnt_flag |= MNT_WANTRDWR;
+		mp->mnt_iflag |= IMNT_WANTRDWR;
 	mp->mnt_flag &=
 	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
@@ -327,13 +327,13 @@ sys_mount(l, v, retval)
 	 */
 	error = VFS_MOUNT(mp, SCARG(uap, path), SCARG(uap, data), &nd, p);
 	if (mp->mnt_flag & (MNT_UPDATE | MNT_GETARGS)) {
-		if (mp->mnt_flag & MNT_WANTRDWR)
+		if (mp->mnt_iflag & IMNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
 		if (error || (mp->mnt_flag & MNT_GETARGS))
 			mp->mnt_flag = flag;
 		mp->mnt_flag &=~
-		    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS |
-		     MNT_WANTRDWR);
+		    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS);
+		mp->mnt_iflag &=~ IMNT_WANTRDWR;
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0) {
 			if (mp->mnt_syncer == NULL)
 				error = vfs_allocate_syncvnode(mp);
@@ -352,8 +352,8 @@ sys_mount(l, v, retval)
 	cache_purge(vp);
 	if (!error) {
 		mp->mnt_flag &=~
-		    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS |
-		     MNT_WANTRDWR);
+		    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS);
+		mp->mnt_iflag &=~ IMNT_WANTRDWR;
 		vp->v_mountedhere = mp;
 		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
@@ -523,7 +523,7 @@ dounmount(mp, flags, p)
 	if (used_syncer == 0)
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 
-	mp->mnt_flag |= MNT_UNMOUNT;
+	mp->mnt_iflag |= IMNT_UNMOUNT;
 	mp->mnt_unmounter = p;
 	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock);
 	if (mp->mnt_flag & MNT_EXPUBLIC)
@@ -541,7 +541,7 @@ dounmount(mp, flags, p)
 	if (error) {
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			(void) vfs_allocate_syncvnode(mp);
-		mp->mnt_flag &= ~MNT_UNMOUNT;
+		mp->mnt_iflag &= ~IMNT_UNMOUNT;
 		mp->mnt_unmounter = NULL;
 		mp->mnt_flag |= async;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
@@ -562,7 +562,7 @@ dounmount(mp, flags, p)
 	mp->mnt_op->vfs_refcount--;
 	if (LIST_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
-	mp->mnt_flag |= MNT_GONE;
+	mp->mnt_iflag |= IMNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
 	if (used_syncer)
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);

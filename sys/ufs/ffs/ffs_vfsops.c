@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.123 2003/09/25 23:39:17 enami Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.124 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.123 2003/09/25 23:39:17 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.124 2003/10/14 14:02:56 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -256,7 +256,7 @@ ffs_mount(mp, path, data, ndp, p)
 	if (error == 0 && p->p_ucred->cr_uid != 0) {
 		accessmode = VREAD;
 		if (update ?
-		    (mp->mnt_flag & MNT_WANTRDWR) != 0 :
+		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -374,7 +374,7 @@ ffs_mount(mp, path, data, ndp, p)
 				return (error);
 		}
 
-		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
+		if (fs->fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * Changing from read-only to read/write
 			 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.113 2003/10/13 16:55:10 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.114 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -132,6 +132,7 @@ struct mount {
 	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
 	struct lock	mnt_lock;		/* mount structure lock */
 	int		mnt_flag;		/* flags */
+	int		mnt_iflag;		/* internal flags */
 	int		mnt_maxsymlinklen;	/* max size of short symlink */
 	int		mnt_fs_bshift;		/* offset shift for lblkno */
 	int		mnt_dev_bshift;		/* shift for device sectors */
@@ -139,6 +140,8 @@ struct mount {
 	void		*mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
 	struct proc	*mnt_unmounter;		/* who is unmounting */
+	int		mnt_writeopcountupper;  /* upper writeops in progress */
+	int		mnt_writeopcountlower;  /* lower writeops in progress */
 };
 
 /*
@@ -150,7 +153,10 @@ struct mount {
  * one of the __MNT_UNUSED flags.
  */
 
-#define __MNT_UNUSED3	0x00800000
+#define	__MNT_UNUSED3	0x00800000
+#define	__MNT_UNUSED4	0x00200000
+#define	__MNT_UNUSED5	0x01000000
+#define	__MNT_UNUSED6	0x02000000
 
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */
@@ -236,26 +242,21 @@ struct mount {
 
 /*
  * Internal filesystem control flags.
+ * These are set in struct mount mnt_iflag.
  *
- * MNT_UNMOUNT locks the mount entry so that name lookup cannot proceed
+ * IMNT_UNMOUNT locks the mount entry so that name lookup cannot proceed
  * past the mount point.  This keeps the subtree stable during mounts
  * and unmounts.
  */
-#define	MNT_GONE	0x00200000	/* filesystem is gone.. */
-#define MNT_UNMOUNT	0x01000000	/* unmount in progress */
-#define MNT_WANTRDWR	0x02000000	/* upgrade to read/write requested */
-
-#define __MNT_CONTROL_FLAGS \
-	{ MNT_GONE,		0,	"gone" }, \
-	{ MNT_UNMOUNT,		0,	"unmount in progress" }, \
-	{ MNT_WANTRDWR,		0,	"upgrade to read/write requested" },
+#define	IMNT_GONE	0x00000001	/* filesystem is gone.. */
+#define	IMNT_UNMOUNT	0x00000002	/* unmount in progress */
+#define	IMNT_WANTRDWR	0x00000004	/* upgrade to read/write requested */
 
 #define __MNT_FLAGS \
 	__MNT_BASIC_FLAGS \
 	__MNT_EXPORTED_FLAGS \
 	__MNT_INTERNAL_FLAGS \
-	__MNT_EXTERNAL_FLAGS \
-	__MNT_CONTROL_FLAGS
+	__MNT_EXTERNAL_FLAGS
 
 /*
  * Sysctl CTL_VFS definitions.
