@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.36 1999/03/28 19:53:50 mycroft Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.37 1999/04/19 14:43:46 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1455,7 +1455,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		newentry->start = dstaddr + oldoffset;
 		newentry->end =
 		    newentry->start + (entry->end - (entry->start + fudge));
-		if (newentry->end > newend)
+		if (newentry->end > newend || newentry->end < newentry->start)
 			newentry->end = newend;
 		newentry->object.uvm_obj = entry->object.uvm_obj;
 		if (newentry->object.uvm_obj) {
