@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.5 2003/11/26 03:55:38 simonb Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.6 2003/11/26 03:56:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ splx(newcpl)
 {
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	cpl = newcpl;
-	if(ipending & ~newcpl)
+	if (ipending & ~newcpl)
 		do_pending_int();
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 }
@@ -134,7 +134,7 @@ spllower(newcpl)
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = newcpl;
-	if(ipending & ~newcpl)
+	if (ipending & ~newcpl)
 		do_pending_int();
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	return(oldcpl);
