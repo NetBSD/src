@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.7 1995/07/05 08:19:05 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.8 1995/11/10 19:25:59 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -439,7 +439,7 @@ destart(ifp)
 /*
  * Command done interrupt.
  */
-deintr(uba,vector,level,unit)
+deintr(unit)
 {
 	struct uba_device *ui;
 	volatile struct dedevice *addr;
@@ -711,6 +711,7 @@ de_match(){
 	return 0;
 }
 
+void
 de_attach(){
 	printf("de_attach\n");
 }
