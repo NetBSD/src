@@ -1,4 +1,4 @@
-/* $NetBSD: setnetbootinfo.c,v 1.7 1997/11/13 18:06:01 mjacob Exp $ */
+/* $NetBSD: setnetbootinfo.c,v 1.8 1998/02/04 23:41:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -31,15 +31,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <err.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/socket.h>						/* XXX */
 #include <net/if.h>						/* XXX */
 #include <net/if_ether.h>
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "stand/common/bbinfo.h"
 
