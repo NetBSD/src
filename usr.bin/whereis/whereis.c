@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.10 1999/11/09 15:06:37 drochner Exp $	*/
+/*	$NetBSD: whereis.c,v 1.11 2002/06/11 06:06:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.10 1999/11/09 15:06:37 drochner Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.11 2002/06/11 06:06:21 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ main(argc, argv)
 		if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1)
 			return (-1);
 		if (len == 0)
-			err(1, "user_cs_path: sysctl: zero length\n");
+			err(1, "user_cs_path: sysctl: zero length");
 		if ((std = malloc(len)) == NULL)
 			err(1, NULL);
 		if (sysctl(mib, 2, std, &len, NULL, 0) == -1) {

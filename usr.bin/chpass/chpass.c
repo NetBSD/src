@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.22 2001/08/18 19:35:34 ad Exp $	*/
+/*	$NetBSD: chpass.c,v 1.23 2002/06/11 06:06:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.22 2001/08/18 19:35:34 ad Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.23 2002/06/11 06:06:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ main(argc, argv)
 		} else {
 			pw = getpwuid(uid);
 			if (pw == NULL)
-				errx(1, "unknown user: uid %u\n", uid);
+				errx(1, "unknown user: uid %u", uid);
 		}
 
 		/* Make a copy for later verification */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.11 2001/02/19 23:03:54 cgd Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.12 2002/06/11 06:06:21 itojun Exp $	*/
 
 /*
  *
@@ -253,7 +253,7 @@ find_server(host, domain)
 	if (retval != RPC_SUCCESS)
 		errx(1, "clnt_call: %s: %s", host, clnt_sperrno(retval));
 	if (ypbind_resp.ypbind_status != YPBIND_SUCC_VAL)
-		errx(1, "ypbind on %s for domain %s failed: %s\n", host, domain,
+		errx(1, "ypbind on %s for domain %s failed: %s", host, domain,
 		    yperr_string(ypbind_resp.ypbind_status));
 
 	/*
