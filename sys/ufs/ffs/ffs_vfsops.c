@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.25 1997/06/11 10:09:46 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.26 1997/06/12 17:14:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -103,9 +103,9 @@ ffs_mountroot()
 		return (ENODEV);
 
 	/*
-	 * Get vnodes for swapdev and rootdev.
+	 * Get vnodes for rootdev.
 	 */
-	if (bdevvp(swapdev, &swapdev_vp) || bdevvp(rootdev, &rootvp))
+	if (bdevvp(rootdev, &rootvp))
 		panic("ffs_mountroot: can't setup bdevvp's");
 
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
