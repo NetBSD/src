@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.65 2000/05/30 05:21:46 itojun Exp $
+.\" 	$NetBSD: ftp.1,v 1.66 2000/05/31 10:25:15 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1563,10 +1563,10 @@ with the argument supplied, and reads (writes) from the stdout
 (stdin).
 If the shell command includes spaces, the argument
 must be quoted; e.g.
-.Dq Qq Li \ ls\ \-lt .
+.Dq Qq Li \&| ls\ \-lt .
 A particularly
 useful example of this mechanism is:
-.Dq Li dir \&|more .
+.Dq Li dir \&. \&|more .
 .It
 Failing the above checks, if ``globbing'' is enabled,
 local file names are expanded
