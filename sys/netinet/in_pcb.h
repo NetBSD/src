@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.16 1996/09/09 14:51:13 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.17 1996/09/15 18:11:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -48,6 +48,7 @@ struct inpcb {
 	LIST_ENTRY(inpcb) inp_hash;
 	CIRCLEQ_ENTRY(inpcb) inp_queue;
 	struct	  inpcbtable *inp_table;
+	int	  inp_state;		/* bind/connect state */
 	struct	  in_addr inp_faddr;	/* foreign host table entry */
 	struct	  in_addr inp_laddr;	/* local host table entry */
 	u_int16_t inp_fport;		/* foreign port */
@@ -61,12 +62,21 @@ struct inpcb {
 	struct	  ip_moptions *inp_moptions; /* IP multicast options */
 };
 
+LIST_HEAD(inpcbhead, inpcb);
+
 struct inpcbtable {
 	CIRCLEQ_HEAD(, inpcb) inpt_queue;
-	LIST_HEAD(inpcbhead, inpcb) *inpt_hashtbl;
-	u_long	  inpt_hash;
+	struct	  inpcbhead *inpt_bindhashtbl;
+	struct	  inpcbhead *inpt_connecthashtbl;
+	u_long	  inpt_bindhash;
+	u_long	  inpt_connecthash;
 	u_int16_t inpt_lastport;
 };
+
+/* states in inp_state: */
+#define	INP_ATTACHED		0
+#define	INP_BOUND		1
+#define	INP_CONNECTED		2
 
 /* flags in inp_flags: */
 #define	INP_RECVOPTS		0x01	/* receive incoming IP options */
@@ -76,30 +86,29 @@ struct inpcbtable {
 #define	INP_HDRINCL		0x08	/* user supplies entire IP header */
 
 #define	INPLOOKUP_WILDCARD	1
-#define	INPLOOKUP_SETLOCAL	2
 
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 
 #ifdef _KERNEL
-void	 in_losing __P((struct inpcb *));
-int	 in_pcballoc __P((struct socket *, void *));
-int	 in_pcbbind __P((void *, struct mbuf *, struct proc *));
-int	 in_pcbconnect __P((void *, struct mbuf *));
-void	 in_pcbdetach __P((void *));
-void	 in_pcbdisconnect __P((void *));
+void	in_losing __P((struct inpcb *));
+int	in_pcballoc __P((struct socket *, void *));
+int	in_pcbbind __P((void *, struct mbuf *, struct proc *));
+int	in_pcbconnect __P((void *, struct mbuf *));
+void	in_pcbdetach __P((void *));
+void	in_pcbdisconnect __P((void *));
+void	in_pcbinit __P((struct inpcbtable *, int, int));
 struct inpcb *
-	 in_pcbhashlookup __P((struct inpcbtable *,
+	in_pcblookup_bind __P((struct inpcbtable *,
+	    struct in_addr, u_int));
+struct inpcb *
+	in_pcblookup_connect __P((struct inpcbtable *,
 	    struct in_addr, u_int, struct in_addr, u_int));
-void	 in_pcbinit __P((struct inpcbtable *, int));
-struct inpcb *
-	 in_pcblookup __P((struct inpcbtable *,
-	    struct in_addr, u_int, struct in_addr, u_int, int));
-void	 in_pcbnotify __P((struct inpcbtable *, struct in_addr, u_int,
+void	in_pcbnotify __P((struct inpcbtable *, struct in_addr, u_int,
 	    struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
-void	 in_pcbnotifyall __P((struct inpcbtable *, struct in_addr, int,
+void	in_pcbnotifyall __P((struct inpcbtable *, struct in_addr, int,
 	    void (*)(struct inpcb *, int)));
-void	 in_pcbrehash __P((struct inpcb *));
-void	 in_rtchange __P((struct inpcb *, int));
-void	 in_setpeeraddr __P((struct inpcb *, struct mbuf *));
-void	 in_setsockaddr __P((struct inpcb *, struct mbuf *));
+void	in_pcbstate __P((struct inpcb *, int));
+void	in_rtchange __P((struct inpcb *, int));
+void	in_setpeeraddr __P((struct inpcb *, struct mbuf *));
+void	in_setsockaddr __P((struct inpcb *, struct mbuf *));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.32 1996/09/09 14:51:12 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.33 1996/09/15 18:11:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -59,17 +59,29 @@
 
 struct	in_addr zeroin_addr;
 
-#define	INPCBHASH(table, faddr, fport, laddr, lport) \
-	&(table)->inpt_hashtbl[(ntohl((faddr).s_addr) + ntohs((fport)) + ntohs((lport))) & (table->inpt_hash)]
+#define	INPCBHASH_BIND(table, laddr, lport) \
+	&(table)->inpt_bindhashtbl[ \
+	    ((ntohl((laddr).s_addr) + ntohs(lport))) & (table)->inpt_bindhash]
+#define	INPCBHASH_CONNECT(table, faddr, fport, laddr, lport) \
+	&(table)->inpt_connecthashtbl[ \
+	    ((ntohl((faddr).s_addr) + ntohs(fport)) + \
+	     (ntohl((laddr).s_addr) + ntohs(lport))) & (table)->inpt_connecthash]
+
+struct inpcb *
+	in_pcblookup_port __P((struct inpcbtable *,
+	    struct in_addr, u_int, int));
 
 void
-in_pcbinit(table, hashsize)
+in_pcbinit(table, bindhashsize, connecthashsize)
 	struct inpcbtable *table;
-	int hashsize;
+	int bindhashsize, connecthashsize;
 {
 
 	CIRCLEQ_INIT(&table->inpt_queue);
-	table->inpt_hashtbl = hashinit(hashsize, M_PCB, &table->inpt_hash);
+	table->inpt_bindhashtbl =
+	    hashinit(bindhashsize, M_PCB, &table->inpt_bindhash);
+	table->inpt_connecthashtbl =
+	    hashinit(connecthashsize, M_PCB, &table->inpt_connecthash);
 	table->inpt_lastport = 0;
 }
 
@@ -88,12 +100,11 @@ in_pcballoc(so, v)
 	bzero((caddr_t)inp, sizeof(*inp));
 	inp->inp_table = table;
 	inp->inp_socket = so;
+	so->so_pcb = inp;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
-	LIST_INSERT_HEAD(INPCBHASH(table, inp->inp_faddr, inp->inp_fport,
-	    inp->inp_laddr, inp->inp_lport), inp, inp_hash);
+	in_pcbstate(inp, INP_ATTACHED);
 	splx(s);
-	so->so_pcb = inp;
 	return (0);
 }
 
@@ -156,8 +167,7 @@ in_pcbbind(v, nam, p)
 		    (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))))
 			return (EACCES);
 #endif
-		t = in_pcblookup(table, zeroin_addr, 0, sin->sin_addr,
-		    lport, wild);
+		t = in_pcblookup_port(table, sin->sin_addr, lport, wild);
 		if (t && (reuseport & t->inp_socket->so_options) == 0)
 			return (EADDRINUSE);
 	}
@@ -169,10 +179,9 @@ noname:
 			    table->inpt_lastport > IPPORT_USERRESERVED)
 				table->inpt_lastport = IPPORT_RESERVED;
 			lport = htons(table->inpt_lastport);
-		} while (in_pcblookup(table,
-			    zeroin_addr, 0, inp->inp_laddr, lport, wild));
+		} while (in_pcblookup_port(table, inp->inp_laddr, lport, wild));
 	inp->inp_lport = lport;
-	in_pcbrehash(inp);
+	in_pcbstate(inp, INP_BOUND);
 	return (0);
 }
 
@@ -291,7 +300,7 @@ in_pcbconnect(v, nam)
 		}
 		ifaddr = satosin(&ia->ia_addr);
 	}
-	if (in_pcbhashlookup(inp->inp_table, sin->sin_addr, sin->sin_port,
+	if (in_pcblookup_connect(inp->inp_table, sin->sin_addr, sin->sin_port,
 	    !in_nullhost(inp->inp_laddr) ? inp->inp_laddr : ifaddr->sin_addr,
 	    inp->inp_lport) != 0)
 		return (EADDRINUSE);
@@ -303,7 +312,7 @@ in_pcbconnect(v, nam)
 	}
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
-	in_pcbrehash(inp);
+	in_pcbstate(inp, INP_CONNECTED);
 	return (0);
 }
 
@@ -315,7 +324,7 @@ in_pcbdisconnect(v)
 
 	inp->inp_faddr = zeroin_addr;
 	inp->inp_fport = 0;
-	in_pcbrehash(inp);
+	in_pcbstate(inp, INP_BOUND);
 	if (inp->inp_socket->so_state & SS_NOFDREF)
 		in_pcbdetach(inp);
 }
@@ -336,7 +345,7 @@ in_pcbdetach(v)
 		rtfree(inp->inp_route.ro_rt);
 	ip_freemoptions(inp->inp_moptions);
 	s = splnet();
-	LIST_REMOVE(inp, inp_hash);
+	in_pcbstate(inp, INP_ATTACHED);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
 	splx(s);
 	FREE(inp, M_PCB);
@@ -393,26 +402,21 @@ in_pcbnotify(table, faddr, fport_arg, laddr, lport_arg, errno, notify)
 	int errno;
 	void (*notify) __P((struct inpcb *, int));
 {
-	register struct inpcb *inp, *oinp;
+	struct inpcbhead *head;
+	register struct inpcb *inp, *ninp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
-	if (in_nullhost(faddr))
+	if (in_nullhost(faddr) || notify == 0)
 		return;
 
-	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;) {
-		if (!in_hosteq(inp->inp_faddr, faddr) ||
-		    inp->inp_socket == 0 ||
-		    inp->inp_fport != fport ||
-		    inp->inp_lport != lport ||
-		    !in_hosteq(inp->inp_laddr, laddr)) {
-			inp = inp->inp_queue.cqe_next;
-			continue;
-		}
-		oinp = inp;
-		inp = inp->inp_queue.cqe_next;
-		if (notify)
-			(*notify)(oinp, errno);
+	head = INPCBHASH_CONNECT(table, faddr, fport, laddr, lport);
+	for (inp = head->lh_first; inp != NULL; inp = ninp) {
+		ninp = inp->inp_hash.le_next;
+		if (in_hosteq(inp->inp_faddr, faddr) &&
+		    inp->inp_fport == fport &&
+		    inp->inp_lport == lport &&
+		    in_hosteq(inp->inp_laddr, laddr))
+			(*notify)(inp, errno);
 	}
 }
 
@@ -423,22 +427,17 @@ in_pcbnotifyall(table, faddr, errno, notify)
 	int errno;
 	void (*notify) __P((struct inpcb *, int));
 {
-	register struct inpcb *inp, *oinp;
+	register struct inpcb *inp, *ninp;
 
-	if (in_nullhost(faddr))
+	if (in_nullhost(faddr) || notify == 0)
 		return;
 
 	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;) {
-		if (!in_hosteq(inp->inp_faddr, faddr) ||
-		    inp->inp_socket == 0) {
-			inp = inp->inp_queue.cqe_next;
-			continue;
-		}
-		oinp = inp;
-		inp = inp->inp_queue.cqe_next;
-		if (notify)
-			(*notify)(oinp, errno);
+	    inp != (struct inpcb *)&table->inpt_queue;
+	    inp = ninp) {
+		ninp = inp->inp_queue.cqe_next;
+		if (in_hosteq(inp->inp_faddr, faddr))
+			(*notify)(inp, errno);
 	}
 }
 
@@ -497,15 +496,15 @@ in_rtchange(inp, errno)
 }
 
 struct inpcb *
-in_pcblookup(table, faddr, fport_arg, laddr, lport_arg, flags)
+in_pcblookup_port(table, laddr, lport_arg, flags)
 	struct inpcbtable *table;
-	struct in_addr faddr, laddr;
-	u_int fport_arg, lport_arg;
+	struct in_addr laddr;
+	u_int lport_arg;
 	int flags;
 {
 	register struct inpcb *inp, *match = 0;
 	int matchwild = 3, wildcard;
-	u_int16_t fport = fport_arg, lport = lport_arg;
+	u_int16_t lport = lport_arg;
 
 	for (inp = table->inpt_queue.cqh_first;
 	    inp != (struct inpcb *)&table->inpt_queue;
@@ -513,18 +512,8 @@ in_pcblookup(table, faddr, fport_arg, laddr, lport_arg, flags)
 		if (inp->inp_lport != lport)
 			continue;
 		wildcard = 0;
-		if (in_nullhost(inp->inp_faddr)) {
-			if (!in_nullhost(faddr))
-				wildcard++;
-		} else {
-			if (in_nullhost(faddr))
-				wildcard++;
-			else {
-				if (!in_hosteq(inp->inp_faddr, faddr) ||
-				    inp->inp_fport != fport)
-					continue;
-			}
-		}
+		if (!in_nullhost(inp->inp_faddr))
+			wildcard++;
 		if (in_nullhost(inp->inp_laddr)) {
 			if (!in_nullhost(laddr))
 				wildcard++;
@@ -548,26 +537,12 @@ in_pcblookup(table, faddr, fport_arg, laddr, lport_arg, flags)
 	return (match);
 }
 
-void
-in_pcbrehash(inp)
-	struct inpcb *inp;
-{
-	struct inpcbtable *table = inp->inp_table;
-	int s;
-
-	s = splnet();
-	LIST_REMOVE(inp, inp_hash);
-	LIST_INSERT_HEAD(INPCBHASH(table, inp->inp_faddr, inp->inp_fport,
-	    inp->inp_laddr, inp->inp_lport), inp, inp_hash);
-	splx(s);
-}
-
 #ifdef DIAGNOSTIC
 int	in_pcbnotifymiss = 0;
 #endif
 
 struct inpcb *
-in_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
+in_pcblookup_connect(table, faddr, fport_arg, laddr, lport_arg)
 	struct inpcbtable *table;
 	struct in_addr faddr, laddr;
 	u_int fport_arg, lport_arg;
@@ -576,30 +551,91 @@ in_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 	register struct inpcb *inp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
-	head = INPCBHASH(table, faddr, fport, laddr, lport);
+	head = INPCBHASH_CONNECT(table, faddr, fport, laddr, lport);
 	for (inp = head->lh_first; inp != NULL; inp = inp->inp_hash.le_next) {
-		if (!in_hosteq(inp->inp_faddr, faddr) ||
-		    inp->inp_fport != fport ||
-		    inp->inp_lport != lport ||
-		    !in_hosteq(inp->inp_laddr, laddr))
-			continue;
-		/*
-		 * Move this PCB to the head of hash chain so that
-		 * repeated accesses are quicker.  This is analogous to
-		 * the historic single-entry PCB cache.
-		 */
-		if (inp != head->lh_first) {
-			LIST_REMOVE(inp, inp_hash);
-			LIST_INSERT_HEAD(head, inp, inp_hash);
-		}
-		break;
+		if (in_hosteq(inp->inp_faddr, faddr) &&
+		    inp->inp_fport == fport &&
+		    inp->inp_lport == lport &&
+		    in_hosteq(inp->inp_laddr, laddr))
+			goto out;
 	}
 #ifdef DIAGNOSTIC
-	if (inp == NULL && in_pcbnotifymiss) {
-		printf("in_pcbhashlookup: faddr=%08x fport=%d laddr=%08x lport=%d\n",
+	if (in_pcbnotifymiss) {
+		printf("in_pcblookup_connect: faddr=%08x fport=%d laddr=%08x lport=%d\n",
 		    ntohl(faddr.s_addr), ntohs(fport),
 		    ntohl(laddr.s_addr), ntohs(lport));
 	}
 #endif
+	return (0);
+
+out:
+	/* Move this PCB to the head of hash chain. */
+	if (inp != head->lh_first) {
+		LIST_REMOVE(inp, inp_hash);
+		LIST_INSERT_HEAD(head, inp, inp_hash);
+	}
 	return (inp);
+}
+
+struct inpcb *
+in_pcblookup_bind(table, laddr, lport_arg)
+	struct inpcbtable *table;
+	struct in_addr laddr;
+	u_int lport_arg;
+{
+	struct inpcbhead *head;
+	register struct inpcb *inp;
+	u_int16_t lport = lport_arg;
+
+	head = INPCBHASH_BIND(table, laddr, lport);
+	for (inp = head->lh_first; inp != NULL; inp = inp->inp_hash.le_next) {
+		if (inp->inp_lport == lport &&
+		    in_hosteq(inp->inp_laddr, laddr))
+			goto out;
+	}
+	head = INPCBHASH_BIND(table, zeroin_addr, lport);
+	for (inp = head->lh_first; inp != NULL; inp = inp->inp_hash.le_next) {
+		if (inp->inp_lport == lport &&
+		    in_hosteq(inp->inp_laddr, zeroin_addr))
+			goto out;
+	}
+#ifdef DIAGNOSTIC
+	if (in_pcbnotifymiss) {
+		printf("in_pcblookup_bind: laddr=%08x lport=%d\n",
+		    ntohl(laddr.s_addr), ntohs(lport));
+	}
+#endif
+	return (0);
+
+out:
+	/* Move this PCB to the head of hash chain. */
+	if (inp != head->lh_first) {
+		LIST_REMOVE(inp, inp_hash);
+		LIST_INSERT_HEAD(head, inp, inp_hash);
+	}
+	return (inp);
+}
+
+void
+in_pcbstate(inp, state)
+	struct inpcb *inp;
+	int state;
+{
+
+	if (inp->inp_state > INP_ATTACHED)
+		LIST_REMOVE(inp, inp_hash);
+
+	switch (state) {
+	case INP_BOUND:
+		LIST_INSERT_HEAD(INPCBHASH_BIND(inp->inp_table,
+		    inp->inp_laddr, inp->inp_lport), inp, inp_hash);
+		break;
+	case INP_CONNECTED:
+		LIST_INSERT_HEAD(INPCBHASH_CONNECT(inp->inp_table,
+		    inp->inp_faddr, inp->inp_fport,
+		    inp->inp_laddr, inp->inp_lport), inp, inp_hash);
+		break;
+	}
+
+	inp->inp_state = state;
 }
