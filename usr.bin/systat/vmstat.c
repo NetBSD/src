@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.35 2000/12/01 02:19:44 simonb Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.36 2001/09/28 11:58:51 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.35 2000/12/01 02:19:44 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.36 2001/09/28 11:58:51 augustss Exp $");
 #endif /* not lint */
 
 /*
@@ -151,7 +151,7 @@ static struct nlist namelist[] = {
 #define PROCSROW	 7	/* uses 2 rows and 20 cols */
 #define PROCSCOL	 0
 #define GENSTATROW	 7	/* uses 2 rows and 30 cols */
-#define GENSTATCOL	20
+#define GENSTATCOL	18
 #define VMSTATROW	 7	/* uses 17 rows and 12 cols */
 #define VMSTATCOL	48
 #define GRAPHROW	10	/* uses 3 rows and 51 cols */
@@ -283,7 +283,7 @@ labelvmstat(void)
 	if (LINES - 1 > VMSTATROW + 16)
 		mvprintw(VMSTATROW + 16, VMSTATCOL + 10, "pdscn");
 
-	mvprintw(GENSTATROW, GENSTATCOL, "  Csw  Trp  Sys  Int  Sof  Flt");
+	mvprintw(GENSTATROW, GENSTATCOL, " Csw   Trp   Sys  Int  Sof   Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
 		"    . %% Sy    . %% Us    . %% Ni    . %% In    . %% Id");
@@ -442,12 +442,12 @@ showvmstat(void)
 	PUTRATE(uvmexp.pgswapin, PAGEROW + 3, PAGECOL + 5, 5);
 	PUTRATE(uvmexp.pgswapout, PAGEROW + 3, PAGECOL + 10, 5);
 
-	PUTRATE(uvmexp.swtch, GENSTATROW + 1, GENSTATCOL, 5);
-	PUTRATE(uvmexp.traps, GENSTATROW + 1, GENSTATCOL + 5, 5);
-	PUTRATE(uvmexp.syscalls, GENSTATROW + 1, GENSTATCOL + 10, 5);
-	PUTRATE(uvmexp.intrs, GENSTATROW + 1, GENSTATCOL + 15, 5);
-	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 20, 5);
-	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 25, 5);
+	PUTRATE(uvmexp.swtch, GENSTATROW + 1, GENSTATCOL, 4);
+	PUTRATE(uvmexp.traps, GENSTATROW + 1, GENSTATCOL + 4, 6);
+	PUTRATE(uvmexp.syscalls, GENSTATROW + 1, GENSTATCOL + 10, 6);
+	PUTRATE(uvmexp.intrs, GENSTATROW + 1, GENSTATCOL + 16, 5);
+	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 21, 5);
+	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 26, 6);
 	mvprintw(DISKROW, DISKCOL + 5, "                              ");
 	for (i = 0, c = 0; i < dk_ndrive && c < MAXDRIVES; i++)
 		if (dk_select[i]) {
