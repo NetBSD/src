@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.102 2003/04/01 03:47:33 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.103 2003/05/27 05:56:41 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2056,3 +2056,25 @@ include/heimdal/version.h		via patch
 etc/mtree/NetBSD.dist			via patch
 
 	Fix typo.  [perry, ticket #40]
+
+sys/arch/amiga/dev/grf_et.c		1.20-1.21
+
+	iszthreepa() takes a physical address, not a virtual address.
+	Fixes PR#19175 [Ignatios, ticket #42]
+
+sys/dev/wscons/wsemul_vt100_subr.c	1.13
+
+	fix crash due to wrong argument in the (almost useless)
+	DECRQUPSS escape sequence [drochner, ticket #43]
+
+sys/dev/wscons/wsemul_vt100.c		1.24 via patch
+sys/dev/wscons/wsemul_vt100var.h	1.7
+
+	vt100 wscons crashes restoring cursor. Fixed by adding a flag.
+	Fixes PR#17738, PR#21230 [drochner, ticket #43]
+
+sys/netiso/clnp_er.c			1.13
+
+	Keep pkthdr when prepending new mbuf in front of a given chain.
+	This keeps us from panic()ing in the interface output routine.
+	[Ignatios, ticket #45]
