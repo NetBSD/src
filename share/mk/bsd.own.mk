@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.185 2001/10/08 10:01:35 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.186 2001/10/09 05:19:04 enami Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -57,6 +57,7 @@ LORDER=		NM="${NM}" ${TOOLDIR}/bin/lorder
 MAKEINFO=	${TOOLDIR}/bin/makeinfo
 MKDEP=		CC="${CC}" ${TOOLDIR}/bin/mkdep
 #MKLOCALE=	${TOOLDIR}/bin/mklocale
+MTREE=		${TOOLDIR}/bin/mtree
 NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
 #NROFF=		${TOOLDIR}/bin/nroff -Tascii
 OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
