@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.1 1998/08/12 18:14:01 augustss Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.2 1998/08/13 00:13:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -226,10 +226,11 @@ midisyn_output(addr, b)
 	struct midisyn_methods *fs;
 	u_int32_t note, vel;
 
-	DPRINTF(("midisyn_output: ms=%p ms->mets=%p\n", ms, ms->mets));
+	DPRINTF(("midisyn_output: ms=%p b=0x%02x\n", ms, b));
 	fs = ms->mets;
 	if (ms->pos < 0) {
 		/* Doing SYSEX */
+		DPRINTF(("midisyn_output: sysex 0x%02x\n", b));
 		if (fs->sysex)
 			fs->sysex(ms, b);
 		if (b == MIDI_SYSEX_END)

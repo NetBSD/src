@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.4 1998/08/12 21:31:28 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.5 1998/08/13 00:13:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -196,6 +196,7 @@ sequenceropen(dev, flags, ifmt, p)
 
 	sc->timer.timebase = 100;
 	sc->timer.tempo = 60;
+	sc->doingsysex = 0;
 	RECALC_TICK(&sc->timer);
 	sc->timer.last = 0;
 	microtime(&sc->timer.start);
@@ -203,6 +204,8 @@ sequenceropen(dev, flags, ifmt, p)
 	SEQ_QINIT(&sc->inq);
 	SEQ_QINIT(&sc->outq);
 	sc->lowat = SEQ_MAXQ / 2;
+
+	seq_reset(sc);
 
 	DPRINTF(("sequenceropen: mode=%d, nmidi=%d\n", sc->mode, sc->nmidi));
 	return 0;
@@ -260,7 +263,7 @@ seq_drain(sc)
 	error = 0;
 	while(!SEQ_QEMPTY(&sc->outq) && !error)
 		error = seq_sleep_timo(&sc->wchan, "seq_dr", 30*hz);
-	return error;
+	return (error);
 }
 
 void
@@ -303,12 +306,15 @@ sequencerclose(dev, flags, ifmt, p)
 	struct proc *p;
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
-	int n;
+	int n, s;
 
 	DPRINTF(("sequencerclose: %p\n", sc));
 
 	seq_drain(sc);
-	seq_reset(sc);
+	s = splaudio();
+	if (sc->timeout)
+		untimeout(seq_timeout, sc);
+	splx(s);
 
 	for (n = 0; n < sc->nmidi; n++)
 		midiseq_close(sc->devs[n]);
@@ -382,10 +388,11 @@ sequencerread(dev, uio, ioflag)
 	seq_event_rec ev;
 	int error, s;
 
-	DPRINTFN(4, ("sequencerread: %p, count=%d, ioflag=%x\n", 
+	DPRINTFN(20, ("sequencerread: %p, count=%d, ioflag=%x\n", 
 		     sc, uio->uio_resid, ioflag));
 
 	if (sc->mode == SEQ_OLD) {
+		DPRINTFN(-1,("sequencerread: old read\n"));
 		return (EINVAL); /* XXX unimplemented */
 	}
 
@@ -607,7 +614,7 @@ sequencerioctl(dev, cmd, addr, flag, p)
 	}
 
 	default:
-		DPRINTF(("sequencer_ioctl: unimpl %08lx\n", cmd));
+		DPRINTFN(-1,("sequencer_ioctl: unimpl %08lx\n", cmd));
 		error = EINVAL;
 		break;
 	}
@@ -689,7 +696,8 @@ seq_do_command(sc, b)
 			return (ENXIO);
 		return midiseq_putc(sc->devs[dev], b->arr[1]);
 	default:
-		DPRINTF(("seq_do_command: unimpl command %02x\n", SEQ_CMD(b)));
+		DPRINTFN(-1,("seq_do_command: unimpl command %02x\n", 
+			     SEQ_CMD(b)));
 		return (EINVAL);
 	}
 }
@@ -731,7 +739,7 @@ seq_do_chnvoice(sc, b)
 		error = midiseq_keypressure(md, voice, note, parm);
 		break;
 	default:
-		DPRINTF(("seq_do_chnvoice: unimpl command %02x\n", cmd));
+		DPRINTFN(-1,("seq_do_chnvoice: unimpl command %02x\n", cmd));
 		error = EINVAL;
 		break;
 	}
@@ -766,23 +774,18 @@ seq_do_chncommon(sc, b)
 	error = 0;
 	switch(cmd) {
 	case MIDI_PGM_CHANGE:
-		md->chan_info[chan].pgm_num = p1;
 		error = midiseq_pgmchange(md, chan, p1);
 		break;
 	case MIDI_CTL_CHANGE:
 		if (chan > 15 || p1 > 127)
 			return 0; /* EINVAL */
-		md->chan_info[chan].controllers[p1] = w14 & 0x7f;
-		if (p1 < 32)
-			md->chan_info[chan].controllers[p1 + 32] = 0;
 		error = midiseq_ctlchange(md, chan, p1, w14);
 		break;
 	case MIDI_PITCH_BEND:
-		md->chan_info[chan].bender_value = w14;
 		error = midiseq_pitchbend(md, chan, w14);
 		break;
 	default:
-		DPRINTF(("seq_do_chncommon: unimpl command %02x\n", cmd));
+		DPRINTFN(-1,("seq_do_chncommon: unimpl command %02x\n", cmd));
 		error = EINVAL;
 		break;
 	}
@@ -825,6 +828,7 @@ seq_do_sysex(sc, b)
 	dev = SEQ_EDEV(b);
 	if (dev < 0 || dev >= sc->nmidi)
 		return (ENXIO);
+	DPRINTF(("seq_do_sysex: dev=%d\n", dev));
 	md = sc->devs[dev];
 
 	if (!sc->doingsysex) {
@@ -836,7 +840,7 @@ seq_do_sysex(sc, b)
 	for (i = 0; i < 6 && buf[i] != 0xff; i++)
 		;
 	midiout(md, &c, i, 0);
-	if (i < 6)
+	if (i < 6 || (i > 0 && buf[i-1] == MIDI_SYSEX_END))
 		sc->doingsysex = 0;
 	return (0);
 }
@@ -1112,6 +1116,7 @@ void
 midiseq_reset(md)
 	struct midi_dev *md;
 {
+	/* XXX send GM reset? */
 	DPRINTFN(3, ("midiseq_reset: %d\n", md->unit));
 }
 
@@ -1257,8 +1262,11 @@ midiseq_loadpatch(md, sysex, uio)
 	u_char c, buf[128];
 	int i, cc, error;
 
-	if (sysex->key != SEQ_SYSEX_PATCH)
-		return EINVAL;
+	if (sysex->key != SEQ_SYSEX_PATCH) {
+		DPRINTFN(-1,("midiseq_loadpatch: bad patch key 0x%04x\n",
+			     sysex->key));
+		return (EINVAL);
+	}
 	if (uio->uio_resid < sysex->len)
 		/* adjust length, should be an error */
 		sysex->len = uio->uio_resid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.3 1998/08/12 21:31:28 augustss Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.4 1998/08/13 00:13:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,14 +61,6 @@ struct sequencer_queue {
 
 struct sequencer_softc;
 
-#define MAXCONTROLLER 128
-struct channel_info {
-	int	pgm_num;
-	int	bender_value;
-	int	bender_range;
-	u_char	controllers[MAXCONTROLLER];
-};
-
 #define MAXCHAN 16
 struct midi_dev {
 	char	*name;
@@ -76,7 +68,6 @@ struct midi_dev {
 	int	capabilities;
 	int	nr_voices;
 	int	instr_bank_size;
-	struct	channel_info chan_info[MAXCHAN];
 	int	unit;
 	u_char	last_cmd;
 	struct	sequencer_softc *seq;

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.2 1998/08/12 18:11:53 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.3 1998/08/13 00:13:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -221,6 +221,8 @@ midi_in(addr, data)
 	struct midi_buffer *mb = &sc->inbuf;
 	int i;
 
+	if (!sc->isopen)
+		return;
 	if (data == MIDI_ACK)
 		return;
 	DPRINTFN(3, ("midi_in: %p 0x%02x\n", sc, data));
@@ -312,6 +314,9 @@ midi_out(addr)
 	void *addr;
 {
 	struct midi_softc *sc = addr;
+
+	if (!sc->isopen)
+		return;
 	DPRINTFN(3, ("midi_out: %p\n", sc));
 	midi_start_output(sc, 1);
 }
@@ -370,11 +375,11 @@ midiclose(dev, flags, ifmt, p)
 	s = splaudio();
 	while (sc->outbuf.used > 0 && !error) {
 		DPRINTFN(2,("midiclose sleep used=%d\n", sc->outbuf.used));
-		error = midi_sleep_timo(&sc->wchan, "mid dr", 10*hz);
+		error = midi_sleep_timo(&sc->wchan, "mid_dr", 30*hz);
 	}
+	sc->isopen = 0;
 	splx(s);
 	hw->close(sc->hw_hdl);
-	sc->isopen = 0;
 #if NSEQUENCER > 0
 	sc->seqopen = 0;
 #endif
