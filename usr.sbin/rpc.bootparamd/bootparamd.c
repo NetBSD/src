@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.21 1999/08/23 01:09:42 christos Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.22 2000/04/14 12:14:40 itojun Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.21 1999/08/23 01:09:42 christos Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.22 2000/04/14 12:14:40 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -29,6 +29,7 @@ __RCSID("$NetBSD: bootparamd.c,v 1.21 1999/08/23 01:09:42 christos Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#include <ifaddrs.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -60,6 +61,7 @@ char   *bootpfile = _PATH_BOOTPARAMS;
 int	main __P((int, char *[]));
 int	lookup_bootparam __P((char *, char *, char *, char **, char **));
 void	usage __P((void));
+static int get_localaddr __P((const char *, struct sockaddr_in *));
 
 
 /*
@@ -112,7 +114,8 @@ main(argc, argv)
 		err(1, "%s", bootpfile);
 
 	if (route_addr.s_addr == 0) {
-		get_myaddress(&my_addr);
+		if (get_localaddr(NULL, &my_addr) != 0)
+			errx(1, "router address not found");
 		route_addr.s_addr = my_addr.sin_addr.s_addr;
 	}
 	if (!debug) {
@@ -404,4 +407,44 @@ usage()
 	fprintf(stderr,
 	    "usage: %s [-d] [-s] [-r router] [-f bootparmsfile]\n", __progname);
 	exit(1);
+}
+
+static int
+get_localaddr(ifname, sin)
+	const char *ifname;
+	struct sockaddr_in *sin;
+{
+	struct ifaddrs *ifap, *ifa;
+
+	if (getifaddrs(&ifap) != 0)
+		return -1;
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifname && strcmp(ifname, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		if (ifa->ifa_addr->sa_len != sizeof(*sin))
+			continue;
+
+		/* no loopback please */
+#ifdef IFF_LOOPBACK
+		if (ifa->ifa_flags & IFF_LOOPBACK)
+			continue;
+#else
+		if (strncmp(ifa->ifa_name, "lo", 2) == 0)
+			continue;
+#endif
+
+		/* XXX more sanity checks? */
+
+		/* candidate found */
+		memcpy(sin, ifa->ifa_addr, ifa->ifa_addr->sa_len);
+		freeifaddrs(ifap);
+		return 0;
+	}
+
+	/* no candidate */
+	freeifaddrs(ifap);
+	return -1;
 }
