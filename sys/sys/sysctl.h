@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.80 2002/11/09 09:03:57 manu Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.81 2002/11/17 19:54:59 manu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -643,14 +643,14 @@ struct kinfo_proc2 {
  * Second level identifier specifies which emulation variable.
  * Subsequent levels are specified in the emulations themselves.
  */
-#define	EMUL_IRIX	1
-#define	EMUL_LINUX	2
+#define	EMUL_LINUX	1
+#define	EMUL_IRIX	2
 
 #define	EMUL_MAXID	3
 #define	CTL_EMUL_NAMES { \
 	{ 0, 0 }, \
-	{ "irix", CTLTYPE_NODE }, \
 	{ "linux", CTLTYPE_NODE }, \
+	{ "irix", CTLTYPE_NODE }, \
 }
 
 #ifdef	_KERNEL
