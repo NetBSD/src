@@ -1,13 +1,20 @@
-#!/bin/sh -x
-# $NetBSD: script,v 1.1 2001/01/05 02:07:00 garbled Exp $
-CTIME=`date +%s`
-if [ ! -z $6 ]; then
+#!/bin/sh
+# $NetBSD: script,v 1.2 2004/03/09 20:06:42 garbled Exp $
+
+if [ -n "$6" ]; then
+	CTIME=`date +%s`
 	EXPIRE=`expr $6 \* 24 \* 60 \* 60 + $CTIME`
 	EXPIRE=`echo "-e $EXPIRE"`
 fi
 if [ -z $5 ]; then
-	HOME=`grep base_dir /etc/usermgmt.conf | awk '{print $2}'`
-	HOME=`echo "${HOME}/${1}"`
+	if [ -r "/etc/usermgmt.conf" ]; then
+		BASE=`grep base_dir /etc/usermgmt.conf | awk '{print $2}'`
+	fi
+	if [ -n "$BASE" ]; then
+		HOME=`echo "${BASE}/${1}"`
+	else
+		HOME=`echo "/home/${1}"`
+	fi
 else
 	HOME=$5
 fi

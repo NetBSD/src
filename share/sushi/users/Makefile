@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:31 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/09 20:06:42 garbled Exp $
 
-SUBDIR= adduser deluser disuser listuser
+SUBDIR= adduser deluser disuser listuser addgroup delgroup listgroup
+SUBDIR+= moduser passwd
 
 FILES=	index
 FILESDIR=${BINDIR}/sushi/users
