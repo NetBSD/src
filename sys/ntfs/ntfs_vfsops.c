@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.4 1999/07/26 14:02:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.5 1999/07/26 14:35:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -296,7 +296,11 @@ ntfs_mount (
 		err = ENOTBLK;
 		goto error_2;
 	}
+#ifdef __FreeBSD__
 	if (bdevsw(devvp->v_rdev) == NULL) {
+#else
+	if (major(devvp->v_rdev) >= nblkdev) {
+#endif
 		err = ENXIO;
 		goto error_2;
 	}
@@ -561,10 +565,11 @@ ntfs_mountfs(devvp, mp, argsp, p)
 		vput(vp);
 	}
 
-	mp->mnt_stat.f_fsid.val[0] = dev2udev(dev);
 #if defined(__FreeBSD__)
+	mp->mnt_stat.f_fsid.val[0] = dev2udev(dev);
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 #else
+	mp->mnt_stat.f_fsid.val[0] = dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_NTFS);
 #endif
 	mp->mnt_maxsymlinklen = 0;
