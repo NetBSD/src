@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.48 2002/08/20 13:55:58 christos Exp $
+#	$NetBSD: Makefile,v 1.49 2002/08/22 00:09:38 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 .include <bsd.obj.mk>
 
 PROG=	ftpd
 SRCS=	cmds.c conf.c ftpd.c ftpcmd.y logutmp.c logwtmp.c popen.c
-CPPFLAGS+=-I${.CURDIR} -DSUPPORT_UTMP
+CPPFLAGS+=-I${.CURDIR} -DSUPPORT_UTMP -DSUPPORT_UTMPX
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lcrypt -lutil
 MAN=	ftpd.conf.5 ftpusers.5 ftpd.8
