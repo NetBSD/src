@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigblock.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: sigblock.3,v 1.5 1994/12/05 18:51:49 jtc Exp $
+.\"	$NetBSD: sigblock.3,v 1.6 1997/05/12 07:41:29 mikel Exp $
 .\"
 .Dd March 10, 1991
 .Dt SIGBLOCK 3
@@ -47,8 +47,8 @@
 .Sh DESCRIPTION
 .Bf -symbolic
 This interface is made obsolete by:
-.Ef
 .Xr sigprocmask 2 .
+.Ef
 .Pp
 .Fn Sigblock
 adds the signals specified in
@@ -73,9 +73,9 @@ imposed by the system.
 The previous set of masked signals is returned.
 .Sh SEE ALSO
 .Xr kill 2 ,
-.Xr sigprocmask 2 ,
 .Xr sigaction 2 ,
-.Xr sigsetmask 2 ,
+.Xr sigprocmask 2 ,
+.Xr sigsetmask 3 ,
 .Xr sigsetops 3
 .Sh HISTORY
 The
