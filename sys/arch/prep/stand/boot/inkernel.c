@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.1 2000/02/29 15:21:51 nonaka Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.2 2003/01/27 01:39:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ instrategy(devdata, func, blk, size, buf, rsize)
 	size_t *rsize;	/* bytes transferred */
 {
 
-	memcpy(buf, (char *)(KERNENTRY + blk * DEV_BSIZE), size);
+	memcpy(buf, (char *)KERNENTRY + (blk * DEV_BSIZE), size);
 	*rsize = size;
 	return (0);
 }
