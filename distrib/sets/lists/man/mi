@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.669 2004/03/24 05:20:12 fair Exp $
+# $NetBSD: mi,v 1.670 2004/03/26 08:52:26 mrg Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -20,7 +20,7 @@
 ./usr/share/info/gettext.info			man-sys-info		info
 ./usr/share/info/gprof.info			man-debug-info		bfd,info
 ./usr/share/info/grep.info			man-util-info		info
-./usr/share/info/gzip.info			man-util-info		info
+./usr/share/info/gzip.info			man-obsolete		obsolete
 ./usr/share/info/heimdal.info			man-krb5-info		kerberos,info
 ./usr/share/info/info-stnd.info			man-texinfo-info	info
 ./usr/share/info/info.info			man-texinfo-info	info
