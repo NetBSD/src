@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.22 2000/10/29 17:16:02 thorpej Exp $ */
+/* $NetBSD: expr.y,v 1.23 2000/10/30 14:55:02 jdolecek Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.22 2000/10/29 17:16:02 thorpej Exp $");
+__RCSID("$NetBSD: expr.y,v 1.23 2000/10/30 14:55:02 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,13 +52,14 @@ __RCSID("$NetBSD: expr.y,v 1.22 2000/10/29 17:16:02 thorpej Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-const char **av;
+static const char * const *av;
 
 static void yyerror(const char *, ...);
 static int yylex(void);
 static int is_zero_or_null(const char *);
 static int is_integer(const char *);
 static int yyparse(void);
+int main(int, const char * const *);
 
 #define YYSTYPE	const char *
 
@@ -77,7 +78,7 @@ exp:	expr = {
 		}
 	;
 
-expr:	item	{ $$ = $1; }
+expr:	item { $$ = $1; }
 	| expr SPEC_OR expr = {
 		/*
 		 * Return evaluation of first expression if it is neither
@@ -327,24 +328,24 @@ is_integer(const char *str)
 }
 
 
-const char *x = "|&=<>+-*/%:()";
-const int x_token[] = {
+static const char *x = "|&=<>+-*/%:()";
+static const int x_token[] = {
 	SPEC_OR, SPEC_AND, COMPARE, COMPARE, COMPARE, ARITH_OPERATOR,
 	ARITH_OPERATOR, ARITH_OPERATOR, ARITH_OPERATOR, ARITH_OPERATOR,
 	SPEC_REG, LEFT_PARENT, RIGHT_PARENT
 };
 
+static int handle_ddash = 1;
+
 int
 yylex(void)
 {
 	const char *p = *av++;
-	int retval = 0;
+	int retval;
 
-	if (!p) {
-		return 0;
-	}
-	
-	if (p[1] == '\0') {
+	if (!p)
+		retval = 0;
+	else if (p[1] == '\0') {
 		const char *w = strchr(x, p[0]);
 		if (w) {
 			retval = x_token[w-x];
@@ -354,9 +355,25 @@ yylex(void)
 	} else if (p[1] == '=' && p[2] == '\0'
 			&& (p[0] == '>' || p[0] == '<' || p[0] == '!'))
 		retval = COMPARE;
-	else
+	else if (handle_ddash && p[0] == '-' && p[1] == '-' && p[2] == '\0') {
+		/* ignore "--" if passed as first argument and isn't followed
+		 * by another STRING */
+		retval = yylex();
+		if (retval != STRING && retval != LEFT_PARENT
+		    && retval != RIGHT_PARENT) {
+			/* is not followed by string or parenthesis, use as
+			 * STRING */
+			retval = STRING;
+			av--;	/* was increased in call to yylex() above */
+			p = "--";
+		} else {
+			/* "--" is to be ignored */
+			p = yylval;
+		}
+	} else
 		retval = STRING;
 
+	handle_ddash = 0;
 	yylval = p;
 
 	return retval;
@@ -376,7 +393,7 @@ yyerror(const char *fmt, ...)
 }
 
 int
-main(int argc, const char **argv)
+main(int argc, const char * const *argv)
 {
 	(void) setlocale(LC_ALL, "");
 
