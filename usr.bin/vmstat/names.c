@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)names.c	5.2 (Berkeley) 6/4/91
+ *	from: @(#)names.c	5.2 (Berkeley) 6/4/91
+ *	$Id: names.c,v 1.3 1993/05/21 08:53:22 cgd Exp $
  */
 
 #if !defined(hp300) && !defined(tahoe) && !defined(vax) && !defined(__386BSD__)
@@ -42,7 +43,7 @@ void read_names()
 #endif
 
 #ifdef i386
-#include <i386/isa/isa_device.h>
+#include <arch/i386/isa/isa_device.h>
 
 char *defdrives[] = { "fd0", "fd1", "wd0", "wd1",
 		      "sd0", "sd1", "sd2", "sd3", 0 };
