@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.50 1999/01/15 23:21:25 thorpej Exp $
+#	$NetBSD: Makefile.atari,v 1.51 1999/01/15 23:37:05 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -44,8 +44,7 @@ ATARI=	$S/arch/atari
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dmc68020 -Datari
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Datari
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 .if (${HAVE_GCC28} != "")

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.46 1999/01/08 19:26:12 augustss Exp $
+# $NetBSD: Makefile.alpha,v 1.47 1999/01/15 23:37:05 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -42,8 +42,7 @@ ALPHA=	$S/arch/alpha
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dalpha
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dalpha
 COPTS?=		-O2
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-format -Wpointer-arith

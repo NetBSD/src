@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.newsmips,v 1.11 1999/01/15 10:33:11 castor Exp $
+#	$NetBSD: Makefile.newsmips,v 1.12 1999/01/15 23:37:06 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -46,14 +46,14 @@ MIPS=	$S/arch/mips
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dnewsmips ${GP}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dnewsmips
 CWARNFLAGS?=	-Werror -Wall -Wno-parentheses -Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 GP?=		-G0
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-abicalls -mno-half-pic
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
+		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80001000 -e start ${GP} -T ../../conf/kern.ldscript
 STRIPFLAGS=	-g -X -x

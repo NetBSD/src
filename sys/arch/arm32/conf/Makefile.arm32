@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.42 1999/01/08 19:26:12 augustss Exp $
+#	$NetBSD: Makefile.arm32,v 1.43 1999/01/15 23:37:05 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -44,9 +44,8 @@ ARM32=	$S/arch/arm32
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Darm32 -Wcomment
-CWARNFLAGS?=	-Werror -Wall -Wpointer-arith
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Darm32
+CWARNFLAGS?=	-Werror -Wall -Wcomment -Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif

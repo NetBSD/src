@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.66 1999/01/15 10:33:12 castor Exp $
+#	$NetBSD: Makefile.pmax,v 1.67 1999/01/15 23:37:07 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -46,16 +46,15 @@ MIPS=	$S/arch/mips
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-D__pmax__ -Dpmax ${GP}
-#	-Wno-uninitialized avoids bogus warnings in cpu_reboot()
-CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitialized \
-		-Wpointer-arith
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dpmax
+CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-uninitialized -Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 GP?=		-G 0
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-abicalls -mno-half-pic
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
+		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext 0x80030000 -T ${MIPS}/conf/kern.ldscript -e start ${GP}
 STRIPFLAGS=	-g -X -x
