@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.5 2002/02/02 15:57:54 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.6 2002/05/13 06:38:14 elric Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1989, 1993, 1994, 1995
@@ -212,7 +212,7 @@ pwmatchline(int search, uid_t uid, const char *name)
 		return 0;
 	_pw_passwd.pw_gid = (gid_t)id;
 
-	if (!(ep = strsep(&bp, ":")))				/* class */
+	if (!(_pw_passwd.pw_class = strsep(&bp, ":")))		/* class */
 		return 0;
 	if (!(ep = strsep(&bp, ":")))				/* change */
 		return 0;
