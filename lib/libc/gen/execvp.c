@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.22 2003/03/04 19:44:10 nathanw Exp $	*/
+/*	$NetBSD: execvp.c,v 1.23 2003/03/15 04:41:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.22 2003/03/04 19:44:10 nathanw Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.23 2003/03/15 04:41:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,6 +125,7 @@ retry:		(void)execve(bp, argv, environ);
 		case EACCES:
 			eacces = 1;
 			break;
+		case ENOTDIR:
 		case ENOENT:
 			break;
 		case ENOEXEC:
