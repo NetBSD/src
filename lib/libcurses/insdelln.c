@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.7 2000/05/20 15:12:15 mycroft Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.8 2001/04/20 12:56:08 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.7 2000/05/20 15:12:15 mycroft Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.8 2001/04/20 12:56:08 jdc Exp $");
 #endif				/* not lint */
 
 /* 
@@ -73,7 +73,7 @@ insdelln(int lines)
 int
 winsdelln(WINDOW *win, int lines)
 {
-	int     y, i;
+	int     y, i, last;
 	__LINE *temp;
 
 #ifdef DEBUG
@@ -86,9 +86,18 @@ winsdelln(WINDOW *win, int lines)
 
 	if (lines > 0) {
 		/* Insert lines */
-		if (lines > win->maxy - win->cury)
-			lines = win->maxy - win->cury;
-		for (y = win->maxy - lines - 1 ; y >= win->cury; --y) {
+		if (win->cury < win->scr_t || win->cury > win->scr_b) {
+			/*  Outside scrolling region */
+			if (lines > win->maxy - win->cury)
+				lines = win->maxy - win->cury;
+			last = win->maxy - 1;
+		} else {
+			/* Inside scrolling region */
+			if (lines > win->scr_b + 1 - win->cury)
+				lines = win->scr_b + 1 - win->cury;
+			last = win->scr_b;
+		}
+		for (y = last - lines; y >= win->cury; --y) {
 			win->lines[y]->flags &= ~__ISPASTEOL;
 			win->lines[y + lines]->flags &= ~__ISPASTEOL;
 			if (win->orig == NULL) {
@@ -109,14 +118,23 @@ winsdelln(WINDOW *win, int lines)
 				win->lines[y]->line[i].attr = 0;
 				win->lines[y]->line[i].battr = win->battr;
 			}
-		for (y = win->maxy - 1; y >= win->cury; --y)
+		for (y = last; y >= win->cury; --y)
 			__touchline(win, y, 0, (int) win->maxx - 1);
 	} else {
 		/* Delete lines */
 		lines = 0 - lines;
-		if (lines > win->maxy - win->cury)
-			lines = win->maxy - win->cury;
-		for (y = win->cury; y < win->maxy - lines; y++) {
+		if (win->cury < win->scr_t || win->cury > win->scr_b) {
+			/*  Outside scrolling region */
+			if (lines > win->maxy - win->cury)
+				lines = win->maxy - win->cury;
+			last = win->maxy;
+		} else {
+			/* Inside scrolling region */
+			if (lines > win->scr_b + 1 - win->cury)
+				lines = win->scr_b + 1 - win->cury;
+			last = win->scr_b + 1;
+		}
+		for (y = win->cury; y < last - lines; y++) {
 			win->lines[y]->flags &= ~__ISPASTEOL;
 			win->lines[y + lines]->flags &= ~__ISPASTEOL;
 			if (win->orig == NULL) {
@@ -130,14 +148,14 @@ winsdelln(WINDOW *win, int lines)
 				temp = win->lines[y + lines];
 			}
 		}
-		for (y = win->maxy - lines; y < win->maxy; y++)
+		for (y = last - lines; y < last; y++)
 			for (i = 0; i < win->maxx; i++) {
 				win->lines[y]->line[i].ch = ' ';
 				win->lines[y]->line[i].bch = win->bch;
 				win->lines[y]->line[i].attr = 0;
 				win->lines[y]->line[i].battr = win->battr;
 			}
-		for (y = win->cury; y < win->maxy; y++)
+		for (y = win->cury; y < last; y++)
 			__touchline(win, y, 0, (int) win->maxx - 1);
 	}
 	if (win->orig != NULL)

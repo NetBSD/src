@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.13 2000/12/31 12:33:02 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.14 2001/04/20 12:56:08 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -85,6 +85,7 @@ struct __window {		/* Window structure. */
 	attr_t	wattr;			/* Character attributes */
 	wchar_t	bch;			/* Background character */
 	attr_t	battr;			/* Background attributes */
+	int	scr_t, scr_b;		/* Scrolling region top, bottom */
 };
 
 /* Set of attributes unset by 'me' - 'mb', 'md', 'mh', 'mk', 'mp' and 'mr'. */
