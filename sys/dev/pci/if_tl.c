@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.8 1998/01/12 09:40:04 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.9 1998/02/11 19:02:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -454,8 +454,7 @@ tl_pci_attach(parent, self, aux)
 	sc->mii.mii_readbit = tl_mii_read;
 	sc->mii.mii_readreg = NULL; /* Let generic MII function handle that */
 	sc->mii.mii_writereg = NULL;
-	if (config_found(self, (void*)&sc->mii, NULL) == NULL) {
-		printf("%s: no mii configured\n", sc->sc_dev.dv_xname);
+	if (config_found(self, (void*)&sc->mii, mii_adapter_print) == NULL) {
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_adapter.h,v 1.2 1997/11/17 08:56:08 thorpej Exp $	*/
+/*	$NetBSD: mii_adapter.h,v 1.3 1998/02/11 19:02:12 bouyer Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -68,6 +68,7 @@ typedef struct _mii_data {
 #define	MII_CLOCK	0x01
 #define	MII_TXEN	0x02
 
+int mii_adapter_print __P((void *, const char *));
 void	mii_media_add __P((struct ifmedia *,  mii_data_t*));
 int	mii_mediachg __P((mii_data_t*));
 void	mii_pollstat __P((mii_data_t*));
