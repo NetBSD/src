@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)esis.c	7.19 (Berkeley) 6/27/91
- *	$Id: esis.c,v 1.2 1993/05/20 05:27:07 cgd Exp $
+ *	$Id: esis.c,v 1.3 1993/09/06 18:02:44 mycroft Exp $
  */
 
 /***********************************************************
@@ -99,7 +99,7 @@ SOFTWARE.
  *
  */
 struct rawcb	esis_pcb;
-int				esis_config(), snpac_age();
+void				esis_config(), snpac_age();
 int				esis_sendspace = 2048;
 int				esis_recvspace = 2048;
 short			esis_holding_time = ESIS_HT;
@@ -744,6 +744,7 @@ bad: ;    /* Needed by ESIS_NEXT_OPTION */
  *
  * NOTES:			Called every esis_config_time seconds
  */
+void
 esis_config()
 {
 	register struct ifnet	*ifp;

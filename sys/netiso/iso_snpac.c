@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso_snpac.c	7.14 (Berkeley) 6/27/91
- *	$Id: iso_snpac.c,v 1.2 1993/05/20 05:27:23 cgd Exp $
+ *	$Id: iso_snpac.c,v 1.3 1993/09/06 18:02:46 mycroft Exp $
  */
 
 /***********************************************************
@@ -90,8 +90,9 @@ SOFTWARE.
 int 				iso_systype = SNPA_ES;	/* default to be an ES */
 extern short	esis_holding_time, esis_config_time, esis_esconfig_time;
 extern struct	timeval time;
-extern int esis_config(), hz;
-static void snpac_fixdstandmask();
+extern void	esis_config();
+extern int	hz;
+static void	snpac_fixdstandmask();
 
 struct sockaddr_iso blank_siso = {sizeof(blank_siso), AF_ISO};
 extern u_long iso_hashchar();
@@ -581,6 +582,7 @@ register struct rtentry *sc;
  *					would time out entries where expiry date is older
  *					than the current time.
  */
+void
 snpac_age()
 {
 	register struct	llinfo_llc *lc, *nlc;
