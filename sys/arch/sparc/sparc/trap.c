@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.2 2001/11/20 16:31:59 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.3 2001/11/28 13:40:06 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -233,10 +233,6 @@ userret(l, pc, oticks)
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
-
-	/* If our process is on the way out, die. */
-	if (p->p_flag & P_WEXIT)
-		lwp_exit(l);
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
