@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2001/03/31 01:31:49 enami Exp $
+#	$NetBSD: Makefile,v 1.31 2001/05/02 18:35:41 fvdl Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ MAGFILES=	$(.CURDIR)/Header \
 		${MAGDIRF}
 
 .if ${MKSHARE} != "no"
-magic:		$(MAGFILES)
+magic:		$(MAGFILES) $(PROG)
 	cat $(MAGFILES) > $(.TARGET)
 magic.mgc:	magic
 	$(.OBJDIR)/$(PROG) -C -m $(.ALLSRC)
