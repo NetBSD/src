@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.6 2003/04/05 01:39:13 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.7 2003/06/26 21:51:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.6 2003/04/05 01:39:13 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.7 2003/06/26 21:51:59 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -337,12 +337,18 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 		 * of the thread structure.
 		 */
 		val = READ(thread->proc, 
-		    thread->addr + offsetof(struct pthread_st, pt_uc),
+		    thread->addr + offsetof(struct pthread_st, pt_trapuc),
 		    &addr, sizeof(addr));
 		if (val != 0)
 			return val;
-		val = READ(thread->proc,
-		    addr, &uc, sizeof(uc));
+		if (addr == 0) {
+			val = READ(thread->proc, 
+			    thread->addr + offsetof(struct pthread_st, pt_uc),
+			    &addr, sizeof(addr));
+			if (val != 0)
+				return val;
+		}
+		val = READ(thread->proc, addr, &uc, sizeof(uc));
 		if (val != 0)
 			return val;
 
@@ -400,10 +406,17 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 		 * besides the registers that should be preserved.
 		 */
 		val = READ(thread->proc, 
-		    thread->addr + offsetof(struct pthread_st, pt_uc),
+		    thread->addr + offsetof(struct pthread_st, pt_trapuc),
 		    &addr, sizeof(addr));
 		if (val != 0)
 			return val;
+		if (addr == 0) {
+			val = READ(thread->proc, 
+			    thread->addr + offsetof(struct pthread_st, pt_uc),
+			    &addr, sizeof(addr));
+			if (val != 0)
+				return val;
+		}
 		val = READ(thread->proc,
 		    addr, &uc, sizeof(uc));
 		if (val != 0)
