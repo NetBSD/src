@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.196 2001/04/21 16:54:05 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.197 2001/05/12 14:06:30 tsutsui Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 an.4 aria.4 atalk.4 audio.4 auich.4 auvia.4 \
@@ -11,7 +11,7 @@ MAN=	adv.4 adw.4 ahb.4 ahc.4 an.4 aria.4 atalk.4 audio.4 auich.4 auvia.4 \
 	lc.4 ld.4 lkm.4 lo.4 lxtphy.4 \
 	mainbus.4 mbe.4 mca.4 md.4 mhzc.4 midi.4 mii.4 mk48txx.4 mlx.4 \
 	mpu.4 mtio.4 ncr.4 ne.4 neo.4 netintro.4 ns.4 nsip.4 \
-	nsphy.4 ntwoc.4 null.4 opl.4 options.4 pas.4 pcdisplay.4 \
+	nsphy.4 ntwoc.4 null.4 opl.4 options.4 osiop.4 pas.4 pcdisplay.4 \
 	pciide.4 pckbc.4 pckbd.4 pcppi.4 pcscp.4 pcweasel.4 pms.4 ppp.4 \
 	pty.4 puc.4 qsphy.4 raid.4 ray.4 rnd.4 route.4 \
 	rtk.4 scsi.4 sd.4 se.4 ses.4 siop.4 sl.4 sm.4 speaker.4 spp.4 \
