@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.9 2000/12/28 01:22:40 augustss Exp $	*/
+/*	$NetBSD: usage.c,v 1.10 2001/01/09 14:29:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -213,10 +213,13 @@ hid_parse_usage_page(const char *name)
 int
 hid_parse_usage_in_page(const char *name)
 {
-	const char *sep = strchr(name, ':');
+	const char *sep;
 	int k, j;
 	unsigned int l;
 
+	_DIAGASSERT(name != NULL);
+
+	sep = strchr(name, ':');
 	if (sep == NULL)
 		return -1;
 	l = sep - name;
