@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.42 2002/12/19 10:30:39 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.43 2002/12/19 11:20:30 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -399,6 +399,7 @@ struct cpu_info {
 #define CPUFLG_SUN4CACHEBUG	0x8	/* trap page can't be cached */
 #define CPUFLG_CACHE_MANDATORY	0x10	/* if cache is on, don't use
 					   uncached access */
+#define CPUFLG_HATCHED		0x1000	/* CPU is alive */
 #define CPUFLG_PAUSED		0x2000	/* CPU is paused */
 #define CPUFLG_GOTMSG		0x4000	/* CPU got an IPI */
 #define CPUFLG_READY		0x8000	/* CPU available for IPI */
