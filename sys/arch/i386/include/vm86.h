@@ -1,4 +1,6 @@
-/*	$NetBSD: vm86.h,v 1.3 1996/04/11 07:47:55 mycroft Exp $	*/
+/*	$NetBSD: vm86.h,v 1.4 1996/04/11 10:07:25 mycroft Exp $	*/
+
+#define	VM86_USE_VIF
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,8 +39,6 @@
  */
 
 #define SETFLAGS(targ, new, newmask) (targ) = ((targ) & ~(newmask)) | ((new) & (newmask))
-#define VM86_EFLAGS(p)	((p)->p_addr->u_pcb.vm86_eflags)
-#define VM86_FLAGMASK(p) ((p)->p_addr->u_pcb.vm86_flagmask)
 
 #define VM86_TYPE(x)	((x) & 0xff)
 #define VM86_ARG(x)	(((x) & 0xff00) >> 8)
@@ -90,17 +90,28 @@ static __inline__ void
 clr_vif(p)
 	struct proc *p;
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	VM86_EFLAGS(p) &= ~PSL_VIF;
+#ifndef VM86_USE_VIF
+	pcb->vm86_eflags &= ~PSL_I;
+#else
+	pcb->vm86_eflags &= ~PSL_VIF;
+#endif
 }
 
 static __inline__ void
 set_vif(p)
 	struct proc *p;
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	VM86_EFLAGS(p) |= PSL_VIF;
-	if (VM86_EFLAGS(p) & PSL_VIP)
+#ifndef VM86_USE_VIF
+	pcb->vm86_eflags |= PSL_I;
+	if ((pcb->vm86_eflags & (PSL_I|PSL_VIP)) == (PSL_I|PSL_VIP))
+#else
+	pcb->vm86_eflags |= PSL_VIF;
+	if ((pcb->vm86_eflags & (PSL_VIF|PSL_VIP)) == (PSL_VIF|PSL_VIP))
+#endif
 		vm86_return(p, VM86_STI);
 }
 
@@ -110,13 +121,16 @@ set_vflags(p, flags)
 	int flags;
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	SETFLAGS(VM86_EFLAGS(p), flags, VM86_FLAGMASK(p));
+	SETFLAGS(pcb->vm86_eflags, flags, pcb->vm86_flagmask | ~VM86_GETDIRECT);
 	SETFLAGS(tf->tf_eflags, flags, VM86_SETDIRECT);
-	if (flags & PSL_I)
-		set_vif(p);
-	else
-		clr_vif(p);
+#ifndef VM86_USE_VIF
+	if ((pcb->vm86_eflags & (PSL_I|PSL_VIP)) == (PSL_I|PSL_VIP))
+#else
+	if ((pcb->vm86_eflags & (PSL_VIF|PSL_VIP)) == (PSL_VIF|PSL_VIP))
+#endif
+		vm86_return(p, VM86_STI);
 }
 
 static __inline__ int
@@ -124,12 +138,11 @@ get_vflags(p)
 	struct proc *p;
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	int flags = 0;
 
-	SETFLAGS(flags, VM86_EFLAGS(p), VM86_FLAGMASK(p));
+	SETFLAGS(flags, pcb->vm86_eflags, pcb->vm86_flagmask | ~VM86_GETDIRECT);
 	SETFLAGS(flags, tf->tf_eflags, VM86_GETDIRECT);
-	if (VM86_EFLAGS(p) & PSL_VIF)
-		flags |= PSL_I;
 	return (flags);
 }
 
@@ -139,13 +152,14 @@ set_vflags_short(p, flags)
 	int flags;
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	SETFLAGS(VM86_EFLAGS(p), flags, VM86_FLAGMASK(p) & 0xffff);
+	SETFLAGS(pcb->vm86_eflags, flags, (pcb->vm86_flagmask | ~VM86_GETDIRECT) & 0xffff);
 	SETFLAGS(tf->tf_eflags, flags, VM86_SETDIRECT & 0xffff);
-	if (flags & PSL_I)
-		set_vif(p);
-	else
-		clr_vif(p);
+#ifndef VM86_USE_VIF
+	if ((pcb->vm86_eflags & (PSL_I|PSL_VIP)) == (PSL_I|PSL_VIP))
+		vm86_return(p, VM86_STI);
+#endif
 }
 
 static __inline__ int
@@ -153,12 +167,11 @@ get_vflags_short(p)
 	struct proc *p;
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	int flags = 0;
 
-	SETFLAGS(flags, VM86_EFLAGS(p), VM86_FLAGMASK(p) & 0xffff);
+	SETFLAGS(flags, pcb->vm86_eflags, (pcb->vm86_flagmask | ~VM86_GETDIRECT) & 0xffff);
 	SETFLAGS(flags, tf->tf_eflags, VM86_GETDIRECT & 0xffff);
-	if (VM86_EFLAGS(p) & PSL_VIF)
-		flags |= PSL_I;
 	return (flags);
 }
 #else
