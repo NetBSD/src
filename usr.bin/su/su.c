@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.49 2002/06/11 06:06:20 itojun Exp $	*/
+/*	$NetBSD: su.c,v 1.50 2002/11/16 13:45:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.49 2002/06/11 06:06:20 itojun Exp $");
+__RCSID("$NetBSD: su.c,v 1.50 2002/11/16 13:45:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,9 +197,8 @@ main(argc, argv)
 
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
-			shell = strncpy(shellbuf, pwd->pw_shell,
-			    sizeof(shellbuf) - 1);
-			shellbuf[sizeof(shellbuf) - 1] = '\0';
+			strlcpy(shellbuf, pwd->pw_shell, sizeof(shellbuf));
+			shell = shellbuf;
 		} else {
 			shell = _PATH_BSHELL;
 			iscsh = NO;
@@ -361,12 +360,12 @@ badlogin:
 
 	if (asthem) {
 		avshellbuf[0] = '-';
-		(void)strncpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 2);
+		(void)strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	} else if (iscsh == YES) {
 		/* csh strips the first character... */
 		avshellbuf[0] = '_';
-		(void)strncpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 2);
+		(void)strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	}
 	*np = avshell;
