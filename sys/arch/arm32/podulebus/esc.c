@@ -1,4 +1,4 @@
-/* $NetBSD: esc.c,v 1.1 1996/10/15 00:05:04 mark Exp $ */
+/* $NetBSD: esc.c,v 1.1.2.1 1997/01/30 05:32:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -717,8 +717,11 @@ esc_select_unit(dev, target)
 
 			*rp->esc_command = cmd;
 			retcode = 1;
-		}
-	}
+			nexus->flags &= ~ESC_NF_RETRY_SELECT;
+		} else
+			nexus->flags |= ESC_NF_RETRY_SELECT;
+	} else
+		nexus->flags |= ESC_NF_RETRY_SELECT;
 
 	splx(s);
 	return(retcode);
@@ -1188,7 +1191,7 @@ esc_midaction(dev, rp, nexus)
 
 		/* Select the first pre-initialized nexus we find. */
 		for(i=0; i<8; i++)
-			if (dev->sc_nexus[i].flags & ESC_NF_SELECT_ME)
+			if (dev->sc_nexus[i].flags & (ESC_NF_SELECT_ME | ESC_NF_RETRY_SELECT))
 				if (esc_select_unit(dev, i) == 2)
 					break;
 
