@@ -1,4 +1,4 @@
-/*	$NetBSD: srvr_nfs.c,v 1.10 1999/02/01 19:05:11 christos Exp $	*/
+/*	$NetBSD: srvr_nfs.c,v 1.11 1999/03/30 08:23:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -96,7 +96,7 @@ static char ping_buf[sizeof(struct rpc_msg) + 32];
 
 #if defined(MNTTAB_OPT_PROTO) || defined(HAVE_FS_NFS3)
 /* protocols we know about, in order of preference */
-static char *protocols[] = { "tcp", "udp", NULL };
+static char *protocols[] = { "udp", "tcp", NULL };
 #endif /* defined(MNTTAB_OPT_PROTO) || defined(HAVE_FS_NFS3) */
 
 /* forward definitions */
