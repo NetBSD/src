@@ -1,4 +1,4 @@
-/* $NetBSD: usrdb.c,v 1.8 2000/06/14 17:26:24 cgd Exp $ */
+/* $NetBSD: usrdb.c,v 1.9 2000/07/29 19:15:40 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usrdb.c,v 1.8 2000/06/14 17:26:24 cgd Exp $");
+__RCSID("$NetBSD: usrdb.c,v 1.9 2000/07/29 19:15:40 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,11 +60,12 @@ usracct_init()
 	DB *saved_usracct_db;
 	BTREEINFO bti;
 	int error;
+	int ndups = 0;
 
 	memset(&bti, 0, sizeof(bti));
 	bti.compare = uid_compare;
 
-	usracct_db = dbopen(NULL, O_RDWR, 0, DB_BTREE, &bti);
+	usracct_db = dbopen(NULL, O_RDWR|O_CREAT|O_TRUNC, 0644, DB_BTREE, &bti);
 	if (usracct_db == NULL)
 		return (-1);
 
@@ -89,12 +90,23 @@ usracct_init()
 			goto closeout;
 		}
 		while (serr == 0) {
-			nerr = DB_PUT(usracct_db, &key, &data, 0);
+			nerr = DB_PUT(usracct_db, &key, &data, R_NOOVERWRITE);
 			if (nerr < 0) {
 				warn("initializing user accounting stats");
 				error = -1;
 				break;
 			} 
+			if (nerr == 1) {
+				warnx("duplicate key in `%s': %s",
+				    _PATH_USRACCT, fmt(&key));
+				if (ndups++ == 5) {
+					warnx("too many duplicate keys;"
+					    " `%s' possibly corrupted.",
+					    _PATH_USRACCT);
+					error = -1;
+					break;
+				}
+			}
 
 			serr = DB_SEQ(saved_usracct_db, &key, &data, R_NEXT);
 			if (serr < 0) {
