@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.17 1998/01/20 20:55:23 perry Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.18 1998/01/20 22:14:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.17 1998/01/20 20:55:23 perry Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.18 1998/01/20 22:14:09 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -388,6 +388,7 @@ getoffset(timearg)
 	struct tm *lt;
 	char *p;
 	time_t now;
+	int yearset;
 
 	if (!strcasecmp(timearg, "now")) {		/* now */
 		offset = 0;
@@ -417,40 +418,50 @@ getoffset(timearg)
 	unsetenv("TZ");					/* OUR timezone */
 	lt = localtime(&now);				/* current time val */
 
-	switch(strlen(timearg)) {
-	case 10:
+	lt->tm_sec = 0;
+
+	yearset = 0;
+	switch (strlen(timearg)) {
+	case 12:
 		lt->tm_year = ATOI2(timearg);
-		if ((lt->tm_year >= 0) || (lt->tm_year <= 68))
-			lt->tm_year += 100;
+		lt->tm_year *= 100;
+		yearset = 1;
+		/* FALLTHROUGH */
+	case 10:
+		if (yearset) {
+			yearset = ATOI2(timearg);
+			lt->tm_year += yearset;
+		} else {
+			yearset = ATOI2(timearg);
+			if (yearset < 69)
+				lt->tm_year = yearset + 2000;
+			else
+				lt->tm_year = yearset + 1900;
+		}
+		lt->tm_year -= TM_YEAR_BASE;
 		/* FALLTHROUGH */
 	case 8:
 		lt->tm_mon = ATOI2(timearg);
-		if (--lt->tm_mon < 0 || lt->tm_mon > 11)
-			badtime();
+		--lt->tm_mon;
 		/* FALLTHROUGH */
 	case 6:
 		lt->tm_mday = ATOI2(timearg);
-		if (lt->tm_mday < 1 || lt->tm_mday > 31)
-			badtime();
 		/* FALLTHROUGH */
 	case 4:
 		lt->tm_hour = ATOI2(timearg);
-		if (lt->tm_hour < 0 || lt->tm_hour > 23)
-			badtime();
+		/* FALLTHROUGH */
+	case 2:
 		lt->tm_min = ATOI2(timearg);
-		if (lt->tm_min < 0 || lt->tm_min > 59)
-			badtime();
-		lt->tm_sec = 0;
-		if ((shuttime = mktime(lt)) == -1)
-			badtime();
-		if ((offset = shuttime - now) < 0) {
-			(void)fprintf(stderr,
-			    "shutdown: that time is already past.\n");
-			exit(1);
-		}
 		break;
 	default:
 		badtime();
+	}
+
+	if ((shuttime = mktime(lt)) == -1)
+		badtime();
+	if ((offset = shuttime - now) < 0) {
+		(void)fprintf(stderr, "shutdown: that time is already past.\n");
+		exit(1);
 	}
 }
 
