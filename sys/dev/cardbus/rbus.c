@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.17 2003/05/17 08:23:14 scw Exp $	*/
+/*	$NetBSD: rbus.c,v 1.18 2003/09/13 12:17:12 simonb Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.17 2003/05/17 08:23:14 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.18 2003/09/13 12:17:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,13 +174,11 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 			*addrp = result + rbt->rb_offset;
 		}
 		return 0;
-
 	} else {
 		/* error!! */
 		DPRINTF(("rbus: no rbus type\n"));
 		return 1;
 	}
-	return 1;
 }
 
 
