@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.31 1995/01/23 04:45:22 cgd Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.32 1995/02/15 02:12:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -718,15 +718,20 @@ fdfree(p)
 	struct proc *p;
 {
 	register struct filedesc *fdp = p->p_fd;
-	struct file **fpp;
+	register struct file **fpp, *fp;
 	register int i;
 
 	if (--fdp->fd_refcnt > 0)
 		return;
 	fpp = fdp->fd_ofiles;
-	for (i = fdp->fd_lastfile; i >= 0; i--, fpp++)
-		if (*fpp != NULL)
-			(void) closef(*fpp, p);
+	for (i = fdp->fd_lastfile; i >= 0; i--, fpp++) {
+		fp = *fpp;
+		if (fp != NULL) {
+			*fpp = NULL;
+			(void) closef(fp, p);
+		}
+	}
+	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
 		FREE(fdp->fd_ofiles, M_FILEDESC);
 	vrele(fdp->fd_cdir);
