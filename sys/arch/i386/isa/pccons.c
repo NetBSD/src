@@ -52,7 +52,7 @@
  *					cleanup, removed ctl-alt-del.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.13 1993/04/26 19:12:06 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.14 1993/05/04 05:00:26 mycroft Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -1418,7 +1418,7 @@ char *sgetc(noblock)
 {
 	u_char		dt;
 	unsigned	key;
-	static u_char	extended = 0;
+	static u_char	extended = 0, lock_down = 0;
 	static char	capchar[2];
 
 	/*
@@ -1433,24 +1433,41 @@ loop:
 			/*
 			 *   Check for locking keys
 			 */
-			if (!(dt & 0x80))
+			switch (scan_codes[dt & 0x7f].type)
 			{
-				dt = dt & 0x7f;
-				switch (scan_codes[dt].type)
-				{
-					case NUM:
-						num ^= 1;
-						update_led();
+				case NUM:
+					if (dt & 0x80) {
+						lock_down &= ~NUM;
 						break;
-					case CAPS:
-						caps ^= 1;
-						update_led();
+					}
+					if (lock_down & NUM)
+						goto loop;
+					lock_down |= NUM;
+					num ^= 1;
+					update_led();
+					break;
+				case CAPS:
+					if (dt & 0x80) {
+						lock_down &= ~CAPS;
 						break;
-					case SCROLL:
-						scroll ^= 1;
-						update_led();
+					}
+					if (lock_down & CAPS)
+						goto loop;
+					lock_down |= CAPS;
+					caps ^= 1;
+					update_led();
+					break;
+				case SCROLL:
+					if (dt & 0x80) {
+						lock_down &= ~SCROLL;
 						break;
-				}
+					}
+					if (lock_down & SCROLL)
+						goto loop;
+					lock_down |= SCROLL;
+					scroll ^= 1;
+					update_led();
+					break;
 			}
 			return (&capchar[0]);
 		}
@@ -1501,6 +1518,15 @@ loop:
 		dt = dt & 0x7f;
 		switch (scan_codes[dt].type)
 		{
+			case NUM:
+				lock_down &= ~NUM;
+				break;
+			case CAPS:
+				lock_down &= ~CAPS;
+				break;
+			case SCROLL:
+				lock_down &= ~SCROLL;
+				break;
 			case SHIFT:
 				shift_down = 0;
 				break;
@@ -1524,14 +1550,23 @@ loop:
 			 *   Locking keys
 			 */
 			case NUM:
+				if (lock_down & NUM)
+					break;
+				lock_down |= NUM;
 				num ^= 1;
 				update_led();
 				break;
 			case CAPS:
+				if (lock_down & CAPS)
+					break;
+				lock_down |= CAPS;
 				caps ^= 1;
 				update_led();
 				break;
 			case SCROLL:
+				if (lock_down & SCROLL)
+					break;
+				lock_down |= SCROLL;
 				scroll ^= 1;
 				update_led();
 				break;
