@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/06/17 15:11:46 itojun Exp $
+#	$NetBSD: Makefile,v 1.25 2002/07/26 17:22:51 manu Exp $
 
 SUBDIR=	mbr
 .if ${MACHINE} == "i386"
@@ -9,6 +9,7 @@ SUBDIR+= mbr_bootsel
      ${MACHINE} == "bebox" || \
      ${MACHINE} == "cobalt" || \
      ${MACHINE} == "ofppc" || \
+     ${MACHINE} == "hpcarm" || \
      ${MACHINE} == "hpcmips" || \
      ${MACHINE} == "hpcsh" || \
      ${MACHINE} == "arc" || \
