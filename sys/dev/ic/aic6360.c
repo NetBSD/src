@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.41 1996/04/01 07:24:37 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.42 1996/04/03 10:33:45 mycroft Exp $	*/
 
 #define	integrate	static inline
 
@@ -106,6 +106,8 @@
  * kernel uses less memory) but you lose the debugging facilities.
  */
 #define AIC_DEBUG		1
+
+#define	AIC_ABORT_TIMEOUT	2000	/* time to wait for abort */
 
 /* End of customizable parameters */
 
@@ -457,9 +459,11 @@ struct aic_acb {
 	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int flags;
 #define ACB_ALLOC	0x01
-#define ACB_SENSE	0x02
-#define	ACB_ABORT	0x04
-#define	ACB_NEXUS	0x08
+#define	ACB_NEXUS	0x02
+#define ACB_SENSE	0x04
+#define	ACB_ABORT	0x40
+#define	ACB_RESET	0x80
+	int timeout;
 };
 
 /*
@@ -507,13 +511,14 @@ struct aic_softc {
 	u_char	 sc_phase;	/* Current bus phase */
 	u_char	 sc_prevphase;	/* Previous bus phase */
 	u_char	 sc_state;	/* State applicable to the adapter */
-#define AIC_IDLE	0x01
-#define AIC_SELECTING	0x02	/* SCSI command is arbiting  */
-#define AIC_RESELECTED	0x04	/* Has been reselected */
-#define AIC_CONNECTED	0x08	/* Actively using the SCSI bus */
-#define	AIC_DISCONNECT	0x10	/* MSG_DISCONNECT received */
-#define	AIC_CMDCOMPLETE	0x20	/* MSG_CMDCOMPLETE received */
-#define AIC_CLEANING	0x40
+#define	AIC_INIT	0
+#define AIC_IDLE	1
+#define AIC_SELECTING	2	/* SCSI command is arbiting  */
+#define AIC_RESELECTED	3	/* Has been reselected */
+#define AIC_CONNECTED	4	/* Actively using the SCSI bus */
+#define	AIC_DISCONNECT	5	/* MSG_DISCONNECT received */
+#define	AIC_CMDCOMPLETE	6	/* MSG_CMDCOMPLETE received */
+#define AIC_CLEANING	7
 	u_char	 sc_flags;
 #define AIC_DROP_MSGIN	0x01	/* Discard all msgs (parity err detected) */
 #define	AIC_ABORTING	0x02	/* Bailing out */
@@ -527,10 +532,10 @@ struct aic_softc {
 	u_char	sc_currmsg;	/* Message currently ready to transmit */
 #define SEND_DEV_RESET		0x01
 #define SEND_PARITY_ERROR	0x02
-#define SEND_ABORT		0x04
+#define SEND_INIT_DET_ERR	0x04
 #define SEND_REJECT		0x08
-#define SEND_INIT_DET_ERR	0x10
-#define SEND_IDENTIFY  		0x20
+#define SEND_IDENTIFY  		0x10
+#define SEND_ABORT		0x20
 #define SEND_SDTR		0x40
 #define	SEND_WDTR		0x80
 #define AIC_MAX_MSG_LEN 8
@@ -757,7 +762,7 @@ aicattach(parent, self, aux)
 	struct aic_softc *sc = (void *)self;
 
 	AIC_TRACE(("aicattach  "));
-	sc->sc_state = 0;
+	sc->sc_state = AIC_INIT;
 	aic_init(sc);	/* Init chip and driver */
 
 	/*
@@ -847,7 +852,7 @@ aic_init(sc)
 	aic_scsi_reset(sc);
 	aic_reset(sc);
 
-	if (sc->sc_state == 0) {
+	if (sc->sc_state == AIC_INIT) {
 		/* First time through; initialize. */
 		TAILQ_INIT(&sc->ready_list);
 		TAILQ_INIT(&sc->nexus_list);
@@ -991,10 +996,18 @@ aic_scsi_cmd(xs)
 
 	/* Initialize acb */
 	acb->xs = xs;
-	bcopy(xs->cmd, &acb->scsi_cmd, xs->cmdlen);
-	acb->scsi_cmd_length = xs->cmdlen;
-	acb->data_addr = xs->data;
-	acb->data_length = xs->datalen;
+	acb->timeout = xs->timeout;
+
+	if (xs->flags & SCSI_RESET) {
+		acb->flags |= ACB_RESET;
+		acb->scsi_cmd_length = 0;
+		acb->data_length = 0;
+	} else {
+		bcopy(xs->cmd, &acb->scsi_cmd, xs->cmdlen);
+		acb->scsi_cmd_length = xs->cmdlen;
+		acb->data_addr = xs->data;
+		acb->data_length = xs->datalen;
+	}
 	acb->target_stat = 0;
 
 	s = splbio();
@@ -1003,18 +1016,15 @@ aic_scsi_cmd(xs)
 	if (sc->sc_state == AIC_IDLE)
 		aic_sched(sc);
 
-	if ((flags & SCSI_POLL) == 0) { /* Almost done. Wait outside */
-		timeout(aic_timeout, acb, (xs->timeout * hz) / 1000);
-		splx(s);
-		return SUCCESSFULLY_QUEUED;
-	}
-
 	splx(s);
 
+	if ((flags & SCSI_POLL) == 0)
+		return SUCCESSFULLY_QUEUED;
+
 	/* Not allowed to use interrupts, use polling instead */
-	if (aic_poll(sc, xs, xs->timeout)) {
+	if (aic_poll(sc, xs, acb->timeout)) {
 		aic_timeout(acb);
-		if (aic_poll(sc, xs, 2000))
+		if (aic_poll(sc, xs, acb->timeout))
 			aic_timeout(acb);
 	}
 	return COMPLETE;
@@ -1173,6 +1183,11 @@ aic_reselect(sc, message)
 	ti->lubusy |= (1 << lun);
 	aic_setsync(sc, ti);
 
+	if (acb->flags & ACB_RESET)
+		aic_sched_msgout(sc, SEND_DEV_RESET);
+	else if (acb->flags & ACB_ABORT)
+		aic_sched_msgout(sc, SEND_ABORT);
+
 	/* Do an implicit RESTORE POINTERS. */
 	sc->sc_dp = acb->data_addr;
 	sc->sc_dleft = acb->data_length;
@@ -1322,8 +1337,8 @@ aic_done(sc, acb)
 	if (acb->flags & ACB_NEXUS)
 		ti->lubusy &= ~(1 << sc_link->lun);
 	if (acb == sc->sc_nexus) {
-		sc->sc_state = AIC_IDLE;
 		sc->sc_nexus = NULL;
+		sc->sc_state = AIC_IDLE;
 		aic_sched(sc);
 	} else
 		aic_dequeue(sc, acb);
@@ -1769,16 +1784,12 @@ nextbyte:
 			 * Target left MESSAGE OUT, possibly to reject
 			 * our message.
 			 *
-			 * We flush the FIFO in case our last message byte is
-			 * still in it.
-			 *
 			 * If this is the last message being sent, then we
 			 * deassert ATN, since either the target is going to
 			 * ignore this message, or it's going to ask for a
 			 * retransmission via MESSAGE PARITY ERROR (in which
 			 * case we reassert ATN anyway).
 			 */
-			outb(iobase + DMACNTRL0, RSTFIFO);
 			if (sc->sc_msgpriq == 0)
 				outb(iobase + CLRSINT1, CLRATNO);
 			goto out;
@@ -1851,42 +1862,55 @@ aic_dataout_pio(sc, p, n)
 	 * complex than otherwise.
 	 */
 	while (n > 0) {
-		int xfer;
-
 		for (;;) {
 			dmastat = inb(iobase + DMASTAT);
-			if ((dmastat & DFIFOEMP) != 0)
+			if ((dmastat & (DFIFOEMP | INTSTAT)) != 0)
 				break;
-			if ((dmastat & INTSTAT) != 0)
-				goto phasechange;
 		}
 
-		xfer = min(DOUTAMOUNT, n);
+		if ((dmastat & INTSTAT) != 0)
+			goto phasechange;
 
-		AIC_MISC(("%d> ", xfer));
-
-		n -= xfer;
-		out += xfer;
+		if (n >= DOUTAMOUNT) {
+			n -= DOUTAMOUNT;
+			out += DOUTAMOUNT;
 
 #if AIC_USE_DWORDS
-		if (xfer >= 12) {
-			outsl(iobase + DMADATALONG, p, xfer >> 2);
-			p += xfer & ~3;
-			xfer &= 3;
-		}
+			outsl(iobase + DMADATALONG, p, DOUTAMOUNT >> 2);
 #else
-		if (xfer >= 8) {
-			outsw(iobase + DMADATA, p, xfer >> 1);
-			p += xfer & ~1;
-			xfer &= 1;
-		}
+			outsw(iobase + DMADATA, p, DOUTAMOUNT >> 1);
 #endif
 
-		if (xfer > 0) {
-			outb(iobase + DMACNTRL0, ENDMA | B8MODE | WRITE);
-			outsb(iobase + DMADATA, p, xfer);
-			p += xfer;
-			outb(iobase + DMACNTRL0, ENDMA | DWORDPIO | WRITE);
+			p += DOUTAMOUNT;
+		} else {
+			register int xfer;
+
+			xfer = n;
+			AIC_MISC(("%d> ", xfer));
+
+			n -= xfer;
+			out += xfer;
+
+#if AIC_USE_DWORDS
+			if (xfer >= 12) {
+				outsl(iobase + DMADATALONG, p, xfer >> 2);
+				p += xfer & ~3;
+				xfer &= 3;
+			}
+#else
+			if (xfer >= 8) {
+				outsw(iobase + DMADATA, p, xfer >> 1);
+				p += xfer & ~1;
+				xfer &= 1;
+			}
+#endif
+
+			if (xfer > 0) {
+				outb(iobase + DMACNTRL0, ENDMA | B8MODE | WRITE);
+				outsb(iobase + DMADATA, p, xfer);
+				p += xfer;
+				outb(iobase + DMACNTRL0, ENDMA | DWORDPIO | WRITE);
+			}
 		}
 	}
 
@@ -1902,11 +1926,11 @@ aic_dataout_pio(sc, p, n)
 		/* See the bytes off chip */
 		for (;;) {
 			dmastat = inb(iobase + DMASTAT);
+			if ((dmastat & INTSTAT) != 0)
+				goto phasechange;
 			if ((dmastat & DFIFOEMP) != 0 &&
 			    (inb(iobase + SSTAT2) & SEMPTY) != 0)
 				break;
-			if ((dmastat & INTSTAT) != 0)
-				goto phasechange;
 		}
 	}
 
@@ -1969,8 +1993,6 @@ aic_datain_pio(sc, p, n)
 	 * b) SCSIRSTI is set (a reset has occurred) or busfree is detected.
 	 */
 	while (n > 0) {
-		int xfer;
-
 		/* Wait for fifo half full or phase mismatch */
 		for (;;) {
 			dmastat = inb(iobase + DMASTAT);
@@ -1978,35 +2000,46 @@ aic_datain_pio(sc, p, n)
 				break;
 		}
 
-		if ((dmastat & DFIFOFULL) != 0)
-			xfer = min(DINAMOUNT, n);
-		else
-			xfer = min(inb(iobase + FIFOSTAT), n);
-
-		AIC_MISC((">%d ", xfer));
-
-		n -= xfer;
-		in += xfer;
+		if ((dmastat & DFIFOFULL) != 0) {
+			n -= DINAMOUNT;
+			in += DINAMOUNT;
 
 #if AIC_USE_DWORDS
-		if (xfer >= 12) {
-			insl(iobase + DMADATALONG, p, xfer >> 2);
-			p += xfer & ~3;
-			xfer &= 3;
-		}
+			insl(iobase + DMADATALONG, p, DINAMOUNT >> 2);
 #else
-		if (xfer >= 8) {
-			insw(iobase + DMADATA, p, xfer >> 1);
-			p += xfer & ~1;
-			xfer &= 1;
-		}
+			insw(iobase + DMADATA, p, DINAMOUNT >> 1);
 #endif
 
-		if (xfer > 0) {
-			outb(iobase + DMACNTRL0, ENDMA | B8MODE);
-			insb(iobase + DMADATA, p, xfer);
-			p += xfer;
-			outb(iobase + DMACNTRL0, ENDMA | DWORDPIO);
+			p += DINAMOUNT;
+		} else {
+			register int xfer;
+
+			xfer = min(inb(iobase + FIFOSTAT), n);
+			AIC_MISC((">%d ", xfer));
+
+			n -= xfer;
+			in += xfer;
+
+#if AIC_USE_DWORDS
+			if (xfer >= 12) {
+				insl(iobase + DMADATALONG, p, xfer >> 2);
+				p += xfer & ~3;
+				xfer &= 3;
+			}
+#else
+			if (xfer >= 8) {
+				insw(iobase + DMADATA, p, xfer >> 1);
+				p += xfer & ~1;
+				xfer &= 1;
+			}
+#endif
+
+			if (xfer > 0) {
+				outb(iobase + DMACNTRL0, ENDMA | B8MODE);
+				insb(iobase + DMADATA, p, xfer);
+				p += xfer;
+				outb(iobase + DMACNTRL0, ENDMA | DWORDPIO);
+			}
 		}
 
 		if ((dmastat & INTSTAT) != 0)
@@ -2112,13 +2145,11 @@ loop:
 			/*
 			 * We don't currently support target mode.
 			 */
-			printf("%s: target mode selected; going to bus free\n",
+			printf("%s: target mode selected; going to BUS FREE\n",
 			    sc->sc_dev.dv_xname);
 			outb(iobase + SCSISIG, 0);
 
-			sc->sc_state = AIC_IDLE;
-			aic_sched(sc);
-			goto out;
+			goto sched;
 		} else if ((sstat0 & SELDI) != 0) {
 			AIC_MISC(("reselected  "));
 
@@ -2156,21 +2187,22 @@ loop:
 			acb = sc->sc_nexus;
 			sc_link = acb->xs->sc_link;
 			ti = &sc->sc_tinfo[sc_link->target];
-			if ((acb->xs->flags & SCSI_RESET) == 0) {
-				if ((acb->flags & ACB_ABORT) == 0) {
-					sc->sc_msgpriq = SEND_IDENTIFY;
+
+			sc->sc_msgpriq = SEND_IDENTIFY;
+			if (acb->flags & ACB_RESET)
+				sc->sc_msgpriq |= SEND_DEV_RESET;
+			else if (acb->flags & ACB_ABORT)
+				sc->sc_msgpriq |= SEND_ABORT;
+			else {
 #if AIC_USE_SYNCHRONOUS
-					if ((ti->flags & DO_SYNC) != 0)
-						sc->sc_msgpriq |= SEND_SDTR;
+				if ((ti->flags & DO_SYNC) != 0)
+					sc->sc_msgpriq |= SEND_SDTR;
 #endif
 #if AIC_USE_WIDE
-					if ((ti->flags & DO_WIDE) != 0)
-						sc->sc_msgpriq |= SEND_WDTR;
+				if ((ti->flags & DO_WIDE) != 0)
+					sc->sc_msgpriq |= SEND_WDTR;
 #endif
-				} else
-					sc->sc_msgpriq = SEND_IDENTIFY | SEND_ABORT;
-			} else
-				sc->sc_msgpriq = SEND_DEV_RESET;
+			}
 
 			acb->flags |= ACB_NEXUS;
 			ti->lubusy |= (1 << sc_link->lun);
@@ -2180,6 +2212,10 @@ loop:
 			sc->sc_dleft = acb->data_length;
 			sc->sc_cp = (u_char *)&acb->scsi_cmd;
 			sc->sc_cleft = acb->scsi_cmd_length;
+
+			/* On our first connection, schedule a timeout. */
+			if ((acb->xs->flags & SCSI_POLL) == 0)
+				timeout(aic_timeout, acb, (acb->timeout * hz) / 1000);
 
 			sc->sc_state = AIC_CONNECTED;
 		} else if ((sstat1 & SELTO) != 0) {
@@ -2197,12 +2233,10 @@ loop:
 			outb(iobase + SXFRCTL1, 0);
 			outb(iobase + SCSISEQ, ENRESELI);
 			outb(iobase + CLRSINT1, CLRSELTIMO);
+			delay(250);
 
 			acb->xs->error = XS_SELTIMEOUT;
-			untimeout(aic_timeout, acb);
-			delay(250);
-			aic_done(sc, acb);
-			goto out;
+			goto finish;
 		} else {
 			if (sc->sc_state != AIC_IDLE) {
 				printf("%s: BUS FREE while not idle; state=%d\n",
@@ -2211,8 +2245,7 @@ loop:
 				goto out;
 			}
 
-			aic_sched(sc);
-			goto out;
+			goto sched;
 		}
 
 		/*
@@ -2232,21 +2265,18 @@ loop:
 		goto dophase;
 	}
 
-	outb(iobase + CLRSINT1, CLRPHASECHG);
-
 	if ((sstat1 & BUSFREE) != 0) {
 		/* We've gone to BUS FREE phase. */
-		outb(iobase + CLRSINT1, CLRBUSFREE);
+		outb(iobase + CLRSINT1, CLRBUSFREE | CLRPHASECHG);
 
 		switch (sc->sc_state) {
 		case AIC_RESELECTED:
-			sc->sc_state = AIC_IDLE;
-			aic_sched(sc);
-			break;
+			goto sched;
 
 		case AIC_CONNECTED:
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
+
 #if AIC_USE_SYNCHRONOUS + AIC_USE_WIDE
 			if (sc->sc_prevphase == PH_MSGOUT) {
 				/*
@@ -2272,6 +2302,7 @@ loop:
 				}
 			}
 #endif
+
 			if ((sc->sc_flags & AIC_ABORTING) == 0) {
 				/*
 				 * Section 5.1.1 of the SCSI 2 spec suggests
@@ -2287,6 +2318,7 @@ loop:
 				aic_sense(sc, acb);
 				goto out;
 			}
+
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			goto finish;
 
@@ -2294,21 +2326,17 @@ loop:
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
 			TAILQ_INSERT_HEAD(&sc->nexus_list, acb, chain);
-			sc->sc_state = AIC_IDLE;
 			sc->sc_nexus = NULL;
-			aic_sched(sc);
-			break;
+			goto sched;
 
 		case AIC_CMDCOMPLETE:
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
-		finish:
-			untimeout(aic_timeout, acb);
-			aic_done(sc, acb);
-			break;
+			goto finish;
 		}
-		goto out;
 	}
+
+	outb(iobase + CLRSINT1, CLRPHASECHG);
 
 dophase:
 	if ((sstat1 & REQINIT) == 0) {
@@ -2321,21 +2349,23 @@ dophase:
 
 	switch (sc->sc_phase) {
 	case PH_MSGOUT:
-		if ((sc->sc_state & (AIC_CONNECTED | AIC_RESELECTED)) == 0)
+		if (sc->sc_state != AIC_CONNECTED &&
+		    sc->sc_state != AIC_RESELECTED)
 			break;
 		aic_msgout(sc);
 		sc->sc_prevphase = PH_MSGOUT;
 		goto loop;
 
 	case PH_MSGIN:
-		if ((sc->sc_state & (AIC_CONNECTED | AIC_RESELECTED)) == 0)
+		if (sc->sc_state != AIC_CONNECTED &&
+		    sc->sc_state != AIC_RESELECTED)
 			break;
 		aic_msgin(sc);
 		sc->sc_prevphase = PH_MSGIN;
 		goto loop;
 
 	case PH_CMD:
-		if ((sc->sc_state & AIC_CONNECTED) == 0)
+		if (sc->sc_state != AIC_CONNECTED)
 			break;
 #if AIC_DEBUG
 		if ((aic_debug & AIC_SHOWMISC) != 0) {
@@ -2352,7 +2382,7 @@ dophase:
 		goto loop;
 
 	case PH_DATAOUT:
-		if ((sc->sc_state & AIC_CONNECTED) == 0)
+		if (sc->sc_state != AIC_CONNECTED)
 			break;
 		AIC_MISC(("dataout dleft=%d  ", sc->sc_dleft));
 		n = aic_dataout_pio(sc, sc->sc_dp, sc->sc_dleft);
@@ -2362,7 +2392,7 @@ dophase:
 		goto loop;
 
 	case PH_DATAIN:
-		if ((sc->sc_state & AIC_CONNECTED) == 0)
+		if (sc->sc_state != AIC_CONNECTED)
 			break;
 		AIC_MISC(("datain  "));
 		n = aic_datain_pio(sc, sc->sc_dp, sc->sc_dleft);
@@ -2372,7 +2402,7 @@ dophase:
 		goto loop;
 
 	case PH_STAT:
-		if ((sc->sc_state & AIC_CONNECTED) == 0)
+		if (sc->sc_state != AIC_CONNECTED)
 			break;
 		AIC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
@@ -2395,6 +2425,16 @@ reset:
 	aic_init(sc);
 	return 1;
 
+finish:
+	untimeout(aic_timeout, acb);
+	aic_done(sc, acb);
+	goto out;
+
+sched:
+	sc->sc_state = AIC_IDLE;
+	aic_sched(sc);
+	goto out;
+
 out:
 	outb(iobase + DMACNTRL0, INTEN);
 	return 1;
@@ -2405,6 +2445,10 @@ aic_abort(sc, acb)
 	struct aic_softc *sc;
 	struct aic_acb *acb;
 {
+
+	/* 2 secs for the abort */
+	acb->timeout = AIC_ABORT_TIMEOUT;
+	acb->flags |= ACB_ABORT;
 
 	if (acb == sc->sc_nexus) {
 		/*
@@ -2439,17 +2483,12 @@ aic_timeout(arg)
 	if (acb->flags & ACB_ABORT) {
 		/* abort timed out */
 		printf(" AGAIN\n");
-		acb->xs->retries = 0;
-		aic_done(sc, acb);
+		/* XXX Must reset! */
 	} else {
 		/* abort the operation that has timed out */
 		printf("\n");
 		acb->xs->error = XS_TIMEOUT;
-		acb->flags |= ACB_ABORT;
 		aic_abort(sc, acb);
-		/* 2 secs for the abort */
-		if ((xs->flags & SCSI_POLL) == 0)
-			timeout(aic_timeout, acb, 2 * hz);
 	}
 
 	splx(s);
