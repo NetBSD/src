@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.52 2000/02/02 13:06:15 itojun Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.53 2000/02/09 14:42:37 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -72,15 +72,14 @@ struct ne_pcmcia_softc {
 	int sc_nic_io_window;			/* i/o window for NIC */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
-
-	int sc_resource;			/* resrouce alloc'ed */
-#define NE_RES_PCIC	1
-#define NE_RES_IO	2
-#define NE_RES_IOMAP	4
-#define NE_RES_MI	8
 };
 
-static void	ne_pcmcia_unmap __P((struct ne_pcmcia_softc *));
+u_int8_t *
+	ne_pcmcia_get_enaddr __P((struct ne_pcmcia_softc *, int,
+	    u_int8_t [ETHER_ADDR_LEN]));
+u_int8_t *
+	ne_pcmcia_dl10019_get_enaddr __P((struct ne_pcmcia_softc *,
+	    u_int8_t [ETHER_ADDR_LEN]));
 
 struct cfattach ne_pcmcia_ca = {
 	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach,
@@ -422,15 +421,12 @@ ne_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct ne2000dev *ne_dev;
-	struct pcmcia_mem_handle pcmh;
-	bus_addr_t offset;
-	int i, j, mwindow;
+	int i;
 	u_int8_t myea[6], *enaddr = NULL;
 	void (*npp_init_media) __P((struct dp8390_softc *, int **,
 	    int *, int *));
 	int *media, nmedia, defmedia;
 	const char *typestr = "";
-	u_int8_t sum;
 
 	npp_init_media = NULL;
 	media = NULL;
@@ -438,7 +434,6 @@ ne_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
-	psc->sc_resource = 0;
 
 #if 0
 	/*
@@ -449,18 +444,14 @@ ne_pcmcia_attach(parent, self, aux)
 	if (cfe->num_memspace != 1) {
 		printf(": unexpected number of memory spaces "
 		    " %d should be 1\n", cfe->num_memspace);
-		return;
+		goto fail_1;
 	}
 #endif
 
 	if (cfe->num_iospace == 1) {
 		if (cfe->iospace[0].length != NE2000_NPORTS) {
-#if 0
-			printf(": unexpected I/O space configuration\n");
-			return;
-#else
-			printf(": unexpected I/O space configuration (continued): ");
-#endif
+			printf(": unexpected I/O space configuration"
+			    " (continued)\n%s", dsc->sc_dev.dv_xname);
 		}
 	} else if (cfe->num_iospace == 2) {
 		/*
@@ -472,19 +463,19 @@ ne_pcmcia_attach(parent, self, aux)
 		if ((cfe->iospace[0].length + cfe->iospace[1].length) !=
 		    NE2000_NPORTS) {
 			printf(": unexpected I/O space configuration\n");
-			return;
+			goto fail_1;
 		}
 	} else {
 		printf(": unexpected number of i/o spaces %d"
 		    " should be 1 or 2\n", cfe->num_iospace);
+		goto fail_1;
 	}
 
 	if (pcmcia_io_alloc(pa->pf, 0, NE2000_NPORTS, NE2000_NPORTS,
 	    &psc->sc_pcioh)) {
 		printf(": can't alloc i/o space\n");
-		return;
+		goto fail_1;
 	}
-	psc->sc_resource |= NE_RES_IO;
 
 	dsc->sc_regt = psc->sc_pcioh.iot;
 	dsc->sc_regh = psc->sc_pcioh.ioh;
@@ -494,7 +485,7 @@ ne_pcmcia_attach(parent, self, aux)
 	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
 	    &nsc->sc_asich)) {
 		printf(": can't get subregion for asic\n");
-		goto fail;
+		goto fail_2;
 	}
 
 	/* Set up power management hooks. */
@@ -505,27 +496,23 @@ ne_pcmcia_attach(parent, self, aux)
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
-		goto fail;
+		goto fail_2;
 	}
-	psc->sc_resource |= NE_RES_PCIC;
 
 	/* some cards claim to be io16, but they're lying. */
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO8,
 	    NE2000_NIC_OFFSET, NE2000_NIC_NPORTS,
 	    &psc->sc_pcioh, &psc->sc_nic_io_window)) {
 		printf(": can't map NIC i/o space\n");
-		goto fail;
+		goto fail_3;
 	}
 
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16,
 	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
 	    &psc->sc_pcioh, &psc->sc_asic_io_window)) {
 		printf(": can't map ASIC i/o space\n");
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
-		goto fail;
+		goto fail_4;
 	}
-
-	psc->sc_resource |= NE_RES_IOMAP;
 
 	printf("\n");
 
@@ -535,31 +522,13 @@ ne_pcmcia_attach(parent, self, aux)
 	i = 0;
 again:
 	for (; i < NE2000_NDEVS; i++) {
-		if ((ne_dev = ne2000_match(pa->card, pa->pf->number, i))
-		    != NULL) {
+		ne_dev = ne2000_match(pa->card, pa->pf->number, i);
+		if (ne_dev != NULL) {
 			if (ne_dev->enet_maddr >= 0) {
-				if (pcmcia_mem_alloc(pa->pf,
-				    ETHER_ADDR_LEN * 2, &pcmh)) {
-					printf("%s: can't alloc mem for"
-					    " enet addr\n",
-					    dsc->sc_dev.dv_xname);
-					goto fail;
-				}
-				if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_ATTR,
-				    ne_dev->enet_maddr, ETHER_ADDR_LEN * 2,
-				    &pcmh, &offset, &mwindow)) {
-					printf("%s: can't map mem for"
-					    " enet addr\n",
-					    dsc->sc_dev.dv_xname);
-					pcmcia_mem_free(pa->pf, &pcmh);
-					goto fail;
-				}
-				for (j = 0; j < ETHER_ADDR_LEN; j++)
-					myea[j] = bus_space_read_1(pcmh.memt,
-					    pcmh.memh, offset + (j * 2));
-				pcmcia_mem_unmap(pa->pf, mwindow);
-				pcmcia_mem_free(pa->pf, &pcmh);
-				enaddr = myea;
+				enaddr = ne_pcmcia_get_enaddr(psc, 
+				    ne_dev->enet_maddr, myea);
+				if (enaddr == NULL)
+					continue;
 			}
 			break;
 		}
@@ -567,24 +536,17 @@ again:
 	if (i == NE2000_NDEVS) {
 		printf("%s: can't match ethernet vendor code\n",
 		    dsc->sc_dev.dv_xname);
-		goto fail;
+		goto fail_5;
 	}
 
 	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
-#define PAR0	0x04
-		for (j = 0, sum = 0; j < 8; j++)
-			sum += bus_space_read_1(nsc->sc_asict, nsc->sc_asich,
-			    PAR0 + j);
-		if (sum != 0xff) {
+		enaddr = ne_pcmcia_dl10019_get_enaddr(psc, myea);
+		if (enaddr == NULL) {
 			++i;
 			goto again;
 		}
-		for (j = 0; j < ETHER_ADDR_LEN; j++)
-			myea[j] = bus_space_read_1(nsc->sc_asict,
-			    nsc->sc_asich, PAR0 + j);
-		enaddr = myea;
 		nsc->sc_type = NE2000_TYPE_DL10019;
-#undef PAR0
+		typestr = " (DL10019)";
 	}
 
 	if (enaddr != NULL) {
@@ -622,20 +584,29 @@ again:
 	if (npp_init_media != NULL)
 		(*npp_init_media)(dsc, &media, &nmedia, &defmedia);
 
-	ne2000_attach(nsc, enaddr, media, nmedia, defmedia);
-	psc->sc_resource |= NE_RES_MI;
+	if (ne2000_attach(nsc, enaddr, media, nmedia, defmedia))
+		goto fail_5;
 
 	pcmcia_function_disable(pa->pf);
-	psc->sc_resource &= ~NE_RES_PCIC;
 	return;
 
-fail:
-	/* ne_pcmcia_unmap() takes care of NE_RES_IO and NE_RES_IOMAP */
-	ne_pcmcia_unmap(psc);
-	if (psc->sc_resource & NE_RES_PCIC) {
-		pcmcia_function_disable(pa->pf);
-		psc->sc_resource &= ~NE_RES_PCIC;
-	}
+ fail_5:
+	/* Unmap ASIC i/o windows. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
+
+ fail_4:
+	/* Unmap NIC i/o windows. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+
+ fail_3:
+	pcmcia_function_disable(pa->pf);
+
+ fail_2:
+	/* Free our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+ fail_1:
+	psc->sc_nic_io_window = -1;
 }
 
 int
@@ -644,17 +615,24 @@ ne_pcmcia_detach(self, flags)
 	int flags;
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
-	int rv;
+	int error;
 
-	if ((psc->sc_resource & NE_RES_MI) != 0) {
-		rv = ne2000_detach(&psc->sc_ne2000, flags);
-		psc->sc_resource &= ~NE_RES_MI;
-	} else
-		rv = 0;
-	if (rv == 0)
-		ne_pcmcia_unmap(psc);
+	if (psc->sc_nic_io_window == -1)
+		/* Nothing to detach. */
+		return (0);
 
-	return rv;
+	error = ne2000_detach(&psc->sc_ne2000, flags);
+	if (error != 0)
+		return (error);
+
+	/* Unmap our i/o windows. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+
+	/* Free our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+	return (0);
 }
 
 int
@@ -662,7 +640,6 @@ ne_pcmcia_enable(dsc)
 	struct dp8390_softc *dsc;
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
-	int rv;
 
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
@@ -670,12 +647,18 @@ ne_pcmcia_enable(dsc)
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    dsc->sc_dev.dv_xname);
-		return (1);
+		goto fail_1;
 	}
 
-	rv = pcmcia_function_enable(psc->sc_pf);
-	psc->sc_resource |= NE_RES_PCIC;
-	return (rv);
+	if (pcmcia_function_enable(psc->sc_pf))
+		goto fail_2;
+
+	return (0);
+
+ fail_2:
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+ fail_1:
+	return (1);
 }
 
 void
@@ -685,25 +668,66 @@ ne_pcmcia_disable(dsc)
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
 
 	pcmcia_function_disable(psc->sc_pf);
-	psc->sc_resource &= ~NE_RES_PCIC;
-
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 }
 
-static void
-ne_pcmcia_unmap(psc)
+u_int8_t *
+ne_pcmcia_get_enaddr(psc, maddr, myea)
 	struct ne_pcmcia_softc *psc;
+	int maddr;
+	u_int8_t myea[ETHER_ADDR_LEN];
 {
-	if ((psc->sc_resource & NE_RES_IOMAP) != 0) {
-		/* Unmap our i/o windows. */
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
-	}
-	psc->sc_resource &= ~NE_RES_IOMAP;
+	struct ne2000_softc *nsc = &psc->sc_ne2000;
+	struct dp8390_softc *dsc = &nsc->sc_dp8390;
+	struct pcmcia_mem_handle pcmh;
+	bus_addr_t offset;
+	u_int8_t *enaddr = NULL;
+	int j, mwindow;
 
-	if ((psc->sc_resource & NE_RES_IO) != 0) {
-		/* Free our i/o space. */
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+	if (maddr < 0)
+		return (NULL);
+
+	if (pcmcia_mem_alloc(psc->sc_pf, ETHER_ADDR_LEN * 2, &pcmh)) {
+		printf("%s: can't alloc mem for enet addr\n",
+		    dsc->sc_dev.dv_xname);
+		goto fail_1;
 	}
-	psc->sc_resource &= ~NE_RES_IO;
+	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR, maddr,
+	    ETHER_ADDR_LEN * 2, &pcmh, &offset, &mwindow)) {
+		printf("%s: can't map mem for enet addr\n",
+		    dsc->sc_dev.dv_xname);
+		goto fail_2;
+	}
+	for (j = 0; j < ETHER_ADDR_LEN; j++)
+		myea[j] = bus_space_read_1(pcmh.memt, pcmh.memh,
+		    offset + (j * 2));
+	enaddr = myea;
+
+	pcmcia_mem_unmap(psc->sc_pf, mwindow);
+ fail_2:
+	pcmcia_mem_free(psc->sc_pf, &pcmh);
+ fail_1:
+	return (enaddr);
+}
+
+u_int8_t *
+ne_pcmcia_dl10019_get_enaddr(psc, myea)
+	struct ne_pcmcia_softc *psc;
+	u_int8_t myea[ETHER_ADDR_LEN];
+{
+	struct ne2000_softc *nsc = &psc->sc_ne2000;
+	u_int8_t sum;
+	int j;
+
+#define PAR0	0x04
+	for (j = 0, sum = 0; j < 8; j++)
+		sum += bus_space_read_1(nsc->sc_asict, nsc->sc_asich,
+		    PAR0 + j);
+	if (sum != 0xff)
+		return (NULL);
+	for (j = 0; j < ETHER_ADDR_LEN; j++)
+		myea[j] = bus_space_read_1(nsc->sc_asict,
+		    nsc->sc_asich, PAR0 + j);
+#undef PAR0
+	return (myea);
 }
