@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/04/08 23:39:05 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1998/04/09 00:06:09 tv Exp $
 
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -123,5 +123,10 @@ ldcomio.cc: Makefile
 	echo '#define LD';\
 	cat $(CINSTCC)) > $(.TARGET)
 CLEANFILES+=ldcomio.cc
+
+.else
+
+# XXX Temporary: during an egcs bootstrap, don't try to build with gcc 2.7
+${TARGETS}:
 
 .endif
