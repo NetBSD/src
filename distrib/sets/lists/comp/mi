@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.366 2001/09/06 00:21:11 wiz Exp $
+#	$NetBSD: mi,v 1.367 2001/09/09 03:07:09 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3069,6 +3069,7 @@
 ./usr/share/man/cat9/fusword.0		comp-sys-catman
 ./usr/share/man/cat9/fuword.0		comp-sys-catman
 ./usr/share/man/cat9/gsignal.0		comp-sys-catman
+./usr/share/man/cat9/hardclock.0		comp-sys-catman
 ./usr/share/man/cat9/humanize_number.0		comp-sys-catman
 ./usr/share/man/cat9/hz.0		comp-sys-catman
 ./usr/share/man/cat9/i386/bios32_service.0		comp-sys-catman
@@ -5217,6 +5218,7 @@
 ./usr/share/man/man9/fusword.9		comp-sys-man
 ./usr/share/man/man9/fuword.9		comp-sys-man
 ./usr/share/man/man9/gsignal.9		comp-sys-man
+./usr/share/man/man9/hardclock.9		comp-sys-man
 ./usr/share/man/man9/humanize_number.9		comp-sys-man
 ./usr/share/man/man9/hz.9		comp-sys-man
 ./usr/share/man/man9/i386/bios32_service.9		comp-sys-man
