@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.26 2000/05/29 17:37:14 jhawk Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.27 2001/05/01 16:40:03 lukem Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -119,7 +119,7 @@ enum fe_type {
 
 	/* PCMCIA by Fujitsu. */
 	FE_TYPE_MBH10302,
-	FE_TYPE_MBH10304,
+	FE_TYPE_MBH10304
 };
 
 enum mb86960_type {

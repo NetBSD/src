@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.44 2001/02/21 21:39:55 jdolecek Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.45 2001/05/01 16:42:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ typedef enum {
 	TULIP_CHIP_AN985     = 22,	/* ADMtek AN985 */
 	TULIP_CHIP_AX88140   = 23,	/* ASIX AX88140 */
 	TULIP_CHIP_AX88141   = 24,	/* ASIX AX88141 */
-	TULIP_CHIP_X3201_3   = 25,	/* Xircom X3201-3 */
+	TULIP_CHIP_X3201_3   = 25	/* Xircom X3201-3 */
 } tulip_chip_t;
 
 #define	TULIP_CHIP_NAMES						\
