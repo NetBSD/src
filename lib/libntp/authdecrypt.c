@@ -1,17 +1,17 @@
-/*	$NetBSD: authdecrypt.c,v 1.3 1998/03/06 18:17:13 christos Exp $	*/
+/*	$NetBSD: authdecrypt.c,v 1.4 1999/07/02 15:58:35 simonb Exp $	*/
 
 /*
  * authdecrypt - routine to decrypt a packet to see if this guy knows our key.
  */
 #include "ntp_stdlib.h"
- 
+
 /*
  * For our purposes an NTP packet looks like:
  *
  *	a variable amount of unencrypted data, multiple of 8 bytes, followed by:
  *	NOCRYPT_OCTETS worth of unencrypted data, followed by:
  *	BLOCK_OCTETS worth of ciphered checksum.
- */ 
+ */
 #define	NOCRYPT_OCTETS	4
 #define	BLOCK_OCTETS	8
 
@@ -44,7 +44,7 @@ DESauthdecrypt(keyno, pkt, length)
 	u_int32 work[2];
 
 	authdecryptions++;
-	
+
 	if (keyno == 0)
 		keys = (u_char *)DESzerodkeys;
 	else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: atoint.c,v 1.2 1998/01/09 03:15:50 perry Exp $	*/
+/*	$NetBSD: atoint.c,v 1.3 1999/07/02 15:58:35 simonb Exp $	*/
 
 /*
  * atoint - convert an ascii string to a signed long, with error checking
@@ -45,7 +45,7 @@ atoint(str, ival)
 
 	if (isneg)
 		*ival = -u;
-	else 
+	else
 		*ival = u;
 	return 1;
 }

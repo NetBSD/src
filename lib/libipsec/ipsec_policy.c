@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("@(#) ipsec_policy.c $Revision: 1.1 $");
+__RCSID("@(#) ipsec_policy.c $Revision: 1.2 $");
 
 /*
  * The following requests are accepted:
@@ -359,7 +359,7 @@ static char *parse_policy(struct pbuf *pbuf, char *p)
 	/* update length */
 	if (policy)
 		policy->sadb_x_policy_len = PFKEY_UNIT64(pbuf->off);
-	
+
 	return p;
 }
 
@@ -648,7 +648,7 @@ char *ipsec_dump_policy(char *policy, char *delimiter)
 			strcat(buf, "/");
 			strcat(buf, tmp);
 		}
-		
+
 		xtlen -= xisr->sadb_x_ipsecrequest_len;
 		xisr = (struct sadb_x_ipsecrequest *)((caddr_t)xisr
 				+ xisr->sadb_x_ipsecrequest_len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dolfptoa.c,v 1.2 1998/01/09 03:16:07 perry Exp $	*/
+/*	$NetBSD: dolfptoa.c,v 1.3 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * dolfptoa - do the grunge work of converting an l_fp number to decimal
@@ -83,7 +83,7 @@ dolfptoa(fpi, fpv, neg, ndec, msec)
 	}
 	if (dec > 12)
 		dec = 12;
-	
+
 	/*
 	 * If there's a fraction to deal with, do so.
 	 */

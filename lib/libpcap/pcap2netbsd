@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: pcap2netbsd,v 1.4 1998/04/09 00:32:35 tv Exp $
+#	$NetBSD: pcap2netbsd,v 1.5 1999/07/02 16:03:41 simonb Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -32,7 +32,7 @@ $version = "0.4a3";
 
 @libpcaphf = ("pcap.h", "pcap-namedb.h");
 @libpcapmf = ("pcap.3");
-@libpcapdf = ("CHANGES", "README", "gnuc.h", "pcap-int.h", "gencode.h", 
+@libpcapdf = ("CHANGES", "README", "gnuc.h", "pcap-int.h", "gencode.h",
 	      "ethertype.h", "ppp.h");
 
 # sed edit list: file, sed-program
@@ -159,7 +159,7 @@ sub dumpsrcs {
 
 #
 # Main progarm.
-# 
+#
 
 $srcdir = $ENV{'SRCDIR'};
 $targetdir = $ENV{'TARGETDIR'};
@@ -167,9 +167,9 @@ $incdirs = "-I. -I$srcdir/config -I$srcdir";
 
 if (!$srcdir | !targetdir) {
     die "You must define the environment variables SRCDIR and TARGETDIR.\n"
-} 
+}
 print "Making the NetBSD directory tree.\n";
-foreach $f (@subdirs) { 
+foreach $f (@subdirs) {
     print "   -->$f\n";
     makedir ("$targetdir/$f");
 }
@@ -231,7 +231,7 @@ while ($line = <DATA>) {
 	}
 	print ODATA "$line\n";
     }
-}    
+}
 close (ODATA);
 
 #

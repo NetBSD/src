@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-int.h,v 1.6 1998/09/19 21:44:37 matt Exp $	*/
+/*	$NetBSD: pcap-int.h,v 1.7 1999/07/02 16:03:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -90,7 +90,7 @@ struct pcap {
 	 */
 	u_char *pkt;
 
-	
+
 	/*
 	 * Placeholder for filter code if bpf not in kernel.
 	 */

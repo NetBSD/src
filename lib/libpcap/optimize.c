@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.8 1999/07/02 10:05:22 itojun Exp $	*/
+/*	$NetBSD: optimize.c,v 1.9 1999/07/02 16:03:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: optimize.c,v 1.60 96/09/26 23:28:14 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: optimize.c,v 1.8 1999/07/02 10:05:22 itojun Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.9 1999/07/02 16:03:41 simonb Exp $");
 #endif
 #endif
 
@@ -1147,7 +1147,7 @@ opt_blk(b, do_stmts)
 	 * already there, or if this block is a return,
 	 * eliminate all the statements.
 	 */
-	if (do_stmts && 
+	if (do_stmts &&
 	    ((b->out_use == 0 && aval != 0 &&b->val[A_ATOM] == aval) ||
 	     BPF_CLASS(b->s.code) == BPF_RET)) {
 		if (b->stmts != 0) {
@@ -2064,12 +2064,12 @@ icode_to_fcode(root, lenp)
 	while (1) {
 	    unMarkAll();
 	    n = *lenp = count_stmts(root);
-    
+
 	    fp = (struct bpf_insn *)malloc(sizeof(*fp) * n);
 	    memset((char *)fp, 0, sizeof(*fp) * n);
 	    fstart = fp;
 	    ftail = fp + n;
-    
+
 	    unMarkAll();
 	    if (convert_code_r(root))
 		break;
