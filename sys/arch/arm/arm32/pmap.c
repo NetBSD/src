@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 2002/05/14 19:22:34 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97.4.1 2002/07/31 00:23:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2002/05/14 19:22:34 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97.4.1 2002/07/31 00:23:17 lukem Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -938,12 +938,21 @@ pmap_unmap_in_l1(struct pmap *pmap, vaddr_t va)
  *
  *	For now, VM is already on, we only need to map the
  *	specified memory.
+ *
+ *	XXX This routine should eventually go away; it's only used
+ *	XXX by machine-dependent crash dump code.
  */
 vaddr_t
 pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 {
+	pt_entry_t *pte;
+
 	while (spa < epa) {
-		pmap_kenter_pa(va, spa, prot);
+		pte = vtopte(va);
+
+		*pte = L2_S_PROTO | spa |
+		    L2_S_PROT(PTE_KERNEL, prot) | pte_l2_s_cache_mode;
+		cpu_tlb_flushID_SE(va);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -988,7 +997,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
 	TAILQ_INIT(&(pmap_kernel()->pm_obj.memq));
 	pmap_kernel()->pm_obj.uo_npages = 0;
 	pmap_kernel()->pm_obj.uo_refs = 1;
-	
+
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
