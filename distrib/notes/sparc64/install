@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.21 2004/06/10 07:23:49 mbw Exp $
+.\"	$NetBSD: install,v 1.22 2004/06/11 06:29:36 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,7 @@ kernel contained in the CD-ROM to be booted.
 After the initial probe messages you'll be
 asked to start the install or upgrade procedure.
 Proceed to the section
-.Sx Running sysinst
+.Sx "Running the sysinst installation program"
 below.
 .
 .Ss2 Installing NetBSD by using the NetBSD miniroot
@@ -150,7 +150,7 @@ miniroot image to be booted.
 After the initial probe messages you'll be
 asked to start the install or upgrade procedure.
 Proceed to the section
-.Sx Running sysinst
+.Sx "Running the sysinst installation program"
 below.
 .
 .Ss2 Installing NetBSD by using a NetBSD kernel on a Solaris partition
@@ -192,7 +192,7 @@ Boot device: /pci@1f,4000/scsi@3/disk@0,0:a  File and args: /ofwboot -a
 After the initial probe messages you'll be
 asked to start the install or upgrade procedure.
 Proceed to the section
-.Sx Running sysinst
+.Sx "Running the sysinst installation program"
 below.
 .
 .Ss2 Installing NetBSD by using a netboot setup
@@ -208,7 +208,7 @@ command at the Open Firmware prompt.
 After the initial probe messages you'll be
 asked to start the install or upgrade procedure.
 Proceed to the section
-.Sx Running sysinst
+.Sx "Running the sysinst installation program"
 below.
 .
 .Ss2 Sample disklabel screen
@@ -245,58 +245,10 @@ To begin installation or the upgrade procedure, run
 .Pp
 .Dl netbsd# Ic sysinst
 .
-.Ss2 Running sysinst
-.
-Once you have a miniroot booted, the first thing
-.Nx
-will ask you for is a terminal.
-If you are running on the keyboard and mouse you want to select
-.Ic sun
-while if you are using a serial console from an X terminal you need to select
-.Ic xterm
-Selecting the wrong terminal settings may cause display corruption or
-.Ic sysinst
-may fail to run.
+.so ../common/sysinst
 .Pp
-.
-The
-.Ic sysinst
-program will do most of the work of transferring the
-system from the distribution sets onto your disk.
-You will frequently be asked for confirmation before
-.Ic sysinst
-proceeds with each phase of the
-installation process.
-.Pp
-Occasionally, you will have to provide a piece of information such as the
-name of the disk you want to install on or IP addresses and domain names
-you want to assign.
-If your system has more than one disk, you may want
-to look at the output of the
-.Xr dmesg 8
-command to see how your disks
-have been identified by the kernel.
-.Pp
-The sysinst goes through the following phases:
-.(bullet
-determination of the disk to install
-.Nx
-on
-.It
-checking of the partition information on the disk
-.It
-setting of the local timezone
-.It
-creating and mounting the
-.Nx
-file systems
-.It
-setup of IP configuration
-.It
-extraction of the distribution tar files
-.It
-installation of boot programs
-.bullet)
+Skip down to the section on
+.Sx "Booting NetBSD for the first time"
 .
 .Ss2 Manual Installation of NetBSD using Solaris
 .
@@ -471,18 +423,11 @@ before
 Now it is time to boot
 .Nx
 for the first time.
-Initially we'd suggest you
-.Ic "boot netbsd -bs" ,
-then try multiuser after that.
-If you boot single-user the
-.Nx
-incantation to make the root file system
-.Pq Pa /
-writable is
-.Pp
-.Dl netbsd# Ic "mount -u /dev/sd0a /"
-.Pp
-.Em Congratulations ,
-you have successfully installed
-.Nx
-\*V.
+You will boot from your disk using similar syntax as described above in
+.Sx "Setting up Open Firmware" 
+and
+.Sx "Determining how to boot from an SBUS or PCI card"
+That is, boot from your first disk:
+.(disp
+.No ok Ic "boot disk"
+.disp)
