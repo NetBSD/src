@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_rrip.h,v 1.3 1994/06/29 06:32:02 cgd Exp $	*/
+/*	$NetBSD: iso_rrip.h,v 1.1 2002/12/23 17:52:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994

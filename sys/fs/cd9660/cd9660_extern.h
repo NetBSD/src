@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.10 2001/09/15 16:12:56 chs Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.1 2002/12/23 17:52:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994

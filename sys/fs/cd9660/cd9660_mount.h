@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_mount.h,v 1.6 2002/09/21 18:12:43 christos Exp $	*/
+/*	$NetBSD: cd9660_mount.h,v 1.1 2002/12/23 17:52:08 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.28 2001/11/12 15:29:48 lukem Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.1 2002/12/23 17:52:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.28 2001/11/12 15:29:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.1 2002/12/23 17:52:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -53,12 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.28 2001/11/12 15:29:48 lukem Exp
 #include <sys/mount.h>
 #include <sys/systm.h>
 
-#include <isofs/cd9660/iso.h>
-#include <isofs/cd9660/cd9660_extern.h>
-#include <isofs/cd9660/cd9660_node.h>
-#include <isofs/cd9660/iso_rrip.h>
-#include <isofs/cd9660/cd9660_rrip.h>
-#include <isofs/cd9660/cd9660_mount.h>
+#include <fs/cd9660/iso.h>
+#include <fs/cd9660/cd9660_extern.h>
+#include <fs/cd9660/cd9660_node.h>
+#include <fs/cd9660/iso_rrip.h>
+#include <fs/cd9660/cd9660_rrip.h>
+#include <fs/cd9660/cd9660_mount.h>
 
 struct	nchstats iso_nchstats;
 

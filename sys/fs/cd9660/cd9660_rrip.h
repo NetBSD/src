@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.h,v 1.6 1994/12/13 22:33:24 mycroft Exp $	*/
+/*	$NetBSD: cd9660_rrip.h,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994

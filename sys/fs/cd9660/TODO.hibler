@@ -1,4 +1,4 @@
-#	$NetBSD: TODO.hibler,v 1.8 2001/07/22 13:34:10 wiz Exp $
+#	$NetBSD: TODO.hibler,v 1.1 2002/12/23 17:52:08 jdolecek Exp $
 
 1. Investiate making ISOFS another UFS shared filesystem (ala FFS/MFS/LFS).
    Since it was modelled after the inode code, we might be able to merge

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:00 cgd Exp $
+#	$NetBSD: Makefile,v 1.1 2002/12/23 17:52:08 jdolecek Exp $
 
 INCSDIR= /usr/include/isofs/cd9660
 

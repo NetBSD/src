@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.29 2002/11/07 08:13:10 thorpej Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.29 2002/11/07 08:13:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.29 2002/11/07 08:13:10 thorpej Exp
 #include <sys/pool.h>
 #include <sys/stat.h>
 
-#include <isofs/cd9660/iso.h>
-#include <isofs/cd9660/cd9660_extern.h>
-#include <isofs/cd9660/cd9660_node.h>
-#include <isofs/cd9660/cd9660_mount.h>
-#include <isofs/cd9660/iso_rrip.h>
+#include <fs/cd9660/iso.h>
+#include <fs/cd9660/cd9660_extern.h>
+#include <fs/cd9660/cd9660_node.h>
+#include <fs/cd9660/cd9660_mount.h>
+#include <fs/cd9660/iso_rrip.h>
 
 /*
  * Structures associated with iso_node caching.

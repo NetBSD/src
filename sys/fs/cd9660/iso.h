@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.22 1999/07/13 11:12:06 scw Exp $	*/
+/*	$NetBSD: iso.h,v 1.1 2002/12/23 17:52:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994

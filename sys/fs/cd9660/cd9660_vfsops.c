@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.64 2002/09/21 18:12:43 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.64 2002/09/21 18:12:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -67,11 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.64 2002/09/21 18:12:43 christos 
 #include <sys/stat.h>
 #include <sys/conf.h>
 
-#include <isofs/cd9660/iso.h>
-#include <isofs/cd9660/cd9660_extern.h>
-#include <isofs/cd9660/iso_rrip.h>
-#include <isofs/cd9660/cd9660_node.h>
-#include <isofs/cd9660/cd9660_mount.h>
+#include <fs/cd9660/iso.h>
+#include <fs/cd9660/cd9660_extern.h>
+#include <fs/cd9660/iso_rrip.h>
+#include <fs/cd9660/cd9660_node.h>
+#include <fs/cd9660/cd9660_mount.h>
 
 extern const struct vnodeopv_desc cd9660_vnodeop_opv_desc;
 extern const struct vnodeopv_desc cd9660_specop_opv_desc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.16 2001/11/12 15:29:49 lukem Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.16 2001/11/12 15:29:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.16 2001/11/12 15:29:49 lukem Exp $
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 
-#include <isofs/cd9660/iso.h>
-#include <isofs/cd9660/cd9660_extern.h>
+#include <fs/cd9660/iso.h>
+#include <fs/cd9660/cd9660_extern.h>
 
 /*
  * Get one character out of an iso filename

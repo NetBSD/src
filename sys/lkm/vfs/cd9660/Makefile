@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/12/23 17:45:14 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/23 17:52:04 jdolecek Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	$S/isofs/cd9660 ${.CURDIR}/../..
+.PATH:	$S/fs/cd9660 ${.CURDIR}/../..
 
 KMOD=	cd9660
 

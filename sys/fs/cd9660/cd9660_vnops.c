@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.72 2002/10/23 09:14:11 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.72 2002/10/23 09:14:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,11 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.72 2002/10/23 09:14:11 jdolecek E
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <isofs/cd9660/iso.h>
-#include <isofs/cd9660/cd9660_extern.h>
-#include <isofs/cd9660/cd9660_node.h>
-#include <isofs/cd9660/iso_rrip.h>
-#include <isofs/cd9660/cd9660_mount.h>
+#include <fs/cd9660/iso.h>
+#include <fs/cd9660/cd9660_extern.h>
+#include <fs/cd9660/cd9660_node.h>
+#include <fs/cd9660/iso_rrip.h>
+#include <fs/cd9660/cd9660_mount.h>
 
 /*
  * Structure for reading directories
