@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.33.2.2 2004/08/03 10:56:05 skrll Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.33.2.3 2004/08/05 20:55:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.33.2.2 2004/08/03 10:56:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.33.2.3 2004/08/05 20:55:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1535,9 +1535,7 @@ int
 spp_usrreq_sp(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
-	int error;
-
-	error = spp_usrreq(so, req, m, nam, control, l);
+	int error = spp_usrreq(so, req, m, nam, control, l);
 
 	if (req == PRU_ATTACH && error == 0) {
 		struct nspcb *nsp = sotonspcb(so);
