@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.6 2003/11/24 23:54:13 cl Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.7 2004/01/09 18:08:28 cl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.6 2003/11/24 23:54:13 cl Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.7 2004/01/09 18:08:28 cl Exp $");
 
 #include <errno.h>
 
@@ -147,12 +147,6 @@ pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
 	self = pthread__self();
 	
 	pthread_spinlock(self, &rwlock->ptr_interlock);
-#ifdef ERRORCHECK
-	if (rwlock->ptr_writer == self) {
-		pthread_spinunlock(self, &rwlock->ptr_interlock);
-		return EDEADLK;
-	}
-#endif
 	/*
 	 * Don't get a readlock if there is a writer or if there are waiting
 	 * writers; i.e. prefer writers to readers. This strategy is dictated
@@ -182,6 +176,12 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 	self = pthread__self();
 	
 	pthread_spinlock(self, &rwlock->ptr_interlock);
+#ifdef ERRORCHECK
+	if (rwlock->ptr_writer == self) {
+		pthread_spinunlock(self, &rwlock->ptr_interlock);
+		return EDEADLK;
+	}
+#endif
 	/*
 	 * Prefer writers to readers here; permit writers even if there are
 	 * waiting readers.
@@ -315,6 +315,12 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	self = pthread__self();
 	
 	pthread_spinlock(self, &rwlock->ptr_interlock);
+#ifdef ERRORCHECK
+	if (rwlock->ptr_writer == self) {
+		pthread_spinlock(self, &rwlock->ptr_interlock);
+		return EDEADLK;
+	}
+#endif
 	/*
 	 * Prefer writers to readers here; permit writers even if there are
 	 * waiting readers.
@@ -406,7 +412,11 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 			blockedq = rwlock->ptr_rblocked;
 			PTQ_INIT(&rwlock->ptr_rblocked);
 		}
-	} else {
+	} else
+#ifdef ERRORCHECK
+	if (rwlock->ptr_nreaders > 0)
+#endif
+	{
 		/* Releasing a read lock. */
 		rwlock->ptr_nreaders--;
 		if (rwlock->ptr_nreaders == 0) {
@@ -415,6 +425,11 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 				PTQ_REMOVE(&rwlock->ptr_wblocked, writer,
 				    pt_sleep);
 		}
+#ifdef ERRORCHECK
+	} else {
+		pthread_spinunlock(self, &rwlock->ptr_interlock);
+		return EPERM;
+#endif	
 	}
 
 	if (writer != NULL)
