@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.33 1995/02/08 04:06:48 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.34 1995/02/22 01:42:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -592,12 +592,14 @@ _lev1intr:
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
+	.globl	_real_via2_intr
 _lev2intr:
 	addql	#1,_intrcnt+8
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	movl	sp, sp@-
-	jbsr	_via2_intr
+	movl	_real_via2_intr,a2
+	jbsr	a2@
 	addql	#4,sp
 	moveml	sp@+,#0xFFFF
 	addql	#4,sp
