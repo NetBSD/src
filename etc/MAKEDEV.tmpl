@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.16 2003/12/22 22:26:32 lukem Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.17 2004/01/14 05:13:53 blymn Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1026,6 +1026,10 @@ isdntel*)
 isdntrc*)
 	unit=${i#isdntrc}
 	mkdev isdntrc$unit c %isdntrc_chr% $unit
+	;;
+
+veriexec)
+	mkdev veriexec c 94 0
 	;;
 
 vmegen)
