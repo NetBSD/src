@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)am_ops.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: am_ops.c,v 1.2 1994/06/13 19:47:20 mycroft Exp $
- *
+ *	from: @(#)am_ops.c	8.1 (Berkeley) 6/6/93
+ *	$Id: am_ops.c,v 1.3 1994/06/13 20:46:57 mycroft Exp $
  */
 
 #include "am.h"
