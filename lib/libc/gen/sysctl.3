@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.51 2000/02/26 08:48:21 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.52 2000/02/27 06:13:35 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -213,9 +213,10 @@ privilege may change the value.
 .It HW\_PHYSMEM	integer	no
 .It HW\_USERMEM	integer	no
 .It HW\_PAGESIZE	integer	no
+.\".It HW\_DISKNAMES	struct	no
+.\".It HW\_DISKSTATS	struct	no
 .It HW\_MACHINE\_ARCH	string	no
-.\".It HW\_DISKNAMES	integer	no
-.\".It HW\_DISKSTATS	integer	no
+.It HW\_ALIGNBYTES	integer	no
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -234,10 +235,17 @@ The bytes of physical memory.
 The bytes of non-kernel memory.
 .It Li HW_PAGESIZE
 The software page size.
-.It Li HW_MACHINE_ARCH
-The machine cpu class.
 .\".It Fa HW_DISKNAMES
 .\".It Fa HW_DISKSTATS
+.It Li HW_MACHINE_ARCH
+The machine cpu class.
+.It Li HW_ALIGNBYTES
+Alignment constraint for all possible data types.
+This shows the value
+.Dv ALIGNBYTES
+in
+.Pa /usr/include/machine/param.h ,
+at the kernel compilation time.
 .El
 .Sh CTL_KERN
 The string and integer information available for the CTL_KERN level
