@@ -1,5 +1,5 @@
-/*	$NetBSD: ah.h,v 1.9 2000/06/02 18:20:15 itojun Exp $	*/
-/*	$KAME: ah.h,v 1.8 2000/05/29 08:05:02 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.10 2000/06/14 11:27:35 itojun Exp $	*/
+/*	$KAME: ah.h,v 1.9 2000/06/14 11:14:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,6 +70,7 @@ struct ah_algorithm {
 	int (*mature) __P((struct secasvar *));
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
+	const char *name;
 	int (*init) __P((struct ah_algorithm_state *, struct secasvar *));
 	void (*update) __P((struct ah_algorithm_state *, caddr_t, size_t));
 	void (*result) __P((struct ah_algorithm_state *, caddr_t));
