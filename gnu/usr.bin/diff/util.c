@@ -18,7 +18,7 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char *rcsid = "$Id: util.c,v 1.5 1993/11/12 02:26:25 jtc Exp $";
+static char *rcsid = "$Id: util.c,v 1.6 1994/03/18 21:45:47 cgd Exp $";
 #endif
 
 #include "diff.h"
@@ -205,7 +205,7 @@ begin_output ()
 	      close (pipes[0]);
 	    }
 
-	  execl (PR_FILE_NAME, PR_FILE_NAME, "-f", "-h", name, 0);
+	  execl (PR_FILE_NAME, PR_FILE_NAME, "-F", "-h", name, 0);
 	  pfatal_with_name (PR_FILE_NAME);
 	}
       else

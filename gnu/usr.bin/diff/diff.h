@@ -23,7 +23,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include "regex.h"
 
 #ifndef PR_FILE_NAME
-#define PR_FILE_NAME "/bin/pr"
+#define PR_FILE_NAME "/usr/bin/pr"
 #endif
 
 #define TAB_WIDTH 8
