@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.118 2001/06/20 22:14:32 chris Exp $
+#	$NetBSD: files.arm32,v 1.119 2001/06/20 22:20:42 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -421,9 +421,6 @@ attach  scr at ofisascr
 file	arch/arm32/isa/isapnp_machdep.c		isapnp
 
 # EBSA285/CATS class board
-
-# CATS boards have an EBSA285 based core with an ISA bus
-file	arch/arm32/isa/isa_cats_machdep.c		isa & ebsa285
 
 device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
