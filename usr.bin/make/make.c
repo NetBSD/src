@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.44 2002/02/18 12:13:59 pk Exp $	*/
+/*	$NetBSD: make.c,v 1.45 2002/03/08 23:22:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.44 2002/02/18 12:13:59 pk Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.45 2002/03/08 23:22:38 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.44 2002/02/18 12:13:59 pk Exp $");
+__RCSID("$NetBSD: make.c,v 1.45 2002/03/08 23:22:38 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -704,6 +704,8 @@ Make_Update (cgn)
  *	node. Called from Make_DoAllVar via Lst_ForEach. A child is added only
  *	if it has not been given the .EXEC, .USE or .INVISIBLE attributes.
  *	.EXEC and .USE children are very rarely going to be files, so...
+ *	If the child is a .JOIN node, its ALLSRC is propagated to the parent.
+ *
  *	A child is added to the OODATE variable if its modification time is
  *	later than that of its parent, as defined by Make, except if the
  *	parent is a .JOIN node. In that case, it is only added to the OODATE
@@ -742,14 +744,21 @@ MakeAddAllSrc (cgnp, pgnp)
     cgn->type |= OP_MARK;
 
     if ((cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE|OP_INVISIBLE)) == 0) {
-	char *child;
-	char *p1 = NULL;
+	char *child, *allsrc;
+	char *p1 = NULL, *p2 = NULL;
 
 	if (cgn->type & OP_ARCHV)
 	    child = Var_Value (MEMBER, cgn, &p1);
 	else
 	    child = cgn->path ? cgn->path : cgn->name;
-	Var_Append (ALLSRC, child, pgn);
+	if (cgn->type & OP_JOIN) {
+	    allsrc = Var_Value (ALLSRC, cgn, &p2);
+	} else {
+	    allsrc = child;
+	}
+	Var_Append (ALLSRC, allsrc, pgn);
+	if (p2)
+	    free(p2);
 	if (pgn->type & OP_JOIN) {
 	    if (cgn->made == MADE) {
 		Var_Append(OODATE, child, pgn);
