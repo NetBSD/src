@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.212 2001/01/20 16:33:03 itojun Exp $
+# $NetBSD: mi,v 1.213 2001/01/22 17:48:15 itojun Exp $
 .
 ./altroot
 ./bin
@@ -1057,12 +1057,6 @@
 ./usr/share/locale/ru_RU.ISO8859-5/LC_CTYPE
 ./usr/share/locale/ru_RU.KOI8-R
 ./usr/share/locale/ru_RU.KOI8-R/LC_CTYPE
-./usr/share/locale/ru_SU.CP866
-./usr/share/locale/ru_SU.CP866/LC_CTYPE
-./usr/share/locale/ru_SU.ISO8859-5
-./usr/share/locale/ru_SU.ISO8859-5/LC_CTYPE
-./usr/share/locale/ru_SU.KOI8-R
-./usr/share/locale/ru_SU.KOI8-R/LC_CTYPE
 ./usr/share/locale/sl
 ./usr/share/locale/sl/LC_MESSAGES
 ./usr/share/locale/sl/LC_MESSAGES/grep.mo
@@ -1378,7 +1372,7 @@
 ./usr/share/vi/catalog/dutch
 ./usr/share/vi/catalog/english
 ./usr/share/vi/catalog/german
-./usr/share/vi/catalog/ru_SU.KOI8-R
+./usr/share/vi/catalog/ru_RU.KOI8-R
 ./usr/share/vi/catalog/swedish
 ./usr/share/wscons
 ./usr/share/wscons/fonts

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1999/02/13 02:54:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2001/01/22 17:48:27 itojun Exp $
 #
 # from: @(#)Makefile.in	8.56 (Berkeley) 5/18/96
 
@@ -36,7 +36,7 @@ MLINKS= vi.1 ex.1 vi.1 view.1
 .PATH: ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 
 .if ${MKSHARE} != "no"
-cat=	dutch english german ru_SU.KOI8-R swedish
+cat=	dutch english german ru_RU.KOI8-R swedish
 FILES=${cat:S@^@${.CURDIR}/../catalog/@g}
 FILESDIR=/usr/share/vi/catalog
 .endif

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 08:06:16 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2001/01/22 17:48:27 itojun Exp $
 #
 #	@(#)Makefile	8.23 (Berkeley) 5/2/96
 
-CAT=	dutch english german ru_SU.KOI8-R swedish
+CAT=	dutch english german ru_RU.KOI8-R swedish
 FILES=	../cl/*.c ../common/*.c ../ex/*.c ../perl_api/*.c ../tcl_api/*.c \
 	../tk/*.c ../vi/*.c
 
@@ -36,7 +36,7 @@ ${CAT}: english.base
 		grep 'NOT LEGAL' $@;					\
 	fi
 
-CHK=	dutch.check english.check german.check ru_SU.KOI8-R.check \
+CHK=	dutch.check english.check german.check ru_RU.KOI8-R.check \
 	swedish.check
 check: ${CHK}
 ${CHK}: ${CAT}
