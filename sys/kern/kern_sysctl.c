@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.176 2004/05/12 12:21:39 cube Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.177 2005/02/16 00:30:28 elric Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.176 2004/05/12 12:21:39 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.177 2005/02/16 00:30:28 elric Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -1006,8 +1006,8 @@ sysctl_create(SYSCTLFN_RWARGS)
 					    sizeof(symname), &symlen);
 					if (error)
 						return (error);
-					error = ksyms_getval_from_kernel(NULL,
-					    symname, &symaddr, KSYMS_EXTERN);
+					error = ksyms_getval(NULL, symname,
+					    &symaddr, KSYMS_EXTERN);
 					if (error)
 						return (error); /* EINVAL? */
 					nnode.sysctl_data = (void*)symaddr;
