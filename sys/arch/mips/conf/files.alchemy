@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.1 2002/07/29 15:39:16 simonb Exp $
+#	$NetBSD: files.alchemy,v 1.2 2003/04/01 17:31:50 hpeyerl Exp $
 
 file	arch/mips/alchemy/au_icu.c
 file	arch/mips/alchemy/au_timer.c
@@ -28,7 +28,7 @@ file	arch/mips/alchemy/dev/if_aumac.c	aumac
 
 # On-chip OHCI USB controller
 attach	ohci at aubus with ohci_aubus
-file	arch/mips/alchemy/dev/ohci.c		ohci
+file	arch/mips/alchemy/dev/ohci_aubus.c	ohci
 
 # On-chip AC'97 audio controller
 device	auaudio: audiobus, auconv, mulaw, ac97, aurateconv
