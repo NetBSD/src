@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.8 1995/02/27 12:35:43 cgd Exp $
+.\"	$NetBSD: quotactl.2,v 1.9 1996/09/28 19:08:22 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,9 +43,9 @@
 .Nm quotactl
 .Nd manipulate filesystem quotas
 .Sh SYNOPSIS
-.Fd #include <ufs/quota.h>	/* for ufs quotas */
+.Fd #include <ufs/ufs/quota.h>	/* for ufs quotas */
 .Ft int
-.Fn quotactl "const char *path" "int cmd" "int id" "char *addr"
+.Fn quotactl "const char *path" "int cmd" "int id" "void *addr"
 .Sh DESCRIPTION
 The
 .Fn quotactl
