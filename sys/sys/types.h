@@ -1,6 +1,4 @@
-/*	$Id: types.h,v 1.18 1994/10/20 04:29:07 cgd Exp $	*/
-
-/*	$NetBSD: types.h,v 1.18 1994/10/20 04:29:07 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.19 1994/10/28 23:06:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
