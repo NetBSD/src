@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2000/11/04 18:54:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.71 2000/11/13 05:29:31 jdolecek Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -18,10 +18,15 @@ SUBDIR+= newfs_msdos fsck_msdos
 SUBDIR+= mount_portal
 
 # following is now build into mount(8) now (see mount/Makefile)
-# SUBDIR+= mount_ados mount_cd9660 mount_ext2fs mount_fdesc mount_filecore \
-#	   mount_ffs mount_kernfs mount_lfs mount_msdos mount_nfs 	\
-#	   mount_ntfs mount_null mount_overlay mount_procfs mount_umap	\
-#	   mount_union
+# we only dive into those subdirs for make obj - some arch's floppies
+# compile individual mount_* and hence need the obj dirs to allow shared
+# source tree
+.if make(obj)
+SUBDIR+= mount_ados mount_cd9660 mount_ext2fs mount_fdesc mount_filecore \
+	   mount_ffs mount_kernfs mount_lfs mount_msdos mount_nfs 	\
+	   mount_ntfs mount_null mount_overlay mount_procfs mount_umap	\
+	   mount_union
+.endif
 
 # IPv6
 SUBDIR+= ping6 rtsol
