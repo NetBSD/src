@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 1999/01/03 02:19:32 mark Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 1999/02/28 01:49:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -157,6 +157,8 @@ extern struct pmap	kernel_pmap_store;  /* kernel_pmap points to this */
 extern boolean_t pmap_testbit __P((vm_offset_t, int));
 extern void pmap_changebit __P((vm_offset_t, int, int));
 extern vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+void	pmap_procwr __P((struct proc *, vm_offset_t, u_long));
+#define	PMAP_NEED_PROCWR
 
 #endif	/* _KERNEL */
 

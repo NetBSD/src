@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1999/01/26 09:03:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 1999/02/28 01:49:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -2818,6 +2818,24 @@ void
 pmap_collect(pmap)
 	pmap_t pmap;
 {
+}
+
+/*
+ * Routine:	pmap_procwr
+ *
+ * Function:
+ *	Synchronize caches corresponding to [addr, addr+len) in p.
+ *
+ */
+void
+pmap_procwr(p, va, len)
+	struct proc	*p;
+	vm_offset_t	va;
+	u_long		len;
+{
+	/* We only need to do anything if it is the current process. */
+	if (p == curproc)
+		cpu_cache_syncI_rng(va, len);
 }
 
 /* End of pmap.c */
