@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.14 1998/11/15 17:42:36 christos Exp $	*/
+/*	$NetBSD: catgets.c,v 1.15 1999/08/17 04:00:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <nl_types.h>
+
+#ifdef __weak_alias
+__weak_alias(catgets, _catgets)
+#endif
 
 char *
 _catgets(catd, set_id, msg_id, s)
