@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 1997/10/15 23:01:09 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 1997/10/16 23:41:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -301,7 +301,7 @@ static int chrtoblktbl[MAXDEV] =  {
  *
  * A minimal stub routine can always return NODEV.
  */
-int
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {
