@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.54 1994/10/20 03:38:13 mycroft Exp $
+ *	$Id: fd.c,v 1.55 1994/10/20 04:46:17 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ struct fdc_softc {
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
 	enum fdc_state sc_state;
-	int sc_retry;			/* number of retries so far */
+	int sc_errors;			/* number of retries so far */
 	u_char sc_status[7];		/* copy of registers */
 };
 
@@ -809,7 +809,7 @@ again:
 
 	switch (fdc->sc_state) {
 	case DEVIDLE:
-		fdc->sc_retry = 0;
+		fdc->sc_errors = 0;
 		fd->sc_skip = 0;
 		fd->sc_blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
 		untimeout(fd_motor_off, fd);
@@ -867,7 +867,8 @@ again:
 		sectrac = type->sectrac;
 		sec = fd->sc_blkno % (sectrac * type->heads);
 		nblks = (sectrac * type->heads) - sec;
-		nblks = min(nblks, (bp->b_bcount - fd->sc_skip) / FDC_BSIZE);
+		nblks = min(nblks,
+		    (bp->b_bcount - fd->sc_skip) / FDC_BSIZE);
 		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
 		fd->sc_nblks = nblks;
 		head = sec / sectrac;
@@ -969,6 +970,12 @@ again:
 		isa_dmadone(bp->b_flags & B_READ, bp->b_data + fd->sc_skip,
 		    nblks * FDC_BSIZE, fdc->sc_drq);
 #endif
+		if (fdc->sc_errors) {
+			diskerr(bp, "fd", "soft error", LOG_PRINTF,
+			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
+			printf("\n");
+			fdc->sc_errors = 0;
+		}
 		fd->sc_skip += nblks * FDC_BSIZE;
 		if (fd->sc_skip < bp->b_bcount) {
 			/* set up next transfer */
@@ -1055,7 +1062,7 @@ fdcretry(fdc)
 	fd = fdc->sc_drives.tqh_first;
 	bp = fd->sc_q.b_actf;
 
-	switch (fdc->sc_retry) {
+	switch (fdc->sc_errors) {
 	case 0:
 		/* try again */
 		fdc->sc_state = SEEKCOMPLETE;
@@ -1073,7 +1080,7 @@ fdcretry(fdc)
 
 	default:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
-		    fd->sc_skip, (struct disklabel *)NULL);
+		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
 		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
@@ -1084,7 +1091,7 @@ fdcretry(fdc)
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}
-	fdc->sc_retry++;
+	fdc->sc_errors++;
 }
 
 void
