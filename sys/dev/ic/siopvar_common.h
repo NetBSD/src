@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.9 2000/11/14 18:21:02 thorpej Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.10 2001/01/26 21:58:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -76,7 +76,7 @@ struct siop_xfer_common {
 struct siop_xfer {
 	struct siop_xfer_common tables;
 	/* u_int32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
-	u_int32_t resel[24];
+	u_int32_t resel[25];
 } __attribute__((__packed__));
 
 /*
