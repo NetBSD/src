@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1.2.4 2001/01/07 18:21:55 sommerfeld Exp $	*/
+/*	$NetBSD: lock.h,v 1.1.2.5 2001/04/30 16:58:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 	    == __SIMPLELOCK_UNLOCKED);
 }
 
-void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 {
 
