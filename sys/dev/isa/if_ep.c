@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.80 1995/07/24 02:08:25 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.81 1995/07/27 05:01:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -900,17 +900,17 @@ epget(sc, totlen)
 			if (len > 3) {
 				len &= ~3;
 				insl(BASE + EP_W1_RX_PIO_RD_1,
-				     mtod(m, caddr_t) + m->m_len, len / 4);
+				     mtod(m, caddr_t), len / 4);
 			} else
 				insb(BASE + EP_W1_RX_PIO_RD_1,
-				     mtod(m, caddr_t) + m->m_len, len);
+				     mtod(m, caddr_t), len);
 		} else {
 			if (len > 1) {
 				len &= ~1;
 				insw(BASE + EP_W1_RX_PIO_RD_1,
-				     mtod(m, caddr_t) + m->m_len, len / 2);
+				     mtod(m, caddr_t), len / 2);
 			} else
-				*(mtod(m, caddr_t) + m->m_len) =
+				*(mtod(m, caddr_t)) =
 				    inb(BASE + EP_W1_RX_PIO_RD_1);
 		}
 		m->m_len = len;
