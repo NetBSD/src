@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.9 1997/12/31 01:19:52 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.10 1998/02/13 04:51:22 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -113,6 +113,9 @@ struct ne2000dev {
       PCMCIA_MANUFACTURER_INVALID, PCMCIA_PRODUCT_INVALID,
       "D-Link", "DE-650", 0,
       0x0040, { 0x00, 0x80, 0xc8 } },
+    { "I-O DATA PCLA/T",
+      0x01bf, 0x2216, NULL, NULL, 0,
+      -1 /* two possible location, 0x01c0 or 0x0ff0 */, { 0x00, 0xa0, 0xb0 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
@@ -169,9 +172,6 @@ struct ne2000dev {
     { "IBM FME",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0374, { 0x08, 0x00, 0x5a } },
-    { "I-O DATA PCLA/T",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x00, 0xa0, 0xb0 } },
     { "Katron PE-520",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0110, { 0x00, 0x40, 0xf6 } },
