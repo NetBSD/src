@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.32 1995/10/09 15:20:30 chopps Exp $	*/
+/*	$NetBSD: ite.c,v 1.32.2.1 1995/10/20 10:19:41 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,12 +112,14 @@ static char sample[20] = {
 };
 
 static char *index __P((const char *, char));
-static int inline atoi __P((const char *));
 static void ite_sifilter __P((void *, void *));
 void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
 int itematch __P((struct device *, struct cfdata *, void *));
+static void iteprecheckwrap __P((struct ite_softc *));
+static void itecheckwrap __P((struct ite_softc *));
+
 
 struct cfdriver itecd = {
 	NULL, "ite", (cfmatch_t)itematch, iteattach, DV_DULL,
@@ -157,7 +159,6 @@ iteattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	extern int hz;
 	struct grf_softc *gp;
 	struct ite_softc *ip;
 	int s;
@@ -252,8 +253,6 @@ itecnprobe(cd)
 void
 init_bell()
 {
-	short i;
-
 	if (bsamplep != NULL)
 		return;
 	bsamplep = alloc_chipmem(20);
@@ -502,7 +501,7 @@ itestop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-
+	return (0);
 }
 
 int
@@ -589,7 +588,7 @@ itestart(tp)
 	struct clist *rbp;
 	struct ite_softc *ip;
 	u_char buf[ITEBURST];
-	int s, len, n;
+	int s, len;
 
 	ip = getitesp(tp->t_dev);
 
@@ -659,7 +658,7 @@ ite_on(dev, flag)
 	return (0);
 }
 
-int
+void
 ite_off(dev, flag)
 	dev_t dev;
 	int flag;
@@ -674,7 +673,8 @@ ite_off(dev, flag)
 	if ((flag & 1) ||
 	    (ip->flags & (ITE_INGRF | ITE_ISCONS | ITE_INITED)) == ITE_INITED)
 		SUBR_DEINIT(ip);
-	if ((flag & 2) == 0)	/* XXX hmm grfon() I think wants this to  go inactive. */
+	/* XXX hmm grfon() I think wants this to  go inactive. */
+	if ((flag & 2) == 0)
 		ip->flags &= ~ITE_ACTIVE;
 }
 
@@ -830,7 +830,7 @@ static u_char tout_pending;
 static void
 ite_sifilter(void *arg1, void *arg2)
 {
-	ite_filter((u_char)arg1, (enum caller)arg2);
+	ite_filter((u_char)(size_t)arg1, (enum caller)(size_t)arg2);
 }
 
 
@@ -841,8 +841,8 @@ repeat_handler(arg)
 {
 	tout_pending = 0;
 	if (last_char) 
-		add_sicallback(ite_sifilter, (void *)last_char,
-		    (void *)ITEFILT_REPEATER);
+		add_sicallback(ite_sifilter, (void *)(size_t)last_char,
+		    (void *)(size_t)ITEFILT_REPEATER);
 }
 
 void
@@ -869,7 +869,7 @@ ite_filter(c, caller)
 	 * to not allow a key-up event to get thru before a repeat for
 	 * the key-down, we remove any outstanding callout requests..
 	 */
-	rem_sicallback(ite_filter);
+	rem_sicallback(ite_sifilter);
 
 	up = c & 0x80 ? 1 : 0;
 	c &= 0x7f;
@@ -1031,7 +1031,7 @@ ite_filter(c, caller)
 }
 
 /* helper functions, makes the code below more readable */
-static void inline
+inline static void
 ite_sendstr(str)
 	char *str;
 {
@@ -1056,7 +1056,7 @@ alignment_display(ip)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+inline static void
 snap_cury(ip)
 	struct ite_softc *ip;
 {
@@ -1069,7 +1069,7 @@ snap_cury(ip)
     }
 }
 
-static void inline
+inline static void
 ite_dnchar(ip, n)
      struct ite_softc *ip;
      int n;
@@ -1087,7 +1087,7 @@ ite_dnchar(ip, n)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+inline static void
 ite_inchar(ip, n)
      struct ite_softc *ip;
      int n;
@@ -1105,7 +1105,7 @@ ite_inchar(ip, n)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+inline static void
 ite_clrtoeol(ip)
      struct ite_softc *ip;
 {
@@ -1118,7 +1118,7 @@ ite_clrtoeol(ip)
     }
 }
 
-static void inline
+inline static void
 ite_clrtobol(ip)
      struct ite_softc *ip;
 {
@@ -1128,7 +1128,7 @@ ite_clrtobol(ip)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+inline static void
 ite_clrline(ip)
      struct ite_softc *ip;
 {
@@ -1140,7 +1140,7 @@ ite_clrline(ip)
 
 
 
-static void inline
+inline static void
 ite_clrtoeos(ip)
      struct ite_softc *ip;
 {
@@ -1153,7 +1153,7 @@ ite_clrtoeos(ip)
     }
 }
 
-static void inline
+inline static void
 ite_clrtobos(ip)
      struct ite_softc *ip;
 {
@@ -1166,7 +1166,7 @@ ite_clrtobos(ip)
     }
 }
 
-static void inline
+inline static void
 ite_clrscreen(ip)
      struct ite_softc *ip;
 {
@@ -1177,7 +1177,7 @@ ite_clrscreen(ip)
 
 
 
-static void inline
+inline static void
 ite_dnline(ip, n)
      struct ite_softc *ip;
      int n;
@@ -1199,7 +1199,7 @@ ite_dnline(ip, n)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+inline static void
 ite_inline(ip, n)
      struct ite_softc *ip;
      int n;
@@ -1221,7 +1221,7 @@ ite_inline(ip, n)
   SUBR_CURSOR(ip, DRAW_CURSOR);
 }
 
-static void inline
+inline static void
 ite_lf (ip)
      struct ite_softc *ip;
 {
@@ -1236,7 +1236,7 @@ ite_lf (ip)
   clr_attr(ip, ATTR_INV);
 }
 
-static void inline 
+inline static void
 ite_crlf (ip)
      struct ite_softc *ip;
 {
@@ -1244,7 +1244,7 @@ ite_crlf (ip)
   ite_lf (ip);
 }
 
-static void inline
+inline static void
 ite_cr (ip)
      struct ite_softc *ip;
 {
@@ -1255,7 +1255,7 @@ ite_cr (ip)
     }
 }
 
-static void inline
+inline static void
 ite_rlf (ip)
      struct ite_softc *ip;
 {
@@ -1270,7 +1270,7 @@ ite_rlf (ip)
   clr_attr(ip, ATTR_INV);
 }
 
-static int inline
+inline static int
 atoi (cp)
     const char *cp;
 {
@@ -1293,7 +1293,7 @@ index (cp, ch)
 
 
 
-static int inline
+inline static int
 ite_argnum (ip)
     struct ite_softc *ip;
 {
@@ -1311,11 +1311,11 @@ ite_argnum (ip)
   return n;
 }
 
-static int inline
+inline static int
 ite_zargnum (ip)
     struct ite_softc *ip;
 {
-  char ch, *cp;
+  char ch;
   int n;
 
   /* convert argument string into number */
@@ -1329,7 +1329,7 @@ ite_zargnum (ip)
   return n;	/* don't "n ? n : 1" here, <CSI>0m != <CSI>1m ! */
 }
 
-static int inline
+inline static int
 strncmp (a, b, l)
     const char *a, *b;
     int l;
@@ -1362,6 +1362,51 @@ ite_putstr(s, len, dev)
 	SUBR_CURSOR(ip, END_CURSOROPT);
 }
 
+static void
+iteprecheckwrap(ip)
+	struct ite_softc *ip;
+{
+	if (ip->auto_wrap && ip->curx == ip->cols) {
+		ip->curx = 0;
+		clr_attr(ip, ATTR_INV);
+		if (++ip->cury >= ip->bottom_margin + 1) {
+			ip->cury = ip->bottom_margin;
+			SUBR_CURSOR(ip, MOVE_CURSOR);
+			SUBR_SCROLL(ip, ip->top_margin + 1, 0, 1, SCROLL_UP);
+			ite_clrtoeol(ip);
+		} else
+			SUBR_CURSOR(ip, MOVE_CURSOR);
+	}
+}
+
+static void
+itecheckwrap(ip)
+	struct ite_softc *ip;
+{
+#if 0
+	if (++ip->curx == ip->cols) {
+		if (ip->auto_wrap) {
+			ip->curx = 0;
+			clr_attr(ip, ATTR_INV);
+			if (++ip->cury >= ip->bottom_margin + 1) {
+				ip->cury = ip->bottom_margin;
+				SUBR_CURSOR(ip, MOVE_CURSOR);
+				SUBR_SCROLL(ip, ip->top_margin + 1, 0, 1, SCROLL_UP);
+				ite_clrtoeol(ip);
+				return;
+			}
+		} else
+			/* stay there if no autowrap.. */
+			ip->curx--;
+	}
+#else
+	if (ip->curx < ip->cols) {
+		ip->curx++;
+		SUBR_CURSOR(ip, MOVE_CURSOR);
+	}
+#endif
+}
+
 void
 iteputchar(c, ip)
 	register int c;
@@ -1377,7 +1422,6 @@ iteputchar(c, ip)
 		kbd_tty = kbd_ite->tp;
 
 	if (ip->escape) {
-doesc:
 		switch (ip->escape) {
 		case ESC:
 			switch (c) {
@@ -2216,47 +2260,3 @@ doesc:
 	}
 }
 
-int
-iteprecheckwrap(ip)
-	struct ite_softc *ip;
-{
-	if (ip->auto_wrap && ip->curx == ip->cols) {
-		ip->curx = 0;
-		clr_attr(ip, ATTR_INV);
-		if (++ip->cury >= ip->bottom_margin + 1) {
-			ip->cury = ip->bottom_margin;
-			SUBR_CURSOR(ip, MOVE_CURSOR);
-			SUBR_SCROLL(ip, ip->top_margin + 1, 0, 1, SCROLL_UP);
-			ite_clrtoeol(ip);
-		} else
-			SUBR_CURSOR(ip, MOVE_CURSOR);
-	}
-}
-
-int
-itecheckwrap(ip)
-	struct ite_softc *ip;
-{
-#if 0
-	if (++ip->curx == ip->cols) {
-		if (ip->auto_wrap) {
-			ip->curx = 0;
-			clr_attr(ip, ATTR_INV);
-			if (++ip->cury >= ip->bottom_margin + 1) {
-				ip->cury = ip->bottom_margin;
-				SUBR_CURSOR(ip, MOVE_CURSOR);
-				SUBR_SCROLL(ip, ip->top_margin + 1, 0, 1, SCROLL_UP);
-				ite_clrtoeol(ip);
-				return;
-			}
-		} else
-			/* stay there if no autowrap.. */
-			ip->curx--;
-	}
-#else
-	if (ip->curx < ip->cols) {
-		ip->curx++;
-		SUBR_CURSOR(ip, MOVE_CURSOR);
-	}
-#endif
-}
