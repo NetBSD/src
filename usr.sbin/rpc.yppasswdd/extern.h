@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_xdr.c,v 1.2 2000/08/03 08:22:34 ad Exp $	*/
+/*	$NetBSD: extern.h,v 1.1 2000/08/03 08:22:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -31,44 +31,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: yppasswdd_xdr.c,v 1.2 2000/08/03 08:22:34 ad Exp $");
-#endif /* not lint */
+/* yppasswdd_mkpw.c */
+void	make_passwd(yppasswd *, struct svc_req *, SVCXPRT *);
 
-#include <rpc/rpc.h>
-#include <rpcsvc/yppasswd.h>
-
-bool_t
-xdr_x_passwd(XDR *xdrs, x_passwd *objp)
-{
-
-	if (!xdr_string(xdrs, &objp->pw_name, ~0))
-		return (FALSE);
-	if (!xdr_string(xdrs, &objp->pw_passwd, ~0))
-		return (FALSE);
-	if (!xdr_int(xdrs, &objp->pw_uid))
-		return (FALSE);
-	if (!xdr_int(xdrs, &objp->pw_gid))
-		return (FALSE);
-	if (!xdr_string(xdrs, &objp->pw_gecos, ~0))
-		return (FALSE);
-	if (!xdr_string(xdrs, &objp->pw_dir, ~0))
-		return (FALSE);
-	if (!xdr_string(xdrs, &objp->pw_shell, ~0))
-		return (FALSE);
-
-	return (TRUE);
-}
-
-bool_t
-xdr_yppasswd(XDR *xdrs, yppasswd *objp)
-{
-
-	if (!xdr_string(xdrs, &objp->oldpass, ~0))
-		return (FALSE);
-	if (!xdr_x_passwd(xdrs, &objp->newpw))
-		return (FALSE);
-
-	return (TRUE);
-}
+/* rpc.yppasswdd.c */
+extern int	noshell, nogecos, nopw, domake;
+extern char	make_arg[_POSIX2_LINE_MAX];
