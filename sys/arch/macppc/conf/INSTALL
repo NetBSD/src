@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.37 2000/10/02 18:43:36 abs Exp $
+#	$NetBSD: INSTALL,v 1.38 2000/10/14 19:14:06 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -31,7 +31,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
