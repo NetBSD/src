@@ -1,4 +1,4 @@
-/*	$NetBSD: uucplock.c,v 1.9 1997/11/22 07:28:49 lukem Exp $	*/
+/*	$NetBSD: uucplock.c,v 1.10 1998/07/12 09:59:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: uucplock.c,v 1.9 1997/11/22 07:28:49 lukem Exp $");
+__RCSID("$NetBSD: uucplock.c,v 1.10 1998/07/12 09:59:30 mrg Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -73,7 +73,7 @@ uu_lock(ttyname)
 			return(-1);
 		}
 		len = read(fd, text_pid, sizeof(text_pid)-1);
-		if(len<=0) {
+		if(len <= 0) {
 			perror(tbuf);
 			(void)close(fd);
 			fprintf(stderr, "Can't read lock file.\n");
