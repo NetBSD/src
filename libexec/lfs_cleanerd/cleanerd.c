@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.12 1999/03/10 00:57:16 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.13 1999/03/14 11:39:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.12 1999/03/10 00:57:16 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.13 1999/03/14 11:39:28 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -351,8 +351,10 @@ clean_loop(fsp, nsegs, options)
 		if(now-fsp->fi_fs_tstamp > segwait_timeout
 		   && fsp->fi_cip->clean < max_free_segs * IDLE_LIM) {
 			if(debug) {
-				syslog(LOG_DEBUG, "Cleaner Running  at %s: fs idle time %ld sec; %d of %lu segments available)",
-				       ctime(&now), now-fsp->fi_fs_tstamp, fsp->fi_cip->clean, max_free_segs);
+				syslog(LOG_DEBUG, "Cleaner Running  at %s: "
+				       "fs idle time %ld sec; %d of %lu segments available)",
+				       ctime(&now), (long)now-fsp->fi_fs_tstamp,
+				       fsp->fi_cip->clean, max_free_segs);
 				syslog(LOG_DEBUG, "  filesystem idle since %s", ctime(&(fsp->fi_fs_tstamp)));
 			}
 			clean_fs(fsp, cost_benefit, nsegs, options);
@@ -377,7 +379,8 @@ clean_loop(fsp, nsegs, options)
 		    && fsp->fi_cip->clean < max_free_segs * IDLE_LIM)
 		{
                         if(debug)
-				syslog(LOG_DEBUG, "Cleaner Running  at %s (system load %.1f, %d of %lu segments available)",
+				syslog(LOG_DEBUG, "Cleaner Running  at %s "
+				       "(system load %.1f, %d of %lu segments available)",
 					ctime(&now), loadavg[ONE_MIN],
 					fsp->fi_cip->clean, max_free_segs);
 		        clean_fs(fsp, cost_benefit, nsegs, options);
@@ -608,11 +611,11 @@ clean_segment(fsp, slp)
 		   && datosn(&(fsp->fi_lfs),block_array[i].bi_daddr) == id)
 		{
 			if(debug > 1) {
-				syslog(LOG_DEBUG,"seg %d, ino %d lbn %d, 0x%x != 0x%x (fixed)",
+				syslog(LOG_DEBUG, "seg %d, ino %d lbn %d, 0x%x != 0x%lx (fixed)",
 				       block_array[i].bi_inode,
 				       block_array[i].bi_lbn,
 				       id, block_array[i].bi_daddr,
-				       seg_addr + ((char *)(block_array[i].bi_bp) - seg_buf)/DEV_BSIZE);
+				       (long)seg_addr + ((char *)(block_array[i].bi_bp) - seg_buf)/DEV_BSIZE);
 			}
 			/*
 			 * XXX KS - have to be careful here about Inodes;
@@ -629,7 +632,8 @@ clean_segment(fsp, slp)
 					}
 				}
 				if(j<0) {
-					syslog(LOG_NOTICE, "lost inode %d in the shuffle! (blk %d)", block_array[i].bi_inode, block_array[i].bi_daddr);
+					syslog(LOG_NOTICE, "lost inode %d in the shuffle! (blk %d)",
+					       block_array[i].bi_inode, block_array[i].bi_daddr);
 					syslog(LOG_DEBUG, "inode numbers found were:");
 					for(j=INOPB(lfsp)-1;j>=0;j--) {
 						syslog(LOG_DEBUG, "%d", dip[j].di_u.inumber);
@@ -639,7 +643,7 @@ clean_segment(fsp, slp)
 					syslog(LOG_DEBUG,"Ino %d corrected to 0x%x+%d",
 					       block_array[i].bi_inode,
 					       block_array[i].bi_daddr,
-					       (int)((caddr_t)(block_array[i].bi_bp) - (caddr_t)seg_addr) % DEV_BSIZE);
+					       (int)((caddr_t)(block_array[i].bi_bp) - (caddr_t)(long)seg_addr) % DEV_BSIZE);
 				}
 			} else {
 				block_array[i].bi_bp = seg_buf + (block_array[i].bi_daddr - seg_addr) * DEV_BSIZE;
