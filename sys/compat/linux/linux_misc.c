@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.21 1995/10/07 06:27:10 mycroft Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.22 1995/10/09 11:24:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -761,6 +761,8 @@ linux_sys_getdents(p, v, retval)
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag, nbytes, oldcall;
 	struct vattr va;
+	u_long *cookiebuf, *cookie;
+	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -786,6 +788,8 @@ linux_sys_getdents(p, v, retval)
 		oldcall = 0;
 	}
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	ncookies = buflen / 16;
+	cookiebuf = malloc(ncookies * sizeof(*cookiebuf), M_TEMP, M_WAITOK);
 	VOP_LOCK(vp);
 	off = fp->f_offset;
 again:
@@ -802,7 +806,8 @@ again:
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
          */
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *)0, 0);
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
+	    ncookies);
 	if (error)
 		goto out;
 
@@ -812,20 +817,21 @@ again:
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
 
-	for (; len > 0; len -= reclen) {
+	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("linux_readdir");
-		off += reclen;
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
 			continue;
 		}
 		linux_reclen = LINUX_RECLEN(&idb, bdp->d_namlen);
 		if (reclen > len || resid < linux_reclen) {
 			/* entry too big for buffer, so just stop */
 			outp++;
+			off = *cookie++;
 			break;
 		}
 		/*
@@ -833,17 +839,23 @@ again:
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
-		idb.d_ino = (long)bdp->d_fileno;
-		idb.d_off = off - reclen;
+		idb.d_ino = (linux_ino_t)bdp->d_fileno;
 		/*
 		 * The old readdir() call misuses the offset and reclen fields.
 		 */
-		idb.d_reclen = oldcall ? (u_short)bdp->d_namlen : linux_reclen;
+		if (oldcall) {
+			idb.d_off = (linux_off_t)linux_reclen;
+			idb.d_reclen = (u_short)bdp->d_namlen;
+		} else {
+			idb.d_off = (linux_off_t)off;
+			idb.d_reclen = (u_short)linux_reclen;
+		}
 		strcpy(idb.d_name, bdp->d_name);
 		if ((error = copyout((caddr_t)&idb, outp, linux_reclen)))
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
+		off = *cookie++;	/* each entry points to itself */
 		/* advance output past Linux-shaped entry */
 		outp += linux_reclen;
 		resid -= linux_reclen;
@@ -863,6 +875,7 @@ eof:
 	*retval = nbytes - resid;
 out:
 	VOP_UNLOCK(vp);
+	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return error;
 }
