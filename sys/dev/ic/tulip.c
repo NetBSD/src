@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.73 2000/10/03 04:32:00 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.74 2000/10/03 23:35:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -501,6 +501,11 @@ tlp_attach(sc, enaddr)
 	ifp->if_ioctl = tlp_ioctl;
 	ifp->if_start = tlp_start;
 	ifp->if_watchdog = tlp_watchdog;
+
+	/*
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/*
 	 * Attach the interface.
@@ -1831,6 +1836,16 @@ tlp_init(sc)
 
 	sc->sc_rxint_mask = STATUS_RI|STATUS_RU|STATUS_RWT;
 	sc->sc_txint_mask = STATUS_TI|STATUS_UNF|STATUS_TJT;
+
+	/*
+	 * If 802.1Q VLAN MTU is enabled, we must ignore Receive Watchdog
+	 * and Transmit Jabber errors.
+	 */
+	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
+		sc->sc_inten &= ~(STATUS_RWT | STATUS_TJT);
+		sc->sc_rxint_mask &= ~STATUS_RWT;
+		sc->sc_txint_mask &= ~STATUS_TJT;
+	}
 
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_WB89C840F:
