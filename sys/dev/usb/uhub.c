@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.55 2001/11/16 02:21:54 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.56 2001/11/20 13:48:03 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.55 2001/11/16 02:21:54 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.56 2001/11/20 13:48:03 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,6 +325,7 @@ uhub_explore(usbd_device_handle dev)
 	struct uhub_softc *sc = dev->hub->hubsoftc;
 	struct usbd_port *up;
 	usbd_status err;
+	int speed;
 	int port;
 	int change, status;
 
@@ -441,16 +442,22 @@ uhub_explore(usbd_device_handle dev)
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
 			/* Nothing connected, just ignore it. */
 #ifdef DIAGNOSTIC
-			printf("%s: device disappeared on port %d\n",
+			printf("%s: port %d, device disappeared after reset\n",
 			       USBDEVNAME(sc->sc_dev), port);
 #endif
 			continue;
 		}
 
+		/* Figure out device speed */
+		if (status & UPS_HIGH_SPEED)
+			speed = USB_SPEED_HIGH;
+		else if (status & UPS_LOW_SPEED)
+			speed = USB_SPEED_LOW;
+		else
+			speed = USB_SPEED_FULL;
 		/* Get device info and set its address. */
 		err = usbd_new_device(USBDEV(sc->sc_dev), dev->bus, 
-			  dev->depth + 1, status & UPS_LOW_SPEED, 
-			  port, up);
+			  dev->depth + 1, speed, port, up);
 		/* XXX retry a few times? */
 		if (err) {
 			DPRINTFN(-1,("uhub_explore: usb_new_device failed, "
