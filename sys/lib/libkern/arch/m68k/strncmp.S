@@ -1,3 +1,5 @@
+/*	$NetBSD: strncmp.S,v 1.4 1997/05/13 19:32:08 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,13 +37,15 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)strncmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strncmp.S,v 1.3 1995/02/08 18:35:56 mycroft Exp $"
-#endif /* LIBC_SCCS and not lint */
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	RCSID("from: @(#)strncmp.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: strncmp.S,v 1.4 1997/05/13 19:32:08 jtc Exp $")
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * NOTE: this guy returns result compatible with the VAX assembly version.
@@ -51,21 +55,21 @@
  */
 ENTRY(strncmp)
 	movl	sp@(12),d1		| count
-	beq	scdone			| nothing to do
+	jeq	Lscdone			| nothing to do
 	movl	sp@(4),a0		| a0 = string1
 	movl	sp@(8),a1		| a1 = string2
-scloop:
+Lscloop:
 	movb	a0@+,d0			| get *string1
 	cmpb	a1@+,d0			| compare a byte
-	bne	scexit			| not equal, break out
+	jne	Lscexit			| not equal, break out
 	tstb	d0			| at end of string1?
-	beq	scdone			| yes, all done
+	jeq	Lscdone			| yes, all done
 	subql	#1,d1			| no, adjust count
-	bne	scloop			| more to do, keep going
-scdone:
+	jne	Lscloop			| more to do, keep going
+Lscdone:
 	moveq	#0,d0			| strings are equal
 	rts
-scexit:
+Lscexit:
 	subb	a1@-,d0			| *string1 - *string2
 	extbl	d0
 	rts
