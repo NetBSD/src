@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.13 1998/05/11 11:06:23 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.14 1998/07/26 14:15:07 mycroft Exp $	*/
 
 /*
  * ====================================================
@@ -23,8 +23,8 @@
 /*
  * ANSI/POSIX
  */
-extern char __infinity[];
-#define HUGE_VAL	(*(double *) __infinity)
+extern const char __infinity[];
+#define HUGE_VAL	(*(const double *)__infinity)
 
 /*
  * XOPEN/SVID
