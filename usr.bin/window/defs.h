@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 1995/09/28 10:34:19 tls Exp $	*/
+/*	$NetBSD: defs.h,v 1.4 1997/11/21 08:35:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,8 +38,9 @@
  *	@(#)defs.h	8.1 (Berkeley) 6/6/93
  */
 
-#include "ww.h"
 #include <sys/time.h>
+#include "value.h"
+#include "ww.h"
 
 #define NWINDOW 9
 
@@ -67,7 +68,60 @@ char terse;			/* terse mode */
 char debug;			/* debug mode */
 char incmd;			/* in command mode */
 
-struct ww *getwin();
-struct ww *openwin();
-struct ww *vtowin();
-struct ww *openiwin();
+void		addwin __P((struct ww *, char));
+int		ccinit __P((void));
+void		ccend __P((void));
+void		ccflush __P((void));
+void		ccreset __P((void));
+void		ccstart __P((void));
+void		c_colon __P((void));
+void		c_debug __P((void));
+void		c_help __P((void));
+void		c_move __P((struct ww *));
+void		c_put __P((void));
+void		c_quit __P((void));
+void		c_size __P((struct ww *));
+void		c_window __P((void));
+void		c_yank __P((void));
+void		closeiwin __P((struct ww *));
+void		closewin __P((struct ww *));
+void		closewin1 __P((struct ww *));
+int		cx_beginbuf __P((char *, struct value *, int));
+int		cx_beginfile __P((char *));
+void		cx_end __P((void));
+void		deletewin __P((struct ww *));
+void		docmd __P((void));
+int		doconfig __P((void));
+void		dodefault __P((void));
+int		dolongcmd __P((char *, struct value *, int));
+int		dosource __P((char *));
+void		error __P((const char *, ...));
+void		err_end __P((void));
+int		findid __P((void));
+struct ww      *findselwin __P((void));
+void		front __P((struct ww *, char));
+int		getpos __P((int *, int *, int, int, int, int));
+struct ww      *getwin __P((void));
+void		labelwin __P((struct ww *));
+void		mloop __P((void));
+int		more __P((struct ww *,  char));
+void		movewin __P((struct ww *, int, int));
+struct ww      *openwin __P((int, int, int, int, int, int, char *, int, int,
+			    char *, char **));
+struct ww      *openiwin __P((int, char *));
+void		p_memerror __P((void));
+void		p_start __P((void));
+void		reframe __P((void));
+void		setcmd __P((char));
+void		setescape __P((char *));
+int		setlabel __P((struct ww *, char *));
+void		setselwin __P((struct ww *));
+void		setterse __P((char));
+void		setvars __P((void));
+void		sizewin __P((struct ww *, int, int));
+void		startwin __P((struct ww *));
+void		stopwin __P((struct ww *));
+int		s_gettok __P((void));
+void		verror __P((const char *, va_list));
+void		waitnl __P((struct ww *));
+int		waitnl1 __P((struct ww *, char *));

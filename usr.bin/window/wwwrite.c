@@ -1,4 +1,4 @@
-/*	$NetBSD: wwwrite.c,v 1.5 1996/02/08 21:49:19 mycroft Exp $	*/
+/*	$NetBSD: wwwrite.c,v 1.6 1997/11/21 08:38:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,16 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwwrite.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwwrite.c,v 1.5 1996/02/08 21:49:19 mycroft Exp $";
+__RCSID("$NetBSD: wwwrite.c,v 1.6 1997/11/21 08:38:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
+#include "xx.h"
 #include "char.h"
 
 #define UPDATE() \
@@ -62,16 +64,17 @@ static char rcsid[] = "$NetBSD: wwwrite.c,v 1.5 1996/02/08 21:49:19 mycroft Exp 
  * p and q.  Essentially, we implement a stack of depth 2,
  * to avoid recursion, which might be a better idea.
  */
+int
 wwwrite(w, p, n)
-register struct ww *w;
-register char *p;
-int n;
+	struct ww *w;
+	char *p;
+	int n;
 {
 	int hascursor;
 	char *savep = p;
 	char *q = p + n;
 	char *r = 0;
-	char *s;
+	char *s = 0;
 
 #ifdef lint
 	s = 0;			/* define it before possible use */
@@ -88,10 +91,10 @@ int n;
 			continue;
 		}
 		if (w->ww_wstate == 0 &&
-		    (isprt(*p) || ISSET(w->ww_wflags, WWW_UNCTRL) &&
-		     isunctrl(*p))) {
-			register i;
-			register union ww_char *bp;
+		    (isprt(*p) ||
+		    (ISSET(w->ww_wflags, WWW_UNCTRL) && isunctrl(*p)))) {
+			int i;
+			union ww_char *bp;
 			int col, col1;
 
 			if (ISSET(w->ww_wflags, WWW_INSERT)) {
@@ -99,7 +102,7 @@ int n;
 				if (*p == '\t') {
 					p++;
 					w->ww_cur.c += 8 -
-						(w->ww_cur.c - w->ww_w.l & 7);
+						((w->ww_cur.c - w->ww_w.l) & 7);
 					goto chklf;
 				}
 				if (!isprt(*p)) {
@@ -121,7 +124,7 @@ int n;
 					q = s;
 					r = 0;
 				} else if (*p == '\t') {
-					register tmp = 8 - (i - w->ww_w.l & 7);
+					int tmp = 8 - ((i - w->ww_w.l) & 7);
 					p++;
 					i += tmp;
 					bp += tmp;
@@ -142,10 +145,10 @@ int n;
 			w->ww_cur.c = i;
 			if (w->ww_cur.r >= w->ww_i.t
 			    && w->ww_cur.r < w->ww_i.b) {
-				register union ww_char *ns = wwns[w->ww_cur.r];
-				register unsigned char *smap =
+				union ww_char *ns = wwns[w->ww_cur.r];
+				unsigned char *smap =
 				    &wwsmap[w->ww_cur.r][col];
-				register char *win = w->ww_win[w->ww_cur.r];
+				char *win = w->ww_win[w->ww_cur.r];
 				int nchanged = 0;
 
 				bp = w->ww_buf[w->ww_cur.r];

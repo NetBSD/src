@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.11 1996/02/08 21:49:07 mycroft Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.12 1997/11/21 08:37:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,23 +36,29 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: wwinit.c,v 1.11 1996/02/08 21:49:07 mycroft Exp $";
+__RCSID("$NetBSD: wwinit.c,v 1.12 1997/11/21 08:37:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <fcntl.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <termcap.h>
 #include "ww.h"
 #include "tt.h"
-#include <sys/signal.h>
-#include <fcntl.h>
+#include "xx.h"
 #include "char.h"
 
+int
 wwinit()
 {
-	register i, j;
+	int i, j;
 	char *kp;
 	sigset_t sigset, osigset;
 
@@ -214,7 +220,7 @@ wwinit()
 	wwwrap = tt.tt_wrap;
 
 	if (wwavailmodes & WWM_REV)
-		wwcursormodes = WWM_REV | wwavailmodes & WWM_BLK;
+		wwcursormodes = WWM_REV | (wwavailmodes & WWM_BLK);
 	else if (wwavailmodes & WWM_UL)
 		wwcursormodes = WWM_UL;
 
@@ -281,7 +287,7 @@ wwinit()
 		wwaddcap1(WWT_DIM, &kp);
 	if (wwavailmodes & WWM_USR)
 		wwaddcap1(WWT_USR, &kp);
-	if (tt.tt_insline && tt.tt_delline || tt.tt_setscroll)
+	if ((tt.tt_insline && tt.tt_delline) || tt.tt_setscroll)
 		wwaddcap1(WWT_ALDL, &kp);
 	if (tt.tt_inschar)
 		wwaddcap1(WWT_IMEI, &kp);
@@ -340,20 +346,21 @@ bad:
 	return -1;
 }
 
+void
 wwaddcap(cap, kp)
-	register char *cap;
-	register char **kp;
+	char *cap;
+	char **kp;
 {
 	char tbuf[512];
 	char *tp = tbuf;
-	register char *str, *p;
+	char *str, *p;
 
 	if ((str = tgetstr(cap, &tp)) != 0) {
-		while (*(*kp)++ = *cap++)
+		while ((*(*kp)++ = *cap++))
 			;
 		(*kp)[-1] = '=';
 		while (*str) {
-			for (p = unctrl(*str++); *(*kp)++ = *p++;)
+			for (p = unctrl(*str++); (*(*kp)++ = *p++);)
 				;
 			(*kp)--;
 		}
@@ -362,18 +369,20 @@ wwaddcap(cap, kp)
 	}
 }
 
+void
 wwaddcap1(cap, kp)
-	register char *cap;
-	register char **kp;
+	char *cap;
+	char **kp;
 {
-	while (*(*kp)++ = *cap++)
+	while ((*(*kp)++ = *cap++))
 		;
 	(*kp)--;
 }
 
+void
 wwstart()
 {
-	register i;
+	int i;
 
 	(void) wwsettty(0, &wwnewtty);
 	for (i = 0; i < wwnrow; i++)
@@ -381,9 +390,10 @@ wwstart()
 	wwstart1();
 }
 
+void
 wwstart1()
 {
-	register i, j;
+	int i, j;
 
 	for (i = 0; i < wwnrow; i++)
 		for (j = 0; j < wwncol; j++) {
@@ -400,9 +410,10 @@ wwstart1()
  * Reset data structures and terminal from an unknown state.
  * Restoring wwos has been taken care of elsewhere.
  */
+void
 wwreset()
 {
-	register i;
+	int i;
 
 	xxreset();
 	for (i = 0; i < wwnrow; i++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwenviron.c,v 1.4 1995/12/21 08:39:50 mycroft Exp $	*/
+/*	$NetBSD: wwenviron.c,v 1.5 1997/11/21 08:37:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,27 +36,34 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwenviron.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwenviron.c,v 1.4 1995/12/21 08:39:50 mycroft Exp $";
+__RCSID("$NetBSD: wwenviron.c,v 1.5 1997/11/21 08:37:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "ww.h"
+#include <sys/types.h>
 #if !defined(OLD_TTY) && !defined(TIOCSCTTY) && !defined(TIOCNOTTY)
 #include <sys/ioctl.h>
 #endif
-#include <sys/signal.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include "ww.h"
 
 /*
  * Set up the environment of this process to run in window 'wp'.
  */
+int
 wwenviron(wp)
-register struct ww *wp;
+	struct ww *wp;
 {
-	register i;
+	int i;
 #ifndef TIOCSCTTY
 	int pgrp = getpid();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwadd.c,v 1.4 1996/02/08 21:48:56 mycroft Exp $	*/
+/*	$NetBSD: wwadd.c,v 1.5 1997/11/21 08:36:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwadd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwadd.c,v 1.4 1996/02/08 21:48:56 mycroft Exp $";
+__RCSID("$NetBSD: wwadd.c,v 1.5 1997/11/21 08:36:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,12 +50,13 @@ static char rcsid[] = "$NetBSD: wwadd.c,v 1.4 1996/02/08 21:48:56 mycroft Exp $"
 /*
  * Stick w1 behind w2.
  */
+void
 wwadd(w1, w2)
-register struct ww *w1;
-struct ww *w2;
+	struct ww *w1;
+	struct ww *w2;
 {
-	register i;
-	register struct ww *w;
+	int i;
+	struct ww *w;
 
 	w1->ww_order = w2->ww_order + 1;
 	w1->ww_back = w2;
@@ -65,9 +67,9 @@ struct ww *w2;
 	for (w = w1->ww_forw; w != &wwhead; w = w->ww_forw)
 		w->ww_order++;
 	for (i = w1->ww_i.t; i < w1->ww_i.b; i++) {
-		register j;
-		register unsigned char *smap = wwsmap[i];
-		register char *win = w1->ww_win[i];
+		int j;
+		unsigned char *smap = wwsmap[i];
+		char *win = w1->ww_win[i];
 		union ww_char *ns = wwns[i];
 		union ww_char *buf = w1->ww_buf[i];
 		int nvis = 0;

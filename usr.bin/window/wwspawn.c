@@ -1,4 +1,4 @@
-/*	$NetBSD: wwspawn.c,v 1.4 1995/12/21 08:39:57 mycroft Exp $	*/
+/*	$NetBSD: wwspawn.c,v 1.5 1997/11/21 08:37:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,25 +36,28 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwspawn.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwspawn.c,v 1.4 1995/12/21 08:39:57 mycroft Exp $";
+__RCSID("$NetBSD: wwspawn.c,v 1.5 1997/11/21 08:37:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <signal.h>
+#include <unistd.h>
 #include "ww.h"
-#include <sys/signal.h>
 
 /*
  * There is a dead lock with vfork and closing of pseudo-ports.
  * So we have to be sneaky about error reporting.
  */
+int
 wwspawn(wp, file, argv)
-register struct ww *wp;
-char *file;
-char **argv;
+	struct ww *wp;
+	char *file;
+	char **argv;
 {
 	int pid;
 	int ret;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.3 1995/09/28 10:34:05 tls Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.4 1997/11/21 08:35:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: cmd2.c,v 1.3 1995/09/28 10:34:05 tls Exp $";
+__RCSID("$NetBSD: cmd2.c,v 1.4 1997/11/21 08:35:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +78,7 @@ char *help_shortcmd[] = {
 	":       Enter a long command",
 	0
 };
+
 char *help_longcmd[] = {
 	":alias name string ...  Make `name' an alias for `string ...'",
 	":alias                  Show all aliases",
@@ -106,9 +108,12 @@ char *help_longcmd[] = {
 	0
 };
 
+int	help_print __P((struct ww *, char *, char **));
+
+void
 c_help()
 {
-	register struct ww *w;
+	struct ww *w;
 
 	if ((w = openiwin(wwnrow - 3, "Help")) == 0) {
 		error("Can't open help window: %s.", wwerror());
@@ -121,10 +126,11 @@ c_help()
 	closeiwin(w);
 }
 
+int
 help_print(w, name, list)
-register struct ww *w;
-char *name;
-register char **list;
+	struct ww *w;
+	char *name;
+	char **list;
 {
 	wwprintf(w, "%s:\n\n", name);
 	while (*list)
@@ -142,6 +148,7 @@ register char **list;
 	return more(w, 1) == 2 ? -1 : 0;
 }
 
+void
 c_quit()
 {
 	char oldterse = terse;
