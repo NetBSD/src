@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 1998/08/25 08:28:53 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.123 1998/09/01 18:05:27 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,15 @@
 #include <vm/vm_page.h>
 
 #if defined(UVM)
-#include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
+#include <uvm/uvm.h>	/* XXX: not _extern ... need vm_map_create */
+#else
+/* A few straightforward translations to reduce clutter */
+#define uvm_km_alloc(m,s)	kmem_alloc(m,s)
+#define uvm_km_valloc(m,s)	kmem_alloc_pageable(m,s)
+#define uvm_unmap(m,a,s,x)	kmem_free(m,a,s)
+#define uvm_km_suballoc(m,l,h,s,p,x,y) \
+				kmem_suballoc(m,l,h,s,p)
+#define uvm_useracc(a,s,f)	useracc(a,s,f)
 #endif
 
 #include <sys/sysctl.h>
@@ -241,13 +249,8 @@ cpu_startup()
 	 */
 	sz = (int)allocsys((caddr_t)0);
 
-#if defined(UVM)
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-#else
-	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-#endif
 
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
@@ -343,13 +346,8 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-#if defined(UVM)
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
                                  16*NCARGS, TRUE, FALSE, NULL);
-#else
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
-#endif
 
 	if (CPU_ISSUN4OR4C) {
 		/*
@@ -366,13 +364,9 @@ cpu_startup()
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
-#if defined(UVM)
         mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
             VM_MBUF_SIZE, FALSE, FALSE, NULL);
-#else
-	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
-#endif
+
 	/*
 	 * Initialize callouts
 	 */
@@ -719,13 +713,8 @@ sys_sigreturn(p, v, retval)
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
 	scp = SCARG(uap, sigcntxp);
-#if defined(UVM)
 	if ((int)scp & 3 || uvm_useracc((caddr_t)scp,sizeof *scp, B_WRITE) == 0)
 		return (EINVAL);
-#else
-	if ((int)scp & 3 || useracc((caddr_t)scp, sizeof *scp, B_WRITE) == 0)
-		return (EINVAL);
-#endif
 	tf = p->p_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
@@ -1405,11 +1394,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-#if defined(UVM)
 	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size, 0);
-#else
-	vm_map_remove(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
-#endif
 }
 
 /*
@@ -1602,10 +1587,14 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 
 	if ((flags & BUS_DMA_24BIT) == 0) {
 		/* Any memory will do */
+#ifdef UVM
 		va = uvm_km_kmemalloc(kernel_map, uvm.kernel_object, size,
 				      (flags & BUS_DMA_NOWAIT) != 0
 						? UVM_KMF_NOWAIT
 						: 0);
+#else
+		va = kmem_malloc(kernel_map, size, !(flags & BUS_DMA_NOWAIT));
+#endif
 		if (va == NULL)
 			return (ENOMEM);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.125 1998/08/23 10:01:24 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.126 1998/09/01 18:05:27 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -726,8 +726,12 @@ pgt_page_alloc(sz, flags, mtype)
 {
 	caddr_t p;
 
+#if defined(UVM)
 	p = (caddr_t)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
 				      (vsize_t)sz, UVM_KMF_NOWAIT);
+#else
+	p = (caddr_t)kmem_malloc(kmem_map, (vsize_t)sz, 0);
+#endif
 
 	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
 		pcache_flush(p, (caddr_t)VA2PA(p), sz);
@@ -742,7 +746,11 @@ pgt_page_free(v, sz, mtype)
 	unsigned long sz;
 	int mtype;
 {
+#if defined(UVM)
 	uvm_km_free(kernel_map, (vaddr_t)v, sz);
+#else
+	kmem_free(kernel_map, (vaddr_t)v, sz);
+#endif
 }
 #endif /* 4m only */
 
