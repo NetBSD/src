@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.9 1997/04/03 17:51:47 kleink Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.10 1997/10/19 17:27:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -89,11 +89,6 @@
 #define	O_CREAT		0x0200		/* create if nonexistant */
 #define	O_TRUNC		0x0400		/* truncate to zero length */
 #define	O_EXCL		0x0800		/* error if already exists */
-#ifdef _KERNEL
-#define	FMARK		0x1000		/* mark during gc() */
-#define	FDEFER		0x2000		/* defer for next gc pass */
-#define	FHASLOCK	0x4000		/* descriptor holds advisory lock */
-#endif
 
 /* defined by POSIX 1003.1; BSD default, but required to be distinct */
 #define	O_NOCTTY	0x8000		/* don't assign controlling terminal */
@@ -103,7 +98,14 @@
 #define	FFLAGS(oflags)	((oflags) + 1)
 #define	OFLAGS(fflags)	((fflags) - 1)
 
-/* bits to save after open */
+/* all bits settable during open(2) */
+#define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
+			 O_ASYNC|O_FSYNC|O_CREAT|O_TRUNC|O_EXCL|O_NOCTTY)
+
+#define	FMARK		0x1000		/* mark during gc() */
+#define	FDEFER		0x2000		/* defer for next gc pass */
+#define	FHASLOCK	0x4000		/* descriptor holds advisory lock */
+/* bits to save after open(2) */
 #define	FMASK		(FREAD|FWRITE|FAPPEND|FASYNC|FFSYNC|FNONBLOCK)
 /* bits settable by fcntl(F_SETFL, ...) */
 #define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK)
