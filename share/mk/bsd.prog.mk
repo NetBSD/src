@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.203 2005/01/08 09:53:38 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.204 2005/01/12 00:32:59 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -110,6 +110,10 @@ CLEANFILES+=strings
 SRCS?=		${PROG}.cc
 .else
 SRCS?=		${PROG}.c
+.endif
+
+.if defined(RESCUEDIR)
+CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
 .endif
 
 _YPSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
