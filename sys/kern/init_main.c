@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.199.2.2 2002/03/10 19:08:21 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.199.2.3 2002/03/10 21:05:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.2.2 2002/03/10 19:08:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.2.3 2002/03/10 21:05:10 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -256,8 +256,7 @@ main(void)
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
-	p->p_ts = pool_get(&turnstile_pool, PR_WAITOK);
-	memset(p->p_ts, 0, sizeof(*p->p_ts));
+	p->p_ts = pool_cache_get(&turnstile_cache, PR_WAITOK);
 
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 

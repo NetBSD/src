@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.92.4.1 2002/03/10 19:08:22 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.92.4.2 2002/03/10 21:05:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.92.4.1 2002/03/10 19:08:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.92.4.2 2002/03/10 21:05:11 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sysv.h"
@@ -227,7 +227,10 @@ exit1(struct proc *p, int rv)
 	 */
 	p->p_stat = SDEAD;
 
-	pool_put(&turnstile_pool, p->p_ts);
+	pool_cache_put(&turnstile_cache, p->p_ts);
+#ifdef DIAGNOSTIC
+	p->p_ts = NULL;
+#endif
 
 	/*
 	 * Remove proc from pidhash chain so looking it up won't
