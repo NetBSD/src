@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.47 1999/07/04 21:39:33 cgd Exp $	*/
+/*	$NetBSD: defs.h,v 1.48 1999/08/16 08:29:04 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -159,8 +159,8 @@ EXTERN int partsize;
 /* set by md_get_info() */
 EXTERN int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
 /* Information for the NetBSD disklabel */
-enum DLTR {A,B,C,D,E,F,G,H};
-EXTERN char partname[] INIT("abcdefgh");
+enum DLTR {A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z};
+#define partition_name(x)	('a' + (x))
 EXTERN partinfo bsdlabel[16];
 EXTERN char fsmount[16][20] INIT({""});
 #define DISKNAME_SIZE 80
@@ -223,14 +223,15 @@ EXTERN char fs_mount[MAXFS][STRSIZE];
 /* needed prototypes */
 
 /* Machine dependent functions .... */
+int	md_check_partitions __P((void));
+void	md_cleanup_install __P((void));
+int	md_copy_filesystem __P((void));
 int	md_get_info __P((void));
-int	md_pre_disklabel __P((void));
+int	md_make_bsd_partitions __P((void));
 int	md_post_disklabel __P((void));
 int	md_post_newfs __P((void));
-int	md_copy_filesystem __P((void));
-int	md_make_bsd_partitions __P((void));
+int	md_pre_disklabel __P((void));
 int	md_update __P((void));
-void	md_cleanup_install __P((void));
 
 /* from main.c */
 void toplevel __P((void));
