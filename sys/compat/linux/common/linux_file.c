@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.30 2000/12/01 12:28:33 jdolecek Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.31 2000/12/18 14:40:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -643,12 +643,12 @@ linux_sys_chmod(p, v, retval)
 }
 
 int
-linux_sys_chown(p, v, retval)
+linux_sys_chown16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_chown_args /* {
+	struct linux_sys_chown16_args /* {
 		syscallarg(const char *) path;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
@@ -668,12 +668,12 @@ linux_sys_chown(p, v, retval)
 }
 
 int
-linux_sys_fchown(p, v, retval)
+linux_sys_fchown16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_fchown_args /* {
+	struct linux_sys_fchown16_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
@@ -690,12 +690,12 @@ linux_sys_fchown(p, v, retval)
 }
 
 int
-linux_sys_lchown(p, v, retval)
+linux_sys_lchown16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_lchown_args /* {
+	struct linux_sys_lchown16_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
