@@ -5614,10 +5614,6 @@ error 0 %s: no such user\n", username);
 	   outweighs this.  */
 	printf ("error 0 no such user %s in CVSROOT/passwd\n", username);
 
-	/* I'm doing this manually rather than via error_exit ()
-	   because I'm not sure whether we want to call server_cleanup.
-	   Needs more investigation....  */
-
 	error_exit ();
     }
     else
