@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.1 2001/10/05 22:27:41 reinoud Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.2 2001/11/22 18:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -52,7 +52,7 @@
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 
 irqhandler_t *irqhandlers[NIRQS];
 fiqhandler_t *fiqhandlers;

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2001/03/04 05:08:43 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.2 2001/11/22 18:34:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <machine/pcb.h>
 
 u_int arm700bugcount = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.1 2001/10/05 22:27:45 reinoud Exp $	*/
+/*	$NetBSD: vidc.c,v 1.2 2001/11/22 18:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -43,7 +43,7 @@
 
 #include <sys/types.h>
 #include <arm/iomd/vidc.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 
 /* VIDC STUFF */
 

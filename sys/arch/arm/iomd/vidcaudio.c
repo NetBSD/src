@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.2 2001/10/17 23:28:20 reinoud Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.3 2001/11/22 18:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -49,7 +49,7 @@
 #include <dev/audio_if.h>
 
 #include <machine/irqhandler.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
