@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.24 2003/04/28 23:16:28 bjh21 Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.25 2003/05/01 12:32:39 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -165,7 +165,8 @@
 #define	F_SETFD		2		/* set file descriptor flags */
 #define	F_GETFL		3		/* get file status flags */
 #define	F_SETFL		4		/* set file status flags */
-#if defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
 #define	F_GETOWN	5		/* get SIGIO/SIGURG proc/pgrp */
 #define F_SETOWN	6		/* set SIGIO/SIGURG proc/pgrp */
 #endif
