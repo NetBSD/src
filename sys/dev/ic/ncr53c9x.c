@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.12 1997/07/19 21:54:16 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.13 1997/07/20 16:46:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -993,7 +993,11 @@ gotit:
 				    sc_link->target, sc_link->lun);
 				sc->sc_dleft = 0;
 			}
-			ecb->xs->resid = ecb->dleft = sc->sc_dleft;
+			ecb->dleft = (ecb->flags & ECB_TENTATIVE_DONE)
+				? 0
+				: sc->sc_dleft;
+			if ((ecb->flags & ECB_SENSE) == 0)
+				ecb->xs->resid = ecb->dleft;
 			sc->sc_state = NCR_CMDCOMPLETE;
 			break;
 
@@ -1021,9 +1025,16 @@ gotit:
 			ti->dconns++;
 			sc->sc_state = NCR_DISCONNECT;
 
-			if ((ecb->xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
-				break;
-			/*FALLTHROUGH*/
+			/*
+			 * Mark the fact that all bytes have moved. The
+			 * target may not bother to do a SAVE POINTERS
+			 * at this stage. This flag will set the residual
+			 * count to zero on MSG COMPLETE.
+			 */
+			if (sc->sc_dleft == 0)
+				ecb->flags |= ECB_TENTATIVE_DONE;
+
+			break;
 
 		case MSG_SAVEDATAPOINTER:
 			NCR_MSGS(("save datapointer "));
@@ -1774,14 +1785,18 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 					    & NCRFIFO_FF) - 2;
 					while (i--)
 						(void) NCR_READ_REG(sc,
-						    NCR_FIFO);
+								    NCR_FIFO);
 				}
 				ecb->stat = NCR_READ_REG(sc, NCR_FIFO);
 				msg = NCR_READ_REG(sc, NCR_FIFO);
 				NCR_PHASE(("<stat:(%x,%x)>", ecb->stat, msg));
 				if (msg == MSG_CMDCOMPLETE) {
-					ecb->xs->resid = ecb->dleft =
-					    sc->sc_dleft;
+					ecb->dleft =
+					  (ecb->flags & ECB_TENTATIVE_DONE)
+						? 0
+						: sc->sc_dleft;
+					if ((ecb->flags & ECB_SENSE) == 0)
+						ecb->xs->resid = ecb->dleft;
 					sc->sc_state = NCR_CMDCOMPLETE;
 				} else
 					printf("%s: STATUS_PHASE: msg %d\n",
@@ -1894,6 +1909,9 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 				  1, &size);
 			sc->sc_prevphase = DATA_IN_PHASE;
 		setup_xfer:
+			/* Target returned to data phase: wipe "done" memory */
+			ecb->flags &= ~ECB_TENTATIVE_DONE;
+
 			/* Program the SCSI counter */
 			NCR_WRITE_REG(sc, NCR_TCL, size);
 			NCR_WRITE_REG(sc, NCR_TCM, size >> 8);
