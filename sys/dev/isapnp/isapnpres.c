@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.9 1998/09/05 14:15:26 christos Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.10 2000/05/23 17:50:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -348,6 +348,8 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 		r->maxbase = (buf[4] << 8) | buf[3];
 		r->align = buf[5];
 		r->length = buf[6];
+		if (r->length == 0)
+		    pa->ipa_nio--;
 #ifdef DEBUG_ISAPNP
 		isapnp_print_io("", r);
 #endif
@@ -360,6 +362,8 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 		r->maxbase = r->minbase;
 		r->align = 1;
 		r->length = buf[2];
+		if (r->length == 0)
+		    pa->ipa_nio--;
 #ifdef DEBUG_ISAPNP
 		isapnp_print_io("FIXED ", r);
 #endif
@@ -376,6 +380,8 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 		r->maxbase = (buf[4] << 16) | (buf[3] << 8);
 		r->align = (buf[6] << 8) | buf[5];
 		r->length = (buf[8] << 16) | (buf[7] << 8);
+		if (r->length == 0)
+		    pa->ipa_nmem--;
 #ifdef DEBUG_ISAPNP
 		isapnp_print_mem("", r);
 #endif
@@ -401,6 +407,8 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 		    (buf[10] << 8) | buf[9];
 		r->length = (buf[16] << 24) | (buf[15] << 16) |
 		    (buf[14] << 8) | buf[13];
+		if (r->length == 0)
+		    pa->ipa_nmem32--;
 #ifdef DEBUG_ISAPNP
 		isapnp_print_mem("32-bit ", r);
 #endif
@@ -415,6 +423,8 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 		r->align = 1;
 		r->length = (buf[8] << 24) | (buf[7] << 16) |
 		    (buf[6] << 8) | buf[5];
+		if (r->length == 0)
+		    pa->ipa_nmem32--;
 #ifdef DEBUG_ISAPNP
 		isapnp_print_mem("FIXED 32-bit ", r);
 #endif
