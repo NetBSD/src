@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.180 2003/09/26 11:51:53 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.181 2003/09/26 14:08:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.180 2003/09/26 11:51:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.181 2003/09/26 14:08:45 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -614,6 +614,12 @@ nfs_getattr(v)
 	 */
 	if (np->n_flag & (NACC | NUPD))
 		np->n_flag |= NCHG;
+
+	/*
+	 * if we have delayed truncation, do it now.
+	 */
+	nfs_delayedtruncate(vp);
+
 	/*
 	 * First look in the cache.
 	 */
