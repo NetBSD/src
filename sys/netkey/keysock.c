@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.35 2004/06/01 02:01:14 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.36 2004/06/01 03:05:26 itojun Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.35 2004/06/01 02:01:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.36 2004/06/01 03:05:26 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -240,10 +240,8 @@ key_sendup0(rp, m, promisc, canwait)
 			kp->kp_queue = NULL;
 		} else
 			m->m_nextpkt = NULL;	/* just for safety */
-	} else {
-		/* NOTE: kp_queue is !NULL */
+	} else
 		m->m_nextpkt = NULL;
-	}
 
 	for (; m && error == 0; m = n) {
 		n = m->m_nextpkt;
@@ -295,8 +293,10 @@ recovery:
 		 * insert m to the head of queue, as normally mbuf on the queue
 		 * is less important than others.
 		 */
-		m->m_nextpkt = kp->kp_queue;
-		kp->kp_queue = m;
+		if (m) {
+			m->m_nextpkt = kp->kp_queue;
+			kp->kp_queue = m;
+		}
 	} else {
 		/* recover the queue */
 		if (!m) {
