@@ -1,4 +1,4 @@
-.\"	$NetBSD: cz.4,v 1.4 2001/09/11 00:08:26 wiz Exp $
+.\"	$NetBSD: cz.4,v 1.5 2001/09/12 18:19:17 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -97,13 +97,21 @@ The MIPS CPU on the board performs all flow-control handling.
 .\" XXX too be done.
 .Sh SEE ALSO
 .Xr pci 4 ,
-.Xr tty 4 ,
-.Xr termios 4
+.Xr termios 4 ,
+.Xr tty 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Nx 1.5 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Jason R. Thorpe Aq thorpej@zembu.com
+and
+.An Bill Studenmund Aq wrstuden@zembu.com
+of Zembu Labs, Inc.
 .Sh BUGS
 The
 .Nm
@@ -118,11 +126,3 @@ Interrupt mode has not been tested.
 .Pp
 There is no support for reading or writing the EEPROM connected to
 the PLX PCI bus controller.
-.Sh AUTHORS
-The
-.Nm
-driver was written by
-.An Jason R. Thorpe Aq thorpej@zembu.com
-and
-.An Bill Studenmund Aq wrstuden@zembu.com
-of Zembu Labs, Inc.
