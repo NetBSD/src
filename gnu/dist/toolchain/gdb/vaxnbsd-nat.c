@@ -28,6 +28,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "gdbcore.h"
 
+static void
+supply_regs (regs)
+     char *regs;
+{
+  int i;
+
+  for (i = 0; i < NUM_REGS; i++)
+    supply_register (i, regs + (i * REGISTER_SIZE));
+}
+
 void
 fetch_inferior_registers (regno)
      int regno;
@@ -36,10 +46,7 @@ fetch_inferior_registers (regno)
 
   ptrace (PT_GETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
-  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers,
-	  sizeof(inferior_registers));
-
-  registers_fetched ();
+  supply_regs ((char *) &inferior_registers);
 }
 
 void
@@ -52,8 +59,6 @@ store_inferior_registers (regno)
 	  sizeof(inferior_registers));
   ptrace (PT_SETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
-
-  registers_fetched ();
 }
 
 
@@ -71,7 +76,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      unsigned int reg_addr;	/* Unused in this version */
 {
   struct md_core *core_reg;
-  struct reg *reg;
+  struct reg reg;
 
   core_reg = (struct md_core *)core_reg_sect;
 
@@ -85,21 +90,42 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
   }
 
   /* Integer registers */
-  reg = (struct reg *) &registers[REGISTER_BYTE (0)];
-  memcpy(&reg->r0, &core_reg->intreg.r0, sizeof(reg->r0)*12);
-  reg->ap = core_reg->intreg.ap;
-  reg->fp = core_reg->intreg.fp;
-  reg->sp = core_reg->intreg.sp;
-  reg->pc = core_reg->intreg.pc;
-  reg->psl = core_reg->intreg.psl;
+  memcpy(&reg.r0, &core_reg->intreg.r0, sizeof(reg.r0)*12);
+  reg.ap = core_reg->intreg.ap;
+  reg.fp = core_reg->intreg.fp;
+  reg.sp = core_reg->intreg.sp;
+  reg.pc = core_reg->intreg.pc;
+  reg.psl = core_reg->intreg.psl;
 
-  registers_fetched ();
+  supply_regs ((char *) &reg);
+}
+
+static void
+fetch_elfcore_registers (core_reg_sect, core_reg_size, which, ignore)
+     char *core_reg_sect;
+     unsigned core_reg_size;
+     int which;
+     CORE_ADDR ignore;
+{
+  switch (which)
+    {
+    case 0:  /* Integer registers */
+      if (core_reg_size != sizeof (struct reg))
+	warning ("Wrong size register set in core file.");
+      else
+	supply_regs (core_reg_sect);
+      break;
+
+    default:
+      /* Don't know what kind of register request this is; just ignore it.  */
+      break;
+    }
 }
 
 /* Register that we are able to handle vaxnbsd core file formats.
    FIXME: is this really bfd_target_unknown_flavour? */
 
-static struct core_fns nat_core_fns =
+static struct core_fns vaxnbsd_core_fns =
 {
   bfd_target_unknown_flavour,		/* core_flavour */
   default_check_format,			/* check_format */
@@ -108,10 +134,20 @@ static struct core_fns nat_core_fns =
   NULL					/* next */
 };
 
+static struct core_fns vaxnbsd_elfcore_fns =
+{
+  bfd_target_elf_flavour,		/* core_flavour */
+  default_check_format,			/* check_format */
+  default_core_sniffer,			/* core_sniffer */
+  fetch_elfcore_registers,		/* core_read_registers */
+  NULL					/* next */
+};
+
 void
 _initialize_vaxnbsd_nat ()
 {
-  add_core_fns (&nat_core_fns);
+  add_core_fns (&vaxnbsd_core_fns);
+  add_core_fns (&vaxnbsd_elfcore_fns);
 }
 
 
