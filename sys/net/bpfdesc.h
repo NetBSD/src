@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.10 1995/03/26 20:30:09 jtc Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -73,6 +73,9 @@ struct bpf_d {
 	u_char		bd_promisc;	/* true if listening promiscuously */
 	u_char		bd_state;	/* idle, waiting, or timed out */
 	u_char		bd_immediate;	/* true to return on packet arrival */
+	int		bd_async;	/* non-zero if packet reception should generate signal */
+	int		bd_sig;		/* signal to send upon packet reception */
+	pid_t		bd_pgid;	/* process or group id for signal */
 #if BSD < 199103
 	u_char		bd_selcoll;	/* true if selects collide */
 	int		bd_timedout;
