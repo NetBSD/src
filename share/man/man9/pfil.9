@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.3 1996/12/02 01:00:50 tls Exp $
+.\"	$NetBSD: pfil.9,v 1.4 1997/04/13 13:48:51 mrg Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green.
 .\" All rights reserved.
@@ -49,17 +49,20 @@
 .\"(void *, int, struct ifnet *, int, struct mbuf **)
 .Sh DESCRIPTION
 The
-.Fn pfil
-interface allows a function to be called on every incoming, outgoing or
-bad packet.  The hooks for these are embedded in the ip_input and ip_output
+.Nm
+interface allows a function to be called on every incoming or outgoing
+packets.  The hooks for these are embedded in the
+.Fn ip_input
+and
+.Fn ip_output
 routines.  The
 .Fn pfil_hook_get
-function returns the first member of a particular hook, either the in, out
-or bad list.  The
+function returns the first member of a particular hook, either the in or out
+list.  The
 .Fn pfil_add_hook
 function takes a function of the form below as it's first argument, and the
 flags for which lists to add the function to.  The possible values for these
-flags are some combination of PFIL_IN, PFIL_OUT and PFIL_BAD.  The
+flags are some combination of PFIL_IN and PFIL_OUT.  The
 .Fn pfil_remove_hook
 removes a hook from the specified lists.
 .Pp
@@ -78,10 +81,13 @@ and
 arguments describe the network interface and the mbuf holding data for this
 packet.  The
 .Va dir
-is the direction; 0 for incoming packets and 1 for outgoing packets.
+is the direction; 0 for incoming packets and 1 for outgoing packets.  if the function
+returns non-zero, this signals an error and no further processing of this packet is
+performed.  The function should set errno to indicate the nature of the error.
+It is the hook's responsibiliy to free the chain if the packet is being dropped.
 .Pp
 The
-.Fn pfil
+.Nm
 interface is enabled in the kernel via the
 .Sy PFIL_HOOKS
 option.
@@ -94,6 +100,13 @@ and
 .Fn pfil_remove_hook
 are expected to always succeed.
 .Sh HISTORY
-The pfil interface first appeared in NetBSD 1.2A.
+The
+.Nm
+interface first appeared in
+.Nx 1.3
+.Sh BUGS
+The current
+.Nm
+implementation will need changes to suit a threaded kernel model.
 .Sh SEE ALSO
-.Xr bpf 4
+.Xr bpf 4 .
