@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.28 2000/05/27 06:53:29 matt Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.29 2000/05/27 17:06:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <a.out.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
@@ -232,7 +233,9 @@ dodir(dir, silent, update_dir_list)
 
 	while ((dp = readdir(dd)) != NULL) {
 		int n;
-		char *cp;
+		char *cp, *path;
+		FILE *fp;
+		struct exec ex;
 
 		/* Check for `lib' prefix */
 		if (dp->d_name[0] != 'l' ||
@@ -255,6 +258,18 @@ dodir(dir, silent, update_dir_list)
 				break;
 		}
 		if (cp <= name)
+			continue;
+
+		path = concat(dir, "/", dp->d_name);
+		fp = fopen(path, "r");
+		free(path);
+		if (fp == NULL)
+			continue;
+		n = fread(&ex, 1, sizeof(ex), fp);
+		fclose(fp);
+		if (n != sizeof(ex)
+		    || N_GETMAGIC(ex) != ZMAGIC
+		    || (N_GETFLAG(ex) & EX_DYNAMIC) == 0)
 			continue;
 
 		*cp = '\0';
