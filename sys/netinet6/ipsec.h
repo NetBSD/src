@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.25 2002/06/08 20:06:45 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.26 2002/06/09 14:43:13 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ struct inpcbpolicy {
 	struct secpolicy *cache[3];
 	struct secpolicyindex cacheidx[3];
 	int cachegen[3]; 	/* cache generation #, the time we filled it */
-	int cacheflags;	
+	int cacheflags;
 #define IPSEC_PCBSP_CONNECTED	1
 };
 

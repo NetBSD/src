@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.28 2002/06/08 20:06:44 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.29 2002/06/09 14:43:12 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.28 2002/06/08 20:06:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.29 2002/06/09 14:43:12 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -154,7 +154,7 @@ in6_gif_output(ifp, family, m)
 		m_freem(m);
 		return EAFNOSUPPORT;
 	}
-	
+
 	/* prepend new IP header */
 	M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 	if (m && m->m_len < sizeof(struct ip6_hdr))
@@ -210,7 +210,7 @@ in6_gif_output(ifp, family, m)
 			return ENETUNREACH;	/* XXX */
 		}
 	}
-	
+
 #ifdef IPV6_MINMTU
 	/*
 	 * force fragmentation to minimum MTU, to avoid path MTU discovery.
@@ -304,7 +304,7 @@ int in6_gif_input(mp, offp, proto)
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
-		
+
 	gif_input(m, af, gifp);
 	return IPPROTO_DONE;
 }
