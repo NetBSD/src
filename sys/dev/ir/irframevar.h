@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.4 2001/12/04 19:56:17 augustss Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.5 2001/12/05 20:00:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,10 +48,10 @@ struct irframe_methods {
 };
 
 struct irframe_softc {
-	struct	device		sc_dev;
-	struct	irframe_methods	*sc_methods;
-	void			*sc_handle;
-	char			sc_open;
+	struct	device			sc_dev;
+	const struct irframe_methods	*sc_methods;
+	void				*sc_handle;
+	char				sc_open;
 };
 
 void irframe_frame_available(struct device *);
@@ -59,4 +59,7 @@ void irframe_frame_available(struct device *);
 #define IRDA_DEFAULT_SPEED	9600
 #define IRDA_DEFAULT_EBOFS	10
 #define IRDA_DEFAULT_SIZE	386
+
+struct device *irframe_alloc(size_t, const struct irframe_methods *, void *);
+void irframe_dealloc(struct device *);
 
