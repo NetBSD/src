@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.26 1995/08/22 19:43:23 jtc Exp $
+#	$NetBSD: PATEK,v 1.27 1996/02/27 00:07:06 cgd Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -72,6 +72,7 @@ config		netbsd	swap generic
 options		GENERIC
 
 isa0	at root
+#eisa0	at root
 #pci0	at root
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
@@ -103,7 +104,7 @@ pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #scsibus* at aha?
-#ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+#ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
