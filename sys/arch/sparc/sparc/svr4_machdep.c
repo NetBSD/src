@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.25 1997/10/16 10:35:55 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.26 1998/01/24 18:26:09 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -41,11 +41,13 @@
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/exec_elf.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_exec.h>
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
@@ -55,6 +57,16 @@
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+
+void
+svr4_setregs(p, epp, stack)
+	struct proc *p;
+	struct exec_package *epp;
+	u_long stack;
+{
+
+	setregs(p, epp, stack);
+}
 
 #ifdef DEBUG
 extern int sigdebug;
