@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.9 1994/12/28 09:25:50 chopps Exp $	*/
+/*	$NetBSD: sci.c,v 1.10 1995/01/05 07:22:46 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -106,18 +106,6 @@ sci_minphys(bp)
 }
 
 /*
- * must be used
- */
-u_int
-sci_adinfo()
-{
-	/* 
-	 * one request at a time please
-	 */
-	return(1);
-}
-
-/*
  * used by specific sci controller
  *
  * it appears that the higher level code does nothing with LUN's
@@ -140,7 +128,7 @@ sci_scsicmd(xs)
 	if (flags & SCSI_DATA_UIO)
 		panic("sci: scsi data uio requested");
 	
-	if (dev->sc_xs && flags & SCSI_NOMASK)
+	if (dev->sc_xs && flags & SCSI_POLL)
 		panic("sci_scsicmd: busy");
 
 	s = splbio();
@@ -165,7 +153,7 @@ sci_scsicmd(xs)
 	 */
 	sci_donextcmd(dev);
 
-	if (flags & SCSI_NOMASK)
+	if (flags & SCSI_POLL)
 		return(COMPLETE);
 	return(SUCCESSFULLY_QUEUED);
 }
@@ -197,7 +185,7 @@ sci_donextcmd(dev)
 
 	dev->sc_stat[0] = -1;
 	xs->cmd->bytes[0] |= slp->lun << 5;
-	if (phase == STATUS_PHASE || flags & SCSI_NOMASK) 
+	if (phase == STATUS_PHASE || flags & SCSI_POLL) 
 		stat = sciicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
 		    xs->data, xs->datalen, phase);
 	else if (scigo(dev, xs) == 0)
@@ -227,7 +215,7 @@ sci_scsidone(dev, stat)
 	 */
 	xs->status = stat;
 
-	if (stat == 0 || xs->flags & SCSI_ERR_OK)
+	if (stat == 0)
 		xs->resid = 0;
 	else {
 		switch(stat) {
@@ -281,7 +269,7 @@ scigetsense(dev, xs)
 
 	slp = xs->sc_link;
 	
-	rqs.op_code = REQUEST_SENSE;
+	rqs.opcode = REQUEST_SENSE;
 	rqs.byte2 = slp->lun << 5;
 #ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length : 

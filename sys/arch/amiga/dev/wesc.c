@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.6 1994/12/28 09:26:04 chopps Exp $	*/
+/*	$NetBSD: wesc.c,v 1.7 1995/01/05 07:22:51 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -58,8 +58,6 @@ struct scsi_adapter wesc_scsiswitch = {
 	siop_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	siop_adinfo,
-	"wesc",
 };
 
 struct scsi_device wesc_scsidev = {
@@ -67,8 +65,6 @@ struct scsi_device wesc_scsidev = {
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
-	"wesc",
-	0,
 };
 
 
@@ -121,9 +117,10 @@ wescattach(pdp, dp, auxp)
 	siopinitialize(sc);
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &wesc_scsiswitch;
 	sc->sc_link.device = &wesc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	custom.intreq = INTF_PORTS;

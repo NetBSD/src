@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.4 1994/12/28 09:24:55 chopps Exp $	*/
+/*	$NetBSD: afsc.c,v 1.5 1995/01/05 07:22:31 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -59,8 +59,6 @@ struct scsi_adapter afsc_scsiswitch = {
 	siop_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	siop_adinfo,
-	"afsc",
 };
 
 struct scsi_device afsc_scsidev = {
@@ -68,8 +66,6 @@ struct scsi_device afsc_scsidev = {
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
-	"afsc",
-	0,
 };
 
 
@@ -123,9 +119,10 @@ afscattach(pdp, dp, auxp)
 	siopinitialize(sc);
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &afsc_scsiswitch;
 	sc->sc_link.device = &afsc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	custom.intreq = INTF_PORTS;

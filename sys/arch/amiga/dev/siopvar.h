@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.6 1994/12/28 09:26:02 chopps Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.7 1995/01/05 07:22:50 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -148,7 +148,6 @@ struct	siop_softc {
 #define	STS_EXT		0x80	/* Extended status valid */
 
 void siop_minphys __P((struct buf *bp));
-u_int siop_adinfo __P((void));
 int siop_scsicmd __P((struct scsi_xfer *));
 
 #endif /* _SIOPVAR_H */

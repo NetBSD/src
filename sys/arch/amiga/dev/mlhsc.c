@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.6 1994/12/28 09:25:45 chopps Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.7 1995/01/05 07:22:40 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -60,8 +60,6 @@ struct scsi_adapter mlhsc_scsiswitch = {
 	sci_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	sci_adinfo,
-	"mlhsc",
 };
 
 struct scsi_device mlhsc_scsidev = {
@@ -69,8 +67,6 @@ struct scsi_device mlhsc_scsidev = {
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
-	"mlhsc",
-	0,
 };
 
 #define QPRINTF
@@ -142,9 +138,10 @@ mlhscattach(pdp, dp, auxp)
 	scireset(sc);
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &mlhsc_scsiswitch;
 	sc->sc_link.device = &mlhsc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	/*
