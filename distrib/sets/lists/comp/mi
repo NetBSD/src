@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.735 2004/11/07 18:03:12 kim Exp $
+#	$NetBSD: mi,v 1.736 2004/11/09 08:46:08 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1266,7 +1266,7 @@
 ./usr/include/sys/bootinfo.h			comp-obsolete		obsolete
 ./usr/include/sys/bswap.h			comp-c-include
 ./usr/include/sys/buf.h				comp-c-include
-./usr/include/sys/bufq.h			comp-c-include
+./usr/include/sys/bufq.h			comp-obsolete		obsolete
 ./usr/include/sys/callout.h			comp-c-include
 ./usr/include/sys/cc_microtime.h		comp-obsolete		obsolete
 ./usr/include/sys/cdefs.h			comp-c-include
