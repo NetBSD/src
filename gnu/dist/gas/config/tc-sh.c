@@ -50,13 +50,10 @@ void cons ();
 void s_align_bytes ();
 static void s_uacons PARAMS ((int));
 
-int shl = 0;
-
 static void
 little (ignore)
      int ignore;
 {
-  shl = 1;
   target_big_endian = 0;
 }
 
@@ -176,9 +173,6 @@ md_begin ()
 {
   sh_opcode_info *opcode;
   char *prev_name = "";
-
-  if (! shl)
-    target_big_endian = 1;
 
   opcode_hash_control = hash_new ();
 
@@ -1233,7 +1227,6 @@ md_parse_option (c, arg)
       break;
 
     case OPTION_LITTLE:
-      shl = 1;
       target_big_endian = 0;
       break;
 
@@ -1924,7 +1917,7 @@ md_apply_fix (fixP, val)
 
     case BFD_RELOC_SH_PCDISP12BY2:
       val /= 2;
-      if (val < -0x800 || val >= 0x7ff)
+      if (val < -0x800 || val > 0x7ff)
 	as_bad_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
       buf[lowbyte] = val & 0xff;
       buf[highbyte] |= (val >> 8) & 0xf;
