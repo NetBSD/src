@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/12 08:08:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/09/13 20:18:49 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -13,5 +13,5 @@ CPPFLAGS+=-DHAS_SNPRINTF
 LDADD+=	-lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>

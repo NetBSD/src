@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:57 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -11,5 +11,5 @@ INCS=	autohint.h bdftypes.h cfftypes.h fnttypes.h ftcalc.h ftcore.h \
 	ftobject.h ftobjs.h ftstream.h fttrace.h internal.h pcftypes.h \
 	psaux.h pshints.h psnames.h sfnt.h t1types.h t42types.h tttypes.h
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>
