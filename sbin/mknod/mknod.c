@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.9 1997/09/15 03:46:31 lukem Exp $	*/
+/*	$NetBSD: mknod.c,v 1.10 1997/11/05 21:29:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mknod.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: mknod.c,v 1.9 1997/09/15 03:46:31 lukem Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.10 1997/11/05 21:29:29 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,11 +88,13 @@ main(argc, argv)
 	}
 
 	exit(0);
+	/* NOTREACHED */
 }
 
 void
 usage()
 {
-	fprintf(stderr, "usage: mknod name [b | c] major minor\n");
+	(void)fprintf(stderr, "usage: mknod name [b | c] major minor\n");
 	exit(1);
+	/* NOTREACHED */
 }
