@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.1.4.1 2004/08/03 10:52:42 skrll Exp $	*/
+/*	$NetBSD: direntry.h,v 1.1.4.2 2004/09/18 14:52:49 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.

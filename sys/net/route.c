@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.57.2.2 2004/08/03 10:54:19 skrll Exp $	*/
+/*	$NetBSD: route.c,v 1.57.2.3 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.57.2.2 2004/08/03 10:54:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.57.2.3 2004/09/18 14:54:16 skrll Exp $");
 
 #include "opt_ns.h"
 
@@ -428,7 +428,7 @@ rtflushclone(struct radix_node_head *rnh, struct rtentry *parent)
  * Routing table ioctl interface.
  */
 int
-rtioctl(u_long req, caddr_t data, struct lwp *l)
+rtioctl(u_long req, caddr_t data, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }

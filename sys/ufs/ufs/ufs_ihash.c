@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.17.2.3 2004/08/24 17:57:56 skrll Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.17.2.4 2004/09/18 14:56:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.17.2.3 2004/08/24 17:57:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.17.2.4 2004/09/18 14:56:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

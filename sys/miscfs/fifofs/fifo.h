@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.19.6.1 2004/08/03 10:54:05 skrll Exp $	*/
+/*	$NetBSD: fifo.h,v 1.19.6.2 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

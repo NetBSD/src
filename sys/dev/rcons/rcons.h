@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.12.28.1 2004/08/03 10:51:04 skrll Exp $ */
+/*	$NetBSD: rcons.h,v 1.12.28.2 2004/09/18 14:51:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

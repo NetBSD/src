@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.1.4.2 2004/08/03 10:50:27 skrll Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.1.4.3 2004/09/18 14:50:40 skrll Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.1.4.2 2004/08/03 10:50:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.1.4.3 2004/09/18 14:50:40 skrll Exp $");
 
 #include "opt_ntp.h"
 

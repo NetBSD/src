@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.h,v 1.7.10.1 2004/08/03 10:56:05 skrll Exp $	*/
+/*	$NetBSD: spp_debug.h,v 1.7.10.2 2004/09/18 14:56:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.107.2.1 2004/08/03 10:54:41 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.107.2.2 2004/09/18 14:54:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.1 2004/08/03 10:54:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.2 2004/09/18 14:54:54 skrll Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -872,14 +872,15 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	int len, hlen, off;
 	int mhlen, firstlen;
 	struct mbuf **mnext;
-	int sw_csum;
+	int sw_csum = m->m_pkthdr.csum_flags;
 	int fragments = 0;
 	int s;
 	int error = 0;
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
-	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
+	if (ifp != NULL)
+		sw_csum &= ~ifp->if_csum_flags_tx;
 
 	len = (mtu - hlen) &~ 7;
 	if (len < 8) {
@@ -965,14 +966,16 @@ sendorfree:
 	 * If there is no room for all the fragments, don't queue
 	 * any of them.
 	 */
-	s = splnet();
-	if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
-	    error == 0) {
-		error = ENOBUFS;
-		ipstat.ips_odropped++;
-		IFQ_INC_DROPS(&ifp->if_snd);
+	if (ifp != NULL) {
+		s = splnet();
+		if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
+		    error == 0) {
+			error = ENOBUFS;
+			ipstat.ips_odropped++;
+			IFQ_INC_DROPS(&ifp->if_snd);
+		}
+		splx(s);
 	}
-	splx(s);
 	if (error) {
 		for (m = m0; m; m = m0) {
 			m0 = m->m_nextpkt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.3.2.1 2004/08/03 10:53:42 skrll Exp $	*/
+/*	$NetBSD: memset.S,v 1.3.2.2 2004/09/18 14:53:53 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.

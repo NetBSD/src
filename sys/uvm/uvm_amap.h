@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.22.2.1 2004/08/03 10:57:02 skrll Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.22.2.2 2004/09/18 14:57:11 skrll Exp $	*/
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.5.4.2 2004/08/03 10:54:21 skrll Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.5.4.3 2004/09/18 14:54:39 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.3 2003/10/17 23:15:30 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.5.4.2 2004/08/03 10:54:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.5.4.3 2004/09/18 14:54:39 skrll Exp $");
 #endif
 
 #include "opt_inet.h"

@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.3 2004/09/03 12:45:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.4 2004/09/18 14:56:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -194,7 +194,7 @@ ffs_snapshot(mp, vp, ctime)
 		goto out;
 	error = vn_rdwr(UIO_WRITE, vp,
 	    cgbuf, fs->fs_bsize, lblktosize(fs, (off_t)(numblks - 1)),
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, p);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
 	if (error)
 		goto out;
 	/*
@@ -560,7 +560,7 @@ out1:
 	 */
 	error = vn_rdwr(UIO_WRITE, vp,
 	    (caddr_t)snapblklist, snaplistsize*sizeof(ufs2_daddr_t), ip->i_size,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, p);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
 	if (error) {
 		fs->fs_snapinum[snaploc] = 0;
 		FREE(snapblklist, M_UFSMNT);
@@ -1726,7 +1726,7 @@ ffs_snapshot_mount(mp)
 	error = vn_rdwr(UIO_READ, vp,
 	    (caddr_t)&snaplistsize, sizeof(snaplistsize),
 	    lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, p);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
 	if (error) {
 		printf("ffs_snapshot_mount: read_1 failed %d\n", error);
 		VOP_UNLOCK(vp, 0);
@@ -1738,7 +1738,7 @@ ffs_snapshot_mount(mp)
 	error = vn_rdwr(UIO_READ, vp,
 	    (caddr_t)snapblklist, snaplistsize * sizeof(ufs2_daddr_t),
 	    lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, p);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
 	if (error) {
 		printf("ffs_snapshot_mount: read_2 failed %d\n", error);
 		VOP_UNLOCK(vp, 0);

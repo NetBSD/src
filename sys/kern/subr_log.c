@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.28.2.2 2004/08/03 10:52:55 skrll Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.28.2.3 2004/09/18 14:53:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.28.2.2 2004/08/03 10:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.28.2.3 2004/09/18 14:53:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,17 +114,17 @@ initmsgbuf(buf, bufsize)
 
 /*ARGSUSED*/
 int
-logopen(dev, flags, mode, l)
+logopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct kern_msgbuf *mbp = msgbufp;
 
 	if (log_open)
 		return (EBUSY);
 	log_open = 1;
-	logsoftc.sc_pgid = l->l_proc->p_pid;	/* signal process only */
+	logsoftc.sc_pgid = p->p_pid;		/* signal process only */
 	/*
 	 * The message buffer is initialized during system configuration.
 	 * If it's been clobbered, note that and return an error.  (This
@@ -141,10 +141,10 @@ logopen(dev, flags, mode, l)
 
 /*ARGSUSED*/
 int
-logclose(dev, flag, mode, l)
+logclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	log_open = 0;
@@ -201,10 +201,10 @@ logread(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-logpoll(dev, events, l)
+logpoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	int revents = 0;
 	int s = splhigh();
@@ -213,7 +213,7 @@ logpoll(dev, events, l)
 		if (msgbufp->msg_bufr != msgbufp->msg_bufx)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(l, &logsoftc.sc_selp);
+			selrecord(p, &logsoftc.sc_selp);
 	}
 
 	splx(s);
@@ -290,14 +290,13 @@ logwakeup()
 
 /*ARGSUSED*/
 int
-logioctl(dev, com, data, flag, lwp)
+logioctl(dev, com, data, flag, p)
 	dev_t dev;
 	u_long com;
 	caddr_t data;
 	int flag;
-	struct lwp *lwp;
+	struct proc *p;
 {
-	struct proc *p = lwp->l_proc;
 	long l;
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.3.2.1 2004/08/03 10:54:11 skrll Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.3.2.2 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

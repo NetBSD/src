@@ -5,7 +5,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_deflate.c,v 1.1.2.1 2004/08/03 10:53:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_deflate.c,v 1.1.2.2 2004/09/18 14:54:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

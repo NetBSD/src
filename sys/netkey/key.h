@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.11.6.1 2004/08/03 10:56:04 skrll Exp $	*/
+/*	$NetBSD: key.h,v 1.11.6.2 2004/09/18 14:56:06 skrll Exp $	*/
 /*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*

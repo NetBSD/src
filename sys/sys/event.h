@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.10.2.2 2004/08/03 10:56:26 skrll Exp $	*/
+/*	$NetBSD: event.h,v 1.10.2.3 2004/09/18 14:56:30 skrll Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -201,9 +201,9 @@ struct knote {
 struct proc;
 
 void	knote(struct klist *, long);
-void	knote_remove(struct lwp *, struct klist *);
-void	knote_fdclose(struct lwp *, int);
-int 	kqueue_register(struct kqueue *, struct kevent *, struct lwp *);
+void	knote_remove(struct proc *, struct klist *);
+void	knote_fdclose(struct proc *, int);
+int 	kqueue_register(struct kqueue *, struct kevent *, struct proc *);
 
 int	kfilter_register(const char *, const struct filterops *, int *);
 int	kfilter_unregister(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212.c,v 1.5.2.1 2004/08/03 10:51:16 skrll Exp $	*/
+/*	$NetBSD: ieee1212.c,v 1.5.2.2 2004/09/18 14:51:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee1212.c,v 1.5.2.1 2004/08/03 10:51:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee1212.c,v 1.5.2.2 2004/09/18 14:51:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1237,7 +1237,7 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 	
 	if (udirs) {
 		do {
-			dev = config_found_sm(sc, udirs, print, NULL);
+			dev = config_found_ia(sc, "fwnode", udirs, print);
 			if (dev && numdev) {
 				devret = realloc(devret,
 				    sizeof(struct device *) *

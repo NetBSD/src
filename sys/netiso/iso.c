@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.32.2.2 2004/08/03 10:55:41 skrll Exp $	*/
+/*	$NetBSD: iso.c,v 1.32.2.3 2004/09/18 14:55:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.32.2.2 2004/08/03 10:55:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.32.2.3 2004/09/18 14:55:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,15 +441,13 @@ iso_netof(
 /* ARGSUSED */
 int
 iso_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
-	struct lwp *l)
+	struct proc *p)
 {
 	struct iso_ifreq *ifr = (struct iso_ifreq *) data;
 	struct iso_ifaddr *ia = 0;
 	struct iso_aliasreq *ifra = (struct iso_aliasreq *) data;
 	int             error, hostIsNew, maskIsNew;
-	struct proc *p;
 
-	p = l ? l->l_proc : NULL;
 	/*
 	 * Find address for this interface, if it exists.
 	 */
@@ -559,7 +557,7 @@ iso_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 #define cmdbyte(x)	(((x) >> 8) & 0xff)
 	default:
 		if (cmdbyte(cmd) == 'a')
-			return (snpac_ioctl(so, cmd, data, l));
+			return (snpac_ioctl(so, cmd, data, p));
 		if (ifp == 0 || ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
 		return ((*ifp->if_ioctl)(ifp, cmd, data));

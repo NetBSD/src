@@ -1,4 +1,4 @@
-/*	$NetBSD: umidireg.h,v 1.2.22.1 2004/08/03 10:51:38 skrll Exp $	*/
+/*	$NetBSD: umidireg.h,v 1.2.22.2 2004/09/18 14:51:46 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.

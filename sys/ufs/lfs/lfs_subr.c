@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.40.2.1 2004/08/03 10:56:57 skrll Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.40.2.2 2004/09/18 14:56:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.40.2.1 2004/08/03 10:56:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.40.2.2 2004/09/18 14:56:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

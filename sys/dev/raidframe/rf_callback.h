@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.h,v 1.4.18.1 2004/08/03 10:50:41 skrll Exp $	*/
+/*	$NetBSD: rf_callback.h,v 1.4.18.2 2004/09/18 14:50:53 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

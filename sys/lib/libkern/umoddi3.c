@@ -1,4 +1,4 @@
-/*	$NetBSD: umoddi3.c,v 1.6.48.1 2004/08/03 10:53:31 skrll Exp $	*/
+/*	$NetBSD: umoddi3.c,v 1.6.48.2 2004/09/18 14:53:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)umoddi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: umoddi3.c,v 1.6.48.1 2004/08/03 10:53:31 skrll Exp $");
+__RCSID("$NetBSD: umoddi3.c,v 1.6.48.2 2004/09/18 14:53:41 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.3.2.2 2004/08/03 10:53:59 skrll Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.3.2.3 2004/09/18 14:54:09 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.

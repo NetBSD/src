@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_8.S,v 1.1.4.2 2004/08/03 10:53:49 skrll Exp $ */
+/*	$NetBSD: byte_swap_8.S,v 1.1.4.3 2004/09/18 14:54:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -30,7 +30,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: byte_swap_8.S,v 1.1.4.2 2004/08/03 10:53:49 skrll Exp $")
+	RCSID("$NetBSD: byte_swap_8.S,v 1.1.4.3 2004/09/18 14:54:01 skrll Exp $")
 #endif
 
 ENTRY(bswap64)

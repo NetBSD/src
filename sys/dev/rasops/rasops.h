@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.15.18.1 2004/08/03 10:51:04 skrll Exp $ */
+/* 	$NetBSD: rasops.h,v 1.15.18.2 2004/09/18 14:51:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

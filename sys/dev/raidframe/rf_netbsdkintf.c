@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.2 2004/08/03 10:50:46 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.3 2004/09/18 14:50:54 skrll Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.2 2004/08/03 10:50:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.3 2004/09/18 14:50:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -210,7 +210,7 @@ static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
 		   dev_t dev, RF_SectorNum_t startSect, 
 		   RF_SectorCount_t numSect, caddr_t buf,
 		   void (*cbFunc) (struct buf *), void *cbArg, 
-		   int logBytesPerSector, struct proc * proc);
+		   int logBytesPerSector, struct proc * b_proc);
 static void raidinit(RF_Raid_t *);
 
 void raidattach(int);
@@ -527,7 +527,7 @@ raidsize(dev_t dev)
 	omask = rs->sc_dkdev.dk_openmask & (1 << part);
 	lp = rs->sc_dkdev.dk_label;
 
-	if (omask == 0 && raidopen(dev, 0, S_IFBLK, curlwp))
+	if (omask == 0 && raidopen(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -536,7 +536,7 @@ raidsize(dev_t dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curlwp))
+	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
 	return (size);
@@ -551,7 +551,7 @@ raiddump(dev_t dev, daddr_t blkno, caddr_t va, size_t  size)
 }
 /* ARGSUSED */
 int
-raidopen(dev_t dev, int flags, int fmt, struct lwp *l)
+raidopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -621,7 +621,7 @@ raidopen(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 /* ARGSUSED */
 int
-raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
+raidclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -775,7 +775,7 @@ raidwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int     unit = raidunit(dev);
 	int     error = 0;
@@ -2126,34 +2126,32 @@ raidmakedisklabel(struct raid_softc *rs)
  * You'll find the original of this in ccd.c
  */
 int
-raidlookup(char *path, struct lwp *l, struct vnode **vpp)
+raidlookup(char *path, struct proc *p, struct vnode **vpp)
 {
 	struct nameidata nd;
 	struct vnode *vp;
-	struct proc *p;
 	struct vattr va;
 	int     error;
 
-	p = l ? l->l_proc : NULL;
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
 		return (error);
 	}
 	vp = nd.ni_vp;
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
 		return (EBUSY);
 	}
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) != 0) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
 		return (error);
 	}
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
 		return (ENOTBLK);
 	}
 	VOP_UNLOCK(vp, 0);
@@ -2470,10 +2468,8 @@ void
 rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 {
 	struct proc *p;
-	struct lwp *l;
 
 	p = raidPtr->engine_thread;
-	l = LIST_FIRST(&p->p_lwps);
 
 	if (vp != NULL) {
 		if (auto_configured == 1) {
@@ -2482,7 +2478,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 			
 		} else {				
-			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
 		}
 	} 
 }

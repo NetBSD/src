@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.4.2.1 2004/08/03 10:54:17 skrll Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.4.2.2 2004/09/18 14:54:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.34.2.1 2004/08/03 10:54:15 skrll Exp $	*/
+/*	$NetBSD: if_media.h,v 1.34.2.2 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.

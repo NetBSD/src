@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.49.2.4 2004/09/03 12:45:39 skrll Exp $	*/
+/*	$NetBSD: ss.c,v 1.49.2.5 2004/09/18 14:51:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.49.2.4 2004/09/03 12:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.49.2.5 2004/09/18 14:51:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,13 +90,14 @@ const struct cdevsw ss_cdevsw = {
 
 static void	ssstrategy(struct buf *);
 static void	ssstart(struct scsipi_periph *);
+static void	ssdone(struct scsipi_xfer *, int);
 static void	ssminphys(struct buf *);
 
 static const struct scsipi_periphsw ss_switch = {
 	NULL,
 	ssstart,
 	NULL,
-	NULL,
+	ssdone,
 };
 
 static const struct scsipi_inquiry_pattern ss_patterns[] = {
@@ -242,7 +243,7 @@ ssactivate(struct device *self, enum devact act)
  * open the device.
  */
 static int
-ssopen(dev_t dev, int flag, int mode, struct lwp *l)
+ssopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit;
 	u_int ssmode;
@@ -314,7 +315,7 @@ bad:
  * occurence of an open device
  */
 static int
-ssclose(dev_t dev, int flag, int mode, struct lwp *l)
+ssclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
@@ -520,13 +521,27 @@ ssrestart(void *v)
 	splx(s);
 }
 
+static void
+ssdone(struct scsipi_xfer *xs, int error)
+{
+	struct buf *bp = xs->bp;
+
+	if (bp) {
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+		if (error)
+			bp->b_flags |= B_ERROR;
+		biodone(bp);
+	}
+}
+
 
 /*
  * Perform special action on behalf of the user;
  * knows about the internals of this device
  */
 int
-ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error = 0;
@@ -578,7 +593,7 @@ ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 #endif
 	default:
 		return (scsipi_do_ioctl(ss->sc_periph, dev, cmd, addr,
-		    flag, l));
+		    flag, p));
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.h,v 1.11.18.1 2004/08/03 10:57:03 skrll Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.11.18.2 2004/09/18 14:57:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and

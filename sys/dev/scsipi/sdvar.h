@@ -1,7 +1,7 @@
-/*	$NetBSD: sdvar.h,v 1.19.2.2 2004/09/03 12:45:39 skrll Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.19.2.3 2004/09/18 14:51:25 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,10 +73,9 @@
 struct sd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
+	struct lock sc_lock;
 
 	int flags;
-#define	SDF_LOCKED	0x01
-#define	SDF_WANTED	0x02
 #define	SDF_WLABEL	0x04		/* label is writable */
 #define	SDF_LABELLING	0x08		/* writing label */
 #define	SDF_ANCIENT	0x10		/* disk is ancient; for minphys */

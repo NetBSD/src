@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.18.2.3 2004/08/24 17:57:42 skrll Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.18.2.4 2004/09/18 14:56:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -73,7 +73,7 @@ struct m_ext2fs;
 struct inode;
 struct mount;
 struct nameidata;
-struct lwp;
+struct proc;
 struct statvfs;
 struct timeval;
 struct ucred;
@@ -122,8 +122,7 @@ int ext2fs_dirremove __P((struct vnode *, struct componentname *));
 int ext2fs_dirrewrite __P((struct inode *, struct inode *,
 			   struct componentname *));
 int ext2fs_dirempty __P((struct inode *, ino_t, struct ucred *));
-int ext2fs_checkpath __P((struct inode *, struct inode *, struct ucred *,
-			  struct lwp *));
+int ext2fs_checkpath __P((struct inode *, struct inode *, struct ucred *));
 
 /* ext2fs_subr.c */
 int ext2fs_blkatoff __P((void *));
@@ -138,13 +137,13 @@ void ext2fs_reinit __P((void));
 void ext2fs_done __P((void));
 int ext2fs_mountroot __P((void));
 int ext2fs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		   struct lwp *));
-int ext2fs_reload __P((struct mount *, struct ucred *, struct lwp *));
-int ext2fs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
-int ext2fs_unmount __P((struct mount *, int, struct lwp *));
-int ext2fs_flushfiles __P((struct mount *, int, struct lwp *));
-int ext2fs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int ext2fs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+		   struct proc *));
+int ext2fs_reload __P((struct mount *, struct ucred *, struct proc *));
+int ext2fs_mountfs __P((struct vnode *, struct mount *, struct proc *));
+int ext2fs_unmount __P((struct mount *, int, struct proc *));
+int ext2fs_flushfiles __P((struct mount *, int, struct proc *));
+int ext2fs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
+int ext2fs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int ext2fs_vget __P((struct mount *, ino_t, struct vnode **));
 int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));

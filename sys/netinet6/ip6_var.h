@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.26.2.2 2004/08/03 10:55:13 skrll Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.26.2.3 2004/09/18 14:55:15 skrll Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ void	rip6_ctlinput __P((int, struct sockaddr *, void *));
 int	rip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	rip6_output __P((struct mbuf *, ...));
 int	rip6_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 
 int	dest6_input __P((struct mbuf **, int *, int));
 int	none_input __P((struct mbuf **, int *, int));

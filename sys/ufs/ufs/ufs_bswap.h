@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.12.2.2 2004/08/25 06:59:14 skrll Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.12.2.3 2004/09/18 14:56:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.

@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.14.2.1 2004/08/03 10:55:40 skrll Exp $ 
+ *	$Id: i4b_l4if.c,v 1.14.2.2 2004/09/18 14:55:33 skrll Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.14.2.1 2004/08/03 10:55:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.14.2.2 2004/09/18 14:55:33 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"

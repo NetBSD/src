@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.19.2.1 2004/08/03 10:56:35 skrll Exp $	*/
+/*	$NetBSD: wait.h,v 1.19.2.2 2004/09/18 14:56:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994

@@ -37,7 +37,7 @@
 #ifdef notdef
 	.asciz "@(#)htons.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: htons.S,v 1.1.1.1.48.1 2004/08/03 10:53:50 skrll Exp $"
+	.asciz "$NetBSD: htons.S,v 1.1.1.1.48.2 2004/09/18 14:54:01 skrll Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* netorder = htons(hostorder) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.1.1.2.2.3 2004/08/05 21:01:25 skrll Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.1.1.2.2.4 2004/09/18 14:54:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>

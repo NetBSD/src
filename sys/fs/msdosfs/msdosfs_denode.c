@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.4.2.3 2004/08/24 17:57:37 skrll Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.4.2.4 2004/09/18 14:52:49 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4.2.3 2004/08/24 17:57:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4.2.4 2004/09/18 14:52:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ struct genfs_ops msdosfs_genfsops = {
 	genfs_gop_write,
 };
 
-static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long, struct lwp *));
+static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
 static void msdosfs_hashins __P((struct denode *));
 static void msdosfs_hashrem __P((struct denode *));
 
@@ -154,11 +154,10 @@ msdosfs_done()
 }
 
 static struct denode *
-msdosfs_hashget(dev, dirclust, diroff, l)
+msdosfs_hashget(dev, dirclust, diroff)
 	dev_t dev;
 	u_long dirclust;
 	u_long diroff;
-	struct lwp *l;
 {
 	struct denode *dep;
 	struct vnode *vp;
@@ -255,7 +254,7 @@ deget(pmp, dirclust, diroffset, depp)
 	 * entry that represented the file happens to be reused while the
 	 * deleted file is still open.
 	 */
-	ldep = msdosfs_hashget(pmp->pm_dev, dirclust, diroffset, curlwp);
+	ldep = msdosfs_hashget(pmp->pm_dev, dirclust, diroffset);
 	if (ldep) {
 		*depp = ldep;
 		return (0);
@@ -384,12 +383,12 @@ deupdat(dep, waitfor)
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(dep, length, flags, cred, l)
+detrunc(dep, length, flags, cred, p)
 	struct denode *dep;
 	u_long length;
 	int flags;
 	struct ucred *cred;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error;
 	int allerror;
@@ -638,7 +637,7 @@ msdosfs_inactive(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct lwp *l = ap->a_l;
+	struct proc *p = ap->a_p;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	int error = 0;
@@ -684,7 +683,7 @@ out:
 		vp->v_usecount, dep->de_Name[0]);
 #endif
 	if (dep->de_Name[0] == SLOT_DELETED)
-		vrecycle(vp, (struct simplelock *)0, l);
+		vrecycle(vp, (struct simplelock *)0, p);
 	return (error);
 }
 

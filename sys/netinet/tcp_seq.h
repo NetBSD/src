@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.12.46.1 2004/08/03 10:54:45 skrll Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.12.46.2 2004/09/18 14:54:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1995

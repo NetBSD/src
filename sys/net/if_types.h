@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.21.6.1 2004/08/03 10:54:19 skrll Exp $	*/
+/*	$NetBSD: if_types.h,v 1.21.6.2 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994

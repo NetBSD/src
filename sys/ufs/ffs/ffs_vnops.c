@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.59.2.2 2004/08/03 10:56:50 skrll Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.59.2.3 2004/09/18 14:56:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.59.2.2 2004/08/03 10:56:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.59.2.3 2004/09/18 14:56:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,7 @@ ffs_fsync(v)
 		int a_flags;
 		off_t a_offlo;
 		off_t a_offhi;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct buf *bp;
 	int s, num, error, i;
@@ -336,7 +336,7 @@ ffs_full_fsync(v)
 		int a_flags;
 		off_t a_offlo;
 		off_t a_offhi;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
@@ -463,14 +463,14 @@ ffs_reclaim(v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct ufsmount *ump = ip->i_ump;
 	int error;
 
-	if ((error = ufs_reclaim(vp, ap->a_l)) != 0)
+	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
 		return (error);
 	if (ip->i_din.ffs1_din != NULL) {
 		if (ump->um_fstype == UFS1)

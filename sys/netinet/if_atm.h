@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.6.6.1 2004/08/03 10:54:36 skrll Exp $       */
+/*      $NetBSD: if_atm.h,v 1.6.6.2 2004/09/18 14:54:53 skrll Exp $       */
 
 /*
  *

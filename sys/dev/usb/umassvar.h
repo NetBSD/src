@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.19.2.1 2004/08/03 10:51:38 skrll Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.19.2.2 2004/09/18 14:51:46 skrll Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>

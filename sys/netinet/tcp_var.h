@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.102.2.2 2004/08/03 10:54:46 skrll Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.102.2.3 2004/09/18 14:54:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -684,6 +684,8 @@ extern	int tcp_syn_cache_size;
 extern	struct syn_cache_head tcp_syn_cache[];
 extern	u_long syn_cache_count;
 
+extern	struct pool tcpipqent_pool;
+
 #ifdef MBUFTRACE
 extern	struct mowner tcp_rx_mowner;
 extern	struct mowner tcp_tx_mowner;
@@ -793,7 +795,7 @@ struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
 int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 tcp_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 void	 tcp_xmit_timer(struct tcpcb *, uint32_t);
 tcp_seq	 tcp_new_iss(struct tcpcb *, tcp_seq);
 tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,

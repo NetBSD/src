@@ -1,5 +1,5 @@
-# $NetBSD: files.vinum,v 1.1.1.1.4.2 2004/08/03 10:51:59 skrll Exp $
-# $Id: files.vinum,v 1.1.1.1.4.2 2004/08/03 10:51:59 skrll Exp $
+# $NetBSD: files.vinum,v 1.1.1.1.4.3 2004/09/18 14:52:13 skrll Exp $
+# $Id: files.vinum,v 1.1.1.1.4.3 2004/09/18 14:52:13 skrll Exp $
 #
 # Configuration file for Vinum
 

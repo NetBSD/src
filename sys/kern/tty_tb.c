@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.28.12.1 2004/08/03 10:52:57 skrll Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.28.12.2 2004/09/18 14:53:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.28.12.1 2004/08/03 10:52:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.28.12.2 2004/09/18 14:53:04 skrll Exp $");
 
 #include "tb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msgbuf.h,v 1.10.50.1 2004/08/03 10:56:29 skrll Exp $	*/
+/*	$NetBSD: msgbuf.h,v 1.10.50.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1981, 1984, 1993

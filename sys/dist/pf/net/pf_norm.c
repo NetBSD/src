@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.3.2.2 2004/08/03 10:52:23 skrll Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.3.2.3 2004/09/18 14:52:37 skrll Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.80 2004/03/09 21:44:41 mcbride Exp $ */
 
 /*
@@ -1327,7 +1327,7 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
 
 	/* copy back packet headers if we sanitized */
 	if (rewrite)
-		m_copyback(m, off, sizeof(*th), (caddr_t)th);
+		m_copyback(m, off, sizeof(*th), th);
 
 	return (PF_PASS);
 
@@ -1519,8 +1519,8 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			/* Copyback the options, caller copys back header */
 			*writeback = 1;
 			m_copyback(m, off + sizeof(struct tcphdr),
-			    (th->th_off << 2) - sizeof(struct tcphdr),
-			    (caddr_t)hdr + sizeof(struct tcphdr));
+			    (th->th_off << 2) - sizeof(struct tcphdr), hdr +
+			    sizeof(struct tcphdr));
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.15.48.1 2004/08/03 10:54:11 skrll Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.15.48.2 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993

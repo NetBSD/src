@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.3.2.3 2004/08/05 21:01:25 skrll Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.3.2.4 2004/09/18 14:54:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.

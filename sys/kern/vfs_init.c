@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.23.2.1 2004/08/03 10:52:59 skrll Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.23.2.2 2004/09/18 14:53:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.23.2.1 2004/08/03 10:52:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.23.2.2 2004/09/18 14:53:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>

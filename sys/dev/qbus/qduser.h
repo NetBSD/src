@@ -1,4 +1,4 @@
-/*	$NetBSD: qduser.h,v 1.4.22.1 2004/08/03 10:50:28 skrll Exp $	*/
+/*	$NetBSD: qduser.h,v 1.4.22.2 2004/09/18 14:50:40 skrll Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
