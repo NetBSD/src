@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)swapgeneric.c	7.11 (Berkeley) 5/9/91
- *	$Id: swapgeneric.c,v 1.1 1994/08/02 20:22:16 ragge Exp $
+ *	$Id: swapgeneric.c,v 1.2 1994/10/08 15:48:18 ragge Exp $
  */
 
 #include "mba.h"
@@ -71,8 +71,8 @@ struct	swdevt swdevt[] = {
 long	dumplo;
 int	dmmin, dmmax, dmtext;
 
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
+extern int ffs_mountroot();
+int (*mountroot)() = ffs_mountroot;
 
 extern	struct mba_driver hpdriver;
 extern	struct uba_driver scdriver;
@@ -169,7 +169,6 @@ gotit:
 	asm("halt");
 
 found:
-	printf("gc->gc_root: %d\n",gc->gc_root);
 	gc->gc_root = makedev(major(gc->gc_root), unit*8);
 	rootdev = gc->gc_root;
 doswap:
