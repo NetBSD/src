@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.13 2002/08/01 02:43:29 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.14 2002/08/02 19:52:02 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -618,7 +618,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	tf->tf_global[1] = (int)catcher;

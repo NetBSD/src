@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.18 2002/08/01 02:41:00 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.19 2002/08/02 19:50:22 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.18 2002/08/01 02:41:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.19 2002/08/02 19:50:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1624,7 +1624,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 	frame->tf_regs[FRAME_PC] = (u_int64_t)catcher;
 	frame->tf_regs[FRAME_A0] = sig;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.4.8 2002/08/01 02:44:00 nathanw Exp $	 */
+/* $NetBSD: machdep.c,v 1.120.4.9 2002/08/02 19:52:24 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -488,7 +488,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 	syscf->psl = PSL_U | PSL_PREVU;
 	syscf->ap = cursp;
