@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.2.1 2005/04/06 20:47:18 tron Exp $
+#	$NetBSD: Makefile,v 1.9.2.2 2005/04/06 20:57:26 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -10,11 +10,15 @@ LIB=		GL
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src/mesa/drivers/dri/common
 SRCS.glx=	clientattrib.c compsize.c dispatch.c eval.c g_render.c \
 		g_single.c g_vendpriv.c glthread.c glxcmds.c glxext.c \
-		glxextensions.c glcontextmodes.c indirect_init.c \
+		glxextensions.c indirect_init.c \
 		pixel.c pixelstore.c render2.c renderpix.c single2.c \
-		singlepix.c vertarr.c xfont.c
+		singlepix.c vertarr.c xfont.c glx_pbuffer.c glx_query.c \
+		glx_texture_compression.c
 
-.PATH:	${X11SRCDIR.xc}/extras/Mesa/src
+.PATH:	${X11SRCDIR.xc}/extras/Mesa/src/mesa/drivers/dri/common
+SRCS.glx+=	glcontextmodes.c
+
+.PATH:	${X11SRCDIR.xc}/extras/Mesa/src/mesa/glapi
 SRCS.glx+=	glapi.c
 
 .if ${MACHINE} == "i386"
