@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.18 2003/11/10 17:56:38 dsl Exp $ */
+/* $NetBSD: mkdep.c,v 1.19 2003/11/10 18:43:15 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.18 2003/11/10 17:56:38 dsl Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.19 2003/11/10 18:43:15 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -77,7 +77,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-acopq] [-f file] [-s suffix_list] flags file ...\n",
+	    "usage: %s [-adopq] [-f file] [-s suffix_list] flags file ...\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -244,12 +244,13 @@ main(int argc, char **argv)
 			ptr[1] = ' ';
 		}
 
-		line = eol = buf;
-		for (; (eol = strchr(eol, '\n')) != NULL; line = eol) {
+		for (line = eol = buf; (eol = strchr(eol, '\n')) != NULL;) {
 			eol++;
-			if (line == eol - 1)
+			if (line == eol - 1) {
 				/* empty line - ignore */
+				line = eol;
 				continue;
+			}
 			if (eol[-2] == '\\')
 				/* Assemble continuation lines */
 				continue;
@@ -296,6 +297,7 @@ main(int argc, char **argv)
 				write(dependfile, ".OPTIONAL", 9);
 				write(dependfile, colon, eol - colon);
 			}
+			line = eol;
 		}
 		munmap(buf, sz);
 	}
