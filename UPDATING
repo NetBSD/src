@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.47 2001/12/02 03:07:29 jmc Exp $
+$NetBSD: UPDATING,v 1.48 2001/12/02 03:13:10 jmc Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -17,7 +17,7 @@ Recent changes:
 
 	remake and install gnu/lib/libgcc
 	remake and install gnu/usr.bin/gawk into /usr/bin (make sure it links
-	against the libgcc.a)
+	against the new libgcc.a)
 
 20011128:
 	Kernel config information was changed to use defflag in
