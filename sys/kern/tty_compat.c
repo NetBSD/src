@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.10 1994/02/24 01:03:15 paulus Exp $
+ *	$Id: tty_compat.c,v 1.11 1994/03/05 22:42:55 mycroft Exp $
  */
 
 /* 
@@ -228,6 +228,10 @@ ttcompat(tp, com, data, flag, p)
 	case OTIOCCONS:
 		*(int *)data = 1;
 		return (ttioctl(tp, TIOCCONS, data, flag, p));
+
+	case TIOCHPCL:
+		tp->t_cflag |= HUPCL;
+		break;
 
 	default:
 		return (-1);
