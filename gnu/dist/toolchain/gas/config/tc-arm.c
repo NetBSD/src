@@ -8959,22 +8959,14 @@ elf32_arm_target_format ()
       if (target_oabi)
 	return "elf32-bigarm-oabi";
       else
-#ifdef TE_NetBSD
-	return "elf32-bigarm-nbsd";
-#else
 	return "elf32-bigarm";
-#endif
     }
   else
     {
       if (target_oabi)
 	return "elf32-littlearm-oabi";
       else
-#ifdef TE_NetBSD
-	return "elf32-littlearm-nbsd";
-#else
 	return "elf32-littlearm";
-#endif
     }
 }
 
