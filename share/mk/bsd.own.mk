@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.294 2002/05/20 14:34:07 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.294.2.1 2002/06/11 15:58:32 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -117,6 +117,7 @@ OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 
 ASN1_COMPILE=	${TOOLDIR}/bin/nbasn1_compile
 CAP_MKDB=	${TOOLDIR}/bin/nbcap_mkdb
+CAT=		${TOOLDIR}/bin/nbcat
 CKSUM=		${TOOLDIR}/bin/nbcksum
 COMPILE_ET=	${TOOLDIR}/bin/nbcompile_et
 CONFIG=		${TOOLDIR}/bin/nbconfig
