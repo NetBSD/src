@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.37 2003/08/07 09:46:43 agc Exp $	*/
+/*	$NetBSD: library.c,v 1.38 2003/09/19 05:52:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.37 2003/08/07 09:46:43 agc Exp $");
+__RCSID("$NetBSD: library.c,v 1.38 2003/09/19 05:52:48 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -403,7 +403,7 @@ pseg_size(daddr_t pseg_addr, FS_INFO *fsp, SEGSUM *sp)
 int
 lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bcount)
 {
-	BLOCK_INFO *bip, *_bip;
+	BLOCK_INFO *bip, *_bip, *nbip;
 	SEGSUM *sp;
 	SEGUSE *sup;
 	FINFO *fip;
@@ -475,10 +475,12 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bc
 #endif
 
 		if (*bcount + nblocks + sp->ss_ninos > nelem) {
-			nelem = *bcount + nblocks + sp->ss_ninos;
-			bip = realloc(bip, nelem * sizeof(BLOCK_INFO));
-			if (!bip)
+			nbip = realloc(bip, (*bcount + nblocks + sp->ss_ninos) *
+			    sizeof(BLOCK_INFO));
+			if (!nbip)
 				goto err0;
+			bip = nbip;
+			nelem = *bcount + nblocks + sp->ss_ninos;
 		}
 		add_blocks(fsp, bip, bcount, sp, seg_buf, seg_addr, pseg_addr);
 		add_inodes(fsp, bip, bcount, sp, seg_buf, seg_addr);
