@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.h,v 1.2 2003/07/01 09:42:15 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv.h,v 1.3 2003/07/10 08:50:43 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -58,8 +58,8 @@ _citrus_iconv_convert(struct _citrus_iconv * __restrict cv,
 		      size_t * __restrict nresults)
 {
 
-	_DIAGASSERT(cv && cv->cv_shared && cv->cv_shared->ci_ops
-		    cv->cv_shared->ci_ops->io_convert && dst);
+	_DIAGASSERT(cv && cv->cv_shared && cv->cv_shared->ci_ops &&
+		    cv->cv_shared->ci_ops->io_convert && out);
 
 	return (*cv->cv_shared->ci_ops->io_convert)(cv, in, inbytes, out,
 						    outbytes, flags, nresults);
