@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.7 1999/03/26 20:15:01 drochner Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.7.2.1 1999/04/09 20:08:55 mellon Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -67,13 +67,14 @@ void bootp (packet)
 	if (packet -> raw -> op != BOOTREQUEST)
 		return;
 
-	note ("BOOTREQUEST from %s via %s",
+	note ("BOOTREQUEST from %s via %s%s",
 	      print_hw_addr (packet -> raw -> htype,
 			     packet -> raw -> hlen,
 			     packet -> raw -> chaddr),
 	      packet -> raw -> giaddr.s_addr
 	      ? inet_ntoa (packet -> raw -> giaddr)
-	      : packet -> interface -> name);
+	      : packet -> interface -> name,
+	      packet -> options_valid ? "" : " (non-rfc1048)");
 
 
 
@@ -232,11 +233,15 @@ void bootp (packet)
 
 	/* If we didn't get a known vendor magic number on the way in,
 	   just copy the input options to the output. */
-	if (!packet -> options_valid) {
+	if (!packet -> options_valid &&
+	    !subnet -> group -> always_reply_rfc1048 &&
+	    (!hp || !hp -> group -> always_reply_rfc1048)) {
 		memcpy (outgoing.raw -> options,
 			packet -> raw -> options, DHCP_OPTION_LEN);
 		outgoing.packet_length = BOOTP_MIN_LEN;
 	} else {
+		struct tree_cache netmask_tree;   /*  -- RBF */
+
 		/* Come up with a list of options that we want to send
 		   to this client.  Start with the per-subnet options,
 		   and then override those with client-specific
@@ -247,6 +252,18 @@ void bootp (packet)
 		for (i = 0; i < 256; i++) {
 			if (hp -> group -> options [i])
 				options [i] = hp -> group -> options [i];
+		}
+
+		/* Use the subnet mask from the subnet declaration if no other
+		   mask has been provided. */
+		if (!options [DHO_SUBNET_MASK]) {
+			options [DHO_SUBNET_MASK] = &netmask_tree;
+			netmask_tree.flags = TC_TEMPORARY;
+			netmask_tree.value = lease -> subnet -> netmask.iabuf;
+			netmask_tree.len = lease -> subnet -> netmask.len;
+			netmask_tree.buf_size = lease -> subnet -> netmask.len;
+			netmask_tree.timeout = 0xFFFFFFFF;
+			netmask_tree.tree = (struct tree *)0;
 		}
 
 		/* Pack the options into the buffer.  Unlike DHCP, we
