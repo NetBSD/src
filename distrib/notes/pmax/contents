@@ -122,8 +122,9 @@ X11R6.3 and can be installed using the 'sysinst' utility.
 
 	xserver	X servers built from X11R5, supporting the 4.3bsd-derived
 		Xserver/framebuffer protocol used in NetBSD/pmax.
-		See the README file in this set for more information
-		on conifguring the X11 R5 servers to work with X11R6 clients.
+		See the /usr/X11R6/bin/README.pmax  file in this set for
+		more information on conifguring the X11 R5 servers to
+		work with X11R6 clients and with compressed fonts.
 
 		[ 712k gzipped, 2.4 unzipped ]
 
