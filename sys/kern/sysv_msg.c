@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.14 1995/06/05 12:56:54 pk Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.15 1995/06/24 20:34:11 christos Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -973,74 +973,3 @@ msgrcv(p, uap, retval)
 	*retval = msgsz;
 	return(0);
 }
-
-#if defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS)
-int
-compat_10_msgsys(p, uap, retval)
-	struct caller *p;
-	struct compat_10_msgsys_args /* {
-		syscallarg(int) which;
-		syscallarg(int) a2;
-		syscallarg(int) a3;
-		syscallarg(int) a4;
-		syscallarg(int) a5;
-		syscallarg(int) a6;
-	} */ *uap;
-	register_t *retval;
-{
-	struct msgctl_args /* {
-		syscallarg(int) msqid;
-		syscallarg(int) cmd;
-		syscallarg(struct msqid_ds *) buf;
-	} */ msgctl_args;
-	struct msgget_args /* {
-		syscallarg(key_t) key;
-		syscallarg(int) msgflg;
-	} */ msgget_args;
-	struct msgsnd_args /* {
-		syscallarg(int) msqid;
-		syscallarg(void *) msgp;
-		syscallarg(size_t) msgsz;
-		syscallarg(int) msgflg;
-	} */ msgsnd_args;
-	struct msgrcv_args /* {
-		syscallarg(int) msqid;
-		syscallarg(void *) msgp;
-		syscallarg(size_t) msgsz;
-		syscallarg(long) msgtyp;
-		syscallarg(int) msgflg;
-	} */ msgrcv_args;
-
-	switch (SCARG(uap, which)) {
-	case 0:					/* msgctl()*/
-		SCARG(&msgctl_args, msqid) = SCARG(uap, a2);
-		SCARG(&msgctl_args, cmd) = SCARG(uap, a3);
-		SCARG(&msgctl_args, buf) =
-		    (struct msqid_ds *)SCARG(uap, a4);
-		return (msgctl(p, &msgctl_args, retval));
-
-	case 1:					/* msgget() */
-		SCARG(&msgget_args, key) = SCARG(uap, a2);
-		SCARG(&msgget_args, msgflg) = SCARG(uap, a3);
-		return (msgget(p, &msgget_args, retval));
-
-	case 2:					/* msgsnd() */
-		SCARG(&msgsnd_args, msqid) = SCARG(uap, a2);
-		SCARG(&msgsnd_args, msgp) = (void *)SCARG(uap, a3);
-		SCARG(&msgsnd_args, msgsz) = SCARG(uap, a4);
-		SCARG(&msgsnd_args, msgflg) = SCARG(uap, a5);
-		return (msgsnd(p, &msgsnd_args, retval));
-
-	case 3:					/* msgrcv() */
-		SCARG(&msgrcv_args, msqid) = SCARG(uap, a2);
-		SCARG(&msgrcv_args, msgp) = (void *)SCARG(uap, a3);
-		SCARG(&msgrcv_args, msgsz) = SCARG(uap, a4);
-		SCARG(&msgrcv_args, msgtyp) = SCARG(uap, a5);
-		SCARG(&msgrcv_args, msgflg) = SCARG(uap, a6);
-		return (msgrcv(p, &msgrcv_args, retval));
-
-	default:
-		return (EINVAL);
-	}
-}
-#endif /* defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS) */
