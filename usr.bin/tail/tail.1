@@ -1,4 +1,4 @@
-.\"	$NetBSD: tail.1,v 1.5 1997/10/19 23:45:11 lukem Exp $
+.\"	$NetBSD: tail.1,v 1.6 1998/02/09 22:39:42 cjs Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,11 @@
 .Nd display the last part of a file
 .Sh SYNOPSIS
 .Nm
-.Op Fl f Li | Fl r
+.Oo
+.Fl f |
+.Fl F |
+.Fl r
+.Oc
 .Oo
 .Fl b Ar number |
 .Fl c Ar number |
@@ -93,6 +97,21 @@ data to be appended to the input.
 The
 .Fl f
 option is ignored if the standard input is a pipe, but not if it is a FIFO.
+.It Fl F
+The
+.Fl F
+option is the same as the
+.Fl f
+option, except that every five seconds
+.Nm
+will check to see if the file named on the command line has been
+shortened or moved (it is considered moved if the inode or device
+number changes) and, if so, it will close
+the current file, open the filename given, print out the entire
+contents, and continue to wait for more data to be appended.
+This option is used to follow log files though rotation by
+.Xr newsyslog 8
+or similar programs.
 .It Fl n Ar number
 The location is
 .Ar number
