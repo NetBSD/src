@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 2002/11/23 09:25:55 scw Exp $	*/
+/*	$NetBSD: mem.c,v 1.6 2003/01/19 19:49:54 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5 2002/11/23 09:25:55 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.6 2003/01/19 19:49:54 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -169,7 +169,7 @@ mmmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curlwp->l_proc;	/* XXX */
 
 	/*
 	 * /dev/mem is the only one that makes sense through this

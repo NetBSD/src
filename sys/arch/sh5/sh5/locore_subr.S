@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.15 2002/11/23 09:25:55 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.16 2003/01/19 19:49:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -94,7 +94,7 @@ Lsh5_init_env:
 1:
 
 	/*
-	 * Set up proc0's pcb.
+	 * Set up lwp0's pcb.
 	 */
 	LEA(Lcpu_info, r1)
 	putcon	r1, kcr0		/* KCR0 always hold cpu_info */
@@ -106,9 +106,9 @@ Lsh5_init_env:
 	add	r0, r1, r15		/* Set up the initial kernel stack */
 	add	r0, r1, r14		/* Set up the initial frame pointer */
 
-	/* Fix up proc0's p_addr */
-	LEA(_C_LABEL(proc0), r3)
-	STPTR	r3, P_ADDR, r0		/* proc0->p_addr = &proc0paddr */
+	/* Fix up lwp0's l_addr */
+	LEA(_C_LABEL(lwp0), r3)
+	STPTR	r3, L_ADDR, r0		/* lwp0->l_addr = &proc0paddr */
 
 	/*
 	 * Create a fake trapframe for proc0 which will be used when
@@ -117,8 +117,8 @@ Lsh5_init_env:
 	movi	SZ_TRAPFRAME, r2
 	sub	r15, r2, r2		/* r2 -> base of fake trapframe */
 
-	/* Fix up proc0->p_md.md_regs to point to the base of the trapframe */
-	STPTR	r3, P_MD_REGS, r2
+	/* Fix up lwp0->l_md.md_regs to point to the base of the trapframe */
+	STPTR	r3, L_MD_REGS, r2
 
 	/* Indicate that callee-saved registers are valid (albeit zeroed) */
 	movi	SF_FLAGS_CALLEE_SAVED, r1
@@ -1120,7 +1120,7 @@ ENTRY_NOPROFILE(_dtf_trap_frob)
 
 
 /*
- * Reserve space in the BSS for proc0's PCB
+ * Reserve space in the BSS for lwp0's PCB
  */
 	.comm	Lproc0paddr,USPACE,16
 	.comm	_C_LABEL(proc0paddr),8,8

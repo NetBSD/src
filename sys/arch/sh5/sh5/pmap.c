@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2003/01/06 20:30:33 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 2003/01/19 19:49:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -448,7 +448,7 @@ int pmap_pvo_remove_depth;
 static __inline int
 pmap_is_curpmap(pmap_t pm)
 {
-	if ((curproc && curproc->p_vmspace->vm_map.pmap == pm) ||
+	if ((curlwp->l_proc && curlwp->l_proc->p_vmspace->vm_map.pmap == pm) ||
 	    pm == pmap_kernel())
 		return (1);
 
@@ -493,7 +493,7 @@ pmap_kernel_ipt_get_ptel(kpte_t *kpte)
 	__asm __volatile("ldlo.l %3, 0, %1; ldhi.l %3, 3, %2; or %1, %2, %0":
 	    "=r"(ptel), "=r"(r1), "=r"(r2): "r"(kpte));
 #else
-	__asm __volatile("ldlo.q %3, 0, %1; ldhi.q %3, 3, %2; or %1, %2, %0":
+	__asm __volatile("ldlo.q %3, 0, %1; ldhi.q %3, 7, %2; or %1, %2, %0":
 	    "=r"(ptel), "=r"(r1), "=r"(r2): "r"(kpte));
 #endif
 
@@ -2580,14 +2580,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  * is the current process, load the new MMU context.
  */
 void
-pmap_activate(struct proc *p)
+pmap_activate(struct lwp *l)
 {
-	pmap_t pm = p->p_vmspace->vm_map.pmap;
+	pmap_t pm = l->l_proc->p_vmspace->vm_map.pmap;
 	vsid_t old_vsid;
 
 	pmap_asid_alloc(pm);
 
-	if (p == curproc) {
+	if (l->l_proc == curlwp->l_proc) {
 		old_vsid = curcpu()->ci_curvsid;
 		curcpu()->ci_curvsid = pm->pm_vsid;
 		sh5_setasid(pm->pm_asid);
@@ -2604,10 +2604,10 @@ pmap_activate(struct proc *p)
 
 
 /*
- * Deactivate the specified process's address space.
+ * Deactivate the specified LWP's address space.
  */
 void
-pmap_deactivate(struct proc *p)
+pmap_deactivate(struct lwp *p)
 {
 }
 
@@ -2810,7 +2810,7 @@ pmap_asid_alloc(pmap_t pm)
  * Otherwise, the page really is read-only.
  */
 int
-pmap_write_trap(int usermode, vaddr_t va)
+pmap_write_trap(struct proc *p, int usermode, vaddr_t va)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
@@ -2818,8 +2818,8 @@ pmap_write_trap(int usermode, vaddr_t va)
 	pmap_t pm;
 	int s, idx;
 
-	if (curproc)
-		pm = curproc->p_vmspace->vm_map.pmap;
+	if (p)
+		pm = p->p_vmspace->vm_map.pmap;
 	else {
 		KDASSERT(usermode == 0);
 		pm = pmap_kernel();

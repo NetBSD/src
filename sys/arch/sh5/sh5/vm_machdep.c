@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 2002/10/31 14:20:39 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 2003/01/19 19:49:57 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  *
  */
 int
-cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
     struct core *chdr)
 {
 #ifdef notyet
@@ -136,32 +136,32 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
  * cpu_exit is called as the last action during exit.
  *
  * Block context switches and then call switch_exit() which will
- * switch to another process thus we never return.
+ * switch to another LWP thus we never return.
  */
 void
-cpu_exit(struct proc *p)
+cpu_exit(struct lwp *l, int proc)
 {
-	extern volatile void switch_exit(struct proc *);
+	extern volatile void switch_exit(struct lwp *, void (*)(struct lwp *));
 
-	pmap_deactivate(p);
+	pmap_deactivate(l);
 
 	(void) splhigh();
 	uvmexp.swtch++;
-	switch_exit(p);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 	/* NOTREACHED */
 }
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a fork operation, with process l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * proc_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the process being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -170,34 +170,34 @@ cpu_exit(struct proc *p)
  * accordingly.
  */
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	extern void proc_trampoline(void);
-	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
 
 #ifdef DIAGNOSTIC
-	if (p1 != curproc && p1 != &proc0)
-		panic("cpu_fork: curproc");
+	if (l1 != curlwp && l1 != &lwp0)
+		panic("cpu_fork: curlwp");
 #endif
 
-	if (p1 == curproc) {
-		p1->p_md.md_flags =
-		    sh5_savectx(p1->p_md.md_regs->tf_state.sf_usr,
-		    p1->p_md.md_flags, &p1->p_addr->u_pcb);
+	if (l1 == curlwp) {
+		l1->l_md.md_flags =
+		    sh5_savectx(l1->l_md.md_regs->tf_state.sf_usr,
+		    l1->l_md.md_flags, &l1->l_addr->u_pcb);
 	}
 
 	/* Child inherits parent's md_flags and pcb */
-	p2->p_md.md_flags = p1->p_md.md_flags;
-	memcpy(pcb, &p1->p_addr->u_pcb, sizeof(*pcb));
+	l2->l_md.md_flags = l1->l_md.md_flags;
+	memcpy(pcb, &l1->l_addr->u_pcb, sizeof(*pcb));
 
 	/* Setup the child's initial kernel stack.  */
-	p2->p_md.md_regs = tf = (struct trapframe *)
-	    ((char *)p2->p_addr + (USPACE - sizeof(*tf)));
+	l2->l_md.md_regs = tf = (struct trapframe *)
+	    ((char *)l2->l_addr + (USPACE - sizeof(*tf)));
 
 	/* Child inherits parent's trapframe */
-	memcpy(tf, (char *)p1->p_addr + (USPACE - sizeof(*tf)), sizeof(*tf));
+	memcpy(tf, (char *)l1->l_addr + (USPACE - sizeof(*tf)), sizeof(*tf));
 
 	/*
 	 * If the child is to have a different user-mode stack, fix it up now.
@@ -211,13 +211,26 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 * Set the child's syscall return parameters to the values
 	 * expected by libc's fork() stub.
 	 */
-	tf->tf_caller.r0 = 0;		/* No error */
-	tf->tf_caller.r2 = p1->p_pid;	/* Parent's pid */
-	tf->tf_caller.r3 = 1;		/* "child" flag */
+	tf->tf_caller.r0 = 0;			/* No error */
+	tf->tf_caller.r2 = l1->l_proc->p_pid;	/* Parent's pid */
+	tf->tf_caller.r3 = 1;			/* "child" flag */
 
 	/*
 	 * Set up a switchframe which will vector through proc_trampoline
 	 */
+	pcb->pcb_ctx.sf_pc = (register_t)(intptr_t)proc_trampoline;
+	pcb->pcb_ctx.sf_sp = pcb->pcb_ctx.sf_fp = (register_t)(intptr_t)tf;
+	pcb->pcb_ctx.sf_r10 = (register_t)(intptr_t)func;
+	pcb->pcb_ctx.sf_r11 = (register_t)(intptr_t)arg;
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = l->l_md.md_regs;
+	extern void proc_trampoline(void);
+
 	pcb->pcb_ctx.sf_pc = (register_t)(intptr_t)proc_trampoline;
 	pcb->pcb_ctx.sf_sp = pcb->pcb_ctx.sf_fp = (register_t)(intptr_t)tf;
 	pcb->pcb_ctx.sf_r10 = (register_t)(intptr_t)func;

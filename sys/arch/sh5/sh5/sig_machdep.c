@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.9 2002/10/02 08:13:09 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.10 2003/01/19 19:49:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,6 +44,8 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -55,14 +57,15 @@
 void
 sendsig(int sig, sigset_t *returnmask, u_long code)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct sigcontext *scp, ksc;
 	struct trapframe *tf;
 	int onstack, fsize, rndfsize;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -81,21 +84,21 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 	scp = (struct sigcontext *)((caddr_t)scp - rndfsize);
 
 	/* Build stack frame for signal trampoline. */
-	process_read_regs(p, &ksc.sc_regs);
+	process_read_regs(l, &ksc.sc_regs);
 	ksc.sc_regs.r_intregs[24] = 0xACEBABE5ULL;	/* magic number */
 
 	/* Save FP state if necessary */
-	if ((p->p_md.md_flags & MDP_FPSAVED) == 0) {
-		p->p_md.md_flags |= sh5_fpsave(tf->tf_state.sf_usr,
-		    &p->p_addr->u_pcb);
+	if ((l->l_md.md_flags & MDP_FPSAVED) == 0) {
+		l->l_md.md_flags |= sh5_fpsave(tf->tf_state.sf_usr,
+		    &l->l_addr->u_pcb);
 	}
-	if ((p->p_md.md_flags & MDP_FPUSED) != 0)
-		process_read_fpregs(p, &ksc.sc_regs);
+	if ((l->l_md.md_flags & MDP_FPUSED) != 0)
+		process_read_fpregs(l, &ksc.sc_regs);
 	else {
 		/* Always copy the FPSCR */
-		ksc.sc_regs.r_fpscr = p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr;
+		ksc.sc_regs.r_fpscr = l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr;
 	}
-	ksc.sc_fpstate = p->p_md.md_flags & (MDP_FPUSED | MDP_FPSAVED);
+	ksc.sc_fpstate = l->l_md.md_flags & (MDP_FPUSED | MDP_FPSAVED);
 
 	/* Save signal stack */
 	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -108,7 +111,7 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -126,7 +129,7 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	tf->tf_state.sf_spc = (register_t)(intptr_t)catcher;
@@ -151,16 +154,18 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
  * a machine fault.
  */
 int
-sys___sigreturn14(struct proc *p, void *v, register_t *retval)
+sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, ksc;
 	struct trapframe *tf;
+	struct proc *p;
 	int i;
 
-	tf = p->p_md.md_regs;
+	p = l->l_proc;
+	tf = l->l_md.md_regs;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -196,15 +201,15 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	process_write_regs(p, &ksc.sc_regs);
+	process_write_regs(l, &ksc.sc_regs);
 	if ((ksc.sc_fpstate & MDP_FPSAVED) != 0) {
-		process_write_fpregs(p, &ksc.sc_regs);
-		sh5_fprestore(tf->tf_state.sf_usr, &p->p_addr->u_pcb);
+		process_write_fpregs(l, &ksc.sc_regs);
+		sh5_fprestore(tf->tf_state.sf_usr, &l->l_addr->u_pcb);
 	} else {
 		/* Always restore FPSCR */
-		p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = ksc.sc_regs.r_fpscr;
+		l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = ksc.sc_regs.r_fpscr;
 	}
-	p->p_md.md_flags = ksc.sc_fpstate & MDP_FPUSED;
+	l->l_md.md_flags = ksc.sc_fpstate & MDP_FPUSED;
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
@@ -216,4 +221,95 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
 
 	return (EJUSTRETURN);
+}
+
+void
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+
+	tf = l->l_md.md_regs;
+
+	tf->tf_state.sf_spc = (register_t)(intptr_t)upcall | 1;
+	tf->tf_state.sf_usr = 0x0007;	/* r0-r23 are dirty */
+	tf->tf_caller.r2 = (register_t)type;
+	tf->tf_caller.r3 = (register_t)(intptr_t)sas;
+	tf->tf_caller.r4 = (register_t)nevents;
+	tf->tf_caller.r5 = (register_t)ninterrupted;
+	tf->tf_caller.r6 = (register_t)(intptr_t)ap;
+	tf->tf_caller.r14 = 0;
+	tf->tf_caller.r15 = (register_t)(intptr_t)sp;
+	tf->tf_caller.r18 = 0;
+}
+
+void
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+	__greg_t *gr = mcp->__gregs;
+
+	process_read_regs(l, (struct reg *)(void *)mcp);
+	gr[_REG_R(24)] = 0x12345678ACEBABE5ULL;	/* magic number */
+	*flags |= _UC_CPU;
+
+	/* Save FP state if necessary */
+	if ((l->l_md.md_flags & MDP_FPSAVED) == 0) {
+		l->l_md.md_flags |= sh5_fpsave(tf->tf_state.sf_usr,
+		    &l->l_addr->u_pcb);
+	}
+	if ((l->l_md.md_flags & MDP_FPUSED) != 0) {
+		process_read_fpregs(l, (struct reg *)(void *)mcp);
+		*flags |= _UC_FPU;
+	} else {
+		/* Always copy the FPSCR */
+		mcp->__fpregs.__fp_scr =
+		    l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr;
+	}
+}
+
+int
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+	const __greg_t *gr = mcp->__gregs;
+	int i;
+
+	if (flags & _UC_CPU) {
+		if (gr[_REG_R(24)] != 0x12345678ACEBABE5ULL) /* magic number */
+		return (EINVAL);
+
+		/*
+		 * Validate the branch target registers. If we don't, we risk
+		 * a kernel-mode exception when trying to restore invalid
+		 * values to them just before returning to user-mode.
+		 */
+		for (i = 0; i < 8; i++) {
+			if (!SH5_EFF_IS_VALID(gr[_REG_TR(i)]) ||
+			    (gr[_REG_TR(i)] & 0x3) == 0x3)
+				return (EINVAL);
+		}
+
+		/*
+		 * Ditto for the PC
+		 */
+		if (!SH5_EFF_IS_VALID(gr[_REG_PC]) ||
+		    (gr[_REG_PC] & 0x3) == 0x3)
+			return (EINVAL);
+
+		/* Restore register context. */
+		process_write_regs(l, (struct reg *)(void *)mcp);
+	}
+
+	if (flags & _UC_FPU) {
+		process_write_fpregs(l, (struct reg *)(void *)mcp);
+		sh5_fprestore(tf->tf_state.sf_usr, &l->l_addr->u_pcb);
+	} else {
+		/* Always restore FPSCR */
+		l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr =
+		    mcp->__fpregs.__fp_scr;
+		l->l_md.md_flags &= ~(MDP_FPUSED | MDP_FPSAVED);
+	}
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9 2002/10/19 08:50:30 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10 2003/01/19 19:49:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -149,7 +149,6 @@ void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, void (*pr)(const char *, ...))
 {
-	struct proc *p;
 	db_addr_t pc, fp;
 	db_addr_t nextpc, nextfp;
 	db_addr_t lastpc = 0, lastfp = 0;
@@ -176,27 +175,32 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		if (trace_thread) {
 			/*
 			 * Trace a specific process.
+			 *
+			 * XXX: Needs to understand multiple LWPs per proc.
 			 */
+			struct proc *p;
+			struct lwp *l;
 			(*pr)("trace: pid %d ", (int)addr);
 			p = pfind(addr);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
 			}
-			if ((p->p_flag & P_INMEM) == 0) {
+			l = LIST_FIRST(&p->p_lwps);	/* XXX: Hardly ideal */
+			if ((l->l_flag & L_INMEM) == 0) {
 				(*pr)("swapped out\n");
 				return;
 			}
 
 			/*
-			 * When the process is NOT current, its PC and FP
-			 * are stashed in the process' PCB. Otherwise, just
+			 * When the LWP is NOT current, its PC and FP
+			 * are stashed in the LWP's PCB. Otherwise, just
 			 * use the current stack frame.
 			 */
-			if (p != curproc) {
-				pc = (db_addr_t) p->p_addr->u_pcb.pcb_ctx.sf_pc;
+			if (l != curlwp) {
+				pc = (db_addr_t) l->l_addr->u_pcb.pcb_ctx.sf_pc;
 				pc &= ~1;
-				fp = (db_addr_t) p->p_addr->u_pcb.pcb_ctx.sf_fp;
+				fp = (db_addr_t) l->l_addr->u_pcb.pcb_ctx.sf_fp;
 				cur_intrframe = NULL;
 			} else {
 				pc = (db_addr_t) ddb_regs.tf_state.sf_spc & ~1;
@@ -249,7 +253,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 * There really is no point trying to trace back through
 		 * "idle" or "proc_trampoline". The former has no valid
 		 * "context" anyway, and the latter is the first function
-		 * called for each new process/kernel thread.
+		 * called for each new LWP/kernel thread.
 		 */
 		if (strcmp(symp, "idle") == 0 ||
 		    strcmp(symp, ___STRING(_C_LABEL(proc_trampoline))) == 0) {
@@ -377,7 +381,7 @@ again:
 		return (0);
 
 	/*
-	 * Compensate for the <handy breakpoint location after process "wakes">
+	 * Compensate for the <handy breakpoint location after LWP "wakes">
 	 * symbol in ltsleep(), which screws up our search for the function's
 	 * prologue.
 	 */

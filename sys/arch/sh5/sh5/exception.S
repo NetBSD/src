@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.19 2002/11/23 09:25:55 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.20 2003/01/19 19:49:53 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -761,20 +761,20 @@ Lsh5_event_sync:
 	addi	r0, -T_TRAP, r0		/* See if exception caused by "trapa" */
 	bne/l	r0, r63, tr0		/* Jump if not */
 	LEAF(_C_LABEL(trapa), r0)
-	LDPTR	r2, CI_CURPROC, r2	/* Get proc pointer */
+	LDPTR	r2, CI_CURLWP, r2	/* Get lwp pointer */
 	ptabs/l	r0, tr0
 	or	r15, r63, r3
-	blink	tr0, r18		/* trapa(curproc, trapframe); */
+	blink	tr0, r18		/* trapa(curlwp, trapframe); */
 	pta/l	Ltrapepilogue, tr0
 	blink	tr0, r63
 
 Ltrapagain:
 	getcon	kcr0, r2		/* Get cpu_info for this cpu */
 	LEAF(_C_LABEL(trap), r0)
-	LDPTR	r2, CI_CURPROC, r2	/* Get proc pointer */
+	LDPTR	r2, CI_CURLWP, r2	/* Get lwp pointer */
 	ptabs/l	r0, tr0
 	or	r15, r63, r3
-	blink	tr0, r18		/* trap(curproc, trapframe); */
+	blink	tr0, r18		/* trap(curlwp, trapframe); */
 
 Ltrapepilogue:
 	/* Check for ASTs */
@@ -784,8 +784,9 @@ Ltrapepilogue:
 	andi	r0, 1, r0		/* Going back to user-mode? */
 	bne/u	r0, r63, tr0		/* Nope. No need to check for ASTs */
 	getcon	kcr0, r1		/* Get cpu_info for this cpu */
-	LDPTR	r1, CI_CURPROC, r1	/* Get curproc */
+	LDPTR	r1, CI_CURLWP, r1	/* Get curlwp */
 	beq/u	r1, r63, tr0		/* Exit if NULL */
+	LDPTR	r1, L_PROC, r1		/* r1 = l->l_proc */
 #ifndef _LP64
 	addi	r1, P_MD_ASTPENDING, r1	/* Point to md_astpending */
 #else
@@ -868,8 +869,9 @@ Lsh5_event_interrupt:
 	andi	r0, 1, r0		/* Going back to user-mode? */
 	bne/u	r0, r63, tr0		/* Nope. No need to check for ASTs */
 	getcon	kcr0, r1		/* Get cpu_info for this cpu */
-	LDPTR	r1, CI_CURPROC, r1	/* Get curproc */
+	LDPTR	r1, CI_CURLWP, r1	/* Get curlwp */
 	beq/u	r1, r63, tr0		/* Exit if NULL */
+	LDPTR	r1, L_PROC, r1		/* r1 = l->l_proc */
 #ifndef _LP64
 	addi	r1, P_MD_ASTPENDING, r1	/* Point to md_astpending */
 #else

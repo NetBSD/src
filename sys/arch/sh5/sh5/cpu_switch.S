@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.14 2002/10/21 15:37:20 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.15 2003/01/19 19:49:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  *
  * Uses: r0, r1 and tr0
  *
- * On entry, r1 must be the value of USR for the process
+ * On entry, r1 must be the value of USR for the LWP
  */
 #define	SAVE_CTX(pcb,mdf)						       \
 	gettr	tr5, r0				/* Save target regs */	      ;\
@@ -152,7 +152,7 @@
  *
  * Uses: r0, r1 and tr0
  *
- * On entry, r1 must be the value of USR for the process
+ * On entry, r1 must be the value of USR for the LWP
  * Note: Does not restore the Status Register
  */
 #define	RESTORE_CTX(pcb,mdf)						       \
@@ -217,7 +217,7 @@
 
 /******************************************************************************
  *
- * When no processes are ready to run, cpu_switch branches to idle to
+ * When no LWPs are ready to run, cpu_switch branches to idle to
  * wait for someone to come ready.
  *
  * On entry, r29 points to "sched_whichqs".
@@ -226,16 +226,8 @@
  * We don't need to preserve caller-save registers.
  */
 ASENTRY_NOPROFILE(idle)
-	/* Deactivate the old process' pmap */
 	getcon	kcr0, r0
-	LDPTR	r0, CI_CURPROC, r2
-	pta/u	1f, tr0
-	beq/u	r2, r63, tr0		/* curproc is already NULL! */
-	LEAF(_C_LABEL(pmap_deactivate), r0)
-	ptabs/l	r0, tr0
-	blink	tr0, r18
-	getcon	kcr0, r0
-	STPTR	r0, CI_CURPROC, r63	/* When idle, there is no curproc */
+	STPTR	r0, CI_CURLWP, r63	/* When idle, there is no curlwp */
 	pta/u	1f, tr0
 
 1:
@@ -270,12 +262,14 @@ ASENTRY_NOPROFILE(idle)
 
 /******************************************************************************
  *
- * void cpu_switch(void)
+ * int cpu_switch(struct lwp *l)
  *
- * Find the highest priority process and resume it.
+ * Find the highest priority LWP and resume it.
  *
- * XXX: Still needs to be optimised to avoid saving/restoring state if
- *      resuming curproc.
+ *  Argument 'l' is the current LWP
+ *
+ *  Returns 0 if no context switch was done, otherwise 1 if we
+ *  switched to another context.
  */
 ENTRY_NOPROFILE(cpu_switch)
 #ifdef DEBUG
@@ -291,17 +285,23 @@ ENTRY_NOPROFILE(cpu_switch)
 1:
 #endif
 	getcon	kcr0, r0
-	LDPTR	r0, CI_CURPCB, r2	/* Fetch curpcb */
-	LDPTR	r0, CI_CURPROC, r0	/* Fetch curproc */
-	ld.l	r0, P_MD_FLAGS, r3	/* Fetch md_flags */
-	LDPTR	r0, P_MD_REGS, r0	/* Fetch pointer to trapframe */
+	LDPTR	r0, CI_CURPCB, r4	/* Fetch curpcb */
+	ld.l	r2, L_MD_FLAGS, r3	/* Fetch md_flags */
+	LDPTR	r2, L_MD_REGS, r0	/* Fetch pointer to trapframe */
 	ld.q	r0, TF_USR, r1		/* Fetch saved USR */
-	SAVE_CTX(r2,r3)			/* Save process context */
-	getcon	kcr0, r0
-	LDPTR	r0, CI_CURPROC, r0	/* Fetch curproc */
-	st.l	r0, P_MD_FLAGS, r3	/* Save FP state */
+	SAVE_CTX(r4,r3)			/* Save LWP context */
+	st.l	r2, L_MD_FLAGS, r3	/* Save FP state */
+
+	/*
+	 * Save the old lwp in r30 for later, so we can check if we did
+	 * in fact context switch away from it.
+	 */
+	add	r2, r63, r30
 
 Lsw1:
+	/*
+	 * switch_exit() jumps here
+	 */
 	pta/u	_ASM_LABEL(idle), tr0
 	LEA(_C_LABEL(sched_whichqs), r29)
 	ld.l	r29, 0, r0		/* Fetch sched_whichqs */
@@ -309,6 +309,8 @@ Lsw1:
 
 Lsw2:
 	/*
+	 * idle() jumps here when there's work to do.
+	 *
 	 * Interrupts are blocked, sched_lock is held, and r0 contains
 	 * the contents of a non-zero sched_whichqs.
 	 */
@@ -334,109 +336,99 @@ Lsw2:
 	pta/u	Lbadsw, tr0
 
 	/*
-	 * Remove process from head of run queue
+	 * Remove LWP from head of run queue
 	 */
-	LDPTR	r3, PH_LINK, r2		/* r2 = victim process, p */
-	beq/u	r2, r3, tr0		/* Queue was empty! Panic stations! */
-	LDPTR	r2, P_FORW, r4		/* r4 = p->p_forw */
-	STPTR	r3, PH_LINK, r4		/* queue->ph_link = p->p_forw */
-	STPTR	r4, P_BACK, r3		/* p->p_forw->p_back = queue */
-	STPTR	r2, P_BACK, r63		/* p->p_back = NULL */
+	LDPTR	r3, PH_LINK, r31	/* r31 = victim lwp, l */
+	beq/u	r31, r3, tr0		/* Queue was empty! Panic stations! */
+	LDPTR	r31, L_FORW, r4		/* r4 = l->l_forw */
+	STPTR	r3, PH_LINK, r4		/* queue->ph_link = l->l_forw */
+	STPTR	r4, L_BACK, r3		/* l->l_forw->l_back = queue */
+	STPTR	r31, L_BACK, r63	/* l->l_back = NULL */
 
 	sub	r3, r4, r4		/* r4 == 0 if queue is now empty */
 	cmveq	r4, r5, r0		/* Update sched_whichqs bitmap */
 	st.l	r29, 0, r0
 
+Lsw3:
 	/*
-	 * At this point: r2 == process we're about to switch to
+	 * Release the scheduler lock now that we're done with the run queue.
 	 */
-	getcon	kcr0, r28
-	LDPTR	r28, CI_CURPROC, r28	/* Fetch curproc (NULL if we idled) */
+#ifdef LOCKDEBUG
+	LEAF(_C_LABEL(sched_unlock_idle), r0)
+	ptabs/l	r0, tr0
+	blink	tr0, r18
+#endif
+
+	/*
+	 * At this point:
+	 *   r30 == lwp we switched from (NULL if there wasn't one).
+	 *   r31 == lwp we're about to switch to.
+	 */
 	pta/u	1f, tr0
-	beq/u	r28, r63, tr0		/* Jump if no previous curproc */
+	beq/u	r30, r63, tr0		/* Jump if no previous curlwp */
 
 	pta/u	2f, tr0
-	beq/u	r2, r28, tr0		/* Jump if switching to same process */
+	beq/u	r30, r31, tr0		/* Jump if switching to same lwp */
 
-	/* Deactivate the old process' pmap */
+	/* Deactivate the old LWP's pmap */
 	LEAF(_C_LABEL(pmap_deactivate), r0)
 	ptabs/l	r0, tr0
-	or	r2, r63, r29		/* Save new proc in r29 */
-	or	r28, r63, r2		/* Get old proc to r2 */
+	or	r30, r63, r2		/* Get old lwp to r2 */
 	blink	tr0, r18
-	or	r29, r63, r2		/* Restore r2 */
 
 1:	getcon	kcr0, r0
-	LDPTR	r2, P_ADDR, r1		/* Point to process' pcb */
-	STPTR	r0, CI_CURPROC, r2	/* New process is now current */
+	LDPTR	r31, L_ADDR, r1		/* Point to new lwp's pcb */
+	STPTR	r0, CI_CURLWP, r31	/* New lwp is now current */
 	STPTR	r0, CI_CURPCB, r1	/* Activate pcb */
 
-	/* Activate the new process' pmap */
+	/* Activate the new LPW's pmap */
 	LEAF(_C_LABEL(pmap_activate), r0)
 	ptabs/l	r0, tr0
-	or	r2, r63, r28		/* Save new proc in r28 */
+	or	r31, r63, r2
 	blink	tr0, r18
-	or	r28, r63, r2		/* new proc to r2 */
 
 	/*
 	 * Check for restartable atomic sequences (RAS)
 	 */
 	pta/l	2f, tr0
+	LDPTR	r31, L_PROC, r2
 	ld.l	r2, P_NRAS, r0
-	beq/l	r2, r63, tr0		/* Skip if no RAS registered for proc */
+	beq/l	r0, r63, tr0		/* Skip if no RAS registered for proc */
 	LEAF(_C_LABEL(ras_lookup), r0)
 	ptabs/l	r0, tr0
-	LDPTR	r2, P_ADDR, r3		/* Fetch new process' pcb */
-	LDPTR	r2, P_MD_REGS, r29	/* Fetch pointer to trapframe */
+	LDPTR	r31, L_MD_REGS, r29	/* Fetch pointer to trapframe */
 	ld.q	r29, TF_SPC, r3		/* Fetch user-space program-counter */
 #ifndef _LP64
 	add.l	r3, r63, r3		/* Sign-extend for ILP32 ABI */
 #endif
-	blink	tr0, r18		/* r2 = ras_lookup(newproc, spc) */
+	blink	tr0, r18		/* r2 = ras_lookup(l->l_proc, spc) */
 	pta/l	2f, tr0
 #ifndef _LP64
-	add.l	r2, r63, r3		/* Sign-extend result for ILP32 ABI */
-#else
-	or	r2, r63, r3
+	add.l	r2, r63, r2		/* Sign-extend result for ILP32 ABI */
 #endif
-	or	r28, r63, r2		/* Restore new proc to r2 */
-	beqi/l	r3, -1, tr0		/* Jump if no need to restart */
-	st.q	r29, TF_SPC, r3		/* Otherwise, reset the process' PC */
+	beqi/l	r2, -1, tr0		/* Jump if no need to restart */
+	st.q	r29, TF_SPC, r2		/* Otherwise, reset the LWP's PC */
 
 2:
-	LDPTR	r2, P_ADDR, r3		/* Fetch new process' pcb */
-	LDPTR	r2, P_MD_REGS, r1	/* Fetch pointer to trapframe */
-	ld.l	r2, P_MD_FLAGS, r4
-	ld.q	r1, TF_USR, r1		/* Fetch saved USR */
-	RESTORE_CTX(r3,r4)		/* Switch context to the new process */
-
-	/*
-	 * We're running in the new process context. Only caller-saved
-	 * registers are available now.
-	 */
-#ifdef LOCKDEBUG
-	addi	r15, -8, r15
-	LEAF(_C_LABEL(sched_unlock_idle), r0)
-	ptabs/l	r0, tr0
-	st.q	r15, 0, r18
-	blink	tr0, r18
-	ld.q	r15, 0, r18
-	addi	r15, 8, r15
-#endif
-
 	getcon	kcr0, r0
-	LDPTR	r0, CI_CURPROC, r1	/* Fetch curproc */
-	movi	SONPROC, r2		/* Flag process as running */
-	st.b	r1, P_STAT, r2
+	LDPTR	r31, L_ADDR, r3		/* Fetch new LWP's pcb */
+	LDPTR	r31, L_MD_REGS, r1	/* Fetch pointer to trapframe */
+	ld.l	r31, L_MD_FLAGS, r4
+	movi	LSONPROC, r2		/* Flag new lwp as running */
+	st.b	r31, L_STAT, r2		/* l->l_stat = LSONPROC */
+	STPTR	r0, CI_CURLWP, r31	/* New lwp is now current */
+	STPTR	r0, CI_CURPCB, r3	/* Activate pcb */
 	st.l	r0, CI_WANT_RESCHED, r63 /* We've rescheduled */
-
-	LDPTR	r0, CI_CURPCB, r0	/* Fetch curpcb */
-	ld.q	r0, PCB_CTX_SR, r0	/* Fetch saved status register */
+	ld.q	r3, PCB_CTX_SR, r5	/* Fetch saved status register */
+	ld.q	r1, TF_USR, r1		/* Fetch saved USR */
+	cmpeq	r30, r31, r2		/* Compute return value */
+	xori	r2, 1, r2		/* Correct for 'cmpeq' result */
+	RESTORE_CTX(r3,r4)		/* Switch context to the new LWP */
 
 #ifdef DEBUG
 	pta/l	5f, tr0
 	LDC32(SH5_CONREG_SR_BL, r1)
-	and	r0, r1, r1
+	and	r5, r1, r1
 	beq/l	r1, r63, tr0
 	LEAF(_C_LABEL(panic), r0)
 	ptabs/l	r0, tr0
@@ -445,9 +437,8 @@ Lsw2:
 5:
 #endif
 
-	putcon	r0, sr			/* Restore interrupt mask */
 	ptabs/l	r18, tr0
-	movi	1, r2			/* Non-zero return value */
+	putcon	r5, sr			/* Restore interrupt mask */
 	blink	tr0, r63		/* Done */
 
 Lbadsw:
@@ -467,27 +458,43 @@ Lbadsw3_panic:
 
 /******************************************************************************
  *
- * void switch_exit(struct proc *p)
+ * void cpu_switchto(struct lwp *current, struct lwp *next)
  *
- * The process `p' is about to die.
+ * Switch to a specific next LWP.
+ */
+ENTRY(cpu_switchto)
+
+	LDPTR	r2, CI_CURPCB, r4	/* Fetch current->l_addr */
+	ld.l	r2, L_MD_FLAGS, r5	/* Fetch current->l_md.md_flags */
+	LDPTR	r2, L_MD_REGS, r0	/* Fetch current->l_md.md_regs */
+	ld.q	r0, TF_USR, r1		/* Fetch saved USR */
+	SAVE_CTX(r4,r5)			/* Save 'current' context */
+	st.l	r2, L_MD_FLAGS, r5	/* Update md_flags */
+	pta/l	Lsw3, tr0
+	or	r2, r63, r30
+	or	r3, r63, r31
+	blink	tr0, r63		/* Switch to 'next' */
+
+
+/******************************************************************************
+ *
+ * void switch_exit(struct lwp *l, void (*exit_func)(struct lwp *))
+ *
+ * The LWP `l' is about to die.
  * Arrange for its obituary before jumping to cpu_switch() to find
- * another process to run.
+ * another LWP to run.
  */
 ENTRY(switch_exit)
-	LEA(_C_LABEL(proc0), r1)
+	LEA(_C_LABEL(lwp0), r1)
 	getcon	kcr0, r0
-	LDPTR	r1, P_ADDR, r1
+	ptabs/l	r3, tr0
+	LDPTR	r1, L_ADDR, r1
 	STPTR	r0, CI_CURPCB, r1	/* Set something useful in CURPCB */
-	STPTR	r0, CI_CURPROC, r63	/* No process is current */
-	ld.q	r1, PCB_CTX_SP, r15	/* Switch to proc0's stack */
+	STPTR	r0, CI_CURLWP, r63	/* No LWP is current */
+	ld.q	r1, PCB_CTX_SP, r15	/* Switch to lwp0's stack */
 	ld.q	r1, PCB_CTX_FP, r14
 
-	LEAF(_C_LABEL(exit2), r0)
-	ptabs/l	r0, tr0
-	blink	tr0, r18
-
-	getcon	kcr0, r0
-	STPTR	r0, CI_CURPROC, r63	/* No process is current */
+	blink	tr0, r18		/* (*exit_func)(l) */
 
 #ifdef LOCKDEBUG
 	LEAF(_C_LABEL(sched_lock_idle), r0)
@@ -496,6 +503,7 @@ ENTRY(switch_exit)
 #endif
 
 	pta/l	Lsw1, tr0
+	add	r63, r63, r30		/* Previous LWP is NULL in cpu_switch */
 	blink	tr0, r63
 
 
@@ -520,7 +528,7 @@ ENTRY(sh5_savectx)
  *
  * Save FP state in the PCB
  *
- * Returns a value suitable for storing in curproc->p_md.md_flags to
+ * Returns a value suitable for storing in curlwp->l_md.md_flags to
  * indicate if the FPU state was used/saved.
  */
 ENTRY(sh5_fpsave)

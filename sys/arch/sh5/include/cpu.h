@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2002/10/05 11:01:13 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2003/01/19 19:49:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -138,7 +138,7 @@ struct cpu_info {
 	u_int ci_simple_locks;		/* # of simple locks held */
 #endif
 
-	struct proc *ci_curproc;	/* current process on this cpu */
+	struct lwp *ci_curlwp;		/* current lwp on this cpu */
 	struct pcb *ci_curpcb;		/* current process' pcb */
 	vsid_t ci_curvsid;		/* current pmap's vsid */
 	u_int ci_want_resched;		/* current process pre-empted */
@@ -156,7 +156,7 @@ curcpu(void)
 	return (ci);
 }
 
-#define	curproc		curcpu()->ci_curproc
+#define	curlwp		curcpu()->ci_curlwp
 #define	curpcb		curcpu()->ci_curpcb
 
 /*
@@ -165,6 +165,7 @@ curcpu(void)
  */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
+#define	cpu_proc_fork(p1, p2)		/* nothing */
 
 /*
  * Can swapout u-area
@@ -200,8 +201,8 @@ struct clockframe {
 #define	need_resched(ci)						\
 do {									\
 	(ci)->ci_want_resched = 1;					\
-	if ((ci)->ci_curproc != NULL)					\
-		aston((ci)->ci_curproc);				\
+	if (curproc != NULL)						\
+		aston(curproc);						\
 } while (/*CONSTCOND*/0)
 
 /*
