@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd_intr.s,v 1.1 1996/11/09 22:27:26 leo Exp $
+/*	$NetBSD: hdfd_intr.s,v 1.2 1996/12/14 13:47:13 leo Exp $
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -38,6 +38,7 @@
  */
 
 #include "assym.h"
+#define ASSEMBLER /* XXX */
 #include <atari/dev/hdfdreg.h>
 
 	.globl	_fddmaaddr
