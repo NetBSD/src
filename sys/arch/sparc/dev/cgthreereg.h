@@ -1,3 +1,5 @@
+/*	$NetBSD: cgthreereg.h,v 1.4 1994/11/20 20:52:03 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *    @(#)cgthreereg.h        8.1 (Berkeley) 6/11/93
- *
- * from: Header: cgthreereg.h,v 1.7 93/10/31 05:09:28 torek Exp
- * $Id: cgthreereg.h,v 1.3 1994/03/03 12:22:04 deraadt Exp $
+ *	@(#)cgthreereg.h	8.2 (Berkeley) 10/30/93
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: fpu_explode.c,v 1.2 1994/11/20 20:52:41 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)fpu_explode.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: fpu_explode.c,v 1.3 92/11/26 01:39:48 torek Exp 
- * $Id: fpu_explode.c,v 1.1 1993/10/02 10:22:57 deraadt Exp $
  */
 
 /*

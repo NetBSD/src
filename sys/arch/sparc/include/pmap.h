@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap.h,v 1.8 1994/11/20 20:53:22 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: pmap.h,v 1.11 93/05/25 10:36:09 torek Exp 
- * $Id: pmap.h,v 1.7 1994/11/14 06:09:19 deraadt Exp $
  */
 
 #ifndef	_SPARC_PMAP_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: asm.h,v 1.3 1994/11/20 20:52:51 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Allen Briggs
  * All rights reserved.
@@ -37,8 +39,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: asm.h,v 1.2 1994/06/03 11:48:13 pk Exp $
  */
 
 #ifndef _ASM_H_

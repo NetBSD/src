@@ -1,3 +1,5 @@
+/*	$NetBSD: defs.h,v 1.2 1994/11/20 20:54:54 deraadt Exp $ */
+
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: defs.h,v 1.1 1994/07/20 20:47:16 pk Exp $
  */
 
 #include <machine/bsd_openprom.h>

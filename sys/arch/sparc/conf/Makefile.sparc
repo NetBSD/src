@@ -1,5 +1,6 @@
-# from:	@(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
-# $Id: Makefile.sparc,v 1.14 1994/11/02 04:59:59 deraadt Exp $
+# 	$NetBSD: Makefile.sparc,v 1.15 1994/11/20 20:51:36 deraadt Exp $
+
+# @(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:

@@ -1,3 +1,5 @@
+/*	$NetBSD: bwtwo.c,v 1.7 1994/11/20 20:51:57 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)bwtwo.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: bwtwo.c,v 1.14 92/11/26 02:28:04 torek Exp 
- * $Id: bwtwo.c,v 1.6 1994/11/02 04:55:50 deraadt Exp $
  */
 
 /*

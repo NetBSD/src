@@ -1,5 +1,6 @@
-#	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-# $Id: files.sparc.newconf,v 1.17 1994/10/26 07:12:18 deraadt Exp $
+#	$NetBSD: files.sparc.newconf,v 1.18 1994/11/20 20:51:46 deraadt Exp $
+
+# @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
 
 maxusers 2 8 64

@@ -1,3 +1,5 @@
+/*	$NetBSD: zs.c,v 1.18 1994/11/20 20:52:28 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
- *
- * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.17 1994/11/03 18:57:33 pk Exp $
  */
 
 /*

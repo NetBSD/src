@@ -1,5 +1,6 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.3 1994/07/20 20:47:02 pk Exp $
+#	$NetBSD: Makefile,v 1.4 1994/11/20 20:54:49 deraadt Exp $
+
+#	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
 DESTDIR=
 

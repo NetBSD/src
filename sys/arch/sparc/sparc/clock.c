@@ -1,3 +1,5 @@
+/*	$NetBSD: clock.c,v 1.13 1994/11/20 20:54:05 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.12 1994/10/15 05:51:19 deraadt Exp $
  */
 
 /*

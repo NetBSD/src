@@ -1,3 +1,5 @@
+/*	$NetBSD: locore2.c,v 1.5 1994/11/20 20:54:28 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)locore2.c	8.4 (Berkeley) 12/10/93
- *
- * from: Header: locore2.c,v 1.8 92/11/26 03:05:01 mccanne Exp (LBL)
- * $Id: locore2.c,v 1.4 1994/05/19 07:12:59 deraadt Exp $
  */
 
 /*

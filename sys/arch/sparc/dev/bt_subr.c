@@ -1,6 +1,8 @@
+/*	$NetBSD: bt_subr.c,v 1.4 1994/11/20 20:51:54 deraadt Exp $ */
+
 /*
- * Copyright (c) 1993 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
- *
- * from: Header: bt_subr.c,v 1.1 93/10/12 15:28:39 torek Exp 
- * $Id: bt_subr.c,v 1.3 1994/09/17 23:57:30 deraadt Exp $
+ *	@(#)bt_subr.c	8.2 (Berkeley) 1/21/94
  */
 
 #include <sys/param.h>

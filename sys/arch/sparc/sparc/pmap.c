@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap.c,v 1.22 1994/11/20 20:54:35 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.21 1994/11/14 06:09:30 deraadt Exp $
+ *	@(#)pmap.c	8.4 (Berkeley) 2/5/94
  */
 
 /*
