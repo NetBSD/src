@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: create.c,v 1.6 1994/03/27 09:26:59 cgd Exp $";
+static char rcsid[] = "$Id: create.c,v 1.7 1998/06/07 02:30:12 enami Exp $";
 #endif /* not lint */
 
 /*
@@ -384,7 +384,7 @@ dump_file (p, curdev, toplevel)
 
       header_moved = 0;
 
-#ifdef BSD42
+#if defined(BSD42) || defined(ENABLE_SPARSE)
       if (f_sparse_files)
 	{
 	  /*
