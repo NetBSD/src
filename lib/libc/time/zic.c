@@ -1,12 +1,12 @@
-/*	$NetBSD: zic.c,v 1.17 2000/08/02 15:17:20 hubertf Exp $	*/
+/*	$NetBSD: zic.c,v 1.18 2000/12/12 15:25:41 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)zic.c	7.100";
+static char	elsieid[] = "@(#)zic.c	7.101";
 #else
-__RCSID("$NetBSD: zic.c,v 1.17 2000/08/02 15:17:20 hubertf Exp $");
+__RCSID("$NetBSD: zic.c,v 1.18 2000/12/12 15:25:41 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -449,7 +449,7 @@ const char * const	string;
 static void
 usage P((void))
 {
-	(void) fprintf(stderr, _("%s: usage is %s [ -s ] [ -v ] [ -l localtime ] [ -p posixrules ]\n\t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n"),
+	(void) fprintf(stderr, _("%s: usage is %s [ -s ] [ -v ] [ -l localtime ] [ -p posixrules ] \\\n\t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n"),
 		progname, progname);
 	(void) exit(EXIT_FAILURE);
 }
