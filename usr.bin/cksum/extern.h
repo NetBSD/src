@@ -31,16 +31,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$Id: extern.h,v 1.3 1993/11/02 07:33:12 cgd Exp $
+ *	$Id: extern.h,v 1.4 1994/12/24 16:02:50 cgd Exp $
  */
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	crc __P((int, unsigned long *, unsigned long *));
-void	pcrc __P((char *, unsigned long, unsigned long));
-void	psum1 __P((char *, unsigned long, unsigned long));
-void	psum2 __P((char *, unsigned long, unsigned long));
-int	csum1 __P((int, unsigned long *, unsigned long *));
-int	csum2 __P((int, unsigned long *, unsigned long *));
+int	crc __P((int, u_int32_t *, u_int32_t *));
+void	pcrc __P((char *, u_int32_t, u_int32_t));
+void	psum1 __P((char *, u_int32_t, u_int32_t));
+void	psum2 __P((char *, u_int32_t, u_int32_t));
+int	csum1 __P((int, u_int32_t *, u_int32_t *));
+int	csum2 __P((int, u_int32_t *, u_int32_t *));
 __END_DECLS
