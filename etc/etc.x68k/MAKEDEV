@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.30 2000/09/27 03:41:12 itohy Exp $
+#	$NetBSD: MAKEDEV,v 1.31 2001/01/08 22:26:29 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -49,6 +49,7 @@
 #	fd	makes fd/* for the fdescfs.
 #	std	standard devices
 #	local	configuration specific devices
+#	isdn	make ISDN devices
 #
 # Tapes:
 #	st*	SCSI tapes
@@ -77,6 +78,13 @@
 #
 # Printers:
 #	par*	motherboard parallel port
+#
+# ISDN devices:
+#	i4b	comunication between userland isdnd and kernel
+#	i4bctl	control device
+#	i4brbch* raw b-channel access
+#	i4btel*	telephonie device
+#	i4btrc*	trace device
 #
 # Special purpose devices:
 #	grf*	builtin video
@@ -114,6 +122,7 @@ all)
 	sh $0 sram audio pow0 pow1 bell random local
 	sh $0 md0 md1 ch0 uk0 uk1 ss0
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 isdn
 	;;
 
 floppy)
@@ -123,6 +132,10 @@ floppy)
 
 ramdisk)
 	sh $0 floppy md0 sram
+	;;
+
+isdn)
+	sh $0 i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
 	;;
 
 std)
@@ -505,6 +518,39 @@ scsibus*)
 	mknod scsibus$unit c 40 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+i4b)
+	rm -f i4b
+	mknod i4b c 43 0
+	chmod 600 i4b
+	;;
+
+i4bctl)
+	rm -f i4bctl
+	mknod i4bctl c 44 0
+	chmod 600 i4bctl
+	;;
+
+i4brbch*)
+	unit=${i#i4brbch};
+	rm -f i4brbch$unit
+	mknod i4brbch$unit c 45 $unit
+	chmod 600 i4brbch$unit
+	;;
+
+i4btel*)
+	unit=${i#i4btel};
+	rm -f i4btel$unit
+	mknod i4btel$unit c 47 $unit
+	chmod 600 i4btel$unit
+	;;
+
+i4btrc*)
+	unit=${i#i4btrc};
+	rm -f i4btrc$unit
+	mknod i4btrc$unit c 46 $unit
+	chmod 600 i4btrc$unit
 	;;
 
 local)
