@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.8 2001/07/24 16:26:53 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.9 2003/02/10 11:43:28 tsutsui Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -70,15 +70,6 @@
 void picaDmaReset __P((dma_softc_t *sc));
 void picaDmaEnd __P((dma_softc_t *sc));
 void picaDmaNull __P((dma_softc_t *sc));
-
-/*
- *  Initialize the dma mapping register area and pool.
- */
-void
-picaDmaInit()
-{
-	jazz_dmatlb_init(&jazzio_bus, jazzio_conf->jc_dmatlbreg);
-}
 
 /*
  *  Allocate an array of 'size' dma pte entrys.
