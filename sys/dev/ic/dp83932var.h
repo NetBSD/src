@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932var.h,v 1.1 2001/07/05 14:37:41 thorpej Exp $	*/
+/*	$NetBSD: dp83932var.h,v 1.2 2001/07/05 15:02:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -203,13 +203,25 @@ struct sonic_softc {
 	bus_space_write_2((sc)->sc_st, (sc)->sc_sh,			\
 	    (sc)->sc_regmap[(reg)], (val))
 
+#define	SONIC_CDTXADDR16(sc, x)						\
+	((sc)->sc_cddma + SONIC_CDTXOFF16((x)))
+
+#define	SONIC_CDTXADDR32(sc, x)						\
+	((sc)->sc_cddma + SONIC_CDTXOFF32((x)))
+
 #define	SONIC_CDTXADDR(sc, x)						\
-	((sc)->sc_cddma +						\
-	 ((sc)->sc_32bit ? SONIC_CDTXOFF32((x)) : SONIC_CDTXOFF16((x))))
+	((sc)->sc_32bit ? SONIC_CDTXADDR32((sc), (x)) :			\
+	    SONIC_CDTXADDR16((sc), (x)))
+
+#define	SONIC_CDRXADDR16(sc, x)						\
+	((sc)->sc_cddma + SONIC_CDRXOFF16((x)))
+
+#define	SONIC_CDRXADDR32(sc, x)						\
+	((sc)->sc_cddma + SONIC_CDRXOFF32((x)))
 
 #define	SONIC_CDRXADDR(sc, x)						\
-	((sc)->sc_cddma +						\
-	 ((sc)->sc_32bit ? SONIC_CDRXOFF32((x)) : SONIC_CDRXOFF16((x))))
+	((sc)->sc_32bit ? SONIC_CDRXADDR32((sc), (x)) :			\
+	    SONIC_CDRXADDR16((sc), (x)))
 
 #define	SONIC_CDRRADDR(sc, x)						\
 	((sc)->sc_cddma +						\
@@ -219,41 +231,29 @@ struct sonic_softc {
 	((sc)->sc_cddma +						\
 	 ((sc)->sc_32bit ? SONIC_CDCAMOFF32 : SONIC_CDCAMOFF32))
 
-#define	SONIC_CDTXSYNC(sc, x, ops)					\
-do {									\
-	if ((sc)->sc_32bit)						\
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
-		    SONIC_CDTXOFF32((x)), sizeof(struct sonic_tda32),	\
-		    (ops));						\
-	else								\
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
-		    SONIC_CDTXOFF16((x)), sizeof(struct sonic_tda16),	\
-		    (ops));						\
-} while (/*CONSTCOND*/0)
+#define	SONIC_CDTXSYNC16(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    SONIC_CDTXOFF16((x)), sizeof(struct sonic_tda16), (ops))
 
-#define	SONIC_CDRXSYNC(sc, x, ops)					\
-do {									\
-	if ((sc)->sc_32bit)						\
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
-		    SONIC_CDRXOFF32((x)), sizeof(struct sonic_rda32),	\
-		    (ops));						\
-	else								\
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
-		    SONIC_CDRXOFF16((x)), sizeof(struct sonic_rda16),	\
-		    (ops));						\
-} while (/*CONSTCOND*/0)
+#define	SONIC_CDTXSYNC32(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    SONIC_CDTXOFF32((x)), sizeof(struct sonic_tda32), (ops))
 
-#define	SONIC_CDRRSYNC(sc, x, ops)					\
-do {									\
-	if ((sc)->sc_32bit)						\
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
-		    SONIC_CDRROFF32((x)), sizeof(struct sonic_rra32),	\
-		    (ops));						\
-	else								\
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
-		    SONIC_CDRROFF16((x)), sizeof(struct sonic_rra16),	\
-		    (ops));						\
-} while (/*CONSTCOND*/0)
+#define	SONIC_CDRXSYNC16(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    SONIC_CDRXOFF16((x)), sizeof(struct sonic_rda16), (ops))
+
+#define	SONIC_CDRXSYNC32(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    SONIC_CDRXOFF32((x)), sizeof(struct sonic_rda32), (ops))
+
+#define	SONIC_CDRRSYNC16(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    SONIC_CDRROFF16((x)), sizeof(struct sonic_rra16), (ops))
+
+#define	SONIC_CDRRSYNC32(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    SONIC_CDRROFF32((x)), sizeof(struct sonic_rra32), (ops))
 
 #define	SONIC_CDCAMSYNC(sc, ops)					\
 do {									\
@@ -292,11 +292,17 @@ do {									\
 		__rra->rra_wc0 = (ETHER_MAX_LEN + 6) / 2;		\
 									\
 		__rda->rda_link =					\
-		    (SONIC_CDRXADDR((sc), SONIC_NEXTRX((x))) & 0xffff) |\
+		    (SONIC_CDRXADDR32((sc), SONIC_NEXTRX((x))) & 0xffff) |\
 		    RDA_LINK_EOL;					\
 		__rda->rda_inuse = 1;					\
 									\
-		__prda->rda_link = SONIC_CDRXADDR((sc), (x));		\
+		__prda->rda_link = SONIC_CDRXADDR32((sc), (x));		\
+									\
+		SONIC_CDRRSYNC32((sc), (x), BUS_DMASYNC_PREWRITE);	\
+		SONIC_CDRXSYNC32((sc), (x),				\
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
+		SONIC_CDRXSYNC32((sc), SONIC_PREVRX(x),			\
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
 	} else {							\
 		/*							\
 		 * In 16-bit mode, we scoot the packet forward 2 bytes	\
@@ -318,18 +324,18 @@ do {									\
 		__rra->rra_wc0 = (ETHER_MAX_LEN + 2) / 2;		\
 									\
 		__rda->rda_link =					\
-		    (SONIC_CDRXADDR((sc), SONIC_NEXTRX((x))) & 0xffff) |\
+		    (SONIC_CDRXADDR16((sc), SONIC_NEXTRX((x))) & 0xffff) |\
 		    RDA_LINK_EOL;					\
 		__rda->rda_inuse = 1;					\
 									\
-		__prda->rda_link = SONIC_CDRXADDR((sc), (x));		\
-	}								\
+		__prda->rda_link = SONIC_CDRXADDR16((sc), (x));		\
 									\
-	SONIC_CDRRSYNC((sc), (x), BUS_DMASYNC_PREWRITE);		\
-	SONIC_CDRXSYNC((sc), (x),					\
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
-	SONIC_CDRXSYNC((sc), SONIC_PREVRX(x),				\
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
+		SONIC_CDRRSYNC16((sc), (x), BUS_DMASYNC_PREWRITE);	\
+		SONIC_CDRXSYNC16((sc), (x),				\
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
+		SONIC_CDRXSYNC16((sc), SONIC_PREVRX(x),			\
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
+	}								\
 } while (/*CONSTCOND*/0)
 
 static __inline uint16_t __attribute__((__unused__))

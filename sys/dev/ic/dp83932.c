@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.1 2001/07/05 14:37:41 thorpej Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.2 2001/07/05 15:02:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -378,8 +378,12 @@ sonic_start(struct ifnet *ifp)
 
 			/* Link it up. */
 			tda32->tda_frags[seg].frag_ptr0 =
-			    htosonic32(sc, SONIC_CDTXADDR(sc,
+			    htosonic32(sc, SONIC_CDTXADDR32(sc,
 			    SONIC_NEXTTX(nexttx)) & 0xffff);
+
+			/* Sync the Tx descriptor. */
+			SONIC_CDTXSYNC32(sc, nexttx,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		} else {
 			tda16 = &sc->sc_tda16[nexttx];
 			for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
@@ -414,13 +418,13 @@ sonic_start(struct ifnet *ifp)
 
 			/* Link it up. */
 			tda16->tda_frags[seg].frag_ptr0 =
-			    htosonic16(sc, SONIC_CDTXADDR(sc,
+			    htosonic16(sc, SONIC_CDTXADDR16(sc,
 			    SONIC_NEXTTX(nexttx)) & 0xffff);
-		}
 
-		/* Sync the Tx descriptor. */
-		SONIC_CDTXSYNC(sc, nexttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			/* Sync the Tx descriptor. */
+			SONIC_CDTXSYNC16(sc, nexttx,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		}
 
 		/* Advance the Tx pointer. */
 		sc->sc_txpending++;
@@ -460,22 +464,22 @@ sonic_start(struct ifnet *ifp)
 			    sonic32toh(sc, sc->sc_tda32[olasttx].tda_fragcnt);
 			sc->sc_tda32[sc->sc_txlast].tda_frags[seg].frag_ptr0 |=
 			    htosonic32(sc, TDA_LINK_EOL);
-			SONIC_CDTXSYNC(sc, sc->sc_txlast,
+			SONIC_CDTXSYNC32(sc, sc->sc_txlast,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 			sc->sc_tda32[olasttx].tda_frags[olseg].frag_ptr0 &=
 			    htosonic32(sc, ~TDA_LINK_EOL);
-			SONIC_CDTXSYNC(sc, olasttx,
+			SONIC_CDTXSYNC32(sc, olasttx,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		} else {
 			olseg =
 			    sonic16toh(sc, sc->sc_tda16[olasttx].tda_fragcnt);
 			sc->sc_tda16[sc->sc_txlast].tda_frags[seg].frag_ptr0 |=
 			    htosonic16(sc, TDA_LINK_EOL);
-			SONIC_CDTXSYNC(sc, sc->sc_txlast,
+			SONIC_CDTXSYNC16(sc, sc->sc_txlast,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 			sc->sc_tda16[olasttx].tda_frags[olseg].frag_ptr0 &=
 			    htosonic16(sc, ~TDA_LINK_EOL);
-			SONIC_CDTXSYNC(sc, olasttx,
+			SONIC_CDTXSYNC16(sc, olasttx,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		}
 
@@ -607,13 +611,14 @@ sonic_txintr(struct sonic_softc *sc)
 	     i = SONIC_NEXTTX(i), sc->sc_txpending--) {
 		ds = &sc->sc_txsoft[i];
 
-		SONIC_CDTXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-
 		if (sc->sc_32bit) {
+			SONIC_CDTXSYNC32(sc, i,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			tda32 = &sc->sc_tda32[i];
 			status = sonic32toh(sc, tda32->tda_status);
 		} else {
+			SONIC_CDTXSYNC16(sc, i,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			tda16 = &sc->sc_tda16[i];
 			status = sonic16toh(sc, tda16->tda_status);
 		}
@@ -671,10 +676,9 @@ sonic_rxintr(struct sonic_softc *sc)
 	for (i = sc->sc_rxptr;; i = SONIC_NEXTRX(i)) {
 		ds = &sc->sc_rxsoft[i];
 
-		SONIC_CDRXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-
 		if (sc->sc_32bit) {
+			SONIC_CDRXSYNC32(sc, i,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			rda32 = &sc->sc_rda32[i];
 			if (rda32->rda_inuse != 0)
 				break;
@@ -684,6 +688,8 @@ sonic_rxintr(struct sonic_softc *sc)
 			ptr1 = sonic32toh(sc, rda32->rda_pkt_ptr1);
 			seqno = sonic32toh(sc, rda32->rda_seqno);
 		} else {
+			SONIC_CDRXSYNC16(sc, i,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			rda16 = &sc->sc_rda16[i];
 			if (rda16->rda_inuse != 0)
 				break;
@@ -879,13 +885,13 @@ sonic_init(struct ifnet *ifp)
 	if (sc->sc_32bit) {
 		for (i = 0; i < SONIC_NTXDESC; i++) {
 			memset(&sc->sc_tda32[i], 0, sizeof(struct sonic_tda32));
-			SONIC_CDTXSYNC(sc, i,
+			SONIC_CDTXSYNC32(sc, i,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		}
 	} else {
 		for (i = 0; i < SONIC_NTXDESC; i++) {
 			memset(&sc->sc_tda16[i], 0, sizeof(struct sonic_tda16));
-			SONIC_CDTXSYNC(sc, i,
+			SONIC_CDTXSYNC16(sc, i,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		}
 	}
