@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.144 2000/12/08 22:32:09 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.145 2000/12/08 23:14:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -192,6 +192,8 @@ int	trap_types = sizeof trap_type / sizeof trap_type[0];
 int	trapdebug = 0;
 #endif
 
+#define	IDTVEC(name)	__CONCAT(X, name)
+
 /*
  * trap(frame):
  *	Exception, fault, and trap interface to BSD kernel. This
@@ -210,7 +212,8 @@ trap(frame)
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
 	extern char fusubail[],
-		    resume_iret[], resume_pop_ds[], resume_pop_es[];
+		    resume_iret[], resume_pop_ds[], resume_pop_es[],
+		    IDTVEC(osyscall)[];
 	struct trapframe *vframe;
 	int resume;
 
@@ -269,6 +272,7 @@ trap(frame)
 	case T_PROTFLT:
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
+	case T_TSSFLT:
 		/* Check for copyin/copyout fault. */
 		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
@@ -472,12 +476,15 @@ trap(frame)
 		break;
 	}
 
-#if !defined(DDB) && !defined(KGDB)
-	/* XXX need to deal with this when DDB is present, too */
-	case T_TRCTRAP:	/* kernel trace trap; someone single stepping lcall's */
-			/* syscall has to turn off the trace bit itself */
-		return;
-#endif
+	case T_TRCTRAP:
+		/* Check whether they single-stepped into a lcall. */
+		if (frame.tf_eip == (int)IDTVEC(osyscall))
+			return;
+		if (frame.tf_eip == (int)IDTVEC(osyscall) + 1) {
+			frame.tf_eflags &= ~PSL_T;
+			return;
+		}
+		goto we_re_toast;
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 	case T_TRCTRAP|T_USER:		/* trace trap */
