@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 1998/09/05 14:46:13 lukem Exp $
+# $NetBSD: Makefile,v 1.22 1999/03/04 20:32:19 wrstuden Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -22,8 +22,8 @@ mount-fs:
 	    count=${CYLS}
 	disklabel -w -r ${DESTDISK} ImageDisk
 	disklabel -W ${DESTDISK}
-	newfs -O /dev/r${DESTDISK}a
-	newfs -O /dev/r${DESTDISK}d
+	newfs -B le -O /dev/r${DESTDISK}a
+	newfs -B le -O /dev/r${DESTDISK}d
 	mount /dev/${DESTDISK}a ${DESTDIR}
 	mkdir ${DESTDIR}/usr
 	mount /dev/${DESTDISK}d ${DESTDIR}/usr

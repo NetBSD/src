@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 1998/10/18 07:35:00 itohy Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1999/03/04 20:32:21 wrstuden Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -34,7 +34,7 @@ all:	netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} bs=100k count=12
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
+	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}

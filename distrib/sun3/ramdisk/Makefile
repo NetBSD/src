@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1998/09/05 14:46:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1999/03/04 20:32:21 wrstuden Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -46,7 +46,7 @@ rdsetroot: ${TOP}/common/rdsetroot.c
 	$(CC) -o $@ -DDEBUG ${TOP}/common/rdsetroot.c
 
 ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
-	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
+	-newfs -B be ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} \

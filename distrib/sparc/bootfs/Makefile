@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/01/18 13:21:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 1999/03/04 20:32:20 wrstuden Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -41,7 +41,7 @@ all:	netbsd.ram.gz
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	disklabel -W ${VND_CDEV}
-	newfs -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
+	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${MINIROOT} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${MINIROOT}/runlist.sh ${LISTS}
