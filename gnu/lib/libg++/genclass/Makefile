@@ -1,11 +1,12 @@
-# Makefile for g++ library genclass test
+# Makefile for g++ library genclass 
 
-NOMAN=	noman
+PROG=		genclass
+SRCS=		genclass.sh
+NOMAN=
 
-afterinstall:
-	sed -e '/^PROTODIR/s_PROTODIR.*_PROTODIR=${DESTDIR}/usr/include/g++/gen_; s_<VERSION>_2.4_;' $(.CURDIR)/genclass.sh > $(DESTDIR)$(BINDIR)/genclass
-	chown ${BINOWN}:${BINGRP} $(DESTDIR)$(BINDIR)/genclass
-	chmod ${BINMODE} $(DESTDIR)$(BINDIR)/genclass
+genclass:	genclass.sh
+	sed -e 's|^PROTODIR=.*|PROTODIR=${DESTDIR}/usr/include/g++/gen|' \
+	    -e 's|<VERSION>|2.4|' ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.prog.mk>
 .include "../../../usr.bin/Makefile.inc"
