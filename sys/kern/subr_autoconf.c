@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.84 2003/03/16 08:10:00 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.85 2003/04/29 00:56:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.84 2003/03/16 08:10:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.85 2003/04/29 00:56:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -780,16 +780,11 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	 * but not silent (in which case, we're twiddling, instead).
 	 */
 	if (parent == ROOT) {
-		if (config_do_twiddle)
-			aprint_normal("%s (root)", dev->dv_xname);
-		else
-			printf("%s (root)", dev->dv_xname);
+		aprint_naive("%s (root)", dev->dv_xname);
+		aprint_normal("%s (root)", dev->dv_xname);
 	} else {
-		if (config_do_twiddle)
-			aprint_normal("%s at %s", dev->dv_xname,
-			    parent->dv_xname);
-		else
-			printf("%s at %s", dev->dv_xname, parent->dv_xname);
+		aprint_naive("%s at %s", dev->dv_xname, parent->dv_xname);
+		aprint_normal("%s at %s", dev->dv_xname, parent->dv_xname);
 		if (print)
 			(void) (*print)(aux, NULL);
 	}
