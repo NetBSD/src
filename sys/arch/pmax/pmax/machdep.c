@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 1999/05/18 01:36:51 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.143 1999/05/20 08:21:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 1999/05/18 01:36:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 1999/05/20 08:21:46 lukem Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -458,9 +458,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (unsigned)allocsys(0);
+	size = (unsigned)allocsys(NULL, NULL);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
-	if ((allocsys(v) - v) != size)
+	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 
 	/*
@@ -481,6 +481,7 @@ cpu_startup()
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -493,7 +494,8 @@ cpu_startup()
 	 */
 	printf(version);
 	printf("%s\n", cpu_model);
-	printf("real mem  = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -575,9 +577,10 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

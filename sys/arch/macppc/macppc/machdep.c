@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1999/05/13 23:37:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1999/05/20 08:21:45 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,7 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -40,7 +39,6 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_natm.h"
-#include "opt_sysv.h"
 #include "adb.h"
 #include "ipkdb.h"
 
@@ -59,15 +57,6 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -89,6 +78,9 @@
 #include <machine/trap.h>
 
 #include <machine/bus.h>
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -125,26 +117,6 @@ void	ofkbd_cnpollc __P((dev_t, int));
 
 int msgbufmapped = 0;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-#ifdef BUFCACHE
-int	bufcache = BUFCACHE;
-#else
-int	bufcache = 0;
-#endif
-
-caddr_t allocsys __P((caddr_t));
 void install_extint __P((void (*)(void)));
 
 int cold = 1;
@@ -496,6 +468,7 @@ cpu_startup()
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
 	int base, residual;
+	char pbuf[9];
 
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
@@ -505,16 +478,17 @@ cpu_startup()
 	printf("%s", version);
 	identifycpu();
 
-	printf("real mem  = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys((caddr_t)0);
+	sz = (int)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-	if (allocsys(v) - v != sz)
+	if (allocsys(v, NULL) - v != sz)
 		panic("startup: table size inconsistency");
 
 	/*
@@ -583,77 +557,15 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-	       nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up the buffers.
 	 */
 	bufinit();
-}
-
-/*
- * Allocate space for system data structures.
- */
-caddr_t
-allocsys(v)
-	caddr_t v;
-{
-#define	valloc(name, type, num) \
-	v = (caddr_t)(((name) = (type *)v) + (num))
-
-	valloc(callout, struct callout, ncallout);
-#ifdef	SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef	SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef	SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-	/*
-	 * Determine the number of pages to use for the buffer cache
-	 * (minimum 16).  Allocate 1/2 as many swap buffer headers as
-	 * file I/O buffers.
-	 */
-	if (bufpages == 0) {
-		if (bufcache == 0) {	/* use old algorithm */
-			bufpages = (physmem / 20) / CLSIZE;
-		} else {
-			/*
-			 * Set size of buffer cache to physmem/bufcache * 100
-			 * (i.e., bufcache % of physmem).
-			 */
-			if (bufcache < 5 || bufcache > 95) {
-				printf("warning: unable to set bufcache "
-				    "to %d%% of RAM, using 10%%", bufcache);
-				bufcache = 10;
-			}
-			bufpages = physmem / (CLSIZE * 100) * bufcache;
-		}
-	}
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) & ~1;
-		if (nswbuf > 256)
-			nswbuf = 256;
-	}
-	valloc(buf, struct buf, nbuf);
-
-	return v;
-#undef valloc
 }
 
 /*
