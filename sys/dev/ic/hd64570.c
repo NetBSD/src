@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.13 2000/12/18 20:32:08 thorpej Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.14 2001/01/17 00:30:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -453,6 +453,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	scp->fastq.ifq_maxlen = IFQ_MAXLEN;
 #endif
 	if_attach(ifp);
+	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_HDLC, HDLC_HDRLEN);

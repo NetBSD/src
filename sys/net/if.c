@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.80 2000/12/18 21:05:04 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.81 2001/01/17 00:30:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -251,65 +251,19 @@ struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 
 /*
- * Attach an interface to the
- * list of "active" interfaces.
+ * Allocate the link level name for the specified interface.  This
+ * is an attachment helper.  It must be called after ifp->if_addrlen
+ * is initialized, which may not be the case when if_attach() is
+ * called.
  */
 void
-if_attach(ifp)
-	struct ifnet *ifp;
+if_alloc_sadl(struct ifnet *ifp)
 {
 	unsigned socksize, ifasize;
 	int namelen, masklen;
 	struct sockaddr_dl *sdl;
 	struct ifaddr *ifa;
-	static size_t if_indexlim = 8;
 
-	if (if_index == 0)
-		TAILQ_INIT(&ifnet);
-	TAILQ_INIT(&ifp->if_addrlist);
-	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
-	ifp->if_index = ++if_index;
-
-	/*
-	 * We have some arrays that should be indexed by if_index.
-	 * since if_index will grow dynamically, they should grow too.
-	 *	struct ifadd **ifnet_addrs
-	 *	struct ifnet **ifindex2ifnet
-	 */
-	if (ifnet_addrs == 0 || ifindex2ifnet == 0 ||
-	    ifp->if_index >= if_indexlim) {
-		size_t n;
-		caddr_t q;
-		
-		while (ifp->if_index >= if_indexlim)
-			if_indexlim <<= 1;
-
-		/* grow ifnet_addrs */
-		n = if_indexlim * sizeof(ifa);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
-		if (ifnet_addrs) {
-			bcopy((caddr_t)ifnet_addrs, q, n/2);
-			free((caddr_t)ifnet_addrs, M_IFADDR);
-		}
-		ifnet_addrs = (struct ifaddr **)q;
-
-		/* grow ifindex2ifnet */
-		n = if_indexlim * sizeof(struct ifnet *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
-		if (ifindex2ifnet) {
-			bcopy((caddr_t)ifindex2ifnet, q, n/2);
-			free((caddr_t)ifindex2ifnet, M_IFADDR);
-		}
-		ifindex2ifnet = (struct ifnet **)q;
-	}
-
-	ifindex2ifnet[ifp->if_index] = ifp;
-
-	/*
-	 * create a Link Level name for this device
-	 */
 	namelen = strlen(ifp->if_xname);
 	masklen = offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
 	socksize = masklen + ifp->if_addrlen;
@@ -340,6 +294,97 @@ if_attach(ifp)
 	sdl->sdl_len = masklen;
 	while (namelen != 0)
 		sdl->sdl_data[--namelen] = 0xff;
+}
+
+/*
+ * Free the link level name for the specified interface.  This is
+ * a detach helper.  This is called from if_detach() or from
+ * link layer type specific detach functions.
+ */
+void
+if_free_sadl(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	int s;
+
+	ifa = ifnet_addrs[ifp->if_index];
+	if (ifa == NULL) {
+		KASSERT(ifp->if_sadl == NULL);
+		return;
+	}
+
+	KASSERT(ifp->if_sadl != NULL);
+
+	s = splimp();
+	rtinit(ifa, RTM_DELETE, 0);
+	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+	IFAFREE(ifa);
+
+	ifp->if_sadl = NULL;
+
+	ifnet_addrs[ifp->if_index] = NULL;
+	IFAFREE(ifa);
+	splx(s);
+}
+
+/*
+ * Attach an interface to the
+ * list of "active" interfaces.
+ */
+void
+if_attach(ifp)
+	struct ifnet *ifp;
+{
+	static size_t if_indexlim = 8;
+
+	if (if_index == 0)
+		TAILQ_INIT(&ifnet);
+	TAILQ_INIT(&ifp->if_addrlist);
+	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
+	ifp->if_index = ++if_index;
+
+	/*
+	 * We have some arrays that should be indexed by if_index.
+	 * since if_index will grow dynamically, they should grow too.
+	 *	struct ifadd **ifnet_addrs
+	 *	struct ifnet **ifindex2ifnet
+	 */
+	if (ifnet_addrs == 0 || ifindex2ifnet == 0 ||
+	    ifp->if_index >= if_indexlim) {
+		size_t n;
+		caddr_t q;
+		
+		while (ifp->if_index >= if_indexlim)
+			if_indexlim <<= 1;
+
+		/* grow ifnet_addrs */
+		n = if_indexlim * sizeof(struct ifaddr *);
+		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
+		bzero(q, n);
+		if (ifnet_addrs) {
+			bcopy((caddr_t)ifnet_addrs, q, n/2);
+			free((caddr_t)ifnet_addrs, M_IFADDR);
+		}
+		ifnet_addrs = (struct ifaddr **)q;
+
+		/* grow ifindex2ifnet */
+		n = if_indexlim * sizeof(struct ifnet *);
+		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
+		bzero(q, n);
+		if (ifindex2ifnet) {
+			bcopy((caddr_t)ifindex2ifnet, q, n/2);
+			free((caddr_t)ifindex2ifnet, M_IFADDR);
+		}
+		ifindex2ifnet = (struct ifnet **)q;
+	}
+
+	ifindex2ifnet[ifp->if_index] = ifp;
+
+	/*
+	 * Link level name is allocated later by a separate call to
+	 * if_alloc_sadl().
+	 */
+
 	if (ifp->if_snd.ifq_maxlen == 0)
 	    ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
@@ -411,6 +456,8 @@ if_detach(ifp)
 	 */
 	if_down(ifp);
 
+	if_free_sadl(ifp);
+
 	/*
 	 * Rip all the addresses off the interface.  This should make
 	 * all of the routes go away.
@@ -425,6 +472,10 @@ if_detach(ifp)
 		last_ifa = ifa;
 #endif
 		if (family == AF_LINK) {
+			/*
+			 * XXX This case may now be obsolete by
+			 * XXX the call to if_free_sadl().
+			 */
 			rtinit(ifa, RTM_DELETE, 0);
 			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 			IFAFREE(ifa);
@@ -462,9 +513,6 @@ if_detach(ifp)
 		if ((rnh = rt_tables[i]) != NULL)
 			(void) (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp);
 	}
-
-	IFAFREE(ifnet_addrs[ifp->if_index]);
-	ifnet_addrs[ifp->if_index] = NULL;
 
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);

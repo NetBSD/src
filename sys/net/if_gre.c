@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.15 2000/12/18 19:50:44 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.16 2001/01/17 00:30:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,6 +155,7 @@ gre_clone_create(ifc, unit)
 	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
 	sc->g_proto = IPPROTO_GRE;
 	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int32_t));
 #endif

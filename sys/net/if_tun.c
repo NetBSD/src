@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.41 2000/12/18 19:50:45 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.42 2001/01/17 00:30:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -103,6 +103,7 @@ tunattach(unused)
 		ifp->if_opackets = 0;
 		ifp->if_dlt = DLT_NULL;
 		if_attach(ifp);
+		if_alloc_sadl(ifp);
 #if NBPFILTER > 0
 		bpfattach(ifp, DLT_NULL, sizeof(u_int32_t));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.62 2000/12/23 19:00:18 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.63 2001/01/17 00:30:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -714,6 +714,8 @@ void	ether_ifattach __P((struct ifnet *, const u_int8_t *));
 void	ether_ifdetach __P((struct ifnet *));
 char	*ether_sprintf __P((const u_char *));
 
+void	if_alloc_sadl __P((struct ifnet *));
+void	if_free_sadl __P((struct ifnet *));
 void	if_attach __P((struct ifnet *));
 void	if_deactivate __P((struct ifnet *));
 void	if_detach __P((struct ifnet *));
