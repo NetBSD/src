@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/06/15 19:53:23 ragge Exp $
+#	$NetBSD: Makefile,v 1.11 2000/07/03 04:24:13 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -36,11 +36,11 @@ LIBKERN=${KERNLIB}
 CLEANFILES+= machine ${MACHINE_ARCH}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	ld -N -Ttext ${RELOC} -e nisse -o ${PROG} ${OBJS} \
+	${LD} -N -Ttext ${RELOC} -e nisse -o ${PROG} ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	/usr/sbin/mopa.out ${PROG} ${PROG}.mop
-	strip ${PROG}
-	size ${PROG}
+	${STRIP} ${PROG}
+	${SIZE} ${PROG}
 
 install:
 	${INSTALL} -c -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} ${DESTDIR}${BINDIR}

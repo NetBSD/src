@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/06/19 04:22:14 matt Exp $
+#	$NetBSD: Makefile,v 1.8 2000/07/03 04:24:13 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -38,7 +38,7 @@ CLEANFILES+= machine ${MACHINE_ARCH}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
-	ld -N -Ttext 100000 -o ${PROG}.out ${OBJS} ${LIBSA} ${LIBKERN}
-	objcopy -O binary ${PROG}.out ${PROG}
+	${LD} -N -Ttext 100000 -o ${PROG}.out ${OBJS} ${LIBSA} ${LIBKERN}
+	${OBJCOPY} -O binary ${PROG}.out ${PROG}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1999/07/18 05:55:45 abs Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2000/07/03 04:24:12 matt Exp $
 
 XXRPB=0x1F4240
 RELOC=0x2f0000
@@ -9,4 +9,4 @@ CPPFLAGS+=-DXXRPB=${XXRPB} -DRELOC=${RELOC}
 
 # Private handling of assembler files.
 .s.o:
-	${CC} -x assembler-with-cpp ${CPPFLAGS} -E ${.IMPSRC} | as -o ${.TARGET}
+	${CC} -x assembler-with-cpp ${CPPFLAGS} -E ${.IMPSRC} | ${AS} -o ${.TARGET}
