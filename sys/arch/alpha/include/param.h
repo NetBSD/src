@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.21 1998/02/10 03:53:01 thorpej Exp $ */
+/* $NetBSD: param.h,v 1.22 1998/03/12 07:28:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,11 +72,6 @@
 #define	NBPG		(1 << ALPHA_PGSHIFT)		/* bytes/page */
 #define	PGOFSET		(NBPG-1)			/* byte off. into pg */
 #define	PGSHIFT		ALPHA_PGSHIFT			/* LOG2(NBPG) */
-#define	NPTEPG		(1 << (PGSHIFT-PTESHIFT))	/* pte's/page */
-
-#define	SEGSHIFT	(PGSHIFT + (PGSHIFT-PTESHIFT))	/* LOG2(NBSEG) */
-#define	NBSEG		(1 << SEGSHIFT)			/* bytes/segment (8M) */
-#define	SEGOFSET	(NBSEG-1)			/* byte off. into seg */
 
 #define	KERNBASE	0xfffffc0000230000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
