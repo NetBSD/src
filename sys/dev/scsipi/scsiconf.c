@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.216 2003/09/12 16:39:25 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.217 2003/09/18 05:06:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.216 2003/09/12 16:39:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.217 2003/09/18 05:06:53 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -769,7 +769,7 @@ scsi_probe_device(sc, target, lun)
 			extension[len++] = ' ';
 	}
 	if (scsipi_inquire(periph, &inqbuf,
-	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0)
+	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		goto bad;
 
 	periph->periph_type = inqbuf.device & SID_TYPE;
@@ -785,10 +785,10 @@ scsi_probe_device(sc, target, lun)
 	checkdtype = 0;
 	switch (inqbuf.device & SID_QUAL) {
 	case SID_QUAL_LU_PRESENT:
-	case SID_QUAL_LU_NOTPRESENT:
 		checkdtype = 1;
 		break;
 
+	case SID_QUAL_LU_NOTPRESENT:
 	case SID_QUAL_reserved:
 	case SID_QUAL_LU_NOT_SUPP:
 		goto bad;
