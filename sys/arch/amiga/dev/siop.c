@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.14 1994/06/22 16:20:53 chopps Exp $
+ *	$Id: siop.c,v 1.15 1994/06/27 04:56:29 chopps Exp $
  */
 
 /*
@@ -254,6 +254,7 @@ static struct {
  *	0x04 - siopintr
  *	0x08 - phase mismatch
  *	0x10 - panic on phase mismatch
+ *	0x20 - panic on unhandled exceptions
  */
 int	siop_debug = 0;
 int	siopsync_debug = 0;
@@ -948,20 +949,33 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 		*status = -1;
 		return 1;
 	}
+	if (sstat0 & SIOP_SSTAT0_SGE)
+		printf ("SIOP: SCSI Gross Error\n");
+	if (sstat0 & SIOP_SSTAT0_PAR)
+		printf ("SIOP: Parity Error\n");
+	if (dstat & SIOP_DSTAT_OPC)
+		printf ("SIOP: Invalid SCRIPTS Opcode\n");
 bad_phase:
-/*
- * temporary panic for unhandled conditions
- * displays various things about the 53C710 status and registers
- * then panics.
- * XXXX need to clean this up to print out the info, reset, and continue
- */
-printf ("siopchkintr: target %x ds %x\n", target, &dev->sc_ds);
-printf ("scripts %x ds %x regs %x dsp %x dcmd %x\n", dev->sc_scriptspa,
-    dev->sc_dspa, kvtop(regs), regs->siop_dsp, *((long *)&regs->siop_dcmd));
-printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x dsa %x sbcl %x sts %x msg %x\n",
-    istat, dstat, sstat0, regs->siop_dsps, regs->siop_dsa, regs->siop_sbcl,
-    dev->sc_stat[0], dev->sc_msg[0]);
-panic("siopchkintr: **** temp ****");
+	/*
+	 * temporary panic for unhandled conditions
+	 * displays various things about the 53C710 status and registers
+	 * then panics.
+	 * XXXX need to clean this up to print out the info, reset, and continue
+	 */
+	printf ("siopchkintr: target %x ds %x\n", target, &dev->sc_ds);
+	printf ("scripts %x ds %x regs %x dsp %x dcmd %x\n", dev->sc_scriptspa,
+	    dev->sc_dspa, kvtop(regs), regs->siop_dsp,
+	    *((long *)&regs->siop_dcmd));
+	printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x dsa %x sbcl %x sts %x msg %x\n",
+	    istat, dstat, sstat0, regs->siop_dsps, regs->siop_dsa,
+	     regs->siop_sbcl, dev->sc_stat[0], dev->sc_msg[0]);
+#ifdef DEBUG
+	if (siop_debug & 0x20)
+		panic("siopchkintr: **** temp ****");
+#endif
+	siopreset (dev);		/* hard reset */
+	*status = -1;
+	return 1;
 }
 
 /*
