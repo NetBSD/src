@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.20 2001/04/30 11:42:19 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.21 2001/05/01 00:25:17 takemura Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -201,7 +201,7 @@ vrgiu_attach(parent, self, aux)
 	/* 
 	 *  hpcio I/F
 	 */
-	haa.haa_busname = "hpcio";
+	haa.haa_busname = HPCIO_BUSNAME;
 	haa.haa_sc = sc;
 	haa.haa_getchip = vrgiu_getchip;
 	while (config_found(self, &haa, vrgiu_print)) ;

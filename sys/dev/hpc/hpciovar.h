@@ -1,4 +1,4 @@
-/*	$NetBSD: hpciovar.h,v 1.1 2001/04/30 11:42:17 takemura Exp $	*/
+/*	$NetBSD: hpciovar.h,v 1.2 2001/05/01 00:25:17 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin.
@@ -54,6 +54,7 @@ struct hpcio_attach_args {
 	void *haa_sc;
 	hpcio_chip_t (*haa_getchip)(void*, int);
 };
+#define HPCIO_BUSNAME	"hpcioif"
 
 #define hpcio_portread(hc, port)	\
 		((*(hc)->hc_portread)((hc), (port)))

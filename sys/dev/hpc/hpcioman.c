@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.1 2001/04/30 11:42:17 takemura Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.2 2001/05/01 00:25:17 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -65,8 +65,11 @@ struct cfattach hpcioman_ca = {
 int
 hpcioman_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;
 
+	if (strcmp(haa->haa_busname, HPCIO_BUSNAME))
+		return 0;
 	/* select platform */
 	mask = PLATID_DEREF(cf->cf_loc[HPCIOIFCF_PLATFORM]);
 
