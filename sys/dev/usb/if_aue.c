@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.42.2.1 2000/09/20 19:57:23 itojun Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.42.2.2 2001/03/13 20:45:36 he Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -613,7 +613,9 @@ aue_setmulti(struct aue_softc *sc)
 
 	ifp = GET_IFP(sc);
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
+allmulti:
+		ifp->if_flags |= IFF_ALLMULTI;
 		AUE_SETBIT(sc, AUE_CTL0, AUE_CTL0_ALLMULTI);
 		return;
 	}
@@ -640,18 +642,16 @@ aue_setmulti(struct aue_softc *sc)
 	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
 #endif
 	while (enm != NULL) {
-#if 1
 		if (memcmp(enm->enm_addrlo,
-			   enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			AUE_SETBIT(sc, AUE_CTL0, AUE_CTL0_ALLMULTI);
-			return;
-		}
-#endif
+		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0)
+			goto allmulti;
+
 		h = aue_crc(enm->enm_addrlo);
 		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
 		ETHER_NEXT_MULTI(step, enm);
 	}
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 }
 
