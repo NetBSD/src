@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.8 1994/06/29 06:43:54 cgd Exp $	*/
+/*	$NetBSD: dirent.h,v 1.9 1994/12/13 15:58:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dir.h	8.1 (Berkeley) 6/2/93
+ *	@(#)dirent.h	8.3 (Berkeley) 8/10/94
  */
 
 /*
@@ -47,10 +47,10 @@
  */
 
 struct dirent {
-	unsigned long	d_fileno;	/* file number of entry */
-	unsigned short	d_reclen;	/* length of this record */
-	unsigned char	d_type; 	/* file type, see below */
-	unsigned char	d_namlen;	/* length of string in d_name */
+	u_int32_t d_fileno;		/* file number of entry */
+	u_int16_t d_reclen;		/* length of this record */
+	u_int8_t  d_type; 		/* file type, see below */
+	u_int8_t  d_namlen;		/* length of string in d_name */
 #ifdef _POSIX_SOURCE
 	char	d_name[255 + 1];	/* name must be no longer than this */
 #else
@@ -70,6 +70,7 @@ struct dirent {
 #define	DT_REG		 8
 #define	DT_LNK		10
 #define	DT_SOCK		12
+#define	DT_WHT		14
 
 /*
  * Convert between stat structure types and directory types.

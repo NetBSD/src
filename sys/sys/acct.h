@@ -1,7 +1,7 @@
-/*	$NetBSD: acct.h,v 1.12 1994/10/30 19:09:08 cgd Exp $	*/
+/*	$NetBSD: acct.h,v 1.13 1994/12/13 16:04:55 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)acct.h	8.2 (Berkeley) 1/21/94
+ *	@(#)acct.h	8.3 (Berkeley) 7/10/94
  */
 
 /*
@@ -48,24 +48,24 @@
 typedef u_int16_t comp_t;
 
 struct acct {
-	char	ac_comm[10];	/* command name */
-	comp_t	ac_utime;	/* user time */
-	comp_t	ac_stime;	/* system time */
-	comp_t	ac_etime;	/* elapsed time */
-	time_t	ac_btime;	/* starting time */
-	uid_t	ac_uid;		/* user id */
-	gid_t	ac_gid;		/* group id */
-	int16_t	ac_mem;		/* average memory usage */
-	comp_t	ac_io;		/* count of IO blocks */
-	dev_t	ac_tty;		/* controlling tty */
-	u_int8_t ac_flag;	/* accounting flags; see below. */
-};
+	char	  ac_comm[10];	/* command name */
+	comp_t	  ac_utime;	/* user time */
+	comp_t	  ac_stime;	/* system time */
+	comp_t	  ac_etime;	/* elapsed time */
+	time_t	  ac_btime;	/* starting time */
+	uid_t	  ac_uid;	/* user id */
+	gid_t	  ac_gid;	/* group id */
+	u_int16_t ac_mem;	/* average memory usage */
+	comp_t	  ac_io;	/* count of IO blocks */
+	dev_t	  ac_tty;	/* controlling tty */
 
-#define	AFORK	0x01		/* forked but not execed */
+#define	AFORK	0x01		/* fork'd but not exec'd */
 #define	ASU	0x02		/* used super-user permissions */
 #define	ACOMPAT	0x04		/* used compatibility mode */
 #define	ACORE	0x08		/* dumped core */
 #define	AXSIG	0x10		/* killed by a signal */
+	u_int8_t  ac_flag;	/* accounting flags */
+};
 
 /*
  * 1/AHZ is the granularity of the data encoded in the comp_t fields.
