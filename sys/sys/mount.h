@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.41 1995/06/18 14:48:16 cgd Exp $	*/
+/*	$NetBSD: mount.h,v 1.42 1995/06/29 10:05:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -58,11 +58,11 @@ struct fid {
  * file system statistics
  */
 
-#define	MFSNAMELEN	16	/* length of fs type name, including null */
+#define	MFSNAMELEN	16	/* length of fs type name, including nul */
 #define	MNAMELEN	90	/* length of buffer for returned name */
 
 struct statfs {
-	short	f_type;			/* type of filesystem (unused; zero) */
+	short	f_type;			/* type of file system (unused; zero) */
 	short	f_flags;		/* copy of mount flags */
 	long	f_bsize;		/* fundamental file system block size */
 	long	f_iosize;		/* optimal transfer block size */
@@ -72,11 +72,11 @@ struct statfs {
 	long	f_files;		/* total file nodes in file system */
 	long	f_ffree;		/* free file nodes in fs */
 	fsid_t	f_fsid;			/* file system id */
-	uid_t	f_owner;		/* user that mounted the filesystem */
+	uid_t	f_owner;		/* user that mounted the file system */
 	long	f_spare[4];		/* spare for later */
 	char	f_fstypename[MFSNAMELEN]; /* fs type name */
-	char	f_mntonname[MNAMELEN];	/* directory on which mounted */
-	char	f_mntfromname[MNAMELEN];/* mounted filesystem */
+	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
+	char	f_mntfromname[MNAMELEN];  /* mounted file system */
 };
 
 /*
