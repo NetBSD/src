@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1997/12/30 23:27:11 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 2000/10/26 23:51:31 jdolecek Exp $
 
-SUBDIR+= m4
+SUBDIR+= m4 sort
 
 .include <bsd.subdir.mk>
