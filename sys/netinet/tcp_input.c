@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.22 1997/07/06 07:07:00 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.23 1997/07/11 06:33:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -508,7 +508,7 @@ findpcb:
 				 * Received a SYN; create compressed
 				 * TCP state for it.
 				 */
-				if (so->so_qlen < so->so_qlimit &&
+				if (so->so_qlen <= so->so_qlimit &&
 				    syn_cache_add(so, m, optp, optlen, &opti))
 					m = NULL;
 			}
