@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.27 2001/01/16 21:18:56 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.28 2001/01/17 15:53:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -453,8 +453,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGIFADDR:
+		if (ifp->if_sadl == NULL)
+			return (EADDRNOTAVAIL);
 		sa = (struct sockaddr *)&ifr->ifr_data;
-		memcpy(sa->sa_data, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+		memcpy(sa->sa_data, LLADDR(ifp->if_sadl), ifp->if_addrlen);
 		break;
 
 	case SIOCSIFMTU:
