@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.71 2002/02/21 19:31:03 martin Exp $	*/
+/*	$NetBSD: print.c,v 1.72 2002/04/24 21:41:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.71 2002/02/21 19:31:03 martin Exp $");
+__RCSID("$NetBSD: print.c,v 1.72 2002/04/24 21:41:22 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -961,6 +961,15 @@ printval(bp, v, mode)
 			uval &= 0xffffff;
 			vok = VPTR;
 			break;
+		case INT64:
+			val = (long long)GET(int64_t);
+			vok = VSIGN;
+			break;
+		case UINT64:
+			uval = (unsigned long long)CHK_INF127(GET(u_int64_t));
+			vok = VUNSIGN;
+			break;
+
 		default:
 			/* nothing... */;
 		}
@@ -1081,6 +1090,12 @@ printval(bp, v, mode)
 			(void)asprintf(&obuf, ofmt, width, &buf[i]);
 		}
 		break;
+	case INT64:
+		(void)printf(ofmt, width, (long long)GET(int64_t));
+		return;
+	case UINT64:
+		(void)printf(ofmt, width, (unsigned long long)CHK_INF127(GET(u_int64_t)));
+		return;
 	default:
 		errx(1, "unknown type %d", v->type);
 	}
