@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.11 2000/03/18 16:13:24 mycroft Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.12 2000/03/18 16:14:57 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -160,12 +160,6 @@ sbc_obio_attach(parent, self, args)
 	}
 
 	/*
-	 * Fill in the prototype scsi_link.
-	 */
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_adapter.scsipi_minphys = minphys;
-
-	/*
 	 * Initialize fields used by the MI code
 	 */
 	ncr_sc->sci_r0 = &sc->sc_regs->sci_pr0.sci_reg;
@@ -233,7 +227,8 @@ sbc_obio_attach(parent, self, args)
 	ncr_sc->sc_link.flags |= sbc_link_flags;
 #endif
 
-	sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_adapter.scsipi_minphys = minphys;
 
 	/*
 	 *  Initialize the SCSI controller itself.
