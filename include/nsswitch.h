@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.1.4.2 1997/05/23 20:31:42 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.1.4.3 1997/05/26 14:42:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 Luke Mewburn <lukem@netbsd.org> 
@@ -47,19 +47,19 @@
 #define	NS_CONTINUE	0
 #define	NS_RETURN	1
 
-#define	NS_SUCCESS	0x10	/* entry was found */
-#define	NS_UNAVAIL	0x20	/* source not responding, or corrupt */
-#define	NS_NOTFOUND	0x40	/* source responded 'no such entry' */
-#define	NS_TRYAGAIN	0x80	/* source busy, may respond to retrys */
-#define	NS_STATUSMASK	0xf0 	/* bitmask to get the status */
+#define	NS_SUCCESS	(1<<8)		/* entry was found */
+#define	NS_UNAVAIL	(1<<9)		/* source not responding, or corrupt */
+#define	NS_NOTFOUND	(1<<10)		/* source responded 'no such entry' */
+#define	NS_TRYAGAIN	(1<<11)		/* source busy, may respond to retrys */
+#define	NS_STATUSMASK	0xffffff00	/* bitmask to get the status flags */
 
-#define NS_FILES	0x00	/* local files */
-#define	NS_DNS		0x01	/* DNS; class IN for hosts, HS for others */
-#define	NS_NIS		0x02	/* yp/nis */
-#define	NS_NISPLUS	0x03	/* nis+ */
-#define	NS_COMPAT	0x04	/* passwd,group in yp compat mode */
-#define	NS_MAXSOURCE	0x0f	/* last possible source */
-#define	NS_SOURCEMASK	0x0f	/* bitmask to get the source */
+#define NS_FILES	0		/* local files */
+#define	NS_DNS		1		/* DNS; IN for hosts, HS for others */
+#define	NS_NIS		2		/* yp/nis */
+#define	NS_NISPLUS	3		/* nis+ */
+#define	NS_COMPAT	4		/* passwd,group in yp compat mode */
+#define	NS_MAXSOURCE	15		/* last possible source */
+#define	NS_SOURCEMASK	0x000000ff	/* bitmask to get the source */
 
 /*
  * currently implemented databases
@@ -101,15 +101,15 @@ typedef struct {
 } ns_dtab [NS_MAXSOURCE];
 
 typedef struct {
-	char	name[NS_MAXDBLEN];	/* name of database */
-	int	size;			/* number of entries of map */
-	u_char	map[NS_MAXSOURCE];	/* map, described below */
+	char		name[NS_MAXDBLEN];	/* name of database */
+	int		size;			/* number of entries of map */
+	u_int32_t	map[NS_MAXSOURCE];	/* map, described below */
 } ns_DBT;
 /*
  * ns_DBT.map --
  *	array of sources to try in order. each number is a bitmask:
- *	- lower 4 bits is source type
- *	- upper 4 bits is action bitmap
+ *	- lower 8 bits is source type
+ *	- upper 24 bits is action bitmap
  *	If source has already been set, don't add again to array
  */
 
