@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.184 2000/10/16 13:35:05 simonb Exp $
+# $NetBSD: mi,v 1.185 2000/10/16 13:48:20 simonb Exp $
 .
 ./altroot
 ./bin
@@ -856,7 +856,6 @@
 ./usr/share/examples/postfix
 ./usr/share/examples/supfiles
 ./usr/share/examples/syslogd
-./usr/share/examples/usermgmt
 ./usr/share/games
 ./usr/share/games/atc
 ./usr/share/games/boggle
