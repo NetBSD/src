@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.4.2.1 1997/10/26 21:09:05 mellon Exp $
+#	$NetBSD: ypinit.sh,v 1.4.2.2 1997/11/06 22:25:05 mellon Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -8,12 +8,12 @@
 # Modified by Jason R. Thorpe <thorpej@NetBSD.ORG>
 #
 
-DOMAINNAME=	/bin/domainname
-HOSTNAME=	/bin/hostname
-YPWHICH=	/usr/bin/ypwhich
-YPXFR=		/usr/sbin/ypxfr
-MAKEDBM=	/usr/sbin/makedbm
-YP_DIR=		/var/yp
+DOMAINNAME=/bin/domainname
+HOSTNAME=/bin/hostname
+YPWHICH=/usr/bin/ypwhich
+YPXFR=/usr/sbin/ypxfr
+MAKEDBM=/usr/sbin/makedbm
+YP_DIR=/var/yp
 
 ERROR=USAGE				# assume usage error
 
@@ -100,7 +100,7 @@ echo ""
 cat << \__notice1
 
 Installing the YP database will require that you answer a few questions.
-Questions will all be asked at the beginning of the procedure.
+Any configuration questions will be asked at the beginning of the procedure.
 
 __notice1
 
@@ -180,7 +180,7 @@ if [ X${SERVERTYPE} = X"MASTER" ]; then
 	(
 		cd ${YP_DIR}/${DOMAIN}
 		touch ypservers
-		cat ypservers | ${MAKEDBM} - ypservers
+		${MAKEDBM} ypservers ypservers
 	)
 
 	echo "Done.  Be sure to run \`make' in ${YP_DIR}."
