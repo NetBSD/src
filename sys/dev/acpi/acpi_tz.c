@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.7 2004/02/02 07:58:11 soren Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.8 2004/02/02 10:36:19 soren Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.7 2004/02/02 07:58:11 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.8 2004/02/02 10:36:19 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,11 +201,11 @@ acpitz_get_status(void *opaque)
 	/*
 	 * The temperature unit for envsys(9) is microKelvin, so convert to
 	 * that from ACPI's microKelvin. Also, the ACPI specification assumes
-	 * that K = C + 273.2 rather than the nominal 273.16 used by envsys(9),
+	 * that K = C + 273.2 rather than the nominal 273.15 used by envsys(9),
 	 * so we correct for that too.
 	 */
 	sc->sc_data[ATZ_SENSOR_TEMP].cur.data_us =
-	    sc->sc_zone.tmp * 100000 - 40000;
+	    sc->sc_zone.tmp * 100000 - 50000;
 	sc->sc_data[ATZ_SENSOR_TEMP].validflags |= ENVSYS_FCURVALID;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
