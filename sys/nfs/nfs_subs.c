@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.44 1997/07/04 20:22:10 drochner Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.45 1997/07/14 20:46:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1222,34 +1222,43 @@ nfs_vfs_init()
  *    copy the attributes to *vaper
  */
 int
-nfs_loadattrcache(vpp, mdp, dposp, vaper)
+nfsm_loadattrcache(vpp, mdp, dposp, vaper)
 	struct vnode **vpp;
 	struct mbuf **mdp;
 	caddr_t *dposp;
 	struct vattr *vaper;
 {
-	register struct vnode *vp = *vpp;
-	register struct vattr *vap;
-	register struct nfs_fattr *fp;
-	extern int (**spec_nfsv2nodeop_p) __P((void *));
-	register struct nfsnode *np;
 	register int32_t t1;
 	caddr_t cp2;
 	int error = 0;
-	int32_t rdev;
 	struct mbuf *md;
-	enum vtype vtyp;
-	u_short vmode;
-	struct timespec mtime;
-	struct vnode *nvp;
-	int v3 = NFS_ISV3(vp);
+	int v3 = NFS_ISV3(*vpp);
 
 	md = *mdp;
 	t1 = (mtod(md, caddr_t) + md->m_len) - *dposp;
 	error = nfsm_disct(mdp, dposp, NFSX_FATTR(v3), t1, &cp2);
 	if (error)
 		return (error);
-	fp = (struct nfs_fattr *)cp2;
+	return nfs_loadattrcache(vpp, (struct nfs_fattr *)cp2, vaper);
+}
+
+int
+nfs_loadattrcache(vpp, fp, vaper)
+	struct vnode **vpp;
+	struct nfs_fattr *fp;
+	struct vattr *vaper;
+{
+	register struct vnode *vp = *vpp;
+	register struct vattr *vap;
+	int v3 = NFS_ISV3(vp);
+	enum vtype vtyp;
+	u_short vmode;
+	struct timespec mtime;
+	struct vnode *nvp;
+	int32_t rdev;
+	register struct nfsnode *np;
+	extern int (**spec_nfsv2nodeop_p) __P((void *));
+
 	if (v3) {
 		vtyp = nfsv3tov_type(fp->fa_type);
 		vmode = fxdr_unsigned(u_short, fp->fa_mode);
