@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.21 1999/09/10 23:24:23 mycroft Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.22 2000/03/23 14:32:41 soren Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -433,9 +433,9 @@ cache_purge(vp)
  * Cache flush, a whole filesystem; called when filesys is umounted to
  * remove entries that would now be invalid
  *
- * The line "nxtcp = nchhead" near the end is to avoid potential problems
- * if the cache lru chain is modified while we are dumping the
- * inode.  This makes the algorithm O(n^2), but do you think I care?
+ * The line "nxtcp = nclruhead.tqh_first" near the end is to avoid potential
+ * problems if the cache lru chain is modified while we are dumping the inode.
+ * This makes the algorithm O(n^2), but do you think I care?
  */
 void
 cache_purgevfs(mp)
