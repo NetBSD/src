@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.97 2002/08/20 03:32:08 kristerw Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.98 2002/08/26 01:39:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.97 2002/08/20 03:32:08 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.98 2002/08/26 01:39:39 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -243,7 +243,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    (u_long) time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 
@@ -1138,7 +1138,7 @@ ether_crc32_le(const u_int8_t *buf, size_t len)
 		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
 	};
 	u_int32_t crc;
-	int i;
+	size_t i;
 
 	crc = 0xffffffffU;	/* initial value */
 
