@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: check_mount.c,v 1.1.1.1 1997/07/24 21:24:12 christos Exp $
+ * $Id: check_mount.c,v 1.2 1997/09/26 17:08:11 christos Exp $
  *
  */
 
@@ -48,6 +48,7 @@
 #include <am_defs.h>
 
 extern int is_same_host(char *name1, char *name2, struct in_addr addr2);
+int fixmount_check_mount(char *host, struct in_addr hostaddr, char *path);
 
 
 int
