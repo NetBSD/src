@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.30 1998/04/25 17:29:45 matt Exp $	*/
+/*	$NetBSD: socket.h,v 1.31 1998/04/30 00:03:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -127,8 +127,10 @@ struct	linger {
 #define AF_NATM		27		/* native ATM access */
 #define AF_ARP		28		/* (rev.) addr. res. prot. (RFC 826) */
 #define pseudo_AF_KEY	29		/* Internal key management protocol  */
+#define	pseudo_AF_HDRCMPLT 30		/* Used by BPF to not rewrite hdrs
+					   in interface output routine */
 
-#define	AF_MAX		30
+#define	AF_MAX		31
 
 /*
  * Structure used by kernel to store most
