@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.33 2000/11/04 04:31:43 simonb Exp $ */
+/* $NetBSD: user.c,v 1.34 2000/12/07 17:44:03 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.33 2000/11/04 04:31:43 simonb Exp $");
+__RCSID("$NetBSD: user.c,v 1.34 2000/12/07 17:44:03 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1277,7 +1277,7 @@ useradd(int argc, char **argv)
 			break;
 		case 'd':
 			memsave(&u.u_home, optarg, strlen(optarg));
-			u.u_flags |= (F_MKDIR | F_HOMEDIR);
+			u.u_flags |= F_HOMEDIR;
 			break;
 		case 'e':
 			defaultfield = 1;
@@ -1390,7 +1390,7 @@ usermod(int argc, char **argv)
 			break;
 		case 'd':
 			memsave(&u.u_home, optarg, strlen(optarg));
-			u.u_flags |= (F_MKDIR | F_HOMEDIR);
+			u.u_flags |= F_HOMEDIR;
 			break;
 		case 'e':
 			memsave(&u.u_expire, optarg, strlen(optarg));
