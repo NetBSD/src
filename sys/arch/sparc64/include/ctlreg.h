@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.5 1999/01/31 09:21:19 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.6 1999/03/22 05:35:41 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -89,6 +89,9 @@
 #define ASI_FLUSH_D_PAGE_SECONDARY	0x39	/* [4u] flush D-cache page using secondary context */
 #define ASI_FLUSH_D_CTX_PRIMARY		0x3a	/* [4u] flush D-cache context using primary context */
 #define ASI_FLUSH_D_CTX_SECONDARY	0x3b	/* [4u] flush D-cache context using secondary context */
+
+#define ASI_LSU_CONTROL_REGISTER	0x45	/* [4u] load/store unit control register */
+
 #define ASI_DCACHE_DATA			0x46	/* [4u] diagnostic access to D-cache data RAM */
 #define ASI_DCACHE_TAG			0x47	/* [4u] diagnostic access to D-cache tag RAM */
 
@@ -199,7 +202,7 @@
  * [4u] MMU and Cache Control Register (MCCR)
  * use ASI = 0x45
  */
-#define ASI_MCCR	0x45
+#define ASI_MCCR	ASI_LSU_CONTROL_REGISTER
 #define MCCR		0x00
 
 /* MCCR Bits and their meanings */
@@ -449,23 +452,89 @@
  * on the address space identifiers (the "n"umeric value part) because
  * it inlines too late, so we have to use the funny valued-macro syntax.
  */
+
+/* DCACHE_BUG forces a flush of the D$ line on every ASI load */
+#define DCACHE_BUG
+
 /* load byte from alternate address space */
+#ifdef DCACHE_BUG
+#define	lduba(loc, asi) ({ \
+	register int _lduba_v; \
+	if (asi == ASI_PHYS_CACHED) { \
+		__asm __volatile("wr %2,%%g0,%%asi; " \
+" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" lduba [%1]%%asi,%0" : "=r" (_lduba_v) : \
+		"r" ((long long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+	} else { \
+		__asm __volatile("wr %2,%%g0,%%asi; lduba [%1]%%asi,%0" : \
+		"=r" (_lduba_v) : "r" ((long long)(loc)), "r" (asi)); \
+	} \
+	_lduba_v; \
+})
+#else
 #define	lduba(loc, asi) ({ \
 	register int _lduba_v; \
 	__asm __volatile("wr %2,%%g0,%%asi; lduba [%1]%%asi,%0" : "=r" (_lduba_v) : \
 	    "r" ((long long)(loc)), "r" (asi)); \
 	_lduba_v; \
 })
+#endif
 
 /* load half-word from alternate address space */
+#ifdef DCACHE_BUG
+#define	lduha(loc, asi) ({ \
+	register int _lduha_v; \
+	if (asi == ASI_PHYS_CACHED) { \
+		__asm __volatile("wr %2,%%g0,%%asi; " \
+" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" lduha [%1]%%asi,%0" : "=r" (_lduha_v) : \
+		"r" ((long long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+	} else { \
+		__asm __volatile("wr %2,%%g0,%%asi; lduha [%1]%%asi,%0" : "=r" (_lduha_v) : \
+		"r" ((long long)(loc)), "r" (asi)); \
+	} \
+	_lduha_v; \
+})
+#else
 #define	lduha(loc, asi) ({ \
 	register int _lduha_v; \
 	__asm __volatile("wr %2,%%g0,%%asi; lduha [%1]%%asi,%0" : "=r" (_lduha_v) : \
 	    "r" ((long long)(loc)), "r" (asi)); \
 	_lduha_v; \
 })
+#endif
 
-/* load int from alternate address space */
+/* load unsigned int from alternate address space */
+#ifdef DCACHE_BUG
+#define	lda(loc, asi) ({ \
+	register int _lda_v; \
+	if (asi == ASI_PHYS_CACHED) { \
+		__asm __volatile("wr %2,%%g0,%%asi; " \
+" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" lda [%1]%%asi,%0" : "=r" (_lda_v) : \
+		"r" ((int)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+	} else { \
+		__asm __volatile("wr %2,%%g0,%%asi; lda [%1]%%asi,%0" : "=r" (_lda_v) : \
+		"r" ((int)(loc)), "r" (asi)); \
+	} \
+	_lda_v; \
+})
+
+/* load signed int from alternate address space */
+#define	ldswa(loc, asi) ({ \
+	register int _lda_v; \
+	if (asi == ASI_PHYS_CACHED) { \
+		__asm __volatile("wr %2,%%g0,%%asi; " \
+" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" ldswa [%1]%%asi,%0" : "=r" (_lda_v) : \
+		"r" ((int)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+	} else { \
+		__asm __volatile("wr %2,%%g0,%%asi; ldswa [%1]%%asi,%0" : "=r" (_lda_v) : \
+		"r" ((int)(loc)), "r" (asi)); \
+	} \
+	_lda_v; \
+})
+#else
 #define	lda(loc, asi) ({ \
 	register int _lda_v; \
 	__asm __volatile("wr %2,%%g0,%%asi; lda [%1]%%asi,%0" : "=r" (_lda_v) : \
@@ -479,24 +548,60 @@
 	    "r" ((int)(loc)), "r" (asi)); \
 	_lda_v; \
 })
+#endif
 
-/* store byte to alternate address space */
-#define	stba(loc, asi, value) ({ \
-	__asm __volatile("wr %2,%%g0,%%asi; stba %0,[%1]%%asi; membar #Sync" : : \
-	    "r" ((int)(value)), "r" ((int)(loc)), "r" (asi)); \
+#ifdef DCACHE_BUG
+
+/* load 64-bit int from alternate address space */
+#define	ldda(loc, asi) ({ \
+	register long long _lda_v; \
+	if (asi == ASI_PHYS_CACHED) { \
+		__asm __volatile("wr %2,%%g0,%%asi; " \
+" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" ldda [%1]%%asi,%0" : "=r" (_lda_v) : \
+		"r" ((int)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+	} else { \
+		__asm __volatile("wr %2,%%g0,%%asi; ldda [%1]%%asi,%0" : "=r" (_lda_v) : \
+		"r" ((int)(loc)), "r" (asi)); \
+	} \
+	_lda_v; \
 })
 
-/* store half-word to alternate address space */
-#define	stha(loc, asi, value) ({ \
-	__asm __volatile("wr %2,%%g0,%%asi; stha %0,[%1]%%asi; membar #Sync" : : \
-	    "r" ((int)(value)), "r" ((int)(loc)), "r" (asi)); \
+#ifdef __arch64__
+/* native load 64-bit int from alternate address space w/64-bit compiler*/
+#define	ldxa(loc, asi) ({ \
+	register long _lda_v; \
+	if (asi == ASI_PHYS_CACHED) { \
+		__asm __volatile("wr %2,%%g0,%%asi; "\
+" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" ldxa [%1]%%asi,%0" : "=r" (_lda_v) : \
+		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+	} else { \
+		__asm __volatile("wr %2,%%g0,%%asi; ldxa [%1]%%asi,%0" : "=r" (_lda_v) : \
+		"r" ((long)(loc)), "r" (asi)); \
+	} \
+	_lda_v; \
 })
+#else
+/* native load 64-bit int from alternate address space w/32-bit compiler*/
+#define	ldxa(loc, asi) ({ \
+	volatile register long _ldxa_lo, _ldxa_hi; \
+	if (asi == ASI_PHYS_CACHED) { \
+		__asm __volatile("wr %3,%%g0,%%asi; " \
+" andn %2,0x1f,%3; stxa %%g0,[%3] %4; membar #Sync; " \
+" ldxa [%2]%%asi,%0; srlx %0,32,%1; srl %0,0,%0" : \
+		"=r" (_ldxa_lo), "=r" (_ldxa_hi) : \
+		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+	} else { \
+		__asm __volatile("wr %3,%%g0,%%asi; ldxa [%2]%%asi,%0; srlx %0,32,%1; srl %0,0,%0;" : \
+		"=r" (_ldxa_lo), "=r" (_ldxa_hi) : \
+		"r" ((long)(loc)), "r" (asi)); \
+	} \
+	((((int64_t)_ldxa_hi)<<32)|_ldxa_lo); \
+})
+#endif
 
-/* store int to alternate address space */
-#define	sta(loc, asi, value) ({ \
-	__asm __volatile("wr %2,%%g0,%%asi; sta %0,[%1]%%asi; membar #Sync" : : \
-	    "r" ((int)(value)), "r" ((int)(loc)), "r" (asi)); \
-})
+#else
 
 /* load 64-bit int from alternate address space */
 #define	ldda(loc, asi) ({ \
@@ -504,12 +609,6 @@
 	__asm __volatile("wr %2,%%g0,%%asi; ldda [%1]%%asi,%0" : "=r" (_lda_v) : \
 	    "r" ((int)(loc)), "r" (asi)); \
 	_lda_v; \
-})
-
-/* store 64-bit int to alternate address space */
-#define	stda(loc, asi, value) ({ \
-	__asm __volatile("wr %2,%%g0,%%asi; stda %0,[%1]%%asi; membar #Sync" : : \
-	    "r" ((long long)(value)), "r" ((int)(loc)), "r" (asi)); \
 })
 
 #ifdef __arch64__
@@ -530,11 +629,37 @@
 	((((int64_t)_ldxa_hi)<<32)|_ldxa_lo); \
 })
 #endif
+#endif
+
+
+/* store byte to alternate address space */
+#define	stba(loc, asi, value) ({ \
+	__asm __volatile("wr %2,%%g0,%%asi; stba %0,[%1]%%asi" : : \
+	    "r" ((int)(value)), "r" ((int)(loc)), "r" (asi)); \
+})
+
+/* store half-word to alternate address space */
+#define	stha(loc, asi, value) ({ \
+	__asm __volatile("wr %2,%%g0,%%asi; stha %0,[%1]%%asi" : : \
+	    "r" ((int)(value)), "r" ((int)(loc)), "r" (asi)); \
+})
+
+/* store int to alternate address space */
+#define	sta(loc, asi, value) ({ \
+	__asm __volatile("wr %2,%%g0,%%asi; sta %0,[%1]%%asi" : : \
+	    "r" ((int)(value)), "r" ((int)(loc)), "r" (asi)); \
+})
+
+/* store 64-bit int to alternate address space */
+#define	stda(loc, asi, value) ({ \
+	__asm __volatile("wr %2,%%g0,%%asi; stda %0,[%1]%%asi" : : \
+	    "r" ((long long)(value)), "r" ((int)(loc)), "r" (asi)); \
+})
 
 #ifdef __arch64__
 /* native store 64-bit int to alternate address space w/64-bit compiler*/
 #define	stxa(loc, asi, value) ({ \
-	__asm __volatile("wr %2,%%g0,%%asi; stxa %0,[%1]%%asi; membar #Sync" : : \
+	__asm __volatile("wr %2,%%g0,%%asi; stxa %0,[%1]%%asi" : : \
 	    "r" ((long)(value)), "r" ((long)(loc)), "r" (asi)); \
 })
 #else
@@ -543,7 +668,7 @@
 	int64_t _stxa_v; \
 	int64_t *_stxa_a = &_stxa_v; \
 	_stxa_v = value; \
-	__asm __volatile("wr %2,%%g0,%%asi; ldx [%0],%3; stxa %3,[%1]%%asi; membar #Sync" : : \
+	__asm __volatile("wr %2,%%g0,%%asi; ldx [%0],%3; stxa %3,[%1]%%asi" : : \
 	    "r" ((long)(_stxa_a)), "r" ((long)(loc)), "r" (asi), "r" ((long)(_stxa_v))); \
 })
 #endif
@@ -554,7 +679,45 @@
 	     "r" ((long)(loc))); \
 })
 
+/* Flush a D$ line */
+#if 0
+#define flushline(loc) ({ \
+	stxa(((paddr_t)loc)&(~0x1f), (ASI_DCACHE_TAG), 0); \
+        membar_sync(); \
+})
+#else
+#define flushline(loc)
+#endif
+
+/* The following two enable or disable the dcache in the LSU control register */
+#define dcenable() ({ \
+	int res; \
+	__asm __volatile("ldxa [%%g0] %1,%0; or %0,%2,%0; stxa %0,[%%g0] %1; membar #Sync" \
+		: "r" (res) : "n" (ASI_MCCR), "n" (MCCR_DCACHE_EN)); \
+})
+#define dcdisable() ({ \
+	int res; \
+	__asm __volatile("ldxa [%%g0] %1,%0; andn %0,%2,%0; stxa %0,[%%g0] %1; membar #Sync" \
+		: "r" (res) : "n" (ASI_MCCR), "n" (MCCR_DCACHE_EN)); \
+})
+
+/*
+ * SPARC V9 memory barrier instructions.
+ */
+/* Make all stores complete before next store */
+#define membar_storestore() __asm __volatile("membar #StoreStore" : :)
+/* Make all loads complete before next store */ 
+#define membar_loadstore() __asm __volatile("membar #LoadStore" : :)
+/* Make all stores complete before next load */ 
+#define membar_storeload() __asm __volatile("membar #StoreLoad" : :)
+/* Make all loads complete before next load */
+#define membar_loadload() __asm __volatile("membar #LoadLoad" : :)
+/* Complete all outstanding memory operations and exceptions */
 #define membar_sync() __asm __volatile("membar #Sync" : :)
+/* Complete all outstanding memory operations */
+#define membar_memissue() __asm __volatile("membar #MemIssue" : :)
+/* Complete all outstanding stores before any new loads */
+#define membar_lookaside() __asm __volatile("membar #Lookaside" : :)
 
 #ifdef __arch64__
 /* read 64-bit %tick register */

@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap.c,v 1.25 1999/03/10 01:54:16 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1999/03/22 05:35:40 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
-/* #define HWREF */
+#define HWREF
 /* #define BOOT_DEBUG */
 /* #define BOOT1_DEBUG */
 /*
@@ -3050,13 +3050,10 @@ pmap_page_protect(pa, prot)
 			if (data & (TLB_W|TLB_MODIFY))
 				firstpv->pv_va |= PV_MOD;
 			if (data & TLB_TSB_LOCK) {
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 				printf("pmap_page_protect: Removing wired page pm %p va %p\n",
 				       npv->pv_pmap, npv->pv_va);
 #endif			
-				/* Skip this pv, it's wired */
-				pv = npv;
-				continue;
 			}
 			/* Clear mapping */
 			if (pseg_set(npv->pv_pmap, npv->pv_va&PV_VAMASK, 0, 0)) {
@@ -3107,12 +3104,10 @@ pmap_page_protect(pa, prot)
 			if (data & (TLB_W|TLB_MODIFY))
 				pv->pv_va |= PV_MOD;
 			if (data & TLB_TSB_LOCK) {
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 				printf("pmap_page_protect: Removing wired page pm %p va %p\n",
 				       pv->pv_pmap, pv->pv_va);
 #endif			
-				/* It's wired, leave it */
-				goto skipit;
 			}
 			if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, 0, 0)) {
 				printf("pmap_page_protect: gotten pseg empty!\n");
