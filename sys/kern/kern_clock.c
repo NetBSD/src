@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.82 2003/01/18 10:06:24 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.83 2003/01/27 22:38:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.82 2003/01/18 10:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.83 2003/01/27 22:38:24 pk Exp $");
 
 #include "opt_callout.h"
 #include "opt_ntp.h"
@@ -390,7 +390,7 @@ struct simplelock callwheel_slock;
 
 #define	CALLWHEEL_LOCK(s)						\
 do {									\
-	s = splclock();							\
+	s = splsched();							\
 	simple_lock(&callwheel_slock);					\
 } while (/*CONSTCOND*/ 0)
 
@@ -527,6 +527,7 @@ hardclock(struct clockframe *frame)
 	extern long timedelta;
 	struct cpu_info *ci = curcpu();
 	struct ptimer *pt;
+	int s;
 #ifdef NTP
 	int time_update;
 	int ltemp;
@@ -890,10 +891,10 @@ hardclock(struct clockframe *frame)
 	 * Process callouts at a very low cpu priority, so we don't keep the
 	 * relatively high clock interrupt priority any longer than necessary.
 	 */
-	simple_lock(&callwheel_slock);	/* already at splclock() */
+	CALLWHEEL_LOCK(s);
 	hardclock_ticks++;
 	if (! TAILQ_EMPTY(&callwheel[hardclock_ticks & callwheelmask].cq_q)) {
-		simple_unlock(&callwheel_slock);
+		CALLWHEEL_UNLOCK(s);
 		if (CLKF_BASEPRI(frame)) {
 			/*
 			 * Save the overhead of a software interrupt;
@@ -919,7 +920,7 @@ hardclock(struct clockframe *frame)
 		   (softclock_ticks + 1) == hardclock_ticks) {
 		softclock_ticks++;
 	}
-	simple_unlock(&callwheel_slock);
+	CALLWHEEL_UNLOCK(s);
 }
 
 /*
