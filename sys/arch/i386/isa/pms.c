@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.22 1995/10/05 14:12:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -67,9 +67,9 @@
 /* controller commands */
 #define	PMS_INT_ENABLE	0x47	/* enable controller interrupts */
 #define	PMS_INT_DISABLE	0x65	/* disable controller interrupts */
-#define	PMS_AUX_ENABLE	0xa7	/* enable auxiliary port */
-#define	PMS_AUX_DISABLE	0xa8	/* disable auxiliary port */
-#define	PMS_MAGIC_1	0xa9	/* XXX */
+#define	PMS_AUX_ENABLE	0xa8	/* enable auxiliary port */
+#define	PMS_AUX_DISABLE	0xa7	/* disable auxiliary port */
+#define	PMS_AUX_TEST	0xa9	/* test auxiliary port */
 
 #define	PMS_8042_CMD	0x65
 
@@ -167,7 +167,7 @@ pmsprobe(parent, match, aux)
 		return 0;
 
 	pms_dev_cmd(PMS_RESET);
-	pms_aux_cmd(PMS_MAGIC_1);
+	pms_aux_cmd(PMS_AUX_TEST);
 	delay(1000);
 	x = inb(PMS_DATA);
 	pms_pit_cmd(PMS_INT_DISABLE);
