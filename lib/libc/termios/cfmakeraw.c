@@ -1,4 +1,4 @@
-/*	$NetBSD: cfmakeraw.c,v 1.4 1997/07/21 14:09:11 jtc Exp $	*/
+/*	$NetBSD: cfmakeraw.c,v 1.5 1998/08/18 07:51:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: cfmakeraw.c,v 1.4 1997/07/21 14:09:11 jtc Exp $");
+__RCSID("$NetBSD: cfmakeraw.c,v 1.5 1998/08/18 07:51:45 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ void
 cfmakeraw(t)
 	struct termios *t;
 {
-	t->c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
+	t->c_iflag &= ~(IMAXBEL|IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
 	t->c_oflag &= ~OPOST;
 	t->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
 	t->c_cflag &= ~(CSIZE|PARENB);
