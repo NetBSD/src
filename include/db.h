@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.14 1998/05/07 19:24:20 kleink Exp $	*/
+/*	$NetBSD: db.h,v 1.15 1998/11/16 12:07:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -180,23 +180,23 @@ typedef struct {
  */
 #define	M_32_SWAP(a) {							\
 	u_int32_t _tmp = a;						\
-	((char *)&a)[0] = ((char *)&_tmp)[3];				\
-	((char *)&a)[1] = ((char *)&_tmp)[2];				\
-	((char *)&a)[2] = ((char *)&_tmp)[1];				\
-	((char *)&a)[3] = ((char *)&_tmp)[0];				\
+	((char *)(void *)&a)[0] = ((char *)(void *)&_tmp)[3];		\
+	((char *)(void *)&a)[1] = ((char *)(void *)&_tmp)[2];		\
+	((char *)(void *)&a)[2] = ((char *)(void *)&_tmp)[1];		\
+	((char *)(void *)&a)[3] = ((char *)(void *)&_tmp)[0];		\
 }
 #define	P_32_SWAP(a) {							\
 	u_int32_t _tmp = *(u_int32_t *)a;				\
-	((char *)a)[0] = ((char *)&_tmp)[3];				\
-	((char *)a)[1] = ((char *)&_tmp)[2];				\
-	((char *)a)[2] = ((char *)&_tmp)[1];				\
-	((char *)a)[3] = ((char *)&_tmp)[0];				\
+	((char *)(void *)a)[0] = ((char *)(void *)&_tmp)[3];		\
+	((char *)(void *)a)[1] = ((char *)(void *)&_tmp)[2];		\
+	((char *)(void *)a)[2] = ((char *)(void *)&_tmp)[1];		\
+	((char *)(void *)a)[3] = ((char *)(void *)&_tmp)[0];		\
 }
 #define	P_32_COPY(a, b) {						\
-	((char *)&(b))[0] = ((char *)&(a))[3];				\
-	((char *)&(b))[1] = ((char *)&(a))[2];				\
-	((char *)&(b))[2] = ((char *)&(a))[1];				\
-	((char *)&(b))[3] = ((char *)&(a))[0];				\
+	((char *)(void *)&(b))[0] = ((char *)(void *)&(a))[3];		\
+	((char *)(void *)&(b))[1] = ((char *)(void *)&(a))[2];		\
+	((char *)(void *)&(b))[2] = ((char *)(void *)&(a))[1];		\
+	((char *)(void *)&(b))[3] = ((char *)(void *)&(a))[0];		\
 }
 
 /*
@@ -207,17 +207,17 @@ typedef struct {
  */
 #define	M_16_SWAP(a) {							\
 	u_int16_t _tmp = a;						\
-	((char *)&a)[0] = ((char *)&_tmp)[1];				\
-	((char *)&a)[1] = ((char *)&_tmp)[0];				\
+	((char *)(void *)&a)[0] = ((char *)(void *)&_tmp)[1];		\
+	((char *)(void *)&a)[1] = ((char *)(void *)&_tmp)[0];		\
 }
 #define	P_16_SWAP(a) {							\
 	u_int16_t _tmp = *(u_int16_t *)a;				\
-	((char *)a)[0] = ((char *)&_tmp)[1];				\
-	((char *)a)[1] = ((char *)&_tmp)[0];				\
+	((char *)(void *)a)[0] = ((char *)(void *)&_tmp)[1];		\
+	((char *)(void *)a)[1] = ((char *)(void *)&_tmp)[0];		\
 }
 #define	P_16_COPY(a, b) {						\
-	((char *)&(b))[0] = ((char *)&(a))[1];				\
-	((char *)&(b))[1] = ((char *)&(a))[0];				\
+	((char *)(void *)&(b))[0] = ((char *)(void *)&(a))[1];		\
+	((char *)(void *)&(b))[1] = ((char *)(void *)&(a))[0];		\
 }
 #endif
 

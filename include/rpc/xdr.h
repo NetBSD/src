@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.14 1998/07/26 12:43:24 mycroft Exp $	*/
+/*	$NetBSD: xdr.h,v 1.15 1998/11/16 12:07:43 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -117,7 +117,7 @@ typedef struct __rpc_xdr {
 		void	(*x_destroy) __P((struct __rpc_xdr *));
 	} *x_ops;
 	char *	 	x_public;	/* users' data */
-	char *		x_private;	/* pointer to private data */
+	void *		x_private;	/* pointer to private data */
 	char * 		x_base;		/* private used for position info */
 	int		x_handy;	/* extra private word */
 } XDR;
@@ -202,7 +202,7 @@ struct xdr_discrim {
 };
 
 /*
- * In-line routines for fast encode/decode of primitve data types.
+ * In-line routines for fast encode/decode of primitive data types.
  * Caveat emptor: these use single memory cycles to get the
  * data from the underlying buffer, and will fail to operate
  * properly if the data is not aligned.  The standard way to use these
@@ -216,8 +216,8 @@ struct xdr_discrim {
  * N.B. and frozen for all time: each data type here uses 4 bytes
  * of external representation.
  */
-#define IXDR_GET_LONG(buf)		((long)ntohl((u_long)*(buf)++))
-#define IXDR_PUT_LONG(buf, v)		(*(buf)++ = (long)htonl((u_long)v))
+#define IXDR_GET_LONG(buf)		((long)ntohl((u_int32_t)*(buf)++))
+#define IXDR_PUT_LONG(buf, v)		(*(buf)++ =(int32_t)htonl((u_int32_t)v))
 
 #define IXDR_GET_BOOL(buf)		((bool_t)IXDR_GET_LONG(buf))
 #define IXDR_GET_ENUM(buf, t)		((t)IXDR_GET_LONG(buf))
@@ -225,11 +225,11 @@ struct xdr_discrim {
 #define IXDR_GET_SHORT(buf)		((short)IXDR_GET_LONG(buf))
 #define IXDR_GET_U_SHORT(buf)		((u_short)IXDR_GET_LONG(buf))
 
-#define IXDR_PUT_BOOL(buf, v)		IXDR_PUT_LONG((buf), ((long)(v)))
-#define IXDR_PUT_ENUM(buf, v)		IXDR_PUT_LONG((buf), ((long)(v)))
-#define IXDR_PUT_U_LONG(buf, v)		IXDR_PUT_LONG((buf), ((long)(v)))
-#define IXDR_PUT_SHORT(buf, v)		IXDR_PUT_LONG((buf), ((long)(v)))
-#define IXDR_PUT_U_SHORT(buf, v)	IXDR_PUT_LONG((buf), ((long)(v)))
+#define IXDR_PUT_BOOL(buf, v)		IXDR_PUT_LONG((buf), (v))
+#define IXDR_PUT_ENUM(buf, v)		IXDR_PUT_LONG((buf), (v))
+#define IXDR_PUT_U_LONG(buf, v)		IXDR_PUT_LONG((buf), (v))
+#define IXDR_PUT_SHORT(buf, v)		IXDR_PUT_LONG((buf), (v))
+#define IXDR_PUT_U_SHORT(buf, v)	IXDR_PUT_LONG((buf), (v))
 
 /*
  * These are the "generic" xdr routines.
