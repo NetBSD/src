@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.12 2003/05/27 15:24:24 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.13 2003/06/06 21:06:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -333,11 +333,17 @@ void	pthread__sigcontext_to_ucontext(const struct pthread__sigcontext *,
 
 #endif /* __PTHREAD_SIGNAL_PRIVATE */
 
+#ifdef PTHREAD_MACHINE_HAS_ID_REGISTER
+#define pthread__id(reg) (reg)
+#else
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
 	((pthread_t) (((vaddr_t)(sp)) & ~PT_STACKMASK))
 
-#define pthread__self() (pthread__id(pthread__sp()))
+#define pthread__id_reg() pthread__sp()
+#endif
+
+#define pthread__self() (pthread__id(pthread__id_reg()))
 
 #define pthread__abort()						\
 	pthread__assertfunc(__FILE__, __LINE__, __func__, "unreachable")
