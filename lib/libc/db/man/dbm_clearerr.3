@@ -1,4 +1,4 @@
-.\"	$NetBSD: dbm_clearerr.3,v 1.1 2004/04/30 21:13:23 kleink Exp $
+.\"	$NetBSD: dbm_clearerr.3,v 1.2 2004/05/01 07:59:09 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,7 +109,9 @@ The
 .Fa file
 argument is the pathname which the actual database file pathname
 is based on.
-This implementation uses a single file with the suffix .db appended to
+This implementation uses a single file with the suffix
+.Pa .db
+appended to
 .Fa file .
 The
 .Fa open_flags
@@ -229,7 +231,9 @@ The
 .Fn dbm_open
 function returns a pointer to a
 .Fa DBM
-when successful; otherwise a null pointer is returned.
+when successful; otherwise a
+.Dv NULL
+pointer is returned.
 .Pp
 The
 .Fn dbm_close
@@ -243,7 +247,9 @@ if no record matching
 .Fa key
 was found or if an error occured, its
 .Fa dptr
-member is a null pointer.
+member is a
+.Dv NULL
+pointer.
 .Pp
 The
 .Fn dbm_store
@@ -270,7 +276,9 @@ functions return a key
 .Fa datum .
 When the end of the database is reached or if an error occured, its
 .Fa dptr
-member is a null pointer.
+member is a
+.Dv NULL
+pointer.
 .Pp
 The
 .Fn dbm_error
