@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18.2.12 2001/03/27 15:31:58 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.18.2.13 2001/03/27 15:52:51 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -168,7 +168,7 @@ struct isposinfo {
 #endif
 
 #define	XS_T			struct scsipi_xfer
-#define	XS_CHANNEL(xs)		((int) (xs)->xs_periph->periph_channel)
+#define	XS_CHANNEL(xs)		((int) (xs)->xs_periph->periph_channel->chan_channel)
 #define	XS_ISP(xs)		\
 	((void *)(xs)->xs_periph->periph_channel->chan_adapter->adapt_dev)
 #define	XS_LUN(xs)		((int) (xs)->xs_periph->periph_lun)
