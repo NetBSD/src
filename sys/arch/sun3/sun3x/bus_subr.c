@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.4 1997/03/13 17:40:38 gwr Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.5 1997/04/25 18:02:47 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 
 #include <vm/vm.h>
@@ -55,6 +54,81 @@
 #include <machine/pmap.h>
 #include <machine/machdep.h>
 #include <machine/mon.h>
+
+/*
+ * bus_scan:
+ * This function is passed to config_search() by the attach function
+ * for each of the "bus" drivers (obctl, obio, obmem, vmes, vmel).
+ * The purpose of this function is to copy the "locators" into our
+ * confargs structure, so child drivers may use the confargs both
+ * as match parameters and as temporary storage for the defaulted
+ * locator values determined in the child_match and preserved for
+ * the child_attach function.  If the bus attach functions just
+ * used config_found, then we would not have an opportunity to
+ * setup the confargs for each child match and attach call.
+ */
+int bus_scan(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+	cfmatch_t mf;
+
+#ifdef	DIAGNOSTIC
+	if (cf->cf_fstate == FSTATE_STAR)
+		panic("bus_scan: FSTATE_STAR");
+#endif
+
+	/*
+	 * Copy the locators into our confargs.
+	 * Our parent set ca->ca_bustype already.
+	 */
+	ca->ca_paddr  = cf->cf_paddr;
+	ca->ca_intpri = cf->cf_intpri;
+	ca->ca_intvec = cf->cf_intvec;
+
+	/*
+	 * Note that this allows the match function to save
+	 * defaulted locators in the confargs that will be
+	 * preserved for the related attach call.
+	 * XXX - This is a hack...
+	 */
+	mf = cf->cf_attach->ca_match;
+	if ((*mf)(parent, cf, ca) > 0) {
+		config_attach(parent, cf, ca, bus_print);
+	}
+	return (0);
+}
+
+/*
+ * bus_print:
+ * Just print out the final (non-default) locators.
+ * The parent name is non-NULL when there was no match
+ * found by config_found().
+ */
+int
+bus_print(args, name)
+	void *args;
+	const char *name;
+{
+	struct confargs *ca = args;
+
+	if (name)
+		printf("%s:", name);
+
+	if (ca->ca_paddr != -1)
+		printf(" addr 0x%x", ca->ca_paddr);
+	if (ca->ca_intpri != -1)
+		printf(" ipl %d", ca->ca_intpri);
+	if (ca->ca_intvec != -1)
+		printf(" vect 0x%x", ca->ca_intvec);
+
+	return(UNCONF);
+}
+
+/****************************************************************/
+/* support functions */
 
 label_t *nofault;
 
