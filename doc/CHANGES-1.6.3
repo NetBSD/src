@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.7 2004/03/12 05:56:01 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.8 2004/03/12 05:58:07 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -42,3 +42,8 @@ sys/sys/stat.h					1.45 via patch
 	Define S_IFSOCK as an XSI extension, define S_ISLNK() for POSIX-2001,
 	and define S_ISSOCK() for POSIX-2001. PR#22902
 	[kleink, ticket #1556]
+
+usr.bin/sed/process.c				1.34
+
+	Prevent integer underflow.
+	[itojun, ticket #1558]
