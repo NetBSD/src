@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.h,v 1.1 1995/02/13 23:09:12 cgd Exp $	*/
+/*	$NetBSD: tcds.h,v 1.2 1995/03/03 01:38:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,10 @@
 
 /*
  * TCDS register offsets, bit masks.
- *
+ */
+#define	TCDS_CIR		  0x040000	/* CIR offset */
+
+/*
  * TCDS CIR control bits.
  */
 #define	TCDS_CIR_GPO_0		0x00000001	/* Not used */
@@ -48,6 +51,7 @@
 #define	TCDS_CIR_SCSI1_DMA_TEST	0x00002000	/* SCSI 1 DMA buf parity test */
 #define	TCDS_CIR_DB_PAR		0x00004000	/* DB parity test mode */
 #define	TCDS_CIR_TC_PAR		0x00008000	/* TC parity test mode */
+#define	TCDS_CIR_ALLCONTROL	0x0000ffff	/* all control bits */
 
 /* TCDS CIR interrupt bits. */
 #define	TCDS_CIR_SCSI0_DREQ	0x00010000	/* SCSI 0 DREQ */
@@ -66,7 +70,10 @@
 #define	TCDS_CIR_SCSI1_DMAR_PAR	0x20000000	/* SCSI 1 DMA read parity */
 #define	TCDS_CIR_TCIOW_PAR	0x40000000	/* TC I/O write parity */
 #define	TCDS_CIR_TCIOA_PAR	0x80000000	/* TC I/O address parity */
-#define	TCDS_CIR		  0x040000	/* CIR offset */
+#define	TCDS_CIR_ALLINTR	0xffff0000	/* all interrupt bits */
+
+#define TCDS_CIR_CLR(c, b)	c = ((c | TCDS_CIR_ALLINTR) & ~b)
+#define TCDS_CIR_SET(c, b)	c = ((c | TCDS_CIR_ALLINTR) | b)
 
 /* TCDS IMER masks and enables, for interrupts in the CIR. */
 #define	TCDS_IMER_SCSI0_MASK	      0x04	/* SCSI 0 intr/enable mask */
