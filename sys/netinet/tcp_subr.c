@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.80 1999/09/23 02:21:32 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.81 1999/09/23 04:02:27 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1337,9 +1337,11 @@ tcp_mss_to_advertise(ifp, af)
 	case AF_INET:
 		hdrsiz = sizeof(struct ip);
 		break;
+#ifdef INET6
 	case AF_INET6:
 		hdrsiz = sizeof(struct ip6_hdr);
 		break;
+#endif
 	default:
 		hdrsiz = 0;
 		break;
