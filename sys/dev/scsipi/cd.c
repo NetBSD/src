@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.109 1998/01/12 09:49:11 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.110 1998/01/15 02:21:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -75,10 +75,11 @@
 					/* from there */
 #include <dev/scsipi/scsi_disk.h>	/* rw comes from there */
 #include <dev/scsipi/scsipiconf.h>
-#include <dev/scsipi/cd_link.h>
+#include <dev/scsipi/cdvar.h>
 
-#include "cd.h"				/* NCD_SCSI and NCD_ATAPI come */
-					/* from here */
+#include "cd.h"		/* NCD_SCSIBUS and NCD_ATAPIBUS come from here */
+
+#define	CDOUTSTANDING	4
 
 #define	CDUNIT(z)			DISKUNIT(z)
 #define	CDPART(z)			DISKPART(z)
@@ -466,7 +467,7 @@ cdstart(v)
 	struct buf *bp = 0;
 	struct buf *dp;
 	struct scsipi_rw_big cmd_big;
-#if NCD_SCSI > 0 
+#if NCD_SCSIBUS > 0 
 	struct scsi_rw cmd_small;
 #endif
 	struct scsipi_generic *cmdp;
@@ -523,7 +524,7 @@ cdstart(v)
 		}
 		nblks = howmany(bp->b_bcount, lp->d_secsize);
 
-#if NCD_SCSI > 0
+#if NCD_SCSIBUS > 0
 		/*
 		 *  Fill out the scsi command.  If the transfer will
 		 *  fit in a "small" cdb, use it.
@@ -725,7 +726,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCPLAYTRACKS: {
 		struct ioc_play_track *args = (struct ioc_play_track *)addr;
 
-		if ((error = (*cd->sc_ops->cdo_set_pa_immed)(cd)) != 0)
+		if ((error = (*cd->sc_ops->cdo_set_pa_immed)(cd, 0)) != 0)
 			return (error);
 		return (cd_play_tracks(cd, args->start_track,
 		    args->start_index, args->end_track, args->end_index));
@@ -733,7 +734,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCPLAYMSF: {
 		struct ioc_play_msf *args = (struct ioc_play_msf *)addr;
 
-		if ((error = (*cd->sc_ops->cdo_set_pa_immed)(cd)) != 0)
+		if ((error = (*cd->sc_ops->cdo_set_pa_immed)(cd, 0)) != 0)
 			return (error);
 		return (cd_play_msf(cd, args->start_m, args->start_s,
 		    args->start_f, args->end_m, args->end_s, args->end_f));
@@ -741,7 +742,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCPLAYBLOCKS: {
 		struct ioc_play_blocks *args = (struct ioc_play_blocks *)addr;
 
-		if ((error = (*cd->sc_ops->cdo_set_pa_immed)(cd)) != 0)
+		if ((error = (*cd->sc_ops->cdo_set_pa_immed)(cd, 0)) != 0)
 			return (error);
 		return (cd_play(cd, args->blk, args->len));
 	}
@@ -822,38 +823,38 @@ cdioctl(dev, cmd, addr, flag, p)
 		struct ioc_patch *arg = (struct ioc_patch *)addr;
 
 		return ((*cd->sc_ops->cdo_setchan)(cd, arg->patch[0],
-		    arg->patch[1], arg->patch[2], arg->patch[3]));
+		    arg->patch[1], arg->patch[2], arg->patch[3], 0));
 	}
 	case CDIOCGETVOL: {
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
 
-		return ((*cd->sc_ops->cdo_getvol)(cd, arg));
+		return ((*cd->sc_ops->cdo_getvol)(cd, arg, 0));
 	}
 	case CDIOCSETVOL: {
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
 
-		return ((*cd->sc_ops->cdo_setvol)(cd, arg));
+		return ((*cd->sc_ops->cdo_setvol)(cd, arg, 0));
 	}
 
 	case CDIOCSETMONO:
 		return ((*cd->sc_ops->cdo_setchan)(cd, BOTH_CHANNEL,
-		    BOTH_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL));
+		    BOTH_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCSETSTEREO:
 		return ((*cd->sc_ops->cdo_setchan)(cd, LEFT_CHANNEL,
-		    RIGHT_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL));
+		    RIGHT_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCSETMUTE:
 		return ((*cd->sc_ops->cdo_setchan)(cd, MUTE_CHANNEL,
-		    MUTE_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL));
+		    MUTE_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCSETLEFT:
 		return ((*cd->sc_ops->cdo_setchan)(cd, LEFT_CHANNEL,
-		    LEFT_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL));
+		    LEFT_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCSETRIGHT:
 		return ((*cd->sc_ops->cdo_setchan)(cd, RIGHT_CHANNEL,
-		    RIGHT_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL));
+		    RIGHT_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0));
 
 	case CDIOCRESUME:
 		return (cd_pause(cd, PA_RESUME));

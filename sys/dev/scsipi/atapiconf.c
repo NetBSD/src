@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.8 1998/01/12 09:49:10 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.9 1998/01/15 02:21:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -38,7 +38,7 @@
 #include <sys/proc.h>
 
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/atapi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/atapiconf.h>
 
