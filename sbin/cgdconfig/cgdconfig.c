@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.13 2005/03/30 15:45:56 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.14 2005/03/30 19:56:05 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.13 2005/03/30 15:45:56 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.14 2005/03/30 19:56:05 elric Exp $");
 #endif
 
 #include <err.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.13 2005/03/30 15:45:56 elric Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
+#include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/resource.h>
 
@@ -146,6 +147,8 @@ main(int argc, char **argv)
 	char	outfile[FILENAME_MAX] = "";
 
 	eliminate_cores();
+	if (mlockall(MCL_FUTURE))
+		err(EXIT_FAILURE, "Can't lock memory");
 	setprogname(*argv);
 	p = params_new();
 	kg = NULL;
