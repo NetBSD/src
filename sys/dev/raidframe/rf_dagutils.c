@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.25 2004/02/27 02:55:17 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.26 2004/02/27 03:18:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.25 2004/02/27 02:55:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.26 2004/02/27 03:18:02 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -183,6 +183,7 @@ static void
 rf_ShutdownDAGs(void *ignored)
 {
 	pool_destroy(&rf_dagh_pool);
+	pool_destroy(&rf_daglist_pool);
 }
 
 int 
