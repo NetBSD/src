@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.9 1996/11/30 18:04:47 cgd Exp $	*/
+/*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: symtab.c,v 1.9 1996/11/30 18:04:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ struct entry *
 lookupino(inum)
 	ino_t inum;
 {
-	register struct entry *ep;
+	struct entry *ep;
 
 	if (inum < WINO || inum >= maxino)
 		return (NULL);
@@ -126,7 +126,7 @@ void
 deleteino(inum)
 	ino_t inum;
 {
-	register struct entry *next;
+	struct entry *next;
 	struct entry **prev;
 
 	if (inum < WINO || inum >= maxino)
@@ -150,8 +150,8 @@ struct entry *
 lookupname(name)
 	char *name;
 {
-	register struct entry *ep;
-	register char *np, *cp;
+	struct entry *ep;
+	char *np, *cp;
 	char buf[MAXPATHLEN];
 
 	cp = name;
@@ -198,9 +198,9 @@ lookupparent(name)
  */
 char *
 myname(ep)
-	register struct entry *ep;
+	struct entry *ep;
 {
-	register char *cp;
+	char *cp;
 	static char namebuf[MAXPATHLEN];
 
 	for (cp = &namebuf[MAXPATHLEN - 2]; cp > &namebuf[ep->e_namlen]; ) {
@@ -230,7 +230,7 @@ addentry(name, inum, type)
 	ino_t inum;
 	int type;
 {
-	register struct entry *np, *ep;
+	struct entry *np, *ep;
 
 	if (freelist != NULL) {
 		np = freelist;
@@ -277,9 +277,9 @@ addentry(name, inum, type)
  */
 void
 freeentry(ep)
-	register struct entry *ep;
+	struct entry *ep;
 {
-	register struct entry *np;
+	struct entry *np;
 	ino_t inum;
 
 	if (ep->e_flags != REMOVED)
@@ -321,7 +321,7 @@ freeentry(ep)
  */
 void
 moveentry(ep, newname)
-	register struct entry *ep;
+	struct entry *ep;
 	char *newname;
 {
 	struct entry *np;
@@ -351,9 +351,9 @@ moveentry(ep, newname)
  */
 static void
 removeentry(ep)
-	register struct entry *ep;
+	struct entry *ep;
 {
-	register struct entry *np;
+	struct entry *np;
 
 	np = ep->e_parent;
 	if (np->e_entries == ep) {
@@ -456,8 +456,8 @@ dumpsymtable(filename, checkpt)
 	char *filename;
 	long checkpt;
 {
-	register struct entry *ep, *tep;
-	register ino_t i;
+	struct entry *ep, *tep;
+	ino_t i;
 	struct entry temp, *tentry;
 	long mynum = 1, stroff = 0;
 	FILE *fd;
@@ -544,11 +544,11 @@ initsymtable(filename)
 {
 	char *base;
 	long tblsize;
-	register struct entry *ep;
+	struct entry *ep;
 	struct entry *baseep, *lep;
 	struct symtableheader hdr;
 	struct stat stbuf;
-	register long i;
+	long i;
 	int fd;
 
 	vprintf(stdout, "Initialize symbol table.\n");
