@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 1997/04/16 22:49:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -241,6 +241,10 @@ syscall_bad:
 	default:
 brain_damage:
 		printf("trap type %x at %x\n", type, frame->srr0);
+#ifdef TRAP_PANICWAIT
+		printf("Press a key to panic.\n");
+		cngetc();
+#endif
 		panic("trap");
 
 	case EXC_AST|EXC_USER:
@@ -331,7 +335,7 @@ setusr(content)
 
 int
 copyin(udaddr, kaddr, len)
-	void *udaddr;
+	const void *udaddr;
 	void *kaddr;
 	size_t len;
 {
@@ -358,7 +362,7 @@ copyin(udaddr, kaddr, len)
 
 int
 copyout(kaddr, udaddr, len)
-	void *kaddr;
+	const void *kaddr;
 	void *udaddr;
 	size_t len;
 {
