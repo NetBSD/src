@@ -1,4 +1,4 @@
-/*	$NetBSD: partab.c,v 1.4 1996/12/29 10:38:21 cgd Exp $	*/
+/*	$NetBSD: partab.c,v 1.5 1997/11/22 07:28:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)partab.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: partab.c,v 1.4 1996/12/29 10:38:21 cgd Exp $";
+__RCSID("$NetBSD: partab.c,v 1.5 1997/11/22 07:28:44 lukem Exp $");
 #endif /* not lint */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
+/*	$NetBSD: cu.c,v 1.6 1997/11/22 07:28:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,31 +33,32 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $";
+__RCSID("$NetBSD: cu.c,v 1.6 1997/11/22 07:28:42 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
 
-void	cleanup();
-
 /*
  * Botch the interface to look like cu's
  */
+int
 cumain(argc, argv)
 	char *argv[];
 {
-	register int i;
+	int i;
 	static char sbuf[12];
 
 	if (argc < 2) {
-		printf("usage: cu telno [-t] [-s speed] [-a acu] [-l line] [-#]\n");
+		fprintf(stderr,
+	    "usage: cu telno [-t] [-s speed] [-a acu] [-l line] [-#]\n");
 		exit(8);
 	}
-	CU = DV = NOSTR;
+	CU = DV = NULL;
 	BR = DEFBR;
 	for (; argc > 1; argv++, argc--) {
 		if (argv[1][0] != '-')
@@ -108,7 +109,7 @@ cumain(argc, argv)
 	 * The "cu" host name is used to define the
 	 * attributes of the generic dialer.
 	 */
-	(void)snprintf(sbuf, sizeof sbuf, "cu%d", BR);
+	(void)snprintf(sbuf, sizeof sbuf, "cu%d", (int)BR);
 	if ((i = hunt(sbuf)) == 0) {
 		printf("all ports busy\n");
 		exit(3);
@@ -134,4 +135,5 @@ cumain(argc, argv)
 	}
 	if (!HW)
 		ttysetup(speed(BR));
+	exit(0);
 }
