@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.53 1997/10/20 22:05:26 thorpej Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.53.2.1 1998/03/09 22:05:14 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -231,6 +231,23 @@ sys_mmap(p, v, retval)
 			flags |= MAP_ANON;
 			goto is_anon;
 		}
+		/*
+		 * Old programs may not select a specific sharing type, so
+		 * default to an appropriate one.
+		 */
+		if ((flags & (MAP_SHARED|MAP_PRIVATE|MAP_COPY)) == 0) {
+			if (vp->v_type == VCHR)
+				flags |= MAP_SHARED;	/* for a device */
+			else
+				flags |= MAP_PRIVATE;	/* for a file */
+		}
+		/* 
+		 * MAP_PRIVATE device mappings don't make sense (and aren't
+		 * supported anyway).  However, some programs rely on this,
+		 * so just change it to MAP_SHARED.
+		 */
+		if (vp->v_type == VCHR && (flags & MAP_PRIVATE) != 0)
+			flags = (flags & ~MAP_PRIVATE) | MAP_SHARED;
 		/*
 		 * Ensure that file and memory protections are
 		 * compatible.  Note that we only worry about
