@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.5 2001/10/25 19:23:14 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.6 2001/10/26 18:16:34 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -266,3 +266,24 @@ sys/sys/disklabel.h				patch
 sys/sys/scsiio.h				1.9
 
   Add Mylex DACC960, CAC-EISA, and I2O block/SCSI drivers.
+
+sys/dev/i2o/files.i2o				1.1-1.3 (new)
+
+  Add Mylex DACC960, CAC-EISA, and I2O block/SCSI drivers.
+
+sys/dev/ic/Makefile				patch
+sys/dev/pci/Makefile				patch
+
+  Move mlxio.h and mlxreg.h from dev/pci/Makefile to dev/ic/Makefile
+
+usr.sbin/lpr/lpd/lpd.c				1.29
+
+  Use DEFLP ("lp") for printer when printer is zero-length.
+
+lib/libc/gen/getcap.c				1.34
+
+  Avoid an underrun in "buf".  Fixes PR#13292.
+
+gnu/libexec/uucp/uuxqt/uuxqt.c			1.4
+
+  Pay more attention to commandline parsing of long options.
