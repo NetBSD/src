@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.23 2000/07/27 14:31:50 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.24 2000/08/02 21:49:41 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -40,6 +40,7 @@
 .Cd "pciide* at pnpbios? index ?"
 .Cd "options PCIIDE_CMD064x_DISABLE"
 .Cd "options PCIIDE_AMD756_ENABLEDMA"
+.Cd "options PCIIDE_CMD0646U_ENABLEUDMA"
 .Sh DESCRIPTION
 The
 .Nm pciide
@@ -92,12 +93,19 @@ This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed and uses the ISA legacy I/O ports
 and interrupts.
 .Pp
+The PCI0646U controller is known to be buggy with Ultra-DMA transfers, so
+Ultra-DMA is disabled by default for this controller. To enable Ultra-DMA,
+use the PCIIDE_CMD0646U_ENABLEUDMA option. Ultra-DMA can eventually be
+disabled on a per-drive basis with config flags, see
+.Xr wd 4 .
+
+.Pp
 The AMD756 chip revision D2 has a bug affecting DMA (but not Ultra-DMA)
 modes.  The workaround documented by AMD is to not use DMA on any drive which
 does not support Ultra-DMA modes.  This does not appear to be necessary on all
 drives, the PCIIDE_AMD756_ENABLEDMA option can be used to force multiword DMA
-on the buggy revisions.  Multiword DMA eventually be disabled on a per-drive
-basis with config flags, see
+on the buggy revisions.  Multiword DMA can eventually be disabled on a
+per-drive basis with config flags, see
 .Xr wd 4 .
 The bug, if triggered, will cause a total system hang.
 .Pp
