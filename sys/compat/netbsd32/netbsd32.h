@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.10 1999/12/30 15:40:45 eeh Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.10.4.1 2000/08/26 01:04:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -459,6 +459,14 @@ typedef u_int32_t netbsd32_utsnamep_t;
 
 /* from <compat/common/kern_info_09.c> */
 typedef u_int32_t netbsd32_outsnamep_t;
+
+/* from <arch/sparc{,64}/include/vuid_event.h> */
+typedef struct firm_event32 {
+	u_short	id;		/* key or MS_* or LOC_[XY]_DELTA */
+	u_short	pad;		/* unused, at least by X11 */
+	int	value;		/* VKEY_{UP,DOWN} or locator delta */
+	struct netbsd32_timeval time;
+} Firm_event32;
 
 /*
  * machine depedant section; must define:
