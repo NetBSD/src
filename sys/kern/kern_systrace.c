@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_systrace.c,v 1.25 2003/03/21 21:13:51 dsl Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.26 2003/03/30 00:40:06 provos Exp $	*/
 
 /*
- * Copyright 2002 Niels Provos <provos@citi.umich.edu>
+ * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.25 2003/03/21 21:13:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.26 2003/03/30 00:40:06 provos Exp $");
 
 #include "opt_systrace.h"
 
@@ -115,7 +115,6 @@ struct str_policy {
 
 struct str_process {
 	TAILQ_ENTRY(str_process) next;
-	TAILQ_ENTRY(str_process) msg_next;
 
 	struct proc *proc;
 	const struct emul *oldemul;
@@ -138,8 +137,6 @@ struct str_process {
 	uid_t saveuid;
 	gid_t setegid;
 	gid_t savegid;
-
-	struct str_message msg;
 };
 
 uid_t	systrace_seteuid(struct proc *,  uid_t);
@@ -163,7 +160,8 @@ struct proc *systrace_find(struct str_process *);
 struct str_process *systrace_findpid(struct fsystrace *fst, pid_t pid);
 void	systrace_wakeup(struct fsystrace *);
 void	systrace_closepolicy(struct fsystrace *, struct str_policy *);
-int	systrace_insert_process(struct fsystrace *, struct proc *);
+int	systrace_insert_process(struct fsystrace *, struct proc *,
+	    struct str_process **);
 struct str_policy *systrace_newpolicy(struct fsystrace *, int);
 int	systrace_msg_child(struct fsystrace *, struct str_process *, pid_t);
 int	systrace_msg_ask(struct fsystrace *, struct str_process *,
@@ -172,7 +170,7 @@ int	systrace_msg_result(struct fsystrace *, struct str_process *,
 	    int, int, size_t, register_t [], register_t []);
 int	systrace_msg_emul(struct fsystrace *, struct str_process *);
 int	systrace_msg_ugid(struct fsystrace *, struct str_process *);
-int	systrace_make_msg(struct str_process *, int);
+int	systrace_make_msg(struct str_process *, int, struct str_message *);
 
 static struct fileops systracefops = {
 	systracef_read,
@@ -194,6 +192,7 @@ static struct fileops systracefops = {
 
 struct pool systr_proc_pl;
 struct pool systr_policy_pl;
+struct pool systr_msgcontainer_pl;
 
 int systrace_debug = 0;
 struct lock systrace_lck;
@@ -217,7 +216,7 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 )
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
-	struct str_process *process;
+	struct str_msgcontainer *cont;
 	int error = 0;
 
 	if (uio->uio_resid != sizeof(struct str_message))
@@ -227,15 +226,14 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 	systrace_lock();
 	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
-	if ((process = TAILQ_FIRST(&fst->messages)) != NULL) {
-		error = uiomove((caddr_t)&process->msg,
+	if ((cont = TAILQ_FIRST(&fst->messages)) != NULL) {
+		error = uiomove((caddr_t)&cont->msg,
 		    sizeof(struct str_message), uio);
 		if (!error) {
-			TAILQ_REMOVE(&fst->messages, process, msg_next);
-			CLR(process->flags, STR_PROC_ONQUEUE);
-
-			if (SYSTR_MSG_NOPROCESS(process))
-				pool_put(&systr_proc_pl, process);
+			TAILQ_REMOVE(&fst->messages, cont, next);
+			if (!SYSTR_MSG_NOPROCESS(cont))
+				CLR(cont->strp->flags, STR_PROC_ONQUEUE);
+			pool_put(&systr_msgcontainer_pl, cont);
 
 		}
 	} else if (TAILQ_FIRST(&fst->processes) == NULL) {
@@ -492,6 +490,7 @@ systracef_close(struct file *fp, struct proc *p)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	struct str_process *strp;
+	struct str_msgcontainer *cont;
 	struct str_policy *strpol;
 
 	systrace_lock();
@@ -508,10 +507,10 @@ systracef_close(struct file *fp, struct proc *p)
 	}
 
 	/* Clean up fork and exit messages */
-	for (strp = TAILQ_FIRST(&fst->messages); strp;
-	    strp = TAILQ_FIRST(&fst->messages)) {
-		TAILQ_REMOVE(&fst->messages, strp, msg_next);
-		pool_put(&systr_proc_pl, strp);
+	for (cont = TAILQ_FIRST(&fst->messages); cont;
+	    cont = TAILQ_FIRST(&fst->messages)) {
+		TAILQ_REMOVE(&fst->messages, cont, next);
+		pool_put(&systr_msgcontainer_pl, cont);
 	}
 
 	/* Clean up all policies */
@@ -559,6 +558,8 @@ systrace_init(void)
 	    "strprocpl", NULL);
 	pool_init(&systr_policy_pl, sizeof(struct str_policy), 0, 0, 0,
 	    "strpolpl", NULL);
+	pool_init(&systr_msgcontainer_pl, sizeof(struct str_msgcontainer),
+	    0, 0, 0, "strmsgpl", NULL);
 	lockinit(&systrace_lck, PLOCK, "systrace", 0, 0);
 }
 
@@ -663,10 +664,11 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 
-	if (systrace_insert_process(fst, p))
+	if (systrace_insert_process(fst, p, &strp)) {
+		/* We need to kill the child */
+		psignal(p, SIGKILL);
 		goto out;
-	if ((strp = systrace_findpid(fst, p->p_pid)) == NULL)
-		panic("systrace_fork");
+	}
 
 	/* Reference policy */
 	if ((strp->policy = oldstrp->policy) != NULL)
@@ -1231,7 +1233,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 		goto out;
 	}
 
-	error = systrace_insert_process(fst, proc);
+	error = systrace_insert_process(fst, proc, NULL);
 
 #if defined(__NetBSD__) && defined(__HAVE_SYSCALL_INTERN)
 	/*
@@ -1389,9 +1391,6 @@ systrace_detach(struct str_process *strp)
 	fst = strp->parent;
 	systrace_wakeup(fst);
 
-	if (ISSET(strp->flags, STR_PROC_ONQUEUE))
-		TAILQ_REMOVE(&fst->messages, strp, msg_next);
-
 	TAILQ_REMOVE(&fst->processes, strp, next);
 	fst->nprocesses--;
 
@@ -1422,7 +1421,8 @@ systrace_closepolicy(struct fsystrace *fst, struct str_policy *policy)
 
 
 int
-systrace_insert_process(struct fsystrace *fst, struct proc *proc)
+systrace_insert_process(struct fsystrace *fst, struct proc *proc,
+    struct str_process **pstrp)
 {
 	struct str_process *strp;
 
@@ -1440,6 +1440,10 @@ systrace_insert_process(struct fsystrace *fst, struct proc *proc)
 
 	proc->p_systrace = strp;
 	SET(proc->p_flag, P_SYSTRACE);
+	
+	/* Pass the new pointer back to the caller */
+	if (pstrp != NULL)
+		*pstrp = strp;
 
 	return (0);
 }
@@ -1481,7 +1485,8 @@ int
 systrace_msg_ask(struct fsystrace *fst, struct str_process *strp,
     int code, size_t argsize, register_t args[])
 {
-	struct str_msg_ask *msg_ask = &strp->msg.msg_data.msg_ask;
+	struct str_message msg;
+	struct str_msg_ask *msg_ask = &msg.msg_data.msg_ask;
 	int i;
 
 	msg_ask->code = code;
@@ -1489,14 +1494,15 @@ systrace_msg_ask(struct fsystrace *fst, struct str_process *strp,
 	for (i = 0; i < (argsize/sizeof(register_t)) && i < SYSTR_MAXARGS; i++)
 		msg_ask->args[i] = args[i];
 
-	return (systrace_make_msg(strp, SYSTR_MSG_ASK));
+	return (systrace_make_msg(strp, SYSTR_MSG_ASK, &msg));
 }
 
 int
 systrace_msg_result(struct fsystrace *fst, struct str_process *strp,
     int error, int code, size_t argsize, register_t args[], register_t rval[])
 {
-	struct str_msg_ask *msg_ask = &strp->msg.msg_data.msg_ask;
+	struct str_message msg;
+	struct str_msg_ask *msg_ask = &msg.msg_data.msg_ask;
 	int i;
 
 	msg_ask->code = code;
@@ -1508,42 +1514,52 @@ systrace_msg_result(struct fsystrace *fst, struct str_process *strp,
 	msg_ask->rval[0] = rval[0];
 	msg_ask->rval[1] = rval[1];
 
-	return (systrace_make_msg(strp, SYSTR_MSG_RES));
+	return (systrace_make_msg(strp, SYSTR_MSG_RES, &msg));
 }
 
 int
 systrace_msg_emul(struct fsystrace *fst, struct str_process *strp)
 {
-	struct str_msg_emul *msg_emul = &strp->msg.msg_data.msg_emul;
+	struct str_message msg;
+	struct str_msg_emul *msg_emul = &msg.msg_data.msg_emul;
 	struct proc *p = strp->proc;
 
 	memcpy(msg_emul->emul, p->p_emul->e_name, SYSTR_EMULEN);
 
-	return (systrace_make_msg(strp, SYSTR_MSG_EMUL));
+	return (systrace_make_msg(strp, SYSTR_MSG_EMUL, &msg));
 }
 
 int
 systrace_msg_ugid(struct fsystrace *fst, struct str_process *strp)
 {
-	struct str_msg_ugid *msg_ugid = &strp->msg.msg_data.msg_ugid;
+	struct str_message msg;
+	struct str_msg_ugid *msg_ugid = &msg.msg_data.msg_ugid;
 	struct proc *p = strp->proc;
 
 	msg_ugid->uid = p->p_cred->p_ruid;
 	msg_ugid->gid = p->p_cred->p_rgid;
 
-	return (systrace_make_msg(strp, SYSTR_MSG_UGID));
+	return (systrace_make_msg(strp, SYSTR_MSG_UGID, &msg));
 }
 
 int
-systrace_make_msg(struct str_process *strp, int type)
+systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 {
-	struct str_message *msg = &strp->msg;
+	struct str_msgcontainer *cont;
+	struct str_message *msg;
 	struct fsystrace *fst = strp->parent;
-#ifndef __NetBSD__
-	struct proc *p = strp->proc;
-#endif
 	int st;
 
+	cont = pool_get(&systr_msgcontainer_pl, PR_WAITOK);
+	memset(cont, 0, sizeof(struct str_msgcontainer));
+	cont->strp = strp;
+
+	msg = &cont->msg;
+
+	/* Copy the already filled in fields */
+	memcpy(&msg->msg_data, &tmsg->msg_data, sizeof(msg->msg_data));
+
+	/* Add the extra fields to the message */
 	msg->msg_seqnr = ++strp->seqnr;
 	msg->msg_type = type;
 	msg->msg_pid = strp->pid;
@@ -1556,18 +1572,14 @@ systrace_make_msg(struct str_process *strp, int type)
 	if (ISSET(strp->flags, STR_PROC_ONQUEUE))
 		goto out;
 
-	TAILQ_INSERT_TAIL(&fst->messages, strp, msg_next);
+	TAILQ_INSERT_TAIL(&fst->messages, cont, next);
 	SET(strp->flags, STR_PROC_ONQUEUE);
 
  out:
 	systrace_wakeup(fst);
 
 	/* Release the lock - XXX */
-#ifndef __NetBSD__
-	SYSTRACE_UNLOCK(fst, p);
-#else
 	SYSTRACE_UNLOCK(fst, strp->proc);
-#endif
 
 	while (1) {
 		st = tsleep(strp, PWAIT | PCATCH, "systrmsg", 0);
@@ -1586,17 +1598,19 @@ systrace_make_msg(struct str_process *strp, int type)
 int
 systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 {
-	struct str_process *nstrp;
+	struct str_msgcontainer *cont;
 	struct str_message *msg;
 	struct str_msg_child *msg_child;
 
-	nstrp = pool_get(&systr_proc_pl, PR_WAITOK);
-	memset(nstrp, 0, sizeof(struct str_process));
+	cont = pool_get(&systr_msgcontainer_pl, PR_WAITOK);
+	memset(cont, 0, sizeof(struct str_msgcontainer));
+	cont->strp = strp;
 
+	msg = &cont->msg;
+	
 	DPRINTF(("%s: %p: pid %d -> pid %d\n", __func__,
-		    nstrp, strp->pid, npid));
+		    msg, strp->pid, npid));
 
-	msg = &nstrp->msg;
 	msg_child = &msg->msg_data.msg_child;
 
 	msg->msg_type = SYSTR_MSG_CHILD;
@@ -1607,7 +1621,7 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 		msg->msg_policy = -1;
 	msg_child->new_pid = npid;
 
-	TAILQ_INSERT_TAIL(&fst->messages, nstrp, msg_next);
+	TAILQ_INSERT_TAIL(&fst->messages, cont, next);
 
 	systrace_wakeup(fst);
 
