@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.5 1997/07/21 14:08:19 jtc Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.6 1998/02/10 04:54:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_none.c,v 1.5 1997/07/21 14:08:19 jtc Exp $");
+__RCSID("$NetBSD: auth_none.c,v 1.6 1998/02/10 04:54:22 lukem Exp $");
 #endif
 #endif
 
@@ -48,7 +48,9 @@ __RCSID("$NetBSD: auth_none.c,v 1.5 1997/07/21 14:08:19 jtc Exp $");
  */
 
 #include "namespace.h"
+
 #include <stdlib.h>
+
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
@@ -80,28 +82,28 @@ static struct auth_ops ops = {
 static struct authnone_private {
 	AUTH	no_client;
 	char	marshalled_client[MAX_MARSHEL_SIZE];
-	u_int	mcnt;
+	size_t	mcnt;
 } *authnone_private;
 
 AUTH *
 authnone_create()
 {
-	register struct authnone_private *ap = authnone_private;
+	struct authnone_private *ap = authnone_private;
 	XDR xdr_stream;
-	register XDR *xdrs;
+	XDR *xdrs;
 
-	if (ap == 0) {
+	if (ap == NULL) {
 		ap = (struct authnone_private *)calloc(1, sizeof (*ap));
-		if (ap == 0)
-			return (0);
+		if (ap == NULL)
+			return (NULL);
 		authnone_private = ap;
 	}
 	if (!ap->mcnt) {
 		ap->no_client.ah_cred = ap->no_client.ah_verf = _null_auth;
 		ap->no_client.ah_ops = &ops;
 		xdrs = &xdr_stream;
-		xdrmem_create(xdrs, ap->marshalled_client, (u_int)MAX_MARSHEL_SIZE,
-		    XDR_ENCODE);
+		xdrmem_create(xdrs, ap->marshalled_client,
+		    (size_t)MAX_MARSHEL_SIZE, XDR_ENCODE);
 		(void)xdr_opaque_auth(xdrs, &ap->no_client.ah_cred);
 		(void)xdr_opaque_auth(xdrs, &ap->no_client.ah_verf);
 		ap->mcnt = XDR_GETPOS(xdrs);
@@ -116,10 +118,10 @@ authnone_marshal(client, xdrs)
 	AUTH *client;
 	XDR *xdrs;
 {
-	register struct authnone_private *ap = authnone_private;
+	struct authnone_private *ap = authnone_private;
 
-	if (ap == 0)
-		return (0);
+	if (ap == NULL)
+		return (NULL);
 	return ((*xdrs->x_ops->x_putbytes)(xdrs,
 	    ap->marshalled_client, ap->mcnt));
 }

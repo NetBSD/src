@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.9 1998/01/23 14:44:23 lukem Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.10 1998/02/10 04:54:32 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.9 1998/01/23 14:44:23 lukem Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.10 1998/02/10 04:54:32 lukem Exp $");
 #endif
 #endif
 
@@ -46,17 +46,20 @@ __RCSID("$NetBSD: clnt_udp.c,v 1.9 1998/01/23 14:44:23 lukem Exp $");
  */
 
 #include "namespace.h"
-#include <sys/types.h>
-#include <sys/poll.h>
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/poll.h>
+#include <sys/socket.h>
+
+#include <err.h>
+#include <errno.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include <rpc/rpc.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netdb.h>
-#include <errno.h>
 #include <rpc/pmap_clnt.h>
 
 #ifdef __weak_alias
@@ -67,12 +70,12 @@ __weak_alias(clntudp_create,_clntudp_create);
 /*
  * UDP bases client side rpc operations
  */
-static enum clnt_stat clntudp_call __P((CLIENT *, u_long, xdrproc_t,
+static enum clnt_stat clntudp_call __P((CLIENT *, u_int32_t, xdrproc_t,
     caddr_t, xdrproc_t, caddr_t, struct timeval));
 static void clntudp_geterr __P((CLIENT *, struct rpc_err *));
 static bool_t clntudp_freeres __P((CLIENT *, xdrproc_t, caddr_t));
 static void clntudp_abort __P((CLIENT *));
-static bool_t clntudp_control __P((CLIENT *, u_int, char *));
+static bool_t clntudp_control __P((CLIENT *, u_int, caddr_t));
 static void clntudp_destroy __P((CLIENT *));
 
 static struct clnt_ops udp_ops = {
@@ -96,10 +99,10 @@ struct cu_data {
 	struct timeval     cu_total;
 	struct rpc_err	   cu_error;
 	XDR		   cu_outxdrs;
-	u_int		   cu_xdrpos;
-	u_int		   cu_sendsz;
+	size_t		   cu_xdrpos;
+	size_t		   cu_sendsz;
 	char		   *cu_outbuf;
-	u_int		   cu_recvsz;
+	size_t		   cu_recvsz;
 	char		   cu_inbuf[1];
 };
 
@@ -122,21 +125,21 @@ struct cu_data {
 CLIENT *
 clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	struct sockaddr_in *raddr;
-	u_long program;
-	u_long version;
+	u_int32_t program;
+	u_int32_t version;
 	struct timeval wait;
-	register int *sockp;
-	u_int sendsz;
-	u_int recvsz;
+	int *sockp;
+	size_t sendsz;
+	size_t recvsz;
 {
 	CLIENT *cl;
-	register struct cu_data *cu = NULL;
+	struct cu_data *cu = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
 
 	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
 	if (cl == NULL) {
-		(void) fprintf(stderr, "clntudp_create: out of memory\n");
+		warnx("clntudp_create: out of memory");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 		rpc_createerr.cf_error.re_errno = errno;
 		goto fooy;
@@ -145,7 +148,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	recvsz = ((recvsz + 3) / 4) * 4;
 	cu = (struct cu_data *)mem_alloc(sizeof(*cu) + sendsz + recvsz);
 	if (cu == NULL) {
-		(void) fprintf(stderr, "clntudp_create: out of memory\n");
+		warnx("clntudp_create: out of memory");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 		rpc_createerr.cf_error.re_errno = errno;
 		goto fooy;
@@ -154,7 +157,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 
 	(void)gettimeofday(&now, (struct timezone *)0);
 	if (raddr->sin_port == 0) {
-		u_short port;
+		in_port_t port;
 		if ((port =
 		    pmap_getport(raddr, program, version, IPPROTO_UDP)) == 0) {
 			goto fooy;
@@ -190,7 +193,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 			rpc_createerr.cf_error.re_errno = errno;
 			goto fooy;
 		}
-		/* attempt to bind to prov port */
+		/* attempt to bind to priv port */
 		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
 		/* the sockets rpc controls are non-blocking */
 		(void)ioctl(*sockp, FIONBIO, (char *) &dontblock);
@@ -203,19 +206,19 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	return (cl);
 fooy:
 	if (cu)
-		mem_free((caddr_t)cu, sizeof(*cu) + sendsz + recvsz);
+		mem_free(cu, sizeof(*cu) + sendsz + recvsz);
 	if (cl)
-		mem_free((caddr_t)cl, sizeof(CLIENT));
+		mem_free(cl, sizeof(CLIENT));
 	return ((CLIENT *)NULL);
 }
 
 CLIENT *
 clntudp_create(raddr, program, version, wait, sockp)
 	struct sockaddr_in *raddr;
-	u_long program;
-	u_long version;
+	u_int32_t program;
+	u_int32_t version;
 	struct timeval wait;
-	register int *sockp;
+	int *sockp;
 {
 
 	return(clntudp_bufcreate(raddr, program, version, wait, sockp,
@@ -224,18 +227,18 @@ clntudp_create(raddr, program, version, wait, sockp)
 
 static enum clnt_stat 
 clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
-	register CLIENT	*cl;		/* client handle */
-	u_long		proc;		/* procedure number */
-	xdrproc_t	xargs;		/* xdr routine for args */
-	caddr_t		argsp;		/* pointer to args */
-	xdrproc_t	xresults;	/* xdr routine for results */
-	caddr_t		resultsp;	/* pointer to results */
-	struct timeval	utimeout;	/* seconds to wait before giving up */
+	CLIENT		*cl;		/* client handle */
+	u_int32_t	 proc;		/* procedure number */
+	xdrproc_t	 xargs;		/* xdr routine for args */
+	caddr_t		 argsp;		/* pointer to args */
+	xdrproc_t	 xresults;	/* xdr routine for results */
+	caddr_t		 resultsp;	/* pointer to results */
+	struct timeval	 utimeout;	/* seconds to wait before giving up */
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
-	register XDR *xdrs;
-	register int outlen;
-	register int inlen;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	XDR *xdrs;
+	int outlen;
+	int inlen;
 	int fromlen;
 	struct pollfd fd;
 	int milliseconds = (cu->cu_wait.tv_sec * 1000) +
@@ -263,7 +266,7 @@ call_again:
 	/*
 	 * the transaction is the first thing in the out buffer
 	 */
-	(*(u_short *)(cu->cu_outbuf))++;
+	(*(u_int32_t *)(cu->cu_outbuf))++;
 	if ((! XDR_PUTLONG(xdrs, &proc)) ||
 	    (! AUTH_MARSHALL(cl->cl_auth, xdrs)) ||
 	    (! (*xargs)(xdrs, argsp)))
@@ -334,7 +337,8 @@ send_again:
 		if (inlen < sizeof(u_int32_t))
 			continue;	
 		/* see if reply transaction id matches sent id */
-		if (*((u_int32_t *)(cu->cu_inbuf)) != *((u_int32_t *)(cu->cu_outbuf)))
+		if (*((u_int32_t *)(cu->cu_inbuf)) !=
+		    *((u_int32_t *)(cu->cu_outbuf)))
 			continue;	
 		/* we now assume we have the proper reply */
 		break;
@@ -343,7 +347,7 @@ send_again:
 	/*
 	 * now decode and validate the response
 	 */
-	xdrmem_create(&reply_xdrs, cu->cu_inbuf, (u_int)inlen, XDR_DECODE);
+	xdrmem_create(&reply_xdrs, cu->cu_inbuf, (size_t)inlen, XDR_DECODE);
 	ok = xdr_replymsg(&reply_xdrs, &reply_msg);
 	/* XDR_DESTROY(&reply_xdrs);  save a few cycles on noop destroy */
 	if (ok) {
@@ -393,7 +397,7 @@ clntudp_geterr(cl, errp)
 	CLIENT *cl;
 	struct rpc_err *errp;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	*errp = cu->cu_error;
 }
@@ -405,8 +409,8 @@ clntudp_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
-	register XDR *xdrs = &(cu->cu_outxdrs);
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	XDR *xdrs = &(cu->cu_outxdrs);
 
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_res)(xdrs, res_ptr));
@@ -423,9 +427,9 @@ static bool_t
 clntudp_control(cl, request, info)
 	CLIENT *cl;
 	u_int request;
-	char *info;
+	caddr_t info;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	switch (request) {
 	case CLSET_TIMEOUT:
@@ -453,12 +457,12 @@ static void
 clntudp_destroy(cl)
 	CLIENT *cl;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	if (cu->cu_closeit) {
 		(void)close(cu->cu_sock);
 	}
 	XDR_DESTROY(&(cu->cu_outxdrs));
-	mem_free((caddr_t)cu, (sizeof(*cu) + cu->cu_sendsz + cu->cu_recvsz));
-	mem_free((caddr_t)cl, sizeof(CLIENT));
+	mem_free(cu, (sizeof(*cu) + cu->cu_sendsz + cu->cu_recvsz));
+	mem_free(cl, sizeof(CLIENT));
 }

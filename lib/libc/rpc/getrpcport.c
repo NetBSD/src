@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcport.c,v 1.9 1997/07/21 14:08:29 jtc Exp $	*/
+/*	$NetBSD: getrpcport.c,v 1.10 1998/02/10 04:54:35 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)getrpcport.c 1.3 87/08/11 SMI";
 static char *sccsid = "@(#)getrpcport.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: getrpcport.c,v 1.9 1997/07/21 14:08:29 jtc Exp $");
+__RCSID("$NetBSD: getrpcport.c,v 1.10 1998/02/10 04:54:35 lukem Exp $");
 #endif
 #endif
 
@@ -44,11 +44,15 @@ __RCSID("$NetBSD: getrpcport.c,v 1.9 1997/07/21 14:08:29 jtc Exp $");
  */
 
 #include "namespace.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <netdb.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <rpc/rpc.h>
-#include <netdb.h>
-#include <sys/socket.h>
 #include <rpc/pmap_clnt.h>
 
 #ifdef __weak_alias
@@ -57,8 +61,9 @@ __weak_alias(getrpcport,_getrpcport);
 
 int
 getrpcport(host, prognum, versnum, proto)
-	char *host;
-	int prognum, versnum, proto;
+	const char *host;
+	u_int32_t prognum, versnum;
+	int proto;
 {
 	struct sockaddr_in addr;
 	struct hostent *hp;
@@ -69,6 +74,6 @@ getrpcport(host, prognum, versnum, proto)
 	addr.sin_len = sizeof(struct sockaddr_in);
 	addr.sin_family = AF_INET;
 	addr.sin_port =  0;
-	bcopy(hp->h_addr, (char *) &addr.sin_addr, hp->h_length);
+	memmove((char *) &addr.sin_addr, hp->h_addr, hp->h_length);
 	return (pmap_getport(&addr, prognum, versnum, proto));
 }
