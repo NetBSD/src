@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.128 2004/08/05 09:07:45 jkunz Exp $	*/
+/*	$NetBSD: tulip.c,v 1.129 2004/10/30 23:33:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.128 2004/08/05 09:07:45 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.129 2004/10/30 23:33:29 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -1005,7 +1005,7 @@ tlp_ioctl(ifp, cmd, data)
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
-			if (TULIP_IS_ENABLED(sc)) {
+			if (ifp->if_flags & IFF_RUNNING) {
 				/*
 				 * Multicast list has changed.  Set the
 				 * hardware filter accordingly.
