@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: object.c,v 1.5 1995/03/23 08:34:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: object.c,v 1.6 1995/04/22 07:34:09 cgd Exp $";
 #endif /* not lint */
 
 /*	object.c		Larn is copyrighted 1986 by Noah Morgan. */
@@ -731,7 +731,7 @@ ocookie()
 		case 'e':	lprcat("eat\nThe cookie tasted good.");
 					forget(); /* no more cookie	*/
 					if (c[BLINDCOUNT]) return;
-					if (!(p=fortune(fortfile))) return;
+					if (!(p=fortune())) return;
 					lprcat("  A message inside the cookie reads:\n"); lprcat(p);
 					return;
 
