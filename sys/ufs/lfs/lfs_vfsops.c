@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.36 1999/09/03 22:48:51 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.37 1999/09/08 03:45:22 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -164,6 +164,11 @@ lfs_mountroot()
 	struct proc *p = curproc;	/* XXX */
 	int error;
 	
+	if (root_device->dv_class != DV_DISK)
+		return (ENODEV);
+
+	if (rootdev == NODEV)
+	  	return (ENODEV);
 	/*
 	 * Get vnodes for swapdev and rootdev.
 	 */
