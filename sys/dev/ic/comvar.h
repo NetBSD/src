@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.37 2000/10/06 21:12:01 nathanw Exp $	*/
+/*	$NetBSD: comvar.h,v 1.38 2001/01/07 18:09:26 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,6 +31,10 @@
  */
 
 #include "rnd.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#include "opt_com.h"
+
 #if NRND > 0 && defined(RND_COM)
 #include <sys/rnd.h>
 #endif
