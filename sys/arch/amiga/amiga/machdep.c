@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.13 1994/03/28 06:15:57 chopps Exp $
+ *	$Id: machdep.c,v 1.14 1994/03/30 17:24:08 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -80,6 +80,7 @@
 #include <net/netisr.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
+#include <sys/queue.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_param.h>
@@ -91,7 +92,6 @@
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
-#include <amiga/amiga/dlists.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
 
