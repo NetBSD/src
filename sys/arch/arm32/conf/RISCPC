@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.25 1999/07/29 10:37:15 augustss Exp $
+#	$NetBSD: RISCPC,v 1.26 1999/12/24 00:15:51 tron Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -259,7 +259,7 @@ pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	strip	4		# STRIP 
 pseudo-device	pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # paging to files
+pseudo-device	vnd     4               # disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
