@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6.2.10 1999/06/11 00:59:59 nisimura Exp $ */
+/*	$NetBSD: dec_3max.c,v 1.6.2.11 1999/10/29 16:49:42 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.10 1999/06/11 00:59:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.11 1999/10/29 16:49:42 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.10 1999/06/11 00:59:59 nisimura E
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
 
-#include "wsdisplay.h"
+#include "dckbd.h"
 
 void dec_3max_init __P((void));
 void dec_3max_bus_reset __P((void));
@@ -203,11 +203,12 @@ dec_3max_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NWSDISPLAY > 0
+#if NDCKBD > 0
 		dckbd_cnattach(KN02_SYS_DZ);
+#endif
 		if (tc_fb_cnattach(crt) > 0)
 			return;
-#endif
+
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
 	}
@@ -357,7 +358,7 @@ static struct tc_builtin tc_kn02_builtins[] = {
 struct tcbus_attach_args kn02_tc_desc = {
 	"tc", 0,
 	TC_SPEED_25_MHZ,
-	3, tc_kn02_slots,
+	8, tc_kn02_slots,
 	3, tc_kn02_builtins,
 	kn02_intr_establish, kn02_intr_disestablish
 };
@@ -451,7 +452,7 @@ kn02sys_attach(parent, self, aux)
 	ibd.ibd_ndevs = sizeof(kn02sys_devs)/sizeof(kn02sys_devs[0]);
 	ibd.ibd_establish = kn02_intr_establish;
 	ibd.ibd_disestablish = kn02_intr_disestablish;
-	ibus_attach_devs(self, &ibd);
+	ibus_devattach(self, &ibd);
 }
 
 /*
