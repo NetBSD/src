@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.8 1995/04/12 15:26:54 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.9 1995/05/05 14:13:03 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -73,10 +73,10 @@ typedef struct pmap {
  */
 
 typedef struct pv_entry {
-  struct pv_entry	*pv_next;	/* next pv_entry */
-  struct pmap	        *pv_pmap;/* if not NULL, pmap where mapping lies */
-  vm_offset_t	         pv_va;		/* virtual address for mapping */
-  int		         pv_flags;	/* flags */
+	struct pv_entry	*pv_next;	/* next pv_entry */
+	struct pmap	*pv_pmap;/* if not NULL, pmap where mapping lies */
+	vm_offset_t	 pv_va;		/* virtual address for mapping */
+	int		 pv_flags;	/* flags */
 } *pv_entry_t;
 
 #define	PV_REF	0x00000001	/* Simulated phys ref bit */
@@ -99,6 +99,7 @@ struct pmap	kernel_pmap_store;
 #define	pmap_copy(a,b,c,d,e) 		/* Dont do anything */
 #define	pmap_update()	mtpr(0,PR_TBIA)	/* Update buffes */
 #define	pmap_pageable(a,b,c,d)		/* Dont do anything */
+#define	pmap_collect(pmap)		/* No need so far */
 #define	pmap_reference(pmap)	if(pmap) (pmap)->ref_count++
 #define	pmap_pinit(pmap)	(pmap)->ref_count=1;
 #define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SIZE)
