@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/24 09:00:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1998/07/29 01:14:16 simonb Exp $
 
 PROG=	newsyslog
 
@@ -7,8 +7,6 @@ CPPFLAGS+= -DCONF=\"/etc/newsyslog.conf\"
 CPPFLAGS+= -DPIDFILE=\"/var/run/syslog.pid\"
 CPPFLAGS+= -DCOMPRESS=\"/usr/bin/gzip\"
 CPPFLAGS+= -DCOMPRESS_POSTFIX=\".gz\"
-
-BINOWN=	root
 
 MAN=	newsyslog.8
 
