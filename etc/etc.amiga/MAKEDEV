@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.5 1994/04/17 13:26:16 chopps Exp $
+#	$Id: MAKEDEV,v 1.6 1994/06/04 12:12:50 chopps Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -52,7 +52,7 @@
 #	vnd*	"file" pseudo-disks
 #
 # Console ports:
-#	ite*	ite bitmapped consoles
+#	ttye*	ite bitmapped consoles
 #
 # Pointing devices:
 #	mouse*	Amiga mice
@@ -80,7 +80,7 @@ for i
 do
 case $i in
 all)
-	sh MAKEDEV std st0 ite0 ite1 mouse0 mouse1 tty0 grf0 grf1 kbd
+	sh MAKEDEV std st0 ttye0 ttye1 mouse0 mouse1 tty00 grf0 grf1 kbd
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 vnd0 vnd1 vnd2 vnd3 vnd4
 	sh MAKEDEV view00 view01 view02 view03 view04 view05 pty0 
 	sh MAKEDEV vnd5 vnd6 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 par0
@@ -113,51 +113,49 @@ std)
 	;;
 
 st*)
-	umask 0 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
+	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
 	st*) name=st; blk=7; chr=20;;
 	esac
+	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	case $unit in
-	0|1|2|3)
-		four=`expr $unit + 4` ; eight=`expr $unit + 8`
-		twelve=`expr $unit + 12`; twenty=`expr $unit + 20`
-		rm -f r${name}${unit} r${name}${four} 
-		rm -f r${name}${eight} r${name}${twelve} 
-		rm -f nr${name}${unit} nr${name}${eight} 
-		rm -f ${name}${unit} ${name}${four} 
-		rm -f ${name}${eight} ${name}${twelve} 
-		rm -f n${name}${unit} n${name}${eight} 
-		#
-		# block devices don't work so don't make them
-		#mknod ${name}${unit}	b $blk $unit
-		#mknod ${name}${four}	b $blk $four
-		#mknod ${name}${eight}	b $blk $eight
-		#mknod ${name}${twelve}	b $blk $twelve
-		#mknod n${name}${unit}	b $blk $four ;: sanity w/pdp11 v7
-		#mknod n${name}${eight}	b $blk $twelve ;: ditto
-		#
-		mknod r${name}${unit}	c $chr $unit
-		mknod r${name}${four}	c $chr $four
-		mknod r${name}${eight}	c $chr $eight
-		mknod r${name}${twelve}	c $chr $twelve
-		ln r${name}${four} nr${name}${unit} ;: sanity w/pdp11 v7
-		ln r${name}${twelve} nr${name}${eight} ;: ditto
+	0|1|2|3|4|5|6)
+		mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
+		mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
+		mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
+		mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
+		mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
+		mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
+		mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
+		mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
+		chgrp operator ${name}${unit} n${name}${unit} \
+			e$name$unit en$name$unit \
+			r${name}${unit} nr${name}${unit} \
+			er${name}${unit} enr${name}${unit} 
+		chmod 640 ${name}${unit} n${name}${unit} \
+			e$name$unit en$name$unit \
+			r${name}${unit} nr${name}${unit} \
+			er${name}${unit} enr${name}${unit} 
 		;;
 	*)
-		echo bad unit for tape in: $1
+		echo bad unit for tape in: $i
 		;;
 	esac
 	umask 77
 	;;
+
 fd*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
-	rm -f fd$unit rfd$unit
+	rm -f fd$unit? rfd$unit?
 	case $unit in
 	0|1|2|3)
-		mknod fd$unit b 2 $unit
-		mknod rfd$unit c 18 $unit
-		chgrp operator fd$unit rfd$unit
-		chmod 640 fd$unit rfd$unit
+		mknod fd${unit}a b 2 `expr $unit '*' 16`
+		mknod fd${unit}b b 2 `expr $unit '*' 16 + 1`
+		mknod rfd${unit}a c 18 `expr $unit '*' 16`
+		mknod rfd${unit}b c 18 `expr $unit '*' 16 + 1`
+		chgrp operator fd$unit? rfd$unit?
+		chmod 640 fd$unit? rfd$unit?
 		;;
 	*)
 		echo bad unit for floppy disk in: $i
@@ -204,8 +202,8 @@ sd*|vnd*)
 	umask 77
 	;;
 
-tty*)
-	unit=`expr $i : 'tty\(.*\)'`
+tty0*)
+	unit=`expr $i : 'tty0\(.*\)'`
 	rm -f ser${unit} tty0${unit} ttym${unit}
 	case $unit in
 	0)
@@ -234,15 +232,16 @@ par*)
 	;;
 
 
-ite*)
-	unit=`expr $i : 'ite\(.*\)'`
-	rm -f ite${unit}
+ttye*)
+	unit=`expr $i : 'ttye\(.*\)'`
+	rm -f ttye${unit}
+	rm -f ite*
 	case $unit in
 	0|1)
-		mknod ite${unit} c 13 ${unit}
+		mknod ttye${unit} c 13 ${unit}
 		;;
 	*)
-		echo bad unit for ite in: $i
+		echo bad unit for ttye in: $i
 		;;
 	esac
 	;;
