@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2001/02/07 13:34:17 mrg Exp $
+# $NetBSD: Makefile,v 1.9 2001/02/07 13:54:13 tsutsui Exp $
 
 # XXX for now, only Linux on i386 was actually tested, others might
 # need further work; compile stuff on everything, but only install
@@ -25,7 +25,7 @@ SUBDIR+=	aout freebsd ibcs2 linux svr4
 SUBDIR+=	aoutm68k linux sunos svr4
 .endif
 
-.if (${MACHINE_ARCH} == "mipsle" || ${MACHINE_ARCH} == "mipsbe")
+.if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")
 SUBDIR+=	ultrix
 .endif
 
