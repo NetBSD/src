@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1999/09/22 12:49:49 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1999/09/23 08:30:59 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -383,7 +383,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.4.0 1999.09.05\r\n")
+			       TEXT("Version 1.5.0 1999.09.23\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
@@ -416,6 +416,9 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 void
 SetBootInfo(struct bootinfo *bi, struct fb_setting *fbs)
 {
+	TIME_ZONE_INFORMATION tz;
+
+	GetTimeZoneInformation(&tz);
 	memset(bi, 0, sizeof(struct bootinfo));
 	bi->length = sizeof(struct bootinfo);
 	bi->reserved = 0;
@@ -427,10 +430,13 @@ SetBootInfo(struct bootinfo *bi, struct fb_setting *fbs)
 	bi->fb_height = fbs->height;
 	bi->platid_cpu = fbs->platid_cpu;
 	bi->platid_machine = fbs->platid_machine;
+	bi->timezone = tz.Bias;
+
 	debug_printf(TEXT("fb setting: %s fb_type=%d 0x%X %dx%d %d\n"),
 		     fbs->name,
 		     bi->fb_type, bi->fb_addr,
 		     bi->fb_width, bi->fb_height, bi->fb_line_bytes);
+	debug_printf(TEXT("timezone: %02ld:00\n"), (bi->timezone / 60));
 }
 
 
@@ -630,9 +636,9 @@ BOOL SerialPort(BOOL on)
 			if ( hPort == INVALID_HANDLE_VALUE ) {
 				debug_printf(TEXT("open failed\n"));
 			} else {
+#if 0
 				DWORD Len;
 				BYTE x = 'X';
-#if 0
 				WriteFile (hPort, &x, 1, &Len, 0);
 				WriteFile (hPort, &x, 1, &Len, 0);
 				WriteFile (hPort, &x, 1, &Len, 0);
