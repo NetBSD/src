@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pager.c,v 1.4 1993/05/29 17:03:06 cgd Exp $
+ *	$Id: vm_pager.c,v 1.5 1993/07/28 02:23:40 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -131,7 +131,7 @@ vm_pager_init()
 	 * Initialize known pagers
 	 */
 	for (pgops = pagertab; pgops < &pagertab[npagers]; pgops++)
-		(*(*pgops)->pgo_init)();
+		if (*pgops) (*(*pgops)->pgo_init)();
 	if (dfltpagerops == NULL)
 		panic("no default pager");
 }
@@ -205,7 +205,7 @@ vm_pager_sync()
 	struct pagerops **pgops;
 
 	for (pgops = pagertab; pgops < &pagertab[npagers]; pgops++)
-		(*(*pgops)->pgo_putpage)(NULL, NULL, FALSE);
+		if (*pgops) (*(*pgops)->pgo_putpage)(NULL, NULL, FALSE);
 }
 
 vm_offset_t

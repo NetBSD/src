@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.11 1993/07/12 13:53:36 mycroft Exp $
+ *	$Id: trap.c,v 1.12 1993/07/28 02:20:59 cgd Exp $
  */
 
 /*
@@ -173,7 +173,13 @@ copyfault:
 #endif
 #ifdef MATH_EMULATE
 		i = math_emulate(&frame);
-		if (i == 0) return;
+		if (i == 0) {
+#ifdef		TRACE_EMU			/* XXX is this necessary? */
+			if (frame.tf_eflags & PSL_T)
+				goto trace;
+#endif
+			return;
+		}
 #else
 		panic("trap: math emulation necessary!");
 #endif
@@ -264,7 +270,9 @@ copyfault:
 #endif
 
 		nss = 0;
-		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
+		if ((caddr_t)va >= vm->vm_maxsaddr
+		    && (caddr_t)va < VM_MAXUSER_ADDRESS
+		    && map != kernel_map) {
 			nss = clrnd(btoc((unsigned)vm->vm_maxsaddr
 				+ MAXSSIZ - (unsigned)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
@@ -293,7 +301,7 @@ copyfault:
 			va = trunc_page(vtopte(va));
 			/* for page table, increment wiring
 			   as long as not a page table fault as well */
-			if (!v && type != T_PAGEFLT)
+			if (!v && map != kernel_map)
 			  vm_map_pageable(map, va, round_page(va+1), FALSE);
 			if (type == T_PAGEFLT)
 				return;
@@ -318,11 +326,13 @@ nogo:
 		frame.tf_eflags &= ~PSL_T;
 
 			/* Q: how do we turn it on again? */
+			/* A: it's saved in the PS */
 		return;
 #endif
 	
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 	case T_TRCTRAP|T_USER:		/* trace trap */
+	trace:
 		frame.tf_eflags &= ~PSL_T;
 		i = SIGTRAP;
 		break;
