@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.3.2.1 1997/05/13 03:38:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -41,6 +41,8 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+
+#include <machine/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -128,5 +130,9 @@ sb_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	sbattach((struct sbdsp_softc *) self);
+	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
+
+	sc->sc_isa = parent;
+
+	sbattach(sc);
 }
