@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.93 2004/04/18 02:12:22 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.94 2004/04/18 02:15:06 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -967,3 +967,8 @@ share/man/man4/options.4			1.236
 
 	Add a useful description for COMPAT_AOUT.
 	[mrg, ticket #144]
+
+usr.bin/gzip/gzip.c				1.36
+
+	Don't try to remove an output file we haven't actually created. PR#25189
+	[mrg, ticket #146]
