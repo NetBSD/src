@@ -1,4 +1,4 @@
-.\" $NetBSD: joy.4,v 1.1 2002/02/06 21:06:34 jdolecek Exp $
+.\" $NetBSD: joy.4,v 1.2 2002/02/06 21:18:51 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthieu Herrb
 .\" All rights reserved.
@@ -33,8 +33,7 @@
 .Os
 .Sh NAME
 .Nm joy
-.Nd
-Games adapter driver
+.Nd games adapter driver
 .Sh SYNOPSIS
 .Cd "joy0 at isa? port 0x201"
 .Cd "joy* at isapnp?"
@@ -42,23 +41,26 @@ Games adapter driver
 .Cd "joy* at pci?"
 .Cd "joy* at pnpbios? index ?"
 .Sh DESCRIPTION
-This driver provides access to the games adapter. The lower bit in the
+This driver provides access to the games adapter.  The lower bit in the
 minor device number selects the joystick: 0 is the first joystick and
 1 is the second.
 .Pp
 The game control adapter allows up to two joysticks to be attached to
-the system. The adapter plus the driver convert the present resistive
-value to a relative joystick position. On receipt of an output signal,
-four timing circuits are started. By determining the time required for
+the system.  The adapter plus the driver convert the present resistive
+value to a relative joystick position.  On receipt of an output signal,
+four timing circuits are started.  By determining the time required for
 the circuit to time-out (a function of the resistance), the paddle
-position can be determined. The adapter could be used as a general
+position can be determined.  The adapter could be used as a general
 purpose I/O card with four analog (resistive) inputs plus four digital
 input points.
 .Pp
-Applications may call ioctl() on a game adapter driver file descriptor
+Applications may call
+.Xr ioctl 2
+on a game adapter driver file descriptor
 to set and get the offsets of the two potentiometers and the maximum
-time-out value for the circuit. The
-ioctl() commands are listed in
+time-out value for the circuit.  The
+.Xr ioctl 2
+commands are listed in
 .Pa Aq machine/joystick.h
 and currently are:
 .Pp
@@ -79,7 +81,8 @@ Returns the current Y offset.
 .Pp
 All this commands take an integer parameter.
 .Pp
-Read() on the file descriptor returns a
+.Xr read 2
+on the file descriptor returns a
 .Fa joystick
 structure:
 .Bd -literal -offset indent
@@ -107,12 +110,12 @@ The b1 and b2 fields in struct joystick are set to 1 if the
 corresponding button is down, 0 otherwise.
 .Pp
 The x and y coordinates are supposed to be between 0 and 255 for a
-good joystick and a good adapter. Unfortunately, because of the
+good joystick and a good adapter.  Unfortunately, because of the
 hardware hack that is used to measure the position (by measuring the
 time needed to discharge an RC circuit made from the joystick's
 potentiometer and a capacitor on the adapter), calibration
 is needed to determine exactly what values are returned for a specific
-joystick/adapter combination. Incorrect hardware can yield negative or
+joystick/adapter combination.  Incorrect hardware can yield negative or
 > 255 values.
 .Pp
 A typical calibration procedure uses the values returned at lower
@@ -124,7 +127,6 @@ This calibration is not part of the driver.
 .Bl -tag -width Pa -compact
 .It Pa /dev/joy0
 first joystick
-.br
 .It Pa /dev/joy1
 second joystick
 .El
@@ -137,6 +139,6 @@ second joystick
 .Sh AUTHORS
 Jean-Marc Zucconi wrote the
 .Fx
-driver. Matthieu Herrb ported it to
+driver.  Matthieu Herrb ported it to
 .Nx
 and wrote this manual page.
