@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.49 2004/02/28 19:27:49 itojun Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.50 2004/12/05 04:16:22 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.49 2004/02/28 19:27:49 itojun Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.50 2004/12/05 04:16:22 christos Exp $");
 #endif
 #endif
 
@@ -291,16 +291,41 @@ sys_check_options()
 int
 ppp_available()
 {
-    int s, ok;
-    struct ifreq ifr;
+    struct if_clonereq ifcr;
+    char *cp, *buf;
+    int idx, s;
     extern char *no_ppp_msg;
 
-    if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-	return 1;		/* can't tell */
+    (void)memset(&ifcr, 0, sizeof(ifcr));
 
-    strlcpy(ifr.ifr_name, "ppp0", sizeof (ifr.ifr_name));
-    ok = ioctl(s, SIOCGIFFLAGS, (caddr_t) &ifr) >= 0;
-    close(s);
+    if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	fatal("socket: %m");
+
+    if (ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
+	fatal("ioctl(get cloners): %m");
+
+    buf = malloc(ifcr.ifcr_total * IFNAMSIZ);
+    if (buf == NULL)
+	fatal("Unable to allocate cloner name buffer: %m");
+
+    ifcr.ifcr_count = ifcr.ifcr_total;
+    ifcr.ifcr_buffer = buf;
+
+    if (ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
+	fatal("ioctl(get cloners): %m");
+    (void)close(s);
+
+    /*
+     * In case some disappeared in the mean time, clamp it down.
+     */
+    if (ifcr.ifcr_count > ifcr.ifcr_total)
+	ifcr.ifcr_count = ifcr.ifcr_total;
+
+    for (cp = buf, idx = 0; idx < ifcr.ifcr_count; idx++, cp += IFNAMSIZ) {
+	if (strcmp(cp, "ppp") == 0)
+	    break;
+    }
+    free(buf);
 
 #ifdef __NetBSD__
     no_ppp_msg = "\
@@ -312,7 +337,7 @@ This system lacks kernel support for PPP.  To include PPP support\n\
 in the kernel, please follow the steps detailed in the README.bsd\n\
 file in the ppp-2.2 distribution.\n";
 #endif
-    return ok;
+    return idx != ifcr.ifcr_count;
 }
 
 /*
