@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l4mgmt.c,v 1.11 2003/09/25 15:16:08 pooka Exp $	*/
+/*	$NetBSD: i4b_l4mgmt.c,v 1.12 2003/09/26 21:05:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.11 2003/09/25 15:16:08 pooka Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.12 2003/09/26 21:05:33 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.11 2003/09/25 15:16:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.12 2003/09/26 21:05:33 pooka Exp $");
 
 #include "isdn.h"
 
@@ -229,7 +229,6 @@ void free_all_cd_of_bri(int bri)
 			call_desc[i].cdid = CDID_UNUSED;
 			call_desc[i].bri = -1;
 			call_desc[i].l3drv = NULL;
-			break;
 		}
 	}
 
