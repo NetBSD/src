@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1.2.3 2004/07/15 20:22:15 he Exp $
+# $NetBSD: GENERIC,v 1.1.2.4 2004/09/23 02:40:54 jmc Exp $
 # NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
@@ -23,14 +23,13 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.2.3 $"
+#ident 		"GENERIC-$Revision: 1.1.2.4 $"
 
 maxusers	32		# estimated number of users
 
 #
 options		XEN
 options		DOM0OPS
-options		HZ=50
 
 # CPU support.  At least one is REQUIRED.
 options 	I686_CPU
@@ -55,7 +54,7 @@ options 	I686_CPU
 options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 #options 	NO_TSC_TIME	# Don't use TSC microtime, even if available.
 				# Improves time behavior under VMware.
 
