@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.17 1998/10/19 02:54:57 matt Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.18 1998/11/15 17:32:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.17 1998/10/19 02:54:57 matt Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.18 1998/11/15 17:32:47 christos Exp $");
 #endif
 #endif
 
@@ -125,7 +125,7 @@ xdr_float(xdrs, fp)
 
 	case XDR_ENCODE:
 #ifdef IEEEFP 
-		tmpl = *(int32_t *)fp;
+		tmpl = *(int32_t *)(void *)fp;
 		return (XDR_PUTLONG(xdrs, &tmpl));
 #else
 		vs = *((struct vax_single *)fp);
@@ -149,7 +149,7 @@ xdr_float(xdrs, fp)
 	case XDR_DECODE:
 #ifdef IEEEFP
 		rv = XDR_GETLONG(xdrs, &tmpl);
-		*(int32_t *)fp = tmpl;
+		*(int32_t *)(void *)fp = (int32_t)tmpl;
 		return (rv);
 #else
 		vsp = (struct vax_single *)fp;
@@ -175,6 +175,7 @@ xdr_float(xdrs, fp)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -235,7 +236,7 @@ xdr_double(xdrs, dp)
 
 	case XDR_ENCODE:
 #ifdef IEEEFP
-		i32p = (int32_t *)dp;
+		i32p = (int32_t *)(void *)dp;
 #if BYTE_ORDER == BIG_ENDIAN
 		tmpl = *i32p++;
 		rv = XDR_PUTLONG(xdrs, &tmpl);
@@ -279,7 +280,7 @@ xdr_double(xdrs, dp)
 
 	case XDR_DECODE:
 #ifdef IEEEFP
-		i32p = (int32_t *)dp;
+		i32p = (int32_t *)(void *)dp;
 #if BYTE_ORDER == BIG_ENDIAN
 		rv = XDR_GETLONG(xdrs, &tmpl);
 		*i32p++ = tmpl;
@@ -289,11 +290,11 @@ xdr_double(xdrs, dp)
 		*i32p = tmpl;
 #else
 		rv = XDR_GETLONG(xdrs, &tmpl);
-		*(i32p+1) = tmpl;
+		*(i32p+1) = (int32_t)tmpl;
 		if (!rv)
 			return (rv);
 		rv = XDR_GETLONG(xdrs, &tmpl);
-		*i32p = tmpl;
+		*i32p = (int32_t)tmpl;
 #endif
 		return (rv);
 #else
@@ -325,5 +326,6 @@ xdr_double(xdrs, dp)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }

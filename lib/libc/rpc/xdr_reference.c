@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_reference.c,v 1.11 1998/02/13 05:52:44 lukem Exp $	*/
+/*	$NetBSD: xdr_reference.c,v 1.12 1998/11/15 17:32:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_reference.c 1.11 87/08/11 SMI";
 static char *sccsid = "@(#)xdr_reference.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_reference.c,v 1.11 1998/02/13 05:52:44 lukem Exp $");
+__RCSID("$NetBSD: xdr_reference.c,v 1.12 1998/11/15 17:32:47 christos Exp $");
 #endif
 #endif
 
@@ -93,7 +93,7 @@ xdr_reference(xdrs, pp, size, proc)
 				warnx("xdr_reference: out of memory");
 				return (FALSE);
 			}
-			memset(loc, 0, (int)size);
+			memset(loc, 0, size);
 			break;
 
 		case XDR_ENCODE:

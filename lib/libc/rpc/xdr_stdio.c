@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.11 1998/07/26 12:47:39 mycroft Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.12 1998/11/15 17:32:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_stdio.c,v 1.11 1998/07/26 12:47:39 mycroft Exp $");
+__RCSID("$NetBSD: xdr_stdio.c,v 1.12 1998/11/15 17:32:47 christos Exp $");
 #endif
 #endif
 
@@ -97,7 +97,7 @@ xdrstdio_create(xdrs, file, op)
 
 	xdrs->x_op = op;
 	xdrs->x_ops = &xdrstdio_ops;
-	xdrs->x_private = (char *)file;
+	xdrs->x_private = file;
 	xdrs->x_handy = 0;
 	xdrs->x_base = 0;
 }
@@ -112,7 +112,7 @@ xdrstdio_destroy(xdrs)
 {
 	(void)fflush((FILE *)xdrs->x_private);
 	/* xx should we close the file ?? */
-};
+}
 
 static bool_t
 xdrstdio_getlong(xdrs, lp)
@@ -120,10 +120,9 @@ xdrstdio_getlong(xdrs, lp)
 	long *lp;
 {
 
-	if (fread((char *)lp, sizeof(int32_t), 1,
-	    (FILE *)xdrs->x_private) != 1)
+	if (fread(lp, sizeof(int32_t), 1, (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
-	*lp = (long)ntohl((int32_t)*lp);
+	*lp = (long)ntohl((u_int32_t)*lp);
 	return (TRUE);
 }
 
@@ -132,10 +131,9 @@ xdrstdio_putlong(xdrs, lp)
 	XDR *xdrs;
 	const long *lp;
 {
-	long mycopy = (long)htonl((int32_t)*lp);
+	long mycopy = (long)htonl((u_int32_t)*lp);
 
-	if (fwrite((char *)&mycopy, sizeof(int32_t), 1,
-	    (FILE *)xdrs->x_private) != 1)
+	if (fwrite(&mycopy, sizeof(int32_t), 1, (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
 	return (TRUE);
 }
@@ -147,7 +145,7 @@ xdrstdio_getbytes(xdrs, addr, len)
 	u_int len;
 {
 
-	if ((len != 0) && (fread(addr, (int)len, 1, (FILE *)xdrs->x_private) != 1))
+	if ((len != 0) && (fread(addr, (size_t)len, 1, (FILE *)xdrs->x_private) != 1))
 		return (FALSE);
 	return (TRUE);
 }
@@ -159,7 +157,8 @@ xdrstdio_putbytes(xdrs, addr, len)
 	u_int len;
 {
 
-	if ((len != 0) && (fwrite(addr, (int)len, 1, (FILE *)xdrs->x_private) != 1))
+	if ((len != 0) && (fwrite(addr, (size_t)len, 1,
+	    (FILE *)xdrs->x_private) != 1))
 		return (FALSE);
 	return (TRUE);
 }
@@ -182,6 +181,7 @@ xdrstdio_setpos(xdrs, pos)
 		FALSE : TRUE);
 }
 
+/* ARGSUSED */
 static int32_t *
 xdrstdio_inline(xdrs, len)
 	XDR *xdrs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_callmsg.c,v 1.10 1998/02/13 05:52:29 lukem Exp $	*/
+/*	$NetBSD: rpc_callmsg.c,v 1.11 1998/11/15 17:32:43 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_callmsg.c,v 1.10 1998/02/13 05:52:29 lukem Exp $");
+__RCSID("$NetBSD: rpc_callmsg.c,v 1.11 1998/11/15 17:32:43 christos Exp $");
 #endif
 #endif
 
@@ -98,16 +98,14 @@ xdr_callmsg(xdrs, cmsg)
 			IXDR_PUT_ENUM(buf, oa->oa_flavor);
 			IXDR_PUT_LONG(buf, oa->oa_length);
 			if (oa->oa_length) {
-				memmove((caddr_t)buf, oa->oa_base,
-				    oa->oa_length);
+				memmove(buf, oa->oa_base, oa->oa_length);
 				buf += RNDUP(oa->oa_length) / sizeof (int32_t);
 			}
 			oa = &cmsg->rm_call.cb_verf;
 			IXDR_PUT_ENUM(buf, oa->oa_flavor);
 			IXDR_PUT_LONG(buf, oa->oa_length);
 			if (oa->oa_length) {
-				memmove((caddr_t)buf, oa->oa_base,
-				    oa->oa_length);
+				memmove(buf, oa->oa_base, oa->oa_length);
 				/* no real need....
 				buf += RNDUP(oa->oa_length) / sizeof (int32_t);
 				*/
@@ -118,21 +116,25 @@ xdr_callmsg(xdrs, cmsg)
 	if (xdrs->x_op == XDR_DECODE) {
 		buf = XDR_INLINE(xdrs, 8 * BYTES_PER_XDR_UNIT);
 		if (buf != NULL) {
-			cmsg->rm_xid = IXDR_GET_LONG(buf);
+			cmsg->rm_xid = (u_int32_t)IXDR_GET_LONG(buf);
 			cmsg->rm_direction = IXDR_GET_ENUM(buf, enum msg_type);
 			if (cmsg->rm_direction != CALL) {
 				return (FALSE);
 			}
-			cmsg->rm_call.cb_rpcvers = IXDR_GET_LONG(buf);
+			cmsg->rm_call.cb_rpcvers =
+			    (u_int32_t)IXDR_GET_LONG(buf);
 			if (cmsg->rm_call.cb_rpcvers != RPC_MSG_VERSION) {
 				return (FALSE);
 			}
-			cmsg->rm_call.cb_prog = IXDR_GET_LONG(buf);
-			cmsg->rm_call.cb_vers = IXDR_GET_LONG(buf);
-			cmsg->rm_call.cb_proc = IXDR_GET_LONG(buf);
+			cmsg->rm_call.cb_prog = 
+			    (u_int32_t)IXDR_GET_LONG(buf);
+			cmsg->rm_call.cb_vers = 
+			    (u_int32_t)IXDR_GET_LONG(buf);
+			cmsg->rm_call.cb_proc =
+			    (u_int32_t)IXDR_GET_LONG(buf);
 			oa = &cmsg->rm_call.cb_cred;
 			oa->oa_flavor = IXDR_GET_ENUM(buf, enum_t);
-			oa->oa_length = IXDR_GET_LONG(buf);
+			oa->oa_length = (u_int)IXDR_GET_LONG(buf);
 			if (oa->oa_length) {
 				if (oa->oa_length > MAX_AUTH_BYTES) {
 					return (FALSE);
@@ -148,7 +150,7 @@ xdr_callmsg(xdrs, cmsg)
 						return (FALSE);
 					}
 				} else {
-					memmove(oa->oa_base, (caddr_t)buf,
+					memmove(oa->oa_base, buf,
 					    oa->oa_length);
 					/* no real need....
 					buf += RNDUP(oa->oa_length) /
@@ -165,7 +167,7 @@ xdr_callmsg(xdrs, cmsg)
 				}
 			} else {
 				oa->oa_flavor = IXDR_GET_ENUM(buf, enum_t);
-				oa->oa_length = IXDR_GET_LONG(buf);
+				oa->oa_length = (u_int)IXDR_GET_LONG(buf);
 			}
 			if (oa->oa_length) {
 				if (oa->oa_length > MAX_AUTH_BYTES) {
@@ -182,7 +184,7 @@ xdr_callmsg(xdrs, cmsg)
 						return (FALSE);
 					}
 				} else {
-					memmove(oa->oa_base, (caddr_t)buf,
+					memmove(oa->oa_base, buf,
 					    oa->oa_length);
 					/* no real need...
 					buf += RNDUP(oa->oa_length) /

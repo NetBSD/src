@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.17 1998/07/26 12:47:38 mycroft Exp $	*/
+/*	$NetBSD: xdr.c,v 1.18 1998/11/15 17:32:46 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.17 1998/07/26 12:47:38 mycroft Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.18 1998/11/15 17:32:46 christos Exp $");
 #endif
 #endif
 
@@ -150,6 +150,7 @@ xdr_int(xdrs, ip)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -167,10 +168,10 @@ xdr_u_int(xdrs, up)
 
 	case XDR_ENCODE:
 		l = (u_long) *up;
-		return (XDR_PUTLONG(xdrs, &l));
+		return (XDR_PUTLONG(xdrs, (long *)&l));
 
 	case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &l)) {
+		if (!XDR_GETLONG(xdrs, (long *)&l)) {
 			return (FALSE);
 		}
 		*up = (u_int) l;
@@ -179,6 +180,7 @@ xdr_u_int(xdrs, up)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -200,7 +202,7 @@ xdr_long(xdrs, lp)
 	case XDR_FREE:
 		return (TRUE);
 	}
-
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -221,6 +223,7 @@ xdr_u_long(xdrs, ulp)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -252,6 +255,7 @@ xdr_int32_t(xdrs, int32_p)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -270,10 +274,10 @@ xdr_u_int32_t(xdrs, u_int32_p)
 
 	case XDR_ENCODE:
 		l = (u_long) *u_int32_p;
-		return (XDR_PUTLONG(xdrs, &l));
+		return (XDR_PUTLONG(xdrs, (long *)&l));
 
 	case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &l)) {
+		if (!XDR_GETLONG(xdrs, (long *)&l)) {
 			return (FALSE);
 		}
 		*u_int32_p = (u_int32_t) l;
@@ -282,6 +286,7 @@ xdr_u_int32_t(xdrs, u_int32_p)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -312,6 +317,7 @@ xdr_short(xdrs, sp)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -329,10 +335,10 @@ xdr_u_short(xdrs, usp)
 
 	case XDR_ENCODE:
 		l = (u_long) *usp;
-		return (XDR_PUTLONG(xdrs, &l));
+		return (XDR_PUTLONG(xdrs, (long *)&l));
 
 	case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &l)) {
+		if (!XDR_GETLONG(xdrs, (long *)&l)) {
 			return (FALSE);
 		}
 		*usp = (u_short) l;
@@ -341,6 +347,7 @@ xdr_u_short(xdrs, usp)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -371,6 +378,7 @@ xdr_int16_t(xdrs, int16_p)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -388,10 +396,10 @@ xdr_u_int16_t(xdrs, u_int16_p)
 
 	case XDR_ENCODE:
 		l = (u_long) *u_int16_p;
-		return (XDR_PUTLONG(xdrs, &l));
+		return (XDR_PUTLONG(xdrs, (long *)&l));
 
 	case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &l)) {
+		if (!XDR_GETLONG(xdrs, (long *)&l)) {
 			return (FALSE);
 		}
 		*u_int16_p = (u_int16_t) l;
@@ -400,6 +408,7 @@ xdr_u_int16_t(xdrs, u_int16_p)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -466,6 +475,7 @@ xdr_bool(xdrs, bp)
 	case XDR_FREE:
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -477,26 +487,20 @@ xdr_enum(xdrs, ep)
 	XDR *xdrs;
 	enum_t *ep;
 {
-#ifndef lint
 	enum sizecheck { SIZEVAL };	/* used to find the size of an enum */
 
 	/*
 	 * enums are treated as ints
 	 */
-	if (sizeof (enum sizecheck) == sizeof (long)) {
-		return (xdr_long(xdrs, (long *)ep));
-	} else if (sizeof (enum sizecheck) == sizeof (int)) {
-		return (xdr_int(xdrs, (int *)ep));
-	} else if (sizeof (enum sizecheck) == sizeof (short)) {
-		return (xdr_short(xdrs, (short *)ep));
+	/* LINTED */ if (sizeof (enum sizecheck) == sizeof (long)) {
+		return (xdr_long(xdrs, (long *)(void *)ep));
+	} else /* LINTED */ if (sizeof (enum sizecheck) == sizeof (int)) {
+		return (xdr_int(xdrs, (int *)(void *)ep));
+	} else /* LINTED */ if (sizeof (enum sizecheck) == sizeof (short)) {
+		return (xdr_short(xdrs, (short *)(void *)ep));
 	} else {
 		return (FALSE);
 	}
-#else
-	(void) (xdr_short(xdrs, (short *)ep));
-	(void) (xdr_int(xdrs, (short *)ep));
-	return (xdr_long(xdrs, (long *)ep));
-#endif
 }
 
 /*
@@ -532,7 +536,7 @@ xdr_opaque(xdrs, cp, cnt)
 		}
 		if (rndup == 0)
 			return (TRUE);
-		return (XDR_GETBYTES(xdrs, (caddr_t)crud, rndup));
+		return (XDR_GETBYTES(xdrs, (caddr_t)(void *)crud, rndup));
 	}
 
 	if (xdrs->x_op == XDR_ENCODE) {
@@ -593,7 +597,7 @@ xdr_bytes(xdrs, cpp, sizep, maxsize)
 			warnx("xdr_bytes: out of memory");
 			return (FALSE);
 		}
-		/* fall into ... */
+		/* FALLTHROUGH */
 
 	case XDR_ENCODE:
 		return (xdr_opaque(xdrs, sp, nodesize));
@@ -605,6 +609,7 @@ xdr_bytes(xdrs, cpp, sizep, maxsize)
 		}
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -698,7 +703,7 @@ xdr_string(xdrs, cpp, maxsize)
 		if (sp == NULL) {
 			return(TRUE);	/* already free */
 		}
-		/* fall through... */
+		/* FALLTHROUGH */
 	case XDR_ENCODE:
 		size = strlen(sp);
 		break;
@@ -729,7 +734,7 @@ xdr_string(xdrs, cpp, maxsize)
 			return (FALSE);
 		}
 		sp[size] = 0;
-		/* fall into ... */
+		/* FALLTHROUGH */
 
 	case XDR_ENCODE:
 		return (xdr_opaque(xdrs, sp, size));
@@ -739,6 +744,7 @@ xdr_string(xdrs, cpp, maxsize)
 		*cpp = NULL;
 		return (TRUE);
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 

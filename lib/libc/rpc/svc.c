@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.14 1998/02/13 05:52:33 lukem Exp $	*/
+/*	$NetBSD: svc.c,v 1.15 1998/11/15 17:32:45 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.14 1998/02/13 05:52:33 lukem Exp $");
+__RCSID("$NetBSD: svc.c,v 1.15 1998/11/15 17:32:45 christos Exp $");
 #endif
 #endif
 
@@ -201,7 +201,7 @@ svc_unregister(prog, vers)
 		prev->sc_next = s->sc_next;
 	}
 	s->sc_next = NULL_SVC;
-	mem_free((char *) s, (u_int) sizeof(struct svc_callout));
+	mem_free(s, sizeof(struct svc_callout));
 	/* now unregister the information with the local binder service */
 	(void)pmap_unset(prog, vers);
 }
@@ -358,8 +358,8 @@ svcerr_progvers(xprt, low_vers, high_vers)
 	rply.rm_reply.rp_stat = MSG_ACCEPTED;
 	rply.acpted_rply.ar_verf = xprt->xp_verf;
 	rply.acpted_rply.ar_stat = PROG_MISMATCH;
-	rply.acpted_rply.ar_vers.low = low_vers;
-	rply.acpted_rply.ar_vers.high = high_vers;
+	rply.acpted_rply.ar_vers.low = (u_int32_t)low_vers;
+	rply.acpted_rply.ar_vers.high = (u_int32_t)high_vers;
 	SVC_REPLY(xprt, &rply);
 }
 
@@ -404,7 +404,7 @@ svc_getreqset(readfds)
 	struct svc_req r;
 	SVCXPRT *xprt;
 	int bit;
-	u_int32_t mask, *maskp;
+	int32_t mask, *maskp;
 	int sock;
 	char cred_area[2*MAX_AUTH_BYTES + RQCRED_SIZE];
 	msg.rm_call.cb_cred.oa_base = cred_area;
@@ -441,8 +441,8 @@ svc_getreqset(readfds)
 				}
 				/* now match message with a registered service*/
 				prog_found = FALSE;
-				low_vers = 0 - 1;
-				high_vers = 0;
+				low_vers = (u_long) -1L;
+				high_vers = (u_long) 0L;
 				for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
 					if (s->sc_prog == r.rq_prog) {
 						if (s->sc_vers == r.rq_vers) {
