@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration lexical analyzer
  *	---------------------------------------------------
  *
- *	$Id: rc_scan.l,v 1.5 2003/09/05 13:31:04 pooka Exp $ 
+ *	$Id: rc_scan.l,v 1.6 2004/10/30 08:19:30 dsl Exp $ 
  *
  * $FreeBSD$
  *
@@ -82,7 +82,7 @@ int yylex(void);
 				int i = 0;
 				if ((str = malloc(128)) == 0)
 					errx(EX_OSERR, "Out of virtual memory");
-				while(*p == '-' || isdigit(*p) || *p == '*')
+				while(*p == '-' || isdigit((unsigned char)*p) || *p == '*')
 					str[i++] = *p++;
 				str[i] = '\0';
 				yylval.str = str;
