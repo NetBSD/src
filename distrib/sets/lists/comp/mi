@@ -589,6 +589,7 @@
 ./usr/include/isofs/cd9660/iso_rrip.h
 ./usr/include/kvm.h
 ./usr/include/langinfo.h
+./usr/include/libgen.h
 ./usr/include/limits.h
 ./usr/include/link.h
 ./usr/include/locale.h
