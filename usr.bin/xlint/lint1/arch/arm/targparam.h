@@ -1,9 +1,9 @@
-/*	$NetBSD: param.h,v 1.16 2001/10/21 21:39:49 thorpej Exp $	*/
+/*	$NetBSD: targparam.h,v 1.1 2001/10/21 21:39:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -32,70 +32,24 @@
  */
 
 /*
- * Minimun size of string buffer. If this is not enough, the buffer
- * is enlarged in steps of STRBLEN bytes.
+ * Machine-dependent target parameters for lint1.
  */
-#define	STRBLEN		256
+
+/*    
+ * Should be set to 1 if the difference of two pointers is of type long
+ * or the value of sizeof is of type unsigned long.  Note this MUST be
+ * kept in sync with the compiler!
+ */     
 
 /*
- * This defines the size of memory blocks which are used to allocate
- * memory in larger chunks.
+ * XXX This is not right!  It picks up ELF from the host, not
+ * XXX the target.
  */
-#define	MBLKSIZ		((size_t)0x4000)
 
-/*
- * Sizes of hash tables
- * Should be a prime. Possible primes are
- * 307, 401, 503, 601, 701, 809, 907, 1009, 1103, 1201, 1301, 1409, 1511.
- *
- * HSHSIZ1	symbol table 1st pass
- * HSHSIZ2	symbol table 2nd pass
- * THSHSIZ2	type table 2nd pass
- */
-#define	HSHSIZ1		503
-#define HSHSIZ2		1009
-#define	THSHSIZ2	1009
-
-/*
- * Pull in target-specific parameters.
- */
-#include "targparam.h"
-
-/*
- * Make sure this matches wchar_t.
- */
-#define WCHAR	SHORT
-
-#ifndef __GNUC__
-#ifndef lint
-#ifndef QUAD_MAX	/* necessary for mkdep */
-#define QUAD_MAX	LONG_MAX
-#define QUAD_MIN	LONG_MIN
-#define UQUAD_MAX	ULONG_MAX
-#endif
-typedef	long	quad_t;
-typedef	u_long	u_quad_t;
-#endif
-#endif
-
-
-/*
- * long double only in ANSI C.
- *
- * And the sparc64 long double code generation is broken.
- */
-#if !defined(__sparc64__) && defined(__STDC__)
-typedef	long double ldbl_t;
+#if defined(__ELF__)
+#define	PTRDIFF_IS_LONG		1
+#define	SIZEOF_IS_ULONG		1
 #else
-typedef	double	ldbl_t;
-#endif
-
-/*
- * Some traditional compilers are not able to assign structures.
- */
-#ifdef __STDC__
-#define STRUCT_ASSIGN(dest, src)	(dest) = (src)
-#else
-#define STRUCT_ASSIGN(dest, src)	(void)memcpy(&(dest), &(src), \
-						     sizeof (dest));
+#define	PTRDIFF_IS_LONG		0
+#define	SIZEOF_IS_ULONG		0
 #endif
