@@ -1,3 +1,5 @@
+.\"     $NetBSD: test.accent,v 1.2 1997/07/07 19:19:39 phil Exp $
+.\"
 .sc
 .sp 4
 .b e\\*'migre
