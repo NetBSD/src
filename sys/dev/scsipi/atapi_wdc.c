@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.63 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.64 2004/01/01 20:25:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.63 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.64 2004/01/01 20:25:22 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -441,12 +441,12 @@ wdc_atapi_start(chp, xfer)
 		if ((drvp->drive_flags & DRIVE_MODE) == 0)
 			goto ready;
 		errstring = "unbusy";
-		if (wait_for_unbusy(chp, ATAPI_DELAY, wait_flags))
+		if (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags))
 			goto timeout;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
 		errstring = "piomode";
-		if (wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags))
+		if (wdc_wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags))
 			goto timeout;
 		if (chp->ch_status & WDCS_ERR) {
 			if (chp->ch_error == WDCE_ABRT) {
@@ -477,7 +477,7 @@ wdc_atapi_start(chp, xfer)
 			goto ready;
 		}
 		errstring = "dmamode";
-		if (wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags))
+		if (wdc_wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags))
 			goto timeout;
 		if (chp->ch_status & WDCS_ERR)
 			goto error;
@@ -495,7 +495,7 @@ ready:
 		chp->wdc->select(chp, xfer->c_drive);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
-	switch (wait_for_unbusy(chp, ATAPI_DELAY, wait_flags)  < 0) {
+	switch (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags)  < 0) {
 	case WDCWAIT_OK:
 		break;
 	case WDCWAIT_TOUT:
@@ -599,12 +599,12 @@ wdc_atapi_intr(chp, xfer, irq)
 		return 1;
 	} 
 
-	/* Ack interrupt done in wait_for_unbusy */
+	/* Ack interrupt done in wdc_wait_for_unbusy */
 	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
 		chp->wdc->select(chp, xfer->c_drive);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
-	if (wait_for_unbusy(chp,
+	if (wdc_wait_for_unbusy(chp,
 	    (irq == 0) ? sc_xfer->timeout : 0, AT_POLL) == WDCWAIT_TOUT) {
 		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
 			return 0; /* IRQ was not for us */
@@ -994,7 +994,7 @@ wdc_atapi_reset(chp, xfer)
 
 	wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
 	drvp->state = 0;
-	if (wait_for_unbusy(chp, WDC_RESET_WAIT, AT_POLL) != 0) {
+	if (wdc_wait_for_unbusy(chp, WDC_RESET_WAIT, AT_POLL) != 0) {
 		printf("%s:%d:%d: reset failed\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel,
 		    xfer->c_drive);

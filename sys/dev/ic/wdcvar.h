@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.50 2004/01/01 20:18:33 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.51 2004/01/01 20:25:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -213,11 +213,11 @@ void	wdc_probe_caps(struct ata_drive_datas*);
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
  * command is aborted.
  */   
-#define wait_for_drq(chp, timeout, flags) \
+#define wdc_wait_for_drq(chp, timeout, flags) \
 		wdcwait((chp), WDCS_DRQ, WDCS_DRQ, (timeout), (flags))
-#define wait_for_unbusy(chp, timeout, flags) \
+#define wdc_wait_for_unbusy(chp, timeout, flags) \
 		wdcwait((chp), 0, 0, (timeout), (flags))
-#define wait_for_ready(chp, timeout, flags) \
+#define wdc_wait_for_ready(chp, timeout, flags) \
 		wdcwait((chp), WDCS_DRDY, WDCS_DRDY, (timeout), (flags))
 
 /* ATA/ATAPI specs says a device can take 31s to reset */
