@@ -1,4 +1,4 @@
-/*	$KAME: handler.c,v 1.41 2000/12/15 13:43:55 sakane Exp $	*/
+/*	$KAME: handler.c,v 1.42 2001/01/26 04:02:45 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -273,10 +273,10 @@ delph1(iph1)
 	VPTRINIT(iph1->sa);
 	VPTRINIT(iph1->sa_ret);
 
+#ifdef HAVE_GSSAPI
 	VPTRINIT(iph1->gi_i);
 	VPTRINIT(iph1->gi_r);
 
-#ifdef HAVE_GSSAPI
 	gssapi_free_state(iph1);
 #endif
 
