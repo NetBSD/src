@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1998/08/27 04:00:53 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1998/08/29 03:09:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -399,7 +399,6 @@ cpu_startup()
 	    (vm_offset_t)0, &minaddr, bufsize, FALSE) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate buffers");
 #endif
-
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
@@ -567,13 +566,6 @@ allocsys(v)
 		else
 			bufpages = (arm_byte_to_page(2 * 1024 * 1024)
 			         + physmem) / (20 * CLSIZE);
-
-	/*
-	 * XXX stopgap measure to prevent wasting too much KVM on
-	 * the sparsely filled buffer cache.
-	 */
-	if (bufpages * MAXBSIZE > VM_MAX_KERNEL_BUF)
-		bufpages = VM_MAX_KERNEL_BUF / MAXBSIZE;
 
 #ifdef DIAGNOSTIC
 	if (bufpages == 0)
