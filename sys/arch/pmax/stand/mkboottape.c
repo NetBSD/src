@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkboottape.c	8.1 (Berkeley) 6/10/93
- *      $Id: mkboottape.c,v 1.2 1994/05/27 08:42:42 glass Exp $
+ *      $Id: mkboottape.c,v 1.3 1994/05/27 09:05:21 glass Exp $
  */
 
 #include <sys/param.h>

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)start.s	8.2 (Berkeley) 1/21/94
- *      $Id: start.s,v 1.2 1994/05/27 08:42:45 glass Exp $
+ *      $Id: start.s,v 1.3 1994/05/27 09:05:33 glass Exp $
  */
 
 /*

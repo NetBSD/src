@@ -1,5 +1,5 @@
 #	from: @(#)README	8.1 (Berkeley) 6/10/93
-#	$Id: README,v 1.1 1994/05/27 08:43:17 glass Exp $
+#	$Id: README,v 1.2 1994/05/27 09:06:35 glass Exp $
 
 This directory contains files that were used to provide binary
 compatibility with ULTRIX. They were used to bootstrap the

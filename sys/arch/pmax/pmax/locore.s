@@ -49,7 +49,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.s,v 1.2 1994/05/27 08:42:06 glass Exp $
+ *	$Id: locore.s,v 1.3 1994/05/27 09:03:36 glass Exp $
  */
 
 /*
@@ -3108,7 +3108,7 @@ END(cpu_getregs)
  * XXX These aren't used yet.
  */
 	.data
-	.globl	intrcnt, eintrcnt, intrnames, eintrnames
+	.globl intrcnt eintrcnt intrnames eintrnames
 intrnames:
 	.asciiz	"spur"
 	.asciiz	"hil"

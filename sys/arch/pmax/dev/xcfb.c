@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xcfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: xcfb.c,v 1.2 1994/05/27 08:40:11 glass Exp $
+ *      $Id: xcfb.c,v 1.3 1994/05/27 08:59:43 glass Exp $
  */
 
 /* 
@@ -77,7 +77,7 @@
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
- * $Id: xcfb.c,v 1.2 1994/05/27 08:40:11 glass Exp $
+ * $Id: xcfb.c,v 1.3 1994/05/27 08:59:43 glass Exp $
  */
 
 #include <xcfb.h>

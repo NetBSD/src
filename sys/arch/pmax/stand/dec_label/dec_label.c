@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dec_label.c	8.1 (Berkeley) 6/10/93
- *      $Id: dec_label.c,v 1.1 1994/05/27 08:42:36 glass Exp $
+ *      $Id: dec_label.c,v 1.2 1994/05/27 09:05:10 glass Exp $
  */
 
 #include <stdio.h>

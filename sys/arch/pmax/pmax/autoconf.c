@@ -38,7 +38,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.2 1994/05/27 08:41:36 glass Exp $
+ *      $Id: autoconf.c,v 1.3 1994/05/27 09:02:52 glass Exp $
  */
 
 /*

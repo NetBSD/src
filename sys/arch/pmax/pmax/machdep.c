@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.4 1994/05/27 08:42:09 glass Exp $
+ *      $Id: machdep.c,v 1.5 1994/05/27 09:03:41 glass Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -73,6 +73,9 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/dc7085cons.h>
+
+#include <machine/exec.h>
+#include <sys/exec_ecoff.h>
 
 #include <pmax/stand/dec_prom.h>
 
@@ -2119,3 +2122,51 @@ asic_init(isa_maxine)
 	*decoder = KMIN_LANCE_CONFIG;
 }
 #endif /* DS5000 */
+
+/*
+ * cpu_exec_aout_makecmds():
+ *	cpu-dependent a.out format hook for execve().
+ * 
+ * Determine of the given exec package refers to something which we
+ * understand and, if so, set up the vmcmds for it.
+ *
+ */
+int
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	return ENOEXEC;
+}
+
+#ifdef COMPAT_ULTRIX
+
+void cpu_exec_ecoff_setup(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	struct ecoff_aouthdr *eap;
+
+	eap = epp->ep_hdr + sizeof(struct ecoff_filehdr);
+	p->p_md.md_regs[GP] = eap->ea_gp_value;
+}
+
+/*
+ * cpu_exec_ecoff_hook():
+ *	cpu-dependent ECOFF format hook for execve().
+ * 
+ * Do any machine-dependent diddling of the exec package when doing ECOFF.
+ *
+ */
+int
+cpu_exec_ecoff_hook(p, epp, eap)
+	struct proc *p;
+	struct exec_package *epp;
+	struct ecoff_aouthdr *eap;
+{
+	epp->ep_emul = EMUL_ULTRIX;
+	epp->ep_setup = cpu_exec_ecoff_setup;
+}
+
+
+#endif

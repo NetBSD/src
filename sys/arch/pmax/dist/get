@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)get	8.2 (Berkeley) 11/30/93
-#	$Id: get,v 1.2 1994/05/27 08:40:21 glass Exp $
+#	$Id: get,v 1.3 1994/05/27 08:59:59 glass Exp $
 #
 
 # Shell script to build a mini-root file system in preparation for building

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)getenv.c	8.1 (Berkeley) 6/10/93
- *      $Id: getenv.c,v 1.2 1994/05/27 08:42:55 glass Exp $
+ *      $Id: getenv.c,v 1.3 1994/05/27 09:05:57 glass Exp $
  */
 
 #include <pmax/stand/dec_prom.h>
