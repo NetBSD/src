@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.14 2000/10/30 20:56:58 jdolecek Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.15 2002/09/21 18:43:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.14 2000/10/30 20:56:58 jdolecek Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.15 2002/09/21 18:43:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: mount_cd9660.c,v 1.14 2000/10/30 20:56:58 jdolecek Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <isofs/cd9660/cd9660_mount.h>
 
@@ -70,6 +71,7 @@ __RCSID("$NetBSD: mount_cd9660.c,v 1.14 2000/10/30 20:56:58 jdolecek Exp $");
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_UPDATE,
+	MOPT_GETARGS,
 	{ "extatt", 0, ISOFSMNT_EXTATT, 1 },
 	{ "gens", 0, ISOFSMNT_GENS, 1 },
 	{ "maplcase", 1, ISOFSMNT_NOCASETRANS, 1 },
@@ -154,6 +156,11 @@ mount_cd9660(argc, argv)
 
 	if (mount(MOUNT_CD9660, dir, mntflags, &args) < 0)
 		err(1, "%s on %s", dev, dir);
+	if (mntflags & MNT_GETARGS) {
+		char buf[2048];
+		(void)snprintb(buf, sizeof(buf), ISOFSMNT_BITS, args.flags);
+		printf("%s\n", buf);
+	}
 	exit(0);
 }
 
