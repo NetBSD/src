@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.11 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.12 2004/03/19 02:27:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -162,6 +162,29 @@ struct RF_AccessStripeMapHeader_s {
 						 * Also used for making lists */
 	RF_AccessStripeMapHeader_t *next;
 };
+
+typedef struct RF_VoidFunctionPointerListElem_s RF_VoidFunctionPointerListElem_t;
+struct RF_VoidFunctionPointerListElem_s {
+	RF_VoidFuncPtr fn;
+	RF_VoidFunctionPointerListElem_t *next;
+};
+typedef struct RF_ASMHeaderListElem_s RF_ASMHeaderListElem_t;
+struct RF_ASMHeaderListElem_s {
+	RF_AccessStripeMapHeader_t *asmh;
+	RF_ASMHeaderListElem_t *next;
+};
+
+typedef struct RF_FailedStripe_s RF_FailedStripe_t;
+struct RF_FailedStripe_s {
+	RF_VoidFunctionPointerListElem_t *vfple;
+	RF_VoidFunctionPointerListElem_t *bvfple;
+	RF_ASMHeaderListElem_t *asmh_u;
+	RF_ASMHeaderListElem_t *asmh_b;
+	RF_FailedStripe_t *next;
+};
+
+
+
 /*****************************************************************************************
  *
  * various routines mapping addresses in the RAID address space.  These work across
