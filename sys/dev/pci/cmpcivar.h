@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpcivar.h,v 1.2 2001/02/12 18:47:12 tshiozak Exp $	*/
+/*	$NetBSD: cmpcivar.h,v 1.3 2001/09/04 13:36:07 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -119,6 +119,12 @@ typedef struct cmpci_dmanode *cmpci_dmapool_t;
 
 #define CMPCI_IS_IN_MUTE(x) ((x) < CMPCI_CD_SWAP)
 
+/* record sorce bitmap */
+#define CMPCI_RECORD_SOURCE_MIC		(1 << 0)
+#define CMPCI_RECORD_SOURCE_CD		(1 << 1)
+#define CMPCI_RECORD_SOURCE_LINE_IN	(1 << 2)
+#define CMPCI_RECORD_SOURCE_FM		(1 << 3)
+#define CMPCI_RECORD_SOURCE_SPDIF	(1 << 4)
 
 /*
  * softc
@@ -161,6 +167,9 @@ struct cmpci_softc {
 	/* I/O Base device */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	bus_space_handle_t	sc_mpu_ioh;
+	struct device		*sc_mpudev;
 
 	/* intr handle */
 	pci_intr_handle_t	*sc_ih;
