@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_sysent.c,v 1.49 2002/10/09 20:24:11 pooka Exp $ */
+/* $NetBSD: freebsd_sysent.c,v 1.50 2002/12/22 00:06:01 gmcgarry Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.49 2002/10/09 20:24:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.50 2002/12/22 00:06:01 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -767,7 +767,7 @@ struct sysent freebsd_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 320 = unimplemented lio_listio */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 321 = unimplemented yield */
+	    freebsd_sys_yield },		/* 321 = yield */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 322 = unimplemented thr_sleep */
 	{ 0, 0, 0,
@@ -778,20 +778,20 @@ struct sysent freebsd_sysent[] = {
 	    sys_munlockall },			/* 325 = munlockall */
 	{ 2, s(struct sys___getcwd_args), 0,
 	    sys___getcwd },			/* 326 = __getcwd */
+	{ 2, s(struct freebsd_sys_sched_setparam_args), 0,
+	    freebsd_sys_sched_setparam },	/* 327 = sched_setparam */
+	{ 2, s(struct freebsd_sys_sched_getparam_args), 0,
+	    freebsd_sys_sched_getparam },	/* 328 = sched_getparam */
+	{ 3, s(struct freebsd_sys_sched_setscheduler_args), 0,
+	    freebsd_sys_sched_setscheduler },	/* 329 = sched_setscheduler */
+	{ 1, s(struct freebsd_sys_sched_getscheduler_args), 0,
+	    freebsd_sys_sched_getscheduler },	/* 330 = sched_getscheduler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 327 = unimplemented sched_setparam */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 328 = unimplemented sched_getparam */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 329 = unimplemented sched_setscheduler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 330 = unimplemented sched_getscheduler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 331 = unimplemented sched_yield */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 332 = unimplemented sched_get_priority_max */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 333 = unimplemented sched_get_priority_min */
+	    freebsd_sys_sched_yield },		/* 331 = sched_yield */
+	{ 1, s(struct freebsd_sys_sched_get_priority_max_args), 0,
+	    freebsd_sys_sched_get_priority_max },/* 332 = sched_get_priority_max */
+	{ 1, s(struct freebsd_sys_sched_get_priority_min_args), 0,
+	    freebsd_sys_sched_get_priority_min },/* 333 = sched_get_priority_min */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 334 = unimplemented sched_rr_get_interval */
 	{ 2, s(struct freebsd_sys_utrace_args), 0,

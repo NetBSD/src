@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscalls.c,v 1.47 2002/10/09 20:24:10 pooka Exp $ */
+/* $NetBSD: freebsd_syscalls.c,v 1.48 2002/12/22 00:06:01 gmcgarry Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.47 2002/10/09 20:24:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.48 2002/12/22 00:06:01 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -419,19 +419,19 @@ const char *const freebsd_syscallnames[] = {
 	"#318 (unimplemented aio_read)",		/* 318 = unimplemented aio_read */
 	"#319 (unimplemented aio_write)",		/* 319 = unimplemented aio_write */
 	"#320 (unimplemented lio_listio)",		/* 320 = unimplemented lio_listio */
-	"#321 (unimplemented yield)",		/* 321 = unimplemented yield */
+	"yield",			/* 321 = yield */
 	"#322 (unimplemented thr_sleep)",		/* 322 = unimplemented thr_sleep */
 	"#323 (unimplemented thr_wakeup)",		/* 323 = unimplemented thr_wakeup */
 	"mlockall",			/* 324 = mlockall */
 	"munlockall",			/* 325 = munlockall */
 	"__getcwd",			/* 326 = __getcwd */
-	"#327 (unimplemented sched_setparam)",		/* 327 = unimplemented sched_setparam */
-	"#328 (unimplemented sched_getparam)",		/* 328 = unimplemented sched_getparam */
-	"#329 (unimplemented sched_setscheduler)",		/* 329 = unimplemented sched_setscheduler */
-	"#330 (unimplemented sched_getscheduler)",		/* 330 = unimplemented sched_getscheduler */
-	"#331 (unimplemented sched_yield)",		/* 331 = unimplemented sched_yield */
-	"#332 (unimplemented sched_get_priority_max)",		/* 332 = unimplemented sched_get_priority_max */
-	"#333 (unimplemented sched_get_priority_min)",		/* 333 = unimplemented sched_get_priority_min */
+	"sched_setparam",			/* 327 = sched_setparam */
+	"sched_getparam",			/* 328 = sched_getparam */
+	"sched_setscheduler",			/* 329 = sched_setscheduler */
+	"sched_getscheduler",			/* 330 = sched_getscheduler */
+	"sched_yield",			/* 331 = sched_yield */
+	"sched_get_priority_max",			/* 332 = sched_get_priority_max */
+	"sched_get_priority_min",			/* 333 = sched_get_priority_min */
 	"#334 (unimplemented sched_rr_get_interval)",		/* 334 = unimplemented sched_rr_get_interval */
 	"utrace",			/* 335 = utrace */
 	"#336 (unimplemented sendfile)",		/* 336 = unimplemented sendfile */

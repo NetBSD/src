@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscallargs.h,v 1.49 2002/10/09 20:24:10 pooka Exp $ */
+/* $NetBSD: freebsd_syscallargs.h,v 1.50 2002/12/22 00:06:00 gmcgarry Exp $ */
 
 /*
  * System call argument lists.
@@ -249,6 +249,34 @@ struct freebsd_sys_lchown_args {
 	syscallarg(const char *) path;
 	syscallarg(int) uid;
 	syscallarg(int) gid;
+};
+
+struct freebsd_sys_sched_setparam_args {
+	syscallarg(pid_t) pid;
+	syscallarg(const struct freebsd_sched_param *) sp;
+};
+
+struct freebsd_sys_sched_getparam_args {
+	syscallarg(pid_t) pid;
+	syscallarg(struct freebsd_sched_param *) sp;
+};
+
+struct freebsd_sys_sched_setscheduler_args {
+	syscallarg(pid_t) pid;
+	syscallarg(int) policy;
+	syscallarg(const struct sched_param *) sp;
+};
+
+struct freebsd_sys_sched_getscheduler_args {
+	syscallarg(pid_t) pid;
+};
+
+struct freebsd_sys_sched_get_priority_max_args {
+	syscallarg(int) policy;
+};
+
+struct freebsd_sys_sched_get_priority_min_args {
+	syscallarg(int) policy;
 };
 
 struct freebsd_sys_utrace_args {
@@ -525,9 +553,17 @@ int	sys_fhstatfs(struct proc *, void *, register_t *);
 int	sys_fhopen(struct proc *, void *, register_t *);
 int	sys_fhstat(struct proc *, void *, register_t *);
 int	sys_getsid(struct proc *, void *, register_t *);
+int	freebsd_sys_yield(struct proc *, void *, register_t *);
 int	sys_mlockall(struct proc *, void *, register_t *);
 int	sys_munlockall(struct proc *, void *, register_t *);
 int	sys___getcwd(struct proc *, void *, register_t *);
+int	freebsd_sys_sched_setparam(struct proc *, void *, register_t *);
+int	freebsd_sys_sched_getparam(struct proc *, void *, register_t *);
+int	freebsd_sys_sched_setscheduler(struct proc *, void *, register_t *);
+int	freebsd_sys_sched_getscheduler(struct proc *, void *, register_t *);
+int	freebsd_sys_sched_yield(struct proc *, void *, register_t *);
+int	freebsd_sys_sched_get_priority_max(struct proc *, void *, register_t *);
+int	freebsd_sys_sched_get_priority_min(struct proc *, void *, register_t *);
 int	freebsd_sys_utrace(struct proc *, void *, register_t *);
 int	sys___sigprocmask14(struct proc *, void *, register_t *);
 int	sys___sigsuspend14(struct proc *, void *, register_t *);
