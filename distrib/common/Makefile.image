@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.7 2002/04/12 01:59:45 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.8 2002/04/12 04:50:01 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -20,6 +20,7 @@
 #	MAKEFS_FLAGS	extra options to ${MAKEFS}
 #	PARSELISTENV	environment variables to set for parselist.awk
 #	WORKDIR		directory to build image in to 
+#	IMAGETAR	tar.gz file to create containing ${IMAGE}'s contents
 #
 
 WORKDIR?=	work
@@ -58,6 +59,19 @@ ${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 
 CLEANFILES+=	${IMAGE} ${IMAGE}.tmp ${WORKBUILT} ${WORKSPEC} ${WORKSPEC}.tmp
+
+
+.if defined(IMAGETAR)						# {
+
+${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
+	( cd ${WORKDIR}; \
+	    GZIP=-9 ${PAX} -N ${_SRC_TOP_}/etc -wdzM < ${.OBJDIR}/${WORKSPEC} \
+	) > ${.TARGET}.tmp \
+	&& mv ${.TARGET}.tmp ${.TARGET}
+
+CLEANFILES+=	${IMAGETAR} ${IMAGETAR}.tmp
+.endif								# }
+
 
 clean cleandir distclean: cleanfsimage
 
