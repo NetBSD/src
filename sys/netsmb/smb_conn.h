@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.6 2003/03/24 07:38:54 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.7 2003/03/24 07:49:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -436,7 +436,6 @@ struct smbiod {
 	int			iod_flags;
 	enum smbiod_state	iod_state;
 	int			iod_muxcnt;	/* number of active outstanding requests */
-	int			iod_sleeptimo;
 	struct smb_vc *		iod_vc;
 	struct smb_slock	iod_rqlock;	/* iod_rqlist, iod_muxwant */
 	SIMPLEQ_HEAD(, smb_rq)
@@ -450,9 +449,10 @@ struct smbiod {
 	struct smb_slock	iod_evlock;	/* iod_evlist */
 	SIMPLEQ_HEAD(,smbiod_event) iod_evlist;
 #if 0
+	int			iod_sleeptimo;
 	struct timeval	 	iod_lastrqsent;
-#endif
 	struct timeval	 	iod_pingtimo;
+#endif
 };
 
 int  smb_iod_init(void);
