@@ -1,4 +1,4 @@
-#	$NetBSD: genlintstub.awk,v 1.1 2001/05/15 22:23:09 perry Exp $
+#	$NetBSD: genlintstub.awk,v 1.2 2001/05/15 22:32:02 perry Exp $
 #
 # Copyright 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -47,12 +47,12 @@
 # kernel has declared as char * and such, like various bits of
 # trampoline code.
 #
-# /* LINTSTUB: I */
-# "I" is for "Ignore" -- this is used as an indicator to humans (and
-# possible future automatic tools) that the entry is only used
-# internally by other .S files and does not need a stub. You want this
-# so you know you haven't just forgotten to put a stub in for
-# something and you are *deliberately* ignoring it.
+# /* LINTSTUB: Ignore */
+# This is used as an indicator to humans (and possible future
+# automatic tools) that the entry is only used internally by other .S
+# files and does not need a stub. You want this so you know you
+# haven't just forgotten to put a stub in for something and you are
+# *deliberately* ignoring it.
 
 BEGIN	{
 		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
@@ -116,9 +116,9 @@ BEGIN	{
 	  exit 1;
 	}
 
-/^\/\* LINTSTUB: I.*\*\/[ \t]*$/ { next; }
+/^\/\* LINTSTUB: Ignore.*\*\/[ \t]*$/ { next; }
 
-/^\/\* LINTSTUB: I/ { 
+/^\/\* LINTSTUB: Ignore/ { 
 	  printf "ERROR: bad ignore declaration: %s\n", $0 > "/dev/stderr";
 	  exit 1;
 	}
