@@ -31,10 +31,19 @@
 # of libc/doprnt.c defines the routine _doprnt_va. If it defines _doprnt
 # instead, leave DORPINT_VA undefined.
 ######################################################################
-
+#
+# If you need to build a sup for export outside of North America use
+# 	"make MAKE_EXPORT="
+# this will remove (not use) any vestiges of crypt code that is present
+# on the system.
+#
+# If you have crypt/crypt.c and /usr/lib/libcrypt.a, you will be building
+# a system that uses the SUP crypt mechanism by default.
+#
 SITE			= NETBSD
 #SITE			= CMUCS
-NETBSD_DEFINES		= -UMACH -g
+NETBSD_DEFINES		= -UMACH
+AFS_DEFINES		= -DAFS -I/usr/afsws/include
 OSF_DEFINES		= -UMACH -DOSF -D_BSD -noshrlib -g -DNEED_VSNPRINTF
 CMUCS_DEFINES		= -DMACH -DDOPRINT_VA -DNEED_VPRINTF
 NON_MACH_DEFINES	= -UMACH
@@ -48,14 +57,9 @@ NETBSD_MAN8		= /usr/local/man/man8
 
 CFLAGS			= ${DEFS} -O -I.
 
-# unlicensed non-crypting version
-#NETCRYPT		= netcryptvoid.o
-# licensed, crypting version
-NETCRYPT		= netcrypt.o
-
 SUPCL			= supcmain.o supcvers.o supcparse.o supcname.o \
 			  supcmisc.o supcmeat.o
-SUPS			= scm.o scmio.o stree.o log.o supmsg.o ${NETCRYPT}
+SUPS			= scm.o scmio.o stree.o log.o supmsg.o netcrypt.o
 EXTRA			= atoo.o errmsg.o expand.o ffilecopy.o filecopy.o nxtarg.o  \
 			  path.o quit.o run.o salloc.o skipto.o  vprintf.o
 
@@ -64,7 +68,14 @@ PROGRAMS		= sup supscan supfilesrv
 MAN1			= sup.1
 MAN8			= supservers.8
 
+AFS_LIBPATH		= /usr/afs/lib
+AFS_LIBS		= -L${AFS_LIBPATH}/afs -lkauth -lprot -L${AFS_LIBPATH} -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcmd -lcom_err -lc ${AFS_LIBPATH}/afs/util.a
+
+.if exists(/usr/lib/libcrypt.a) && !defined(MAKE_EXPORT)
 NETBSD_LIBS		= -lcrypt
+.else
+NETBSD_LIBS		=
+.endif
 CMUCS_LIBS		= -lsys
 OSF_LIBS		= -lbsd
 LIBS			= libextra.a
@@ -75,27 +86,39 @@ supscan_OFILES		= supscan.o stree.o scan.o
 
 
 all: ${PROGRAMS}
+.if exists(/usr/lib/libcrypt.a) && !defined(MAKE_EXPORT)
+	@echo "WARNING: You have built a NON-exportable version of sup because it uses crypt()!"
+	@echo "	To build a crypt-clean version define MAKE_EXPORT=1 and make."
+.endif
 
 sup: ${sup_OFILES} ${LIBS}
-	${CC} ${CFLAGS} -o sup ${sup_OFILES} ${LIBS} ${NETBSD_LIBS} #${${SITE}_LIBS}
+	${CC} ${CFLAGS} -o sup ${sup_OFILES} ${LIBS} ${NETBSD_LIBS}
 
 supfilesrv: ${supfilesrv_OFILES} ${supfilesrv_LIBS}
-	${CC} ${CFLAGS} -o supfilesrv ${supfilesrv_OFILES} ${supfilesrv_LIBS} ${NETBSD_LIBS} #${${SITE}_LIBS}
+	${CC} ${CFLAGS} -o supfilesrv ${supfilesrv_OFILES} ${supfilesrv_LIBS} ${NETBSD_LIBS}
 
 supscan:  ${supscan_OFILES} ${LIBS}
-	${CC} ${CFLAGS} -o supscan ${supscan_OFILES} ${LIBS} ${NETBSD_LIBS} #${${SITE}_LIBS}
+	${CC} ${CFLAGS} -o supscan ${supscan_OFILES} ${LIBS} ${NETBSD_LIBS}
 
 libextra.a: ${EXTRA}
 	ar r libextra.a $?
 	ranlib libextra.a
 
 clean:
-	rm -f ${PROGRAMS} libextra.a *.o core a.out
+	rm -f ${PROGRAMS} libextra.a netcrypt.c *.o core a.out
 
 install: ${PROGRAMS}
 	install -cs -m 555 -o bin -g bin ${PROGRAMS} ${NETBSD_BINDIR}
 	install -c -m 444 -o bin -g bin ${MAN1} ${NETBSD_MAN1}
 	install -c -m 444 -o bin -g bin ${MAN8} ${NETBSD_MAN8}
+
+netcrypt.c: crypt.diffs
+	if [ -d crypt -a "X$$MAKE_EXPORT" = X ]; then \
+		ed - crypt/crypt.c < crypt.diffs; \
+	else \
+        	echo "[ Using netcryptvoid.c ]"; \
+		cp netcryptvoid.c netcrypt.c; \
+	fi
 
 scan.o:	sup.h
 scm.o:	sup.h

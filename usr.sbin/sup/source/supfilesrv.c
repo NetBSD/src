@@ -37,8 +37,8 @@
  *	/usr/bin/sup for exported version of sup.
  *
  * $Log: supfilesrv.c,v $
- * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
+ * Revision 1.2  1993/05/24 17:57:31  brezak
+ * Remove netcrypt.c. Remove unneeded files. Cleanup make.
  *
  * Revision 1.20  92/09/09  22:05:00  mrt
  * 	Added Brad's change to make sendfile take a va_list.
@@ -200,6 +200,10 @@
  */
 
 #include <libc.h>
+#ifdef AFS
+#include <afs/param.h>
+#undef MAXNAMLEN
+#endif
 #include <sys/param.h>
 #include <c.h>
 #include <signal.h>
@@ -1329,6 +1333,20 @@ int fileuid,filegid;
 			pswdp = NULL;
 		else
 			pswdp = passwordp ? passwordp : "";
+#ifdef AFS
+                if (strcmp (nbuf,DEFUSER) != 0) {
+                        char *reason;
+                        setpag(); /* set a pag */
+                        if (ka_UserAuthenticate(pwd->pw_name, "", 0,
+                                                pswdp, 1, &reason)) {
+                                (void) sprintf (errbuf,"AFS authentication failed, %s",
+                                                reason);
+                                logerr ("Attempt by %s; %s",
+                                        nbuf, errbuf);
+                                return (errbuf);
+                        }
+                }
+#endif
 	}
 	if (getuid () != 0) {
 		if (getuid () == pwd->pw_uid)
@@ -1355,7 +1373,7 @@ int fileuid,filegid;
 #else	/* CMUCS */
 	status = ACCESS_CODE_OK;
 	if (namep && strcmp(pwd->pw_name, DEFUSER) != 0)
-		if (strcmp(pwd->pw_passwd,crypt(pswdp,pwd->pw_passwd)))
+		if (strcmp(pwd->pw_passwd,(char *)crypt(pswdp,pwd->pw_passwd)))
 			status = ACCESS_CODE_BADPASSWORD;
 #endif	/* CMUCS */
 	switch (status) {

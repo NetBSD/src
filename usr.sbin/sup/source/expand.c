@@ -114,7 +114,7 @@ static glob(as)
 				if (gethdir(path + 1)) goto endit;
 				strcpy(path, path + 1);
 			} else
-				strcpy(path, getenv("HOME"));
+				strcpy(path, (char *)getenv("HOME"));
 			pathp = path;
 			while (*pathp) pathp++;
 		}
@@ -322,7 +322,7 @@ static addone(s1, s2)
 		bufcnt = BUFSIZE + 1;
 		longjmp(sjbuf, 1);
 	}
-	ep = malloc(strlen(s1) + strlen(s2) + 1);
+	ep = (char *)malloc(strlen(s1) + strlen(s2) + 1);
 	if (ep == 0) {
 		bufcnt = -1;
 		longjmp(sjbuf, 1);
