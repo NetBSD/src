@@ -171,7 +171,7 @@ main (argc, argv)
     interactive = TRUE;
   else
     interactive = FALSE;
-  quiet = FALSE;
+  quiet = TRUE;
   file_names = NULL;
 
 #ifdef HAVE_SETVBUF
