@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.4 1997/03/24 18:54:26 mycroft Exp $
+ * $NetBSD: main.c,v 1.5 1997/03/24 18:56:26 mycroft Exp $
  *
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -244,7 +244,7 @@ pain()
 	nseg = 0;
 	mh = SysBase->MemLst;
 	vfrom = mh->Lower & -__PGSZ;
-	vsize = (mh->Upper - vfrom) & -__PGSZ; 
+	vsize = (mh->Upper & -__PGSZ) - vfrom; 
 	contflag = mapped1to1 = 0;
 
 	do {
@@ -261,7 +261,7 @@ pain()
 			vsize = 0;
 		}
 
-#if DEBUG_MEMORY_LIST
+#ifdef DEBUG_MEMORY_LIST
 		printf("%lx %lx %lx %ld/%lx %lx\n",
 			(long)from, (long)size, 
 			(long)mh->Attribs, (long)mh->Pri,
@@ -304,7 +304,7 @@ pain()
 			contflag = 0;
 			if (mh->next) {
 				vfrom = mh->Lower & -__PGSZ;
-				vsize = (mh->Upper & -__PGSZ) - vfrom;
+				vsize = (mh->Upper & -__PGSZ) - vfrom; 
 			}
 		}
 	} while ((++nseg <= 16) && vsize);
@@ -452,7 +452,11 @@ pain()
 	    (u_long)boothowto, (u_long)esym, (u_long)cpuid, (u_long)eclock,
 	    (u_long)amiga_flags, (u_long)I_flag, (u_long)(Z_flag == 0));
 #endif
+#ifdef DEBUG_MEMORY_LIST
+	timelimit = 0;
+#else
 	timelimit = 2;
+#endif
 	(void)getchar();
 
 	start_it(kp, ksize, eh->a_entry, (void *)fmem, fmemsz, cmemsz,
