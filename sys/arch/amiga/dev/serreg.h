@@ -1,4 +1,4 @@
-/*	$NetBSD: serreg.h,v 1.7 1994/10/26 02:04:54 cgd Exp $	*/
+/*	$NetBSD: serreg.h,v 1.8 1999/01/31 10:30:22 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
@@ -67,4 +67,4 @@ struct serdevice {
    dialout:   carrier is ignored */
 
 #define SERUNIT(dev)   (minor(dev) & 0x7f)
-#define DIALOUT(dev)   ((minor(dev) & 0x80) == 0x00)
+#define DIALOUT(dev)   (minor(dev) & 0x80)
