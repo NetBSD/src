@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.22 1997/05/01 03:34:07 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.23 1997/05/02 00:54:29 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -53,6 +53,7 @@
 static void	load_image_data __P((caddr_t data, struct image_data *image));
 
 static void	grfmv_intr_generic __P((void *vsc, int slot));
+static void	grfmv_intr_radius __P((void *vsc, int slot));
 static void	grfmv_intr_cti __P((void *vsc, int slot));
 static void	grfmv_intr_cb264 __P((void *vsc, int slot));
 
@@ -223,6 +224,9 @@ grfmv_attach(parent, self, aux)
 		sc->cli_value = 0;
 		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
 		break;
+	case NUBUS_DRHW_RPC8XJ:
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_radius, sc);
+		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
 		sc->cli_offset = 0xF05000;
@@ -300,6 +304,37 @@ grfmv_intr_generic(vsc, slot)
 	sc = (struct grfbus_softc *)vsc;
 	slotbase = (volatile char *)sc->sc_slot.virtual_base;
 	slotbase[sc->cli_offset] = zero;
+}
+
+/*
+ * Generic routine to clear interrupts for cards where it simply takes
+ * a CLR.B to clear the interrupt.  The offset of this byte varies between
+ * cards.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_radius(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	unsigned char	c;
+	struct grfbus_softc *sc;
+	volatile char *slotbase;
+
+	sc = (struct grfbus_softc *)vsc;
+	slotbase = (volatile char *)sc->sc_slot.virtual_base;
+
+	/*
+	 * The value 0x66 was the observed value on one	card.  It is read
+	 * from the driver's information block, so this may not be sufficient.
+	 * Then again, we're not setting up any other interrupts...
+	 */
+	c = 0x66;
+
+	c |= 0x80;
+	slotbase[0xD00403] = c;
+	c &= 0x7F;
+	slotbase[0xD00403] = c;
 }
 
 /*
