@@ -1,37 +1,19 @@
-#	$NetBSD: Makefile.inc,v 1.2 1999/12/24 15:14:29 fredb Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2000/02/20 03:52:22 mycroft Exp $
 #
 #	mac68k-specific release building goo
 #
 
-# This is commented out in the distribution, because
+# This is commented out in the distribution, because GENERICSBC isn't
+# distributed (it's just GENERIC:s/ncrsci/sbc/).
 #
-#  1) GENERICSBC isn't distributed
-#     (It's just GENERIC:s/ncrsci/sbc/),
-#
-# and
-#
-#  2) if we include GENERIC here without also setting
-#     UPDATE, we'll end up building GENERIC twice.
-#
-#EXTRA_KERNELS+= 		GENERIC GENERICSBC
-EXTRA_INSTALL_KERNELS+= 	INSTALL
+#EXTRA_KERNELS+=	GENERICSBC
+BUILD_KERNELS+= 	INSTALL
 
 INSTALLATION_DIRS+=		installation/instkernel
 
 snap_md_post:
 #
-# Build the install kernels...
-#
-.for k in ${EXTRA_INSTALL_KERNELS}
-	cd ${KERNCONFDIR} && config \
-		-b ${KERNOBJDIR}/${k} -s ${KERNSRCDIR} ${k}
-.ifndef UPDATE
-	cd ${KERNOBJDIR}/${k} && ${MAKE} cleandir
-.endif
-	cd ${KERNOBJDIR}/${k} && ${MAKE} depend && ${MAKE} ${_J}
-.endfor
-#
-# the ramdisk...
+# Build the ramdisk...
 #
 .ifndef UPDATE
 	cd ${.CURDIR}/../distrib/mac68k/instkernel/ramdisk && \
