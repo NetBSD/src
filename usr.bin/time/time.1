@@ -30,71 +30,92 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)time.1	6.4 (Berkeley) 4/23/91
-.\"	$Id: time.1,v 1.2 1993/08/01 07:27:51 mycroft Exp $
+.\"	$Id: time.1,v 1.3 1993/08/27 19:05:29 jtc Exp $
 .\"
 .Dd April 23, 1991
 .Dt TIME 1
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm time
 .Nd time command execution
 .Sh SYNOPSIS
 .Nm time
-.Op Fl l
-.Ar command
+.Op Fl lp
+.Ar utility
 .Sh DESCRIPTION
 The
 .Nm time
 utility
 executes and
 times
-.Ar command
-by initiating a timer and passing the
-.Ar command
-to the
-shell.
+.Ar utility .
 After the
-.Ar command
+.Ar utility
 finishes,
 .Nm time
-writes to the standard error stream,
-(in seconds): 
-the total time elapsed,
-time consumed by system overhead,
-and the time used to execute the
-.Ar command
-process.
+writes the total time elapsed,
+the time consumed by system overhead,
+and the time used to execute 
+.Ar utility 
+to the standard error stream.
+Times are reported in seconds.
 .Pp
 Available options:
 .Bl -tag -width Ds
 .It Fl l
 The contents of the
 .Em rusage
-structure are printed as well.
+structure are printed.
+.It Fl p
+The output is formatted as specified by
+.St -p1003.2-92 .
 .El
 .Pp
 The
 .Xr csh 1
 has its own and syntactically different builtin version of
 .Nm time.
-The command described here
+The utility described here
 is available as
-.Pa /bin/time
+.Pa /usr/bin/time
 to
 .Xr csh
 users.
-.Sh BUGS
-The granularity of seconds on micro processors is crude and
-can result in times being reported for CPU usage which are too large by
-a second.
+.Sh DIAGNOSTICS
+The
+.Nm time
+utility shall exit with one of the following values:
+.Bl -tag -width indent
+.It 1-125
+An error occured in the 
+.Nm time
+utility.
+.It 126
+The 
+.Ar utility
+was found but could not be invoked.
+.It 127
+The 
+.Ar utility
+could not be found.
+.El
+.Pp
+Otherwise, the exit status of 
+.Nm time 
+shall be that of 
+.Ar utility .
 .Sh SEE ALSO
 .Xr csh 1
 .Sh FILES
 .Bl -tag -width /usr/include/sys/h/resource.h -compact
 .It Pa /usr/include/sys/h/resource.h
 .El
-.Sh HISTORY
-A
+.Sh STANDARDS
+The
 .Nm
-command appeared in
-.At v6 .
+utility conforms to 
+.St -p1003.2-92 .
+.Sh BUGS
+The granularity of seconds on microprocessors is crude and
+can result in times being reported for CPU usage which are too large by
+a second.
