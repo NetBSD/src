@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.12 1998/11/30 21:39:20 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.13 1998/12/08 14:34:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -596,6 +596,24 @@ ohci_rhsc_able(sc, on)
 	}
 }
 
+#ifdef USB_DEBUG
+char *ohci_cc_strs[] = {
+	"NO_ERROR",
+	"CRC",
+	"BIT_STUFFING",
+	"DATA_TOGGLE_MISMATCH",
+	"STALL",
+	"DEVICE_NOT_RESPONDING",
+	"PID_CHECK_FAILURE",
+	"UNEXPECTED_PID",
+	"DATA_OVERRUN",
+	"DATA_UNDERRUN",
+	"BUFFER_OVERRUN",
+	"BUFFER_UNDERRUN",
+	"NOT_ACCESSED",
+};
+#endif
+
 void
 ohci_process_done(sc, done)
 	ohci_softc_t *sc;
@@ -654,8 +672,9 @@ ohci_process_done(sc, done)
 			ohci_soft_td_t *p, *n;
 			struct ohci_pipe *opipe = 
 				(struct ohci_pipe *)reqh->pipe;
-			DPRINTFN(-1,("ohci_process_done: error cc=%d\n",
-				     OHCI_TD_GET_CC(std->td->td_flags)));
+			DPRINTFN(-1,("ohci_process_done: error cc=%d (%s)\n",
+				     OHCI_TD_GET_CC(std->td->td_flags),
+				     ohci_cc_strs[OHCI_TD_GET_CC(std->td->td_flags)]));
 			/*
 			 * Endpoint is halted.  First unlink all the TDs
 			 * belonging to the failed transfer, and then restart
