@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.21.4.4 2001/11/25 19:33:20 he Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.21.4.5 2001/11/25 19:36:53 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.21.4.4 2001/11/25 19:33:20 he Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.21.4.5 2001/11/25 19:36:53 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ dumpfs(name)
 {
 	int fd, c, i, j, k, size;
 	time_t t;
+	struct csum *ccsp;
 
 	if ((fd = open(name, O_RDONLY, 0)) < 0)
 		goto err;
@@ -224,18 +225,19 @@ dumpfs(name)
 		}
 	}
 	printf("\ncs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
+	afs.fs_csp = calloc(1, afs.fs_cssize);
 	for (i = 0, j = 0; i < afs.fs_cssize; i += afs.fs_bsize, j++) {
 		size = afs.fs_cssize - i < afs.fs_bsize ?
 		    afs.fs_cssize - i : afs.fs_bsize;
-		afs.fs_csp[j] = calloc(1, size);
+		ccsp = (struct csum *)((char *)afs.fs_csp + i);
 		if (lseek(fd,
 		    (off_t)(fsbtodb(&afs, (afs.fs_csaddr + j * afs.fs_frag))) *
 		    dev_bsize, SEEK_SET) == (off_t)-1)
 			goto err;
-		if (read(fd, afs.fs_csp[j], size) != size)
+		if (read(fd, ccsp, size) != size)
 			goto err;
 		if (needswap)
-			ffs_csum_swap(afs.fs_csp[j], afs.fs_csp[j], size);
+			ffs_csum_swap(ccsp, ccsp, size);
 	}
 	for (i = 0; i < afs.fs_ncg; i++) {
 		struct csum *cs = &afs.fs_cs(&afs, i);
