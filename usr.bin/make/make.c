@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.40 2002/01/27 01:50:55 reinoud Exp $	*/
+/*	$NetBSD: make.c,v 1.41 2002/02/03 19:58:15 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.40 2002/01/27 01:50:55 reinoud Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.41 2002/02/03 19:58:15 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.40 2002/01/27 01:50:55 reinoud Exp $");
+__RCSID("$NetBSD: make.c,v 1.41 2002/02/03 19:58:15 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1010,7 +1010,8 @@ Make_ExpandUse (targs)
 	    Var_Set (TARGET, gn->path ? gn->path : gn->name, gn, 0);
 	    Lst_ForEach (gn->children, MakeUnmark, (ClientData)gn);
 	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
-	    Suff_FindDeps (gn);
+	    if ((gn->type & OP_MADE) == 0)
+		Suff_FindDeps (gn);
 
 	    if (gn->unmade != 0 && (gn->type & OP_MADE) == 0) {
 		Lst_ForEach (gn->children, MakeAddChild, (ClientData)examine);
