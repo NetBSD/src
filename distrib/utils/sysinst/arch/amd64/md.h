@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.13 2003/08/31 16:53:03 fvdl Exp $	*/
+/*	$NetBSD: md.h,v 1.14 2003/10/18 14:17:00 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,8 +70,6 @@
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
-
-#define SET_MD_1_NAME		"toolchain"
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
 
