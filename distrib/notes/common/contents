@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.32 2002/09/07 04:06:46 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.33 2003/06/19 02:03:32 grant Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -158,8 +158,6 @@ A gzipped
 .Nx kernel containing code only for Open Firmware 1.0.5, 1.1.22, 2.0.x,
 and 2.4 systems (i.e. those that have floppy drives).
 It has a RAM-disk installer.
-This is the kernel you should use when you want to install on
-one of these systems from a floppy disk.
 .\}
 .
 .if \n[mvme68k] \{\
@@ -287,8 +285,10 @@ installation section, below.
 .\}
 .
 .if \n[macppc] \{\
-.		It Pa floppy/boot.fs
-\*M boot and installation floppy image.
+.		It Pa floppy/boot1.fs
+.		It Pa floppy/boot2.fs
+\*M boot and installation floppy images.  The first is the bootloader and
+kernel.  The second image has the installation tools.
 Only usable on models that ship with a floppy drive (pre-Open Firmware 3);
 see below.
 .		It Pa ofwboot.xcf
