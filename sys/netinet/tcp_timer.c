@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.68 2005/01/27 18:45:41 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.69 2005/02/03 23:51:56 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.68 2005/01/27 18:45:41 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.69 2005/02/03 23:51:56 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -242,7 +242,7 @@ tcp_delack(void *arg)
  * causes finite state machine actions if timers expire.
  */
 void
-tcp_slowtimo()
+tcp_slowtimo(void)
 {
 	int s;
 
@@ -257,8 +257,7 @@ tcp_slowtimo()
  * Cancel all timers for TCP tp.
  */
 void
-tcp_canceltimers(tp)
-	struct tcpcb *tp;
+tcp_canceltimers(struct tcpcb *tp)
 {
 	int i;
 
