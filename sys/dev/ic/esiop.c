@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.19 2003/05/03 18:11:17 wiz Exp $	*/
+/*	$NetBSD: esiop.c,v 1.20 2003/07/03 11:12:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.19 2003/05/03 18:11:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.20 2003/07/03 11:12:32 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1992,7 +1992,7 @@ esiop_moretagtbl(sc)
 		goto bad2;
 	}
 	error = bus_dmamem_map(sc->sc_c.sc_dmat, &seg, rseg, PAGE_SIZE,
-	    (caddr_t *)&tbls, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	    (void *)&tbls, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: unable to map tbls DMA memory, error = %d\n",
 		    sc->sc_c.sc_dev.dv_xname, error);
