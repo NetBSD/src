@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.22 2000/11/21 00:37:55 jdolecek Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.23 2000/11/24 10:21:30 scw Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -109,8 +109,6 @@ exec_sunos_aout_makecmds(p, epp)
 		error = sunos_exec_aout_prep_omagic(p, epp);
 		break;
 	}
-	if (error==0)
-		epp->ep_emul = &emul_sunos;
 	return error;
 }
 

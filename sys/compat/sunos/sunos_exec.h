@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.h,v 1.2 1998/08/09 03:12:39 mrg Exp $	*/
+/*	$NetBSD: sunos_exec.h,v 1.3 2000/11/24 10:21:30 scw Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -46,6 +46,8 @@ struct sunos_exec {
 #endif
 
 #define SUNOS_AOUT_HDR_SIZE (sizeof(struct exec))
+
+extern const struct emul emul_sunos;
 
 int exec_sunos_aout_makecmds __P((struct proc *, struct exec_package *));
 
