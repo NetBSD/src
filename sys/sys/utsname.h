@@ -1,4 +1,4 @@
-/*	$NetBSD: utsname.h,v 1.8 1998/11/03 10:08:32 simonb Exp $	*/
+/*	$NetBSD: utsname.h,v 1.9 1998/11/09 13:00:41 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -40,6 +40,8 @@
 
 #ifndef	_SYS_UTSNAME_H_
 #define	_SYS_UTSNAME_H_
+
+#include <sys/featuretest.h>
 
 #define	_SYS_NMLN	256
 
