@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.43 1997/03/20 11:03:10 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.44 1997/04/02 03:58:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -137,10 +137,8 @@ sbmatch(sc)
 		-1, -1, 0x01, -1, -1, 0x02, -1, 0x04, -1, 0x01, 0x08
 	};
 
-	if (sbdsp_probe(sc) == 0) {
-		printf("%s: sbdsp probe failed\n", sc->sc_dev.dv_xname);
+	if (sbdsp_probe(sc) == 0)
 		return 0;
-	}
 
 	/*
 	 * Cannot auto-discover DMA channel.
