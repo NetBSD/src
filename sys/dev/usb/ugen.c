@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.5 1998/12/26 12:53:01 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.6 1998/12/29 03:13:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -835,7 +835,8 @@ ugenioctl(dev, cmd, addr, flag, p)
 					goto ret;
 			}
 		}
-		r = usbd_do_request(sc->sc_udev, &ur->request, ptr);
+		r = usbd_do_request_flags(sc->sc_udev, &ur->request, 
+					  ptr, ur->flags);
 		if (r) {
 			error = EIO;
 			goto ret;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.16 1998/12/28 20:14:00 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.17 1998/12/29 03:13:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1035,6 +1035,16 @@ usbd_do_request(dev, req, data)
 	usb_device_request_t *req;
 	void *data;
 {
+	return (usbd_do_request_flags(dev, req, data, 0));
+}
+
+usbd_status
+usbd_do_request_flags(dev, req, data, flags)
+	usbd_device_handle dev;
+	usb_device_request_t *req;
+	void *data;
+	u_int16_t flags;
+{
 	usbd_request_handle reqh;
 	usbd_status r;
 
@@ -1050,7 +1060,7 @@ usbd_do_request(dev, req, data)
 		return (USBD_NOMEM);
 	r = usbd_setup_default_request(
 		reqh, dev, 0, USBD_DEFAULT_TIMEOUT, req, data, 
-		UGETW(req->wLength), 0, 0);
+		UGETW(req->wLength), flags, 0);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto bad;
 	r = usbd_sync_transfer(reqh);

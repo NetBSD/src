@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.8 1998/12/28 02:20:28 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.9 1998/12/29 03:13:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -343,11 +343,12 @@ usbioctl(dev, cmd, data, flag, p)
 		usbd_status r;
 		int error = 0;
 
+		DPRINTF(("usbioctl: USB_REQUEST addr=%d len=%d\n", addr, len));
 		if (len < 0 || len > 32768)
-			return EINVAL;
+			return (EINVAL);
 		if (addr < 0 || addr >= USB_MAX_DEVICES || 
 		    sc->sc_bus->devices[addr] == 0)
-			return EINVAL;
+			return (EINVAL);
 		if (len != 0) {
 			iov.iov_base = (caddr_t)ur->data;
 			iov.iov_len = len;
@@ -367,8 +368,8 @@ usbioctl(dev, cmd, data, flag, p)
 					goto ret;
 			}
 		}
-		r = usbd_do_request(sc->sc_bus->devices[addr],
-				    &ur->request, ptr);
+		r = usbd_do_request_flags(sc->sc_bus->devices[addr],
+					  &ur->request, ptr, ur->flags);
 		if (r) {
 			error = EIO;
 			goto ret;
