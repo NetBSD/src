@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.3 1999/10/24 08:37:29 takemura Exp $	*/
+/*	$NetBSD: fb.c,v 1.4 1999/10/24 08:43:59 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -63,7 +63,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 19999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.3 1999/10/24 08:37:29 takemura Exp $";
+    "$Id: fb.c,v 1.4 1999/10/24 08:43:59 takemura Exp $";
 
 
 #include <sys/param.h>
@@ -230,8 +230,9 @@ fbattach(parent, self, aux)
 }
 
 int
-fb_cnattach(iot, memt, type, check)
-	bus_space_tag_t iot, memt;
+fb_cnattach(iot, iobase, type, check)
+	bus_space_tag_t iot;
+	int iobase;
 	int type, check;
 {
 	long defattr = 0;
