@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.25 1998/09/13 20:27:48 hwr Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.26 1998/09/30 05:59:28 hwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -131,7 +131,12 @@ struct protosw inetsw[] = {
 #if NGRE > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_GRE,	PR_ATOMIC|PR_ADDR,
   gre_input,	rip_output,	0,		rip_ctloutput,
-  rip_usrreq,	/* XXX */
+  rip_usrreq,
+  0,		0,		0,		0,
+},
+{ SOCK_RAW,	&inetdomain,	IPPROTO_MOBILE,	PR_ATOMIC|PR_ADDR,
+  gre_mobile_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
   0,		0,		0,		0,
 },
 #ifndef MROUTING

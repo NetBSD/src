@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.1 1998/09/13 20:27:48 hwr Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.2 1998/09/30 05:59:28 hwr Exp $ */
 
 /*
  * (c) 1998 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  */
 
 /*
- * deencapsulate GRE packets and send them on
+ * deencapsulate tunneled packets and send them on
  * output half is in net/ip_gre.[ch]
+ * This currently handles IPPROTO_IPIP, IPPROTO_GRE, IPPROTO_MOBILE
  *
  */
 
@@ -91,7 +92,13 @@ Huh? ip_gre input without IP?
 #include "ip_gre.h"
 #include <net/if_gre.h>
 
+#if 1
+void gre_inet_ntoa(struct in_addr in); 	/* XXX */
+#endif
+
 extern struct gre_softc gre_softc[NGRE];
+
+static int match_tunnel(struct mbuf *m,u_char proto);
 
 /*
  * De-encapsulate a packet and feed it back through ip input (this
@@ -108,12 +115,12 @@ gre_input(m, va_alist)
         va_dcl
 #endif
 {
-        register int hlen,ret;
+	register int hlen,ret;
 	va_list ap;
 
-        va_start(ap, m);
-        hlen = va_arg(ap, int);
-        va_end(ap);
+	va_start(ap, m);
+	hlen = va_arg(ap, int);
+	va_end(ap);
 
 	ret=gre_input2(m,hlen,IPPROTO_GRE);
 	/* 
@@ -138,30 +145,21 @@ gre_input(m, va_alist)
 int
 gre_input2(struct mbuf *m ,int hlen,u_char proto)
 {
-        register struct ip *ip = mtod(m, struct ip *);
 	register struct greip *gip = mtod(m, struct greip *);
-        register int s,i;
-        register struct ifqueue *ifq;
-	struct gre_softc *sc;
+	register int s;
+	register struct ifqueue *ifq;
+	struct gre_softc *sc = NULL;
 	u_short flags;
+	int i;
 
-	i=0;	
-	do {
+	i=match_tunnel(m,proto);
+	if (i!=-1) {		 /* found matching tunnel that is up */
 		sc=&gre_softc[i];
-		if((sc->g_dst.s_addr == ip->ip_src.s_addr) &&
-		    (sc->g_src.s_addr == ip->ip_dst.s_addr))
-			break;
-		i++;
-	} while(i<NGRE);
-		  
-	if ((i<NGRE) && ((sc->sc_if.if_flags & IFF_UP) == IFF_UP)) {	
-		/* found matching tunnel that is up */
 		sc->sc_if.if_ipackets++;  
 		sc->sc_if.if_ibytes+=m->m_pkthdr.len;
-	} else {   /* no matching tunnel or match, but tunnel down */
+	} else {   		/* no matching tunnel or match, but tunnel down */
 		return 0;
 	}
-
 
 	switch (proto) {
 	case IPPROTO_GRE:
@@ -211,7 +209,6 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 		return(0);
 	}
 		
-
 	m->m_data += hlen; 
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
@@ -226,6 +223,83 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 	splx(s);
 
 	return(1);	/* packet is done, no further processing needed */
+}
+
+/*
+ * input routine for IPPRPOTO_MOBILE
+ * This is a little bit diffrent from the other modes, as the 
+ * encapsulating header was not prepended, but instead inserted
+ * between IP header and payload
+ */
+
+void
+#if __STDC__
+gre_mobile_input(struct mbuf *m, ...)
+#else
+gre_mobile_input(m, va_alist)
+        struct mbuf *m;
+        va_dcl
+#endif
+{
+	register struct ip *ip = mtod(m, struct ip *);
+	register struct mobip_h *mip = mtod(m, struct mobip_h *);
+	register struct ifqueue *ifq;
+	struct gre_softc *sc = NULL;
+	register int hlen,s;
+	va_list ap;
+	u_char osrc=0;
+	int i,msiz;
+
+	va_start(ap,m);
+	hlen=va_arg(ap, int);
+	va_end(ap);
+
+	i=match_tunnel(m,IPPROTO_MOBILE);
+	if (i!=-1) {
+		sc=&gre_softc[i];
+		/* found matching tunnel that is up */
+		sc->sc_if.if_ipackets++;  
+		sc->sc_if.if_ibytes+=m->m_pkthdr.len;
+	} else {   /* no matching tunnel or match, but tunnel down */
+		m_freem(m);
+		return;
+	}
+
+	if(ntohs(mip->mh.proto) & MOB_H_SBIT) {
+		osrc=1;
+		msiz=MOB_H_SIZ_L;
+		mip->mi.ip_src.s_addr=mip->mh.osrc;
+	} else {
+		msiz=MOB_H_SIZ_S;
+	}
+	mip->mi.ip_dst.s_addr=mip->mh.odst;
+	mip->mi.ip_p=(ntohs(mip->mh.proto) >> 8);
+	
+	if (gre_in_cksum((u_short*)&mip->mh,msiz)!=0) {
+		m_freem(m);
+		return;
+	}
+
+	memmove(ip+(ip->ip_hl<<2),ip+(ip->ip_hl<<2)+msiz, 
+		m->m_len-msiz-(ip->ip_hl<<2));
+	m->m_len-=msiz;
+	ip->ip_len-=msiz;
+	ip->ip_len+=ip->ip_hl<<2;	/* ip input "stripped" this off */
+	HTONS(ip->ip_len);
+	m->m_pkthdr.len-=msiz;
+
+	ip->ip_sum=0;
+	ip->ip_sum=in_cksum(m,(ip->ip_hl << 2));
+
+	ifq = &ipintrq;
+	s = splimp();       /* possible */
+	if (IF_QFULL(ifq)) {
+		IF_DROP(ifq);
+		m_freem(m);
+	} else { 
+		IF_ENQUEUE(ifq,m);  
+	}       
+	splx(s);
 }
 
 
@@ -266,6 +340,41 @@ ipip_input(m, va_alist)
 }
 #endif /* ifndef MROUTING */
 
-#endif /* if NGRE > 0 */
+/*
+ * go through tunnel interfaces and see if we have a matching one
+ * returns i where gre_softc[i] is the match on success, -1 otherwise.
+ */
 
+static int
+match_tunnel(struct mbuf *m,u_char proto)
+{
+	register struct ip *ip = mtod(m, struct ip *);
+	register int i,r;
+	struct gre_softc *sc = NULL;
+
+
+	i=0;	
+	do {
+		sc=&gre_softc[i];
+		if((sc->g_dst.s_addr == ip->ip_src.s_addr) &&
+		    (sc->g_src.s_addr == ip->ip_dst.s_addr))
+			break;
+		i++;
+	} while(i<NGRE);
+		  
+	if ((i<NGRE) && ((sc->sc_if.if_flags & IFF_UP) == IFF_UP))  {
+		r=i;
+	} else {
+		r=-1;
+	}
+	if (sc->g_proto != proto) {
+		r=-1;
+	}
+		
+	return(r);
+
+}
+
+
+#endif /* if NGRE > 0 */
 
