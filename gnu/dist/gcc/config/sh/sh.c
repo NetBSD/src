@@ -2572,7 +2572,7 @@ barrier_align (barrier_or_label)
      rtx barrier_or_label;
 {
   rtx next = next_real_insn (barrier_or_label), pat, prev;
-  int slot, credit;
+  int slot, credit, jump_to_next;
  
   if (! next)
     return 0;
@@ -2604,36 +2604,64 @@ barrier_align (barrier_or_label)
   if (! TARGET_SH2 || ! optimize)
     return CACHE_LOG;
 
-  /* Check if there is an immediately preceding branch to the insn beyond
-     the barrier.  We must weight the cost of discarding useful information
-     from the current cache line when executing this branch and there is
-     an alignment, against that of fetching unneeded insn in front of the
-     branch target when there is no alignment.  */
-
-  /* PREV is presumed to be the JUMP_INSN for the barrier under
-     investigation.  Skip to the insn before it.  */
-  prev = prev_real_insn (prev);
-
-  for (slot = 2, credit = (1 << (CACHE_LOG - 2)) + 2;
-       credit >= 0 && prev && GET_CODE (prev) == INSN;
-       prev = prev_real_insn (prev))
+  /* When fixing up pcloads, a constant table might be inserted just before
+     the basic block that ends with the barrier.  Thus, we can't trust the
+     instruction lengths before that.  */
+  if (mdep_reorg_phase > SH_FIXUP_PCLOAD)
     {
-      if (GET_CODE (PATTERN (prev)) == USE
-          || GET_CODE (PATTERN (prev)) == CLOBBER)
-        continue;
-      if (GET_CODE (PATTERN (prev)) == SEQUENCE)
-	prev = XVECEXP (PATTERN (prev), 0, 1);
-      if (slot &&
-          get_attr_in_delay_slot (prev) == IN_DELAY_SLOT_YES)
-        slot = 0;
-      credit -= get_attr_length (prev);
+      /* Check if there is an immediately preceding branch to the insn beyond
+	 the barrier.  We must weight the cost of discarding useful information
+	 from the current cache line when executing this branch and there is
+	 an alignment, against that of fetching unneeded insn in front of the
+	 branch target when there is no alignment.  */
+
+      /* There are two delay_slot cases to consider.  One is the simple case 
+	 where the preceding branch is to the insn beyond the barrier (simple 
+	 delay slot filling), and the other is where the preceding branch has 
+	 a delay slot that is a duplicate of the insn after the barrier 
+	 (fill_eager_delay_slots) and the branch is to the insn after the insn 
+	 after the barrier.  */
+
+      /* PREV is presumed to be the JUMP_INSN for the barrier under
+	 investigation.  Skip to the insn before it.  */
+      prev = prev_real_insn (prev);
+
+      for (slot = 2, credit = (1 << (CACHE_LOG - 2)) + 2;
+	   credit >= 0 && prev && GET_CODE (prev) == INSN;
+	   prev = prev_real_insn (prev))
+	{
+	  jump_to_next = 0;
+	  if (GET_CODE (PATTERN (prev)) == USE
+	      || GET_CODE (PATTERN (prev)) == CLOBBER)
+	    continue;
+	  if (GET_CODE (PATTERN (prev)) == SEQUENCE)
+	    {
+	      prev = XVECEXP (PATTERN (prev), 0, 1);
+	      if (INSN_UID (prev) == INSN_UID (next)) 
+		{
+	  	  /* Delay slot was filled with insn at jump target.  */
+		  jump_to_next = 1;
+		  continue;
+  		}
+	    }
+
+	  if (slot &&
+	      get_attr_in_delay_slot (prev) == IN_DELAY_SLOT_YES)
+	    slot = 0;
+	  credit -= get_attr_length (prev);
+	}
+      if (prev
+	  && GET_CODE (prev) == JUMP_INSN
+	  && JUMP_LABEL (prev)
+	  && (jump_to_next || next_real_insn (JUMP_LABEL (prev)) == next))
+	{
+	  rtx pat = PATTERN (prev);
+	  if (GET_CODE (pat) == PARALLEL)
+	    pat = XVECEXP (pat, 0, 0);
+	  if (credit - slot >= (GET_CODE (SET_SRC (pat)) == PC ? 2 : 0))
+	    return 0;
+	}
     }
-  if (prev
-      && GET_CODE (prev) == JUMP_INSN
-      && JUMP_LABEL (prev)
-      && next_real_insn (JUMP_LABEL (prev)) == next_real_insn (barrier_or_label)
-      && (credit - slot >= (GET_CODE (SET_SRC (PATTERN (prev))) == PC ? 2 : 0)))
-    return 0;
 
   return CACHE_LOG;
 }
