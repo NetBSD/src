@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.h,v 1.1.1.4 1999/04/06 05:30:38 mrg Exp $	*/
+/*	$NetBSD: regexp.h,v 1.1.1.5 2001/07/26 12:00:37 mrg Exp $	*/
 
 /*
  * Definitions etc. for regexp(3) routines.
@@ -29,6 +29,7 @@ typedef struct regexp {
 
 extern regexp *regcomp _ANSI_ARGS_((char *exp));
 extern int regexec _ANSI_ARGS_((regexp *prog, char *string));
+extern int regexec2 _ANSI_ARGS_((regexp *prog, char *string, int notbol));
 extern void regsub _ANSI_ARGS_((regexp *prog, char *source, char *dest));
 extern void regerror _ANSI_ARGS_((char *msg));
 

@@ -1,29 +1,13 @@
-/*	$NetBSD: lesskey.c,v 1.1.1.4 1999/04/06 05:30:39 mrg Exp $	*/
+/*	$NetBSD: lesskey.c,v 1.1.1.5 2001/07/26 12:00:45 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -119,6 +103,7 @@ struct cmdname cmdnames[] =
 	"back-search",		A_B_SEARCH,
 	"back-window",		A_B_WINDOW,
 	"debug",		A_DEBUG,
+	"digit",		A_DIGIT,
 	"display-flag",		A_DISP_OPTION,
 	"display-option",	A_DISP_OPTION,
 	"end",			A_GOEND,
@@ -226,6 +211,13 @@ int errors;
 
 extern char version[];
 
+	void
+usage()
+{
+	fprintf(stderr, "usage: lesskey [-o output] [input]\n");
+	exit(1);
+}
+
 	char *
 mkpathname(dirname, filename)
 	char *dirname;
@@ -272,13 +264,47 @@ parse_args(argc, argv)
 	int argc;
 	char **argv;
 {
+	char *arg;
+
 	outfile = NULL;
-	while (--argc > 0 && **(++argv) == '-' && argv[0][1] != '\0')
+	while (--argc > 0)
 	{
-		switch (argv[0][1])
+		arg = *++argv;
+		if (arg[0] != '-')
+			/* Arg does not start with "-"; it's not an option. */
+			break;
+		if (arg[1] == '\0')
+			/* "-" means standard input. */
+			break;
+		if (arg[1] == '-' && arg[2] == '\0')
 		{
+			/* "--" means end of options. */
+			argc--;
+			argv++;
+			break;
+		}
+		switch (arg[1])
+		{
+		case '-':
+			if (strncmp(arg, "--output", 8) == 0)
+			{
+				if (arg[8] == '\0')
+					outfile = &arg[8];
+				else if (arg[8] == '=')
+					outfile = &arg[9];
+				else
+					usage();
+				goto opt_o;
+			}
+			if (strcmp(arg, "--version") == 0)
+			{
+				goto opt_V;
+			}
+			usage();
+			break;
 		case 'o':
 			outfile = &argv[0][2];
+		opt_o:
 			if (*outfile == '\0')
 			{
 				if (--argc <= 0)
@@ -287,6 +313,7 @@ parse_args(argc, argv)
 			}
 			break;
 		case 'V':
+		opt_V:
 			printf("lesskey  version %s\n", version);
 			exit(0);
 		default:
@@ -323,13 +350,16 @@ init_tables()
 /*
  * Parse one character of a string.
  */
-	int
-tchar(pp)
+	char *
+tstr(pp)
 	char **pp;
 {
 	register char *p;
 	register char ch;
 	register int i;
+	static char buf[10];
+	static char tstr_control_k[] =
+		{ SK_SPECIAL_KEY, SK_CONTROL_K, 6, 1, 1, 1, '\0' };
 
 	p = *pp;
 	switch (*p)
@@ -349,39 +379,79 @@ tchar(pp)
 				ch = 8*ch + (*p - '0');
 			while (*++p >= '0' && *p <= '7' && ++i < 3);
 			*pp = p;
-			return (ch);
+			if (ch == CONTROL('K'))
+				return tstr_control_k;
+			buf[0] = ch;
+			buf[1] = '\0';
+			return (buf);
 		case 'b':
 			*pp = p+1;
-			return ('\r');
+			return ("\b");
 		case 'e':
 			*pp = p+1;
-			return (ESC);
+			buf[0] = ESC;
+			buf[1] = '\0';
+			return (buf);
 		case 'n':
 			*pp = p+1;
-			return ('\n');
+			return ("\n");
 		case 'r':
 			*pp = p+1;
-			return ('\r');
+			return ("\r");
 		case 't':
 			*pp = p+1;
-			return ('\t');
+			return ("\t");
+		case 'k':
+			switch (*++p)
+			{
+			case 'u': ch = SK_UP_ARROW; break;
+			case 'd': ch = SK_DOWN_ARROW; break;
+			case 'r': ch = SK_RIGHT_ARROW; break;
+			case 'l': ch = SK_LEFT_ARROW; break;
+			case 'U': ch = SK_PAGE_UP; break;
+			case 'D': ch = SK_PAGE_DOWN; break;
+			case 'h': ch = SK_HOME; break;
+			case 'e': ch = SK_END; break;
+			case 'x': ch = SK_DELETE; break;
+			}
+			*pp = p+1;
+			buf[0] = SK_SPECIAL_KEY;
+			buf[1] = ch;
+			buf[2] = 6;
+			buf[3] = 1;
+			buf[4] = 1;
+			buf[5] = 1;
+			buf[6] = '\0';
+			return (buf);
 		default:
 			/*
 			 * Backslash followed by any other char 
 			 * just means that char.
 			 */
 			*pp = p+1;
-			return (*p);
+			buf[0] = *p;
+			buf[1] = '\0';
+			if (buf[0] == CONTROL('K'))
+				return tstr_control_k;
+			return (buf);
 		}
 	case '^':
 		/*
 		 * Carat means CONTROL.
 		 */
 		*pp = p+2;
-		return (CONTROL(p[1]));
+		buf[0] = CONTROL(p[1]);
+		buf[1] = '\0';
+		if (buf[0] == CONTROL('K'))
+			return tstr_control_k;
+		return (buf);
 	}
 	*pp = p+1;
-	return (*p);
+	buf[0] = *p;
+	buf[1] = '\0';
+	if (buf[0] == CONTROL('K'))
+		return tstr_control_k;
+	return (buf);
 }
 
 /*
@@ -419,7 +489,7 @@ clean_line(s)
 	register int i;
 
 	s = skipsp(s);
-	for (i = 0;  s[i] != '\n' && s[i] != '\0';  i++)
+	for (i = 0;  s[i] != '\n' && s[i] != '\r' && s[i] != '\0';  i++)
 		if (s[i] == '#' && (i == 0 || s[i-1] != '\\'))
 			break;
 	s[i] = '\0';
@@ -439,6 +509,17 @@ add_cmd_char(c)
 		exit(1);
 	}
 	*(currtable->pbuffer)++ = c;
+}
+
+/*
+ * Add a string to the output command table.
+ */
+	void
+add_cmd_str(s)
+	char *s;
+{
+	for ( ;  *s != '\0';  s++)
+		add_cmd_char(*s);
 }
 
 /*
@@ -528,12 +609,6 @@ findaction(actname)
 	return (A_INVALID);
 }
 
-usage()
-{
-	fprintf(stderr, "usage: lesskey [-o output] [input]\n");
-	exit(1);
-}
-
 	void
 error(s)
 	char *s;
@@ -550,7 +625,8 @@ parse_cmdline(p)
 	int cmdlen;
 	char *actname;
 	int action;
-	int c;
+	char *s;
+	char c;
 
 	/*
 	 * Parse the command string and store it in the current table.
@@ -558,11 +634,12 @@ parse_cmdline(p)
 	cmdlen = 0;
 	do
 	{
-		c = tchar(&p);
-		if (++cmdlen > MAX_CMDLEN)
+		s = tstr(&p);
+		cmdlen += strlen(s);
+		if (cmdlen > MAX_CMDLEN)
 			error("command too long");
 		else
-			add_cmd_char(c);
+			add_cmd_str(s);
 	} while (*p != ' ' && *p != '\t' && *p != '\0');
 	/*
 	 * Terminate the command string with a null byte.
@@ -606,7 +683,7 @@ parse_cmdline(p)
 		 */
 		add_cmd_char(action | A_EXTRA);
 		while (*p != '\0')
-			add_cmd_char(tchar(&p));
+			add_cmd_str(tstr(&p));
 		add_cmd_char('\0');
 	}
 }
@@ -615,12 +692,12 @@ parse_cmdline(p)
 parse_varline(p)
 	char *p;
 {
-	int c;
+	char *s;
 
 	do
 	{
-		c = tchar(&p);
-		add_cmd_char(c);
+		s = tstr(&p);
+		add_cmd_str(s);
 	} while (*p != ' ' && *p != '\t' && *p != '=' && *p != '\0');
 	/*
 	 * Terminate the variable name with a null byte.
@@ -639,8 +716,8 @@ parse_varline(p)
 	p = skipsp(p);
 	while (*p != '\0')
 	{
-		c = tchar(&p);
-		add_cmd_char(c);
+		s = tstr(&p);
+		add_cmd_str(s);
 	}
 	add_cmd_char('\0');
 }
@@ -674,6 +751,7 @@ parse_line(line)
 		parse_cmdline(p);
 }
 
+	int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -695,7 +773,7 @@ main(argc, argv)
 		{
 			char *env = (char *) calloc(strlen(drive) + 
 					strlen(path) + 6, sizeof(char));
-			strcpy(env, "PATH=");
+			strcpy(env, "HOME=");
 			strcat(env, drive);
 			strcat(env, path);
 			putenv(env);
@@ -779,5 +857,5 @@ main(argc, argv)
 	/* File trailer */
 	fputbytes(out, endsection, sizeof(endsection));
 	fputbytes(out, filetrailer, sizeof(filetrailer));
-	exit(0);
+	return (0);
 }
