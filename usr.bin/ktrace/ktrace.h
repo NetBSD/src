@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.4 1997/01/09 20:20:30 tls Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.5 1997/07/23 05:37:59 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -32,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ktrace.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: ktrace.h,v 1.4 1997/01/09 20:20:30 tls Exp $
+ *	@(#)ktrace.h	8.1 (Berkeley) 6/6/93
  */
 
 #define DEF_POINTS (KTRFAC_SYSCALL | KTRFAC_SYSRET | KTRFAC_NAMEI | \
@@ -42,3 +41,7 @@
 #define ALL_POINTS (DEF_POINTS | KTRFAC_CSW)
 
 #define DEF_TRACEFILE	"ktrace.out"
+
+#include <sys/cdefs.h>
+
+int	getpoints __P((char *));
