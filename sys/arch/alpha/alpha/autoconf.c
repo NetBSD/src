@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.22 1997/04/07 06:09:00 cgd Exp $ */
+/* $NetBSD: autoconf.c,v 1.23 1997/04/07 06:24:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
