@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.19 1999/01/09 22:56:06 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.20 1999/03/19 05:13:17 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -69,7 +69,7 @@
 
 #ifdef SHARK
 #include "machine/pio.h"
-#include "arm32/isa/isa_machdep.h"
+#include "machine/isa_machdep.h"
 #endif
 
 #include "pc.h"

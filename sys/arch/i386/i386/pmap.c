@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 1999/01/16 20:30:35 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 1999/03/19 05:13:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
 #include <machine/cpu.h>
 
 #include <dev/isa/isareg.h>
-#include <i386/isa/isa_machdep.h>
+#include <machine/isa_machdep.h>
 
 #ifdef DEBUG
 void	pmap_pvdump __P((paddr_t pa));
