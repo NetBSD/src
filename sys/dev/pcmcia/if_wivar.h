@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.11 2000/07/18 14:53:26 onoe Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.12 2000/08/26 00:05:54 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,6 +70,7 @@ struct wi_softc	{
 	u_int16_t		wi_create_ibss;
 	u_int16_t		wi_channel;
 	u_int16_t		wi_pm_enabled;
+	u_int16_t		wi_mor_enabled;
 	u_int16_t		wi_max_sleep;
 
 	struct ieee80211_nwid	wi_nodeid;
