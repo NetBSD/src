@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.9.4.1 1999/10/10 20:50:52 cgd Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.9.4.2 1999/10/18 05:04:48 cgd Exp $	*/
 
 /*
  * 
@@ -56,6 +56,13 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.9.4.2  1999/10/18 05:04:48  cgd
+ * pull up rev 1.14 from trunk (requested by wrstuden):
+ *   In spec_close(), call the device's close routine with the vnode
+ *   unlocked if the call might block. Force a non-blocking close if
+ *   VXLOCK is set.  This eliminates a potential deadlock situation, and
+ *   should eliminate the dirty buffers on reboot issue.
+ *
  * Revision 1.9.4.1  1999/10/10 20:50:52  cgd
  * pull up rev 1.13 from trunk (requested by mycroft):
  *   Fix potential overflow of v_usecount and v_writecount (and panics
@@ -539,8 +546,9 @@ coda_close(v)
 #ifdef	hmm
 	    vgone(cp->c_ovp);
 #else
+	    vn_lock(cp->c_ovp, LK_EXCLUSIVE | LK_RETRY);
 	    VOP_CLOSE(cp->c_ovp, flag, cred, p); /* Do errors matter here? */
-	    vrele(cp->c_ovp);
+	    vput(cp->c_ovp);
 #endif
 	} else {
 #ifdef	CODA_VERBOSE
@@ -549,8 +557,9 @@ coda_close(v)
 	}
 	return ENODEV;
     } else {
+	vn_lock(cp->c_ovp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(cp->c_ovp, flag, cred, p); /* Do errors matter here? */
-	vrele(cp->c_ovp);
+	vput(cp->c_ovp);
     }
 
     if (--cp->c_ocount == 0)
