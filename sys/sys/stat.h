@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.36 1998/09/20 05:42:05 simonb Exp $	*/
+/*	$NetBSD: stat.h,v 1.37 1998/09/21 01:50:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -176,32 +176,43 @@ struct stat {
 #define	S_IWOTH	0000002			/* W for other */
 #define	S_IXOTH	0000001			/* X for other */
 
+#define	_S_IFMT	  0170000		/* type of file mask */
+#define	_S_IFIFO  0010000		/* named pipe (fifo) */
+#define	_S_IFCHR  0020000		/* character special */
+#define	_S_IFDIR  0040000		/* directory */
+#define	_S_IFBLK  0060000		/* block special */
+#define	_S_IFREG  0100000		/* regular */
+#define	_S_IFLNK  0120000		/* symbolic link */
+#define	_S_ISVTX  0001000		/* save swapped text even after use */
+#define	_S_IFSOCK 0140000		/* socket */
+#define	_S_IFWHT  0160000		/* whiteout */
+
 #if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
-#define	S_IFMT	 0170000		/* type of file mask */
-#define	S_IFIFO	 0010000		/* named pipe (fifo) */
-#define	S_IFCHR	 0020000		/* character special */
-#define	S_IFDIR	 0040000		/* directory */
-#define	S_IFBLK	 0060000		/* block special */
-#define	S_IFREG	 0100000		/* regular */
-#define	S_IFLNK	 0120000		/* symbolic link */
-#define	S_ISVTX	 0001000		/* save swapped text even after use */
+#define	S_IFMT	 _S_IFMT
+#define	S_IFIFO	 _S_IFIFO
+#define	S_IFCHR	 _S_IFCHR
+#define	S_IFDIR	 _S_IFDIR
+#define	S_IFBLK	 _S_IFBLK
+#define	S_IFREG	 _S_IFREG
+#define	S_IFLNK	 _S_IFLNK
+#define	S_ISVTX	 _S_ISVTX
 #endif
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	S_IFSOCK 0140000		/* socket */
-#define	S_IFWHT  0160000		/* whiteout */
+#define	S_IFSOCK _S_IFSOCK
+#define	S_IFWHT  _S_IFWHT
 #endif
 
-#define	S_ISDIR(m)	((m & S_IFMT) == S_IFDIR)	/* directory */
-#define	S_ISCHR(m)	((m & S_IFMT) == S_IFCHR)	/* char special */
-#define	S_ISBLK(m)	((m & S_IFMT) == S_IFBLK)	/* block special */
-#define	S_ISREG(m)	((m & S_IFMT) == S_IFREG)	/* regular file */
-#define	S_ISFIFO(m)	((m & S_IFMT) == S_IFIFO)	/* fifo */
+#define	S_ISDIR(m)	((m & _S_IFMT) == _S_IFDIR)	/* directory */
+#define	S_ISCHR(m)	((m & _S_IFMT) == _S_IFCHR)	/* char special */
+#define	S_ISBLK(m)	((m & _S_IFMT) == _S_IFBLK)	/* block special */
+#define	S_ISREG(m)	((m & _S_IFMT) == _S_IFREG)	/* regular file */
+#define	S_ISFIFO(m)	((m & _S_IFMT) == _S_IFIFO)	/* fifo */
 #if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
-#define	S_ISLNK(m)	((m & S_IFMT) == S_IFLNK)	/* symbolic link */
+#define	S_ISLNK(m)	((m & _S_IFMT) == _S_IFLNK)	/* symbolic link */
 #endif
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	S_ISSOCK(m)	((m & S_IFMT) == S_IFSOCK)	/* socket */
-#define	S_ISWHT(m)	((m & S_IFMT) == S_IFWHT)	/* whiteout */
+#define	S_ISSOCK(m)	((m & _S_IFMT) == _S_IFSOCK)	/* socket */
+#define	S_ISWHT(m)	((m & _S_IFMT) == _S_IFWHT)	/* whiteout */
 #endif
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
