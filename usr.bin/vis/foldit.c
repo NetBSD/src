@@ -1,4 +1,4 @@
-/*	$NetBSD: foldit.c,v 1.4 1994/12/20 16:13:02 jtc Exp $	*/
+/*	$NetBSD: foldit.c,v 1.5 1997/10/20 03:06:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,21 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)foldit.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: foldit.c,v 1.4 1994/12/20 16:13:02 jtc Exp $";
+__RCSID("$NetBSD: foldit.c,v 1.5 1997/10/20 03:06:47 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
+
+int foldit __P((char *, int, int));
 
 int
 foldit(chunk, col, max)
 	char *chunk;
 	int col, max;
 {
-	register char *cp;
+	char *cp;
 
 	/*
 	 * Keep track of column position. Insert hidden newline
@@ -62,7 +65,7 @@ again:
 			col = 0;
 			break;
 		case '\t':
-			col = col + 8 &~ 07;
+			col = (col + 8) &~ 07;
 			break;
 		case '\b':
 			col = col ? col - 1 : 0;
