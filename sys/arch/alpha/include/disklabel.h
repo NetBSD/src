@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.4 1999/04/02 07:32:33 cgd Exp $ */
+/* $NetBSD: disklabel.h,v 1.5 1999/04/05 02:45:47 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1999 Christopher G. Demetriou
@@ -52,15 +52,32 @@ struct cpu_disklabel {
  */
 
 struct boot_block {
-	u_int64_t bb_pad[60];		/* disklabel lives in here */
-	u_int64_t bb_secsize;		/* secondary size (blocks) */
-	u_int64_t bb_secstart;		/* secondary start (blocks) */
-	u_int64_t bb_flags;		/* unknown; always zero */
+	u_int64_t bb_data[63];		/* data (disklabel, also as below) */
 	u_int64_t bb_cksum;		/* checksum of the the boot block,
 					 * taken as u_int64_t's
 					 */
 };
+#define	bb_secsize	bb_data[60]	/* secondary size (blocks) */
+#define	bb_secstart	bb_data[61]	/* secondary start (blocks) */
+#define	bb_flags	bb_data[62]	/* unknown flags (set to zero) */
 
-#define	BOOT_BLOCK_BLOCKSIZE	512	/* block size for sec. size/start */
+#define	BOOT_BLOCK_OFFSET	0	/* offset of boot block. */
+#define	BOOT_BLOCK_BLOCKSIZE	512	/* block size for sec. size/start,
+					 * and for boot block itself
+					 */
+
+#define	CHECKSUM_BOOT_BLOCK(bb,cksum)					\
+	do {								\
+		const struct boot_block *_bb = (bb);			\
+		u_int64_t _cksum;					\
+		int _i;							\
+									\
+		_cksum = 0;						\
+		for (_i = 0;						\
+		    _i < (sizeof _bb->bb_data / sizeof _bb->bb_data[0]); \
+		    _i++)						\
+			_cksum += _bb->bb_data[_i];			\
+		*(cksum) = _cksum;					\
+	} while (0)
 
 #endif /* _MACHINE_DISKLABEL_H_ */
