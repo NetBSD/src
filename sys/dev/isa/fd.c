@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.49 2003/09/25 19:06:19 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.50 2003/09/27 15:56:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.49 2003/09/25 19:06:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2003/09/27 15:56:03 mycroft Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -397,6 +397,7 @@ fdprobe(parent, match, aux)
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	int n;
+	int s;
 
 	if (cf->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
 	    cf->cf_loc[FDCCF_DRIVE] != drive)
@@ -413,6 +414,7 @@ fdprobe(parent, match, aux)
 	if (fdc->sc_known)
 		return 1;
 
+	s = splbio();
 	/* toss any interrupt status */
 	for (n = 0; n < 4; n++) {
 		out_fdc(iot, ioh, NE7CMD_SENSEI);
@@ -440,6 +442,7 @@ fdprobe(parent, match, aux)
 #endif
 	/* turn off motor */
 	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
+	splx(s);
 
 #if defined(bebox)	/* XXX What is this about? --thorpej@netbsd.org */
 	if (n != 2 || (fdc->sc_status[1] != 0))
