@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.17 2001/06/02 18:09:14 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.18 2001/08/25 21:14:44 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2001/06/02 18:09:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2001/08/25 21:14:44 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -952,15 +952,15 @@ struct consdev *cn_tab = &romcons;
 ({					\
 	register _r;			\
 	asm volatile ("			\
-		movc	vbr,%0		; \
-		movel	%0,sp@-		; \
+		movc	%%vbr,%0	; \
+		movel	%0,%%sp@-	; \
 		clrl	%0		; \
-		movc	%0,vbr"		\
+		movc	%0,%%vbr"	\
 		: "=r" (_r));		\
 	PUTC(x);			\
 	asm volatile ("			\
-		movel	sp@+,%0		; \
-		movc	%0,vbr"		\
+		movel	%%sp@+,%0	; \
+		movc	%0,%%vbr"	\
 		: "=r" (_r));		\
 })
 
@@ -968,15 +968,15 @@ struct consdev *cn_tab = &romcons;
 ({					\
 	register _r, _c;		\
 	asm volatile ("			\
-		movc	vbr,%0		; \
-		movel	%0,sp@-		; \
+		movc	%%vbr,%0	; \
+		movel	%0,%%sp@-	; \
 		clrl	%0		; \
-		movc	%0,vbr"		\
+		movc	%0,%%vbr"	\
 		: "=r" (_r));		\
 	_c = GETC();			\
 	asm volatile ("			\
-		movel	sp@+,%0		; \
-		movc	%0,vbr"		\
+		movel	%%sp@+,%0	; \
+		movc	%0,%%vbr"	\
 		: "=r" (_r));		\
 	_c;				\
 })
