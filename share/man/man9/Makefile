@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.29 1997/10/04 14:04:15 kleink Exp $
+#       $NetBSD: Makefile,v 1.30 1997/10/11 08:22:06 mycroft Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -92,4 +92,5 @@ MLINKS+=vslock.9 vsunlock.9
 
 SUBDIR= man9.sun3
 
-.include <bsd.prog.mk>
+.include <bsd.man.mk>
+.include <bsd.subdir.mk>
