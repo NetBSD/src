@@ -1,4 +1,4 @@
-.\" $NetBSD: ym.4,v 1.13 2002/02/13 08:17:52 ross Exp $
+.\" $NetBSD: ym.4,v 1.14 2002/03/10 13:57:12 itohy Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm ym
-.Nd Yamaha OPL3-SA3 audio device driver
+.Nd Yamaha OPL3-SA2 and OPL3-SA3 audio device driver
 .Sh SYNOPSIS
 .Cd "ym*    at isapnp?"
 .Cd "ym*    at pnpbios? index ?"
@@ -49,13 +49,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Yamaha YMF715x (OPL3-SA3) sound devices.
+driver provides support for
+Yamaha YMF711 (OPL3-SA2) and YMF715x (OPL3-SA3) sound devices.
 .Pp
-The OPL3-SA3 device has
+The OPL3-SAx device has
 WSS compatible full-duplex 16bit CODEC,
-OPL3 FM synthesizer,
-MPU401 compatible MIDI I/O port interface,
-and built-in
+OPL3 FM synthesizer, and
+MPU401 compatible MIDI I/O port interface.
+Additionally, OPL3-SA3 has built-in
 .Sq 3D Enhanced
 equalizer.
 .Pp
@@ -75,9 +76,10 @@ midi(OPL3/ZV)-\*[Gt]-+----------------------------+-\*[Gt]|inputs.midi    |
 cd      -\*[Gt]------+-*--------------------------+-\*[Gt]|inputs.cd      |
 line    -\*[Gt]----*-+-+--------------------------+-\*[Gt]|inputs.line    |
 speaker -\*[Gt]----+-+-+--------------------------+-\*[Gt]|inputs.speaker |
-  inputs.mic  v v v      monitor.monitor     |  |               |
-     |  ---------------  -------  |  ------- |  |               |
-mic ---\*[Gt]|record.record|-\*[Gt]| A/D |----\*[Gt]| D/A |-*-\*[Gt]|inputs.dac     |analog
+mic     -\*[Gt]--*-+-+-+--------------------------+-\*[Gt]|inputs.mic     |
+            v v v v      monitor.monitor     |  |               |
+        ---------------  -------  |  ------- |  |               |
+        |record.record|-\*[Gt]| A/D |----\*[Gt]| D/A |-*-\*[Gt]|inputs.dac     |analog
         |             |  |conv.|-- -\*[Gt]|conv.|    |               |output
         ---------------  ------- | | -------    | outputs.master|--\*[Gt]
                            wave  v | wave       | equalization.*|
@@ -102,12 +104,22 @@ the device is never put in global power down or power save mode.
 This is because if the device is in global power down or power save mode,
 the output is automatically muted.
 .Pp
-All the external input sources (CD playback, line input, and speaker)
+All the external input sources (CD playback, line input, speaker, and MIC)
 are muted by default.
+.Pp
+The
+.Sq Dv equalization.*
+variables does not exists on OPL3-SA2.
+The
+.Sq equalization.treble
+and
+.Sq equalization.bass
+are enhancement only, and any values below the center position (128)
+don't take any effect.
 .Sh POWER MANAGEMENT
 The
 .Nm
-driver is capable of power management on the OPL3-SA3 devices.
+driver is capable of power management on the OPL3-SAx devices.
 The following modes can be selected by setting
 .Sq Dv power.save
 variable of
@@ -134,7 +146,7 @@ the driver puts the device in
 mode.
 .Pp
 On the global power down mode, the power consumption is minimized
-(10\(*mA typ.),
+(10\(*mA (SA3) or 200\(*mA (SA2) typ.),
 .\" Note: \(*m is Greek mu
 but the click noise on power up/down the device is rather loud.
 .Bf Em

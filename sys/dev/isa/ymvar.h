@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.7 2002/02/26 14:57:36 itohy Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.8 2002/03/10 13:57:11 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2002 The NetBSD Foundation, Inc.
@@ -80,51 +80,56 @@
 /*
  * Mixer devices
  */
-#define YM_DAC_LVL		0
-#define YM_MIDI_LVL		1
-#define YM_CD_LVL		2
-#define YM_LINE_LVL		3
-#define YM_SPEAKER_LVL		4
-#define YM_MIC_LVL		5
-#define YM_MONITOR_LVL		6
-#define YM_DAC_MUTE		7
-#define YM_MIDI_MUTE		8
-#define YM_CD_MUTE		9
-#define YM_LINE_MUTE		10
-#define YM_SPEAKER_MUTE		11
-#define YM_MIC_MUTE		12
-#define YM_MONITOR_MUTE		13
+#define YM_DAC_LVL		0	/* inputs.dac */
+#define YM_MIDI_LVL		1	/* inputs.midi */
+#define YM_CD_LVL		2	/* inputs.cd */
+#define YM_LINE_LVL		3	/* inputs.line */
+#define YM_SPEAKER_LVL		4	/* inputs.speaker */
+#define YM_MIC_LVL		5	/* inputs.mic */
+#define YM_MONITOR_LVL		6	/* monitor.monitor */
+#define YM_DAC_MUTE		7	/* inputs.dac.mute */
+#define YM_MIDI_MUTE		8	/* inputs.midi.mute */
+#define YM_CD_MUTE		9	/* inputs.cd.mute */
+#define YM_LINE_MUTE		10	/* inputs.line.mute */
+#define YM_SPEAKER_MUTE		11	/* inputs.speaker.mute */
+#define YM_MIC_MUTE		12	/* inputs.mic.mute */
+#define YM_MONITOR_MUTE		13	/* monitor.monitor.mute */
 
-#define YM_REC_LVL		14
-#define YM_RECORD_SOURCE	15
+#define YM_REC_LVL		14	/* record.record */
+#define YM_RECORD_SOURCE	15	/* record.record.source */
 
-#define YM_OUTPUT_LVL		16
-#define YM_OUTPUT_MUTE		17
-
-#define YM_MASTER_EQMODE	18
-#define YM_MASTER_TREBLE	19
-#define YM_MASTER_BASS		20
-#define YM_MASTER_WIDE		21
+#define YM_OUTPUT_LVL		16	/* outputs.master */
+#define YM_OUTPUT_MUTE		17	/* outputs.master.mute */
 
 #ifndef AUDIO_NO_POWER_CTL
-#define YM_PWR_MODE		22
-#define YM_PWR_TIMEOUT		23
+#define YM_PWR_MODE		18	/* power.save */
+#define YM_PWR_TIMEOUT		19	/* power.save.timeout */
 #endif
 
 /* Classes - don't change this without looking at mixer_classes array */
 #ifdef AUDIO_NO_POWER_CTL
-#define YM_CLASS_TOP		22
+#define YM_CLASS_TOP		18
 #else
-#define YM_CLASS_TOP		24
+#define YM_CLASS_TOP		20
 #endif
 #define YM_INPUT_CLASS		(YM_CLASS_TOP + 0)
 #define YM_RECORD_CLASS		(YM_CLASS_TOP + 1)
 #define YM_OUTPUT_CLASS		(YM_CLASS_TOP + 2)
 #define YM_MONITOR_CLASS	(YM_CLASS_TOP + 3)
+#ifdef AUDIO_NO_POWER_CTL
 #define YM_EQ_CLASS		(YM_CLASS_TOP + 4)
-#ifndef AUDIO_NO_POWER_CTL
-#define YM_PWR_CLASS		(YM_CLASS_TOP + 5)
+#else
+#define YM_PWR_CLASS		(YM_CLASS_TOP + 4)
+#define YM_EQ_CLASS		(YM_CLASS_TOP + 5)
 #endif
+
+/* equalizer is SA3 only */
+#define YM_MASTER_EQMODE	(YM_EQ_CLASS+1)	/* equalization.mode */
+#define YM_MASTER_TREBLE	(YM_EQ_CLASS+2)	/* equalization.treble */
+#define YM_MASTER_BASS		(YM_EQ_CLASS+3)	/* equalization.bass */
+#define YM_MASTER_WIDE		(YM_EQ_CLASS+4)	/* equalization.surround */
+
+#define YM_MIXER_SA3_ONLY(m)	((m) >= YM_EQ_CLASS)
 
 /* XXX should be in <sys/audioio.h> */
 #define AudioNdesktop		"desktop"
@@ -165,6 +170,7 @@ struct ym_softc {
 	u_int8_t sc_external_sources;	/* non-zero value prevents power down */
 
 	u_int8_t sc_version;		/* hardware version */
+#define YM_IS_SA3(sc)	((sc)->sc_version > SA3_MISC_VER_711)
 
 	/* 3D encehamcement */
 	u_int8_t sc_eqmode;
@@ -199,8 +205,9 @@ struct ym_softc {
 	int	sc_pow_timeout;
 
 	u_int8_t sc_codec_scan[0x20];
-#define YM_SAVE_REG_MAX	SA3_HVOL_INTR_CNF
-	u_int8_t sc_sa3_scan[YM_SAVE_REG_MAX + 1];
+#define YM_SAVE_REG_MAX_SA3	SA3_HVOL_INTR_CNF
+#define YM_SAVE_REG_MAX_SA2	SA3_DMA_CNT_REC_HIGH
+	u_int8_t sc_sa3_scan[YM_SAVE_REG_MAX_SA3 + 1];
 
 	u_int16_t sc_on_blocks;
 	u_int16_t sc_turning_off;
