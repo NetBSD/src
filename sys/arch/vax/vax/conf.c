@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 1998/09/30 14:09:59 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.37 1998/10/10 02:00:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -379,6 +379,9 @@ cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
 
+#include "scsibus.h"
+cdev_decl(scsibus);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -456,6 +459,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE,
 			wsmouse),	/* 70: mice */
 	cdev_disk_init(NRY,ry),		/* 71: VS floppy */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 72: SCSI bus */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -545,6 +549,7 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 69 */
 	NODEV,	/* 70 */
 	NODEV,	/* 71 */
+	NODEV,	/* 72 */
 };
 
 dev_t

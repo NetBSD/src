@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.60 1998/02/26 16:01:18 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.61 1998/10/10 02:00:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -168,6 +168,9 @@ cdev_decl(xy);
 #include "zstty.h"
 cdev_decl(zs);
 
+#include "scsibus.h"
+cdev_decl(scsibus);
+
 /* Block devices */
 struct bdevsw	bdevsw[] =
 {
@@ -283,6 +286,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 78 */
 	cdev_notdef(),			/* 79 */
 	cdev_rnd_init(NRND,rnd),	/* 80: random source pseudo-device */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 81: SCSI bus */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -405,6 +409,7 @@ static int chrtoblktbl[] = {
 	/* 78 */	NODEV,
 	/* 79 */	NODEV,
 	/* 80 */	NODEV,
+	/* 81 */	NODEV,
 };
 
 /*

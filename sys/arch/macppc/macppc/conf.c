@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1998/07/13 19:37:28 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1998/10/10 02:00:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,6 +111,9 @@ cdev_decl(adb);
 cdev_decl(ofc);
 cdev_decl(nvram);
 
+#include "scsibus.h"
+cdev_decl(scsibus);
+
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: control tty */
@@ -146,6 +149,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_init(NLKM,lkm),	/* 31: loadable module driver */
 	cdev_fd_init(1,filedesc),	/* 32: file descriptor pseudo-device */
 	cdev_mm_init(1,nvram),		/* 33: nvram device */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 34: SCSI bus */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -214,6 +218,7 @@ static int chrtoblktbl[] = {
 	/* 31 */	NODEV,
 	/* 32 */	NODEV,
 	/* 33 */	NODEV,
+	/* 34 */	NODEV,
 };
 
 /*
