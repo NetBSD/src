@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.108 1994/05/23 03:02:24 cgd Exp $
+ *	$Id: machdep.c,v 1.109 1994/05/24 07:23:01 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -321,6 +321,7 @@ struct cpu_nameclass i386_cpus[] = {
 	{ "i486SX",	CPUCLASS_486 },	/* CPU_486SX */
 	{ "i486DX",	CPUCLASS_486 },	/* CPU_486   */
 	{ "Pentium",	CPUCLASS_586 },	/* CPU_586   */
+	{ "Cx486DLC",	CPUCLASS_486 },	/* CPU_486DLC (Cyrix) */
 };
 
 identifycpu()
