@@ -1,4 +1,4 @@
-.\"	$NetBSD: lm.4,v 1.3.4.2 2000/08/02 17:09:49 bouyer Exp $
+.\"	$NetBSD: lm.4,v 1.3.4.3 2000/08/04 14:11:38 bouyer Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ Most supported devices possess 11 sensors:
 .It Li "Fan1" Ta "RPM" Ta "Chassis Fan"
 .It Li "Fan2" Ta "RPM" Ta "Fan"
 .El
-for some devices (such as the W83627HF) sensors names and numbers will be
+for some devices (most Winbond devices) sensors names and numbers will be
 different.
 .Pp
 Sensor names as well as nominal RPMs for fans 0 and 1 may be changed
@@ -86,17 +86,22 @@ driver include:
 .Bl -item -offset indent
 .It
 .Tn National Semiconductor
-LM78 and LM78-J
+.Em LM78
+and
+.Em LM78-J
 .It
 .Tn National Semiconductor
-LM79
+.Em LM79
 .It
 .Tn Winbond
-W83781D and W83782D (untested)
+.Em W83697HF
+(untested)
 .It
 .Tn Winbond
-W83627HF
-.El
+.Em W83627HF ,
+.Em W83781D
+and
+.Em W83782D 
 .Sh SEE ALSO
 .Xr envstat 1
 .Xr envsys 4
