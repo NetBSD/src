@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.14 2002/10/22 21:09:34 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.15 2002/10/23 00:36:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.14 2002/10/22 21:09:34 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.15 2002/10/23 00:36:36 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -490,7 +490,7 @@ mkinit(tnode_t *tn)
 		ln->tn_type = tduptyp(ln->tn_type);
 		ln->tn_type->t_const = 0;
 		tn = build(ASSIGN, ln, tn);
-		expr(tn, 0, 0);
+		expr(tn, 0, 0, 1);
 		goto end;
 	}
 
@@ -534,7 +534,7 @@ mkinit(tnode_t *tn)
 	 * expr() would free it.
 	 */
 	tmem = tsave();
-	expr(tn, 1, 0);
+	expr(tn, 1, 0, 1);
 	trestor(tmem);
 
 	if (isityp(lt) && ln->tn_type->t_isfield && !isityp(rt)) {
