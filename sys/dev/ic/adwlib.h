@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.11 2000/05/14 18:25:49 dante Exp $        */
+/*      $NetBSD: adwlib.h,v 1.12 2000/05/26 15:13:44 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -72,7 +72,7 @@
 
 /*
  * Define Adv Reset Hold Time grater than 25 uSec.
- * See AdvResetSCSIBus() for more info.
+ * See AdwResetSCSIBus() for more info.
  */
 #define ASC_SCSI_RESET_HOLD_TIME_US  60
 
@@ -435,15 +435,15 @@ typedef struct adw_eep_38C1600_config
 #define BIOS_CTRL_SCSI_PARITY        0x1000
 #define BIOS_CTRL_AIPP_DIS           0x2000
 
-#define ADV_3550_MEMSIZE             0x2000	/* 8 KB Internal Memory */
-#define ADV_3550_IOLEN               0x40	/* I/O Port Range in bytes */
+#define ADW_3550_MEMSIZE             0x2000	/* 8 KB Internal Memory */
+#define ADW_3550_IOLEN               0x40	/* I/O Port Range in bytes */
 
-#define ADV_38C0800_MEMSIZE          0x4000	/* 16 KB Internal Memory */
-#define ADV_38C0800_IOLEN            0x100	/* I/O Port Range in bytes */
+#define ADW_38C0800_MEMSIZE          0x4000	/* 16 KB Internal Memory */
+#define ADW_38C0800_IOLEN            0x100	/* I/O Port Range in bytes */
 
-#define ADV_38C1600_MEMSIZE          0x8000	/* 32 KB Internal Memory */
-#define ADV_38C1600_IOLEN            0x100	/* I/O Port Range 256 bytes */
-#define ADV_38C1600_MEMLEN           0x1000	/* Memory Range 4KB bytes */
+#define ADW_38C1600_MEMSIZE          0x8000	/* 32 KB Internal Memory */
+#define ADW_38C1600_IOLEN            0x100	/* I/O Port Range 256 bytes */
+#define ADW_38C1600_MEMLEN           0x1000	/* Memory Range 4KB bytes */
 
 /*
  * Byte I/O register address from base of 'iop_base'.
@@ -799,6 +799,10 @@ typedef struct adw_eep_38C1600_config
 #define INTAB		0x01
 
 
+#define ADW_MAX_TID                     15 /* max. target identifier */
+#define ADW_MAX_LUN                     7  /* max. logical unit number */
+
+
 /*
  * Adv Library Status Definitions
  */
@@ -811,77 +815,31 @@ typedef struct adw_eep_38C1600_config
 
 
 /*
- * ASC_DVC_VAR 'warn_code' values
+ * Warning code values for AdwInitFrom*EEP() functions
  */
-#define ASC_WARN_BUSRESET_ERROR         0x0001 /* SCSI Bus Reset error */
-#define ASC_WARN_EEPROM_CHKSUM          0x0002 /* EEP check sum error */
-#define ASC_WARN_EEPROM_TERMINATION     0x0004 /* EEP termination bad field */
-#define ASC_WARN_SET_PCI_CONFIG_SPACE   0x0080 /* PCI config space set error */
-#define ASC_WARN_ERROR                  0xFFFF /* ADW_ERROR return */
-
-#define ADW_MAX_TID                     15 /* max. target identifier */
-#define ADW_MAX_LUN                     7  /* max. logical unit number */
-
+#define ADW_WARN_BUSRESET_ERROR         0x0001 /* SCSI Bus Reset error */
+#define ADW_WARN_EEPROM_CHKSUM          0x0002 /* EEP check sum error */
+#define ADW_WARN_EEPROM_TERMINATION     0x0004 /* EEP termination bad field */
+#define ADW_WARN_SET_PCI_CONFIG_SPACE   0x0080 /* PCI config space set error */
+#define ADW_WARN_ERROR                  0xFFFF /* ADW_ERROR return */
 
 /*
- * AscInitGetConfig() and AscInitAsc1000Driver() Definitions
- *
- * Error code values are set in ASC_DVC_VAR 'err_code'.
+ * Error code values for AdwInitAsc*Driver() functions
  */
-#define ASC_IERR_WRITE_EEPROM       0x0001 /* write EEPROM error */
-#define ASC_IERR_MCODE_CHKSUM       0x0002 /* micro code check sum error */
-#define ASC_IERR_NO_CARRIER         0x0004 /* No more carrier memory. */
-#define ASC_IERR_START_STOP_CHIP    0x0008 /* start/stop chip failed */
-#define ASC_IERR_CHIP_VERSION       0x0040 /* wrong chip version */
-#define ASC_IERR_SET_SCSI_ID        0x0080 /* set SCSI ID failed */
-#define ASC_IERR_HVD_DEVICE         0x0100 /* HVD attached to LVD connector. */
-#define ASC_IERR_BAD_SIGNATURE      0x0200 /* signature not found */
-#define ASC_IERR_ILLEGAL_CONNECTION 0x0400 /* Illegal cable connection */
-#define ASC_IERR_SINGLE_END_DEVICE  0x0800 /* Single-end used w/differential */
-#define ASC_IERR_REVERSED_CABLE     0x1000 /* Narrow flat cable reversed */
-#define ASC_IERR_BIST_PRE_TEST      0x2000 /* BIST pre-test error */
-#define ASC_IERR_BIST_RAM_TEST      0x4000 /* BIST RAM test error */
-#define ASC_IERR_BAD_CHIPTYPE       0x8000 /* Invalid 'chip_type' setting. */
-
-/*
- * Fixed locations of microcode operating variables.
- */
-#define ASC_MC_CODE_BEGIN_ADDR          0x0028 /* microcode start address */
-#define ASC_MC_CODE_END_ADDR            0x002A /* microcode end address */
-#define ASC_MC_CODE_CHK_SUM             0x002C /* microcode code checksum */
-#define ASC_MC_VERSION_DATE             0x0038 /* microcode version */
-#define ASC_MC_VERSION_NUM              0x003A /* microcode number */
-#define ASC_MC_BIOSMEM                  0x0040 /* BIOS RISC Memory Start */
-#define ASC_MC_BIOSLEN                  0x0050 /* BIOS RISC Memory Length */
-#define ASC_MC_BIOS_SIGNATURE           0x0058 /* BIOS Signature 0x55AA */
-#define ASC_MC_BIOS_VERSION             0x005A /* BIOS Version (2 bytes) */
-#define ASC_MC_SDTR_SPEED1              0x0090 /* SDTR Speed for TID 0-3 */
-#define ASC_MC_SDTR_SPEED2              0x0092 /* SDTR Speed for TID 4-7 */
-#define ASC_MC_SDTR_SPEED3              0x0094 /* SDTR Speed for TID 8-11 */
-#define ASC_MC_SDTR_SPEED4              0x0096 /* SDTR Speed for TID 12-15 */
-#define ASC_MC_CHIP_TYPE                0x009A
-#define ASC_MC_INTRB_CODE               0x009B
-#define ASC_MC_WDTR_ABLE                0x009C
-#define ASC_MC_SDTR_ABLE                0x009E
-#define ASC_MC_TAGQNG_ABLE              0x00A0
-#define ASC_MC_DISC_ENABLE              0x00A2
-#define ASC_MC_IDLE_CMD_STATUS          0x00A4
-#define ASC_MC_IDLE_CMD                 0x00A6
-#define ASC_MC_IDLE_CMD_PARAMETER       0x00A8
-#define ASC_MC_DEFAULT_SCSI_CFG0        0x00AC
-#define ASC_MC_DEFAULT_SCSI_CFG1        0x00AE
-#define ASC_MC_DEFAULT_MEM_CFG          0x00B0
-#define ASC_MC_DEFAULT_SEL_MASK         0x00B2
-#define ASC_MC_SDTR_DONE                0x00B6
-#define ASC_MC_NUMBER_OF_QUEUED_CMD     0x00C0
-#define ASC_MC_NUMBER_OF_MAX_CMD        0x00D0
-#define ASC_MC_DEVICE_HSHK_CFG_TABLE    0x0100
-#define ASC_MC_CONTROL_FLAG             0x0122 /* Microcode control flag. */
-#define ASC_MC_WDTR_DONE                0x0124
-#define ASC_MC_CAM_MODE_MASK            0x015E /* CAM mode TID bitmask. */
-#define ASC_MC_ICQ                      0x0160
-#define ASC_MC_IRQ                      0x0164
-#define ASC_MC_PPR_ABLE                 0x017A
+#define ADW_IERR_WRITE_EEPROM       0x0001 /* write EEPROM error */
+#define ADW_IERR_MCODE_CHKSUM       0x0002 /* micro code check sum error */
+#define ADW_IERR_NO_CARRIER         0x0004 /* No more carrier memory. */
+#define ADW_IERR_START_STOP_CHIP    0x0008 /* start/stop chip failed */
+#define ADW_IERR_CHIP_VERSION       0x0040 /* wrong chip version */
+#define ADW_IERR_SET_SCSI_ID        0x0080 /* set SCSI ID failed */
+#define ADW_IERR_HVD_DEVICE         0x0100 /* HVD attached to LVD connector. */
+#define ADW_IERR_BAD_SIGNATURE      0x0200 /* signature not found */
+#define ADW_IERR_ILLEGAL_CONNECTION 0x0400 /* Illegal cable connection */
+#define ADW_IERR_SINGLE_END_DEVICE  0x0800 /* Single-end used w/differential */
+#define ADW_IERR_REVERSED_CABLE     0x1000 /* Narrow flat cable reversed */
+#define ADW_IERR_BIST_PRE_TEST      0x2000 /* BIST pre-test error */
+#define ADW_IERR_BIST_RAM_TEST      0x4000 /* BIST RAM test error */
+#define ADW_IERR_BAD_CHIPTYPE       0x8000 /* Invalid 'chip_type' setting. */
 
 /*
  * BIOS LRAM variable absolute offsets.
@@ -892,47 +850,11 @@ typedef struct adw_eep_38C1600_config
 #define BIOS_VERSION    0x5A
 
 /*
- * Microcode Control Flags
- *
- * Flags set by the Adv Library in RISC variable 'control_flag' (0x122)
- * and handled by the microcode.
+ * Chip Type flag values
  */
-#define CONTROL_FLAG_IGNORE_PERR        0x0001 /* Ignore DMA Parity Errors */
-#define CONTROL_FLAG_ENABLE_AIPP        0x0002 /* Enabled AIPP checking. */
-
-/*
- * ASC_MC_DEVICE_HSHK_CFG_TABLE microcode table or HSHK_CFG register format
- */
-#define HSHK_CFG_WIDE_XFR       0x8000
-#define HSHK_CFG_RATE           0x0F00
-#define HSHK_CFG_OFFSET         0x001F
-
-#define ASC_DEF_MAX_HOST_QNG    0xFD /* Max. number of host commands (253) */
-#define ASC_DEF_MIN_HOST_QNG    0x10 /* Min. number of host commands (16) */
-#define ASC_DEF_MAX_DVC_QNG     0x3F /* Max. number commands per device (63) */
-#define ASC_DEF_MIN_DVC_QNG     0x04 /* Min. number commands per device (4) */
-
-#define ASC_QC_DATA_CHECK  0x01 /* Require ASC_QC_DATA_OUT set or clear. */
-#define ASC_QC_DATA_OUT    0x02 /* Data out DMA transfer. */
-#define ASC_QC_START_MOTOR 0x04 /* Send auto-start motor before request. */
-#define ASC_QC_NO_OVERRUN  0x08 /* Don't report overrun. */
-#define ASC_QC_FREEZE_TIDQ 0x10 /* Freeze TID queue after request. XXX TBD */
-
-#define ASC_QSC_NO_DISC     0x01 /* Don't allow disconnect for request. */
-#define ASC_QSC_NO_TAGMSG   0x02 /* Don't allow tag queuing for request. */
-#define ASC_QSC_NO_SYNC     0x04 /* Don't use Synch. transfer on request. */
-#define ASC_QSC_NO_WIDE     0x08 /* Don't use Wide transfer on request. */
-#define ASC_QSC_REDO_DTR    0x10 /* Renegotiate WDTR/SDTR before request. */
-/*
- * Note: If a Tag Message is to be sent and neither ASC_QSC_HEAD_TAG or
- * ASC_QSC_ORDERED_TAG is set, then a Simple Tag Message (0x20) is used.
- */
-#define ASC_QSC_HEAD_TAG    0x40 /* Use Head Tag Message (0x21). */
-#define ASC_QSC_ORDERED_TAG 0x80 /* Use Ordered Tag Message (0x22). */
-
-#define ADV_CHIP_ASC3550          0x01   /* Ultra-Wide IC */
-#define ADV_CHIP_ASC38C0800       0x02   /* Ultra2-Wide/LVD IC */
-#define ADV_CHIP_ASC38C1600       0x03   /* Ultra3-Wide/LVD2 IC */
+#define ADW_CHIP_ASC3550          0x01   /* Ultra-Wide IC */
+#define ADW_CHIP_ASC38C0800       0x02   /* Ultra2-Wide/LVD IC */
+#define ADW_CHIP_ASC38C1600       0x03   /* Ultra3-Wide/LVD2 IC */
 
 /*
  * Adapter temporary configuration structure
@@ -1019,8 +941,8 @@ typedef struct adw_softc {
 
 	int			sc_freeze_dev[ADW_MAX_TID];
 
-	ADW_CALLBACK	isr_callback;	/* pointer to function, called in AdvISR() */
-	ADW_CALLBACK	async_callback;	/* pointer to function, called in AdvISR() */
+	ADW_CALLBACK	isr_callback;	/* pointer to function, called in AdwISR() */
+	ADW_CALLBACK	async_callback;	/* pointer to function, called in AdwISR() */
 	u_int16_t	bios_ctrl;	/* BIOS control word, EEPROM word 12 */
 	u_int16_t	wdtr_able;	/* try WDTR for a device */
 	u_int16_t	sdtr_able;	/* try SDTR for a device */
@@ -1063,7 +985,7 @@ typedef struct adw_softc {
  * coordinating the change with the microcode.
  */
 typedef struct adw_scsi_req_q {
-	u_int8_t	cntl;		/* Ucode flags and state (ASC_MC_QC_*). */
+	u_int8_t	cntl;		/* Ucode flags and state (ADW_MC_QC_*). */
 	u_int8_t	target_cmd;
 	u_int8_t	target_id;	/* Device target identifier. */
 	u_int8_t	target_lun;	/* Device target logical unit number. */
@@ -1164,7 +1086,7 @@ typedef struct adw_scsi_req_q {
 #define IDLE_CMD_STATUS_FAILURE      0x0002
 
 /*
- * AdvSendIdleCmd() flag definitions.
+ * AdwSendIdleCmd() flag definitions.
  */
 #define ADW_NOWAIT     0x01
 
@@ -1285,7 +1207,7 @@ do { \
  *      ADW_FALSE(0) - Queue was not found on the active queue list.
  */
 #define ADW_ABORT_CCB(sc, ccb_ptr) \
-	AdvSendIdleCmd((sc), (u_int16_t) IDLE_CMD_ABORT, (ccb_ptr)->hashkey)
+	AdwSendIdleCmd((sc), (u_int16_t) IDLE_CMD_ABORT, (ccb_ptr)->hashkey)
 
 /*
  * Send a Bus Device Reset Message to the specified target ID.
@@ -1299,7 +1221,7 @@ do { \
  *                     are not purged.
  */
 #define ADW_RESET_DEVICE(sc, target_id) \
-	AdvSendIdleCmd((sc), (u_int16_t) IDLE_CMD_DEVICE_RESET, (target_id), 0)
+	AdwSendIdleCmd((sc), (u_int16_t) IDLE_CMD_DEVICE_RESET, (target_id), 0)
 
 /*
  * SCSI Wide Type definition.
@@ -1321,17 +1243,17 @@ do { \
  * Adv Library functions available to drivers.
  */
 
-int	AdvInitAsc3550Driver __P((ADW_SOFTC *));
-int	AdvInitAsc38C0800Driver __P((ADW_SOFTC *));
-int	AdvInitAsc38C1600Driver __P((ADW_SOFTC *));
-int	AdvInitFrom3550EEP __P((ADW_SOFTC *));
-int	AdvInitFrom38C0800EEP __P((ADW_SOFTC *));
-int	AdvInitFrom38C1600EEP __P((ADW_SOFTC *));
-int	AdvExeScsiQueue __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
-int	AdvISR __P((ADW_SOFTC *));
-void	AdvResetChip __P((bus_space_tag_t, bus_space_handle_t));
-int	AdvSendIdleCmd __P((ADW_SOFTC *, u_int16_t, u_int32_t));
-int	AdvResetSCSIBus __P((ADW_SOFTC *));
-int	AdvResetCCB __P((ADW_SOFTC *));
+int	AdwInitAsc3550Driver __P((ADW_SOFTC *));
+int	AdwInitAsc38C0800Driver __P((ADW_SOFTC *));
+int	AdwInitAsc38C1600Driver __P((ADW_SOFTC *));
+int	AdwInitFrom3550EEP __P((ADW_SOFTC *));
+int	AdwInitFrom38C0800EEP __P((ADW_SOFTC *));
+int	AdwInitFrom38C1600EEP __P((ADW_SOFTC *));
+int	AdwExeScsiQueue __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
+int	AdwISR __P((ADW_SOFTC *));
+void	AdwResetChip __P((bus_space_tag_t, bus_space_handle_t));
+int	AdwSendIdleCmd __P((ADW_SOFTC *, u_int16_t, u_int32_t));
+int	AdwResetSCSIBus __P((ADW_SOFTC *));
+int	AdwResetCCB __P((ADW_SOFTC *));
 
 #endif	/* _ADVANSYS_WIDE_LIBRARY_H_ */
