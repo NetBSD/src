@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2004/05/08 21:51:50 kleink Exp $
+#	$NetBSD: Makefile,v 1.29 2004/08/01 18:53:17 uch Exp $
 
 INCSDIR= /usr/include/newsmips
 
@@ -19,7 +19,7 @@ INCS=	adrsmap.h ansi.h asm.h aout_machdep.h autoconf.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h \
-	wchar_limits.h \
+	wchar_limits.h wsconsio.h \
 	z8530var.h
 
 .include <bsd.kinc.mk>
