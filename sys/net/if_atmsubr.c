@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.9 1996/11/09 23:02:28 chuck Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.10 1997/03/11 23:19:51 chuck Exp $       */
 
 /*
  *
@@ -303,6 +303,14 @@ atm_ifattach(ifp)
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	    ifa = ifa->ifa_list.tqe_next)
+#elif defined(__FreeBSD__) && ((__FreeBSD__ > 2) || defined(_NET_IF_VAR_H_))
+/*
+ * for FreeBSD-3.0.  3.0-SNAP-970124 still sets -D__FreeBSD__=2!
+ * XXX -- for now, use newly-introduced "net/if_var.h" as an identifier.
+ * need a better way to identify 3.0.  -- kjc
+ */
+	for (ifa = ifp->if_addrhead.tqh_first; ifa; 
+	    ifa = ifa->ifa_link.tqe_next)
 #elif defined(__FreeBSD__) || defined(__bsdi__)
 	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) 
 #endif
