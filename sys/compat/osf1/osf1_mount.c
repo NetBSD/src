@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.2 1995/03/08 01:28:55 cgd Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.3 1995/06/18 14:46:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -161,11 +161,11 @@ bsd2osf_statfs(bsfs, osfs)
 {
 
 	bzero(osfs, sizeof (struct osf1_statfs));
-	if (!strncmp(MOUNT_UFS, bsfs->f_fstypename, MFSNAMELEN+1))
+	if (!strncmp(MOUNT_UFS, bsfs->f_fstypename, MFSNAMELEN))
 		osfs->f_type = OSF1_MOUNT_UFS;
-	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, MFSNAMELEN+1))
+	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, MFSNAMELEN))
 		osfs->f_type = OSF1_MOUNT_NFS;
-	else if (!strncmp(MOUNT_MFS, bsfs->f_fstypename, MFSNAMELEN+1))
+	else if (!strncmp(MOUNT_MFS, bsfs->f_fstypename, MFSNAMELEN))
 		osfs->f_type = OSF1_MOUNT_MFS;
 	else
 		/* uh oh...  XXX = PC, CDFS, PROCFS, etc. */

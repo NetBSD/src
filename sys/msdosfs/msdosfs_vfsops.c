@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.29 1995/03/27 12:59:56 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.30 1995/06/18 14:47:52 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -532,7 +532,6 @@ msdosfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
-	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
 

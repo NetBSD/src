@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.7 1995/03/09 12:05:59 mycroft Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.8 1995/06/18 14:47:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -347,7 +347,6 @@ umapfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
-	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
 
