@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.5 1996/03/13 21:21:00 mark Exp $ */
+/* $NetBSD: syscall.c,v 1.6 1996/06/03 21:32:11 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -73,6 +73,7 @@
 #include <machine/frame.h>
 #include <machine/katelib.h>
 #include <machine/undefined.h>
+#include <machine/irqhandler.h>
 
 #include "hydrabus.h"
 
@@ -102,6 +103,16 @@ extern pv_addr_t hydrascratch;
 
 void postmortem __P((trapframe_t *));
 void fpe_dump_prof __P(());
+
+extern int vmem_mapdram		__P((void));
+extern int vmem_mapvram		__P((void));
+extern int vmem_cachectl	__P((int flag));
+extern void pmap_dump_pvs	__P((void));
+extern int pmap_page_attributes	__P((vm_offset_t va));
+extern void pmap_pagedir_dump	__P((void));
+extern void pmap_debug		__P((int level));
+extern u_int disassemble	__P((u_int addr));
+extern void debug_show_all_procs	__P((int argc, char *argv[]));
 
 #define SYSCALL_SPECIAL_RETURN			\
 	userret(p, frame->tf_pc, sticks);	\
@@ -170,6 +181,21 @@ syscall(frame, code)
  */
 
 	if ((ReadWord(frame->tf_pc - 4) & 0x0f000000) != 0x0f000000) {
+#ifdef ARM700BUGTRACK
+		int loop;
+
+		printf("ARM700 just stumbled at 0x%08x\n", frame->tf_pc - 4);
+		printf("Code leading up to this was\n");
+		for (loop = frame->tf_pc - 32; loop < frame->tf_pc; loop += 4)
+			disassemble(loop);
+
+		dumpframe(frame);
+		printf("CPU ID=%08x\n", cpu_id());
+		printf("MMU Fault address=%08x status=%08x\n", cpu_faultaddress(), cpu_faultstatus());
+		printf("Page table entry for 0x%08x at 0x%08x = 0x%08x\n", frame->tf_pc - 4, vtopte(frame->tf_pc - 4),
+			*vtopte(frame->tf_pc - 4));
+#endif
+
 		frame->tf_pc -= 4;
 		++arm700bugcount;
 
@@ -242,7 +268,7 @@ syscall(frame, code)
 	case 0x1008:
 		switch (frame->tf_r0) {
 		case 0 :
-			debug_show_all_procs(frame->tf_r1, frame->tf_r2);
+			debug_show_all_procs(frame->tf_r1, (char **)frame->tf_r2);
 			break;
 #ifdef FPE
 		case 4 :
@@ -414,6 +440,7 @@ syscall(frame, code)
 		SYSCALL_SPECIAL_RETURN;
 		break;
 
+#ifdef RC7500
 	case 0x102b:
 		frame->tf_r0 = vmem_mapdram();
 		SYSCALL_SPECIAL_RETURN;
@@ -428,6 +455,7 @@ syscall(frame, code)
 		frame->tf_r0 = vmem_cachectl(frame->tf_r0);
 		SYSCALL_SPECIAL_RETURN;
 		break;
+#endif /* RC7500 */
 
 	case SYS_syscall:
 /*		code = fuword(params);*/
