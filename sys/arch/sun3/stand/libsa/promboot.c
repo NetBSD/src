@@ -1,3 +1,5 @@
+/*	$NetBSD: promboot.c,v 1.5 1998/01/05 07:03:27 perry Exp $	*/
+
 
 #include <sys/param.h>
 #include <sys/reboot.h>

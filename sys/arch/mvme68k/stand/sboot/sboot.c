@@ -1,3 +1,5 @@
+/*	$NetBSD: sboot.c,v 1.3 1998/01/05 07:03:06 perry Exp $	*/
+
 /*
  *
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff

@@ -1,3 +1,5 @@
+/*	$NetBSD: ioasicvar.h,v 1.2 1998/01/05 07:03:17 perry Exp $	*/
+
 /*
  * Copyright 1995, 1996 Jonathan Stone
  * All rights reserved

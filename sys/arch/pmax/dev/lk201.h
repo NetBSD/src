@@ -1,3 +1,5 @@
+/*	$NetBSD: lk201.h,v 1.2 1998/01/05 07:03:11 perry Exp $	*/
+
 
 /*
  * Ascii values of command keys.

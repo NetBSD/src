@@ -1,3 +1,5 @@
+/*	$NetBSD: netif.h,v 1.4 1998/01/05 07:03:26 perry Exp $	*/
+
 
 #include "iodesc.h"
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: dvma.h,v 1.3 1998/01/05 07:03:26 perry Exp $	*/
+
 
 void dvma_init();
 

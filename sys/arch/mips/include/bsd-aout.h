@@ -1,3 +1,5 @@
+/*	$NetBSD: bsd-aout.h,v 1.3 1998/01/05 07:03:00 perry Exp $	*/
+
 /* bsd-aout.h
 
    4.4bsd a.out format, for backwards compatibility...  */
