@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.6 1994/07/19 14:14:10 mycroft Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.7 1994/07/19 15:07:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -108,6 +108,7 @@ cd9660_lookup(ap)
 	doff_t endsearch;		/* offset to end directory search */
 	struct vnode *pdp;		/* saved dp during symlink work */
 	struct vnode *tdp;		/* returned by cd9660_vget_internal */
+	u_long bmask;			/* block offset mask */
 	int lockparent;			/* 1 => lockparent flag is set */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int error;
@@ -217,6 +218,7 @@ cd9660_lookup(ap)
 	 * profiling time and hence has been removed in the interest
 	 * of simplicity.
 	 */
+	bmask = imp->im_bmask;
 	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
 	    dp->i_diroff > dp->i_size) {
 		entryoffsetinblock = 0;
@@ -224,9 +226,8 @@ cd9660_lookup(ap)
 		numdirpasses = 1;
 	} else {
 		dp->i_offset = dp->i_diroff;
-		entryoffsetinblock = blkoff(imp, dp->i_offset);
-		if (entryoffsetinblock != 0) {
-			if (error = VOP_BLKATOFF(vdp, dp->i_offset, NULL, &bp))
+		if ((entryoffsetinblock = dp->i_offset & bmask) &&
+		    (error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
 				return (error);
 		}
 		numdirpasses = 2;
@@ -241,10 +242,11 @@ searchloop:
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-		if (blkoff(imp, dp->i_offset) == 0) {
+		if ((dp->i_offset & bmask) == 0)
 			if (bp != NULL)
 				brelse(bp);
-			if (error = VOP_BLKATOFF(vdp, dp->i_offset, NULL, &bp))
+			if (error =
+			    VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp))
 				return (error);
 			entryoffsetinblock = 0;
 		}
@@ -252,13 +254,12 @@ searchloop:
 		 * Get pointer to next entry.
 		 */
 		ep = (struct iso_directory_record *)
-			(bp->b_data + entryoffsetinblock);
+			((char *)bp->b_data + entryoffsetinblock);
 		
-		reclen = isonum_711 (ep->length);
+		reclen = isonum_711(ep->length);
 		if (reclen == 0) {
 			/* skip to next block, if any */
-			dp->i_offset =
-			    (dp->i_offset + imp->im_bmask) & ~imp->im_bmask;
+			dp->i_offset = (dp->i_offset + bmask) & ~bmask;
 			continue;
 		}
 		
@@ -270,15 +271,15 @@ searchloop:
 			/* entries are not allowed to cross boundaries */
 			break;
 		
-		/*
-		 * Check for a name match.
-		 */
 		namelen = isonum_711(ep->name_len);
 		
 		if (reclen < ISO_DIRECTORY_RECORD_SIZE + namelen)
 			/* illegal entry, stop */
 			break;
 		
+		/*
+		 * Check for a name match.
+		 */
 		switch (imp->iso_ftype) {
 		default:
 			if ((!(isonum_711(ep->flags)&4)) == !assoc) {
@@ -340,8 +341,8 @@ foundino:
 			    lblkno(imp, saveoffset)) {
 				if (bp != NULL)
 					brelse(bp);
-				if (error = VOP_BLKATOFF(vdp, saveoffset, NULL,
-							 &bp))
+				if (error = VOP_BLKATOFF(vdp,
+				    (off_t)saveoffset, NULL, &bp))
 					return (error);
 			}
 			ep = (struct iso_directory_record *)
