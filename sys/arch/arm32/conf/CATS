@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.30 2000/04/22 13:13:21 tsutsui Exp $
+#	$NetBSD: CATS,v 1.31 2000/05/08 13:49:46 augustss Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -137,6 +137,7 @@ options 	IRQSTATS	# manage IRQ statistics
 #options 	KMEMSTATS	# kernel memory statistics
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40

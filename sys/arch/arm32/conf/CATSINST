@@ -1,4 +1,4 @@
-#	$NetBSD: CATSINST,v 1.14 2000/04/22 13:13:21 tsutsui Exp $
+#	$NetBSD: CATSINST,v 1.15 2000/05/08 13:49:46 augustss Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -137,6 +137,7 @@ options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 #options 	KMEMSTATS	# kernel memory statistics
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
