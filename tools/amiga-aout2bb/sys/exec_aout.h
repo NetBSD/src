@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.1 2004/11/28 07:00:53 jmc Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.1.4.1 2005/04/06 09:44:49 he Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
