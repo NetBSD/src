@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.22 1998/07/28 05:15:47 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.23 1998/11/04 18:50:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.22 1998/07/28 05:15:47 mycroft Exp $");
+__RCSID("$NetBSD: print.c,v 1.23 1998/11/04 18:50:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,15 +107,16 @@ printlong(dp)
 			continue;
 		sp = p->fts_statp;
 		if (f_inode)
-			(void)printf("%*u ", dp->s_inode, sp->st_ino);
+			(void)printf("%*lu ", dp->s_inode,
+			    (unsigned long)sp->st_ino);
 		if (f_size)
 			(void)printf("%*qu ", dp->s_block,
 			    (long long)howmany(sp->st_blocks, blocksize));
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
-		(void)printf("%s %*u %-*s  %-*s  ", buf, dp->s_nlink,
-		    sp->st_nlink, dp->s_user, np->user, dp->s_group,
-		    np->group);
+		(void)printf("%s %*lu %-*s  %-*s  ", buf, dp->s_nlink,
+		    (unsigned long)sp->st_nlink, dp->s_user, np->user,
+		    dp->s_group, np->group);
 		if (f_flags)
 			(void)printf("%-*s ", dp->s_flags, np->flags);
 		if (S_ISCHR(sp->st_mode) || S_ISBLK(sp->st_mode))
@@ -265,7 +266,7 @@ printaname(p, inodefield, sizefield)
 	sp = p->fts_statp;
 	chcnt = 0;
 	if (f_inode)
-		chcnt += printf("%*u ", inodefield, sp->st_ino);
+		chcnt += printf("%*lu ", inodefield, (unsigned long)sp->st_ino);
 	if (f_size)
 		chcnt += printf("%*qu ", sizefield,
 		    (long long)howmany(sp->st_blocks, blocksize));
