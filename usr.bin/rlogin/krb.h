@@ -1,4 +1,4 @@
-/*	$NetBSD: krb.h,v 1.5 1997/01/09 20:21:03 tls Exp $	*/
+/*	$NetBSD: krb.h,v 1.6 1999/02/17 06:49:30 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,6 +39,10 @@
  * XXX
  * These should be in a kerberos include file.
  */
-int	 krcmd __P((char **, u_short, char *, char *, int *, char *));
-int	 krcmd_mutual __P((char **, u_short, char *, char *, int *,
+int	kcmd __P((int *, char **, u_short, char *, char *, char *, int *,
+	    KTEXT, char *, char *, CREDENTIALS *, Key_schedule,
+	    MSG_DAT *, struct sockaddr_in *, struct sockaddr_in *, long));
+
+int	krcmd __P((char **, u_short, char *, char *, int *, char *));
+int	krcmd_mutual __P((char **, u_short, char *, char *, int *,
 	    char *, CREDENTIALS *, Key_schedule));

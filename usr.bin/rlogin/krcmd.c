@@ -1,4 +1,4 @@
-/*	$NetBSD: krcmd.c,v 1.4 1998/01/05 05:15:18 perry Exp $	*/
+/*	$NetBSD: krcmd.c,v 1.5 1999/02/17 06:49:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: krcmd.c,v 1.4 1998/01/05 05:15:18 perry Exp $");
+__RCSID("$NetBSD: krcmd.c,v 1.5 1999/02/17 06:49:31 scottr Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +61,7 @@ __RCSID("$NetBSD: krcmd.c,v 1.4 1998/01/05 05:15:18 perry Exp $");
 
 #include <kerberosIV/des.h>
 #include <kerberosIV/krb.h>
+#include "krb.h"
 
 #include <stdio.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kcmd.c,v 1.6 1998/08/10 03:11:07 perry Exp $	*/
+/*	$NetBSD: kcmd.c,v 1.7 1999/02/17 06:49:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,12 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-__RCSID("$NetBSD: kcmd.c,v 1.6 1998/08/10 03:11:07 perry Exp $");
+__RCSID("$NetBSD: kcmd.c,v 1.7 1999/02/17 06:49:30 scottr Exp $");
 #endif
 #endif /* not lint */
 
