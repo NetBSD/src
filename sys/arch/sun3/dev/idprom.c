@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.16 1997/01/27 19:40:47 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.17 1997/01/27 20:35:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,9 +50,11 @@
 #include <machine/idprom.h>
 #include <machine/mon.h>
 
+#include <sun3/sun3/sunmon.h>
+
 /*
  * This structure is what this driver is all about.
- * It is copied from control space early in startup.
+ * It is copied from the device early in startup.
  */
 struct idprom identity_prom;
 
@@ -60,7 +62,7 @@ struct idprom identity_prom;
  * This is called very early during startup to
  * get a copy of the idprom from control space.
  */
-int
+void
 idprom_init()
 {
 	struct idprom *idp;
@@ -85,11 +87,11 @@ idprom_init()
 
 	if (xorsum != 0) {
 		mon_printf("idprom_fetch: bad checksum=%d\n", xorsum);
-		return xorsum;
+		sunmon_abort();
 	}
 	if (idp->idp_format < 1) {
 		mon_printf("idprom_fetch: bad version=%d\n", idp->idp_format);
-		return -1;
+		sunmon_abort();
 	}
 
 	/*
@@ -101,8 +103,6 @@ idprom_init()
 	hid.c[2] = idp->idp_serialnum[1];
 	hid.c[3] = idp->idp_serialnum[2];
 	hostid = hid.l;
-
-	return 0;
 }
 
 void idprom_etheraddr(eaddrp)
