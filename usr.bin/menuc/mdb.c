@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.28 2003/05/09 12:07:53 lukem Exp $	*/
+/*	$NetBSD: mdb.c,v 1.29 2003/05/16 19:57:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -166,7 +166,7 @@ write_menu_file (char *initcode)
 		"struct menudesc;\n"	
 		"typedef\n"
 		"struct menu_ent {\n"
-		"	char	       *opt_name;\n"
+		"	const char	*opt_name;\n"
 		"	int		opt_menu;\n"
 		"	int		opt_flags;\n"
 		"	int		(*opt_action)(struct menudesc *);\n"
@@ -177,7 +177,7 @@ write_menu_file (char *initcode)
 		"#define OPT_NOMENU	-1\n\n"
 		"typedef\n"
 		"struct menudesc {\n"
-		"	char	       *title;\n"
+		"	const char	*title;\n"
 		"	int		y, x;\n"
 		"	int		h, w;\n"
 		"	int		mopt;\n"
