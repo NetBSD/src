@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.25 1998/04/07 20:08:29 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.26 1998/07/29 18:48:54 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <machine/bus.h>
-#include <sparc/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 
 /*
  * Most devices are configured according to information kept in
