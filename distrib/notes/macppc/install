@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.33 2004/11/01 01:01:47 mbw Exp $
+.\"	$NetBSD: install,v 1.34 2005/01/08 05:21:49 briggs Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -370,6 +370,13 @@ All you need to do is:
 .(disp
 .No 0 \*> Ic boot fd:0
 .disp)
+.Pp
+It is common to see
+.Dq "READ TIMEOUT@"
+from the floppy.  This means that Open
+Firmware is having difficulty reading the media.  See the section below on
+.Sx "Common Problems and Error Messages"
+for more information about this and what you can do to get a successful boot.
 .Pp
 You can eject a floppy by typing:
 .Pp
