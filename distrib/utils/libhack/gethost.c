@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.4 1999/03/13 19:08:44 sommerfe Exp $	*/
+/*	$NetBSD: gethost.c,v 1.5 2000/01/14 13:52:13 pk Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -57,6 +57,19 @@
  * Copied from:  lib/libc/net/gethostnamadr.c
  * and then gutted, leaving only /etc/hosts support.
  */
+
+#include <sys/cdefs.h>
+
+#if defined(__weak_alias)
+/* From namespace.h: */
+#define gethostbyaddr	_gethostbyaddr
+#define gethostbyname	_gethostbyname
+#define gethostname	_gethostname
+
+__weak_alias(gethostbyaddr,_gethostbyaddr);
+__weak_alias(gethostbyname,_gethostbyname);
+__weak_alias(gethostbyname2,gethostbyname);
+#endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
