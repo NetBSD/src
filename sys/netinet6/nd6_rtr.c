@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.33 2002/06/09 14:43:14 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.34 2002/07/13 21:04:55 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.33 2002/06/09 14:43:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.34 2002/07/13 21:04:55 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,6 @@ nd6_ra_input(m, off, icmp6len)
 	u_int32_t advreachable = nd_ra->nd_ra_reachable;
 	long time_second = time.tv_sec;
 
-	Bzero(&dr0, sizeof(dr0));
 	Bzero(&dr0, sizeof(dr0));
 	dr0.rtaddr = saddr6;
 	dr0.flags  = nd_ra->nd_ra_flags_reserved;
