@@ -1,4 +1,4 @@
-/*	$NetBSD: pig.c,v 1.5 1997/10/10 16:43:37 lukem Exp $	*/
+/*	$NetBSD: pig.c,v 1.6 1997/10/12 01:00:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,13 +43,14 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pig.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: pig.c,v 1.5 1997/10/10 16:43:37 lukem Exp $");
+__RCSID("$NetBSD: pig.c,v 1.6 1997/10/12 01:00:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,10 +80,8 @@ main(argc, argv)
 
 	for (len = 0; (ch = getchar()) != EOF;) {
 		if (isalpha(ch)) {
-			if (len >= sizeof(buf)) {
-				(void)fprintf(stderr, "pig: ate too much!\n");
-				exit(1);
-			}
+			if (len >= sizeof(buf))
+				errx(1, "ate too much!");
 			buf[len++] = ch;
 			continue;
 		}
@@ -112,7 +111,7 @@ pigout(buf, len)
 	 * If the word starts with a vowel, append "way".  Don't treat 'y'
 	 * as a vowel if it appears first.
 	 */
-	if (index("aeiouAEIOU", buf[0]) != NULL) {
+	if (strchr("aeiouAEIOU", buf[0]) != NULL) {
 		(void)printf("%.*s%s", len, buf,
 		    allupper ? "WAY" : "way");
 		return;
@@ -125,7 +124,7 @@ pigout(buf, len)
 	if (!allupper)
 		buf[0] = tolower(buf[0]);
 	for (start = 0, olen = len;
-	    !index("aeiouyAEIOUY", buf[start]) && start < olen;) {
+	    !strchr("aeiouyAEIOUY", buf[start]) && start < olen;) {
 		ch = buf[len++] = buf[start++];
 		if ((ch == 'q' || ch == 'Q') && start < olen &&
 		    (buf[start] == 'u' || buf[start] == 'U'))
