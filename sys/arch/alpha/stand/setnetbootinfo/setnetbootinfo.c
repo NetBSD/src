@@ -1,4 +1,4 @@
-/* $NetBSD: setnetbootinfo.c,v 1.5 1997/04/06 08:41:37 cgd Exp $ */
+/* $NetBSD: setnetbootinfo.c,v 1.6 1997/11/01 06:49:16 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -74,7 +74,7 @@ main(argc, argv)
 	char *netbb;
 	int c, fd, i;
 
-	while ((c = getopt(argc, argv, "a:fh:o:uv")) != EOF) {
+	while ((c = getopt(argc, argv, "a:fh:o:uv")) != -1) {
 		switch (c) {
 		case 'a':
 			/* use the argument as an ethernet address */

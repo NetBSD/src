@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_asm.c,v 1.4 1996/05/20 00:48:48 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx_asm.c,v 1.5 1997/11/01 06:49:58 lukem Exp $	*/
 
 /*+M*************************************************************************
  * Adaptec AIC7770/AIC7870 sequencer code assembler.
@@ -45,7 +45,7 @@
  * are token separators.
  *
  *-M*************************************************************************/
-static char id[] = "$NetBSD: aic7xxx_asm.c,v 1.4 1996/05/20 00:48:48 thorpej Exp $";
+static char id[] = "$NetBSD: aic7xxx_asm.c,v 1.5 1997/11/01 06:49:58 lukem Exp $";
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -587,7 +587,7 @@ main(int argc, char **argv)
 	int fd[2];
 
 	ofile = NULL;
-	while ((c = getopt(argc, argv, "dho:vD:")) != EOF) {
+	while ((c = getopt(argc, argv, "dho:vD:")) != -1) {
 		switch (c) {
 		    case 'd':
 			debug = !0;

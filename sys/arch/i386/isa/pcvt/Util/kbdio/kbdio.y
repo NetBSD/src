@@ -1,6 +1,6 @@
 /* Hello emacs, this should be edited in -*- Fundamental -*- mode */
 %{
-/*	$NetBSD: kbdio.y,v 1.3 1997/10/13 14:22:22 lukem Exp $	*/
+/*	$NetBSD: kbdio.y,v 1.4 1997/11/01 06:49:38 lukem Exp $	*/
 /*
  * Copyright (c) 1994,1995 Joerg Wunsch
  *
@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
 	int fd, c;
 	const char *devname = "/dev/console";
 
-	while((c = getopt(argc, argv, "df:")) != EOF)
+	while((c = getopt(argc, argv, "df:")) != -1)
 		switch(c) {
 		case 'd':
 			yydebug = 1;
