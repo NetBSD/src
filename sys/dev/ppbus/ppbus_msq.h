@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.h,v 1.3 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: ppbus_msq.h,v 1.4 2004/01/28 17:11:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 Nicolas Souchu
@@ -183,8 +183,6 @@ struct ppbus_xfer {
 #define MS_SUBRET(code)	{ MS_OP_SUBRET,	{{ code }}}
 #define MS_RET(code)	{ MS_OP_RET, {{ code }}}
 
-#ifdef _KERNEL
-
 /*
  * Function abstraction level
  */
@@ -233,7 +231,5 @@ int ppbus_MS_microseq(
 		struct ppbus_microseq *,	/* msq to execute */
 		int *				/* returned value */
 		);
-
-#endif /* _KERNEL */
 
 #endif /* __PPBUS_MSQ_H */
