@@ -9,8 +9,10 @@ CLEANFILES=ranlib.5.0
 
 ranlib.0: ranlib.5.0
 
+.if !defined(NOMAN)
 afterinstall:
 	install -c -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} ranlib.5.0 \
 	    ${DESTDIR}${MANDIR}5/ranlib.0
+.endif
 
 .include <bsd.prog.mk>
