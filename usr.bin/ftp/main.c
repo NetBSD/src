@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.70 2000/05/01 10:35:19 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.71 2000/05/31 14:23:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.70 2000/05/01 10:35:19 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.71 2000/05/31 14:23:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,8 +144,8 @@ main(int argc, char *argv[])
 {
 	int ch, rval;
 	struct passwd *pw = NULL;
-	char *cp, *ep, *anonuser, *anonpass;
-	int dumbterm, s, len;
+	char *cp, *ep, *anonuser, *anonpass, *upload_path;
+	int dumbterm, s, len, isupload;
 
 	ftpport = "ftp";
 	httpport = "http";
@@ -184,6 +184,8 @@ main(int argc, char *argv[])
 	epsv4 = 0;
 #endif
 	epsv4bad = 0;
+	upload_path = NULL;
+	isupload = 0;
 
 	/*
 	 * Get the default socket buffer sizes if we don't already have them.
@@ -268,7 +270,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:RtT:vV")) != -1) {
+	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:RtT:u:vV")) != -1) {
 		switch (ch) {
 		case 'A':
 			activefallback = 0;
@@ -361,6 +363,16 @@ main(int argc, char *argv[])
 			break;
 		}
 
+		case 'u':
+		{
+			/* XXX : if i move this under 'T' we get a segv. */
+			isupload = 1;
+			interactive = 0;
+			upload_path = xstrdup(optarg);
+
+			break;
+		}
+
 		case 'v':
 			progress = verbose = 1;
 			break;
@@ -439,7 +451,11 @@ main(int argc, char *argv[])
 #endif
 
 	if (argc > 0) {
-		if (strchr(argv[0], ':') != NULL && ! isipv6addr(argv[0])) {
+		if (isupload) {
+			rval = auto_put(argc, argv, upload_path);
+			exit(rval);
+		} else if (strchr(argv[0], ':') != NULL
+			    && ! isipv6addr(argv[0])) {
 			rval = auto_fetch(argc, argv);
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);
@@ -487,6 +503,9 @@ main(int argc, char *argv[])
 			retry_connect = 0; /* connected, stop hiding msgs */
 		}
 	}
+	if (isupload)
+		usage();
+
 #ifndef NO_EDITCOMPLETE
 	controlediting();
 #endif /* !NO_EDITCOMPLETE */
@@ -952,9 +971,10 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-"usage: %s [-AadefginpRtvV] [-o outfile] [-P port] [-r retry] [-T dir,max[,inc]\n"
-"       [[user@]host [port]] [host:path[/]] [file:///file]\n"
-"       [ftp://[user[:pass]@]host[:port]/path[/]]\n"
-"       [http://[user[:pass]@]host[:port]/path] [...]\n", __progname);
+"usage: %s [-AadefginpRtvV] [-o outfile] [-P port] [-r retry]\n"
+"           [-T dir,max[,inc][[user@]host [port]]] [host:path[/]]\n"
+"           [file:///file] [ftp://[user[:pass]@]host[:port]/path[/]]\n"
+"           [http://[user[:pass]@]host[:port]/path] [...]\n"
+"       %s -u url file [...]\n", __progname, __progname);
 	exit(1);
 }
