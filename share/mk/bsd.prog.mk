@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.34 1994/01/28 00:16:38 cgd Exp $
+#	$Id: bsd.prog.mk,v 1.35 1994/02/09 23:50:38 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -97,9 +97,6 @@ cleandir: clean
 .if !target(install)
 .if !target(beforeinstall)
 beforeinstall:
-.if defined(DESTDIR) || defined(BINDIR)
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}
-.endif
 .endif
 .if !target(afterinstall)
 afterinstall:
