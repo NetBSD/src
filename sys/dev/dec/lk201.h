@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.h,v 1.5 1998/10/22 18:50:17 drochner Exp $	*/
+/*	$NetBSD: lk201.h,v 1.6 1999/03/10 13:02:43 kleink Exp $	*/
 
 
 /*
@@ -140,5 +140,5 @@
 
 #ifdef _KERNEL
 extern int LKgetc __P((dev_t dev));
-extern void lkdivert __P (( int (*getc_fn) __P ((dev_t dev)), dev_t dev));
+extern void lkdivert __P ((int (*getc_fn)(dev_t dev), dev_t dev));
 #endif
