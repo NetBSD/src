@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.105 1996/10/23 07:25:44 matthias Exp $	*/
+/*	$NetBSD: sd.c,v 1.106 1996/11/29 19:58:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -848,6 +848,13 @@ sd_mode_sense(sd, scsi_sense, page, flags)
 	int page, flags;
 {
 	struct scsi_mode_sense scsi_cmd;
+
+	/*
+	 * Make sure the sense buffer is clean before we do
+	 * the mode sense, so that checks for bogus values of
+	 * 0 will work in case the mode sense fails.
+	 */
+	bzero(scsi_sense, sizeof(*scsi_sense));
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = MODE_SENSE;
