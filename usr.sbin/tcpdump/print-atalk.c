@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atalk.c,v 1.4 1997/03/15 18:37:45 is Exp $	*/
+/*	$NetBSD: print-atalk.c,v 1.5 1997/09/26 18:12:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -95,11 +95,8 @@ static const char *ataddr_string(u_short, u_char);
 static void ddp_print(const u_char *, int, int, u_short, u_char, u_char);
 static const char *ddpskt_string(int);
 
-/*
- * Print AppleTalk Datagram Delivery Protocol packets.
- */
 void
-atalk_print(register const u_char *bp, int length)
+llap_print(register const u_char *bp, int length)
 {
 	register const struct LAP *lp;
 	register const struct atDDP *dp;
@@ -154,6 +151,31 @@ atalk_print(register const u_char *bp, int length)
 		    lp->src, lp->dst, lp->type, length);
 		break;
 	}
+}
+
+/*
+ * Print AppleTalk Datagram Delivery Protocol packets.
+ */
+void
+atalk_print(register const u_char *bp, int length)
+{
+	register const struct atDDP *dp;
+	u_short snet;
+
+	if (length < ddpSize) {
+	  (void)printf(" [|ddp %d]", length);
+	  return;
+	}
+	dp = (const struct atDDP *)bp;
+	snet = EXTRACT_SHORT(&dp->srcNet);
+	printf("%s.%s", ataddr_string(snet, dp->srcNode),
+	       ddpskt_string(dp->srcSkt));
+	printf(" > %s.%s:",
+	       ataddr_string(EXTRACT_SHORT(&dp->dstNet), dp->dstNode),
+	       ddpskt_string(dp->dstSkt));
+	bp += ddpSize;
+	length -= ddpSize;
+	ddp_print(bp, length, dp->type, snet, dp->srcNode, dp->srcSkt);
 }
 
 /* XXX should probably pass in the snap header and do checks like arp_print() */
