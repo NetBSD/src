@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.29 2000/05/21 02:50:12 soren Exp $
+# $NetBSD: Makefile.booters,v 1.30 2000/07/13 22:18:08 jdolecek Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -63,7 +63,8 @@ CHECKSIZE_CMD?=	SIZE=${SIZE} sh ${.CURDIR}/../common/checksize.sh
 PROG=		${SECONDARY_PROG}
 LOAD_ADDRESS=	${SECONDARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DSECONDARY_BOOTBLOCK
-VERS_O?=	vers.o
+SRCS+=	vers.c
+CLEANFILES+= vers.c
 .else
 # XXX ?
 .endif
@@ -97,14 +98,13 @@ LIBSA=		${SALIB}
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
+.PHONY: vers.c
+vers.c: ${.CURDIR}/version
+	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "pmax"
 
-${PROG}: ${OBJS} ${LIBS}
-.if defined(VERS_O)
-	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version
-	${COMPILE.c} vers.c
-.endif
+${PROG}: machine mips pmax ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
-	    -e start -o ${PROG} ${OBJS} ${VERS_O} ${LIBS}
+	    -e start -o ${PROG} ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}
 .if defined(CHECKSIZE_CMD)
 	@${CHECKSIZE_CMD} ${PROG} ${PRIMARY_MAX_LOAD} ${PRIMARY_MAX_TOTAL} || \
@@ -112,9 +112,6 @@ ${PROG}: ${OBJS} ${LIBS}
 .endif
 
 CLEANFILES+=	${PROG}.map
-.if defined(VERS_O)
-CLEANFILES+=vers.c vers.o
-.endif
 
 cleandir distclean: cleanlibdir
 
