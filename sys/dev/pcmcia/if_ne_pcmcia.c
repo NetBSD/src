@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.94 2002/07/23 14:11:11 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.95 2002/09/13 02:16:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.94 2002/07/23 14:11:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.95 2002/09/13 02:16:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -801,7 +801,7 @@ again:
 			typestr = " (RTL8019)";
 			dsc->sc_mediachange = rtl80x9_mediachange;
 			dsc->sc_mediastatus = rtl80x9_mediastatus;
-				dsc->init_card = rtl80x9_init_card;
+			dsc->init_card = rtl80x9_init_card;
 			dsc->sc_media_init = rtl80x9_media_init;
 		}
 	}
