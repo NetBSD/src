@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.24 1996/10/11 00:22:13 christos Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.25 1996/10/13 07:45:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -712,7 +712,7 @@ NLEAF(mips_r2000_TLBMissException)
 	sw	a3, 20(sp)
 	sw	sp, 24(sp)
 	move	a2, ra
-	jal	_C_LABEL(kprintf)
+	jal	_C_LABEL(printf)
 	mfc0	a3, MACH_COP_0_BAD_VADDR
 	.data
 1:
