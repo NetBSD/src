@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)preen.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: preen.c,v 1.8 1994/10/28 16:55:08 mycroft Exp $";
+static char *rcsid = "$Id: preen.c,v 1.9 1994/12/05 20:16:04 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,8 +44,7 @@ static char *rcsid = "$Id: preen.c,v 1.8 1994/10/28 16:55:08 mycroft Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-
-char	*rawname(), *unrawname(), *blockcheck();
+#include <unistd.h>
 
 struct part {
 	struct	part *next;		/* forward link of partitions on disk */
@@ -64,6 +63,11 @@ struct disk {
 int	nrun, ndisks;
 char	hotroot;
 
+char	*rawname(), *unrawname(), *blockcheck();
+void addpart __P((char *, char *, long));
+int startdisk __P((struct disk *, int (*)() ));
+
+int
 checkfstab(preen, maxrun, docheck, chkit)
 	int preen, maxrun;
 	int (*docheck)(), (*chkit)();
@@ -226,6 +230,7 @@ finddisk(name)
 	return (dk);
 }
 
+void
 addpart(name, fsname, auxdata)
 	char *name, *fsname;
 	long auxdata;
@@ -257,6 +262,7 @@ addpart(name, fsname, auxdata)
 	pt->auxdata = auxdata;
 }
 
+int
 startdisk(dk, checkit)
 	register struct disk *dk;
 	int (*checkit)();

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass4.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: pass4.c,v 1.7 1994/09/23 14:27:17 mycroft Exp $";
+static char *rcsid = "$Id: pass4.c,v 1.8 1994/12/05 20:16:02 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -43,9 +43,9 @@ static char *rcsid = "$Id: pass4.c,v 1.7 1994/09/23 14:27:17 mycroft Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include "fsck.h"
+#include "extern.h"
 
-int	pass4check();
-
+void
 pass4()
 {
 	register ino_t inumber;
@@ -104,6 +104,7 @@ pass4()
 	}
 }
 
+int
 pass4check(idesc)
 	register struct inodesc *idesc;
 {

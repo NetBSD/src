@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass3.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: pass3.c,v 1.6 1994/06/08 19:00:28 mycroft Exp $";
+static char *rcsid = "$Id: pass3.c,v 1.7 1994/12/05 20:16:01 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -41,7 +41,9 @@ static char *rcsid = "$Id: pass3.c,v 1.6 1994/06/08 19:00:28 mycroft Exp $";
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include "fsck.h"
+#include "extern.h"
 
+void
 pass3()
 {
 	register struct inoinfo **inpp, *inp;

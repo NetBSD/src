@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dumplfs.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dumplfs.c,v 1.3 1994/10/31 04:21:52 cgd Exp $";
+static char *rcsid = "$Id: dumplfs.c,v 1.4 1994/12/05 20:15:39 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -190,7 +190,7 @@ dump_ifile(fd, lfsp, do_ientries)
 	IFILE *ipage;
 	struct dinode *dip, *dpage;
 	daddr_t addr, *addrp, *dindir, *iaddrp, *indir;
-	int block_limit, i, inum, j, nblocks, nsupb, psize;
+	int block_limit, i, inum, j, nblocks, psize;
 
 	psize = lfsp->lfs_bsize;
 	addr = lfsp->lfs_idaddr;

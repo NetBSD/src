@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)halt.c	5.10 (Berkeley) 4/3/91";*/
-static char rcsid[] = "$Id: halt.c,v 1.4 1993/08/01 18:27:00 mycroft Exp $";
+static char rcsid[] = "$Id: halt.c,v 1.5 1994/12/05 20:16:10 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -50,11 +50,17 @@ static char rcsid[] = "$Id: halt.c,v 1.4 1993/08/01 18:27:00 mycroft Exp $";
 #include <sys/time.h>
 #include <sys/syslog.h>
 #include <sys/signal.h>
+#include <sys/types.h>
 #include <errno.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <paths.h>
+#include <signal.h>
+#include <unistd.h>
 
+void setalarm __P((int));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -139,6 +145,8 @@ main(argc, argv)
 	}
 	reboot(howto);
 	perror("halt");
+
+	exit(0);
 }
 
 void
@@ -147,6 +155,7 @@ dingdong()
 	/* RRRIIINNNGGG RRRIIINNNGGG */
 }
 
+void
 setalarm(n)
 	int n;
 {

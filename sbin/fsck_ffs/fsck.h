@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsck.h	8.1 (Berkeley) 6/5/93
- *	$Id: fsck.h,v 1.6 1994/06/08 19:00:21 mycroft Exp $
+ *	$Id: fsck.h,v 1.7 1994/12/05 20:15:49 cgd Exp $
  */
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */
@@ -213,4 +213,3 @@ struct dinode *ginode();
 struct inoinfo *getinoinfo();
 void getblk();
 ino_t allocino();
-int findino();

@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: fdisk.c,v 1.7 1994/10/20 00:06:17 mycroft Exp $";
+static char rcsid[] = "$Id: fdisk.c,v 1.8 1994/12/05 20:15:41 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -33,10 +33,13 @@ static char rcsid[] = "$Id: fdisk.c,v 1.7 1994/10/20 00:06:17 mycroft Exp $";
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define LBUF 100
 static char lbuf[LBUF];
@@ -594,7 +597,7 @@ decimal(str, num)
 	char *str;
 	int *num;
 {
-	int acc = 0, c;
+	int acc = 0;
 	char *cp;
 
 	for (;; printf("%s is not a valid decimal number.\n", lbuf)) {

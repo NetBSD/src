@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass2.c	8.2 (Berkeley) 2/27/94";*/
-static char *rcsid = "$Id: pass2.c,v 1.8 1994/10/28 16:54:05 mycroft Exp $";
+static char *rcsid = "$Id: pass2.c,v 1.9 1994/12/05 20:15:59 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -41,14 +41,18 @@ static char *rcsid = "$Id: pass2.c,v 1.8 1994/10/28 16:54:05 mycroft Exp $";
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "fsck.h"
+#include "extern.h"
 
 #define MINDIRSIZE	(sizeof (struct dirtemplate))
 
 int	pass2check(), blksort();
 
+void
 pass2()
 {
 	register struct dinode *dp;
@@ -189,6 +193,7 @@ pass2()
 	propagate();
 }
 
+int
 pass2check(idesc)
 	struct inodesc *idesc;
 {
@@ -440,6 +445,7 @@ again:
 /*
  * Routine to sort disk blocks.
  */
+int
 blksort(inpp1, inpp2)
 	struct inoinfo **inpp1, **inpp2;
 {

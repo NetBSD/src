@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.2 (Berkeley) 1/23/94";*/
-static char *rcsid = "$Id: main.c,v 1.13 1994/06/08 19:00:24 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.14 1994/12/05 20:15:52 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,18 +52,24 @@ static char *rcsid = "$Id: main.c,v 1.13 1994/06/08 19:00:24 mycroft Exp $";
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <unistd.h>
+
 #include "fsck.h"
+#include "extern.h"
 
 void	catch(), catchquit(), voidquit();
 int	returntosingle;
+int argtoi __P((int, char *, char *, int));
+int checkfilesys __P((char *, char *, long, int));
+int docheck __P((struct fstab *));
 
+int
 main(argc, argv)
 	int	argc;
 	char	*argv[];
 {
 	int ch;
 	int ret, maxrun = 0;
-	extern int docheck(), checkfilesys();
 	extern char *optarg, *blockcheck();
 	extern int optind;
 
@@ -131,6 +137,7 @@ main(argc, argv)
 	exit(ret);
 }
 
+int
 argtoi(flag, req, str, base)
 	int flag;
 	char *req, *str;
@@ -148,6 +155,7 @@ argtoi(flag, req, str, base)
 /*
  * Determine whether a filesystem should be checked.
  */
+int
 docheck(fsp)
 	register struct fstab *fsp;
 {
@@ -164,9 +172,11 @@ docheck(fsp)
  * Check the specified filesystem.
  */
 /* ARGSUSED */
+int
 checkfilesys(filesys, mntpt, auxdata, child)
 	char *filesys, *mntpt;
 	long auxdata;
+	int child;
 {
 	daddr_t n_ffree, n_bfree;
 	struct dups *dp;

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: setup.c,v 1.14 1994/10/28 16:55:11 mycroft Exp $";
+static char *rcsid = "$Id: setup.c,v 1.15 1994/12/05 20:16:06 cgd Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -45,18 +45,25 @@ static char *rcsid = "$Id: setup.c,v 1.14 1994/10/28 16:55:11 mycroft Exp $";
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/file.h>
+
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "fsck.h"
+#include "extern.h"
 
 struct bufarea asblk;
 #define altsblock (*asblk.b_un.b_fs)
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
-struct	disklabel *getdisklabel();
+void badsb __P((int, char *));
+int calcsb __P((char *, int, struct fs *));
+struct disklabel *getdisklabel();
+int readsb __P((int));
 
+int
 setup(dev)
 	char *dev;
 {
@@ -252,25 +259,25 @@ setup(dev)
 	if (blockmap == NULL) {
 		printf("cannot alloc %u bytes for blockmap\n",
 		    (unsigned)bmapsize);
-		goto badsb;
+		goto badsblabel;
 	}
 	statemap = calloc((unsigned)(maxino + 1), sizeof(char));
 	if (statemap == NULL) {
 		printf("cannot alloc %u bytes for statemap\n",
 		    (unsigned)(maxino + 1));
-		goto badsb;
+		goto badsblabel;
 	}
 	typemap = calloc((unsigned)(maxino + 1), sizeof(char));
 	if (typemap == NULL) {
 		printf("cannot alloc %u bytes for typemap\n",
 		    (unsigned)(maxino + 1));
-		goto badsb;
+		goto badsblabel;
 	}
 	lncntp = (short *)calloc((unsigned)(maxino + 1), sizeof(short));
 	if (lncntp == NULL) {
 		printf("cannot alloc %u bytes for lncntp\n", 
 		    (unsigned)(maxino + 1) * sizeof(short));
-		goto badsb;
+		goto badsblabel;
 	}
 	numdirs = sblock.fs_cstotal.cs_ndir;
 	inplast = 0;
@@ -282,12 +289,12 @@ setup(dev)
 	if (inpsort == NULL || inphead == NULL) {
 		printf("cannot alloc %u bytes for inphead\n", 
 		    (unsigned)numdirs * sizeof(struct inoinfo *));
-		goto badsb;
+		goto badsblabel;
 	}
 	bufinit();
 	return (1);
 
-badsb:
+badsblabel:
 	ckfini();
 	return (0);
 }
@@ -295,6 +302,7 @@ badsb:
 /*
  * Read in the super block and its summary info.
  */
+int
 readsb(listerr)
 	int listerr;
 {
@@ -378,6 +386,7 @@ readsb(listerr)
 	return (1);
 }
 
+void
 badsb(listerr, s)
 	int listerr;
 	char *s;
@@ -396,6 +405,7 @@ badsb(listerr, s)
  * can be used. Do NOT attempt to use other macros without verifying that
  * their needed information is available!
  */
+int
 calcsb(dev, devfd, fs)
 	char *dev;
 	int devfd;
