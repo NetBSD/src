@@ -1,4 +1,4 @@
-/*	$Id: defs.h,v 1.2 1993/08/02 17:43:29 mycroft Exp $ */
+/*	$Id: defs.h,v 1.3 2001/04/19 14:41:22 wiz Exp $ */
 #define PROG_PREFIX ""
 #define DEVICE "ps"
 #define FONTPATH "/usr/share/groff_font"

@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/25 10:11:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2001/04/19 14:41:21 wiz Exp $
+
+.include "../Makefile.lib"
+
+DIST=		${IDIST}/src/utils/hpftodit
+.PATH:		${DIST}
 
 PROG=		hpftodit
 SRCS=		hpftodit.cc
-CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)
 
-.include "../../Makefile.inc"
-.include "../Makefile.cfg"
 .include <bsd.prog.mk>

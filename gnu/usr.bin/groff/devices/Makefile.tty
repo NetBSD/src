@@ -1,26 +1,6 @@
-#	from: @(#)Makefile.tty	6.1 (Berkeley) 3/3/91
-#	$NetBSD: Makefile.tty,v 1.5 1997/10/18 05:58:30 lukem Exp $
+#	$NetBSD: Makefile.tty,v 1.6 2001/04/19 14:40:43 wiz Exp $
 
-#Modified for Berkeley Unix by Donn Seeley, donn@okeeffe.berkeley.edu
-#
-#Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-#     Written by James Clark (jjc@jclark.uucp)
-#
-#This file is part of groff.
-#
-#groff is free software; you can redistribute it and/or modify it under
-#the terms of the GNU General Public License as published by the Free
-#Software Foundation; either version 1, or (at your option) any later
-#version.
-#
-#groff is distributed in the hope that it will be useful, but WITHOUT ANY
-#WARRANTY; without even the implied warranty of MERCHANTABILITY or
-#FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-#for more details.
-#
-#You should have received a copy of the GNU General Public License along
-#with groff; see the file LICENSE.  If not, write to the Free Software
-#Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+# common Makefile contents for devascii and devlatin1
 
 .MAIN: all
 
@@ -42,7 +22,7 @@ $(FONTS): R.proto
 	     -e "/^internalname/s/B/2/" \
 	     -e "/^internalname/s/I/1/" \
 	     -e "/^internalname .*[^ 0-9]/d" \
-	     $(.CURDIR)/R.proto >$@)
+	     $> >$@)
 
 DESC: DESC.proto
 	@echo Making $@
@@ -50,4 +30,4 @@ DESC: DESC.proto
 	    -e "s/^hor .*$$/hor `echo $(RES) / $(CPI) | bc`/" \
 	    -e "s/^vert .*$$/vert `echo $(RES) / $(LPI) | bc`/" \
 	    -e "s/^fonts .*$$/fonts `set $(FONTS); echo $$#` $(FONTS)/" \
-	    $(.CURDIR)/DESC.proto >$@
+	    $> >$@
