@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.57 2003/08/11 16:44:35 pk Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.58 2003/08/11 16:48:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.57 2003/08/11 16:44:35 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.58 2003/08/11 16:48:05 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1464,7 +1464,8 @@ uao_pagein_page(aobj, pageidx)
 	 * deactivate the page (to make sure it's on a page queue).
 	 */
 	uvm_lock_pageq();
-	uvm_pagedeactivate(pg);
+	if (pg->wire_count == 0)
+		uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
 
 	pg->flags &= ~(PG_BUSY|PG_CLEAN|PG_FAKE);
