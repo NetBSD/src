@@ -1,8 +1,8 @@
-/*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1997/04/16 22:54:21 thorpej Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank.
- * Copyright (C) 1995, 1996 TooLs GmbH.
+ * Copyright (C) 1995-1997 Wolfgang Solfrank.
+ * Copyright (C) 1995-1997 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,20 +36,47 @@
 #include <machine/frame.h>
 
 struct machvec {
-	void (*splx) __P((int));
+	int (*splhigh) __P((void));
+	int (*spl0) __P((void));
+	int (*splbio) __P((void));
+	int (*splnet) __P((void));
+	int (*spltty) __P((void));
+	int (*splimp) __P((void));
+	int (*splclock) __P((void));
+	int (*splsoftclock) __P((void));
+	int (*splsoftnet) __P((void));
+	int (*splx) __P((int));
+	void (*setsoftclock) __P((void));
+	void (*setsoftnet) __P((void));
+	void (*clock_return) __P((struct clockframe *, int));
 	void (*irq_establish) __P((int, int, void (*)(void *), void *));
 };
 extern struct machvec machine_interface;
 
 #include <machine/psl.h>
 
+#define	splhigh()	((*machine_interface.splhigh)())
+#define	spl0()		((*machine_interface.spl0)())
+#define	splbio()	((*machine_interface.splbio)())
+#define	splnet()	((*machine_interface.splnet)())
+#define	spltty()	((*machine_interface.spltty)())
+#define	splimp()	((*machine_interface.splimp)())
+#define	splclock()	((*machine_interface.splclock)())
+#define	splsoftclock()	((*machine_interface.splsoftclock)())
+#define	splstatclock()	splclock()
+#define	splsoftnet()	((*machine_interface.splsoftnet)())
+#define	splx(new)	((*machine_interface.splx)(new))
+#define	setsoftclock()	((*machine_interface.setsoftclock)())
+#define	setsoftnet()	((*machine_interface.setsoftnet)())
+#define	clock_return(frame, level)		\
+	((*machine_interface.clock_return)((frame), (level)))
 #define	irq_establish(irq, level, handler, arg)	\
 	((*machine_interface.irq_establish)((irq), (level), (handler), (arg)))
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth != 0)
+#define	CLKF_INTR(frame)	((frame)->depth >= 0)
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)
