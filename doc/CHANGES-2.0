@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.537 2004/11/12 06:59:27 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.538 2004/11/12 07:10:53 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8091,3 +8091,9 @@ sys/compat/ultrix/ultrix_misc.c				1.95
 
 	Bounds check syscall arguments where appropriate.
 	[david, ticket #946]
+
+sys/sys/param.h					patched by hand
+share/tmac/doc-common				patched by hand
+gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
+
+	Welcome to 2.0_RC5
