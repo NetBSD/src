@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.14 2001/10/18 20:17:27 thorpej Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.15 2001/11/13 00:12:58 lukem Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -41,6 +41,9 @@
  *
  *	@(#)llc_subr.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.15 2001/11/13 00:12:58 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
