@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.5 2000/10/17 16:10:41 taca Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.6 2000/10/17 16:12:20 taca Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -210,7 +210,7 @@ struct bpf_insn dhcp_bpf_filter [] = {
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 
-#if defined (DEC_FDDI)
+#if defined(DEC_FDDI) || defined(NETBSD_FDDI)
 struct bpf_insn *bpf_fddi_filter;
 #endif
 
