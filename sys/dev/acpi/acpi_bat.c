@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.24 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.25 2003/10/31 21:39:51 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.24 2003/10/31 20:54:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.25 2003/10/31 21:39:51 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -737,7 +737,6 @@ acpibat_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 		acpibat_update(sc);
 
 	/* XXX locking */
-	/* XXX it should be checked whether info/stat is valid. */
 	*tred = sc->sc_data[tred->sensor];
 	/* XXX locking */
 
