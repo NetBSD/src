@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14 1994/10/27 04:15:48 cgd Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15 1994/11/05 03:17:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,11 +128,8 @@ set_user_ldt(pcb)
 	struct pcb *pcb;
 {
 
-	gdt_segs[GUSERLDT_SEL].ssd_base = (unsigned)pcb->pcb_ldt;
-	gdt_segs[GUSERLDT_SEL].ssd_limit = (pcb->pcb_ldt_len * sizeof(union descriptor)) - 1;
-	ssdtosd(gdt_segs+GUSERLDT_SEL, gdt+GUSERLDT_SEL);
-	lldt(GSEL(GUSERLDT_SEL, SEL_KPL));
-	currentldt = GSEL(GUSERLDT_SEL, SEL_KPL);
+	gdt[GUSERLDT_SEL] = pcb->pcb_ldt_desc;
+	lldt(currentldt = GSEL(GUSERLDT_SEL, SEL_KPL));
 }
 
 struct i386_get_ldt_args {
@@ -158,6 +155,7 @@ i386_get_ldt(p, args, retval)
 		return(error);
 
 	uap = &ua;
+
 #ifdef	DEBUG
 	printf("i386_get_ldt: start=%d num=%d descs=%x\n", uap->start,
 	    uap->num, uap->desc);
@@ -166,28 +164,25 @@ i386_get_ldt(p, args, retval)
 	if (uap->start < 0 || uap->num < 0)
 		return(EINVAL);
 
-	s = splhigh();
-
 	if (pcb->pcb_ldt) {
 		nldt = pcb->pcb_ldt_len;
-		num = min(uap->num, nldt);
-		lp = &((union descriptor *)(pcb->pcb_ldt))[uap->start];
+		lp = (union descriptor *)pcb->pcb_ldt;
 	} else {
 		nldt = sizeof(ldt)/sizeof(ldt[0]);
-		num = min(uap->num, nldt);
-		lp = &ldt[uap->start];
+		lp = ldt;
 	}
 	if (uap->start > nldt) {
 		splx(s);
 		return(EINVAL);
 	}
+	lp += uap->start;
+	num = min(uap->num, nldt - uap->start);
 
-	error = copyout(lp, uap->desc, num * sizeof(union descriptor));
-	if (!error)
-		*retval = num;
+	if (error = copyout(lp, uap->desc, num * sizeof(union descriptor)))
+		return(error);
 
-	splx(s);
-	return(error);
+	*retval = num;
+	return(0);
 }
 
 struct i386_set_ldt_args {
@@ -208,7 +203,7 @@ i386_set_ldt(p, args, retval)
 	int s;
 	struct i386_set_ldt_args ua, *uap;
 
-	if ((error = copyin(args, &ua, sizeof(struct i386_set_ldt_args))) < 0)
+	if (error = copyin(args, &ua, sizeof(struct i386_set_ldt_args)))
 		return(error);
 
 	uap = &ua;
@@ -221,18 +216,34 @@ i386_set_ldt(p, args, retval)
 	if (uap->start < 0 || uap->num < 0)
 		return(EINVAL);
 
-	/* XXX Should be 8192 ! */
-	if (uap->start > 512 || (uap->start + uap->num) > 512)
+	if (uap->start > 8192 || (uap->start + uap->num) > 8192)
 		return(EINVAL);
 
 	/* allocate user ldt */
-	if (!pcb->pcb_ldt) {
-		union descriptor *new_ldt =
-			(union descriptor *)kmem_alloc(kernel_map, 512*sizeof(union descriptor));
-		bzero(new_ldt, 512*sizeof(union descriptor));
-		bcopy(ldt, new_ldt, sizeof(ldt));
+	if (!pcb->pcb_ldt || (uap->start + uap->num) > pcb->pcb_ldt_len) {
+		size_t oldlen, len;
+		union descriptor *new_ldt;
+
+		if (!pcb->pcb_ldt)
+			pcb->pcb_ldt_len = 512;
+		while ((uap->start + uap->num) > pcb->pcb_ldt_len)
+			pcb->pcb_ldt_len *= 2;
+		len = pcb->pcb_ldt_len * sizeof(union descriptor);
+		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
+		if (!pcb->pcb_ldt) {
+			oldlen = sizeof(ldt);
+			bcopy(ldt, new_ldt, oldlen);
+		} else {
+			oldlen = pcb->pcb_ldt_len * sizeof(union descriptor);
+			bcopy(pcb->pcb_ldt, new_ldt, oldlen);
+			kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
+			    oldlen);
+		}
+		bzero((caddr_t)new_ldt + oldlen, len - oldlen);
 		pcb->pcb_ldt = (caddr_t)new_ldt;
-		pcb->pcb_ldt_len = 512;		/* XXX need to grow */
+		gdt_segs[GUSERLDT_SEL].ssd_base = (unsigned)new_ldt;
+		gdt_segs[GUSERLDT_SEL].ssd_limit = len - 1;
+		ssdtosd(gdt_segs + GUSERLDT_SEL, &pcb->pcb_ldt_desc);
 #ifdef DEBUG
 		printf("i386_set_ldt(%d): new_ldt=%x\n", p->p_pid, new_ldt);
 #endif
