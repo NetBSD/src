@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:50:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/12 08:08:14 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -16,8 +16,8 @@ SRCS=	XAllowDv.c XChgDCtl.c XChgFCtl.c XChgKMap.c XChgKbd.c \
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
-#LM#	LDADD+=	-lXext -lX11
-#LM#	DPADD+=	${LIBXEXT} ${LIBX11}
+LDADD+=	-lXext -lX11
+DPADD+=	${LIBXEXT} ${LIBX11}
 
 .include <bsd.lib.mk>
 .include <bsd.x11.mk>
