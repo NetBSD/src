@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.97 2001/11/12 15:25:17 lukem Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.98 2002/01/27 12:41:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.97 2001/11/12 15:25:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.98 2002/01/27 12:41:08 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -571,9 +571,15 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	/* All sysctl names at this level, except for a few, are terminal. */
+	switch (name[0]) {
+	case HW_DISKSTATS:
+		/* Not terminal. */
+		break;
+	default:
+		if (namelen != 1)
+			return (ENOTDIR);	/* overloaded */
+	}
 
 	switch (name[0]) {
 	case HW_MACHINE:
@@ -595,6 +601,10 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_ALIGNBYTES:
 		return (sysctl_rdint(oldp, oldlenp, newp, ALIGNBYTES));
+	case HW_DISKNAMES:
+		return (sysctl_disknames(oldp, oldlenp));
+	case HW_DISKSTATS:
+		return (sysctl_diskstats(name + 1, namelen - 1, oldp, oldlenp));
 	case HW_CNMAGIC: {
 		char magic[CNS_LEN];
 		int error;
