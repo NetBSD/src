@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.1.1.1 2000/09/28 22:10:34 thorpej Exp $	*/
+/*	$NetBSD: ssh.c,v 1.2 2000/10/04 03:43:58 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssh.c,v 1.1.1.1 2000/09/28 22:10:34 thorpej Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.2 2000/10/04 03:43:58 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -549,7 +549,7 @@ main(int ac, char **av)
 	/* check if RSA support exists */
 	if ((options.protocol & SSH_PROTO_1) &&
 	    rsa_alive() == 0) {
-		log("%s: no RSA support in libssl and libcrypto.  See ssl(8).",
+		log("%s: failed to generate RSA key: rnd(4) is mandatory.\n",
 		    __progname);
 		log("Disabling protocol version 1");
 		options.protocol &= ~ (SSH_PROTO_1|SSH_PROTO_1_PREFERRED);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.1.1.1 2000/09/28 22:10:03 thorpej Exp $	*/
+/*	$NetBSD: kex.c,v 1.2 2000/10/04 03:43:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: kex.c,v 1.1.1.1 2000/09/28 22:10:03 thorpej Exp $");
+__RCSID("$NetBSD: kex.c,v 1.2 2000/10/04 03:43:57 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -179,7 +179,7 @@ dh_new_group1()
 	BN_set_word(dh->g, 2);
 	do {
 		if (DH_generate_key(dh) == 0)
-			fatal("DH_generate_key");
+			fatal("failed to generate DH key: rnd(4) is mandatory.");
 		if (tries++ > 10)
 			fatal("dh_new_group1: too many bad keys: giving up");
 	} while (!dh_pub_is_valid(dh, dh->pub_key));
