@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.2 1996/04/30 11:52:36 briggs Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.3 1996/04/30 12:02:54 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -115,9 +115,7 @@ __fpu_modrem(fe, modrem)
     l = x->fp_exp - y->fp_exp;
     k = 0;
     q = 0;
-    if (l < 0) {
-	goto Step4;
-    } else {
+    if (l >= 0) {
 	CPYFPN(r, x);
 	r->fp_exp -= l;
 	j = l;
@@ -152,6 +150,8 @@ __fpu_modrem(fe, modrem)
 	    q += q;
 	    r->fp_exp++;
 	}
+	/* Step 9 */
+	goto Step9;
     }
  Step4:
     Last_Subtract = 0;
@@ -206,6 +206,16 @@ __fpu_modrem(fe, modrem)
 	fe->fe_fpsr =
 	    (fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
     return r;
+
+ Step9:
+    fe->fe_f1.fp_class = FPC_ZERO;
+    q++;
+    q &= 0x7f;
+    q |= (signQ << 7);
+    fe->fe_fpframe->fpf_fpsr =
+	fe->fe_fpsr =
+	    (fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
+    return &fe->fe_f1;
 }
 
 struct fpn *
