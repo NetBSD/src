@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.57 1995/06/04 20:39:22 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.58 1995/06/04 20:50:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -816,14 +816,16 @@ comintr(arg)
 
 			comevents = 1;
 			do {
+				if ((lsr & LSR_BI) != 0) {
 #ifdef DDB
-				if ((lsr & LSR_BI) != 0 &&
-				    sc->sc_dev.dv_unit == comconsole) {
-					Debugger();
-					goto next;
-				}
+					if (sc->sc_dev.dv_unit == comconsole) {
+						Debugger();
+						goto next;
+					} else
 #endif
-				data = inb(iobase + com_data);
+						data = '\0';
+				} else
+					data = inb(iobase + com_data);
 				if (p >= sc->sc_ibufend) {
 					sc->sc_floods++;
 					if (sc->sc_errors++ == 0)
