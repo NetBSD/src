@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael.c,v 1.5 2003/08/27 03:35:35 itojun Exp $	*/
+/*	$NetBSD: rijndael.c,v 1.6 2003/08/27 14:23:27 itojun Exp $	*/
 
 /**             
  * rijndael-alg-fst.c 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.5 2003/08/27 03:35:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.6 2003/08/27 14:23:27 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -35,25 +35,17 @@ __KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.5 2003/08/27 03:35:35 itojun Exp $");
 #include <crypto/rijndael/rijndael.h>
 
 void
-rijndael_set_key(rijndael_ctx *ctx, const u_char *key, int bits, int encrypt)
+rijndael_set_key(rijndael_ctx *ctx, const u_char *key, int bits)
 {
 
 	ctx->Nr = rijndaelKeySetupEnc(ctx->ek, key, bits);
-	if (encrypt) {
-		ctx->decrypt = 0;
-		memset(ctx->dk, 0, sizeof(ctx->dk));
-	} else {
-		ctx->decrypt = 1;
-		rijndaelKeySetupDec(ctx->dk, key, bits);
-	}
+	rijndaelKeySetupDec(ctx->dk, key, bits);
 }
 
 void
 rijndael_decrypt(const rijndael_ctx *ctx, const u_char *src, u_char *dst)
 {
 
-	if (!ctx->decrypt)
-		panic("rijndael_decrypt: encryption context is passed");
 	rijndaelDecrypt(ctx->dk, ctx->Nr, src, dst);
 }
 
@@ -61,7 +53,5 @@ void
 rijndael_encrypt(const rijndael_ctx *ctx, const u_char *src, u_char *dst)
 {
 
-	if (ctx->decrypt)
-		panic("rijndael_encrypt: decryption context is passed");
 	rijndaelEncrypt(ctx->ek, ctx->Nr, src, dst);
 }

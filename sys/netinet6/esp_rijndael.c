@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.16 2003/08/27 02:42:09 itojun Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.17 2003/08/27 14:23:25 itojun Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.16 2003/08/27 02:42:09 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.17 2003/08/27 14:23:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ esp_rijndael_schedlen(algo)
 	const struct esp_algorithm *algo;
 {
 
-	return sizeof(rijndael_ctx) * 2;
+	return sizeof(rijndael_ctx);
 }
 
 int
@@ -66,12 +66,8 @@ esp_rijndael_schedule(algo, sav)
 	rijndael_ctx *ctx;
 
 	ctx = (rijndael_ctx *)sav->sched;
-	/* decryption schedule */
-	rijndael_set_key(&ctx[0],
-	    (u_char *)_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc) * 8, 0);
-	/* encryption schedule */
-	rijndael_set_key(&ctx[1],
-	    (u_char *)_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc) * 8, 1);
+	rijndael_set_key(ctx,
+	    (u_char *)_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc) * 8);
 	return 0;
 }
 
@@ -85,7 +81,7 @@ esp_rijndael_blockdecrypt(algo, sav, s, d)
 	rijndael_ctx *ctx;
 
 	ctx = (rijndael_ctx *)sav->sched;
-	rijndael_decrypt(&ctx[0], s, d);
+	rijndael_decrypt(ctx, s, d);
 	return 0;
 }
 
@@ -99,6 +95,6 @@ esp_rijndael_blockencrypt(algo, sav, s, d)
 	rijndael_ctx *ctx;
 
 	ctx = (rijndael_ctx *)sav->sched;
-	rijndael_encrypt(&ctx[1], s, d);
+	rijndael_encrypt(ctx, s, d);
 	return 0;
 }
