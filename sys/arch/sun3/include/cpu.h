@@ -38,7 +38,7 @@
  *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
- *	$Id: cpu.h,v 1.8 1994/05/05 03:02:49 gwr Exp $
+ *	$Id: cpu.h,v 1.9 1994/05/06 23:02:38 gwr Exp $
  */
 
 #ifdef KERNEL
@@ -59,7 +59,7 @@
 /*
  * Arguments to hardclock, softclock and gatherstats
  * encapsulate the previous machine state in an opaque
- * clockframe; for hp300, use just what the hardware
+ * clockframe; for sun3, use just what the hardware
  * leaves on the stack.
  */
 struct clockframe {
@@ -81,10 +81,11 @@ typedef struct clockframe clockframe;
 
 /*
  * Give a profiling tick to the current process from the softclock
- * interrupt.  On hp300, request an ast to send us through trap(),
+ * interrupt.  On the sun3, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= P_OWEUPC; aston();}
+#define	profile_tick(p, framep)	((p)->p_flag |= P_OWEUPC, aston())
+#define	need_proftick(p) 	((p)->p_flag |= P_OWEUPC, aston())
 
 /*
  * Notify the current process (p) that it has a signal pending,
