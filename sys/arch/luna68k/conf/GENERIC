@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.11 2000/10/04 03:35:55 itojun Exp $
+#	$NetBSD: GENERIC,v 1.12 2000/10/18 08:27:19 nisimura Exp $
 #
 #	GENERIC LUNA68K
 #
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 maxusers	8
 
@@ -86,7 +86,7 @@ options 	NFS_BOOT_DHCP	# superset of BOOTP
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
 
-config		netbsd root on ? type nfs
+config		netbsd root on ? type ?
 
 mainbus0 at root
 
