@@ -1,4 +1,4 @@
-/*      $NetBSD: main.h,v 1.2 2003/02/27 04:10:36 atatat Exp $ */
+/*      $NetBSD: main.h,v 1.3 2003/03/28 23:10:33 atatat Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int debug, verbose, recurse;
+extern int debug, verbose, recurse, page_size;
 extern int print_all, print_map, print_maps, print_solaris, print_ddb;
 extern u_long kernel_map_addr;
 extern void *uvm_vnodeops, *uvm_deviceops, *aobj_pager, *ubc_pager;
@@ -60,7 +60,10 @@ extern struct cache_head lcache;
 #define PRINT_VM_MAP		0x00000002
 #define PRINT_VM_MAP_HEADER	0x00000004
 #define PRINT_VM_MAP_ENTRY	0x00000008
-#define DUMP_NAMEI_CACHE	0x00000010
+#define PRINT_VM_AMAP		0x00000010
+#define DUMP_VM_AMAP_DATA	0x00000020
+#define PRINT_VM_ANON		0x00000040
+#define DUMP_NAMEI_CACHE	0x00001000
 
 void (*process_map)(kvm_t *, pid_t, struct kinfo_proc2 *);
 void load_name_cache(kvm_t *);
