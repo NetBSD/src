@@ -375,8 +375,17 @@ gnu/dist/gdb/solib.c				1.6
   Also, work around non-relocation and misfeatures in mips ELF
   to avoid heuristic fencepost errors.)  (jonathan)
 
+sys/dev/tc/asc.c				1.46
 
-NOT YET PULLED UP (expecting patches):
+  Fix an error that resulted in a system reboot without any
+  error message unless DEBUG was defined.  Correct a check for
+  a spurious interrupt that came from a newer version of the
+  Mach driver which didn't get converted correctly when imported
+  into the pmax driver.  Partial workaround for "Illegal Command"
+  error status.  (mhitch)
+
+
+NOT YET PULLED UP (expecting patches or further information):
 
 sys/arch/i386/i386/trap.c			1.125 (patch)
 
