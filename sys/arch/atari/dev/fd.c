@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.7 1995/05/14 15:47:17 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.8 1995/07/11 18:32:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -100,6 +100,12 @@
 #define	FLP_MONDELAY	(3 * hz)	/* motor-on delay		*/
 #define	FLP_XFERDELAY	(2 * hz)	/* timeout on transfer		*/
 
+/*
+ * The density codes
+ */
+#define	FLP_DD		0		/* Double density		*/
+#define	FLP_HD		1		/* High density			*/
+
 
 #define	b_block		b_resid		/* FIXME: this is not the place	*/
 
@@ -124,6 +130,7 @@ struct fd_softc {
 	int		unit;		/* unit for atari controlling hw*/
 	int		nheads;		/* number of heads in use	*/
 	int		nsectors;	/* number of sectors/track	*/
+	int		density;	/* density code			*/
 	int		nblocks;	/* number of blocks on disk	*/
 	int		curtrk;		/* track head positioned on	*/
 	short		flags;		/* misc flags			*/
@@ -142,7 +149,7 @@ struct fd_softc {
  */
 #define FLPF_NOTRESP	0x001		/* Unit not responding		*/
 #define FLPF_ISOPEN	0x002		/* Unit is open			*/
-#define FLPF_ISHD	0x004		/* Use High Density		*/
+#define FLPF_SPARE	0x004		/* Not used			*/
 #define FLPF_HAVELAB	0x008		/* We have a valid label	*/
 #define FLPF_BOUNCE	0x010		/* Now using the bounce buffer	*/
 #define FLPF_WRTPROT	0x020		/* Unit is write-protected	*/
@@ -154,10 +161,11 @@ struct fd_types {
 	int		nheads;		/* Heads in use			*/
 	int		nsectors;	/* sectors per track		*/
 	int		nblocks;	/* number of blocks		*/
+	int		density;	/* density code			*/
 } fdtypes[NR_TYPES] = {
-		{ 1,  9,  720 },	/* 360  Kb	*/
-		{ 2,  9, 1440 },	/* 720  Kb	*/
-		{ 1, 18, 2880 },	/* 1.44 Mb	*/
+		{ 1,  9,  720 , FLP_DD },	/* 360  Kb	*/
+		{ 2,  9, 1440 , FLP_DD },	/* 720  Kb	*/
+		{ 2, 18, 2880 , FLP_HD },	/* 1.44 Mb	*/
 };
 
 typedef void	(*FPV)();
@@ -175,6 +183,8 @@ static void	fdmotoroff __P((struct fd_softc *));
 static int	fdminphys __P((struct buf *));
 static void	fdtestdrv __P((struct fd_softc *));
 static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
+static int	fdselect __P((int, int, int));
+static void	fddeselect __P((void));
 
 extern __inline__ u_char read_fdreg(u_short regno)
 {
@@ -225,6 +235,7 @@ void		*auxp;
 	int		i, nfound = 0;
 
 	printf("\n");
+	fddeselect();
 	for(i = 0; i < NR_DRIVES; i++) {
 
 		/*
@@ -242,7 +253,6 @@ void		*auxp;
 	}
 
 	if(nfound) {
-
 		/*
 		 * enable disk related interrupts
 		 */
@@ -369,6 +379,7 @@ struct proc	*proc;
 #endif
 		nopens++;
 		write_fdreg(FDC_CS, IRUPT);
+		delay(40);
 	}
 
 	/*
@@ -392,14 +403,13 @@ struct proc	*proc;
 		sc->nheads	= fdtypes[part].nheads;
 		sc->nsectors	= fdtypes[part].nsectors;
 		sc->nblocks     = fdtypes[part].nblocks;
+		sc->density	= fdtypes[part].density;
 		sc->curtrk	= INV_TRK;
 		sc->sector	= 0;
 		sc->errcnt	= 0;
 		sc->bounceb	= (u_char*)alloc_stmem(SECTOR_SIZE, &addr);
 		if(sc->bounceb == NULL)
 			return(ENOMEM); /* XXX */
-		if(sc->nsectors > 9) /* XXX */
-			sc->flags |= FLPF_ISHD;
 
 		/*
 		 * Go get write protect + loaded status
@@ -543,8 +553,7 @@ fdread(dev, uio)
 dev_t		dev;
 struct uio	*uio;
 {
-	return(physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-	    dev, B_READ, fdminphys, uio));
+	return(physio(fdstrategy, NULL, dev, B_READ, fdminphys, uio));
 }
 
 int
@@ -552,8 +561,7 @@ fdwrite(dev, uio)
 dev_t		dev;
 struct uio	*uio;
 {
-	return(physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-	    dev, B_WRITE, fdminphys, uio));
+	return(physio(fdstrategy, NULL, dev, B_WRITE, fdminphys, uio));
 }
 
 /*
@@ -568,13 +576,6 @@ struct fd_softc	*sc;
 #endif
 	sc->errcnt = 0;
 	fd_state   = FLP_STAT;
-
-	/*
-	 * Make sure the floppy controller is the correct density mode
-	 */
-	if(sc->flags & FLPF_ISHD)
-		DMA->dma_drvmode |= (FDC_HDSET|FDC_HDSIG);
-	else DMA->dma_drvmode &= ~(FDC_HDSET|FDC_HDSIG);
 	fd_xfer(sc);
 }
 
@@ -598,12 +599,6 @@ struct fd_softc	*sc;
 	sc->errcnt   = 0;		/* No errors yet		*/
 	fd_state     = FLP_XFER;	/* Yes, we're going to transfer	*/
 
-	/*
-	 * Make sure the floppy controller is the correct density mode
-	 */
-	if(sc->flags & FLPF_ISHD)
-		DMA->dma_drvmode |= (FDC_HDSET|FDC_HDSIG);
-	else DMA->dma_drvmode &= ~(FDC_HDSET|FDC_HDSIG);
 	fd_xfer(sc);
 }
 
@@ -619,11 +614,6 @@ register struct fd_softc	*sc;
 	struct buf	*bp, *dp;
 	struct fd_softc	*sc1;
 	int		i, sps;
-
-	/*
-	 * Lower clock frequency of FDC (better for some old ones).
-	 */
-	DMA->dma_drvmode &= ~(FDC_HDSET|FDC_HDSIG);
 
 	/*
 	 * Give others a chance to use the dma.
@@ -680,6 +670,53 @@ register struct fd_softc	*sc;
 	st_dmagrab(fdcint, fdstart, sc1, &lock_stat, 0);
 }
 
+static int
+fdselect(drive, head, dense)
+int	drive, head, dense;
+{
+	int	i, sps, spinning;
+#ifdef FLP_DEBUG
+	printf("fdselect: drive=%d, head=%d, dense=%d\n", drive, head, dense);
+#endif
+	i = ((drive == 1) ? PA_FLOP1 : PA_FLOP0) | head;
+	spinning = motoron;
+	motoron  = 1;
+
+	switch(dense) {
+		case FLP_DD:
+			DMA->dma_drvmode = 0;
+			break;
+		case FLP_HD:
+			DMA->dma_drvmode = (FDC_HDSET|FDC_HDSIG);
+			break;
+		default:
+			panic("fdselect: unknown density code\n");
+	}
+	if(i != selected) {
+		sps = splhigh();
+
+		selected = i;
+		SOUND->sd_selr = YM_IOA;
+		SOUND->sd_wdat = (SOUND->sd_rdat & 0x78) | (i ^ 0x07);
+		splx(sps);
+	}
+	return(spinning);
+}
+
+static void
+fddeselect()
+{
+	int	sps;
+
+	sps = splhigh();
+	SOUND->sd_selr = YM_IOA;
+	SOUND->sd_wdat = SOUND->sd_rdat | 0x07;
+	splx(sps);
+
+	motoron = selected = 0;
+	DMA->dma_drvmode   = 0;
+}
+
 /****************************************************************************
  * The following functions assume to be running as a result of a            *
  * disk-interrupt (e.q. spl = splbio).				            *
@@ -730,20 +767,9 @@ struct fd_softc	*sc;
 	}
 
 	/*
-	 * Determine if the controller should check spin-up.
+	 * Select the drive.
 	 */
-	hbit = motoron ? HBIT : 0;
-	motoron = 1;
-
-	/*
-	 * Select the right unit and head.
-	 */
-	i = (sc->unit ? PA_FLOP1 : PA_FLOP0) | head;
-	if(i != selected) {
-		selected = i;
-		SOUND->sd_selr = YM_IOA;
-		SOUND->sd_wdat = (SOUND->sd_rdat & 0xF8) | (i ^ 0x07);
-	}
+	hbit = fdselect(sc->unit, head, sc->density) ? HBIT : 0;
 
 	if(sc->curtrk == INV_TRK) {
 		/* 
@@ -757,8 +783,8 @@ struct fd_softc	*sc;
 		 * a recalibration is done, which forces the arm to track 0.
 		 * This way the controller can get back into sync with reality.
 		 */
-		write_fdreg(FDC_CS, RESTORE|VBIT|hbit);
 		fd_cmd = RESTORE;
+		write_fdreg(FDC_CS, RESTORE|VBIT|hbit);
 		timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
 
 #ifdef FLP_DEBUG
@@ -862,6 +888,11 @@ struct fd_softc	*sc;
 			 * Non recoverable error. Fall back to motor-on
 			 * idle-state.
 			 */
+			if(fd_error != NULL) {
+				printf("Floppy error: %s\n", fd_error);
+				fd_error = NULL;
+			}
+
 			if(fd_state == FLP_STAT) {
 				sc->flags |= FLPF_EMPTY;
 				sc->flags &= ~FLPF_GETSTAT;
@@ -874,11 +905,7 @@ struct fd_softc	*sc;
 
 			bp->b_error  = EIO;
 			bp->b_flags |= B_ERROR;
-			fd_state = FLP_MON;
-			if(fd_error != NULL) {
-				printf("Floppy error: %s\n", fd_error);
-				fd_error = NULL;
-			}
+			fd_state     = FLP_MON;
 
 			break;
 		case X_AGAIN:
@@ -941,6 +968,8 @@ register struct fd_softc	*sc;
 			/*
 			 * Timeout. Force a recalibrate before we try again.
 			 */
+			status = read_fdreg(FDC_CS);
+
 			fd_error = "Timeout";
 			sc->curtrk = INV_TRK;
 			return(X_ERROR);
@@ -1028,7 +1057,7 @@ static void
 fdmotoroff(sc)
 struct fd_softc	*sc;
 {
-	int	sps, wrbit;
+	int	sps;
 
 	/*
 	 * Get at harware interrupt level
@@ -1051,24 +1080,19 @@ struct fd_softc	*sc;
 			/*
 			 * Cancel current transaction
 			 */
-			wrbit = (fd_cmd == F_WRITE) ? DMA_WRBIT : 0;
 			fd_cmd = IRUPT;
-			write_fdreg(FDC_CS, wrbit|IRUPT);
+			write_fdreg(FDC_CS, IRUPT);
+			delay(20);
+			(void)read_fdreg(FDC_CS);
+			write_fdreg(FDC_CS, RESTORE);
+			break;
 
-			/*
-			 * Simulate floppy interrupt.
-			 */
-			fdcint(sc);
-			return;
 		case FLP_MON  :
 			/*
 			 * Turn motor off.
 			 */
-			if(selected) {
-				SOUND->sd_selr = YM_IOA;
-				SOUND->sd_wdat = SOUND->sd_rdat | 0x07;
-				motoron = selected = 0;
-			}
+			if(selected)
+				fddeselect();
 			fd_state = FLP_IDLE;
 			break;
 	}
@@ -1114,19 +1138,14 @@ static void
 fdtestdrv(fdsoftc)
 struct fd_softc	*fdsoftc;
 {
-	int		i, status;
+	int	i, status;
 
 	/*
 	 * Select the right unit and head.
 	 */
-	i = fdsoftc->unit ? PA_FLOP1 : PA_FLOP0;
-	if(i != selected) {
-		selected = i;
-		SOUND->sd_selr = YM_IOA;
-		SOUND->sd_wdat = (SOUND->sd_rdat & 0xF8) | (i ^ 0x07);
-	}
+	fdselect(fdsoftc->unit, 0, FLP_DD);
 
-	write_fdreg(FDC_CS, RESTORE|VBIT|HBIT);
+	write_fdreg(FDC_CS, RESTORE|HBIT);
 
 	/*
 	 * Wait for about 2 seconds.
@@ -1134,11 +1153,15 @@ struct fd_softc	*fdsoftc;
 	delay(2000000);
 
 	status = read_fdreg(FDC_CS);
-	if(status & (RNF|BUSY))
+	if(status & (RNF|BUSY)) {
 		write_fdreg(FDC_CS, IRUPT);	/* reset controller */
+		delay(40);
+	}
 
 	if(!(status & LD_T00))
 		fdsoftc->flags |= FLPF_NOTRESP;
+
+	fddeselect();
 }
 
 /*
