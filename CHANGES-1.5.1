@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.24 2001/01/28 15:58:50 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.25 2001/02/03 22:33:45 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -323,7 +323,7 @@ sys/arch/news68k/news68k/locore.s		1.13,1.17
 
   Allow runtime enabling/disabling of DC_BE and IC_BE bits in %cacr
   and enable them on news1200/1400/1500 (Which have no L2 cache); yields
-  a performance improvement. Also correct a typo in a comment.
+  a performance improvement.  Also correct a typo in a comment.
 
 sys/arch/news68k/include/romcall.h		1.2
 sys/arch/news68k/stand/boot/boot.c		1.3
@@ -338,35 +338,36 @@ gnu/usr.bin/ld/ld/ld.c				1.73
 gnu/usr.bin/ld/ld/ld_i.h			1.2
 gnu/usr.bin/ld/ld/lib.c				1.23
 
-  Correct various problems with argument parsing for --whole-archive and
-  --no-whole-archive. Fully implement --no-whole-archive. Remove spurious
-  warning for -Bshareable.
+  Correct various problems with argument parsing for --whole-archive
+  and --no-whole-archive. Fully implement --no-whole-archive.  Remove
+  spurious warning for -Bshareable.
 
 sys/dev/pci/tga.c				1.29
 
-  Restore code to clear "odd" in VCHR. This seems to be required for X
-  to function properly on the T8-02 TGA (onboard on Multias, seperate
-  card in other machines).
+  Restore code to clear "odd" in VCHR. This seems to be required
+  for X to function properly on the T8-02 TGA (onboard on Multias,
+  seperate card in other machines).
 
 usr.sbin/chown/chown.c				1.25 via patch
 
-  Correct the display of some errors in chown. Fixes PR#11695.
+  Correct the display of some errors in chown.  Fixes PR#11695.
 
 distrib/utils/sysinst/mbr.c			1.24
 
-  Correct an error in the calculation of the end of a partition. Fixes PR#7556.
+  Correct an error in the calculation of the end of a partition.
+  Fixes PR#7556.
 
 usr.sbin/rpc.lockd/lockd_lock.c			1.5
 
-  Fix an error freeing the wrong lock; in some cases this might have lfree()'d
-  a NULL pointer.
+  Fix an error freeing the wrong lock; in some cases this might
+  have lfree()'d a NULL pointer.
 
 distrib/utils/sysinst/util.c			1.59
 distrib/utils/sysinst/msg.mi.en			1.79
 distrib/utils/sysinst/msg.mi.fr			1.39
 
   Fix sysinst to require base.tgz (in addition to etc.tgz and
-  kern.tgz) to successfully install. Fixes PR#11634.
+  kern.tgz) to successfully install.  Fixes PR#11634.
 
 sys/dev/pcmcia/wdc_pcmcia.c			1.36 via patch
 
@@ -381,7 +382,8 @@ sys/dev/isa/ad1848var.h				1.35
 
 gnu/usr.sbin/sendmail/Makefile			1.3
 
-  Move the the "doc" subdirectory from MKSHARE conditional to the MKDOC one.
+  Move the the "doc" subdirectory from MKSHARE conditional to the
+  MKDOC one.
 
 sys/dev/tc/sfbreg.h				1.3
 
@@ -397,13 +399,14 @@ sys/sys/sockio.h				1.12-1.13
 
 etc/etc.i386/MAKEDEV				1.131 via patch
 
-  Support up to five SCSI disks during INSTALL, not only three. Fixes PR#9912.
+  Support up to five SCSI disks during INSTALL, not only three.
+  Fixes PR#9912.
 
 sys/arch/macppc/include/vmparam.h		1.13
 
-Increase limits (max test size, datasize, default datasize, and
-default stacksize) to match other ports.  (Fixes a bunch of problems
-running apps like Mozilla with the defaults.)
+  Increase limits (max test size, datasize, default datasize, and
+  default stacksize) to match other ports.  (Fixes a bunch of
+  problems running apps like Mozilla with the defaults.)
 
 sbin/ifconfig/ifconfig.c			1.89
 sbin/ifconfig/ifconfig.8			1.43
@@ -428,7 +431,7 @@ sys/dev/ic/lance.c				1.14
 sys/dev/ic/smc83c170.c				1.36
 sys/dev/ic/tulip.c				1.74-1.75
 
-	Add support for 802.1Q virtual LANs.
+  Add support for 802.1Q virtual LANs.
 
 sys/dev/pci/if_ti.c				1.12, 1.15 via patch
 sys/dev/pci/if_tireg.h				1.3
@@ -461,7 +464,7 @@ usr.sbin/user/user.c				1.35
 usr.sbin/user/usermod.8				1.8
 
   Make moving a user's homedirectory with -md work correctly,
-  and clarify the meaning of -d in the absence of -m. Fixing PR11707 
+  and clarify the meaning of -d in the absence of -m.  Fixing PR#11707 
 
 sbin/modload/elf.c				1.4
 
@@ -489,7 +492,7 @@ share/examples/supfiles/Makefile		1.7
 
 sys/net/bpf.c					1.60
 
-  Fix non-blocking BPF reads. Fixes PR kern/11836.
+  Fix non-blocking BPF reads.  Fixes PR#11836.
 
 share/misc/acronyms				1.64-1.73
 
@@ -516,8 +519,8 @@ sys/arch/mac68k/mac68k/locore.s			1.133
 sys/arch/mac68k/obio/esp.c			1.26-1.28
 sys/arch/mac68k/obio/espvar.h			1.6
 
- Improve performance of the pseudo-DMA mode of the esp driver, and handle
- residual FIFO data on write.
+  Improve performance of the pseudo-DMA mode of the esp driver, and
+  handle residual FIFO data on write.
 
 usr.bin/tftp/main.c				1.14
 
@@ -526,12 +529,12 @@ usr.bin/tftp/main.c				1.14
 sys/dev/pcmcia/if_wi.c				1.48
 sys/dev/pcmcia/if_wivar.h			1.15
 
-  Ensure the ethernet payload is properly aligned. Fixes PR port-hpcmips/11477.
+  Ensure the ethernet payload is properly aligned.  Fixes PR#11477.
 
 distrib/sets/lists/base/mi			1.204
 etc/mtree/NetBSD.dist				1.128
 
-  /etc/openssl/cert.pem is a file, not a directory. Fixes PR11772.
+  /etc/openssl/cert.pem is a file, not a directory.  Fixes PR#11772.
 
 lib/libc/locale/setlocale.c			1.23, 1.25-1.27, 1.31 via patch
 
@@ -556,7 +559,7 @@ sys/dev/ic/isp_netbsd.c				1.31-1.35
 share/man/man7/packages.7			1.40
 
   Remove documentation of NOCLEANDEPENDS (default); document
-  MAKEFILE, per PR 11866.
+  MAKEFILE, per PR#11866.
 
 crypto/dist/ssh/packet.c			1.2
 
@@ -577,7 +580,7 @@ sys/arch/x68k/conf/TOKOCHAN			1.16
 lib/libc/regex/regcomp.c			1.17
 
   Pass unsigned char (not char) to ctype(3) functions, except iascii(3).
-  Fixes PR bin/11885.
+  Fixes PR#11885.
 
 crypto/dist/openssl/crypto/rand/randfile.c	1.2
 
@@ -603,7 +606,7 @@ sys/dev/isa/ess.c				1.53
 sys/dev/isa/essvar.h				1.18
 sys/dev/ofisa/ess_ofisa.c			1.6
 
-  Support certain ISAPnP ESS 1868 and 1869 cards. Per PR port-i386/11630.
+  Support certain ISAPnP ESS 1868 and 1869 cards.  Per PR#11630.
 
 sys/uvm/uvm_mmap.c				1.47-1.48 via patch
 
@@ -612,19 +615,21 @@ sys/uvm/uvm_mmap.c				1.47-1.48 via patch
 
 sys/dev/pcmcia/if_ray.c				1.26
 
-  Cast pktlen to u_long and print with %ld. Now it compiles on the alpha.
+  Cast pktlen to u_long and print with %ld.  Now it compiles on
+  the alpha.
 
 sys/dev/ic/tulip.c				1.85
 
   Ignore receive errors if VLAN_MTU is enabled.
 
-sys/netinet6/icmp6.c				1.50
+sys/netinet6/icmp6.c				1.50,1.51
 
-  Only printf() IPv6 ICMP checksum errors under ND6DEBUG.
+  Only printf() IPv6 ICMP checksum errors under ND6_DEBUG.  Fixes
+  PR#11911.
 
 sbin/ifconfig/ifconfig.c			1.94
 
-  Initialize an uninitialized pointer. PR11702.
+  Initialize an uninitialized pointer. PR#11702.
 
 lib/libcrypto_idea/Makefile			1.2
 lib/libcrypto_rc5/Makefile			1.2
@@ -643,7 +648,7 @@ gnu/dist/gcc/gcc.1				1.8
 
 gnu/usr.bin/gawk/Makefile			1.11
 
-  Use -msoft-quad-flat on the sparc64.
+  Use -msoft-quad-float on the sparc64.
 
 sys/netinet/ip_output.c				1.80
 
@@ -652,21 +657,23 @@ sys/netinet/ip_output.c				1.80
 sys/arch/sparc/dev/cgsix.c			patch
 sys/arch/sparc/dev/cgsixreg.h			patch
 
-  Initialize cgsix registers for machines that do not do so by themselves.
-  Fixes PR port-sparc/11944.
+  Initialize cgsix registers for machines that do not do so by
+  themselves.  Fixes PR#11944.
 
 share/termcap/termcap.src			1.64
 
-  Remove visual bell from xterm termcap, for compatibility. Fixes PR bin/11882.
+  Remove visual bell from xterm termcap, for compatibility.  Fixes
+  PR#11882.
 
 bin/ps/ps.1					1.40-1.42
 bin/ps/print.c					1.63-1.65
 
-  Clarify meaning of COMMANDs printed in parentheses. Addresses PR11930.
+  Clarify meaning of COMMANDs printed in parentheses.  Addresses
+  PR#11930.
 
 distrib/sparc/miniroot/dot.profile		1.10
 
-  Do not reset the baud rate to 9600. Fixes PR11946.
+  Do not reset the baud rate to 9600.  Fixes PR#11946.
 
 dist/bind/LICENSE				1.2
 dist/bind/README				1.3
@@ -805,3 +812,256 @@ usr.sbin/bind/Makefile				1.9
 usr.sbin/bind/lib/Makefile			1.11 via patch
 
   Upgrade to BIND version 8.2.3.
+
+crypto/dist/ssh/ssh.conf			1.3
+
+  Document that we ship with "ForwardX11 no" as the default.
+
+sys/arch/i386/i386/apm.c			1.58 via patch
+
+  Fix problem detected on IBM thinkpads causing it to suspend
+  shortly after resume.  This is caused by duplicate events filling
+  the event queue, so improve detection of duplicates.  Also cleanup
+  and add some APMDEBUG code.
+
+sys/arch/i386/isa/npx_isa.c			1.2
+
+  Avoid doing Very Bad Things by passing a horrible IRQ value to
+  npxprobe1().  Fixes a problem on IBM Thinkpads.
+
+sys/arch/sparc/stand/common/promdev.c		1.9
+
+  On V0 proms, read the ``idprom'' property at the root node to
+  get to the station's ethernet address.  Fixes netbooting on some
+  older SPARCstations where the boot program would otherwise crash.
+
+sys/arch/mac68k/dev/ite_compat.c		1.3
+
+  Correct the implementation of iteopen()/iteclose().  Fixes
+  PR#12022.
+
+usr.sbin/ypserv/ypinit/Makefile.yp		1.14
+
+  Handle multiple-line netgroup entries correctly.
+
+sys/arch/i386/stand/lib/biosdisk.c		1.13
+
+  Add support for booting off RAIDframe RAID1 mirrors.  Done by
+  checking the first partition type in biosdiskopen(), and if it
+  is of type FS_RAID, add 64 to d->b_off.
+
+  NOTE: installboot(8) still needs some hacking to DTRT, but at
+  least this way if you can load "/boot" off another partition
+  (e.g, wd0h), then wd0a can be of type `RAID' with a raidframe
+  mirror at the start and the kernel will load OK of wd0a, and with
+  raidctl -A root partitions, it will change root as well.
+
+sys/dev/pckbc/wskbdmap_mfii.c.			1.20
+
+  Cause the ``delete'' key to actually send <DEL> like it used to
+  (and still does with pccons) rather than <ESC>[3~.
+
+usr.sbin/grfconfig/grfconfig.c			1.10
+
+  Fix parameter file checking.  Fixes PR#11865.
+
+usr.sbin/apmd/apmd.c				1.17
+
+  Be more picky about running /etc/apm/{battery,line} in response
+  to APM_POWER_CHANGE event.  Some BIOSes post this event periodically
+  while the battery is charging/discharging, even though there's
+  no change in a/c state.  Thus, track a/c state, and only run the
+  scripts when a/c state actually changes.
+
+share/misc/bsd-family-tree			1.7
+
+  Keep in sync with current reality.  Include up-to-date information
+  about NetBSD-1.5, BSD/386, BSD/OS and other BSDs.
+
+sys/kern/uipc_socket.c				1.52
+
+  Prevent bogus data from being returned from the kernel on accept(2)
+  in case the peer already have disconnected.  Partial fix for
+  PR#12027 and PR#10698.
+
+sys/dev/raidframe/rf_copyback.c			1.15
+sys/dev/raidframe/rf_reconstruct.c		1.27
+
+  Make sure we update the ``partitionSize'' field of the component
+  labels when doing a reconstruct or copyback, instead of leaving
+  behind possibly uninitialized junk, which could cause autoconfig
+  failure on reboot.
+
+distrib/i386/floppies/ramdisk-rescuesmall/ramdiskbin.conf	1.2
+distrib/i386/floppies/ramdisk-small/ramdiskbin.conf	1.3 via patch
+distrib/i386/floppies/ramdisk-small/Makefile	patch
+
+  Squeeze so these fit again:
+   o Replace less(1) with more(1)
+   o Reduce number of inodes
+
+usr.bin/time/time.1				1.9-1.12
+
+  Note that ``time'' is also a builtin in ksh, and document rusage
+  information.  Fixes PR#11975.  Also use "EXIT STATUS" instead of
+  "DIAGNOSTICS".
+
+usr.sbin/wsfontload/wsfontload.8		1.11
+usr.sbin/wsfontload/wsfontload.c		1.5
+
+  Improve error messages by printing device name.  Add -v switch
+  to wsfontload to dump stats on fonts before loading.
+
+sys/sys/exec.h					1.77
+
+  Correct macro expansions of NEW_VMCMD and NEW_VMCMD2 (under DEBUG)
+  to not contain ``;'' at the end.
+
+sys/compat/pecoff/pecoff_exec.c			1.8
+
+  Add support to mmap .bss section, using vmcmd_map_pagedvn if
+  possible.
+
+usr.bin/file/magdir/netbsd			1.15
+
+  Fix arm32 confusion.
+
+distrib/sparc64/ramdisk/Makefile		deleted
+distrib/sparc64/ramdisk/list.m4			deleted
+distrib/sparc64/ramdisk/disktab			deleted
+distrib/sparc64/ramdisk/disktab.preinstall	deleted
+distrib/sparc64/ramdisk/termcap.mini		deleted
+distrib/sparc64/ramdisk/dot.profile.m4		deleted
+distrib/sparc64/ramdisk/mtree.conf		deleted
+distrib/sparc64/ramdisk/ramdiskbin.m4		deleted
+distrib/sparc64/ramdisk/dist/base_obsolete	deleted
+distrib/sparc64/ramdisk/dist/comp_obsolete	deleted
+distrib/sparc64/ramdisk/dist/games_obsolete	deleted
+distrib/sparc64/ramdisk/dist/man_obsolete	deleted
+distrib/sparc64/ramdisk/dist/misc_obsolete	deleted
+distrib/sparc64/ramdisk/dist/secr_obsolete	deleted
+distrib/sparc64/ramdisk/dist/xbase_obsolete	deleted
+distrib/sparc64/ramdisk/dist/xserver_obsolete	deleted
+distrib/sparc64/xminiroot/Makefile		1.1-1.2 (new)
+distrib/sparc64/xminiroot/disktab		1.1 (new)
+distrib/sparc64/xminiroot/disktab.preinstall	1.1 (new)
+distrib/sparc64/xminiroot/dot.profile.m4	1.1 (new)
+distrib/sparc64/xminiroot/list.m4		1.1 (new)
+distrib/sparc64/xminiroot/mtree.conf		1.1 (new)
+distrib/sparc64/xminiroot/ramdiskbin.m4		1.1 (new)
+distrib/sparc64/xminiroot/termcap.mini		1.1 (new)
+distrib/sparc64/xminiroot/dist/base_obsolete	1.1 (new)
+distrib/sparc64/xminiroot/dist/comp_obsolete	1.1 (new)
+distrib/sparc64/xminiroot/dist/games_obsolete	1.1 (new)
+distrib/sparc64/xminiroot/dist/man_obsolete	1.1 (new)
+distrib/sparc64/xminiroot/dist/misc_obsolete	1.1 (new)
+distrib/sparc64/xminiroot/dist/secr_obsolete	1.1 (new)
+distrib/sparc64/xminiroot/dist/xbase_obsolete	1.1 (new)
+distrib/sparc64/xminiroot/dist/xserver_obsolete	1.1 (new)
+etc/etc.sparc64/Makefile.inc			1.5
+distrib/sparc64/Makefile			1.2
+
+  Rename sparc64 ``ramdisk'' to ``xminiroot'' to avoid confusion
+  about what it actually does.
+
+usr.sbin/mailwrapper/mailwrapper.c		1.4
+
+  Add forgottern addarg(&al, NULL, 0) before execve() to prevent
+  coredump.
+
+lib/libkvm/kvm.c				1.69
+
+  Add forgotten initialization.  Fixes PR#11446.
+
+sys/arch/pmax/pmax/dec_3100.c			1.31
+
+  Distinguish between PMIN and PMAX in boot message.
+
+libexec/lfs_cleanerd/cleanerd.c			1.23
+libexec/lfs_cleanerd/library.c			1.17
+
+  Plug memory leak in lfs_cleanerd.  Fixes PR#11094.
+
+usr.sbin/rarpd/rarpd.c				1.40
+
+  Diagnostic message was the wrong way round.  Fixes PR#11330.
+
+usr.sbin/pwd_mkdb/pwd_mkdb.c			1.21
+
+  Use empty string as default prefix so that e.g. ``/etc/spwd.db''
+  is used instead of ``//etc/spwd.db''.
+
+bin/dd/dd.c					1.18-1.19
+
+  Accept the getopt(3) ``last option'' delimiter.  Fixes PR#11229.
+
+usr.bin/patch/patch.1				1.5
+usr.bin/patch/patch.c				1.8
+
+  Support the 1003.2-92 -i option.   Fixes PR#11221.
+
+usr.bin/at/Makefile				1.7
+usr.bin/at/at.1					1.13
+usr.bin/at/at.c					1.18
+usr.bin/at/panic.c				1.9
+usr.bin/at/stime.c				1.1 (new)
+usr.bin/at/stime.h				1.1 (new)
+
+  Support the 1003.2-92 -t option.  Fixes PR#11205.
+  For symmetry, extend -t to batch(1) as well.
+
+libexec/tftpd/tftpd.c				1.20-1.21
+
+  Handle getnameinfo error properly.
+  Make sure not to overrun packet buffer with error message string.
+
+usr.bin/tftp/main.c				1.13
+
+  Make sure we do not overrun peeraddr.
+
+usr.sbin/wiconfig/wiconfig.c			1.10
+
+  Cast isprint() parameter to (unsigned char) - it looses if the
+  character has high bit set when the architecture is using signed
+  char by default.  Fixes PR#11556.
+
+sys/ufs/lfs/lfs.h				1.33-1.35
+sys/ufs/lfs/lfs_balloc.c			1.26-1.27
+sys/ufs/lfs/lfs_bio.c				1.31-1.32
+sys/ufs/lfs/lfs_extern.h			1.22
+sys/ufs/lfs/lfs_inode.c				1.46-1.47 via patch
+sys/ufs/lfs/lfs_segment.c			1.60-1.62
+sys/ufs/lfs/lfs_syscalls.c			1.50,1.52-1.53
+sys/ufs/lfs/lfs_vfsops.c			1.59
+sys/ufs/lfs/lfs_vnops.c				1.47-1.49
+sbin/newfs_lfs/lfs.c				1.19,1.21
+sbin/fsck_lfs/main.c				1.7
+sbin/fsck_lfs/pass5.c				1.7-1.8
+sbin/mount_lfs/mount_lfs.c			1.12 via patch
+libexec/lfs_cleanerd/Makefile			1.7
+libexec/lfs_cleanerd/cleanerd.c			1.24-1.27
+usr.sbin/dumplfs/dumplfs.c			1.17
+
+  Major LFS pullup:
+  o Don't write anything if the filesystem is idle (PR#10979).
+  o Allow the user to specify a 0% free space threshold at fs
+    creation time with "newfs_lfs -m 0" (PR#11112).
+  o Add compatibility option "-f" to fsck_lfs (PR#11129).
+  o Don't spawn more cleaners when using "mount -u", unless
+    upgrading from r/o to r/w; when downgrading, kill the cleaner.
+  o Close up accounting holes in LFS' accounting of immediately-
+    available-space, number of clean segments, and amount of dirty
+    space taken up by metadata (PR#11468, PR#11470, PR#11534).
+  o Fix locking and reference leaks in lfs_markv, on error (PR#11547).
+  o Initialize cleaner info from superblock, making fsck_lfs'
+    accounting of lfs_nclean work.    
+  o Don't clean the same segment twice.
+  o Make dumplfs report lfs_nclean and lfs_dmeta.
+  o Make fsck_lfs report and fix lfs_nclean and lfs_dmete
+    inconsistencies.
+
+usr.sbin/amd/amd/Makefile			1.17
+usr.sbin/amd/amd/amd.conf.5			1.1 (new)
+
+  Add amd.conf.5 from dist/am-utils/scripts here, and install it.
+  Fixes PR#5051, PR#7524, PR#8999, PR#10814.
