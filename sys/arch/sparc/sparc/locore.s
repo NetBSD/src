@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.132 2000/05/31 11:23:21 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.133 2000/07/24 08:48:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3623,6 +3623,7 @@ start_havetype:
 	lduba	[%l3] ASI_CONTROL, %l3
 	cmp	%l3, 0x24 ! XXX - SUN4_400
 	bne	no_3mmu
+	 nop
 	add	%l0, 2, %l0		! get to proper half-word in RG space
 	add	%l1, 2, %l1
 	lduha	[%l0] ASI_REGMAP, %l4	! regmap[highva] = regmap[lowva];
@@ -4507,7 +4508,7 @@ _ASM_LABEL(idle):
 	/*
 	 * We must preserve several global registers across the call
 	 * to uvm_pageidlezero().  Use the %ix registers for this, but
-	 * since we might still be running in our our caller's frame
+	 * since we might still be running in our caller's frame
 	 * (if we came here from cpu_switch()), we need to setup a
 	 * frame first.
 	 */
