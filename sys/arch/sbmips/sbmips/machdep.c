@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.10 2002/09/25 22:21:19 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.11 2002/11/08 19:35:38 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -90,7 +90,6 @@
 #include <machine/swarm.h>
 #include <mips/locore.h>
 
-#include <mips/cfe/cfe_xiocb.h>
 #include <mips/cfe/cfe_api.h>
 
 #if 0 /* XXXCGD */
@@ -233,15 +232,15 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	if (magic == BOOTINFO_MAGIC) {
 		int idx;
 		int added;
-		cfe_xuint_t start, len, type;
+		uint64_t start, len, type;
 
-		cfe_init(fwhandle);
+		cfe_init(bootinfo.fwhandle, bootinfo.fwentry);
 		cfe_present = 1;
 
 		idx = 0;
 		physmem = 0;
 		mem_cluster_cnt = 0;
-		while (cfe_getmeminfo(idx, &start, &len, &type) == 0) {
+		while (cfe_enummem(idx, 0, &start, &len, &type) == 0) {
 			added = 0;
 			printf("Memory Block #%d start %08llX len %08llX: %s: ",
 			    idx, start, len, (type == CFE_MI_AVAILABLE) ?
