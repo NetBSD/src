@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.3 1997/07/20 17:42:06 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.4 1998/08/19 01:43:22 thorpej Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -559,11 +559,12 @@ Done:
 			if (c == c2 || (c == '<' && c2 == '>')) {
 				iop->flag = c == c2 ?
 					  (c == '>' ? IOCAT : IOHERE) : IORDWR;
-				if (iop->flag == IOHERE)
+				if (iop->flag == IOHERE) {
 					if ((c2 = getsc()) == '-')
 						iop->flag |= IOSKIP;
 					else
 						ungetsc(c2);
+				}
 			} else if (c2 == '&')
 				iop->flag = IODUP | (c == '<' ? IORDUP : 0);
 			else {

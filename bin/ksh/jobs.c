@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.3 1998/04/07 10:29:50 fair Exp $	*/
+/*	$NetBSD: jobs.c,v 1.4 1998/08/19 01:43:22 thorpej Exp $	*/
 
 /*
  * Process and job control
@@ -1533,11 +1533,12 @@ j_print(j, how, shf)
 			break;
 		}
 
-		if (how != JP_SHORT)
+		if (how != JP_SHORT) {
 			if (p == j->proc_list)
 				shf_fprintf(shf, "[%d] %c ", j->job, jobchar);
 			else
 				shf_fprintf(shf, "%s", filler);
+		}
 
 		if (how == JP_LONG)
 			shf_fprintf(shf, "%5d ", p->pid);
