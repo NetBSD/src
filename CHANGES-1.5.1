@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.15 2000/12/26 19:17:20 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.16 2000/12/31 21:30:56 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -386,3 +386,61 @@ gnu/usr.sbin/sendmail/Makefile			1.3
 sys/dev/tc/sfbreg.h				1.3
 
   Make XalphaNetBSD compile with SFB support.
+
+sbin/ifconfig/ifconfig.c			1.81, 1.87
+sbin/ifconfig/ifconfig.8			1.34, 1.38
+sys/net/if.c					1.63-1.64, 1.67
+sys/net/if.h					1.51, 1.53
+sys/sys/sockio.h				1.12-1.13
+
+  Support cloning of network pseudo-interfaces.
+
+etc/etc.i386/MAKEDEV				1.131 via patch
+
+  Support up to five SCSI disks during INSTALL, not only three. Fixes PR#9912.
+
+sys/arch/macppc/include/vmparam.h		1.13
+
+Increase limits (max test size, datasize, default datasize, and
+default stacksize) to match other ports.  (Fixes a bunch of problems
+running apps like Mozilla with the defaults.)
+
+sbin/ifconfig/ifconfig.c			1.89
+sbin/ifconfig/ifconfig.8			1.43
+distrib/sets/lists/comp/mi			1.258
+distrib/sets/lists/man/mi			1.269
+share/man/man4/Makefile				1.166
+share/man/man4/vlan.4				1.1-1.6 (new)
+sys/conf/files					1.395 via patch
+sys/net/Makefile				1.8
+sys/net/if_ether.h				1.18-1.19, 1.21
+sys/net/if_ethersubr.c				1.59-1.60, 1.62-1.65, 1.70
+						via patch
+sys/net/if_vlan.c				1.1-1.14, 1.16-1.21,
+						1.23-1.26 (new)
+sys/net/if_vlanvar.h				1.1-1.4 (new)
+sys/sys/sockio.h				1.14
+sys/dev/ic/dp8390.c				1.39
+sys/dev/ic/elinkxl.c				1.43 via patch
+sys/dev/ic/elinkxlreg.h				1.4
+sys/dev/ic/i82557.c				1.39
+sys/dev/ic/lance.c				1.14
+sys/dev/ic/smc83c170.c				1.36
+sys/dev/ic/tulip.c				1.74-1.75
+
+	Add support for 802.1Q virtual LANs.
+
+sys/dev/pci/if_ti.c				1.12, 1.15 via patch
+sys/dev/pci/if_tireg.h				1.3
+sys/dev/pci/pcidevs				1.272 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/ti_fw.h				1.2
+sys/dev/pci/ti_fw2.h				1.2
+share/man/man4/ti.4				1.4 via patch
+share/man/man4/vlan.4				1.7
+
+  For the ti driver, add hardware 802.1Q support, update firmware
+  to 12.4.13+wpaul, and support the Netgear GA620T copper gigabit card,
+  and the Alteon ACEnic 100baseSX and 1000baseT gigabit cards. Various
+  small changes from FreeBSD.
