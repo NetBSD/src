@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: cpu.h 1.16 91/03/25
- *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.7 1994/05/17 10:30:33 cgd Exp $
+ * from: Utah $Hdr: cpu.h 1.16 91/03/25$
+ *
+ *	from: @(#)cpu.h	8.4 (Berkeley) 1/5/94
+ *	$Id: cpu.h,v 1.8 1994/05/23 06:21:18 mycroft Exp $
  */
 
 /*
@@ -50,35 +51,33 @@
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
-/*
- * function vs. inline configuration;
- * these are defined to get generic functions
- * rather than inline or machine-dependent implementations
- */
-#define	NEED_MINMAX		/* need {,i,l,ul}{min,max} functions */
-#undef	NEED_FFS		/* don't need ffs function */
-#undef	NEED_BCMP		/* don't need bcmp function */
-#undef	NEED_STRLEN		/* don't need strlen function */
-
-#define	cpu_exec(p)	/* nothing */
-#define	cpu_wait(p)	/* nothing */
-#define	cpu_swapin(p)	/* nothing */
+#define	cpu_exec(p)			/* nothing */
+#define	cpu_swapin(p)			/* nothing */
+#define	cpu_wait(p)			/* nothing */
+#define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
+#define cpu_set_init_frame(p, fp)	(p)->p_md.md_regs = fp
 
 /*
- * Arguments to hardclock, softclock and gatherstats
- * encapsulate the previous machine state in an opaque
- * clockframe; for hp300, use just what the hardware
- * leaves on the stack.
+ * Arguments to hardclock and gatherstats encapsulate the previous
+ * machine state in an opaque clockframe.  One the hp300, we use
+ * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {
-	int	ps;
-	int	pc;
+	u_short	sr;		/* sr at time of interrupt */
+	u_long	pc;		/* pc at time of interrupt */
+	u_short	vo;		/* vector offset (4-word frame) */
 };
 
-#define	CLKF_USERMODE(frame)	(((frame)->ps & PSL_S) == 0)
-#define	CLKF_BASEPRI(frame)	(((frame)->ps & PSL_IPL7) == 0)
-#define	CLKF_PC(frame)		((frame)->pc)
-#define	CLKF_INTR(frame)	(0)	/* XXX */
+#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
+#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
+#define	CLKF_PC(framep)		((framep)->pc)
+#if 0
+/* We would like to do it this way... */
+#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
+#else
+/* but until we start using PSL_M, we have to do this instead */
+#define	CLKF_INTR(framep)	(0)	/* XXX */
+#endif
 
 
 /*
@@ -88,11 +87,10 @@ struct clockframe {
 #define	need_resched()	{ want_resched++; aston(); }
 
 /*
- * Give a profiling tick to the current process from the softclock
- * interrupt.  On hp300, request an ast to send us through trap(),
- * marking the proc as needing a profiling tick.
+ * Give a profiling tick to the current process when the user profiling
+ * buffer pages are invalid.  On the hp300, request an ast to send us
+ * through trap, marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= P_OWEUPC; aston(); }
 #define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
 
 /*
@@ -125,7 +123,7 @@ extern unsigned char ssir;
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_MAXID		2	/* number of valid machdep ids */
 
-#define	CTL_MACHDEP_NAMES { \
+#define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
@@ -143,8 +141,11 @@ extern unsigned char ssir;
 #define	HP_370		4	/* 33Mhz 68030+64K external cache */
 #define	HP_340		5	/* 16Mhz 68030 */
 #define	HP_375		6	/* 50Mhz 68030+32K external cache */
+#define	HP_380		7	/* 25Mhz 68040 */
+#define HP_433		8	/* 33Mhz 68040 */
 
 /* values for mmutype (assigned for quick testing) */
+#define	MMU_68040	-2	/* 68040 on-chip MMU */
 #define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
 #define	MMU_HP		0	/* HP proprietary */
 #define	MMU_68851	1	/* Motorola 68851 */
@@ -164,6 +165,10 @@ extern unsigned char ssir;
 #ifdef KERNEL
 extern	int machineid, mmutype, ectype;
 extern	char *intiobase, *intiolimit;
+
+/* what is this supposed to do? i.e. how is it different than startrtclock? */
+#define	enablertclock()
+
 #endif
 
 /* physical memory sections */
@@ -250,6 +255,20 @@ extern	char *intiobase, *intiolimit;
 #define	PMMU_BE		0x8000
 #define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
 
+/*
+ * 68040 MMU
+ */
+#define	MMU4_RES	0x001
+#define	MMU4_TTR	0x002
+#define	MMU4_WP		0x004
+#define	MMU4_MOD	0x010
+#define	MMU4_CMMASK	0x060
+#define	MMU4_SUP	0x080
+#define	MMU4_U0		0x100
+#define	MMU4_U1		0x200
+#define	MMU4_GLB	0x400
+#define	MMU4_BE		0x800
+
 /* 680X0 function codes */
 #define	FC_USERD	1	/* user data space */
 #define	FC_USERP	2	/* user program space */
@@ -278,3 +297,10 @@ extern	char *intiobase, *intiolimit;
 #define	CACHE_CLR	(CACHE_ON)
 #define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
+
+/* 68040 cache control register */
+#define	IC4_ENABLE	0x8000		/* instruction cache enable bit */
+#define	DC4_ENABLE	0x80000000	/* data cache enable bit */
+
+#define	CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
+#define	CACHE4_OFF	(0)

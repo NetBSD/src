@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: pte.h 1.11 89/09/03
- *	from: @(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.1 1993/08/09 04:44:11 mycroft Exp $
+ * from: Utah $Hdr: pte.h 1.13 92/01/20$
+ *
+ *	from: @(#)pte.h	8.1 (Berkeley) 6/10/93
+ *	$Id: pte.h,v 1.2 1994/05/23 06:21:54 mycroft Exp $
  */
 
 /*
@@ -48,6 +49,14 @@ struct ste {
 	unsigned int	sg_pfnum:20;	/* page table frame number */
 	unsigned int	:8;		/* reserved at 0 */
 	unsigned int	:1;		/* reserved at 1 */
+	unsigned int	sg_prot:1;	/* write protect bit */
+	unsigned int	sg_v:2;		/* valid bits */
+};
+
+struct ste40 {
+	unsigned int	sg_ptaddr:24;	/* page table page addr */
+	unsigned int	:4;		/* reserved at 0 */
+	unsigned int	sg_u;		/* hardware modified (dirty) bit */
 	unsigned int	sg_prot:1;	/* write protect bit */
 	unsigned int	sg_v:2;		/* valid bits */
 };
@@ -76,11 +85,25 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	SG_PROT		0x00000004	/* access protection mask */
 #define	SG_RO		0x00000004
 #define	SG_RW		0x00000000
+#define	SG_U		0x00000008	/* modified bit (68040) */
 #define	SG_FRAME	0xfffff000
 #define	SG_IMASK	0xffc00000
-#define	SG_PMASK	0x003ff000
 #define	SG_ISHIFT	22
+#define	SG_PMASK	0x003ff000
 #define	SG_PSHIFT	12
+
+/* 68040 additions */
+#define	SG4_MASK1	0xfe000000
+#define	SG4_SHIFT1	25
+#define	SG4_MASK2	0x01fc0000
+#define	SG4_SHIFT2	18
+#define	SG4_MASK3	0x0003f000
+#define	SG4_SHIFT3	12
+#define	SG4_ADDR1	0xfffffe00
+#define	SG4_ADDR2	0xffffff00
+#define	SG4_LEV1SIZE	128
+#define	SG4_LEV2SIZE	128
+#define	SG4_LEV3SIZE	64
 
 #define	PG_V		0x00000001
 #define	PG_NV		0x00000000
@@ -95,8 +118,17 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define PG_SHIFT	12
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
-#define HP_STSIZE	HP_PAGE_SIZE	/* segment table size */
-#define HP_MAX_PTSIZE	HP_SEG_SIZE	/* max size of UPT */
+/* 68040 additions */
+#define	PG_CMASK	0x00000060	/* cache mode mask */
+#define	PG_CWT		0x00000000	/* writethrough caching */
+#define	PG_CCB		0x00000020	/* copyback caching */
+#define	PG_CIS		0x00000040	/* cache inhibited serialized */
+#define	PG_CIN		0x00000060	/* cache inhibited nonserialized */
+#define	PG_SO		0x00000080	/* supervisor only */
+
+#define HP_STSIZE	(MAXUL2SIZE*SG4_LEV2SIZE*sizeof(st_entry_t))
+					/* user process segment table size */
+#define HP_MAX_PTSIZE	0x400000	/* max size of UPT */
 #define HP_MAX_KPTSIZE	0x100000	/* max memory to allocate to KPT */
 #define HP_PTBASE	0x10000000	/* UPT map base address */
 #define HP_PTMAXSIZE	0x70000000	/* UPT map maximum size */

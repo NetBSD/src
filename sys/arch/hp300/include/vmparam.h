@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: vmparam.h 1.16 91/01/18
- *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.5 1993/08/24 17:56:21 mycroft Exp $
+ * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
+ *
+ *	from: @(#)vmparam.h	8.2 (Berkeley) 4/19/94
+ *	$Id: vmparam.h,v 1.6 1994/05/23 06:21:59 mycroft Exp $
  */
 
 /*
@@ -66,13 +67,13 @@
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(6*1024*1024)		/* max text size */
+#define	MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(32*1024*1024)		/* max data size */
+#define	MAXDSIZ		(64*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
@@ -198,14 +199,11 @@
  * Strategy of 1/19/85:
  *	lotsfree is 512k bytes, but at most 1/4 of memory
  *	desfree is 200k bytes, but at most 1/8 of memory
- *	minfree is 64k bytes, but at most 1/2 of desfree
  */
 #define	LOTSFREE	(512 * 1024)
 #define	LOTSFREEFRACT	4
 #define	DESFREE		(200 * 1024)
 #define	DESFREEFRACT	8
-#define	MINFREE		(64 * 1024)
-#define	MINFREEFRACT	2
 
 /*
  * There are two clock hands, initially separated by HANDSPREAD bytes
@@ -226,9 +224,6 @@
  * swapping area is desirable.
  */
 #define	LOTSOFMEM	2
-
-#define	mapin(pte, v, pfnum, prot) \
-	(*(u_int *)(pte) = ((pfnum) << PGSHIFT) | (prot), TBIS((caddr_t)(v)))
 
 /*
  * Mach derived constants

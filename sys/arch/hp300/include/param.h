@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machparam.h 1.11 89/08/14
- *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.11 1994/05/20 18:21:26 mycroft Exp $
+ * from: Utah $Hdr: machparam.h 1.16 92/12/20$
+ *
+ *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
+ *	$Id: param.h,v 1.12 1994/05/23 06:21:28 mycroft Exp $
  */
 
 /*
@@ -45,14 +46,14 @@
  */
 #define	MACHINE		"hp300"
 #define	MACHINE_ARCH	"m68k"
-#define MID_MACHINE	MID_M68K4K
+#define	MID_MACHINE	MID_M68K4K
 
 /*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
+ * Round p (pointer or byte index) up to a correctly-aligned value for all
+ * data types (int, long, ...).   The result is u_int and must be cast to
+ * any desired pointer type.
  */
-#define	ALIGNBYTES	(sizeof(int) - 1)
+#define	ALIGNBYTES	3
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 
 #define	NBPG		4096		/* bytes/page */
@@ -60,7 +61,7 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NPTEPG		(NBPG/(sizeof (struct pte)))
 
-#define NBSEG		(1024*NBPG)	/* bytes/segment */
+#define NBSEG		0x400000	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
@@ -79,7 +80,7 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#define	UPAGES		3		/* pages of u-area */
+#define	UPAGES		2		/* pages of u-area */
 
 /*
  * Constants related to network buffer management.
@@ -89,8 +90,8 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	1024
-#define	MCLSHIFT	10
+#define	MCLBYTES	2048		/* large enough for ether MTU */
+#define	MCLSHIFT	11
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
@@ -98,16 +99,6 @@
 #else
 #define	NMBCLUSTERS	256		/* map size, max cluster allocation */
 #endif
-#endif
-
-/*
- * Disklabel location
- */
-#ifndef LABELSECTOR
-#define LABELSECTOR     (1024/DEV_BSIZE)
-#endif
-#ifndef LABELOFFSET
-#define LABELOFFSET     0
 #endif
 
 /*
@@ -128,6 +119,13 @@
 /* bytes to pages */
 #define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
 
+#ifndef LABELSECTOR
+#define LABELSECTOR	(1024/DEV_BSIZE)
+#endif
+#ifndef LABELOFFSET
+#define LABELOFFSET	0
+#endif
+
 #define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
 	((unsigned)(bytes) >> DEV_BSHIFT)
 #define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
@@ -144,12 +142,8 @@
 /*
  * Mach derived conversion macros
  */
-#define hp300_round_seg(x)	((((unsigned)(x)) + NBSEG - 1) & ~(NBSEG-1))
-#define hp300_trunc_seg(x)	((unsigned)(x) & ~(NBSEG-1))
 #define hp300_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
 #define hp300_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define hp300_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define hp300_stob(x)		((unsigned)(x) << SEGSHIFT)
 #define hp300_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define hp300_ptob(x)		((unsigned)(x) << PGSHIFT)
 
@@ -176,16 +170,16 @@
 #define spl6()  _spl(PSL_S|PSL_IPL6)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 
-#define splsoftclock()  spl1()
-#define splnet()        spl1()
-#define splbio()        spl5()
-#define splimp()        spl5()
-#define spltty()        spl5()
-#define splclock()      spl6()
-#define splstatclock()  spl6()
-#define splvm()         spl6()
-#define splhigh()       spl7()
-#define splsched()      spl7()
+#define splsoftclock()	spl1()
+#define splnet()	spl1()
+#define splbio()	spl5()
+#define splimp()	spl5()
+#define spltty()	spl5()
+#define splclock()	spl6()
+#define splstatclock()	spl6()
+#define splvm()		spl6()
+#define splhigh()	spl7()
+#define splsched()	spl7()
 
 /* watch out for side effects */
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
@@ -195,7 +189,6 @@
 int	cpuspeed;
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 #endif
-
 #else
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif
@@ -206,7 +199,10 @@ int	cpuspeed;
  * Pages in the first 256Mb are mapped in at every 256Mb segment.
  */
 #define HPMMMASK	0xF0000000
-#define ISHPMMADDR(v)	\
-    ((curproc->p_addr->u_pcb.pcb_flags&PCB_HPUXMMAP) && ((unsigned)(v)&HPMMMASK) != HPMMMASK)
-#define HPMMBASEADDR(v)	((unsigned)(v) & ~HPMMMASK)
+#define ISHPMMADDR(v) \
+	((curproc->p_md.md_flags & MDP_HPUXMMAP) && \
+	 ((unsigned)(v) & HPMMMASK) && \
+	 ((unsigned)(v) & HPMMMASK) != HPMMMASK)
+#define HPMMBASEADDR(v) \
+	((unsigned)(v) & ~HPMMMASK)
 #endif
