@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.48 2001/05/21 21:49:51 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.49 2001/05/21 23:21:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -234,7 +234,7 @@ fxp_scb_cmd(struct fxp_softc *sc, u_int8_t cmd)
 
 	if (cmd == FXP_SCB_COMMAND_CU_RESUME &&
 	    (sc->sc_flags & FXPF_FIX_RESUME_BUG) != 0) {
-		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_CU_COMMAND_NOP);
+		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_NOP);
 		fxp_scb_wait(sc);
 	}
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, cmd);
