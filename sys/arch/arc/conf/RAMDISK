@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.39 2003/06/15 06:08:13 tsutsui Exp $
+#	$NetBSD: RAMDISK,v 1.40 2003/06/15 06:10:42 tsutsui Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.39 $"
+#ident		"GENERIC-$Revision: 1.40 $"
 
 maxusers	32		# estimated number of users
 
@@ -212,6 +212,8 @@ isa*		at tyneisabr?
 
 #isadma0 	at isa?
 
+isapnp0 	at isa?
+
 timer0		at isa? port 0x40 irq 0
 mcclock0 	at isa? port 0x70
 
@@ -235,10 +237,9 @@ com*		at ast? slave ?
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
 # fall back to 16bits I/O if 32bits I/O are not functional).
 # Some controllers pass the initial 32bit test, but will fail later.
-# XXX - should be configured
-#wdc0		at isa? port 0x1f0 irq 14 flags 0x00
+wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1		at isa? port 0x170 irq 15 flags 0x00
-#wdc*		at isapnp?
+wdc*		at isapnp?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -251,25 +252,23 @@ com*		at ast? slave ?
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-# XXX - should be configured
-#wd*		at wdc? channel ? drive ? flags 0x0000
+wd*		at wdc? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-# XXX - should be configured
-#atapibus*	at wdc? channel ?
+atapibus*	at wdc? channel ?
 
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x378 irq 7
 
 # ISA network interfaces
-# XXX - should be configured
 #ec0		at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
-#ep0		at isa? port ? irq ?		# 3C509 ethernet cards
-#ne0		at isa? port 0x280 irq 9	# NE[12]000 ethernet cards
-#ne1		at isa? port 0x300 irq 10
-#ne*		at isapnp?			# NE[12]000 PnP ethernet
-#we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
-#we1		at isa? port 0x300 iomem 0xcc000 irq 10
+ep*		at isa? port ? irq ?		# 3C509 ethernet cards
+ep*		at isapnp?			# 3C509B ethernet card
+ne0		at isa? port 0x280 irq 9	# NE[12]000 ethernet cards
+ne1		at isa? port 0x300 irq 10
+ne*		at isapnp?			# NE[12]000 PnP ethernet
+we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+we1		at isa? port 0x300 iomem 0xcc000 irq 10
 
 # XXX - should be configured
 #btl0		at isa? port 0x330 irq ? drq ?
