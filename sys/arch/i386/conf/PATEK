@@ -1,7 +1,7 @@
 #
 # PATEK -- Mycroft's 486 test box
 #
-#	$Id: PATEK,v 1.14 1994/05/21 08:37:42 cgd Exp $
+#	$Id: PATEK,v 1.15 1994/07/18 08:34:59 mycroft Exp $
 #
 
 machine		"i386"
@@ -10,6 +10,7 @@ cpu		"I486_CPU"
 options		"DUMMY_NOPS"
 options		"MACHINE_NONCONTIG"
 options		XSERVER,UCONSOLE
+options		"USER_LDT"
 
 ident		PATEK
 maxusers	16
@@ -18,12 +19,9 @@ timezone	5 dst
 options		SWAPPAGER
 options		VNODEPAGER,DEVPAGER
 options		DDB
-#options	DIAGNOSTIC
+options		DIAGNOSTIC
 options		KTRACE
-options		FIFO
-#options	SYSVMSG
-#options	SYSVSEM
-#options	SYSVSHM
+options		SYSVSHM,SYSVSEM,SYSVMSG
 #options	"SHMMAXPGS=1024"
 options		LKM
 
@@ -32,26 +30,26 @@ options		"COMPAT_09"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
-#options	QUOTA
-options		FIFO
-options		FFS
+options		FFS,QUOTA
+options		LFS
 options		MFS
-options		NFSSERVER
+
 options		NFSCLIENT
-options		ISOFS
-options		MSDOSFS
+options		NFSSERVER
+
+options		"CD9660"
 options		FDESC
+options		FIFO
 options		KERNFS
+options		NULLFS
+options		PORTAL
 options		PROCFS
+options		UMAPFS
+options		UNION
 
 options		GATEWAY
-options		MULTICAST,MROUTING
+options		MROUTING
 options		INET
-#options	NS
-#options	CCITT
-#options	ISO
-#options	TPIP
-#options	EON
 
 options		SCSI
 options		SBPRO
@@ -69,11 +67,7 @@ device		lpt0	at isa? port "IO_LPT1" irq 7
 
 #device		lms0	at isa? port "IO_BMS1" irq 5
 device		mms0	at isa? port "IO_BMS1" irq 5
-#device		pms0	at isa? port "IO_KBD" irq 12
-
-controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
-disk		fd0	at fdc0 drive ?
-disk		fd1	at fdc0 drive ?
+device		pms0	at isa? port "IO_KBD" irq 12
 
 controller	uha0	at isa? port "IO_UHA0" irq 14 drq 5
 master		scsibus0 at uha0
@@ -86,6 +80,21 @@ tape		st1	at scsibus0 slave ?
 disk		cd0	at scsibus0 slave ?
 disk		cd1	at scsibus0 slave ?
 
+controller	aic0	at isa? port 0x340 irq 11
+master		scsibus1 at aic0
+disk		sd0	at scsibus1 slave ?
+disk		sd1	at scsibus1 slave ?
+disk		sd2	at scsibus1 slave ?
+disk		sd3	at scsibus1 slave ?
+tape		st0	at scsibus1 slave ?
+tape		st1	at scsibus1 slave ?
+disk		cd0	at scsibus1 slave ?
+disk		cd1	at scsibus1 slave ?
+
+controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
+disk		fd0	at fdc0 drive ?
+disk		fd1	at fdc0 drive ?
+
 device		sb0	at isa? port 0x220 irq 5 drq 1
 
 device		ed0	at isa? port 0x280 irq 10 iomem 0xd8000
@@ -94,7 +103,7 @@ device		npx0	at isa? port "IO_NPX" irq 13
 
 pseudo-device	loop
 pseudo-device	ether
-pseudo-device	bpfilter 4
+pseudo-device	bpfilter 8
 pseudo-device	log
 pseudo-device	pty	32
 pseudo-device	audio
