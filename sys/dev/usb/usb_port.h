@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.11 1999/09/11 08:19:27 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.12 1999/10/12 11:54:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define USB_ATTACH_SETUP printf("\n")
 
 #define USB_GET_SC_OPEN(dname, unit, sc) \
-	struct __CONCAT(dname,_softc) *sc; \
 	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \
 		return (ENXIO); \
 	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
@@ -120,7 +119,7 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
-	struct __CONCAT(dname,_softc) *sc = __CONCAT(dname,_cd).cd_devs[unit]
+	sc = __CONCAT(dname,_cd).cd_devs[unit]
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(config_found_sm(parent, args, print, sub))
@@ -203,7 +202,6 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define USB_ATTACH_SETUP printf("\n")
 
 #define USB_GET_SC_OPEN(dname, unit, sc) \
-	struct __CONCAT(dname,_softc) *sc; \
 	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \
 		return (ENXIO); \
 	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
@@ -211,7 +209,7 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
-	struct __CONCAT(dname,_softc) *sc = __CONCAT(dname,_cd).cd_devs[unit]
+	sc = __CONCAT(dname,_cd).cd_devs[unit]
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(config_found_sm(parent, args, print, sub))
@@ -290,14 +288,12 @@ __CONCAT(dname,_attach)(device_t self)
 	sc->sc_dev = self
 
 #define USB_GET_SC_OPEN(dname, unit, sc) \
-	struct __CONCAT(dname,_softc) *sc = \
-		devclass_get_softc(__CONCAT(dname,_devclass), unit); \
+	sc = devclass_get_softc(__CONCAT(dname,_devclass), unit); \
 	if (!sc) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
-	struct __CONCAT(dname,_softc) *sc = \
-		devclass_get_softc(__CONCAT(dname,_devclass), unit)
+	sc = devclass_get_softc(__CONCAT(dname,_devclass), unit)
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(device_probe_and_attach((bdev)) == 0 ? ((dev)->softc = (bdev)) : 0)

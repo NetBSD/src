@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.24 1999/09/05 19:32:18 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.25 1999/10/12 11:54:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -334,7 +334,9 @@ uhidopen(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
+	struct uhid_softc *sc;
 	usbd_status r;
+
 	USB_GET_SC_OPEN(uhid, UHIDUNIT(dev), sc);
 
 	DPRINTF(("uhidopen: sc=%p\n", sc));
@@ -384,6 +386,8 @@ uhidclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
+	struct uhid_softc *sc;
+
 	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	DPRINTF(("uhidclose: sc=%p\n", sc));
@@ -478,8 +482,10 @@ uhidread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	struct uhid_softc *sc;
 	int error;
+
+	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = uhid_do_read(sc, uio, flag);
@@ -530,8 +536,10 @@ uhidwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	struct uhid_softc *sc;
 	int error;
+
+	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = uhid_do_write(sc, uio, flag);
@@ -622,8 +630,10 @@ uhidioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	struct uhid_softc *sc;
 	int error;
+
+	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = uhid_do_ioctl(sc, cmd, addr, flag, p);
@@ -638,8 +648,10 @@ uhidpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
+	struct uhid_softc *sc;
 	int revents = 0;
 	int s;
+
 	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	if (sc->sc_dying)

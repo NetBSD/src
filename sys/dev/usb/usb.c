@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.25 1999/09/18 11:25:51 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.26 1999/10/12 11:54:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,16 +55,19 @@
 #include <sys/bus.h>
 #include <sys/ioccom.h>
 #include <sys/uio.h>
-#include <sys/conf.h>
 #endif
 #include <sys/conf.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/select.h>
+#include <sys/vnode.h>
+#include <sys/signalvar.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+
+#define USB_DEV_MINOR 255
 
 #if defined(__FreeBSD__)
 MALLOC_DEFINE(M_USB, "USB", "USB");
@@ -90,10 +93,6 @@ int	usb_noexplore = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-int usb_nbus = 0;
-
-#define USBUNIT(dev) (minor(dev))
 
 struct usb_softc {
 	USBBASEDEVICE	sc_dev;		/* base device */
@@ -125,6 +124,19 @@ struct cdevsw usb_cdevsw = {
 usbd_status usb_discover __P((struct usb_softc *));
 void	usb_create_event_thread __P((void *));
 void	usb_event_thread __P((void *));
+
+#define USB_MAX_EVENTS 50
+struct usb_event_q {
+	struct usb_event ue;
+	SIMPLEQ_ENTRY(usb_event_q) next;
+};
+SIMPLEQ_HEAD(, usb_event_q) usb_events = SIMPLEQ_HEAD_INITIALIZER(usb_events);
+int usb_nevents = 0;
+struct selinfo usb_selevent;
+struct proc *usb_async_proc;  /* process who wants USB SIGIO */
+int usb_dev_open = 0;
+
+int usb_get_next_event __P((struct usb_event *));
 
 /* Flag to see if we are in the cold boot process. */
 extern int cold;
@@ -191,7 +203,6 @@ USB_ATTACH(usb)
 
 	kthread_create(usb_create_event_thread, sc);
 
-	usb_nbus++;
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -252,14 +263,59 @@ usbopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	USB_GET_SC_OPEN(usb, USBUNIT(dev), sc);
+	int unit = minor(dev);
+	struct usb_softc *sc;
 
-	if (sc == 0)
-		return (ENXIO);
+	if (unit == USB_DEV_MINOR) {
+		if (usb_dev_open)
+			return (EBUSY);
+		usb_dev_open = 1;
+		usb_async_proc = 0;
+		return (0);
+	}
+
+	USB_GET_SC_OPEN(usb, unit, sc);
+
 	if (sc->sc_dying)
 		return (EIO);
 
 	return (0);
+}
+
+int
+usbread(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	struct usb_event ue;
+	int s, error, n;
+
+	if (minor(dev) != USB_DEV_MINOR)
+		return (ENXIO);
+
+	if (uio->uio_resid != sizeof(struct usb_event))
+		return (EINVAL);
+
+	error = 0;
+	s = splusb();
+	for (;;) {
+		n = usb_get_next_event(&ue);
+		if (n != 0)
+			break;
+		if (flag & IO_NDELAY) {
+			error = EWOULDBLOCK;
+			break;
+		}
+		error = tsleep(&usb_events, PZERO | PCATCH, "usbrea", 0);
+		if (error)
+			break;
+	}
+	splx(s);
+	if (!error)
+		error = uiomove(&ue, uio->uio_resid, uio);
+
+	return (error);
 }
 
 int
@@ -268,6 +324,13 @@ usbclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	int unit = minor(dev);
+
+	if (unit == USB_DEV_MINOR) {
+		usb_async_proc = 0;
+		usb_dev_open = 0;
+	}
+
 	return (0);
 }
 
@@ -279,7 +342,28 @@ usbioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	USB_GET_SC(usb, USBUNIT(dev), sc);
+	struct usb_softc *sc;
+	int unit = minor(dev);
+
+	if (unit == USB_DEV_MINOR) {
+		switch (cmd) {
+		case FIONBIO:
+			/* All handled in the upper FS layer. */
+			return (0);
+			
+		case FIOASYNC:
+			if (*(int *)data)
+				usb_async_proc = p;
+			else
+				usb_async_proc = 0;
+			return (0);
+
+		default:
+			return (EINVAL);
+		}
+	}
+
+	USB_GET_SC(usb, unit, sc);
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -350,14 +434,14 @@ usbioctl(dev, cmd, data, flag, p)
 	{
 		struct usb_device_info *di = (void *)data;
 		int addr = di->addr;
-		usbd_device_handle dev;
+		usbd_device_handle devh;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)
 			return (EINVAL);
-		dev = sc->sc_bus->devices[addr];
-		if (dev == 0)
+		devh = sc->sc_bus->devices[addr];
+		if (devh == 0)
 			return (ENXIO);
-		usbd_fill_deviceinfo(dev, di);
+		usbd_fill_deviceinfo(devh, di);
 		break;
 	}
 
@@ -366,7 +450,7 @@ usbioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		return (ENXIO);
+		return (EINVAL);
 	}
 	return (0);
 }
@@ -377,23 +461,23 @@ usbpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	int revents, s;
-	USB_GET_SC(usb, USBUNIT(dev), sc);
+	int revents, mask, s;
 
-	if (sc->sc_dying)
-		return (EIO);
+	if (minor(dev) != USB_DEV_MINOR)
+		return (ENXIO);
 
-	DPRINTFN(2, ("usbpoll: sc=%p events=0x%x\n", sc, events));
-	s = splusb();
 	revents = 0;
-	if (events & (POLLOUT | POLLWRNORM))
-		if (sc->sc_bus->needs_explore)
-			revents |= events & (POLLOUT | POLLWRNORM);
+	s = splusb();
+	mask = POLLIN | POLLRDNORM;
+	if (events & mask)
+		if (usb_nevents > 0)
+			revents |= events & mask;
+
 	DPRINTFN(2, ("usbpoll: revents=0x%x\n", revents));
 	if (revents == 0) {
-		if (events & (POLLOUT | POLLWRNORM)) {
+		if (events & mask) {
 			DPRINTFN(2, ("usbpoll: selrecord\n"));
-			selrecord(p, &sc->sc_consel);
+			selrecord(p, &usb_selevent);
 		}
 	}
 	splx(s);
@@ -422,8 +506,60 @@ usb_needs_explore(bus)
 	usbd_bus_handle bus;
 {
 	bus->needs_explore = 1;
-	selwakeup(&bus->usbctl->sc_consel);
 	wakeup(&bus->needs_explore);
+}
+
+/* Called at splusb() */
+int
+usb_get_next_event(ue)
+	struct usb_event *ue;
+{
+	struct usb_event_q *ueq;
+
+	if (usb_nevents <= 0)
+		return (0);
+	ueq = SIMPLEQ_FIRST(&usb_events);
+	*ue = ueq->ue;
+	SIMPLEQ_REMOVE_HEAD(&usb_events, ueq, next);
+	free(ueq, M_USBDEV);
+	usb_nevents--;
+	return (1);
+}
+
+void
+usbd_add_event(type, devh)
+	int type;
+	usbd_device_handle devh;
+{
+	struct usb_event_q *ueq;
+	struct usb_event ue;
+	struct timeval thetime;
+	int s;
+
+	s = splusb();
+	if (++usb_nevents >= USB_MAX_EVENTS) {
+		/* Too many queued events, drop an old one. */
+		DPRINTFN(-1,("usb: event dropped\n"));
+		(void)usb_get_next_event(&ue);
+	}
+	/* Don't want to wait here inside splusb() */
+	ueq = malloc(sizeof *ueq, M_USBDEV, M_NOWAIT);
+	if (ueq == 0) {
+		printf("usb: no memory, event dropped\n");
+		splx(s);
+		return;
+	}
+	ueq->ue.ue_type = type;
+	ueq->ue.ue_cookie = devh->cookie;
+	usbd_fill_deviceinfo(devh, &ueq->ue.ue_device);
+	microtime(&thetime);
+	TIMEVAL_TO_TIMESPEC(&thetime, &ueq->ue.ue_time);
+	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
+	wakeup(&usb_events);
+	selwakeup(&usb_selevent);
+	if (usb_async_proc)
+		psignal(usb_async_proc, SIGIO);
+	splx(s);
 }
 
 int
@@ -472,17 +608,7 @@ usb_detach(self, flags)
 			       USBDEVNAME(sc->sc_dev));
 	}
 
-	usb_nbus--;
-	return (0);
-}
-
-int
-usbread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
-{
-	/* XXX */
+	usbd_finish();
 	return (0);
 }
 

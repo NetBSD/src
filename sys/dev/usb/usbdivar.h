@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.35 1999/09/15 21:08:19 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.36 1999/10/12 11:54:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ struct usbd_device {
 	int			config;
 	int			langid;	/* language to use for strings */
 #define USBD_NOLANG (-1)
+	usb_event_cookie_t	cookie;	/* unique connection id */
 	struct usbd_port       *powersrc;
 	struct usbd_endpoint	def_ep;	/* for pipe 0 */
 	usb_endpoint_descriptor_t def_ep_desc; /* for pipe 0 */
@@ -192,6 +193,7 @@ struct usbd_request {
 };
 
 void usbd_init __P((void));
+void usbd_finish __P((void));
 
 /* Routines from usb_subr.c */
 int		usbctlprint __P((void *, const char *));

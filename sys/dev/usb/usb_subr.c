@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.49 1999/10/11 09:16:39 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.50 1999/10/12 11:54:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@ void usbd_kill_pipe __P((usbd_pipe_handle));
 usbd_status usbd_probe_and_attach 
 	__P((device_ptr_t parent, usbd_device_handle dev, int port, int addr));
 
+static u_int32_t usb_cookie_no = 0;
 
 #ifdef USBVERBOSE
 typedef u_int16_t usb_vendor_id_t;
@@ -858,7 +859,6 @@ usbd_probe_and_attach(parent, dev, port, addr)
 }
 
 
-
 /*
  * Called when a new device has been put in the powered state,
  * but not yet in the addressed state.
@@ -914,6 +914,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	dev->depth = depth;
 	dev->powersrc = up;
 	dev->langid = USBD_NOLANG;
+	dev->cookie.cookie = ++usb_cookie_no;
 
 	/* Establish the the default pipe. */
 	r = usbd_setup_pipe(dev, 0, &dev->def_ep, &dev->default_pipe);
@@ -1001,6 +1002,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		return (r);
   	}
   
+	usbd_add_event(USB_EVENT_ATTACH, dev);
   	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -1223,6 +1225,7 @@ usb_disconnect_port(up)
 		}
 	}
 
+	usbd_add_event(USB_EVENT_DETACH, dev);
 	dev->bus->devices[dev->address] = 0;
 	up->device = 0;
 	usb_free_device(dev);

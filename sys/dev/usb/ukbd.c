@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.44 1999/09/12 08:21:49 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.45 1999/10/12 11:54:56 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -430,7 +430,7 @@ ukbd_detach(self, flags)
 		 */
 		panic("ukbd_detach: console keyboard");
 	}
-	/* No need to do reference counting of ums, wskbd has all the goo. */
+	/* No need to do reference counting of ukbd, wskbd has all the goo. */
 	if (sc->sc_wskbddev)
 		rv = config_detach(sc->sc_wskbddev, flags);
 	return (rv);
