@@ -1,4 +1,4 @@
-/*	$NetBSD: wssreg.h,v 1.2 1995/05/08 22:02:35 brezak Exp $	*/
+/*	$NetBSD: wssreg.h,v 1.3 1995/07/07 02:15:15 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -42,20 +42,23 @@
 /*
  * Macros to detect valid hardware configuration data.
  */
-#define WSS_IRQ_VALID(mask)  ((mask) & 0x00ac)	/* IRQ 2,3,5,7 */
+#define WSS_IRQ_VALID(irq)   ((irq) ==	7 || (irq) ==  9 || \
+			     (irq) == 10 || (irq) == 11)
+#define WSS_DRQ_VALID(chan)  ((chan) == 0 || (chan) == 1 || (chan) == 3)
 #define WSS_BASE_VALID(base) ((base) == 0x0530 || \
 			      (base) == 0x0604 || \
 			      (base) == 0x0e80 || \
 			      (base) == 0x0f40)
 
 /* Default WSS base */
-/* WSS registers */
 #define WSS_BASE_ADDRESS 0x0530
 
 /* WSS registers */
-#define WSS_CONFIG	0x00
-#define WSS_STATUS	0x03
+#define WSS_CONFIG	0x00	/* write only */
+#define WSS_STATUS	0x03	/* read only */
 
-#define WSS_VERS	0x04
+/* WSS status register bits */
 #define WSS_16SLOT	0x80
-#define WSS_DUALDMA	0x40
+#define WSS_IRQACTIVE	0x40
+#define WSS_VERS	0x04
+#define WSS_VERSMASK	0x3f

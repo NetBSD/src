@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.5 1995/05/08 22:02:32 brezak Exp $	*/
+/*	$NetBSD: wss.c,v 1.6 1995/07/07 02:15:12 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -52,10 +52,9 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
+#include <dev/ic/ad1848reg.h>
 #include <dev/isa/ad1848var.h>
-#include <dev/isa/ad1848reg.h>
 #include <dev/isa/wssreg.h>
 
 /*
@@ -77,8 +76,7 @@
 #define WSS_RECORD_CLASS	10
 #define WSS_MONITOR_CLASS	11
 
-#define DEBUG	/*XXX*/
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (wssdebug) printf x
 int	wssdebug = 0;
 #else
@@ -91,7 +89,6 @@ struct wss_softc {
 	void	*sc_ih;			/* interrupt vectoring */
 
 	struct  ad1848_softc sc_ad1848;
-#define wss_iobase sc_ad1848.sc_iobase
 #define wss_irq    sc_ad1848.sc_irq
 #define wss_drq    sc_ad1848.sc_drq
 
@@ -186,19 +183,27 @@ wssprobe(parent, self, aux)
 	-1, -1, -1, -1, -1, -1, -1, 0x08, -1, 0x10, 0x18, 0x20
     };
     static u_char dma_bits[4] = {1, 2, 0, 3};
-    char bits;
     
     if (!WSS_BASE_VALID(ia->ia_iobase)) {
-	printf("wss: configured iobase %d invalid\n", ia->ia_iobase);
+	printf("wss: configured iobase %x invalid\n", ia->ia_iobase);
 	return 0;
     }
 
-    sc->wss_iobase = iobase;
+    sc->sc_ad1848.sc_iobase = iobase;
 
     /* Is there an ad1848 chip at the WSS iobase ? */
     if (ad1848_probe(&sc->sc_ad1848) == 0)
 	return 0;
 	
+    ia->ia_iosize = WSS_NPORT;
+
+    /* Setup WSS interrupt and DMA */
+    if (!WSS_DRQ_VALID(ia->ia_drq)) {
+	printf("wss: configured dma chan %d invalid\n", ia->ia_drq);
+	return 0;
+    }
+    sc->wss_drq = ia->ia_drq;
+
 #ifdef NEWCONFIG
     /*
      * If the IRQ wasn't compiled in, auto-detect it.
@@ -206,27 +211,21 @@ wssprobe(parent, self, aux)
     if (ia->ia_irq == IRQUNK) {
 	ia->ia_irq = isa_discoverintr(ad1848_forceintr, &sc->sc_ad1848);
 	if (!WSS_IRQ_VALID(ia->ia_irq)) {
-	    printf("wss: couldn't auto-detect interrupt");
+	    printf("wss: couldn't auto-detect interrupt\n");
 	    return 0;
 	}
     }
     else
 #endif
-    ia->ia_iosize = WSS_NPORT;
-
-    /* Setup WSS interrupt and DMA */
-    if ((bits = interrupt_bits[sc->wss_irq]) == -1) {
-	    printf("wss: invalid interrupt configuration (irq=%d)\n", sc->wss_irq);
-	    return 0;
+    if (!WSS_IRQ_VALID(ia->ia_irq)) {
+	printf("wss: configured interrupt %d invalid\n", ia->ia_irq);
+	return 0;
     }
 
-#if 0
-    /* XXX Dual-DMA */
-    outb(sc->wss_iobase+WSS_CONFIG, (bits | 0x40));
-    if ((inb(sc->wss_iobase+WSS_STATUS) & 0x40) == 0)
-	printf("wss: IRQ?\n");
-#endif    
-    outb(sc->wss_iobase+WSS_CONFIG, (bits | dma_bits[sc->wss_drq]));
+    sc->wss_irq = ia->ia_irq;
+
+    outb(iobase+WSS_CONFIG,
+	 (interrupt_bits[ia->ia_irq] | dma_bits[ia->ia_drq]));
 
     return 1;
 }
@@ -243,25 +242,25 @@ wssattach(parent, self, aux)
     register struct wss_softc *sc = (struct wss_softc *)self;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
     register u_short iobase = ia->ia_iobase;
-
-    sc->wss_iobase = iobase;
-    sc->wss_drq = ia->ia_drq;
+    int err;
+    
+    sc->sc_ad1848.sc_recdrq = ia->ia_drq;
 
 #ifdef NEWCONFIG
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-    sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	ad1848_intr, &sc->sc_ad1848);
+    sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
+				   ad1848_intr, &sc->sc_ad1848);
 
     ad1848_attach(&sc->sc_ad1848);
     
-    printf(" (vers %d)", inb(sc->wss_iobase+WSS_STATUS) & 0x1f);
+    printf(" (vers %d)", inb(iobase+WSS_STATUS) & WSS_VERSMASK);
     printf("\n");
 
     sc->sc_ad1848.parent = sc;
 
-    if (audio_hardware_attach(&wss_hw_if, &sc->sc_ad1848) != 0)
-	printf("wss: could not attach to audio pseudo-device driver\n");
+    if ((err = audio_hardware_attach(&wss_hw_if, &sc->sc_ad1848)) != 0)
+	printf("wss: could not attach to audio pseudo-device driver (%d)\n", err);
 }
 
 static int
