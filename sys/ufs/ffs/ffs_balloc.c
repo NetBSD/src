@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.19 2000/05/28 08:31:41 mycroft Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.20 2000/05/29 16:28:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -360,7 +360,7 @@ fail:
 	 * occurence. The error return from fsync is ignored as we already
 	 * have an error to return to the user.
 	 */
-	(void) VOP_FSYNC(vp, cred, MNT_WAIT, curproc);
+	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, curproc);
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
 		ffs_blkfree(ip, *blkp, fs->fs_bsize);
 		deallocated += fs->fs_bsize;
@@ -402,6 +402,6 @@ fail:
 		ip->i_ffs_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-	(void) VOP_FSYNC(vp, cred, MNT_WAIT, curproc);
+	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, curproc);
 	return (error);
 }
