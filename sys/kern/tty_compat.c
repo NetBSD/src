@@ -98,7 +98,7 @@ ttcompat(tp, com, data, flag)
 		}
 		sg->sg_erase = cc[VERASE];
 		sg->sg_kill = cc[VKILL];
-		sg->sg_flags = ttcompatgetflags(tp);
+		sg->sg_flags = tp->t_flags = ttcompatgetflags(tp);
 		break;
 	}
 
@@ -119,7 +119,7 @@ ttcompat(tp, com, data, flag)
 			term.c_ospeed = compatspcodes[speed];
 		term.c_cc[VERASE] = sg->sg_erase;
 		term.c_cc[VKILL] = sg->sg_kill;
-		tp->t_flags = tp->t_flags&0xffff0000 | sg->sg_flags&0xffff;
+		tp->t_flags = ttcompatgetflags(tp)&0xffff0000 | sg->sg_flags&0xffff;
 		ttcompatsetflags(tp, &term);
 		return (ttioctl(tp, com == TIOCSETP ? TIOCSETAF : TIOCSETA, 
 			&term, flag));
@@ -182,10 +182,9 @@ ttcompat(tp, com, data, flag)
 
 		term = tp->t_termios;
 		if (com == TIOCLSET)
-			tp->t_flags = (tp->t_flags&0xffff) | *(int *)data<<16;
+			tp->t_flags = (ttcompatgetflags(tp)&0xffff) | *(int *)data<<16;
 		else {
-			tp->t_flags = 
-			 (ttcompatgetflags(tp)&0xffff0000)|(tp->t_flags&0xffff);
+			tp->t_flags = ttcompatgetflags(tp);
 			if (com == TIOCLBIS)
 				tp->t_flags |= *(int *)data<<16;
 			else
@@ -195,7 +194,9 @@ ttcompat(tp, com, data, flag)
 		return (ttioctl(tp, TIOCSETA, &term, flag));
 	}
 	case TIOCLGET:
-		*(int *)data = ttcompatgetflags(tp)>>16;
+		tp->t_flags =
+		 (ttcompatgetflags(tp)&0xffff0000)|(tp->t_flags&0xffff);
+		*(int *)data = tp->t_flags>>16;
 		if (ttydebug)
 			printf("CLGET: returning %x\n", *(int *)data);
 		break;
@@ -234,7 +235,12 @@ ttcompatgetflags(tp)
 		flags |= TANDEM;
 	if (iflag&ICRNL || oflag&ONLCR)
 		flags |= CRMOD;
-	if (cflag&PARENB) {
+	if ((cflag&CSIZE) == CS8) {
+		flags |= PASS8;
+		if (iflag&ISTRIP)
+			flags |= ANYP;
+	}
+	else if (cflag&PARENB) {
 		if (iflag&INPCK) {
 			if (cflag&PARODD)
 				flags |= ODDP;
@@ -242,20 +248,17 @@ ttcompatgetflags(tp)
 				flags |= EVENP;
 		} else
 			flags |= EVENP | ODDP;
-	} else {
-		if ((tp->t_flags&LITOUT) && !(oflag&OPOST))
-			flags |= LITOUT;
-		if (tp->t_flags&PASS8)
-			flags |= PASS8;
 	}
-	
+
 	if ((lflag&ICANON) == 0) {	
 		/* fudge */
-		if (iflag&IXON || lflag&ISIG || lflag&IEXTEN || cflag&PARENB)
+		if (oflag&OPOST || iflag&ISTRIP || iflag&IXON || lflag&ISIG || lflag&IEXTEN || cflag&PARENB || iflag&INPCK || (cflag&CSIZE) != CS8)
 			flags |= CBREAK;
 		else
 			flags |= RAW;
 	}
+	if (!(flags&RAW) && !(oflag&OPOST) && (!(cflag&PARENB) || (cflag&CSIZE) == CS8))
+		flags |= LITOUT;
 	if (oflag&OXTABS)
 		flags |= XTABS;
 	if (lflag&ECHOE)
@@ -285,7 +288,7 @@ ttcompatsetflags(tp, t)
 	register long cflag = t->c_cflag;
 
 	if (flags & RAW) {
-		iflag &= IXOFF;
+		iflag &= (IXOFF|IXANY);
 		oflag &= ~OPOST;
 		lflag &= ~(ECHOCTL|ISIG|ICANON|IEXTEN);
 	} else {
@@ -313,16 +316,17 @@ ttcompatsetflags(tp, t)
 	else
 		lflag &= ~ECHO;
 		
+	cflag &= ~(CSIZE|PARENB);
 	if (flags&(RAW|LITOUT|PASS8)) {
-		cflag &= ~(CSIZE|PARENB);
 		cflag |= CS8;
-		if ((flags&(RAW|PASS8)) == 0)
+		if (!(flags&(RAW|PASS8)) || (flags&(RAW|PASS8|ANYP)) == (PASS8|ANYP))
 			iflag |= ISTRIP;
 		else
 			iflag &= ~ISTRIP;
 	} else {
-		cflag &= ~CSIZE;
-		cflag |= CS7|PARENB;
+		cflag |= CS7;
+		if ((flags&(EVENP|ODDP)) && (flags&ANYP) != ANYP)
+			cflag |= PARENB;
 		iflag |= ISTRIP;
 	}
 	if ((flags&(EVENP|ODDP)) == EVENP) {
@@ -377,18 +381,22 @@ ttcompatsetlflags(tp, t)
 		lflag &= ~IXANY;
 	lflag &= ~(MDMBUF|TOSTOP|FLUSHO|NOHANG|PENDIN|NOFLSH);
 	lflag |= flags&(MDMBUF|TOSTOP|FLUSHO|NOHANG|PENDIN|NOFLSH);
+	cflag &= ~(CSIZE|PARENB);
 	if (flags&(LITOUT|PASS8)) {
-		iflag &= ~ISTRIP;
-		cflag &= ~(CSIZE|PARENB);
 		cflag |= CS8;
-		if (flags&LITOUT)
+		if (flags&(LITOUT|RAW))
 			oflag &= ~OPOST;
-		if ((flags&(PASS8|RAW)) == 0)
-			iflag |= ISTRIP;
+		else
+			oflag |= OPOST;
+		if (!(flags&(RAW|PASS8)) || (flags&(RAW|PASS8|ANYP)) == (PASS8|ANYP))
+  			iflag |= ISTRIP;
+		else
+			iflag &= ~ISTRIP;
 	} else if ((flags&RAW) == 0) {
-		cflag &= ~CSIZE;
-		cflag |= CS7|PARENB;
-		oflag |= OPOST;
+		cflag |= CS7;
+		if ((flags&(EVENP|ODDP)) && (flags&ANYP) != ANYP)
+			cflag |= PARENB;
+		oflag |= ISTRIP|OPOST;
 	}
 	t->c_iflag = iflag;
 	t->c_oflag = oflag;
