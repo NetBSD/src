@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.14 2002/09/11 01:46:35 mycroft Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.15 2003/01/20 05:30:01 simonb Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -123,7 +123,7 @@ u_char *rom_return_sp;
 u_int rom_mon_stack;
 u_char rom_image[0x2000];
 vm_offset_t rom_image_base;
-u_int rom_vbr;;
+u_int rom_vbr;
 u_int rom_intrmask;
 u_int rom_intrstat;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.28 2003/01/06 20:30:28 wiz Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.29 2003/01/20 05:29:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.28 2003/01/06 20:30:28 wiz Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.29 2003/01/20 05:29:54 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		 */
 		if ((to_sb->st_dev==sb.st_dev)&&(to_sb->st_ino == sb.st_ino)) {
 			tty_warn(1, "Unable to link file %s to itself", to);
-			return(-1);;
+			return(-1);
 		}
 
 		/*

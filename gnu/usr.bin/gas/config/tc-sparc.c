@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-sparc.c,v 1.8 1996/04/14 11:32:19 pk Exp $";
+static char rcsid[] = "$Id: tc-sparc.c,v 1.9 2003/01/20 05:29:56 simonb Exp $";
 #endif
 
 #define cypress 1234
@@ -240,7 +240,7 @@ static void s_reserve() {
 #endif
 		
 		/* convert to a power of 2 alignment */
-		for (temp = 0; (align & 1) == 0; align >>= 1, ++temp) ;;
+		for (temp = 0; (align & 1) == 0; align >>= 1, ++temp) ;
 		
 		if (align != 1) {
 			as_bad("Alignment not a power of 2");
@@ -930,7 +930,7 @@ char *str;
 					
 					char *s1;
 					
-					for (s1 = s; *s1 && *s1 != ',' && *s1 != ']'; s1++) ;;
+					for (s1 = s; *s1 && *s1 != ',' && *s1 != ']'; s1++) ;
 					
 					if (s1 != s && isdigit(s1[-1])) {
 						if (s1[-2] == '%' && s1[-3] == '+') {

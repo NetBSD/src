@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.55 2002/10/02 03:10:49 thorpej Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.56 2003/01/20 05:30:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.55 2002/10/02 03:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.56 2003/01/20 05:30:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ lpt_isa_probe(parent, match, aux)
 		return (0);
 
 	iot = ia->ia_iot;
-	base = ia->ia_io[0].ir_addr;;
+	base = ia->ia_io[0].ir_addr;
 	if (bus_space_map(iot, base, LPT_NPORTS, 0, &ioh))
 		return 0;
 

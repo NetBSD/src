@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.11 2003/01/06 13:05:15 wiz Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.12 2003/01/20 05:30:07 simonb Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.11 2003/01/06 13:05:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.12 2003/01/20 05:30:07 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -717,7 +717,7 @@ hifn_writeramaddr(sc, addr, data, slot)
 	wc.masks = 3 << 13;
 	wc.session_num = addr >> 14;
 	wc.total_source_count = 8;
-	wc.total_dest_count = addr & 0x3fff;;
+	wc.total_dest_count = addr & 0x3fff;
 
 	/* build write command */
 	*(hifn_base_command_t *) sc->sc_dma->command_bufs[slot] = wc;

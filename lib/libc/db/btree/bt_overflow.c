@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_overflow.c,v 1.9 1998/12/09 12:42:46 christos Exp $	*/
+/*	$NetBSD: bt_overflow.c,v 1.10 2003/01/20 05:29:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_overflow.c	8.5 (Berkeley) 7/16/94";
 #else
-__RCSID("$NetBSD: bt_overflow.c,v 1.9 1998/12/09 12:42:46 christos Exp $");
+__RCSID("$NetBSD: bt_overflow.c,v 1.10 2003/01/20 05:29:57 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -160,7 +160,7 @@ __ovfl_put(t, dbt, pg)
 	 * number of the first page in the chain.
 	 */
 	plen = t->bt_psize - BTDATAOFF;
-	for (last = NULL, p = dbt->data, sz = dbt->size;;
+	for (last = NULL, p = dbt->data, sz = dbt->size;
 	    p = (char *)p + plen, last = h) {
 		if ((h = __bt_new(t, &npg)) == NULL)
 			return (RET_ERROR);
