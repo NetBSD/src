@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.169 2003/12/30 18:29:43 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.170 2004/01/23 05:01:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -265,6 +265,8 @@ void	statclock __P((struct clockframe *));
 void	hardupdate __P((long offset));
 #ifdef PPS_SYNC
 void	hardpps __P((struct timeval *, long));
+extern	void *pps_kc_hardpps_source;
+extern	int pps_kc_hardpps_mode;
 #endif
 #endif
 
