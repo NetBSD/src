@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.5 2001/01/12 22:44:08 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.6 2001/01/12 23:33:07 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -199,34 +199,34 @@ static const struct arm32_insn arm32_i[] = {
     { 0x00000000, 0x00000000, NULL,	NULL }
 };
 
-static char * const arm32_insn_conditions[] = {
+static char const arm32_insn_conditions[][4] = {
 	"eq", "ne", "cs", "cc",
 	"mi", "pl", "vs", "vc",
 	"hi", "ls", "ge", "lt",
 	"gt", "le", "",   "nv"
 };
 
-static char * const insn_block_transfers[] = {
+static char const insn_block_transfers[][4] = {
 	"da", "ia", "db", "ib"
 };
 
-static char * const insn_stack_block_transfers[] = {
+static char const insn_stack_block_transfers[][4] = {
 	"ed", "ea", "fd", "fa"
 };
 
-static char * const op_shifts[] = {
+static char const op_shifts[][4] = {
 	"lsl", "lsr", "asr", "ror"
 };
 
-static char * const insn_fpa_rounding[] = {
+static char const insn_fpa_rounding[][2] = {
 	"", "p", "m", "z"
 };
 
-static char * const insn_fpa_precision[] = {
+static char const insn_fpa_precision[][2] = {
 	"s", "d", "e", "p"
 };
 
-static char * const insn_fpaconstants[] = {
+static char const insn_fpaconstants[][8] = {
 	"0.0", "1.0", "2.0", "3.0",
 	"4.0", "5.0", "0.5", "10.0"
 };
