@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/10/14 06:47:39 sakamoto Exp $
+#	$NetBSD: genassym.cf,v 1.2 1998/02/02 05:17:40 sakamoto Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,5 +66,3 @@ define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
 define	P_FORW		offsetof(struct proc, p_forw)
 define	P_BACK		offsetof(struct proc, p_back)
 define	P_ADDR		offsetof(struct proc, p_addr)
-
-define	SPLX		offsetof(struct machvec, splx)
