@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.7 1996/02/16 00:53:00 mrg Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.8 1997/04/13 10:30:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,13 +31,23 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * Portions Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
+ *    Dep. Matematica Universidade de Coimbra, Portugal, Europe
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * from getnetent.c   1.1 (Coimbra) 93/06/02
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "Id: getnetent.c,v 8.3 1996/08/05 08:31:35 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: getnetent.c,v 1.7 1996/02/16 00:53:00 mrg Exp $";
+static char rcsid[] = "$NetBSD: getnetent.c,v 1.8 1997/04/13 10:30:37 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,10 +67,31 @@ static struct netent net;
 static char *net_aliases[MAXALIASES];
 int _net_stayopen;
 
+void _setnetent __P((int));
+void _endnetent __P((void));
+
 void
-setnetent(f)
+setnetent(stayopen)
+	int stayopen;
+{
+
+	sethostent(stayopen);
+	_setnetent(stayopen);
+}
+
+void
+endnetent()
+{
+
+	endhostent();
+	_endnetent();
+}
+
+void
+_setnetent(f)
 	int f;
 {
+
 	if (netf == NULL)
 		netf = fopen(_PATH_NETWORKS, "r" );
 	else
@@ -69,8 +100,9 @@ setnetent(f)
 }
 
 void
-endnetent()
+_endnetent()
 {
+
 	if (netf) {
 		fclose(netf);
 		netf = NULL;

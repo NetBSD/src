@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_net_ntop.c,v 1.2 1997/04/13 10:30:41 mrg Exp $	*/
+
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -16,7 +18,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.1.1.1 1997/04/13 09:12:16 mrg Exp $";
+#if 0
+static const char rcsid[] = "$Id: inet_net_ntop.c,v 8.2 1996/08/08 06:54:44 vixie Exp";
+#else
+static const char rcsid[] = "$NetBSD: inet_net_ntop.c,v 1.2 1997/04/13 10:30:41 mrg Exp $";
+#endif
 #endif
 
 #include <sys/types.h>

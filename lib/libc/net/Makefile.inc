@@ -1,15 +1,16 @@
-#	$NetBSD: Makefile.inc,v 1.27 1996/11/17 04:37:14 mikel Exp $
+#	$NetBSD: Makefile.inc,v 1.28 1997/04/13 10:30:29 mrg Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
 
-SRCS+=	gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
+SRCS+=	base64.c gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	getproto.c getprotoent.c getprotoname.c getservbyname.c \
 	getservbyport.c getservent.c herror.c inet_addr.c inet_lnaof.c \
-	inet_makeaddr.c inet_netof.c inet_network.c inet_ntoa.c \
+	inet_makeaddr.c inet_net_ntop.c inet_net_pton.c inet_neta.c \
+	inet_ntop.c inet_pton.c inet_netof.c inet_network.c inet_ntoa.c \
 	iso_addr.c linkaddr.c ns_addr.c ns_ntoa.c nsap_addr.c rcmd.c recv.c \
-	res_comp.c res_debug.c res_init.c res_mkquery.c res_query.c \
+	res_comp.c res_data.c res_debug.c res_init.c res_mkquery.c res_query.c \
 	res_send.c send.c sethostent.c ethers.c
 
 # machine-dependent net sources
