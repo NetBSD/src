@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.24 1997/07/20 06:35:37 thorpej Exp $	*/
+/*	$NetBSD: ed.h,v 1.25 1998/10/13 17:04:15 wsanchez Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -34,7 +34,7 @@
 # include <sys/param.h>		/* for MAXPATHLEN */
 #endif
 #include <errno.h>
-#if defined(sun) || defined(__NetBSD__)
+#if defined(sun) || defined(__NetBSD__) || defined(__APPLE__)
 # include <limits.h>
 #endif
 #include <regex.h>
