@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.23 1997/04/21 16:16:10 matthias Exp $	*/
+/*	$NetBSD: lpt.c,v 1.24 1997/07/17 02:05:14 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -214,7 +214,7 @@ lptmatch(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 	volatile struct i8255 *i8255 =
-		(volatile struct i8255 *)((struct cfdata *)cf)->cf_loc[0];
+		(volatile struct i8255 *)((struct cfdata *)cf)->cf_addr;
 	int unit = ((struct cfdata *)cf)->cf_unit;
 
 	if (unit >= LPT_MAX)

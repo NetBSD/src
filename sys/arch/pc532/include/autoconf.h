@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 1997/02/08 09:32:30 matthias Exp $ */
+/*	$NetBSD: autoconf.h,v 1.3 1997/07/17 02:05:15 jtk Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -40,8 +40,10 @@ struct confargs {
 };
 
 /* Locator aliases */
-#define cf_addr		cf_loc[0]
-#define cf_irq		cf_loc[1]
+#include "locators.h"
+
+#define cf_addr		cf_loc[MAINBUSCF_ADDR]
+#define cf_irq		cf_loc[MAINBUSCF_IRQ]
 
 extern u_long bootdev;
 extern struct device *booted_device;
