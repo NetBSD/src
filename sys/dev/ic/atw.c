@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.30 2004/05/31 11:28:48 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.31 2004/06/05 07:12:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.30 2004/05/31 11:28:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.31 2004/06/05 07:12:45 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3052,9 +3052,7 @@ atw_rxintr(struct atw_softc *sc)
 
 		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, wh);
-		if (m->m_pkthdr.len >= sizeof(struct ieee80211_frame_min) ||
-		    ic->ic_opmode == IEEE80211_M_MONITOR)
-			ieee80211_input(ifp, m, ni, (int)rssi, 0);
+		ieee80211_input(ifp, m, ni, (int)rssi, 0);
 		/*
 		 * The frame may have caused the node to be marked for
 		 * reclamation (e.g. in response to a DEAUTH message)
