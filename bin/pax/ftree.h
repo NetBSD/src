@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ftree.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)ftree.h	8.1 (Berkeley) 5/31/93
+ *	$Id: ftree.h,v 1.2 1994/06/13 16:34:01 jtc Exp $
  */
 
 /*

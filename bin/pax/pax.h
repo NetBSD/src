@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pax.h	8.2 (Berkeley) 4/18/94
+ *	from: @(#)pax.h	8.2 (Berkeley) 4/18/94
+ *	$Id: pax.h,v 1.2 1994/06/13 16:34:17 jtc Exp $
  */
 
 /*

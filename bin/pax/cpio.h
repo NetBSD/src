@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cpio.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)cpio.h	8.1 (Berkeley) 5/31/93
+ *	$Id: cpio.h,v 1.2 1994/06/13 16:33:49 jtc Exp $
  */
 
 /*
