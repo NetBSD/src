@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.29 1996/03/07 15:00:11 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.30 1996/03/24 01:26:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -747,7 +747,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
-		printf("ccdbuffer(%p, %p, %d, %p, %d)\n",
+		printf("ccdbuffer(%p, %p, %d, %p, %ld)\n",
 		       cs, bp, bn, addr, bcount);
 #endif
 	/*
@@ -834,7 +834,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
-		printf(" dev %x(u%d): cbp %p bn %d addr %p bcnt %d\n",
+		printf(" dev %x(u%d): cbp %p bn %d addr %p bcnt %ld\n",
 		       ci->ci_dev, ci-cs->sc_cinfo, cbp, cbp->cb_buf.b_blkno,
 		       cbp->cb_buf.b_data, cbp->cb_buf.b_bcount);
 #endif
@@ -898,9 +898,9 @@ ccdiodone(vbp)
 		if (cbp->cb_flags & CBF_MIRROR)
 			printf("ccdiodone: mirror component\n");
 		else
-			printf("ccdiodone: bp %p bcount %d resid %d\n",
+			printf("ccdiodone: bp %p bcount %ld resid %ld\n",
 			       bp, bp->b_bcount, bp->b_resid);
-		printf(" dev %x(u%d), cbp %p bn %d addr %p bcnt %d\n",
+		printf(" dev %x(u%d), cbp %p bn %d addr %p bcnt %ld\n",
 		       cbp->cb_buf.b_dev, cbp->cb_comp, cbp,
 		       cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
 		       cbp->cb_buf.b_bcount);
