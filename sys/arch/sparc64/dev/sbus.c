@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.43 2001/07/20 00:07:13 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.44 2001/09/24 23:49:32 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 
+#include <uvm/uvm_prot.h>
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/sparc64.h>
@@ -142,7 +144,7 @@ static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct sbus_intr **, int *, int));
-static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			      int, bus_space_handle_t *));
 static int sbus_overtemp __P((void *));
 static int _sbus_bus_map __P((
@@ -504,11 +506,33 @@ sbus_bus_mmap(t, btype, paddr, flags, hp)
 
 		paddr = sc->sc_range[i].poffset + offset;
 		paddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
-		return (bus_space_mmap(sc->sc_bustag, 0, paddr,
-				       flags, hp));
+		*hp = bus_space_mmap(sc->sc_bustag, paddr, 0,
+			VM_PROT_READ|VM_PROT_WRITE, flags);
 	}
 
-	return (-1);
+	return (*hp == -1 ? -1 : 0);
+}
+
+bus_addr_t
+sbus_bus_addr(t, btype, offset)
+	bus_space_tag_t t;
+	u_int btype;
+	u_int offset;
+{
+	bus_addr_t baddr;
+	int slot = btype;
+	struct sbus_softc *sc = t->cookie;
+	int i;
+
+	for (i = 0; i < sc->sc_nrange; i++) {
+		if (sc->sc_range[i].cspace != slot)
+			continue;
+
+		baddr = sc->sc_range[i].poffset + offset;
+		baddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
+	}
+
+	return (baddr);
 }
 
 
@@ -775,7 +799,7 @@ sbus_alloc_bustag(sc)
 	sbt->parent = sc->sc_bustag;
 	sbt->type = SBUS_BUS_SPACE;
 	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_mmap = sbus_bus_mmap;
+	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
 }

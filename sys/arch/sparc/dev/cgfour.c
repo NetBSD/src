@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.24 2000/08/22 21:28:30 pk Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.25 2001/09/24 23:49:31 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -421,7 +421,6 @@ cgfourmmap(dev, off, prot)
 	int prot;
 {
 	struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];
-	bus_space_handle_t bh;
 	off_t poff;
 
 #define START_ENABLE	(128*1024)
@@ -466,13 +465,9 @@ cgfourmmap(dev, off, prot)
 	} else
 		return (-1);
 
-	if (bus_space_mmap(sc->sc_bustag,
-			   sc->sc_btype,
-			   sc->sc_paddr + poff,
-			   BUS_SPACE_MAP_LINEAR, &bh))
-		return (-1);
-
-	return ((paddr_t)bh);
+	return (bus_space_mmap(sc->sc_bustag,
+		sc->sc_paddr, poff,
+		prot, BUS_SPACE_MAP_LINEAR));
 }
 
 #if defined(SUN4)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.184 2001/09/10 21:19:25 chris Exp $ */
+/*	$NetBSD: machdep.c,v 1.185 2001/09/24 23:49:32 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1743,8 +1743,8 @@ static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
 					 bus_size_t, bus_size_t,
 					 bus_space_handle_t *));
-static int	sparc_bus_mmap __P((bus_space_tag_t, bus_type_t,
-				    bus_addr_t, int, bus_space_handle_t *));
+static paddr_t	sparc_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
+				    int, int));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
 						   int, int (*) __P((void *)),
 						   void *));
@@ -1827,16 +1827,17 @@ sparc_bus_subregion(tag, handle, offset, size, nhandlep)
 	return (0);
 }
 
-int
-sparc_bus_mmap(t, iospace, paddr, flags, hp)
+paddr_t
+sparc_bus_mmap(t, baddr, off, prot, flags)
 	bus_space_tag_t t;
-	bus_type_t	iospace;
-	bus_addr_t	paddr;
+	bus_addr_t	baddr;
+	off_t		off;
+	int		prot;
 	int		flags;
-	bus_space_handle_t *hp;
 {
-	*hp = (bus_space_handle_t)(paddr | PMAP_IOENC(iospace) | PMAP_NC);
-	return (0);
+	bus_type_t iospace = BUS_ADDR_IOSPACE(baddr);
+	paddr_t paddr = trunc_page(BUS_ADDR_PADDR(baddr) + off);
+	return (paddr_t)(paddr | PMAP_IOENC(iospace) | PMAP_NC);
 }
 
 /*
