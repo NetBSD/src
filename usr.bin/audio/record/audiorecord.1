@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiorecord.1,v 1.33 2003/07/21 00:55:40 mrg Exp $
+.\"	$NetBSD: audiorecord.1,v 1.34 2003/08/07 10:04:01 wiz Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Op Fl i Ar info
 .Op Fl m Ar monvol
 .Op Fl P Ar precision
-.Op Fl p Ar input
+.Op Fl p Ar port
 .Op Fl s Ar rate
 .Op Fl t Ar time
 .Op Fl v Ar volume
@@ -68,22 +68,22 @@ ends with a
 file extension it will be written as RIFF/WAVE.
 .Sh OPTIONS
 The following options are available:
-.Bl -tag -width 123456
+.Bl -tag -width XpXprecisionX
 .It Fl a
 Append to the specified file, rather than overwriting.
-.It Fl b
+.It Fl b Ar balance
 Set the balance to
 .Ar balance .
 This value must be between 0 and 63.
-.It Fl c
+.It Fl c Ar channels
 Set number of channels to
 .Ar channels .
-.It Fl d
+.It Fl d Ar device
 Set the audio device to be
 .Ar device .
 The default is
 .Pa /dev/sound .
-.It Fl e
+.It Fl e Ar encoding
 Set encoding to either
 .Dq alaw ,
 .Dq ulaw
@@ -104,7 +104,7 @@ Setting the argument to
 still may be important since it is used in an
 .Xr ioctl 2
 call to the kernel to choose the kind of data provided.
-.It Fl F
+.It Fl F Ar format
 Set the output header format to
 .Ar format .
 Currently supported formats are
@@ -123,15 +123,15 @@ The
 option will allow a discrepancy to be ignored.
 .It Fl h
 Print a help message.
-.It Fl i
+.It Fl i Ar info
 If supported by the
 .Fl F
 format, add the string
 .Ar info
 to the output header.
-.It Fl m
+.It Fl m Ar monvol
 Set the monitor volume.
-.It Fl P
+.It Fl P Ar precision
 Set the precision.
 This value is the number of bits per sample, and is normally either
 .Dq 8
@@ -143,7 +143,7 @@ though the values
 and
 .Dq 32
 are also valid.
-.It Fl p
+.It Fl p Ar port
 Set the input port to
 .Ar port .
 The valid values of
@@ -154,19 +154,19 @@ are
 .Dq mic ,
 and
 .Dq line .
-.It Fl s
+.It Fl s Ar rate
 Set the sampling rate.
 This value is per-second.
 Typical values are 8000, 44100, and 48000, which are the telephone,
 CD Audio, and DAT Audio default sampling rates.
-.It Fl t
+.It Fl t Ar time
 Sets the maximum amount of time to record.
 Format is [hh:]mm:ss.
 .It Fl q
 Be quiet.
 .It Fl V
 Be verbose.
-.It Fl v
+.It Fl v Ar volume
 Set the volume (gain) to
 .Ar volume .
 This value must be between 0 and 255.
