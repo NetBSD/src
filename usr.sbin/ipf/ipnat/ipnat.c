@@ -56,7 +56,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static  char    sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipnat.c,v 1.2 1997/01/14 06:45:05 cgd Exp $";
+static	char	rcsid[] = "$Id: ipnat.c,v 1.3 1997/01/29 01:49:28 mark Exp $";
 #endif
 
 #if	SOLARIS
@@ -81,7 +81,8 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-	char	*file = NULL, c;
+	char	*file = NULL;
+	int	c;
 	int	fd, opts = 1;
 
 	while ((c = getopt(argc, argv, "f:lnrsv")) != -1)
