@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.14 2000/10/19 09:47:43 kleink Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.15 2001/12/07 11:47:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)snprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: snprintf.c,v 1.14 2000/10/19 09:47:43 kleink Exp $");
+__RCSID("$NetBSD: snprintf.c,v 1.15 2001/12/07 11:47:43 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: snprintf.c,v 1.14 2000/10/19 09:47:43 kleink Exp $");
 #else
 #include <varargs.h>
 #endif
+#include "local.h"
 
 #ifdef __weak_alias
 __weak_alias(snprintf,_snprintf)
@@ -74,6 +75,7 @@ snprintf(str, n, fmt, va_alist)
 	int ret;
 	va_list ap;
 	FILE f;
+	struct __sfileext fext;
 
 	_DIAGASSERT(n == 0 || str != NULL);
 	_DIAGASSERT(fmt != NULL);
@@ -87,6 +89,7 @@ snprintf(str, n, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
+	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;

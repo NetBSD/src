@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.29 2001/12/02 20:53:49 kleink Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.30 2001/12/07 11:47:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.29 2001/12/02 20:53:49 kleink Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.30 2001/12/07 11:47:45 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -144,6 +144,7 @@ __svfscanf(fp, fmt0, ap)
 	_DIAGASSERT(fmt0 != NULL);
 
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 
 	nassigned = 0;
 	nread = 0;
