@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.8 1998/01/18 04:01:42 mark Exp $
+$NetBSD: podules,v 1.9 1998/09/26 03:29:36 mark Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -61,6 +61,7 @@ manufacturer	ALSYSTEMS	0x005b	Alsystems
 manufacturer	SIMTEC		0x005f	Simtec Electronics
 manufacturer	YES		0x0060	Yellowstone Educational Solutions
 manufacturer	MCS		0x0063	MCS
+manufacturer	EESOX		0x0064	EESOX
 
 /*
  * List of known podules.  Grouped by vendor.
@@ -144,3 +145,5 @@ podule	SIMTEC		IDE		0x0131	16 bit IDE interface
 podule	YES		RAPIDE		0x0114	RapIDE32 interface
 
 podule	MCS		SCSI		0x0125	Connect32 SCSI II interface
+
+podule	EESOX		SCSI		0x008c	EESOX SCSI II interface
