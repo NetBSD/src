@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.7 1997/10/09 15:12:24 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -87,6 +87,7 @@ emit(def)
 	};
 
 	print_header(def);
+
 	switch (def->def_kind) {
 	case DEF_UNION:
 		emit_union(def);
@@ -142,14 +143,14 @@ print_generic_header(procname, pointerp)
 		f_print(fout, "%s ", procname);
 		if (pointerp)
 			f_print(fout, "*");
-		f_print(fout, "objp)\n{\n\n");
+		f_print(fout, "objp)\n{\n");
 	} else {
 		f_print(fout, "xdr_%s(xdrs, objp)\n", procname);
 		f_print(fout, "\tXDR *xdrs;\n");
 		f_print(fout, "\t%s ", procname);
 		if (pointerp)
 			f_print(fout, "*");
-		f_print(fout, "objp;\n{\n\n");
+		f_print(fout, "objp;\n{\n");
 	}
 }
 
@@ -162,19 +163,9 @@ print_header(def)
 	bas_type *ptr;
 	int     i;
 
-
 	print_generic_header(def->def_name,
 	    def->def_kind != DEF_TYPEDEF ||
 	    !isvectordef(def->def.ty.old_type, def->def.ty.rel));
-
-	/* Now add Inline support */
-
-
-	if (inline == 0)
-		return;
-	/* May cause lint to complain. but  ... */
-	f_print(fout, "\t register int32_t *buf;\n\n");
-
 }
 
 static
@@ -198,7 +189,7 @@ print_ifopen(indent, name)
 	char   *name;
 {
 	tabify(fout, indent);
-	f_print(fout, " if (!xdr_%s(xdrs", name);
+	f_print(fout, "if (!xdr_%s(xdrs", name);
 }
 
 static
@@ -228,11 +219,9 @@ static
 print_ifclose(indent)
 	int     indent;
 {
-	f_print(fout, ")) {\n");
+	f_print(fout, "))\n");
 	tabify(fout, indent);
-	f_print(fout, "\t return (FALSE);\n");
-	tabify(fout, indent);
-	f_print(fout, " }\n");
+	f_print(fout, "\treturn (FALSE);\n");
 }
 
 static
@@ -317,6 +306,7 @@ static
 emit_enum(def)
 	definition *def;
 {
+	fprintf(fout, "\n");
 	print_ifopen(1, "enum");
 	print_ifarg("(enum_t *)objp");
 	print_ifclose(1);
@@ -355,10 +345,10 @@ emit_union(def)
 	char   *vecformat = "objp->%s_u.%s";
 	char   *format = "&objp->%s_u.%s";
 
+	f_print(fout, "\n");
 	print_stat(1, &def->def.un.enum_decl);
 	f_print(fout, "\tswitch (objp->%s) {\n", def->def.un.enum_decl.name);
 	for (cl = def->def.un.cases; cl != NULL; cl = cl->next) {
-
 		f_print(fout, "\tcase %s:\n", cl->case_name);
 		if (cl->contflag == 1)	/* a continued case statement */
 			continue;
@@ -373,16 +363,16 @@ emit_union(def)
 				s_print(object, format, def->def_name,
 				    cs->name);
 			}
-			print_ifstat(2, cs->prefix, cs->type, cs->rel, cs->array_max,
-			    object, cs->name);
+			print_ifstat(2, cs->prefix, cs->type, cs->rel,
+			    cs->array_max, object, cs->name);
 			free(object);
 		}
 		f_print(fout, "\t\tbreak;\n");
 	}
 	dflt = def->def.un.default_decl;
+	f_print(fout, "\tdefault:\n");
 	if (dflt != NULL) {
 		if (!streq(dflt->type, "void")) {
-			f_print(fout, "\tdefault:\n");
 			object = alloc(strlen(def->def_name) + strlen(format) +
 			    strlen(dflt->name) + 1);
 			if (isvectordef(dflt->type, dflt->rel)) {
@@ -392,14 +382,12 @@ emit_union(def)
 				s_print(object, format, def->def_name,
 				    dflt->name);
 			}
-
 			print_ifstat(2, dflt->prefix, dflt->type, dflt->rel,
 			    dflt->array_max, object, dflt->name);
 			free(object);
-			f_print(fout, "\t\tbreak;\n");
 		}
+		f_print(fout, "\t\tbreak;\n");
 	} else {
-		f_print(fout, "\tdefault:\n");
 		f_print(fout, "\t\treturn (FALSE);\n");
 	}
 
@@ -420,15 +408,12 @@ emit_struct(def)
 
 
 	if (inline == 0) {
+		fprintf(fout, "\n");
 		for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
 			print_stat(1, &dl->decl);
 		return;
 	}
-	for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
-		if (dl->decl.rel == REL_VECTOR) {
-			f_print(fout, "\t int i;\n");
-			break;
-		}
+
 	size = 0;
 	can_inline = 0;
 	for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
@@ -453,23 +438,25 @@ emit_struct(def)
 		can_inline = 1;
 
 	if (can_inline == 0) {	/* can not inline, drop back to old mode */
+		fprintf(fout, "\n");
 		for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
 			print_stat(1, &dl->decl);
 		return;
 	};
 
+	/* May cause lint to complain. but  ... */
+	f_print(fout, "\tregister int32_t *buf;\n");
 
-
+	for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
+		if (dl->decl.rel == REL_VECTOR) {
+			f_print(fout, "\tint i;\n");
+			break;
+		}
 
 	flag = PUT;
+	f_print(fout, "\n\tif (xdrs->x_op == XDR_ENCODE) {\n");
+
 	for (j = 0; j < 2; j++) {
-
-		if (flag == PUT)
-			f_print(fout, "\n\t if (xdrs->x_op == XDR_ENCODE) {\n");
-		else
-			f_print(fout, "\n \t return (TRUE);\n\t} else if (xdrs->x_op == XDR_DECODE) {\n");
-
-
 		i = 0;
 		size = 0;
 		sizestr = NULL;
@@ -503,7 +490,7 @@ emit_struct(def)
 						sizestr = (char *)realloc(sizestr, strlen(sizestr) + strlen(ptemp) + 1);
 						if (sizestr == NULL) {
 
-							f_print(stderr, "Fatal error : no memory \n");
+							f_print(stderr, "Fatal error : no memory\n");
 							crash();
 						};
 						sizestr = strcat(sizestr, ptemp);	/* build up length of
@@ -518,7 +505,7 @@ emit_struct(def)
 						/* don't expand into inline
 						 * code if size < inline */
 						while (cur != dl) {
-							print_stat(1, &cur->decl);
+							print_stat(2, &cur->decl);
 							cur = cur->next;
 						}
 					} else {
@@ -528,27 +515,27 @@ emit_struct(def)
 						/* were already looking at a
 						 * xdr_inlineable structure */
 						if (sizestr == NULL)
-							f_print(fout, "\t buf = (int32_t *)XDR_INLINE(xdrs,%d * BYTES_PER_XDR_UNIT);",
+							f_print(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %d * BYTES_PER_XDR_UNIT);\n",
 							    size);
 						else
 							if (size == 0)
 								f_print(fout,
-								    "\t buf = (int32_t *)XDR_INLINE(xdrs,%s * BYTES_PER_XDR_UNIT);",
+								    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %s * BYTES_PER_XDR_UNIT);\n",
 								    sizestr);
 							else
 								f_print(fout,
-								    "\t buf = (int32_t *)XDR_INLINE(xdrs,(%d + %s)* BYTES_PER_XDR_UNIT);",
+								    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, (%d + %s) * BYTES_PER_XDR_UNIT);\n",
 								    size, sizestr);
 
-						f_print(fout, "\n\t   if (buf == NULL) {\n");
+						f_print(fout, "\t\tif (buf == NULL) {\n");
 
 						psav = cur;
 						while (cur != dl) {
-							print_stat(2, &cur->decl);
+							print_stat(3, &cur->decl);
 							cur = cur->next;
 						}
 
-						f_print(fout, "\n\t  }\n\t  else {\n");
+						f_print(fout, "\t\t} else {\n");
 
 						cur = psav;
 						while (cur != dl) {
@@ -556,12 +543,12 @@ emit_struct(def)
 							cur = cur->next;
 						}
 
-						f_print(fout, "\t  }\n");
+						f_print(fout, "\t\t}\n");
 					}
 				size = 0;
 				i = 0;
 				sizestr = NULL;
-				print_stat(1, &dl->decl);
+				print_stat(2, &dl->decl);
 			}
 
 		}
@@ -570,7 +557,7 @@ emit_struct(def)
 				/* don't expand into inline code if size <
 				 * inline */
 				while (cur != dl) {
-					print_stat(1, &cur->decl);
+					print_stat(2, &cur->decl);
 					cur = cur->next;
 				}
 			} else {
@@ -578,26 +565,26 @@ emit_struct(def)
 				/* were already looking at a xdr_inlineable
 				 * structure */
 				if (sizestr == NULL)
-					f_print(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,%d * BYTES_PER_XDR_UNIT);",
+					f_print(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %d * BYTES_PER_XDR_UNIT);\n",
 					    size);
 				else
 					if (size == 0)
 						f_print(fout,
-						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,%s * BYTES_PER_XDR_UNIT);",
+						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %s * BYTES_PER_XDR_UNIT);\n",
 						    sizestr);
 					else
 						f_print(fout,
-						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,(%d + %s)* BYTES_PER_XDR_UNIT);",
+						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, (%d + %s) * BYTES_PER_XDR_UNIT);\n",
 						    size, sizestr);
 
-				f_print(fout, "\n\t\tif (buf == NULL) {\n");
+				f_print(fout, "\t\tif (buf == NULL) {\n");
 
 				psav = cur;
 				while (cur != NULL) {
-					print_stat(2, &cur->decl);
+					print_stat(3, &cur->decl);
 					cur = cur->next;
 				}
-				f_print(fout, "\n\t  }\n\t  else {\n");
+				f_print(fout, "\t\t} else {\n");
 
 				cur = psav;
 				while (cur != dl) {
@@ -605,17 +592,24 @@ emit_struct(def)
 					cur = cur->next;
 				}
 
-				f_print(fout, "\t  }\n");
+				f_print(fout, "\t\t}\n");
 
 			}
-		flag = GET;
+
+		if (flag == PUT) {
+			flag = GET;
+			f_print(fout, "\t} else if (xdrs->x_op == XDR_DECODE) {\n");
+		}
 	}
-	f_print(fout, "\t return(TRUE);\n\t}\n\n");
+
+	f_print(fout, "\t} else {\n");
 
 	/* now take care of XDR_FREE case */
 
 	for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
-		print_stat(1, &dl->decl);
+		print_stat(2, &dl->decl);
+
+	f_print(fout, "\t}\n");
 }
 
 static
@@ -627,7 +621,7 @@ emit_typedef(def)
 	char   *amax = def->def.ty.array_max;
 	relation rel = def->def.ty.rel;
 
-
+	fprintf(fout, "\n");
 	print_ifstat(1, prefix, type, rel, amax, "objp", def->def_name);
 }
 
@@ -666,11 +660,14 @@ emit_inline(decl, flag)
 		emit_single_in_line(decl, flag, REL_ALIAS);
 		break;
 	case REL_VECTOR:
-		f_print(fout, "\t\t{ register %s *genp; \n", decl->type);
-		f_print(fout, "\t\t  for ( i = 0,genp=objp->%s;\n \t\t\ti < %s; i++){\n\t\t",
-		    decl->name, decl->array_max);
+		f_print(fout, "\t\t\t{\n");
+		f_print(fout, "\t\t\t\tregister %s *genp;\n", decl->type);
+		f_print(fout, "\t\t\t\tfor (i = 0, genp = objp->%s;\n",
+		    decl->name);
+		f_print(fout, "\t\t\t\t    i < %s; i++) {\n\t\t",
+		    decl->array_max);
 		emit_single_in_line(decl, flag, REL_VECTOR);
-		f_print(fout, "\t\t   }\n\t\t };\n");
+		f_print(fout, "\t\t\t\t}\n\t\t\t}\n");
 
 	}
 }
@@ -683,15 +680,13 @@ emit_single_in_line(decl, flag, rel)
 	char   *upp_case;
 	int     freed = 0;
 
-
-
 	if (flag == PUT)
-		f_print(fout, "\t\t IXDR_PUT_");
+		f_print(fout, "\t\t\tIXDR_PUT_");
 	else
 		if (rel == REL_ALIAS)
-			f_print(fout, "\t\t objp->%s = IXDR_GET_", decl->name);
+			f_print(fout, "\t\t\tobjp->%s = IXDR_GET_", decl->name);
 		else
-			f_print(fout, "\t\t *genp++ = IXDR_GET_");
+			f_print(fout, "\t\t\t*genp++ = IXDR_GET_");
 
 	upp_case = upcase(decl->type);
 
@@ -729,7 +724,7 @@ upcase(str)
 
 	ptr = (char *) malloc(strlen(str)+1);
 	if (ptr == (char *) NULL) {
-		f_print(stderr, "malloc failed \n");
+		f_print(stderr, "malloc failed\n");
 		exit(1);
 	};
 
