@@ -32,7 +32,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$Id: yp_passwd.c,v 1.6 1994/08/17 06:06:42 deraadt Exp $";
+static char rcsid[] = "$Id: yp_passwd.c,v 1.7 1995/01/15 03:23:48 phil Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -194,12 +194,15 @@ getnewpasswd(pw, old_pass)
 	if (old_pass) {
 		*old_pass = NULL;
 	
-		if (pw->pw_passwd &&
+		if (pw->pw_passwd[0] &&
 		    strcmp(crypt(p = getpass("Old password:"), pw->pw_passwd),
 			   pw->pw_passwd)) {
 				   errno = EACCES;
 				   pw_error(NULL, 1, 1);
+		} else {
+			p = "";
 		}
+
 		*old_pass = strdup(p);
 	}
 	for (buf[0] = '\0', tries = 0;;) {
