@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.34 2000/01/05 18:44:27 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.35 2000/01/07 13:43:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -67,6 +67,7 @@
 #include <sys/device.h>
 #include <machine/fbio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/wscons/wsconsio.h>
 #include <dev/rcons/rcons.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
