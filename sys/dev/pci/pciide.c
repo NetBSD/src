@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.141 2002/01/08 11:47:27 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.142 2002/01/14 01:35:39 augustss Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.141 2002/01/08 11:47:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.142 2002/01/14 01:35:39 augustss Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -283,6 +283,16 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82801BAM_IDE,
 	  0,
 	  "Intel 82801BAM IDE Controller (ICH2)",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801CA_IDE_1,
+	  0,
+	  "Intel 82201CA IDE Controller",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801CA_IDE_2,
+	  0,
+	  "Intel 82201CA IDE Controller",
 	  piix_chip_map,
 	},
 	{ 0,
