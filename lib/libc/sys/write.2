@@ -1,4 +1,4 @@
-.\"	$NetBSD: write.2,v 1.7 1998/04/28 07:19:29 fair Exp $
+.\"	$NetBSD: write.2,v 1.8 1998/06/30 19:46:01 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,9 @@
 .Os BSD 4
 .Sh NAME
 .Nm write ,
-.Nm writev
+.Nm writev ,
+.Nm pwrite ,
+.Nm pwritev
 .Nd write output
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
@@ -48,6 +50,10 @@
 .Fn write "int d" "const void *buf" "size_t nbytes"
 .Ft ssize_t
 .Fn writev "int d" "const struct iovec *iov" "int iovcnt"
+.Ft ssize_t
+.Fn pwrite "int d" "const void *buf" "size_t nbytes" "off_t offset"
+.Ft ssize_t
+.Fn pwritev "int d" "const struct iovec *iov" "int iovcnt" "off_t offset"
 .Sh DESCRIPTION
 .Fn Write
 attempts to write
@@ -63,9 +69,16 @@ from the
 buffers specified by the members of the
 .Fa iov
 array: iov[0], iov[1], ..., iov[iovcnt\|-\|1].
+.Fn Pwrite
+and
+.Fn pwritev
+perform the same functions, but write to the specified position in
+the file without modifying the file pointer.
 .Pp
 For 
-.Fn writev ,
+.Fn writev
+and
+.Fn pwritev ,
 the 
 .Fa iovec
 structure is defined as:
@@ -123,9 +136,11 @@ is returned.  Otherwise a -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Write
+.Fn Write ,
+.Fn writev ,
+.Fn pwrite ,
 and
-.Fn writev
+.Fn pwritev
 will fail and the file pointer will remain unchanged if:
 .Bl -tag -width Er
 .It Bq Er EBADF
@@ -165,6 +180,8 @@ and no data could be written immediately.
 .Pp
 In addition, 
 .Fn writev
+and
+.Fn pwritev
 may return one of the following errors:
 .Bl -tag -width Er
 .It Bq Er EINVAL
@@ -184,6 +201,18 @@ values in the
 .Fa iov
 array overflowed a 32-bit integer.
 .El
+.Pp
+.The
+.Fn pwrite
+and
+.Fn pwritev
+calls may also return the following errors:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The specified file offset is invalid.
+.It Bq Er ESPIPE
+The file descriptor is associated with a pipe, socket, or FIFO.
+.El
 .Sh SEE ALSO
 .Xr fcntl 2 ,
 .Xr lseek 2 ,
@@ -195,7 +224,23 @@ The
 .Fn write
 function is expected to conform to
 .St -p1003.1-88 .
+The
+.Fn writev
+and
+.Fn pwrite
+functions conform to
+.St -xpg4.2 .
 .Sh HISTORY
+the
+.Fn pwritev
+function call
+appeared in
+.Nx 1.4 .
+The
+.Fn pwrite
+function call
+appeared in
+.At V.4 .
 The
 .Fn writev
 function call

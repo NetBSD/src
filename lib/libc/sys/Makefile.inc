@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.84 1998/06/27 21:22:56 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.85 1998/06/30 19:46:01 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -46,9 +46,9 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	mlock.o mount.o mprotect.o msgctl.o msgget.o msgrcv.o \
 	msgsnd.o __msync13.o munlock.o munmap.o nanosleep.o \
 	nfssvc.o ntp_adjtime.o ntp_gettime.o open.o pathconf.o \
-	poll.o profil.o quotactl.o read.o readlink.o readv.o \
-	reboot.o recvfrom.o recvmsg.o rename.o revoke.o rmdir.o \
-	select.o semconfig.o semget.o semop.o sendmsg.o sendto.o \
+	poll.o pread.o preadv.o profil.o pwrite.o pwritev.o quotactl.o read.o \
+	readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o revoke.o \
+	rmdir.o select.o semconfig.o semget.o semop.o sendmsg.o sendto.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
 	setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
 	setsid.o setsockopt.o settimeofday.o setuid.o shmat.o \
@@ -212,7 +212,7 @@ MLINKS+=lseek.2 seek.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mount.2 unmount.2
 MLINKS+=pathconf.2 fpathconf.2
-MLINKS+=read.2 readv.2
+MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
 MLINKS+=send.2 sendmsg.2 send.2 sendto.2
 MLINKS+=setpgid.2 setpgrp.2
@@ -224,4 +224,4 @@ MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
-MLINKS+=write.2 writev.2
+MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
