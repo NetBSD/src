@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2003/03/05 22:08:26 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2003/03/06 05:25:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,60 +43,51 @@
 #include <sys/extent.h>
 #include <sys/mbuf.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 
-static paddr_t ev64260_memio_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
-static int ev64260_memio_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+static paddr_t memio_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+static int memio_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	bus_space_handle_t *);
-static void ev64260_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-static int ev64260_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,
-	bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *,
-	bus_space_handle_t *);
-static void ev64260_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+static void memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+static int memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
+	bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
+static void memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 struct powerpc_bus_space ev64260_pci0_mem_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0x81000000, 0x89000000,
 	NULL,
-	ev64260_memio_mmap,
-	ev64260_memio_map, ev64260_memio_unmap, ev64260_memio_alloc,
-	ev64260_memio_free
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
 struct powerpc_bus_space ev64260_pci0_io_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80000000, 0x00000000, 0x80800000,
+	0x80000000, 0x00000000, 0x00800000,
 	NULL,
-	ev64260_memio_mmap,
-	ev64260_memio_map, ev64260_memio_unmap, ev64260_memio_alloc,
-	ev64260_memio_free
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
 struct powerpc_bus_space ev64260_pci1_mem_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0x89000000, 0x90000000,
 	NULL,
-	ev64260_memio_mmap,
-	ev64260_memio_map, ev64260_memio_unmap, ev64260_memio_alloc,
-	ev64260_memio_free
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
 struct powerpc_bus_space ev64260_pci1_io_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80800000, 0x00000000, 0x81000000,
+	0x80000000, 0x00800000, 0x01000000,
 	NULL,
-	ev64260_memio_mmap,
-	ev64260_memio_map, ev64260_memio_unmap, ev64260_memio_alloc,
-	ev64260_memio_free
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
 struct powerpc_bus_space ev64260_gt_mem_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0x00000000, 0xf8000000, 0xf8010000,
+	0x00000000, 0x00000000, 0x00010000,
 	NULL,
-	ev64260_memio_mmap,
-	ev64260_memio_map, ev64260_memio_unmap, ev64260_memio_alloc,
-	ev64260_memio_free
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
 
 static char ex_storage[5][EXTENT_FIXED_STORAGE_SIZE(8)]
-    __attribute__((aligned(4)));
+    __attribute__((aligned(8)));
 
 static int extent_flags;
 
@@ -106,12 +97,16 @@ ev64260_bus_space_init(void)
 	int error;
 
 	ev64260_pci0_mem_bs_tag.pbs_extent = extent_create("pci0-mem",
-	    0x81000000, 0x88ffffff, M_DEVBUF,
+	    ev64260_pci0_mem_bs_tag.pbs_base,
+	    ev64260_pci0_mem_bs_tag.pbs_limit-1,
+	    M_DEVBUF,
 	    ex_storage[0], sizeof(ex_storage[0]),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
 	ev64260_pci0_io_bs_tag.pbs_extent = extent_create("pci0-ioport",
-	    0x00000000, 0x00ffffff, M_DEVBUF,
+	    ev64260_pci0_io_bs_tag.pbs_base,
+	    ev64260_pci0_io_bs_tag.pbs_limit-1,
+	    M_DEVBUF,
 	    ex_storage[1], sizeof(ex_storage[1]),
 	    EX_NOCOALESCE|EX_NOWAIT);
 	error = extent_alloc_region(ev64260_pci0_io_bs_tag.pbs_extent,
@@ -121,12 +116,16 @@ ev64260_bus_space_init(void)
 		    "I/O space 0x10000-0x7fffff: error=%d\n", error);
 
 	ev64260_pci1_mem_bs_tag.pbs_extent = extent_create("pci1-iomem",
-	    0x89000000, 0x8fffffff, M_DEVBUF,
+	    ev64260_pci1_mem_bs_tag.pbs_base,
+	    ev64260_pci1_mem_bs_tag.pbs_limit-1,
+	    M_DEVBUF,
 	    ex_storage[2], sizeof(ex_storage[2]),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
 	ev64260_pci1_io_bs_tag.pbs_extent = extent_create("pci1-ioport",
-	    0x00000000, 0x00ffffff, M_DEVBUF,
+	    ev64260_pci1_io_bs_tag.pbs_base,
+	    ev64260_pci1_io_bs_tag.pbs_limit-1,
+	    M_DEVBUF,
 	    ex_storage[3], sizeof(ex_storage[3]),
 	    EX_NOCOALESCE|EX_NOWAIT);
 	error = extent_alloc_region(ev64260_pci1_io_bs_tag.pbs_extent,
@@ -136,7 +135,9 @@ ev64260_bus_space_init(void)
 		    "I/O space 0x10000-0x7fffff: error=%d\n", error);
 
 	ev64260_gt_mem_bs_tag.pbs_extent = extent_create("gtmem",
-	    0xf8000000, 0xf800ffff, M_DEVBUF,
+	    ev64260_gt_mem_bs_tag.pbs_base,
+	    ev64260_gt_mem_bs_tag.pbs_limit-1,
+	    M_DEVBUF,
 	    ex_storage[4], sizeof(ex_storage[4]),
 	    EX_NOCOALESCE|EX_NOWAIT);
 }
@@ -144,30 +145,29 @@ ev64260_bus_space_init(void)
 void
 ev64260_bus_space_mallocok(void)
 {
-
 	extent_flags = EX_MALLOCOK;
 }
 
 paddr_t
-ev64260_memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot,
-	int flags)
+memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 {
-	return ((bpa + offset) >> PGSHIFT);
+	return (trunc_page(bpa + offset));
 }
 
 int
-ev64260_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
-	int flags, bus_space_handle_t *bshp)
+memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+	bus_space_handle_t *bshp)
 {
 	int error;
 
 	if (bpa + size > t->pbs_limit)
 		return (EINVAL);
+
 	/*
 	 * Can't map I/O space as linear.
 	 */
-	if ((t->pbs_flags & _BUS_SPACE_IO_TYPE) &&
-	    (flags & BUS_SPACE_MAP_LINEAR))
+	if ((flags & BUS_SPACE_MAP_LINEAR) &&
+	    (t->pbs_flags & _BUS_SPACE_IO_TYPE))
 		return (EOPNOTSUPP);
 
 	/*
@@ -185,35 +185,41 @@ ev64260_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 }
 
 void
-ev64260_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
+memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	bus_addr_t bpa = bsh - t->pbs_offset;
 
 	if (extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags)) {
-		printf("ev64260_memio_unmap: %s 0x%lx, size 0x%lx\n",
+		printf("memio_unmap: %s 0x%lx, size 0x%lx\n",
 		    (t->pbs_flags & _BUS_SPACE_IO_TYPE) ? "port" : "mem",
 		    (unsigned long)bpa, (unsigned long)size);
-		printf("ev64260_memio_unmap: can't free region\n");
+		printf("memio_unmap: can't free region\n");
 	}
 }
 
 int
-ev64260_memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
-	struct extent *ex = t->pbs_extent;
 	u_long bpa;
 	int error;
 
 	if (rstart + size > t->pbs_limit)
 		return (EINVAL);
 
-	if (rstart < ex->ex_start || rend > ex->ex_end)
-		panic("ev64260_memio_alloc: bad region start/end");
+	/*
+	 * Can't map I/O space as linear.
+	 */
+	if ((flags & BUS_SPACE_MAP_LINEAR) &&
+	    (t->pbs_flags & _BUS_SPACE_IO_TYPE))
+		return (EOPNOTSUPP);
 
-	error = extent_alloc_subregion(ex, rstart, rend, size, alignment,
-	    boundary, EX_FAST | EX_NOWAIT | extent_flags, &bpa);
+	if (rstart < t->pbs_extent->ex_start || rend > t->pbs_extent->ex_end)
+		panic("memio_alloc: bad region start/end");
+
+	error = extent_alloc_subregion(t->pbs_extent, rstart, rend, size,
+	    alignment, boundary, EX_FAST | EX_NOWAIT | extent_flags, &bpa);
 
 	if (error)
 		return (error);
@@ -225,9 +231,8 @@ ev64260_memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 }
 
 void
-ev64260_memio_free(bus_space_tag_t t, bus_space_handle_t bsh,
-	bus_size_t size)
+memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
-	/* ev64260_memio_unmap() does all that we need to do. */
-	ev64260_memio_unmap(t, bsh, size);
+	/* memio_unmap() does all that we need to do. */
+	memio_unmap(t, bsh, size);
 }

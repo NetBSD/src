@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25 2001/08/26 02:47:36 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.26 2003/03/06 05:25:18 matt Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -117,16 +117,16 @@
  * See Figure 3-4, page 3-6 in the MPC105 User's Manual.
  */
 #define MPC105_DIRECT_MAPPED_SPACE	0x80000000
-#define PHYS_TO_PCI_MEM(x)	((x) | MPC105_DIRECT_MAPPED_SPACE)
-#define PCI_MEM_TO_PHYS(x)	((x) & ~MPC105_DIRECT_MAPPED_SPACE)
+#define PHYS_TO_BUS_MEM(t,x)	((x) | MPC105_DIRECT_MAPPED_SPACE)
+#define BUS_MEM_TO_PHYS(t,x)	((x) & ~MPC105_DIRECT_MAPPED_SPACE)
 
 #ifdef _KERNEL
 void bebox_bus_space_init __P((void));
 void bebox_bus_space_mallocok __P((void));
-extern const struct powerpc_bus_space bebox_io_bs_tag;
-extern const struct powerpc_bus_space bebox_mem_bs_tag;
-extern const struct powerpc_bus_space bebox_isa_io_bs_tag;
-extern const struct powerpc_bus_space bebox_isa_mem_bs_tag;
+extern struct powerpc_bus_space bebox_io_bs_tag;
+extern struct powerpc_bus_space bebox_mem_bs_tag;
+extern struct powerpc_bus_space bebox_isa_io_bs_tag;
+extern struct powerpc_bus_space bebox_isa_mem_bs_tag;
 #endif
 
 #endif /* _BEBOX_BUS_H_ */

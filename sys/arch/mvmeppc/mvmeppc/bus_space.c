@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2003/01/13 00:21:53 augustss Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 2003/03/06 05:25:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,8 +42,6 @@
 #include <sys/kernel.h>
 #include <sys/extent.h>
 #include <sys/mbuf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bat.h>
 #define _POWERPC_BUS_DMA_PRIVATE

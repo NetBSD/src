@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.9 2003/03/06 00:20:41 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.10 2003/03/06 05:25:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,50 +47,46 @@
 
 #include <machine/bus.h>
 
-static paddr_t prep_memio_mmap (bus_space_tag_t, bus_addr_t, off_t, int, int);
-static int prep_memio_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+static paddr_t memio_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+static int memio_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	bus_space_handle_t *);
-static void prep_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-static int prep_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,
-	bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *,
-	bus_space_handle_t *);
-static void prep_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+static void memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+static int memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
+	bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
+static void memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 struct powerpc_bus_space prep_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x80000000, 0x00000000, 0x3f800000,
 	NULL,
-	prep_memio_mmap,
-	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
 struct powerpc_bus_space prep_isa_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x80000000, 0x00000000, 0x00010000,
 	NULL,
-	prep_memio_mmap,
-	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
 struct powerpc_bus_space prep_mem_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN,
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x3f000000,
 	NULL,
-	prep_memio_mmap,
-	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
 struct powerpc_bus_space prep_isa_mem_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN,
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x01000000,
 	NULL,
-	prep_memio_mmap,
-	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
+
 static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
 
-static int ioport_extent_flags;
+static int extent_flags;
 
 void
-prep_bus_space_init()
+prep_bus_space_init(void)
 {
 	int error;
 
@@ -115,35 +111,29 @@ prep_bus_space_init()
 }
 
 void
-prep_bus_space_mallocok()
+prep_bus_space_mallocok(void)
 {
-
-	ioport_extent_flags = EX_MALLOCOK;
+	extent_flags = EX_MALLOCOK;
 }
 
-static paddr_t
-prep_memio_mmap(t, bpa, offset, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	off_t offset;
-	int prot, flags;
+paddr_t
+memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 {
-
 	return (trunc_page(bpa + offset));
 }
 
-static int
-prep_memio_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+int
+memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+	bus_space_handle_t *bshp)
 {
 	int error;
 
 	if (bpa + size > t->pbs_limit)
 		return (EINVAL);
+
+	/*
+	 * Can't map I/O space as linear.
+	 */
 	if ((flags & BUS_SPACE_MAP_LINEAR) &&
 	    (t->pbs_flags & _BUS_SPACE_IO_TYPE))
 		return (EOPNOTSUPP);
@@ -153,7 +143,7 @@ prep_memio_map(t, bpa, size, flags, bshp)
 	 * region is available.
 	 */
 	error = extent_alloc_region(t->pbs_extent, bpa, size,
-	    EX_NOWAIT | ioport_extent_flags);
+	    EX_NOWAIT | extent_flags);
 	if (error)
 		return (error);
 
@@ -162,32 +152,23 @@ prep_memio_map(t, bpa, size, flags, bshp)
 	return (0);
 }
 
-static void
-prep_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+void
+memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	bus_addr_t bpa = bsh - t->pbs_offset;
 
-	if (extent_free(t->pbs_extent, bpa, size,
-	    EX_NOWAIT | ioport_extent_flags)) {
-		printf("prep_memio_unmap: %s 0x%lx, size 0x%lx\n",
+	if (extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags)) {
+		printf("memio_unmap: %s 0x%lx, size 0x%lx\n",
 		    (t->pbs_flags & _BUS_SPACE_IO_TYPE) ? "port" : "mem",
 		    (unsigned long)bpa, (unsigned long)size);
-		printf("prep_memio_unmap: can't free region\n");
+		printf("memio_unmap: can't free region\n");
 	}
 }
 
-static int
-prep_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
-    bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+int
+memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+	bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+	int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	u_long bpa;
 	int error;
@@ -195,16 +176,18 @@ prep_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 	if (rstart + size > t->pbs_limit)
 		return (EINVAL);
 
+	/*
+	 * Can't map I/O space as linear.
+	 */
 	if ((flags & BUS_SPACE_MAP_LINEAR) &&
 	    (t->pbs_flags & _BUS_SPACE_IO_TYPE))
 		return (EOPNOTSUPP);
 
 	if (rstart < t->pbs_extent->ex_start || rend > t->pbs_extent->ex_end)
-		panic("prep_memio_alloc: bad region start/end");
+		panic("memio_alloc: bad region start/end");
 
 	error = extent_alloc_subregion(t->pbs_extent, rstart, rend, size,
-	    alignment, boundary, EX_FAST | EX_NOWAIT | ioport_extent_flags,
-	    &bpa);
+	    alignment, boundary, EX_FAST | EX_NOWAIT | extent_flags, &bpa);
 
 	if (error)
 		return (error);
@@ -215,13 +198,9 @@ prep_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 	return (0);
 }
 
-static void    
-prep_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+void
+memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
-
-	/* prep_memio_unmap() does all that we need to do. */
-	prep_memio_unmap(t, bsh, size);
+	/* memio_unmap() does all that we need to do. */
+	memio_unmap(t, bsh, size);
 }
