@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.317 2004/04/27 21:34:10 jonathan Exp $
+#	$NetBSD: Makefile,v 1.318 2004/04/29 19:42:29 jonathan Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
@@ -15,7 +15,7 @@ MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
 	elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 esis.4 \
 	esa.4 esiop.4 esl.4 esm.4 eso.4 exphy.4 fast_ipsec.4 fd.4 \
 	fpa.4 fms.4 fss.4 fwiso.4 fxp.4 gem.4 gentbi.4 \
-	glxtphy.4 gpib.4 gre.4 gphyter.4 gsip.4 hme.4 \
+	glxtphy.4 gpib.4 gre.4 gphyter.4 gsip.4 hifn.4 hme.4 \
 	hptide.4 icmp.4 icp.4 icsphy.4 idp.4 ifmedia.4 \
 	igsfb.4 iha.4 inet.4 inphy.4 intersil7170.4 \
 	ioasic.4 ioat.4 iop.4 iophy.4 iopsp.4 ip.4 \
@@ -37,7 +37,7 @@ MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
 	ss.4 st.4 ste.4 stge.4 sv.4 strip.4 systrace.4 \
 	tb.4 tc.4 tcds.4 tcp.4 termios.4 tfb.4 ti.4 \
 	tl.4 tlp.4 tlphy.4 tp.4 tr.4 trm.4 tty.4 tun.4 \
-	tqphy.4 twe.4 txp.4 udp.4 uha.4 uk.4 ukphy.4 \
+	tqphy.4 twe.4 txp.4 ubsec.4 udp.4 uha.4 uk.4 ukphy.4 \
 	unix.4 userconf.4 verifiedexec.4 vga.4 viaide.4 \
 	vlan.4 vmmon.4 vmnet.4 vnd.4 vr.4 wd.4 wdc.4 \
 	wi.4 wm.4 wscons.4 wsdisplay.4 wsfont.4 wskbd.4 \
