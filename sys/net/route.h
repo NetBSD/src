@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.16 1998/12/10 15:52:39 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.17 1998/12/27 18:27:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -241,20 +241,20 @@ struct route_cb {
  */
 
 struct rttimer {
-        CIRCLEQ_ENTRY(rttimer)	rtt_next;
-        LIST_ENTRY(rttimer) 	rtt_link; /* Multiple timers on single route */
-	struct rttimer_queue	*rtt_queue;
-        struct rtentry  	*rtt_rt;  /* Back pointer to the route */
-        void            	(*rtt_func) __P((struct rtentry *, 
+	TAILQ_ENTRY(rttimer)	rtt_next;  /* entry on timer queue */
+	LIST_ENTRY(rttimer) 	rtt_link;  /* multiple timers per rtentry */
+	struct rttimer_queue	*rtt_queue;/* back pointer to queue */
+	struct rtentry  	*rtt_rt;   /* Back pointer to the route */
+	void            	(*rtt_func) __P((struct rtentry *, 
 						 struct rttimer *));
-        time_t          	rtt_time; /* When this timer was registered */
+	time_t          	rtt_time; /* When this timer was registered */
 };
 
 struct rttimer_queue {
 	long				rtq_timeout;
-	CIRCLEQ_HEAD(, rttimer)		rtq_head;
+	TAILQ_HEAD(, rttimer)		rtq_head;
 	LIST_ENTRY(rttimer_queue)	rtq_link;
-};    
+};
 
 
 #ifdef _KERNEL

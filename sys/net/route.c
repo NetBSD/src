@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.23 1998/12/27 11:44:41 veego Exp $	*/
+/*	$NetBSD: route.c,v 1.24 1998/12/27 18:27:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -630,7 +630,6 @@ rt_timer_init()
 	rt_init_done = 1;
 }
 
-
 struct rttimer_queue *
 rt_timer_queue_create(timeout)
 	u_int	timeout;
@@ -642,21 +641,21 @@ rt_timer_queue_create(timeout)
 
 	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
 	if (rtq == NULL)
-		return NULL;		
+		return (NULL);		
 
 	rtq->rtq_timeout = timeout;
-	CIRCLEQ_INIT(&rtq->rtq_head);
+	TAILQ_INIT(&rtq->rtq_head);
 	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
 
-	return rtq;
+	return (rtq);
 }
-
 
 void
 rt_timer_queue_change(rtq, timeout)
 	struct rttimer_queue *rtq;
 	long timeout;
 {
+
 	rtq->rtq_timeout = timeout;
 }
 
@@ -666,17 +665,14 @@ rt_timer_queue_destroy(rtq, destroy)
 	struct rttimer_queue *rtq;
 	int destroy;
 {
-	struct rttimer *r, *r0;
+	struct rttimer *r;
 
-	r = CIRCLEQ_FIRST(&rtq->rtq_head); 
-	while (r != (struct rttimer *) &rtq->rtq_head) {
-		r0 = CIRCLEQ_NEXT(r, rtt_next);
-		CIRCLEQ_REMOVE(&rtq->rtq_head, r, rtt_next);
+	while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
-		if (destroy != 0)
+		TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
+		if (destroy)
 			RTTIMER_CALLOUT(r);
 		pool_put(&rttimer_pool, r);
-		r = r0;
 	}
 
 	LIST_REMOVE(rtq, rtq_link);
@@ -686,23 +682,18 @@ rt_timer_queue_destroy(rtq, destroy)
 	 */
 }
 
-
 void     
 rt_timer_remove_all(rt)
 	struct rtentry *rt;
 {
-	struct rttimer *r, *r0;
+	struct rttimer *r;
 
-	r = LIST_FIRST(&rt->rt_timer); 
-	while (r) { 
-		r0 = LIST_NEXT(r, rtt_link);
+	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
-		CIRCLEQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
 		pool_put(&rttimer_pool, r);
-		r = r0;
 	}
 }
-
 
 int      
 rt_timer_add(rt, func, queue)
@@ -710,44 +701,40 @@ rt_timer_add(rt, func, queue)
 	void(*func) __P((struct rtentry *, struct rttimer *));
 	struct rttimer_queue *queue;
 {
-	struct rttimer *r, *rttimer;
-	int s;
+	struct rttimer *r;
 	long current_time;
+	int s;
 
 	s = splclock();
 	current_time = mono_time.tv_sec;
 	splx(s);
 
-	for (r = LIST_FIRST(&rt->rt_timer); r; r = LIST_NEXT(r, rtt_link)) {
+	/*
+	 * If there's already a timer with this action, destroy it before
+	 * we add a new one.
+	 */
+	for (r = LIST_FIRST(&rt->rt_timer); r != NULL;
+	     r = LIST_NEXT(r, rtt_link)) {
 		if (r->rtt_func == func) {
 			LIST_REMOVE(r, rtt_link);
-			CIRCLEQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+			TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
 			pool_put(&rttimer_pool, r);
 			break;  /* only one per list, so we can quit... */
 		}
 	}
 
-	rttimer = pool_get(&rttimer_pool, PR_NOWAIT);
-	if (rttimer == NULL)
-		return ENOBUFS;
+	r = pool_get(&rttimer_pool, PR_NOWAIT);
+	if (r == NULL)
+		return (ENOBUFS);
 
-	rttimer->rtt_rt = rt;
-	rttimer->rtt_time = current_time;
-	rttimer->rtt_func = func;
-	rttimer->rtt_queue = queue;
-	LIST_INSERT_HEAD(&rt->rt_timer, rttimer, rtt_link);
-
-	r = CIRCLEQ_LAST(&queue->rtq_head);
-	while (r && r != (struct rttimer *) &queue->rtq_head && 
-	       r->rtt_time > current_time) 
-		r = CIRCLEQ_PREV(r, rtt_next);
-
-	if (r)
-		CIRCLEQ_INSERT_AFTER(&queue->rtq_head, r, rttimer, rtt_next);
-	else
-		CIRCLEQ_INSERT_HEAD(&queue->rtq_head, rttimer, rtt_next);
-
-	return 0;
+	r->rtt_rt = rt;
+	r->rtt_time = current_time;
+	r->rtt_func = func;
+	r->rtt_queue = queue;
+	LIST_INSERT_HEAD(&rt->rt_timer, r, rtt_link);
+	TAILQ_INSERT_TAIL(&queue->rtq_head, r, rtt_next);
+	
+	return (0);
 }
 
 /* ARGSUSED */
@@ -755,31 +742,27 @@ void
 rt_timer_timer(arg)
 	void *arg;
 {
-	struct rttimer *r, *rttimer;
-	struct rttimer_queue	*rtq;
+	struct rttimer_queue *rtq;
+	struct rttimer *r;
 	long current_time;
-	int s = splsoftnet();
-	int t;
+	int s;
 
-	t = splclock();
+	s = splclock();
 	current_time = mono_time.tv_sec;
-	splx(t);
+	splx(s);
 
+	s = splsoftnet();
 	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL; 
 	     rtq = LIST_NEXT(rtq, rtq_link)) {
-		rttimer = CIRCLEQ_FIRST(&rtq->rtq_head); 
-		while (rttimer != (struct rttimer *) &rtq->rtq_head && 
-		       (rttimer->rtt_time + rtq->rtq_timeout) < current_time) {
-			r = CIRCLEQ_NEXT(rttimer, rtt_next);
-			CIRCLEQ_REMOVE(&rtq->rtq_head, rttimer, rtt_next);
-			LIST_REMOVE(rttimer, rtt_link);
-			RTTIMER_CALLOUT(rttimer);
-			pool_put(&rttimer_pool, rttimer);
-			rttimer = r;
+		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
+		    (r->rtt_time + rtq->rtq_timeout) < current_time) {
+			LIST_REMOVE(r, rtt_link);
+			TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
+			RTTIMER_CALLOUT(r);
+			pool_put(&rttimer_pool, r);
 		}
 	}
+	splx(s);
 
 	timeout(rt_timer_timer, NULL, hz);  /* every second */
-
-	splx(s);
 }
