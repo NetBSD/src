@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.27 1999/05/17 15:14:54 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.28 1999/05/18 08:14:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.27 1999/05/17 15:14:54 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.28 1999/05/18 08:14:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,11 +186,12 @@ cmd
 	| QUIT CRLF
 		{
 			if (logged_in) {
-				lreply(221,
+				lreply(221, "");
+				lreply(0,
 	    "Data traffic for this session was %qd byte%s in %qd file%s.",
 				    total_data, PLURAL(total_data),
 				    total_files, PLURAL(total_files));
-				lreply(221,
+				lreply(0,
 	    "Total traffic for this session was %qd byte%s in %qd transfer%s.",
 				    total_bytes, PLURAL(total_bytes),
 				    total_xfers, PLURAL(total_xfers));
@@ -203,10 +204,9 @@ cmd
 				    total_bytes, PLURAL(total_bytes),
 				    total_xfers, PLURAL(total_xfers));
 			}
-			lreply(211,
+			reply(221,
 			    "Thank you for using the FTP service on %s.",
 			    hostname);
-			reply(221, "Goodbye.");
 			dologout(0);
 		}
 
@@ -1414,14 +1414,15 @@ help(ctab, s)
 		int i, j, w;
 		int columns, lines;
 
-		lreply(214, "The following %scommands are recognized.", type);
+		lreply(214, "");
+		lreply(0, "The following %scommands are recognized.", type);
 		lreply(0, "(`-' = not implemented, `+' = supports options)");
 		columns = 76 / width;
 		if (columns == 0)
 			columns = 1;
 		lines = (NCMDS + columns - 1) / columns;
 		for (i = 0; i < lines; i++) {
-			b = printf("   ");
+			b = printf("    ");
 			total_bytes += b;
 			total_bytes_out += b;
 			for (j = 0; j < columns; j++) {
@@ -1432,16 +1433,22 @@ help(ctab, s)
 				w = strlen(c->name);
 				if (! c->implemented) {
 					putchar('-');
+					total_bytes++;
+					total_bytes_out++;
 					w++;
 				}
 				if (c->hasopts) {
 					putchar('+');
+					total_bytes++;
+					total_bytes_out++;
 					w++;
 				}
 				if (c + lines >= &ctab[NCMDS])
 					break;
 				while (w < width) {
 					putchar(' ');
+					total_bytes++;
+					total_bytes_out++;
 					w++;
 				}
 			}
