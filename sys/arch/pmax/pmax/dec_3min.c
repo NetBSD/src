@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.26 1999/11/25 01:40:22 simonb Exp $ */
+/* $NetBSD: dec_3min.c,v 1.27 1999/11/28 08:29:00 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.26 1999/11/25 01:40:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.27 1999/11/28 08:29:00 simonb Exp $");
 
 
 #include <sys/types.h>
@@ -518,7 +518,8 @@ void
 kn02ba_wbflush()
 {
 	/* read twice IOASIC_IMSK */
-	__asm __volatile("lw $0,%0; lw $0,%0" :: "i"(0xbc040120));
+	__asm __volatile("lw $0,%0; lw $0,%0" ::
+	    "i"(MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK)));
 }
 
 unsigned
