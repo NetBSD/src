@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.8 2002/02/11 21:48:48 reinoud Exp $
+#	$NetBSD: files.acorn32,v 1.9 2002/04/11 17:31:23 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -306,8 +306,8 @@ file	arch/arm/arm32/intr.c
 file	arch/arm/arm32/spl.S
 
 # RiscPC specific files
-file	arch/acorn32/acorn32/rpc_machdep.c	riscpc
-file	arch/acorn32/acorn32/rpc_kbd_map.c	riscpc & kbd
+file	arch/acorn32/acorn32/rpc_machdep.c
+file	arch/acorn32/acorn32/rpc_kbd_map.c
 
 device	sysbeep
 attach	sysbeep at vidc with sysbeep_vidc
