@@ -1,4 +1,4 @@
-/*	$NetBSD: code.c,v 1.3 1999/11/09 22:41:53 wennmach Exp $	*/
+/*	$NetBSD: code.c,v 1.4 1999/11/12 14:42:35 wennmach Exp $	*/
 
 /*-
  * Copyright (c) 1999 
@@ -32,6 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: code.c,v 1.4 1999/11/12 14:42:35 wennmach Exp $");
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <vis.h>
