@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.18 2000/02/16 06:52:31 enami Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.19 2000/03/20 13:20:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,8 +77,6 @@
  *
  *	@(#)vnconfig.c	8.1 (Berkeley) 12/15/93
  */
-
-#define __POOL_EXPOSE			/* dev/vndvar.h uses struct pool */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
