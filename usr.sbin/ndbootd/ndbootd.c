@@ -1,3 +1,5 @@
+/*	$NetBSD: ndbootd.c,v 1.2 2001/05/22 14:41:59 fredette Exp $	*/
+
 /* ndbootd.c - the Sun Network Disk (nd) daemon: */
 
 /*
@@ -1033,4 +1035,4 @@ where OPTIONS are:\n\
 	/* NOTREACHED */
 }
 /* the raw Ethernet access code: */
-#include "ndbootd-raw.c"
+#include "config/ndbootd-bpf.c"
