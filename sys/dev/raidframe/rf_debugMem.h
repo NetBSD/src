@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.h,v 1.5 1999/09/04 21:11:21 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.h,v 1.6 1999/09/05 01:46:35 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -64,8 +64,7 @@ typedef u_int32_t U32;
 #define RF_Calloc(_p_, _nel_, _elsz_, _cast_)                               \
   {                                                                      \
      RF_Malloc( _p_, (_nel_) * (_elsz_), _cast_);                           \
-     bzero( (_p_), (_nel_) * (_elsz_) );                                 \
-   }
+  }
 
 #define RF_CallocAndAdd(__p,__nel,__elsz,__cast,__alist)                     \
   {                                                                       \
