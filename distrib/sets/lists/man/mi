@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.223 2000/04/16 23:39:58 perry Exp $
+# $NetBSD: mi,v 1.224 2000/04/17 17:06:21 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -663,6 +663,7 @@
 ./usr/share/man/cat7/hostname.0
 ./usr/share/man/cat7/intro.0
 ./usr/share/man/cat7/mailaddr.0
+./usr/share/man/cat7/mandoc.0
 ./usr/share/man/cat7/mdoc.0
 ./usr/share/man/cat7/msafer.0
 ./usr/share/man/cat7/packages.0
@@ -1626,6 +1627,7 @@
 ./usr/share/man/man7/hostname.7
 ./usr/share/man/man7/intro.7
 ./usr/share/man/man7/mailaddr.7
+./usr/share/man/man7/mandoc.7
 ./usr/share/man/man7/mdoc.7
 ./usr/share/man/man7/msafer.7
 ./usr/share/man/man7/packages.7
