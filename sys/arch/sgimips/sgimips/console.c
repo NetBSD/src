@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.24 2004/04/10 20:03:11 pooka Exp $	*/
+/*	$NetBSD: console.c,v 1.25 2004/04/10 20:15:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.24 2004/04/10 20:03:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.25 2004/04/10 20:15:12 pooka Exp $");
 
 #include "opt_kgdb.h"
 
@@ -100,6 +100,8 @@ consinit()
 			pckbc_cnattach(1,
 			    0x1fb80000+HPC_PBUS_CH6_DEVREGS+IOC_KB_REGS,
 			    KBCMDP, PCKBC_KBD_SLOT);
+
+			return;
 		}
 #endif
 	case MACH_SGI_IP12:
@@ -109,6 +111,8 @@ consinit()
 		    (consdev[7] == '0' || consdev[7] == '1')) {
 			cn_tab = &zs_cn;
 			(*cn_tab->cn_init)(cn_tab);
+			
+			return;
 		}
 #endif
 		break;
@@ -116,8 +120,8 @@ consinit()
 	case MACH_SGI_IP32:
 #if (NCOM > 0)
 		if ((strlen(consdev) == 9) &&
-	    	    (!strncmp(consdev, "serial", 6)) &&
-	    	    (consdev[7] == '0' || consdev[7] == '1')) {
+		    (!strncmp(consdev, "serial", 6)) &&
+		    (consdev[7] == '0' || consdev[7] == '1')) {
 			delay(10000);
 			/* XXX: hardcoded MACE iotag */
 			if (comcnattach(3,
@@ -126,15 +130,18 @@ consinit()
 			    MACE_ISA_SER1_BASE:MACE_ISA_SER2_BASE)),
 			    speed, COM_FREQ, COM_TYPE_NORMAL,
 			    comcnmode) == 0)
-				break;
+				return;
 		}
 #endif
 		panic("ip32 supports serial console only.  sorry.");
 		break;
+
 	default:
-		printf("Using ARCS for console I/O.\n");
+		panic("consinit(): unknown machine type IP%d\n", mach_type);
 		break;
 	}
+
+	printf("Using ARCS for console I/O.\n");
 }
 
 #if defined(KGDB)
