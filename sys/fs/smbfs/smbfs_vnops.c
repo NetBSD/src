@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.9 2003/02/23 21:54:05 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.10 2003/02/23 21:55:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_create_desc,		smbfs_create },
 	{ &vop_fsync_desc,		smbfs_fsync },
 	{ &vop_getattr_desc,		smbfs_getattr },
-	{ &vop_getpages_desc,		genfs_getpages },
+	{ &vop_getpages_desc,		genfs_compat_getpages },
 	{ &vop_inactive_desc,		smbfs_inactive },
 	{ &vop_ioctl_desc,		genfs_enoioctl },
 	{ &vop_islocked_desc,		genfs_noislocked },
