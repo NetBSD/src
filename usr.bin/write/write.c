@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.12 1998/07/06 11:17:30 mrg Exp $	*/
+/*	$NetBSD: write.c,v 1.13 1998/07/26 23:16:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.12 1998/07/06 11:17:30 mrg Exp $");
+__RCSID("$NetBSD: write.c,v 1.13 1998/07/26 23:16:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,8 @@ do_write(tty, mytty, myuid)
 	char *tty, *mytty;
 	uid_t myuid;
 {
-	char *login, *nows;
+	const char *login;
+	char *nows;
 	struct passwd *pwd;
 	time_t now;
 	char path[MAXPATHLEN], host[MAXHOSTNAMELEN + 1], line[512];
