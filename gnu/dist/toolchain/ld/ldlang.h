@@ -131,6 +131,9 @@ typedef struct lang_output_section_statement_struct {
   int section_alignment;	/* alignment of start of section */
 
   union etree_union *load_base;
+  union etree_union *size_adj;
+
+  struct lang_output_section_statement_struct *last_orphan;
 
   struct lang_output_section_phdr_list *phdrs;
 } lang_output_section_statement_type;
