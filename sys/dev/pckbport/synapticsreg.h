@@ -1,6 +1,7 @@
-/*	$NetBSD: synapticsreg.h,v 1.1 2004/12/24 18:33:06 christos Exp $	*/
+/*	$NetBSD: synapticsreg.h,v 1.2 2005/01/02 22:37:12 scw Exp $	*/
 
 /*
+ * Copyright (c) 2005, Steve C. Woodford
  * Copyright (c) 2004, Ales Krenek
  * Copyright (c) 2004, Kentaro A. Kurahone
  * All rights reserved.
@@ -54,7 +55,7 @@
 #define SYNAPTICS_CAP_SLEEP		(1 << 4)
 #define SYNAPTICS_CAP_4BUTTON		(1 << 3)
 #define SYNAPTICS_CAP_MULTIDETECT	(1 << 1)
-#define SYNAPTICS_CAP_PALMDETECT	(1)
+#define SYNAPTICS_CAP_PALMDETECT	(1 << 0)
 
 /* Mode bits. */
 #define SYNAPTICS_MODE_ABSOLUTE		(1 << 7)
@@ -63,16 +64,35 @@
 #define SYNAPTICS_MODE_GEST		(1 << 2)
 #define SYNAPTICS_MODE_W		(1)
 
-/* Tunables sysctl defaults. */
-#define SYNAPTICS_SLOW_LIMIT		(30*30)
-#define SYNAPTICS_TAP_TOLERANCE		500
-#define SYNAPTICS_TAP_LENGTH		200000
-
 /* Extended mode button masks. */
 #define SYN_1BUTMASK			0x1
 #define SYN_2BUTMASK			0x1
 
-/* Threshold for idleness. */
-#define SYNAPTICS_NOTOUCH		30
+/* Touchpad edge boundaries (Recommended values from Synaptics documentation) */
+#define	SYNAPTICS_EDGE_LEFT		1632
+#define	SYNAPTICS_EDGE_RIGHT		5312
+#define	SYNAPTICS_EDGE_TOP		4288
+#define	SYNAPTICS_EDGE_BOTTOM		1568
+#define	SYNAPTICS_EDGE_MAX		6143
 
-#endif
+/* Finger pressures */
+#define	SYNAPTICS_FINGER_NONE		0
+#define	SYNAPTICS_FINGER_HOVER		10
+#define	SYNAPTICS_FINGER_LIGHT		30
+#define	SYNAPTICS_FINGER_NORMAL		80
+#define	SYNAPTICS_FINGER_HEAVY		110
+#define	SYNAPTICS_FINGER_FLAT		200
+#define	SYNAPTICS_FINGER_PALM		255
+
+/* Width values */
+#define	SYNAPTICS_WIDTH_TWO_FINGERS	0
+#define	SYNAPTICS_WIDTH_THREE_OR_MORE	1
+#define	SYNAPTICS_WIDTH_PEN		2
+#define	SYNAPTICS_WIDTH_FINGER_MIN	4
+#define	SYNAPTICS_WIDTH_FINGER_NORMAL	5
+#define	SYNAPTICS_WIDTH_FINGER_MAX	7
+#define	SYNAPTICS_WIDTH_PALM_MIN	8
+#define	SYNAPTICS_WIDTH_PALM_MAX	14
+#define	SYNAPTICS_WIDTH_MAX		15
+
+#endif	/* _DEV_PCKBCPORT_SYNAPTICSREG_H_ */

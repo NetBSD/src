@@ -1,6 +1,7 @@
-/*	$NetBSD: synapticsvar.h,v 1.1 2004/12/24 18:33:06 christos Exp $	*/
+/*	$NetBSD: synapticsvar.h,v 1.2 2005/01/02 22:37:12 scw Exp $	*/
 
 /*
+ * Copyright (c) 2005, Steve C. Woodford
  * Copyright (c) 2004, Ales Krenek
  * Copyright (c) 2004, Kentaro A. Kurahone
  * All rights reserved.
@@ -40,14 +41,40 @@
 struct synaptics_softc {
 	struct proc *syn_thread;
 	int	caps;
-	int	has_m_button;
-	int	has_buttons_4_5;
-	int	has_buttons_4_5_ext;
-	int	has_passthrough;
-	int	enable_passthrough;
-	int	last_x, last_y;
 
-	u_char	buf[6], buf_full;
+	int	flags;
+#define	SYN_FLAG_HAS_MIDDLE_BUTTON	(1 << 0)
+#define	SYN_FLAG_HAS_BUTTONS_4_5	(1 << 1)
+#define	SYN_FLAG_HAS_UP_DOWN_BUTTONS	(1 << 2)
+#define	SYN_FLAG_HAS_PASSTHROUGH	(1 << 3)	/* Not yet supported */
+#define	SYN_FLAG_HAS_PALM_DETECT	(1 << 4)
+#define	SYN_FLAG_HAS_MULTI_FINGER	(1 << 5)
+
+	u_int	total_packets;		/* Total number of packets received */
+#define	SYN_TIME(sc,c)	(((sc)->total_packets >= (c)) ?		\
+			    ((sc)->total_packets - (c)) :	\
+			    ((c) - (sc)->total_packets))
+
+	int	up_down;
+	int	prev_fingers;
+
+	int	gesture_start_x, gesture_start_y;
+	u_int	gesture_start_packet;
+	u_int	gesture_tap_packet;
+
+	int	gesture_buttons;
+	int	gesture_type;
+#define	SYN_GESTURE_SINGLE	0x01
+#define	SYN_GESTURE_DOUBLE	0x02
+#define	SYN_GESTURE_DRAG	0x04
+#define	SYN_IS_SINGLE_TAP(t)	((t) & SYN_GESTURE_SINGLE)
+#define	SYN_IS_DOUBLE_TAP(t)	((t) & SYN_GESTURE_DOUBLE)
+#define	SYN_IS_DRAG(t)		((t) & SYN_GESTURE_DRAG)
+
+#define	SYN_HIST_SIZE	4
+	int	rem_x, rem_y;
+	u_int	movement_history;
+	int	history_x[SYN_HIST_SIZE], history_y[SYN_HIST_SIZE];
 };
 
 int pms_synaptics_probe_init(void *vsc);
