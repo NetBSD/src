@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.18 1998/06/27 10:10:51 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.19 1999/03/13 19:46:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -144,7 +144,7 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /*  5: ??? */
 	cpu_notsupp("ST_DEC_2000_300"),		     /*  6: ST_DEC_2000_300 */
 	cpu_init(dec_3000_300_init,"DEC_3000_300"),  /*  7: ST_DEC_3000_300 */
-	cpu_init(avalon_a12_init,"ST_AVALON_A12"),   /*  8: ST_AVALON_A12 */
+	cpu_init(avalon_a12_init,"AVALON_A12"),   /*  8: ST_AVALON_A12 */
 	cpu_notsupp("ST_DEC_2100_A500"),	     /*  9: ST_DEC_2100_A500 */
 	cpu_notsupp("ST_DEC_APXVME_64"),	     /* 10: ST_DEC_APXVME_64 */
 	cpu_init(dec_axppci_33_init,"DEC_AXPPCI_33"),/* 11: ST_DEC_AXPPCI_33 */
@@ -153,20 +153,20 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("ST_DEC_MUSTANG"),		     /* 14: ST_DEC_MUSTANG */
 	cpu_init(dec_kn20aa_init,"DEC_KN20AA"),	     /* 15: ST_DEC_KN20AA */
 	cpu_notsupp("???"),			     /* 16: ??? */
-	cpu_init(dec_1000a_init,"ST_DEC_1000"),	     /* 17: ST_DEC_1000 */
+	cpu_init(dec_1000a_init,"DEC_1000"),	     /* 17: ST_DEC_1000 */
 	cpu_notsupp("???"),			     /* 18: ??? */
 	cpu_init(dec_eb66_init,"DEC_EB66"),	     /* 19: ST_EB66 */
 	cpu_init(dec_eb64plus_init,"DEC_EB64PLUS"),  /* 20: ST_EB64P */
 	cpu_init(dec_alphabook1_init,"DEC_ALPHABOOK1"),/* 21: ST_ALPHABOOK1 */
-	cpu_init(dec_kn300_init,"ST_DEC_4100"),	     /* 22: ST_DEC_4100 */
+	cpu_init(dec_kn300_init,"DEC_KN300"),	     /* 22: ST_DEC_4100 */
 	cpu_notsupp("ST_DEC_EV45_PBP"),		     /* 23: ST_DEC_EV45_PBP */
 	cpu_notsupp("ST_DEC_2100A_A500"),	     /* 24: ST_DEC_2100A_A500 */
 	cpu_notsupp("???"),			     /* 25: ??? */
 	cpu_init(dec_eb164_init,"DEC_EB164"),	     /* 26: ST_EB164 */
-	cpu_init(dec_1000a_init, "ST_DEC_1000A"),    /* 27: ST_DEC_1000A */
+	cpu_init(dec_1000a_init, "DEC_1000A"),    /* 27: ST_DEC_1000A */
 	cpu_notsupp("ST_DEC_ALPHAVME_224"),	   /* 28: ST_DEC_ALPHAVME_224 */
 	cpu_notsupp("???"),			     /* 29: ??? */
-	cpu_init(dec_550_init,"ST_DEC_550"),	     /* 30: ST_DEC_550 */
+	cpu_init(dec_550_init,"DEC_550"),	     /* 30: ST_DEC_550 */
 	cpu_notsupp("???"),			     /* 31: ??? */
 	cpu_notsupp("ST_DEC_EV56_PBP"),		     /* 32: ST_DEC_EV56_PBP */
 	cpu_notsupp("ST_DEC_ALPHAVME_320"),	   /* 33: ST_DEC_ALPHAVME_320 */
