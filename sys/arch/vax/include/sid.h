@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.13 2000/05/08 17:49:07 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.14 2000/05/22 15:40:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -183,7 +183,7 @@
 /*
  * Highest Number supported by NetBSD/VAX
  */
-#define VAX_TYP_MAX	VAX_TYP_RIGEL
+#define VAX_TYP_MAX	VAX_TYP_NVAX
 
 /*
  * compatibility with old names:
