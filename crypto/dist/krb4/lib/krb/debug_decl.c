@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: debug_decl.c,v 1.1.1.2 2000/12/29 01:43:12 assar Exp $");
+__RCSID("$KTH-KRB: debug_decl.c,v 1.10 1999/06/16 15:10:38 joda Exp $"
+      "$NetBSD: debug_decl.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 /* Declare global debugging variables. */
 

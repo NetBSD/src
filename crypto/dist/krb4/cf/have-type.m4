@@ -1,4 +1,5 @@
-dnl $Id: have-type.m4,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $
+dnl $KTH-KRB: have-type.m4,v 1.6 2000/07/15 18:10:00 joda Exp $
+dnl $NetBSD: have-type.m4,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl check for existance of a type
 

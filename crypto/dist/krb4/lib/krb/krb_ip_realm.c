@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: krb_ip_realm.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
+__RCSID("$KTH-KRB: krb_ip_realm.c,v 1.3 1999/12/06 23:02:33 assar Exp $"
+      "$NetBSD: krb_ip_realm.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * Obtain a ticket for ourselves (`user.instance') in REALM and decrypt

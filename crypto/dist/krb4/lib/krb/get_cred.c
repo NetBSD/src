@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_cred.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
+__RCSID("$KTH-KRB: get_cred.c,v 1.8 1999/12/11 23:39:12 joda Exp $"
+      "$NetBSD: get_cred.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * krb_get_cred takes a service name, instance, and realm, and a

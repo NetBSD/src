@@ -1,4 +1,5 @@
-# $Id: Makefile.am,v 1.1.1.1 2001/09/17 12:09:52 assar Exp $
+# $KTH-KRB: Makefile.am,v 1.4 2002/05/02 16:41:01 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.2 2002/09/12 12:22:08 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -8,9 +9,16 @@ noinst_PROGRAMS = bits
 
 INCLUDES += -DHOST=\"$(CANONICAL_HOST)\"
 
-include_HEADERS = ktypes.h protos.h
+include_HEADERS = ktypes.h protos.h $(des_h)
 
-CLEANFILES = roken.h krb_err.h kadm_err.h
+if HAVE_OPENSSL
+des_h = des.h
+des.h:
+	echo '#include <@DES_H@>' > des.h
+else
+des_h = 
+endif
+
 
 ktypes.h: bits$(EXEEXT)
 	./bits$(EXEEXT) ktypes.h

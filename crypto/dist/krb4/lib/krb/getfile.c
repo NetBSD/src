@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: getfile.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
+__RCSID("$KTH-KRB: getfile.c,v 1.6 2000/12/07 17:00:49 assar Exp $"
+      "$NetBSD: getfile.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 static int
 is_suid(void)

@@ -46,7 +46,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: encrypt.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: encrypt.c,v 1.6 2001/09/09 20:27:22 assar Exp $"
+      "$NetBSD: encrypt.c,v 1.1.1.4 2002/09/12 12:22:03 joda Exp $");
 
 /* replacements for htonl and ntohl since I have no idea what to do
  * when faced with machines with 8 byte longs. */

@@ -1,5 +1,6 @@
 #!/bin/sh
-# $Id: krb4-config.in,v 1.1.1.1 2001/09/17 12:10:06 assar Exp $
+# $KTH-KRB: krb4-config.in,v 1.4 2002/05/17 16:05:32 joda Exp $
+# $NetBSD: krb4-config.in,v 1.1.1.2 2002/09/12 12:22:14 joda Exp $
 
 do_libs=no
 do_cflags=no
@@ -21,7 +22,7 @@ for i in $*; do
     ;;
   --version)
     echo "@PACKAGE@ @VERSION@"
-    echo '$Id: krb4-config.in,v 1.1.1.1 2001/09/17 12:10:06 assar Exp $'
+    echo '$Id: krb4-config.in,v 1.1.1.2 2002/09/12 12:22:14 joda Exp $'
     exit 0
     ;;
   --prefix=*)
@@ -42,11 +43,17 @@ for i in $*; do
   --cflags)
     do_cflags=yes
     ;;
-  krb5)
-    library=krb5
+  krb4)
+    library=krb4
+    ;;
+  krb)
+    library=krb4
     ;;
   kadm-client)
     library=kadm-client
+    ;;
+  kdb)
+    library=kdb
     ;;
   *)
     echo "unknown option: $i"
@@ -71,6 +78,7 @@ fi
 
 libdir=@libdir@
 includedir=@includedir@
+INCLUDE_des=@INCLUDE_des@
 
 if test "$print_prefix" = "yes"; then
     echo $prefix
@@ -86,13 +94,16 @@ if test "$do_libs" = "yes"; then
     kadm-client)
 	lib_flags="$lib_flags -lkadm"
 	;;
+    kdb)
+	lib_flags="$lib_flags -lkdb @DBLIB@"
+	;;
     esac
     lib_flags="$lib_flags -lkrb @LIB_des_appl@"
     lib_flags="$lib_flags @LIBS@"
     echo $lib_flags
 fi
 if test "$do_cflags" = "yes"; then
-    echo "-I${includedir}"
+    echo "-I${includedir} ${INCLUDE_des}"
 fi
 
 exit 0

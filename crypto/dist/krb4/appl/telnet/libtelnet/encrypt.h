@@ -55,7 +55,8 @@
  * or implied warranty.
  */
 
-/* $Id: encrypt.h,v 1.1.1.3 2001/09/17 12:09:46 assar Exp $ */
+/* $KTH-KRB: encrypt.h,v 1.7 2001/08/22 20:30:22 assar Exp $
+   $NetBSD: encrypt.h,v 1.1.1.4 2002/09/12 12:22:05 joda Exp $ */
 
 #ifndef	__ENCRYPT__
 #define	__ENCRYPT__

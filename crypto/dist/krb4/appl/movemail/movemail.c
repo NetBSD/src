@@ -716,5 +716,7 @@ int mbx_delimit_end (FILE *mbf)
   if (putc ('\037', mbf) == EOF)
     return (NOTOK);
 #endif
+  if (putc('\n', mbf) == EOF)
+    return (NOTOK);
   return (OK);
 }

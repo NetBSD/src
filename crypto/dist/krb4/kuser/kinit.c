@@ -19,7 +19,8 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id: kinit.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
+__RCSID("$KTH-KRB: kinit.c,v 1.18 2001/02/20 23:07:56 assar Exp $"
+      "$NetBSD: kinit.c,v 1.1.1.4 2002/09/12 12:22:08 joda Exp $");
 
 #define	LIFE	DEFAULT_TKT_LIFE /* lifetime of ticket in 5-minute units */
 #define CHPASSLIFE 2

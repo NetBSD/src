@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: otp.h,v 1.1.1.3 2001/09/17 12:10:04 assar Exp $ */
+/* $KTH-KRB: otp.h,v 1.19 2000/07/12 00:26:43 assar Exp $
+   $NetBSD: otp.h,v 1.1.1.4 2002/09/12 12:22:12 joda Exp $ */
 
 #ifndef _OTP_H
 #define _OTP_H

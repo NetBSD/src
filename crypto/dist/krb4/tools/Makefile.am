@@ -1,4 +1,5 @@
-# $Id: Makefile.am,v 1.1.1.1 2001/09/17 12:10:06 assar Exp $
+# $KTH-KRB: Makefile.am,v 1.4 2002/05/17 16:05:58 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.2 2002/09/12 12:22:14 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -18,6 +19,8 @@ krb4-config: krb4-config.in
 		-e "s;@libdir\@;$(libdir);g" \
 		-e "s;@includedir\@;$(includedir);g" \
 		-e "s;@LIB_des_appl\@;$(LIB_des_appl);g" \
+		-e "s;@INCLUDE_des\@;$(INCLUDE_des);g" \
 		-e "s;@LIBS\@;$(LIBS);g" \
+		-e "s;@DBLIB\@;$(DBLIB);g" \
 		$(srcdir)/krb4-config.in > $@
 	chmod +x $@

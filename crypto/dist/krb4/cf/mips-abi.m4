@@ -1,4 +1,5 @@
-dnl $Id: mips-abi.m4,v 1.1.1.3 2001/09/17 12:10:07 assar Exp $
+dnl $KTH-KRB: mips-abi.m4,v 1.6 2002/04/30 16:46:05 joda Exp $
+dnl $NetBSD: mips-abi.m4,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl
 dnl Check for MIPS/IRIX ABI flags. Sets $abi and $abilibdirext to some
@@ -6,7 +7,7 @@ dnl value.
 
 AC_DEFUN(AC_MIPS_ABI, [
 AC_ARG_WITH(mips_abi,
-[  --with-mips-abi=abi     ABI to use for IRIX (32, n32, or 64)])
+	AC_HELP_STRING([--with-mips-abi=abi],[ABI to use for IRIX (32, n32, or 64)]))
 
 case "$host_os" in
 irix*)

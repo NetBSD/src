@@ -8,7 +8,8 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: xnlock.c,v 1.1.1.3 2001/09/17 12:09:48 assar Exp $");
+__RCSID("$KTH-KRB: xnlock.c,v 1.90 2002/08/23 19:29:38 assar Exp $"
+      "$NetBSD: xnlock.c,v 1.1.1.4 2002/09/12 12:22:06 joda Exp $");
 #endif
 
 #include <stdio.h>
@@ -241,6 +242,9 @@ init_words (int argc, char **argv)
 		if (appres.file == NULL)
 		    errx (1, "cannot allocate memory for message");
 	    }
+	} else if(strcmp(argv[i], "--version") == 0) {
+	    print_version(NULL);
+	    exit(0);
 	} else {
 	    int j;
 	    int len = 1;
