@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.4 1997/06/24 17:47:03 kleink Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.5 1997/07/06 16:19:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsirand.c,v 1.4 1997/06/24 17:47:03 kleink Exp $";
+static char rcsid[] = "$NetBSD: fsirand.c,v 1.5 1997/07/06 16:19:40 mycroft Exp $";
 #endif /* lint */
 
 #include <stdio.h>
@@ -137,7 +137,10 @@ fixinodes(fd, fs, lab, pflag, xorval)
 		err(1, "Out of memory");
 
 	for (ino = 0, imax = fs->fs_ipg * fs->fs_ncg; ino < imax;) {
-		off_t sp = fsbtodb(fs, ino_to_fsba(fs, ino)) * lab->d_secsize;
+		off_t sp;
+
+		sp = (off_t) fsbtodb(fs, ino_to_fsba(fs, ino)) *
+		     (off_t) lab->d_secsize;
 
 		if (lseek(fd, sp, SEEK_SET) == (off_t) -1)
 			err(1, "Seeking to inode %d failed", ino);
