@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.62.2.6 2000/09/20 20:11:25 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.62.2.7 2000/09/20 21:50:48 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -254,7 +254,7 @@ message packname
 {Please enter a name for your NetBSD disk}
 
 message lastchance
-{Ok, we are now ready to install NetBSD on your hard disk.  Nothing has been
+{Ok, we are now ready to install NetBSD on your hard disk (%s).  Nothing has been
 written yet.  This is your last chance to quit this process before anything
 gets changed.  
 
