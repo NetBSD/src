@@ -53,14 +53,18 @@ local_passwd(uname)
 	char *getnewpasswd();
 
 	if (!(pw = getpwnam(uname))) {
+#ifdef YP
+		extern int use_yp;
+		if (!use_yp)
+#endif
 		(void)fprintf(stderr, "passwd: unknown user %s.\n", uname);
-		exit(1);
+		return(1);
 	}
 
 	uid = getuid();
 	if (uid && uid != pw->pw_uid) {
 		(void)fprintf(stderr, "passwd: %s\n", strerror(EACCES));
-		exit(1);
+		return(1);
 	}
 
 	pw_init();
@@ -78,7 +82,7 @@ local_passwd(uname)
 
 	if (!pw_mkdb())
 		pw_error((char *)NULL, 0, 1);
-	exit(0);
+	return(0);
 }
 
 char *
