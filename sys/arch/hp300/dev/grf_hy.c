@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.14 2001/12/08 03:34:39 gmcgarry Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.15 2001/12/14 08:34:27 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,9 +123,7 @@ void	hyper_ite_fontinit __P((struct ite_data *));
 int	hyper_dio_match __P((struct device *, struct cfdata *, void *));
 void	hyper_dio_attach __P((struct device *, struct device *, void *));
 
-int	hyper_console_scan __P((int, caddr_t, void *));
-void	hypercnprobe __P((struct consdev *cp));
-void	hypercninit __P((struct consdev *cp));
+int	hypercnattach __P((bus_space_tag_t, bus_addr_t, int));
 
 struct cfattach hyper_dio_ca = {
 	sizeof(struct grfdev_softc), hyper_dio_match, hyper_dio_attach
@@ -135,6 +133,9 @@ struct cfattach hyper_dio_ca = {
 struct grfsw hyper_grfsw = {
 	GID_HYPERION, GRFHYPERION, "hyperion", hy_init, hy_mode
 };
+
+static int hyperconscode;
+static caddr_t hyperconaddr;
 
 #if NITE > 0
 void	hyper_init __P((struct ite_data *));
@@ -179,8 +180,8 @@ hyper_dio_attach(parent, self, aux)
 	caddr_t grf;
 
 	sc->sc_scode = da->da_scode;
-	if (sc->sc_scode == conscode)
-		grf = conaddr;
+	if (sc->sc_scode == hyperconscode)
+		grf = hyperconaddr;
 	else {
 		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
 		if (grf == 0) {
@@ -190,6 +191,7 @@ hyper_dio_attach(parent, self, aux)
 		}
 	}
 
+	sc->sc_isconsole = (sc->sc_scode == hyperconscode);
 	grfdev_attach(sc, hy_init, grf, &hyper_grfsw);
 }
 
@@ -212,7 +214,7 @@ hy_init(gp, scode, addr)
 	 * If the console has been initialized, and it was us, there's
 	 * no need to repeat this.
 	 */
-	if (consinit_active || (scode != conscode)) {
+	if (scode != hyperconscode) {
 		if (ISIIOVA(addr))
 			gi->gd_regaddr = (caddr_t) IIOP(addr);
 		else
@@ -746,131 +748,56 @@ hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
 /*
  * Hyperion console support
  */
-
 int
-hyper_console_scan(scode, va, arg)
-	int scode;
-	caddr_t va;
-	void *arg;
+hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
-	struct grfreg *grf = (struct grfreg *)va;
-	struct consdev *cp = arg;
-	u_char *dioiidev;
-	int force = 0, pri;
-
-	if ((grf->gr_id == GRFHWID) && (grf->gr_id2 == GID_HYPERION)) {
-		pri = CN_NORMAL;
-
-#ifdef CONSCODE
-		/*
-		 * Raise our prioity, if appropriate.
-		 */
-		if (scode == CONSCODE) {
-			pri = CN_REMOTE;
-			force = conforced = 1;
-		}
-#endif
-
-		/* Only raise priority. */
-		if (pri > cp->cn_pri)
-			cp->cn_pri = pri;
-
-		/*
-		 * If our priority is higher than the currently-remembered
-		 * console, stash our priority.
-		 */
-		if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri))
-		    || force) {
-			cn_tab = cp;
-			if (scode >= 132) {
-				dioiidev = (u_char *)va;
-				return ((dioiidev[0x101] + 1) * 0x100000);
-			}
-			return (DIOCSIZE);
-		}
-	}
-	return (0);
-}
-
-void
-hypercnprobe(cp)
-	struct consdev *cp;
-{
-	int maj;
+	bus_space_handle_t bsh;
 	caddr_t va;
 	struct grfreg *grf;
-	int force = 0;
+	struct grf_data *gp = &grf_cn;
+	u_int8_t *dioiidev;
+	int size;
 
-	maj = ite_major();
-
-	/* initialize required fields */
-	cp->cn_dev = makedev(maj, 0);		/* XXX */
-	cp->cn_pri = CN_DEAD;
-
-	/* Abort early if console is already forced. */
-	if (conforced)
-		return;
-
-	/* Look for "internal" framebuffer. */
-	va = (caddr_t)IIOV(GRFIADDR);
+	if (bus_space_map(bst, addr, NBPG, 0, &bsh))
+		return (1);
+	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
-	if (!badaddr(va) &&
-	    ((grf->gr_id == GRFHWID) && (grf->gr_id2 == GID_HYPERION))) {
-		cp->cn_pri = CN_INTERNAL;
 
-#ifdef CONSCODE
-		/*
-		 * Raise our priority and save some work, if appropriate.
-		 */
-		if (CONSCODE == -1) {
-			cp->cn_pri = CN_REMOTE;
-			force = conforced = 1;
-		}
-#endif
-
-		/*
-		 * If our priority is higher than the currently
-		 * remembered console, stash our priority, and
-		 * unmap whichever device might be currently mapped.
-		 * Since we're internal, we set the saved size to 0
-		 * so they don't attempt to unmap our fixed VA later.
-		 */
-		if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri))
-		    || force) {
-			cn_tab = cp;
-			if (convasize)
-				iounmap(conaddr, convasize);
-			conscode = -1;
-			conaddr = va;
-			convasize = 0;
-		}
+	if ((grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_HYPERION)) {
+		bus_space_unmap(bst, bsh, NBPG);
+		return (1);
 	}
 
-	console_scan(hyper_console_scan, cp);
-}
+	if (scode > 132) {
+		dioiidev = (u_int8_t *)va;
+		size =  ((dioiidev[0x101] + 1) * 0x100000);
+	} else
+		size = DIOCSIZE;
 
-void
-hypercninit(cp)
-	struct consdev *cp;
-{
-	struct grf_data *gp = &grf_cn;
+	bus_space_unmap(bst, bsh, NBPG);
+	if (bus_space_map(bst, addr, size, 0, &bsh))
+		return (1);
+	va = bus_space_vaddr(bst, bsh);
 
 	/*
 	 * Initialize the framebuffer hardware.
 	 */
-	(void)hy_init(gp, conscode, conaddr);
+	(void)hy_init(gp, scode, va);
+	hyperconscode = scode;
+	hyperconaddr = va;
 
 	/*
 	 * Set up required grf data.
-	 */
+	*/
 	gp->g_sw = &hyper_grfsw;
 	gp->g_display.gd_id = gp->g_sw->gd_swid;
 	gp->g_flags = GF_ALIVE;
 
 	/*
 	 * Initialize the terminal emulator.
-	 */
-	itecninit(gp, &hyper_itesw);
+	*/
+	itedisplaycnattach(gp, &hyper_itesw);
+	return (0);
 }
 
 #endif /* NITE > 0 */
