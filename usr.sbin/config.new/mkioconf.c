@@ -39,7 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mkioconf.c	5.5 (Berkeley) 5/10/93
+ *	from: @(#)mkioconf.c	5.5 (Berkeley) 5/10/93
+ *	$Id: mkioconf.c,v 1.2 1993/12/04 06:06:12 cgd Exp $
  */
 
 #include <sys/param.h>

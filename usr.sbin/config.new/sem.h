@@ -39,7 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sem.h	5.2 (Berkeley) 4/18/93
+ *	from: @(#)sem.h	5.2 (Berkeley) 4/18/93
+ *	$Id: sem.h,v 1.3 1993/12/04 06:06:25 cgd Exp $
  */
 
 void		enddefs __P((const char *));

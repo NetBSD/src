@@ -39,7 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pack.c	5.2 (Berkeley) 4/18/93
+ *	from: @(#)pack.c	5.2 (Berkeley) 4/18/93
+ *	$Id: pack.c,v 1.2 1993/12/04 06:06:17 cgd Exp $
  */
 
 #include <sys/param.h>
