@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah_zbus.c,v 1.4 1999/02/16 23:34:12 is Exp $ */
+/*	$NetBSD: if_bah_zbus.c,v 1.5 1999/12/30 20:56:45 is Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ bah_zbus_attach(parent, self, aux)
 	    sc->sc_dev.dv_xname, parent, self, aux);
 #endif
 	bsc->sc_bst.base = (bus_addr_t)zap->va;
-	bsc->sc_bst.stride = 1;
+	bsc->sc_bst.absm = &amiga_bus_stride_2word;
 
 	sc->sc_bst_r = &bsc->sc_bst;
 	sc->sc_regs = bsc->sc_bst.base + 0x4000;

@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.6 1999/02/16 23:34:11 is Exp $ */
+/*	$NetBSD: drsupio.c,v 1.7 1999/12/30 20:56:45 is Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ drsupioattach(parent, self, auxp)
 		printf("\n");
 
 	drsc->sc_bst.base = DRCCADDR + NBPG * DRSUPIOPG + 1;
-	drsc->sc_bst.stride = 2;
+	drsc->sc_bst.absm = &amiga_bus_stride_4;
 	
 	supa.supio_iot = &drsc->sc_bst;
 	supa.supio_ipl = 5;

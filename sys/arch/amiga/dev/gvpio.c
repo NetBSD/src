@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.3 1999/04/01 20:31:02 is Exp $ */
+/*	$NetBSD: gvpio.c,v 1.4 1999/12/30 20:56:45 is Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -123,7 +123,7 @@ gvpioattach(parent, self, auxp)
 	gbase = gap->zargs.va;
 	giosc->sc_cntr = &gbase[0x41];
 	giosc->sc_bst.base = (u_long)gbase + 1;
-	giosc->sc_bst.stride = 1;
+	giosc->sc_bst.absm = amiga_bus_stride_2word;
 	LIST_INIT(&giosc->sc_comhdls);
 	giosd = gvpiodevs;
 

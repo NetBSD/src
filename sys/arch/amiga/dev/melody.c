@@ -1,4 +1,4 @@
-/*	$NetBSD: melody.c,v 1.5 1999/02/16 23:34:12 is Exp $	*/
+/*	$NetBSD: melody.c,v 1.6 1999/12/30 20:56:45 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ melody_attach(parent, self, aux)
 	zap = aux;
 
 	sc->sc_bst_leftbyte.base = (u_long)zap->va + 0;
-	sc->sc_bst_leftbyte.stride = 1;
+	sc->sc_bst_leftbyte.absm = &amiga_bus_stride_2word;
 	sc->sc_intack = (caddr_t)zap->va + 0xc000;
 
 	/* set up board specific part in sc_tav */
