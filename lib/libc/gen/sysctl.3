@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.47 2000/01/19 12:30:12 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.48 2000/01/23 17:12:11 ad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -719,7 +719,7 @@ must be divided by the tcp.slowhz value to get times in seconds.)
 Returns 1 if the use of J. Hoe's NewReno congestion control algorithm is
 enabled.  This algorithm improves the start-up behavior of TCP connections.
 .It Li tcp.log_refused
-When set to 1, all refused TCP connections to the host are logged.
+Returns 1 if refused TCP connections to the host will be logged.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
