@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.14 1999/08/26 22:53:42 thorpej Exp $ */
+/*	$NetBSD: tcx.c,v 1.15 1999/08/27 10:49:20 hannken Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ tcxattach(parent, self, args)
 {
 	struct tcx_softc *sc = (struct tcx_softc *)self;
 	struct sbus_attach_args *sa = args;
-	int node, ramsize, i;
+	int node, ramsize;
 	volatile struct bt_regs *bt;
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
