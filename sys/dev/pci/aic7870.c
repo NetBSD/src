@@ -19,7 +19,7 @@
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
  *
- *	$Id: aic7870.c,v 1.2 1995/11/10 19:36:08 christos Exp $
+ *	$Id: aic7870.c,v 1.3 1995/11/12 20:55:26 christos Exp $
  */
 
 #include <sys/param.h>
@@ -59,21 +59,15 @@ aic7870_probe(parent, match, aux)
         void *match, *aux; 
 {       
         struct pci_attach_args *pa = aux;
-        struct ahc_softc *ahc = match;
 
 	if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_ADP)
 		return 0;
 
 	switch (PCI_CHIPID(pa->pa_id)) {
 	case PCI_PRODUCT_ADP_AIC7870:
-		ahc->type = AHC_AIC7870;
-		return 1;
-
 	case PCI_PRODUCT_ADP_AIC2940:
 	case PCI_PRODUCT_ADP_AIC2940U:
-		ahc->type = AHC_294;
 		return 1;
-
 	default:
 		return 0;
 	}
@@ -87,6 +81,17 @@ aic7870_attach(parent, self, aux)
         struct pci_attach_args *pa = aux;
         struct ahc_softc *ahc = (void *)self;
 	int iobase; 
+
+	switch (PCI_CHIPID(pa->pa_id)) {
+	case PCI_PRODUCT_ADP_AIC7870:
+		ahc->type = AHC_AIC7870;
+		break;
+
+	case PCI_PRODUCT_ADP_AIC2940:
+	case PCI_PRODUCT_ADP_AIC2940U:
+		ahc->type = AHC_294;
+		break;
+	}
 
 	if (pci_map_io(pa->pa_tag, PCI_BASEADR0, &iobase))
 		return;
