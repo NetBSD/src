@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.6 1999/01/27 06:37:49 dbj Exp $	*/
+/*	$NetBSD: espvar.h,v 1.7 1999/02/03 20:44:43 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,19 +42,36 @@ struct esp_softc {
 	struct nextdma_config sc_scsi_dma;
 	bus_space_tag_t	sc_bst;				
 	bus_space_handle_t sc_bsh;		/* the device registers */
-	bus_dmamap_t  sc_dmamap;			/* i/o dma map */
-	int sc_datain;								/* dma direction for map */
-	caddr_t sc_slop_bgn_addr;			/* bytes to be fifo'd at beginning */
-	caddr_t sc_slop_end_addr;			/* bytes to be fifo'd at end */
-	int sc_slop_bgn_size;					/* # bytes to be fifo'd at beginning */
-	int sc_slop_end_size;					/* # bytes to be fifo'd at end */
-	int sc_dmamap_loaded;					/* 0=not loaded, 1=sc_dmamap, 2=sc_tail_dmamap */
-	caddr_t *sc_dmaaddr;
-	size_t  *sc_dmalen;
-	size_t  sc_dmasize;
+
+	caddr_t *sc_dmaaddr;					/* saved argument to esp_dma_setup */
+	size_t  *sc_dmalen;						/* saved argument to esp_dma_setup */
+	size_t  sc_dmasize;						/* saved argument to esp_dma_setup */
+	int sc_datain;								/* saved argument to esp_dma_setup */
+
+#define ESP_LOADED_MAIN (0x01)
+#define ESP_LOADED_TAIL (0x02)
+
+	int sc_loaded;								/* used by continue callback to remember
+																 * which dmamaps are already loaded.
+																 */
+
+	/* To deal with begin alignment problems, we stuff the fifo
+	 * with a begin buffer
+	 */
+	caddr_t       sc_begin;				/* pointer to start io buf, NULL if invalid */
+	size_t        sc_begin_size;	/*  */
+
+	bus_dmamap_t  sc_main_dmamap;	/* i/o dma map */
+	caddr_t       sc_main;				/* pointer to main io buf, NULL if invalid */
+	size_t        sc_main_size;		/* aligned length of main io buf we are using */
+
+	/* To deal with end alignment problems, we copy the end of the dma
+	 * buffer into a "tail" buffer that we can control more carefully.
+	 * We then chain this extra buffer onto the end.
+	 */
 #define ESP_DMA_MAXTAIL 128
-	caddr_t sc_tail;
-	size_t  sc_tail_size;
-	char sc_tailbuf[ESP_DMA_MAXTAIL+2*DMA_ENDALIGNMENT];
 	bus_dmamap_t  sc_tail_dmamap;
+	caddr_t sc_tail;							/* pointer into sc_tailbuf, NULL if invalid */
+	size_t  sc_tail_size;					/* aligned length of tailbuf we are using */
+	u_char sc_tailbuf[ESP_DMA_MAXTAIL+2*DMA_ENDALIGNMENT];
 };
