@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.16 2000/03/29 04:56:47 enami Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.17 2000/06/17 20:57:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -136,8 +136,9 @@ extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 extern u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
-int	ether_addmulti __P((struct ifreq *, struct ethercom *));
-int	ether_delmulti __P((struct ifreq *, struct ethercom *));
+int	ether_addmulti (struct ifreq *, struct ethercom *);
+int	ether_delmulti (struct ifreq *, struct ethercom *);
+int	ether_changeaddr (struct ifreq *, struct ethercom *);
 #endif /* _KERNEL */
 
 /*
@@ -205,8 +206,8 @@ struct ether_multistep {
 }
 
 #ifdef _KERNEL
-u_int32_t ether_crc32_le __P((const u_int8_t *, size_t));
-u_int32_t ether_crc32_be __P((const u_int8_t *, size_t));
+u_int32_t ether_crc32_le (const u_int8_t *, size_t);
+u_int32_t ether_crc32_be (const u_int8_t *, size_t);
 #else
 /*
  * Prototype ethers(3) functions.
