@@ -1,4 +1,4 @@
-#	$NetBSD: MINBAR,v 1.22 2001/01/19 14:44:11 fvdl Exp $
+#	$NetBSD: MINBAR,v 1.23 2001/02/09 19:12:08 mycroft Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	MINBAR -- offshore CVS server
@@ -598,7 +598,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	sl		2	# Serial Line IP
@@ -611,7 +611,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
