@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.4 1994/10/26 00:56:41 cgd Exp $	*/
+/*	$NetBSD: vis.h,v 1.5 1997/10/16 23:25:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@ char	*vis __P((char *, int, int, int));
 int	strvis __P((char *, const char *, int));
 int	strvisx __P((char *, const char *, size_t, int));
 int	strunvis __P((char *, const char *));
-int	unvis __P((char *, char, int *, int));
+int	unvis __P((char *, int, int *, int));
 __END_DECLS
 
 #endif /* !_VIS_H_ */
