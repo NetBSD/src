@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.126 2001/04/30 01:13:21 lukem Exp $	*/
+/*	$NetBSD: proc.h,v 1.127 2001/05/06 19:09:54 manu Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -92,7 +92,7 @@ struct emul {
 	const char	*e_name;	/* Symbolic name */
 	const char	*e_path;	/* Extra emulation path (NULL if none)*/
 #ifndef __HAVE_MINIMAL_EMUL
-	int		e_flags;	/* Miscellaneous flags */
+	int		e_flags;	/* Miscellaneous flags, see above */
 					/* Syscall handling function */
 	const int	*e_errno;	/* Errno array */
 	int		e_nosys;	/* Offset of the nosys() syscall */
@@ -119,7 +119,12 @@ struct emul {
 #endif
 };
 
+/* 
+ * Emulation miscelaneous flags
+ */
 #define	EMUL_HAS_SYS___syscall	0x001	/* Has SYS___syscall */
+#define 	EMUL_BSD_ASYNCIO_PIPE	0x002 /* BSD style async I/O pipes */
+#define 	EMUL_NO_SIGIO_ON_READ	0x004 /* No SIGIO fired on read() calls*/
 
 /*
  * Description of a process.
