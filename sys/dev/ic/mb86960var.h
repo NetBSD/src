@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.33 2003/02/05 12:03:54 tsutsui Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.34 2005/01/02 12:41:03 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -133,20 +133,20 @@ struct mb86960_softc {
 	bus_space_handle_t sc_bsh;
 
 	/* Set by probe() and not modified in later phases. */
-	u_int32_t sc_flags;		/* controller quirks */
+	uint32_t sc_flags;		/* controller quirks */
 #define FE_FLAGS_MB86960	0x0001	/* DLCR7 is differnt on MB86960 */
 #define FE_FLAGS_SBW_BYTE	0x0002	/* byte access mode for system bus */
 #define FE_FLAGS_SRAM_150ns	0x0004	/* The board has slow SRAM */
 
-	u_int8_t proto_dlcr4;		/* DLCR4 prototype. */
-	u_int8_t proto_dlcr5;		/* DLCR5 prototype. */
-	u_int8_t proto_dlcr6;		/* DLCR6 prototype. */
-	u_int8_t proto_dlcr7;		/* DLCR7 prototype. */
-	u_int8_t proto_bmpr13;		/* BMPR13 prototype. */
+	uint8_t proto_dlcr4;		/* DLCR4 prototype. */
+	uint8_t proto_dlcr5;		/* DLCR5 prototype. */
+	uint8_t proto_dlcr6;		/* DLCR6 prototype. */
+	uint8_t proto_dlcr7;		/* DLCR7 prototype. */
+	uint8_t proto_bmpr13;		/* BMPR13 prototype. */
 
 	/* Vendor specific hooks. */
-	void	(*init_card) __P((struct mb86960_softc *));
-	void	(*stop_card) __P((struct mb86960_softc *));
+	void	(*init_card)(struct mb86960_softc *);
+	void	(*stop_card)(struct mb86960_softc *);
 
 	/* Transmission buffer management. */
 	int	txb_size;	/* total bytes in TX buffer */
@@ -157,24 +157,23 @@ struct mb86960_softc {
 
 	/* Multicast address filter management. */
 	int	filter_change;	/* MARs must be changed ASAP. */
-	u_int8_t filter[FE_FILTER_LEN];	/* new filter value. */
+	uint8_t filter[FE_FILTER_LEN];	/* new filter value. */
 
-	u_int8_t sc_enaddr[ETHER_ADDR_LEN];
+	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 
 #if NRND > 0
 	rndsource_element_t rnd_source;
 #endif
 
-	u_int32_t sc_stat;	/* driver status */
+	uint32_t sc_stat;	/* driver status */
 #define FE_STAT_ENABLED		0x0001	/* power enabled on interface */
 #define FE_STAT_ATTACHED	0x0002	/* attach has succeeded */
 
-	int	(*sc_enable) __P((struct mb86960_softc *));
-	void	(*sc_disable) __P((struct mb86960_softc *));
+	int	(*sc_enable)(struct mb86960_softc *);
+	void	(*sc_disable)(struct mb86960_softc *);
 
-	int	(*sc_mediachange) __P((struct mb86960_softc *));
-	void	(*sc_mediastatus) __P((struct mb86960_softc *,
-		    struct ifmediareq *));
+	int	(*sc_mediachange)(struct mb86960_softc *);
+	void	(*sc_mediastatus)(struct mb86960_softc *, struct ifmediareq *);
 };
 
 /*
@@ -195,12 +194,11 @@ struct mb86960_softc {
 	 * Hence FE_MAX_RECV_COUNT is the upper limit for number
 	 * of packets in the receive buffer. */
 
-void	mb86960_attach	__P((struct mb86960_softc *, u_int8_t *));
-void	mb86960_config	__P((struct mb86960_softc *, int *, int, int));
-int	mb86960_intr	__P((void *));
-int	mb86960_enable	__P((struct mb86960_softc *));
-void	mb86960_disable	__P((struct mb86960_softc *));
-int	mb86960_activate __P((struct device *, enum devact));
-int	mb86960_detach	__P((struct mb86960_softc *));
-void	mb86965_read_eeprom __P((bus_space_tag_t, bus_space_handle_t,
-	    u_int8_t *));
+void	mb86960_attach(struct mb86960_softc *, uint8_t *);
+void	mb86960_config(struct mb86960_softc *, int *, int, int);
+int	mb86960_intr(void *);
+int	mb86960_enable(struct mb86960_softc *);
+void	mb86960_disable(struct mb86960_softc *);
+int	mb86960_activate(struct device *, enum devact);
+int	mb86960_detach(struct mb86960_softc *);
+void	mb86965_read_eeprom(bus_space_tag_t, bus_space_handle_t, uint8_t *);
