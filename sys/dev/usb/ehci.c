@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.83 2004/10/24 22:09:15 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.84 2004/10/24 22:11:05 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.83 2004/10/24 22:09:15 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.84 2004/10/24 22:11:05 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -485,7 +485,7 @@ ehci_init(ehci_softc_t *sc)
 
 	/* Turn on controller */
 	EOWRITE4(sc, EHCI_USBCMD,
-		 EHCI_CMD_ITC_8 | /* 8 microframes */
+		 EHCI_CMD_ITC_2 | /* 2 microframes */
 		 (EOREAD4(sc, EHCI_USBCMD) & EHCI_CMD_FLS_M) |
 		 EHCI_CMD_ASE |
 		 EHCI_CMD_PSE |
@@ -706,7 +706,7 @@ ehci_check_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	lsqtd = ex->sqtdend;
 #ifdef DIAGNOSTIC
 	if (lsqtd == NULL) {
-		printf("ehci_check_intr: sqtd==0\n");
+		printf("ehci_check_intr: lsqtd==0\n");
 		return;
 	}
 #endif
