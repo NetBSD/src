@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.4 1999/01/18 01:01:27 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.5 1999/01/19 07:55:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  * ns_dtab - `nsswitch dispatch table'
  * contains an entry for each source and the appropriate function to call
  */
-typedef struct ns_dtab {
+typedef struct {
 	const char	 *src;
 	int		(*callback)(void *retval, void *cb_data, va_list ap);
 	void		 *cb_data;
@@ -113,25 +113,42 @@ typedef struct ns_dtab {
 /*
  * macros to help build an ns_dtab[]
  */
-#define NS_FILES_CB(F,C)	{ NSSRC_FILES,	F,	C }
+#define NS_FILES_CB(F,C)	{ NSSRC_FILES,	F,	C },
  
 #ifdef HESIOD
-#   define NS_DNS_CB(F,C)	{ NSSRC_DNS,	F,	C }
+#   define NS_DNS_CB(F,C)	{ NSSRC_DNS,	F,	C },
 #else
-#   define NS_DNS_CB(F,C)	{ NSSRC_DNS,	NULL,	NULL }
+#   define NS_DNS_CB(F,C)
 #endif
 
 #ifdef YP
-#   define NS_NIS_CB(F,C)	{ NSSRC_NIS,	F,	C }
+#   define NS_NIS_CB(F,C)	{ NSSRC_NIS,	F,	C },
 #else
-#   define NS_NIS_CB(F,C)	{ NSSRC_NIS,	NULL,	NULL }
+#   define NS_NIS_CB(F,C)
 #endif
 
 #if defined(HESIOD) || defined(YP)
-#   define NS_COMPAT_CB(F,C)	{ NSSRC_COMPAT,	F,	C }
+#   define NS_COMPAT_CB(F,C)	{ NSSRC_COMPAT,	F,	C },
 #else
-#   define NS_COMPAT_CB(F,C)	{ NSSRC_COMPAT,	NULL,	NULL }
+#   define NS_COMPAT_CB(F,C)
 #endif
+
+/*
+ * ns_src - `nsswitch source'
+ * used by the nsparser routines to store a mapping between a source
+ * and its dispatch control flags for a given database.
+ */
+typedef struct {
+	const char	*name;
+	u_int32_t	 flags;
+} ns_src;
+
+
+/*
+ * default sourcelist (if nsswitch.conf is missing, corrupt,
+ * or the requested database doesn't have an entry.
+ */
+extern const ns_src __nsdefaultsrc[];
 
 
 #ifdef _NS_PRIVATE
@@ -141,21 +158,11 @@ typedef struct ns_dtab {
  */
 
 /*
- * ns_src - `nsswitch source'
- * used by the nsparser routines to store a mapping between a source
- * and its dispatch control flags for a given database.
- */
-typedef struct ns_src {
-	const char	*name;
-	u_int32_t	 flags;
-} ns_src;
-
-/*
  * ns_dbt - `nsswitch database thang'
  * for each database in /etc/nsswitch.conf there is a ns_dbt, with its
  * name and a list of ns_src's containing the source information.
  */
-typedef struct ns_dbt {
+typedef struct {
 	const char	*name;		/* name of database */
 	ns_src		*srclist;	/* list of sources */
 	int		 srclistsize;	/* size of srclist */
@@ -168,7 +175,7 @@ typedef struct ns_dbt {
 
 __BEGIN_DECLS
 extern	int	nsdispatch	__P((void *, const ns_dtab [], const char *,
-				    ...));
+				    const char *, const ns_src [], ...));
 
 #ifdef _NS_PRIVATE
 extern	void		 _nsdbtaddsrc __P((ns_dbt *, const ns_src *));
