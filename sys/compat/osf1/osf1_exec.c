@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.4 1999/04/27 05:38:08 cgd Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.5 1999/04/28 02:49:38 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -104,9 +104,16 @@ osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
 	epp->ep_emul_arg = emul_arg;
 
 	emul_arg->flags = 0;
-	/* includes /emul/osf1 if appropriate */
-	strncpy(emul_arg->exec_name, epp->ep_ndp->ni_cnd.cn_pnbuf,
-	    MAXPATHLEN + 1);
+	if (epp->ep_ndp->ni_segflg == UIO_SYSSPACE)
+		error = copystr(epp->ep_ndp->ni_dirp, emul_arg->exec_name,
+		    MAXPATHLEN + 1, NULL);
+	else
+		error = copyinstr(epp->ep_ndp->ni_dirp, emul_arg->exec_name,
+		    MAXPATHLEN + 1, NULL);
+#ifdef DIAGNOSTIC
+	if (error != 0)
+		panic("osf1_exec_ecoff_hook: copyinstr failed");
+#endif
 
 	/* do any special object file handling */
 	switch (execp->f.f_flags & ECOFF_FLAG_OBJECT_TYPE_MASK) {
