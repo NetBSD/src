@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 2000/06/29 08:04:04 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 2000/08/08 08:26:21 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,6 +91,7 @@
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_output.h>
 #endif
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
@@ -1172,7 +1173,7 @@ mvme68k_abort(cp)
 	const char *cp;
 {
 #ifdef DDB
-	printf("%s\n", cp);
+	db_printf("%s\n", cp);
 	Debugger();
 #else
 #ifdef PANICBUTTON
