@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.49 2004/08/09 19:08:19 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.50 2004/08/09 19:09:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.49 2004/08/09 19:08:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.50 2004/08/09 19:09:06 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -644,7 +644,6 @@ pcmcia_io_map(pf, width, pcihp, windowp)
 	int *windowp;
 {
 	int error;
-	int reg;
 
 	if (pf->pf_flags & PFF_ENABLED)
 		printf("pcmcia_io_map: function is enabled!");
