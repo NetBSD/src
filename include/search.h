@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.9 1995/08/08 21:14:45 jtc Exp $	*/
+/*	$NetBSD: search.h,v 1.10 1999/02/16 18:12:24 kleink Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>
@@ -34,7 +34,7 @@ typedef enum {
 __BEGIN_DECLS
 extern void	*bsearch __P((const void *, const void *, size_t, size_t,
 			      int (*)(const void *, const void *)));
-extern int	 hcreate __P((unsigned int));
+extern int	 hcreate __P((size_t));
 extern void	 hdestroy __P((void));
 extern ENTRY	*hsearch __P((ENTRY, ACTION));
 

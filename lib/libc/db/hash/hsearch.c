@@ -1,4 +1,4 @@
-/*	$NetBSD: hsearch.c,v 1.12 1999/02/16 17:59:18 kleink Exp $	*/
+/*	$NetBSD: hsearch.c,v 1.13 1999/02/16 18:12:24 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hsearch.c	8.4 (Berkeley) 7/21/94";
 #else
-__RCSID("$NetBSD: hsearch.c,v 1.12 1999/02/16 17:59:18 kleink Exp $");
+__RCSID("$NetBSD: hsearch.c,v 1.13 1999/02/16 18:12:24 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ static ENTRY retval;
 
 extern int
 hcreate(nel)
-	u_int nel;
+	size_t nel;
 {
 	HASHINFO info;
 
