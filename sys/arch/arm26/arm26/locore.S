@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.3 2000/06/08 23:26:10 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.4 2000/08/20 13:41:44 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -38,14 +38,15 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: locore.S,v 1.3 2000/06/08 23:26:10 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.4 2000/08/20 13:41:44 bjh21 Exp $")
 
 #include <sys/syscall.h>
 #include <machine/armreg.h>
 #include "assym.h"
 
 #include "opt_cputypes.h"
-
+#include "opt_ddb.h"
+	
 fp	.req	r11
 ip	.req	r12
 sp	.req	r13
@@ -355,6 +356,7 @@ ENTRY(longjmp)
 	mov	r0, #1			/* Return 1 through longjmp */
 	movs	pc, lr
 
+#ifdef DDB
 /* Enter DDB -- shove registers in a trapframe first */
 /* void cpu_Debugger(void); */
 ENTRY(cpu_Debugger)
@@ -366,6 +368,7 @@ ENTRY(cpu_Debugger)
 	add	r13, r13, #(4 * 16)
 	ldmfd	r13!, {pc}^
 
+#endif
 /*
  * Signal trampoline; copied to top of user stack.
  */
