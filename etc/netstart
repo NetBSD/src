@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.36 1997/05/15 02:09:27 lukem Exp $
+#	$NetBSD: netstart,v 1.37 1997/05/17 14:12:24 lukem Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.conf ]; then
@@ -62,11 +62,13 @@ if [ "$net_interfaces" != NO ]; then
 			(while read args; do
 				ifconfig $int $args
 			done) < /etc/ifconfig.$int
-		elif [ "$net_interfaces" != DEFAULT ]; then
-			echo
-			echo -n "/etc/ifconfig.$int missing"
- 			echo -n "& ifconfig_$int not set"
-			echo "; interface $int can't be configured"
+		else
+			if [ "$net_interfaces" != DEFAULT ]; then
+				echo
+				echo -n "/etc/ifconfig.$int missing"
+				echo -n "& ifconfig_$int not set"
+				echo "; interface $int can't be configured"
+			fi
 			continue
 		fi
 		if [ "$int" = "lo0" ]; then
