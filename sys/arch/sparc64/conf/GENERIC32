@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.22 2001/10/24 18:49:39 thorpej Exp $
+# 	$NetBSD: GENERIC32,v 1.23 2001/11/03 17:22:39 tsutsui Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 maxusers	64
 
@@ -277,13 +277,16 @@ scsibus* at isp?
 siop*	at pci?					# 53C875 "glm" compatible
 scsibus* at siop?
 
-# PCI SCSI controllers (untested)
-adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
-ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
-dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
-pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+# PCI SCSI controllers
+# 	UT marks untested.
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI UT
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI UT
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI UT
+dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID UT
+iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI UT
+trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 scsibus* at scsi?
 
