@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.11 2002/09/23 12:48:06 mycroft Exp $ */
+/* $NetBSD: moused.c,v 1.12 2003/07/16 06:33:11 itojun Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.11 2002/09/23 12:48:06 mycroft Exp $");
+__RCSID("$NetBSD: moused.c,v 1.12 2003/07/16 06:33:11 itojun Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -2656,7 +2656,7 @@ pnpparse(pnpid_t *id, char *buf, int len)
     if ((id->nserial > 0) || (id->nclass > 0)
 	|| (id->ncompat > 0) || (id->ndescription > 0)) {
         debug("PnP checksum: 0x%X", sum); 
-        sprintf(s, "%02X", sum & 0x0ff);
+        snprintf(s, sizeof(s), "%02X", sum & 0x0ff);
         if (strncmp(s, &buf[len - 3], 2) != 0) {
 #if 0
             /*
