@@ -1,4 +1,4 @@
-.\" $NetBSD: mca.4,v 1.9 2001/04/19 17:27:09 jdolecek Exp $
+.\" $NetBSD: mca.4,v 1.10 2001/04/20 16:08:46 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,6 +74,12 @@ interface.
 IBM ESDI Fixed Disk Controller
 .El
 .\"
+.Ss Serial interfaces
+.Bl -tag -width speaker -offset indent
+.It com
+NS8250-, NS16450-, and NS16550-based serial cards.
+.El
+.\"
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent
 .It tr
@@ -93,6 +99,7 @@ WD/SMC WD80x3x ethernet interface cards and clones
 .Sh SEE ALSO
 .Xr aha 4 ,
 .Xr ate 4 ,
+.Xr com 4 ,
 .Xr edc 4 ,
 .Xr elmc 4 ,
 .Xr ep 4 ,
