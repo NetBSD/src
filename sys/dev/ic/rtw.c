@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.16 2004/12/23 05:57:18 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.17 2004/12/23 06:00:35 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.16 2004/12/23 05:57:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.17 2004/12/23 06:00:35 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1521,6 +1521,8 @@ rtw_swring_setup(struct rtw_softc *sc)
 
 	rtw_txctl_blk_init_all(&sc->sc_txctl_blk[0]);
 
+	rtw_rxdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
+	    0, RTW_NRXDESC, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	rtw_rxctl_init_all(sc->sc_dmat, sc->sc_rxctl, &sc->sc_rxnext,
 	    sc->sc_dev.dv_xname);
 	rtw_rxdesc_init_all(sc->sc_dmat, sc->sc_desc_dmamap,
