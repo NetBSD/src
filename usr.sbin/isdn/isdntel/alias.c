@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: alias.c,v 1.1.1.1 2001/01/06 13:00:34 martin Exp $ 
+ *      $Id: alias.c,v 1.2 2003/10/06 09:18:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -89,12 +89,10 @@ init_alias(char *filename)
 		{
 			if((newa = (struct alias *) malloc(sizeof(struct alias))) == NULL)
 				fatal("malloc failed for struct alias");
-			if((newa->number = (char *) malloc(strlen(number)+1)) == NULL)
+			if((newa->number = strdup(number)) == NULL)
 				fatal("malloc failed for number alias");
-			if((newa->name = (char *) malloc(strlen(name)+1)) == NULL)
+			if((newa->name = strdup(name)) == NULL)
 				fatal("malloc failed for name alias");
-			strcpy(newa->name, name);
-			strcpy(newa->number, number);
 			newa->next = NULL;
 			
 			if(firsta == NULL)

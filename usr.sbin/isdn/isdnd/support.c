@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.9 2002/12/06 15:00:16 thorpej Exp $ 
+ *	$Id: support.c,v 1.10 2003/10/06 09:18:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -546,11 +546,12 @@ find_matching_entry_incoming(msg_connect_ind_t *mp, int len)
 		
 		/* cp number to real one used */
 		
-		strcpy(cep->real_phone_incoming, mp->src_telno);
+		strlcpy(cep->real_phone_incoming, mp->src_telno,
+		    sizeof(cep->real_phone_incoming));
 
 		/* copy display string */
 		
-		strcpy(cep->display, mp->display);
+		strlcpy(cep->display, mp->display, sizeof(cep->display));
 		
 		/* entry currently down ? */
 		
