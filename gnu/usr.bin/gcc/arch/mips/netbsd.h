@@ -76,7 +76,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef CPP_PREDEFINES
 #define CPP_PREDEFINES "-D__ANSI_COMPAT \
 -DMIPSEL -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD -D__NetBSD__ -Dmips \
--D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
+-D__ELF__ -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
 -Dunix -D_R3000 -D__KPRINTF_ATTRIBUTE__ \
 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
 #endif
