@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.47 2001/06/11 01:14:56 wiz Exp $
+.\"	$NetBSD: pci.4,v 1.48 2001/07/05 14:47:23 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -172,6 +172,10 @@ interfaces.
 Intel EtherExpress PRO 10+/100B
 .Tn Ethernet
 interfaces.
+.It gsip
+National Semiconductor DP83820 based Gigabit
+.Tn Ethernet
+interfaces.
 .It hme
 Sun Microelectronics STP2002-STQ
 .Tn Ethernet
@@ -190,6 +194,19 @@ interfaces.
 SDL Communications N2pci and WAN/ic 400 synchronous serial interfaces.
 .It rtk
 RealTek 8129/8139 based
+.Tn Ethernet
+interfaces.
+.It sf
+Adaptec AIC-6915 10/100
+.Tn Ethernet
+interfaces.
+.It sip
+Silicon Integrated Systems SiS 900, SiS 7016, and National Semiconductor
+DP83815 based
+.Tn Ethernet
+interfaces.
+.It ste
+Sundance ST-201 10/100 based
 .Tn Ethernet
 interfaces.
 .It tl
@@ -313,6 +330,7 @@ VGA graphics boards.
 .Xr fms 4 ,
 .Xr fpa 4 ,
 .Xr fxp 4 ,
+.Xr gsip 4 ,
 .Xr hme 4 ,
 .Xr iha 4 ,
 .Xr iop 4 ,
@@ -331,7 +349,10 @@ VGA graphics boards.
 .Xr ppb 4 ,
 .Xr puc 4 ,
 .Xr rtk 4 ,
+.Xr sf 4 ,
 .Xr siop 4 ,
+.Xr sip 4 ,
+.Xr ste 4 ,
 .Xr sv 4 ,
 .Xr tl 4 ,
 .Xr tlp 4 ,
