@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.9 1999/09/11 21:42:58 thorpej Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.10 2000/01/21 23:40:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ struct sd_softc {
 		u_long	disksize;	/* total number sectors */
 		u_long	rot_rate;	/* rotational rate, in RPM */
 	} params;
-	struct buf buf_queue;
+	struct buf_queue buf_queue;
 	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */
 	const struct sd_ops *sc_ops;	/* our bus-dependent ops vector */

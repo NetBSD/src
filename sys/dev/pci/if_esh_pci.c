@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.5 1998/07/05 06:49:15 jonathan Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.6 2000/01/21 23:39:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.24 1999/09/17 20:07:18 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.25 2000/01/21 23:39:55 thorpej Exp $	*/
 
 /*
  *
@@ -439,9 +439,7 @@ xdcattach(parent, self, aux)
 
 	/* init queue of waiting bufs */
 
-	xdc->sc_wq.b_active = 0;
-	xdc->sc_wq.b_actf = 0;
-	xdc->sc_wq.b_actb = &xdc->sc_wq.b_actf;
+	BUFQ_INIT(&xdc->sc_wq);
 
 	/*
 	 * section 7 of the manual tells us how to init the controller:
@@ -1026,7 +1024,6 @@ xdstrategy(bp)
 {
 	struct xd_softc *xd;
 	struct xdc_softc *parent;
-	struct buf *wq;
 	int     s, unit;
 
 	unit = DISKUNIT(bp->b_dev);
@@ -1077,7 +1074,7 @@ xdstrategy(bp)
 
 	/* first, give jobs in front of us a chance */
 	parent = xd->parent;
-	while (parent->nfree > 0 && parent->sc_wq.b_actf)
+	while (parent->nfree > 0 && BUFQ_FIRST(&parent->sc_wq) != NULL)
 		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1086,11 +1083,7 @@ xdstrategy(bp)
 	 * buffs will get picked up later by xdcintr().
 	 */
 	if (parent->nfree == 0) {
-		wq = &xd->parent->sc_wq;
-		bp->b_actf = 0;
-		bp->b_actb = wq->b_actb;
-		*wq->b_actb = bp;
-		wq->b_actb = &bp->b_actf;
+		BUFQ_INSERT_TAIL(&parent->sc_wq, bp);
 		splx(s);
 		return;
 	}
@@ -1138,7 +1131,7 @@ xdcintr(v)
 	xdc_start(xdcsc, XDC_MAXIOPB);
 
 	/* fill up any remaining iorq's with queue'd buffers */
-	while (xdcsc->nfree > 0 && xdcsc->sc_wq.b_actf)
+	while (xdcsc->nfree > 0 && BUFQ_FIRST(&xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1369,7 +1362,6 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	int     rqno, partno;
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
-	struct buf *wq;
 	u_long  block;
 	caddr_t dbuf;
 
@@ -1382,15 +1374,10 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	/* get buf */
 
 	if (bp == NULL) {
-		bp = xdcsc->sc_wq.b_actf;
-		if (!bp)
+		bp = BUFQ_FIRST(&xdcsc->sc_wq);
+		if (bp == NULL)
 			panic("xdc_startbuf bp");
-		wq = bp->b_actf;
-		if (wq)
-			wq->b_actb = bp->b_actb;
-		else
-			xdcsc->sc_wq.b_actb = bp->b_actb;
-		*bp->b_actb = wq;
+		BUFQ_REMOVE(&xdcsc->sc_wq, bp);
 		xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
 	}
 	partno = DISKPART(bp->b_dev);
@@ -1431,11 +1418,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 		printf("%s: warning: out of DVMA space\n",
 			   xdcsc->sc_dev.dv_xname);
 		XDC_FREE(xdcsc, rqno);
-		wq = &xdcsc->sc_wq;	/* put at end of queue */
-		bp->b_actf = 0;
-		bp->b_actb = wq->b_actb;
-		*wq->b_actb = bp;
-		wq->b_actb = &bp->b_actf;
+		BUFQ_INSERT_TAIL(&xdcsc->sc_wq, bp);
 		return (XD_ERR_FAIL);	/* XXX: need some sort of
 		                         * call-back scheme here? */
 	}
@@ -1636,7 +1619,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 	/* now that we've drained everything, start up any bufs that have
 	 * queued */
 
-	while (xdcsc->nfree > 0 && xdcsc->sc_wq.b_actf)
+	while (xdcsc->nfree > 0 && BUFQ_FIRST(&xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
