@@ -25,7 +25,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: nfs.c,v 1.2 1994/06/20 07:50:17 glass Exp $
+ *	$Id: nfs.c,v 1.3 1994/08/22 21:56:08 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -394,7 +394,7 @@ recvreaddata(d, pkt, len)
 static int
 readdata(d, off, addr, len)
 	register struct nfs_iodesc *d;
-	register u_long off;
+	register off_t off;
 	register void *addr;
 	register u_long len;
 {
@@ -414,7 +414,7 @@ readdata(d, off, addr, len)
 
 #ifdef NFS_DEBUG
 	if (debug)
-	    printf("readdata: addr=%x, off=%d len=%d\n", (u_int)addr, off, len);
+	    printf("readdata: addr=%x, off=%d len=%d\n", (u_int)addr, (u_int)off, len);
 #endif
 	if (len == 0)
 		return (0);
@@ -432,7 +432,7 @@ readdata(d, off, addr, len)
 		ns->xid = d->iodesc->xid;
 		++d->iodesc->xid;
 
-		ns->off = off;
+		ns->off = (u_int)off;
 		ns->len = len;
 		if (ns->len > NFSREAD_SIZE)
 			ns->len = NFSREAD_SIZE;
@@ -609,7 +609,7 @@ nfs_read(f, addr, size, resid)
 	
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_read: size=%d off=%d\n", size, fp->off);
+		printf("nfs_read: size=%d off=%d\n", size, (int)fp->off);
 #endif
 	while (size > 0) {
 		cc = readdata(fp->iodesc, fp->off, (void *)addr, size);
