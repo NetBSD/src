@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.6 1997/03/16 03:48:00 thorpej Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.7 1997/03/16 09:16:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -83,7 +83,7 @@ struct emul emul_hpux = {
 	hpux_syscallnames,
 	0,
 	copyargs,
-	setregs,
+	hpux_setregs,
 	sigcode,
 	esigcode,
 };
