@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.9 2000/10/19 13:56:13 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.10 2000/10/30 23:28:17 tv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.9 2000/10/19 13:55:24 he Exp 
+ *	NetBSD: pcidevs,v 1.236.2.10 2000/10/30 23:27:35 tv Exp 
  */
 
 /*
@@ -1271,6 +1271,18 @@
 
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
+
+/* Pequr products */
+#define	PCI_PRODUCT_PEQUR_ROSB4	0x0200		/* ROSB4 SouthBridge */
+#define	PCI_PRODUCT_PEQUR_XX5	0x0005		/* PCIHB5 */
+#define	PCI_PRODUCT_PEQUR_CIOB20	0x0006		/* I/O Bridge */
+#define	PCI_PRODUCT_PEQUR_XX7	0x0007		/* PCIHB7 */
+#define	PCI_PRODUCT_PEQUR_CNB20HE	0x0008		/* CNB20HE Host */
+#define	PCI_PRODUCT_PEQUR_CNB20LE	0x0009		/* CNB20LE Host */
+#define	PCI_PRODUCT_PEQUR_CIOB30	0x0010		/* CIOB30 */
+#define	PCI_PRODUCT_PEQUR_CMIC_HE	0x0011		/* CMIC_HE Host */
+#define	PCI_PRODUCT_PEQUR_IDE	0x0211		/* IDE */
+#define	PCI_PRODUCT_PEQUR_USB	0x0220		/* USB */
 
 /* PLX Technology products */
 #define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI bus controller */
