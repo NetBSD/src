@@ -1,14 +1,18 @@
-/*	$NetBSD: ipf.c,v 1.4.4.1 2000/08/31 14:49:46 veego Exp $	*/
+/*	$NetBSD: ipf.c,v 1.4.4.2 2002/02/09 16:55:41 he Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 #ifdef	__FreeBSD__
-# include <osreldate.h>
+# ifndef __FreeBSD_cc_version
+#  include <osreldate.h>
+# else
+#  if __FreeBSD_cc_version < 430000
+#   include <osreldate.h>
+#  endif
+# endif
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -45,7 +49,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 2.10.2.3 2000/08/07 14:54:05 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipf.c,v 2.10.2.11 2002/01/09 11:46:01 darrenr Exp";
 #endif
 
 #if	SOLARIS
@@ -62,9 +66,7 @@ void	zerostats __P((void));
 int	main __P((int, char *[]));
 
 int	opts = 0;
-#ifdef	USE_INET6
 int	use_inet6 = 0;
-#endif
 
 static	int	fd = -1;
 
@@ -73,16 +75,22 @@ static	void	set_state __P((u_int)), showstats __P((friostat_t *));
 static	void	packetlogon __P((char *)), swapactive __P((void));
 static	int	opendevice __P((char *));
 static	void	closedevice __P((void));
-static	char	*getline __P((char *, size_t, FILE *));
+static	char	*getline __P((char *, size_t, FILE *, int *));
 static	char	*ipfname = IPL_NAME;
 static	void	usage __P((void));
-static	void	showversion __P((void));
+static	int	showversion __P((void));
 static	int	get_flags __P((void));
 
 
+#if SOLARIS
+# define	OPTS	"6AdDEf:F:Il:noPrsUvVyzZ"
+#else
+# define	OPTS	"6AdDEf:F:Il:noPrsvVyzZ"
+#endif
+
 static void usage()
 {
-	fprintf(stderr, "usage: ipf [-6AdDEInoPrsUvVyzZ] %s %s %s\n",
+	fprintf(stderr, "usage: ipf [-%s] %s %s %s\n", OPTS,
 		"[-l block|pass|nomatch]", "[-F i|o|a|s|S]", "[-f filename]");
 	exit(1);
 }
@@ -94,11 +102,9 @@ char *argv[];
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "6AdDEf:F:Il:noPrsUvVyzZ")) != -1) {
+	while ((c = getopt(argc, argv, OPTS)) != -1) {
 		switch (c)
 		{
-		case '?' :
-			usage();
 #ifdef	USE_INET6
 		case '6' :
 			use_inet6 = 1;
@@ -148,10 +154,11 @@ char *argv[];
 			break;
 #endif
 		case 'v' :
-			opts |= OPT_VERBOSE;
+			opts += OPT_VERBOSE;
 			break;
 		case 'V' :
-			showversion();
+			if (showversion())
+				exit(1);
 			break;
 		case 'y' :
 			frsync();
@@ -161,6 +168,9 @@ char *argv[];
 			break;
 		case 'Z' :
 			zerostats();
+			break;
+		default :
+			usage();
 			break;
 		}
 	}
@@ -254,8 +264,7 @@ char	*name, *file;
 		exit(1);
 	}
 
-	while (getline(line, sizeof(line), fp)) {
-	        linenum++;
+	while (getline(line, sizeof(line), fp, &linenum)) {
 		/*
 		 * treat CR as EOL.  LF is converted to NUL by getline().
 		 */
@@ -337,10 +346,11 @@ char	*name, *file;
  * Similar to fgets(3) but can handle '\\' and NL is converted to NUL.
  * Returns NULL if error occured, EOF encounterd or input line is too long.
  */
-static char *getline(str, size, file)
+static char *getline(str, size, file, linenum)
 register char	*str;
 size_t	size;
 FILE	*file;
+int	*linenum;
 {
 	char *p;
 	int s, len;
@@ -358,6 +368,7 @@ FILE	*file;
 				p[len] = '\0';
 				break;
 			}
+			(*linenum)++;
 			p[len - 1] = '\0';
 			if (len < 2 || p[len - 2] != '\\')
 				break;
@@ -554,7 +565,7 @@ static void blockunknown()
 #endif
 
 
-static void showversion()
+static int showversion()
 {
 	struct friostat fio;
 	struct friostat *fiop=&fio;
@@ -566,13 +577,13 @@ static void showversion()
 
 	if ((vfd = open(ipfname, O_RDONLY)) == -1) {
 		perror("open device");
-		return;
+		return 1;
 	}
 
 	if (ioctl(vfd, SIOCGETFS, &fiop)) {
-		perror("ioctl(SIOCGETFS");
+		perror("ioctl(SIOCGETFS)");
 		close(vfd);
-		return;
+		return 1;
 	}
 	close(vfd);
 	flags = get_flags();
@@ -611,4 +622,6 @@ static void showversion()
 		s = "nomatch -> block";
 	printf("%s all, Logging: %savailable\n", s, fio.f_logging ? "" : "un");
 	printf("Active list: %d\n", fio.f_active);
+
+	return 0;
 }
