@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.119 2004/07/07 05:39:27 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.120 2004/07/07 06:43:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.119 2004/07/07 05:39:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.120 2004/07/07 06:43:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -562,7 +562,6 @@ ne_pcmcia_attach(parent, self, aux)
 	int i;
 	u_int8_t myea[6], *enaddr;
 	const char *typestr = "";
-	char devinfo[256];
 
 	psc->sc_pf = pa->pf;
 
@@ -666,9 +665,7 @@ ne_pcmcia_attach(parent, self, aux)
 		goto fail_4;
 	}
 
-	/* Print out what we are. */
-	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof(devinfo));
-	printf("\n%s: %s\n", self->dv_xname, devinfo);
+	aprint_normal("\n");
 
 	/*
 	 * Read the station address from the board.
