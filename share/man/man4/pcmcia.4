@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.10 1999/11/14 23:19:10 augustss Exp $
+.\" $NetBSD: pcmcia.4,v 1.11 1999/12/06 14:52:08 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,6 +69,8 @@ drivers, sorted by function and driver name:
 .Bl -tag -width speaker -offset indent -compact
 .It awi
 BayStack 650 wireless 802.11FH controller.
+.It cnw
+Netwave AirSurfer Wireless LAN interface.
 .It ep
 3com 3c589 Etherlink-III Ethernet card.
 .It mbe
@@ -113,6 +115,7 @@ devices in the kernel config file to accomodate these cards.
 .Xr aic 4 ,
 .Xr awi 4 ,
 .Xr cardbus 4 ,
+.Xr cnw 4 ,
 .Xr com 4 ,
 .Xr ep 4 ,
 .Xr isa 4 ,
