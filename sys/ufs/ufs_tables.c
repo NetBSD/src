@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_tables.c	7.4 (Berkeley) 6/28/90
+ *	from: @(#)ufs_tables.c	7.4 (Berkeley) 6/28/90
+ *	$Id: ufs_tables.c,v 1.2 1993/05/20 03:53:44 cgd Exp $
  */
 
 #ifdef KERNEL
