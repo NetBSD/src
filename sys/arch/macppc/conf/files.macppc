@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.38 2001/01/17 00:07:28 fvdl Exp $
+#	$NetBSD: files.macppc,v 1.39 2001/01/19 01:51:16 manu Exp $
 #
 # macppc-specific configuration info
 
@@ -27,6 +27,18 @@ file dev/cons.c
 #
 file dev/md_root.c				memory_disk_hooks
 major {md = 9}
+
+#
+# Compatibility modules
+#
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/powerpc/files.linux_powerpc"
+file arch/powerpc/powerpc/linux_sigcode.S        compat_linux
 
 #
 # RAIDframe
