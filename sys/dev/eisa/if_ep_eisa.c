@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.27 2002/10/02 16:33:47 thorpej Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.28 2003/02/08 12:06:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.27 2002/10/02 16:33:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.28 2003/02/08 12:06:13 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -245,13 +245,8 @@ ep_eisa_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->sc_iot = iot;
 
-	/* Reset card. */
-	bus_space_write_1(iot, ioh_cfg, EP_EISA_CFG_CONTROL, 
-	    EISA_ENABLE | EISA_RESET);
-	delay(4000);
 	bus_space_write_1(iot, ioh_cfg, EP_EISA_CFG_CONTROL, EISA_ENABLE);
-	/* Wait for reset? */
-	delay(1000);
+	delay(4000);
 
 	/* Read the IRQ from the card. */
 	irq = bus_space_read_2(iot, ioh_cfg, EP_EISA_CFG_RESOURCE) >> 12;
