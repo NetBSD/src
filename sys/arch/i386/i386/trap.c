@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106 1997/12/07 21:28:56 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.107 1998/01/15 22:26:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -42,6 +42,8 @@
 /*
  * 386 Trap and System call handling
  */
+
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

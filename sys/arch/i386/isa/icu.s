@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.51 1997/11/16 12:30:00 mycroft Exp $	*/
+/*	$NetBSD: icu.s,v 1.52 1998/01/15 22:26:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_vm86.h"
 
 #include <net/netisr.h>
 
