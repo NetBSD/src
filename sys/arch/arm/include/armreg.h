@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.28 2003/10/31 16:30:15 scw Exp $	*/
+/*	$NetBSD: armreg.h,v 1.29 2004/04/13 19:14:34 bsh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -203,6 +203,7 @@
 #define CPU_ID_PXA210B		0x69052920 /* 3rd version Core */
 #define CPU_ID_PXA250C		0x69052d00 /* 4th version Core */
 #define CPU_ID_PXA210C		0x69052d20 /* 4th version Core */
+#define	CPU_ID_PXA27X		0x69054110
 #define	CPU_ID_80321_400	0x69052420
 #define	CPU_ID_80321_600	0x69052430
 #define	CPU_ID_80321_400_B0	0x69052c20
