@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.7 2001/09/15 13:01:45 drochner Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.8 2001/09/20 20:00:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -125,6 +125,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	sc->as_methods = &agp_i810_methods;
 
 	if (pci_find_device(&isc->vga_pa, agp_i810_vgamatch) == 0) {
+		printf(": can't find internal VGA device config space\n");
 		free(isc, M_AGP);
 		return ENOENT;
 	}
