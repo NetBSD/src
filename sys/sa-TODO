@@ -1,35 +1,23 @@
 Things to do for scheduler activations/LWP code.
 
+Bugs:
+ 
+- MD bug: i386 code needs to handle SSE format FP.
+
 - MD bug: i386 npx handling. cpu_getcontext() may call npxsave(), which
   can only be run at spl0, which is a problem. Options
    * Change npxsave to avoid that requirement.
    * Don't save FP context at getcontext() time, but do something
      More Clever with lazy FPU switching.
 
-- MD bug: tetss/thread2 panics the alpha somewhere after the first
+- MD bug: tetts/thread2 panics the alpha somewhere after the first
   unblocked upcall. The kernel appears to jump into space.
-
-- Document! Not everyone wants to read the thesis. Man pages, etc.
-
-- Rethink scheduler. Verify that behavior is still correct for a system
-  of single-LWP ("traditional") processes (I believe it is, but it should 
-  still be verified). Study scheduling behavior of multi-LWP and SA processes.
-  Notions of fairness and appropriate scheduling may need changing.
-  XXX when combined with multiprocessor support, usefully scheduling multi-lwp
-  processes requires a whole new kind of scheduling. Implementing such a thing
-  (such as an "equal-space" scheduler) is a major project unto itself.
 
 - lwp-exit2: kill -9 should succeed against processes whose LWPs are
   all suspended.
 
 - Implement better management of the lwp cache for a sa process. High-water 
   mark needed, at the very least.
-
-- exit1() is too fragile. A cleaner solution to the LWPWAIT_EXITCONTROL
-  problem is also needed.
-
-- Debugging interface needs work; ptrace(2) interface can't handle multi-LWP
-  or SA processes. 
 
 - Prevent multiple PREEMPTED upcalls from being delivered before a
   process ever returns to userspace.
@@ -41,6 +29,26 @@ Things to do for scheduler activations/LWP code.
   the kernel doesn't know what the signal mask of the executing thread
   is, and can't make the decision about whether to wake them. Defer to
   userland, in true SA style.
- 
-- Of course, check all new XXX'd parts.
 
+Wishlist:
+
+- exit1() is too fragile. A cleaner solution to the LWPWAIT_EXITCONTROL
+  problem is also needed.
+
+- Document! Not everyone wants to read the thesis. Man pages, etc.
+
+- Rethink scheduler. Verify that behavior is still correct for a system
+  of single-LWP ("traditional") processes (I believe it is, but it should 
+  still be verified). Study scheduling behavior of multi-LWP and SA processes.
+  Notions of fairness and appropriate scheduling may need changing.
+  XXX when combined with multiprocessor support, usefully scheduling multi-lwp
+  processes requires a whole new kind of scheduling. Implementing such a thing
+  (such as an "equal-space" scheduler) is a major project unto itself.
+
+- Debugging interface needs work; ptrace(2) interface can't handle multi-LWP
+  or SA processes. 
+
+- ddb needs a way to trace specific LWPs, instead of just the
+  "representative" LWP of a process.
+
+- Lazy FPU upcall notifications.
