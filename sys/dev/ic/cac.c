@@ -1,11 +1,11 @@
-/*	$NetBSD: cac.c,v 1.5 2000/05/03 18:58:15 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.6 2000/06/13 13:36:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.5 2000/05/03 18:58:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.6 2000/06/13 13:36:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

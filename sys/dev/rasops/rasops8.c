@@ -1,11 +1,11 @@
-/* 	$NetBSD: rasops8.c,v 1.8 2000/04/12 14:22:29 pk Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.9 2000/06/13 13:36:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.8 2000/04/12 14:22:29 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.9 2000/06/13 13:36:59 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

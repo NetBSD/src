@@ -1,11 +1,11 @@
-/*	$NetBSD: ca.c,v 1.6 2000/06/12 11:07:45 ad Exp $	*/
+/*	$NetBSD: ca.c,v 1.7 2000/06/13 13:36:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum and Andy Doran.
+ * by Charles M. Hannum and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.6 2000/06/12 11:07:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.7 2000/06/13 13:36:45 ad Exp $");
 
 #include "rnd.h"
 

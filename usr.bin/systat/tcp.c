@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp.c,v 1.5 2000/04/29 04:36:16 matt Exp $	*/
+/*	$NetBSD: tcp.c,v 1.6 2000/06/13 13:37:13 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
+ * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tcp.c,v 1.5 2000/04/29 04:36:16 matt Exp $");
+__RCSID("$NetBSD: tcp.c,v 1.6 2000/06/13 13:37:13 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,11 +1,11 @@
-/*	 $NetBSD: rasops.c,v 1.31 2000/06/12 23:45:45 sommerfeld Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.32 2000/06/13 13:36:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.31 2000/06/12 23:45:45 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.32 2000/06/13 13:36:53 ad Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
