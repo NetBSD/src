@@ -243,6 +243,9 @@ pcattach(struct isa_device *dev)
 
 #if PCVT_NETBSD > 100
 	    vs[i].vs_tty = ttymalloc();
+#if PCVT_NETBSD >= 120
+	    tty_attach(vs[i].vs_tty);
+#endif /* PCVT_NETBSD >= 120 */
 #else /* !PCVT_NETBSD > 100 */
 
 #if PCVT_NETBSD
