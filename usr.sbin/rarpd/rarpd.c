@@ -26,7 +26,7 @@ char    copyright[] =
 
 #ifndef lint
 static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.3 1994/01/24 01:46:29 deraadt Exp $";
+"@(#) $Id: rarpd.c,v 1.4 1994/03/01 06:46:42 cgd Exp $";
 #endif
 
 
@@ -697,9 +697,9 @@ rarp_reply(ii, ep, ipaddr)
 
 	/* Build the rarp reply by modifying the rarp request in place. */
 	ep->ether_type = htons(ETHERTYPE_REVARP);
-	ap->ea_hdr.ar_hrd = ARPHRD_ETHER;
-	ap->ea_hdr.ar_pro = htons (ETHERTYPE_IP);
-	ap->arp_op = htons (REVARP_REPLY);
+	ap->ea_hdr.ar_hrd = htons(ARPHRD_ETHER);
+	ap->ea_hdr.ar_pro = htons(ETHERTYPE_IP);
+	ap->arp_op = htons(REVARP_REPLY);
 
 	bcopy((char *) &ap->arp_sha, (char *) &ep->ether_dhost, 6);
 	bcopy((char *) ii->ii_eaddr, (char *) &ep->ether_shost, 6);
