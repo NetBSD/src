@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.12 2004/10/29 12:57:17 yamt Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.13 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -206,10 +206,11 @@ void    iwclose __P((void *));	  	/* close hardware */
 	/* Encoding. */
 	/* XXX should we have separate in/out? */
 int     iw_query_encoding __P((void *, struct audio_encoding *));
-int     iw_set_params __P((void *, int, int, struct audio_params *,  struct audio_params *));
+int     iw_set_params __P((void *, int, int, audio_params_t *, audio_params_t *,
+			   stream_filter_list_t *, stream_filter_list_t *));
 
 	/* Hardware may have some say in the blocksize to choose */
-int     iw_round_blocksize __P((void *, int));
+int     iw_round_blocksize __P((void *, int, int, const audio_params_t *));
 
 int     iw_commit_settings __P((void *));
 
@@ -219,12 +220,12 @@ void    iw_sw_decode __P((void *, int, u_char *, int));
 
 	/* Start input/output routines. These usually control DMA. */
 int     iw_start_output __P((void *, void *, int,
-				    void (*)(void *), void *));
+			     void (*)(void *), void *));
 int     iw_start_input __P((void *, void *, int,
-			           void (*)(void *), void *));
+			    void (*)(void *), void *));
 
-int     iw_init_input __P((void *,void *,int));
-int     iw_init_output __P((void *,void *,int));
+int     iw_init_input __P((void *, void *, int));
+int     iw_init_output __P((void *, void *, int));
 int     iw_halt_output __P((void *));
 int     iw_halt_input __P((void *));
 

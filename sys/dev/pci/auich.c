@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.83 2004/12/11 17:48:56 cube Exp $	*/
+/*	$NetBSD: auich.c,v 1.84 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.83 2004/12/11 17:48:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.84 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,12 +246,11 @@ static int	auich_intr(void *);
 CFATTACH_DECL(auich, sizeof(struct auich_softc),
     auich_match, auich_attach, auich_detach, auich_activate);
 
-static int	auich_open(void *, int);
-static void	auich_close(void *);
 static int	auich_query_encoding(void *, struct audio_encoding *);
-static int	auich_set_params(void *, int, int, struct audio_params *,
-		    struct audio_params *);
-static int	auich_round_blocksize(void *, int);
+static int	auich_set_params(void *, int, int, audio_params_t *,
+		    audio_params_t *, stream_filter_list_t *,
+		    stream_filter_list_t *);
+static int	auich_round_blocksize(void *, int, int, const audio_params_t *);
 static int	auich_halt_output(void *);
 static int	auich_halt_input(void *);
 static int	auich_getdev(void *, struct audio_device *);
@@ -264,9 +263,9 @@ static size_t	auich_round_buffersize(void *, int, size_t);
 static paddr_t	auich_mappage(void *, void *, off_t, int);
 static int	auich_get_props(void *);
 static int	auich_trigger_output(void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *);
+		    void (*)(void *), void *, const audio_params_t *);
 static int	auich_trigger_input(void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *);
+		    void (*)(void *), void *, const audio_params_t *);
 
 static int	auich_alloc_cdata(struct auich_softc *);
 
@@ -286,8 +285,8 @@ static int	auich_write_codec(void *, u_int8_t, u_int16_t);
 static int	auich_reset_codec(void *);
 
 const struct audio_hw_if auich_hw_if = {
-	auich_open,
-	auich_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,			/* drain */
 	auich_query_encoding,
 	auich_set_params,
@@ -520,7 +519,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.write = auich_write_codec;
 	sc->host_if.reset = auich_reset_codec;
 
-	if (ac97_attach(&sc->host_if) != 0)
+	if (ac97_attach(&sc->host_if, self) != 0)
 		return;
 
 	/* setup audio_format */
@@ -763,17 +762,6 @@ auich_reset_codec(void *v)
 }
 
 static int
-auich_open(void *v, int flags)
-{
-	return 0;
-}
-
-static void
-auich_close(void *v)
-{
-}
-
-static int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
 	struct auich_softc *sc;
@@ -786,7 +774,7 @@ static int
 auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 {
 	int ret;
-	u_long ratetmp;
+	u_int ratetmp;
 
 	sc->codec_if->vtbl->set_clock(sc->codec_if, sc->sc_ac97_clock);
 	ratetmp = srate;
@@ -809,13 +797,14 @@ auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 }
 
 static int
-auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
-    struct audio_params *rec)
+auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
+    audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct auich_softc *sc = v;
-	struct audio_params *p;
+	audio_params_t *p;
+	stream_filter_list_t *fil;
 	int mode, index;
-	u_int32_t control;
+	uint32_t control;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -823,6 +812,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			continue;
 
 		p = mode == AUMODE_PLAY ? play : rec;
+		fil = mode == AUMODE_PLAY ? pfil : rfil;
 		if (p == NULL)
 			continue;
 
@@ -831,18 +821,21 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			return (EINVAL);
 
 		index = auconv_set_converter(sc->sc_formats, AUICH_NFORMATS,
-					     mode, p, TRUE);
+					     mode, p, TRUE, fil);
 		if (index < 0)
 			return EINVAL;
+		if (fil->req_size > 0)
+			p = &fil->filters[0].param;
+		/* p represents HW encoding */
 		if (sc->sc_formats[index].frequency_type != 1
-		    && auich_set_rate(sc, mode, p->hw_sample_rate))
+		    && auich_set_rate(sc, mode, p->sample_rate))
 			return EINVAL;
 		if (mode == AUMODE_PLAY) {
 			control = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GCTRL);
 			control &= ~ICH_PCM246_MASK;
-			if (p->hw_channels == 4) {
+			if (p->channels == 4) {
 				control |= ICH_PCM4;
-			} else if (p->hw_channels == 6) {
+			} else if (p->channels == 6) {
 				control |= ICH_PCM6;
 			}
 			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, control);
@@ -853,7 +846,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 }
 
 static int
-auich_round_blocksize(void *v, int blk)
+auich_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
 {
 
 	return (blk & ~0x3f);		/* keep good alignment */
@@ -1152,7 +1145,7 @@ auich_intr(void *v)
 
 static int
 auich_trigger_output(void *v, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct auich_softc *sc = v;
 	struct auich_dmalist *q;
@@ -1219,13 +1212,8 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 }
 
 static int
-auich_trigger_input(v, start, end, blksize, intr, arg, param)
-	void *v;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+auich_trigger_input(void *v, void *start, void *end, int blksize,
+		    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct auich_softc *sc = v;
 	struct auich_dmalist *q;
@@ -1448,7 +1436,7 @@ auich_calibrate(struct auich_softc *sc)
 	uint32_t actual_48k_rate, bytes, ac97rate;
 	void *temp_buffer;
 	struct auich_dma *p;
-	u_long rate;
+	u_int rate;
 
 	/*
 	 * Grab audio from input for fixed interval and compare how

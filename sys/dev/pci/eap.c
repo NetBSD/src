@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.74 2004/11/09 16:28:14 kent Exp $	*/
+/*	$NetBSD: eap.c,v 1.75 2005/01/10 22:01:37 kent Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.74 2004/11/09 16:28:14 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.75 2005/01/10 22:01:37 kent Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -190,14 +190,14 @@ CFATTACH_DECL(eap, sizeof(struct eap_softc),
     eap_match, eap_attach, eap_detach, NULL);
 
 int	eap_open(void *, int);
-void	eap_close(void *);
 int	eap_query_encoding(void *, struct audio_encoding *);
-int	eap_set_params(void *, int, int, struct audio_params *, struct audio_params *);
-int	eap_round_blocksize(void *, int);
+int	eap_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+		       stream_filter_list_t *, stream_filter_list_t *);
+int	eap_round_blocksize(void *, int, int, const audio_params_t *);
 int	eap_trigger_output(void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *);
+	    void *, const audio_params_t *);
 int	eap_trigger_input(void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *);
+	    void *, const audio_params_t *);
 int	eap_halt_output(void *);
 int	eap_halt_input(void *);
 void    eap1370_write_codec(struct eap_softc *, int, int);
@@ -214,8 +214,8 @@ paddr_t	eap_mappage(void *, void *, off_t, int);
 int	eap_get_props(void *);
 void	eap1370_set_mixer(struct eap_softc *sc, int a, int d);
 u_int32_t eap1371_src_wait(struct eap_softc *sc);
-void 	eap1371_set_adc_rate(struct eap_softc *sc, int rate);
-void 	eap1371_set_dac_rate(struct eap_instance *ei, int rate);
+void	eap1371_set_adc_rate(struct eap_softc *sc, int rate);
+void	eap1371_set_dac_rate(struct eap_instance *ei, int rate);
 int	eap1371_src_read(struct eap_softc *sc, int a);
 void	eap1371_src_write(struct eap_softc *sc, int a, int d);
 int	eap1371_query_devinfo(void *addr, mixer_devinfo_t *dip);
@@ -236,7 +236,7 @@ int	eap_midi_output(void *, int);
 
 const struct audio_hw_if eap1370_hw_if = {
 	eap_open,
-	eap_close,
+	NULL,			/* close */
 	NULL,
 	eap_query_encoding,
 	eap_set_params,
@@ -266,7 +266,7 @@ const struct audio_hw_if eap1370_hw_if = {
 
 const struct audio_hw_if eap1371_hw_if = {
 	eap_open,
-	eap_close,
+	NULL,			/* close */
 	NULL,
 	eap_query_encoding,
 	eap_set_params,
@@ -308,6 +308,18 @@ struct audio_device eap_device = {
 	"Ensoniq AudioPCI",
 	"",
 	"eap"
+};
+
+#define EAP_NFORMATS	4
+static const struct audio_format eap_formats[EAP_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
 };
 
 int
@@ -760,7 +772,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		sc->host_if.write = eap1371_write_codec;
 		sc->host_if.reset = eap1371_reset_codec;
 		
-		if (ac97_attach(&sc->host_if) == 0) {
+		if (ac97_attach(&sc->host_if, self) == 0) {
 			/* Interrupt enable */
 			EWRITE4(sc, EAP_SIC, EAP_P2_INTR_EN | EAP_R1_INTR_EN);
 		} else
@@ -990,14 +1002,6 @@ eap_open(void *addr, int flags)
 	return (0);
 }
 
-/*
- * Close function is called at splaudio().
- */
-void
-eap_close(void *addr)
-{
-}
-
 int
 eap_query_encoding(void *addr, struct audio_encoding *fp)
 {
@@ -1057,12 +1061,14 @@ eap_query_encoding(void *addr, struct audio_encoding *fp)
 
 int
 eap_set_params(void *addr, int setmode, int usemode,
-	       struct audio_params *play, struct audio_params *rec)
+	       audio_params_t *play, audio_params_t *rec,
+	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct eap_instance *ei = addr;
 	struct eap_softc *sc = (struct eap_softc *)ei->parent;
 	struct audio_params *p;
-	int mode;
+	stream_filter_list_t *fil;
+	int mode, i;
 	u_int32_t div;
 
 	/*
@@ -1072,7 +1078,7 @@ eap_set_params(void *addr, int setmode, int usemode,
 	if (!sc->sc_1371 && ei->index == EAP_DAC2) {
 	    if (play->sample_rate != rec->sample_rate &&
 		usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
-	    	if (setmode == AUMODE_PLAY) {
+		if (setmode == AUMODE_PLAY) {
 		    rec->sample_rate = play->sample_rate;
 		    setmode |= AUMODE_RECORD;
 		} else if (setmode == AUMODE_RECORD) {
@@ -1095,48 +1101,11 @@ eap_set_params(void *addr, int setmode, int usemode,
 		    (p->channels != 1 && p->channels != 2))
 			return (EINVAL);
 
-		p->factor = 1;
-		p->sw_code = 0;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16_le;
-				else
-					p->sw_code = change_sign16_swap_bytes_le;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
-		default:
-			return (EINVAL);
-		}
+		fil = mode == AUMODE_PLAY ? pfil : rfil;
+		i = auconv_set_converter(eap_formats, EAP_NFORMATS,
+					 mode, p, FALSE, fil);
+		if (i < 0)
+			return EINVAL;
 	}
 
 	if (sc->sc_1371) {
@@ -1195,7 +1164,7 @@ eap_set_params(void *addr, int setmode, int usemode,
 }
 
 int
-eap_round_blocksize(void *addr, int blk)
+eap_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
 	return (blk & -32);	/* keep good alignment */
 }
@@ -1208,7 +1177,7 @@ eap_trigger_output(
 	int blksize,
 	void (*intr)(void *),
 	void *arg,
-	struct audio_params *param)
+	const audio_params_t *param)
 {
 	struct eap_instance *ei = addr;
 	struct eap_softc *sc = (struct eap_softc *)ei->parent;
@@ -1232,10 +1201,10 @@ eap_trigger_output(
 
 	if (ei->index == EAP_DAC2)
 		sic |= EAP_SET_P2_ST_INC(0)
-		    | EAP_SET_P2_END_INC(param->precision * param->factor / 8);
+		    | EAP_SET_P2_END_INC(param->precision / 8);
 
 	sampshift = 0;
-	if (param->precision * param->factor == 16) {
+	if (param->precision == 16) {
 		sic |= EAP_S_EB(ei->index);
 		sampshift++;
 	}
@@ -1301,7 +1270,7 @@ eap_trigger_input(
 	int blksize,
 	void (*intr)(void *),
 	void *arg,
-	struct audio_params *param)
+	const audio_params_t *param)
 {
 	struct eap_instance *ei = addr;
 	struct eap_softc *sc = (struct eap_softc *)ei->parent;
@@ -1323,7 +1292,7 @@ eap_trigger_input(
 	sic = EREAD4(sc, EAP_SIC);
 	sic &= ~(EAP_R1_S_EB | EAP_R1_S_MB);
 	sampshift = 0;
-	if (param->precision * param->factor == 16) {
+	if (param->precision == 16) {
 		sic |= EAP_R1_S_EB;
 		sampshift++;
 	}

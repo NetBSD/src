@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.2 2004/10/29 12:57:16 yamt Exp $	*/
+/*	$NetBSD: harmony.c,v 1.3 2005/01/10 22:01:36 kent Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -66,9 +66,9 @@
 int     harmony_open(void *, int);
 void    harmony_close(void *);
 int     harmony_query_encoding(void *, struct audio_encoding *);
-int     harmony_set_params(void *, int, int, struct audio_params *,
-    struct audio_params *);
-int     harmony_round_blocksize(void *, int);
+int     harmony_set_params(void *, int, int, audio_params_t *,
+    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+int     harmony_round_blocksize(void *, int, int, const audio_params_t *);
 int     harmony_commit_settings(void *);
 int     harmony_halt_output(void *);
 int     harmony_halt_input(void *);
@@ -81,9 +81,9 @@ void    harmony_freem(void *, void *, struct malloc_type *);
 size_t  harmony_round_buffersize(void *, int, size_t);
 int     harmony_get_props(void *);
 int     harmony_trigger_output(void *, void *, void *, int,
-    void (*)(void *), void *, struct audio_params *);
+    void (*)(void *), void *, const audio_params_t *);
 int     harmony_trigger_input(void *, void *, void *, int,
-    void (*)(void *), void *, struct audio_params *);
+    void (*)(void *), void *, const audio_params_t *);
 
 const struct audio_hw_if harmony_sa_hw_if = {
 	harmony_open,
@@ -124,7 +124,7 @@ CFATTACH_DECL(harmony, sizeof(struct harmony_softc),
 int harmony_intr(void *);
 void harmony_intr_enable(struct harmony_softc *);
 void harmony_intr_disable(struct harmony_softc *);
-uint32_t harmony_speed_bits(struct harmony_softc *, u_long *);
+uint32_t harmony_speed_bits(struct harmony_softc *, u_int *);
 int harmony_set_gainctl(struct harmony_softc *);
 void harmony_reset_codec(struct harmony_softc *);
 void harmony_start_cp(struct harmony_softc *);
@@ -488,13 +488,17 @@ harmony_query_encoding(void *vsc, struct audio_encoding *fp)
 
 int
 harmony_set_params(void *vsc, int setmode, int usemode,
-    struct audio_params *p, struct audio_params *r)
+    audio_params_t *p, audio_params_t *r,
+    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
+	audio_params_t hw;
 	struct harmony_softc *sc = vsc;
 	uint32_t bits;
-	void (*pswcode)(void *, u_char *, int) = NULL;
-	void (*rswcode)(void *, u_char *, int) = NULL;
+	stream_filter_factory_t *pswcode = NULL;
+	stream_filter_factory_t *rswcode = NULL;
 
+	/* assume p.equals(r) */
+	hw = *p;
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 		if (p->precision != 8)
@@ -509,6 +513,7 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 	case AUDIO_ENCODING_SLINEAR_BE:
 		if (p->precision == 8) {
 			bits = CNTL_FORMAT_ULINEAR8;
+			hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 			rswcode = pswcode = change_sign8;
 			break;
 		}
@@ -526,16 +531,19 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 		if (p->precision != 8)
 			return (EINVAL);
 		bits = CNTL_FORMAT_ULINEAR8;
+		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 		rswcode = pswcode = change_sign8;
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
 		if (p->precision == 8) {
 			bits = CNTL_FORMAT_ULINEAR8;
+			hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 			rswcode = pswcode = change_sign8;
 			break;
 		}
 		if (p->precision == 16) {
 			bits = CNTL_FORMAT_SLINEAR16BE;
+			hw.encoding = AUDIO_ENCODING_SLINEAR_BE;
 			rswcode = pswcode = swap_bytes;
 			break;
 		}
@@ -547,7 +555,7 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 		}
 		if (p->precision == 16) {
 			bits = CNTL_FORMAT_SLINEAR16BE;
-			rswcode = pswcode = change_sign16_be;
+			rswcode = pswcode = change_sign16;
 			break;
 		}
 		return (EINVAL);
@@ -558,8 +566,8 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 		}
 		if (p->precision == 16) {
 			bits = CNTL_FORMAT_SLINEAR16BE;
-			pswcode = change_sign16_swap_bytes_le;
-			rswcode = swap_bytes_change_sign16_le;
+			hw.encoding = AUDIO_ENCODING_SLINEAR_BE;
+			rswcode = pswcode = swap_bytes_change_sign16;
 			break;
 		}
 		return (EINVAL);
@@ -578,8 +586,10 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 		return (EINVAL);
 
 	bits |= harmony_speed_bits(sc, &p->sample_rate);
-	p->sw_code = pswcode;
-	r->sw_code = rswcode;
+	if (pswcode != NULL)
+		pfil->append(pfil, pswcode, &hw);
+	if (rswcode != NULL)
+		rfil->append(rfil, rswcode, &hw);
 	sc->sc_cntlbits = bits;
 	sc->sc_need_commit = 1;
 
@@ -587,7 +597,8 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 }
 
 int
-harmony_round_blocksize(void *vsc, int blk)
+harmony_round_blocksize(void *vsc, int blk,
+			int mode, const audio_params_t *param)
 {
 	return (HARMONY_BUFSIZE);
 }
@@ -1044,7 +1055,7 @@ harmony_get_props(void *vsc)
 
 int
 harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *intrarg, struct audio_params *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
 	struct harmony_softc *sc = vsc;
 	struct harmony_channel *c = &sc->sc_playback;
@@ -1138,7 +1149,7 @@ harmony_start_cp(struct harmony_softc *sc)
 
 int
 harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *intrarg, struct audio_params *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
 	struct harmony_softc *sc = vsc;
 	struct harmony_channel *c = &sc->sc_capture;
@@ -1187,7 +1198,7 @@ static const struct speed_struct {
 };
 
 uint32_t
-harmony_speed_bits(struct harmony_softc *sc, u_long *speedp)
+harmony_speed_bits(struct harmony_softc *sc, u_int *speedp)
 {
 	int i, n, selected = -1;
 

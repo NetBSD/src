@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.26 2004/10/29 12:57:18 yamt Exp $ */
+/* $NetBSD: esa.c,v 1.27 2005/01/10 22:01:37 kent Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.26 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.27 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -104,12 +104,11 @@ void		esa_attach(struct device *, struct device *, void *);
 int		esa_detach(struct device *, int);
 
 /* audio(9) functions */
-int		esa_open(void *, int);
-void		esa_close(void *);
 int		esa_query_encoding(void *, struct audio_encoding *);
-int		esa_set_params(void *, int, int, struct audio_params *,
-			       struct audio_params *);
-int		esa_round_blocksize(void *, int);
+int		esa_set_params(void *, int, int, audio_params_t *,
+			       audio_params_t *, stream_filter_list_t *,
+			       stream_filter_list_t *);
+int		esa_round_blocksize(void *, int, int, const audio_params_t *);
 int		esa_commit_settings(void *);
 int		esa_halt_output(void *);
 int		esa_halt_input(void *);
@@ -123,10 +122,10 @@ size_t		esa_round_buffersize(void *, int, size_t);
 int		esa_get_props(void *);
 int		esa_trigger_output(void *, void *, void *, int,
 				   void (*)(void *), void *,
-				   struct audio_params *);
+				   const audio_params_t *);
 int		esa_trigger_input(void *, void *, void *, int,
 				  void (*)(void *), void *,
-				  struct audio_params *);
+				  const audio_params_t *);
 
 int		esa_intr(void *);
 int		esa_allocmem(struct esa_softc *, size_t, size_t,
@@ -182,9 +181,21 @@ static audio_encoding_t esa_encoding[] = {
 
 #define ESA_NENCODINGS 8
 
+#define ESA_NFORMATS	4
+static const struct audio_format esa_formats[ESA_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {ESA_MINRATE, ESA_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {ESA_MINRATE, ESA_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {ESA_MINRATE, ESA_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {ESA_MINRATE, ESA_MAXRATE}},
+};
+
 const struct audio_hw_if esa_hw_if = {
-	esa_open,
-	esa_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,			/* drain */
 	esa_query_encoding,
 	esa_set_params,
@@ -219,20 +230,6 @@ CFATTACH_DECL(esa, sizeof(struct esa_softc), esa_match, esa_attach,
  */
 
 int
-esa_open(void *hdl, int flags)
-{
-
-	return (0);
-}
-
-void
-esa_close(void *hdl)
-{
-
-	return;
-}
-
-int
 esa_query_encoding(void *hdl, struct audio_encoding *ae)
 {
 
@@ -244,14 +241,16 @@ esa_query_encoding(void *hdl, struct audio_encoding *ae)
 }
 
 int
-esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
-	       struct audio_params *rec)
+esa_set_params(void *hdl, int setmode, int usemode,
+	       audio_params_t *play, audio_params_t *rec,
+	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct esa_voice *vc = hdl;
 	//struct esa_softc *sc = (struct esa_softc *)vc->parent;
 	struct esa_channel *ch;
 	struct audio_params *p;
-	int mode;
+	stream_filter_list_t *fil;
+	int mode, i;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = (mode == AUMODE_RECORD) ? AUMODE_PLAY : -1) {
@@ -262,10 +261,12 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 		case AUMODE_PLAY:
 			p = play;
 			ch = &vc->play;
+			fil = pfil;
 			break;
 		case AUMODE_RECORD:
 			p = rec;
 			ch = &vc->rec;
+			fil = rfil;
 			break;
 		default:
 			return EINVAL;
@@ -277,52 +278,12 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 		    (p->channels < 1 && p->channels > 2))
 			return (EINVAL);
 
-		p->factor = 1;
-		p->sw_code = 0;
-
-		switch(p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    swap_bytes_change_sign16_le;
-				else
-					p->sw_code =
-					    change_sign16_swap_bytes_le;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
-		default:
-			return (EINVAL);
-		}
-
+		i = auconv_set_converter(esa_formats, ESA_NFORMATS,
+					 mode, p, FALSE, fil);
+		if (i < 0)
+			return EINVAL;
+		if (fil->req_size > 0)
+			p = &fil->filters[0].param;
 		ch->mode = *p;
 	}
 
@@ -352,7 +313,7 @@ esa_commit_settings(void *hdl)
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
 		       vc->play.data_offset + ESA_SRC3_MODE_OFFSET,
 		       data);
-	if (p->precision * p->factor == 8)
+	if (p->precision  == 8)
 		data = 1;
 	else
 		data = 0;
@@ -375,7 +336,7 @@ esa_commit_settings(void *hdl)
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
 		       vc->rec.data_offset + ESA_SRC3_MODE_OFFSET,
 		       data);
-	if (r->precision * r->factor == 8)
+	if (r->precision == 8)
 		data = 1;
 	else
 		data = 0;
@@ -392,7 +353,7 @@ esa_commit_settings(void *hdl)
 };
 
 int
-esa_round_blocksize(void *hdl, int bs)
+esa_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
 
 	return (bs & ~0x20);	/* Be conservative; align to 32 bytes */
@@ -570,7 +531,7 @@ esa_get_props(void *hdl)
 int
 esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 			void (*intr)(void *), void *intrarg,
-			struct audio_params *param)
+			const audio_params_t *param)
 {
 	struct esa_voice *vc = hdl;
 	struct esa_softc *sc = (struct esa_softc *)vc->parent;
@@ -705,7 +666,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 int
 esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 			void (*intr)(void *), void *intrarg,
-			struct audio_params *param)
+			const audio_params_t *param)
 {
 	struct esa_voice *vc = hdl;
 	struct esa_softc *sc = (struct esa_softc *)vc->parent;
@@ -1100,7 +1061,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.reset = esa_reset_codec;
 	sc->host_if.flags = esa_flags_codec;
 
-	if (ac97_attach(&sc->host_if) != 0)
+	if (ac97_attach(&sc->host_if, self) != 0)
 		return;
 
 	/* initialize list management structures */

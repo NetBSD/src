@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.32 2004/11/09 16:28:14 kent Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.33 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.32 2004/11/09 16:28:14 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.33 2005/01/10 22:01:37 kent Exp $");
 
 #include "midi.h"
 
@@ -93,14 +93,15 @@ int  cs4280_match(struct device *, struct cfdata *, void *);
 void cs4280_attach(struct device *, struct device *, void *);
 int  cs4280_intr(void *);
 int  cs4280_query_encoding(void *, struct audio_encoding *);
-int  cs4280_set_params(void *, int, int, struct audio_params *, struct audio_params *);
+int  cs4280_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+		       stream_filter_list_t *, stream_filter_list_t *);
 int  cs4280_halt_output(void *);
 int  cs4280_halt_input(void *);
 int  cs4280_getdev(void *, struct audio_device *);
 int  cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
-                           void *, struct audio_params *);
+			   void *, const audio_params_t *);
 int  cs4280_trigger_input(void *, void *, void *, int, void (*)(void *),
-                          void *, struct audio_params *);
+			  void *, const audio_params_t *);
 
 int cs4280_reset_codec(void *);
 
@@ -124,8 +125,8 @@ int  cs4280_checkimage(struct cs428x_softc *, u_int32_t *, u_int32_t, u_int32_t)
 #endif
 
 const struct audio_hw_if cs4280_hw_if = {
-	cs428x_open,
-	cs428x_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,
 	cs4280_query_encoding,
 	cs4280_set_params,
@@ -303,7 +304,7 @@ cs4280_attach(parent, self, aux)
 	sc->host_if.read   = cs428x_read_codec;
 	sc->host_if.write  = cs428x_write_codec;
 	sc->host_if.reset  = cs4280_reset_codec;
-	if (ac97_attach(&sc->host_if) != 0) {
+	if (ac97_attach(&sc->host_if, self) != 0) {
 		aprint_error("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -547,22 +548,23 @@ cs4280_query_encoding(addr, fp)
 }
 
 int
-cs4280_set_params(addr, setmode, usemode, play, rec)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+cs4280_set_params(void *addr, int setmode, int usemode,
+		  audio_params_t *play, audio_params_t *rec,
+		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
+	audio_params_t hw;
 	struct cs428x_softc *sc = addr;
 	struct audio_params *p;
+	stream_filter_list_t *fil;
 	int mode;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1 ) {
 		if ((setmode & mode) == 0)
 			continue;
-		
+
 		p = mode == AUMODE_PLAY ? play : rec;
-		
+
 		if (p == play) {
 			DPRINTFN(5,("play: sample=%ld precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
@@ -592,49 +594,49 @@ cs4280_set_params(addr, setmode, usemode, play, rec)
 				return EINVAL;
 			}
 		}
-		p->factor  = 1;
-		p->sw_code = 0;
+		fil = mode == AUMODE_PLAY ? pfil : rfil;
+		hw = *p;
+		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
 
 		/* capturing data is slinear */
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (mode == AUMODE_RECORD) {
-				if (p->precision == 16)
-					p->sw_code = swap_bytes;
+			if (mode == AUMODE_RECORD && p->precision == 16) {
+				fil->append(fil, swap_bytes, &hw);
 			}
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (mode == AUMODE_RECORD) {
-				if (p->precision == 16)
-					p->sw_code = change_sign16_swap_bytes_le;
-				else
-					p->sw_code = change_sign8;
+				fil->append(fil, p->precision == 16
+					    ? swap_bytes_change_sign16
+					    : change_sign8, &hw);
 			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (mode == AUMODE_RECORD) {
-				if (p->precision == 16)
-					p->sw_code = change_sign16_le;
-				else
-					p->sw_code = change_sign8;
+				fil->append(fil, p->precision == 16
+					    ? change_sign16 : change_sign8,
+					    &hw);
 			}
 			break;
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
+				hw.precision = 16;
+				hw.validbits = 16;
+				fil->append(fil, mulaw_to_linear16, &hw);
 			} else {
-				p->sw_code = slinear8_to_mulaw;
+				fil->append(fil, linear8_to_mulaw, &hw);
 			}
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
+				hw.precision = 16;
+				hw.validbits = 16;
+				fil->append(fil, alaw_to_linear16, &hw);
 			} else {
-				p->sw_code = slinear8_to_alaw;
+				fil->append(fil, linear8_to_alaw, &hw);
 			}
 			break;
 		default:
@@ -654,7 +656,7 @@ cs4280_halt_output(addr)
 {
 	struct cs428x_softc *sc = addr;
 	u_int32_t mem;
-	
+
 	mem = BA1READ4(sc, CS4280_PCTL);
 	BA1WRITE4(sc, CS4280_PCTL, mem & ~PCTL_MASK);
 	sc->sc_prun = 0;
@@ -690,12 +692,12 @@ cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cs428x_softc *sc = addr;
 	u_int32_t pfie, pctl, pdtc;
 	struct cs428x_dma *p;
-	
+
 #ifdef DIAGNOSTIC
 	if (sc->sc_prun)
 		printf("cs4280_trigger_output: already running\n");
@@ -715,10 +717,9 @@ cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
 	pdtc &= ~PDTC_MASK;
 	pdtc |= CS4280_MK_PDTC(param->precision * param->channels);
 	BA1WRITE4(sc, CS4280_PDTC, pdtc);
-	
-	DPRINTF(("param: precision=%d  factor=%d channels=%d encoding=%d\n",
-	       param->precision, param->factor, param->channels,
-	       param->encoding));
+
+	DPRINTF(("param: precision=%d channels=%d encoding=%d\n",
+	       param->precision, param->channels, param->encoding));
 	for (p = sc->sc_dmas; p != NULL && BUFADDR(p) != start; p = p->next)
 		;
 	if (p == NULL) {
@@ -753,7 +754,7 @@ cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
 	/* set PFIE */
 	pfie = BA1READ4(sc, CS4280_PFIE) & ~PFIE_MASK;
 
-	if (param->precision * param->factor == 8)
+	if (param->precision == 8)
 		pfie |= PFIE_8BIT;
 	if (param->channels == 1)
 		pfie |= PFIE_MONO;
@@ -783,12 +784,12 @@ cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cs428x_softc *sc = addr;
 	u_int32_t cctl, cie;
 	struct cs428x_dma *p;
-	
+
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
 		printf("cs4280_trigger_input: already running\n");
@@ -802,7 +803,7 @@ cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	/* stop capture DMA */
 	BA1WRITE4(sc, CS4280_CCTL, BA1READ4(sc, CS4280_CCTL) & ~CCTL_MASK);
-	
+
 	for (p = sc->sc_dmas; p && BUFADDR(p) != start; p = p->next)
 		;
 	if (p == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.49 2004/11/16 17:15:01 xtraeme Exp $	*/
+/*	$NetBSD: auvia.c,v 1.50 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.49 2004/11/16 17:15:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.50 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,14 +88,12 @@ struct auvia_dma_op {
 
 int	auvia_match(struct device *, struct cfdata *, void *);
 void	auvia_attach(struct device *, struct device *, void *);
-int	auvia_open(void *, int);
-void	auvia_close(void *);
 int	auvia_query_encoding(void *, struct audio_encoding *);
 void	auvia_set_params_sub(struct auvia_softc *, struct auvia_softc_chan *,
-	struct audio_params *);
-int	auvia_set_params(void *, int, int, struct audio_params *,
-	struct audio_params *);
-int	auvia_round_blocksize(void *, int);
+	const audio_params_t *);
+int	auvia_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+	stream_filter_list_t *, stream_filter_list_t *);
+int	auvia_round_blocksize(void *, int, int, const audio_params_t *);
 int	auvia_halt_output(void *);
 int	auvia_halt_input(void *);
 int	auvia_getdev(void *, struct audio_device *);
@@ -110,9 +108,9 @@ int	auvia_get_props(void *);
 int	auvia_build_dma_ops(struct auvia_softc *, struct auvia_softc_chan *,
 	struct auvia_dma *, void *, void *, int);
 int	auvia_trigger_output(void *, void *, void *, int, void (*)(void *),
-	void *, struct audio_params *);
+	void *, const audio_params_t *);
 int	auvia_trigger_input(void *, void *, void *, int, void (*)(void *),
-	void *, struct audio_params *);
+	void *, const audio_params_t *);
 void	auvia_powerhook(int, void *);
 int	auvia_intr(void *);
 
@@ -195,8 +193,8 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 #define TIMEOUT	50
 
 const struct audio_hw_if auvia_hw_if = {
-	auvia_open,
-	auvia_close,
+	NULL, /* open */
+	NULL, /* close */
 	NULL, /* drain */
 	auvia_query_encoding,
 	auvia_set_params,
@@ -386,7 +384,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.write = auvia_write_codec;
 	sc->host_if.reset = auvia_reset_codec;
 
-	if ((r = ac97_attach(&sc->host_if)) != 0) {
+	if ((r = ac97_attach(&sc->host_if, self)) != 0) {
 		aprint_error("%s: can't attach codec (error 0x%X)\n",
 			sc->sc_dev.dv_xname, r);
 		pci_intr_disestablish(pc, sc->sc_ih);
@@ -542,20 +540,6 @@ auvia_read_codec(void *addr, u_int8_t reg, u_int16_t *val)
 	return 0;
 }
 
-
-int
-auvia_open(void *addr, int flags)
-{
-	return 0;
-}
-
-
-void
-auvia_close(void *addr)
-{
-}
-
-
 int
 auvia_query_encoding(void *addr, struct audio_encoding *fp)
 {
@@ -567,14 +551,14 @@ auvia_query_encoding(void *addr, struct audio_encoding *fp)
 
 void
 auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
-		     struct audio_params *p)
+		     const audio_params_t *p)
 {
 	u_int32_t v;
 	u_int16_t regval;
 
 	if (!(sc->sc_flags & AUVIA_FLAGS_VT8233)) {
-		regval = (p->hw_channels == 2 ? AUVIA_RPMODE_STEREO : 0)
-			| (p->hw_precision * p->factor == 16 ?
+		regval = (p->channels == 2 ? AUVIA_RPMODE_STEREO : 0)
+			| (p->precision  == 16 ?
 				AUVIA_RPMODE_16BIT : 0)
 			| AUVIA_RPMODE_INTR_FLAG | AUVIA_RPMODE_INTR_EOL
 			| AUVIA_RPMODE_AUTOSTART;
@@ -584,11 +568,11 @@ auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 		v &= ~(VIA8233_RATEFMT_48K | VIA8233_RATEFMT_STEREO
 			| VIA8233_RATEFMT_16BIT);
 
-		v |= VIA8233_RATEFMT_48K * (p->hw_sample_rate / 20)
+		v |= VIA8233_RATEFMT_48K * (p->sample_rate / 20)
 			/ (48000 / 20);
-		if (p->hw_channels == 2)
+		if (p->channels == 2)
 			v |= VIA8233_RATEFMT_STEREO;
-		if (p->hw_precision == 16)
+		if (p->precision == 16)
 			v |= VIA8233_RATEFMT_16BIT;
 
 		CH_WRITE4(sc, ch, VIA8233_RP_RATEFMT, v);
@@ -597,22 +581,24 @@ auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 			{ 0, 0xff000011, 0xff000021, 0,
 			  0xff004321, 0, 0xff436521};
 
-		regval = (p->hw_precision == 16
+		regval = (p->precision == 16
 			? VIA8233_MP_FORMAT_16BIT : VIA8233_MP_FORMAT_8BIT)
-			| (p->hw_channels << 4);
+			| (p->channels << 4);
 		CH_WRITE1(sc, ch, VIA8233_OFF_MP_FORMAT, regval);
-		CH_WRITE4(sc, ch, VIA8233_OFF_MP_STOP, slottab[p->hw_channels]);
+		CH_WRITE4(sc, ch, VIA8233_OFF_MP_STOP, slottab[p->channels]);
 	}
 }
 
 int
 auvia_set_params(void *addr, int setmode, int usemode,
-	struct audio_params *play, struct audio_params *rec)
+		 audio_params_t *play, audio_params_t *rec,
+		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct auvia_softc *sc = addr;
 	struct auvia_softc_chan *ch;
 	struct audio_params *p;
 	struct ac97_codec_if* codec;
+	stream_filter_list_t *fil;
 	int reg, mode;
 	int index;
 
@@ -627,31 +613,35 @@ auvia_set_params(void *addr, int setmode, int usemode,
 			p = play;
 			ch = &sc->sc_play;
 			reg = AC97_REG_PCM_FRONT_DAC_RATE;
+			fil = pfil;
 		} else {
 			p = rec;
 			ch = &sc->sc_record;
 			reg = AC97_REG_PCM_LR_ADC_RATE;
+			fil = rfil;
 		}
 
 		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
 		    (p->precision != 8 && p->precision != 16))
 			return (EINVAL);
 		index = auconv_set_converter(sc->sc_formats, AUVIA_NFORMATS,
-					     mode, p, TRUE);
+					     mode, p, TRUE, fil);
 		if (index < 0)
 			return EINVAL;
+		if (fil->req_size > 0)
+			p = &fil->filters[0].param;
 		if (!AC97_IS_FIXED_RATE(codec)) {
-			if (codec->vtbl->set_rate(codec, reg, &p->hw_sample_rate))
+			if (codec->vtbl->set_rate(codec, reg, &p->sample_rate))
 				return EINVAL;
 			reg = AC97_REG_PCM_SURR_DAC_RATE;
-			if (p->hw_channels >= 4
+			if (p->channels >= 4
 			    && codec->vtbl->set_rate(codec, reg,
-						     &p->hw_sample_rate))
+						     &p->sample_rate))
 				return EINVAL;
 			reg = AC97_REG_PCM_LFE_DAC_RATE;
-			if (p->hw_channels == 6
+			if (p->channels == 6
 			    && codec->vtbl->set_rate(codec, reg,
-						     &p->hw_sample_rate))
+						     &p->sample_rate))
 				return EINVAL;
 		}
 		auvia_set_params_sub(sc, ch, p);
@@ -662,7 +652,8 @@ auvia_set_params(void *addr, int setmode, int usemode,
 
 
 int
-auvia_round_blocksize(void *addr, int blk)
+auvia_round_blocksize(void *addr, int blk,
+		      int mode, const audio_params_t *param)
 {
 	struct auvia_softc *sc = addr;
 
@@ -938,7 +929,7 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 int
 auvia_trigger_output(void *addr, void *start, void *end,
 	int blksize, void (*intr)(void *), void *arg,
-	struct audio_params *param)
+	const audio_params_t *param)
 {
 	struct auvia_softc *sc = addr;
 	struct auvia_softc_chan *ch = &(sc->sc_play);
@@ -981,7 +972,7 @@ auvia_trigger_output(void *addr, void *start, void *end,
 int
 auvia_trigger_input(void *addr, void *start, void *end,
 	int blksize, void (*intr)(void *), void *arg,
-	struct audio_params *param)
+	const audio_params_t *param)
 {
 	struct auvia_softc *sc = addr;
 	struct auvia_softc_chan *ch = &(sc->sc_record);

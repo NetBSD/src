@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.14 2004/10/29 12:57:17 yamt Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.15 2005/01/10 22:01:37 kent Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.14 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.15 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,8 @@ CFATTACH_DECL(audiocs_ebus, sizeof(struct cs4231_ebus_softc),
     cs4231_ebus_match, cs4231_ebus_attach, NULL, NULL);
 
 /* audio_hw_if methods specific to ebus DMA */
-static int	cs4231_ebus_round_blocksize(void *, int);
+static int	cs4231_ebus_round_blocksize(void *, int, int,
+					    const audio_params_t *);
 static int	cs4231_ebus_trigger_output(void *, void *, void *, int,
 					   void (*)(void *), void *,
 					   struct audio_params *);
@@ -214,9 +215,11 @@ cs4231_ebus_attach(parent, self, aux)
 
 
 static int
-cs4231_ebus_round_blocksize(addr, blk)
+cs4231_ebus_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 
 	/* we want to use DMA burst size of 16 words */
