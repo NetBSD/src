@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2002/01/30 03:59:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2003/05/17 22:18:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ int booted_partition;
 void
 cpu_rootconf(void)
 {
-	printf("boot device: %s\n",
+	aprint_normal("boot device: %s\n",
 	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
 	setroot(booted_device, booted_partition);
 }
