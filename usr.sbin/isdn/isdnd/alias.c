@@ -30,7 +30,7 @@
  *	NOTE:	this has to stay in sync with isdntel/alias.c to be able
  *		to share a common aliasfile!
  *		
- *      $Id: alias.c,v 1.2 2002/12/06 15:00:14 thorpej Exp $
+ *      $Id: alias.c,v 1.3 2003/10/06 09:18:41 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -102,20 +102,18 @@ init_alias(char *filename)
 				exit(1);
 			}
 
-			if((newa->number = (char *) malloc(strlen(number)+1)) == NULL)
+			if((newa->number = strdup(number)) == NULL)
 			{
 				logit(LL_ERR, "init_alias: malloc failed for number alias!\n");
 				exit(1);
 			}
 
-			if((newa->name = (char *) malloc(strlen(name)+1)) == NULL)
+			if((newa->name = strdup(name)) == NULL)
 			{
 				logit(LL_ERR, "init_alias: malloc failed for name alias!\n");
 				exit(1);
 			}
 
-			strcpy(newa->name, name);
-			strcpy(newa->number, number);
 			newa->next = NULL;
 			
 			if(firsta == NULL)

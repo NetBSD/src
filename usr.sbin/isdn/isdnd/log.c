@@ -27,7 +27,7 @@
  *	i4b daemon - logging routines
  *	-----------------------------
  *
- *	$Id: log.c,v 1.4 2002/12/06 15:00:15 thorpej Exp $ 
+ *	$Id: log.c,v 1.5 2003/10/06 09:18:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -108,13 +108,11 @@ init_log(void)
 
 		rarr[i].re_flg = 0;
 
-		if((p = malloc(strlen(buf) + 1)) == NULL)
+		if((p = strdup(buf)) == NULL)
 		{
 			logit(LL_DBG, "init_log: malloc failed: %s", strerror(errno));
 			do_exit(1);
 		}
-
-		strcpy(p, buf);
 
 		rarr[i].re_prog = p;
 	}
