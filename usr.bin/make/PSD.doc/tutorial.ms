@@ -1,4 +1,4 @@
-.\"	$NetBSD: tutorial.ms,v 1.5 2001/08/20 12:00:55 wiz Exp $
+.\"	$NetBSD: tutorial.ms,v 1.6 2002/05/16 19:47:47 wiz Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
 .\" Copyright (c) 1988, 1989, 1993
@@ -2974,11 +2974,11 @@ MAKELIB		: .USE .PRECIOUS
 #ifndef no_ranlib
 # ifdef many_libraries
 	...
-# endif many_libraries
+# endif /* many_libraries */
 	ranlib $(.TARGET)
-#endif no_ranlib
+#endif /* no_ranlib */
 
-#endif _MAKELIB_MK
+#endif /* _MAKELIB_MK */
 .DE
 .xH 2 On the Condition...
 .Rd 1
