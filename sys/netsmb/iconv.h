@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.h,v 1.4 2003/02/16 19:50:48 jdolecek Exp $	*/
+/*	$NetBSD: iconv.h,v 1.5 2004/02/24 15:22:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -55,7 +55,7 @@ struct iconv_cspair_info {
 };
 
 /*
- * Paramters for 'add' sysctl
+ * Parameters for 'add' sysctl
  */
 #define	ICONV_ADD_VER	1
 
