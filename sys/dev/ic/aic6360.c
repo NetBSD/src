@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.34 1995/09/14 20:43:12 pk Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.35 1995/09/26 19:31:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -420,11 +420,9 @@
 #define SCSIBLK		0x02
 #define DMABLK		0x01
 
-#ifdef	DDB
-int	Debugger();
-#else	DDB
+#ifndef DDB
 #define	Debugger() panic("should call debugger here (aic6360.c)")
-#endif	DDB
+#endif /* ! DDB */
 
 typedef u_long physaddr;
 typedef u_long physlen;
