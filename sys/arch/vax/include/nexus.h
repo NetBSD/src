@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.19 2001/05/16 05:36:57 matt Exp $	*/
+/*	$NetBSD: nexus.h,v 1.20 2002/06/04 19:04:33 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -104,6 +104,7 @@ struct	nexus {
 struct sbi_attach_args {
 	int sa_nexnum; 		/* This nexus TR number */
 	int sa_type;		/* This nexus type */
+	int sa_sbinum;
 	bus_space_tag_t sa_iot;
 	bus_space_handle_t sa_ioh;
 };
