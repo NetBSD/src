@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.23 1997/10/19 05:49:59 lukem Exp $	*/
+/*	$NetBSD: inet.c,v 1.24 1997/12/10 07:26:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.23 1997/10/19 05:49:59 lukem Exp $");
+__RCSID("$NetBSD: inet.c,v 1.24 1997/12/10 07:26:02 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,6 +234,7 @@ tcp_stats(off, name)
 	p(tcps_preddat, "\t%lu correct data packet header prediction%s\n");
 	p3(tcps_pcbhashmiss, "\t%lu PCB hash miss%s\n");
 	ps(tcps_noport, "\t%lu dropped due to no socket\n");
+	p(tcps_connsdrained, "\t%lu connection%s drained due to memory shortage\n");
 
 	p(tcps_badsyn, "\t%lu bad connection attempt%s\n");
 	ps(tcps_sc_added, "\t%lu SYN cache entries added\n");
