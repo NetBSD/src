@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1998/01/09 17:22:47 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 1998/03/24 08:39:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 1998/01/09 17:22:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 1998/03/24 08:39:02 jonathan Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -70,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 1998/01/09 17:22:47 drochner Exp $
 #include <pmax/pmax/turbochannel.h>
 
 void dumpconf __P((void)); 	/* XXX */
-
-void xconsinit __P((void));	/* XXX console-init continuation */
 
 #if 0
 /*
@@ -139,17 +137,6 @@ configure()
 	s = splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 	    panic("no mainbus found");
-
-#if 0
-	printf("looking for non-PROM console driver\n");
-#endif
-
-	xconsinit();	/* do kludged-up console init */
-
-#ifdef DEBUG
-	if (cputype == DS_3MIN)
-/*FIXME*/	printf("switched to non-PROM console\n");
-#endif
 
 	initcpu();
 
