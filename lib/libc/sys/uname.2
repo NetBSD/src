@@ -30,11 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)uname.2	6.6 (Berkeley) 3/10/91
-.\"	$Id: uname.2,v 1.4 1993/11/29 21:25:51 jtc Exp $
+.\"	$Id: uname.2,v 1.5 1993/12/15 20:40:38 jtc Exp $
 .\"
 .Dd March 29, 1993
 .Dt UNAME 2
-.Os Posix
+.Os
 .Sh NAME
 .Nm uname
 .Nd get host information
@@ -77,18 +77,19 @@ further identify the operating system.
 .Fa Machine
 contains the standard name that identifies the hardware
 that the UNIX system is running on.
-.Sn ERRORS
+.Sh RETURN VALUE
+Upon successful completion a value of 0 is returned.
+Otherwise, a value of -1 is returned and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er EFAULT
 .Fn Uname
 will fail if
 .Fa name
 points to an invalid address.
-.Sh RETURN VALUE
-Upon successful completion a value of 0 is returned.
-Otherwise, a value of -1 is returned and
-.Va errno
-is set to indicate the error.
+.El
 .Sh SEE ALSO
 .Xr hostname 1 ,
 .Xr machine 1 ,
