@@ -6,10 +6,7 @@ MEMORY
 }
 SECTIONS
 {
-  ROM = 0x80010000;
-
   .text :
-  AT (ROM)
   {
     *(.text)
     *(.rodata)
@@ -17,7 +14,6 @@ SECTIONS
      _etext = . ; 
   }  > ram
   .tors :
-  AT ( ROM + SIZEOF(.text))
   {
     ___ctors = . ;
     *(.ctors)
@@ -27,13 +23,11 @@ SECTIONS
     ___dtors_end = . ;
   } > ram
   .data :
-  AT ( ROM + SIZEOF(.text) + SIZEOF(.tors))
   {
     *(.data)
      _edata = . ; 
   }  > ram
   .bss :
-  AT ( ROM + SIZEOF(.text) + SIZEOF(.tors) + SIZEOF(.data))
   {
      _bss_start = . ; 
     *(.bss)
