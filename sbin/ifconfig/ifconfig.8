@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.32.4.2 2000/07/03 22:11:08 thorpej Exp $
+.\"	$NetBSD: ifconfig.8,v 1.32.4.3 2000/07/03 22:12:46 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,7 @@ or other operating parameters.
 Available operands for
 .Nm "" :
 .Bl -tag -width Ds
-.It Ar Address
+.It Ar address
 For the
 .Tn DARPA-Internet
 family,
@@ -129,7 +129,7 @@ supported are
 .Dq iso ,
 and
 .Dq ns .
-.It Ar Interface
+.It Ar interface
 The
 .Ar interface
 parameter is a string of the form
@@ -185,7 +185,7 @@ does not work for IPv6 addresses.
 Use
 .Fl alias
 with explicit IPv6 address instead.
-.It Cm dest_address
+.It Ar dest_address
 Specify the address of the correspondent on the other end
 of a point to point link.
 .It Cm down
@@ -325,24 +325,6 @@ Set the IPv6 tentative address bit.
 .It Fl tentative
 (inet6 only)
 Clear the IPv6 tentative address bit.
-.It Cm trailers
-Request the use of a ``trailer'' link level encapsulation when
-sending (default).
-If a network interface supports
-.Cm trailers ,
-the system will, when possible, encapsulate outgoing
-messages in a manner which minimizes the number of
-memory to memory copy operations performed by the receiver.
-On networks that support the Address Resolution Protocol (see
-.Xr arp 4 ;
-currently, only 10 Mb/s Ethernet),
-this flag indicates that the system should request that other
-systems use trailers when sending to this host.
-Similarly, trailer encapsulations will be sent to other
-hosts that have made such requests.
-Currently used by Internet protocols only.
-.It Fl trailers
-Disable the use of a ``trailer'' link level encapsulation.
 .It Cm link[0-2]
 Enable special processing of the link level of the interface.
 These three options are interface specific in actual effect, however,
