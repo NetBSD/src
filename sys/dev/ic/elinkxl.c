@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.70 2003/06/05 22:11:21 dogcow Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.71 2003/07/06 09:12:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.70 2003/06/05 22:11:21 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.71 2003/07/06 09:12:59 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1347,6 +1347,11 @@ ex_intr(arg)
 						  ELINK_UPUNSTALL);
 			}
 		}
+
+#if NRND > 0
+		if (stat)
+			rnd_add_uint32(&sc->rnd_source, stat);
+#endif
 	}
 
 	/* no more interrupts */
