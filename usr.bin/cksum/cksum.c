@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.21 2004/07/09 11:44:30 wiz Exp $	*/
+/*	$NetBSD: cksum.c,v 1.22 2005/01/12 17:04:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.21 2004/07/09 11:44:30 wiz Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.22 2005/01/12 17:04:35 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -138,23 +138,20 @@ struct hash {
 	{ NULL }
 };
 
-int	main __P((int, char **));
-int	hash_digest_file __P((char *, struct hash *, int));
-void	requirehash __P((const char *));
-void	usage __P((void));
+int	hash_digest_file (char *, struct hash *, int);
+void	requirehash (const char *);
+void	usage (void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	register int ch, fd, rval, dosum, pflag, nohashstdin;
 	u_int32_t val;
 	off_t len;
 	char *fn;
 	const char *progname;
-	int (*cfncn) __P((int, u_int32_t *, off_t *));
-	void (*pfncn) __P((char *, u_int32_t, off_t));
+	int (*cfncn) (int, u_int32_t *, off_t *);
+	void (*pfncn) (char *, u_int32_t, off_t);
 	struct hash *hash;
 	int normal;
 
@@ -307,27 +304,23 @@ main(argc, argv)
 }
 
 int
-hash_digest_file(fn, hash, normal)
-	char *fn;
-	struct hash *hash;
-	int normal;
+hash_digest_file(char *fn, struct hash *hash, int normal)
 {
 	char buf[41], *cp;
 
 	cp = hash->filefunc(fn, buf);
 	if (cp == NULL)
-		return (1);
+		return 1;
 
 	if (normal)
 		printf("%s %s\n", cp, fn);
 	else
 		printf("%s (%s) = %s\n", hash->hashname, fn, cp);
-	return (0);
+	return 0;
 }
 
 void
-requirehash(flg)
-	const char *flg;
+requirehash(const char *flg)
 {
 	warnx("%s flag requires `md2', `md4', `md5', `sha1', or `rmd160'",
 	    flg);
@@ -335,7 +328,7 @@ requirehash(flg)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: cksum [-n] [-m | -1 | -2 | -4 | -5 | -6 | [-o 1 | 2]] [file ...]\n");
