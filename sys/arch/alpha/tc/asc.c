@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.15 1998/11/19 21:43:00 thorpej Exp $ */
+/* $NetBSD: asc.c,v 1.15.4.1 1999/12/04 19:37:14 he Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15 1998/11/19 21:43:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15.4.1 1999/12/04 19:37:14 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -206,10 +206,12 @@ asc_tcds_attach(parent, self, aux)
 	sc->sc_cfg2 = NCRCFG2_SCSI2;
 	sc->sc_cfg3 = NCRCFG3_CDB;
 	if (sc->sc_freq > 25)
-		sc->sc_cfg3 |= NCRCFG3_FCLK;
+		sc->sc_cfg3 |= NCRF9XCFG3_FCLK;
 	sc->sc_rev = tcdsdev->tcdsda_variant;
-	if (tcdsdev->tcdsda_fast)
+	if (tcdsdev->tcdsda_fast) {
 		sc->sc_features |= NCR_F_FASTSCSI;
+		sc->sc_cfg3_fscsi = NCRF9XCFG3_FSCSI;
+	}
 
 	/*
 	 * XXX minsync and maxxfer _should_ be set up in MI code,
