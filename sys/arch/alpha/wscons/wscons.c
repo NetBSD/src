@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.8 1996/11/13 21:13:40 cgd Exp $	*/
+/*	$NetBSD: wscons.c,v 1.9 1996/11/19 05:23:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -59,6 +59,7 @@ struct wscons_softc {
 	struct wscons_emul_data *sc_emul_data;
 	struct tty		*sc_tty;
 
+	void			*sc_fn_cookie;
 	wscons_ioctl_t		sc_ioctl;
 	wscons_mmap_t		sc_mmap;
 };
@@ -180,6 +181,7 @@ wsconsattach(parent, self, aux)
 	/*
 	 * Record other relevant information: ioctl and mmap functions.
 	 */
+	sc->sc_fn_cookie = waa->waa_odev_spec.wo_miscfuncs_cookie;
 	sc->sc_ioctl = waa->waa_odev_spec.wo_ioctl;
 	sc->sc_mmap = waa->waa_odev_spec.wo_mmap;
 
@@ -345,7 +347,7 @@ wsconsioctl(dev, cmd, data, flag, p)
 
 	/* then the underlying frame buffer device ioctls */
 	if (sc->sc_ioctl != NULL)
-		error = (*sc->sc_ioctl)(sc->sc_dev.dv_parent, cmd, data,
+		error = (*sc->sc_ioctl)(sc->sc_fn_cookie, cmd, data,
 		    flag, p);
 	if (error >= 0)
 		return error;

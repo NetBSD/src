@@ -1,4 +1,4 @@
-/*	$NetBSD: tga.c,v 1.11 1996/10/23 04:12:35 cgd Exp $	*/
+/*	$NetBSD: tga.c,v 1.12 1996/11/19 05:23:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -82,8 +82,8 @@ struct wscons_emulfuncs tga_emulfuncs = {
 	rcons_eraserows,
 };
 
-int	tgaioctl __P((struct device *, u_long, caddr_t, int, struct proc *));
-int	tgammap __P((struct device *, off_t, int));
+int	tgaioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	tgammap __P((void *, off_t, int));
 
 void	tga_blank __P((struct tga_devconfig *));
 void	tga_unblank __P((struct tga_devconfig *));
@@ -294,15 +294,20 @@ tgaattach(parent, self, aux)
 		    intrstr);
 
 	waa.waa_isconsole = console;
+
 	wo = &waa.waa_odev_spec;
-	wo->wo_ef = &tga_emulfuncs;
-	wo->wo_efa = &sc->sc_dc->dc_rcons;
+
+	wo->wo_emulfuncs = &tga_emulfuncs;
+	wo->wo_emulfuncs_cookie = &sc->sc_dc->dc_rcons;
+
+	wo->wo_ioctl = tgaioctl;
+	wo->wo_mmap = tgammap;
+	wo->wo_miscfuncs_cookie = sc;
+
 	wo->wo_nrows = sc->sc_dc->dc_rcons.rc_maxrow;
 	wo->wo_ncols = sc->sc_dc->dc_rcons.rc_maxcol;
 	wo->wo_crow = 0;
 	wo->wo_ccol = 0;
-	wo->wo_ioctl = tgaioctl;
-	wo->wo_mmap = tgammap;
 
 	config_found(self, &waa, tgaprint);
 }
@@ -319,14 +324,14 @@ tgaprint(aux, pnp)
 }
 
 int
-tgaioctl(dev, cmd, data, flag, p)
-	struct device *dev;
+tgaioctl(v, cmd, data, flag, p)
+	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct tga_softc *sc = (struct tga_softc *)dev;
+	struct tga_softc *sc = v;
 	struct tga_devconfig *dc = sc->sc_dc;
 	const struct tga_ramdac_conf *tgar = dc->dc_tgaconf->tgac_ramdac;
 
@@ -381,12 +386,12 @@ tgaioctl(dev, cmd, data, flag, p)
 }
 
 int
-tgammap(dev, offset, prot)
-	struct device *dev;
+tgammap(v, offset, prot)
+	void *v;
 	off_t offset;
 	int prot;
 {
-	struct tga_softc *sc = (struct tga_softc *)dev;
+	struct tga_softc *sc = v;
 
 	if (offset > sc->sc_dc->dc_tgaconf->tgac_cspace_size)
 		return -1;
@@ -419,13 +424,15 @@ tga_console(iot, memt, pc, bus, device, function)
 	 */
 	(*dcp->dc_tgaconf->tgac_ramdac->tgar_init)(dcp, 0);
 
-	wo.wo_ef = &tga_emulfuncs;
-	wo.wo_efa = &dcp->dc_rcons;
+	wo.wo_emulfuncs = &tga_emulfuncs;
+	wo.wo_emulfuncs_cookie = &dcp->dc_rcons;
+
+	/* ioctl and mmap are unused until real attachment. */
+
 	wo.wo_nrows = dcp->dc_rcons.rc_maxrow;
 	wo.wo_ncols = dcp->dc_rcons.rc_maxcol;
 	wo.wo_crow = 0;
 	wo.wo_ccol = 0;
-	/* ioctl and mmap are unused until real attachment. */
 
 	wscons_attach_console(&wo);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.11 1996/11/13 21:13:22 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.12 1996/11/19 05:23:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -106,7 +106,7 @@ struct cfdriver pckbd_cd = {
 int	pckbd_cngetc __P((struct device *));
 void	pckbd_cnpollc __P((struct device *, int));
 void	pckbd_bell __P((struct device *, struct wsconsio_bell_data *));
-int	pckbd_ioctl __P((struct device *, u_long, caddr_t, int,
+int	pckbd_ioctl __P((void *, u_long, caddr_t, int,
 	    struct proc *));
 char	*pckbd_translate __P((struct device *dev, int c));
 
@@ -497,8 +497,8 @@ async_update()
 }
 
 int
-pckbd_ioctl(dev, cmd, data, flag, p)
-	struct device *dev;
+pckbd_ioctl(v, cmd, data, flag, p)
+	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
