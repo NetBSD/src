@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.13 2003/01/19 00:50:28 kristerw Exp $	*/
+/*	$NetBSD: patch.c,v 1.14 2003/05/29 00:59:24 kristerw Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.13 2003/01/19 00:50:28 kristerw Exp $");
+__RCSID("$NetBSD: patch.c,v 1.14 2003/05/29 00:59:24 kristerw Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -248,23 +248,23 @@ main(int argc, char *argv[])
 		abort_hunk();
 		failed++;
 		if (verbose)
-		    say("Hunk #%d ignored at %ld.\n", hunk, newwhere);
+		    say("Hunk #%d ignored at %d.\n", hunk, newwhere);
 	    }
 	    else if (where == Nulline) {
 		abort_hunk();
 		failed++;
 		if (verbose)
-		    say("Hunk #%d failed at %ld.\n", hunk, newwhere);
+		    say("Hunk #%d failed at %d.\n", hunk, newwhere);
 	    }
 	    else {
 		apply_hunk(where);
 		if (verbose) {
-		    say("Hunk #%d succeeded at %ld", hunk, newwhere);
+		    say("Hunk #%d succeeded at %d", hunk, newwhere);
 		    if (fuzz)
-			say(" with fuzz %ld", fuzz);
+			say(" with fuzz %d", fuzz);
 		    if (last_offset)
-			say(" (offset %ld line%s)",
-			    last_offset, last_offset==1L?"":"s");
+			say(" (offset %d line%s)",
+			    last_offset, last_offset==1?"":"s");
 		    say(".\n");
 		}
 	    }
@@ -615,7 +615,7 @@ locate_hunk(LINENUM fuzz)
 	if (check_after && patch_match(first_guess, offset, fuzz)) {
 #ifdef DEBUGGING
 	    if (debug & 1)
-		say("Offset changing from %ld to %ld\n", last_offset, offset);
+		say("Offset changing from %d to %d\n", last_offset, offset);
 #endif
 	    last_offset = offset;
 	    return first_guess+offset;
@@ -623,7 +623,7 @@ locate_hunk(LINENUM fuzz)
 	else if (check_before && patch_match(first_guess, -offset, fuzz)) {
 #ifdef DEBUGGING
 	    if (debug & 1)
-		say("Offset changing from %ld to %ld\n", last_offset, -offset);
+		say("Offset changing from %d to %d\n", last_offset, -offset);
 #endif
 	    last_offset = -offset;
 	    return first_guess-offset;
@@ -655,17 +655,17 @@ abort_hunk(void)
 	    if (oldlast < oldfirst)
 		fprintf(rejfp, "*** 0%s\n", stars);
 	    else if (oldlast == oldfirst)
-		fprintf(rejfp, "*** %ld%s\n", oldfirst, stars);
+		fprintf(rejfp, "*** %d%s\n", oldfirst, stars);
 	    else
-		fprintf(rejfp, "*** %ld,%ld%s\n", oldfirst, oldlast, stars);
+		fprintf(rejfp, "*** %d,%d%s\n", oldfirst, oldlast, stars);
 	    break;
 	case '=':
 	    if (newlast < newfirst)
 		fprintf(rejfp, "--- 0%s\n", minuses);
 	    else if (newlast == newfirst)
-		fprintf(rejfp, "--- %ld%s\n", newfirst, minuses);
+		fprintf(rejfp, "--- %d%s\n", newfirst, minuses);
 	    else
-		fprintf(rejfp, "--- %ld,%ld%s\n", newfirst, newlast, minuses);
+		fprintf(rejfp, "--- %d,%d%s\n", newfirst, newlast, minuses);
 	    break;
 	case '\n':
 	    fprintf(rejfp, "%s", pfetch(i));
@@ -735,7 +735,7 @@ apply_hunk(LINENUM where)
 	    new++;
 	}
 	else if (pch_char(new) != pch_char(old)) {
-	    say("Out-of-sync patch, lines %ld,%ld--mangled text or line numbers, maybe?\n",
+	    say("Out-of-sync patch, lines %d,%d--mangled text or line numbers, maybe?\n",
 		pch_hunk_beg() + old,
 		pch_hunk_beg() + new);
 #ifdef DEBUGGING
@@ -840,7 +840,7 @@ spew_output(void)
 {
 #ifdef DEBUGGING
     if (debug & 256)
-	say("il=%ld lfl=%ld\n",input_lines,last_frozen_line);
+	say("il=%d lfl=%d\n",input_lines,last_frozen_line);
 #endif
     if (input_lines)
 	copy_till(input_lines);		/* dump remainder of file */

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.11 2002/03/11 18:47:51 kristerw Exp $	*/
+/*	$NetBSD: common.h,v 1.12 2003/05/29 00:59:23 kristerw Exp $	*/
 
 #define DEBUGGING
 
@@ -67,7 +67,7 @@
 /* typedefs */
 
 typedef char bool;
-typedef long LINENUM;			/* must be signed */
+typedef int LINENUM;			/* must be signed */
 
 /* globals */
 
@@ -77,7 +77,7 @@ EXT int Argc_last;			/* for restarting plan_b */
 EXT char **Argv_last;
 
 EXT struct stat filestat;		/* file statistics area */
-EXT int filemode INIT(0644);
+EXT mode_t filemode INIT(0644);
 
 EXT char buf[MAXLINELEN];		/* general purpose buffer */
 EXT FILE *ofp INIT(NULL);		/* output file pointer */
