@@ -1,5 +1,22 @@
-# $NetBSD: shl.elf,v 1.58 2002/08/20 13:49:55 jdarrow Exp $
+# $NetBSD: shl.elf,v 1.59 2002/09/22 15:08:18 lukem Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
+./lib/libc.so.12		base-sys-shlib
+./lib/libcrypt.so.0		base-sys-shlib
+./lib/libedit.so.2		base-sys-shlib
+./lib/libipsec.so.2		base-net-shlib
+./lib/libkvm.so.5		base-sys-shlib
+./lib/libm.so.0			base-sys-shlib
+./lib/libtermcap.so.0		base-sys-shlib
+./lib/libtermlib.so.0		base-sys-shlib
+./lib/libutil.so.6		base-sys-shlib
+./lib/libz.so.0			base-sys-shlib
+./libexec/ld.elf_so		base-sys-shlib
+./usr/lib/i18n/libBIG5.so.4	base-i18n-shlib
+./usr/lib/i18n/libEUC.so.4	base-i18n-shlib
+./usr/lib/i18n/libEUCTW.so.4	base-i18n-shlib
+./usr/lib/i18n/libISO2022.so.4	base-i18n-shlib
+./usr/lib/i18n/libMSKanji.so.4	base-i18n-shlib
+./usr/lib/i18n/libUTF8.so.4	base-i18n-shlib
 ./usr/lib/libamu.so.2		base-amd-shlib
 ./usr/lib/libasn1.so.6		base-krb5-shlib
 ./usr/lib/libbz2.so.1		base-sys-shlib
@@ -45,10 +62,4 @@
 ./usr/lib/libutil.so.6		base-sys-shlib
 ./usr/lib/libwrap.so.0		base-net-shlib
 ./usr/lib/libz.so.0		base-sys-shlib
-./usr/lib/i18n/libBIG5.so.4	base-i18n-shlib
-./usr/lib/i18n/libEUC.so.4	base-i18n-shlib
-./usr/lib/i18n/libMSKanji.so.4	base-i18n-shlib
-./usr/lib/i18n/libUTF8.so.4	base-i18n-shlib
-./usr/lib/i18n/libEUCTW.so.4	base-i18n-shlib
-./usr/lib/i18n/libISO2022.so.4	base-i18n-shlib
 ./usr/libexec/ld.elf_so		base-sys-shlib

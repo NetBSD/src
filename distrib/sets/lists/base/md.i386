@@ -1,4 +1,6 @@
-# $NetBSD: md.i386,v 1.94 2002/08/29 01:30:41 lukem Exp $
+# $NetBSD: md.i386,v 1.95 2002/09/22 15:08:17 lukem Exp $
+./lib/libm387.so.0			base-sys-shlib
+./lib/libm387.so.0.0			base-sys-shlib
 ./rescue/fdisk				base-rescue-root
 ./rescue/ldconfig			base-rescue-root
 ./sbin/fdisk				base-sysutil-root

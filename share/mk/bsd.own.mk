@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.310 2002/09/17 23:18:30 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.311 2002/09/22 15:08:19 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -213,7 +213,7 @@ DESTDIR?=
 # libraries moved from /usr/lib to /lib and the shared linker moved
 # from /usr/libexec to /lib
 #
-MKDYNAMICROOT?=	no
+MKDYNAMICROOT?=	yes
 
 # Where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj (for example).
