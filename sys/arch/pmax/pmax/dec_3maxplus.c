@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.5 1998/03/26 12:46:34 jonathan Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.6 1998/03/29 01:12:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.5 1998/03/26 12:46:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.6 1998/03/29 01:12:15 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.5 1998/03/26 12:46:34 jonathan Ex
 
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/asic.h>
+#include <pmax/pmax/dec_3max_subr.h>
 
 
 /*
@@ -474,52 +475,23 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 		MIPS_SR_INT_ENA_CUR);
 }
 
-/*
- * XXX share with  5000/200  
- */
 
+/*
+ * Handle Memory error.   3max, 3maxplus has ECC.
+ * Correct single-bit error, panic on  double-bit error.
+ * XXX on double-error on clean user page, mark bad and reload frame?
+ */
 static void
 dec_3maxplus_errintr()
 {
-	u_int erradr, errsyn, physadr;
+	register u_int erradr, errsyn;
 
+	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);
 	errsyn = *(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRSYN);
 	*(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	wbflush();
 
-	if (!(erradr & KN03_ERR_VALID))
-		return;
-	/* extract the physical word address and compensate for pipelining */
-	physadr = erradr & KN03_ERR_ADDRESS;
-	if (!(erradr & KN03_ERR_WRITE))
-		physadr = (physadr & ~0xfff) | ((physadr & 0xfff) - 5);
-	physadr <<= 2;
-	printf("%s memory %s %s error at 0x%08x",
-		(erradr & KN03_ERR_CPU) ? "CPU" : "DMA",
-		(erradr & KN03_ERR_WRITE) ? "write" : "read",
-		(erradr & KN03_ERR_ECCERR) ? "ECC" : "timeout",
-		physadr);
-	if (erradr & KN03_ERR_ECCERR) {
-		*(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRSYN) = 0;
-		wbflush();
-		printf("   ECC 0x%08x\n", errsyn);
-
-		/* check for a corrected, single bit, read error */
-		if (!(erradr & KN03_ERR_WRITE)) {
-			if (physadr & 0x4) {
-				/* check high word */
-				if (errsyn & KN03_ECC_SNGHI)
-					return;
-			} else {
-				/* check low word */
-				if (errsyn & KN03_ECC_SNGLO)
-					return;
-			}
-		}
-		printf("\n");
-	}
-	else
-		printf("\n");
-	printf("panic(\"Mem error interrupt\");\n");
+	/* Send to kn02/kn03 memory subsystem handler */
+	dec_mtasic_err(erradr, errsyn);
 }
