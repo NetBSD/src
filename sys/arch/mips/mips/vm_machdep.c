@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 1998/07/28 18:34:55 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 1998/09/02 06:41:22 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 1998/07/28 18:34:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.27 1998/09/02 06:41:22 nisimura Exp $");
 
 #include "opt_uvm.h"
 
@@ -69,9 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 1998/07/28 18:34:55 thorpej Exp 
 #include <mips/pte.h>
 #include <machine/cpu.h>
 
-extern struct proc *fpcurproc;			/* trap.c */
-
+/* XXX will be declared in mips/include/cpu.h XXX */
+extern struct proc *fpcurproc;
 extern void savefpregs __P((struct proc *));
+extern void child_return __P((void));
 
 extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
 
@@ -84,35 +85,29 @@ cpu_fork(p1, p2)
 {
 	struct pcb *pcb;
 	pt_entry_t *pte;
-	struct frame *tf;
-	int i;
-	extern void child_return __P((void));		/* trap.c */
+	int i, x;
 
-	tf = (struct frame *)(KERNELSTACK - 24);
 	p2->p_md.md_regs = p2->p_addr->u_pcb.pcb_regs;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
+	x = (CPUISMIPS3) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
+	pte = kvtopte(p2->p_addr);
+	for (i = 0; i < UPAGES; i++)
+		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
 
 #ifdef MIPS3
 	if (CPUISMIPS3)
-		mips3_HitFlushDCache((vm_offset_t)p2->p_addr, UPAGES * NBPG);
+		mips3_HitFlushDCache((vm_offset_t)p2->p_addr, USPACE);
 #endif
-
-	/* XXX save pte mask outside loop ? */
-	for (i = 0, pte = kvtopte(p2->p_addr); i < UPAGES; i++, pte++) {
-		if (CPUISMIPS3)
-			p2->p_md.md_upte[i] = pte->pt_entry &
-		            ~(MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED);
-		else
-			p2->p_md.md_upte[i] = pte->pt_entry &~ MIPS1_PG_G;
-	}
 	
-	pcb = &p2->p_addr->u_pcb;
 	if (p1 == fpcurproc)
 		savefpregs(p1);
-	*pcb = p1->p_addr->u_pcb;
+
+	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+	pcb = &p2->p_addr->u_pcb;
 	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
-	pcb->pcb_context[8] = (int)tf;			/* SP */
+	pcb->pcb_context[8] = (int)pcb + USPACE;	/* SP */
+	pcb->pcb_context[8] = (int)KERNELSTACK;		/* SP */ /* XXX */
 	pcb->pcb_context[0] = (int)child_return;	/* S0 */
 	pcb->pcb_context[1] = (int)p2;			/* S1 */
 }
@@ -132,26 +127,20 @@ cpu_set_kpc(p, pc)
  */
 void
 cpu_swapin(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register struct user *up = p->p_addr;
-	register pt_entry_t *pte;
-	register int i;
+	pt_entry_t *pte;
+	int i, x;
 
 	/*
 	 * Cache the PTEs for the user area in the machine dependent
 	 * part of the proc struct so cpu_switch() can quickly map in
 	 * the user struct and kernel stack.
 	 */
-	pte = kvtopte(up);
-	for (i = 0; i < UPAGES; i++) {
-		if (CPUISMIPS3)
-			p->p_md.md_upte[i] = pte->pt_entry &
-			    ~(MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED);
-		else
-			p->p_md.md_upte[i] = pte->pt_entry & ~MIPS1_PG_G;
-		pte++;
-	}
+	x = (CPUISMIPS3) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
+	pte = kvtopte(p->p_addr);
+	for (i = 0; i < UPAGES; i++)
+		p->p_md.md_upte[i] = pte[i].pt_entry &~ x;
 }
 
 /*
