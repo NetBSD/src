@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.10 1993/08/06 20:56:34 mycroft Exp $
+#	$Id: Makefile.inc,v 1.11 1993/08/13 02:49:41 brezak Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
@@ -8,8 +8,8 @@ SRCS+=	alarm.c assert.c clock.c crypt.c ctermid.c ctime.c ctype_.c difftime.c \
 	directory.c disklabel.c err.c errlst.c exec.c fnmatch.c frexp.c \
 	fstab.c fts.c getcap.c getcwd.c getgrent.c getlogin.c getmntinfo.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
-	infinity.c initgroups.c isatty.c isctype.c isinf.c mktemp.c nice.c \
-	nlist.c pause.c popen.c psignal.c raise.c \
+	infinity.c initgroups.c insque.c isatty.c isctype.c isinf.c  \
+	mktemp.c nice.c nlist.c pause.c popen.c psignal.c raise.c remque.c \
 	scandir.c setjmperr.c \
 	setmode.c setrgid.c setruid.c siginterrupt.c \
 	siglist.c signal.c signame.c sigsetops.c sleep.c syslog.c \
@@ -42,7 +42,7 @@ SRCS+=	udiv.s urem.s
 MAN3+=	alarm.0 clock.0 crypt.0 ctermid.0 ctime.0 ctype.0 directory.0 err.0 \
 	exec.0 fnmatch.0 frexp.0 fts.0 getcap.0 getcwd.0 getdiskbyname.0 \
 	getfsent.0 getgrent.0 getmntinfo.0 getpass.0 getpwent.0 getsubopt.0 \
-	getttyent.0 getusershell.0 glob.0 initgroups.0 isalnum.0 \
+	getttyent.0 getusershell.0 glob.0 initgroups.0 insque.0 isalnum.0 \
 	isalpha.0 isascii.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
 	islower.0 isprint.0 ispunct.0 isspace.0 isupper.0 isxdigit.0 \
 	ldexp.0 modf.0 nice.0 nlist.0 pause.0 popen.0 psignal.0 \
