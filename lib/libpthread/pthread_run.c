@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.10 2003/05/27 15:24:24 christos Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.11 2003/06/26 01:26:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.10 2003/05/27 15:24:24 christos Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.11 2003/06/26 01:26:39 nathanw Exp $");
 
 #include <ucontext.h>
 
@@ -176,6 +176,7 @@ pthread__sched_idle(pthread_t self, pthread_t thread)
 	thread->pt_state = PT_STATE_RUNNABLE;
 
 	thread->pt_flags &= ~PT_FLAG_IDLED;
+	thread->pt_trapuc = NULL;
 	_INITCONTEXT_U(thread->pt_uc);
 	thread->pt_uc->uc_stack = thread->pt_stack;
 	thread->pt_uc->uc_link = NULL;
@@ -242,6 +243,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->pt_flags &= ~PT_FLAG_IDLED;
 			qhead->pt_next = NULL;
 			qhead->pt_parent = NULL;
+			qhead->pt_trapuc = NULL;
 			_INITCONTEXT_U(qhead->pt_uc);
 			qhead->pt_uc->uc_stack = qhead->pt_stack;
 			qhead->pt_uc->uc_link = NULL;
