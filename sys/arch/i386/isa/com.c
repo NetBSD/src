@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.12 1993/10/17 05:34:20 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.13 1993/10/18 07:35:26 mycroft Exp $
  */
 
 /*
@@ -161,8 +161,8 @@ comprobe(parent, cf, aux)
 	}
 
 	/* disable interrupts */
-	outb(iobase + com_mcr, 0);
 	outb(iobase + com_ier, 0);
+	outb(iobase + com_mcr, 0);
 
 	ia->ia_iosize = COM_NPORTS;
 	ia->ia_drq = DRQUNK;
@@ -190,7 +190,7 @@ comforceintr(aux)
 #else
 	/*
 	 * So instead we try to force the transmit buffer empty (though
-	 * it probably is already).
+	 * it probably is already) and get a transmit interrupt.
 	 */
 	outb(iobase + com_cfcr, CFCR_8BITS);	/* turn off DLAB */
 	outb(iobase + com_ier, 0);
@@ -220,22 +220,25 @@ comattach(parent, self, aux)
 
 	/* look for a NS 16550AF UART with FIFOs */
 	outb(iobase + com_fifo,
-	     FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_8);
+	     FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
 	delay(100);
-	if ((inb(iobase + com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK) {
-		sc->sc_flags |= COM_FIFO;
-		printf(": ns16550\n");
+	if ((inb(iobase + com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK)
+		if ((inb(iobase + com_fifo) & FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
+			sc->sc_flags |= COM_FIFO;
+			printf(": ns16550a, working fifo\n");
+		} else
+			printf(": ns82550 or ns16550, broken fifo\n");
 	} else
-		printf(": ns8250 or ns16450\n");
+		printf(": ns82450 or ns16450, no fifo\n");
 	outb(iobase + com_fifo, 0);
 	isa_establish(&sc->sc_id, &sc->sc_dev);
+
+	outb(iobase + com_ier, 0);
+	outb(iobase + com_mcr, 0);
 
 	sc->sc_ih.ih_fun = comintr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(ia->ia_irq, &sc->sc_ih, DV_TTY);
-
-	outb(iobase + com_ier, 0);
-	outb(iobase + com_mcr, MCR_IENABLE);
 
 	/*
 	 * Need to reset baud rate, etc. of next print so reset comconsinit.
@@ -336,7 +339,7 @@ comclose(dev, flag)
 	bic(iobase + com_cfcr, CFCR_SBREAK);
 	outb(iobase + com_ier, 0);
 	if (tp->t_cflag & HUPCL)
-		bic(iobase + com_mcr, MCR_DTR | MCR_RTS);
+		outb(iobase + com_mcr, 0);
 	ttyclose(tp);
 #ifdef notyet /* XXXX */
 	if (iobase != comconsole) {
@@ -629,8 +632,8 @@ commint(sc)
 			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 		else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
 			bic(iobase + com_mcr, MCR_DTR | MCR_RTS);
-	} else if (stat & MSR_DCTS && tp->t_state & TS_ISOPEN &&
-		   tp->t_cflag & CRTSCTS) {
+	}
+	if (stat & MSR_DCTS && tp->t_state & TS_ISOPEN && tp->t_cflag & CRTSCTS) {
 		/* the line is up and we want to do rts/cts flow control */
 		if (stat & MSR_CTS) {
 			tp->t_state &=~ TS_TTSTOP;
@@ -682,6 +685,9 @@ comintr(sc)
 				else
 					comstart(tp);
 			break;
+		    case IIR_MLSC:
+			commint(sc);
+			break;
 		    case IIR_RLS:
 			comeint(sc, inb(iobase + com_lsr));
 			break;
@@ -689,9 +695,6 @@ comintr(sc)
 			log(LOG_WARNING, "%s: weird iir=0x%x\n",
 			    sc->sc_dev.dv_xname, code);
 			/* fall through */
-		    case IIR_MLSC:
-			commint(sc);
-			break;
 		}
 
 		code = inb(iobase + com_iir);
