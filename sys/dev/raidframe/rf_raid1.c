@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.9 2002/07/13 20:14:34 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.10 2002/09/14 17:11:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.9 2002/07/13 20:14:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.10 2002/09/14 17:11:30 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -320,11 +320,13 @@ rf_VerifyParityRAID1(
 	RF_MallocAndAdd(buf, bcount, (char *), allocList);
 	if (buf == NULL)
 		goto done;
+#if RF_DEBUG_VERIFYPARITY
 	if (rf_verifyParityDebug) {
 		printf("raid%d: RAID1 parity verify: buf=%lx bcount=%d (%lx - %lx)\n",
 		       raidPtr->raidid, (long) buf, bcount, (long) buf, 
 		       (long) buf + bcount);
 	}
+#endif
 	/*
          * Generate a DAG which will read the entire stripe- then we can
          * just compare data chunks versus "parity" chunks.
@@ -435,13 +437,16 @@ rf_VerifyParityRAID1(
          * Check data vs "parity" (mirror copy).
          */
 	for (i = 0; i < layoutPtr->numDataCol; i++) {
+#if RF_DEBUG_VERIFYPARITY
 		if (rf_verifyParityDebug) {
 			printf("raid%d: RAID1 parity verify %d bytes: i=%d buf1=%lx buf2=%lx buf=%lx\n",
 			       raidPtr->raidid, nbytes, i, (long) buf1, 
 			       (long) buf2, (long) buf);
 		}
+#endif
 		ret = memcmp(buf1, buf2, nbytes);
 		if (ret) {
+#if RF_DEBUG_VERIFYPARITY
 			if (rf_verifyParityDebug > 1) {
 				for (j = 0; j < nbytes; j++) {
 					if (buf1[j] != buf2[j])
@@ -456,6 +461,7 @@ rf_VerifyParityRAID1(
 			if (rf_verifyParityDebug) {
 				printf("raid%d: RAID1: found bad parity, i=%d\n", raidPtr->raidid, i);
 			}
+#endif
 			/*
 		         * Parity is bad. Keep track of which columns were bad.
 		         */
@@ -470,9 +476,11 @@ rf_VerifyParityRAID1(
 
 	if ((ret != RF_PARITY_OKAY) && correct_it) {
 		ret = RF_PARITY_COULD_NOT_CORRECT;
+#if RF_DEBUG_VERIFYPARITY
 		if (rf_verifyParityDebug) {
 			printf("raid%d: RAID1 parity verify: parity not correct\n", raidPtr->raidid);
 		}
+#endif
 		if (bbufs == NULL)
 			goto done;
 		/*
@@ -537,10 +545,12 @@ done:
 	if (mcpair)
 		rf_FreeMCPair(mcpair);
 	rf_FreeAllocList(allocList);
+#if RF_DEBUG_VERIFYPARITY
 	if (rf_verifyParityDebug) {
 		printf("raid%d: RAID1 parity verify, returning %d\n", 
 		       raidPtr->raidid, ret);
 	}
+#endif
 	return (ret);
 }
 
@@ -571,12 +581,14 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 	RF_ASSERT(rbuf);
 	RF_ASSERT(rbuf->col != reconCtrlPtr->fcol);
 
+#if RF_DEBUG_RECONBUFFER
 	if (rf_reconbufferDebug) {
 		printf("raid%d: RAID1 reconbuffer submission r%d c%d psid %ld ru%d (failed offset %ld)\n",
 		       raidPtr->raidid, rbuf->row, rbuf->col, 
 		       (long) rbuf->parityStripeID, rbuf->which_ru,
 		       (long) rbuf->failedDiskSectorOffset);
 	}
+#endif
 	if (rf_reconDebug) {
 		printf("RAID1 reconbuffer submit psid %ld buf %lx\n",
 		    (long) rbuf->parityStripeID, (long) rbuf->buffer);
@@ -601,34 +613,42 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 
 	t = NULL;
 	if (keep_it) {
+#if RF_DEBUG_RECONBUFFER
 		if (rf_reconbufferDebug) {
 			printf("raid%d: RAID1 rbuf submission: keeping rbuf\n", 
 			       raidPtr->raidid);
 		}
+#endif
 		t = rbuf;
 	} else {
 		if (use_committed) {
+#if RF_DEBUG_RECONBUFFER
 			if (rf_reconbufferDebug) {
 				printf("raid%d: RAID1 rbuf submission: using committed rbuf\n", raidPtr->raidid);
 			}
+#endif
 			t = reconCtrlPtr->committedRbufs;
 			RF_ASSERT(t);
 			reconCtrlPtr->committedRbufs = t->next;
 			t->next = NULL;
 		} else
 			if (reconCtrlPtr->floatingRbufs) {
+#if RF_DEBUG_RECONBUFFER
 				if (rf_reconbufferDebug) {
 					printf("raid%d: RAID1 rbuf submission: using floating rbuf\n", raidPtr->raidid);
 				}
+#endif
 				t = reconCtrlPtr->floatingRbufs;
 				reconCtrlPtr->floatingRbufs = t->next;
 				t->next = NULL;
 			}
 	}
 	if (t == NULL) {
+#if RF_DEBUG_RECONBUFFER
 		if (rf_reconbufferDebug) {
 			printf("raid%d: RAID1 rbuf submission: waiting for rbuf\n", raidPtr->raidid);
 		}
+#endif
 		RF_ASSERT((keep_it == 0) && (use_committed == 0));
 		raidPtr->procsInBufWait++;
 		if ((raidPtr->procsInBufWait == (raidPtr->numCol - 1))
@@ -686,9 +706,11 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 out:
 	RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->row, rbuf->parityStripeID);
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+#if RF_DEBUG_RECONBUFFER
 	if (rf_reconbufferDebug) {
 		printf("raid%d: RAID1 rbuf submission: returning %d\n", 
 		       raidPtr->raidid, retcode);
 	}
+#endif
 	return (retcode);
 }
