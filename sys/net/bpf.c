@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.40 1998/04/30 00:08:19 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.41 1998/08/06 04:24:25 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -126,7 +126,7 @@ static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
-static void	bpf_mcopy __P((const void *, void *, size_t));
+static void	bpf_mcpy __P((const void *, void *, size_t));
 static int	bpf_movein __P((struct uio *, int, int,
 			        struct mbuf **, struct sockaddr *));
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
@@ -255,7 +255,7 @@ bpf_movein(uio, linktype, mtu, mp, sockp)
 	if (error)
 		goto bad;
 	if (hlen != 0) {
-		bcopy(mtod(m, caddr_t), sockp->sa_data, hlen);
+		memcpy(sockp->sa_data, mtod(m, caddr_t), hlen);
 #if BSD >= 199103
 		m->m_data += hlen; /* XXX */
 #else
@@ -374,7 +374,7 @@ bpfopen(dev, flag, mode, p)
 		return (EBUSY);
 
 	/* Mark "free" and do most initialization. */
-	bzero((char *)d, sizeof(*d));
+	memset((char *)d, 0, sizeof(*d));
 	d->bd_bufsize = bpf_bufsize;
 
 	return (0);
@@ -1049,7 +1049,7 @@ bpf_ifname(ifp, ifr)
 	struct ifreq *ifr;
 {
 
-	bcopy(ifp->if_xname, ifr->ifr_name, IFNAMSIZ);
+	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
 }
 
 /*
@@ -1106,7 +1106,7 @@ bpf_tap(arg, pkt, pktlen)
 		++d->bd_rcount;
 		slen = bpf_filter(d->bd_filter, pkt, pktlen, pktlen);
 		if (slen != 0)
-			catchpacket(d, pkt, pktlen, slen, bcopy);
+			catchpacket(d, pkt, pktlen, slen, memcpy);
 	}
 }
 
@@ -1115,9 +1115,9 @@ bpf_tap(arg, pkt, pktlen)
  * from m_copydata in sys/uipc_mbuf.c.
  */
 static void
-bpf_mcopy(src_arg, dst_arg, len)
-	const void *src_arg;
+bpf_mcpy(dst_arg, src_arg, len)
 	void *dst_arg;
+	const void *src_arg;
 	register size_t len;
 {
 	register const struct mbuf *m;
@@ -1128,9 +1128,9 @@ bpf_mcopy(src_arg, dst_arg, len)
 	dst = dst_arg;
 	while (len > 0) {
 		if (m == 0)
-			panic("bpf_mcopy");
+			panic("bpf_mcpy");
 		count = min(m->m_len, len);
-		bcopy(mtod(m, caddr_t), (caddr_t)dst, count);
+		memcpy((caddr_t)dst, mtod(m, caddr_t), count);
 		m = m->m_next;
 		dst += count;
 		len -= count;
@@ -1158,7 +1158,7 @@ bpf_mtap(arg, m)
 		++d->bd_rcount;
 		slen = bpf_filter(d->bd_filter, (u_char *)m, pktlen, 0);
 		if (slen != 0)
-			catchpacket(d, (u_char *)m, pktlen, slen, bpf_mcopy);
+			catchpacket(d, (u_char *)m, pktlen, slen, bpf_mcpy);
 	}
 }
 
@@ -1166,8 +1166,8 @@ bpf_mtap(arg, m)
  * Move the packet data from interface memory (pkt) into the
  * store buffer.  Return 1 if it's time to wakeup a listener (buffer full),
  * otherwise 0.  "copy" is the routine called to do the actual data
- * transfer.  bcopy is passed in to copy contiguous chunks, while
- * bpf_mcopy is passed in to copy mbuf chains.  In the latter case,
+ * transfer.  memcpy is passed in to copy contiguous chunks, while
+ * bpf_mcpy is passed in to copy mbuf chains.  In the latter case,
  * pkt is really an mbuf.
  */
 static void
@@ -1235,7 +1235,7 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	/*
 	 * Copy the packet data into the store buffer and update its length.
 	 */
-	(*cpfn)(pkt, (u_char *)hp + hdrlen, (hp->bh_caplen = totlen - hdrlen));
+	(*cpfn)((u_char *)hp + hdrlen, pkt, (hp->bh_caplen = totlen - hdrlen));
 	d->bd_slen = curlen + totlen;
 }
 
@@ -1382,7 +1382,7 @@ ifpromisc(ifp, pswitch)
 		if ((ifp->if_flags & IFF_UP) == 0)
 			return (0);
 	}
-	bzero((caddr_t)&ifr, sizeof(ifr));
+	memset((caddr_t)&ifr, 0, sizeof(ifr));
 	ifr.ifr_flags = ifp->if_flags;
 	ret = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
 	/* Restore interface state if not successful */
