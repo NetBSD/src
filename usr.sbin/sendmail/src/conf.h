@@ -423,6 +423,10 @@ typedef int		pid_t;
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 # define HASUNAME       1 
 #endif
+#if defined(__NetBSD__) && ((NetBSD > 199307) || (NetBSD0_9 > 1))
+# undef SETPROCTITLE
+# define HASSETPROCTITLE
+#endif
 # include <sys/cdefs.h>
 # define ERRLIST_PREDEFINED	/* don't declare sys_errlist */
 # ifndef LA_TYPE
