@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.27 2000/03/23 06:44:46 thorpej Exp $ */
+/*	$NetBSD: auxreg.c,v 1.28 2000/11/14 11:34:52 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)auxreg.c	8.1 (Berkeley) 6/11/93
  */
+
+#include "opt_blink.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
