@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.7 2004/08/08 23:17:12 mycroft Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.8 2004/08/09 18:41:36 mycroft Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.7 2004/08/08 23:17:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.8 2004/08/09 18:41:36 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +147,7 @@ cs_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_disable = cs_pcmcia_disable;
 
 	pcmcia_function_init(pa->pf, cfe);
+
 	if (cs_pcmcia_enable(sc))
 		goto fail;
 
@@ -155,12 +156,10 @@ cs_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 
 	cs_pcmcia_disable(sc);
-
 	return;
 
 fail:
 	cs_pcmcia_detach((struct device *)psc, 0);
-
 	return;
 }
 
@@ -199,14 +198,15 @@ cs_pcmcia_enable(struct cs_softc *sc)
 	}
 	psc->sc_flags |= CS_PCMCIA_FLAGS_IO_MAPPED;
 
-	if (pcmcia_function_enable(pf)) {
-		printf("%s: can't enable function\n", DEVNAME(sc));
-		goto fail;
-	}
-
 	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, cs_intr, sc);
 	if (sc->sc_ih == 0) {
 		printf("%s: can't establish interrupt\n", DEVNAME(sc));
+		goto fail;
+	}
+
+	if (pcmcia_function_enable(pf)) {
+		printf("%s: can't enable function\n", DEVNAME(sc));
+		pcmcia_intr_disestablish(pf, sc->sc_ih);
 		goto fail;
 	}
 
@@ -222,13 +222,13 @@ cs_pcmcia_disable(struct cs_softc *sc)
 	struct cs_pcmcia_softc *psc = (void *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
 
+	pcmcia_function_disable(pf);
+	
 	if (sc->sc_ih != 0) {
 		pcmcia_intr_disestablish(pf, sc->sc_ih);
 		sc->sc_ih = 0;
 	}
 
-	pcmcia_function_disable(pf);
-	
 	if (psc->sc_flags & CS_PCMCIA_FLAGS_IO_MAPPED) {
 		pcmcia_io_unmap(pf, psc->sc_io_window);
 		psc->sc_flags &= ~CS_PCMCIA_FLAGS_IO_MAPPED;
