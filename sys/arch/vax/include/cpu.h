@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.19 1996/07/20 17:58:12 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.20 1997/01/31 02:11:51 thorpej Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -92,17 +92,18 @@ extern	int     want_resched;   /* resched() was called */
  */
 #define need_proftick(p) {(p)->p_flag |= P_OWEUPC; mtpr(AST_OK,PR_ASTLVL); }
 
+struct device;
+
 /* Some low-level prototypes */
 int	badaddr __P((caddr_t, int));
 void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 void	cpu_swapin __P((struct proc *));
-int	hp_getdev __P((int, int, char **));
-int	ra_getdev __P((int, int, int, char **));
+int	hp_getdev __P((int, int, struct device **));
+int	ra_getdev __P((int, int, int, struct device **));
 void	configure __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
-void	setroot __P((void));
-void	setconf __P((void));
+void	findroot __P((void));
 void	swapconf __P((void));
 #ifdef DDB
 int	kdbrint __P((int));
