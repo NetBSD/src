@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 1997/09/26 18:09:58 gwr Exp $
+# $NetBSD: Makefile,v 1.4 1997/09/26 18:12:09 gwr Exp $
 
 # PROG=	gdb # No, this needs custom rules.
 # Use <bsd.prog.mk> somehow?
@@ -13,8 +13,8 @@ srcdir= $(dist)/gdb
 # Override this to build a cross-debugger.
 TARGET_ARCH?=$(MACHINE_ARCH)
 
-# Compiler options.
-CFLAGS=-g
+# Debugging?
+# CFLAGS=-g
 
 # Find out where libreadline.a lives.
 RL_CURDIR=$(TOP)/lib/readline
