@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.27 1999/01/20 09:15:41 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.28 1999/03/23 10:45:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -174,6 +174,7 @@ sonewconn1(head, connstatus)
 	so->so_pgid = head->so_pgid;
 	so->so_send = head->so_send;
 	so->so_receive = head->so_receive;
+	so->so_uid = head->so_uid;
 	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
