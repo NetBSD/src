@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.65 2000/06/07 04:31:49 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.66 2000/06/07 20:42:52 scw Exp $	*/
 
 
 /*
@@ -2940,7 +2940,8 @@ opti_chip_map(sc, pa)
 	pciide_mapreg_dma(sc, pa);
 	printf("\n");
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
@@ -2985,7 +2986,7 @@ opti_setup_channel(chp)
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	int drive;
+	int drive, spd;
 	int mode[2];
 	u_int8_t rv, mr;
 
@@ -3000,6 +3001,10 @@ opti_setup_channel(chp)
 
 	/* Prime the control register before setting timing values */
 	opti_write_config(chp, OPTI_REG_CONTROL, OPTI_CONTROL_DISABLE);
+
+	/* Determine the clockrate of the PCIbus the chip is attached to */
+	spd = (int) opti_read_config(chp, OPTI_REG_STRAP);
+	spd &= OPTI_STRAP_PCI_SPEED_MASK;
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -3030,14 +3035,14 @@ opti_setup_channel(chp)
 			mode[drive] = drvp->PIO_mode;
 
 		if (drive && mode[0] >= 0 &&
-		    (opti_tim_as[mode[0]] != opti_tim_as[mode[1]])) {
+		    (opti_tim_as[spd][mode[0]] != opti_tim_as[spd][mode[1]])) {
 			/*
 			 * Can't have two drives using different values
 			 * for `Address Setup Time'.
 			 * Slow down the faster drive to compensate.
 			 */
-			int d;
-			d = (opti_tim_as[mode[0]] > opti_tim_as[mode[1]])?0:1;
+			int d = (opti_tim_as[spd][mode[0]] >
+				 opti_tim_as[spd][mode[1]]) ?  0 : 1;
 
 			mode[d] = mode[1-d];
 			chp->ch_drive[d].PIO_mode = chp->ch_drive[1-d].PIO_mode;
@@ -3052,13 +3057,13 @@ opti_setup_channel(chp)
 			continue;
 
 		/* Set the Address Setup Time and select appropriate index */
-		rv = opti_tim_as[m] << OPTI_MISC_ADDR_SETUP_SHIFT;
+		rv = opti_tim_as[spd][m] << OPTI_MISC_ADDR_SETUP_SHIFT;
 		rv |= OPTI_MISC_INDEX(drive);
 		opti_write_config(chp, OPTI_REG_MISC, mr | rv);
 
 		/* Set the pulse width and recovery timing parameters */
-		rv  = opti_tim_cp[m] << OPTI_PULSE_WIDTH_SHIFT;
-		rv |= opti_tim_rt[m] << OPTI_RECOVERY_TIME_SHIFT;
+		rv  = opti_tim_cp[spd][m] << OPTI_PULSE_WIDTH_SHIFT;
+		rv |= opti_tim_rt[spd][m] << OPTI_RECOVERY_TIME_SHIFT;
 		opti_write_config(chp, OPTI_REG_READ_CYCLE_TIMING, rv);
 		opti_write_config(chp, OPTI_REG_WRITE_CYCLE_TIMING, rv);
 
