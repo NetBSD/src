@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: lkm3,v 1.3 2000/05/13 08:45:07 lukem Exp $
+# $NetBSD: lkm3,v 1.3.4.1 2000/08/09 19:09:41 lukem Exp $
 #
 
 # PROVIDE: aftermountlkm
@@ -24,5 +24,5 @@ do_lkm3()
 	fi
 }
 
-load_rc_config $name
+load_rc_config lkm
 run_rc_command "$1"

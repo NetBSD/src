@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+# $NetBSD: sshd,v 1.5.2.2 2000/08/09 19:09:46 lukem Exp $
+#
+
+# PROVIDE: ssh
+# REQUIRE: NETWORK
+
+. /etc/rc.subr
+
+name="sshd"
+command="/usr/sbin/sshd"
+required_files="/etc/sshd.conf"
+
+extra_commands="keygen"
+
+sshd_keygen() {
+	if [ -f /etc/ssh_host_key ]
+	then
+		echo "You already have an RSA host key in /etc/ssh_host_key"
+		echo "Skipping RSA Key Generation"
+	else
+		umask 022
+		/usr/bin/ssh-keygen -b 1024 -f /etc/ssh_host_key -N ''
+	fi
+
+	if [ -f /etc/ssh_host_dsa_key ]
+	then
+		echo "You already have a DSA host key in /etc/ssh_host_dsa_key"
+		echo "Skipping DSA Key Generation"
+	else
+		umask 022
+		/usr/bin/ssh-keygen -d -f /etc/ssh_host_dsa_key -N ''
+	fi
+}
+
+sshd_precmd() {
+	if [ ! -f /etc/ssh_host_key -o ! -f /etc/ssh_host_dsa_key ]
+	then
+		/etc/rc.d/sshd keygen
+	fi
+}
+
+keygen_cmd=sshd_keygen
+start_precmd=sshd_precmd
+
+load_rc_config $name
+run_rc_command "$1"

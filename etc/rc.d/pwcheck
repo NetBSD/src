@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: pwcheck,v 1.2 2000/05/13 08:45:08 lukem Exp $
+# $NetBSD: pwcheck,v 1.2.4.1 2000/08/09 19:09:45 lukem Exp $
 #
 
 # PROVIDE: pwcheck
-# REQUIRE: systemfs syslogd
+# REQUIRE: mountcritremote syslogd
 
 . /etc/rc.subr
 

@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: SERVERS,v 1.1.4.1 2000/08/06 21:39:04 thorpej Exp $
+# $NetBSD: SERVERS,v 1.1.4.2 2000/08/09 19:09:38 lukem Exp $
 #
 
 # PROVIDE: SERVERS
-# REQUIRE: ipmon savecore syslogd kdc
+# REQUIRE: ipmon ppp savecore syslogd kdc
 
 #	This is a dummy dependancy, for early-start servers relying on
 #	some basic configuration.
