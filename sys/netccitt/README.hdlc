@@ -1,4 +1,4 @@
-/*	$NetBSD: README.hdlc,v 1.5 2003/01/04 23:43:06 wiz Exp $	*/
+/*	$NetBSD: README.hdlc,v 1.6 2004/04/23 20:17:13 snj Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -12,7 +12,7 @@
  *  Model.  The implementation  is based  on the ISO  High-Level  Data Link 
  *  Control (HDLC).  These procedures  subscribe to the  principles  of the 
  *  ISO-Class of Procedures for  point-to-point. These procedures implement
- *  two-way  asynchronous balanced mode (LAPB) as recommented by the CCITT.
+ *  two-way  asynchronous balanced mode (LAPB) as recommended by the CCITT.
  *
  *  The HDLC protocol layer interface consists of the following procedures:
  *    Hd_init       (pr_init) 
@@ -35,7 +35,7 @@
  *        If the remote is busy, no iframes are sent. The remote sends a RR
  *	  to clear this condition. However, this RR may be damaged, causing
  *	  a possible deadlock. A solution is to poll with iframe (P(S)==P(R)
- *	  of RNR) indefinitly.
+ *	  of RNR) indefinitely.
  *
  *
  *  Date:             February 1984
