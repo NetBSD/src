@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.23 2000/06/29 07:14:25 mrg Exp $ */
+/*	$NetBSD: ka43.c,v 1.24 2000/08/09 03:02:53 tv Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -176,13 +176,20 @@ ka43_mchk(addr)
 void
 ka43_memerr()
 {
+	char sbuf[256];
+
 	/*
 	 * Don\'t know what to do here. So just print some messages
 	 * and try to go on...
 	 */
+
 	printf("memory error!\n");
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
-	printf("secondary cache status: %b\n", *ka43_creg, KA43_SESR_BITS);
+
+	bitmask_snprintf(mfpr(PR_PCSTS), KA43_PCSTS_BITS, sbuf, sizeof(sbuf));
+	printf("primary cache status: %s\n", sbuf);
+
+	bitmask_snprintf(*ka43_creg, KA43_SESR_BITS, sbuf, sizeof(sbuf));
+	printf("secondary cache status: %s\n", sbuf);
 }
 
 int
@@ -204,6 +211,8 @@ ka43_clear_errors()
 int
 ka43_cache_reset()
 {
+	char sbuf[256];
+
 	/*
 	 * resetting primary and secondary caches is done in three steps:
 	 *	1. disable both caches
@@ -214,8 +223,11 @@ ka43_cache_reset()
 	ka43_cache_invalidate();
 	ka43_cache_enable();
 
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
-	printf("secondary cache status: %b\n", *ka43_creg, KA43_SESR_BITS);
+	bitmask_snprintf(mfpr(PR_PCSTS), KA43_PCSTS_BITS, sbuf, sizeof(sbuf));
+	printf("primary cache status: %s\n", sbuf);
+
+	bitmask_snprintf(*ka43_creg, KA43_SESR_BITS, sbuf, sizeof(sbuf));
+	printf("secondary cache status: %s\n", sbuf);
 
 	return (0);
 }

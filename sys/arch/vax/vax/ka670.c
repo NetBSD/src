@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.6 2000/06/29 07:14:27 mrg Exp $	*/
+/*	$NetBSD: ka670.c,v 1.7 2000/08/09 03:02:54 tv Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -161,19 +161,29 @@ ka670_mchk(addr)
 void
 ka670_memerr()
 {
+	char sbuf[256];
+
 	/*
 	 * Don\'t know what to do here. So just print some messages
 	 * and try to go on...
 	 */
+
 	printf("memory error!\n");
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA670_PCSTS_BITS);
-	printf("secondary cache status: %b\n", mfpr(PR_BCSTS), KA670_BCSTS_BITS);
+
+	bitmask_snprintf(mfpr(PR_PCSTS), KA670_PCSTS_BITS, sbuf, sizeof(sbuf));
+	printf("primary cache status: %s\n", sbuf);
+
+	bitmask_snprintf(mfpr(PR_BCSTS), KA670_BCSTS_BITS, sbuf, sizeof(sbuf));
+	printf("secondary cache status: %s\n", sbuf);
 }
 
 int
 ka670_cache_init()
 {
 	int val;
+#ifdef DEBUG
+	char sbuf[256];
+#endif
 
 	mtpr(KA670_PCS_REFRESH, PR_PCSTS);	/* disable primary cache */
 	val = mfpr(PR_PCSTS);
@@ -186,8 +196,11 @@ ka670_cache_init()
 	mtpr(KA670_PCS_ENABLE | KA670_PCS_REFRESH, PR_PCSTS);	/* flush primary cache */
 
 #ifdef DEBUG
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA670_PCSTS_BITS);
-	printf("secondary cache status: %b\n", mfpr(PR_BCSTS), KA670_BCSTS_BITS);
+	bitmask_snprintf(mfpr(PR_PCSTS), KA670_PCSTS_BITS, sbuf, sizeof(sbuf));
+	printf("primary cache status: %s\n", sbuf);
+
+	bitmask_snprintf(mfpr(PR_BCSTS), KA670_BCSTS_BITS, sbuf, sizeof(sbuf));
+	printf("secondary cache status: %s\n", sbuf);
 #endif
 
 	return (0);
