@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.71 1994/12/19 14:36:46 cgd Exp $	*/
+/*	$NetBSD: init_main.c,v 1.72 1994/12/24 14:07:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -100,6 +100,7 @@ static void start_init __P((struct proc *p, void *framep));
  * hard work is done in the lower-level initialization routines including
  * startup(), which does memory initialization and autoconfiguration.
  */
+int
 main(framep)
 	void *framep;
 {
