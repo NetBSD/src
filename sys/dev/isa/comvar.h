@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.11.2.2 1997/08/23 07:13:16 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.11.2.3 1997/08/27 23:31:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,23 +30,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int comconsaddr;
-extern bus_space_tag_t comconstag;
-extern bus_space_handle_t comconsioh;
-extern int comconsrate;
-extern tcflag_t comconscflag;
-int comcngetc __P((dev_t));
-void comcnputc __P((dev_t, int));
-void comcnpollc __P((dev_t, int));
-extern int comconsattached;
+int comcnattach __P((bus_space_tag_t, int, int, tcflag_t));
 
 #ifdef KGDB
-extern int com_kgdb_addr;
-extern bus_space_tag_t com_kgdb_iot;
-extern bus_space_handle_t com_kgdb_ioh;
-extern int com_kgdb_getc __P((void*));
-extern void com_kgdb_putc __P((void*, int));
+int com_kgdb_attach __P((bus_space_tag_t, int, int, tcflag_t));
 #endif
+
+int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
 
 /* Hardware flag masks */
 #define	COM_HW_NOIEN	0x01
@@ -122,7 +112,7 @@ struct com_softc {
 int comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
 int comintr __P((void *));
 void com_attach_subr __P((struct com_softc *));
-void cominit 		__P((bus_space_tag_t, bus_space_handle_t, int));
+int cominit 		__P((bus_space_tag_t, int, int, tcflag_t, bus_space_handle_t *));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
 #ifdef alpha

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
+/*	$NetBSD: if_fxpvar.h,v 1.1.4.1 1997/08/27 23:32:36 thorpej Exp $	*/
 
 /*                  
  * Copyright (c) 1995, David Greenman
@@ -48,6 +48,7 @@ struct fxp_softc {
 	struct arpcom arpcom;		/* per-interface network data */
 	struct caddr_t csr;		/* control/status registers */
 #endif /* __NetBSD__ */
+	struct ifmedia sc_media;	/* media information */
 	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
 	struct fxp_cb_tx *cbl_first;	/* first active TxCB in list */
 	struct fxp_cb_tx *cbl_last;	/* last active TxCB in list */

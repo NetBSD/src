@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.33 1997/08/14 15:41:49 drochner Exp 
+ *	NetBSD: pcidevs,v 1.35 1997/08/23 13:44:06 drochner Exp 
  */
 
 /*
@@ -396,6 +396,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Chips and Technologies",
 	    "65550",
+	},
+	{
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65554,
+	    0,
+	    "Chips and Technologies",
+	    "65554",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7548,
@@ -1182,6 +1188,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Q Logic",
 	    "ISP1022",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2100,
+	    0,
+	    "Q Logic",
+	    "ISP2100",
 	},
 	{
 	    PCI_VENDOR_QUANTUMDESIGNS, PCI_PRODUCT_QUANTUMDESIGNS_8500,
