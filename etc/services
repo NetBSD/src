@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.37 2000/06/18 04:09:54 mrg Exp $
+#	$NetBSD: services,v 1.38 2000/07/22 00:26:42 joda Exp $
 #
 # Network services, Internet style
 #
@@ -200,19 +200,24 @@ rfe		5002/udp		# Actually uses UDP only
 
 #
 # Kerberos (Project Athena/MIT) services
-# Note that these are for Kerberos v4, and are unofficial.
+# (note that kerberos @ port 88 is sorted in the list above)
 #
+kpasswd		464/udp			# Kerberos password changing protocol
+kpasswd		464/tcp			# Kerberos password changing protocol
 klogin		543/tcp			# Kerberos `rlogin'
 kshell		544/tcp		krcmd	# Kerberos `rsh'
+ekshell		545/tcp			# Encrypted kshell
 kerberos-adm	749/tcp			# Kerberos `kadmin' (v5)
-kerberos4	750/udp		kdc	# Kerberos (server) udp
-kerberos4	750/tcp		kdc	# Kerberos (server) tcp
+kerberos-iv	750/udp		kdc kerberos4	# Kerberos (server) udp
+kerberos-iv	750/tcp		kdc kerberos4	# Kerberos (server) tcp
 kerberos-master	751/udp			# Kerberos admin server udp
 kerberos-master	751/tcp			# Kerberos admin server tcp
 krbupdate	760/tcp		kreg	# BSD Kerberos registration
 kpasswd		761/tcp		kpwd	# BSD Kerberos `passwd'
 kpop		1109/tcp		# Kerberos POP server
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
+ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
+krb524		4444/udp		# krb5 -> krb4 ticket conversion
 
 #
 # Unofficial but necessary (for NetBSD) services
