@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.6 1994/06/29 06:40:24 cgd Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.7 1994/12/13 20:38:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -159,7 +159,7 @@ tp_consistency( tpcb, cmd, param )
 		printf("p_class 0x%x, class_to_use 0x%x\n",  param->p_class,
 			class_to_use);
 	ENDDEBUG
-	if((param->p_netservice < 0) || (param->p_netservice > TP_MAX_NETSERVICES)){
+	if((param->p_netservice > TP_MAX_NETSERVICES)){
 		error = EINVAL; goto done;
 	}
 	if( (param->p_class & TP_CLASSES_IMPLEMENTED) == 0 ) {
