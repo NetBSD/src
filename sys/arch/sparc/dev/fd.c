@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.75 2000/01/28 15:46:20 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.76 2000/02/07 11:44:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ int	fdcmatch_obio __P((struct device *, struct cfdata *, void *));
 void	fdcattach_mainbus __P((struct device *, struct device *, void *));
 void	fdcattach_obio __P((struct device *, struct device *, void *));
 
-void	fdcattach __P((struct fdc_softc *, int));
+int	fdcattach __P((struct fdc_softc *, int));
 
 struct cfattach fdc_mainbus_ca = {
 	sizeof(struct fdc_softc), fdcmatch_mainbus, fdcattach_mainbus
@@ -526,20 +526,16 @@ fdcattach_mainbus(parent, self, aux)
 
 	fdc->sc_bustag = ma->ma_bustag;
 
-	if (ma->ma_promvaddr != 0)
-		fdc->sc_handle = (bus_space_handle_t)ma->ma_promvaddr;
-	else {
-		if (bus_space_map2(
-				ma->ma_bustag,
-				ma->ma_iospace,
-				ma->ma_paddr,
-				ma->ma_size,
-				BUS_SPACE_MAP_LINEAR,
-				0,
-				&fdc->sc_handle) != 0) {
-			printf("%s: cannot map registers\n", self->dv_xname);
-			return;
-		}
+	if (bus_space_map2(
+			ma->ma_bustag,
+			ma->ma_iospace,
+			ma->ma_paddr,
+			ma->ma_size,
+			BUS_SPACE_MAP_LINEAR,
+			0,
+			&fdc->sc_handle) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
 	}
 
 	establish_chip_type(fdc,
@@ -549,7 +545,8 @@ fdcattach_mainbus(parent, self, aux)
 			    ma->ma_size,
 			    fdc->sc_handle);
 
-	fdcattach(fdc, ma->ma_pri);
+	if (fdcattach(fdc, ma->ma_pri) != 0)
+		bus_space_unmap(ma->ma_bustag, fdc->sc_handle, ma->ma_size);
 }
 
 void
@@ -561,21 +558,22 @@ fdcattach_obio(parent, self, aux)
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
+	if (sa->sa_nintr == 0) {
+		printf(": no interrupt line configured\n");
+		return;
+	}
+
 	fdc->sc_bustag = sa->sa_bustag;
 
-	if (sa->sa_npromvaddrs != 0)
-		fdc->sc_handle = (bus_space_handle_t)sa->sa_promvaddrs[0];
-	else {
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset,
-				 sa->sa_size,
-				 BUS_SPACE_MAP_LINEAR,
-				 0,
-				 &fdc->sc_handle) != 0) {
-			printf("%s: cannot map control registers\n",
-				self->dv_xname);
-			return;
-		}
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+			 sa->sa_offset,
+			 sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR,
+			 0,
+			 &fdc->sc_handle) != 0) {
+		printf("%s: cannot map control registers\n",
+			self->dv_xname);
+		return;
 	}
 
 	establish_chip_type(fdc,
@@ -590,16 +588,17 @@ fdcattach_obio(parent, self, aux)
 		return;
 	}
 
-	if (sa->sa_nintr != 0)
-		fdcattach(fdc, sa->sa_pri);
+	if (fdcattach(fdc, sa->sa_pri) != 0)
+		bus_space_unmap(sa->sa_bustag, fdc->sc_handle, sa->sa_size);
 }
 
-void
+int
 fdcattach(fdc, pri)
 	struct fdc_softc *fdc;
 	int pri;
 {
 	struct fdc_attach_args fa;
+	int drive_attached;
 	char code;
 
 	fdc->sc_state = DEVIDLE;
@@ -630,7 +629,7 @@ fdcattach(fdc, pri)
 	fdc->sc_cfg = CFG_EIS|/*CFG_EFIFO|*/CFG_POLL|(8 & CFG_THRHLD_MASK);
 	if (fdconf(fdc) != 0) {
 		printf("%s: no drives attached\n", fdc->sc_dev.dv_xname);
-		return;
+		return (-1);
 	}
 
 #ifdef FDC_C_HANDLER
@@ -649,11 +648,20 @@ fdcattach(fdc, pri)
 	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
 
 	/* physical limit: four drives per controller. */
+	drive_attached = 0;
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		fa.fa_deftype = NULL;		/* unknown */
 	fa.fa_deftype = &fd_types[0];		/* XXX */
-		(void)config_found(&fdc->sc_dev, (void *)&fa, fdprint);
+		if (config_found(&fdc->sc_dev, (void *)&fa, fdprint) != NULL)
+			drive_attached = 1;
 	}
+
+	if (drive_attached == 0) {
+		/* XXX - dis-establish interrupts here */
+		/* return (-1); */
+	}
+
+	return (0);
 }
 
 int
