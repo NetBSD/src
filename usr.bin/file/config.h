@@ -91,7 +91,7 @@
 
 /* Define if you have the <stdint.h> header file.  */
 #include <sys/param.h>
-#if (__NetBSD_Version__ > 106000000) || defined(__linux__)
+#if (__NetBSD_Version__ > 106000000) || defined(__linux__) || defined(__APPLE__)
 #define HAVE_STDINT_H 1
 #endif
 
