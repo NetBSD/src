@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.6 2000/04/24 14:09:42 blymn Exp $	*/
+/*	$NetBSD: border.c,v 1.7 2001/02/05 21:54:21 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.6 2000/04/24 14:09:42 blymn Exp $");
+__RCSID("$NetBSD: border.c,v 1.7 2001/02/05 21:54:21 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -73,14 +73,22 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 	int	 endy, endx, i;
 	__LDATA	*fp, *lp;
 
-	if (!(left & __CHARTEXT)) left = ACS_VLINE;
-	if (!(right & __CHARTEXT)) right = ACS_VLINE;
-	if (!(top & __CHARTEXT)) top = ACS_HLINE;
-	if (!(bottom & __CHARTEXT)) bottom = ACS_HLINE;
-	if (!(topleft & __CHARTEXT)) topleft = ACS_ULCORNER;
-	if (!(topright & __CHARTEXT)) topright = ACS_URCORNER;
-	if (!(botleft & __CHARTEXT)) botleft = ACS_LLCORNER;
-	if (!(botright & __CHARTEXT)) botright = ACS_LRCORNER;
+	if (!(left & __CHARTEXT))
+		left |= ACS_VLINE;
+	if (!(right & __CHARTEXT))
+		right |= ACS_VLINE;
+	if (!(top & __CHARTEXT))
+		top |= ACS_HLINE;
+	if (!(bottom & __CHARTEXT))
+		bottom |= ACS_HLINE;
+	if (!(topleft & __CHARTEXT))
+		topleft |= ACS_ULCORNER;
+	if (!(topright & __CHARTEXT))
+		topright |= ACS_URCORNER;
+	if (!(botleft & __CHARTEXT))
+		botleft |= ACS_LLCORNER;
+	if (!(botright & __CHARTEXT))
+		botright |= ACS_LRCORNER;
 
 #ifdef DEBUG
 	__CTRACE("wborder: left = %c, 0x%x\n", left & __CHARTEXT,
