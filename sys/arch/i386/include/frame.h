@@ -37,6 +37,8 @@
  *	frame.h,v 1.3 1993/06/27 01:24:55 andrew Exp
  */
 
+#include <sys/signal.h>
+
 /*
  * System stack frames.
  */
@@ -96,8 +98,6 @@ struct intrframe {
 /*
  * Signal frame
  */
-#include <machine/signal.h>
-
 struct sigframe {
 	int	sf_signum;
 	int	sf_code;
