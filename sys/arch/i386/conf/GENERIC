@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.402 2001/03/30 14:47:49 minoura Exp $
+#	$NetBSD: GENERIC,v 1.403 2001/04/21 20:49:14 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.402 $"
+#ident 		"GENERIC-$Revision: 1.403 $"
 
 maxusers	32		# estimated number of users
 
@@ -58,7 +58,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
