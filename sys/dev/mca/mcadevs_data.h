@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.9 2001/04/19 07:31:18 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.10 2001/04/19 18:38:50 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.8 2001/04/19 07:30:25 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.9 2001/04/19 18:38:23 jdolecek Exp 
  */
 
 /*-
@@ -176,6 +176,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x678C,	"NeoTecH S2M100 Dual RS-232 Async. Adapter" },
     { 0x678D,	"NeoTecH MSP/4 4-Channel Serial/Parallel Adapter" },
     { 0x678F,	"BBS GPIB-3000 IEEE-488 Adapter" },
+    { 0x6781,	"NeoTecH Single RS-232 Async. Adapter, SM110" },
     { 0x6792,	"NeoTecH SPM121/SPM321 Serial/Parallel Adapter" },
     { 0x6795,	"NeoTecH S1M200 Single RS-422/485 Async. Adapter" },
     { 0x6796,	"NeoTecH PM101 Single Bidirectional Parallel Adapter" },
@@ -195,6 +196,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x6ABF,	"RM Ethernet MC Adapter" },
     { 0x6AE7,	"Dacom Unity Gold+/2 Modem" },
     { 0x6AFB,	"Miracom Keycard/PS Modem" },
+    { 0x6AFD,	"SKNET Ethernet Adapter/G" },
     { 0x6B76,	"Network Designers Garnet 2 Adapter" },
     { 0x6B80,	"DataFlex Chameleo Modem" },
     { 0x6B95,	"CORE ESDI Fixed Disk Adapter" },
@@ -206,6 +208,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x6BBC,	"Apricot Synchronous Communications Adapter" },
     { 0x6BCB,	"CONNECT ARCnet Adapter" },
     { 0x6BE7,	"Symicron dtsx12 Token Ring Adapter" },
+    { 0x6BE9,	"SKNET Ethernet Adapter" },
     { 0x6BFF,	"Torus Ethernet Adapter/MC" },
     { 0x6C0F,	"Roland MIDI Processing Unit MPU-IMC" },
     { 0x6DAC,	"Logitech ScanMan Adapter" },
