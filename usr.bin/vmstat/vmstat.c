@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)vmstat.c	5.31 (Berkeley) 7/2/91";*/
-static char rcsid[] = "$Id: vmstat.c,v 1.9 1993/11/10 15:00:41 deraadt Exp $";
+static char rcsid[] = "$Id: vmstat.c,v 1.10 1993/12/06 09:22:03 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -161,7 +161,7 @@ struct	vmmeter sum, osum;
 char	*vmunix = _PATH_UNIX;
 char	**dr_name;
 int	*dr_select, dk_ndrive, ndrives;
-#ifdef __386BSD__
+#ifdef notdef
       /* to make up for statistics that don't get updated */
 int	size, free_count, active_count, inactive, wired; 
 #endif
@@ -371,10 +371,10 @@ getdrivedata(argv)
 	return(argv);
 }
 
-#ifdef __386BSD__
+#ifdef __NetBSD__
 /* 
- * Make up for the fact that under 0.1, VM doesn't update all of the
- * fields in the statistics structures.
+ * Make up for the fact that in NetBSD, VM doesn't update all of the
+ * fields in the statistics structures. (XXX)
  */
 
 void
@@ -439,7 +439,7 @@ dovmstat(interval, reps)
 		kread(X_SUM, &sum, sizeof(sum));
 		kread(X_TOTAL, &total, sizeof(total));
 		kread(X_VMSTAT, &vm_stat, sizeof(vm_stat));
-#ifdef __386BSD__
+#ifdef __NetBSD__
 		fill_in_vm_stat (&vm_stat);
 #endif
 #ifdef notdef
@@ -450,7 +450,7 @@ dovmstat(interval, reps)
 #define pgtok(a) ((a)*NBPG >> 10)
 #define	rate(x)	(((x) + halfuptime) / uptime)	/* round */
 		(void)printf("%5ld %5ld ",
-#ifdef __386BSD__
+#ifdef __NetBSD__
 		    pgtok(vm_stat.active_count), pgtok(vm_stat.free_count));
 #else
 		    pgtok(total.t_avm), pgtok(total.t_free));
@@ -580,7 +580,7 @@ dosum()
 	kread(X_SUM, &sum, sizeof(sum));
 #ifdef NEWVM
 	kread(X_VMSTAT, &vm_stat, sizeof(vm_stat));
-#ifdef __386BSD__
+#ifdef __NetBSD__
 	fill_in_vm_stat(&vm_stat);
 #endif
 #else
