@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.9 1998/06/15 14:45:06 lukem Exp $
+# $NetBSD: maketars,v 1.10 1998/06/27 08:27:36 ross Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-a arch] [-m machine] [-s setsdir] [-d destdir] \
@@ -62,8 +62,8 @@ USAGE
 	esac
 	shift
 done
-if [ -n "$@" ]; then
-	lists="$@"
+if [ -n "$*" ]; then
+	lists="$*"
 fi
 
 if [ -z "$tars" ]; then
