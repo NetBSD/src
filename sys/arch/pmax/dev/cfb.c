@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.17 1996/03/17 01:46:37 thorpej Exp $	*/
+/*	$NetBSD: cfb.c,v 1.18 1996/04/08 00:57:45 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -82,8 +82,10 @@
 
 #include "fb.h"
 #include "cfb.h"
+
 #if NCFB > 0
 #include <sys/param.h>
+#include <sys/systm.h>					/* printf() */
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
@@ -137,6 +139,7 @@ struct fbdriver cfb_driver = {
 	bt459CursorColor
 };
 
+int cfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
 extern void fbScreenInit __P((struct fbinfo *fi));
 
 void genConfigMouse(), genDeconfigMouse();
@@ -171,13 +174,14 @@ struct cfdriver cfb_cd = {
 };
 
 
+
 int
 cfbmatch(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
+	/*struct cfdata *cf = match;*/
 	struct confargs *ca = aux;
 
 #ifdef FBDRIVER_DOES_ATTACH
@@ -255,14 +259,14 @@ cfbinit(fi, cfbaddr, unit, silent)
 	else {
     		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			printf("cfb%d: no memory for cmap 0x%x\n", unit);
+			printf("cfb%d: no memory for cmap\n", unit);
 			return (0);
 		}
 	}
 
 	/* check for no frame buffer */
 	if (badaddr(cfbaddr, 4)) {
-		printf("cfb: bad address 0x%x\n", cfbaddr);
+		printf("cfb: bad address 0x%p\n", cfbaddr);
 		return (0);
 	}
 
@@ -364,6 +368,8 @@ cfb_intr(sc)
 	
 	/* reset vertical-retrace interrupt by writing a dont-care */
 	*(int*) (slot_addr+CFB_OFFSET_IREQ) = 0;
+
+	return (0);
 }
 
 #endif /* NCFB */
