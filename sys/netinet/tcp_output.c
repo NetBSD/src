@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_output.c	7.22 (Berkeley) 8/31/90
- *	$Id: tcp_output.c,v 1.5 1994/01/08 21:22:00 mycroft Exp $
+ *	$Id: tcp_output.c,v 1.6 1994/01/08 23:07:20 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -71,6 +71,7 @@ u_char	tcp_initopt[4] = { TCPOPT_MAXSEG, 4, 0x0, 0x0, };
 /*
  * Tcp output routine: figure out what should be sent and send it.
  */
+int
 tcp_output(tp)
 	register struct tcpcb *tp;
 {
@@ -460,7 +461,7 @@ send:
 	if (error) {
 out:
 		if (error == ENOBUFS) {
-			tcp_quench(tp->t_inpcb);
+			tcp_quench(tp->t_inpcb, 0);
 			return (0);
 		}
 		if ((error == EHOSTUNREACH || error == ENETDOWN)
@@ -486,6 +487,7 @@ out:
 	return (0);
 }
 
+void
 tcp_setpersist(tp)
 	register struct tcpcb *tp;
 {
