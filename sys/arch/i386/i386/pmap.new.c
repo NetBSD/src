@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.5 1998/03/17 19:15:07 chuck Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.6 1998/03/17 22:09:32 chuck Exp $	*/
 
 /*
  *
@@ -3177,7 +3177,7 @@ boolean_t move;
       if (lpve->pv_pmap == srcpmap && lpve->pv_va == srcl->addr)
 	break;
     if (lpve == NULL)
-      panic("pmap_transfer_ptes: PV_PGLIST PTE, but entry not found");
+      panic("pmap_transfer_ptes: PG_PVLIST PTE, but entry not found");
 
     /*
      * update src ptp.   if the ptp is null in the pventry, then 
