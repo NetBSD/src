@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.18 2000/09/25 14:08:08 jsm Exp $	*/
+/*	$NetBSD: com4.c,v 1.19 2000/09/25 19:37:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com4.c,v 1.18 2000/09/25 14:08:08 jsm Exp $");
+__RCSID("$NetBSD: com4.c,v 1.19 2000/09/25 19:37:58 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,6 +54,7 @@ take(from)
 	if (wordnumber < wordcount && wordvalue[wordnumber + 1] == OFF) {
 		wordnumber++;
 		wordvalue[wordnumber] = TAKEOFF;
+		wordtype[wordnumber] = VERB;
 		return (cypher());
 	} else {
 		wordnumber++;

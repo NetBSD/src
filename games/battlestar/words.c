@@ -1,4 +1,4 @@
-/*	$NetBSD: words.c,v 1.9 2000/09/21 17:44:34 jsm Exp $	*/
+/*	$NetBSD: words.c,v 1.10 2000/09/25 19:37:59 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)words.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: words.c,v 1.9 2000/09/21 17:44:34 jsm Exp $");
+__RCSID("$NetBSD: words.c,v 1.10 2000/09/25 19:37:59 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -212,9 +212,9 @@ struct wlist wlist[] = {
 	{ "purple",	0,		ADJS, NULL },
 	{ "kingly",	0,		ADJS, NULL },
 	{ "the",	0,		ADJS, NULL },
-	{ "climb",	0,		ADJS, NULL },
-	{ "move",	0,		ADJS, NULL },
-	{ "make",	0,		ADJS, NULL },
+	{ "climb",	AUXVERB,	VERB, NULL },
+	{ "move",	AUXVERB,	VERB, NULL },
+	{ "make",	AUXVERB,	VERB, NULL },
 	{ "to",		0,		ADJS, NULL },
 	{ NULL,		0,		0, NULL }
 };

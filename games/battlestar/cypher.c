@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.20 2000/09/25 14:06:20 jsm Exp $	*/
+/*	$NetBSD: cypher.c,v 1.21 2000/09/25 19:37:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.20 2000/09/25 14:06:20 jsm Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.21 2000/09/25 19:37:58 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,7 +55,22 @@ cypher()
 	size_t	filename_len;
 
 	while (wordnumber <= wordcount) {
+		if (wordtype[wordnumber] != VERB &&
+		    !(wordtype[wordnumber] == OBJECT && wordvalue[wordnumber] == KNIFE)) {
+			printf("%s: How's that?\n",
+			    (wordnumber == wordcount) ? words[0] : words[wordnumber]);
+			return (-1);
+		}
+
 		switch (wordvalue[wordnumber]) {
+
+		case AUXVERB:
+			/*
+			 * Take the following word as the verb (e.g.
+			 * "make love", "climb up").
+			 */
+			wordnumber++;
+			continue;
 
 		case UP:
 			if (location[position].access || wiz || tempwiz) {
