@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.3 1995/09/04 09:53:53 pk Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.4 1996/02/13 22:43:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,12 +70,12 @@
 struct v0devops {
 	int	(*v0_open)(char *dev);
 	int	(*v0_close)(int d);
-	int	(*v0_rbdev)(int d, int nblks, int blkno, caddr_t addr);	
-	int	(*v0_wbdev)(int d, int nblks, int blkno, caddr_t addr);	
-	int	(*v0_wnet)(int d, int nbytes, caddr_t addr);
-	int	(*v0_rnet)(int d, int nbytes, caddr_t addr);
-	int	(*v0_rcdev)(int d, int nbytes, int, caddr_t addr);
-	int	(*v0_wcdev)(int d, int nbytes, int, caddr_t addr);
+	int	(*v0_rbdev)(int d, int nblks, int blkno, void *addr);	
+	int	(*v0_wbdev)(int d, int nblks, int blkno, void *addr);	
+	int	(*v0_wnet)(int d, int nbytes, void *addr);
+	int	(*v0_rnet)(int d, int nbytes, void *addr);
+	int	(*v0_rcdev)(int d, int nbytes, int, void *addr);
+	int	(*v0_wcdev)(int d, int nbytes, int, void *addr);
 	int	(*v0_seek)(int d, long offset, int whence);
 };
 
@@ -97,7 +97,7 @@ struct v2devops {
 	int	(*v2_fd_phandle)(int d);
 
 	/* Memory allocation and release. */
-	caddr_t	(*v2_malloc)(caddr_t va, u_int sz);
+	void	*(*v2_malloc)(caddr_t va, u_int sz);
 	void	(*v2_free)(caddr_t va, u_int sz);
 
 	/* Device memory mapper. */
@@ -107,12 +107,12 @@ struct v2devops {
 	/* Device open, close, etc. */
 	int	(*v2_open)(char *devpath);
 	void	(*v2_close)(int d);
-	int	(*v2_read)(int d, caddr_t buf, int nbytes);
-	int	(*v2_write)(int d, caddr_t buf, int nbytes);
+	int	(*v2_read)(int d, void *buf, int nbytes);
+	int	(*v2_write)(int d, void *buf, int nbytes);
 	void	(*v2_seek)(int d, int hi, int lo);
 
-	void	(*v2_xxx2)();		/* ??? */
-	void	(*v2_xxx3)();		/* ??? */
+	void	(*v2_chain)();		/* ??? */
+	void	(*v2_release)();	/* ??? */
 };
 
 /*
@@ -251,6 +251,17 @@ struct promvec {
 	 * easily.
 	 */
 	void	(*pv_setctxt)(int ctxt, caddr_t va, int pmeg);
+#if defined(SUN4M) && defined(notyet)
+	/* 
+	 * The following are V3 ROM functions to handle MP machines in the
+	 * Sun4m series. They have undefined results when run on a uniprocessor!
+	 */
+	int	(*pv_v3cpustart)(u_int module, u_int ctxtbl,
+				 int context, caddr_t pc);
+	int 	(*pv_v3cpustop)(u_int module);
+	int	(*pv_v3cpuidle)(u_int module);
+	int 	(*pv_v3cpuresume)(u_int module);
+#endif
 };
 
 /*
