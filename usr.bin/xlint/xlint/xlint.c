@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.19 2000/06/29 02:56:47 wrstuden Exp $ */
+/* $NetBSD: xlint.c,v 1.20 2000/07/06 01:12:24 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.19 2000/06/29 02:56:47 wrstuden Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.20 2000/07/06 01:12:24 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -286,13 +286,16 @@ usage()
 {
 	extern char *__progname;
 	(void)fprintf(stderr,
-    "Usage: %s [-abceghprvxzHF] [-s|-t] [-i|-nu] [-Dname[=def]] [-Uname]\n",
-	    __progname);
+	    "Usage: %s [-abceghprvwxzHF] [-s|-t] [-i|-nu] [-Dname[=def]]"
+	    " [-Uname] [-X <id>[,<id>]...\n", __progname);
 	(void)fprintf(stderr, 
-    "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile] file ...\n");
+	    "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile]"
+	    " file...\n");
 	(void)fprintf(stderr,
-    "       %s [-abceghprvzHF] [-s|-t] -Clibrary [-Dname[=def]]\n", __progname);
-	(void)fprintf(stderr, "\t[-Idirectory] [-Uname] [-Bpath] file ...\n");
+	    "       %s [-abceghprvwzHF] [-s|-t] -Clibrary [-Dname[=def]]\n"
+	    " [-X <id>[,<id>]...\n", __progname);
+	(void)fprintf(stderr, "\t[-Idirectory] [-Uname] [-Bpath] file"
+	    " ...\n");
 	terminate(-1);
 }
 
@@ -366,7 +369,7 @@ main(argc, argv)
 		argv += optind;
 		optind = 0;
 
-		c = getopt(argc, argv, "abcd:eghil:no:prstuvxzB:C:D:FHI:L:U:V");
+		c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:U:VX:");
 
 		switch (c) {
 
@@ -377,6 +380,7 @@ main(argc, argv)
 		case 'g':
 		case 'r':
 		case 'v':
+		case 'w':
 		case 'z':
 			(void)sprintf(flgbuf, "-%c", c);
 			appcstrg(&l1flags, flgbuf);
@@ -390,6 +394,12 @@ main(argc, argv)
 			(void)sprintf(flgbuf, "-%c", c);
 			appcstrg(&l1flags, flgbuf);
 			appcstrg(&l2flags, flgbuf);
+			break;
+
+		case 'X':
+			(void)sprintf(flgbuf, "-%c", c);
+			appcstrg(&l1flags, flgbuf);
+			appcstrg(&l1flags, optarg);
 			break;
 
 		case 'i':
