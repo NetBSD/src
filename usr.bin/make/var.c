@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.58 2001/03/10 00:41:48 itojun Exp $	*/
+/*	$NetBSD: var.c,v 1.59 2001/05/12 06:48:49 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.58 2001/03/10 00:41:48 itojun Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.59 2001/05/12 06:48:49 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.58 2001/03/10 00:41:48 itojun Exp $");
+__RCSID("$NetBSD: var.c,v 1.59 2001/05/12 06:48:49 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2126,7 +2126,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    if ((v->flags & VAR_JUNK) != 0)
 			v->flags |= VAR_KEEP;
 		    gn = Targ_FindNode(v->name, TARG_NOCREATE);
-		    if (gn == NILGNODE)
+		    if (gn == NILGNODE || gn->path == NULL)
 			newStr = strdup(v->name);
 		    else
 			newStr = strdup(gn->path);
