@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.8 1995/05/11 21:29:12 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.9 1996/06/25 16:43:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: histedit.c,v 1.8 1995/05/11 21:29:12 christos Exp $";
+static char rcsid[] = "$NetBSD: histedit.c,v 1.9 1996/06/25 16:43:34 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ histedit()
 			INTON;
 
 			if (hist != NULL)
-				sethistsize();
+				sethistsize(histsizeval());
 			else
 				out2str("sh: can't initialize history\n");
 		}
@@ -149,15 +149,14 @@ bad:
 
 
 void
-sethistsize()
+sethistsize(hs)
+	const char *hs;
 {
-	char *cp;
 	int histsize;
 
 	if (hist != NULL) {
-		cp = lookupvar("HISTSIZE");
-		if (cp == NULL || *cp == '\0' || 
-		   (histsize = atoi(cp)) < 0)
+		if (hs == NULL || *hs == '\0' || 
+		   (histsize = atoi(hs)) < 0)
 			histsize = 100;
 		history(hist, H_EVENT, histsize);
 	}
