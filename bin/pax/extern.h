@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.44 2004/08/22 16:46:18 tron Exp $	*/
+/*	$NetBSD: extern.h,v 1.45 2004/09/22 15:03:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -143,6 +143,7 @@ int bcpio_wr(ARCHD *);
  * file_subs.c
  */
 extern char *gnu_name_string, *gnu_link_string;
+extern size_t gnu_name_length, gnu_link_length;
 extern char *xtmp_name;
 int file_creat(ARCHD *, int);
 void file_close(ARCHD *, int);
