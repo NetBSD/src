@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2001/12/19 06:51:05 mhitch Exp $
+#	$NetBSD: Makefile,v 1.1.22.1 2005/04/06 10:06:30 he Exp $
 #
 CPPFLAGS+= -I.
-HOSTPROG=	elf2bb
+PROG=	elf2bb
 MKMAN=	no
 SRCS=	elf2bb.c chksum.c
 
-.include <bsd.hostprog.mk>
+.include <bsd.prog.mk>
