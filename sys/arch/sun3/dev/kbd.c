@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.9 1995/03/24 19:48:41 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.10 1995/05/24 20:51:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@
  * Decode tables for type 2, 3, and 4 keyboards
  * (stolen from Sprite; see also kbd.h).
  */
-static const u_char kbd_unshifted[] = {
+static u_char kbd_unshifted[] = {
 /*   0 */	KEY_IGNORE,	KEY_L1,		KEY_IGNORE,	KEY_IGNORE,
 /*   4 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,
 /*   8 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,
@@ -136,7 +136,7 @@ static const u_char kbd_unshifted[] = {
 /* 124 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_ALLUP,
 };
 
-static const u_char kbd_shifted[] = {
+static u_char kbd_shifted[] = {
 /*   0 */	KEY_IGNORE,	KEY_L1,		KEY_IGNORE,	KEY_IGNORE,
 /*   4 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,
 /*   8 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,
@@ -190,6 +190,8 @@ struct kbd_state {
 	char	kbd_click;	/* true => keyclick enabled */
 	char	kbd_takeid;	/* take next byte as ID */
 	u_char	kbd_id;		/* a place to store the ID */
+	char	kbd_leds;	/* LED state */
+	char	_pad;
 };
 
 /*
@@ -211,6 +213,8 @@ struct kbd_softc {
 	int	k_isopen;		/* set if open has been done */
 	struct	kbd_state k_state;	/* ASCII decode state */
 	struct	evvar k_events;		/* event queue state */
+	int	k_repeatc;		/* repeated character */
+	int	k_repeating;		/* we've called timeout() */
 } kbd_softc;
 
 /* Prototypes */
@@ -227,6 +231,10 @@ int	kbdwrite(dev_t, struct uio *, int);
 int	kbdioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	kbdselect(dev_t, int, struct proc *);
 int	kbd_docmd(int, int);
+
+/* set in kbdattach() */
+int kbd_repeat_start;
+int kbd_repeat_step;
 
 /*
  * Initialization done by either kdcninit or kbd_iopen
@@ -299,6 +307,9 @@ kbd_iopen()
 	if (tp == NULL)
 		return (ENXIO);
 
+	kbd_repeat_start = hz/2;
+	kbd_repeat_step = hz/20;
+
 	/* Open the "down" link (never to be closed). */
 	tp->t_ispeed = tp->t_ospeed = 1200;
 	(*k->k_open)(tp);
@@ -356,6 +367,9 @@ kbd_reset(k)
 			(void) kbd_docmd(KBD_CMD_CLICK, 0);
 		break;
 	}
+
+	/* LEDs are off after reset. */
+	ks->kbd_leds = 0;
 }
 
 /*
@@ -426,11 +440,29 @@ kbd_translate(register int c)
 }
 
 void
+kbd_repeat(void *arg)
+{
+	struct kbd_softc *k = (struct kbd_softc *)arg;
+	int s = spltty();
+
+	if (k->k_repeating && k->k_repeatc >= 0 && k->k_cons != NULL) {
+		ttyinput(k->k_repeatc, k->k_cons);
+		timeout(kbd_repeat, k, kbd_repeat_step);
+	}
+	splx(s);
+}
+
+void
 kbd_rint(register int c)
 {
 	register struct kbd_softc *k = &kbd_softc;
 	register struct firm_event *fe;
 	register int put;
+
+	if (k->k_repeating) {
+		k->k_repeating = 0;
+		untimeout(kbd_repeat, k);
+	}
 
 	/*
 	 * Reset keyboard after serial port overrun, so we can resynch.
@@ -466,8 +498,12 @@ kbd_rint(register int c)
 	 */
 	if (!k->k_evmode) {
 		c = kbd_translate(c);
-		if (c >= 0 && k->k_cons != NULL)
+		if (c >= 0 && k->k_cons != NULL) {
 			ttyinput(c, k->k_cons);
+			k->k_repeating = 1;
+			k->k_repeatc = c;
+			timeout(kbd_repeat, k, kbd_repeat_start);
+		}
 		return;
 	}
 
@@ -551,6 +587,8 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data,
 	int flag, struct proc *p)
 {
 	register struct kbd_softc *k = &kbd_softc;
+	register struct kiockey *kmp;
+	register u_char *tp;
 
 	switch (cmd) {
 
@@ -567,15 +605,52 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data,
 		return (0);
 
 	case KIOCGETKEY:
-		if (((struct kiockey *)data)->kio_station == 118) {
+		if (((struct okiockey *)data)->kio_station == 118) {
 			/*
 			 * This is X11 asking if a type 3 keyboard is
 			 * really a type 3 keyboard.  Say yes.
 			 */
-			((struct kiockey *)data)->kio_entry = HOLE;
+			((struct okiockey *)data)->kio_entry = HOLE;
 			return (0);
 		}
 		break;
+
+	case KIOCSKEY:
+		kmp = (struct kiockey *)data;
+
+		switch (kmp->kio_tablemask) {
+		case KIOC_NOMASK:
+			tp = kbd_unshifted;
+			break;
+		case KIOC_SHIFTMASK:
+			tp = kbd_shifted;
+			break;
+		default:
+			/* Silently ignore unsupported masks */
+			return (0);
+		}
+		if (kmp->kio_entry & 0xff80)
+			/* Silently ignore funny entries */
+			return (0);
+
+		tp[kmp->kio_station] = kmp->kio_entry;
+		return (0);
+
+	case KIOCGKEY:
+		kmp = (struct kiockey *)data;
+
+		switch (kmp->kio_tablemask) {
+		case KIOC_NOMASK:
+			tp = kbd_unshifted;
+			break;
+		case KIOC_SHIFTMASK:
+			tp = kbd_shifted;
+			break;
+		default:
+			return (0);
+		}
+		kmp->kio_entry = tp[kmp->kio_station] & ~KEY_MAGIC;
+		return (0);
 
 	case KIOCCMD:
 		/*
@@ -600,6 +675,32 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data,
 
 	case KIOCLAYOUT:
 		*data = 0;
+		return (0);
+
+	case KIOCSLED:
+		if (k->k_state.kbd_id != KB_SUN4) {
+			/* xxx NYI */
+			k->k_state.kbd_leds = *(char*)data;
+		} else {
+			int s;
+			char leds = *(char *)data;
+			struct tty *tp = kbd_softc.k_kbd;
+			s = spltty();
+			if (tp->t_outq.c_cc > 120)
+				(void) tsleep((caddr_t)&lbolt, TTIPRI,
+					      ttyout, 0);
+			splx(s);
+			if (ttyoutput(KBD_CMD_SETLED, tp) >= 0)
+				return (ENOSPC);	/* ERESTART? */
+			k->k_state.kbd_leds = leds;
+			if (ttyoutput(leds, tp) >= 0)
+				return (ENOSPC);	/* ERESTART? */
+			(*tp->t_oproc)(tp);
+		}
+		return (0);
+
+	case KIOCGLED:
+		*(char *)data = k->k_state.kbd_leds;
 		return (0);
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
