@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.1 1996/09/30 01:51:16 jonathan Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.2 1996/09/30 02:21:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
  * DEcstation-specific mips locore code.
  */
 
+#include <mips/asm.h>
 
 /*
  * Copy data to a DMA buffer padded with 16 bits of data, 16

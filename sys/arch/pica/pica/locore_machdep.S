@@ -1,9 +1,11 @@
-/*	$NetBSD: locore_machdep.S,v 1.1 1996/09/30 01:51:17 jonathan Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.2 1996/09/30 02:21:23 jonathan Exp $	*/
+
 
 /*
  * ARC-specific mips locore code
  */
 
+#include <mips/asm.h>
 
 /*
  * Interrupt counters for vmstat.
