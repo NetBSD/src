@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.c,v 1.2 2002/11/28 21:21:32 manu Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.3 2002/11/29 17:08:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.2 2002/11/28 21:21:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.3 2002/11/29 17:08:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,6 +102,30 @@ mach_sys_clock_sleep_trap(p, v, retval)
 
 	return 0;
 }
+int
+mach_sys_timebase_info(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct mach_sys_timebase_info_args /*
+		syscallarg(mach_timebase_info_t) info;
+	*/ *uap = v;
+	int error;
+	struct mach_timebase_info info;
+
+	/* XXX This is probably bus speed, fill it accurately */
+	info.numer = 4000000000UL;
+	info.denom = 75189611UL;
+
+	if ((error = copyout(&info, (void *)SCARG(uap, info), 
+	    sizeof(info))) != 0)
+		return error;
+
+	return 0;
+}
+
+
 
 int 
 mach_clock_get_time(p, msgh, maxlen, dst)
