@@ -201,22 +201,22 @@ unsigned char * arm_breakpoint_from_pc PARAMS ((CORE_ADDR * pcptr, int * lenptr)
 #define ARM_LAST_FP_ARG_REGNUM	F3_REGNUM
 
 /* Instruction condition field values.  */
-#define INST_EQ		0x00000000
-#define INST_NE		0x10000000
-#define INST_CS		0x20000000
-#define INST_CC		0x30000000
-#define INST_MI		0x40000000
-#define INST_PL		0x50000000
-#define INST_VS		0x60000000
-#define INST_VC		0x70000000
-#define INST_HI		0x80000000
-#define INST_LS		0x90000000
-#define INST_GE		0xa0000000
-#define INST_LT		0xb0000000
-#define INST_GT		0xc0000000
-#define INST_LE		0xd0000000
-#define INST_AL		0xe0000000
-#define INST_NV		0xf0000000
+#define INST_EQ		0x0
+#define INST_NE		0x1
+#define INST_CS		0x2
+#define INST_CC		0x3
+#define INST_MI		0x4
+#define INST_PL		0x5
+#define INST_VS		0x6
+#define INST_VC		0x7
+#define INST_HI		0x8
+#define INST_LS		0x9
+#define INST_GE		0xa
+#define INST_LT		0xb
+#define INST_GT		0xc
+#define INST_LE		0xd
+#define INST_AL		0xe
+#define INST_NV		0xf
 
 #define FLAG_N		0x80000000
 #define FLAG_Z		0x40000000
