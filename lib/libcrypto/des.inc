@@ -1,4 +1,4 @@
-#	$NetBSD: des.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: des.inc,v 1.2 2000/06/21 19:34:24 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/des
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/des
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/des
 
 SRCS+= set_key.c  ecb_enc.c  cbc_enc.c \
 	ecb3_enc.c cfb64enc.c cfb64ede.c cfb_enc.c  ofb64ede.c \

@@ -1,4 +1,4 @@
-#	$NetBSD: x509.inc,v 1.1.1.1 2000/06/16 04:21:31 thorpej Exp $
+#	$NetBSD: x509.inc,v 1.2 2000/06/21 19:34:32 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/x509
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/x509
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/x509
 
 SRCS+= x509_def.c x509_d2.c x509_r2x.c x509_cmp.c \
 	x509_obj.c x509_req.c x509_vfy.c \

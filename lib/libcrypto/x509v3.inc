@@ -1,4 +1,4 @@
-#	$NetBSD: x509v3.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: x509v3.inc,v 1.2 2000/06/21 19:34:33 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/x509v3
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/x509v3
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/x509v3
 
 SRCS+= v3_bcons.c v3_bitst.c v3_conf.c v3_extku.c v3_ia5.c v3_lib.c \
 v3_prn.c v3_utl.c v3err.c v3_genn.c v3_alt.c v3_skey.c v3_akey.c v3_pku.c \

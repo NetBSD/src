@@ -1,4 +1,4 @@
-#	$NetBSD: bio.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: bio.inc,v 1.2 2000/06/21 19:34:24 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/bio
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/bio
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/bio
 
 SRCS+= bio_lib.c bio_cb.c bio_err.c \
 	bss_mem.c bss_null.c bss_fd.c \

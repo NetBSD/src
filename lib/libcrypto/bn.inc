@@ -1,4 +1,4 @@
-#	$NetBSD: bn.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: bn.inc,v 1.2 2000/06/21 19:34:24 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/bn
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/bn
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/bn
 
 SRCS+=	bn_add.c bn_div.c bn_exp.c bn_lib.c bn_mul.c \
 	bn_print.c bn_rand.c bn_shift.c bn_word.c bn_blind.c \

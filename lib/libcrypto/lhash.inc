@@ -1,4 +1,4 @@
-#	$NetBSD: lhash.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: lhash.inc,v 1.2 2000/06/21 19:34:25 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/lhash
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/lhash
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/lhash
 
 SRCS+=lhash.c lh_stats.c
 
