@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscalls.c,v 1.41 2001/01/27 07:29:05 thorpej Exp $ */
+/* $NetBSD: osf1_syscalls.c,v 1.42 2001/04/04 19:52:19 ross Exp $ */
 
 /*
  * System call names.
@@ -246,12 +246,12 @@ const char *const osf1_syscallnames[] = {
 	"#221 (unimplemented)",		/* 221 = unimplemented */
 	"#222 (unimplemented security)",		/* 222 = unimplemented security */
 	"#223 (unimplemented kloadcall)",		/* 223 = unimplemented kloadcall */
-	"#224 (unimplemented)",		/* 224 = unimplemented */
-	"#225 (unimplemented)",		/* 225 = unimplemented */
-	"#226 (unimplemented)",		/* 226 = unimplemented */
-	"#227 (unimplemented)",		/* 227 = unimplemented */
-	"#228 (unimplemented)",		/* 228 = unimplemented */
-	"#229 (unimplemented)",		/* 229 = unimplemented */
+	"stat2",			/* 224 = stat2 */
+	"lstat2",			/* 225 = lstat2 */
+	"fstat2",			/* 226 = fstat2 */
+	"#227 (unimplemented statfs2)",		/* 227 = unimplemented statfs2 */
+	"#228 (unimplemented fstatfs2)",		/* 228 = unimplemented fstatfs2 */
+	"#229 (unimplemented getfsstat2)",		/* 229 = unimplemented getfsstat2 */
 	"#230 (unimplemented)",		/* 230 = unimplemented */
 	"#231 (unimplemented)",		/* 231 = unimplemented */
 	"#232 (unimplemented)",		/* 232 = unimplemented */
