@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.107 2004/09/10 12:57:05 wiz Exp $
+.\"	$NetBSD: contents,v 1.108 2004/10/13 23:28:35 gavan Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -519,6 +519,7 @@ everything described below.
 .if \n[hpcsh] .setsize 17 46
 .if \n[i386] .setsize 17 47
 .if \n[ibmnws] .setsize 19 52
+.if \n[iyonix] .setsize 18 50
 .if \n[luna68k] .setsize 16 45
 .if \n[mac68k] .setsize 16 46
 .if \n[macppc] .setsize 19 53
@@ -583,6 +584,7 @@ system call and library manual pages.
 .if \n[hpcsh] .setsize 20 71
 .if \n[i386] .setsize 20 73
 .if \n[ibmnws] .setsize 23 83
+.if \n[iyonix] .setsize 21 76
 .if \n[luna68k] .setsize 18 69
 .if \n[mac68k] .setsize 18 69
 .if \n[macppc] .setsize 23 83
@@ -901,6 +903,7 @@ that your system may need to boot.
 .if \n[hpcsh] .setsize 1 2
 .if \n[i386] .setsize 4 8
 .if \n[ibmnws] .setsize 1 4
+.if \n[iyonix] .setsize 2 3
 .if \n[luna68k] .setsize 1 2
 .if \n[mac68k] .setsize 2 3
 .if \n[macppc] .setsize 3 6

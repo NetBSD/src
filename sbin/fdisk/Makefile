@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2003/04/30 19:49:01 dsl Exp $
+#	$NetBSD: Makefile,v 1.29 2004/10/13 23:28:35 gavan Exp $
 
 SUBDIR=	mbr
 
@@ -9,6 +9,7 @@ SUBDIR=	mbr
      ${MACHINE} == "hpcarm" || \
      ${MACHINE} == "hpcmips" || \
      ${MACHINE} == "hpcsh" || \
+     ${MACHINE} == "iyonix" || \
      ${MACHINE} == "arc" || \
      ${MACHINE} == "prep" || \
      ${MACHINE} == "playstation2" || \

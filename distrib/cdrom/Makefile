@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2004/02/29 01:08:22 jmc Exp $
+# $NetBSD: Makefile,v 1.22 2004/10/13 23:28:34 gavan Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -111,6 +111,7 @@ MACHINE_ARCH.hp300=	m68k
 MACHINE_ARCH.hpcarm=	arm
 MACHINE_ARCH.hpcmips=	mipsel
 MACHINE_ARCH.hpcsh=	sh3el
+MACHINE_ARCH.iyonix=	arm
 MACHINE_ARCH.luna68k=	m68k
 MACHINE_ARCH.mac68k=	m68k
 MACHINE_ARCH.macppc=	powerpc

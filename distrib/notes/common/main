@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.266 2004/08/23 16:03:57 wiz Exp $
+.\"	$NetBSD: main,v 1.267 2004/10/13 23:28:35 gavan Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,13 +44,13 @@
 .
 .nr FOR_RELEASE 1
 .nr DOC_XR 1
-.ds MACHINE_LIST acorn26 acorn32 algor alpha amd64 amiga amigappc arc atari bebox
-.as MACHINE_LIST " cats cesfic cobalt dreamcast evbarm evbmips evbppc evbsh3 evbsh5 
-.as MACHINE_LIST " hp300 hp700 hpcarm hpcmips hpcsh hppa i386 ibmnws luna68k mac68k macppc
-.as MACHINE_LIST " mipsco mmeye mvme68k mvmeppc netwinder news68k newsmips
-.as MACHINE_LIST " next68k ofppc openblocks pc532 pdp10 playstation2 pmax pmppc prep sandpoint
-.as MACHINE_LIST " sbmips sgimips shark sparc sparc64 sun2 sun3 vax 
-.as MACHINE_LIST " x68k xen .
+.ds MACHINE_LIST acorn26 acorn32 algor alpha amd64 amiga amigappc arc atari
+.as MACHINE_LIST " bebox cats cesfic cobalt dreamcast evbarm evbmips evbppc
+.as MACHINE_LIST " evbsh3 evbsh5 hp300 hp700 hpcarm hpcmips hpcsh hppa i386
+.as MACHINE_LIST " ibmnws iyonix luna68k mac68k macppc mipsco mmeye mvme68k
+.as MACHINE_LIST " mvmeppc netwinder news68k newsmips next68k ofppc openblocks
+.as MACHINE_LIST " pc532 pdp10 playstation2 pmax pmppc prep sandpoint sbmips
+.as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen .
 .so \*[.CURDIR]/../common/macros
 .
 .Dd August 22, 2004
