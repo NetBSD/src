@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.17 1995/04/13 11:59:28 chopps Exp $	*/
+/*	$NetBSD: fd.c,v 1.18 1995/07/05 02:12:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -540,8 +540,7 @@ fdread(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-	    dev, B_READ, fdminphys, uio));
+	return (physio(fdstrategy, NULL, dev, B_READ, fdminphys, uio));
 }
 
 int
@@ -549,8 +548,7 @@ fdwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-	    dev, B_WRITE, fdminphys, uio));
+	return (physio(fdstrategy, NULL, dev, B_WRITE, fdminphys, uio));
 }
 
 
