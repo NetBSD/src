@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.9 1999/01/03 17:13:51 hubertf Exp $	*/
+/*	$NetBSD: screen.c,v 1.10 1999/08/14 16:40:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,7 +74,7 @@ static	void	stopset __P((int));
  * Capabilities from TERMCAP.
  */
 char	PC, *BC, *UP;		/* tgoto requires globals: ugh! */
-speed_t	ospeed;
+short	ospeed;
 
 static char
 	*bcstr,			/* backspace char */
