@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.57 1997/11/03 22:53:25 cgd Exp $
+#	$NetBSD: bsd.own.mk,v 1.58 1998/01/15 09:37:25 agc Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -88,10 +88,16 @@ TARGETS+=	all clean cleandir depend includes install lint obj regress \
 		tags beforedepend afterdepend beforeinstall afterinstall \
 		realinstall
 
+# set NEED_install_TARGET, if it's not already set, to yes
+# this is used by bsd.port.mk to stop "install" being defined
+NEED_OWN_INSTALL_TARGET?=	yes
+
+.if (${NEED_OWN_INSTALL_TARGET} == "yes")
 .if !target(install)
 install:	.NOTMAIN beforeinstall subdir-install realinstall afterinstall
 beforeinstall:	.NOTMAIN
 subdir-install:	.NOTMAIN beforeinstall
 realinstall:	.NOTMAIN beforeinstall
 afterinstall:	.NOTMAIN subdir-install realinstall
+.endif
 .endif
