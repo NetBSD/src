@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.1 2000/06/14 05:29:00 soren Exp $
+#	$NetBSD: disktab,v 1.2 2002/04/09 12:40:42 tron Exp $
 #
 # Disk geometry and partition layout tables.
 # Key:
@@ -26,3 +26,10 @@
 #	f[a-h]	partition fragment sizes in bytes
 #	t[a-h]	partition types (filesystem, swap, etc)
 #
+
+# This entry is required for the FFS regression test.
+floppy288|2.88MB 3.5in Extra High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
+	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
+	:pb#5760:ob#0:\
+	:pc#5760:oc#0:
