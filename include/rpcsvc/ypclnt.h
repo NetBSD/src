@@ -1,4 +1,4 @@
-/*	$NetBSD: ypclnt.h,v 1.10 1998/02/10 04:12:25 lukem Exp $	*/
+/*	$NetBSD: ypclnt.h,v 1.11 1998/02/11 23:07:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -85,7 +85,7 @@ int	yp_order	__P((const char *, const char *, int *));
 int	yp_all		__P((const char *, const char *,
 			     struct ypall_callback *));
 char *	yperr_string	__P((int));
-int	ypprot_err	__P((u_int32_t));
+int	ypprot_err	__P((unsigned int));
 __END_DECLS
 
 #endif /* _RPCSVC_YPCLNT_H_ */

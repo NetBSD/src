@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.8 1998/02/10 05:10:19 lukem Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.9 1998/02/11 23:11:17 lukem Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_hout.c,v 1.8 1998/02/10 05:10:19 lukem Exp $");
+__RCSID("$NetBSD: rpc_hout.c,v 1.9 1998/02/11 23:11:17 lukem Exp $");
 #endif
 #endif
 
@@ -241,7 +241,7 @@ puldefine(name, num)
 	char   *name;
 	char   *num;
 {
-	f_print(fout, "#define %s ((u_int32_t)%s)\n", name, num);
+	f_print(fout, "#define %s ((u_long)%s)\n", name, num);
 }
 
 static int
