@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.19 1998/10/12 09:57:48 bouyer Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.20 1998/10/16 14:29:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -168,7 +168,8 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 	if (!ISSEQREAD(vp, lblkno)) {
 		vp->v_ralen = 0;
 		vp->v_maxra = lblkno;
-	} else if ((ioblkno + 1) * size <= filesize && !alreadyincore &&
+	} else if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size <= filesize &&
+	    !alreadyincore &&
 	    !(error = VOP_BMAP(vp, ioblkno, NULL, &blkno, &num_ra)) &&
 	    blkno != -1) {
 		/*
@@ -205,9 +206,10 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 			bp->b_blkno = blkno;
 			/* Case 5: check how many blocks to read ahead */
 			++ioblkno;
-			if ((ioblkno + 1) * size > filesize ||
+			if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size >
+			    filesize ||
 			    incore(vp, ioblkno) || (error = VOP_BMAP(vp,
-			     ioblkno, NULL, &blkno, &num_ra)) || blkno == -1)
+			    ioblkno, NULL, &blkno, &num_ra)) || blkno == -1)
 				goto skip_readahead;
 			/*
 			 * Adjust readahead as above.
@@ -572,7 +574,7 @@ cluster_write(bp, filesize)
 		 * If at end of file, make cluster as large as possible,
 		 * otherwise find size of existing cluster.
 		 */
-		if ((lbn + 1) * bp->b_bcount != filesize &&
+		if ((u_quad_t)(lbn + 1) * (u_quad_t)bp->b_bcount != filesize &&
 		    (VOP_BMAP(vp, lbn, NULL, &bp->b_blkno, &maxclen) ||
 		     bp->b_blkno == -1)) {
 			bawrite(bp);
