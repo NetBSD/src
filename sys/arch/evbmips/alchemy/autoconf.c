@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.4 2002/09/27 02:24:13 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.5 2003/07/04 01:19:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ device_register(struct device *dev, void *aux)
 	/* Fetch the MAC addresses from YAMON. */
 	if (strcmp(name, "aumac") == 0) {
 		uint8_t ethaddr[ETHER_ADDR_LEN];
-		char prop_name[sizeof("0xffffffff:mac-addr") + 1];
 		const char *cp;
 		char *cp0;
 		int i;
@@ -118,13 +117,11 @@ device_register(struct device *dev, void *aux)
 				 */
 				ethaddr[4] += 0x10;
 			}
-
-			snprintf(prop_name, sizeof(prop_name), "%p:mac-addr",
-			    dev);
-			if (alchemy_info_set(prop_name, ethaddr,
-			    sizeof(ethaddr), 0, 0))
-				panic("can't set mac address property for "
-				    "aumac");
+			if (prop_set(dev_propdb, dev, "mac-addr",
+				     ethaddr, sizeof(ethaddr), 0, 0) != 0) {
+				printf("WARNING: unable to set mac-addr "
+				    "property for %s\n", dev->dv_xname);
+			}
 		}
 	}
 }
