@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.20 1998/09/05 01:18:19 mark Exp $	*/
+/*	$NetBSD: syscall.c,v 1.21 1998/09/06 04:25:15 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -68,24 +68,11 @@
 
 #include <arm32/arm32/disassem.h>
 
-#ifdef HYDRA
-#include "hydrabus.h"
-#endif
-
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
 #endif
 
 u_int arm700bugcount = 0;
-extern int usertraceback;
-
-#if NHYDRABUS > 0
-extern pv_addr_t hydrascratch;
-#endif
-
-extern int vmem_mapdram		__P((void));
-extern int vmem_mapvram		__P((void));
-extern int vmem_cachectl	__P((int flag));
 
 /* Macors to simplify the switch statement below */
 
