@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.141 2000/01/17 04:22:59 itojun Exp $
+# $NetBSD: mi,v 1.142 2000/01/20 19:26:43 wrstuden Exp $
 .
 ./altroot
 ./bin
@@ -99,6 +99,7 @@
 ./sbin/mount_nfs
 ./sbin/mount_ntfs
 ./sbin/mount_null
+./sbin/mount_overlay
 ./sbin/mount_portal
 ./sbin/mount_procfs
 ./sbin/mount_ufs
