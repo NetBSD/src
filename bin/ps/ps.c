@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ps.c	5.43 (Berkeley) 7/1/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/ps/ps.c,v 1.6 1993/07/11 17:34:29 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/ps.c,v 1.7 1993/07/19 11:02:10 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -289,7 +289,7 @@ main(argc, argv)
 	for (nentries = 0; p = kvm_nextproc(); ++nentries) {
 		kinfo[nentries].ki_p = p;
 		kinfo[nentries].ki_e = kvm_geteproc(p);
-		if (needuser)
+		if (needuser || needcomm)
 			saveuser(&kinfo[nentries]);
 	}
 	/*
