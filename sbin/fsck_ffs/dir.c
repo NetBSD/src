@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,18 +32,15 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dir.c	5.19 (Berkeley) 7/26/91";*/
-static char rcsid[] = "$Id: dir.c,v 1.6 1994/04/25 18:28:20 cgd Exp $";
+/*static char sccsid[] = "from: @(#)dir.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: dir.c,v 1.7 1994/06/08 19:00:19 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
-#define KERNEL
-#include <ufs/dir.h>
-#undef KERNEL
-#include <stddef.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
+#include <ufs/ffs/fs.h>
 #include <stdlib.h>
 #include <string.h>
 #include "fsck.h"
@@ -51,7 +48,14 @@ static char rcsid[] = "$Id: dir.c,v 1.6 1994/04/25 18:28:20 cgd Exp $";
 char	*lfname = "lost+found";
 int	lfmode = 01777;
 struct	dirtemplate emptydir = { 0, DIRBLKSIZ };
-struct	dirtemplate dirhead = { 0, 12, 1, ".", 0, DIRBLKSIZ - 12, 2, ".." };
+struct	dirtemplate dirhead = {
+	0, 12, DT_DIR, 1, ".",
+	0, DIRBLKSIZ - 12, DT_DIR, 2, ".."
+};
+struct	odirtemplate odirhead = {
+	0, 12, 1, ".",
+	0, DIRBLKSIZ - 12, 2, ".."
+};
 
 struct direct	*fsck_readdir();
 struct bufarea	*getdirblk();
@@ -107,8 +111,29 @@ dirscan(idesc)
 	for (dp = fsck_readdir(idesc); dp != NULL; dp = fsck_readdir(idesc)) {
 		dsize = dp->d_reclen;
 		bcopy((char *)dp, dbuf, (size_t)dsize);
+#		if (BYTE_ORDER == LITTLE_ENDIAN)
+			if (!newinofmt) {
+				struct direct *tdp = (struct direct *)dbuf;
+				u_char tmp;
+
+				tmp = tdp->d_namlen;
+				tdp->d_namlen = tdp->d_type;
+				tdp->d_type = tmp;
+			}
+#		endif
 		idesc->id_dirp = (struct direct *)dbuf;
 		if ((n = (*idesc->id_func)(idesc)) & ALTERED) {
+#			if (BYTE_ORDER == LITTLE_ENDIAN)
+				if (!newinofmt && !doinglevel2) {
+					struct direct *tdp;
+					u_char tmp;
+
+					tdp = (struct direct *)dbuf;
+					tmp = tdp->d_namlen;
+					tdp->d_namlen = tdp->d_type;
+					tdp->d_type = tmp;
+				}
+#			endif
 			bp = getdirblk(idesc->id_blkno, blksiz);
 			bcopy(dbuf, bp->b_un.b_buf + idesc->id_loc - dsize,
 			    (size_t)dsize);
@@ -130,39 +155,34 @@ fsck_readdir(idesc)
 {
 	register struct direct *dp, *ndp;
 	register struct bufarea *bp;
-	long blksiz, new_id_filesize;
-	int fix, new_id_loc, new_reclen, orig_id_loc, size;
+	long size, blksiz, fix, dploc;
 
 	blksiz = idesc->id_numfrags * sblock.fs_fsize;
 	bp = getdirblk(idesc->id_blkno, blksiz);
-	orig_id_loc = idesc->id_loc;
 	if (idesc->id_loc % DIRBLKSIZ == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
 		dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
 		if (dircheck(idesc, dp))
 			goto dpok;
-		/*
-		 * See below about recursion.
-		 */
-		new_id_loc = idesc->id_loc + DIRBLKSIZ;
-		new_id_filesize = idesc->id_filesize - DIRBLKSIZ;
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
-		idesc->id_loc = new_id_loc;
-		idesc->id_filesize = new_id_filesize;
 		bp = getdirblk(idesc->id_blkno, blksiz);
-		dp = (struct direct *)(bp->b_un.b_buf + orig_id_loc);
+		dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
 		dp->d_reclen = DIRBLKSIZ;
 		dp->d_ino = 0;
+		dp->d_type = 0;
 		dp->d_namlen = 0;
 		dp->d_name[0] = '\0';
 		if (fix)
 			dirty(bp);
+		idesc->id_loc += DIRBLKSIZ;
+		idesc->id_filesize -= DIRBLKSIZ;
 		return (dp);
 	}
 dpok:
 	if (idesc->id_filesize <= 0 || idesc->id_loc >= blksiz)
 		return NULL;
-	dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
+	dploc = idesc->id_loc;
+	dp = (struct direct *)(bp->b_un.b_buf + dploc);
 	idesc->id_loc += dp->d_reclen;
 	idesc->id_filesize -= dp->d_reclen;
 	if ((idesc->id_loc % DIRBLKSIZ) == 0)
@@ -171,23 +191,12 @@ dpok:
 	if (idesc->id_loc < blksiz && idesc->id_filesize > 0 &&
 	    dircheck(idesc, ndp) == 0) {
 		size = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
-		/*
-		 * dofix() may recurse here.  Don't let it cause multiple
-		 * fixups.
-		 */
-		new_id_loc = idesc->id_loc + size;
-		new_id_filesize = idesc->id_filesize - size;
-		new_reclen = dp->d_reclen + size;
+		idesc->id_loc += size;
+		idesc->id_filesize -= size;
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
-		idesc->id_loc = new_id_loc;
-		idesc->id_filesize = new_id_filesize;
-		/*
-		 * dofix() calls fsck_readdir() and getdirblk() discards
-		 * the lock on bp so bp may now be invalid.
-		 */
 		bp = getdirblk(idesc->id_blkno, blksiz);
-		dp = (struct direct *)(bp->b_un.b_buf + orig_id_loc);
-		dp->d_reclen = new_reclen;
+		dp = (struct direct *)(bp->b_un.b_buf + dploc);
+		dp->d_reclen += size;
 		if (fix)
 			dirty(bp);
 	}
@@ -204,22 +213,34 @@ dircheck(idesc, dp)
 {
 	register int size;
 	register char *cp;
+	u_char namlen, type;
 	int spaceleft;
 
+	size = DIRSIZ(!newinofmt, dp);
 	spaceleft = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
-	if (spaceleft < offsetof(struct direct, d_name))
-		return (0);	/* dp is bad; don't use it */
-	size = DIRSIZ(dp);
+#	if (BYTE_ORDER == LITTLE_ENDIAN)
+		if (!newinofmt) {
+			type = dp->d_namlen;
+			namlen = dp->d_type;
+		} else {
+			namlen = dp->d_namlen;
+			type = dp->d_type;
+		}
+#	else
+		namlen = dp->d_namlen;
+		type = dp->d_type;
+#	endif
 	if (dp->d_ino < maxino &&
 	    dp->d_reclen != 0 &&
 	    dp->d_reclen <= spaceleft &&
 	    (dp->d_reclen & 0x3) == 0 &&
 	    dp->d_reclen >= size &&
 	    idesc->id_filesize >= size &&
-	    dp->d_namlen <= MAXNAMLEN) {
+	    namlen <= MAXNAMLEN &&
+	    type <= 15) {
 		if (dp->d_ino == 0)
 			return (1);
-		for (cp = dp->d_name, size = 0; size < dp->d_namlen; size++)
+		for (cp = dp->d_name, size = 0; size < namlen; size++)
 			if (*cp == 0 || (*cp++ == '/'))
 				return (0);
 		if (*cp == 0)
@@ -297,9 +318,9 @@ mkentry(idesc)
 	int newlen, oldlen;
 
 	newent.d_namlen = strlen(idesc->id_name);
-	newlen = DIRSIZ(&newent);
+	newlen = DIRSIZ(0, &newent);
 	if (dirp->d_ino != 0)
-		oldlen = DIRSIZ(dirp);
+		oldlen = DIRSIZ(0, dirp);
 	else
 		oldlen = 0;
 	if (dirp->d_reclen - oldlen < newlen)
@@ -308,6 +329,10 @@ mkentry(idesc)
 	dirp->d_reclen = oldlen;
 	dirp = (struct direct *)(((char *)dirp) + oldlen);
 	dirp->d_ino = idesc->id_parent;	/* ino to be entered is in id_parent */
+	if (newinofmt)
+		dirp->d_type = typemap[idesc->id_parent];
+	else
+		dirp->d_type = 0;
 	dirp->d_reclen = newent.d_reclen;
 	dirp->d_namlen = newent.d_namlen;
 	bcopy(idesc->id_name, dirp->d_name, (size_t)dirp->d_namlen + 1);
@@ -322,6 +347,10 @@ chgino(idesc)
 	if (bcmp(dirp->d_name, idesc->id_name, (int)dirp->d_namlen + 1))
 		return (KEEPON);
 	dirp->d_ino = idesc->id_parent;
+	if (newinofmt)
+		dirp->d_type = typemap[idesc->id_parent];
+	else
+		dirp->d_type = 0;
 	return (ALTERED|STOP);
 }
 
@@ -551,17 +580,22 @@ allocdir(parent, request, mode)
 	char *cp;
 	struct dinode *dp;
 	register struct bufarea *bp;
+	struct dirtemplate *dirp;
 
 	ino = allocino(request, IFDIR|mode);
-	dirhead.dot_ino = ino;
-	dirhead.dotdot_ino = parent;
+	if (newinofmt)
+		dirp = &dirhead;
+	else
+		dirp = (struct dirtemplate *)&odirhead;
+	dirp->dot_ino = ino;
+	dirp->dotdot_ino = parent;
 	dp = ginode(ino);
 	bp = getdirblk(dp->di_db[0], sblock.fs_fsize);
 	if (bp->b_errs) {
 		freeino(ino);
 		return (0);
 	}
-	bcopy((char *)&dirhead, bp->b_un.b_buf, sizeof dirhead);
+	bcopy((char *)dirp, bp->b_un.b_buf, sizeof(struct dirtemplate));
 	for (cp = &bp->b_un.b_buf[DIRBLKSIZ];
 	     cp < &bp->b_un.b_buf[sblock.fs_fsize];
 	     cp += DIRBLKSIZ)
