@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.103 2004/05/12 02:07:37 jrf Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.104 2004/05/13 15:44:04 cl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.103 2004/05/12 02:07:37 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.104 2004/05/13 15:44:04 cl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -162,11 +162,11 @@ const struct kernfs_fileop kernfs_default_fileops[] = {
   { .kf_fileop = KERNFS_XWRITE },
   { .kf_fileop = KERNFS_FILEOP_OPEN },
   { .kf_fileop = KERNFS_FILEOP_GETATTR,
-    .kf_vop = kernfs_default_fileop_getattr },
+    .kf_genop = {kernfs_default_fileop_getattr} },
   { .kf_fileop = KERNFS_FILEOP_IOCTL },
   { .kf_fileop = KERNFS_FILEOP_MMAP },
   { .kf_fileop = KERNFS_FILEOP_CLOSE },
-  { .kf_fileop = KERNFS_FILEOP_WRITE, .kf_vop = kernfs_default_xwrite },
+  { .kf_fileop = KERNFS_FILEOP_WRITE, .kf_genop = {kernfs_default_xwrite} },
 };
 
 int	kernfs_lookup	__P((void *));
