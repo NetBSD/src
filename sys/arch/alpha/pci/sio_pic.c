@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.22 1998/08/01 18:54:21 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.23 1998/08/01 19:38:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.22 1998/08/01 18:54:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.23 1998/08/01 19:38:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,8 +500,7 @@ sio_intr_disestablish(v, cookie)
 	void *cookie;
 {
 	struct alpha_shared_intrhand *ih = cookie;
-	int s, irq = ih->ih_num;
-	int ist = INITIALLY_LEVEL_TRIGGERED(irq) ?  IST_LEVEL : IST_NONE;
+	int s, ist, irq = ih->ih_num;
 
 	s = splhigh();
 
@@ -516,6 +515,27 @@ sio_intr_disestablish(v, cookie)
 	 *	- An initially-LT interrupt is never untyped.
 	 */
 	if (alpha_shared_intr_isactive(sio_intr, irq) == 0) {
+		/*
+		 * IRQs 0, 1, 8, and 13 must always be edge-triggered
+		 * (see setup).
+		 */
+		switch (irq) {
+		case 0:
+		case 1:
+		case 8:
+		case 13:
+			/*
+			 * If the interrupt was initially level-triggered
+			 * a warning was printed in setup.
+			 */
+			ist = IST_EDGE;
+			break;
+
+		default:
+			ist = INITIALLY_LEVEL_TRIGGERED(irq) ?
+			    IST_LEVEL : IST_NONE;
+			break;
+		}
 		sio_setirqstat(irq, INITIALLY_ENABLED(irq), ist);
 		alpha_shared_intr_set_dfltsharetype(sio_intr, irq, ist);
 	}
