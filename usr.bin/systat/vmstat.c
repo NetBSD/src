@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.10 1997/10/19 23:36:34 lukem Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.11 1998/02/07 14:08:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.10 1997/10/19 23:36:34 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.11 1998/02/07 14:08:23 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -56,6 +56,10 @@ __RCSID("$NetBSD: vmstat.c,v 1.10 1997/10/19 23:36:34 lukem Exp $");
 #include <sys/sysctl.h>
 #include <vm/vm.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <ctype.h>
 #include <err.h>
 #include <nlist.h>
@@ -71,7 +75,11 @@ __RCSID("$NetBSD: vmstat.c,v 1.10 1997/10/19 23:36:34 lukem Exp $");
 
 static struct Info {
 	long	time[CPUSTATES];
+#if defined(UVM)
+	struct	uvmexp uvmexp;
+#else
 	struct	vmmeter Cnt;
+#endif
 	struct	vmtotal Total;
 	struct	nchstats nchstats;
 	long	nchcount;
@@ -111,7 +119,6 @@ static	int nextintsrow;
 
 struct	utmp utmp;
 
-
 WINDOW *
 openkre()
 {
@@ -138,20 +145,22 @@ closekre(w)
 static struct nlist namelist[] = {
 #define X_CPTIME	0
 	{ "_cp_time" },
-#define X_CNT		1
-	{ "_cnt" },
-#define X_TOTAL		2
+#define X_TOTAL		1
 	{ "_total" },
-#define	X_NCHSTATS	3
+#define	X_NCHSTATS	2
 	{ "_nchstats" },
-#define	X_INTRNAMES	4
+#define	X_INTRNAMES	3
 	{ "_intrnames" },
-#define	X_EINTRNAMES	5
+#define	X_EINTRNAMES	4
 	{ "_eintrnames" },
-#define	X_INTRCNT	6
+#define	X_INTRCNT	5
 	{ "_intrcnt" },
-#define	X_EINTRCNT	7
+#define	X_EINTRCNT	6
 	{ "_eintrcnt" },
+#if !defined(UVM)
+#define X_CNT		7
+	{ "_cnt" },
+#endif
 	{ "" },
 };
 
@@ -285,23 +294,30 @@ labelkre()
 	mvprintw(INTSROW + 1, INTSCOL + 9, "total");
 
 	mvprintw(VMSTATROW + 0, VMSTATCOL + 10, "cow");
+/* XXX fix me */
+#if !defined(UVM)
 	mvprintw(VMSTATROW + 1, VMSTATCOL + 10, "objlk");
 	mvprintw(VMSTATROW + 2, VMSTATCOL + 10, "objht");
 	mvprintw(VMSTATROW + 3, VMSTATCOL + 10, "zfod");
 	mvprintw(VMSTATROW + 4, VMSTATCOL + 10, "nzfod");
 	mvprintw(VMSTATROW + 5, VMSTATCOL + 10, "%%zfod");
 	mvprintw(VMSTATROW + 6, VMSTATCOL + 10, "kern");
+#endif
 	mvprintw(VMSTATROW + 7, VMSTATCOL + 10, "wire");
 	mvprintw(VMSTATROW + 8, VMSTATCOL + 10, "act");
 	mvprintw(VMSTATROW + 9, VMSTATCOL + 10, "inact");
 	mvprintw(VMSTATROW + 10, VMSTATCOL + 10, "free");
 	mvprintw(VMSTATROW + 11, VMSTATCOL + 10, "daefr");
+#if !defined(UVM)
 	mvprintw(VMSTATROW + 12, VMSTATCOL + 10, "prcfr");
+#endif
 	mvprintw(VMSTATROW + 13, VMSTATCOL + 10, "react");
 	mvprintw(VMSTATROW + 14, VMSTATCOL + 10, "scan");
 	mvprintw(VMSTATROW + 15, VMSTATCOL + 10, "hdrev");
+#if !defined(UVM)
 	if (LINES - 1 > VMSTATROW + 16)
 		mvprintw(VMSTATROW + 16, VMSTATCOL + 10, "intrn");
+#endif
 
 	mvprintw(GENSTATROW, GENSTATCOL, "  Csw  Trp  Sys  Int  Sof  Flt");
 
@@ -337,9 +353,7 @@ labelkre()
 #define Y(fld)	{t = s.fld; s.fld -= s1.fld; if(state == TIME) s1.fld = t;}
 #define Z(fld)	{t = s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld; \
 	if(state == TIME) s1.nchstats.fld = t;}
-#define PUTRATE(fld, l, c, w) \
-	Y(fld); \
-	putint((int)((float)s.fld/etime + 0.5), l, c, w)
+#define PUTRATE(fld, l, c, w) Y(fld); putint((int)((float)s.fld/etime + 0.5), l, c, w)
 #define MAXFAIL 5
 
 static	char cpuchar[CPUSTATES] = { '=' , '>', '-', ' ' };
@@ -427,7 +441,12 @@ showkre()
 	putfloat(avenrun[1], STATROW, STATCOL + 23, 6, 2, 0);
 	putfloat(avenrun[2], STATROW, STATCOL + 29, 6, 2, 0);
 	mvaddstr(STATROW, STATCOL + 53, buf);
+#if defined(UVM)
+#define pgtokb(pg)	((pg) * s.uvmexp.pagesize / 1024)
+#else
 #define pgtokb(pg)	((pg) * cnt.v_page_size / 1024)
+#endif
+
 	putint(pgtokb(total.t_arm), MEMROW + 2, MEMCOL + 3, 6);
 	putint(pgtokb(total.t_armshr), MEMROW + 2, MEMCOL + 9, 6);
 	putint(pgtokb(total.t_avm), MEMROW + 2, MEMCOL + 15, 7);
@@ -442,6 +461,51 @@ showkre()
 	putint(total.t_dw, PROCSROW + 1, PROCSCOL + 9, 3);
 	putint(total.t_sl, PROCSROW + 1, PROCSCOL + 12, 3);
 	putint(total.t_sw, PROCSROW + 1, PROCSCOL + 15, 3);
+#if defined(UVM)
+	PUTRATE(uvmexp.flt_acow, VMSTATROW + 0, VMSTATCOL + 3, 6);
+#if 0
+	PUTRATE(Cnt.v_lookups, VMSTATROW + 1, VMSTATCOL + 3, 6);
+	PUTRATE(Cnt.v_hits, VMSTATROW + 2, VMSTATCOL + 3, 6);
+	PUTRATE(Cnt.v_zfod, VMSTATROW + 3, VMSTATCOL + 4, 5);
+	PUTRATE(Cnt.v_nzfod, VMSTATROW + 4, VMSTATCOL + 3, 6);
+	putfloat(cnt.v_nzfod == 0 ? 0.0 : (100.0 * cnt.v_zfod / cnt.v_nzfod),
+		 VMSTATROW + 5, VMSTATCOL + 2, 7, 2, 1);
+	putint(pgtokb(cnt.v_kernel_pages), VMSTATROW + 6, VMSTATCOL, 9);
+#endif
+	putint(pgtokb(s.uvmexp.wired), VMSTATROW + 7, VMSTATCOL, 9);
+	putint(pgtokb(s.uvmexp.active), VMSTATROW + 8, VMSTATCOL, 9);
+	putint(pgtokb(s.uvmexp.inactive), VMSTATROW + 9, VMSTATCOL, 9);
+	putint(pgtokb(s.uvmexp.free), VMSTATROW + 10, VMSTATCOL, 9);
+	PUTRATE(uvmexp.pdfreed, VMSTATROW + 11, VMSTATCOL, 9);
+#if 0
+	PUTRATE(Cnt.v_pfree, VMSTATROW + 12, VMSTATCOL, 9);
+#endif
+	PUTRATE(uvmexp.pdreact, VMSTATROW + 13, VMSTATCOL, 9);
+	PUTRATE(uvmexp.pdscans, VMSTATROW + 14, VMSTATCOL, 9);
+	PUTRATE(uvmexp.pdrevs, VMSTATROW + 15, VMSTATCOL, 9);
+#if 0
+	if (LINES - 1 > VMSTATROW + 16)
+		PUTRATE(Cnt.v_intrans, VMSTATROW + 16, VMSTATCOL, 9);
+#endif
+	PUTRATE(uvmexp.fltanget, PAGEROW + 2, PAGECOL + 5, 5);
+	PUTRATE(uvmexp.pdpageouts, PAGEROW + 2, PAGECOL + 10, 5);
+	PUTRATE(uvmexp.swapins, PAGEROW + 2, PAGECOL + 15, 5);	/* - */
+	PUTRATE(uvmexp.swapouts, PAGEROW + 2, PAGECOL + 20, 5);	/* - */
+#if 0
+	PUTRATE(uvmexp.v_pgpgin, PAGEROW + 3, PAGECOL + 5, 5);	/* ? */
+#endif
+	PUTRATE(uvmexp.pdfreed, PAGEROW + 3, PAGECOL + 10, 5);	/* ? */
+#if 0
+	PUTRATE(uvmexp.v_pswpin, PAGEROW + 3, PAGECOL + 15, 5);	/* - */
+	PUTRATE(uvmexp.v_pswpout, PAGEROW + 3, PAGECOL + 20, 5);	/* - */
+#endif
+	PUTRATE(uvmexp.swtch, GENSTATROW + 1, GENSTATCOL, 5);
+	PUTRATE(uvmexp.traps, GENSTATROW + 1, GENSTATCOL + 5, 5);
+	PUTRATE(uvmexp.syscalls, GENSTATROW + 1, GENSTATCOL + 10, 5);
+	PUTRATE(uvmexp.intrs, GENSTATROW + 1, GENSTATCOL + 15, 5);
+	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 20, 5);
+	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 25, 5);
+#else
 	PUTRATE(Cnt.v_cow_faults, VMSTATROW + 0, VMSTATCOL + 3, 6);
 	PUTRATE(Cnt.v_lookups, VMSTATROW + 1, VMSTATCOL + 3, 6);
 	PUTRATE(Cnt.v_hits, VMSTATROW + 2, VMSTATCOL + 3, 6);
@@ -475,6 +539,7 @@ showkre()
 	PUTRATE(Cnt.v_intr, GENSTATROW + 1, GENSTATCOL + 15, 5);
 	PUTRATE(Cnt.v_soft, GENSTATROW + 1, GENSTATCOL + 20, 5);
 	PUTRATE(Cnt.v_faults, GENSTATROW + 1, GENSTATCOL + 25, 5);
+#endif
 	mvprintw(DISKROW, DISKCOL + 5, "                              ");
 	for (i = 0, c = 0; i < dk_ndrive && c < MAXDRIVES; i++)
 		if (dk_select[i]) {
@@ -605,9 +670,19 @@ getinfo(s, st)
 
 	dkreadstats();
 	NREAD(X_CPTIME, s->time, sizeof s->time);
-	NREAD(X_CNT, &s->Cnt, sizeof s->Cnt);
 	NREAD(X_NCHSTATS, &s->nchstats, sizeof s->nchstats);
 	NREAD(X_INTRCNT, s->intrcnt, nintr * LONG);
+#if defined(UVM)
+	size = sizeof(s->uvmexp);
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP;
+	if (sysctl(mib, 2, &s->uvmexp, &size, NULL, 0) < 0) {
+		error("can't get uvmexp: %s\n", strerror(errno));
+		memset(&s->uvmexp, 0, sizeof(s->uvmexp));
+	}
+#else
+	NREAD(X_CNT, &s->Cnt, sizeof s->Cnt);
+#endif
 	size = sizeof(s->Total);
 	mib[0] = CTL_VM;
 	mib[1] = VM_METER;
