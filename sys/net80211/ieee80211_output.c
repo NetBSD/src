@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.23 2004/12/27 09:25:05 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.24 2004/12/27 10:47:57 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.23 2004/12/27 09:25:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.24 2004/12/27 10:47:57 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -313,10 +313,6 @@ ieee80211_compute_duration1(int len, int use_ack, uint32_t flags, int rate,
 	else
 		pre += IEEE80211_DUR_DS_LONG_PREAMBLE + IEEE80211_DUR_DS_SLOW_PLCPHDR;
 
-#if 0
-	/* RTS is always sent at 1 Mb/s.  (XXX Really?) */
-	d->d_rts_plcp_len = sizeof(struct ieee80211_frame_rts) * 8;
-#endif
 	d->d_residue = 0;
 	data_dur = (bitlen * 2) / rate;
 	remainder = (bitlen * 2) % rate;
@@ -395,31 +391,20 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
 
 	paylen = len - hdrlen;
 
-	if ((flags & IEEE80211_F_PRIVACY) != 0) {
+	if ((flags & IEEE80211_F_PRIVACY) != 0)
 		overlen = IEEE80211_WEP_TOTLEN + IEEE80211_CRC_LEN;
-#if 0	/* 802.11 lets us extend a fragment's length by the length of
-	 * a WEP header, AFTER fragmentation.  Might want to disable
-	 * this while fancy link adaptations are running.
-	 */
-		fraglen -= IEEE80211_WEP_TOTLEN;
-#endif
-#if 0	/* Ditto CRC? */
-		fraglen -= IEEE80211_CRC_LEN;
-#endif
-	} else
+	else
 		overlen = IEEE80211_CRC_LEN;
 
 	npkt = paylen / fraglen;
 	lastlen0 = paylen % fraglen;
 
-	if (npkt == 0) {
-		/* no fragments */
+	if (npkt == 0)			/* no fragments */
 		lastlen = paylen + overlen;
-	} else if (lastlen0 != 0) {
-		/* a short fragment */
+	else if (lastlen0 != 0) {	/* a short "tail" fragment */
 		lastlen = lastlen0 + overlen;
 		npkt++;
-	} else
+	} else				/* full-length "tail" fragment */
 		lastlen = fraglen + overlen;
 
 	if (npktp != NULL)
