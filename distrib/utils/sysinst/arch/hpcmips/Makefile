@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/01/22 02:59:59 shin Exp $
+#	$NetBSD: Makefile,v 1.3 2000/02/21 13:28:30 shin Exp $
 #
 # Makefile for i386
 #
@@ -11,6 +11,6 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 
 fdisk.o md.o:	menu_defs.h msg_defs.h
 
-CPPFLAGS+=-DINET6
+#CPPFLAGS+=-DINET6
 
 .include "../../Makefile.inc"
