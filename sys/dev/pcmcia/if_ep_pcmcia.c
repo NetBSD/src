@@ -55,8 +55,8 @@ int ep_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void ep_pcmcia_attach __P((struct device *, struct device *, void *));
 
 int ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
-int ep_pcmcia_enable __P((void *arg));
-void ep_pcmcia_disable __P((void *arg));
+int ep_pcmcia_enable __P((struct ep_softc *));
+void ep_pcmcia_disable __P((struct ep_softc *));
 
 struct ep_pcmcia_softc {
 	struct ep_softc sc_ep;			/* real "ep" softc */
@@ -96,14 +96,22 @@ ep_pcmcia_match(parent, match, aux)
     return(0);
 }
 
-int ep_pcmcia_enable(void *arg)
+int
+ep_pcmcia_enable(sc)
+     struct ep_softc *sc;
 {
-    return(pcmcia_function_enable(arg));
+    struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *)sc;
+
+    return (pcmcia_function_enable(psc->sc_pf));
 }
 
-void ep_pcmcia_disable(void *arg)
+void
+ep_pcmcia_disable(sc)
+     struct ep_softc *sc;
 {
-    pcmcia_function_disable(arg);
+    struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *)sc;
+
+    pcmcia_function_disable(psc->sc_pf);
 }
 
 void
@@ -205,7 +213,6 @@ ep_pcmcia_attach(parent, self, aux)
 
     sc->enable = ep_pcmcia_enable;
     sc->disable = ep_pcmcia_disable;
-    sc->able_arg = pa->pf;
 
     epconfig(sc, EP_CHIPSET_3C509, enaddr);
 

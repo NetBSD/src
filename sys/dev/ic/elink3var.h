@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.12.4.3 1997/09/27 03:48:12 marc Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.12.4.4 1997/09/29 07:47:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -83,9 +83,8 @@ struct ep_softc {
 	int ep_pktlenshift;		/* scale factor for pkt lengths */
 
 	/* power management hooks */
-	int (*enable) __P((void *arg));
-	void (*disable) __P((void *arg));
-	void *able_arg;
+	int (*enable) __P((struct ep_softc *));
+	void (*disable) __P((struct ep_softc *));
 	int enabled;
 };
 
