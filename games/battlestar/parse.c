@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.4 1997/01/07 11:56:49 tls Exp $	*/
+/*	$NetBSD: parse.c,v 1.5 1997/10/10 11:40:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,28 +33,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.4 1997/01/07 11:56:49 tls Exp $";
+__RCSID("$NetBSD: parse.c,v 1.5 1997/10/10 11:40:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+void
 wordinit()
 {
-	register struct wlist *w;
+	struct wlist *w;
 
 	for (w = wlist; w->string; w++)
 		install(w);
 }
 
+int
 hash(s)
-	register char *s;
+	char *s;
 {
-	register hashval = 0;
+	int hashval = 0;
 
 	while (*s) {
 		hashval += *s++;
@@ -68,7 +71,7 @@ struct wlist *
 lookup(s)
 	char *s;
 {
-	register struct wlist *wp;
+	struct wlist *wp;
 
 	for (wp = hashtab[hash(s)]; wp != NULL; wp = wp->next)
 		if (*s == *wp->string && strcmp(s, wp->string) == 0)
@@ -76,8 +79,9 @@ lookup(s)
 	return NULL;
 }
 
+void
 install(wp)
-	register struct wlist *wp;
+	struct wlist *wp;
 {
 	int hashval;
 
@@ -89,10 +93,11 @@ install(wp)
 		printf("Multiply defined %s.\n", wp->string);
 }
 
+void
 parse()
 {
-	register struct wlist *wp;
-	register n;
+	struct wlist *wp;
+	int n;
 
 	wordnumber = 0;           /* for cypher */
 	for (n = 0; n <= wordcount; n++) {

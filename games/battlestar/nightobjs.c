@@ -1,4 +1,4 @@
-/*	$NetBSD: nightobjs.c,v 1.4 1997/01/07 11:56:48 tls Exp $	*/
+/*	$NetBSD: nightobjs.c,v 1.5 1997/10/10 11:40:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)nightobjs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: nightobjs.c,v 1.4 1997/01/07 11:56:48 tls Exp $";
+__RCSID("$NetBSD: nightobjs.c,v 1.5 1997/10/10 11:40:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,5 +103,5 @@ struct objs nightobjs[] = {
 	{ 249,	FOOT },
 	{ 250,	FOOT },
 	{ 93,	PAPAYAS },
-	0
+	{ 0 }
 };

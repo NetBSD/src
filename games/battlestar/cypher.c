@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.4 1997/01/07 11:56:39 tls Exp $	*/
+/*	$NetBSD: cypher.c,v 1.5 1997/10/10 11:39:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,19 +33,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: cypher.c,v 1.4 1997/01/07 11:56:39 tls Exp $";
+__RCSID("$NetBSD: cypher.c,v 1.5 1997/10/10 11:39:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+int
 cypher()
 {
-	register int n;
+	int n;
 	int junk;
 	int lflag = -1;
 	char buffer[10];
@@ -147,7 +149,7 @@ cypher()
 				if (wordnumber < wordcount && wordvalue[wordnumber+1] == EVERYTHING){
 					for (n=0; n < NUMOFOBJECTS; n++)
 						if (testbit(inven,n) ||
-						  testbit(location[position].objects, n) && *objsht[n]){
+						  (testbit(location[position].objects, n) && *objsht[n])){
 							wordvalue[wordnumber+1] = n;
 							wordnumber = throw(wordvalue[wordnumber] == KICK ? "Kicked" : "Thrown");
 						}
@@ -270,7 +272,9 @@ cypher()
 				break;
 
 			case LOOK:
-				if (!notes[CANTSEE] || testbit(inven,LAMPON) || testbit(location[position].objects,LAMPON) || matchlight){
+				if (!notes[CANTSEE] || testbit(inven,LAMPON) ||
+				    testbit(location[position].objects,LAMPON)
+				    || matchlight) {
 					beenthere[position] = 2;
 					writedes();
 					printobjs();
@@ -289,10 +293,10 @@ cypher()
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
 					sscanf(buffer,"%d", &position);
-				printf("Time (was %d) = ",time);
+				printf("Time (was %d) = ", ourtime);
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
-					sscanf(buffer,"%d", &time);
+					sscanf(buffer,"%d", &ourtime);
 				printf("Fuel (was %d) = ",fuel);
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
@@ -309,10 +313,10 @@ cypher()
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
 					sscanf(buffer,"%d",&WEIGHT);
-				printf("Clock (was %d) = ",clock);
+				printf("Clock (was %d) = ", ourclock);
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
-					sscanf(buffer,"%d",&clock);
+					sscanf(buffer,"%d", &ourclock);
 				printf("Wizard (was %d, %d) = ",wiz, tempwiz);
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n'){
@@ -330,7 +334,7 @@ cypher()
 			 case SCORE:
 				printf("\tPLEASURE\tPOWER\t\tEGO\n");
 				printf("\t%3d\t\t%3d\t\t%3d\n\n",pleasure,power,ego);
-				printf("This gives you the rating of %s in %d turns.\n",rate(),time);
+				printf("This gives you the rating of %s in %d turns.\n",rate(),ourtime);
 				printf("You have visited %d out of %d rooms this run (%d%%).\n",card(beenthere,NUMOFROOMS),NUMOFROOMS,card(beenthere,NUMOFROOMS)*100/NUMOFROOMS);
 				break;
 

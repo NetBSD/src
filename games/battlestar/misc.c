@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1997/01/07 11:56:46 tls Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1997/10/10 11:40:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,22 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.4 1997/01/07 11:56:46 tls Exp $";
+__RCSID("$NetBSD: misc.c,v 1.5 1997/10/10 11:40:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+int
 card(array, size)		/* for beenthere, injuries */
-	register char *array;
+	char *array;
 	int size;
 {
-	register char *end = array + size;
-	register int i = 0;
+	char *end = array + size;
+	int i = 0;
 
 	while (array < end)
 		if (*array++)
@@ -56,10 +58,11 @@ card(array, size)		/* for beenthere, injuries */
 	return (i);
 }
 
+int
 ucard(array)
-	register unsigned *array;
+	unsigned int *array;
 {
-	register int j = 0, n;
+	int j = 0, n;
 
 	for (n = 0; n < NUMOFOBJECTS; n++)
 		if (testbit(array, n))

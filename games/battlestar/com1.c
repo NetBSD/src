@@ -1,4 +1,4 @@
-/*	$NetBSD: com1.c,v 1.4 1997/01/07 11:56:34 tls Exp $	*/
+/*	$NetBSD: com1.c,v 1.5 1997/10/10 11:39:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,25 +33,29 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: com1.c,v 1.4 1997/01/07 11:56:34 tls Exp $";
+__RCSID("$NetBSD: com1.c,v 1.5 1997/10/10 11:39:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+int
 move(thataway, token)
-int thataway, token;
+	int thataway, token;
 {
 	wordnumber++;
-	if ((!notes[CANTMOVE] && !notes[LAUNCHED]) || testbit(location[position].objects, LAND) || fuel > 0 && notes[LAUNCHED])
+	if ((!notes[CANTMOVE] && !notes[LAUNCHED]) ||
+	    testbit(location[position].objects, LAND) ||
+	    (fuel > 0 && notes[LAUNCHED]))
 		if (thataway) {
 			position = thataway;
 			newway(token);
-			time++;
+			ourtime++;
 		}
 		else {
 			puts("You can't go this way.");
@@ -66,11 +70,12 @@ int thataway, token;
 	return(1);
 }
 
+void
 convert(tothis)		/* Converts day to night and vice versa. 	    */
-int tothis;		/* Day objects are permanent.  Night objects are added*/
+	int tothis;	/* Day objects are permanent.  Night objects are added*/
 {			/* at dusk, and subtracted at dawn.		*/
-	register struct objs *p;
-	register i, j;
+	struct objs *p;
+	int i, j;
 
 	if (tothis == TONIGHT) {
 		for (i = 1; i <= NUMOFROOMS; i++)
@@ -89,29 +94,30 @@ int tothis;		/* Day objects are permanent.  Night objects are added*/
 	}
 }
 
+void
 news()
 {
-	register int n;
+	int n;
 	int hurt;
 
-	if (time > 30 && position < 32){
+	if (ourtime > 30 && position < 32){
 		puts("An explosion of shuddering magnitude splinters bulkheads and");
 		puts("ruptures the battlestar's hull.  You are sucked out into the");
 		puts("frozen void of space and killed.");
 		die();
 	}
-	if (time > 20 && position < 32)
+	if (ourtime > 20 && position < 32)
 		puts("Explosions rock the battlestar.");
-	if (time > snooze){
+	if (ourtime > snooze){
 		puts("You drop from exhaustion...");
 		zzz();
 	}
-	if (time > snooze - 5)
+	if (ourtime > snooze - 5)
 		puts("You're getting tired.");
-	if (time > (rythmn + CYCLE)) {
+	if (ourtime > (rythmn + CYCLE)) {
 		if (location == nightfile) {
 			convert(TODAY);
-			if (OUTSIDE && time - rythmn - CYCLE < 10) {
+			if (OUTSIDE && ourtime - rythmn - CYCLE < 10) {
 				puts("Dew lit sunbeams stretch out from a watery sunrise and herald the dawn.");
 				puts("You awake from a misty dream-world into stark reality.");
 				puts("It is day.");
@@ -119,14 +125,14 @@ news()
 		} else {
 			convert(TONIGHT);
 			clearbit(location[POOLS].objects, BATHGOD);
-			if (OUTSIDE && time - rythmn - CYCLE < 10) {
+			if (OUTSIDE && ourtime - rythmn - CYCLE < 10) {
 				puts("The dying sun sinks into the ocean, leaving a blood stained sunset.");
 				puts("The sky slowly fades from orange to violet to black.  A few stars");
 				puts("flicker on, and it is night.");
 				puts("The world seems completly different at night.");
 			}
 		}
-		rythmn = time - time % CYCLE;
+		rythmn = ourtime - ourtime % CYCLE;
 	}
 	if (!wiz && !tempwiz)
 		if ((testbit(inven,TALISMAN) || testbit(wear,TALISMAN)) && (testbit(inven,MEDALION) || testbit(wear,MEDALION)) && (testbit(inven,AMULET) || testbit(wear,AMULET))){
@@ -163,16 +169,16 @@ news()
 	}
 	if (testbit(location[position].objects, GIRL))
 		meetgirl = 1;
-	if (meetgirl && CYCLE * 1.5 - time < 10){
+	if (meetgirl && CYCLE * 1.5 - ourtime < 10){
 		setbit(location[GARDEN].objects,GIRLTALK);
 		setbit(location[GARDEN].objects,LAMPON);
 		setbit(location[GARDEN].objects,ROPE);
 	}
-	if (position == DOCK && (beenthere[position] || time > CYCLE)){
+	if (position == DOCK && (beenthere[position] || ourtime > CYCLE)){
 		clearbit(location[DOCK].objects, GIRL);
 		clearbit(location[DOCK].objects,MAN);
 	}
-	if (meetgirl && time - CYCLE * 1.5 > 10){
+	if (meetgirl && ourtime - CYCLE * 1.5 > 10){
 		clearbit(location[GARDEN].objects,GIRLTALK);
 		clearbit(location[GARDEN].objects,LAMPON);
 		clearbit(location[GARDEN].objects,ROPE);
@@ -180,7 +186,8 @@ news()
 	}
 	if (testbit(location[position].objects,CYLON)){
 		puts("Oh my God, you're being shot at by an alien spacecraft!");
-		printf("The targeting computer says we have %d seconds to attack!\n",clock);
+		printf("The targeting computer says we have %d seconds to attack!\n",
+		    ourclock);
 		fflush(stdout);
 		sleep(1);
 		if (!visual()){
@@ -223,12 +230,14 @@ news()
 		notes[CANTMOVE] = 0;
 }
 
+void
 crash()
 {
 	int hurt1,hurt2;
 
 	fuel--;
-	if (!location[position].flyhere || (testbit(location[position].objects,LAND) && fuel <= 0)){
+	if (!location[position].flyhere ||
+	    (testbit(location[position].objects,LAND) && fuel <= 0)){
 		if (!location[position].flyhere)
 			puts("You're flying too low.  We're going to crash!");
 		else{ 
@@ -242,7 +251,7 @@ crash()
 		}
 		notes[LAUNCHED] = 0;
 		setbit(location[position].objects,CRASH);
-		time += rnd(CYCLE/4);
+		ourtime += rnd(CYCLE/4);
 		puts("The viper explodes into the ground and you lose consciousness...");
 		zzz();
 		hurt1 = rnd(NUMOFINJURIES - 2) + 2;
@@ -251,6 +260,7 @@ crash()
 		injuries[hurt2] = 1;
 		injuries[0] = 1;	/* abrasions */
 		injuries[1] = 1;	/* lacerations */
-		printf("I'm afraid you have suffered %s and %s.\n",ouch[hurt1],ouch[hurt2]);
+		printf("I'm afraid you have suffered %s and %s.\n",
+		    ouch[hurt1], ouch[hurt2]);
 	}
 }

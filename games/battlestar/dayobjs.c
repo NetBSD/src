@@ -1,4 +1,4 @@
-/*	$NetBSD: dayobjs.c,v 1.4 1997/01/07 11:56:41 tls Exp $	*/
+/*	$NetBSD: dayobjs.c,v 1.5 1997/10/10 11:39:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dayobjs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: dayobjs.c,v 1.4 1997/01/07 11:56:41 tls Exp $";
+__RCSID("$NetBSD: dayobjs.c,v 1.5 1997/10/10 11:39:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,5 +141,5 @@ struct objs dayobjs[] = {
 	{ 130,	BRACELET },
 	{ 93,	GIRL },
 	{ 268,	LAMPON },
-	0
+	{ 0 }
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: com3.c,v 1.4 1997/01/07 11:56:35 tls Exp $	*/
+/*	$NetBSD: com3.c,v 1.5 1997/10/10 11:39:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,21 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: com3.c,v 1.4 1997/01/07 11:56:35 tls Exp $";
+__RCSID("$NetBSD: com3.c,v 1.5 1997/10/10 11:39:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+void
 dig()
 {
 	if (testbit(inven,SHOVEL)){
 		puts("OK");
-		time++;
+		ourtime++;
 		switch(position){
 			case 144:		/* copse near beach */
 				if (!notes[DUG]){
@@ -67,9 +69,10 @@ dig()
 		puts("You don't have a shovel.");
 }
 
+int
 jump()
 {
-	register int n;
+	int n;
 
 	switch(position){
 		default:
@@ -106,6 +109,7 @@ jump()
 	return(0);
 }
 
+void
 bury()
 {
 	int value;
@@ -169,9 +173,10 @@ bury()
 		puts("You aren't holding a shovel.");
 }
 
+void
 drink()
 {
-	register int n;
+	int n;
 
 	if (testbit(inven,POTION)){
 		puts("The cool liquid runs down your throat but turns to fire and you choke.");
@@ -182,18 +187,20 @@ drink()
 		CUMBER = MAXCUMBER;
 		for (n=0; n < NUMOFINJURIES; n++)
 			injuries[n] = 0;
-		time++;
+		ourtime++;
 		zzz();
 	}
 	else
 		puts("I'm not thirsty.");
 }
 
+int
 shoot()
 {
 	int firstnumber, value;
-	register int n;
+	int n;
 
+	firstnumber = 0;
 	if (!testbit(inven,LASER))
 		puts("You aren't holding a blaster.");
 	else {
@@ -205,7 +212,7 @@ shoot()
 			for (n=0; objsht[value][n]; n++);
 			if (testbit(location[position].objects,value)){
 				clearbit(location[position].objects,value);
-				time++;
+				ourtime++;
 				printf("The %s explode%s\n",objsht[value],(objsht[value][n-1]=='s' ? (objsht[value][n-2]=='s' ? "s." : ".") : "s."));
 				if (value == BOMB)
 					die();
@@ -220,7 +227,7 @@ shoot()
 			    /* special cases with their own return()'s */
 
 		if (wordnumber <= wordcount && wordtype[wordnumber] == NOUNS){
-			time++;
+			ourtime++;
 			switch(wordvalue[wordnumber]){
 			
 				case DOOR:
