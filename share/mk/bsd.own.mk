@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.240 2001/12/24 11:38:05 minoura Exp $
+#	$NetBSD: bsd.own.mk,v 1.241 2001/12/28 01:32:41 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -183,6 +183,13 @@ INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
+SHLIBDIR?=	/usr/lib
+.if ${USE_SHLIBDIR:Uno} == "yes"
+_LIBSODIR?=	${SHLIBDIR}
+.else
+_LIBSODIR?=	${LIBDIR}
+.endif
+SHLINKDIR?=	/usr/libexec
 LINTLIBDIR?=	/usr/libdata/lint
 LIBGRP?=	${BINGRP}
 LIBOWN?=	${BINOWN}

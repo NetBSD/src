@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.143 2001/11/28 04:38:29 tv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.144 2001/12/28 01:32:41 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -17,9 +17,11 @@ CFLAGS+=	${COPTS}
 .if ${OBJECT_FMT} == "ELF"
 LIBCRTBEGIN?=	${DESTDIR}/usr/lib/crtbegin.o
 LIBCRTEND?=	${DESTDIR}/usr/lib/crtend.o
+_SHLINKER=	${SHLINKDIR}/ld.elf_so
 .else
 LIBCRTBEGIN?=
 LIBCRTEND?=
+_SHLINKER=	${SHLINKDIR}/ld.so
 .endif
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
@@ -114,18 +116,28 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if defined(OBJS) && !empty(OBJS)
 .NOPATH: ${OBJS} ${PROG} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
+_PROGLDOPTS=
+.if ${SHLINKDIR} != "/usr/libexec"	# XXX: change or remove if ld.so moves
+_PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
+.endif
+.if ${SHLIBDIR} != ${LIBDIR}
+_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
+		-Wl,-rpath,${SHLIBDIR}:/usr/lib \
+		-L${DESTDIR}${SHLIBDIR}
+.endif
+
 .if defined(DESTDIR)
 
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
-	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -Wl,-rpath-link,${DESTDIR}/usr/lib ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${DESTDIR}/usr/lib -lgcc -lc -lgcc ${LIBCRTEND}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${DESTDIR}/usr/lib -lgcc -lc -lgcc ${LIBCRTEND}
 .endif
 
 .else
 
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
-	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
 .endif
 
 .endif	# defined(DESTDIR)
