@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 1999/12/17 05:32:38 garbled Exp $
+#	$NetBSD: Makefile,v 1.3 1999/12/20 09:51:07 jdc Exp $
 
 .if ${MACHINE} == "sparc"
 PROG=	tadpolectl
 SRCS=	tadpolectl.c
 .endif
 
-MAN=	sparc/tadpolectl.8
+MAN=	tadpolectl.8
+MANSUBDIR=	/sparc
 
 .include <bsd.prog.mk>
