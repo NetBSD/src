@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.56 1997/10/20 03:42:43 perry Exp $
+#	$NetBSD: INSTALL,v 1.57 1997/10/20 15:19:58 explorer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -436,5 +436,8 @@ pseudo-device	sl		2	# Serial Line IP
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	tb		1	# tablet line discipline
+
+# rnd is EXTERIMENTAL at this point.
+#pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well
