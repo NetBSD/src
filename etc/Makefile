@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 1996/11/20 04:33:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.59 1996/11/29 16:31:55 jtk Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
 
 TZDIR=		/usr/share/zoneinfo
@@ -16,11 +16,11 @@ NOOBJ=	oobj
 BINOWN= root
 BINGRP= wheel
 BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
-	dm.conf ftpusers ftpchroot gettytab group hosts hosts.equiv hosts.lpd \
-	inetd.conf man.conf monthly motd mrouted.conf myname netstart \
-	networks newsyslog.conf phones printcap protocols rbootd.conf rc \
-	rc.local remote rpc security services shells syslog.conf weekly \
-	etc.${MACHINE}/ttys etc.${MACHINE}/disktab
+	dm.conf floppytab ftpusers ftpchroot gettytab group hosts hosts.equiv \
+	hosts.lpd inetd.conf man.conf monthly motd mrouted.conf myname \
+	netstart networks newsyslog.conf phones printcap protocols \
+	rbootd.conf rc rc.local remote rpc security services shells \
+	syslog.conf weekly etc.${MACHINE}/ttys etc.${MACHINE}/disktab
 
 # -rw-rw-r--
 BIN2=	motd
