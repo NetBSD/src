@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.21 2000/11/23 23:21:15 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.22 2001/02/05 01:51:52 christos Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -139,8 +139,10 @@ extern int lflag;		/* follow symbolic links?		*/
 extern int sflag;		/* read/analyze block special files?	*/
 extern int iflag;		/* Output types as mime-types		*/
 
+#ifdef NEED_GETOPT
 extern int optind;		/* From getopt(3)			*/
 extern char *optarg;
+#endif
 
 #ifndef HAVE_STRERROR
 extern int sys_nerr;
