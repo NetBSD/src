@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.137 1998/07/09 00:46:17 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.138 1998/07/13 19:07:33 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 1998/07/09 00:46:17 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 1998/07/13 19:07:33 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,8 +234,10 @@ u_int64_t	cycles_per_usec;
 /* number of cpus in the box.  really! */
 int		ncpus;
 
-/* machine check info array, fleshed out in allocsys */
-struct mchkinfo *mchkinfo;
+/* machine check info array, valloc()'ed in allocsys() */
+
+static struct mchkinfo startup_info,
+			*mchkinfo_all_cpus;
 
 struct bootinfo_kernel bootinfo;
 
@@ -981,7 +983,7 @@ allocsys(v)
 	 * of processor slots defined in the HWRPB and the whami
 	 * value that can be returned.
 	 */
-	valloc(mchkinfo, struct mchkinfo, hwrpb->rpb_pcs_cnt);
+	valloc(mchkinfo_all_cpus, struct mchkinfo, hwrpb->rpb_pcs_cnt);
 
 	return (v);
 #undef valloc
@@ -2263,3 +2265,11 @@ alpha_XXX_dmamap(v)						/* XXX */
 	return (vtophys(v) | alpha_XXX_dmamap_or);		/* XXX */
 }								/* XXX */
 /* XXX XXX END XXX XXX */
+
+struct mchkinfo *
+cpu_mchkinfo()
+{
+	if (mchkinfo_all_cpus == NULL)
+		return &startup_info;
+	return mchkinfo_all_cpus + alpha_pal_whami();
+}
