@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.21 2004/03/11 21:48:43 cl Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.22 2004/05/01 06:16:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ int nfs_bootdhcp  __P((struct nfs_diskless *, struct proc *));
 int nfs_bootparam __P((struct nfs_diskless *, struct proc *));
 int nfs_bootstatic __P((struct nfs_diskless *, struct proc *));
 
-int (*nfs_bootstatic_callback)(struct nfs_diskless *);
+extern int (*nfs_bootstatic_callback)(struct nfs_diskless *);
 
 #define	NFS_BOOTSTATIC_HAS_MYIP		0x01
 #define	NFS_BOOTSTATIC_HAS_GWIP		0x02
