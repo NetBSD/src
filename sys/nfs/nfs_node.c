@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.47 2001/11/10 10:59:09 lukem Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.48 2001/12/06 01:26:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.47 2001/11/10 10:59:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.48 2001/12/06 01:26:36 lukem Exp $");
 
 #include "opt_nfs.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.47 2001/11/10 10:59:09 lukem Exp $");
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/lock.h>
+#include <sys/hash.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -73,6 +74,8 @@ extern int prtactive;
 
 #define TRUE	1
 #define	FALSE	0
+
+#define	nfs_hash(x,y)	hash32_buf((x), (y), HASH32_BUF_INIT)
 
 void nfs_gop_size(struct vnode *, off_t, off_t *);
 int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
@@ -141,25 +144,6 @@ nfs_nhdone()
 	hashdone(nfsnodehashtbl, M_NFSNODE);
 	pool_destroy(&nfs_node_pool);
 	pool_destroy(&nfs_vattr_pool);
-}
-
-/*
- * Compute an entry in the NFS hash table structure
- */
-u_long
-nfs_hash(fhp, fhsize)
-	nfsfh_t *fhp;
-	int fhsize;
-{
-	u_char *fhpp;
-	u_long fhsum;
-	int i;
-
-	fhpp = &fhp->fh_bytes[0];
-	fhsum = 0;
-	for (i = 0; i < fhsize; i++)
-		fhsum += *fhpp++;
-	return (fhsum);
 }
 
 /*
