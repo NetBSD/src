@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.29 1995/07/23 20:11:55 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.30 1995/07/24 02:02:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -82,15 +82,14 @@ struct el_softc {
  * prototypes
  */
 int elintr __P((void *));
-static int el_init __P((struct el_softc *));
-static int el_ioctl __P((struct ifnet *, u_long, caddr_t));
-static void el_start __P((struct ifnet *));
-static void el_watchdog __P((int));
-static void el_reset __P((struct el_softc *));
-static void el_stop __P((struct el_softc *));
+int elinit __P((struct el_softc *));
+int elioctl __P((struct ifnet *, u_long, caddr_t));
+void elstart __P((struct ifnet *));
+void elwatchdog __P((int));
+void elreset __P((struct el_softc *));
+void elstop __P((struct el_softc *));
 static int el_xmit __P((struct el_softc *));
-static inline void elread __P((struct el_softc *, int));
-static struct mbuf *elget __P((struct el_softc *, int, struct ifnet *));
+void elread __P((struct el_softc *, int));
 static inline void el_hardreset __P((struct el_softc *));
 
 int elprobe __P((struct device *, void *, void *));
@@ -181,14 +180,14 @@ elattach(parent, self, aux)
 	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));
 
 	/* Stop the board. */
-	el_stop(sc);
+	elstop(sc);
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = elcd.cd_name;
-	ifp->if_start = el_start;
-	ifp->if_ioctl = el_ioctl;
-	ifp->if_watchdog = el_watchdog;
+	ifp->if_start = elstart;
+	ifp->if_ioctl = elioctl;
+	ifp->if_watchdog = elwatchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 
 	/* Now we can attach the interface. */
@@ -214,24 +213,24 @@ elattach(parent, self, aux)
 /*
  * Reset interface.
  */
-static void
-el_reset(sc)
+void
+elreset(sc)
 	struct el_softc *sc;
 {
 	int s;
 
 	dprintf(("elreset()\n"));
 	s = splimp();
-	el_stop(sc);
-	el_init(sc);
+	elstop(sc);
+	elinit(sc);
 	splx(s);
 }
 
 /*
  * Stop interface.
  */
-static void
-el_stop(sc)
+void
+elstop(sc)
 	struct el_softc *sc;
 {
 
@@ -260,8 +259,8 @@ el_hardreset(sc)
 /*
  * Initialize interface.
  */
-static int
-el_init(sc)
+int
+elinit(sc)
 	struct el_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -291,7 +290,7 @@ el_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* And start output. */
-	el_start(ifp);
+	elstart(ifp);
 }
 
 /*
@@ -299,8 +298,8 @@ el_init(sc)
  * giving the receiver a chance between datagrams.  Call only from splimp or
  * interrupt level!
  */
-static void
-el_start(ifp)
+void
+elstart(ifp)
 	struct ifnet *ifp;
 {
 	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
@@ -308,7 +307,7 @@ el_start(ifp)
 	struct mbuf *m, *m0;
 	int s, i, off, retries;
 
-	dprintf(("el_start()...\n"));
+	dprintf(("elstart()...\n"));
 	s = splimp();
 
 	/* Don't do anything if output is active. */
@@ -468,15 +467,6 @@ elintr(arg)
 		dprintf(("receive len=%d rxstat=%x ", len, rxstat));
 		outb(iobase+EL_AC, EL_AC_HOST);
 
-		/*
-		 * If packet too short or too long, restore rx mode and return.
-		 */
-		if (len <= sizeof(struct ether_header) ||
-		    len > ETHER_MAX_LEN)
-			goto reset;
-
-		sc->sc_arpcom.ac_if.if_ipackets++;
-
 		/* Pass data up to upper levels. */
 		elread(sc, len);
 
@@ -496,22 +486,33 @@ elintr(arg)
 }
 
 /*
- * Pass a packet up to the higher levels.
+ * Pass a packet to the higher levels.
  */
-static inline void
+void
 elread(sc, len)
-	struct el_softc *sc;
+	register struct le_softc *sc;
 	int len;
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
-	/* Pull packet off interface. */
-	ifp = &sc->sc_arpcom.ac_if;
-	m = elget(sc, len, ifp);
-	if (m == 0)
+	if (len <= sizeof(struct ether_header) ||
+	    len > ETHER_MAX_LEN) {
+		printf("%s: invalid packet size %d; dropping\n",
+		    sc->sc_dev.dv_xname);
+		ifp->if_ierrors++;
 		return;
+	}
+
+	/* Pull packet off interface. */
+	m = elget(sc, len);
+	if (m == 0) {
+		ifp->if_ierrors++;
+		return;
+	}
+
+	ifp->if_ipackets++;
 
 	/* We assume that the header fit entirely in one mbuf. */
 	eh = mtod(m, struct ether_header *);
@@ -519,7 +520,7 @@ elread(sc, len)
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to bpf.
+	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf) {
 		bpf_mtap(ifp->if_bpf, m);
@@ -540,10 +541,7 @@ elread(sc, len)
 #endif
 
 	/* We assume that the header fit entirely in one mbuf. */
-	m->m_pkthdr.len -= sizeof(*eh);
-	m->m_len -= sizeof(*eh);
-	m->m_data += sizeof(*eh);
-
+	m_adj(m, sizeof(struct ether_header));
 	ether_input(ifp, eh, m);
 }
 
@@ -552,15 +550,15 @@ elread(sc, len)
  * header stripped.  We copy the data into mbufs.  When full cluster sized
  * units are present we copy into clusters.
  */
-struct mbuf *
-elget(sc, totlen, ifp)
+static inline void
+elget(sc, totlen)
 	struct el_softc *sc;
 	int totlen;
-	struct ifnet *ifp;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int iobase = sc->sc_iobase;
 	struct mbuf *top, **mp, *m;
 	int len;
-	int iobase = sc->sc_iobase;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
@@ -604,8 +602,8 @@ elget(sc, totlen, ifp)
 /*
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
-static int
-el_ioctl(ifp, cmd, data)
+int
+elioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
@@ -625,7 +623,7 @@ el_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			el_init(sc);
+			elinit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
@@ -643,12 +641,12 @@ el_ioctl(ifp, cmd, data)
 				    sc->sc_arpcom.ac_enaddr,
 				    sizeof(sc->sc_arpcom.ac_enaddr));
 			/* Set new address. */
-			el_init(sc);
+			elinit(sc);
 			break;
 		    }
 #endif
 		default:
-			el_init(sc);
+			elinit(sc);
 			break;
 		}
 		break;
@@ -660,7 +658,7 @@ el_ioctl(ifp, cmd, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			el_stop(sc);
+			elstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -668,13 +666,13 @@ el_ioctl(ifp, cmd, data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			el_init(sc);
+			elinit(sc);
 		} else {
 			/*
 			 * Some other important flag might have changed, so
 			 * reset.
 			 */
-			el_reset(sc);
+			elreset(sc);
 		}
 		break;
 
@@ -690,8 +688,8 @@ el_ioctl(ifp, cmd, data)
 /*
  * Device timeout routine.
  */
-static void
-el_watchdog(unit)
+void
+elwatchdog(unit)
 	int unit;
 {
 	struct el_softc *sc = elcd.cd_devs[unit];
@@ -699,5 +697,5 @@ el_watchdog(unit)
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;
 
-	el_reset(sc);
+	elreset(sc);
 }

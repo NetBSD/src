@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.30 1995/07/23 21:37:51 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.31 1995/07/24 02:02:58 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -866,8 +866,7 @@ lerint(sc)
 				recv_print(sc, sc->sc_last_rd);
 #endif
 			leread(sc, sc->sc_rbuf + (BUFSIZE * rmd),
-			    (int)cdm->mcnt);
-			ifp->if_ipackets++;
+			    (int)cdm->mcnt - 4);
 		}
 
 		cdm->bcnt = -BUFSIZE;
@@ -893,19 +892,26 @@ leread(sc, buf, len)
 	u_char *buf;
 	int len;
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
-	len -= 4;
-	if (len <= 0)
+	if (len <= sizeof(struct ether_header) ||
+	    len > ETHER_MAX_LEN) {
+		printf("%s: invalid packet size %d; dropping\n",
+		    sc->sc_dev.dv_xname);
+		ifp->if_ierrors++;
 		return;
+	}
 
 	/* Pull packet off interface. */
-	ifp = &sc->sc_arpcom.ac_if;
 	m = leget(buf, len, ifp);
-	if (m == 0)
+	if (m == 0) {
+		ifp->if_ierrors++;
 		return;
+	}
+
+	ifp->if_ipackets++;
 
 	/* We assume that the header fit entirely in one mbuf. */
 	eh = mtod(m, struct ether_header *);
@@ -934,10 +940,7 @@ leread(sc, buf, len)
 #endif
 
 	/* We assume that the header fit entirely in one mbuf. */
-	m->m_pkthdr.len -= sizeof(*eh);
-	m->m_len -= sizeof(*eh);
-	m->m_data += sizeof(*eh);
-
+	m_adj(m, sizeof(struct ether_header));
 	ether_input(ifp, eh, m);
 }
 
@@ -1023,7 +1026,6 @@ leioctl(ifp, cmd, data)
 			break;
 #endif
 #ifdef NS
-		/* XXX - This code is probably wrong. */
 		case AF_NS:
 		    {
 			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
@@ -1084,7 +1086,7 @@ leioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom):
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
@@ -1092,15 +1094,17 @@ leioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			leinit(sc);
+			lereset(sc);
 			error = 0;
 		}
 		break;
 
 	default:
 		error = EINVAL;
+		break;
 	}
-	(void) splx(s);
+
+	splx(s);
 	return error;
 }
 
