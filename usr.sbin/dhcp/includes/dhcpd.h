@@ -234,6 +234,19 @@ struct hardware {
 	u_int8_t hbuf [17];
 };
 
+/* Lease states: */
+typedef enum {
+	FTS_FREE = 1,
+	FTS_ACTIVE = 2,
+	FTS_EXPIRED = 3,
+	FTS_RELEASED = 4,
+	FTS_ABANDONED = 5,
+	FTS_RESET = 6,
+	FTS_BACKUP = 7,
+	FTS_RESERVED = 8,
+	FTS_BOOTP = 9
+} binding_state_t;
+
 /* A dhcp lease declaration structure. */
 struct lease {
 	OMAPI_OBJECT_PREAMBLE;
@@ -502,10 +515,10 @@ struct pool {
 	struct lease *backup;
 	struct lease *abandoned;
 	TIME next_event_time;
-#if defined (FAILOVER_PROTOCOL)
 	int lease_count;
 	int free_leases;
 	int backup_leases;
+#if defined (FAILOVER_PROTOCOL)
 	dhcp_failover_state_t *failover_peer;
 #endif
 };

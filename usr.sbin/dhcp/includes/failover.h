@@ -156,19 +156,6 @@ typedef struct {
 #define FTR_HBA_CONFLICT	19
 #define FTR_UNKNOWN		254
 
-/* Lease states: */
-typedef enum {
-	FTS_FREE = 1,
-	FTS_ACTIVE = 2,
-	FTS_EXPIRED = 3,
-	FTS_RELEASED = 4,
-	FTS_ABANDONED = 5,
-	FTS_RESET = 6,
-	FTS_BACKUP = 7,
-	FTS_RESERVED = 8,
-	FTS_BOOTP = 9
-} binding_state_t;
-
 #define DHCP_FAILOVER_MAX_MESSAGE_SIZE	2048
 
 typedef struct {
