@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.h,v 1.18 1999/07/01 08:12:48 itojun Exp $	*/
+/*	$NetBSD: netisr.h,v 1.19 2000/02/21 20:31:02 erh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -57,17 +57,16 @@
  * on the lowest level routine of each protocol.
  */
 #define	NETISR_IP	2		/* same as AF_INET */
-#define	NETISR_IMP	3		/* same as AF_IMPLINK */
 #define	NETISR_NS	6		/* same as AF_NS */
 #define	NETISR_ISO	7		/* same as AF_ISO */
 #define	NETISR_CCITT	10		/* same as AF_CCITT */
 #define	NETISR_ATALK	16		/* same as AF_APPLETALK */
-#define	NETISR_ARP	18		/* same as AF_LINK */
-#define NETISR_IPX	23		/* same as AF_IPX */
-#define NETISR_IPV6	24		/* same as AF_INET6 */
-#define NETISR_ISDN	26		/* same as AF_E164 */
-#define NETISR_NATM	27		/* same as AF_NATM */
-#define NETISR_PPP	28		/* for PPP processing */
+#define	NETISR_IPX	23		/* same as AF_IPX */
+#define	NETISR_IPV6	24		/* same as AF_INET6 */
+#define	NETISR_ISDN	26		/* same as AF_E164 */
+#define	NETISR_NATM	27		/* same as AF_NATM */
+#define	NETISR_ARP	28		/* same as AF_ARP */
+#define	NETISR_PPP	31		/* for PPP processing */
 
 #define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
 
