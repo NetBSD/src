@@ -1,3 +1,5 @@
+/*	$NetBSD: makekey.c,v 1.4 1997/10/07 11:31:26 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,15 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)makekey.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: makekey.c,v 1.3 1997/04/29 21:19:09 tls Exp $";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#if 0
+static char sccsid[] = "from: @(#)makekey.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: makekey.c,v 1.4 1997/10/07 11:31:26 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,6 +54,7 @@ static char rcsid[] = "$NetBSD: makekey.c,v 1.3 1997/04/29 21:19:09 tls Exp $";
 #include <unistd.h>
 
 static void get __P((char *, int));
+int main __P((void));
 
 int
 main()
