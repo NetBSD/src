@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaauvar.h,v 1.3 2002/08/03 21:31:16 thorpej Exp $	*/
+/*	$NetBSD: iopaauvar.h,v 1.4 2002/08/04 02:26:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/pool.h>
 #include <dev/dmover/dmovervar.h>
 
-#define	AAU_MAX_INPUTS		4
+#define	AAU_MAX_INPUTS		8
 
 /*
  * Due to the way the AAU's descriptors work, the DMA segments for
@@ -77,6 +77,7 @@ struct iopaau_function {
 };
 
 extern struct pool_cache iopaau_desc_4_cache;
+extern struct pool_cache iopaau_desc_8_cache;
 
 void	iopaau_attach(struct iopaau_softc *);
 void	iopaau_process(struct dmover_backend *);
@@ -86,7 +87,7 @@ int	iopaau_func_zero_setup(struct iopaau_softc *,
 	    struct dmover_request *);
 int	iopaau_func_fill8_setup(struct iopaau_softc *,
 	    struct dmover_request *);
-int	iopaau_func_xor_1_4_setup(struct iopaau_softc *,
+int	iopaau_func_xor_setup(struct iopaau_softc *,
 	    struct dmover_request *);
 
 void	iopaau_desc_free(struct pool_cache *, void *);

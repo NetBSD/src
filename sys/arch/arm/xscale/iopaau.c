@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.6 2002/08/03 21:58:55 thorpej Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.7 2002/08/04 02:26:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.6 2002/08/03 21:58:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.7 2002/08/04 02:26:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -66,8 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.6 2002/08/03 21:58:55 thorpej Exp $");
 #endif
 
 static struct pool aau_desc_4_pool;
+static struct pool aau_desc_8_pool;
 
 struct pool_cache iopaau_desc_4_cache;
+struct pool_cache iopaau_desc_8_cache;
 
 /*
  * iopaau_desc_ctor:
@@ -366,15 +368,49 @@ static const uint32_t iopaau_dc_inputs[] = {
 	AAU_DC_B2_CC(AAU_DC_CC_XOR)|
 	AAU_DC_B3_CC(AAU_DC_CC_XOR)|
 	AAU_DC_B4_CC(AAU_DC_CC_XOR),
+
+	AAU_DC_SBCI_5_8|				/* 5 */
+	AAU_DC_B1_CC(AAU_DC_CC_DIRECT_FILL)|
+	AAU_DC_B2_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B3_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B4_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B5_CC(AAU_DC_CC_XOR),
+
+	AAU_DC_SBCI_5_8|				/* 6 */
+	AAU_DC_B1_CC(AAU_DC_CC_DIRECT_FILL)|
+	AAU_DC_B2_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B3_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B4_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B5_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B6_CC(AAU_DC_CC_XOR),
+
+	AAU_DC_SBCI_5_8|				/* 7 */
+	AAU_DC_B1_CC(AAU_DC_CC_DIRECT_FILL)|
+	AAU_DC_B2_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B3_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B4_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B5_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B6_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B7_CC(AAU_DC_CC_XOR),
+
+	AAU_DC_SBCI_5_8|				/* 8 */
+	AAU_DC_B1_CC(AAU_DC_CC_DIRECT_FILL)|
+	AAU_DC_B2_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B3_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B4_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B5_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B6_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B7_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B8_CC(AAU_DC_CC_XOR),
 };
 
 /*
- * iopaau_func_xor_1_4_setup:
+ * iopaau_func_xor_setup:
  *
- *	Setup routine for the "copy", "xor2".."xor4" functions.
+ *	Setup routine for the "copy", "xor2".."xor8" functions.
  */
 int
-iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
+iopaau_func_xor_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 {
 	struct iopaau_function *af =
 	    dreq->dreq_assignment->das_algdesc->dad_data;
@@ -382,7 +418,7 @@ iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 	bus_dmamap_t dmamap = sc->sc_map_out;
 	bus_dmamap_t *inmap = sc->sc_map_in;
 	uint32_t *prevpa;
-	struct aau_desc_4 **prevp, *cur;
+	struct aau_desc_8 **prevp, *cur;
 	int ninputs = dreq->dreq_assignment->das_algdesc->dad_ninputs;
 	int i, error, seg;
 	size_t descsz = AAU_DESC_SIZE(ninputs);
@@ -471,7 +507,7 @@ iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 		    BUS_DMASYNC_PREWRITE);
 	}
 
-	prevp = (struct aau_desc_4 **) &sc->sc_firstdesc;
+	prevp = (struct aau_desc_8 **) &sc->sc_firstdesc;
 	prevpa = &sc->sc_firstdesc_pa;
 
 	for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
@@ -495,7 +531,13 @@ iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 				error = EFAULT;	/* "address" error, sort of. */
 				goto bad;
 			}
-			cur->d_sar[i] = inmap[i]->dm_segs[seg].ds_addr;
+			if (i < 4) {
+				cur->d_sar[i] =
+				    inmap[i]->dm_segs[seg].ds_addr;
+			} else if (i < 8) {
+				cur->d_sar5_8[i - 4] =
+				    inmap[i]->dm_segs[seg].ds_addr;
+			}
 		}
 		cur->d_dar = dmamap->dm_segs[seg].ds_addr;
 		cur->d_bc = dmamap->dm_segs[seg].ds_len;
@@ -602,7 +644,13 @@ iopaau_attach(struct iopaau_softc *sc)
 	pool_init(&aau_desc_4_pool, sizeof(struct aau_desc_4),
 	    8 * 4, offsetof(struct aau_desc_4, d_nda), 0, "aaud4pl",
 	    NULL);
+	pool_init(&aau_desc_8_pool, sizeof(struct aau_desc_8),
+	    8 * 4, offsetof(struct aau_desc_8, d_nda), 0, "aaud8pl",
+	    NULL);
+
 	pool_cache_init(&iopaau_desc_4_cache, &aau_desc_4_pool,
+	    iopaau_desc_ctor, NULL, NULL);
+	pool_cache_init(&iopaau_desc_8_cache, &aau_desc_8_pool,
 	    iopaau_desc_ctor, NULL, NULL);
 
 	/* Register us with dmover. */
