@@ -41,39 +41,83 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: update.c,v 1.3 1997/03/12 18:50:08 mycroft Exp $";
+static char rcsid[] = "$NetBSD: update.c,v 1.4 1997/03/12 19:10:54 mycroft Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/time.h>
+
+#include <err.h>
 #include <signal.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-main()
+void mysync __P((void));
+void usage __P((void));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	struct itimerval value;
-	void mysync();
-
-	daemon(0, 0);
-
-	(void)signal(SIGALRM, mysync);
+	int ch;
+	struct sigaction sa;
+	sigset_t set, oset;
 
 	value.it_interval.tv_sec = 30;
 	value.it_interval.tv_usec = 0;
-	value.it_value = value.it_interval;
-	if (setitimer(ITIMER_REAL, &value, NULL)) {
-		perror("update: setitimer");
-		exit(1);
+
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		default:
+		case '?':
+			usage();
+		}
 	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc) {
+		value.it_interval.tv_sec = atoi(argv[0]);
+		--argc;
+		++argv;
+	}
+
+	if (argc)
+		usage();
+
+	daemon(0, 0);
+
+	sa.sa_handler = mysync;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	if (sigaction(SIGALRM, &sa, (struct sigaction *)0) < 0)
+		err(1, "sigaction");
+
+	value.it_value = value.it_interval;
+	if (setitimer(ITIMER_REAL, &value, NULL) < 0)
+		err(1, "setitimer");
+
+	sigemptyset(&set);
+	sigprocmask(SIG_BLOCK, &set, &oset);
 	for (;;)
-		sigpause(sigblock(0L));
+		sigsuspend(&oset);
 	/* NOTREACHED */
 }
 
 void
 mysync()
 {
+
 	(void)sync();
+}
+
+void
+usage()
+{
+
+	(void)fprintf(stderr, "usage: update [interval]\n");
+	exit(1);
 }

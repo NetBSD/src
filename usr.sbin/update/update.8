@@ -39,13 +39,16 @@
 .Nd flush internal filesystem caches to disk frequently
 .Sh SYNOPSIS
 .Nm update
+.Op Ar interval
 .Sh DESCRIPTION
 The
 .Nm update
 command helps protect the integrity of disk volumes
 by flushing
 volatile cached filesystem data
-to disk at thirty second intervals.
+to disk periodically, with the specified
+.Ar interval
+(by default 30 seconds).
 .Nm Update
 uses the
 .Xr sync 2
