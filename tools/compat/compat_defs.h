@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.14 2002/04/23 00:13:50 bjh21 Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.15 2002/04/24 19:41:58 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -323,12 +323,7 @@ void *setmode(const char *);
 /* <paths.h> */
 
 #ifndef _PATH_BSHELL
-#if defined(__sun)
-/* Sun's /bin/sh is obnoxiously broken. */
-#define _PATH_BSHELL "/usr/xpg4/bin/sh"
-#else
-#define _PATH_BSHELL "/bin/sh"
-#endif
+#define _PATH_BSHELL PATH_BSHELL
 #endif
 #ifndef _PATH_DEFPATH
 #define _PATH_DEFPATH "/usr/bin:/bin:/usr/local/bin"

@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.19 2002/04/23 00:13:51 bjh21 Exp $
+#	$NetBSD: configure.ac,v 1.20 2002/04/24 19:41:58 bjh21 Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -6,6 +6,12 @@
 AC_INIT([libnbcompat], [noversion], [lib-bug-people@netbsd.org])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES(defs.mk)
+
+AC_PATH_PROG(BSHELL, sh, )
+if test x"$BSHELL" = x; then
+	AC_MSG_ERROR([sh must be somewhere on \$PATH])
+fi
+AC_DEFINE_UNQUOTED(PATH_BSHELL, "$BSHELL")
 
 AC_C_BIGENDIAN
 AC_HEADER_STDC
