@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 2002/02/12 15:26:50 uch Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.5 2002/02/19 17:22:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ kgdb_connect(int verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	breakpoint();
+	__asm__ __volatile__("trapa #0xc3");
 
 	if (verbose)
 		printf("connected.\n");
