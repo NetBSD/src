@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euc.c,v 1.5 2002/03/28 10:53:48 yamt Exp $	*/
+/*	$NetBSD: citrus_euc.c,v 1.6 2003/06/25 09:51:42 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euc.c,v 1.5 2002/03/28 10:53:48 yamt Exp $");
+__RCSID("$NetBSD: citrus_euc.c,v 1.6 2003/06/25 09:51:42 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -77,8 +77,12 @@ __RCSID("$NetBSD: citrus_euc.c,v 1.5 2002/03/28 10:53:48 yamt Exp $");
 #include <wchar.h>
 #include <sys/types.h>
 #include <limits.h>
+
+#include "citrus_namespace.h"
+#include "citrus_types.h"
 #include "citrus_module.h"
 #include "citrus_ctype.h"
+#include "citrus_stdenc.h"
 #include "citrus_euc.h"
 
 
@@ -299,11 +303,17 @@ _citrus_EUC_wcrtomb_priv(_EUCEncodingInfo *ei, char *s, size_t n, wchar_t wc,
 			 _EUCState *psenc, size_t *nresult)
 {
 	wchar_t m, nm;
-	int cs, i;
+	int cs, i, ret;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
+
+	/* reset state */
+	if (wc == 0) {
+		*nresult = 0; /* stateless */
+		return 0;
+	}
 
 	m = wc & ei->mask;
 	nm = wc & ~m;
@@ -319,8 +329,10 @@ _citrus_EUC_wcrtomb_priv(_EUCEncodingInfo *ei, char *s, size_t n, wchar_t wc,
 		cs = 1;
 
 	i = ei->count[cs];
-	if (n < i)
-		goto ilseq;
+	if (n < i) {
+		ret = E2BIG;
+		goto err;
+	}
 	m = (cs % 2) ? 0x80 : 0x00;
 	switch (cs) {
 	case 2:
@@ -339,15 +351,51 @@ _citrus_EUC_wcrtomb_priv(_EUCEncodingInfo *ei, char *s, size_t n, wchar_t wc,
 	*nresult = (size_t)ei->count[cs];
 	return 0;
 
-ilseq:
+err:
 	*nresult = (size_t)-1;
-	return EILSEQ;	/*XXX*/
+	return ret;
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_EUC_stdenc_wctocs(_EUCEncodingInfo * __restrict ei,
+			  _csid_t * __restrict csid,
+			  _index_t * __restrict idx, wchar_t wc)
+{
+	wchar_t m, nm;
+
+	_DIAGASSERT(ei != NULL && csid != NULL && idx != NULL);
+
+	m = wc & ei->mask;
+	nm = wc & ~m;
+
+	*csid = (_citrus_csid_t)m;
+	*idx  = (_citrus_index_t)nm;
+
+	return (0);
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_EUC_stdenc_cstowc(_EUCEncodingInfo * __restrict ei,
+			  wchar_t * __restrict wc,
+			  _csid_t csid, _index_t idx)
+{
+
+	_DIAGASSERT(ei != NULL && wc != NULL);
+
+	if ((csid & ~ei->mask) != 0 || (idx & ei->mask) != 0)
+		return (EINVAL);
+
+	*wc = (wchar_t)csid | (wchar_t)idx;
+
+	return (0);
 }
 
 static int
 /*ARGSUSED*/
-_citrus_EUC_stdencoding_init(_EUCEncodingInfo * __restrict ei,
-			     const void * __restrict var, size_t lenvar)
+_citrus_EUC_encoding_module_init(_EUCEncodingInfo * __restrict ei,
+				 const void * __restrict var, size_t lenvar)
 {
 
 	_DIAGASSERT(ei != NULL);
@@ -357,7 +405,7 @@ _citrus_EUC_stdencoding_init(_EUCEncodingInfo * __restrict ei,
 
 static void
 /*ARGSUSED*/
-_citrus_EUC_stdencoding_uninit(_EUCEncodingInfo * __restrict ei)
+_citrus_EUC_encoding_module_uninit(_EUCEncodingInfo * __restrict ei)
 {
 }
 
@@ -369,3 +417,12 @@ _CITRUS_CTYPE_DECLS(EUC);
 _CITRUS_CTYPE_DEF_OPS(EUC);
 
 #include "citrus_ctype_template.h"
+
+/* ----------------------------------------------------------------------
+ * public interface for stdenc
+ */
+
+_CITRUS_STDENC_DECLS(EUC);
+_CITRUS_STDENC_DEF_OPS(EUC);
+
+#include "citrus_stdenc_template.h"
