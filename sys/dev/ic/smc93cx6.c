@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6.c,v 1.6 2000/03/15 02:08:30 fvdl Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.7 2001/04/30 03:49:12 lukem Exp $	*/
 
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -86,8 +86,8 @@ static struct seeprom_cmd {
  * Wait for the SEERDY to go high; about 800 ns.
  */
 #define CLOCK_PULSE(sd, rdy)	{					\
-	int i = 1000;							\
-	while ((SEEPROM_STATUS_INB(sd) & rdy) == 0 && i-- > 0) {	\
+	int cpi = 1000;							\
+	while ((SEEPROM_STATUS_INB(sd) & rdy) == 0 && cpi-- > 0) {	\
 		;  /* Do nothing */					\
 	}								\
 	(void)SEEPROM_INB(sd);	/* Clear clock */			\
