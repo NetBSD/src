@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.18 1996/06/12 01:44:31 cgd Exp $
+#	$NetBSD: GENERIC,v 1.19 1996/06/13 19:18:31 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -37,7 +37,9 @@ options		INET		# Internet protocol suite
 options		COMPAT_43
 
 # Binary compatibility with previous versions of NetBSD.
+#options	COMPAT_09
 options		COMPAT_10
+options		COMPAT_11
 
 # OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
 #options	COMPAT_OSF1
@@ -132,8 +134,8 @@ wscons*	at	pcivga?
 wscons*	at	sfb?
 wscons*	at	tga?
 
-pseudo-device	bpfilter
+pseudo-device	bpfilter	16
 pseudo-device	loop
-pseudo-device	pty
-pseudo-device	sl
-pseudo-device	vnd
+pseudo-device	pty		64
+pseudo-device	sl		4
+pseudo-device	vnd		4
