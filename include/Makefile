@@ -25,13 +25,12 @@ LDIRS=	net netinet netccitt netiso netns nfs sys ufs vm
 
 NOOBJ=	noobj
 
-# Define SHARED to indicate whether you want symbolic links to the system
-# source (``symlinks''), or a separate copy (``copies''); (latter useful
-# in environments where it's not possible to keep /sys publicly readable)
-SHARED= 	copies
-#SHARED= 	symlinks
+# Change SYS_INCLUDE in bsd.own.mk to "symlinks" if you don't want copies
+.if !defined(SYS_INCLUDE)
+SYS_INCLUDE=	copies
+.endif
 
-install: beforeinstall _PROGSUBDIR ${SHARED}
+install: beforeinstall _PROGSUBDIR ${SYS_INCLUDE}
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
