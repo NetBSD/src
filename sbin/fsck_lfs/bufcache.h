@@ -1,11 +1,12 @@
-/* $NetBSD: pass0.c,v 1.14 2003/03/28 08:09:53 perseant Exp $	 */
+/*	$NetBSD: bufcache.h,v 1.1 2003/03/28 08:09:52 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Konrad E. Schroder <perseant@hhhh.org>.
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,9 +36,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*-
- * Copyright (c) 1980, 1986, 1993
+
+/*
+ * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,122 +73,53 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)buf.h	8.9 (Berkeley) 3/30/95
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/buf.h>
-#include <sys/mount.h>
-
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
-#define vnode uvnode
-#include <ufs/lfs/lfs.h>
-#undef vnode
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "bufcache.h"
-#include "vnode.h"
-#include "lfs.h"
-
-#include "fsck.h"
-#include "extern.h"
-#include "fsutil.h"
-
-extern int fake_cleanseg;
+#define BUF_CACHE_SIZE 1000
 
 /*
- * Pass 0.  Check the LFS partial segments for valid checksums, correcting
- * if necessary.  Also check for valid offsets for inode and finfo blocks.
+ * The buffer header describes an I/O operation.
  */
+struct ubuf {
+	LIST_ENTRY(ubuf) b_hash;	/* Hash chain. */
+	LIST_ENTRY(ubuf) b_vnbufs;	/* Buffer's associated vnode. */
+	TAILQ_ENTRY(ubuf) b_freelist;	/* Free list position if not active. */
+	volatile long	b_flags;	/* B_* flags. */
+	long	b_bcount;		/* Valid bytes in buffer. */
+#undef b_data
+	char	*b_data;		/* Data in buffer */
+	daddr_t	b_lblkno;		/* Logical block number. */
+	daddr_t	b_blkno;		/* Underlying physical block number */
+	struct	uvnode *b_vp;		/* File vnode. */
+};
+
+#define b_bufsize b_bcount
+
 /*
- * XXX more could be done here---consistency between inode-held blocks and
- * finfo blocks, for one thing.
+ * These flags are kept in b_flags.
  */
+#define	B_AGE		0x00000001	/* Move to age queue when I/O done. */
+#define	B_NEEDCOMMIT	0x00000002	/* Needs committing to stable storage */
+#define	B_BUSY		0x00000010	/* I/O in progress. */
+#define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
+#define	B_DONE		0x00000200	/* I/O completed. */
+#define	B_ERROR		0x00000800	/* I/O error occurred. */
+#define	B_GATHERED	0x00001000	/* LFS: already in a segment. */
+#define	B_INVAL		0x00002000	/* Does not contain valid info. */
+#define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
+#define	B_READ		0x00100000	/* Read buffer. */
 
-#define dbshift (fs->lfs_bshift - fs->lfs_blktodb)
+LIST_HEAD(bufhash_struct, ubuf);
 
-void
-pass0()
-{
-	daddr_t daddr;
-	IFILE *ifp;
-	struct ubuf *bp;
-	ino_t ino, plastino, nextino, *visited;
-
-	/*
-         * Check the inode free list for inuse inodes, and cycles.
-	 * Make sure that all free inodes are in fact on the list.
-         */
-	visited = (ino_t *) malloc(maxino * sizeof(ino_t));
-	memset(visited, 0, maxino * sizeof(ino_t));
-
-	plastino = 0;
-	ino = fs->lfs_freehd;
-	while (ino) {
-		if (ino >= maxino) {
-			printf("! Ino %d out of range (last was %d)\n", ino,
-			    plastino);
-			break;
-		}
-		if (visited[ino]) {
-			pwarn("! Ino %d already found on the free list!\n",
-			    ino);
-			if (preen || reply("FIX") == 1) {
-				/* plastino can't be zero */
-				LFS_IENTRY(ifp, fs, plastino, bp);
-				ifp->if_nextfree = 0;
-				VOP_BWRITE(bp);
-			}
-			break;
-		}
-		++visited[ino];
-		LFS_IENTRY(ifp, fs, ino, bp);
-		nextino = ifp->if_nextfree;
-		daddr = ifp->if_daddr;
-		brelse(bp);
-		if (daddr) {
-			pwarn("! Ino %d with daddr 0x%llx is on the free list!\n",
-			    ino, (long long) daddr);
-			if (preen || reply("FIX") == 1) {
-				if (plastino == 0) {
-					fs->lfs_freehd = nextino;
-					sbdirty();
-				} else {
-					LFS_IENTRY(ifp, fs, plastino, bp);
-					ifp->if_nextfree = nextino;
-					VOP_BWRITE(bp);
-				}
-				ino = nextino;
-				continue;
-			}
-		}
-		plastino = ino;
-		ino = nextino;
-	}
-	/*
-	 * Make sure all free inodes were found on the list
-	 */
-	for (ino = ROOTINO + 1; ino < maxino; ++ino) {
-		if (visited[ino])
-			continue;
-
-		LFS_IENTRY(ifp, fs, ino, bp);
-		if (ifp->if_daddr) {
-			brelse(bp);
-			continue;
-		}
-		pwarn("! Ino %d free, but not on the free list\n", ino);
-		if (preen || reply("FIX") == 1) {
-			ifp->if_nextfree = fs->lfs_freehd;
-			fs->lfs_freehd = ino;
-			sbdirty();
-			VOP_BWRITE(bp);
-		} else
-			brelse(bp);
-	}
-}
+void bufinit(void);
+void bufstats(void);
+void buf_destroy(struct ubuf *);
+void bremfree(struct ubuf *);
+struct ubuf *incore(struct uvnode *, int);
+struct ubuf *getblk(struct uvnode *, daddr_t, int);
+void bwrite(struct ubuf *);
+void brelse(struct ubuf *);
+int bread(struct uvnode *, daddr_t, int, struct ucred *, struct ubuf **);
+void reassignbuf(struct ubuf *, struct uvnode *);
