@@ -29,10 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #define MY(OP) CAT(i386netbsd_,OP)
 #define NAME(x,y) CAT3(x,_i386netbsd_,y)
-#define aout_i386netbsd_get_section_contents _bfd_generic_get_section_contents
 
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
 #define TARGETNAME "a.out-i386-netbsd"
 
-#include "netbsd.h"
 #include "aoutnbsd.h"
