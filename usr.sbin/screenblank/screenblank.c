@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.20 2004/01/05 23:23:39 jmmv Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.21 2004/10/30 15:43:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.20 2004/01/05 23:23:39 jmmv Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.21 2004/10/30 15:43:25 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -367,7 +367,7 @@ cvt_arg(char *arg, struct timespec *tvp)
 			continue;
 		}
 
-		if (!isdigit(*cp))
+		if (!isdigit((unsigned char)*cp))
 			errx(1, "Invalid argument: %s", arg);
 
 		if (period) {

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.19 2004/02/13 11:36:24 wiz Exp $ */
+/* $NetBSD: main.c,v 1.20 2004/10/30 15:40:57 dsl Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.19 2004/02/13 11:36:24 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2004/10/30 15:40:57 dsl Exp $");
 #endif
 
 /*
@@ -338,7 +338,7 @@ acct_load(pn, wr)
 		    i++) {
 			char c = ac.ac_comm[i];
 
-			if (!isascii(c) || iscntrl(c)) {
+			if (!isascii(c) || iscntrl((unsigned char)c)) {
 				ci.ci_comm[i] = '?';
 				ci.ci_flags |= CI_UNPRINTABLE;
 			} else

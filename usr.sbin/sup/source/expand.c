@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.14 2002/07/10 20:19:39 wiz Exp $	*/
+/*	$NetBSD: expand.c,v 1.15 2004/10/30 15:48:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -125,7 +125,7 @@ glob(char *as)
 	if (*cs == '~' && pathp == path) {
 		if (addpath('~'))
 			goto endit;
-		for (cs++; isalnum(*cs) || *cs == '_' || *cs == '-';)
+		for (cs++; isalnum((unsigned char)*cs) || *cs == '_' || *cs == '-';)
 			if (addpath(*cs++))
 				goto endit;
 		if (!*cs || *cs == '/') {
