@@ -34,9 +34,9 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: output.c,v 1.1.1.5 1997/02/03 21:06:27 christos Exp $";
+static char rcsid[] = "$NetBSD: output.c,v 1.1.1.6 1998/06/02 17:41:25 thorpej Exp $";
 #endif
-#ident "$Revision: 1.1.1.5 $"
+#ident "$Revision: 1.1.1.6 $"
 
 #include "defs.h"
 
@@ -62,10 +62,9 @@ struct {
 #define	    WS_ST_RIP2_ALL  0x002	/* send full featured RIPv2 */
 #define	    WS_ST_AG	    0x004	/* ok to aggregate subnets */
 #define	    WS_ST_SUPER_AG  0x008	/* ok to aggregate networks */
-#define	    WS_ST_SUB_AG    0x010	/* aggregate subnets in odd case */
-#define	    WS_ST_QUERY	    0x020	/* responding to a query */
-#define	    WS_ST_TO_ON_NET 0x040	/* sending onto one of our nets */
-#define	    WS_ST_DEFAULT   0x080	/* faking a default */
+#define	    WS_ST_QUERY	    0x010	/* responding to a query */
+#define	    WS_ST_TO_ON_NET 0x020	/* sending onto one of our nets */
+#define	    WS_ST_DEFAULT   0x040	/* faking a default */
 } ws;
 
 /* A buffer for what can be heard by both RIPv1 and RIPv2 listeners */
@@ -355,11 +354,6 @@ supply_out(struct ag_info *ag)
 	    && (ws.state & WS_ST_FLASH))
 		return;
 
-	/* Skip this route if required by split-horizon.
-	 */
-	if (ag->ag_state & AGS_SPLIT_HZ)
-		return;
-
 	dst_h = ag->ag_dst_h;
 	mask = ag->ag_mask;
 	v1_mask = ripv1_mask_host(htonl(dst_h),
@@ -395,13 +389,14 @@ supply_out(struct ag_info *ag)
 				/* Punt if we would have to generate an
 				 * unreasonable number of routes.
 				 */
-#ifdef DEBUG
-				msglog("sending %s to %s as 1 instead"
-				       " of %d routes",
-				       addrname(htonl(dst_h),mask,1),
-				       naddr_ntoa(ws.to.sin_addr.s_addr),
-				       i+1);
-#endif
+				if (TRACECONTENTS)
+					trace_misc("sending %s-->%s as 1"
+						   " instead of %d routes",
+						   addrname(htonl(dst_h), mask,
+							1),
+						   naddr_ntoa(ws.to.sin_addr
+							.s_addr),
+						   i+1);
 				i = 0;
 
 			} else {
@@ -494,7 +489,7 @@ walk_supply(struct radix_node *rn,
 
 		} else {
 			/* Do not send automatic synthetic network routes
-			 * if they are not needed becaus no RIPv1 listeners
+			 * if they are not needed because no RIPv1 listeners
 			 * can hear them.
 			 */
 			if (ws.state & WS_ST_RIP2_ALL)
@@ -513,6 +508,7 @@ walk_supply(struct radix_node *rn,
 		/* Advertise the next hop if this is not a route for one
 		 * of our interfaces and the next hop is on the same
 		 * network as the target.
+		 * The final determination is made by supply_out().
 		 */
 		if (!(RT->rt_state & RS_IF)
 		    && RT->rt_gate != myaddr
@@ -530,23 +526,30 @@ walk_supply(struct radix_node *rn,
 		;
 
 	} else if (RT_ISHOST(RT)) {
-		/* We should always aggregate the host routes
-		 * for the local end of our point-to-point links.
+		/* We should always suppress (into existing network routes)
+		 * the host routes for the local end of our point-to-point
+		 * links.
 		 * If we are suppressing host routes in general, then do so.
 		 * Avoid advertising host routes onto their own network,
 		 * where they should be handled by proxy-ARP.
 		 */
 		if ((RT->rt_state & RS_LOCAL)
 		    || ridhosts
-		    || (ws.state & WS_ST_SUPER_AG)
 		    || on_net(dst, ws.to_net, ws.to_mask))
 			ags |= AGS_SUPPRESS;
 
-		if (ws.state & WS_ST_SUPER_AG)
-			ags |= AGS_PROMOTE;
+		/* Aggregate stray host routes into network routes if allowed.
+		 * We cannot aggregate host routes into small network routes
+		 * without confusing RIPv1 listeners into thinking the
+		 * network routes are host routes.
+		 */
+		if ((ws.state & WS_ST_AG)
+		    && !(ws.state & WS_ST_RIP2_ALL))
+			ags |= AGS_AGGREGATE;
 
-	} else if (ws.state & WS_ST_AG) {
-		/* Aggregate network routes, if we are allowed.
+	} else {
+		/* Always suppress network routes into other, existing
+		 * network routes
 		 */
 		ags |= AGS_SUPPRESS;
 
@@ -555,10 +558,10 @@ walk_supply(struct radix_node *rn,
 		 * later convert back to ordinary nets.
 		 * This unifies dealing with received supernets.
 		 */
-		if ((RT->rt_state & RS_SUBNET)
-		    || (ws.state & WS_ST_SUPER_AG))
-			ags |= AGS_PROMOTE;
-
+		if ((ws.state & WS_ST_AG)
+		    && ((RT->rt_state & RS_SUBNET)
+			|| (ws.state & WS_ST_SUPER_AG)))
+			ags |= AGS_AGGREGATE;
 	}
 
 	/* Do not send RIPv1 advertisements of subnets to other
@@ -566,11 +569,9 @@ walk_supply(struct radix_node *rn,
 	 */
 	if ((RT->rt_state & RS_SUBNET)
 	    && !(ws.state & WS_ST_RIP2_ALL)
-	    && !on_net(dst, ws.to_std_net, ws.to_std_mask)) {
-		ags |= AGS_RIPV2 | AGS_PROMOTE;
-		if (ws.state & WS_ST_SUB_AG)
-			ags |= AGS_SUPPRESS;
-	}
+	    && !on_net(dst, ws.to_std_net, ws.to_std_mask))
+		ags |= AGS_RIPV2 | AGS_AGGREGATE;
+
 
 	/* Do not send a route back to where it came from, except in
 	 * response to a query.  This is "split-horizon".  That means not
@@ -579,8 +580,7 @@ walk_supply(struct radix_node *rn,
 	 * We want to suppress routes that might have been fragmented
 	 * from this route by a RIPv1 router and sent back to us, and so we
 	 * cannot forget this route here.  Let the split-horizon route
-	 * aggregate (suppress) the fragmented routes and then itself be
-	 * forgotten.
+	 * suppress the fragmented routes and then itself be forgotten.
 	 *
 	 * Include the routes for both ends of point-to-point interfaces
 	 * among those suppressed by split-horizon, since the other side
@@ -595,11 +595,10 @@ walk_supply(struct radix_node *rn,
 	    && (!(RT->rt_state & RS_IF)
 		|| ws.ifp->int_if_flags & IFF_POINTOPOINT)) {
 		for (rts = RT->rt_spares, i = NUM_SPARES; i != 0; i--, rts++) {
-			if (rts->rts_ifp == ws.ifp
-			    && rts->rts_metric <= metric)
-				break;
-		}
-		if (i != 0) {
+			if (rts->rts_metric > metric
+			    || rts->rts_ifp != ws.ifp)
+				continue;
+
 			/* If we do not mark the route with AGS_SPLIT_HZ here,
 			 * it will be poisoned-reverse, or advertised back
 			 * toward its source with an infinite metric.
@@ -618,9 +617,10 @@ walk_supply(struct radix_node *rn,
 			    || RT->rt_poison_metric >= metric
 			    || RT->rt_spares[1].rts_gate == 0) {
 				ags |= AGS_SPLIT_HZ;
-				ags &= ~(AGS_PROMOTE | AGS_SUPPRESS);
+				ags &= ~AGS_SUPPRESS;
 			}
 			metric = HOPCNT_INFINITY;
+			break;
 		}
 	}
 
@@ -700,8 +700,6 @@ supply(struct sockaddr_in *dst,
 	ws.npackets = 0;
 	if (flash)
 		ws.state |= WS_ST_FLASH;
-	if (type == OUT_QUERY)
-		ws.state |= WS_ST_QUERY;
 
 	if ((ws.ifp = ifp) == 0) {
 		ws.metric = 1;
@@ -715,44 +713,42 @@ supply(struct sockaddr_in *dst,
 	ripv12_buf.rip.rip_vers = vers;
 
 	switch (type) {
-	case OUT_BROADCAST:
-		v2buf.type = ((ifp != 0 && (ifp->int_if_flags & IFF_MULTICAST))
-			      ? OUT_MULTICAST
-			      : NO_OUT_MULTICAST);
-		v12buf.type = OUT_BROADCAST;
-		break;
 	case OUT_MULTICAST:
-		v2buf.type = ((ifp != 0 && (ifp->int_if_flags & IFF_MULTICAST))
-			      ? OUT_MULTICAST
-			      : NO_OUT_MULTICAST);
+		if (ifp->int_if_flags & IFF_MULTICAST)
+			v2buf.type = OUT_MULTICAST;
+		else
+			v2buf.type = NO_OUT_MULTICAST;
 		v12buf.type = OUT_BROADCAST;
 		break;
-	case OUT_UNICAST:
+
 	case OUT_QUERY:
+		ws.state |= WS_ST_QUERY;
+		/* fall through */
+	case OUT_BROADCAST:
+	case OUT_UNICAST:
 		v2buf.type = (vers == RIPv2) ? type : NO_OUT_RIPV2;
 		v12buf.type = type;
 		break;
-	default:
-		v2buf.type = type;
-		v12buf.type = type;
-		break;
+
+	case NO_OUT_MULTICAST:
+	case NO_OUT_RIPV2:
+		break;			/* no output */
 	}
 
 	if (vers == RIPv2) {
 		/* full RIPv2 only if cannot be heard by RIPv1 listeners */
 		if (type != OUT_BROADCAST)
 			ws.state |= WS_ST_RIP2_ALL;
-		if (!(ws.state & WS_ST_TO_ON_NET)) {
+		if ((ws.state & WS_ST_QUERY)
+		    || !(ws.state & WS_ST_TO_ON_NET)) {
 			ws.state |= (WS_ST_AG | WS_ST_SUPER_AG);
 		} else if (ifp == 0 || !(ifp->int_state & IS_NO_AG)) {
 			ws.state |= WS_ST_AG;
 			if (type != OUT_BROADCAST
-			    && (ifp == 0 || !(ifp->int_state&IS_NO_SUPER_AG)))
+			    && (ifp == 0
+				|| !(ifp->int_state & IS_NO_SUPER_AG)))
 				ws.state |= WS_ST_SUPER_AG;
 		}
-
-	} else if (ifp == 0 || !(ifp->int_state & IS_NO_AG)) {
-		ws.state |= WS_ST_SUB_AG;
 	}
 
 	ws.a = (vers == RIPv2) ? find_auth(ifp) : 0;
@@ -848,7 +844,7 @@ rip_bcast(int flash)
 			continue;
 
 		/* skip turned off interfaces */
-		if (!iff_alive(ifp->int_if_flags))
+		if (!iff_up(ifp->int_if_flags))
 			continue;
 
 		vers = (ifp->int_state & IS_NO_RIPV1_OUT) ? RIPv2 : RIPv1;
@@ -857,11 +853,8 @@ rip_bcast(int flash)
 			/* ordinary, hardware interface */
 			dst.sin_addr.s_addr = ifp->int_brdaddr;
 
-			/* If RIPv1 is not turned off, then broadcast so
-			 * that RIPv1 listeners can hear.
-			 */
 			if (vers == RIPv2
-			    && (ifp->int_state & IS_NO_RIPV1_OUT)) {
+			    && !(ifp->int_state  & IS_NO_RIP_MCAST)) {
 				type = OUT_MULTICAST;
 			} else {
 				type = OUT_BROADCAST;
@@ -923,7 +916,7 @@ rip_query(void)
 			continue;
 
 		/* skip turned off interfaces */
-		if (!iff_alive(ifp->int_if_flags))
+		if (!iff_up(ifp->int_if_flags))
 			continue;
 
 		buf.rip_vers = (ifp->int_state&IS_NO_RIPV1_OUT) ? RIPv2:RIPv1;
@@ -931,14 +924,26 @@ rip_query(void)
 		buf.rip_nets[0].n_family = RIP_AF_UNSPEC;
 		buf.rip_nets[0].n_metric = htonl(HOPCNT_INFINITY);
 
+		/* Send a RIPv1 query only if allowed and if we will
+		 * listen to RIPv1 routers.
+		 */
+		if ((ifp->int_state & IS_NO_RIPV1_OUT)
+		    || (ifp->int_state & IS_NO_RIPV1_IN)) {
+			buf.rip_vers = RIPv2;
+		} else {
+			buf.rip_vers = RIPv1;
+		}
+
 		if (ifp->int_if_flags & IFF_BROADCAST) {
 			/* ordinary, hardware interface */
 			dst.sin_addr.s_addr = ifp->int_brdaddr;
-			/* if RIPv1 is not turned off, then broadcast so
-			 * that RIPv1 listeners can hear.
+
+			/* Broadcast RIPv1 queries and RIPv2 queries
+			 * when the hardware cannot multicast.
 			 */
 			if (buf.rip_vers == RIPv2
-			    && (ifp->int_state & IS_NO_RIPV1_OUT)) {
+			    && (ifp->int_if_flags & IFF_MULTICAST)
+			    && !(ifp->int_state  & IS_NO_RIP_MCAST)) {
 				type = OUT_MULTICAST;
 			} else {
 				type = OUT_BROADCAST;
