@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.32 1998/01/24 12:42:25 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.33 1998/01/24 12:45:19 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -49,6 +49,7 @@
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_exec.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
