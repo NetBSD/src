@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.25 1999/03/28 13:48:40 drochner Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.26 1999/04/15 22:06:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.25 1999/03/28 13:48:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.26 1999/04/15 22:06:47 thorpej Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -102,8 +102,9 @@ dec_3000_300_cons_init()
 	case CTB_GRAPHICS:
 #if NWSDISPLAY > 0
 		/* display console ... */
-		if (zs_ioasic_lk201_cnattach(0x1a0000000, 0x00180000, 0)
-		    && tc_3000_300_fb_cnattach(ctb->ctb_turboslot)) {
+		if (zs_ioasic_lk201_cnattach(0x1a0000000, 0x00180000, 0) &&
+		    tc_3000_300_fb_cnattach(
+		     CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot))) {
 			break;
 		}
 #endif
