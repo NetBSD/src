@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.56 2002/11/26 18:49:49 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
  */
 
 /*
- * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
+ * HID spec: http://www.usb.org/developers/devclass_docs/HID1_11.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.56 2002/11/26 18:49:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
