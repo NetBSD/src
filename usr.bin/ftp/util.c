@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.82 1999/11/12 02:50:38 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.83 1999/11/26 21:41:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.82 1999/11/12 02:50:38 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.83 1999/11/26 21:41:56 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -224,7 +224,6 @@ setpeer(argc, argv)
 "Remember to set tenex mode when transferring binary files from this machine.\n",
 				    ttyout);
 		}
-		updateremotepwd();
 		verbose = overbose;
 	}
 }
@@ -328,6 +327,12 @@ ftp_login(host, user, pass)
 	acct = NULL;
 	aflag = rval = freeuser = freepass = freeacct = 0;
 
+	if (debug)
+		fprintf(ttyout, "ftp_login: user `%s' pass `%s' host `%s'\n",
+		    user ? user : "<null>", pass ? pass : "<null>",
+		    host ? host : "<null>");
+
+
 	/*
 	 * Set up arguments for an anonymous FTP session, if necessary.
 	 */
@@ -422,6 +427,8 @@ ftp_login(host, user, pass)
 			break;
 		}
 	}
+	updateremotepwd();
+
 cleanup_ftp_login:
 	if (user != NULL && freeuser)
 		free((char *)user);

@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.59 1999/11/12 02:50:38 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.60 1999/11/26 21:41:57 lukem Exp $
 .\"
 .\" Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd November 12, 1999
+.Dd November 27, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -77,74 +77,57 @@
 Internet file transfer program
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl A
-.Op Fl a
-.Op Fl d
-.Op Fl e
-.Op Fl g
-.Op Fl i
-.Op Fl n
-.Op Fl p
+.Op Fl AadefginpRtvV
+.Bk -words
+.Op Fl o Ar output
+.Ek
 .Bk -words
 .Op Fl P Ar port
 .Ek
 .Bk -words
-.Op Fl r Ar seconds
+.Op Fl r Ar retry
 .Ek
-.Op Fl t
 .Bk -words
 .Oo
 .Fl T
 .Sm off
 .Xo
-.Ar direction ,
-.Ar maximum
-.Op , Ar increment
+.Ar dir ,
+.Ar max
+.Op , Ar inc
 .Xc
 .Sm on
 .Oc
 .Ek
-.Op Fl v
-.Op Fl V
 .Bk -words
-.Op Ar host Op Ar port
+.Oo
+[\fIuser\fR@]\fIhost\fR
+.Op Ar port
+.Oc
 .Ek
-.Nm ftp
-.Op Fl f
 .Bk -words
-.Op Fl o Ar output
+[\fIuser\fR@]\fIhost\fR:[\fIpath\fR][/]
 .Ek
-file:///\fIpath\fR
-.Nm ftp
-.Op Fl f
-.Op Fl R
 .Bk -words
-.Op Fl o Ar output
+.Op file:///\fIpath\fR
 .Ek
-ftp://[\fIuser\fR[:\fIpassword\fR]@]\fIhost\fR[:\fIport\fR]/\fIpath\fR[/]
-.Nm ftp
-.Op Fl f
 .Bk -words
-.Op Fl o Ar output
+.Op ftp://[\fIuser\fR[:\fIpassword\fR]@]\fIhost\fR[:\fIport\fR]/\fIpath\fR[/]
 .Ek
-http://[\fIuser\fR[:\fIpassword\fR]@]\fIhost\fR[:\fIport\fR]/\fIpath\fR
-.Nm ftp
-.Op Fl f
-.Op Fl R
 .Bk -words
-.Op Fl o Ar output
+.Op http://[\fIuser\fR[:\fIpassword\fR]@]\fIhost\fR[:\fIport\fR]/\fIpath\fR
 .Ek
-\fIhost\fR:[\fIpath\fR][/]
+.Op Ar \&.\&.\&.
 .Sh DESCRIPTION
 .Nm
 is the user interface to the Internet standard File Transfer Protocol.
 The program allows a user to transfer files to and from a
 remote network site.
 .Pp
-The last four usage formats will fetch a file using the
-.Tn HTTP
-or
+The last five arguments will fetch a file using the
 .Tn FTP
+or
+.Tn HTTP
 protocols, or by direct copying, into the current directory.
 This is ideal for scripts.
 Refer to
@@ -1382,7 +1365,7 @@ on the command line.
 .Pp
 The following formats are valid syntax for an auto-fetch element:
 .Bl -tag -width "FOO "
-.It host:[path][/]
+.It [user@]host:[path][/]
 .Dq Classic
 .Tn FTP
 format.
