@@ -1,3 +1,5 @@
+/*	$NetBSD: bcopy.S,v 1.7 1995/11/17 20:21:12 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,9 +38,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: bcopy.S,v 1.6 1995/06/29 20:42:22 jtc Exp $"
+#if 0
+	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: bcopy.S,v 1.7 1995/11/17 20:21:12 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
