@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/12/12 12:24:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/03/08 02:00:58 itojun Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -11,8 +11,8 @@ NOPROFILE=	# defined
 LIBSSHOBJDIR=${.OBJDIR}
 
 LIB=	ssh
-SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c \
-	channels.c cipher.c compat.c compress.c crc32.c deattack.c \
+SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c channels.c \
+	cipher.c compat.c compress.c crc32.c deattack.c fatal.c \
 	hostfile.c log.c match.c mpaux.c nchan.c packet.c readpass.c \
 	rsa.c tildexpand.c ttymodes.c uidswap.c xmalloc.c atomicio.c \
 	key.c dispatch.c kex.c mac.c uuencode.c misc.c \

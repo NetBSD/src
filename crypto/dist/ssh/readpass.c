@@ -1,7 +1,6 @@
-/*	$NetBSD: readpass.c,v 1.8 2001/11/27 04:10:24 itojun Exp $	*/
+/*	$NetBSD: readpass.c,v 1.9 2002/03/08 02:00:53 itojun Exp $	*/
 /*
- * Copyright (c) 1988, 1993
- *      The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,29 +10,21 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readpass.c,v 1.23 2001/11/08 10:51:08 markus Exp $");
+RCSID("$OpenBSD: readpass.c,v 1.26 2002/02/13 00:39:15 markus Exp $");
 
 #include <readpassphrase.h>
 
@@ -49,7 +40,7 @@ ssh_askpass(char *askpass, const char *msg)
 	pid_t pid;
 	size_t len;
 	char *pass;
-	int p[2], status;
+	int p[2], status, ret;
 	char buf[1024];
 
 	if (fflush(stdout) != 0)
@@ -74,14 +65,23 @@ ssh_askpass(char *askpass, const char *msg)
 		fatal("ssh_askpass: exec(%s): %s", askpass, strerror(errno));
 	}
 	close(p[1]);
-	len = read(p[0], buf, sizeof buf -1);
+
+	len = ret = 0;
+	do {
+		ret = read(p[0], buf + len, sizeof(buf) - 1 - len);
+		if (ret == -1 && errno == EINTR)
+			continue;
+		if (ret <= 0)
+			break;
+		len += ret;
+	} while (sizeof(buf) - 1 - len > 0);
+	buf[len] = '\0';
+
 	close(p[0]);
 	while (waitpid(pid, &status, 0) < 0)
 		if (errno != EINTR)
 			break;
-	if (len <= 1)
-		return xstrdup("");
-	buf[len] = '\0';
+
 	buf[strcspn(buf, "\r\n")] = '\0';
 	pass = xstrdup(buf);
 	memset(buf, 0, sizeof(buf));
@@ -106,7 +106,7 @@ read_passphrase(const char *prompt, int flags)
 			use_askpass = 1;
 	} else {
 		rppflags |= RPP_REQUIRE_TTY;
-		ttyfd = open("/dev/tty", O_RDWR);
+		ttyfd = open(_PATH_TTY, O_RDWR);
 		if (ttyfd >= 0)
 			close(ttyfd);
 		else

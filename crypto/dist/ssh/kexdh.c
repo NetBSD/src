@@ -1,4 +1,4 @@
-/*	$NetBSD: kexdh.c,v 1.5 2001/09/27 03:24:03 itojun Exp $	*/
+/*	$NetBSD: kexdh.c,v 1.6 2002/03/08 02:00:53 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexdh.c,v 1.7 2001/09/17 19:27:15 stevesk Exp $");
+RCSID("$OpenBSD: kexdh.c,v 1.17 2002/02/28 15:46:33 markus Exp $");
 
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
@@ -52,7 +52,7 @@ kex_dh_hash(
 {
 	Buffer b;
 	static u_char digest[EVP_MAX_MD_SIZE];
-	EVP_MD *evp_md = EVP_sha1();
+	const EVP_MD *evp_md = EVP_sha1();
 	EVP_MD_CTX md;
 
 	buffer_init(&b);
@@ -82,7 +82,7 @@ kex_dh_hash(
 	buffer_free(&b);
 
 #ifdef DEBUG_KEX
-	dump_digest("hash", digest, evp_md->md_size);
+	dump_digest("hash", digest, EVP_MD_size(evp_md));
 #endif
 	return digest;
 }
@@ -98,7 +98,6 @@ kexdh_client(Kex *kex)
 	u_char *server_host_key_blob = NULL, *signature = NULL;
 	u_char *kbuf, *hash;
 	u_int klen, kout, slen, sbloblen;
-	int dlen, plen;
 
 	/* generate and send 'e', client DH public key */
 	dh = dh_new_group1();
@@ -116,24 +115,24 @@ kexdh_client(Kex *kex)
 #endif
 
 	debug("expecting SSH2_MSG_KEXDH_REPLY");
-	packet_read_expect(&plen, SSH2_MSG_KEXDH_REPLY);
+	packet_read_expect(SSH2_MSG_KEXDH_REPLY);
 
 	/* key, cert */
 	server_host_key_blob = packet_get_string(&sbloblen);
 	server_host_key = key_from_blob(server_host_key_blob, sbloblen);
 	if (server_host_key == NULL)
 		fatal("cannot decode server_host_key_blob");
-
+	if (server_host_key->type != kex->hostkey_type)
+		fatal("type mismatch for decoded server_host_key_blob");
 	if (kex->verify_host_key == NULL)
 		fatal("cannot verify server_host_key");
 	if (kex->verify_host_key(server_host_key) == -1)
 		fatal("server_host_key verification failed");
 
 	/* DH paramter f, server public DH key */
-	dh_server_pub = BN_new();
-	if (dh_server_pub == NULL)
+	if ((dh_server_pub = BN_new()) == NULL)
 		fatal("dh_server_pub == NULL");
-	packet_get_bignum2(dh_server_pub, &dlen);
+	packet_get_bignum2(dh_server_pub);
 
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "dh_server_pub= ");
@@ -144,7 +143,7 @@ kexdh_client(Kex *kex)
 
 	/* signed H */
 	signature = packet_get_string(&slen);
-	packet_done();
+	packet_check_eom();
 
 	if (!dh_pub_is_valid(dh, dh_server_pub))
 		packet_disconnect("bad server public DH value");
@@ -155,7 +154,8 @@ kexdh_client(Kex *kex)
 #ifdef DEBUG_KEXDH
 	dump_digest("shared secret", kbuf, kout);
 #endif
-	shared_secret = BN_new();
+	if ((shared_secret = BN_new()) == NULL)
+		fatal("kexdh_client: BN_new failed");
 	BN_bin2bn(kbuf, kout, shared_secret);
 	memset(kbuf, 0, klen);
 	xfree(kbuf);
@@ -172,7 +172,7 @@ kexdh_client(Kex *kex)
 	    shared_secret
 	);
 	xfree(server_host_key_blob);
-	BN_free(dh_server_pub);
+	BN_clear_free(dh_server_pub);
 	DH_free(dh);
 
 	if (key_verify(server_host_key, signature, slen, hash, 20) != 1)
@@ -202,14 +202,14 @@ kexdh_server(Kex *kex)
 	Key *server_host_key;
 	u_char *kbuf, *hash, *signature = NULL, *server_host_key_blob = NULL;
 	u_int sbloblen, klen, kout;
-	int dlen, slen, plen;
+	u_int slen;
 
 	/* generate server DH public key */
 	dh = dh_new_group1();
 	dh_gen_key(dh, kex->we_need * 8);
 
 	debug("expecting SSH2_MSG_KEXDH_INIT");
-	packet_read_expect(&plen, SSH2_MSG_KEXDH_INIT);
+	packet_read_expect(SSH2_MSG_KEXDH_INIT);
 
 	if (kex->load_host_key == NULL)
 		fatal("Cannot load hostkey");
@@ -218,10 +218,10 @@ kexdh_server(Kex *kex)
 		fatal("Unsupported hostkey type %d", kex->hostkey_type);
 
 	/* key, cert */
-	dh_client_pub = BN_new();
-	if (dh_client_pub == NULL)
+	if ((dh_client_pub = BN_new()) == NULL)
 		fatal("dh_client_pub == NULL");
-	packet_get_bignum2(dh_client_pub, &dlen);
+	packet_get_bignum2(dh_client_pub);
+	packet_check_eom();
 
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "dh_client_pub= ");
@@ -245,7 +245,8 @@ kexdh_server(Kex *kex)
 #ifdef DEBUG_KEXDH
 	dump_digest("shared secret", kbuf, kout);
 #endif
-	shared_secret = BN_new();
+	if ((shared_secret = BN_new()) == NULL)
+		fatal("kexdh_server: BN_new failed");
 	BN_bin2bn(kbuf, kout, shared_secret);
 	memset(kbuf, 0, klen);
 	xfree(kbuf);
@@ -263,7 +264,7 @@ kexdh_server(Kex *kex)
 	    dh->pub_key,
 	    shared_secret
 	);
-	BN_free(dh_client_pub);
+	BN_clear_free(dh_client_pub);
 
 	/* save session id := H */
 	/* XXX hashlen depends on KEX */
