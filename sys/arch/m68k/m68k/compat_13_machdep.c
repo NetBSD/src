@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.6 2003/08/07 16:28:16 agc Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.7 2004/08/28 22:06:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6 2003/08/07 16:28:16 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7 2004/08/28 22:06:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6 2003/08/07 16:28:16 agc Ex
 
 extern int fputype;
 extern short exframesize[];
-void	m68881_restore __P((struct fpframe *));
+void	m68881_restore(struct fpframe *);
 
 /*
  * System call to cleanup state after a signal
@@ -107,10 +107,7 @@ void	m68881_restore __P((struct fpframe *));
  * a machine fault.
  */
 int
-compat_13_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
