@@ -1,5 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.12 2000/10/25 15:55:44 hubertf Exp $
+# $NetBSD: Makefile.inc,v 1.13 2000/10/27 11:49:23 hubertf Exp $
 # Original from FreeBSD, no rcs id.
+
+.if exists(/etc/mk.conf)
+.include "/etc/mk.conf"
+.endif
 
 LIBINSTALL != cd ${.CURDIR}/../lib;\
     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
@@ -20,9 +24,6 @@ CHMOD= /bin/chmod
 CHOWN= /usr/sbin/chown
 CHGRP= /usr/bin/chgrp
 .elif ${OPSYS} == "SunOS"
-.if exists(/etc/mk.conf)
-.include "/etc/mk.conf"
-.endif
 LOCALBASE?= /usr/local
 TAR_CMD?= gtar
 TAR_FULLPATHNAME?= ${LOCALBASE}/bin/${TAR_CMD}
