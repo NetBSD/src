@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1997/06/06 23:24:31 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 1997/07/10 02:36:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -91,19 +91,78 @@ typedef u_long bus_size_t;
 typedef	int bus_space_tag_t;
 typedef	u_long bus_space_handle_t;
 
-int	bus_space_map __P((bus_space_tag_t t, bus_addr_t addr,
+/*
+ *	int bus_space_map  __P((bus_space_tag_t t, bus_addr_t addr,
+ *	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
+ *
+ * Map a region of bus space.
+ */
+
+int	i386_memio_map __P((bus_space_tag_t t, bus_addr_t addr,
 	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
-void	bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
+/* like map, but without extent map checking/allocation */
+int	_i386_memio_map __P((bus_space_tag_t t, bus_addr_t addr,
+	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
+
+#define	bus_space_map(t, a, s, c, hp)					\
+	i386_memio_map((t), (a), (s), (c), (hp))
+
+/*
+ *	int bus_space_unmap __P((bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size));
+ *
+ * Unmap a region of bus space.
+ */
+
+void	i386_memio_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
-int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
+
+#define bus_space_unmap(t, h, s)					\
+	i386_memio_unmap((t), (h), (s))
+
+/*
+ *	int bus_space_subregion __P((bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t offset, bus_size_t size,
+ *	    bus_space_handle_t *nbshp));
+ *
+ * Get a new handle for a subregion of an already-mapped area of bus space.
+ */
+
+int	i386_memio_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));
 
-int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
+#define bus_space_subregion(t, h, o, s, nhp)				\
+	i386_memio_subregion((t), (h), (o), (s), (nhp))
+
+/*
+ *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
+ *	    bus_addr_t rend, bus_size_t size, bus_size_t align,
+ *	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
+ *	    bus_space_handle_t *bshp));
+ *
+ * Allocate a region of bus space.
+ */
+
+int	i386_memio_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,
 	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
 	    bus_space_handle_t *bshp));
-void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
+
+#define bus_space_alloc(t, rs, re, s, a, b, c, ap, hp)			\
+	i386_memio_alloc((t), (rs), (re), (s), (a), (b), (c), (ap), (hp))
+
+/*
+ *	int bus_space_free __P((bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size));
+ *
+ * Free a region of bus space.
+ */
+
+void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
+
+#define bus_space_free(t, h, s)						\
+	i386_memio_free((t), (h), (s))
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
