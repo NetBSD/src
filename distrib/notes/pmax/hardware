@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.2.2.2 1998/02/07 06:21:22 mellon Exp $	
+
 NetBSD/pmax _VER runs on the following classes of machines:
 	- Decstation 2100 and 3100, also known as "pmin" and  "pmax" 
 	- Personal Decstations (5000/20, and /25)  also known as "MAXINE"
@@ -30,7 +32,7 @@ Supported devices include:
 		PMAGB-BA  1024x768 8-bit colour frame buffer.
 		PMAG-AA  1280x1024 four-bit greyscale frame buffer.
 
-		NOTE:  All supported DECstation vide produces sync-on-green.
+		NOTE:  All supported DECstation video produces sync-on-green.
 		Be sure to use either a DEC-compatible fixed-sync monitor
 		or a multisync monitor that supports sync-on-green.
 
