@@ -1,4 +1,4 @@
-/*	$NetBSD: netdate.c,v 1.18 1998/12/19 22:44:19 kristerw Exp $	*/
+/*	$NetBSD: netdate.c,v 1.19 2001/07/08 05:26:03 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.18 1998/12/19 22:44:19 kristerw Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.19 2001/07/08 05:26:03 gmcgarry Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,8 @@ netsettime(tval)
 	struct sockaddr_in sin, dest, from;
 	fd_set ready;
 	long waittime;
-	int s, length, timed_ack, found, error;
+	int s, timed_ack, found, error;
+	socklen_t length;
 #ifdef IP_PORTRANGE
 	int on;
 #endif
