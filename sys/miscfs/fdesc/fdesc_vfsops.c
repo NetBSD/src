@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.15 1994/12/13 09:58:12 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.16 1994/12/15 20:00:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,6 @@ fdesc_mount(mp, path, data, ndp, p)
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("fdesc", mp->mnt_stat.f_mntfromname, sizeof("fdesc"));
-	(void)fdesc_statfs(mp, &mp->mnt_stat, p);
 	return (0);
 }
 

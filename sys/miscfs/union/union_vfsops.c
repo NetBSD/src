@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.6 1994/12/14 16:31:19 mycroft Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.7 1994/12/15 20:00:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -224,7 +224,6 @@ union_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.target, cp, len - 1, &size);
 	bzero(cp + size, len - size);
 
-	(void)union_statfs(mp, &mp->mnt_stat, p);
 #ifdef UNION_DIAGNOSTIC
 	printf("union_mount: from %s, on %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);

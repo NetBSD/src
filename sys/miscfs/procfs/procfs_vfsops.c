@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.20 1994/09/15 03:49:19 mycroft Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.21 1994/12/15 20:00:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -86,7 +86,6 @@ procfs_mount(mp, path, data, ndp, p)
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("procfs", mp->mnt_stat.f_mntfromname, sizeof("procfs"));
-	(void)procfs_statfs(mp, &mp->mnt_stat, p);
 	return (0);
 }
 
