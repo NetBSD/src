@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.1 2001/09/29 14:00:57 augustss Exp $ */
+/* $NetBSD: opl_esl.c,v 1.2 2001/09/29 19:06:33 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -56,9 +56,9 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/eslvar.h>
 
-int	opl_esl_match __P((struct device *, struct cfdata *, void *));
-void	opl_esl_attach __P((struct device *, struct device *, void *));
-int	opl_esl_detach __P((struct device *, int));
+int	opl_esl_match(struct device *, struct cfdata *, void *);
+void	opl_esl_attach(struct device *, struct device *, void *);
+int	opl_esl_detach(struct device *, int);
 
 struct cfattach opl_esl_ca = {
 	sizeof(struct opl_softc), opl_esl_match, opl_esl_attach,
