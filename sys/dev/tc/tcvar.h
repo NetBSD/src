@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.16 2000/06/01 00:22:52 cgd Exp $ */
+/* $NetBSD: tcvar.h,v 1.17 2000/06/04 19:15:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -69,6 +69,7 @@ struct tc_softc {
 	int	sc_nslots;
 	struct tc_slotdesc *sc_slots;
 
+	const struct evcnt *(*sc_intr_evcnt)(struct device *, void *);
 	void	(*sc_intr_establish)(struct device *, void *,
 			int, int (*)(void *), void *);
 	void	(*sc_intr_disestablish)(struct device *, void *);
@@ -91,6 +92,7 @@ struct tcbus_attach_args {
 	
 
 	/* TC bus resource management; XXX will move elsewhere eventually. */
+	const struct evcnt *(*tba_intr_evcnt)(struct device *, void *);
 	void	(*tba_intr_establish)(struct device *, void *,
 			int, int (*)(void *), void *);
 	void	(*tba_intr_disestablish)(struct device *, void *);
@@ -139,6 +141,7 @@ struct tc_builtin {
 int	tc_checkslot(tc_addr_t, char *);
 void	tc_devinfo(const char *, char *);
 void	tcattach(struct device *, struct device *, void *);
+const struct evcnt *tc_intr_evcnt(struct device *, void *);
 void	tc_intr_establish(struct device *, void *, int, int (*)(void *),
 	    void *);
 void	tc_intr_disestablish(struct device *, void *);

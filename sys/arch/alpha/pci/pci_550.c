@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.14 2000/03/19 02:25:29 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.15 2000/06/04 19:14:21 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.14 2000/03/19 02:25:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.15 2000/06/04 19:14:21 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.14 2000/03/19 02:25:29 thorpej Exp $")
 int	dec_550_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_550_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_550_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_550_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_550_intr_disestablish __P((void *, void *));
@@ -150,6 +151,7 @@ pci_550_pickintr(ccp)
         pc->pc_intr_v = ccp;
         pc->pc_intr_map = dec_550_intr_map;
         pc->pc_intr_string = dec_550_intr_string;
+	pc->pc_intr_evcnt = dec_550_intr_evcnt;
         pc->pc_intr_establish = dec_550_intr_establish;
         pc->pc_intr_disestablish = dec_550_intr_disestablish;
 
@@ -279,6 +281,25 @@ dec_550_intr_string(ccv, ih)
 		panic("dec_550_intr_string: bogus 550 IRQ 0x%lx\n", ih);
 	sprintf(irqstr, "dec 550 irq %ld", ih);
 	return (irqstr);
+}
+
+const struct evcnt *
+dec_550_intr_evcnt(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
+{
+#if 0
+	struct cia_config *ccp = ccv;
+#endif
+
+#if NSIO
+	if (DEC_550_LINE_IS_ISA(ih))
+		return (sio_intr_evcnt(NULL /*XXX*/,
+		    DEC_550_LINE_ISA_IRQ(ih)));
+#endif
+
+	/* XXX for now, no evcnt parent reported */
+	return (NULL);
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.6 2000/03/23 07:01:43 thorpej Exp $	*/
+/*	$NetBSD: magma.c,v 1.7 2000/06/04 19:15:13 cgd Exp $	*/
 /*
  * magma.c
  *
@@ -443,7 +443,8 @@ magma_attach(parent, self, aux)
 	(void)bus_intr_establish(sa->sa_bustag, PIL_TTY,
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 magma_soft, sc);
-	evcnt_attach(&sc->ms_dev, "intr", &sc->ms_intrcnt);
+	evcnt_attach_dynamic(&sc->ms_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->ms_dev.dv_xname, "intr");
 }
 
 /*

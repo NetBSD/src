@@ -1,4 +1,4 @@
-/* $NetBSD: pci_up1000.c,v 1.1 2000/06/01 20:30:31 thorpej Exp $ */
+/* $NetBSD: pci_up1000.c,v 1.2 2000/06/04 19:14:25 cgd Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.1 2000/06/01 20:30:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.2 2000/06/04 19:14:25 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.1 2000/06/01 20:30:31 thorpej Exp $
 
 int     api_up1000_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 const char *api_up1000_intr_string(void *, pci_intr_handle_t);
+const struct evcnt *api_up1000_intr_evcnt(void *, pci_intr_handle_t);
 void    *api_up1000_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *);
 void    api_up1000_intr_disestablish(void *, void *);
@@ -86,6 +87,7 @@ pci_up1000_pickintr(struct irongate_config *icp)
 	pc->pc_intr_v = icp;
 	pc->pc_intr_map = api_up1000_intr_map;
 	pc->pc_intr_string = api_up1000_intr_string;
+	pc->pc_intr_evcnt = api_up1000_intr_evcnt;
 	pc->pc_intr_establish = api_up1000_intr_establish;
 	pc->pc_intr_disestablish = api_up1000_intr_disestablish;
 
@@ -153,6 +155,16 @@ api_up1000_intr_string(void *icv, pci_intr_handle_t ih)
 #endif
 
 	return sio_intr_string(NULL /*XXX*/, ih);
+}
+
+const struct evcnt *
+api_up1000_intr_evcnt(void *icv, pci_intr_handle_t ih)
+{
+#if 0
+	struct irongate_config *icp = icv;
+#endif
+
+	return sio_intr_evcnt(NULL /*XXX*/, ih);
 }
 
 void *

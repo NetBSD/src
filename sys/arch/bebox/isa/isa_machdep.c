@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 1999/03/19 04:58:46 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 2000/06/04 19:14:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,14 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <bebox/isa/icu.h>
+
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
 
 /*
  * Set up an interrupt handler to start being called.

@@ -1,10 +1,10 @@
-#       $NetBSD: Makefile,v 1.61 2000/05/31 00:40:51 cgd Exp $
+#       $NetBSD: Makefile,v 1.62 2000/06/04 19:14:16 cgd Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	access.9 arp.9 audio.9 bus_dma.9 bus_space.9 callout.9 copy.9 \
 	cpu_reboot.9 ctxsw.9 disk.9 disklabel.9 dopowerhooks.9 \
-	doshutdownhooks.9 ethersubr.9 extent.9 fetch.9 fork1.9 \
+	doshutdownhooks.9 ethersubr.9 evcnt.9 extent.9 fetch.9 fork1.9 \
 	humanize_number.9 inittodr.9 intro.9 ioctl.9 kprintf.9 \
 	log.9 malloc.9 mbuf.9 microtime.9 panic.9 pfil.9 physio.9 pool.9 \
 	powerhook_establish.9 psignal.9 ratecheck.9 resettodr.9 rnd.9 \
@@ -68,6 +68,8 @@ MLINKS+=ethersubr.9 ether_ifattach.9 ethersubr.9 ether_addmulti.9 \
 	ethersubr.9 ETHER_FIRST_MULTI.9 ethersubr.9 ETHER_NEXT_MULTI.9 \
 	ethersubr.9 fddi_ifattach.9 \
 	ethersubr.9 fddi_addmulti.9 ethersubr.9 fddi_delmulti.9
+MLINKS+=evcnt.9 evcnt_attach_dynamic.9 evcnt.9 evcnt_attach_static.9 \
+	evcnt.9 evcnt_detach.9
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
