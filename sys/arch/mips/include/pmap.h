@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1997/05/18 17:33:08 mhitch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 1997/06/09 11:46:16 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -100,6 +100,12 @@ struct pmap kernel_pmap_store;
 
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_kernel()		(&kernel_pmap_store)
+
+/*
+ * Kernel cache operations for the user-space API 
+ */
+int mips_user_cacheflush __P((struct proc *p, vm_offset_t va, int nbytes, int whichcache));
+int mips_user_cachectl   __P((struct proc *p, vm_offset_t va, int nbytes, int ctl));
 #endif	/* _KERNEL */
 
 #endif	/* _PMAP_MACHINE_ */

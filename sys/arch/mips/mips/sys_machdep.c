@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 1997/06/09 02:15:47 jonathan Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.12 1997/06/09 11:46:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,9 +52,15 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <mips/sysarch.h>
+#include <mips/cachectl.h>
+#include <mips/locore.h>
+#include <vm/vm.h>
+
 #ifdef TRACE
 int	nvualarm;
 
+int
 vtrace(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -97,6 +103,7 @@ vtrace(p, v, retval)
 	return (0);
 }
 
+void
 vdoualarm(arg)
 	int arg;
 {
@@ -107,7 +114,7 @@ vdoualarm(arg)
 		psignal(p, 16);
 	nvualarm--;
 }
-#endif
+#endif /* TRACE */
 
 int
 sys_sysarch(p, v, retval)
@@ -123,9 +130,108 @@ sys_sysarch(p, v, retval)
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
+	case MIPS_CACHEFLUSH: {
+		struct mips_cacheflush_args cfua;
+
+		error = copyin(SCARG(uap, parms), &cfua, sizeof(cfua));
+		if (error != 0) return (error);
+		error =  mips_user_cacheflush(p, cfua.va, cfua.nbytes,
+		     cfua.whichcache);
+		break;
+	}		
+	case MIPS_CACHECTL: {
+		struct mips_cachectl_args ccua;
+
+		error = copyin(SCARG(uap, parms), &ccua, sizeof(ccua));
+		if (error != 0) return (error);
+		error = mips_user_cachectl(p, ccua.va, ccua.nbytes, ccua.ctl);
+		break;
+	}		
 	default:
 		error = ENOSYS;
 		break;
 	}
 	return(error);
 }
+
+
+/*
+ * Hande a user-space  request to flush a given virutal address
+ * rangefrom the i-cache, d-cache, or both.
+ */
+int
+mips_user_cacheflush(p, va, nbytes, whichcache)
+	struct proc *p;
+	vm_offset_t va;
+	register int nbytes, whichcache;
+{
+
+	/* validate the cache we're going to  flush. */
+	switch (whichcache) {
+	    case ICACHE:
+	    case DCACHE:
+	    case BCACHE:
+		break;
+	    default:
+		return (EINVAL);
+	}
+
+#ifndef notyet
+	/* For now, just flush all of both caches. */
+	MachFlushCache();
+	return (0);
+
+#else
+	void * uncached_physaddr;
+	register u_int len;
+
+	/*
+	 * Invalidate each page in the virtual-address range,
+	 * by manually mapping to a  physical address and
+	 * invalidating the PA.
+	 */
+	for (base = (void*) addr; nbytes > 0; base += len, nbytes -= len) {
+		/* XXX vm_fault?  */
+		if (whichcache & ICACHE) {
+			MachFlushCache(uncached_physaddr, len);
+		}
+		if (whichcache & DCACHE) {
+			MachFlushDCache(uncached_physaddr, len);
+		}
+	}
+#endif
+}
+
+/*
+ * Hande a user-space to make a given range of virtual addresses
+ * non-cacheable.
+ */
+int
+mips_user_cachectl(p, va, nbytes, cachectl)
+	struct proc *p;
+	vm_offset_t va;
+	register int nbytes, cachectl;
+{
+	/* validate the cache we're going to  flush. */
+	switch (cachectl) {
+	case CACHEABLE:
+	case UNCACHEABLE:
+		break;
+	default:
+		return (EINVAL);
+	}
+
+#ifndef notyet
+	return(EOPNOTSUPP);
+#else
+	/*
+	 * Use the merged mips3  pmap cache-control functions
+	 * to change the cache attributes of each page in the virtual-address range,
+	 * by manually mapping to a  physical address and changing the
+	 * pmap attributes of the  PA of each page in the range.
+	 * Force misses on non-present pages to be sure the cacheable bits
+	 * get set.
+	 */
+#endif
+}
+
