@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.42 1994/03/09 07:58:41 mycroft Exp $
+ *	$Id: isa.c,v 1.43 1994/03/10 18:14:32 mycroft Exp $
  */
 
 /*
@@ -418,6 +418,25 @@ isa_dmastart(flags, addr, nbytes, chan)
 		/* unmask channel */
 		outb(DMA2_SMSK, (chan & 3) | DMA37SM_CLEAR);
 	}
+}
+
+void
+isa_dmaabort(chan)
+	int chan;
+{
+
+#ifdef DIAGNOSTIC
+	if (chan < 0 || chan > 7)
+		panic("isa_dmadone: impossible request");
+#endif
+
+	bounced[chan] = 0;
+
+	/* mask channel */
+	if ((chan & 4) == 0)
+		outb(DMA1_SMSK, DMA37SM_SET | chan);
+	else
+		outb(DMA2_SMSK, DMA37SM_SET | (chan & 3));
 }
 
 void
