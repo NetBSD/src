@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.252 2004/11/07 02:52:21 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.253 2004/11/07 16:29:39 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -224,7 +224,7 @@ Newer flex will be found in:
 
 Package:	gcc
 Version:	2.95.3/3.3.3
-Current Vers:	3.4.0
+Current Vers:	3.4.3
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Mailing List:	gcc-bugs@gnu.org
