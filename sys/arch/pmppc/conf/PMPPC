@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.3 2002/05/31 10:46:34 augustss Exp $
+#	$NetBSD: PMPPC,v 1.4 2002/05/31 11:03:54 augustss Exp $
 #
 #	PMPPC
 #
@@ -179,7 +179,7 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 iop*	at pci? dev ? function ?	# I/O processor
 iopsp*	at iop? tid ?			# SCSI/FC-AL ports
 ld*	at iop? tid ?			# block devices
-dpti*	at iop? tid 0			# DPT/Adaptec control interface
+#dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 
 # SCSI Controllers and Devices
@@ -399,7 +399,7 @@ esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
-neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
+#neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
