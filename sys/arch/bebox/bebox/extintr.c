@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.12 2000/06/26 14:20:41 mrg Exp $	*/
+/*	$NetBSD: extintr.c,v 1.13 2000/06/29 08:22:17 mrg Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -44,7 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/psl.h>

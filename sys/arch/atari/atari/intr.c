@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 1999/09/17 19:59:40 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.8 2000/06/29 08:28:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
 #include <sys/device.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
