@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.7 1998/10/11 18:42:01 thorpej Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.8 1998/11/20 02:12:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -64,6 +64,8 @@ struct aic_pcmcia_softc {
 struct cfattach aic_pcmcia_ca = {
 	sizeof(struct aic_pcmcia_softc), aic_pcmcia_match, aic_pcmcia_attach
 };
+
+int	aic_pcmcia_enable __P((void *, int));
 
 struct aic_pcmcia_product {
 	u_int32_t	app_vendor;		/* PCMCIA vendor ID */
@@ -168,13 +170,47 @@ aic_pcmcia_attach(parent, self, aux)
 		panic("aic_pcmcia_attach: impossible");
 	}
 
+	/* We can enable and disable the controller. */
+	sc->sc_adapter.scsipi_enable = aic_pcmcia_enable;
+
+	/*
+	 * Disable the pcmcia function now; we will be enbled again
+	 * as the SCSI code adds references to probe for children.
+	 */
+	pcmcia_function_disable(pf);
+
 	printf(": %s\n", app->app_name);
 
 	aicattach(sc);
+}
 
-	/* Establish the interrupt handler. */
-	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, aicintr, sc);
-	if (psc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+int
+aic_pcmcia_enable(arg, onoff)
+	void *arg;
+	int onoff;
+{
+	struct aic_pcmcia_softc *psc = arg;
+
+	if (onoff) {
+		/* Establish the interrupt handler. */
+		psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_BIO,
+		    aicintr, &psc->sc_aic);
+		if (psc->sc_ih == NULL) {
+			printf("%s: couldn't establish interrupt handler\n",
+			    psc->sc_aic.sc_dev.dv_xname);
+			return (EIO);
+		}
+
+		if (pcmcia_function_enable(psc->sc_pf)) {
+			printf("%s: couldn't enable PCMCIA function\n",
+			    psc->sc_aic.sc_dev.dv_xname);
+			pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+			return (EIO);
+		}
+	} else {
+		pcmcia_function_disable(psc->sc_pf);
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	}
+
+	return (0);
 }
