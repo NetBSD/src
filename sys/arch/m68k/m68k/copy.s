@@ -38,10 +38,11 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: (hp300) @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: copy.s,v 1.8 1994/01/22 13:38:36 briggs Exp $
+ *	$Id: copy.s,v 1.9 1994/01/23 00:19:18 cgd Exp $
  */
 
 #include <sys/errno.h>
+#include <machine/asm.h>
 
 #include "assym.s"
 
@@ -56,8 +57,6 @@
 #define	SETUP_DFC
 #define	RESTORE_DFC
 #endif
-
-#include "m68k/asm.h"
 
 .text
 /*
