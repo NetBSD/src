@@ -1,13 +1,13 @@
-#	@(#)Makefile	6.1 (Berkeley) 3/3/91
+#	$NetBSD: Makefile,v 1.1.1.2 2001/04/19 14:33:14 wiz Exp $
 
-.include "../Makefile.g++"
-.include "../../Makefile.inc"
+.include "../Makefile.lib"
+
+DIST=		${IDIST}/src/preproc/tbl
+.PATH:		${DIST}
 
 PROG=		tbl
 SRCS=		main.cc table.cc
-LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a
-# Delete the -Ig++-include after we fix libg++ and install it
-GXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libgroff \
-		-I$(.CURDIR)/../../../lib/libg++/g++-include
+LDADD+=		$(LIBGROFF) -lm
+DPADD+=		$(LIBGROFF) $(LIBM)
 
 .include <bsd.prog.mk>
