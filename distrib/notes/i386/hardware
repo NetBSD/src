@@ -106,6 +106,15 @@ Supported devices include:
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
 		Novell NE1000, NE2000
+		Texas Intruments Thunderland based ethernet board:
+			Compaq Netelligent 10/100 TX
+			Compaq ProLiant Integrated Netelligent 10/100 TX
+			Compaq Netelligent 10 T (untested)
+			Compaq Integrated NetFlex 3/P
+			Compaq NetFlex 3/P w/ BNC (untested)
+			Compaq NetFlex 3/P (untested)
+			Compaq Dual Port Netelligent 10/100 TX (untested)
+			Compaq Deskpro 4000 5233MMX (untested)
 	FDDI adapters:
 		Digital DEFPA PCI FDDI adapters [*] [+]
 		Digital DEFEA EISA FDDI adapters [*] [+]
