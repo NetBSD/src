@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.19 1994/06/29 06:38:27 cgd Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.20 1995/04/11 04:30:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -159,7 +159,6 @@ ip_output(m0, opt, ro, flags, imo)
 	}
 	if (IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
 		struct in_multi *inm;
-		extern struct ifnet loif;
 
 		m->m_flags |= M_MCAST;
 		/*
@@ -240,7 +239,7 @@ ip_output(m0, opt, ro, flags, imo)
 		 * loop back a copy if this host actually belongs to the
 		 * destination group on the loopback interface.
 		 */
-		if (ip->ip_ttl == 0 || ifp == &loif) {
+		if (ip->ip_ttl == 0 || (ifp->if_flags & IFF_LOOPBACK) != 0) {
 			m_freem(m);
 			goto done;
 		}
