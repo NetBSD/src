@@ -296,7 +296,7 @@ nbsd_thread_unsuspend(void)
       td_thr_info(susp[i], &ti);
       val = td_thr_resume(susp[i]);
       if (val != 0)
-	error ("nbsd_thread_resume: td_thr_suspend(%p): %s", susp[i],
+	error ("nbsd_thread_unsuspend: td_thr_resume(%p): %s", susp[i],
 	       td_err_string (val));
     }
   nsusp = 0;
@@ -551,7 +551,7 @@ nbsd_thread_new_objfile (struct objfile *objfile)
     goto quit;
   else if (val != 0)
     {
-      warning ("target_new_objfile: td_open: %s", td_err_string (val));
+      warning ("nbsd_thread_new_objfile: td_open: %s", td_err_string (val));
       goto quit;
     }
 
@@ -810,7 +810,8 @@ nbsd_thread_examine_all_cmd (char *args, int from_tty)
     {
       val = td_thr_iter (main_ta, info_cb, args);
       if (val != 0)
-	error ("nbsd_find_new_threads: td_thr_iter: %s", td_err_string (val));
+	error ("nbsd_thread_examine_all_cmd: td_thr_iter: %s",
+	       td_err_string (val));
     }
   else
     printf_filtered ("Thread debugging not active.\n");
