@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsfont.9,v 1.1 2001/10/22 03:29:59 gmcgarry Exp $
+.\"     $NetBSD: wsfont.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -162,7 +162,7 @@ should be used.
 Add a font
 .Fa font
 to the font list.
-If the 
+If the
 .Fa copy
 argument is non-zero, then the font is physically copied, otherwise a
 reference to the original font is made.
@@ -182,7 +182,7 @@ Lock access to the font specified by
 .Fa cookie
 so that it cannot be unloaded from the kernel while is being used.
 The address of the wsdisplay_font pointer for the specified font is
-return in the 
+return in the
 .Fa ptr
 argument.  The
 .Fa bitorder
@@ -228,7 +228,7 @@ This section describes places within the
 source tree where actual code implementing or utilising the
 machine-independent wsfont subsystem can be found.  All pathnames are
 relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The wscons subsystem is implemented within the directory
 .Pa sys/dev/wscons .
