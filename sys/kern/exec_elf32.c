@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.86 2003/02/28 00:11:14 matt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.87 2003/02/28 19:09:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.86 2003/02/28 00:11:14 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.87 2003/02/28 19:09:08 matt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -237,30 +237,37 @@ void
 ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
     const Elf_Phdr *ph, Elf_Addr *addr, u_long *size, int *prot, int flags)
 {
-	u_long uaddr, msize, psize, rm, rf;
+	u_long msize, psize, rm, rf;
 	long diff, offset;
 
 	/*
 	 * If the user specified an address, then we load there.
 	 */
-	if (*addr != ELFDEFNNAME(NO_ADDR)) {
-		if (ph->p_align > 1) {
-			*addr = ELF_TRUNC(*addr, ph->p_align);
-			uaddr = ELF_TRUNC(ph->p_vaddr, ph->p_align);
-		} else
-			uaddr = ph->p_vaddr;
-		diff = ph->p_vaddr - uaddr;
-	} else {
-		*addr = uaddr = ph->p_vaddr;
-		if (ph->p_align > 1)
-			*addr = ELF_TRUNC(uaddr, ph->p_align);
-		diff = uaddr - *addr;
-	}
+	if (*addr == ELFDEFNNAME(NO_ADDR))
+		*addr = ph->p_vaddr;
+
+	if (ph->p_align > 1) {
+		/*
+		 * Make sure we are virtually aligned as we are supposed to be.
+		 */
+		diff = ph->p_vaddr - ELF_TRUNC(ph->p_vaddr, ph->p_align);
+		KASSERT(*addr - diff == ELF_TRUNC(*addr, ph->p_align));
+		/*
+		 * But make sure to not map any pages before the start of the
+		 * psection by limiting the difference to within a page.
+		 */
+		diff &= PAGE_MASK;  
+	} else
+		diff = 0;
 
 	*prot |= (ph->p_flags & PF_R) ? VM_PROT_READ : 0;
 	*prot |= (ph->p_flags & PF_W) ? VM_PROT_WRITE : 0;
 	*prot |= (ph->p_flags & PF_X) ? VM_PROT_EXECUTE : 0;
 
+	/*
+	 * Adjust everything so it all starts on a page boundary.
+	 */
+	*addr -= diff;
 	offset = ph->p_offset - diff;
 	*size = ph->p_filesz + diff;
 	msize = ph->p_memsz + diff;
@@ -284,15 +291,16 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		NEW_VMCMD2(vcset, ph->p_align < PAGE_SIZE ?
 		    vmcmd_map_readvn : vmcmd_map_pagedvn, psize, *addr, vp,
 		    offset, *prot, flags);
+		flags &= VMCMD_RELATIVE;
 	}
 	if (psize < *size) {
 		NEW_VMCMD2(vcset, vmcmd_map_readvn, *size - psize,
-		    *addr + psize, vp, offset + psize, *prot, 
-		    psize > 0 ? flags & VMCMD_RELATIVE : flags);
+		    *addr + psize, vp, offset + psize, *prot, flags);
 	}
 
 	/*
-	 * Check if we need to extend the size of the segment
+	 * Check if we need to extend the size of the segment (does
+	 * bss extend page the next page boundary)?
 	 */
 	rm = round_page(*addr + msize);
 	rf = round_page(*addr + *size);
@@ -441,8 +449,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 			} else {
 				u_long limit = round_page(last_ph->p_vaddr
 				    + last_ph->p_memsz);
-				u_long base = trunc_page(
-				     ELF_TRUNC(ph0->p_vaddr, ph0->p_align));
+				u_long base = trunc_page(ph0->p_vaddr);
 
 				/*
 				 * If there is a gap in between the psections,
@@ -452,8 +459,8 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 				if (limit != base) {
 					NEW_VMCMD2(vcset, vmcmd_map_zero,
 					    base - limit,
-					    limit - base_ph->p_vaddr,
-					    NULLVP, 0, 0, VMCMD_RELATIVE);
+					    limit - base_ph->p_vaddr, NULLVP,
+					    0, VM_PROT_NONE, VMCMD_RELATIVE);
 				}
 
 				addr = ph0->p_vaddr - base_ph->p_vaddr;
