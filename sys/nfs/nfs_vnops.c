@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.172 2003/06/27 13:58:36 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.173 2003/06/27 14:00:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.172 2003/06/27 13:58:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.173 2003/06/27 14:00:55 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1237,16 +1237,16 @@ nfs_writerpc_extfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
  * nfs write call
  */
 int
-nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
+nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	struct vnode *vp;
 	struct uio *uiop;
 	int *iomode;
 	boolean_t pageprotected;
-	boolean_t *stalewriteverf;
+	boolean_t *stalewriteverfp;
 {
 	u_int32_t *tl;
 	caddr_t cp;
-	int32_t t1, t2, backup;
+	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
@@ -1257,6 +1257,7 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 	struct nfs_writerpc_context ctx;
 	int s;
 	struct lwp *l;
+	size_t origresid;
 
 	simple_lock_init(&ctx.nwc_slock);
 	ctx.nwc_mbufcount = 1;
@@ -1276,8 +1277,13 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 		l = curlwp;
 		PHOLD(l);
 	}
+retry:
+	origresid = uiop->uio_resid;
+	KASSERT(origresid == uiop->uio_iov->iov_len);
 	while (tsiz > 0) {
-		int datalen;
+		uint32_t datalen; /* data bytes need to be allocated in mbuf */
+		uint32_t backup;
+		boolean_t stalewriteverf = FALSE;
 
 		nfsstats.rpccnt[NFSPROC_WRITE]++;
 		len = min(tsiz, nmp->nm_wsize);
@@ -1383,10 +1389,19 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 				    NFSMNT_STALEWRITEVERF) ||
 				    memcmp(tl, nmp->nm_writeverf,
 				    NFSX_V3WRITEVERF)) {
-					*stalewriteverf = TRUE;
 					memcpy(nmp->nm_writeverf, tl,
 					    NFSX_V3WRITEVERF);
-					nmp->nm_iflag |= NFSMNT_STALEWRITEVERF;
+					/*
+					 * note NFSMNT_STALEWRITEVERF
+					 * if we're the first thread to 
+					 * notice it.
+					 */
+					if ((nmp->nm_iflag &
+					    NFSMNT_STALEWRITEVERF) == 0) {
+						stalewriteverf = TRUE;
+						nmp->nm_iflag |=
+						    NFSMNT_STALEWRITEVERF;
+					}
 				}
 				simple_unlock(&nmp->nm_slock);
 			}
@@ -1399,6 +1414,27 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 		if (error)
 			break;
 		tsiz -= len;
+		if (stalewriteverf) {
+			*stalewriteverfp = TRUE;
+			stalewriteverf = FALSE;
+			if (committed == NFSV3WRITE_UNSTABLE &&
+			    len != origresid) {
+				/*
+				 * if our write requests weren't atomic but
+				 * unstable, datas in previous iterations
+				 * might have already been lost now.
+				 * then, we should resend them to nfsd.
+				 */
+				backup = origresid - tsiz;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base - backup;
+				uiop->uio_iov->iov_len += backup;
+				uiop->uio_offset -= backup;
+				uiop->uio_resid += backup;
+				tsiz = origresid;
+				goto retry;
+			}
+		}
 	}
 	if (pageprotected) {
 		/*
