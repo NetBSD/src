@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.9 2003/11/02 01:58:22 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.10 2003/11/02 02:05:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.9 2003/11/02 01:58:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.10 2003/11/02 02:05:15 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1212,24 +1212,13 @@ atw_init(ifp)
 	atw_start_beacon(sc, 0);
 
 	switch (ic->ic_opmode) {
-	case IEEE80211_M_IBSS:
-	case IEEE80211_M_STA:
-		error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-		if (error)
-			goto out;
-		break;
 	case IEEE80211_M_AHDEMO:
 	case IEEE80211_M_HOSTAP:
 		ic->ic_bss->ni_intval = ic->ic_lintval;
 		ic->ic_bss->ni_rssi = 0;
 		ic->ic_bss->ni_rstamp = 0;
-		ic->ic_state = IEEE80211_S_SCAN;	/*XXX*/
-
-		error = ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-		if (error)
-			goto out;
 		break;
-	case IEEE80211_M_MONITOR: /* XXX */
+	default:					/* XXX */
 		break;
 	}
 
@@ -1256,6 +1245,10 @@ atw_init(ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ic->ic_state = IEEE80211_S_INIT;
 
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+	else
+		error = ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
  out:
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
