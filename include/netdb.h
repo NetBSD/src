@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.39 2004/05/21 02:14:39 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.40 2004/05/24 12:34:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -367,7 +367,6 @@ struct protoent	*getprotobyname_r __P((const char *,
     struct protoent *, struct protoent_data *));
 struct protoent	*getprotobynumber_r __P((int,
     struct protoent *, struct protoent_data *));
-struct protoent	*getprotoent_r __P((struct protoent *, struct protoent_data *));
 void setprotoent_r __P((int, struct protoent_data *));
 void endprotoent_r __P((struct protoent_data *));
 
