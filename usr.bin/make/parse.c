@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.41.2.1 1999/06/21 16:37:31 perry Exp $	*/
+/*	$NetBSD: parse.c,v 1.41.2.2 2000/10/19 16:31:52 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.41.2.1 1999/06/21 16:37:31 perry Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.41.2.2 2000/10/19 16:31:52 he Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.41.2.1 1999/06/21 16:37:31 perry Exp $");
+__RCSID("$NetBSD: parse.c,v 1.41.2.2 2000/10/19 16:31:52 he Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -241,8 +241,10 @@ static struct {
 { ".WAIT",	  Wait, 	0 },
 };
 
-static void ParseErrorInternal __P((char *, size_t, int, char *, ...));
-static void ParseVErrorInternal __P((char *, size_t, int, char *, va_list));
+static void ParseErrorInternal __P((char *, size_t, int, char *, ...))
+     __attribute__((__format__(__printf__, 4, 5)));
+static void ParseVErrorInternal __P((char *, size_t, int, char *, va_list))
+     __attribute__((__format__(__printf__, 4, 0)));
 static int ParseFindKeyword __P((char *));
 static int ParseLinkSrc __P((ClientData, ClientData));
 static int ParseDoOp __P((ClientData, ClientData));
