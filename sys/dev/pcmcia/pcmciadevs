@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.8 1998/08/15 18:58:05 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.9 1998/08/15 20:08:07 thorpej Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -50,6 +50,7 @@ vendor DAYNA			0x0194	Dayna Corporation
 vendor IODATA			0x01bf	I-O DATA
 vendor NEWMEDIA			0x0057	NewMedia Corporation
 vendor SOCKET			0x0104	Socket Communications
+vendor SMC			0x0108	Standard Microsystems Corporation
 
 /*
  * List of known products.  Grouped by vendor.
@@ -103,6 +104,9 @@ product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
 
 /* Socket Communications Products */
 product SOCKET DUAL_RS232	0x0012 Socket Communications Dual RS232
+
+/* Standard Microsystems Corporation Products */
+product SMC 8020BT		0x0105 SMC 8020BT EtherEZ
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
