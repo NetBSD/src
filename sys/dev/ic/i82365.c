@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.14 1998/11/16 22:41:01 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.15 1998/11/17 08:49:11 thorpej Exp $	*/
 
 #define	PCICDEBUG
 
@@ -80,7 +80,8 @@ int	pcic_print  __P((void *arg, const char *pnp));
 int	pcic_intr_socket __P((struct pcic_handle *));
 
 void	pcic_attach_card __P((struct pcic_handle *));
-void	pcic_detach_card __P((struct pcic_handle *));
+void	pcic_detach_card __P((struct pcic_handle *, int));
+void	pcic_deactivate_card __P((struct pcic_handle *));
 
 void	pcic_chip_do_mem_map __P((struct pcic_handle *, int));
 void	pcic_chip_do_io_map __P((struct pcic_handle *, int));
@@ -388,7 +389,7 @@ pcic_event_thread(arg)
 
 		case PCIC_EVENT_REMOVAL:
 			DPRINTF(("%s: removal event\n", h->sc->dev.dv_xname));
-			pcic_detach_card(h);
+			pcic_detach_card(h, DETACH_FORCE);
 			break;
 
 		default:
@@ -589,7 +590,11 @@ pcic_intr_socket(h)
 			}
 		} else {
 			if (h->flags & PCIC_FLAG_CARDP) {
-				/* XXX Should deactivate children NOW. */
+				/* Deactivate the card now. */
+				DPRINTF(("%s: deactivating card\n",
+				    h->sc->dev.dv_xname));
+				pcic_deactivate_card(h);
+
 				DPRINTF(("%s: enqueing REMOVAL event\n",
 				    h->sc->dev.dv_xname));
 				pcic_queue_event(h, PCIC_EVENT_REMOVAL);
@@ -632,37 +637,46 @@ void
 pcic_attach_card(h)
 	struct pcic_handle *h;
 {
+
 	if (h->flags & PCIC_FLAG_CARDP)
 		panic("pcic_attach_card: already attached");
 
 	/* call the MI attach function */
-
 	pcmcia_card_attach(h->pcmcia);
 
 	h->flags |= PCIC_FLAG_CARDP;
 }
 
 void
-pcic_detach_card(h)
+pcic_detach_card(h, flags)
 	struct pcic_handle *h;
+	int flags;		/* DETACH_* */
 {
+
 	if (!(h->flags & PCIC_FLAG_CARDP))
 		panic("pcic_attach_card: already detached");
 
 	h->flags &= ~PCIC_FLAG_CARDP;
 
-	/* call the MI attach function */
+	/* call the MI detach function */
+	pcmcia_card_detach(h->pcmcia, flags);
+}
 
-	pcmcia_card_detach(h->pcmcia);
+void
+pcic_deactivate_card(h)
+	struct pcic_handle *h;
+{
 
-	/* disable card detect resume and configuration reset */
+	if (!(h->flags & PCIC_FLAG_CARDP))
+		 panic("pcic_deactivate_card: already detached");
+
+	/* call the MI deactivate function */
+	pcmcia_card_deactivate(h->pcmcia);
 
 	/* power down the socket */
-
 	pcic_write(h, PCIC_PWRCTL, 0);
 
-	/* reset the card */
-
+	/* reset the socket */
 	pcic_write(h, PCIC_INTR, 0);
 }
 
