@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken-common.h,v 1.1.1.2 2000/08/02 19:59:55 assar Exp $ */
+/* $Id: roken-common.h,v 1.2 2001/01/06 23:30:57 christos Exp $ */
 
 #ifndef __ROKEN_COMMON_H__
 #define __ROKEN_COMMON_H__
@@ -236,7 +236,9 @@
 #if IRIX != 4 /* fix for compiler bug */
 #ifdef RETSIGTYPE
 typedef RETSIGTYPE (*SigAction)(int);
+#ifndef BSD4_4
 SigAction signal(int iSig, SigAction pAction); /* BSD compatible */
+#endif
 #endif
 #endif
 
