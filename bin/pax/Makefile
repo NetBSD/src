@@ -1,5 +1,5 @@
 #       from: @(#)Makefile	8.1 (Berkeley) 5/31/93
-#	$Id: Makefile,v 1.2 1994/06/13 16:33:34 jtc Exp $
+#	$Id: Makefile,v 1.3 1994/06/14 01:16:02 jtc Exp $
 
 # To install on versions prior to BSD 4.4 the following may have to be
 # defined with CFLAGS +=
@@ -27,7 +27,7 @@
 
 PROG=   pax
 SRCS=	ar_io.c ar_subs.c buf_subs.c cache.c cpio.c file_subs.c ftree.c\
-	gen_subs.c options.c pat_rep.c pax.c sel_subs.c tables.c tar.c\
-	tty_subs.c
+	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\
+	tar.c tty_subs.c
 
 .include <bsd.prog.mk>
