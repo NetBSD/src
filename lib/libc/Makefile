@@ -6,7 +6,8 @@
 # from CFLAGS below.  To remove these strings from just the system call
 # stubs, remove just -DSYSLIBC_SCCS from CFLAGS.
 #
-# To produce a library that does YP, add -DYP to CFLAGS below.
+# The YP functions are always in libc. To choose that getpwent() and friends
+# actually call the YP functions, put -DYP on the CFLAGS line below.
 
 LIB=c
 CFLAGS+=-DYP -DLIBC_SCCS -DSYSLIBC_SCCS 
