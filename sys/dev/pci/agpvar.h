@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.2 2001/09/11 06:51:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -185,6 +185,7 @@ int agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem);
 int agp_ali_match(struct device *, struct cfdata *, void *);
 int agp_amd_match(struct device *, struct cfdata *, void *);
 int agp_i810_match(struct device *, struct cfdata *, void *);
+int agp_i810_bridgematch(struct pci_attach_args *);
 int agp_intel_match(struct device *, struct cfdata *, void *);
 int agp_sis_match(struct device *, struct cfdata *, void *);
 int agp_via_match(struct device *, struct cfdata *, void *);
