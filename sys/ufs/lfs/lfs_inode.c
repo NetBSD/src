@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.21 1999/03/29 21:51:38 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.22 1999/04/01 23:28:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -262,6 +262,7 @@ lfs_truncate(v)
 	/*
 	 * Update the size of the file. If the file is not being truncated to
 	 * a block boundry, the contents of the partial block following the end
+	 * must be zero'd in case it ever becomes accessible again
 	 * because of subsequent file growth.  For this part of the code,
 	 * oldsize_newlast refers to the old size of the new last block in the
 	 * file.
@@ -442,7 +443,7 @@ lfs_truncate(v)
 #endif
 	fs->lfs_avail += fragstodb(fs, a_released);
 	if(length>0)
-		e1 = lfs_vinvalbuf(vp, ap->a_cred, ap->a_p, lastblock);
+		e1 = lfs_vinvalbuf(vp, ap->a_cred, ap->a_p, lastblock-1);
 	else
 		e1 = vinvalbuf(vp, 0, ap->a_cred, ap->a_p, 0, 0); 
 	e2 = VOP_UPDATE(vp, NULL, NULL, 0);
@@ -467,8 +468,10 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 {
 	register struct buf *bp;
 	struct buf *nbp, *blist;
-	int i, s, error;
+	int i, s, error, dirty;
 
+      top:
+	dirty=0;
 	for (i=0;i<2;i++) {
 		if(i==0)
 			blist = vp->v_cleanblkhd.lh_first;
@@ -477,7 +480,15 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 
 		for (bp = blist; bp; bp = nbp) {
 			nbp = bp->b_vnbufs.le_next;
+
 			s = splbio();
+			if (bp->b_flags & B_GATHERED) {
+				error = tsleep(vp, PRIBIO+1, "lfs_vin2", 0);
+				splx(s);
+				if(error)
+					return error;
+				goto top;
+			}
 			if (bp->b_flags & B_BUSY) {
 				bp->b_flags |= B_WANTED;
 				error = tsleep((caddr_t)bp,
@@ -485,29 +496,35 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 				splx(s);
 				if (error)
 					return (error);
-				break;
+				goto top;
 			}
-			/*
-			 * Don't touch gathered buffers; and certainly don't
-			 * mark cleaner buffers B_INVAL, since that would
-			 * change them to "fake buffers".
-			 *
-			 * But get rid of anything else that's past the new
-			 * last block.
-			 */
+
 			bp->b_flags |= B_BUSY;
 			splx(s);
 			if((bp->b_lblkno >= 0 && bp->b_lblkno > maxblk)
-			   || (bp->b_lblkno < 0 && bp->b_lblkno < -maxblk-NIADDR))
+			   || (bp->b_lblkno < 0 && bp->b_lblkno < -maxblk-(NIADDR-1)))
 			{
-				if(!(bp->b_flags & (B_GATHERED|B_CALL)))
-					bp->b_flags |= B_INVAL;
-			}
-			if(bp->b_flags & B_CALL)
+				bp->b_flags |= B_INVAL | B_VFLUSH;
+				if(bp->b_flags & B_CALL) {
+					lfs_freebuf(bp);
+				} else {
+					brelse(bp);
+				}
+				++dirty;
+			} else {
+				/*
+				 * This buffer is still on its free list.
+				 * So don't brelse, but wake up any sleepers.
+				 */
 				bp->b_flags &= ~B_BUSY;
-			else
-				brelse(bp);
+				if(bp->b_flags & B_WANTED) {
+					bp->b_flags &= ~(B_WANTED|B_AGE);
+					wakeup(bp);
+				}
+			}
 		}
 	}
+	if(dirty)
+		goto top;
 	return (0);
 }
