@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.27 1997/04/16 14:41:29 jtc Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.28 1997/04/21 16:56:54 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -217,6 +217,8 @@ sys_nanosleep(p, v, retval)
 		error = 0;
 
 	if (SCARG(uap, rmtp)) {
+		int error;
+
 		s = splclock();
 		utv = time;
 		splx(s);
@@ -227,7 +229,9 @@ sys_nanosleep(p, v, retval)
 
 		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
 		error = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
-			sizeof(rmt));		
+			sizeof(rmt));
+		if (error)
+			return (error);
 	}
 
 	return error;
