@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
+/*	$NetBSD: subr.s,v 1.33 2000/01/10 23:54:47 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,6 +34,10 @@
 
 #include "assym.h"
 #include "opt_ddb.h"
+#include "opt_compat_ibcs2.h"
+#ifdef COMPAT_IBCS2
+#include <compat/ibcs2/ibcs2_syscall.h>
+#endif
 #include "opt_compat_ultrix.h"
 #ifdef COMPAT_ULTRIX
 #include <compat/ultrix/ultrix_syscall.h>
@@ -97,6 +101,20 @@ _sigcode:	pushr	$0x3f
 		.align	2
 _esigcode:
 
+#ifdef COMPAT_IBCS2
+		.globl	_ibcs2_sigcode,_ibcs2_esigcode
+_ibcs2_sigcode:	pushr	$0x3f
+		subl2	$0xc,sp
+		movl	0x24(sp),r0
+		calls	$3,(r0)
+		popr	$0x3f
+		chmk	$SYS___sigreturn14
+		chmk	$SYS_exit
+		halt	
+		.align	2
+_ibcs2_esigcode:
+#endif /* COMPAT_IBCS2 */
+
 #ifdef COMPAT_ULTRIX
 		.globl	_ultrix_sigcode,_ultrix_esigcode
 _ultrix_sigcode:	pushr	$0x3f
@@ -113,6 +131,12 @@ _ultrix_esigcode:
 
 		.globl	_idsptch, _eidsptch
 _idsptch:	pushr	$0x3f
+#ifdef NEWIDSPTCH
+		.word	0x9f16
+		.long	_cmn_idsptch
+		.long	0
+		.long	0
+#else
 		pushl	$1
 		.long	0x9f01fb01
 		.long	0x12345678
@@ -122,7 +146,17 @@ _idsptch:	pushr	$0x3f
 #		calls	$1, *$0x12345678
 		popr	$0x3f
 		rei
+#endif
 _eidsptch:
+
+#ifdef NEWIDSPTCH
+_cmn_idsptch:
+		movl	(sp)+,r0
+		pushl	4(r0)
+		calls	$1,*(r0)
+		popr	0x$3f
+		rei
+#endif
 
 ENTRY(badaddr,0)			# Called with addr,b/w/l
 		mfpr	$0x12,r0
