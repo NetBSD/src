@@ -1,7 +1,8 @@
-/*	$NetBSD: segments.h,v 1.25 1996/09/08 15:46:09 jtk Exp $	*/
+/*	$NetBSD: segments.h,v 1.25.14.1 1997/11/13 08:10:04 mellon Exp $	*/
 
 /*-
- * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1995, 1997
+ *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1990 William F. Jolitz
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -127,8 +128,9 @@ struct region_descriptor {
 #endif
 
 #ifdef _KERNEL
-extern union descriptor gdt[], ldt[];
-extern struct gate_descriptor idt[];
+extern union descriptor static_gdt[], *gdt;
+extern union descriptor static_ldt[];
+extern struct gate_descriptor static_idt[], *idt;
 
 void setgate __P((struct gate_descriptor *, void *, int, int, int));
 void setregion __P((struct region_descriptor *, void *, size_t));
