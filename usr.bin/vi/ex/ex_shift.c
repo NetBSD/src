@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_shift.c,v 1.9 2002/04/09 01:47:34 thorpej Exp $	*/
+/*	$NetBSD: ex_shift.c,v 1.9.4.1 2005/02/12 12:24:13 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_shift.c	10.11 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: ex_shift.c,v 1.9.4.1 2005/02/12 12:24:13 aymeric Exp $");
 #endif
 #endif /* not lint */
 
