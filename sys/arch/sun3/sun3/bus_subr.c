@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.1 1997/02/18 14:57:41 gwr Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.2 1997/04/25 18:06:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,6 +56,84 @@
 #include <machine/machdep.h>
 #include <machine/mon.h>
 
+/*
+ * bus_scan:
+ * This function is passed to config_search() by the attach function
+ * for each of the "bus" drivers (obctl, obio, obmem, vmes, vmel).
+ * The purpose of this function is to copy the "locators" into our
+ * confargs structure, so child drivers may use the confargs both
+ * as match parameters and as temporary storage for the defaulted
+ * locator values determined in the child_match and preserved for
+ * the child_attach function.  If the bus attach functions just
+ * used config_found, then we would not have an opportunity to
+ * setup the confargs for each child match and attach call.
+ */
+int bus_scan(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+	cfmatch_t mf;
+
+#ifdef	DIAGNOSTIC
+	if (cf->cf_fstate == FSTATE_STAR)
+		panic("bus_scan: FSTATE_STAR");
+#endif
+
+	/* ca->ca_bustype set by parent */
+	ca->ca_paddr  = cf->cf_paddr;
+	ca->ca_intpri = cf->cf_intpri;
+
+	/* The sun3 supports vectors only on VME. */
+	ca->ca_intvec = -1;
+	if ((ca->ca_bustype == BUS_VME16) ||
+		(ca->ca_bustype == BUS_VME32))
+	{
+		ca->ca_intvec = cf->cf_intvec;
+	}
+
+	/*
+	 * Note that this allows the match function to save
+	 * defaulted locators in the confargs that will be
+	 * preserved for the related attach call.
+	 * XXX - This is a hack...
+	 */
+	mf = cf->cf_attach->ca_match;
+	if ((*mf)(parent, cf, ca) > 0) {
+		config_attach(parent, cf, ca, bus_print);
+	}
+	return (0);
+}
+
+/*
+ * bus_print:
+ * Just print out the final (non-default) locators.
+ * The parent name is non-NULL when there was no match
+ * found by config_found().
+ */
+int
+bus_print(args, name)
+	void *args;
+	const char *name;
+{
+	struct confargs *ca = args;
+
+	if (name)
+		printf("%s:", name);
+
+	if (ca->ca_paddr != -1)
+		printf(" addr 0x%x", ca->ca_paddr);
+	if (ca->ca_intpri != -1)
+		printf(" level %d", ca->ca_intpri);
+	if (ca->ca_intvec != -1)
+		printf(" vect 0x%x", ca->ca_intvec);
+
+	return(UNCONF);
+}
+
+/****************************************************************/
+/* support functions */
 
 label_t *nofault;
 
@@ -165,6 +243,24 @@ bus_mapin(bustype, paddr, sz)
 	return ((void*)retval);
 }
 
+/* from hp300: badbaddr() */
+int
+peek_byte(addr)
+	register caddr_t addr;
+{
+	label_t 	faultbuf;
+	register int x;
+
+	nofault = &faultbuf;
+	if (setjmp(&faultbuf)) {
+		nofault = NULL;
+		return(-1);
+	}
+	x = *(volatile u_char *)addr;
+	nofault = NULL;
+	return(x);
+}
+
 int
 peek_word(addr)
 	register caddr_t addr;
@@ -182,12 +278,11 @@ peek_word(addr)
 	return(x);
 }
 
-/* from hp300: badbaddr() */
 int
-peek_byte(addr)
+peek_long(addr)
 	register caddr_t addr;
 {
-	label_t 	faultbuf;
+	label_t		faultbuf;
 	register int x;
 
 	nofault = &faultbuf;
@@ -195,7 +290,7 @@ peek_byte(addr)
 		nofault = NULL;
 		return(-1);
 	}
-	x = *(volatile u_char *)addr;
+	x = *(volatile int *)addr;
 	nofault = NULL;
 	return(x);
 }
