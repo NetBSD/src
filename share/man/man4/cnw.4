@@ -1,4 +1,4 @@
-.\"	$NetBSD: cnw.4,v 1.9 2000/07/05 19:24:35 itojun Exp $
+.\"	$NetBSD: cnw.4,v 1.10 2000/07/05 23:45:05 itojun Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -59,6 +59,10 @@ These devices are supported by the
 .Xr awi 4
 driver.
 .Pp
+Netwave devices are not compatible with IEEE 802.11 wireless network.
+Also note that there are Netwave devices with different wireless frequency,
+depending on radio band plan in each countries.
+.Pp
 The card uses 36K of I/O memory mapped to the card.
 .\"The card uses 32K of I/O memory mapped to the card along with either 16 I/O ports
 .\"or 4K of additional I/O memory for access to command registers.
@@ -70,8 +74,15 @@ for details.
 .Pp
 In use, the cards appear to achieve up to a 420Kb/s transfer rate, though
 a transfer rate between 250Kb/s and 350Kb/s is typical.
+.Pp
 The card operates in the 2.4Ghz frequency range and is subject to interference
-from microwaves as well as earth.
+from microwaves, IEEE 802.11 wireless network devices, as well as earth.
+For example, it seems that IEEE 802.11 channel 14 conflicts with Netwave
+.Pq US frequency .
+They interfere each other if we operate both of them
+in the same geographic region, causing weird packet loss.
+You may be able to avoid the interference with IEEE 802.11 devices,
+by changing IEEE 802.11 channel.
 .Sh HARDWARE
 Cards supported by the
 .Nm
