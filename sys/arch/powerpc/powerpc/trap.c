@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 2000/12/14 10:33:42 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.35 2001/01/01 04:33:39 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,8 +57,10 @@
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
 
+#ifndef MULTIPROCESSOR
 volatile int astpending;
 volatile int want_resched;
+#endif
 
 void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
 
