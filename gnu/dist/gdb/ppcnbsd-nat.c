@@ -36,6 +36,7 @@ fetch_inferior_registers (regno)
   int regno;
 {
   struct reg infreg;
+  struct fpreg inffpreg;
 
   /* Integer registers */
   ptrace(PT_GETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &infreg, 0);
@@ -51,7 +52,10 @@ fetch_inferior_registers (regno)
   *(long *) &registers[REGISTER_BYTE (MQ_REGNUM)] = 0;
 
   /* Floating point registers */
-  memset(&registers[REGISTER_BYTE (FP0_REGNUM)], 0, 8*32);
+  ptrace(PT_GETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inffpreg, 0);
+
+  memcpy(&registers[REGISTER_BYTE (FP0_REGNUM)], inffpreg.fpreg,
+	 sizeof(inffpreg.fpreg));
 
   registers_fetched ();
 }
@@ -61,6 +65,7 @@ store_inferior_registers (regno)
      int regno;
 {
   struct reg infreg;
+  struct fpreg inffpreg;
 
   /* Integer registers */
   memcpy(infreg.fixreg, &registers[REGISTER_BYTE (GP0_REGNUM)],
@@ -74,7 +79,11 @@ store_inferior_registers (regno)
   ptrace(PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &infreg, 0);
 
   /* Floating point registers */
-  /* XXX not yet */
+  memset(&inffpreg, 0, sizeof(inffpreg));
+  memcpy(inffpreg.fpreg, &registers[REGISTER_BYTE (FP0_REGNUM)],
+	 sizeof(inffpreg.fpreg));
+
+  ptrace(PT_SETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inffpreg, 0);
 
   registers_fetched ();
 }
