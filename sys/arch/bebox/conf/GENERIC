@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.14 1998/11/16 16:44:56 oster Exp $
+#	$NetBSD: GENERIC,v 1.15 1998/11/18 09:05:18 sakamoto Exp $
 #
 # First try for BEBOX config file
 #
@@ -97,7 +97,9 @@ pckbd*	at pckbc?
 #psm*	at pckbc?
 #vga0	at isa?
 vga*	at pci?
+pfb*	at pci?
 wsdisplay*	at vga? console ?
+wsdisplay*	at pfb? console ?
 wskbd*		at pckbd? console ?
 #wsmouse*	at psm?
 
