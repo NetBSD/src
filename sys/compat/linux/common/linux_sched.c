@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_sched.c,v 1.1 1999/10/04 16:55:56 tron Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.2 1999/10/11 01:18:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by by Jason R. Thorpe * of the Numerical Aerospace Simulation Facility,
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center; by Matthias Scheler.
  *
  * Redistribution and use in source and binary forms, with or without
