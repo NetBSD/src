@@ -1,3 +1,4 @@
+/*	$NetBSD: dosfs.h,v 1.2 1996/05/25 17:09:45 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -100,7 +101,6 @@ struct dosDirEntry {
 		*parent,		/* previous tree level */
 		*next,			/* next brother */
 		*child;			/* if this is a directory */
-	char *fullpath;			/* path name from root to this directory */
 	char name[8+1+3+1];		/* alias name first part */
 	char lname[DOSLONGNAMELEN];	/* real name */
 	uint flags;			/* attributes */
