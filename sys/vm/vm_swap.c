@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.33 1996/10/10 17:16:26 christos Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.34 1996/10/12 21:50:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -143,11 +143,11 @@ swapinit()
 		panic("swapvp");
 #endif
 	if (nswap == 0)
-		kprintf("WARNING: no swap space found\n");
+		printf("WARNING: no swap space found\n");
 	else if ((error = swfree(p, 0)) == ENXIO)
-		kprintf("WARNING: primary swap device not configured\n");
+		printf("WARNING: primary swap device not configured\n");
 	else if (error) {
-		kprintf("swfree errno %d\n", error);	/* XXX */
+		printf("swfree errno %d\n", error);	/* XXX */
 		panic("swapinit swfree 0");
 	}
 
@@ -480,7 +480,7 @@ swfree(p, index)
 		firstblk = rmalloc(swapmap, rootblks - ctod(CLSIZE));
 		if (firstblk != ctod(CLSIZE))
 			panic("swfree miniroot save");
-		kprintf("Preserved %d blocks of miniroot leaving %d pages of swap\n",
+		printf("Preserved %d blocks of miniroot leaving %d pages of swap\n",
 		    rootblks, dtoc(nblks - rootblks));
 	}
 

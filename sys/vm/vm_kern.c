@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.19 1996/10/10 17:16:21 christos Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.20 1996/10/12 21:50:09 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -242,7 +242,7 @@ kmem_suballoc(parent, min, max, size, pageable)
 	ret = vm_map_find(parent, NULL, (vm_offset_t) 0,
 				min, size, TRUE);
 	if (ret != KERN_SUCCESS) {
-		kprintf("kmem_suballoc: bad status return of %d.\n", ret);
+		printf("kmem_suballoc: bad status return of %d.\n", ret);
 		panic("kmem_suballoc");
 	}
 	*max = *min + size;
