@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.22 1995/11/28 05:12:44 jtc Exp $	*/
+/*	$NetBSD: df.c,v 1.23 1996/12/11 03:48:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: df.c,v 1.22 1995/11/28 05:12:44 jtc Exp $";
+static char rcsid[] = "$NetBSD: df.c,v 1.23 1996/12/11 03:48:42 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,9 +114,6 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (*argv && (lflag || typelist != NULL))
-		errx(1, "-l or -t does not make sense with list of mount points");
-
 	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
 	if (mntsize == 0)
 	        err(1, "retrieving information on mounted file systems");
@@ -166,7 +163,18 @@ main(argc, argv)
 			 * implement nflag here.
 			 */
 			if (!statfs(mntpt, &mntbuf[mntsize]))
-				++mntsize;
+				if (lflag &&
+				    (mntbuf[mntsize].f_flags & MNT_LOCAL) == 0)
+					warnx("Warning: %s is not a local %s",
+					    *argv, "file system");
+				else if
+				    (!selected(mntbuf[mntsize].f_fstypename))
+					warnx("Warning: %s mounted as a %s %s",
+					    *argv,
+					    mntbuf[mntsize].f_fstypename,
+					    "file system");
+				else
+					++mntsize;
 			else
 				warn("%s", *argv);
 		}
