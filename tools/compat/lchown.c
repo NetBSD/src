@@ -1,4 +1,4 @@
-/*	$NetBSD: lchown.c,v 1.1 2002/10/08 00:28:36 lukem Exp $	*/
+/*	$NetBSD: lchown.c,v 1.2 2003/03/19 09:26:38 grant Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,8 +54,7 @@ lchown(const char *path, uid_t owner, gid_t group)
 	if (lstat(path, &psb) == -1)
 		return -1;
 	if (S_ISLNK(psb.st_mode)) {
-		errno = EINVAL;
-		return -1;
+		return 0;
 	}
 	return (chown(path, owner, group));
 }
