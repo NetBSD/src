@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.163 2001/06/18 17:04:45 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.164 2001/06/19 01:37:44 fvdl Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -89,7 +89,8 @@ NOPIC?=1
 .endif
 
 # The sparc64 port is incomplete.
-.if ${MACHINE_ARCH} == "sparc64"
+# Profiling and linting is also off on the x86_64 port at the moment.
+.if ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "x86_64"
 NOPROFILE=1
 NOLINT=1
 .endif
@@ -105,6 +106,7 @@ NOLINT=1
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE} == "next68k" || \
     ${MACHINE} == "sun3" || \
@@ -114,6 +116,10 @@ NOLINT=1
 OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
+.endif
+
+.if ${MACHINE_ARCH} == "x86_64"
+CFLAGS+=-Wno-format -fno-builtin
 .endif
 
 # Location of the file that contains the major and minor numbers of the
