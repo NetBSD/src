@@ -96,85 +96,87 @@ stios2btios(st, bt)
 {
 	register u_long l, r;
 
-	l = st->c_iflag;
-	r = 	((l & IBCS2_IGNBRK) ? IGNBRK	: 0);
-	r |=	((l & IBCS2_BRKINT) ? BRKINT	: 0);
-	r |=	((l & IBCS2_IGNPAR) ? IGNPAR	: 0);
-	r |=	((l & IBCS2_PARMRK) ? PARMRK	: 0);
-	r |=	((l & IBCS2_INPCK) ? INPCK	: 0);
-	r |=	((l & IBCS2_ISTRIP) ? ISTRIP	: 0);
-	r |= 	((l & IBCS2_INLCR) ? INLCR	: 0);
-	r |=	((l & IBCS2_IGNCR) ? IGNCR	: 0);
-	r |=	((l & IBCS2_ICRNL) ? ICRNL	: 0);
-	r |=	((l & IBCS2_IXON) ? IXON	: 0);
-	r |=	((l & IBCS2_IXANY) ? IXANY	: 0);
-	r |=	((l & IBCS2_IXOFF) ? IXOFF	: 0);
-	r |=	((l & IBCS2_IMAXBEL) ? IMAXBEL	: 0);
+	l = st->c_iflag;	r = 0;
+	if (l & IBCS2_IGNBRK)	r |= IGNBRK;
+	if (l & IBCS2_BRKINT)	r |= BRKINT;
+	if (l & IBCS2_IGNPAR)	r |= IGNPAR;
+	if (l & IBCS2_PARMRK)	r |= PARMRK;
+	if (l & IBCS2_INPCK)	r |= INPCK;
+	if (l & IBCS2_ISTRIP)	r |= ISTRIP;
+	if (l & IBCS2_INLCR)	r |= INLCR;
+	if (l & IBCS2_IGNCR)	r |= IGNCR;
+	if (l & IBCS2_ICRNL)	r |= ICRNL;
+	if (l & IBCS2_IXON)	r |= IXON;
+	if (l & IBCS2_IXANY)	r |= IXANY;
+	if (l & IBCS2_IXOFF)	r |= IXOFF;
+	if (l & IBCS2_IMAXBEL)	r |= IMAXBEL;
 	bt->c_iflag = r;
 
-	l = st->c_oflag;
-	r = 	((l & IBCS2_OPOST) ? OPOST	: 0);
-	r |=	((l & IBCS2_ONLCR) ? ONLCR	: 0);
-	r |=	((l & IBCS2_TAB3) ? OXTABS	: 0);
+	l = st->c_oflag;	r = 0;
+	if (l & IBCS2_OPOST)	r |= OPOST;
+	if (l & IBCS2_ONLCR)	r |= ONLCR;
+	if (l & IBCS2_TAB3)	r |= OXTABS;
 	bt->c_oflag = r;
 
-	l = st->c_cflag;
-	r = 	((l & IBCS2_CS6) ? CS6		: 0);
-	r |=	((l & IBCS2_CS7) ? CS7		: 0);
-	r |=	((l & IBCS2_CS8) ? CS8		: 0);
-	r |=	((l & IBCS2_CSTOPB) ? CSTOPB	: 0);
-	r |=	((l & IBCS2_CREAD) ? CREAD	: 0);
-	r |= 	((l & IBCS2_PARENB) ? PARENB	: 0);
-	r |=	((l & IBCS2_PARODD) ? PARODD	: 0);
-	r |=	((l & IBCS2_HUPCL) ? HUPCL	: 0);
-	r |=	((l & IBCS2_CLOCAL) ? CLOCAL	: 0);
+	l = st->c_cflag;	r = 0;
+	switch (l & IBCS2_CSIZE) {
+	case IBCS2_CS5:		r |= CS5; break;
+	case IBCS2_CS6:		r |= CS6; break;
+	case IBCS2_CS7:		r |= CS7; break;
+	case IBCS2_CS8:		r |= CS8; break;
+	}
+	if (l & IBCS2_CSTOPB)	r |= CSTOPB;
+	if (l & IBCS2_CREAD)	r |= CREAD;
+	if (l & IBCS2_PARENB)	r |= PARENB;
+	if (l & IBCS2_PARODD)	r |= PARODD;
+	if (l & IBCS2_HUPCL)	r |= HUPCL;
+	if (l & IBCS2_CLOCAL)	r |= CLOCAL;
 	bt->c_cflag = r;
+
+	l = st->c_lflag;	r = 0;
+	if (l & IBCS2_ISIG)	r |= ISIG;
+	if (l & IBCS2_ICANON)	r |= ICANON;
+	if (l & IBCS2_ECHO)	r |= ECHO;
+	if (l & IBCS2_ECHOE)	r |= ECHOE;
+	if (l & IBCS2_ECHOK)	r |= ECHOK;
+	if (l & IBCS2_ECHONL)	r |= ECHONL;
+	if (l & IBCS2_NOFLSH)	r |= NOFLSH;
+	if (l & IBCS2_TOSTOP)	r |= TOSTOP;
+	bt->c_lflag = r;
 
 	bt->c_ispeed = bt->c_ospeed = s2btab[l & 0x0000000f];
 
-	l = st->c_lflag;
-	r = 	((l & IBCS2_ISIG) ? ISIG	: 0);
-	r |=	((l & IBCS2_ICANON) ? ICANON	: 0);
-	r |=	((l & IBCS2_ECHO) ? ECHO	: 0);
-	r |=	((l & IBCS2_ECHOE) ? ECHOE	: 0);
-	r |=	((l & IBCS2_ECHOK) ? ECHOK	: 0);
-	r |=	((l & IBCS2_ECHONL) ? ECHONL	: 0);
-	r |= 	((l & IBCS2_NOFLSH) ? NOFLSH	: 0);
-	r |=	((l & IBCS2_TOSTOP) ? TOSTOP	: 0);
-	bt->c_lflag = r;
-
-	bt->c_cc[VINTR]	= st->c_cc[IBCS2_VINTR] ? st->c_cc[IBCS2_VINTR]
-		: _POSIX_VDISABLE;
-	bt->c_cc[VQUIT] = st->c_cc[IBCS2_VQUIT] ? st->c_cc[IBCS2_VQUIT]
-		: _POSIX_VDISABLE;
-	bt->c_cc[VERASE] = st->c_cc[IBCS2_VERASE] ? st->c_cc[IBCS2_VERASE]
-		: _POSIX_VDISABLE;
-	bt->c_cc[VKILL] = st->c_cc[IBCS2_VKILL] ? st->c_cc[IBCS2_VKILL]
-		: _POSIX_VDISABLE;
-	bt->c_cc[VEOF] = st->c_cc[IBCS2_VEOF] ? st->c_cc[IBCS2_VEOF]
-		: _POSIX_VDISABLE;
-	bt->c_cc[VEOL] = st->c_cc[IBCS2_VEOL] ? st->c_cc[IBCS2_VEOL]
-		: _POSIX_VDISABLE;
-	bt->c_cc[VEOL2] = st->c_cc[IBCS2_VEOL2] ? st->c_cc[IBCS2_VEOL2]
-		: _POSIX_VDISABLE;
+	bt->c_cc[VINTR]	=
+	    st->c_cc[IBCS2_VINTR]  ? st->c_cc[IBCS2_VINTR]  : _POSIX_VDISABLE;
+	bt->c_cc[VQUIT] =
+	    st->c_cc[IBCS2_VQUIT]  ? st->c_cc[IBCS2_VQUIT]  : _POSIX_VDISABLE;
+	bt->c_cc[VERASE] =
+	    st->c_cc[IBCS2_VERASE] ? st->c_cc[IBCS2_VERASE] : _POSIX_VDISABLE;
+	bt->c_cc[VKILL] =
+	    st->c_cc[IBCS2_VKILL]  ? st->c_cc[IBCS2_VKILL]  : _POSIX_VDISABLE;
+	bt->c_cc[VEOF] =
+	    st->c_cc[IBCS2_VEOF]   ? st->c_cc[IBCS2_VEOF]   : _POSIX_VDISABLE;
+	bt->c_cc[VEOL] =
+	    st->c_cc[IBCS2_VEOL]   ? st->c_cc[IBCS2_VEOL]   : _POSIX_VDISABLE;
+	bt->c_cc[VEOL2] =
+	    st->c_cc[IBCS2_VEOL2]  ? st->c_cc[IBCS2_VEOL2]  : _POSIX_VDISABLE;
 #if 0
-	bt->c_cc[VSWTCH] = st->c_cc[IBCS2_VSWTCH] ? st->c_cc[IBCS2_VSWTCH]
-		: _POSIX_VDISABLE;
+	bt->c_cc[VSWTCH] =
+	    st->c_cc[IBCS2_VSWTCH] ? st->c_cc[IBCS2_VSWTCH] : _POSIX_VDISABLE;
 #endif
-	bt->c_cc[VSTART] = st->c_cc[IBCS2_VSTART] ? st->c_cc[IBCS2_VSTART]
-		: _POSIX_VDISABLE;
-	bt->c_cc[VSTOP] = st->c_cc[IBCS2_VSTART] ? st->c_cc[IBCS2_VSTART]
-		: _POSIX_VDISABLE;
-	bt->c_cc[VSUSP] = st->c_cc[IBCS2_VSUSP] ? st->c_cc[IBCS2_VSUSP]
-		: _POSIX_VDISABLE;
-	bt->c_cc[VDSUSP] = _POSIX_VDISABLE;
+	bt->c_cc[VSTART] =
+	    st->c_cc[IBCS2_VSTART] ? st->c_cc[IBCS2_VSTART] : _POSIX_VDISABLE;
+	bt->c_cc[VSTOP] =
+	    st->c_cc[IBCS2_VSTOP]  ? st->c_cc[IBCS2_VSTOP]  : _POSIX_VDISABLE;
+	bt->c_cc[VSUSP] =
+	    st->c_cc[IBCS2_VSUSP]  ? st->c_cc[IBCS2_VSUSP]  : _POSIX_VDISABLE;
+	bt->c_cc[VDSUSP]   = _POSIX_VDISABLE;
 	bt->c_cc[VREPRINT] = _POSIX_VDISABLE;
 	bt->c_cc[VDISCARD] = _POSIX_VDISABLE;
 	bt->c_cc[VWERASE]  = _POSIX_VDISABLE;
 	bt->c_cc[VLNEXT]   = _POSIX_VDISABLE;
 	bt->c_cc[VSTATUS]  = _POSIX_VDISABLE;
 }
-
 
 static void
 btios2stios(bt, st)
@@ -183,76 +185,80 @@ btios2stios(bt, st)
 {
 	register u_long l, r;
 
-	l = bt->c_iflag;
-	r = 	((l &  IGNBRK) ? IBCS2_IGNBRK	: 0);
-	r |=	((l &  BRKINT) ? IBCS2_BRKINT	: 0);
-	r |=	((l &  IGNPAR) ? IBCS2_IGNPAR	: 0);
-	r |=	((l &  PARMRK) ? IBCS2_PARMRK	: 0);
-	r |=	((l &   INPCK) ? IBCS2_INPCK	: 0);
-	r |=	((l &  ISTRIP) ? IBCS2_ISTRIP	: 0);
-	r |=	((l &   INLCR) ? IBCS2_INLCR	: 0);
-	r |=	((l &   IGNCR) ? IBCS2_IGNCR	: 0);
-	r |=	((l &   ICRNL) ? IBCS2_ICRNL	: 0);
-	r |=	((l &    IXON) ? IBCS2_IXON	: 0);
-	r |=	((l &   IXANY) ? IBCS2_IXANY	: 0);
-	r |=	((l &   IXOFF) ? IBCS2_IXOFF	: 0);
-	r |=	((l & IMAXBEL) ? IBCS2_IMAXBEL	: 0);
+	l = bt->c_iflag;	r = 0;
+	if (l & IGNBRK)		r |= IBCS2_IGNBRK;
+	if (l & BRKINT)		r |= IBCS2_BRKINT;
+	if (l & IGNPAR)		r |= IBCS2_IGNPAR;
+	if (l & PARMRK)		r |= IBCS2_PARMRK;
+	if (l & INPCK)		r |= IBCS2_INPCK;
+	if (l & ISTRIP)		r |= IBCS2_ISTRIP;
+	if (l & INLCR)		r |= IBCS2_INLCR;
+	if (l & IGNCR)		r |= IBCS2_IGNCR;
+	if (l & ICRNL)		r |= IBCS2_ICRNL;
+	if (l & IXON)		r |= IBCS2_IXON;
+	if (l & IXANY)		r |= IBCS2_IXANY;
+	if (l & IXOFF)		r |= IBCS2_IXOFF;
+	if (l & IMAXBEL)	r |= IBCS2_IMAXBEL;
 	st->c_iflag = r;
 
-	l = bt->c_oflag;
-	r =	((l &   OPOST) ? IBCS2_OPOST	: 0);
-	r |=	((l &   ONLCR) ? IBCS2_ONLCR	: 0);
-	r |=	((l &  OXTABS) ? IBCS2_TAB3	: 0);
+	l = bt->c_oflag;	r = 0;
+	if (l & OPOST)		r |= IBCS2_OPOST;
+	if (l & ONLCR)		r |= IBCS2_ONLCR;
+	if (l & OXTABS)		r |= IBCS2_TAB3;
 	st->c_oflag = r;
 
-	l = bt->c_cflag;
-	r = 	((l &     CS6) ? IBCS2_CS6	: 0);
-	r |=	((l &     CS7) ? IBCS2_CS7	: 0);
-	r |=	((l &     CS8) ? IBCS2_CS8	: 0);
-	r |=	((l &  CSTOPB) ? IBCS2_CSTOPB	: 0);
-	r |=	((l &   CREAD) ? IBCS2_CREAD	: 0);
-	r |=	((l &  PARENB) ? IBCS2_PARENB	: 0);
-	r |=	((l &  PARODD) ? IBCS2_PARODD	: 0);
-	r |=	((l &   HUPCL) ? IBCS2_HUPCL	: 0);
-	r |=	((l &  CLOCAL) ? IBCS2_CLOCAL	: 0);
+	l = bt->c_cflag;	r = 0;
+	switch (l & CSIZE) {
+	case CS5:		r |= IBCS2_CS5; break;
+	case CS6:		r |= IBCS2_CS6; break;
+	case CS7:		r |= IBCS2_CS7; break;
+	case CS8:		r |= IBCS2_CS8; break;
+	}
+	if (l & CSTOPB)		r |= IBCS2_CSTOPB;
+	if (l & CREAD)		r |= IBCS2_CREAD;
+	if (l & PARENB)		r |= IBCS2_PARENB;
+	if (l & PARODD)		r |= IBCS2_PARODD;
+	if (l & HUPCL)		r |= IBCS2_HUPCL;
+	if (l & CLOCAL)		r |= IBCS2_CLOCAL;
 	st->c_cflag = r;
 
-	l = bt->c_lflag;
-	r =	((l &    ISIG) ? IBCS2_ISIG	: 0);
-	r |=	((l &  ICANON) ? IBCS2_ICANON	: 0);
-	r |=	((l &    ECHO) ? IBCS2_ECHO	: 0);
-	r |=	((l &   ECHOE) ? IBCS2_ECHOE	: 0);
-	r |=	((l &   ECHOK) ? IBCS2_ECHOK	: 0);
-	r |=	((l &  ECHONL) ? IBCS2_ECHONL	: 0);
-	r |=	((l &  NOFLSH) ? IBCS2_NOFLSH	: 0);
-	r |=	((l &  TOSTOP) ? IBCS2_TOSTOP	: 0);
+	l = bt->c_lflag;	r = 0;
+	if (l & ISIG)		r |= IBCS2_ISIG;
+	if (l & ICANON)		r |= IBCS2_ICANON;
+	if (l & ECHO)		r |= IBCS2_ECHO;
+	if (l & ECHOE)		r |= IBCS2_ECHOE;
+	if (l & ECHOK)		r |= IBCS2_ECHOK;
+	if (l & ECHONL)		r |= IBCS2_ECHONL;
+	if (l & NOFLSH)		r |= IBCS2_NOFLSH;
+	if (l & TOSTOP)		r |= IBCS2_TOSTOP;
 	st->c_lflag = r;
 
 	l = ttspeedtab(bt->c_ospeed, sptab);
 	if (l >= 0)
 		st->c_cflag |= l;
 
-	st->c_cc[IBCS2_VINTR] = bt->c_cc[VINTR] != _POSIX_VDISABLE
-		? bt->c_cc[VINTR] : 0;
-	st->c_cc[IBCS2_VQUIT] = bt->c_cc[VQUIT] != _POSIX_VDISABLE
-		? bt->c_cc[VQUIT] : 0;
-	st->c_cc[IBCS2_VERASE] = bt->c_cc[VERASE] != _POSIX_VDISABLE
-		? bt->c_cc[VERASE] : 0;
-	st->c_cc[IBCS2_VKILL] = bt->c_cc[VKILL] != _POSIX_VDISABLE
-		? bt->c_cc[VKILL] : 0;
-	st->c_cc[IBCS2_VEOF] = bt->c_cc[VEOF] != _POSIX_VDISABLE
-		? bt->c_cc[VEOF] : 0;
-	st->c_cc[IBCS2_VEOL] = bt->c_cc[VEOL] != _POSIX_VDISABLE
-		? bt->c_cc[VEOL] : 0;
-	st->c_cc[IBCS2_VEOL2] = bt->c_cc[VEOL2] != _POSIX_VDISABLE
-		? bt->c_cc[VEOL2] : 0;
-	st->c_cc[IBCS2_VSWTCH] = 0;
-	st->c_cc[IBCS2_VSUSP]= bt->c_cc[VSUSP] != _POSIX_VDISABLE
-		? bt->c_cc[VSUSP] : 0;
-	st->c_cc[IBCS2_VSTART] = bt->c_cc[VSTART] != _POSIX_VDISABLE
-		? bt->c_cc[VSTART] : 0;
-	st->c_cc[IBCS2_VSTOP] = bt->c_cc[VSTOP] != _POSIX_VDISABLE
-		? bt->c_cc[VSTOP] : 0;
+	st->c_cc[IBCS2_VINTR] =
+	    bt->c_cc[VINTR]  != _POSIX_VDISABLE ? bt->c_cc[VINTR]  : 0;
+	st->c_cc[IBCS2_VQUIT] =
+	    bt->c_cc[VQUIT]  != _POSIX_VDISABLE ? bt->c_cc[VQUIT]  : 0;
+	st->c_cc[IBCS2_VERASE] =
+	    bt->c_cc[VERASE] != _POSIX_VDISABLE ? bt->c_cc[VERASE] : 0;
+	st->c_cc[IBCS2_VKILL] =
+	    bt->c_cc[VKILL]  != _POSIX_VDISABLE ? bt->c_cc[VKILL]  : 0;
+	st->c_cc[IBCS2_VEOF] =
+	    bt->c_cc[VEOF]   != _POSIX_VDISABLE ? bt->c_cc[VEOF]   : 0;
+	st->c_cc[IBCS2_VEOL] =
+	    bt->c_cc[VEOL]   != _POSIX_VDISABLE ? bt->c_cc[VEOL]   : 0;
+	st->c_cc[IBCS2_VEOL2] =
+	    bt->c_cc[VEOL2]  != _POSIX_VDISABLE ? bt->c_cc[VEOL2]  : 0;
+	st->c_cc[IBCS2_VSWTCH] =
+	    0;
+	st->c_cc[IBCS2_VSUSP] =
+	    bt->c_cc[VSUSP]  != _POSIX_VDISABLE ? bt->c_cc[VSUSP]  : 0;
+	st->c_cc[IBCS2_VSTART] =
+	    bt->c_cc[VSTART] != _POSIX_VDISABLE ? bt->c_cc[VSTART] : 0;
+	st->c_cc[IBCS2_VSTOP] =
+	    bt->c_cc[VSTOP]  != _POSIX_VDISABLE ? bt->c_cc[VSTOP]  : 0;
 
 	st->c_line = 0;
 }
@@ -300,7 +306,7 @@ ibcs2_ioctl(p, uap, retval)
 	register int (*ctl)();
 	int error;
 
-	if ((unsigned)uap->fd >= fdp->fd_nfiles ||
+	if (uap->fd < 0 || uap->fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[uap->fd]) == NULL) {
 		DPRINTF(("ibcs2_ioctl(%d): bad fd %d ", p->p_pid, uap->fd));
 		return EBADF;
