@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.163 2003/10/08 11:55:44 bouyer Exp $
+# $NetBSD: GENERIC,v 1.164 2003/10/13 05:20:52 dyoung Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.163 $"
+#ident 		"GENERIC-$Revision: 1.164 $"
 
 maxusers	32
 
@@ -188,6 +188,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 # PCI Network devices
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+atw*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 bge*	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -310,6 +311,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 tlp*	at cardbus? dev ? function ?	# DECchip 21143
 rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
