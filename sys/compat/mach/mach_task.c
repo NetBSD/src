@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.27 2003/10/25 20:15:13 mycroft Exp $ */
+/*	$NetBSD: mach_task.c,v 1.28 2003/11/09 11:10:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.27 2003/10/25 20:15:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.28 2003/11/09 11:10:11 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -348,6 +348,8 @@ mach_task_get_exception_ports(args)
 
 	med = l->l_proc->p_emuldata;
 
+	uprintf("Unimplemented mach_task_get_exception_ports\n");
+
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
@@ -372,7 +374,7 @@ mach_task_set_exception_ports(args)
 
 	med = l->l_proc->p_emuldata;
 
-	uprintf("mach_task_set_exception_ports\n");
+	uprintf("Unimplemented mach_task_set_exception_ports\n");
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);

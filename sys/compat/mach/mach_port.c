@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.41 2003/11/07 17:16:39 christos Exp $ */
+/*	$NetBSD: mach_port.c,v 1.42 2003/11/09 11:10:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.41 2003/11/07 17:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.42 2003/11/09 11:10:11 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -450,6 +450,8 @@ mach_port_insert_member(args)
 	mach_port_insert_member_request_t *req = args->smsg;
 	mach_port_insert_member_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+
+	uprintf("Unimplemented mach_port_insert_member\n");
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
