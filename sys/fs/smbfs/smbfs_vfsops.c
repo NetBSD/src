@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.26 2003/06/23 11:02:03 martin Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.27 2003/06/23 15:25:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,9 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.26 2003/06/23 11:02:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.27 2003/06/23 15:25:55 martin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_quota.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
