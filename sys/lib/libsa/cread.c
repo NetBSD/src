@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.13 2000/11/26 03:31:20 simonb Exp $	*/
+/*	$NetBSD: cread.c,v 1.14 2003/03/18 19:20:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -63,7 +63,7 @@
 #define Z_BUFSIZE 4096
 #endif
 
-static int gz_magic[2] = {0x1f, 0x8b};	/* gzip magic header */
+static const int gz_magic[2] = {0x1f, 0x8b};	/* gzip magic header */
 
 /* gzip flag byte */
 #define ASCII_FLAG	0x01	/* bit 0 set: file probably ascii text */
