@@ -1,8 +1,8 @@
-/*	$NetBSD: mkdir.c,v 1.11 1995/03/01 07:52:23 jtc Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.12 1995/03/21 07:28:54 cgd Exp $	*/
 
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,30 +35,36 @@
 
 #ifndef lint
 char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+"@(#) Copyright (c) 1983, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mkdir.c	5.7 (Berkeley) 5/31/90";
+static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
+#else
+static char rcsid[] = "$NetBSD: mkdir.c,v 1.12 1995/03/21 07:28:54 cgd Exp $";
 #endif
-static char rcsid[] = "$NetBSD: mkdir.c,v 1.11 1995/03/01 07:52:23 jtc Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <err.h>
+#include <errno.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include <err.h>
 
+int	mkpath __P((char *, mode_t, mode_t));
+void	usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int ch, exitval, pflag;
 	void *set;
@@ -119,6 +125,7 @@ main(argc, argv)
  *	mode     - file mode of terminal directory
  *	dir_mode - file mode of intermediate directories
  */
+int
 mkpath(path, mode, dir_mode)
 	char *path;
 	mode_t mode;
@@ -159,8 +166,9 @@ mkpath(path, mode, dir_mode)
 	return(0);
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr, "usage: mkdir [-p] [-m mode] dirname ...\n");
-	exit(1);
+	exit (1);
 }
