@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.18 2001/07/24 17:51:03 nra Exp $
+.\"	$NetBSD: upgrade,v 1.18.2.1 2002/07/02 04:20:10 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -39,46 +39,50 @@ to interdependencies in the various components.
 .Pp
 No automated upgrade procedure exists for upgrading to release \*V for the
 .Nx*M
-architecture. The current procedure is essentially to perform
-a new install from scratch. It is hoped that there will be a good upgrade
-procedure for future releases. Please feel free to volunteer to help
-replace these installation tools.
+architecture.
+The current procedure is essentially to perform a new install from scratch.
+It is hoped that there will be a good upgrade procedure for future releases.
+Please feel free to volunteer to help replace these installation tools.
 .Pp
-The following steps outline the current upgrade procedure. These steps
-should help ease the upgrade process. Please read these instructions
-carefully and completely before proceeding.
+The following steps outline the current upgrade procedure.
+These steps should help ease the upgrade process.
+Please read these instructions carefully and completely before proceeding.
 .(enum
 Since upgrading involves replacing the kernel and most of the system
-binaries, it has the potential to cause data loss. You are strongly
-advised to
+binaries, it has the potential to cause data loss.
+You are strongly advised to
 .Em back up any important data on your disk,
 whether on the
 .Nx
 partition or on another operating system's partition, before
-beginning the upgrade process. Although the upgrade should not
-damage your file system(s) in any way, you never know what may happen.
+beginning the upgrade process.
+Although the upgrade should not damage your file system(s) in any way,
+you never know what may happen.
 .It
 Download the distribution sets you want from the
 .Pa \*M/binary/sets
 subdirectory of the
 .Nx \*V
-distribution. You will need the base
-set and the kernel at a minimum. Be sure to download the files in
+distribution.
+You will need the base set and the kernel at a minimum.
+Be sure to download the files in
 .Em binary
-mode. If you will be upgrading from within
+mode.
+If you will be upgrading from within
 .Nx ,
 make sure
 that you place the distribution sets on a file system you will be able to
 reach from single-user mode.
 .It
-Install the \*V kernel. You may either use the Installer utility
+Install the \*V kernel.
+You may either use the Installer utility
 (included in the
 .Pa installation/misc
 subdirectory) or install from within
 .Nx
-(the latter is recommended for speed reasons). If you
-choose the former, proceed as you normally would. If you choose to
-install from within
+(the latter is recommended for speed reasons).
+If you choose the former, proceed as you normally would.
+If you choose to install from within
 .Nx ,
 then boot (or shutdown) into single-user
 mode and do the following:
@@ -88,24 +92,28 @@ mode and do the following:
 .Pp
 There is no need to backup your old kernel explicitly since it will be
 incapable of running many of the newer binaries you are about to
-install. (Unless, of course, you have a backup copy of your older
-binaries and want to revert to them for some reason.) However, you
-might want to keep a backup if you are upgrading from within
+install.
+(Unless, of course, you have a backup copy of your older
+binaries and want to revert to them for some reason.)
+However, you might want to keep a backup if you are upgrading from within
 .Nx
 just in case the newer kernel has trouble booting your machine.
 .It
-If you are installing using the Installer, skip to step 5. Otherwise,
-reboot into
+If you are installing using the Installer, skip to step 5.
+Otherwise, reboot into
 .Nx
-in single-user mode. Run
+in single-user mode.
+Run
 .Ic fsck Fl f
 and then mount all
-local partitions read/write. Usually
+local partitions read/write.
+Usually
 .Ic mount Fl a t Ic nonfs
 should do the
 trick, but if you have several partitions on the same disk, take note of
 the fact that a change in partition numbering may have moved a few of
-your partitions around. You can do a
+your partitions around.
+You can do a
 .Ic disklabel sd Ns Ar X
 (where
 .Ar X
@@ -113,7 +121,8 @@ is a
 drive on which you have
 .Nx
 partitions) to see how the partitions are
-currently laid out. It is likely that a partition has shifted into the
+currently laid out.
+It is likely that a partition has shifted into the
 .Li sd Ns Ar X Ns Li d
 or
 .Li sd Ns Ar X Ns Li e
@@ -127,8 +136,8 @@ via
 .Ic "mount -w /"
 and edit your
 .Pa /etc/fstab
-file to reflect the new partition layout. Unless you are
-familiar with
+file to reflect the new partition layout.
+Unless you are familiar with
 .Xr ex 1
 or
 .Xr ed 1 .
@@ -139,13 +148,15 @@ is probably to simply do a
 .Ic "cat \*> /etc/fstab"
 and type in the corrected file in its entirety.
 .It
-Install the distribution sets. Keep in mind that the
+Install the distribution sets.
+Keep in mind that the
 .Nx \*V
 distribution takes up a considerably larger amount of disk space than
-did the 1.3 family of distributions. If you are using the Installer,
-proceed normally (remember that you will need to mount non-root
-partitions by hand using the MiniShell before installing). If you are
-installing from within
+did the 1.3 family of distributions.
+If you are using the Installer, proceed normally
+(remember that you will need to mount non-root partitions by hand using
+the MiniShell before installing).
+If you are installing from within
 .Nx ,
 do the following:
 .Pp
@@ -154,16 +165,18 @@ do the following:
 .Pp
 Keep in mind that there is
 no going back once you have installed the base set short of a complete
-re-install of an earlier distribution. Continue with the appropriate
-command line for each of the other sets you wish to install except for
-the etc set. If you are in the Installer, open up the Minishell and do
-the following:
+re-install of an earlier distribution.
+Continue with the appropriate command line for each of the other sets
+you wish to install except for the
+.Sy etc
+set.
+If you are in the Installer, open up the Minishell and do the following:
 .Pp
 .Dl Ic "cd /tmp"
 .Dl Ic "exit"
 .Pp
-Ignore the warning message this will cause. Now, use the Installer to
-install the
+Ignore the warning message this will cause.
+Now, use the Installer to install the
 .Sy etc
 set (it will install into
 .Pa /tmp
@@ -180,8 +193,8 @@ do the following instead:
 .It
 If you are in the Installer, quit it and boot into
 .Nx
-in single-user
-mode. From there,
+in single-user mode.
+From there,
 .Ic cd
 to the
 .Pa /tmp/etc
@@ -189,8 +202,8 @@ directory and compare each file there with your old files in
 .Pa /etc .
 You will probably want to replace
 some of your system configuration files, or incorporate some of the
-changes in the new versions into yours. You should take note of the
-following when upgrading to the
+changes in the new versions into yours.
+You should take note of the following when upgrading to the
 .Nx \*V
 etc.tgz set:
 .(bullet
@@ -212,15 +225,15 @@ command (e.g.
 for MFS file systems; note:
 FFS type file systems are documented in the
 .Xr mount 8
-man page). If you
-have not already done so, you may also need to correct
+man page).
+If you have not already done so, you may also need to correct
 .Pa /etc/fstab
-for a shift in the partition numbering scheme. See step 4 above for more
-details.
+for a shift in the partition numbering scheme.
+See step 4 above for more details.
 .It
-You will also probably want to upgrade your device nodes at this time
-as well. Make sure you have installed the latest MAKEDEV script (it
-should be included in the etc set) and perform the following commands:
+You will also probably want to upgrade your device nodes at this time as well.
+Make sure you have installed the latest MAKEDEV script
+(it should be included in the etc set) and perform the following commands:
 .Pp
 .Dl # Ic "cd /dev"
 .Dl # Ic "sh MAKEDEV all"
@@ -228,8 +241,8 @@ should be included in the etc set) and perform the following commands:
 .It
 Run
 .Ic fsck Fl f
-to make sure that your file system is still consistent. If
-fsck reports any errors, fix them by answering
+to make sure that your file system is still consistent.
+If fsck reports any errors, fix them by answering
 .Sq Ic y
 to its suggested
 solutions

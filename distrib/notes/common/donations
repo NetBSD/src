@@ -1,6 +1,6 @@
-.\"	$NetBSD: donations,v 1.21 2001/05/21 01:15:26 jhawk Exp $
+.\"	$NetBSD: donations,v 1.21.2.1 2002/07/02 04:20:05 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -70,6 +70,7 @@ Ted Lemon
 Norman R. McBride
 Neil J. McRae
 Perry E. Metzger
+Luke Mewburn
 Toru Nishimura
 Herb Peyerl
 Mike Price

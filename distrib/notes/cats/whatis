@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.1 2002/04/02 11:36:35 skrll Exp $
+.\"	$NetBSD: whatis,v 1.1.2.1 2002/07/02 04:20:04 lukem Exp $
 .
-This is the first major release of 
+This is the first major release of
 .Nx*M .
 Previous versions of
 .Nx

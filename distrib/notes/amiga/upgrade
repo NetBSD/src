@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.22 2000/10/29 14:08:05 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.22.2.1 2002/07/02 04:20:02 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -45,22 +45,25 @@ and you must transfer the miniroot file system
 .Pa miniroot.fs
 onto the swap partition of the
 .Nx
-hard disk. You must also have at least the
+hard disk.
+You must also have at least the
 .Sy base
 binary distribution set available, so that you can upgrade
-with it, using one of the upgrade methods described above. Finally,
-you must have sufficient disk space available to install the new
-binaries. Since the old binaries are being overwritten in place,
-you only need space for the new binaries, which weren't previously
-on the system. If you have a few megabytes free on each of your
+with it, using one of the upgrade methods described above.
+Finally, you must have sufficient disk space available to install the new
+binaries.
+Since the old binaries are being overwritten in place, you only need
+space for the new binaries, which weren't previously on the system.
+If you have a few megabytes free on each of your
 .Pa /
 (root) and
 .Pa /usr
 partitions, you should have enough space.
 .Pp
 Since upgrading involves replacing the kernel, and most of the system
-binaries, it has the potential to cause data loss. You are strongly
-advised to BACK UP ANY IMPORTANT DATA ON YOUR DISK, whether on the
+binaries, it has the potential to cause data loss.
+You are strongly advised to BACK UP ANY IMPORTANT DATA ON YOUR DISK,
+whether on the
 .Nx
 partition or on another operating system's partition, before
 beginning the upgrade process.
@@ -93,8 +96,9 @@ before using loadbsd, else the kernel will hang!
 .Nx ,
 with boot blocks installed
 .(Note
-This description is for V40 (OS 3.1) ROMs. For older ROMs,
-there might be small differences. Check your
+This description is for V40 (OS 3.1) ROMs.
+For older ROMs, there might be small differences.
+Check your
 .Tn AmigaDOS
 documentation to learn about the exact procedure.
 Booting using bootblocks doesn't work at all on some systems, and may
@@ -103,17 +107,20 @@ require a mountable file system on others.
 .Pp
 Reboot your machine, holding down both mouse buttons if you
 have a 2-button mouse, the outer mouse buttons if you have
-a 3-button mouse. On the DraCo, press the left mouse button
-instead, when the boot screen prompts you for it.
+a 3-button mouse.
+On the DraCo, press the left mouse button instead,
+when the boot screen prompts you for it.
 .Pp
 From the boot menu, select
 .Ic Boot Options .
 Select the swap partition with the miniroot, and then
-.Ic ok . No Select
-.Ic Boot No now .
-The machine will boot the bootblock, which
-will prompt your for a command line. You have a few seconds time
-to change the default. Entering an empty line will accept the
+.Ic ok .
+Select
+.Ic Boot
+now.
+The machine will boot the bootblock, which will prompt your for a command line.
+You have a few seconds time to change the default.
+Entering an empty line will accept the
 default.
 .Pp
 The bootblock uses command lines of the form:
@@ -136,31 +143,34 @@ use
 .Ss2 Once your kernel boots
 .
 You should see the screen clear and some information about
-your system as the kernel configures the hardware. Note which
-hard disk device is configured that contains your root
+your system as the kernel configures the hardware.
+Note which hard disk device is configured that contains your root
 .Pq Pa /
-and swap partitions. When prompted for the root device, type
+and swap partitions.
+When prompted for the root device, type
 .Li sd0b
 (replacing
 .Sq Li 0
 with the disk number that
 .Nx
 used for
-your root/swap device). When prompted for a dump device,
-answer
+your root/swap device).
+When prompted for a dump device, answer
 .Sq Ic none
-for the upgrade. (For a normal boot, you would
-tell it one of the swap devices). When prompted for the root
-file system type, confirm
+for the upgrade.
+(For a normal boot, you would tell it one of the swap devices).
+When prompted for the root file system type, confirm
 .Sq Ic generic ,
 which will auto-detect it.
 .Pp
 You will be presented with some information about the upgrade
 process and a warning message, and will be asked if you wish
-to proceed with the upgrade process. If you answer
-negatively, the upgrade process will stop, and your disk will
-not be modified. If you answer affirmatively, the upgrade
-process will begin, and your disk will be modified. You may press
+to proceed with the upgrade process.
+If you answer negatively, the upgrade process will stop, and your disk will
+not be modified.
+If you answer affirmatively, the upgrade process will begin,
+and your disk will be modified.
+You may press
 .Key CONTROL-C
 to stop the upgrade process at any time.
 However, if you press it at an inopportune moment, your system
@@ -171,27 +181,29 @@ potential dangerous procedure and that you should not upgrade the
 .Sy etc
 set.
 .Pp
-When you decide to proceed, you will be prompted to enter
-your root disk. After you've done this, it will be checked
+When you decide to proceed, you will be prompted to enter your root disk.
+After you've done this, it will be checked
 automatically to make sure that the file system is in a sane
-state before making any modifications. After this is done,
-you will be asked if you want to configure your network.
+state before making any modifications.
+After this is done, you will be asked if you want to configure your network.
 .Pp
-You are now allowed to edit your fstab. Normally you don't have
-to. Note that the upgrade-kit uses it's own copy of the fstab.
+You are now allowed to edit your fstab.
+Normally you don't have to.
+Note that the upgrade-kit uses it's own copy of the fstab.
 Whatever you do here
 .Em won't
 affect your actual fstab.
 After you are satisfied with your fstab, the upgrade-kit will check
-all file systems mentioned in it. When they're ok, they will be
-mounted.
+all file systems mentioned in it.
+When they're ok, they will be mounted.
 .Pp
 You will now be asked if your sets are stored on a normally
-mounted file system. You should answer
+mounted file system.
+You should answer
 .Sq Ic y
 to this question if
-you have the sets stored on a file system that was present in
-the fstab. The actions you should take for the set extraction
+you have the sets stored on a file system that was present in the fstab.
+The actions you should take for the set extraction
 are pretty logical (we think).
 .Pp
 After you have extracted the sets, the upgrade kit will proceed
@@ -205,8 +217,8 @@ section.
 After a new kernel has been copied to your hard disk, your
 machine is a complete
 .Nx \*V
-system. However, that
-doesn't mean that you're finished with the upgrade process.
+system.
+However, that doesn't mean that you're finished with the upgrade process.
 There are several things that you should do, or might have to
 do, to insure that the system works properly.
 .Pp
@@ -215,7 +227,8 @@ You will probably want to get the
 distribution,
 extract it, and compare its contents with those in your
 .Pa /etc
-directory. You will probably want to replace some of your
+directory.
+You will probably want to replace some of your
 system configuration files, or incorporate some of the changes
 in the new versions into yours.
 .Pp
@@ -225,14 +238,16 @@ of the version of
 that you upgraded from and have since
 been removed from the
 .Nx
-distribution. If upgrading from a
+distribution.
+If upgrading from a
 .Nx
 version older than 1.0, you might also want to
 recompile any locally-built binaries, to take advantage of the
-shared libraries. (Note that any new binaries that you build
+shared libraries.
+(Note that any new binaries that you build
 will be dynamically linked, and therefore take advantage of
-the shared libraries, by default. For information on how to
-make statically linked binaries, see the
+the shared libraries, by default.
+For information on how to make statically linked binaries, see the
 .Xr cc 1
 and
 .Xr ld 1

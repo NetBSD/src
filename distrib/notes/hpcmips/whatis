@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.7 2002/04/07 02:58:16 shin Exp $
+.\"	$NetBSD: whatis,v 1.7.2.1 2002/07/02 04:20:08 lukem Exp $
 .
 This is the second official release of
 .Nx*M .
@@ -8,7 +8,8 @@ brings the
 NetBSD operating system to
 MIPS based
 .Tn "Windows CE"
-PDA machines.  Currently, the
+PDA machines.
+Currently, the
 Vr4102, Vr4111, Vr4121, TX3912, and TX3922 processors are supported.
 .Pp
 The port name

@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.16 2002/04/05 21:14:35 scw Exp $
+.\"	$NetBSD: install,v 1.16.2.1 2002/07/02 04:20:12 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -38,13 +38,15 @@ this document in hand it should not be too difficult.
 .Pp
 There are several ways to install
 .Nx
-onto your disk. If your
+onto your disk.
+If your
 .Tn MVME147
 machine has a tape drive the easiest way is
 .Sx "Installing from tape"
 (details below).
 All other machines can be installed easily over the network from a
-suitable NFS server. See
+suitable NFS server.
+See
 .Sx "Installing from NFS"
 for details.
 Otherwise, if you have another \*M machine running
@@ -68,10 +70,11 @@ Then, with the tape in the drive, type the following at the Bug prompt:
 As mentioned earlier, this assumes your tape is jumpered for SCSI-ID 5.
 .Pp
 As the tape loads (which may take 20 to 30 seconds), you will see a
-series of status messages. It may be useful if you can capture these
-messages to a file, or a scrollable xterm window. In particular, you
-should make a note of the lines which describe the geometry of the
-SCSI disks detected by
+series of status messages.
+It may be useful if you can capture these
+messages to a file, or a scrollable xterm window.
+In particular, you should make a note of the lines which describe the
+geometry of the SCSI disks detected by
 .Nx .
 They are of the form:
 .(disp
@@ -80,8 +83,8 @@ sd0: 800 MB, 800 cyl, 16 head, 128 sec, 512 bytes/sect x 1638400 sectors
 .disp)
 .Pp
 The information of most interest is the number of sectors; for the fictitious
-disk above, it's 1638400. You will need this number when you come to create
-a disklabel for that drive.
+disk above, it's 1638400.
+You will need this number when you come to create a disklabel for that drive.
 .Pp
 Here is an example of an MVME147 system booting from tape:
 .(disp
@@ -93,7 +96,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.16 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.16.2.1 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -178,7 +181,8 @@ The root file system
 .It Li sd0b
 The swap partition.
 .It Li sd0c
-The whole disk. Also known as the
+The whole disk.
+Also known as the
 .Em raw partition .
 .tag)
 .Pp
@@ -186,8 +190,9 @@ The
 .Em raw partition No is special;
 .Nx
 is able to use it even if the
-disk has no label. You should never create a file system on the Raw
-Partition, even on a non-boot disk.
+disk has no label.
+You should never create a file system on the Raw Partition,
+even on a non-boot disk.
 .Pp
 It is good practice to put
 .Pa /usr
@@ -262,14 +267,16 @@ at the edlabel prompt, then enter the letter corresponding to the first
 .Dl edlabel/modify\*>
 .Pp
 When you enter the start and length of a partition, you can use either
-blocks or cylinder/track/sector notation. If this is the first time
-you've partitioned a disk for
+blocks or cylinder/track/sector notation.
+If this is the first time you've partitioned a disk for
 .Nx ,
 it's probably easiest to use block
-notation. The above example creates partition
+notation.
+The above example creates partition
 .Sq Li a ,
 starting at block zero
-and with a size of 65536 blocks. Note that the usual size of a block is
+and with a size of 65536 blocks.
+Note that the usual size of a block is
 512 bytes, so this creates a 32 MB partition.
 .Pp
 The
@@ -278,9 +285,9 @@ of the partition should be
 .Li 4.2BSD ,
 otherwise you won't be able to create a file system on it.
 .Pp
-Next, create a swap partition (b). Note that the minimum size of this
-swap partition should be 8 MB, otherwise you won't be able to use a
-miniroot to complete the
+Next, create a swap partition (b).
+Note that the minimum size of this swap partition should be 8 MB,
+otherwise you won't be able to use a miniroot to complete the
 .Nx
 installation!
 .Pp
@@ -295,14 +302,17 @@ Here, we specify a value for
 .Li start
 such that the swap partition follows immediately after partition
 .Sq Li a ,
-i.e. 65536. The length of the swap
-partition should be a multiple of the amount of RAM you have in your
-system. Here, we've chosen 32768, or 16 MB. The next available block on the
-drive is thus 65536 + 32768. We will use this to create partition
+i.e. 65536.
+The length of the swap partition should be a multiple of the
+amount of RAM you have in your system.
+Here, we've chosen 32768, or 16 MB.
+The next available block on the drive is thus 65536 + 32768.
+We will use this to create partition
 .Sq Li d
 for our
 .Pa /usr
-file system. (Note that for a busy system, or a system with more
+file system.
+(Note that for a busy system, or a system with more
 than 8 MB of RAM, you'll be better off with a 32 or 64 MB swap partition.)
 .Pp
 .Dl edlabel/modify\*> Ic d
@@ -322,15 +332,17 @@ starts at sector 98304, a simple bit of arithmetic (1638400 - 98304)
 gives
 .Sy d No a size of 1540096.
 .Pp
-Note that the above partition sizes are just guidelines. If your disk is
-large enough, you should resize the partitions appropriately and
-perhaps also create a /var partition as well.
+Note that the above partition sizes are just guidelines.
+If your disk is large enough, you should resize the partitions
+appropriately and perhaps also create a /var partition as well.
 .Pp
 You now need to write this new disklabel, together with the partition
-details you've just entered, to disk. You might also try the
+details you've just entered, to disk.
+You might also try the
 .Sq Ic p
 command
-to view the partitions. Once written, you can quit back to the shell using
+to view the partitions.
+Once written, you can quit back to the shell using
 .Sq Ic q .
 .Pp
 .Dl edlabel\*> Ic p
@@ -357,9 +369,11 @@ partition      start         (c/t/s)      nblks         (c/t/s)  type
 .Dl #
 .Pp
 Now that your disk's partitioned, you need to get the proper installation
-miniroot image onto it. The miniroot image is designed to be copied into
-the swap partition of your disk. This is a safe place which won't be
-overwritten by the installation procedure. From the shell prompt, use the
+miniroot image onto it.
+The miniroot image is designed to be copied into
+the swap partition of your disk.
+This is a safe place which won't be overwritten by the installation procedure.
+From the shell prompt, use the
 following commands to copy the miniroot image from tape to swap (b).
 .Pp
 .Dl # Ic "mt -f /dev/nrst0 rewind"
@@ -368,7 +382,8 @@ following commands to copy the miniroot image from tape to swap (b).
 .Pp
 The disk and the miniroot must now be made bootable using the
 .Xr installboot 8
-command. To do this, issue the following commands:
+command.
+To do this, issue the following commands:
 .Pp
 .Dl # Ic "mount /dev/sd0b /mnt"
 .Dl # Ic "installboot /mnt/usr/mdec/bootsd /bootxx /dev/rsd0b"
@@ -389,8 +404,8 @@ You can now shutdown the system.
 .Dl Execute Soft Reset [Y,N] N? Ic y
 .Pp
 Resetting the other types of MVME boards are very similar.
-You should now reboot from that just installed miniroot. See the section
-entitled
+You should now reboot from that just installed miniroot.
+See the section entitled
 .Sx "Booting the miniroot"
 for details.
 .
@@ -411,7 +426,8 @@ in the
 .Pa install
 directory of the \*M distribution).
 You can either do that through the console line or through a 2nd serial
-connection. For example, an MVME147 connected to a sun4/110 and accessed via
+connection.
+For example, an MVME147 connected to a sun4/110 and accessed via
 .Xr tip 1
 can be loaded as follows:
 .Pp
@@ -438,12 +454,14 @@ Which will look like this:
 .Dl \*>\*>\*>
 .Pp
 Now, if you want to do it through serial line 1, then connect serial
-line one to a machine. At the
+line one to a machine.
+At the
 .Li 147-Bug\*> No prompt type Ic \&tm 1
 You should then login to the machine it is connected to.
 Then press
 .Key CONTROL-A
-to escape to Bug. do
+to escape to Bug.
+Do
 .Ic lo 1;x=cat sboot Em ...
 then when that is done you can reconnect
 .Ic tm 1 No and logout.
@@ -477,8 +495,8 @@ To enable this, you must first configure the networking parameters
 on the board as described in the section entitled "Preparing your System
 for
 .Nx
-Installation. On a properly configured MVME162/172 or MVME167/177, all you need
-to type is:
+Installation.
+On a properly configured MVME162/172 or MVME167/177, all you need to type is:
 .Pp
 .Dl 1xx-Bug\*> Ic nbo
 .Pp
@@ -486,7 +504,7 @@ For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.16 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.16.2.1 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -521,11 +539,13 @@ SCSI disk on which you intend to create your root file system
 .Pq Pa / .
 Follow the instructions in the previous section entitled
 .Sx "Installing from tape"
-to do this. (But stop short of the part which describes how to
+to do this.
+(But stop short of the part which describes how to
 copy the miniroot from tape.)
 .Pp
 You must now configure the network interface before you can access the
-NFS server containing the miniroot image. For example the command:
+NFS server containing the miniroot image.
+For example the command:
 .Pp
 .Dl # Ic "ifconfig le0 inet 192.168.1.4 up"
 .Pp
@@ -540,8 +560,9 @@ will bring up the MVME162/172 or MVME167/177 network interface
 .Li ie0
 with that address.
 The next
-step is to copy the miniroot from your server. This can be done using
-either NFS or remote shell. (In the examples that follow, the server has
+step is to copy the miniroot from your server.
+This can be done using either NFS or remote shell.
+(In the examples that follow, the server has
 IP address 192.168.1.1) You may then need to add a default route if the
 server is on a different subnet:
 .Pp
@@ -556,7 +577,8 @@ Now mount the NFS file system containing the miniroot image:
 .Dl # Ic "mount -r 192.168.1.1:/export/soapy /mnt"
 .Pp
 The procedure is simpler if you have space for an expanded (not
-compressed) copy of the miniroot image. In that case:
+compressed) copy of the miniroot image.
+In that case:
 .Pp
 .Dl # Ic "dd bs=8k if=/mnt/miniroot of=/dev/rsd0b"
 .Pp
@@ -566,7 +588,8 @@ to expand the miniroot image while copying.
 .Pp
 .Dl # Ic gzcat miniroot.fs.gz | dd obs=8k of=/dev/rsd0b
 .Pp
-You must now make the disk bootable. Refer to the previous section on
+You must now make the disk bootable.
+Refer to the previous section on
 installing from tape, where it describes how to run
 .Ic installboot .
 This is immediately following the part which explains how to copy the
@@ -598,14 +621,16 @@ the miniroot kernel just as you did when the
 .Li RAMDISK
 kernel booted.
 .Pp
-You will then be prompted to enter the root device. Since the miniroot
-was booted from the swap partition, you should enter
+You will then be prompted to enter the root device.
+Since the miniroot was booted from the swap partition, you should enter
 .Li sd0b .
 You will
-then be asked for the swap device and file system type. Just press
+then be asked for the swap device and file system type.
+Just press
 .Key RETURN
-twice to accept the defaults. When asked to enter a terminal
-type, either accept the default, or use whatever the TERM environment
+twice to accept the defaults.
+When asked to enter a terminal type, either accept the default,
+or use whatever the TERM environment
 variable is set to in the shell of your host system:
 .Pp
 .Dl boot device: sd0
@@ -619,13 +644,13 @@ variable is set to in the shell of your host system:
 .Dl erase ^H, werase ^W, kill ^U, intr ^C
 .Dl Terminal type? [vt100] Em return
 .Pp
-Congratulations! The system should now be running the miniroot
-installation program.
+Congratulations!
+The system should now be running the miniroot installation program.
 .
 .Ss2 Miniroot install program:
 .
-The miniroot's install program is very simple to use. It will guide
-you through the entire process, and is well automated.
+The miniroot's install program is very simple to use.
+It will guide you through the entire process, and is well automated.
 .Pp
 Starting with
 .Nx
@@ -634,11 +659,13 @@ version 1.6, you have the option of using
 instead of the old installation and upgrade shell scripts.
 At this time,
 .Ic sysinst
-is not capable of installing distribution sets from tape. In such a
-case, you should fallback to the shell script installation or upgrade
-procedure. In all other cases,
+is not capable of installing distribution sets from tape.
+In such a case, you should fallback to the shell script installation
+or upgrade procedure.
+In all other cases,
 .Ic sysinst
-should be used. Note that as soon as
+should be used.
+Note that as soon as
 .Ic sysinst
 can deal with tapes, the shell script tools will be removed.
 .Pp
@@ -653,8 +680,9 @@ been partitioned using the
 kernel.
 .Pp
 Note that partition sizes and offsets are expressed
-in sectors. When you fill out the disklabel, you will
-need to specify partition types and file system parameters.
+in sectors.
+When you fill out the disklabel, you will need to specify partition
+types and file system parameters.
 If you're unsure what these values should be, use the
 following defaults:
 .(disp
@@ -683,7 +711,8 @@ Create file systems on target partitions.
 .It
 Allow you to set up your system's network configuration.
 Remember to specify host names without the domain name
-appended to the end.  For example use
+appended to the end.
+For example use
 .Li foo
 instead of
 .Li foo.bar.org .
@@ -692,8 +721,8 @@ the network interfaces, you make a mistake, you will
 be able to re-configure that interface by simply selecting
 it for configuration again.
 .It
-Mount target file systems. You will be given the opportunity
-to manually edit the resulting
+Mount target file systems.
+You will be given the opportunity to manually edit the resulting
 .Pa /etc/fstab .
 .It
 Extract binary sets from the media of your choice.

@@ -1,6 +1,7 @@
-.\"	$NetBSD: legal,v 1.2 2002/05/20 23:48:48 itojun Exp $
+.\"	$NetBSD: legal,v 1.2.2.1 2002/07/02 04:20:16 lukem Exp $
 .
 .It
-This product includes software developed for the NetBSD Project by Wasabi Systems, Inc.    
+This product includes software developed for the NetBSD Project by
+Wasabi Systems, Inc.
 .It
 This product includes software developed by TooLs GmbH.

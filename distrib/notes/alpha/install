@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.23 2002/02/16 18:17:04 he Exp $
+.\"	$NetBSD: install,v 1.23.2.1 2002/07/02 04:20:01 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -62,8 +62,8 @@ The usual procedure is to write the installation system to a floppy
 disk set and then boot from the floppies, however, there
 are now six ways to boot the
 .Nx*M
-installation system! Each approach
-loads the exact same installation bits.
+installation system!
+Each approach loads the exact same installation bits.
 The six paths are:
 .Pp
 .
@@ -90,10 +90,12 @@ CD or from an ftp site to the chosen media type.
 Although booting from floppy is the usual path, the
 hard drive boot is useful if you have another operating system (and a spare
 drive) already installed, or if you don't mind swapping hard drives from
-box to box. CD and tape boots are nice and fast if you have a CD writer
+box to box.
+CD and tape boots are nice and fast if you have a CD writer
 or a tape format in common with another previously installed
 .Ul
-system. Finally, most versions of SRM can locate the
+system.
+Finally, most versions of SRM can locate the
 .Nx
 boot program
 .Ic netboot
@@ -148,7 +150,8 @@ system available, you can use
 the
 .Ic rawrite.exe
 utility to transfer the image to a floppy
-disk. This utility is provided with the
+disk.
+This utility is provided with the
 .Nx Ns /i386
 install tools, under
 .Pa i386/installation/misc ;
@@ -180,7 +183,8 @@ To boot from a magnetic tape device such as
 or
 .Tn DLT ,
 it is important
-to create the tape image with 512-byte records. Use a command like:
+to create the tape image with 512-byte records.
+Use a command like:
 .Pp
 .Dl # Ic "dd if=cdhdtape bs=512 of=/dev/rst0"
 .Pp
@@ -202,9 +206,9 @@ The installation subdirectory
 contains
 .Pa netbsd.gz ;
 this is the same install kernel but without a bootable file system
-image wrapped around it. You can perform an complete reinstall
-by beginning it as an upgrade, and booting this kernel in the
-normal way off the root file system
+image wrapped around it.
+You can perform an complete reinstall by beginning it as an upgrade,
+and booting this kernel in the normal way off the root file system
 .Pq Pa /
 of a previous installation.
 .Pp
@@ -217,26 +221,28 @@ Network Boot
 Booting
 .Nx*M
 \*V over a network requires a BOOTP or
-DHCP server, a TFTP server and an NFS server. (These are usually
-all run on the same machine.) There are three basic stages to
-the boot:
+DHCP server, a TFTP server and an NFS server.
+(These are usually all run on the same machine.)
+There are three basic stages to the boot:
 .Pp
 .
 .
 .(bullet
 \*M console software sends a BOOTP request to get its
 own address, the address of the TFTP server and the file to
-download. It downloads this file, which is the second stage
-bootstrap, via TFTP and then executes it.
+download.
+It downloads this file, which is the second stage bootstrap,
+via TFTP and then executes it.
 .It
 The secondary boot program resends the BOOTP request, this
-time also locating the NFS server and root path. It mounts the
-root path via NFS and reads in and transfers to the kernel:
+time also locating the NFS server and root path.
+It mounts the root path via NFS and reads in and transfers to the kernel:
 .Pa /netbsd .
 .It
 The kernel probes and configures the devices, and then sends
 out another BOOTP request so it can find out its address, the NFS
-server, and path. It then mounts its root
+server, and path.
+It then mounts its root
 .Pq Pa /
 via NFS and continues.
 .bullet)
@@ -249,8 +255,8 @@ from the network, untar the
 .Nx
 snapshot or distribution
 into a directory on your server and NFS export that directory
-to the client. Make sure you put a kernel there as well, and
-create the device nodes in
+to the client.
+Make sure you put a kernel there as well, and create the device nodes in
 .Pa /dev
 with
 .Ic sh ./MAKEDEV all .
@@ -299,8 +305,8 @@ so for the TFTP setup, you need to copy the second stage bootstrap,
 .Ic netboot ,
 into an appropriately named file such as
 .Li boot.netbsd.\*M
-in the directory used by your TFTP server. If you extracted a full
-snapshot, you can get the netboot program from
+in the directory used by your TFTP server.
+If you extracted a full snapshot, you can get the netboot program from
 .Pa /usr/mdec/netboot ;
 if not, you can get this from the
 .Pa installation/netboot
@@ -356,14 +362,16 @@ host axp {
 The only Ethernet device the console on most \*M systems
 knows how to boot from is the onboard Ethernet interface or a
 .Tn DEC
-Tulip (21040, 21041, 21140) PCI Ethernet card. Some
-older SMC 100 Mbps cards that use this chip have been known to
-work as well. Many older systems will not be able to use the
-newer 2.0 stepping of the 21140, however. If your system appears
-not to be receiving packets, this may be the problem. (You may
-or may not be able to update your firmware to fix this; see
+Tulip (21040, 21041, 21140) PCI Ethernet card.
+Some older SMC 100 Mbps cards that use this chip have been known to
+work as well.
+Many older systems will not be able to use the newer 2.0 stepping
+of the 21140, however.
+If your system appears not to be receiving packets, this may be the problem.
+(You may or may not be able to update your firmware to fix this; see
 the \*M port pages on www.netbsd.org for more information on
-this.) In general, 10 Mb cards from manufacturers other than
+this.)
+In general, 10 Mb cards from manufacturers other than
 .Tn DEC
 will work, and 100 Mb cards not from
 .Tn DEC
@@ -383,15 +391,17 @@ The 3000 series of Turbochannel systems and certain other models use
 .Em old SRM ,
 do not have a
 .Fl proto
-option and use different device names. They also tend to not netboot very
-well so you probably don't need to worry about this section. However, if you
-want to give it a try, note the following differences:
+option and use different device names.
+They also tend to not netboot very well so you probably don't
+need to worry about this section.
+However, if you want to give it a try, note the following differences:
 .(bullet -offset indent
 There is no
 .Fl proto
 argument, or
 .Ic ewa0_protocols
-variable. Old SRM uses bootp if the device name is given as
+variable.
+Old SRM uses bootp if the device name is given as
 .Sy ez0 .
 .It
 The use of the
@@ -434,7 +444,8 @@ unpacking the tar files into these followed by running MAKEDEV.
 .Pp
 However, as stated above it is also possible to do the installation yourself
 from the shell, and in any case it is helpful to understand
-what the install script does. The procedure is:
+what the install script does.
+The procedure is:
 .Pp
 .
 .
@@ -482,7 +493,9 @@ The
 .Pa install
 and
 .Pa upgrade
-scripts are still there, so by exiting the sysinst program you can type
+scripts are still there, so by exiting the
+.Ic sysinst
+program you can type
 .Li install
 or
 .Li upgrade
@@ -490,8 +503,8 @@ at the shell prompt and run them as you did in the good old days.
 .Pp
 You may install
 on either a SCSI or an IDE disk; you will be prompted for
-the disk to install on. The disks in your system will be numbered
-starting at
+the disk to install on.
+The disks in your system will be numbered starting at
 .Em x Ns Li d0
 (where
 .Em x
@@ -504,7 +517,8 @@ more than one disk, watch the boot messages carefully to see
 which ones are probed as which numbers.
 .Pp
 Once you've selected a disk to install on, you'll be prompted
-for the geometry. This is also displayed in the boot messages,
+for the geometry.
+This is also displayed in the boot messages,
 and you'll be given a chance to review the boot messages again
 to get the exact figures for the number of cylinders, heads
 and sectors.
@@ -515,7 +529,8 @@ program will tell you how many bytes there are in each cylinder.
 .Pp
 The swap partition is the second thing you specify, after the
 .Pa /
-(root) partition. Regardless of the size of your disk, you'll
+(root) partition.
+Regardless of the size of your disk, you'll
 want to specify a swap partition that's at least as large as
 the amount of RAM you have, and probably not less than 64 MB
 in any case.
@@ -531,22 +546,24 @@ and preferably 48 MB, to the
 .Pa /
 (root) partition.
 .Pa /usr
-will need 150 MB or so if you're not installing X, 200 MB or so if you
-are. A typical organization is 50 MB for
+will need 150 MB or so if you're not installing X, 200 MB or so if you are.
+A typical organization is 50 MB for
 .Pa /
 (root), 150-250 MB for
 swap, and the remaining space for
 .Pa /usr .
 With enough swap space configured, you can make
 .Pa /tmp
-a nice, fast mfs. See
+a nice, fast mfs.
+See
 .Xr mount_mfs 8 ,
 and note that the mfs will require swap space for
 the largest planned amount of
 .Pa /tmp
-storage. It doesn't return
-space when files are deleted, but just keeps it its own freelist
-so the swap space required is equal to the highwater mark of
+storage.
+It doesn't return space when files are deleted,
+but just keeps it its own freelist so the swap space required is
+equal to the highwater mark of
 .Pa /tmp
 use, plus space required to back up main memory and store inactive images.
 .Pp
@@ -567,10 +584,9 @@ shell commands or the script assist, you then need only
 unpack the distribution sets with the
 .Xr tar 1
 command.
-To do this you will need access from the target host
-to the tar files
-that contain the operating system in order to extract them to your
-disk. This is done via an NFS or FTP transfer over a network,
+To do this you will need access from the target host to the tar files
+that contain the operating system in order to extract them to your disk.
+This is done via an NFS or FTP transfer over a network,
 via a CD-ROM archive, a tape archive, or by preloading an accessible hard
 drive with the necessary tar files.
 .
@@ -579,8 +595,10 @@ drive with the necessary tar files.
 Preparing to Install from a CD-ROM
 .Pp
 All you need to do is mount the CD-ROM, which will generally
-be device cd0. (The initial boot messages will tell you what
-the CD-ROM drive is probed as.) This would be done with:
+be device cd0.
+(The initial boot messages will tell you what
+the CD-ROM drive is probed as.)
+This would be done with:
 .Pp
 .Dl # Ic "mount -r -t cd9660 /dev/cd0a /mnt2"
 .It
@@ -591,7 +609,8 @@ interface, which is done with the command
 .Pp
 .Dl # Ic "ifconfig lo0 127.0.0.1"
 .Pp
-Then you will have to configure your Ethernet card. The command
+Then you will have to configure your Ethernet card.
+The command
 .Pp
 .Dl # Ic "ifconfig -l"
 .Pp
@@ -631,8 +650,8 @@ parameter is one of:
 .
 .Pp
 If the host you are getting the data files from is not on the
-local network, you will also have to configure a gateway into
-your system. Do this with
+local network, you will also have to configure a gateway into your system.
+Do this with
 .Pp
 .Dl # Ic "route add default \*<gateway-IP-address\*>"
 .Pp
@@ -711,9 +730,9 @@ Now make the device nodes:
 .It
 Restart your system
 .Pp
-Unmount the file systems and halt. The exact instructions to
-type here will depend on the file systems you created, but
-typically the commands are:
+Unmount the file systems and halt.
+The exact instructions to type here will depend on the file systems
+you created, but typically the commands are:
 .Pp
 .Dl # Ic "cd /"
 .Dl # Ic "umount /mnt/usr"
@@ -735,9 +754,8 @@ This command might be:
 if your drive is on ID 1.
 You can usually use
 .Ic "show device"
-to see a full list of bootable
-devices in your system. Your system will come up in single-user
-mode, ready for you to configure it.
+to see a full list of bootable devices in your system.
+Your system will come up in single-user mode, ready for you to configure it.
 .
 .enum)
 .

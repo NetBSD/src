@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.8 2002/05/03 04:01:45 mbw Exp $
+.\"	$NetBSD: install,v 1.8.2.1 2002/07/02 04:20:07 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-The miniroot's install program is very simple to use. It will guide
-you through the entire process, and is well automated.  If you need to
-restart the installer, hit
+The miniroot's install program is very simple to use.
+It will guide you through the entire process, and is well automated.
+If you need to restart the installer, hit
 .Key Control-C
-which will return you to a shell prompt.  From there, just start it over:
+which will return you to a shell prompt.
+From there, just start it over:
 .(disp
 .No # Ic "./install"
 .disp)
@@ -46,8 +47,8 @@ very self-explanatory.
 The miniroot's install program will:
 .(enum
 Allow you to place disklabels on additional disks.
-Note that partition sizes and offsets are expressed
-in sectors. When you fill out the disklabel, you will
+Note that partition sizes and offsets are expressed in sectors.
+When you fill out the disklabel, you will
 need to specify partition types and file system parameters.
 If you're unsure what these values should be, use the
 following:
@@ -80,8 +81,8 @@ the last partition letter, where
 etc.
 Therefore, if the last filled partition is partition
 .Sq Li g ,
-there are 7 partitions. Any partitions with size of 0
-may be removed from the list.
+there are 7 partitions.
+Any partitions with size of 0 may be removed from the list.
 .Pp
 Anything after a
 .Sq Li #
@@ -105,7 +106,8 @@ Create file systems on target partitions.
 .It
 Allow you to set up your system's network configuration.
 Remember to specify host names without the domain name
-appended to the end. For example use
+appended to the end.
+For example use
 .Li foo
 instead of
 .Li foo.bar.org .
@@ -115,8 +117,8 @@ be able to re-configure that interface by simply selecting
 it for configuration again.
 .Pp
 .It
-Mount target file systems. You will be given the opportunity
-to manually edit the resulting
+Mount target file systems.
+You will be given the opportunity to manually edit the resulting
 .Pa /etc/fstab .
 .Pp
 .It

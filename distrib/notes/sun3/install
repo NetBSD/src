@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.11 2001/10/27 22:38:10 chs Exp $
+.\"	$NetBSD: install,v 1.11.2.1 2002/07/02 04:20:19 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -39,11 +39,11 @@ this document in hand it should not be too difficult.
 .Pp
 There are several ways to install
 .Nx
-onto your disk. If your
-machine has a tape drive the easiest way is
+onto your disk.
+If your machine has a tape drive the easiest way is
 .Sx "Installing from tape"
-(details below). If your machine is on a network with a suitable
-NFS server, then
+(details below).
+If your machine is on a network with a suitable NFS server, then
 .Sx "Installing from NFS"
 is the next best method.
 Otherwise, if you have another
@@ -62,14 +62,15 @@ Create the
 \*V boot tape as described in the section
 entitled
 .Sx "Preparing a boot tape"
-and boot the tape. At the PROM
-monitor prompt, use one of the commands:
+and boot the tape.
+At the PROM monitor prompt, use one of the commands:
 .Pp
 .Dl \*> Ns Ic "b st()"
 .Dl \*> Ns Ic "b st(0,8,0)"
 .Pp
 The first example will use the tape on SCSI target 4, where the
-second will use SCSI target 5. The
+second will use SCSI target 5.
+The
 .Li \*>
 is the monitor prompt.
 .Pp
@@ -107,8 +108,8 @@ To view this message again, type:  cat /.welcome
 .disp)
 .Pp
 Copy the miniroot as described in the welcome message, and
-reboot from that just installed miniroot. See the section
-entitled
+reboot from that just installed miniroot.
+See the section entitled
 .Sx Booting the miniroot
 for details.
 .
@@ -124,12 +125,13 @@ above.
 First, at the
 .Tn Sun
 PROM monitor prompt, enter a boot command
-using the network interface as the boot device. On desktop
-machines this is
+using the network interface as the boot device.
+On desktop machines this is
 .Em le ,
 and
 .Em ie
-on the others. Examples:
+on the others.
+Examples:
 .Pp
 .Dl \*> Ns Ic "b le() -s"
 .Dl \*> Ns Ic "b ie() -s"
@@ -137,16 +139,19 @@ on the others. Examples:
 After the boot program loads the RAMDISK kernel, you should
 see the welcome screen as shown in the
 .Sx Installing from tape
-section above. You must configure the network interface before you
-can use any network resources. For example the command:
+section above.
+You must configure the network interface before you
+can use any network resources.
+For example the command:
 .Pp
 .Dl ssh\*> Ic "ifconfig le0 inet 192.233.20.198 up"
 .Pp
-will bring up the network interface with that address. The next
-step is to copy the miniroot from your server. This can be done
-using either NFS or remote shell. (In the examples that follow,
-the server has IP address 192.233.20.195.) You may then need to
-add a default route if the server is on a different subnet:
+will bring up the network interface with that address.
+The next step is to copy the miniroot from your server.
+This can be done using either NFS or remote shell.
+(In the examples that follow, the server has IP address 192.233.20.195.)
+You may then need to add a default route if the server is on
+a different subnet:
 .Pp
 .Dl ssh\*> Ic "route add default 192.233.20.255 1"
 .Pp
@@ -159,19 +164,21 @@ Now mount the NFS file system containing the miniroot image:
 .Dl ssh\*> Ic "mount -r 192.233.20.195:/server/path /mnt"
 .Pp
 The procedure is simpler if you have space for an expanded
-(not compressed) copy of the miniroot image. In that case:
+(not compressed) copy of the miniroot image.
+In that case:
 .Pp
 .Dl ssh\*> Ic "dd if=/mnt/miniroot of=/dev/rsd0b bs=8k"
 .Pp
 Otherwise, you will need to use
 .Ic zcat
-to expand the miniroot image while copying. This is tricky because the
+to expand the miniroot image while copying.
+This is tricky because the
 .Ic ssh
 program
 (small shell) does not handle
 .Xr sh 1
-pipeline syntax. Instead,
-you first run the reader in the background with its input set
+pipeline syntax.
+Instead, you first run the reader in the background with its input set
 to
 .Pa /dev/pipe
 and then run the other program in the foreground with its output to
@@ -182,7 +189,8 @@ The result looks like this:
 .Dl ssh\*> Ic "run -o /dev/pipe zcat /mnt/install/miniroot.gz"
 .Pp
 To load the miniroot using rsh to the server, you would use a
-pair of commands similar to the above. Here is another example:
+pair of commands similar to the above.
+Here is another example:
 .Pp
 .Dl ssh\*> Ic "run -b dd if=/dev/pipe of=/dev/rsd0b obs=8k"
 .Dl ssh\*> Ic "run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.gz"
@@ -210,8 +218,9 @@ the image elsewhere before you can use it.
 Next, bring
 .Tn SunOS
 down to single user mode to insure that nothing
-will be using the swap space on your drive. To be extra safe, reboot
-the machine into single-user mode rather than using the
+will be using the swap space on your drive.
+To be extra safe, reboot the machine into single-user mode
+rather than using the
 .Ic shutdown
 command.
 .Pp
@@ -252,9 +261,9 @@ partition number
 .
 .Ss2 Miniroot install program
 .
-The miniroot's install program is very simple to use. It will guide
-you through the entire process, and is well automated. Additional
-improvements are planned for future releases.
+The miniroot's install program is very simple to use.
+It will guide you through the entire process, and is well automated.
+Additional improvements are planned for future releases.
 .Pp
 The miniroot's install program will:
 .(bullet -offset indent
@@ -266,7 +275,8 @@ Create file systems on target partitions.
 .It
 Allow you to set up your system's network configuration.
 Remember to specify host names without the domain name
-appended to the end. For example use
+appended to the end.
+For example use
 .Li foo
 instead of
 .Li foo.bar.org .
@@ -275,8 +285,8 @@ the network interfaces, you make a mistake, you will
 be able to re-configure that interface by simply selecting
 it for configuration again.
 .It
-Mount target file systems. You will be given the opportunity
-to manually edit the resulting
+Mount target file systems.
+You will be given the opportunity to manually edit the resulting
 .Pa /etc/fstab .
 .It
 Extract binary sets from the media of your choice.

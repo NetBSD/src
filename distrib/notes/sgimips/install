@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.1.2.1 2002/06/10 16:17:49 tv Exp $
+.\"	$NetBSD: install,v 1.1.2.2 2002/07/02 04:20:16 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000, 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -54,31 +54,33 @@ install kernel from an existing file system.
 .if 0 \{\
 .It
 Copying a bootable diskimage onto the beginning of a disk and installing
-onto that disk.  See the
+onto that disk.
+See the
 .Sx Diskless installation
 section later in these INSTALL notes.
 .\}
 .It
-Installation in a diskless environment.  This means that you will install
+Installation in a diskless environment.
+This means that you will install
 your entire system onto a remotely shared disk.
 .It
-Booting the install kernel over the network and installing onto a local
-disk.  The beginning of the procedure is similar to diskless installation,
+Booting the install kernel over the network and installing onto a local disk.
+The beginning of the procedure is similar to diskless installation,
 but you will eventually end up writing the system onto your local disk.
 .if 0 \{\
 .It
-Using a helper machine with a SCSI controller to copy the bootable
-diskimage onto the beginning of a disk, and moving the disk to the
-target machine.  See the
+Using a helper machine with a SCSI controller to copy the bootable diskimage
+onto the beginning of a disk, and moving the disk to the target machine.
+See the
 .Sx Install via diskimage
 section later in these INSTALL notes.
-.\} 
+.\}
 .enum)
 .Pp
 You should familiarize yourself with the console PROM environment
-and the hardware configuration.  A good place to study PROM tricks
-is the IRIX "prom" manual page.
-Be sure you know how to print the configuration of your machine, 
+and the hardware configuration.
+A good place to study PROM tricks is the IRIX "prom" manual page.
+Be sure you know how to print the configuration of your machine,
 and how to boot from disk or network, as appropriate.
 .Pp
 To boot from disk, use:
@@ -92,9 +94,9 @@ To boot from disk, use:
 .Dl ">> setenv osloader boot"
 .bullet)
 .Pp
-For all 
+For all
 drives (including all SCSI-2 drives), the kernel should correctly detect
-the disk geometry. 
+the disk geometry.
 .Pp
 If you're installing
 .Nx*M
@@ -103,38 +105,40 @@ good idea to pre-plan partition sizes for the disks onto which you're
 installing
 .Nx .
 Changing the size of partitions after you've
-installed is difficult.  If you do not have a spare bootable disk, it
-may be simpler to re-install
+installed is difficult.
+If you do not have a spare bootable disk, it may be simpler to re-install
 .Nx
 again from scratch.
 .Pp
 To be able to boot from local disk an
-SGI Volume Header partition is required.  This special partition is accessed
-by the PROM to load the
+SGI Volume Header partition is required.
+This special partition is accessed by the PROM to load the
 .Nx*M
-boot program.  The partition should be about
-2 MB in size, but can be reduced somewhat.  The minimum size can approach
-150k, but this doesn't leave room for upgrade boot programs.
+boot program.
+The partition should be about 2 MB in size, but can be reduced somewhat.
+The minimum size can approach 150k, but this doesn't leave room for
+upgrade boot programs.
 .
 .Ss2 Install via a bootable CD-ROM
 .
 The
 .Nx*M
-CD-ROM is not ISO-formatted.  Since the older SGI PROMs
-do not understand ISO/CD-9660 formats, the CD-ROM image is generated with an
-SGI Volume Header and an FFS-formatted (BSD4.2) partition for the distribution.
+CD-ROM is not ISO-formatted.
+Since the older SGI PROMs do not understand ISO/CD-9660 formats,
+the CD-ROM image is generated with an SGI Volume Header and an
+FFS-formatted (BSD4.2) partition for the distribution.
 Furthermore, since the filesystem is FFS, the CD cannot be mounted under IRIX.
 .Pp
 To install from a
 .Nx*M
 CD-ROM, follow the procedure above for
 setting the PROM environment for SystemPartition, OSLoadPartition, OSLoader
-and OSLoadFilename.  The SCSI and DISK values used should be for your attached
-CD-ROM drive, where
+and OSLoadFilename.
+The SCSI and DISK values used should be for your attached CD-ROM drive, where
 .Ar X
 is the SCSI-ID of the CD-ROM.
 .
-Using the PROM command-line interface, 
+Using the PROM command-line interface,
 you can boot the CD-ROM installation kernel as follows:
 .Pp
 .(tag 12n -offset indent -compact
@@ -146,14 +150,16 @@ This sections assumes you know how to configure DHCP, TFTP,
 and NFS services on your server.
 .Pp
 .(enum
-Place the kernel into the TFTP server's download area.  If the
-kernel has a
+Place the kernel into the TFTP server's download area.
+If the kernel has a
 .Dq .gz
 suffix, you must first uncompress it using the
 .Pa gunzip
-program.  You must also decide which kernel you need to boot.  Because of
-differences in SGI hardware between different machines, the kernel load
-addresses differ. You will need GENERIC_INDY for the Indy and Indigo2,
+program.
+You must also decide which kernel you need to boot.
+Because of differences in SGI hardware between different machines,
+the kernel load addresses differ.
+You will need GENERIC_INDY for the Indy and Indigo2,
 while GENERIC should be enough for the O2.
 .Pp
 .Dl server# Ic cp netbsd-GENERIC /tftpboot/netbsd-sgimips
@@ -178,12 +184,13 @@ Load the kernel from the TFTP server:
 .Pp
 The installation of your diskless
 .Nx*M
-system is now complete!  You may now skip ahead to any post-installation
-instructions.
+system is now complete!
+You may now skip ahead to any post-installation instructions.
 .Ss2 Once you've booted the diskimage
 .
 Once you've booted the installation kernel you will need to
-select your terminal type.  Use
+select your terminal type.
+Use
 .Ic iris-ansi
 for an SGI graphics console (Not currently supported)
 .Ic vt100

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.8 2000/11/21 12:38:59 scw Exp $
+.\"	$NetBSD: hardware,v 1.8.2.1 2002/07/02 04:20:12 lukem Exp $
 .
 .Nx*M
 \*V runs on Motorola
@@ -16,9 +16,10 @@ Single Board Computers.
 .Pp
 The minimal configuration requires 8 MB of RAM and ~200 MB of disk space.
 To install the entire system requires much more disk space (approx.
-600 MB additional space is necessary for full sources. Double that if you
-want to recompile it all!). To run X (clients only) or compile the system,
-more RAM is recommended. Good performance requires 16 MB of RAM, or 32 MB
+600 MB additional space is necessary for full sources.
+Double that if you want to recompile it all!).
+To run X (clients only) or compile the system, more RAM is recommended.
+Good performance requires 16 MB of RAM, or 32 MB
 when running the X Window System.
 .Pp
 Note that you can install
@@ -44,8 +45,9 @@ Note that the
 .Nx*M
 installation procedure uses a
 .Em miniroot
-image which is placed into the swap area of the disk. The swap partition
-must be large enough to hold this miniroot image (\*> 7.5 MB).
+image which is placed into the swap area of the disk.
+The swap partition must be large enough to hold this miniroot image
+(\*> 7.5 MB).
 .
 .Ss2 Supported VME147 hardware
 .(bullet -offset indent

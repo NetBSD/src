@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1.2.2 2002/06/19 01:20:48 lukem Exp $
+.\"	$NetBSD: hardware,v 1.1.2.3 2002/07/02 04:20:13 lukem Exp $
 .
 .Nx*M
 \*V will run on single MIPS-based Sony NEWS workstations.

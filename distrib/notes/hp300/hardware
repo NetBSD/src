@@ -1,9 +1,9 @@
-.\"	$NetBSD: hardware,v 1.13 2002/05/03 04:09:04 mbw Exp $
+.\"	$NetBSD: hardware,v 1.13.2.1 2002/07/02 04:20:07 lukem Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
-The smallest amount of RAM that has been tested is 4 MB.  If you wish to
-run X, more RAM is recommended.
+The smallest amount of RAM that has been tested is 4 MB.
+If you wish to run X, more RAM is recommended.
 .
 .Ss2 Supported hardware
 .(bullet -offset indent
@@ -53,16 +53,16 @@ CPUs
 .It
 385 (33 MHz 68040, up to 128 MB RAM, built-in SCSI)
 .It
-400s, 400t, 400dl (50 MHz 68030 with 32 KB L2 cache, built-in SCSI, 
+400s, 400t, 400dl (50 MHz 68030 with 32 KB L2 cache, built-in SCSI,
 up to 128 MB RAM)
 .It
 425s, 425t, 425dl (25 MHz 68040 with built-in SCSI, up to 128 MB RAM)
 .It
 425e (25 MHz 68040, built-in SCSI)
 .br
-.Em "The BootROM does not support serial console and" 
+.Em "The BootROM does not support serial console and"
 .Nx*M
-.Em "does not support the 425e framebuffer.  When the" 
+.Em "does not support the 425e framebuffer.  When the"
 .Nx
 .Em "kernel begins to boot it will default to using the serial port for console"
 .It
@@ -201,25 +201,26 @@ ID modules
 .It
 Miscellaneous boards/interfaces
 .(bullet -compact
-98265A SCSI interface (DIO-I board, daughtercard for 98562, or built-in) 
+98265A SCSI interface (DIO-I board, daughtercard for 98562, or built-in)
 .It
-98561 Human Interface board (DIO-I board with serial port, HP-HIL, and HP-IB) 
+98561 Human Interface board (DIO-I board with serial port, HP-HIL, and HP-IB)
 .It
 98562 System Interface board (DIO-II board with serial port,
 HP-HIL, HP-IB, DMA, and ethernet, has optional fast HP-IB or SCSI
-daughterboard) 
+daughterboard)
 .It
-98620 DMA card (DIO-I board, for use with 98561) 
+98620 DMA card (DIO-I board, for use with 98561)
 .It
-98624 HP-IB interface (DIO-I board or built-in) 
+98624 HP-IB interface (DIO-I board or built-in)
 .It
 98625A and 98625B 'fast' HP-IB interface (DIO-I board or
-daughtercard for 98562) 
+daughtercard for 98562)
 .bullet)
 .bullet)
 .Pp
 Each serial interface has its own quirks, and some of them use
-non-standard pins.  The FAQ describes how to configure and connect serial
+non-standard pins.
+The FAQ describes how to configure and connect serial
 consoles to \*M systems.
 .Lk http://www.netbsd.org/Ports/hp300/faq.html#serialconsole
 .Pp
@@ -241,31 +242,32 @@ CPUs
 .It
 Graphics Devices
 .(bullet -compact
-SGC support (for 425e built-in EVRX framebuffer) 
+SGC support (for 425e built-in EVRX framebuffer)
 .It
-SGC support (for some rare configurations of 4XXt and 4XXdl workstations) 
+SGC support (for some rare configurations of 4XXt and 4XXdl workstations)
 .It
-98702 TurboVRX DIO-II graphics device 
+98702 TurboVRX DIO-II graphics device
 .It
-98705 Tigershark PersonalVRX DIO-II graphics device 
+98705 Tigershark PersonalVRX DIO-II graphics device
 .It
-internal video on models 362/382 
+internal video on models 362/382
 .bullet)
 .It
 Miscellaneous boards/interfaces
 .(bullet -compact
-domain keyboard and mouse, on Series 400 workstations. Needs wscons 
+domain keyboard and mouse, on Series 400 workstations.
+Needs wscons
 .It
-parallel port, on 345, 375, 380, and Series 400 workstations 
+parallel port, on 345, 375, 380, and Series 400 workstations
 .It
-EISA support, on Series 400 workstations 
+EISA support, on Series 400 workstations
 .It
-Token Ring cards (a.k.a. ATR) 
+Token Ring cards (a.k.a. ATR)
 .It
-VME bus adapter, on Series 300 workstations 
+VME bus adapter, on Series 300 workstations
 .It
-98625C fast HP-IB option on models 345 and 375 
+98625C fast HP-IB option on models 345 and 375
 .It
-floppy drive on 425e 
+floppy drive on 425e
 .bullet)
 .bullet)

@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.2 2002/05/08 04:13:15 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.2.2.1 2002/07/02 04:20:18 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -36,12 +36,13 @@
 It is possible to easily upgrade your existing
 .Nx*M
 system
-using the upgrade program in the miniroot. If you wish to upgrade
-your system by this method, simply select the
+using the upgrade program in the miniroot.
+If you wish to upgrade your system by this method, simply select the
 .Ic upgrade
 option once
-the miniroot has booted. The upgrade program with then guide you
-through the procedure. The upgrade program will:
+the miniroot has booted.
+The upgrade program with then guide you through the procedure.
+The upgrade program will:
 .(bullet -offset indent
 Enable the network based on your system's current network configuration.
 .It
@@ -73,16 +74,16 @@ Using the miniroot's upgrade program is the preferred method
 of upgrading your system.
 .\}
 .Pp
-However, it is possible to upgrade your system
-manually. To do this, follow the following procedure:
+However, it is possible to upgrade your system manually.
+To do this, follow the following procedure:
 .(bullet -offset indent
 Place
 .Em at least
 the
 .Sy base
 binary set in a file system
-accessible to the target machine. A local file system
-is preferred, since the NFS subsystem in the
+accessible to the target machine.
+A local file system is preferred, since the NFS subsystem in the
 .Nx \*V
 kernel may be incompatible with your old binaries.
 .It
@@ -106,8 +107,8 @@ If you keep
 or
 .Pa /usr/share
 on an NFS server, you
-will want to mount those file systems as well. To do
-this, you will need to enable the network:
+will want to mount those file systems as well.
+To do this, you will need to enable the network:
 .Pp
 .Dl # Ic "sh /etc/rc.d/network start"
 .It
@@ -144,6 +145,7 @@ To extract these sets, use the following commands:
 .No You Em should not
 extract the
 .Sy etc
-set if upgrading. Instead, you should extract that set into another
+set if upgrading.
+Instead, you should extract that set into another
 area and carefully merge the changes by hand.
 .Note)

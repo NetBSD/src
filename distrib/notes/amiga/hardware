@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.43 2002/01/27 19:50:10 aymeric Exp $
+.\"	$NetBSD: hardware,v 1.43.2.1 2002/07/02 04:20:01 lukem Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -14,10 +14,12 @@ system utilities.
 68LC040, 68040V and 68LC060 systems don't work correctly at the moment.
 .Pp
 The minimal configuration requires 6 MB of RAM (not including CHIPMEM!)
-and about 75 MB of disk space.  To install the entire system requires
-much more disk space, and to run X or compile the system, more RAM
-is recommended.  (6 MB of RAM will actually allow you to compile,
-however it won't be speedy. X really isn't usable on a 6 MB system.)
+and about 75 MB of disk space.
+To install the entire system requires much more disk space,
+and to run X or compile the system, more RAM is recommended.
+(6 MB of RAM will actually allow you to compile,
+however it won't be speedy.
+X really isn't usable on a 6 MB system.)
 .Pp
 Here is a table of recommended HD partition sizes for a full install:
 .Bl -column -offset indent Partition Suggested 100xMBxx Needed 100xMB
@@ -141,8 +143,8 @@ Mustek SCSI scanner.
 SCSI scanner support is machine independent, so it should
 work, but hasn't been tested yet on most Amiga configurations.
 There are reports that the Mustek and HP ScanJet hang if
-accessed from the A3000. This might apply to other
-33C93-Adapters, too.
+accessed from the A3000.
+This might apply to other 33C93-Adapters, too.
 .It
 Most SCSI CD-ROM drives
 .It
@@ -161,11 +163,11 @@ Amiga floppy drives with Amiga (880/1760kB) and
 .Tn IBM
 (720/1440kB) encoding.
 Our floppy driver doesn't notice when mounted floppies are
-write-protected at the moment. Your floppy will stay
-unchanged, but you might not notice that you didn't write
-anything due to the buffer cache. Also note that HD floppy
-drives only get detected as such if a HD floppy is inserted at
-boot time.
+write-protected at the moment.
+Your floppy will stay unchanged, but you might not notice that
+you didn't write anything due to the buffer cache.
+Also note that HD floppy drives only get detected as such if a
+HD floppy is inserted at boot time.
 .It
 Amiga parallel port
 .It
@@ -185,7 +187,7 @@ DraCo builtin (r/o)
 .bullet)
 .bullet)
 .Pp
-If its not on the above lists, there is no support for it in this
-release. Especially (but this is an incomplete list), there are no
+If its not on the above lists, there is no support for it in this release.
+Especially (but this is an incomplete list), there are no
 drivers for: Blizzard III SCSI option,
 Ferret SCSI, Oktagon SCSI.

@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.9.2.1 2002/05/29 16:27:46 tv Exp $
+	$NetBSD: prep.RISCOS,v 1.9.2.2 2002/07/02 04:20:00 lukem Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+/NC's).
@@ -368,7 +368,7 @@ mentioned in this document as well as the bootloader !BtNetBSD itself.
 4.1 Configuring the !BtNetBSD bootloader before installation
 
 Open the !BtNetBSD application and edit the `fastboot' file to specify
-the installation kernel location; an example is already given. 
+the installation kernel location; an example is already given.
 
 
 You can also set other details like tweaking with the amount of memory in

@@ -1,6 +1,6 @@
-.\"	$NetBSD: macros,v 1.19 2002/05/12 22:47:17 kleink Exp $
+.\"	$NetBSD: macros,v 1.19.2.1 2002/07/02 04:20:05 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -232,7 +232,7 @@
 .if \\n(Db .tm diversion trap (page break) at \\n(nlu.
 .\"TRAP1	\" debugging
 .di            \" close first-page (C1) diversion
-.di C2         \" open second-page (C2) diversion 
+.di C2         \" open second-page (C2) diversion
 ..
 .de Bc
 .in +\n(Dsu	\" Indent to match Bd
@@ -258,7 +258,7 @@
 .rn C1 C0	\" put original in C0
 .ev 2
 .di C1		\" Divert the first page into new C1
-.\" Diversion trap location in solid kludgite. If notCRT, we need 
+.\" Diversion trap location in solid kludgite. If notCRT, we need
 .\" extra v-height. go figure.
 .ie \\n(cR==0 .dt \\n(CBu*\\n(CNu+2v CC
 .el .dt \\n(CBu*\\n(CNu CC
@@ -369,16 +369,20 @@
 .
 .define_all \*[MACHINE_LIST]
 .
-.\" Supported CPUs:
-.\"	alpha arm i386 m68k mips pc532 powerpc sh3 sparc sparc64 vax
-.\" Define registers for MACHINE_ARCHs with multiple MACHINEs
+.\" Supported MACHINE_ARCHs:
+.\"	alpha arm i386 m68000 m68k mipseb mipsel ns32k powerpc
+.\"	sh3eb sh3el sparc sparc64 vax x86_64
+.\" Define registers for MACHINE_ARCHs with multiple or different MACHINEs
 .
 .ds A \*M
 .if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[hpcarm]:\n[netwinder]:\n[shark] .ds A arm
+.if \n[sun2] .ds A m68000
 .if \n[amiga]:\n[atari]:\n[cesfic]:\n[hp300]:\n[luna68k]:\n[mac68k]:\n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .ds A m68k
-.if \n[algor]:\n[arc]:\n[cobalt]:\n[evbmips]:\n[hpcmips]:\n[mipsco]:\n[newsmips]:\n[playstation2]:\n[pmax]:\n[sbmips]:\n[sgimips] .ds A mips
+.if \n[mipsco]:\n[newsmips]:\n[sbmips]:\n[sgimips] .ds A mipseb
+.if \n[algor]:\n[arc]:\n[cobalt]:\n[evbmips]:\n[hpcmips]:\n[playstation2]:\n[pmax] .ds A mipsel
 .if \n[amigappc]:\n[bebox]:\n[macppc]:\n[mvmeppc]:\n[ofppc]:\n[prep]:\n[sandpoint]:\n[walnut] .ds A powerpc
-.if \n[dreamcast]\n[evbsh3]:\n[hpcsh]:\n[mmeye] .ds A sh3
+.if \n[evbsh3]:\n[mmeye] .ds A sh3eb
+.if \n[dreamcast]:\n[hpcsh] .ds A sh3el
 .if !r\*A .nr \*A 1
 .
 .

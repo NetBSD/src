@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.30 2002/05/08 04:13:14 lukem Exp $
+.\"	$NetBSD: install,v 1.30.2.1 2002/07/02 04:20:15 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -64,35 +64,39 @@ See the
 section later in these INSTALL notes.
 .It
 Copying a bootable diskimage onto the beginning of a disk and installing
-onto that disk.  See the
+onto that disk.
+See the
 .Sx Install via diskimage
 section later in these INSTALL notes.
 .It
 Booting the install kernel over the network and installing onto a local
-disk.  See the
+disk.
+See the
 .Sx Install via netboot install kernel
 section later in these INSTALL notes.
 .It
 Using a helper machine with a SCSI controller to copy the bootable
 diskimage onto the beginning of a disk, and moving the disk to the
-target machine.  See the
+target machine.
+See the
 .Sx Install via diskimage
 section later in these INSTALL notes.
 .It
 For machines with some PROMs that cannot netboot standard kernels, you
 will need to set up an NFS server with a diskless root file system for
 trimmed-down network install kernel and run the installation system from
-the NFS root file system. See the
+the NFS root file system.
+See the
 .Sx Install via diskless boot
 section later in these INSTALL notes.
 .enum)
 .Pp
 You should familiarize yourself with the console PROM environment
-and the hardware configuration. The PROMs on the older DECstation
-2100 and 3100 use one syntax. The PROMs on the TurboChannel machines
-use a completely different syntax.  Be sure you know how to print
-the configuration of your machine, and how to boot from disk or
-network, as appropriate.
+and the hardware configuration.
+The PROMs on the older DECstation 2100 and 3100 use one syntax.
+The PROMs on the TurboChannel machines use a completely different syntax.
+Be sure you know how to print the configuration of your machine,
+and how to boot from disk or network, as appropriate.
 .Pp
 To boot from disk, use:
 .Pp
@@ -131,9 +135,10 @@ You will also need to know the total size (in sectors) and the
 approximate geometry of the disks you are installing onto, so that you
 can label your disks for the
 .Bx
-fast file system (FFS).  For most SCSI
-drives (including all SCSI-2 drives), the kernel will correctly detect
-the disk geometry. The
+fast file system (FFS).
+For most SCSI drives (including all SCSI-2 drives),
+the kernel will correctly detect the disk geometry.
+The
 .Ic sysinst
 tool will suggest these as the default.
 .Pp
@@ -143,9 +148,8 @@ for the first time it's a very
 good idea to pre-plan partition sizes for the disks on which you're
 installing
 .Nx .
-Changing the size of partitions after you've
-installed is difficult.  If you do not have a spare bootable disk, it
-may be simpler to re-install
+Changing the size of partitions after you've installed is difficult.
+If you do not have a spare bootable disk, it may be simpler to re-install
 .Nx
 again from scratch.
 .Pp
@@ -162,9 +166,10 @@ A good initial size for the swap partition is twice the
 amount of physical memory in your machine (though, unlike
 .Tn Ultrix ,
 there are no restrictions on the size of the swap partition that would render
-part of your memory unusable).  The default swap size is 64 MB, which
-is adequate for doing a full system build.  A full binary installation,
-with X11R6.3 takes about 150 MB in
+part of your memory unusable).
+The default swap size is 64 MB, which
+is adequate for doing a full system build.
+A full binary installation, with X11R6.3 takes about 150 MB in
 .Pa /usr ;
 a 200 MB
 .Pa /usr
@@ -196,8 +201,8 @@ is the SCSI-ID of the CD-ROM.
 does not have Rock Ridge extensions so leave out everything
 between the first and last period
 .Pq Sq \&.
-in the paths on the CD.  For
-example, the path
+in the paths on the CD.
+For example, the path
 .Pa NetBSD-1.4.3
 would show up as
 .Pa NetBSD-1.3 .
@@ -237,8 +242,8 @@ New bootblocks are in the tar file:
 .Pp
 in the
 .Nx \*V
-distribution.  To install the new bootblocks,
-use the following commands:
+distribution.
+To install the new bootblocks, use the following commands:
 .Pp
 .Dl # Ic "cd /"
 .Dl # Ic "tar -zxpvf .../\*M/installation/misc/bootblocks.tgz"
@@ -322,7 +327,8 @@ disk, you may get a message like:
 .Pp
 when issuing the
 .Ic "disklabel -W /dev/rsd" Ns Ar X Ns Ic "c"
-command.  This can safely be ignored.
+command.
+This can safely be ignored.
 .Pp
 On
 .Nx Ns /i386,
@@ -340,7 +346,8 @@ On
 be sure to use
 .Ic disklabel -W
 to enable writing to the label
-area of the disk. If you forget this and/or use the
+area of the disk.
+If you forget this and/or use the
 .Sq block
 device, the
 .Ic dd
@@ -389,8 +396,9 @@ section.
 Booting
 .Nx*M
 \*V install kernel over a network requires a BOOTP
-or DHCP server and a TFTP server.  (These are usually all run on the
-same machine.)  There are two basic stages to the boot:
+or DHCP server and a TFTP server.
+(These are usually all run on the same machine.)
+There are two basic stages to the boot:
 .Pp
 .
 .(bullet
@@ -453,8 +461,8 @@ host \*M {
 .Pp
 For the TFTP server, You will need to copy the
 .Ic install.ecoff
-kernel to the directory used by the TFTP server.  This file must be
-gunzipped.
+kernel to the directory used by the TFTP server.
+This file must be gunzipped.
 .Pp
 Then boot using one of:
 .Pp
@@ -476,19 +484,23 @@ section.
 The file
 .Pa \*M/installation/netboot/diskimage.tar.gz
 contains a suitable set of files for installing on an NFS server to set
-up a diskless root filesytem.  (It is a tar copy of the contents of an
-installation ramdisk file system contained in the install kernel.)  You
-will need to find an NFS server, unpack the tarfile, and setup
-BOOTP/dhcp service for your \*M.  Instructions for setting up
-an NFS server and diskless booting are on the
+up a diskless root filesytem.
+(It is a tar copy of the contents of an
+installation ramdisk file system contained in the install kernel.)
+You will need to find an NFS server, unpack the tarfile, and setup
+BOOTP/dhcp service for your \*M.
+Instructions for setting up an NFS server and diskless booting are on the
 .Nx*M
 netboot
 webpage at
 .Lk http://www.netbsd.org/Ports/\*M/netboot.html
 .Pp
-Since the system install utility, sysinst, requires a read/write root,
+Since the system install utility,
+.Ic sysinst ,
+requires a read/write root,
 installing via diskless boot is only feasible if your NFS server exports
-the diskless root read-write.  If this is not possible, you should
+the diskless root read-write.
+If this is not possible, you should
 install via other of the other installation procedures.
 .Pp
 Once you have booted the kernel, continue to the
@@ -498,7 +510,8 @@ section.
 .Ss2 Once you've booted the diskimage
 .
 Once you've booted the installation kernel you will need to
-select your terminal type.  Use
+select your terminal type.
+Use
 .Ic rcons
 for a framebuffer console,
 .Ic vt100

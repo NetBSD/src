@@ -1,6 +1,6 @@
-.\"	$NetBSD: xfer,v 1.24.2.3 2002/06/29 08:03:08 lukem Exp $
+.\"	$NetBSD: xfer,v 1.24.2.4 2002/07/02 04:20:06 lukem Exp $
 .\"
-.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -65,8 +65,9 @@ floppy images.
 For older machines with little RAM, use
 .Pa boot-tiny.fs .
 This image is tailored towards old, small-memory systems, and thus does
-not contain any PCI or SCSI support. It should work on systems with
-4M of RAM. Note that this means 4M available to NetBSD; systems that
+not contain any PCI or SCSI support.
+It should work on systems with 4M of RAM.
+Note that this means 4M available to NetBSD; systems that
 are said to have 4M may have 640k of base memory and 3072k of extended
 memory, which currently will not work, as this is a total of 3712k.
 .Pp
@@ -84,8 +85,9 @@ and
 .
 .Pp
 For the 2-floppy sets (and the CD boot image), utilities to repair
-a badly crashed systems are included. The -small and -tiny images
-have separate rescue floppy images because of lack of space.
+a badly crashed systems are included.
+The -small and -tiny images have separate rescue floppy images because
+of lack of space.
 .Pp
 If you are using a
 .Ul
@@ -122,7 +124,8 @@ is also available that runs under
 You should wait to decide where to put the
 .Nx
 distribution sets until you have figured out how you are going to boot
-your system.  Refer back to this section after you have done so.
+your system.
+Refer back to this section after you have done so.
 .Pp
 .\}
 .if r_macppc \{\
@@ -132,9 +135,11 @@ Some
 .Ic ftp
 clients default to downloading files in
 .Sq ASCII
-mode.  This will render the
+mode.
+This will render the
 .Nx
-files useless.  Make sure to set your ftp program to download in
+files useless.
+Make sure to set your ftp program to download in
 .Sq binary
 mode.
 .Note)
@@ -181,7 +186,7 @@ utility, provided in the
 directory of the
 .Nx
 distribution.
-It will write a file system image (.fs file) to a floppy disk. 
+It will write a file system image (.fs file) to a floppy disk.
 A
 .Ic rawrite32
 is also available that runs under
@@ -261,7 +266,7 @@ utility, provided in the
 directory of the
 .Nx
 distribution.
-It will write a file system image (.fs file) to a floppy disk. 
+It will write a file system image (.fs file) to a floppy disk.
 A
 .Ic rawrite32
 is also available that runs under
@@ -279,8 +284,8 @@ even after
 .Nx*M
 has been installed.
 .Pp
-SCSI devices on NWS-3xxx and NWS-5000 machines are supported. But they
-also can run
+SCSI devices on NWS-3xxx and NWS-5000 machines are supported.
+But they also can run
 .Nx*M
 diskless.
 No file transfer is needed, and all you have to do is to prepare files on
@@ -366,7 +371,8 @@ When you chose the first method, you have to put the installation kernel
 .Pa netbsd
 and the
 .Pa loadbsd.x
-utility to a disk accessible from Human68k.  These files can be found in
+utility to a disk accessible from Human68k.
+These files can be found in
 .Pa installation/misc
 directory of the
 .Nx
@@ -395,7 +401,8 @@ system to write the floppy image to
 disks, you should use the
 .Pa dd
 command to copy the file system images (.fs files) directly to the raw
-floppy disks. It is suggested that you read the
+floppy disks.
+It is suggested that you read the
 .Xr dd 1
 manual page or
 ask your system administrator to determine the correct set of
@@ -411,25 +418,27 @@ utility, provided in the
 .Pa installation/misc
 directory of the
 .Nx
-distribution. It will write the file system
-images (.fs files) to disks.
+distribution.
+It will write the file system images (.fs files) to disks.
 .Pp
 To use the boot floppy, insert the floppy to your floppy drive 0,
 and reboot your computer with OPT.1 key pressed.
 .Pp
 If you have less than 5MB of memory, you have to use the
 `floppy-root' installation system instead of the above
-`ramdisk-root' installation system.  `Floppy-root' installation
-system is composed of two floppies, `kern' and `inst'.  They are
-made from the floppy images
-.Pa kern.fs 
+`ramdisk-root' installation system.
+`Floppy-root' installation
+system is composed of two floppies, `kern' and `inst'.
+They are made from the floppy images
+.Pa kern.fs
 and
 .Pa inst.fs
 respectively, both of which are found in
 .Pa installation/floppy
 directory of the
 .Nx
-distribution.  See above how to write the images to floppies.
+distribution.
+See above how to write the images to floppies.
 .Pp
 To start the `floppy-root' installation system, insert the `kern' floppy
 to your floppy drive 0, and reboot your computer with OPT.1 key pressed.
@@ -438,11 +447,11 @@ replace the `kern' floppy with `inst' floppy and press return key.
 .Pp
 Once booted, the `floppy-root' installation system is identical with
 the `ramdisk-root' installation system, except that the former constantly
-accesses the floppy disk.  Floppy disks are relatively unreliable
-media and cause some warning messages to report access errors, most of
-which are corrected and can be ignored.  With the latter installation
-system the floppy disk is not used once the system has booted off and can
-be removed from the drive.
+accesses the floppy disk.
+Floppy disks are relatively unreliable media and cause some warning messages
+to report access errors, most of which are corrected and can be ignored.
+With the latter installation system the floppy disk is not used once the
+system has booted off and can be removed from the drive.
 .Pp
 .\} \" r_x68k
 .
@@ -731,8 +740,9 @@ the tape devices with which
 .Nx*M
 is believed to work is the
 .Tn DEC
-TK-50. This is a very slow device.  Installation via disk or network is
-recommended if at all possible.
+TK-50.
+This is a very slow device.
+Installation via disk or network is recommended if at all possible.
 .Note)
 .\} \" \n[pmax]:\n[vax]
 .Pp

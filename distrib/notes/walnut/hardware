@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1.2.2 2002/06/19 00:52:44 lukem Exp $
+.\"	$NetBSD: hardware,v 1.1.2.3 2002/07/02 04:20:20 lukem Exp $
 .
 .Nx*M
 is a port of
@@ -63,8 +63,9 @@ On-board Ethernet
 .Pp
 .Em Note :
 This does not concern booting the kernel itself, since that
-is done by the firmware.  For using an NFS root you will have to
-provide a supported network card, though.
+is done by the firmware.
+For using an NFS root you will have to provide a supported network card,
+though.
 .bullet)
 .
 .Ss2 Supported boot devices and media
@@ -75,8 +76,8 @@ Instructions for booting from serial port are not provided; in the
 following we will describe how to setup netbooting.
 .Pp
 The first step is setting the IP addresses of both the walnut itself
-and the host that will be serving the kernel image. From the main menu,
-choose 3 to set the IP address of the machine:
+and the host that will be serving the kernel image.
+From the main menu, choose 3 to set the IP address of the machine:
 .(disp
   1 - Enable/disable tests
   2 - Enable/disable boot devices
@@ -95,18 +96,18 @@ choose 3 to set the IP address of the machine:
 .Pp
 Set the IP address for the local Ethernet with 1:
 .(disp
----   CHANGE IP ADDRESS   ---    
+---   CHANGE IP ADDRESS   ---
  Device List:
    001  Enabled   Ethernet      [ENET]
                   local=0.0.0.0  remote=0.0.0.0  hwaddr=0004ace312bd
    004  Disabled  Serial Port 2 [S2]
                   local=8.1.1.2  remote=255.255.255.255  hwaddr=ffffffffffff
- ----------------------------      
-select device to change ->1    
+ ----------------------------
+select device to change ->1
   1 - Change local address
   2 - Change remote address
-  0 - Return to main menu   
-->1 
+  0 - Return to main menu
+->1
 Current IP address = (0.0.0.0)
 Enter new IP address ->Enter IP address in dot notation, (eg. 8.1.1.2)
 .disp)
@@ -119,8 +120,9 @@ Once both the local and remote addresses are set, you can use
 the ping test to make sure the ethernet is working; or you can
 simply use option 0, "Exit menu and continue" to try to boot the
 machine, if you already set up the remote machine to provide
-a kernel image.  For details on how to do that, see the
-.Dq Booting from the network
+a kernel image.
+For details on how to do that, see the
+.Sx Booting from the network
 section below.
 .Pp
 You should now be able to boot the operating system.
