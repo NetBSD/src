@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.28 1998/12/19 23:48:39 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.29 1998/12/20 03:53:03 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.25 1998/12/18 22:07:39 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.26 1998/12/19 23:47:51 nathanw Exp 
  */
 
 /*-
@@ -122,6 +122,9 @@
 #define	PCMCIA_CIS_IBM_HOME_AND_AWAY	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IBM_HOME_AND_AWAY	0x002e
 #define	PCMCIA_STR_IBM_HOME_AND_AWAY	"IBM Home and Away Modem"
+#define	PCMCIA_CIS_IBM_WIRELESS_LAN_ENTRY	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IBM_WIRELESS_LAN_ENTRY	0x0032
+#define	PCMCIA_STR_IBM_WIRELESS_LAN_ENTRY	"Wireless LAN Entry"
 
 /* I-O DATA */
 #define	PCMCIA_CIS_IODATA_PCLAT	{ NULL, NULL, NULL, NULL }
@@ -182,9 +185,12 @@
 #define	PCMCIA_STR_TDK_DFL9610	"TDK DFL9610 Ethernet & Digital Cellular"
 
 /* TDK Vendor ID also used by Xircom! */
-#define	PCMCIA_CIS_TDK_XIR_CE	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CE	0x0108
-#define	PCMCIA_STR_TDK_XIR_CE	"Xircom CreditCard Ethernet"
+#define	PCMCIA_CIS_TDK_XIR_CE_10	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_CE_10	0x0108
+#define	PCMCIA_STR_TDK_XIR_CE_10	"Xircom CreditCard Ethernet"
+#define	PCMCIA_CIS_TDK_XIR_CEM_10	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_CEM_10	0x110a
+#define	PCMCIA_STR_TDK_XIR_CEM_10	"Xircom CreditCard Ethernet + Modem"
 #define	PCMCIA_CIS_TDK_XIR_PS_CE2_10	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10	0x010b
 #define	PCMCIA_STR_TDK_XIR_PS_CE2_10	"Xircom CreditCard CE2 Ethernet"
