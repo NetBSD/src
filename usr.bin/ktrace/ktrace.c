@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.11 1999/07/23 03:10:49 itohy Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.12 1999/07/30 14:03:55 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,12 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.11 1999/07/23 03:10:49 itohy Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.12 1999/07/30 14:03:55 darrenr Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -198,9 +199,10 @@ main(argc, argv)
 	}
 
 	if (*argv) { 
-		(void)do_ktrace(outfile, ops, trpoints, getpid());
-		execvp(argv[0], &argv[0]);
-		err(1, "exec of '%s' failed", argv[0]);
+		if (do_ktrace(outfile, ops, trpoints, getpid()) == 1) {
+			execvp(argv[0], &argv[0]);
+			err(1, "exec of '%s' failed", argv[0]);
+		}
 	} else
 		(void)do_ktrace(outfile, ops, trpoints, pid);
 	exit(0);
@@ -260,26 +262,27 @@ do_ktrace(tracefile, ops, trpoints, pid)
 	int ret;
 
 	if (!tracefile || strcmp(tracefile, "-") == 0) {
-		int pi[2], nofork, fpid;
+		int pi[2], dofork, fpid;
 
 		if (pipe(pi) < 0)
 			err(1, "pipe(2)");
 		fcntl(pi[0], F_SETFD, FD_CLOEXEC|fcntl(pi[0], F_GETFD, 0));
 		fcntl(pi[1], F_SETFD, FD_CLOEXEC|fcntl(pi[1], F_GETFD, 0));
 
-		nofork = (pid != getpid());
+		dofork = (pid == getpid());
 
-		if (!nofork)
+		if (dofork)
 			fpid = fork();
 		else
-			fpid = 0;	/* XXX: Gcc */
-		if (nofork || !fpid) {
-			if (nofork)
-				ret = fktrace(pi[1], ops, trpoints, pid);
+			fpid = pid;	/* XXX: Gcc */
+		if (fpid) {
+			if (!dofork)
+				ret = fktrace(pi[1], ops, trpoints, fpid);
 			else
 				close(pi[1]);
 #ifdef KTRUSS
 			dumpfile(NULL, pi[0], trpoints);
+			waitpid(fpid, NULL, 0);
 #else
 			{
 				char	buf[512];
@@ -291,19 +294,16 @@ do_ktrace(tracefile, ops, trpoints, pid)
 				}
 			}
 #endif
-			if (!nofork)
-#ifdef KTRUSS
-				exit(0);	/* flush stdio needed */
-#else
-				_exit(0);
-#endif
 			return 0;
 		}
 		close(pi[0]);
-		ret = fktrace(pi[1], ops, trpoints, pid);
+		if (dofork && !fpid) {
+			ret = fktrace(pi[1], ops, trpoints, getpid());
+			return 1;
+		}
 	} else
 		ret = ktrace(tracefile, ops, trpoints, pid);
 	if (ret < 0)
 		err(1, tracefile);
-	return ret;
+	return 1;
 }
