@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/11 08:42:04 mycroft Exp $
-
-NOOBJ=
+#	$NetBSD: Makefile,v 1.13 1997/10/11 08:44:44 mycroft Exp $
 
 # Makefile for amiga tags file and boot blocks
 
