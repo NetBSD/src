@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.80 1995/12/24 02:30:11 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.81 1995/12/28 15:48:57 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -166,6 +166,8 @@ struct fd_softc {
 #define	FD_MOTOR	0x02		/* motor should be on */
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int sc_cylin;		/* where we think the head is */
+
+	void *sc_sdhook;	/* saved shutdown hook for drive. */
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
@@ -408,6 +410,8 @@ fdattach(parent, self, aux)
 	/* XXX Need to do some more fiddling with sc_dk. */
 	dk_establish(&fd->sc_dk, &fd->sc_dev);
 #endif
+	/* Needed to power off if the motor is on when we halt. */
+	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
 }
 
 /*
