@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 2003/04/01 20:41:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.63 2003/07/27 04:38:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2003/04/01 20:41:38 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2003/07/27 04:38:06 tsutsui Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -161,7 +161,6 @@ extern int gboxcnattach(bus_space_tag_t, bus_addr_t, int);
 extern int rboxcnattach(bus_space_tag_t, bus_addr_t, int);
 extern int hypercnattach(bus_space_tag_t, bus_addr_t, int);
 extern int topcatcnattach(bus_space_tag_t, bus_addr_t, int);
-extern int hilkbdcnattach(bus_space_tag_t, bus_addr_t);
 extern int dnkbdcnattach(bus_space_tag_t, bus_addr_t);
 
 int dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int));
