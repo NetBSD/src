@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.16 2002/12/19 00:38:04 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.17 2002/12/29 19:40:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -334,6 +334,16 @@ trap(type, psr, pc, tf)
 				return;
 			}
 		}
+#ifdef MULTIPROCESSOR
+		if (type == T_DBPAUSE) {
+			/* XXX - deal with kgdb too */
+			extern void ddb_suspend(struct trapframe *tf);
+			write_all_windows();
+			ddb_suspend(tf);
+			ADVANCE;
+			return;
+		}
+#endif
 #endif
 #ifdef DIAGNOSTIC
 		/*
@@ -376,6 +386,7 @@ trap(type, psr, pc, tf)
 		       type, pc, tf->tf_npc, bitmask_snprintf(psr,
 		       PSR_BITS, bits, sizeof(bits)));
 #ifdef DDB
+		write_all_windows();
 		(void) kdb_trap(type, tf);
 #endif
 		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
@@ -1353,10 +1364,10 @@ syscall(code, tf, pc)
 
 	/* Lock the kernel if the syscall isn't MP-safe. */
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 
-	if ((error = trace_enter(l, code, code, args.i, rval)) != 0) {
-		KERNEL_PROC_UNLOCK(p);
+	if ((error = trace_enter(l, code, code, NULL, args.i, rval)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto bad;
 	}
 
@@ -1365,7 +1376,7 @@ syscall(code, tf, pc)
 	error = (*callp->sy_call)(l, &args, rval);
 
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 
 	switch (error) {
 	case 0:

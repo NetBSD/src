@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.4.2.2 2002/12/11 06:37:07 thorpej Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.4.2.3 2002/12/29 19:43:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.4.2.2 2002/12/11 06:37:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.4.2.3 2002/12/29 19:43:48 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,24 +52,27 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.4.2.2 2002/12/11 06:37:07 thorpe
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
-int darwin_kern_sysctl
+pid_t darwin_init_pid;
+
+static int darwin_kern_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int darwin_vm_sysctl
+static int darwin_vm_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int darwin_vfs_sysctl
+static int darwin_vfs_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int darwin_net_sysctl
+static int darwin_net_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int darwin_debug_sysctl
+static int darwin_debug_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int darwin_hw_sysctl
+static int darwin_hw_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int darwin_machdep_sysctl
+static int darwin_machdep_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int darwin_user_sysctl
+static int darwin_user_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 int
@@ -107,10 +110,10 @@ darwin_sys___sysctl(struct proc *p, void *v, register_t *retval)
 	{
 		int i;
 
-		DPRINTF(("darwin_sys___sysctl: name = [ "));
+		printf("darwin_sys___sysctl: name = [ ");
 		for (i = 0; i < namelen; i++)
-			DPRINTF(("%d, ", name[i]));
-		DPRINTF(("]\n"));
+			printf("%d, ", name[i]);
+		printf("]\n");
 	}
 #endif /* DEBUG_DARWIN */
 	/* 
@@ -175,7 +178,7 @@ darwin_sys___sysctl(struct proc *p, void *v, register_t *retval)
 }
 
 
-int
+static int
 darwin_kern_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int nlen;
@@ -220,7 +223,7 @@ darwin_kern_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	return 0;
 }
 
-int
+static int
 darwin_vm_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int nlen;
@@ -239,7 +242,7 @@ darwin_vm_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	return 0;
 }
 
-int
+static int
 darwin_vfs_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int nlen;
@@ -258,7 +261,7 @@ darwin_vfs_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	return 0;
 }
 
-int
+static int
 darwin_net_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int nlen;
@@ -277,7 +280,7 @@ darwin_net_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	return 0;
 }
 
-int
+static int
 darwin_debug_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int nlen;
@@ -296,7 +299,7 @@ darwin_debug_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	return 0;
 }
 
-int
+static int
 darwin_hw_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int nlen;
@@ -322,7 +325,7 @@ darwin_hw_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	return 0;
 }
 
-int
+static int
 darwin_machdep_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int nlen;
@@ -341,7 +344,7 @@ darwin_machdep_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	return 0;
 }
 
-int
+static int
 darwin_user_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int nlen;
@@ -360,3 +363,60 @@ darwin_user_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	return 0;
 }
 
+int
+darwin_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int nlen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	if (nlen != 1)
+		return EOPNOTSUPP;
+
+	switch (name[0]) {
+	case EMUL_DARWIN_INIT_PID:
+		return sysctl_int(oldp, oldlenp, 
+		    newp, newlen, &darwin_init_pid);
+
+	default:
+		return EOPNOTSUPP;
+	}
+
+	return 0;
+}
+
+/*
+ * On Darwin, mach_init is the system bootstrap process. It is responsible
+ * for forking the traditional UNIX init(8) and it does the Mach port naming
+ * service. We need mach_init for the naming service, but unfortunately, it
+ * will only act as such if its PID is 1. We use a sysctl 
+ * (emul.darwin.init_pid) to fool a given process into thinking its PID is 1.
+ * That way we can run mach_init when we want to. 
+ * Typical use:
+ * sysctl -w emul.darwin.init_pid=$$; exec /emul/darwin/sbin/mach_init
+ * 
+ * The same problem exists after mach_init has forked init: the fork libc stub
+ * really insist on the child to have PID 2 (if PID is not 2, then the stub
+ * will issue bootstrap calls to an already running mach_init, which fails,
+ * of course). 
+ */
+int 
+darwin_sys_getpid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct darwin_emuldata *ded;
+
+	ded = (struct darwin_emuldata *)p->p_emuldata;
+
+	if (ded->ded_fakepid != 0)
+		*retval = ded->ded_fakepid;
+	else
+		*retval = p->p_pid;
+
+	return 0;
+}

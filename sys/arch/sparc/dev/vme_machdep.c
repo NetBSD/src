@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.34.4.8 2002/12/19 00:37:58 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.34.4.9 2002/12/29 19:40:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -205,10 +205,14 @@ struct extent *vme_dvmamap;
 struct sparc_bus_space_tag sparc_vme_bus_tag = {
 	NULL, /* cookie */
 	NULL, /* parent bus tag */
+	NULL, /* ranges */
+	0,    /* nranges */
 	NULL, /* bus_map */
 	NULL, /* bus_unmap */
 	NULL, /* bus_subregion */
-	NULL  /* barrier */
+	NULL, /* barrier */
+	NULL, /* mmap */
+	NULL  /* intr_establish */
 };
 
 struct vme_chipset_tag sparc_vme_chipset_tag = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.12 2002/12/19 00:38:01 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.13 2002/12/29 19:40:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -75,6 +75,10 @@
 #include <machine/oldmon.h>
 #include <machine/idprom.h>
 
+#if defined(MULTIPROCESSOR) && defined(DDB)
+#include <machine/db_machdep.h>
+#endif
+
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
@@ -91,8 +95,9 @@ struct cpu_softc {
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[100];
 int	cpu_arch;			/* sparc architecture version */
+char	cpu_model[100];			/* machine model (primary cpu) */
+extern char machine_model[];
 
 int	ncpu;				/* # of CPUs detected by PROM */
 struct	cpu_info **cpus;
@@ -166,7 +171,7 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 	if (ismaster == 0) {
 		/*
 		 * While we're here, allocate a per-CPU idle PCB and
-		 * interrupt stack as well.
+		 * interrupt stack as well (8KB + 16KB).
 		 */
 		sz += USPACE;		/* `idle' u-area for this CPU */
 		sz += INT_STACK_SIZE;	/* interrupt stack for this CPU */
@@ -395,10 +400,14 @@ static	struct cpu_softc *bootcpu;
 
 
 	if (cpi->master) {
+		char buf[100];
+
 		cpu_setup(sc);
-		sprintf(cpu_model, "%s @ %s MHz, %s FPU",
+		snprintf(buf, sizeof buf, "%s @ %s MHz, %s FPU",
 			cpi->cpu_name, clockfreq(cpi->hz), cpi->fpu_name);
-		printf(": %s\n", cpu_model);
+		printf(": %s\n", buf);
+		snprintf(cpu_model, sizeof cpu_model, "%s (%s)",
+			machine_model, buf);
 		cache_print(sc);
 		return;
 	}
@@ -459,7 +468,8 @@ cpu_boot_secondary_processors()
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+			(cpi->flags & CPUFLG_HATCHED) == 0)
 			continue;
 
 		printf(" cpu%d", cpi->ci_cpuid);
@@ -501,7 +511,7 @@ cpu_setup(sc)
 	cpu_hatched = 1;
 #if 0
 	/* Flush cache line */
-	cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched), 0);
+	cpuinfo.sp_cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched), 0);
 #endif
 }
 
@@ -547,6 +557,7 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	for (n = 10000; n != 0; n--) {
 		cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
 		if (cpu_hatched != 0) {
+			cpi->flags |= CPUFLG_HATCHED;
 			return;
 		}
 		delay(100);
@@ -554,54 +565,33 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	printf("CPU did not spin up\n");
 }
 
-/* 
- * Calls raise_ipi(), waits for the remote CPU to notice the message, and
- * unlocks this CPU's message lock, which we expect was locked at entry.
- */
-void
-raise_ipi_wait_and_unlock(cpi)
-	struct cpu_info *cpi;
-{
-	int i;
-
-	raise_ipi(cpi);
-	i = 0;
-	while ((cpi->flags & CPUFLG_GOTMSG) == 0) {
-		if (i++ > 500000) {
-			printf("raise_ipi_wait_and_unlock(cpu%d): couldn't ping cpu%d\n",
-			    cpuinfo.ci_cpuid, cpi->ci_cpuid);
-			break;
-		}
-	}
-	simple_unlock(&cpi->msg.lock);
-}
-
 /*
  * Call a function on every CPU.  One must hold xpmsg_lock around
  * this function.
  */
 void
-cross_call(func, arg0, arg1, arg2, arg3, cpuset)
+xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	int	(*func)(int, int, int, int);
 	int	arg0, arg1, arg2, arg3;
 	int	cpuset;	/* XXX unused; cpus to send to: we do all */
 {
-	int n, i, not_done;
-	struct xpmsg_func *p;
+	int s, n, i, done;
+	volatile struct xpmsg_func *p;
+
+	/* XXX - note p->retval is probably no longer useful */
 
 	/*
 	 * If no cpus are configured yet, just call ourselves.
 	 */
 	if (cpus == NULL) {
 		p = &cpuinfo.msg.u.xpmsg_func;
-		p->func = func;
-		p->arg0 = arg0;
-		p->arg1 = arg1;
-		p->arg2 = arg2;
-		p->arg3 = arg3;
-		p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+		if (func)
+			p->retval = (*func)(arg0, arg1, arg2, arg3); 
 		return;
 	}
+
+	s = splvm();	/* XXX - should validate this level */
+	LOCK_XPMSG();
 
 	/*
 	 * Firstly, call each CPU.  We do this so that they might have
@@ -610,72 +600,70 @@ cross_call(func, arg0, arg1, arg2, arg3, cpuset)
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (CPU_READY(cpi))
+		if (CPU_NOTREADY(cpi))
 			continue;
 		
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_FUNC;
+		cpi->flags &= ~CPUFLG_GOTMSG;
 		p = &cpi->msg.u.xpmsg_func;
 		p->func = func;
 		p->arg0 = arg0;
 		p->arg1 = arg1;
 		p->arg2 = arg2;
 		p->arg3 = arg3;
-		cpi->flags &= ~CPUFLG_GOTMSG;
-		raise_ipi(cpi);
+		cpi->intreg_4m->pi_set = PINTR_SINTRLEV(13);/*xcall_cookie->pil*/
+		/*was: raise_ipi(cpi);*/
 	}
 
 	/*
 	 * Second, call ourselves.
 	 */
-
 	p = &cpuinfo.msg.u.xpmsg_func;
-
-	/* Call this on me first. */
-	p->func = func;
-	p->arg0 = arg0;
-	p->arg1 = arg1;
-	p->arg2 = arg2;
-	p->arg3 = arg3;
-
-	p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+	if (func)
+		p->retval = (*func)(arg0, arg1, arg2, arg3); 
 
 	/*
 	 * Lastly, start looping, waiting for all cpu's to register that they
 	 * have completed (bailing if it takes "too long", being loud about
 	 * this in the process).
 	 */
-	i = 0;
-	while (not_done) {
-		not_done = 0;
+	done = 0;
+	i = 100000;	/* time-out */
+	while (!done) {
+		if (--i < 0) {
+			printf("xcall(cpu%d,%p): couldn't ping cpus:",
+			    cpuinfo.ci_cpuid, func);
+			break;
+		}
+
+		done = 1;
 		for (n = 0; n < ncpu; n++) {
 			struct cpu_info *cpi = cpus[n];
 
-			if (CPU_READY(cpi))
+			if (CPU_NOTREADY(cpi))
 				continue;
 
-			if ((cpi->flags & CPUFLG_GOTMSG) != 0)
-				not_done = 1;
+			if ((cpi->flags & CPUFLG_GOTMSG) == 0) {
+				done = 0;
+				break;
+			}
 		}
-		if (not_done && i++ > 100000) {
-			printf("cross_call(cpu%d): couldn't ping cpus:",
-			    cpuinfo.ci_cpuid);
-			break;
-		}
-		if (not_done == 0)
-			break;
 	}
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (CPU_READY(cpi))
+		if (CPU_NOTREADY(cpi))
 			continue;
 		simple_unlock(&cpi->msg.lock);
-		if ((cpi->flags & CPUFLG_GOTMSG) != 0)
+		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
 			printf(" cpu%d", cpi->ci_cpuid);
 	}
-	if (not_done)
+	if (!done)
 		printf("\n");
+
+	UNLOCK_XPMSG();
+	splx(s);
 }
 
 void
@@ -686,17 +674,18 @@ mp_pause_cpus()
 	if (cpus == NULL)
 		return;
 
+	/* XXX - can currently be called at a high IPL level */
 	LOCK_XPMSG();
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (CPU_READY(cpi))
+		if (CPU_NOTREADY(cpi))
 			continue;
 
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_PAUSECPU;
 		cpi->flags &= ~CPUFLG_GOTMSG;
-		raise_ipi_wait_and_unlock(cpi);
+		cpi->intreg_4m->pi_set = PINTR_SINTRLEV(13);/*xcall_cookie->pil*/
 	}
 	UNLOCK_XPMSG();
 }
@@ -1169,9 +1158,11 @@ getcacheinfo_obp(sc, node)
 		if ((1 << i) != l && l)
 			panic("bad cache line size %d", l);
 		ci->c_l2linesize = i;
-		ci->c_totalsize = l *
-			ci->c_nlines *
+		ci->c_associativity =
 			PROM_getpropint(node, "cache-associativity", 1);
+		ci->dc_associativity = ci->ic_associativity =
+			ci->c_associativity;
+		ci->c_totalsize = l * ci->c_nlines * ci->c_associativity;
 	}
 	
 	if (node_has_property(node, "ecache-nlines")) {

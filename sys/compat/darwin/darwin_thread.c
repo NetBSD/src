@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_thread.c,v 1.1.2.2 2002/12/11 06:37:08 thorpej Exp $ */
+/*	$NetBSD: darwin_thread.c,v 1.1.2.3 2002/12/29 19:43:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.1.2.2 2002/12/11 06:37:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.1.2.3 2002/12/29 19:43:49 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.1.2.2 2002/12/11 06:37:08 thorpe
 #include <sys/syscallargs.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_vm.h>
 
 #include <compat/darwin/darwin_signal.h>
@@ -89,4 +90,29 @@ darwin_sys_vfork(p, v, retval)
 		return error;
 
 	return 0;
+}
+
+int
+darwin_sys_pthread_exit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct darwin_sys_pthread_exit_args /* {
+		syscallarg(void *) value_ptr;
+	} */ *uap = v;
+	struct sys_exit_args cup;
+	struct mach_emuldata *med;
+	int error;
+
+	/* Get the status or use zero if it is not possible */
+	if ((error = copyin(SCARG(uap, value_ptr), &SCARG(&cup, rval), 
+	    sizeof(void *))) != 0)
+		SCARG(&cup, rval) = 0;
+
+	/* Avoid destroying the parent's rights in mach_e_proc_exit */
+	med = (struct mach_emuldata *)p->p_emuldata;
+	LIST_INIT(&med->med_right);
+
+	return sys_exit(p, &cup, retval);
 }

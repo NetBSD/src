@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.14.6.2 2002/10/18 02:40:21 nathanw Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.14.6.3 2002/12/29 19:41:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -532,7 +532,7 @@ se_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN)
 		bp->b_bcount = MAX_DMA_LEN;
 
-	return (minphys(bp));
+	minphys(bp);
 }
 
 
