@@ -1,4 +1,4 @@
-/*	$NetBSD: srvr_nfs.c,v 1.1.1.1 2000/06/07 00:52:22 dogcow Exp $ */
+/*	$NetBSD: srvr_nfs.c,v 1.2 2000/06/16 02:10:12 dogcow Exp $ */
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -95,7 +95,7 @@ static char ping_buf[sizeof(struct rpc_msg) + 32];
 
 #if defined(MNTTAB_OPT_PROTO) || defined(HAVE_FS_NFS3)
 /* protocols we know about, in order of preference */
-static char *protocols[] = { "tcp", "udp", NULL };
+static char *protocols[] = { "udp", "tcp", NULL };
 #endif /* defined(MNTTAB_OPT_PROTO) || defined(HAVE_FS_NFS3) */
 
 /* forward definitions */
@@ -755,6 +755,14 @@ find_nfs_srvr(mntfs *mf)
 
   if (!nfs_proto)
     nfs_proto = "udp";
+
+  if (ip) {
+    /*    
+     * XXX RPC or SunOS 4.1.4 bug ? the last call to nfs_get_version() must  
+     * be done with the used version and proto  
+     */  
+    (void)get_nfs_version(host, ip, nfs_version, nfs_proto);  
+  }
 
   plog(XLOG_INFO, "Using NFS version %d, protocol %s on host %s",
        (int) nfs_version, nfs_proto, host);

@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_subr.c,v 1.1.1.1 2000/06/07 00:52:22 dogcow Exp $ */
+/*	$NetBSD: amq_subr.c,v 1.2 2000/06/16 02:10:12 dogcow Exp $ */
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -254,7 +254,28 @@ amqproc_mount_1_svc(voidp argp, struct svc_req *rqstp)
     return 0;
   return &rc;
 }
-#endif /* ENABLE_AMQ_MOUNT */
+#else /* not ENABLE_AMQ_MOUNT */
+
+int *
+amqproc_mount_1_svc(voidp argp, struct svc_req *rqstp)
+{
+  static int rc = EINVAL;
+  char *s = *(amq_string *) argp;
+  char dq[20];
+  struct sockaddr_in *sin;
+
+  if ((sin = amu_svc_getcaller(rqstp->rq_xprt)) == NULL) {
+    plog(XLOG_ERROR, "amu_svc_getcaller returned NULL");
+    return &rc;
+  }
+  plog(XLOG_ERROR,
+       "amq requested mount of %s from %s.%d, but code is disabled",
+       s, inet_dquad(dq, sin->sin_addr.s_addr),
+       ntohs(sin->sin_port));
+
+  return &rc;
+}
+#endif /* not ENABLE_AMQ_MOUNT */
 
 
 amq_string *
