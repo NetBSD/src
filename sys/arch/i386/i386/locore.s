@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.158 1996/12/03 23:59:25 fvdl Exp $	*/
+/*	$NetBSD: locore.s,v 1.159 1996/12/06 22:27:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -255,6 +255,7 @@ try386:	/* Try to toggle alignment check flag; does not exist on 386. */
 	movl	$0x5555,%eax
 	xorl	%edx,%edx
 	movl	$2,%ecx
+	divl	%ecx
 	jnz	is386
 
 isnx586:
