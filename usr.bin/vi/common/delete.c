@@ -1,4 +1,4 @@
-/*	$NetBSD: delete.c,v 1.3 2001/03/31 11:37:45 aymeric Exp $	*/
+/*	$NetBSD: delete.c,v 1.4 2001/09/09 11:03:02 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -68,7 +68,7 @@ del(sp, fm, tm, lmode)
 		if (tm->lno == lno) {
 			if (db_get(sp, lno, DBG_FATAL, &p, &len))
 				return (1);
-			eof = tm->cno >= len ? 1 : 0;
+			eof = tm->cno != -1 && tm->cno >= len ? 1 : 0;
 		} else
 			eof = 1;
 		if (eof) {
