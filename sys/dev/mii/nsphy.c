@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.7 1998/08/12 20:56:35 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.8 1998/08/12 22:41:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -294,7 +294,7 @@ nsphy_status(sc)
 	struct nsphy_softc *sc;
 {
 	struct mii_data *mii = sc->sc_mii.mii_pdata;
-	int bmsr, bmcr, par;
+	int bmsr, bmcr, par, anlpar;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -323,13 +323,44 @@ nsphy_status(sc)
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
+
+		/*
+		 * Argh.  The PAR doesn't seem to indicate duplex mode
+		 * properly!  Determine media based on link partner's
+		 * advertised capabilities.
+		 */
+		if (NSPHY_READ(sc, MII_ANER) & ANER_LPAN) {
+			anlpar = NSPHY_READ(sc, MII_ANAR) &
+			    NSPHY_READ(sc, MII_ANLPAR);
+			if (anlpar & ANLPAR_T4)
+				mii->mii_media_active |= IFM_100_T4;
+			else if (anlpar & ANLPAR_TX_FD)
+				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+			else if (anlpar & ANLPAR_TX)
+				mii->mii_media_active |= IFM_100_TX;
+			else if (anlpar & ANLPAR_10_FD)
+				mii->mii_media_active |= IFM_10_T|IFM_FDX;
+			else if (anlpar & ANLPAR_10)
+				mii->mii_media_active |= IFM_10_T;
+			else
+				mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+
+		/*
+		 * Link partner is not capable of autonegotiation.
+		 * We will never be in full-duplex mode if this is
+		 * the case, so reading the PAR is OK.
+		 */
 		par = NSPHY_READ(sc, MII_NSPHY_PAR);
 		if (par & PAR_10)
 			mii->mii_media_active |= IFM_10_T;
 		else
 			mii->mii_media_active |= IFM_100_TX;
+#if 0
 		if (par & PAR_FDX)
 			mii->mii_media_active |= IFM_FDX;
+#endif
 	} else {
 		if (bmcr & BMCR_S100)
 			mii->mii_media_active |= IFM_100_TX;
