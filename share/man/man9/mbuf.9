@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.1.2.1 1997/11/12 01:04:01 mrg Exp $
+.\"	$NetBSD: mbuf.9,v 1.1.2.2 1997/11/27 08:58:49 mellon Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Dt MBUF 9
 .Os NetBSD
 .Sh NAME
-.Nm MBUF ,
+.Nm mbuf ,
 .Nm m_get ,
 .Nm m_getclr ,
 .Nm m_gethdr ,
@@ -148,7 +148,7 @@ An
 consists of a header and a data area.
 It is of a fixed size,
 .Dv MSIZE
-(defined in <machine/param.h>),
+.Pq defined in Aq Pa machine/param.h ,
 which includes overhead.
 The header contains a pointer to the next
 .Nm mbuf
@@ -157,9 +157,9 @@ in the
 a pointer to the next
 .Nm mbuf chain ,
 a pointer to the data area, the amount of data in this mbuf, its type
-and also a
+and a
 .Dv flags
-variable.
+field.
 .Pp
 The
 .Dv type
@@ -176,7 +176,7 @@ data is a socket name
 .It Dv MT_SOOPTS
 data is socket options
 .It Dv MT_FTABLE
-data is the fragments reassembly header
+data is the fragment reassembly header
 .It Dv MT_CONTROL
 mbuf contains ancillary \&(protocol control\&) data
 .It Dv MT_OOBDATA
@@ -202,10 +202,10 @@ external storage is a cluster.
 If an
 .Nm mbuf
 designates the start of a record
-.Dv (M_PKTHDR) ,
+.Pq Dv M_PKTHDR ,
 its
 .Dv flags
-variable may contain additional information describing the content of
+field may contain additional information describing the content of
 the record:
 .Bl -tag -compact -offset indent -width "XXXXXXXXXXX"
 .It Dv M_BCAST
@@ -222,7 +222,9 @@ may add a single
 .Nm mbuf cluster
 of
 .Dv MCLBYTES
-bytes (also defined in <machine/param.h>), which has no additional overhead
+bytes
+.Pq also defined in Aq Pa machine/param.h ,
+which has no additional overhead
 and is used instead of the internal data area; this is done when at least
 .Dv MINCLSIZE
 bytes of data must be stored.
@@ -238,8 +240,8 @@ means the call cannot fail, but may take forever. The
 .Fa type
 parameter is an mbuf type.
 .It Fn m_getclr "int nowait" "int type"
-Allocates an mbuf and initializes it to contain internal data. Also
-bzeros the data area. The
+Allocates an mbuf and initializes it to contain internal data, then
+zeros the data area. The
 .Fa nowait
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
@@ -284,7 +286,7 @@ from caller.
 .It Fn m_copypacket "struct mbuf *m" "int how"
 Copies an entire packet, including header (which must be present).
 This function is an optimization of the common case
-.Fn m_copym "m" "0" "M_COPYALL" "how" .
+.Li m_copym(m, 0, Dv M_COPYALL, Fa how ) .
 .It Fn m_copydata "struct mbuf *m" "int off" "int len" "caddr_t cp"
 Copies
 .Fa len
@@ -306,7 +308,7 @@ starting
 .Fa off
 bytes from the beginning, extending the mbuf chain if necessary.
 .It Fn m_cat "struct mbuf *m" "struct mbuf *n"
-concatenates mbuf chain
+Concatenates mbuf chain
 .Fa n
 to
 .Fa m .
@@ -326,7 +328,7 @@ parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
 .It Fn m_pullup "struct mbuf *m" "int len"
-Rearanges an mbuf chain so that
+Rearranges an mbuf chain so that
 .Fa len
 bytes are contiguous
 and in the data area of an mbuf (so that
@@ -334,13 +336,15 @@ and in the data area of an mbuf (so that
 will work for a structure of size
 .Fa len ) .
 Returns the resulting
-mbuf chain on success, frees it and returns null on failure.
+mbuf chain on success, frees it and returns
+.Dv NULL
+on failure.
 If there is room, it will add up to
 .Dv max_protohdr
 -
 .Fa len
 extra bytes to the
-contiguous region in attempt to avoid being called next time.
+contiguous region to possibly avoid being called again.
 .It Fn m_split "struct mbuf *m0" "int len0" "int wait"
 Partitions an mbuf chain in two pieces, returning the tail,
 which is all but the first
@@ -379,7 +383,7 @@ Takes a
 .Fa datapointer
 within an mbuf cluster and returns the cluster index number of the mbuf
 owning the data.
-Avoid this; it may be deprecated in the future .
+Avoid this; it may be deprecated in the future.
 Implemented as a macro.
 .It Fn cltom "u_long clusternum"
 Takes an mbuf cluster index number
@@ -425,8 +429,9 @@ and
 .Fa arg
 describe the external storage.
 .Fa type
-describes the malloc type of the storage,
-The parameter
+describes the
+.Xr malloc 9
+type of the storage,
 .Fa free
 is a free routine (if not the usual one), and
 .Fa arg
@@ -462,20 +467,22 @@ Implemented as a macro.
 .It Fn M_ALIGN "struct mbuf *m" "int len"
 Sets the data pointer of a newly allocated mbuf
 .Fa m
+to
 .Fa len
 bytes from the end of the mbuf data area, so that
 .Fa len
-bytes data written to the mbuf
+bytes of data written to the mbuf
 .Fa m ,
 starting at the data pointer, will be aligned to the end of the data area.
 Implemented as a macro.
 .It Fn MH_ALIGN "struct mbuf *m" "int len"
 Sets the data pointer of a newly allocated packetheader mbuf
 .Fa m
+to
 .Fa len
 bytes from the end of the mbuf data area, so that
 .Fa len
-bytes data written to the mbuf
+bytes of data written to the mbuf
 .Fa m ,
 starting at the data pointer, will be aligned to the end of the data area.
 Implemented as a macro.
