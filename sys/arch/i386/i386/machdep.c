@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.154 1995/05/01 08:06:36 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155 1995/05/01 09:08:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -846,98 +846,98 @@ extern  struct user *proc0paddr;
 /* software prototypes -- in more palatable form */
 struct soft_segment_descriptor gdt_segs[] = {
 	/* Null descriptor */
-{	0x0,			/* segment base address  */
+{	0x0,			/* segment base address */
 	0x0,			/* length */
 	0,			/* segment type */
-	0,			/* segment descriptor priority level */
+	0,			/* segment descriptor privilege level */
 	0,			/* segment descriptor present */
 	0, 0,
 	0,			/* default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ },
+	0  			/* limit granularity (byte/page units) */ },
 	/* Kernel code descriptor */
-{	0x0,			/* segment base address  */
+{	0x0,			/* segment base address */
 	0xfffff,		/* length - all address space */
 	SDT_MEMERA,		/* segment type */
-	0,			/* segment descriptor priority level */
+	SEL_KPL,		/* segment descriptor privilege level */
 	1,			/* segment descriptor present */
 	0, 0,
 	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units)*/ },
+	1  			/* limit granularity (byte/page units) */ },
 	/* Kernel data descriptor */
-{	0x0,			/* segment base address  */
+{	0x0,			/* segment base address */
 	0xfffff,		/* length - all address space */
 	SDT_MEMRWA,		/* segment type */
-	0,			/* segment descriptor priority level */
+	SEL_KPL,		/* segment descriptor privilege level */
 	1,			/* segment descriptor present */
 	0, 0,
 	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units)*/ },
+	1  			/* limit granularity (byte/page units) */ },
 	/* LDT Descriptor */
-{	(int) ldt,			/* segment base address  */
+{	(int) ldt,		/* segment base address */
 	sizeof(ldt)-1,		/* length - all address space */
 	SDT_SYSLDT,		/* segment type */
-	0,			/* segment descriptor priority level */
+	0,			/* segment descriptor privilege level */
 	1,			/* segment descriptor present */
 	0, 0,
 	0,			/* unused - default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ },
+	0  			/* limit granularity (byte/page units) */ },
 	/* Proc 0 Tss Descriptor */
-{	(int) USRSTACK,		/* segment base address  */
+{	(int) USRSTACK,		/* segment base address */
 	sizeof(tss)-1,		/* length - all address space */
 	SDT_SYS386TSS,		/* segment type */
-	0,			/* segment descriptor priority level */
+	SEL_KPL,		/* segment descriptor privilege level */
 	1,			/* segment descriptor present */
 	0, 0,
 	0,			/* unused - default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ },
+	0  			/* limit granularity (byte/page units) */ },
 	/* User LDT Descriptor per process */
-{	(int) ldt,			/* segment base address  */
+{	(int) ldt,		/* segment base address */
 	(512 * sizeof(union descriptor)-1),		/* length */
 	SDT_SYSLDT,		/* segment type */
-	0,			/* segment descriptor priority level */
+	0,			/* segment descriptor privilege level */
 	1,			/* segment descriptor present */
 	0, 0,
 	0,			/* unused - default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ },
+	0  			/* limit granularity (byte/page units) */ },
 };
 
 struct soft_segment_descriptor ldt_segs[] = {
 	/* Null Descriptor - overwritten by call gate */
-{	0x0,			/* segment base address  */
+{	0x0,			/* segment base address */
 	0x0,			/* length */
 	0,			/* segment type */
-	0,			/* segment descriptor priority level */
+	0,			/* segment descriptor privilege level */
 	0,			/* segment descriptor present */
 	0, 0,
 	0,			/* default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ },
+	0  			/* limit granularity (byte/page units) */ },
 	/* Null Descriptor - overwritten by call gate */
-{	0x0,			/* segment base address  */
+{	0x0,			/* segment base address */
 	0x0,			/* length */
 	0,			/* segment type */
-	0,			/* segment descriptor priority level */
+	0,			/* segment descriptor privilege level */
 	0,			/* segment descriptor present */
 	0, 0,
 	0,			/* default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ },
+	0  			/* limit granularity (byte/page units) */ },
 	/* User code descriptor */
-{	0x0,			/* segment base address  */
+{	0x0,			/* segment base address */
 	0xfffff,		/* length - all address space */
 	SDT_MEMERA,		/* segment type */
-	SEL_UPL,		/* segment descriptor priority level */
+	SEL_UPL,		/* segment descriptor privilege level */
 	1,			/* segment descriptor present */
 	0, 0,
 	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units)*/ },
+	1  			/* limit granularity (byte/page units) */ },
 	/* User data descriptor */
-{	0x0,			/* segment base address  */
+{	0x0,			/* segment base address */
 	0xfffff,		/* length - all address space */
 	SDT_MEMRWA,		/* segment type */
-	SEL_UPL,		/* segment descriptor priority level */
+	SEL_UPL,		/* segment descriptor privilege level */
 	1,			/* segment descriptor present */
 	0, 0,
 	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units)*/ } };
+	1  			/* limit granularity (byte/page units) */ } };
 
 void
 setgate(gdp, func, args, typ, dpl)
