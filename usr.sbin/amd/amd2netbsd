@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.11 1997/10/26 00:24:44 christos Exp $
+#	$NetBSD: amd2netbsd,v 1.12 1998/04/07 19:33:09 tv Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -474,13 +474,24 @@ fsi_gram.c fsi_gram.h: fsi_gram.y
 LIB= amu
 %% srcs libamu
 
+NOPROFILE=
+ 
 config_local.h: mkconf
 	@rm -f ${.TARGET}
 	sh ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=config_local.h
 
+install: __libinstall
+ 
 .include <bsd.lib.mk>
+ 
+.if !defined(NOPIC)
+__libinstall: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.else
+__libinstall:
+.endif
+
 LDADD=
 DPADD=
 ${OBJS}: config_local.h
