@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.92.2.7 2000/10/20 17:48:32 tv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.92.2.8 2001/04/05 12:25:03 he Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1937,7 +1937,7 @@ raidgetdefaultlabel(raidPtr, rs, lp)
 	lp->d_secperunit = raidPtr->totalSectors;
 	lp->d_secsize = raidPtr->bytesPerSector;
 	lp->d_nsectors = raidPtr->Layout.dataSectorsPerStripe;
-	lp->d_ntracks = 1;
+	lp->d_ntracks = 4 * raidPtr->numCol;
 	lp->d_ncylinders = raidPtr->totalSectors / 
 		(lp->d_nsectors * lp->d_ntracks);
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
