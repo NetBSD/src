@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12 2001/06/02 18:09:09 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.13 2001/07/22 14:09:04 wiz Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -186,37 +186,37 @@ initppc(startkernel, endkernel)
 	for (exc = EXC_RSVD + EXC_UPPER; exc <= EXC_LAST + EXC_UPPER; exc += 0x100) {
 		switch (exc - EXC_UPPER) {
 		default:
-			bcopy(&trapcode, (void *)exc, (size_t)&trapsize);
+			memcpy((void *)exc, &trapcode, (size_t)&trapsize);
 			break;
 		case EXC_MCHK:
-			bcopy(&adamint, (void *)exc, (size_t)&adamintsize);
+			memcpy((void *)exc, &adamint, (size_t)&adamintsize);
 			break;
 		case EXC_EXI:
-			bcopy(&extint, (void *)exc, (size_t)&extsize);
+			memcpy((void *)exc, &extint, (size_t)&extsize);
 			/*
 			 * This one is (potentially) installed during autoconf
 			 */
 			break;
 		case EXC_ALI:
-			bcopy(&alitrap, (void *)exc, (size_t)&alisize);
+			memcpy((void *)exc, &alitrap, (size_t)&alisize);
 			break;
 		case EXC_DSI:
-			bcopy(&dsitrap, (void *)exc, (size_t)&dsisize);
+			memcpy((void *)exc, &dsitrap, (size_t)&dsisize);
 			break;
 		case EXC_ISI:
-			bcopy(&isitrap, (void *)exc, (size_t)&isisize);
+			memcpy((void *)exc, &isitrap, (size_t)&isisize);
 			break;
 		case EXC_DECR:
-			bcopy(&decrint, (void *)exc, (size_t)&decrsize);
+			memcpy((void *)exc, &decrint, (size_t)&decrsize);
 			break;
 		case EXC_IMISS:
-			bcopy(&tlbimiss, (void *)exc, (size_t)&tlbimsize);
+			memcpy((void *)exc, &tlbimiss, (size_t)&tlbimsize);
 			break;
 		case EXC_DLMISS:
-			bcopy(&tlbdlmiss, (void *)exc, (size_t)&tlbdlmsize);
+			memcpy((void *)exc, &tlbdlmiss, (size_t)&tlbdlmsize);
 			break;
 		case EXC_DSMISS:
-			bcopy(&tlbdsmiss, (void *)exc, (size_t)&tlbdsmsize);
+			memcpy((void *)exc, &tlbdsmiss, (size_t)&tlbdsmsize);
 			break;
 
 #if defined(DDB) || defined(IPKDB)
@@ -224,9 +224,9 @@ initppc(startkernel, endkernel)
 		case EXC_TRC:
 		case EXC_BPT:
 #if defined(DDB)
-			bcopy(&ddblow, (void *)exc, (size_t)&ddbsize);
+			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
 #else
-			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
+			memcpy((void *)exc, &ipkdblow, (size_t)&ipkdbsize);
 #endif
 			break;
 #endif /* DDB || IPKDB */
