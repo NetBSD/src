@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.1 2000/08/13 16:48:57 itojun Exp $
+#	$NetBSD: Makefile,v 1.4.2.2 2001/03/09 18:03:17 he Exp $
 
 .include <bsd.own.mk>
 
@@ -13,8 +13,8 @@ BINMODE=	4555
 
 LIBSMUTILDIR!=	cd ${.CURDIR}/../libsmutil; ${MAKE} print-objdir
 
-LDADD+=		-lwrap -L${LIBSMUTILDIR} -lsmutil
-DPADD+=		${LIBWRAP} ${LIBSMUTILDIR}/libsmutil.a
+LDADD+=		-lwrap -L${LIBSMUTILDIR} -lsmutil -lutil
+DPADD+=		${LIBWRAP} ${LIBSMUTILDIR}/libsmutil.a ${LIBUTIL}
 
 SRCS=		alias.c arpadate.c bf_torek.c clock.c collect.c \
 		conf.c control.c convtime.c daemon.c deliver.c \
