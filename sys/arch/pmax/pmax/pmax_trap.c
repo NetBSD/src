@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.25 1996/01/29 22:52:35 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.26 1996/01/31 08:47:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -215,7 +215,7 @@ extern u_long kn03_tc3_imask;
  * IOASIC 40ns bus-cycle counter, used as hi-resolution clock:
  * may also be present on (some) XINE, 3min hardware, but not tested there.
  */
-extern u_long asic_base;	/* Base address of I/O asic */
+extern u_long ioasic_base;	/* Base address of I/O asic */
 u_long latched_cycle_cnt;	/*
 				 * IOASIC cycle counter, latched on every
 				 * interrupt from RTC chip (64Hz).
@@ -1294,7 +1294,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		temp = c->regc;	/* XXX clear interrupt bits */
 		cf.pc = pc;
 		cf.sr = statusReg;
-		latched_cycle_cnt = *(u_long*)(ASIC_REG_CTR(asic_base));
+		latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
 		hardclock(&cf);
 		intrcnt[6]++;
 		old_buscycle = latched_cycle_cnt - old_buscycle;
