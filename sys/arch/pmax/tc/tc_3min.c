@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3min.c,v 1.4 1999/12/01 08:55:09 nisimura Exp $	*/
+/*	$NetBSD: tc_3min.c,v 1.5 2000/02/29 07:20:21 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3min.c,v 1.4 1999/12/01 08:55:09 nisimura Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3min.c,v 1.5 2000/02/29 07:20:21 nisimura Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,14 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3min.c,v 1.4 1999/12/01 08:55:09 nisimura Exp $ "
  * is designed as a TC device and sits in slot #3 space.
  */
 static struct tc_slotdesc tc_kmin_slots [] = {
-       	{ TC_KV(KMIN_PHYS_TC_0_START), TC_C(0) },   /* 0 - TC option slot 0 */
-	{ TC_KV(KMIN_PHYS_TC_1_START), TC_C(1) },   /* 1 - TC option slot 1 */
-	{ TC_KV(KMIN_PHYS_TC_2_START), TC_C(2) },   /* 2 - TC option slot 2 */
-	{ TC_KV(KMIN_PHYS_TC_3_START), TC_C(3) }    /* 3 - IOASIC on b'board */
+    { KV(KMIN_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
+    { KV(KMIN_PHYS_TC_1_START), C(SYS_DEV_OPT1),  },	/* 1 - opt slot 1 */
+    { KV(KMIN_PHYS_TC_2_START), C(SYS_DEV_OPT2),  },	/* 2 - opt slot 2 */
+    { KV(KMIN_PHYS_TC_3_START), C(SYS_DEV_BOGUS), },	/* 3 - IOASIC */
 };
 
 const struct tc_builtin tc_kn02ba_builtins[] = {
-	{ "IOCTL   ",	3, 0x0, TC_C(3), }
+	{ "IOCTL   ",	3, 0x0, C(3), }
 };
 
 struct tcbus_attach_args kmin_tc_desc =
