@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.72 1999/10/31 22:34:58 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.73 1999/11/05 08:12:13 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -955,3 +955,62 @@ distrib/utils/sysinst/net.c			1.55
   Do not mislead users by inserting "lookup files bind" in
   /etc/resolv.conf; after we converted to nsswitch this is
   handled elsewhere.
+
+distrib/notes/pmax/install			1.22
+
+  Note that the netboot kernel is called "install.ecoff", not "install".
+
+gnu/usr.bin/send-pr/send-pr.man			1.5
+
+  Document the files and environment variables used by send-pr to fill in
+  defaults for problem reports, in the FILES and ENVIRONMENT sections
+  of the manual page, respectively.  Fixes PR#1889.
+
+gnu/usr.bin/send-pr/fields.texi			1.3
+gnu/usr.bin/send-pr/send-pr.sh			1.18
+gnu/usr.bin/send-pr/send-pr.texi		1.3
+
+  Change the example values of the Confidential field from "yes | no" to
+  "no | yes" so that "yes" will be less likely to be used accidentally.
+
+sys/nfs/nfs_socket.c				1.51
+sys/nfs/nfs_vfsops.c				1.84
+sys/nfs/nfsmount.h				1.18
+
+  Avoid a panic when forcibly unmounting a hung NFS mount, e.g. at
+  reboot.
+
+usr.bin/fmt/fmt.c				1.10-1.11
+
+  Process lines longer than BUFSIZ characters correctly.
+
+lib/libc/net/inet_pton.c			1.13
+
+  Check for invalid digits in number components.  Fixes PR#8314.
+
+sys/arch/arm32/arm32/copystr.S			1.11-1.13
+
+  Fix problems in copy{,in,out}str() with zero-length buffers.
+
+sys/dev/ccd.c					1.64
+
+  Fix a dobule-biodone() panic when ccd component buffers have errors.
+
+sys/arch/m68k/include/psl.h			1.3
+
+  Provide multiple inclusion protection.
+
+sys/msdosfs/msdosfs_vnops.c			1.88
+
+  Set iovec offset correctly in msdosfs_readdir() so that some long
+  filename entries won't be ignored when the contents of the directory
+  don't fit in the user buffer all at once.  Fixes PR#4492.
+
+sys/arch/sparc/sparc/locore.s			1.126
+
+  Fix several panics in copy{in,out,}str().
+
+sys/arch/i386/isa/pms.c				1.43
+
+  Disable a diagnostic printout ("opmsprobe: command error" if no mouse
+  is connected) which is often misunderstood to be an error message.
