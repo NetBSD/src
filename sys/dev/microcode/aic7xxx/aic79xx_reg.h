@@ -3,7 +3,7 @@
  *		 from the following source files:
  *
  * Id: //depot/aic7xxx/aic7xxx/aic79xx.seq#94 $
- * Id: //depot/aic7xxx/aic7xxx/aic79xx.reg#69 $
+ * Id: aic79xx.reg,v 1.13 2003/05/26 21:26:51 gibbs Exp $
  */
 typedef int (ahd_reg_print_t)(u_int, u_int *, u_int);
 typedef struct ahd_reg_parse_entry {
@@ -2239,94 +2239,94 @@ ahd_reg_print_t ahd_scb_sense_busaddr_print;
 #endif
 
 #if AIC_DEBUG_REGISTERS
-ahd_reg_print_t ahd_scb_dataptr_print;
+ahd_reg_print_t ahd_scb_tag_print;
 #else
-#define ahd_scb_dataptr_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_DATAPTR", 0x190, regvalue, cur_col, wrap)
-#endif
-
-#if AIC_DEBUG_REGISTERS
-ahd_reg_print_t ahd_scb_datacnt_print;
-#else
-#define ahd_scb_datacnt_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_DATACNT", 0x198, regvalue, cur_col, wrap)
-#endif
-
-#if AIC_DEBUG_REGISTERS
-ahd_reg_print_t ahd_scb_sgptr_print;
-#else
-#define ahd_scb_sgptr_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_SGPTR", 0x19c, regvalue, cur_col, wrap)
-#endif
-
-#if AIC_DEBUG_REGISTERS
-ahd_reg_print_t ahd_scb_busaddr_print;
-#else
-#define ahd_scb_busaddr_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_BUSADDR", 0x1a0, regvalue, cur_col, wrap)
-#endif
-
-#if AIC_DEBUG_REGISTERS
-ahd_reg_print_t ahd_scb_next_print;
-#else
-#define ahd_scb_next_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_NEXT", 0x1a4, regvalue, cur_col, wrap)
-#endif
-
-#if AIC_DEBUG_REGISTERS
-ahd_reg_print_t ahd_scb_next2_print;
-#else
-#define ahd_scb_next2_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_NEXT2", 0x1a6, regvalue, cur_col, wrap)
+#define ahd_scb_tag_print(regvalue, cur_col, wrap) \
+    ahd_print_register(NULL, 0, "SCB_TAG", 0x190, regvalue, cur_col, wrap)
 #endif
 
 #if AIC_DEBUG_REGISTERS
 ahd_reg_print_t ahd_scb_control_print;
 #else
 #define ahd_scb_control_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_CONTROL", 0x1a8, regvalue, cur_col, wrap)
+    ahd_print_register(NULL, 0, "SCB_CONTROL", 0x192, regvalue, cur_col, wrap)
 #endif
 
 #if AIC_DEBUG_REGISTERS
 ahd_reg_print_t ahd_scb_scsiid_print;
 #else
 #define ahd_scb_scsiid_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_SCSIID", 0x1a9, regvalue, cur_col, wrap)
+    ahd_print_register(NULL, 0, "SCB_SCSIID", 0x193, regvalue, cur_col, wrap)
 #endif
 
 #if AIC_DEBUG_REGISTERS
 ahd_reg_print_t ahd_scb_lun_print;
 #else
 #define ahd_scb_lun_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_LUN", 0x1aa, regvalue, cur_col, wrap)
+    ahd_print_register(NULL, 0, "SCB_LUN", 0x194, regvalue, cur_col, wrap)
 #endif
 
 #if AIC_DEBUG_REGISTERS
 ahd_reg_print_t ahd_scb_task_attribute_print;
 #else
 #define ahd_scb_task_attribute_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_TASK_ATTRIBUTE", 0x1ab, regvalue, cur_col, wrap)
+    ahd_print_register(NULL, 0, "SCB_TASK_ATTRIBUTE", 0x195, regvalue, cur_col, wrap)
 #endif
 
 #if AIC_DEBUG_REGISTERS
 ahd_reg_print_t ahd_scb_cdb_len_print;
 #else
 #define ahd_scb_cdb_len_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_CDB_LEN", 0x1ac, regvalue, cur_col, wrap)
+    ahd_print_register(NULL, 0, "SCB_CDB_LEN", 0x196, regvalue, cur_col, wrap)
 #endif
 
 #if AIC_DEBUG_REGISTERS
 ahd_reg_print_t ahd_scb_task_management_print;
 #else
 #define ahd_scb_task_management_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_TASK_MANAGEMENT", 0x1ad, regvalue, cur_col, wrap)
+    ahd_print_register(NULL, 0, "SCB_TASK_MANAGEMENT", 0x197, regvalue, cur_col, wrap)
 #endif
 
 #if AIC_DEBUG_REGISTERS
-ahd_reg_print_t ahd_scb_tag_print;
+ahd_reg_print_t ahd_scb_dataptr_print;
 #else
-#define ahd_scb_tag_print(regvalue, cur_col, wrap) \
-    ahd_print_register(NULL, 0, "SCB_TAG", 0x1ae, regvalue, cur_col, wrap)
+#define ahd_scb_dataptr_print(regvalue, cur_col, wrap) \
+    ahd_print_register(NULL, 0, "SCB_DATAPTR", 0x198, regvalue, cur_col, wrap)
+#endif
+
+#if AIC_DEBUG_REGISTERS
+ahd_reg_print_t ahd_scb_datacnt_print;
+#else
+#define ahd_scb_datacnt_print(regvalue, cur_col, wrap) \
+    ahd_print_register(NULL, 0, "SCB_DATACNT", 0x1a0, regvalue, cur_col, wrap)
+#endif
+
+#if AIC_DEBUG_REGISTERS
+ahd_reg_print_t ahd_scb_sgptr_print;
+#else
+#define ahd_scb_sgptr_print(regvalue, cur_col, wrap) \
+    ahd_print_register(NULL, 0, "SCB_SGPTR", 0x1a4, regvalue, cur_col, wrap)
+#endif
+
+#if AIC_DEBUG_REGISTERS
+ahd_reg_print_t ahd_scb_busaddr_print;
+#else
+#define ahd_scb_busaddr_print(regvalue, cur_col, wrap) \
+    ahd_print_register(NULL, 0, "SCB_BUSADDR", 0x1a8, regvalue, cur_col, wrap)
+#endif
+
+#if AIC_DEBUG_REGISTERS
+ahd_reg_print_t ahd_scb_next_print;
+#else
+#define ahd_scb_next_print(regvalue, cur_col, wrap) \
+    ahd_print_register(NULL, 0, "SCB_NEXT", 0x1ac, regvalue, cur_col, wrap)
+#endif
+
+#if AIC_DEBUG_REGISTERS
+ahd_reg_print_t ahd_scb_next2_print;
+#else
+#define ahd_scb_next2_print(regvalue, cur_col, wrap) \
+    ahd_print_register(NULL, 0, "SCB_NEXT2", 0x1ae, regvalue, cur_col, wrap)
 #endif
 
 #if AIC_DEBUG_REGISTERS
@@ -3650,25 +3650,10 @@ ahd_reg_print_t ahd_scb_disconnected_lists_print;
 #define	SCB_SENSE_BUSADDR		0x18c
 #define	SCB_NEXT_COMPLETE		0x18c
 
-#define	SCB_DATAPTR     		0x190
+#define	SCB_TAG         		0x190
+#define	SCB_FIFO_USE_COUNT		0x190
 
-#define	SCB_DATACNT     		0x198
-#define		SG_LAST_SEG     	0x80
-#define		SG_HIGH_ADDR_BITS	0x7f
-
-#define	SCB_SGPTR       		0x19c
-#define		SG_STATUS_VALID 	0x04
-#define		SG_FULL_RESID   	0x02
-#define		SG_LIST_NULL    	0x01
-
-#define	SCB_BUSADDR     		0x1a0
-
-#define	SCB_NEXT        		0x1a4
-#define	SCB_NEXT_SCB_BUSADDR		0x1a4
-
-#define	SCB_NEXT2       		0x1a6
-
-#define	SCB_CONTROL     		0x1a8
+#define	SCB_CONTROL     		0x192
 #define		TARGET_SCB      	0x80
 #define		DISCENB         	0x40
 #define		TAG_ENB         	0x20
@@ -3677,23 +3662,38 @@ ahd_reg_print_t ahd_scb_disconnected_lists_print;
 #define		DISCONNECTED    	0x04
 #define		SCB_TAG_TYPE    	0x03
 
-#define	SCB_SCSIID      		0x1a9
+#define	SCB_SCSIID      		0x193
 #define		TID             	0xf0
 #define		OID             	0x0f
 
-#define	SCB_LUN         		0x1aa
+#define	SCB_LUN         		0x194
 #define		LID             	0xff
 
-#define	SCB_TASK_ATTRIBUTE		0x1ab
+#define	SCB_TASK_ATTRIBUTE		0x195
 #define		SCB_XFERLEN_ODD 	0x01
 
-#define	SCB_CDB_LEN     		0x1ac
+#define	SCB_CDB_LEN     		0x196
 #define		SCB_CDB_LEN_PTR 	0x80
 
-#define	SCB_TASK_MANAGEMENT		0x1ad
+#define	SCB_TASK_MANAGEMENT		0x197
 
-#define	SCB_TAG         		0x1ae
-#define	SCB_FIFO_USE_COUNT		0x1ae
+#define	SCB_DATAPTR     		0x198
+
+#define	SCB_DATACNT     		0x1a0
+#define		SG_LAST_SEG     	0x80
+#define		SG_HIGH_ADDR_BITS	0x7f
+
+#define	SCB_SGPTR       		0x1a4
+#define		SG_STATUS_VALID 	0x04
+#define		SG_FULL_RESID   	0x02
+#define		SG_LIST_NULL    	0x01
+
+#define	SCB_BUSADDR     		0x1a8
+
+#define	SCB_NEXT        		0x1ac
+#define	SCB_NEXT_SCB_BUSADDR		0x1ac
+
+#define	SCB_NEXT2       		0x1ae
 
 #define	SCB_SPARE       		0x1b0
 #define	SCB_PKT_LUN     		0x1b0
