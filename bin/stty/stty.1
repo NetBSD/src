@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.17 1998/02/06 05:40:33 perry Exp $
+.\"	$NetBSD: stty.1,v 1.18 1998/02/13 21:53:48 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -250,6 +250,10 @@ to
 on output.
 .It Cm oxtabs Pq Fl oxtabs
 Expand (do not expand) tabs to spaces on output.
+.It Cm onocr Pq Fl onocr
+Do not (do) output CRs at column zero.
+.It Cm onlret Pq Fl onlret
+On the terminal NL performs (does not perform) the CR function.
 .El
 .Ss Local Modes:
 .Pp

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.102 1998/02/12 20:39:44 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.103 1998/02/13 21:53:46 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -596,7 +596,7 @@ ttyoutput(c, tp)
 		return (-1);
 	}
 	/*
-	 * Do tab expansion if OXTABS is set.  Special case if we external
+	 * Do tab expansion if OXTABS is set.  Special case if we do external
 	 * processing, we don't do the tab expansion because we'll probably
 	 * get it wrong.  If tab expansion needs to be done, let it happen
 	 * externally.
@@ -631,11 +631,12 @@ ttyoutput(c, tp)
 		if (!ISSET(tp->t_lflag, FLUSHO) && putc('\r', &tp->t_outq))
 			return (c);
 	}
-	/*
-	 * If OCRNL is set, translate "\r" into "\n".
-	 */
+	/* If OCRNL is set, translate "\r" into "\n". */
 	else if (c == '\r' && ISSET(tp->t_oflag, OCRNL))
 		c = '\n';
+	/* If ONOCR is set, don't transmit CRs when on column 0. */
+	else if (c == '\r' && ISSET(tp->t_oflag, ONOCR) && tp->t_column == 0)
+		return (-1);
 
 	tk_nout++;
 	tp->t_outcc++;
@@ -651,7 +652,7 @@ ttyoutput(c, tp)
 	case CONTROL:
 		break;
 	case NEWLINE:
-		if (ISSET(tp->t_oflag, ONLCR))
+		if (ISSET(tp->t_oflag, ONLCR | ONLRET))
 			col = 0;
 		break;
 	case RETURN:
