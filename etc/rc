@@ -1,4 +1,4 @@
-#	@(#)rc	5.27 (Berkeley) 6/5/91
+#	@(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -6,8 +6,6 @@
 # and the console is the controlling terminal.
 
 stty status '^T'
-# yellow characters with blue background
-echo -n "[3;30x"
 
 # Set shell to ignore SIGINT (2), but not children;
 # shell catches SIGQUIT (3) and returns to single user after fsck.
@@ -20,10 +18,10 @@ export PATH
 
 if [ -r /fastboot ]
 then
-	echo Fast boot ... skipping disk checks
+	echo "Fast boot: skipping disk checks."
 elif [ $1x = autobootx ]
 then
-	echo Automatic reboot in progress...
+	echo "Automatic boot in progress: starting file system checks."
 	fsck -p
 	case $? in
 	0)
@@ -32,16 +30,17 @@ then
 		exit 1
 		;;
 	4)
+		echo "Rebooting..."
 		reboot
-		echo "reboot failed... help!"
+		echo "Reboot failed; help!"
 		exit 1
 		;;
 	8)
-		echo "Automatic file system check failed... help!"
+		echo "Automatic file system check failed; help!"
 		exit 1
 		;;
 	12)
-		echo "Reboot interrupted"
+		echo "Boot interrupted."
 		exit 1
 		;;
 	130)
@@ -49,13 +48,13 @@ then
 		exit 1
 		;;
 	*)
-		echo "Unknown error in reboot"
+		echo "Unknown error; help!"
 		exit 1
 		;;
 	esac
 fi
 
-trap "echo 'Reboot interrupted'; exit 1" 3
+trap "echo 'Boot interrupted.'; exit 1" 3
 
 swapon -a
 
@@ -73,7 +72,7 @@ mount -a -t nfs >/dev/null 2>&1 &	# XXX shouldn't need background
 rm -f /etc/nologin
 rm -f /var/spool/uucp/LCK.*
 rm -f /var/spool/uucp/STST/*
-(cd /var/run && { rm -rf -- *; cp /dev/null utmp; chmod 644 utmp; })
+(cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 
 echo -n 'starting system logger'
 rm -f /dev/log
@@ -93,13 +92,13 @@ if [ -d /var/crash ]; then
 	savecore /var/crash
 fi
 
-#				echo -n 'checking quotas:'
-#quotacheck -a
-#				echo ' done.'
-#quotaon -a
+				echo -n 'checking quotas:'
+quotacheck -a
+				echo ' done.'
+quotaon -a
 
 # build ps databases
-kvm_mkdb /386bsd
+kvm_mkdb
 dev_mkdb
 
 chmod 666 /dev/tty[pqrs]*
@@ -112,22 +111,22 @@ then
 fi
 
 echo preserving editor files
-(cd /var/tmp && /usr/libexec/elvispreserve "-the system rebooted" elvis* &&
-     rm -f elvis[0-9a-f][0-9a-f][0-9a-f][0-9a-f]* \
-	 elvis_[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*)
+(cd /var/tmp && /usr/libexec/ex3.7preserve -a &&
+     rm -f Ex[0-9][0-9][0-9][0-9][0-9] Rx[0-9][0-9][0-9][0-9][0-9])
 
 echo clearing /tmp
 
-# prune quickly with one rm, then use find to clean up /tmp/[lq]*
-# (not needed with mfs /tmp, but doesn't hurt there...)
+# Prune quickly with one rm, then use find to clean up /tmp/[lq]* (this
+# is not needed with mfs /tmp, but doesn't hurt anything).
 (cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
-    find . ! -name . ! -name lost+found ! -name quotas -exec rm -rf -- {} \;)
+    find . ! -name . ! -name lost+found ! -name quotas -type d -prune \
+	-exec rm -rf -- {} \;)
 
-# echo 'turning on accounting';	accton /var/account/acct
+echo 'turning on accounting';	accton /var/account/acct
 
 echo -n standard daemons:
 echo -n ' update';		update
-echo -n ' crond';		/usr/libexec/crond
+echo -n ' cron';		cron
 echo '.'
 
 echo -n starting network daemons:
@@ -141,9 +140,7 @@ elif [ X${routedflags} != X"NO" ]; then
 	echo -n ' routed';	routed $routedflags
 fi
 
-if [ X${name_server} = X"YES" -a -r /etc/named.boot ]; then
-	echo -n ' named';		named
-fi
+echo -n ' named';		named
 
 # $rwhod is imported from /etc/netstart;
 # if $rwhod is set to something other than NO, rwhod is run.
@@ -153,22 +150,22 @@ fi
 
 echo -n ' printer';		lpd
 
-
-if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
-	echo -n ' portmap';		portmap
-	echo -n ' mountd';		mountd
-	echo -n ' nfsd';		nfsd -u 0,0,4 -t 0,0
-	echo -n ' nfsiod';		nfsiod 4
-fi
+echo -n ' portmap';		portmap
+echo -n ' mountd';		mountd
+echo -n ' nfsd';		nfsd -u -t 6
+echo -n ' nfsiod';		nfsiod 4
 
 echo -n ' sendmail';		sendmail -bd -q30m
 echo -n ' inetd';		inetd
+echo -n ' amd';
+	cd /; amd -l /var/log/amd -r -a /amd -p > /var/run/amd.pid \
+	/home /etc/amd-home \
+	/n /etc/amd-n \
+	&
+
 echo '.'
 
 sh /etc/rc.local
 
 date
-
-# reset to normal (no colors)
-echo -n "[0x"
 exit 0
