@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.4 1994/10/26 21:09:12 cgd Exp $	*/
+/*	$NetBSD: pm.c,v 1.5 1995/04/10 07:31:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -306,7 +306,7 @@ pmioctl(dev, cmd, data, flag, p)
  * Return the physical page number that corresponds to byte offset 'off'.
  */
 /*ARGSUSED*/
-pmmap(dev, off, prot)
+pmmmap(dev, off, prot)
 	dev_t dev;
 {
 	int len;
