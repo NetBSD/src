@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.1 1999/06/20 16:35:40 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.2 1999/10/30 16:07:59 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -134,6 +134,10 @@ fxp_pci_attach(parent, self, aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int flags;
+
+	sc->sc_enabled = 1;
+	sc->sc_enable = NULL;
+	sc->sc_disable = NULL;
 
 	/*
 	 * Map control/status registers.

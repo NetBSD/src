@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.7 1999/10/28 19:21:51 sommerfeld Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.8 1999/10/30 16:07:58 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -199,9 +199,16 @@ struct fxp_softc {
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
+
+	int	sc_enabled;	/* boolean; power enabled on interface */
+	int	(*sc_enable) __P((struct fxp_softc *));
+	void	(*sc_disable) __P((struct fxp_softc *));
+
+	int sc_eeprom_size;		/* log2 size of EEPROM */
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
 #endif
+	
 };
 
 #define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
@@ -307,3 +314,7 @@ do {									\
 
 void	fxp_attach __P((struct fxp_softc *));
 int	fxp_intr __P((void *));
+
+int	fxp_enable __P((struct fxp_softc*));
+void	fxp_disable __P((struct fxp_softc*));
+
