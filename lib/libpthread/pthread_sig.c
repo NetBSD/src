@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.33 2004/01/02 19:24:44 cl Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.34 2004/03/24 20:01:37 lha Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.33 2004/01/02 19:24:44 cl Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.34 2004/03/24 20:01:37 lha Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -597,18 +597,22 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 
 	/* See if there are any signals to take */
 	__sigemptyset14(&takelist);
-	while ((i = firstsig(&self->pt_siglist)) != 0) {
+	tmp = self->pt_siglist;
+	while ((i = firstsig(&tmp)) != 0) {
 		if (!__sigismember14(&self->pt_sigmask, i)) {
 			__sigaddset14(&takelist, i);
 			__sigdelset14(&self->pt_siglist, i);
 		}
+		__sigdelset14(&tmp, i);
 	}
 	pthread_spinlock(self, &pt_process_siglock);
-	while ((i = firstsig(&pt_process_siglist)) != 0) {
+	tmp = pt_process_siglist;
+	while ((i = firstsig(&tmp)) != 0) {
 		if (!__sigismember14(&self->pt_sigmask, i)) {
 			__sigaddset14(&takelist, i);
 			__sigdelset14(&pt_process_siglist, i);
 		}
+		__sigdelset14(&tmp, i);
 	}
 	/* Unblock any signals that were blocked process-wide before this. */
 	tmp = pt_process_sigmask;
