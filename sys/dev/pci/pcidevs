@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.555 2003/07/27 01:16:10 jonathan Exp $
+$NetBSD: pcidevs,v 1.556 2003/07/27 02:34:38 jonathan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -559,6 +559,7 @@ vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	Broadcom Corp. (SiByte)
+vendor CAVIUM		0x177d	Cavium
 vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
@@ -1068,6 +1069,9 @@ product BUSLOGIC FLASHPOINT	0x8130	FlashPoint
 
 /* c't Magazin products */
 product C4T GPPCI		0x6773	GPPCI
+
+/* Cavium products */
+product CAVIUM NITROX		0x0001	Nitrox XL
 
 /* Chips and Technologies products */
 product CHIPS 64310		0x00b8	64310
