@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.48 2004/04/29 16:10:55 jrf Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.49 2004/05/25 04:44:44 atatat Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.48 2004/04/29 16:10:55 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.49 2004/05/25 04:44:44 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,8 @@ SYSCTL_SETUP(sysctl_vfs_null_setup, "sysctl vfs.null subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "null", NULL,
+		       CTLTYPE_NODE, "null",
+		       SYSCTL_DESCR("Loopback file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 9, CTL_EOL);
 	/*
