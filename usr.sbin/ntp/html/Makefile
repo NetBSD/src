@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 12:24:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/04/18 18:33:22 thorpej Exp $
 
 NOOBJ=  # defined
 
 .include <bsd.own.mk>
 
-.if ${MKSHARE} != "no"
+.if ${MKDOC} != "no"
 NTPSRCDIR=html
 FILESDIR=${NTPDOCDIR}
 FILES=	Oncore-SHMEM.htm accopt.htm assoc.htm audio.htm authopt.htm \
