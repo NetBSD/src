@@ -24,9 +24,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Get generic i386 definitions. */
 
-/* This goes away when the math-emulator is fixed */
-#define TARGET_CPU_DEFAULT 0400		/* TARGET_NO_FANCY_MATH_387 */
-
 #include <i386/gstabs.h>
 
 /* Get perform_* macros to build libgcc.a.  */
@@ -38,6 +35,11 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include <netbsd.h>
 
 #define OBJECT_FORMAT_ELF
+
+/* This goes away when the math-emulator is fixed */
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT \
+  (MASK_80387 | MASK_IEEE_FP | MASK_FLOAT_RETURNS | MASK_NO_FANCY_MATH_387)
 
 /*
  * DBX stabs definitions. Same as Solaris and other i386 ELF platforms.
