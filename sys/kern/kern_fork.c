@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.54 1999/03/24 05:51:23 mrg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.55 1999/04/30 18:42:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -276,6 +276,8 @@ again:
 		VREF(p2->p_textvp);
 
 	p2->p_fd = fdcopy(p1);
+	p2->p_cwdi = cwdinit(p1);
+
 	/*
 	 * If p_limit is still copy-on-write, bump refcnt,
 	 * otherwise get a copy that won't be modified.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.41 1999/04/21 02:37:07 mrg Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.42 1999/04/30 18:43:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -810,7 +810,7 @@ unp_externalize(rights)
 	int f, error = 0;
 
 	/* Make sure the recipient should be able to see the descriptors.. */
-	if (p->p_fd->fd_rdir != NULL) {
+	if (p->p_cwdi->cwdi_rdir != NULL) {
 		rp = (struct file **)ALIGN(cm + 1);
 		for (i = 0; i < nfds; i++) {
 			fp = *rp++;
@@ -823,7 +823,7 @@ unp_externalize(rights)
 			if (fp->f_type == DTYPE_VNODE) {
 				struct vnode *vp = (struct vnode *)fp->f_data;
 				if ((vp->v_type == VDIR) &&
-				    !vn_isunder(vp, p->p_fd->fd_rdir, p)) {
+				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, p)) {
 					error = EPERM;
 					break;
 				}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.57 1999/03/24 05:51:22 mrg Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.58 1999/04/30 18:42:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -70,6 +70,7 @@
 struct filelist filehead;	/* head of list of open files */
 int nfiles;			/* actual number of open files */
 struct pool file_pool;		/* memory pool for file structures */
+struct pool cwdi_pool;		/* memory pool for cwdinfo structures */
 
 static __inline void fd_used __P((struct filedesc *, int));
 static __inline void fd_unused __P((struct filedesc *, int));
@@ -576,6 +577,8 @@ finit()
 
 	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILE);
+	pool_init(&cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0, "cwdipl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILEDESC);
 }
 
 /*
@@ -639,6 +642,80 @@ ffree(fp)
 }
 
 /*
+ * Create an initial cwdinfo structure, using the same current and root
+ * directories as p.
+ */
+struct cwdinfo *
+cwdinit(p)
+	struct proc *p;
+{
+	struct cwdinfo *cwdi;
+	extern int cmask;
+
+	cwdi = pool_get(&cwdi_pool, PR_WAITOK);
+
+	cwdi->cwdi_cdir = p->p_cwdi->cwdi_cdir;
+	VREF(cwdi->cwdi_cdir);
+	cwdi->cwdi_rdir = p->p_cwdi->cwdi_rdir;
+	if (cwdi->cwdi_rdir)
+		VREF(cwdi->cwdi_rdir);
+	cwdi->cwdi_cmask = cmask;
+	cwdi->cwdi_refcnt = 1;
+
+	return (cwdi);
+}
+
+/*
+ * Make p2 share p1's cwdinfo.
+ */
+void
+cwdshare(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_cwdi = p1->p_cwdi;
+	p1->p_cwdi->cwdi_refcnt++;
+}
+
+/*
+ * Make this process not share its cwdinfo structure, maintaining
+ * all cwdinfo state.
+ */
+void
+cwdunshare(p)
+	struct proc *p;
+{
+	struct cwdinfo *newcwdi;
+
+	if (p->p_cwdi->cwdi_refcnt == 1)
+		return;
+
+	newcwdi = cwdinit(p);
+	cwdfree(p);
+	p->p_cwdi = newcwdi;
+}
+
+/*
+ * Release a cwdinfo structure.
+ */
+void
+cwdfree(p)
+	struct proc *p;
+{
+	struct cwdinfo *cwdi = p->p_cwdi;
+
+	if (--cwdi->cwdi_refcnt > 0)
+		return;
+
+	p->p_cwdi = NULL;
+
+	vrele(cwdi->cwdi_cdir);
+	if (cwdi->cwdi_rdir)
+		vrele(cwdi->cwdi_rdir);
+	pool_put(&cwdi_pool, cwdi);
+}
+
+/*
  * Create an initial filedesc structure, using the same current and root
  * directories as p.
  */
@@ -647,16 +724,10 @@ fdinit(p)
 	struct proc *p;
 {
 	struct filedesc0 *newfdp;
-	struct filedesc *fdp = p->p_fd;
 
 	MALLOC(newfdp, struct filedesc0 *, sizeof(struct filedesc0),
 	    M_FILEDESC, M_WAITOK);
 	memset(newfdp, 0, sizeof(struct filedesc0));
-	newfdp->fd_fd.fd_cdir = fdp->fd_cdir;
-	VREF(newfdp->fd_fd.fd_cdir);
-	newfdp->fd_fd.fd_rdir = fdp->fd_rdir;
-	if (newfdp->fd_fd.fd_rdir)
-		VREF(newfdp->fd_fd.fd_rdir);
 
 	fdinit1(newfdp);
 
@@ -670,10 +741,8 @@ void
 fdinit1(newfdp)
 	struct filedesc0 *newfdp;
 {
-	extern int cmask;		/* init_main.c */
 
 	newfdp->fd_fd.fd_refcnt = 1;
-	newfdp->fd_fd.fd_cmask = cmask;
 	newfdp->fd_fd.fd_ofiles = newfdp->fd_dfiles;
 	newfdp->fd_fd.fd_ofileflags = newfdp->fd_dfileflags;
 	newfdp->fd_fd.fd_nfiles = NDFILE;
@@ -737,9 +806,6 @@ fdcopy(p)
 	MALLOC(newfdp, struct filedesc *, sizeof(struct filedesc0),
 	    M_FILEDESC, M_WAITOK);
 	memcpy(newfdp, fdp, sizeof(struct filedesc));
-	VREF(newfdp->fd_cdir);
-	if (newfdp->fd_rdir)
-		VREF(newfdp->fd_rdir);
 	newfdp->fd_refcnt = 1;
 
 	/*
@@ -800,9 +866,6 @@ fdfree(p)
 	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
 		FREE(fdp->fd_ofiles, M_FILEDESC);
-	vrele(fdp->fd_cdir);
-	if (fdp->fd_rdir)
-		vrele(fdp->fd_rdir);
 	FREE(fdp, M_FILEDESC);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.133 1999/03/31 19:18:45 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.134 1999/04/30 18:43:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -353,7 +353,7 @@ void
 checkdirs(olddp)
 	struct vnode *olddp;
 {
-	struct filedesc *fdp;
+	struct cwdinfo *cwdi;
 	struct vnode *newdp;
 	struct proc *p;
 
@@ -362,16 +362,16 @@ checkdirs(olddp)
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
-		fdp = p->p_fd;
-		if (fdp->fd_cdir == olddp) {
-			vrele(fdp->fd_cdir);
+		cwdi = p->p_cwdi;
+		if (cwdi->cwdi_cdir == olddp) {
+			vrele(cwdi->cwdi_cdir);
 			VREF(newdp);
-			fdp->fd_cdir = newdp;
+			cwdi->cwdi_cdir = newdp;
 		}
-		if (fdp->fd_rdir == olddp) {
-			vrele(fdp->fd_rdir);
+		if (cwdi->cwdi_rdir == olddp) {
+			vrele(cwdi->cwdi_rdir);
 			VREF(newdp);
-			fdp->fd_rdir = newdp;
+			cwdi->cwdi_rdir = newdp;
 		}
 	}
 	if (rootvnode == olddp) {
@@ -703,7 +703,8 @@ sys_fchdir(p, v, retval)
 	struct sys_fchdir_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
+	struct cwdinfo *cwdi = p->p_cwdi;
 	struct vnode *vp, *tdp;
 	struct mount *mp;
 	struct file *fp;
@@ -739,14 +740,14 @@ sys_fchdir(p, v, retval)
 	 * Disallow changing to a directory not under the process's
 	 * current root directory (if there is one).
 	 */
-	if (fdp->fd_rdir &&
+	if (cwdi->cwdi_rdir &&
 	    !vn_isunder(vp, NULL, p)) {
 		vrele(vp);
 		return EPERM;	/* operation not permitted */
 	}
 	
-	vrele(fdp->fd_cdir);
-	fdp->fd_cdir = vp;
+	vrele(cwdi->cwdi_cdir);
+	cwdi->cwdi_cdir = vp;
 	return (0);
 }
 
@@ -761,7 +762,8 @@ sys_fchroot(p, v, retval)
 	register_t *retval;
 {
 	struct sys_fchroot_args *uap = v;
-	struct filedesc	*fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
+	struct cwdinfo *cwdi = p->p_cwdi;
 	struct vnode	*vp;
 	struct file	*fp;
 	int		 error;
@@ -786,19 +788,19 @@ sys_fchroot(p, v, retval)
 	 * the working directory.  Silently chdir to / if we aren't
 	 * already there.
 	 */
-	if (!vn_isunder(fdp->fd_cdir, vp, p)) {
+	if (!vn_isunder(cwdi->cwdi_cdir, vp, p)) {
 		/*
 		 * XXX would be more failsafe to change directory to a
 		 * deadfs node here instead
 		 */
-		vrele(fdp->fd_cdir);
+		vrele(cwdi->cwdi_cdir);
 		VREF(vp);
-		fdp->fd_cdir = vp;
+		cwdi->cwdi_cdir = vp;
 	}
 	
-	if (fdp->fd_rdir != NULL)
-		vrele(fdp->fd_rdir);
-	fdp->fd_rdir = vp;
+	if (cwdi->cwdi_rdir != NULL)
+		vrele(cwdi->cwdi_rdir);
+	cwdi->cwdi_rdir = vp;
 	return 0;
 }
 
@@ -817,7 +819,7 @@ sys_chdir(p, v, retval)
 	struct sys_chdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
+	struct cwdinfo *cwdi = p->p_cwdi;
 	int error;
 	struct nameidata nd;
 
@@ -825,8 +827,8 @@ sys_chdir(p, v, retval)
 	    SCARG(uap, path), p);
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
-	vrele(fdp->fd_cdir);
-	fdp->fd_cdir = nd.ni_vp;
+	vrele(cwdi->cwdi_cdir);
+	cwdi->cwdi_cdir = nd.ni_vp;
 	return (0);
 }
 
@@ -843,7 +845,7 @@ sys_chroot(p, v, retval)
 	struct sys_chroot_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
+	struct cwdinfo *cwdi = p->p_cwdi;
 	struct vnode *vp;
 	int error;
 	struct nameidata nd;
@@ -854,24 +856,24 @@ sys_chroot(p, v, retval)
 	    SCARG(uap, path), p);
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
-	if (fdp->fd_rdir != NULL)
-		vrele(fdp->fd_rdir);
+	if (cwdi->cwdi_rdir != NULL)
+		vrele(cwdi->cwdi_rdir);
 	vp = nd.ni_vp;
-	fdp->fd_rdir = vp;
+	cwdi->cwdi_rdir = vp;
 
 	/*
 	 * Prevent escaping from chroot by putting the root under
 	 * the working directory.  Silently chdir to / if we aren't
 	 * already there.
 	 */
-	if (!vn_isunder(fdp->fd_cdir, vp, p)) {
+	if (!vn_isunder(cwdi->cwdi_cdir, vp, p)) {
 		/*
 		 * XXX would be more failsafe to change directory to a
 		 * deadfs node here instead
 		 */
-		vrele(fdp->fd_cdir);
+		vrele(cwdi->cwdi_cdir);
 		VREF(vp);
-		fdp->fd_cdir = vp;
+		cwdi->cwdi_cdir = vp;
 	}
 	
 	return (0);
@@ -918,6 +920,7 @@ sys_open(p, v, retval)
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */ *uap = v;
+	struct cwdinfo *cwdi = p->p_cwdi;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	register struct vnode *vp;
@@ -934,7 +937,7 @@ sys_open(p, v, retval)
 	if ((error = falloc(p, &nfp, &indx)) != 0)
 		return (error);
 	fp = nfp;
-	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
+	cmode = ((SCARG(uap, mode) &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	p->p_dupfd = -indx - 1;			/* XXX check for fdopen */
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
@@ -1016,7 +1019,7 @@ sys_mknod(p, v, retval)
 	else {
 		VATTR_NULL(&vattr);
 		vattr.va_mode =
-		    (SCARG(uap, mode) & ALLPERMS) &~ p->p_fd->fd_cmask;
+		    (SCARG(uap, mode) & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
 		vattr.va_rdev = SCARG(uap, dev);
 		whiteout = 0;
 
@@ -1093,7 +1096,7 @@ sys_mkfifo(p, v, retval)
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VFIFO;
-	vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_fd->fd_cmask;
+	vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	return (VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr));
 }
@@ -1178,7 +1181,7 @@ sys_symlink(p, v, retval)
 		goto out;
 	}
 	VATTR_NULL(&vattr);
-	vattr.va_mode = ACCESSPERMS &~ p->p_fd->fd_cmask;
+	vattr.va_mode = ACCESSPERMS &~ p->p_cwdi->cwdi_cmask;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
 out:
@@ -2472,7 +2475,8 @@ sys_mkdir(p, v, retval)
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VDIR;
-	vattr.va_mode = (SCARG(uap, mode) & ACCESSPERMS) &~ p->p_fd->fd_cmask;
+	vattr.va_mode =
+	    (SCARG(uap, mode) & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (!error)
@@ -2573,11 +2577,11 @@ sys_umask(p, v, retval)
 	struct sys_umask_args /* {
 		syscallarg(mode_t) newmask;
 	} */ *uap = v;
-	register struct filedesc *fdp;
+	struct cwdinfo *cwdi;
 
-	fdp = p->p_fd;
-	*retval = fdp->fd_cmask;
-	fdp->fd_cmask = SCARG(uap, newmask) & ALLPERMS;
+	cwdi = p->p_cwdi;
+	*retval = cwdi->cwdi_cmask;
+	cwdi->cwdi_cmask = SCARG(uap, newmask) & ALLPERMS;
 	return (0);
 }
 

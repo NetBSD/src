@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.87 1999/03/24 05:51:23 mrg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.88 1999/04/30 18:43:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1205,7 +1205,7 @@ coredump(p)
 	 * sure that the directory is still there and that the mount flags
 	 * allow us to write core dumps there.
 	 */
-	vp = p->p_fd->fd_cdir;
+	vp = p->p_cwdi->cwdi_cdir;
 	if (vp->v_mount == NULL ||
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
 		return (EPERM);

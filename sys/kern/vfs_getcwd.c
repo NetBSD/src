@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.5 1999/04/26 20:33:18 is Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.6 1999/04/30 18:43:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -320,13 +320,13 @@ static int getcwd_common (dvp, rvp, bpp, bufp, limit, flags, p)
 	int flags;
 	struct proc *p;
 {
-	struct filedesc *fdp = p->p_fd;
+	struct cwdinfo *cwdi = p->p_cwdi;
 	struct vnode *pvp = NULL;
 	char *bp = NULL;
 	int error;
 	
 	if (rvp == NULL) {
-		rvp = fdp->fd_rdir;
+		rvp = cwdi->cwdi_rdir;
 		if (rvp == NULL)
 			rvp = rootvnode;
 	}
@@ -470,9 +470,9 @@ int proc_isunder (p1, p2)
 	struct proc *p1;
 	struct proc *p2;
 {
-	struct vnode *r1 = p1->p_fd->fd_rdir;
-	struct vnode *r2 = p2->p_fd->fd_rdir;
-	
+	struct vnode *r1 = p1->p_cwdi->cwdi_rdir;
+	struct vnode *r2 = p2->p_cwdi->cwdi_rdir;
+
 	if (r1 == NULL)
 		return (r2 == NULL);
 	else if (r2 == NULL)
@@ -509,7 +509,7 @@ int sys___getcwd(p, v, retval)
 	bend = bp;
 	*(--bp) = '\0';
 
-	error = getcwd_common (p->p_fd->fd_cdir, NULL, &bp, path, len/2,
+	error = getcwd_common (p->p_cwdi->cwdi_cdir, NULL, &bp, path, len/2,
 			       GETCWD_CHECK_ACCESS, p);
 
 	if (error)
@@ -552,7 +552,7 @@ sys___getcwd(p, v, retval)
 		syscallarg(size_t) length;
 	} */ *uap = v;
 
-	struct filedesc *fdp = p->p_fd;
+	struct cwdinfo *cwdi = p->p_cwdi;
 	struct vnode *cvp = NULL, *pvp = NULL, *rootvp = NULL;
 	int     error;
 	char   *path;
@@ -571,11 +571,11 @@ sys___getcwd(p, v, retval)
 	bend = bp;
 	*(--bp) = '\0';
 
-	rootvp = fdp->fd_rdir;
+	rootvp = cwdi->cwdi_rdir;
 	if (rootvp == NULL)
 		rootvp = rootvnode;
 
-	cvp = fdp->fd_cdir;
+	cvp = cwdi->cwdi_cdir;
 
 	VREF(rootvp);
 	VREF(cvp);
