@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.14 1999/10/14 02:16:04 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.15 1999/10/28 16:12:10 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -45,7 +45,6 @@
 #include <machine/vmparam.h>
 
 #include <dev/ic/isp_netbsd.h>
-#include <dev/microcode/isp/asm_sbus.h>
 #include <dev/sbus/sbusvar.h>
 
 static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
@@ -65,10 +64,10 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	NULL,
-	ISP_RISC_CODE,
-	ISP_CODE_LENGTH,
-	ISP_CODE_ORG,
-	ISP_CODE_VERSION,
+	0,
+	0,
+	0,
+	0,
 	BIU_BURST_ENABLE,
 	0
 };
