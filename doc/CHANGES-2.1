@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.41 2005/03/20 12:03:53 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.42 2005/03/22 19:09:02 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -889,4 +889,12 @@ sys/dev/cgd_crypto.c				1.4
 
 	Clear freed memory.
 	[dan, ticket #1343]
+
+sys/arch/evbppc/conf/Makefile.ev64260.inc	1.3
+sys/arch/evbppc/conf/Makefile.obs405.inc	1.2
+sys/arch/evbppc/conf/Makefile.walnut.inc	1.3
+
+	Can't depend on shell scripts being executable from CVS. Preface
+	mkimg.sh with ${HOST_SH}
+	[jmc, ticket #1350]
 
