@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.17 1998/08/15 16:49:33 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.18 1998/08/15 16:58:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -1116,7 +1116,7 @@ tl_ifioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host  = 
-				    (union ns_host*) LLADDR(ifp->if_sadl);
+				    *(union ns_host*) LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 					ifp->if_addrlen);
