@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.35 1995/07/27 04:39:05 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.36 1995/10/07 09:19:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -92,6 +92,7 @@ int lance_probe __P((struct le_softc *));
 void leattach __P((struct device *, struct device *, void *));
 int leintr __P((void *));
 int leintredge __P((void *));
+void leshutdown __P((void *));
 
 struct cfdriver lecd = {
 	NULL, "le", leprobe, leattach, DV_IFNET, sizeof(struct le_softc)
@@ -411,6 +412,17 @@ leattach(parent, self, aux)
 		sc->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_NET, leintr, sc);
 	}
 #endif
+
+	sc->sc_sh = shutdownhook_establish(leshutdown, sc);
+}
+
+void
+leshutdown(arg)
+	void *arg;
+{
+	struct le_softc *sc = arg;
+
+	lestop(sc);
 }
 
 #if NISA > 0
