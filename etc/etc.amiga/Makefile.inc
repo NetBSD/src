@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.15 2001/11/29 22:45:54 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2002/02/10 20:43:34 is Exp $
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC
 
-EXTRA_KERNELS=		INSTALL INSTWDCPCM
+EXTRA_KERNELS=		INSTALL
 
 INSTALLATION_DIRS+=	installation/miniroot \
 			installation/misc
