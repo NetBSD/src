@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.8 2001/07/28 13:28:04 chris Exp $
+#	$NetBSD: files.cats,v 1.9 2001/09/03 04:28:52 matt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -70,9 +70,10 @@ include "dev/scsipi/files.scsipi"
 major   {sd = 24}
 major   {cd = 26}
 
+file	arch/arm/arm32/conf.c
+
 # Generic MD files
 file	arch/cats/cats/autoconf.c
-file	arch/cats/cats/conf.c
 file	arch/cats/cats/cats_machdep.c
 
 # library functions
