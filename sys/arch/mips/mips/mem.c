@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1997/09/19 13:54:44 leo Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 1997/09/24 02:20:56 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,7 +122,7 @@ mmrw(dev, uio, flags)
 			if (v < MIPS_KSEG0_START)
 				return (EFAULT);
 			if (v + c > MIPS_PHYS_TO_KSEG0(avail_end +
-						mips_round_page(MSGBUFSIZE))
+						mips_round_page(MSGBUFSIZE)) &&
 			    (v < MIPS_KSEG2_START ||
 			    !kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
