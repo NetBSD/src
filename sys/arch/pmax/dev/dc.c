@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.33.6.3 1998/11/24 06:03:44 cgd Exp $	*/
+/*	$NetBSD: dc.c,v 1.33.6.4 1998/11/24 06:40:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.33.6.3 1998/11/24 06:03:44 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.33.6.4 1998/11/24 06:40:37 cgd Exp $");
 
 /*
  * devDC7085.c --
@@ -338,7 +338,19 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
 			wbflush();
 			DELAY(10000);
-			MouseInit(makedev(DCDEV, DCMOUSE_PORT), dcPutc, dcGetc);
+			/*
+			 * XXX: Copyied from ../tc/scc.c
+			 * This is a hack.  As Ted Lemon observed,
+			 * we want bstreams, or failing that, a line
+			 * discipline to do the inkernel DEC mouse
+			 * tracking required by Xservers.
+			 */
+			if (major(cn_tab->cn_dev) == RCONSDEV) {
+				/* DELAY(10000); */
+				MouseInit(makedev(DCDEV, DCMOUSE_PORT), \
+					dcPutc, dcGetc);
+				/* DELAY(10000); */
+			}
 			splx(s);
 		}
 	}
