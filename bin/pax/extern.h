@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2000/02/17 03:12:23 itohy Exp $	*/
+/*	$NetBSD: extern.h,v 1.23 2000/03/30 17:53:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -52,6 +52,7 @@ extern const char *arcname;
 extern int curdirfd;
 extern const char *gzip_program;
 extern time_t starttime;
+extern int force_one_volume;
 int ar_open __P((const char *));
 void ar_close __P((void));
 void ar_drain __P((void));

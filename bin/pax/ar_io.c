@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.17 2000/02/17 03:12:22 itohy Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.18 2000/03/30 17:53:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.17 2000/02/17 03:12:22 itohy Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.18 2000/03/30 17:53:04 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ const char *gzip_program;		/* name of gzip program */
 time_t starttime;			/* time the run started */
 int minusCfd = -1;			/* active -C directory */
 int curdirfd = -1;			/* original current directory */
+int force_one_volume;			/* 1 if we ignore volume changes */
 
 static int get_phys __P((void));
 extern sigset_t s_mask;
@@ -1311,7 +1312,7 @@ ar_next()
 	if (sigprocmask(SIG_SETMASK, &o_mask, (sigset_t *)NULL) < 0)
 		syswarn(0, errno, "Unable to restore signal mask");
 
-	if (done || !wr_trail || is_oldgnutar)
+	if (done || !wr_trail || is_oldgnutar || force_one_volume)
 		return(-1);
 
 	tty_prnt("\nATTENTION! %s archive volume change required.\n", argv0);

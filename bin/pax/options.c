@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.26 2000/02/17 03:12:25 itohy Exp $	*/
+/*	$NetBSD: options.c,v 1.27 2000/03/30 17:53:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.26 2000/02/17 03:12:25 itohy Exp $");
+__RCSID("$NetBSD: options.c,v 1.27 2000/03/30 17:53:04 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ pax_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLPT:U:XYZ"))
+	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLOPT:U:XYZ"))
 	    != -1) {
 		switch (c) {
 		case 'a':
@@ -480,6 +480,12 @@ pax_options(argc, argv)
 			 */
 			Lflag = 1;
 			flg |= CLF;
+			break;
+		case 'O':
+			/*
+			 * Force one volume.  Non standard option.
+			 */
+			force_one_volume = 1;
 			break;
 		case 'P':
 			/*
