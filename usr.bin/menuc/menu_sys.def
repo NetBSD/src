@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.36 2003/06/03 08:49:53 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.37 2003/06/03 11:51:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -520,11 +520,12 @@ menu_init(void)
 }
 
 void
-process_menu(int num)
+process_menu(int num, void *arg)
 {
 	int sel = 0;
 	int req, done;
 	int last_num;
+	menu_ent *opt;
 
 	struct menudesc *m;
 
@@ -571,20 +572,21 @@ process_menu(int num)
 
 		/* Process the items */
 		if (sel < m->numopts) {
-			if (m->opts[sel].opt_flags & OPT_ENDWIN) {
+			opt = &m->opts[sel];
+			if (opt->opt_flags & OPT_ENDWIN) {
 				endwin();
 				__m_endwin = 1;
 			}
-			if (m->opts[sel].opt_action)
-				done = (*m->opts[sel].opt_action)(m);
-			if (m->opts[sel].opt_menu != -1) {
-				if (m->opts[sel].opt_flags & OPT_SUB)
-					process_menu(m->opts[sel].opt_menu);
+			if (opt->opt_action)
+				done = (*opt->opt_action)(m, opt, arg);
+			if (opt->opt_menu != -1) {
+				if (opt->opt_flags & OPT_SUB)
+					process_menu(opt->opt_menu, arg);
 				else
-					num = m->opts[sel].opt_menu;
+					num = opt->opt_menu;
 			}
 
-                        if (m->opts[sel].opt_flags & OPT_EXIT) 
+                        if (opt->opt_flags & OPT_EXIT) 
                                 done = TRUE;
  				
 		} else
@@ -619,8 +621,8 @@ double_menus(void)
 	temp  = malloc(sizeof(menudesc) * num_menus * 2);
 	if (temp == NULL)
 		return 0;
-	(void) memset(temp, 0, sizeof(menudesc) * num_menus * 2);
-	(void) memcpy(temp, menus, sizeof(menudesc) * num_menus);
+	(void)memset(temp, 0, sizeof(menudesc) * num_menus * 2);
+	(void)memcpy(temp, menus, sizeof(menudesc) * num_menus);
 	free(menus);
 	menus = temp;
 	num_avail = num_menus;
