@@ -87,6 +87,20 @@ server program
 server program arguments
 .Ed
 .Pp
+To specify an 
+.Em Sun-RPC 
+based service, the entry would contain these fields.
+.Pp
+.Bd -unfilled -offset indent -compact
+service name/version
+socket type
+rpc/protocol
+wait/nowait
+user
+server program
+server program arguments
+.Ed
+.Pp
 The
 .Em service-name
 entry is the name of a valid service in
@@ -98,7 +112,19 @@ services (discussed below), the service
 name
 .Em must
 be the official name of the service (that is, the first entry in
-.Pa /etc/services ) .
+.Pa /etc/services ) . 
+When used to specify a
+.Em Sun-RPC
+based service, this field is a valid RPC service name in
+the file
+.Pa /etc/rpc . 
+The part on the right of the 
+.Dq /
+is the RPC version number. This
+can simply be a single numeric argument or a range of versions.
+A range is bounded by the low version to the high version - 
+.Dq rusers/1-3 .
+
 .Pp
 The
 .Em socket-type
@@ -120,6 +146,12 @@ Examples might be
 .Dq tcp
 or
 .Dq udp .
+Rpc based services are specified with the 
+.Dq rpc/tcp
+or 
+.Dq rpc/udp 
+service type.
+
 .Pp
 The
 .Em wait/nowait
@@ -220,3 +252,8 @@ The
 .Nm
 command appeared in
 .Bx 4.3 .
+Support for
+.Em Sun-RPC 
+based services is modelled after that
+provided by
+.Em Sun-OS 4.1 .
