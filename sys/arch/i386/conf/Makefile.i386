@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.58 1995/09/19 23:25:29 thorpej Exp $
+#	$NetBSD: Makefile.i386,v 1.59 1995/10/10 05:58:00 mycroft Exp $
 # 	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
@@ -35,7 +35,7 @@ I386=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Di386
-CFLAGS=	-O6 -Werror -fno-builtin ${COPTS}
+CFLAGS=	-O6 -Werror ${COPTS}
 LOAD_ADDRESS= F8100000
 
 ### find out what to use for libkern
@@ -176,3 +176,6 @@ vnode_if.c vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
 	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
 %RULES
+
+### add microcode dependencies
+.include "$S/dev/microcode/Makefile.inc"
