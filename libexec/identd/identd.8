@@ -1,4 +1,4 @@
-.\"	$NetBSD: identd.8,v 1.11 2002/02/08 01:30:07 ross Exp $
+.\"	$NetBSD: identd.8,v 1.12 2002/03/28 15:09:14 sommerfeld Exp $
 .\"
 .\" @(#)identd.8 1.9 92/02/11 Lysator
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
@@ -16,7 +16,7 @@ identd \- TCP/IP IDENT protocol server
 .RB [ \-p\*[Lt]port\*[Gt] ]
 .RB [ \-a\*[Lt]address\*[Gt] ]
 .RB [ \-c\*[Lt]charset\*[Gt] ]
-.RB [ \-C [ \*[Lt]keyfile\*[Gt] ]]
+.\".RB [ \-C [ \*[Lt]keyfile\*[Gt] ]]
 .RB [ \-o ]
 .RB [ \-e ]
 .RB [ \-l ]
@@ -30,24 +30,39 @@ identd \- TCP/IP IDENT protocol server
 .SH DESCRIPTION
 .IX "identd daemon" "" \fLidentd\fP daemon"
 .B identd
-is a server which implements the
-.SM TCP/IP
-proposed standard
+is a server which implements the ill-conceived
 .SM IDENT
-user identification protocol as specified in the
-.SM RFC\s0 1413
-document.
+protocol specified in
+.SM RFC\s0 1413.
 .PP
 .B identd
 operates by looking up specific
 .SM TCP/IP
-connections and returning the user name of the
-process owning the connection.  It can optionally
-return other information instead of a user name.
+connections and returning information which may or may not be 
+associated with the process owning the connection.
+.PP
+The 
+.B identd 
+server provides little other than a false sense of security; however,
+some legacy services require their clients to run ident servers.
 .SH ARGUMENTS
+The highly-recommended
+.B \-L\*[Lt]user name\*[Gt]
+option instructs
+.B identd
+to always return a fixed user identity in response to all requests,
+resulting in both improved efficiency and increased user privacy (you didn't
+.I really
+intend to trust my assertion about who I was anyway, right?)
+.PP
+This flag provides a way for a site to support services requiring the ident
+protocol while providing a standard answer to all ident queries.  All queries
+to identd will respond with a host type of `OTHER' and a username of
+.B \*[Lt]user name\*[Gt].
+.PP
 The
 .B \-i
-flag, which is the default mode, should be used when starting the
+flag, enabled by default, should be used when starting the
 daemon from
 .B inetd
 with the "nowait" option in the
@@ -183,32 +198,32 @@ designator to the reply generated.
 .I charset
 should be a valid character set as described in the MIME RFC in upper
 case characters.
-.PP
-The
-.BR \-C [ \*[Lt]keyfile\*[Gt] ]
-option tells
-.B identd
-to return encrypted tokens instead of user names.
-The local and remote IP
-addresses and TCP port numbers, the local user's uid number, a timestamp,
-a random number, and a checksum, are all encrypted using DES
-with a secret key derived from the first line of the
-.I keyfile
-(using
-.BR des_string_to_key (3)).
-The encrypted binary information is then encoded in a base64 string
-(32 characters in length) and enclosed in square brackets to produce
-a token that is transmitted to the remote client.
-The encrypted token can later be decrypted by
-.BR idecrypt (8).
-There may not be a space between the
-.B \-C
-and the name of the
-.IR keyfile .
-If the
-.I keyfile
-is not specified, it defaults to
-.BR /etc/identd.key .
+.\".PP
+.\"The
+.\".BR \-C [ \*[Lt]keyfile\*[Gt] ]
+.\"option tells
+.\".B identd
+.\"to return encrypted tokens instead of user names.
+.\"The local and remote IP
+.\"addresses and TCP port numbers, the local user's uid number, a timestamp,
+.\"a random number, and a checksum, are all encrypted using DES
+.\"with a secret key derived from the first line of the
+.\".I keyfile
+.\"(using
+.\".BR des_string_to_key (3)).
+.\"The encrypted binary information is then encoded in a base64 string
+.\"(32 characters in length) and enclosed in square brackets to produce
+.\"a token that is transmitted to the remote client.
+.\"The encrypted token can later be decrypted by
+.\".BR idecrypt (8).
+.\"There may not be a space between the
+.\".B \-C
+.\"and the name of the
+.\".IR keyfile .
+.\"If the
+.\".I keyfile
+.\"is not specified, it defaults to
+.\".BR /etc/identd.key .
 .PP
 The
 .B \-n
@@ -280,24 +295,12 @@ Not implemented yet, but on my wish-list are the following:
 .in -.5i
 .fi
 .PP
-The
-.B \-L\*[Lt]user name\*[Gt]
-option instructs
-.B identd
-to lie brazenly about the identity of the user in question.  You didn't
-.I really
-intend to trust my assertion about who I was anyway, right?
-.br
-This flag provides a way for a site to support services requiring the ident
-protocol while providing a standard answer to all ident queries.  All queries
-to identd will respond with a host type of `OTHER' and a username of \*[Lt]user name\*[Gt].
-.PP
 .B kernelfile
 defaults to the normally running kernel file.
 .PP
 .B kmemfile
 defaults to the memory space of the normally running kernel.
-.SH UNDOCUMENTED FLAGS
+.SH UNDERDOCUMENTED FLAGS
 The
 .B \-v
 flag enables more verbose output or messages. (Further occurences of the
@@ -362,6 +365,11 @@ file:
 This will make it run in the background as user 2, group 2 (user "sys",
 group "kmem" on SunOS 4.1.1).
 .SH NOTES
+There should be no need to
+ever use this; if you think you need this, you really need protocols
+which do strong host and/or user authentication such as ssh and IPsec
+in conjunction with audit trails.
+.Pp
 The username (or UID) returned ought to be the login name. However it
 (probably, for most architecture implementations) is the "real user ID" as
 stored with the process; there is no provision for returning the "effective
@@ -400,11 +408,29 @@ options for
 If compiled with
 .I \-ldes
 this file can be used to specify a secret key for encrypting replies.
+.SH SECURITY CONSIDERATIONS
+May leak information generally considered "private" unless the
+.B \-e
+flag or 
+.\"either the
+.B \-L
+.\"or
+.\".B \-C
+flags are used.
+.PP
+The protocol is unprotected and is vulnerable to man-in-the-middle
+attacks.
 .SH "SEE ALSO"
-.\".BR authuser (3)
-.\",
 .BR inetd.conf (5)
-.\",
-.\".BR idecrypt (8)
 .SH BUGS
+The 
+.B \-e
+and
+.B \-L
+flags should be enabled by default.
+.PP
+The whole concept of this service is a bug; cryptographic
+authentication should be integrated into services which think they
+need this.
+.PP
 The handling of fatal errors could be better.
