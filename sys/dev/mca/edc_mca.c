@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.4 2001/04/22 20:00:59 jdolecek Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.5 2001/04/22 20:02:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -742,17 +742,6 @@ static const char * const edc_cmd_error[256] = {
 	"Format Warning (Error during verifying)",
 	"Invalid device number for the command",
 	/* 0x14-0xff reserved */
-};
-
-static const char * const edc_dev_status[] = {
-	"Seek or Command complete",
-	"Track 0 Flag (emulated)",
-	"Write Fault (emulated)",
-	"Selected",
-	"Ready",
-	"Reserved (0)",
-	"STANDBY",
-	"Reserved (0)",
 };
 
 static const char * const edc_dev_errors[] = {
