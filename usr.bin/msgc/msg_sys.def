@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.21 2003/06/27 22:11:59 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.22 2003/07/07 12:22:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -111,7 +111,7 @@ msg_file(const char *file)
 	if (msgmap == MAP_FAILED)
 		return -1;
 	/* check_magic */
-	if (memcmp(msgmap, "INSTMSGS", 8)) {
+	if (strcmp(msgmap, "MSGTXTS") != 0) {
 		msg_file(NULL);
 		return -1;
 	}
@@ -419,7 +419,7 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 		w = vsnprintf(NULL, 0, msg_string(msg_no), ap);
 		va_end(ap);
 		if (def != NULL && *def != 0)
-			w += 2 + strlen(def);
+			w += 2 + strlen(def) + 1;
 		w += 1 + 2 + max_chars + 1;
 		if (w > maxx)
 			w = maxx;
