@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102 1999/01/29 02:18:42 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.103 1999/02/27 02:54:05 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 1999/01/29 02:18:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 1999/02/27 02:54:05 jonathan Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -166,15 +166,6 @@ const char *trap_type[] = {
 	"reserved 29",
 	"reserved 30",
 	"r4000 virtual coherency data",
-};
-
-struct trapframe {
-	mips_reg_t tf_regs[17];
-	mips_reg_t tf_ra;
-	mips_reg_t tf_sr;
-	mips_reg_t tf_mullo;
-	mips_reg_t tf_mulhi;
-	mips_reg_t tf_epc;
 };
 
 void userret __P((struct proc *, unsigned, u_quad_t));

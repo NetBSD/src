@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.18 1999/01/15 22:26:42 castor Exp $	*/
+/*	$NetBSD: locore.h,v 1.19 1999/02/27 02:54:05 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -228,6 +228,32 @@ extern u_int	mips_CacheAliasMask;
 extern int	mips3_L1TwoWayCache;
 extern int	mips3_cacheflush_bug;
 #endif /* MIPS3 */
+
+/*
+ * trapframe argument passed to trap() 
+ */
+struct trapframe {
+	mips_reg_t tf_regs[17];
+	mips_reg_t tf_ra;
+	mips_reg_t tf_sr;
+	mips_reg_t tf_mullo;
+	mips_reg_t tf_mulhi;
+	mips_reg_t tf_epc;		/* may be changed by trap() call */
+};
+
+/*
+ * Stack frame for kernel traps. four args passed in registers.
+ * A trapframe is pointed to by the 5th arg, and a dummy sixth argument
+ * is used to avoid alignment problems
+ */
+
+struct kernframe {
+	register_t cf_args[4 + 1];
+	register_t cf_pad;		/* (for 8 word alignment) */
+	register_t cf_sp;
+	register_t cf_ra;
+	struct trapframe cf_frame;
+};
 
 #endif
 
