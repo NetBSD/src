@@ -1,4 +1,4 @@
-/* $NetBSD: lcgreg.h,v 1.2 2004/06/10 18:32:20 matt Exp $ */
+/* $NetBSD: lcgreg.h,v 1.3 2004/12/12 21:03:06 abs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  * All relative to 0x20100000
  */
 
-/* Memory Control, Flow Control, Configration Registers
+/* Memory Control, Flow Control, Configuration Registers
  */
 #define	LCG_REG_MEM_CONFIG		0x001800
 #define	LCG_REG_MEM_STATUS		0x001804

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.11 2003/07/15 00:25:07 lukem Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.12 2004/12/12 21:03:06 abs Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.11 2003/07/15 00:25:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.12 2004/12/12 21:03:06 abs Exp $");
 
 #define IPAQ_LCD_DEBUG
 
@@ -352,7 +352,7 @@ ipaqlcd_ioctl(v, cmd, data, flag, p)
 			return (EINVAL);
 		}
 		/*
-		 * nothing to do because we have only one configration
+		 * nothing to do because we have only one configuration
 		 */
 		return (0);
 	case HPCFBIO_GDSPCONF:
@@ -375,7 +375,7 @@ ipaqlcd_ioctl(v, cmd, data, flag, p)
 		}
 		/*
 		 * nothing to do
- 		 * because we have only one unit and one configration
+ 		 * because we have only one unit and one configuration
 		 */
 		return (0);
 

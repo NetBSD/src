@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.52 2004/12/12 20:42:53 abs Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.53 2004/12/12 21:03:06 abs Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.52 2004/12/12 20:42:53 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.53 2004/12/12 21:03:06 abs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -496,7 +496,7 @@ initarm(void *arg)
 	 * array.
 	 *
 	 * The kernel page directory must be on a 16K boundary.  The page
-	 * tables must be on 4K bounaries.  What we do is allocate the
+	 * tables must be on 4K boundaries.  What we do is allocate the
 	 * page directory on the first 16K boundary that we encounter, and
 	 * the page tables on 4K boundaries otherwise.  Since we allocate
 	 * at least 3 L2 page tables, we are guaranteed to encounter at
