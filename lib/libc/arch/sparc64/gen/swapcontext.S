@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.2 2003/01/18 11:17:45 thorpej Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3 2003/05/23 18:20:14 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,10 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.2 2003/01/18 11:17:45 thorpej Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3 2003/05/23 18:20:14 petrov Exp $")
 #endif /* LIBC_SCCS && !lint */
+
+	.register	%g2,#scratch
 
 ENTRY(swapcontext)
 	mov	%o0, %o2			/* must save pointer */
