@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.h,v 1.1.2.3 1997/03/04 14:33:21 mrg Exp $	*/
+/*	$NetBSD: vm_swap.h,v 1.1.2.4 1997/03/15 08:58:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -35,6 +35,7 @@
 #ifndef _VM_VM_SWAP_H_
 #define _VM_VM_SWAP_H_
 
+/* These structures are used to return swap information for userland */
 struct swapent {
 	dev_t	se_dev;
 	int	se_flags;
