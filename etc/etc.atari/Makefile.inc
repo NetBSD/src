@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/11/29 22:45:55 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/03/31 16:07:54 bjh21 Exp $
 #
 #	etc.atari/Makefile.inc -- atari-specific etc Makefile targets
 #
@@ -17,4 +17,4 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/miniroot && ${MAKE} && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-#	sh ${.CURDIR}/../distrib/sets/makesums -t ${RELEASEDIR}/installation/miniroot '*.gz'
+#	${MAKESUMS} -t ${RELEASEDIR}/installation/miniroot '*.gz'

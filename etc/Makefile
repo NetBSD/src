@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.205 2002/03/29 04:45:37 matt Exp $
+#	$NetBSD: Makefile,v 1.206 2002/03/31 16:07:53 bjh21 Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -46,6 +46,7 @@ NOOBJ=		# defined
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	UTC
 PWD_MKDB?=	pwd_mkdb
+MAKESUMS=	CKSUM=${CKSUM:Q} sh ../distrib/sets/makesums
 
 # Flags for creating ISO CDROM image
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrecord
@@ -278,7 +279,7 @@ distrib-dirs: check_DESTDIR
 release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
     distribution snap_pre snap_md_pre snap_kern snap_md_post
 	(cd ../distrib/sets; ${MAKE} sets)
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/binary/kernel '*.gz'
 
 # Standalone target to create a CDROM image after the release
 # was composed. Should be run after "make build" in both src and xsrc
@@ -290,7 +291,7 @@ iso-image_mi: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_pre
 		${MKISOFS} ${MKISOFS_FLAGS} \
 			-o ${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
 			${RELEASEDIR} ; \
-		sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/cdrom '*.iso' ; \
+		${MAKESUMS} -t ${RELEASEDIR}/installation/cdrom '*.iso' ; \
 	else \
 		echo "install pkgsrc/sysutils/cdrecord and type 'make iso-image'." ; \
 	fi

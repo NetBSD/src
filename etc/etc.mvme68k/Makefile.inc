@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2001/11/29 22:45:57 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2002/03/31 16:07:55 bjh21 Exp $
 #
 #	etc.mvme68k/Makefile.inc -- mvme68k-specific etc Makefile targets
 #
@@ -25,6 +25,6 @@ snap_md_post:
 	cp -p ${DESTDIR}/usr/mdec/netboot ${RELEASEDIR}/installation/netboot
 	cp -p ${DESTDIR}/usr/mdec/stboot ${RELEASEDIR}/installation/tapeimage
 	cp -p ${DESTDIR}/usr/mdec/bootst ${RELEASEDIR}/installation/tapeimage
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/netboot -all
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/tapeimage -all
+	${MAKESUMS} -t ${RELEASEDIR}/installation/netboot -all
+	${MAKESUMS} -t ${RELEASEDIR}/installation/tapeimage -all
 

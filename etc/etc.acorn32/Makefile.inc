@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/03/20 17:05:52 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/03/31 16:07:54 bjh21 Exp $
 #
 #	etc.acorn32/Makefile.inc -- acorn32-specific etc Makefile targets
 #
@@ -17,5 +17,5 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/acorn32 && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/kernel '*.gz'
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/misc '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/installation/kernel '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/installation/misc '*.gz'
