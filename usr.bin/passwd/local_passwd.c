@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.23 2001/08/18 19:35:35 ad Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.24 2001/08/18 19:42:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.23 2001/08/18 19:35:35 ad Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.24 2001/08/18 19:42:40 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,6 +161,7 @@ local_chpw(uname)
 {
 	struct passwd *pw;
 	struct passwd old_pw;
+	time_t old_change;
 	int pfd, tfd;
 	int min_pw_len = 0;
 	int pw_expiry  = 0;
@@ -194,6 +195,7 @@ local_chpw(uname)
 #endif
 
 	pw->pw_passwd = getnewpasswd(pw, min_pw_len);
+	old_change = pw->pw_change;
 	pw->pw_change = pw_expiry ? pw_expiry + time(NULL) : 0;
 
 	/*
@@ -216,7 +218,7 @@ local_chpw(uname)
 
 	pw_copy(pfd, tfd, pw, &old_pw);
 
-	if (pw_mkdb(uname, pw_expiry == 0) < 0)
+	if (pw_mkdb(uname, old_change == pw->pw_change) < 0)
 		pw_error((char *)NULL, 0, 1);
 	return (0);
 }
