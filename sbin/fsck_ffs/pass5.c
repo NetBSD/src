@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.28 2002/04/10 17:29:30 mycroft Exp $	*/
+/*	$NetBSD: pass5.c,v 1.29 2002/05/06 03:17:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.28 2002/04/10 17:29:30 mycroft Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.29 2002/05/06 03:17:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,6 +185,13 @@ pass5()
 	for (i = fs->fs_size; i < j; i++)
 		setbmap(i);
 	for (c = 0; c < fs->fs_ncg; c++) {
+		if (got_siginfo) {
+			fprintf(stderr,
+			    "%s: phase 5: cyl group %d of %d (%d%%)\n",
+			    cdevname(), c, fs->fs_ncg,
+			    c * 100 / fs->fs_ncg);
+			got_siginfo = 0;
+		}
 		getblk(&cgblk, cgtod(fs, c), fs->fs_cgsize);
 		memcpy(cg, cgblk.b_un.b_cg, fs->fs_cgsize);
 		if((doswap && !needswap) || (!doswap && needswap))
