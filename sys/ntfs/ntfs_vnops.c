@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.7 1999/07/28 20:36:46 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.8 1999/08/04 18:17:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -909,17 +909,85 @@ ntfs_lookup(ap)
 	if(error)
 		return (error);
 
-	if( (cnp->cn_namelen == 1) &&
-	    !strncmp(cnp->cn_nameptr,".",1) ) {
+	if ((cnp->cn_flags & ISLASTCN) &&
+	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return (EROFS);
+
+#ifdef __NetBSD__
+	/*
+	 * We now have a segment name to search for, and a directory
+	 * to search.
+	 *
+	 * Before tediously performing a linear scan of the directory,
+	 * check the name cache to see if the directory/name pair
+	 * we are looking for is known already.
+	 */
+	if ((error = cache_lookup(ap->a_dvp, ap->a_vpp, cnp)) != 0) {
+		int vpid;
+		struct vnode *pdp, *vdp = ap->a_dvp;
+		struct vnode **vpp = ap->a_vpp;
+		u_long flags = cnp->cn_flags;
+
+		if (error == ENOENT)
+			return (error);
+
+		/*
+		 * Get the next vnode in the path.
+		 * See comment below starting `Step through' for
+		 * an explaination of the locking protocol.
+		 */
+		pdp = vdp;
+		vdp = *vpp;
+		vpid = vdp->v_id;
+		if (pdp == vdp) {   /* lookup on "." */
+			VREF(vdp);
+			error = 0;
+		} else if (flags & ISDOTDOT) {
+			VOP_UNLOCK(pdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+			error = vget(vdp, LK_EXCLUSIVE);
+			if (!error && lockparent && (flags & ISLASTCN)){
+				error = vn_lock(pdp, LK_EXCLUSIVE);
+				if (error == 0)
+					cnp->cn_flags &= ~PDIRUNLOCK;
+			}
+		} else {
+			error = vget(vdp, LK_EXCLUSIVE);
+			if (!lockparent || error || !(flags & ISLASTCN)) {
+				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
+		}
+		/*
+		 * Check that the capability number did not change
+		 * while we were waiting for the lock.
+		 */
+		if (!error) {
+			if (vpid == vdp->v_id)
+				return (0);
+
+			vput(vdp);
+			if (lockparent && pdp != vdp && (flags & ISLASTCN)) {
+				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
+		}
+		if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0)
+			return (error);
+		cnp->cn_flags &= ~PDIRUNLOCK;
+		vdp = pdp;
+		*vpp = NULL;
+	}
+#endif
+
+	if(cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		dprintf(("ntfs_lookup: faking . directory in %d\n",
 			dip->i_number));
 
 		VREF(dvp);
 		*ap->a_vpp = dvp;
-		return (0);
-	} else if( (cnp->cn_namelen == 2) &&
-	    !strncmp(cnp->cn_nameptr,"..",2) &&
-	    (cnp->cn_flags & ISDOTDOT) ) {
+	} else if (cnp->cn_flags & ISDOTDOT) {
 		struct ntvattr *vap;
 
 		dprintf(("ntfs_lookup: faking .. directory in %d\n",
@@ -930,23 +998,26 @@ ntfs_lookup(ap)
 			return (error);
 
 		VOP__UNLOCK(dvp,0,cnp->cn_proc);
+		cnp->cn_flags |= PDIRUNLOCK;
 
 		dprintf(("ntfs_lookup: parentdir: %d\n",
 			 vap->va_a_name->n_pnumber));
 		error = VFS_VGET(ntmp->ntm_mountp,
 				 vap->va_a_name->n_pnumber,ap->a_vpp); 
 		ntfs_ntvattrrele(vap);
-		if(error) {
-			VOP__LOCK(dvp, 0, cnp->cn_proc);
+		if (error) {
+			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
 			return(error);
 		}
 
-		if( lockparent && (cnp->cn_flags & ISLASTCN) && 
-		    (error = VOP__LOCK(dvp, 0, cnp->cn_proc)) ) {
-			vput( *(ap->a_vpp) );
-			return (error);
+		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
+			if (error = vn_lock(dvp, LK_EXCLUSIVE)) {
+				vput( *(ap->a_vpp) );
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
-		return (error);
 	} else {
 		error = ntfs_ntlookupfile(ntmp, dvp, cnp, ap->a_vpp);
 		if(error)
@@ -957,10 +1028,11 @@ ntfs_lookup(ap)
 
 		if(!lockparent || !(cnp->cn_flags & ISLASTCN))
 			VOP__UNLOCK(dvp, 0, cnp->cn_proc);
-		if (cnp->cn_flags & MAKEENTRY)
-			cache_enter(dvp, *ap->a_vpp, cnp);
-
 	}
+
+	if (cnp->cn_flags & MAKEENTRY)
+		cache_enter(dvp, *ap->a_vpp, cnp);
+
 	return (error);
 }
 
@@ -1005,16 +1077,16 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_lookup_desc, (vop_t *)vfs_cache_lookup },
 #else
 #if __NetBSD_Version__ >= 104050000
-	{ &vop_islocked_desc, (vop_t *)genfs_islocked },
-	{ &vop_unlock_desc, (vop_t *)genfs_unlock },
-	{ &vop_lock_desc, (vop_t *)genfs_lock },
-	{ &vop_lookup_desc, (vop_t *)ntfs_lookup },
+	{ &vop_islocked_desc, genfs_islocked },
+	{ &vop_unlock_desc, genfs_unlock },
+	{ &vop_lock_desc, genfs_lock },
+	{ &vop_fcntl_desc, genfs_fcntl },
 #else
 	{ &vop_islocked_desc, (vop_t *)ntfs_islocked },
 	{ &vop_unlock_desc, (vop_t *)ntfs_unlock },
 	{ &vop_lock_desc, (vop_t *)ntfs_lock },
-	{ &vop_lookup_desc, (vop_t *)ntfs_lookup },
 #endif
+	{ &vop_lookup_desc, (vop_t *)ntfs_lookup },
 #endif
 
 	{ &vop_access_desc, (vop_t *)ntfs_access },
@@ -1032,7 +1104,7 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 #if defined(__FreeBSD__)
 	{ &vop_bwrite_desc, (vop_t *)vop_stdbwrite },
 #else /* defined(__NetBSD__) */
-	{ &vop_bwrite_desc, (vop_t *)vn_bwrite },
+	{ &vop_bwrite_desc, vn_bwrite },
 #endif
 	{ &vop_read_desc, (vop_t *)ntfs_read },
 	{ &vop_write_desc, (vop_t *)ntfs_write },
