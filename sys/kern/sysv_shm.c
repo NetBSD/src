@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.57 2000/06/27 17:41:40 mrg Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.58 2000/07/22 16:11:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,9 +76,6 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <sys/sysctl.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/syscallargs.h>
