@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.3 1998/12/26 12:53:03 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.4 1999/01/09 12:16:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ typedef struct {
 usbd_status	usb_allocmem __P((bus_dma_tag_t, size_t, size_t, usb_dma_t *));
 void		usb_freemem  __P((bus_dma_tag_t, usb_dma_t *));
 
-#elif define(__FreeBSD__)
+#elif defined(__FreeBSD__)
 
 /* 
  * FreeBSD does not have special functions for dma memory, so let's keep it
@@ -79,8 +79,6 @@ void		usb_freemem  __P((bus_dma_tag_t, usb_dma_t *));
 #include <vm/pmap.h>
 
 #include <machine/pmap.h>       /* for vtophys */
-
-
 
 typedef void * usb_dma_t;
 
