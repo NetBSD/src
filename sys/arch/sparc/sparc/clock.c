@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1994/11/20 20:54:05 deraadt Exp $ */
+/*	$NetBSD: clock.c,v 1.14 1994/11/23 07:02:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,13 +83,13 @@ int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
 
-static int clockmatch __P((struct device *, struct cfdata *, void *));
+static int clockmatch __P((struct device *, void *, void *));
 static void clockattach __P((struct device *, struct device *, void *));
 
 struct cfdriver clockcd =
     { NULL, "clock", clockmatch, clockattach, DV_DULL, sizeof(struct device) };
 
-static int timermatch __P((struct device *, struct cfdata *, void *));
+static int timermatch __P((struct device *, void *, void *));
 static void timerattach __P((struct device *, struct device *, void *));
 struct cfdriver timercd =
     { NULL, "timer", timermatch, timerattach, DV_DULL, sizeof(struct device) };
@@ -99,11 +99,11 @@ struct cfdriver timercd =
  * own special match function to call it the "clock".
  */
 static int
-clockmatch(parent, cf, aux)
+clockmatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *aux, *vcf;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
 	if (cputyp==CPU_SUN4)
@@ -176,11 +176,11 @@ clockattach(parent, self, aux)
  * The OPENPROM calls the timer the "counter-timer".
  */
 static int
-timermatch(parent, cf, aux)
+timermatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *aux, *vcf;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
 	if (cputyp==CPU_SUN4)

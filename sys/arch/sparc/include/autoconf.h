@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.6 1994/11/20 20:52:52 deraadt Exp $ */
+/*	$NetBSD: autoconf.h,v 1.7 1994/11/23 07:02:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@ int	romprop __P((struct romaux *ra, const char *name, int node));
  * its aux pointer to point to a pointer to the name (the address of
  * a romaux structure suffices, for instance).
  */
-int	matchbyname __P((struct device *, struct cfdata *cf, void *aux));
+int	matchbyname __P((struct device *, void *cf, void *aux));
 
 /*
  * `clockfreq' produces a printable representation of a clock frequency

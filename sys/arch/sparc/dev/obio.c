@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.8 1994/11/05 09:28:06 deraadt Exp $	*/
+/*	$NetBSD: obio.c,v 1.9 1994/11/23 07:02:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -55,10 +55,10 @@ struct bus_softc {
 };
 
 /* autoconfiguration driver */
-static int	busmatch(struct device *, struct cfdata *, void *);
-static void	obioattach(struct device *, struct device *, void *);
-static void	vmesattach(struct device *, struct device *, void *);
-static void	vmelattach(struct device *, struct device *, void *);
+static int	busmatch __P((struct device *, void *, void *));
+static void	obioattach __P((struct device *, struct device *, void *));
+static void	vmesattach __P((struct device *, struct device *, void *));
+static void	vmelattach __P((struct device *, struct device *, void *));
 
 struct cfdriver obiocd = { NULL, "obio", busmatch, obioattach,
 	DV_DULL, sizeof(struct bus_softc)
@@ -70,18 +70,18 @@ struct cfdriver vmescd = { NULL, "vmes", busmatch, vmesattach,
 	DV_DULL, sizeof(struct bus_softc)
 };
 
-static void	busattach(struct device *, struct device *, void *, int);
+static void	busattach __P((struct device *, struct device *, void *, int));
 
 void *		bus_map __P((void *, int, int));
 void *		bus_tmp __P((void *, int));
 void		bus_untmp __P((void));
 
 int
-busmatch(parent, cf, aux)
+busmatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 

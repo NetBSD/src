@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 1994/11/20 20:52:28 deraadt Exp $ */
+/*	$NetBSD: zs.c,v 1.19 1994/11/23 07:02:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,7 +113,7 @@ struct zsinfo {
 struct tty *zs_tty[NZS * 2];		/* XXX should be dynamic */
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch __P((struct device *, struct cfdata *, void *));
+static int	zsmatch __P((struct device *, void *, void *));
 static void	zsattach __P((struct device *, struct device *, void *));
 struct cfdriver zscd =
     { NULL, "zs", zsmatch, zsattach, DV_TTY, sizeof(struct zsinfo) };
@@ -204,11 +204,11 @@ zs_write(zc, reg, val)
  * not set up the keyboard as ttya, etc.
  */
 static int
-zsmatch(parent, cf, aux)
+zsmatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.13 1994/11/21 01:56:38 deraadt Exp $ */
+/*	$NetBSD: esp.c,v 1.14 1994/11/23 07:02:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -65,7 +65,7 @@
 int esp_debug = ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS; /**/ 
 
 void	espattach	__P((struct device *, struct device *, void *));
-int	espmatch	__P((struct device *, struct cfdata *, void *));
+int	espmatch	__P((struct device *, void *, void *));
 void	esp_minphys	__P((struct buf *));
 u_int	esp_adapter_info __P((struct esp_softc *));
 int	espprint	__P((void *, char *));
@@ -217,11 +217,11 @@ espselect(sc, target, lun, cmd, clen)
 }
 
 int
-espmatch(parent, cf, aux)
+espmatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 

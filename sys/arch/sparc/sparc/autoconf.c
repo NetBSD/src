@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1994/11/20 20:53:57 deraadt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.18 1994/11/23 07:02:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,11 +94,11 @@ struct	bootpath bootpath[8];
  * device names with our internal names.
  */
 int
-matchbyname(parent, cf, aux)
+matchbyname(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *aux, *vcf;
 {
+	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 
 #if defined(SUN4)

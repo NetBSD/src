@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.11 1994/11/20 20:52:02 deraadt Exp $ */
+/*	$NetBSD: cgthree.c,v 1.12 1994/11/23 07:02:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@ struct cgthree_softc {
 
 /* autoconfiguration driver */
 static void	cgthreeattach(struct device *, struct device *, void *);
-static int	cgthreematch(struct device *, struct cfdata *, void *);
+static int	cgthreematch(struct device *, void *, void *);
 struct cfdriver cgthreecd = {
 	NULL, "cgthree", cgthreematch, cgthreeattach,
 	DV_DULL, sizeof(struct cgthree_softc)
@@ -106,14 +106,14 @@ static void cgthreeloadcmap __P((struct cgthree_softc *, int, int));
 #define	CGTHREE_MAJOR	55		/* XXX */
 
 /*
- * Match a cgsix.
+ * Match a cgthree.
  */
 int
-cgthreematch(parent, cf, aux)
+cgthreematch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 

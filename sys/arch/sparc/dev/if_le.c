@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.16 1994/11/20 20:52:21 deraadt Exp $ */
+/*	$NetBSD: if_le.c,v 1.17 1994/11/23 07:02:15 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -147,7 +147,7 @@ struct le_softc {
 
 /* autoconfiguration driver */
 void	leattach(struct device *, struct device *, void *);
-int	lematch(struct device *, struct cfdata *, void *);
+int	lematch(struct device *, void *, void *);
 struct	cfdriver lecd =
     { NULL, "le", lematch, leattach, DV_IFNET, sizeof(struct le_softc) };
 
@@ -169,11 +169,11 @@ void	lererror(struct le_softc *, char *);
 void	lexerror(struct le_softc *);
 
 int
-lematch(parent, cf, aux)
+lematch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 

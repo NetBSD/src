@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.10 1994/11/20 20:51:59 deraadt Exp $ */
+/*	$NetBSD: cgsix.c,v 1.11 1994/11/23 07:02:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -108,14 +108,14 @@ struct cgsix_softc {
 };
 
 /* autoconfiguration driver */
-static void	cgsixattach(struct device *, struct device *, void *);
-static int	cgsixmatch(struct device *, struct cfdata *, void *);
+static void	cgsixattach __P((struct device *, struct device *, void *));
+static int	cgsixmatch __P((struct device *, void *, void *));
 struct cfdriver cgsixcd =
     { NULL, "cgsix", cgsixmatch, cgsixattach,
       DV_DULL, sizeof(struct cgsix_softc) };
 
 /* frame buffer generic driver */
-static void	cg6_unblank(struct device *);
+static void	cg6_unblank __P((struct device *));
 static struct fbdriver cg6_fbdriver = { cg6_unblank };
 
 /*
@@ -137,11 +137,11 @@ static void cg6_loadcursor __P((struct cgsix_softc *));/* set shape */
  * Match a cgsix.
  */
 int
-cgsixmatch(parent, cf, aux)
+cgsixmatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 	struct cg6_layout *p = (struct cg6_layout *)ra->ra_vaddr;

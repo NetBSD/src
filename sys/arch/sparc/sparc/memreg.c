@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.5 1994/11/20 20:54:32 deraadt Exp $ */
+/*	$NetBSD: memreg.c,v 1.6 1994/11/23 07:02:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
 #include <sparc/sparc/memreg.h>
 #include <sparc/sparc/vaddrs.h>
 
-static int memregmatch __P((struct device *, struct cfdata *, void *));
+static int memregmatch __P((struct device *, void *, void *));
 static void memregattach __P((struct device *, struct device *, void *));
 struct cfdriver memregcd =
     { 0, "memreg", memregmatch, memregattach, DV_DULL, sizeof(struct device) };
@@ -62,11 +62,11 @@ struct cfdriver memregcd =
  * The OPENPROM calls this "memory-error".
  */
 static int
-memregmatch(parent, cf, aux)
+memregmatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *aux, *vcf;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
 	if (cputyp==CPU_SUN4) {

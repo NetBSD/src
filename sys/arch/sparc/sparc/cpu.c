@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 1994/11/20 20:54:10 deraadt Exp $ */
+/*	$NetBSD: cpu.c,v 1.13 1994/11/23 07:02:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@ char	cpu_model[100];
 
 /* The CPU configuration driver. */
 static void cpu_attach __P((struct device *, struct device *, void *));
-int  cpu_match __P((struct device *, struct cfdata *, void *));
+int  cpu_match __P((struct device *, void *, void *));
 
 struct cfdriver cpucd =
     { NULL, "cpu", cpu_match, cpu_attach, DV_CPU, sizeof(struct device) };
@@ -105,11 +105,11 @@ static char *iu_vendor[16] = {
 #endif
 
 int
-cpu_match(parent, cf, aux)
+cpu_match(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *aux, *vcf;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
 	return (strcmp(cf->cf_driver->cd_name, ca->ca_ra.ra_name) == 0);
