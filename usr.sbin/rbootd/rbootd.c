@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.12 2001/01/11 01:43:45 lukem Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.13 2001/01/16 02:36:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,7 +57,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.12 2001/01/11 01:43:45 lukem Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.13 2001/01/16 02:36:29 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,6 +158,7 @@ main(argc, argv)
 		char *errmsg;
 
 		if ((IntfName = BpfGetIntfName(&errmsg)) == NULL) {
+			/* backslash to avoid trigraph ??) */
 			syslog(LOG_NOTICE, "restarted (?\?)");
 			syslog(LOG_ERR, errmsg);
 			Exit(0);
