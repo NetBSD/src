@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.26 2000/06/25 17:21:55 thorpej Exp $ */
+/* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ extern void _dec_1000a_init __P((void));
 #ifdef DEC_1000
 #define	dec_1000_init		_dec_1000a_init
 #else
-#define	dec_1000a_init		platform_not_configured
+#define	dec_1000_init		platform_not_configured
 #endif
 
 #include "opt_dec_alphabook1.h"
