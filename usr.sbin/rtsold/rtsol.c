@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.6 2000/02/28 07:20:44 itojun Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.6.4.1 2002/04/11 21:36:29 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -89,6 +89,8 @@ sockopen()
 		return(-1);
 	}
 	memset(&sin6_allrouters, 0, sizeof(struct sockaddr_in6));
+	sin6_allrouters.sin6_family = AF_INET6;
+	sin6_allrouters.sin6_len = sizeof(sin6_allrouters);
 	if (inet_pton(AF_INET6, ALLROUTER,
 		      &sin6_allrouters.sin6_addr.s6_addr) != 1) {
 		warnmsg(LOG_ERR, __FUNCTION__, "inet_pton failed for %s",
