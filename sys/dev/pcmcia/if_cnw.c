@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.4 2000/01/25 16:48:47 itojun Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.5 2000/02/02 12:25:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -177,6 +177,9 @@ int cnw_skey = CNW_SCRAMBLEKEY;		/* Scramble key */
 
 int	cnw_match __P((struct device *, struct cfdata *, void *));
 void	cnw_attach __P((struct device *, struct device *, void *));
+int	cnw_detach __P((struct device *, int));
+
+int	cnw_activate __P((struct device *, enum devact));
 
 struct cnw_softc {
 	struct device sc_dev;		    /* Device glue (must be first) */
@@ -199,10 +202,16 @@ struct cnw_softc {
 	void *sc_ih;			    /* Interrupt cookie */
 	struct timeval sc_txlast;	    /* When the last xmit was made */
 	int sc_active;			    /* Currently xmitting a packet */
+
+	int sc_resource;		    /* Resources alloc'ed on attach */
+#define CNW_RES_IO	1
+#define CNW_RES_MEM	2
+#define CNW_RES_NET	4
 };
 
 struct cfattach cnw_ca = {
-	sizeof(struct cnw_softc), cnw_match, cnw_attach
+	sizeof(struct cnw_softc), cnw_match, cnw_attach, cnw_detach,
+		cnw_activate
 };
 
 
@@ -388,6 +397,9 @@ cnw_enable(sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
+	if ((ifp->if_flags & IFF_RUNNING) != 0)
+		return (0);
+
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET, cnw_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
@@ -413,6 +425,9 @@ cnw_disable(sc)
 	struct cnw_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
 
 	pcmcia_function_disable(sc->sc_pf);
 	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
@@ -456,6 +471,8 @@ cnw_attach(parent, self, aux)
 	u_int8_t macaddr[ETHER_ADDR_LEN];
 	int i;
 
+	sc->sc_resource = 0;
+
 	/* Enable the card */
 	sc->sc_pf = pa->pf;
 	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
@@ -472,23 +489,33 @@ cnw_attach(parent, self, aux)
 	}
 	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    CNW_IO_SIZE, &sc->sc_pcioh, &sc->sc_iowin) != 0) {
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
 		printf(": can't map i/o space\n");
 		return;
 	}
 	sc->sc_iot = sc->sc_pcioh.iot;
 	sc->sc_ioh = sc->sc_pcioh.ioh;
+	sc->sc_resource |= CNW_RES_IO;
 	if (pcmcia_mem_alloc(sc->sc_pf, CNW_MEM_SIZE, &sc->sc_pcmemh) != 0) {
 		printf(": can't allocate memory\n");
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+		sc->sc_resource = 0;
 		return;
 	}
 	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_MEM_COMMON, CNW_MEM_ADDR,
 	    CNW_MEM_SIZE, &sc->sc_pcmemh, &sc->sc_memoff,
 	    &sc->sc_memwin) != 0) {
 		printf(": can't map memory\n");
+		pcmcia_mem_free(sc->sc_pf, &sc->sc_pcmemh);
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+		sc->sc_resource = 0;
 		return;
 	}
 	sc->sc_memt = sc->sc_pcmemh.memt;
 	sc->sc_memh = sc->sc_pcmemh.memh;
+	sc->sc_resource |= CNW_RES_MEM;
 	switch (pa->product) {
 	case PCMCIA_PRODUCT_TDK_XIR_CNW_801:
 		printf(": %s\n", PCMCIA_STR_TDK_XIR_CNW_801);
@@ -526,6 +553,7 @@ cnw_attach(parent, self, aux)
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
+	sc->sc_resource |= CNW_RES_NET;
 
 	ifp->if_baudrate = 1 * 1024 * 1024;
 
@@ -842,7 +870,8 @@ cnw_intr(arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int ret, status, rser, tser;
 
-	if (!(sc->sc_ethercom.ec_if.if_flags & IFF_RUNNING))
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_RUNNING) == 0 ||
+	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 	ifp->if_timer = 0;	/* stop watchdog timer */
 
@@ -1108,4 +1137,60 @@ cnw_setkey(sc, key)
 
 	sc->sc_skey = key;
 	return 0;
+}
+
+int
+cnw_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct cnw_softc *sc = (struct cnw_softc *)self;
+	int rv = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		break;
+	}
+	splx(s);
+	return (rv);
+}
+
+int
+cnw_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct cnw_softc *sc = (struct cnw_softc *)self;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	/* cnw_disable() checks IFF_RUNNING */
+	cnw_disable(sc);
+
+	if ((sc->sc_resource & CNW_RES_NET) != 0) {
+#if NBPFILTER > 0
+		bpfdetach(ifp);
+#endif
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
+
+	/* unmap and free our i/o windows */
+	if ((sc->sc_resource & CNW_RES_IO) != 0) {
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+	}
+
+	/* unmap and free our memory windows */
+	if ((sc->sc_resource & CNW_RES_MEM) != 0) {
+		pcmcia_mem_unmap(sc->sc_pf, sc->sc_memwin);
+		pcmcia_mem_free(sc->sc_pf, &sc->sc_pcmemh);
+	}
+
+	return (0);
 }
