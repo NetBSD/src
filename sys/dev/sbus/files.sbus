@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.9 1998/11/22 22:17:27 pk Exp $
+#	$NetBSD: files.sbus,v 1.10 1998/11/26 15:33:29 pk Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -55,9 +55,9 @@ device	qec {}
 attach	qec at sbus
 file	dev/sbus/qec.c			qec
 
-#device	be: arp, ether, ifnet
-#attach	be at qec
-#file	dev/sbus/be.c			be
+device	be: arp, ether, ifnet, mii
+attach	be at qec
+file	dev/sbus/be.c			be
 
 #device	hme: arp, ether, ifnet, stp2002
 #attach	hme at qec
@@ -78,10 +78,8 @@ device	mbpp
 attach	mbpp at magma
 file	dev/sbus/magma.c		magma | mtty | mbpp needs-flag
 
-# STP4020 SBus to PCMCIA bridge (`nell' to friends)
-#XXX: next line should go into `conf/files'
-define	pcic {}
-device	nell: pcic
+# STP4020 SBus to PCMCIA bridge (`nell' to her friends)
+device	nell: pcmciabus
 attach	nell at sbus
 file	dev/sbus/stp4020.c		nell
 
