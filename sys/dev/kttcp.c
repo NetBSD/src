@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.2 2002/07/03 19:06:47 thorpej Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.3 2002/07/03 19:36:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -643,6 +643,23 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		    !sosendallatonce(so) && !nextrecord) {
 			if (so->so_error || so->so_state & SS_CANTRCVMORE)
 				break;
+			/*
+			 * If we are peeking and the socket receive buffer is
+			 * full, stop since we can't get more data to peek at.
+			 */
+			if ((flags & MSG_PEEK) && sbspace(&so->so_rcv) <= 0)
+				break;
+			/*
+			 * If we've drained the socket buffer, tell the
+			 * protocol in case it needs to do something to
+			 * get it filled again.
+			 */
+			if ((pr->pr_flags & PR_WANTRCVD) && so->so_pcb)
+				(*pr->pr_usrreq)(so, PRU_RCVD,
+				    (struct mbuf *)0,
+				    (struct mbuf *)(long)flags,
+				    (struct mbuf *)0,
+				    (struct proc *)0);
 			SBLASTRECORDCHK(&so->so_rcv,
 			    "kttcp_soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv,
