@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.382 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.383 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -67,7 +67,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		and other platforms using the same mouse code
 		[tsarna 20040603]
 	hp700: Add FFS/LFS primary bootstrap (xxboot).  [itohy 20040615]
-	racoon: upgraded to 20040617 [iojun 20040617]
+	racoon: upgraded to 20040617 [itojun 20040617]
 	powerpc: Implement MPC601 support. [kleink 20040626]
 	prep: Add IBM RS/6000 40P 7020-001 platform support. [kleink 20040626]
 	libcrypt: Add support for SHA1 hashed (hmac_sha1 actually) passwords.
