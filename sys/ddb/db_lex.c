@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.13 2000/06/06 18:50:56 soren Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.14 2000/07/08 17:10:23 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -134,16 +134,13 @@ db_expr_t val;
 	 * 2+1+21+1 => 25
 	 */
 	static char buf[25];
-	char format[] = "%#10lZ";
 
 	if (db_radix == 16)
-		format[5] = 'x';	/* convert to %lx */
+		snprintf(buf, sizeof(buf), "%#10lx", val);
 	else if (db_radix == 8)
-		format[5] = 'o';	/* convert to %lo */
+		snprintf(buf, sizeof(buf), "%#10lo", val);
 	else
-		format[5] = 'u';	/* convert to %lu */
-
-	snprintf(buf, sizeof(buf), format, val);
+		snprintf(buf, sizeof(buf), "%10lu", val);
 	return buf;
 }
 
