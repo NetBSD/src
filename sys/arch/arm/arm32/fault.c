@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.12 2002/03/24 21:27:57 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.13 2002/03/24 22:03:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -653,7 +653,7 @@ prefetch_abort_handler(frame)
 	 * There are bugs in the rev K SA110.  This is a check for one
 	 * of them.
 	 */
-	if (cputype == CPU_ID_SA110 /* XXXJRT check stepping */) {
+	if (curcpu()->ci_cputype == CPU_ID_SA110 && curcpu()->ci_cpurev < 3) {
 		/* Always current pmap */
 		pt_entry_t *pte = vtopte((vaddr_t) fault_pc);
 		struct pmap *pmap = p->p_vmspace->vm_map.pmap;
