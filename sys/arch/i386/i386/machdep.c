@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.441 2001/05/04 03:19:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.442 2001/05/25 04:39:33 oki Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1302,6 +1302,7 @@ identifycpu(struct cpu_info *ci)
 			modifier = "";
 			name = "";
 			cpu_setup = NULL;
+			cpu_cacheinfo = NULL;
 		} else {
 			vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
