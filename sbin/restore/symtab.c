@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.16 2002/11/18 04:28:03 enami Exp $	*/
+/*	$NetBSD: symtab.c,v 1.17 2002/11/18 04:38:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.16 2002/11/18 04:28:03 enami Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.17 2002/11/18 04:38:43 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -383,7 +383,7 @@ removeentry(ep)
  * of similar lengths can use the same entry. The value of STRTBLINCR
  * is chosen so that every entry has at least enough space to hold
  * a "struct strtbl" header. Thus every entry can be linked onto an
- * apprpriate free list.
+ * appropriate free list.
  *
  * NB. The macro "allocsize" below assumes that "struct strhdr"
  *     has a size that is a power of two.
