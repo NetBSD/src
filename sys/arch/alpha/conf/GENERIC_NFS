@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_NFS,v 1.9 1996/05/20 01:37:22 cgd Exp $
+#	$NetBSD: GENERIC_NFS,v 1.9.4.1 1996/06/03 20:11:52 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -89,6 +89,7 @@ pci*	at	ppb?
 
 # PCI devices
 de*	at	pci?
+le*	at	pci?
 ncr*	at	pci?
 pceb*	at	pci?
 pcivga*	at	pci?
