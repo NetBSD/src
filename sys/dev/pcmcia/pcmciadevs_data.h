@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.30 1998/12/24 03:55:54 marc Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.31 1998/12/25 00:54:11 marc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.27 1998/12/20 03:52:40 nathanw Exp 
+ *	NetBSD: pcmciadevs,v 1.28 1998/12/24 03:55:54 marc Exp 
  */
 
 /*-
