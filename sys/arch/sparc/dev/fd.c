@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13 1995/10/09 22:33:07 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.14 1995/11/11 21:12:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -92,7 +92,7 @@ enum fdc_state {
 
 /* software state, per controller */
 struct fdc_softc {
-	struct dkdevice sc_dk;		/* boilerplate */
+	struct device	sc_dev;		/* boilerplate */
 	struct intrhand sc_sih;
 	struct intrhand sc_hih;
 	caddr_t		sc_reg;
@@ -388,7 +388,7 @@ fdcattach(parent, self, aux)
 			printf(" CFGLOCK: unexpected response");
 	}
 
-	evcnt_attach(&fdc->sc_dk.dk_dev, "intr", &fdc->sc_intrcnt);
+	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
 
 	printf(" pri %d, softpri %d: chip 8207%c\n", pri, PIL_FDSOFT, code);
 
