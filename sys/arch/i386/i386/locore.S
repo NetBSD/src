@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.2.5 2002/12/19 00:33:48 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.2.6 2002/12/23 16:15:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1986,7 +1986,7 @@ NENTRY(preempt_error)
 
 /*
  * void cpu_preempt(struct lwp *current, struct lwp *next)
- * Switch to the specified nexxt LWP.
+ * Switch to the specified next LWP.
  */
 ENTRY(cpu_preempt)
 	pushl	%ebx
