@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.10 1999/04/29 22:20:42 rvb Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.11 1999/09/18 05:31:42 matt Exp $	*/
 
 /*
  * 
@@ -52,6 +52,9 @@
 /*
  * HISTORY
  * $Log: coda_psdev.c,v $
+ * Revision 1.11  1999/09/18 05:31:42  matt
+ * Make this compile on alpha again.
+ *
  * Revision 1.10  1999/04/29 22:20:42  rvb
  * Typo/braino?
  *
@@ -500,8 +503,8 @@ vc_nb_write(dev, uiop, flag)
     
     /* get the rest of the data. */
     if (vmp->vm_outSize < uiop->uio_resid) {
-	myprintf(("vcwrite: more data than asked for (%d < %d)\n",
-		  vmp->vm_outSize, uiop->uio_resid));
+	myprintf(("vcwrite: more data than asked for (%d < %lu)\n",
+		  vmp->vm_outSize, (unsigned long) uiop->uio_resid));
 	wakeup(&vmp->vm_sleep); 	/* Notify caller of the error. */
 	return(EINVAL);
     } 
