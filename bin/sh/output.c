@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.15 1995/09/14 16:19:06 jtc Exp $	*/
+/*	$NetBSD: output.c,v 1.16 1996/10/16 14:51:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: output.c,v 1.15 1995/09/14 16:19:06 jtc Exp $";
+static char rcsid[] = "$NetBSD: output.c,v 1.16 1996/10/16 14:51:24 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -353,11 +353,7 @@ fmtstr(va_alist)
 
 #define TEMPSIZE 24
 
-#ifdef __STDC__
-static const char digit[16] = "0123456789ABCDEF";
-#else
-static const char digit[17] = "0123456789ABCDEF";
-#endif
+static const char digit[] = "0123456789ABCDEF";
 
 
 void
@@ -569,7 +565,7 @@ xwrite(fd, buf, nbytes)
  */
 
 int
-xioctl(fd, request, arg) 
+xioctl(fd, request, arg)
 	int fd;
 	unsigned long request;
 	char * arg;
