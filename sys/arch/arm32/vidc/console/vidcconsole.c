@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.5 1996/03/17 01:24:16 thorpej Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.6 1996/03/27 21:47:29 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Robert Black
@@ -1541,6 +1541,7 @@ vidcconsole_flash_go(vc)
 	cursor_ih.ih_func = vidcconsole_cursorintr;
 	cursor_ih.ih_arg = vc;
 	cursor_ih.ih_level = IPL_TTY;
+	cursor_ih.ih_name = "vsync";
 	irq_claim ( IRQ_FLYBACK, &cursor_ih );
 
 	cursor_init = 0;
