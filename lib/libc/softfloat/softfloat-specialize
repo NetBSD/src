@@ -94,7 +94,7 @@ Returns 1 if the single-precision floating-point value `a' is a signaling
 NaN; otherwise returns 0.
 -------------------------------------------------------------------------------
 */
-#ifdef SOFTFLOAT_FOR_GCC
+#if defined(SOFTFLOAT_FOR_GCC) && !defined(SOFTFLOATSPARC64_FOR_GCC)
 static
 #endif
 flag float32_is_signaling_nan( float32 a )
@@ -193,7 +193,7 @@ Returns 1 if the double-precision floating-point value `a' is a signaling
 NaN; otherwise returns 0.
 -------------------------------------------------------------------------------
 */
-#ifdef SOFTFLOAT_FOR_GCC
+#if defined(SOFTFLOAT_FOR_GCC) && !defined(SOFTFLOATSPARC64_FOR_GCC)
 static
 #endif
 flag float64_is_signaling_nan( float64 a )
