@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.57 2001/12/31 07:00:15 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.57.8.1 2002/05/16 03:45:49 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.57 2001/12/31 07:00:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.57.8.1 2002/05/16 03:45:49 gehenna Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -125,6 +125,7 @@ uvn_attach(arg, accessprot)
 	struct vnode *vp = arg;
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vattr vattr;
+	const struct bdevsw *bdev;
 	int result;
 	struct partinfo pi;
 	voff_t used_vnode_size;
@@ -150,10 +151,14 @@ uvn_attach(arg, accessprot)
 	/*
 	 * if we're mapping a BLK device, make sure it is a disk.
 	 */
-	if (vp->v_type == VBLK && bdevsw[major(vp->v_rdev)].d_type != D_DISK) {
-		simple_unlock(&uobj->vmobjlock);
-		UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)", 0,0,0,0);
-		return(NULL);
+	if (vp->v_type == VBLK) {
+		bdev = bdevsw_lookup(vp->v_rdev);
+		if (bdev == NULL || bdev->d_type != D_DISK) {
+			simple_unlock(&uobj->vmobjlock);
+			UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)",
+				    0,0,0,0);
+			return(NULL);
+		}
 	}
 	KASSERT(vp->v_type == VREG || vp->v_type == VBLK);
 
@@ -176,8 +181,13 @@ uvn_attach(arg, accessprot)
 		 *
 		 *	(2) All we want is the size, anyhow.
 		 */
-		result = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
-		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
+		bdev = bdevsw_lookup(vp->v_rdev);
+		if (bdev != NULL) {
+			result = (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART,
+						  (caddr_t)&pi, FREAD, curproc);
+		} else {
+			result = ENXIO;
+		}
 		if (result == 0) {
 			/* XXX should remember blocksize */
 			used_vnode_size = (voff_t)pi.disklab->d_secsize *
