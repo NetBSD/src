@@ -1,4 +1,4 @@
-/*	$NetBSD: profileio.h,v 1.4 2001/11/23 20:47:18 thorpej Exp $	*/
+/*	$NetBSD: profileio.h,v 1.3 2001/11/23 20:47:17 thorpej Exp $	*/
 
 /*
  * Copyright 1997
