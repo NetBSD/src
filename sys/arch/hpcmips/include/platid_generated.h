@@ -1,4 +1,4 @@
-/* $Id: platid_generated.h,v 1.13 2000/01/22 10:51:29 takemura Exp $ */
+/* $Id: platid_generated.h,v 1.14 2000/01/28 06:22:54 shin Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -170,6 +170,10 @@
 #define PLATID_MACH_NEC_MCR_700A_NUM	2
 #define PLATID_MACH_NEC_MCR_700A	\
   ((PLATID_MACH_NEC_MCR_700A_NUM << PLATID_SUBMODEL_SHIFT)| \
+    PLATID_MACH_NEC_MCR_7XX)
+#define PLATID_MACH_NEC_MCR_730_NUM	3
+#define PLATID_MACH_NEC_MCR_730	\
+  ((PLATID_MACH_NEC_MCR_730_NUM << PLATID_SUBMODEL_SHIFT)| \
     PLATID_MACH_NEC_MCR_7XX)
 #define PLATID_MACH_EVEREX_NUM	2
 #define PLATID_MACH_EVEREX	\
