@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.32 2004/01/03 14:53:16 chris Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.33 2004/01/10 22:33:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.32 2004/01/03 14:53:16 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.33 2004/01/10 22:33:24 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -312,7 +312,7 @@ vidcaudio_query_encoding(void *addr, struct audio_encoding *fp)
 	return 0;
 }
 
-#define MULAW_TO_VIDC(m) (~(m) << 1 | (m) >> 7)
+#define MULAW_TO_VIDC(m) (~((m) << 1 | (m) >> 7))
 
 static void
 mulaw_to_vidc(void *v, u_char *p, int cc)
