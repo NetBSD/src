@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 1998/02/25 23:25:16 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 1998/09/11 16:46:31 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -141,8 +141,18 @@ struct clockframe {
 
 #define aston()		(astpending = 1)
 
-int	astpending;	/* need to trap before returning to user mode */
-int	want_resched;	/* resched() was called */
+extern int astpending;	/* need to trap before returning to user mode */
+extern int want_resched;	/* resched() was called */
+#ifdef MIPS3
+extern u_int	mips_L2CacheSize;
+extern int	mips_L2CacheIsSnooping; /* L2 cache snoops uncached writes ? */
+extern int	mips_L2CacheMixed;
+
+#ifdef MIPS3_INTERNAL_TIMER_INTERRUPT
+extern u_int32_t mips3_intr_cycle_count;
+extern u_int32_t mips3_timer_delta;
+#endif
+#endif
 
 /*
  * CTL_MACHDEP definitions.
@@ -158,6 +168,7 @@ int	want_resched;	/* resched() was called */
 /*
  * Misc prototypes.
  */
+
 struct user;
 
 caddr_t	allocsys __P((caddr_t));
@@ -165,6 +176,13 @@ void	dumpsys __P((void));
 int	savectx __P((struct user *));
 void	mips_init_msgbuf __P((void));
 void	mips_init_proc0 __P((caddr_t));
+
+/* locore.S */
+extern void savefpregs __P((struct proc *));
+
+/* mips_machdep.c */
+extern void cpu_identify __P((void));
+extern void mips_vector_init __P((void));
 
 /*
  * MIPS CPU types (cp_imp).
@@ -178,13 +196,20 @@ void	mips_init_proc0 __P((caddr_t));
 #define	MIPS_R3IDT	0x07	/* IDT R3000 derivate		ISA I	*/
 #define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV  */
 #define	MIPS_R4200	0x0a	/* MIPS R4200 CPU (ICE)		ISA III */
-#define MIPS_UNKC1	0x0b	/* unnanounced product cpu	ISA III */
+#define MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III */
 #define MIPS_UNKC2	0x0c	/* unnanounced product cpu	ISA III */
 #define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
 #define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
-#define	MIPS_R3SONY	0x21	/* Sony R3000 based CPU		ISA I   */
+/* ID conflict */
+#define	MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
+#define	MIPS_R3SONY	MIPS_R4700 /* Sony R3000 CPU		ISA I CLASH */
+
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based CPU	ISA I	*/
-#define	MIPS_R3NKK	0x23	/* NKK R3000 based CPU		ISA I   */
+/* ID conflict */
+#define	MIPS_R5000	0x23	/* MIPS R5000 based CPU		ISA IV  */
+#define	MIPS_R3NKK	MIPS_R5000 /* NKK R3000 based CPU	ISA I  CLASH */
+
+#define	MIPS_RM5230	0x28	/* QED RM5230 based CPU		ISA IV  */
 
 
 /*
@@ -202,11 +227,15 @@ void	mips_init_proc0 __P((caddr_t));
 #define MIPS_UNKF1	0x0b	/* unnanounced product cpu	ISA III */
 #define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
 #define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
-#define	MIPS_R3SONY	0x21	/* Sony R3000 based FPU		ISA I   */
+#define	MIPS_R3SONY	MIPS_R4700	/* Sony R3000 based FPU		ISA I   */
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
-#define	MIPS_R3NKK	0x23	/* NKK R3000 based FPU		ISA I   */
+/* ID conflict */
+#define	MIPS_R3NKK	MIPS_R5000 /* NKK R3000 based CPU	ISA I  CLASH */
 
- 
+#define	MIPS_R5010	0x23	/* MIPS R5000 based FPU		ISA IV  */
+#define	MIPS_RM5230	0x28	/* QED RM5230 based FPU		ISA IV  */
+
+
 /*
  * Enable realtime clock (always enabled).
  */
