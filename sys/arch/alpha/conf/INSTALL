@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.31 1999/11/05 21:30:21 thorpej Exp $
+# $NetBSD: INSTALL,v 1.32 1999/11/15 20:07:21 dante Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -128,6 +128,9 @@ pci*	at	tsp?
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
+#options 	ADW_WDTR_DISABLE		# 	disable WDTR
+#options 	ADW_SDTR_DISABLE		# 	disable SDTR
+#options 	ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
