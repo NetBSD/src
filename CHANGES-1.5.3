@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.22 2002/01/10 17:20:16 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.23 2002/01/12 01:12:06 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1263,3 +1263,13 @@ sys/arch/x68k/conf/INSTALL			1.43
 sys/arch/x68k/dev/if_ne_intio.c			1.1 (new) via patch
 
   Support the Ethernet part of Nereid (ether/USB/memory board).
+
+sys/kern/kern_exec.c				1.149 via patch
+sys/kern/sys_process.c				1.72
+sys/sys/proc.h					1.136 via patch
+lib/libc/sys/ptrace.2				1.16
+sys/miscfs/procfs/procfs_ctl.c			1.22
+
+  Fix a ptrace/execve race condition which could be used to modify
+  the child process' image during execve.  This would be a security
+  issue due to setuid programs.
