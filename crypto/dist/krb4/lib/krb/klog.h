@@ -1,5 +1,5 @@
 /*
- * $Id: klog.h,v 1.1.1.2 2000/12/29 01:43:14 assar Exp $
+ * $Id: klog.h,v 1.2 2001/01/07 23:21:44 christos Exp $
  *
  * Copyright 1988 by the Massachusetts Institute of Technology.
  *
@@ -37,11 +37,5 @@
 #define L_ALL_REQ	 14	/* All requests			    */
 #define L_APPL_REQ	 15	/* Application requests (using tgt) */
 #define L_KRB_PWARN      16	/* Protocol warning messages	    */
-
-char * klog __P((int type, const char *format, ...))
-#ifdef __GNUC__
-__attribute__ ((format (printf, 2, 3)))
-#endif
-;
 
 #endif /* KLOG_DEFS */
