@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.18 1998/05/29 20:52:04 veego Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.19 1998/07/12 15:02:44 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -64,7 +64,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.6 1998/05/23 19:07:02 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.8 1998/06/06 14:39:56 darrenr Exp ";
 #endif
 
 
@@ -371,7 +371,7 @@ int fd, opts;
 					ntohs(nat.nat_outport));
 				printf(" [%s %hu]", inet_ntoa(nat.nat_oip),
 					ntohs(nat.nat_oport));
-				printf(" %ld %hu %d", nat.nat_age,
+				printf(" %ld %hu %x", nat.nat_age,
 					nat.nat_use, nat.nat_sumd);
 #if SOLARIS
 				printf(" %lx", nat.nat_ipsumd);
@@ -702,6 +702,9 @@ char *line;
 					"missing parameter for \"proxy\"\n");
 				return NULL;
 			}
+		} else {
+			fprintf(stderr, "missing keyword \"port\"\n");
+			return NULL;
 		}
 		if ((proto = index(s, '/'))) {
 			*proto++ = '\0';
