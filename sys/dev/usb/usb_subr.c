@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.73 2000/04/21 15:58:55 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.74 2000/04/21 20:58:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -526,6 +526,7 @@ usbd_set_config(dev, conf)
 	return (usbd_do_request(dev, &req, 0));
 }
 
+/* XXX should allow moving the device to the unconfigured state. */
 usbd_status
 usbd_set_config_no(dev, no, msg)
 	usbd_device_handle dev;
@@ -548,6 +549,7 @@ usbd_set_config_no(dev, no, msg)
 	return (USBD_INVAL);
 }
 
+/* XXX should allow moving the device to the unconfigured state. */
 usbd_status
 usbd_set_config_index(dev, index, msg)
 	usbd_device_handle dev;
@@ -575,7 +577,7 @@ usbd_set_config_index(dev, index, msg)
 		dev->config = 0;
 	}
 
-	/* Figure out what config number to use. */
+	/* Get the short descriptor. */
 	err = usbd_get_config_desc(dev, index, &cd);
 	if (err)
 		return (err);
@@ -583,6 +585,7 @@ usbd_set_config_index(dev, index, msg)
 	cdp = malloc(len, M_USB, M_NOWAIT);
 	if (cdp == NULL)
 		return (USBD_NOMEM);
+	/* Get the full descriptor. */
 	err = usbd_get_desc(dev, UDESC_CONFIG, index, len, cdp);
 	if (err)
 		goto bad;
@@ -592,9 +595,11 @@ usbd_set_config_index(dev, index, msg)
 		err = USBD_INVAL;
 		goto bad;
 	}
+
+	/* Figure out if the device is self or bus powered. */
 	selfpowered = 0;
 	if (!(dev->quirks->uq_flags & UQ_BUS_POWERED) &&
-	    cdp->bmAttributes & UC_SELF_POWERED) {
+	    (cdp->bmAttributes & UC_SELF_POWERED)) {
 		/* May be self powered. */
 		if (cdp->bmAttributes & UC_BUS_POWERED) {
 			/* Must ask device. */
@@ -611,6 +616,8 @@ usbd_set_config_index(dev, index, msg)
 		 "selfpowered=%d, power=%d\n", 
 		 dev->address, cdp->bmAttributes, 
 		 selfpowered, cdp->bMaxPower * 2));
+
+	/* Check if we have enough power. */
 #ifdef USB_DEBUG
 	if (dev->powersrc == NULL) {
 		DPRINTF(("usbd_set_config_index: No power source?\n"));
@@ -632,6 +639,7 @@ usbd_set_config_index(dev, index, msg)
 	dev->power = power;
 	dev->self_powered = selfpowered;
 
+	/* Set the actual configuration value. */
 	DPRINTF(("usbd_set_config_index: set config %d\n",
 		 cdp->bConfigurationValue));
 	err = usbd_set_config(dev, cdp->bConfigurationValue);
@@ -641,8 +649,8 @@ usbd_set_config_index(dev, index, msg)
 			 cdp->bConfigurationValue, usbd_errstr(err)));
 		goto bad;
 	}
-	DPRINTF(("usbd_set_config_index: setting new config %d\n",
-		 cdp->bConfigurationValue));
+
+	/* Allocate and fill interface data. */
 	nifc = cdp->bNumInterface;
 	dev->ifaces = malloc(nifc * sizeof(struct usbd_interface), 
 			     M_USB, M_NOWAIT);
