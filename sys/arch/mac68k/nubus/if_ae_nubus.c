@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.11 1997/03/19 08:04:39 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.12 1997/04/10 03:19:46 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -355,6 +355,15 @@ ae_nb_card_vendor(na)
 
 	switch (na->drsw) {
 	case NUBUS_DRSW_3COM:
+		switch (na->drhw) {
+		case NUBUS_DRHW_APPLE_SN:
+			vendor = AE_VENDOR_UNKNOWN;
+			break;
+		default:
+			vendor = AE_VENDOR_APPLE;
+			break;
+		}
+		break;
 	case NUBUS_DRSW_APPLE:
 	case NUBUS_DRSW_TECHWORKS:
 		vendor = AE_VENDOR_APPLE;

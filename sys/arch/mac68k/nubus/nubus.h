@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.19 1997/04/01 13:31:39 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.20 1997/04/10 03:19:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -71,8 +71,9 @@
 #define   NUBUS_DRSW_FOCUS	0x011A
 #define    NUBUS_DRHW_INTERLAN	0x0100
 #define    NUBUS_DRHW_KINETICS	0x0106
-#define    NUBUS_DRHW_SONIC	0x0110
 #define    NUBUS_DRHW_CABLETRON	0x0109
+#define    NUBUS_DRHW_SONIC	0x0110
+#define    NUBUS_DRHW_APPLE_SN	0x0119
 
 #define NUBUS_CATEGORY_COMMUNICATIONS	0x0006
 #define  NUBUS_TYPE_RS232	0x0002
