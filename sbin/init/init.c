@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.25 1997/07/19 17:06:29 perry Exp $	*/
+/*	$NetBSD: init.c,v 1.26 1997/07/19 18:11:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
+"	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.25 1997/07/19 17:06:29 perry Exp $";
+__RCSID("$NetBSD: init.c,v 1.26 1997/07/19 18:11:59 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -562,10 +562,11 @@ single_user()
 #ifdef SECURE
 	struct ttyent *typ;
 	struct passwd *pp;
-	static const char banner[] =
-		"Enter root password, or ^D to go multi-user\n";
 	char *clear, *password;
 #endif
+#ifdef ALTSHELL
+	char altshell[128];
+#endif /* ALTSHELL */
 
 	/*
 	 * If the kernel is in secure mode, downgrade it to insecure mode.
@@ -589,7 +590,8 @@ single_user()
 		pp = getpwnam("root");
 		if (typ && (typ->ty_status & TTY_SECURE) == 0 && pp &&
 		    *pp->pw_passwd != '\0') {
-			write(2, banner, sizeof banner - 1);
+			fprintf(stderr,
+			    "Enter root password, or ^D to go multi-user\n");
 			for (;;) {
 				clear = getpass("Password:");
 				if (clear == 0 || *clear == '\0')
@@ -605,23 +607,15 @@ single_user()
 		endpwent();
 #endif /* SECURE */
 
-#ifdef DEBUGSHELL
-		{
-			char altshell[128], *cp = altshell;
-			int num;
+#ifdef ALTSHELL
+		fprintf(stderr, "Enter pathname of shell or RETURN for sh: ");
+		fgets(altshell, sizeof(altshell), stdin);
+		/* nuke \n */
+		altshell[strlen(altshell) - 1] = '\0';
 
-#define	SHREQUEST \
-	"Enter pathname of shell or RETURN for sh: "
-			(void)write(STDERR_FILENO,
-			    SHREQUEST, sizeof(SHREQUEST) - 1);
-			while ((num = read(STDIN_FILENO, cp, 1)) != -1 &&
-			    num != 0 && *cp != '\n' && cp < &altshell[127])
-					cp++;
-			*cp = '\0';
-			if (altshell[0] != '\0')
-				shell = altshell;
-		}
-#endif /* DEBUGSHELL */
+		if (altshell[0])
+			shell = altshell;
+#endif /* ALTSHELL */
 
 		/*
 		 * Unblock signals.
@@ -638,8 +632,13 @@ single_user()
 		argv[0] = "-sh";
 		argv[1] = 0;
 		setenv("PATH", _PATH_STDPATH, 1);
+#ifdef ALTSHELL
+		if (altshell[0])
+			argv[0] = altshell;
 		execv(shell, argv);
 		emergency("can't exec %s for single user: %m", shell);
+		argv[0] = "-sh";
+#endif /* ALTSHELL */
 		execv(_PATH_BSHELL, argv);
 		emergency("can't exec %s for single user: %m", _PATH_BSHELL);
 		sleep(STALL_TIMEOUT);
