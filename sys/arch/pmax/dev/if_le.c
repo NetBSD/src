@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.10 1995/04/19 16:23:11 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11 1995/04/19 18:06:03 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -893,7 +893,7 @@ leget(le, lebuf, totlen, off, ifp)
  */
 leioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
