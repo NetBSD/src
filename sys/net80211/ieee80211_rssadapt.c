@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.1 2003/10/26 07:56:41 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.2 2003/12/07 05:29:39 dyoung Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -90,7 +90,9 @@ void
 ieee80211_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_rssadapt *ra, int rssi)
 {
+#ifdef IEEE80211_DEBUG
 	int last_avg_rssi = ra->ra_avg_rssi;
+#endif
 
 	ra->ra_avg_rssi =
 	    (ieee80211_rssadapt_avgrssi_old * ra->ra_avg_rssi +
@@ -156,7 +158,10 @@ ieee80211_rssadapt_raise_rate(struct ieee80211com *ic,
 	u_int16_t (*thrs)[IEEE80211_RATE_SIZE], newthr, oldthr;
 	struct ieee80211_node *ni = id->id_node;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
-	int i, j, rate, top;
+	int i, rate, top;
+#ifdef IEEE80211_DEBUG
+	int j;
+#endif
 
 	ra->ra_nfail++;
 
