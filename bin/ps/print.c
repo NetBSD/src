@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.82 2004/03/27 12:09:28 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.83 2004/03/27 12:11:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.82 2004/03/27 12:09:28 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.83 2004/03/27 12:11:55 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -919,7 +919,7 @@ cputime(void *arg, VARENT *ve, int mode)
 	}
 	if (mode == WIDTHMODE) {
 		/*
-		 * Ugg, this is the only field where a value of 0 longer
+		 * Ugg, this is the only field where a value of 0 is longer
 		 * than the column title.
 		 * Use SECSPERMIN, because secs is divided by that when
 		 * passed to iwidth().
