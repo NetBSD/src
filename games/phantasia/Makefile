@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/05/31 21:21:17 cjs Exp $
+#	$NetBSD: Makefile,v 1.10 1997/06/30 19:33:34 phil Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	phantasia
@@ -6,6 +6,7 @@ SRCS=	main.c fight.c io.c interplayer.c gamesupport.c misc.c phantglobs.c
 DPADD=	${LIBM} ${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
 LDADD=	-lm -lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
+USETBL=
 MAN=	phantasia.6
 CLEANFILES+=map setup setup.o host_phantglobs.o
 
@@ -30,9 +31,5 @@ afterinstall:
 map: map.c
 	${CC} -O ${.CURDIR}/map.c -lplot -o ${.TARGET}
 	./map | plot > /dev/tty
-
-# XXX this rule shouldn't be here.
-phantasia.cat6: phantasia.6
-	tbl ${.CURDIR}/phantasia.6 | nroff -man > ${.TARGET}
 
 .include <bsd.prog.mk>
