@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.2.2.4 2002/08/06 23:28:29 nathanw Exp $	*/
+/*	$NetBSD: userret.h,v 1.2.2.5 2002/08/09 19:37:14 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_altivec.h"
+
+#include <powerpc/fpu.h>
+
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
@@ -61,7 +65,7 @@ userret(struct lwp *l, struct trapframe *frame)
 	 * If someone stole the fp or vector unit while we were away,
 	 * disable it
 	 */
-#ifdef PPC_HAS_FPU
+#ifdef PPC_HAVE_FPU
 	if ((pcb->pcb_flags & PCB_FPU) &&
 	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
 		frame->srr1 &= ~PSL_FP;
