@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.43 2003/07/15 00:25:00 lukem Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.44 2003/09/06 10:18:07 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.43 2003/07/15 00:25:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.44 2003/09/06 10:18:07 rearnsha Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -653,7 +653,7 @@ initarm(void *arg)
 
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
 		pmap_map_chunk(l1pagetable, kernel_pt_table[loop].pv_va,
-		    kernel_pt_table[loop].pv_va, L2_TABLE_SIZE,
+		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 	}
 
