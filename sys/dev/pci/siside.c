@@ -1,5 +1,4 @@
-/*	$NetBSD: siside.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
-
+/*	$NetBSD: siside.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -28,9 +27,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,19 +38,20 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_sis_reg.h>
 
-void sis_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void sis_setup_channel __P((struct channel_softc*));
-void sis96x_setup_channel __P((struct channel_softc*));
-static int sis_hostbr_match __P(( struct pci_attach_args *));
-static int sis_south_match __P(( struct pci_attach_args *));
+static void sis_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void sis_setup_channel(struct channel_softc *);
+static void sis96x_setup_channel(struct channel_softc *);
 
-int	siside_match __P((struct device *, struct cfdata *, void *));
-void	siside_attach __P((struct device *, struct device *, void *));
+static int  sis_hostbr_match(struct pci_attach_args *);
+static int  sis_south_match(struct pci_attach_args *);
+
+static int  siside_match(struct device *, struct cfdata *, void *);
+static void siside_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(siside, sizeof(struct pciide_softc),
     siside_match, siside_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_sis_products[] =  {
+static const struct pciide_product_desc pciide_sis_products[] =  {
 	{ PCI_PRODUCT_SIS_5597_IDE,
 	  0,
 	  NULL,
@@ -66,11 +64,8 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	}
 };
 
-int
-siside_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+siside_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -81,10 +76,8 @@ siside_match(parent, match, aux)
 	return (0);
 }
 
-void
-siside_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+siside_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -155,10 +148,10 @@ static struct sis_hostbr_type {
 static struct sis_hostbr_type *sis_hostbr_type_match;
 
 static int
-sis_hostbr_match(pa)
-	struct pci_attach_args *pa;
+sis_hostbr_match(struct pci_attach_args *pa)
 {
 	int i;
+
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_SIS)
 		return 0;
 	sis_hostbr_type_match = NULL;
@@ -172,18 +165,17 @@ sis_hostbr_match(pa)
 	return (sis_hostbr_type_match != NULL);
 }
 
-static int sis_south_match(pa)
-	struct pci_attach_args *pa;
+static int
+sis_south_match(struct pci_attach_args *pa)
 {
-	return(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS &&
+
+	return (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS &&
 		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_85C503 &&
 		PCI_REVISION(pa->pa_class) >= 0x10);
 }
 
-void
-sis_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
@@ -299,9 +291,8 @@ sis_chip_map(sc, pa)
 	}
 }
 
-void
-sis96x_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+sis96x_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -365,9 +356,8 @@ sis96x_setup_channel(chp)
 	}
 }
 
-void
-sis_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+sis_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;

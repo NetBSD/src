@@ -1,5 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
-
+/*	$NetBSD: piixide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -28,9 +27,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,17 +38,18 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_piix_reg.h>
 
-void piix_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void piix_setup_channel __P((struct channel_softc*));
-void piix3_4_setup_channel __P((struct channel_softc*));
-static u_int32_t piix_setup_idetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
-static u_int32_t piix_setup_idetim_drvs __P((struct ata_drive_datas*));
-static u_int32_t piix_setup_sidetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
-void artisea_chip_map __P((struct pciide_softc*, struct pci_attach_args *));
-int	piixide_match __P((struct device *, struct cfdata *, void *));
-void	piixide_attach __P((struct device *, struct device *, void *));
+static void piix_chip_map(struct pciide_softc*, struct pci_attach_args *);
+static void piix_setup_channel(struct channel_softc *);
+static void piix3_4_setup_channel(struct channel_softc *);
+static u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
+static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
+static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
+static void artisea_chip_map(struct pciide_softc*, struct pci_attach_args *);
 
-const struct pciide_product_desc pciide_intel_products[] =  {
+static int  piixide_match(struct device *, struct cfdata *, void *);
+static void piixide_attach(struct device *, struct device *, void *);
+
+static const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82092AA,
 	  0,
 	  "Intel 82092AA IDE controller",
@@ -127,6 +125,9 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 31244 Serial ATA Controller",
 	  artisea_chip_map,
 	},
+	/*
+	 * XXX Is this really the same as the 31244? --thorpej
+	 */
 	{ PCI_PRODUCT_INTEL_82801EB_SATA,
 	  0,
 	  "Intel 82801EB Serial ATA Controller",
@@ -139,15 +140,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	}
 };
 
-
 CFATTACH_DECL(piixide, sizeof(struct pciide_softc),
     piixide_match, piixide_attach, NULL, NULL);
 
-int
-piixide_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+piixide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -158,10 +155,8 @@ piixide_match(parent, match, aux)
 	return (0);
 }
 
-void
-piixide_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+piixide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -171,10 +166,8 @@ piixide_attach(parent, self, aux)
 
 }
 
-void
-piix_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
@@ -320,9 +313,8 @@ piix_chip_map(sc, pa)
 	WDCDEBUG_PRINT(("\n"), DEBUG_PROBE);
 }
 
-void
-piix_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+piix_setup_channel(struct channel_softc *chp)
 {
 	u_int8_t mode[2], drive;
 	u_int32_t oidetim, idetim, idedma_ctl;
@@ -428,9 +420,8 @@ end:	/*
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM, idetim);
 }
 
-void
-piix3_4_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+piix3_4_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	u_int32_t oidetim, idetim, sidetim, udmareg, ideconf, idedma_ctl;
@@ -648,10 +639,8 @@ piix_setup_sidetim_timings(mode, dma, channel)
 		    PIIX_SIDETIM_RTC_SET(piix_rtc_pio[mode], channel);
 }
 
-void
-artisea_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	bus_size_t cmdsize, ctlsize;
