@@ -1,61 +1,42 @@
-#	$NetBSD: Makefile,v 1.14 2002/02/04 01:11:09 ross Exp $
+#	$NetBSD: Makefile,v 1.15 2002/03/07 23:51:48 lukem Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk.fs
-
-CBIN=		ramdiskbin
-
-MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-IMAGE?=		xxx.fs
-MDEC=		${DESTDIR}/usr/mdec
-
-LISTS=		list
-CRUNCHCONF=	${CBIN}.conf
-MTREECONF=	mtree.conf
-
-CRUNCHGEN?=	crunchgen
-
-all: ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} count=9000
-	vnconfig -v -c ${VND} ${IMAGE}
-#	disklabel -rw ${VND} ${DISKTYPE}
-	newfs -B le -m 0 -o space -i 5120 ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${.CURDIR}/${LISTS}
-	@echo chdir '$${.CURDIR}/../../../notes/alpha; ${MAKE} INSTALL.more'
-	@chdir ${.CURDIR}/../../../notes/alpha; ${MAKE} INSTALL.more
-	cp `chdir ${.CURDIR}/../../../notes/alpha; ${MAKE} echomore`	\
-		${MOUNT_POINT}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
-
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
-
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
-
-clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
-
+.include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-.include <bsd.sys.mk>
+
+IMAGE=		ramdisk.fs
+IMAGESIZE=	9000b
+MAKEFS_FLAGS=	-o density=5k
+
+WARNS=		1
+
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
+MTREECONF=	${DISTRIBDIR}/common/mtree.common #${.CURDIR}/mtree.conf
+IMAGEENDIAN=	le
+MAKEDEVTARGETS=	minimal
+IMAGEDEPENDS+=	${CRUNCHBIN} \
+		disktab.preinstall dot.hdprofile dot.profile \
+		${.CURDIR}/../src/install.sh ${.CURDIR}/../src/upgrade.sh \
+		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/bootxx_ffs \
+		${DESTDIR}/usr/share/misc/termcap \
+		${_SRC_TOP_}/distrib/utils/script-installer/dot.commonutils \
+		${_SRC_TOP_}/distrib/utils/script-installer/dot.instutils \
+		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
+		${_SRC_TOP_}/etc/services
+
+INSTALLNOTES!=	cd ${DISTRIBDIR}/notes/alpha && ${MAKE} echomore 
+IMAGEDEPENDS+=	${INSTALLNOTES}
+POPULATEENV+=	INSTALLNOTES=${INSTALLNOTES:Q} PWD_MKDB=${PWD_MKDB:Q}
+
+
+realall: ${IMAGE}
+
+release:
+
+
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
+.include <bsd.prog.mk>
