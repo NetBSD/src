@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.242 2003/02/19 22:27:08 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.243 2003/02/20 16:22:49 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2462,6 +2462,8 @@ pv_link4_4c(pg, pm, va, nc)
  * as long as the process has a context; this is overly conservative.
  * It also copies ref and mod bits to the pvlist, on the theory that
  * this might save work later.  (XXX should test this theory)
+ *
+ * Called with PV lock and pmap main lock held.
  */
 void
 pv_changepte4m(pg, bis, bic)
@@ -2470,26 +2472,20 @@ pv_changepte4m(pg, bis, bic)
 {
 	struct pvlist *pv;
 	struct pmap *pm;
-	int va, vr;
-	int s;
+	vaddr_t va;
 	struct regmap *rp;
 	struct segmap *sp;
 
 	pv = VM_MDPAGE_PVHEAD(pg);
-
-	s = splvm();			/* paranoid? */
-	PMAP_HEAD_TO_MAP_LOCK();
-	simple_lock(&pg->mdpage.pv_slock);
-	if (pv->pv_pmap == NULL) {
-		goto out;
-	}
+	if (pv->pv_pmap == NULL)
+		return;
 
 	for (; pv != NULL; pv = pv->pv_next) {
 		int tpte;
 		pm = pv->pv_pmap;
+		/* XXXSMP: should lock pm */
 		va = pv->pv_va;
-		vr = VA_VREG(va);
-		rp = &pm->pm_regmap[vr];
+		rp = &pm->pm_regmap[VA_VREG(va)];
 		sp = &rp->rg_segmap[VA_VSEG(va)];
 
 		if (pm->pm_ctx) {
@@ -2512,11 +2508,6 @@ pv_changepte4m(pg, bis, bic)
 		    &sp->sg_pte[VA_SUN4M_VPG(va)], bic, bis, pm->pm_ctxnum,
 		    PMAP_CPUSET(pm)));
 	}
-
-out:
-	simple_unlock(&pg->mdpage.pv_slock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
-	splx(s);
 }
 
 /*
@@ -2537,10 +2528,9 @@ pv_syncflags4m(pg)
 	struct segmap *sp;
 	boolean_t doflush;
 
-	pv = VM_MDPAGE_PVHEAD(pg);
-
-	s = splvm();			/* paranoid? */
+	s = splvm();
 	PMAP_HEAD_TO_MAP_LOCK();
+	pv = VM_MDPAGE_PVHEAD(pg);
 	if (pv->pv_pmap == NULL) {	/* paranoid */
 		flags = 0;
 		goto out;
@@ -2703,7 +2693,7 @@ pv_link4m(pg, pm, va, pteprotop)
 	vaddr_t va;
 	unsigned int *pteprotop;
 {
-	struct pvlist *pv0, *npv;
+	struct pvlist *pv0, *pv, *npv;
 	int nc = (*pteprotop & SRMMU_PG_C) == 0 ? PV_NC : 0;
 	int error = 0;
 
@@ -2722,16 +2712,15 @@ pv_link4m(pg, pm, va, pteprotop)
 
 	pmap_stats.ps_enter_secondpv++;
 
+	/*
+	 * Allocate the new PV entry now, and, if that fails, bail out 
+	 * before changing the cacheable state of the existing mappings.
+	 */
 	npv = pool_get(&pv_pool, PR_NOWAIT);
 	if (npv == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
-	npv->pv_next = pv0->pv_next;
-	npv->pv_pmap = pm;
-	npv->pv_va = va;
-	npv->pv_flags = nc;
-	pv0->pv_next = npv;
 
 	/*
 	 * See if the new mapping will cause old mappings to
@@ -2743,8 +2732,8 @@ pv_link4m(pg, pm, va, pteprotop)
 		goto out;
 	}
 
-	for (npv = pv0; npv != NULL; npv = npv->pv_next) {
-		if ((npv->pv_flags & PV_NC) != 0) {
+	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
+		if ((pv->pv_flags & PV_NC) != 0) {
 			*pteprotop &= ~SRMMU_PG_C;
 #ifdef DEBUG
 			/* Check currently illegal condition */
@@ -2752,16 +2741,16 @@ pv_link4m(pg, pm, va, pteprotop)
 				printf("pv_link: proc %s, va=0x%lx: "
 				"unexpected uncached mapping at 0x%lx\n",
 				    curproc ? curproc->p_comm : "--",
-				    va, npv->pv_va);
+				    va, pv->pv_va);
 #endif
 		}
-		if (BADALIAS(va, npv->pv_va)) {
+		if (BADALIAS(va, pv->pv_va)) {
 #ifdef DEBUG
 			if (pmapdebug & PDB_CACHESTUFF)
 				printf(
 			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pg %p\n",
 				curproc ? curproc->p_comm : "--",
-				va, npv->pv_va, pg);
+				va, pv->pv_va, pg);
 #endif
 			/* Mark list head `uncached due to aliases' */
 			pv0->pv_flags |= PV_ANC;
@@ -2770,6 +2759,13 @@ pv_link4m(pg, pm, va, pteprotop)
 			break;
 		}
 	}
+
+	/* Now link in the new PV entry */
+	npv->pv_next = pv0->pv_next;
+	npv->pv_pmap = pm;
+	npv->pv_va = va;
+	npv->pv_flags = nc;
+	pv0->pv_next = npv;
 
 out:
 	simple_unlock(&pg->mdpage.pv_slock);
@@ -2786,9 +2782,14 @@ out:
 static void pv_uncache(struct vm_page *pg)
 {
 	struct pvlist *pv;
+	int s;
 
 	for (pv = VM_MDPAGE_PVHEAD(pg); pv != NULL; pv = pv->pv_next)
 		pv->pv_flags |= PV_NC;
+
+	s = splvm();
+	PMAP_HEAD_TO_MAP_LOCK();
+	simple_lock(&pg->mdpage.pv_slock);
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU)
@@ -2798,6 +2799,9 @@ static void pv_uncache(struct vm_page *pg)
 	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		pv_changepte4_4c(pg, PG_NC, 0);
 #endif
+	simple_unlock(&pg->mdpage.pv_slock);
+	PMAP_HEAD_TO_MAP_UNLOCK();
+	splx(s);
 }
 
 /*
@@ -5083,30 +5087,27 @@ pmap_page_protect4m(pg, prot)
 	if (pg == NULL || prot & VM_PROT_WRITE)
 		return;
 
+	s = splvm();
+	PMAP_HEAD_TO_MAP_LOCK();
+	simple_lock(&pg->mdpage.pv_slock);
+
 	if (prot & VM_PROT_READ) {
 		pv_changepte4m(pg, 0, PPROT_WRITE);
-		return;
+		goto out;
 	}
 
 	/*
 	 * Remove all access to all people talking to this page.
-	 * Walk down PV list, removing all mappings.
-	 * The logic is much like that for pmap_remove,
-	 * but we know we are removing exactly one page.
+	 * Walk down PV list, removing all mappings. The logic is much
+	 * like that for pmap_remove, but we know we are removing exactly
+	 * one page.
 	 */
-	s = splvm();
 	pv = VM_MDPAGE_PVHEAD(pg);
-	if (pv->pv_pmap == NULL) {
-		splx(s);
-		return;
-	}
+	if (pv->pv_pmap == NULL)
+		goto out;
 
 	/* This pv head will become empty, so clear caching state flags */
 	flags = pv->pv_flags & ~(PV_NC|PV_ANC);
-
-	PMAP_HEAD_TO_MAP_LOCK();
-	simple_lock(&pg->mdpage.pv_slock);
-
 	while (pv != NULL) {
 		pm = pv->pv_pmap;
 		simple_lock(&pm->pm_lock);
@@ -5150,13 +5151,15 @@ pmap_page_protect4m(pg, prot)
 		simple_unlock(&pm->pm_lock);
 		pv = npv;
 	}
-	simple_unlock(&pg->mdpage.pv_slock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	/* Finally, update pv head */
 	VM_MDPAGE_PVHEAD(pg)->pv_pmap = NULL;
 	VM_MDPAGE_PVHEAD(pg)->pv_next = NULL;
 	VM_MDPAGE_PVHEAD(pg)->pv_flags = flags;
+
+out:
+	simple_unlock(&pg->mdpage.pv_slock);
+	PMAP_HEAD_TO_MAP_UNLOCK();
 	splx(s);
 }
 
