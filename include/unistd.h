@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.27 1996/05/28 02:07:32 mrg Exp $	*/
+/*	$NetBSD: unistd.h,v 1.28 1996/06/23 11:56:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -157,8 +157,8 @@ int	 setkey __P((const char *));
 int	 setlogin __P((const char *));
 void	*setmode __P((const char *));
 int	 setpgrp __P((pid_t pid, pid_t pgrp));	/* obsoleted by setpgid() */
-int	 setregid __P((int, int));
-int	 setreuid __P((int, int));
+int	 setregid __P((gid_t, gid_t));
+int	 setreuid __P((uid_t, uid_t));
 int	 setrgid __P((gid_t));
 int	 setruid __P((uid_t));
 void	 setusershell __P((void));
