@@ -1,4 +1,4 @@
-#	$NetBSD: RC7500,v 1.27 1999/01/23 22:18:42 sommerfe Exp $
+#	$NetBSD: RC7500,v 1.28 1999/03/27 07:11:36 explorer Exp $
 #
 #	RC7500 - Config for the VLSI RC7500 board
 #
@@ -210,6 +210,7 @@ pseudo-device	pty     32              # pseudo-terminals
 pseudo-device	vnd     4               # paging to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Memory disk driver
+pseudo-device	rnd			# /dev/random and /dev/urandom
 
 #options 	HARDCODEDMODES
 

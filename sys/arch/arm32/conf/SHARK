@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.20 1999/03/26 02:48:18 hubertf Exp $
+#	$NetBSD: SHARK,v 1.21 1999/03/27 07:11:36 explorer Exp $
 # From:  NetBSD: GENERIC,v 1.53 1999/01/23 22:18:42 sommerfe Exp
 #
 #	SHARK
@@ -200,6 +200,7 @@ pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# paging to files
 #pseudo-device	ccd	2		# concatenated disk devices
+pseudo-device	rnd			# /dev/random and /dev/urandom
 
 #pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device

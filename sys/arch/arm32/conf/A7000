@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.33 1999/01/23 22:18:42 sommerfe Exp $
+#	$NetBSD: A7000,v 1.34 1999/03/27 07:11:35 explorer Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -261,6 +261,7 @@ pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
+pseudo-device	rnd			# /dev/random and /dev/urandom
 
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"

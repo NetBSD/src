@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.8 1998/10/04 19:03:37 mark Exp $
+#	$NetBSD: OFWGENCFG,v 1.9 1999/03/27 07:11:36 explorer Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -134,5 +134,6 @@ pseudo-device	pty     32              # pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd     4               # paging to files
 #pseudo-device	ccd	2		# concatenated disk devices
+pseudo-device	rnd			# /dev/random and /dev/urandom
 
 #pseudo-device	md	1		# Ramdisk driver

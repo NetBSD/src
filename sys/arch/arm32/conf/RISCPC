@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.23 1999/01/23 22:18:42 sommerfe Exp $
+#	$NetBSD: RISCPC,v 1.24 1999/03/27 07:11:36 explorer Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -261,6 +261,7 @@ pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
+pseudo-device	rnd			# /dev/random and /dev/urandom
 
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"

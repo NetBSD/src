@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.54 1999/03/26 02:46:14 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.55 1999/03/27 07:11:36 explorer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -265,8 +265,7 @@ pseudo-device	vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 pseudo-device	md	1		# Ramdisk driver
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"
