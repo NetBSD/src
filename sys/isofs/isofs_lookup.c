@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.7.2.1 1993/09/24 08:50:04 mycroft Exp $
+ *	$Id: isofs_lookup.c,v 1.7.2.2 1993/11/14 17:50:03 mycroft Exp $
  */
 
 #include "param.h"
@@ -139,7 +139,7 @@ isofs_lookup(vdp, ndp, p)
 		if (error == ENOENT)
 			return (error);
 #ifdef PARANOID
-		if (vdp == ndp->ni_rdir && ndp->ni_isdotdot)
+		if (vdp == ndp->ni_rootdir && ndp->ni_isdotdot)
 			panic("ufs_lookup: .. through root");
 #endif
 		/*
