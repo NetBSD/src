@@ -31,15 +31,15 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.4 1994/01/26 14:28:56 brezak Exp $
+ *	$Id: conf.c,v 1.5 1994/02/06 00:44:39 mycroft Exp $
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/conf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
@@ -125,7 +125,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
 	dev_decl(n,write); dev_decl(n,ioctl); dev_decl(n,stop); \
 	dev_decl(n,reset); dev_decl(n,select); dev_decl(n,map); \
-	dev_decl(n,strategy); extern struct tty __CONCAT(n,_tty)[]
+	dev_decl(n,strategy); extern struct tty *__CONCAT(n,_tty)[]
 
 #define	dev_tty_init(c,n)	(c > 0 ? __CONCAT(n,_tty) : 0)
 
@@ -337,3 +337,49 @@ int	mem_no = 2; 	/* major device number of memory special file */
  * provided as a character (raw) device.
  */
 dev_t	swapdev = makedev(3, 0);
+
+/*
+ * This entire table could be autoconfig()ed but that would mean that
+ * the kernel's idea of the console would be out of sync with that of
+ * the standalone boot.  I think it best that they both use the same
+ * known algorithm unless we see a pressing need otherwise.
+ */
+#include <dev/cons.h>
+
+/* console-specific types */
+#if 0 /* XXX */
+#define	dev_type_cnprobe(n)	void n __P((struct consdev *))
+#define	dev_type_cninit(n)	void n __P((struct consdev *))
+#define	dev_type_cngetc(n)	int n __P((dev_t))
+#define	dev_type_cnputc(n)	void n __P((dev_t, int))
+#else
+#define	dev_type_cnprobe(n)	int n()
+#define	dev_type_cninit(n)	int n()
+#define	dev_type_cngetc(n)	int n()
+#define	dev_type_cnputc(n)	int n()
+#endif
+
+#define	cons_decl(n) \
+	dev_decl(n,cnprobe); dev_decl(n,cninit); dev_decl(n,cngetc); \
+	dev_decl(n,cnputc)
+
+#define	cons_init(n) { \
+	dev_init(1,n,cnprobe), dev_init(1,n,cninit), dev_init(1,n,cngetc), \
+	dev_init(1,n,cnputc) }
+
+cons_decl(ite);
+cons_decl(dca);
+cons_decl(dcm);
+
+struct	consdev constab[] = {
+#if NITE > 0
+	cons_init(ite),
+#endif
+#if NDCA > 0
+	cons_init(dca),
+#endif
+#if NDCM > 0
+	cons_init(dcm),
+#endif
+	{ 0 },
+};
