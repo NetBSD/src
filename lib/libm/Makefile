@@ -1,125 +1,79 @@
-#	from: @(#)Makefile	5.11 (Berkeley) 12/2/92
-#	$Id: Makefile,v 1.10 1993/12/06 12:11:42 cgd Exp $
+#  @(#)Makefile 5.1beta 93/09/24 
+#  $Id: Makefile,v 1.11 1994/02/11 18:35:35 jtc Exp $
+# 
+#  ====================================================
+#  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+# 
+#  Developed at SunPro, a Sun Microsystems, Inc. business.
+#  Permission to use, copy, modify, and distribute this
+#  software is freely granted, provided that this notice 
+#  is preserved.
+#  ====================================================
+# 
+# 
+
 #
-# ieee		- for most IEEE machines, we hope.
-# mc68881	- the, ahem, mc68881.
-# national	- NATIONAL 32016 with 32081.
-# i386		- i387 NPX
-# mips		- for MIPS achitecture machines (and also pmax)
-# tahoe		- for the tahoe double format.
-# vax		- for the vax D_floating format
+# There are two options in making libm at fdlibm compile time:
+# 	_IEEE_LIBM 	--- IEEE libm; smaller, and somewhat faster
+#	_MULTI_LIBM	--- Support multi-standard at runtime by 
+#			    imposing wrapper functions defined in 
+#			    fdlibm.h:
+#				_IEEE_MODE 	-- IEEE
+#				_XOPEN_MODE 	-- X/OPEN
+#				_POSIX_MODE 	-- POSIX/ANSI
+#				_SVID3_MODE 	-- SVID
+#
+# Here is how to set up CFLAGS to create the desired libm at 
+# compile time:
+#
+# 	CFLAGS = -D_IEEE_LIBM		... IEEE libm (recommended)
+#	CFLAGS = -D_SVID3_MODE	... Multi-standard supported
+#					    libm with SVID as the 
+#					    default standard
+#	CFLAGS = -D_XOPEN_MODE	... Multi-standard supported
+#					    libm with XOPEN as the 
+#					    default standard
+#	CFLAGS = -D_POSIX_MODE	... Multi-standard supported
+#					    libm with POSIX as the 
+#					    default standard
+#	CFLAGS = 			... Multi-standard supported
+#					    libm with IEEE as the 
+#					    default standard
+# 
+
+.if (${MACHINE_ARCH} == "i386")
+# Uncomment the following lines if you have a i387 (or i486 or Pentium)
+#.PATH:	${.CURDIR}/arch/i387
+.elif (${MACHINE_ARCH} == "m68k")
+#.PATH:	${.CURDIR}/arch/mc68881
+.endif
+
+.PATH:	${.CURDIR}/man
+.PATH:	${.CURDIR}/src
+
+
+CFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
+NOPIC=
 
 LIB=	m
-CFLAGS+=-I${.CURDIR}/common_source
-NOPIC=	nopic
+OBJS = 	k_standard.o k_rem_pio2.o k_cos.o k_sin.o k_tan.o \
+	e_acos.o e_acosh.o e_asin.o e_atan2.o e_atanh.o e_cosh.o e_exp.o \
+	e_fmod.o e_gamma.o e_gamma_r.o e_hypot.o e_j0.o e_j1.o e_jn.o \
+	e_lgamma.o e_lgamma_r.o e_log.o e_log10.o e_pow.o e_rem_pio2.o \
+	e_remainder.o e_scalb.o e_sinh.o e_sqrt.o \
+	w_acos.o w_acosh.o w_asin.o w_atan2.o \
+	w_atanh.o w_cosh.o w_exp.o w_fmod.o \
+	w_gamma.o w_gamma_r.o w_hypot.o w_j0.o \
+	w_j1.o w_jn.o w_lgamma.o w_lgamma_r.o \
+	w_log.o w_log10.o w_pow.o w_remainder.o \
+	w_scalb.o w_sinh.o w_sqrt.o \
+	s_asinh.o s_atan.o s_cbrt.o s_ceil.o s_copysign.o \
+	s_cos.o s_erf.o s_expm1.o s_fabs.o s_finite.o s_floor.o \
+	s_frexp.o s_ilogb.o s_isnan.o s_ldexp.o s_lib_version.o \
+	s_log1p.o s_logb.o s_matherr.o s_modf.o s_nextafter.o \
+	s_rint.o s_scalbn.o s_signgam.o s_significand.o s_sin.o \
+	s_tan.o s_tanh.o
 
-.if (${MACHINE_ARCH} == "ieee")
-
-HARDWARE=${MACHINE_ARCH}
-.PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
-# common_source
-SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
-	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
-# common
-SRCS+=	atan2.c sincos.c tan.c
-# ieee
-SRCS+=	cabs.c cbrt.c support.c
-
-.elif (${MACHINE_ARCH} == "m68k")
-
-HARDWARE=mc68881
-.PATH:	${.CURDIR}/mc68881 ${.CURDIR}/common_source ${.CURDIR}/ieee
-# common_source
-SRCS+=	acosh.c asinh.c erf.c exp__D.c exp__E.c fmod.c gamma.c lgamma.c j0.c \
-	j1.c log__D.c log__L.c logtab.c pow.c
-# mc68881
-SRCS+=	asincos.S atan.S atan2.c atanh.S cosh.S exp.S expm1.S floor.S \
-	log.S log10.S log1p.S sincos.S sinh.S sqrt.S support.S tan.S tanh.S
-# ieee
-SRCS+=	cabs.c cbrt.c
-
-.elif (${MACHINE_ARCH} == "i386")
-
-HARDWARE=i387
-.PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
-# common_source
-SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
-	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
-# common
-SRCS+=	atan2.c sincos.c tan.c
-# ieee
-SRCS+=	cabs.c cbrt.c support.c
-
-.elif (${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "pmax")
-
-HARDWARE=${MACHINE_ARCH}
-.PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
-# common_source
-SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
-	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
-# common
-SRCS+=	atan2.c sincos.c tan.c
-# ieee
-SRCS+=	cabs.c cbrt.c support.c
-
-.elif (${MACHINE_ARCH} == "national" || ${MACHINE_ARCH} == "ns32k")
-HARDWARE=national
-.PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/national \
-	${.CURDIR}/ieee
-# common_source
-SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
-	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
-# common
-SRCS+=	atan2.c sincos.c tan.c
-# national
-SRCS+=	sqrt.S support.S
-# ieee
-SRCS+=	cabs.c cbrt.c
-
-.elif (${MACHINE_ARCH} == "sparc")
-
-HARDWARE=${MACHINE_ARCH}
-.PATH:  ${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
-# common_source
-SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
-	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
-# XXX should do sqrt & support functions in assembly
-# common
-SRCS+=	atan2.c sincos.c tan.c
-# ieee
-SRCS+=	cabs.c cbrt.c support.c
-
-.elif (${MACHINE_ARCH} == "tahoe")
-
-HARDWARE=${MACHINE_ARCH}
-.PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/tahoe \
-# common_source
-SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
-	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
-# common
-SRCS+=	atan2.c sincos.c tan.c
-# tahoe
-SRCS+=	cabs.S cbrt.S sqrt.S support.S infnan.S
-
-.elif (${MACHINE_ARCH} == "vax")
-
-HARDWARE=${MACHINE_ARCH}
-.PATH:	${.CURDIR}/common_source ${.CURDIR}/vax
-# common_source
-SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
-	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
-# vax
-SRCS+=	atan2.S cabs.S cbrt.S sqrt.S sincos.S tan.S argred.S support.S \
-	infnan.S
-
-.endif
 
 MAN3+=	acos.0 acosh.0 asin.0 asinh.0 atan.0 atan2.0 atanh.0 ceil.0 \
 	cos.0 cosh.0 erf.0 exp.0 fabs.0 floor.0 fmod.0 hypot.0 ieee.0 \
@@ -135,23 +89,5 @@ MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
 MLINKS+=lgamma.3 gamma.3
 MLINKS+=sqrt.3 cbrt.3
 
-# can't use the standard mkdep, because there are some .S files that
-# are using '#' as a comment indicator and cpp thinks it's an undefined
-# control.
-
-depend: .depend
-.depend: ${SRCS}
-	mkdep ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
 
 .include <bsd.lib.mk>
-
-.S.o:
-	${AS} -o ${.TARGET} ${.IMPSRC}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
-
-.S.po:
-	sed -f ${.CURDIR}/${HARDWARE}/mcount.sed ${.IMPSRC} | \
-	    ${AS} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
