@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)vis.c	5.4 (Berkeley) 2/23/91"; */
-static char rcsid[] = "$Id: vis.c,v 1.2 1993/07/15 17:54:43 cgd Exp $";
+/*static char sccsid[] = "from: @(#)vis.c	5.6 (Berkeley) 2/5/92";*/
+static char rcsid[] = "$Id: vis.c,v 1.3 1993/07/30 07:57:54 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,14 +47,10 @@ static char rcsid[] = "$Id: vis.c,v 1.2 1993/07/15 17:54:43 cgd Exp $";
  * vis - visually encode characters
  */
 char *
-#if __STDC__
-vis(register char *dst, register char c, register int flag, char nextc)
-#else
 vis(dst, c, flag, nextc)
-	register char *dst, c;
-	char nextc;
+	register char *dst;
+	int c, nextc;
 	register int flag;
-#endif
 {
 	if ((u_int)c <= UCHAR_MAX && isgraph(c) ||
 	   ((flag & VIS_SP) == 0 && c == ' ') ||
@@ -176,16 +172,14 @@ strvisx(dst, src, len, flag)
 	register size_t len;
 	int flag;
 {
-	register char c;
-	char *start;
+	char *start = dst;
 
-	for (start = dst; len > 1; len--) {
-		c = *src;
-		dst = vis(dst, c, flag, *++src);
+	while (len > 1) {
+		dst = vis(dst, *src, flag, *(src+1));
+		len--;
 	}
 	if (len)
 		dst = vis(dst, *src, flag, '\0');
-	*dst = '\0';
 
 	return (dst - start);
 }
