@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.136 1999/01/09 22:10:21 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.137 1999/01/13 20:48:40 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -620,9 +620,9 @@ sendsig(catcher, sig, mask, code)
 	sf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	sf.sf_sc.sc_mask = *mask;
 #ifdef COMPAT_13
-	/* 
+	/*
 	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will 
+	 * XXX we might be delivering a signal to a process which will
 	 * XXX escape from the signal in a non-standard way and invoke
 	 * XXX sigreturn() directly.
 	 */
@@ -1426,13 +1426,13 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 int	sun4_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 				bus_size_t, struct proc *, int));
 void	sun4_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-int	sun4_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size, 
+int	sun4_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 				bus_size_t alignment, bus_size_t boundary,
 				bus_dma_segment_t *segs, int nsegs, int *rsegs,
 				int flags));
 void	sun4_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 				int nsegs));
-int	sun4_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,  
+int	sun4_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 				int nsegs, size_t size, caddr_t *kvap,
 				int flags));
 
@@ -1771,6 +1771,9 @@ static int	sparc_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
 				    bus_space_handle_t *));
 static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				     bus_size_t));
+static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
+					 bus_size_t, bus_size_t,
+					 bus_space_handle_t *));
 static int	sparc_bus_mmap __P((bus_space_tag_t, bus_type_t,
 				    bus_addr_t, int, bus_space_handle_t *));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
@@ -1838,6 +1841,18 @@ sparc_bus_unmap(t, bh, size)
 	vaddr_t endva = va + round_page(size);
 
 	pmap_remove(pmap_kernel(), va, endva);
+	return (0);
+}
+
+int
+sparc_bus_subregion(tag, handle, offset, size, nhandlep)
+	bus_space_tag_t		tag;
+	bus_space_handle_t	handle;
+	bus_size_t		offset;
+	bus_size_t		size;
+	bus_space_handle_t	*nhandlep;
+{
+	*nhandlep = handle + offset;
 	return (0);
 }
 
@@ -1923,7 +1938,7 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	NULL,				/* parent bus tag */
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
-	NULL,				/* bus_space_subregion */
+	sparc_bus_subregion,		/* bus_space_subregion */
 	sparc_bus_barrier,		/* bus_space_barrier */
 	sparc_bus_mmap,			/* bus_space_mmap */
 	sparc_mainbus_intr_establish	/* bus_intr_establish */
