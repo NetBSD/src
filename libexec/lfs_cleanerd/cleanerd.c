@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.44 2003/02/24 08:48:17 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.45 2003/02/25 23:12:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,11 +40,11 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.44 2003/02/24 08:48:17 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.45 2003/02/25 23:12:08 perseant Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/ioctl.h>
+#include <sys/fcntl.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/time.h>
@@ -125,40 +125,40 @@ void	 just_exit(int);
 int	 main(int, char *[]);
 
 /*
- * Emulate lfs_{bmapv,markv,segwait} using ioctl calls.
+ * Emulate lfs_{bmapv,markv,segwait} using fcntl calls.
  * NOTE: the old system calls still use BLOCK_INFO_15,
- * while the ioctls use BLOCK_INFO.
+ * while the fcntls use BLOCK_INFO.
  */
 int
 lfs_markv_emul(int fd, BLOCK_INFO *blkiov, int blkcnt)
 {
-	struct lfs_ioctl_markv /* {
+	struct lfs_fcntl_markv /* {
 		BLOCK_INFO *blkiov;
 		int blkcnt;
 	} */ lim;
 
 	lim.blkiov = blkiov;
 	lim.blkcnt = blkcnt;
-	return ioctl(fd, LIOCMARKV, &lim);
+	return fcntl(fd, LFCNMARKV, &lim);
 }
 
 int
 lfs_bmapv_emul(int fd, BLOCK_INFO *blkiov, int blkcnt)
 {
-	struct lfs_ioctl_markv /* {
+	struct lfs_fcntl_markv /* {
 		BLOCK_INFO *blkiov;
 		int blkcnt;
 	} */ lim;
 
 	lim.blkiov = blkiov;
 	lim.blkcnt = blkcnt;
-	return ioctl(fd, LIOCBMAPV, &lim);
+	return fcntl(fd, LFCNBMAPV, &lim);
 }
 
 int
 lfs_segwait_emul(int fd, struct timeval *tv)
 {
-	return ioctl(fd, LIOCSEGWAIT, tv);
+	return fcntl(fd, LFCNSEGWAIT, tv);
 }
 
 /*
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 		if(debug > 1)
 			syslog(LOG_DEBUG,"Cleaner going to sleep.");
 		if (lfs_segwait_emul(ifile_fd, &timeout) < 0)
-			syslog(LOG_WARNING,"LIOCSEGWAIT: %m");
+			syslog(LOG_WARNING,"LFCNSEGWAIT: %m");
 		if(debug > 1)
 			syslog(LOG_DEBUG,"Cleaner waking up.");
 	}
@@ -728,7 +728,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 
 	/* get the current disk address of blocks contained by the segment */
 	if ((error = lfs_bmapv_emul(ifile_fd, tba, num_blocks)) < 0) {
-		syslog(LOG_WARNING, "add_segment: LIOCBMAPV failed");
+		syslog(LOG_WARNING, "add_segment: LFCNBMAPV failed");
 		goto out;
 	}
 
@@ -935,7 +935,7 @@ clean_segments(FS_INFO *fsp, SEGS_AND_BLOCKS *sbp)
 	for (bp = sbp->ba; sbp->nb > 0; bp += clean_blocks) {
 		clean_blocks = maxblocks < sbp->nb ? maxblocks : sbp->nb;
 		if ((error = lfs_markv_emul(ifile_fd, bp, clean_blocks)) < 0) {
-			syslog(LOG_WARNING,"clean_segment: LIOCMARKV failed: %m");
+			syslog(LOG_WARNING,"clean_segment: LFCNMARKV failed: %m");
 			++cleaner_stats.segs_error;
 			if (errno == ENOENT) break;
 		}

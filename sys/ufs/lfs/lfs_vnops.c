@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.89 2003/02/24 08:42:49 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.90 2003/02/25 23:12:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.89 2003/02/24 08:42:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.90 2003/02/25 23:12:07 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,8 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_read_desc, lfs_read },			/* read */
 	{ &vop_write_desc, lfs_write },			/* write */
 	{ &vop_lease_desc, ufs_lease_check },		/* lease */
-	{ &vop_ioctl_desc, lfs_ioctl },			/* ioctl */
-	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
+	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
+	{ &vop_fcntl_desc, lfs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
@@ -1012,12 +1012,12 @@ lfs_reclaim(void *v)
 }
 
 /*
- * Provide an ioctl interface to sys_lfs_{segwait,bmapv,markv}.
+ * Provide a fcntl interface to sys_lfs_{segwait,bmapv,markv}.
  */
 int
-lfs_ioctl(void *v)
+lfs_fcntl(void *v)
 {
-        struct vop_ioctl_args /* {
+        struct vop_fcntl_args /* {
                 struct vnode *a_vp;
                 u_long a_command;
                 caddr_t  a_data;
@@ -1028,34 +1028,33 @@ lfs_ioctl(void *v)
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
 	int blkcnt, error;
-	struct lfs_ioctl_markv blkvp;
+	struct lfs_fcntl_markv blkvp;
 	fsid_t *fsidp;
 
-	/* Only respect LFS ioctls on fs root or Ifile */
+	/* Only respect LFS fcntls on fs root or Ifile */
 	if (VTOI(ap->a_vp)->i_number != ROOTINO &&
 	    VTOI(ap->a_vp)->i_number != LFS_IFILE_INUM) {
-		return ufs_ioctl(v);
+		return ufs_fcntl(v);
 	}
 
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsid;
 
 	switch(ap->a_command) {
-	    case LIOCSEGWAITALL:
+	    case LFCNSEGWAITALL:
 		fsidp = NULL;
 		/* FALLSTHROUGH */
-	    case LIOCSEGWAIT:
+	    case LFCNSEGWAIT:
 		tvp = (struct timeval *)ap->a_data;
-		if ((error = lfs_segwait(fsidp, tvp)) != 0) {
-			return error;
-		}
-		/* copyout(&tv, ap->a_data, sizeof(tv)); */
-		return 0;
+		VOP_UNLOCK(ap->a_vp, 0);
+		error = lfs_segwait(fsidp, tvp);
+		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
+		return error;
 
-	    case LIOCBMAPV:
-	    case LIOCMARKV:
+	    case LFCNBMAPV:
+	    case LFCNMARKV:
 		if ((error = suser(ap->a_p->p_ucred, &ap->a_p->p_acflag)) != 0)
 			return (error);
-		blkvp = *(struct lfs_ioctl_markv *)ap->a_data;
+		blkvp = *(struct lfs_fcntl_markv *)ap->a_data;
 
 		blkcnt = blkvp.blkcnt;
 		if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
@@ -1067,18 +1066,20 @@ lfs_ioctl(void *v)
 			return error;
 		}
 
-		if (ap->a_command == LIOCBMAPV)
+		VOP_UNLOCK(ap->a_vp, 0);
+		if (ap->a_command == LFCNBMAPV)
 			error = lfs_bmapv(ap->a_p, fsidp, blkiov, blkcnt);
-		else /* LIOCMARKV */
+		else /* LFCNMARKV */
 			error = lfs_markv(ap->a_p, fsidp, blkiov, blkcnt);
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
+		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		free(blkiov, M_SEGMENT);
 		return error;
 
 	    default:
-		return ufs_ioctl(v);
+		return ufs_fcntl(v);
 	}
 	return 0;
 }
