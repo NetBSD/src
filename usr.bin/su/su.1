@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.20 2001/01/10 21:33:13 sjg Exp $
+.\"	$NetBSD: su.1,v 1.21 2001/03/08 02:59:25 fair Exp $
 .\"
-.Dd January 14, 2000
+.Dd March 7, 2001
 .Dt SU 1
 .Os
 .Sh NAME
@@ -126,7 +126,7 @@ is set to
 is set to the path specified in the
 .Pa /etc/login.conf
 file (or to the default of
-.Dq Pa /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin 
+.Dq Pa /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin
 ).
 .Ev TERM
 is imported from your current environment.
@@ -188,7 +188,7 @@ prompt is set to
 .Dq Sy \&#
 to remind one of its awesome power.
 .Sh EXAMPLES
-To  become user username and use the same environment as in original shell, execute:
+To become user username and use the same environment as in original shell, execute:
 .Bd -literal -offset indent
 su username
 .Ed
@@ -235,5 +235,6 @@ unless the user ID is 0 (root).
 .Sh HISTORY
 A
 .Nm
-command appeared in
-.At v7 .
+command existed in
+.At v5
+(and probably earlier).
