@@ -104,6 +104,7 @@ netbsd_core_file_p (abfd)
 		asect = (asection *) bfd_zalloc (abfd, sizeof(asection));
 		if (asect == NULL) {
 			bfd_set_error(bfd_error_no_memory);
+			goto punt;
 		}
 
 		asect->_raw_size = coreseg.c_size;
