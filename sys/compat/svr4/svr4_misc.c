@@ -39,10 +39,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)svr4_misc.c	8.1 (Berkeley) 6/18/93
+ * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  *
- * from: Header: svr4_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: svr4_misc.c,v 1.1 1994/05/22 10:04:36 deraadt Exp $
+ *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
+ *	$Id: svr4_misc.c,v 1.2 1994/05/22 10:46:33 cgd Exp $
  */
 
 /*
