@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.54 1999/03/25 00:51:53 explorer Exp $
+#	$NetBSD: files.pci,v 1.54.2.1 1999/10/05 22:09:37 he Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -188,3 +188,8 @@ file	dev/pci/ohci_pci.c		ohci
 device	vr: ether, ifnet, arp, mii
 attach	vr at pci
 file	dev/pci/if_vr.c			vr
+
+# Alteon ACEnic Gigabit Ethernet controller
+device ti: ether, ifnet, arp
+attach ti at pci
+file	dev/pci/if_ti.c			ti
