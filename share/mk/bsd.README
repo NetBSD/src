@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.83 2001/11/19 04:45:06 perry Exp $
+#	$NetBSD: bsd.README,v 1.84 2001/11/19 16:20:26 kleink Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -227,14 +227,14 @@ DOCOWN		Documentation owner. [root]
 
 DOCMODE		Documentation mode. [${NONBINMODE}]
 
-NLSDIR		Base path for National Language Support files installation.
+NLSDIR		Base path for Native Language Support files installation.
 		[/usr/share/nls]
 
-NLSGRP		National Language Support files group. [wheel]
+NLSGRP		Native Language Support files group. [wheel]
 
-NLSOWN		National Language Support files owner. [root]
+NLSOWN		Native Language Support files owner. [root]
 
-NLSMODE		National Language Support files mode. [${NONBINMODE}]
+NLSMODE		Native Language Support files mode. [${NONBINMODE}]
 
 STRIPFLAG	The flag passed to the install program to cause the binary
 		to be stripped.  This is to be used when building your
