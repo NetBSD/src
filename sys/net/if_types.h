@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.8 1998/02/03 04:20:05 ross Exp $	*/
+/*	$NetBSD: if_types.h,v 1.9 1998/02/04 01:00:23 ross Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -95,67 +95,78 @@
 #define	IFT_SMDSICIP	0x34		/* SMDS InterCarrier Interface */
 #define	IFT_PROPVIRTUAL	0x35		/* Proprietary Virtual/internal */
 #define	IFT_PROPMUX	0x36		/* Proprietary Multiplexing */
-#define IFT_IEEE80212	       0x37	/* 100BaseVG */
-#define IFT_FIBRECHANNEL       0x38	/* Fibre Channel */
-#define IFT_HIPPIINTERFACE     0x39	/* HIPPI interfaces	 */
-#define IFT_FRAMERELAYINTERCONNECT	\
-			       0x3a	/* Obsolete, use either 0x20 or 0x2c */
-#define IFT_AFLANE8023	       0x3b	/* ATM Emulated LAN for 802.3 */
-#define IFT_AFLANE8025	       0x3c	/* ATM Emulated LAN for 802.5 */
-#define IFT_CCTEMUL	       0x3d	/* ATM Emulated circuit		  */
-#define IFT_FASTETHER	       0x3e	/* Fast Ethernet (100BaseT) */
-#define IFT_ISDN	       0x3f	/* ISDN and X.25	    */
-#define IFT_V11		       0x40	/* CCITT V.11/X.21		*/
-#define IFT_V36		       0x41	/* CCITT V.36			*/
-#define IFT_G703AT64K	       0x42	/* CCITT G703 at 64Kbps */
-#define IFT_G703AT2MB	       0x43	/* Obsolete see DS1-MIB */
-#define IFT_QLLC	       0x44	/* SNA QLLC			*/
-#define IFT_FASTETHERFX	       0x45	/* Fast Ethernet (100BaseFX)	*/
-#define IFT_CHANNEL	       0x46	/* channel			*/
-#define IFT_IEEE80211	       0x47	/* radio spread spectrum	*/
-#define IFT_IBM370PARCHAN      0x48	/* IBM System 360/370 OEMI Channel */
-#define IFT_ESCON	       0x49	/* IBM Enterprise Systems Connection */
-#define IFT_DLSW	       0x4a	/* Data Link Switching */
-#define IFT_ISDNS	       0x4b	/* ISDN S/T interface */
-#define IFT_ISDNU	       0x4c	/* ISDN U interface */
-#define IFT_LAPD	       0x4d	/* Link Access Protocol D */
-#define IFT_IPSWITCH	       0x4e	/* IP Switching Objects */
-#define IFT_RSRB	       0x4f	/* Remote Source Route Bridging */
-#define IFT_ATMLOGICAL	       0x50	/* ATM Logical Port */
-#define IFT_DS0		       0x51	/* Digital Signal Level 0 */
-#define IFT_DS0BUNDLE	       0x52	/* group of ds0s on the same ds1 */
-#define IFT_BSC		       0x53	/* Bisynchronous Protocol */
-#define IFT_ASYNC	       0x54	/* Asynchronous Protocol */
-#define IFT_CNR		       0x55	/* Combat Net Radio */
-#define IFT_ISO88025DTR	       0x56	/* ISO 802.5r DTR */
-#define IFT_EPLRS	       0x57	/* Ext Pos Loc Report Sys */
-#define IFT_ARAP	       0x58	/* Appletalk Remote Access Protocol */
-#define IFT_PROPCNLS	       0x59	/* Proprietary Connectionless Protocol*/
-#define IFT_HOSTPAD	       0x5a	/* CCITT-ITU X.29 PAD Protocol */
-#define IFT_TERMPAD	       0x5b	/* CCITT-ITU X.3 PAD Facility */
-#define IFT_FRAMERELAYMPI      0x5c	/* Multiproto Interconnect over FR */
-#define IFT_X213	       0x5d	/* CCITT-ITU X213 */
-#define IFT_ADSL	       0x5e	/* Asymmetric Digital Subscriber Loop */
-#define IFT_RADSL	       0x5f	/* Rate-Adapt. Digital Subscriber Loop*/
-#define IFT_SDSL	       0x60	/* Symmetric Digital Subscriber Loop */
-#define IFT_VDSL	       0x61	/* Very H-Speed Digital Subscrib. Loop*/
-#define IFT_ISO88025CRFPINT    0x62	/* ISO 802.5 CRFP */
-#define IFT_MYRINET	       0x63	/* Myricom Myrinet */
-#define IFT_VOICEEM	       0x64	/* voice recEive and transMit */
-#define IFT_VOICEFXO	       0x65	/* voice Foreign Exchange Office */
-#define IFT_VOICEFXS	       0x66	/* voice Foreign Exchange Station */
-#define IFT_VOICEENCAP	       0x67	/* voice encapsulation */
-#define IFT_VOICEOVERIP	       0x68	/* voice over IP encapsulation */
-#define IFT_ATMDXI	       0x69	/* ATM DXI */
-#define IFT_ATMFUNI	       0x6a	/* ATM FUNI */
-#define IFT_ATMIMA	       0x6b	/* ATM IMA		      */
-#define IFT_PPPMULTILINKBUNDLE 0x6c	/* PPP Multilink Bundle */
-#define IFT_IPOVERCDLC	       0x6d	/* IBM ipOverCdlc */
-#define IFT_IPOVERCLAW	       0x6e	/* IBM Common Link Access to Workstn */
-#define IFT_STACKTOSTACK       0x6f	/* IBM stackToStack */
-#define IFT_VIRTUALIPADDRESS   0x70	/* IBM VIPA */
-#define IFT_MPC		       0x71	/* IBM multi-protocol channel support */
-#define IFT_IPOVERATM	       0x72	/* IBM ipOverAtm */
-#define IFT_ISO88025FIBER      0x73	/* ISO 802.5j Fiber Token Ring */
-#define IFT_TDLC	       0x74	/* IBM twinaxial data link control */
-#define IFT_GIGABITETHERNET    0x75	/* Gigabit Ethernet */
+#define IFT_IEEE80212		   0x37 /* 100BaseVG */
+#define IFT_FIBRECHANNEL	   0x38 /* Fibre Channel */
+#define IFT_HIPPIINTERFACE	   0x39 /* HIPPI interfaces	 */
+#define IFT_FRAMERELAYINTERCONNECT 0x3a /* Obsolete, use either 0x20 or 0x2c */
+#define IFT_AFLANE8023		   0x3b /* ATM Emulated LAN for 802.3 */
+#define IFT_AFLANE8025		   0x3c /* ATM Emulated LAN for 802.5 */
+#define IFT_CCTEMUL		   0x3d /* ATM Emulated circuit		  */
+#define IFT_FASTETHER		   0x3e /* Fast Ethernet (100BaseT) */
+#define IFT_ISDN		   0x3f /* ISDN and X.25	    */
+#define IFT_V11			   0x40 /* CCITT V.11/X.21		*/
+#define IFT_V36			   0x41 /* CCITT V.36			*/
+#define IFT_G703AT64K		   0x42 /* CCITT G703 at 64Kbps */
+#define IFT_G703AT2MB		   0x43 /* Obsolete see DS1-MIB */
+#define IFT_QLLC		   0x44 /* SNA QLLC			*/
+#define IFT_FASTETHERFX		   0x45 /* Fast Ethernet (100BaseFX)	*/
+#define IFT_CHANNEL		   0x46 /* channel			*/
+#define IFT_IEEE80211		   0x47 /* radio spread spectrum	*/
+#define IFT_IBM370PARCHAN	   0x48 /* IBM System 360/370 OEMI Channel */
+#define IFT_ESCON		   0x49 /* IBM Enterprise Systems Connection */
+#define IFT_DLSW		   0x4a /* Data Link Switching */
+#define IFT_ISDNS		   0x4b /* ISDN S/T interface */
+#define IFT_ISDNU		   0x4c /* ISDN U interface */
+#define IFT_LAPD		   0x4d /* Link Access Protocol D */
+#define IFT_IPSWITCH		   0x4e /* IP Switching Objects */
+#define IFT_RSRB		   0x4f /* Remote Source Route Bridging */
+#define IFT_ATMLOGICAL		   0x50 /* ATM Logical Port */
+#define IFT_DS0			   0x51 /* Digital Signal Level 0 */
+#define IFT_DS0BUNDLE		   0x52 /* group of ds0s on the same ds1 */
+#define IFT_BSC			   0x53 /* Bisynchronous Protocol */
+#define IFT_ASYNC		   0x54 /* Asynchronous Protocol */
+#define IFT_CNR			   0x55 /* Combat Net Radio */
+#define IFT_ISO88025DTR		   0x56 /* ISO 802.5r DTR */
+#define IFT_EPLRS		   0x57 /* Ext Pos Loc Report Sys */
+#define IFT_ARAP		   0x58 /* Appletalk Remote Access Protocol */
+#define IFT_PROPCNLS		   0x59 /* Proprietary Connectionless Protocol*/
+#define IFT_HOSTPAD		   0x5a /* CCITT-ITU X.29 PAD Protocol */
+#define IFT_TERMPAD		   0x5b /* CCITT-ITU X.3 PAD Facility */
+#define IFT_FRAMERELAYMPI	   0x5c /* Multiproto Interconnect over FR */
+#define IFT_X213		   0x5d /* CCITT-ITU X213 */
+#define IFT_ADSL		   0x5e /* Asymmetric Digital Subscriber Loop */
+#define IFT_RADSL		   0x5f /* Rate-Adapt. Digital Subscriber Loop*/
+#define IFT_SDSL		   0x60 /* Symmetric Digital Subscriber Loop */
+#define IFT_VDSL		   0x61 /* Very H-Speed Digital Subscrib. Loop*/
+#define IFT_ISO88025CRFPINT	   0x62 /* ISO 802.5 CRFP */
+#define IFT_MYRINET		   0x63 /* Myricom Myrinet */
+#define IFT_VOICEEM		   0x64 /* voice recEive and transMit */
+#define IFT_VOICEFXO		   0x65 /* voice Foreign Exchange Office */
+#define IFT_VOICEFXS		   0x66 /* voice Foreign Exchange Station */
+#define IFT_VOICEENCAP		   0x67 /* voice encapsulation */
+#define IFT_VOICEOVERIP		   0x68 /* voice over IP encapsulation */
+#define IFT_ATMDXI		   0x69 /* ATM DXI */
+#define IFT_ATMFUNI		   0x6a /* ATM FUNI */
+#define IFT_ATMIMA		   0x6b /* ATM IMA		      */
+#define IFT_PPPMULTILINKBUNDLE	   0x6c /* PPP Multilink Bundle */
+#define IFT_IPOVERCDLC		   0x6d /* IBM ipOverCdlc */
+#define IFT_IPOVERCLAW		   0x6e /* IBM Common Link Access to Workstn */
+#define IFT_STACKTOSTACK	   0x6f /* IBM stackToStack */
+#define IFT_VIRTUALIPADDRESS	   0x70 /* IBM VIPA */
+#define IFT_MPC			   0x71 /* IBM multi-protocol channel support */
+#define IFT_IPOVERATM		   0x72 /* IBM ipOverAtm */
+#define IFT_ISO88025FIBER	   0x73 /* ISO 802.5j Fiber Token Ring */
+#define IFT_TDLC		   0x74 /* IBM twinaxial data link control */
+#define IFT_GIGABITETHERNET	   0x75 /* Gigabit Ethernet */
+#define IFT_HDLC		   0x76 /* HDLC */
+#define IFT_LAPF		   0x77 /* LAP F */
+#define IFT_V37			   0x78 /* V.37 */
+#define IFT_X25MLP		   0x79 /* Multi-Link Protocol */
+#define IFT_X25HUNTGROUP	   0x7a /* X25 Hunt Group */
+#define IFT_TRANSPHDLC		   0x7b /* Transp HDLC */
+#define IFT_INTERLEAVE		   0x7c /* Interleave channel */
+#define IFT_FAST		   0x7d /* Fast channel */
+#define IFT_IP			   0x7e /* IP (for APPN HPR in IP networks) */
+#define IFT_DOCSCABLEMACLAYER	   0x7f /* CATV Mac Layer */
+#define IFT_DOCSCABLEDOWNSTREAM	   0x80 /* CATV Downstream interface */
+#define IFT_DOCSCABLEUPSTREAM	   0x81 /* CATV Upstream interface */
