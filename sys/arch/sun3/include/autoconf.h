@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 1994/11/21 21:33:25 gwr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6 1994/11/23 06:58:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-int always_match __P((struct device *, struct cfdata *, void *));
+int always_match __P((struct device *, void *, void *));
 
 #define DEVICE_UNIT(device) (device->dv_unit)
 #define CFDATA_LOC(cfdata) (cfdata->cf_loc)
