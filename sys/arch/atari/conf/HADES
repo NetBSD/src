@@ -1,5 +1,5 @@
 #
-# $NetBSD: HADES,v 1.55 2004/11/24 20:52:23 bouyer Exp $
+# $NetBSD: HADES,v 1.56 2005/01/17 15:28:51 cube Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -126,6 +126,7 @@ pseudo-device md 3 # Boot memory disk
 
 pseudo-device bpfilter 2 # berkeley packet filters
 pseudo-device tun 2 # network tunnel
+pseudo-device tap # virtual Ethernet
 
 pseudo-device gif 4 # IPv[46] over IPv[46] tunnel (RFC1933)
 
