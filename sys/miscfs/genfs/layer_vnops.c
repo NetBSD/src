@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.22 2004/06/19 06:17:15 yamt Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.23 2004/06/30 17:42:55 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.22 2004/06/19 06:17:15 yamt Exp $
+ *	$Id: layer_vnops.c,v 1.23 2004/06/30 17:42:55 hannken Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.22 2004/06/19 06:17:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.23 2004/06/30 17:42:55 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -827,6 +827,27 @@ layer_rename(v)
 			VTOLAYER(tvp)->layer_flags |= LAYERFS_REMOVED;
 		vrele(tvp);
 	}
+
+	return (error);
+}
+
+int
+layer_rmdir(v)
+	void *v;
+{
+	struct vop_rmdir_args /* {
+		struct vnode		*a_dvp;
+		struct vnode		*a_vp;
+		struct componentname	*a_cnp;
+	} */ *ap = v;
+	int		error;
+	struct vnode	*vp = ap->a_vp;
+
+	vref(vp);
+	if ((error = LAYERFS_DO_BYPASS(vp, ap)) == 0)
+		VTOLAYER(vp)->layer_flags |= LAYERFS_REMOVED;
+
+	vrele(vp);
 
 	return (error);
 }
