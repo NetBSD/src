@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs_data.h,v 1.12 2001/05/31 19:41:07 thorpej Exp $	*/
+/*	$NetBSD: miidevs_data.h,v 1.13 2001/06/19 19:51:28 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.22 2001/05/31 19:40:33 thorpej Exp 
+ *	NetBSD: miidevs,v 1.23 2001/06/19 19:51:04 thorpej Exp 
  */
 
 /*-
@@ -75,6 +75,7 @@ struct mii_knowndev mii_knowndevs[] = {
  { MII_OUI_xxQUALSEMI, MII_MODEL_xxQUALSEMI_QS6612, MII_STR_xxQUALSEMI_QS6612 }, 
  { MII_OUI_SEEQ, MII_MODEL_SEEQ_80220, MII_STR_SEEQ_80220 }, 
  { MII_OUI_SEEQ, MII_MODEL_SEEQ_84220, MII_STR_SEEQ_84220 }, 
+ { MII_OUI_SEEQ, MII_MODEL_SEEQ_80225, MII_STR_SEEQ_80225 }, 
  { MII_OUI_SIS, MII_MODEL_SIS_900, MII_STR_SIS_900 }, 
  { MII_OUI_TI, MII_MODEL_TI_TLAN10T, MII_STR_TI_TLAN10T }, 
  { MII_OUI_TI, MII_MODEL_TI_100VGPMI, MII_STR_TI_100VGPMI }, 
