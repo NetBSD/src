@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.3 2002/09/27 03:18:16 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.4 2002/09/27 20:39:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.3 2002/09/27 03:18:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.4 2002/09/27 20:39:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ static inline u_int32_t	amr_inl(struct amr_softc *, int);
 static inline void	amr_outb(struct amr_softc *, int, u_int8_t);
 static inline void	amr_outl(struct amr_softc *, int, u_int32_t);
 
-struct cfattach amr_ca = {
+const struct cfattach amr_ca = {
 	sizeof(struct amr_softc), amr_match, amr_attach
 };
 

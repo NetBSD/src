@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pnpbios.c,v 1.3 2002/02/06 21:32:16 jdolecek Exp $	*/
+/*	$NetBSD: joy_pnpbios.c,v 1.4 2002/09/27 20:33:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.3 2002/02/06 21:32:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.4 2002/09/27 20:33:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.3 2002/02/06 21:32:16 jdolecek Exp
 int	joy_pnpbios_match __P((struct device *, struct cfdata *, void *));
 void	joy_pnpbios_attach __P((struct device *, struct device *, void *));
 
-struct cfattach joy_pnpbios_ca = {
+const struct cfattach joy_pnpbios_ca = {
 	sizeof(struct joy_softc), joy_pnpbios_match, joy_pnpbios_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.3 2001/11/13 13:01:57 lukem Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.4 2002/09/27 20:37:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.3 2001/11/13 13:01:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.4 2002/09/27 20:37:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ struct acpilid_softc {
 int	acpilid_match(struct device *, struct cfdata *, void *);
 void	acpilid_attach(struct device *, struct device *, void *);
 
-struct cfattach acpilid_ca = {
+const struct cfattach acpilid_ca = {
 	sizeof(struct acpilid_softc), acpilid_match, acpilid_attach,
 };
 

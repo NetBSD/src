@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.2 2002/03/17 19:40:46 atatat Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.3 2002/09/27 20:34:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -65,7 +65,7 @@ int kb_hb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 extern struct wscons_keydesc newskb_keydesctab[];
 
-struct cfattach kb_hb_ca = {
+const struct cfattach kb_hb_ca = {
 	sizeof(struct kb_hb_softc), kb_hb_match, kb_hb_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.13 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: par.c,v 1.14 2002/09/27 20:37:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -112,7 +112,7 @@ int	pardebug = 0;
 int parmatch __P((struct device *, struct cfdata *, void *));
 void parattach __P((struct device *, struct device *, void *));
 
-struct cfattach par_ca = {
+const struct cfattach par_ca = {
 	sizeof(struct par_softc), parmatch, parattach
 };
 

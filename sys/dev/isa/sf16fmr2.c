@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.5 2002/09/03 18:53:41 augustss Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.6 2002/09/27 20:38:51 thorpej Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -105,7 +105,7 @@ struct sf2r_softc {
 	struct tea5757_t	tea;
 };
 
-struct cfattach sf2r_ca = {
+const struct cfattach sf2r_ca = {
 	sizeof(struct sf2r_softc), sf2r_probe, sf2r_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mca.c,v 1.3 2001/11/13 07:46:26 lukem Exp $	*/
+/*	$NetBSD: if_ne_mca.c,v 1.4 2002/09/27 20:39:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.3 2001/11/13 07:46:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.4 2002/09/27 20:39:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ struct ne_mca_softc {
 int	ne_mca_match __P((struct device *, struct cfdata *, void *));
 void	ne_mca_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ne_mca_ca = {
+const struct cfattach ne_mca_ca = {
 	sizeof(struct ne_mca_softc), ne_mca_match, ne_mca_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.14 2002/01/07 21:47:03 thorpej Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.15 2002/09/27 20:38:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.14 2002/01/07 21:47:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.15 2002/09/27 20:38:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.14 2002/01/07 21:47:03 thorpej Exp $")
 int	aha_isa_probe __P((struct device *, struct cfdata *, void *));
 void	aha_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach aha_isa_ca = {
+const struct cfattach aha_isa_ca = {
 	sizeof(struct aha_softc), aha_isa_probe, aha_isa_attach
 };
 

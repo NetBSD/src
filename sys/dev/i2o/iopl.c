@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.8 2002/09/27 15:37:13 provos Exp $	*/
+/*	$NetBSD: iopl.c,v 1.9 2002/09/27 20:38:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.8 2002/09/27 15:37:13 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.9 2002/09/27 20:38:01 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -130,7 +130,7 @@ static int	iopl_ioctl(struct ifnet *, u_long, caddr_t);
 static void	iopl_start(struct ifnet *);
 static void	iopl_stop(struct ifnet *, int);
 
-struct cfattach iopl_ca = {
+const struct cfattach iopl_ca = {
 	sizeof(struct iopl_softc), iopl_match, iopl_attach,
 };
 

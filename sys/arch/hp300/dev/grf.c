@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.44 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: grf.c,v 1.45 2002/09/27 20:31:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.44 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.45 2002/09/27 20:31:45 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.44 2002/09/06 13:18:43 gehenna Exp $");
 int	grfmatch __P((struct device *, struct cfdata *, void *));
 void	grfattach __P((struct device *, struct device *, void *));
 
-struct cfattach grf_ca = {
+const struct cfattach grf_ca = {
 	sizeof(struct grf_softc), grfmatch, grfattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.3 2002/08/25 20:20:00 fredette Exp $	*/
+/*	$NetBSD: asp.c,v 1.4 2002/09/27 20:31:58 thorpej Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -135,7 +135,7 @@ struct asp_softc {
 int	aspmatch __P((struct device *, struct cfdata *, void *));
 void	aspattach __P((struct device *, struct device *, void *));
 
-struct cfattach asp_ca = {
+const struct cfattach asp_ca = {
 	sizeof(struct asp_softc), aspmatch, aspattach
 };
 

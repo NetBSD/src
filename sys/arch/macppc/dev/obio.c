@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.14 2001/06/17 19:54:47 tsubai Exp $	*/
+/*	$NetBSD: obio.c,v 1.15 2002/09/27 20:33:36 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -53,7 +53,7 @@ struct obio_softc {
 };
 
 
-struct cfattach obio_ca = {
+const struct cfattach obio_ca = {
 	sizeof(struct obio_softc), obio_match, obio_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.76 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mcd.c,v 1.77 2002/09/27 20:38:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.76 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.77 2002/09/27 20:38:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ int mcd_find __P((bus_space_tag_t, bus_space_handle_t, struct mcd_softc *));
 int mcdprobe __P((struct device *, struct cfdata *, void *));
 void mcdattach __P((struct device *, struct device *, void *));
 
-struct cfattach mcd_ca = {
+const struct cfattach mcd_ca = {
 	sizeof(struct mcd_softc), mcdprobe, mcdattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.28 2002/09/25 22:21:38 thorpej Exp $	*/
+/*	$NetBSD: dhu.c,v 1.29 2002/09/27 20:41:15 thorpej Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.28 2002/09/25 22:21:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.29 2002/09/27 20:41:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ static	int	dhuparam __P((struct tty *, struct termios *));
 static	int	dhuiflow __P((struct tty *, int));
 static unsigned	dhumctl __P((struct dhu_softc *,int, int, int));
 
-struct	cfattach dhu_ca = {
+const struct cfattach dhu_ca = {
 	sizeof(struct dhu_softc), dhu_match, dhu_attach
 };
 

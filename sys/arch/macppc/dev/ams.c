@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.13 2002/03/17 19:40:44 atatat Exp $	*/
+/*	$NetBSD: ams.c,v 1.14 2002/09/27 20:33:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -59,7 +59,7 @@ static void	ems_init __P((struct ams_softc *));
 static void	ms_processevent __P((adb_event_t *event, struct ams_softc *));
 
 /* Driver definition. */
-struct cfattach ams_ca = {
+const struct cfattach ams_ca = {
 	sizeof(struct ams_softc), amsmatch, amsattach
 };
 

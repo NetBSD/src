@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.6 2002/07/03 06:25:50 simonb Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.7 2002/09/27 20:39:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.6 2002/07/03 06:25:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.7 2002/09/27 20:39:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.6 2002/07/03 06:25:50 simonb Exp $");
 int	gentbimatch(struct device *, struct cfdata *, void *);
 void	gentbiattach(struct device *, struct device *, void *);
 
-struct cfattach gentbi_ca = {
+const struct cfattach gentbi_ca = {
 	sizeof(struct mii_softc), gentbimatch, gentbiattach,
 	    mii_phy_detach, mii_phy_activate
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_mainbus.c,v 1.4 2000/07/26 11:53:30 ragge Exp $	   */
+/*	$NetBSD: bi_mainbus.c,v 1.5 2002/09/27 20:36:43 thorpej Exp $	   */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,7 +46,7 @@
 static	int bi_mainbus_match __P((struct device *, struct cfdata *, void *));
 static	void bi_mainbus_attach __P((struct device *, struct device *, void *));
 
-struct	cfattach bi_mainbus_ca = {
+const struct cfattach bi_mainbus_ca = {
 	sizeof(struct bi_softc), bi_mainbus_match, bi_mainbus_attach
 };
 

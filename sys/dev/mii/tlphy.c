@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.34 2002/03/25 20:51:26 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.35 2002/09/27 20:39:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.34 2002/03/25 20:51:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.35 2002/09/27 20:39:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ struct tlphy_softc {
 int	tlphymatch(struct device *, struct cfdata *, void *);
 void	tlphyattach(struct device *, struct device *, void *);
 
-struct cfattach tlphy_ca = {
+const struct cfattach tlphy_ca = {
 	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_phy_detach,
 	    mii_phy_activate
 };

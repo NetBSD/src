@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.11 2002/09/04 01:36:07 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.12 2002/09/27 20:40:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.11 2002/09/04 01:36:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.12 2002/09/27 20:40:13 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -459,7 +459,7 @@ int	pcn_copy_small = 0;
 int	pcn_match(struct device *, struct cfdata *, void *);
 void	pcn_attach(struct device *, struct device *, void *);
 
-struct cfattach pcn_ca = {
+const struct cfattach pcn_ca = {
 	sizeof(struct pcn_softc), pcn_match, pcn_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 1998/01/12 19:55:44 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.23 2002/09/27 20:34:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@ static void	write_rtc __P((u_char *));
 static int  clock_match __P((struct device *, struct cfdata *, void *args));
 static void clock_attach __P((struct device *, struct device *, void *));
 
-struct cfattach clock_ca = {
+const struct cfattach clock_ca = {
 	sizeof(struct device), clock_match, clock_attach
 };
 
 static int  rtc_match __P((struct device *, struct cfdata *, void *args));
 static void rtc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach rtc_ca = {
+const struct cfattach rtc_ca = {
 	sizeof(struct device), rtc_match, rtc_attach
 };
 

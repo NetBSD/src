@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.7 2002/07/04 14:43:50 junyoung Exp $ */
+/* $NetBSD: macfb.c,v 1.8 2002/09/27 20:33:14 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -56,7 +56,7 @@
 int macfb_match __P((struct device *, struct cfdata *, void *));
 void macfb_attach __P((struct device *, struct device *, void *));
 
-struct cfattach macfb_ca = {
+const struct cfattach macfb_ca = {
 	sizeof(struct macfb_softc), 
 	macfb_match,
 	macfb_attach,

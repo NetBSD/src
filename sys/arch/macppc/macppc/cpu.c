@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28 2002/08/06 06:26:19 chs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.29 2002/09/27 20:33:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -67,7 +67,7 @@ void cpu_hatch(void);
 void cpu_spinup_trampoline(void);
 int cpuintr(void *);
 
-struct cfattach cpu_ca = {
+const struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
 };
 

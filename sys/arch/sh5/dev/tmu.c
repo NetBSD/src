@@ -1,4 +1,4 @@
-/*	$NetBSD: tmu.c,v 1.4 2002/09/22 20:57:23 scw Exp $	*/
+/*	$NetBSD: tmu.c,v 1.5 2002/09/27 20:35:31 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -70,7 +70,7 @@ struct tmu_softc {
 static int tmumatch(struct device *, struct cfdata *, void *);
 static void tmuattach(struct device *, struct device *, void *);
 
-struct cfattach tmu_ca = {
+const struct cfattach tmu_ca = {
 	sizeof(struct tmu_softc), tmumatch, tmuattach
 };
 extern struct cfdriver tmu_cd;

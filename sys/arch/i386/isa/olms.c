@@ -1,4 +1,4 @@
-/*	$NetBSD: olms.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: olms.c,v 1.6 2002/09/27 20:33:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.6 2002/09/27 20:33:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,7 +78,7 @@ int olmsprobe __P((struct device *, struct cfdata *, void *));
 void olmsattach __P((struct device *, struct device *, void *));
 int olmsintr __P((void *));
 
-struct cfattach olms_ca = {
+const struct cfattach olms_ca = {
 	sizeof(struct olms_softc), olmsprobe, olmsattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.26 2002/09/24 06:19:10 ad Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.27 2002/09/27 20:36:59 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -74,7 +74,7 @@ static  void    dz_vsbus_attach(struct device *, struct device *, void *);
 
 static	vaddr_t dz_regs; /* Used for console */
 
-struct  cfattach dz_vsbus_ca = {
+const struct cfattach dz_vsbus_ca = {
 	sizeof(struct dz_softc), dz_vsbus_match, dz_vsbus_attach
 };
 

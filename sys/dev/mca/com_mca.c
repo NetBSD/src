@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.6 2001/11/15 09:48:11 lukem Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.7 2002/09/27 20:39:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.6 2001/11/15 09:48:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.7 2002/09/27 20:39:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ static int ibm_modem_getcfg __P((struct mca_attach_args *, int *, int *));
 static int neocom1_getcfg __P((struct mca_attach_args *, int *, int *));
 static int ibm_mpcom_getcfg __P((struct mca_attach_args *, int *, int *));
 
-struct cfattach com_mca_ca = {
+const struct cfattach com_mca_ca = {
 	sizeof(struct com_mca_softc), com_mca_probe, com_mca_attach
 };
 

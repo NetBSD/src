@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_gsc.c,v 1.1 2002/06/06 19:48:05 fredette Exp $	*/
+/*	$NetBSD: fdc_gsc.c,v 1.2 2002/09/27 20:32:01 thorpej Exp $	*/
 
 /*	$OpenBSD: fdc_gsc.c,v 1.1 1998/09/30 04:45:46 mickey Exp $	*/
 
@@ -51,7 +51,7 @@
 int fdc_gsc_probe __P((struct device *, void *, void *));
 void fdc_gsc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach fdc_gsc_ca = {
+const struct cfattach fdc_gsc_ca = {
 	sizeof(struct fdc_softc), fdc_gsc_probe, fdc_gsc_attach
 };
 

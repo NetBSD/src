@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.69 2002/09/27 15:36:47 provos Exp $ */
+/*	$NetBSD: iommu.c,v 1.70 2002/09/27 20:36:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -84,7 +84,7 @@ int	iommu_match __P((struct device *, struct cfdata *, void *));
 static void iommu_copy_prom_entries __P((struct iommu_softc *));
 #endif
 
-struct cfattach iommu_ca = {
+const struct cfattach iommu_ca = {
 	sizeof(struct iommu_softc), iommu_match, iommu_attach
 };
 

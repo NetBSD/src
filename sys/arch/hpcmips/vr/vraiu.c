@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.1 2002/03/23 09:02:02 hamajima Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.2 2002/09/27 20:32:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -83,7 +83,7 @@ int vraiu_match(struct device *, struct cfdata *, void *);
 void vraiu_attach(struct device *, struct device *, void *);
 int vraiu_intr(void *);
 
-struct cfattach vraiu_ca = {
+const struct cfattach vraiu_ca = {
 	sizeof(struct vraiu_softc), vraiu_match, vraiu_attach
 };
 

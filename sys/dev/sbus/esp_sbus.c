@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.23 2002/09/27 02:24:32 thorpej Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.24 2002/09/27 20:41:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.23 2002/09/27 02:24:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.24 2002/09/27 20:41:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,10 @@ int	espmatch_sbus	__P((struct device *, struct cfdata *, void *));
 
 
 /* Linkup to the rest of the kernel */
-struct cfattach esp_sbus_ca = {
+const struct cfattach esp_sbus_ca = {
 	sizeof(struct esp_softc), espmatch_sbus, espattach_sbus
 };
-struct cfattach esp_dma_ca = {
+const struct cfattach esp_dma_ca = {
 	sizeof(struct esp_softc), espmatch_sbus, espattach_dma
 };
 

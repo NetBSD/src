@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.2 2002/02/23 17:18:55 scw Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.3 2002/09/27 20:34:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 int	mkclock_hb_match __P((struct device *, struct cfdata  *, void *));
 void	mkclock_hb_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mkclock_hb_ca = {
+const struct cfattach mkclock_hb_ca = {
 	sizeof(struct device), mkclock_hb_match, mkclock_hb_attach
 };
 

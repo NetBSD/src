@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.1 2002/03/28 11:54:17 pk Exp $ */
+/*	$NetBSD: oclock.c,v 1.2 2002/09/27 20:36:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ void establish_hostid(struct idprom *);
 static int oclockmatch(struct device *, struct cfdata *, void *);
 static void oclockattach(struct device *, struct device *, void *);
 
-struct cfattach oclock_ca = {
+const struct cfattach oclock_ca = {
 	sizeof(struct device), oclockmatch, oclockattach
 };
 

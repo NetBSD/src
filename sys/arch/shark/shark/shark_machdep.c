@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.6 2002/09/27 15:36:45 provos Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.7 2002/09/27 20:35:37 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@ int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
 extern unsigned int sa1_cache_clean_addr;
 extern unsigned int sa1_cache_clean_size;
 
-struct cfattach ofbus_root_ca = {
+const struct cfattach ofbus_root_ca = {
 	sizeof(struct device), ofbus_match, ofbus_attach
 };
 

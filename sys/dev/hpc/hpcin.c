@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.5 2002/01/13 14:00:38 takemura Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.6 2002/09/27 20:37:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.5 2002/01/13 14:00:38 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.6 2002/09/27 20:37:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ struct hpcin_softc {
 #define sc_off		sc_hma.hma_off
 #define sc_connect	sc_hma.hma_connect
 
-struct cfattach hpcin_ca = {
+const struct cfattach hpcin_ca = {
 	sizeof(struct hpcin_softc), hpcin_match, hpcin_attach
 };
 

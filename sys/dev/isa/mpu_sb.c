@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_sb.c,v 1.2 2001/11/13 08:01:26 lukem Exp $	*/
+/*	$NetBSD: mpu_sb.c,v 1.3 2002/09/27 20:38:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.2 2001/11/13 08:01:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.3 2002/09/27 20:38:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.2 2001/11/13 08:01:26 lukem Exp $");
 int	mpu_sb_match __P((struct device *, struct cfdata *, void *));
 void	mpu_sb_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mpu_sb_ca = {
+const struct cfattach mpu_sb_ca = {
 	sizeof (struct mpu_softc), mpu_sb_match, mpu_sb_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.5 2001/07/22 11:29:46 wiz Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.6 2002/09/27 20:33:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -78,7 +78,7 @@ int mc_supmedia[] = {
 
 #define N_SUPMEDIA (sizeof(mc_supmedia) / sizeof(int));
 
-struct cfattach mc_ca = {
+const struct cfattach mc_ca = {
 	sizeof(struct mc_softc), mc_match, mc_attach
 };
 

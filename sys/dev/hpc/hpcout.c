@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.4 2001/11/13 12:47:56 lukem Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.5 2002/09/27 20:37:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.4 2001/11/13 12:47:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.5 2002/09/27 20:37:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ struct hpcout_softc {
 #define sc_on		sc_hma.hma_on
 #define sc_off		sc_hma.hma_off
 
-struct cfattach hpcout_ca = {
+const struct cfattach hpcout_ca = {
 	sizeof(struct hpcout_softc), hpcout_match, hpcout_attach
 };
 

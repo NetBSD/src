@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.16 2002/08/24 10:48:10 ragge Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.17 2002/09/27 20:36:51 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -99,7 +99,7 @@ static  void	ubaerror(struct uba_softc *, int *, int *);
 static	void	dw780_purge(struct uba_softc *, int);
 #endif
 
-struct	cfattach uba_sbi_ca = {
+const struct cfattach uba_sbi_ca = {
 	sizeof(struct uba_vsoftc), dw780_match, dw780_attach
 };
 

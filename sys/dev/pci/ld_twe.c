@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.10 2002/05/24 18:10:06 christos Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.11 2002/09/27 20:40:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.10 2002/05/24 18:10:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.11 2002/09/27 20:40:28 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -79,7 +79,7 @@ static void	ld_twe_handler(struct twe_ccb *, int);
 static int	ld_twe_match(struct device *, struct cfdata *, void *);
 static int	ld_twe_start(struct ld_softc *, struct buf *);
 
-struct cfattach ld_twe_ca = {
+const struct cfattach ld_twe_ca = {
 	sizeof(struct ld_twe_softc), ld_twe_match, ld_twe_attach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.5 2002/07/14 14:39:44 drochner Exp $ */
+/* $NetBSD: vesabios.c,v 1.6 2002/09/27 20:32:53 thorpej Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ static void vbefreeinfo(struct vbeinfoblock *);
 static const char *mm2txt(unsigned int);
 #endif
 
-struct cfattach vesabios_ca = {
+const struct cfattach vesabios_ca = {
 	sizeof(struct device), vesabios_match, vesabios_attach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.2 2002/09/27 03:17:59 thorpej Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.3 2002/09/27 20:33:46 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@ static void smbus_attach(struct device *, struct device *, void *);
 static int smbus_print(void *, const char *);
 static int smbus_submatch(struct device *, struct cfdata *, void *);
 
-struct cfattach smbus_ca = {
+const struct cfattach smbus_ca = {
 	sizeof(struct device), smbus_match, smbus_attach
 };
 

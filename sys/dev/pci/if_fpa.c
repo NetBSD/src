@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.38 2002/01/14 13:39:15 tsutsui Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.39 2002/09/27 20:40:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.38 2002/01/14 13:39:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.39 2002/09/27 20:40:09 thorpej Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -128,7 +128,7 @@ extern struct cfdriver fpacd;
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpacd.cd_devs[unit])
 
 #elif defined(__NetBSD__)
-extern struct cfattach fpa_ca;
+extern const struct cfattach fpa_ca;
 extern struct cfdriver fpa_cd;
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpa_cd.cd_devs[unit])
 #define	pdq_pci_ifwatchdog		NULL
@@ -500,7 +500,7 @@ pdq_pci_attach(
 	printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 }
 
-struct cfattach fpa_ca = {
+const struct cfattach fpa_ca = {
     sizeof(pdq_softc_t), pdq_pci_match, pdq_pci_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.2 2001/11/14 18:15:30 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.3 2002/09/27 20:34:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ struct tulip_ap_softc {
 static int	tlp_ap_match __P((struct device *, struct cfdata *, void *));
 static void	tlp_ap_attach __P((struct device *, struct device *, void *));
 
-struct cfattach tlp_ap_ca = {
+const struct cfattach tlp_ap_ca = {
 	sizeof(struct tulip_ap_softc), tlp_ap_match, tlp_ap_attach
 };
 

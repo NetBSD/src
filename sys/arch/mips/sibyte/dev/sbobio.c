@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.3 2002/09/27 03:17:59 thorpej Exp $ */
+/* $NetBSD: sbobio.c,v 1.4 2002/09/27 20:33:45 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -46,7 +46,7 @@
 static int	sbobio_match(struct device *, struct cfdata *, void *);
 static void	sbobio_attach(struct device *, struct device *, void *);
 
-struct cfattach sbobio_ca = {
+const struct cfattach sbobio_ca = {
 	sizeof(struct device), sbobio_match, sbobio_attach
 };
 

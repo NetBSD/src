@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.29 2002/09/27 02:24:23 thorpej Exp $ */
+/* $NetBSD: sci.c,v 1.30 2002/09/27 20:35:23 thorpej Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -257,7 +257,7 @@ struct callout sci_soft_ch = CALLOUT_INITIALIZER;
 
 u_int sci_rbuf_size = SCI_RING_SIZE;
 
-struct cfattach sci_ca = {
+const struct cfattach sci_ca = {
 	sizeof(struct sci_softc), sci_match, sci_attach
 };
 

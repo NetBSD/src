@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.17 2001/09/05 13:21:09 tsutsui Exp $	*/
+/*	$NetBSD: intreg.c,v 1.18 2002/09/27 20:36:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ static int  intreg_match __P((struct device *, struct cfdata *, void *));
 static void intreg_attach __P((struct device *, struct device *, void *));
 static int soft1intr __P((void *));
 
-struct cfattach intreg_ca = {
+const struct cfattach intreg_ca = {
 	sizeof(struct intreg_softc), intreg_match, intreg_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.17 2002/07/24 10:17:45 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.18 2002/09/27 20:36:56 thorpej Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -346,7 +346,7 @@ static	int abus_print __P((void *, const char *));
 static  int abus_match __P((struct device *, struct cfdata *, void *));
 static  void abus_attach __P((struct device *, struct device *, void*));
 
-struct  cfattach abus_ca = {
+const struct cfattach abus_ca = {
         sizeof(struct device), abus_match, abus_attach
 };
 

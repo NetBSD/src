@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5 2001/07/22 14:58:20 wiz Exp $	*/
+/*	$NetBSD: pcib.c,v 1.6 2002/09/27 20:35:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct pcib_softc {
 	struct prep_isa_chipset sc_chipset;
 };
 
-struct cfattach pcib_ca = {
+const struct cfattach pcib_ca = {
 	sizeof(struct pcib_softc), pcibmatch, pcibattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.20 2002/05/31 10:54:34 augustss Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.21 2002/09/27 20:39:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.20 2002/05/31 10:54:34 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.21 2002/09/27 20:39:50 thorpej Exp $");
 
 #include "midi.h"
 
@@ -170,7 +170,7 @@ struct midi_hw_if cs4280_midi_hw_if = {
 };
 #endif
 
-struct cfattach clcs_ca = {
+const struct cfattach clcs_ca = {
 	sizeof(struct cs428x_softc), cs4280_match, cs4280_attach
 };
 

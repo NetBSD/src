@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.3 2002/08/25 20:20:00 fredette Exp $	*/
+/*	$NetBSD: lasi.c,v 1.4 2002/09/27 20:31:59 thorpej Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -79,7 +79,7 @@ struct lasi_softc {
 int	lasimatch __P((struct device *, struct cfdata *, void *));
 void	lasiattach __P((struct device *, struct device *, void *));
 
-struct cfattach lasi_ca = {
+const struct cfattach lasi_ca = {
 	sizeof(struct lasi_softc), lasimatch, lasiattach
 };
 

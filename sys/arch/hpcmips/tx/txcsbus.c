@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.11 2002/09/27 15:36:06 provos Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.12 2002/09/27 20:32:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ struct txcsbus_softc {
 	struct bus_space_tag_hpcmips *sc_cst[TX39_MAXCS];
 };
 
-struct cfattach txcsbus_ca = {
+const struct cfattach txcsbus_ca = {
 	sizeof(struct txcsbus_softc), txcsbus_match, txcsbus_attach
 };
 

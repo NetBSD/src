@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.4 2002/09/27 03:18:03 thorpej Exp $ */
+/* $NetBSD: plb.c,v 1.5 2002/09/27 20:35:03 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -93,7 +93,7 @@ static void	plb_attach(struct device *, struct device *, void *);
 static int	plb_submatch(struct device *, struct cfdata *, void *);
 static int	plb_print(void *, const char *);
 
-struct cfattach plb_ca = {
+const struct cfattach plb_ca = {
 	sizeof(struct device), plb_match, plb_attach
 };
 

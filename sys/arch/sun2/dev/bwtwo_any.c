@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_any.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: bwtwo_any.c,v 1.6 2002/09/27 20:36:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -116,11 +116,11 @@ struct bwtwosun2_softc {
 	bus_space_handle_t bh;
 };
 
-struct cfattach bwtwo_obio_ca = {
+const struct cfattach bwtwo_obio_ca = {
 	sizeof(struct bwtwosun2_softc), bwtwomatch_any, bwtwoattach_any
 };
 
-struct cfattach bwtwo_obmem_ca = {
+const struct cfattach bwtwo_obmem_ca = {
 	sizeof(struct bwtwosun2_softc), bwtwomatch_any, bwtwoattach_any
 };
 

@@ -54,7 +54,7 @@ struct vrdcu_softc {
 int vrdcu_match(struct device *, struct cfdata *, void *);
 void vrdcu_attach(struct device *, struct device *, void *);
 
-struct cfattach vrdcu_ca = {
+const struct cfattach vrdcu_ca = {
 	sizeof(struct vrdcu_softc), vrdcu_match, vrdcu_attach
 };
 

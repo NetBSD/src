@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.13 2001/11/15 09:48:12 lukem Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.14 2002/09/27 20:40:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.13 2001/11/15 09:48:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.14 2002/09/27 20:40:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.13 2001/11/15 09:48:12 lukem Exp $"
 int	pcic_pci_match __P((struct device *, struct cfdata *, void *));
 void	pcic_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach pcic_pci_ca = {
+const struct cfattach pcic_pci_ca = {
 	sizeof(struct pcic_pci_softc), pcic_pci_match, pcic_pci_attach
 };
 

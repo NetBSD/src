@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.37 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.38 2002/09/27 20:35:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ static void	cgtwounblank __P((struct device *));
 int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
 int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
 
-struct cfattach cgtwo_ca = {
+const struct cfattach cgtwo_ca = {
 	sizeof(struct cgtwo_softc), cgtwomatch, cgtwoattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timekeeper.c,v 1.3 2002/02/23 17:18:54 scw Exp $	*/
+/*	$NetBSD: timekeeper.c,v 1.4 2002/09/27 20:34:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct timekeeper_softc {
 int timekeeper_match(struct device *, struct cfdata *, void *);
 void timekeeper_attach(struct device *, struct device *, void *);
 
-struct cfattach timekeeper_ca = {
+const struct cfattach timekeeper_ca = {
 	sizeof(struct timekeeper_softc), timekeeper_match, timekeeper_attach
 };
 

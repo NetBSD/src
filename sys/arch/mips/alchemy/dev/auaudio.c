@@ -1,4 +1,4 @@
-/* $NetBSD: auaudio.c,v 1.2 2002/09/27 02:24:17 thorpej Exp $ */
+/* $NetBSD: auaudio.c,v 1.3 2002/09/27 20:33:43 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 static int	auaudio_match(struct device *, struct cfdata *, void *);
 static void	auaudio_attach(struct device *, struct device *, void *);
 
-struct cfattach auaudio_ca = {
+const struct cfattach auaudio_ca = {
 	sizeof (struct device), auaudio_match, auaudio_attach, 
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.1 2002/04/27 19:29:09 shiba Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.2 2002/09/27 20:33:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -76,7 +76,7 @@ void	mac68k_bsh_wdc_set_stride __P((bus_space_tag_t t,
 u_int16_t	mac68k_bsr2_wdc_gen __P((bus_space_tag_t t,
 		bus_space_handle_t *bsh, bus_size_t offset));
 
-struct cfattach wdc_obio_ca = {
+const struct cfattach wdc_obio_ca = {
 	sizeof(struct wdc_obio_softc), wdc_obio_match, wdc_obio_attach
 };
 

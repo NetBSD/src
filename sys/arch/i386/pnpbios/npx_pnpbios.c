@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_pnpbios.c,v 1.2 2001/11/15 07:03:35 lukem Exp $	*/
+/*	$NetBSD: npx_pnpbios.c,v 1.3 2002/09/27 20:33:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.2 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.3 2002/09/27 20:33:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.2 2001/11/15 07:03:35 lukem Exp $"
 int	npx_pnpbios_match(struct device *, struct cfdata *, void *);
 void	npx_pnpbios_attach(struct device *, struct device *, void *);
 
-struct cfattach npx_pnpbios_ca = {
+const struct cfattach npx_pnpbios_ca = {
 	sizeof(struct npx_softc), npx_pnpbios_match, npx_pnpbios_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.6 2002/06/01 23:51:02 lukem Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.7 2002/09/27 20:41:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.6 2002/06/01 23:51:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.7 2002/09/27 20:41:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ void	nca_pcmcia_attach __P((struct device *, struct device *, void *));
 int	nca_pcmcia_detach __P((struct device *, int));
 int	nca_pcmcia_enable __P((struct device *, int));
 
-struct cfattach nca_pcmcia_ca = {
+const struct cfattach nca_pcmcia_ca = {
 	sizeof(struct nca_pcmcia_softc), nca_pcmcia_match, nca_pcmcia_attach,
 	nca_pcmcia_detach
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.77 2002/05/31 13:34:03 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.78 2002/09/27 20:40:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.77 2002/05/31 13:34:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.78 2002/09/27 20:40:35 thorpej Exp $");
 
 /*
 #define CBB_DEBUG
@@ -226,7 +226,7 @@ static void cb_show_regs __P((pci_chipset_tag_t pc, pcitag_t tag,
     bus_space_tag_t memt, bus_space_handle_t memh));
 #endif
 
-struct cfattach cbb_pci_ca = {
+const struct cfattach cbb_pci_ca = {
 	sizeof(struct pccbb_softc), pcicbbmatch, pccbbattach
 };
 

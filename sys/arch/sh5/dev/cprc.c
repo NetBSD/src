@@ -1,4 +1,4 @@
-/*	$NetBSD: cprc.c,v 1.1 2002/07/05 13:31:51 scw Exp $	*/
+/*	$NetBSD: cprc.c,v 1.2 2002/09/27 20:35:27 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@ static int cprcmatch(struct device *, struct cfdata *, void *);
 static void cprcattach(struct device *, struct device *, void *);
 static int cprcprint(void *, const char *);
 
-struct cfattach cprc_ca = {
+const struct cfattach cprc_ca = {
 	sizeof(struct cprc_softc), cprcmatch, cprcattach
 };
 
@@ -165,7 +165,7 @@ cprc_reg_write(u_int off, u_int32_t value)
  */
 static int clockmatch(struct device *, struct cfdata *, void *);
 static void clockattach(struct device *, struct device *, void *);
-struct cfattach clock_ca = {
+const struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
 };
 extern struct cfdriver clock_cd;
@@ -239,7 +239,7 @@ struct watchdog_softc {
 static int watchdogmatch(struct device *, struct cfdata *, void *);
 static void watchdogattach(struct device *, struct device *, void *);
 static int watchdogint(void *);
-struct cfattach watchdog_ca = {
+const struct cfattach watchdog_ca = {
 	sizeof(struct watchdog_softc), watchdogmatch, watchdogattach
 };
 extern struct cfdriver watchdog_cd;
@@ -290,7 +290,7 @@ watchdogint(void *arg)
  */
 static int powermatch(struct device *, struct cfdata *, void *);
 static void powerattach(struct device *, struct device *, void *);
-struct cfattach power_ca = {
+const struct cfattach power_ca = {
 	sizeof(struct device), powermatch, powerattach
 };
 extern struct cfdriver power_cd;
@@ -321,7 +321,7 @@ powerattach(struct device *parent, struct device *self, void *args)
  */
 static int resetmatch(struct device *, struct cfdata *, void *);
 static void resetattach(struct device *, struct device *, void *);
-struct cfattach reset_ca = {
+const struct cfattach reset_ca = {
 	sizeof(struct device), resetmatch, resetattach
 };
 extern struct cfdriver reset_cd;

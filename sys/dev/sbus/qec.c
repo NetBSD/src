@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.21 2002/09/27 02:24:33 thorpej Exp $ */
+/*	$NetBSD: qec.c,v 1.22 2002/09/27 20:41:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.21 2002/09/27 02:24:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.22 2002/09/27 20:41:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static void *qec_intr_establish __P((
 		int (*) __P((void *)),	/*handler*/
 		void *));		/*arg*/
 
-struct cfattach qec_ca = {
+const struct cfattach qec_ca = {
 	sizeof(struct qec_softc), qecmatch, qecattach
 };
 

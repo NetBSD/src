@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 2002/09/27 20:31:59 thorpej Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -110,7 +110,7 @@ struct mem_softc {
 int	memmatch __P((struct device *, struct cfdata *, void *));
 void	memattach __P((struct device *, struct device *, void *));
 
-struct cfattach mem_ca = {
+const struct cfattach mem_ca = {
 	sizeof(struct mem_softc), memmatch, memattach
 };
 

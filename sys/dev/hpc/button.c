@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.6 2002/02/09 15:20:49 sato Exp $	*/
+/*	$NetBSD: button.c,v 1.7 2002/09/27 20:37:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.6 2002/02/09 15:20:49 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.7 2002/09/27 20:37:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static void	button_attach(struct device *, struct device *, void *);
 static int	button_intr(void *);
 static int	button_state(void *, int, long, void *);
 
-struct cfattach button_ca = {
+const struct cfattach button_ca = {
 	sizeof(struct button_softc), button_match, button_attach
 };
 

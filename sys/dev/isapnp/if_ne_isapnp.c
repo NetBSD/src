@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.14 2001/11/13 07:56:41 lukem Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.15 2002/09/27 20:39:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.14 2001/11/13 07:56:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.15 2002/09/27 20:39:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ struct ne_isapnp_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach ne_isapnp_ca = {
+const struct cfattach ne_isapnp_ca = {
 	sizeof(struct ne_isapnp_softc), ne_isapnp_match, ne_isapnp_attach
 };
 

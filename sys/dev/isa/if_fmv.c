@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.26 2002/01/07 21:47:07 thorpej Exp $	*/
+/*	$NetBSD: if_fmv.c,v 1.27 2002/09/27 20:38:31 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.26 2002/01/07 21:47:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.27 2002/09/27 20:38:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ struct fmv_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach fmv_ca = {
+const struct cfattach fmv_ca = {
 	sizeof(struct fmv_softc), fmv_match, fmv_attach
 };
 

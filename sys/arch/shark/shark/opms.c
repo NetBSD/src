@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.3 2002/09/27 02:24:23 thorpej Exp $        */
+/*      $NetBSD: opms.c,v 1.4 2002/09/27 20:35:34 thorpej Exp $        */
 
 /*
  * Copyright 1997
@@ -192,7 +192,7 @@ int                  opmsintr         __P((void *));
 */
 
 /* Autoconfiguration data structures */
-struct cfattach opms_ca = 
+const struct cfattach opms_ca = 
 {
         sizeof(struct opms_softc), opmsprobe, opmsattach,
 };

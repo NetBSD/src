@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.2 2002/04/24 15:08:48 ad Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.3 2002/09/27 20:40:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.2 2002/04/24 15:08:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.3 2002/09/27 20:40:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ void	icp_mpr_release_event(struct icp_softc *, struct icp_ccb *);
 void	icp_mpr_set_sema0(struct icp_softc *);
 int	icp_mpr_test_busy(struct icp_softc *);
 
-struct cfattach icp_pci_ca = {
+const struct cfattach icp_pci_ca = {
 	sizeof(struct icp_softc), icp_pci_match, icp_pci_attach
 };
 

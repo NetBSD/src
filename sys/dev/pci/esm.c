@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.13 2002/01/14 19:24:39 pooka Exp $      */
+/*      $NetBSD: esm.c,v 1.14 2002/09/27 20:39:57 thorpej Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.13 2002/01/14 19:24:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.14 2002/09/27 20:39:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ static void		esmch_set_format(struct esm_chinfo *,
 /* Power Management */
 void esm_powerhook(int, void *);
 
-struct cfattach esm_ca = {
+const struct cfattach esm_ca = {
 	sizeof(struct esm_softc), esm_match, esm_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.34 2002/09/27 15:37:12 provos Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.35 2002/09/27 20:37:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.34 2002/09/27 15:37:12 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.35 2002/09/27 20:37:45 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -128,7 +128,7 @@ int	tlp_cardbus_match __P((struct device *, struct cfdata *, void *));
 void	tlp_cardbus_attach __P((struct device *, struct device *, void *));
 int	tlp_cardbus_detach __P((struct device *, int));
 
-struct cfattach tlp_cardbus_ca = {
+const struct cfattach tlp_cardbus_ca = {
 	sizeof(struct tulip_cardbus_softc),
 	    tlp_cardbus_match, tlp_cardbus_attach,
 		tlp_cardbus_detach, tlp_activate,

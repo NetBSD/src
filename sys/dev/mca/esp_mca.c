@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.3 2001/12/04 20:51:23 jdolecek Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.4 2002/09/27 20:39:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ static void	esp_mca_attach	__P((struct device *, struct device *, void *));
 static int	esp_mca_match	__P((struct device *, struct cfdata *, void *));
 
 /* Linkup to the rest of the kernel */
-struct cfattach esp_mca_ca = {
+const struct cfattach esp_mca_ca = {
 	sizeof(struct esp_softc), esp_mca_match, esp_mca_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: omms.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: omms.c,v 1.6 2002/09/27 20:33:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.6 2002/09/27 20:33:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,7 +76,7 @@ int ommsprobe __P((struct device *, struct cfdata *, void *));
 void ommsattach __P((struct device *, struct device *, void *));
 int ommsintr __P((void *));
 
-struct cfattach omms_ca = {
+const struct cfattach omms_ca = {
 	sizeof(struct omms_softc), ommsprobe, ommsattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.3 2002/09/27 02:24:27 thorpej Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.4 2002/09/27 20:36:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ static int	sun68k_vme_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 
 paddr_t sun68k_vme_mmap_cookie __P((vme_addr_t, vme_am_t, bus_space_handle_t *));
 
-struct cfattach sun68kvme_ca = {
+const struct cfattach sun68kvme_ca = {
 	sizeof(struct sun68kvme_softc), sun68kvme_match, sun68kvme_attach
 };
 

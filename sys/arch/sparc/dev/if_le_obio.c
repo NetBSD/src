@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.13 2002/03/11 16:27:02 pk Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.14 2002/09/27 20:35:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ static int lemedia[] = {
 };
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
 
-struct cfattach le_obio_ca = {
+const struct cfattach le_obio_ca = {
 	sizeof(struct le_softc), lematch_obio, leattach_obio
 };
 

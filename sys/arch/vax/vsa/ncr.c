@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.36 2002/09/27 15:37:00 provos Exp $	*/
+/*	$NetBSD: ncr.c,v 1.37 2002/09/27 20:37:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ static	void si_dma_eop(struct ncr5380_softc *);
 static	void si_dma_stop(struct ncr5380_softc *);
 static	void si_dma_go(void *);
 
-struct cfattach si_vsbus_ca = {
+const struct cfattach si_vsbus_ca = {
 	sizeof(struct si_softc), si_vsbus_match, si_vsbus_attach
 };
 

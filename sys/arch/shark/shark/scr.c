@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.4 2002/09/27 15:36:44 provos Exp $	*/
+/*	$NetBSD: scr.c,v 1.5 2002/09/27 20:35:36 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -650,7 +650,7 @@ static void scrUntimeout   __P((void (*func)(struct scr_softc*,int), struct scr_
 
 
 
-struct cfattach scr_ca =
+const struct cfattach scr_ca =
 {
         sizeof(struct scr_softc), (cfmatch_t)scrprobe, scrattach
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.3 2002/09/27 15:36:37 provos Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.4 2002/09/27 20:35:01 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@ static void	ecc_plbattach(struct device *, struct device *, void *);
 static void	ecc_plb_deferred(struct device *);
 static int	ecc_plb_intr(void *);
 
-struct cfattach ecc_plb_ca = {
+const struct cfattach ecc_plb_ca = {
 	sizeof(struct ecc_plb_softc), ecc_plbmatch, ecc_plbattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_kbc.c,v 1.2 2002/03/17 19:40:45 atatat Exp $	*/
+/*	$NetBSD: ms_kbc.c,v 1.3 2002/09/27 20:34:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -52,7 +52,7 @@ int ms_kbc_enable(void *);
 void ms_kbc_disable(void *);
 int ms_kbc_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
-struct cfattach ms_kbc_ca = {
+const struct cfattach ms_kbc_ca = {
 	sizeof(struct ms_softc), ms_kbc_match, ms_kbc_attach
 };
 

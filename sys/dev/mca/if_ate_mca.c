@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.3 2001/11/13 07:46:25 lukem Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.4 2002/09/27 20:39:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.3 2001/11/13 07:46:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.4 2002/09/27 20:39:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ struct ate_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach ate_mca_ca = {
+const struct cfattach ate_mca_ca = {
 	sizeof(struct ate_softc), ate_mca_match, ate_mca_attach
 };
 

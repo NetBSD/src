@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.22 2001/08/20 12:00:51 wiz Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.23 2002/09/27 20:36:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ static __inline__ int si_obio_udc_read
 static int	si_obio_match __P((struct device *, struct cfdata *, void *));
 static void	si_obio_attach __P((struct device *, struct device *, void *));
 
-struct cfattach si_obio_ca = {
+const struct cfattach si_obio_ca = {
 	sizeof(struct si_softc), si_obio_match, si_obio_attach
 };
 

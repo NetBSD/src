@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: apm.c,v 1.3 2002/09/27 20:33:32 thorpej Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ static int	apm_record_event __P((struct apm_softc *, u_int));
 #endif
 #endif
 
-struct cfattach apm_ca = {
+const struct cfattach apm_ca = {
 	sizeof(struct apm_softc), apmmatch, apmattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.28 2002/09/27 03:18:17 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.29 2002/09/27 20:40:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.28 2002/09/27 03:18:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.29 2002/09/27 20:40:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static int	twe_status_wait(struct twe_softc *, u_int, int);
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void	twe_outl(struct twe_softc *, int, u_int32_t);
 
-struct cfattach twe_ca = {
+const struct cfattach twe_ca = {
 	sizeof(struct twe_softc), twe_match, twe_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.6 2002/01/13 14:00:38 takemura Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.7 2002/09/27 20:37:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.6 2002/01/13 14:00:38 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.7 2002/09/27 20:37:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ struct hpcioman_softc {
 	struct device sc_dev;
 };
 
-struct cfattach hpcioman_ca = {
+const struct cfattach hpcioman_ca = {
 	sizeof(struct hpcioman_softc), hpcioman_match, hpcioman_attach
 };
 

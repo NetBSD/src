@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.5 2002/09/27 03:18:06 thorpej Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.6 2002/09/27 20:35:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct bootbus_softc {
 static int bootbus_match(struct device *, struct cfdata *, void *);
 static void bootbus_attach(struct device *, struct device *, void *);
 
-struct cfattach bootbus_ca = {
+const struct cfattach bootbus_ca = {
 	sizeof(struct bootbus_softc), bootbus_match, bootbus_attach,
 };
 

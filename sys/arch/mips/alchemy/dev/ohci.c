@@ -1,4 +1,4 @@
-/* $NetBSD: ohci.c,v 1.2 2002/09/27 02:24:17 thorpej Exp $ */
+/* $NetBSD: ohci.c,v 1.3 2002/09/27 20:33:44 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
 static int	ohci_aubus_match(struct device *, struct cfdata *, void *);
 static void	ohci_aubus_attach(struct device *, struct device *, void *);
 
-struct cfattach ohci_aubus_ca = {
+const struct cfattach ohci_aubus_ca = {
 	sizeof (struct device), ohci_aubus_match, ohci_aubus_attach, 
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.50 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ch.c,v 1.51 2002/09/27 20:41:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.50 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.51 2002/09/27 20:41:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ struct ch_softc {
 int	chmatch __P((struct device *, struct cfdata *, void *));
 void	chattach __P((struct device *, struct device *, void *));
 
-struct cfattach ch_ca = {
+const struct cfattach ch_ca = {
 	sizeof(struct ch_softc), chmatch, chattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.32 2001/11/21 19:01:33 wiz Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.33 2002/09/27 20:39:42 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.32 2001/11/21 19:01:33 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.33 2002/09/27 20:39:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -564,7 +564,7 @@ void ahc_pci_attach __P((struct device *, struct device *, void *));
 /* Exported for use in the ahc_intr routine */
 int ahc_pci_intr(struct ahc_softc *ahc);
 
-struct cfattach ahc_pci_ca = {
+const struct cfattach ahc_pci_ca = {
         sizeof(struct ahc_softc), ahc_pci_probe, ahc_pci_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.50 2002/06/11 23:33:27 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.51 2002/09/27 20:36:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,15 +135,15 @@ static void	clockattach_rtc __P((struct device *, struct device *, void *));
 static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
 
 
-struct cfattach clock_sbus_ca = {
+const struct cfattach clock_sbus_ca = {
 	sizeof(struct device), clockmatch_sbus, clockattach_sbus
 };
 
-struct cfattach clock_ebus_ca = {
+const struct cfattach clock_ebus_ca = {
 	sizeof(struct device), clockmatch_ebus, clockattach_ebus
 };
 
-struct cfattach rtc_ebus_ca = {
+const struct cfattach rtc_ebus_ca = {
 	sizeof(struct device), clockmatch_rtc, clockattach_rtc
 };
 
@@ -158,7 +158,7 @@ static void	timerattach __P((struct device *, struct device *, void *));
 
 struct timerreg_4u	timerreg_4u;	/* XXX - need more cleanup */
 
-struct cfattach timer_ca = {
+const struct cfattach timer_ca = {
 	sizeof(struct device), timermatch, timerattach
 };
 

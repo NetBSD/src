@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.8 2001/11/14 18:15:29 thorpej Exp $	*/
+/*	$NetBSD: apbus.c,v 1.9 2002/09/27 20:34:16 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -68,7 +68,7 @@ struct apbus_softc {
 	struct device apbs_dev;
 };
 
-struct cfattach ap_ca = {
+const struct cfattach ap_ca = {
 	sizeof(struct apbus_softc), apbusmatch, apbusattach
 };
 

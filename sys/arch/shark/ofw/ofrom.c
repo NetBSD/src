@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.6 2002/09/27 20:35:32 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -58,7 +58,7 @@ struct ofrom_softc {
 int ofromprobe __P((struct device *, struct cfdata *, void *));
 void ofromattach __P((struct device *, struct device *, void *));
 
-struct cfattach ofrom_ca = {
+const struct cfattach ofrom_ca = {
 	sizeof(struct ofrom_softc), ofromprobe, ofromattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.21 2002/07/16 11:48:45 mrg Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.22 2002/09/27 20:41:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.21 2002/07/16 11:48:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.22 2002/09/27 20:41:25 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -88,7 +88,7 @@ struct cs4231_sbus_softc {
 static int	cs4231_sbus_match(struct device *, struct cfdata *, void *);
 static void	cs4231_sbus_attach(struct device *, struct device *, void *);
 
-struct cfattach audiocs_sbus_ca = {
+const struct cfattach audiocs_sbus_ca = {
 	sizeof(struct cs4231_sbus_softc), cs4231_sbus_match, cs4231_sbus_attach
 };
 

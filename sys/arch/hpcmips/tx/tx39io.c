@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.13 2002/09/27 15:36:06 provos Exp $ */
+/*	$NetBSD: tx39io.c,v 1.14 2002/09/27 20:32:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 int	tx39io_match(struct device *, struct cfdata *, void *);
 void	tx39io_attach(struct device *, struct device *, void *);
 
-struct cfattach tx39io_ca = {
+const struct cfattach tx39io_ca = {
 	sizeof(struct tx39io_softc), tx39io_match, tx39io_attach
 };
 

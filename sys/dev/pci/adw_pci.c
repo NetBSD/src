@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.10 2001/11/15 09:48:11 lukem Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.11 2002/09/27 20:39:41 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.10 2001/11/15 09:48:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.11 2002/09/27 20:39:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.10 2001/11/15 09:48:11 lukem Exp $");
 static int adw_pci_match __P((struct device *, struct cfdata *, void *));
 static void adw_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach adw_pci_ca =
+const struct cfattach adw_pci_ca =
 {
 	sizeof(ADW_SOFTC), adw_pci_match, adw_pci_attach
 };

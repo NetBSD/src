@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.13 2002/06/14 15:15:23 thorpej Exp $	*/
+/*	$NetBSD: neo.c,v 1.14 2002/09/27 20:40:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.13 2002/06/14 15:15:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.14 2002/09/27 20:40:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ int	neo_get_props(void *);
 void	neo_set_mixer(struct neo_softc *sc, int a, int d);
 void	neo_power(int why, void *arg);
 
-struct cfattach neo_ca = {
+const struct cfattach neo_ca = {
 	sizeof(struct neo_softc), neo_match, neo_attach
 };
 

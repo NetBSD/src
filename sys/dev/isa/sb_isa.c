@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.26 2002/01/11 17:33:01 jdolecek Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.27 2002/09/27 20:38:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.26 2002/01/11 17:33:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.27 2002/09/27 20:38:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static	int sbfind __P((struct device *, struct sbdsp_softc *, int,
 int	sb_isa_match __P((struct device *, struct cfdata *, void *));
 void	sb_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach sb_isa_ca = {
+const struct cfattach sb_isa_ca = {
 	sizeof(struct sbdsp_softc), sb_isa_match, sb_isa_attach
 };
 

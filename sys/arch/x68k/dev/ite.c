@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.29 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ite.c,v 1.30 2002/09/27 20:37:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,7 +154,7 @@ void ite_putstr __P((const u_char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
 int itematch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach ite_ca = {
+const struct cfattach ite_ca = {
 	sizeof(struct ite_softc), itematch, iteattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.3 1999/03/24 14:07:39 minoura Exp $	*/
+/*	$NetBSD: xel.c,v 1.4 2002/09/27 20:37:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct xel_softc {
 	bus_space_handle_t sc_bh;
 };
 
-struct cfattach xel_ca = {
+const struct cfattach xel_ca = {
 	sizeof (struct xel_softc), xel_match, xel_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.5 2002/06/01 23:51:00 lukem Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.6 2002/09/27 20:40:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.5 2002/06/01 23:51:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.6 2002/09/27 20:40:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ int	esl_pcmcia_detach(struct device *, int);
 int	esl_pcmcia_enable(struct esl_pcmcia_softc *);
 void	esl_pcmcia_disable(struct esl_pcmcia_softc *);
 
-struct cfattach esl_pcmcia_ca = {
+const struct cfattach esl_pcmcia_ca = {
 	sizeof(struct esl_pcmcia_softc), esl_pcmcia_match, esl_pcmcia_attach,
 	esl_pcmcia_detach
 };

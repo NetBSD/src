@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.49 2002/06/01 23:51:02 lukem Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.50 2002/09/27 20:41:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.49 2002/06/01 23:51:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.50 2002/09/27 20:41:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,7 +81,7 @@ static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
 static void wdc_pcmcia_attach	__P((struct device *, struct device *, void *));
 static int wdc_pcmcia_detach	__P((struct device *, int));
 
-struct cfattach wdc_pcmcia_ca = {
+const struct cfattach wdc_pcmcia_ca = {
 	sizeof(struct wdc_pcmcia_softc), wdc_pcmcia_match, wdc_pcmcia_attach,
 	wdc_pcmcia_detach, wdcactivate
 };

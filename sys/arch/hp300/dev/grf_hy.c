@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.16 2002/03/15 05:55:35 gmcgarry Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.17 2002/09/27 20:31:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.16 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.17 2002/09/27 20:31:47 thorpej Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -128,7 +128,7 @@ void	hyper_dio_attach __P((struct device *, struct device *, void *));
 
 int	hypercnattach __P((bus_space_tag_t, bus_addr_t, int));
 
-struct cfattach hyper_dio_ca = {
+const struct cfattach hyper_dio_ca = {
 	sizeof(struct grfdev_softc), hyper_dio_match, hyper_dio_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.10 2002/07/09 23:57:59 matt Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.11 2002/09/27 20:40:10 thorpej Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.10 2002/07/09 23:57:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.11 2002/09/27 20:40:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -84,7 +84,7 @@ struct gem_pci_softc {
 int	gem_match_pci __P((struct device *, struct cfdata *, void *));
 void	gem_attach_pci __P((struct device *, struct device *, void *));
 
-struct cfattach gem_pci_ca = {
+const struct cfattach gem_pci_ca = {
 	sizeof(struct gem_pci_softc), gem_match_pci, gem_attach_pci
 };
 

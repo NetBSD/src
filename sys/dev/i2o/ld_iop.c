@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.10 2001/11/13 12:24:59 lukem Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.11 2002/09/27 20:38:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.10 2001/11/13 12:24:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.11 2002/09/27 20:38:02 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -92,7 +92,7 @@ static int	ld_iop_match(struct device *, struct cfdata *, void *);
 static int	ld_iop_start(struct ld_softc *, struct buf *);
 static void	ld_iop_unconfig(struct ld_iop_softc *, int);
 
-struct cfattach ld_iop_ca = {
+const struct cfattach ld_iop_ca = {
 	sizeof(struct ld_iop_softc),
 	ld_iop_match,
 	ld_iop_attach,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.6 2001/11/13 07:48:42 lukem Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.7 2002/09/27 20:40:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.6 2001/11/13 07:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.7 2002/09/27 20:40:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -87,7 +87,7 @@ struct an_pci_softc {
 int	an_pci_match __P((struct device *, struct cfdata *, void *));
 void	an_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach an_pci_ca = {
+const struct cfattach an_pci_ca = {
 	sizeof(struct an_pci_softc), an_pci_match, an_pci_attach,
 };
 

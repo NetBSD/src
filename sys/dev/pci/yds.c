@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.12 2002/06/10 16:58:57 someya Exp $	*/
+/*	$NetBSD: yds.c,v 1.13 2002/09/27 20:40:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.12 2002/06/10 16:58:57 someya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.13 2002/09/27 20:40:48 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -144,7 +144,7 @@ void YWRITE4(struct yds_softc *sc,bus_size_t r,u_int32_t x)
 #define	YWRITEREGION4(sc, r, x, c)	\
 	bus_space_write_region_4((sc)->memt, (sc)->memh, (r), (x), (c) / 4)
 
-struct cfattach yds_ca = {
+const struct cfattach yds_ca = {
 	sizeof(struct yds_softc), yds_match, yds_attach
 };
 

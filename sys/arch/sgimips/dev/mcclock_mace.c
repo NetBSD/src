@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.4 2002/01/14 16:26:44 pooka Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.5 2002/09/27 20:35:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -110,7 +110,7 @@ const struct clockfns mcclock_mace_clockfns = {
 	mcclock_mace_init, mcclock_mace_get, mcclock_mace_set
 };
 
-struct cfattach mcclock_mace_ca = {
+const struct cfattach mcclock_mace_ca = {
 	sizeof(struct mcclock_mace_softc),
 	mcclock_mace_match,
 	mcclock_mace_attach

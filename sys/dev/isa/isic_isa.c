@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.13 2002/04/14 12:24:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.14 2002/09/27 20:38:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -98,7 +98,7 @@ static int setup_io_map __P((int flags, bus_space_tag_t iot,
 	int *msize));
 static void args_unmap __P((int *num_mappings, struct isic_io_map *maps));
 
-struct cfattach isic_isa_ca = {
+const struct cfattach isic_isa_ca = {
 	sizeof(struct isic_softc), isic_isa_probe, isic_isa_attach
 };
 

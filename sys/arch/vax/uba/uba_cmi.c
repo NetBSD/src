@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.7 2002/08/24 10:48:10 ragge Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.8 2002/09/27 20:36:50 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -72,7 +72,7 @@ static	void	dw750_init(struct uba_softc*);
 static	void	dw750_purge(struct uba_softc *, int);
 #endif
 
-struct	cfattach uba_cmi_ca = {
+const struct cfattach uba_cmi_ca = {
 	sizeof(struct uba_vsoftc), dw750_match, dw750_attach
 };
 

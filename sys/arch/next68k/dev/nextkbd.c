@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.5 2002/09/11 01:46:32 mycroft Exp $ */
+/* $NetBSD: nextkbd.c,v 1.6 2002/09/27 20:34:31 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -82,7 +82,7 @@ void nextkbd_attach __P((struct device *, struct device *, void *));
 
 int nextkbc_cnattach __P((bus_space_tag_t));
 
-struct cfattach nextkbd_ca = {
+const struct cfattach nextkbd_ca = {
 	sizeof(struct nextkbd_softc), nextkbd_match, nextkbd_attach
 };
 

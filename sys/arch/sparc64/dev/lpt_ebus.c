@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.13 2002/07/18 11:59:07 wiz Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.14 2002/09/27 20:36:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -48,7 +48,7 @@
 int	lpt_ebus_match __P((struct device *, struct cfdata *, void *));
 void	lpt_ebus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach lpt_ebus_ca = {
+const struct cfattach lpt_ebus_ca = {
 	sizeof(struct lpt_softc), lpt_ebus_match, lpt_ebus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.13 2002/09/27 15:36:07 provos Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.14 2002/09/27 20:32:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ STATIC void hd64461video_info(struct hd64461video_softc *);
 STATIC void hd64461video_dump(void) __attribute__((__unused__));
 #endif
 
-struct cfattach hd64461video_ca = {
+const struct cfattach hd64461video_ca = {
 	sizeof(struct hd64461video_softc), hd64461video_match,
 	hd64461video_attach
 };

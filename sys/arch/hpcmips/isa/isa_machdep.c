@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.25 2002/09/27 02:24:14 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.26 2002/09/27 20:32:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ struct vrisab_softc {
 	struct hpcmips_isa_chipset sc_isa_ic;
 };
 
-struct cfattach vrisab_ca = {
+const struct cfattach vrisab_ca = {
 	sizeof(struct vrisab_softc), vrisabmatch, vrisabattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.5 2001/11/18 08:19:39 takemura Exp $ */
+/*	$NetBSD: plumohci.c,v 1.6 2002/09/27 20:32:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -113,7 +113,7 @@ struct plumohci_softc {
 	LIST_HEAD(, plumohci_shm) sc_shm_head;
 };
 
-struct cfattach plumohci_ca = {
+const struct cfattach plumohci_ca = {
 	sizeof(struct plumohci_softc), plumohci_match, plumohci_attach,
 };
 

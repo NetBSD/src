@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.3 2002/09/27 03:18:00 thorpej Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.4 2002/09/27 20:33:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -237,7 +237,7 @@ void	mmeyepcmcia_queue_event(struct mmeyepcmcia_handle *, int);
 int	mmeyepcmcia_match(struct device *, struct cfdata *, void *);
 void	mmeyepcmcia_attach(struct device *, struct device *, void *);
 
-struct cfattach mmeyepcmcia_ca = {
+const struct cfattach mmeyepcmcia_ca = {
 	sizeof(struct mmeyepcmcia_softc), mmeyepcmcia_match,
 	mmeyepcmcia_attach
 };

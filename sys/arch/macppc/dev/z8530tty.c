@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.13 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.14 2002/09/27 20:33:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -194,7 +194,7 @@ struct zstty_softc {
 static int	zstty_match(struct device *, struct cfdata *, void *);
 static void	zstty_attach(struct device *, struct device *, void *);
 
-struct cfattach zstty_ca = {
+const struct cfattach zstty_ca = {
 	sizeof(struct zstty_softc), zstty_match, zstty_attach
 };
 

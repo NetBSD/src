@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.6 2001/11/13 12:47:33 lukem Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.7 2002/09/27 20:37:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.6 2001/11/13 12:47:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.7 2002/09/27 20:37:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ static void	dpt_eisa_attach(struct device *, struct device *, void *);
 static int	dpt_eisa_irq(bus_space_tag_t, bus_space_handle_t, int *);
 static int	dpt_eisa_match(struct device *, struct cfdata *, void *);
 
-struct cfattach dpt_eisa_ca = {
+const struct cfattach dpt_eisa_ca = {
 	sizeof(struct dpt_softc), dpt_eisa_match, dpt_eisa_attach
 };
 

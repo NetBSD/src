@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.112 2002/09/27 03:18:14 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.113 2002/09/27 20:38:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.112 2002/09/27 03:18:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.113 2002/09/27 20:38:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ int	isamatch(struct device *, struct cfdata *, void *);
 void	isaattach(struct device *, struct device *, void *);
 int	isaprint(void *, const char *);
 
-struct cfattach isa_ca = {
+const struct cfattach isa_ca = {
 	sizeof(struct isa_softc), isamatch, isaattach
 };
 

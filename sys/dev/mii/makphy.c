@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.8 2002/08/08 00:04:57 fvdl Exp $	*/
+/*	$NetBSD: makphy.c,v 1.9 2002/09/27 20:39:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.8 2002/08/08 00:04:57 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.9 2002/09/27 20:39:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.8 2002/08/08 00:04:57 fvdl Exp $");
 int	makphymatch(struct device *, struct cfdata *, void *);
 void	makphyattach(struct device *, struct device *, void *);
 
-struct cfattach makphy_ca = {
+const struct cfattach makphy_ca = {
 	sizeof(struct mii_softc), makphymatch, makphyattach,
 	    mii_phy_detach, mii_phy_activate
 };

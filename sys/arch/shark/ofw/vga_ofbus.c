@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.1 2002/02/10 07:07:07 thorpej Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.2 2002/09/27 20:35:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -57,7 +57,7 @@ struct vga_ofbus_softc {
 int	vga_ofbus_match (struct device *, struct cfdata *, void *);
 void	vga_ofbus_attach (struct device *, struct device *, void *);
 
-struct cfattach vga_ofbus_ca = {
+const struct cfattach vga_ofbus_ca = {
 	sizeof(struct vga_ofbus_softc), vga_ofbus_match, vga_ofbus_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisascr.c,v 1.1 2002/02/10 01:57:58 thorpej Exp $	*/
+/*	$NetBSD: ofisascr.c,v 1.2 2002/09/27 20:35:32 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -51,7 +51,7 @@ int ofisascrprobe __P((struct device *, struct cfdata *, void *));
 void ofisascrattach __P((struct device *, struct device *, void *));
 
 
-struct cfattach ofisascr_ca = {
+const struct cfattach ofisascr_ca = {
 	sizeof(struct device), ofisascrprobe, ofisascrattach
 };
 

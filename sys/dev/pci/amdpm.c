@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.1 2002/06/02 02:44:28 enami Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.2 2002/09/27 20:39:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.1 2002/06/02 02:44:28 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.2 2002/09/27 20:39:43 thorpej Exp $");
 
 #include "opt_amdpm.h"
 
@@ -76,7 +76,7 @@ int	amdpm_match(struct device *, struct cfdata *, void *);
 void	amdpm_attach(struct device *, struct device *, void *);
 void	amdpm_rnd_callout(void *);
 
-struct cfattach amdpm_ca = {
+const struct cfattach amdpm_ca = {
 	sizeof(struct amdpm_softc), amdpm_match, amdpm_attach
 };
 

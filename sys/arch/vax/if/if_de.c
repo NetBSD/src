@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.36 1999/05/18 23:52:54 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.37 2002/09/27 20:36:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -156,7 +156,7 @@ void	de_setaddr __P((u_char *, struct de_softc *));
 void	deintr __P((int));
 
 
-struct	cfattach de_ca = {
+const struct cfattach de_ca = {
 	sizeof(struct de_softc), dematch, deattach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.19 2002/07/07 06:36:34 junyoung Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.20 2002/09/27 20:38:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.19 2002/07/07 06:36:34 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.20 2002/09/27 20:38:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ static void pcdisplay_init __P((struct pcdisplay_config *,
 			     int));
 static int pcdisplay_allocattr __P((void *, int, int, int, long *));
 
-struct cfattach pcdisplay_ca = {
+const struct cfattach pcdisplay_ca = {
 	sizeof(struct pcdisplay_softc), pcdisplay_match, pcdisplay_attach,
 };
 

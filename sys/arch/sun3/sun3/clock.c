@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.46 2001/09/05 13:21:09 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.47 2002/09/27 20:36:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,7 +86,7 @@ static volatile void *intersil_va;
 static int  clock_match __P((struct device *, struct cfdata *, void *args));
 static void clock_attach __P((struct device *, struct device *, void *));
 
-struct cfattach clock_ca = {
+const struct cfattach clock_ca = {
 	sizeof(struct device), clock_match, clock_attach
 };
 

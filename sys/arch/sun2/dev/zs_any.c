@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.6 2002/07/27 15:55:36 fredette Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.7 2002/09/27 20:36:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,15 +82,15 @@
 static int	zs_any_match __P((struct device *, struct cfdata *, void *));
 static void	zs_any_attach __P((struct device *, struct device *, void *));
 
-struct cfattach zs_obio_ca = {
+const struct cfattach zs_obio_ca = {
 	sizeof(struct zsc_softc), zs_any_match, zs_any_attach
 };
 
-struct cfattach zs_obmem_ca = {
+const struct cfattach zs_obmem_ca = {
 	sizeof(struct zsc_softc), zs_any_match, zs_any_attach
 };
 
-struct cfattach zs_mbmem_ca = {
+const struct cfattach zs_mbmem_ca = {
 	sizeof(struct zsc_softc), zs_any_match, zs_any_attach
 };
 

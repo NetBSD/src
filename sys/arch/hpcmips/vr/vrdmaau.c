@@ -49,7 +49,7 @@ struct vrdmaau_softc {
 int vrdmaau_match(struct device *, struct cfdata *, void *);
 void vrdmaau_attach(struct device *, struct device *, void *);
 
-struct cfattach vrdmaau_ca = {
+const struct cfattach vrdmaau_ca = {
 	sizeof(struct vrdmaau_softc), vrdmaau_match, vrdmaau_attach
 };
 

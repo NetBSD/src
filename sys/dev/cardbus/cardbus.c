@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.43 2002/09/27 03:18:09 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.44 2002/09/27 20:37:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.43 2002/09/27 03:18:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.44 2002/09/27 20:37:40 thorpej Exp $");
 
 #include "opt_cardbus.h"
 
@@ -87,7 +87,7 @@ static int cardbus_read_tuples(struct cardbus_attach_args *,
 static void enable_function(struct cardbus_softc *, int, int);
 static void disable_function(struct cardbus_softc *, int);
 
-struct cfattach cardbus_ca = {
+const struct cfattach cardbus_ca = {
 	sizeof(struct cardbus_softc), cardbusmatch, cardbusattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.18 2002/05/16 01:01:38 thorpej Exp $	*/
+/*	$NetBSD: bandit.c,v 1.19 2002/09/27 20:33:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -50,7 +50,7 @@ void bandit_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
 
 static void bandit_init __P((struct bandit_softc *));
 
-struct cfattach bandit_ca = {
+const struct cfattach bandit_ca = {
 	sizeof(struct bandit_softc), bandit_match, bandit_attach
 };
 

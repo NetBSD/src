@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.31 2002/06/29 05:30:44 rafal Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.32 2002/09/27 20:38:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.31 2002/06/29 05:30:44 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.32 2002/09/27 20:38:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ int le_dummyprobe __P((struct device *, struct cfdata *, void *));
 void le_ne2100_attach __P((struct device *, struct device *, void *));
 void le_bicc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach nele_ca = {
+const struct cfattach nele_ca = {
 	sizeof(struct device), ne2100_isa_probe, le_dummyattach
 }, le_nele_ca = {
 	sizeof(struct le_softc), le_dummyprobe, le_ne2100_attach

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.59 2002/09/27 03:17:51 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.60 2002/09/27 20:31:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2002/09/27 03:17:51 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60 2002/09/27 20:31:56 thorpej Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -243,7 +243,7 @@ int	mainbusmatch __P((struct device *, struct cfdata *, void *));
 void	mainbusattach __P((struct device *, struct device *, void *));
 int	mainbussearch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbusmatch, mainbusattach
 };
 

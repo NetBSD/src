@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.11 2002/01/29 18:53:15 uch Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.12 2002/09/27 20:32:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ void	__tx39timer_rtcreset(tx_chipset_tag_t);
 __inline__ void	__tx39timer_rtcget(struct txtime *);
 __inline__ time_t __tx39timer_rtc2sec(struct txtime *);
 
-struct cfattach tx39clock_ca = {
+const struct cfattach tx39clock_ca = {
 	sizeof(struct tx39clock_softc), tx39clock_match, tx39clock_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.2 2001/11/13 08:01:21 lukem Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.3 2002/09/27 20:38:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.2 2001/11/13 08:01:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.3 2002/09/27 20:38:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ void ioat66attach __P((struct device *, struct device *, void *));
 int ioat66intr __P((void *));
 int ioat66print __P((void *, const char *));
 
-struct cfattach ioat_ca = {
+const struct cfattach ioat_ca = {
 	sizeof(struct ioat66_softc), ioat66probe, ioat66attach,
 };
 

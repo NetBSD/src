@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.49 2002/09/27 02:24:24 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.50 2002/09/27 20:35:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,13 +125,13 @@ void	sbus_attach_xbox __P((struct device *, struct device *, void *));
 static	int sbus_error __P((void));
 int	(*sbuserr_handler) __P((void));
 
-struct cfattach sbus_mainbus_ca = {
+const struct cfattach sbus_mainbus_ca = {
 	sizeof(struct sbus_softc), sbus_match_mainbus, sbus_attach_mainbus
 };
-struct cfattach sbus_iommu_ca = {
+const struct cfattach sbus_iommu_ca = {
 	sizeof(struct sbus_softc), sbus_match_iommu, sbus_attach_iommu
 };
-struct cfattach sbus_xbox_ca = {
+const struct cfattach sbus_xbox_ca = {
 	sizeof(struct sbus_softc), sbus_match_xbox, sbus_attach_xbox
 };
 

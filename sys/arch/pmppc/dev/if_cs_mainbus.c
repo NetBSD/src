@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.2 2002/09/27 15:36:36 provos Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.3 2002/09/27 20:34:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 static int	cs_mainbus_match(struct device *, struct cfdata *, void *);
 static void	cs_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach cs_mainbus_ca = {
+const struct cfattach cs_mainbus_ca = {
 	sizeof(struct cs_softc), cs_mainbus_match, cs_mainbus_attach
 };
 

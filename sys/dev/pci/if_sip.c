@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.69 2002/08/26 22:52:02 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.70 2002/09/27 20:40:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.69 2002/08/26 22:52:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.70 2002/09/27 20:40:15 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -456,7 +456,7 @@ void	SIP_DECL(attach)(struct device *, struct device *, void *);
 
 int	SIP_DECL(copy_small) = 0;
 
-struct cfattach SIP_DECL(ca) = {
+const struct cfattach SIP_DECL(ca) = {
 	sizeof(struct sip_softc), SIP_DECL(match), SIP_DECL(attach),
 };
 

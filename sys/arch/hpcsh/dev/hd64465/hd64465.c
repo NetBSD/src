@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.4 2002/09/27 02:24:16 thorpej Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.5 2002/09/27 20:32:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ STATIC int hd64465_print(void *, const char *);
 STATIC void hd64465_info(void);
 #endif
 
-struct cfattach hd64465if_ca = {
+const struct cfattach hd64465if_ca = {
 	sizeof(struct device), hd64465_match, hd64465_attach
 };
 

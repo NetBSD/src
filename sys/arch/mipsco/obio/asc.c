@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.10 2001/12/15 11:11:49 wdk Exp $	*/
+/*	$NetBSD: asc.c,v 1.11 2002/09/27 20:33:49 thorpej Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -82,7 +82,7 @@ struct asc_softc {
 static int	ascmatch  (struct device *, struct cfdata *, void *);
 static void	ascattach (struct device *, struct device *, void *);
 
-struct cfattach asc_ca = {
+const struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181_vrip.c,v 1.5 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: ite8181_vrip.c,v 1.6 2002/09/27 20:32:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -53,7 +53,7 @@ struct ite8181_vrip_softc {
 static int	ite8181_vrip_probe(struct device *, struct cfdata *, void *);
 static void	ite8181_vrip_attach(struct device *, struct device *, void *);
 
-struct cfattach ite8181video_vrip_ca = {
+const struct cfattach ite8181video_vrip_ca = {
 	sizeof(struct ite8181_vrip_softc), ite8181_vrip_probe, ite8181_vrip_attach
 };
 

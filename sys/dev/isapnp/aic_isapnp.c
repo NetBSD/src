@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isapnp.c,v 1.6 2001/11/13 07:56:39 lukem Exp $	*/
+/*	$NetBSD: aic_isapnp.c,v 1.7 2002/09/27 20:38:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.6 2001/11/13 07:56:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.7 2002/09/27 20:38:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ struct aic_isapnp_softc {
 int	aic_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	aic_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach aic_isapnp_ca = {
+const struct cfattach aic_isapnp_ca = {
 	sizeof(struct aic_isapnp_softc), aic_isapnp_match, aic_isapnp_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.8 2002/01/07 21:47:09 thorpej Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.9 2002/09/27 20:38:36 thorpej Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.8 2002/01/07 21:47:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.9 2002/09/27 20:38:36 thorpej Exp $");
 
 #undef TRISADEBUG
 
@@ -85,7 +85,7 @@ int	(*tr_isa_probe_list[])(struct device *, struct cfdata *, void *) = {
 		0
 	};
 
-struct cfattach tr_isa_ca = {
+const struct cfattach tr_isa_ca = {
 	sizeof(struct tr_softc), tr_isa_probe, tr_isa_attach
 };
 

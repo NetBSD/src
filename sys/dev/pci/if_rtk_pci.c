@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.12 2002/02/06 12:43:05 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.13 2002/09/27 20:40:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.12 2002/02/06 12:43:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.13 2002/09/27 20:40:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ const struct rtk_type *rtk_pci_lookup __P((const struct pci_attach_args *));
 int	rtk_pci_match __P((struct device *, struct cfdata *, void *));
 void	rtk_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach rtk_pci_ca = {
+const struct cfattach rtk_pci_ca = {
 	sizeof(struct rtk_pci_softc), rtk_pci_match, rtk_pci_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.12 2002/09/27 15:37:25 provos Exp $	*/
+/*	$NetBSD: fms.c,v 1.13 2002/09/27 20:39:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.12 2002/09/27 15:37:25 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.13 2002/09/27 20:39:58 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -106,7 +106,7 @@ int	fms_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 int	fms_trigger_input __P((void *, void *, void *, int, void (*)(void *),
 			       void *, struct audio_params *));
 
-struct cfattach fms_ca = {
+const struct cfattach fms_ca = {
 	sizeof (struct fms_softc), fms_match, fms_attach
 };
 

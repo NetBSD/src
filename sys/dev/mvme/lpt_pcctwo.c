@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.1 2002/02/12 20:38:44 scw Exp $	*/
+/*	$NetBSD: lpt_pcctwo.c,v 1.2 2002/09/27 20:39:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 int lpt_pcctwo_match __P((struct device *, struct cfdata *, void *));
 void lpt_pcctwo_attach __P((struct device *, struct device *, void *));
 
-struct cfattach lpt_pcctwo_ca = {
+const struct cfattach lpt_pcctwo_ca = {
 	sizeof(struct lpt_softc), lpt_pcctwo_match, lpt_pcctwo_attach
 };
 

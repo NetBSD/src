@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.2 2002/01/14 04:25:47 isaki Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.3 2002/09/27 20:37:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -91,7 +91,7 @@ static int  ne_intio_intr(void *);
 
 #define ne_intio_softc ne2000_softc
 
-struct cfattach ne_intio_ca = {
+const struct cfattach ne_intio_ca = {
 	sizeof(struct ne_intio_softc), ne_intio_match, ne_intio_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.3 2002/09/21 09:29:33 petrov Exp $	*/
+/*	$NetBSD: sab.c,v 1.4 2002/09/27 20:36:12 thorpej Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -147,14 +147,14 @@ void sabtty_cnputc(struct sabtty_softc *, int);
 int sabtty_cngetc(struct sabtty_softc *);
 void sabtty_abort(struct sabtty_softc *);
 
-struct cfattach sab_ca = {
+const struct cfattach sab_ca = {
 	sizeof(struct sab_softc), sab_match, sab_attach
 };
 
 extern struct cfdriver sab_cd;
 
 
-struct cfattach sabtty_ca = {
+const struct cfattach sabtty_ca = {
 	sizeof(struct sabtty_softc), sabtty_match, sabtty_attach
 };
 

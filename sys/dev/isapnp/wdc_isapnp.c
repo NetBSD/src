@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.15 2001/11/15 09:48:10 lukem Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.16 2002/09/27 20:39:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.15 2001/11/15 09:48:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.16 2002/09/27 20:39:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct wdc_isapnp_softc {
 int	wdc_isapnp_probe 	__P((struct device *, struct cfdata *, void *));
 void	wdc_isapnp_attach 	__P((struct device *, struct device *, void *));
 
-struct cfattach wdc_isapnp_ca = {
+const struct cfattach wdc_isapnp_ca = {
 	sizeof(struct wdc_isapnp_softc), wdc_isapnp_probe, wdc_isapnp_attach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack2.c,v 1.5 2002/09/03 18:53:41 augustss Exp $ */
+/* $NetBSD: radiotrack2.c,v 1.6 2002/09/27 20:38:49 thorpej Exp $ */
 /* $OpenBSD: radiotrack2.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
@@ -105,7 +105,7 @@ struct rtii_softc {
 	struct tea5757_t	tea;
 };
 
-struct cfattach rtii_ca = {
+const struct cfattach rtii_ca = {
 	sizeof(struct rtii_softc), rtii_probe, rtii_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.16 2002/01/07 21:47:01 thorpej Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.17 2002/09/27 20:32:56 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.16 2002/01/07 21:47:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.17 2002/09/27 20:32:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ int	ahc_isa_probe __P((struct device *, struct cfdata *, void *));
 void	ahc_isa_attach __P((struct device *, struct device *, void *));
 void	aha2840_load_seeprom __P((struct ahc_softc *ahc));
 
-struct cfattach ahc_isa_ca = {
+const struct cfattach ahc_isa_ca = {
 	sizeof(struct ahc_softc), ahc_isa_probe, ahc_isa_attach
 };
 

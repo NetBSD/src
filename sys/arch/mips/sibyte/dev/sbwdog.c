@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.1 2002/07/31 05:30:21 simonb Exp $ */
+/* $NetBSD: sbwdog.c,v 1.2 2002/09/27 20:33:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@ static void sbwdog_attach(struct device *, struct device *, void *);
 static int sbwdog_tickle(struct sysmon_wdog *);
 static int sbwdog_setmode(struct sysmon_wdog *);
 
-struct cfattach sbwdog_ca = {
+const struct cfattach sbwdog_ca = {
 	sizeof(struct sbwdog_softc), sbwdog_match, sbwdog_attach,
 };
 

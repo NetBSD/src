@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.1 2002/02/12 20:38:43 scw Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.2 2002/09/27 20:39:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct ie_pcctwo_softc {
 	struct evcnt ps_evcnt;
 };
 
-struct cfattach ie_pcctwo_ca = {
+const struct cfattach ie_pcctwo_ca = {
 	sizeof(struct ie_pcctwo_softc), ie_pcctwo_match, ie_pcctwo_attach
 };
 

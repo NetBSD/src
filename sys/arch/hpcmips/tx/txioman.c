@@ -1,4 +1,4 @@
-/*	$NetBSD: txioman.c,v 1.4 2002/01/29 18:53:20 uch Exp $ */
+/*	$NetBSD: txioman.c,v 1.5 2002/09/27 20:32:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ void txioman_callback(struct device *);
 int txioman_print(void *, const char *);
 hpcio_chip_t tx_conf_reference_ioman(void *, int);
 
-struct cfattach txioman_ca = {
+const struct cfattach txioman_ca = {
 	sizeof(struct device), txioman_match, txioman_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.26 2001/11/13 12:51:34 lukem Exp $ */
+/*	$NetBSD: kdb.c,v 1.27 2002/09/27 20:37:38 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.26 2001/11/13 12:51:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.27 2002/09/27 20:37:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,7 +98,7 @@ int	kdbprint __P((void *, const char *));
 void	kdbsaerror __P((struct device *, int));
 void	kdbgo __P((struct device *, struct mscp_xi *));
 
-struct	cfattach kdb_ca = {
+const struct cfattach kdb_ca = {
 	sizeof(struct kdb_softc), kdbmatch, kdbattach
 };
 

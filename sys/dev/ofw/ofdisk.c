@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.20 2002/09/18 01:46:40 chs Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.21 2002/09/27 20:39:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.20 2002/09/18 01:46:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.21 2002/09/27 20:39:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -66,7 +66,7 @@ struct ofdisk_softc {
 static int ofdisk_match (struct device *, struct cfdata *, void *);
 static void ofdisk_attach (struct device *, struct device *, void *);
 
-struct cfattach ofdisk_ca = {
+const struct cfattach ofdisk_ca = {
 	sizeof(struct ofdisk_softc), ofdisk_match, ofdisk_attach
 };
 

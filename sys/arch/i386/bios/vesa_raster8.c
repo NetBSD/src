@@ -1,4 +1,4 @@
-/* $NetBSD: vesa_raster8.c,v 1.2 2002/07/14 14:39:44 drochner Exp $ */
+/* $NetBSD: vesa_raster8.c,v 1.3 2002/09/27 20:32:53 thorpej Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -23,7 +23,7 @@ struct vesaraster8sc {
 	struct rasops_info sc_ri;
 };
 
-struct cfattach vesarasterviii_ca = {
+const struct cfattach vesarasterviii_ca = {
 	sizeof(struct vesaraster8sc), vesaraster8_match, vesaraster8_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumisa_machdep.c,v 1.3 2002/09/27 02:24:14 thorpej Exp $ */
+/*	$NetBSD: plumisa_machdep.c,v 1.4 2002/09/27 20:32:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct plumisab_softc {
 	void *sc_ih;
 };
 
-struct cfattach plumisab_ca = {
+const struct cfattach plumisab_ca = {
 	sizeof(struct plumisab_softc), plumisabmatch, plumisabattach
 };
 

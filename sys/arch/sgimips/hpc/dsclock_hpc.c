@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock_hpc.c,v 1.4 2002/09/27 02:24:22 thorpej Exp $	*/
+/*	$NetBSD: dsclock_hpc.c,v 1.5 2002/09/27 20:35:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -66,7 +66,7 @@ const struct clockfns dsclock_clockfns = {
 	dsclock_init, dsclock_get, dsclock_set,
 };
 
-struct cfattach dsclock_ca = {
+const struct cfattach dsclock_ca = {
 	sizeof(struct dsclock_softc), dsclock_match, dsclock_attach
 };
 

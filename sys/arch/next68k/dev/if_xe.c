@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.8 2002/09/27 15:36:30 provos Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.9 2002/09/27 20:34:29 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -102,7 +102,7 @@ void xe_dma_tx_shutdown __P((void *));
 
 static void	findchannel_defer __P((struct device *));
 
-struct cfattach xe_ca = {
+const struct cfattach xe_ca = {
 	sizeof(struct xe_softc), xe_match, xe_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.4 2002/08/25 20:20:00 fredette Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.5 2002/09/27 20:32:01 thorpej Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -99,7 +99,7 @@ struct gsc_softc {
 	void *sc_ih;
 };
 
-struct cfattach gsc_ca = {
+const struct cfattach gsc_ca = {
 	sizeof(struct gsc_softc), gscmatch, gscattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.20 2002/08/28 10:51:03 dsainty Exp $	*/
+/*	$NetBSD: auich.c,v 1.21 2002/09/27 20:39:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.20 2002/08/28 10:51:03 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.21 2002/09/27 20:39:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ int	auich_match(struct device *, struct cfdata *, void *);
 void	auich_attach(struct device *, struct device *, void *);
 int	auich_intr(void *);
 
-struct cfattach auich_ca = {
+const struct cfattach auich_ca = {
 	sizeof(struct auich_softc), auich_match, auich_attach
 };
 
@@ -490,6 +490,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		sc->sc_fixed_rate = FIXED_RATE;
 	}
+sc->sc_fixed_rate = FIXED_RATE;
 	if (sc->sc_fixed_rate)
 		printf("%s: warning, fixed rate codec\n", sc->sc_dev.dv_xname);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_eso.c,v 1.1 2002/04/25 00:52:21 kleink Exp $	*/
+/*	$NetBSD: joy_eso.c,v 1.2 2002/09/27 20:40:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 static int	joy_eso_match __P((struct device *, struct cfdata *, void *));
 static void	joy_eso_attach __P((struct device *, struct device *, void *));
 
-struct cfattach joy_eso_ca = {
+const struct cfattach joy_eso_ca = {
 	sizeof (struct joy_softc), joy_eso_match, joy_eso_attach
 };
 

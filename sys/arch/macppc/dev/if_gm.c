@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.17 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.18 2002/09/27 20:33:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -128,7 +128,7 @@ void gmac_mii_writereg __P((struct device *, int, int, int));
 void gmac_mii_statchg __P((struct device *));
 void gmac_mii_tick __P((void *));
 
-struct cfattach gm_ca = {
+const struct cfattach gm_ca = {
 	sizeof(struct gmac_softc), gmac_match, gmac_attach
 };
 

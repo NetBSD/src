@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.65 2002/04/17 02:19:14 mycroft Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.66 2002/09/27 20:40:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.65 2002/04/17 02:19:14 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.66 2002/09/27 20:40:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -112,7 +112,7 @@ struct tulip_pci_softc {
 int	tlp_pci_match __P((struct device *, struct cfdata *, void *));
 void	tlp_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach tlp_pci_ca = {
+const struct cfattach tlp_pci_ca = {
 	sizeof(struct tulip_pci_softc), tlp_pci_match, tlp_pci_attach,
 };
 

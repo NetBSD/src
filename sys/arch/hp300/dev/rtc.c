@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.4 2002/03/17 05:44:49 gmcgarry Exp $	*/
+/*	$NetBSD: rtc.c,v 1.5 2002/09/27 20:31:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.4 2002/03/17 05:44:49 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.5 2002/09/27 20:31:53 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ struct rtc_softc {
 static int rtcmatch(struct device *, struct cfdata *, void *);
 static void rtcattach(struct device *, struct device *, void *aux);
 
-struct cfattach rtc_ca = {
+const struct cfattach rtc_ca = {
 	sizeof (struct rtc_softc), rtcmatch, rtcattach, 
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.37 2002/09/27 03:18:15 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.38 2002/09/27 20:39:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.37 2002/09/27 03:18:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.38 2002/09/27 20:39:05 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -89,7 +89,7 @@ static int isapnp_match __P((struct device *, struct cfdata *, void *));
 static void isapnp_attach __P((struct device *, struct device *, void *));
 static void isapnp_callback __P((struct device *));
 
-struct cfattach isapnp_ca = {
+const struct cfattach isapnp_ca = {
 	sizeof(struct isapnp_softc), isapnp_match, isapnp_attach
 };
 

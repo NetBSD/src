@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.9 2002/09/27 02:24:32 thorpej Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.10 2002/09/27 20:41:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.9 2002/09/27 02:24:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.10 2002/09/27 20:41:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ struct cgsix_sbus_softc {
 	struct sbusdev bss_sd;
 };
 
-struct cfattach cgsix_sbus_ca = {
+const struct cfattach cgsix_sbus_ca = {
 	sizeof(struct cgsix_sbus_softc), cgsixmatch, cgsixattach
 };
 

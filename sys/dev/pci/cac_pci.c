@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.13 2002/05/15 14:15:17 augustss Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.14 2002/09/27 20:39:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.13 2002/05/15 14:15:17 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.14 2002/09/27 20:39:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ void	cac_pci_l0_intr_enable(struct cac_softc *, int);
 int	cac_pci_l0_intr_pending(struct cac_softc *);
 void	cac_pci_l0_submit(struct cac_softc *, struct cac_ccb *);
 
-struct cfattach cac_pci_ca = {
+const struct cfattach cac_pci_ca = {
 	sizeof(struct cac_softc), cac_pci_match, cac_pci_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_ibus.c,v 1.10 2002/09/26 20:36:51 thorpej Exp $	*/
+/*	$NetBSD: mcclock_ibus.c,v 1.11 2002/09/27 20:34:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.10 2002/09/26 20:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.11 2002/09/27 20:34:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,7 +45,7 @@ static int	mcclock_ibus_match __P((struct device *, struct cfdata *,
 static void	mcclock_ibus_attach __P((struct device *, struct device *,
 		    void *));
 
-struct cfattach mcclock_ibus_ca = {
+const struct cfattach mcclock_ibus_ca = {
 	sizeof (struct mcclock_pad32_softc),
 	     (void *)mcclock_ibus_match, mcclock_ibus_attach,
 };

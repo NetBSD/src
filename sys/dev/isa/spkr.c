@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: spkr.c,v 1.8 2002/09/27 20:38:52 thorpej Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.8 2002/09/27 20:38:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,7 +34,7 @@ struct spkr_softc {
 	struct device sc_dev;
 };
 
-struct cfattach spkr_ca = {
+const struct cfattach spkr_ca = {
 	sizeof(struct spkr_softc), spkrprobe, spkrattach
 };
 

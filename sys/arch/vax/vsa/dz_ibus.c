@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.26 2002/09/24 06:19:09 ad Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.27 2002/09/27 20:36:59 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,7 +67,7 @@ static	void	dz_ibus_attach(struct device *, struct device *, void *);
 
 static	vaddr_t idz_regs; /* Used for console */
 
-struct	cfattach dz_ibus_ca = {
+const struct cfattach dz_ibus_ca = {
 	sizeof(struct dz_softc), dz_ibus_match, dz_ibus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha_pci.c,v 1.3 2001/11/13 07:48:45 lukem Exp $ */
+/*	$NetBSD: iha_pci.c,v 1.4 2002/09/27 20:40:25 thorpej Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.3 2001/11/13 07:48:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.4 2002/09/27 20:40:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.3 2001/11/13 07:48:45 lukem Exp $");
 static int  iha_pci_probe(struct device *, struct cfdata *, void *);
 static void iha_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach iha_pci_ca = {
+const struct cfattach iha_pci_ca = {
 	sizeof(struct iha_softc), iha_pci_probe, iha_pci_attach
 };
 

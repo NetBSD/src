@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.14 2001/04/25 17:53:24 bouyer Exp $	*/
+/*	$NetBSD: esp.c,v 1.15 2002/09/27 20:36:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ struct esp_softc {
 static int	espmatch	__P((struct device *, struct cfdata *, void *));
 static void	espattach	__P((struct device *, struct device *, void *));
 
-struct cfattach esp_ca = {
+const struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
 };
 

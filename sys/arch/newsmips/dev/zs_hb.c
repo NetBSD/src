@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.6 2002/09/27 20:34:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@ int zs_hb_match __P((struct device *, struct cfdata *, void *));
 void zs_hb_attach __P((struct device *, struct device *, void *));
 int zs_print __P((void *, const char *name));
 
-struct cfattach zsc_hb_ca = {
+const struct cfattach zsc_hb_ca = {
 	sizeof(struct zsc_softc), zs_hb_match, zs_hb_attach
 };
 

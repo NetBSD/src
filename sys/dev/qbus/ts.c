@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.6 2002/09/25 22:21:39 thorpej Exp $ */
+/*	$NetBSD: ts.c,v 1.7 2002/09/27 20:41:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.6 2002/09/25 22:21:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.7 2002/09/27 20:41:21 thorpej Exp $");
 
 #undef	TSDEBUG
 
@@ -168,7 +168,7 @@ static	int tsmatch(struct device *, struct cfdata *, void *);
 static	void tsattach(struct device *, struct device *, void *);
 static	int tsready(struct uba_unit *);
 
-struct	cfattach ts_ca = {
+const struct cfattach ts_ca = {
 	sizeof(struct ts_softc), tsmatch, tsattach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.5 2002/09/27 02:24:21 thorpej Exp $ */
+/* $NetBSD: com_opb.c,v 1.6 2002/09/27 20:35:00 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -58,7 +58,7 @@ struct com_opb_softc {
 static int	com_opb_probe(struct device *, struct cfdata *, void *);
 static void	com_opb_attach(struct device *, struct device *, void *);
 
-struct cfattach com_opb_ca = {
+const struct cfattach com_opb_ca = {
 	sizeof(struct com_opb_softc), com_opb_probe, com_opb_attach
 };
 

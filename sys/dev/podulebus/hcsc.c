@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.9 2002/03/24 14:56:01 bjh21 Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.10 2002/09/27 20:41:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.9 2002/03/24 14:56:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.10 2002/09/27 20:41:12 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -119,7 +119,7 @@ struct hcsc_softc {
 	struct evcnt	sc_intrcnt;
 };
 
-struct cfattach hcsc_ca = {
+const struct cfattach hcsc_ca = {
 	sizeof(struct hcsc_softc), hcsc_match, hcsc_attach
 };
 

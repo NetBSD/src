@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 2002/09/27 15:36:50 provos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.63 2002/09/27 20:36:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -779,7 +779,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	(void) config_found(dev, (void *)&ma, mbprint);
 }
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.73 2002/09/26 20:36:14 thorpej Exp $	*/
+/*	$NetBSD: scc.c,v 1.74 2002/09/27 20:34:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.73 2002/09/26 20:36:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.74 2002/09/27 20:34:54 thorpej Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -207,7 +207,7 @@ static int	sccmatch  __P((struct device *parent, struct cfdata *cf,
 static void	sccattach __P((struct device *parent, struct device *self,
 		    void *aux));
 
-struct cfattach scc_ca = {
+const struct cfattach scc_ca = {
 	sizeof (struct scc_softc), sccmatch, sccattach,
 };
 

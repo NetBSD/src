@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.20 2001/11/15 09:48:03 lukem Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.21 2002/09/27 20:37:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.20 2001/11/15 09:48:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.21 2002/09/27 20:37:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ int	bha_eisa_address __P((bus_space_tag_t, bus_space_handle_t, int *));
 int	bha_eisa_match __P((struct device *, struct cfdata *, void *));
 void	bha_eisa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach bha_eisa_ca = {
+const struct cfattach bha_eisa_ca = {
 	sizeof(struct bha_softc), bha_eisa_match, bha_eisa_attach
 };
 

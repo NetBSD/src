@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_pbus.c,v 1.4 2002/09/27 02:24:27 thorpej Exp $ */
+/* $NetBSD: pckbc_pbus.c,v 1.5 2002/09/27 20:37:07 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,7 +63,7 @@ static int	pckbc_pbus_probe(struct device *, struct cfdata *, void *);
 static void	pckbc_pbus_attach(struct device *, struct device *, void *);
 static void	pckbc_pbus_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
-struct cfattach pckbc_pbus_ca = {
+const struct cfattach pckbc_pbus_ca = {
 	sizeof(struct pckbc_pbus_softc), pckbc_pbus_probe, pckbc_pbus_attach
 };
 

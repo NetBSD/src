@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.14 2002/04/05 18:27:45 bouyer Exp $	*/
+/*	$NetBSD: mesh.c,v 1.15 2002/09/27 20:33:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -176,7 +176,7 @@ void mesh_minphys __P((struct buf *));
 
 #define MESH_PHASE_MASK	(MESH_STATUS0_MSG | MESH_STATUS0_CD | MESH_STATUS0_IO)
 
-struct cfattach mesh_ca = {
+const struct cfattach mesh_ca = {
 	sizeof(struct mesh_softc), mesh_match, mesh_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.18 2002/09/27 15:37:24 provos Exp $	*/
+/*	$NetBSD: auvia.c,v 1.19 2002/09/27 20:39:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.18 2002/09/27 15:37:24 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.19 2002/09/27 20:39:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ int	auvia_trigger_input(void *, void *, void *, int, void (*)(void *),
 
 int	auvia_intr __P((void *));
 
-struct cfattach auvia_ca = {
+const struct cfattach auvia_ca = {
 	sizeof (struct auvia_softc), auvia_match, auvia_attach
 };
 

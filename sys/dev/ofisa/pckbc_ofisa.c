@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.4 2002/06/08 17:07:54 yamt Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.5 2002/09/27 20:39:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.4 2002/06/08 17:07:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.5 2002/09/27 20:39:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ struct pckbc_ofisa_softc {
 	struct ofisa_intr_desc sc_intr[PCKBC_NSLOTS];
 };
 
-struct cfattach pckbc_ofisa_ca = {
+const struct cfattach pckbc_ofisa_ca = {
 	sizeof(struct pckbc_ofisa_softc), pckbc_ofisa_match, pckbc_ofisa_attach,
 };
 

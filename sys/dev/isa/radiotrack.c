@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.5 2002/01/07 21:47:14 thorpej Exp $ */
+/* $NetBSD: radiotrack.c,v 1.6 2002/09/27 20:38:48 thorpej Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -113,7 +113,7 @@ struct rt_softc {
 	struct lm700x_t	lm;
 };
 
-struct cfattach rt_ca = {
+const struct cfattach rt_ca = {
 	sizeof(struct rt_softc), rt_probe, rt_attach
 };
 

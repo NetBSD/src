@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.6 2002/04/04 17:41:09 uwe Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.7 2002/09/27 20:37:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -66,7 +66,7 @@ struct cs4231_ebus_softc {
 void	cs4231_ebus_attach(struct device *, struct device *, void *);
 int	cs4231_ebus_match(struct device *, struct cfdata *, void *);
 
-struct cfattach audiocs_ebus_ca = {
+const struct cfattach audiocs_ebus_ca = {
 	sizeof(struct cs4231_ebus_softc), cs4231_ebus_match, cs4231_ebus_attach
 };
 

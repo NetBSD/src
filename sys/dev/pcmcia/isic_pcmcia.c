@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.16 2002/06/01 23:51:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.17 2002/09/27 20:41:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -90,7 +90,7 @@ static int isic_pcmcia_isdn_attach __P((struct isic_softc *sc, const char*));
 static int isic_pcmcia_detach(struct device *self, int flags);
 static int isic_pcmcia_activate(struct device *self, enum devact act);
 
-struct cfattach isic_pcmcia_ca = {
+const struct cfattach isic_pcmcia_ca = {
 	sizeof(struct pcmcia_isic_softc), isic_pcmcia_match, 
 	isic_pcmcia_attach, isic_pcmcia_detach, isic_pcmcia_activate
 };

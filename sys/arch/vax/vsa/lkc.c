@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.13 2002/02/25 14:58:09 ad Exp $ */
+/*	$NetBSD: lkc.c,v 1.14 2002/09/27 20:37:02 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -60,7 +60,7 @@ struct  lkc_softc {
 	int	ls_lastchar;	/* last key pressed (for repeat) */
 };
 
-struct cfattach lkc_ca = {
+const struct cfattach lkc_ca = {
 	sizeof(struct lkc_softc), lkc_match, lkc_attach,
 };
 

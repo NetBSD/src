@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.17 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: txcom.c,v 1.18 2002/09/27 20:32:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ struct consdev txcomcons = {
 /* Serial console */
 struct txcom_chip txcom_chip;
 
-struct cfattach txcom_ca = {
+const struct cfattach txcom_ca = {
 	sizeof(struct txcom_softc), txcom_match, txcom_attach
 };
 

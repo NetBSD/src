@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.10 2002/01/29 18:53:17 uch Exp $ */
+/*	$NetBSD: tx39power.c,v 1.11 2002/09/27 20:32:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ struct tx39power_softc {
 	txreg_t sc_icu_state[TX39_INTRSET_MAX + 1];
 };
 
-struct cfattach tx39power_ca = {
+const struct cfattach tx39power_ca = {
 	sizeof(struct tx39power_softc), tx39power_match, tx39power_attach
 };
 

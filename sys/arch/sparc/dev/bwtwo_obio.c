@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.7 2002/09/27 20:35:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ static void	bwtwoattach_obio (struct device *, struct device *, void *);
 static int	bwtwomatch_obio (struct device *, struct cfdata *, void *);
 
 
-struct cfattach bwtwo_obio_ca = {
+const struct cfattach bwtwo_obio_ca = {
 	sizeof(struct bwtwo_softc), bwtwomatch_obio, bwtwoattach_obio
 };
 

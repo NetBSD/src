@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.20 2002/03/17 05:44:49 gmcgarry Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.21 2002/09/27 20:31:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.20 2002/03/17 05:44:49 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.21 2002/09/27 20:31:47 thorpej Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -137,11 +137,11 @@ void	gbox_dio_attach __P((struct device *, struct device *, void *));
 
 int	gboxcnattach __P((bus_space_tag_t, bus_addr_t, int));
 
-struct cfattach gbox_intio_ca = {
+const struct cfattach gbox_intio_ca = {
 	sizeof(struct grfdev_softc), gbox_intio_match, gbox_intio_attach
 };
 
-struct cfattach gbox_dio_ca = {
+const struct cfattach gbox_dio_ca = {
 	sizeof(struct grfdev_softc), gbox_dio_match, gbox_dio_attach
 };
 

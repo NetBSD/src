@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.19 2002/07/22 21:48:40 hannken Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.20 2002/09/27 20:39:29 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.19 2002/07/22 21:48:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.20 2002/09/27 20:39:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,7 +70,7 @@ int	mscp_init __P((struct  mscp_softc *));
 void	mscp_initds __P((struct mscp_softc *));
 int	mscp_waitstep __P((struct mscp_softc *, int, int));
 
-struct	cfattach mscpbus_ca = {
+const struct cfattach mscpbus_ca = {
 	sizeof(struct mscp_softc), mscp_match, mscp_attach
 };
 

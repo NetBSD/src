@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.14 2002/09/27 15:37:12 provos Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.15 2002/09/27 20:37:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.14 2002/09/27 15:37:12 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.15 2002/09/27 20:37:44 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -113,7 +113,7 @@ struct fxp_cardbus_softc {
 	bus_size_t size;
 };
 
-struct cfattach fxp_cardbus_ca = {
+const struct cfattach fxp_cardbus_ca = {
 	sizeof(struct fxp_cardbus_softc), fxp_cardbus_match, fxp_cardbus_attach,
 	    fxp_cardbus_detach, fxp_activate
 };

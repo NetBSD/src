@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.23 2002/06/01 23:51:00 lukem Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.24 2002/09/27 20:40:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.23 2002/06/01 23:51:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.24 2002/09/27 20:40:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ struct awi_pcmcia_softc {
 static int	awi_pcmcia_find __P((struct awi_pcmcia_softc *,
     struct pcmcia_attach_args *, struct pcmcia_config_entry *));
 
-struct cfattach awi_pcmcia_ca = {
+const struct cfattach awi_pcmcia_ca = {
 	sizeof(struct awi_pcmcia_softc), awi_pcmcia_match, awi_pcmcia_attach,
 	awi_pcmcia_detach, awi_activate
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr4122ip.c,v 1.2 2002/02/11 11:44:36 takemura Exp $	*/
+/*	$NetBSD: vr4122ip.c,v 1.3 2002/09/27 20:32:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -45,7 +45,7 @@
 
 void	vr4122ipattach(struct device *, struct device *, void *);
 
-struct cfattach vr4122ip_ca = {
+const struct cfattach vr4122ip_ca = {
 	sizeof(struct vrip_softc), vripmatch, vr4122ipattach
 };
 

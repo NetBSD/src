@@ -1,4 +1,4 @@
-/*	$NetBSD: spd.c,v 1.1 2001/10/16 15:38:35 uch Exp $	*/
+/*	$NetBSD: spd.c,v 1.2 2002/09/27 20:34:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ STATIC struct {
 	const char *name;
 } __spd_table[2];
 
-struct cfattach spd_ca = {
+const struct cfattach spd_ca = {
 	sizeof(struct device), spd_match, spd_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.226 2002/09/27 17:17:53 drochner Exp $ */
+/*	$NetBSD: wd.c,v 1.227 2002/09/27 20:37:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.226 2002/09/27 17:17:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.227 2002/09/27 20:37:35 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -183,7 +183,7 @@ int	wdactivate __P((struct device *, enum devact));
 int	wdprint	__P((void *, char *));
 void	wdperror __P((const struct wd_softc *));
 
-struct cfattach wd_ca = {
+const struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach, wddetach, wdactivate
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.24 2002/09/27 15:37:11 provos Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.25 2002/09/27 20:37:43 thorpej Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.24 2002/09/27 15:37:11 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.25 2002/09/27 20:37:43 thorpej Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -121,7 +121,7 @@ struct ex_cardbus_softc {
 	
 };
 
-struct cfattach ex_cardbus_ca = {
+const struct cfattach ex_cardbus_ca = {
 	sizeof(struct ex_cardbus_softc), ex_cardbus_match,
 	    ex_cardbus_attach, ex_cardbus_detach, ex_activate
 };

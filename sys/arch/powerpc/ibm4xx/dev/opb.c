@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.7 2002/09/27 03:18:03 thorpej Exp $ */
+/* $NetBSD: opb.c,v 1.8 2002/09/27 20:35:02 thorpej Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -99,7 +99,7 @@ static void	opb_attach(struct device *, struct device *, void *);
 static int	opb_submatch(struct device *, struct cfdata *, void *);
 static int	opb_print(void *, const char *);
 
-struct cfattach opb_ca = {
+const struct cfattach opb_ca = {
 	sizeof(struct device), opb_match, opb_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.3 2002/09/27 15:36:35 provos Exp $	*/
+/*	$NetBSD: sbus.c,v 1.4 2002/09/27 20:34:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ STATIC void sbus_attach(struct device *, struct device *, void *);
 STATIC int sbus_search(struct device *, struct cfdata *, void *);
 STATIC int sbus_print(void *, const char *);
 
-struct cfattach sbus_ca = {
+const struct cfattach sbus_ca = {
 	sizeof (struct device), sbus_match, sbus_attach
 };
 

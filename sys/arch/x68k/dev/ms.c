@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.12 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: ms.c,v 1.13 2002/09/27 20:37:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ static void ms_attach __P((struct device*, struct device*, void*));
 static void ms_trigger __P((struct zs_chanstate*, int));
 void ms_modem __P((void *));
 
-struct cfattach ms_ca = {
+const struct cfattach ms_ca = {
 	sizeof(struct ms_softc), ms_match, ms_attach
 };
 

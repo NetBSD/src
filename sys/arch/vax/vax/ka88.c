@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.2 2001/04/12 06:12:17 thorpej Exp $	*/
+/*	$NetBSD: ka88.c,v 1.3 2002/09/27 20:36:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -155,7 +155,7 @@ ka88_attach(struct device *parent, struct device *self, void *aux)
 	curcpu()->ci_dev = self;
 }
 
-struct cfattach cpu_nmi_ca = {
+const struct cfattach cpu_nmi_ca = {
 	sizeof(struct ka88_softc), ka88_match, ka88_attach
 };
 
@@ -184,7 +184,7 @@ ms88_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 }
 
-struct cfattach mem_nmi_ca = {
+const struct cfattach mem_nmi_ca = {
 	sizeof(struct mem_nmi_softc), ms88_match, ms88_attach
 };
 

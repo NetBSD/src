@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.11 2001/11/13 07:26:32 lukem Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.12 2002/09/27 20:40:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.11 2001/11/13 07:26:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.12 2002/09/27 20:40:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct an_pcmcia_softc {
 	void *sc_powerhook;			/* power hook descriptor */
 };
 
-struct cfattach an_pcmcia_ca = {
+const struct cfattach an_pcmcia_ca = {
 	sizeof(struct an_pcmcia_softc), an_pcmcia_match, an_pcmcia_attach,
 	an_pcmcia_detach, an_activate
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.18 2002/09/19 19:04:50 nathanw Exp $	*/
+/*	$NetBSD: agp.c,v 1.19 2002/09/27 20:39:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.18 2002/09/19 19:04:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.19 2002/09/27 20:39:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ const struct cdevsw agp_cdevsw = {
 int agpmatch(struct device *, struct cfdata *, void *);
 void agpattach(struct device *, struct device *, void *);
 
-struct cfattach agp_ca = {
+const struct cfattach agp_ca = {
 	sizeof(struct agp_softc), agpmatch, agpattach
 };
 

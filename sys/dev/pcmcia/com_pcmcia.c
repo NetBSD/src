@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.29 2002/06/01 23:51:00 lukem Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.30 2002/09/27 20:40:53 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.29 2002/06/01 23:51:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.30 2002/09/27 20:40:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ struct com_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 };
 
-struct cfattach com_pcmcia_ca = {
+const struct cfattach com_pcmcia_ca = {
 	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
 	com_pcmcia_detach, com_activate
 };

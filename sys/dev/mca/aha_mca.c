@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.7 2002/03/24 18:46:49 jdolecek Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.8 2002/09/27 20:39:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.7 2002/03/24 18:46:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.8 2002/09/27 20:39:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.7 2002/03/24 18:46:49 jdolecek Exp $")
 int	aha_mca_probe __P((struct device *, struct cfdata *, void *));
 void	aha_mca_attach __P((struct device *, struct device *, void *));
 
-struct cfattach aha_mca_ca = {
+const struct cfattach aha_mca_ca = {
 	sizeof(struct aha_softc), aha_mca_probe, aha_mca_attach
 };
 

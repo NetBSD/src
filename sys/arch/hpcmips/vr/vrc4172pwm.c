@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.15 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.16 2002/09/27 20:32:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -76,7 +76,7 @@ int vrc4172pwm_brightness2rawduty(struct vrc4172pwm_softc *);
 struct vrc4172pwm_param * vrc4172pwm_getparam(void);
 void vrc4172pwm_dumpreg(struct vrc4172pwm_softc *);
 
-struct cfattach vrc4172pwm_ca = {
+const struct cfattach vrc4172pwm_ca = {
 	sizeof(struct vrc4172pwm_softc), vrc4172pwmprobe, vrc4172pwmattach
 };
 

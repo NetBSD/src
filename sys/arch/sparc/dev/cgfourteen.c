@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.27 2002/09/27 02:24:24 thorpej Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.28 2002/09/27 20:35:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -105,7 +105,7 @@ static void	cgfourteenattach(struct device *, struct device *, void *);
 static int	cgfourteenmatch(struct device *, struct cfdata *, void *);
 static void	cgfourteenunblank(struct device *);
 
-struct cfattach cgfourteen_ca = {
+const struct cfattach cgfourteen_ca = {
 	sizeof(struct cgfourteen_softc), cgfourteenmatch, cgfourteenattach
 };
 

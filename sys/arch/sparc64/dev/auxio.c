@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.6 2002/03/21 01:18:42 eeh Exp $	*/
+/*	$NetBSD: auxio.c,v 1.7 2002/09/27 20:36:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -82,10 +82,10 @@ void	auxio_ebus_attach(struct device *, struct device *, void *);
 int	auxio_sbus_match(struct device *, struct cfdata *, void *);
 void	auxio_sbus_attach(struct device *, struct device *, void *);
 
-struct cfattach auxio_ebus_ca = {
+const struct cfattach auxio_ebus_ca = {
 	sizeof(struct auxio_softc), auxio_ebus_match, auxio_ebus_attach
 };
-struct cfattach auxio_sbus_ca = {
+const struct cfattach auxio_sbus_ca = {
 	sizeof(struct auxio_softc), auxio_sbus_match, auxio_sbus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.26 2002/09/23 05:51:10 simonb Exp $	*/
+/*	$NetBSD: midi.c,v 1.27 2002/09/27 20:37:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.26 2002/09/23 05:51:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.27 2002/09/27 20:37:30 thorpej Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -103,7 +103,7 @@ const struct cdevsw midi_cdevsw = {
 	nostop, notty, midipoll, nommap,
 };
 
-struct cfattach midi_ca = {
+const struct cfattach midi_ca = {
 	sizeof(struct midi_softc), midiprobe, midiattach,
 	mididetach, midiactivate
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_pmax.c,v 1.16 2000/02/29 04:41:48 nisimura Exp $	*/
+/*	$NetBSD: ibus_pmax.c,v 1.17 2002/09/27 20:34:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.16 2000/02/29 04:41:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.17 2002/09/27 20:34:50 thorpej Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.16 2000/02/29 04:41:48 nisimura Exp 
 static int	ibus_pmax_match __P((struct device *, struct cfdata *, void *));
 static void	ibus_pmax_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ibus_pmax_ca = {
+const struct cfattach ibus_pmax_ca = {
 	sizeof(struct ibus_softc), ibus_pmax_match, ibus_pmax_attach
 };
 

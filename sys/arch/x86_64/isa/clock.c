@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2002/08/25 18:10:32 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2002/09/27 20:37:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -133,7 +133,7 @@ int clock_debug = 0;
 int sysbeepmatch __P((struct device *, struct cfdata *, void *));
 void sysbeepattach __P((struct device *, struct device *, void *));
 
-struct cfattach sysbeep_ca = {
+const struct cfattach sysbeep_ca = {
 	sizeof(struct device), sysbeepmatch, sysbeepattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.2 2002/03/17 19:40:45 atatat Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.3 2002/09/27 20:34:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -55,7 +55,7 @@ int ms_hb_enable(void *);
 int ms_hb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void ms_hb_disable(void *);
 
-struct cfattach ms_hb_ca = {
+const struct cfattach ms_hb_ca = {
 	sizeof(struct ms_softc), ms_hb_match, ms_hb_attach
 };
 

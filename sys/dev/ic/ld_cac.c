@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.5 2002/01/25 16:10:36 ad Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.6 2002/09/27 20:38:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.5 2002/01/25 16:10:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.6 2002/09/27 20:38:06 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -79,7 +79,7 @@ int	ld_cac_start(struct ld_softc *, struct buf *);
 
 static const struct	timeval ld_cac_serrintvl = { 60, 0 };
 
-struct cfattach ld_cac_ca = {
+const struct cfattach ld_cac_ca = {
 	sizeof(struct ld_cac_softc), ld_cac_match, ld_cac_attach
 };
 

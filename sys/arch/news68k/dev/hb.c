@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.7 2002/09/27 03:18:00 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.8 2002/09/27 20:34:08 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -42,7 +42,7 @@ static void	hb_attach __P((struct device *, struct device *, void *));
 static int	hb_search __P((struct device *, struct cfdata *, void *));
 static int	hb_print __P((void *, const char *));
 
-struct cfattach hb_ca = {
+const struct cfattach hb_ca = {
 	sizeof(struct device), hb_match, hb_attach
 };
 

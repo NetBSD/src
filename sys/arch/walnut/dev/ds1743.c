@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.4 2002/09/27 02:24:27 thorpej Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.5 2002/09/27 20:37:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -69,7 +69,7 @@ static u_char ds1743_lock(struct dsrtc_softc *, u_char);
 static void ds1743_unlock(struct dsrtc_softc *, u_char);
 
 /* device and attach structures */
-struct cfattach dsrtc_ca = {
+const struct cfattach dsrtc_ca = {
 	sizeof(struct dsrtc_softc), dsrtcmatch, dsrtcattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.8 2002/03/17 19:40:40 atatat Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.9 2002/09/27 20:32:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ int	ucbtp_enable(void *);
 int	ucbtp_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	ucbtp_disable(void *);
 
-struct cfattach ucbtp_ca = {
+const struct cfattach ucbtp_ca = {
 	sizeof(struct ucbtp_softc), ucbtp_match, ucbtp_attach
 };
 

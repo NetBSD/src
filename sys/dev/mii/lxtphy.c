@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.29 2002/07/03 06:25:52 simonb Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.30 2002/09/27 20:39:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.29 2002/07/03 06:25:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.30 2002/09/27 20:39:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.29 2002/07/03 06:25:52 simonb Exp $");
 int	lxtphymatch(struct device *, struct cfdata *, void *);
 void	lxtphyattach(struct device *, struct device *, void *);
 
-struct cfattach lxtphy_ca = {
+const struct cfattach lxtphy_ca = {
 	sizeof(struct mii_softc), lxtphymatch, lxtphyattach, mii_phy_detach,
 	    mii_phy_activate
 };

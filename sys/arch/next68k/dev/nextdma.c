@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.32 2002/09/27 15:36:31 provos Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.33 2002/09/27 20:34:30 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -114,7 +114,7 @@ static int nextdma_enet_intr	__P((void *));
 #define nd_bsr4(reg) bus_space_read_4(nsc->sc_bst, nsc->sc_bsh, (reg))
 #define nd_bsw4(reg,val) bus_space_write_4(nsc->sc_bst, nsc->sc_bsh, (reg), (val))
 
-struct cfattach nextdma_ca = {
+const struct cfattach nextdma_ca = {
 	sizeof(struct nextdma_softc), nextdma_match, nextdma_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.9 2002/01/07 21:47:09 thorpej Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.10 2002/09/27 20:38:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.9 2002/01/07 21:47:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.10 2002/09/27 20:38:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ struct sm_isa_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach sm_isa_ca = {
+const struct cfattach sm_isa_ca = {
 	sizeof(struct sm_isa_softc), sm_isa_match, sm_isa_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.9 2002/05/22 22:43:14 bjh21 Exp $	*/
+/*	$NetBSD: oak.c,v 1.10 2002/09/27 20:41:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.9 2002/05/22 22:43:14 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.10 2002/09/27 20:41:14 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -109,7 +109,7 @@ struct oak_softc {
 	bus_space_handle_t	sc_pdmah;
 };
 
-struct cfattach oak_ca = {
+const struct cfattach oak_ca = {
 	sizeof(struct oak_softc), oak_match, oak_attach
 };
 
