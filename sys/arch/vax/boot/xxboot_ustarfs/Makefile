@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/29 05:45:08 matt Exp $
+#	$NetBSD: Makefile,v 1.2 2002/06/09 19:21:08 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -19,7 +19,8 @@ CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
 BINDIR=	/usr/mdec
 NOMAN=	# defined
 
-CFLAGS=	-Os
+CFLAGS=	-Os -ffreestanding
+LIBC=
 
 SA_AS=	library
 .include "${S}/lib/libsa/Makefile.inc"
