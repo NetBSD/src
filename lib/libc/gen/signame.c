@@ -1,4 +1,4 @@
-/*	$NetBSD: signame.c,v 1.10 1998/12/01 20:31:41 thorpej Exp $	*/
+/*	$NetBSD: signame.c,v 1.11 2002/03/20 01:42:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)siglist.c	5.6 (Berkeley) 2/23/91";*/
 #else
-__RCSID("$NetBSD: signame.c,v 1.10 1998/12/01 20:31:41 thorpej Exp $");
+__RCSID("$NetBSD: signame.c,v 1.11 2002/03/20 01:42:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,36 +46,36 @@ __warn_references(sys_signame,
     "warning: reference to compatibility sys_signame[]; include <signal.h> for correct reference")
 
 const char *const sys_signame[] = {
-	"Signal 0",
-	"HUP",		/* SIGHUP */
-	"INT",		/* SIGINT */
-	"QUIT",		/* SIGQUIT */
-	"ILL",		/* SIGILL */
-	"TRAP",		/* SIGTRAP */
-	"ABRT",		/* SIGABRT */
-	"EMT",		/* SIGEMT */
-	"FPE",		/* SIGFPE */
-	"KILL",		/* SIGKILL */
-	"BUS",		/* SIGBUS */
-	"SEGV",		/* SIGSEGV */
-	"SYS",		/* SIGSYS */
-	"PIPE",		/* SIGPIPE */
-	"ALRM",		/* SIGALRM */
-	"TERM",		/* SIGTERM */
-	"URG",		/* SIGURG */
-	"STOP",		/* SIGSTOP */
-	"TSTP",		/* SIGTSTP */
-	"CONT",		/* SIGCONT */
-	"CHLD",		/* SIGCHLD */
-	"TTIN",		/* SIGTTIN */
-	"TTOU",		/* SIGTTOU */
-	"IO",		/* SIGIO */
-	"XCPU",		/* SIGXCPU */
-	"XFSZ",		/* SIGXFSZ */
-	"VTALRM",	/* SIGVTALRM */
-	"PROF",		/* SIGPROF */
-	"WINCH",	/* SIGWINCH */
-	"INFO",		/* SIGINFO */
-	"USR1",		/* SIGUSR1 */
-	"USR2"		/* SIGUSR2 */
+	"Signal 0",	/* 0 */
+	"HUP",		/* 1 SIGHUP */
+	"INT",		/* 2 SIGINT */
+	"QUIT",		/* 3 SIGQUIT */
+	"ILL",		/* 4 SIGILL */
+	"TRAP",		/* 5 SIGTRAP */
+	"ABRT",		/* 6 SIGABRT */
+	"EMT",		/* 7 SIGEMT */
+	"FPE",		/* 8 SIGFPE */
+	"KILL",		/* 9 SIGKILL */
+	"BUS",		/* 10 SIGBUS */
+	"SEGV",		/* 11 SIGSEGV */
+	"SYS",		/* 12 SIGSYS */
+	"PIPE",		/* 13 SIGPIPE */
+	"ALRM",		/* 14 SIGALRM */
+	"TERM",		/* 15 SIGTERM */
+	"URG",		/* 16 SIGURG */
+	"STOP",		/* 17 SIGSTOP */
+	"TSTP",		/* 18 SIGTSTP */
+	"CONT",		/* 19 SIGCONT */
+	"CHLD",		/* 20 SIGCHLD */
+	"TTIN",		/* 21 SIGTTIN */
+	"TTOU",		/* 22 SIGTTOU */
+	"IO",		/* 23 SIGIO */
+	"XCPU",		/* 24 SIGXCPU */
+	"XFSZ",		/* 25 SIGXFSZ */
+	"VTALRM",	/* 26 SIGVTALRM */
+	"PROF",		/* 27 SIGPROF */
+	"WINCH",	/* 28 SIGWINCH */
+	"INFO",		/* 29 SIGINFO */
+	"USR1",		/* 30 SIGUSR1 */
+	"USR2",		/* 31 SIGUSR2 */
 };
