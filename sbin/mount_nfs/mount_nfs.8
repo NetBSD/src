@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.25 2004/05/05 00:21:00 fair Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.26 2005/01/21 15:49:43 yamt Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mount_nfs.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd May 4, 2004
+.Dd January 22, 2005
 .Dt MOUNT_NFS 8
 .Os
 .Sh NAME
@@ -528,3 +528,6 @@ cannot resolve the name of the remote host.
 .%D September 1999
 .%T "Authentication Mechanisms for ONC RPC"
 .Re
+.Sh CAVEATS
+An NFS server shouldn't loopback-mount its own exported file systems because
+it's fundamentally prone to deadlock.
