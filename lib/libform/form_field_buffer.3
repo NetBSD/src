@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_buffer.3,v 1.5 2002/08/06 12:44:34 wiz Exp $
+.\"	$NetBSD: form_field_buffer.3,v 1.6 2002/08/09 14:15:13 blymn Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -36,6 +36,7 @@
 .Nm field_buffer ,
 .Nm field_status ,
 .Nm set_field_buffer ,
+.Nm set_field_printf ,
 .Nm set_field_status ,
 .Nm set_max_field
 .Nd form library
@@ -50,6 +51,8 @@
 .Ft int
 .Fn set_field_buffer "FIELD *field" "int buffer" "char *value"
 .Ft int
+.Fn set_field_printf "FIELD *field" "int buffer" "char *fmt" "..."
+.Ft int
 .Fn set_field_status "FIELD *field" "int status"
 .Sh DESCRIPTION
 The
@@ -61,7 +64,14 @@ number of buffers attached to the field then NULL will be returned.
 The field buffer may be set by calling
 .Fn set_field_buffer
 which will set the given buffer number to the contents of the string
-passed.  Calling
+passed.  A buffer may also be set by calling
+.Fn set_field_printf
+which sets the buffer using the format arg
+.Fa fmt
+after being expanded using the subsequent arguments in the same manner
+as
+.Xr sprintf 3
+does.  Calling
 .Fn field_status
 will return the status of the first buffer attached to the field.  If
 the field has been modified then the function will return TRUE
@@ -95,3 +105,8 @@ automatically includes both
 .Pa \*[Lt]curses.h\*[Gt]
 and
 .Pa \*[Lt]eti.h\*[Gt] .
+The function
+.Fn set_field_printf
+is a 
+.Nx
+extension and must not be used in portable code.
