@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd.1,v 1.22 2003/08/07 09:05:25 agc Exp $
+.\"	$NetBSD: pwd.1,v 1.23 2003/10/30 13:52:23 dsl Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)pwd.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd November 2, 1998
+.Dd October 30, 2003
 .Dt PWD 1
 .Os
 .Sh NAME
@@ -49,15 +49,25 @@ the standard output.
 The following options are available:
 .Bl -tag -width indent
 .It Fl L
-Print the logical path to the current working directory, as indicated
-by the shell in the environment variable
-.Ev PWD ,
-if possible.
+If the
+.Ev PWD
+environment variable is an absolute pathname that contains
+neither "/./" nor "/../" and references the current directory, then
+.Ev PWD
+is assumed to be the name of the current directory.
 .It Fl P
 Print the physical path to the current working directory, with symbolic
 links in the path resolved.
-This is the default.
 .El
+.Pp
+The default for the
+.Nm
+command is
+.Fl P .
+.Pp
+.Nm
+is usually provided as a shell builtin (which may have a different
+default).
 .Sh EXIT STATUS
 The
 .Nm
@@ -65,13 +75,18 @@ utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Sh SEE ALSO
 .Xr cd 1 ,
 .Xr csh 1 ,
+.Xr ksh 1 ,
+.Xr sh 1 ,
 .Xr getcwd 3
 .Sh STANDARDS
 The
 .Nm
 utility is expected to be conforming to
-.St -p1003.2 .
-The options are extensions to the standard.
+.St -p1003.1 ,
+except that the default is
+.Fl P
+not
+.Fl L .
 .Sh BUGS
 In
 .Xr csh 1
@@ -80,3 +95,13 @@ the command
 is always faster (although it can give a different answer in the rare case
 that the current directory or a containing directory was moved after
 the shell descended into it).
+.Pp
+.Nm
+.Fl L
+relies on the filesystem having unique inode numbers.
+If this is not true (eg msdos) then
+.Nm
+.Fl L
+may fail to detect that
+.Ev PWD
+is incorrect.

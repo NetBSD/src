@@ -1,4 +1,4 @@
-/* $NetBSD: pwd.c,v 1.18 2003/09/14 19:20:23 jschauma Exp $ */
+/* $NetBSD: pwd.c,v 1.19 2003/10/30 13:52:23 dsl Exp $ */
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.18 2003/09/14 19:20:23 jschauma Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.19 2003/10/30 13:52:23 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,13 +53,17 @@ __RCSID("$NetBSD: pwd.c,v 1.18 2003/09/14 19:20:23 jschauma Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
 
-int	stdout_ok;			/* stdout connected to a terminal */
-
-static char *getcwd_logical(char *, size_t);
+static char *getcwd_logical(void);
 static void usage(void);
-int main(int, char *[]);
+
+/*
+ * Note that EEE Std 1003.1, 2003 requires that the default be -L.
+ * This is inconsistent with the historic behaviour of everything
+ * except the ksh builtin.
+ * To avoid breaking scripts the default has been kept as -P.
+ * (Some scripts run /bin/pwd in order to get 'pwd -P'.)
+ */
 
 int
 main(int argc, char *argv[])
@@ -69,7 +73,7 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 	lFlag = 0;
-	while ((ch = getopt(argc, argv, "LP")) != -1)
+	while ((ch = getopt(argc, argv, "LP")) != -1) {
 		switch (ch) {
 		case 'L':
 			lFlag = 1;
@@ -81,6 +85,7 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
@@ -88,14 +93,14 @@ main(int argc, char *argv[])
 		usage();
 
 	if (lFlag)
-		p = getcwd_logical(NULL, 0);
+		p = getcwd_logical();
 	else
+		p = NULL;
+	if (p == NULL)
 		p = getcwd(NULL, 0);
 
 	if (p == NULL)
 		err(EXIT_FAILURE, NULL);
-
-	stdout_ok = isatty(STDOUT_FILENO);
 
 	(void)printf("%s\n", p);
 
@@ -104,42 +109,26 @@ main(int argc, char *argv[])
 }
 
 static char *
-getcwd_logical(char *pt, size_t size)
+getcwd_logical(void)
 {
 	char *pwd;
-	size_t pwdlen;
-	dev_t dev;
-	ino_t ino;
-	struct stat s;
+	struct stat s_pwd, s_dot;
 
 	/* Check $PWD -- if it's right, it's fast. */
-	if ((pwd = getenv("PWD")) != NULL && pwd[0] == '/') {
-		if (stat(pwd, &s) != -1) {
-			dev = s.st_dev;
-			ino = s.st_ino;
-			if (stat(".", &s) != -1 && dev == s.st_dev &&
-			    ino == s.st_ino) {
-				pwdlen = strlen(pwd);
-				if (pt) {
-					if (!size) {
-						errno = EINVAL;
-						return (NULL);
-					}
-					if (pwdlen + 1 > size) {
-						errno = ERANGE;
-						return (NULL);
-					}
-				} else if ((pt = malloc(pwdlen + 1)) == NULL)
-					return (NULL);
-				(void)memmove(pt, pwd, pwdlen);
-				pt[pwdlen] = '\0';
-				return (pt);
-			}
-		}
-	} else
-		errno = ENOENT;
-
-	return (NULL);
+	pwd = getenv("PWD");
+	if (pwd == NULL)
+		return NULL;
+	if (pwd[0] != '/')
+		return NULL;
+	if (strstr(pwd, "/./") != NULL)
+		return NULL;
+	if (strstr(pwd, "/../") != NULL)
+		return NULL;
+	if (stat(pwd, &s_pwd) == -1 || stat(".", &s_dot) == -1)
+		return NULL;
+	if (s_pwd.st_dev != s_dot.st_dev || s_pwd.st_ino != s_dot.st_ino)
+		return NULL;
+	return pwd;
 }
 
 static void
