@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.23 1997/10/25 09:27:11 lukem Exp $
+#	$NetBSD: libg++2netbsd,v 1.24 1998/02/26 02:26:27 jonathan Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -571,17 +571,17 @@ DPADD=	${DESTDIR}/usr/lib/c++rt0.o
 #ifndef _G_config_h
 #define _G_config_h
 #define _G_LIB_VERSION "2.7.2"
-#ifndef __alpha__
+#if ! defined(__alpha__) && !defined(__mips)	/* ELF */
 #define _G_NAMES_HAVE_UNDERSCORE 1
-#else /* __alpha__ */
+#else /* ELF */
 #define _G_NAMES_HAVE_UNDERSCORE 0
-#endif /* __alpha__ */
+#endif /* ELF */
 #define _G_VTABLE_LABEL_HAS_LENGTH 1
-#ifndef __alpha__
+#if ! defined(__alpha__) && !defined(__mips)	/* ELF */
 #define _G_VTABLE_LABEL_PREFIX "__vt$"
-#else /* __alpha__ */
+#else 	/* ELF */
 #define _G_VTABLE_LABEL_PREFIX "_vt$"
-#endif /* __alpha__ */
+#endif 	/* ELF */
 #define _G_HAVE_ST_BLKSIZE 1
 #ifndef __alpha__
 typedef unsigned long _G_clock_t;
