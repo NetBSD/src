@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.15.2.1 1999/06/23 14:20:51 perry Exp $	*/
+/*	$NetBSD: man.c,v 1.15.2.2 2000/04/30 11:11:45 he Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.15.2.1 1999/06/23 14:20:51 perry Exp $");
+__RCSID("$NetBSD: man.c,v 1.15.2.2 2000/04/30 11:11:45 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,6 +296,7 @@ main(argc, argv)
 	 */
 	(void)signal(SIGINT, onsig);
 	(void)signal(SIGHUP, onsig);
+	(void)signal(SIGPIPE, onsig);
 
 	memset(&pg, 0, sizeof(pg));
 	for (found = 0; *argv; ++argv)
