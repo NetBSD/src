@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.54 2000/04/27 05:28:51 mycroft Exp $
+#	$NetBSD: termcap.src,v 1.55 2000/04/27 18:55:32 mycroft Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1753,7 +1753,7 @@ xterm-xf86-v32|xterm terminal emulator (X Window System):\
 	:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:kD=\177:kI=\E[2~:\
 	:kN=\E[6~:kP=\E[5~:kb=^H:kd=\EOB:ke=\E[?1l\E>:kh=\EOH:\
 	:kl=\EOD:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:le=^H:md=\E[1m:\
-	:me=\E[m\017:mr=\E[7m:nd=\E[C:rc=\E8:sc=\E7:se=\E[27m:\
+	:me=\E[m:mr=\E[7m:nd=\E[C:rc=\E8:sc=\E7:se=\E[27m:\
 	:sf=^J:so=\E[7m:sr=\EM:st=\EH:ta=^I:te=\E[2J\E[?47l\E8:\
 	:ti=\E7\E[?47h:ue=\E[24m:up=\E[A:us=\E[4m:\
 	:vb=\E[?5h\E[?5l:ve=\E[?25h:vi=\E[?25l:vs=\E[?25h:
