@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.1.6.1 2002/11/11 22:46:14 he Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.1.6.2 2002/11/11 23:35:15 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -62,7 +62,6 @@ struct intrq {
 	int iq_mask;			/* IRQs to mask while handling */
 	int iq_levels;			/* IPL_*'s this IRQ has */
 	int iq_ist;			/* share type */
-	char iq_name[IRQNAMESIZE];	/* interrupt name */
 };
 
 struct i80321_softc {
@@ -148,6 +147,7 @@ struct iopxs_attach_args {
 
 extern struct bus_space i80321_bs_tag;
 extern struct i80321_softc *i80321_softc;
+extern const char *i80321_irqnames[];
 
 extern void (*i80321_hardclock_hook)(void);
 
