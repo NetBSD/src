@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.25 2001/02/27 18:29:36 reinoud Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.26 2001/02/27 20:23:11 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,6 +49,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>
@@ -70,7 +71,6 @@ u_int irqblock[NIRQS];
 extern u_int soft_interrupts;	/* Only so we can initialise it */
 
 extern char *_intrnames;
-extern int  *iomd_base;
 
 /* Prototypes */
 
