@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.20 1996/10/25 23:14:04 cgd Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.21 1997/04/08 10:11:55 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -85,7 +85,7 @@ namei(ndp)
 	register struct vnode *dp;	/* the directory we are searching */
 	struct iovec aiov;		/* uio for reading symbolic links */
 	struct uio auio;
-	int error, linklen;
+	int error, linklen, forcedir = 0;
 	struct componentname *cnp = &ndp->ni_cnd;
 
 	ndp->ni_cnd.cn_cred = ndp->ni_cnd.cn_proc->p_ucred;
@@ -111,12 +111,34 @@ namei(ndp)
 	else
 		error = copyinstr(ndp->ni_dirp, cnp->cn_pnbuf,
 			    MAXPATHLEN, &ndp->ni_pathlen);
+
+	/*
+	 * POSIX.1 requirement: "" is not a valid file name.
+	 */      
+	if (!error && ndp->ni_pathlen == 1)
+		error = ENOENT;
+
 	if (error) {
 		free(cnp->cn_pnbuf, M_NAMEI);
 		ndp->ni_vp = NULL;
 		return (error);
 	}
 	ndp->ni_loopcnt = 0;
+
+	/*
+	 * If there are trailing '/'s, strip them off and require the last
+	 * path element to be a directory. This is heavily `2'-based:
+	 * ni_pathlen includes the trailing '\0', and at least the first
+	 * character of cn_pnbuf has to be preserved.
+	 */
+	if (ndp->ni_pathlen > 2 && cnp->cn_pnbuf[ndp->ni_pathlen - 2] == '/') {
+		forcedir = 1;
+		cnp->cn_flags |= FOLLOW;
+		while (ndp->ni_pathlen > 2 &&
+		       cnp->cn_pnbuf[ndp->ni_pathlen - 2] == '/')
+			cnp->cn_pnbuf[ndp->ni_pathlen-- - 2] = '\0';
+	}
+
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
 		ktrnamei(cnp->cn_proc->p_tracep, cnp->cn_pnbuf);
@@ -153,6 +175,18 @@ namei(ndp)
 		 * Check for symbolic link
 		 */
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
+			/*
+			 * If trailing '/'s implied a directory, verify this.
+			 */
+			if (forcedir && ndp->ni_vp->v_type != VDIR) {
+				if ((cnp->cn_flags & LOCKPARENT) &&
+				    ndp->ni_pathlen == 1)
+					VOP_UNLOCK(ndp->ni_dvp);
+				vput(ndp->ni_vp);
+				FREE(cnp->cn_pnbuf, M_NAMEI);
+				return (ENOTDIR);
+			}
+
 			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
 				FREE(cnp->cn_pnbuf, M_NAMEI);
 			else
