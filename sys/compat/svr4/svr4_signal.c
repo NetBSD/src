@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.29 1998/10/02 11:54:16 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.30 1998/10/04 16:21:13 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -427,26 +427,28 @@ svr4_sys_sigprocmask(p, v, retval)
 		how = SIG_SETMASK;
 		break;
 	default:
-		return (EINVAL);
+		if (SCARG(uap, set))
+			return EINVAL;
+		break;
 	}
 
 	if (SCARG(uap, set)) {
 		error = copyin(SCARG(uap, set), &nsss, sizeof(nsss));
 		if (error)
-			return (error);
+			return error;
 		svr4_to_native_sigset(&nsss, &nbss);
 	}
 	error = sigprocmask1(p, how,
-	    SCARG(uap, set) ? &nbss : 0, SCARG(uap, oset) ? &obss : 0);
+	    SCARG(uap, set) ? &nbss : NULL, SCARG(uap, oset) ? &obss : NULL);
 	if (error)
-		return (error);
+		return error;
 	if (SCARG(uap, oset)) {
 		native_to_svr4_sigset(&obss, &osss);
 		error = copyout(&osss, SCARG(uap, oset), sizeof(osss));
 		if (error)
-			return (error);
+			return error;
 	}
-	return (0);
+	return 0;
 }
 
 int
