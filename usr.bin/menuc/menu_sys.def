@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.29 2002/04/04 14:11:23 blymn Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.30 2003/01/10 20:00:50 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -308,6 +308,7 @@ post_menu (struct menudesc *m)
 }
 
 static void
+/*ARGSUSED*/
 process_help (struct menudesc *m, int num)
 {
 	char *help = m->helpstr;
@@ -392,7 +393,7 @@ process_req (struct menudesc *m, int num, int req)
 {
 	int ch;
 	int hasexit = (m->mopt & MC_NOEXITOPT ? 0 : 1 );
-	int refresh = 0;
+	int refr = 0;
 	int scroll_sel = 0;
 
 	if (req == REQ_EXECUTE)
@@ -402,7 +403,7 @@ process_req (struct menudesc *m, int num, int req)
 		if (m->cursel < m->numopts + hasexit - 1) {
 			m->cursel++;
 			scroll_sel = 1;
-			refresh = 1;
+			refr = 1;
 			if (m->mopt & MC_SCROLL && 
 			    m->cursel >= m->topline + m->h -1 )
 				m->topline += 1;
@@ -413,7 +414,7 @@ process_req (struct menudesc *m, int num, int req)
 		if (m->cursel > 0) {
 			m->cursel--;
 			scroll_sel = 1;
-			refresh = 1;
+			refr = 1;
 			if (m->cursel < m->topline )
 				m->topline -= 1;
 		} else
@@ -424,11 +425,11 @@ process_req (struct menudesc *m, int num, int req)
 		wrefresh(stdscr);
 		if (m->post_act)
 			(*m->post_act)();
-		refresh = 1;
+		refr = 1;
 
 	} else if (req == REQ_HELP) {
 		process_help (m, num);
-		refresh = 1;
+		refr = 1;
 
 	} else if (req == REQ_SCROLLUP) {
 		if (!(m->mopt & MC_SCROLL))
@@ -439,7 +440,7 @@ process_req (struct menudesc *m, int num, int req)
 			m->topline = MAX(0,m->topline-m->h+1);
 			m->cursel = MAX(0, m->cursel-m->h+1);
 			wclear (m->mw);
-			refresh = 1;
+			refr = 1;
 		}
 
 	} else if (req == REQ_SCROLLDOWN) {
@@ -452,7 +453,7 @@ process_req (struct menudesc *m, int num, int req)
 					 m->numopts+hasexit-m->h+1);
 			m->cursel = MIN(m->numopts-1, m->cursel+m->h-1);
 			wclear (m->mw);
-			refresh = 1;
+			refr = 1;
 		}
 
 	} else {
@@ -460,7 +461,7 @@ process_req (struct menudesc *m, int num, int req)
 		if (ch == 'x' && hasexit) {
 			m->cursel = m->numopts;
 			scroll_sel = 1;
-			refresh = 1;
+			refr = 1;
 		} else 
 			if (!(m->mopt & MC_NOSHORTCUT)) {
 				if (ch > 'z')
@@ -475,7 +476,7 @@ process_req (struct menudesc *m, int num, int req)
 				else {
 					m->cursel = ch;
 					scroll_sel = 1;
-					refresh = 1;
+					refr = 1;
 				}
 			} else 
 				mbeep();
@@ -489,7 +490,7 @@ process_req (struct menudesc *m, int num, int req)
 			m->topline = MAX(0,m->topline-m->h+1);
 	}
 
-	if (refresh) {
+	if (refr) {
 		post_menu (m);
 		wrefresh (m->mw);
 	}

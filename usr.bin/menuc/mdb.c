@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.23 2002/03/07 20:43:29 tv Exp $	*/
+/*	$NetBSD: mdb.c,v 1.24 2003/01/10 20:00:50 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -279,6 +279,7 @@ write_menu_file (char *initcode)
 			if (strlen(toptn->optact.code)) {
 				(void) fprintf (out_file,
 					"int opt_act_%d_%d(menudesc *m);\n"
+					"/*ARGSUSED*/\n"
 					"int opt_act_%d_%d(menudesc *m)\n"
 					"{\t%s\n\treturn %s;\n}\n\n",
 					i, j, i, j, toptn->optact.code,
