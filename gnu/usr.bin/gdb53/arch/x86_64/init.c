@@ -117,6 +117,7 @@ initialize_all_files (void)
   _initialize_x86_64_tdep ();
   _initialize_x86_64nbsd_nat ();
   _initialize_x86_64nbsd_tdep ();
+  _initialize_corelow ();
   _initialize_solib ();
   _initialize_svr4_solib ();
   _initialize_ser_hardwire ();
@@ -184,5 +185,4 @@ initialize_all_files (void)
   _initialize_tui_out ();
 #endif
   _initialize_nbsd_thread ();
-  _initialize_corelow ();
 }
