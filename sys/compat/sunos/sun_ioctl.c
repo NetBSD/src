@@ -8,7 +8,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * loosely from: Header: sun_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
- * $Id: sun_ioctl.c,v 1.7 1994/01/15 01:18:14 deraadt Exp $
+ * $Id: sun_ioctl.c,v 1.8 1994/01/28 23:46:40 jtc Exp $
  */
 
 #include <sys/param.h>
