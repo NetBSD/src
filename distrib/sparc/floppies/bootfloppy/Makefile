@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 1998/09/05 14:46:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1999/01/06 03:00:39 cjs Exp $
 
-TOP=		${.CURDIR}/..
+TOP=		${.CURDIR}/../..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=		boot${REV}.fs
-KERN=		${.CURDIR}/../../../../sys/arch/sparc/compile/INSTALL/netbsd
+KERN=		${TOP}/../../sys/arch/sparc/compile/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -18,9 +18,10 @@ FD_RDEV=	/dev/r${FD}a
 IMAGE?=		xxx.fs
 KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
+COMPRESS=	gzip -9
 
 LISTS=		${.CURDIR}/list
-RAMDISK!=	cd $(.CURDIR)/../ramdisk/; \
+RAMDISK!=	cd ${TOP}/ramdisk/; \
 		    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
 		    ${MAKE} -s -f-
 
@@ -40,6 +41,7 @@ all:	netbsd.ram.gz
 	# vnconfig -v -c ${VND_CDEV} ${IMAGE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	disklabel -W ${VND_CDEV}
 	newfs -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -60,11 +62,13 @@ unconfig:
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
-	gzip netbsd.tmp
+	${COMPRESS} netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
+
+depend install:
 
 real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=32k
