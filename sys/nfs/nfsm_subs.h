@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.34 2004/03/19 13:52:07 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.35 2004/04/05 10:28:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -258,10 +258,19 @@
 #define NFSV3_WCCCHK	1
 
 #define	nfsm_wcc_data(v, f, flags) \
-		{ int ttattrf, ttretf = 0; \
+		{ int ttattrf, ttretf = 0, renewctime = 0, renewnctime = 0; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
+			struct timespec ctime; \
 			nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED); \
+			fxdr_nfsv3time(tl + 4, &ctime); \
+			if (VTONFS(v)->n_ctime == ctime.tv_sec) \
+				renewctime = 1; \
+			if ((v)->v_type == VDIR) { \
+				if (timespeccmp(&VTONFS(v)->n_nctime, \
+				    &ctime, ==)) \
+					renewnctime = 1; \
+			} \
 			if (f) { \
 				struct timespec mtime; \
 				fxdr_nfsv3time(tl + 2, &mtime); \
@@ -270,6 +279,10 @@
 			} \
 		} \
 		nfsm_postop_attr((v), ttattrf, (flags)); \
+		if (renewctime && ttattrf) \
+			VTONFS(v)->n_ctime = VTONFS(v)->n_vattr->va_ctime.tv_sec; \
+		if (renewnctime && ttattrf) \
+			VTONFS(v)->n_nctime = VTONFS(v)->n_vattr->va_ctime; \
 		if (f) { \
 			(f) = ttretf; \
 		} else { \
