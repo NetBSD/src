@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.103 1997/05/09 13:25:53 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.104 1997/05/09 13:40:36 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -168,7 +168,7 @@ __archiveinstall: .USE
 	${RANLIB} -t ${.TARGET}
 	chmod ${LIBMODE} ${.TARGET}
 
-DPSRCS+=	${SRCS:M*.[ly]:.l=.c:.y=.c}
+DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS}
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}

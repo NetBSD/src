@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.80 1997/05/09 13:26:01 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.81 1997/05/09 13:40:38 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -81,7 +81,7 @@ CLEANFILES+=strings
 .if defined(PROG)
 SRCS?=		${PROG}.c
 
-DPSRCS+=	${SRCS:M*.[ly]:.l=.c:.y=.c}
+DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS}
 
 .if !empty(SRCS:N*.h:N*.sh)
