@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.70 2003/09/10 17:01:04 drochner Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.71 2003/10/26 10:32:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.70 2003/09/10 17:01:04 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.71 2003/10/26 10:32:24 jdolecek Exp $");
 
 #define SYSVSHM
 
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.70 2003/09/10 17:01:04 drochner Exp $
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int, int));
 
-MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
+static MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
 
 /*
  * Provides the following externally accessible functions:
@@ -108,7 +108,7 @@ MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
 #define	SHMSEG_ALLOCATED	0x0800
 #define	SHMSEG_WANTED		0x1000
 
-int	shm_last_free, shm_nused, shm_committed;
+static int	shm_last_free, shm_nused, shm_committed;
 struct	shmid_ds *shmsegs;
 
 struct shm_handle {
@@ -121,7 +121,7 @@ struct shmmap_entry {
 	int shmid;
 };
 
-struct pool shmmap_entry_pool;
+static struct pool shmmap_entry_pool;
 
 struct shmmap_state {
 	unsigned int nitems;
@@ -689,7 +689,14 @@ shmexit(vm)
 void
 shminit()
 {
-	int i;
+	int i, sz;
+	vaddr_t v;
+
+	/* Allocate pageable memory for our structures */
+	sz = shminfo.shmmni * sizeof(struct shmid_ds);
+	if ((v = uvm_km_alloc(kernel_map, round_page(sz))) == 0)
+		panic("sysv_shm: cannot allocate memory");
+	shmsegs = (void *)v;
 
 	shminfo.shmmax *= PAGE_SIZE;
 

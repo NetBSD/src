@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.47 2003/06/29 22:31:27 fvdl Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.48 2003/10/26 10:32:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.47 2003/06/29 22:31:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.48 2003/10/26 10:32:24 jdolecek Exp $");
 
 #define SYSVSEM
 
@@ -58,11 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.47 2003/06/29 22:31:27 fvdl Exp $");
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
-int	semtot = 0;
-struct	semid_ds *sema;		/* semaphore id pool */
-struct	__sem *sem;		/* semaphore pool */
-struct	sem_undo *semu_list;	/* list of active undo structures */
-int	*semu;			/* undo structure pool */
+static int	semtot = 0;
+struct	semid_ds *sema;			/* semaphore id pool */
+static struct	__sem *sem;		/* semaphore pool */
+static struct	sem_undo *semu_list;	/* list of active undo structures */
+static int	*semu;			/* undo structure pool */
 
 #ifdef SEM_DEBUG
 #define SEM_PRINTF(a) printf a
@@ -82,12 +82,18 @@ void semundo_clear __P((int, int));
 void
 seminit()
 {
-	int i;
+	int i, sz;
+	vaddr_t v;
 
-	if (sema == NULL)
-		panic("sema is NULL");
-	if (semu == NULL)
-		panic("semu is NULL");
+	/* Allocate pageable memory for our structures */
+	sz = seminfo.semmni * sizeof(struct semid_ds)
+		+ seminfo.semmns * sizeof(struct __sem)
+		+ seminfo.semmnu * seminfo.semusz;
+	if ((v = uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
+		panic("sysv_sem: cannot allocate memory");
+	sema = (void *)v;
+	sem = (void *)(sema + seminfo.semmni);
+	semu = (void *)(sem + seminfo.semmns);
 
 	for (i = 0; i < seminfo.semmni; i++) {
 		sema[i]._sem_base = 0;
