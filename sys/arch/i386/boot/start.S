@@ -52,8 +52,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 	.file	"start.s"
 
-BOOTSEG		=	0x6000	# boot will be loaded here (below 640K)
-BOOTSTACK	=	0xe000	# boot stack
+BOOTSEG		=	0x0100	# boot will be loaded here (below 640K)
+BOOTSTACK	=	0xfffc	# boot stack
 SIGNATURE	=	0xaa55
 LOADSZ		=	15	# size of unix boot
 PARTSTART	=	0x1be	# starting address of partition table
