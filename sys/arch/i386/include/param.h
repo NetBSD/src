@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.6 1993/06/18 06:51:03 cgd Exp $
+ *	$Id: param.h,v 1.7 1993/07/05 01:12:46 deraadt Exp $
  */
 
 /*
@@ -148,7 +148,3 @@
 #define i386_dtob(x)		((unsigned)(x) << PDRSHIFT)
 #define i386_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define i386_ptob(x)		((unsigned)(x) << PGSHIFT)
-
-#ifndef KERNEL
-#define	DELAY(n)	{ volatile int N = (n); while (--N > 0); }
-#endif
