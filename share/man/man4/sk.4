@@ -1,4 +1,4 @@
-.\"	$NetBSD: sk.4,v 1.4 2003/12/17 10:12:28 wiz Exp $
+.\"	$NetBSD: sk.4,v 1.5 2004/12/08 18:33:32 peter Exp $
 .\"
 .\" Copyright (c) 2003, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -173,9 +173,9 @@ Set 1000Mbps (Gigabit Ethernet) operation and force full-duplex mode.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 To view a list of media types and options supported by the card, try
-.Ic ifconfig -m Aq device .
+.Ic ifconfig Fl m Aq device .
 For example,
-.Ic ifconfig -m sk0 .
+.Ic ifconfig Fl m Ar sk0 .
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "sk%d: couldn't map memory"

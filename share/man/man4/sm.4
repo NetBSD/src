@@ -1,4 +1,4 @@
-.\"	$NetBSD: sm.4,v 1.10 2001/12/18 13:33:18 ad Exp $
+.\"	$NetBSD: sm.4,v 1.11 2004/12/08 18:33:32 peter Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,18 +79,18 @@ To enable the AUI media, select the
 or
 .Em aui
 media type with
-.Xr ifconfig 8 Ns s
-.Sq media
+.Xr ifconfig 8 Ns 's
+.Cm media
 directive.  To select UTP, select the
 .Em 10baseT
 or
 .Em utp
 media type.
 .Pp
-.Xr ifconfig 8 Ns s
-.Sq -m
+.Xr ifconfig 8 Ns 's
+.Fl m
 option will display the full list of supported
-.Sq media
+.Cm media
 directives for a particular configuration.
 .Sh DIAGNOSTICS
 .Bl -diag
