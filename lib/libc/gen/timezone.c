@@ -1,4 +1,4 @@
-/*	$NetBSD: timezone.c,v 1.15 2001/03/31 18:29:21 kleink Exp $	*/
+/*	$NetBSD: timezone.c,v 1.16 2001/03/31 19:13:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)timezone.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: timezone.c,v 1.15 2001/03/31 18:29:21 kleink Exp $");
+__RCSID("$NetBSD: timezone.c,v 1.16 2001/03/31 19:13:00 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,9 @@ __RCSID("$NetBSD: timezone.c,v 1.15 2001/03/31 18:29:21 kleink Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <tzfile.h>
+
+__warn_references(timezone,
+     "warning: reference to compatibility timezone; include <time.h> to generate correct reference")
 
 /*
  * timezone --
