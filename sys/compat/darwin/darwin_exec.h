@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.h,v 1.9 2003/11/20 07:12:34 manu Exp $ */
+/*	$NetBSD: darwin_exec.h,v 1.10 2003/12/27 22:06:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,9 +48,10 @@
 struct darwin_emuldata {
 	struct mach_emuldata ded_mach_emuldata;
 	pid_t ded_fakepid;
-	dev_t ded_wsdev;	/* display to restore on exit */
+	dev_t ded_wsdev;		/* display to restore on exit */
 	int *ded_hidsystem_finished;	/* iohidsystem thread finished flag */
-	int ded_flags;		/* flags, see below */
+	int ded_flags;			/* flags, see below */
+	void *ded_vramoffset;		/* Where VRAM was mapped? */
 };
 
 #define DARWIN_DED_SIGEXC	1	/* Mach exceptions instead of signals */
