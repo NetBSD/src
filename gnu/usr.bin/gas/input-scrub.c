@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: input-scrub.c,v 1.3 1993/10/02 20:57:39 pk Exp $";
+static char rcsid[] = "$Id: input-scrub.c,v 1.4 1994/05/25 13:53:23 pk Exp $";
 #endif
 
 #include <errno.h>	/* Need this to make errno declaration right */
@@ -331,8 +331,10 @@ int
 void
     bump_line_counters ()
 {
-	++ physical_input_line;
-	/*  ++ logical_input_line; FIXME-now remove this. */
+	++physical_input_line;
+	if (logical_input_line >= 0)
+		++logical_input_line;
+
 }
 
 /*
@@ -352,7 +354,8 @@ int line_number;
 	
 	if (line_number >= 0) {
 		logical_input_line = line_number;
-	} /* if we have a line number */
+	} else if (line_number == -2 && logical_input_line > 0)
+		--logical_input_line;
 } /* new_logical_line() */
 
 /*
