@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.185 1999/12/17 14:00:12 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.186 1999/12/17 17:19:11 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.178 1999/12/17 13:59:44 augustss Exp 
+ *	NetBSD: pcidevs,v 1.179 1999/12/17 17:18:48 drochner Exp 
  */
 
 /*
@@ -1028,6 +1028,8 @@
 #define	PCI_PRODUCT_INTEL_I740	0x7800		/* i740 Graphics Accelerator */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
+#define	PCI_PRODUCT_INTEL_82451NX_MIOC	0x84ca		/* 82451NX Memory & I/O Controller (MIOC) */
+#define	PCI_PRODUCT_INTEL_82451NX_PXB	0x84cb		/* 82451NX PCI Expander Bridge (PXB) */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
