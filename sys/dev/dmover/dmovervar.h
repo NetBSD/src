@@ -1,7 +1,7 @@
-/*	$NetBSD: dmovervar.h,v 1.5 2003/06/14 19:03:40 thorpej Exp $	*/
+/*	$NetBSD: dmovervar.h,v 1.6 2003/07/19 02:00:18 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -45,8 +45,9 @@
  * Types of buffers the dmover-api can handle.
  */
 typedef enum {
-	DMOVER_BUF_LINEAR,
-	DMOVER_BUF_UIO
+	DMOVER_BUF_NONE			= 0,
+	DMOVER_BUF_LINEAR		= 1,
+	DMOVER_BUF_UIO			= 2
 } dmover_buffer_type;
 
 typedef struct {

@@ -1,7 +1,7 @@
-/*	$NetBSD: dmover_io.h,v 1.1 2002/08/02 00:30:38 thorpej Exp $	*/
+/*	$NetBSD: dmover_io.h,v 1.2 2003/07/19 02:00:18 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -55,14 +55,15 @@ struct dmio_usrreq {
 	/* Output buffer. */
 	dmio_buffer req_outbuf;
 
-	/* Input buffer. */
-	union {
-		uint8_t _immediate[8];
-		dmio_buffer *_inbuf;
-	} _req_inbuf_un;
+	/*
+	 * General purpose immediate value.  Can be used as an
+	 * input, output, or both, depending on the function.
+	 * The output is transmitted via the usrresp structure.
+	 */
+	uint8_t req_immediate[8];
 
-#define	req_immediate		_req_inbuf_un._immediate
-#define	req_inbuf		_req_inbuf_un._inbuf
+	/* Input buffer. */
+	dmio_buffer *req_inbuf;
 
 	uint32_t req_id;	/* request ID; passed in response */
 };
@@ -75,6 +76,7 @@ struct dmio_usrreq {
 struct dmio_usrresp {
 	uint32_t resp_id;	/* request ID */
 	int resp_error;		/* error, 0 if success */
+	uint8_t resp_immediate[8];
 };
 
 /*
