@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.15 2003/01/02 12:46:07 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.16 2003/01/03 13:40:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
     (MACH_PORT_TYPE_PORT_RIGHTS | MACH_PORT_TYPE_DEAD_NAME)
 #define MACH_PORT_TYPE_ALL_RIGHTS \
     (MACH_PORT_TYPE_PORT_OR_DEAD|MACH_PORT_TYPE_PORT_SET)
+#define MACH_PORT_TYPE_REF_RIGHTS \
+    (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE | MACH_PORT_TYPE_DEAD_NAME)
 	
 
 /* port_deallocate */
@@ -218,7 +220,6 @@ struct mach_right {
 	struct proc *mr_p;		/* points back to struct proc */
 	int mr_type;			/* right type (recv, send, sendonce) */
 	LIST_ENTRY(mach_right) mr_list; /* Right list for a process */
-	LIST_ENTRY(mach_right) mr_listall; /* All processes right list */
 	int mr_refcount;		/* Reference count */
 
 	/* Revelant only if the right is on a port set */
@@ -250,8 +251,6 @@ struct mach_port {
 	struct lock mp_msglock;		/* Lock for the queue */
 	int mp_refcount;		/* Reference count */
 };
-
-extern struct lock mach_right_list_lock;
 
 void mach_port_init(void);
 struct mach_port *mach_port_get(void);
