@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.50 2000/06/05 21:47:11 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.51 2000/06/12 23:35:11 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.50 2000/06/05 21:47:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2000/06/12 23:35:11 sommerfeld Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -270,7 +270,7 @@ recognized:
 
 #ifdef DEBUG
 	if (p->pcs_proc_var != 0) {
-		printf("%s: ", dev->dv_xname);
+		printf("%s: ", sc->sc_dev.dv_xname);
 
 		needcomma = 0;
 		if (p->pcs_proc_var & PCS_VAR_VAXFP) {
