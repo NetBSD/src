@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.50 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.51 1998/12/12 16:36:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1915,15 +1915,18 @@ epmbuffill(v)
 	void *v;
 {
 	struct ep_softc *sc = v;
+	struct mbuf *m;
 	int s, i;
 
 	s = splnet();
 	i = sc->last_mb;
 	do {
-		if (sc->mb[i] == NULL)
-			MGET(sc->mb[i], M_DONTWAIT, MT_DATA);
-		if (sc->mb[i] == NULL)
-			break;
+		if (sc->mb[i] == 0) {
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m == 0)
+				break;
+			sc->mb[i] = m;
+		}
 		i = (i + 1) % MAX_MBS;
 	} while (i != sc->next_mb);
 	sc->last_mb = i;
