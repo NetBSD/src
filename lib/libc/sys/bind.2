@@ -1,4 +1,4 @@
-.\"	$NetBSD: bind.2,v 1.20 2003/01/18 11:33:01 thorpej Exp $
+.\"	$NetBSD: bind.2,v 1.21 2003/03/18 06:44:22 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,6 +57,10 @@ but has no name assigned.
 requests that
 .Fa name
 be assigned to the socket.
+.Fa namelen
+indicates the amount of space pointed to by
+.Fa name ,
+in bytes.
 .Sh NOTES
 Binding a name in the
 .Ux
