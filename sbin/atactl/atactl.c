@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.19 2002/08/15 19:17:04 soren Exp $	*/
+/*	$NetBSD: atactl.c,v 1.20 2002/09/13 18:31:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ void	usage(void);
 void	ata_command(struct atareq *);
 void	print_bitinfo(const char *, const char *, u_int, struct bitinfo *);
 void	print_smart_status(void *vbuf, void *tbuf);
-int	is_smart(int silent);
+int	is_smart(void);
 
 int	fd;				/* file descriptor for device */
 const	char *dvname;			/* device name */
@@ -358,7 +358,7 @@ print_smart_status(void *vbuf, void *tbuf)
  */
 
 int
-is_smart(int silent)
+is_smart(void)
 {
 	int retval = 0;
 	struct atareq req;
@@ -396,9 +396,7 @@ is_smart(int silent)
 					status = "disabled";
 				}
 			}
-			if (!silent || retval == 0) {
-				printf("SMART supported, SMART %s\n", status);
-			}
+			printf("SMART supported, SMART %s\n", status);
 		}
 	}
 	return retval;
@@ -677,33 +675,29 @@ device_smart(int argc, char *argv[])
 		usage();
 
 	if (strcmp(argv[0], "enable") == 0) {
-		if (is_smart(1)) {
-			memset(&req, 0, sizeof(req));
+		memset(&req, 0, sizeof(req));
 
-			req.features = WDSM_ENABLE_OPS;
-			req.command = WDCC_SMART;
-			req.cylinder = htole16(WDSMART_CYL);
-			req.timeout = 1000;
+		req.features = WDSM_ENABLE_OPS;
+		req.command = WDCC_SMART;
+		req.cylinder = htole16(WDSMART_CYL);
+		req.timeout = 1000;
 
-			ata_command(&req);
+		ata_command(&req);
 
-			is_smart(0);
-		}
+		is_smart();
 	} else if (strcmp(argv[0], "disable") == 0) {
-		if (is_smart(1)) {
-			memset(&req, 0, sizeof(req));
+		memset(&req, 0, sizeof(req));
 
-			req.features = WDSM_DISABLE_OPS;
-			req.command = WDCC_SMART;
-			req.cylinder = htole16(WDSMART_CYL);
-			req.timeout = 1000;
+		req.features = WDSM_DISABLE_OPS;
+		req.command = WDCC_SMART;
+		req.cylinder = htole16(WDSMART_CYL);
+		req.timeout = 1000;
 
-			ata_command(&req);
+		ata_command(&req);
 
-			is_smart(0);
-		}
+		is_smart();
 	} else if (strcmp(argv[0], "status") == 0) {
-		if (is_smart(0)) {
+		if (is_smart()) {
 			memset(&inbuf, 0, sizeof(inbuf));
 			memset(&req, 0, sizeof(req));
 
