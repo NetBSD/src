@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.10 1998/08/10 22:34:59 tv Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.11 1998/11/04 19:37:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.10 1998/08/10 22:34:59 tv Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.11 1998/11/04 19:37:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1053,8 +1053,8 @@ ar_rev(sksz)
 		mb.mt_op = MTBSR;
 		mb.mt_count = sksz/phyblk;
 		if (ioctl(arfd, MTIOCTOP, &mb) < 0) {
-			syswarn(1,errno, "Unable to backspace tape %d blocks.",
-			    mb.mt_count);
+			syswarn(1,errno, "Unable to backspace tape %ld blocks.",
+			    (long) mb.mt_count);
 			lstrval = -1;
 			return(-1);
 		}
@@ -1176,8 +1176,8 @@ get_phys()
 	mb.mt_op = MTBSR;
 	mb.mt_count = padsz/phyblk;
 	if (ioctl(arfd, MTIOCTOP, &mb) < 0) {
-		syswarn(1,errno,"Unable to backspace tape over %d pad blocks",
-		    mb.mt_count);
+		syswarn(1,errno,"Unable to backspace tape over %ld pad blocks",
+		    (long)mb.mt_count);
 		return(-1);
 	}
 	return(phyblk);
