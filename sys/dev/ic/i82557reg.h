@@ -1,7 +1,7 @@
-/*	$NetBSD: i82557reg.h,v 1.3 1999/12/12 17:46:36 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.3.4.1 2002/06/06 19:41:29 he Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,6 +39,7 @@
 
 /*
  * Copyright (c) 1995, David Greenman
+ * Copyright (c) 2001 Jonathan Lemon <jlemon@freebsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,11 +64,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: if_fxpreg.h,v 1.11 1997/09/29 11:27:42 davidg Exp
+ *	Id: if_fxpreg.h,v 1.24 2001/05/15 18:52:40 jlemon Exp
  */
-
-#define FXP_VENDORID_INTEL	0x8086
-#define FXP_DEVICEID_i82557	0x1229
 
 #define FXP_PCI_MMBA	0x10
 #define FXP_PCI_IOBA	0x14
@@ -75,15 +73,16 @@
 /*
  * Control/status registers.
  */
-#define	FXP_CSR_SCB_RUSCUS	0	/* scb_rus/scb_cus (1 byte) */
-#define	FXP_CSR_SCB_STATACK	1	/* scb_statack (1 byte) */
-#define	FXP_CSR_SCB_COMMAND	2	/* scb_command (1 byte) */
-#define	FXP_CSR_SCB_INTRCNTL	3	/* scb_intrcntl (1 byte) */
-#define	FXP_CSR_SCB_GENERAL	4	/* scb_general (4 bytes) */
-#define	FXP_CSR_PORT		8	/* port (4 bytes) */
-#define	FXP_CSR_FLASHCONTROL	12	/* flash control (2 bytes) */
-#define	FXP_CSR_EEPROMCONTROL	14	/* eeprom control (2 bytes) */
-#define	FXP_CSR_MDICONTROL	16	/* mdi control (4 bytes) */
+#define	FXP_CSR_SCB_RUSCUS	0x00	/* scb_rus/scb_cus (1 byte) */
+#define	FXP_CSR_SCB_STATACK	0x01	/* scb_statack (1 byte) */
+#define	FXP_CSR_SCB_COMMAND	0x02	/* scb_command (1 byte) */
+#define	FXP_CSR_SCB_INTRCNTL	0x03	/* scb_intrcntl (1 byte) */
+#define	FXP_CSR_SCB_GENERAL	0x04	/* scb_general (4 bytes) */
+#define	FXP_CSR_PORT		0x08	/* port (4 bytes) */
+#define	FXP_CSR_FLASHCONTROL	0x0c	/* flash control (2 bytes) */
+#define	FXP_CSR_EEPROMCONTROL	0x0e	/* eeprom control (2 bytes) */
+#define	FXP_CSR_MDICONTROL	0x10	/* mdi control (4 bytes) */
+#define	FXP_CSR_FLOWCONTROL	0x19	/* flow control (2 bytes) */
 
 /*
  * FOR REFERENCE ONLY, the old definition of FXP_CSR_SCB_RUSCUS:
@@ -110,6 +109,17 @@
 #define FXP_SCB_CUS_SUSPENDED		1
 #define FXP_SCB_CUS_ACTIVE		2
 
+#define	FXP_SCB_INTR_DISABLE		0x01	/* disable all interrupts */
+#define	FXP_SCB_INTR_SWI		0x02	/* generate SWI */
+#define	FXP_SCB_INTMASK_FCP		0x04
+#define	FXP_SCB_INTMASK_ER		0x08
+#define	FXP_SCB_INTMASK_RNR		0x10
+#define	FXP_SCB_INTMASK_CNA		0x20
+#define	FXP_SCB_INTMASK_FR		0x40
+#define	FXP_SCB_INTMASK_CXTNO		0x80
+
+#define	FXP_SCB_STATACK_FCP		0x01	/* flow control pause */
+#define	FXP_SCB_STATACK_ER		0x02	/* early receive */
 #define FXP_SCB_STATACK_SWI		0x04
 #define FXP_SCB_STATACK_MDI		0x08
 #define FXP_SCB_STATACK_RNR		0x10
@@ -160,12 +170,18 @@ struct fxp_cb_ias {
 #define	__FXP_BITFIELD2(a, b)			a, b
 #define	__FXP_BITFIELD3(a, b, c)		a, b, c
 #define	__FXP_BITFIELD4(a, b, c, d)		a, b, c, d
+#define	__FXP_BITFIELD5(a, b, c, d, e)		a, b, c, d, e
 #define	__FXP_BITFIELD6(a, b, c, d, e, f)	a, b, c, d, e, f
+#define	__FXP_BITFIELD7(a, b, c, d, e, f, g)	a, b, c, d, e, f, g
+#define	__FXP_BITFIELD8(a, b, c, d, e, f, g, h)	a, b, c, d, e, f, g, h
 #else
 #define	__FXP_BITFIELD2(a, b)			b, a
 #define	__FXP_BITFIELD3(a, b, c)		c, b, a
 #define	__FXP_BITFIELD4(a, b, c, d)		d, c, b, a
+#define	__FXP_BITFIELD5(a, b, c, d, e)		e, d, c, b, a
 #define	__FXP_BITFIELD6(a, b, c, d, e, f)	f, e, d, c, b, a
+#define	__FXP_BITFIELD7(a, b, c, d, e, f, g)	g, f, e, d, c, b, a
+#define	__FXP_BITFIELD8(a, b, c, d, e, f, g, h)	h, g, f, e, d, c, b, a
 #endif
 
 /*
@@ -175,45 +191,95 @@ struct fxp_cb_config {
 	volatile u_int16_t	cb_status;
 	volatile u_int16_t	cb_command;
 	volatile u_int32_t	link_addr;
-	volatile u_int8_t	__FXP_BITFIELD2(byte_count:6, :2);
-	volatile u_int8_t	__FXP_BITFIELD3(rx_fifo_limit:4,
+
+	/* Bytes 0 - 21 -- common to all i8255x */
+/*0*/	volatile u_int8_t	__FXP_BITFIELD2(byte_count:6, :2);
+/*1*/	volatile u_int8_t	__FXP_BITFIELD3(rx_fifo_limit:4,
 				    tx_fifo_limit:3,
 				    :1);
-	volatile u_int8_t	adaptive_ifs;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD2(rx_dma_bytecount:7, :1);
-	volatile u_int8_t	__FXP_BITFIELD2(tx_dma_bytecount:7,
-				    dma_bce:1);
-	volatile u_int8_t	__FXP_BITFIELD6(late_scb:1, :1,
-				    tno_int:1,
-				    ci_int:1, :3,
+/*2*/	volatile u_int8_t	adaptive_ifs;
+/*3*/	volatile u_int8_t	__FXP_BITFIELD5(mwi_enable:1,	/* 8,9 */
+				    type_enable:1,		/* 8,9 */
+				    read_align_en:1,		/* 8,9 */
+				    end_wr_on_cl:1,		/* 8,9 */
+				    :4);
+/*4*/	volatile u_int8_t	__FXP_BITFIELD2(rx_dma_bytecount:7,
+				    :1);
+/*5*/	volatile u_int8_t	__FXP_BITFIELD2(tx_dma_bytecount:7,
+				    dma_mbce:1);
+/*6*/	volatile u_int8_t	__FXP_BITFIELD8(late_scb:1,	/* 7 */
+				    direct_dma_dis:1,		/* 8,9 */
+				    tno_int_or_tco_en:1,	/* 7,9 */
+				    ci_int:1,
+				    ext_txcb_dis:1,		/* 8,9 */
+				    ext_stats_dis:1,		/* 8,9 */
+				    keep_overrun_rx:1,
 				    save_bf:1);
-	volatile u_int8_t	__FXP_BITFIELD3(disc_short_rx:1,
-				    underrun_retry:2, :5);
-	volatile u_int8_t	__FXP_BITFIELD2(mediatype:1, :7);
-	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD4(:3,
+/*7*/	volatile u_int8_t	__FXP_BITFIELD6(disc_short_rx:1,
+				    underrun_retry:2,
+				    :2,
+				    extended_rfd_en:1,		/* 0 */
+				    two_frames:1,		/* 8,9 */
+				    dyn_tbd:1);			/* 8,9 */
+/*8*/	volatile u_int8_t	__FXP_BITFIELD3(mediatype:1,	/* 7 */
+				    :6,
+				    csma_dis:1);		/* 8,9 */
+/*9*/	volatile u_int8_t	__FXP_BITFIELD6(tcp_udp_cksum:1,/* 9 */
+				    :3,
+				    vlan_tco:1,			/* 8,9 */
+				    link_wake_en:1,		/* 8,9 */
+				    arp_wake_en:1,		/* 8 */
+				    mc_wake_en:1);		/* 8 */
+/*10*/	volatile u_int8_t	__FXP_BITFIELD4(:3,
 				    nsai:1,
 				    preamble_length:2,
 				    loopback:2);
-	volatile u_int8_t	__FXP_BITFIELD2(linear_priority:3, :5);
-	volatile u_int8_t	__FXP_BITFIELD3(linear_pri_mode:1, :3,
+/*11*/	volatile u_int8_t	__FXP_BITFIELD2(linear_priority:3,/* 7 */
+				    :5);
+/*12*/	volatile u_int8_t	__FXP_BITFIELD3(linear_pri_mode:1,/* 7 */
+				    :3,
 				    interfrm_spacing:4);
-	volatile u_int8_t	:8;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD4(promiscuous:1,
-				    bcast_disable:1, :5,
+/*13*/	volatile u_int8_t	:8;
+/*14*/	volatile u_int8_t	:8;
+/*15*/	volatile u_int8_t	__FXP_BITFIELD8(promiscuous:1,
+				    bcast_disable:1,
+				    wait_after_win:1,		/* 8,9 */
+				    :1,
+				    ignore_ul:1,		/* 8,9 */
+				    crc16_en:1,			/* 9 */
+				    :1,
 				    crscdt:1);
-	volatile u_int8_t	:8;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD4(stripping:1,
+/*16*/	volatile u_int8_t	fc_delay_lsb:8;			/* 8,9 */
+/*17*/	volatile u_int8_t	fc_delay_msb:8;			/* 8,9 */
+/*18*/	volatile u_int8_t	__FXP_BITFIELD6(stripping:1,
 				    padding:1,
-				    rcv_crc_xfer:1, :5);
-	volatile u_int8_t	__FXP_BITFIELD3(:6, force_fdx:1,
+				    rcv_crc_xfer:1,
+				    long_rx_en:1,		/* 8,9 */
+				    pri_fc_thresh:3,		/* 8,9 */
+				    :1);
+/*19*/	volatile u_int8_t	__FXP_BITFIELD8(ia_wake_en:1,	/* 8 */
+				    magic_pkt_dis:1,		/* 8,9,!9ER */
+				    tx_fc_dis:1,		/* 8,9 */
+				    rx_fc_restop:1,		/* 8,9 */
+				    rx_fc_restart:1,		/* 8,9 */
+				    fc_filter:1,		/* 8,9 */
+				    force_fdx:1,
 				    fdx_pin_en:1);
-	volatile u_int8_t	__FXP_BITFIELD3(:6, multi_ia:1, :1);
-	volatile u_int8_t	__FXP_BITFIELD3(:3, mc_all:1, :4);
+/*20*/	volatile u_int8_t	__FXP_BITFIELD4(:5,
+				    pri_fc_loc:1		/* 8,9 */,
+				    multi_ia:1,
+				    :1);
+/*21*/	volatile u_int8_t	__FXP_BITFIELD3(:3, mc_all:1, :4);
+
+	/* Bytes 22 - 31 -- i82550 only */
+/*22*/	volatile u_int8_t	__FXP_BITFIELD3(ext_rx_mode:1,
+				    vlan_drop_en:1,
+				    :6);
+	volatile u_int8_t	reserved[9];
 };
+
+#define	FXP_CONFIG_LEN		22	/* i8255x */
+#define	FXP_EXT_CONFIG_LEN	32	/* i82550 */
 
 /*
  * Multicast setup command.
@@ -238,6 +304,11 @@ struct fxp_cb_tx {
 	volatile u_int16_t byte_count;
 	volatile u_int8_t tx_threshold;
 	volatile u_int8_t tbd_number;
+	/*
+	 * If using the extended TxCB feature, there is a
+	 * two TBDs right here.  We handle this in the
+	 * fxp_control_data in i82557var.h.
+	 */
 };
 
 /*
@@ -281,13 +352,26 @@ struct fxp_tbd {
  * we must make them an array of bytes!
  */
 struct fxp_rfa {
+	/* Fields common to all i8255x chips. */
 	volatile u_int16_t rfa_status;
 	volatile u_int16_t rfa_control;
 	volatile u_int8_t link_addr[4];
 	volatile u_int8_t rbd_addr[4];
 	volatile u_int16_t actual_size;
 	volatile u_int16_t size;
+
+	/* Fields available only on the i82550 in extended RFD mode. */
+	volatile u_int16_t vlan_id;
+	volatile u_int8_t rx_parse_stat;
+	volatile u_int8_t reserved;
+	volatile u_int16_t security_stat;
+	volatile u_int8_t cksum_stat;
+	volatile u_int8_t zerocopy_stat;
+	volatile u_int8_t unused[8];
 };
+
+#define	RFA_SIZE		16
+#define	RFA_EXT_SIZE		32
 
 #define FXP_RFA_STATUS_RCOL	0x0001	/* receive collision */
 #define FXP_RFA_STATUS_IAMATCH	0x0002	/* 0 = matches station address */
@@ -355,6 +439,10 @@ struct fxp_stats {
 /*
  * PHY device types (from EEPROM)
  */
+#define	FXP_PHY_DEVICE_MASK	0x3f00
+#define	FXP_PHY_DEVICE_SHIFT	8
+#define	FXP_PHY_DEVADDR_MASK	0x00ff
+#define	FXP_PHY_SERIAL_ONLY	0x8000
 #define FXP_PHY_NONE		0
 #define FXP_PHY_82553A		1
 #define FXP_PHY_82553C		2
@@ -364,3 +452,14 @@ struct fxp_stats {
 #define FXP_PHY_80C24		6
 #define FXP_PHY_82555		7
 #define FXP_PHY_DP83840A	10
+#define	FXP_PHY_DP82555B	11
+
+/*
+ * PCI revisions.
+ */
+#define	FXP_REV_82558_A4	4
+#define	FXP_REV_82558_B0	5
+#define	FXP_REV_82559_A0	8
+#define	FXP_REV_82559S_A	9
+#define	FXP_REV_82550		12
+#define	FXP_REV_82550_C		13
