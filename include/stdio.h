@@ -1,8 +1,8 @@
-/*	$NetBSD: stdio.h,v 1.19 1998/01/19 07:35:06 jtc Exp $	*/
+/*	$NetBSD: stdio.h,v 1.20 1998/02/02 21:07:52 perry Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdio.h	5.17 (Berkeley) 6/3/91
+ *	@(#)stdio.h	8.5 (Berkeley) 4/29/95
  */
 
 #ifndef	_STDIO_H_
@@ -107,6 +107,8 @@ struct __sbuf {
  * that does not match the previous one in _bf.  When this happens,
  * _ub._base becomes non-nil (i.e., a stream has ungetc() data iff
  * _ub._base!=NULL) and _up and _ur save the current values of _p and _r.
+ *
+ * NB: see WARNING above before changing the layout of this structure!
  */
 typedef	struct __sFILE {
 	unsigned char *_p;	/* current position in (some) buffer */
@@ -178,10 +180,11 @@ __END_DECLS
 #define	EOF	(-1)
 
 /*
- * FOPEN_MAX is a minimum maximum, and should be the number of descriptors
- * that the kernel can provide without allocation of a resource that can
- * fail without the process sleeping.  Do not use this for anything.
+ * FOPEN_MAX is a minimum maximum, and is the number of streams that
+ * stdio can provide without attempting to allocate further resources
+ * (which could fail).  Do not use this for anything.
  */
+				/* must be == _POSIX_STREAM_MAX <limits.h> */
 #define	FOPEN_MAX	20	/* must be <= OPEN_MAX <sys/syslimits.h> */
 #define	FILENAME_MAX	1024	/* must be <= PATH_MAX <sys/syslimits.h> */
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: a.out.h,v 1.15 1994/10/26 00:55:42 cgd Exp $	*/
+/*	$NetBSD: a.out.h,v 1.16 1998/02/02 21:07:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993 Theo de Raadt
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)a.out.h	5.6 (Berkeley) 4/30/91
+ *	@(#)a.out.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef	_AOUT_H_

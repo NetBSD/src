@@ -1,6 +1,6 @@
-/*
- * ++Copyright++ 1980, 1983, 1988, 1993
- * -
+/*	$NetBSD: netdb.h,v 1.9 1998/02/02 21:07:35 perry Exp $	*/
+
+/*-
  * Copyright (c) 1980, 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -31,16 +31,19 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
+ *	$Id: netdb.h,v 1.9 1998/02/02 21:07:35 perry Exp $
  * -
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
- *
+ * 
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies, and that
  * the name of Digital Equipment Corporation not be used in advertising or
  * publicity pertaining to distribution of the document or software without
  * specific, written prior permission.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
  * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
@@ -53,18 +56,10 @@
  * --Copyright--
  */
 
-/*
- *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	$NetBSD: netdb.h,v 1.8 1997/10/13 09:26:06 lukem Exp $
- */
-
 #ifndef _NETDB_H_
 #define _NETDB_H_
 
 #include <sys/param.h>
-#if (!defined(BSD)) || (BSD < 199306)
-# include <sys/bitypes.h>
-#endif
 #include <sys/cdefs.h>
 
 #define	_PATH_HEQUIV	"/etc/hosts.equiv"
@@ -152,19 +147,5 @@ void		setnetent __P((int));
 void		setprotoent __P((int));
 void		setservent __P((int));
 __END_DECLS
-
-/* This is nec'y to make this include file properly replace the sun version. */
-#ifdef sun
-#ifdef __GNU_LIBRARY__
-#include <rpc/netdb.h>
-#else
-struct rpcent {
-	char	*r_name;	/* name of server for this rpc program */
-	char	**r_aliases;	/* alias list */
-	int	r_number;	/* rpc program number */
-};
-struct rpcent	*getrpcbyname(), *getrpcbynumber(), *getrpcent();
-#endif /* __GNU_LIBRARY__ */
-#endif /* sun */
 
 #endif /* !_NETDB_H_ */
