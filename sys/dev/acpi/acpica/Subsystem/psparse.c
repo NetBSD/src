@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
- *              xRevision: 142 $
+ *              xRevision: 143 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.10 2003/12/21 07:53:57 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.11 2004/02/14 16:57:25 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmisc - ACPI AML (p-code) execution - specific opcodes
- *              xRevision: 116 $
+ *              xRevision: 118 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.9 2003/12/13 18:11:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.10 2004/02/14 16:57:24 kochi Exp $");
 
 #define __EXMISC_C__
 
@@ -184,7 +184,7 @@ AcpiExGetObjectReference (
 
         default:
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown Reference subtype %X\n",
+            ACPI_REPORT_ERROR (("Unknown Reference subtype in get ref %X\n",
                 ObjDesc->Reference.Opcode));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
@@ -202,8 +202,8 @@ AcpiExGetObjectReference (
 
     default:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "%p has invalid descriptor [%s]\n",
-                ObjDesc, AcpiUtGetDescriptorName (ObjDesc)));
+        ACPI_REPORT_ERROR (("Invalid descriptor type in get ref: %X\n",
+                ACPI_GET_DESCRIPTOR_TYPE (ObjDesc)));
         return_ACPI_STATUS (AE_TYPE);
     }
 
@@ -440,6 +440,8 @@ AcpiExDoConcatenate (
 
         /* Invalid object type, should not happen here */
 
+        ACPI_REPORT_ERROR (("Concat - invalid obj type: %X\n",
+                ACPI_GET_OBJECT_TYPE (ObjDesc1)));
         Status = AE_AML_INTERNAL;
         ReturnDesc = NULL;
     }

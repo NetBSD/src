@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.h,v 1.3 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: acpi_madt.h,v 1.4 2004/02/14 16:59:35 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,13 +34,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * MADT entry structures not defined in actbl.h
- */
-typedef struct {
-	APIC_HEADER_DEF
-} APIC_HEADER;
 
 #define ACPI_PLATFORM_INT_PMI	1
 #define ACPI_PLATFORM_INT_INIT	2
