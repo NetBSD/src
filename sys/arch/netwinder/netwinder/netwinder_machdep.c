@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.42 2003/01/17 23:47:41 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.43 2003/03/28 10:45:40 he Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -956,5 +956,5 @@ kcomcnpollc(dev_t dev, int on)
 
 struct consdev kcomcons = {
 	NULL, NULL, kcomcngetc, kcomcnputc, kcomcnpollc, NULL,
-	NODEV, CN_NORMAL
+	NULL, NULL, NODEV, CN_NORMAL
 };
