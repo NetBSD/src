@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.18 1999/03/30 00:12:14 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.19 1999/03/30 01:53:57 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -95,7 +95,7 @@ void catch_sigterm PROTO ((int));
 static char copyright[] =
 "Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Client V2.0b1pl20";
+static char message [] = "Internet Software Consortium DHCP Client V2.0b1pl21";
 static char contrib [] = "Please contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
 
@@ -1480,7 +1480,12 @@ void make_discover (ip, lease)
 	ip -> client -> packet.hops = 0;
 	ip -> client -> packet.xid = random ();
 	ip -> client -> packet.secs = 0; /* filled in by send_discover. */
-	ip -> client -> packet.flags = htons (BOOTP_BROADCAST); /* XXX */
+
+	if (can_receive_unicast_unconfigured (ip))
+		ip -> client -> packet.flags = 0;
+	else
+		ip -> client -> packet.flags = htons (BOOTP_BROADCAST);
+
 	memset (&(ip -> client -> packet.ciaddr),
 		0, sizeof ip -> client -> packet.ciaddr);
 	memset (&(ip -> client -> packet.yiaddr),
@@ -1599,7 +1604,10 @@ void make_request (ip, lease)
 	} else {
 		memset (&ip -> client -> packet.ciaddr, 0,
 			sizeof ip -> client -> packet.ciaddr);
-		ip -> client -> packet.flags = htons (BOOTP_BROADCAST);
+		if (can_receive_unicast_unconfigured (ip))
+			ip -> client -> packet.flags = 0;
+		else
+			ip -> client -> packet.flags = htons (BOOTP_BROADCAST);
 	}
 
 	memset (&ip -> client -> packet.yiaddr, 0,
@@ -1688,7 +1696,7 @@ void make_decline (ip, lease)
 	ip -> client -> packet.hops = 0;
 	ip -> client -> packet.xid = ip -> client -> xid;
 	ip -> client -> packet.secs = 0; /* Filled in by send_request. */
-	ip -> client -> packet.flags = htons (BOOTP_BROADCAST);
+	ip -> client -> packet.flags = 0;
 
 	/* ciaddr must always be zero. */
 	memset (&ip -> client -> packet.ciaddr, 0,
@@ -1754,8 +1762,9 @@ void make_release (ip, lease)
 	ip -> client -> packet.xid = random ();
 	ip -> client -> packet.secs = 0;
 	ip -> client -> packet.flags = 0;
-	memcpy (&ip -> client -> packet.ciaddr,
-		lease -> address.iabuf, lease -> address.len);
+
+	memset (&ip -> client -> packet.ciaddr, 0,
+		sizeof ip -> client -> packet.ciaddr);
 	memset (&ip -> client -> packet.yiaddr, 0,
 		sizeof ip -> client -> packet.yiaddr);
 	memset (&ip -> client -> packet.siaddr, 0,
