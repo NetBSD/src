@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.33 1999/02/23 03:20:00 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.34 1999/06/07 20:16:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 1999/02/23 03:20:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34 1999/06/07 20:16:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,16 +68,6 @@ struct bootdev_data	*bootdev_data;
 
 void	parse_prom_bootdev __P((void));
 int	atoi __P((char *));
-
-struct devnametobdevmaj alpha_nam2blk[] = {
-	{ "st",		2 },
-	{ "cd",		3 },
-	{ "md",		6 },
-	{ "sd",		8 },
-	{ "fd",		0 },
-	{ "wd",		4 },
-	{ NULL,		0 },
-};
 
 /*
  * configure:
@@ -115,7 +105,7 @@ cpu_rootconf()
 	if (booted_device == NULL)
 		printf("WARNING: can't figure what device matches \"%s\"\n",
 		    bootinfo.booted_dev);
-	setroot(booted_device, booted_partition, alpha_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 void

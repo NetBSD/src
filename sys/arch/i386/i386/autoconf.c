@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 1999/04/01 00:37:50 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 1999/06/07 20:16:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,16 +78,6 @@ extern int i386_ndisks;
  */
 extern int	cold;		/* cold start flag initialized in locore.s */
 
-struct devnametobdevmaj i386_nam2blk[] = {
-	{ "wd",		0 },
-	{ "sd",		4 },
-	{ "cd",		6 },
-	{ "mcd",	7 },
-	{ "fd",		2 },
-	{ "md",		17 },
-	{ NULL,		0 },
-};
-
 /*
  * Determine i/o configuration for a machine.
  */
@@ -126,7 +116,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, i386_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 /*
@@ -197,7 +187,7 @@ matchbiosdisks()
 			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
 			    dv->dv_unit);
 
-			for (d = i386_nam2blk; d->d_name &&
+			for (d = dev_name2blk; d->d_name &&
 			   strcmp(d->d_name, dv->dv_cfdata->cf_driver->cd_name);
 			   d++);
 			if (d->d_name == NULL)
@@ -282,7 +272,7 @@ match_harddisk(dv, bid)
 	/*
 	 * lookup major number for disk block device
 	 */
-	i = i386_nam2blk;
+	i = dev_name2blk;
 	while (i->d_name &&
 	       strcmp(i->d_name, dv->dv_cfdata->cf_driver->cd_name))
 		i++;
@@ -437,16 +427,16 @@ found:
 		return;
 
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	for (i = 0; i386_nam2blk[i].d_name != NULL; i++)
-		if (majdev == i386_nam2blk[i].d_maj)
+	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
+		if (majdev == dev_name2blk[i].d_maj)
 			break;
-	if (i386_nam2blk[i].d_name == NULL)
+	if (dev_name2blk[i].d_name == NULL)
 		return;
 
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
-	sprintf(buf, "%s%d", i386_nam2blk[i].d_name, unit);
+	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {

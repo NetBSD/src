@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1999/06/04 13:55:37 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.19 1999/06/07 20:16:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -518,7 +518,7 @@ cpu_rootconf()
 	bootdv = bp == NULL ? NULL : bp->dev;
 	bootpartition = bp == NULL ? 0 : bp->val[2];
 
-	setroot(bootdv, bootpartition, dev_name2blk);
+	setroot(bootdv, bootpartition);
 }
 
 /*
