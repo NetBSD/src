@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.74 2000/01/04 06:31:39 chopps Exp $
+#	$NetBSD: files.pci,v 1.75 2000/01/26 06:27:32 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -15,9 +15,8 @@ file	dev/pci/pci_subr.c		pci
 
 # Adaptec 3940, 2940, and aic78[5678]0 SCSI controllers
 # device declaration in sys/conf/files
-attach	ahc at pci with ahc_pci
+attach	ahc at pci with ahc_pci: ahc_seeprom, smc93cx6
 file	dev/pci/ahc_pci.c		ahc_pci
-file	dev/ic/smc93cx6.c		ahc_pci
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
