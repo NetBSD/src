@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.7 2003/03/24 17:07:17 matt Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.8 2003/06/12 19:21:09 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -124,8 +124,10 @@ gt_attach(struct device *parent, struct device *self, void *aux)
 	gt->gt_memt = &gt_mem_bs_tag;
 	gt->gt_pci0_memt = &gt_pci0_mem_bs_tag;
 	gt->gt_pci0_iot =  &gt_pci0_io_bs_tag;
+	gt->gt_pci0_host = TRUE;
 	gt->gt_pci1_memt = &gt_pci1_mem_bs_tag;
 	gt->gt_pci1_iot =  &gt_pci1_io_bs_tag;
+	gt->gt_pci1_host = TRUE;
 
 	gt->gt_memh = gt_memh;
 
