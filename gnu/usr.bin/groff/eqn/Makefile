@@ -1,10 +1,15 @@
-#	$NetBSD: Makefile,v 1.13 2000/01/23 22:17:11 mycroft Exp $
+#	$NetBSD: Makefile,v 1.14 2001/04/19 14:41:13 wiz Exp $
+
+.include "../Makefile.lib"
+
+DIST=		${IDIST}/src/preproc/eqn
+.PATH:		${DIST}
 
 PROG=		eqn
 SRCS=		main.cc lex.cc  box.cc limit.cc list.cc over.cc text.cc\
 		script.cc mark.cc other.cc delim.cc sqrt.cc pile.cc special.cc\
 		eqn.cc
-CPPFLAGS+=	-I. -I$(.CURDIR)/../include
+CPPFLAGS+=	-I${DIST}
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
 
@@ -20,6 +25,4 @@ realall: neqn
 neqn:	neqn.sh
 	sed -e 's/@g@/$(g)/g' ${.ALLSRC} > ${.TARGET}
 
-.include "../../Makefile.inc"
-.include "../Makefile.cfg"
 .include <bsd.prog.mk>

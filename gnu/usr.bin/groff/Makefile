@@ -1,20 +1,12 @@
-#	$NetBSD: Makefile,v 1.11 2001/01/09 03:13:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2001/04/19 14:40:40 wiz Exp $
 
-.include <bsd.own.mk>
+SUBDIR=	libbib libdriver libgroff .WAIT addftinfo devices eqn grn \
+	grodvi groff grog grohtml grolbp grolj4 grops grotty hpftodit \
+	indxbib lkbib lookbib man mm nroff pfbtops pic refer \
+	tbl tfmtodit tmac troff
 
-SUBDIR=	grog nroff libgroff libdriver libbib .WAIT \
-	addftinfo eqn grodvi groff grolj4 grops grotty hpftodit indxbib \
-	lkbib lookbib pfbtops pic psbb refer tbl tfmtodit troff
-
-.if ${MKSHARE} != "no" || \
-	make(clean) || make(cleandir) || make(distclean) || make(obj)
-SUBDIR+=devices tmac mm man
-.endif
-
-# don't do xditview; we don't want to have to deal w/X not being installed
-#SUBDIR+=	xditview
-
-# BSD already provides soelim and afmtodit requires perl...
-MISC=		soelim afmtodit
+# afmtodit is a perl script; xditview an X program (we can't assume X is
+# installed); NetBSD has its own soelim.
+MISC=	afmtodit xditview soelim
 
 .include <bsd.subdir.mk>

@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/25 10:11:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2001/04/19 14:40:41 wiz Exp $
+
+.include "../Makefile.lib"
+
+DIST=		${IDIST}/src/utils/addftinfo
+.PATH:		${DIST}
 
 PROG=		addftinfo
 SRCS=		addftinfo.cc guess.cc
-CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
 
-.include "../../Makefile.inc"
-.include "../Makefile.cfg"
 .include <bsd.prog.mk>

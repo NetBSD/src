@@ -1,13 +1,11 @@
-#	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$NetBSD: Makefile.dev,v 1.26 2000/01/23 22:17:10 mycroft Exp $
+#	$NetBSD: Makefile.dev,v 1.27 2001/04/19 14:40:43 wiz Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
 
-.include <bsd.own.mk>
+.MAIN: all
 
-DEVICES_=no_libraries
-.include "../Makefile.cfg"
+.include <bsd.own.mk>
 
 # XXX -- this depends on ../include/defs.h
 FONTDIR=	/usr/share/groff_font
@@ -17,7 +15,9 @@ FONTOWN?=	${FILESOWN}
 FONTGRP?=	${FILESGRP}
 FONTMODE?=	${FILESMODE}
 
-.MAIN: all
+PSPRINT=	lpr
+DVIPRINT=	lpr -d
+BROKEN_SPOOLER_FLAGS=7
 
 .if ${MKSHARE} != "no"
 realall:	$(FONTFILES)

@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/18 05:59:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2001/04/19 14:41:30 wiz Exp $
 
-MAN=	groff_char.7 groff_font.5 groff_out.5
+.include "../Makefile.path"
 
-.include "../Makefile.cfg"
+DIST=	${IDIST}/man
+.PATH:	${DIST}
+
+MAN=	groff.7 groff_char.7 groff_font.5 groff_out.5 roff.7
+
 .include <bsd.prog.mk>
