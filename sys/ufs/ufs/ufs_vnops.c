@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.43 1998/06/24 20:58:49 sommerfe Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.44 1998/07/28 18:23:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1114,7 +1114,7 @@ abortit:
 			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
 			    sizeof (struct dirtemplate), (off_t)0,
 			    UIO_SYSSPACE, IO_NODELOCKED,
-			    tcnp->cn_cred, (int *)0, (struct proc *)0);
+			    tcnp->cn_cred, NULL, (struct proc *)0);
 			if (error == 0) {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 				if (fvp->v_mount->mnt_maxsymlinklen <= 0 &&
@@ -1142,7 +1142,7 @@ abortit:
 					    sizeof (struct dirtemplate),
 					    (off_t)0, UIO_SYSSPACE,
 					    IO_NODELOCKED|IO_SYNC,
-					    tcnp->cn_cred, (int *)0,
+					    tcnp->cn_cred, NULL,
 					    (struct proc *)0);
 					cache_purge(fdvp);
 				}
@@ -1284,7 +1284,7 @@ ufs_mkdir(v)
 
 	error = vn_rdwr(UIO_WRITE, tvp, (caddr_t)&dirtemplate,
 	    sizeof (dirtemplate), (off_t)0, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, (int *)0, (struct proc *)0);
+	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, NULL, (struct proc *)0);
 	if (error) {
 		dp->i_ffs_nlink--;
 		dp->i_flag |= IN_CHANGE;
@@ -1430,7 +1430,7 @@ ufs_symlink(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, (int *)0,
+		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
 		    (struct proc *)0);
 	vput(vp);
 	return (error);
