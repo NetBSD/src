@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.28 2002/04/25 15:06:35 atatat Exp $
+#	$NetBSD: INSTALL,v 1.29 2002/07/05 13:40:15 abs Exp $
 #
 # INSTALL -- install kernel
 #
@@ -28,13 +28,14 @@ file-system 	NFS				# Network File System client
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 options 	KMEMSTATS			# saves about 50k
 options 	INET				# IP + ICMP + TCP + UDP
 
 #options 	USERCONF			# userconf(4) support
 options		PIPE_SOCKETPAIR			# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # pc532 special options
 options 	CPU30MHZ			# necessary for fast machines

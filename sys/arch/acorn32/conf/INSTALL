@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.10 2002/04/25 15:06:20 atatat Exp $
+#	$NetBSD: INSTALL,v 1.11 2002/07/05 13:40:10 abs Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.10 $"
+#ident		"INSTALL-$Revision: 1.11 $"
 
 # estimated number of users
 maxusers	32
@@ -70,6 +70,8 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER
+
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 
@@ -128,7 +130,8 @@ options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Development and Debugging options
 
