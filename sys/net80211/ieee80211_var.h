@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.12 2004/07/23 07:24:21 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.13 2004/07/23 08:31:39 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -196,7 +196,7 @@ extern struct ieee80211com_head ieee80211com_head;
 /* ic_flags */
 #define	IEEE80211_F_ASCAN	0x00000001	/* STATUS: active scan */
 #define	IEEE80211_F_SIBSS	0x00000002	/* STATUS: start IBSS */
-#define	IEEE80211_F_WEPON	0x00000100	/* CONF: WEP enabled */
+#define	IEEE80211_F_PRIVACY	0x00000100	/* CONF: WEP enabled */
 #define	IEEE80211_F_IBSSON	0x00000200	/* CONF: IBSS creation enable */
 #define	IEEE80211_F_PMGTON	0x00000400	/* CONF: Power mgmt enable */
 #define	IEEE80211_F_DESBSSID	0x00000800	/* CONF: des_bssid is set */
