@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.41 2001/01/27 10:39:33 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.42 2001/01/27 11:07:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ struct pool rttimer_pool;	/* pool for rttimer structures */
 struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 
 static int rtdeletemsg __P((struct rtentry *));
-static int rtflushit __P((struct radix_node *, void *));
+static int rtflushclone1 __P((struct radix_node *, void *));
 static void rtflushclone __P((struct radix_node_head *, struct rtentry *));
 
 void
@@ -406,7 +406,7 @@ rtdeletemsg(rt)
 }
 
 static int
-rtflushit(rn, arg)
+rtflushclone1(rn, arg)
 	struct radix_node *rn;
 	void *arg;
 {
@@ -431,7 +431,7 @@ rtflushclone(rnh, parent)
 	if (!rnh->rnh_walktree)
 		panic("rtflushclone: no rnh_walktree");
 #endif
-	rnh->rnh_walktree(rnh, rtflushit, (void *)parent);
+	rnh->rnh_walktree(rnh, rtflushclone1, (void *)parent);
 }
 
 /*
