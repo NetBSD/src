@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43 1996/10/19 00:54:22 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.44 1996/10/19 18:42:12 perry Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -16,7 +16,6 @@ SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	chown.o chroot.o \
-	clock_gettime.o clock_settime.o clock_getres.o \
 	close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o \
