@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.51 1999/08/14 02:17:17 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.52 1999/08/24 23:29:08 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -712,7 +712,7 @@ fdesc_readdir(v)
 		struct fdesc_target *ft;
 
 		if (i >= nfdesc_targets)
-			return EINVAL;
+			return 0;
 
 		if (ap->a_ncookies) {
 			ncookies = min(ncookies, (nfdesc_targets - i));
