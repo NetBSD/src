@@ -1,4 +1,4 @@
-/*	$NetBSD: threadlib.h,v 1.2 2003/01/19 20:46:11 thorpej Exp $	*/
+/*	$NetBSD: threadlib.h,v 1.3 2003/01/19 21:06:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 
 #ifndef __LIBC_THREAD_STUBS
 
+__BEGIN_DECLS
 int	__libc_mutex_init(mutex_t *, const mutexattr_t *);
 int	__libc_mutex_lock(mutex_t *);
 int	__libc_mutex_trylock(mutex_t *);
@@ -86,6 +87,7 @@ int	__libc_mutex_destroy(mutex_t *);
 int	__libc_mutexattr_init(mutexattr_t *);
 int	__libc_mutexattr_settype(mutexattr_t *, int);
 int	__libc_mutexattr_destroy(mutexattr_t *);
+__END_DECLS
 
 #define	mutex_init(m, a)	__libc_mutex_init((m), (a))
 #define	mutex_lock(m)		__libc_mutex_lock((m))
@@ -97,12 +99,14 @@ int	__libc_mutexattr_destroy(mutexattr_t *);
 #define	mutexattr_settype(ma, t) __libc_mutexattr_settype((ma), (t))
 #define	mutexattr_destroy(ma)	__libc_mutexattr_destroy((ma))
 
+__BEGIN_DECLS
 int	__libc_cond_init(cond_t *, const condattr_t *);
 int	__libc_cond_signal(cond_t *);
 int	__libc_cond_broadcast(cond_t *);
 int	__libc_cond_wait(cond_t *, mutex_t *);
 int	__libc_cond_timedwait(cond_t *, mutex_t *, const struct timespec *);
 int	__libc_cond_destroy(cond_t *);
+__END_DECLS
 
 #define	cond_init(c, t, a)     	__libc_cond_init((c), (a))
 #define	cond_signal(c)		__libc_cond_signal((c))
@@ -111,6 +115,7 @@ int	__libc_cond_destroy(cond_t *);
 #define	cond_timedwait(c, m, t)	__libc_cond_timedwait((c), (m), (t))
 #define	cond_destroy(c)		__libc_cond_destroy((c))
 
+__BEGIN_DECLS
 int	__libc_rwlock_init(rwlock_t *, const rwlockattr_t *);
 int	__libc_rwlock_rdlock(rwlock_t *);
 int	__libc_rwlock_wrlock(rwlock_t *);
@@ -118,6 +123,7 @@ int	__libc_rwlock_tryrdlock(rwlock_t *);
 int	__libc_rwlock_trywrlock(rwlock_t *);
 int	__libc_rwlock_unlock(rwlock_t *);
 int	__libc_rwlock_destroy(rwlock_t *);
+__END_DECLS
 
 #define	rwlock_init(l, a)	__libc_rwlock_init((l), (a))
 #define	rwlock_rdlock(l)	__libc_rwlock_rdlock((l))
@@ -127,25 +133,32 @@ int	__libc_rwlock_destroy(rwlock_t *);
 #define	rwlock_unlock(l)	__libc_rwlock_unlock((l))
 #define	rwlock_destroy(l)	__libc_rwlock_destroy((l))
 
+__BEGIN_DECLS
 int	__libc_thr_keycreate(thread_key_t *, void (*)(void *));
 int	__libc_thr_setspecific(thread_key_t, const void *);
 void	*__libc_thr_getspecific(thread_key_t);
 int	__libc_thr_keydelete(thread_key_t);
+__END_DECLS
 
 #define	thr_keycreate(k, d)	__libc_thr_keycreate((k), (d))
 #define	thr_setspecific(k, p)	__libc_thr_setspecific((k), (p))
 #define	thr_getspecific(k)	__libc_thr_getspecific((k))
 #define	thr_keydelete(k)	__libc_thr_keydelete((k))
 
+__BEGIN_DECLS
 int	__libc_thr_once(once_t *, void (*)(void));
 int	__libc_thr_sigsetmask(int, const sigset_t *, sigset_t *);
 thr_t	__libc_thr_self(void);
 int	*__libc_thr_errno(void);
 
+extern int __isthreaded;
+__END_DECLS
+
 #define	thr_once(o, f)		__libc_thr_once((o), (f))
 #define	thr_sigsetmask(f, n, o)	__libc_thr_sigsetmask((f), (n), (o))
 #define	thr_self()		__libc_thr_self()
 #define	thr_errno()		__libc_thr_errno()
+#define	thr_enabled()		(__isthreaded)
 
 #endif /* __LIBC_THREAD_STUBS */
 
