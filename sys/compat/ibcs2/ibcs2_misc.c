@@ -43,7 +43,7 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
- *	$Id: ibcs2_misc.c,v 1.1 1994/08/24 19:13:56 mycroft Exp $
+ *	$Id: ibcs2_misc.c,v 1.2 1994/09/05 01:29:03 mycroft Exp $
  */
 
 /*
@@ -68,6 +68,7 @@
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
@@ -191,6 +192,16 @@ ibcs2bsd_sig(sig)
 		return NOSIG;
 	else
 		return ibcs2bsd_sigtbl[sig];
+}
+
+int
+bsd2ibcs_sig(sig)
+	int sig;
+{
+	if (sig < 1 || sig >= NSIG)
+		return NOSIG;
+	else
+		return bsd2ibcs_sigtbl[sig];
 }
 
 static sigset_t
@@ -1722,13 +1733,30 @@ ibcs2_times(p, uap, retval)
 	return copyout(&tms, uap->tp, sizeof(tms));
 }
 
+struct ibcs2_stime_args {
+	long *timep;
+};
+
 int
 ibcs2_stime(p, uap, retval)
 	struct proc *p;
-	void *uap;
+	struct ibcs2_stime_args *uap;
 	int *retval;
 {
-	return EINVAL;		/* XXX - TODO */
+	int error;
+	struct settimeofday_args {
+		struct  timeval *tv;
+		struct  timezone *tzp;
+	} sa;
+
+	sa.tv = STACK_ALLOC();
+	sa.tzp = NULL;
+	if (error = copyin((caddr_t)uap->timep, &sa.tv->tv_sec, sizeof(long)))
+		return error;
+	sa.tv->tv_usec = 0;
+	if (error = settimeofday(p, &sa, retval))
+		return EPERM;
+	return 0;
 }
 
 int
@@ -1740,22 +1768,69 @@ ibcs2_ptrace(p, uap, retval)
 	return EINVAL;		/* XXX - TODO */
 }
 
+struct ibcs2_utimbuf {
+	time_t actime;
+	time_t modtime;
+};
+
+struct ibcs2_utime_args {
+	char *path;
+	struct ibcs2_utimbuf *buf;
+};
+
 int
 ibcs2_utime(p, uap, retval)
 	struct proc *p;
-	void *uap;
+	struct ibcs2_utime_args *uap;
 	int *retval;
 {
-	return EINVAL;		/* XXX - TODO */
+	int error;
+	struct utimes_args {
+		char    *path;
+		struct  timeval *tptr;
+	} sa;
+
+	sa.path = uap->path;
+	if (uap->buf) {
+		struct ibcs2_utimbuf ubuf;
+
+		if (error = copyin((caddr_t)uap->buf, (caddr_t)&ubuf,
+				   sizeof(ubuf)))
+			return error;
+		sa.tptr = STACK_ALLOC();
+		sa.tptr[0].tv_sec = ubuf.actime;
+		sa.tptr[0].tv_usec = 0;
+		sa.tptr[1].tv_sec = ubuf.modtime;
+		sa.tptr[1].tv_usec = 0;
+	} else
+		sa.tptr = NULL;
+	return utimes(p, &sa, retval);
 }
+
+struct ibcs2_nice_args {
+	int incr;
+};
 
 int
 ibcs2_nice(p, uap, retval)
 	struct proc *p;
-	void *uap;
+	struct ibcs2_nice_args *uap;
 	int *retval;
 {
-	return EINVAL;		/* XXX - TODO */
+	int error, cur_nice = p->p_nice;
+	struct setpriority_args {
+		int     which;
+		int     who;
+		int     prio;
+	} sa;
+
+	sa.which = PRIO_PROCESS;
+	sa.who = 0;
+	sa.prio = p->p_nice + uap->incr;
+	if (error = setpriority(p, &sa, retval))
+		return EPERM;
+	*retval = p->p_nice;
+	return 0;
 }
 
 /*
@@ -1814,30 +1889,113 @@ ibcs2_pgrpsys(p, uap, retval)
 	}
 }
 
+struct ibcs2_plock_args {
+	int cmd;
+};
+
+#define IBCS2_UNLOCK	0
+#define IBCS2_PROCLOCK	1
+#define IBCS2_TEXTLOCK	2
+#define IBCS2_DATALOCK	4
+
+/*
+ * XXX - need to check for nested calls
+ */
+
 int
 ibcs2_plock(p, uap, retval)
 	struct proc *p;
-	void *uap;
+	struct ibcs2_plock_args *uap;
 	int *retval;
 {
-	return EINVAL;		/* XXX - TODO */
+	int error;
+	
+        if (error = suser(p->p_ucred, &p->p_acflag))
+                return EPERM;
+	switch(uap->cmd) {
+	case IBCS2_UNLOCK:
+	case IBCS2_PROCLOCK:
+	case IBCS2_TEXTLOCK:
+	case IBCS2_DATALOCK:
+		return 0;	/* XXX - TODO */
+	}
+	return EINVAL;
 }
+
+#define SCO_A_REBOOT        1
+#define SCO_A_SHUTDOWN      2
+#define SCO_A_REMOUNT       4
+#define SCO_A_CLOCK         8
+#define SCO_A_SETCONFIG     128
+#define SCO_A_GETDEV        130
+
+#define SCO_AD_HALT         0
+#define SCO_AD_BOOT         1
+#define SCO_AD_IBOOT        2
+#define SCO_AD_PWRDOWN      3
+#define SCO_AD_PWRNAP       4
+
+#define SCO_AD_PANICBOOT    1
+
+#define SCO_AD_GETBMAJ      0
+#define SCO_AD_GETCMAJ      1
+
+struct ibcs2_uadmin_args {
+	int cmd;
+	int func;
+	caddr_t data;
+};
 
 int
 ibcs2_uadmin(p, uap, retval)
 	struct proc *p;
-	void *uap;
+	struct ibcs2_uadmin_args *uap;
 	int *retval;
 {
-	return EINVAL;		/* XXX - TODO */
+	switch(uap->cmd) {
+	case SCO_A_REBOOT:
+	case SCO_A_SHUTDOWN:
+		switch(uap->func) {
+		case SCO_AD_HALT:
+		case SCO_AD_PWRDOWN:
+		case SCO_AD_PWRNAP:
+			reboot(RB_HALT);
+		case SCO_AD_BOOT:
+		case SCO_AD_IBOOT:
+			reboot(RB_AUTOBOOT);
+		}
+		return EINVAL;
+	case SCO_A_REMOUNT:
+	case SCO_A_CLOCK:
+	case SCO_A_SETCONFIG:
+		return 0;
+	case SCO_A_GETDEV:
+		return EINVAL;	/* XXX - TODO */
+	}
+	return EINVAL;
 }
+
+struct ibcs2_sysfs_args {
+	int cmd;
+	caddr_t d1;
+	char *buf;
+};
+
+#define IBCS2_GETFSIND        1
+#define IBCS2_GETFSTYP        2
+#define IBCS2_GETNFSTYP       3
 
 int
 ibcs2_sysfs(p, uap, retval)
 	struct proc *p;
-	void *uap;
+	struct ibcs2_sysfs_args *uap;
 	int *retval;
 {
+	switch(uap->cmd) {
+	case IBCS2_GETFSIND:
+	case IBCS2_GETFSTYP:
+	case IBCS2_GETNFSTYP:
+	}
 	return EINVAL;		/* XXX - TODO */
 }
 
@@ -1848,4 +2006,84 @@ ibcs2_poll(p, uap, retval)
 	int *retval;
 {
 	return EINVAL;		/* XXX - TODO */
+}
+
+struct ibcs2_kill_args {
+	int pid;
+	int signo;
+};
+
+int
+ibcs2_kill(p, uap, retval)
+	struct proc *p;
+	struct ibcs2_kill_args *uap;
+	int *retval;
+{
+
+	uap->signo = ibcs2bsd_sig(uap->signo);
+	if (uap->signo == NOSIG)
+		return EINVAL;
+	return kill(p, uap, retval);
+}
+
+struct xenix_rdchk_args {
+	int fd;
+};
+
+int
+xenix_rdchk(p, uap, retval)
+	struct proc *p;
+	struct xenix_rdchk_args *uap;
+	int *retval;
+{
+	int error;
+	struct ioctl_args {
+		int     fd;
+		int     com;
+		caddr_t data;
+	} sa;
+
+	sa.fd = uap->fd;
+	sa.com = FIONREAD;
+	sa.data = STACK_ALLOC();
+	if (error = ioctl(p, &sa, retval))
+		return error;
+	*retval = (*((int*)sa.data)) ? 1 : 0;
+	return 0;
+}
+
+struct xenix_chsize_args {
+	int fd;
+	long size;
+};
+
+int
+xenix_chsize(p, uap, retval)
+	struct proc *p;
+	struct xenix_chsize_args *uap;
+	int *retval;
+{
+	struct ftruncate_args {
+		int     fd;
+		int     pad;
+		off_t   length;
+	} sa;
+
+	sa.fd = uap->fd;
+	sa.pad = 0;
+	sa.length = uap->size;
+	return ftruncate(p, &sa, retval);
+}
+
+struct xenix_nap_args {
+	int millisec;
+};
+
+int
+xenix_nap(p, uap, retval)
+	struct proc *p;
+	struct xenix_nap_args *uap;
+	int *retval;
+{
+	return ENOSYS;
 }
