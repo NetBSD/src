@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.34 2002/08/06 06:26:20 chs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.35 2003/02/02 20:43:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -77,22 +77,24 @@ static void legacy_int_init __P((void));
 
 int imask[NIPL];
 
-int intrtype[NIRQ], intrmask[NIRQ], intrlevel[NIRQ];
-struct intrhand *intrhand[NIRQ];
+struct intrsource {
+	int is_type;
+	int is_level;
+	int is_hwirq;
+	int is_mask;
+	struct intrhand *is_hand;
+	struct evcnt is_ev;
+	char is_source[16];
+};
 
-static u_char hwirq[NIRQ], virq[ICU_LEN];
+static struct intrsource intrsources[NIRQ];
+
+static u_char virq[ICU_LEN];
 static int virq_max = 0;
 
 static u_char *obio_base;
 
 extern u_int *heathrow_FCR;
-
-#ifdef MULTIPROCESSOR
-#define ipending	(curcpu()->ci_ipending)
-#define cpl		(curcpu()->ci_cpl)
-#else
-volatile int cpl, ipending;
-#endif
 
 #define IPI_VECTOR 64
 
@@ -128,7 +130,7 @@ mapirq(irq)
 	if (v > HWIRQ_MAX)
 		panic("virq overflow");
 
-	hwirq[v] = irq;
+	intrsources[v].is_hwirq = irq;
 	virq[irq] = v;
 
 	return v;
@@ -224,21 +226,22 @@ void
 intr_calculatemasks()
 {
 	int irq, level;
+	struct intrsource *is;
 	struct intrhand *q;
 
 	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < NIRQ; irq++) {
+	for (irq = 0, is = intrsources; irq < NIRQ; irq++, is++) {
 		register int levels = 0;
-		for (q = intrhand[irq]; q; q = q->ih_next)
+		for (q = is->is_hand; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
+		is->is_level = levels;
 	}
 
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
 		register int irqs = 0;
-		for (irq = 0; irq < NIRQ; irq++)
-			if (intrlevel[irq] & (1 << level))
+		for (irq = 0, is = intrsources; irq < NIRQ; irq++, is++)
+			if (is->is_level & (1 << level))
 				irqs |= 1 << irq;
 		imask[level] = irqs;
 	}
@@ -299,28 +302,28 @@ intr_calculatemasks()
 	imask[IPL_SERIAL] |= imask[IPL_HIGH];
 
 	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < NIRQ; irq++) {
+	for (irq = 0, is = intrsources; irq < NIRQ; irq++, is++) {
 		register int irqs = 1 << irq;
-		for (q = intrhand[irq]; q; q = q->ih_next)
+		for (q = is->is_hand; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs;
+		is->is_mask = irqs;
 	}
 
 	/* Lastly, enable IRQs actually in use. */
 	if (have_openpic) {
 		for (irq = 0; irq < ICU_LEN; irq++)
 			openpic_disable_irq(irq);
-		for (irq = 0; irq < NIRQ; irq++) {
-			if (intrhand[irq])
-				openpic_enable_irq(hwirq[irq], intrtype[irq]);
+		for (irq = 0, is = intrsources; irq < NIRQ; irq++, is++) {
+			if (is->is_hand != NULL)
+				openpic_enable_irq(is->is_hwirq, is->is_type);
 		}
 	} else {
 		out32rb(INT_ENABLE_REG_L, 0);
 		if (heathrow_FCR)
 			out32rb(INT_ENABLE_REG_H, 0);
-		for (irq = 0; irq < NIRQ; irq++) {
-			if (intrhand[irq])
-				gc_enable_irq(hwirq[irq]);
+		for (irq = 0, is = intrsources; irq < NIRQ; irq++, is++) {
+			if (is->is_hand)
+				gc_enable_irq(is->is_hwirq);
 		}
 	}
 }
@@ -358,17 +361,19 @@ intr_typename(type)
  * Register an interrupt handler.
  */
 void *
-intr_establish(irq, type, level, ih_fun, ih_arg)
-	int irq;
+intr_establish(hwirq, type, level, ih_fun, ih_arg)
+	int hwirq;
 	int type;
 	int level;
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
 {
 	struct intrhand **p, *q, *ih;
+	struct intrsource *is;
 	static struct intrhand fakehand = {fakeintr};
+	int irq;
 
-	irq = mapirq(irq);
+	irq = mapirq(hwirq);
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
@@ -378,20 +383,28 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq (%d) or type (%d)", irq, type);
 
-	switch (intrtype[irq]) {
+	is = &intrsources[irq];
+
+	switch (is->is_type) {
 	case IST_NONE:
-		intrtype[irq] = type;
+		is->is_type = type;
 		break;
 	case IST_EDGE:
 	case IST_LEVEL:
-		if (type == intrtype[irq])
+		if (type == is->is_type)
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE)
 			panic("intr_establish: can't share %s with %s",
-			    intr_typename(intrtype[irq]),
+			    intr_typename(is->is_type),
 			    intr_typename(type));
 		break;
+	}
+	if (is->is_hand == NULL) {
+		snprintf(is->is_source, sizeof(is->is_source), "irq %d",
+		    is->is_hwirq);
+		evcnt_attach_dynamic(&is->is_ev, EVCNT_TYPE_INTR, NULL,
+		    have_openpic ? "openpic" : "pic", is->is_source);
 	}
 
 	/*
@@ -399,7 +412,7 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * generally small.
 	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
+	for (p = &is->is_hand; (q = *p) != NULL; p = &q->ih_next)
 		;
 
 	/*
@@ -417,7 +430,6 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
@@ -435,6 +447,7 @@ intr_disestablish(arg)
 {
 	struct intrhand *ih = arg;
 	int irq = ih->ih_irq;
+	struct intrsource *is = &intrsources[irq];
 	struct intrhand **p, *q;
 
 	if (!LEGAL_IRQ(irq))
@@ -444,7 +457,7 @@ intr_disestablish(arg)
 	 * Remove the handler from the chain.
 	 * This is O(n^2), too.
 	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
+	for (p = &is->is_hand; (q = *p) != NULL && q != ih; p = &q->ih_next)
 		;
 	if (q)
 		*p = q->ih_next;
@@ -454,8 +467,10 @@ intr_disestablish(arg)
 
 	intr_calculatemasks();
 
-	if (intrhand[irq] == NULL)
-		intrtype[irq] = IST_NONE;
+	if (is->is_hand == NULL) {
+		is->is_type = IST_NONE;
+		evcnt_detach(&is->is_ev);
+	}
 }
 
 #define HH_INTR_SECONDARY 0xf80000c0
@@ -470,6 +485,8 @@ ext_intr()
 {
 	int irq;
 	int pcpl, msr, r_imen;
+	struct cpu_info *ci = curcpu();
+	struct intrsource *is;
 	struct intrhand *ih;
 	u_long int_state;
 
@@ -482,7 +499,7 @@ ext_intr()
 	}
 #endif
 
-	pcpl = cpl;
+	pcpl = ci->ci_cpl;
 	msr = mfmsr();
 
 	int_state = gc_read_irq();
@@ -500,24 +517,26 @@ start:
 	irq = 31 - cntlzw(int_state);
 	r_imen = 1 << irq;
 
+	is = &intrsources[irq];
+
 	if ((pcpl & r_imen) != 0) {
-		ipending |= r_imen;	/* Masked! Mark this as pending */
-		gc_disable_irq(hwirq[irq]);
+		ci->ci_ipending |= r_imen;	/* Masked! Mark this as pending */
+		gc_disable_irq(is->is_hwirq);
 	} else {
-		splraise(intrmask[irq]);
+		splraise(is->is_mask);
 		mtmsr(msr | PSL_EE);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-		ih = intrhand[irq];
+		ih = is->is_hand;
 		while (ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
 		KERNEL_UNLOCK();
 		mtmsr(msr);
-		cpl = pcpl;
+		ci->ci_cpl = pcpl;
 
 		uvmexp.intrs++;
-		intrcnt[hwirq[irq]]++;
+		is->is_ev.ev_count++;
 	}
 
 	int_state &= ~r_imen;
@@ -532,8 +551,10 @@ start:
 void
 ext_intr_openpic()
 {
+	struct cpu_info *ci = curcpu();
 	int irq, realirq;
 	int pcpl, msr, r_imen;
+	struct intrsource *is;
 	struct intrhand *ih;
 
 	msr = mfmsr();
@@ -554,7 +575,7 @@ ext_intr_openpic()
 	}
 #endif
 
-	pcpl = cpl;
+	pcpl = ci->ci_cpl;
 
 	realirq = openpic_read_irq(0);
 	if (realirq == 255) {
@@ -577,25 +598,26 @@ start:
 	irq = virq[realirq];
 	KASSERT(realirq < ICU_LEN);
 	r_imen = 1 << irq;
+	is = &intrsources[irq];
 
 	if ((pcpl & r_imen) != 0) {
-		ipending |= r_imen;	/* Masked! Mark this as pending */
+		ci->ci_ipending |= r_imen;	/* Masked! Mark this as pending */
 		openpic_disable_irq(realirq);
 	} else {
-		splraise(intrmask[irq]);
+		splraise(is->is_mask);
 		mtmsr(msr | PSL_EE);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-		ih = intrhand[irq];
+		ih = is->is_hand;
 		while (ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
 		KERNEL_UNLOCK();
 		mtmsr(msr);
-		cpl = pcpl;
+		ci->ci_cpl = pcpl;
 
 		uvmexp.intrs++;
-		intrcnt[hwirq[irq]]++;
+		is->is_ev.ev_count++;
 	}
 
 	openpic_eoi(0);
@@ -612,70 +634,71 @@ start:
 static void
 do_pending_int()
 {
+	struct cpu_info * const ci = curcpu();
+	struct intrsource *is;
 	struct intrhand *ih;
 	int irq;
 	int pcpl;
 	int hwpend;
 	int emsr, dmsr;
-	const int cpu_id = cpu_number();
-	static int processing[2];	/* XXX */
 
-	if (processing[cpu_id])
+	if (ci->ci_iactive)
 		return;
 
-	processing[cpu_id] = 1;
+	ci->ci_iactive = 1;
 	emsr = mfmsr();
 	dmsr = emsr & ~PSL_EE;
 	mtmsr(dmsr);
 
-	pcpl = cpl;
+	pcpl = ci->ci_cpl;
 again:
 
 #ifdef MULTIPROCESSOR
-	if (cpu_id == 0) {
+	if (ci->ci_cpuid == 0) {
 #endif
 	/* Do now unmasked pendings */
-	while ((hwpend = ipending & ~pcpl & HWIRQ_MASK) != 0) {
+	while ((hwpend = (ci->ci_ipending & ~pcpl & HWIRQ_MASK)) != 0) {
 		irq = 31 - cntlzw(hwpend);
+		is = &intrsources[irq];
 		if (!have_openpic)
-			gc_enable_irq(hwirq[irq]);
+			gc_enable_irq(is->is_hwirq);
 
-		ipending &= ~(1 << irq);
-		splraise(intrmask[irq]);
+		ci->ci_ipending &= ~(1 << irq);
+		splraise(is->is_mask);
 		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-		ih = intrhand[irq];
-		while(ih) {
+		ih = is->is_hand;
+		while (ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
-		cpl = pcpl;
+		ci->ci_cpl = pcpl;
 
-		intrcnt[hwirq[irq]]++;
+		is->is_ev.ev_count++;
 		if (have_openpic)
-			openpic_enable_irq(hwirq[irq], intrtype[irq]);
+			openpic_enable_irq(is->is_hwirq, is->is_type);
 	}
 #ifdef MULTIPROCESSOR
 	}
 #endif
 
-	if ((ipending & ~pcpl) & (1 << SIR_SERIAL)) {
-		ipending &= ~(1 << SIR_SERIAL);
+	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_SERIAL)) {
+		ci->ci_ipending &= ~(1 << SIR_SERIAL);
 		splsoftserial();
 		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		softserial();
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
-		cpl = pcpl;
-		intrcnt[CNT_SOFTSERIAL]++;
+		ci->ci_cpl = pcpl;
+		ci->ci_ev_softserial.ev_count++;
 		goto again;
 	}
-	if ((ipending & ~pcpl) & (1 << SIR_NET)) {
+	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_NET)) {
 		int pisr;
-		ipending &= ~(1 << SIR_NET);
+		ci->ci_ipending &= ~(1 << SIR_NET);
 		splsoftnet();
 		pisr = netisr;
 		netisr = 0;
@@ -684,31 +707,31 @@ again:
 		softnet(pisr);
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
-		cpl = pcpl;
-		intrcnt[CNT_SOFTNET]++;
+		ci->ci_cpl = pcpl;
+		ci->ci_ev_softnet.ev_count++;
 		goto again;
 	}
-	if ((ipending & ~pcpl) & (1 << SIR_CLOCK)) {
-		ipending &= ~(1 << SIR_CLOCK);
+	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_CLOCK)) {
+		ci->ci_ipending &= ~(1 << SIR_CLOCK);
 		splsoftclock();
 		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		softclock(NULL);
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
-		cpl = pcpl;
-		intrcnt[CNT_SOFTCLOCK]++;
+		ci->ci_cpl = pcpl;
+		ci->ci_ev_softclock.ev_count++;
 		goto again;
 	}
 
 #if 0
-	if (ipending & ~pcpl) {
-		printf("do_pending_int (again) 0x%x\n", ipending & ~pcpl);
+	if (ci->ci_ipending & ~pcpl) {
+		printf("do_pending_int (again) 0x%x\n", ci->ci_ipending & ~pcpl);
 		goto again;
 	}
 #endif
-	cpl = pcpl;	/* Don't use splx... we are here already! */
-	processing[cpu_id] = 0;
+	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
+	ci->ci_iactive = 0;
 	mtmsr(emsr);
 }
 
@@ -716,11 +739,12 @@ int
 splraise(ncpl)
 	int ncpl;
 {
+	struct cpu_info *ci = curcpu();
 	int ocpl;
 
 	asm volatile("sync; eieio");	/* don't reorder.... */
-	ocpl = cpl;
-	cpl = ocpl | ncpl;
+	ocpl = ci->ci_cpl;
+	ci->ci_cpl = ocpl | ncpl;
 	asm volatile("sync; eieio");	/* reorder protect */
 	return ocpl;
 }
@@ -730,9 +754,10 @@ splx(ncpl)
 	int ncpl;
 {
 
+	struct cpu_info *ci = curcpu();
 	asm volatile("sync; eieio");	/* reorder protect */
-	cpl = ncpl;
-	if (ipending & ~ncpl)
+	ci->ci_cpl = ncpl;
+	if (ci->ci_ipending & ~ncpl)
 		do_pending_int();
 	asm volatile("sync; eieio");	/* reorder protect */
 }
@@ -741,12 +766,13 @@ int
 spllower(ncpl)
 	int ncpl;
 {
+	struct cpu_info *ci = curcpu();
 	int ocpl;
 
 	asm volatile("sync; eieio");	/* reorder protect */
-	ocpl = cpl;
-	cpl = ncpl;
-	if (ipending & ~ncpl)
+	ocpl = ci->ci_cpl;
+	ci->ci_cpl = ncpl;
+	if (ci->ci_ipending & ~ncpl)
 		do_pending_int();
 	asm volatile("sync; eieio");	/* reorder protect */
 	return ocpl;
@@ -762,7 +788,7 @@ softintr(ipl)
 
 	msrsave = mfmsr();
 	mtmsr(msrsave & ~PSL_EE);
-	ipending |= 1 << ipl;
+	curcpu()->ci_ipending |= 1 << ipl;
 	mtmsr(msrsave);
 }
 

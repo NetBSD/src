@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 2002/10/02 04:49:11 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4 2003/02/02 20:43:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 
 	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
 		return (0);
-	if (cpu_info_store.ci_dev != NULL)
+	if (cpu_info[0].ci_dev != NULL)
 		return (0);
 	return (1);
 }

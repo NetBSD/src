@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.3 2002/09/16 02:07:24 chs Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.4 2003/02/02 20:43:23 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,17 +35,17 @@
 	.local	firmstk
 	.local	openfirmware_entry
 	.local	ofwsrsave
+	.local	OF_buffer
 
 	.data
 GLOBAL(ofmsr)
 	.long	0,0,0,0,0		/* msr & sprg[0-3] used in OF */
 
-#ifdef MULTIPROCESSOR
 GLOBAL(ofwsprg0save)
 	.long	0
-#endif
 
 	.comm	firmstk,NBPG,8
+	.comm	OF_buffer,NBPG,4
 	.comm	openfirmware_entry,4,4	/* openfirmware entry point */
 	.comm	ofwsrsave,64,4		/* openfirmware SR savearea */
 
@@ -79,6 +79,11 @@ ENTRY_NOPROFILE(ofwinit)
        	stwu	0,4(9)
         mfsprg  0,3
        	stw	0,4(9)
+
+	lis	0,OF_buffer@ha
+	addi	0,0,OF_buffer@l
+	lis	9,_C_LABEL(OF_buf)@ha
+	stw	0,_C_LABEL(OF_buf)@l(9)
 
 	blr
 
@@ -114,12 +119,10 @@ ENTRY(openfirmware)
 	cmpwi	5,0
 	bne	1b
 
-#ifdef MULTIPROCESSOR
 	mfsprg	5,0			/* save current sprg0 (curcpu) */
 	lis	4,ofwsprg0save@ha
 	addi	4,4,ofwsprg0save@l
 	stw	5,0(4)
-#endif
 
 	lis	4,_C_LABEL(ofw_pmap)@ha	/* load OFW SR */
 	addi	4,4,_C_LABEL(ofw_pmap)@l
@@ -149,12 +152,10 @@ ENTRY(openfirmware)
 
 	blrl				/* call Open Firmware */
 
-#ifdef MULTIPROCESSOR
 	lis	4,ofwsprg0save@ha	/* restore saved sprg0 (curcpu) */
 	addi	4,4,ofwsprg0save@l
 	lwz	5,0(4)
 	mtsprg	0,5
-#endif
 
 	lis	4,ofwsrsave@ha		/* restore saved SRs */
 	addi	4,4,ofwsrsave@l

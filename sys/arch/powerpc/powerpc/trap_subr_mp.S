@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr_mp.S,v 1.10 2003/01/22 22:20:23 kleink Exp $	*/
+/*	$NetBSD: trap_subr_mp.S,v 1.11 2003/02/02 20:43:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,12 +37,9 @@
  *
  *	#include <powerpc/powerpc/trap_subr.S>
  */
+#include "opt_altivec.h"
 
 #ifdef ALTIVEC
-#define DSSALL			/* assumes PSL is in cr registers */	\
-	bc+	4,6,86f;	/* branch is PSL_VEC is false */	\
-	dssall;			/* stop datastreams */			\
-86:
 #define	SAVE_VRSAVE(tf,b)						\
 	mfspr	b,SPR_VRSAVE;						\
 	stw	b,FRAME_VRSAVE+8(tf);
@@ -51,7 +48,6 @@
 	lwz	b,FRAME_VRSAVE+8(tf);					\
 	mtspr	SPR_VRSAVE,b;
 #else
-#define DSSALL
 #define SAVE_VRSAVE(tf,b)
 #define RESTORE_VRSAVE(tf,b)
 #endif
@@ -573,6 +569,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
  *	savearea	r28-r31,DAR,DSISR	(DAR & DSISR only for DSI traps)
  *	28		LR
  *	29		CR
+ *	30		scratch
+ *	31		scratch
  *	1		kernel stack
  *	LR		trap type
  *	SRR0/1		as at start of trap
@@ -581,24 +579,24 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 /* Have to enable translation to allow access of kernel stack: */	\
 	GET_CPUINFO(31);						\
 	mfsrr0	30;							\
-	stw	30,savearea+24(31);					\
+	stw	30,savearea+24(31);	/* save SRR0 */			\
 	mfsrr1	30;							\
-	stw	30,savearea+28(31);					\
+	stw	30,savearea+28(31);	/* save SRR1 */			\
 	mfmsr	30;							\
-	ori	30,30,(PSL_DR|PSL_IR);					\
-	mtmsr	30;							\
+	ori	30,30,(PSL_DR|PSL_IR);	/* turn on relocation */	\
+	mtmsr	30;			/* stack can be accesed now */	\
 	isync;								\
-	mfsprg	31,1;							\
-	stwu	31,-FRAMELEN(1);					\
-	stw	0,FRAME_0+8(1);						\
-	stw	31,FRAME_1+8(1);					\
+	mfsprg	31,1;			/* get saved SP */		\
+	stwu	31,-FRAMELEN(1);	/* save it in the callframe */	\
+	stw	0,FRAME_0+8(1);		/* save R0 in the trapframe */	\
+	stw	31,FRAME_1+8(1);	/* save SP in the trapframe */	\
+	stw	2,FRAME_2+8(1);		/* save R2 in the trapframe */	\
 	stw	28,FRAME_LR+8(1);					\
 	stw	29,FRAME_CR+8(1);					\
-	stw	2,FRAME_2+8(1);						\
 	GET_CPUINFO(2);							\
-	lmw	28,savearea(2);						\
-	stmw	3,FRAME_3+8(1);	 /* after this, r3-r31 can be used */	\
-	lmw	28,savearea+16(2);					\
+	lmw	28,savearea(2);		/* get saved r28-r31 */		\
+	stmw	3,FRAME_3+8(1);		/* save r3-r31 */		\
+	lmw	28,savearea+16(2);	/* get DAR/DSISR/SRR0/SRR1 */	\
 	mfxer	3;							\
 	mfctr	4;							\
 	mflr	5;							\
@@ -606,8 +604,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	stw	3,FRAME_XER+8(1);					\
 	stw	4,FRAME_CTR+8(1);					\
 	stw	5,FRAME_EXC+8(1);					\
-	SAVE_VRSAVE(2,6);						\
-	SAVE_MQ(2,7);							\
+	SAVE_VRSAVE(1,6);						\
+	SAVE_MQ(1,7);							\
 	stw	28,FRAME_DAR+8(1);					\
 	stw	29,FRAME_DSISR+8(1);					\
 	stw	30,FRAME_SRR0+8(1);					\
@@ -680,7 +678,6 @@ realtrap:
 					   overwritten) */
 s_trap:
 	bc	4,17,k_trap		/* branch if PSL_PR is false */
-	DSSALL				/* stop AltiVec data streams */
 	GET_CPUINFO(1)
 	lwz	1,CI_CURPCB(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
@@ -808,7 +805,6 @@ s_sctrap:
 	stw	3,IFRAME_SRR1(1);					\
 	mtcr	3;							\
 	bc	4,17,99f;	/* branch if PSL_PR is false */		\
-	DSSALL;			/* stop AltiVec datastreams */		\
 /* interrupts are recoverable here, and enable translation */		\
 	RESTORE_KERN_SRS(3,4);						\
 	CPU601_KERN_ENTRY(3,4);						\
@@ -844,21 +840,27 @@ intr_exit:
 	mtsrr0	5
 	mtctr	4
 	mtxer	3
+
+	GET_CPUINFO(5)
+	lwz	4,CI_INTRDEPTH(5)
+	addi	4,4,-1			/* adjust reentrancy count */
+	stw	4,CI_INTRDEPTH(5)
+
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
+
 	CPU601_KERN_LEAVE(3,4)
-	GET_CPUINFO(4)
 	RESTORE_USER_SRS(3,4)
-	lwz	4,CI_ASTPENDING(4)	/* Test AST pending */
-	andi.	4,4,1
+	lwz	3,CI_ASTPENDING(5)	/* Test AST pending */
+	andi.	3,3,1
 	beq	1f
+
 /* Setup for entry to realtrap: */
 	lwz	3,IFRAME_R1(1)		/* get saved SP */
 	mtsprg	1,3
 	li	6,EXC_AST
-	GET_CPUINFO(3)
-	stmw	28,CI_TEMPSAVE(3)	/* establish tempsave again */
+	stmw	28,CI_TEMPSAVE(5)	/* establish tempsave again */
 	mtlr	6
 	lwz	28,IFRAME_LR(1)		/* saved LR */
 	lwz	29,IFRAME_CR(1)		/* saved CR */
@@ -867,10 +869,6 @@ intr_exit:
 	lwz	4,IFRAME_R4(1)
 	lwz	3,IFRAME_R3(1)
 	lwz	0,IFRAME_R0(1)
-	GET_CPUINFO(30)
-	lwz	31,CI_INTRDEPTH(30)
-	addi	31,31,-1		/* adjust reentrancy count */
-	stw	31,CI_INTRDEPTH(30)
 	b	realtrap
 1:
 /* Here is the normal exit of extintr: */
@@ -880,10 +878,6 @@ intr_exit:
 	mtlr	6
 	lwz	6,IFRAME_R6(1)
 	lwz	5,IFRAME_R5(1)
-	GET_CPUINFO(3)
-	lwz	4,CI_INTRDEPTH(3)
-	addi	4,4,-1			/* adjust reentrancy count */
-	stw	4,CI_INTRDEPTH(3)
 	lwz	4,IFRAME_R4(1)
 	lwz	3,IFRAME_R3(1)
 	lwz	0,IFRAME_R0(1)

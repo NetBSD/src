@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2002/02/27 21:02:24 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2003/02/02 20:43:20 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_ppcparam.h"
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -46,6 +47,7 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
@@ -54,9 +56,6 @@
  * Some instructions gas doesn't understand (yet?)
  */
 #define	bdneq	bdnzf 2,
-
-#define	INTSTK	(8*1024)	/* 8K interrupt stack */
-#define	SPILLSTK 1024		/* 1K spill stack */
 
 /*
  * Globals
@@ -85,13 +84,6 @@ GLOBAL(intrcnt)
 GLOBAL(eintrcnt)
 
 /*
- * File-scope for locore.S
- */
-	.data
-idle_u:
-	.long	0			/* fake uarea during idle after exit */
-
-/*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.
  */
@@ -105,77 +97,68 @@ _C_LABEL(kernel_text):
  *
  * The bootloaded passes the following registers:
  *
- *  r3 == start of symbol table
- *  r4 == end of symbol table
- *  r5 == boot parameters
+ *  %r3 == start of symbol table
+ *  %r4 == end of symbol table
+ *  %r5 == boot parameters
  */
 	.text
 	.globl	__start
 __start:
-	li	r0,0
-	mtmsr	r0			/* Disable FPU/MMU/exceptions */
+	li	%r0,0
+	mtmsr	%r0			/* Disable FPU/MMU/exceptions */
 	isync
 
 /* compute end of kernel memory */
-	lis	r8,_C_LABEL(end)@ha
-	addi	r8,r8,_C_LABEL(end)@l
 #if defined(DDB) || defined(KERNFS)
-	lis	r7,_C_LABEL(startsym)@ha
-	addi	r7,r7,_C_LABEL(startsym)@l
-	stw	r3,0(r7)
-	lis	r7,_C_LABEL(endsym)@ha
-	addi	r7,r7,_C_LABEL(endsym)@l
-	stw	r4,0(r7)
-	mr	r8,r4			/* end of symbol table */
+	lis	%r7,_C_LABEL(startsym)@ha
+	addi	%r7,%r7,_C_LABEL(startsym)@l
+	stw	%r3,0(%r7)
+	lis	%r7,_C_LABEL(endsym)@ha
+	addi	%r7,%r7,_C_LABEL(endsym)@l
+	stw	%r4,0(%r7)		/* end of symbol table */
+#else
+	lis	%r4,_C_LABEL(end)@ha
+	addi	%r4,%r4,_C_LABEL(end)@l
 #endif
-	li	r9,PGOFSET
-	add	r8,r8,r9
-	andc	r8,r8,r9
-	addi	r8,r8,NBPG
-	lis	r9,idle_u@ha
-	stw	r8,idle_u@l(r9)
-	addi	r8,r8,USPACE		/* space for idle_u */
-	lis	r9,_C_LABEL(proc0paddr)@ha
-	stw	r8,_C_LABEL(proc0paddr)@l(r9)
-	addi	r1,r8,USPACE-FRAMELEN	/* stackpointer for proc0 */
-	mr	r4,r1			/* end of mem reserved for kernel */
-	xor	r0,r0,r0
-	stwu	r0,-16(r1)		/* end of stack chain */
 
-	lis	r3,__start@ha
-	addi	r3,r3,__start@l
+	INIT_CPUINFO(%r4,%r1,%r9,%r0)
 
+	lis	%r3,__start@ha
+	addi	%r3,%r3,__start@l
+
+	li	%r5,0
+	li	%r6,0
 	bl	_C_LABEL(initppc)
 
 /* enable internal i/d-cache */
-	mfpvr	r9
-	rlwinm	r9,r9,16,16,31
-	cmpi	cr0,r9,1
+	mfpvr	%r9
+	rlwinm	%r9,%r9,16,16,31
+	cmpi	%cr0,%r9,1
 	beq	3f			/* not needed for 601 */
-	mfspr	r11,SPR_HID0
-	andi.	r0,r11,HID0_DCE
-	ori	r11,r11,HID0_ICE|HID0_DCE
-	ori	r8,r11,HID0_ICFI
+	mfspr	%r11,SPR_HID0
+	andi.	%r0,%r11,HID0_DCE
+	ori	%r11,%r11,HID0_ICE|HID0_DCE
+	ori	%r8,%r11,HID0_ICFI
 	bne	1f			/* don't invalidate the D-cache */
-	ori	r8,r8,HID0_DCFI		/* unless it wasn't enabled */
+	ori	%r8,%r8,HID0_DCFI		/* unless it wasn't enabled */
 1:
 	sync
-	mtspr	SPR_HID0,r8		/* enable and invalidate caches */
+	mtspr	SPR_HID0,%r8		/* enable and invalidate caches */
 	sync
-	mtspr	SPR_HID0,r11		/* enable caches */
+	mtspr	SPR_HID0,%r11		/* enable caches */
 	sync
 	isync
-	cmpi	cr0,r9,4		/* check for 604 */
-	cmpi	cr1,r9,9		/* or 604e */
-	cmpi	cr2,r9,10		/* or mach5 */
+	cmpi	%cr0,%r9,4		/* check for 604 */
+	cmpi	%cr1,%r9,9		/* or 604e */
+	cmpi	%cr2,%r9,10		/* or mach5 */
 	cror	2,2,6
 	cror	2,2,10
 	bne	3f
-	ori	r11,r11,HID0_SIED|HID0_BHTE /* for 604[e], enable */
-	bne	cr2,2f
-	ori	r11,r11,HID0_BTCD
+	ori	%r11,%r11,HID0_SIED|HID0_BHTE /* for 604[e], enable */
+	bne	%cr2,2f
+	ori	%r11,%r11,HID0_BTCD
 2:
-	mtspr	SPR_HID0,r11
+	mtspr	SPR_HID0,%r11
 3:
 	sync
 	isync
@@ -190,24 +173,24 @@ __start:
  * before dropping back out to bug.
  */
 ENTRY(_mvmeppc_unsup_board)
-	addi	r10,0,0x0022
+	addi	%r10,0,0x0022
 	sc
-bugret:	addi	r10,0,0x0063
+bugret:	addi	%r10,0,0x0063
 	sc
 	/* NOTREACHED */
 
 	.globl	_C_LABEL(enable_intr)
 _C_LABEL(enable_intr):
-	mfmsr	r3
-	ori	r3,r3,PSL_EE@l
-	mtmsr	r3
+	mfmsr	%r3
+	ori	%r3,%r3,PSL_EE@l
+	mtmsr	%r3
 	blr
 
 	.globl	_C_LABEL(disable_intr)
 _C_LABEL(disable_intr):
-	mfmsr	r3
-	andi.	r3,r3,~PSL_EE@l
-	mtmsr	r3
+	mfmsr	%r3
+	andi.	%r3,%r3,~PSL_EE@l
+	mtmsr	%r3
 	blr
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 2003/01/18 06:23:31 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 2003/02/02 20:43:23 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -110,15 +110,9 @@
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
 
-#ifndef MULTIPROCESSOR
-volatile int astpending;
-volatile int want_resched;
-#endif
-
 static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
 
 void trap __P((struct trapframe *));	/* Called from locore / trap_subr */
-int setfault __P((faultbuf));	/* defined in locore.S */
 /* Why are these not defined in a header? */
 int badaddr __P((void *, size_t));
 int badaddr_read __P((void *, size_t, int *));
@@ -175,35 +169,35 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 		{
 			struct vm_map *map;
 			vaddr_t va;
-			faultbuf *fb = NULL;
+			struct faultbuf *fb = NULL;
 
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-			va = frame->dear;
-			if (frame->pid == KERNEL_PID) {
+			va = frame->dar;
+			if (frame->tf_xtra[TF_PID] == KERNEL_PID) {
 				map = kernel_map;
 			} else {
 				map = &p->p_vmspace->vm_map;
 			}
 
-			if (frame->esr & (ESR_DST|ESR_DIZ))
+			if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
 				ftype = VM_PROT_WRITE;
 
 DBPRINTF(TDB_ALL, ("trap(EXC_DSI) at %x %s fault on %p esr %x\n",
-frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
+frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->tf_xtra[TF_ESR]));
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
 			if (rv == 0)
 				goto done;
 			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
-				frame->pid = KERNEL_PID;
-				frame->srr0 = (*fb)[0];
+				frame->tf_xtra[TF_PID] = KERNEL_PID;
+				frame->srr0 = fb->fb_pc;
 				frame->srr1 |= PSL_IR; /* Re-enable IMMU */
-				frame->fixreg[1] = (*fb)[1];
-				frame->fixreg[2] = (*fb)[2];
+				frame->fixreg[1] = fb->fb_sp;
+				frame->fixreg[2] = fb->fb_r2;
 				frame->fixreg[3] = 1; /* Return TRUE */
-				frame->cr = (*fb)[3];
-				memcpy(&frame->fixreg[13], &(*fb)[4],
-				      19 * sizeof(register_t));
+				frame->cr = fb->fb_cr;
+				memcpy(&frame->fixreg[13], fb->fb_fixreg,
+				    sizeof(fb->fb_fixreg));
 				goto done;
 			}
 		}
@@ -214,14 +208,14 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 	case EXC_DTMISS|EXC_USER:
 		KERNEL_PROC_LOCK(l);
 
-		if (frame->esr & (ESR_DST|ESR_DIZ))
+		if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
 			ftype = VM_PROT_WRITE;
 
 DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %x %s fault on %x %x\n",
-frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->dear, frame->esr));
+frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->dar, frame->tf_xtra[TF_ESR]));
 KASSERT(l == curlwp && (l->l_stat == LSONPROC));
 		rv = uvm_fault(&p->p_vmspace->vm_map,
-			       trunc_page(frame->dear), 0, ftype);
+			       trunc_page(frame->dar), 0, ftype);
 		if (rv == 0) {
 		  KERNEL_PROC_UNLOCK(l);
 		  break;
@@ -254,7 +248,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		break;
 
 	case EXC_AST|EXC_USER:
-		astpending = 0;		/* we are about to do it */
+		curcpu()->ci_astpending = 0;	/* we are about to do it */
 		KERNEL_PROC_LOCK(l);
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
@@ -262,7 +256,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 			ADDUPROF(p);
 		}
 		/* Check whether we are being preempted. */
-		if (want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt(0);
 		KERNEL_PROC_UNLOCK(l);
 		break;
@@ -300,25 +294,25 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 
 	case EXC_MCHK:
 		{
-			faultbuf *fb;
+			struct faultbuf *fb;
 
 			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
-				frame->pid = KERNEL_PID;
-				frame->srr0 = (*fb)[0];
+				frame->tf_xtra[TF_PID] = KERNEL_PID;
+				frame->srr0 = fb->fb_pc;
 				frame->srr1 |= PSL_IR; /* Re-enable IMMU */
-				frame->fixreg[1] = (*fb)[1];
-				frame->fixreg[2] = (*fb)[2];
+				frame->fixreg[1] = fb->fb_sp;
+				frame->fixreg[2] = fb->fb_r2;
 				frame->fixreg[3] = 1; /* Return TRUE */
-				frame->cr = (*fb)[3];
-				memcpy(&frame->fixreg[13], &(*fb)[4],
-				      19 * sizeof(register_t));
+				frame->cr = fb->fb_cr;
+				memcpy(&frame->fixreg[13], fb->fb_fixreg,
+				    sizeof(fb->fb_fixreg));
 				goto done;
 			}
 		}
 		goto brain_damage;
 	default:
 brain_damage:
-		printf("trap type 0x%x at 0x%x\n", type, frame->srr0);
+		printf("trap type 0x%x at 0x%lx\n", type, frame->srr0);
 #ifdef DDB
 		if (kdb_trap(type, frame))
 			goto done;
@@ -397,12 +391,12 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	int msr, pid, tmp, ctx;
-	faultbuf env;
+	struct faultbuf env;
 
 	/* For bigger buffers use the faster copy */
 	if (len > 256) return (bigcopyin(udaddr, kaddr, len));
 
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = 0;
 		return EFAULT;
 	}
@@ -477,12 +471,12 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	int msr, pid, tmp, ctx;
-	faultbuf env;
+	struct faultbuf env;
 
 	/* For big copies use more efficient routine */
 	if (len > 256) return (bigcopyout(kaddr, udaddr, len));
 
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = 0;
 		return EFAULT;
 	}
@@ -566,10 +560,10 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 int
 kcopy(const void *src, void *dst, size_t len)
 {
-	faultbuf env, *oldfault;
+	struct faultbuf env, *oldfault;
 
 	oldfault = curpcb->pcb_onfault;
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = oldfault;
 		return EFAULT;
 	}
@@ -590,13 +584,13 @@ badaddr(void *addr, size_t size)
 int
 badaddr_read(void *addr, size_t size, int *rptr)
 {
-	faultbuf env;
+	struct faultbuf env;
 	int x;
 
 	/* Get rid of any stale machine checks that have been waiting.  */
 	__asm __volatile ("sync; isync");
 
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = 0;
 		__asm __volatile ("sync");
 		return 1;

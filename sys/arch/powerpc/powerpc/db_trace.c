@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.24 2003/01/22 21:44:56 kleink Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.25 2003/02/02 20:43:24 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -207,8 +207,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 #endif
 #ifdef PPC_IBM4XX
 				(*pr)("DSI %s trap @ %#x by ",
-				    tf->esr & ESR_DST ? "write" : "read",
-				    tf->dear);
+				    tf->tf_xtra[TF_ESR] & ESR_DST ? "write" : "read",
+				    tf->dar);
 #endif
 				goto print_trap;
 			case EXC_ISI: trapstr = "ISI"; break;
@@ -254,12 +254,13 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			if (tf->exc == EXC_DSI)
 				(*pr)(" dsisr=%#x", tf->dsisr);
 			if ((mfpvr() >> 16) == MPC601)
-				(*pr)(" mq=%#x", tf->mq);
+				(*pr)(" mq=%#x", tf->tf_xtra[TF_MQ]);
 #endif
 #ifdef PPC_IBM4XX
 			if (tf->exc == EXC_DSI)
-				(*pr)(" dear=%#x", tf->dear);
-			(*pr)(" esr=%#x pid=%#x", tf->esr, tf->pid);
+				(*pr)(" dear=%#x", tf->dar);
+			(*pr)(" esr=%#x pid=%#x", tf->tf_xtra[TF_ESR],
+			    tf->tf_xtra[TF_PID]);
 #endif
 			(*pr)("\n");
 			fakeframe[0] = (db_addr_t) tf->fixreg[1];
