@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.47 2001/04/10 19:36:20 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.48 2001/05/28 08:12:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -142,6 +142,7 @@ cdev_decl(i4btel);
 #include "ss.h"
 #include "tun.h"
 #include "uk.h"
+#include "vga_pci.h"
 #include "view.h"
 #include "zs.h"
 #include "leo.h"
@@ -383,6 +384,7 @@ chrtoblk(dev)
 cons_decl(ser);
 #define	itecnpollc	nullcnpollc
 cons_decl(ite);
+cons_decl(vga)
 
 struct	consdev constab[] = {
 #if NSER > 0
@@ -390,6 +392,9 @@ struct	consdev constab[] = {
 #endif
 #if NITE > 0
 	cons_init(ite),
+#endif
+#if NVGA_PCI > 0
+	{ dev_init(1,vga,cnprobe), dev_init(1,vga,cninit) },
 #endif
 	{ 0 },
 };
