@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.35 1999/09/12 00:17:50 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.36 1999/09/15 02:56:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.35 1999/09/12 00:17:50 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.36 1999/09/15 02:56:35 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.35 1999/09/12 00:17:50 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.36 1999/09/15 02:56:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -135,8 +135,6 @@ static char	varNoError[] = "";
 GNode          *VAR_GLOBAL;   /* variables from the makefile */
 GNode          *VAR_CMD;      /* variables defined on the command-line */
 
-static Lst	allVars;      /* List of all variables */
-
 #define FIND_CMD	0x1   /* look in VAR_CMD when searching */
 #define FIND_GLOBAL	0x2   /* look in VAR_GLOBAL as well */
 #define FIND_ENV  	0x4   /* look in the environment also */
@@ -180,7 +178,6 @@ typedef struct {
 } VarREPattern;
 #endif
 
-static int VarCmp __P((ClientData, ClientData));
 static Var *VarFind __P((char *, GNode *, int));
 static void VarAdd __P((char *, char *, GNode *));
 static void VarDelete __P((ClientData));
@@ -206,28 +203,7 @@ static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer,
 			    ClientData));
 static char *VarSort __P((char *));
 static int VarWordCompare __P((const void *, const void *));
-static int VarPrintVar __P((ClientData, ClientData));
-
-/*-
- *-----------------------------------------------------------------------
- * VarCmp  --
- *	See if the given variable matches the named one. Called from
- *	Lst_Find when searching for a variable of a given name.
- *
- * Results:
- *	0 if they match. non-zero otherwise.
- *
- * Side Effects:
- *	none
- *-----------------------------------------------------------------------
- */
-static int
-VarCmp (v, name)
-    ClientData     v;		/* VAR structure to compare */
-    ClientData     name;	/* name to look for */
-{
-    return (strcmp ((char *) name, ((Var *) v)->name));
-}
+static void VarPrintVar __P((ClientData));
 
 /*-
  *-----------------------------------------------------------------------
@@ -254,7 +230,7 @@ VarFind (name, ctxt, flags)
 				 * FIND_ENV set means to look in the
 				 * environment */
 {
-    LstNode         	var;
+    Hash_Entry         	*var;
     Var		  	*v;
 
 	/*
@@ -297,17 +273,17 @@ VarFind (name, ctxt, flags)
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    var = Lst_Find (ctxt->context, (ClientData)name, VarCmp);
+    var = Hash_FindEntry (&ctxt->context, name);
 
-    if ((var == NILLNODE) && (flags & FIND_CMD) && (ctxt != VAR_CMD)) {
-	var = Lst_Find (VAR_CMD->context, (ClientData)name, VarCmp);
+    if ((var == NULL) && (flags & FIND_CMD) && (ctxt != VAR_CMD)) {
+	var = Hash_FindEntry (&VAR_CMD->context, name);
     }
-    if (!checkEnvFirst && (var == NILLNODE) && (flags & FIND_GLOBAL) &&
+    if (!checkEnvFirst && (var == NULL) && (flags & FIND_GLOBAL) &&
 	(ctxt != VAR_GLOBAL))
     {
-	var = Lst_Find (VAR_GLOBAL->context, (ClientData)name, VarCmp);
+	var = Hash_FindEntry (&VAR_GLOBAL->context, name);
     }
-    if ((var == NILLNODE) && (flags & FIND_ENV)) {
+    if ((var == NULL) && (flags & FIND_ENV)) {
 	char *env;
 
 	if ((env = getenv (name)) != NULL) {
@@ -326,19 +302,19 @@ VarFind (name, ctxt, flags)
 	} else if (checkEnvFirst && (flags & FIND_GLOBAL) &&
 		   (ctxt != VAR_GLOBAL))
 	{
-	    var = Lst_Find (VAR_GLOBAL->context, (ClientData)name, VarCmp);
-	    if (var == NILLNODE) {
+	    var = Hash_FindEntry (&VAR_GLOBAL->context, name);
+	    if (var == NULL) {
 		return ((Var *) NIL);
 	    } else {
-		return ((Var *)Lst_Datum(var));
+		return ((Var *)Hash_GetValue(var));
 	    }
 	} else {
 	    return((Var *)NIL);
 	}
-    } else if (var == NILLNODE) {
+    } else if (var == NULL) {
 	return ((Var *) NIL);
     } else {
-	return ((Var *) Lst_Datum (var));
+	return ((Var *) Hash_GetValue(var));
     }
 }
 
@@ -364,6 +340,7 @@ VarAdd (name, val, ctxt)
 {
     register Var   *v;
     int	    	  len;
+    Hash_Entry      *h;
 
     v = (Var *) emalloc (sizeof (Var));
 
@@ -375,8 +352,8 @@ VarAdd (name, val, ctxt)
 
     v->flags = 0;
 
-    (void) Lst_AtFront (ctxt->context, (ClientData)v);
-    (void) Lst_AtEnd (allVars, (ClientData) v);
+    h = Hash_CreateEntry (&ctxt->context, name, NULL);
+    Hash_SetValue(h, v);
     if (DEBUG(VAR)) {
 	printf("%s:%s = %s\n", ctxt->name, name, val);
     }
@@ -425,19 +402,17 @@ Var_Delete(name, ctxt)
     char    	  *name;
     GNode	  *ctxt;
 {
-    LstNode 	  ln;
+    Hash_Entry 	  *ln;
 
     if (DEBUG(VAR)) {
 	printf("%s:delete %s\n", ctxt->name, name);
     }
-    ln = Lst_Find(ctxt->context, (ClientData)name, VarCmp);
-    if (ln != NILLNODE) {
+    ln = Hash_FindEntry(&ctxt->context, name);
+    if (ln != NULL) {
 	register Var 	  *v;
 
-	v = (Var *)Lst_Datum(ln);
-	Lst_Remove(ctxt->context, ln);
-	ln = Lst_Member(allVars, v);
-	Lst_Remove(allVars, ln);
+	v = (Var *)Hash_GetValue(ln);
+	Hash_DeleteEntry(&ctxt->context, ln);
 	VarDelete((ClientData) v);
     }
 }
@@ -525,6 +500,7 @@ Var_Append (name, val, ctxt)
     GNode          *ctxt;	/* Context in which this should occur */
 {
     register Var   *v;
+    Hash_Entry	   *h;
 
     v = VarFind (name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
@@ -547,7 +523,8 @@ Var_Append (name, val, ctxt)
 	     * export other variables...)
 	     */
 	    v->flags &= ~VAR_FROM_ENV;
-	    Lst_AtFront(ctxt->context, (ClientData)v);
+	    h = Hash_CreateEntry (&ctxt->context, name, NULL);
+	    Hash_SetValue(h, v);
 	}
     }
 }
@@ -2450,7 +2427,6 @@ Var_Init ()
 {
     VAR_GLOBAL = Targ_NewGN ("Global");
     VAR_CMD = Targ_NewGN ("Command");
-    allVars = Lst_Init(FALSE);
 
 }
 
@@ -2458,19 +2434,16 @@ Var_Init ()
 void
 Var_End ()
 {
-    Lst_Destroy(allVars, VarDelete);
 }
 
 
 /****************** PRINT DEBUGGING INFO *****************/
-static int
-VarPrintVar (vp, dummy)
+static void
+VarPrintVar (vp)
     ClientData vp;
-    ClientData dummy;
 {
     Var    *v = (Var *) vp;
     printf ("%-16s = %s\n", v->name, (char *) Buf_GetAll(v->val, (int *)NULL));
-    return (dummy ? 0 : 0);
 }
 
 /*-
@@ -2483,5 +2456,12 @@ void
 Var_Dump (ctxt)
     GNode          *ctxt;
 {
-    Lst_ForEach (ctxt->context, VarPrintVar, (ClientData) 0);
+    Hash_Search search;
+    Hash_Entry *h;
+
+    for (h = Hash_EnumFirst(&ctxt->context, &search);
+	 h != NULL;
+	 h = Hash_EnumNext(&search)) {
+	    VarPrintVar(Hash_GetValue(h));
+    }
 }
