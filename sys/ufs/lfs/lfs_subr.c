@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.27 2002/07/06 01:30:13 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.28 2002/07/11 21:09:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.27 2002/07/06 01:30:13 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.28 2002/07/11 21:09:00 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,11 +132,6 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
 	
-	/*
-	 * SEGM_PROT specifies a shared lock, which can be held by multiple
-	 * processes simultaneously.  It is not possible to upgrade from a
-	 * SEGM_PROT lock to a normal seglock.
-	 */
 	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid) {
 			++fs->lfs_seglock;
