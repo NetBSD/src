@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.109 2003/03/11 02:47:40 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.110 2003/03/15 02:27:18 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.109 2003/03/11 02:47:40 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.110 2003/03/15 02:27:18 kristerw Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -276,6 +276,7 @@ lfs_vflush(struct vnode *vp)
 				}
 			}
 		    nextbp:
+			;
 		}
 		splx(s);
 	}
