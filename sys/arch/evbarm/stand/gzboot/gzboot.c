@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.5 2002/02/24 18:36:29 thorpej Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.6 2002/04/17 17:38:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@ main(void)
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
-	mem_init();
+	board_init();
 
 	printf(">> Load address: 0x%x\n", md_root_loadaddr);
 	printf(">> Image size: %u\n", md_root_size);
@@ -140,6 +140,9 @@ main(void)
 	printf("done.\n");
 
 	printf("Jumping to image @ 0x%x...\n", md_root_loadaddr);
+
+	board_fini();
+
 	(*loadaddr)();
 
 	_rtt();
