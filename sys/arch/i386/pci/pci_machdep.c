@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pci_machdep.c,v 1.2 1994/08/10 04:37:53 mycroft Exp $
+ *	$Id: pci_machdep.c,v 1.3 1994/09/06 01:25:22 mycroft Exp $
  */
 
 /*
@@ -321,28 +321,6 @@ pci_map_mem(tag, reg, vap, pap)
 	return 0;
 }
 
-/*
- * XXX
- * Different machines map the PCI interrupts to ISA/EISA interrupts in
- * different ways.  If the interrupts weren't confgiured on the devices
- * at boot time, then we have to rely on this statically configured
- * information to do the mapping.  In theory, we should never need this,
- * but we're talking about Intel here.
- */
-#ifndef PCI_INT_A
-#define	PCI_INT_A	IRQUNK
-#endif
-#ifndef PCI_INT_B
-#define	PCI_INT_B	IRQUNK
-#endif
-#ifndef PCI_INT_C
-#define	PCI_INT_C	IRQUNK
-#endif
-#ifndef PCI_INT_D
-#define	PCI_INT_D	IRQUNK
-#endif
-u_short pci_int_map[] = {0, PCI_INT_A, PCI_INT_B, PCI_INT_C, PCI_INT_D};
-
 int
 pci_map_int(tag, ih)
 	pcitag_t tag;
@@ -372,22 +350,17 @@ pci_map_int(tag, ih)
 	 * `unknown' or `no connection' on a PC.  We assume that a device with
 	 * `no connection' either doesn't have an interrupt (in which case the
 	 * pin number should be 0, and would have been noticed above), or
-	 * wasn't configured by the BIOS (in which case we try to map it
-	 * ourselves).
+	 * wasn't configured by the BIOS (in which case we punt, since there's
+	 * no real way we can know how the chipset is configured).
 	 *
 	 * XXX
 	 * Since IRQ 0 is only used by the clock, and we can't actually be sure
-	 * that the BIOS did its job, we also recognize that as a signal to map
-	 * the IRQ ourselves.
+	 * that the BIOS did its job, we also recognize that as meaning that
+	 * the BIOS has not configured the device.
 	 */
 	if (line == 0 || line == 255) {
-		irq = pci_int_map[pin];
-		if (irq == IRQUNK) {
-			printf("pci_map_int: no mapping for pin %c\n", '@' + pin);
-			return EINVAL;
-		}
-		data = PCI_INTERRUPT_LINE_INSERT(data, ffs(irq) - 1);
-		pci_conf_write(tag, PCI_INTERRUPT_REG, data);
+		printf("pci_map_int: no mapping for pin %c\n", '@' + pin);
+		return EINVAL;
 	} else {
 		if (line >= ICU_LEN) {
 			printf("pci_map_int: bad interrupt line %d\n", line);
