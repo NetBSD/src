@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 1998/08/13 02:10:43 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 1998/09/02 05:51:37 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ zs_attach_mainbus(parent, self, aux)
 	/* Use the mapping setup by the Sun PROM. */
 	if (zsaddr[zs_unit] == NULL)
 		zsaddr[zs_unit] = findzs(zs_unit);
-	if ((void*)zsaddr[zs_unit] != ma->ma_address[0])
+	if ((void*)zsaddr[zs_unit] != (void*)(long)ma->ma_address[0])
 		panic("zsattach_mainbus");
 	zs_attach(zsc, ma->ma_pri);
 }

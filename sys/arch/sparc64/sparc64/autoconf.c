@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1998/08/30 15:32:17 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.5 1998/09/02 05:51:38 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -196,6 +196,32 @@ bootstrap(nctx)
 	extern void *ssym, *esym;
 
 	/* 
+	 * Initialize ddb first and register OBP callbacks.
+	 * We can do this because ddb_machine_init() and 
+	 * ddb_init() do not allocate anything, just initialze
+	 * some pointers to important things like the symtab.
+	 *
+	 * By doing this first and installing the OBP callbacks
+	 * we get to do symbolic debugging of pmap_bootstrap().
+	 */
+#ifdef KGDB
+/* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
+	zs_kgdb_init();		/* XXX */
+#endif
+#ifdef DDB
+	db_machine_init();
+#ifdef DB_ELF_SYMBOLS
+	ddb_init(ssym, esym); /* No symbols as yet */
+#else
+	ddb_init();
+#endif
+#ifdef _LP64
+	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
+	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
+#endif
+#endif
+
+	/* 
 	 * These are the best approximations for the spitfire: 
 	 *
 	 * Contexts are 13 bits.
@@ -208,19 +234,6 @@ bootstrap(nctx)
 	 * process address spaces during MMU faults.
 	 */
 	pmap_bootstrap(KERNBASE, (u_int)&end, nctx);
-#ifdef KGDB
-/* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
-	zs_kgdb_init();		/* XXX */
-#endif
-#ifdef DDB
-	db_machine_init();
-#ifdef DB_ELF_SYMBOLS
-	ddb_init(ssym, esym); /* No symbols as yet */
-#else
-	ddb_init();
-#endif
-#endif
-
 }
 
 /*
@@ -484,18 +497,18 @@ sync_crash()
 
 char *
 clockfreq(freq)
-	register int freq;
+	long freq;
 {
-	register char *p;
+	char *p;
 	static char buf[10];
 
 	freq /= 1000;
-	sprintf(buf, "%d", freq / 1000);
+	sprintf(buf, "%ld", freq / 1000);
 	freq %= 1000;
 	if (freq) {
 		freq += 1000;	/* now in 1000..1999 */
 		p = buf + strlen(buf);
-		sprintf(p, "%d", freq);
+		sprintf(p, "%ld", freq);
 		*p = '.';	/* now buf = %d.%3d */
 	}
 	return (buf);
@@ -512,7 +525,7 @@ mbprint(aux, name)
 	if (name)
 		printf("%s at %s", ma->ma_name, name);
 	if (ma->ma_address)
-		printf(" addr 0x%lx", (long)ma->ma_address[0]);
+		printf(" addr 0x%x", (int)ma->ma_address[0]);
 	if (ma->ma_pri)
 		printf(" ipl %d", ma->ma_pri);
 	return (UNCONF);
@@ -765,17 +778,21 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_node = node;
 		if (getpropA(node, "reg", sizeof(ma.ma_reg[0]), 
 			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
+{
+panic("mainbus_attach(): %s has no \"reg\"\n", sp);
 			continue;
-
+}
 		if (getpropA(node, "interrupts", sizeof(ma.ma_interrupts[0]), 
 			     &ma.ma_ninterrupts, (void**)&ma.ma_interrupts) != 0) {
 			free(ma.ma_reg, M_DEVBUF);
+panic("mainbus_attach(): %s has no \"interrupts\"\n", sp);
 			continue;
 		}
 		if (getpropA(node, "address", sizeof(*ma.ma_address), 
 			     &ma.ma_naddress, (void**)&ma.ma_address) != 0) {
 			free(ma.ma_reg, M_DEVBUF);
 			free(ma.ma_interrupts, M_DEVBUF);
+panic("mainbus_attach(): %s has no \"address\"\n", sp);
 			continue;
 		}
 		/* Start at the beginning of the bootpath */
@@ -949,7 +966,7 @@ getprop(node, name, buf, bufsiz)
 	int node;
 	char *name;
 	void *buf;
-	register int bufsiz;
+	size_t bufsiz;
 {
 	return OF_getprop(node, name, buf, bufsiz);
 }
@@ -958,14 +975,15 @@ int
 getpropA(node, name, size, nitem, bufp)
 	int	node;
 	char	*name;
-	int	size;
+	size_t	size;
 	int	*nitem;
 	void	**bufp;
 {
 	void	*buf;
-	int	len;
+	long	len;
 
 	len = getproplen(node, name);
+if (len <= 0 || ((len % size) != 0)) printf("getpropA(%s): len = %lx size = %lx\n", name, len, size);
 	if (len <= 0)
 		return (ENOENT);
 
@@ -976,6 +994,7 @@ getpropA(node, name, size, nitem, bufp)
 	if (buf == NULL) {
 		/* No storage provided, so we allocate some */
 		buf = malloc(len, M_DEVBUF, M_NOWAIT);
+if (!buf) printf("getpropA(%s): malloc of %lx failed\n", name, len);
 		if (buf == NULL)
 			return (ENOMEM);
 	}
@@ -1084,7 +1103,7 @@ getprop_address1(node, vpp)
 /*
  * Internal form of proplen().  Returns the property length.
  */
-int
+long
 getproplen(node, name)
 	int node;
 	char *name;

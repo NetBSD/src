@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.4 1998/08/23 15:52:44 eeh Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.5 1998/09/02 05:51:39 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -125,6 +125,7 @@ OF_instance_to_package(ihandle)
 	return args.phandle;
 }
 
+/* Should really return a `long' */
 int
 OF_getproplen(handle, prop)
 	int handle;
@@ -291,7 +292,7 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 	args.name = ADR2CELL(&"call-method");
 	args.nargs = nargs + 2;
 	args.nreturns = nreturns + 1;
-	args.method = HDL2CELL(method);
+	args.method = ADR2CELL(method);
 	args.ihandle = HDL2CELL(ihandle);
 	va_start(ap, nreturns);
 	for (ip = (long*)(args.args_n_results + (n = nargs)); --n >= 0;)
@@ -333,7 +334,7 @@ OF_call_method_1(method, ihandle, nargs, va_alist)
 	args.name = ADR2CELL(&"call-method");
 	args.nargs = nargs + 2;
 	args.nreturns = 1;
-	args.method = HDL2CELL(method);
+	args.method = ADR2CELL(method);
 	args.ihandle = HDL2CELL(ihandle);
 	va_start(ap, nargs);
 	for (ip = (long*)(args.args_n_results + (n = nargs)); --n >= 0;)
@@ -466,11 +467,12 @@ OF_read(handle, addr, len)
 		if (args.actual > 0) {
 			act += args.actual;
 		}
-		if (args.actual < l)
+		if (args.actual < l) {
 			if (act)
 				return act;
 			else
 				return args.actual;
+		}
 	}
 	return act;
 }
@@ -625,3 +627,101 @@ void
 	return (void*)(long)args.oldfunc;
 }
 
+void 
+OF_set_symbol_lookup(s2v, v2s)
+	void (*s2v)(void *);
+	void (*v2s)(void *);
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t sym2val;
+		cell_t val2sym;
+	} args;
+		
+	args.name = ADR2CELL(&"set-symbol-lookup");
+	args.nargs = 2;
+	args.nreturns = 0;
+	args.sym2val = ADR2CELL(s2v);
+	args.val2sym = ADR2CELL(v2s);
+
+	(void)openfirmware(&args);
+}
+
+#include "opt_ddb.h"
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
+void OF_sym2val(cells)
+	void *cells;
+{
+	struct args {
+		cell_t service;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t symbol;
+		cell_t result;
+		cell_t value;
+	} *args = (struct args*)cells;
+	db_sym_t symbol;
+	db_expr_t value;
+
+	/* No args?  Nothing to do. */
+	if (!args->nargs || 
+	    !args->nreturns) return;
+
+	/* Do we have a place for the value? */
+	if (args->nreturns != 2) {
+		args->nreturns = 1;
+		args->result = -1;
+		return;
+	} 
+	symbol = (db_sym_t)args->symbol;
+prom_printf("looking up symbol %s\n", symbol);
+	db_symbol_values(symbol, (char**)NULL, &value);
+	args->result = 0;
+	args->value = ADR2CELL(value);
+}
+
+void OF_val2sym(cells)
+	void *cells;
+{
+	struct args {
+		cell_t service;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t value;
+		cell_t offset;
+		cell_t symbol;
+	} *args = (struct args*)cells;
+	db_sym_t symbol;
+	db_expr_t value;
+	db_expr_t offset;
+
+	/* No args?  Nothing to do. */
+	if (!args->nargs || 
+	    !args->nreturns) return;
+
+	/* Do we have a place for the value? */
+	if (args->nreturns != 2) {
+		args->nreturns = 1;
+		args->offset = -1;
+		return;
+	} 
+	
+	value = args->value;
+prom_printf("looking up value %ld\n", value);
+	symbol = db_search_symbol(value, 0, &offset);
+	if (symbol == DB_SYM_NULL) {
+		args->nreturns = 1;
+		args->offset = -1;
+		return;		
+	}
+	args->offset = offset;
+	args->symbol = ADR2CELL(symbol);
+       
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.2 1998/09/02 05:51:38 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -154,9 +154,10 @@ cpu_attach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	register int node, clk;
-	register int impl, vers, fver;
-	register char *fpuname;
+	int node;
+	long clk;
+	int impl, vers, fver;
+	char *fpuname;
 	struct mainbus_attach_args *ma = aux;
 	struct fpstate *fpstate;
 	struct fpstate fps[2];
@@ -261,21 +262,21 @@ cpu_attach(parent, dev, aux)
 	sep = " ";
 	printf("%s: physical", dev->dv_xname);
 	if (cacheinfo.ic_totalsize > 0) {
-		printf("%s%dK instruction (%d b/l)", sep,
-		       cacheinfo.ic_totalsize/1024,
-		       cacheinfo.ic_linesize);
+		printf("%s%ldK instruction (%ld b/l)", sep,
+		       (long)cacheinfo.ic_totalsize/1024,
+		       (long)cacheinfo.ic_linesize);
 		sep = ", ";
 	}
 	if (cacheinfo.dc_totalsize > 0) {
-		printf("%s%dK data (%d b/l)", sep,
-		       cacheinfo.dc_totalsize/1024,
-		       cacheinfo.dc_linesize);
+		printf("%s%ldK data (%ld b/l)", sep,
+		       (long)cacheinfo.dc_totalsize/1024,
+		       (long)cacheinfo.dc_linesize);
 		sep = ", ";
 	}
 	if (cacheinfo.ec_totalsize > 0) {
-		printf("%s%dK external (%d b/l)", sep,
-		       cacheinfo.ec_totalsize/1024,
-		       cacheinfo.ec_linesize);
+		printf("%s%ldK external (%ld b/l)", sep,
+		       (long)cacheinfo.ec_totalsize/1024,
+		       (long)cacheinfo.ec_linesize);
 	}
 	printf(" \n");
 	cache_enable();

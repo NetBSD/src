@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 1998/08/30 15:32:18 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.6 1998/09/02 05:51:38 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -163,7 +163,7 @@ kdb_trap(type, tf)
 
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
-		printf("kdb breakpoint at %p\n", (int)tf->tf_pc);
+		printf("kdb breakpoint at %p\n", tf->tf_pc);
 		break;
 	case -1:		/* keyboard interrupt */
 		printf("kdb tf=%p\n", tf);
@@ -171,6 +171,11 @@ kdb_trap(type, tf)
 	default:
 		printf("kernel trap %x: %s\n", type, trap_type[type & 0x1ff]);
 		if (db_recover != 0) {
+#ifdef	_LP64
+			/* For now, don't get into infinite DDB trap loop */
+			printf("Faulted in DDB; going to OBP...\n");
+			OF_enter();
+#endif
 			db_error("Faulted in DDB; continuing...\n");
 			OF_enter();
 			/*NOTREACHED*/
@@ -216,9 +221,9 @@ kdb_trap(type, tf)
 	s = splhigh();
 	tl = savetstate(ts);
 	for (i=0; i<tl; i++) {
-		printf("%d tt=%x tstate=%x:%x tpc=%x:%x tnpc=%x:%x\n",
-		       i+1, (int)ts[i].tt, (int)(ts[i].tstate>>32), (int)ts[i].tstate,
-		       (int)(ts[i].tpc>>32), (int)ts[i].tpc, (int)(ts[i].tnpc>>32), (int)ts[i].tnpc);
+		printf("%d tt=%x tstate=%lx tpc=%p tnpc=%p\n",
+		       i+1, (int)ts[i].tt, (u_long)ts[i].tstate,
+		       (void*)ts[i].tpc, (void*)ts[i].tnpc);
 	}
 	db_trap(type, 0/*code*/);
 	restoretstate(tl,ts);
@@ -356,7 +361,7 @@ struct pmap* pm;
 		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			db_printf("pdir %d at %x:\n", i, (long)pdir);
 			for (k=0; k<PDSZ; k++) {
-				if (ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED)) {
+				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
 					db_printf("ptable %d:%d at %x:\n", i, k, (long)ptbl);
 					for (j=0; j<PTSZ; j++) {
 						int64_t data0, data1;
@@ -433,8 +438,8 @@ db_pmap_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct pmap* pm;
-	int i, j, full = 0;
+	struct pmap* pm=NULL;
+	int i, j=0, full = 0;
 
 	{
 		register char c, *cp = modif;

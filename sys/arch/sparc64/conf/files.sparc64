@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.9 1998/08/27 11:47:12 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.10 1998/09/02 05:51:36 eeh Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -92,17 +92,17 @@ major { sd = 7 }
 major { vnd = 8 }
 major { cd = 18 }
 
-device dma {}
-attach dma at sbus, obio
-device ledma {}
-attach ledma at sbus
-file	arch/sparc64/dev/dma.c		dma | ledma
+#device dma {}
+#attach dma at sbus, obio
+#device ledma {}
+#attach ledma at sbus
+#file	arch/sparc64/dev/dma.c		dma | ledma
 
-device esp: scsi, ncr53c9x
-attach esp at sbus, dma, obio
-device fas: scsi, ncr53c9x
-attach fas at sbus, dma, obio
-file	arch/sparc64/dev/esp.c		esp | fas
+#device esp: scsi, ncr53c9x
+#attach esp at sbus, dma, obio
+#device fas: scsi, ncr53c9x
+#attach fas at sbus, dma, obio
+#file	arch/sparc64/dev/esp.c		esp | fas
 
 #device audioamd: audio
 #attach audioamd at mainbus, obio, sbus
@@ -148,8 +148,8 @@ file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 file	arch/sparc64/dev/bt_subr.c	bt_dac
 
 # device definition in sys/conf/files
-attach le at ledma, obio: le24
-file	arch/sparc64/dev/if_le.c	le
+#attach le at ledma, obio: le24
+#file	arch/sparc64/dev/if_le.c	le
 
 device ie: ifnet, ether, arp
 attach ie at sbus, obio

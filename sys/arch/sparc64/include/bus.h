@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 1998/08/30 15:32:17 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 1998/09/02 05:51:37 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,8 @@
 
 #include <machine/types.h>
 #include <machine/ctlreg.h>
-#include <sparc64/asm.h>
+/* Need to get defines for ldxa, etc. */
+#include "asm.h"
 
 /*
  * UPA and SBUS spaces are non-cached and big endian

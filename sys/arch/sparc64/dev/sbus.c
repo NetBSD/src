@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.4 1998/08/30 15:32:16 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.5 1998/09/02 05:51:36 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -251,7 +251,7 @@ sbus_attach(parent, self, aux)
 
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
-	sc->sc_sysio = (struct sysioreg*) ma->ma_address[0];	/* Use prom mapping for sysio. */
+	sc->sc_sysio = (struct sysioreg*)(long)ma->ma_address[0];	/* Use prom mapping for sysio. */
 	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;		/* Find interrupt group no */
 
 	/* Setup interrupt translation tables */
@@ -722,8 +722,8 @@ sbus_flush(sc)
 	while( !sc->sc_flush && flushtimeout > tick()) membar_sync();
 #ifdef DIAGNOSTIC
 	if( !sc->sc_flush )
-		printf("sbus_remove: flush timeout %p at %x:%x\n", (long)sc->sc_flush, 
-		       (int)(sc->sc_flushpa>>32), (int)sc->sc_flushpa); /* panic? */
+		printf("sbus_remove: flush timeout %p at %p\n", (long)sc->sc_flush, 
+		       (long)sc->sc_flushpa); /* panic? */
 #endif
 	return (sc->sc_flush);
 }
@@ -920,7 +920,7 @@ sbus_alloc_bustag(sc)
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
-	sbt->type = SBUS_BUS_SPACE;
+	sbt->type = ASI_PRIMARY;
 	sbt->sparc_bus_map = _sbus_bus_map;
 	sbt->sparc_bus_mmap = sbus_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;

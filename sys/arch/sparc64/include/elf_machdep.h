@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.2 1998/07/07 03:05:03 eeh Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.3 1998/09/02 05:51:37 eeh Exp $	*/
 
 #define ELF32_MACHDEP_ENDIANNESS	Elf_ed_2msb
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -9,6 +9,7 @@
 #define	ELF64_MACHDEP_ENDIANNESS	Elf_ed_2msb
 #define	ELF64_MACHDEP_ID_CASES						\
 		case Elf_em_sparc32plus:				\
+		case Elf_em_sparc64:					\
 			break;
 
 #define R_SPARC_NONE		0

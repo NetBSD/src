@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.2 1998/08/13 02:10:43 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.3 1998/09/02 05:51:37 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@
 
 #ifndef _SBUS_VAR_H_
 #define _SBUS_VAR_H_
+
+#include <machine/bus.h>
 
 /*
  * Most devices are configured according to information kept in

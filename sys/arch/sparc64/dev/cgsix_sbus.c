@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.2 1998/09/02 05:51:36 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ cgsixattach(parent, self, aux)
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_depth = 8;
 
-	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
+	fb_setsize(fb, fb->fb_type.fb_depth, 1152, 900, node);
 
 	/*
 	 * Dunno what the PROM has mapped, though obviously it must have
