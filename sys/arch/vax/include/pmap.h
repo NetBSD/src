@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.12 1996/02/02 18:08:27 mycroft Exp $     */
+/*      $NetBSD: pmap.h,v 1.13 1996/02/11 13:46:23 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -117,6 +117,6 @@ struct pmap	kernel_pmap_store;
 #define	pmap_collect(pmap)		/* No need so far */
 #define	pmap_reference(pmap)	if(pmap) (pmap)->ref_count++
 #define	pmap_pinit(pmap)	(pmap)->ref_count=1;
-#define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SIZE)
+#define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SHIFT)
 
 #endif PMAP_H
