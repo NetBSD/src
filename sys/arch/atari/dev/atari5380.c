@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.29 1998/10/06 09:29:44 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.29.6.1 1999/12/16 22:22:32 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -254,7 +254,7 @@ scsi_tt_init(struct ncr_softc *sc)
 	if (machineid & ATARI_TT) {
 		/* SCSI-dma interrupts		*/
 		MFP2->mf_ierb |= IB_SCDM;
-		MFP2->mf_iprb &= ~IB_SCDM;
+		MFP2->mf_iprb  = (u_int8_t)~IB_SCDM;
 		MFP2->mf_imrb |= IB_SCDM;
 	}
 	else if (machineid & ATARI_HADES) {
@@ -268,7 +268,7 @@ scsi_tt_init(struct ncr_softc *sc)
 	else panic("scsi_tt_init: should not come here");
 
 	MFP2->mf_iera |= IA_SCSI;	/* SCSI-5380 interrupts		*/
-	MFP2->mf_ipra &= ~IA_SCSI;
+	MFP2->mf_ipra  = (u_int8_t)~IA_SCSI;
 	MFP2->mf_imra |= IA_SCSI;
 
 	/*
@@ -318,8 +318,8 @@ scsi_tt_clr_ipend(void)
 	SCSI_DMA->s_dma_ctrl = 0;
 	tmp = GET_TT_REG(NCR5380_IRCV);
 	if (machineid & ATARI_TT)
-		single_inst_bclr_b(MFP2->mf_iprb, IB_SCDM);
-	single_inst_bclr_b(MFP2->mf_ipra, IA_SCSI);
+		MFP2->mf_iprb = (u_int8_t)~IB_SCDM;
+	MFP2->mf_ipra = (u_int8_t)~IA_SCSI;
 
 	/*
 	 * Remove interrupts already scheduled.
@@ -685,7 +685,7 @@ struct ncr_softc	*sc;
 	 * Enable disk related interrupts
 	 */
 	MFP->mf_ierb  |= IB_DINT;
-	MFP->mf_iprb  &= ~IB_DINT;
+	MFP->mf_iprb   = (u_int8_t)~IB_DINT;
 	MFP->mf_imrb  |= IB_DINT;
 }
 
