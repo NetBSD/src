@@ -1,4 +1,4 @@
-.\"	$NetBSD: minherit.2,v 1.15 2003/11/19 15:20:32 pooka Exp $
+.\"	$NetBSD: minherit.2,v 1.16 2003/11/19 16:50:09 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)minherit.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd November 19, 2003
 .Dt MINHERIT 2
 .Os
 .Sh NAME
@@ -72,10 +72,7 @@ are shared between the address spaces, while pages or regions marked
 .Dv MAP_INHERIT_NONE
 will be unmapped in the child.
 .Sh RETURN VALUES
-Upon succesful completion, a value of 0 is returned.
-Otherwise, a value of -1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std minherit
 .Sh SEE ALSO
 .Xr fork 2 ,
 .Xr madvise 2 ,
