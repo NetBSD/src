@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.87 2002/09/26 23:55:43 martin Exp $	*/
+/*	$NetBSD: wi.c,v 1.88 2002/09/27 21:54:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.87 2002/09/26 23:55:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.88 2002/09/27 21:54:17 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1407,7 +1407,7 @@ wi_cmd(sc, cmd, val0, val1, val2)
 	int			i, s = 0;
 
 	/* Wait 100us for the busy bit to clear. */
-	for (i = 10; i--; DELAY(10)) {
+	for (i = 100; i--; DELAY(10)) {
 		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY))
 			break;
 	}
