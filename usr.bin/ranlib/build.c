@@ -36,12 +36,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: build.c,v 1.7 1994/12/24 17:35:27 cgd Exp $";
+static char rcsid[] = "$Id: build.c,v 1.8 1995/06/27 00:28:17 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <a.out.h>
 #include <dirent.h>
