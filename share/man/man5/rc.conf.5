@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.32 2000/06/13 16:33:18 itojun Exp $
+.\"	$NetBSD: rc.conf.5,v 1.33 2000/06/20 16:48:21 itojun Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -325,22 +325,6 @@ and
 .Sy rtsold
 as well, if you set the variable to
 .Li autohost .
-.It Sy ip6defaultif
-This configuration is just for very rare case, you can leave it empty.
-IPv6 neighbor discovery specification (RFC2461 section 5.2)
-says that if you have no router known to you,
-you need to treat all the destination as being on-link.
-.Sy ip6defaultif
-configures the outgoing interface in this situation.
-See
-.Xr ndp 8 ,
-option
-.Fl I
-for more detail.
-The setting is for IPv6 hosts only.
-It will be ignored if
-.Sy ip6mode is set to
-.Li router .
 .It Sy rtsol
 YES or NO.
 Run
