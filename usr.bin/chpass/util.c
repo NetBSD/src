@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 1998/07/26 15:08:02 mycroft Exp $	*/
+/*	$NetBSD: util.c,v 1.10 1998/07/26 15:13:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: util.c,v 1.9 1998/07/26 15:08:02 mycroft Exp $");
+__RCSID("$NetBSD: util.c,v 1.10 1998/07/26 15:13:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ ttoa(buf, len, tval)
 
 int
 atot(p, store)
-	char *p;
+	const char *p;
 	time_t *store;
 {
 	static struct tm *lt;
@@ -104,9 +104,9 @@ atot(p, store)
 	return (0);
 }
 
-char *
+const char *
 ok_shell(name)
-	char *name;
+	const char *name;
 {
 	char *p;
 	const char *sh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.2 1998/02/22 14:57:31 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.3 1998/07/26 15:23:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -212,7 +212,7 @@ strerror(err)
 errno_message(filename)
 	char *filename;
 {
-	register char *p;
+	register const char *p;
 	register char *m;
 #if HAVE_ERRNO
 #if MUST_DEFINE_ERRNO
