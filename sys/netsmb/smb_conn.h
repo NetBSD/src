@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.8 2003/03/24 09:17:52 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.9 2003/03/24 14:24:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: src/sys/netsmb/smb_conn.h,v 1.5 2002/02/21 16:13:19 bp Exp
+ * FreeBSD: src/sys/netsmb/smb_conn.h,v 1.7 2002/09/16 10:18:34 bp Exp
  */
 
 /*
@@ -263,7 +263,9 @@ struct smb_vc {
 	u_char 		vc_ch[SMB_MAXCHALLENGELEN];
 	u_short		vc_mid;		/* multiplex id */
 	struct smb_sopt	vc_sopt;	/* server options */
-	int		vc_txmax;	/* max tx/rx packet size */
+	size_t		vc_txmax;	/* max tx/rx packet size */
+	size_t		vc_rxmax;	/* max readx data size */
+	size_t		vc_wxmax;	/* max writex data size */
 	struct smbiod *	vc_iod;
 	struct smb_slock vc_stlock;
 };
