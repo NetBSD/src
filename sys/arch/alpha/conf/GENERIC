@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.6 1995/04/22 12:46:08 cgd Exp $
+#	$NetBSD: GENERIC,v 1.7 1995/06/27 00:58:31 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
-include "std.alpha"
+machine		alpha
 
 makeoptions	CC="gcc -Werror"
 makeoptions	DEBUG="-g"
@@ -16,7 +16,7 @@ options		GENERIC
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 options		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 options		DEC_3000_300	# Pelican etc:	3000/300*
-options		DEC_2100_A50	# "Avanti":	AlphaStation 400 4/233
+options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 
 # needs to be set per system
 options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
@@ -42,13 +42,20 @@ options		COMPAT_43
 # OSF/1 binary compatibility
 options		COMPAT_OSF1
 
-# Loadable kernel modules
+# Loadable Kernel Modules
 options		LKM
 
 # Disable kernel security.
-options		INSECURE
+#options	INSECURE
 
-config		netbsd	swap generic
+# Misc. options
+options		PCIVERBOSE		# recognize "unknown" PCI devices
+
+config		netbsd		swap generic
+
+mainbus0 at	root
+
+cpu*	at	mainbus0
 
 tc*	at	mainbus0
 asic0	at	tc? slot ? offset ?
@@ -61,7 +68,26 @@ esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?
 #sfb*	at	tc? slot ? offset ?
 
-scsibus* at esp?
+apecs*	at	mainbus?
+#lca*	at	cpu?
+
+pci*	at	apecs?
+#pci*	at	lca?
+
+de*	at	pci?
+sio*	at	pci?
+ncr*	at	pci?
+#tga*	at	pci?
+
+isa0	at	sio?
+clock0	at	isa? port 0x70
+#com0	at	isa? port 0x3f8 irq 4		# standard serial ports
+com1	at	isa? port 0x2f8 irq 3
+lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
+wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+
+scsibus* at	esp?
+scsibus* at	ncr?
 
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?

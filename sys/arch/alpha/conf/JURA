@@ -1,4 +1,4 @@
-#	$NetBSD: JURA,v 1.1 1995/04/22 12:47:54 cgd Exp $
+#	$NetBSD: JURA,v 1.2 1995/06/27 00:59:52 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 
@@ -12,7 +12,8 @@ maxusers 8
 # CPU Support
 options         DEC_2000_300    # "Jensen":     2000/300 (DECpc AXP 150)
 
-options		COLDHALTLOOP
+options		BOOTKEY			# ask for keyhit before halt/reboot 
+
 # needs to be set per system
 options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
