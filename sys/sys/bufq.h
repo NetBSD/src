@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq.h,v 1.1 2004/10/28 07:07:47 yamt Exp $	*/
+/*	$NetBSD: bufq.h,v 1.2 2004/11/25 04:52:23 yamt Exp $	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
 /*-
@@ -96,6 +96,7 @@ struct bufq_state {
 #define BUFQ_SORT_RAWBLOCK	0x0001	/* Sort by b_rawblkno */
 #define BUFQ_SORT_CYLINDER	0x0002	/* Sort by b_cylinder, b_rawblkno */
 
+#define	_BUFQ_DEFAULT		0x00f0	/* Let bufq_alloc() choose strategy */
 #define BUFQ_FCFS		0x0010	/* First-come first-serve */
 #define BUFQ_DISKSORT		0x0020	/* Min seek sort */
 #define BUFQ_READ_PRIO		0x0030	/* Min seek and read priority */
@@ -115,11 +116,6 @@ void	bufq_free(struct bufq_state *);
 	(*(bufq)->bq_get)((bufq), 1)	/* Get and remove buffer from queue */
 #define BUFQ_PEEK(bufq) \
 	(*(bufq)->bq_get)((bufq), 0)	/* Get buffer from queue */
-
-void	bufq_fcfs_init(struct bufq_state *);
-void	bufq_disksort_init(struct bufq_state *);
-void	bufq_readprio_init(struct bufq_state *);
-void	bufq_priocscan_init(struct bufq_state *);
 
 static __inline int buf_inorder(const struct buf *, const struct buf *, int)
     __unused;
@@ -144,3 +140,18 @@ buf_inorder(const struct buf *bp, const struct buf *bq, int sortby)
 	} else
 		return bp->b_rawblkno < bq->b_rawblkno;
 }
+
+struct bufq_strat {
+	const char *bs_name;
+	void (*bs_initfn)(struct bufq_state *);
+	int bs_id;
+};
+
+#define	BUFQ_DEFINE(name, id, initfn)			\
+static const struct bufq_strat bufq_strat_##name = {	\
+	.bs_name = #name,				\
+	.bs_id = id,					\
+	.bs_initfn = initfn				\
+};							\
+__link_set_add_rodata(bufq_strats, bufq_strat_##name)
+

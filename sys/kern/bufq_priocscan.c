@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.2 2004/10/28 07:07:46 yamt Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.3 2004/11/25 04:52:24 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.2 2004/10/28 07:07:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.3 2004/11/25 04:52:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,8 +163,12 @@ const int priocscan_burst[] = {
 	64, 16, 4
 };
 
+static void bufq_priocscan_init(struct bufq_state *);
 static void bufq_priocscan_put(struct bufq_state *, struct buf *);
 static struct buf *bufq_priocscan_get(struct bufq_state *, int);
+
+BUFQ_DEFINE(priocscan, BUFQ_PRIOCSCAN, bufq_priocscan_init);
+
 static __inline struct cscan_queue *bufq_priocscan_selectqueue(
     struct bufq_priocscan *, const struct buf *);
 
@@ -271,7 +275,7 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 	return bp;
 }
 
-void
+static void
 bufq_priocscan_init(struct bufq_state *bufq)
 {
 	struct bufq_priocscan *q;

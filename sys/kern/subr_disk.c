@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.64 2004/10/28 07:07:46 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.65 2004/11/25 04:52:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,10 +74,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.64 2004/10/28 07:07:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.65 2004/11/25 04:52:24 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_bufq.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,11 +97,9 @@ struct	disklist_head disklist = TAILQ_HEAD_INITIALIZER(disklist);
 int	disk_count;		/* number of drives in global disklist */
 struct simplelock disklist_slock = SIMPLELOCK_INITIALIZER;
 
-#ifdef NEW_BUFQ_STRATEGY
-int bufq_disk_default_strat = BUFQ_READ_PRIO;
-#else /* NEW_BUFQ_STRATEGY */
-int bufq_disk_default_strat = BUFQ_DISKSORT;
-#endif /* NEW_BUFQ_STRATEGY */
+int bufq_disk_default_strat = _BUFQ_DEFAULT;
+
+BUFQ_DEFINE(dummy, 0, NULL); /* so that bufq_strats won't be empty */
 
 /*
  * Compute checksum for disk label.
@@ -481,39 +478,55 @@ sysctl_hw_diskstats(SYSCTLFN_ARGS)
 void
 bufq_alloc(struct bufq_state *bufq, int flags)
 {
-	void (*initfn)(struct bufq_state *);
+	__link_set_decl(bufq_strats, const struct bufq_strat);
+	int methodid;
+	const struct bufq_strat *bsp;
+	const struct bufq_strat * const *it;
 
 	bufq->bq_flags = flags;
+	methodid = flags & BUFQ_METHOD_MASK;
 
 	switch (flags & BUFQ_SORT_MASK) {
 	case BUFQ_SORT_RAWBLOCK:
 	case BUFQ_SORT_CYLINDER:
 		break;
 	case 0:
-		if ((flags & BUFQ_METHOD_MASK) == BUFQ_FCFS)
+		if (methodid == BUFQ_FCFS)
 			break;
 		/* FALLTHROUGH */
 	default:
 		panic("bufq_alloc: sort out of range");
 	}
 
-	switch (flags & BUFQ_METHOD_MASK) {
-	case BUFQ_FCFS:
-		initfn = bufq_fcfs_init;
-		break;
-	case BUFQ_DISKSORT:
-		initfn = bufq_disksort_init;
-		break;
-	case BUFQ_READ_PRIO:
-		initfn = bufq_readprio_init;
-		break;
-	case BUFQ_PRIOCSCAN:
-		initfn = bufq_priocscan_init;
-		break;
-	default:
-		panic("bufq_alloc: method out of range");
+	/*
+	 * select strategy.
+	 * if a strategy specified by flags is found, use it.
+	 * otherwise, select one with the largest id number. XXX
+	 */
+	bsp = NULL;
+	__link_set_foreach(it, bufq_strats) {
+		if ((*it) == &bufq_strat_dummy)
+			continue;
+		if (methodid == (*it)->bs_id) {
+			bsp = *it;
+			break;
+		}
+		if (bsp == NULL || (*it)->bs_id > bsp->bs_id)
+			bsp = *it;
 	}
-	(*initfn)(bufq);
+
+	if (bsp) {
+#if defined(DEBUG)
+		/* XXX aprint? */
+		if (bsp->bs_id != methodid && methodid != _BUFQ_DEFAULT)
+			printf("bufq_alloc: method 0x%04x is not available.\n",
+			    methodid);
+		printf("bufq_alloc: using %s\n", bsp->bs_name);
+#endif
+		(*bsp->bs_initfn)(bufq);
+	} else {
+		panic("bufq_alloc: no method");
+	}
 }
 
 /*
