@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.71 1996/05/20 18:17:53 mrg Exp $
+#	$NetBSD: SUN_LAMP,v 1.72 1996/05/30 22:36:49 cgd Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -47,7 +47,8 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 #options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 
 #options	USER_LDT	# user-settable LDT; used by WINE
-#options	LKM		# loadable kernel modules
+options		LKM		# loadable kernel modules
+options		INSECURE
 
 options		FFS #,QUOTA	# UFS and quotas
 #options	LFS		# log-structured file system
