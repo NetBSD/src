@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.1 1995/06/24 20:16:23 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.2 1995/09/19 22:02:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -57,15 +57,16 @@
 #define MSG_COMPAT	0x8000	/* XXX */
 
 int
-compat_43_accept(p, uap, retval)
+compat_43_accept(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct accept_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) name;
 		syscallarg(int *) anamelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int error;
 
 	if ((error = accept(p, uap, retval)) != 0)
@@ -87,15 +88,16 @@ compat_43_accept(p, uap, retval)
 
 
 int
-compat_43_getpeername(p, uap, retval)
+compat_43_getpeername(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct getpeername_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
 		syscallarg(int *) alen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct sockaddr sa;
 
 	int error;
@@ -116,15 +118,16 @@ compat_43_getpeername(p, uap, retval)
 
 
 int
-compat_43_getsockname(p, uap, retval)
+compat_43_getsockname(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct getsockname_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
 		syscallarg(int *) alen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct sockaddr sa;
 	int error;
 
@@ -144,16 +147,17 @@ compat_43_getsockname(p, uap, retval)
 
 
 int
-compat_43_recv(p, uap, retval)
+compat_43_recv(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_recv_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;
 
@@ -170,8 +174,11 @@ compat_43_recv(p, uap, retval)
 
 
 int
-compat_43_recvfrom(p, uap, retval)
+compat_43_recvfrom(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct recvfrom_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
@@ -179,9 +186,7 @@ compat_43_recvfrom(p, uap, retval)
 		syscallarg(int) flags;
 		syscallarg(caddr_t) from;
 		syscallarg(int *) fromlenaddr;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 
 	SCARG(uap, flags) |= MSG_COMPAT;
 	return (recvfrom(p, uap, retval));
@@ -194,15 +199,16 @@ compat_43_recvfrom(p, uap, retval)
  * rights where the control fields are now.
  */
 int
-compat_43_recvmsg(p, uap, retval)
+compat_43_recvmsg(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_recvmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(struct omsghdr *) msg;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
@@ -236,16 +242,17 @@ done:
 }
 
 int
-compat_43_send(p, uap, retval)
+compat_43_send(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_send_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;
 
@@ -261,15 +268,16 @@ compat_43_send(p, uap, retval)
 }
 
 int
-compat_43_sendmsg(p, uap, retval)
+compat_43_sendmsg(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct compat_43_sendmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) msg;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
