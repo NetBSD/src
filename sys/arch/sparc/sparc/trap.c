@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 1998/11/12 14:00:06 ws Exp $ */
+/*	$NetBSD: trap.c,v 1.78 1998/12/14 16:18:46 kleink Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -391,6 +391,7 @@ badtrap:
 		if (fs == NULL) {
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
+			fs->fs_qsize = 0;
 			p->p_md.md_fpstate = fs;
 		}
 		/*
