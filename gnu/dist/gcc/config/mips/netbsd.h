@@ -27,6 +27,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <mips/elf.h>
 
+
 /* NetBSD on mips uses elf. */
 
 #undef OBJECT_FORMAT_COFF
@@ -233,36 +234,6 @@ do {									 \
       }									\
   } while (0)
 
-/*
- A C statement to output something to the assembler file to switch to section
- NAME for object DECL which is either a FUNCTION_DECL, a VAR_DECL or
- NULL_TREE.  Some target formats do not support arbitrary sections.  Do not
- define this macro in such cases.
-*/
-#define ASM_OUTPUT_SECTION_NAME(F, DECL, NAME, RELOC)                        \
-do {                                                                         \
-  extern FILE *asm_out_text_file;                                            \
-  if ((DECL) && TREE_CODE (DECL) == FUNCTION_DECL)                           \
-    fprintf (asm_out_text_file, "\t.section %s,\"ax\",@progbits\n", (NAME)); \
-  else if ((DECL) && DECL_READONLY_SECTION (DECL, RELOC))                    \
-    fprintf (F, "\t.section %s,\"a\",@progbits\n", (NAME));                  \
-  else                                                                       \
-    fprintf (F, "\t.section %s,\"aw\",@progbits\n", (NAME));                 \
-} while (0)
-
-/* Since gas and gld are standard on NetBSD, we don't need these */
-#undef ASM_FINAL_SPEC
-
-/* XXXXXX see iris6.h */
-
-/* This is *NOT* how to equate one symbol to another symbol.  The assembler
-   '=' syntax just equates a name to a constant expression.
-   See ASM_OUTPUT_WEAK_ALIAS.  */
-
-#undef ASM_OUTPUT_DEF
-
-#undef SET_ASM_OP	/* Has no equivalent.  See ASM_OUTPUT_DEF below.  */
-
 
 /* -G is incompatible with -KPIC which is the default, so only allow objects
    in the small data section if the user explicitly asks for it.  */
@@ -280,3 +251,149 @@ do {                                                                         \
 
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT (MASK_GAS|MASK_DEBUG_A)
+
+/* Since gas and gld are standard on NetBSD, we don't need these */
+#undef ASM_FINAL_SPEC
+
+
+/* XXXXXX see iris6.h for the following */
+
+
+/* This is *NOT* how to equate one symbol to another symbol.  The assembler
+   '=' syntax just equates a name to a constant expression.
+   See ASM_OUTPUT_WEAK_ALIAS.  */
+
+#undef ASM_OUTPUT_DEF
+
+#undef SET_ASM_OP	/* Has no equivalent.  See ASM_OUTPUT_DEF below.  */
+
+
+/* Stuff for constructors.  Start here.  */
+
+/* Like irix6 only different: using gas and ld with ELF, we *do* have
+   support for the .init and .fini sections, and we can put stuff in
+   there to be executed before and after `main'.  We let crtstuff.c
+   and other files know this by defining the following symbols.  The
+   definitions say how to change sections to the .init and .fini
+   sections.  This is the same for all known svr4 assemblers.
+   (except for 32/64-bit support, if we stay compatible with IRIX?). */
+
+#define CONST_SECTION_ASM_OP_32	"\t.rdata"
+#define CONST_SECTION_ASM_OP_64	".section\t.rodata"
+
+
+/* Note that the following sections must be writable, so that
+   ld.so can relocate (and write into) shared-library .ctors/.dtors
+   sections after mapping them. */
+#define CTORS_SECTION_ASM_OP	".section\t.ctors,\"aw\""
+#define DTORS_SECTION_ASM_OP	".section\t.dtors,\"aw\""
+
+
+#define BSS_SECTION_ASM_OP	".section\t.bss"
+#define CONST_SECTION_ASM_OP_32	"\t.rdata"
+#define CONST_SECTION_ASM_OP_64	".section\t.rodata"
+
+/* Define the pseudo-ops used to switch to the .ctors and .dtors sections.
+   XXX do we need to make these writable? see svr4.h. */
+
+#define INIT_SECTION_ASM_OP	".section\t.init"
+#define FINI_SECTION_ASM_OP	".section\t.fini"
+
+/* This is the pseudo-op used to generate a 32-bit word of data with a
+   specific value in some section.  This is the same for all known svr4
+   assemblers.  */
+
+#define INT_ASM_OP		".word"
+		/* XXX mips64 targets? */
+
+/* dwarf2out will handle padding this data properly.  We definitely don't
+   want it 8-byte aligned on n32.  */
+#define EH_FRAME_SECTION_ASM_OP ".section\t.eh_frame"
+
+/* A default list of other sections which we might be "in" at any given
+   time.  For targets that use additional sections (e.g. .tdesc) you
+   should override this definition in the target-specific file which
+   includes this file.  */
+
+#undef EXTRA_SECTIONS
+#define EXTRA_SECTIONS in_sdata, in_rdata, in_const, in_ctors, in_dtors
+
+/* A default list of extra section function definitions.  For targets
+   that use additional sections (e.g. .tdesc) you should override this
+   definition in the target-specific file which includes this file.  */
+
+/* ??? rdata_section is now same as svr4 const_section.  */
+
+#undef EXTRA_SECTION_FUNCTIONS
+#define EXTRA_SECTION_FUNCTIONS						\
+void									\
+sdata_section ()							\
+{									\
+  if (in_section != in_sdata)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", SDATA_SECTION_ASM_OP);		\
+      in_section = in_sdata;						\
+    }									\
+}									\
+									\
+void									\
+rdata_section ()							\
+{									\
+  if (in_section != in_rdata)						\
+    {									\
+      if (mips_abi != ABI_32)						\
+	fprintf (asm_out_file, "%s\n", CONST_SECTION_ASM_OP_64);	\
+      else								\
+	fprintf (asm_out_file, "%s\n", CONST_SECTION_ASM_OP_32);	\
+      in_section = in_rdata;						\
+    }									\
+}									\
+  CTORS_SECTION_FUNCTION						\
+  DTORS_SECTION_FUNCTION
+
+#define CTORS_SECTION_FUNCTION						\
+void									\
+ctors_section ()							\
+{									\
+  if (in_section != in_ctors)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", CTORS_SECTION_ASM_OP);		\
+      in_section = in_ctors;						\
+    }									\
+}
+
+#define DTORS_SECTION_FUNCTION						\
+void									\
+dtors_section ()							\
+{									\
+  if (in_section != in_dtors)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", DTORS_SECTION_ASM_OP);		\
+      in_section = in_dtors;						\
+    }									\
+}
+
+#define OBJECT_FORMAT_ELF
+/* A C statement (sans semicolon) to output an element in the table of
+   global constructors.  */
+#define ASM_OUTPUT_CONSTRUCTOR(FILE,NAME)				\
+  do {									\
+    ctors_section ();							\
+    fprintf (FILE, "\t%s\t ",						\
+	     TARGET_LONG64 ? ".dword" : ".word");			\
+    assemble_name (FILE, NAME);						\
+    fprintf (FILE, "\n");						\
+  } while (0)
+
+/* A C statement (sans semicolon) to output an element in the table of
+   global destructors.  */
+#define ASM_OUTPUT_DESTRUCTOR(FILE,NAME)       				\
+  do {									\
+    dtors_section ();                   				\
+    fprintf (FILE, "\t%s\t ",						\
+	     TARGET_LONG64 ? ".dword" : ".word");			\
+    assemble_name (FILE, NAME);              				\
+    fprintf (FILE, "\n");						\
+  } while (0)
+
+/* Stuff for constructors.  End here.  */
