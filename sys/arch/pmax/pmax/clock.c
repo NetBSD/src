@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 1996/10/13 03:39:45 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 1997/06/15 18:04:30 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
+#include <machine/locore.h>	/* XXX wbflush() */
 #include <pmax/pmax/clockreg.h>
 
 #include "tc.h"			/* Is a Turbochannel configured? */
