@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)signalvar.h	7.1 (Berkeley) 5/9/91
- *	$Id: signalvar.h,v 1.3 1993/05/20 16:23:07 cgd Exp $
+ *	$Id: signalvar.h,v 1.3.4.1 1993/10/13 12:34:44 deraadt Exp $
  */
 
 #ifndef _SYS_SIGNALVAR_H_
@@ -56,6 +56,7 @@ struct	sigacts {
 	struct	sigstack ps_sigstack;	/* sp & on stack state variable */
 	int	ps_sig;			/* for core dump/debugger XXX */
 	int	ps_code;		/* for core dump/debugger XXX */
+	sigset_t ps_usertramp;		/* SunOS compat; libc sigtramp XXX */
 };
 
 #define	ps_onstack	ps_sigstack.ss_onstack
