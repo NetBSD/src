@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 2003/06/24 04:57:59 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 2003/11/06 00:41:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -39,11 +39,12 @@
  * Modified by Matthias Pfaller, Jan 1996.
  *
  */
-
+#define __HAVE_SIGINFO
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_cpu30mhz.h"
 #include "opt_ns381.h"
+#include "opt_compat_netbsd.h"
 
 #include "assym.h"
 
@@ -148,7 +149,7 @@ KENTRY(delay, 4)		/* bsr  2 cycles;  80 ns */
 /*
  * Signal trampoline; copied to top of user stack.
  */
-
+#ifdef COMPAT_16
 ENTRY_NOPROFILE(sigcode)
 	/*
 	 * Handler has returned here as if we called it.  The sigcontext
@@ -156,7 +157,7 @@ ENTRY_NOPROFILE(sigcode)
 	 */
 	addr	12(sp),4(sp)		/* get pointer to sigcontext
 					   and put it in the argument slot */
-	movd	SYS___sigreturn14,r0
+	movd	SYS_compat_16___sigreturn14,r0
 	svc
 	.long	0x0000a517		/* movd	0,0 -- illegal instruction. */
 GLOBAL(esigcode)
@@ -164,6 +165,7 @@ GLOBAL(esigcode)
 #if defined(PROF) || defined(GPROF) || defined(KGDB) || defined(DDB)
 	/* Just a gap between esigcode and the next label */
 	.long	0
+#endif
 #endif
 
 /****************************************************************************/
