@@ -1,5 +1,5 @@
+#	$NetBSD: rc,v 1.54 1995/10/08 18:11:43 thorpej Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
-#	$Id: rc,v 1.53 1995/09/16 15:29:20 jtc Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
