@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.98 2003/05/15 12:56:16 dsl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.99 2003/05/16 14:25:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.98 2003/05/15 12:56:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.99 2003/05/16 14:25:03 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -814,7 +814,7 @@ setroot(bootdv, bootpartition)
 			printf(": ");
 			len = cngetsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
-				strcpy(buf, bootdv->dv_xname);
+				strlcpy(buf, bootdv->dv_xname, sizeof(buf));
 				len = strlen(buf);
 			}
 			if (len > 0 && buf[len - 1] == '*') {

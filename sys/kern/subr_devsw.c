@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.5 2003/02/01 11:12:35 mrg Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.6 2003/05/16 14:25:03 itojun Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -140,12 +140,13 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 		max_devsw_convs = new;
 	}
 
-	name = malloc(strlen(devname) + 1, M_DEVBUF, M_NOWAIT);
+	i = strlen(devname) + 1;
+	name = malloc(i, M_DEVBUF, M_NOWAIT);
 	if (name == NULL) {
 		devsw_detach(bdev, cdev);
 		return (ENOMEM);
 	}
-	strcpy(name, devname);
+	strlcpy(name, devname, i);
 
 	devsw_conv[i].d_name = name;
 	devsw_conv[i].d_bmajor = *bmajor;
