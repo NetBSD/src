@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.57 1999/01/12 00:21:47 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.58 1999/01/12 12:49:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ ccdinit(cs, cpaths, vpp, p)
 
 #ifdef DEBUG
 	if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-		printf("ccdinit: unit %d\n", ccd->ccd_unit);
+		printf("ccdinit: unit %d\n", cs->sc_unit);
 #endif
 
 	/* Allocate space for the component info. */
