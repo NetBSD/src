@@ -1,4 +1,4 @@
-/* $NetBSD: dc_ibus.c,v 1.1.2.4 1999/11/25 09:56:52 nisimura Exp $ */
+/* $NetBSD: dc_ibus.c,v 1.1.2.5 1999/11/26 05:09:04 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dc_ibus.c,v 1.1.2.4 1999/11/25 09:56:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc_ibus.c,v 1.1.2.5 1999/11/26 05:09:04 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,11 +93,12 @@ dc_ibus_submatch(parent, cf, aux)
 	    cf->cf_loc[DCCF_LINE] != args->line)
 		return 0; 
 	if (cf->cf_loc[DCCF_LINE] == DCCF_LINE_DEFAULT) {
-		if (sc->sc_unit == 0) {
+		if (sc->sc_dv.dv_unit == 0) {
 			switch (systype) {
 			    case DS_PMAX:
 			    case DS_3MAX:
 			/* XXX distinguish DECsystem cases XXX */
+			/* XXX they are easy to find out XXX */
 				if (args->line == 0)
 					defname = "vsms";
 				else if (args->line == 1)
@@ -136,13 +137,12 @@ dc_ibus_attach(parent, self, aux)
 		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
 		return;
 	}
-	sc->sc_unit = dc_cd.cd_ndevs;
 
 	printf("\n");
 
 	for (line = 0; line < 4; line++) {
 		args.line = line;
-		config_found_sm(self, (void *)args,
+		config_found_sm(self, (void *)&args,
 				dc_ibus_print, dc_ibus_submatch);
 	}
 
