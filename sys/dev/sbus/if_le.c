@@ -1,12 +1,12 @@
-/*	$NetBSD: if_le.c,v 1.3 1998/07/30 22:44:51 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.4 1998/08/15 10:51:19 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Charles M. Hannum and by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +40,6 @@
 /*-
  * Copyright (c) 1996
  *	The President and Fellows of Harvard College. All rights reserved.
- * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

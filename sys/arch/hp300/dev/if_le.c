@@ -1,11 +1,11 @@
-/*	$NetBSD: if_le.c,v 1.46 1998/07/21 17:36:02 drochner Exp $	*/
+/*	$NetBSD: if_le.c,v 1.47 1998/08/15 10:51:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Charles M. Hannum and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,6 @@
  */
 
 /*-
- * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
