@@ -792,7 +792,7 @@ if test x"$*" = x; then
 	tests="${tests} modules modules2 modules3 modules4 modules5 modules6"
 	tests="${tests} mkmodules co-d"
 	tests="${tests} cvsadm emptydir abspath abspath2 toplevel toplevel2"
-        tests="${tests} top-level checkout_repository"
+        tests="${tests} rstar-toplevel trailingslashes checkout_repository"
 	# Log messages, error messages.
 	tests="${tests} mflag editor errmsg1 errmsg2 adderrmsg opterrmsg"
 	# Watches, binary files, history browsing, &c.
@@ -1943,9 +1943,8 @@ done"
 	  dotest basica-8a5 "${testcvs} -q up -A ./" "[UP] ssfile"
 
 	  cd ../..
-	  dotest basica-8b "${testcvs} -q diff -r1.2 -r1.3" ''
-	  dotest basica-8b1 "${testcvs} -q diff -r1.2 -r1.3 -C 3isacrowd" \
-''
+	  dotest basica-8b "${testcvs} -q diff -r1.2 -r1.3"
+	  dotest basica-8b1 "${testcvs} -q diff -r1.2 -r1.3 -C 3isacrowd"
 
 	  # The .* here will normally be "No such file or directory",
 	  # but if memory serves some systems (AIX?) have a different message.
@@ -6018,8 +6017,7 @@ ${QUESTION} sdir"
 "${QUESTION} sdir
 ${PROG} \[update aborted\]: no such tag br"
 	    dotest dirs2-10ar \
-"${testcvs} -q rdiff -u -r 1.1 -r br first-dir/sdir/file1" \
-""
+"${testcvs} -q rdiff -u -r 1.1 -r br first-dir/sdir/file1"
 	    dotest_fail dirs2-10-again "${testcvs} update -d -r br" \
 "${QUESTION} sdir
 ${PROG} update: Updating \.
@@ -13849,14 +13847,14 @@ ${PROG} commit: Rebuilding administrative file database"
 
 
 
-	top-level)
+	rstar-toplevel)
 	  # FIXCVS:
 	  # This test confirms a bug that exists in the r* commands currently
 	  # when run against the top-level project.
 	  #
 	  # The assertion failure is something like:
 	  # do_recursion: Assertion \`strstr (repository, \"/\./\") == ((void \*)0)' failed\..*"
-	  dotest_fail top-level-1 "$testcvs rlog ." \
+	  dotest_fail rstar-toplevel-1 "$testcvs rlog ." \
 "${DOTSTAR}ssertion.*failed${DOTSTAR}" "${DOTSTAR}failed assertion${DOTSTAR}"
 
 	  if $keep; then
@@ -13864,6 +13862,52 @@ ${PROG} commit: Rebuilding administrative file database"
 	    exit 0
 	  fi
 	;;
+
+
+
+	trailingslashes)
+	  # Some tests of CVS's reactions to path specifications containing
+	  # trailing slashes.
+	  mkdir trailingslashes; cd trailingslashes
+	  dotest trailingslashes-init-1 "$testcvs -Q co -ldt ."
+	  dotest trailingslashes-init-2 "$testcvs -Q co -dt2 ."
+	  cd t
+	  echo "Ahh'll be baaack." >topfile
+	  dotest trailingslashes-init-3 "$testcvs -Q add topfile"
+	  dotest trailingslashes-init-4 "$testcvs -Q ci -mto-top" \
+"RCS file: $CVSROOT_DIRNAME/topfile,v
+done
+Checking in topfile;
+$CVSROOT_DIRNAME/topfile,v  <--  topfile
+initial revision: 1\.1
+done"
+
+	  # First, demonstrate the usual case.
+	  cd ../t2
+	  dotest trailingslashes-1 "$testcvs -q up CVSROOT"
+	  dotest_fail trailingslashes-1a "test -f topfile"
+
+	  # FIXCVS:
+	  # Now the one that fails in remote mode.
+	  # This highlights one of the failure cases mentioned in TODO item
+	  # #205.
+	  if $remote; then
+		  dotest trailingslashes-2 "$testcvs -q up CVSROOT/" \
+"U topfile"
+		  dotest trailingslashes-2a "test -f topfile"
+	  else
+		  dotest trailingslashes-2 "$testcvs -q up CVSROOT/"
+		  dotest_fail trailingslashes-2a "test -f topfile"
+	  fi
+
+	  if $keep; then
+	    echo Keeping $TESTDIR and exiting due to --keep
+	    exit 0
+	  fi
+
+	  cd ../..
+	  rm -rf trailingslashes $CVSROOT_DIRNAME/topfile,v
+	  ;;
 
 
 
@@ -27494,7 +27538,11 @@ done"
     # files.  We would like to not leave any behind.
     if $remote && ls $TMPDIR/cvs-serv* >/dev/null 2>&1; then
 	# A true value means ls found files/directories with these names.
-	fail "Found cvs-serv* directories in $TMPDIR."
+	# Give the server some time to finish, then retry.
+	sleep 1
+	if ls $TMPDIR/cvs-serv* >/dev/null 2>&1; then
+	    fail "Found cvs-serv* directories in $TMPDIR."
+	fi
     fi
     if ls $TMPDIR/cvs?????? >/dev/null 2>&1; then
 	# A true value means ls found files/directories with these names.

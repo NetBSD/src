@@ -1,24 +1,24 @@
-# Microsoft Developer Studio Project File - Name="libdiff" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="libcvs" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
-CFG=libdiff - Win32 Debug
+CFG=libcvs - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "libdiff.mak".
+!MESSAGE NMAKE /f "libcvs.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "libdiff.mak" CFG="libdiff - Win32 Debug"
+!MESSAGE NMAKE /f "libcvs.mak" CFG="libcvs - Win32 Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "libdiff - Win32 Release" (based on "Win32 (x86) Static Library")
-!MESSAGE "libdiff - Win32 Debug" (based on "Win32 (x86) Static Library")
+!MESSAGE "libcvs - Win32 Release" (based on "Win32 (x86) Static Library")
+!MESSAGE "libcvs - Win32 Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -28,22 +28,22 @@ CFG=libdiff - Win32 Debug
 CPP=cl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "libdiff - Win32 Release"
+!IF  "$(CFG)" == "libcvs - Win32 Release"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
 # PROP BASE Output_Dir "WinRel"
 # PROP BASE Intermediate_Dir "WinRel"
-# PROP BASE Target_Dir ".\libdiff"
+# PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "WinRel"
 # PROP Intermediate_Dir "WinRel"
-# PROP Target_Dir ".\libdiff"
-# ADD BASE CPP /nologo /W3 /GX /O2 /I "..\windows-NT" /I "..\lib" /D "_WINDOWS" /D "HAVE_TIME_H" /D "CLOSEDIR_VOID" /D "NDEBUG" /D "WIN32" /D "WANT_WIN_COMPILER_VERSION" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "..\windows-NT" /I "..\lib" /D "_WINDOWS" /D "HAVE_TIME_H" /D "CLOSEDIR_VOID" /D "NDEBUG" /D "WIN32" /D "WANT_WIN_COMPILER_VERSION" /YX /FD /c
-# ADD BASE RSC /l 0x409
-# ADD RSC /l 0x409
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /I "..\windows-NT" /I "." /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "HAVE_CONFIG_H" /YX /FD /c
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -51,117 +51,152 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
-!ELSEIF  "$(CFG)" == "libdiff - Win32 Debug"
+!ELSEIF  "$(CFG)" == "libcvs - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
 # PROP BASE Output_Dir "WinDebug"
 # PROP BASE Intermediate_Dir "WinDebug"
-# PROP BASE Target_Dir ".\libdiff"
+# PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "WinDebug"
 # PROP Intermediate_Dir "WinDebug"
-# PROP Target_Dir ".\libdiff"
-# ADD BASE CPP /nologo /W3 /GX /Z7 /Od /I "..\windows-NT" /I "..\lib" /D "_DEBUG" /D "_WINDOWS" /D "WIN32" /D "HAVE_TIME_H" /D "CLOSEDIR_VOID" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /Z7 /Od /I "..\windows-NT" /I "..\lib" /D "_DEBUG" /D "_WINDOWS" /D "WIN32" /D "HAVE_TIME_H" /D "CLOSEDIR_VOID" /YX /FD /c
-# ADD BASE RSC /l 0x409
-# ADD RSC /l 0x409
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "..\windows-NT" /I "." /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "HAVE_CONFIG_H" /YX /FD /GZ /c
+# ADD BASE RSC /l 0x409 /d "_DEBUG"
+# ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 ..\lib\WinDebug\libcvs.lib /nologo
+# ADD LIB32 /nologo
 
 !ENDIF 
 
 # Begin Target
 
-# Name "libdiff - Win32 Release"
-# Name "libdiff - Win32 Debug"
+# Name "libcvs - Win32 Release"
+# Name "libcvs - Win32 Debug"
 # Begin Group "Source Files"
 
-# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90"
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\analyze.c
+SOURCE=.\argmatch.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\cmpbuf.c
+SOURCE=.\fncase.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\context.c
+SOURCE=.\fnmatch.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\diff.c
+SOURCE=.\getdate.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\diff3.c
+SOURCE=.\getline.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\dir.c
+SOURCE=.\getopt.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\ed.c
+SOURCE=.\getopt1.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\ifdef.c
+SOURCE=.\md5.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\io.c
+SOURCE=.\regex.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\normal.c
+SOURCE=.\savecwd.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\side.c
+SOURCE=.\sighandle.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\util.c
+SOURCE=.\stripslash.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\version.c
+SOURCE=.\valloc.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\xgetwd.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\yesno.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
 
-# PROP Default_Filter "h;hpp;hxx;hm;inl;fi;fd"
-# Begin Source File
-
-SOURCE=.\cmpbuf.h
-# End Source File
+# PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
 SOURCE="..\windows-NT\config.h"
 # End Source File
 # Begin Source File
 
-SOURCE=.\diff.h
+SOURCE=.\fnmatch.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\diffrun.h
+SOURCE=.\fnmatch.h.in
+
+!IF  "$(CFG)" == "libcvs - Win32 Release"
+
+# Begin Custom Build
+InputPath=.\fnmatch.h.in
+
+".\fnmatch.h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	copy .\fnmatch.h.in .\fnmatch.h
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "libcvs - Win32 Debug"
+
+# Begin Custom Build
+InputPath=.\fnmatch.h.in
+
+".\fnmatch.h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	copy .\fnmatch.h.in .\fnmatch.h
+
+# End Custom Build
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=..\lib\fnmatch.h
+SOURCE=.\getline.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\lib\getopt.h
+SOURCE=.\getopt.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\getpagesize.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\md5.h
 # End Source File
 # Begin Source File
 
@@ -169,11 +204,19 @@ SOURCE="..\windows-NT\ndir.h"
 # End Source File
 # Begin Source File
 
-SOURCE=..\lib\regex.h
+SOURCE=.\regex.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\savecwd.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\system.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\xtime.h
 # End Source File
 # End Group
 # End Target
