@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.8 2001/09/10 22:17:33 augustss Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.9 2002/01/12 22:06:02 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -158,7 +158,8 @@ Archimedes parallel port
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd
-File descriptors (/dev/fd/*)
+File descriptors (/dev/fd/*), see
+.Xr \&fd 4
 . It Ar bpf#
 Berkeley packet filter devices, see
 .Xr \&bpf 4
