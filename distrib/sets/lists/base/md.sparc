@@ -1,6 +1,5 @@
-# $NetBSD: md.sparc,v 1.43 1999/05/18 23:18:18 tron Exp $
+# $NetBSD: md.sparc,v 1.44 1999/10/18 20:30:39 pk Exp $
 ./sbin/edlabel
-./sbin/ldconfig
 ./usr/bin/fdformat
 ./usr/libexec/ld.so
 ./usr/lkm/adosfs.o
