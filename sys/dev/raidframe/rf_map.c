@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.28 2003/12/30 22:12:10 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.29 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.28 2003/12/30 22:12:10 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.29 2004/02/29 04:03:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -341,7 +341,6 @@ rf_ShutdownMapModule(void *ignored)
 int 
 rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 {
-	int     rc;
 
 	pool_init(&rf_asmhdr_pool, sizeof(RF_AccessStripeMapHeader_t),
 		  0, 0, 0, "rf_asmhdr_pl", NULL);
@@ -358,12 +357,8 @@ rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 	pool_sethiwat(&rf_pda_pool, RF_MAX_FREE_PDA);
 	pool_prime(&rf_pda_pool, RF_PDA_INITIAL);
 
-	rc = rf_ShutdownCreate(listp, rf_ShutdownMapModule, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownMapModule(NULL);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownMapModule, NULL);
+
 	return (0);
 }
 

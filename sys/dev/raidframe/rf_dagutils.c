@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.28 2004/02/29 01:47:45 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.29 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.28 2004/02/29 01:47:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.29 2004/02/29 04:03:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -192,7 +192,6 @@ rf_ShutdownDAGs(void *ignored)
 int 
 rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 {
-	int     rc;
 
 	pool_init(&rf_dagh_pool, sizeof(RF_DagHeader_t), 0, 0, 0,
 		  "rf_dagh_pl", NULL);
@@ -209,12 +208,8 @@ rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 	pool_sethiwat(&rf_funclist_pool, RF_MAX_FREE_FUNCLIST);
 	pool_prime(&rf_funclist_pool, RF_FUNCLIST_INITIAL);
 
-	rc = rf_ShutdownCreate(listp, rf_ShutdownDAGs, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownDAGs(NULL);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownDAGs, NULL);
+
 	return (0);
 }
 

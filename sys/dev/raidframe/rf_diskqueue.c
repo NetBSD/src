@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.29 2004/01/01 19:27:35 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.30 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.29 2004/01/01 19:27:35 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.30 2004/02/29 04:03:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -186,22 +186,16 @@ rf_ShutdownDiskQueueSystem(void *ignored)
 	pool_destroy(&rf_dqd_pool);
 }
 
-int 
+int
 rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp)
 {
-	int     rc;
 
 	pool_init(&rf_dqd_pool, sizeof(RF_DiskQueueData_t), 0, 0, 0,
 		  "rf_dqd_pl", NULL);
 	pool_sethiwat(&rf_dqd_pool, RF_MAX_FREE_DQD);
 	pool_prime(&rf_dqd_pool, RF_DQD_INITIAL);
 
-	rc = rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
-		rf_ShutdownDiskQueueSystem(NULL);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
 
 	return (0);
 }
