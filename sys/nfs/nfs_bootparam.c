@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.15 1999/07/26 02:16:35 enami Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.16 2000/10/02 04:27:57 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ nfs_bootparam(nd, procp)
 	}
 
 	error = EADDRNOTAVAIL;
+#ifdef INET
 #if NARP > 0
 	if (ifp->if_type == IFT_ETHER || ifp->if_type == IFT_FDDI) {
 		/*
@@ -139,6 +140,7 @@ nfs_bootparam(nd, procp)
 		 */
 		error = revarpwhoarewe(ifp, &arps_ip, &my_ip);
 	}
+#endif
 #endif
 	if (error) {
 		printf("revarp failed, error=%d\n", error);
