@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.14 1994/10/02 22:00:39 deraadt Exp $
+ * $Id: autoconf.c,v 1.15 1994/10/15 05:53:23 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -376,7 +376,7 @@ configure()
 		}
 		if (memregcf==NULL)
 			panic("configure: no memreg found!");
-		par_err_reg = (int *)obio_map(memregcf->cf_loc[0], NBPG);
+		par_err_reg = (int *)bus_map(memregcf->cf_loc[0], NBPG, BUS_OBIO);
 		if (par_err_reg == NULL)
 			panic("configure: ROM hasn't mapped memreg!");
 	}
@@ -562,9 +562,8 @@ mainbus_attach(parent, dev, aux)
 	int nzs = 0, audio = 0;
 #endif
 	static const char *const oldmon_special[] = {
-		"obio",
-		"",
-
+		"vmel",
+		"vmes",
 		NULL
 	};
 
@@ -606,11 +605,15 @@ mainbus_attach(parent, dev, aux)
 		/* Start at the beginning of the bootpath */
 		oca.ca_ra.ra_bp = bootpath;
 
-		for (ssp = oldmon_special; *(sp = *ssp) != 0; ssp++) {
+		oca.ca_bustype = BUS_MAIN;
+		oca.ca_ra.ra_name = "obio";
+		if (!config_found(dev, (void *)&oca, mbprint))
+			panic(sp);
+
+		for (ssp = oldmon_special; (sp = *ssp) != NULL; ssp++) {
 			oca.ca_bustype = BUS_MAIN;
 			oca.ca_ra.ra_name = sp;
-			if (!config_found(dev, (void *)&oca, mbprint))
-				panic(sp);
+			(void)config_found(dev, (void *)&oca, mbprint);
 		}
 	} else {
 
@@ -702,7 +705,7 @@ findzs(zs)
 			panic("findzs: unknown zs device %d", zs);
 		}
 
-		addr = obio_map(paddr, NBPG);
+		addr = bus_map(paddr, NBPG, BUS_OBIO);
 		if (addr)
 			return ((void *)addr);
 	}
@@ -744,7 +747,7 @@ makememarr(ap, max, which)
 
 #if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
-		switch(which) {
+		switch (which) {
 		case MEMARR_AVAILPHYS:
 			ap[0].addr = 0;
 			ap[0].len = *oldpvec->memoryAvail;
