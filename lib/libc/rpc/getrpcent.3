@@ -1,5 +1,5 @@
 .\"	@(#)getrpcent.3n	2.2 88/08/02 4.0 RPCSRC; from 1.11 88/03/14 SMI
-.\"	$NetBSD: getrpcent.3,v 1.12 2003/04/16 13:34:43 wiz Exp $
+.\"	$NetBSD: getrpcent.3,v 1.13 2004/08/16 02:47:54 ginsbach Exp $
 .\"
 .Dd December 14, 1987
 .Dt GETRPCENT 3
@@ -18,7 +18,7 @@
 .Ft struct rpcent *
 .Fn getrpcent void
 .Ft struct rpcent *
-.Fn getrpcbyname "char *name"
+.Fn getrpcbyname "const char *name"
 .Ft struct rpcent *
 .Fn getrpcbynumber "int number"
 .Ft void
