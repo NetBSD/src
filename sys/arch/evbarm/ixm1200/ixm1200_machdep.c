@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.12 2003/02/22 05:32:02 igy Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.13 2003/03/25 06:53:15 igy Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002, 2003
@@ -65,6 +65,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.13 2003/03/25 06:53:15 igy Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

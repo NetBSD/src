@@ -1,4 +1,4 @@
-/*      $NetBSD: ixm1200_pci.c,v 1.3 2003/02/17 20:51:53 ichiro Exp $ */
+/*      $NetBSD: ixm1200_pci.c,v 1.4 2003/03/25 06:53:16 igy Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2002, 2003
@@ -32,6 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.4 2003/03/25 06:53:16 igy Exp $");
 
 /*
  * IXM1200 PCI interrupt support.
