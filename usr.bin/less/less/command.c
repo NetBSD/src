@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.6 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: command.c,v 1.7 1999/09/03 22:07:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -52,6 +52,7 @@ extern int ignore_eoi;
 extern int secure;
 extern int hshift;
 extern int show_attn;
+extern int more_mode;
 extern char *every_first_cmd;
 extern char *curr_altfilename;
 extern char version[];
@@ -346,8 +347,8 @@ mca_char(c)
 		 * Certain characters as the first char of 
 		 * the pattern have special meaning:
 		 *	!  Toggle the NO_MATCH flag
-		 *	*  Toggle the PAST_EOF flag
-		 *	@  Toggle the FIRST_FILE flag
+		 *	*  Toggle the PAST_EOF flag (less extension)
+		 *	@  Toggle the FIRST_FILE flag (less extension)
 		 */
 		if (len_cmdbuf() > 0)
 			/*
@@ -358,12 +359,16 @@ mca_char(c)
 		flag = 0;
 		switch (c)
 		{
-		case CONTROL('E'): /* ignore END of file */
 		case '*':
+			if (more_mode)
+				break;
+		case CONTROL('E'): /* ignore END of file */
 			flag = SRCH_PAST_EOF;
 			break;
-		case CONTROL('F'): /* FIRST file */
 		case '@':
+			if (more_mode)
+				break;
+		case CONTROL('F'): /* FIRST file */
 			flag = SRCH_FIRST_FILE;
 			break;
 		case CONTROL('K'): /* KEEP position */
