@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.14 2002/07/08 19:43:23 drochner Exp $ */
+/* $NetBSD: vgavar.h,v 1.15 2002/10/15 18:14:42 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -54,25 +54,29 @@ struct vga_config {
 	LIST_HEAD(, vgascreen) screens;
 	struct vgascreen *active; /* current display */
 	const struct wsscreen_descr *currenttype;
-	int currentfontset1, currentfontset2;
 
 	int vc_biosmapped;
 	bus_space_tag_t vc_biostag;
 	bus_space_handle_t vc_bioshdl;
 
-	int vc_nfontslots;
-	struct egavga_font *vc_fonts[8]; /* currently loaded */
-	TAILQ_HEAD(, egavga_font) vc_fontlist; /* LRU queue */
-
 	struct vgascreen *wantedscreen;
 	void (*switchcb)(void *, int, int);
 	void *switchcbarg;
 
+	struct callout vc_switch_callout;
+	int vc_quirks;
 	int vc_type;
 	const struct vga_funcs *vc_funcs;
 
-	struct callout vc_switch_callout;
-	int vc_quirks;
+#ifndef VGA_RASTERCONSOLE
+	int currentfontset1, currentfontset2;
+	int vc_nfontslots;
+	struct egavga_font *vc_fonts[8]; /* currently loaded */
+	TAILQ_HEAD(, egavga_font) vc_fontlist; /* LRU queue */
+#else
+	int nfonts;
+	LIST_HEAD(, vga_raster_font) vc_fontlist;
+#endif /* !VGA_RASTERCONSOLE */
 };
 
 struct vga_softc {
@@ -194,6 +198,7 @@ int	vga_is_console(bus_space_tag_t, int);
 
 int	vga_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 
+#ifndef VGA_RASTERCONSOLE
 struct wsscreen_descr;
 void 	vga_loadchars(struct vga_handle *, int, int, int, int, char *);
 void 	vga_readoutchars(struct vga_handle *, int, int, int, int, char *);
@@ -202,3 +207,6 @@ void 	vga_copyfont01(struct vga_handle *);
 #endif
 void 	vga_setfontset(struct vga_handle *, int, int);
 void 	vga_setscreentype(struct vga_handle *, const struct wsscreen_descr *);
+#else /* !VGA_RASTERCONSOLE */
+void 	vga_load_builtinfont(struct vga_handle *, u_int8_t *, int, int);
+#endif /* !VGA_RASTERCONSOLE */
