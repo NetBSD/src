@@ -1,0 +1,32 @@
+.\"	$NetBSD: xy.4,v 1.1 2004/03/31 07:20:49 mrg Exp $
+.\"
+.\" Copyright (c) 1998 The OpenBSD Project
+.\" All rights reserved.
+.\"
+.\" from: OpenBSD: xy.4,v 1.6 2003/07/09 13:26:20 jmc Exp
+.\"
+.Dd March 31, 2004
+.Dt XY 4 sparc
+.Os
+.Sh NAME
+.Nm xy
+.Nd Xylogics 450 or 451 VME SMD disk controller driver
+.Sh SYNOPSIS
+.Cd "xyc0    at vmes0 addr 0xffffee40 level 3 vect 0x48" Pq sun4
+.Cd "xyc1    at vmes0 addr 0xffffee48 level 3 vect 0x49" Pq sun4
+.Cd "xy*     at xyc? drive ?                           " Pq sun4
+.Sh DESCRIPTION
+The
+.Nm
+is a Xylogics 450/451 SMD disk controller found on sun4 systems with
+the VME bus.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr xd 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 1.1
+and was written by
+.An Charles D. Cranor .

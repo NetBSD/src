@@ -1,0 +1,59 @@
+.\"     $NetBSD: tctrl.4,v 1.1 2004/03/31 07:20:49 mrg Exp $
+.\"
+.\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" from: OpenBSD: tctrl.4,v 1.6 2003/06/23 09:34:53 miod Exp
+.\"
+.Dd March 31, 2004
+.Dt TCTRL 4 sparc
+.Os
+.Sh NAME
+.Nm tctrl
+.Nd Tadpole Microcontroller Interface
+.Sh SYNOPSIS
+.Cd "tctrl0 at obio0"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides control over many functions on the
+.Tn Tadpole SPARCbook
+3 series laptops, via their TS102 chip.
+The microcontroller is used to power the TFT display down when the
+laptop lid is closed and when the screen is blanked by the
+.Xr pnozz 4
+driver.
+The
+.Nm tctrl
+is also used to power the laptop off when the
+.Xr reboot 2
+system call is used with the
+.Ar RB_POWERDOWN
+flag is set.
+The PCMCIA part of the controller is not yet supported by
+.Nx .
+.Sh SEE ALSO
+.Xr reboot 2 ,
+.Xr intro 4 ,
+.Xr pnozz 4 .
