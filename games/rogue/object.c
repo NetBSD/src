@@ -1,4 +1,4 @@
-/*	$NetBSD: object.c,v 1.5 1997/10/15 09:27:06 is Exp $	*/
+/*	$NetBSD: object.c,v 1.6 1997/10/15 12:43:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: object.c,v 1.5 1997/10/15 09:27:06 is Exp $");
+__RCSID("$NetBSD: object.c,v 1.6 1997/10/15 12:43:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -504,8 +504,6 @@ gr_weapon(obj, assign_wk)
 	short i;
 	short blessing, increment;
 
-	increment = 0; /* XXX make gcc happy */
-
 	obj->what_is = WEAPON;
 	if (assign_wk) {
 		obj->which_kind = get_rand(0, (WEAPONS - 1));
@@ -522,13 +520,13 @@ gr_weapon(obj, assign_wk)
 	percent = get_rand(1, 96);
 	blessing = get_rand(1, 3);
 
-	if (percent <= 16) {
-		increment = 1;
-	} else if (percent <= 32) {
-		increment = -1;
-		obj->is_cursed = 1;
-	}
 	if (percent <= 32) {
+		if (percent <= 16) {
+			increment = 1;
+		} else {
+			increment = -1;
+			obj->is_cursed = 1;
+		}
 		for (i = 0; i < blessing; i++) {
 			if (coin_toss()) {
 				obj->hit_enchant += increment;
