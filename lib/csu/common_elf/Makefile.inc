@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2002/05/05 00:34:00 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2002/05/05 00:45:31 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -16,13 +16,13 @@ CPPFLAGS+=	-DDWARF2_EH
 CPPFLAGS+=	-DJCR
 CPPFLAGS+=	-DDSO_HANDLE
 
-.if !defined(MACHINE_ARCH) || ${MACHINE_ARCH} != "m68000"
-COPTS+=		-fPIC
-.endif
-
 .PATH:		${.CURDIR}/../common_elf
 
-OBJS+=		crt0.o gcrt0.o crtbegin.o crtbeginS.o crtend.o crtendS.o
+OBJS+=		crt0.o gcrt0.o crtbegin.o crtend.o
+.if ${MKPIC} != "no"
+OBJS+=		crtbeginS.o crtendS.o
+COPTS+=		-fPIC
+.endif
 
 realall: ${OBJS}
 
