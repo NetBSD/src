@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47 1996/05/20 03:32:16 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -68,7 +68,7 @@ options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 options		NULLFS		# loopback file system
-options		PORTAL		# ?
+options		PORTAL		# portal filesystem (still experimental)
 options		PROCFS		# /proc
 options		UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system

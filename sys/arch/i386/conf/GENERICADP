@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICADP,v 1.23 1996/05/20 03:32:18 thorpej Exp $
+#	$NetBSD: GENERICADP,v 1.24 1996/05/20 18:17:29 mrg Exp $
 #
 #	GENERICADP -- everything that's currently supported, except non-
 #                     Adaptec SCSI controllers.
@@ -69,7 +69,7 @@ options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 options		NULLFS		# loopback file system
-options		PORTAL		# ?
+options		PORTAL		# portal filesystem (still experimental)
 options		PROCFS		# /proc
 options		UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system
