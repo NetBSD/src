@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,10 +32,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bsearch.c	5.4 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)bsearch.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
-#include <stddef.h>		/* size_t */
+#include <stddef.h>
 #include <stdlib.h>
 
 /*
@@ -63,7 +63,8 @@ bsearch(key, base0, nmemb, size, compar)
 	register int (*compar) __P((const void *, const void *));
 {
 	register const char *base = base0;
-	register int lim, cmp;
+	register size_t lim;
+	register int cmp;
 	register const void *p;
 
 	for (lim = nmemb; lim != 0; lim >>= 1) {
@@ -74,7 +75,7 @@ bsearch(key, base0, nmemb, size, compar)
 		if (cmp > 0) {	/* key > p: move right */
 			base = (char *)p + size;
 			lim--;
-		} /* else move left */
+		}		/* else move left */
 	}
 	return (NULL);
 }
