@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.8 1998/02/25 12:15:49 drochner Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.9 1999/02/19 19:30:46 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -35,7 +35,7 @@ Author: Martin Renters.
 #include <libi386.h>
 #include <pcivar.h>
 
-#ifdef _STANDALONE
+#if defined(_STANDALONE) && !defined(SUPPORT_NO_NETBSD)
 #include <lib/libkern/libkern.h>
 #include <bootinfo.h>
 #endif
@@ -65,7 +65,7 @@ static struct mtabentry {
     {6, 0x40, "MII"},
 };
 
-#ifdef _STANDALONE
+#if defined(_STANDALONE) && !defined(SUPPORT_NO_NETBSD)
 static struct btinfo_netif bi_netif;
 #endif
 
@@ -73,7 +73,7 @@ static struct btinfo_netif bi_netif;
 ETH_PROBE - Look for an adapter
 ***************************************************************************/
 int EtherInit(myadr)
-char *myadr;
+	unsigned char *myadr;
 {
 	/* common variables */
 	int i, j;
@@ -148,7 +148,7 @@ ok:
 	epreset();
 
 
-#ifdef _STANDALONE
+#if defined(_STANDALONE) && !defined(SUPPORT_NO_NETBSD)
 	strncpy(bi_netif.ifname, "ep", sizeof(bi_netif.ifname));
 	bi_netif.bus = BI_BUS_PCI;
 	bi_netif.addr.tag = hdl;
