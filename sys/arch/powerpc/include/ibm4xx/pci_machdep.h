@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2003/03/04 07:51:03 matt Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2 2004/08/02 18:07:40 tacha Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -80,8 +80,6 @@ int		pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 
 void		pci_machdep_init(void);
 
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))
 
 /*
  * Internal functions.
