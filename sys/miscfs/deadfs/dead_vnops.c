@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.14 1996/02/09 22:39:56 christos Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.15 1996/02/13 13:02:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,9 +47,9 @@
 /*
  * Prototypes for dead operations on vnodes.
  */
-int	dead_badop	__P((void *));
-int	dead_ebadf	__P((void *));
-int	dead_nullop	__P((void *));
+int	dead_badop __P((void *)),
+	dead_ebadf __P((void *));
+
 int	dead_lookup	__P((void *));
 #define dead_create	dead_badop
 #define dead_mknod	dead_badop
@@ -340,18 +340,6 @@ dead_badop(v)
 
 	panic("dead_badop called");
 	/* NOTREACHED */
-}
-
-/*
- * Empty vnode null operation
- */
-/*ARGSUSED*/
-int
-dead_nullop(v)
-	void *v;
-{
-
-	return (0);
 }
 
 /*
