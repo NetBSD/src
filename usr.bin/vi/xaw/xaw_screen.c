@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)xaw_screen.c	8.5 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)xaw_screen.c	8.7 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -58,7 +58,7 @@ int
 xaw_screen_init(sp)
 	SCR *sp;
 {
-	msgq(sp, M_ERR, "The Athena widget screen not yet implemented.");
+	msgq(sp, M_ERR, "The Athena widget screen not yet implemented");
 	return (1);
 }
 
