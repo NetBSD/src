@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aout_machdep.h,v 1.1 1993/06/02 02:46:58 cgd Exp $
+ *	$Id: aout_machdep.h,v 1.2 1993/06/03 01:28:36 cgd Exp $
  */
 
 #ifndef _HP300_EXEC_H_
@@ -42,5 +42,17 @@
  * machine-specific ones can be defined using this function.
  */
 #define cpu_exec_makecmds(p,epp)        ENOEXEC
+
+/*
+ * the following function/macro checks to see if a given machine
+ * type (a_mid) field is valid for this architecture
+ * a non-zero return value indicates that the machine type is correct.
+ */
+#ifdef HPUXCOMPAT
+#define cpu_exec_checkmid(mid) ((mid == MID_HP200) || (mid == MID_HP300)\
+				(mid == MID_HPUX))
+#else
+#define cpu_exec_checkmid(mid) ((mid == MID_HP200) || (mid == MID_HP300)))
+#endif
 
 #endif  /* _HP300_EXEC_H_ */
