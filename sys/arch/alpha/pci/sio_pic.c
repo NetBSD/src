@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.26 2000/06/04 19:14:26 cgd Exp $ */
+/* $NetBSD: sio_pic.c,v 1.27 2000/06/05 21:47:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.26 2000/06/04 19:14:26 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.27 2000/06/05 21:47:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.26 2000/06/04 19:14:26 cgd Exp $");
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <alpha/pci/siovar.h>
-
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include "sio.h"
 
@@ -112,9 +108,6 @@ bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
 #define	ICU_LEN		16		/* number of ISA IRQs */
 
 static struct alpha_shared_intr *sio_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt sio_intr_evcnt;
-#endif
 
 #ifndef STRAY_MAX
 #define	STRAY_MAX	5
@@ -342,6 +335,7 @@ sio_intr_setup(pc, iot)
 	pci_chipset_tag_t pc;
 	bus_space_tag_t iot;
 {
+	char *cp;
 	int i;
 
 	sio_iot = iot;
@@ -368,13 +362,18 @@ sio_intr_setup(pc, iot)
 	shutdownhook_establish(sio_intr_shutdown, 0);
 #endif
 
-	sio_intr = alpha_shared_intr_alloc(ICU_LEN);
+	sio_intr = alpha_shared_intr_alloc(ICU_LEN, 8);
 
 	/*
 	 * set up initial values for interrupt enables.
 	 */
 	for (i = 0; i < ICU_LEN; i++) {
 		alpha_shared_intr_set_maxstrays(sio_intr, i, STRAY_MAX);
+
+		cp = alpha_shared_intr_string(sio_intr, i);
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(sio_intr, i),
+		    EVCNT_TYPE_INTR, NULL, "isa", cp);
 
 		switch (i) {
 		case 0:
@@ -450,8 +449,10 @@ sio_intr_evcnt(v, irq)
 	int irq;
 {
 
-	/* XXX for now, no evcnt parent reported */
-	return (NULL);
+	if (irq == 0 || irq >= ICU_LEN || irq == 2)
+		panic("sio_intr_evcnt: bogus isa irq 0x%x\n", irq);
+
+	return (alpha_shared_intr_evcnt(sio_intr, irq));
 }
 
 void *
@@ -536,16 +537,6 @@ sio_iointr(framep, vec)
 #ifdef DIAGNOSTIC
 	if (irq > ICU_LEN || irq < 0)
 		panic("sio_iointr: irq out of range (%d)", irq);
-#endif
-
-#ifdef EVCNT_COUNTERS
-	sio_intr_evcnt.ev_count++;
-#else
-#ifdef DEBUG
-	if (ICU_LEN != INTRCNT_ISA_IRQ_LEN)
-		panic("sio interrupt counter sizes inconsistent");
-#endif
-	intrcnt[INTRCNT_ISA_IRQ + irq]++;
 #endif
 
 	if (!alpha_shared_intr_dispatch(sio_intr, irq))

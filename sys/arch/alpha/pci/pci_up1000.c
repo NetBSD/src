@@ -1,4 +1,4 @@
-/* $NetBSD: pci_up1000.c,v 1.2 2000/06/04 19:14:25 cgd Exp $ */
+/* $NetBSD: pci_up1000.c,v 1.3 2000/06/05 21:47:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.2 2000/06/04 19:14:25 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.3 2000/06/05 21:47:28 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.2 2000/06/04 19:14:25 cgd Exp $");
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/intrcnt.h>
 
 #include <dev/isa/isavar.h>
 
