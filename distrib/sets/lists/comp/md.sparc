@@ -10,13 +10,11 @@
 ./usr/include/machine/conf.h
 ./usr/include/machine/cpu.h
 ./usr/include/machine/ctlreg.h
-./usr/include/machine/db_machdep.h
 ./usr/include/machine/disklabel.h
 ./usr/include/machine/eeprom.h
 ./usr/include/machine/elf_machdep.h
 ./usr/include/machine/endian.h
 ./usr/include/machine/fbio.h
-./usr/include/machine/fbvar.h
 ./usr/include/machine/float.h
 ./usr/include/machine/frame.h
 ./usr/include/machine/fsr.h
@@ -51,7 +49,6 @@
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
 ./usr/include/machine/vuid_event.h
-./usr/include/machine/z8530var.h
 ./usr/include/sparc
 ./usr/lib/c++rt0.o
 ./usr/lib/scrt0.o
