@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.49 2001/11/13 13:14:36 lukem Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.49.10.1 2003/01/27 05:26:24 jmc Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.49 2001/11/13 13:14:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.49.10.1 2003/01/27 05:26:24 jmc Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -509,7 +509,7 @@ outloop:
 		len = dp8390_write_mbuf(sc, m0, buffer);
 
 	m_freem(m0);
-	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN - ETHER_CRC_LEN);
+	sc->txb_len[sc->txb_new] = len;
 
 	/* Point to next buffer slot and wrap if necessary. */
 	if (++sc->txb_new == sc->txb_cnt)
@@ -1259,7 +1259,11 @@ dp8390_write_mbuf(sc, m, buf)
 			buf += len;
 		}
 	}
-
+	if (totlen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+		bus_space_set_region_1(buft, bufh, buf, 0,
+		    ETHER_MIN_LEN - ETHER_CRC_LEN - totlen);
+		totlen = ETHER_MIN_LEN - ETHER_CRC_LEN;
+	}
 	return (totlen);
 }
 
