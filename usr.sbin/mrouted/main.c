@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1997/10/17 10:38:20 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1998/03/30 02:33:23 mrg Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.9 1997/10/17 10:38:20 lukem Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.10 1998/03/30 02:33:23 mrg Exp $");
 #endif
 
 extern char *configfilename;
@@ -524,7 +524,7 @@ done(i)
 static void
 cleanup()
 {
-    static in_cleanup = 0;
+    static int in_cleanup = 0;
 
     if (!in_cleanup) {
 	in_cleanup++;
