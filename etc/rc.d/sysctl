@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysctl,v 1.2 2000/04/08 23:02:54 tsarna Exp $
+# $NetBSD: sysctl,v 1.3 2000/04/09 21:00:04 tsarna Exp $
 #
 
 # PROVIDE: sysctl
@@ -15,6 +15,28 @@ stop_cmd=":"
 
 sysctl_start()
 {
+	if [ -n "$defcorename" ]; then
+		cat <<__EOF__
+*** WARNING: /etc/rc.conf \$defcorename setting is obsolete. Please
+*** set kern.defcorename in /etc/sysctl.conf
+		sysctl -w kern.defcorename=$defcorename
+__EOF__
+	fi
+
+	#	if $securelevel is set, change it here, else if it is 0,
+	#	change it to 1 here, before we start login services.
+	#
+	if [ -n "$securelevel" ]; then
+		echo -n "Setting securelevel: "
+		sysctl -w kern.securelevel=$securelevel
+	else
+		securelevel=`sysctl -n kern.securelevel`
+		if [ x"$securelevel" = x0 ]; then
+			echo -n "Setting securelevel: "
+			sysctl -w kern.securelevel=1
+		fi
+ 	fi
+
 	if [ -r /etc/sysctl.conf ]; then
 		echo "Setting sysctl variables:"
 		sysctl -f /etc/sysctl.conf
