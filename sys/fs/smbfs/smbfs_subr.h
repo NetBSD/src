@@ -1,3 +1,5 @@
+/*	$NetBSD: smbfs_subr.h,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/fs/smbfs/smbfs_subr.h,v 1.2 2001/12/10 08:09:46 obrien Exp $
+ * FreeBSD: src/sys/fs/smbfs/smbfs_subr.h,v 1.2 2001/12/10 08:09:46 obrien Exp
  */
 #ifndef _FS_SMBFS_SMBFS_SUBR_H_
 #define _FS_SMBFS_SMBFS_SUBR_H_
