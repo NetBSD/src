@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/11 23:35:44 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2002/04/24 20:37:46 thorpej Exp $
 
 NOMAN=	# defined
 
@@ -19,6 +19,6 @@ CPPFLAGS+= -DCONADDR=0xfe800000UL
 
 LDSCRIPT= ${S}/arch/evbarm/stand/gzboot/IQ80321_flash_0xf0080000/ldscript
 
-SRCS+=	ns16550.c i80321_mem.c
+SRCS+=	iq80321.c ns16550.c i80321_mem.c
 
 .include "${S}/arch/evbarm/stand/gzboot/Makefile.gzboot"
