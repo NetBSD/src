@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.19 1999/12/23 02:10:07 mjl Exp $	*/
+/*	$NetBSD: lpd.c,v 1.20 2000/01/27 05:39:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.19 1999/12/23 02:10:07 mjl Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.20 2000/01/27 05:39:50 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,9 +116,10 @@ static void       reapchild __P((int));
 static void       mcleanup __P((int));
 static void       doit __P((void));
 static void       startup __P((void));
-static void       chkhost __P((struct sockaddr_in *));
+static void       chkhost __P((struct sockaddr *));
 static int	  ckqueue __P((char *));
 static void	  usage __P((void));
+static int	  *socksetup __P((int, int));
 
 uid_t	uid, euid;
 int child_count;
@@ -128,10 +129,10 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int f, funix, finet, options, fromlen;
+	int f, funix, *finet, options, fromlen;
 	fd_set defreadfds;
 	struct sockaddr_un un, fromunix;
-	struct sockaddr_in sin, frominet;
+	struct sockaddr_storage frominet;
 	int omask, lfd, errs, i;
 	int child_max = 32;	/* more then enough to hose the system */
 
@@ -242,31 +243,15 @@ main(argc, argv)
 	FD_SET(funix, &defreadfds);
 	listen(funix, 5);
 	if (!sflag)
-		finet = socket(AF_INET, SOCK_STREAM, 0);
+		finet = socksetup(PF_UNSPEC, options);
 	else
-		finet = -1;	/* pretend we couldn't open TCP socket. */
-	if (finet >= 0) {
-		struct servent *sp;
+		finet = NULL;	/* pretend we couldn't open TCP socket. */
 
-		if (options & SO_DEBUG)
-			if (setsockopt(finet, SOL_SOCKET, SO_DEBUG, 0, 0) < 0) {
-				syslog(LOG_ERR, "setsockopt (SO_DEBUG): %m");
-				mcleanup(0);
-			}
-		sp = getservbyname("printer", "tcp");
-		if (sp == NULL) {
-			syslog(LOG_ERR, "printer/tcp: unknown service");
-			mcleanup(0);
+	if (finet) {
+		for (i = 1; i <= *finet; i++) {
+			FD_SET(finet[i], &defreadfds);
+			listen(finet[i], 5);
 		}
-		memset(&sin, 0, sizeof(sin));
-		sin.sin_family = AF_INET;
-		sin.sin_port = sp->s_port;
-		if (bind(finet, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-			syslog(LOG_ERR, "bind: %m");
-			mcleanup(0);
-		}
-		FD_SET(finet, &defreadfds);
-		listen(finet, 5);
 	}
 	/*
 	 * Main loop: accept, do a request, continue.
@@ -302,10 +287,12 @@ main(argc, argv)
 			domain = AF_LOCAL, fromlen = sizeof(fromunix);
 			s = accept(funix,
 			    (struct sockaddr *)&fromunix, &fromlen);
-		} else /* if (FD_ISSET(finet, &readfds)) */  {
-			domain = AF_INET, fromlen = sizeof(frominet);
-			s = accept(finet,
-			    (struct sockaddr *)&frominet, &fromlen);
+		} else {
+                        for (i = 1; i <= *finet; i++) 
+				if (FD_ISSET(finet[i], &readfds)) {
+					domain = AF_INET, fromlen = sizeof(frominet);
+					s = accept(finet[i], (struct sockaddr *)&frominet, &fromlen);
+				}
 		}
 		if (s < 0) {
 			if (errno != EINTR)
@@ -321,13 +308,15 @@ main(argc, argv)
 			signal(SIGQUIT, SIG_IGN);
 			signal(SIGTERM, SIG_IGN);
 			(void)close(funix);
-			if (!sflag)
-				(void)close(finet);
+			if (!sflag && finet)
+                        	for (i = 1; i <= *finet; i++) 
+					(void)close(finet[i]);
 			dup2(s, 1);
 			(void)close(s);
 			if (domain == AF_INET) {
+				/* for both AF_INET and AF_INET6 */
 				from_remote = 1;
-				chkhost(&frominet);
+				chkhost((struct sockaddr *)&frominet);
 			} else
 				from_remote = 0;
 			doit();
@@ -372,7 +361,7 @@ int	requ[MAXREQUESTS];	/* job number of spool entries */
 int	requests;		/* # of spool requests */
 char	*person;		/* name of person doing lprm */
 
-char	fromb[MAXHOSTNAMELEN];	/* buffer for client's machine name */
+char	fromb[NI_MAXHOST];	/* buffer for client's machine name */
 char	cbuf[BUFSIZ];		/* command line buffer */
 char	*cmdnames[] = {
 	"null",
@@ -564,46 +553,67 @@ ckqueue(cap)
  */
 static void
 chkhost(f)
-	struct sockaddr_in *f;
+	struct sockaddr *f;
 {
-	struct hostent *hp;
+	struct addrinfo hints, *res, *r;
 	FILE *hostf;
 	int first = 1, good = 0;
+	char host[NI_MAXHOST], ip[NI_MAXHOST];
+	char serv[NI_MAXSERV];
+	int error;
 
-	f->sin_port = ntohs(f->sin_port);
-	if (f->sin_family != AF_INET || f->sin_port >= IPPORT_RESERVED)
+	error = getnameinfo(f, f->sa_len, NULL, 0, serv, sizeof(serv),
+			    NI_NUMERICSERV);
+	if (error || atoi(serv) >= IPPORT_RESERVED)
 		fatal("Malformed from address");
 
 	/* Need real hostname for temporary filenames */
-	hp = gethostbyaddr((char *)&f->sin_addr,
-	    sizeof(struct in_addr), f->sin_family);
-	if (hp == NULL)
-		fatal("Host name for your address (%s) unknown",
-			inet_ntoa(f->sin_addr));
+	error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
+			    NI_NAMEREQD);
+	if (error) {
+		error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
+				    NI_NUMERICHOST);
+		if (error)
+			fatal("Host name for your address unknown");
+		else
+			fatal("Host name for your address (%s) unknown", host);
+	}
 
-	(void)strncpy(fromb, hp->h_name, sizeof(fromb) - 1);
+	(void)strncpy(fromb, host, sizeof(fromb) - 1);
 	fromb[sizeof(fromb) - 1] = '\0';
 	from = fromb;
 
+	/* need address in stringform for comparison (no DNS lookup here) */
+	error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
+			    NI_NUMERICHOST);
+	if (error)
+		fatal("Cannot print address");
+
 	/* Check for spoof, ala rlogind */
-	hp = gethostbyname(fromb);
-	if (!hp)
-		fatal("hostname for your address (%s) unknown",
-		    inet_ntoa(f->sin_addr));
-	for (; good == 0 && hp->h_addr_list[0] != NULL; hp->h_addr_list++) {
-		if (!memcmp(hp->h_addr_list[0], (caddr_t)&f->sin_addr,
-		    sizeof(f->sin_addr)))
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+	error = getaddrinfo(fromb, NULL, &hints, &res);
+	if (error) {
+		fatal("hostname for your address (%s) unknown: %s", host,
+		    gai_strerror(error));
+	}
+	good = 0;
+	for (r = res; good == 0 && r; r = r->ai_next) {
+		error = getnameinfo(r->ai_addr, r->ai_addrlen, ip, sizeof(ip),
+				    NULL, 0, NI_NUMERICHOST);
+		if (!error && !strcmp(host, ip))
 			good = 1;
 	}
+	if (res)
+		freeaddrinfo(res);
 	if (good == 0)
-		fatal("address for your hostname (%s) not matched",
-		    inet_ntoa(f->sin_addr));
+		fatal("address for your hostname (%s) not matched", host);
 	setproctitle("serving %s", from);
 	hostf = fopen(_PATH_HOSTSEQUIV, "r");
 again:
 	if (hostf) {
-		if (__ivaliduser(hostf, f->sin_addr.s_addr,
-		    DUMMY, DUMMY) == 0) {
+		if (__ivaliduser_sa(hostf, f, DUMMY, DUMMY) == 0) {
 			(void)fclose(hostf);
 			return;
 		}
@@ -625,4 +635,69 @@ usage()
 
 	fprintf(stderr, "usage: %s [-d] [-l]\n", __progname);
 	exit(1);
+}
+
+/* setup server socket for specified address family */
+/* if af is PF_UNSPEC more than one socket may be returned */
+/* the returned list is dynamically allocated, so caller needs to free it */
+int *
+socksetup(af, options)
+        int af, options;
+{
+	struct addrinfo hints, *res, *r;
+	int error, maxs, *s, *socks;
+	const int on = 1;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_family = af;
+	hints.ai_socktype = SOCK_STREAM;
+	error = getaddrinfo(NULL, "printer", &hints, &res);
+	if (error) {
+		syslog(LOG_ERR, (gai_strerror(error)));
+		mcleanup(0);
+	}
+
+	/* Count max number of sockets we may open */
+	for (maxs = 0, r = res; r; r = r->ai_next, maxs++)
+		;
+	socks = malloc((maxs + 1) * sizeof(int));
+	if (!socks) {
+		syslog(LOG_ERR, "couldn't allocate memory for sockets");
+		mcleanup(0);
+	}
+
+	*socks = 0;   /* num of sockets counter at start of array */
+	s = socks + 1;
+	for (r = res; r; r = r->ai_next) {
+		*s = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
+		if (*s < 0) {
+			syslog(LOG_DEBUG, "socket(): %m");
+			continue;
+		}
+		if (options & SO_DEBUG)
+			if (setsockopt(*s, SOL_SOCKET, SO_DEBUG,
+				       &on, sizeof(on)) < 0) {
+				syslog(LOG_ERR, "setsockopt (SO_DEBUG): %m");
+				close (*s);
+				continue;
+			}
+		if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+			syslog(LOG_DEBUG, "bind(): %m");
+			close (*s);
+			continue;
+		}
+		*socks = *socks + 1;
+		s++;
+	}
+
+	if (res)
+		freeaddrinfo(res);
+
+	if (*socks == 0) {
+		syslog(LOG_ERR, "Couldn't bind to any socket");
+		free(socks);
+		mcleanup(0);
+	}
+	return(socks);
 }
