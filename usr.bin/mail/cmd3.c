@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.18 2002/03/29 15:07:52 ross Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.19 2002/08/12 02:42:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.18 2002/03/29 15:07:52 ross Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.19 2002/08/12 02:42:52 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -477,7 +477,7 @@ group(void *v)
 	gname = *argv;
 	h = hash(gname);
 	if ((gh = findgroup(gname)) == NULL) {
-		gh = (struct grouphead *) calloc(sizeof *gh, 1);
+		gh = (struct grouphead *) calloc(1, sizeof *gh);
 		gh->g_name = vcopy(gname);
 		gh->g_list = NULL;
 		gh->g_link = groups[h];
@@ -491,7 +491,7 @@ group(void *v)
 	 */
 
 	for (ap = argv+1; *ap != NULL; ap++) {
-		gp = (struct group *) calloc(sizeof *gp, 1);
+		gp = (struct group *) calloc(1, sizeof *gp);
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;
 		gh->g_list = gp;
