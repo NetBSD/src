@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.11 1994/03/18 19:08:28 mycroft Exp $
+ *	$Id: mem.c,v 1.12 1994/03/23 05:09:45 cgd Exp $
  */
 
 /*
@@ -235,24 +235,24 @@ mmmmap(dev, offset)
 	dev_t dev;
 	int offset;
 {
+	struct proc *p = curproc;	/* XXX */
+	struct pcred *pc = p->p_cred;
 
-#ifdef notyet
 	switch (minor(dev)) {
 /* minor device 0 is physical memory */
 	case 0:
-		if (offset > ctob(physmem))
+		if (offset > ctob(physmem) &&
+		    suser(pc->pc_ucred, &p->p_acflag) != 0)
 			return -1;
 		return i386_btop(offset);
+
 /* minor device 1 is kernel memory */
 	case 1:
-		/* kernacc() doesn't check executable permissions. */
-		if (!kerncheckprot((caddr_t)offset, NBPG, nprot))
+		/* XXX - writability, executability checks? */
+		if (!kernacc((caddr_t)offset, NBPG, B_READ))
 			return -1;
 		return i386_btop(vtophys(offset));
 	default:
 		return -1;
 	}
-#else
-	return -1;
-#endif
 }
