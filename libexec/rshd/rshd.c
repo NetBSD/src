@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.30 2003/05/17 21:26:47 itojun Exp $	*/
+/*	$NetBSD: rshd.c,v 1.31 2003/06/14 22:43:31 joff Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.30 2003/05/17 21:26:47 itojun Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.31 2003/06/14 22:43:31 joff Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ __RCSID("$NetBSD: rshd.c,v 1.30 2003/05/17 21:26:47 itojun Exp $");
 #include <sys/socket.h>
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -133,6 +134,7 @@ main(int argc, char *argv[])
 	struct linger linger;
 	int ch, on = 1, fromlen;
 	struct sockaddr_storage from;
+	struct protoent *proto;
 
 	openlog("rshd", LOG_PID, LOG_DAEMON);
 
@@ -205,6 +207,8 @@ main(int argc, char *argv[])
 	if (setsockopt(0, SOL_SOCKET, SO_LINGER, (char *)&linger,
 	    sizeof (linger)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_LINGER): %m");
+	proto = getprotobyname("tcp");
+	setsockopt(0, proto->p_proto, TCP_NODELAY, &on, sizeof(on));
 	doit((struct sockaddr *)&from);
 	/* NOTREACHED */
 #ifdef __GNUC__

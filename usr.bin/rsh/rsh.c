@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.19 2003/05/22 02:14:03 hubertf Exp $	*/
+/*	$NetBSD: rsh.c,v 1.20 2003/06/14 22:43:32 joff Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.19 2003/05/22 02:14:03 hubertf Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.20 2003/06/14 22:43:32 joff Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: rsh.c,v 1.19 2003/05/22 02:14:03 hubertf Exp $");
 #include <poll.h>
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 
 #include <err.h>
@@ -106,6 +107,7 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	struct servent *sp;
 	sigset_t oset, nset;
+	struct protoent *proto;
 
 #ifdef IN_RCMD
 	char	*locuser = 0, *loop;
@@ -368,6 +370,10 @@ try_connect:
 		    sizeof(one)) < 0)
 			warn("setsockopt stderr");
 	}
+	proto = getprotobyname("tcp");
+	setsockopt(rem, proto->p_proto, TCP_NODELAY, &one, sizeof(one));
+	setsockopt(remerr, proto->p_proto, TCP_NODELAY, &one, sizeof(one));
+
 
 	(void) setuid(uid);
 
