@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.2 2003/10/23 19:29:35 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.2 2003/10/23 19:29:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -865,6 +865,11 @@ next:
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name,
 			    failreason);
 			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			bus_space_unmap(cp->wdc_channel.cmd_iot,
+			    cp->wdc_channel.cmd_ioh, cmdsize);
+			bus_space_unmap(cp->wdc_channel.ctl_iot,
+			    cp->wdc_channel.ctl_ioh, ctlsize);
+
 		}
 	}
 
