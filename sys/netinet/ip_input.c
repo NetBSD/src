@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.209 2005/01/24 21:25:10 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.210 2005/02/02 21:41:55 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.209 2005/01/24 21:25:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.210 2005/02/02 21:41:55 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -241,7 +241,7 @@ struct pfil_head inet_pfil_hook;
  * recalculate IP parameters derived from nmbclusters.
  */
 static int	ip_nmbclusters;			/* copy of nmbclusters */
-static void	ip_nmbclusters_changed __P((void));	/* recalc limits */
+static void	ip_nmbclusters_changed(void);	/* recalc limits */
 
 #define CHECK_NMBCLUSTER_PARAMS()				\
 do {								\
@@ -275,12 +275,12 @@ int	ip_maxfrags;		        /* limit on fragments. XXX sysctl */
  * repeatedly deleting single packets under heavy fragmentation load
  * (e.g., from lossy NFS peers).
  */
-static u_int	ip_reass_ttl_decr __P((u_int ticks)); 
-static void	ip_reass_drophalf __P((void));
+static u_int	ip_reass_ttl_decr(u_int ticks); 
+static void	ip_reass_drophalf(void);
 
 
-static __inline int ipq_lock_try __P((void));
-static __inline void ipq_unlock __P((void));
+static __inline int ipq_lock_try(void);
+static __inline void ipq_unlock(void);
 
 static __inline int
 ipq_lock_try()
@@ -373,7 +373,7 @@ static	struct ip_srcrt {
 	struct	in_addr route[MAX_IPOPTLEN/sizeof(struct in_addr)];
 } ip_srcrt;
 
-static void save_rte __P((u_char *, struct in_addr));
+static void save_rte(u_char *, struct in_addr);
 
 #ifdef MBUFTRACE
 struct mowner ip_rx_mowner = { "internet", "rx" };
