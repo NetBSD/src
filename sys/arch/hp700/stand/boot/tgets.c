@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.3 2003/08/07 16:27:45 agc Exp $	*/
+/*	$NetBSD: tgets.c,v 1.4 2003/10/21 12:21:05 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,11 +32,9 @@
  */
 
 #include <sys/types.h>
+#include <arch/hp700/stand/common/libsa.h>
 
-time_t getsecs(void);
-int tgetchar(void);
-int getchar(void);
-int putchar(int);
+int tgets(char *);
 
 int
 tgets(char *buf)
