@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.24 1999/11/29 20:09:56 hubertf Exp $	*/
+/*	$NetBSD: plist.c,v 1.25 2000/04/29 22:39:58 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.24 1999/11/29 20:09:56 hubertf Exp $");
+__RCSID("$NetBSD: plist.c,v 1.25 2000/04/29 22:39:58 hubertf Exp $");
 #endif
 #endif
 
@@ -425,16 +425,21 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 
 		case PLIST_DIR_RM:
 			(void) snprintf(tmp, sizeof(tmp), "%s/%s", Where, p->name);
-			if (!isdir(tmp)) {
-				warnx("attempting to delete file `%s' as a directory\n"
+			if (fexists(tmp)) {
+			    if (!isdir(tmp)) {
+				warnx("cannot remove `%s' as a directory\n"
 				    "this packing list is incorrect - ignoring delete request", tmp);
-			} else {
+			    } else {
 				if (Verbose)
 					printf("Delete directory %s\n", tmp);
 				if (!Fake && delete_hierarchy(tmp, ign_err, FALSE)) {
 					warnx("unable to completely remove directory '%s'", tmp);
 					fail = FAIL;
 				}
+			    }
+			} else {
+			    warnx("cannot remove non-existant directory `%s'\n"
+			            "this packing list is incorrect - ignoring delete request", tmp)
 			}
 			last_file = p->name;
 			break;
