@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.1 1998/12/10 20:10:03 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.2 1999/01/22 10:44:38 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ wdc_obio_probe(parent, match, aux)
 
 	if (strcmp(ca->ca_name, "ATA") == 0 ||
 	    strcmp(ca->ca_name, "ata") == 0 ||
+	    strcmp(ca->ca_name, "ata0") == 0 ||
 	    strcmp(ca->ca_name, "ide") == 0)
 		return 1;
 
