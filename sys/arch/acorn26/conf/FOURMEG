@@ -1,8 +1,8 @@
-# $NetBSD: FOURMEG,v 1.2 2002/03/29 19:13:39 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.3 2002/03/29 19:15:17 bjh21 Exp $
 
 # FOURMEG arm26 configuration -- something small
 
-include "arch/arm26/conf/std.acorn26"
+include "arch/acorn26/conf/std.acorn26"
 
 maxusers 2
 
