@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.112 1998/10/10 02:34:15 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.113 1998/10/10 03:33:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/fcntl.h>
 #include <sys/scsiio.h>
 
 #include <dev/scsipi/scsi_all.h>
@@ -769,11 +770,21 @@ scsibusioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-#if 0
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 	struct scsipi_link *sc_link = sc->adapter_link;
-#endif
 	int error;
+
+	/*
+	 * Enforce write permission for ioctls that change the
+	 * state of the bus.  Host adapter specific ioctls must
+	 * be checked by the adapter driver.
+	 */
+	switch (cmd) {
+	case SCBUSIOSCAN:
+	case SCBUSIORESET:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+	}
 
 	switch (cmd) {
 	case SCBUSIOSCAN:
@@ -787,8 +798,15 @@ scsibusioctl(dev, cmd, addr, flag, p)
 		break;
 	    }
 
+	case SCBUSIORESET:
+		/* FALLTHROUGH */
 	default:
-		error = ENOTTY;
+		if (sc_link->adapter->scsipi_ioctl == NULL)
+			error = ENOTTY;
+		else
+			error = (*sc_link->adapter->scsipi_ioctl)(sc_link,
+			    cmd, addr, flag, p);
+		break;
 	}
 
 	return (error);
