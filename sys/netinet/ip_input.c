@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.82 1999/03/27 01:24:49 aidan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.82.2.1 1999/04/07 23:20:42 proff Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -420,7 +420,10 @@ next:
 	 * Check our list of addresses, to see if the packet is for us.
 	 */
 	INADDR_TO_IA(ip->ip_dst, ia);
-	if (ia != NULL) goto ours;
+	if (ia != NULL) {
+		if (ia->ia_ifp->if_flags & IFF_UP)
+			goto ours;
+	}
 	if (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
 		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;
 		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
