@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 2000/02/02 03:14:31 shin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4 2000/05/10 01:36:56 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -84,7 +84,7 @@ cpuattach(parent, dev, aux)
 #ifdef VR41X1
 	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
 		printf("cpu0: install VR specific idle routine\n");
-		mips_locore_jumpvec.cpu_idle = vr_idle;
+		CPU_IDLE = vr_idle;
 	}
 #endif
 }
