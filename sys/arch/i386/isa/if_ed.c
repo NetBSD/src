@@ -14,7 +14,7 @@
  */
 
 /*
- *	$Id: if_ed.c,v 1.2.2.5 1993/07/27 06:00:45 cgd Exp $
+ *	$Id: if_ed.c,v 1.2.2.6 1993/08/25 23:58:34 cgd Exp $
  */
  
 #include "ed.h"
@@ -809,14 +809,14 @@ ed_init(unit)
 	if (sc->memwidth == 16) {
 		/*
 		 * Set FIFO threshold to 8, No auto-init Remote DMA,
-		 *	byte order=80x86, word-wide DMA xfers
+		 *	byte order=80x86, word-wide DMA xfers,
 		 */
-		outb(sc->nic_addr + ED_P0_DCR, ED_DCR_FT1|ED_DCR_WTS);
+		outb(sc->nic_addr + ED_P0_DCR, ED_DCR_FT1|ED_DCR_WTS|ED_DCR_LS);
 	} else {
 		/*
 		 * Same as above, but byte-wide DMA xfers
 		 */
-		outb(sc->nic_addr + ED_P0_DCR, ED_DCR_FT1);
+		outb(sc->nic_addr + ED_P0_DCR, ED_DCR_FT1|ED_DCR_LS);
 	}
 
 	/*
