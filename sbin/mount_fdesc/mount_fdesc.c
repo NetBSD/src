@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fdesc.c,v 1.8 1997/09/15 04:36:08 lukem Exp $	*/
+/*	$NetBSD: mount_fdesc.c,v 1.9 1997/09/16 12:26:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
@@ -45,9 +45,9 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mount_fdesc.c	8.2 (Berkeley) 3/27/94";
+static char sccsid[] = "@(#)mount_fdesc.c	8.3 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_fdesc.c,v 1.8 1997/09/15 04:36:08 lukem Exp $");
+__RCSID("$NetBSD: mount_fdesc.c,v 1.9 1997/09/16 12:26:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags);
+			getmntopts(optarg, mopts, &mntflags, 0);
 			break;
 		case '?':
 		default:
