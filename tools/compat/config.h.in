@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.22 2002/09/16 04:10:36 briggs Exp $	*/
+/*	$NetBSD: config.h.in,v 1.23 2002/10/04 22:10:10 thorpej Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -17,6 +17,7 @@
 #undef HAVE_NETDB_H
 #undef HAVE_MACHINE_BSWAP_H
 #undef HAVE_MALLOC_H
+#undef HAVE_POLL_H
 #undef HAVE_STDDEF_H
 #undef HAVE_STRING_H
 #undef HAVE_SYS_DIR_H
@@ -63,6 +64,7 @@
 #undef HAVE_LUTIMES
 #undef HAVE_MKSTEMP
 #undef HAVE_MKDTEMP
+#undef HAVE_POLL
 #undef HAVE_PREAD
 #undef HAVE_PWCACHE_USERDB
 #undef HAVE_PWRITE
