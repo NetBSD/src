@@ -109,7 +109,10 @@
  **********************************************************************
  * HISTORY
  * $Log: scmio.c,v $
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
+ * Revision 1.2  1993/05/24 17:57:26  brezak
+ * Remove netcrypt.c. Remove unneeded files. Cleanup make.
+ *
+ * Revision 1.1.1.1  1993/05/21  14:52:17  cgd
  * initial import of CMU's SUP to NetBSD
  *
  * Revision 1.7  92/09/09  22:04:41  mrt
@@ -606,7 +609,7 @@ register char **buf;
 		return (scmerr (-1,"Invalid message count %d",count));
 	if (scmdebug > 3)
 		loginfo ("SCM Reading string count %d",count);
-	if ((p = malloc ((unsigned)count+1)) == NULL)
+	if ((p = (char *)malloc ((unsigned)count+1)) == NULL)
 		return (scmerr (-1,"Can't malloc %d bytes for string",count));
 	if (cryptflag) {
 		x = getcryptbuf (count+1);
