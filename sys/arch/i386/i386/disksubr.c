@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.3 1994/01/11 16:35:44 mycroft Exp $
+ *	$Id: disksubr.c,v 1.4 1994/01/11 16:38:48 mycroft Exp $
  */
 
 #include "param.h"
@@ -66,7 +66,7 @@
 char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
