@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.42 1994/03/09 21:22:31 ws Exp $
+#	$Id: ALL,v 1.43 1994/03/09 22:55:57 hpeyerl Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -202,7 +202,7 @@ device ed0 at isa? port 0x300 net irq 10 iomem 0xcc000 vector edintr
 device ed1 at isa? port 0x250 net irq 9 iomem 0xd8000 vector edintr
 device hp0 at isa? port 0x300 net irq 5 vector hpintr
 device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
-device ep0 at isa? port 0x350 net irq 10 vector epintr
+device ep0 at isa? port 0x300 net irq 10 vector epintr
 
 #sound-blaster
 device		sb0	at isa? port 0x220 bio irq 7 drq 1 vector sbintr
