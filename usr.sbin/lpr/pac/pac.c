@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.8 1996/12/09 09:57:51 mrg Exp $	*/
+/*	$NetBSD: pac.c,v 1.9 1997/07/11 06:43:51 mikel Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: pac.c,v 1.9 1997/07/11 06:43:51 mikel Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -53,9 +57,10 @@ static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #include <sys/param.h>
 
 #include <dirent.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "lp.h"
 #include "lp.local.h"
 
