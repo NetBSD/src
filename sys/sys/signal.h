@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.29 1998/05/06 16:47:26 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.30 1998/05/25 21:37:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -119,26 +119,30 @@ struct	sigaction {
 	sigset_t sa_mask;		/* signal mask to apply */
 	int	sa_flags;		/* see signal options below */
 };
-#ifndef _POSIX_SOURCE
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500
 #define SA_ONSTACK	0x0001	/* take signal on signal stack */
 #define SA_RESTART	0x0002	/* restart system on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
 #define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
 #if (defined(_KERNEL) || defined(_LKM)) && defined(COMPAT_SUNOS)
 #define	SA_USERTRAMP	0x0100	/* do not bounce off kernel's sigtramp */
-#endif
-#endif
+#endif /* (_KERNEL || _LKM) && COMPAT_SUNOS */
+#endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
+/* Only valid for SIGCHLD. */
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
 
 /*
- * Flags for sigprocmask:
+ * Flags for sigprocmask():
  */
 #define	SIG_BLOCK	1	/* block specified signal set */
 #define	SIG_UNBLOCK	2	/* unblock specified signal set */
 #define	SIG_SETMASK	3	/* set specified signal set */
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 typedef	void (*sig_t) __P((int));	/* type of signal function */
+#endif
 
 /*
  * Structure used in sigaltstack call.
@@ -151,10 +155,13 @@ struct sigaltstack13 {
 };
 #endif /* defined(__LIBC12_SOURCE__) || defined(_KERNEL) */
 
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500
 typedef struct
 #ifndef _XOPEN_SOURCE
                sigaltstack
-#endif /* !defined(_XOPEN_SOURCE) */
+#endif /* !_XOPEN_SOURCE */
 			   {
 	void	*ss_sp;			/* signal stack base */
 	size_t	ss_size;		/* signal stack length */
@@ -165,7 +172,9 @@ typedef struct
 #define SS_DISABLE	0x0004	/* disable taking signals on alternate stack */
 #define	MINSIGSTKSZ	8192			/* minimum allowable stack */
 #define	SIGSTKSZ	(MINSIGSTKSZ + 32768)	/* recommended stack size */
+#endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * 4.3 compatibility:
  * Signal vector "template" used in sigvec call.
@@ -180,7 +189,11 @@ struct	sigvec {
 #define SV_INTERRUPT	SA_RESTART	/* same bit, opposite sense */
 #define SV_RESETHAND	SA_RESETHAND
 #define sv_onstack sv_flags	/* isn't compatibility wonderful! */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500
 /*
  * Structure used in sigstack call.
  */
@@ -188,7 +201,9 @@ struct	sigstack {
 	void	*ss_sp;			/* signal stack pointer */
 	int	ss_onstack;		/* current status */
 };
+#endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * Macro for converting signal number to a mask suitable for
  * sigblock().
@@ -196,8 +211,8 @@ struct	sigstack {
 #define sigmask(m)	(1 << ((m)-1))
 
 #define	BADSIG		SIG_ERR
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
-#endif	/* !_POSIX_SOURCE */
 #endif	/* !_ANSI_SOURCE */
 
 /*
