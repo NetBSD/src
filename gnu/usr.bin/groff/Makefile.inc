@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2003/10/26 03:49:39 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.11 2003/10/28 02:51:56 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -134,7 +134,7 @@ revision=`sed -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISION`
 	-e "s;@TMAC_MDIR@;$(tmacdir)/mm;g" \
 	-e "s;@BROKEN_SPOOLER_FLAGS@;$(BROKEN_SPOOLER_FLAGS);g" \
 	-e "s;@VERSION@;$(version)$(revision);g" \
-	-e "s;@MDATE@;`$(SHELL) ${GROFF_DIST}/mdate.sh $<`;g" \
+	-e "s;@MDATE@;`${HOST_SH} ${GROFF_DIST}/mdate.sh $<`;g" \
 	-e "s;@g@;$(g);g" \
 	-e "s;@G@;`echo $(g) | tr [a-z] [A-Z]`;g" \
 	$< >$@
