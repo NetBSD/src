@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.61 2004/08/04 22:44:04 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.62 2004/08/11 17:49:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.61 2004/08/04 22:44:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.62 2004/08/11 17:49:27 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -520,35 +520,8 @@ again:
 			wdc_ata_bio_done(chp, xfer);
 			return;
 		}
-		if ((wdc->cap & WDC_CAPABILITY_ATA_NOSTREAM)) {
-			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_write_multi_4(chp->data32iot,
-				    chp->data32ioh, 0,
-				    (u_int32_t *)((char *)xfer->c_databuf +
-				                  xfer->c_skip),
-				    ata_bio->nbytes >> 2);
-			} else {
-				bus_space_write_multi_2(chp->cmd_iot,
-				    chp->cmd_iohs[wd_data], 0,
-				    (u_int16_t *)((char *)xfer->c_databuf +
-				                  xfer->c_skip),
-				    ata_bio->nbytes >> 1);
-			}
-		} else {
-			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_write_multi_stream_4(chp->data32iot,
-				    chp->data32ioh, 0,
-				    (u_int32_t *)((char *)xfer->c_databuf +
-				                  xfer->c_skip),
-				    ata_bio->nbytes >> 2);
-			} else {
-				bus_space_write_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_iohs[wd_data], 0,
-				    (u_int16_t *)((char *)xfer->c_databuf +
-				                  xfer->c_skip),
-				    ata_bio->nbytes >> 1);
-			}
-		}
+		wdc_dataout_pio(chp, drvp->drive_flags,
+		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
 	}
 
 intr:	/* Wait for IRQ (either real or polled) */
@@ -679,35 +652,8 @@ wdc_ata_bio_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 			wdc_ata_bio_done(chp, xfer);
 			return 1;
 		}
-		if ((wdc->cap & WDC_CAPABILITY_ATA_NOSTREAM)) {
-			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_read_multi_4(chp->data32iot,
-				    chp->data32ioh, 0,
-				    (u_int32_t *)((char *)xfer->c_databuf +
-				                  xfer->c_skip),
-				    ata_bio->nbytes >> 2);
-			} else {
-				bus_space_read_multi_2(chp->cmd_iot,
-				    chp->cmd_iohs[wd_data], 0,
-				    (u_int16_t *)((char *)xfer->c_databuf +
-				                  xfer->c_skip),
-				    ata_bio->nbytes >> 1);
-			}
-		} else {
-			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_read_multi_stream_4(chp->data32iot,
-				    chp->data32ioh, 0,
-				    (u_int32_t *)((char *)xfer->c_databuf +
-				                  xfer->c_skip),
-				    ata_bio->nbytes >> 2);
-			} else {
-				bus_space_read_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_iohs[wd_data], 0,
-				    (u_int16_t *)((char *)xfer->c_databuf +
-				                  xfer->c_skip),
-				    ata_bio->nbytes >> 1);
-			}
-		}
+		wdc_datain_pio(chp, drvp->drive_flags,
+		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
 	}
 
 end:
