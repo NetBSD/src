@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.80 2005/01/22 02:22:44 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.81 2005/01/22 02:24:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.80 2005/01/22 02:22:44 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.81 2005/01/22 02:24:31 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -93,10 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.80 2005/01/22 02:22:44 oster Ex
 #define DDprintf2(s,a,b) {}
 
 #endif /* RF_DEBUG_RECON */
-
-
-#define RF_MAX_FREE_RECOND  10
-#define RF_MIN_FREE_RECOND  4
 
 #define RF_MAX_FREE_RECONBUFFER 32
 #define RF_MIN_FREE_RECONBUFFER 16
