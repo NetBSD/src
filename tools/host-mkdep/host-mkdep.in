@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.5 2003/03/13 04:40:45 thorpej Exp $
+#	$NetBSD: host-mkdep.in,v 1.6 2003/06/06 17:33:32 christos Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -41,44 +41,82 @@ CPPFLAGS=
 NEWEXT=.o
 OUTFILE=.depend
 SRCS=
+USAGE="Usage: $0 [-a] [-p] [-f makefile] [flags] file ..."
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-	-a)	APPEND=true; shift;;
+	-a)	APPEND=true
+		shift
+		;;
 
-	-f)	OUTFILE=$2; shift; shift;;
+	-f)	OUTFILE=$2
+		shift 2
+		;;
 
-	-p)	NEWEXT=; shift;;
+	-p)	NEWEXT=
+		shift
+		;;
 
-	*)	break;;
+	*)	break
+		;;
 	esac
 done
 
-if [ $# = 0 ] ; then
-	echo "usage: $0 [-a] [-p] [-f makefile] [flags] file ..."
+if [ $# = 0 ]; then
+	echo "$USAGE" 1>&2
 	exit 1
 fi
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-	-L)		shift; shift;; # takes an arg, but ignored
+	-L)			# takes an arg, but ignored
+			shift 2
+			;;
 
-	-c|-[lLMOW]*)	shift;; # takes no extra args
+	-c|-[lLMOW]*)		# takes no extra args
+			shift
+			;;
 
-	-[IDU]*)	CPPFLAGS="$CPPFLAGS $1"; shift;;
+	-[IDU]*)
+			CPPFLAGS="$CPPFLAGS $1"
+			shift
+			;;
 
 	-[IDU]|-include)
-			CPPFLAGS="$CPPFLAGS $1 $2"; shift; shift;;
+			CPPFLAGS="$CPPFLAGS $1 $2"
+			shift 2
+			;;
 
-	# This is a Darwin-specific option.
-	-no-cpp-precomp)
-			CPPFLAGS="$CPPFLAGS $1"; shift;;
+	-no-cpp-precomp)	# This is a Darwin-specific option.
+			CPPFLAGS="$CPPFLAGS $1"
+			shift
+			;;
 
-	-*)		echo "$0: unknown option: $1"; exit 1;; # all other -options
+	-nostdinc*)		# This is a gcc/g++ ism; ignore if not gcc/g++
+			case "@CFLAGS@" in
+			*-O2*)	# Autoconf puts -O2 when gcc only
+				CPPFLAGS="$CPPFLAGS $1"
+				;;
+			esac	
+			shift
+			;;
 
-	*)		SRCS="$SRCS $1"; shift;; # source file
+	-*)		
+			echo "$0: Unknown option: $1" 1>&2 # all other -options
+			exit 1
+			;;
+
+	*)	
+			SRCS="$SRCS $1"	# source file
+			shift
+			;;
 	esac
 done
+
+if [ -z "$SRCS" ]; then
+	echo "$USAGE" 1>&2
+	exit 1
+fi
 
 TMP=/tmp/mkdep$$
 rm -f $TMP
@@ -106,13 +144,13 @@ for f in $SRCS; do
 			seenfiles[$0] = 1
 			print objfile ": " $0
 		}
-	' >>$TMP
+	' >> $TMP
 done
 
 if $APPEND; then
-	cat $TMP >>$OUTFILE
+	cat $TMP >> $OUTFILE
 else
-	cat $TMP >$OUTFILE
+	cat $TMP > $OUTFILE
 fi
 
 rm -f $TMP
