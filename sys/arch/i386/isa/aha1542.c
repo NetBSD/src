@@ -16,7 +16,10 @@
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.6  1993/04/15 07:57:50  deraadt
+ * Revision 1.7  1993/04/19 06:02:16  mycroft
+ * Fix subtle word-size error.
+ *
+ * Revision 1.6  1993/04/15  07:57:50  deraadt
  * ioconf changes, see previous cvs's that dumped core
  *
  * Revision 1.4  1993/04/12  08:17:23  deraadt
@@ -516,7 +519,7 @@ ahaattach(struct isa_device *dev)
 {
 	static int firsttime;
 	int masunit = dev->id_masunit;
-	short id = dev->id_unit;
+	int id = dev->id_unit;
 
 	if(!firsttime) {
 		firsttime = 1;
