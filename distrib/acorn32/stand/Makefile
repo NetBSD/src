@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.4 2004/06/17 07:51:46 tron Exp $
+#	$NetBSD: Makefile,v 1.10.2.5 2004/06/17 08:19:22 tron Exp $
 #
 
 .include <bsd.own.mk>
@@ -21,6 +21,7 @@ release: check_RELEASEDIR .WAIT ${ARCHIVE}
 	    ${RELEASEDIR}/${MACHINE}/installation/misc/
 
 ${ARCHIVE}: tmp/BtNetBSD
+	export TOOL_SPARKCRC=${TOOL_SPARKCRC}; \
 	cd tmp/BtNetBSD && ${.CURDIR}/../mksparkive.sh * > ${.OBJDIR}/${ARCHIVE}
 
 UUDECODE_FILES=unixfs_res Sprite banner pling.Sprites pling.Sprites22 MemFix
