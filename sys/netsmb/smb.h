@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.6 2003/03/02 18:55:48 jdolecek Exp $	*/
+/*	$NetBSD: smb.h,v 1.7 2003/03/24 08:03:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: src/sys/netsmb/smb.h,v 1.2 2001/08/21 08:21:03 bp Exp
+ * FreeBSD: src/sys/netsmb/smb.h,v 1.4 2002/02/21 16:10:42 bp Exp
  */
 
 /*
@@ -99,7 +99,7 @@ enum smb_dialects {
  * Security mode bits
  */
 #define SMB_SM_USER		0x01		/* server in the user security mode */
-#define	SMB_SM_ENCRYPT		0x02		/* use challenge/responce */
+#define	SMB_SM_ENCRYPT		0x02		/* use challenge/response */
 
 /*
  * NTLM capabilities
@@ -281,6 +281,7 @@ enum smb_dialects {
  * Set PATH/FILE information levels
  */
 #define	SMB_SET_FILE_BASIC_INFO		0x101
+#define	SMB_SET_FILE_END_OF_FILE_INFO	0x104
 
 /*
  * LOCKING_ANDX LockType flags
@@ -356,7 +357,7 @@ enum smb_dialects {
 #define ERRqfull	49	/* Print queue full */
 #define ERRqtoobig	50	/* Print queue full - no space */
 #define ERRinvpfid	52	/* Invalid print file FID */
-#define ERRsmbcmd	64	/* The server did not recognise the command */
+#define ERRsmbcmd	64	/* The server did not recognize the command */
 #define ERRsrverror	65	/* The server encountered and internal error */
 #define ERRfilespecs	67	/* The Fid and path name contains an invalid combination */
 #define ERRbadpermits	69	/* Access mode invalid */
@@ -370,7 +371,7 @@ enum smb_dialects {
 #define ERRtoomanyuids	90      /* Too many UIDs active on this session */
 #define ERRbaduid	91	/* The UID is not known in this session */
 #define ERRusempx	250	/* Temporarily unable to support Raw, use MPX mode */
-#define ERRusestd	251	/* Temporarily unable to support Raw, use stdandard r/w */
+#define ERRusestd	251	/* Temporarily unable to support Raw, use standard r/w */
 #define ERRcontmpx	252	/* Continue in MPX mode */
 #define ERRnosupport	65535	/* Invalid function */
 
