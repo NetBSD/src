@@ -1,11 +1,11 @@
-.\"$NetBSD: hardware,v 1.1 2002/06/17 20:32:23 augustss Exp $
+.\"$NetBSD: hardware,v 1.2 2002/06/30 12:30:20 lukem Exp $
 .
 Currently,
 .Nx*M
 requires the use of Motorola's
 .Tn "DINK32"
-ROM to load over a serial port.  This means that there is no
-way to boot from a local disk or PCI device.
+ROM to load over a serial port.
+This means that there is no way to boot from a local disk or PCI device.
 .
 .Ss2 Supported processor cards
 .(bullet -offset indent
