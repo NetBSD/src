@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.217 2003/07/04 13:26:52 wiz Exp $
+.\"	$NetBSD: options.4,v 1.218 2003/07/04 13:28:44 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1642,14 +1642,14 @@ Number of packets to record for
 Defaults to 100.
 .It Cd options TCP_SENDSPACE=value
 .It Cd options TCP_RECVSPACE=value
-These options sets the max TCP window size to other sizes than the default.
+These options set the max TCP window size to other sizes than the default.
 The TCP window sizes can be altered via
 .Xr sysctl 8
 as well.
 .It Cd options TCP_INIT_WIN=value
 This option sets the initial TCP window size for non-local connections,
 which is used when the transmission starts.
-The default size is 1, but if the machine should act more aggressive
+The default size is 1, but if the machine should act more aggressively
 the initial size can be set to some other value.
 The initial TCP window size can be set via
 .Xr sysctl 8
@@ -1793,7 +1793,7 @@ insufficient resulting in an
 panic.
 .It Cd options SB_MAX=value
 Sets the max size in bytes that a socket buffer is allowed to occupy.
-The default is 256k, but sometimes it need to be increased, for example
+The default is 256k, but sometimes it needs to be increased, for example
 when using large TCP windows.
 This option can be changed via
 .Xr sysctl 8
