@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.80.2.3 2004/09/11 11:13:52 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.80.2.4 2004/09/11 22:06:58 he Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -921,7 +921,7 @@ struct mbuf *
 m_split(struct mbuf *m0, int len0, int wait)
 {
 
-	return m_split0(m0, len0, wait, 0);
+	return m_split0(m0, len0, wait, 1);
 }
 
 static struct mbuf *
