@@ -1,0 +1,55 @@
+From: "Kaveh R."  <ghazi@caip.rutgers.edu!>
+Date: Fri, 6 Dec 1996 11:51:27 -0500 (EST)
+To: arnold@skeeve.atl.ga.us
+Subject: Re:  new (and I sure hope final) test release of 3.0.1
+
+	Gawk built everywhere except on irix-4.0.5:
+
+cc -c  -DGAWK -I. -I.. -DHAVE_CONFIG_H ../array.c
+accom: Error: ../protos.h, line 73: One declaration for is non-prototype style,)
+       extern int fprintf () ; 
+       ----------------------^
+accom: Error: ../protos.h, line 73: One declaration for fprintf is non-prototyp)
+       extern int fprintf () ; 
+       ----------------------^
+accom: Error: ../protos.h, line 78: redeclaration of fwrite
+       extern int fwrite();
+       -------------------^
+accom: Error: ../protos.h, line 91: One declaration for is non-prototype style,)
+       extern int sscanf () ;
+       ---------------------^
+accom: Error: ../protos.h, line 91: One declaration for sscanf is non-prototype)
+       extern int sscanf () ;
+       ---------------------^
+accom: Error: ../protos.h, line 126: One declaration for is non-prototype style)
+       extern int        sprintf () ;
+       -----------------------------^
+accom: Error: ../protos.h, line 126: One declaration for sprintf is non-prototy)
+       extern int        sprintf () ;
+       -----------------------------^
+accom: Error: /usr/include/unistd.h, line 96: One declaration for is non-protot)
+       extern int       execl(  char *,   char *, ...);
+       -----------------------------------------------^
+accom: Error: /usr/include/unistd.h, line 96: One declaration for execl is non-)
+       extern int       execl(  char *,   char *, ...);
+       -----------------------------------------------^
+make: *** [array.o] Error 1
+
+
+	The compiler on irix-4.0.5 understands and uses prototypes in
+its headers, but does not define __STDC__.  Since gawk's source code
+prototypes various systems calls and libc functions, without function
+arguments since __STDC__ is not defined, you get these problems.
+
+	I was able to get around it by setting CFLAGS to "-D__STDC__=1".
+Then gawk's source code prototyped functions with arguments, and the above
+errors did not occur.  I wonder why gawk is prototyping system functions.
+
+	Anyway, after using the CFLAGS hack (only necessary on irix-4.0.5)
+all systems built and passed "make check".
+
+		--Kaveh
+--
+Kaveh R. Ghazi				Systems Engineer / Project Leader
+ghazi@caip.rutgers.edu			ICon CMT Corp.
+
