@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.45 1999/12/05 20:08:39 danw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.46 2000/01/25 08:06:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -135,11 +135,6 @@ struct ne2000dev {
       PCMCIA_CIS_SVEC_LANCARD,
       0, 0x7f0, { 0x00, 0xc0, 0x6c } },
 
-    { PCMCIA_STR_PLANEX_FNW3600T,
-      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-      PCMCIA_CIS_PLANEX_FNW3600T,
-      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_DL10019 },
-
     { PCMCIA_STR_EPSON_EEN10B,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_EPSON_EEN10B,
       PCMCIA_CIS_EPSON_EEN10B,
@@ -165,6 +160,16 @@ struct ne2000dev {
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
       PCMCIA_CIS_LINKSYS_ECARD_1, 
       0, -1, { 0x00, 0x80, 0xc8 } },
+
+    { PCMCIA_STR_PLANEX_FNW3600T,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
+      PCMCIA_CIS_PLANEX_FNW3600T,
+      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_DL10019 },
+
+    { PCMCIA_STR_SVEC_PN650TX,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
+      PCMCIA_CIS_SVEC_PN650TX,
+      0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
 
     { PCMCIA_STR_LINKSYS_COMBO_ECARD, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
@@ -508,7 +513,9 @@ ne_pcmcia_attach(parent, self, aux)
 	/*
 	 * Read the station address from the board.
 	 */
-	for (i = 0; i < NE2000_NDEVS; i++) {
+	i = 0;
+again:
+	for (; i < NE2000_NDEVS; i++) {
 		if ((ne_dev = ne2000_match(pa->card, pa->pf->number, i))
 		    != NULL) {
 			if (ne_dev->enet_maddr >= 0) {
@@ -537,20 +544,25 @@ ne_pcmcia_attach(parent, self, aux)
 			break;
 		}
 	}
+	if (i == NE2000_NDEVS) {
+		printf("%s: can't match ethernet vendor code\n",
+		    dsc->sc_dev.dv_xname);
+		return;
+	}
 
 	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
 #define PAR0	0x04
-		for (i = 0, sum = 0; i < 8; i++)
+		for (j = 0, sum = 0; j < 8; j++)
 			sum += bus_space_read_1(nsc->sc_asict, nsc->sc_asich,
-			    PAR0 + i);
+			    PAR0 + j);
 		if (sum != 0xff) {
 			printf("%s: sum(0x%x) should be 0xff\n",
 			    dsc->sc_dev.dv_xname, sum);
 			return;
 		}
-		for (i = 0; i < ETHER_ADDR_LEN; i++)
-			myea[i] = bus_space_read_1(nsc->sc_asict,
-			    nsc->sc_asich, PAR0 + i);
+		for (j = 0; j < ETHER_ADDR_LEN; j++)
+			myea[j] = bus_space_read_1(nsc->sc_asict,
+			    nsc->sc_asich, PAR0 + j);
 		enaddr = myea;
 		nsc->sc_type = NE2000_TYPE_DL10019;
 #undef PAR0
@@ -563,15 +575,8 @@ ne_pcmcia_attach(parent, self, aux)
 		if (enaddr[0] != ne_dev->enet_vendor[0] ||
 		    enaddr[1] != ne_dev->enet_vendor[1] ||
 		    enaddr[2] != ne_dev->enet_vendor[2]) {
-			printf("%s: enet addr has incorrect vendor code\n",
-			    dsc->sc_dev.dv_xname);
-			printf("%s: (%02x:%02x:%02x should be "
-			    "%02x:%02x:%02x)\n", dsc->sc_dev.dv_xname,
-			    enaddr[0], enaddr[1], enaddr[2],
-			    ne_dev->enet_vendor[0],
-			    ne_dev->enet_vendor[1],
-			    ne_dev->enet_vendor[2]);
-			return;
+			++i;
+			goto again;
 		}
 	}
 
