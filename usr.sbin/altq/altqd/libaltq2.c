@@ -1,3 +1,4 @@
+/*	$NetBSD: libaltq2.c,v 1.3 2001/08/16 07:48:09 itojun Exp $	*/
 /*	$KAME: libaltq2.c,v 1.2 2001/08/15 03:38:04 kjc Exp $	*/
 /*
  * Copyright (C) 1997-2000
