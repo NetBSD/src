@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.13 2002/11/01 08:28:34 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.14 2002/11/01 08:43:41 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -500,8 +500,13 @@ sys/netinet/ipl.h				1.14
 
 libexec/ftpd/cmds.c				1.19
 
-Turns out that our implementation of STAT wasn't RFC 959 compliant.
-This version is now RFC 959 compliant. using a patch adapted from one
-
+	Turns out that our implementation of STAT wasn't RFC 959 compliant.
+	This version is now RFC 959 compliant.
 	[itojun, ticket #942]
+
+sys/ufs/mfs/mfs_vfsops.c			1.42
+
+	Force MFS mounts to be "sync".
+	Fixes PR#17128 and PR#17321.
+	[tron, ticket #941]
 
