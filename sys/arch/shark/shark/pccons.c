@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.18 2004/02/13 11:36:17 wiz Exp $       */
+/*      $NetBSD: pccons.c,v 1.19 2005/01/05 09:17:36 tsutsui Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.18 2004/02/13 11:36:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.19 2005/01/05 09:17:36 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -165,11 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.18 2004/02/13 11:36:17 wiz Exp $");
 #include <machine/pio.h>
 
 #include <machine/pccons.h>
-#ifdef i386
-#include <machine/pc/display.h>
-#else
-#include <shark/shark/display.h>
-#endif
+#include <dev/ic/pcdisplay.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
