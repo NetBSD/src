@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/07/21 07:05:00 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1998/07/19 17:47:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -76,7 +76,7 @@ struct	 cmdtab *lookup __P((char *));
 void	 command __P((char *));
 void	 die __P((int));
 void	 display __P((int));
-int	 dkinit __P((int));
+int	 dkinit __P((int, gid_t));
 int	 dkcmd __P((char *, char *));
 void	 error __P((const char *fmt, ...));
 void	 fetchiostat __P((void));

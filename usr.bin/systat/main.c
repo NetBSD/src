@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 1998/07/12 05:59:00 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.15 1998/07/19 17:47:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.14 1998/07/12 05:59:00 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 1998/07/19 17:47:07 drochner Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,15 +88,17 @@ static	WINDOW *wload;			/* one line window for load average */
 static void usage __P((void));
 int main __P((int, char **));
 
+gid_t egid; /* XXX needed by initiostat() and initkre() */
+
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	int ch;
-	gid_t egid = getegid();
 	char errbuf[_POSIX2_LINE_MAX];
 
+	egid = getegid();
 	(void)setegid(getgid());
 	while ((ch = getopt(argc, argv, "M:N:w:")) != -1)
 		switch(ch) {
@@ -116,16 +118,6 @@ main(argc, argv)
 		}
 	argc -= optind;
 	argv += optind;
-	/*
-	 * Discard setgid privileges.  If not the running kernel, we toss
-	 * them away totally so that bad guys can't print interesting stuff
-	 * from kernel memory, otherwise switch back to kmem for the
-	 * duration of the kvm_openfiles() call.
-	 */
-	if (nlistf != NULL || memf != NULL)
-		(void)setgid(getgid());
-	else
-		(void)setegid(egid);
 
 	while (argc > 0) {
 		if (isdigit(argv[0][0])) {
@@ -145,14 +137,27 @@ main(argc, argv)
 		argc--, argv++;
 	}
 
+	/*
+	 * Discard setgid privileges.  If not the running kernel, we toss
+	 * them away totally so that bad guys can't print interesting stuff
+	 * from kernel memory, otherwise switch back to kmem for the
+	 * duration of the kvm_openfiles() call.
+	 */
+	if (nlistf != NULL || memf != NULL)
+		(void)setgid(getgid());
+	else
+		(void)setegid(egid);
+
 	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
 	if (kd == NULL) {
 		error("%s", errbuf);
 		exit(1);
 	}
-	/* get rid of it now anyway */
+
+	/* Get rid of privs for now. */
 	if (nlistf == NULL && memf == NULL)
-		(void)setgid(getgid());
+		(void)setegid(getgid());
+
 	if (kvm_nlist(kd, namelist)) {
 		nlisterr(namelist);
 		exit(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.4 1998/07/06 07:50:20 mrg Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.5 1998/07/19 17:47:08 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -99,7 +99,7 @@ char		**dr_name;
 
 void dkswap __P((void));
 void dkreadstats __P((void));
-int dkinit __P((int));
+int dkinit __P((int, gid_t));
 static void deref_kptr __P((void *, void *, size_t));
 
 /*
@@ -174,9 +174,11 @@ dkreadstats()
  * track disk statistics.
  */
 int
-dkinit(select)
+dkinit(select, egid)
 	int	select;
+	gid_t egid;
 {
+	gid_t oldgid;
 	struct disklist_head disk_head;
 	struct disk	cur_disk, *p;
         char		errbuf[_POSIX2_LINE_MAX];
@@ -187,12 +189,16 @@ dkinit(select)
 	if (once)
 		return (1);
 
+	/* assume privs for kvm access */
+	oldgid = getegid();
+	(void)setegid(egid);
+
 	/* Open the kernel. */
         if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "kvm_openfiles: %s", errbuf);
 
 	/* we are finished with privs now */
-	(void)setgid(getgid());
+	(void)setegid(oldgid);
 
 	/* Obtain the namelist symbols from the kernel. */
 	if (kvm_nlist(kd, namelist))

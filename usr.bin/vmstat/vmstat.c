@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.48 1998/07/06 07:50:20 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.49 1998/07/19 17:47:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.48 1998/07/06 07:50:20 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.49 1998/07/19 17:47:08 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ void	hist_dodump __P((struct uvm_history *));
 int	main __P((int, char **));
 char	**choosedrives __P((char **));
 
-extern int dkinit __P((int));
+extern int dkinit __P((int, gid_t));
 extern void dkreadstats __P((void));
 extern void dkswap __P((void));
 
@@ -327,7 +327,10 @@ main(argc, argv)
 	if (todo & VMSTAT) {
 		struct winsize winsize;
 
-		dkinit(0);	/* Initialize disk stats, no disks selected. */
+		dkinit(0, egid); /* Initialize disk stats, no disks selected. */
+
+		(void)setgid(getgid()); /* don't need privs anymore */
+
 		argv = choosedrives(argv);	/* Select disks. */
 		winsize.ws_row = 0;
 		(void)ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&winsize);
