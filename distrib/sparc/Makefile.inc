@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.4 2000/05/02 06:47:23 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2000/05/03 00:10:34 sjg Exp $
 
-# pick up BSDSRCDIR if not already set
 .include "../../Makefile.inc"
 
 # REV is revision without dots, as in "12C"

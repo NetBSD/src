@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kernobj.mk,v 1.1 2000/05/02 03:43:15 sjg Exp $
+#	$NetBSD: bsd.kernobj.mk,v 1.2 2000/05/03 00:10:33 sjg Exp $
 
 #   KERNSRCDIR points to kernel source; it is set by default to ../sys,
 #	but can be overridden.
@@ -13,7 +13,6 @@
 #   KERNCONFDIR is where the configuration files for kernels are found;
 #	default is ${KERNSRCDIR}/${KERNARCHDIR}/conf but can be overridden.
 
-# we need a top level Makefile.inc to set BSDSRCDIR
 KERNSRCDIR?=	${BSDSRCDIR}/sys
 # just incase ${MACHINE} is not always correct
 KERNARCHDIR?=	arch/${MACHINE}
