@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.34 2002/08/22 07:23:27 itojun Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.35 2003/07/13 09:40:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.34 2002/08/22 07:23:27 itojun Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.35 2003/07/13 09:40:20 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1601,8 +1601,9 @@ start_login(host, autologin, name)
 			len = strlen(name)+1;
 			write(xpty, name, len);
 			write(xpty, name, len);
-			sprintf(speed, "%s/%d", (cp = getenv("TERM")) ? cp : "",
-				(def_rspeed > 0) ? def_rspeed : 9600);
+			snprintf(speed, sizeof(speed), "%s/%d",
+			    (cp = getenv("TERM")) ? cp : "",
+			    (def_rspeed > 0) ? def_rspeed : 9600);
 			len = strlen(speed)+1;
 			write(xpty, speed, len);
 
