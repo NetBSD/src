@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.190 2001/10/31 02:58:58 jmc Exp $
+#	$NetBSD: Makefile,v 1.191 2001/11/13 17:14:27 tv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -117,23 +117,24 @@ BIN3+=	hosts.equiv
 NAMEDB=	127 root.cache named.conf localhost loopback.v6
 PCS=	pcs750.bin
 
+.if make(release) || make(snapshot) || make(distribution)
 # find out endianness of target and set proper flag for pwd_mkdb so that
 # it creates database in same endianness
-.if exists(${DESTDIR}/usr/include/machine/endian_machdep.h)
+.if exists(${DESTDIR}/usr/include/sys/endian.h)
 TARGET_ENDIANNESS!= \
-	( echo "\#include <machine/endian_machdep.h>" ; echo _BYTE_ORDER ) | \
+	printf '\#include <sys/endian.h>\n_BYTE_ORDER\n' | \
 	${CC} -I${DESTDIR}/usr/include -E - | tail -1 | awk '{print $$1}'
 .else
 TARGET_ENDIANNESS=
 .endif
 
-.if ${TARGET_ENDIANNESS} == "_LITTLE_ENDIAN"
+.if ${TARGET_ENDIANNESS} == "1234"
 TARGET_ENDIANNESS= -L
-.elif ${TARGET_ENDIANNESS} == "_BIG_ENDIAN"
+.elif ${TARGET_ENDIANNESS} == "4321"
 TARGET_ENDIANNESS= -B
 .else
-# XXX sh3 should be split into sh3eb and sh3el
 TARGET_ENDIANNESS=
+.endif
 .endif
 
 .include <bsd.kernobj.mk>
