@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.6 2000/09/24 15:59:35 jdolecek Exp $
+# 	$NetBSD: LIBERO,v 1.7 2000/10/04 16:35:43 tsutsui Exp $
 
 #	NEWS1750 config file;
 #
@@ -77,7 +77,7 @@ mainbus0 at root
 hb0	at mainbus0 systype NEWS1700
 
 # MK48T02 realtime clock
-clock0	at hb0 addr 0xe0d807f8 ipl 6
+clock0	at hb0 addr 0xe0d80000 ipl 6
 
 # onboard LANCE ethernet
 le0	at hb0 addr 0xe0f00000 ipl 4
