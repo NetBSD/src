@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1995/03/23 00:02:49 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1995/05/28 05:37:34 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.11 1995/03/23 00:02:49 mycroft Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.12 1995/05/28 05:37:34 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,9 @@ static char rcsid[] = "$NetBSD: main.c,v 1.11 1995/03/23 00:02:49 mycroft Exp $"
 
 #include <net/if.h>
 
-#include <sys/errno.h>
-#include <sys/signal.h>
-#include <sys/syslog.h>
+#include <errno.h>
+#include <signal.h>
+#include <syslog.h>
 #include "pathnames.h"
 
 int	supplier = -1;		/* process should supply updates */
