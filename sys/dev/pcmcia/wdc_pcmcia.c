@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.76 2004/08/10 05:22:33 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.77 2004/08/10 06:08:32 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.76 2004/08/10 05:22:33 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.77 2004/08/10 06:08:32 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -235,7 +235,6 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	const struct wdc_pcmcia_product *wpp;
 	bus_size_t offset;
 	int i;
 	int error;
@@ -299,8 +298,6 @@ wdc_pcmcia_attach(parent, self, aux)
 		    error);
 		goto fail;
 	}
-
-	wpp = wdc_pcmcia_lookup(pa);
 
 	for (i = 0; i < WDC_PCMCIA_REG_NPORTS; i++) {
 		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
