@@ -1,7 +1,13 @@
-# $NetBSD: Makefile,v 1.7 1997/06/22 05:09:55 mrg Exp $
+# $NetBSD: Makefile,v 1.8 1998/02/01 06:59:30 thorpej Exp $
 
 PROG=	installboot
 BINDIR=	/usr/mdec
+
+WARNS?=	1
+
+.PATH:	${.CURDIR}/../../../../../sbin/disklabel
+
+SRCS=	installboot.c cd9660.c dkcksum.c
 
 NOMAN=	yes
 
