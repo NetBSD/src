@@ -2,7 +2,7 @@
 # R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.12 1999/02/07 07:14:22 jonathan Exp $
+# 	$NetBSD: R4000,v 1.13 1999/03/27 08:15:29 simonb Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -13,7 +13,7 @@ options 	MIPS3			# R4000/R4400 support (new)
 
 
 # Support for specific models of DECstation
-options 	DEC_3MIN		# 5000/50 
+options 	DEC_3MIN		# 5000/50
 options 	DEC_MAXINE		# 5000/150
 options 	DEC_3MAXPLUS		# 5000/260
 
