@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.59 1994/11/03 23:53:19 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.60 1994/11/04 00:07:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -45,6 +45,10 @@ u_short *Crtat = (u_short *)MONO_BUF;
 
 int isamatch __P((struct device *, void *, void *));
 void isaattach __P((struct device *, struct device *, void *));
+
+struct cfdriver isacd = {
+	NULL, "isa", isamatch, isaattach, DV_DULL, sizeof(struct device), 1
+};
 
 int
 isamatch(parent, match, aux)
