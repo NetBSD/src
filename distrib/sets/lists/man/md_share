@@ -132,6 +132,11 @@
 ./usr/share/man/cat4/vax/vp.0
 ./usr/share/man/cat4/vax/vv.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
+./usr/share/man/cat8/boot_hp300.0
+./usr/share/man/cat8/boot_i386.0
+./usr/share/man/cat8/boot_sparc.0
+./usr/share/man/cat8/boot_tahoe.0
+./usr/share/man/cat8/boot_vax.0
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/crash.0
 ./usr/share/man/cat8/hp300/format.0

@@ -82,6 +82,7 @@
 ./sbin/newlfs
 ./sbin/nfsd
 ./sbin/nfsiod
+./sbin/nologin
 ./sbin/ping
 ./sbin/quotacheck
 ./sbin/rdump
@@ -689,6 +690,10 @@
 ./usr/share/mk/sys.mk
 ./usr/share/ms
 ./usr/share/nls
+./usr/share/nls/C
+./usr/share/nls/C/libc.cat
+./usr/share/nls/Pig
+./usr/share/nls/Pig/libc.cat
 ./usr/share/skel
 ./usr/share/skel/dot.cshrc
 ./usr/share/skel/dot.login
