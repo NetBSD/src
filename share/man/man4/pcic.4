@@ -1,4 +1,4 @@
-.\" $NetBSD: pcic.4,v 1.1 2000/02/12 11:14:14 fair Exp $
+.\" $NetBSD: pcic.4,v 1.2 2000/02/27 23:13:23 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,8 +38,8 @@
 .Nm pcic
 .Nd Intel and Cirrus Logic PCMCIA controller driver
 .Sh SYNOPSIS
-.Cd "pcic0   at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000"
-.Cd "pcic1   at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000"
+.Cd "pcic0   at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000 flags N"
+.Cd "pcic1   at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000 flags N"
 .Cd "pcic*   at isapnp?"
 .Cd "pcic*   at pci? dev? function ?"
 .Cd "pcmcia* at pcic? controller ? socket ?"
@@ -52,6 +52,13 @@ provides support for the
 PD6710 and PD672x
 .Tn PCMCIA
 controllers.
+.Pp
+For the
+.Xr isa 4
+attachment a
+.Ar flags
+value of 1 can be used to force the use of polling instead
+of interrupts for card events.
 .Pp
 The default configuration of the pcic gives each controller 16
 kilobytes of memory, to be shared between slots.
