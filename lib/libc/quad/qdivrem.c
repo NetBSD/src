@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)qdivrem.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: qdivrem.c,v 1.1 1993/09/16 06:06:07 mycroft Exp $";
+static char *rcsid = "$Id: qdivrem.c,v 1.2 1994/10/19 03:09:53 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -47,7 +47,7 @@ static char *rcsid = "$Id: qdivrem.c,v 1.1 1993/09/16 06:06:07 mycroft Exp $";
 
 #include "quad.h"
 
-#define	B	(1 << HALF_BITS)	/* digit base */
+#define	B	((long)1 << HALF_BITS)	/* digit base */
 
 /* Combine two `digits' to make a single two-digit number. */
 #define	COMBINE(a, b) (((u_long)(a) << HALF_BITS) | (b))

@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)floatdisf.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: floatdisf.c,v 1.1 1993/09/16 06:05:59 mycroft Exp $";
+static char *rcsid = "$Id: floatdisf.c,v 1.2 1994/10/19 03:09:51 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -70,7 +70,7 @@ __floatdisf(x)
 	 *
 	 * Using double here may be excessive paranoia.
 	 */
-	f = (double)u.ul[H] * ((1 << (LONG_BITS - 2)) * 4.0);
+	f = (double)u.ul[H] * (((long)1 << (LONG_BITS - 2)) * 4.0);
 	f += u.ul[L];
 
 	return (neg ? -f : f);

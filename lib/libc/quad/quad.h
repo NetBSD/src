@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)quad.h	8.1 (Berkeley) 6/4/93
- *	$Id: quad.h,v 1.1 1993/09/16 06:06:08 mycroft Exp $
+ *	$Id: quad.h,v 1.2 1994/10/19 03:09:55 cgd Exp $
  */
 
 /*
@@ -92,9 +92,9 @@ union uu {
  * and lower halves, and to reassemble a product as a quad_t, shifted left
  * (sizeof(long)*CHAR_BIT/2).
  */
-#define	HHALF(x)	((x) >> HALF_BITS)
-#define	LHALF(x)	((x) & ((1 << HALF_BITS) - 1))
-#define	LHUP(x)		((x) << HALF_BITS)
+#define	HHALF(x)	((long)(x) >> HALF_BITS)
+#define	LHALF(x)	((long)(x) & (((long)1 << HALF_BITS) - 1))
+#define	LHUP(x)		((long)(x) << HALF_BITS)
 
 extern u_quad_t __qdivrem __P((u_quad_t u, u_quad_t v, u_quad_t *rem));
 

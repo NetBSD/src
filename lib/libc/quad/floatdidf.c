@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)floatdidf.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: floatdidf.c,v 1.1 1993/09/16 06:05:58 mycroft Exp $";
+static char *rcsid = "$Id: floatdidf.c,v 1.2 1994/10/19 03:09:50 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -68,7 +68,7 @@ __floatdidf(x)
 	 * code and does not know how to get at an exponent.  Machine-
 	 * specific code may be able to do this more efficiently.
 	 */
-	d = (double)u.ul[H] * ((1 << (LONG_BITS - 2)) * 4.0);
+	d = (double)u.ul[H] * (((long)1 << (LONG_BITS - 2)) * 4.0);
 	d += u.ul[L];
 
 	return (neg ? -d : d);
