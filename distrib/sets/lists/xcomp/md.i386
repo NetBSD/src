@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.6 1999/04/19 03:11:36 simonb Exp $
+# $NetBSD: md.i386,v 1.7 2002/02/11 16:23:19 tron Exp $
 ./usr/X11R6/include/X11/extensions/dpms.h
 ./usr/X11R6/include/X11/extensions/dpmsstr.h
 ./usr/X11R6/include/X11/extensions/xf86dga.h
@@ -7,30 +7,9 @@
 ./usr/X11R6/include/X11/extensions/xf86mscstr.h
 ./usr/X11R6/include/X11/extensions/xf86vmode.h
 ./usr/X11R6/include/X11/extensions/xf86vmstr.h
-./usr/X11R6/lib/libXdpms.a
 ./usr/X11R6/lib/libXxf86dga.a
 ./usr/X11R6/lib/libXxf86misc.a
 ./usr/X11R6/lib/libXxf86vm.a
-./usr/X11R6/man/cat3/XF86DGA.0
-./usr/X11R6/man/cat3/XF86DGADirectVideo.0
-./usr/X11R6/man/cat3/XF86DGAForkApp.0
-./usr/X11R6/man/cat3/XF86DGAGetVideo.0
-./usr/X11R6/man/cat3/XF86DGAInstallColormap.0
-./usr/X11R6/man/cat3/XF86DGAQueryDirectVideo.0
-./usr/X11R6/man/cat3/XF86DGAQueryExtension.0
-./usr/X11R6/man/cat3/XF86DGAQueryVersion.0
-./usr/X11R6/man/cat3/XF86DGASetVidPage.0
-./usr/X11R6/man/cat3/XF86DGASetViewPort.0
-./usr/X11R6/man/cat3/XF86DGAViewPortChanged.0
-./usr/X11R6/man/cat3/XF86Misc.0
-./usr/X11R6/man/cat3/XF86MiscGetKbdSettings.0
-./usr/X11R6/man/cat3/XF86MiscGetMouseSettings.0
-./usr/X11R6/man/cat3/XF86MiscGetSaver.0
-./usr/X11R6/man/cat3/XF86MiscQueryExtension.0
-./usr/X11R6/man/cat3/XF86MiscQueryVersion.0
-./usr/X11R6/man/cat3/XF86MiscSetKbdSettings.0
-./usr/X11R6/man/cat3/XF86MiscSetMouseSettings.0
-./usr/X11R6/man/cat3/XF86MiscSetSaver.0
 ./usr/X11R6/man/cat3/XF86VidMode.0
 ./usr/X11R6/man/cat3/XF86VidModeGetAllModeLines.0
 ./usr/X11R6/man/cat3/XF86VidModeGetModeLine.0

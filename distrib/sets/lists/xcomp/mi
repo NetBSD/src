@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.9 2001/04/29 11:06:00 wiz Exp $
+# $NetBSD: mi,v 1.10 2002/02/11 16:23:19 tron Exp $
 ./usr/X11R6/bin/gccmakedep
 ./usr/X11R6/bin/imake
 ./usr/X11R6/bin/lndir
@@ -25,11 +25,6 @@
 ./usr/X11R6/include/X11/IntrinsicP.h
 ./usr/X11R6/include/X11/Object.h
 ./usr/X11R6/include/X11/ObjectP.h
-./usr/X11R6/include/X11/PEX5/PEX.h
-./usr/X11R6/include/X11/PEX5/PEXlib.h
-./usr/X11R6/include/X11/PEX5/PEXlibint.h
-./usr/X11R6/include/X11/PEX5/PEXproto.h
-./usr/X11R6/include/X11/PEX5/PEXprotost.h
 ./usr/X11R6/include/X11/PM/PM.h
 ./usr/X11R6/include/X11/PM/PMproto.h
 ./usr/X11R6/include/X11/RectObj.h
@@ -164,7 +159,6 @@
 ./usr/X11R6/include/X11/extensions/Printstr.h
 ./usr/X11R6/include/X11/extensions/XI.h
 ./usr/X11R6/include/X11/extensions/XIE.h
-./usr/X11R6/include/X11/extensions/XIElib.h
 ./usr/X11R6/include/X11/extensions/XIEproto.h
 ./usr/X11R6/include/X11/extensions/XIEprotost.h
 ./usr/X11R6/include/X11/extensions/XInput.h
@@ -226,8 +220,6 @@
 ./usr/X11R6/lib/X11/config/NetBSD.cf
 ./usr/X11R6/lib/X11/config/Oki.cf
 ./usr/X11R6/lib/X11/config/OpenBSD.cf
-./usr/X11R6/lib/X11/config/QNX.cf
-./usr/X11R6/lib/X11/config/QNX.rules
 ./usr/X11R6/lib/X11/config/Server.tmpl
 ./usr/X11R6/lib/X11/config/ServerLib.tmpl
 ./usr/X11R6/lib/X11/config/Threads.tmpl
@@ -312,10 +304,8 @@
 ./usr/X11R6/lib/X11/config/xfree86.cf
 ./usr/X11R6/lib/libFS.a
 ./usr/X11R6/lib/libICE.a
-./usr/X11R6/lib/libPEX5.a
 ./usr/X11R6/lib/libSM.a
 ./usr/X11R6/lib/libX11.a
-./usr/X11R6/lib/libXIE.a
 ./usr/X11R6/lib/libXau.a
 ./usr/X11R6/lib/libXaw.a
 ./usr/X11R6/lib/libXdmcp.a
@@ -789,7 +779,6 @@
 ./usr/X11R6/man/cat3/XSetModifierMapping.0
 ./usr/X11R6/man/cat3/XSetOCValues.0
 ./usr/X11R6/man/cat3/XSetOMValues.0
-./usr/X11R6/man/cat3/XSetPlanemask.0
 ./usr/X11R6/man/cat3/XSetPointerMapping.0
 ./usr/X11R6/man/cat3/XSetRGBColormaps.0
 ./usr/X11R6/man/cat3/XSetRegion.0
@@ -876,7 +865,6 @@
 ./usr/X11R6/man/cat3/XUnregisterIMInstantiateCallback.0
 ./usr/X11R6/man/cat3/XUnsetICFocus.0
 ./usr/X11R6/man/cat3/XVaCreateNestedList.0
-./usr/X11R6/man/cat3/XVisibilityNotifyEvent.0
 ./usr/X11R6/man/cat3/XVisualIDFromVisual.0
 ./usr/X11R6/man/cat3/XVisualInfo.0
 ./usr/X11R6/man/cat3/XWMGeometry.0

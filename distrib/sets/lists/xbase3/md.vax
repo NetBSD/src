@@ -1,0 +1,6 @@
+# $NetBSD: md.vax,v 1.1 2002/02/11 16:23:19 tron Exp $
+./usr/X11R6/lib/libPEX5.so.6.0
+./usr/X11R6/lib/libX11.so.6.1
+./usr/X11R6/lib/libXIE.so.6.0
+./usr/X11R6/lib/libXext.so.6.3
+./usr/X11R6/lib/libXmu.so.6.0

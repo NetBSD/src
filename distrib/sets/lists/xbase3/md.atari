@@ -1,0 +1,4 @@
+# $NetBSD: md.atari,v 1.1 2002/02/11 16:23:18 tron Exp $
+./usr/X11R6/lib/X11/doc/COPYRIGHT
+./usr/X11R6/lib/X11/etc/postinst.sh
+./usr/X11R6/lib/X11/etc/preinst.sh

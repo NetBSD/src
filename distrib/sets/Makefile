@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/01/01 07:59:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2002/02/11 16:23:17 tron Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -45,6 +45,13 @@ print_object_fmt: .PHONY
 
 print_use_new_toolchain: .PHONY
 	@echo "${USE_NEW_TOOLCHAIN:Dyes}"
+
+print_x11_version: .PHONY
+.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
+	@echo 4
+.else
+	@echo 3
+.endif
 
 # This target has debugging value only, really.
 makeflist: .PHONY check_destdir

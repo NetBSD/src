@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.20 2001/04/29 11:05:59 wiz Exp $
+# $NetBSD: mi,v 1.21 2002/02/11 16:23:18 tron Exp $
 ./usr/X11R6
 ./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
@@ -8,7 +8,6 @@
 ./usr/X11R6/bin/bitmap
 ./usr/X11R6/bin/bmtoa
 ./usr/X11R6/bin/editres
-./usr/X11R6/bin/fsinfo
 ./usr/X11R6/bin/fslsfonts
 ./usr/X11R6/bin/fstobdf
 ./usr/X11R6/bin/iceauth
@@ -40,7 +39,6 @@
 ./usr/X11R6/bin/xfs
 ./usr/X11R6/bin/xfwp
 ./usr/X11R6/bin/xhost
-./usr/X11R6/bin/xieperf
 ./usr/X11R6/bin/xinit
 ./usr/X11R6/bin/xkbbell
 ./usr/X11R6/bin/xkbcomp
@@ -60,7 +58,6 @@
 ./usr/X11R6/bin/xprop
 ./usr/X11R6/bin/xrdb
 ./usr/X11R6/bin/xrefresh
-./usr/X11R6/bin/xrx
 ./usr/X11R6/bin/xset
 ./usr/X11R6/bin/xsetmode
 ./usr/X11R6/bin/xsetpointer
@@ -74,7 +71,6 @@
 ./usr/X11R6/include
 ./usr/X11R6/include/X11
 ./usr/X11R6/include/X11/ICE
-./usr/X11R6/include/X11/PEX5
 ./usr/X11R6/include/X11/PM
 ./usr/X11R6/include/X11/SM
 ./usr/X11R6/include/X11/Xaw
@@ -203,8 +199,6 @@
 ./usr/X11R6/lib/X11/locale/C
 ./usr/X11R6/lib/X11/locale/C/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/compose.dir
-./usr/X11R6/lib/X11/locale/en_US.utf
-./usr/X11R6/lib/X11/locale/en_US.utf/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/iso8859-1
 ./usr/X11R6/lib/X11/locale/iso8859-1/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-1/XLC_LOCALE
@@ -243,30 +237,7 @@
 ./usr/X11R6/lib/X11/locale/koi8-r/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/locale.alias
 ./usr/X11R6/lib/X11/locale/locale.dir
-./usr/X11R6/lib/X11/locale/tbl_data
-./usr/X11R6/lib/X11/locale/tbl_data/gb2312
-./usr/X11R6/lib/X11/locale/tbl_data/jis0201
-./usr/X11R6/lib/X11/locale/tbl_data/jis0208
-./usr/X11R6/lib/X11/locale/tbl_data/ksc5601
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_1
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_10
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_15
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_2
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_3
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_4
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_5
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_6
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_7
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_8
-./usr/X11R6/lib/X11/locale/tbl_data/tab8859_9
-./usr/X11R6/lib/X11/locale/tbl_data/tabkoi8_r
-./usr/X11R6/lib/X11/locale/th_TH.TACTIS
-./usr/X11R6/lib/X11/locale/th_TH.TACTIS/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/zh
-./usr/X11R6/lib/X11/locale/zh/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/zh_TW
-./usr/X11R6/lib/X11/locale/zh_TW.Big5
-./usr/X11R6/lib/X11/locale/zh_TW.Big5/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/zh_TW/XLC_LOCALE
 ./usr/X11R6/lib/X11/proxymngr
 ./usr/X11R6/lib/X11/proxymngr/pmconfig
@@ -349,7 +320,6 @@
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/O2
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/indigo
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/indy
-./usr/X11R6/lib/X11/xkb/geometry/sharp
 ./usr/X11R6/lib/X11/xkb/geometry/sony
 ./usr/X11R6/lib/X11/xkb/geometry/sun
 ./usr/X11R6/lib/X11/xkb/geometry/winbook
@@ -370,7 +340,6 @@
 ./usr/X11R6/lib/X11/xkb/keycodes/sgi/iris
 ./usr/X11R6/lib/X11/xkb/keycodes/sony
 ./usr/X11R6/lib/X11/xkb/keycodes/sun
-./usr/X11R6/lib/X11/xkb/keycodes/x68k
 ./usr/X11R6/lib/X11/xkb/keycodes/xfree86
 ./usr/X11R6/lib/X11/xkb/keycodes/xfree98
 ./usr/X11R6/lib/X11/xkb/keymap
@@ -384,7 +353,6 @@
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/be
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/bg
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/ca
-./usr/X11R6/lib/X11/xkb/keymap/sgi/cs
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/de
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/de_CH
 ./usr/X11R6/lib/X11/xkb/keymap/sgi/dk
@@ -410,7 +378,6 @@
 ./usr/X11R6/lib/X11/xkb/keymap/sun/de
 ./usr/X11R6/lib/X11/xkb/keymap/sun/se
 ./usr/X11R6/lib/X11/xkb/keymap/sun/us
-./usr/X11R6/lib/X11/xkb/keymap/x68k
 ./usr/X11R6/lib/X11/xkb/keymap/xfree86
 ./usr/X11R6/lib/X11/xkb/keymap/xfree98
 ./usr/X11R6/lib/X11/xkb/rules
@@ -426,14 +393,11 @@
 ./usr/X11R6/lib/X11/xkb/semantics/xtest
 ./usr/X11R6/lib/X11/xkb/symbols
 ./usr/X11R6/lib/X11/xkb/symbols.dir
-./usr/X11R6/lib/X11/xkb/symbols/amiga
-./usr/X11R6/lib/X11/xkb/symbols/ataritt
 ./usr/X11R6/lib/X11/xkb/symbols/be
 ./usr/X11R6/lib/X11/xkb/symbols/bg
 ./usr/X11R6/lib/X11/xkb/symbols/br
 ./usr/X11R6/lib/X11/xkb/symbols/ca
 ./usr/X11R6/lib/X11/xkb/symbols/ca_enhanced
-./usr/X11R6/lib/X11/xkb/symbols/cs
 ./usr/X11R6/lib/X11/xkb/symbols/ctrl
 ./usr/X11R6/lib/X11/xkb/symbols/czsk
 ./usr/X11R6/lib/X11/xkb/symbols/de
@@ -476,8 +440,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/se
 ./usr/X11R6/lib/X11/xkb/symbols/sgi
 ./usr/X11R6/lib/X11/xkb/symbols/sgi/jp
-./usr/X11R6/lib/X11/xkb/symbols/sharp
-./usr/X11R6/lib/X11/xkb/symbols/sharp/jp
 ./usr/X11R6/lib/X11/xkb/symbols/si
 ./usr/X11R6/lib/X11/xkb/symbols/sony
 ./usr/X11R6/lib/X11/xkb/symbols/sony/us
@@ -508,7 +470,6 @@
 ./usr/X11R6/man/cat1/bitmap.0
 ./usr/X11R6/man/cat1/bmtoa.0
 ./usr/X11R6/man/cat1/editres.0
-./usr/X11R6/man/cat1/fsinfo.0
 ./usr/X11R6/man/cat1/fslsfonts.0
 ./usr/X11R6/man/cat1/fstobdf.0
 ./usr/X11R6/man/cat1/iceauth.0
@@ -540,7 +501,6 @@
 ./usr/X11R6/man/cat1/xfs.0
 ./usr/X11R6/man/cat1/xfwp.0
 ./usr/X11R6/man/cat1/xhost.0
-./usr/X11R6/man/cat1/xieperf.0
 ./usr/X11R6/man/cat1/xinit.0
 ./usr/X11R6/man/cat1/xkbcomp.0
 ./usr/X11R6/man/cat1/xkbevd.0
@@ -557,7 +517,6 @@
 ./usr/X11R6/man/cat1/xprop.0
 ./usr/X11R6/man/cat1/xrdb.0
 ./usr/X11R6/man/cat1/xrefresh.0
-./usr/X11R6/man/cat1/xrx.0
 ./usr/X11R6/man/cat1/xset.0
 ./usr/X11R6/man/cat1/xsetmode.0
 ./usr/X11R6/man/cat1/xsetpointer.0
