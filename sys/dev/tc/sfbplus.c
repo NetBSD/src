@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.12 2001/11/13 06:26:10 lukem Exp $ */
+/* $NetBSD: sfbplus.c,v 1.13 2002/03/13 15:05:17 ad Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.12 2001/11/13 06:26:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.13 2002/03/13 15:05:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,16 +389,18 @@ sfbp_common_init(ri)
 
 	wsfont_init();
 	/* prefer 12 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 12, 0, 0)) <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0);
+	cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_R2L,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_R2L,
+		    WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0) {
 		printf("sfbp: font table is empty\n");
 		return;
 	}
 
 	/* the accelerated sfbp_putchar() needs LSbit left */
-	if (wsfont_lock(cookie, &ri->ri_font,
-	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	if (wsfont_lock(cookie, &ri->ri_font)) {
 		printf("sfb: couldn't lock font\n");
 		return;
 	}
