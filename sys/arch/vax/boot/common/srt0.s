@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.4 2000/05/24 19:53:11 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.5 2000/07/10 10:42:27 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,6 +48,7 @@ nisse:	.set	nisse,0		# pass -e nisse to ld gives OK start addr
 JSBENTRY(_start)
 	nop;nop;
 	movl	$_start, sp	# Probably safe place for stack
+	pushr	$0x1fff		# save for later usage
 
 	subl3	$_start, $_edata, r0
 	movab	_start, r1
@@ -56,16 +57,16 @@ JSBENTRY(_start)
 	subl3	$_edata, $_end, r2
 	movc5	$0,(r3),$0,r2,(r3) # Nolla bss också.
 
-	jsb	1f
-1:	movl    $relocated, (sp)   # return-address on top of stack
-	rsb                        # can be replaced with new address
-relocated:	                   # now relocation is done !!!
-	pushl	r11		# RPB is copied here.
-
-	calls	$1, _Xmain	# Were here!
+	movpsl	-(sp)
+	movl	$relocated, -(sp)
+	rei
+relocated:	                # now relocation is done !!!
+	movl	sp,_bootregs	# *bootregs
+	calls	$0, _Xmain	# Were here!
 	halt			# no return
 
 ENTRY(machdep_start, 0)
+	calls	$0,_niclose	# Evil hack to shutdown DEBNA.
 	mtpr	$0x1f,$0x12	# Block all interrupts
 	mtpr	$0,$0x18	# stop real time interrupt clock
 	movl	4(ap), r6
