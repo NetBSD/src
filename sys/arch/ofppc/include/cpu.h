@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2000/08/21 02:06:33 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2000/08/22 19:46:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -95,6 +95,7 @@ extern struct machvec machine_interface;
 	((*machine_interface.irq_establish)((irq), (level), (handler), (arg)))
 
 #define	splsched()	splhigh()
+#define	spllock()	splhigh()
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
