@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.9 2001/01/06 13:09:05 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.10 2001/01/16 00:29:45 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.9 2001/01/06 13:09:05 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.10 2001/01/16 00:29:45 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -231,9 +231,13 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	frame.sf_sc.sc_r10 = tf->tf_r10;
 	frame.sf_sc.sc_r11 = tf->tf_r11;
 	frame.sf_sc.sc_r12 = tf->tf_r12;
-	frame.sf_sc.sc_r13 = tf->tf_r13;
-	frame.sf_sc.sc_r14 = tf->tf_r14;
-	frame.sf_sc.sc_r15 = tf->tf_r15;
+	frame.sf_sc.sc_usr_sp = tf->tf_r13;
+	frame.sf_sc.sc_usr_lr = tf->tf_r14;
+	frame.sf_sc.sc_pc  = tf->tf_r15;
+
+	/* Dummy values for registers that don't exist in ARMv2. */
+	frame.sf_sc.sc_svc_lr = 0;
+	frame.sf_sc.sc_spsr = 0;
 
 	/* Save signal stack. */
 	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -292,8 +296,8 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 		return EFAULT;
 
 	/* Make sure the processor mode has not been tampered with. */
-	if ((context.sc_r15 & R15_MODE) != R15_MODE_USR ||
-	    (context.sc_r15 & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
+	if ((context.sc_pc & R15_MODE) != R15_MODE_USR ||
+	    (context.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 		return EINVAL;
 
 	/* Restore register context. */
@@ -311,9 +315,9 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	tf->tf_r10 = context.sc_r10;
 	tf->tf_r11 = context.sc_r11;
 	tf->tf_r12 = context.sc_r12;
-	tf->tf_r13 = context.sc_r13;
-	tf->tf_r14 = context.sc_r14;
-	tf->tf_r15 = context.sc_r15;
+	tf->tf_r13 = context.sc_usr_sp;
+	tf->tf_r14 = context.sc_usr_lr;
+	tf->tf_r15 = context.sc_pc;
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
