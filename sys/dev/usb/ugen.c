@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.48 2001/09/16 18:06:32 yamt Exp $	*/
+/*	$NetBSD: ugen.c,v 1.49 2001/10/24 22:31:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -173,6 +173,10 @@ USB_MATCH(ugen)
 {
 	USB_MATCH_START(ugen, uaa);
 
+#if 0
+	if (uaa->matchlvl)
+		return (uaa->matchlvl);
+#endif
 	if (uaa->usegeneric)
 		return (UMATCH_GENERIC);
 	else
