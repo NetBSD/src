@@ -145,7 +145,7 @@ _low_level_init ()
 
   mem_size = ram_size(end);
   physmem = btoc(mem_size);
-  start_page = (((int)&end + NS532_PAGE_SIZE) & ~(NS532_PAGE_SIZE-1)) & 0xfffff;
+  start_page = (((int)&end + NS532_PAGE_SIZE) & ~(NS532_PAGE_SIZE-1)) & 0xffffff;
   avail_start = start_page; 
   avail_end   = mem_size - NS532_PAGE_SIZE;
   
