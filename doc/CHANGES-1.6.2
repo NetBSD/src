@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.233 2003/11/14 03:40:17 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.234 2003/11/20 04:31:11 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3008,3 +3008,24 @@ sys/conf/osrelease.sh                           patched by hand
 share/tmac/doc-common                           patched by hand
 
         Update to 1.6.2_RC2
+
+sys/compat/linux/arch/arm/syscalls.master	patched by hand
+sys/compat/linux/arch/m68k/syscalls.master	patched by hand
+sys/compat/linux/arch/arm/linux_syscall.h	regen
+sys/compat/linux/arch/arm/linux_syscallargs.h	regen
+sys/compat/linux/arch/arm/linux_syscalls.c	regen
+sys/compat/linux/arch/arm/linux_sysent.c	regen
+sys/compat/linux/arch/m68k/linux_syscall.h	regen
+sys/compat/linux/arch/m68k/linux_syscallargs.h	regen
+sys/compat/linux/arch/m68k/linux_syscalls.c	regen
+sys/compat/linux/arch/m68k/linux_sysent.c	regen
+sys/compat/linux/arch/arm/linux_syscall.h	regen
+sys/compat/linux/arch/arm/linux_syscallargs.h	regen
+sys/compat/linux/arch/arm/linux_syscalls.c	regen
+sys/compat/linux/arch/arm/linux_sysent.c	regen
+sys/compat/linux/arch/m68k/linux_syscall.h	regen
+sys/compat/linux/arch/m68k/linux_syscallargs.h	regen
+sys/compat/linux/arch/m68k/linux_syscalls.c	regen
+sys/compat/linux/arch/m68k/linux_sysent.c	regen
+
+	Fixes for ticket #1427. Forgot a #include which broke builds.  
