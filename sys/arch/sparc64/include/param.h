@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 1998/09/02 05:51:38 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.5 1998/09/06 21:53:42 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,7 +71,11 @@
  * (within reasonable limits). 
  *
  */
+#ifdef _LP64
 #define	ALIGNBYTES		0xf
+#else
+#define	ALIGNBYTES		0x7
+#endif
 #define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 

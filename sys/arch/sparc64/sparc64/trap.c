@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 1998/09/05 23:57:29 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.12 1998/09/06 21:53:43 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -154,7 +154,7 @@ int	rwindow_debug = RW_64|RW_ERR;
 #define TDB_STOPCALL	0x200
 #define TDB_STOPCPIO	0x400
 #define TDB_SYSTOP	0x800
-int	trapdebug = 0|TDB_STOPSIG|TDB_STOPCPIO/*|TDB_FOLLOW*/;
+int	trapdebug = 0/*|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/;
 /* #define __inline */
 #endif
 
@@ -1136,7 +1136,7 @@ kfault:
 			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%lx addr=%x\n",
+				printf("data fault: pc=%lx addr=%lx\n",
 				    pc, addr);
 				DEBUGGER(type, tf);
 				panic("kernel fault");

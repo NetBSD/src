@@ -50,7 +50,7 @@
  */
 
 #undef NO_VCACHE
-#define TRAPTRACE
+#undef TRAPTRACE
 #define TRAPSTATS
 #undef TRAPS_USE_IG
 #undef LOCKED_PCB
@@ -7325,7 +7325,7 @@ ENTRY(proc_trampoline)
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
 #ifdef NOTDEF_DEBUG
-!	set	panicstack-CC64FSZ, %o0! DEBUG
+!	set	panicstack-CC64FSZ-STKB, %o0! DEBUG
 !	save	%g0, %o0, %sp	! DEBUG
 	save	%sp, -CC64FSZ, %sp
 	set	1f, %o0
@@ -7345,7 +7345,7 @@ ENTRY(proc_trampoline)
 	LOCTOGLOB
 	ba	2f
 	 restore
-1:	.asciz	"proc_trampoline: returning to %x, sp=%x, tf=%x\r\n"
+1:	.asciz	"proc_trampoline: returning to %p, sp=%p, tf=%p\r\n"
 3:	.asciz	"tstate=%p tpc=%p tnpc=%p ctx=%x\r\n"
 	_ALIGN
 2:

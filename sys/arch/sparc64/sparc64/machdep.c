@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 1998/09/05 23:57:28 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.10 1998/09/06 21:53:43 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -467,16 +467,24 @@ allocsys(v)
 
 /*
  * Set up registers on exec.
- *
- * XXX this entire mess must be fixed
- * XXX especially for 64-bit exec types.
  */
+
+#ifdef _LP64
+#define rwindow		rwindow64
+#define STACK_OFFSET	BIAS
+#define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
+#else
+#define rwindow		rwindow32
+#define STACK_OFFSET	0
+#define CPOUTREG(l,v)	suword((l), (v))
+#endif
+
 /* ARGSUSED */
 void
 setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
-	u_long stack;
+	vaddr_t stack;
 {
 	register struct trapframe *tf = p->p_md.md_tf;
 	register struct fpstate *fs;
@@ -513,19 +521,17 @@ setregs(p, pack, stack)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (int)PS_STRINGS;
+	tf->tf_global[1] = (vaddr_t)PS_STRINGS;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 	/* XXXX Needs to support 64-bit frames */
-	stack -= sizeof(struct rwindow32);
-	tf->tf_out[6] = stack;
+	stack -= sizeof(struct rwindow);
+	tf->tf_out[6] = stack - STACK_OFFSET;
 	tf->tf_out[7] = NULL;
 #ifdef NOTDEF_DEBUG
-	{
-		extern int execdebug;
-		if (execdebug)
-			printf("setregs: setting tf %x sp %x\n", tf, stack);
-	}
+	printf("setregs: setting tf %p sp %p pc %p\n", (long)tf, 
+	       (long)tf->tf_out[6], (long)tf->tf_pc);
+	Debugger();
 #endif
 }
 
@@ -573,15 +579,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-#ifdef _LP64
-#define rwindow		rwindow64
-#define STACK_OFFSET	BIAS
-#define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
-#else
-#define rwindow		rwindow32
-#define STACK_OFFSET	0
-#define CPOUTREG(l,v)	suword((l), (v))
-#endif
 /*
  * Send an interrupt to process.
  */
