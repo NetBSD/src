@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.3 2004/02/24 15:28:07 christos Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservent_r.c,v 1.3 2004/02/24 15:28:07 christos Exp $");
+__RCSID("$NetBSD: getservent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,7 +112,7 @@ getservent_r(struct servent *sp, struct servent_data *sd)
 		sp->s_proto = cp;
 		if (sd->aliases == NULL) {
 			sd->maxaliases = 10;
-			sd->aliases = malloc(sd->maxaliases * sizeof(char **));
+			sd->aliases = malloc(sd->maxaliases * sizeof(char *));
 			if (sd->aliases == NULL) {
 				oerrno = errno;
 				endservent_r(sd);
@@ -132,7 +132,7 @@ getservent_r(struct servent *sp, struct servent_data *sd)
 			if (i == sd->maxaliases - 2) {
 				sd->maxaliases *= 2;
 				q = realloc(q,
-				    sd->maxaliases * sizeof(char **));
+				    sd->maxaliases * sizeof(char *));
 				if (q == NULL) {
 					oerrno = errno;
 					endservent_r(sd);
