@@ -1,4 +1,4 @@
-#	$NetBSD: srcs.inc,v 1.9 2001/04/12 07:48:05 itojun Exp $
+#	$NetBSD: srcs.inc,v 1.10 2001/09/10 02:59:09 thorpej Exp $
 
 CRYPTOINCS= \
 	asn1.inc bf.inc bio.inc bn.inc buffer.inc cast.inc comp.inc conf.inc \
@@ -14,8 +14,8 @@ CRYPTOINCS+=	rc5.inc
 CRYPTOINCS+=	man.inc
 
 .for cryptoinc in ${CRYPTOINCS}
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH:C/mipse[bl]/mips/}/${cryptoinc})
-.include "${.CURDIR}/arch/${MACHINE_ARCH:C/mipse[bl]/mips/}/${cryptoinc}"
+.if exists(${.CURDIR}/arch/${MACHINE_CPU}/${cryptoinc})
+.include "${.CURDIR}/arch/${MACHINE_CPU}/${cryptoinc}"
 .else
 .include "${cryptoinc}"
 .endif
