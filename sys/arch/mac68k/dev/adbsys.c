@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.38 1998/05/28 02:11:32 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.39 1998/08/11 20:08:00 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -225,14 +225,15 @@ extdms_init(totaladbs)
 		/* Get the ADB information */
 		adbaddr = GetIndADB(&adbdata, adbindex);
 		if (adbdata.origADBAddr == ADBADDR_MS &&
-		    (adbdata.devType == ADBMS_USPEED)) {
-			/* Found MicroSpeed Mouse Deluxe Mac */
+		    (adbdata.devType == ADBMS_USPEED ||
+		     adbdata.devType == ADBMS_UCONTOUR)) {
+			/* Found MicroSpeed Mouse Deluxe Mac or Contour Mouse */
 			cmd = ((adbaddr<<4)&0xF0)|0x9;	/* listen 1 */
 
 			/*
-			 * To setup the MicroSpeed, it appears that we can
-			 * send the following command to the mouse and then
-			 * expect data back in the form:
+			 * To setup the MicroSpeed or the Contour, it appears
+			 * that we can send the following command to the mouse
+			 * and then expect data back in the form:
 			 *  buffer[0] = 4 (bytes)
 			 *  buffer[1], buffer[2] as std. mouse
 			 *  buffer[3] = buffer[4] = 0xff when no buttons
@@ -524,6 +525,9 @@ adb_init()
 				break;
 			case ADBMS_USPEED:
 				printf("MicroSpeed mouse, default parameters");
+				break;
+			case ADBMS_UCONTOUR:
+				printf("Contour mouse, default parameters");
 				break;
 			case ADBMS_EXTENDED:
 				extdms_done = 0;
