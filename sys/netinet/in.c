@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.93 2003/11/11 20:25:26 jonathan Exp $	*/
+/*	$NetBSD: in.c,v 1.93.2.1 2004/07/10 12:42:37 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.93 2003/11/11 20:25:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.93.2.1 2004/07/10 12:42:37 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -467,9 +467,11 @@ in_control(so, cmd, data, ifp, p)
 		return error;
 
 	case SIOCSIFNETMASK:
-		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr =
-		    ifra->ifra_addr.sin_addr.s_addr;
-		break;
+		in_ifscrub(ifp, ia);
+		ia->ia_sockmask = *satosin(&ifr->ifr_addr);
+		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
+		error = in_ifinit(ifp, ia, NULL, 0);
+		return (error);
 
 	case SIOCAIFADDR:
 		maskIsNew = 0;
@@ -782,9 +784,12 @@ in_ifinit(ifp, ia, sin, scrub)
 	struct sockaddr_in *sin;
 	int scrub;
 {
-	u_int32_t i = sin->sin_addr.s_addr;
+	u_int32_t i;
 	struct sockaddr_in oldaddr;
 	int s = splnet(), flags = RTF_UP, error;
+
+	if (!sin)
+		sin = &ia->ia_addr;
 
 	/*
 	 * Set up new addresses.
@@ -810,6 +815,7 @@ in_ifinit(ifp, ia, sin, scrub)
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 	}
 
+	i = ia->ia_addr.sin_addr.s_addr;
 	if (IN_CLASSA(i))
 		ia->ia_netmask = IN_CLASSA_NET;
 	else if (IN_CLASSB(i))
