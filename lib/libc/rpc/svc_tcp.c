@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.6 1995/06/03 22:37:27 mycroft Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.7 1996/12/17 03:55:38 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_tcp.c,v 1.6 1995/06/03 22:37:27 mycroft Exp $";
+static char *rcsid = "$NetBSD: svc_tcp.c,v 1.7 1996/12/17 03:55:38 mrg Exp $";
 #endif
 
 /*
@@ -44,6 +44,9 @@ static char *rcsid = "$NetBSD: svc_tcp.c,v 1.6 1995/06/03 22:37:27 mycroft Exp $
  * a tcp rendezvouser (a listner and connection establisher)
  * and a record/tcp stream.
  */
+
+#include <sys/types.h>
+#include <sys/poll.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -279,16 +282,13 @@ svctcp_destroy(xprt)
 	mem_free((caddr_t)xprt, sizeof(SVCXPRT));
 }
 
-/*
- * All read operations timeout after 35 seconds.
- * A timeout is fatal for the connection.
- */
-static struct timeval wait_per_try = { 35, 0 };
 
 /*
  * reads data from the tcp conection.
  * any error is fatal and the connection is closed.
  * (And a read of zero bytes is a half closed stream => error.)
+ * All read operations timeout after 35 seconds.  A timeout is
+ * fatal for the connection.
  */
 static int
 readtcp(xprt, buf, len)
@@ -297,21 +297,19 @@ readtcp(xprt, buf, len)
 	register int len;
 {
 	register int sock = xprt->xp_sock;
-	fd_set mask;
-	fd_set readfds;
+	int milliseconds = 35 * 1000;
+	struct pollfd pollfd;
 
-	FD_ZERO(&mask);
-	FD_SET(sock, &mask);
 	do {
-		readfds = mask;
-		if (select(sock+1, &readfds, (int*)NULL, (int*)NULL, 
-			   &wait_per_try) <= 0) {
+		pollfd.fd = sock;
+		pollfd.events = pollfd.revents = POLLIN;
+		if (poll(&pollfd, 1, milliseconds)) {
 			if (errno == EINTR) {
 				continue;
 			}
 			goto fatal_err;
 		}
-	} while (!FD_ISSET(sock, &readfds));
+	} while ((pollfd.revents & POLLIN) == 0);
 	if ((len = read(sock, buf, len)) > 0) {
 		return (len);
 	}
