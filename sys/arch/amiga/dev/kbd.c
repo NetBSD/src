@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.39 2002/03/17 19:40:31 atatat Exp $ */
+/*	$NetBSD: kbd.c,v 1.39.4.1 2002/05/16 16:11:51 gehenna Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.39 2002/03/17 19:40:31 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.39.4.1 2002/05/16 16:11:51 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.39 2002/03/17 19:40:31 atatat Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/signalvar.h>
+#include <sys/conf.h>
 #include <dev/cons.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
@@ -135,10 +136,6 @@ static struct wskbd_mapdata kbd_mapdata = {
 
 #endif /* WSKBD */
 
-
-#include <sys/conf.h>
-#include <machine/conf.h>
-
 struct kbd_softc {
 	int k_event_mode;	/* if true, collect events, else pass to ite */
 	struct evvar k_events;	/* event queue state */
@@ -167,6 +164,17 @@ int drkbdwaitfor(int);
 
 struct cfattach kbd_ca = {
 	sizeof(struct device), kbdmatch, kbdattach
+};
+
+dev_type_open(kbdopen);
+dev_type_close(kbdclose);
+dev_type_read(kbdread);
+dev_type_ioctl(kbdioctl);
+dev_type_poll(kbdpoll);
+
+const struct cdevsw kbd_cdevsw = {
+	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
+	nostop, notty, kbdpoll, nommap,
 };
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.25 2002/01/28 09:57:01 aymeric Exp $ */
+/*	$NetBSD: par.c,v 1.25.8.1 2002/05/16 16:11:51 gehenna Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.25 2002/01/28 09:57:01 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.25.8.1 2002/05/16 16:11:51 gehenna Exp $");
 
 /*
  * parallel port interface
@@ -54,13 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: par.c,v 1.25 2002/01/28 09:57:01 aymeric Exp $");
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/dev/parioctl.h>
-
-#include <sys/conf.h>
-#include <machine/conf.h>
 
 struct	par_softc {
 	struct device sc_dev;
@@ -112,6 +110,17 @@ int parmatch(struct device *, struct cfdata *, void *);
 
 struct cfattach par_ca = {
 	sizeof(struct par_softc), parmatch, parattach
+};
+
+dev_type_open(paropen);
+dev_type_close(parclose);
+dev_type_read(parread);
+dev_type_write(parwrite);
+dev_type_ioctl(parioctl);
+
+const struct cdevsw par_cdevsw = {
+	paropen, parclose, parread, parwrite, parioctl,
+	nostop, notty, nopoll, nommap,
 };
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.20 2002/01/28 09:57:01 aymeric Exp $ */
+/*	$NetBSD: ms.c,v 1.20.8.1 2002/05/16 16:11:51 gehenna Exp $ */
 
 /*
  * based on:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20 2002/01/28 09:57:01 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20.8.1 2002/05/16 16:11:51 gehenna Exp $");
 
 /*
  * Mouse driver.
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20 2002/01/28 09:57:01 aymeric Exp $");
 #include <sys/callout.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
+#include <sys/conf.h>
 
 #include <amiga/dev/event_var.h>
 #include <amiga/dev/vuid_event.h>
@@ -72,9 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20 2002/01/28 09:57:01 aymeric Exp $");
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/device.h>
-
-#include <sys/conf.h>
-#include <machine/conf.h>
 
 void msattach(struct device *, struct device *, void *);
 int msmatch(struct device *, struct cfdata *, void *);
@@ -111,6 +109,17 @@ void ms_enable(struct ms_port *);
 void ms_disable(struct ms_port *);
 
 extern struct cfdriver ms_cd;
+
+dev_type_open(msopen);
+dev_type_close(msclose);
+dev_type_read(msread);
+dev_type_ioctl(msioctl);
+dev_type_poll(mspoll);
+
+const struct cdevsw ms_cdevsw = {
+	msopen, msclose, msread, nowrite, msioctl,
+	nostop, notty, mspoll, nommap,
+};
 
 #define	MS_UNIT(d)	((minor(d) & ~0x1) >> 1)
 #define	MS_PORT(d)	(minor(d) & 0x1)

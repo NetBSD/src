@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.22 2002/03/17 19:40:31 atatat Exp $ */
+/*	$NetBSD: msc.c,v 1.22.4.1 2002/05/16 16:11:51 gehenna Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.22 2002/03/17 19:40:31 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.22.4.1 2002/05/16 16:11:51 gehenna Exp $");
 
 #include "msc.h"
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.22 2002/03/17 19:40:31 atatat Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <amiga/amiga/device.h>
 #include <amiga/dev/zbusvar.h>
@@ -77,9 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.22 2002/03/17 19:40:31 atatat Exp $");
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
-
-#include <sys/conf.h>
-#include <machine/conf.h>
 
 /* 6502 code for A2232 card */
 #include "msc6502.h"
@@ -176,6 +174,20 @@ void mscattach(struct device *, struct device *, void *);
 
 struct cfattach msc_ca = {
 	sizeof(struct device), mscmatch, mscattach
+};
+
+dev_type_open(mscopen);
+dev_type_close(mscclose);
+dev_type_read(mscread);
+dev_type_write(mscwrite);
+dev_type_ioctl(mscioctl);
+dev_type_stop(mscstop);
+dev_type_tty(msctty);
+dev_type_poll(mscpoll);
+
+const struct cdevsw msc_cdevsw = {
+	mscopen, mscclose, mscread, mscwrite, mscioctl,
+	mscstop, msctty, mscpoll, nommap, D_TTY
 };
 
 int
