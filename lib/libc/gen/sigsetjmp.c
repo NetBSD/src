@@ -1,3 +1,5 @@
+/*	$NetBSD: sigsetjmp.c,v 1.2 1994/12/10 11:23:43 jtc Exp $	*/
+
 /*
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)sigsetjmp.c	8.1 (Berkeley) 6/4/93";
+#endif
+static char rcsid[] = "$NetBSD: sigsetjmp.c,v 1.2 1994/12/10 11:23:43 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <setjmp.h>
