@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: scsi_base.c,v 1.9 1994/03/29 04:29:29 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.10 1994/04/11 02:23:43 mycroft Exp $
  */
 
 /*
@@ -248,40 +248,18 @@ scsi_prevent(sc_link, type, flags)
  * Get scsi driver to send a "start up" command
  */
 int 
-scsi_start_unit(sc_link, flags)
+scsi_start(sc_link, type, flags)
 	struct scsi_link *sc_link;
-	u_int32 flags;
+	u_int32 type, flags;
 {
 	struct scsi_start_stop scsi_cmd;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = START_STOP;
-	scsi_cmd.how = SSS_START;
-
+	scsi_cmd.how = type;
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), 0, 0, 2, 6000, NULL, flags);
-}
-
-/*
- * Get scsi driver to send a "stop" command
- */
-int
-scsi_stop_unit(sc_link, eject, flags)
-	struct scsi_link *sc_link;
-	u_int32 eject;
-	u_int32 flags;
-{
-	struct scsi_start_stop scsi_cmd;
-
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = START_STOP;
-	if (eject)
-		scsi_cmd.how = SSS_LOEJ;
-	else
-		scsi_cmd.how = SSS_STOP;
-
-	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), 0, 0, 2, 2000, NULL, flags);
+			     sizeof(scsi_cmd), 0, 0, 2,
+			     type == SSS_START ? 10000 : 2000, NULL, flags);
 }
 
 /*
