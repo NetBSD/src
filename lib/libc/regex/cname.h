@@ -1,4 +1,4 @@
-/*	$NetBSD: cname.h,v 1.4 1997/07/13 20:02:51 christos Exp $	*/
+/*	$NetBSD: cname.h,v 1.5 1998/07/26 11:11:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -40,7 +40,7 @@
  */
 
 /* character-name table */
-static struct cname {
+static const struct cname {
 	char *name;
 	char code;
 } cnames[] = {
