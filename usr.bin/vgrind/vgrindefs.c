@@ -1,4 +1,4 @@
-/*	$NetBSD: vgrindefs.c,v 1.4 1994/11/17 08:28:08 jtc Exp $	*/
+/*	$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vgrindefs.c,v 1.4 1994/11/17 08:28:08 jtc Exp $";
+static char rcsid[] = "$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $";
 #endif /* not lint */
 
 #define	BUFSIZ	1024
 #define MAXHOP	32	/* max number of tc= indirections */
 
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 /*
  * grindcap - routines for dealing with the language definitions data base
