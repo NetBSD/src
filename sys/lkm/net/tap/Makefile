@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2005/01/19 11:09:05 cube Exp $
+# $NetBSD: Makefile,v 1.2 2005/01/19 14:59:08 cube Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 SRCS=	if_tap_lkm.c if_tap.c
 KMOD=	tap
 WARNS=	3
+
+CPPFLAGS+=	-DNBPFILTER=1
 
 .include <bsd.kmod.mk>
