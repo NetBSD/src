@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.105 2002/11/18 03:17:24 nathanw Exp $ */
+/* $NetBSD: vmstat.c,v 1.106 2002/11/21 01:39:15 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.105 2002/11/18 03:17:24 nathanw Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.106 2002/11/21 01:39:15 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -820,6 +820,7 @@ cpustats(void)
 #if defined(pc532)
 /* To get struct iv ...*/
 #define	_KERNEL
+#include <machine/intr.h>
 #include <machine/psl.h>
 #undef _KERNEL
 void
