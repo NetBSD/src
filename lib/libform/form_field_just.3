@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_just.3,v 1.9 2004/11/24 12:26:23 wiz Exp $
+.\"	$NetBSD: form_field_just.3,v 1.10 2004/11/24 12:47:20 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -75,11 +75,7 @@ The field will be centre justified, padding will be applied to either
 end of the line to make the line centred in the field.
 .El
 .Sh RETURN VALUES
-Functions returning pointers will return
-.Dv NULL
-if an error is detected.
-The functions that return an int will return one of the following error
-values:
+The functions will return one of the following error values:
 .Pp
 .Bl -tag -width E_UNKNOWN_COMMAND -compact
 .It Er E_OK

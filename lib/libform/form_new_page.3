@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_new_page.3,v 1.9 2004/11/24 12:42:51 wiz Exp $
+.\"	$NetBSD: form_new_page.3,v 1.10 2004/11/24 12:47:20 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -55,11 +55,7 @@ the new page status of a field can be set or unset using the
 .Fn set_new_page
 function.
 .Sh RETURN VALUES
-Functions returning pointers will return
-.Dv NULL
-if an error is detected.
-The functions that return an int will return one of the following error
-values:
+The functions will return one of the following error values:
 .Pp
 .Bl -tag -width E_UNKNOWN_COMMAND -compact
 .It Er E_OK
