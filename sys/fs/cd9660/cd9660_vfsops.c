@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.13 2004/04/27 17:37:30 jrf Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.14 2004/05/25 04:44:43 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.13 2004/04/27 17:37:30 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.14 2004/05/25 04:44:43 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -992,7 +992,8 @@ SYSCTL_SETUP(sysctl_vfs_cd9660_setup, "sysctl vfs.cd9660 subtree setup")
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "cd9660", NULL,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "cd9660",
+		       SYSCTL_DESCR("ISO-9660 file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 14, CTL_EOL);
 	/*
