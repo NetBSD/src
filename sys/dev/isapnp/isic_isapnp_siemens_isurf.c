@@ -37,7 +37,7 @@
  *	Siemens I-Surf 2.0 PnP specific routines for isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_siemens_isurf.c,v 1.1 2001/02/18 09:24:54 martin Exp $
+ *	$Id: isic_isapnp_siemens_isurf.c,v 1.2 2001/02/20 22:24:39 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -83,10 +83,10 @@
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 
-#include <dev/ic/i4b_isicl1.h>
-#include <dev/ic/i4b_ipac.h>
-#include <dev/ic/i4b_isac.h>
-#include <dev/ic/i4b_hscx.h>
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/ipac.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 #if !defined(__FreeBSD__)
 void isic_attach_siemens_isurf __P((struct l1_softc *sc));

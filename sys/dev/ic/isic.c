@@ -27,7 +27,7 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: i4b_isic.c,v 1.2 2001/01/07 21:47:24 martin Exp $ 
+ *	$Id: isic.c,v 1.1 2001/02/20 22:24:37 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
@@ -48,10 +48,10 @@
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 
-#include <dev/ic/i4b_isicl1.h>
-#include <dev/ic/i4b_ipac.h>
-#include <dev/ic/i4b_isac.h>
-#include <dev/ic/i4b_hscx.h>
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/ipac.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>

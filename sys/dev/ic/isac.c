@@ -27,7 +27,7 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: i4b_isac.c,v 1.1.1.1 2001/01/05 12:50:11 martin Exp $ 
+ *	$Id: isac.c,v 1.1 2001/02/20 22:24:36 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
@@ -74,9 +74,9 @@
 #include <netisdn/i4b_trace.h>
 #endif
 
-#include <dev/ic/i4b_isicl1.h>
-#include <dev/ic/i4b_isac.h>
-#include <dev/ic/i4b_hscx.h>
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>

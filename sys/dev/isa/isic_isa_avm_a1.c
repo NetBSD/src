@@ -35,7 +35,7 @@
  *	i4b_avm_a1.c - AVM A1/Fritz passive card driver for isdn4bsd
  *	------------------------------------------------------------
  *
- *	$Id: isic_isa_avm_a1.c,v 1.1 2001/02/18 13:54:33 martin Exp $ 
+ *	$Id: isic_isa_avm_a1.c,v 1.2 2001/02/20 22:24:38 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -79,9 +79,9 @@
 
 #include <netisdn/i4b_global.h>
 
-#include <dev/ic/i4b_isicl1.h>
-#include <dev/ic/i4b_isac.h>
-#include <dev/ic/i4b_hscx.h>
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 #ifndef __FreeBSD__
 static u_int8_t avma1_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));

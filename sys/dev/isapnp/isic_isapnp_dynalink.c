@@ -33,7 +33,7 @@
  *	isdn4bsd layer1 driver for Dynalink IS64PH isdn TA
  *	==================================================
  *
- *	$Id: isic_isapnp_dynalink.c,v 1.1 2001/02/18 09:24:53 martin Exp $
+ *	$Id: isic_isapnp_dynalink.c,v 1.2 2001/02/20 22:24:39 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -119,9 +119,9 @@
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 
-#include <dev/ic/i4b_isicl1.h>
-#include <dev/ic/i4b_isac.h>
-#include <dev/ic/i4b_hscx.h>
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 #if defined(__FreeBSD__) || defined(__bsdi__)
 static void dynalink_read_fifo(void *buf, const void *base, size_t len);
