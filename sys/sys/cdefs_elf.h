@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.2 1999/03/23 18:28:12 thorpej Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.3 1999/05/02 18:23:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,6 +44,8 @@
 #define	__weak_alias(alias,sym)						\
     __asm__(".weak " #alias " ; " #alias " = " #sym);
 #endif /* !__DO_NOT_DO_WEAK__ */
+#define	__weak_extern(sym)						\
+    __asm__(".weak " #sym);
 #define	__warn_references(sym,msg)					\
     __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text");
 
@@ -53,6 +55,8 @@
 #define	__weak_alias(alias,sym)						\
     __asm__(".weak alias ; alias = sym");
 #endif /* !__DO_NOT_DO_WEAK__ */
+#define	__weak_extern(sym)						\
+    __asm__(".weak sym");
 #define	__warn_references(sym,msg)					\
     __asm__(".section .gnu.warning.sym ; .ascii msg ; .text");
 
