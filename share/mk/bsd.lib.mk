@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.109 1997/05/27 17:45:57 cjs Exp $
+#	$NetBSD: bsd.lib.mk,v 1.110 1997/05/27 18:21:16 cjs Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -43,8 +43,8 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .if (${MACHINE_ARCH} == "alpha")
 
 SHLIB_TYPE=ELF
-SHLIB_LDSTARTFILE= ${BUILDDIR}${LIBDIR}/crtbeginS.o
-SHLIB_LDENDFILE= ${BUILDDIR}${LIBDIR}/crtendS.o
+SHLIB_LDSTARTFILE= ${BUILDDIR}usr/lib/crtbeginS.o
+SHLIB_LDENDFILE= ${BUILDDIR}usr/lib/crtendS.o
 SHLIB_SOVERSION=${SHLIB_MAJOR}
 CPICFLAGS ?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
