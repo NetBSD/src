@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.32 1999/04/10 13:52:11 drochner Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.33 1999/07/22 22:58:40 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -367,7 +367,7 @@ simple_lock_data_t	vm_page_queue_free_lock;
 				(m)->flags &= ~PG_BUSY; \
 				if ((m)->flags & PG_WANTED) { \
 					(m)->flags &= ~PG_WANTED; \
-					thread_wakeup((m)); \
+					wakeup((m)); \
 				} \
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.27 1999/07/08 18:11:03 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.28 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -107,6 +107,31 @@ unsigned maxsmap = MAXSSIZ;	/* kern_resource.c: RLIMIT_STACK max */
 int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
 				/* XXX: see uvm_kernacc */
 
+
+/*
+ * uvm_sleep: atomic unlock and sleep for UVM_UNLOCK_AND_WAIT().
+ */
+
+void
+uvm_sleep(event, slock, canintr, msg, timo)
+	void *event;
+	struct simplelock *slock;
+	boolean_t canintr;
+	const char *msg;
+	int timo;
+{
+	int s, pri;
+
+	pri = PVM;
+	if (canintr)
+		pri |= PCATCH;
+
+	s = splhigh();
+	if (slock != NULL)
+		simple_unlock(slock);
+	(void) tsleep(event, pri, msg, timo);
+	splx(s);
+}
 
 /*
  * uvm_kernacc: can the kernel access a region of memory
@@ -422,6 +447,7 @@ loop:
 #endif
 	pp = NULL;		/* process to choose */
 	ppri = INT_MIN;	/* its priority */
+	proclist_lock_read(0);
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 
 		/* is it a runnable swapped out process? */
@@ -434,6 +460,7 @@ loop:
 			}
 		}
 	}
+	proclist_unlock_read();
 
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
@@ -521,6 +548,7 @@ uvm_swapout_threads()
 	 */
 	outp = outp2 = NULL;
 	outpri = outpri2 = 0;
+	proclist_lock_read(0);
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (!swappable(p))
 			continue;
@@ -544,6 +572,7 @@ uvm_swapout_threads()
 			continue;
 		}
 	}
+	proclist_unlock_read();
 
 	/*
 	 * If we didn't get rid of any real duds, toss out the next most

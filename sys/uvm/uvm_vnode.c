@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.24 1999/07/22 21:27:32 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.25 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1163,7 +1163,7 @@ ReTry:
 			if (result != VM_PAGER_PEND) {
 				if (ptmp->flags & PG_WANTED)
 					/* still holding object lock */
-					thread_wakeup(ptmp);
+					wakeup(ptmp);
 
 				ptmp->flags &= ~(PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);
@@ -1523,7 +1523,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 		if (result != VM_PAGER_OK) {
 			if (ptmp->flags & PG_WANTED)
 				/* object lock still held */
-				thread_wakeup(ptmp);
+				wakeup(ptmp);
 
 			ptmp->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(ptmp, NULL);

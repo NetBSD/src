@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.30 1999/07/22 21:27:32 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.31 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -655,7 +655,7 @@ uvm_km_free_wakeup(map, addr, size)
 	vm_map_lock(map);
 	(void)uvm_unmap_remove(map, trunc_page(addr), round_page(addr+size), 
 			 &dead_entries);
-	thread_wakeup(map);
+	wakeup(map);
 	vm_map_unlock(map);
 
 	if (dead_entries != NULL)
