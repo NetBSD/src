@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.42 1999/09/06 21:50:48 is Exp $	*/
+/*	$NetBSD: siop.c,v 1.43 1999/09/30 22:59:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -200,14 +200,14 @@ siop_scsicmd(xs)
 
 	slp = xs->sc_link;
 	sc = slp->adapter_softc;
-	flags = xs->flags;
+	flags = xs->xs_control;
 
 	/* XXXX ?? */
-	if (flags & SCSI_DATA_UIO)
+	if (flags & XS_CTL_DATA_UIO)
 		panic("siop: scsi data uio requested");
 
 	/* XXXX ?? */
-	if (sc->sc_nexus && flags & SCSI_POLL)
+	if (sc->sc_nexus && flags & XS_CTL_POLL)
 /*		panic("siop_scsicmd: busy");*/
 		printf("siop_scsicmd: busy\n");
 
@@ -238,7 +238,7 @@ siop_scsicmd(xs)
 
 	splx(s);
 
-	if (flags & SCSI_POLL || siop_no_dma)
+	if (flags & XS_CTL_POLL || siop_no_dma)
 		return(siop_poll(sc, acb));
 	return(SUCCESSFULLY_QUEUED);
 }
@@ -299,7 +299,8 @@ siop_poll(sc, acb)
 			}
 			siop_scsidone(sc->sc_nexus, status);
 		}
-		if (xs->flags & ITSDONE)
+
+		if (xs->xs_status & XS_STS_DONE)
 			break;
 	}
 	splx(s);
@@ -350,7 +351,7 @@ siop_sched(sc)
 		return;
 	}
 
-	if (acb->xs->flags & SCSI_RESET)
+	if (acb->xs->xs_control & XS_CTL_RESET)
 		siopreset(sc);
 
 #if 0
@@ -420,7 +421,7 @@ siop_scsidone(acb, stat)
 			xs->error = XS_BUSY;
 			break;
 #endif
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 
 	/*
 	 * Remove the ACB from whatever queue it's on.  We have to do a bit of
@@ -1421,7 +1422,7 @@ siop_select(sc)
 #endif
 
 	rp = sc->sc_siopp;
-	if (acb->xs->flags & SCSI_POLL || siop_no_dma) {
+	if (acb->xs->xs_control & XS_CTL_POLL || siop_no_dma) {
 		sc->sc_flags |= SIOP_INTSOFF;
 		sc->sc_flags &= ~SIOP_INTDEFER;
 		if ((rp->siop_istat & 0x08) == 0) {

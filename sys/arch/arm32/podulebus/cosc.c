@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.10 1998/12/05 19:43:41 mjacob Exp $	*/
+/*	$NetBSD: cosc.c,v 1.11 1999/09/30 22:59:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -442,13 +442,13 @@ cosc_scsicmd(xs)
 
 #if COSC_POLL > 0
 	if (cosc_poll)
-		xs->flags |= SCSI_POLL;
+		xs->xs_control |= XS_CTL_POLL;
 #endif
 #if 0
 	if (sc_link->scsipi_scsi.lun == 0)
 	printf("id=%d lun=%d cmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
 	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
-	    xs->flags, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);
+	    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);
 #endif
 	return(esc_scsicmd(xs));
 }
