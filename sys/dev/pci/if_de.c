@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.16 1996/03/30 05:10:29 cgd Exp $       */
+/*    $NetBSD: if_de.c,v 1.17 1996/04/01 19:37:54 cgd Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -672,7 +672,7 @@ tulip_dc21140_de500_media_probe(
     if ((TULIP_READ_CSR(sc, csr_gp) &
 	(TULIP_GP_DE500_NOTOK_100|TULIP_GP_DE500_NOTOK_10)) !=
 	(TULIP_GP_DE500_NOTOK_100|TULIP_GP_DE500_NOTOK_10))
-	return (TULIP_READ_CSR(sc, csr_gp) & TULIP_GP_DE500_NOTOK_100) != 0;
+	return (TULIP_READ_CSR(sc, csr_gp) & TULIP_GP_DE500_NOTOK_100) == 0;
     TULIP_WRITE_CSR(sc, csr_gp,
 	TULIP_GP_DE500_HALFDUPLEX|TULIP_GP_DE500_FORCE_100);
     TULIP_WRITE_CSR(sc, csr_command,
@@ -681,7 +681,7 @@ tulip_dc21140_de500_media_probe(
     TULIP_WRITE_CSR(sc, csr_command,
 	TULIP_READ_CSR(sc, csr_command) & ~TULIP_CMD_TXTHRSHLDCTL);
     DELAY(1000000);
-    return (TULIP_READ_CSR(sc, csr_gp) & TULIP_GP_DE500_NOTOK_100) != 0;
+    return (TULIP_READ_CSR(sc, csr_gp) & TULIP_GP_DE500_NOTOK_100) == 0;
 }
 
 static void
