@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.4 1996/12/13 08:26:04 mikel Exp $	*/
+/*	$NetBSD: gencode.h,v 1.5 1997/10/03 15:53:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: gencode.h,v 1.36 96/07/17 00:11:34 leres Exp (LBL)
+ * @(#) Header: gencode.h,v 1.36 96/07/17 00:11:34 leres Exp  (LBL)
  */
 
 /*XXX*/

@@ -1,7 +1,7 @@
-$NetBSD: README,v 1.3 1996/12/13 08:25:56 mikel Exp $
-@(#) Header: README,v 1.15 96/07/07 22:38:34 leres Exp (LBL)
+$NetBSD: README,v 1.4 1997/10/03 15:53:01 christos Exp $
+@(#) Header: README,v 1.18 97/06/12 14:23:56 leres Exp  (LBL)
 
-LIBPCAP 0.2.1
+LIBPCAP 0.4
 Lawrence Berkeley National Laboratory
 Network Research Group
 libpcap@ee.lbl.gov

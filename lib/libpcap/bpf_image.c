@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_image.c,v 1.4 1997/01/23 14:02:56 mrg Exp $	*/
+/*	$NetBSD: bpf_image.c,v 1.5 1997/10/03 15:53:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: bpf_image.c,v 1.21 96/07/15 00:48:36 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: bpf_image.c,v 1.22 96/09/26 23:27:56 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: bpf_image.c,v 1.5 1997/10/03 15:53:02 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>

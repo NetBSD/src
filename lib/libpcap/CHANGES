@@ -1,5 +1,91 @@
-$NetBSD: CHANGES,v 1.3 1996/12/13 08:25:54 mikel Exp $
-@(#) Header: CHANGES,v 1.34 96/07/23 14:36:14 leres Exp (LBL)
+$NetBSD: CHANGES,v 1.4 1997/10/03 15:53:00 christos Exp $
+@(#) Header: CHANGES,v 1.43 97/09/24 19:48:58 leres Exp  (LBL)
+
+v0.4 Wed Sep 24 19:48:54 PDT 1997
+
+- Fix endian problem with DLT_NULL devices. From FreeBSD via Bill
+  Fenner (fenner@parc.xerox.com)
+
+- Fix alignment problem with FDDI under DLPI. This was causing core
+  dumps under Solaris.
+
+- Added configure options to disable flex and bison. Resulted from a
+  bug report by barnett@grymoire.crd.ge.com (Bruce Barnett). Also added
+  options to disable gcc and to force a particular packet capture type.
+
+- Added support for Fore ATM interfaces (qaa and fa) under IRIX. Thanks
+  to John Hawkinson (jhawk@mit.edu)
+
+- Change Linux PPP and SLIP to use DLT_RAW since the kernel does not
+  supply any "link layer" data.
+
+- Change Linux to use SIOCGIFHWADDR ioctl to determine link layer type.
+  Thanks to Thomas Sailer (sailer@ife.ee.ethz.ch)
+
+- Change IRIX PPP to use DLT_RAW since the kernel does not supply any
+  "link layer" data.
+
+- Modified to support the new BSD/OS 2.1 PPP and SLIP link layer header
+  formats.
+
+- Added some new SGI snoop interface types. Thanks to Steve Alexander
+  (sca@refugee.engr.sgi.com)
+
+- Fixes for HP-UX 10.20 (which is similar to HP-UX 9). Thanks to
+  Richard Allen (ra@hp.is) and Steinar Haug (sthaug@nethelp.no)
+
+- Fddi supports broadcast as reported by Jeff Macdonald
+  (jeff@iacnet.com). Also correct ieee802 and arcnet.
+
+- Determine Linux pcap buffer size at run time or else it might not be
+  big enough for some interface types (e.g. FDDI). Thanks to Jes
+  Sorensen (Jes.Sorensen@cern.ch)
+
+- Fix some linux alignment problems.
+
+- Document promisc argument to pcap_open_live(). Reported by Ian Marsh
+  (ianm@sics.se)
+
+- Support Metricom radio packets under Linux. Thanks to Kevin Lai
+  (laik@gunpowder.stanford.edu)
+
+- Bind to interface name under Linux to avoid packets from multiple
+  interfaces on multi-homed hosts. Thanks to Kevin Lai
+  (laik@gunpowder.stanford.edu)
+
+- Change L_SET to SEEK_SET for HP-UX. Thanks to Roland Roberts
+  (rroberts@muller.com)
+
+- Fixed an uninitialized memory reference found by Kent Vander Velden
+  (graphix@iastate.edu)
+
+- Fixed lex pattern for IDs to allow leading digits. As reported by
+  Theo de Raadt (deraadt@cvs.openbsd.org)
+
+- Fixed Linux include file problems when using GNU libc.
+
+- Ifdef ARPHRD_FDDI since not all versions of the Linux kernel have it.
+  Reported reported by Eric Jacksch (jacksch@tenebris.ca)
+
+v0.3 Sat Nov 30 20:56:27 PST 1996
+
+- Added Linux support.
+
+- Fixed savefile bugs.
+
+- Solaris x86 fix from Tim Rylance (t.rylance@elsevier.nl)
+
+- Add support for bpf kernel port filters.
+
+- Remove duplicate atalk protocol table entry. Thanks to Christian
+  Hopps (chopps@water.emich.edu)
+
+- Fixed pcap_lookupdev() to ignore nonexistent devices. This was
+  reported to happen under BSD/OS by David Vincenzetti
+  (vince@cryptonet.it)
+
+- Avoid solaris compiler warnings. Thanks to Bruce Barnett
+  (barnett@grymoire.crd.ge.com)
 
 v0.2.1 Sun Jul 14 03:02:26 PDT 1996
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: inet.c,v 1.5 1997/01/23 14:02:59 mrg Exp $	*/
+/*	$NetBSD: inet.c,v 1.6 1997/10/03 15:53:08 christos Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995, 1996
+ * Copyright (c) 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: inet.c,v 1.18 96/07/15 00:48:49 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: inet.c,v 1.21 97/07/17 14:24:58 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: inet.c,v 1.6 1997/10/03 15:53:08 christos Exp $");
+#endif
 #endif
 
 #include <sys/param.h>
@@ -102,6 +107,7 @@ pcap_lookupdev(errbuf)
 	ifc.ifc_len = sizeof ibuf;
 	ifc.ifc_buf = (caddr_t)ibuf;
 
+	memset((char *)ibuf, 0, sizeof(ibuf));
 	if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0 ||
 	    ifc.ifc_len < sizeof(struct ifreq)) {
 		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "SIOCGIFCONF: %s",
@@ -134,8 +140,12 @@ pcap_lookupdev(errbuf)
 		 */
 		strncpy(ifr.ifr_name, ifrp->ifr_name, sizeof(ifr.ifr_name));
 		if (ioctl(fd, SIOCGIFFLAGS, (char *)&ifr) < 0) {
+			if (errno == ENXIO)
+				continue;
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
-			    "SIOCGIFFLAGS: %s", pcap_strerror(errno));
+			    "SIOCGIFFLAGS: %.*s: %s",
+			    (int)sizeof(ifr.ifr_name), ifr.ifr_name,
+			    pcap_strerror(errno));
 			(void)close(fd);
 			return (NULL);
 		}
