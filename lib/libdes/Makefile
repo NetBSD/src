@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/06/17 01:08:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2000/06/17 01:20:50 thorpej Exp $
 
 LIB=	des
 
@@ -19,10 +19,10 @@ SRCS=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 CPPFLAGS+=	-D_POSIX_SOURCE -I. -I${.CURDIR}
 CPPFLAGS+=      -I${DIST}/openssl/crypto/des -I${DIST}/openssl/crypto
 
-DIST=		${.CURDIR}/../../dist
+DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/openssl/crypto/des ${DIST}/openssl/crypto ${DIST}/openssl
 
 INCS=	des.h 
-INCSDIR=/usr/include/openssl
+INCSDIR=/usr/include
 
 .include <bsd.lib.mk>
