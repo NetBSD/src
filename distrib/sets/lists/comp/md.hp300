@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.36 2000/02/03 05:27:59 jwise Exp $
+# $NetBSD: md.hp300,v 1.37 2000/03/17 22:54:05 tron Exp $
 ./usr/include/hp300		comp-c-include
 ./usr/include/hp300/_G_config.h		comp-c-include
 ./usr/include/hp300/ansi.h		comp-c-include
@@ -13,6 +13,7 @@
 ./usr/include/hp300/disklabel.h		comp-c-include
 ./usr/include/hp300/elf_machdep.h		comp-c-include
 ./usr/include/hp300/endian.h		comp-c-include
+./usr/include/hp300/endian_machdep.h		comp-c-include
 ./usr/include/hp300/float.h		comp-c-include
 ./usr/include/hp300/frame.h		comp-c-include
 ./usr/include/hp300/hp300spu.h		comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.36 2000/02/03 05:27:59 jwise Exp $
+# $NetBSD: md.mac68k,v 1.37 2000/03/17 22:54:05 tron Exp $
 ./usr/include/mac68k	comp-c-include
 ./usr/include/mac68k/_G_config.h	comp-c-include
 ./usr/include/mac68k/adbsys.h	comp-c-include
@@ -14,6 +14,7 @@
 ./usr/include/mac68k/disklabel.h	comp-c-include
 ./usr/include/mac68k/elf_machdep.h	comp-c-include
 ./usr/include/mac68k/endian.h	comp-c-include
+./usr/include/mac68k/endian_machdep.h	comp-c-include
 ./usr/include/mac68k/float.h	comp-c-include
 ./usr/include/mac68k/frame.h	comp-c-include
 ./usr/include/mac68k/grfioctl.h	comp-c-include
