@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.438 2001/05/06 03:26:38 ichiro Exp $
+#	$NetBSD: files,v 1.439 2001/05/11 04:47:56 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -573,6 +573,9 @@ file	dev/ic/pcdisplay_chars.c	pcdisplayops
 device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c			vga			needs-flag
 file	dev/ic/vga_subr.c		vga
+# CyberPro 20x0 graphics (linear non-VGA mode)
+device	cprofb: wsemuldisplaydev
+file	dev/ic/cyberpro.c		cprofb needs-flag
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
