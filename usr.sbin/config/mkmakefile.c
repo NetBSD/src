@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkmakefile.c	8.1 (Berkeley) 6/6/93
- *	$Id: mkmakefile.c,v 1.25 1995/04/28 06:55:15 cgd Exp $
+ *	$Id: mkmakefile.c,v 1.26 1996/02/23 00:39:42 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ emitobjs(fp)
 		lpos += len + 1;
 		sp = ' ';
 	}
-	if (lpos != 7 && putc('\n', fp) < 0)
+	if (putc('\n', fp) < 0)
 		return (1);
 	return (0);
 }
@@ -276,7 +276,7 @@ emitfiles(fp, suffix)
 			sp = ' ';
 		}
 	}
-	if (lpos != 7 && putc('\n', fp) < 0)
+	if (putc('\n', fp) < 0)
 		return (1);
 	return (0);
 }
