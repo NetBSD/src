@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.10 1998/04/15 21:44:39 drochner Exp $
+#	$NetBSD: files.bebox,v 1.11 1998/05/28 08:44:59 sakamoto Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -6,38 +6,16 @@ maxpartitions 16
 
 maxusers 2 8 64
 
-file	arch/bebox/bebox/Locore.c
 file	arch/bebox/bebox/autoconf.c
-file	arch/bebox/bebox/bcopy.c
+file	arch/bebox/bebox/bus_dma.c
 file	arch/bebox/bebox/clock.c
 file	arch/bebox/bebox/conf.c
-file	arch/bebox/bebox/copyinstr.c
-file	arch/bebox/bebox/copyoutstr.c
-file	arch/bebox/bebox/copystr.c
 file	arch/bebox/bebox/disksubr.c		disk
 file	arch/bebox/bebox/extintr.c
-file	arch/bebox/bebox/fpu.c
-file	arch/bebox/bebox/fubyte.c
-file	arch/bebox/bebox/fuswintr.c
-file	arch/bebox/bebox/in_cksum.c
-file	arch/bebox/bebox/ipkdb_glue.c		ipkdb
 file	arch/bebox/bebox/machdep.c
-file	arch/bebox/bebox/mem.c
-file	arch/bebox/bebox/pmap.c
-file	arch/bebox/bebox/process_machdep.c
-file	arch/bebox/bebox/subyte.c
-file	arch/bebox/bebox/suword.c
-file	arch/bebox/bebox/suswintr.c
-file	arch/bebox/bebox/sys_machdep.c
-file	arch/bebox/bebox/trap.c
-file	arch/bebox/bebox/vm_machdep.c
-file	arch/bebox/bebox/bus_dma.c
+
+# General files
 file	dev/cons.c
-file    arch/bebox/bebox/setjmp.s                   ddb
-file    arch/bebox/bebox/db_memrw.c                 ddb
-file    arch/bebox/bebox/db_disasm.c                ddb
-file    arch/bebox/bebox/db_interface.c             ddb
-file    arch/bebox/bebox/db_trace.c                 ddb
 
 major	{vnd = 14}
 
