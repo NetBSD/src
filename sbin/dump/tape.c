@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.21 1999/10/01 04:35:23 perseant Exp $	*/
+/*	$NetBSD: tape.c,v 1.22 2000/10/11 04:57:42 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.21 1999/10/01 04:35:23 perseant Exp $");
+__RCSID("$NetBSD: tape.c,v 1.22 2000/10/11 04:57:42 briggs Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ tperror(signo)
 		quit("Cannot recover\n");
 		/* NOTREACHED */
 	}
-	msg("write error %d blocks into volume %d\n", blocksthisvol, tapeno);
+	msg("write error %ld blocks into volume %d\n", blocksthisvol, tapeno);
 	broadcast("DUMP WRITE ERROR!\n");
 	if (!query("Do you want to restart?"))
 		dumpabort(0);
@@ -262,7 +262,7 @@ do_stats()
 	blocks = iswap32(spcl.c_tapea) - tapea_volume;
 	msg("Volume %d completed at: %s", tapeno, ctime(&tnow));
 	if (ttaken > 0) {
-		msg("Volume %d took %d:%02d:%02d\n", tapeno,
+		msg("Volume %d took %ld:%02ld:%02ld\n", tapeno,
 		    ttaken / 3600, (ttaken % 3600) / 60, ttaken % 60); 
 		msg("Volume %d transfer rate: %ld KB/s\n", tapeno,
 		    blocks / ttaken);
