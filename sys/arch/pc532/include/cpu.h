@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 1995/05/05 03:42:07 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 1995/05/16 07:30:40 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #define clockframe intrframe 
 
 #define	CLKF_USERMODE(framep)	((framep)->if_psr & PSR_USR)
-#define	CLKF_BASEPRI(framep)	((framep)->if_pl == ~PL_zero)
+#define	CLKF_BASEPRI(framep)	((framep)->if_pl == imask[IPL_ZERO])
 #define	CLKF_PC(framep)		((framep)->if_pc)
 #define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
 

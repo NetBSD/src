@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 1995/04/27 07:16:37 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 1995/05/16 07:30:51 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -288,6 +288,7 @@ init532()
 
   /* Set up the ICU. */
   icu_init();
+  intr_init();
 } 
 
 
@@ -850,19 +851,6 @@ physcopyseg(frm, to)
 	bcopy(CADDR1, CADDR2, NBPG);
 }
 
-int want_softclock = 0;
-int want_softnet = 0;
-
-void setsoftclock(void)
-{
-  want_softclock = 1;
-}
-
-void setsoftnet(void)
-{
-  want_softnet = 1;
-}
-
 /*
  * insert an element into a queue 
  */
@@ -1050,20 +1038,6 @@ int ether_output()
   panic ("No ether_output!");
 }
 #endif
-
-static bad_count = 0;
-void bad_intr (struct intrframe frame)
-{  int x;
-   x=splhigh();
-   bad_count++;
-   if (bad_count < 5)
-   	printf ("Unknown interrupt! vec=%d pc=0x%x psr=0x%x\n",frame.if_vec,
-   		frame.if_pc, frame.if_psr);
-   if (bad_count == 5)
-	printf ("Too many bad errors, quitting reporting them.\n");
-   splx(x);
-}
-
 
 /* Stub function for reboot_cpu. */
 

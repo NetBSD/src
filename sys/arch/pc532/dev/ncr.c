@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.11 1995/01/19 07:03:35 phil Exp $	*/
+/*	$NetBSD: ncr.c,v 1.12 1995/05/16 07:30:36 phil Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -45,6 +45,7 @@ static int ncr_debug=1;
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/buf.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
@@ -167,25 +168,12 @@ struct cfdriver ncrcd =
 	DV_DULL, sizeof(struct ncr5380_softc), NULL, 0 };
 
 static int
-ncr_print(aux, name)
-	void *aux;
-	char *name;
-{
-	/* printf("%s: (sc_link = 0x%x)", name, (int) aux); 
-	return UNCONF;*/
-}
-
-static int
 ncrprobe(parent, self, aux)
 	struct device	*parent, *self;
 	void		*aux;
 {
 /*	int			unit = cf->cf_unit; */
 	struct ncr5380_softc	*ncr5380 = (void *)self;
-
-	if (strcmp(*((char **) aux), ncrcd.cd_name)) {
-		return 0;
-	}
 
 #if 0
 DELETE THIS ????
@@ -206,7 +194,6 @@ DELETE THIS ????
 
 	/* If we call this, we need to add SPL_DP to the bio mask! */
 	/*  PL_bio |= SPL_DP;  Not yet ... no interrupts */
-	PL_zero |= PL_bio;
 
 	return 1;
 }
@@ -229,7 +216,7 @@ ncrattach(parent, self, aux)
 
 	printf("\n");
 
-	config_found(self, &(ncr5380->sc_link), ncr_print);
+	config_found(self, &(ncr5380->sc_link), NULL);
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
@@ -378,8 +365,7 @@ ncr5380_reset_target(int adapter, int target)
 static int
 ncr5380_send_cmd(struct scsi_xfer *xs)
 {
-	int	s;
-	int	sense;
+	int	s, i, sense;
 
 #if 0
 	ncr5380_show_scsi_cmd(xs); 
@@ -389,12 +375,14 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
 			  xs->data, xs->datalen );
 	splx(s);
-	if (sense) {
-		switch (sense) {
-			case 0x02:	/* Check condition */
-/*				printf("check cond. target %d.\n", xs->targ);*/
+	switch (sense) {
+		case 0x00:
+			xs->error = XS_NOERROR;
+			return (COMPLETE);
+		case 0x02:	/* Check condition */
+			for (i = 10; i; i--) {
 				s = splbio();
-				scsi_group0(xs->sc_link->scsibus,
+				sense = scsi_group0(xs->sc_link->scsibus,
 					    xs->sc_link->target,
 					    xs->sc_link->lun,
 					    0x3, 0x0,
@@ -402,18 +390,23 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 					    0, (caddr_t) &(xs->sense),
 					    sizeof(struct scsi_sense_data));
 				splx(s);
-				xs->error = XS_SENSE;
-				return COMPLETE;
-			case 0x08:	/* Busy */
-				xs->error = XS_BUSY;
-				return COMPLETE;
-			default:
-				xs->error = XS_DRIVER_STUFFUP;
-				return COMPLETE;
-		}
+				if (sense == 0) break;
+				if (sense == 8
+				    && (xs->flags & SCSI_NOSLEEP) == 0)
+					tsleep((caddr_t)&lbolt, PRIBIO, "ncrbusy", 0);
+			}
+			if (!i)
+				printf("ncr(%d:%d): Sense failed (dev busy)\n",
+				       xs->sc_link->target, xs->sc_link->lun);
+			xs->error = XS_SENSE;
+			return COMPLETE;
+		case 0x08:	/* Busy */
+			xs->error = XS_BUSY;
+			return COMPLETE;
+		default:
+			xs->error = XS_DRIVER_STUFFUP;
+			return COMPLETE;
 	}
-	xs->error = XS_NOERROR;
-	return (COMPLETE);
 }
 
 static int
@@ -768,7 +761,7 @@ scsi_gen(int adapter, int id, int lun, struct scsi_generic *cmd,
   register volatile sci_padded_regmap_t *regs = ncr;
   int i,j,sent,ret;
 
-  cmd->bytes[0] = ((u_char) lun << 5);
+  cmd->bytes[0] |= ((u_char) lun << 5);
 
   i = scsi_request(regs, id, lun, (u_char *) cmd, cmdlen,
 		   databuf, datalen, &sent, &ret);

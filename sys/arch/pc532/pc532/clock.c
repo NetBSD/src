@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 1995/01/02 04:20:58 phil Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 1995/05/16 07:30:46 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,237 +43,39 @@
  * Primitive clock interrupt routines.
  *
  * Improved by Phil Budne ... 10/17/94.
+ * Pulled over code from i386/isa/clock.c (Matthias Pfaller 12/03/94).
  */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <machine/icu.h>
 
 void spinwait __P((int));
 
-/* Get access to the time variable. */
-extern struct timeval time;
-extern struct timezone tz;
-
-/* Conversion data */
-static const short daymon[13] = {
-    0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365
-};
-
-/* Defines to make code more readable. */
-
-#define FROMBCD(B)	(((B)>>4) * 10 + ((B)&0xf))
-#define TOBCD(D)	((((D)/10)<<4) + (D)%10)
-
-#define DAYMON(M,L)	(daymon[(M)] + ((L) && (M) > 1))
-
-#define SECDAY		(24*60*60)
-#define SECMON(M,L)	(DAYMON(M,L)*SECDAY)
-#define SECYR		(365*SECDAY)
-#define LEAPYEAR(Y)	(((Y) & 3) == 0)
-
-
+void
 startrtclock()
 {
-  int s;
-  int x;
-  int timer = (ICU_CLK_HZ) / hz;
+	int timer = (ICU_CLK_HZ) / hz;
 
-  /* Write the timer values to the ICU. */
-  WR_ADR (unsigned short, ICU_ADR + HCSV, timer);
-  WR_ADR (unsigned short, ICU_ADR + HCCV, timer);
+	/* Write the timer values to the ICU. */
+	WR_ADR (unsigned short, ICU_ADR + HCSV, timer);
+	WR_ADR (unsigned short, ICU_ADR + HCCV, timer);
 
+	/* Establish interrupt vector */
+	intr_establish(IR_CLK, hardclock, NULL, "clock", IPL_CLOCK,
+		       FALLING_EDGE);
 }
-
-
-/* convert years to seconds since Jan 1, 1970 */
-static unsigned long
-ytos(y)
-int y;
-{
-	int i;
-	unsigned long ret;
-
-	ret = 0;
-	y -= 70;
-	for(i=0;i<y;i++) {
-	    ret += SECYR;
-	    if (LEAPYEAR(70+i))
-		ret += SECDAY;
-	}
-	return ret;
-}
-
-
-/*
- *  Access to the real time clock.
- * 
- */
-
-extern int have_rtc;
 
 void
-inittodr(base)
-    time_t base;
+cpu_initclocks()
 {
-    unsigned char buffer[8];
-    unsigned int year, month, dom, hour, min, sec, csec;
-
-    if (!have_rtc) {
-	time.tv_sec = base;
-	return;
-    }
-
-    /* Read rtc and convert to seconds since Jan 1, 1970. */
-
-    rw_rtc( buffer, 0);		/* Read the rtc. */
-
-    /* convert to decimal */
-    year = FROMBCD(buffer[7]);
-    /* XXX apply offset, or tweak for 21st century? */
-
-    month = FROMBCD(buffer[6]);
-    dom = FROMBCD(buffer[5]);
-    /* buffer[4] is dow! */
-    hour = FROMBCD(buffer[3]);
-    min = FROMBCD(buffer[2]);
-    sec = FROMBCD(buffer[1]);
-    csec = FROMBCD(buffer[0]);
-
-    /* Check to see if it was really the rtc by checking for bad date info. */
-    if (sec > 59 || min > 59 || hour > 23 || dom > 31 || month > 12) {
-	printf("inittodr: No clock found\n");
-#ifdef TEST
-	printf ("sec=%d, min=%d, hour=%d, dom=%d, month=%d\n",
-		 sec, min, hour, dom, month);
-#endif
-	have_rtc = 0;
-	time.tv_sec = base;
-	return;
-    }
-
-    month--;			/* make zero based */
-    dom--;			/* make zero based */
-
-#ifdef TEST
-    printf("ytos %d secmon %d dom %d hour %d, min %d\n",
-	   ytos(year),		/* years */
-	   SECMON(month, LEAPYEAR(year)), /* months */
-	   dom * SECDAY,	/* days of month */
-	   hour*60*60,		/* hours */
-	   min*60);		/* minutes */
-
-#endif
-
-    sec += ytos(year)		/* years */
-	+ SECMON(month, LEAPYEAR(year)) /* months */
-	    + dom * SECDAY	/* days of month */
-		+ hour*60*60	/* hours */
-		    + min*60;	/* minutes */
-
-    /* apply local offset */
-    sec += tz.tz_minuteswest * 60;
-    if (tz.tz_dsttime)
-	sec -= 60 * 60;
-
-    if (sec < base)
-	printf ("WARNING: clock is earlier than last shutdown time.\n");
-    time.tv_sec = sec;
-
-    if (csec > 99)
-	csec = 0;		/* ignore if bogus */
-    time.tv_usec = csec * 10000;
+	/* enable clock interrupt */
+	WR_ADR (unsigned char, ICU_ADR +CICTL, 0x30);
 }
 
-
-/*
- * Reset clock chip to current system time
- * Phil Budne 10/17/94
- */
-resettodr()
-{
-    int year, leap, mon, dom, hour, min, sec, csec;
-    struct timeval tv;
-    unsigned char buffer[8];
-    unsigned long t, t2;
-
-    tv = time;			/* XXX do under spl? */
-
-    t = tv.tv_sec;
-
-    /* XXX apply 1-day tweak? */
-
-    /* apply local offset */
-    t -= tz.tz_minuteswest * 60;
-    if (tz.tz_dsttime)
-	t += 60 * 60;
-
-    year = 70;
-    for (;;) {
-	t2 = SECYR;
-	if (LEAPYEAR(year))
-	    t2 += SECDAY;
-	if (t < t2)
-	    break;
-	year++;
-	t -= t2;
-    }
-
-    leap = LEAPYEAR(year);
-    mon = 0;
-    for (;;) {
-	mon++;
-	if (t < SECMON(mon, leap))
-	    break;
-    }
-    mon--;			/* get zero based */
-    t -= SECMON(mon, leap);
-    mon++;			/* make one based */
-
-    dom = t / SECDAY;
-    t %= SECDAY;
-
-    hour = t / (60*60);
-    t %= 60*60;
-
-    min = t / 60;
-    sec = t % 60;
-    csec = tv.tv_usec / 10000;
-
-    dom++;			/* make one-based */
-
-#ifdef TEST
-    printf("resettodr: %d/%d/%d %d:%02d:%02d.%02d\n",
-	   mon, dom, year + 1900, hour, min, sec, csec );
-#endif
-
-    buffer[0] = TOBCD(csec);
-    buffer[1] = TOBCD(sec);
-    buffer[2] = TOBCD(min);
-    buffer[3] = TOBCD(hour);
-    buffer[4] = 0;		/* XXX DOW! */
-    buffer[5] = TOBCD(dom);
-    buffer[6] = TOBCD(mon);
-    buffer[7] = TOBCD(year);    /* XXX remove offset, or mod by 100? */
-
-    rw_rtc(buffer,1);		/* reset chip!! */
-}
-
-/*
- * Wire clock interrupt in.
- */
-enablertclock()
-{
-  /* Set the clock interrupt enable (CICTL) */
-  WR_ADR (unsigned char, ICU_ADR +CICTL, 0x30);
-  PL_zero |= SPL_CLK | SPL_SOFTCLK | SPL_NET | SPL_IMP;
-}
-
-/*
- * Delay for some number of milliseconds.
- */
 void
 spinwait(int millisecs)
 {
@@ -281,18 +83,171 @@ spinwait(int millisecs)
 }
 
 DELAY(n)
-{ volatile int N = (n); while (--N > 0); }
-
-
-/* new functions ... */
-int
-cpu_initclocks()
 {
-  startrtclock();
-  enablertclock();
+	volatile int N = (n);
+	while (--N > 0)
+		;
+}
+
+void
+setstatclockrate(int dummy)
+{
+	printf ("setstatclockrate\n");
+}
+
+
+static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+static int
+yeartoday(year)
+	int year;
+{
+
+	return((year % 4) ? 365 : 366);
 }
 
 int
-setstatclockrate()
-{printf ("setstatclockrate\n");}
+hexdectodec(n)
+	char n;
+{
 
+	return(((n >> 4) & 0x0F) * 10 + (n & 0x0F));
+}
+
+char
+dectohexdec(n)
+	int n;
+{
+
+	return((char)(((n / 10) << 4) & 0xF0) | ((n % 10) & 0x0F));
+}
+
+static int timeset;
+struct rtc_st {
+	unsigned char rtc_csec;
+	unsigned char rtc_sec;
+	unsigned char rtc_min;
+	unsigned char rtc_hr;
+	unsigned char rtc_dow;
+	unsigned char rtc_dom;
+	unsigned char rtc_mon;
+	unsigned char rtc_yr;
+};
+
+/*
+ * Initialize the time of day register, based on the time base which is, e.g.
+ * from a filesystem.
+ */
+void
+inittodr(base)
+	time_t base;
+{
+        /*
+         * We ignore the suggested time for now and go for the RTC
+         * clock time stored in the CMOS RAM.
+         */
+	struct rtc_st rtclk;
+	time_t n;
+	int csec, sec, min, hr, dom, mon, yr;
+	int i, days = 0;
+	int s;
+	extern int have_rtc;
+
+	timeset = 1;
+	if (!have_rtc) {
+		time.tv_sec = base;
+		return;
+	}
+
+	rw_rtc((unsigned char *)&rtclk, 0);
+
+	csec = hexdectodec(rtclk.rtc_csec);
+	sec  = hexdectodec(rtclk.rtc_sec);
+	min  = hexdectodec(rtclk.rtc_min);
+	hr   = hexdectodec(rtclk.rtc_hr);
+	dom  = hexdectodec(rtclk.rtc_dom);
+	mon  = hexdectodec(rtclk.rtc_mon);
+	yr   = hexdectodec(rtclk.rtc_yr);
+	yr   = (yr < 70) ? yr + 100 : yr;
+
+	/*
+	 * Check to see if it was really the rtc
+	 * by checking for bad date info.
+	 */
+	if (sec > 59 || min > 59 || hr > 23 || dom > 31 || mon > 12) {
+		printf("inittodr: No clock found\n");
+		time.tv_sec = base;
+		return;
+	}
+
+	n = sec + 60 * min + 3600 * hr;
+	n += (dom - 1) * 3600 * 24;
+
+	if (yeartoday(yr) == 366)
+		month[1] = 29;
+	for (i = mon - 2; i >= 0; i--)
+		days += month[i];
+	month[1] = 28;
+	for (i = 70; i < yr; i++)
+		days += yeartoday(i);
+	n += days * 3600 * 24;
+
+	n += tz.tz_minuteswest * 60;
+	if (tz.tz_dsttime)
+		n -= 3600;
+	s = splclock();
+	time.tv_sec = n;
+	time.tv_usec = csec * 10000;
+	splx(s);
+}
+
+/*
+ * Reset the clock.
+ */
+void
+resettodr()
+{
+	struct rtc_st rtclk;
+	time_t n;
+	int diff, i, j;
+	int s;
+
+	/*
+	 * We might have been called by boot() due to a crash early
+	 * on.  Don't reset the clock chip in this case.
+	 */
+	if (!timeset)
+		return;
+
+	diff = tz.tz_minuteswest * 60;
+	if (tz.tz_dsttime)
+		diff -= 3600;
+
+	s = splclock();
+	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
+	rtclk.rtc_csec = dectohexdec(time.tv_usec / 10000);
+	rtclk.rtc_sec = dectohexdec(n%60);
+	n /= 60;
+	rtclk.rtc_min = dectohexdec(n%60);
+	rtclk.rtc_hr = dectohexdec(n/60);
+
+	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
+	splx(s);
+	rtclk.rtc_dow = (n + 4) % 7;  /* 1/1/70 is Thursday */
+
+	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
+		n -= i;
+
+	rtclk.rtc_yr = dectohexdec(j - 1900);
+
+	if (i == 366)
+		month[1] = 29;
+	for (i = 0; n >= month[i]; i++)
+		n -= month[i];
+	month[1] = 28;
+	rtclk.rtc_mon = dectohexdec(++i);
+
+	rtclk.rtc_dom = dectohexdec(++n);
+
+	rw_rtc((unsigned char *)&rtclk, 1);
+}
