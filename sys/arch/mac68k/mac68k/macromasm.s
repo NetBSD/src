@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.17 1998/02/21 00:37:08 scottr Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.17.26.1 2000/11/15 20:29:30 tv Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -37,6 +37,8 @@
 
 #include "opt_adb.h"
 #include "assym.h"
+#include <machine/asm.h>
+#include <machine/trap.h>
 
 
 	/* Define this symbol as global with (v) value */
@@ -425,7 +427,6 @@ LGR_enter:
  * 1010 line emulator; A-line trap
  * (we fake MacOS traps from here)
  */
-	.global _mrg_aline_user
 	.global _mrg_aline_super
 	.global _mrg_ToolBoxtraps
 	.global _alinetrap
@@ -437,8 +438,9 @@ _alinetrap:
 	movw	sp@(FR_HW + 4), d0	| retrieve status register
 	andw	#PSL_S, d0	| supervisor state?
 	bne	Lalnosup	| branch if supervisor
-	jbsr	_mrg_aline_user | user a-line trap
-	bra	Lalrts
+	addql	#4, sp		| pop frame ptr
+	movql	#T_ILLINST, d0	| user-mode fault
+	jra	_ASM_LABEL(fault)
 Lalnosup:
 #define FR_PC (FR_HW+2)
 	movl	sp@(FR_PC + 4), a0	| retrieve PC
