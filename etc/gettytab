@@ -1,4 +1,4 @@
-#	$NetBSD: gettytab,v 1.8 1997/02/15 10:02:14 mikel Exp $
+#	$NetBSD: gettytab,v 1.9 1997/03/14 20:41:51 mycroft Exp $
 #	from: @(#)gettytab	8.2 (Berkeley) 4/20/94
 #
 # Most of the table entries here are just copies of the old getty table,
@@ -10,7 +10,7 @@
 # entries, and in cases where getty is called with no table name
 #
 default:\
-	:ap:im=\r\n%s/%m (%h) (%t)\r\n\r\n:sp#1200:
+	:np:im=\r\n%s/%m (%h) (%t)\r\n\r\n:sp#1200:
 
 #
 # Fixed speed entries
@@ -113,7 +113,7 @@ X|Xwindow|X window system:\
 	:fd@:nd@:cd@:rw:sp#9600:
 
 P|Pc|Pc console:\
-	:np:ap:sp#9600:
+	:np:sp#9600:
 
 # 8 bit clean Sun console
 S|suncons|Sun Console:\
