@@ -1,30 +1,15 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.23 1993/08/15 19:37:06 mycroft Exp $
+#	$Id: bsd.lib.mk,v 1.24 1993/08/15 20:42:41 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
-LIBDIR?=	/usr/lib
-LINTLIBDIR?=	/usr/libdata/lint
-LIBGRP?=	bin
-LIBOWN?=	bin
-LIBMODE?=	444
-
-STRIP?=		-s
-
-BINGRP?=	bin
-BINOWN?=	bin
-BINMODE?=	555
-
 .MAIN: all
 
 # prefer .s to a .c, add .po, remove stuff not used in the BSD libraries
 .SUFFIXES:
-.SUFFIXES: .out .o .po .s .c .cc .C .f .y .l .8 .7 .6 .5 .4 .3 .2 .1 .0
-
-.8.0 .7.0 .6.0 .5.0 .4.0 .3.0 .2.0 .1.0:
-	nroff -mandoc ${.IMPSRC} > ${.TARGET}
+.SUFFIXES: .out .o .po .s .c .cc .C .f .y .l .0 .1 .2 .3 .4 .5 .6 .7 .8
 
 .c.o:
 	${CC} ${CFLAGS} -c ${.IMPSRC} 
@@ -58,17 +43,13 @@ BINMODE?=	555
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-.if !defined(NOMAN)
-MANALL=	${MAN1} ${MAN2} ${MAN3} ${MAN4} ${MAN5} ${MAN6} ${MAN7} ${MAN8}
-.endif
-
 .if !defined(NOPROFILE)
 _LIBS=lib${LIB}.a lib${LIB}_p.a
 .else
 _LIBS=lib${LIB}.a
 .endif
 
-all: ${_LIBS} ${MANALL}# llib-l${LIB}.ln
+all: ${_LIBS} # llib-l${LIB}.ln
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 
@@ -96,12 +77,6 @@ clean:
 	rm -f lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
 .endif
 
-.if !target(cleandir)
-cleandir: clean
-	rm -f ${MANALL} ${.CURDIR}/tags .depend
-.endif
-
-.include <bsd.dep.mk>
 afterdepend:
 	@(TMP=/tmp/_depend$$$$; \
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po:/' < .depend > $$TMP; \
@@ -145,18 +120,12 @@ afterinstall: realinstall
 realinstall: beforeinstall
 .endif
 
-.if !target(lint)
-lint:
-.endif
-
-.if !target(tags)
-tags: ${SRCS}
-	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:M*.c} | \
-	    sed "s;\${.CURDIR}/;;" > tags
-.endif
+cleandir: clean
 
 .if !defined(NOMAN)
 .include <bsd.man.mk>
 .endif
 
 .include <bsd.obj.mk>
+.include <bsd.dep.mk>
+.include <bsd.subdir.mk>

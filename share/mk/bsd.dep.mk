@@ -1,4 +1,4 @@
-#	$Id: bsd.dep.mk,v 1.1 1993/08/15 19:37:04 mycroft Exp $
+#	$Id: bsd.dep.mk,v 1.2 1993/08/15 20:42:39 mycroft Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)
@@ -16,3 +16,13 @@ depend: beforedepend .depend afterdepend
 	fi
 .endif
 .endif
+
+.if !target(tags)
+tags: ${SRCS}
+	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
+	    sed "s;\${.CURDIR}/;;" > tags
+.endif
+
+clean: cleandepend
+cleandepend:
+	rm -f .depend ${.CURDIR}/tags
