@@ -1,4 +1,4 @@
-/*	$NetBSD: from.c,v 1.10 2000/09/08 13:06:13 mjl Exp $	*/
+/*	$NetBSD: from.c,v 1.11 2000/09/08 13:11:03 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: from.c,v 1.10 2000/09/08 13:06:13 mjl Exp $");
+__RCSID("$NetBSD: from.c,v 1.11 2000/09/08 13:11:03 mjl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,13 +56,11 @@ __RCSID("$NetBSD: from.c,v 1.10 2000/09/08 13:06:13 mjl Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main __P((int, char **));
-int	match __P((char *, char *));
+int	main (int, char **);
+int	match (const char *, const char *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct passwd *pwd;
 	int ch, newline;
@@ -134,10 +132,10 @@ main(argc, argv)
 }
 
 int
-match(line, sender)
-	char *line, *sender;
+match(const char *line, const char *sender)
 {
-	char ch, pch, first, *p, *t;
+	char ch, pch, first;
+	const char *p, *t;
 
 	for (first = *sender++;;) {
 		if (isspace((unsigned char)(ch = *line)))
