@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.145 2001/11/30 07:08:53 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.146 2001/12/04 18:38:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.145 2001/11/30 07:08:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.146 2001/12/04 18:38:09 christos Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2907,14 +2907,16 @@ nfs_pathconf(v)
 	} */ *ap = v;
 	struct nfsv3_pathconf *pcp;
 	struct vnode *vp = ap->a_vp;
-	struct nfsmount *nmp;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	int32_t t1, t2;
 	u_int32_t *tl;
 	caddr_t bpos, dpos, cp, cp2;
 	int error = 0, attrflag;
+#ifndef NFS_V2_ONLY
+	struct nfsmount *nmp;
 	unsigned int l;
 	u_int64_t maxsize;
+#endif
 	const int v3 = NFS_ISV3(vp);
 
 	switch (ap->a_name) {
@@ -2965,6 +2967,7 @@ nfs_pathconf(v)
 		nfsm_reqdone;
 		break;
 	case _PC_FILESIZEBITS:
+#ifndef NFS_V2_ONLY
 		if (v3) {
 			nmp = VFSTONFS(vp->v_mount);
 			if ((nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
@@ -2975,7 +2978,9 @@ nfs_pathconf(v)
 			    (maxsize >> l) > 0; l++)
 				;
 			*ap->a_retval = l + 1;
-		} else {
+		} else
+#endif
+		{
 			*ap->a_retval = 32;	/* NFS V2 limitation */
 		}
 		break;
