@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)recvjob.c	5.15 (Berkeley) 5/4/91";*/
-static char rcsid[] = "$Id: recvjob.c,v 1.2 1993/08/01 17:58:49 mycroft Exp $";
+static char rcsid[] = "$Id: recvjob.c,v 1.3 1994/04/21 18:53:47 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -252,7 +252,7 @@ chksize(size)
 		syslog(LOG_ERR, "%s: %m", "statfs(\".\")");
 		return (1);
 	}
-	spacefree = sfb.f_bavail * (sfb.f_fsize / 512);
+	spacefree = sfb.f_bavail * (sfb.f_bsize / 512);
 	size = (size + 511) / 512;
 	if (minfree + size > spacefree)
 		return(0);
