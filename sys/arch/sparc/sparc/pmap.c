@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.288 2004/04/12 14:26:01 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.289 2004/04/17 10:04:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.288 2004/04/12 14:26:01 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289 2004/04/17 10:04:20 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -684,13 +684,16 @@ static __inline__ void	smp_tlb_flush_region (int va, int ctx, u_int cpuset);
 static __inline__ void	smp_tlb_flush_context (int ctx, u_int cpuset);
 static __inline__ void	smp_tlb_flush_all (void);
 
+/* From locore: */
+extern void ft_tlb_flush(int va, int ctx, int lvl);
+
 static __inline__ void
 smp_tlb_flush_page(int va, int ctx, u_int cpuset)
 {
 	if (CPU_ISSUN4D) {
 		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L3);
 	} else
-		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L3, cpuset);
+		FXCALL3(sp_tlb_flush, ft_tlb_flush, va, ctx, ASI_SRMMUFP_L3, cpuset);
 }
 
 static __inline__ void
@@ -699,7 +702,7 @@ smp_tlb_flush_segment(int va, int ctx, u_int cpuset)
 	if (CPU_ISSUN4D) {
 		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L2);
 	} else
-		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L2, cpuset);
+		FXCALL3(sp_tlb_flush, ft_tlb_flush, va, ctx, ASI_SRMMUFP_L2, cpuset);
 }
 
 static __inline__ void
@@ -708,7 +711,7 @@ smp_tlb_flush_region(int va, int ctx, u_int cpuset)
 	if (CPU_ISSUN4D) {
 		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L1);
 	} else
-		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L1, cpuset);
+		FXCALL3(sp_tlb_flush, ft_tlb_flush, va, ctx, ASI_SRMMUFP_L1, cpuset);
 }
 
 static __inline__ void
@@ -717,7 +720,7 @@ smp_tlb_flush_context(int ctx, u_int cpuset)
 	if (CPU_ISSUN4D) {
 		sp_tlb_flush(ctx, 0, ASI_SRMMUFP_L0);
 	} else
-		XCALL3(sp_tlb_flush, 0, ctx, ASI_SRMMUFP_L0, cpuset);
+		FXCALL3(sp_tlb_flush, ft_tlb_flush, 0, ctx, ASI_SRMMUFP_L0, cpuset);
 }
 
 static __inline__ void
