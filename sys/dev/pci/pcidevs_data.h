@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.316 2001/03/21 18:10:35 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.317 2001/03/31 09:08:07 minoura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.312 2001/03/21 18:10:13 soren Exp 
+ *	NetBSD: pcidevs,v 1.313 2001/03/31 09:06:45 minoura Exp 
  */
 
 /*
@@ -1726,6 +1726,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "USB Controller",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB_MEDIAGX,
+	    0,
+	    "Compaq",
+	    "USB Controller",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMART2P,
 	    0,
 	    "Compaq",
@@ -1892,6 +1898,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cyclades",
 	    "Cyclom-Z above 1M",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_MEDIAGX_PCHB,
+	    0,
+	    "Cyrix Corporation",
+	    "MediaGX Built-in PCI Host Controller",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5520_PCIB,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5520 I/O Companion",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_PCIB,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion Multi-Function South Bridge",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_SMI,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion (SMI Status and ACPI Timer)",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_IDE,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion (IDE Controller)",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_AUDIO,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion (XpressAUDIO)",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_VIDEO,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion (Video Controller)",
 	},
 	{
 	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102,
