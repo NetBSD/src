@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.214 2000/02/27 01:19:54 groo Exp $
+# $NetBSD: mi,v 1.215 2000/03/14 09:06:52 shin Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -676,6 +676,7 @@
 ./usr/share/man/cat8/bootpef.0
 ./usr/share/man/cat8/bootpgw.0
 ./usr/share/man/cat8/bootptest.0
+./usr/share/man/cat8/bootselect.0
 ./usr/share/man/cat8/catman.0
 ./usr/share/man/cat8/ccdconfig.0
 ./usr/share/man/cat8/chat.0
@@ -711,6 +712,7 @@
 ./usr/share/man/cat8/dumpfs.0
 ./usr/share/man/cat8/dumplfs.0
 ./usr/share/man/cat8/edquota.0
+./usr/share/man/cat8/envstat.0
 ./usr/share/man/cat8/eshconfig.0
 ./usr/share/man/cat8/faithd.0
 ./usr/share/man/cat8/fastboot.0
@@ -1629,6 +1631,7 @@
 ./usr/share/man/man8/bootpef.8
 ./usr/share/man/man8/bootpgw.8
 ./usr/share/man/man8/bootptest.8
+./usr/share/man/man8/bootselect.8
 ./usr/share/man/man8/catman.8
 ./usr/share/man/man8/ccdconfig.8
 ./usr/share/man/man8/chat.8
@@ -1664,6 +1667,7 @@
 ./usr/share/man/man8/dumpfs.8
 ./usr/share/man/man8/dumplfs.8
 ./usr/share/man/man8/edquota.8
+./usr/share/man/man8/envstat.8
 ./usr/share/man/man8/eshconfig.8
 ./usr/share/man/man8/faithd.8
 ./usr/share/man/man8/fastboot.8
