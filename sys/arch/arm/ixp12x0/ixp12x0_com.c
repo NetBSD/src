@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.7 2002/10/23 09:10:46 jdolecek Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.8 2002/12/02 14:10:13 ichiro Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -135,12 +135,14 @@ u_int32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
 
 static bus_space_tag_t ixpcomconstag;
 static bus_space_handle_t ixpcomconsioh;
-static bus_addr_t ixpcomconsaddr = IXPCOM_UART_BASE; /* XXX initial value */
+static bus_addr_t ixpcomconsaddr;
 
 static int ixpcomconsattached;
 static int ixpcomconsrate;
 static tcflag_t ixpcomconscflag;
 static struct cnm_state ixpcom_cnm_state;
+
+struct ixpcom_softc* ixpcom_sc = NULL;
 
 extern struct cfdriver ixpcom_cd;
 
@@ -193,6 +195,8 @@ ixpcom_attach_subr(sc)
 	bus_addr_t iobase = sc->sc_baseaddr;
 	bus_space_tag_t iot = sc->sc_iot;
 	struct tty *tp;
+
+	ixpcom_sc = sc;
 
 	if (iot == ixpcomconstag && iobase == ixpcomconsaddr) {
 		ixpcomconsattached = 1;
