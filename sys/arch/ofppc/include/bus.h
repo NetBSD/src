@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2003/06/15 23:09:03 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2003/06/23 20:12:19 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -647,8 +647,8 @@ struct powerpc_bus_dmamap {
 
 #ifdef _POWERPC_BUS_DMA_PRIVATE
 /* These are used by the generic PowerPC bus_dma routines. */
-#define	PHYS_TO_PCI_MEM(x)	(x)
-#define	PCI_MEM_TO_PHYS(x)	(x)
+#define	PHYS_TO_BUS_MEM(t, x)	(x)
+#define	BUS_MEM_TO_PHYS(t, x)	(x)
 
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
