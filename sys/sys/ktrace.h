@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.20 2000/12/17 16:04:51 jdolecek Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.21 2000/12/28 11:10:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -144,7 +144,13 @@ struct ktr_csw {
  * KTR_USER - user record
  */
 #define	KTR_USER	8
-	/* record contains some user data */
+#define KTR_USER_MAXIDLEN	20
+struct ktr_user {
+	char 	ktr_id[KTR_USER_MAXIDLEN];	/* string id of caller */
+	/*
+	 * Followed by ktr_len - sizeof(struct ktr_user) of user data.
+	 */
+};
 
 /*
  * kernel trace points (in p_traceflag)
@@ -172,6 +178,7 @@ struct ktr_csw {
 __BEGIN_DECLS
 int	ktrace __P((const char *, int, int, pid_t));
 int	fktrace __P((int, int, int, pid_t));
+int	utrace __P((const char *, void *, size_t));
 __END_DECLS
 
 #else
@@ -183,6 +190,7 @@ void ktrnamei __P((struct proc *, char *));
 void ktrpsig __P((struct proc *, int, sig_t, sigset_t *, int));
 void ktrsyscall __P((struct proc *, register_t, size_t, register_t []));
 void ktrsysret __P((struct proc *, register_t, int, register_t));
+void ktruser __P((struct proc *, const char *, void *, size_t, int));
 void ktrderef __P((struct proc *));
 void ktradref __P((struct proc *));
 
