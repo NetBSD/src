@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_msg.h,v 1.5 1995/04/29 05:28:00 cgd Exp $	*/
+/*	$NetBSD: rpc_msg.h,v 1.6 1997/07/13 18:16:43 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -183,6 +183,23 @@ extern bool_t	xdr_callhdr	__P((XDR *, struct rpc_msg *));
  * 	struct rpc_msg *rmsg;
  */
 extern bool_t	xdr_replymsg	__P((XDR *, struct rpc_msg *));
+
+
+/*
+ * XDR routine to handle a accepted rpc reply.
+ * xdr_accepted_reply(xdrs, rej)
+ * 	XDR *xdrs;
+ * 	struct accepted_reply *rej;
+ */
+extern bool_t	xdr_accepted_reply	__P((XDR *, struct accepted_reply *));
+
+/*
+ * XDR routine to handle a rejected rpc reply.
+ * xdr_rejected_reply(xdrs, rej)
+ * 	XDR *xdrs;
+ * 	struct rejected_reply *rej;
+ */
+extern bool_t	xdr_rejected_reply	__P((XDR *, struct rejected_reply *));
 
 /*
  * Fills in the error part of a reply message.
