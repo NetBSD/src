@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.7 2003/08/27 22:53:18 dsl Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.8 2003/08/29 19:53:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,15 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
-#include "stand.h"
+/* memcmp is defined as equivalent to bcmp in bcmp.c */
 
-/*
- * Cheezy memcmp(), as a wrapper around bcmp()
- */
-__strong_alias(bcmp, memcmp)
+extern int i;		/* avoid any 'empty translation unit' problems' */

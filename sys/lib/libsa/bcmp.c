@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.4 2003/08/07 16:32:25 agc Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.5 2003/08/29 19:53:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,6 +33,9 @@
 #include <lib/libkern/libkern.h>
 
 #undef bcmp			/* in case of LIBSA_USE_MEMCMP */
+#undef memcmp
+
+__strong_alias(memcmp, bcmp)	/* libsa has always had an 'unsorting' memcmp */
 
 /*
  * bcmp -- vax cmpc3 instruction
