@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.36 1999/08/26 02:56:59 itojun Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.37 1999/10/12 14:51:34 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.36 1999/08/26 02:56:59 itojun Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.37 1999/10/12 14:51:34 sommerfeld Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.0.2.44.2.10 1998/11/22 01:50:22 darrenr Exp ";
@@ -1063,9 +1063,11 @@ frdest_t *fdp;
 		/* Send ICMP error here */
 		struct mbuf *mcopy;
 		mcopy = m_copy(m, 0, imin((int)ip->ip_len, 68));
-		if (mcopy)
+		if (mcopy) {
+			mcopy->m_pkthdr.rcvif = (struct ifnet *)ifp;
 			icmp_error(mcopy, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG,
-				   ip->ip_dst.s_addr, ifp);
+			    ip->ip_dst.s_addr, ifp);
+		}
 		error = EMSGSIZE;
 		goto bad;
 	}
