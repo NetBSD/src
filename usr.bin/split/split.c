@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.13 2003/06/24 18:45:08 bjh21 Exp $	*/
+/*	$NetBSD: split.c,v 1.14 2003/06/26 22:49:53 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.13 2003/06/24 18:45:08 bjh21 Exp $");
+__RCSID("$NetBSD: split.c,v 1.14 2003/06/26 22:49:53 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,22 +62,22 @@ __RCSID("$NetBSD: split.c,v 1.13 2003/06/24 18:45:08 bjh21 Exp $");
 static int file_open;		/* If a file open. */
 static int ifd = -1, ofd = -1;	/* Input/output file descriptors. */
 static char *fname;		/* File name prefix. */
-static int sfxlen = 2;		/* suffix length. */
+static size_t sfxlen = 2;		/* suffix length. */
 
 int  main(int, char **);
 static void newfile(void);
-static void split1(unsigned long long);
-static void split2(unsigned long long);
+static void split1(off_t);
+static void split2(off_t);
 static void usage(void) __attribute__((__noreturn__));
-static unsigned long long bigwrite __P((int, const void *, unsigned long long));
+static size_t bigwrite(int, void const *, size_t);
 
 int
 main(int argc, char *argv[])
 {
 	int ch;
 	char *ep, *p;
-	unsigned long long bytecnt = 0;	/* Byte count to split on. */
-	unsigned long long numlines = 0;/* Line count to split on. */
+	off_t bytecnt = 0;	/* Byte count to split on. */
+	off_t numlines = 0;	/* Line count to split on. */
 	size_t namelen;
 	long name_max;
 
@@ -92,13 +92,12 @@ main(int argc, char *argv[])
 			if (numlines == 0) {
 				p = argv[optind - 1];
 				if (p[0] == '-' && p[1] == ch && !p[2])
-					numlines = strtol(++p, &ep, 10);
+					p++;
 				else
-					numlines =
-					    strtol(argv[optind] + 1, &ep, 10);
-				if (numlines <= 0 || *ep)
-					errx(1,
-					    "%s: illegal line count.", optarg);
+					p = argv[optind] + 1;
+				numlines = strtoull(p, &ep, 10);
+				if (numlines == 0 || *ep != '\0')
+					errx(1, "%s: illegal line count.", p);
 			}
 			break;
 		case '-':		/* stdin flag. */
@@ -107,7 +106,8 @@ main(int argc, char *argv[])
 			ifd = 0;
 			break;
 		case 'b':		/* Byte count. */
-			if ((bytecnt = strtoull(optarg, &ep, 10)) <= 0 ||
+			if (!isdigit((unsigned char)optarg[0]) ||
+			    (bytecnt = strtoull(optarg, &ep, 10)) == 0 ||
 			    (*ep != '\0' && *ep != 'k' && *ep != 'm'))
 				errx(1, "%s: illegal byte count.", optarg);
 			if (*ep == 'k')
@@ -118,11 +118,15 @@ main(int argc, char *argv[])
 		case 'l':		/* Line count. */
 			if (numlines != 0)
 				usage();
-			if ((numlines = strtoull(optarg, &ep, 10)) <= 0 || *ep)
+			if (!isdigit((unsigned char)optarg[0]) ||
+			    (numlines = strtoull(optarg, &ep, 10)) == 0 ||
+			    *ep != '\0')
 				errx(1, "%s: illegal line count.", optarg);
 			break;
 		case 'a':		/* Suffix length. */
-			if ((sfxlen = strtol(optarg, &ep, 10)) <= 0 || *ep)
+			if (!isdigit((unsigned char)optarg[0]) ||
+			    (sfxlen = (size_t)strtoul(optarg, &ep, 10)) == 0 ||
+			    *ep != '\0')
 				errx(1, "%s: illegal suffix length.", optarg);
 			break;
 		default:
@@ -183,10 +187,10 @@ main(int argc, char *argv[])
  *	Split the input by bytes.
  */
 static void
-split1(unsigned long long bytecnt)
+split1(off_t bytecnt)
 {
-	unsigned long long bcnt, dist;
-	ssize_t len;
+	off_t bcnt;
+	ssize_t dist, len;
 	char *C;
 	char bfr[MAXBSIZE];
 
@@ -204,19 +208,23 @@ split1(unsigned long long bytecnt)
 				file_open = 1;
 			}
 			if (bcnt + len >= bytecnt) {
+				/* LINTED: bytecnt - bcnt <= len */
 				dist = bytecnt - bcnt;
 				if (bigwrite(ofd, bfr, dist) != dist)
 					err(1, "write");
 				len -= dist;
 				for (C = bfr + dist; len >= bytecnt;
+				    /* LINTED: bytecnt <= len */
 				    len -= bytecnt, C += bytecnt) {
 					newfile();
+					/* LINTED: as above */
 					if (bigwrite(ofd,
-					    C, (int)bytecnt) != bytecnt)
+					    C, bytecnt) != bytecnt)
 						err(1, "write");
 				}
 				if (len) {
 					newfile();
+					/* LINTED: len >= 0 */
 					if (bigwrite(ofd, C, len) != len)
 						err(1, "write");
 				} else
@@ -224,6 +232,7 @@ split1(unsigned long long bytecnt)
 				bcnt = len;
 			} else {
 				bcnt += len;
+				/* LINTED: len >= 0 */
 				if (bigwrite(ofd, bfr, len) != len)
 					err(1, "write");
 			}
@@ -235,9 +244,10 @@ split1(unsigned long long bytecnt)
  *	Split the input by lines.
  */
 static void
-split2(unsigned long long numlines)
+split2(off_t numlines)
 {
-	unsigned long long lcnt, bcnt;
+	off_t lcnt;
+	size_t bcnt;
 	ssize_t len;
 	char *Ce, *Cs;
 	char bfr[MAXBSIZE];
@@ -319,15 +329,15 @@ newfile(void)
 		err(1, "%s", fname);
 }
 
-static unsigned long long
-bigwrite(int fd, const void *buf, unsigned long long len)
+static size_t
+bigwrite(int fd, const void *buf, size_t len)
 {
 	const char *ptr = buf;
-	unsigned long long sofar = 0;
+	size_t sofar = 0;
+	ssize_t w;
 
 	while (len != 0) {
-		ssize_t w, nw = (len > INT_MAX) ? INT_MAX : (ssize_t)len;
-		if  ((w = write(fd, ptr, nw)) == -1)
+		if  ((w = write(fd, ptr, len)) == -1)
 			return sofar;
 		len -= w;
 		ptr += w;
