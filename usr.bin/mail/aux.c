@@ -1,4 +1,4 @@
-/*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
+/*	$NetBSD: aux.c,v 1.6 1997/10/19 05:02:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $";
+__RCSID("$NetBSD: aux.c,v 1.6 1997/10/19 05:02:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +63,7 @@ savestr(str)
 	int size = strlen(str) + 1;
 
 	if ((new = salloc(size)) != NOSTR)
-		bcopy(str, new, size);
+		memmove(new, str, size);
 	return new;
 }
 
@@ -79,44 +80,12 @@ save2str(str, old)
 
 	if ((new = salloc(newsize + oldsize)) != NOSTR) {
 		if (oldsize) {
-			bcopy(old, new, oldsize);
+			memmove(new, old, oldsize);
 			new[oldsize - 1] = ' ';
 		}
-		bcopy(str, new + oldsize, newsize);
+		memmove(new + oldsize, str, newsize);
 	}
 	return new;
-}
-
-/*
- * Announce a fatal error and die.
- */
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-panic(const char *fmt, ...)
-#else
-panic(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "panic: ");
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	fflush(stderr);
-	abort();
 }
 
 /*
@@ -126,7 +95,7 @@ panic(fmt, va_alist)
  */
 void
 touch(mp)
-	register struct message *mp;
+	struct message *mp;
 {
 
 	mp->m_flag |= MTOUCH;
@@ -156,7 +125,7 @@ int
 argcount(argv)
 	char **argv;
 {
-	register char **ap;
+	char **ap;
 
 	for (ap = argv; *ap++ != NOSTR;)
 		;	
@@ -172,10 +141,10 @@ hfield(field, mp)
 	char field[];
 	struct message *mp;
 {
-	register FILE *ibuf;
+	FILE *ibuf;
 	char linebuf[LINESIZE];
-	register int lc;
-	register char *hfield;
+	int lc;
+	char *hfield;
 	char *colon, *oldhfield = NOSTR;
 
 	ibuf = setinput(mp);
@@ -200,14 +169,14 @@ hfield(field, mp)
  */
 int
 gethfield(f, linebuf, rem, colon)
-	register FILE *f;
+	FILE *f;
 	char linebuf[];
-	register int rem;
+	int rem;
 	char **colon;
 {
 	char line2[LINESIZE];
-	register char *cp, *cp2;
-	register int c;
+	char *cp, *cp2;
+	int c;
 
 	for (;;) {
 		if (--rem < 0)
@@ -243,7 +212,7 @@ gethfield(f, linebuf, rem, colon)
 			if (cp + c >= linebuf + LINESIZE - 2)
 				break;
 			*cp++ = ' ';
-			bcopy(cp2, cp, c);
+			memmove(cp, cp2, c);
 			cp += c;
 		}
 		*cp = 0;
@@ -262,7 +231,7 @@ ishfield(linebuf, colon, field)
 	char linebuf[], field[];
 	char *colon;
 {
-	register char *cp = colon;
+	char *cp = colon;
 
 	*cp = 0;
 	if (strcasecmp(linebuf, field) != 0) {
@@ -280,7 +249,7 @@ ishfield(linebuf, colon, field)
  */
 void
 istrcpy(dest, src)
-	register char *dest, *src;
+	char *dest, *src;
 {
 
 	do {
@@ -390,7 +359,7 @@ int
 blankline(linebuf)
 	char linebuf[];
 {
-	register char *cp;
+	char *cp;
 
 	for (cp = linebuf; *cp; cp++)
 		if (*cp != ' ' && *cp != '\t')
@@ -405,10 +374,10 @@ blankline(linebuf)
  */
 char *
 nameof(mp, reptype)
-	register struct message *mp;
+	struct message *mp;
 	int reptype;
 {
-	register char *cp, *cp2;
+	char *cp, *cp2;
 
 	cp = skin(name1(mp, reptype));
 	if (reptype != 0 || charcount(cp, '!') < 2)
@@ -428,9 +397,9 @@ nameof(mp, reptype)
  */
 char *
 skip_comment(cp)
-	register char *cp;
+	char *cp;
 {
-	register nesting = 1;
+	int nesting = 1;
 
 	for (; nesting > 0 && *cp; cp++) {
 		switch (*cp) {
@@ -457,8 +426,8 @@ char *
 skin(name)
 	char *name;
 {
-	register int c;
-	register char *cp, *cp2;
+	int c;
+	char *cp, *cp2;
 	char *bufend;
 	int gotlt, lastsp;
 	char nbuf[BUFSIZ];
@@ -563,13 +532,13 @@ skin(name)
  */
 char *
 name1(mp, reptype)
-	register struct message *mp;
+	struct message *mp;
 	int reptype;
 {
 	char namebuf[LINESIZE];
 	char linebuf[LINESIZE];
-	register char *cp, *cp2;
-	register FILE *ibuf;
+	char *cp, *cp2;
+	FILE *ibuf;
 	int first = 1;
 
 	if ((cp = hfield("from", mp)) != NOSTR)
@@ -632,8 +601,8 @@ charcount(str, c)
 	char *str;
 	int c;
 {
-	register char *cp;
-	register int i;
+	char *cp;
+	int i;
 
 	for (i = 0, cp = str; *cp; cp++)
 		if (*cp == c)
@@ -646,7 +615,7 @@ charcount(str, c)
  */
 int
 anyof(s1, s2)
-	register char *s1, *s2;
+	char *s1, *s2;
 {
 
 	while (*s1)
@@ -660,7 +629,7 @@ anyof(s1, s2)
  */
 int
 raise(c)
-	register int c;
+	int c;
 {
 
 	if (islower(c))
@@ -673,7 +642,7 @@ raise(c)
  */
 char *
 copy(s1, s2)
-	register char *s1, *s2;
+	char *s1, *s2;
 {
 
 	while ((*s2++ = *s1++) != '\0')
@@ -706,10 +675,10 @@ isign(field, ignore)
 
 int
 member(realfield, table)
-	register char *realfield;
+	char *realfield;
 	struct ignoretab *table;
 {
-	register struct ignore *igp;
+	struct ignore *igp;
 
 	for (igp = table->i_head[hash(realfield)]; igp != 0; igp = igp->i_link)
 		if (*igp->i_field == *realfield &&

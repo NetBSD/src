@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.6 1996/12/28 07:11:03 tls Exp $	*/
+/*	$NetBSD: head.c,v 1.7 1997/10/19 05:03:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: head.c,v 1.6 1996/12/28 07:11:03 tls Exp $";
+__RCSID("$NetBSD: head.c,v 1.7 1997/10/19 05:03:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +60,7 @@ int
 ishead(linebuf)
 	char linebuf[];
 {
-	register char *cp;
+	char *cp;
 	struct headline hl;
 	char parbuf[BUFSIZ];
 
@@ -104,9 +105,9 @@ fail(linebuf, reason)
 void
 parse(line, hl, pbuf)
 	char line[], pbuf[];
-	register struct headline *hl;
+	struct headline *hl;
 {
-	register char *cp;
+	char *cp;
 	char *sp;
 	char word[LINESIZE];
 
@@ -138,10 +139,10 @@ parse(line, hl, pbuf)
  */
 char *
 copyin(src, space)
-	register char *src;
+	char *src;
 	char **space;
 {
-	register char *cp;
+	char *cp;
 	char *top;
 
 	top = cp = *space;
@@ -189,7 +190,7 @@ isdate(date)
  */
 int
 cmatch(cp, tp)
-	register char *cp, *tp;
+	char *cp, *tp;
 {
 
 	while (*cp && *tp)
@@ -236,9 +237,9 @@ cmatch(cp, tp)
  */
 char *
 nextword(wp, wbuf)
-	register char *wp, *wbuf;
+	char *wp, *wbuf;
 {
-	register c;
+	int c;
 
 	if (wp == NOSTR) {
 		*wbuf = 0;

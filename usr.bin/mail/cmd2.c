@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.8 1997/10/19 05:03:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,16 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $";
+__RCSID("$NetBSD: cmd2.c,v 1.8 1997/10/19 05:03:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
-#include <sys/wait.h>
 #include "extern.h"
 
 /*
@@ -62,8 +62,8 @@ next(v)
 	void *v;
 {
 	int *msgvec = v;
-	register struct message *mp;
-	register int *ip, *ip2;
+	struct message *mp;
+	int *ip, *ip2;
 	int list[2], mdot;
 
 	if (*msgvec != 0) {
@@ -169,8 +169,8 @@ save1(str, mark, cmd, ignore)
 	char *cmd;
 	struct ignoretab *ignore;
 {
-	register int *ip;
-	register struct message *mp;
+	int *ip;
+	struct message *mp;
 	char *file, *disp;
 	int f, *msgvec;
 	FILE *obuf;
@@ -246,7 +246,7 @@ snarf(linebuf, flag)
 	char linebuf[];
 	int *flag;
 {
-	register char *cp;
+	char *cp;
 
 	*flag = 1;
 	cp = strlen(linebuf) + linebuf - 1;
@@ -322,8 +322,8 @@ int
 delm(msgvec)
 	int *msgvec;
 {
-	register struct message *mp;
-	register *ip;
+	struct message *mp;
+	int *ip;
 	int last;
 
 	last = 0;
@@ -362,8 +362,8 @@ undeletecmd(v)
 	void *v;
 {
 	int *msgvec = v;
-	register struct message *mp;
-	register *ip;
+	struct message *mp;
+	int *ip;
 
 	for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
@@ -410,7 +410,7 @@ clobber(v)
 	void *v;
 {
 	char **argv = v;
-	register int times;
+	int times;
 
 	if (argv[0] == 0)
 		times = 1;
@@ -428,7 +428,7 @@ clob1(n)
 	int n;
 {
 	char buf[512];
-	register char *cp;
+	char *cp;
 
 	if (n <= 0)
 		return;
@@ -488,8 +488,8 @@ ignore1(list, tab, which)
 	char *which;
 {
 	char field[LINESIZE];
-	register int h;
-	register struct ignore *igp;
+	int h;
+	struct ignore *igp;
 	char **ap;
 
 	if (*list == NOSTR)
@@ -518,7 +518,7 @@ igshow(tab, which)
 	struct ignoretab *tab;
 	char *which;
 {
-	register int h;
+	int h;
 	struct ignore *igp;
 	char **ap, **ring;
 

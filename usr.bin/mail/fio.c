@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.9 1997/10/18 15:48:48 matt Exp $	*/
+/*	$NetBSD: fio.c,v 1.10 1997/10/19 05:03:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,21 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: fio.c,v 1.9 1997/10/18 15:48:48 matt Exp $";
+__RCSID("$NetBSD: fio.c,v 1.10 1997/10/19 05:03:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
-#include <sys/file.h>
-#include <sys/wait.h>
-
-#include <unistd.h>
-#include <paths.h>
-#include <errno.h>
 #include "extern.h"
 
 /*
@@ -61,12 +56,12 @@ static char rcsid[] = "$NetBSD: fio.c,v 1.9 1997/10/18 15:48:48 matt Exp $";
  */
 void
 setptr(ibuf, offset)
-	register FILE *ibuf;
+	FILE *ibuf;
 	off_t offset;
 {
 	extern char *tmpdir;
-	register int c, count;
-	register char *cp, *cp2;
+	int c, count;
+	char *cp, *cp2;
 	struct message this;
 	FILE *mestmp;
 	int maybe, inhead;
@@ -180,7 +175,7 @@ putline(obuf, linebuf, outlf)
 	char *linebuf;
 	int   outlf;
 {
-	register int c;
+	int c;
 
 	c = strlen(linebuf);
 	(void) fwrite(linebuf, sizeof *linebuf, c, obuf);
@@ -204,7 +199,7 @@ readline(ibuf, linebuf, linesize)
 	char *linebuf;
 	int linesize;
 {
-	register int n;
+	int n;
 
 	clearerr(ibuf);
 	if (fgets(linebuf, linesize, ibuf) == NULL)
@@ -221,14 +216,12 @@ readline(ibuf, linebuf, linesize)
  */
 FILE *
 setinput(mp)
-	register struct message *mp;
+	struct message *mp;
 {
 
 	fflush(otf);
-	if (fseek(itf, (long)positionof(mp->m_block, mp->m_offset), 0) < 0) {
-		perror("fseek");
-		panic("temporary file seek");
-	}
+	if (fseek(itf, (long)positionof(mp->m_block, mp->m_offset), 0) < 0)
+		err(1, "fseek");
 	return (itf);
 }
 
@@ -241,25 +234,26 @@ makemessage(f, omsgCount)
 	FILE *f;
 	int omsgCount;
 {
-	register size = (msgCount + 1) * sizeof (struct message);
+	int size = (msgCount + 1) * sizeof (struct message);
 
 	if (omsgCount) {
 		message = (struct message *)realloc(message, (unsigned) size);
 		if (message == 0)
-			panic("Insufficient memory for %d messages\n",
+			errx(1, "Insufficient memory for %d messages\n",
 			      msgCount);
 	} else {        
 		if (message != 0)
 			free((char *) message);
 		if ((message = (struct message *) malloc((unsigned) size)) == 0)
-			panic("Insufficient memory for %d messages", msgCount);
+			errx(1, "Insufficient memory for %d messages",
+			    msgCount);
 		dot = message;
 	}
 	size -= (omsgCount + 1) * sizeof (struct message);
 	fflush(f);
 	(void) lseek(fileno(f), (off_t)sizeof *message, 0);
 	if (read(fileno(f), (char *) &message[omsgCount], size) != size)
-		panic("Message temporary file corrupted");
+		errx(1, "Message temporary file corrupted");
 	message[msgCount].m_size = 0;
 	message[msgCount].m_lines = 0;
 	Fclose(f);
@@ -352,12 +346,12 @@ fsize(iob)
  */
 char *
 expand(name)
-	register char *name;
+	char *name;
 {
 	char xname[PATHSIZE];
 	char cmdbuf[PATHSIZE];		/* also used for file names */
-	register int pid, l;
-	register char *cp, *shell;
+	int pid, l;
+	char *cp, *shell;
 	int pivec[2];
 	struct stat sbuf;
 	extern union wait wait_status;
@@ -465,7 +459,7 @@ getfold(name)
 char *
 getdeadletter()
 {
-	register char *cp;
+	char *cp;
 
 	if ((cp = value("DEAD")) == NOSTR || (cp = expand(cp)) == NOSTR)
 		cp = expand("~/dead.letter");
