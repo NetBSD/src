@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.69 1999/05/13 17:28:30 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.70 1999/07/15 23:18:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -377,7 +377,7 @@ reaper()
 		LIST_INSERT_HEAD(&zombproc, p, p_list);
 
 		/* Wake up the parent so it can get exit status. */
-		if ((p->p_flag & P_FSTRACE) == 0)
+		if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
 			psignal(p->p_pptr, P_EXITSIG(p));
 		wakeup((caddr_t)p->p_pptr);
 	}
@@ -416,8 +416,8 @@ loop:
 		 * if WALTSIG is set; wait for processes with p_exitsig ==
 		 * SIGCHLD only if WALTSIG is clear.
 		 */
-		if ((SCARG(uap, options) & WALTSIG) ? P_EXITSIG(p) == SIGCHLD :
-						      P_EXITSIG(p) != SIGCHLD)
+		if ((SCARG(uap, options) & WALTSIG) ?
+		    (p->p_exitsig == SIGCHLD) : (P_EXITSIG(p) != SIGCHLD))
 			continue;
 
 		nfound++;
@@ -451,7 +451,8 @@ loop:
 				proc_reparent(p, t ? t : initproc);
 				p->p_oppid = 0;
 				p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
-				psignal(p->p_pptr, P_EXITSIG(p));
+				if (p->p_exitsig != 0)
+					psignal(p->p_pptr, P_EXITSIG(p));
 				wakeup((caddr_t)p->p_pptr);
 				return (0);
 			}
@@ -536,6 +537,9 @@ proc_reparent(child, parent)
 
 	if (child->p_pptr == parent)
 		return;
+
+	if (parent == initproc)
+		child->p_exitsig = SIGCHLD;
 
 	LIST_REMOVE(child, p_sibling);
 	LIST_INSERT_HEAD(&parent->p_children, child, p_sibling);

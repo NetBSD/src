@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.77 1999/05/13 21:58:37 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.78 1999/07/15 23:18:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -232,11 +232,10 @@ struct	proc {
 #define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
 
 /*
- * Macro to compute the exit signal.
+ * Macro to compute the exit signal to be delivered.
  */
-#define	P_EXITSIG(p)	((((p)->p_flag & (P_TRACED|P_FSTRACE)) ||	\
-			  (p)->p_pptr == initproc) ?			\
-			 SIGCHLD : p->p_exitsig)
+#define	P_EXITSIG(p)	(((p)->p_flag & (P_TRACED|P_FSTRACE)) ? SIGCHLD : \
+			 p->p_exitsig)
 
 /*
  * MOVE TO ucred.h?
