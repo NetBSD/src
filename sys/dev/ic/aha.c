@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.24 1999/09/30 23:04:40 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.25 2000/02/12 19:12:52 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -1182,7 +1182,7 @@ aha_scsi_cmd(xs)
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct aha_ccb *ccb;
 	int error, seg, flags, s;
-	int fromqueue = 0, dontqueue = 0;
+	int fromqueue = 0, dontqueue = 0, nowait = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("aha_scsi_cmd\n"));
 
@@ -1195,6 +1195,7 @@ aha_scsi_cmd(xs)
 	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
 		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
+		nowait = 1;
 		goto get_ccb;
 	}
 
@@ -1231,6 +1232,8 @@ aha_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->xs_control;
+	if (nowait)
+		flags |= XS_CTL_NOSLEEP;
 	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
 		/*
 		 * If we can't queue, we lose.

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.14 1999/09/30 23:04:40 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.15 2000/02/12 19:12:52 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -551,7 +551,7 @@ adv_scsi_cmd(xs)
 	bus_dma_tag_t   dmat = sc->sc_dmat;
 	ADV_CCB        *ccb;
 	int             s, flags, error, nsegs;
-	int             fromqueue = 1, dontqueue = 0;
+	int             fromqueue = 0, dontqueue = 0, nowait = 0;
 
 
 	s = splbio();		/* protect the queue */
@@ -563,6 +563,7 @@ adv_scsi_cmd(xs)
 	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
 		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
+		nowait = 1;
 	} else {
 
 		/* Polled requests can't be queued for later. */
@@ -599,6 +600,8 @@ adv_scsi_cmd(xs)
          */
 
 	flags = xs->xs_control;
+	if (nowait)
+		flags |= XS_CTL_NOSLEEP;
 	if ((ccb = adv_get_ccb(sc, flags)) == NULL) {
 		/*
                  * If we can't queue, we lose.
