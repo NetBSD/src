@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.3 1998/06/22 22:01:03 sommerfe Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.4 1998/06/24 20:58:45 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,10 +39,6 @@
  *
  *	@(#)iso.h	8.4 (Berkeley) 12/5/94
  */
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_fifo.h"
-#endif
 
 /*
  * Definitions used in the kernel for cd9660 file system support.
@@ -105,9 +101,7 @@ int cd9660_mountroot __P((void));
 
 extern int (**cd9660_vnodeop_p) __P((void *));
 extern int (**cd9660_specop_p) __P((void *));
-#ifdef FIFO
 extern int (**cd9660_fifoop_p) __P((void *));
-#endif
 
 int isofncmp __P((const u_char *, int, const u_char *, int));
 void isofntrans __P((u_char *, int, u_char *, u_short *, int, int));

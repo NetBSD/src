@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.9 1998/06/22 22:01:08 sommerfe Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.10 1998/06/24 20:58:47 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,10 +34,6 @@
  *
  *	@(#)ffs_extern.h	8.6 (Berkeley) 3/30/95
  */
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_fifo.h"
-#endif
 
 /*
  * Sysctl values for the fast filesystem.
@@ -140,9 +136,6 @@ __END_DECLS
 
 extern int (**ffs_vnodeop_p) __P((void *));
 extern int (**ffs_specop_p) __P((void *));
-#ifdef FIFO
 extern int (**ffs_fifoop_p) __P((void *));
-#define FFS_FIFOOPS ffs_fifoop_p
-#else
-#define FFS_FIFOOPS NULL
-#endif
+
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.39 1998/06/22 22:01:09 sommerfe Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.40 1998/06/24 20:58:48 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -37,7 +37,6 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
-#include "opt_fifo.h"
 #endif
 
 #include <sys/param.h>
@@ -78,16 +77,12 @@ int ffs_sbupdate __P((struct ufsmount *, int));
 
 extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ffs_specop_opv_desc;
-#ifdef FIFO
 extern struct vnodeopv_desc ffs_fifoop_opv_desc;
-#endif  
 
 struct vnodeopv_desc *ffs_vnodeopv_descs[] = {
 	&ffs_vnodeop_opv_desc,
 	&ffs_specop_opv_desc,
-#ifdef FIFO
 	&ffs_fifoop_opv_desc,
-#endif
 	NULL,
 };
 
@@ -923,7 +918,7 @@ ffs_vget(mp, ino, vpp)
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ufs_vinit(mp, ffs_specop_p, FFS_FIFOOPS, &vp);
+	error = ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
 	if (error) {
 		vput(vp);
 		*vpp = NULL;

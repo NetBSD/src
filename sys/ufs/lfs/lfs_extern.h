@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.8 1998/06/22 22:01:09 sommerfe Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.9 1998/06/24 20:58:48 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,8 +34,6 @@
  *
  *	@(#)lfs_extern.h	8.6 (Berkeley) 5/8/95
  */
-
-#include "opt_fifo.h"
 
 struct fid;
 struct mount;
@@ -150,9 +148,5 @@ __END_DECLS
 extern int lfs_mount_type;
 extern int (**lfs_vnodeop_p) __P((void *));
 extern int (**lfs_specop_p) __P((void *));
-#ifdef FIFO
 extern int (**lfs_fifoop_p) __P((void *));
-#define LFS_FIFOOPS lfs_fifoop_p
-#else
-#define LFS_FIFOOPS NULL
-#endif
+

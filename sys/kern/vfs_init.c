@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.12 1998/06/22 22:01:04 sommerfe Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.13 1998/06/24 20:58:45 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,8 +77,6 @@
  *	@(#)vfs_init.c	8.5 (Berkeley) 5/11/95
  */
 
-#include "opt_fifo.h"
-
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/time.h>
@@ -111,16 +109,12 @@ extern struct vnodeop_desc *vfs_op_descs[];
  * be initialized by vfs_attach().
  */
 extern struct vnodeopv_desc dead_vnodeop_opv_desc;
-#ifdef FIFO
 extern struct vnodeopv_desc fifo_vnodeop_opv_desc;
-#endif
 extern struct vnodeopv_desc spec_vnodeop_opv_desc;
 
 struct vnodeopv_desc *vfs_special_vnodeopv_descs[] = {
 	&dead_vnodeop_opv_desc,
-#ifdef FIFO
 	&fifo_vnodeop_opv_desc,
-#endif
 	&spec_vnodeop_opv_desc,
 	NULL,
 };
