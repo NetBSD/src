@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2000/12/11 05:37:01 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2000/12/11 16:49:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,14 +62,18 @@
 #include <machine/userret.h>
 
 void syscall_intern __P((struct proc *));
-void syscall __P((struct trapframe));
+void syscall_plain __P((struct trapframe));
+void syscall_fancy __P((struct trapframe));
 
 void
 syscall_intern(p)
 	struct proc *p;
 {
 
-	p->p_md.md_syscall = syscall;
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+		p->p_md.md_syscall = syscall_fancy;
+	else
+		p->p_md.md_syscall = syscall_plain;
 }
 
 /*
@@ -77,10 +81,8 @@ syscall_intern(p)
  *	System call request from POSIX system call gate interface to kernel.
  * Like trap(), argument is call by reference.
  */
-#if 0
-/*ARGSUSED*/
 void
-syscall(frame)
+syscall_plain(frame)
 	struct trapframe frame;
 {
 	register caddr_t params;
@@ -91,16 +93,42 @@ syscall(frame)
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-#ifdef DEBUG
-	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
-		panic("syscall");
-#endif
-
 	p = curproc;
 
 	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
+
+#ifdef VM86
+	/*
+	 * VM86 mode application found our syscall trap gate by accident; let
+	 * it get a SIGSYS and have the VM86 handler in the process take care
+	 * of it.
+	 */
+	if (frame.tf_eflags & PSL_VM)
+		code = -1;
+	else
+#endif /* VM86 */
+
+	switch (code) {
+	case SYS_syscall:
+		/*
+		 * Code is first argument, followed by actual args.
+		 */
+		code = fuword(params);
+		params += sizeof(int);
+		break;
+	case SYS___syscall:
+		/*
+		 * Like syscall, but code is a quad, so as to maintain
+		 * quad alignment for the rest of the arguments.
+		 */
+		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		params += sizeof(quad_t);
+		break;
+	default:
+		break;
+	}
 
 	callp += (code & (SYS_NSYSENT - 1));
 	argsize = callp->sy_argsize;
@@ -109,6 +137,9 @@ syscall(frame)
 		if (error)
 			goto bad;
 	}
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args);
+#endif /* SYSCALL_DEBUG */
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
@@ -136,14 +167,14 @@ syscall(frame)
 		break;
 	}
 
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval);
+#endif /* SYSCALL_DEBUG */
 	userret(p);
 }
-#endif
 
-#if 1
-/*ARGSUSED*/
 void
-syscall(frame)
+syscall_fancy(frame)
 	struct trapframe frame;
 {
 	register caddr_t params;
@@ -154,11 +185,6 @@ syscall(frame)
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-#ifdef DEBUG
-	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
-		panic("syscall");
-#endif
-
 	p = curproc;
 
 	code = frame.tf_eax;
@@ -246,7 +272,6 @@ syscall(frame)
 		ktrsysret(p, code, error, rval[0]);
 #endif /* KTRACE */
 }
-#endif
 
 void
 child_return(arg)
