@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.17 2002/03/05 21:18:14 wiz Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.18 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.17 2002/03/05 21:18:14 wiz Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.18 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,7 +325,7 @@ type1(int *msgvec, int doign, int page)
 				cp = _PATH_MORE;
 			obuf = Popen(cp, "w");
 			if (obuf == NULL) {
-				perror(cp);
+				warn("%s", cp);
 				obuf = stdout;
 			} else
 				signal(SIGPIPE, brokpipe);

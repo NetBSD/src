@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.18 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: send.c,v 1.19 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.18 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: send.c,v 1.19 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -372,7 +372,7 @@ mail1(struct header *hp, int printheaders)
 	 */
 	pid = fork();
 	if (pid == -1) {
-		perror("fork");
+		warn("fork");
 		savedeadletter(mtf);
 		goto out;
 	}
@@ -391,7 +391,7 @@ mail1(struct header *hp, int printheaders)
 		else
 			cp = _PATH_SENDMAIL;
 		execv(cp, namelist);
-		perror(cp);
+		warn("%s", cp);
 		_exit(1);
 	}
 	if (value("verbose") != NULL)
@@ -440,11 +440,11 @@ infix(struct header *hp, FILE *fi)
 	int c;
 
 	if ((nfo = Fopen(tempMail, "w")) == NULL) {
-		perror(tempMail);
+		warn("%s", tempMail);
 		return(fi);
 	}
 	if ((nfi = Fopen(tempMail, "r")) == NULL) {
-		perror(tempMail);
+		warn("%s", tempMail);
 		(void)Fclose(nfo);
 		return(fi);
 	}
@@ -456,13 +456,13 @@ infix(struct header *hp, FILE *fi)
 		c = getc(fi);
 	}
 	if (ferror(fi)) {
-		perror("read");
+		warn("read");
 		rewind(fi);
 		return(fi);
 	}
 	(void)fflush(nfo);
 	if (ferror(nfo)) {
-		perror(tempMail);
+		warn("%s", tempMail);
 		(void)Fclose(nfo);
 		(void)Fclose(nfi);
 		rewind(fi);
@@ -541,7 +541,7 @@ savemail(char name[], FILE *fi)
 	time_t now;
 
 	if ((fo = Fopen(name, "a")) == NULL) {
-		perror(name);
+		warn("%s", name);
 		return (-1);
 	}
 	(void)time(&now);
@@ -551,7 +551,7 @@ savemail(char name[], FILE *fi)
 	(void)putc('\n', fo);
 	(void)fflush(fo);
 	if (ferror(fo))
-		perror(name);
+		warn("%s", name);
 	(void)Fclose(fo);
 	rewind(fi);
 	return (0);

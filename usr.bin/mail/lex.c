@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.21 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: lex.c,v 1.22 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.21 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: lex.c,v 1.22 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,12 +80,12 @@ setfile(char *name)
 	if ((ibuf = Fopen(name, "r")) == NULL) {
 		if (!isedit && errno == ENOENT)
 			goto nomail;
-		perror(name);
+		warn("%s", name);
 		return(-1);
 	}
 
 	if (fstat(fileno(ibuf), &stb) < 0) {
-		perror("fstat");
+		warn("fstat");
 		Fclose(ibuf);
 		return (-1);
 	}
@@ -94,7 +94,7 @@ setfile(char *name)
 	case S_IFDIR:
 		Fclose(ibuf);
 		errno = EISDIR;
-		perror(name);
+		warn("%s", name);
 		return (-1);
 
 	case S_IFREG:
@@ -103,7 +103,7 @@ setfile(char *name)
 	default:
 		Fclose(ibuf);
 		errno = EINVAL;
-		perror(name);
+		warn("%s", name);
 		return (-1);
 	}
 
