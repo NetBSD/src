@@ -1,4 +1,4 @@
-/*	$NetBSD: ustirreg.h,v 1.1 2002/01/03 18:54:32 augustss Exp $	*/
+/*	$NetBSD: ustirreg.h,v 1.2 2002/12/28 05:35:34 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,8 @@
 /*
  * Registers definitions for SigmaTel STIr4200 USB/IrDA Bridge
  * Controller.  Documentation available at:
- *  http://extranet.sigmatel.com/library/infrared/stir4200/stir4200-ds.pdf
+ *  http://www.sigmatel.com/technical_docs.htm
+ *  http://extranet.sigmatel.com/library/infrared/stir4200/stir4200-ds-1-0.pdf
  */
 
 /* Notes:
