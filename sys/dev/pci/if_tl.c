@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.1 1997/10/17 18:38:30 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.1.2.1 1997/10/21 08:22:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 /*
- * Texas Instruments ThunderLand ethernet controller
+ * Texas Instruments ThunderLAN ethernet controller
  * ThunderLAN Programmer's Guide (TI Literature Number SPWU013A)
  * available from www.ti.com
  */
@@ -361,7 +361,7 @@ tl_pci_attach(parent, self, aux)
 			sc->mii.adapter_id = COMPAQ_NETFLEX;
 			break;
 		default:
-			model = "unknown Thunderland board!\n";
+			model = "unknown ThunderLAN board!\n";
 	}
 	printf(": %s\n%s: ",model, sc->sc_dev.dv_xname);
 
