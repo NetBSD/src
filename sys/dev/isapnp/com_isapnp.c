@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.8 1997/10/28 21:27:55 christos Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.9 1997/11/30 15:13:30 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,11 @@ struct com_isapnp_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	com_isapnp_match __P((struct device *, void *, void *));
+#else
+int	com_isapnp_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	com_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach com_isapnp_ca = {
@@ -72,7 +76,12 @@ struct cfattach com_isapnp_ca = {
 int
 com_isapnp_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
 

@@ -1,7 +1,7 @@
 #include "guspnp.h"
 #if NGUSPNP > 0
 
-/*	$NetBSD: gus_isapnp.c,v 1.4 1997/11/19 14:19:59 augustss Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.5 1997/11/30 15:13:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,11 @@
 #include <dev/ic/interwavereg.h>
 
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	gus_isapnp_match __P((struct device *, void *, void *));
+#else
+int	gus_isapnp_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	gus_isapnp_attach __P((struct device *, struct device *, void *));
 static int     gus_isapnp_open __P((void *, int));
 
@@ -133,7 +137,12 @@ static int gus_0 = 0;		/* XXX what's this */
 int
 gus_isapnp_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
 
