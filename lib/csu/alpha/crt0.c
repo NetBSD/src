@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.11 1997/10/20 20:41:09 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.11.2.1 1998/05/08 05:42:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -30,10 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifdef ECOFF_COMPAT
-#undef DYNAMIC
-#endif
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -70,10 +66,8 @@ char	**environ;
 char	*__progname = "";
 struct ps_strings *__ps_strings = 0;
 
-#ifndef ECOFF_COMPAT
-extern void	__init __P((void));
-extern void	__fini __P((void));
-#endif /* ECOFF_COMPAT */
+extern void	_init __P((void));
+extern void	_fini __P((void));
 
 #ifdef DYNAMIC
 void		rtld_setup __P((void (*)(void), const Obj_Entry *obj));
@@ -135,10 +129,8 @@ __start(sp, cleanup, obj, ps_strings)
 	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif
 
-#ifndef ECOFF_COMPAT
-	atexit(__fini);
-	__init();
-#endif /* ECOFF_COMPAT */
+	atexit(_fini);
+	_init();
 
 	exit(main(argc, argv, environ));
 }
@@ -147,14 +139,14 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.11 1997/10/20 20:41:09 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.11.2.1 1998/05/08 05:42:46 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 static char *
 _strrchr(p, ch)
-register char *p, ch;
+char *p, ch;
 {
-	register char *save;
+	char *save;
 
 	for (save = NULL;; ++p) {
 		if (*p == ch)

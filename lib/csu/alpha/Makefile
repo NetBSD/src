@@ -1,14 +1,8 @@
-#	$NetBSD: Makefile,v 1.13.2.1 1997/11/09 00:59:12 lukem Exp $
-
-.include <bsd.own.mk>			# for ECOFF_TOOLCHAIN definition
+#	$NetBSD: Makefile,v 1.13.2.2 1998/05/08 05:42:46 mycroft Exp $
 
 CPPFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC -DELFSIZE=64
 CPPFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
 COPT+=		-fPIC
-
-.if defined(ECOFF_TOOLCHAIN)
-CPPFLAGS+=	-DECOFF_COMPAT
-.endif
 
 OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o
 
