@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.148 2003/02/06 12:21:21 pk Exp $	*/
+/*	$NetBSD: tty.c,v 1.149 2003/02/17 22:23:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.148 2003/02/06 12:21:21 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.149 2003/02/17 22:23:14 christos Exp $");
 
 #include "opt_uconsole.h"
 
@@ -64,11 +64,16 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.148 2003/02/06 12:21:21 pk Exp $");
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/poll.h>
+#include <sys/kprintf.h>
+
+#include <machine/stdarg.h>
 
 static int	ttnread(struct tty *);
 static void	ttyblock(struct tty *);
 static void	ttyecho(int, struct tty *);
 static void	ttyrubo(struct tty *, int);
+static void	ttyprintf_nolock(struct tty *, const char *fmt, ...)
+    __attribute__((__format__(__printf__,2,3)));
 static int	proc_compare(struct proc *, struct proc *);
 
 /* Symbolic sleep message strings. */
@@ -2203,23 +2208,23 @@ ttyinfo(struct tty *tp)
 
 	/* Print load average. */
 	tmp = (averunnable.ldavg[0] * 100 + FSCALE / 2) >> FSHIFT;
-	ttyprintf(tp, "load: %d.%02d ", tmp / 100, tmp % 100);
+	ttyprintf_nolock(tp, "load: %d.%02d ", tmp / 100, tmp % 100);
 
 	if (tp->t_session == NULL)
-		ttyprintf(tp, "not a controlling terminal\n");
+		ttyprintf_nolock(tp, "not a controlling terminal\n");
 	else if (tp->t_pgrp == NULL)
-		ttyprintf(tp, "no foreground process group\n");
+		ttyprintf_nolock(tp, "no foreground process group\n");
 	else if ((p = LIST_FIRST(&tp->t_pgrp->pg_members)) == 0)
-		ttyprintf(tp, "empty foreground process group\n");
+		ttyprintf_nolock(tp, "empty foreground process group\n");
 	else {
 		/* Pick interesting process. */
 		for (pick = NULL; p != NULL; p = LIST_NEXT(p, p_pglist))
 			if (proc_compare(pick, p))
 				pick = p;
 
-		ttyprintf(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
+		ttyprintf_nolock(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
 		LIST_FOREACH(l, &pick->p_lwps, l_sibling)
-		    ttyprintf(tp, "%s%s",
+		    ttyprintf_nolock(tp, "%s%s",
 		    l->l_stat == LSONPROC ? "running" :
 		    l->l_stat == LSRUN ? "runnable" :
 		    l->l_wmesg ? l->l_wmesg : "iowait",
@@ -2233,7 +2238,7 @@ ttyinfo(struct tty *tp)
 			utime.tv_sec += 1;
 			utime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%ld.%02ldu ", (long int)utime.tv_sec,
+		ttyprintf_nolock(tp, "%ld.%02ldu ", (long int)utime.tv_sec,
 		    (long int)utime.tv_usec / 10000);
 
 		/* Round up and print system time. */
@@ -2242,13 +2247,13 @@ ttyinfo(struct tty *tp)
 			stime.tv_sec += 1;
 			stime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%ld.%02lds ", (long int)stime.tv_sec,
+		ttyprintf_nolock(tp, "%ld.%02lds ", (long int)stime.tv_sec,
 		    (long int)stime.tv_usec / 10000);
 
 #define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
 		/* Print percentage cpu. */
 		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
-		ttyprintf(tp, "%d%% ", tmp / 100);
+		ttyprintf_nolock(tp, "%d%% ", tmp / 100);
 
 		/* Print resident set size. */
 		if (pick->p_stat == SIDL || P_ZOMBIE(pick))
@@ -2257,7 +2262,7 @@ ttyinfo(struct tty *tp)
 			struct vmspace *vm = pick->p_vmspace;
 			tmp = pgtok(vm_resident_count(vm));
 		}
-		ttyprintf(tp, "%dk\n", tmp);
+		ttyprintf_nolock(tp, "%dk\n", tmp);
 	}
 	tp->t_rocount = 0;	/* so pending input will be retyped if BS */
 }
@@ -2340,12 +2345,13 @@ proc_compare(struct proc *p1, struct proc *p2)
  * Can be called with tty lock held through kprintf() machinery..
  */
 int
-tputchar(int c, struct tty *tp)
+tputchar(int c, int flags, struct tty *tp)
 {
-	int	release_lock, s, r = 0;
+	int s, r = 0;
 
 	s = spltty();
-	release_lock = simple_lock_try(&tp->t_slock);
+	if ((flags & NOLOCK) == 0)
+		simple_lock(&tp->t_slock);
 	if (!CONNECTED(tp)) {
 		r = -1;
 		goto out;
@@ -2355,7 +2361,7 @@ tputchar(int c, struct tty *tp)
 	(void)ttyoutput(c, tp);
 	ttstart(tp);
 out:
-	if (release_lock)
+	if ((flags & NOLOCK) == 0)
 		TTY_UNLOCK(tp);
 	splx(s);
 	return (r);
@@ -2473,4 +2479,22 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
 	pool_put(&tty_pool, tp);
+}
+
+/*
+ * ttyprintf_nolock: send a message to a specific tty, without locking.
+ *
+ * => should be used only by tty driver or anything that knows the
+ *    underlying tty will not be revoked(2)'d away.  [otherwise,
+ *    use tprintf]
+ */
+static void
+ttyprintf_nolock(struct tty *tp, const char *fmt, ...)
+{
+	va_list ap;
+
+	/* No mutex needed; going to process TTY. */
+	va_start(ap, fmt);
+	kprintf(fmt, TOTTY|NOLOCK, tp, NULL, ap);
+	va_end(ap);
 }
