@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.10 1996/11/28 09:37:34 pk Exp $ */
+/*	$NetBSD: dmareg.h,v 1.11 1998/07/27 19:16:49 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -81,14 +81,3 @@ struct dma_regs {
 #define en_bar		test
 
 };
-
-/*
- * PROM-reported DMA burst sizes for the SBus
- */
-#define SBUS_BURST_1	0x1
-#define SBUS_BURST_2	0x2
-#define SBUS_BURST_4	0x4
-#define SBUS_BURST_8	0x8
-#define SBUS_BURST_16	0x10
-#define SBUS_BURST_32	0x20
-#define SBUS_BURST_64	0x40
