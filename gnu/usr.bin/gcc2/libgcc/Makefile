@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.10 1995/01/07 23:07:03 mycroft Exp $
+#	$Id: Makefile,v 1.11 1995/07/07 05:17:16 jtc Exp $
 
 LIB=	gcc
 NOPROFILE=
@@ -24,6 +24,10 @@ CFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
 LIB2OBJS+=__gcc_bcmp.o _varargs.o _eprintf.o _op_new.o _new_handler.o \
 	  _op_delete.o _bb.o _shtab.o _clear_cache.o _trampoline.o __main.o \
 	  _exit.o _ctors.o
+
+.if (${MACHINE_ARCH} == "m68k")
+LIB2OBJS+=_fixxfdi.o _fixunsxfdi.o _floatdixf.o
+.endif
 
 OBJS= ${LIB1OBJS} ${LIB2OBJS}
 #LIB1SOBJS=${LIB1OBJS:.o=.so}
