@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.324 2001/02/27 09:14:57 leo Exp $
+# $NetBSD: mi,v 1.325 2001/03/12 12:44:42 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1080,6 +1080,7 @@
 ./usr/share/man/cat8/arp.0			man-netutil-catman
 ./usr/share/man/cat8/atactl.0			man-sysutil-catman
 ./usr/share/man/cat8/atari/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/atari/ahdilabel.0		man-sysutil-catman
 ./usr/share/man/cat8/atari/binpatch.0		man-sysutil-catman
 ./usr/share/man/cat8/atari/boot.0		man-sys-catman
 ./usr/share/man/cat8/atari/bootpref.0		man-sysutil-catman
