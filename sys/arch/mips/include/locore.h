@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.11 1997/06/22 03:17:41 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.12 1997/06/22 04:30:01 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -130,7 +130,7 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBUpdate		mips3_TLBUpdate
 #define wbflush			mips3_wbflush
 #define proc_trampoline		mips3_proc_trampoline
-#define switch_exit		mips3_mips_switch_exit
+#define switch_exit		mips3_switch_exit
 #endif
 
 #if !defined(MIPS3) && defined (MIPS1)
