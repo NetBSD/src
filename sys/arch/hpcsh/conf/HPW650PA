@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.4 2002/03/02 22:26:25 uch Exp $
+#	$NetBSD: HPW650PA,v 1.5 2002/03/03 14:36:48 uch Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -10,7 +10,7 @@ maxusers	32			# estimated number of users
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 options		KLOADER_DEBUG
 
-options		SH4
+options		SH4			# SH7750V 128MHz
 options 	PCLOCK=32000000		# 32MHz
 
 options		INTERRUPT_MONITOR
@@ -81,5 +81,4 @@ pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	bpfilter	1	# Berkeley packet filter
 pseudo-device	loop			# network loopback
-pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	rnd			# /dev/random and in-kernel generator
