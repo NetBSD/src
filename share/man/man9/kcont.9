@@ -1,4 +1,4 @@
-.\" 	$NetBSD: kcont.9,v 1.5 2004/03/24 01:29:37 snj Exp $
+.\" 	$NetBSD: kcont.9,v 1.6 2004/03/24 06:03:26 snj Exp $
 .\"
 .\" The author of this man page is Jonathan Stone (jonathan@dsg.stanford.edu)
 .\"
@@ -32,7 +32,7 @@ notification of asynchronous events
 .Fa "struct kc *"
 .Fa "void (*fn) (void *kernel_obj, void *env_arg, int status)"
 .Fa "void *env_arg"
-.Fa "int continue_ipl"
+.Fa "int desired_ipl"
 .Fc
 .\"
 .Ft struct kc *
@@ -40,7 +40,7 @@ notification of asynchronous events
 .Fa "int mallocflags"
 .Fa "void (*fn) (void *kernel_obj, void *env_arg, int status)"
 .Fa "void *env_arg"
-.Fa "int continue_ipl"
+.Fa "int desired_ipl"
 .Fc
 .\"
 .Ft void
@@ -50,7 +50,7 @@ notification of asynchronous events
 .Fa "void *kernel_obj"
 .Fa "void *env_arg"
 .Fa "int status"
-.Fa "int continue_ipl"
+.Fa "int desired_ipl"
 .Fc
 .Ft void
 .Fo kcont_defer_malloc
@@ -59,12 +59,12 @@ notification of asynchronous events
 .Fa "void *kernel_obj"
 .Fa "void *env_arg"
 .Fa "int status"
-.Fa "int continue_ipl"
+.Fa "int desired_ipl"
 .Fc
 .\"
 .Ft void
 .Fn kcont_enqueue "struct kcq *kcont_queue" "struct kc* kcont"
-.\" "void (*fn) (void *kernel_obj, void *env_arg, int status)" "void *env_arg" "int continue_ipl"
+.\" "void (*fn) (void *kernel_obj, void *env_arg, int status)" "void *env_arg" "int desired_ipl"
 .Ft void
 .Fn kcont_run "kcq_t *kcq" "void *obj" "int status" "int curipl"
 .Sh DESCRIPTION
@@ -153,7 +153,7 @@ creator) on completion of an asynchronous operation.
 .Sh DATA TYPES
 .Ss Deferral Priorities
 Arguments shown above with the name
-.Ar continue_ipl
+.Ar desired_ipl
 are drawn from the following namespace:
 .Bl -tag -offset indent -width KC_IPL_DEFER_SOFTSERIALXX
 .It Dv KCL_IPL_IMMEDIATE
@@ -175,7 +175,7 @@ Defer execution of the continuation to process context.
 .El
 .Sh NOTES
 The
-.Ar continue_ipl
+.Ar desired_ipl
 argument should be interpreted as an upper-bound:
 the continuation will not be executed before interrupt priority drops
 to, or below, the requested level.
