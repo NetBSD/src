@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.25.2.2 2002/06/23 17:43:16 jdolecek Exp $	*/
+/*	$NetBSD: ite.c,v 1.25.2.3 2002/06/24 07:04:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -581,6 +581,18 @@ itestart(tp)
 	}
 out:
 	splx(s);
+}
+
+void
+itestop(tp, rw)
+	struct tty *tp;
+	int rw;
+{
+	/*
+	 * XXX not implemented
+	 * Stylistically, this should return ENODEV, but this returns void.
+	 * So just do nothing. This is identical to dev_noimpl(stop,enodev).
+	 */ 
 }
 
 /* XXX called after changes made in underlying grf layer. */
