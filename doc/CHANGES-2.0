@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.380 2004/08/11 19:57:13 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.381 2004/08/12 03:31:41 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6393,3 +6393,10 @@ sys/kern/kern_fork.c				1.118
 	Linux enforces CLONE_VM if CLONE_SIGHAND in clone(2) is specified,
 	follow the suit - this is intended to be Linux-compatible call.
 	[jdolecek, ticket #741]
+
+sys/arch/i386/i386/identcpu.c			1.16
+sys/arch/x86/x86/cacheinfo.c			1.5
+sys/arch/x86/include/cacheinfo.h		1.2
+
+	Enable VIA C3 CPU support
+	[briggs, ticket #742]
