@@ -29,9 +29,9 @@ struct dvd_layer {
         u_int8_t track_density      : 4;
         u_int8_t linear_density     : 4;
         u_int8_t bca                : 1;
-        u_int8_t start_sector;
-        u_int8_t end_sector;
-        u_int8_t end_sector_l0;
+        u_int32_t start_sector;
+        u_int32_t end_sector;
+        u_int32_t end_sector_l0;
 };
  
 struct dvd_physical {
