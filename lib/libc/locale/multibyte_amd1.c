@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_amd1.c,v 1.3 2002/03/26 06:10:27 yamt Exp $	*/
+/*	$NetBSD: multibyte_amd1.c,v 1.4 2002/03/27 18:17:34 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_amd1.c,v 1.3 2002/03/26 06:10:27 yamt Exp $");
+__RCSID("$NetBSD: multibyte_amd1.c,v 1.4 2002/03/27 18:17:34 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -120,7 +120,7 @@ wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 
 	_fixup_ps(_CurrentRuneLocale, ps, s==NULL);
 
-	err0 =  _citrus_ctype_wcrtomb(_ps_to_ctype(ps), s, wc,
+	err0 = _citrus_ctype_wcrtomb(_ps_to_ctype(ps), s, wc,
 				       _ps_to_private(ps), &ret);
 	if (err0)
 		errno = err0;
