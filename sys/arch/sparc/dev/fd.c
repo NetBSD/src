@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8 1995/05/20 20:03:37 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.9 1995/07/05 13:34:10 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -780,6 +780,24 @@ fdclose(dev, flags)
 
 	fd->sc_flags &= ~FD_OPEN;
 	return 0;
+}
+
+int
+fdread(dev, uio)
+        dev_t dev;
+        struct uio *uio;
+{
+
+        return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+fdwrite(dev, uio)
+        dev_t dev;
+        struct uio *uio;
+{
+
+        return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 void
