@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.7 1996/12/17 08:41:09 thorpej Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.8 1997/01/30 09:18:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -82,7 +82,6 @@ int	hy_init __P((struct grf_data *gp, int, caddr_t));
 int	hy_mode __P((struct grf_data *gp, int, caddr_t));
 void	hyper_ite_fontinit __P((struct ite_data *));
 
-#ifdef NEWCONFIG
 int	hyper_dio_match __P((struct device *, struct cfdata *, void *));
 void	hyper_dio_attach __P((struct device *, struct device *, void *));
 
@@ -93,7 +92,6 @@ struct cfattach hyper_dio_ca = {
 struct cfdriver hyper_cd = {
 	NULL, "hyper", DV_DULL
 };
-#endif /* NEWCONFIG */
 
 /* Hyperion grf switch */
 struct grfsw hyper_grfsw = {
@@ -118,7 +116,6 @@ struct itesw hyper_itesw = {
 };
 #endif /* NITE > 0 */
 
-#ifdef NEWCONFIG
 int
 hyper_dio_match(parent, match, aux)
 	struct device *parent;
@@ -157,7 +154,6 @@ hyper_dio_attach(parent, self, aux)
 
 	grfdev_attach(sc, hy_init, grf, &hyper_grfsw);
 }
-#endif /* NEWCONFIG */
 
 /*
  * Initialize hardware.

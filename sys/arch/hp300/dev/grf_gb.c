@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.9 1996/12/17 08:41:08 thorpej Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.10 1997/01/30 09:18:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -88,7 +88,6 @@ int	gb_init __P((struct grf_data *gp, int, caddr_t));
 int	gb_mode __P((struct grf_data *gp, int, caddr_t));
 void	gb_microcode __P((struct gboxfb *));
 
-#ifdef NEWCONFIG
 int	gbox_intio_match __P((struct device *, struct cfdata *, void *));
 void	gbox_intio_attach __P((struct device *, struct device *, void *));
 
@@ -106,7 +105,6 @@ struct cfattach gbox_dio_ca = {
 struct cfdriver gbox_cd = {
 	NULL, "gbox", DV_DULL
 };
-#endif /* NEWCONFIG */
 
 /* Gatorbox grf switch */
 struct grfsw gbox_grfsw = {
@@ -130,7 +128,6 @@ struct itesw gbox_itesw = {
 };
 #endif /* NITE > 0 */
 
-#ifdef NEWCONFIG
 int
 gbox_intio_match(parent, match, aux)
 	struct device *parent;
@@ -205,7 +202,6 @@ gbox_dio_attach(parent, self, aux)
 
 	grfdev_attach(sc, gb_init, grf, &gbox_grfsw);
 }
-#endif /* NEWCONFIG */
 
 /*
  * Initialize hardware.
