@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.4 2002/12/21 16:23:59 manu Exp $	*/
+/*	$NetBSD: exception.c,v 1.5 2003/01/18 06:33:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -55,10 +55,13 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -100,29 +103,29 @@ const char *exp_type[] = {
 };
 const int exp_types = sizeof exp_type / sizeof exp_type[0];
 
-void general_exception(struct proc *, struct trapframe *);
-void tlb_exception(struct proc *, struct trapframe *, u_int32_t);
-void syscall(struct proc *, struct trapframe *);
-void ast(struct proc *, struct trapframe *);
+void general_exception(struct lwp *, struct trapframe *);
+void tlb_exception(struct lwp *, struct trapframe *, u_int32_t);
+void syscall(struct lwp *, struct trapframe *);
+void ast(struct lwp *, struct trapframe *);
 
 /*
- * void general_exception(struct proc *p, struct trapframe *tf):
- *	p  ... curproc when exception occur.
+ * void general_exception(struct lwp *l, struct trapframe *tf):
+ *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  */
 void
-general_exception(struct proc *p, struct trapframe *tf)
+general_exception(struct lwp *l, struct trapframe *tf)
 {
 	int expevt = tf->tf_expevt;
 	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
 
 	uvmexp.traps++;
 
-	if (p == NULL)
+	if (l == NULL)
  		goto do_panic;
 
 	if (usermode) {
-		KDASSERT(p->p_md.md_regs == tf); /* check exception depth */
+		KDASSERT(l->l_md.md_regs == tf); /* check exception depth */
 		expevt |= EXP_USER;
 	}
 
@@ -130,17 +133,17 @@ general_exception(struct proc *p, struct trapframe *tf)
 	case EXPEVT_TRAPA | EXP_USER:
 		/* Check for debugger break */
 		if (_reg_read_4(SH_(TRA)) == (_SH_TRA_BREAK << 2)) {
-			trapsignal(p, SIGTRAP, tf->tf_expevt);
+			trapsignal(l, SIGTRAP, tf->tf_expevt);
 		} else {
-			syscall(p, tf);
+			syscall(l, tf);
 			return;
 		}
 		break;
 	case EXPEVT_ADDR_ERR_LD:
 		/*FALLTHROUGH*/
 	case EXPEVT_ADDR_ERR_ST:
-		KDASSERT(p->p_md.md_pcb->pcb_onfault != NULL);
-		tf->tf_spc = (int)p->p_md.md_pcb->pcb_onfault;
+		KDASSERT(l->l_md.md_pcb->pcb_onfault != NULL);
+		tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
 		if (tf->tf_spc == NULL)
 			goto do_panic;
 		break;
@@ -148,24 +151,24 @@ general_exception(struct proc *p, struct trapframe *tf)
 	case EXPEVT_ADDR_ERR_LD | EXP_USER:
 		/*FALLTHROUGH*/
 	case EXPEVT_ADDR_ERR_ST | EXP_USER:
-		trapsignal(p, SIGSEGV, tf->tf_expevt);
+		trapsignal(l, SIGSEGV, tf->tf_expevt);
 		break;
 
 	case EXPEVT_RES_INST | EXP_USER:
 		/*FALLTHROUGH*/
 	case EXPEVT_SLOT_INST | EXP_USER:
-		trapsignal(p, SIGILL, tf->tf_expevt);
+		trapsignal(l, SIGILL, tf->tf_expevt);
 		break;
 
 	case EXPEVT_BREAK | EXP_USER:
-		trapsignal(p, SIGTRAP, tf->tf_expevt);
+		trapsignal(l, SIGTRAP, tf->tf_expevt);
 		break;
 	default:
 		goto do_panic;
 	}
 
 	if (usermode)
-		userret(p);
+		userret(l);
 	return;
 
  do_panic:
@@ -191,14 +194,15 @@ general_exception(struct proc *p, struct trapframe *tf)
 }
 
 /*
- * void syscall(struct proc *p, struct trapframe *tf):
- *	p  ... curproc when exception occur.
+ * void syscall(struct lwp *l, struct trapframe *tf):
+ *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  *	System call request from POSIX system call gate interface to kernel.
  */
 void
-syscall(struct proc *p, struct trapframe *tf)
+syscall(struct lwp *l, struct trapframe *tf)
 {
+	struct proc *p = l->l_proc;
 	caddr_t params;
 	const struct sysent *callp;
 	int error, opc, nsys;
@@ -292,19 +296,14 @@ syscall(struct proc *p, struct trapframe *tf)
 	if (error)
 		goto bad;
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = tf->tf_r1;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 */
-		p = curproc;
 		tf->tf_r0 = rval[0];
 		tf->tf_r1 = rval[1];
 		tf->tf_ssr |= PSL_TBIT;	/* T bit */
@@ -329,19 +328,19 @@ syscall(struct proc *p, struct trapframe *tf)
 	}
 
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 
-	userret(p);
+	userret(l);
 }
 
 /*
- * void tlb_exception(struct proc *p, struct trapframe *tf, u_int32_t va):
- *	p  ... curproc when exception occur.
+ * void tlb_exception(struct lwp *l, struct trapframe *tf, u_int32_t va):
+ *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  *	va ... fault address.
  */
 void
-tlb_exception(struct proc *p, struct trapframe *tf, u_int32_t va)
+tlb_exception(struct lwp *l, struct trapframe *tf, u_int32_t va)
 {
 #define	TLB_ASSERT(assert, msg)						\
 do {									\
@@ -358,11 +357,11 @@ do {									\
 
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
-		KDASSERT(p->p_md.md_regs == tf);
+		KDASSERT(l->l_md.md_regs == tf);
 	} else {
-		KDASSERT(p == NULL ||		/* idle */
-		    p == &proc0 ||		/* kthread */
-		    p->p_md.md_regs != tf);	/* other */
+		KDASSERT(l == NULL ||		/* idle */
+		    l == &lwp0 ||		/* kthread */
+		    l->l_md.md_regs != tf);	/* other */
 	}
 
 	switch (tf->tf_expevt) {
@@ -382,12 +381,12 @@ do {									\
 		TLB_ASSERT((int)va > 0,
 		    "kernel virtual protection fault (load)");
 		if (usermode) {
-			trapsignal(p, SIGSEGV, tf->tf_expevt);
+			trapsignal(l, SIGSEGV, tf->tf_expevt);
 			goto user_fault;
 		} else {
-			TLB_ASSERT(p && p->p_md.md_pcb->pcb_onfault != NULL,
+			TLB_ASSERT(l && l->l_md.md_pcb->pcb_onfault != NULL,
 			    "no copyin/out fault handler (load protection)");
-			tf->tf_spc = (int)p->p_md.md_pcb->pcb_onfault;
+			tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
 		}
 		return;
 
@@ -399,18 +398,18 @@ do {									\
 
 	/* Select address space */
 	if (usermode) {
-		TLB_ASSERT(p != NULL, "no curproc");
-		map = &p->p_vmspace->vm_map;
+		TLB_ASSERT(l != NULL, "no curlwp");
+		map = &l->l_proc->p_vmspace->vm_map;
 		pmap = map->pmap;
 	} else {
 		if ((int)va < 0) {
 			map = kernel_map;
 			pmap = pmap_kernel();
 		} else {
-			TLB_ASSERT(va != 0 && p != NULL &&
-			    p->p_md.md_pcb->pcb_onfault != NULL,
+			TLB_ASSERT(va != 0 && l != NULL &&
+			    l->l_md.md_pcb->pcb_onfault != NULL,
 			    "invalid user-space access from kernel mode");
-			map = &p->p_vmspace->vm_map;
+			map = &l->l_proc->p_vmspace->vm_map;
 			pmap = map->pmap;
 		}
 	}
@@ -418,16 +417,16 @@ do {									\
 	/* Lookup page table. if entry found, load it. */
 	if (track && __pmap_pte_load(pmap, va, track)) {
 		if (usermode)
-			userret(p);
+			userret(l);
 		return;
 	}
 
 	/* Page not found. call fault handler */
 	if (!usermode && pmap != pmap_kernel() &&
-	    p->p_md.md_pcb->pcb_faultbail) {
-		TLB_ASSERT(p->p_md.md_pcb->pcb_onfault != NULL,
+	    l->l_md.md_pcb->pcb_faultbail) {
+		TLB_ASSERT(l->l_md.md_pcb->pcb_onfault != NULL,
 		    "no copyin/out fault handler (interrupt context)");
-		tf->tf_spc = (int)p->p_md.md_pcb->pcb_onfault;
+		tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
 		return;
 	}
 
@@ -435,9 +434,10 @@ do {									\
 
 	/* User stack extension */
 	if (map != kernel_map &&
-	    (va >= (vaddr_t)p->p_vmspace->vm_maxsaddr) && (va < USRSTACK)) {
+	    (va >= (vaddr_t)l->l_proc->p_vmspace->vm_maxsaddr) &&
+	    (va < USRSTACK)) {
 		if (err == 0) {
-			struct vmspace *vm = p->p_vmspace;
+			struct vmspace *vm = l->l_proc->p_vmspace;
 			u_int32_t nss;
 			nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
@@ -452,49 +452,51 @@ do {									\
 		boolean_t loaded = __pmap_pte_load(pmap, va, track);
 		TLB_ASSERT(loaded, "page table entry not found");
 		if (usermode)
-			userret(p);
+			userret(l);
 		return;
 	}
 
 	/* Page not found. */
 	if (usermode) {
-		trapsignal(p, err == ENOMEM ? SIGKILL : SIGSEGV, tf->tf_expevt);
+		trapsignal(l, err == ENOMEM ? SIGKILL : SIGSEGV, tf->tf_expevt);
 		goto user_fault;
 	} else {
-		TLB_ASSERT(p->p_md.md_pcb->pcb_onfault,
+		TLB_ASSERT(l->l_md.md_pcb->pcb_onfault,
 		    "no copyin/out fault handler (page not found)");
-		tf->tf_spc = (int)p->p_md.md_pcb->pcb_onfault;
+		tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
 	}
 	return;
 
  user_fault:
-	userret(p);
-	ast(p, tf);
+	userret(l);
+	ast(l, tf);
 	return;
 
  tlb_panic:
 	panic("tlb_handler: %s va=0x%08x, ssr=0x%08x, spc=0x%08x"
-	    "  proc=%p onfault=%p", panic_msg, va, tf->tf_ssr, tf->tf_spc,
-	    p, p ? p->p_md.md_pcb->pcb_onfault : 0);
+	    "  lwp=%p onfault=%p", panic_msg, va, tf->tf_ssr, tf->tf_spc,
+	    l, l ? l->l_md.md_pcb->pcb_onfault : 0);
 #undef	TLB_ASSERT
 }
 
 /*
- * void ast(struct proc *p, struct trapframe *tf):
- *	p  ... curproc when exception occur.
+ * void ast(struct lwp *l, struct trapframe *tf):
+ *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  *	This is called when exception return. if return from kernel to user,
  *	handle asynchronous software traps and context switch if needed.
  */
 void
-ast(struct proc *p, struct trapframe *tf)
+ast(struct lwp *l, struct trapframe *tf)
 {
-	int sig;
+	struct proc *p;
 
 	if (KERNELMODE(tf->tf_ssr))
 		return;
-	KDASSERT(p != NULL);
-	KDASSERT(p->p_md.md_regs == tf);
+	KDASSERT(l != NULL);
+	KDASSERT(l->l_md.md_regs == tf);
+
+	p = l->l_proc;
 
 	while (p->p_md.md_astpending) {
 		uvmexp.softs++;
@@ -505,16 +507,12 @@ ast(struct proc *p, struct trapframe *tf)
 			ADDUPROF(p);
 		}
 
-		/* Take pending signals. */
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-
 		if (want_resched) {
 			/* We are being preempted. */
-			preempt(NULL);
+			preempt(0);
 		}
 
-		userret(p);
+		userret(l);
 	}
 }
 
@@ -527,15 +525,53 @@ ast(struct proc *p, struct trapframe *tf)
 void
 child_return(void *arg)
 {
-	struct proc *p = arg;
-	struct trapframe *tf = p->p_md.md_regs;
+	struct lwp *l = arg;
+#ifdef KTRACE
+	struct proc *p = l->l_proc;
+#endif
+	struct trapframe *tf = l->l_md.md_regs;
 
 	tf->tf_r0 = 0;
 	tf->tf_ssr |= PSL_TBIT; /* This indicates no error. */
 
-	userret(p);
+	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
 #endif
+}
+
+/*
+ * void startlwp(void *arg):
+ *
+ *	Start a new LWP.
+ */
+void
+startlwp(void *arg)
+{
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+	int error;
+
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#ifdef DIAGNOSTIC
+	if (error)
+		printf("startlwp: error %d from cpu_setmcontext()", error);
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l);
+}
+
+/*
+ * void upcallret(struct lwp *l):
+ *
+ *	Perform userret() for an LWP.
+ *	XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	userret(l);
 }

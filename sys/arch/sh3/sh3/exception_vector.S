@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.9 2002/05/09 12:24:21 uch Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.10 2003/01/18 06:33:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ _C_LABEL(sh_vector_generic):
 	MOV	(EXPEVT, r0)
 	mov.l	@r0,	r0
 	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
-	/* Get curproc */
+	/* Get curlwp */
 	mov.l	3f,	r1
 	mov.l	@r1,	r4	/* 1st arg */
 	/* Check TLB exception or not */
@@ -110,7 +110,7 @@ _C_LABEL(sh_vector_generic):
 2:	__EXCEPTION_RETURN
 	/* NOTREACHED */
 	.align	2
-3:		.long	_C_LABEL(curproc)
+3:		.long	_C_LABEL(curlwp)
 REG_SYMBOL(EXPEVT)
 REG_SYMBOL(BBRA)
 REG_SYMBOL(TEA)
@@ -178,7 +178,7 @@ _C_LABEL(sh3_vector_tlbmiss):
 	 mov	r14,	r5	/* 2nd arg */
 3:	__EXCEPTION_RETURN
 	.align	2
-2:		.long	_C_LABEL(curproc)
+2:		.long	_C_LABEL(curlwp)
 1:		.long	_C_LABEL(tlb_exception)
 _L.EXPEVT3:	.long	SH3_EXPEVT
 _L.TEA3:	.long	SH3_TEA
@@ -218,7 +218,7 @@ _C_LABEL(sh4_vector_tlbmiss):
 	__EXCEPTION_RETURN
 	.align	2
 1:		.long	_C_LABEL(tlb_exception)
-2:		.long	_C_LABEL(curproc)
+2:		.long	_C_LABEL(curlwp)
 _L.EXPEVT4:	.long	SH4_EXPEVT
 _L.TEA4:	.long	SH4_TEA
 ___L.VPN_MASK:	.long	0xfffff000
@@ -257,7 +257,7 @@ _C_LABEL(sh_vector_interrupt):
 	 mov	r14,	r5	/* 2nd arg */
 	__EXCEPTION_RETURN
 	.align	2
-1:			.long	_C_LABEL(curproc)
+1:			.long	_C_LABEL(curlwp)
 __L.intc_intr:		.long	_C_LABEL(intc_intr)
 __L.ast:		.long	_C_LABEL(ast)
 __L.uvmexp.intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS

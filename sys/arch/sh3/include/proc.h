@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 2002/05/09 12:28:08 uch Exp $	*/
+/*	$NetBSD: proc.h,v 1.5 2003/01/18 06:33:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -38,9 +38,12 @@
 
 #ifndef _SH3_PROC_H_
 #define	_SH3_PROC_H_
+
 /*
  * Machine-dependent part of the proc structure for sh3.
  */
+
+#include <machine/param.h>
 
 /* Kernel stack PTE */
 struct md_upte {
@@ -48,17 +51,20 @@ struct md_upte {
 	u_int32_t data;
 };
 
-struct mdproc {
+struct mdlwp {
 	struct trapframe *md_regs;	/* user context */
 	struct pcb *md_pcb;		/* pcb access address */
 	int md_flags;			/* machine-dependent flags */
 	/* u-area PTE: *2 .. SH4 data/address data array access */
 	struct md_upte md_upte[UPAGES * 2];
-	__volatile int md_astpending;	/* AST pending on return to userland */
 };
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
+
+struct mdproc {
+	__volatile int md_astpending;	/* AST pending on return to userland */
+};
 
 #ifdef _KERNEL
 #ifndef _LOCORE

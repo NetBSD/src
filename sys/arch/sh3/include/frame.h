@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.9 2002/06/23 18:35:05 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.10 2003/01/18 06:33:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -44,6 +44,7 @@
 #define	_SH3_FRAME_H_
 
 #include <sys/signal.h>
+#include <sys/sa.h>
 
 /*
  * Exception Stack Frame
@@ -99,6 +100,19 @@ struct switchframe {
  */
 struct sigframe {
 	struct	sigcontext sf_sc;
+};
+
+/*
+ * Scheduler activations upcall frame
+ */
+struct saframe {
+#if 0 /* in registers on entry to upcallcode */
+	int		sa_type;	/* r4 */
+	struct sa_t **	sa_sas;		/* r5 */
+	int		sa_events;	/* r6 */
+	int		sa_interrupted;	/* r7 */
+#endif
+	void *		sa_arg;
 };
 
 #endif /* !_SH3_FRAME_H_ */

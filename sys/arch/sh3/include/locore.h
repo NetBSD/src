@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.7 2002/05/09 12:25:41 uch Exp $	*/
+/*	$NetBSD: locore.h,v 1.8 2003/01/18 06:33:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -198,9 +198,9 @@
 	ldc	Rm,	sr	/* unmask all interrupt */
 
 #ifndef _LOCORE
-void sh3_switch_setup(struct proc *);
-void sh4_switch_setup(struct proc *);
-void sh3_switch_resume(struct proc *);
-void sh4_switch_resume(struct proc *);
-extern void (*__sh_switch_resume)(struct proc *);
+void sh3_switch_setup(struct lwp *);
+void sh4_switch_setup(struct lwp *);
+void sh3_switch_resume(struct lwp *);
+void sh4_switch_resume(struct lwp *);
+extern void (*__sh_switch_resume)(struct lwp *);
 #endif /* !_LOCORE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.12 2002/06/23 18:49:33 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.13 2003/01/18 06:33:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * void cpu_switch(struct proc *):
+ * void cpu_switch(struct lwp *):
  *	Find a runnable process and switch to it.  Wait if necessary.
  */
 ENTRY(cpu_switch)
@@ -79,6 +79,7 @@ ENTRY(cpu_switch)
 	bt/s	1f
 	 mov	r0,	r4	/* new proc */
 
+_L.doswitch:
 	/* Setup kernel stack */
 	mov.l	_L.SF,	r0
 	mov.l	@(r0, r4), r1		/* switch frame */
@@ -100,8 +101,16 @@ ENTRY(cpu_switch)
 	__EXCEPTION_UNBLOCK(r0, r1)
 	/* Now OK to use kernel stack. */
 
+	/* Return 1 indicating "we switched". */
+	bra	2f
+	 mov	#1, r2
+
+1:	/* Return 0 indicating "didn't switch". */
+	mov	#0, r2
+
 	/* Restore new process's context from switchframe */
-1:	mov.l	_L.SF,	r0
+	/* NOTE: r2 has return value! */
+2:	mov.l	_L.SF,	r0
 	mov.l	@(r0, r4), r1
 	add	#4,	r1		/* r15 already restored */
 	mov.l	@r1+,	r14
@@ -114,12 +123,47 @@ ENTRY(cpu_switch)
 	lds.l	@r1+,	pr
 	add	#4,	r1		/* r6_bank already restored */
 	ldc.l	@r1+,	sr
+
+	/* r2 has the return value; stuff it into r0 now. */
 	rts
-	 nop
+	 mov	r2, r0
 	.align	2
-_L.SF:			.long	(P_MD + MD_PCB)
+_L.SF:			.long	(L_MD_PCB)
 _L.cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
 FUNC_SYMBOL(switch_resume)
+
+/*
+ * void cpu_switchto(struct lwp *current, struct lwp *next)
+ *	Switch to the specified next LWP.
+ */
+ENTRY(cpu_switchto)
+	/* Save current process's context to switchframe. */
+	mov.l	_L.SFp,	r0
+	mov.l	@(r0, r4), r1
+	add	#SF_SIZE, r1
+	stc.l	r7_bank,@-r1
+	stc.l	sr,	@-r1
+	stc.l	r6_bank,@-r1
+	sts.l	pr,	@-r1
+	mov.l	r8,	@-r1
+	mov.l	r9,	@-r1
+	mov.l	r10,	@-r1
+	mov.l	r11,	@-r1
+	mov.l	r12,	@-r1
+	mov.l	r13,	@-r1
+	mov.l	r14,	@-r1
+	mov.l	r15,	@-r1
+
+	/*
+	 * Put the incoming LWP in r4 and jump into the middle
+	 * of cpu_switch(), and let it do the work to restore the
+	 * incoming LWP's context.
+	 */
+	bra	_L.doswitch
+	 mov	r5, r4
+
+	.align	2
+_L.SFp:			.long	(L_MD_PCB)
 
 #ifdef SH3
 /*
@@ -211,7 +255,7 @@ _L.4_ITLB_AA:		.long	SH4_ITLB_AA
 _L.VPN_MASK:		.long	0xfffff000
 _L.P2BASE:		.long	0xa0000000
 #endif /* SH4 */
-_L.UPTE:		.long	(P_MD + MD_UPTE)
+_L.UPTE:		.long	(L_MD_UPTE)
 
 /*
  * int _cpu_intr_raise(int s):

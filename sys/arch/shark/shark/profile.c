@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.5 2002/10/23 09:12:03 jdolecek Exp $	*/
+/*	$NetBSD: profile.c,v 1.6 2003/01/18 06:37:06 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -516,7 +516,7 @@ profFiq(int  x)
     if ( (profTable->hdr.mode & SAMPLE_PROC) &&
 	((spsr & STATUS_MODE_MASK) == USER_MODE) )
     {
-	if ( curproc->p_pid == profTable->hdr.pid )
+	if ( curlwp->p_pid == profTable->hdr.pid )
 	{
 	    profEnter(profTable, stacklr-4);
 	}
