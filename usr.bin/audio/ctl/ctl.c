@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.2 1997/05/19 16:32:56 augustss Exp $	*/
+/*	$NetBSD: ctl.c,v 1.3 1997/05/21 22:25:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -354,8 +354,8 @@ main(int argc, char **argv)
 		getinfo(fd);
 		for(i = 0; fields[i].name; i++) {
 		    if (fields[i].flags & SET) {
-			fprintf(out, "%s: -> ", p->name);
-			prfield(p, 0);
+			fprintf(out, "%s: -> ", fields[i].name);
+			prfield(&fields[i], 0);
 			fprintf(out, "\n");
 		    }
 		}
