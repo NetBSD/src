@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.505 2003/02/03 11:00:53 joda Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.506 2003/02/03 13:28:54 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.504 2003/02/03 11:00:26 joda Exp 
+ *	NetBSD: pcidevs,v 1.505 2003/02/03 13:27:57 pooka Exp 
  */
 
 /*
@@ -5522,6 +5522,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia Corporation",
 	    "GeForce2 MX [NV11]",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2GO,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce2 Go",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2,
