@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.3 1997/03/15 18:11:33 is Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.4 1997/04/01 22:08:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -60,9 +60,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Set this to 1 for normal debug, or 2 for per-target tracing. */
 #define NCR53C9X_DEBUG		0
 
 #define	NCR_ABORT_TIMEOUT	2000	/* time to wait for abort */
+#define	NCR_SENSE_TIMEOUT	1000	/* time to wait for sense */
 
 #define FREQTOCCF(freq)	(((freq + 4) / 5))
 
@@ -101,12 +103,13 @@ struct ncr53c9x_ecb {
 	char	*daddr;		/* Saved data pointer */
 	int	 dleft;		/* Residue */
 	u_char 	 stat;		/* SCSI status byte */
+	u_char	pad[3];
 
-#if NCR53C9X_DEBUG > 0
+#if NCR53C9X_DEBUG > 1
 	char trace[1000];
 #endif
 };
-#if NCR53C9X_DEBUG > 0
+#if NCR53C9X_DEBUG > 1
 #define ECB_TRACE(ecb, msg, a, b) do { \
 	const char *f = "[" msg "]"; \
 	int n = strlen((ecb)->trace); \
@@ -138,6 +141,7 @@ struct ncr53c9x_tinfo {
 #define T_RSELECTOFF	0x20	/* .. */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
+	u_char	pad[3];
 } tinfo_t;
 
 /* Register a linenumber (for debugging) */
