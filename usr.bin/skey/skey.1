@@ -1,8 +1,8 @@
-.\"	$NetBSD: skey.1,v 1.15 2001/04/09 12:34:14 wiz Exp $
+.\"	$NetBSD: skey.1,v 1.16 2001/07/24 23:53:25 lukem Exp $
 .\"
 .\"	from: @(#)skey.1	1.1 	10/28/93
 .\"
-.Dd June 7, 2000
+.Dd July 25, 2001
 .Dt SKEY 1
 .Os
 .Sh NAME
@@ -10,7 +10,6 @@
 .Nd respond to an OTP challenge
 .Sh SYNOPSIS
 .Nm
-.Op Fl f
 .Op Fl n Ar count
 .Op Fl p Ar password
 .Op Fl t Ar hash
@@ -110,12 +109,6 @@ To output the S/Key list in hexadecimal instead of words,
 use the
 .Fl x
 option.
-.Pp
-The
-.Fl f
-option can be used to override the
-strict length checking for passwords. Do not use this option until you have
-very good reason to do so, as shorter passwords violate RFC2289.
 .Sh EXAMPLE
 Initialize generation of one time passwords:
 .Bd -literal -offset indent

@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.14 2001/01/08 14:12:06 itojun Exp $	*/
+/*	$NetBSD: skey.c,v 1.15 2001/07/24 23:53:25 lukem Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skey.c,v 1.14 2001/01/08 14:12:06 itojun Exp $");
+__RCSID("$NetBSD: skey.c,v 1.15 2001/07/24 23:53:25 lukem Exp $");
 #endif
 
 #include <ctype.h>
@@ -41,7 +41,7 @@ void    usage(char *);
 int
 main(int	argc, char **argv)
 {
-	int     n, cnt, i, pass = 0, hexmode = 0, force = 0;
+	int     n, cnt, i, pass = 0, hexmode = 0;
 	char    passwd[SKEY_MAX_PW_LEN+1], key[SKEY_BINKEY_SIZE];
 	char	buf[33], *seed, *slash, *t;
 
@@ -50,9 +50,8 @@ main(int	argc, char **argv)
 	while ((i = getopt(argc, argv, "fn:p:t:x")) != -1) {
 		switch (i) {
 		case 'f':
-			force = 1;
+				/* this option is ignored now */
 			break;
-
 		case 'n':
 			cnt = atoi(optarg);
 			break;
@@ -124,8 +123,10 @@ main(int	argc, char **argv)
 			exit(1);
 	}
 
-	if(strlen(passwd) < SKEY_MIN_PW_LEN && !force)
-		errx(1, "password must be at least %d long", SKEY_MIN_PW_LEN);
+	if (strlen(passwd) < SKEY_MIN_PW_LEN)
+		warnx(
+	"password should be at least %d characters long according to RFC2289",
+		    SKEY_MIN_PW_LEN);
 
 	/* Crunch seed and password into starting key */
 	if (keycrunch(key, seed, passwd) != 0)
@@ -154,7 +155,7 @@ usage(char *s)
 {
 
 	fprintf(stderr,
-	    "Usage: %s [-f] [-n count] [-p password] [-t hash] [-x] sequence#"
-	    	"[/] key\n", s);
+    "Usage: %s [-n count] [-p password] [-t hash] [-x] sequence# [/] key\n",
+	    s);
 	exit(1);
 }
