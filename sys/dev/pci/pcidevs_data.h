@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.340 2001/06/30 01:04:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.341 2001/07/23 20:14:37 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.336 2001/06/30 01:03:59 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.337 2001/07/23 20:13:26 bouyer Exp 
  */
 
 /*
@@ -5204,6 +5204,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Titan Electronics, Inc.",
 	    "PCI-800H",
+	},
+	{
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI100H,
+	    0,
+	    "Titan Electronics, Inc.",
+	    "PCI-100H",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
