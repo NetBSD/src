@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.22 2003/04/28 23:16:12 bjh21 Exp $	*/
+/*	$NetBSD: ctype.h,v 1.23 2003/04/29 12:49:38 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -43,9 +43,8 @@
 #ifndef _CTYPE_H_
 #define _CTYPE_H_
 
-#include <sys/featuretest.h>
-
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #define	_U	0x01
 #define	_L	0x02
@@ -83,7 +82,8 @@ int	_tolower __P ((int));
 int	_toupper __P ((int));
 #endif
 
-#if defined(_NETBSD_SOURCE)
+#if defined(_ISO_C99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
+    (_XOPEN_SOURCE - 0) > 600 || defined(_NETBSD_SOURCE)
 int	isblank __P ((int));
 #endif
 __END_DECLS
@@ -109,7 +109,8 @@ __END_DECLS
 #define _toupper(c)	((c) - 'a' + 'A')
 #endif
 
-#if defined(_NETBSD_SOURCE)
+#if defined(_ISO_C99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
+    (_XOPEN_SOURCE - 0) > 600 || defined(_NETBSD_SOURCE)
 #if notyet
 /*
  * isblank() is implemented as C function, due to insufficient bitwidth in
