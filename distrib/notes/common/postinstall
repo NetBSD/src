@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.28 2001/07/30 16:58:55 jdolecek Exp $
+.\"	$NetBSD: postinstall,v 1.29 2001/12/02 03:59:41 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -148,7 +148,8 @@ for your
 network interface, 
 .ie r_macppc \{\
 where your on-board interfaces may be one of
-.Li mc0 , bm0 , No or Li gm0
+.Li mc0 , bm0 , tlp0 No or Li gm0 .
+For example:
 .\}
 .el along the lines of
 .Pp
