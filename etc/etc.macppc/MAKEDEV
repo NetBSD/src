@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.15 1999/08/25 23:06:48 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.16 1999/08/27 14:06:06 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -245,6 +245,20 @@ ccd*|fd*|raid*|sd*|vnd*|wd*)
 	chmod 640 $name$unit? r$name$unit?
 	;;
 
+ttyU*)
+	unit=${i#ttyU}
+	ttyU=ttyU$unit
+	dtyU=dtyU$unit
+	ctyU=ctyU$unit
+	major=44
+	rm -f $ttyU $dtyU $ctyU
+	mknod $ttyU c $major $(($unit + $dialin  ))
+	mknod $dtyU c $major $(($unit + $dialout ))
+	mknod $ctyU c $major $(($unit + $callunit))
+	chown uucp.wheel $ttyU $dtyU $ctyU
+	chmod 600 $ttyU $dtyU $ctyU
+	;;
+
 tty*)
 	unit=${i#???}
 	rm -f tty0$unit dty0$unit
@@ -442,20 +456,6 @@ ulpt*)
 	mknod $ulpt c $major $unit
 	chown root.wheel $ulpt
 	chmod 600 $ulpt
-	;;
-
-ttyU*)
-	unit=${i#ttyU}
-	ttyU=ttyU$unit
-	dtyU=dtyU$unit
-	ctyU=ctyU$unit
-	major=44
-	rm -f $ttyU $dtyU $ctyU
-	mknod $ttyU c $major $(($unit + $dialin  ))
-	mknod $dtyU c $major $(($unit + $dialout ))
-	mknod $ctyU c $major $(($unit + $callunit))
-	chown uucp.wheel $ttyU $dtyU $ctyU
-	chmod 600 $ttyU $dtyU $ctyU
 	;;
 
 ugen*)
