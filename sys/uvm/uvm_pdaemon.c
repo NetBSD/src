@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.26 2000/12/13 17:03:32 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.27 2001/01/25 00:10:03 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -446,14 +446,24 @@ uvmpd_scan_inactive(pglst)
 		}
 
 		if (p) {	/* if (we have a new page to consider) */
-
 			/*
 			 * we are below target and have a new page to consider.
 			 */
-
 			uvmexp.pdscans++;
 			nextpg = TAILQ_NEXT(p, pageq);
 
+			/*
+			 * move referenced pages back to active queue and
+			 * skip to next page (unlikely to happen since
+			 * inactive pages shouldn't have any valid mappings
+			 * and we cleared reference before deactivating).
+			 */
+			if (pmap_is_referenced(p)) {
+				uvm_pageactivate(p);
+				uvmexp.pdreact++;
+				continue;
+			}
+			
 			/*
 			 * first we attempt to lock the object that this page
 			 * belongs to.  if our attempt fails we skip on to
