@@ -38,7 +38,7 @@
 #include <netsmb/smb_dev.h>
 
 #ifndef SMB_CFG_FILE
-#define	SMB_CFG_FILE	"/usr/local/etc/nsmb.conf"
+#define	SMB_CFG_FILE	"/etc/nsmb.conf"
 #endif
 
 #define	STDPARAM_ARGS	'A':case 'B':case 'C':case 'E':case 'I': \
