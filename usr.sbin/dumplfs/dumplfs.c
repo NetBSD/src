@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.20 2003/01/24 21:55:31 fvdl Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.21 2003/01/28 07:44:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.20 2003/01/24 21:55:31 fvdl Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.21 2003/01/28 07:44:54 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -476,7 +476,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	if (lfsp->lfs_version > 1 && sp->ss_ident != lfsp->lfs_ident) {
 		(void)printf("dumplfs: %s %d address 0x%llx\n",
 	                     "summary from a former life; segment", segnum,
-			     addr);
+			     (long long)addr);
 		return (0);
 	}
 
