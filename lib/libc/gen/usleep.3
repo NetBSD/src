@@ -1,4 +1,4 @@
-.\"	$NetBSD: usleep.3,v 1.4 1997/05/12 07:12:00 mikel Exp $
+.\"	$NetBSD: usleep.3,v 1.5 1997/07/19 02:42:31 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,32 +53,8 @@ for
 of time.
 System activity or time spent in processing the
 call may lengthen the sleep slightly.
-.Pp
-If a timer is already running on the process its state is saved.
-If the value
-.Fa microseconds
-is more than or equal to the remaining clock time for the saved timer,
-the sleep time is set to
-the remaining clock time.
-The state of the previous timer
-is restored after
-.Fa microseconds
-has passed.
-.Pp
-This routine is implemented using 
-.Xr setitimer 2 ;
-it requires eight system calls each time it is invoked.
-A similar but less compatible function can be obtained with a single
-.Xr select 2 ;
-such a function would not restart after signals, but would not interfere
-with other uses of
-.Xr setitimer 2 .
 .Sh SEE ALSO
-.Xr getitimer 2 ,
-.Xr setitimer 2 ,
-.Xr sigsuspend 2 ,
-.Xr alarm 3 ,
-.Xr ualarm 3 ,
+.Xr nanosleep 2 ,
 .Xr sleep 3
 .Sh HISTORY
 The

@@ -1,8 +1,11 @@
-/*	$NetBSD: sleep.c,v 1.16 1997/07/13 19:31:25 christos Exp $	*/
+/*	$NetBSD: sleep.c,v 1.17 1997/07/19 02:42:31 jtc Exp $	*/
 
-/*
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by J.T. Conklin.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,122 +17,42 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)sleep.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: sleep.c,v 1.16 1997/07/13 19:31:25 christos Exp $");
-#endif
+static char rcsid[] = "$NetBSD: sleep.c,v 1.17 1997/07/19 02:42:31 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/time.h>
-#include <signal.h>
+#include <time.h>
 #include <unistd.h>
-
-static volatile int ringring;
-static void sleephandler __P((int));
 
 unsigned int
 sleep(seconds)
 	unsigned int seconds;
 {
-	struct itimerval itv, oitv;
-	struct sigaction act, oact;
-	struct timeval diff;
-	sigset_t set, oset;
+	struct timespec rqt, rtm;
 
-	if (!seconds)
-		return 0;
+	rqt.tv_sec  = seconds;
+	rqt.tv_nsec = 0;
 
-	sigemptyset(&set);
-	sigaddset(&set, SIGALRM);
-	sigprocmask(SIG_BLOCK, &set, &oset);
+	nanosleep(&rqt, &rmt);
 
-	act.sa_handler = sleephandler;
-	act.sa_flags = 0;
-	sigemptyset(&act.sa_mask);
-	sigaction(SIGALRM, &act, &oact);
-
-	timerclear(&itv.it_interval);
-	itv.it_value.tv_sec = seconds;
-	itv.it_value.tv_usec = 0;
-	timerclear(&diff);
-	setitimer(ITIMER_REAL, &itv, &oitv);
-
-	if (timerisset(&oitv.it_value)) {
-		if (timercmp(&oitv.it_value, &itv.it_value, >)) {
-			timersub(&oitv.it_value, &itv.it_value, &oitv.it_value);
-		} else {
-			/*
-			 * The existing timer was scheduled to fire 
-			 * before ours, so we compute the time diff
-			 * so we can add it back in the end.
-			 */
-			timersub(&itv.it_value, &oitv.it_value, &diff);
-			itv.it_value = oitv.it_value;
-			/*
-			 * This is a hack, but we must have time to return
-			 * from the setitimer after the alarm or else it'll
-			 * be restarted.  And, anyway, sleep never did
-			 * anything more than this before.
-			 */
-			oitv.it_value.tv_sec  = 1;
-			oitv.it_value.tv_usec = 0;
-
-			setitimer(ITIMER_REAL, &itv, NULL);
-		}
-	}
-
-	set = oset;
-	sigdelset(&set, SIGALRM);
-	ringring = 0;
- 	(void) sigsuspend(&set);
-
-	if (!ringring) {
-		struct itimerval nulltv;
-		/*
-		 * Interrupted by other signal; allow for pending 
-		 * SIGALRM to be processed before resetting handler,
-		 * after first turning off the timer.
-		 */
-		timerclear(&nulltv.it_interval);
-		timerclear(&nulltv.it_value);
-		(void) setitimer(ITIMER_REAL, &nulltv, &itv);
-	} else
-		timerclear(&itv.it_value);
-	sigprocmask(SIG_SETMASK, &oset, NULL);
-	sigaction(SIGALRM, &oact, NULL);
-	(void) setitimer(ITIMER_REAL, &oitv, NULL);
-
-	if (timerisset(&diff))
-		timeradd(&itv.it_value, &diff, &itv.it_value);
-
-	return (itv.it_value.tv_sec);
-}
-
-static void
-sleephandler(n)
-	int n;
-{
-	ringring = 1;
+	return rmt.tv_sec;
 }
