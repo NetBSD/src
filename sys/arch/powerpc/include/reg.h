@@ -1,7 +1,33 @@
-/*	$NetBSD: reg.h,v 1.6 2002/03/04 13:37:42 kleink Exp $	*/
+/*	$NetBSD: reg.h,v 1.7 2002/04/18 20:08:10 matt Exp $	*/
 
 #ifndef _POWERPC_REG_H_
 #define _POWERPC_REG_H_
+
+/*
+ *  Register Usage according the SVR4 ABI for PPC.
+ *
+ *  Register Name	Usage
+ *  r0			Volatile register which may be modified during
+ *			function linkage
+ *  r1			Stack fram pointer, always valid
+ *  r2			System-reserved register
+ *  r3-r4		Volatile registers used for parameter passing and
+ *			return values
+ *  r5-r10		Volatile registers used for parameter passing
+ *  r11-r12		Volatile register which may be modified during
+ *			function linkage
+ *  [Start of callee-saved registers]
+ *  r13			Small data area pointer register
+ *  r14-r30		Registers used for local variables
+ *  r31			Used for local variable or "environent pointers"
+ *
+ *  f0			Volatile register
+ *  f1			Volatile registers used for parameter passing and
+ *			return values
+ *  f2-f8		Volatile registers used for parameter passing
+ *  f9-f13		Volatile registers
+ *  f14-f31		Registers used for local variables
+ */
 
 struct reg {				/* base registers */
 	register_t fixreg[32];
