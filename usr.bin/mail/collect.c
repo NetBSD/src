@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.16 1997/10/31 22:21:37 mycroft Exp $	*/
+/*	$NetBSD: collect.c,v 1.17 1997/11/25 17:58:15 bad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.16 1997/10/31 22:21:37 mycroft Exp $");
+__RCSID("$NetBSD: collect.c,v 1.17 1997/11/25 17:58:15 bad Exp $");
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,7 @@ exwrite(name, fp, f)
 		return(-1);
 	}
 	if ((of = Fopen(name, "w")) == NULL) {
-		perror(NOSTR);
+		perror(name);
 		return(-1);
 	}
 	lc = 0;
