@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.38 2000/09/21 21:04:56 phil Exp $
+.\"	$NetBSD: sh.1,v 1.39 2000/11/20 16:59:56 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1237,6 +1237,36 @@ otherwise, it will set
 .Va var
 to
 .Dq ? .
+.Pp
+The following code fragment shows how one might process the arguments
+for a command that can take the options
+.Op a
+and
+.Op b ,
+and the option
+.Op c ,
+which requires an argument.
+.Pp
+.Bd -literal -offset indent
+while getopts abo: c
+do
+	case $c in
+	a | b)	flag=$c;;
+	c)	carg=$OPTARG;;
+	\\?)	echo $USAGE; exit 1;;
+	esac
+done
+shift `expr $OPTIND - 1`
+.Ed
+.Pp
+This code will accept any of the following as equivalent:
+.Pp
+.Bd -literal -offset indent
+cmd \-acarg file file
+cmd \-a \-c arg file file
+cmd \-carg -a file file
+cmd \-a \-carg \-\- file file
+.Ed
 .It hash Fl rv Ar command...
 The shell maintains a hash table which remembers the
 locations of commands.  With no arguments whatsoever,
