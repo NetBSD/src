@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.27 1994/06/14 00:58:05 chopps Exp $
+ *	$Id: locore.s,v 1.28 1994/06/15 19:02:35 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -775,6 +775,7 @@ _esym:	.long	0
 	.comm	_lowram,4
 
 	.text
+	.globl	_eclockfreq
 	.globl	_edata
 	.globl	_etext,_end
 	.globl	start
@@ -801,6 +802,11 @@ start:
 	movl	#0xbfe001,_CIAAbase
 	movl	#0xbfd000,_CIABbase
 	movl	#0xdff000,_CUSTOMbase
+	
+	/*
+	 * initialize the timer frequency
+	 */
+	movl	d4,_eclockfreq
 
 	movl	#AMIGA_68030,d1		| 68030 Attn flag from exec
 	andl	d5,d1
