@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.363 2003/09/22 14:50:51 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.364 2003/09/23 13:45:27 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -71,11 +71,11 @@ USE_TOOLS_TOOLCHAIN?=yes
 #	${MACHINE_ARCH} == "sh3el"
 #	${MACHINE_ARCH} == "vax"
 # in progress:
-#	${MACHINE_ARCH} == "m68k"
 #	${MACHINE_ARCH} == "mipseb"
 #	${MACHINE_ARCH} == "mipsel"
 # working:
 .if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
 HAVE_GDB53?=	yes
