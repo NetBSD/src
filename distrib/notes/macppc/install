@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.22 2002/07/11 04:52:50 scottr Exp $
+.\"	$NetBSD: install,v 1.23 2002/07/20 07:39:30 lukem Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -759,7 +759,9 @@ Make sure that you have use binary mode to FTP the files, and
 that they are properly uncompressed.
 .It
 .To 2 "bad partition number, using 0no bootable HFS partition"
-.Dq Li "bad partition number, using 0no bootable HFS partition"
+.Do
+.Li "bad partition number, using 0no bootable HFS partition"
+.Dc
 .Pp
 If you're trying to boot an Open Firmware 1.0.5, 1.1.22, or 2.0.x system,
 this probably means that your media (i.e. hard drive or CD-ROM) has an HFS
