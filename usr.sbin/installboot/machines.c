@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.16 2003/07/27 07:51:40 lukem Exp $	*/
+/*	$NetBSD: machines.c,v 1.17 2003/08/30 17:46:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.16 2003/07/27 07:51:40 lukem Exp $");
+__RCSID("$NetBSD: machines.c,v 1.17 2003/08/30 17:46:32 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -50,6 +50,9 @@ struct ib_mach machines[] = {
 	{ "amiga",	amiga_setboot,	no_clearboot,
 		IB_STAGE1START | IB_STAGE2START | IB_COMMAND },
 	{ "i386",	i386_setboot,	no_clearboot,
+		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED |
+		IB_PASSWORD | IB_TIMEOUT },
+	{ "amd64",	i386_setboot,	no_clearboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED |
 		IB_PASSWORD | IB_TIMEOUT },
 	{ "macppc",	macppc_setboot,	macppc_clearboot,
