@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.72 1998/12/16 10:36:50 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.73 1999/02/09 20:46:40 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ static void bsd_statfs_to_svr4_statvfs64 __P((const struct statfs *,
     struct svr4_statvfs64 *));
 static struct proc *svr4_pfind __P((pid_t pid));
 
-static int svr4_mknod __P((struct proc *, register_t *, char *,
+static int svr4_mknod __P((struct proc *, register_t *, const char *,
     svr4_mode_t, svr4_dev_t));
 
 int
@@ -200,7 +200,7 @@ svr4_sys_execve(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_execve_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
@@ -580,13 +580,13 @@ static int
 svr4_mknod(p, retval, path, mode, dev)
 	struct proc *p;
 	register_t *retval;
-	char *path;
+	const char *path;
 	svr4_mode_t mode;
 	svr4_dev_t dev;
 {
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	SVR4_CHECK_ALT_EXIST(p, &sg, path);
+	SVR4_CHECK_ALT_CREAT(p, &sg, path);
 
 	if (S_ISFIFO(mode)) {
 		struct sys_mkfifo_args ap;
