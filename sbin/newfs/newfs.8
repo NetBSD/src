@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.40 2002/02/08 01:30:45 ross Exp $
+.\"	$NetBSD: newfs.8,v 1.41 2002/02/20 04:04:39 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd January 4, 2002
+.Dd February 20, 2002
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm ""
 .Op Fl B Ar byte-order
-.Op Fl FNOZ
+.Op Fl FINOZ
 .Op Fl S Ar sector-size
 .Op Fl T Ar disk-type
 .Op Fl a Ar maxcontig
@@ -105,7 +105,10 @@ Create a file system image in
 .Ar special .
 The file system size needs to be specified with
 .Dq Fl s Ar size .
-No attempts to use or update the disklabel will be made.
+No attempts to use or update the disk label will be made.
+.It Fl I
+Do not require that the file system type listed in the disk label is
+.Ql 4.2BSD .
 .It Fl N
 Causes the file system parameters to be printed out
 without really creating the file system.
@@ -118,7 +121,7 @@ that can be understood by older boot ROMs.
 .It Fl T Ar disk-type
 Uses information for the specified disk from
 .Pa /etc/disktab
-instead of trying to get the information from a disklabel.
+instead of trying to get the information from the disk label.
 .It Fl Z
 Pre-zeros the file system image created with
 .Fl F .
@@ -325,9 +328,14 @@ the file system.
 For the
 .Nm
 command to succeed,
-the disklabel should first be updated such that the fstype field for the
+the disk label should first be updated such that the fstype field for the
 partition is set to
-.Bx 4.2 .
+.Ql 4.2BSD ,
+unless
+.Fl F
+or
+.Fl I
+is used.
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr fs 5 ,
