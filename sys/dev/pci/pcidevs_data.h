@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.669 2004/12/05 21:03:45 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.670 2004/12/06 12:55:26 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.670 2004/12/05 21:01:43 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.671 2004/12/06 12:54:37 cube Exp 
  */
 
 /*
@@ -3358,6 +3358,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6_U2,
 	    "Radeon Mobility M6",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE,
+	    "IXP IDE Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
@@ -9844,4 +9848,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1883;
+const int pci_nproducts = 1884;

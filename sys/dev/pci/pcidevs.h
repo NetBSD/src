@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.671 2004/12/05 21:03:45 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.672 2004/12/06 12:55:26 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.670 2004/12/05 21:01:43 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.671 2004/12/06 12:54:37 cube Exp 
  */
 
 /*
@@ -948,6 +948,7 @@
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
 #define	PCI_PRODUCT_ATI_RADEON_IGP_320M	0x4336		/* Radeon IGP 320M */
 #define	PCI_PRODUCT_ATI_RADEON_M6_U2	0x4337		/* Radeon Mobility M6 */
+#define	PCI_PRODUCT_ATI_IXP_IDE	0x4349		/* IXP IDE Controller */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_RAGE_PRO_AGP	0x4742		/* 3D Rage Pro (AGP) */
