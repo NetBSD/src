@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.11 1996/01/09 21:23:36 pk Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$NetBSD: dumpfs.c,v 1.11 1996/01/09 21:23:36 pk Exp $";
+static char rcsid[] = "$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,9 +134,22 @@ dumpfs(name)
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 	printf("magic\t%x\ttime\t%s", afs.fs_magic,
 	    ctime(&afs.fs_time));
-	printf("cylgrp\t%s\tinodes\t%s\n",
-	    afs.fs_postblformat == FS_42POSTBLFMT ? "static" : "dynamic",
-	    afs.fs_inodefmt < FS_44INODEFMT ? "4.2/4.3BSD" : "4.4BSD");
+	i = 0;
+	if (afs.fs_postblformat != FS_42POSTBLFMT) {
+		i++;
+		if (afs.fs_inodefmt >= FS_44INODEFMT) {
+			int max, siz;
+
+			i++;
+			max = afs.fs_maxcontig;
+			size = afs.fs_contigsumsize;
+			if ((max < 2 && size == 0)
+			    || (max > 1 && size >= MIN(max, FS_MAXCONTIG)))
+				i++;
+		}
+	}
+	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\n",
+	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i);
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
 	    afs.fs_cstotal.cs_nbfree, afs.fs_cstotal.cs_ndir,
 	    afs.fs_cstotal.cs_nifree, afs.fs_cstotal.cs_nffree);
