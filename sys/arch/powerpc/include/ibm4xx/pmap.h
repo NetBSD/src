@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 2003/08/17 18:07:11 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 2004/08/31 01:06:12 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -106,9 +106,6 @@
 
 #define	TTE_PA(p)	((p)&TTE_PA_MASK)
 #define TTE_ZONE(z)	TLB_ZONE(z)
-
-#define	MKTTE(pa,sz,zn,e,fl)	(((pa)&TTE_PA_MASK)|((sz)&TTE_SZ_MASK)|\
-	(TTE_ZONE(zn))|(fl)|((e)?TTE_ENDIAN:0)
 
 /*
  * Definitions for sizes of 1st and 2nd level page tables.
