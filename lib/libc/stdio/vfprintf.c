@@ -159,7 +159,7 @@ int
 vfprintf(fp, fmt0, ap)
 	FILE *fp;
 	const char *fmt0;
-	va_list ap;
+	_VA_LIST_ ap;
 {
 	register char *fmt;	/* format string */
 	register int ch;	/* character from fmt */
