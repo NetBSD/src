@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.11 2000/08/21 07:39:44 itohy Exp $
+#	$NetBSD: SWINGER,v 1.12 2000/09/20 18:20:55 thorpej Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.11 $"
+#ident 		"SWINGER-$Revision: 1.12 $"
 
 maxusers	64		# estimated number of users
 
@@ -18,10 +18,10 @@ options 	I686_CPU
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
-#options 	VM86		# virtual 8086 emulation
+options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
-#options 	DUMMY_NOPS
+options 	DUMMY_NOPS
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
