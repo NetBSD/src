@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc,v 1.18 1999/03/09 06:31:00 ross Exp $
+.\"	$NetBSD: doc,v 1.19 1999/03/09 08:32:52 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1428,7 +1428,7 @@
 .	nr aT 2
 .\}
 .el \{\
-.	Pushwarn
+.	if \n(.g .Pushwarn
 .	if \\n(sW==1 \{\
 .		ie \\n(z\\$1>2 \{\
 .			nr aT \\n(z\\$1
@@ -1441,7 +1441,7 @@
 .		\}
 .		el .nr aT 2
 .	\}
-.	Popwarn
+.	if \n(.g .Popwarn
 .\}
 ..
 .de aU
@@ -1449,7 +1449,7 @@
 .aW \\$1
 .ie \\n(sW>2:(\A'\\*(A\\$1'==0) .nr aT 2
 .el \{\
-.	Pushwarn
+.	if \n(.g .Pushwarn
 .	if \\n(sW==1 \{\
 .		ie \\n(z\\*(A\\$1>2 \{\
 .			nr aT \\n(z\\*(A\\$1
@@ -1462,7 +1462,7 @@
 .		\}
 .		el .nr aT 2
 .	\}
-.	Popwarn
+.	if \n(.g .Popwarn
 .\}
 ..
 .\}
@@ -1473,7 +1473,7 @@
 .	nr aT 2
 .\}
 .el \{\
-.	Pushwarn
+.	if \n(.g .Pushwarn
 .	if \\n(sW==1 \{\
 .		ie \\n(z\\$1>2 \{\
 .			nr aT \\n(z\\$1
@@ -1486,7 +1486,7 @@
 .		\}
 .		el .nr aT 2
 .	\}
-.	Popwarn
+.	if \n(.g .Popwarn
 .\}
 ..
 .de aU
@@ -1494,7 +1494,7 @@
 .aW \\$1
 .ie \\n(sW>2 .nr aT 2
 .el \{\
-.	Pushwarn
+.	if \n(.g .Pushwarn
 .	if \\n(sW==1 \{\
 .		ie \\n(z\\*(A\\$1>2 \{\
 .			nr aT \\n(z\\*(A\\$1
@@ -1507,7 +1507,7 @@
 .		\}
 .		el .nr aT 2
 .	\}
-.	Popwarn
+.	if \n(.g .Popwarn
 .\}
 ..
 .\}
