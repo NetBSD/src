@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.9 2000/03/04 15:02:44 uch Exp $
+#	$NetBSD: MAKEDEV,v 1.10 2000/03/11 07:45:31 shin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -91,6 +91,7 @@
 
 dialin=0
 dialout=524288		# high bit of the minor number
+callunit=262144
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -318,6 +319,7 @@ ccd*|fd*|sd*|vnd*|wd*|raid*)
 	;;
 
 ucbsnd)
+	rm -f ucbsnd
 	mknod ucbsnd c 36 0
 	chmod 666 ucbsnd
 	;;
