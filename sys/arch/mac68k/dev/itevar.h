@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.1 1996/05/05 06:16:49 briggs Exp $	*/
+/*	$NetBSD: itevar.h,v 1.2 1997/04/08 04:47:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -34,6 +34,7 @@
 int	ite_intr __P((adb_event_t *event));
 int	iteon __P((dev_t dev, int flags));
 int	iteoff __P((dev_t dev, int flags));
+void	itereset __P((void));
 
 #ifndef CN_DEAD
 #include <dev/cons.h>
