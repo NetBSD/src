@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkfifo.1,v 1.4 1994/12/23 07:16:54 jtc Exp $
+.\"	$NetBSD: mkfifo.1,v 1.5 1997/07/16 04:42:32 mikel Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,9 +76,9 @@ requires write permission in the parent directory.
 exits 0 if successful, and >0 if an error occurred.
 .Sh SEE ALSO
 .Xr mkdir 1 ,
-.Xr mknod 1 ,
 .Xr rm 1 ,
-.Xr mkfifo 2
+.Xr mkfifo 2 ,
+.Xr mknod 8
 .Sh STANDARDS
 The
 .Nm mkfifo
@@ -87,5 +87,5 @@ utility is expected to be
 compliant.
 .Sh HISTORY
 .Nm
-command appears in
+command appeared in
 .Bx 4.4 .
