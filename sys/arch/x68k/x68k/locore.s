@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 1996/05/17 12:22:22 oki Exp $	*/
+/*	$NetBSD: locore.s,v 1.2.4.1 1996/05/29 17:34:05 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1596,7 +1596,7 @@ Lmc68851d:
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 ENTRY(ICPA)
 	cmpl	#MMU_68040,_mmutype	| 68040
 	jne	Lmotommu7		| no, skip
@@ -1646,7 +1646,7 @@ LmotommuA:
 #endif
 	rts
 
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 ENTRY(ICPL)
 	movl	sp@(4),a0		| address
 	.word	0xf488			| cinvl ic,a0@
@@ -1677,7 +1677,7 @@ ENTRY(DCFP)
 #endif
 
 ENTRY(PCIA)
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 ENTRY(DCFA)
 	cmpl	#MMU_68040,_mmutype	| 68040
 	jne	LmotommuB		| no, skip
@@ -1844,6 +1844,8 @@ LmotommuF:
 #endif
 	clrl	sp@			| value for pmove to TC (turn off MMU)
 	pmove	sp@,tc			| disable MMU
+	movl	0x00ff0000:l,Lvectab
+	movl	0x00ff0004:l,Lvectab+4
 	moval	0x00ff0004:l,a0
 	jmp	a0@			| reboot X680x0
 Lebootcode:
