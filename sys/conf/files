@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.519 2002/04/22 09:41:21 augustss Exp $
+#	$NetBSD: files,v 1.520 2002/04/22 13:03:06 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -797,6 +797,10 @@ file	dev/ieee1394/sbp2.c		sbp2
 #
 device	fwlynx: fwbus
 device	fwohci: fwbus
+
+# Sony Programmable I/O Controller
+device	spic: wsmousedev
+file	dev/ic/spic.c			spic
 
 # Attribute used by various things that need BPF's virtual machine
 #
