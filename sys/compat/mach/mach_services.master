@@ -1,4 +1,4 @@
- $NetBSD: mach_services.master,v 1.6 2003/11/29 23:56:08 manu Exp $
+ $NetBSD: mach_services.master,v 1.7 2003/11/30 20:42:03 manu Exp $
 ;
 ; Mach services list. 
 ;
@@ -291,7 +291,7 @@
 ; Mach tasks
 ;
 3400	UNIMPL	task_create
-3401	UNIMPL	task_terminate
+3401	STD	task_terminate
 3402	STD	task_threads
 3403	UNIMPL	ports_register
 3404	STD	ports_lookup

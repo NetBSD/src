@@ -1,4 +1,4 @@
-/* $NetBSD: mach_services_names.c,v 1.6 2003/11/30 00:09:59 manu Exp $ */
+/* $NetBSD: mach_services_names.c,v 1.7 2003/11/30 20:42:03 manu Exp $ */
 
 /*
  * Mach services names. This file is not built
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.6 2003/11/30 00:09:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.7 2003/11/30 20:42:03 manu Exp $");
 
 struct mach_service_name {
 	int srv_id;
@@ -207,7 +207,7 @@ struct mach_service_name mach_services_names[] = {
 	{3226, "port_insert_member"},
 	{3227, "unimpl. port_extract_member"},
 	{3400, "unimpl. task_create"},
-	{3401, "unimpl. task_terminate"},
+	{3401, "task_terminate"},
 	{3402, "task_threads"},
 	{3403, "unimpl. ports_register"},
 	{3404, "ports_lookup"},

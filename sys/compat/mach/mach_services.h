@@ -1,4 +1,4 @@
-/* $NetBSD: mach_services.h,v 1.9 2003/11/30 00:09:59 manu Exp $ */
+/* $NetBSD: mach_services.h,v 1.10 2003/11/30 20:42:03 manu Exp $ */
 
 /*
  * Mach services prototypes.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services.h,v 1.9 2003/11/30 00:09:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services.h,v 1.10 2003/11/30 20:42:03 manu Exp $");
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -59,6 +59,7 @@ int mach_port_insert_right(struct mach_trap_args *);
 int mach_port_get_attributes(struct mach_trap_args *);
 int mach_port_set_attributes(struct mach_trap_args *);
 int mach_port_insert_member(struct mach_trap_args *);
+int mach_task_terminate(struct mach_trap_args *);
 int mach_task_threads(struct mach_trap_args *);
 int mach_ports_lookup(struct mach_trap_args *);
 int mach_task_info(struct mach_trap_args *);
