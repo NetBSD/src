@@ -4,11 +4,35 @@
 ======================================================================
 
   For the latest news about less, see the "less" Web page:
-      http://www.fog.net/markn/less
+      http://www.flash.net/~marknu/less
   You can also download the latest version of less from there.
 
   The email address for questions about less 
-  has been changed to markn@fog.net.
+  has been changed to marknu@flash.net.
+
+======================================================================
+
+
+	Major changes between "less" versions 332 and 335
+
+* The old -w flag (suppress tildes after end-of-file) has been removed.
+
+* New -w flag highlights the first new line after a forward-screen.
+
+* New -W flag highlights the first new line after any forward movement.
+
+* Window resize works even if LINES and/or COLUMNS environment 
+  variables are incorrect.
+
+* New percent escapes for prompt strings:
+  %d is replaced by the page number, and
+  %D is replaced by the number of pages in the file.
+
+* Added charsets "iso8859" and "ebcdic".
+
+* In Windows version, uses HOMEDRIVE and HOMEPATH if HOME is not defined.
+
+* Fixed some bugs causing incorrect display on DOS/Windows.
 
 ======================================================================
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.1.1.3 1997/09/21 12:23:05 mrg Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.4 1999/04/06 05:30:36 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -147,6 +147,26 @@ iread(fd, buf, len)
 	}
 #endif
 	n = read(fd, buf, len);
+#if 1
+	/*
+	 * This is a kludge to workaround a problem on some systems
+	 * where terminating a remote tty connection causes read() to
+	 * start returning 0 forever, instead of -1.
+	 */
+	{
+		extern int ignore_eoi;
+		if (!ignore_eoi)
+		{
+			static int consecutive_nulls = 0;
+			if (n == 0)
+				consecutive_nulls++;
+			else
+				consecutive_nulls = 0;
+			if (consecutive_nulls > 20)
+				quit(QUIT_ERROR);
+		}
+	}
+#endif
 	reading = 0;
 	if (n < 0)
 		return (-1);
