@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.3 1995/07/24 05:56:17 leo Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.4 1997/01/10 21:24:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -127,6 +127,7 @@ struct key {
 
 #define	KBD_SCANCODE(code)	(code & 0x7f)
 #define	KBD_RELEASED(code)	(code & 0x80 ? 1 : 0)
+#define	KBD_IS_KEY(code)	((u_char)(code) < 0xf6)
 
 struct kbdmap {
 	struct key	keys[KBD_NUM_KEYS],
