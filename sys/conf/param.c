@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.14 1994/12/05 06:03:45 mycroft Exp $	*/
+/*	$NetBSD: param.c,v 1.15 1995/03/08 00:54:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -47,7 +47,9 @@
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/callout.h>
+#ifdef REAL_CLISTS
 #include <sys/clist.h>
+#endif
 #include <sys/mbuf.h>
 #include <ufs/ufs/quota.h>
 #include <sys/kernel.h>
@@ -87,7 +89,9 @@ int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
 int	ncallout = 16 + NPROC;
+#ifdef REAL_CLISTS
 int	nclist = 60 + 12 * MAXUSERS;
+#endif
 int	nmbclusters = NMBCLUSTERS;
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 
