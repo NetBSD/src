@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.51 2003/09/11 17:33:42 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.52 2003/12/06 14:16:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.51 2003/09/11 17:33:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.52 2003/12/06 14:16:11 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -403,7 +403,7 @@ dirloop:
 	*(char *)cp = '\0';
 	printf("{%s}: ", cnp->cn_nameptr);
 	*(char *)cp = c; }
-#endif
+#endif /* NAMEI_DIAGNOSTIC */
 	ndp->ni_pathlen -= cnp->cn_namelen;
 	ndp->ni_next = cp;
 	/*
@@ -510,10 +510,10 @@ unionlookup:
 #ifdef DIAGNOSTIC
 		if (ndp->ni_vp != NULL)
 			panic("leaf `%s' should be empty", cnp->cn_nameptr);
-#endif
+#endif /* DIAGNOSTIC */
 #ifdef NAMEI_DIAGNOSTIC
 		printf("not found\n");
-#endif
+#endif /* NAMEI_DIAGNOSTIC */
 		if ((error == ENOENT) &&
 		    (dp->v_flag & VROOT) &&
 		    (dp->v_mount->mnt_flag & MNT_UNION)) {
@@ -560,7 +560,7 @@ unionlookup:
 	}
 #ifdef NAMEI_DIAGNOSTIC
 	printf("found\n");
-#endif
+#endif /* NAMEI_DIAGNOSTIC */
 
 	/*
 	 * Take into account any additional components consumed by the
@@ -677,10 +677,10 @@ relookup(dvp, vpp, cnp)
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
-#ifdef NAMEI_DIAGNOSTIC
+#ifdef DEBUG
 	int newhash;			/* DEBUG: check name hash */
 	const char *cp;			/* DEBUG: check name ptr/len */
-#endif
+#endif /* DEBUG */
 
 	/*
 	 * Setup: break out flag bits into variables.
@@ -701,7 +701,7 @@ relookup(dvp, vpp, cnp)
 	 * the name set the SAVENAME flag. When done, they assume
 	 * responsibility for freeing the pathname buffer.
 	 */
-#ifdef NAMEI_DIAGNOSTIC
+#ifdef DEBUG
 	cp = NULL;
 	newhash = namei_hash(cnp->cn_nameptr, &cp);
 	if (newhash != cnp->cn_hash)
@@ -710,8 +710,10 @@ relookup(dvp, vpp, cnp)
 		panic ("relookup: bad len");
 	if (*cp != 0)
 		panic("relookup: not last component");
+#endif /* DEBUG */
+#ifdef NAMEI_DIAGNOSTIC
 	printf("{%s}: ", cnp->cn_nameptr);
-#endif
+#endif /* NAMEI_DIAGNOSTIC */
 
 	/*
 	 * Check for degenerate name (e.g. / or "")
