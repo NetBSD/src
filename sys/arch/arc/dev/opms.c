@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.5 2002/10/23 09:10:38 jdolecek Exp $	*/
+/*	$NetBSD: opms.c,v 1.6 2002/10/25 07:47:56 jdolecek Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -98,6 +98,7 @@ dev_type_close(opmsclose);
 dev_type_read(opmsread);
 dev_type_ioctl(opmsioctl);
 dev_type_poll(opmspoll);
+dev_type_kqfilter(opmskqfilter);
 
 const struct cdevsw opms_cdevsw = {
 	opmsopen, opmsclose, opmsread, nowrite, opmsioctl,
