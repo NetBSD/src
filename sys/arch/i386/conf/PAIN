@@ -1,64 +1,92 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.21 1994/01/13 04:30:10 cgd Exp $
+#	$Id: PAIN,v 1.22 1994/01/16 01:38:07 cgd Exp $
 #
-machine         "i386"
-cpu             "I486_CPU"
-ident           PAIN
-timezone        8 dst
-maxusers        10
+machine		"i386"
+cpu		"I486_CPU"
+ident		PAIN
+timezone	8 dst
+maxusers	10
 maxfdescs	2048
+
+# "mandatory"
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
-options         INET,NFSSERVER,NFSCLIENT,MFS
-options         "COMPAT_43"
-options         "TCP_COMPAT_42"
-options         UCONSOLE, XSERVER
-options		"DUMMY_NOPS"
-options		MSDOSFS
-options		LKM
+
+# all of the networking possibilities known to man
+options		INET
+options		NS
+options		ISO
+options		TPIP
+options		EON
+options		CCITT
+# and even multicast support!
+options		MULTICAST
+
+# and even forward packets
+options		GATEWAY
+
+# "optional, but generally included"
+options		"COMPAT_43"
+options		"TCP_COMPAT_42"
+
+# i386 stuff
+options		UCONSOLE, XSERVER
+options		DUMMY_NOPS
+options		COMPAT_NOMID
+options		MACHINE_NONCONTIG
+
+# for per-process i386 LDT's
+options		USER_LDT
+
+# every file system known to man
+options		MFS
+options		NFSSERVER,NFSCLIENT
+options		MSDOSFS,ISOFS
+options		FDESC,FIFO,KERNFS,LOFS,PORTAL,PROCFS
+
+# and even UFS quotas
+options		QUOTA
+
+# SysV compat stuff
 options		SYSVMSG,SYSVSEM,SYSVSHM
+#options	"SHMMAXPAGES=1024"		# 1024 is the default.
 
-# stuff residing in sys/miscfs
-options		FDESC
-options		FIFO
-options		KERNFS
-options		LOFS
-options		PORTAL
-options		PROCFS
-
-options		KTRACE
-options		SCSI
-options		"COMPAT_NOMID"
-options		"MACHINE_NONCONTIG"
-
+# Various "debugging" stuff
 options		DDB
 options		DIAGNOSTIC
+options		KTRACE
 
-config          netbsd        root on sd0 swap on sd0
+# loadable kernel modules
+options		LKM
 
-controller      isa0
-controller      fdc0     at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
-disk            fd0     at fdc0 drive 0
-disk            fd1     at fdc0 drive 1
+# uses the SCSI system (XXX)
+options		SCSI
 
-device          pc0     at isa? port "IO_KBD" tty irq 1 vector pcrint
-device          npx0    at isa? port "IO_NPX" irq 13 vector npxintr
+config		netbsd	root on sd0 swap on sd0
 
-controller      ahb0    at isa? bio irq 11 drq 5 vector ahbintr
+controller	isa0
+controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+disk		fd0	at fdc0 drive 0
+disk		fd1	at fdc0 drive 1
 
-disk            sd0     at ahb0 flags 0 drive 000
-disk            sd1     at ahb0 flags 0 drive ?
+device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
+device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+
+controller	ahb0	at isa? bio irq 11 drq 5 vector ahbintr
+
+disk		sd0	at ahb0 flags 0 drive 000
+disk		sd1	at ahb0 flags 0 drive ?
 tape		st0	at ahb0 flags 1	drive ?
 
-device          ed0 at isa? port 0x300 net irq 5 iomem 0xca000 vector edintr
-device          com0    at isa? port "IO_COM1" tty irq 4 vector comintr
-device          com1    at isa? port "IO_COM2" tty irq 3 vector comintr
-device          lpt0    at isa? port "IO_LPT1" tty irq 7 vector lptintr
+device		ed0	at isa? port 0x300 net irq 5 iomem 0xca000 vector edintr
+device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
+device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
+device		lpt0	at isa? port "IO_LPT1" tty irq 7 vector lptintr
 
-pseudo-device   loop		2
-pseudo-device   ether
-pseudo-device   log
-pseudo-device   pty		16
+pseudo-device	loop		2
+pseudo-device	ether
+pseudo-device	log
+pseudo-device	pty		32
 
 pseudo-device	bpfilter	4
