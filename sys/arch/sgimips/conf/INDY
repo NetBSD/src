@@ -1,4 +1,4 @@
-#	$NetBSD: INDY,v 1.4 2000/10/04 21:41:48 cgd Exp $
+#	$NetBSD: INDY,v 1.5 2000/11/15 00:46:35 matt Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -43,6 +43,7 @@ options 	DIAGNOSTIC
 
 file-system	FFS
 file-system	NFS
+file-system	MFS
 #file-system	KERNFS
 #file-system	PROCFS
 
@@ -115,4 +116,5 @@ cd*		at scsibus? target ? lun ?
 pseudo-device	loop
 pseudo-device	pty
 pseudo-device	bpfilter	8
+pseudo-device	vnd		4
 #pseudo-device	md		1
