@@ -31,15 +31,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT(
+    "@(#) Copyright (c) 1983 The Regents of the University of California.\n\
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)gettable.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: gettable.c,v 1.5 1994/12/23 16:46:17 cgd Exp $";
+#if 0
+static char sccsid[] = "from: @(#)gettable.c	5.6 (Berkeley) 3/2/91";
+#else
+__RCSID("$Id: gettable.c,v 1.6 1997/10/17 04:24:21 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,9 +51,11 @@ static char rcsid[] = "$Id: gettable.c,v 1.5 1994/12/23 16:46:17 cgd Exp $";
 
 #include <netinet/in.h>
 
+#include <err.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <string.h>
-#include <netdb.h>
+#include <unistd.h>
 
 #define	OUTFILE		"hosts.txt"	/* default output file */
 #define	VERFILE		"hosts.ver"	/* default version file */
@@ -62,15 +68,18 @@ struct	sockaddr_in s_in;
 char	buf[BUFSIZ];
 char	*outfile = OUTFILE;
 
+int	main __P((int, char **));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	int s;
-	register len;
-	register FILE *sfi, *sfo, *hf;
+	int len;
+	FILE *sfi, *sfo, *hf;
 	char *host;
-	register struct hostent *hp;
+	struct hostent *hp;
 	struct servent *sp;
 	int version = 0;
 	int beginseen = 0;
@@ -106,34 +115,22 @@ main(argc, argv)
 		outfile = *argv;
 	s_in.sin_family = hp->h_addrtype;
 	s = socket(hp->h_addrtype, SOCK_STREAM, 0);
-	if (s < 0) {
-		perror("gettable: socket");
-		exit(4);
-	}
-	if (bind(s, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
-		perror("gettable: bind");
-		exit(5);
-	}
-	bcopy(hp->h_addr, &s_in.sin_addr, hp->h_length);
+	if (s < 0)
+		err(4, "socket");
+	if (bind(s, (struct sockaddr *)&s_in, sizeof (s_in)) < 0)
+		err(5, "bind");
+	memmove(&s_in.sin_addr, hp->h_addr, hp->h_length);
 	s_in.sin_port = sp->s_port;
-	if (connect(s, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
-		perror("gettable: connect");
-		exit(6);
-	}
+	if (connect(s, (struct sockaddr *)&s_in, sizeof (s_in)) < 0)
+		err(6, "connect");
 	fprintf(stderr, "Connection to %s opened.\n", host);
 	sfi = fdopen(s, "r");
 	sfo = fdopen(s, "w");
-	if (sfi == NULL || sfo == NULL) {
-		perror("gettable: fdopen");
-		close(s);
-		exit(1);
-	}
+	if (sfi == NULL || sfo == NULL)
+		err(1, "fdopen");
 	hf = fopen(outfile, "w");
-	if (hf == NULL) {
-		fprintf(stderr, "gettable: "); perror(outfile);
-		close(s);
-		exit(1);
-	}
+	if (hf == NULL)
+		err(1, "open `%s'", outfile);
 	fprintf(sfo, version ? VERSION : QUERY);
 	fflush(sfo);
 	while (fgets(buf, sizeof(buf), sfi) != NULL) {
