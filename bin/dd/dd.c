@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.34 2003/11/15 12:44:54 dsainty Exp $	*/
+/*	$NetBSD: dd.c,v 1.35 2003/11/15 14:55:32 dsainty Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.34 2003/11/15 12:44:54 dsainty Exp $");
+__RCSID("$NetBSD: dd.c,v 1.35 2003/11/15 14:55:32 dsainty Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,18 +272,16 @@ redup_clean_fd(int fd)
 		/* File descriptor is ok, return immediately. */
 		return fd;
 
-	newfd = dup(fd);
+	/*
+	 * 3 is the first descriptor greater than STD*_FILENO.  Any
+	 * free descriptor valued 3 or above is acceptable...
+	 */
+	newfd = fcntl(fd, F_DUPFD, 3);
 	if (newfd < 0) {
-		err(EXIT_FAILURE, "dup IO");
+		err(EXIT_FAILURE, "dupfd IO");
 		/* NOTREACHED */
 	}
 
-	/*
-	 * Recurse, to ensure that the new descriptor is clean.  Don't
-	 * free the old descriptor(s) until we've allocated a clean
-	 * one.
-	 */
-	newfd = redup_clean_fd(newfd);
 	close(fd);
 
 	return newfd;
