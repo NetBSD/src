@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/10/25 08:51:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2001/10/28 13:06:43 lukem Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -8,8 +8,8 @@
 # 		stat structure is easily determined by looking at the
 # 		basic type of an off_t (often defined in the file:
 # 		/usr/include/sys/types.h). If off_t is a long (and is
-# 		NOT A longlong_t) then you must define NET2_STAT.
-# 		This define is important, as if you do have a longlong_t
+# 		NOT A long long) then you must define NET2_STAT.
+# 		This define is important, as if you do have a long long
 # 		off_t and define NET2_STAT, pax will compile but will
 # 		NOT RUN PROPERLY.
 #

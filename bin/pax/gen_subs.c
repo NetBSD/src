@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.21 2001/10/25 05:33:33 lukem Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.22 2001/10/28 13:06:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.21 2001/10/25 05:33:33 lukem Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.22 2001/10/28 13:06:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -323,19 +323,19 @@ ul_asc(u_long val, char *str, int len, int base)
 #ifndef NET2_STAT
 /*
  * asc_ull()
- *	convert hex/octal character string into a u_longlong_t. We do not have
- *	to to check for overflow! (the headers in all supported formats are
- *	not large enough to create an overflow).
+ *	convert hex/octal character string into a unsigned long long. We do
+ *	not have to to check for overflow! (the headers in all supported
+ *	formats are not large enough to create an overflow).
  *	NOTE: strings passed to us are NOT TERMINATED.
  * Return:
- *	u_longlong_t value
+ *	unsigned long long value
  */
 
-u_longlong_t
+unsigned long long
 asc_ull(char *str, int len, int base)
 {
 	char *stop;
-	u_longlong_t tval = 0;
+	unsigned long long tval = 0;
 
 	stop = str + len;
 
@@ -369,16 +369,16 @@ asc_ull(char *str, int len, int base)
 
 /*
  * ull_asc()
- *	convert an u_longlong_t into a hex/oct ascii string. pads with LEADING
- *	ascii 0's to fill string completely
+ *	convert an unsigned long long into a hex/oct ascii string. pads with
+ *	LEADING ascii 0's to fill string completely
  *	NOTE: the string created is NOT TERMINATED.
  */
 
 int
-ull_asc(u_longlong_t val, char *str, int len, int base)
+ull_asc(unsigned long long val, char *str, int len, int base)
 {
 	char *pt;
-	u_longlong_t digit;
+	unsigned long long digit;
 
 	/*
 	 * WARNING str is not '\0' terminated by this routine
@@ -396,13 +396,13 @@ ull_asc(u_longlong_t val, char *str, int len, int base)
 				*pt-- = '0' + (char)digit;
 			else
 				*pt-- = 'a' + (char)(digit - 10);
-			if ((val = (val >> 4)) == (u_longlong_t)0)
+			if ((val = (val >> 4)) == (unsigned long long)0)
 				break;
 		}
 	} else {
 		while (pt >= str) {
 			*pt-- = '0' + (char)(val & 0x7);
-			if ((val = (val >> 3)) == (u_longlong_t)0)
+			if ((val = (val >> 3)) == (unsigned long long)0)
 				break;
 		}
 	}
@@ -412,7 +412,7 @@ ull_asc(u_longlong_t val, char *str, int len, int base)
 	 */
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_longlong_t)0)
+	if (val != (unsigned long long)0)
 		return(-1);
 	return(0);
 }

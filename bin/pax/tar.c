@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.19 2001/10/25 05:33:34 lukem Exp $	*/
+/*	$NetBSD: tar.c,v 1.20 2001/10/28 13:06:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.19 2001/10/25 05:33:34 lukem Exp $");
+__RCSID("$NetBSD: tar.c,v 1.20 2001/10/28 13:06:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
 #ifndef NET2_STAT
-static int ull_oct(u_longlong_t, char *, int, int);
+static int ull_oct(unsigned long long, char *, int, int);
 #endif
 
 /*
@@ -209,17 +209,17 @@ ul_oct(u_long val, char *str, int len, int term)
 #ifndef NET2_STAT
 /*
  * ull_oct()
- *	convert an u_longlong_t to an octal string. one of many oddball field
- *	termination characters are used by the various versions of tar in the
- *	different fields. term selects which kind to use. str is '0' padded
- *	at the front to len. we are unable to use only one format as many old
- *	tar readers are very cranky about this.
+ *	convert an unsigned long long to an octal string. one of many oddball
+ *	field termination characters are used by the various versions of tar
+ *	in the different fields. term selects which kind to use. str is '0'
+ *	padded at the front to len. we are unable to use only one format as
+ *	many old tar readers are very cranky about this.
  * Return:
  *	0 if the number fit into the string, -1 otherwise
  */
 
 static int
-ull_oct(u_longlong_t val, char *str, int len, int term)
+ull_oct(unsigned long long val, char *str, int len, int term)
 {
 	char *pt;
 
@@ -256,7 +256,7 @@ ull_oct(u_longlong_t val, char *str, int len, int term)
 
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_longlong_t)0)
+	if (val != (unsigned long long)0)
 		return(-1);
 	return(0);
 }

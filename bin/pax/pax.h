@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.11 2001/10/25 05:33:33 lukem Exp $	*/
+/*	$NetBSD: pax.h,v 1.12 2001/10/28 13:06:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -253,7 +253,7 @@ typedef struct oplist {
 #define TMPFILE	"paxXXXXXX"
 
 /*
- * Macros to manipulate off_t as a u_long or u_longlong_t
+ * Macros to manipulate off_t as a unsigned long or unsigned long long
  */
 #ifdef NET2_STAT
 #define	OFFT_F			"%lu"
@@ -267,10 +267,10 @@ typedef struct oplist {
 #else
 #define	OFFT_F			"%llu"
 #define	OFFT_FP(x)		"%" x "llu"
-#define	OFFT_T			u_longlong_t
+#define	OFFT_T			unsigned long long
 #define	ASC_OFFT(x,y,z)		asc_ull(x,y,z)
-#define	OFFT_ASC(w,x,y,z)	ull_asc((u_longlong_t)w,x,y,z)
-#define	OFFT_OCT(w,x,y,z)	ull_oct((u_longlong_t)w,x,y,z)
+#define	OFFT_ASC(w,x,y,z)	ull_asc((unsigned long long)w,x,y,z)
+#define	OFFT_OCT(w,x,y,z)	ull_oct((unsigned long long)w,x,y,z)
 #define	STRTOOFFT(x,y,z)	strtoll(x,y,z)
 #define	OFFT_MAX		ULLONG_MAX
 #endif

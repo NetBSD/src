@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2001/10/25 08:51:50 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.28 2001/10/28 13:06:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -178,8 +178,8 @@ int l_strncpy(char *, const char *, int);
 u_long asc_ul(char *, int, int);
 int ul_asc(u_long, char *, int, int);
 #ifndef NET2_STAT
-u_longlong_t asc_ull(char *, int, int);
-int ull_asc(u_longlong_t, char *, int, int);
+unsigned long long asc_ull(char *, int, int);
+int ull_asc(unsigned long long, char *, int, int);
 #endif
 int check_Aflag(void);
 
