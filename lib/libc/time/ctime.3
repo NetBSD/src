@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.19 2000/07/06 16:19:15 kleink Exp $
+.\"	$NetBSD: ctime.3,v 1.20 2000/07/10 12:39:39 kleink Exp $
 .TH CTIME 3
 .SH NAME
 asctime, asctime_r, ctime, ctime_r, difftime, gmtime, gmtime_r, localtime, localtime_r, mktime \- convert date and time to ASCII
@@ -171,15 +171,15 @@ includes the following fields:
 .PP
 .nf
 .ta .5i +\w'long tm_gmtoff;\0\0'u
-	int tm_sec;	/\(** seconds after the minute (0 - 61) \(**/
-	int tm_min;	/\(** minutes after the hour (0 - 59) \(**/
-	int tm_hour;	/\(** hours since midnight (0 - 23) \(**/
-	int tm_mday;	/\(** day of the month (1 - 31) \(**/
-	int tm_mon;	/\(** months since January (0 - 11) \(**/
+	int tm_sec;	/\(** seconds after the minute [0,61] \(**/
+	int tm_min;	/\(** minutes after the hour [0,59] \(**/
+	int tm_hour;	/\(** hours since midnight [0,23] \(**/
+	int tm_mday;	/\(** day of the month [1,31] \(**/
+	int tm_mon;	/\(** months since January [0,11] \(**/
 	int tm_year;	/\(** years since 1900 \(**/
-	int tm_wday;	/\(** day of week (Sunday = 0) \(**/
-	int tm_yday;	/\(** day of year (0 - 365, 0 = Jan 1) \(**/
-	int tm_isdst;	/\(** is summer time in effect? \(**/
+	int tm_wday;	/\(** day of week [0,6] (Sunday = 0) \(**/
+	int tm_yday;	/\(** day of year [0,365] (Jan 1 = 0) \(**/
+	int tm_isdst;	/\(** daylight savings flag \(**/
 	long tm_gmtoff;	/\(** offset from UTC in seconds \(**/
 	char \(**tm_zone;	/\(** abbreviation of timezone name \(**/
 .fi
