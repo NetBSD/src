@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.3 2002/12/11 12:02:07 fvdl Exp $	*/
+/*	$NetBSD: spl.S,v 1.4 2002/12/12 21:39:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,9 +153,7 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%eax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-	sti
 5:	CHECK_ASTPENDING()
-	cli
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
 #ifdef VM86
