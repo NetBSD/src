@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.484 2002/11/07 20:41:27 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.485 2002/11/07 20:55:13 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.481 2002/11/07 20:40:28 martin Exp 
+ *	NetBSD: pcidevs,v 1.482 2002/11/07 20:49:57 thorpej Exp 
  */
 
 /*
@@ -1497,6 +1497,7 @@
 #define	PCI_PRODUCT_INTEL_82845G_DRAM	0x2560		/* 82845G/GL DRAM Controller / Host-Hub I/F Bridge */
 #define	PCI_PRODUCT_INTEL_82845G_AGP	0x2561		/* 82845G/GL Host-to-AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82845G_IGD	0x2562		/* 82845G/GL Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82830MP_IO_1	0x3575		/* 82830MP CPU to I/O Bridge 1 */
 #define	PCI_PRODUCT_INTEL_82830MP_AGP	0x3576		/* 82830MP CPU to AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82830MP_IV	0x3577		/* 82830MP Integrated Video */
