@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.30 2002/06/09 17:17:15 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.31 2002/06/09 17:18:32 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.30 2002/06/09 17:17:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.31 2002/06/09 17:18:32 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -487,11 +487,15 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
 		if (lifr->addr.ss_family != AF_INET ||
-		    lifr->dstaddr.ss_family != AF_INET)
-			return EAFNOSUPPORT;
+		    lifr->dstaddr.ss_family != AF_INET) {
+			error = EAFNOSUPPORT;
+			break;
+		}
 		if (lifr->addr.ss_len != sizeof(si) ||
-		    lifr->dstaddr.ss_len != sizeof(si))
-			return EINVAL;
+		    lifr->dstaddr.ss_len != sizeof(si)) {
+			error = EINVAL;
+			break;
+		}
 		sc->g_src = (satosin((struct sockadrr *)&lifr->addr))->sin_addr;
 		sc->g_dst =
 		    (satosin((struct sockadrr *)&lifr->dstaddr))->sin_addr;
@@ -521,6 +525,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	default:
 		error = EINVAL;
+		break;
 	}
 
 	splx(s);
