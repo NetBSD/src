@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.12 2001/11/13 06:56:41 lukem Exp $ */
+/*	$NetBSD: ses.c,v 1.13 2001/11/15 09:48:18 lukem Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,11 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.12 2001/11/13 06:56:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.13 2001/11/15 09:48:18 lukem Exp $");
 
 #include "opt_scsi.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

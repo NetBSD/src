@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.7 2001/11/13 00:00:58 lukem Exp $	*/
+/*	$NetBSD: aarp.c,v 1.8 2001/11/15 09:48:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,13 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.7 2001/11/13 00:00:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.8 2001/11/15 09:48:26 lukem Exp $");
 
-#include <sys/types.h>
-#include <sys/cdefs.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
-#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/proc.h>

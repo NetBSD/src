@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.1 2000/12/08 06:29:24 deberg Exp $	*/
+/*	$NetBSD: md4c.c,v 1.2 2001/11/15 09:48:20 lukem Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -28,14 +28,12 @@
  * documentation and/or software.
  */
 
-#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/param.h>
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/md4.h>
 #include <lib/libkern/libkern.h>
 #define _DIAGASSERT(x)	(void)0
 #else
-#include <sys/types.h>
-
 #include <assert.h>
 #include <md4.h>
 #include <string.h>

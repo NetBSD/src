@@ -33,7 +33,7 @@
  *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: isic_pcmcia.c,v 1.4 2001/11/13 07:26:33 lukem Exp $ 
+ *	$Id: isic_pcmcia.c,v 1.5 2001/11/15 09:48:12 lukem Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -42,9 +42,8 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.4 2001/11/13 07:26:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.5 2001/11/15 09:48:12 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394arp.c,v 1.6 2001/11/13 00:32:35 lukem Exp $	*/
+/*	$NetBSD: if_ieee1394arp.c,v 1.7 2001/11/15 09:48:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394arp.c,v 1.6 2001/11/13 00:32:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394arp.c,v 1.7 2001/11/15 09:48:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/syslog.h>

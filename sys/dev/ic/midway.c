@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.55 2001/11/13 13:14:41 lukem Exp $	*/
+/*	$NetBSD: midway.c,v 1.56 2001/11/15 09:48:06 lukem Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.55 2001/11/13 13:14:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.56 2001/11/15 09:48:06 lukem Exp $");
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */
@@ -145,7 +145,6 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.55 2001/11/13 13:14:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)
 #include <sys/device.h>
 #endif

@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.2 2001/11/13 05:32:49 lukem Exp $ */
+/*      $NetBSD: clockctl.c,v 1.3 2001/11/15 09:48:03 lukem Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.2 2001/11/13 05:32:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.3 2001/11/15 09:48:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.2 2001/11/13 05:32:49 lukem Exp $");
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #ifdef NTP
 #include <sys/timex.h>
 #endif /* NTP */

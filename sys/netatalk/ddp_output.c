@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.3 2001/11/13 00:00:58 lukem Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.4 2001/11/15 09:48:26 lukem Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,9 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.3 2001/11/13 00:00:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.4 2001/11/15 09:48:26 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>

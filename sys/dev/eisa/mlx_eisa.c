@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.4 2001/11/13 12:47:33 lukem Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.5 2001/11/15 09:48:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,9 +41,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.4 2001/11/13 12:47:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.5 2001/11/15 09:48:03 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

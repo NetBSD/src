@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.11 2001/11/13 07:48:42 lukem Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.12 2001/11/15 09:48:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.11 2001/11/13 07:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.12 2001/11/15 09:48:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 

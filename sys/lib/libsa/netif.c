@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.15 2000/03/30 12:19:48 augustss Exp $	*/
+/*	$NetBSD: netif.c,v 1.16 2001/11/15 09:48:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -32,7 +32,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/mount.h>
 #ifdef _STANDALONE
