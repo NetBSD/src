@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisavar.h,v 1.2 1998/03/21 02:06:17 cgd Exp $	*/
+/*	$NetBSD: ofisavar.h,v 1.3 1998/06/30 00:09:36 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -59,6 +59,20 @@ struct ofisa_intr_desc {
 	int		irq;		/* IRQ. */
 };
 
+struct ofisa_dma_desc {
+	int		drq;		/* DMA request */
+	int		mode;		/* DMA mode */
+	int		width;		/* DMA width */
+	int		countwidth;	/* DMA count width */
+	int		busmaster;	/* boolean; is a busmaster */
+};
+
+#define	OFISA_DMA_MODE_COMPAT	0	/* compatibility mode */
+#define	OFISA_DMA_MODE_A	1	/* DMA A mode */
+#define	OFISA_DMA_MODE_B	2	/* DMA B mode */
+#define	OFISA_DMA_MODE_F	3	/* DMA F mode */
+#define	OFISA_DMA_MODE_C	4	/* DMA C mode */
+
 /*
  * Machine-dependent function/macro definitions.
  *
@@ -86,5 +100,8 @@ void	ofisa_reg_print __P((struct ofisa_reg_desc *, int));
 int	ofisa_intr_count __P((int));
 int	ofisa_intr_get __P((int, struct ofisa_intr_desc *, int));
 void	ofisa_intr_print __P((struct ofisa_intr_desc *, int));
+int	ofisa_dma_count __P((int));
+int	ofisa_dma_get __P((int, struct ofisa_dma_desc *, int));
+void	ofisa_dma_print __P((struct ofisa_dma_desc *, int));
 
 #endif /* _DEV_OFISA_OFISAVAR_H_ */
