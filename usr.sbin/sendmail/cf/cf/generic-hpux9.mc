@@ -32,7 +32,17 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-divert(0)
-VERSIONID(`@(#)eecs.hidden.m4	8.1 (Berkeley) 6/7/93')
-DOMAIN(Berkeley)dnl
-MASQUERADE_AS(EECS.Berkeley.EDU)dnl
+
+#
+#  This is a generic configuration file for HP-UX 9.x.
+#  It has support for local and SMTP mail only.  If you want to
+#  customize it, copy it to a name appropriate for your environment
+#  and do the modifications there.
+#
+
+divert(0)dnl
+VERSIONID(`@(#)generic-hpux9.mc	8.3 (Berkeley) 3/23/96')
+OSTYPE(hpux9)dnl
+DOMAIN(generic)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl

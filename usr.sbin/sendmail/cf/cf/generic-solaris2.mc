@@ -32,9 +32,17 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-divert(0)
-VERSIONID(`@(#)cs.exposed.m4	8.1 (Berkeley) 6/7/93')
-DOMAIN(Berkeley)dnl
-HACK(cssubdomain)dnl
-define(`confUSERDB_SPEC',
-	`/usr/sww/share/lib/users.cs.db,/usr/sww/share/lib/users.eecs.db')dnl
+
+#
+#  This is a generic configuration file for SunOS 5.x (a.k.a. Solaris 2.x)
+#  It has support for local and SMTP mail only.  If you want to
+#  customize it, copy it to a name appropriate for your environment
+#  and do the modifications there.
+#
+
+divert(0)dnl
+VERSIONID(`@(#)generic-solaris2.mc	8.3 (Berkeley) 3/23/96')
+OSTYPE(solaris2)dnl
+DOMAIN(generic)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
