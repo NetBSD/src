@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.10 2001/12/01 02:15:40 perry Exp $	*/
+/*	$NetBSD: ls.c,v 1.11 2001/12/22 00:35:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.10 2001/12/01 02:15:40 perry Exp $");
+__RCSID("$NetBSD: ls.c,v 1.11 2001/12/22 00:35:45 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,11 +74,11 @@ main()
 		}
 
 		if (!S_ISDIR(st.st_mode)) {
-			printf("ls: not a direntory\n");
+			printf("ls: not a directory\n");
 			continue;
 		}
 		if (st.st_size == 0) {
-			printf("ls: zero length direntory\n");
+			printf("ls: zero length directory\n");
 			continue;
 		}
 		ls(fd);
