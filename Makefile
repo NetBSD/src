@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.154 2001/11/13 15:56:28 tv Exp $
+#	$NetBSD: Makefile,v 1.155 2001/11/13 17:47:16 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -44,8 +44,8 @@
 #	Runs the regression tests in "regress" on this host.
 #
 # Targets invoked by `make build,' in order:
-#   obj:             creates object directories.
 #   cleandir:        cleans the tree.
+#   obj:             creates object directories.
 #   do-tools:        builds host toolchain.
 #   do-distrib-dirs: creates the distribution directories.
 #   includes:        installs include files.
@@ -102,11 +102,11 @@ whatis.db:
 
 # Targets (in order!) called by "make build".
 
-.if ${MKOBJDIRS} != "no"
-BUILDTARGETS+=	obj
-.endif
 .if !defined(UPDATE) && !defined(NOCLEANDIR)
 BUILDTARGETS+=	cleandir
+.endif
+.if ${MKOBJDIRS} != "no"
+BUILDTARGETS+=	obj
 .endif
 .if ${USETOOLS} == "yes"
 BUILDTARGETS+=	do-tools
