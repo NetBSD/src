@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.168 2003/01/20 00:55:52 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.169 2003/01/20 20:51:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -102,7 +102,6 @@ extern char machine_model[];
 
 int	ncpu;				/* # of CPUs detected by PROM */
 struct	cpu_info **cpus;
-#define CPU_MID2CPUNO(mid) ((mid) - 8)
 static	int cpu_instance;		/* current # of CPUs wired by us */
 
 
@@ -135,10 +134,11 @@ void fpu_init __P((struct cpu_info *));
 #define SRMMU_VERS(mmusr)	(((mmusr) >> 24) & 0xf)
 
 #if defined(MULTIPROCESSOR)
-void cpu_spinup __P((struct cpu_softc *));
+void cpu_spinup __P((struct cpu_info *));
 struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
 struct cpu_info	*alloc_cpuinfo __P((void));
 
+int bootmid;		/* Module ID of boot CPU */
 int go_smp_cpus = 0;	/* non-primary cpu's wait for this to go */
 
 /* lock this to send IPI's */
@@ -409,16 +409,15 @@ cpu_cpuunit_attach(parent, self, aux)
 static void
 cpu_attach(struct cpu_softc *sc, int node, int mid)
 {
-static	struct cpu_softc *bootcpu;
 	struct cpu_info *cpi;
 
 	/*
-	 * First, find out if we're attaching the boot CPU.
+	 * The first CPU we're attaching must be the boot CPU.
+	 * (see autoconf.c and cpuunit.c)
 	 */
-	if (bootcpu == NULL) {
+	if (cpus == NULL) {
 		extern struct pcb idle_u[];
 
-		bootcpu = sc;
 		cpus = malloc(ncpu * sizeof(cpi), M_DEVBUF, M_NOWAIT);
 		bzero(cpus, ncpu * sizeof(cpi));
 
@@ -485,9 +484,9 @@ static	struct cpu_softc *bootcpu;
 		cpu_setup();
 		snprintf(buf, sizeof buf, "%s @ %s MHz, %s FPU",
 			cpi->cpu_name, clockfreq(cpi->hz), cpi->fpu_name);
-		printf(": %s\n", buf);
 		snprintf(cpu_model, sizeof cpu_model, "%s (%s)",
 			machine_model, buf);
+		printf(": %s\n", buf);
 		cache_print(sc);
 		return;
 	}
@@ -498,7 +497,7 @@ static	struct cpu_softc *bootcpu;
 		(PI_INTR_VA + (_MAXNBPG * CPU_MID2CPUNO(mid)));
 
 	/* Now start this CPU */
-	cpu_spinup(sc);
+	cpu_spinup(cpi);
 	printf(": %s @ %s MHz, %s FPU\n", cpi->cpu_name,
 		clockfreq(cpi->hz), cpi->fpu_name);
 
@@ -596,10 +595,9 @@ cpu_setup()
  * Allocate per-CPU data, then start up this CPU using PROM.
  */
 void
-cpu_spinup(sc)
-	struct cpu_softc *sc;
+cpu_spinup(cpi)
+	struct cpu_info *cpi;
 {
-	struct cpu_info *cpi = sc->sc_cpuinfo;
 	int n;
 extern void cpu_hatch __P((void));	/* in locore.s */
 	caddr_t pc = (caddr_t)cpu_hatch;
@@ -848,7 +846,7 @@ mp_pause_cpus_ddb()
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (CPU_NOTREADY(cpi))
+		if (cpi == NULL || cpi->mid == cpuinfo.mid)
 			continue;
 
 		cpi->msg_lev15.tag = XPMSG15_PAUSECPU;
@@ -1005,6 +1003,11 @@ int hypersparc_get_asyncflt __P((u_int *, u_int *));
 int cypress_get_asyncflt __P((u_int *, u_int *));
 int no_asyncflt_regs __P((u_int *, u_int *));
 
+int hypersparc_getmid(void);
+/* cypress and hypersparc can share this function, see ctlreg.h */
+#define cypress_getmid	hypersparc_getmid
+int viking_getmid(void);
+
 int	(*moduleerr_handler) __P((void));
 int viking_module_error(void);
 
@@ -1036,6 +1039,7 @@ struct module_info module_sun4 = {
 	sun4_hotfix,
 	0,
 	sun4_cache_enable,
+	0,
 	0,			/* ncontext set in `match' function */
 	0,			/* get_syncflt(); unused in sun4c */
 	0,			/* get_asyncflt(); unused in sun4c */
@@ -1169,6 +1173,7 @@ struct module_info module_sun4c = {
 	sun4_hotfix,
 	0,
 	sun4_cache_enable,
+	0,
 	0,			/* ncontext set in `match' function */
 	0,			/* get_syncflt(); unused in sun4c */
 	0,			/* get_asyncflt(); unused in sun4c */
@@ -1375,6 +1380,7 @@ struct module_info module_ms1 = {
 	0,
 	ms1_mmu_enable,
 	ms1_cache_enable,
+	0,
 	64,
 	ms1_get_syncflt,
 	no_asyncflt_regs,
@@ -1419,6 +1425,7 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	0,
 	0,
 	swift_cache_enable,
+	0,
 	256,
 	srmmu_get_syncflt,
 	srmmu_get_asyncflt,
@@ -1444,6 +1451,7 @@ struct module_info module_swift = {
 	swift_hotfix,
 	0,
 	swift_cache_enable,
+	0,
 	256,
 	swift_get_syncflt,
 	no_asyncflt_regs,
@@ -1486,6 +1494,7 @@ struct module_info module_hypersparc = {
 	0,
 	hypersparc_mmu_enable,
 	hypersparc_cache_enable,
+	hypersparc_getmid,
 	4096,
 	hypersparc_get_syncflt,
 	hypersparc_get_asyncflt,
@@ -1534,6 +1543,14 @@ hypersparc_mmu_enable()
 #endif
 }
 
+int
+hypersparc_getmid(void)
+{
+	u_int pcr = lda(SRMMU_PCR, ASI_SRMMU);
+	return ((pcr & HYPERSPARC_PCR_MID) >> 15);
+}
+
+
 /* Cypress 605 */
 struct module_info module_cypress = {
 	CPUTYP_CYPRESS,
@@ -1543,6 +1560,7 @@ struct module_info module_cypress = {
 	0,
 	0,
 	cypress_cache_enable,
+	cypress_getmid,
 	4096,
 	cypress_get_syncflt,
 	cypress_get_asyncflt,
@@ -1559,6 +1577,7 @@ struct module_info module_cypress = {
 	pmap_copy_page4m
 };
 
+
 /* Fujitsu Turbosparc */
 struct module_info module_turbosparc = {
 	CPUTYP_MS2,
@@ -1568,6 +1587,7 @@ struct module_info module_turbosparc = {
 	turbosparc_hotfix,
 	0,
 	turbosparc_cache_enable,
+	0,
 	256,
 	turbosparc_get_syncflt,
 	no_asyncflt_regs,
@@ -1643,6 +1663,7 @@ struct module_info module_viking = {
 	viking_hotfix,
 	viking_mmu_enable,
 	viking_cache_enable,
+	viking_getmid,
 	4096,
 	viking_get_syncflt,
 	no_asyncflt_regs,
@@ -1676,6 +1697,7 @@ void
 viking_hotfix(sc)
 	struct cpu_info *sc;
 {
+static	int mxcc = -1;
 	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
 	/* Test if we're directly on the MBus */
@@ -1697,8 +1719,12 @@ viking_hotfix(sc)
 	} else {
 		sc->cache_flush = viking_cache_flush;
 	}
-	if (cpus != NULL && cpus[0]->mxcc != sc->mxcc)
-		panic("[MXCC module mismatch]");
+
+	/* Check all modules have the same MXCC configuration */
+	if (mxcc != -1 && sc->mxcc != mxcc)
+		panic("MXCC module mismatch");
+
+	mxcc = sc->mxcc;
 
 	/* XXX! */
 	if (sc->mxcc)
@@ -1723,6 +1749,13 @@ viking_mmu_enable()
 	} else
 		pcr &= ~VIKING_PCR_TC;
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+}
+
+int
+viking_getmid(void)
+{
+	u_int v = ldda(MXCC_MBUSPORT, ASI_CONTROL) & 0xffffffff;
+	return ((v >> 24) & 0xf);
 }
 
 int
@@ -1994,6 +2027,9 @@ getcpuinfo(sc, node)
 						    "clock-frequency", 0);
 			}
 		}
+
+		if (sc->master && mp->minfo->getmid != NULL)
+			bootmid = mp->minfo->getmid();
 
 		/*
 		 * Copy CPU/MMU/Cache specific routines into cpu_info.
