@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.12 1997/10/08 01:04:31 enami Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.13 1998/03/30 01:53:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.12 1997/10/08 01:04:31 enami Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.13 1998/03/30 01:53:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ doit(f, fromp)
 {
 	int master, pid, on = 1;
 	int authenticated = 0;
-	register struct hostent *hp;
+	struct hostent *hp;
 	char utmphost[UT_HOSTSIZE + 1];
 	char *hostname;
 	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
@@ -348,11 +348,11 @@ control(pty, cp, n)
  */
 void
 protocol(f, p)
-	register int f, p;
+	int f, p;
 {
 	char pibuf[1024+1], fibuf[1024], *pbp = NULL, *fbp = NULL;
 					/* XXX gcc above */
-	register pcc = 0, fcc = 0;
+	int pcc = 0, fcc = 0;
 	int cc, nfd, n;
 	char cntl;
 
@@ -417,7 +417,7 @@ protocol(f, p)
 			if (fcc < 0 && errno == EWOULDBLOCK)
 				fcc = 0;
 			else {
-				register char *cp;
+				char *cp;
 				int left, n;
 
 				if (fcc <= 0)
@@ -590,7 +590,7 @@ void
 setup_term(fd)
 	int fd;
 {
-	register char *cp = index(term+ENVSIZE, '/');
+	char *cp = index(term+ENVSIZE, '/');
 	char *speed;
 	struct termios tt;
 
@@ -662,7 +662,7 @@ char *
 topdomain(h)
 	char *h;
 {
-	register char *p;
+	char *p;
 	char *maybe = NULL;
 	int dots = 0;
 
