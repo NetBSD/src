@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.31 2000/11/15 00:00:26 is Exp $
+.\"	$NetBSD: contents,v 1.32 2000/11/21 12:39:40 scw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,9 +116,13 @@ installing on Laptop machine.
 .			It Pa netbsd.VME147.gz
 A kernel for MVME147 boards.
 .			It Pa netbsd.VME162.gz
-A kernel for MVME162-LX boards.
+A kernel for MVME162 boards.
 .			It Pa netbsd.VME167.gz
 A kernel for MVME167 boards.
+.			It Pa netbsd.VME172.gz
+A kernel for MVME172 boards.
+.			It Pa netbsd.VME177.gz
+A kernel for MVME177 boards.
 .\}
 .		tag)
 .		It Pa sets/
