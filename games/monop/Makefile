@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1997/10/12 17:45:06 christos Exp $
+#	$NetBSD: Makefile,v 1.18 1998/09/12 19:05:48 wrstuden Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	monop
@@ -11,6 +11,9 @@ FILES=cards.pck
 FILESDIR=/usr/share/games
 
 monop: cards.pck
+
+initdeck: initdeck.c
+	${HOST_LINK.c} -o initdeck ${.CURDIR}/initdeck.c
 
 cards.pck: initdeck
 	${.OBJDIR}/initdeck ${.CURDIR}/cards.inp
