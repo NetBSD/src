@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_ass.h,v 1.7 2000/10/11 20:23:52 is Exp $	*/
+/*	$NetBSD: gsp_ass.h,v 1.8 2001/06/13 10:46:06 wiz Exp $	*/
 /*
  * GSP assembler - definitions
  *
@@ -17,7 +17,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Paul Mackerras.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
