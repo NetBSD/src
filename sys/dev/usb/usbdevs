@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.148 2001/02/26 20:53:43 soren Exp $
+$NetBSD: usbdevs,v 1.149 2001/03/15 20:09:50 abs Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -135,6 +135,7 @@ vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
 vendor ELECOM		0x056e	Elecom Corp. Ltd.
+vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
 vendor AVM		0x057c	AVM GmbH
@@ -493,6 +494,9 @@ product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
 /* Handspring, Inc. */
 product HANDSPRING VISOR	0x0100	Handspring Visor
+
+/* Hauppauge Computer Works */
+product HAUPPAUGE WINTV_USB_FM	0x4d12	WinTV USB FM
 
 /* HP products */
 product HP 4100C		0x0101	Scanjet 4100C
