@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.71 2003/01/18 06:45:07 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.72 2003/05/07 08:19:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -305,14 +305,13 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 /*
  * cpu_exit is called as the last action during exit.
  *
- * We clean up a little and then call switchexit() with the old proc
+ * We clean up the FPU state and then call switchexit() with the old proc
  * as an argument.  switchexit() switches to the idle context, schedules
  * the old vmspace and stack to be freed, then selects a new process to
  * run.
  *
- * If proc==0, we're an exiting lwp, and call switch_lwp_exit() instead of
- * switch_exit(), and only do LWP-appropriate cleanup (e.g. don't deactivate
- * the pmap).
+ * If proc==0, we're an exiting lwp and arrange to call lwp_exit2() instead
+ * of exit2().
  */
 void
 cpu_exit(l, proc)
