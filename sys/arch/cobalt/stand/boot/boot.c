@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2004/01/07 12:43:44 cdi Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2004/04/10 12:30:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include <lib/libkern/libkern.h>
 
 #include <sys/param.h>
+#include <sys/boot_flag.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
@@ -109,7 +110,8 @@ void start(void);
 static char *bootstring;
 
 static int patch_bootstring	(char *bootspec);
-static int get_bsdbootname	(char **dev, char **name, char **kname);
+static int get_bsdbootname(char **, char **);
+static int parse_bootname(char *, int, char **, char **);
 static int prominit		(unsigned int memsize);
 static int print_banner		(unsigned int memsize);
 
@@ -189,53 +191,120 @@ patch_bootstring(bootspec)
 /*
  * Extract NetBSD boot specification
  */
-int
-get_bsdbootname(dev, name, kname)
+static int
+get_bsdbootname(dev, kname)
 	char **dev;
-	char **name;
 	char **kname;
 {
-	char *spec;
+	int len, error;
+	char *bootstr_dev, *bootstr_kname;
+	char *prompt_dev, *prompt_kname;
+	char *ptr, *spec;
+	char c, namebuf[PATH_MAX];
 
-	*dev = NULL;
-	*name = NULL;
-	*kname = NULL;
+	bootstr_dev = prompt_dev = NULL;
+	bootstr_kname = prompt_kname = NULL;
 
-	if ( (spec = strstr(bootstring, "nbsd=")) != NULL) {
-		int len;
-		char *ptr = strchr(spec, ' ');
-
+	/* first, get bootname from bootstrings */
+	if ((spec = strstr(bootstring, "nbsd=")) != NULL) {
+		ptr = strchr(spec, ' ');
 		spec += 5; 	/* skip 'nbsd=' */
 		len = (ptr == NULL) ? strlen(spec) : ptr - spec;
-
 		if (len > 0) {
-			char *devname = alloc(len + 1);
-			if (devname != NULL) {
-				memcpy(devname, spec, len);
-				devname[len] = '\0';
-
-				if ( (ptr = memchr(devname,':',len)) != NULL) {
-					/* wdXX:kernel */
-					*ptr = '\0';
-					*dev = devname;
-
-					if (*++ptr)
-						*kname = ptr;
-
-					devname = alloc(len + 1);
-					if (devname != NULL) {
-						memcpy(devname, spec, len);
-						devname[len] = '\0';
-					}
-				}
-
-				*name = devname;
-				return (0);
-			}
+			if (parse_bootname(spec, len,
+			    &bootstr_dev, &bootstr_kname))
+				return 1;
 		}
 	}
 
-	return (1);
+	DPRINTF(("bootstr_dev = %s, bootstr_kname = %s\n",
+	    bootstr_dev ? bootstr_dev : "<NULL>",
+	    bootstr_kname ? bootstr_kname : "<NULL>"));
+
+	spec = NULL;
+	len = 0;
+
+	memset(namebuf, 0, sizeof namebuf);
+	printf("Boot [%s:%s]: ",
+	    bootstr_dev ? bootstr_dev : DEFBOOTDEV,
+	    bootstr_kname ? bootstr_kname : DEFKERNELNAME);
+
+	if (tgets(namebuf) == -1)
+		printf("\n");
+
+	ptr = namebuf;
+	while ((c = *ptr) != '\0') {
+		while (c == ' ')
+			c = *++ptr;
+		if (c == '\0')
+			break;
+		if (c == '-') {
+			while ((c = *++ptr) && c != ' ')
+				;
+#if notyet
+			BOOT_FLAG(c, boothowto);
+#endif
+		} else {
+			spec = ptr;
+			while ((c = *++ptr) && c != ' ')
+				;
+			if (c)
+				*ptr++ = '\0';
+			len = strlen(spec);
+		}
+	}
+
+	if (len > 0) {
+		if (parse_bootname(spec, len, &prompt_dev, &prompt_kname))
+			return 1;
+	}
+
+	DPRINTF(("prompt_dev = %s, prompt_kname = %s\n",
+	    prompt_dev ? prompt_dev : "<NULL>",
+	    prompt_kname ? prompt_kname : "<NULL>"));
+
+	if (prompt_dev)
+		*dev = prompt_dev;
+	else
+		*dev = bootstr_dev;
+
+	if (prompt_kname)
+		*kname = prompt_kname;
+	else
+		*kname = bootstr_kname;
+
+	DPRINTF(("dev = %s, kname = %s\n",
+	    *dev ? *dev : "<NULL>",
+	    *kname ? *kname : "<NULL>"));
+
+	return 0;
+}
+
+static int
+parse_bootname(spec, len, dev, kname)
+	char *spec;
+	int len;
+	char **dev;
+	char **kname;
+{
+	char *bootname, *ptr;
+
+	bootname = alloc(len + 1);
+	if (bootname == NULL)
+		return 1;
+	memcpy(bootname, spec, len);
+	bootname[len] = '\0';
+
+	if ((ptr = memchr(bootname, ':', len)) != NULL) {
+		/* "wdXX:kernel" */
+		*ptr = '\0';
+		*dev = bootname;
+		if (*++ptr)
+			*kname = ptr;
+	} else
+		/* "kernel" */
+		*kname = bootname;
+	return 0;
 }
 
 /*
@@ -272,7 +341,7 @@ int
 main(memsize)
 	unsigned int memsize;
 {
-	char *name, **namep, *dev, *kernel, *spec, *bi_addr;
+	char **namep, *dev, *kernel, *bi_addr;
 	char bootpath[PATH_MAX];
 	int win;
 	u_long marks[MARK_MAX];
@@ -295,31 +364,30 @@ main(memsize)
 	print_banner(memsize);
 
 	memset(marks, 0, sizeof marks);
-	get_bsdbootname(&dev, &name, &kernel);
+	get_bsdbootname(&dev, &kernel);
 
 	if (kernel != NULL) {
 		DPRINTF(("kernel: %s\n", kernel));
-		patch_bootstring(name);
-		win = (loadfile(name, marks, LOAD_KERNEL) == 0);
+		kernelnames[0] = kernel;
+		kernelnames[1] = NULL;
 	} else {
-		win = 0;
 		DPRINTF(("kernel: NULL\n"));
-		DPRINTF(("Kernel names: %p\n", kernelnames));
-		for (namep = kernelnames, win = 0;
-				(*namep != NULL) && !win;
-				namep++) {
-			kernel = *namep;
+	}
 
-			bootpath[0] = '\0';
+	win = 0;
+	DPRINTF(("Kernel names: %p\n", kernelnames));
+	for (namep = kernelnames, win = 0; (*namep != NULL) && !win; namep++) {
+		kernel = *namep;
 
-			strcpy(bootpath, (dev != NULL) ? dev : "wd0a");
-			strcat(bootpath, ":");
-			strcat(bootpath, kernel);
+		bootpath[0] = '\0';
 
-			printf("Loading: %s\n", bootpath);
-			patch_bootstring(bootpath);
-			win = (loadfile(bootpath, marks, LOAD_ALL) != -1);
-		}
+		strcpy(bootpath, dev ? dev : DEFBOOTDEV);
+		strcat(bootpath, ":");
+		strcat(bootpath, kernel);
+
+		printf("Loading: %s\n", bootpath);
+		patch_bootstring(bootpath);
+		win = (loadfile(bootpath, marks, LOAD_ALL) != -1);
 	}
 
 	if (win) {
