@@ -35,7 +35,7 @@
  *
  *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
  *
- *	$Id: genassym.c,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	$Id: genassym.c,v 1.2 1994/04/05 17:37:41 phil Exp $
  */
 
 #include "sys/param.h"
@@ -94,7 +94,7 @@ main()
 	printf("#define\tREGS_USP %d\n", &regs->pcb_usp);
 	printf("#define\tREGS_PSR %d\n", &regs->pcb_psr);
 
-	printf("#define\tPCB_ONSTACK %c\n", &pcb->pcb_onstack);
+	printf("#define\tPCB_ONSTACK %d\n", &pcb->pcb_onstack);
 	printf("#define\tPCB_FSR %d\n", &pcb->pcb_fsr);
 	for (i=0; i<8; i++)
 	  printf("#define\tPCB_F%d %d\n", i, &pcb->pcb_freg[i]);
