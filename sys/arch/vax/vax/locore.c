@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.51 2000/07/26 11:44:25 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.52 2000/09/04 11:46:33 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -130,6 +130,7 @@ _start(struct rpb *prpb)
 #if VAX410
 	case VAX_BTYP_420: /* They are very similar */
 		dep_call = &ka410_calls;
+		strcat(cpu_model, "3100");
 		if (((vax_siedata >> 8) & 0xff) == 1)
 			strcat(cpu_model, "/m{38,48}");
 		else if (((vax_siedata >> 8) & 0xff) == 0)
@@ -156,7 +157,10 @@ _start(struct rpb *prpb)
 #if VAX48
 	case VAX_BTYP_48:
 		dep_call = &ka48_calls;
-		strcat(cpu_model, "VAXstation 4000 VLC");
+		if (vax_confdata & 0x80)
+			strcat(cpu_model, "3100/m{30,40}");
+		else
+			strcat(cpu_model, "4000 VLC");
 		break;
 #endif
 #if VAX49
