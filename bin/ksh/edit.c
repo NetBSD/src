@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.11 2003/06/23 11:38:54 agc Exp $	*/
+/*	$NetBSD: edit.c,v 1.12 2003/08/26 07:28:39 wiz Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.11 2003/06/23 11:38:54 agc Exp $");
+__RCSID("$NetBSD: edit.c,v 1.12 2003/08/26 07:28:39 wiz Exp $");
 #endif
 
 
@@ -777,7 +777,7 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 		;
 	/* Go forwards to end of word */
 	for (end = start; end < buflen && IS_WORDC(buf[end]); end++) {
-		if (buf[end] == '\\' && (end+1) < buflen && buf[end+1] == ' ')
+		if (buf[end] == '\\' && (end+1) < buflen)
 			end++;
 	}
 
