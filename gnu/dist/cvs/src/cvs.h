@@ -393,6 +393,7 @@ extern char *emptydir_name PROTO ((void));
 
 extern int trace;		/* Show all commands */
 extern int noexec;		/* Don't modify disk anywhere */
+extern int nolock;		/* Don't create locks */
 extern int logoff;		/* Don't write history entry */
 
 extern int top_level_admin;
