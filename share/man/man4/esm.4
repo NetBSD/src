@@ -1,4 +1,4 @@
-.\"	$NetBSD: esm.4,v 1.4 2003/01/06 15:38:25 fredette Exp $
+.\"	$NetBSD: esm.4,v 1.5 2003/01/06 19:18:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Rene Hexel
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 8, 2001
+.Dd January 6, 2003
 .Dt ESM 4
 .Os
 .Sh NAME
@@ -44,8 +44,9 @@ Due to their power management capabilities, the Maestro chips are often used
 in laptop and notebook systems.
 .Pp
 The Maestro is a full-duplex device that allows independent playback and
-recording at sample rates between 4000 Hz and 48 kHz.  The sound processor
-is capable of handling and converting 8 and 16 bit mono and stereo data.
+recording at sample rates between 4000 Hz and 48 kHz.
+The sound processor is capable of handling and converting 8 and 16 bit mono
+and stereo data.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr joy 4 ,
@@ -58,5 +59,5 @@ device driver appeared in
 .Nx 1.6 .
 .Sh BUGS
 Currently, this driver only supports 16-bit mono recording; an unknown bug
-causes stereo recording to miss a channel.  Also not supported yet are 
-hardware volume settings, MIDI, and joystick input.
+causes stereo recording to miss a channel.
+Also not supported yet are hardware volume settings, MIDI, and joystick input.
