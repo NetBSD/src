@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.4 1998/11/04 23:28:15 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.5 1998/11/04 23:44:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ sqphymatch(parent, match, aux)
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_SEEQ &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_SEEQ_80220)
-		return (1);
+		return (10);
 
 	return (0);
 }
