@@ -34,8 +34,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.2.4.8 1994/01/11 13:40:01 mycroft Exp $
+ *	$Id: psl.h,v 1.2.4.9 1994/02/01 18:43:44 mycroft Exp $
  */
+
+#ifndef _I386_PSL_H_
+#define _I386_PSL_H_
 
 /*
  * 386 processor status longword.
@@ -109,3 +112,5 @@ enable_intr(void)
 	__asm __volatile("sti");
 }
 #endif
+
+#endif /* !_I386_PSL_H_ */
