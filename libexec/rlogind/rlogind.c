@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.27 2002/09/18 20:37:11 mycroft Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.28 2002/09/20 19:07:34 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.27 2002/09/18 20:37:11 mycroft Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.28 2002/09/20 19:07:34 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -460,8 +460,9 @@ protocol(f, p)
 	char pibuf[1024+1], fibuf[1024], *pbp = NULL, *fbp = NULL;
 					/* XXX gcc above */
 	int pcc = 0, fcc = 0;
-	int cc, nfd, n;
+	int cc, n;
 	char cntl;
+	struct pollfd set[2];
 
 	/*
 	 * Must ignore SIGTTOU, otherwise we'll stop
@@ -470,16 +471,10 @@ protocol(f, p)
 	 */
 	(void) signal(SIGTTOU, SIG_IGN);
 	send(f, oobdata, 1, MSG_OOB);	/* indicate new rlogin */
-	if (f > p)
-		nfd = f + 1;
-	else
-		nfd = p + 1;
+	set[0].fd = p;
+	set[1].fd = f;
 	for (;;) {
-		struct pollfd set[2];
-
-		set[0].fd = p;
 		set[0].events = POLLPRI;
-		set[1].fd = f;
 		set[1].events = 0;
 		if (fcc)
 			set[0].events |= POLLOUT;
