@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.643 2003/10/29 17:00:40 tsutsui Exp $
+#	$NetBSD: files,v 1.644 2003/11/16 12:10:41 tls Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -99,6 +99,7 @@ include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
 include "crypto/ripemd160/files.ripemd160"
 include "crypto/sha2/files.sha2"
+include "crypto/skipjack/files.skipjack"
 
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
