@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1998/09/05 14:46:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 1998/11/16 23:43:58 jonathan Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,7 @@ IMAGESIZE?=	12288 # 6MB in 512 byte blocks
 NEWFSOPTS?=
 MOUNT_POINT?=	/mnt
 BOOTINSTALL?=	true
+PRELABEL?=	true
 
 .ifdef DISKTYPE
 DISKTYPEARG=	-t ${DISKTYPE}
@@ -38,6 +39,7 @@ all:
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE} ${VND_GEOM}
+	${PRELABEL}
 	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	${BOOTINSTALL}
 	mount ${VND_DEV} ${MOUNT_POINT}
