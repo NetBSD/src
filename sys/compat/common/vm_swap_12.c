@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap_12.c,v 1.1.2.1 1997/02/14 15:02:28 mrg Exp $	*/
+/*	$NetBSD: vm_swap_12.c,v 1.1.2.2 1997/02/14 15:33:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -37,18 +37,18 @@
 
 #ifdef COMPAT_12
 int
-sys_oswapon(p, v, retval)
+compat_12_sys_swapon(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct sys_swapon_args ua;
-	struct sys_oswapon_args /* {
-		syscallarg(char	*)	path;
+	struct compat_12_sys_swapon_args /* {
+		syscallarg(const char *) name;
 	} */ *uap = v;
 
 	SCARG(&ua, cmd) = SWAP_ON;
-	SCARG(&ua, arg) = SCARG(uap, path);
+	SCARG(&ua, arg) = SCARG(uap, name);
 	SCARG(&ua, misc) = 0;	/* priority */
 	return (sys_swapon(p, &ua, retval));
 }
