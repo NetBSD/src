@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.18 2004/12/13 03:10:52 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.19 2004/12/15 16:29:53 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ __END_DECLS
  * functions that don't make sense without the previous functions
  * (pthread_attr_*). The pthread_cond_wait and pthread_cond_timedwait
  * functions are useful in implementing certain protection mechanisms,
- * though a non-buggy app shouldn't end up callung them in
+ * though a non-buggy app shouldn't end up calling them in
  * single-threaded mode.
  *
  * The rename is done as:
