@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstab.5,v 1.21 2000/11/09 00:06:17 lukem Exp $
+.\"	$NetBSD: fstab.5,v 1.22 2001/04/25 16:34:46 cjones Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -114,6 +114,9 @@ an implementation of /dev/fd
 a local
 .Ux
 filesystem
+.It Em filecore
+a filesystem for
+.Tn RISC\ OS
 .It Em kernfs
 various and sundry kernel statistics
 .It Em lfs
@@ -129,9 +132,15 @@ an
 .It Em nfs
 a Sun Microsystems compatible 
 .Dq Network File System
+.It Em ntfs
+a filesystem used by
+.Tn Windows NT .
+Still experimental.
 .It Em null
 a loop-back filesystem, allowing parts of the system to be viewed
 elsewhere.
+.It Em overlay
+a demonstration of layered filesystems.
 .It Em portal
 a general filesystem interface, currently supports TCP and FS mounts.
 .It Em procfs
@@ -295,17 +304,21 @@ resides in
 .El
 .Sh SEE ALSO
 .Xr getfsent 3 ,
+.Xr mount 8 ,
 .Xr mount_ados 8 ,
 .Xr mount_cd9660 8 ,
 .Xr mount_ext2fs 8 ,
 .Xr mount_fdesc 8 ,
 .Xr mount_ffs 8 ,
+.Xr mount_filecore 8 ,
 .Xr mount_kernfs 8 ,
 .Xr mount_lfs 8 ,
 .Xr mount_mfs 8 ,
 .Xr mount_msdos 8 ,
 .Xr mount_nfs 8 ,
+.Xr mount_ntfs 8 ,
 .Xr mount_null 8 ,
+.Xr mount_overlay 8 ,
 .Xr mount_portal 8 ,
 .Xr mount_procfs 8 ,
 .Xr mount_ufs 8 ,
