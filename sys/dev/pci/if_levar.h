@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.7 1998/08/15 10:51:19 mycroft Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.8 1998/10/02 00:20:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,4 +56,5 @@ struct le_softc {
 	bus_dma_tag_t	sc_dmat;	/* bus dma tag */
 	bus_dmamap_t	sc_dmam;	/* bus dma map */
 	int	sc_rap, sc_rdp;		/* offsets to LANCE registers */
+	int	sc_currentmedia;	/* currently used media type */
 };
