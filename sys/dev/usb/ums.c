@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.31 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.32 1999/09/12 08:21:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -301,6 +301,7 @@ ums_activate(self, act)
 	enum devact act;
 {
 	struct ums_softc *sc = (struct ums_softc *)self;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -308,10 +309,12 @@ ums_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
+		if (sc->sc_wsmousedev)
+			rv = config_deactivate(sc->sc_wsmousedev);
 		sc->sc_dying = 1;
 		break;
 	}
-	return (0);
+	return (rv);
 }
 
 int
