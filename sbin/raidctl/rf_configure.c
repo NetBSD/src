@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.21 2004/10/26 22:46:27 oster Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.22 2005/02/09 14:21:37 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.21 2004/10/26 22:46:27 oster Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.22 2005/02/09 14:21:37 xtraeme Exp $");
 #endif
 
 
@@ -139,9 +139,7 @@ static int rf_get_next_nonblank_line(char *buf, int len, FILE * fp,
  * the system via ioctl.
  */
 int 
-rf_MakeConfig(configname, cfgPtr)
-	char *configname;
-	RF_Config_t *cfgPtr;
+rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 {
 	int numscanned, val, r, c, retcode, aa, bb, cc;
 	char buf[256], buf1[256], *cp;
@@ -298,10 +296,7 @@ out:
  * information to be passed into the configuration code.
  */
 int 
-rf_MakeLayoutSpecificNULL(fp, cfgPtr, ignored)
-	FILE *fp;
-	RF_Config_t *cfgPtr;
-	void *ignored;
+rf_MakeLayoutSpecificNULL(FILE *fp, RF_Config_t *cfgPtr, void *ignored)
 {
 	cfgPtr->layoutSpecificSize = 0;
 	cfgPtr->layoutSpecific = NULL;
@@ -309,10 +304,7 @@ rf_MakeLayoutSpecificNULL(fp, cfgPtr, ignored)
 }
 
 int 
-rf_MakeLayoutSpecificDeclustered(configfp, cfgPtr, arg)
-	FILE *configfp;
-	RF_Config_t *cfgPtr;
-	void *arg;
+rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 {
 	int b, v, k, r, lambda, norotate, i, val, distSpare;
 	char *cfgBuf, *bdfile, *p, *smname;
@@ -435,11 +427,7 @@ rf_find_white(char *p)
  * specified as a parameter
  */
 static int 
-rf_search_file_for_start_of(string, buf, len, fp)
-	const char *string;
-	char *buf;
-	int len;
-	FILE *fp;
+rf_search_file_for_start_of(const char *string, char *buf, int len, FILE *fp)
 {
 	char *p;
 
@@ -458,11 +446,7 @@ rf_search_file_for_start_of(string, buf, len, fp)
 
 /* reads from file fp into buf until it finds an interesting line */
 int 
-rf_get_next_nonblank_line(buf, len, fp, errmsg)
-	char *buf;
-	int len;
-	FILE *fp;
-	const char *errmsg;
+rf_get_next_nonblank_line(char *buf, int len, FILE *fp, const char *errmsg)
 {
 	char *p;
 	int l;
@@ -498,9 +482,7 @@ rf_get_next_nonblank_line(buf, len, fp, errmsg)
  *
  */
 void *
-rf_ReadSpareTable(req, fname)
-	RF_SparetWait_t *req;
-	char *fname;
+rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 {
 	int i, j, numFound, linecount, tableNum, tupleNum,
 	    spareDisk, spareBlkOffset;
