@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.1 2000/11/05 17:17:15 onoe Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.2 2000/11/14 11:14:56 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,23 +77,21 @@
 static int  ieee1394_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		struct rtentry *);
 static void ieee1394_input(struct ifnet *, struct mbuf *);
+static struct mbuf *ieee1394_reass(struct ifnet *, struct mbuf *);
 
 static int
 ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	u_int16_t etype = 0;
-	int s, hdrlen, maxrec, len, off, tlen, error = 0;
-	struct mbuf *m = m0, **mp;
+	struct mbuf *m;
+	int s, hdrlen, error = 0;
 	struct rtentry *rt;
 	struct mbuf *mcopy = NULL;
-	struct ieee1394com *ic = (struct ieee1394com *)ifp;
+	struct ieee1394_hwaddr hwdst, *myaddr;
 #ifdef INET
 	struct ieee1394_arphdr *ah;
 #endif /* INET */
-	struct ieee1394_unfraghdr *iuh;
-	struct ieee1394_fraghdr *ifh;
-	struct ieee1394_hwaddr hwdst;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -135,27 +133,26 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
-		if (m->m_flags & (M_BCAST|M_MCAST))
+		if (m0->m_flags & (M_BCAST | M_MCAST))
 			memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
-		else if (!ieee1394arpresolve(ifp, rt, m, dst, &hwdst))
+		else if (!ieee1394arpresolve(ifp, rt, m0, dst, &hwdst))
 			return 0;	/* if not yet resolved */
 		/* if broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
+		if ((m0->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
+			mcopy = m_copy(m0, 0, M_COPYALL);
 		etype = htons(ETHERTYPE_IP);
 		break;
-
 	case AF_ARP:
-		ah = mtod(m, struct ieee1394_arphdr *);
+		ah = mtod(m0, struct ieee1394_arphdr *);
 		memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
 		etype = htons(ETHERTYPE_ARP);
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		if (m->m_flags & M_MCAST)
+		if (m0->m_flags & M_MCAST)
 			memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
-		else if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)&hwdst)) {
+		else if (!nd6_storelladdr(ifp, rt, m0, dst, (u_char *)&hwdst)) {
 			/* this must be impossible, so we bark */
 			printf("ieee1394_output: nd6_storelladdr failed\n");
 			return 0;
@@ -177,10 +174,11 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (mcopy)
 		looutput(ifp, mcopy, dst, rt);
 #if NBPFILTER > 0
+	/* XXX: emulate DLT_EN10MB */
 	if (ifp->if_bpf) {
 		struct mbuf mb;
 
-		mb.m_next = m;
+		mb.m_next = m0;
 		mb.m_len = 14;
 		mb.m_data = mb.m_dat;
 		((u_int32_t *)mb.m_data)[0] = 0;
@@ -190,97 +188,59 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		bpf_mtap(ifp->if_bpf, &mb);
 	}
 #endif
+	myaddr = (struct ieee1394_hwaddr *)LLADDR(ifp->if_sadl);
+	if ((ifp->if_flags & IFF_SIMPLEX) &&
+	    memcmp(&hwdst, myaddr, IEEE1394_ADDR_LEN) == 0)
+		return looutput(ifp, m0, dst, rt);
 
-	/* determine fragmented or not */
-	maxrec = 1 << (hwdst.iha_maxrec + 1);
-	if (m->m_flags & (M_BCAST|M_MCAST))
-		hdrlen = IEEE1394_STRHDRLEN + sizeof(*iuh);
-	else
-		hdrlen = IEEE1394_AWBHDRLEN + sizeof(*iuh);
-	if (m->m_pkthdr.len < maxrec - hdrlen) {
-		M_PREPEND(m, sizeof(hwdst) + sizeof(*iuh), M_DONTWAIT);
-		if (m == 0)
-			senderr(ENOBUFS);
-		memcpy(mtod(m, caddr_t), &hwdst, sizeof(hwdst));
-		iuh = (struct ieee1394_unfraghdr *)
-		    (mtod(m, caddr_t) + sizeof(hwdst));
-		iuh->iuh_ft = 0;
-		iuh->iuh_etype = etype;
+	if (m0->m_flags & (M_BCAST | M_MCAST)) {
+		hdrlen = IEEE1394_GASP_LEN;
+		/*
+		 * XXX: There should be sophisticated way to determine
+		 * maximum available rate for all IP capable nodes.
+		 */
+		hwdst.iha_speed = 0;
+	} else
+		hdrlen = 0;
 
-		s = splimp();
-		if (IF_QFULL(&ifp->if_snd)) {
-			IF_DROP(&ifp->if_snd);
-			splx(s);
-			senderr(ENOBUFS);
-		}
-		IF_ENQUEUE(&ifp->if_snd, m);
-		ifp->if_obytes += m0->m_pkthdr.len;
-		goto done;
-	}
-	printf("ieee1304_output: fragment packet\n");
-	hdrlen += sizeof(*ifh) - sizeof(*iuh);
-	len = maxrec - hdrlen;
-	off = len;
-	mp = &m0->m_nextpkt;
-	while (off < m0->m_pkthdr.len) {
-		MGETHDR(m, M_DONTWAIT, MT_HEADER);
-		if (m == NULL)
-			senderr(ENOBUFS);
-		m->m_flags |= m0->m_flags & (M_BCAST|M_MCAST);
-		tlen = len;
-		if (tlen > m0->m_pkthdr.len - off)
-			tlen = m0->m_pkthdr.len - off;
-		m->m_data += hdrlen - sizeof(hwdst);
-		m->m_len = sizeof(hwdst) + sizeof(*ifh);
-		memcpy(mtod(m, caddr_t), &hwdst, sizeof(hwdst));
-		ifh = (struct ieee1394_fraghdr *)
-		    (mtod(m, caddr_t) + sizeof(hwdst));
-		ifh->ifh_ft_size = htons(0xc000 | tlen);
-		ifh->ifh_etype_off = htons(off);
-		ifh->ifh_dgl = htons(ic->ic_dgl);
-		ifh->ifh_reserved = 0;
-		m->m_next = m_copy(m0, off, tlen);
-		if (m->m_next == NULL)
-			senderr(ENOBUFS);
-		off += tlen;
-		*mp = m;
-		mp = &m->m_nextpkt;
-	}
-	ifh->ifh_ft_size &= ~htons(0x4000);	/* note last fragment */
+	/*
+	 * XXX: The maximum possible rate depends on the topology.
+	 */
+	if (hwdst.iha_speed > myaddr->iha_speed)
+		hwdst.iha_speed = myaddr->iha_speed;
+	if (hwdst.iha_maxrec > myaddr->iha_maxrec)
+		hwdst.iha_maxrec = myaddr->iha_maxrec;
+	if (hwdst.iha_maxrec > (8 + hwdst.iha_speed))
+		hwdst.iha_maxrec = 8 + hwdst.iha_speed;
+	if (hwdst.iha_maxrec < 8)
+		hwdst.iha_maxrec = 8;
 
-	/* first fragment */
-	m = m0;
-	M_PREPEND(m, sizeof(hwdst) + sizeof(*ifh), M_DONTWAIT);
-	memcpy(mtod(m, caddr_t), &hwdst, sizeof(hwdst));
-	ifh = (struct ieee1394_fraghdr *)(mtod(m, caddr_t) + sizeof(hwdst));
-	ifh->ifh_ft_size = htons(0x4000 | (maxrec - hdrlen));
-	ifh->ifh_etype_off = etype;
-	ifh->ifh_dgl = htons(ic->ic_dgl++);
-	ifh->ifh_reserved = 0;
-
-	/* send off */
-
+	m0 = ieee1394_fragment(ifp, m0, (2<<hwdst.iha_maxrec) - hdrlen, etype);
+	if (m0 == NULL)
+		senderr(ENOBUFS);
 	s = splimp();
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
 		splx(s);
 		senderr(ENOBUFS);
 	}
-	while (m0 != NULL) {
-		m = m0->m_nextpkt;
-		m0->m_nextpkt = NULL;
-		IF_ENQUEUE(&ifp->if_snd, m0);
-		ifp->if_obytes += m0->m_pkthdr.len;
-		m0 = m;
-	}
-
-  done:
+	ifp->if_obytes += m0->m_pkthdr.len;
 	if (m0->m_flags & M_MCAST)
 		ifp->if_omcasts++;
+	while ((m = m0) != NULL) {
+		m0 = m->m_nextpkt;
+		M_PREPEND(m, sizeof(struct ieee1394_header), M_DONTWAIT);
+		if (m == NULL) {
+			splx(s);
+			senderr(ENOBUFS);
+		}
+		memcpy(mtod(m, caddr_t), &hwdst, sizeof(hwdst));
+		IF_ENQUEUE(&ifp->if_snd, m);
+	}
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
-	return error;
+	return 0;
 
   bad:
 	while (m0 != NULL) {
@@ -292,31 +252,114 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	return error;
 }
 
+struct mbuf *
+ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
+    u_int16_t etype)
+{
+	struct ieee1394com *ic = (struct ieee1394com *)ifp;
+	int totlen, fraglen, off;
+	struct mbuf *m, **mp;
+	struct ieee1394_fraghdr *ifh;
+	struct ieee1394_unfraghdr *iuh;
+
+	totlen = m0->m_pkthdr.len;
+	if (totlen + sizeof(struct ieee1394_unfraghdr) <= maxsize) {
+		M_PREPEND(m0, sizeof(struct ieee1394_unfraghdr), M_DONTWAIT);
+		if (m0 == NULL)
+			goto bad;
+		iuh = mtod(m0, struct ieee1394_unfraghdr *);
+		iuh->iuh_ft = 0;
+		iuh->iuh_etype = etype;
+		return m0;
+	}
+
+	fraglen = maxsize - sizeof(struct ieee1394_fraghdr);
+
+	M_PREPEND(m0, sizeof(struct ieee1394_fraghdr), M_DONTWAIT);
+	if (m0 == NULL)
+		goto bad;
+	ifh = mtod(m0, struct ieee1394_fraghdr *);
+	ifh->ifh_ft_size = htons(IEEE1394_FT_MORE | (totlen - 1));
+	ifh->ifh_etype_off = etype;
+	ifh->ifh_dgl = htons(ic->ic_dgl);
+	ifh->ifh_reserved = 0;
+	off = fraglen;
+	mp = &m0->m_nextpkt;
+	while (off < totlen) {
+		if (off + fraglen > totlen)
+			fraglen = totlen - off;
+		MGETHDR(m, M_DONTWAIT, MT_HEADER);
+		if (m == NULL)
+			goto bad;
+		m->m_flags |= m0->m_flags & (M_BCAST|M_MCAST);	/* copy bcast */
+		MH_ALIGN(m, sizeof(struct ieee1394_fraghdr));
+		m->m_len = sizeof(struct ieee1394_fraghdr);
+		ifh = mtod(m, struct ieee1394_fraghdr *);
+		ifh->ifh_ft_size =
+		    htons(IEEE1394_FT_SUBSEQ | IEEE1394_FT_MORE | (totlen - 1));
+		ifh->ifh_etype_off = htons(off);
+		ifh->ifh_dgl = htons(ic->ic_dgl);
+		ifh->ifh_reserved = 0;
+		m->m_next = m_copy(m0, off + sizeof(struct ieee1394_fraghdr),
+		    fraglen);
+		if (m->m_next == NULL)
+			goto bad;
+		m->m_pkthdr.len = sizeof(struct ieee1394_fraghdr) + fraglen;
+		off += fraglen;
+		*mp = m;
+		mp = &m->m_nextpkt;
+	}
+	ifh->ifh_ft_size &= ~htons(IEEE1394_FT_MORE);	/* last fragment */
+	m_adj(m0, -(m0->m_pkthdr.len - maxsize));
+
+	ic->ic_dgl++;
+	return m0;
+
+  bad:
+	while ((m = m0) != NULL) {
+		m0 = m->m_nextpkt;
+		m->m_nextpkt = NULL;
+		m_freem(m);
+	}
+	return NULL;
+}
+
 static void
 ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	u_int16_t etype;
 	int s;
+	struct ieee1394_header *ih;
 	struct ieee1394_unfraghdr *iuh;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return;
 	}
+	if (m->m_len < sizeof(*ih) + sizeof(*iuh)) {
+		m = m_pullup(m, sizeof(*ih) + sizeof(*iuh));
+		if (m == NULL)
+			return;
+	}
 
-	iuh = mtod(m, struct ieee1394_unfraghdr *);
-	if (iuh->iuh_ft != 0) {
-		printf("%s: ieee1394_input: fragment not implemented yet\n",
-		    ifp->if_xname);
-		m_freem(m);
-		return;
+	ih = mtod(m, struct ieee1394_header *);
+	iuh = (struct ieee1394_unfraghdr *)&ih[1];
+
+	if (ntohs(iuh->iuh_ft) & (IEEE1394_FT_SUBSEQ | IEEE1394_FT_MORE)) {
+		m = ieee1394_reass(ifp, m);
+		if (m == NULL)
+			return;
+		ih = mtod(m, struct ieee1394_header *);
+		iuh = (struct ieee1394_unfraghdr *)&ih[1];
 	}
 	etype = ntohs(iuh->iuh_etype);
 
 	/* strip off the ieee1394 header */
-	m_adj(m, sizeof(struct ieee1394_unfraghdr));
+	m_adj(m, sizeof(struct ieee1394_header) +
+	    sizeof(struct ieee1394_unfraghdr));
 #if NBPFILTER > 0
+	/* XXX: emulate DLT_EN10MB */
 	if (ifp->if_bpf) {
 		struct mbuf mb;
 
@@ -364,6 +407,159 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 	splx(s);
 }
 
+static struct mbuf *
+ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
+{
+	struct ieee1394com *ic = (struct ieee1394com *)ifp;
+	struct ieee1394_header *ih;
+	struct ieee1394_fraghdr *ifh;
+	struct ieee1394_unfraghdr *iuh;
+	struct ieee1394_reassq *rq;
+	struct ieee1394_reass_pkt *rp, *trp, *nrp;
+	int len;
+	u_int16_t off, ftype, size, dgl;
+
+	if (m0->m_len < sizeof(*ih) + sizeof(*ifh)) {
+		m0 = m_pullup(m0, sizeof(*ih) + sizeof(*ifh));
+		if (m0 == NULL)
+			return NULL;
+	}
+	ih = mtod(m0, struct ieee1394_header *);
+	ifh = (struct ieee1394_fraghdr *)&ih[1];
+	m_adj(m0, sizeof(*ih) + sizeof(*ifh));
+	size = ntohs(ifh->ifh_ft_size);
+	ftype = size & (IEEE1394_FT_SUBSEQ | IEEE1394_FT_MORE);
+	size = (size & ~ftype) + 1;
+	dgl = ifh->ifh_dgl;
+	len = m0->m_pkthdr.len;
+	if (ftype & IEEE1394_FT_SUBSEQ) {
+		m0->m_flags &= ~M_PKTHDR;
+		off = ntohs(ifh->ifh_etype_off);
+	} else
+		off = 0;
+
+	for (rq = LIST_FIRST(&ic->ic_reassq); ; rq = LIST_NEXT(rq, rq_node)) {
+		if (rq == NULL) {
+			/*
+			 * Create a new reassemble queue head for the node.
+			 */
+			rq = malloc(sizeof(*rq), M_FTABLE, M_NOWAIT);
+			if (rq == NULL) {
+				m_freem(m0);
+				return NULL;
+			}
+			memcpy(rq->rq_uid, ih->ih_uid, IEEE1394_ADDR_LEN);
+			LIST_INIT(&rq->rq_pkt);
+			LIST_INSERT_HEAD(&ic->ic_reassq, rq, rq_node);
+			break;
+		}
+		if (memcmp(rq->rq_uid, ih->ih_uid, IEEE1394_ADDR_LEN) == 0)
+			break;
+	}
+	for (rp = LIST_FIRST(&rq->rq_pkt); rp != NULL; rp = nrp) {
+		nrp = LIST_NEXT(rp, rp_next);
+		if (rp->rp_dgl != dgl)
+			continue;
+		/* sanity check: datagram size must be same for all fragments */
+		if (rp->rp_size != size) {
+			/*
+			 * This is possibly by wrapping dgl value.
+			 * Destroy previous received fragment.
+			 */
+			LIST_REMOVE(rp, rp_next);
+			m_freem(rp->rp_m);
+			free(rp, M_FTABLE);
+			continue;
+		}
+		if (rp->rp_off + rp->rp_len == off) {
+			/*
+			 * All the subsequent fragments received in sequence
+			 * come here.
+			 * Concatinate mbuf to previous one instead of
+			 * allocating new reassemble queue structure,
+			 * and try to merge more with the subsequent fragment
+			 * in the queue.
+			 */
+			m_cat(rp->rp_m, m0);
+			rp->rp_len += len;
+			while (rp->rp_off + rp->rp_len < size &&
+			    nrp != NULL && nrp->rp_dgl == dgl &&
+			    nrp->rp_off == rp->rp_off + rp->rp_len) {
+				LIST_REMOVE(nrp, rp_next);
+				m_cat(rp->rp_m, nrp->rp_m);
+				rp->rp_len += nrp->rp_len;
+				nrp = LIST_NEXT(rp, rp_next);
+			}
+			m0 = NULL;	/* mark merged */
+			break;
+		}
+		if (off + m0->m_pkthdr.len == rp->rp_off) {
+			m_cat(m0, rp->rp_m);
+			rp->rp_m = m0;
+			rp->rp_off = off;
+			rp->rp_len += len;
+			m0 = NULL;	/* mark merged */
+			break;
+		}
+		if (rp->rp_off > off) {
+			/* insert before rp */
+			nrp = rp;
+			break;
+		}
+		if (nrp == NULL || nrp->rp_dgl != dgl) {
+			/* insert after rp */
+			nrp = NULL;
+			break;
+		}
+	}
+	if (m0 == NULL) {
+		if (rp->rp_off != 0 || rp->rp_len != size)
+			return NULL;
+		/* fragment done */
+		LIST_REMOVE(rp, rp_next);
+		m0 = rp->rp_m;
+		m0->m_pkthdr.len = rp->rp_len;
+		M_PREPEND(m0, sizeof(*ih) + sizeof(*iuh), M_DONTWAIT);
+		if (m0 != NULL) {
+			ih = mtod(m0, struct ieee1394_header *);
+			iuh = (struct ieee1394_unfraghdr *)&ih[1];
+			memcpy(ih, &rp->rp_hdr, sizeof(*ih));
+			iuh->iuh_ft = 0;
+			iuh->iuh_etype = rp->rp_etype;
+		}
+		free(rp, M_FTABLE);
+		return m0;
+	}
+
+	/*
+	 * New fragment received.  Allocate reassemble queue structure.
+	 */
+	trp = malloc(sizeof(*trp), M_FTABLE, M_NOWAIT);
+	if (trp == NULL) {
+		m_freem(m0);
+		return NULL;
+	}
+	trp->rp_m = m0;
+	memcpy(&trp->rp_hdr, ih, sizeof(*ih));
+	trp->rp_size = size;
+	trp->rp_etype = ifh->ifh_etype_off;	 /* valid only if off==0 */
+	trp->rp_off = off;
+	trp->rp_dgl = dgl;
+	trp->rp_len = len;
+
+	if (rp == NULL) {
+		/* first fragment for the dgl */
+		LIST_INSERT_HEAD(&rq->rq_pkt, trp, rp_next);
+	} else if (nrp == NULL) {
+		/* no next fragment for the dgl */
+		LIST_INSERT_AFTER(rp, trp, rp_next);
+	} else {
+		/* there is a hole */
+		LIST_INSERT_BEFORE(nrp, trp, rp_next);
+	}
+	return NULL;
+}
+
 const char *
 ieee1394_sprintf(const u_int8_t *laddr)
 {
@@ -379,6 +575,8 @@ void
 ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 {
 	struct sockaddr_dl *sdl;
+	struct ieee1394_hwaddr *baddr;
+	struct ieee1394com *ic = (struct ieee1394com *)ifp;
 
 	ifp->if_type = IFT_IEEE1394;
 	ifp->if_addrlen = sizeof(struct ieee1394_hwaddr);
@@ -394,8 +592,12 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 		memcpy(LLADDR(sdl), hwaddr, ifp->if_addrlen);
 	}
 	ifp->if_broadcastaddr = malloc(ifp->if_addrlen, M_DEVBUF, M_WAITOK);
-	memcpy(ifp->if_broadcastaddr, hwaddr, ifp->if_addrlen);
-	memset(ifp->if_broadcastaddr, 0xff, IEEE1394_ADDR_LEN);
+	baddr = (struct ieee1394_hwaddr *)ifp->if_broadcastaddr;
+	memset(baddr->iha_uid, 0xff, IEEE1394_ADDR_LEN);
+	baddr->iha_speed = 0;	/*XXX*/
+	baddr->iha_maxrec = 512 << baddr->iha_speed;
+	memset(baddr->iha_offset, 0, sizeof(baddr->iha_offset));
+	LIST_INIT(&ic->ic_reassq);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394.h,v 1.1 2000/11/05 17:17:15 onoe Exp $	*/
+/*	$NetBSD: if_ieee1394.h,v 1.2 2000/11/14 11:14:56 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,18 +39,20 @@
 #ifndef _NET_IF_IEEE1394_H_
 #define _NET_IF_IEEE1394_H_
 
-/* pseudo header */
-struct ieee1394_header {
-	u_int8_t	ih_dstaddr[8];
-	u_int8_t	ih_srcaddr[8];
-};
-
 /* hardware address information for arp / nd */
 struct ieee1394_hwaddr {
 	u_int8_t	iha_uid[8];
 	u_int8_t	iha_maxrec;
 	u_int8_t	iha_speed;
 	u_int8_t	iha_offset[6];
+};
+
+/* pseudo header */
+struct ieee1394_header {
+	u_int8_t	ih_uid[8];		/* dst/src uid */
+	u_int8_t	ih_maxrec;		/* dst maxrec for tx */
+	u_int8_t	ih_speed;		/* speed */
+	u_int8_t	ih_offset[6];		/* dst offset */
 };
 
 /* unfragment encapsulation header */
@@ -67,22 +69,43 @@ struct ieee1394_fraghdr {
 	u_int16_t	ifh_reserved;
 };
 
+#define	IEEE1394_FT_SUBSEQ	0x8000
+#define	IEEE1394_FT_MORE	0x4000
+
 #define	IEEE1394MTU		1500
 
-#define	IEEE1394_STRHDRLEN	16
-#define	IEEE1394_AWBHDRLEN	20
+#define	IEEE1394_GASP_LEN	8		/* GASP header for Stream */
 #define	IEEE1394_ADDR_LEN	8
 #define	IEEE1394_CRC_LEN	4
+
+struct ieee1394_reass_pkt {
+	LIST_ENTRY(ieee1394_reass_pkt) rp_next;
+	struct mbuf	*rp_m;
+	struct ieee1394_header rp_hdr;
+	u_int16_t	rp_size;
+	u_int16_t	rp_etype;
+	u_int16_t	rp_off;
+	u_int16_t	rp_dgl;
+	u_int16_t	rp_len;
+};
+
+struct ieee1394_reassq {
+	LIST_ENTRY(ieee1394_reassq) rq_node;
+	LIST_HEAD(, ieee1394_reass_pkt) rq_pkt;
+	u_int8_t	rq_uid[8];
+};
 
 struct ieee1394com {
 	struct ifnet	ic_if;
 	struct ieee1394_hwaddr ic_hwaddr;
 	u_int16_t	ic_dgl;
+	LIST_HEAD(, ieee1394_reassq) ic_reassq;
 };
 
 const char *ieee1394_sprintf(const u_int8_t *);
 void ieee1394_ifattach(struct ifnet *, const struct ieee1394_hwaddr *);
 void ieee1394_ifdetach(struct ifnet *);
 int  ieee1394_ioctl(struct ifnet *, u_long, caddr_t);
+struct mbuf * ieee1394_fragment(struct ifnet *, struct mbuf *, int, u_int16_t);
 
 #endif /* _NET_IF_IEEE1394_H_ */

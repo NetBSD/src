@@ -101,10 +101,8 @@ struct fwohci_ctx {
 };
 
 struct fwohci_uidtbl {
-	struct fwohci_uident {
-		u_int8_t	fu_uid[4];
-		u_int8_t	fu_valid;
-	} fu_hi, fu_lo;
+	int		fu_valid;
+	u_int8_t	fu_uid[8];
 };
 
 struct fwohci_softc {
