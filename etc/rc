@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.124.2.1 1999/04/13 18:25:07 tron Exp $
+#	$NetBSD: rc,v 1.124.2.2 1999/08/29 11:21:02 he Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -345,7 +345,9 @@ virecovery=`echo /var/tmp/vi.recover/recover.*`
 if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
 	echo preserving editor files
 	for i in $virecovery; do
-		sendmail -t < $i
+		if [ -f $i ]; then
+			sendmail -t < $i
+		fi
 	done
 fi
 
