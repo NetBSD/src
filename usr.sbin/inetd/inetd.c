@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.83 2002/07/04 12:35:19 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.84 2002/09/19 21:59:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.83 2002/07/04 12:35:19 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.84 2002/09/19 21:59:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1053,8 +1053,12 @@ setup(sep)
 		return;
 	}
 	/* Set all listening sockets to close-on-exec. */
-	if (fcntl(sep->se_fd, F_SETFD, FD_CLOEXEC) < 0)
-		syslog(LOG_ERR, "fcntl (F_SETFD, FD_CLOEXEC): %m");
+	if (fcntl(sep->se_fd, F_SETFD, FD_CLOEXEC) < 0) {
+		syslog(LOG_ERR, "%s/%s: fcntl(F_SETFD, FD_CLOEXEC): %m",
+		    sep->se_service, sep->se_proto);
+		close(sep->se_fd);
+		return;
+	}
 
 #define	turnon(fd, opt) \
 setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
