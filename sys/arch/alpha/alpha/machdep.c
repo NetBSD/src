@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.98 1998/01/31 02:20:44 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.99 1998/01/31 10:32:49 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 1998/01/31 02:20:44 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 1998/01/31 10:32:49 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,6 +247,15 @@ alpha_init(pfn, ptb, bim, bip)
 	 * until PROM mappings go away in consinit.
 	 */
 	init_prom_interface();
+
+	hz = hwrpb->rpb_intr_freq >> 12;
+	if (!(60 <= hz && hz <= 10240)) {
+		hz = 1024;
+#ifdef DIAGNOSTIC
+		printf("rpb_intr_freq of %ld=>%d hz was not believed\n",
+			hwrpb->rpb_intr_freq, hz);
+#endif
+	}
 
 	/*
 	 * Check for a bootinfo from the boot program.
