@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm.c	5.18 (Berkeley) 5/7/91"; */
-static char rcsid[] = "$Id: kvm.c,v 1.9 1993/06/01 01:48:36 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.10 1993/06/15 07:16:06 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -898,18 +898,22 @@ kvm_procreadstr(p, addr, buf, len)
         const unsigned addr, buf;
 	unsigned len;
 {
-	int	done;
+	int	done, little;
+	char	copy[200], *pb;
 	char	a, *bp = (char *) buf;
 
-	/* XXX -- should be optimized */
-
 	done = 0;
-	while (len && kvm_procread(p, addr+done, &a, 1) == 1) {
-		*bp++ = a;
-		if (a == '\0')
+	while (len) {
+		little = kvm_procread(p, addr+done, copy, MIN(len, sizeof copy));
+		if (little<1)
+			break;
+		pb = copy;
+		while (little--) {
+			len--;
+			if( (*bp++ = *pb++) == '\0' )
 			return done;
 		done++;
-		len--;
+		}
 	}
 	return done;
 }
