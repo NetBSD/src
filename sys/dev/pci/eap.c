@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.3 1998/05/02 02:36:30 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.4 1998/05/02 08:21:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -725,7 +725,7 @@ eap_set_params(addr, setmode, usemode, p, r)
 	DPRINTFN(2, ("eap_set_params: old ICSC = 0x%08x\n", 
 		     EREAD4(sc, EAP_ICSC)));
 	div = EREAD4(sc, EAP_ICSC) & ~EAP_PCLKBITS;
-        div |= EAP_SET_PCLKDIV(EAP_XTAL_FREQ / p->sample_rate);
+        div |= EAP_SET_PCLKDIV(EAP_XTAL_FREQ / p->sample_rate - 2);
 	div |= EAP_CCB_INTRM;
         EWRITE4(sc, EAP_ICSC, div);
 	DPRINTFN(2, ("eap_set_params: set ICSC = 0x%08x\n", div));
@@ -1222,7 +1222,7 @@ eap_mappage(addr, mem, off, prot)
 	struct eap_softc *sc = addr;
         struct eap_dma *p;
 
-        for (p = sc->sc_dmas; p && KERNADDR(p) != addr; p = p->next)
+        for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
 		;
 	if (!p)
 		return (-1);
