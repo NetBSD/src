@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1998/05/09 17:22:08 kleink Exp $	*/
+/*	$NetBSD: main.c,v 1.11.2.1 2000/10/19 17:05:34 he Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.11 1998/05/09 17:22:08 kleink Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.11.2.1 2000/10/19 17:05:34 he Exp $");
 #endif
 
 extern char *configfilename;
@@ -77,6 +77,10 @@ static void resetlogging __P((void *));
 
 /* To shut up gcc -Wstrict-prototypes */
 int main __P((int argc, char **argv));
+#ifdef __STDC__
+void log(int severity, int syserr, const char *format, ...)
+	__attribute__((__format__(__printf__, 3, 4)));
+#endif
 
 int
 register_input_handler(fd, func)
@@ -667,7 +671,7 @@ resetlogging(arg)
  */
 #ifdef __STDC__
 void
-log(int severity, int syserr, char *format, ...)
+log(int severity, int syserr, const char *format, ...)
 {
     va_list ap;
     static char fmt[211] = "warning - ";
@@ -708,9 +712,9 @@ log(severity, syserr, format, va_alist)
 	    gettimeofday(&now,NULL);
 	    t = now.tv_sec;
 	    thyme = localtime(&t);
-	    strftime(tbuf, sizeof(tbuf), "%X.%%03d ", thyme);
-	    fprintf(stderr, tbuf, now.tv_usec / 1000);
-	    fprintf(stderr, "%s", msg);
+	    strftime(tbuf, sizeof(tbuf), "%X", thyme);
+	    fprintf(stderr, "%s.%03ld %s", tbuf, (long)now.tv_usec / 1000,
+		msg);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
 	    else
