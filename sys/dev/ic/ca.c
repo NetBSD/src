@@ -1,4 +1,4 @@
-/*	$NetBSD: ca.c,v 1.7 2000/06/13 13:36:45 ad Exp $	*/
+/*	$NetBSD: ca.c,v 1.8 2000/06/20 15:04:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.7 2000/06/13 13:36:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.8 2000/06/20 15:04:50 ad Exp $");
 
 #include "rnd.h"
 
@@ -493,8 +493,8 @@ cadone(ccb, error)
 	} else
 		bp->b_resid = bp->b_bcount - ccb->ccb_datasize;
 
-	cac_ccb_free(sc->sc_cac, ccb);
 	disk_unbusy(&sc->sc_dk, ccb->ccb_datasize);
+	cac_ccb_free(sc->sc_cac, ccb);
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
 #endif
