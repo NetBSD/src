@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.h,v 1.7 2004/11/15 17:16:28 oster Exp $	*/
+/*	$NetBSD: rf_revent.h,v 1.8 2005/02/05 23:32:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,7 +43,7 @@ RF_ReconEvent_t *rf_GetNextReconEvent(RF_RaidReconDesc_t * reconDesc);
 
 void rf_CauseReconEvent(RF_Raid_t * raidPtr, RF_RowCol_t col,
 			void *arg, RF_Revent_t type);
-
+void rf_DrainReconEventQueue(RF_RaidReconDesc_t *reconDesc);
 void rf_FreeReconEventDesc(RF_ReconEvent_t * event);
 
 #endif				/* !_RF__RF_REVENT_H_ */
