@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.2 2002/02/11 17:13:28 uch Exp $	*/
+/*	$NetBSD: kloader.c,v 1.3 2002/02/28 01:59:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -149,9 +149,6 @@ kloader_reboot()
 	if (!kloader.setuped)
 		return;
 
-#ifdef KLOADER_DEBUG
-	kloader_bootinfo_dump();
-#endif
 	printf("Rebooting...\n");
 
 	(*kloader.ops->jump) (kloader.loader, kloader.loader_sp,
@@ -420,19 +417,19 @@ kloader_bootinfo_dump()
 
 	dbg_banner_function();
 	printf("[bootinfo] addr=%p\n", kbi);
-#define _(m, fmt)	printf(" - %-15s= " #fmt "\n", #m, bi->m)
-	_(length, %d);
-	_(magic, 0x%08x);
-	_(fb_addr, %p);
-	_(fb_line_bytes, %d);
-	_(fb_width, %d);
-	_(fb_height, %d);
-	_(fb_type, %d);
-	_(bi_cnuse, %d);
-	_(platid_cpu, 0x%08lx);
-	_(platid_machine, 0x%08lx);
-	_(timezone, 0x%08lx);
-#undef _
+#define PRINT(m, fmt)	printf(" - %-15s= " #fmt "\n", #m, bi->m)
+	PRINT(length, %d);
+	PRINT(magic, 0x%08x);
+	PRINT(fb_addr, %p);
+	PRINT(fb_line_bytes, %d);
+	PRINT(fb_width, %d);
+	PRINT(fb_height, %d);
+	PRINT(fb_type, %d);
+	PRINT(bi_cnuse, %d);
+	PRINT(platid_cpu, 0x%08lx);
+	PRINT(platid_machine, 0x%08lx);
+	PRINT(timezone, 0x%08lx);
+#undef PRINT
 
 	printf("[args]\n");
 	for (i = 0; i < kbi->argc; i++) {
