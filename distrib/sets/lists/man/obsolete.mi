@@ -1,5 +1,6 @@
-# $NetBSD: obsolete.mi,v 1.54 2002/10/14 06:31:41 takemura Exp $
+# $NetBSD: obsolete.mi,v 1.55 2002/10/17 12:27:58 lukem Exp $
 /usr/share/info/g++FAQ.info
+/usr/share/info/tar.info
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
