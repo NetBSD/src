@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.44 2002/11/28 16:18:49 jdolecek Exp $	*/
+/*	$NetBSD: kdump.c,v 1.45 2002/11/29 19:15:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.44 2002/11/28 16:18:49 jdolecek Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.45 2002/11/29 19:15:41 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -656,7 +656,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-"usage: kdump [-dnlRT] [-e emulation] [-f trfile] [-m maxdata] [-p pid]\n"
-"             [-t [cnis]] [trfile]\n");
+"usage: kdump [-dlNnRT] [-e emulation] [-f file] [-m maxdata] [-p pid]\n"
+"             [-t trstr] [file]\n");
 	exit(1);
 }
