@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.65 1997/11/30 23:18:59 mjacob Exp $
+# $NetBSD: ALPHA,v 1.66 1998/01/15 07:17:19 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -192,8 +192,8 @@ lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
-awdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
-awdc1	at	isa? port 0x170 irq 15
+wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
+wdc1	at	isa? port 0x170 irq 15
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #audio*	at	wss?
 aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
@@ -232,7 +232,14 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
 # ST506/ESDI/IDE devices
-awd*	at	awdc? drive ?
+wd*	at	wdc? drive ?
+
+# ATAPI bus support
+atapibus* at	wdc?
+
+# ATAPI devices
+sd*	at	atapibus? drive ?		# ATAPI disk devices
+cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Workstation Console attachments
 #wscons* at	cfb?
