@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.7 1994/12/03 14:17:20 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.8 1995/01/15 06:27:56 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -89,16 +89,11 @@ static int		ncr53c96_reset_target(int adapter, int target);
 static int		ncr53c96_poll(int adapter, int timeout);
 static int		ncr53c96_send_cmd(struct scsi_xfer *xs);
 
-static char scsi_name[] = "ncr96scsi";
-
 struct scsi_adapter	ncr53c96_switch = {
 	ncr53c96_scsi_cmd,		/* scsi_cmd()		*/
 	ncr53c96_minphys,		/* scsi_minphys()	*/
 	0,				/* open_target_lu()	*/
 	0,				/* close_target_lu()	*/
-	ncr53c96_adapter_info,		/* adapter_info()	*/
-	scsi_name,			/* name			*/
-	{0, 0}				/* spare[3]		*/
 };
 
 /* This is copied from julian's bt driver */
@@ -108,9 +103,6 @@ struct scsi_device ncr53c96_dev = {
 	NULL,		/* have a queue, served by this (?) */
 	NULL,		/* have no async handler.	    */
 	NULL,		/* Use default "done" routine.	    */
-	"ncr53c96",
-	0,
-	0, 0
 };
 
 extern int	matchbyname();
@@ -189,7 +181,7 @@ ncr96attach(parent, dev, aux)
 	ncr53c96data[unit] = ncr53c96 = (struct ncr53c96_data *) dev;
 
 	ncr53c96->sc_link.scsibus = unit;
-	ncr53c96->sc_link.adapter_targ = 7;
+	ncr53c96->sc_link.adapter_target = 7;
 	ncr53c96->sc_link.adapter = &ncr53c96_switch;
 	ncr53c96->sc_link.device = &ncr53c96_dev;
 
@@ -249,7 +241,7 @@ ncr53c96_scsi_cmd(struct scsi_xfer *xs)
 			ncr53c96_reset_target(xs->sc_link->scsibus,
 						xs->sc_link->target);
 			if (ncr53c96_poll(xs->sc_link->scsibus, xs->timeout)) {
-				return (HAD_ERROR);
+				return (COMPLETE);
 			}
 			return (COMPLETE);
 		}
@@ -273,7 +265,7 @@ ncr53c96_scsi_cmd(struct scsi_xfer *xs)
 	switch(r) {
 		case COMPLETE: case SUCCESSFULLY_QUEUED:
 			r = SUCCESSFULLY_QUEUED;
-			if (xs->flags&SCSI_NOMASK)
+			if (xs->flags&SCSI_POLL)
 				r = COMPLETE;
 			break;
 		default:
@@ -356,6 +348,7 @@ do_send_cmd(struct scsi_xfer *xs)
 	int			i, stat, is, intr;
 	int			status, msg, phase;
 
+	xs->resid=0;
 	i = (int) ncr->statreg;			/* clear interrupts */
 	ncr->cmdreg = NCR96_CMD_CLRFIFO;	/* and fifo */
 
@@ -450,13 +443,13 @@ if (d<=0) printf("read timeout.\n");
 
 have_error:
 	xs->error = XS_DRIVER_STUFFUP;
-	return HAD_ERROR;
+	return COMPLETE;
 }
 
 static int
 ncr53c96_send_cmd(struct scsi_xfer *xs)
 {
-	int	r;
+	int	r=COMPLETE;
 
 	if (xs->sc_link->target >= 5) ncr53c96_show_scsi_cmd(xs);
 	switch (xs->cmd->opcode) {
@@ -465,7 +458,7 @@ ncr53c96_send_cmd(struct scsi_xfer *xs)
 			r = do_send_cmd(xs);
 		default:
 			xs->error = XS_DRIVER_STUFFUP;
-			r = HAD_ERROR;
+			r = COMPLETE;
 	}
 	return r;
 }
