@@ -1,4 +1,4 @@
-#	$NetBSD: changelist,v 1.5 1997/09/10 06:05:44 mikel Exp $
+#	$NetBSD: changelist,v 1.6 1998/11/25 08:30:42 msaitoh Exp $
 #	from: @(#)changelist	8.1 (Berkeley) 6/9/93
 #
 # List of files which the security script backs up and checks
@@ -6,6 +6,7 @@
 
 /etc/Distfile
 /etc/aliases
+/etc/bootparams
 /etc/changelist
 /etc/crontab
 /etc/csh.cshrc
@@ -17,8 +18,13 @@
 /etc/exports
 /etc/fstab
 /etc/ftpusers
+/etc/gettytab
 /etc/group
+/etc/hosts
+/etc/hosts.allow
+/etc/hosts.deny
 /etc/hosts.equiv
+/etc/ifaliases
 /etc/inetd.conf
 /etc/ld.so.conf
 /etc/lkm.conf
@@ -26,7 +32,9 @@
 /etc/master.passwd
 /etc/monthly
 /etc/monthly.conf
+/etc/myname
 /etc/named.boot
+/etc/netgroup
 /etc/netstart
 /etc/networks
 /etc/newsyslog.conf
@@ -62,3 +70,4 @@
 /root/.profile
 /root/.rhosts
 /var/cron/tabs/root
+/var/yp/Makefile
