@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.131 2004/08/20 21:23:08 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.132 2004/11/11 21:24:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -358,18 +358,12 @@ message disksetupdone
 {Okay, the first part of the procedure is finished.  Sysinst has
 written a disklabel to the target disk, and newfs'ed and fsck'ed
 the new partitions you specified for the target disk.
-
-The next step is to fetch and unpack the distribution filesets. 
-Press <return> to proceed.
 }
 
 message disksetupdoneupdate
 {Okay, the first part of the procedure is finished.  Sysinst has
 written a disklabel to the target disk, and fsck'ed the new
 partitions you specified for the target disk.
-
-The next step is to fetch and unpack the distribution filesets. 
-Press <return> to proceed.
 }
 
 message openfail
@@ -476,8 +470,8 @@ select from the optional distribution sets.
 }
 
 message ftpsource
-{The following is the ftp site, directory, user, and password currently
-ready to use.  If "user" is "ftp", then the password is not needed.
+{The following are the %s site, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
 
 host:		%s 
 base directory:	%s 
@@ -649,7 +643,10 @@ message delete_dist_files
 (You can keep them to install/upgrade a second system.)}
 
 message verboseextract
-{During the extraction process, what do you want to see as
+{
+The next step is to fetch and unpack the distribution filesets. 
+
+During the extraction process, what do you want to see as
 each file is extracted?
 }
 
@@ -987,6 +984,7 @@ message Cylinders {Cylinders}
 message Sectors {Sectors}
 message Select_medium {Select medium}
 message ftp {FTP}
+message http {HTTP}
 message nfs {NFS}
 message cdrom {CD-ROM / DVD}
 message floppy {Floppy}

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.102 2004/06/05 21:19:00 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.103 2004/11/11 21:24:41 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -752,7 +752,7 @@ again:
 }
 
 int
-get_via_ftp(void)
+get_via_ftp(const char *xfer_type)
 {
 	distinfo *list;
 	char ftp_user_encoded[STRSIZE];
@@ -780,7 +780,7 @@ get_via_ftp(void)
 	cwd = open(".", O_RDONLY);
 	cd_dist_dir("ftp");
 
-	process_menu(MENU_ftpsource, NULL);
+	process_menu(MENU_ftpsource, deconst(xfer_type));
 
 	list = dist_list;
 	while (list->desc) {
@@ -828,8 +828,8 @@ get_via_ftp(void)
 			    RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0),
 
 		ret = run_program(RUN_DISPLAY | RUN_PROGRESS, 
-			    "/usr/bin/ftp %sftp://%s%s/%s/%s%s",
-			    ftp_opt, ftp_user_encoded, ftp_host,
+			    "/usr/bin/ftp %s%s://%s%s/%s/%s%s",
+			    ftp_opt, xfer_type, ftp_user_encoded, ftp_host,
 			    ftp_dir_encoded, list->name, dist_postfix);
 
 		if (ret == 0) {

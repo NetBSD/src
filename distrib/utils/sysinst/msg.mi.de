@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.15 2004/10/21 12:14:21 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.16 2004/11/11 21:24:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -372,8 +372,6 @@ Partitionen formatiert (newfs'ed) sowie auf Fehler überprüft (fsck'ed).
 
 Im nächsten Schritt werden nun die Distributionssets (Basissystem + Kernel)
 geladen und auf die Festplatte kopiert.
-
-Drücken Sie die Eingabetaste um fortzufahren.
 }
 
 message disksetupdoneupdate
@@ -383,8 +381,6 @@ Partition auf Fehler überprüft (fsck'ed).
 
 Im nächsten Schritt werden nun die Distributionssets (Basissystem + Kernel)
 geladen und auf die Festplatte kopiert.
-
-Drücken Sie die Eingabetaste um fortzufahren.
 }
 
 message openfail
@@ -499,7 +495,7 @@ wollen.
 
 message ftpsource
 {
-Dies sind die Daten zum Aufbau einer ftp Verbindung.
+Dies sind die Daten zum Aufbau einer %s Verbindung.
 Falls der Benutzer "ftp" ist, benötigen Sie kein Passwort.
 
 Server:		%s 
@@ -676,7 +672,11 @@ message delete_dist_files
 oder zu erneuern.)}
 
 message verboseextract
-{Was wollen Sie während des Extrahierens sehen?
+{
+Im nächste Schritt werden nun die Distributionssets (Basissystem + Kernel)
+geladen und auf die Festplatte kopiert.
+
+Was wollen Sie während des Extrahierens sehen?
 }
 
 message notarfile
@@ -1030,6 +1030,7 @@ message Cylinders {Zylinder}
 message Sectors {Sektoren}
 message Select_medium {Medium auswählen}
 message ftp {FTP}
+message http {HTTP}
 message nfs {NFS}
 message cdrom {CD-ROM / DVD}
 message floppy {Diskette}
