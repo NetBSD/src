@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.25 2002/07/26 08:43:26 jdolecek Exp $       */
+/*      $NetBSD: scanform.c,v 1.26 2002/08/07 11:03:45 blymn Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -367,9 +367,9 @@ get_request(WINDOW *w)			/* virtual key mapping */
 	case 0x05:		/* ^E */
 		return REQ_END_FIELD;
 	case KEY_LEFT:
-		return REQ_LEFT_CHAR;
+		return REQ_PREV_CHAR;
 	case KEY_RIGHT:
-		return REQ_RIGHT_CHAR;
+		return REQ_NEXT_CHAR;
 	case 0x0f:		/* ^O */
 		return REQ_INS_LINE;
 	case KEY_DC:
