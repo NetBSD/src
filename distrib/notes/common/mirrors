@@ -90,11 +90,6 @@ If you wish to become a distribution site for NetBSD, contact
 "University of Amsterdam" \
 "ftp://ftp.nl.netbsd.org/pub/NetBSD/"
 .
-.Country "New Zealand"
-.mirror "ftp.clear.net.nz" \
-"CLEAR Net, Auckland" \
-"ftp://ftp.clear.net.nz/pub/NetBSD/"
-.
 .Country "Norway"
 .mirror "ftp.no.netbsd.org" \
 "Bergen IT Consult AS" \
