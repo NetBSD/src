@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *      $Id: ite.c,v 1.13 1994/03/14 01:19:31 chopps Exp $
+ *      $Id: ite.c,v 1.14 1994/03/20 10:13:54 chopps Exp $
  */
 
 /*
@@ -84,6 +84,8 @@ int	nunits = sizeof(itesw) / sizeof(struct itesw);
 
 int	start_repeat_timeo = 20;	/* first repeat after. */
 int	next_repeat_timeo = 5;		/* next repeat after. */
+
+int	ite_default_wrap = 1;		/* you want vtxxx-nam, binpatch */
 
 u_char	cons_tabs[MAX_TABS];
 
@@ -521,7 +523,7 @@ ite_reset(ip)
 	ip->bottom_margin = ip->rows - 1;
 	ip->inside_margins = 0;
 	ip->linefeed_newline = 0;
-	ip->auto_wrap = 0;
+	ip->auto_wrap = ite_default_wrap;
 	ip->cursor_appmode = 0;
 	ip->keypad_appmode = 0;
 	ip->imode = 0;
