@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.210 2003/11/18 18:26:18 dbj Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.211 2003/12/01 18:53:10 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.210 2003/11/18 18:26:18 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.211 2003/12/01 18:53:10 dbj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1605,9 +1605,13 @@ vclean(vp, flags, p)
 	 * Clean out any cached data associated with the vnode.
 	 */
 	if (flags & DOCLOSE) {
+		int error;
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-		vinvalbuf(vp, V_SAVE, NOCRED, p, 0, 0);
+		error = vinvalbuf(vp, V_SAVE, NOCRED, p, 0, 0);
 		vn_finished_write(mp, V_LOWER);
+		if (error)
+			error = vinvalbuf(vp, 0, NOCRED, p, 0, 0);
+		KASSERT(error == 0);
 		KASSERT((vp->v_flag & VONWORKLST) == 0);
 	}
 	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));
