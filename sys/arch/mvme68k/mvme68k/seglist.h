@@ -1,4 +1,4 @@
-/*	$NetBSD: seglist.h,v 1.1 1997/10/09 21:45:05 scw Exp $	*/
+/*	$NetBSD: seglist.h,v 1.2 1998/02/21 19:03:27 scw Exp $	*/
 
 /*
  * Copyright (c) 1997 The Steve Woodford
@@ -48,7 +48,7 @@ struct phys_seg_list_t {
 };
 
 /* Space for onboard RAM, and one contiguous offboard segment */
-#define	MAX_PHYS_SEGS	2
+#define	MAX_PHYS_SEGS	VM_PHYSSEG_MAX
 
 /* Instantiated in pmap.c */
 extern struct phys_seg_list_t phys_seg_list[MAX_PHYS_SEGS];

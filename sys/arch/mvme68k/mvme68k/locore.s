@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.32 1998/01/05 23:16:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.33 1998/02/21 19:03:26 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,10 +42,11 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
+#include "opt_uvm.h"
+
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/trap.h>
-#include <machine/vmparam.h>
 
 /*
  * Temporary stack for a variety of purposes.
@@ -164,20 +165,7 @@ start:					| start of kernel and .text!
 	RELOC(_myea, a0)
 	movl	0xfffe0778,a0@		| XXXCDC -- HARDWIRED HEX
 
-	/* initialize memory sizes (for pmap_bootstrap) */
-#ifndef MACHINE_NONCONTIG
-	movl	0xfffe0774,d1		| XXXCDC -- hardwired HEX
-	moveq	#PGSHIFT,d2
-	lsrl	d2,d1			| convert to page (click) number
-	RELOC(_maxmem, a0)
-	movl	d1,a0@			| save as maxmem
-	movl	a5,d0			| lowram value from ROM via boot
-	lsrl	d2,d0			| convert to page number
-	subl	d0,d1			| compute amount of RAM present
-	RELOC(_physmem, a0)
-	movl	d1,a0@			| and physmem
-#else
-	/* initialise list of physical memory segments */
+	/* initialise list of physical memory segments for pmap_bootstrap */
 	RELOC(_phys_seg_list, a0)
 	movl	a5,a0@			| phys_seg_list[0].ps_start
 	movl	0xfffe0774,d1		| End + 1 of onboard memory
@@ -218,8 +206,6 @@ Lsavmaxmem:
 	lsrl	d2,d1			| convert to page (click) number
 	RELOC(_maxmem, a0)
 	movl	d1,a0@			| save as maxmem
-#endif
-
 	jra	Lstart1
 Lnot147:
 #endif
@@ -393,7 +379,11 @@ Lmotommu2:
 Lenab1:
 /* select the software page size now */
 	lea	tmpstk,sp		| temporary stack
+#ifdef UVM
+	jbsr	_uvm_setpagesize	| select software page size
+#else
 	jbsr	_vm_set_page_size	| select software page size
+#endif
 /* set kernel stack, user SP, and initial pcb */
 	movl	_proc0paddr,a1		| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -840,7 +830,11 @@ Lsigr1:
 
 _spurintr:	/* Level 0 */
 	addql	#1,_intrcnt+0
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
 	addql	#1,_cnt+V_INTR
+#endif
 	jra	rei
 
 _intrhand_autovec:	/* Levels 1 through 6 */
@@ -973,7 +967,10 @@ Ldorte:
  */
 #include <m68k/m68k/support.s>
 
-	.globl	_whichqs,_qs,_cnt,_panic
+#ifndef UVM
+	.globl	_cnt
+#endif
+	.globl	_whichqs,_qs,_panic
 	.globl	_curproc,_want_resched
 
 /*
@@ -1010,7 +1007,11 @@ ENTRY(switch_exit)
 	movl    #USPACE,sp@-            | size of u-area
 	movl    a0@(P_ADDR),sp@-        | address of process's u-area
 	movl    _kernel_map,sp@-        | map it was allocated in
+#ifdef UVM
+	jbsr    _uvm_km_free            | deallocate it
+#else
 	jbsr    _kmem_free              | deallocate it
+#endif
 	lea     sp@(12),sp              | pop args
 
 	jra	_cpu_switch

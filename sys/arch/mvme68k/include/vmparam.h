@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 1997/10/12 15:39:35 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 1998/02/21 19:03:25 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,9 +42,13 @@
  *	@(#)vmparam.h	8.2 (Berkeley) 4/19/94
  */
 
+#ifndef _MVME68K_VMPARAM_H_
+#define _MVME68K_VMPARAM_H_
+
 /*
  * Machine dependent constants for MVME68K
  */
+
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
@@ -232,4 +236,26 @@
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
 
-#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
+/* Use new VM page bootstrap interface. */
+#define MACHINE_NEW_NONCONTIG
+
+#ifdef MACHINE_NEW_NONCONTIG
+/*
+ * Constants which control the way the VM system deals with memory segments.
+ * The mvme68k port has two physical memory segments: 1 for onboard RAM
+ * and another for contiguous VMEbus RAM.
+ */
+#define	VM_PHYSSEG_MAX		2
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
+#define	VM_PHYSSEG_NOADD
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv table for this seg */
+	char *attrs;			/* page attributes for this seg */
+};
+#endif
+
+#endif /* _MVME68K_VMPARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.7 1997/12/06 20:29:59 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.8 1998/02/21 19:03:27 scw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
 
-#ifdef	MACHINE_NONCONTIG
+#ifdef	MACHINE_NEW_NONCONTIG
 #include <mvme68k/mvme68k/seglist.h>
 #endif
 
@@ -62,7 +62,7 @@ extern pt_entry_t *Sysptmap, *Sysmap;
 extern int maxmem, physmem;
 extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
 extern vm_size_t mem_size;
-#ifdef MACHINE_NONCONTIG
+#ifdef MACHINE_NEW_NONCONTIG
 extern vm_size_t avail_remaining;
 extern vm_offset_t avail_next;
 #endif
@@ -104,7 +104,7 @@ pmap_bootstrap(nextpa, firstpa)
 	u_int nptpages, kstsize;
 	register st_entry_t protoste, *ste;
 	register pt_entry_t protopte, *pte, *epte;
-#ifdef MACHINE_NONCONTIG
+#ifdef MACHINE_NEW_NONCONTIG
 	int i;
 #endif
 
@@ -411,7 +411,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	RELOC(avail_start, vm_offset_t) = nextpa;
 
-#ifndef MACHINE_NONCONTIG
+#ifndef MACHINE_NEW_NONCONTIG
 	RELOC(avail_end, vm_offset_t) =
 		m68k_ptob(RELOC(maxmem, int))
 			/* XXX allow for msgbuf */
