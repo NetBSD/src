@@ -1,4 +1,4 @@
-/*	$NetBSD: _catclose.c,v 1.1 1996/05/13 23:29:34 jtc Exp $	*/
+/*	$NetBSD: _catclose.c,v 1.2 1997/07/13 19:58:34 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -12,8 +12,6 @@ __indr_reference(_catclose,catclose);
 #else
 
 #include <nl_types.h>
-
-extern int _catclose __P((nl_catd));
 
 int
 catclose(catd)
