@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.8 1995/12/26 00:19:17 mycroft Exp $ */
+/*	$NetBSD: varargs.h,v 1.9 1995/12/26 01:16:33 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,7 @@
 #endif
 
 #define	va_alist	__builtin_va_alist
-#define	va_dcl		va_list __builtin_va_alist; __va_ellipsis
+#define	va_dcl		long __builtin_va_alist; __va_ellipsis
 
 #undef va_start
 #ifdef __GCC_NEW_VARARGS__
