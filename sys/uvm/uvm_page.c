@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.15.2.1 1998/11/09 06:06:38 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.15.2.2 1999/02/25 04:17:00 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -838,9 +838,11 @@ uvm_pagealloc_strat(obj, off, anon, strat, free_list)
 	 * the pagedaemon.
 	 */
 
-	if (uvmexp.free < uvmexp.freemin || (uvmexp.free < uvmexp.freetarg &&
-	    uvmexp.inactive < uvmexp.inactarg))
-		thread_wakeup(&uvm.pagedaemon);
+	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
+	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
+	     uvmexp.inactive < uvmexp.inactarg)) {
+		wakeup(&uvm.pagedaemon);
+	}
 
 	/*
 	 * fail if any of these conditions is true:
@@ -910,6 +912,9 @@ uvm_pagealloc_strat(obj, off, anon, strat, free_list)
 	pg->version++;
 	pg->wire_count = 0;
 	pg->loan_count = 0;
+#ifdef UBC
+	pg->blkno = 0;
+#endif
 	if (anon) {
 		anon->u.an_page = pg;
 		pg->pqflags = PQ_ANON;
@@ -976,10 +981,9 @@ uvm_pagerealloc(pg, newobj, newoff)
  * => assumes all valid mappings of pg are gone
  */
 
-void uvm_pagefree(pg)
-
-struct vm_page *pg;
-
+void
+uvm_pagefree(pg)
+	struct vm_page *pg;
 {
 	int s;
 	int saved_loan_count = pg->loan_count;
