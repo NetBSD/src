@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.11 2003/10/27 14:11:46 junyoung Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.12 2003/11/13 01:44:36 christos Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.11 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.12 2003/11/13 01:44:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -201,4 +201,19 @@ mach_create_thread_child(arg)
 #else
 	printf("mach_create_thread_child %p\n", arg);
 #endif
+}
+
+int
+mach_thread_get_state_machdep(struct lwp *l, int flavor, void *state,
+    int *size)
+{
+	printf("Unimplemented thread state flavor %d\n", flavor);
+	return EINVAL;
+}
+
+int
+mach_thread_set_state_machdep(struct lwp *l, int flavor, void *state)
+{
+	printf("Unimplemented thread state flavor %d\n", flavor);
+	return EINVAL;
 }
