@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.h,v 1.4 1999/01/22 02:36:13 thorpej Exp $	*/
+/*	$NetBSD: ypserv.h,v 1.5 2002/07/06 00:18:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,35 +43,34 @@ struct ypresp_all {
 	} ypresp_all_u;
 };
 
-extern	int _yp_invalid_domain __P((const char *));	/* from libc */
-	int _yp_invalid_map __P((const char *));
+extern	int _yp_invalid_domain(const char *);	/* from libc */
+	int _yp_invalid_map(const char *);
 
-void	*ypproc_null_2_svc __P((void *, struct svc_req *));
-void	*ypproc_domain_2_svc __P((void *, struct svc_req *));
-void	*ypproc_domain_nonack_2_svc __P((void *, struct svc_req *));
-void	*ypproc_match_2_svc __P((void *, struct svc_req *));
-void	*ypproc_first_2_svc __P((void *, struct svc_req *));
-void	*ypproc_next_2_svc __P((void *, struct svc_req *));
-void	*ypproc_xfr_2_svc __P((void *, struct svc_req *));
-void	*ypproc_clear_2_svc __P((void *, struct svc_req *));
-void	*ypproc_all_2_svc __P((void *, struct svc_req *));
-void	*ypproc_master_2_svc __P((void *, struct svc_req *));
-void	*ypproc_order_2_svc __P((void *, struct svc_req *));
-void	*ypproc_maplist_2_svc __P((void *, struct svc_req *));
+void	*ypproc_null_2_svc(void *, struct svc_req *);
+void	*ypproc_domain_2_svc(void *, struct svc_req *);
+void	*ypproc_domain_nonack_2_svc(void *, struct svc_req *);
+void	*ypproc_match_2_svc(void *, struct svc_req *);
+void	*ypproc_first_2_svc(void *, struct svc_req *);
+void	*ypproc_next_2_svc(void *, struct svc_req *);
+void	*ypproc_xfr_2_svc(void *, struct svc_req *);
+void	*ypproc_clear_2_svc(void *, struct svc_req *);
+void	*ypproc_all_2_svc(void *, struct svc_req *);
+void	*ypproc_master_2_svc(void *, struct svc_req *);
+void	*ypproc_order_2_svc(void *, struct svc_req *);
+void	*ypproc_maplist_2_svc(void *, struct svc_req *);
 
-bool_t	xdr_ypresp_all __P((XDR *, struct ypresp_all *));
+bool_t	xdr_ypresp_all(XDR *, struct ypresp_all *);
 
-struct ypresp_val ypdb_get_record __P((const char *, const char *, datum, int));
-struct ypresp_key_val ypdb_get_first __P((const char *, const char *, int));
-struct ypresp_key_val ypdb_get_next __P((const char *, const char *,
-	    datum, int));
-struct ypresp_order ypdb_get_order __P((const char *, const char *));
-struct ypresp_master ypdb_get_master __P((const char *, const char *));
+struct ypresp_val ypdb_get_record(const char *, const char *, datum, int);
+struct ypresp_key_val ypdb_get_first(const char *, const char *, int);
+struct ypresp_key_val ypdb_get_next(const char *, const char *, datum, int);
+struct ypresp_order ypdb_get_order(const char *, const char *);
+struct ypresp_master ypdb_get_master(const char *, const char *);
 
-void	ypdb_close_all __P((void));
-void	ypdb_init __P((void));
-int	ypdb_secure __P((const char *, const char *));
-bool_t	ypdb_xdr_get_all __P((XDR *, struct ypreq_nokey *));
+void	ypdb_close_all(void);
+void	ypdb_init(void);
+int	ypdb_secure(const char *, const char *);
+bool_t	ypdb_xdr_get_all(XDR *, struct ypreq_nokey *);
 
 #ifdef LIBWRAP
 /* from ypserv.c */

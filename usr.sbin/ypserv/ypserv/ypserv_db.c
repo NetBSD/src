@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.12 2002/06/18 02:57:53 thorpej Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.13 2002/07/06 00:18:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.12 2002/06/18 02:57:53 thorpej Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.13 2002/07/06 00:18:48 wiz Exp $");
 #endif
 
 /*
@@ -99,13 +99,12 @@ struct mapq     maps;			/* global queue of maps (LRU) */
 
 extern int      usedns;
 
-int	yp_private __P((datum, int));
-void	ypdb_close_db __P((DBM *));
-void	ypdb_close_last __P((void));
-void	ypdb_close_map __P((struct opt_map *));
-DBM    *ypdb_open_db __P((const char *, const char *, int *,
-	    struct opt_map **));
-int	lookup_host __P((int, int, DBM *, char *, struct ypresp_val *));
+int	yp_private(datum, int);
+void	ypdb_close_db(DBM *);
+void	ypdb_close_last(void);
+void	ypdb_close_map(struct opt_map *);
+DBM    *ypdb_open_db(const char *, const char *, int *, struct opt_map **);
+int	lookup_host(int, int, DBM *, char *, struct ypresp_val *);
 
 /*
  * ypdb_init: init the queues and lists
