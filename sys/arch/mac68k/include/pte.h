@@ -72,7 +72,7 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	from: @(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.2 1993/11/29 00:38:33 briggs Exp $
+ *	$Id: pte.h,v 1.3 1994/02/22 00:59:34 briggs Exp $
  */
 
 /*
@@ -133,8 +133,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define MAC_STSIZE	MAC_PAGE_SIZE	/* segment table size */
 #define MAC_MAX_PTSIZE	MAC_SEG_SIZE	/* max size of UPT */
 #define MAC_MAX_KPTSIZE	0x100000	/* max memory to allocate to KPT */
-#define MAC_PTBASE	0x60000000	/* UPT map base address */
-					/* 9/2 BG changed from 0x10000000 */
+#define MAC_PTBASE	0x60100000	/* UPT map base address */
 #define MAC_PTMAXSIZE	0x70000000	/* UPT map maximum size */
 
 /*
@@ -148,4 +147,3 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 	((((pt_entry_t *)(pt) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
 #define	kvtophys(va) \
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
-
