@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.9 2003/08/03 19:14:59 he Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.10 2003/09/07 21:28:16 scw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.9 2003/08/03 19:14:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.10 2003/09/07 21:28:16 scw Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -418,7 +418,8 @@ db_show_callout_bucket(struct callout_circq *bucket)
 
 	for (p = CIRCQ_FIRST(bucket); p != bucket; p = CIRCQ_FIRST(p)) {
 		c = (struct callout *)p; /* XXX */
-		db_find_sym_and_offset((db_addr_t)c->c_func, &name, &offset);
+		db_find_sym_and_offset((db_addr_t)(intptr_t)c->c_func, &name,
+		    &offset);
 		name = name ? name : "?";
 #ifdef _LP64
 #define	POINTER_WIDTH	"%16lx"
