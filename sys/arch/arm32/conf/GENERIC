@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.80 2001/06/30 11:00:32 darcy Exp $
+#	$NetBSD: GENERIC,v 1.81 2001/06/30 15:09:38 bjh21 Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.81 $"
 
 # estimated number of users
 maxusers	32
@@ -250,6 +250,14 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI auto-changers
 uk*	at scsibus? target ? lun ?	# SCSI unknown device
 ss*	at scsibus? target ? lun ?	# SCSI scanner
+
+dtide*	at podulebus?			# D.T. Software IDE card
+wd*	at dtide? channel ? drive ?
+atapibus* at dtide? channel ?
+
+hcide*	at podulebus?			# HCCS IDE card
+wd*	at hcide? channel ? drive ?
+atapibus* at hcide? channel ?
 
 icside*	at podulebus?			# ICS IDE card
 wd*	at icside? channel ? drive ?
