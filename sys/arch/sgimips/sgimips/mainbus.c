@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2000/06/14 16:02:47 soren Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2001/05/11 04:47:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -48,7 +48,7 @@ static void	mainbus_attach(struct device *, struct device *, void *);
 static int	mainbus_search(struct device *, struct cfdata *, void *);
 int		mainbus_print(void *, const char *);
 
-static int	atoi(char *);
+int		atoi(char *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
@@ -92,7 +92,7 @@ mainbus_attach(parent, self, aux)
 
 	if (ma->ma_arch <= 0)
 		panic("invalid architecture");
-	
+
 	config_search(mainbus_search, self, ma);
 }
 
