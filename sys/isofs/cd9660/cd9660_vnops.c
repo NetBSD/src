@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.20 1994/12/24 15:30:14 cgd Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.21 1994/12/24 16:44:12 ws Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -169,49 +169,10 @@ cd9660_access(ap)
 	} */ *ap;
 {
 	struct iso_node *ip = VTOI(ap->a_vp);
-	struct ucred *cred = ap->a_cred;
-	mode_t mask, mode = ap->a_mode;
-	gid_t *gp;
-	int i;
 
-	/* User id 0 always gets access. */
-	if (cred->cr_uid == 0)
-		return (0);
-
-	mask = 0;
-
-	/* Otherwise, check the owner. */
-	if (cred->cr_uid == ip->inode.iso_uid) {
-		if (mode & VEXEC)
-			mask |= S_IXUSR;
-		if (mode & VREAD)
-			mask |= S_IRUSR;
-		if (mode & VWRITE)
-			mask |= S_IWUSR;
-		return ((ip->inode.iso_mode & mask) == mask ? 0 : EACCES);
-	}
-
-	/* Otherwise, check the groups. */
-	for (i = 0, gp = cred->cr_groups; i < cred->cr_ngroups; i++, gp++)
-		if (ip->inode.iso_gid == *gp) {
-			if (mode & VEXEC)
-				mask |= S_IXGRP;
-			if (mode & VREAD)
-				mask |= S_IRGRP;
-			if (mode & VWRITE)
-				mask |= S_IWGRP;
-			return ((ip->inode.iso_mode & mask) == mask ?
-			    0 : EACCES);
-		}
-
-	/* Otherwise, check everyone else. */
-	if (mode & VEXEC)
-		mask |= S_IXOTH;
-	if (mode & VREAD)
-		mask |= S_IROTH;
-	if (mode & VWRITE)
-		mask |= S_IWOTH;
-	return ((ip->inode.iso_mode & mask) == mask ? 0 : EACCES);
+	return (vaccess(ip->inode.iso_mode,
+			ip->inode.iso_uid, ip->inode.iso_gid,
+			ap->a_mode, ap->a_cred));
 }
 
 int
