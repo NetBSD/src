@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.80 1997/05/13 18:00:54 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.81 1997/05/22 22:48:47 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+#include <machine/trap.h>
 
 	.globl	_kernel_text
 _kernel_text:
