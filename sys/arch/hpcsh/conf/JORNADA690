@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA690,v 1.6 2001/03/08 15:21:31 uch Exp $
+#	$NetBSD: JORNADA690,v 1.7 2001/03/15 17:30:55 uch Exp $
 #
 #	JORNADA690 uch's Jornada 690
 #
@@ -85,6 +85,7 @@ scif0 at shb? port 0xa4000008 irq 12
 
 hd64461if* at shb? irq 4
 hd64461pcmcia*	at hd64461if?
+com*		at hd64461if?
 
 # PCMCIA bus support
 pcmcia0 at hd64461pcmcia? controller 0 socket ?	# I/O card, memory card
