@@ -1,7 +1,5 @@
-/*	$NetBSD: nfs_subr.c,v 1.1.1.2 2000/11/19 23:43:41 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_subr.c,v 1.6.2.1 2000/06/08 00:24:13 ezk Exp
+ * $Id: nfs_subr.c,v 1.1.1.3 2001/05/13 17:34:11 veego Exp $
  *
  */
 
@@ -186,16 +184,16 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
   uid_t uid;
   gid_t gid;
 
+#ifdef DEBUG
+  amuDebug(D_TRACE)
+    plog(XLOG_DEBUG, "lookup:");
+#endif /* DEBUG */
+
   /* finally, find the effective uid/gid from RPC request */
   if (getcreds(rqstp, &uid, &gid, nfsxprt) < 0)
     plog(XLOG_ERROR, "cannot get uid/gid from RPC credentials");
   sprintf(opt_uid, "%d", (int) uid);
   sprintf(opt_gid, "%d", (int) gid);
-
-#ifdef DEBUG
-  amuDebug(D_TRACE)
-    plog(XLOG_DEBUG, "lookup:");
-#endif /* DEBUG */
 
   mp = fh_to_mp2(&argp->da_fhandle, &retry);
   if (mp == 0) {

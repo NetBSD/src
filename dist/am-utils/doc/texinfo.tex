@@ -3,9 +3,9 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2000-05-28.15}
+\def\texinfoversion{2000-11-09.08}
 %
-% Copyright (C) 1985, 86, 88, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99
+% Copyright (C) 1985, 86, 88, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 2000
 % Free Software Foundation, Inc.
 %
 % This texinfo.tex file is free software; you can redistribute it and/or
@@ -688,16 +688,39 @@ where each line of input produces a line of output.}
 \def\nofillexdentyyy #1{{\advance \leftskip by -\exdentamount
 \leftline{\hskip\leftskip{\rm#1}}}}
 
-% @inmargin{TEXT} puts TEXT in the margin next to the current paragraph.
-
-\def\inmargin#1{%
-\strut\vadjust{\nobreak\kern-\strutdepth
-  \vtop to \strutdepth{\baselineskip\strutdepth\vss
-  \llap{\rightskip=\inmarginspacing \vbox{\noindent #1}}\null}}}
+% @inmargin{WHICH}{TEXT} puts TEXT in the WHICH margin next to the current
+% paragraph.  For more general purposes, use the \margin insertion
+% class.  WHICH is `l' or `r'.
+%
 \newskip\inmarginspacing \inmarginspacing=1cm
 \def\strutdepth{\dp\strutbox}
-
-%\hbox{{\rm#1}}\hfil\break}}
+%
+\def\doinmargin#1#2{\strut\vadjust{%
+  \nobreak
+  \kern-\strutdepth
+  \vtop to \strutdepth{%
+    \baselineskip=\strutdepth
+    \vss
+    % if you have multiple lines of stuff to put here, you'll need to
+    % make the vbox yourself of the appropriate size.
+    \ifx#1l%
+      \llap{#2\hskip\inmarginspacing}%
+    \else
+      \rlap{\hskip\hsize\hskip\inmarginspacing#2}%
+    \fi
+    \null
+  }%
+}}
+\def\inleftmargin{\doinmargin l}
+\def\inrightmargin{\doinmargin r}
+\def\inmargin{% not perfect, but better than nothing.
+  \ifodd\pageno
+    \let\temp=\inleftmargin
+  \else
+    \let\temp=\inrightmargin
+  \fi
+  \temp
+}
 
 % @include file    insert text of that file as input.
 % Allow normal characters that  we make active in the argument (a file name).
@@ -2593,42 +2616,48 @@ width0pt\relax} \fi
 }
 
 % @defindex foo  ==  \newindex{foo}
-
+%
 \def\defindex{\parsearg\newindex}
 
 % Define @defcodeindex, like @defindex except put all entries in @code.
-
+%
+\def\defcodeindex{\parsearg\newcodeindex}
+%
 \def\newcodeindex#1{%
   \iflinks
     \expandafter\newwrite \csname#1indfile\endcsname
     \openout \csname#1indfile\endcsname \jobname.#1
   \fi
   \expandafter\xdef\csname#1index\endcsname{%
-    \noexpand\docodeindex{#1}}
+    \noexpand\docodeindex{#1}}%
 }
 
-\def\defcodeindex{\parsearg\newcodeindex}
 
 % @synindex foo bar    makes index foo feed into index bar.
 % Do this instead of @defindex foo if you don't want it as a separate index.
-% The \closeout helps reduce unnecessary open files; the limit on the
-% Acorn RISC OS is a mere 16 files.
-\def\synindex#1 #2 {%
-  \expandafter\let\expandafter\synindexfoo\expandafter=\csname#2indfile\endcsname
-  \expandafter\closeout\csname#1indfile\endcsname
-  \expandafter\let\csname#1indfile\endcsname=\synindexfoo
-  \expandafter\xdef\csname#1index\endcsname{% define \xxxindex
-    \noexpand\doindex{#2}}%
-}
-
+% 
 % @syncodeindex foo bar   similar, but put all entries made for index foo
 % inside @code.
-\def\syncodeindex#1 #2 {%
-  \expandafter\let\expandafter\synindexfoo\expandafter=\csname#2indfile\endcsname
-  \expandafter\closeout\csname#1indfile\endcsname
-  \expandafter\let\csname#1indfile\endcsname=\synindexfoo
-  \expandafter\xdef\csname#1index\endcsname{% define \xxxindex
-    \noexpand\docodeindex{#2}}%
+% 
+\def\synindex#1 #2 {\dosynindex\doindex{#1}{#2}}
+\def\syncodeindex#1 #2 {\dosynindex\docodeindex{#1}{#2}}
+
+% #1 is \doindex or \docodeindex, #2 the index getting redefined (foo),
+% #3 the target index (bar).
+\def\dosynindex#1#2#3{%
+  % Only do \closeout if we haven't already done it, else we'll end up
+  % closing the target index.
+  \expandafter \ifx\csname donesynindex#2\endcsname \undefined
+    % The \closeout helps reduce unnecessary open files; the limit on the
+    % Acorn RISC OS is a mere 16 files.
+    \expandafter\closeout\csname#2indfile\endcsname
+    \expandafter\let\csname\donesynindex#2\endcsname = 1
+  \fi
+  % redefine \fooindfile:
+  \expandafter\let\expandafter\temp\expandafter=\csname#3indfile\endcsname
+  \expandafter\let\csname#2indfile\endcsname=\temp
+  % redefine \fooindex:
+  \expandafter\xdef\csname#2index\endcsname{\noexpand#1{#3}}%
 }
 
 % Define \doindex, the driver for all \fooindex macros.
@@ -3155,7 +3184,6 @@ width0pt\relax} \fi
   %
   % Double the \vsize as well.  (We don't need a separate register here,
   % since nobody clobbers \vsize.)
-  \advance\vsize by -\ht\partialpage
   \vsize = 2\vsize
 }
 
@@ -3169,6 +3197,7 @@ width0pt\relax} \fi
   % previous page.
   \dimen@ = \vsize
   \divide\dimen@ by 2
+  \advance\dimen@ by -\ht\partialpage
   %
   % box0 will be the left-hand column, box2 the right.
   \setbox0=\vsplit255 to\dimen@ \setbox2=\vsplit255 to\dimen@
@@ -3176,15 +3205,18 @@ width0pt\relax} \fi
   \unvbox255
   \penalty\outputpenalty
 }
+%
+% Re-output the contents of the output page -- any previous material,
+% followed by the two boxes we just split, in box0 and box2.
 \def\pagesofar{%
-  % Re-output the contents of the output page -- any previous material,
-  % followed by the two boxes we just split, in box0 and box2.
   \unvbox\partialpage
   %
   \hsize = \doublecolumnhsize
   \wd0=\hsize \wd2=\hsize
   \hbox to\pagewidth{\box0\hfil\box2}%
 }
+% 
+% All done with double columns.
 \def\enddoublecolumns{%
   \output = {%
     % Split the last of the double-column material.  Leave it on the
@@ -3209,8 +3241,9 @@ width0pt\relax} \fi
   % \endgroup where \vsize got restored).
   \pagegoal = \vsize
 }
+%
+% Called at the end of the double column material.
 \def\balancecolumns{%
-  % Called at the end of the double column material.
   \setbox0 = \vbox{\unvbox255}% like \box255 but more efficient, see p.120.
   \dimen@ = \ht0
   \advance\dimen@ by \topskip

@@ -1,7 +1,5 @@
-/*	$NetBSD: ops_autofs.c,v 1.1.1.2 2000/11/19 23:43:46 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: ops_autofs.c,v 1.7 2000/02/25 02:40:20 ib42 Exp
+ * $Id: ops_autofs.c,v 1.1.1.3 2001/05/13 17:34:15 veego Exp $
  *
  */
 
@@ -512,7 +510,7 @@ out:
  endfor
  */
 static int
-autofs_bgmount(struct continuation * cp, int mpe)
+autofs_bgmount(struct continuation *cp, int mpe)
 {
   mntfs *mf = cp->mp->am_mnt;	/* Current mntfs */
   mntfs *mf_retry = 0;		/* First mntfs which needed retrying */
@@ -678,8 +676,6 @@ autofs_bgmount(struct continuation * cp, int mpe)
 	mk_fattr(mp, NFDIR);
       else
 	mk_fattr(mp, NFLNK);
-
-      mp->am_fattr.na_fileid = mp->am_gen;
 
       if (p->fs_init)
 	this_error = (*p->fs_init) (mf);
@@ -1124,7 +1120,7 @@ autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
      */
     rvec = strsplit(dfl, ' ', '\"');
 
-    if (gopt.flags & CFM_ENABLE_DEFAULT_SELECTORS) {
+    if (gopt.flags & CFM_SELECTORS_IN_DEFAULTS) {
       /*
        * Pick whichever first entry matched the list of selectors.
        * Strip the selectors from the string, and assign to dfl the
@@ -1149,7 +1145,7 @@ autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
 	  ++sp;
 	}
       }
-    } else {			/* not enable_default_selectors */
+    } else {			/* not selectors_in_defaults */
       /*
        * Extract first value
        */
@@ -1163,7 +1159,7 @@ autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
       /*
        * Log error if there were other values
        */
-      if (!(gopt.flags & CFM_ENABLE_DEFAULT_SELECTORS) && rvec[1]) {
+      if (!(gopt.flags & CFM_SELECTORS_IN_DEFAULTS) && rvec[1]) {
 # ifdef DEBUG
 	dlog("/defaults chopped into %s", dfl);
 # endif /* DEBUG */

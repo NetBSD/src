@@ -1,7 +1,5 @@
-/*	$NetBSD: info_file.c,v 1.1.1.2 2000/11/19 23:43:43 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: info_file.c,v 1.3 2000/01/12 16:44:18 ezk Exp
+ * $Id: info_file.c,v 1.1.1.3 2001/05/13 17:34:12 veego Exp $
  *
  */
 
@@ -64,7 +62,7 @@ int file_mtime(mnt_map *m, char *map, time_t *tp);
 
 
 static int
-read_line(char *buf, int size, FILE * fp)
+read_line(char *buf, int size, FILE *fp)
 {
   int done = 0;
 
@@ -99,7 +97,7 @@ read_line(char *buf, int size, FILE * fp)
  * Try to locate a key in a file
  */
 static int
-search_or_reload_file(FILE * fp, char *map, char *key, char **val, mnt_map *m, void (*fn) (mnt_map *m, char *, char *))
+search_or_reload_file(FILE *fp, char *map, char *key, char **val, mnt_map *m, void (*fn) (mnt_map *m, char *, char *))
 {
   char key_val[MAX_LINE_LEN];
   int chuck = 0;
