@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/dfa.c,v 1.10 1996/12/10 07:18:40 mikel Exp $ */
+/* $NetBSD: dfa.c,v 1.11 1998/01/05 05:15:45 perry Exp $ */
 
 #include "flexdef.h"
 

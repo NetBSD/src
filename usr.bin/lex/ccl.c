@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/ccl.c,v 1.7 1996/12/10 07:18:39 mikel Exp $ */
+/* $NetBSD: ccl.c,v 1.8 1998/01/05 05:15:44 perry Exp $ */
 
 #include "flexdef.h"
 

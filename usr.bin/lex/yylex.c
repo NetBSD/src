@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/yylex.c,v 1.7 1996/12/10 07:18:55 mikel Exp $ */
+/* $NetBSD: yylex.c,v 1.8 1998/01/05 05:16:00 perry Exp $ */
 
 #include <ctype.h>
 #include "flexdef.h"
