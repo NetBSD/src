@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.4 1995/12/10 10:06:57 mycroft Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.5 1998/03/30 02:33:37 mrg Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
@@ -28,8 +28,7 @@ static u_int32_t	valid_if __P((char *s));
 static struct ifreq *	ifconfaddr __P((struct ifconf *ifcp, u_int32_t a));
 int			yyparse __P((void));
 
-static FILE *f;
-
+static FILE *f __attribute__((__unused__));	/* XXX egcs */
 extern int udp_socket;
 char *configfilename = _PATH_MROUTED_CONF;
 
