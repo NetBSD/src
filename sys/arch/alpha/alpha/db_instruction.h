@@ -1,4 +1,34 @@
-/* $NetBSD: db_instruction.h,v 1.4 1997/09/16 22:53:32 thorpej Exp $ */
+/* $NetBSD: db_instruction.h,v 1.5 1999/05/09 19:38:59 cgd Exp $ */
+
+/*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* 
  * Mach Operating System
@@ -46,11 +76,12 @@
  *	All instructions are in one of five formats:
  *		Memory, Branch, Operate, Floating-point Operate, PAL
  *
- *	One minor departure from DEC's conventions is we use names
- *	for registers that are more akin their software use, e.g.
- *	rather then bluntly call them Ra/Rb/Rc we make clear which
- *	one is a source (Rs) and which one is a destination (Rd).
- *	When a second source register is defined we call it Rt.
+ *	The original Mach sources attempted to use 'smarter' names
+ *	for registers, which reflected source and destination.  These
+ *	definitions use the names from the Architecture Reference Manual,
+ *	both for clarity and because you can't differentiate between
+ *	'source' and 'destinations' for some types of instructions (loads
+ *	and stores; they'd be correct for one, but swapped for the other).
  */
 
 
@@ -61,14 +92,23 @@ typedef union {
 	unsigned int	bits;
 
 	/*
+	 *	Generic instruction pseudo format; look at
+	 *	opcode to see how to interpret the rest.
+	 */
+	struct {
+		unsigned	bits:26,
+				opcode:6;
+	} generic_format;
+
+	/*
 	 *	Memory instructions contain a 16 bit
 	 *	signed immediate value and two register
 	 *	specifiers
 	 */
 	struct {
 		signed short	displacement;
-		unsigned	rs : 5,
-				rd : 5,
+		unsigned	rb : 5,
+				ra : 5,
 				opcode : 6;
 	} mem_format;
 
@@ -84,15 +124,15 @@ typedef union {
 	 */
 	struct {
 		signed int	displacement : 21;
-		unsigned	rd : 5,
+		unsigned	ra : 5,
 				opcode : 6;
 	} branch_format;
 
 	struct {
 		signed int	hint : 14;
 		unsigned	action : 2,
-				rs : 5,
-				rd : 5,
+				rb : 5,
+				ra : 5,
 				opcode : 6;
 	} jump_format;
 
@@ -103,20 +143,31 @@ typedef union {
 	 *	specifier.  Bit 12 sez which is which.
 	 */
 	struct {
-		unsigned	rd : 5,
+		unsigned	rc : 5,
 				function : 7,
-				sbz : 4,
-				rt : 5,
-				rs : 5,
+				is_lit : 1,
+				sbz_or_litlo : 3,
+				rb_or_lithi : 5,
+				ra : 5,
+				opcode : 6;
+	} operate_generic_format;
+			
+	struct {
+		unsigned	rc : 5,
+				function : 7,
+				zero : 1,
+				sbz : 3,
+				rb : 5,
+				ra : 5,
 				opcode : 6;
 	} operate_reg_format;
 
 	struct {
-		unsigned	rd : 5,
+		unsigned	rc : 5,
 				function : 7,
 				one : 1,
 				literal : 8,
-				rs : 5,
+				ra : 5,
 				opcode : 6;
 	} operate_lit_format;
 
@@ -126,10 +177,10 @@ typedef union {
 	 *	uniform in the encoding.  As for the semantics..
 	 */
 	struct {
-		unsigned	fd : 5,
+		unsigned	fc : 5,
 				function : 11,
-				ft : 5,
-				fs : 5,
+				fb : 5,
+				fa : 5,
 				opcode : 6;
 	} float_format;
 
