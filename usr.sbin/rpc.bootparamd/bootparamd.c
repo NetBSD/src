@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.37 2001/01/11 01:44:23 lukem Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.38 2001/02/19 23:22:47 cgd Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.37 2001/01/11 01:44:23 lukem Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.38 2001/02/19 23:22:47 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -59,7 +59,6 @@ int     debug = 0;
 int     dolog = 0;
 struct in_addr route_addr;
 struct sockaddr_in my_addr;
-extern char *__progname;
 char   *bootpfile = _PATH_BOOTPARAMS;
 
 int	main __P((int, char *[]));
@@ -448,7 +447,8 @@ void
 usage()
 {
 	fprintf(stderr,
-	    "usage: %s [-d] [-s] [-r router] [-f bootparmsfile]\n", __progname);
+	    "usage: %s [-d] [-s] [-r router] [-f bootparmsfile]\n",
+	    getprogname());
 	exit(1);
 }
 

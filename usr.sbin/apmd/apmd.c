@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.17 2001/01/25 00:48:59 chuck Exp $	*/
+/*	$NetBSD: apmd.c,v 1.18 2001/02/19 23:22:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -72,8 +72,6 @@ const char sockfile[] = _PATH_APM_SOCKET;
 static int debug = 0;
 static int verbose = 0;
 
-extern char *__progname;
-
 void usage (void);
 int power_status (int fd, int force, struct apm_power_info *pinfo);
 int bind_socket (const char *sn, mode_t mode, uid_t uid, gid_t gid);
@@ -95,7 +93,7 @@ sigexit(int signo)
 void
 usage(void)
 {
-    fprintf(stderr,"usage: %s [-adlqsv] [-t seconds] [-S sockname]\n\t[-m sockmode] [-o sockowner:sockgroup] [-f devname]\n", __progname);
+    fprintf(stderr,"usage: %s [-adlqsv] [-t seconds] [-S sockname]\n\t[-m sockmode] [-o sockowner:sockgroup] [-f devname]\n", getprogname());
     exit(1);
 }
 

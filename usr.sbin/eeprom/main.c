@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2001/01/29 03:11:50 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2001/02/19 23:22:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,13 +40,14 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.14 2001/01/29 03:11:50 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2001/02/19 23:22:42 cgd Exp $");
 #endif
 
 #include <sys/param.h>
 #include <err.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include <machine/eeprom.h>
@@ -81,8 +82,6 @@ int	eval = 0;
 int	verbose = 0;
 int	use_openprom;
 #endif
-
-extern	char *__progname;
 
 int
 main(argc, argv)
@@ -219,10 +218,10 @@ usage()
 {
 
 #ifdef USE_OPENPROM
-	fprintf(stderr, "usage: %s %s\n", __progname,
+	fprintf(stderr, "usage: %s %s\n", getprogname(),
 	    "[-] [-c] [-f device] [-i] [-v] [field[=value] ...]");
 #else
-	fprintf(stderr, "usage: %s %s\n", __progname,
+	fprintf(stderr, "usage: %s %s\n", getprogname(),
 	    "[-] [-c] [-f device] [-i] [field[=value] ...]");
 #endif /* __us */
 	exit(1);

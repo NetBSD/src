@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.37 2001/02/13 21:27:03 lukem Exp $ */
+/* $NetBSD: user.c,v 1.38 2001/02/19 23:22:49 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.37 2001/02/13 21:27:03 lukem Exp $");
+__RCSID("$NetBSD: user.c,v 1.38 2001/02/19 23:22:49 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1202,7 +1202,7 @@ find_group_info(char *name)
 
 /* print out usage message, and then exit */
 void
-usermgmt_usage(char *prog)
+usermgmt_usage(const char *prog)
 {
 	if (strcmp(prog, "useradd") == 0) {
 		(void) fprintf(stderr, "Usage: %s -D [-b basedir] [-e expiry] "

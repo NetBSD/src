@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.13 2001/01/11 00:34:51 lukem Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.14 2001/02/19 23:22:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.13 2001/01/11 00:34:51 lukem Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.14 2001/02/19 23:22:52 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -85,8 +85,6 @@ int	foreground;
 int	lflag;
 #endif
 
-extern	char *__progname;	/* from crt0.s */
-
 int	main __P((int, char *[]));
 void	usage __P((void));
 
@@ -130,7 +128,8 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 
 #ifdef LIBWRAP
 	caller = svc_getrpccaller(transp)->buf;
-	request_init(&req, RQ_DAEMON, __progname, RQ_CLIENT_SIN, caller, NULL);
+	request_init(&req, RQ_DAEMON, getprogname(), RQ_CLIENT_SIN, caller,
+	    NULL);
 	sock_methods(&req);
 #endif
 
@@ -474,7 +473,7 @@ usage()
 #define	USAGESTR	"usage: %s [-d]\n"
 #endif
 
-	fprintf(stderr, USAGESTR, __progname);
+	fprintf(stderr, USAGESTR, getprogname());
 	exit(1);
 
 #undef USAGESTR

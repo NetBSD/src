@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.26 2001/02/02 14:20:33 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.27 2001/02/19 23:22:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.26 2001/02/02 14:20:33 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.27 2001/02/19 23:22:44 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -685,10 +685,9 @@ again:
 static void
 usage()
 {
-	extern char *__progname;	/* XXX */
 
 	fprintf(stderr, "usage: %s [-dlrs] [-b bind-address] [-n maxchild] [-w maxwait] [port]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.11 2001/01/05 03:27:27 lukem Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.12 2001/02/19 23:22:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -42,7 +42,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.11 2001/01/05 03:27:27 lukem Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.12 2001/02/19 23:22:44 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -178,9 +178,8 @@ main(argc, argv)
 static void
 usage()
 {
-	extern const char *__progname;
 
-	fprintf(stderr, "usage: %s kernel_file fsimage_file\n", __progname);
+	fprintf(stderr, "usage: %s kernel_file fsimage_file\n", getprogname());
 	exit(1);
 }
 
