@@ -1,0 +1,8 @@
+#	$NetBSD: files.bluetooth,v 1.1 2002/10/10 21:52:30 thorpej Exp $
+
+define	btbus { }
+
+# Bluetooth host controller driver
+define	bthcidrv
+device	bthci { }: bthcidrv
+attach	bthci at btbus
