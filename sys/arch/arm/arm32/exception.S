@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.1.8.3 2002/02/28 04:07:22 nathanw Exp $	*/
+/*	$NetBSD: exception.S,v 1.1.8.4 2002/08/19 21:39:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -70,12 +70,12 @@ Lastpending:
  */
 
 exception_exit:
-	mrs     r4, cpsr_all		/* Get CPSR */
+	mrs     r4, cpsr		/* Get CPSR */
 
 	ldr	r0, [sp]		/* Get the SPSR from stack */
 	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the AST */
 	teq	r0, #(PSR_USR32_MODE)
-	bne	do_exit			/* Not USR mode so no AST delivery */
+	bne	.Ldo_exit		/* Not USR mode so no AST delivery */
 
 	ldr	r5, Lastpending		/* Get address of astpending */
 
@@ -85,11 +85,11 @@ Lexception_exit_loop:
 
 	ldr	r1, [r5]		/* Do we have an AST pending */
 	teq	r1, #0x00000000
-	bne	do_ast
+	bne	.Ldo_ast
 
 	PULLFRAMEFROMSVCANDEXIT		/* No AST so exit */
 
-do_ast:
+.Ldo_ast:
 	mov	r1, #0x00000000		/* Clear ast pending */
 	str	r1, [r5]
 
@@ -99,7 +99,7 @@ do_ast:
 	bl	_C_LABEL(ast)		/* call the AST handler */
 	b	Lexception_exit_loop	/* Try and exit again */
 
-do_exit:
+.Ldo_exit:
 	orr     r0, r4, #(I32_bit)	/* Disable interupts */
 	msr     cpsr_all, r0
 
@@ -132,20 +132,20 @@ ASENTRY_NP(swi_entry)
 	bl	_C_LABEL(swi_handler)	/* It's a SWI ! */
 
 	ldr	r5, Lastpending		/* Get address of astpending */
-	mrs     r4, cpsr_all		/* Get CPSR */
+	mrs     r4, cpsr		/* Get CPSR */
 
-swi_exit_loop:
+.Lswi_exit_loop:
 	orr     r0, r4, #(I32_bit)	/* Disable IRQs */
 	msr     cpsr_all, r0
 
 	ldr	r1, [r5]		/* Do we have an AST pending */
 	teq	r1, #0x00000000
-	bne	do_swi_ast
+	bne	.Ldo_swi_ast
 
 	PULLFRAME
 	movs	pc, lr			/* Exit */
 
-do_swi_ast:
+.Ldo_swi_ast:
 	mov	r1, #0x00000000		/* Clear ast pending */
 	str	r1, [r5]
 
@@ -153,7 +153,7 @@ do_swi_ast:
 
 	mov	r0, sp			/* arg 0 = trap frame */
 	bl	_C_LABEL(ast)		/* call the AST handler */
-	b	swi_exit_loop		/* Try and exit again */
+	b	.Lswi_exit_loop		/* Try and exit again */
 
 /*
  * prefetch_abort_entry:
@@ -275,14 +275,14 @@ ASENTRY_NP(undefined_entry)
  * Test for user mode.
  */
 	tst	r0, #0xf
-	bne	Lprenotuser_push
+	bne	.Lprenotuser_push
 	add	r1, sp, #(8*4)
 	stmia	r1,{r8-r14}^		/* store user mode r8-r14*/
-	b	Lgoipkdb
+	b	.Lgoipkdb
 /*
  * Switch to previous mode to get r8-r13.
  */
-Lprenotuser_push:
+.Lprenotuser_push:
 	orr	r0, r0, #(I32_bit) /* disable interrupts */
 	msr	cpsr_all, r0
 	mov	r1, r8
@@ -306,10 +306,10 @@ Lprenotuser_push:
 /*
  * Now to IPKDB.
  */
-Lgoipkdb:
+.Lgoipkdb:
 	mov	r0, sp
 	bl	_C_LABEL(ipkdb_trap_glue)
-	ldr	r1, Lipkdb_trap_return
+	ldr	r1, .Lipkdb_trap_return
 	str	r0,[r1]
 /*
  * Have to load all registers from the stack.
@@ -324,11 +324,11 @@ Lgoipkdb:
  * Test for user mode.
  */
 	tst	r0, #0xf
-	bne	Lprenotuser_pull
+	bne	.Lprenotuser_pull
 	add	r1, sp, #(8*4)
 	ldmia	r1, {r8-r14}^		/* load user mode r8-r14 */
-	b	Lpull_r0r7
-Lprenotuser_pull:
+	b	.Lpull_r0r7
+.Lprenotuser_pull:
 /*
  * Now previous mode spsr and r14.
  */
@@ -352,7 +352,7 @@ Lprenotuser_pull:
 	mov	r12, r5
 	mov	r13, r6
 	msr	cpsr_all, r7
-Lpull_r0r7:
+.Lpull_r0r7:
 /*
  * Now the rest of the registers.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3.4.9 2002/08/01 02:41:12 nathanw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3.4.10 2002/08/19 21:38:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,25 @@ int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 struct arm32_dma_range *_bus_dma_inrange(struct arm32_dma_range *,
 	    int, bus_addr_t);
+
+/*
+ * Check to see if the specified page is in an allowed DMA range.
+ */
+__inline struct arm32_dma_range *
+_bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
+    bus_addr_t curaddr)
+{
+	struct arm32_dma_range *dr;
+	int i;
+
+	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
+		if (curaddr >= dr->dr_sysbase &&
+		    round_page(curaddr) <= (dr->dr_sysbase + dr->dr_len))
+			return (dr);
+	}
+
+	return (NULL);
+}
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -169,6 +188,9 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	/* _bus_dmamap_load_buffer() clears this if we're not... */
+	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
+
 	seg = 0;
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
 	    &lastaddr, &seg, 1);
@@ -214,6 +236,9 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
+
+	/* _bus_dmamap_load_buffer() clears this if we're not... */
+	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
 
 	first = 1;
 	seg = 0;
@@ -266,6 +291,9 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
 #endif
 	}
+
+	/* _bus_dmamap_load_buffer() clears this if we're not... */
+	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
 
 	first = 1;
 	seg = 0;
@@ -329,14 +357,13 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->_dm_proc = NULL;
 }
 
-static void
+static __inline void
 _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 	vaddr_t addr = (vaddr_t) map->_dm_origbuf;
 
 	addr += offset;
-	len -= offset;
 
 	switch (ops) {
 	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
@@ -344,11 +371,10 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		break;
 
 	case BUS_DMASYNC_PREREAD:
-#if 1
-		cpu_dcache_wbinv_range(addr, len);
-#else
-		cpu_dcache_inv_range(addr, len);
-#endif
+		if (((addr | len) & arm_dcache_align_mask) == 0)
+			cpu_dcache_inv_range(addr, len);
+		else
+			cpu_dcache_wbinv_range(addr, len);
 		break;
 
 	case BUS_DMASYNC_PREWRITE:
@@ -357,7 +383,7 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	}
 }
 
-static void
+static __inline void
 _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
@@ -390,11 +416,10 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			break;
 
 		case BUS_DMASYNC_PREREAD:
-#if 1
-			cpu_dcache_wbinv_range(maddr, minlen);
-#else
-			cpu_dcache_inv_range(maddr, minlen);
-#endif
+			if (((maddr | minlen) & arm_dcache_align_mask) == 0)
+				cpu_dcache_inv_range(maddr, minlen);
+			else
+				cpu_dcache_wbinv_range(maddr, minlen);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
@@ -406,7 +431,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	}
 }
 
-static void
+static __inline void
 _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
@@ -439,11 +464,10 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			break;
 
 		case BUS_DMASYNC_PREREAD:
-#if 1
-			cpu_dcache_wbinv_range(addr, minlen);
-#else
-			cpu_dcache_inv_range(addr, minlen);
-#endif
+			if (((addr | minlen) & arm_dcache_align_mask) == 0)
+				cpu_dcache_inv_range(addr, minlen);
+			else
+				cpu_dcache_wbinv_range(addr, minlen);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
@@ -512,9 +536,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (ops == 0)
 		return;
 
-	/*
-	 * XXX Skip cache frobbing if mapping was COHERENT.
-	 */
+	/* Skip cache frobbing if mapping was COHERENT. */
+	if (map->_dm_flags & ARM32_DMAMAP_COHERENT) {
+		/* Drain the write buffer. */
+		cpu_drain_writebuf();
+		return;
+	}
 
 	/*
 	 * If the mapping is not the kernel's and also not the
@@ -689,7 +716,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				cpu_dcache_wbinv_range(va, NBPG);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
-				*ptep &= ~(L2_B | L2_C);
+				*ptep &= ~L2_S_CACHE_MASK;
 				tlb_flush();
 			}
 #ifdef DEBUG_DMA
@@ -777,6 +804,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
+	pd_entry_t *pde;
+	pt_entry_t pte;
 	int seg;
 	pmap_t pmap;
 
@@ -796,8 +825,41 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	for (seg = *segp; buflen > 0; ) {
 		/*
 		 * Get the physical address for this segment.
+		 *
+		 * XXX Don't support checking for coherent mappings
+		 * XXX in user address space.
 		 */
-		(void) pmap_extract(pmap, (vaddr_t)vaddr, &curaddr);
+		if (__predict_true(pmap == pmap_kernel())) {
+			pde = pmap_pde(pmap, vaddr);
+			if (__predict_false(pmap_pde_section(pde))) {
+				curaddr = (*pde & L1_S_FRAME) |
+				    (vaddr & L1_S_OFFSET);
+				if (*pde & L1_S_CACHE_MASK) {
+					map->_dm_flags &=
+					    ~ARM32_DMAMAP_COHERENT;
+				}
+			} else {
+				pte = *vtopte(vaddr);
+				KDASSERT((pte & L2_TYPE_MASK) != L2_TYPE_INV);
+				if (__predict_false((pte & L2_TYPE_MASK)
+						    == L2_TYPE_L)) {
+					curaddr = (pte & L2_L_FRAME) |
+					    (vaddr & L2_L_OFFSET);
+					if (pte & L2_L_CACHE_MASK) {
+						map->_dm_flags &=
+						    ~ARM32_DMAMAP_COHERENT;
+					}
+				} else {
+					curaddr = (pte & L2_S_FRAME) |
+					    (vaddr & L2_S_OFFSET);
+					if (pte & L2_S_CACHE_MASK) {
+						map->_dm_flags &=
+						    ~ARM32_DMAMAP_COHERENT;
+					}
+				}
+			}
+		} else
+			(void) pmap_extract(pmap, vaddr, &curaddr);
 
 		/*
 		 * Make sure we're in an allowed DMA range.
@@ -870,25 +932,6 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen != 0)
 		return (EFBIG);		/* XXX better return value here? */
 	return (0);
-}
-
-/*
- * Check to see if the specified page is in an allowed DMA range.
- */
-struct arm32_dma_range *
-_bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
-    bus_addr_t curaddr)
-{
-	struct arm32_dma_range *dr;
-	int i;
-
-	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
-		if (curaddr >= dr->dr_sysbase &&
-		    round_page(curaddr) <= (dr->dr_sysbase + dr->dr_len))
-			return (dr);
-	}
-
-	return (NULL);
 }
 
 /*

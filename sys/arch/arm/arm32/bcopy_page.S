@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy_page.S,v 1.2.6.2 2002/08/13 02:17:49 nathanw Exp $	*/
+/*	$NetBSD: bcopy_page.S,v 1.2.6.3 2002/08/19 21:38:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -89,7 +89,7 @@ ENTRY(bcopy_page)
 	mov	r2, #(NBPG >> 7)
 #endif
 
-Lloopcopy:
+1:
 	COPY_CHUNK
 	COPY_CHUNK
 	COPY_CHUNK
@@ -115,7 +115,7 @@ Lloopcopy:
 	COPY_CHUNK
 #endif
 	subs	r2, r2, #1
-	bne	Lloopcopy
+	bne	1b
 
 	RESTORE_REGS		/* ...and return. */
 
@@ -148,7 +148,7 @@ ENTRY(bzero_page)
 	mov	ip, #0
 	mov	lr, #0
 
-Lloopzero:
+1:
 	stmia	r0!, {r3-r8,ip,lr}
 	stmia	r0!, {r3-r8,ip,lr}
 	stmia	r0!, {r3-r8,ip,lr}
@@ -176,6 +176,6 @@ Lloopzero:
 #endif
 
 	subs	r2, r2, #1
-	bne	Lloopzero
+	bne	1b
 
 	ldmfd	sp!, {r4-r8, pc}

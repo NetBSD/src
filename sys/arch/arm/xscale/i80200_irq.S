@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.1.4.4 2002/08/13 02:17:57 nathanw Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.1.4.5 2002/08/19 21:39:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -54,19 +54,19 @@
 	.text
 	.align	0
 
-Lcurrent_intr_depth: 
+.Lcurrent_intr_depth: 
 	.word	_C_LABEL(current_intr_depth)
 	.word	_C_LABEL(prev_intr_depth)
 
-Lintr_dispatch:
+.Lintr_dispatch:
 	.word	_C_LABEL(i80200_extirq_dispatch)
 
 #if defined(PERFCTRS)
-Lpmc_dispatch:
+.Lpmc_dispatch:
 	.word	_C_LABEL(xscale_pmc_dispatch)
 #endif
 
-Lastpending:
+.Lastpending:
 	.word	_C_LABEL(astpending)
 
 ASENTRY_NP(irq_entry)
@@ -80,8 +80,8 @@ ASENTRY_NP(irq_entry)
 	 * determine if we are in an IRQ.  Instead, we will
 	 * count each time the interrupt handler is nested.
 	 */
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r2, Lcurrent_intr_depth+4
+	ldr	r0, .Lcurrent_intr_depth
+	ldr	r2, .Lcurrent_intr_depth+4
 	ldr	r1, [r0]
 	str	r1, [r2]
 	add	r1, r1, #1
@@ -98,12 +98,12 @@ ASENTRY_NP(irq_entry)
 	 * If we have one, call the routine to handle it.
 	 */
 	tst	r4, #(INTSRC_PI)
-	beq	Lpmc_intr_return
+	beq	.Lpmc_intr_return
 	mov	r1, r4
-	add	lr, pc, #Lpmc_intr_return - . - 8
+	add	lr, pc, #.Lpmc_intr_return - . - 8
 	mov	r0, sp
-	ldr	pc, Lpmc_dispatch
-Lpmc_intr_return:
+	ldr	pc, .Lpmc_dispatch
+.Lpmc_intr_return:
 #endif
 
 	/*
@@ -118,16 +118,16 @@ Lpmc_intr_return:
 	 * disabled.
 	 */
 	tst	r4, #(INTSRC_II)
-	beq	Lextirq_return		/* no external IRQ pending */
-	ldr	r1, Lintr_dispatch
-	add	lr, pc, #Lextirq_return - . - 8
+	beq	.Lextirq_return		/* no external IRQ pending */
+	ldr	r1, .Lintr_dispatch
+	add	lr, pc, #.Lextirq_return - . - 8
 	mov	r0, sp
 	ldr	pc, [r1]
-Lextirq_return:
+.Lextirq_return:
 
 	/* Decremement the nest count. */
-	ldr	r0, Lcurrent_intr_depth 
-	ldr	r2, Lcurrent_intr_depth+4
+	ldr	r0, .Lcurrent_intr_depth 
+	ldr	r2, .Lcurrent_intr_depth+4
 	ldr	r1, [r0]
 	str	r1, [r2]
 	sub	r1, r1, #1
@@ -139,28 +139,28 @@ Lextirq_return:
 	ldr	r0, [sp]		/* Get the SPSR from stack */
 	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
 	teq	r0, #(PSR_USR32_MODE)
-	bne	Lirqout			/* Nope, get out now */
+	bne	.Lirqout		/* Nope, get out now */
 
-Lastloop:
-	ldr	r0, Lastpending		/* Do we have an AST pending? */
+.Lastloop:
+	ldr	r0, .Lastpending	/* Do we have an AST pending? */
 	ldr	r1, [r0]
 	teq	r1, #0x00000000
-	beq	Lirqout			/* Nope, get out now */
+	beq	.Lirqout		/* Nope, get out now */
 
 	mov	r1, #0x00000000
 	str	r1, [r0]		/* Clear astpending */
 
-	mrs	r4, cpsr_all		/* save CPSR */
+	mrs	r4, cpsr		/* save CPSR */
 	bic	r0, r4, #(I32_bit)	/* Enable IRQs */
-	msr	cpsr_all, r0
+	msr	cpsr_c, r0
 
 	mov	r0, sp
 	bl	_C_LABEL(ast)		/* ast(frame) */
 
-	msr	cpsr_all, r4		/* Disable IRQs */
-	b	Lastloop		/* Check for more ASTs */
+	msr	cpsr_c, r4		/* Disable IRQs */
+	b	.Lastloop		/* Check for more ASTs */
 
-Lirqout:
+.Lirqout:
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3.4.3 2002/08/01 02:41:15 nathanw Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.4.4 2002/08/19 21:39:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -634,6 +634,11 @@ bs_c_8_proto(f);
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 
+/*
+ * Private flags stored in the DMA map.
+ */
+#define	ARM32_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
@@ -707,7 +712,9 @@ struct arm32_bus_dma_tag {
 	int	(*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
 		    bus_dma_segment_t *, int, bus_size_t, int));
 	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
+	void	(*_dmamap_sync_pre) __P((bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int));
+	void	(*_dmamap_sync_post) __P((bus_dma_tag_t, bus_dmamap_t,
 		    bus_addr_t, bus_size_t, int));
 
 	/*
@@ -739,8 +746,14 @@ struct arm32_bus_dma_tag {
 #define	bus_dmamap_unload(t, p)					\
 	(*(t)->_dmamap_unload)((t), (p))
 #define	bus_dmamap_sync(t, p, o, l, ops)			\
-	(void)((t)->_dmamap_sync ?				\
-	    (*(t)->_dmamap_sync)((t), (p), (o), (l), (ops)) : (void)0)
+do {									\
+	if (((ops) & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0	\
+	    && (t)->_dmamap_sync_pre != NULL)				\
+		(*(t)->_dmamap_sync_pre)((t), (p), (o), (l), (ops));	\
+	else if (((ops) & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0 \
+		 && (t)->_dmamap_sync_post != NULL)			     \
+		(*(t)->_dmamap_sync_post)((t), (p), (o), (l), (ops));	     \
+} while (/*CONSTCOND*/0)
 
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
 	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))

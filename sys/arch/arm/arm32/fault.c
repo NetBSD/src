@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4.2.11 2002/08/13 02:17:50 nathanw Exp $	*/
+/*	$NetBSD: fault.c,v 1.4.2.12 2002/08/19 21:39:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4.2.11 2002/08/13 02:17:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4.2.12 2002/08/19 21:39:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4.2.11 2002/08/13 02:17:50 nathanw Exp $
 #include <arch/arm/arm/disassem.h>
 #include <arm/arm32/machdep.h>
  
-int cowfault __P((vaddr_t));
 extern char fusubailout[];
 
 static void report_abort __P((const char *, u_int, u_int, u_int));
