@@ -1,6 +1,5 @@
-# $NetBSD: md.hp300,v 1.48 2003/01/18 17:50:24 thorpej Exp $
+# $NetBSD: md.hp300,v 1.49 2003/10/24 18:32:16 mycroft Exp $
 ./usr/include/hp300		comp-c-include
-./usr/include/hp300/_G_config.h		comp-c-include
 ./usr/include/hp300/ansi.h		comp-c-include
 ./usr/include/hp300/aout_machdep.h		comp-c-include
 ./usr/include/hp300/asm.h		comp-c-include
