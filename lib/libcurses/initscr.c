@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: initscr.c,v 1.11 1999/06/28 13:32:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.11 1999/06/28 13:32:43 simonb Exp $");
 #endif
 #endif	/* not lint */
 
@@ -75,7 +75,7 @@ initscr()
 		return (NULL);
 
 	/* Need either homing or cursor motion for refreshes */
-	if (!HO && !CM) 
+	if (!HO && !CM)
 		return (NULL);
 
 	if (curscr != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.23 1999/06/28 12:32:07 simonb Exp $	*/
+/*	$NetBSD: curses.h,v 1.24 1999/06/28 13:32:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -107,9 +107,9 @@ extern char	*AL, *BC, *BL, *BT, *CD, *CE, *CL, *CM, *CR, *CS, *DC,
 #define    KEY_BACKSPACE  0x107    /* Backspace */
 
 /* First function key (block of 64 follow) */
-#define    KEY_F0         0x108    
+#define    KEY_F0         0x108
 /* Function defining other function key values*/
-#define    KEY_F(n)       (KEY_F0+(n))  
+#define    KEY_F(n)       (KEY_F0+(n))
 
 #define    KEY_DL         0x148    /* Delete Line */
 #define    KEY_IL         0x149    /* Insert Line*/
@@ -216,7 +216,7 @@ extern char	 __unctrllen[256];	/* Control strings length. */
  * A line is an array of __LDATA structures pointed to by the 'line' pointer.
  *
  * IMPORTANT: the __LDATA structure must NOT induce any padding, so if new
- * fields are added -- padding fields with *constant values* should ensure 
+ * fields are added -- padding fields with *constant values* should ensure
  * that the compiler will not generate any padding when storing an array of
  *  __LDATA structures.  This is to enable consistent use of memcmp, and memcpy
  * for comparing and copying arrays.
@@ -270,7 +270,7 @@ typedef struct __window {		/* Window structure. */
 #define	__SCROLLOK	0x00020		/* Scrolling ok. */
 #define	__CLEAROK	0x00040		/* Clear on next refresh. */
 #define	__WSTANDOUT	0x00080		/* Standout window */
-#define	__LEAVEOK	0x00100		/* If curser left */	
+#define	__LEAVEOK	0x00100		/* If curser left */
 #define	__WUNDERSCORE	0x00200 	/* Underscored window */
 #define	__WREVERSE	0x00400		/* Reverse video window */
 #define	__WBLINK	0x00800		/* Blinking window */

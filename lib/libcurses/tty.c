@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.11 1999/04/13 14:08:19 mrg Exp $	*/
+/*	$NetBSD: tty.c,v 1.12 1999/06/28 13:32:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.11 1999/04/13 14:08:19 mrg Exp $");
+__RCSID("$NetBSD: tty.c,v 1.12 1999/06/28 13:32:43 simonb Exp $");
 #endif
 #endif				/* not lint */
 
@@ -338,7 +338,7 @@ noecho()
 	rawt.c_lflag &= ~ECHO;
 	cbreakt.c_lflag &= ~ECHO;
 	__baset.c_lflag &= ~ECHO;
-	
+
 	__echoit = 0;
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, curt) ? ERR : OK);

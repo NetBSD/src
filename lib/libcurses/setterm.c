@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.11 1999/04/13 14:08:19 mrg Exp $	*/
+/*	$NetBSD: setterm.c,v 1.12 1999/06/28 13:32:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.11 1999/04/13 14:08:19 mrg Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.12 1999/06/28 13:32:43 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ zap()
 		__CTRACE("%2.2s = %s\n", namp, *fp[-1] ? "TRUE" : "FALSE");
 #endif
 		namp += 2;
-		
+
 	} while (*namp);
 	namp = "ALbcblbtcdceclcmcrcsdcDLdmdoedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmpmrndnlpcrcscseSFsoSRtatetiucueupusvbvsvealdlsfsrALDLUPDOLERI";
 	sp = sstrs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.10 1999/04/13 14:08:17 mrg Exp $	*/
+/*	$NetBSD: curses.c,v 1.11 1999/06/28 13:32:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.10 1999/04/13 14:08:17 mrg Exp $");
+__RCSID("$NetBSD: curses.c,v 1.11 1999/06/28 13:32:43 simonb Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,9 +48,9 @@ __RCSID("$NetBSD: curses.c,v 1.10 1999/04/13 14:08:17 mrg Exp $");
 int	__echoit = 1;			/* If stty indicates ECHO. */
 int	__pfast;
 int	__rawmode = 0;			/* If stty indicates RAW mode. */
-int	__noqch = 0;			/* 
-					 * If terminal doesn't have 
-					 * insert/delete line capabilities 
+int	__noqch = 0;			/*
+					 * If terminal doesn't have
+					 * insert/delete line capabilities
 					 * for quick change on refresh.
 					 */
 char	AM, BS, CA, DA, EO, HC, IN, MI, MS, NC, NS, OS, PC, UL, XB, XN,

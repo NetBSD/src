@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.13 1999/04/13 14:08:17 mrg Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.14 1999/06/28 13:32:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.13 1999/04/13 14:08:17 mrg Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.14 1999/06/28 13:32:43 simonb Exp $");
 #endif
 #endif				/* not lint */
 
@@ -82,7 +82,7 @@ __waddbytes(win, bytes, count, attr)
 #ifdef DEBUG
 			__CTRACE("ADDBYTES(%0.2o, %d, %d)\n", win, y, x);
 #endif
-			
+
 			lp = win->lines[y];
 			if (lp->flags & __ISPASTEOL) {
 				lp->flags &= ~__ISPASTEOL;
@@ -103,7 +103,7 @@ __waddbytes(win, bytes, count, attr)
 				if (c == '\n')
 					break;
 			}
-				
+
 			attributes = '\0';
 			if (win->flags & __WSTANDOUT || attr & __STANDOUT)
 				attributes |= __STANDOUT;

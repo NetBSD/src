@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.12 1999/04/13 14:08:17 mrg Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.13 1999/06/28 13:32:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.12 1999/04/13 14:08:17 mrg Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.13 1999/06/28 13:32:43 simonb Exp $");
 #endif
 #endif				/* not lint */
 
@@ -144,7 +144,7 @@ fgoto(in_refresh)
 			 * list this won't work.  We should probably have an
 			 * sc capability but sf will generally take the place
 			 * if it works.
-			 * 
+			 *
 			 * Superbee glitch: in the middle of the screen have to
 			 * use esc B (down) because linefeed screws up in
 			 * "Efficient Paging" (what a joke) mode (which is
