@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.15 2000/05/13 23:43:12 perseant Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.16 2000/05/28 04:13:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -193,9 +193,9 @@ ext2fs_truncate(v)
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	int offset, size, level;
-	long count, nblocks, vflags, blocksreleased = 0;
+	long count, nblocks, blocksreleased = 0;
 	int i;
-	int aflags, error, allerror;
+	int aflags, error, allerror = 0;
 	off_t osize;
 
 	if (length < 0)
@@ -307,8 +307,10 @@ ext2fs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_e2fs_blocks[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT)) != 0)
+	error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
+	if (error && !allerror)
 		allerror = error;
+
 	/*
 	 * Having written the new inode to disk, save its new configuration
 	 * and put back the old block pointers long enough to process them.
@@ -318,8 +320,9 @@ ext2fs_truncate(v)
 	memcpy((caddr_t)newblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof newblks);
 	memcpy((caddr_t)&oip->i_e2fs_blocks[0], (caddr_t)oldblks, sizeof oldblks);
 	oip->i_e2fs_size = osize;
-	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
-	allerror = vinvalbuf(ovp, vflags, ap->a_cred, ap->a_p, 0, 0);
+	error = vtruncbuf(ovp, lastblock + 1, 0, 0);
+	if (error && !allerror)
+		allerror = error;
 
 	/*
 	 * Indirect blocks first.
@@ -331,7 +334,7 @@ ext2fs_truncate(v)
 		bn = fs2h32(oip->i_e2fs_blocks[NDADDR + level]);
 		if (bn != 0) {
 			error = ext2fs_indirtrunc(oip, indir_lbn[level],
-				fsbtodb(fs, bn), lastiblock[level], level, &count);
+			    fsbtodb(fs, bn), lastiblock[level], level, &count);
 			if (error)
 				allerror = error;
 			blocksreleased += count;
@@ -362,14 +365,13 @@ ext2fs_truncate(v)
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (newblks[NDADDR + level] !=
-			fs2h32(oip->i_e2fs_blocks[NDADDR + level]))
+		if (newblks[NDADDR + level] != oip->i_e2fs_blocks[NDADDR + level])
 			panic("itrunc1");
 	for (i = 0; i < NDADDR; i++)
-		if (newblks[i] != fs2h32(oip->i_e2fs_blocks[i]))
+		if (newblks[i] != oip->i_e2fs_blocks[i])
 			panic("itrunc2");
 	if (length == 0 &&
-		(ovp->v_dirtyblkhd.lh_first || ovp->v_cleanblkhd.lh_first))
+	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
 		panic("itrunc3");
 #endif /* DIAGNOSTIC */
 	/*
