@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.172 2002/04/19 23:03:09 schmonz Exp $
+.\"	$NetBSD: main,v 1.173 2002/04/21 17:37:05 nsmrtks Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1466,7 +1466,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Wayne Knowles Ta Mt wdk@netbsd.org Ta Sy mipsco
 .It Ta Paul Kranenburg Ta Mt pk@netbsd.org Ta Sy sparc
 .It Ta Anders Magnusson Ta Mt ragge@netbsd.org Ta Sy vax
-.It Ta Minoura Makoto Ta Mt minoura@netbsd.org Ta Sy x68k
+.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org Ta Sy x68k
 .It Ta Phil Nelson Ta Mt phil@netbsd.org Ta Sy pc532
 .It Ta Tohru Nishimura Ta Mt nisimura@netbsd.org Ta Sy luna68k
 .It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org Ta Sy prep
@@ -1616,11 +1616,11 @@ them, and would like to mentioned, tell us!)
 .It Ta Jared D. McNeill Ta Mt jmcneill@netbsd.org
 .It Ta Neil J. McRae Ta Mt neil@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
+.It Ta Minoura Makoto Ta Mt minoura@netbsd.org
 .It Ta der Mouse Ta Mt mouse@netbsd.org
 .It Ta Joseph Myers Ta Mt jsm@netbsd.org
 .It Ta Ken Nakata Ta Mt kenn@netbsd.org
 .It Ta Bob Nestor Ta Mt rnestor@netbsd.org
-.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org
 .It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org
 .It Ta Jesse Off Ta Mt joff@netbsd.org
 .It Ta Tatoku Ogaito Ta Mt tacha@netbsd.org
