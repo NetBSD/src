@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.56 2003/04/10 22:07:01 christos Exp $
+# $NetBSD: GENERIC,v 1.57 2003/04/19 16:22:51 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.56 $"
+#ident 		"GENERIC-$Revision: 1.57 $"
 
 maxusers	16
 
@@ -44,7 +44,7 @@ options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
-#options 	NTP			# network time protocol
+options 	NTP			# network time protocol
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
@@ -53,11 +53,11 @@ options 	USERCONF		# userconf(4) support
 #options 	NEW_BUFQ_STRATEGY
 
 # Debugging options
-#options 	DDB			# kernel dynamic debugger
+options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG			# extra kernel debugging support
 #options 	DIAGNOSTIC		# extra kernel sanity checking
-#options 	SCSIVERBOSE		# Verbose SCSI errors
+options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
