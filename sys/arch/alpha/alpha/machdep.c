@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1996/06/13 00:28:59 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 1996/06/13 04:54:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,7 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #ifdef REAL_CLISTS
@@ -175,6 +176,7 @@ int		ncpus;
 /* various CPU-specific functions. */
 char		*(*cpu_modelname) __P((void));
 void		(*cpu_consinit) __P((void));
+void		(*cpu_device_register) __P((struct device *dev, void *aux));
 char		*cpu_iobus;
 
 char boot_flags[64];
@@ -359,6 +361,7 @@ alpha_init(pfn, ptb)
 	case ST_DEC_3000_500:
 		cpu_modelname = dec_3000_500_modelname;
 		cpu_consinit = dec_3000_500_consinit;
+		cpu_device_register = dec_3000_500_device_register;
 		cpu_iobus = "tcasic";
 		break;
 #endif
@@ -367,6 +370,7 @@ alpha_init(pfn, ptb)
 	case ST_DEC_3000_300:
 		cpu_modelname = dec_3000_300_modelname;
 		cpu_consinit = dec_3000_300_consinit;
+		cpu_device_register = dec_3000_300_device_register;
 		cpu_iobus = "tcasic";
 		break;
 #endif
@@ -375,6 +379,7 @@ alpha_init(pfn, ptb)
 	case ST_DEC_2100_A50:
 		cpu_modelname = dec_2100_a50_modelname;
 		cpu_consinit = dec_2100_a50_consinit;
+		cpu_device_register = dec_2100_a50_device_register;
 		cpu_iobus = "apecs";
 		break;
 #endif
@@ -383,6 +388,7 @@ alpha_init(pfn, ptb)
 	case ST_DEC_KN20AA:
 		cpu_modelname = dec_kn20aa_modelname;
 		cpu_consinit = dec_kn20aa_consinit;
+		cpu_device_register = dec_kn20aa_device_register;
 		cpu_iobus = "cia";
 		break;
 #endif
@@ -391,6 +397,7 @@ alpha_init(pfn, ptb)
 	case ST_DEC_AXPPCI_33:
 		cpu_modelname = dec_axppci_33_modelname;
 		cpu_consinit = dec_axppci_33_consinit;
+		cpu_device_register = dec_axppci_33_device_register;
 		cpu_iobus = "lca";
 		break;
 #endif
@@ -399,6 +406,7 @@ alpha_init(pfn, ptb)
 	case ST_DEC_2000_300:
 		cpu_modelname = dec_2000_300_modelname;
 		cpu_consinit = dec_2000_300_consinit;
+		cpu_device_register = dec_2000_300_device_register;
 		cpu_iobus = "ibus";
 	XXX DEC 2000/300 NOT SUPPORTED
 		break;
@@ -408,6 +416,7 @@ alpha_init(pfn, ptb)
 	case ST_DEC_21000:
 		cpu_modelname = dec_21000_modelname;
 		cpu_consinit = dec_21000_consinit;
+		cpu_device_register = dec_21000_device_register;
 		cpu_iobus = "tlsb";
 	XXX DEC 21000 NOT SUPPORTED
 		break;
