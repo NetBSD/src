@@ -652,6 +652,11 @@
 ./usr/share/man/cat8/getNAME.0
 ./usr/share/man/cat8/getty.0
 ./usr/share/man/cat8/greconfig.0
+./usr/share/man/cat8/group.0
+./usr/share/man/cat8/groupadd.0
+./usr/share/man/cat8/groupdel.0
+./usr/share/man/cat8/groupinfo.0
+./usr/share/man/cat8/groupmod.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hlfsd.0
 ./usr/share/man/cat8/identd.0
@@ -833,6 +838,11 @@
 ./usr/share/man/cat8/update.0
 ./usr/share/man/cat8/usbd.0
 ./usr/share/man/cat8/usbdevs.0
+./usr/share/man/cat8/user.0
+./usr/share/man/cat8/useradd.0
+./usr/share/man/cat8/userdel.0
+./usr/share/man/cat8/userinfo.0
+./usr/share/man/cat8/usermod.0
 ./usr/share/man/cat8/uucico.0
 ./usr/share/man/cat8/uucpd.0
 ./usr/share/man/cat8/uugetty.0
@@ -1767,6 +1777,11 @@
 ./usr/share/man/man8/getNAME.8
 ./usr/share/man/man8/getty.8
 ./usr/share/man/man8/greconfig.8
+./usr/share/man/man8/group.8
+./usr/share/man/man8/groupadd.8
+./usr/share/man/man8/groupdel.8
+./usr/share/man/man8/groupinfo.8
+./usr/share/man/man8/groupmod.8
 ./usr/share/man/man8/halt.8
 ./usr/share/man/man8/hlfsd.8
 ./usr/share/man/man8/identd.8
@@ -1948,6 +1963,11 @@
 ./usr/share/man/man8/update.8
 ./usr/share/man/man8/usbd.8
 ./usr/share/man/man8/usbdevs.8
+./usr/share/man/man8/user.8
+./usr/share/man/man8/useradd.8
+./usr/share/man/man8/userdel.8
+./usr/share/man/man8/userinfo.8
+./usr/share/man/man8/usermod.8
 ./usr/share/man/man8/uucico.8
 ./usr/share/man/man8/uucpd.8
 ./usr/share/man/man8/uugetty.8
