@@ -6,9 +6,12 @@ CFLAGS+=	-I$(.CURDIR)/../include
 LDADD+= 	$(LIBBIB) $(LIBGROFF) -lm
 DPADD+= 	$(LIBBIB) $(LIBGROFF) $(LIBMATH)
 
+# XXX -- this depends on ../include/defs.h
+COMMON_WORDS_FILE=	"/usr/share/dict/eign"
+
 afterinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 $(.CURDIR)/eign \
-		$(DESTDIR)$(common_words_file)
+		$(DESTDIR)$(COMMON_WORDS_FILE)
 
 .include <bsd.prog.mk>
 .include "../../Makefile.inc"
