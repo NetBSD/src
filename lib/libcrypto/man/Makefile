@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 2001/04/12 10:45:37 itojun Exp $
+#	$NetBSD: Makefile,v 1.8 2001/04/13 00:18:11 itojun Exp $
 
 # the makefile is not, and should not be visited during normal build process.
+# try to use latest pod2man, which comes with the latest perl.
 
 VERSION=	0.9.6a
 CRYPTODIST=	${.CURDIR}/../../../crypto/dist
