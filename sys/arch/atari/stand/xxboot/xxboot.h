@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.h,v 1.1.1.1 1996/02/29 11:36:49 leo Exp $	*/
+/*	$NetBSD: xxboot.h,v 1.2 1996/03/20 08:23:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -42,6 +42,7 @@
 #define	_memtop		0x0436
 #define	flock		0x043e
 #define	_bootdev	0x0446
+#define	_v_bas_ad	0x044e
 #define	_hz_200		0x04ba
 #define	_drvbits	0x04c2
 #define	_sysbase	0x04f2
@@ -52,15 +53,15 @@
 #define	dmahi		0x8609
 #define	gpip		0xfa01
 
-#define	idesdh		0xfff00019
-#define	idedor		0xfff00005
-#define	idedr		0xfff00000
-#define	idecr		0xfff0001d
-#define	idesr		0xfff0001d
-#define	idesc		0xfff00009
-#define	idesn		0xfff0000d
-#define	idecl		0xfff00011
-#define	idech		0xfff00015
+#define	idesdh		0xf00019
+#define	idedor		0xf00005
+#define	idedr		0xf00000
+#define	idecr		0xf0001d
+#define	idesr		0xf0001d
+#define	idesc		0xf00009
+#define	idesn		0xf0000d
+#define	idecl		0xf00011
+#define	idech		0xf00015
 
 /*
  * Boot block format (16 * 512 bytes)
