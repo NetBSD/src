@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,11 +29,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)uuencode.format.5	6.4 (Berkeley) 5/10/91
+.\"	@(#)uuencode.format.5	8.2 (Berkeley) 1/12/94
 .\"
-.Dd May 10, 1991
+.Dd January 12, 1994
 .Dt UUENCODE 5
-.Os BSD 4.0
+.Os BSD 4
 .Sh NAME
 .Nm uuencode
 .Nd format of an encoded uuencode file
@@ -54,6 +54,7 @@ look like a header.
 The header line is distinguished by having the first
 6 characters
 .Dq begin\ \&
+(note the trailing space).
 The word
 .Em begin
 is followed by a mode (in octal),
@@ -95,7 +96,7 @@ on a line by itself.
 .Xr mail 1
 .Sh HISTORY
 The
-.Nm
+.Nm uuencode
 file format appeared in
 .Bx 4.0 .
 .\" It was named uuencode.5 prior to 4.3

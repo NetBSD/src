@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ttymsg.c	5.8 (Berkeley) 7/1/91";
+static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,17 +48,18 @@ static char sccsid[] = "@(#)ttymsg.c	5.8 (Berkeley) 7/1/91";
 #include <stdlib.h>
 
 /*
- * Display the contents of a uio structure on a terminal.  Used by wall(1)
- * and syslogd(8).  Forks and finishes in child if write would block, waiting
- * at most five minutes.  Returns pointer to error string on unexpected error;
- * string is not newline-terminated.  Various "normal" errors are ignored
- * (exclusive-use, lack of permission, etc.).
+ * Display the contents of a uio structure on a terminal.  Used by wall(1),
+ * syslogd(8), and talkd(8).  Forks and finishes in child if write would block,
+ * waiting up to tmout seconds.  Returns pointer to error string on unexpected
+ * error; string is not newline-terminated.  Various "normal" errors are
+ * ignored (exclusive-use, lack of permission, etc.).
  */
 char *
-ttymsg(iov, iovcnt, line)
+ttymsg(iov, iovcnt, line, tmout)
 	struct iovec *iov;
 	int iovcnt;
 	char *line;
+	int tmout;
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
 	static char errbuf[1024];
@@ -66,13 +67,21 @@ ttymsg(iov, iovcnt, line)
 	struct iovec localiov[6];
 	int forked = 0;
 
-	if (iovcnt > 6)
+	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
 		return ("too many iov's (change code in wall/ttymsg.c)");
+
+	(void) strcpy(device + sizeof(_PATH_DEV) - 1, line);
+	if (strchr(device + sizeof(_PATH_DEV) - 1, '/')) {
+		/* A slash is an attempt to break security... */
+		(void) snprintf(errbuf, sizeof(errbuf), "'/' in \"%s\"",
+		    device);
+		return (errbuf);
+	}
+
 	/*
 	 * open will fail on slip lines or exclusive-use lines
 	 * if not running as root; not an error.
 	 */
-	(void) strcpy(device + sizeof(_PATH_DEV) - 1, line);
 	if ((fd = open(device, O_WRONLY|O_NONBLOCK, 0)) < 0) {
 		if (errno == EBUSY || errno == EACCES)
 			return (NULL);
@@ -91,7 +100,7 @@ ttymsg(iov, iovcnt, line)
 		if (wret >= 0) {
 			left -= wret;
 			if (iov != localiov) {
-				bcopy(iov, localiov, 
+				bcopy(iov, localiov,
 				    iovcnt * sizeof(struct iovec));
 				iov = localiov;
 			}
@@ -125,14 +134,14 @@ ttymsg(iov, iovcnt, line)
 				return (NULL);
 			}
 			forked++;
-			/* wait at most 5 minutes */
+			/* wait at most tmout seconds */
 			(void) signal(SIGALRM, SIG_DFL);
 			(void) signal(SIGTERM, SIG_DFL); /* XXX */
 			(void) sigsetmask(0);
-			(void) alarm((u_int)(60 * 5));
+			(void) alarm((u_int)tmout);
 			(void) fcntl(fd, O_NONBLOCK, &off);
 			continue;
-		} 
+		}
 		/*
 		 * We get ENODEV on a slip line if we're running as root,
 		 * and EIO if the line just went away.

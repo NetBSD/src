@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)wall.c	5.14 (Berkeley) 3/2/91";
+static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif /* not lint */
 
 /*
@@ -50,11 +50,16 @@ static char sccsid[] = "@(#)wall.c	5.14 (Berkeley) 3/2/91";
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>
-#include <utmp.h>
+
+#include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <paths.h>
+#include <string.h>
+#include <unistd.h>
+#include <utmp.h>
+
+void	makemsg __P((char *));
 
 #define	IGNOREUSER	"sleeper"
 
@@ -63,6 +68,7 @@ int mbufsize;
 char *mbuf;
 
 /* ARGSUSED */
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -73,6 +79,7 @@ main(argc, argv)
 	struct utmp utmp;
 	FILE *fp;
 	char *p, *ttymsg();
+	char line[sizeof(utmp.ut_line) + 1];
 
 	while ((ch = getopt(argc, argv, "n")) != EOF)
 		switch (ch) {
@@ -105,12 +112,15 @@ usage:
 		if (!utmp.ut_name[0] ||
 		    !strncmp(utmp.ut_name, IGNOREUSER, sizeof(utmp.ut_name)))
 			continue;
-		if (p = ttymsg(&iov, 1, utmp.ut_line))
+		strncpy(line, utmp.ut_line, sizeof(utmp.ut_line));
+		line[sizeof(utmp.ut_line)] = '\0';
+		if ((p = ttymsg(&iov, 1, line, 60*5)) != NULL)
 			(void)fprintf(stderr, "wall: %s\n", p);
 	}
 	exit(0);
 }
 
+void
 makemsg(fname)
 	char *fname;
 {
@@ -156,12 +166,12 @@ makemsg(fname)
 	}
 	(void)fprintf(fp, "%79s\r\n", " ");
 
-	if (*fname && !(freopen(fname, "r", stdin))) {
+	if (fname && !(freopen(fname, "r", stdin))) {
 		(void)fprintf(stderr, "wall: can't read %s.\n", fname);
 		exit(1);
 	}
 	while (fgets(lbuf, sizeof(lbuf), stdin))
-		for (cnt = 0, p = lbuf; ch = *p; ++p, ++cnt) {
+		for (cnt = 0, p = lbuf; (ch = *p) != '\0'; ++p, ++cnt) {
 			if (cnt == 79 || ch == '\n') {
 				for (; cnt < 79; ++cnt)
 					putc(' ', fp);
