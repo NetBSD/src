@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.187 2000/11/02 20:51:58 veego Exp $
+# $NetBSD: mi,v 1.188 2000/11/03 05:40:58 veego Exp $
 .
 ./altroot
 ./bin
@@ -918,6 +918,8 @@
 ./usr/share/locale/no
 ./usr/share/locale/no/LC_MESSAGES
 ./usr/share/locale/no/LC_MESSAGES/grep.mo
+./usr/share/locale/no@nynorsk
+./usr/share/locale/no@nynorsk/LC_MESSAGES
 ./usr/share/locale/pl
 ./usr/share/locale/pl/LC_MESSAGES
 ./usr/share/locale/pl/LC_MESSAGES/grep.mo
