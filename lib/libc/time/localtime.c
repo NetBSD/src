@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.24 2000/09/13 22:32:28 msaitoh Exp $	*/
+/*	$NetBSD: localtime.c,v 1.25 2001/03/31 18:29:21 kleink Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.70";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.24 2000/09/13 22:32:28 msaitoh Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.25 2001/03/31 18:29:21 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -30,6 +30,7 @@ __RCSID("$NetBSD: localtime.c,v 1.24 2000/09/13 22:32:28 msaitoh Exp $");
 
 #ifdef __weak_alias
 __weak_alias(ctime_r,_ctime_r)
+__weak_alias(daylight,_daylight)
 __weak_alias(gmtime_r,_gmtime_r)
 __weak_alias(localtime_r,_localtime_r)
 __weak_alias(offtime,_offtime)
