@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.46 2004/03/13 17:31:34 bjh21 Exp $
+#	$NetBSD: files.prep,v 1.47 2004/06/26 21:51:04 kleink Exp $
 #
 # prep-specific configuration info
 #
@@ -8,7 +8,8 @@ maxusers 2 8 64
 
 defflag	opt_residual.h	RESIDUAL_DATA_DUMP
 
-defflag	opt_platform.h	PLATFORM_IBM_6040
+defflag	opt_platform.h	PLATFORM_IBM_6015
+			PLATFORM_IBM_6040
 			PLATFORM_IBM_6050
 			PLATFORM_IBM_7248
 			PLATFORM_IBM_7043_140
@@ -16,6 +17,7 @@ defflag	opt_platform.h	PLATFORM_IBM_6040
 
 # IBM
 file	arch/prep/prep/ibm_machdep.c
+file	arch/prep/prep/ibm_6015.c	platform_ibm_6015
 file	arch/prep/prep/ibm_6040.c	platform_ibm_6040
 file	arch/prep/prep/ibm_6050.c	platform_ibm_6050
 file	arch/prep/prep/ibm_7248.c	platform_ibm_7248
