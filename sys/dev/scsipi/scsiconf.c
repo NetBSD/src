@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.79 1997/04/08 17:35:06 scottr Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.80 1997/04/19 21:32:37 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -384,7 +384,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,  
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"}, SDEV_NOLUNS},  
-
+	{{T_DIRECT, T_FIXED,
+	 "MICROP  ", "1588-15MBSUN0669", ""},     SDEV_AUTOSAVE},
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
 
@@ -462,6 +463,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Following entry reported as a Tandberg 3600; ref. PR1933 */
 	{{T_SEQUENTIAL, T_REMOV,
 	 "ARCHIVE ", "VIPER 150  21247", ""},     SDEV_NOLUNS},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "ARCHIVE ", "Python 28454-XXX", ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WANGTEK ", "5099ES SCSI",      ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
