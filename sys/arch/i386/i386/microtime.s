@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.18.18.1 2000/02/20 18:16:07 sommerfeld Exp $	*/
+/*	$NetBSD: microtime.s,v 1.18.18.2 2001/05/23 03:13:38 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -37,9 +37,12 @@
 #include <dev/isa/isareg.h>
 #include <i386/isa/timerreg.h>
 
+/* LINTSTUB: include <sys/time.h> */
+
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)
 
+/* LINTSTUB: Func: void i8254_microtime(struct timeval *tv) */
 ENTRY(i8254_microtime)
 	# clear registers and do whatever we can up front
 	pushl	%edi

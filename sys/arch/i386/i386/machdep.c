@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.22 2001/05/07 21:15:04 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.23 2001/05/23 03:13:37 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -3007,3 +3007,20 @@ idt_vec_free (vec)
 {
 	unsetgate(&idt[vec].gd);
 }
+
+extern void xxx_lapic_time(void);
+
+void
+xxx_lapic_time(void)
+{
+	uint64_t before, after;
+	int i, sum;
+
+	before=rdtsc();
+	for (i=0; i<1000000; i++) {
+		sum += lapic_tpr;
+	}
+	after=rdtsc();
+	printf("1000000 lapic_tpr reads: %llx\n", after-before);
+}
+

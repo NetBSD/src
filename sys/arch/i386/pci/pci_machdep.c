@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.6 2001/01/07 22:12:49 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.7 2001/05/23 03:13:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -619,7 +619,7 @@ pci_intr_disestablish(pc, cookie)
 	void *cookie;
 {
 
-	return isa_intr_disestablish(NULL, cookie);
+	isa_intr_disestablish(NULL, cookie);
 }
 
 /*

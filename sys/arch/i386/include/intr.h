@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.13 2001/04/30 20:36:38 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.14 2001/05/23 03:13:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
