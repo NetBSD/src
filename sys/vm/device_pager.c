@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.c,v 1.6 1993/11/03 14:48:42 cgd Exp $
+ *	$Id: device_pager.c,v 1.7 1993/11/03 14:49:22 cgd Exp $
  */
 
 /*
@@ -135,7 +135,7 @@ dev_pager_alloc(handle, size, prot, foff)
 	/*
 	 * Offset should be page aligned.
 	 */
-	if (foff & PAGE_MASK)
+	if (foff & page_mask)
 		return(NULL);
 
 	/*
@@ -339,7 +339,10 @@ dev_pager_getfake(paddr)
 		}
 	}
 	queue_remove_first(&dev_pager_fakelist, m, vm_page_t, pageq);
-	m->flags = PG_BUSY | PG_CLEAN | PG_FAKE | PG_FICTITIOUS;
+	m->busy = 1;
+	m->clean = 1;
+	m->fake = 1;
+	m->fictitious = 1;
 	m->phys_addr = paddr;
 	m->wire_count = 1;
 	return(m);
@@ -350,7 +353,7 @@ dev_pager_putfake(m)
 	vm_page_t m;
 {
 #ifdef DIAGNOSTIC
-	if (!(m->flags & PG_FICTITIOUS))
+	if (!m->fictitious))
 		panic("dev_pager_putfake: bad page");
 #endif
 	queue_enter(&dev_pager_fakelist, m, vm_page_t, pageq);
