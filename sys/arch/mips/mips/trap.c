@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 1995/05/02 19:51:52 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 1995/05/05 06:48:54 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1080,8 +1080,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 	int temp;
 
 	old_mask = *imaskp & xine_tc3_imask;
-	*imaskp = xine_tc3_imask |
-		 (XINE_IM0 & ~(XINE_INTR_TC_0|XINE_INTR_TC_1));
+	*imaskp = xine_tc3_imask;
 
 	if (mask & MACH_INT_MASK_4)
 		(*callv->_halt)((int *)0, 0);
@@ -1101,10 +1100,13 @@ xine_intr(mask, pc, statusReg, causeReg)
 		/* masked interrupts are still observable */
 		intr &= old_mask;
 
-		if ((intr & XINE_INTR_SCC_0) &&
-			tc_slot_info[XINE_SCC0_SLOT].intr)
-			(*(tc_slot_info[XINE_SCC0_SLOT].intr))
-			(tc_slot_info[XINE_SCC0_SLOT].unit);
+		if ((intr & XINE_INTR_SCC_0)) {
+			if (tc_slot_info[XINE_SCC0_SLOT].intr)
+				(*(tc_slot_info[XINE_SCC0_SLOT].intr))
+				(tc_slot_info[XINE_SCC0_SLOT].unit);
+			else
+				printf ("can't handle scc interrupt\n");
+		}
 	
 		if (intr & XINE_INTR_SCSI_PTR_LOAD) {
 			*intrp &= ~XINE_INTR_SCSI_PTR_LOAD;
@@ -1119,41 +1121,62 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if (intr & XINE_INTR_LANCE_READ_E)
 			*intrp &= ~XINE_INTR_LANCE_READ_E;
 
-		if ((intr & XINE_INTR_DTOP_RX) &&
-			tc_slot_info[XINE_DTOP_SLOT].intr)
-			(*(tc_slot_info[XINE_DTOP_SLOT].intr))
-			(tc_slot_info[XINE_DTOP_SLOT].unit);
+		if (intr & XINE_INTR_DTOP_RX) {
+			if (tc_slot_info[XINE_DTOP_SLOT].intr)
+				(*(tc_slot_info[XINE_DTOP_SLOT].intr))
+				(tc_slot_info[XINE_DTOP_SLOT].unit);
+			else
+				printf ("can't handle dtop interrupt\n");
+		}
 	
-		if ((intr & XINE_INTR_FLOPPY) &&
-			tc_slot_info[XINE_FLOPPY_SLOT].intr)
-			(*(tc_slot_info[XINE_FLOPPY_SLOT].intr))
-			(tc_slot_info[XINE_FLOPPY_SLOT].unit);
+		if (intr & XINE_INTR_FLOPPY) {
+			if (tc_slot_info[XINE_FLOPPY_SLOT].intr)
+				(*(tc_slot_info[XINE_FLOPPY_SLOT].intr))
+				(tc_slot_info[XINE_FLOPPY_SLOT].unit);
+		else
+			printf ("can't handle floppy interrupt\n");
+		}
 	
-		if ((intr & XINE_INTR_TC_0) &&
-			tc_slot_info[0].intr)
-			(*(tc_slot_info[0].intr))
-			(tc_slot_info[0].unit);
+		if (intr & XINE_INTR_TC_0) {
+			if (tc_slot_info[0].intr)
+				(*(tc_slot_info[0].intr))
+				(tc_slot_info[0].unit);
+			else
+				printf ("can't handle tc0 interrupt\n");
+		}
 	
-		if ((intr & XINE_INTR_TC_1) &&
-			tc_slot_info[1].intr)
-			(*(tc_slot_info[1].intr))
-			(tc_slot_info[1].unit);
+		if (intr & XINE_INTR_TC_1) {
+			if (tc_slot_info[1].intr)
+				(*(tc_slot_info[1].intr))
+				(tc_slot_info[1].unit);
+			else
+				printf ("can't handle tc1 interrupt\n");
+		}
 	
-		if ((intr & XINE_INTR_ISDN) &&
-			tc_slot_info[XINE_ISDN_SLOT].intr)
-			(*(tc_slot_info[XINE_ISDN_SLOT].intr))
-			(tc_slot_info[XINE_ISDN_SLOT].unit);
+		if (intr & XINE_INTR_ISDN) {
+			if (tc_slot_info[XINE_ISDN_SLOT].intr)
+				(*(tc_slot_info[XINE_ISDN_SLOT].intr))
+				(tc_slot_info[XINE_ISDN_SLOT].unit);
+			else
+				printf ("can't handle isdn interrupt\n");
+		}
 	
-		if ((intr & XINE_INTR_SCSI) &&
-			tc_slot_info[XINE_SCSI_SLOT].intr)
-			(*(tc_slot_info[XINE_SCSI_SLOT].intr))
-			(tc_slot_info[XINE_SCSI_SLOT].unit);
+		if (intr & XINE_INTR_SCSI) {
+			if (tc_slot_info[XINE_SCSI_SLOT].intr)
+				(*(tc_slot_info[XINE_SCSI_SLOT].intr))
+				(tc_slot_info[XINE_SCSI_SLOT].unit);
+			else
+				printf ("can't handle scsi interrupt\n");
+		}
 	
-		if ((intr & XINE_INTR_LANCE) &&
-			tc_slot_info[XINE_LANCE_SLOT].intr)
-			(*(tc_slot_info[XINE_LANCE_SLOT].intr))
-			(tc_slot_info[XINE_LANCE_SLOT].unit);
+		if (intr & XINE_INTR_LANCE) {
+			if (tc_slot_info[XINE_LANCE_SLOT].intr)
+				(*(tc_slot_info[XINE_LANCE_SLOT].intr))
+				(tc_slot_info[XINE_LANCE_SLOT].unit);
+			else
+				printf ("can't handle lance interrupt\n");
 	
+		}
 	}
 	if (mask & MACH_INT_MASK_2)
 		kn02ba_errintr();
