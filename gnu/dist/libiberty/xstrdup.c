@@ -5,6 +5,8 @@
 #include "ansidecl.h"
 #include "libiberty.h"
 
+#include <string.h>
+
 char *
 xstrdup (s)
      const char *s;
