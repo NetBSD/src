@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/11/23 16:02:55 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 2003/09/21 00:19:31 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -10,7 +10,7 @@ MDSETTARGETS=		INSTALL ${RAMDISK} -
 MDSET_RELEASEDIR=	binary/kernel
 
 MDSET_POST.-= \
-	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs \
+	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment \
 	    ${.TARGET} ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
