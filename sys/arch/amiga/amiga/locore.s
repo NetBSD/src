@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.82 1997/06/04 22:12:45 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.83 1997/06/05 20:13:37 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,8 +109,7 @@ _addrerr4060:
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
-	lea	sp@(FR_HW),a1		| grab base of HW berr frame
-	movl	a1@(8),sp@-		| V = exception address
+	movl	sp@(FR_HW+8),sp@-
 	clrl	sp@-			| dummy code
 	movl	#T_ADDRERR,sp@-		| mark address error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
