@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.50 1995/03/18 05:56:32 gwr Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.51 1995/10/09 11:25:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1587,11 +1587,11 @@ nfs_readdir(ap)
 	struct vattr vattr;
 
 	/*
-	 * We don't allow exporting NFS mounts, and currently local requests
-	 * do not need cookies.
+	 * XXX
+	 * We don't support cookies here, yet.
 	 */
 	if (ap->a_ncookies)
-		panic("nfs_readdir: not hungry");
+		return (EINVAL);
 
 	if (vp->v_type != VDIR)
 		return (EPERM);
