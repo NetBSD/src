@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.29 1996/03/17 13:18:23 cgd Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.30 1996/08/12 00:55:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -337,12 +337,11 @@ emitrules(fp)
 		    *fpath != '/' ? "$S/" : "", fpath) < 0)
 			return (1);
 		if ((cp = fi->fi_mkrule) == NULL) {
-			cp = fi->fi_flags & FI_DRIVER ? "DRIVER" : "NORMAL";
+			cp = "NORMAL";
 			ch = fpath[strlen(fpath) - 1];
 			if (islower(ch))
 				ch = toupper(ch);
-			(void)sprintf(buf, "${%s_%c%s}", cp, ch,
-			    fi->fi_flags & FI_CONFIGDEP ? "_C" : "");
+			(void)sprintf(buf, "${%s_%c}", cp, ch);
 			cp = buf;
 		}
 		if (fprintf(fp, "\t%s\n\n", cp) < 0)

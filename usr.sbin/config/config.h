@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.23 1996/03/17 13:18:15 cgd Exp $	*/
+/*	$NetBSD: config.h,v 1.24 1996/08/12 00:55:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,11 +218,9 @@ struct files {
 
 /* flags */
 #define	FI_SEL		0x01	/* selected */
-#define	FI_CONFIGDEP	0x02	/* config-dependent */
-#define	FI_DRIVER	0x04	/* device-driver */
-#define	FI_NEEDSCOUNT	0x08	/* needs-count */
-#define	FI_NEEDSFLAG	0x10	/* needs-flag */
-#define	FI_HIDDEN	0x20	/* obscured by other(s), base names overlap */
+#define	FI_NEEDSCOUNT	0x02	/* needs-count */
+#define	FI_NEEDSFLAG	0x04	/* needs-flag */
+#define	FI_HIDDEN	0x08	/* obscured by other(s), base names overlap */
 
 /*
  * Hash tables look up name=value pairs.  The pointer value of the name
