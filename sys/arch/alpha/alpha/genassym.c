@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.7 1996/07/11 05:31:16 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.8 1996/07/14 04:20:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -49,7 +49,6 @@
 #include <machine/reg.h>
 #include <machine/frame.h>
 #include <machine/rpb.h>
-#include <machine/trap.h>
 
 #include <stddef.h>
 #include <stdio.h>
@@ -156,6 +155,7 @@ main(argc, argv)
 	off("U_PCB_HW_KSP", struct user, u_pcb.pcb_hw.apcb_ksp);
 	off("U_PCB_CONTEXT", struct user, u_pcb.pcb_context[0]);
 	off("U_PCB_ONFAULT", struct user, u_pcb.pcb_onfault);
+	off("U_PCB_ACCESSADDR", struct user, u_pcb.pcb_accessaddr);
 
 	/* Offsets into struct fpstate, for save, restore */
 	off("FPREG_FPR_REGS", struct fpreg, fpr_regs[0]);
@@ -165,12 +165,11 @@ main(argc, argv)
 	def("HWRPB_ADDR", HWRPB_ADDR);		/* Restart parameter block */
 	def("VPTBASE", VPTBASE);		/* Virtual Page Table base */
 
-	/* Trap types and qualifiers */
-	def("T_ASTFLT", T_ASTFLT);
-	def("T_UNAFLT", T_UNAFLT);
-	def("T_ARITHFLT", T_ARITHFLT);
-	def("T_IFLT", T_IFLT);			/* qualifier */
-	def("T_MMFLT", T_MMFLT);		/* qualifier */
+	/* Kernel entries */
+	def("ALPHA_KENTRY_ARITH", ALPHA_KENTRY_ARITH);
+	def("ALPHA_KENTRY_MM", ALPHA_KENTRY_MM);
+	def("ALPHA_KENTRY_IF", ALPHA_KENTRY_IF);
+	def("ALPHA_KENTRY_UNA", ALPHA_KENTRY_UNA);
 
 	/* errno values */
 	def("ENAMETOOLONG", ENAMETOOLONG);
