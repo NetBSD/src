@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.64 2003/03/07 00:42:04 fvdl Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.65 2003/04/06 05:19:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.64 2003/03/07 00:42:04 fvdl Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.65 2003/04/06 05:19:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,6 +162,7 @@ struct list secondlevel[] = {
 };
 
 int	Aflag, aflag, nflag, qflag, wflag;
+FILE	*warnfp = stderr;
 
 /*
  * Variables requiring special processing.
@@ -210,7 +211,7 @@ static int findname(char *, char *, char **, struct list *);
 static void usage(void);
 
 #define USEAPP(s, a) \
-    if (flags) printf("%s: use '%s' to view this information\n", s, a)
+    if (flags) fprintf(warnfp, "%s: use '%s' to view this information\n", s, a)
 
 
 int
@@ -259,6 +260,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (Aflag || aflag) {
+		warnfp = stdout;
 		debuginit();
 		for (lvl1 = 1; lvl1 < CTL_MAXID; lvl1++)
 			listall(topname[lvl1].ctl_name, &secondlevel[lvl1]);
@@ -378,8 +380,8 @@ parse(char *string, int flags)
 				if (flags == 0)
 					return;
 				if (!nflag)
-					printf("%s: ", string);
-				printf(
+					fprintf(warnfp, "%s: ", string);
+				fprintf(warnfp,
 				    "kernel is not compiled for profiling\n");
 				return;
 			}
@@ -593,17 +595,20 @@ parse(char *string, int flags)
 			return;
 		switch (errno) {
 		case EOPNOTSUPP:
-			printf("%s: the value is not available\n", string);
+			fprintf(warnfp,
+			    "%s: the value is not available\n", string);
 			return;
 		case ENOTDIR:
-			printf("%s: the specification is incomplete\n", string);
+			fprintf(warnfp,
+			    "%s: the specification is incomplete\n", string);
 			return;
 		case ENOMEM:
-			printf("%s: this type is unknown to this program\n",
+			fprintf(warnfp,
+			    "%s: this type is unknown to this program\n",
 			    string);
 			return;
 		default:
-			printf("%s: sysctl() failed with %s\n",
+			fprintf(warnfp, "%s: sysctl() failed with %s\n",
 			    string, strerror(errno));
 			return;
 		}
@@ -663,7 +668,7 @@ parse(char *string, int flags)
 		ni = dl->dl_nativedisks;
 		bi = dl->dl_biosdisks;
 		if ((char *)&ni[lim] != (char *)buf + size) {
-			printf("size mismatch\n");
+			fprintf(warnfp, "size mismatch\n");
 			return;
 		}
 		for (i = 0; i < lim; ni++, i++) {
@@ -867,7 +872,8 @@ sysctl_inet(char *string, char **bufpp, int mib[], int flags, int *typep)
 	else if (!flags)
 		return (-1);
 	else {
-		printf("%s: no variables defined for protocol\n", string);
+		fprintf(warnfp,
+		    "%s: no variables defined for protocol\n", string);
 		return (-1);
 	}
 	if (*bufpp == NULL) {
@@ -1015,7 +1021,8 @@ sysctl_vfs(char *string, char **bufpp, int mib[], int flags, int *typep)
 
 	if (lp->list == NULL) {
 		if (flags)
-			printf("%s: no variables defined for file system\n",
+			fprintf(warnfp,
+			    "%s: no variables defined for file system\n",
 			    string);
 		return (-1);
 	}
