@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.34 2005/03/16 18:40:46 jmc Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.35 2005/03/16 19:17:53 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -817,7 +817,6 @@ distrib/notes/sparc64/install			1.24-1.25
 	in PR port-sparc64/29703.
 	[martin, ticket #1322]
 
-
 sys/dev/ata/ata_wdc.c				1.55
 sys/dev/ata/atavar.h				1.43
 sys/dev/ic/wdc.c				1.180
@@ -830,3 +829,10 @@ sys/dev/ic/wdc.c				1.180
 	they're using an 80-wire cable, but it's just too long for the higher 
 	modes, or there is minor crosstalk.
 	[mycroft, ticket #1018]
+
+gnu/dist/binutils/bfd/ChangeLog                 1.2 via patch
+gnu/dist/binutils/bfd/elf64-sparc.c             1.4
+
+	Fix bug in "binutils" which broke Firefox under NetBSD-sparc64.
+	[skrll, ticket #1101]
+
