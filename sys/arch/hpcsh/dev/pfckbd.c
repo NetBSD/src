@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.11 2003/07/15 02:29:38 lukem Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.12 2003/12/14 04:03:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.11 2003/07/15 02:29:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.12 2003/12/14 04:03:16 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -306,11 +306,13 @@ pfckbd_callout_hp(void *arg)
 	_reg_write_2(SH7709_PDCR, dc | (0x5555 & PFCKBD_HP_PDCR_MASK));
 	_reg_write_2(SH7709_PECR, ec | (0x5555 & PFCKBD_HP_PECR_MASK));
 
+#if 0
 	/* (ignore) extra keys/events (recorder buttons, lid, cable &c) */
 	data = _reg_read_1(SH7709_PGDR) | (_reg_read_1(SH7709_PHDR) << 8);
+#endif
 
  reinstall:
-	callout_reset(&pc->pc_soft_ch, 1, pfckbd_callout_hp, pc);
+	callout_schedule(&pc->pc_soft_ch, 1);
 }
 
 /* HITACH PERSONA (HPW-50PAD) */
@@ -358,5 +360,5 @@ pfckbd_callout_hitachi(void *arg)
 	data = _reg_read_1(SH7709_PGDR) | (_reg_read_1(SH7709_PHDR) << 8);
 
  reinstall:
-	callout_reset(&pc->pc_soft_ch, 1, pfckbd_callout_hitachi, pc);
+	callout_schedule(&pc->pc_soft_ch, 1);
 }
