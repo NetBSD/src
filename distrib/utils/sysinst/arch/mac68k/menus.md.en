@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.6 1999/07/04 22:31:39 cgd Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.7 1999/07/04 22:52:22 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -129,14 +129,14 @@ menu editparttable, title  "Choose your partition", exit, y=15;
                         map.blk[i].pmPartBlkCnt);
                 if ((map.blk[i].pmPyPartStart +
                     map.blk[i].pmPartBlkCnt) > dlsize) {
-                        msg_printf_add("Fixing partition %s%c\n",
+			msg_display_add(MSG_parttable_fix_fixing,
                                 diskdev, bzb->flags.part);
                         map.blk[i].pmPartBlkCnt =
                             dlsize - map.blk[i].pmPyPartStart;
                         map.blk[i].pmDataCnt =
                             map.blk[i].pmPartBlkCnt;
                 } else {
-                    msg_printf_add("Partition %s%c is just fine!\n",
+		    msg_display_add(MSG_parttable_fix_fine,
                         diskdev, bzb->flags.part);
                 }
                 process_menu(MENU_ok);
