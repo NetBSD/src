@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.110 1997/04/28 17:04:11 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.111 1997/06/04 20:42:56 cgd Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -2232,7 +2232,7 @@ ed_pio_readmem(sc, src, dst, amount)
 
 	if (sc->isa16bit)
 		bus_space_read_multi_2(iot, ioh, sc->asic_base + ED_NOVELL_DATA,
-		    dst, amount / 2);
+		    (u_int16_t *)dst, amount / 2);
 	else
 		bus_space_read_multi_1(iot, ioh, sc->asic_base + ED_NOVELL_DATA,
 		    dst, amount);
@@ -2275,7 +2275,7 @@ ed_pio_writemem(sc, src, dst, len)
 
 	if (sc->isa16bit)
 		bus_space_write_multi_2(iot, ioh, sc->asic_base + ED_NOVELL_DATA,
-		    src, len / 2);
+		    (u_int16_t *)src, len / 2);
 	else
 		bus_space_write_multi_1(iot, ioh, sc->asic_base + ED_NOVELL_DATA,
 		    src, len);
@@ -2368,7 +2368,7 @@ ed_pio_write_mbufs(sc, m, dst)
 			if (len > 1) {
 				bus_space_write_multi_2(iot, ioh,
 				    asicbase + ED_NOVELL_DATA,
-				    data, len >> 1);
+				    (u_int16_t *)data, len >> 1);
 			}
 			/* Save last byte, if necessary. */
 			if (len & 1) {
