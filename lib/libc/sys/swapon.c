@@ -1,4 +1,4 @@
-/*	$NetBSD: swapon.c,v 1.5 1997/10/20 16:04:33 christos Exp $	*/
+/*	$NetBSD: swapon.c,v 1.6 1997/11/05 21:40:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -28,8 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
 #include <vm/vm_swap.h>
 #include <unistd.h>
 
