@@ -1,4 +1,4 @@
-/*	$NetBSD: aptck.h,v 1.1.1.1 1996/01/07 21:54:15 leo Exp $	*/
+/*	$NetBSD: aptck.h,v 1.2 2001/07/26 23:07:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -75,8 +75,8 @@ typedef struct {
 	u_int		hdsize;		/* medium size from root sector	*/
 	u_int		bslst;		/* start of bad sector list	*/
 	u_int		bslend;		/* end of bad sector list	*/
-	u_int		nroots;		/* # of auxilary root sectors	*/
-	u_int		*roots;		/* list of auxilary roots	*/
+	u_int		nroots;		/* # of auxiliary root sectors	*/
+	u_int		*roots;		/* list of auxiliary roots	*/
 	u_int		nparts;		/* number of regular partitions	*/
 	part_t 		*parts;		/* list of partition descriptors */
 } disk_t;

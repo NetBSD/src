@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2001/07/26 22:55:13 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 2001/07/26 23:07:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -371,7 +371,7 @@ bsd_label(dev, strat, label, blkno, offsetp)
 #ifdef DISKLABEL_AHDI
 /*
  * Check for consistency between the NetBSD partition table
- * and the AHDI auxilary root sectors. There's no good reason
+ * and the AHDI auxiliary root sectors. There's no good reason
  * to force such consistency, but issuing a warning may help
  * an inexperienced sysadmin to prevent corruption of AHDI
  * partitions.
@@ -398,7 +398,7 @@ ck_label(dl, cdl)
 			if (*rp >= p->p_offset
 			  && *rp < p->p_offset + p->p_size) {
 				uprintf("Warning: NetBSD partition %c"
-				" includes AHDI auxilary root\n", 'a'+i);
+				" includes AHDI auxiliary root\n", 'a'+i);
 			}
 		}
 	}
@@ -599,7 +599,7 @@ ahdi_to_bsd(dl, apt)
 }
 
 /*
- * Fetch the AHDI partitions and auxilary roots.
+ * Fetch the AHDI partitions and auxiliary roots.
  *
  * Returns:  0 if successful,
  *           otherwise an I/O error occurred, and the

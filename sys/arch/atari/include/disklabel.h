@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 2000/02/05 21:14:55 jdc Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 2001/07/26 23:07:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -50,7 +50,7 @@
 #define SWAP_PART	1		/* xx?b is default swap partition  */
 #define RAW_PART	2		/* xx?c is raw partition	   */
 
-#define MAXAUXROOTS	29		/* max. # of auxilary root sectors */
+#define MAXAUXROOTS	29		/* max. # of auxiliary root sectors */
 
 struct cpu_disklabel {
 	u_int		cd_bblock;	/* start of NetBSD boot block      */
@@ -59,7 +59,7 @@ struct cpu_disklabel {
 #ifdef DISKLABEL_AHDI
 	u_int		cd_bslst;	/* start of AHDI bad sector list   */
 	u_int		cd_bslend;	/* end of AHDI bad sector list     */
-	u_int		cd_roots[MAXAUXROOTS+1]; /* auxilary root sectors  */
+	u_int		cd_roots[MAXAUXROOTS+1]; /* auxiliary root sectors  */
 #endif /* DISKLABEL_AHDI */
 };
 
