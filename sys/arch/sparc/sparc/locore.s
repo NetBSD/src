@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.169 2002/12/09 16:13:23 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.170 2002/12/21 11:57:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2599,8 +2599,12 @@ sparc_interrupt_common:
 	ld	[%l4 + %l5], %l4
 
 #if defined(MULTIPROCESSOR) && defined(SUN4M) /* XXX */
+	cmp	%l3, PIL_SCHED
+	bgu	0f
+	 nop
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
+0:
 #endif
 
 	b	3f
@@ -2637,8 +2641,12 @@ sparc_interrupt_common:
 	/* all done: restore registers and go return */
 4:
 #if defined(MULTIPROCESSOR) && defined(SUN4M) /* XXX */
+	cmp	%l3, PIL_SCHED
+	bgu	0f
+	 nop
 	call	_C_LABEL(intr_unlock_kernel)
 	 nop
+0:
 #endif
 	mov	%l7, %g1
 	wr	%l6, 0, %y
@@ -4199,6 +4207,12 @@ _C_LABEL(cpu_hatch):
 	call	_C_LABEL(cpu_setup)
 	 ld	[%o0+%lo(_C_LABEL(cpu_hatch_sc))], %o0
 
+	/* Enable interrupts */
+	rd	%psr, %l0
+	andn	%l0, PSR_PIL, %l0	! psr &= ~PSR_PIL;
+	wr	%l0, 0, %psr		! (void) spl0();
+	nop; nop; nop
+
 	/* Wait for go_smp_cpus to go */
 	set	_C_LABEL(go_smp_cpus), %l1
 	ld	[%l1], %l0
@@ -4231,10 +4245,6 @@ _C_LABEL(cpu_hatch):
 	 clr	%g4				! lastproc = NULL;	
 #else
 	/* Idle here .. */
-	rd	%psr, %l0
-	andn	%l0, PSR_PIL, %l0	! psr &= ~PSR_PIL;
-	wr	%l0, 0, %psr		! (void) spl0();
-	nop; nop; nop
 9:	ba 9b
 	 nop
 	/*NOTREACHED*/
