@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.11 1997/01/04 23:32:08 leo Exp $
+#	$NetBSD: BOOTX,v 1.12 1997/01/31 01:48:26 thorpej Exp $
 #
 # BOOTX
 #
@@ -38,14 +38,16 @@ options		FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #
 options		INET		# Basic networking support
 
-options		FFS		# Berkeley fast file system
-options		MFS		# Memory based filesystem
-options		PROCFS		# Process filesystem
-options		KERNFS		# Kernel parameter filesystem
-options		NULLFS		# Loopback filesystem
-options		MSDOSFS		# MSDOS filesystem
-options		CD9660		# ISO 9660 filesystem with Rock Ridge
+# File systems
+file-system 	FFS		# Berkeley fast file system
+file-system 	MFS		# Memory based filesystem
+file-system 	PROCFS		# Process filesystem
+file-system 	KERNFS		# Kernel parameter filesystem
+file-system 	NULLFS		# Loopback filesystem
+file-system 	MSDOSFS		# MSDOS filesystem
+file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 
+# File system options
 options		FIFO		# FIFO operations on vnodes
 
 #
@@ -85,7 +87,7 @@ options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #
 # Build one kernel that can boot from any disk.
 #
-config		netbsd swap on generic
+config		netbsd root on ? type ?
 
 pseudo-device	mouse	1	# mouse
 pseudo-device	view	4	# View (graphics mapping)
