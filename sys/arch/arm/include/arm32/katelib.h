@@ -1,4 +1,4 @@
-/*	$NetBSD: katelib.h,v 1.2 2001/05/30 00:16:36 bjh21 Exp $	*/
+/*	$NetBSD: katelib.h,v 1.2.2.1 2002/01/10 19:37:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 #ifdef _KERNEL
 

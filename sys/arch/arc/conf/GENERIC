@@ -1,12 +1,26 @@
-#	$NetBSD: GENERIC,v 1.47.2.2 2001/09/13 01:13:03 thorpej Exp $
-#	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
+# $NetBSD: GENERIC,v 1.47.2.3 2002/01/10 19:37:39 thorpej Exp $
 #
-#	GENERIC -- everything that's currently supported
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.47.2.2 $"
+#ident		"GENERIC-$Revision: 1.47.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -17,7 +31,7 @@ options 	PLATFORM_DESKTECH_TYNE		# DESKstation Tyne
 options 	PLATFORM_MICROSOFT_JAZZ		# MIPS Magnum
 options 	PLATFORM_NEC_JC94		# NEC Express 5800/230 PCI R4K
 options 	PLATFORM_NEC_R94		# NEC RISCstation 2200 EISA
-options 	PLATFORM_NEC_R96      # NEC Express RISCserver, RISCserver 2200
+options 	PLATFORM_NEC_R96	# NEC Express RISCserver, RISCserver 2200
 options 	PLATFORM_NEC_RAX94		# NEC RISCstation 2200 PCI
 options 	PLATFORM_NEC_RD94		# NEC RISCstation 2250
 options 	PLATFORM_SNI_RM200PCI
@@ -31,25 +45,25 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
-#options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
-options 	DDB		# in-kernel debugger
+options 	DIAGNOSTIC		# cheap kernel consistency checks
+#options 	DEBUG			# expensive debugging checks/support
+#options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
+options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	KGDB		# remote gdb
-#options 	KGDBRATE=19200	# kernel gdb port rate (default 9600)
-#options 	KGDBDEV="17*256+0"	# device for kernel gdb
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#options 	KGDB			# remote gdb
+#options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
+#options 	KGDB_DEV="17*256+0"	# device for kernel gdb
+#makeoptions	DEBUG="-g"		# compile full symbol table
 
 # Compatibility options
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -276,6 +290,9 @@ scsibus* 	at pcscp?
 siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
 scsibus* 	at siop?
 
+trm*		at pci? dev ? function ?	# Tekram DC-395/315 SCSI
+scsibus*	at trm?
+
 #de*		at pci? dev ? function ?
 epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
@@ -354,6 +371,7 @@ pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
@@ -363,7 +381,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -377,4 +395,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux		2
+#pseudo-device	wsmux

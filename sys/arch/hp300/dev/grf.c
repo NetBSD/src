@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.2.1 2001/09/12 19:04:01 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.2.2 2002/01/10 19:42:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,7 +72,6 @@
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
-extern struct emul emul_hpux;
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -260,7 +259,7 @@ grfioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 
 	case GRFIOCGINFO:
-		bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo));
+		memcpy(data, (caddr_t)&gp->g_display, sizeof(struct grfinfo));
 		break;
 
 	case GRFIOCON:
@@ -645,7 +644,8 @@ grfmap(dev, addrp, p)
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
-			 (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
+			 (vsize_t)len, VM_PROT_READ|VM_PROT_WRITE,
+			 VM_PROT_READ|VM_PROT_WRITE,
 			 flags, (caddr_t)&vn, 0,
 			 p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	if (error == 0)
@@ -722,7 +722,7 @@ grffindpid(gp)
 	if (gp->g_pid == NULL) {
 		gp->g_pid = (short *)
 			malloc(GRFMAXLCK * sizeof(short), M_DEVBUF, M_WAITOK);
-		bzero((caddr_t)gp->g_pid, GRFMAXLCK * sizeof(short));
+		memset((caddr_t)gp->g_pid, 0, GRFMAXLCK * sizeof(short));
 	}
 	pid = curproc->p_pid;
 	ni = limit = gp->g_pid[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.23.6.1 2001/09/13 01:13:50 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.23.6.2 2002/01/10 19:45:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.23.6.2 2002/01/10 19:45:03 thorpej Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,12 +51,12 @@
 
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/agpreg.h>
 #include <dev/pci/agpvar.h>
 
 #include <arch/i386/pci/pchbvar.h>
 
 #include "rnd.h"
-#include "agp.h"
 
 #define PCISET_BRIDGETYPE_MASK	0x3
 #define PCISET_TYPE_COMPAT	0x1
@@ -107,16 +110,15 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
-#if NAGP > 0
-	struct agp_phcb_attach_args apa;
-#endif
+	struct agpbus_attach_args apa;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
-	int doattach, attachflags;
+	int doattach, attachflags, has_agp;
 
 	printf("\n");
 	doattach = 0;
+	has_agp = 0;
 	attachflags = pa->pa_flags;
 
 	/*
@@ -142,6 +144,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_SERVERWORKS_XX5:
 		case PCI_PRODUCT_SERVERWORKS_CNB20HE:
+		case PCI_PRODUCT_SERVERWORKS_CNB20LE:
 		case PCI_PRODUCT_SERVERWORKS_CIOB20:
 			if ((attachflags &
 			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
@@ -249,8 +252,43 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			if (pbnum != 0)
 				doattach = 1;
 			break;
+
+		case PCI_PRODUCT_INTEL_82810_MCH:
+		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+		case PCI_PRODUCT_INTEL_82810E_MCH:
+		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+			/*
+			 * The host bridge is either in GFX mode (internal
+			 * graphics) or in AGP mode. In GFX mode, we pretend
+			 * to have AGP because the graphics memory access
+			 * is very similar and the AGP GATT code will
+			 * deal with this. In the latter case, the
+			 * pci_get_capability(PCI_CAP_AGP) test below will
+			 * fire, so we do no harm by already setting the flag.
+			 */
+			has_agp = 1;
+			break;
 		}
 		break;
+	}
+
+#if NRND > 0
+	/*
+	 * Attach a random number generator, if there is one.
+	 */
+	pchb_attach_rnd(sc, pa);
+#endif
+
+	/*
+	 * If we haven't detected AGP yet (via a product ID),
+	 * then check for AGP capability on the device.
+	 */
+	if (has_agp ||
+	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+			       NULL, NULL) != 0) {
+		apa.apa_busname = "agp";
+		apa.apa_pci_args = *pa;
+		config_found(self, &apa, agp_print);
 	}
 
 	if (doattach) {
@@ -263,23 +301,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);
 	}
-
-#if NAGP > 0
-	/*
-	 * XXX re-use of pci attach args for pchb, but it's probably
-	 * the best thing to do.
-	 */
-	apa.apa_busname = "agp";
-	apa.apa_pci_args = *pa;
-	config_found(self, &apa, agp_print);
-#endif
-
-#if NRND > 0
-	/*
-	 * Attach a random number generator, if there is one.
-	 */
-	pchb_attach_rnd(sc, pa);
-#endif
 }
 
 int
@@ -296,7 +317,7 @@ pchb_print(void *aux, const char *pnp)
 int
 agp_print(void *aux, const char *pnp)
 {
-	struct agp_phcb_attach_args *apa = aux;
+	struct agpbus_attach_args *apa = aux;
 	if (pnp)
 		printf("%s at %s", apa->apa_busname, pnp);
 	return (UNCONF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.12.2.1 2001/09/13 01:13:47 thorpej Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.12.2.2 2002/01/10 19:44:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -30,6 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.12.2.2 2002/01/10 19:44:46 thorpej Exp $");
 
 #include "opt_pcibios.h"
 

@@ -1,8 +1,26 @@
-#	$NetBSD: GENERIC,v 1.17.2.2 2001/09/13 01:13:32 thorpej Exp $
+# $NetBSD: GENERIC,v 1.17.2.3 2002/01/10 19:41:26 thorpej Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.17.2.2 $"
+#ident 		"GENERIC-$Revision: 1.17.2.3 $"
 
 maxusers	32
 
@@ -10,10 +28,10 @@ maxusers	32
 options 	KTRACE		# system call tracing support
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	LKM		# loadable kernel modules
@@ -23,10 +41,10 @@ options 	SYSVSHM		# System V shared memory
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)  
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
-#makeoptions 	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -42,7 +60,7 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
-file-system 	EXT2FS		# second extended file system (linux) 
+file-system 	EXT2FS		# second extended file system (linux)
 file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem
@@ -62,7 +80,7 @@ file-system	FDESC		# user file descriptor filesystem
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -91,7 +109,7 @@ options 	INET		# Internet protocols
 # Warning, these may compile large string tables into the kernel!
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
-options         SCSIVERBOSE     # human readable SCSI error messages
+options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 options 	NFS_BOOT_DHCP
@@ -228,16 +246,17 @@ pseudo-device	bpfilter	8		# Berkeley packet filter
 #pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp		2		# Point-to-Point Protocol
+#pseudo-device	pppoe				# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl		2		# Serial Line IP
 #pseudo-device	strip		2		# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2		# network tunneling over tty
 #pseudo-device	gre		2		# generic L3 over IP tunnel
 #pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
-#pseudo-device	gif		4		# RFC1933  tunnel
-#pseudo-device	faith		1		# IPv[46] tcp relay translation 
+#pseudo-device	gif		4		# RFC1933 tunnel
+#pseudo-device	faith		1		# IPv[46] tcp relay translation
 #pseudo-device	stf		1		# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bridge			# simple inter-network bridging
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals

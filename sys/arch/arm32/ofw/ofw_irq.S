@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.9 1999/10/26 06:53:44 cgd Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.9.10.1 2002/01/10 19:39:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -250,7 +250,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, [pc, #irqhandlers - . - 8]
+	ldr	r7, [pc, #Lirqhandlers - . - 8]
         mov	r9, #0x00000001
 
 irqloop:
@@ -405,7 +405,7 @@ Lintrcnt:
 	.word	_C_LABEL(intrcnt)
 
 
-irqhandlers:
+Lirqhandlers:
 	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */
 
 Lastpending:
@@ -642,43 +642,3 @@ _C_LABEL(intrcnt):
 	.long	0
 _C_LABEL(eintrcnt):
 #endif	/* IRQSTATS */
-
-/* FIQ code */
-
-ENTRY(fiq_setregs)
-        mrs	r2, cpsr_all
-	mov	r3, r2
-	bic	r2, r2, #(PSR_MODE)
-	orr	r2, r2, #(PSR_FIQ32_MODE)
-        msr	cpsr_all, r2
-
-	ldr	r8,  [r0, #FH_R8]	/* Update FIQ registers*/
-	ldr	r9,  [r0, #FH_R9]
-	ldr	r10, [r0, #FH_R10]
-	ldr	r11, [r0, #FH_R11]
-	ldr	r12, [r0, #FH_R12]
-	ldr	r13, [r0, #FH_R13]
-
-        msr	cpsr_all, r3		/* Back to old mode */
-
-	mov	pc, lr			/* Exit */
-
-ENTRY(fiq_getregs)
-        mrs	r2, cpsr_all
-	mov	r3, r2
-	bic	r2, r2, #(PSR_MODE)
-	orr	r2, r2, #(PSR_FIQ32_MODE)
-        msr	cpsr_all, r2
-
-	str	r8,  [r0, #FH_R8]	/* Update FIQ registers*/
-	str	r9,  [r0, #FH_R9]
-	str	r10, [r0, #FH_R10]
-	str	r11, [r0, #FH_R11]
-	str	r12, [r0, #FH_R12]
-	str	r13, [r0, #FH_R13]
-
-        msr	cpsr_all, r3		/* Back to old mode */
-
-	mov	pc, lr			/* Exit */
-
-/* End of irq.S */

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.16 2001/06/19 13:42:13 wiz Exp $       */
+/*      $NetBSD: pccons.c,v 1.16.2.1 2002/01/10 19:39:19 thorpej Exp $       */
 
 /*
  * Copyright 1997
@@ -858,9 +858,14 @@ pcprobe(struct device *parent,
     bus_space_tag_t           iot;
     bus_space_handle_t        ioh;
 
+    if (ia->ia_nio < 1)
+	return (0);
+    if (ia->ia_nirq < 1)
+	return (0);
+
     if (actingConsole == FALSE)
     {
-        iobase = ia->ia_iobase;
+        iobase = ia->ia_io[0].ir_addr;
         iot    = ia->ia_iot;
 
         /* Map register space 
@@ -868,7 +873,7 @@ pcprobe(struct device *parent,
         if ( I8042_MAP(iot, iobase, ioh) == 0 ) 
         {
             /*
-            ** Initalise keyboard controller.  We don't fail the 
+            ** Initialise keyboard controller.  We don't fail the 
             ** probe even if the init failed.  This allows the
             ** console device to be used even if a keyboard
             ** isn't connected.
@@ -890,8 +895,15 @@ pcprobe(struct device *parent,
     ** Fill in the isa structure with the number of 
     ** ports used and mapped memory size.
     */
-    ia->ia_iosize = I8042_NPORTS;
-    ia->ia_msize  = 0;
+    if (probeOk) {
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = I8042_NPORTS;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
+    }
 
     return (probeOk);
 } /* End pcprobe() */
@@ -949,7 +961,7 @@ pcattach(struct device   *parent,
     {
         KERN_DEBUG( pcdebug, KERN_DEBUG_INFO,
                    ("\npcattach: mapping io space\n"));
-        iobase                              = ia->ia_iobase;
+        iobase                              = ia->ia_io[0].ir_addr;
         sc->sc_flags                        = 0x00;
         sc->kbd.sc_shift_state              = 0x00;
         sc->kbd.sc_new_lock_state           = 0x00;
@@ -1026,8 +1038,8 @@ pcattach(struct device   *parent,
     do_async_update(sc);
     /* Set up keyboard controller interrupt 
     */
-    sc->kbd.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_LEVEL,
-				       IPL_TTY, pcintr, sc);
+    sc->kbd.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+        IST_LEVEL, IPL_TTY, pcintr, sc);
     /* 
     ** Pass child devices our io handle so they can use
     ** the same io space as the keyboard.
@@ -1979,7 +1991,7 @@ pccnprobe(struct consdev *cp)
 	    == 0) 
         {
 	    /*  
-	    ** Initalise the keyboard.  Look for another device if
+	    ** Initialise the keyboard.  Look for another device if
             ** keyboard wont initialise but leave us as a backup display
 	    ** unit.
 	    */

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.77 2001/07/08 16:32:18 abs Exp $
+#	$NetBSD: DISKLESS,v 1.77.2.1 2002/01/10 19:44:25 thorpej Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -34,7 +34,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 options 	DIAGNOSTIC	# internal consistency checks
 options 	KTRACE		# system call tracing via ktrace(1)
@@ -94,7 +94,7 @@ options 	CCITT,LLC,HDLC	# X.25
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 config		netbsd	root on ? type nfs
-#options 	"CONSDEVNAME=\"com\"",CONADDR=0x3f8,CONSPEED=9600
+#options 	CONSDEVNAME="\"com\"",CONADDR=0x3f8,CONSPEED=9600
 
 options 	EISAVERBOSE	# verbose EISA device messages
 options 	PCIVERBOSE	# verbose PCI device messages
@@ -114,8 +114,8 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pci*	at pchb?
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
-isa*	at pcib?			# ISA on PCI-ISA bridge
-isa*	at mainbus0			# all other ISA
+isa0	at pcib?			# ISA on PCI-ISA bridge
+isa0	at mainbus0			# all other ISA
 #isapnp0	at isa?				# ISA Plug-and-Play
 
 #apm0	at mainbus0			# Advanced power management
@@ -232,8 +232,8 @@ fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 ne*	at pci? dev ? function ?		# NE2000-compatible eth cards
 
-#pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
+#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #audio*	at sp0
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster

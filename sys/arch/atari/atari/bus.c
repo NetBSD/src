@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.27.2.1 2001/09/13 01:13:17 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.27.2.2 2002/01/10 19:39:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -153,7 +154,6 @@ bus_size_t		size;
 int			flags;
 bus_space_handle_t	*mhp;
 {
-	paddr_t	pa, endpa;
 	int	error;
 
 	/*
@@ -165,9 +165,6 @@ bus_space_handle_t	*mhp;
 
 	if (error)
 		return (error);
-
-	pa    = m68k_trunc_page(bpa + t->base);
-	endpa = m68k_round_page((bpa + t->base + size) - 1);
 
 	error = bus_mem_add_mapping(t, bpa, size, flags, mhp);
 	if (error) {
@@ -336,6 +333,25 @@ bus_space_handle_t	*mhp;
 {
 	*mhp = memh + off;
 	return 0;
+}
+
+paddr_t
+bus_space_mmap(t, addr, off, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	/*
+	 * "addr" is the base address of the device we're mapping.
+	 * "off" is the offset into that device.
+	 *
+	 * Note we are called for each "page" in the device that
+	 * the upper layers want to map.
+	 */
+	return (m68k_btop(addr + off));
 }
 
 /*

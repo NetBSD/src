@@ -1,6 +1,8 @@
-$NetBSD: version,v 1.4.4.1 2001/08/03 04:11:20 lukem Exp $
+$NetBSD: version,v 1.4.4.2 2002/01/10 19:40:50 thorpej Exp $
 
 1.1:		Boot program for BeBox; initial revision
 1.2:		check BUS FREQ, add clock information
 1.3:		Support verbose/quiet boot.
 1.4:		loadfile() update:  ELF symbols no longer need backward seeks.
+1.5:		loadfile() update to avoid backwards seeks for ELF Program
+		Headers.

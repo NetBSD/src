@@ -1,25 +1,18 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.33 2001/06/14 16:55:34 uch Exp $
+#	$NetBSD: TX3922,v 1.33.2.1 2002/01/10 19:43:45 thorpej Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-maxusers	8
+maxusers	16
 
-options 	MIPS1			# R2000/R3000 CPUs
-options 	ENABLE_MIPS_TX3900	# R3900 CPU core
-options 	NOFPU			# No FPU
-options 	SOFTFLOAT		# emulate FPU insn
-#options 	R3900_CACHE_DISABLE	# Disable I/D-cache
-
-options 	TX39XX			# Toshiba TX39 series
+include		"arch/hpcmips/conf/std.hpcmips.tx39"
 options 	TX392X			# Toshiba TX3922
-options 	KSEG2IOBUFSIZE=0x08000000	# MCS0/MCS1 are mapped to kseg2
 
 options 	TX39_DEBUG
-#options	TX39_WATCHDOGTIMER
-#options	WINCE_DEFAULT_SETTING	# Debugging use
+#options 	TX39_WATCHDOGTIMER
+#options 	WINCE_DEFAULT_SETTING	# Debugging use
 #options 	TX39ICUDEBUG
 #options 	TX39BIUDEBUG
 #options 	TX39POWERDEBUG
@@ -29,9 +22,8 @@ options 	DDB			# in-kernel debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
-options		MSGBUFSIZE=65534
+options 	MSGBUFSIZE=65534
 
-options 	__NO_SOFT_SERIAL_INTERRUPT
 options 	SERIALCONSSLOT=0	# UARTA 0, UARTB 1
 
 options 	COMPAT_43
@@ -76,7 +68,7 @@ options 	INET6		# IPV6
 #options 	CCITT,LLC,HDLC	# X.25
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
 
@@ -93,20 +85,6 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 hpcapm0	at mainbus0			# power management
 apmdev0	at hpcapm0			# APM
 
-txsim*	at mainbus0
-#
-# TX39 System Internal Modules
-#
-tx39biu*	at txsim?
-tx39icu*	at txsim?
-tx39clock*	at txsim?
-tx39power*	at txsim?
-tx39io*		at txsim?
-tx39sib*	at txsim?
-tx39uart*	at txsim?
-txcom0		at tx39uart? slot 0
-txcom1		at tx39uart? slot 1
-
 txcsbus1	at tx39biu? platform SHARP_TELIOS
 txcsbus2	at tx39biu? platform VICTOR_INTERLINK
 
@@ -118,16 +96,16 @@ txioman* at txsim?
 #	(3) ITE IO notyet
 #	(4) Plum2 IO (EXTPW[0:2]) notyet
 hpcioman1 at txioman? platform SHARP_TELIOS_HCAJ1
-hpcin*	at hpcioman1 iochip 1 evtype BUTTON  id BTN_APP0   port 7  edge 1 # IE button 
-hpcin*	at hpcioman1 iochip 1 evtype BUTTON  id BTN_APP1   port 8  edge 1 # Mail button 
+hpcin*	at hpcioman1 iochip 1 evtype BUTTON  id BTN_APP0   port 7  edge 1 # IE button
+hpcin*	at hpcioman1 iochip 1 evtype BUTTON  id BTN_APP1   port 8  edge 1 # Mail button
 hpcin*	at hpcioman1 iochip 1 evtype PMEVENT id PME_AC	   port 6  edge 1 # AC-power
 hpcin*	at hpcioman1 iochip 0 evtype EVENT   id COM0_CTS   port 27 edge 3
 hpcin*	at hpcioman1 iochip 0 evtype EVENT   id COM0_DCD   port 29 edge 3
 hpcout*	at hpcioman1 iochip 1 evtype POWER   id PWCTL_LED  port 4  flags 3 #(blink)
 
 hpcioman2 at txioman? platform SHARP_TELIOS_HCVJ1C_JP
-hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP0   port 7  edge 1 # IE button 
-hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP1   port 8  edge 1 # Mail button 
+hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP0   port 7  edge 1 # IE button
+hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP1   port 8  edge 1 # Mail button
 hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP2   port 11 edge 1 # Video button
 hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP3   port 12 edge 1 # Head phone button
 hpcin*	at hpcioman2 iochip 1 evtype PMEVENT id PME_AC     port 6
@@ -144,7 +122,7 @@ hpcin*	at hpcioman3 iochip 0 evtype EVENT  id COM0_DCD	port 29
 hpcin*	at hpcioman3 iochip 0 evtype EVENT  id COM0_CTS	port 30
 # kbd MFIO:7 ?
 
-options USE_POLL
+options 	USE_POLL
 
 # PHILIPS UCB1200 / TOSHIBA TC35413F modem/audio analog front-end
 ucb*		at tx39sib? slot 0
@@ -153,7 +131,7 @@ ucbsnd*		at ucb?
 ucbio*		at ucb?
 
 # PHILIPS 74ALVC*1624? / TOSHIBA TC5165BFTS buffer chip (keyboard)
-# chip select: CS1, IRQ: 3:12/4:12 (irq1 108) 
+# chip select: CS1, IRQ: 3:12/4:12 (irq1 108)
 # interrupt-mode don't work. use polling mode.
 tc5165buf*	at txcsbus1 iocs 1 iocsbase 0 iocssize 0x100 iocswidth 16
 hpckbd*		at tc5165buf?
@@ -164,8 +142,8 @@ hpckbd*		at tc5165buf?
 m38813c*	at txcsbus2 iocs 8 iocswidth 16 iocsbase 0 iocssize 8
 hpckbd*		at m38813c?
 
-# TC6358TB(Plum2) 
-#  register space: CS3,	 
+# TC6358TB(Plum2)
+#  register space: CS3,
 #  I/O space: MCS0 & MCS1,  IRQ: 8:21 (IO[5] positive)
 #
 plum*		at txcsbus? regcs 3 regcswidth 32 iocs 4 iocswidth 32 memcs 5 memcswidth 32 irq1 277
@@ -184,19 +162,22 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse*	at ums? mux 0
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+uhid*	at uhidev? reportid ?
 
 # USB joystick, game pad
 #ujoy*	at uhub? configuration ? interface ?
-
-# USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
@@ -333,10 +314,10 @@ pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux
 
 # miscellaneous pseudo-devices
-pseudo-device   rnd                     # /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	pty			# pseudo-terminals
 
 # a pseudo device needed for Coda	# also needs CODA (above)

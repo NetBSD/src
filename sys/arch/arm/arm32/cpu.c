@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3.4.1 2001/09/13 01:13:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3.4.2 2002/01/10 19:37:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -52,13 +52,14 @@
 #include <uvm/uvm_extern.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
-#include <machine/cpus.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
+
+#include <arm/cpus.h>
 
 #ifdef ARMFPE
 #include <machine/bootconfig.h> /* For boot args */
-#include <arm32/fpe-arm/armfpe.h>
-#endif	/* ARMFPE */
+#include <arm/fpe-arm/armfpe.h>
+#endif
 
 cpu_t cpus[MAX_CPUS];
 
@@ -70,7 +71,8 @@ extern int cpuctrl;		/* cpu control register value */
 void identify_master_cpu __P((struct device *dv, int cpu_number));
 void identify_arm_cpu	__P((struct device *dv, int cpu_number));
 void identify_arm_fpu	__P((struct device *dv, int cpu_number));
-
+int fpa_test __P((u_int, u_int, trapframe_t *, int));
+int fpa_handler __P((u_int, u_int, trapframe_t *, int));
 
 /*
  * void cpusattach(struct device *parent, struct device *dev, void *aux)
@@ -93,10 +95,11 @@ cpu_attach(dv)
  */
 
 int
-fpa_test(address, instruction, frame)
+fpa_test(address, instruction, frame, fault_code)
 	u_int address;
 	u_int instruction;
 	trapframe_t *frame;
+	int fault_code;
 {
 
 	frame->tf_pc += INSN_SIZE;
@@ -249,7 +252,7 @@ identify_master_cpu(dv, cpu_number)
 struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
-	char *		cpu_name;
+	const char	*cpu_name;
 };
 
 const struct cpuidtab cpuids[] = {
@@ -274,32 +277,32 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_ARM940T,	CPU_CLASS_ARM9TDMI,	"ARM940T" },
 	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S" },
 	{ CPU_ID_ARM966ES,	CPU_CLASS_ARM9ES,	"ARM966E-S" },
-	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S (Rev 1)" },
+	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S" },
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110" },
 	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100" },
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110" },
-	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"80200" },
+	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200" },
 	{ 0, CPU_CLASS_NONE, NULL }
 };
 
 struct cpu_classtab {
-	char	*class_name;
-	char	*class_option;
+	const char	*class_name;
+	const char	*class_option;
 };
 
 const struct cpu_classtab cpu_classes[] = {
-	{ "unknown",	NULL },		/* CPU_CLASS_NONE */
-	{ "ARM2",	"CPU_ARM2" },	/* CPU_CLASS_ARM2 */
-	{ "ARM2as",	"CPU_ARM250" },	/* CPU_CLASS_ARM2AS */
-	{ "ARM3",	"CPU_ARM3" },	/* CPU_CLASS_ARM3 */
-	{ "ARM6",	"CPU_ARM6" },	/* CPU_CLASS_ARM6 */
-	{ "ARM7",	"CPU_ARM7" },	/* CPU_CLASS_ARM7 */
-	{ "ARM7TDMI",	"CPU_ARM7TDMI" },/* CPU_CLASS_ARM7TDMI */
-	{ "ARM8",	"CPU_ARM8" },	/* CPU_CLASS_ARM8 */
-	{ "ARM9TDMI",	NULL },		/* CPU_CLASS_ARM9TDMI */
-	{ "ARM9E-S",	NULL },		/* CPU_CLASS_ARM9ES */
-	{ "SA-1",	"CPU_SA110" },	/* CPU_CLASS_SA1 */
-	{ "Xscale",	"CPU_XSCALE" },	/* CPU_CLASS_XSCALE */
+	{ "unknown",	NULL },			/* CPU_CLASS_NONE */
+	{ "ARM2",	"CPU_ARM2" },		/* CPU_CLASS_ARM2 */
+	{ "ARM2as",	"CPU_ARM250" },		/* CPU_CLASS_ARM2AS */
+	{ "ARM3",	"CPU_ARM3" },		/* CPU_CLASS_ARM3 */
+	{ "ARM6",	"CPU_ARM6" },		/* CPU_CLASS_ARM6 */
+	{ "ARM7",	"CPU_ARM7" },		/* CPU_CLASS_ARM7 */
+	{ "ARM7TDMI",	"CPU_ARM7TDMI" },	/* CPU_CLASS_ARM7TDMI */
+	{ "ARM8",	"CPU_ARM8" },		/* CPU_CLASS_ARM8 */
+	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
+	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
+	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
+	{ "XScale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
 };
 
 /*
@@ -307,6 +310,25 @@ const struct cpu_classtab cpu_classes[] = {
  * arm specific information in the cpu structure to identify the processor.
  * The remaining fields in the cpu structure are filled in appropriately.
  */
+
+static const char *wtnames[] = {
+	"write-through",
+	"write-back",
+	"write-back",
+	"**unknown 3**",
+	"**unknown 4**",
+	"write-back-locking",		/* XXX XScale-specific? */
+	"write-back-locking-A",
+	"write-back-locking-B",
+	"**unknown 8**",
+	"**unknown 9**",
+	"**unknown 10**",
+	"**unknown 11**",
+	"**unknown 12**",
+	"**unknown 13**",
+	"**unknown 14**",
+	"**unknown 15**",
+};
 
 void
 identify_arm_cpu(dv, cpu_number)
@@ -347,6 +369,7 @@ identify_arm_cpu(dv, cpu_number)
 		else
 			strcat(cpu->cpu_model, " IDC enabled");
 		break;
+	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 		if ((cpu->cpu_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
@@ -373,8 +396,28 @@ identify_arm_cpu(dv, cpu_number)
 		strcat(cpu->cpu_model, " branch prediction enabled");
 
 	/* Print the info */
-
 	printf(": %s\n", cpu->cpu_model);
+
+	/* Print cache info. */
+	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)
+		goto skip_pcache;
+
+	if (arm_pcache_unified) {
+		printf("%s: %dKB/%dB %d-way %s unified cache\n",
+		    dv->dv_xname, arm_pdcache_size / 1024,
+		    arm_pdcache_line_size, arm_pdcache_ways,
+		    wtnames[arm_pcache_type]);
+	} else {
+		printf("%s: %dKB/%dB %d-way Instruction cache\n",
+		    dv->dv_xname, arm_picache_size / 1024,
+		    arm_picache_line_size, arm_picache_ways);
+		printf("%s: %dKB/%dB %d-way %s Data cache\n",
+		    dv->dv_xname, arm_pdcache_size / 1024, 
+		    arm_pdcache_line_size, arm_pdcache_ways,
+		    wtnames[arm_pcache_type]);
+	}
+
+ skip_pcache:
 
 	switch (cpu->cpu_class) {
 #ifdef CPU_ARM2
@@ -397,6 +440,9 @@ identify_arm_cpu(dv, cpu_number)
 #endif		
 #ifdef CPU_ARM8
 	case CPU_CLASS_ARM8:
+#endif
+#ifdef CPU_ARM9
+	case CPU_CLASS_ARM9TDMI:
 #endif
 #ifdef CPU_SA110
 	case CPU_CLASS_SA1:

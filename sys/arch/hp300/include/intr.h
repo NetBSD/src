@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2001/04/13 23:29:59 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.2.1 2002/01/10 19:43:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -39,26 +39,9 @@
 #ifndef _HP300_INTR_H_
 #define	_HP300_INTR_H_
 
-#include <machine/psl.h>
-
-#ifdef _HP300_INTR_H_PRIVATE
+#include <sys/device.h>
 #include <sys/queue.h>
-
-/*
- * The location and size of the autovectored interrupt portion
- * of the vector table.
- */
-#define ISRLOC		0x18
-#define NISR		8
-
-struct isr {
-	LIST_ENTRY(isr) isr_link;
-	int		(*isr_func) __P((void *));
-	void		*isr_arg;
-	int		isr_ipl;
-	int		isr_priority;
-};
-#endif /* _HP300_INTR_H_PRIVATE */
+#include <machine/psl.h>
 
 /*
  * Interrupt "levels".  These are a more abstract representation
@@ -76,6 +59,20 @@ struct isr {
 #define	IPL_CLOCK	5	/* disable clock interrupts */
 #define	IPL_HIGH	6	/* disable all interrupts */
 
+/* Copied from alpha/include/intr.h */
+#define	IPL_SOFTSERIAL	0	/* serial software interrupts */
+#define	IPL_SOFTNET	1	/* network software interrupts */
+#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
+#define	IPL_SOFT	3	/* other software interrupts */
+#define	IPL_NSOFT	4
+
+#define	IPL_SOFTNAMES {							\
+	"serial",							\
+	"net",								\
+	"clock",							\
+	"misc",								\
+}
+
 /*
  * Convert PSL values to CPU IPLs and vice-versa.
  */
@@ -83,8 +80,6 @@ struct isr {
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
 #ifdef _KERNEL
-/* spl0 requires checking for software interrupts */
-
 /*
  * This array contains the appropriate PSL_S|PSL_IPL? values
  * to raise interrupt priority to the requested level.
@@ -95,7 +90,7 @@ extern unsigned short hp300_ipls[];
 #define	HP300_IPL_BIO		1
 #define	HP300_IPL_NET		2
 #define	HP300_IPL_TTY		3
-#define	HP300_IPL_IMP		4
+#define	HP300_IPL_VM		4
 #define	HP300_IPL_CLOCK		5
 #define	HP300_IPL_HIGH		6
 #define	HP300_NIPLS		7
@@ -105,14 +100,16 @@ extern unsigned short hp300_ipls[];
 #define	splkbd()	splhil()
 
 /* These spl calls are used by machine-independent code. */
+/* spl0 requires checking for software interrupts */
 #define	spllowersoftclock() spl1()
 #define	splsoft()	splraise1()
 #define	splsoftclock()	splsoft()
 #define	splsoftnet()	splsoft()
+#define splsoftserial	splsoft()
 #define	splbio()	_splraise(hp300_ipls[HP300_IPL_BIO])
 #define	splnet()	_splraise(hp300_ipls[HP300_IPL_NET])
 #define	spltty()	_splraise(hp300_ipls[HP300_IPL_TTY])
-#define	splvm()		_splraise(hp300_ipls[HP300_IPL_IMP])
+#define	splvm()		_splraise(hp300_ipls[HP300_IPL_VM])
 #define	splclock()	spl6()
 #define	splstatclock()	splclock()
 #define	splhigh()	spl7()
@@ -122,31 +119,67 @@ extern unsigned short hp300_ipls[];
 /* watch out for side effects */
 #define	splx(s)		((s) & PSL_IPL ? _spl((s)) : spl0())
 
+struct hp300_intrhand {
+	LIST_ENTRY(hp300_intrhand) ih_q;
+	int (*ih_fn)(void *);
+	void *ih_arg;
+	int ih_ipl;
+	int ih_priority;
+};
+
+struct hp300_intr {
+	LIST_HEAD(, hp300_intrhand) hi_q;
+	struct evcnt hi_evcnt;
+};
+
 /*
- * Simulated software interrupt register.
+ * Software Interrupts.
  */
+
+struct hp300_soft_intrhand {
+	LIST_ENTRY(hp300_soft_intrhand) sih_q;
+	struct hp300_soft_intr *sih_intrhead;
+	void (*sih_fn)(void *);
+	void *sih_arg;
+	volatile int sih_pending;
+};
+
+struct hp300_soft_intr {
+	LIST_HEAD(, hp300_soft_intrhand) hsi_q;
+	struct evcnt hsi_evcnt;
+	uint8_t hsi_ipl;
+};
+
+void	*softintr_establish(int, void (*)(void *), void *);
+void	softintr_disestablish(void *);
+void	softintr_init(void);
+void	softintr_dispatch(void);
+
 extern volatile u_int8_t ssir;
+#define setsoft(x)	ssir |= (1<<(x))
 
-#define	SIR_NET		0x01
-#define	SIR_CLOCK	0x02
+#define softintr_schedule(arg)				\
+do {							\
+	struct hp300_soft_intrhand *__sih = (arg);	\
+	__sih->sih_pending = 1;				\
+	setsoft(__sih->sih_intrhead->hsi_ipl);		\
+} while (0)
 
-#define	siron(mask)	\
-	__asm __volatile ( "orb %1,%0" : "=m" (ssir) : "i" ((mask)))
-#define	siroff(mask)	\
-	__asm __volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)));
-
-#define	setsoftnet()	siron(SIR_NET)
-#define	setsoftclock()	siron(SIR_CLOCK)
+/* XXX For legacy software interrupts */
+extern struct hp300_soft_intrhand *softnet_intrhand;
+#define setsoftnet()	softintr_schedule(softnet_intrhand)
 
 /* locore.s */
-int	spl0 __P((void));
+int	spl0(void);
 
 /* intr.c */
-void	intr_init __P((void));
-void	*intr_establish __P((int (*)(void *), void *, int, int));
-void	intr_disestablish __P((void *));
-void	intr_dispatch __P((int));
-void	intr_printlevels __P((void));
+void	intr_init(void);
+void	*intr_establish(int (*)(void *), void *, int, int);
+void	intr_disestablish(void *);
+void	intr_dispatch(int);
+void	intr_printlevels(void);
+void	netintr(void);
+
 #endif /* _KERNEL */
 
 #endif /* _HP300_INTR_H_ */

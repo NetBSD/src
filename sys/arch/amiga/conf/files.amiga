@@ -1,33 +1,35 @@
-#	$NetBSD: files.amiga,v 1.108.2.1 2001/09/13 01:13:00 thorpej Exp $
+#	$NetBSD: files.amiga,v 1.108.2.2 2002/01/10 19:37:16 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
 
 maxusers 2 8 64
 
-defopt	opt_amigaccgrf.h	GRF_PAL:GRF_NTSC	# temporary workaround
-defopt	opt_amigaccgrf.h	GRF_NTSC
-defopt	opt_amigaccgrf.h	GRF_ECS GRF_AGA
-defopt	opt_amigaccgrf.h	GRF_A2024:GRF_ECS
-defopt	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA
-defopt	opt_amigaccgrf.h	GRF_SUPER72:GRF_AGA
-defopt	opt_amigaccgrf.h	USE_C_BFOPS
+defflag	opt_amigaccgrf.h	GRF_PAL	:GRF_NTSC	# temporary workaround
+defflag	opt_amigaccgrf.h	GRF_NTSC
+defflag	opt_amigaccgrf.h	GRF_ECS GRF_AGA
+defflag	opt_amigaccgrf.h	GRF_A2024:GRF_ECS
+defflag	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA
+defflag	opt_amigaccgrf.h	GRF_SUPER72:GRF_AGA
+defflag	opt_amigaccgrf.h	USE_C_BFOPS
 
-defopt	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
-defopt	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
-defopt	opt_amigacons.h		CV3DONZORRO2
+defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
+defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
+defflag	opt_amigacons.h		CV3DONZORRO2
+defflag	opt_amigacons.h		SERCONSOLE
 
-defopt	opt_retina.h		RH_MEMCLK RH_64BIT_SPRITE RH_HARDWARECURSOR
-defopt	opt_retina.h		RETINA_SPEED_HACK
+defparam opt_retina.h		RH_MEMCLK
+defflag	opt_retina.h		RH_64BIT_SPRITE RH_HARDWARECURSOR
+defflag	opt_retina.h		RETINA_SPEED_HACK
 
-defopt				BB060STUPIDROM
-defopt				P5PPC68KBOARD
-defopt				LEV6_DEFER
+defflag				BB060STUPIDROM
+defflag				P5PPC68KBOARD
+defflag				LEV6_DEFER
 
-defopt				IOBZCLOCK
+defparam			IOBZCLOCK
 
-device  mainbus {}
-attach  mainbus at root
+device	mainbus {}
+attach	mainbus at root
 
 device	cpu
 attach	cpu at mainbus
@@ -91,7 +93,7 @@ file	arch/amiga/dev/par.c		par needs-count
 # audio
 device	aucc: audio
 attach	aucc at mainbus
-file	arch/amiga/dev/aucc.c		aucc needs-flag 
+file	arch/amiga/dev/aucc.c		aucc needs-flag
 
 device	melody: audio, tms320av110
 attach	melody at zbus
@@ -139,7 +141,7 @@ file	arch/amiga/dev/ite_cc.c		grfcc & ite
 # wscons interface to custom chips
 device	amidisplaycc: wsemuldisplaydev
 attach	amidisplaycc at mainbus
-file	arch/amiga/dev/amidisplaycc.c   amidisplaycc needs-flag
+file	arch/amiga/dev/amidisplaycc.c	amidisplaycc needs-flag
 
 include "dev/wscons/files.wscons"
 
@@ -283,7 +285,7 @@ major	{sd = 4}
 major	{cd = 7}
 
 # wd 33c93 contrllers
-define	sbic 
+define	sbic
 file	arch/amiga/dev/sbic.c		sbic
 
 # GVP series II
@@ -310,7 +312,7 @@ device	wstsc: scsi, sci
 attach	wstsc at zbus
 file	arch/amiga/dev/wstsc.c		wstsc needs-flag
 
-# IVS 
+# IVS
 device	ivsc: scsi, sci
 attach	ivsc at zbus
 file	arch/amiga/dev/ivsc.c		ivsc needs-flag
@@ -405,7 +407,7 @@ file	arch/amiga/dev/idesc.c		idesc needs-flag
 # MacroSystem DraCo internal
 device	drsc: scsi, asiop
 attach	drsc at mainbus
-file  arch/amiga/dev/drsc.c           drsc needs-flag
+file	arch/amiga/dev/drsc.c		drsc needs-flag
 
 # MacroSystem DraCo internal DS2404 hwc
 device	drbbc
@@ -461,6 +463,9 @@ major	{md = 15}	# Memory disk (for mini-kernel)
 major	{raid = 16}	# RAIDframe
 
 # Compatibility modules
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"

@@ -1,4 +1,4 @@
-# $NetBSD: AMIGA,v 1.37.2.1 2001/09/13 01:12:59 thorpej Exp $
+# $NetBSD: AMIGA,v 1.37.2.2 2002/01/10 19:37:13 thorpej Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -7,7 +7,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.37.2.1 $"
+#ident  		"GENERIC-$Revision: 1.37.2.2 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -15,12 +15,12 @@ options 	RTC_OFFSET=0
 #mainboards to support (in addition to Amiga)
 
 options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
-				# MC68060 with an OS ROM up to (at least) 
+				# MC68060 with an OS ROM up to (at least)
 				# V40 (OS3.1) and want to boot with the
 				# bootblock.
 				# You do not need this if you have a DraCo,
 				# have no 68060 or NEVER use the bootblock
-options		P5PPC68KBOARD	# Phase5 PPC/68K board support
+options 	P5PPC68KBOARD	# Phase5 PPC/68K board support
 
 #processors this kernel should support
 
@@ -84,7 +84,7 @@ file-system 	UNION		# union filesystem
 #options 	FFS_EI		# FFS Endian Independant support
 
 options 	QUOTA		# User and group quotas in FFS
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -110,10 +110,10 @@ options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 
 #Support for various kernel options
 
@@ -121,7 +121,7 @@ options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 options 	UCONSOLE	# anyone can redirect a virtual console
 
-#options 	INSECURE	# allow, among other insecure stuff, LKM 
+#options 	INSECURE	# allow, among other insecure stuff, LKM
 				# loading in multi-user mode.
 options 	SCSIVERBOSE	# Verbose SCSI errors
 
@@ -141,12 +141,12 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options	NKPTADD=4	# set this for 4 additional KPT pages
-#options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
+#options 	NKPTADD=4	# set this for 4 additional KPT pages
+#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
 				# per 16 MB (1<<24 bytes) of RAM
-                                # define and decrease this, or define and
-                                # increase NKPTADD if you get "out of PT pages"
-                                # panics.
+				# define and decrease this, or define and
+				# increase NKPTADD if you get "out of PT pages"
+				# panics.
 
 #ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 #before the 10 secondinterval ends, or that KBDRESET does work at all.
@@ -195,11 +195,11 @@ options 	GRF_SUPER72	# AGA Super-72
 #options 	RH_HARDWARECURSOR
 
 #wscons aware interface to amiga custom chips. Text-only console.
-#If you enable it enable also wskbd. 
+#If you enable it enable also wskbd.
 
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
-#options	WSEMUL_VT100
+#options 	WSEMUL_VT100
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
@@ -249,8 +249,8 @@ hyper*		at zbus?		# zbus HyperCom3/3+/4/4+
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
 
-#options IOBZCLOCK=22118400 		# default, uncomment the next line
-#options IOBZCLOCK=24000000		# if needed.
+#options 	IOBZCLOCK=22118400 	# default, uncomment the next line
+#options 	IOBZCLOCK=24000000	# if needed.
 
 iobl*		at zbus?		# zbus IOBlix
 com*		at iobl? port ?		# IOBlix serial ports
@@ -277,7 +277,7 @@ audio*		at aucc?
 
 #Zorro-II, Zorro-III, DraCo Direct-Bus devices (sans graphics)
 
-#Alas, Melody-Z2 dont configure in the DraCo bus. 
+#Alas, Melody-Z2 dont configure in the DraCo bus.
 melody* 	at zbus0		# Melody MPEG audio decoder
 audio*		at melody?
 
@@ -323,9 +323,9 @@ aftsc0		at mainbus0		# A4000T scsi
 scsibus*	at aftsc0
 flsc0		at zbus0		# FastlaneZ3 scsi
 scsibus*	at flsc0
-bzsc0		at zbus0		# Blizzard 1230 I,II scsi 
+bzsc0		at zbus0		# Blizzard 1230 I,II scsi
 scsibus*	at bzsc0
-bzivsc0 	at zbus0		# Blizzard 12x0 IV scsi 
+bzivsc0 	at zbus0		# Blizzard 12x0 IV scsi
 scsibus*	at bzivsc0
 bztzsc0 	at zbus0		# Blizzard 2060 scsi
 scsibus*	at bztzsc0
@@ -359,7 +359,7 @@ ep*		at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*		at pcmcia? function ?		# MB8696x based Ethernet
 ne*		at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*		at pcmcia? function ?		# Megahertz Ethernet
-mhzc*		at pcmcia? function ?    # Megahertz Ethernet/Modem combo cards
+mhzc*		at pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
 com*		at mhzc?
 sm*		at mhzc?
 
@@ -394,7 +394,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
-pseudo-device  rnd                     # /dev/random and in-kernel generator
-#options        RND_COM                 # use "com" randomness as well (BROKEN)
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.180.2.3 2001/09/13 01:12:53 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.180.2.4 2002/01/10 19:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180.2.3 2001/09/13 01:12:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180.2.4 2002/01/10 19:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1482,10 +1482,6 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		PMAP_HEAD_TO_MAP_LOCK();
 		simple_lock(&pg->mdpage.pvh_slock);
 		for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
-			/* XXX Don't write-protect pager mappings. */
-			if (pv->pv_va >= uvm.pager_sva &&
-			    pv->pv_va < uvm.pager_eva)
-				continue;
 			PMAP_LOCK(pv->pv_pmap);
 			if (*pv->pv_pte & (PG_KWE | PG_UWE)) {
 				*pv->pv_pte &= ~(PG_KWE | PG_UWE);
@@ -1517,25 +1513,13 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		    pmap_pte_pa(pv->pv_pte) != pa)
 			panic("pmap_page_protect: bad mapping");
 #endif
-		if (pmap_pte_w(pv->pv_pte) == 0) {
-			if (pmap_remove_mapping(pmap, pv->pv_va, pv->pv_pte,
-			    FALSE, cpu_id) == TRUE) {
-				if (pmap == pmap_kernel())
-					needkisync |= TRUE;
-				else
-					PMAP_SYNC_ISTREAM_USER(pmap);
-			}
+		if (pmap_remove_mapping(pmap, pv->pv_va, pv->pv_pte,
+		    FALSE, cpu_id) == TRUE) {
+			if (pmap == pmap_kernel())
+				needkisync |= TRUE;
+			else
+				PMAP_SYNC_ISTREAM_USER(pmap);
 		}
-#ifdef DEBUG
-		else {
-			if (pmapdebug & PDB_PARANOIA) {
-				printf("%s wired mapping for %lx not removed\n",
-				       "pmap_page_protect:", pa);
-				printf("vm wire count %d\n", 
-					PHYS_TO_VM_PAGE(pa)->wire_count);
-			}
-		}
-#endif
 		PMAP_UNLOCK(pmap);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_alignstride_bus_mem_chipdep.c,v 1.1.2.1 2001/09/13 01:12:52 thorpej Exp $	*/
+/*	$NetBSD: pci_alignstride_bus_mem_chipdep.c,v 1.1.2.2 2002/01/10 19:36:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -715,7 +715,7 @@ __C(CHIP,_mem_mmap)(v, addr, off, prot, flags)
 		return (-1);
 
 	return (mips_btop(mbst.mbst_sys_start +
-	    (memaddr - mbst.mbst_bus_start) + off));
+	    (addr - mbst.mbst_bus_start) + off));
 }
 
 inline void

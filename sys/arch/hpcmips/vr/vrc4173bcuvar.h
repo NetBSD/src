@@ -1,7 +1,7 @@
-/*	$NetBSD: vrc4173bcuvar.h,v 1.1 2001/06/13 07:32:48 enami Exp $	*/
+/*	$NetBSD: vrc4173bcuvar.h,v 1.1.4.1 2002/01/10 19:44:13 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2001 Enami Tsugutomo.
+ * Copyright (c) 2001,2002 Enami Tsugutomo.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,23 +28,7 @@
 
 #include <dev/pci/pcivar.h>
 
-struct vrc4173bcu_softc {
-	struct device sc_dev;
-
-	pci_chipset_tag_t sc_pc;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	bus_size_t sc_size;
-
-	bus_space_handle_t sc_icuh;	/* I/O handle for ICU. */
-	void *sc_ih;
-
-#define	VRC4173BCU_NINTRHAND	(16)	/* XXX */
-	struct intrhand {
-		int (*ih_func)(void *);
-		void *ih_arg;
-	} sc_intrhand[VRC4173BCU_NINTRHAND];
-};
+struct vrc4173bcu_softc;
 
 struct vrc4173bcu_attach_args {
 	bus_space_tag_t vaa_iot;
@@ -55,7 +39,6 @@ int	vrc4173bcu_intr(void *);
 void	*vrc4173bcu_intr_establish(struct vrc4173bcu_softc *, int,
 	    int (*)(void *), void *);
 void	vrc4173bcu_intr_disestablish(struct vrc4173bcu_softc *, void *);
-int	vrc4173bcu_pci_bus_devorder(pci_chipset_tag_t, int, char *);
 int	vrc4173bcu_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *
 	vrc4173bcu_pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);

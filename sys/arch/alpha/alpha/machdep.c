@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.245.2.2 2001/09/13 01:12:53 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.245.2.3 2002/01/10 19:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,10 +71,11 @@
 #include "opt_dec_3000_500.h"
 #include "opt_compat_osf1.h"
 #include "opt_compat_netbsd.h"
+#include "opt_execfmt.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.2 2001/09/13 01:12:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.3 2002/01/10 19:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +342,7 @@ nobootinfo:
 	cycles_per_usec = (hwrpb->rpb_cc_freq + 999999) / 1000000;
 
 	/*
-	 * Initalize the (temporary) bootstrap console interface, so
+	 * Initialize the (temporary) bootstrap console interface, so
 	 * we can use printf until the VM system starts being setup.
 	 * The real console is initialized before then.
 	 */
@@ -390,7 +391,7 @@ nobootinfo:
 	strcpy(cpu_model, platform.model);
 
 	/*
-	 * Initalize the real console, so that the bootstrap console is
+	 * Initialize the real console, so that the bootstrap console is
 	 * no longer necessary.
 	 */
 	(*platform.cons_init)();
@@ -1988,12 +1989,7 @@ delay(n)
 	}
 }
 
-#if defined(COMPAT_OSF1) || 1		/* XXX */
-void	cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
-	    u_long));
-#endif
-
-#if 1		/* XXX */
+#ifdef EXEC_ECOFF
 void
 cpu_exec_ecoff_setregs(p, epp, stack)
 	struct proc *p;
@@ -2002,7 +1998,6 @@ cpu_exec_ecoff_setregs(p, epp, stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
-	setregs(p, epp, stack);
 	p->p_md.md_tf->tf_regs[FRAME_GP] = execp->a.gp_value;
 }
 
@@ -2028,7 +2023,7 @@ cpu_exec_ecoff_probe(p, epp)
 
 	return (error);
 }
-#endif
+#endif /* EXEC_ECOFF */
 
 int
 alpha_pa_access(pa)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.7.4.1 2001/09/13 01:13:50 thorpej Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.7.4.2 2002/01/10 19:45:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -32,6 +32,9 @@
  *
  *	from OpenBSD: pchb.c,v 1.23 2000/10/23 20:07:30 deraadt Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.7.4.2 2002/01/10 19:45:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

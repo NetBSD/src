@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.21.4.1 2001/08/03 04:11:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.21.4.2 2002/01/10 19:45:15 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
 BASE= netboot
 PROG= ${BASE}.rom
-MKMAN=	no
+NOMAN=	# defined
 NEWVERSWHAT=	"Network Boot"
 
 SRCS= main.c devopen.c conf.c dev_net.c exec.c
@@ -64,6 +64,9 @@ CPPFLAGS+= -DPCI_DID=0x9058 # 3c905b combo
 
 #USE_NETIF= i82557
 #CPPFLAGS+= -DPCIROM -DPCI_VID=0x8086 -DPCI_DID=0x1229 -DPCI_CLASS=0x020000
+
+#USE_NETIF= ne2000
+#CPPFLAGS+= -DBASEREG=0x300
 
 .include "../lib/netif/Makefile.inc"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2001/06/06 17:50:15 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.12.2.1 2002/01/10 19:45:50 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,6 +42,13 @@
  */
 #define	MACHINE		"macppc"
 #define	KERNBASE	0x100000
+
+/*
+ * 4KB isn't enough for a full boot message for a macppc system anymore
+ */
+#ifndef MSGBUFSIZE
+#define	MSGBUFSIZE	(3*NBPG)
+#endif
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized

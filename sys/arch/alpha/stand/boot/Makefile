@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2000/09/26 05:13:36 simonb Exp $
+# $NetBSD: Makefile,v 1.30.4.1 2002/01/10 19:37:08 thorpej Exp $
 
 PROG = boot
 
@@ -20,7 +20,7 @@ CLEANFILES+= ${PROG}.sym
 
 ${PROG}: ${PROG}.sym
 	@echo creating ${PROG} from ${PROG}.sym...
-	@objcopy --output-target=binary ${PROG}.sym ${PROG}
+	@${OBJCOPY} --output-target=binary ${PROG}.sym ${PROG}
 	@chmod 644 ${PROG}
 	@ls -l ${PROG}
 	@${CHECKSIZE_CMD} ${PROG}.sym ${PROG} ${SECONDARY_MAX_LOAD} \

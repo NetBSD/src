@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.2 2001/05/28 08:30:03 leo Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.2.4.1 2002/01/10 19:40:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,11 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
+#include <dev/isa/isavar.h>		/* isa_intr_{dis}establish */
+#include <dev/isa/isareg.h>		/* isa_intr_{dis}establish */
+
 #include <machine/bswap.h>
+#include <machine/isa_machdep.h>	/* isa_intr_{dis}establish */
 
 #include <atari/pci/pci_vga.h>
 #include <atari/dev/grf_etreg.h>
@@ -101,8 +105,9 @@ pci_intr_establish(pc, ih, level, ih_fun, ih_arg)
 	int			(*ih_fun) __P((void *));
 	void			*ih_arg;
 {
-	printf("pci_intr_establish: Not yet implemented\n");
-	return NULL;
+	if (ih == 0 || ih >= 16 || ih == 2)
+		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+	return isa_intr_establish(NULL, ih, IST_LEVEL, level, ih_fun, ih_arg);
 }
 
 void
@@ -110,6 +115,7 @@ pci_intr_disestablish(pc, cookie)
 	pci_chipset_tag_t pc;
 	void *cookie;
 {
+	isa_intr_disestablish(NULL, cookie);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 2000/09/24 12:32:34 jdolecek Exp $	*/
+/*	$NetBSD: machdep.h,v 1.5.4.1 2002/01/10 19:44:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -30,5 +30,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* others.. */
 extern char cpu_name[];
+extern struct device *booted_device;
+extern int booted_partition;
+
+#include <sys/kcore.h>
+extern phys_ram_seg_t mem_clusters[];
+extern int mem_cluster_cnt;
+
+int	badaddr(void *, u_int);
+void	makebootdev(char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.6.2.1 2001/08/25 06:15:20 thorpej Exp $	*/
+/*	$NetBSD: stubs.c,v 1.6.2.2 2002/01/10 19:43:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -48,7 +48,7 @@
 #include <sys/msgbuf.h>
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
 

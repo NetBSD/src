@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/04/15 17:13:05 kleink Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2002/01/10 19:37:19 thorpej Exp $
 
 KDIR=	/sys/arch/amiga/include
 INCSDIR= /usr/include/amiga
@@ -8,7 +8,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	cdefs.h conf.h cpu.h cpufunc.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	fbio.h float.h frame.h \
+	float.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
@@ -17,7 +17,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	math.h mtpr.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
-	setjmp.h signal.h stdarg.h svr4_machdep.h \
+	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h
 

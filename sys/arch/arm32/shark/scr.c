@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.10 2001/06/05 05:14:19 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.10.2.1 2002/01/10 19:39:21 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -118,7 +118,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <dev/isa/isavar.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 
 /* SCR_DEBUG is the master switch for turning on debugging */        
@@ -722,9 +722,10 @@ int scrprobe(parent, match, aux)
         devices++;      
 
         /* tell the caller that we are not using any resource */
-        ia->ia_iosize = -1;
-        ia->ia_irq   = -1;
-        ia->ia_msize = 0;
+	ia->ia_nio = 0;
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
         rv = 1;
 
 

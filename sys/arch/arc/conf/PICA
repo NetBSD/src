@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.27 2001/07/08 16:32:14 abs Exp $
+#	$NetBSD: PICA,v 1.27.2.1 2002/01/10 19:37:40 thorpej Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -25,15 +25,15 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
-#options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
-options 	DDB		# in-kernel debugger
+options 	DIAGNOSTIC		# cheap kernel consistency checks
+#options 	DEBUG			# expensive debugging checks/support
+#options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
+options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	KGDB		# remote gdb
-#options 	KGDBRATE=19200	# kernel gdb port rate (default 9600)
-#options 	KGDBDEV="17*256+0"	# device for kernel gdb
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#options 	KGDB			# remote gdb
+#options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
+#options 	KGDB_DEV="17*256+0"	# device for kernel gdb
+#makeoptions	DEBUG="-g"		# compile full symbol table
 
 # Compatibility options
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -213,4 +213,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux		2
+#pseudo-device	wsmux

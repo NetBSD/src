@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.1 1998/10/05 01:20:58 mark Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.1.26.1 2002/01/10 19:38:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -63,6 +63,9 @@ int ds1687_read __P((struct dsrtc_softc *sc, int addr));
 void ds1687_write __P((struct dsrtc_softc *sc, int addr, int data));
 int ds1687_ram_read __P((struct dsrtc_softc *sc, int addr));
 void ds1687_ram_write __P((struct dsrtc_softc *sc, int addr, int data));
+static void ds1687_bank_select __P((struct dsrtc_softc *, int));
+static int dsrtc_write __P((void *, rtc_t *));
+static int dsrtc_read __P((void *, rtc_t *));
 
 int
 ds1687_read(sc, addr)
@@ -85,7 +88,7 @@ ds1687_write(sc, addr, data)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_DATA_REG, data);
 }
 
-void
+static void
 ds1687_bank_select(sc, bank)
 	struct dsrtc_softc *sc;
 	int bank;
@@ -209,12 +212,16 @@ dsrtcmatch(parent, cf, aux)
 {
 	struct isa_attach_args *ia = aux;
 
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_nio < 1 ||
+	    ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return (0);
 
-	ia->ia_iosize = NRTC_PORTS;
-	ia->ia_msize = 0;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = NRTC_PORTS;
+
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
 
 	return(1);
 }
@@ -236,8 +243,8 @@ dsrtcattach(parent, self, aux)
 	struct todclock_attach_args ta;
 	
 	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase,
-	    NRTC_PORTS, 0, &sc->sc_ioh)) {
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh)) {
 		printf(": cannot map I/O space\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.46 2001/05/30 11:40:35 mrg Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.46.2.1 2002/01/10 19:35:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.46.2.1 2002/01/10 19:35:53 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
@@ -53,6 +56,7 @@
 #include <adosfs/adosfs.h>
 
 void adosfs_init __P((void));
+void adosfs_reinit __P((void));
 void adosfs_done __P((void));
 int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		      struct proc *));
@@ -76,6 +80,10 @@ int adosfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 struct simplelock adosfs_hashlock;
 
 struct pool adosfs_node_pool;
+
+struct genfs_ops adosfs_genfsops = {
+	genfs_size,
+};
 
 int
 adosfs_mount(mp, path, data, ndp, p)
@@ -586,8 +594,10 @@ adosfs_vget(mp, an, vpp)
 	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
 	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);
 
-	*vpp = vp;		/* return vp */
-	brelse(bp);		/* release buffer */
+	genfs_node_init(vp, &adosfs_genfsops);
+	*vpp = vp;
+	brelse(bp);
+	vp->v_size = ap->fsize;
 	return (0);
 }
 
@@ -848,6 +858,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_fhtovp,                  
 	adosfs_vptofh,                  
 	adosfs_init,                    
+	NULL,
 	adosfs_done,
 	adosfs_sysctl,
 	NULL,				/* vfs_mountroot */

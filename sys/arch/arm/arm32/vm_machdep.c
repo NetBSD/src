@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.2.4 2001/09/13 01:13:08 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.5 2002/01/10 19:37:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -64,7 +64,7 @@
 #include <machine/vmparam.h>
 
 #ifdef ARMFPE
-#include <arm32/fpe-arm/armfpe.h>
+#include <arm/fpe-arm/armfpe.h>
 #endif
 
 extern pv_addr_t systempage;
@@ -72,7 +72,7 @@ extern pv_addr_t systempage;
 int process_read_regs	__P((struct proc *p, struct reg *regs));
 int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
-void	switch_exit	__P((struct proc *p, struct proc *proc0));
+void	switch_exit	__P((struct proc *p));
 extern void proc_trampoline	__P((void));
 
 /*
@@ -176,7 +176,11 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
+#ifdef __NEWINTR
+	sf->sf_spl = cpu_sf_spl0();
+#else
 	sf->sf_spl = _SPL_0;
+#endif
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
@@ -218,7 +222,7 @@ cpu_exit(p)
 	}
 #endif	/* STACKCHECKS */
 	uvmexp.swtch++;
-	switch_exit(p, &proc0);
+	switch_exit(p);
 }
 
 
@@ -226,7 +230,8 @@ void
 cpu_swapin(p)
 	struct proc *p;
 {
-
+#if 0
+	/* Don't do this.  See the comment in cpu_swapout().  */
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapin(%p, %d, %s, %p)\n", p, p->p_pid,
@@ -237,6 +242,7 @@ cpu_swapin(p)
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 	pmap_update(p->p_vmspace->vm_map.pmap);
+#endif
 }
 
 
@@ -244,7 +250,11 @@ void
 cpu_swapout(p)
 	struct proc *p;
 {
-
+#if 0
+	/* 
+	 * Don't do this!  If the pmap is shared with another process,
+	 * it will loose it's page0 entry.  That's bad news indeed.
+	 */
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapout(%p, %d, %s, %p)\n", p, p->p_pid,
@@ -254,6 +264,7 @@ cpu_swapout(p)
 	/* Free the system page mapping */
 	pmap_remove(p->p_vmspace->vm_map.pmap, 0x00000000, 0x00000000 + NBPG);
 	pmap_update(p->p_vmspace->vm_map.pmap);
+#endif
 }
 
 
@@ -324,11 +335,10 @@ vmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
-	taddr = uvm_km_valloc_wait(phys_map, len);
-
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
+	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
 
 	/*

@@ -1,0 +1,11 @@
+OUTPUT_ARCH(mips)
+ENTRY(_start)
+SECTIONS
+{
+  .text      :
+  {
+    _ftext = . ;
+    *(.text)
+   _etext = .;
+  }
+}

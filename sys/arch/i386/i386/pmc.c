@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.2 2000/10/24 22:03:36 thorpej Exp $	*/
+/*	$NetBSD: pmc.c,v 1.2.8.1 2002/01/10 19:44:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -36,6 +36,9 @@
 /*
  * Interface to x86 CPU Performance Counters.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.2.8.1 2002/01/10 19:44:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

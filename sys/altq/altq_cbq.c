@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.3 2001/04/13 23:29:55 thorpej Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.3.2.1 2002/01/10 19:35:55 thorpej Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  *  
  * These notices must be retained in any copies of any part of this software.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.3.2.1 2002/01/10 19:35:55 thorpej Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -705,7 +708,7 @@ cbq_ifdetach(ifacep)
  *
  *	Assumptions:	called in splnet
  *	Returns:	0 if the queueing is successful.
- *			ENOBUFS if a packet dropping occured as a result of
+ *			ENOBUFS if a packet dropping occurred as a result of
  *			the queueing.
  */
 

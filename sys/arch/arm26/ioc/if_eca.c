@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.1.2.2 2001/09/13 01:13:14 thorpej Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.1.2.3 2002/01/10 19:38:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.1.2.2 2001/09/13 01:13:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.1.2.3 2002/01/10 19:38:37 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -64,6 +64,8 @@ static void eca_tx_downgrade(void);
 static void eca_txdone(void *);
 
 static int eca_init_rxbuf(struct eca_softc *sc, int flags);
+static void eca_init_rx_soft(struct eca_softc *sc);
+static void eca_init_rx_hard(struct eca_softc *sc);
 static void eca_init_rx(struct eca_softc *sc);
 
 static void eca_rx_downgrade(void);
@@ -114,7 +116,7 @@ eca_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_init = eca_init;
 	ifp->if_stop = eca_stop;
-	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	IFQ_SET_READY(&ifp->if_snd);
 	sc->sc_ec.ec_claimwire = eca_claimwire;
 	sc->sc_ec.ec_txframe = eca_txframe;
@@ -130,6 +132,11 @@ eca_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	eco_ifattach(ifp, myaddr);
 
+	sc->sc_fiqhandler.fh_func = eca_fiqhandler;
+	sc->sc_fiqhandler.fh_size = eca_efiqhandler - eca_fiqhandler;
+	sc->sc_fiqhandler.fh_flags = 0;
+	sc->sc_fiqhandler.fh_regs = &sc->sc_fiqstate.efs_rx_fiqregs;
+
 	printf("\n");
 }
 
@@ -142,10 +149,12 @@ eca_init(struct ifnet *ifp)
 	int sr1, sr2;
 	int err;
 
+	if ((err = eco_init(ifp)) != 0)
+		return err;
+
 	/* Claim the FIQ early, in case we don't get it. */
-	if (fiq_claim(eca_fiqhandler_rx,
-	    eca_efiqhandler_rx - eca_fiqhandler_rx))
-		return EBUSY;
+	if ((err = fiq_claim(&sc->sc_fiqhandler)) != 0)
+		return err;
 
 	if (sc->sc_rcvmbuf == NULL) {
 		err = eca_init_rxbuf(sc, M_WAIT);
@@ -199,6 +208,7 @@ eca_claimwire(struct ifnet *ifp)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
+	KASSERT(sc->sc_ec.ec_state == ECO_IDLE);
 	if (bus_space_read_1(iot, ioh, MC6854_SR2) & MC6854_SR2_RX_IDLE) {
 		/* Start flag fill. */
 		sc->sc_cr2 |= MC6854_CR2_RTS | MC6854_CR2_F_M_IDLE;
@@ -214,22 +224,21 @@ eca_txframe(struct ifnet *ifp, struct mbuf *m)
 	struct eca_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct fiq_regs fr;
+	struct fiqregs fr;
 
 	ioc_fiq_setmask(0);
 	/* Start flag-filling while we work out what to do next. */
 	sc->sc_cr2 |= MC6854_CR2_RTS | MC6854_CR2_F_M_IDLE;
 	bus_space_write_1(iot, ioh, MC6854_CR2, sc->sc_cr2);
-	fiq_installhandler(eca_fiqhandler_tx,
-	    eca_efiqhandler_tx - eca_fiqhandler_tx);
+	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_tx;
 	sc->sc_transmitting = 1;
 	sc->sc_txmbuf = m;
-	fr.r8_fiq = (register_t)sc->sc_ioh.a1;
-	fr.r9_fiq = (register_t)sc->sc_txmbuf->m_data;
-	fr.r10_fiq = (register_t)sc->sc_txmbuf->m_len;
-	fr.r11_fiq = (register_t)&sc->sc_txstate;
+	fr.fr_r8 = (register_t)sc->sc_ioh.a1;
+	fr.fr_r9 = (register_t)sc->sc_txmbuf->m_data;
+	fr.fr_r10 = (register_t)sc->sc_txmbuf->m_len;
+	fr.fr_r11 = (register_t)&sc->sc_fiqstate;
 	fiq_setregs(&fr);
-	sc->sc_txstate.etx_curmbuf = sc->sc_txmbuf;
+	sc->sc_fiqstate.efs_tx_curmbuf = sc->sc_txmbuf;
 	fiq_downgrade_handler = eca_tx_downgrade;
 	/* Read and clear Tx status. */
 	bus_space_read_1(iot, ioh, MC6854_SR1);
@@ -249,13 +258,10 @@ eca_tx_downgrade(void)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int sr1;
 	char buf[128];
-#if 0
-	struct fiq_regs fr;
-#endif
 
 	KASSERT(sc->sc_transmitting);
 	sc->sc_cr2 = 0;
-	if (__predict_true(sc->sc_txstate.etx_curmbuf == NULL)) {
+	if (__predict_true(sc->sc_fiqstate.efs_tx_curmbuf == NULL)) {
 		/* Entire frame got transmitted. */
 	} else {
 		sr1 = bus_space_read_1(iot, ioh, MC6854_SR1);
@@ -275,7 +281,15 @@ eca_tx_downgrade(void)
 		    sc->sc_cr2 | MC6854_CR2_CLR_TX_ST);
 	}
 	sc->sc_txmbuf = NULL;
-	eca_init_rx(sc);
+	
+	/* Code from eca_init_rx_hard(). */
+	sc->sc_cr1 = MC6854_CR1_RIE;
+	fiq_downgrade_handler = eca_rx_downgrade;
+	sc->sc_transmitting = 0;
+	eca_fiqowner = sc;
+	ioc_fiq_setmask(IOC_FIQ_BIT(FIQ_EFIQ));
+	/* End code from eca_init_rx_hard(). */
+
 	softintr_schedule(sc->sc_tx_soft);
 }
 
@@ -286,9 +300,12 @@ static void
 eca_txdone(void *arg)
 {
 	struct eca_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
 	m_freem(sc->sc_txmbuf);
 	sc->sc_txmbuf = NULL;
+	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_start(ifp);
 }
 
 /*
@@ -331,34 +348,60 @@ eca_init_rxbuf(struct eca_softc *sc, int flags)
 }
 
 /*
+ * Set up the software state necessary for reception, but don't
+ * actually start receoption.  Pushing the state into the hardware is
+ * left to eca_init_rx_hard() the Tx FIQ handler.
+ */
+void
+eca_init_rx_soft(struct eca_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct fiqregs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
+
+	memset(fr, 0, sizeof(*fr));
+	fr->fr_r8 = (register_t)sc->sc_ioh.a1;
+	fr->fr_r9 = (register_t)sc->sc_rcvmbuf->m_data;
+	fr->fr_r10 = (register_t)ECO_ADDR_LEN;
+	fr->fr_r11 = (register_t)&sc->sc_fiqstate;
+	sc->sc_fiqstate.efs_rx_curmbuf = sc->sc_rcvmbuf;
+	sc->sc_fiqstate.efs_rx_flags = 0;
+	sc->sc_fiqstate.efs_rx_myaddr = LLADDR(ifp->if_sadl)[0];
+}
+
+/*
+ * Copy state set up by eca_init_rx_soft into the hardware, and reset
+ * the FIQ handler as appropriate.
+ *
+ * This code is functionally duplicated across the Tx FIQ handler and
+ * eca_tx_downgrade().  Keep them in sync!
+ */
+void
+eca_init_rx_hard(struct eca_softc *sc)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	struct fiqregs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
+
+	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_rx;
+	sc->sc_transmitting = 0;
+	sc->sc_cr1 = MC6854_CR1_RIE;
+	bus_space_write_1(iot, ioh, MC6854_CR1, sc->sc_cr1);
+	fiq_setregs(fr);
+	fiq_downgrade_handler = eca_rx_downgrade;
+	eca_fiqowner = sc;
+	ioc_fiq_setmask(IOC_FIQ_BIT(FIQ_EFIQ));
+}
+
+/*
  * Set up the chip and FIQ handler for reception.  Assumes the Rx buffer is
  * set up already by eca_init_rxbuf().
  */
 void
 eca_init_rx(struct eca_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	struct fiq_regs fr;
 
-	fiq_installhandler(eca_fiqhandler_rx,
-	    eca_efiqhandler_rx - eca_fiqhandler_rx);
-	sc->sc_transmitting = 0;
-	sc->sc_cr1 = MC6854_CR1_RIE;
-	bus_space_write_1(iot, ioh, MC6854_CR1, sc->sc_cr1);
-	memset(&fr, 0, sizeof(fr));
-	fr.r8_fiq = (register_t)sc->sc_ioh.a1;
-	fr.r9_fiq = (register_t)sc->sc_rcvmbuf->m_data;
-	fr.r10_fiq = (register_t)ECO_ADDR_LEN;
-	fr.r11_fiq = (register_t)&sc->sc_rxstate;
-	sc->sc_rxstate.erx_curmbuf = sc->sc_rcvmbuf;
-	sc->sc_rxstate.erx_flags = 0;
-	sc->sc_rxstate.erx_myaddr = LLADDR(ifp->if_sadl)[0];
-	fiq_setregs(&fr);
-	fiq_downgrade_handler = eca_rx_downgrade;
-	eca_fiqowner = sc;
-	ioc_fiq_setmask(IOC_FIQ_BIT(FIQ_EFIQ));
+	eca_init_rx_soft(sc);
+	eca_init_rx_hard(sc);
 }
 
 static void
@@ -370,6 +413,8 @@ eca_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
+	eco_stop(ifp, disable);
+
 	/* Interrupts disabled, no DMA, hold Tx and Rx in reset. */
 	sc->sc_cr1 = MC6854_CR1_RX_RS | MC6854_CR1_TX_RS;
 	bus_space_write_1(iot, ioh, MC6854_CR1, sc->sc_cr1);
@@ -377,7 +422,7 @@ eca_stop(struct ifnet *ifp, int disable)
 	ioc_fiq_setmask(0);
 	fiq_downgrade_handler = NULL;
 	eca_fiqowner = NULL;
-	fiq_release();
+	fiq_release(&sc->sc_fiqhandler);
 	if (sc->sc_rcvmbuf != NULL) {
 		m_freem(sc->sc_rcvmbuf);
 		sc->sc_rcvmbuf = NULL;
@@ -391,12 +436,16 @@ eca_stop(struct ifnet *ifp, int disable)
 static void
 eca_rx_downgrade(void)
 {
+	struct eca_softc *sc = eca_fiqowner;
 
-	softintr_schedule(eca_fiqowner->sc_rx_soft);
+	sc->sc_sr2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, MC6854_SR2);
+	softintr_schedule(sc->sc_rx_soft);
 }
 
 /*
- * This is a soft interrupt handler, and hence can get away with anything.
+ * eca_gotframe() is called if there's something interesting on
+ * reception.  The receiver is turned off now -- it's up to us to
+ * start it again.
  */
 static void
 eca_gotframe(void *arg)
@@ -405,26 +454,19 @@ eca_gotframe(void *arg)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct fiq_regs fr;
+	struct fiqregs fr;
 	int sr2;
 	struct mbuf *m, *mtail, *n, *reply;
 
 	reply = NULL;
-	KASSERT(!sc->sc_transmitting);
-	KASSERT(sc == eca_fiqowner);
-	sr2 = bus_space_read_1(iot, ioh, MC6854_SR2);
-	/* OVRN and FV can be set together. */
-	if (__predict_false(sr2 & MC6854_SR2_OVRN)) {
-		log(LOG_ERR, "%s: Rx overrun\n", sc->sc_dev.dv_xname);
-		ifp->if_ierrors++;
-		/* Discard the rest of the frame. */
-		bus_space_write_1(iot, ioh, MC6854_CR1,
-		    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
-	} else if (__predict_true(sr2 & MC6854_SR2_FV)) {
-		/* Frame Valid. */
+	sr2 = sc->sc_sr2;
+
+	/* 1: Is there a valid frame waiting? */
+	if ((sr2 & MC6854_SR2_FV) && !(sr2 & MC6854_SR2_OVRN) &&
+	    sc->sc_fiqstate.efs_rx_curmbuf != NULL) {
 		fiq_getregs(&fr);
 		m = sc->sc_rcvmbuf;
-		mtail = sc->sc_rxstate.erx_curmbuf;
+		mtail = sc->sc_fiqstate.efs_rx_curmbuf;
 		/*
 		 * Before we process this buffer, make sure we can get
 		 * a new one.
@@ -432,7 +474,7 @@ eca_gotframe(void *arg)
 		if (eca_init_rxbuf(sc, M_DONTWAIT) == 0) {
 			ifp->if_ipackets++; /* XXX packet vs frame? */
 			/* Trim the tail of the mbuf chain. */
-			mtail->m_len = (caddr_t)(fr.r9_fiq) - mtail->m_data;
+			mtail->m_len = (caddr_t)(fr.fr_r9) - mtail->m_data;
 			m_freem(mtail->m_next);
 			mtail->m_next = NULL;
 			/* Set up the header of the chain. */
@@ -443,6 +485,21 @@ eca_gotframe(void *arg)
 			reply = eco_inputframe(ifp, m);
 		} else
 			ifp->if_iqdrops++;
+	}
+
+	/* 2: Are there any errors waiting? */
+	if (sr2 & MC6854_SR2_OVRN) {
+		fiq_getregs(&fr);
+		mtail = sc->sc_fiqstate.efs_rx_curmbuf;
+		log(LOG_ERR, "%s: Rx overrun (state = %d, len = %ld)\n",
+		    sc->sc_dev.dv_xname, sc->sc_ec.ec_state,
+		    (caddr_t)(fr.fr_r9) - mtail->m_data);
+		ifp->if_ierrors++;
+
+		/* Discard the rest of the frame. */
+		if (!sc->sc_transmitting)
+			bus_space_write_1(iot, ioh, MC6854_CR1,
+			    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
 	} else if (sr2 & MC6854_SR2_RXABT) {
 		log(LOG_NOTICE, "%s: Rx abort\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
@@ -455,28 +512,33 @@ eca_gotframe(void *arg)
 		log(LOG_ERR, "%s: No clock\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 	}
-
-	if (sr2 & MC6854_SR2_RX_IDLE)
-		eco_inputidle(ifp);
-
-	if (sc->sc_rxstate.erx_curmbuf == NULL) {
+	if (sc->sc_fiqstate.efs_rx_curmbuf == NULL) {
 		log(LOG_NOTICE, "%s: Oversized frame\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 		/* Discard the rest of the frame. */
-		bus_space_write_1(iot, ioh, MC6854_CR1,
-		    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
+		if (!sc->sc_transmitting)
+			bus_space_write_1(iot, ioh, MC6854_CR1,
+			    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
 	}
+
 
 	bus_space_write_1(iot, ioh, MC6854_CR2,
 	    sc->sc_cr2 | MC6854_CR2_CLR_RX_ST);
 
-	if (reply)
+	if (reply) {
+		KASSERT(sc->sc_fiqstate.efs_rx_flags & ERXF_FLAGFILL);
+		eca_init_rx_soft(sc);
 		eca_txframe(ifp, reply);
-	else {
-		/* Make sure we're not flag-filling. */
-		bus_space_write_1(iot, ioh, MC6854_CR2,
-		    sc->sc_cr2);
+	} else {
+		/* KASSERT(!sc->sc_transmitting); */
+		if (sc->sc_fiqstate.efs_rx_flags & ERXF_FLAGFILL)
+			/* Stop flag-filling: we have nothing to send. */
+			bus_space_write_1(iot, ioh, MC6854_CR2,
+			    sc->sc_cr2);
 		/* Set the ADLC up to receive the next frame. */
 		eca_init_rx(sc);
+		/* 3: Is the network idle now? */
+		if (sr2 & MC6854_SR2_RX_IDLE)
+			eco_inputidle(ifp);
 	}
 }

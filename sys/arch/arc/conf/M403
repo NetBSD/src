@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.14 2001/07/08 16:32:13 abs Exp $
+#	$NetBSD: M403,v 1.14.2.1 2002/01/10 19:37:39 thorpej Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -25,15 +25,15 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
-#options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
-options 	DDB		# in-kernel debugger
+options 	DIAGNOSTIC		# cheap kernel consistency checks
+#options 	DEBUG			# expensive debugging checks/support
+#options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
+options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	KGDB		# remote gdb
-#options 	KGDBRATE=19200	# kernel gdb port rate (default 9600)
-#options 	KGDBDEV="17*256+0"	# device for kernel gdb
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#options 	KGDB			# remote gdb
+#options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
+#options 	KGDB_DEV="17*256+0"	# device for kernel gdb
+#makeoptions	DEBUG="-g"		# compile full symbol table
 
 # Compatibility options
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -134,7 +134,7 @@ mcclock0 	at jazzio?
 #pc0		at jazzio?
 #opms0		at jazzio?
 pckbc0		at jazzio?	# PC keyboard controller
-options		COM_FREQ_MAGNUM=8192000	# 8.192 MHz - NEC M403
+options 	COM_FREQ_MAGNUM=8192000	# 8.192 MHz - NEC M403
 com0		at jazzio?
 com1		at jazzio?
 lpt0		at jazzio?
@@ -211,4 +211,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux		2
+#pseudo-device	wsmux

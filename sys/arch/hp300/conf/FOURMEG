@@ -1,16 +1,16 @@
-# $NetBSD: FOURMEG,v 1.1 2001/07/01 02:16:33 gmcgarry Exp $
+# $NetBSD: FOURMEG,v 1.1.2.1 2002/01/10 19:42:46 thorpej Exp $
 #
 # Options for low-memory systems.
-# 
+#
 # Copy these options into your custom kernel and remove
 # unnecessary devices.
 
 include	"arch/hp300/conf/GENERIC"
 
-makeoptions     COPTS="-Os"
-options         NVNODE=50
-options         NBUF=16
-options         BUFPAGES=16
-options         NMBCLUSTERS=64
-options         NFS_V2_ONLY
-options         NFS_DEFAULT_NIOTHREADS=1
+makeoptions	COPTS="-Os"
+options 	NVNODE=50
+options 	NBUF=16
+options 	BUFPAGES=16
+options 	NMBCLUSTERS=64
+options 	NFS_V2_ONLY
+options 	NFS_DEFAULT_NIOTHREADS=1

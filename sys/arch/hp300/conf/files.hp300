@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.45 2001/06/18 02:00:49 christos Exp $
+#	$NetBSD: files.hp300,v 1.45.2.1 2002/01/10 19:42:48 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -8,11 +8,11 @@ maxpartitions 8
 maxusers 2 8 64
 
 # SPU configuration options.
-defopt	opt_spuconf.h HP320 HP330 HP340 HP345 HP350 HP360 HP370
-	HP375 HP380 HP385 HP400 HP425 HP433
+defflag	opt_spuconf.h	HP320 HP330 HP340 HP345 HP350 HP360 HP370
+			HP375 HP380 HP385 HP400 HP425 HP433
 
 # Misc. options.
-defopt	USELEDS		# make the lights twinkle
+defflag			USELEDS		# make the lights twinkle
 
 # NOTE!  The order of these lines is significant!  Don't change them
 # unless you absolutely know what you're doing!
@@ -43,6 +43,17 @@ file	arch/hp300/dev/dio.c		dio
 #
 # Devices in Internal i/o space
 #
+
+# Real-time clock (not optional)
+device	rtc
+attach	rtc at intio
+file	arch/hp300/dev/rtc.c			rtc
+
+# Human (Hilarious) Interface Loop
+device	hil { }
+attach	hil at intio
+file	arch/hp300/dev/hil.c			hil	needs-flag
+file	arch/hp300/dev/hil_keymaps.c		hil
 
 # Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
 device	frodo { offset = -1 }
@@ -174,11 +185,6 @@ file	arch/hp300/dev/ac.c		ac needs-flag
 # RAIDframe
 major	{raid = 15}
 
-# Human (Hilarious) Interface Loop
-# XXX should be a real device
-file	arch/hp300/dev/hil.c
-file	arch/hp300/dev/hil_keymaps.c
-
 #
 # Non-device files
 #
@@ -197,6 +203,7 @@ file	arch/hp300/hp300/mem.c
 file	arch/hp300/hp300/pmap.c
 file	arch/hp300/hp300/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/hp300/hp300/procfs_machdep.c	procfs
+file	arch/hp300/hp300/softintr.c
 file	arch/hp300/hp300/sys_machdep.c
 file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/vm_machdep.c
@@ -204,8 +211,8 @@ file	arch/hp300/hp300/disksubr.c
 file	arch/hp300/dev/dma.c
 file	arch/hp300/dev/md_root.c		memory_disk_hooks
 
+file	dev/clock_subr.c
 file	dev/cons.c
-file	dev/cninit.c
 
 #
 # HP-UX binary compatibility

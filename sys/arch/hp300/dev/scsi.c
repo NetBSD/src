@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.28 2000/05/19 18:54:31 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.28.8.1 2002/01/10 19:42:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -420,7 +420,7 @@ scsi_attach_children(sc)
 			continue;
 
 		for (lun = 0; lun < 1 /* XXX */; lun++) {
-			bzero(&inqbuf, sizeof(inqbuf));
+			memset(&inqbuf, 0, sizeof(inqbuf));
 			if (scsi_probe_device(sc->sc_dev.dv_unit,
 			    target, lun, &inqbuf, sizeof(inqbuf))) {
 				/*
@@ -429,7 +429,7 @@ scsi_attach_children(sc)
 				 * XXX that's what the old Utah "st"
 				 * XXX driver claimed.)
 				 */
-				bzero(&inqbuf, sizeof(inqbuf));
+				memset(&inqbuf, 0, sizeof(inqbuf));
 				if (scsi_probe_device(sc->sc_dev.dv_unit,
 				    target, lun, &inqbuf, sizeof(inqbuf)))
 					continue;
@@ -479,9 +479,9 @@ scsi_print(aux, pnp)
 	if (pnp == NULL)
 		printf(" targ %d lun %d: ", osa->osa_target, osa->osa_lun);
 
-	bzero(vendor, sizeof(vendor));
-	bzero(product, sizeof(product));
-	bzero(revision, sizeof(revision));
+	memset(vendor, 0, sizeof(vendor));
+	memset(product, 0, sizeof(product));
+	memset(revision, 0, sizeof(revision));
 	switch (inqbuf->version) {
 	case 1:
 	case 2:
@@ -1103,7 +1103,7 @@ scsi_tt_read(ctlr, slave, unit, buf, len, blk, bshift)
 	int old_wait = scsi_data_wait;
 
 	scsi_data_wait = 300000;
-	bzero(&cdb, sizeof(cdb));
+	memset(&cdb, 0, sizeof(cdb));
 	cdb.cmd = CMD_READ_EXT;
 	cdb.lun = unit;
 	blk >>= bshift;
@@ -1134,7 +1134,7 @@ scsi_tt_write(ctlr, slave, unit, buf, len, blk, bshift)
 
 	scsi_data_wait = 300000;
 
-	bzero(&cdb, sizeof(cdb));
+	memset(&cdb, 0, sizeof(cdb));
 	cdb.cmd = CMD_WRITE_EXT;
 	cdb.lun = unit;
 	blk >>= bshift;
@@ -1462,7 +1462,7 @@ scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 	/*
 	 * Initialize command block
 	 */
-	bzero(&cdb, sizeof(cdb));
+	memset(&cdb, 0, sizeof(cdb));
 	cdb.lun = unit;
 	cdb.lbam = (len >> 16) & 0xff;
 	cdb.lbal = (len >> 8) & 0xff;
@@ -1506,7 +1506,7 @@ scsi_str(src, dst, len)
 			return;
 		}
 	}
-	bcopy(src, dst, len);
+	memcpy(dst, src, len);
 	dst[len] = '\0';
 }
 

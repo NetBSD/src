@@ -1,14 +1,14 @@
 #
-#	$NetBSD: files.atari,v 1.88.2.1 2001/09/13 01:13:19 thorpej Exp $
+#	$NetBSD: files.atari,v 1.88.2.2 2002/01/10 19:39:57 thorpej Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
 
-defopt	opt_mbtype.h			_MILANHW_ _ATARIHW_
+defflag	opt_mbtype.h		_MILANHW_ _ATARIHW_
 
-defopt	opt_atariscsi.h			TT_SCSI FALCON_SCSI
-defopt	opt_atariscsi.h			TRY_SCSI_LINKED_COMMANDS
+defflag	opt_atariscsi.h		TT_SCSI FALCON_SCSI
+defparam opt_atariscsi.h	TRY_SCSI_LINKED_COMMANDS
 
 device	mainbus {}
 attach	mainbus at root
@@ -50,7 +50,7 @@ file	arch/atari/dev/lpt.c		lp needs-flag
 
 # memory disk
 file	arch/atari/dev/md_root.c	memory_disk_hooks
-major   {md = 1}
+major	{md = 1}
 
 # RAIDframe
 major	{raid = 15}
@@ -97,7 +97,7 @@ file	arch/atari/vme/if_le_vme.c	le_vme
 # Circad Leonardo 24-bit true color video
 device	leo
 attach	leo at vme
-file	arch/atari/vme/leo.c            leo needs-count
+file	arch/atari/vme/leo.c		leo needs-count
 
 # ET4000 (Crazy Dots II) color video
 device	et
@@ -124,10 +124,10 @@ file	arch/atari/dev/ite_et.c		grfet needs-count
 file	arch/atari/dev/grfabs_et.c	grfet
 
 device	ite: tty
-attach	ite at grfcc,grfet 
+attach	ite at grfcc,grfet
 file	arch/atari/dev/ite.c		ite needs-flag
 file	arch/atari/dev/kbdmap.c		ite
-#					XXX  pci_vga needs to download the font
+#					XXX pci_vga needs to download the font
 file	arch/atari/dev/font_8x8.c	ite | pci
 file	arch/atari/dev/font_8x16.c	ite | pci
 
@@ -171,13 +171,13 @@ include "dev/isa/files.isa"
 include "dev/ata/files.ata"
 
 # Milan floppy driver - uses 'generic' isa version of fd.c
-device  fdcisa  {drive = -1}: isadma
-file    arch/atari/isa/fdcisa.c		fdcisa
-attach  fdcisa at isa
-device  fdisa: disk
-attach  fdisa at fdcisa
-file    dev/isa/fd.c			fdisa needs-flag
-major   {fdisa = 2}
+device	fdcisa	{drive = -1}: isadma
+file	arch/atari/isa/fdcisa.c		fdcisa
+attach	fdcisa at isa
+device	fdisa: disk
+attach	fdisa at fdcisa
+file	dev/isa/fd.c			fdisa needs-flag
+major	{fdisa = 2}
 
 attach	wdc at mainbus with wdc_mb: mbdma
 file	arch/atari/dev/wdc_mb.c		wdc_mb
@@ -187,8 +187,8 @@ major	{wd = 14}
 file	arch/atari/isa/isapnp_machdep.c	isapnp
 
 include "dev/scsipi/files.scsipi"
-major   {sd = 4}
-major   {cd = 6}
+major	{sd = 4}
+major	{cd = 6}
 
 # ncr 5380 controller
 device	ncrscsi: scsi, mbdma
@@ -254,3 +254,4 @@ include "dev/mii/files.mii"
 # Wscons related includes
 include	"dev/pckbc/files.pckbc"
 include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"

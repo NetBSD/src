@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.26 2000/12/27 21:58:53 jdolecek Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.26.4.1 2002/01/10 19:43:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ hpux_cpu_vmcmd(p, ev)
 #if 0 /* XXX - unable to handle HPUX coredumps */
 	/* Make sure we have room. */
 	if (ev->ev_len <= sizeof(p->p_addr->u_md.md_exec))
-		bcopy((caddr_t)ev->ev_addr, p->p_addr->u_md.md_exec,
+		memcpy(p->p_addr->u_md.md_exec, (caddr_t)ev->ev_addr,
 		    ev->ev_len);
 #endif
 
@@ -463,7 +463,7 @@ hpux_sendsig(catcher, sig, mask, code)
 	 *	- FP coprocessor state
 	 */
 	kf.hsf_sigstate.hss_flags = HSS_USERREGS;
-	bcopy(frame->f_regs, kf.hsf_sigstate.hss_frame.f_regs,
+	memcpy(kf.hsf_sigstate.hss_frame.f_regs, frame->f_regs,
 	    sizeof(frame->f_regs));
 	if (ft >= FMT4) {
 #ifdef DEBUG
@@ -473,7 +473,7 @@ hpux_sendsig(catcher, sig, mask, code)
 		kf.hsf_sigstate.hss_flags |= HSS_RTEFRAME;
 		kf.hsf_sigstate.hss_frame.f_format = frame->f_format;
 		kf.hsf_sigstate.hss_frame.f_vector = frame->f_vector;
-		bcopy(&frame->F_u, &kf.hsf_sigstate.hss_frame.F_u,
+		memcpy(&kf.hsf_sigstate.hss_frame.F_u, &frame->F_u,
 		    exframesize[ft]);
 		/*
 		 * Leave an indicator that we need to clean up the kernel
@@ -658,7 +658,7 @@ hpux_sys_sigreturn(p, v, retval)
 		frame->f_stackadj -= sz;
 		frame->f_format = tstate.hss_frame.f_format;
 		frame->f_vector = tstate.hss_frame.f_vector;
-		bcopy(&tstate.hss_frame.F_u, &frame->F_u, sz);
+		memcpy(&frame->F_u, &tstate.hss_frame.F_u, sz);
 #ifdef DEBUG
 		if (hpuxsigdebug & SDB_FOLLOW)
 			printf("sigreturn(%d): copy in %d of frame type %d\n",
@@ -671,8 +671,8 @@ hpux_sys_sigreturn(p, v, retval)
 	 * which were handled above.
 	 */
 	if (flags & HSS_USERREGS)
-		bcopy(tstate.hss_frame.f_regs,
-		    frame->f_regs, sizeof(frame->f_regs) - (2 * NBPW));
+		memcpy(frame->f_regs, tstate.hss_frame.f_regs,
+		    sizeof(frame->f_regs) - (2 * NBPW));
 
 	/*
 	 * Finally we restore the original FP context

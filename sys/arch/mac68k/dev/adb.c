@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.40 2000/11/15 06:35:51 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.40.4.1 2002/01/10 19:45:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -317,7 +317,7 @@ void
 adb_op_comprout(void)
 {
 #ifdef __NetBSD__
-	asm("movw	#1,a2@			| update flag value");
+	asm("movw	#1,%a2@			| update flag value");
 #else				/* for macos based testing */
 	asm {
 		move.w #1,(a2) }		/* update flag value */

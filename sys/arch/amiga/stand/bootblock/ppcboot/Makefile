@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/11/28 22:10:48 is Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2002/01/10 19:37:28 thorpej Exp $
 
 ### what we need:
 
@@ -58,10 +58,10 @@ CFLAGS= ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 CLEANFILES += xxppcboot fdppcboot x.out f.out xxstart.o fdstart.o libboot.a
 
 xxppcboot: x.out
-	${AOUT2BB} x.out $@ || nm -u x.out
+	${RELOC2BB} x.out $@ || nm -u x.out
 
 fdppcboot: f.out
-	${AOUT2BB} f.out $@ || nm -u f.out
+	${RELOC2BB} f.out $@ || nm -u f.out
 
 x.out: xxstart.o libboot.a
 	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>
@@ -108,4 +108,4 @@ libboot.a: ${OBJS}
 # make sure these are built:
 
 ${COBJS}: ${TXLT}
-${FILES}: ${AOUT2BB}
+${FILES}: ${RELOC2BB}

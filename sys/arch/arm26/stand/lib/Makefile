@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2001/08/03 04:11:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2002/01/10 19:38:38 thorpej Exp $
 
 S?=	${.CURDIR}/../../../../
 
 LIB= riscos
-MKPIC=no
-MKPROFILE=no
+NOPIC=# defined
+NOPROFILE=# defined
 
 CPPFLAGS= -I$S/lib/libsa ${RISCOSCPPFLAGS} ${RISCOSMISCCPPFLAGS}
 #CPPFLAGS+= -DDISK_DEBUG
@@ -14,6 +14,8 @@ CPPFLAGS= -I$S/lib/libsa ${RISCOSCPPFLAGS} ${RISCOSMISCCPPFLAGS}
 SRCS=	srt1.c devopen.c
 SRCS+=	riscoscalls.S riscoscons.c riscoserrors.c riscosfile.c
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

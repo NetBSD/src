@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.7 2001/05/30 12:28:39 mrg Exp $ */
+/*      $NetBSD: cpu.h,v 1.7.2.1 2002/01/10 19:37:36 thorpej Exp $ */
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -42,13 +42,6 @@
 #include <machine/intr.h>
 
 #include <sys/sched.h>
-struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
-};
 
 #ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
@@ -59,6 +52,8 @@ u_long	clkread	__P((void));
 void	physaccess	__P((caddr_t, caddr_t, int, int));
 
 #endif /* _KERNEL */
+
+#define CPU_MAXNUM	1
 
 /* ADAM: taken from macppc/cpu.h */
 #define CLKF_USERMODE(frame)    (((frame)->srr1 & PSL_PR) != 0)
@@ -88,8 +83,7 @@ extern char bootpath[];
 #define CACHELINESIZE   32
 #endif
 
-/* ADAM: commented out to avoid CTL_MACHDEP_NAMES redefiniton (see below) */
-/*#include <powerpc/cpu.h>*/
+#include <powerpc/cpu.h>
 
 /* end of ADAM */
 
@@ -109,26 +103,6 @@ extern char bootpath[];
 #ifdef _KERNEL
 int machineid;
 #endif
-
-/* ADAM: copied from powerpc/cpu.h */
-#ifndef _POWERPC_CPU_H_
-#define _POWERPC_CPU_H_
-
-extern void __syncicache __P((void *, int));
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define CPU_CACHELINE   1
-#define CPU_MAXID       2
-
-#endif  /* _POWERPC_CPU_H_ */
-
-/* ADAM: copied from amiga/cpu.h */
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 #ifdef _KERNEL
 /*

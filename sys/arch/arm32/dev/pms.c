@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.22.2.1 2001/09/09 02:28:22 thorpej Exp $	*/
+/*	$NetBSD: pms.c,v 1.22.2.2 2002/01/10 19:38:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -342,7 +342,7 @@ pmsread(dev, uio, flag)
 	size_t length;
 	u_char buffer[PMS_CHUNK];
 
-	/* Block until mouse activity occured. */
+	/* Block until mouse activity occurred. */
 
 	s = spltty();
 	while (sc->sc_q.c_cc == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.18.2.1 2001/08/25 06:15:30 thorpej Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.18.2.2 2002/01/10 19:45:47 thorpej Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1258,8 +1258,14 @@ adb_reinit(void)
 	delay(1000);
 
 	/* send an ADB reset first */
-	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
+	result = adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
 	delay(200000);
+
+#ifdef ADB_DEBUG
+	if (result && adb_debug) {
+		printf_intr("adb_reinit: failed to reset, result = %d\n",result);
+	}
+#endif
 
 	/*
 	 * Probe for ADB devices. Probe devices 1-15 quickly to determine
@@ -1284,6 +1290,13 @@ adb_reinit(void)
 		command = ADBTALK(i, 3);
 		result = adb_op_sync((Ptr)send_string, (Ptr)0,
 		    (Ptr)0, (short)command);
+
+#ifdef ADB_DEBUG
+		if (result && adb_debug) {
+			printf_intr("adb_reinit: scan of device %d, result = %d, str = 0x%x\n",
+					i,result,send_string[0]);
+		}
+#endif
 
 		if (send_string[0] != 0) {
 			/* check for valid device handler */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.7 1999/11/13 21:21:38 thorpej Exp $	*/
+/*	$NetBSD: netio.c,v 1.7.8.1 2002/01/10 19:43:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -113,9 +113,6 @@ static int open_count;
 int netio_ask = 0;		/* default to bootparam, can override */
 
 static	char input_line[100];
-
-/* Why be any different? */
-#define SUN_BOOTPARAMS
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
@@ -265,14 +262,7 @@ netmountroot(f, devname)
 	/* Get boot info using BOOTP way. (RFC951, RFC1048) */
 	bootp(netdev_sock);
 
-	printf("Using IP address: %s\n", inet_ntoa(myip));
-
-	printf("myip: %s (%s)", hostname, inet_ntoa(myip));
-	if (gateip)
-		printf(", gateip: %s", inet_ntoa(gateip));
-	if (mask)
-		printf(", mask: %s", intoa(netmask));
-	printf("\n");
+	printf("boot: client IP address: %s \n", inet_ntoa(myip));
 
 #endif /* SUN_BOOTPARAMS */
 

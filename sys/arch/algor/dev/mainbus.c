@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3.2.1 2001/08/25 06:14:59 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3.2.2 2002/01/10 19:36:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+
+#include <mips/cache.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
@@ -183,7 +185,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #elif defined(ALGOR_P6032)
 	/*
-	 * Reserve the bottom 64K of the I/O spcae for ISA devices.
+	 * Reserve the bottom 64K of the I/O space for ISA devices.
 	 */
 	ioext  = extent_create("pciio",  0x00010000, 0x000effff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
@@ -196,7 +198,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #endif /* ALGOR_P4032 || ALGOR_P5064 || ALGOR_P6032 */
 
-	pci_configure_bus(pc, ioext, memext, NULL);
+	pci_configure_bus(pc, ioext, memext, NULL, 0, mips_dcache_align);
 	extent_destroy(ioext);
 	extent_destroy(memext);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.23.4.1 2001/09/13 01:12:55 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.23.4.2 2002/01/10 19:37:04 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -247,7 +247,7 @@
 	ERSAVE()
 
 #define	ESETUP(_name_)						\
-	.loc	1 __LINE__;					\
+	/* .loc	1 __LINE__; */					\
 	.globl	_name_;						\
 	.ent	_name_ 0;					\
 _name_:;							\
@@ -262,7 +262,7 @@ _name_:;							\
 	stq	at_reg,(FRAME_AT*8)(sp);			\
 	.set	at;						\
 	stq	ra,(FRAME_RA*8)(sp);				\
-	.loc	1 __LINE__;					\
+	/* .loc	1 __LINE__; */					\
 	bsr	ra,exception_save_regs         /* jmp/CALL trashes pv/t12 */
 
 
@@ -412,7 +412,7 @@ _name_:
  *	Function invocation
  */
 #define	CALL(_name_)						\
-	.loc	1 __LINE__;					\
+	/* .loc	1 __LINE__; */					\
 	jsr	ra,_name_;					\
 	ldgp	gp,0(ra)
 /* but this would cover longer jumps
@@ -611,19 +611,15 @@ label:	ASCIZ msg;						\
 	ldgp	gp, 0(reg)
 
 /*
- * WEAK_ALIAS: create a weak alias (ELF only).
+ * WEAK_ALIAS: create a weak alias.
  */
-#ifdef __ELF__
 #define WEAK_ALIAS(alias,sym)					\
 	.weak alias;						\
 	alias = sym
-#endif
 
 /*
- * WARN_REFERENCES: create a warning if the specified symbol is referenced
- * (ELF only).
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced.
  */
-#ifdef __ELF__
 #ifdef __STDC__
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
@@ -631,7 +627,6 @@ label:	ASCIZ msg;						\
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
 #endif /* __STDC__ */
-#endif /* __ELF__ */
 
 /*
  * Kernel RCS ID tag and copyright macros
@@ -639,13 +634,8 @@ label:	ASCIZ msg;						\
 
 #ifdef _KERNEL
 
-#ifdef __ELF__
 #define	__KERNEL_SECTIONSTRING(_sec, _str)				\
 	.section _sec ; .asciz _str ; .text
-#else /* __ELF__ */
-#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
-	.data ; .asciz _str ; .align 3 ; .text
-#endif /* __ELF__ */
 
 #define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
 #define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)

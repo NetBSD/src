@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.32 2001/05/28 07:22:37 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.32.2.1 2002/01/10 19:40:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -101,7 +101,7 @@ int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 struct atari_bus_dma_tag pci_bus_dma_tag = {
 	0,
-#ifdef _ATARIHW_
+#if defined(_ATARIHW_)
 	0x80000000, /* On the Hades, CPU memory starts here PCI-wise */
 #else
 	0,
@@ -444,15 +444,21 @@ enable_pci_devices()
 	    }
 	}
 
+
+#if defined(_ATARIHW_)
 	/*
 	 * Both interrupt pin & line are set to the device (== slot)
-	 * number. This makes sense on the atari because the
+	 * number. This makes sense on the atari Hades because the
 	 * individual slots are hard-wired to a specific MFP-pin.
-	 * XXX: This is _not_ true on the Milan.
 	 */
 	csr  = (DEV2SLOT(dev) << PCI_INTERRUPT_PIN_SHIFT);
 	csr |= (DEV2SLOT(dev) << PCI_INTERRUPT_LINE_SHIFT);
 	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, csr);
+#else
+	/*
+	 * On the Milan, we accept the BIOS's choice.
+	 */
+#endif
     }
 
     /*
@@ -614,22 +620,56 @@ pci_intr_map(pa, ihp)
 {
 	int line = pa->pa_intrline;
 
+#if defined(_MILANHW_)
+	/*
+	 * On the Hades, the 'pin' info is useless.
+	 */
+	{
+		int pin = pa->pa_intrpin;
+
+		if (pin == 0) {
+			/* No IRQ used. */
+			goto bad;
+		}
+		if (pin > PCI_INTERRUPT_PIN_MAX) {
+			printf("pci_intr_map: bad interrupt pin %d\n", pin);
+			goto bad;
+		}
+	}
+#endif /* _MILANHW_ */
+
 	/*
 	 * According to the PCI-spec, 255 means `unknown' or `no connection'.
 	 * Interpret this as 'no interrupt assigned'.
 	 */
-	if (line == 255) {
-		*ihp = -1;
-		return 1;
-	}
+	if (line == 255)
+		goto bad;
 
 	/*
 	 * Values are pretty useless on the Hades since all interrupt
 	 * lines for a card are tied together and hardwired to a
 	 * specific TT-MFP I/O port.
+	 * On the Milan, they are tied to the ICU.
 	 */
+#if defined(_MILANHW_)
+	if (line >= 16) {
+		printf("pci_intr_map: bad interrupt line %d\n", line);
+		goto bad;
+	}
+	if (line == 2) {
+		printf("pci_intr_map: changed line 2 to line 9\n");
+		line = 9;
+	}
+	/* Assume line == 0 means unassigned */
+	if (line == 0)
+		goto bad;
+#endif
 	*ihp = line;
 	return 0;
+
+bad:
+	*ihp = -1;
+	return 1;
 }
 
 const char *

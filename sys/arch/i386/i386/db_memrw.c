@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.11 2000/11/14 22:55:05 thorpej Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11.4.1 2002/01/10 19:44:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
  * Modified for i386 from hp300 version by
  * Jason R. Thorpe <thorpej@zembu.com>.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11.4.1 2002/01/10 19:44:37 thorpej Exp $");
 
 #include "opt_largepages.h"
 

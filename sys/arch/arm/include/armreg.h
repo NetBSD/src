@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.7.2.1 2001/08/03 04:11:01 lukem Exp $	*/
+/*	$NetBSD: armreg.h,v 1.7.2.2 2002/01/10 19:37:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -224,17 +224,21 @@
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
 
 /* Cache type register definitions */
-#define CPU_CT_IINFO_MASK	0x00000fff
-#define CPU_CT_IINFO_SHIFT	0
-#define CPU_CT_DINFO_MASK	0x00fff000
-#define CPU_CT_DINFO_SHIFT	12
-#define CPU_CT_HARVARD		0x01000000
-#define CPU_CT_TYPE_MASK	0x1e000000
-/* "Info" subfields -- see ARM ARM for meanings. */
-#define CPU_CT_LINE_MASK	0x00000003
-#define CPU_CT_M_BIT		0x00000004
-#define CPU_CT_ASSOC_MASK	0x00000038
-#define CPU_CT_SIZE_MASK	0x000001c0
+#define	CPU_CT_ISIZE(x)		((x) & 0xfff)		/* I$ info */
+#define	CPU_CT_DSIZE(x)		(((x) >> 12) & 0xfff)	/* D$ info */
+#define	CPU_CT_S		(1U << 24)		/* split cache */
+#define	CPU_CT_CTYPE(x)		(((x) >> 25) & 0xf)	/* cache type */
+
+#define	CPU_CT_CTYPE_WT		0	/* write-through */
+#define	CPU_CT_CTYPE_WB1	1	/* write-back, clean w/ read */
+#define	CPU_CT_CTYPE_WB2	2	/* w/b, clean w/ cp15,7 */
+#define	CPU_CT_CTYPE_WB6	6	/* w/b, cp15,7, lockdown fmt A */
+#define	CPU_CT_CTYPE_WB7	7	/* w/b, cp15,7, lockdown fmt B */
+
+#define	CPU_CT_xSIZE_LEN(x)	((x) & 0x3)		/* line size */
+#define	CPU_CT_xSIZE_M		(1U << 2)		/* multiplier */
+#define	CPU_CT_xSIZE_ASSOC(x)	(((x) >> 3) & 0x7)	/* associativity */
+#define	CPU_CT_xSIZE_SIZE(x)	(((x) >> 6) & 0x7)	/* size */
 
 /* Fault status register definitions */
 

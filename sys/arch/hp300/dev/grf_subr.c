@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.5 1997/10/09 09:06:53 jtc Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.5.30.1 2002/01/10 19:42:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,11 +62,8 @@ grfdev_attach(sc, init, regs, sw)
 {
 	struct grfdev_attach_args ga;
 	struct grf_data *gp;
-	int isconsole;
 
-	isconsole = (sc->sc_scode == conscode);
-
-	if (isconsole) 
+	if (sc->sc_isconsole) 
 		sc->sc_data = gp = &grf_cn;
 	else {
 		sc->sc_data = gp =
@@ -77,7 +74,7 @@ grfdev_attach(sc, init, regs, sw)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		bzero(sc->sc_data, sizeof(struct grf_data));
+		memset(sc->sc_data, 0, sizeof(struct grf_data));
 
 		/* Initialize the framebuffer hardware. */
 		if ((*init)(sc->sc_data, sc->sc_scode, regs) == 0) {
@@ -103,7 +100,7 @@ grfdev_attach(sc, init, regs, sw)
 
 	/* Attach a grf. */
 	ga.ga_scode = sc->sc_scode;	/* XXX */
-	ga.ga_isconsole = isconsole;
+	ga.ga_isconsole = sc->sc_isconsole;
 	ga.ga_data = (void *)sc->sc_data;
 	(void)config_found(&sc->sc_dev, &ga, grfdevprint);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.1 2001/05/09 16:08:45 matt Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.1.2.1 2002/01/10 19:41:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -50,7 +50,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/cpu.h>
 
 irqhandler_t *irqhandlers[NIRQS];
@@ -72,8 +72,6 @@ extern char *_intrnames;
 /* Prototypes */
 
 int podule_irqhandler		__P((void));
-extern void zero_page_readonly	__P((void));
-extern void zero_page_readwrite	__P((void));
 extern int fiq_setregs		__P((fiqhandler_t *));
 extern int fiq_getregs		__P((fiqhandler_t *));
 extern void set_spl_masks	__P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.9 2001/06/13 15:08:05 soda Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.9.2.1 2002/01/10 19:37:37 thorpej Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -196,7 +196,8 @@ bios_configure_memory(mem_reserved, mem_clusters, mem_cluster_cnt_return)
 
 #ifdef BIOS_MEMORY_DEBUG
 		printf("memory type:%d, 0x%8lx..%8lx, size:%8ld bytes\n",
-		    descr->Type, seg_start, seg_end, seg_end - seg_start);
+		    descr->Type, (u_long)seg_start, (u_long)seg_end,
+		    (u_long)(seg_end - seg_start));
 #endif
 
 		switch (descr->Type) {
@@ -250,7 +251,7 @@ account_it:
 		}
 	}
 
-#ifdef MEMORY_DEBUG
+#ifdef BIOS_MEMORY_DEBUG
 	for (i = 0; i < mem_cluster_cnt; i++)
 		printf("mem_clusters[%d] = %d:{ 0x%8lx, 0x%8lx }\n", i,
 		    mem_reserved[i],

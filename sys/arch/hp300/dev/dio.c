@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.13 1998/07/01 22:46:29 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.13.28.1 2002/01/10 19:42:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -114,12 +114,9 @@ dioattach(parent, self, aux)
 		 * Temporarily map the space corresponding to
 		 * the current select code unless:
 		 *	- this is the internal hpib select code,
-		 *	- this is the console select code.
 		 */
 		pa = dio_scodetopa(scode);
-		if (scode == conscode)
-			va = conaddr;
-		else if ((scode == 7) && internalhpib)
+		if ((scode == 7) && internalhpib)
 			va = internalhpib = (caddr_t)IIOV(pa);
 		else {
 			va = iomap(pa, NBPG);
@@ -141,7 +138,7 @@ dioattach(parent, self, aux)
 		}
 
 		/* Fill out attach args. */
-		bzero(&da, sizeof(da));
+		memset(&da, 0, sizeof(da));
 		da.da_bst = HP300_BUS_SPACE_DIO;
 		da.da_scode = scode;
 		/*
@@ -276,7 +273,7 @@ dio_devinfo(da, buf, buflen)
 	int i;
 #endif
 
-	bzero(buf, buflen);
+	memset(buf, 0, buflen);
 
 	/*
 	 * Deal with lame internal HP-IB controllers which don't have
@@ -342,8 +339,8 @@ void
 dio_intr_disestablish(arg)
 	void *arg;
 {
-	struct isr *isr = arg;
-	int priority = isr->isr_priority;
+	struct hp300_intrhand *ih = arg;
+	int priority = ih->ih_priority;
 
 	intr_disestablish(arg);
 

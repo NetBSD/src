@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10.2.1 2001/08/25 06:15:13 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.10.2.2 2002/01/10 19:38:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,8 +42,10 @@
 
 #define	_MACHINE	arm26
 #define	MACHINE		"arm26"
-#define	_MACHINE_ARCH	arm26
-#define	MACHINE_ARCH	"arm26"
+#define	_MACHINE_ARCH	arm
+#define	MACHINE_ARCH	"arm"
+
+#define POOL_SUBPAGE 4096
 
 #define	PGSHIFT		15		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */

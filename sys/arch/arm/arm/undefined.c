@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.8 2001/03/17 18:12:09 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.8.4.1 2002/01/10 19:37:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -48,11 +48,10 @@
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
-#include "opt_progmode.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.8 2001/03/17 18:12:09 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.8.4.1 2002/01/10 19:37:47 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -70,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.8 2001/03/17 18:12:09 bjh21 Exp $");
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 #include <machine/trap.h>
 
 #include <arch/arm/arm/disassem.h>
@@ -124,7 +123,8 @@ static int
 gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
 
-	if (insn == GDB_BREAKPOINT && code == FAULT_USER) {
+	if ((insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) &&
+	    code == FAULT_USER) {
 		trapsignal(curproc, SIGTRAP, 0);
 		return 0;
 	}
@@ -171,7 +171,7 @@ undefinedinstruction(trapframe_t *frame)
 	frame->tf_pc -= INSN_SIZE;
 #endif
 
-#ifdef PROG26
+#ifdef __PROG26
 	fault_pc = frame->tf_r15 & R15_PC;
 #else
 	fault_pc = frame->tf_pc;
@@ -209,7 +209,7 @@ undefinedinstruction(trapframe_t *frame)
 	if ((p = curproc) == 0)
 		p = &proc0;
 
-#ifdef PROG26
+#ifdef __PROG26
 	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
 #else
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
@@ -301,16 +301,3 @@ undefinedinstruction(trapframe_t *frame)
 	userret(p);
 #endif
 }
-
-
-void
-resethandler(trapframe_t *frame)
-{
-#ifdef DDB
-	/* Extra info in case panic drops us into the debugger. */
-	printf("Trap frame at %p\n", frame);
-#endif
-	panic("Branch to never-never land (zero)..... we're dead\n");
-}
-
-/* End of undefined.c */

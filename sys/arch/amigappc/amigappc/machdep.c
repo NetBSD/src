@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12.2.3 2001/09/13 01:13:02 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.12.2.4 2002/01/10 19:37:34 thorpej Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,7 @@
 
 #include <machine/powerpc.h>
 #include <machine/bat.h>
+#include <machine/mtpr.h>
 #include <machine/trap.h>
 #include <machine/hid.h>
 #include <machine/cpu.h>
@@ -126,12 +127,12 @@ initppc(startkernel, endkernel)
 
 	PPCavail[0].start = 0x8000000;
 	PPCavail[0].size  = 0x5f80000;
-/*
 	PPCavail[1].start = (0x7c00000 + endkernel + PGOFSET) & ~PGOFSET;
 	PPCavail[1].size  = 0x8000000 - PPCavail[1].start;
-*/
+/*
 	PPCavail[1].start = 0x7c00000;
 	PPCavail[1].size  = 0x0400000;
+*/
 	PPCavail[2].start = 0x0;
 	PPCavail[2].size  = 0x0;
 
@@ -241,8 +242,7 @@ initppc(startkernel, endkernel)
 	 * Enable translation and interrupts
 	 */
 	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync" :
-		"=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI|PSL_EE));
-	custom.intreq = 0xc000;
+		"=r"(scratch) : "K"(PSL_EE|PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	/*
 	 * Set the page size
@@ -254,6 +254,104 @@ initppc(startkernel, endkernel)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 }
+
+
+/* XXX: for a while here, from intr.h */
+volatile int
+splraise(ncpl)
+	int ncpl;
+{
+	int ocpl;
+	volatile unsigned char *p5_ipl = (void *)0xf60030;
+
+	ocpl = ~(*p5_ipl) & 7;
+
+	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
+
+	/*custom.intreq = 0x7fff;*/
+	if (ncpl > ocpl) {
+		/* disable int */
+		/*p5_ipl = 0xc0;*/
+		/* clear bits */
+		*p5_ipl = 7;
+		/* set new priority */
+		*p5_ipl = 0x80 | (~ncpl & 7);
+		/* enable int */
+		/*p5_ipl = 0x40;*/
+	}
+
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	return (ocpl);
+}
+
+volatile void
+splx(ncpl)
+	int ncpl;
+{
+	volatile unsigned char *p5_ipl = (void *)0xf60030;
+
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+
+/*	if (ipending & ~ncpl)
+		do_pending_int();*/
+
+	custom.intreq = custom.intreqr;
+	/* disable int */
+	/*p5_ipl = 0xc0;*/
+	/* clear bits */
+	*p5_ipl = 0x07;
+	/* set new priority */
+	*p5_ipl = 0x80 | (~ncpl & 7);
+	/* enable int */
+	/*p5_ipl = 0x40;*/
+
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+}
+
+volatile int
+spllower(ncpl)
+	int ncpl;
+{
+	int ocpl;
+	volatile unsigned char *p5_ipl = (void *)0xf60030;
+
+	ocpl = ~(*p5_ipl) & 7;
+
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+
+/*	if (ipending & ~ncpl)
+		do_pending_int();*/
+
+	/*custom.intreq = 0x7fff;*/
+	if (ncpl < ocpl) {
+		/* disable int */
+		/*p5_ipl = 0xc0;*/
+		/* clear bits */
+		*p5_ipl = 7;
+		/* set new priority */
+		*p5_ipl = 0x80 | (~ncpl & 7);
+		/* enable int */
+		/*p5_ipl = 0x40;*/
+	}
+
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	return (ocpl);
+}
+
+/* Following code should be implemented with lwarx/stwcx to avoid
+ * the disable/enable. i need to read the manual once more.... */
+volatile void
+softintr(ipl)
+	int ipl;
+{
+	int msrsave;
+
+	__asm__ volatile("mfmsr %0" : "=r"(msrsave));
+	__asm__ volatile("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
+	ipending |= 1 << ipl;
+	__asm__ volatile("mtmsr %0" :: "r"(msrsave));
+}
+/* XXX: end of intr.h */
 
 
 /* show PPC registers */
@@ -343,7 +441,6 @@ do_pending_int(void)
 	asm volatile ("sync");
 }
 
-
 /*
  * Interrupt handler
  */
@@ -378,6 +475,7 @@ intrhand()
 
 	/* ports */
 	if (ireq & INTF_PORTS) {
+		ciaa_intr();
 		custom.intreq = INTF_PORTS;
 	}
 
@@ -486,134 +584,6 @@ alloc_sicallback()
 #endif
 }
 
-
-
-/* should be in clock.c */
-volatile int tickspending;
-
-/*
- * Initially we assume a processor with a bus frequency of 12.5 MHz.
- */
-static u_long ticks_per_sec = 12500000;
-static u_long ns_per_tick = 80;
-static long ticks_per_intr;
-static volatile u_long lasttb;
-
-void
-decr_intr(frame)
-	struct clockframe *frame;
-{
-	u_long tb;
-	long tick;
-	int nticks;
-
-	/*
-	 * Check whether we are initialized
-	 */
-	if (!ticks_per_intr) {
-		return;
-	}
-
-	/*
-	 * Based on the actual time delay since the last decrementer reload,
-	 * we arrange for earlier interrupt next time.
-	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
-	for (nticks = 0; tick < 0; nticks++) {
-		tick += ticks_per_intr;
-	}
-	asm volatile ("mtdec %0" :: "r"(tick));
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = tb + tick - ticks_per_intr;
-
-	uvmexp.intrs++;
-	intrcnt[CNT_CLOCK]++;
-	{
-	int pri, msr;
-
-	pri = splclock();
-	if (pri & (1 << SPL_CLOCK)) {
-		tickspending += nticks;
-	}
-	else {
-		nticks += tickspending;
-		tickspending = 0;
-
-		/*
-		 * Reenable interrupts
-		 */
-		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
-				: "=r"(msr) : "K"(PSL_EE));
-
-		/*
-		 * Do standard timer interrupt stuff.
-		 * Do softclock stuff only on the last iteration.
-		 */
-		frame->pri = pri | (1 << SIR_CLOCK);
-		while (--nticks > 0) {
-			hardclock(frame);
-		}
-		frame->pri = pri;
-		hardclock(frame);
-	}
-	splx(pri);
-	}
-}
-
-
-static inline u_quad_t
-mftb()
-{
-	u_long scratch;
-	u_quad_t tb;
-
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
-		: "=r"(tb), "=r"(scratch));
-	return tb;
-}
-
-/*
- * Fill in *tvp with current time with microsecond resolution.
- */
-void
-microtime(tvp)
-        struct timeval *tvp;
-{
-	u_long tb, ticks;
-	int msr, scratch;
-
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-			: "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	asm ("mftb %0" : "=r"(tb));
-	ticks = (tb - lasttb) * ns_per_tick;
-	*tvp = time;
-	asm volatile ("mtmsr %0" :: "r"(msr));
-	ticks /= 1000;
-	tvp->tv_usec += ticks;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-}
-
-void
-delay(n)
-	unsigned n;
-{
-	u_quad_t tb;
-	u_long tbh, tbl, scratch;
-
-	tb = mftb();
-	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
-	tbh = tb >> 32;
-	tbl = tb;
-	asm ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
-		"mftb %0; cmplw %0,%2; blt 1b; 2:"
-		:: "r"(scratch), "r"(tbh), "r"(tbl));
-}
 
 /*
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.5 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.5.2.1 2002/01/10 19:44:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,8 +41,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
+#include <machine/bus_space_hpcmips.h>
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
@@ -97,7 +98,7 @@ struct txcsbus_softc {
 	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
 	/* chip select space tag */
-	bus_space_tag_t sc_cst[TX39_MAXCS];
+	struct bus_space_tag_hpcmips *sc_cst[TX39_MAXCS];
 };
 
 struct cfattach txcsbus_ca = {
@@ -239,7 +240,7 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 	tx_chipset_tag_t tc = sc->sc_tc;
 	int cs = csh->cs;
 	int width = csh->cswidth;
-	bus_space_tag_t iot;
+	struct bus_space_tag_hpcmips *iot;
 	txreg_t reg;
 
  	if (!TX39_ISCS(cs) && !TX39_ISMCS(cs) && !TX39_ISCARD(cs)) {
@@ -248,15 +249,13 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 
 	/* Already setuped chip select */
 	if (sc->sc_cst[cs]) {
-		return (sc->sc_cst[cs]);
+		return (&sc->sc_cst[cs]->bst);
 	}
 
 	iot = hpcmips_alloc_bus_space_tag();
+	hpcmips_init_bus_space(iot, hpcmips_system_bus_space_hpcmips(),
+	    __csmap[cs].cs_name, __csmap[cs].cs_addr, __csmap[cs].cs_size);
 	sc->sc_cst[cs] = iot;
-
-	iot->t_base = __csmap[cs].cs_addr;
-	iot->t_size = __csmap[cs].cs_size;
-	strcpy(iot->t_name , __csmap[cs].cs_name);
 
 	/* CS bus-width (configurationable) */
 	switch (width) {
@@ -341,8 +340,6 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 			    "not allowed", cs);
 		}
 	}
-	
-	hpcmips_init_bus_space_extent(iot);
 
-	return (iot);
+	return (&iot->bst);
 }

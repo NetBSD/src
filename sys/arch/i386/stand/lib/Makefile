@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.18 2001/05/19 17:53:30 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.18.4.1 2002/01/10 19:45:13 thorpej Exp $
 
 S?=	${.CURDIR}/../../../../
 
 LIB= i386
-MKPIC=no
-MKPROFILE=no
+NOPIC=# defined
+NOPROFILE=# defined
 
 I386_INCLUDE_DISK?= yes
 I386_INCLUDE_DOS?= no
@@ -38,6 +38,8 @@ SRCS+= biospci.c bios_pci.S isapnp.c isadma.c
 SRCS+= biosmca.S
 .endif
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

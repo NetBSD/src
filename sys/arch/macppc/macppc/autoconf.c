@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25.2.1 2001/08/03 04:11:55 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.2.2 2002/01/10 19:45:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,6 +48,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
+#include <dev/ata/wdvar.h>
 #include <dev/ic/wdcvar.h>
 
 void canonicalize_bootpath __P((void));
@@ -244,9 +245,9 @@ device_register(dev, aux)
 		if (addr != sa->sa_periph->periph_target)
 			return;
 	} else if (DEVICE_IS(dev->dv_parent, "pciide")) {
-		struct ata_atapi_attach *aa = aux;
+		struct ata_device *adev = aux;
 
-		if (addr != aa->aa_channel)
+		if (addr != adev->adev_drv_data->drive)
 			return;
 
 		/*
@@ -258,12 +259,12 @@ device_register(dev, aux)
 		p = strchr(p, '@');
 		if (!p++)
 			return;
-		if (strtoul(p, &p, 16) != aa->aa_drv_data->drive)
+		if (strtoul(p, &p, 16) != adev->adev_drv_data->drive)
 			return;
 	} else if (DEVICE_IS(dev->dv_parent, "wdc")) {
-		struct ata_atapi_attach *aa = aux;
+		struct ata_device *adev = aux;
 
-		if (addr != aa->aa_channel)
+		if (addr != adev->adev_drv_data->drive)
 			return;
 	} else
 		return;
@@ -280,6 +281,9 @@ device_register(dev, aux)
 			bp++;
 		return;
 	} else {
+#ifdef DEBUG
+		printf("%s -> %s\n", bootpath, dev->dv_xname);
+#endif
 		booted_device = dev;
 		return;
 	}

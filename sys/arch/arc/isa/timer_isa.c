@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_isa.c,v 1.1 2001/06/13 15:02:14 soda Exp $	*/
+/*	$NetBSD: timer_isa.c,v 1.1.4.1 2002/01/10 19:37:43 thorpej Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -96,35 +96,40 @@ timer_isa_match(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
-	bus_addr_t iobase = IO_TIMER1;
-	bus_size_t iosize = TIMER_IOSIZE;
-	int irq = TIMER_IRQ;
 
-	if (ia->ia_iobase != IOBASEUNK)
-		iobase = ia->ia_iobase;
-#if 0	/* XXX isa.c */
-	if (ia->ia_iosize != 0)
-		iosize = ia->ia_iosize;
-#endif
-	if (ia->ia_irq != IRQUNK)
-		irq = ia->ia_irq;
+	if (ia->ia_nio < 1 ||
+	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	     ia->ia_io[0].ir_addr != IO_TIMER1))
+		return (0);
 
-	if (iobase != IO_TIMER1 || iosize != TIMER_IOSIZE ||
-	    ia->ia_maddr != MADDRUNK || ia->ia_msize != 0 ||
-	    irq != TIMER_IRQ || ia->ia_drq != DRQUNK)
+	if (ia->ia_niomem > 0 &&
+	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT))
+		return (0);
+
+	if (ia->ia_nirq > 0 &&
+	    (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+	     ia->ia_irq[0].ir_irq != TIMER_IRQ))
+		return (0);
+
+	if (ia->ia_ndrq > 0 &&
+	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
 		return (0);
 
 	if (!timer_isa_conf)
 		return (0);
 
-	if (bus_space_map(ia->ia_iot, iobase, iosize, 0, &ioh))
+	if (bus_space_map(ia->ia_iot, IO_TIMER1, TIMER_IOSIZE, 0, &ioh))
 		return (0);
 
-	bus_space_unmap(ia->ia_iot, ioh, iosize);
+	bus_space_unmap(ia->ia_iot, ioh, TIMER_IOSIZE);
 
-	ia->ia_iobase = iobase;
-	ia->ia_iosize = iosize;
-	ia->ia_irq = irq;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_addr = IO_TIMER1;
+	ia->ia_io[0].ir_size = TIMER_IOSIZE;
+
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
 
 	return (1);
 }
@@ -140,12 +145,13 @@ timer_isa_attach(parent, self, aux)
 	void *ih;
 
 	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
-	    &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh))
 		panic("timer_isa_attach: couldn't map clock I/O space");
 
-	ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_PULSE, IPL_CLOCK,
-	    (int (*)(void *))hardclock, NULL /* clockframe is hardcoded */);
+	ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq, IST_PULSE,
+	    IPL_CLOCK, (int (*)(void *))hardclock,
+	    NULL /* clockframe is hardcoded */);
 	if (ih == NULL)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 

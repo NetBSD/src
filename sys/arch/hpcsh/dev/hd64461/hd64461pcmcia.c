@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.1 2001/08/03 04:11:38 lukem Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.2 2002/01/10 19:44:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ static int _chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 static void _chip_mem_free(pcmcia_chipset_handle_t,
     struct pcmcia_mem_handle *);
 static int _chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
-    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
 static void _chip_mem_unmap(pcmcia_chipset_handle_t, int);
 static int _chip_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
     bus_size_t, bus_size_t, struct pcmcia_io_handle *);
@@ -599,7 +599,7 @@ _chip_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pcmhp)
 static int
 _chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
     bus_size_t size, struct pcmcia_mem_handle *pcmhp,
-    bus_addr_t *offsetp, int *windowp)
+    bus_size_t *offsetp, int *windowp)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 	struct hd64461pcmcia_window_cookie *cookie;
@@ -793,15 +793,18 @@ _chip_socket_enable(pcmcia_chipset_handle_t pch)
 	memory_window_16(channel, MEMWIN_16M_COMMON_0);
 
 	/* set the card type */
+	r = hd64461_reg_read_1(gcr);
 	if (channel == CHANNEL_0) {
 		cardtype = pcmcia_card_gettype(ch->ch_pcmcia);
-		r = hd64461_reg_read_1(gcr);
 		if (cardtype == PCMCIA_IFTYPE_IO)
 			r |= HD64461_PCC0GCR_P0PCCT;
 		else
 			r &= ~HD64461_PCC0GCR_P0PCCT;
-		hd64461_reg_write_1(gcr, r);
+	} else {
+		/* reserved bit must be 0 */
+ 		r &= ~HD64461_PCC1GCR_RESERVED;		
 	}
+	hd64461_reg_write_1(gcr, r);
 
 	DPRINTF("OK.\n");
 }
@@ -906,7 +909,7 @@ power_on(enum controller_channel channel)
 	/* detect voltage and supply VCC */
 	r = hd64461_reg_read_1(isr);
 	switch (r & (HD64461_PCCISR_VS1 | HD64461_PCCISR_VS2)) {
-	case (HD64461_PCCISR_VS1 | HD64461_PCCISR_VS2):
+	case (HD64461_PCCISR_VS1 | HD64461_PCCISR_VS2): /* 5 V */
 		DPRINTF("5V card\n");
 		r = hd64461_reg_read_1(gcr);
 		r &= ~HD64461_PCCGCR_VCC0;
@@ -915,7 +918,9 @@ power_on(enum controller_channel channel)
 		r &= ~HD64461_PCCSCR_VCC1;
 		hd64461_reg_write_1(scr, r);
 		break;
-	case HD64461_PCCISR_VS2:
+	case HD64461_PCCISR_VS2:	/* 3.3 / 5 V */
+		/* FALLTHROUGH */
+	case 0:				/* x.x / 3.3 / 5 V */
 		DPRINTF("3.3V card\n");
 		if (channel == CHANNEL_1) { 
 			r = hd64461_reg_read_1(gcr);
@@ -930,6 +935,10 @@ power_on(enum controller_channel channel)
 		r &= ~HD64461_PCCSCR_VCC1;
 		hd64461_reg_write_1(scr, r);
 		break;
+	case HD64461_PCCISR_VS1:	/* x.x V */
+		/* FALLTHROUGH */
+		printf("x.x V not supported.\n");
+		return;
 	default:
 		printf("\nunknown Voltage. don't attach.\n");
 		return;

@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.39 2001/07/08 16:32:17 abs Exp $
+#	$NetBSD: BASALT,v 1.39.2.1 2002/01/10 19:42:45 thorpej Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 workstation.
 #
@@ -73,6 +73,12 @@ mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
+
+# Real-time clock (not optional)
+rtc*		at intio?
+
+# Human Interface Loop
+hil*		at intio?
 
 # Topcat/catseye framebuffers
 topcat*		at intio?

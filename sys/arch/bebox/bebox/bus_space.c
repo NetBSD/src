@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2001/06/06 17:42:29 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.4.1 2002/01/10 19:40:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 #include <machine/bus.h>
 
+static paddr_t bebox_memio_mmap (bus_space_tag_t, bus_addr_t, off_t, int, int);
 static int bebox_memio_map (bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	bus_space_handle_t *);
 static void bebox_memio_unmap (bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -55,18 +56,22 @@ static void bebox_memio_free (bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 const struct powerpc_bus_space bebox_io_bs_tag = {
 	BEBOX_BUS_SPACE_IO, 0x80000000, 0x80000000, 0x3f800000,
+	bebox_memio_mmap,
 	bebox_memio_map, bebox_memio_unmap, bebox_memio_alloc, bebox_memio_free
 };
 const struct powerpc_bus_space bebox_isa_io_bs_tag = {
 	BEBOX_BUS_SPACE_IO, 0x80000000, 0x80000000, 0x00010000,
+	bebox_memio_mmap,
 	bebox_memio_map, bebox_memio_unmap, bebox_memio_alloc, bebox_memio_free
 };
 const struct powerpc_bus_space bebox_mem_bs_tag = {
 	BEBOX_BUS_SPACE_MEM, 0xc0000000, 0xc0000000, 0x3f000000,
+	bebox_memio_mmap,
 	bebox_memio_map, bebox_memio_unmap, bebox_memio_alloc, bebox_memio_free
 };
 const struct powerpc_bus_space bebox_isa_mem_bs_tag = {
 	BEBOX_BUS_SPACE_MEM, 0xc0000000, 0xc0000000, 0x01000000,
+	bebox_memio_mmap,
 	bebox_memio_map, bebox_memio_unmap, bebox_memio_alloc, bebox_memio_free
 };
 static long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
@@ -98,6 +103,16 @@ bebox_bus_space_mallocok()
 {
 
 	ioport_malloc_safe = 1;
+}
+
+static paddr_t
+bebox_memio_mmap(t, bpa, offset, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	off_t offset;
+	int prot, flags;
+{
+	return ((bpa + offset) >> PGSHIFT);
 }
 
 static int

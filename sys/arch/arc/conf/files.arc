@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.32.2.1 2001/08/03 04:10:56 lukem Exp $
+#	$NetBSD: files.arc,v 1.32.2.2 2002/01/10 19:37:41 thorpej Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -11,7 +11,7 @@ maxusers 2 8 64
 ##	Platform support option header and files
 ##
 
-defopt	opt_platform.h			PLATFORM_ACER_PICA_61
+defflag	opt_platform.h			PLATFORM_ACER_PICA_61
 					PLATFORM_DESKTECH_ARCSTATION_I
 					PLATFORM_DESKTECH_TYNE
 					PLATFORM_MICROSOFT_JAZZ
@@ -78,7 +78,7 @@ file	arch/arc/arc/wired_map.c
 file	arch/arc/arc/arcbios.c
 
 ##
-##	Machine-independent ATAPI drivers 
+##	Machine-independent ATAPI drivers
 ##
 include "dev/ata/files.ata"
 major	{ wd = 4 }
@@ -197,8 +197,8 @@ attach	vga at jazzio with vga_jazzio
 file	arch/arc/jazz/vga_jazzio.c	vga_jazzio needs-flag
 
 #	PC keyboard controller on Jazz-Internal bus
-attach  pckbc at jazzio with pckbc_jazzio
-file    arch/arc/jazz/pckbc_jazzio.c	pckbc_jazzio needs-flag
+attach	pckbc at jazzio with pckbc_jazzio
+file	arch/arc/jazz/pckbc_jazzio.c	pckbc_jazzio needs-flag
 
 #
 #	Stock ISA bus support

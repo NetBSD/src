@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.72.2.1 2001/08/03 04:11:45 lukem Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72.2.2 2002/01/10 19:44:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,6 +82,7 @@ struct cpu_info {
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
 	struct i386_cache_info ci_cinfo[CAI_COUNT];
+	void (*ci_info) __P((int));
 };
 
 #ifdef _KERNEL
@@ -154,6 +155,7 @@ struct cpu_nocpuid_nameclass {
 	int cpu_class;
 	void (*cpu_setup) __P((void));
 	void (*cpu_cacheinfo) __P((struct cpu_info *));
+	void (*cpu_info) __P((int));
 };
 
 
@@ -166,6 +168,7 @@ struct cpu_cpuid_nameclass {
 		const char *cpu_models[CPU_MAXMODEL+2];
 		void (*cpu_setup) __P((void));
 		void (*cpu_cacheinfo) __P((struct cpu_info *));
+		void (*cpu_info) __P((int));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
@@ -264,7 +267,11 @@ void i386_bus_space_mallocok __P((void));
 #define	CPU_OSFXSR		8	/* OS uses FXSAVE/FXRSTOR */
 #define	CPU_SSE			9	/* OS/CPU supports SSE */
 #define	CPU_SSE2		10	/* OS/CPU supports SSE2 */
-#define	CPU_MAXID		11	/* number of valid machdep ids */
+#define CPU_TMLR_MODE		11
+#define CPU_TMLR_FREQUENCY	12
+#define CPU_TMLR_VOLTAGE	13
+#define CPU_TMLR_PERCENTAGE	14
+#define	CPU_MAXID		15	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -278,6 +285,10 @@ void i386_bus_space_mallocok __P((void));
 	{ "osfxsr", CTLTYPE_INT }, \
 	{ "sse", CTLTYPE_INT }, \
 	{ "sse2", CTLTYPE_INT }, \
+	{ "tm_longrun_mode", CTLTYPE_INT }, \
+	{ "tm_longrun_frequency", CTLTYPE_INT }, \
+	{ "tm_longrun_voltage", CTLTYPE_INT }, \
+	{ "tm_longrun_percentage", CTLTYPE_INT }, \
 }
 
 

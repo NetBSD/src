@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.15 2000/09/27 03:57:51 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.15.4.1 2002/01/10 19:45:35 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -902,12 +902,12 @@ pm_pmgrop_mrg(pmdata)
 	u_int32_t rval=0;
 
 	asm("
-		movl	%1, a0
+		movl	%1,%%a0
 		.word	0xa085
-		movl	d0, %0"
+		movl	%%d0,%0"
 		: "=g" (rval)
 		: "g" (pmdata)
-		: "a0", "d0" );
+		: "a0","d0");
 
 	return rval;
 }
@@ -1050,7 +1050,7 @@ pm_adb_op(buffer, compRout, data, command)
 
 	PM_VIA_INTR_ENABLE();
 
-	/* wait until the PM interrupt is occured */
+	/* wait until the PM interrupt has occurred */
 	delay = 0x80000;
 	while (adbWaiting == 1) {
 		switch (mac68k_machine.machineid) {

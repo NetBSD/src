@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.6 2001/04/28 17:41:01 bjh21 Exp $ */
+/* $NetBSD: conf.c,v 1.6.2.1 2002/01/10 19:38:33 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: conf.c,v 1.6 2001/04/28 17:41:01 bjh21 Exp $");
+__RCSID("$NetBSD: conf.c,v 1.6.2.1 2002/01/10 19:38:33 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -144,7 +144,7 @@ int mem_no = 2; 	/* major device number of memory special file */
  * confuse, e.g. the hashing routines. Instead, /dev/drum is
  * provided as a character (raw) device.
  */
-dev_t	swapdev = makedev(1, 0);
+dev_t	swapdev = makedev(0, 0);
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.6 2001/05/30 12:28:43 mrg Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.6.2.1 2002/01/10 19:44:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.6.2.1 2002/01/10 19:44:38 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.43 2001/06/25 16:28:48 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.43.4.1 2002/01/10 19:44:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,17 +97,6 @@
 #define	USRIOSIZE 	300
 
 /*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP 		20
-
-/*
  * Mach derived constants
  */
 
@@ -122,8 +111,7 @@
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF \
-	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / 1024 * 7 / 10 * 1024)
+#define VM_MAX_KERNEL_BUF	(384 * 1024 * 1024)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */

@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.41.6.1 2001/08/03 04:10:43 lukem Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.41.6.2 2002/01/10 19:37:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -430,7 +430,7 @@ alpha_pal_swpctx(unsigned long ctx)
 		: "=r" (a0), "=r" (v0)
 		: "i" (PAL_OSF1_swpctx), "0" (a0)
 		/* clobbers t0, t8..t11, a0 (above) */
-		: "$1", "$22", "$23", "$24", "$25");
+		: "$1", "$22", "$23", "$24", "$25", "memory");
 
 	return (v0);
 }
@@ -445,7 +445,7 @@ alpha_pal_swpipl(unsigned long ipl)
 		: "=r" (a0), "=r" (v0)
 		: "i" (PAL_OSF1_swpipl), "0" (a0)
 		/* clobbers t0, t8..t11, a0 (above) */
-		: "$1", "$22", "$23", "$24", "$25");
+		: "$1", "$22", "$23", "$24", "$25", "memory");
 
 	return (v0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.9.2.2 2001/09/13 01:13:37 thorpej Exp $	*/
+/*	$NetBSD: platid.def,v 1.9.2.3 2002/01/10 19:43:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -53,7 +53,7 @@ MIPS {
   }
   TX {
     3900 {
-      3911 3912 
+      3911 3912
     }
     3920 {
       3922 3927
@@ -69,7 +69,7 @@ SH {
 		7709A
 	}
 	4 {
-		7750	
+		7750
 	}
 }
 #endif /* hpcsh */
@@ -175,7 +175,7 @@ Sharp {
     }
   }
   Mobilon {
-    HC {	
+    HC {
       CPU=MIPS_TX_3912 HC4100
       CPU=MIPS_TX_3912 HC4500
       CPU=MIPS_TX_3912 HC1200
@@ -294,7 +294,7 @@ HP {
 	JORNADA " Jornada" {
 #ifdef hpcsh
 		6XX {
-			CPU=SH_3_7709A 
+			CPU=SH_3_7709A
 			680
 			680JP -" 680 (Japanese)"
 			680HU -" 680 (Hungarian)"

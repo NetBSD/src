@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.buildboot,v 1.4.2.2 2001/08/03 04:11:04 lukem Exp $
+#	$NetBSD: Makefile.buildboot,v 1.4.2.3 2002/01/10 19:38:38 thorpej Exp $
 
 S?=	${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../lib
 
 SRCS=	${PROGSOURCE}
-MKMAN=no
+NOMAN=# defined
 BINDIR=/usr/mdec
 BINMODE=444
 FILESDIR=/usr/mdec
@@ -47,7 +47,6 @@ RISCOS_AS=		library
 LIBRISCOS=		${RISCOSLIB}
 
 RELOC=8000
-OBJCOPY?=objcopy
 # -N (OMAGIC) since we don't need a gap between text and data.
 LINKFLAGS=-N
 
@@ -59,7 +58,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS}
 ${PROG},${RISCOSTYPE}: ${PROG}
 	${OBJCOPY} --output-target=binary ${.ALLSRC} ${.TARGET}
 
-all: ${PROG},${RISCOSTYPE}
+realall: ${PROG},${RISCOSTYPE}
 
 CLEANFILES+=	${PROG},${RISCOSTYPE}
 FILES+=		${PROG},${RISCOSTYPE}

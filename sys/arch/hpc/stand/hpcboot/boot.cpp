@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.cpp,v 1.2 2001/04/24 19:27:58 uch Exp $	*/
+/*	$NetBSD: boot.cpp,v 1.2.2.1 2002/01/10 19:43:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,9 +48,6 @@
 #include <console.h>
 
 #include <file.h>
-#include <file_fat.h>
-#include <file_http.h>
-#include <file_ufs.h>
 
 #ifdef ARM
 #include <arm/arm_boot.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecavar.h,v 1.1.2.2 2001/09/13 01:13:14 thorpej Exp $	*/
+/*	$NetBSD: if_ecavar.h,v 1.1.2.3 2002/01/10 19:38:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -31,17 +31,24 @@
 #define _ECAVAR_H_
 
 #ifndef _LOCORE
+#include <sys/device.h>
+#include <sys/socket.h>
+
 #include <net/if.h>
 #include <net/if_eco.h>
 
-struct eca_rxstate {
-	struct mbuf	*erx_curmbuf;
-	u_int32_t	erx_flags;
-	u_int8_t	erx_myaddr;
-};
+#include <arm/fiq.h>
 
-struct eca_txstate {
-	struct mbuf	*etx_curmbuf;
+#include <machine/bus.h>
+#include <machine/fiq.h>
+
+struct eca_fiqstate {
+	void		*efs_fiqhandler;
+	struct mbuf	*efs_rx_curmbuf;
+	struct fiqregs	efs_rx_fiqregs;
+	u_int32_t	efs_rx_flags;
+	u_int8_t	efs_rx_myaddr;
+	struct mbuf	*efs_tx_curmbuf;
 };
 
 struct eca_softc {
@@ -53,26 +60,23 @@ struct eca_softc {
 	u_int8_t	sc_cr4;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	struct mbuf	*sc_rcvmbuf;
 	void		*sc_rx_soft;
-	struct eca_rxstate sc_rxstate;
+	struct fiqhandler sc_fiqhandler;
+	struct eca_fiqstate sc_fiqstate;
+	struct mbuf	*sc_rcvmbuf;
 	struct mbuf	*sc_txmbuf;
+	u_int8_t	sc_sr2;
 	void		*sc_tx_soft;
-	struct eca_txstate sc_txstate;
 	int		sc_transmitting;
 };
 
-extern char eca_fiqhandler_rx[], eca_efiqhandler_rx[];
-extern char eca_fiqhandler_tx[], eca_efiqhandler_tx[];
+extern char eca_fiqhandler[], eca_efiqhandler[];
+extern char eca_fiqhandler_rx[], eca_fiqhandler_tx[];
 
 #endif
-/* Sync with rxstate above */
-#define ERX_CURMBUF	0
-#define ERX_FLAGS	4
+
+/* Flags for efs_rx_flags. */
 #define ERXF_GOTHDR	0x01
 #define ERXF_FLAGFILL	0x02
-#define ERX_MYADDR	8
-/* Sync with txstate above */
-#define ETX_CURMBUF	0
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.2 2001/06/05 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.2.2.1 2002/01/10 19:41:31 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -118,7 +118,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <dev/isa/isavar.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 
 /* SCR_DEBUG is the master switch for turning on debugging */        
@@ -1081,6 +1081,48 @@ int         flag;
     return ENODEV;
 } 
 
+
+
+
+
+/*
+**++
+**  FUNCTIONAL DESCRIPTION:
+**
+**      scrpoll
+**
+**      not supported
+**
+**  FORMAL PARAMETERS:
+**      
+**      dev  - input : Device identifier consisting of major and minor numbers.
+**      events -input: Events to poll for
+**      p    - input : Process requesting the poll.
+**
+**  IMPLICIT INPUTS:
+**
+**
+**  IMPLICIT OUTPUTS:
+**
+**      none
+**
+**  FUNCTION VALUE:
+**
+**      Returns ENODEV
+**
+**  SIDE EFFECTS:
+**
+**      none
+**--
+*/
+int
+scrpoll(dev, events, p)
+dev_t       dev;
+int         events;
+struct proc *p;
+{
+    return ENODEV;
+} 
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.14.2.1 2001/08/03 04:11:53 lukem Exp $	*/
+/*	$NetBSD: akbd.c,v 1.14.2.2 2002/01/10 19:45:47 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -242,6 +242,10 @@ akbdattach(parent, self, aux)
 		printf("akbd: returned %d from SetADBInfo\n", error);
 #endif
 
+	if (akbd_is_console) {
+		wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
+	}
+
 	a.console = akbd_is_console;
 	a.keymap = &akbd_keymapdata;
 	a.accessops = &akbd_accessops;
@@ -448,7 +452,7 @@ akbd_ioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
-		*(int *)data = 0;		/* XXX */
+		*(int *)data = WSKBD_TYPE_ADB;
 		return 0;
 	case WSKBDIO_SETLEDS:
 		return 0;
@@ -510,7 +514,6 @@ akbd_cnattach()
 {
 
 	akbd_is_console = 1;
-	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
 	return 0;
 }
 

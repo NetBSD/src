@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.2.2.4 2001/09/13 01:13:06 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.2.2.5 2002/01/10 19:37:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -60,8 +60,8 @@
 
 #include <dev/cons.h>
 
-#include <machine/katelib.h>
-#include <machine/pte.h>
+#include <arm/arm32/katelib.h>
+#include <arm/arm32/machdep.h>
 #include <machine/bootconfig.h>
 
 #include "opt_ipkdb.h"
@@ -117,7 +117,6 @@ void prefetch_abort_handler	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
-extern void dumpsys	__P((void));
 
 /*
  * Debug function just to park the CPU
@@ -176,7 +175,7 @@ map_section(pagetable, va, pa, cacheable)
 
 	if (cacheable)
 		((u_int *)pagetable)[(va >> PDSHIFT)] =
-		    L1_SEC((pa & PD_MASK), PT_C);
+		    L1_SEC((pa & PD_MASK), pte_cache_mode);
 	else
 		((u_int *)pagetable)[(va >> PDSHIFT)] =
 		    L1_SEC((pa & PD_MASK), 0);

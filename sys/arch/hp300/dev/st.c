@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.28 2000/05/27 04:52:28 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.28.8.1 2002/01/10 19:43:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ int st_dmaoddretry = 0;
  * From adb can have access to fixed vs. variable length modes.
  * Use 0x400 for 1k (best capacity) fixed length records.
  * In st_open, if minor bit 4 set then 1k records are used.
- * If st_exblken is set to anything other then 0 we are in fixed length mode.
+ * If st_exblken is set to anything other than 0 we are in fixed length mode.
  * Minor bit 5 requests 1K fixed-length, overriding any setting of st_exblklen.
  */
 int st_exblklen = 0;
@@ -267,9 +267,9 @@ stattach(parent, self, aux)
 
 	BUFQ_INIT(&sc->sc_tab);
 
-	bzero(vendor, sizeof(vendor));
-	bzero(product, sizeof(product));
-	bzero(revision, sizeof(revision));
+	memset(vendor, 0, sizeof(vendor));
+	memset(product, 0, sizeof(product));
+	memset(revision, 0, sizeof(revision));
 
 	scsi_str(osa->osa_inqbuf->vendor_id, vendor,
 	    sizeof(osa->osa_inqbuf->vendor_id));
@@ -289,28 +289,28 @@ stattach(parent, self, aux)
 	sc->sc_sq.sq_go = stgo;
 	sc->sc_sq.sq_intr = stintr;
 
-	if (bcmp("EXB-8200", product, 8) == 0) {
+	if (memcmp("EXB-8200", product, 8) == 0) {
 		sc->sc_tapeid = MT_ISEXABYTE;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 26;
 		sc->sc_datalen[CMD_INQUIRY] = 52;
 		sc->sc_datalen[CMD_MODE_SELECT] = 17;
 		sc->sc_datalen[CMD_MODE_SENSE] = 17;
-	} else if (bcmp("VIPER 150", product, 9) == 0 ||
-		   bcmp("VIPER 60", product, 8) == 0) {
+	} else if (memcmp("VIPER 150", product, 9) == 0 ||
+		   memcmp("VIPER 60", product, 8) == 0) {
 		sc->sc_tapeid = MT_ISVIPER1;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("Python 25501", product, 12) == 0 ||
-		   bcmp("Python 28849", product, 12) == 0) {
+	} else if (memcmp("Python 25501", product, 12) == 0 ||
+		   memcmp("Python 28849", product, 12) == 0) {
 		sc->sc_tapeid = MT_ISPYTHON;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("HP35450A", product, 8) == 0 ||
-		   bcmp("HP35470A", product, 8) == 0) {
+	} else if (memcmp("HP35450A", product, 8) == 0 ||
+		   memcmp("HP35470A", product, 8) == 0) {
 		/* XXX "extra" stat makes the HP drive happy at boot time */
 		stat = scsi_test_unit_rdy(sc->sc_dev.dv_parent->dv_unit,
 		    sc->sc_target, sc->sc_lun);
@@ -319,8 +319,8 @@ stattach(parent, self, aux)
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("123107 SCSI", product, 11) == 0 ||
-		   bcmp("OPEN REEL TAPE", product, 14) == 0) {
+	} else if (memcmp("123107 SCSI", product, 11) == 0 ||
+		   memcmp("OPEN REEL TAPE", product, 14) == 0) {
 		sc->sc_tapeid = MT_ISMFOUR;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 8;
 		sc->sc_datalen[CMD_INQUIRY] = 5;

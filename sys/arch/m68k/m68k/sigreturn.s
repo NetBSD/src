@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.s,v 1.5 1999/11/10 00:01:32 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.s,v 1.5.8.1 2002/01/10 19:45:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,7 @@ Lsigr1:
 	movl	%sp@,%sp		| and our SP
 	jra	_ASM_LABEL(rei)		| all done
 
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || defined(COMPAT_SUNOS)
 /*
  * Pull in the NetBSD 1.3 sigreturn stub.
  */

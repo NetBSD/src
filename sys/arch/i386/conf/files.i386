@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.188.2.2 2001/09/13 01:13:44 thorpej Exp $
+#	$NetBSD: files.i386,v 1.188.2.3 2002/01/10 19:44:32 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -9,52 +9,53 @@ maxpartitions 8
 maxusers 2 16 128
 
 # APM options
-defopt	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
+defflag	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
 			APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG
-			APMDEBUG_VALUE APM_POWER_PRINT APM_DISABLE_INTERRUPTS
-			APM_ALLOW_BOGUS_SEGMENTS
+			APM_POWER_PRINT APM_ALLOW_BOGUS_SEGMENTS
+defparam opt_apm.h	APMDEBUG_VALUE APM_DISABLE_INTERRUPTS
 
 # Processor type options.
-defopt	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
+defflag	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
 
 # delay before cpu_reset() for reboot.
-defopt	CPURESET_DELAY
+defparam		CPURESET_DELAY
 
 # VM86 emulation
-defopt	VM86
+defflag			VM86
 
 # Floating point emulation
-defopt	MATH_EMULATE
+defflag			MATH_EMULATE
 
 # User-settable LDT (used by WINE)
-defopt	USER_LDT
+defflag			USER_LDT
 
 # Speed hack; make NOPs dummies (might break on some machines)
-defopt	DUMMY_NOPS
+defflag			DUMMY_NOPS
 
 # Performance counter support
-defopt	PERFCTRS
+defflag			PERFCTRS
 
 # MTRR support
-defopt	MTRR
+defflag			MTRR
 
 # X server support in console drivers
-defopt	opt_xserver.h	XSERVER XSERVER_DDB
+defflag	opt_xserver.h	XSERVER XSERVER_DDB
 
 # The REAL{BASE,EXT}MEM options
-defopt	opt_realmem.h	REALBASEMEM REALEXTMEM
+defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
 # understand boot device passed by pre-1.3 bootblocks
-defopt	COMPAT_OLDBOOT
+defflag			COMPAT_OLDBOOT
 
 # PCI BIOS options
-defopt	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
-	PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
-	PCIBIOS_INTR_FIXUP PCIBIOS_INTR_FIXUP_FORCE
-	PCIBIOS_INTR_GUESS PCIBIOS_IRQS_HINT PCIINTR_DEBUG
+defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
+			PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
+			PCIBIOS_INTR_FIXUP PCIBIOS_INTR_FIXUP_FORCE
+			PCIBIOS_INTR_GUESS PCIINTR_DEBUG
+defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 
 # Large page size
-defopt	LARGEPAGES
+defflag			LARGEPAGES
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_machdep.c
@@ -67,7 +68,7 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/gdt.c
-file	arch/i386/i386/in_cksum.s	inet
+file	arch/i386/i386/in_cksum.s	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
@@ -75,6 +76,7 @@ file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/microtime.s
 file	arch/i386/i386/mtrr_i686.c	mtrr
+file	arch/i386/i386/mtrr_k6.c	mtrr
 file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
@@ -139,11 +141,9 @@ file	arch/i386/i386/bios32.c		bios32 needs-flag
 
 define	mainbus { }
 # XXX BIOS32 only if something that uses it is configured!
-device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
+device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32, acpibus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
-
-define	agpbus { }
 
 #
 # PCI-only drivers
@@ -152,7 +152,9 @@ define	agpbus { }
 #
 
 include	"dev/pci/files.pci"
+include "dev/pci/files.agp"
 file	arch/i386/pci/pci_machdep.c	pci
+file 	arch/i386/pci/agp_machdep.c	agp
 file	arch/i386/pci/pcibios.c		pcibios
 file	arch/i386/pci/pci_intr_fixup.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/piix.c		pcibios & pcibios_intr_fixup
@@ -164,27 +166,16 @@ file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/ali1543.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
-defopt	PCI_CONF_MODE
+defparam		PCI_CONF_MODE
 file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
 # PCI-Host bridge chipsets
-device	pchb: pcibus, agpbus
+device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
+	      agp_via
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb			needs-flag
 file	arch/i386/pci/pchb_rnd.c	pchb & rnd
-
-# AGP control devices inside PCI-Host bridges
-device 	agp
-attach 	agp at agpbus
-file 	dev/pci/agp.c			agp			needs-flag
-file 	dev/pci/agp_ali.c		agp
-file 	dev/pci/agp_amd.c		agp
-file 	dev/pci/agp_intel.c		agp
-file 	dev/pci/agp_sis.c		agp
-file 	dev/pci/agp_via.c		agp
-file	dev/pci/agp_i810.c		agp
-file 	arch/i386/pci/agp_machdep.c	agp
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
@@ -401,9 +392,9 @@ file	arch/i386/i386/rbus_machdep.c	cardbus
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defopt	PCIC_ISA_ALLOC_IOBASE
-defopt	PCIC_ISA_ALLOC_IOSIZE
-defopt	PCIC_ISA_INTR_ALLOC_MASK
+defparam		PCIC_ISA_ALLOC_IOBASE
+defparam		PCIC_ISA_ALLOC_IOSIZE
+defparam		PCIC_ISA_INTR_ALLOC_MASK
 
 device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
@@ -432,9 +423,9 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defopt	TCIC_ISA_ALLOC_IOBASE
-defopt	TCIC_ISA_ALLOC_IOSIZE
-defopt	TCIC_ISA_INTR_ALLOC_MASK
+defparam		TCIC_ISA_ALLOC_IOBASE
+defparam		TCIC_ISA_ALLOC_IOSIZE
+defparam		TCIC_ISA_INTR_ALLOC_MASK
 
 device	tcic: pcmciabus
 file	dev/ic/tcic2.c			tcic
@@ -455,3 +446,6 @@ include	"dev/usb/files.usb"
 include	"dev/ieee1394/files.ieee1394"
 
 include	"arch/i386/pnpbios/files.pnpbios"
+
+include "dev/acpi/files.acpi"
+file	arch/i386/i386/acpi_machdep.c	acpi

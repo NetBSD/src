@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.2.4.2 2001/08/25 06:15:22 thorpej Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.2.4.3 2002/01/10 19:44:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -754,7 +754,7 @@ font_load_16bpp(u_int16_t *d, u_int8_t *s, int w, int h, int step)
 	
 	for (i = 0; i < h; i++, d += n) {
 		for (j = 0; j < w; j++) {
-			d[j] = *s & (1 << w - j - 1) ? 0xffff : 0x0000;
+			d[j] = *s & (1 << (w - j - 1)) ? 0xffff : 0x0000;
 		}
 		s++;
 	}
@@ -768,7 +768,7 @@ font_load_8bpp(u_int8_t *d, u_int8_t *s, int w, int h, int step)
 	
 	for (i = 0; i < h; i++, d += n) {
 		for (j = 0; j < w; j++) {
-			d[j] = *s & (1 << w - j - 1) ? 0xff : 0x00;
+			d[j] = *s & (1 << (w - j - 1)) ? 0xff : 0x00;
 		}
 		s++;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.6.2.2 2001/09/13 01:13:09 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.6.2.3 2002/01/10 19:37:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -54,6 +54,7 @@ struct cpu_functions {
 	/* CPU functions */
 	
 	u_int	(*cf_id)		__P((void));
+	void	(*cf_cpwait)		__P((void));
 
 	/* MMU functions */
 
@@ -121,6 +122,7 @@ extern struct cpu_functions cpufuncs;
 extern u_int cputype;
 
 #define cpu_id()		cpufuncs.cf_id()
+#define	cpu_cpwait()		cpufuncs.cf_cpwait()
 
 #define cpu_control(c, e)	cpufuncs.cf_control(c, e)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
@@ -242,13 +244,43 @@ void	arm8_setup		__P((char *string));
 u_int	arm8_clock_config	__P((u_int, u_int));
 #endif
 
+#ifdef CPU_ARM9
+void	arm9_setttb		__P((u_int));
+
+void	arm9_tlb_flushID_SE	__P((u_int va));
+
+void	arm9_cache_flushID	__P((void));
+void	arm9_cache_flushID_SE	__P((u_int));
+void	arm9_cache_flushI	__P((void));
+void	arm9_cache_flushI_SE	__P((u_int));
+void	arm9_cache_flushD	__P((void));
+void	arm9_cache_flushD_SE	__P((u_int));
+
+void	arm9_cache_cleanID	__P((void));
+
+void	arm9_cache_syncI	__P((void));
+void	arm9_cache_flushID_rng	__P((u_int, u_int));
+void	arm9_cache_flushD_rng	__P((u_int, u_int));
+void	arm9_cache_syncI_rng	__P((u_int, u_int));
+
+void	arm9_context_switch	__P((void));
+
+void	arm9_setup		__P((char *string));
+#endif
+
+#if defined(CPU_ARM9) || defined(CPU_SA110) || defined(CPU_XSCALE)
+void	armv4_tlb_flushID	__P((void));
+void	armv4_tlb_flushI	__P((void));
+void	armv4_tlb_flushD	__P((void));
+void	armv4_tlb_flushD_SE	__P((u_int va));
+
+void	armv4_drain_writebuf	__P((void));
+#endif
+
 #ifdef CPU_SA110
 void	sa110_setttb		__P((u_int ttb));
-void	sa110_tlb_flushID	__P((void));
+
 void	sa110_tlb_flushID_SE	__P((u_int va));
-void	sa110_tlb_flushI	__P((void));
-void	sa110_tlb_flushD	__P((void));
-void	sa110_tlb_flushD_SE	__P((u_int va));
 
 void	sa110_cache_flushID	__P((void));
 void	sa110_cache_flushI	__P((void));
@@ -264,8 +296,6 @@ void	sa110_cache_purgeID_E	__P((u_int entry));
 void	sa110_cache_purgeD	__P((void));
 void	sa110_cache_purgeD_E	__P((u_int entry));
 
-void	sa110_drain_writebuf	__P((void));
-
 void	sa110_cache_syncI	__P((void));
 void	sa110_cache_cleanID_rng	__P((u_int start, u_int end));
 void	sa110_cache_cleanD_rng	__P((u_int start, u_int end));
@@ -279,12 +309,13 @@ void	sa110_setup		__P((char *string));
 #endif	/* CPU_SA110 */
 
 #ifdef CPU_XSCALE
+void	xscale_cpwait		__P((void));
+
+u_int	xscale_control		__P((u_int clear, u_int bic));
+
 void	xscale_setttb		__P((u_int ttb));
-void	xscale_tlb_flushID	__P((void));
+
 void	xscale_tlb_flushID_SE	__P((u_int va));
-void	xscale_tlb_flushI	__P((void));
-void	xscale_tlb_flushD	__P((void));
-void	xscale_tlb_flushD_SE	__P((u_int va));
 
 void	xscale_cache_flushID	__P((void));
 void	xscale_cache_flushI	__P((void));
@@ -300,14 +331,17 @@ void	xscale_cache_purgeID_E	__P((u_int entry));
 void	xscale_cache_purgeD	__P((void));
 void	xscale_cache_purgeD_E	__P((u_int entry));
 
-void	xscale_drain_writebuf	__P((void));
-
 void	xscale_cache_syncI	__P((void));
 void	xscale_cache_cleanID_rng	__P((u_int start, u_int end));
 void	xscale_cache_cleanD_rng	__P((u_int start, u_int end));
 void	xscale_cache_purgeID_rng	__P((u_int start, u_int end));
 void	xscale_cache_purgeD_rng	__P((u_int start, u_int end));
 void	xscale_cache_syncI_rng	__P((u_int start, u_int end));
+
+/* Used in write-through mode. */
+void	xscale_cache_flushID_rng __P((u_int start, u_int end));
+void	xscale_cache_flushD_rng	__P((u_int start, u_int end));
+void	xscale_cache_flushI_rng	__P((u_int start, u_int end));
 
 void	xscale_context_switch	__P((void));
 
@@ -324,23 +358,37 @@ void	xscale_setup		__P((char *string));
 /*
  * Macros for manipulating CPU interrupts
  */
-
-#define disable_interrupts(mask) \
+#ifdef __PROG32
+#define disable_interrupts(mask)					\
 	(SetCPSR((mask) & (I32_bit | F32_bit), (mask) & (I32_bit | F32_bit)))
 
-#define enable_interrupts(mask) \
+#define enable_interrupts(mask)						\
 	(SetCPSR((mask) & (I32_bit | F32_bit), 0))
 
-#define restore_interrupts(old_cpsr) \
+#define restore_interrupts(old_cpsr)					\
 	(SetCPSR((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
+#else /* ! __PROG32 */
+#define	disable_interrupts(mask)					\
+	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE),		\
+		 (mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)))
 
-/*
- * Functions to manipulate the CPSR
- * (in arm/arm32/setcpsr.S)
- */
+#define	enable_interrupts(mask)						\
+	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE), 0))
 
-u_int SetCPSR		__P((u_int bic, u_int eor));
-u_int GetCPSR		__P((void));
+#define	restore_interrupts(old_r15)					\
+	(set_r15((R15_IRQ_DISABLE | R15_FIQ_DISABLE),			\
+		 (old_r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)))
+#endif /* __PROG32 */
+
+#ifdef __PROG32
+/* Functions to manipulate the CPSR. */
+u_int	SetCPSR(u_int bic, u_int eor);
+u_int	GetCPSR(void);
+#else
+/* Functions to manipulate the processor control bits in r15. */
+u_int	set_r15(u_int bic, u_int eor);
+u_int	get_r15(void);
+#endif /* __PROG32 */
 
 /*
  * Functions to manipulate cpu r13
@@ -354,13 +402,32 @@ u_int get_stackptr	__P((u_int mode));
  * Miscellany
  */
 
-int get_pc_str_offset();
+int get_pc_str_offset	__P((void));
 
 /*
  * CPU functions from locore.S
  */
 
 void cpu_reset		__P((void)) __attribute__((__noreturn__));
+
+/*
+ * Cache info variables.
+ */
+
+/* PRIMARY CACHE VARIABLES */
+int	arm_picache_size;
+int	arm_picache_line_size;
+int	arm_picache_ways;
+
+int	arm_pdcache_size;	/* and unified */
+int	arm_pdcache_line_size;
+int	arm_pdcache_ways; 
+
+int	arm_pcache_type;
+int	arm_pcache_unified;
+
+int	arm_dcache_align;
+int	arm_dcache_align_mask;
 
 #endif	/* _KERNEL */
 #endif	/* _ARM32_CPUFUNC_H_ */

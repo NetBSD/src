@@ -1,4 +1,4 @@
-/*	$NetBSD: omms.c,v 1.1.24.1 2001/09/08 21:38:32 thorpej Exp $	*/
+/*	$NetBSD: omms.c,v 1.1.24.2 2002/01/10 19:44:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -22,6 +22,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.1.24.2 2002/01/10 19:44:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,12 +95,22 @@ ommsprobe(parent, match, aux)
 	bus_space_handle_t ioh;
 	int rv;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return 0;
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return 0;
 
 	/* Map the i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, MMS_NPORTS, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, MMS_NPORTS, 0, &ioh))
 		return 0;
 
 	rv = 0;
@@ -110,8 +123,13 @@ ommsprobe(parent, match, aux)
 	bus_space_write_1(iot, ioh, MMS_ADDR, 0x87);
 
 	rv = 1;
-	ia->ia_iosize = MMS_NPORTS;
-	ia->ia_msize = 0;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = MMS_NPORTS;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
 
 out:
 	bus_space_unmap(iot, ioh, MMS_NPORTS);
@@ -130,7 +148,7 @@ ommsattach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, MMS_NPORTS, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, MMS_NPORTS, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -140,8 +158,8 @@ ommsattach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->sc_state = 0;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_PULSE,
-	    IPL_TTY, ommsintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_PULSE, IPL_TTY, ommsintr, sc);
 }
 
 int
@@ -208,7 +226,7 @@ mmsread(dev, uio, flag)
 	size_t length;
 	u_char buffer[MMS_CHUNK];
 
-	/* Block until mouse activity occured. */
+	/* Block until mouse activity occurred. */
 
 	s = spltty();
 	while (sc->sc_q.c_cc == 0) {

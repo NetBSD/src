@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.21.18.1 2001/08/03 04:11:44 lukem Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.21.18.2 2002/01/10 19:44:43 thorpej Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -35,6 +35,9 @@
  * to 80-bit temporary reals, and do with them as they please. I wanted to
  * hide most of the 387-specific things here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.21.18.2 2002/01/10 19:44:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +116,6 @@ math_emulate(info)
 		switch (prefix) {
 		case INSPREF_LOCK:
 			math_abort(info, SIGILL);
-			break;
 		case INSPREF_REPN:
 		case INSPREF_REPE:
 			break;
@@ -133,7 +135,6 @@ math_emulate(info)
 			break;
 		case -1:
 			math_abort(info,SIGSEGV);
-			break;
 		default:
 			goto done;
 		}
@@ -373,8 +374,6 @@ done:
 	case 0xf8: /* XXX */
 		printf("ffree not implemented\n\r");
 		math_abort(info,SIGILL);
-		fpop();
-		return(0);
 	case 0xf9: /* XXX */
 		fxchg(&ST(0),&ST(code & 7));
 		return(0);

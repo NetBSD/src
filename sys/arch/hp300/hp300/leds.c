@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.8.2.1 2001/09/13 01:13:35 thorpej Exp $	*/
+/*	$NetBSD: leds.c,v 1.8.2.2 2002/01/10 19:43:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,10 +79,11 @@ ledcontrol(ons, offs, togs)
 	int ons, offs, togs;
 {
 
-	__asm __volatile ("	orb	%1,%0;
-				andb	%2,%0;
-				eorb	%3,%0"
-				    : "=m" (currentleds)
-				    : "d" (ons), "d" (~offs), "d" (togs));
+	__asm __volatile (
+		"orb	%1,%0	;\n"
+		"andb	%2,%0	;\n"
+		"eorb	%3,%0"
+	    : "=m" (currentleds)
+	    : "d" (ons), "d" (~offs), "d" (togs));
 	*ledaddr = ~currentleds;
 }

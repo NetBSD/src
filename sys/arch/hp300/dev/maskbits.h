@@ -1,4 +1,4 @@
-/*	$NetBSD: maskbits.h,v 1.3 1997/03/31 07:37:28 scottr Exp $	*/
+/*	$NetBSD: maskbits.h,v 1.3.36.1 2002/01/10 19:42:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -71,7 +71,7 @@ and the number of whole longwords between the ends.
 #define FASTPUTBITS(src, x, w, pdst) \
     asm ("bfins %3,%0{%1:%2}" \
 	 : "=o" (*(char *)(pdst)) \
-	 : "di" (x), "di" (w), "d" (src), "0" (*(char *) (pdst)))
+	 : "di" (x), "di" (w), "d" (src))
 
 #define getandputrop(psrc, srcbit, dstbit, width, pdst, rop) \
 { \

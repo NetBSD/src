@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2.2.2 2001/09/13 01:13:10 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2.2.3 2002/01/10 19:37:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -37,8 +37,9 @@
 #define	_ARM_PCB_H_
 
 #include <machine/frame.h>
-#include <machine/pte.h>
 #include <machine/fp.h>
+
+#include <arm/arm32/pte.h>
 
 struct trapframe;
 

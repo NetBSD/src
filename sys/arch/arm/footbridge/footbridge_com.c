@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.1.2.1 2001/09/13 01:13:08 thorpej Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.1.2.2 2002/01/10 19:37:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -50,15 +50,18 @@
 #include <sys/termios.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <arm/conf.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>
 #include <arm/footbridge/footbridgevar.h>
+#include <arm/footbridge/footbridge.h>
 
 #include <dev/cons.h>
 
 #include "fcom.h"
 
 extern u_int dc21285_fclk;
+
 
 #ifdef DDB
 /*
@@ -100,6 +103,7 @@ struct fcom_softc {
 
 static int  fcom_probe   __P((struct device *, struct cfdata *, void *));
 static void fcom_attach  __P((struct device *, struct device *, void *));
+static void fcom_softintr __P((void *));
 
 int fcomopen __P((dev_t dev, int flag, int mode, struct proc *p));
 static int fcom_rxintr __P((void *));
@@ -543,9 +547,10 @@ fcomparam(tp, t)
 static int softint_scheduled = 0;
 
 static void
-fcom_softintr(sc)
-	struct fcom_softc *sc;
+fcom_softintr(arg)
+	void *arg;
 {
+	struct fcom_softc *sc = arg;
 	struct tty *tp = sc->sc_tty;
 	int s;
 	int loop;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.7 2000/06/29 08:53:01 mrg Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.7.4.1 2002/01/10 19:38:57 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -83,11 +83,10 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/cpu.h>
 
 irqhandler_t *irqhandlers[NIRQS];
-fiqhandler_t *fiqhandlers;
 
 int current_intr_depth;
 u_int current_mask;
@@ -105,8 +104,6 @@ extern char *_intrnames;
 
 extern void zero_page_readonly	__P((void));
 extern void zero_page_readwrite	__P((void));
-extern int fiq_setregs		__P((fiqhandler_t *));
-extern int fiq_getregs		__P((fiqhandler_t *));
 extern void set_spl_masks	__P((void));
 
 void irq_calculatemasks __P((void));
@@ -129,9 +126,6 @@ irq_init()
 		irqhandlers[loop] = NULL;
 		irqblock[loop] = 0;
 	}
-
-	/* Clear the FIQ handler */
-	fiqhandlers = NULL;
 
 	/*
 	 * Setup the irqmasks for the different Interrupt Priority Levels
@@ -483,71 +477,3 @@ stray_irqhandler(mask)
 		log(LOG_ERR, "Stray interrupt %08x%s\n", mask,
 		    stray_irqs >= 8 ? ": stopped logging" : "");
 }
-
-
-/*
- * int fiq_claim(fiqhandler_t *handler)
- *
- * Claim FIQ's and install a handler for them.
- */
-
-int
-fiq_claim(handler)
-	fiqhandler_t *handler;
-{
-	/* Fail if the FIQ's are already claimed */
-	if (fiqhandlers)
-		return(-1);
-
-	if (handler->fh_size > 0xc0)
-		return(-1);
-
-	/* Install the handler */
-	fiqhandlers = handler;
-
-	/* Now we have to actually install the FIQ handler */
-
-	/* Eventually we will copy this down but for the moment ... */
-	zero_page_readwrite();
-
-	WriteWord(0x0000003c, (u_int) handler->fh_func);
-    
-	zero_page_readonly();
-	cpu_cache_syncI_rng(0, 0x40);	/* XXX 0x3c should never be in the ic*/
-
-	/* We must now set up the FIQ registers */
-	fiq_setregs(handler);
-
-	/* Make sure that the FIQ's are enabled */
-	enable_interrupts(F32_bit);
-
-	return(0);
-}
-
-
-/*
- * int fiq_release(fiqhandler_t *handler)
- *
- * Release FIQ's and remove a handler for them.
- */
-
-int
-fiq_release(handler)
-	fiqhandler_t *handler;
-{
-	/* Fail if the handler is wrong */
-	if (fiqhandlers != handler)
-		return(-1);
-
-	/* Disable FIQ interrupts */
-	disable_interrupts(F32_bit);
-
-	/* Retrieve the FIQ registers */
-	fiq_getregs(handler);
-
-	/* Remove the handler */
-	fiqhandlers = NULL;
-	return(0);
-}
-
-/* End of irqhandler.c */

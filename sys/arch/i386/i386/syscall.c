@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10 2000/12/18 20:40:25 jdolecek Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.6.1 2002/01/10 19:44:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.6.1 2002/01/10 19:44:48 thorpej Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"

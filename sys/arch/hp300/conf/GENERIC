@@ -1,12 +1,26 @@
-#	$NetBSD: GENERIC,v 1.66.2.1 2001/09/13 01:13:35 thorpej Exp $
+# $NetBSD: GENERIC,v 1.66.2.2 2002/01/10 19:42:46 thorpej Exp $
 #
-# Generic kernel - one size fits all.
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-# Include attributes common to all hp300s
-include "arch/hp300/conf/std.hp300"
+include 	"arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.66.2.1 $"
+#ident 		"GENERIC-$Revision: 1.66.2.2 $"
 
 # Support for various CPU types
 options 	HP320
@@ -38,10 +52,10 @@ options 	COMPAT_14	# compatibility with NetBSD 1.4
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
@@ -60,9 +74,9 @@ file-system	MFS		# Memory-based filesystem
 # Filesystem options
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network filesystem server
-options 	NFS_BOOT_BOOTPARAM # use Sun bootparams for NFS boot
+options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
 
 # Networking options
 options 	INET		# Internet protocols
@@ -118,8 +132,14 @@ mainbus0	at root		# root "bus"
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
 
+# Real-time clock (not optional)
+rtc*		at intio?
+
+# Human Interface Loop
+hil*		at intio?
+
 # Frodo utility chip found on 4xx's
-frodo0		at intio?
+frodo*		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
@@ -184,6 +204,7 @@ ac*		at oscsi? target ? lun ?	# SCSI changers
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		4	# SLIP network interfaces
 pseudo-device	ppp		4	# PPP network interfaces
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
@@ -196,5 +217,5 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernel generator

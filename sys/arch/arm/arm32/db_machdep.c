@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3.2.1 2001/09/13 01:13:06 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3.2.2 2002/01/10 19:37:48 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,48 +33,11 @@
 #include <sys/vnode.h>
 #include <sys/systm.h>
 
-#include <machine/db_machdep.h>
+#include <arm/arm32/db_machdep.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
-
-#include <machine/intr.h>
-
-void
-db_show_intrchain_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-#ifndef NEWINTR
-	int loop;
-	struct irqhandler *ptr;
-	char *name;
-	db_expr_t offset;
-
-	for (loop = 0; loop < NIRQS; ++loop) {
-		ptr = irqhandlers[loop];
-		if (ptr) {
-			db_printf("IRQ %d\n", loop);
-
-			while (ptr) {
-				db_printf("  %-13s %d ", ptr->ih_name, ptr->ih_level);
-				db_find_sym_and_offset((u_int)ptr->ih_func, &name, &offset);
-				if (name == NULL)
-					name = "?";
-
-				db_printf("%s(", name);
-				db_printsym((u_int)ptr->ih_func, DB_STGY_PROC,
-				    db_printf);
-				db_printf(") %08x\n", (u_int)ptr->ih_arg);
-				ptr = ptr->ih_next;
-			}
-		}
-	}
-#endif	/* NEWINTR */
-}
 
 
 void

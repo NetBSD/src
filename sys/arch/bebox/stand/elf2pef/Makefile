@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1999/06/28 01:03:55 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.1.16.1 2002/01/10 19:40:50 thorpej Exp $
 
 PROG=	elf2pef
 CPPFLAGS=	-I${.CURDIR}
-MKMAN=	no
+NOMAN=	# defined
 
 .include <bsd.prog.mk>

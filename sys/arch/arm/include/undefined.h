@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.2 2001/03/11 16:18:40 bjh21 Exp $	*/
+/*	$NetBSD: undefined.h,v 1.2.4.1 2002/01/10 19:37:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -77,6 +77,9 @@ struct undefined_handler {
  * removed.
  */
 void install_coproc_handler_static __P((int, struct undefined_handler *));
+
+/* Calls up to undefined.c from trap handlers */
+void undefinedinstruction(struct trapframe *);
 
 #endif
 

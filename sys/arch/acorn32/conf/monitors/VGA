@@ -1,0 +1,171 @@
+# Modefile written by !MakeModes version 0.04 (30-Sep-93)
+
+file_format:1
+monitor_title:Generic VGAPlus
+
+# 320 x 250 (70Hz)
+startmode
+mode_name:320 x 250
+x_res:320
+y_res:250
+pixel_rate:12587
+h_timings:48,22,0,320,0,10
+v_timings:2,109,0,250,0,88
+sync_pol:2
+endmode
+
+# 320 x 256 (70Hz)
+startmode
+mode_name:320 x 256
+x_res:320
+y_res:256
+pixel_rate:12587
+h_timings:48,22,0,320,0,10
+v_timings:2,106,0,256,0,85
+sync_pol:2
+endmode
+
+# 320 x 480 (60Hz)
+startmode
+mode_name:320 x 480
+x_res:320
+y_res:480
+pixel_rate:12587
+h_timings:48,22,0,320,0,10
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 360 x 480 (60Hz)
+startmode
+mode_name:360 x 480
+x_res:360
+y_res:480
+pixel_rate:16783
+h_timings:64,62,0,360,0,46
+v_timings:2,32,0,480,0,11
+sync_pol:0
+endmode
+
+# 640 x 200 (70Hz)
+startmode
+mode_name:640 x 200
+x_res:640
+y_res:200
+pixel_rate:25175
+h_timings:96,46,0,640,0,18
+v_timings:2,134,0,200,0,113
+sync_pol:2
+endmode
+
+# 640 x 250 (70Hz)
+startmode
+mode_name:640 x 250
+x_res:640
+y_res:250
+pixel_rate:25175
+h_timings:96,46,0,640,0,18
+v_timings:2,109,0,250,0,88
+sync_pol:2
+endmode
+
+# 640 x 256 (70Hz)
+startmode
+mode_name:640 x 256
+x_res:640
+y_res:256
+pixel_rate:25175
+h_timings:96,46,0,640,0,18
+v_timings:2,106,0,256,0,85
+sync_pol:2
+endmode
+
+# 640 x 352 (70Hz)
+startmode
+mode_name:640 x 352
+x_res:640
+y_res:352
+pixel_rate:25175
+h_timings:96,46,0,640,0,18
+v_timings:2,58,0,352,0,37
+sync_pol:2
+endmode
+
+# 640 x 480 (60Hz)
+startmode
+mode_name:640 x 480
+x_res:640
+y_res:480
+pixel_rate:25175
+h_timings:96,46,0,640,0,18
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 800 x 600 (56Hz)
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:36000
+h_timings:72,114,14,800,14,10
+v_timings:2,22,0,600,0,1
+sync_pol:0
+endmode
+
+# 800 x 600 (60Hz)
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:40000
+h_timings:128,64,24,800,24,16
+v_timings:4,23,0,600,0,1
+sync_pol:0
+endmode
+
+# 1024 x 768 (60Hz)
+startmode
+mode_name:1024 x 768
+x_res:1024
+y_res:768
+pixel_rate:65000
+h_timings:136,142,18,1024,18,6
+v_timings:6,29,0,768,0,3
+sync_pol:3
+endmode
+
+# 1280 x 480 (60Hz)
+startmode
+mode_name:1280 x 480
+x_res:1280
+y_res:480
+pixel_rate:50350
+h_timings:192,92,0,1280,0,36
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 1600 x 600 (56Hz)
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:72000
+h_timings:144,236,20,1600,20,28
+v_timings:2,22,0,600,0,1
+sync_pol:0
+endmode
+
+# 1600 x 600 (60Hz)
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:80000
+h_timings:256,130,46,1600,46,34
+v_timings:4,23,0,600,0,1
+sync_pol:0
+endmode
+
+# End

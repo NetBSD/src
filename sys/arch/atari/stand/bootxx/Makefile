@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.7.16.1 2001/09/13 01:13:20 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7.16.2 2002/01/10 19:40:10 thorpej Exp $
+
+NOMAN=	# defined
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
 
 PROG=	bootxx
-SRCS=	bootxx.c bsdstart.s filesystem.c
-MKMAN=	no
+SRCS=	bootxx.c filesystem.c
 
 STRIPFLAG=
 BINDIR=	/usr/mdec
@@ -13,7 +14,7 @@ BINMODE=${NONBINMODE}
 
 LIBCRT0=
 
-DEFS=	-D_STANDALONE
+DEFS=	-D_STANDALONE  -DHEAP_VARIABLE
 INCL=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
 
 CPPFLAGS+=	${DEFS} ${INCL}
@@ -50,7 +51,7 @@ beforeinstall:
 		size ${PROG};					\
 		false;						\
 	 fi;							\
-	objcopy -O binary ${PROG} ${PROG}XX
+	${OBJCOPY} -O binary ${PROG} ${PROG}XX
 	@cat ${PROG}XX /dev/zero | dd of=${PROG}X		\
 			bs=1 count=6656  2>/dev/null
 	@mv -f ${PROG} ${PROG}XX

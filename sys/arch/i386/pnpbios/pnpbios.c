@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.23.2.1 2001/09/13 01:13:51 thorpej Exp $ */
+/* $NetBSD: pnpbios.c,v 1.23.2.2 2002/01/10 19:45:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -39,6 +39,9 @@
  * I had no platforms to test on so someone else will need to finish
  * it.  I didn't want to toss the code though
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.23.2.2 2002/01/10 19:45:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +143,7 @@ static int	pnpbios_submatch	__P((struct device *parent,
     struct cfdata *match, void *aux));
 extern int	pnpbioscall		__P((int));
 
+static void	pnpbios_enumerate(struct pnpbios_softc *sc);
 static int	pnpbios_update_dock_status __P((struct pnpbios_softc *sc));
 
 /* scanning functions */
@@ -287,16 +291,14 @@ pnpbios_attach(parent, self, aux)
 {
 	struct pnpbios_softc *sc = (struct pnpbios_softc *)self;
 	struct pnpbios_attach_args *paa = aux;
-	struct pnpdevnode *dn;
 	caddr_t p;
 	unsigned int codepbase, datapbase, evaddrp;
 	caddr_t codeva, datava;
 	extern char pnpbiostramp[], epnpbiostramp[];
-	int res, num, i, size, idx;
+	int res, num, size;
 #ifdef PNPBIOSEVENTS
 	int evtype;
 #endif
-	u_int8_t *buf;
 
 	pnpbios_softc = sc;
 	sc->sc_ic = paa->paa_ic;
@@ -362,7 +364,6 @@ pnpbios_attach(parent, self, aux)
 	}
 
 	printf(": nodes %d, max len %d\n", num, size);
-	buf = malloc(size, M_DEVBUF, M_NOWAIT);
 
 #ifdef PNPBIOSEVENTS
 	EDPRINTF(("%s: event flag vaddr 0x%08x\n", sc->sc_dev.dv_xname,
@@ -372,6 +373,44 @@ pnpbios_attach(parent, self, aux)
 	/* Set initial dock status. */
 	sc->sc_docked = -1;
 	(void) pnpbios_update_dock_status(sc);
+
+	/* Enumerate the device nodes. */
+	pnpbios_enumerate(sc);
+
+#ifdef PNPBIOSEVENTS
+	/* if we have an event mechnism queue a thread to deal with them */
+	/* XXX need to update with irq if we do that */
+	if (evtype != PNP_IC_CONTROL_EVENT_NONE) {
+		if (evtype != PNP_IC_CONTROL_EVENT_POLL || sc->sc_evaddr) {
+			sc->sc_threadrun = 1;
+			config_pending_incr();
+			kthread_create(pnpbios_create_event_thread, sc);
+		}
+	}
+#endif
+}
+
+static void
+pnpbios_enumerate(sc)
+	struct pnpbios_softc *sc;
+{
+	int res, num, i, size, idx;
+	struct pnpdevnode *dn;
+	u_int8_t *buf;
+
+	res = pnpbios_getnumnodes(&num, &size);
+	if (res) {
+		printf("%s: pnpbios_getnumnodes: error %d\n",
+		    sc->sc_dev.dv_xname, res);
+		return;
+	}
+
+	buf = malloc(size, M_DEVBUF, M_NOWAIT);
+	if (buf == NULL) {
+		printf("%s: unable to allocate node buffer\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	/* 
 	 * Loop through the list of indices getting data and match/attaching
@@ -437,18 +476,6 @@ pnpbios_attach(parent, self, aux)
 		printf("%s: last index %d\n", sc->sc_dev.dv_xname, idx);
 
 	free(buf, M_DEVBUF);
-
-#ifdef PNPBIOSEVENTS
-	/* if we have an event mechnism queue a thread to deal with them */
-	/* XXX need to update with irq if we do that */
-	if (evtype != PNP_IC_CONTROL_EVENT_NONE) {
-		if (evtype != PNP_IC_CONTROL_EVENT_POLL || sc->sc_evaddr) {
-			sc->sc_threadrun = 1;
-			config_pending_incr();
-			kthread_create(pnpbios_create_event_thread, sc);
-		}
-	}
-#endif
 }
 
 static int

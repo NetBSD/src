@@ -1,0 +1,12 @@
+#	$NetBSD: std.acorn32,v 1.1.6.2 2002/01/10 19:36:05 thorpej Exp $
+#
+# standard NetBSD/arm32 options
+
+machine	acorn32 arm
+
+options 	EXEC_AOUT
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32

@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.21 2001/04/25 17:53:13 bouyer Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.21.2.1 2002/01/10 19:39:24 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -50,6 +50,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <arm/fiq.h>
+
 #include <dev/cons.h>
 
 #include <machine/db_machdep.h>
@@ -59,10 +61,9 @@
 #include <machine/frame.h>
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
-#include <machine/pte.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 
 #include "opt_ipkdb.h"
 
@@ -79,6 +80,7 @@
 
 #if NWD > 0 || NSD > 0 || NCD > 0
 #include <dev/ata/atavar.h>
+#include <dev/ata/wdvar.h>
 #endif
 #if NSD > 0 || NCD > 0
 #include <dev/scsipi/scsi_all.h>
@@ -105,9 +107,6 @@ extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
 extern void consinit		__P((void));
-#ifdef	DDB
-extern void db_machine_init     __P((void));
-#endif
 int	ofbus_match __P((struct device *, struct cfdata *, void *));
 void	ofbus_attach __P((struct device *, struct device *, void *));
 
@@ -191,6 +190,10 @@ cpu_reboot(howto, bootstr)
  * Return the new stackptr (va) for the SVC frame.
  *
  */
+
+struct fiqhandler shark_fiqhandler;
+struct fiqregs shark_fiqregs;
+
 vm_offset_t
 initarm(ofw_handle)
 	ofw_handle_t ofw_handle;
@@ -199,9 +202,7 @@ initarm(ofw_handle)
 	vm_offset_t  isa_io_physaddr, isa_mem_physaddr;
 	vm_offset_t  isa_io_virtaddr, isa_mem_virtaddr;
 	vm_offset_t  isadmaphysbufs;
-	fiqhandler_t fiqhandler;
-	extern void  shark_fiq     __P((void));
-	extern void  shark_fiq_end __P((void));
+	extern char shark_fiq[], shark_fiq_end[];
 
 	/* Don't want to get hit with interrupts 'til we're ready. */
 	(void)disable_interrupts(I32_bit | F32_bit);
@@ -295,29 +296,35 @@ initarm(ofw_handle)
 	undefined_init();
 
 	/* Now for the SHARK-specific part of the FIQ set-up */
-	fiqhandler.fh_func = shark_fiq;
-	fiqhandler.fh_size = (char *)shark_fiq_end - (char *)shark_fiq;
-	fiqhandler.fh_mask = 0x01; /* XXX ??? */
-	fiqhandler.fh_r8   = isa_io_virtaddr;
-	fiqhandler.fh_r9   = 0; /* no routine right now */
-	fiqhandler.fh_r10  = 0; /* no arg right now */
-	fiqhandler.fh_r11  = 0; /* scratch */
-	fiqhandler.fh_r12  = 0; /* scratch */
-	fiqhandler.fh_r13  = 0; /* must set a stack when r9 is set! */
+	shark_fiqhandler.fh_func = shark_fiq;
+	shark_fiqhandler.fh_size = shark_fiq_end - shark_fiq;
+	shark_fiqhandler.fh_flags = 0;
+	shark_fiqhandler.fh_regs = &shark_fiqregs;
 
-	if (fiq_claim(&fiqhandler))
+	shark_fiqregs.fr_r8   = isa_io_virtaddr;
+	shark_fiqregs.fr_r9   = 0; /* no routine right now */
+	shark_fiqregs.fr_r10  = 0; /* no arg right now */
+	shark_fiqregs.fr_r11  = 0; /* scratch */
+	shark_fiqregs.fr_r12  = 0; /* scratch */
+	shark_fiqregs.fr_r13  = 0; /* must set a stack when r9 is set! */
+
+	if (fiq_claim(&shark_fiqhandler))
 		panic("Cannot claim FIQ vector.\n");
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
-		struct exec *kernexec = (struct exec *)KERNEL_BASE;
+		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
 		extern char *esym;
 
 		ddb_init(kernexec->a_syms, &end, esym);
 	}
+#endif /* __ELF__ */
+
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -436,11 +443,11 @@ ofw_device_register(struct device *dev, void *aux)
 #endif
 #if NWD > 0
 		if (!strcmp(cd_name, "wd")) {
-			struct ata_atapi_attach *aa = aux;
+			struct ata_device *adev = aux;
 			char *cp = strchr(boot_component, '@');
 			if (cp != NULL
-			    && aa->aa_drv_data->drive == strtoul(cp+1, NULL, 16)
-			    && aa->aa_channel == 0) {
+			    && adev->adev_drv_data->drive == strtoul(cp+1, NULL, 16)
+			    && adev->adev_channel == 0) {
 				booted_device = dev;
 				return;
 			}

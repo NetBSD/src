@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.6 1998/10/06 20:50:16 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6.26.1 2002/01/10 19:43:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,14 +37,7 @@
  */
 
 #ifdef _KERNEL
-extern	int conscode;			/* select code of console device */
-extern	int consinit_active;		/* hint for drivers */
-extern	caddr_t conaddr;		/* KVA of console device */
-extern	int convasize;			/* size of mapping at conaddr */
-extern	int conforced;			/* console has been forced */
-
 void	hp300_cninit __P((void));
-void	console_scan __P((int (*)(int, caddr_t, void *), void *));
 caddr_t	iomap __P((caddr_t, int));
 void	iounmap __P((caddr_t, int));
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2 2001/06/09 10:29:16 chris Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2.2.1 2002/01/10 19:41:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,9 @@
 
 #include "isadma.h"
 
+/* prototypes */
+static void isa_icu_init __P((void));
+
 struct arm32_isa_chipset isa_chipset_tag;
 
 void isa_strayintr __P((int));
@@ -125,7 +128,7 @@ u_int isa_intr_count[ICU_LEN];
  * Fill in default interrupt table (in case of spuruious interrupt
  * during configuration of kernel, setup interrupt control unit
  */
-void
+static void
 isa_icu_init(void)
 {
 	/* initialize 8259's */

@@ -1,4 +1,4 @@
-*	$NetBSD: decbin.sa,v 1.2 1994/10/26 07:48:59 cgd Exp $
+*	$NetBSD: decbin.sa,v 1.2.46.1 2002/01/10 19:45:24 thorpej Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -95,7 +95,7 @@
 *	in an inex2 exception.  If so, set inex1 in the fpsr and 
 *	check if the inex1 exception is enabled.  If so, set d7 upper
 *	word to $0100.  This will signal unimp.sa that an enabled inex1
-*	exception occured.  Unimp will fix the stack.
+*	exception occurred.  Unimp will fix the stack.
 *	
 
 DECBIN    IDNT    2,1 Motorola 040 Floating Point Software Package
@@ -255,7 +255,7 @@ nextlw:
 *
 m_sign:
 	btst	#31,(a0)	;test sign of the mantissa
-	beq.b	ap_st_z		;if clear, go to append/strip zeros
+	beq.b	short_ap_st_z	;if clear, go to append/strip zeros
 	fneg.x	fp0		;if set, negate fp0
 	
 *
@@ -309,11 +309,12 @@ m_sign:
 * This section handles a positive adjusted exponent.
 *
 ap_st_z:
+short_ap_st_z:
 	move.l	L_SCR1(a6),d1	;load expA for range test
 	cmp.l	#27,d1		;test is with 27
 	ble.w	pwrten		;if abs(expA) <28, skip ap/st zeros
 	btst	#30,(a0)	;check sign of exp
-	bne.b	ap_st_n		;if neg, go to neg side
+	bne.b	short_ap_st_n	;if neg, go to neg side
 	clr.l	d1		;zero count reg
 	move.l	(a0),d4		;load lword 1 to d4
 	bfextu	d4{28:4},d0	;get M16 in d0
@@ -361,11 +362,12 @@ ap_p_en:
 	tst.l	d0		;check if d0 is zero
 	bne.b	ap_p_el		;if not, get next bit
 	fmul.x	fp1,fp0		;mul mantissa by 10**(no_bits_shifted)
-	bra.b	pwrten		;go calc pwrten
+	bra.b	short_pwrten	;go calc pwrten
 *
 * This section handles a negative adjusted exponent.
 *
 ap_st_n:
+short_ap_st_n:
 	clr.l	d1		;clr counter
 	moveq.l	#2,d5		;set up d5 to point to lword 3
 	move.l	(a0,d5.L*4),d4	;get lword 3
@@ -454,6 +456,7 @@ ap_n_en:
 *
 *
 pwrten:
+short_pwrten:
 	move.l	USER_FPCR(a6),d3 ;get user's FPCR
 	bfextu	d3{26:2},d2	;isolate rounding mode bits
 	move.l	(a0),d4		;reload 1st bcd word to d4
