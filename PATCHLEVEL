@@ -283,3 +283,7 @@ panic the client.  Fix this.
 
 [ dmesg(8) ] Don't get stuck in an infinite loop if the msgbuf index is
 0 or 1, from enami tsugutomo <enami@ba2.so-net.or.jp>, PR #3285.
+
+[ kernel/i386 ] Fix the 3COM `sniper bug', which could cause packets to
+be accepted that were not sent to the local host, in turn causing bogus
+redirects and/or ICMP unreachables.
