@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 1998/07/17 02:33:13 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.2.2.1 1998/07/30 14:03:55 eeh Exp $
 
 #
 # Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -81,6 +81,7 @@ include <sparc64/dev/fdvar.h>
 # general constants
 define	BSD		BSD
 define	USRSTACK	USRSTACK
+define	PADDRT		sizeof(paddr_t)
 
 # proc fields and values
 define	P_ADDR		offsetof(struct proc, p_addr)

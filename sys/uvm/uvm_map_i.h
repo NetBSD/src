@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.6 1998/03/09 00:58:57 mrg Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.6.2.1 1998/07/30 14:04:13 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -92,7 +92,7 @@
 MAP_INLINE vm_map_t
 uvm_map_create(pmap, min, max, pageable)
 	pmap_t pmap;
-	vm_offset_t min, max;
+	vaddr_t min, max;
 	boolean_t pageable;
 {
 	vm_map_t result;
@@ -112,7 +112,7 @@ uvm_map_create(pmap, min, max, pageable)
 MAP_INLINE void
 uvm_map_setup(map, min, max, pageable)
 	vm_map_t map;
-	vm_offset_t min, max;
+	vaddr_t min, max;
 	boolean_t pageable;
 {
 
@@ -151,7 +151,7 @@ uvm_map_setup(map, min, max, pageable)
 MAP_INLINE int
 uvm_unmap(map, start, end, mainonly)
 	vm_map_t map;
-	vm_offset_t start,end;
+	vaddr_t start,end;
 	boolean_t mainonly;
 {
 	int result;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.45 1998/03/01 02:22:29 fvdl Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.45.2.1 1998/07/30 14:04:04 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -285,8 +285,8 @@ dosetrlimit(p, which, limp)
 		 */
 		limp->rlim_cur = round_page(limp->rlim_cur);
 		if (limp->rlim_cur != alimp->rlim_cur) {
-			vm_offset_t addr;
-			vm_size_t size;
+			vaddr_t addr;
+			vsize_t size;
 			vm_prot_t prot;
 
 			if (limp->rlim_cur > alimp->rlim_cur) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_sbus.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: isp_sbus.c,v 1.1.1.1.2.1 1998/07/30 14:03:51 eeh Exp $	*/
 
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -81,7 +81,7 @@ struct isp_sbussoftc {
 	volatile u_char *sbus_reg;
 	int sbus_node;
 	int sbus_pri;
-	vm_offset_t sbus_kdma_allocs[RQUEST_QUEUE_LEN];
+	vaddr_t sbus_kdma_allocs[RQUEST_QUEUE_LEN];
 };
 
 
@@ -260,7 +260,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	u_int8_t optr; 
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	vm_offset_t kdvma;
+	vaddr_t kdvma;
 	int dosleep = (xs->flags & SCSI_NOSLEEP) != 0;
 
 	if (xs->datalen == 0) {
@@ -275,16 +275,16 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		/* NOTREACHED */
 	}
 	if (CPU_ISSUN4M) {
-		kdvma = (vm_offset_t)
+		kdvma = (vaddr_t)
 			kdvma_mapin((caddr_t)xs->data, xs->datalen, dosleep);
-		if (kdvma == (vm_offset_t) 0) {
+		if (kdvma == (vaddr_t) 0) {
 			return (1);
 		}
 	} else {
-		kdvma = (vm_offset_t) xs->data;
+		kdvma = (vaddr_t) xs->data;
 	}
 
-	if (sbc->sbus_kdma_allocs[rq->req_handle] != (vm_offset_t) 0) {
+	if (sbc->sbus_kdma_allocs[rq->req_handle] != (vaddr_t) 0) {
 		panic("%s: kdma handle already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
@@ -307,7 +307,7 @@ isp_sbus_dmateardown(isp, xs, handle)
 	u_int32_t handle;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	vm_offset_t kdvma;
+	vaddr_t kdvma;
 
 	if (xs->flags & SCSI_DATA_IN) {
 		cpuinfo.cache_flush(xs->data, xs->datalen - xs->resid);
@@ -318,13 +318,13 @@ isp_sbus_dmateardown(isp, xs, handle)
 			isp->isp_name, handle);
 		/* NOTREACHED */
 	}
-	if (sbc->sbus_kdma_allocs[handle] == (vm_offset_t) 0) {
+	if (sbc->sbus_kdma_allocs[handle] == (vaddr_t) 0) {
 		panic("%s: kdma handle not already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
 	kdvma = sbc->sbus_kdma_allocs[handle];
-	sbc->sbus_kdma_allocs[handle] = (vm_offset_t) 0;
+	sbc->sbus_kdma_allocs[handle] = (vaddr_t) 0;
 	if (CPU_ISSUN4M) {
-		dvma_mapout(kdvma, (vm_offset_t) xs->data, xs->datalen);
+		dvma_mapout(kdvma, (vaddr_t) xs->data, xs->datalen);
 	}
 }

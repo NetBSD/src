@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.10 1998/07/24 20:28:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.10.2.1 1998/07/30 14:04:11 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -167,7 +167,7 @@ vm_map_t kernel_map = NULL;
  * local functions
  */
 
-static int uvm_km_get __P((struct uvm_object *, vm_offset_t, 
+static int uvm_km_get __P((struct uvm_object *, vaddr_t, 
 													 vm_page_t *, int *, int, vm_prot_t, int, int));
 /*
  * local data structues
@@ -201,13 +201,13 @@ static struct uvm_pagerops km_pager = {
 static int
 uvm_km_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	struct uvm_object *uobj;
-	vm_offset_t offset;
+	vaddr_t offset;
 	struct vm_page **pps;
 	int *npagesp;
 	int centeridx, advice, flags;
 	vm_prot_t access_type;
 {
-	vm_offset_t current_offset;
+	vaddr_t current_offset;
 	vm_page_t ptmp;
 	int lcv, gotpages, maxpages;
 	boolean_t done;
@@ -417,9 +417,9 @@ uvm_km_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 
 void
 uvm_km_init(start, end)
-	vm_offset_t start, end;
+	vaddr_t start, end;
 {
-	vm_offset_t base = VM_MIN_KERNEL_ADDRESS;
+	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
 
 	/*
 	 * first, init kernel memory objects.
@@ -479,8 +479,8 @@ uvm_km_init(start, end)
 struct vm_map *
 uvm_km_suballoc(map, min, max, size, pageable, fixed, submap)
 	struct vm_map *map;
-	vm_offset_t *min, *max;		/* OUT, OUT */
-	vm_size_t size;
+	vaddr_t *min, *max;		/* OUT, OUT */
+	vsize_t size;
 	boolean_t pageable;
 	boolean_t fixed;
 	struct vm_map *submap;
@@ -541,11 +541,11 @@ uvm_km_suballoc(map, min, max, size, pageable, fixed, submap)
 void
 uvm_km_pgremove(uobj, start, end)
 	struct uvm_object *uobj;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 {
 	boolean_t by_list, is_aobj;
 	struct vm_page *pp, *ppnext;
-	vm_offset_t curoff;
+	vaddr_t curoff;
 	UVMHIST_FUNC("uvm_km_pgremove"); UVMHIST_CALLED(maphist);
 
 	simple_lock(&uobj->vmobjlock);		/* lock object */
@@ -650,15 +650,15 @@ loop_by_list:
  *	lock the map
  */
 
-vm_offset_t
+vaddr_t
 uvm_km_kmemalloc(map, obj, size, flags)
 	vm_map_t map;
 	struct uvm_object *obj;
-	vm_size_t size;
+	vsize_t size;
 	int flags;
 {
-	vm_offset_t kva, loopva;
-	vm_offset_t offset;
+	vaddr_t kva, loopva;
+	vaddr_t offset;
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_km_kmemalloc"); UVMHIST_CALLED(maphist);
 
@@ -763,8 +763,8 @@ uvm_km_kmemalloc(map, obj, size, flags)
 void
 uvm_km_free(map, addr, size)
 	vm_map_t map;
-	vm_offset_t addr;
-	vm_size_t size;
+	vaddr_t addr;
+	vsize_t size;
 {
 
 	uvm_unmap(map, trunc_page(addr), round_page(addr+size), 1);
@@ -780,8 +780,8 @@ uvm_km_free(map, addr, size)
 void
 uvm_km_free_wakeup(map, addr, size)
 	vm_map_t map;
-	vm_offset_t addr;
-	vm_size_t size;
+	vaddr_t addr;
+	vsize_t size;
 {
 	vm_map_entry_t dead_entries;
 
@@ -801,13 +801,13 @@ uvm_km_free_wakeup(map, addr, size)
  * => we can sleep if needed
  */
 
-vm_offset_t
+vaddr_t
 uvm_km_alloc1(map, size, zeroit)
 	vm_map_t map;
-	vm_size_t size;
+	vsize_t size;
 	boolean_t zeroit;
 {
-	vm_offset_t kva, loopva, offset;
+	vaddr_t kva, loopva, offset;
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_km_alloc1"); UVMHIST_CALLED(maphist);
 
@@ -903,12 +903,12 @@ uvm_km_alloc1(map, size, zeroit)
  * => memory is not allocated until fault time
  */
 
-vm_offset_t
+vaddr_t
 uvm_km_valloc(map, size)
 	vm_map_t map;
-	vm_size_t size;
+	vsize_t size;
 {
-	vm_offset_t kva;
+	vaddr_t kva;
 	UVMHIST_FUNC("uvm_km_valloc"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x)", map, size, 0,0);
@@ -944,12 +944,12 @@ uvm_km_valloc(map, size)
  *    is larger than map (in which case we return 0)
  */
 
-vm_offset_t
+vaddr_t
 uvm_km_valloc_wait(map, size)
 	vm_map_t map;
-	vm_size_t size;
+	vsize_t size;
 {
-	vm_offset_t kva;
+	vaddr_t kva;
 	UVMHIST_FUNC("uvm_km_valloc_wait"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x)", map, size, 0,0);
@@ -1001,12 +1001,12 @@ uvm_km_valloc_wait(map, size)
  * => if the pmap specifies an alternate mapping method, we use it.
  */
 
-vm_offset_t
+vaddr_t
 uvm_km_alloc_poolpage()
 {
 #if defined(PMAP_MAP_POOLPAGE)
 	struct vm_page *pg;
-	vm_offset_t va;
+	vaddr_t va;
 
 	pg = uvm_pagealloc(NULL, 0, NULL);
 	if (pg == NULL)
@@ -1016,7 +1016,7 @@ uvm_km_alloc_poolpage()
 		uvm_pagefree(pg);
 	return (va);
 #else
-	vm_offset_t va;
+	vaddr_t va;
 	int s;
 
 	s = splimp();
@@ -1035,10 +1035,10 @@ uvm_km_alloc_poolpage()
 
 void
 uvm_km_free_poolpage(addr)
-	vm_offset_t addr;
+	vaddr_t addr;
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
-	vm_offset_t pa;
+	paddr_t pa;
 
 	pa = PMAP_UNMAP_POOLPAGE(addr);
 	uvm_pagefree(PHYS_TO_VM_PAGE(pa));

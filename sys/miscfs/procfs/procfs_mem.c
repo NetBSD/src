@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.18 1998/02/10 14:10:35 mrg Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.18.2.1 1998/07/30 14:04:06 eeh Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -84,19 +84,19 @@ procfs_rwmem(p, uio)
 	do {
 		vm_map_t map, tmap;
 		vm_object_t object;
-		vm_offset_t kva;
-		vm_offset_t uva;
+		vaddr_t kva;
+		vaddr_t uva;
 		int page_offset;		/* offset into page */
-		vm_offset_t pageno;		/* page number */
+		vaddr_t pageno;		/* page number */
 		vm_map_entry_t out_entry;
 		vm_prot_t out_prot;
 		vm_page_t m;
 		boolean_t wired, single_use;
-		vm_offset_t off;
+		vaddr_t off;
 		u_int len;
 		int fix_prot;
 
-		uva = (vm_offset_t) uio->uio_offset;
+		uva = (vaddr_t) uio->uio_offset;
 		if (uva > VM_MAXUSER_ADDRESS) {
 			error = 0;
 			break;
@@ -312,7 +312,7 @@ procfs_findtextvp(p)
 {
 	int error;
 	vm_object_t object;
-	vm_offset_t pageno;		/* page number */
+	vaddr_t pageno;		/* page number */
 
 	/* find a vnode pager for the user address space */
 
@@ -323,7 +323,7 @@ procfs_findtextvp(p)
 		vm_map_entry_t out_entry;
 		vm_prot_t out_prot;
 		boolean_t wired, single_use;
-		vm_offset_t off;
+		vaddr_t off;
 
 		map = &p->p_vmspace->vm_map;
 		error = vm_map_lookup(&map, pageno,

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.13 1998/07/24 18:46:02 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.13.2.1 1998/07/30 14:04:16 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1680,7 +1680,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	daddr_t startblk;
 	struct swapbuf *sbp;
 	struct	buf *bp;
-	vm_offset_t kva;
+	vaddr_t kva;
 	int	result, s, waitf, pflag;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
@@ -1858,7 +1858,7 @@ uvm_swap_aiodone(aio)
 	/* XXX it does with GCC */
 	struct vm_page *pps[MAXBSIZE/PAGE_SIZE];
 	int lcv, s;
-	vm_offset_t addr;
+	vaddr_t addr;
 	UVMHIST_FUNC("uvm_swap_aiodone"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "done with aio %p", aio, 0, 0, 0);

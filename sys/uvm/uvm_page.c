@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.12 1998/07/08 04:28:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.12.2.1 1998/07/30 14:04:14 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -109,8 +109,8 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  * and pmap_startup here also uses them internally.
  */
 
-static vm_offset_t      virtual_space_start;
-static vm_offset_t      virtual_space_end;
+static vaddr_t      virtual_space_start;
+static vaddr_t      virtual_space_end;
 
 /*
  * we use a hash table with only one bucket during bootup.  we will
@@ -212,18 +212,17 @@ uvm_pageremove(pg)
 
 void
 uvm_page_init(kvm_startp, kvm_endp)
-	vm_offset_t *kvm_startp, *kvm_endp;
+	vaddr_t *kvm_startp, *kvm_endp;
 {
 	int freepages, pagecount;
 	vm_page_t pagearray;
 	int lcv, n, i;  
-	vm_offset_t paddr;
+	paddr_t paddr;
 
 
 	/*
 	 * step 1: init the page queues and page queue locks
 	 */
-
 	for (lcv = 0; lcv < VM_NFREELIST; lcv++)
 	  TAILQ_INIT(&uvm.page_free[lcv]);
 	TAILQ_INIT(&uvm.page_active);
@@ -370,12 +369,12 @@ uvm_setpagesize()
  * uvm_pageboot_alloc: steal memory from physmem for bootstrapping
  */
 
-vm_offset_t
+vaddr_t
 uvm_pageboot_alloc(size)
-	vm_size_t size;
+	vsize_t size;
 {
 #if defined(PMAP_STEAL_MEMORY)
-	vm_offset_t addr;
+	vaddr_t addr;
 
 	/* 
 	 * defer bootstrap allocation to MD code (it may want to allocate 
@@ -390,7 +389,8 @@ uvm_pageboot_alloc(size)
 
 #else /* !PMAP_STEAL_MEMORY */
 
-	vm_offset_t addr, vaddr, paddr;
+	vaddr_t addr, vaddr;
+	paddr_t paddr;
 
 	/* round to page size */
 	size = round_page(size);
@@ -434,7 +434,6 @@ uvm_pageboot_alloc(size)
 #endif
 
 	}
-
 	return(addr);
 #endif	/* PMAP_STEAL_MEMORY */
 }
@@ -452,7 +451,7 @@ uvm_pageboot_alloc(size)
 
 boolean_t
 uvm_page_physget(paddrp)
-	vm_offset_t *paddrp;
+	paddr_t *paddrp;
 {
 	int lcv, x;
 
@@ -550,10 +549,11 @@ uvm_page_physget(paddrp)
 
 void
 uvm_page_physload(start, end, avail_start, avail_end, free_list)
-	vm_offset_t start, end, avail_start, avail_end;
+	vaddr_t start, end, avail_start, avail_end;
 	int free_list;
 {
-	int preload, lcv, npages;
+	int preload, lcv;
+	psize_t npages;
 	struct vm_page *pgs;
 	struct vm_physseg *ps;
 
@@ -592,7 +592,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 		panic("vm_page_physload: tried to add RAM after vm_mem_init");
 #else
 		/* XXXCDC: need some sort of lockout for this case */
-		vm_offset_t paddr;
+		paddr_t paddr;
 		npages = end - start;  /* # of pages */
 		MALLOC(pgs, struct vm_page *, sizeof(struct vm_page) * npages,
 					 M_VMPAGE, M_NOWAIT);
@@ -815,7 +815,7 @@ uvm_page_physdump()
 struct vm_page *
 uvm_pagealloc_strat(obj, off, anon, strat, free_list)
 	struct uvm_object *obj;
-	vm_offset_t off;
+	vaddr_t off;
 	struct vm_anon *anon;
 	int strat, free_list;
 {
@@ -941,7 +941,7 @@ void
 uvm_pagerealloc(pg, newobj, newoff)
 	struct vm_page *pg;
 	struct uvm_object *newobj;
-	vm_offset_t newoff;
+	vaddr_t newoff;
 {
 	/*
 	 * remove it from the old object

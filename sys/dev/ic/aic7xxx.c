@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.29 1998/04/16 07:12:43 leo Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.29.2.1 1998/07/30 14:04:00 eeh Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -166,9 +166,9 @@
 #endif
 #ifdef alpha		/* XXX */
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
-extern vm_offset_t alpha_XXX_dmamap(vm_offset_t);
+extern paddr_t alpha_XXX_dmamap(vaddr_t);
 #undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t) va)
+#define	vtophys(va)	alpha_XXX_dmamap((vaddr_t) va)
 #endif	/* alpha */
 #endif /* defined(__NetBSD__) */
 

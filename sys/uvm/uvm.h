@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.10 1998/07/08 04:28:27 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.10.2.1 1998/07/30 14:04:07 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -108,8 +108,8 @@ struct uvm {
 	struct uvm_aiohead aio_done;	/* done async i/o reqs */
 
 	/* pager VM area bounds */
-	vm_offset_t pager_sva;		/* start of pager VA area */
-	vm_offset_t pager_eva;		/* end of pager VA area */
+	vaddr_t pager_sva;		/* start of pager VA area */
+	vaddr_t pager_eva;		/* end of pager VA area */
 
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;

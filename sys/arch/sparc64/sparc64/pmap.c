@@ -1,6 +1,8 @@
-/*	$NetBSD: pmap.c,v 1.3 1998/07/08 04:43:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3.2.1 1998/07/30 14:03:56 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF
+/* #define BOOT_DEBUG */
+/* #define BOOT1_DEBUG */
 /* #define printf	db_printf */
 /*
  * 
@@ -68,7 +70,7 @@
  * larger page sizes that cause aliasing.
  */
 struct page_size_map page_size_map[] = {
-#ifdef NOTDEF_DEBUG
+#ifdef DEBUG
 	{ 0, TLB_8K&0  },	/* Disable large pages */
 #endif
 	{ (4*1024*1024-1) & ~(8*1024-1), TLB_4M&0 },
@@ -78,11 +80,11 @@ struct page_size_map page_size_map[] = {
 	{ 0, TLB_8K&0  }
 };
 
-extern int64_t asmptechk __P((union sun4u_data* pseg[], vm_offset_t addr)); /* DEBUG XXXXX */
+extern int64_t asmptechk __P((union sun4u_data* pseg[], int addr)); /* DEBUG XXXXX */
 
 /* These routines are in assembly to allow access thru physical mappings */
-extern int64_t pseg_get __P((struct pmap*, vm_offset_t addr));
-extern int64_t** pseg_set __P((struct pmap*, vm_offset_t addr, int64_t tte));
+extern int64_t pseg_get __P((struct pmap*, int addr));
+extern int64_t** pseg_set __P((struct pmap*, int addr, int64_t tte));
 			
 extern vm_page_t vm_page_alloc1 __P((void));
 extern void vm_page_free1 __P((vm_page_t));
@@ -106,7 +108,7 @@ extern void vm_page_free1 __P((vm_page_t));
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t	pv_va;		/* virtual address for mapping */
 } *pv_entry_t;
 /* PV flags encoded in the low bits of the VA of the first pv_entry */
 #define	PV_ALIAS	0x1LL
@@ -129,12 +131,12 @@ pv_entry_t	pv_table;	/* array of entries, one per page */
 #define PMAP_ATTR_REF	0x02	/* page has been referenced */
 char *pmap_attributes;
 #endif
-extern void	pmap_remove_pv __P((struct pmap *pm, vm_offset_t va, vm_offset_t endva));
+extern void	pmap_remove_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
 
 /*
  * First and last managed physical addresses.  XXX only used for dumping the system.
  */
-vm_offset_t	vm_first_phys, vm_num_phys;
+paddr_t	vm_first_phys, vm_num_phys;
 
 u_int64_t first_phys_addr;
 #define pa_index(pa)		atop((pa) - first_phys_addr)
@@ -154,7 +156,7 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
  * And here's the IOMMU TSB stuff, also allocated in pmap_bootstrap.
  */
 int64_t		*iotsb;
-vm_offset_t	iotsbp;
+paddr_t		iotsbp;
 int		iotsbsize; /* tsbents = 1024 * 2 ^^ tsbsize */
 #define IOTSBENTS	(1024<<iotsbsize)
 #define IOTSBSIZE	(IOTSBENTS * 8)
@@ -175,16 +177,17 @@ caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 struct mem_region *mem, *avail, *orig;
 int memsize;
 
-static int memh=0, vmemh=0, mmuh=0;	/* Handles to OBP devices */
+static int memh=0, vmemh=0;	/* Handles to OBP devices */
 
 static int pmap_initialized;
 
-vm_offset_t avail_start, avail_end;	/* These are used by ps & family */
+int avail_start, avail_end;	/* These are used by ps & family */
 
-static int ptelookup_pa __P((vm_offset_t pa)); /* sun4u */
-static int ptelookup_va __P((vm_offset_t va)); /* sun4u */
+static int ptelookup_pa __P((paddr_t pa)); /* sun4u */
+static int ptelookup_va __P((vaddr_t va)); /* sun4u */
 static void tsb_enter __P((int ctx, int64_t va, int64_t data));
 static void pmap_pinit __P((struct pmap *));
+static void pmap_release __P((pmap_t));
 
 struct pmap_stats {
 	int	ps_unlink_pvfirst;	/* # of pv_unlinks on head */
@@ -316,13 +319,13 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	int msgbufsiz;
 	int pcnt;
 	u_int s, sz, i, j;
-	unsigned int phys_msgbuf_lo, phys_msgbuf_hi;
+	u_int64_t phys_msgbuf;
 	u_int firstaddr, newkp, ksize;
-	unsigned int *src, *dest, *newkv;
+	unsigned int *newkv;
 	int opmapdebug = pmapdebug;
 	pmapdebug = 0;
 
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	prom_printf("Entered pmap_bootstrap.\r\n");
 #endif
 	/*
@@ -349,7 +352,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		OF_exit();
 	}
 
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	/* print out mem list */
 	prom_printf("Available virutal memory:\r\n");
 	for (mp = memlist; mp->size; mp++) {
@@ -362,29 +365,24 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/* 
 	 * Get hold or the message buffer.
 	 */
-	msgbufp = (struct msgbuf *)MSGBUF_VA;
+	msgbufp = (struct kern_msgbuf *)MSGBUF_VA;
 	msgbufsiz = NBPG /* round_page(sizeof(struct msgbuf)) */;
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	prom_printf("Trying to allocate msgbuf at %x, size %x\r\n", 
 		    (int)msgbufp, (int)msgbufsiz);
 #endif
-	if( (int)msgbufp != (phys_msgbuf_hi = prom_claim_virt((int)msgbufp, msgbufsiz) ) )
-		prom_printf("cannot get msgbuf VA, msgbufp=%x, phys_msgbuf_hi=%x\r\n", 
-			    msgbufp, phys_msgbuf_hi);
-	phys_msgbuf_lo = prom_get_msgbuf(msgbufsiz, MMU_PAGE_ALIGN);
-#ifdef NOTDEF_DEBUG
+	if( (int)msgbufp != (int)(phys_msgbuf = prom_claim_virt((int)msgbufp, msgbufsiz) ) )
+		prom_printf("cannot get msgbuf VA, msgbufp=%x, phys_msgbuf=%x\r\n", 
+			    msgbufp, (int)phys_msgbuf);
+	phys_msgbuf = prom_get_msgbuf(msgbufsiz, MMU_PAGE_ALIGN);
+#ifdef BOOT_DEBUG
 	prom_printf("We should have the memory at %08x, let's map it in\r\n", 
-		    phys_msgbuf_lo);
+		    phys_msgbuf);
 #endif
-#ifdef INT_IS_64_BITS
-	if( prom_map_phys(((u_int64_t)phys_msgbuf_hi<<32)|phys_msgbuf_lo, 
-			  msgbufsiz, (vm_offset_t)msgbufp, -1/* sunos does this */) != 0)
-#else
-	if( prom_map_phys(phys_msgbuf_lo, msgbufsiz, (vm_offset_t)msgbufp, 
+	if( prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp, 
 			  -1/* sunos does this */) != 0)
-#endif
 		prom_printf("Failed to map msgbuf\r\n");
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	else
 		prom_printf("msgbuf mapped at %x\r\n", msgbufp);
 #endif
@@ -395,7 +393,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * Record kernel mapping -- we will map this with a permanent 4MB
 	 * TLB entry when we initialize the CPU later.
 	 */
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	prom_printf("translating kernelstart %x\r\n", kernelstart);
 #endif
 	ksegv = kernelstart;
@@ -415,7 +413,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	}
 	if( mp1->start < kernelstart )
 		prom_printf("Kernel at end of vmem???\r\n");
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("The kernel is mapped at %x %x, next free seg: %x %x, %x %x\r\n", 
 		    (int)(ksegp>>32), (int)ksegp,
 		    (int)(mp1->start>>32), (int)mp1->start, 
@@ -430,7 +428,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #define	valloc(name, type, num) (name) = (type *)firstaddr; firstaddr += (num)
 #else
 #define	valloc(name, type, num) (name) = (type *)firstaddr; firstaddr = \
-	(vm_offset_t)((name)+(num))
+	(vaddr_t)((name)+(num))
 #endif
 #define MEG		(1<<20) /* 1MB */
 
@@ -443,49 +441,45 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	ksize = round_page(mp1->start - kernelstart);
 
 	if (ksegp & (4*MEG-1)) {
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 		prom_printf("Allocating new %x kernel at 4MB boundary\r\n", ksize);
 #endif
 		if( (newkp = prom_alloc_phys(ksize, 4*MEG)) == 0 ) {
 			prom_printf("Cannot allocate new kernel\r\n");
 			OF_exit();
 		}
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 		prom_printf("Allocating new va for buffer at %x\r\n", newkp);
 #endif
-		if( (newkv = (int*)prom_alloc_virt(ksize, 8)) == -1) {
+		if( (newkv = (u_int*)prom_alloc_virt(ksize, 8)) == (u_int*)-1) {
 			prom_printf("Cannot allocate new kernel va\r\n");
 			OF_exit();
 		}
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 		prom_printf("Mapping in buffer %x at %x\r\n", newkp, newkv);
 #endif
-		prom_map_phys(newkp, 4*MEG, (vm_offset_t)newkv, -1); 
-#ifdef DEF_DEBUG
+		prom_map_phys(newkp, 4*MEG, (vaddr_t)newkv, -1); 
+#ifdef BOOT1_DEBUG
 		prom_printf("Copying kernel...");
 #endif
 		bzero(newkv, 4*MEG);
-		bcopy(kernelstart, (void *)newkv, kernelend - kernelstart);
-#if 0
-		for(src = (unsigned int*)kernelstart, dest = newkv; src < (unsigned int*)kernelend;
-		    *dest++ = *src++);
-#endif
-#ifdef DEF_DEBUG
+		bcopy((void *)kernelstart, (void *)newkv, kernelend - kernelstart);
+#ifdef BOOT1_DEBUG
 		prom_printf("done.  Swapping maps..unmap new\r\n");
 #endif
-		prom_unmap_virt((vm_offset_t)newkv, 4*MEG);
-#ifdef NOTDEF_DEBUG
+		prom_unmap_virt((vaddr_t)newkv, 4*MEG);
+#ifdef BOOT_DEBUG
 		prom_printf("remap old ");
 #endif
 		prom_map_phys(newkp, 4*MEG, kernelstart, -1); 
 		/* we will map in 4MB, more than we allocated, to allow further allocation */
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 		prom_printf("free old\r\n");
 #endif
 		prom_free_phys(ksegp, ksize);
 		ksegp = newkp;
 		
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 		prom_printf("pmap_bootstrap: firstaddr is %x virt (%x phys) avail for kernel\r\n", 
 			    firstaddr, prom_vtop(firstaddr));
 #endif
@@ -499,7 +493,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/*
 	 * Find out how much RAM we have installed.
 	 */
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	prom_printf("pmap_bootstrap: getting phys installed\r\n");
 #endif
 	if ((memh = OF_finddevice("/memory")) == -1) {
@@ -514,7 +508,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		OF_exit();
 	}
 
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	/* print out mem list */
 	prom_printf("Installed physical memory:\r\n");
 	for (mp = mem; mp->size; mp++) {
@@ -527,7 +521,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	for (mp = mem; mp->size; mp++)
 		physmem += btoc(mp->size);
 
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf(" result %x or %d pages\r\n", physmem, physmem);
 #endif
 	/* 
@@ -549,7 +543,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		OF_exit();
 	}
 
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	/* print out mem list */
 	prom_printf("Available physical memory:\r\n");
 	for (mp = orig; mp->size; mp++) {
@@ -576,7 +570,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		OF_exit();
 	}
 	prom_map_size = sz / sizeof(struct prom_map);
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	/* print out mem list */
 	prom_printf("Prom xlations:\r\n");
 	for (i=0; i<prom_map_size; i++) {
@@ -607,7 +601,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			}
 		}
 	}
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	/* print out mem list */
 	prom_printf("Prom xlations:\r\n");
 	for (i=0; i<prom_map_size; i++) {
@@ -615,7 +609,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			    (int)(prom_map[i].vstart>>32), (int)prom_map[i].vstart, 
 			    (int)(prom_map[i].vsize>>32), (int)prom_map[i].vsize,
 			    (int)(prom_map[i].tte>>32), (int)prom_map[i].tte);
-		for( j=14000000; j>0; j--); /* delay loop 1sec@140MHz */
 	}
 	prom_printf("End of prom xlations\r\n");
 #endif
@@ -639,10 +632,10 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		 */
 		sz = (int)allocsys((caddr_t)0);
 		
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 		prom_printf("allocsys needs %08x bytes RAM...", sz);
 #endif
-		valloc(v, caddr_t, sz);
+		valloc(v, void, sz);
 		
 		if (allocsys(v) - v != sz) {
 			prom_printf("startup: table size inconsistency");
@@ -650,7 +643,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		}
 		/* Need to zero this out or we have problems w/swbufs and physio hangs */
 		bzero(v, sz);
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 		prom_printf("got it\r\n");
 #endif
 	}
@@ -660,7 +653,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 *
 	 * We will use the left over space to flesh out the kernel pmap.
 	 */
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("firstaddr before TSB=%08x\r\n", firstaddr);
 #endif
 	i = (firstaddr + NBPG - 1) & ~(NBPG-1);	/* First, page align */
@@ -671,13 +664,13 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		panic("TSB alloc\n");
 		OF_exit();
 	}
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	prom_printf("frobbed i, firstaddr before TSB=%08x, %08x\r\n", i, firstaddr);
 #endif
 	valloc(tsb, pte_t, TSBSIZE);
 	bzero(tsb, TSBSIZE);
 
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("firstaddr after TSB=%08x\r\n", firstaddr);
 	prom_printf("TSB allocated at %08x size %08x\r\n", tsb, TSBSIZE);
 #endif
@@ -686,7 +679,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 */
 	iotsbsize = 0; /* We will only allocate an 8K TSB now */
 	valloc(iotsb, int64_t, IOTSBSIZE);
-	iotsbp = ((vm_offset_t)iotsb) - kernelstart + ksegp; 
+	iotsbp = ((vaddr_t)iotsb) - kernelstart + ksegp; 
 	bzero(iotsb, IOTSBSIZE);	/* Invalidate all entries */	
 
 
@@ -694,19 +687,19 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	first_phys_addr = mem->start;
 	valloc(pv_table, struct pv_entry, sizeof(struct pv_entry)*physmem);
 	bzero((caddr_t)pv_table, sizeof(struct pv_entry)*physmem);
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("Allocating pv_table at %x,%x\r\n", pv_table, 
 		    sizeof(struct pv_entry)*physmem);
 #endif
 #ifdef ATTR
 	valloc(pmap_attributes, char, physmem);
 	bzero((caddr_t)pmap_attributes, physmem);
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("Allocating pmap_attributes at %x,%x\r\n", pmap_attributes, physmem);
 #endif
 #endif
 
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("firstaddr after pmap=%08x\r\n", firstaddr);
 #endif
 
@@ -718,13 +711,13 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * And convert from virtual to physical addresses.
 	 */
 	
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	prom_printf("kernel virtual size %08x - %08x\r\n", kernelstart, firstaddr);
 #endif
 	kernelstart = kernelstart & ~PGOFSET;
 	kernelend = firstaddr;
 	kernelend = (kernelend + PGOFSET) & ~PGOFSET;
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("kernel virtual size %08x - %08x\r\n", kernelstart, kernelend);
 #endif
 	ksegend = kernelend;
@@ -742,7 +735,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/* DEBUG -- don't allow these pages to be used. */
 	kernelend = (kernelstart + 4*MEG);
 #endif
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	/* print out mem list */
 	prom_printf("Available %x physical memory before cleanup:\r\n", avail);
 	for (mp = avail; mp->size; mp++) {
@@ -829,7 +822,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			mp1->start = s;
 			mp1->size = sz;
 		}
-#if 1
 #if defined(MACHINE_NEW_NONCONTIG)
 		/* 
 		 * In future we should be able to specify both allocated
@@ -850,10 +842,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			atop(mp->size));
 #endif
 #endif
-#endif
 	}
 
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	/* Throw away page zero if we have it. */
 	if (avail->start == 0) {
 		avail->start += NBPG;
@@ -876,35 +867,31 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/*
 	 * finish filling out kernel pmap.
 	 */
-	pmap_kernel()->pm_physaddr = ((vm_offset_t)(pmap_kernel()->pm_segs)) - ksegv + ksegp;
+	pmap_kernel()->pm_physaddr = ((vaddr_t)(pmap_kernel()->pm_segs)) - ksegv + ksegp;
 	ctxbusy[0] = (int)pmap_kernel()->pm_physaddr; /* mark kernel context as busy */
 
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	prom_printf("pmap_kernel()->pm_physaddr = %p\r\n", pmap_kernel()->pm_physaddr);
 #endif
 	/*
 	 * Tell pmap about our mesgbuf -- Hope this works already
 	 */
-#ifdef NOTDEF_DEBUG
+#ifdef BOOT_DEBUG
 	prom_printf("Calling consinit()\r\n");
 	consinit();
 	prom_printf("Inserting mesgbuf into pmap_kernel()\r\n");
 #endif
-#if 0
-	prom_map_phys(phys_msgbuf_lo, NBPG, msgbufp, -1); 
-	pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp, phys_msgbuf_lo, VM_PROT_WRITE, 1);
-#else
 	/* it's not safe to call pmap_enter so we need to do this ourselves */
 	{
 		pte_t tte;
 		int64_t** ptr;
-		vm_offset_t va = (vm_offset_t)msgbufp;
+		vaddr_t va = (vaddr_t)msgbufp;
 
-		prom_map_phys(phys_msgbuf_lo, NBPG, (vm_offset_t)msgbufp, -1); 
+		prom_map_phys(phys_msgbuf, NBPG, (vaddr_t)msgbufp, -1); 
 #ifdef NO_VCACHE
 		tte.data.data = TSB_DATA(0 /* global */, 
 					 TLB_8K,
-					 phys_msgbuf_lo,
+					 phys_msgbuf,
 					 1 /* priv */,
 					 1 /* Write */,
 					 1 /* Cacheable */,
@@ -913,7 +900,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #else
 		tte.data.data = TSB_DATA(0 /* global */, 
 					 TLB_8K,
-					 phys_msgbuf_lo,
+					 phys_msgbuf,
 					 1 /* priv */,
 					 1 /* Write */,
 					 1 /* Cacheable */,
@@ -923,10 +910,15 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 
 		while((ptr = pseg_set(pmap_kernel(), va, tte.data.data))
 		      != NULL) {
-			vm_offset_t newp;
+			paddr_t newp;
 			pmap_get_page(&newp);
 			pmap_zero_page(newp);
 			*ptr = (int64_t*)newp;
+#ifdef BOOT1_DEBUG
+			prom_printf("pset_set: ptr %x newp %x:%x *ptr %x\r\n", 
+				    (int)ptr, (int)(newp>>32), (int)newp, (int)*ptr);
+			{int i; for (i=0; i<140000000; i++) ;}
+#endif
 		}
 		
 		/* 
@@ -943,18 +935,17 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		tte.data.data |= TLB_L|TLB_NFO;
 		while((ptr = pseg_set(pmap_kernel(), va, tte.data.data))
 		      != NULL) {
-			vm_offset_t newp;
+			paddr_t newp;
 			pmap_get_page(&newp);
 			pmap_zero_page(newp);
 			*ptr = (int64_t*)newp;
 		}
 	}
-#endif
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("Done inserting mesgbuf into pmap_kernel()\r\n");
 #endif
 	
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("Inserting PROM mappings into pmap_kernel()\r\n");
 #endif
 	
@@ -983,18 +974,18 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 				while((ptr = pseg_set(pmap_kernel(), prom_map[i].vstart+j, 
 						      (prom_map[i].tte+j)|page_size_map[k].code))
 				      != NULL) {
-					vm_offset_t newp;
+					paddr_t newp;
 					pmap_get_page(&newp);
 					pmap_zero_page(newp);
 					*ptr = (int64_t*)newp;
 				}
 #else
 				prom_printf("i=%d j=%d\r\n", i, j);
-				pmap_enter_phys(pmap_kernel(), (vm_offset_t)prom_map[i].vstart+j, 
+				pmap_enter_phys(pmap_kernel(), (vaddr_t)prom_map[i].vstart+j, 
 						(prom_map[i].tte&TLB_PA_MASK)+j, TLB_8K, VM_PROT_WRITE, 1);
 #endif
 			}
-#ifdef DEF_DEBUG
+#ifdef BOOT1_DEBUG
 	prom_printf("Done inserting PROM mappings into pmap_kernel()\r\n");
 #endif
 
@@ -1006,30 +997,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	avail_start = nextavail;
 	for (mp = avail; mp->size; mp++)
 		avail_end = mp->start+mp->size;
-
-#if 0
-#if defined(MACHINE_NEW_NONCONTIG)
-	for (mp = avail; mp->size; mp++) {
-		/* 
-		 * In future we should be able to specify both allocated
-		 * and free.
-		 */
-#if defined(UVM)
-		uvm_page_physload(
-			atop(mp->start),
-			atop(mp->size),
-			atop(mp->start),
-			atop(mp->size));
-#else
-		vm_page_physload(
-			atop(mp->start),
-			atop(mp->size),
-			atop(mp->start),
-			atop(mp->size));
-#endif
-	}
-#endif
-#endif
 	pmapdebug = opmapdebug;
 
 }
@@ -1052,15 +1019,16 @@ pmap_init()
 	vm_num_phys = avail_end - avail_start;
 }
 
+#if !defined(MACHINE_NEW_NONCONTIG)
 /*
  * Return the index of the given page in terms of pmap_next_page() calls.
  */
 int
 pmap_page_index(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	struct mem_region *mp;
-	vm_size_t pre;
+	psize_t pre;
 	
 	pa &= ~PGOFSET;
 	for (pre = 0, mp = avail; mp->size; mp++) {
@@ -1071,25 +1039,27 @@ pmap_page_index(pa)
 	}
 	return -1;
 }
+#endif
 
 /*
  * How much virtual space is available to the kernel?
  */
 void
 pmap_virtual_space(start, end)
-	vm_offset_t *start, *end;
+	vaddr_t *start, *end;
 {
 	/*
 	 * Reserve one segment for kernel virtual memory
 	 */
 	vmmap = (caddr_t)(ksegv + 4*MEG); /* Start after our locked TLB entry */
-	*start = (vm_offset_t)(vmmap + NBPG);
+	*start = (vaddr_t)(vmmap + NBPG);
 	*end = VM_MAX_KERNEL_ADDRESS;
 #ifdef NOTDEF_DEBUG
 	prom_printf("pmap_virtual_space: %x-%x\r\n", *start, *end);
 #endif
 }
 
+#ifdef MACHINE_NONCONTIG
 /*
  * Return the number of possible page indices returned
  * from pmap_page_index for any page provided by pmap_next_page.
@@ -1107,7 +1077,7 @@ pmap_free_pages()
  */
 int
 pmap_next_page(paddr)
-	vm_offset_t *paddr;
+	paddr_t *paddr;
 {
 	static int lastidx = -1;
 	
@@ -1136,13 +1106,14 @@ pmap_next_page(paddr)
 #endif
 	return TRUE;
 }
+#endif
 
 /*
  * Create and return a physical map.
  */
 struct pmap *
 pmap_create(size)
-	vm_size_t size;
+	vsize_t size;
 {
 	struct pmap *pm;
 	
@@ -1172,7 +1143,7 @@ pmap_pinit(pm)
 	if(pm != pmap_kernel()) {
 		for(i=0; i<STSZ; i++)
 			pm->pm_segs[i] = NULL;
-		pm->pm_physaddr = pmap_extract(pmap_kernel(), (vm_offset_t)&pm->pm_segs);
+		pm->pm_physaddr = pmap_extract(pmap_kernel(), (vaddr_t)&pm->pm_segs);
 		if (!pm->pm_physaddr) panic("pmap_pinit");
 		ctx_alloc(pm);
 	}
@@ -1235,7 +1206,7 @@ pmap_release(pm)
 					pmap_remove_pv(pm, (i<<STSHIFT)|(j<<PTSHIFT), 
 						       data&TLB_PA_MASK);
 			}
-			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE(pm->pm_segs[i]));
+			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pm->pm_segs[i]));
 			pm->pm_segs[i] = NULL;
 		}
 #ifdef NOTDEF_DEBUG
@@ -1266,8 +1237,8 @@ pmap_release(pm)
 void
 pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	struct pmap *dst_pmap, *src_pmap;
-	vm_offset_t dst_addr, src_addr;
-	vm_size_t len;
+	vaddr_t dst_addr, src_addr;
+	vsize_t len;
 {
 #ifdef DEBUG
 	if (pmapdebug&PDB_CREATE)
@@ -1312,7 +1283,7 @@ pmap_collect(pm)
 			}
 			if (!n) {
 				/* Free the damn thing */
-				vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE(pm->pm_segs[i]));
+				vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pm->pm_segs[i]));
 				pm->pm_segs[i] = NULL;
 			}
 		}
@@ -1328,7 +1299,7 @@ pmap_collect(pm)
 void
 pmap_pageable(pm, start, end, pageable)
 	struct pmap *pm;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 	int pageable;
 {
 }
@@ -1343,7 +1314,7 @@ pmap_pageable(pm, start, end, pageable)
  */
 void
 pmap_zero_page(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	/* 
 	 * We don't need to worry about flushing caches
@@ -1362,7 +1333,7 @@ pmap_zero_page(pa)
  */
 void
 pmap_copy_page(src, dst)
-	vm_offset_t src, dst;
+	paddr_t src, dst;
 {
 	bcopy((caddr_t)src, (caddr_t)dst, NBPG);
 }
@@ -1411,13 +1382,14 @@ pmap_deactivate(p)
 void
 pmap_enter(pm, va, pa, prot, wired)
 	struct pmap *pm;
-	vm_offset_t va, pa;
+	vaddr_t va;
+	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
 {
 	register u_int64_t phys;
 
-	phys = (pa&0x0ffffffffLL);
+	phys = pa;
 	/* Call 64-bit clean version of pmap_enter */
 	return pmap_enter_phys(pm, va, phys, TLB_8K, prot, wired);
 }
@@ -1429,7 +1401,7 @@ pmap_enter(pm, va, pa, prot, wired)
 void
 pmap_enter_phys(pm, va, pa, size, prot, wired)
 	struct pmap *pm;
-	vm_offset_t va;
+	vaddr_t va;
 	u_int64_t pa;
 	u_int64_t size;
 	vm_prot_t prot;
@@ -1488,7 +1460,7 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 	if (pa & PMAP_NVC) aliased = 1;
 	if ((tte.data.data = pseg_get(pm, va))<0 &&
 	    ((tte.data.data^pa)&TLB_PA_MASK)) {
-		vm_offset_t entry;
+		vaddr_t entry;
 
 		/* different mapping for this page exists -- remove it. */
 		entry = (tte.data.data&TLB_PA_MASK);
@@ -1519,33 +1491,33 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 	if (wired) tte.data.data |= TLB_TSB_LOCK;
 	ASSERT((tte.data.data & TLB_NFO) == 0);
 	while ((pptr = pseg_set(pm, va, tte.data.data)) != NULL) {
+		paddr_t pg;
 #if defined(UVM)
-		if (pmap_initialized || !uvm_page_physget((vm_offset_t*)pptr)) {
+		if (pmap_initialized || !uvm_page_physget(&pg)) {
 #else
-		if (pmap_initialized || !pmap_next_page((vm_offset_t*)pptr)) {
+		if (pmap_initialized || !pmap_next_page(&pg)) {
 #endif
 			vm_page_t page;
+#ifdef NOTDEF_DEBUG
+			printf("pmap_enter_phys: need to alloc page\n");
+#endif
 			while ((page = vm_page_alloc1()) == NULL) {
-#if 1
 				/*
 				 * Let the pager run a bit--however this may deadlock
 				 */
+#ifdef NOTDEF_DEBUG
+				printf("pmap_enter_phys: calling uvm_wait()\n");
+#endif
 #if defined(UVM)
 				uvm_wait("pmap_enter_phys");
 #else
 				VM_WAIT;
 #endif
-#else
-				/* 
-				 * We can't allocate a page to hold the 
-				 * mapping so just put it in the TSB and return.
-				 */
-				goto tsbinsert;
-#endif
 			}
 			*pptr = (int64_t*)VM_PAGE_TO_PHYS(page);
-		}
-		pmap_zero_page((vm_offset_t)*pptr);
+		} else
+			*pptr = (int64_t*)pg;
+		pmap_zero_page((paddr_t)*pptr);
 	}
 
 	if (pv) {
@@ -1675,7 +1647,6 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 		}
 		splx(s);
 	}
-tsbinsert:
 	i = ptelookup_va(va);
 #ifdef DEBUG
 	if( pmapdebug & PDB_ENTER )
@@ -1719,7 +1690,7 @@ tsbinsert:
 void
 pmap_remove(pm, va, endva)
 	struct pmap *pm;
-	vm_offset_t va, endva;
+	vaddr_t va, endva;
 {
 	int i;
 	int64_t data;
@@ -1746,7 +1717,7 @@ pmap_remove(pm, va, endva)
 		}
 
 		if ((data = pseg_get(pm, va))<0) {
-			vm_offset_t entry;
+			paddr_t entry;
 			
 			/* First remove it from the pv_table */
 			entry = (data&TLB_PA_MASK);
@@ -1816,11 +1787,11 @@ pmap_remove(pm, va, endva)
 void
 pmap_protect(pm, sva, eva, prot)
 	struct pmap *pm;
-	vm_offset_t sva, eva;
+	vaddr_t sva, eva;
 	vm_prot_t prot;
 {
 	int i;
-	vm_offset_t pa;
+	paddr_t pa;
 	int64_t data;
 	
 	if (prot & VM_PROT_WRITE) 
@@ -1907,16 +1878,16 @@ pmap_protect(pm, sva, eva, prot)
  * with the given map/virtual_address pair.
  * GRR, the vm code knows; we should not have to do this!
  */
-vm_offset_t
+paddr_t
 pmap_extract(pm, va)
 	register struct pmap *pm;
-	vm_offset_t va;
+	vaddr_t va;
 {
-	vm_offset_t pa;
+	paddr_t pa;
 
 	if( pm == pmap_kernel() && va >= ksegv && va < ksegv+4*MEG ) {
 		/* Need to deal w/locked TLB entry specially. */
-		pa = (vm_offset_t) (ksegp - ksegv + va);
+		pa = (paddr_t) (ksegp - ksegv + va);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
 			printf("pmap_extract: va=%x pa=%x\n", va, pa);
@@ -1936,12 +1907,15 @@ pmap_extract(pm, va)
 	return pa;
 }
 
+#if 0
+/* This appears to be no longer used. */
 /*
  * Map physical addresses into kernel VM. -- used by device drivers
  */
-vm_offset_t
+vaddr_t
 pmap_map(va, pa, endpa, prot)
-	register vm_offset_t va, pa, endpa;
+	register vaddr_t va;
+	retister paddr_t pa, endpa;
 	register int prot;
 {
 	register int pgsize = PAGE_SIZE;
@@ -1965,18 +1939,19 @@ pmap_map(va, pa, endpa, prot)
 	}
 	return (va);
 }
+#endif
 
 /*
  * Really change page protections -- used by device drivers
  */
 void pmap_changeprot(pm, start, prot, size)
 pmap_t pm; 
-vm_offset_t start;
+vaddr_t start;
 vm_prot_t prot;
 int size;
 {
 	int i, s;
-	vm_offset_t sva, eva;
+	vaddr_t sva, eva;
 	int64_t data, set, clr;
 	
 	if (prot == VM_PROT_NONE) {
@@ -2094,7 +2069,7 @@ pmap_dumpmmu(dump, blkno)
 	cpu_kcore_hdr_t	*kcpup;
 	phys_ram_seg_t	memseg;
 	register int	error = 0;
-	register int	i, memsegoffset, segmapoffset, pmegoffset;
+	register int	i, memsegoffset, segmapoffset;
 	int		buffer[dbtob(1) / sizeof(int)];
 	int		*bp, *ep;
 
@@ -2128,7 +2103,7 @@ pmap_dumpmmu(dump, blkno)
 	kcpup = (cpu_kcore_hdr_t *)((int)bp + ALIGN(sizeof(kcore_seg_t)));
 	kcpup->cputype = CPU_SUN4U;
 	kcpup->kernbase = KERNBASE;
-	kcpup->kphys = ksegp;
+	kcpup->kphys = (paddr_t)ksegp;
 	kcpup->nmemseg = memsize;
 	kcpup->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
 	kcpup->nsegmap = STSZ;
@@ -2149,7 +2124,6 @@ pmap_dumpmmu(dump, blkno)
 
 	EXPEDITE(&kernel_pmap_.pm_segs[0], sizeof(kernel_pmap_.pm_segs));
 
-out:
 	if (bp != buffer)
 		error = (*dump)(dumpdev, blkno++, (caddr_t)buffer, dbtob(1));
 
@@ -2160,7 +2134,7 @@ out:
  * Determine (non)existance of physical page
  */
 int pmap_pa_exists(pa)
-vm_offset_t pa;
+paddr_t pa;
 {
 	register struct mem_region *mp;
 
@@ -2171,6 +2145,7 @@ vm_offset_t pa;
 	return 0;
 }
 
+#if 0
 /* 
  * Lookup an entry in TSB -- returns NULL if not mapped. 
  *
@@ -2180,7 +2155,7 @@ vm_offset_t pa;
  */
 int 
 ptelookup_pa(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	register int i;
 
@@ -2190,6 +2165,7 @@ ptelookup_pa(pa)
 			return i;
 	return -1;
 }
+#endif
 
 /*
  * Lookup the appropriate TSB entry.
@@ -2241,12 +2217,12 @@ int64 GenerateTSBPointer(
  */
 int
 ptelookup_va(va)
-	vm_offset_t va;
+	vaddr_t va;
 {
 	int tsbptr;
 #define TSBBASEMASK	(0xffffffffffffe000LL<<tsbsize)
 
-	tsbptr = (((vm_offset_t)tsb & TSBBASEMASK)
+	tsbptr = (((vaddr_t)tsb & TSBBASEMASK)
 		| (((va >> 9) & 0xfffffffffffffff0LL) & ~TSBBASEMASK ));
 	return ((struct sun4u_tte*)tsbptr) - tsb;
 }
@@ -2276,7 +2252,7 @@ int64_t data;
 
 void
 pmap_clear_modify(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	int i, s;
 	register pv_entry_t pv;
@@ -2343,7 +2319,7 @@ pmap_clear_modify(pa)
 
 void
 pmap_clear_reference(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	int i, s;
 	register pv_entry_t pv;
@@ -2411,7 +2387,7 @@ pmap_clear_reference(pa)
 }
 
 int pmap_is_modified(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	int i, s;
 	register pv_entry_t pv;
@@ -2463,7 +2439,7 @@ int pmap_is_modified(pa)
 }
 
 int pmap_is_referenced(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	int i, s;
 	register pv_entry_t pv;
@@ -2521,7 +2497,7 @@ int pmap_is_referenced(pa)
 void
 pmap_change_wiring(pmap, va, wired)
 	register pmap_t	pmap;
-	vm_offset_t va;
+	vaddr_t va;
 	boolean_t wired;
 {
 	int64_t data;
@@ -2569,11 +2545,10 @@ pmap_change_wiring(pmap, va, wired)
  */
 void
 pmap_page_protect(pa, prot)
-	vm_offset_t pa;
+	paddr_t pa;
 	vm_prot_t prot;
 {
 	register pv_entry_t pv;
-	register pte_t *ptp;
 	register int i, s;
 	long long clear, set;
 	int64_t data = 0LL;
@@ -2858,7 +2833,8 @@ ctx_free(pm)
 void
 pmap_remove_pv(pmap, va, pa)
 	pmap_t pmap;
-	vm_offset_t va, pa;
+	vaddr_t va;
+	paddr_t pa;
 {
 	register pv_entry_t pv, npv, opv;
 	int64_t data = 0LL;
@@ -3155,7 +3131,6 @@ db_dump_pv(addr, have_addr, count, modif)
 	char *modif;
 {
 	struct pv_entry *pv;
-	int i;
 
 	if (!have_addr) {
 		db_printf("Need addr for pv\n");

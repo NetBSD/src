@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.4 1997/09/10 19:39:05 pk Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.4.4.1 1998/07/30 14:04:05 eeh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@ static int digit2i __P((u_char));
 static u_char i2digit __P((int));
 static void mem2hex __P((void *, void *, int));
 static u_char *hex2mem __P((void *, u_char *, int));
-static vm_offset_t hex2i __P((u_char **));
+static vaddr_t hex2i __P((u_char **));
 
 static int (*kgdb_getc) __P((void *));
 static void (*kgdb_putc) __P((void *, int));
@@ -199,12 +199,12 @@ hex2mem(vdst, src, maxlen)
  * This returns a pointer to the character following
  * the last valid hex digit.
  */ 
-static vm_offset_t
+static vaddr_t
 hex2i(srcp)
 	u_char **srcp;
 {
 	char *src = *srcp;
-	vm_offset_t r = 0;
+	vaddr_t r = 0;
 	int nibble;
 
 	while ((nibble = digit2i(*src)) >= 0) {
@@ -324,7 +324,7 @@ kgdb_trap(type, regs)
 	db_regs_t *regs;
 {
 	label_t jmpbuf;
-	vm_offset_t addr;
+	vaddr_t addr;
 	size_t len;
 	u_char *p;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.8 1998/05/05 20:51:06 kleink Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.8.2.1 1998/07/30 14:04:12 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -111,7 +111,7 @@ static int	uvm_loananon __P((struct uvm_faultinfo *, void ***,
 				int, struct vm_anon *));
 static int	uvm_loanentry __P((struct uvm_faultinfo *, void ***, int));
 static int	uvm_loanuobj __P((struct uvm_faultinfo *, void ***, 
-				int, vm_offset_t));
+				int, vaddr_t));
 static int	uvm_loanzero __P((struct uvm_faultinfo *, void ***, int));
 
 /*
@@ -134,8 +134,8 @@ uvm_loanentry(ufi, output, flags)
 	void ***output;
 	int flags;
 {
-	vm_offset_t curaddr = ufi->rvaddr;
-	vm_size_t togo = ufi->size;
+	vaddr_t curaddr = ufi->rvaddr;
+	vsize_t togo = ufi->size;
 	struct vm_aref *aref = &ufi->entry->aref;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_anon *anon;
@@ -215,8 +215,8 @@ uvm_loanentry(ufi, output, flags)
 int
 uvm_loan(map, start, len, result, flags)
 	struct vm_map *map;
-	vm_offset_t start;
-	vm_size_t len;
+	vaddr_t start;
+	vsize_t len;
 	void **result;
 	int flags;
 {
@@ -403,7 +403,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	struct uvm_faultinfo *ufi;
 	void ***output;
 	int flags;
-	vm_offset_t va;
+	vaddr_t va;
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;

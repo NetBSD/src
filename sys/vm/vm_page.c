@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.45 1998/03/31 03:04:59 chuck Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.45.2.1 1998/07/30 14:04:23 eeh Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -144,10 +144,10 @@ static int vm_page_lost_count = 0; /* XXXCDC: DEBUG DEBUG */
  *	The implementation of vm_bootstrap_steal_memory here also uses
  *	them internally.
  */
-static vm_offset_t	virtual_space_start;
-static vm_offset_t	virtual_space_end;
+static vaddr_t	virtual_space_start;
+static vaddr_t	virtual_space_end;
 
-vm_offset_t	vm_bootstrap_steal_memory __P((vm_size_t));
+vaddr_t	vm_bootstrap_steal_memory __P((vsize_t));
 #endif
 
 /*
@@ -183,11 +183,11 @@ int		vm_page_count;
 /* OLD NCONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
 long		first_page;
 long		last_page;
-vm_offset_t	first_phys_addr;
-vm_offset_t	last_phys_addr;
+paddr_t	first_phys_addr;
+paddr_t	last_phys_addr;
 int		vm_page_count;
 #endif
-vm_size_t	page_mask;
+vsize_t	page_mask;
 int		page_shift;
 
 #if defined(MACHINE_NEW_NONCONTIG)
@@ -196,7 +196,7 @@ int		page_shift;
  */
 
 #if !defined(PMAP_STEAL_MEMORY)
-static boolean_t vm_page_physget __P((vm_offset_t *));
+static boolean_t vm_page_physget __P((paddr_t *));
 #endif
 #endif
 
@@ -247,9 +247,9 @@ vm_set_page_size()
  */
 void
 vm_page_bootstrap(startp, endp)
-	vm_offset_t *startp, *endp;	/* OUT, OUT */
+	vaddr_t *startp, *endp;	/* OUT, OUT */
 {
-	vm_offset_t paddr;
+	paddr_t paddr;
 	vm_page_t pagearray;
 	int	lcv, freepages, pagecount, n, i;
 
@@ -356,12 +356,12 @@ vm_page_bootstrap(startp, endp)
 /*
  * vm_bootstrap_steal_memory: steal memory from physmem for bootstrapping
  */
-vm_offset_t
+vaddr_t
 vm_bootstrap_steal_memory(size)
-	vm_size_t size;
+	vsize_t size;
 {
 #if defined(PMAP_STEAL_MEMORY)
-	vm_offset_t addr;
+	vaddr_t addr;
 
 	/*
 	 * Defer this to machine-dependent code; we may need to allocate
@@ -376,7 +376,7 @@ vm_bootstrap_steal_memory(size)
 
 	return (addr);
 #else /* ! PMAP_STEAL_MEMORY */
-	vm_offset_t addr, vaddr, paddr;
+	vaddr_t addr, vaddr, paddr;
 
 	/* round to page size */
 	size = round_page(size);
@@ -428,7 +428,7 @@ vm_bootstrap_steal_memory(size)
  */
 static boolean_t
 vm_page_physget(paddrp)
-	vm_offset_t *paddrp;
+	paddr_t *paddrp;
 
 {
 	int	lcv, x;
@@ -524,7 +524,7 @@ vm_page_physget(paddrp)
  */
 void
 vm_page_physload(start, end, avail_start, avail_end)
-	vm_offset_t start, end, avail_start, avail_end;
+	vaddr_t start, end, avail_start, avail_end;
 {
 	struct	vm_page *pgs;
 	struct	vm_physseg *ps;
@@ -564,7 +564,7 @@ vm_page_physload(start, end, avail_start, avail_end)
 		panic("vm_page_physload: tried to add RAM after vm_mem_init");
 #else
 /* XXXCDC: need some sort of lockout for this case */
-		vm_offset_t paddr;
+		paddr_t paddr;
 
 		/* # of pages */
 		npages = end - start;
@@ -789,15 +789,15 @@ vm_page_physdump()
  */
 void
 vm_page_bootstrap(startp, endp)
-	vm_offset_t	*startp;
-	vm_offset_t	*endp;
+	vaddr_t	*startp;
+	vaddr_t	*endp;
 {
 	unsigned int		i, freepages;
 	register struct pglist	*bucket;
-	vm_offset_t		paddr;
+	paddr_t		paddr;
 
-	extern	vm_offset_t	kentry_data;
-	extern	vm_size_t	kentry_data_size;
+	extern	vaddr_t	kentry_data;
+	extern	vsize_t	kentry_data_size;
 
 
 	/*
@@ -955,11 +955,11 @@ vm_page_bootstrap(startp, endp)
 	simple_lock_init(&vm_pages_needed_lock);
 }
 
-vm_offset_t
+vaddr_t
 vm_bootstrap_steal_memory(size)
-	vm_size_t	size;
+	vsize_t	size;
 {
-	vm_offset_t	addr, vaddr, paddr;
+	vaddr_t	addr, vaddr, paddr;
 
 	/*
 	 *	We round to page size.
@@ -1027,16 +1027,16 @@ vm_bootstrap_steal_memory(size)
  */
 void
 vm_page_startup(start, end)
-	vm_offset_t	*start;
-	vm_offset_t	*end;
+	vaddr_t	*start;
+	vaddr_t	*end;
 {
 	register vm_page_t	m;
 	register struct pglist	*bucket;
 	int			npages;
 	int			i;
-	vm_offset_t		pa;
-	extern	vm_offset_t	kentry_data;
-	extern	vm_size_t	kentry_data_size;
+	paddr_t		pa;
+	extern	vaddr_t	kentry_data;
+	extern	vsize_t	kentry_data_size;
 
 
 	/*
@@ -1103,7 +1103,7 @@ vm_page_startup(start, end)
 	 */
 	kentry_data_size = round_page(MAX_KMAP*sizeof(struct vm_map) +
 				      MAX_KMAPENT*sizeof(struct vm_map_entry));
-	kentry_data = (vm_offset_t) pmap_bootstrap_alloc(kentry_data_size);
+	kentry_data = (vaddr_t) pmap_bootstrap_alloc(kentry_data_size);
 
 	/*
  	 *	Compute the number of pages of memory that will be
@@ -1171,7 +1171,7 @@ void
 vm_page_insert(mem, object, offset)
 	register vm_page_t	mem;
 	register vm_object_t	object;
-	register vm_offset_t	offset;
+	register vaddr_t	offset;
 {
 	register struct pglist	*bucket;
 	int			spl;
@@ -1278,7 +1278,7 @@ vm_page_remove(mem)
 vm_page_t
 vm_page_lookup(object, offset)
 	register vm_object_t	object;
-	register vm_offset_t	offset;
+	register vaddr_t	offset;
 {
 	register vm_page_t	mem;
 	register struct pglist	*bucket;
@@ -1318,7 +1318,7 @@ void
 vm_page_rename(mem, new_object, new_offset)
 	register vm_page_t	mem;
 	register vm_object_t	new_object;
-	vm_offset_t		new_offset;
+	vaddr_t		new_offset;
 {
 
 	if (mem->object == new_object)
@@ -1343,7 +1343,7 @@ vm_page_rename(mem, new_object, new_offset)
 vm_page_t
 vm_page_alloc(object, offset)
 	vm_object_t	object;
-	vm_offset_t	offset;
+	vaddr_t	offset;
 {
 	register vm_page_t	mem;
 	int		spl;
@@ -1708,12 +1708,12 @@ u_long	vm_page_alloc_memory_npages;
 int
 vm_page_alloc_memory(size, low, high, alignment, boundary,
     rlist, nsegs, waitok)
-	vm_size_t size;
-	vm_offset_t low, high, alignment, boundary;
+	vsize_t size;
+	vaddr_t low, high, alignment, boundary;
 	struct pglist *rlist;
 	int nsegs, waitok;
 {
-	vm_offset_t try, idxpa, lastidxpa;
+	paddr_t try, idxpa, lastidxpa;
 #if defined(MACHINE_NEW_NONCONTIG)
 	int psi;
 	struct vm_page *vm_page_array;

@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: upa.c,v 1.1.1.1.2.1 1998/07/30 14:03:52 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ static int _upa_bus_map __P((
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
-		vm_offset_t,		/*preferred virtual address */
+		vaddr_t,		/*preferred virtual address */
 		bus_space_handle_t *));
 static void *upa_intr_establish __P((
 		bus_space_tag_t,
@@ -512,7 +512,7 @@ _upa_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	bus_addr_t offset;
 	bus_size_t size;
 	int	flags;
-	vm_offset_t vaddr;
+	vaddr_t vaddr;
 	bus_space_handle_t *hp;
 {
 	struct upa_softc *sc = t->cookie;
@@ -636,8 +636,8 @@ upareset(upa)
  */
 void
 upa_enter(va, pa)
-	vm_offset_t va;
-	int64_t pa;
+	vaddr_t va;
+	paddr_t pa;
 {
 	struct upa_softc *sc = upa_sc;
 	int64_t tte;
@@ -671,7 +671,7 @@ upa_enter(va, pa)
  */
 void
 upa_remove(va, len)
-	register vm_offset_t va;
+	register vaddr_t va;
 	register u_int len;
 {
 	register struct upa_softc *sc = upa_sc;

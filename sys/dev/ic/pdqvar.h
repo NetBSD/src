@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.21 1998/05/27 01:17:53 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.21.2.1 1998/07/30 14:04:00 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -95,7 +95,7 @@ enum _pdq_type_t {
 #endif
 #if !defined(PDQ_BUS_DMA)
 #if defined(__NetBSD__) && defined(__alpha__) 
-#define	PDQ_OS_VA_TO_BUSPA(pdq, p)		(alpha_XXX_dmamap((vm_offset_t)p))
+#define	PDQ_OS_VA_TO_BUSPA(pdq, p)		(alpha_XXX_dmamap((vaddr_t)p))
 #else
 #define	PDQ_OS_VA_TO_BUSPA(pdq, p)		vtophys(p)
 #endif
@@ -104,15 +104,15 @@ enum _pdq_type_t {
 #define	PDQ_OS_MEMFREE(p, n)		free((void *) p, M_DEVBUF)
 #ifdef __FreeBSD__
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	vm_page_alloc_contig(n, 0, 0xffffffff, PAGE_SIZE)
-#define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vm_offset_t) p, n)
+#define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vaddr_t) p, n)
 #else
 #if !defined(PDQ_BUS_DMA)
 #if defined(UVM)
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	uvm_km_alloc(kernel_map, round_page(n))
-#define	PDQ_OS_MEMFREE_CONTIG(p, n)	uvm_km_free(kernel_map, (vm_offset_t) p, n)
+#define	PDQ_OS_MEMFREE_CONTIG(p, n)	uvm_km_free(kernel_map, (vaddr_t) p, n)
 #else
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	kmem_alloc(kernel_map, round_page(n))
-#define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vm_offset_t) p, n)
+#define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vaddr_t) p, n)
 #endif
 #endif
 #endif /* __FreeBSD__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: device_pager.c,v 1.25 1998/06/10 22:41:03 tv Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.25.2.1 1998/07/30 14:04:17 eeh Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -68,15 +68,15 @@ int	dpagerdebug = 0;
 #endif
 
 static vm_pager_t	 dev_pager_alloc
-			    __P((caddr_t, vm_size_t, vm_prot_t, vm_offset_t));
+			    __P((caddr_t, vsize_t, vm_prot_t, vaddr_t));
 static void		 dev_pager_dealloc __P((vm_pager_t));
 static int		 dev_pager_getpage
 			    __P((vm_pager_t, vm_page_t *, int, boolean_t));
-static boolean_t	 dev_pager_haspage __P((vm_pager_t, vm_offset_t));
+static boolean_t	 dev_pager_haspage __P((vm_pager_t, vaddr_t));
 static void		 dev_pager_init __P((void));
 static int		 dev_pager_putpage
 			    __P((vm_pager_t, vm_page_t *, int, boolean_t));
-static vm_page_t	 dev_pager_getfake __P((vm_offset_t));
+static vm_page_t	 dev_pager_getfake __P((vaddr_t));
 static void		 dev_pager_putfake __P((vm_page_t));
 
 struct pagerops devicepagerops = {
@@ -103,9 +103,9 @@ dev_pager_init()
 static vm_pager_t
 dev_pager_alloc(handle, size, prot, foff)
 	caddr_t handle;
-	vm_size_t size;
+	vsize_t size;
 	vm_prot_t prot;
-	vm_offset_t foff;
+	vaddr_t foff;
 {
 	dev_t dev;
 	vm_pager_t pager;
@@ -182,7 +182,7 @@ top:
 		 */
 		object = devp->devp_object = vm_object_allocate(0);
 		vm_object_enter(object, pager);
-		vm_object_setpager(object, pager, (vm_offset_t)0, FALSE);
+		vm_object_setpager(object, pager, (vaddr_t)0, FALSE);
 		/*
 		 * Finally, put it on the managed list so other can find it.
 		 * First we re-lookup in case someone else beat us to this
@@ -260,7 +260,7 @@ dev_pager_getpage(pager, mlist, npages, sync)
 	boolean_t sync;
 {
 	register vm_object_t object;
-	vm_offset_t offset, paddr;
+	vaddr_t offset, paddr;
 	vm_page_t page;
 	dev_t dev;
 	int (*mapfunc) __P((dev_t, int, int)), prot;
@@ -332,7 +332,7 @@ dev_pager_putpage(pager, mlist, npages, sync)
 static boolean_t
 dev_pager_haspage(pager, offset)
 	vm_pager_t pager;
-	vm_offset_t offset;
+	vaddr_t offset;
 {
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
@@ -343,7 +343,7 @@ dev_pager_haspage(pager, offset)
 
 static vm_page_t
 dev_pager_getfake(paddr)
-	vm_offset_t paddr;
+	vaddr_t paddr;
 {
 	vm_page_t m;
 	int i;

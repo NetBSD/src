@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.27 1998/07/05 00:51:23 jonathan Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.27.2.1 1998/07/30 14:04:01 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -192,7 +192,8 @@ pdq_pci_attach(
     int unit)
 {
     pdq_softc_t *sc;
-    vm_offset_t va_csrs, pa_csrs;
+    vaddr_t va_csrs;
+    paddr_t pa_csrs;
     pdq_uint32_t data;
 
     if (unit == NFPA) {
@@ -360,7 +361,7 @@ pdq_pci_attach(
     sc->sc_if.if_unit = sc->sc_dev.dv_unit;
     sc->sc_if.if_name = "fpa";
     sc->sc_if.if_flags = 0;
-    sc->sc_membase = (pdq_bus_memaddr_t) mapphys((vm_offset_t)ia->ia_maddr, ia->ia_msize);
+    sc->sc_membase = (pdq_bus_memaddr_t) mapphys((vaddr_t)ia->ia_maddr, ia->ia_msize);
 
     sc->sc_pdq = pdq_initialize(PDQ_BUS_PCI, sc->sc_membase,
 				sc->sc_if.if_name, sc->sc_if.if_unit,

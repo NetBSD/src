@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.1.1.1.2.1 1998/07/30 14:03:55 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -40,7 +40,7 @@ void db_dump_stack __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_trap __P((db_expr_t, int, db_expr_t, char *));
 void db_print_window __P((u_int64_t));
 
-#define INKERNEL(va)	(((vm_offset_t)(va)) >= USRSTACK) /* Not really true, y'know */
+#define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK) /* Not really true, y'know */
 
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
@@ -220,7 +220,7 @@ db_dump_stack(addr, have_addr, count, modif)
 			db_printf("Window %x ", i);
 			db_print_window(frame - BIAS);
 			if (!INKERNEL(((struct frame64 *)(frame))))
-				frame = fuword(((vm_offset_t)&((struct frame64 *)frame)->fr_fp)+4);
+				frame = fuword(((vaddr_t)&((struct frame64 *)frame)->fr_fp)+4);
 			else
 				frame = ((struct frame64 *)frame)->fr_fp;
 		} else {

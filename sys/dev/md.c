@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 1998/02/10 14:09:18 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.16.2.1 1998/07/30 14:03:59 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -438,8 +438,8 @@ md_ioctl_kalloc(sc, umd, proc)
 	struct md_conf *umd;
 	struct proc	*proc;
 {
-	vm_offset_t addr;
-	vm_size_t  size;
+	vaddr_t addr;
+	vsize_t  size;
 
 	/* Sanity check the size. */
 	size = umd->md_size;
@@ -470,14 +470,14 @@ md_ioctl_server(sc, umd, proc)
 	struct md_conf *umd;
 	struct proc	*proc;
 {
-	vm_offset_t end;
+	vaddr_t end;
 	int error;
 
 	/* Sanity check addr, size. */
-	end = (vm_offset_t) (umd->md_addr + umd->md_size);
+	end = (vaddr_t) (umd->md_addr + umd->md_size);
 
 	if ((end >= VM_MAXUSER_ADDRESS) ||
-		(end < ((vm_offset_t) umd->md_addr)) )
+		(end < ((vaddr_t) umd->md_addr)) )
 		return EINVAL;
 
 	/* This unit is now configured. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 1998/07/28 18:34:57 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.3.2.1 1998/07/30 14:03:57 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -73,8 +73,8 @@
 
 /* XXX These are in sbusvar.h, but including that would be problematical */
 struct sbus_softc *sbus0;
-void    sbus_enter __P((struct sbus_softc *, vm_offset_t va, int64_t pa, int flags));
-void    sbus_remove __P((struct sbus_softc *, vm_offset_t va, int len));
+void    sbus_enter __P((struct sbus_softc *, vaddr_t va, int64_t pa, int flags));
+void    sbus_remove __P((struct sbus_softc *, vaddr_t va, int len));
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -84,7 +84,7 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	register paddr_t pa;
 
 	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
 		panic("pagemove 1");
@@ -92,13 +92,13 @@ pagemove(from, to, size)
 	cache_flush((caddr_t)from, size);
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
 		if (pa == 0)
 			panic("pagemove 2");
 		pmap_remove(pmap_kernel(),
-		    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
+		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -117,7 +117,7 @@ kdvma_mapin(va, len, canwait)
 	caddr_t	va;
 	int	len, canwait;
 {
-	return ((caddr_t)dvma_mapin(kernel_map, (vm_offset_t)va, len, canwait));
+	return ((caddr_t)dvma_mapin(kernel_map, (vaddr_t)va, len, canwait));
 }
 
 caddr_t
@@ -126,18 +126,18 @@ dvma_malloc(len, kaddr, flags)
 	void	*kaddr;
 	int	flags;
 {
-	vm_offset_t	kva;
-	vm_offset_t	dva;
+	vaddr_t	kva;
+	vaddr_t	dva;
 #if defined(SUN4M)
 	extern int has_iocache;
 #endif
 
 	len = round_page(len);
-	kva = (vm_offset_t)malloc(len, M_DEVBUF, flags);
+	kva = (vaddr_t)malloc(len, M_DEVBUF, flags);
 	if (kva == NULL)
 		return (NULL);
 
-	*(vm_offset_t *)kaddr = kva;
+	*(vaddr_t *)kaddr = kva;
 	dva = dvma_mapin(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1);
 	if (dva == NULL) {
 		free((void *)kva, M_DEVBUF);
@@ -152,9 +152,9 @@ dvma_free(dva, len, kaddr)
 	size_t	len;
 	void	*kaddr;
 {
-	vm_offset_t	kva = *(vm_offset_t *)kaddr;
+	vaddr_t	kva = *(vaddr_t *)kaddr;
 
-	dvma_mapout((vm_offset_t)dva, kva, round_page(len));
+	dvma_mapout((vaddr_t)dva, kva, round_page(len));
 	free((void *)kva, M_DEVBUF);
 }
 
@@ -164,17 +164,17 @@ u_long dvma_cachealign = 0;
  * Map a range [va, va+len] of wired virtual addresses in the given map
  * to a kernel address in DVMA space.
  */
-vm_offset_t
+vaddr_t
 dvma_mapin(map, va, len, canwait)
 	struct vm_map	*map;
-	vm_offset_t	va;
+	vaddr_t	va;
 	int		len, canwait;
 {
-	vm_offset_t	kva, tva;
+	vaddr_t	kva, tva;
 	register int npf, s;
-	register vm_offset_t pa;
+	register paddr_t pa;
 	long off, pn;
-	vm_offset_t	ova;
+	vaddr_t	ova;
 	int		olen;
 
 	ova = va;
@@ -245,7 +245,7 @@ dvma_mapin(map, va, len, canwait)
 		pa = trunc_page(pa);
 
 		/* Standard RAM is cached non-coherent writeable */
-		sbus_enter(sbus0, tva, pa, BUS_DMA_WRITE|BUS_DMA_CACHE);
+		sbus_enter(sbus0, tva, pa, BUS_DMA_WAITOK);
 
 		tva += PAGE_SIZE;
 		va += PAGE_SIZE;
@@ -265,7 +265,7 @@ dvma_mapin(map, va, len, canwait)
  */
 void
 dvma_mapout(kva, va, len)
-	vm_offset_t	kva, va;
+	vaddr_t	kva, va;
 	int		len;
 {
 	register int s, off;
@@ -294,13 +294,13 @@ dvma_mapout(kva, va, len)
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
 	struct pmap *upmap, *kpmap;
-	vm_offset_t uva;	/* User VA (map from) */
-	vm_offset_t kva;	/* Kernel VA (new to) */
-	vm_offset_t pa; 	/* physical address */
-	vm_size_t off;
+	vaddr_t uva;	/* User VA (map from) */
+	vaddr_t kva;	/* Kernel VA (new to) */
+	paddr_t pa; 	/* physical address */
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -311,7 +311,7 @@ vmapbuf(bp, len)
 	 */
 	bp->b_saveaddr = bp->b_data;
 	uva = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - uva;
+	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
 #if defined(UVM)
 	kva = uvm_km_valloc_wait(kernel_map, len);
@@ -350,16 +350,16 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t kva;
-	vm_size_t off;
+	vaddr_t kva;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - kva;
+	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
 
 	/* This will call pmap_remove() for us. */
@@ -402,7 +402,7 @@ cpu_fork(p1, p2)
 	register struct pcb *opcb = &p1->p_addr->u_pcb;
 	register struct pcb *npcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf2;
-	register struct rwindow32 *rp, *orp;
+	register struct rwindow32 *rp;
 
 	/*
 	 * Save all user registers to p1's stack or, in the case of
@@ -528,7 +528,7 @@ cpu_set_kpc(p, pc)
 	void (*pc) __P((struct proc *));
 {
 	struct pcb *pcb;
-	struct rwindow32 *rp, *orp;
+	struct rwindow32 *rp;
 
 #if 0
 	/* Make sure our D$ is not polluted w/bad data */

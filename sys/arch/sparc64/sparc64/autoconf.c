@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1998/07/04 22:18:41 jonathan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.2.2.1 1998/07/30 14:03:54 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -795,7 +795,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	 */
 	for (node = node0; node; node = nextsibling(node)) {
 		const char *cp;
-		struct sbus_reg romreg;
 
 		if (node_has_property(node, "device_type") &&
 		    strcmp(getpropstringA(node, "device_type", namebuf),

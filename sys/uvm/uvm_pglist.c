@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.5 1998/07/08 04:28:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.5.2.1 1998/07/30 14:04:15 eeh Exp $	*/
 
 #define VM_PAGE_ALLOC_MEMORY_STATS
  
@@ -92,12 +92,12 @@ u_long	uvm_pglistalloc_npages;
 
 int
 uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
-	vm_size_t size;
-	vm_offset_t low, high, alignment, boundary;
+	psize_t size;
+	paddr_t low, high, alignment, boundary;
 	struct pglist *rlist;
 	int nsegs, waitok;
 {
-	vm_offset_t try, idxpa, lastidxpa;
+	paddr_t try, idxpa, lastidxpa;
 	int psi;
 	struct vm_page *pgs;
 	int s, tryidx, idx, end, error, free_list;

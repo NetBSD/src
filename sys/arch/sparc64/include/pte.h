@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: pte.h,v 1.1.1.1.2.1 1998/07/30 14:03:53 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -137,7 +137,7 @@ struct sun4u_tte {
 typedef struct sun4u_tte pte_t;
 
 /* Assembly routine to flush a mapping */
-extern void tlb_flush_pte __P((vm_offset_t addr, int ctx));
+extern void tlb_flush_pte __P((vaddr_t addr, int ctx));
 extern void tlb_flush_ctx __P((int ctx));
 
 #endif /* _LOCORE */

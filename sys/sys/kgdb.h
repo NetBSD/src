@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.3 1998/04/03 19:34:24 pk Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.3.2.1 1998/07/30 14:04:06 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,7 @@ int kgdb_trap __P((int, db_regs_t *));
  * Machine dependent functions needed by kgdb_stub.c
  */
 int kgdb_signal __P((int));
-int kgdb_acc __P((vm_offset_t, size_t));
+int kgdb_acc __P((vaddr_t, size_t));
 void kgdb_getregs __P((db_regs_t *, kgdb_reg_t *));
 void kgdb_setregs __P((db_regs_t *, kgdb_reg_t *));
 

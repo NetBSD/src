@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.89 1998/06/08 15:52:07 kleink Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.89.2.1 1998/07/30 14:04:06 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2000,7 +2000,7 @@ vfs_shutdown()
 	int iter, nbusy;
 
 	printf("syncing disks... ");
-
+	
 	/* XXX Should suspend scheduling. */
 	(void) spl0();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.39 1998/07/12 17:14:08 thorpej Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.39.2.1 1998/07/30 14:04:26 eeh Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -83,14 +83,14 @@ int	vpagerdebug = 0x00;
 #endif
 
 static vm_pager_t	 vnode_pager_alloc
-			    __P((caddr_t, vm_size_t, vm_prot_t, vm_offset_t));
+			    __P((caddr_t, vsize_t, vm_prot_t, vaddr_t));
 static void		 vnode_pager_cluster
-			    __P((vm_pager_t, vm_offset_t,
-				 vm_offset_t *, vm_offset_t *));
+			    __P((vm_pager_t, vaddr_t,
+				 vaddr_t *, vaddr_t *));
 static void		 vnode_pager_dealloc __P((vm_pager_t));
 static int		 vnode_pager_getpage
 			    __P((vm_pager_t, vm_page_t *, int, boolean_t));
-static boolean_t	 vnode_pager_haspage __P((vm_pager_t, vm_offset_t));
+static boolean_t	 vnode_pager_haspage __P((vm_pager_t, vaddr_t));
 static void		 vnode_pager_init __P((void));
 static int		 vnode_pager_io
 			    __P((vn_pager_t, vm_page_t *, int,
@@ -127,9 +127,9 @@ vnode_pager_init()
 static vm_pager_t
 vnode_pager_alloc(handle, size, prot, foff)
 	caddr_t handle;
-	vm_size_t size;
+	vsize_t size;
 	vm_prot_t prot;
-	vm_offset_t foff;
+	vaddr_t foff;
 {
 	register vm_pager_t pager;
 	register vn_pager_t vnp;
@@ -210,12 +210,12 @@ vnode_pager_alloc(handle, size, prot, foff)
 		}
 		/* make sure mapping fits into numeric range,
 		 truncate if necessary */
-		if (used_vnode_size > (vm_offset_t)-PAGE_SIZE) {
+		if (used_vnode_size > (vaddr_t)-PAGE_SIZE) {
 #ifdef DEBUG
 			printf("vnode_pager_alloc: vn %p size truncated %qx->%lx\n",
-			       vp, used_vnode_size, (vm_offset_t)-PAGE_SIZE);
+			       vp, used_vnode_size, (vaddr_t)-PAGE_SIZE);
 #endif
-			used_vnode_size = (vm_offset_t)-PAGE_SIZE;
+			used_vnode_size = (vaddr_t)-PAGE_SIZE;
 		}
 		object = vm_object_allocate(round_page(used_vnode_size));
 		vm_object_enter(object, pager);
@@ -335,7 +335,7 @@ vnode_pager_putpage(pager, mlist, npages, sync)
 static boolean_t
 vnode_pager_haspage(pager, offset)
 	vm_pager_t pager;
-	vm_offset_t offset;
+	vaddr_t offset;
 {
 	register vn_pager_t vnp = (vn_pager_t)pager->pg_data;
 	daddr_t bn;
@@ -387,12 +387,12 @@ vnode_pager_haspage(pager, offset)
 static void
 vnode_pager_cluster(pager, offset, loffset, hoffset)
 	vm_pager_t	pager;
-	vm_offset_t	offset;
-	vm_offset_t	*loffset;
-	vm_offset_t	*hoffset;
+	vaddr_t	offset;
+	vaddr_t	*loffset;
+	vaddr_t	*hoffset;
 {
 	vn_pager_t vnp = (vn_pager_t)pager->pg_data;
-	vm_offset_t loff, hoff;
+	vaddr_t loff, hoff;
 
 #ifdef DEBUG
 	if (vpagerdebug & VDB_FOLLOW)
@@ -443,12 +443,12 @@ vnode_pager_setsize(vp, nsize)
 
 	/* make sure mapping fits into numeric range,
 	 truncate if necessary */
-	if (nsize > (vm_offset_t)-PAGE_SIZE) {
+	if (nsize > (vaddr_t)-PAGE_SIZE) {
 #ifdef DEBUG
 		printf("vnode_pager_setsize: vn %p size truncated %qx->%lx\n",
-		       vp, nsize, (vm_offset_t)-PAGE_SIZE);
+		       vp, nsize, (vaddr_t)-PAGE_SIZE);
 #endif
-		nsize = (vm_offset_t)-PAGE_SIZE;
+		nsize = (vaddr_t)-PAGE_SIZE;
 	}
 
 	/*
@@ -482,10 +482,10 @@ vnode_pager_setsize(vp, nsize)
 	if (nsize < vnp->vnp_size) {
 		vm_object_lock(object);
 		vm_object_page_remove(object,
-				      (vm_offset_t)nsize, vnp->vnp_size);
+				      (vaddr_t)nsize, vnp->vnp_size);
 		vm_object_unlock(object);
 	}
-	vnp->vnp_size = (vm_offset_t)nsize;
+	vnp->vnp_size = (vaddr_t)nsize;
 	vm_object_deallocate(object);
 }
 
@@ -636,7 +636,7 @@ vnode_pager_io(vnp, mlist, npages, sync, rw)
 {
 	struct uio auio;
 	struct iovec aiov;
-	vm_offset_t kva, foff;
+	vaddr_t kva, foff;
 	int error, size;
 	struct proc *p = curproc;		/* XXX */
 

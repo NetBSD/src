@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.2 1998/07/04 22:18:41 jonathan Exp $	*/
+/*	$NetBSD: si.c,v 1.2.2.1 1998/07/30 14:03:51 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -721,8 +721,8 @@ si_dma_free(ncr_sc)
 		/* XXX - Should separate allocation and mapping. */
 
 		/* Give back the DVMA space. */
-		dvma_mapout((vm_offset_t)dh->dh_dvma,
-		    (vm_offset_t)dh->dh_addr, dh->dh_maplen);
+		dvma_mapout((vaddr_t)dh->dh_dvma,
+		    (vaddr_t)dh->dh_addr, dh->dh_maplen);
 
 		dh->dh_dvma = 0;
 		dh->dh_flags = 0;

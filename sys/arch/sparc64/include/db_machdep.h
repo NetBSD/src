@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.1.1.1.2.1 1998/07/30 14:03:53 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -42,7 +42,7 @@
 
 /* end of mangling */
 
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
+typedef	vaddr_t	db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 #if 1

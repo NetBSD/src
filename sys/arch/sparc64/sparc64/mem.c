@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 1998/07/07 03:05:05 eeh Exp $ */
+/*	$NetBSD: mem.c,v 1.2.2.1 1998/07/30 14:03:56 eeh Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,8 +62,8 @@
 
 #include <vm/vm.h>
 
-extern vm_offset_t prom_vstart;
-extern vm_offset_t prom_vend;
+extern vaddr_t prom_vstart;
+extern vaddr_t prom_vend;
 caddr_t zeropage;
 
 /*ARGSUSED*/
@@ -95,7 +95,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
+	register vaddr_t o, v;
 	register int c;
 	register struct iovec *iov;
 	int error = 0;
@@ -132,14 +132,14 @@ mmrw(dev, uio, flags)
 				error = EFAULT;
 				goto unlock;
 			}
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + NBPG);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+			    (vaddr_t)vmmap + NBPG);
 			break;
 #else
 			/* On v9 we can just use the physical ASI and not bother w/mapin & mapout */
@@ -285,7 +285,7 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
         dev_t dev;
         int off, prot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.2 1998/07/07 03:05:02 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.2.2.1 1998/07/30 14:03:51 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ static int _sbus_bus_map __P((
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
-		vm_offset_t,		/*preferred virtual address */
+		vaddr_t,		/*preferred virtual address */
 		bus_space_handle_t *));
 static void *sbus_intr_establish __P((
 		bus_space_tag_t,
@@ -147,8 +147,8 @@ extern struct cfdriver sbus_cd;
 /*
  * DVMA routines
  */
-void sbus_enter __P((struct sbus_softc *, vm_offset_t, int64_t, int));
-void sbus_remove __P((struct sbus_softc *, vm_offset_t, int));
+void sbus_enter __P((struct sbus_softc *, vaddr_t, int64_t, int));
+void sbus_remove __P((struct sbus_softc *, vaddr_t, int));
 int sbus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 			  bus_size_t, struct proc *, int));
 void sbus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
@@ -315,7 +315,7 @@ sbus_attach(parent, self, aux)
 	 */
 	{
 		extern int64_t		*iotsb;
-		extern vm_offset_t	iotsbp;
+		extern paddr_t		iotsbp;
 		extern int		iotsbsize;
 		
 		sc->sc_tsbsize = iotsbsize;
@@ -342,7 +342,7 @@ sbus_attach(parent, self, aux)
 		tsb = sc->sc_sysio->sys_iommu.iommu_tsb;
 		printf("iommu cr=%x:%x tsb=%x:%x\n", (long)(cr>>32), (long)cr, (long)(tsb>>32), (long)tsb);
 		printf("sysio base %p phys %p TSB base %p phys %p", 
-		       (long)sc->sc_sysio, (long)pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_sysio), 
+		       (long)sc->sc_sysio, (long)pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_sysio), 
 		       (long)sc->sc_tsb, (long)sc->sc_ptsb);
 		delay(1000000); /* 1 s */
 	}
@@ -351,7 +351,7 @@ sbus_attach(parent, self, aux)
 	/*
 	 * Initialize streaming buffer.
 	 */
-	sc->sc_flushpa = pmap_extract(pmap_kernel(), &sc->sc_flush);
+	sc->sc_flushpa = pmap_extract(pmap_kernel(), (vaddr_t)&sc->sc_flush);
 #if 0
 	sc->sc_sysio->sys_strbuf.strbuf_ctl = STRBUF_EN; /* Enable diagnostics mode? */
 #else
@@ -427,7 +427,7 @@ _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	bus_addr_t offset;
 	bus_size_t size;
 	int	flags;
-	vm_offset_t vaddr;
+	vaddr_t vaddr;
 	bus_space_handle_t *hp;
 {
 	struct sbus_softc *sc = t->cookie;
@@ -557,7 +557,7 @@ sbusreset(sbus)
 void
 sbus_enter(sc, va, pa, flags)
 	struct sbus_softc *sc;
-	vm_offset_t va;
+	vaddr_t va;
 	int64_t pa;
 	int flags;
 {
@@ -568,7 +568,7 @@ sbus_enter(sc, va, pa, flags)
 		panic("sbus_enter: va 0x%x not in DVMA space",va);
 #endif
 
-	tte = MAKEIOTTE(pa, flags&BUS_DMA_WRITE, flags&BUS_DMA_CACHE, 
+	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
 			!(flags&BUS_DMA_COHERENT));
 	
 	/* Is the streamcache flush really needed? */
@@ -601,7 +601,7 @@ sbus_enter(sc, va, pa, flags)
 void
 sbus_remove(sc, va, len)
 	struct sbus_softc *sc;
-	vm_offset_t va;
+	vaddr_t va;
 	int len;
 {
 
@@ -918,8 +918,8 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	int err;
 	bus_size_t sgsize;
-	vm_offset_t curaddr;
-	vm_offset_t  dvmaddr, vaddr = (vm_offset_t)buf;
+	paddr_t curaddr;
+	vaddr_t  dvmaddr, vaddr = (vaddr_t)buf;
 	pmap_t pmap;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
@@ -944,7 +944,7 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		if ((curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr)) == NULL) {
+		if ((curaddr = (bus_addr_t)pmap_extract(pmap, (vaddr_t)vaddr)) == NULL) {
 			bus_dmamap_unload(t, map);
 			return (-1);
 		}
@@ -975,7 +975,7 @@ sbus_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	vm_offset_t addr;
+	vaddr_t addr;
 	int len;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
@@ -1004,7 +1004,7 @@ sbus_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
-	vm_offset_t va = map->dm_segs[0].ds_addr + offset;
+	vaddr_t va = map->dm_segs[0].ds_addr + offset;
 
 
 	/*
@@ -1059,7 +1059,7 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t curaddr;
+	paddr_t curaddr;
 	bus_addr_t dvmaddr;
 	vm_page_t m;
 	struct pglist *mlist;
@@ -1092,7 +1092,7 @@ sbus_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	vm_offset_t addr;
+	vaddr_t addr;
 	int len;
 	int n;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
@@ -1120,17 +1120,17 @@ sbus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	vm_page_t m;
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	struct pglist *mlist;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
-	int r, cbit;
+	int cbit;
 	int rval;
 
 	/* 
 	 * First have the parent driver allocate some address space in DVMA space.
 	 */
-	if (rval = bus_dmamem_map(t->_parent, segs, nsegs, size, kvap, flags))
+	if ((rval = bus_dmamem_map(t->_parent, segs, nsegs, size, kvap, flags)))
 		return (rval);
 
 	/* 
@@ -1139,12 +1139,12 @@ sbus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	cbit = 0;
 	if (flags & BUS_DMA_COHERENT)	/* Disable vcache */
 		cbit |= PMAP_NVC;
-	if (flags & BUS_DMA_CACHE)	/* sideffects */
+	if (flags & BUS_DMA_NOCACHE)	/* sideffects */
 		cbit |= PMAP_NC;
 	/*
 	 * Now take this and map it both into the CPU and into the IOMMU.
 	 */
-	va = (vm_offset_t)*kvap;
+	va = (vaddr_t)*kvap;
 	mlist = segs[0]._ds_mlist;
 	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
 
@@ -1180,6 +1180,6 @@ sbus_dmamem_unmap(t, kva, size)
 #endif
 	
 	size = round_page(size);
-	sbus_remove(sc, kva, size);
+	sbus_remove(sc, (vaddr_t)kva, size);
 	bus_dmamem_unmap(t->_parent, kva, size);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.6 1998/02/10 14:12:05 mrg Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.6.2.1 1998/07/30 14:04:09 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -61,7 +61,7 @@
 AMAP_INLINE struct vm_anon *
 amap_lookup(aref, offset)
 	struct vm_aref *aref;
-	vm_offset_t offset;
+	vaddr_t offset;
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -86,7 +86,7 @@ amap_lookup(aref, offset)
 AMAP_INLINE void
 amap_lookups(aref, offset, anons, npages)
 	struct vm_aref *aref;
-	vm_offset_t offset;
+	vaddr_t offset;
 	struct vm_anon **anons;
 	int npages;
 {
@@ -117,10 +117,10 @@ amap_lookups(aref, offset, anons, npages)
  *	pmap_page_protect on the anon's page.
  * => returns an "offset" which is meaningful to amap_unadd().
  */
-AMAP_INLINE vm_offset_t
+AMAP_INLINE vaddr_t
 amap_add(aref, offset, anon, replace)
 	struct vm_aref *aref;
-	vm_offset_t offset;
+	vaddr_t offset;
 	struct vm_anon *anon;
 	int replace;
 {
@@ -171,7 +171,7 @@ amap_add(aref, offset, anon, replace)
 AMAP_INLINE void
 amap_unadd(amap, slot)
 	struct vm_amap *amap;
-	vm_offset_t slot;
+	vaddr_t slot;
 {
 	int ptr;
 	UVMHIST_FUNC("amap_unadd"); UVMHIST_CALLED(maphist);

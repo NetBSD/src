@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 1998/07/07 03:05:03 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.2.2.1 1998/07/30 14:03:53 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct sparc_bus_space_tag {
 				bus_addr_t,
 				bus_size_t,
 				int,			/*flags*/
-				vm_offset_t,		/*preferred vaddr*/
+				vaddr_t,		/*preferred vaddr*/
 				bus_space_handle_t *));
 	int	(*sparc_bus_unmap) __P((
 				bus_space_tag_t,
@@ -182,7 +182,7 @@ static int	bus_space_map2 __P((
 				bus_addr_t,
 				bus_size_t,
 				int,			/*flags*/
-				vm_offset_t,		/*preferred vaddr*/
+				vaddr_t,		/*preferred vaddr*/
 				bus_space_handle_t *));
 static int	bus_space_unmap __P((
 				bus_space_tag_t,
@@ -238,7 +238,7 @@ bus_space_map2(t, bt, a, s, f, v, hp)
 	bus_addr_t	a;
 	bus_size_t	s;
 	int		f;
-	vm_offset_t	v;
+	vaddr_t	v;
 	bus_space_handle_t *hp;
 {
 	_BS_CALL(t, sparc_bus_map)(t, bt, a, s, f, v, hp);
@@ -533,8 +533,8 @@ int bus_space_probe __P((
 #define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
 #define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
-#define	BUS_DMA_WRITE		0x08	/* I suppose the following two should default on */
-#define	BUS_DMA_CACHE		0x10	
+#define	BUS_DMA_NOWRITE		0x08	/* I suppose the following two should default on */
+#define	BUS_DMA_NOCACHE		0x10	
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
@@ -695,7 +695,7 @@ int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vm_offset_t low, vm_offset_t high));
+	    vaddr_t low, vaddr_t high));
 #endif /* _SPARC_BUS_DMA_PRIVATE */
 
 #endif /* _SPARC_BUS_H_ */

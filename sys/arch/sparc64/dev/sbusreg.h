@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.1.1.1.2.1 1998/07/30 14:03:51 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -254,10 +254,10 @@ struct sysioreg {
 #define MAKEIOTTE(pa,w,c,s)	(((pa)&IOTTE_PAMASK)|((w)?IOTTE_W:0)|((c)?IOTTE_C:0)|((s)?IOTTE_STREAM:0)|(IOTTE_V|IOTTE_8K))
 #if 0
 /* This version generates a pointer to a int64_t */
-#define IOTSBSLOT(va,sz)	((((((vm_offset_t)(va))-(0xff800000<<(sz))))>>(13-3))&(~7))
+#define IOTSBSLOT(va,sz)	((((((vaddr_t)(va))-(0xff800000<<(sz))))>>(13-3))&(~7))
 #else
 /* Here we just try to create an array index */
-#define IOTSBSLOT(va,sz)	((((((vm_offset_t)(va))-(0xff800000<<(sz))))>>(13)))
+#define IOTSBSLOT(va,sz)	((((((vaddr_t)(va))-(0xff800000<<(sz))))>>(13)))
 #endif
 
 /*

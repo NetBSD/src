@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.2 1998/07/07 03:05:03 eeh Exp $	*/
+/*	$NetBSD: kcore.h,v 1.2.2.1 1998/07/30 14:03:53 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,5 +58,5 @@ typedef struct cpu_kcore_hdr {
 	u_long	pmegoffset;		/* start of pmeg array (relative */
 					/*  to the start of this header) */
 /* SPARC64 stuff */
-	int64_t	kphys;			/* Physical address of 4MB locked TLB */
+	paddr_t	kphys;			/* Physical address of 4MB locked TLB */
 } cpu_kcore_hdr_t;

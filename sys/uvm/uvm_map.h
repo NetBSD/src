@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.6 1998/02/10 14:12:20 mrg Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.6.2.1 1998/07/30 14:04:13 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -127,40 +127,40 @@
 MAP_INLINE
 void		uvm_map_deallocate __P((vm_map_t));
 
-int		uvm_map_clean __P((vm_map_t, vm_offset_t, vm_offset_t, int));
+int		uvm_map_clean __P((vm_map_t, vaddr_t, vaddr_t, int));
 void		uvm_map_clip_start __P((vm_map_t,
-				vm_map_entry_t, vm_offset_t));
+				vm_map_entry_t, vaddr_t));
 void		uvm_map_clip_end __P((vm_map_t, vm_map_entry_t,
-				vm_offset_t));
+				vaddr_t));
 MAP_INLINE
-vm_map_t	uvm_map_create __P((pmap_t, vm_offset_t, 
-			vm_offset_t, boolean_t));
-int		uvm_map_extract __P((vm_map_t, vm_offset_t, vm_size_t, 
-			vm_map_t, vm_offset_t *, int));
-vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vm_offset_t, vm_size_t,
-			vm_offset_t *, struct uvm_object *, vm_offset_t, 
+vm_map_t	uvm_map_create __P((pmap_t, vaddr_t, 
+			vaddr_t, boolean_t));
+int		uvm_map_extract __P((vm_map_t, vaddr_t, vsize_t, 
+			vm_map_t, vaddr_t *, int));
+vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vaddr_t, vsize_t,
+			vaddr_t *, struct uvm_object *, vaddr_t, 
 			boolean_t));
-int		uvm_map_inherit __P((vm_map_t, vm_offset_t, vm_offset_t,
+int		uvm_map_inherit __P((vm_map_t, vaddr_t, vaddr_t,
 			vm_inherit_t));
 void		uvm_map_init __P((void));
-boolean_t	uvm_map_lookup_entry __P((vm_map_t, vm_offset_t, 
+boolean_t	uvm_map_lookup_entry __P((vm_map_t, vaddr_t, 
 			vm_map_entry_t *));
 MAP_INLINE
 void		uvm_map_reference __P((vm_map_t));
-int		uvm_map_replace __P((vm_map_t, vm_offset_t, vm_offset_t, 
+int		uvm_map_replace __P((vm_map_t, vaddr_t, vaddr_t, 
 			vm_map_entry_t, int));
-int		uvm_map_reserve __P((vm_map_t, vm_size_t, vm_offset_t, 
-			vm_offset_t *));
-void		uvm_map_setup __P((vm_map_t, vm_offset_t, 
-			vm_offset_t, boolean_t));
+int		uvm_map_reserve __P((vm_map_t, vsize_t, vaddr_t, 
+			vaddr_t *));
+void		uvm_map_setup __P((vm_map_t, vaddr_t, 
+			vaddr_t, boolean_t));
 void		uvm_map_sharemapcopy __P((vm_map_t, vm_map_entry_t,
 					  vm_map_t));
-int		uvm_map_submap __P((vm_map_t, vm_offset_t, 
-			vm_offset_t, vm_map_t));
+int		uvm_map_submap __P((vm_map_t, vaddr_t, 
+			vaddr_t, vm_map_t));
 MAP_INLINE
-int		uvm_unmap __P((vm_map_t, vm_offset_t, vm_offset_t, boolean_t));
+int		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t, boolean_t));
 void		uvm_unmap_detach __P((vm_map_entry_t,int));
-int		uvm_unmap_remove __P((vm_map_t, vm_offset_t, vm_offset_t,
+int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
 				      boolean_t, vm_map_entry_t *));
 
 struct vmspace *uvmspace_fork __P((struct vmspace *));

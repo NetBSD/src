@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.26 1998/07/26 10:03:29 simonb Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.26.2.1 1998/07/30 14:04:20 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -83,12 +83,12 @@
  *	Allocate pageable memory to the kernel's address map.
  *	map must be "kernel_map" below.
  */
-vm_offset_t
+vaddr_t
 kmem_alloc_pageable(map, size)
 	vm_map_t		map;
-	register vm_size_t	size;
+	register vsize_t	size;
 {
-	vm_offset_t		addr;
+	vaddr_t		addr;
 	register int		result;
 
 #if	0
@@ -99,7 +99,7 @@ kmem_alloc_pageable(map, size)
 	size = round_page(size);
 
 	addr = vm_map_min(map);
-	result = vm_map_find(map, NULL, (vm_offset_t) 0,
+	result = vm_map_find(map, NULL, (vaddr_t) 0,
 				&addr, size, TRUE);
 	if (result != KERN_SUCCESS) {
 		return(0);
@@ -112,15 +112,15 @@ kmem_alloc_pageable(map, size)
  *	Allocate wired-down memory in the kernel's address map
  *	or a submap.
  */
-vm_offset_t
+vaddr_t
 kmem_alloc(map, size)
 	register vm_map_t	map;
-	register vm_size_t	size;
+	register vsize_t	size;
 {
-	vm_offset_t		addr;
-	register vm_offset_t	offset;
+	vaddr_t		addr;
+	register vaddr_t	offset;
 	extern vm_object_t	kernel_object;
-	vm_offset_t		i;
+	vaddr_t		i;
 
 	size = round_page(size);
 
@@ -187,7 +187,7 @@ kmem_alloc(map, size)
 	 *	And finally, mark the data as non-pageable.
 	 */
 
-	(void) vm_map_pageable(map, (vm_offset_t) addr, addr + size, FALSE);
+	(void) vm_map_pageable(map, (vaddr_t) addr, addr + size, FALSE);
 
 	/*
 	 *	Try to coalesce the map
@@ -208,8 +208,8 @@ kmem_alloc(map, size)
 void
 kmem_free(map, addr, size)
 	vm_map_t		map;
-	register vm_offset_t	addr;
-	vm_size_t		size;
+	register vaddr_t	addr;
+	vsize_t		size;
 {
 	(void) vm_map_remove(map, trunc_page(addr), round_page(addr + size));
 }
@@ -230,8 +230,8 @@ kmem_free(map, addr, size)
 vm_map_t
 kmem_suballoc(parent, min, max, size, pageable)
 	register vm_map_t	parent;
-	vm_offset_t		*min, *max;
-	register vm_size_t	size;
+	vaddr_t		*min, *max;
+	register vsize_t	size;
 	boolean_t		pageable;
 {
 	register int	ret;
@@ -239,8 +239,8 @@ kmem_suballoc(parent, min, max, size, pageable)
 
 	size = round_page(size);
 
-	*min = (vm_offset_t) vm_map_min(parent);
-	ret = vm_map_find(parent, NULL, (vm_offset_t) 0,
+	*min = (vaddr_t) vm_map_min(parent);
+	ret = vm_map_find(parent, NULL, (vaddr_t) 0,
 				min, size, TRUE);
 	if (ret != KERN_SUCCESS) {
 		printf("kmem_suballoc: bad status return of %d.\n", ret);
@@ -272,15 +272,15 @@ kmem_suballoc(parent, min, max, size, pageable)
  * We don't worry about expanding the map (adding entries) since entries
  * for wired maps are statically allocated.
  */
-vm_offset_t
+vaddr_t
 kmem_malloc(map, size, canwait)
 	register vm_map_t	map;
-	register vm_size_t	size;
+	register vsize_t	size;
 	boolean_t		canwait;
 {
-	register vm_offset_t	offset, i;
+	register vaddr_t	offset, i;
 	vm_map_entry_t		entry;
-	vm_offset_t		addr;
+	vaddr_t		addr;
 	vm_page_t		m;
 	extern vm_object_t	kmem_object;
 
@@ -318,7 +318,7 @@ kmem_malloc(map, size, canwait)
 	 */
 	if (canwait) {
 		vm_map_unlock(map);
-		(void) vm_map_pageable(map, (vm_offset_t) addr, addr + size,
+		(void) vm_map_pageable(map, (vaddr_t) addr, addr + size,
 				       FALSE);
 		vm_map_simplify(map, addr);
 		return(addr);
@@ -392,12 +392,12 @@ kmem_malloc(map, size, canwait)
  *	has no room, the caller sleeps waiting for more memory in the submap.
  *
  */
-vm_offset_t
+vaddr_t
 kmem_alloc_wait(map, size)
 	vm_map_t	map;
-	vm_size_t	size;
+	vsize_t	size;
 {
-	vm_offset_t	addr;
+	vaddr_t	addr;
 
 	size = round_page(size);
 
@@ -418,7 +418,7 @@ kmem_alloc_wait(map, size)
 		vm_map_unlock(map);
 		thread_block("mKmwait");
 	}
-	vm_map_insert(map, NULL, (vm_offset_t)0, addr, addr + size);
+	vm_map_insert(map, NULL, (vaddr_t)0, addr, addr + size);
 	vm_map_unlock(map);
 	return (addr);
 }
@@ -432,8 +432,8 @@ kmem_alloc_wait(map, size)
 void
 kmem_free_wakeup(map, addr, size)
 	vm_map_t	map;
-	vm_offset_t	addr;
-	vm_size_t	size;
+	vaddr_t	addr;
+	vsize_t	size;
 {
 	vm_map_lock(map);
 	(void) vm_map_delete(map, trunc_page(addr), round_page(addr + size));
@@ -453,12 +453,12 @@ kmem_free_wakeup(map, addr, size)
  *	Allocate a PAGE_SIZE page for the pool allocator.  Separate from
  *	kmem_alloc(), as we may be using a direct-mapping for the page.
  */
-vm_offset_t
+vaddr_t
 kmem_alloc_poolpage()
 {
 #if defined(PMAP_MAP_POOLPAGE)
-	vm_page_t pg;
-	vm_offset_t va;
+	vm_page_t pg
+	vaddr_t va;
 
 	pg = vm_page_alloc1();
 	if (pg == NULL)
@@ -468,7 +468,7 @@ kmem_alloc_poolpage()
 		vm_page_free1(pg);
 	return (va);
 #else
-	vm_offset_t va;
+	vaddr_t va;
 	int s;
 
 	s = splimp();
@@ -485,10 +485,10 @@ kmem_alloc_poolpage()
  */
 void
 kmem_free_poolpage(addr)
-	vm_offset_t	addr;
+	vaddr_t	addr;
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
-	vm_offset_t pa;
+	paddr_t pa;
 
 	pa = PMAP_UNMAP_POOLPAGE(addr);
 	vm_page_free1(PHYS_TO_VM_PAGE(pa));
@@ -509,7 +509,7 @@ kmem_free_poolpage(addr)
  */
 void
 kmem_init(start, end)
-	vm_offset_t start, end;
+	vaddr_t start, end;
 {
 	register vm_map_t m;
 
@@ -517,8 +517,9 @@ kmem_init(start, end)
 	vm_map_lock(m);
 	/* N.B.: cannot use kgdb to debug, starting with this assignment ... */
 	kernel_map = m;
-	(void) vm_map_insert(m, NULL, (vm_offset_t)0,
+	(void) vm_map_insert(m, NULL, (vaddr_t)0,
 	    VM_MIN_KERNEL_ADDRESS, start);
 	/* ... and ending with the completion of the above `insert' */
 	vm_map_unlock(m);
 }
+

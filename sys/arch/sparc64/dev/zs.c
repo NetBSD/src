@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 1998/07/04 22:18:41 jonathan Exp $	*/
+/*	$NetBSD: zs.c,v 1.2.2.1 1998/07/30 14:03:52 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -947,7 +947,7 @@ consinit()
 	struct consdev *cn;
 	int channel, zs_unit, zstty_unit;
 	int inSource, outSink;
-	register int node,fd;
+	register int node;
 	char buffer[128];
 	register char *cp;
 	extern int fbnode;
@@ -1035,7 +1035,9 @@ setup_output:
 			outSink = PROMDEV_TTYA + (cp[1] - 'a');
 		else outSink = -1;
 	}	
+#if 0
 setup_console:
+#endif
 
 	if (inSource != outSink) {
 		printf("cninit: mismatched PROM output selector\n");

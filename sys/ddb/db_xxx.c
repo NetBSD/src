@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.3 1998/01/31 04:14:48 ross Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.3.2.1 1998/07/30 14:03:59 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -174,7 +174,7 @@ db_show_all_procs(addr, haddr, count, modif)
 				}
 				if(p->p_wchan && p->p_wmesg) {
 					db_printf(" %-12s", p->p_wmesg);
-					db_printsym((db_addr_t)p->p_wchan,
+					db_printsym((db_expr_t)p->p_wchan,
 					    DB_STGY_XTRN);
 				}
 				db_printf("\n");
@@ -211,7 +211,7 @@ db_show_callout(addr, haddr, count, modif)
 		if (t > 0)
 			cum += t;
 
-		db_find_sym_and_offset((db_addr_t)p1->c_func, &name, &offset);
+		db_find_sym_and_offset((db_expr_t)p1->c_func, &name, &offset);
 		if (name == NULL)
 			name = "?";
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.1.1.1.2.1 1998/07/30 14:03:56 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -102,18 +102,18 @@ get_memory_handle() {
  */
 int
 prom_set_trap_table(tba)
-vm_offset_t tba;
+vaddr_t tba;
 {
 	static struct {
 		int pad0; char *name;
 		int64_t nargs;
 		int64_t nreturns;
-		int pad1; vm_offset_t tba;
+		u_int64_t tba;
 	} args = {
 		0,"SUNW,set-trap-table",
 		1,
 		0,
-		0, NULL
+		NULL
 	};
 
 	args.tba = tba;
@@ -127,7 +127,7 @@ vm_offset_t tba;
  */
 u_int64_t
 prom_vtop(vaddr)
-vm_offset_t vaddr;
+vaddr_t vaddr;
 {
 	static struct {
 		int pad0; char *name;
@@ -135,7 +135,7 @@ vm_offset_t vaddr;
 		int64_t nreturns;
 		int pad1; char *method;
 		int pad2; int ihandle;
-		int pad3; vm_offset_t vaddr;
+		u_int64_t vaddr;
 		int64_t status;
 		int64_t retaddr;
 		int64_t mode;
@@ -177,9 +177,9 @@ vm_offset_t vaddr;
  *
  * Only works while the prom is actively mapping us.
  */
-u_int64_t
+vaddr_t
 prom_claim_virt(vaddr, len)
-vm_offset_t vaddr;
+vaddr_t vaddr;
 int len;
 {
 	static struct {
@@ -190,7 +190,7 @@ int len;
 		int pad2; int ihandle;
 		u_int64_t align;
 		u_int64_t len;
-		int pad3; vm_offset_t vaddr;
+		u_int64_t vaddr;
 		int64_t status;
 		int64_t retaddr;
 	} args = {
@@ -201,7 +201,7 @@ int len;
 		0, 0,
 		0,
 		0, 
-		0, NULL,
+		NULL,
 		0,
 		0
 	};
@@ -223,7 +223,7 @@ int len;
  *
  * Only works while the prom is actively mapping us.
  */
-u_int64_t
+vaddr_t
 prom_alloc_virt(len, align)
 int len;
 int align;
@@ -270,7 +270,7 @@ int align;
  */
 int
 prom_free_virt(vaddr, len)
-vm_offset_t vaddr;
+vaddr_t vaddr;
 int len;
 {
 	static struct {
@@ -280,7 +280,7 @@ int len;
 		int pad1; char *method;
 		int pad2; int ihandle;
 		u_int64_t len;
-		int pad3; vm_offset_t vaddr;
+		u_int64_t vaddr;
 	} args = {
 		0,"call-method",
 		4,
@@ -288,7 +288,7 @@ int len;
 		0,"release",
 		0, 0,
 		0,
-		0, NULL
+		NULL
 	};
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -309,7 +309,7 @@ int len;
  */
 int
 prom_unmap_virt(vaddr, len)
-vm_offset_t vaddr;
+vaddr_t vaddr;
 int len;
 {
 	static struct {
@@ -319,7 +319,7 @@ int len;
 		int pad1; char *method;
 		int pad2; int ihandle;
 		u_int64_t len;
-		int pad3; vm_offset_t vaddr;
+		u_int64_t vaddr;
 	} args = {
 		0,"call-method",
 		4,
@@ -327,7 +327,7 @@ int len;
 		0,"unmap",
 		0, 0,
 		0,
-		0, NULL
+		NULL
 	};
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -349,7 +349,7 @@ int
 prom_map_phys(paddr, size, vaddr, mode)
 u_int64_t paddr;
 off_t size;
-vm_offset_t vaddr;
+vaddr_t vaddr;
 int mode;
 {
 	int phys_hi, phys_lo;
@@ -361,9 +361,9 @@ int mode;
 		int pad2; int ihandle;
 		int64_t mode;
 		u_int64_t size;
-		int pad3; vm_offset_t vaddr;
-		int pad4; vm_offset_t paddr_hi;
-		int pad6; vm_offset_t paddr_lo;
+		u_int64_t vaddr;
+		int pad4; int paddr_hi;
+		int pad6; int paddr_lo;
 		int64_t status;
 		int64_t retaddr;
 	} args = {
@@ -454,7 +454,7 @@ int align;
  */
 u_int64_t
 prom_claim_phys(phys, len)
-vm_offset_t phys;
+paddr_t phys;
 int len;
 {
 	static struct {
@@ -465,8 +465,8 @@ int len;
 		int pad2; int ihandle;
 		u_int64_t align;
 		u_int64_t len;
-		int pad4; void* phys_hi;
-		int pad5; void* phys_lo;
+		int pad4; u_int32_t phys_hi;
+		int pad5; u_int32_t phys_lo;
 		int64_t status;
 		int64_t res;
 		u_int64_t rphys_hi;
@@ -503,7 +503,7 @@ int len;
  */
 int
 prom_free_phys(phys, len)
-vm_offset_t phys;
+paddr_t phys;
 int len;
 {
 	static struct {
@@ -513,8 +513,8 @@ int len;
 		int pad1; char *method;
 		int pad2; int ihandle;
 		u_int64_t len;
-		int pad4; void* phys_hi;
-		int pad5; void* phys_lo;
+		int pad4; u_int32_t phys_hi;
+		int pad5; u_int32_t phys_lo;
 	} args = {
 		0,"call-method",
 		5,
@@ -556,8 +556,8 @@ int align;
 		u_int64_t len;
 		int pad3; char *id;
 		int64_t status;
-		int pad4; void *phys_hi;
-		int pad5; void *phys_lo;
+		int pad4; u_int32_t phys_hi;
+		int pad5; u_int32_t phys_lo;
 	} args = {
 		0,"call-method",
 		5,
@@ -571,6 +571,7 @@ int align;
 		0, 0,
 		0, 0
 	};
+	u_int64_t addr;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
@@ -582,19 +583,19 @@ int align;
 	if (OF_test("test-method") == 0) {
 		if (OF_test_method(memh, "SUNW,retain") != 0) {
 			if (openfirmware(&args) == 0 && args.status == 0) {
-				return args.phys_lo;
+				return (((u_int64_t)args.phys_hi<<32)|args.phys_lo);
 			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
 		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
 	} else prom_printf("prom_get_msgbuf: test failed\r\n");
 	/* Allocate random memory */
-	args.phys_lo = prom_claim_phys(0x2000, len);
-	prom_printf("prom_get_msgbuf: allocated new buf at %08x\r\n", args.phys_lo); 
-	if( !args.phys_lo ) {
+	addr = prom_claim_phys(0x2000, len);
+	prom_printf("prom_get_msgbuf: allocated new buf at %08x\r\n", (int)addr); 
+	if( !addr ) {
 		prom_printf("prom_get_msgbuf: cannot get allocate physmem\r\n");
 		return -1LL;
 	}
-	prom_printf("prom_get_msgbuf: claiming new buf at %08x\r\n", args.phys_lo); 	
-	return args.phys_lo; /* Kluge till we go 64-bit */
+	prom_printf("prom_get_msgbuf: claiming new buf at %08x\r\n", (int)addr); 	
+	return addr; /* Kluge till we go 64-bit */
 }
 
 /* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.17 1998/03/01 02:24:00 fvdl Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.17.2.1 1998/07/30 14:04:21 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -113,10 +113,10 @@ union vm_map_object {
 struct vm_map_entry {
 	struct vm_map_entry	*prev;		/* previous entry */
 	struct vm_map_entry	*next;		/* next entry */
-	vm_offset_t		start;		/* start address */
-	vm_offset_t		end;		/* end address */
+	vaddr_t			start;		/* start address */
+	vaddr_t			end;		/* end address */
 	union vm_map_object	object;		/* object I point to */
-	vm_offset_t		offset;		/* offset into object */
+	vsize_t			offset;		/* offset into object */
 #if defined(UVM)
 	/* etype is a bitmap that replaces the following 4 items */
 	int			etype;		/* entry type */
@@ -154,7 +154,7 @@ struct vm_map {
 	lock_data_t		lock;		/* Lock for map data */
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
-	vm_size_t		size;		/* virtual size */
+	vsize_t			size;		/* virtual size */
 	boolean_t		is_main_map;	/* Am I a main map? */
 	int			ref_count;	/* Reference count */
 	simple_lock_data_t	ref_lock;	/* Lock for ref_count field */
@@ -259,51 +259,51 @@ vm_map_t map;
 
 #ifdef _KERNEL
 boolean_t	 vm_map_check_protection __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, vm_prot_t));
-int		 vm_map_copy __P((vm_map_t, vm_map_t, vm_offset_t,
-		    vm_size_t, vm_offset_t, boolean_t, boolean_t));
+		    vaddr_t, vaddr_t, vm_prot_t));
+int		 vm_map_copy __P((vm_map_t, vm_map_t, vaddr_t,
+		    vsize_t, vaddr_t, boolean_t, boolean_t));
 void		 vm_map_copy_entry __P((vm_map_t,
 		    vm_map_t, vm_map_entry_t, vm_map_entry_t));
 struct pmap;
 vm_map_t	 vm_map_create __P((struct pmap *,
-		    vm_offset_t, vm_offset_t, boolean_t));
+		    vaddr_t, vaddr_t, boolean_t));
 void		 vm_map_deallocate __P((vm_map_t));
-int		 vm_map_delete __P((vm_map_t, vm_offset_t, vm_offset_t));
+int		 vm_map_delete __P((vm_map_t, vaddr_t, vaddr_t));
 vm_map_entry_t	 vm_map_entry_create __P((vm_map_t));
 void		 vm_map_entry_delete __P((vm_map_t, vm_map_entry_t));
 void		 vm_map_entry_dispose __P((vm_map_t, vm_map_entry_t));
 void		 vm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
 int		 vm_map_find __P((vm_map_t, vm_object_t,
-		    vm_offset_t, vm_offset_t *, vm_size_t, boolean_t));
+		    vaddr_t, vaddr_t *, vsize_t, boolean_t));
 int		 vm_map_findspace __P((vm_map_t,
-		    vm_offset_t, vm_size_t, vm_offset_t *));
+		    vaddr_t, vsize_t, vaddr_t *));
 int		 vm_map_inherit __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, vm_inherit_t));
+		    vaddr_t, vaddr_t, vm_inherit_t));
 void		 vm_map_init __P((struct vm_map *,
-		    vm_offset_t, vm_offset_t, boolean_t));
+		    vaddr_t, vaddr_t, boolean_t));
 int		 vm_map_insert __P((vm_map_t,
-		    vm_object_t, vm_offset_t, vm_offset_t, vm_offset_t));
-int		 vm_map_lookup __P((vm_map_t *, vm_offset_t, vm_prot_t,
-		    vm_map_entry_t *, vm_object_t *, vm_offset_t *, vm_prot_t *,
+		    vaddr_t, vaddr_t, vaddr_t, vaddr_t));
+int		 vm_map_lookup __P((vm_map_t *, vaddr_t, vm_prot_t,
+		    vm_map_entry_t *, vm_object_t *, vaddr_t *, vm_prot_t *,
 		    boolean_t *, boolean_t *));
 void		 vm_map_lookup_done __P((vm_map_t, vm_map_entry_t));
 boolean_t	 vm_map_lookup_entry __P((vm_map_t,
-		    vm_offset_t, vm_map_entry_t *));
+		    vaddr_t, vm_map_entry_t *));
 int		 vm_map_pageable __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, boolean_t));
+		    vaddr_t, vaddr_t, boolean_t));
 int		 vm_map_clean __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, boolean_t, boolean_t));
+		    vaddr_t, vaddr_t, boolean_t, boolean_t));
 void		 vm_map_print __P((vm_map_t, boolean_t));
 void		 _vm_map_print __P((vm_map_t, boolean_t,
 		    void (*)(const char *, ...)));
 int		 vm_map_protect __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
+		    vaddr_t, vaddr_t, vm_prot_t, boolean_t));
 void		 vm_map_reference __P((vm_map_t));
-int		 vm_map_remove __P((vm_map_t, vm_offset_t, vm_offset_t));
-void		 vm_map_simplify __P((vm_map_t, vm_offset_t));
+int		 vm_map_remove __P((vm_map_t, vaddr_t, vaddr_t));
+void		 vm_map_simplify __P((vm_map_t, vaddr_t));
 void		 vm_map_simplify_entry __P((vm_map_t, vm_map_entry_t));
 void		 vm_map_startup __P((void));
 int		 vm_map_submap __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, vm_map_t));
+		    vaddr_t, vaddr_t, vm_map_t));
 #endif
 #endif /* _VM_MAP_ */

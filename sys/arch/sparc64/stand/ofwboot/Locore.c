@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1.1.1 1998/06/20 04:58:53 eeh Exp $	*/
+/*	$NetBSD: Locore.c,v 1.1.1.1.2.1 1998/07/30 14:03:57 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,14 +36,14 @@
 
 #include <machine/cpu.h>
 
-vm_offset_t OF_claim_virt __P((vm_offset_t vaddr, int len));
-vm_offset_t OF_alloc_virt __P((int len, int align));
-int OF_free_virt __P((vm_offset_t vaddr, int len));
-int OF_unmap_virt __P((vm_offset_t vaddr, int len));
-int OF_map_phys __P((u_int64_t paddr, off_t size, vm_offset_t vaddr, int mode));
+vaddr_t OF_claim_virt __P((vaddr_t vaddr, int len));
+vaddr_t OF_alloc_virt __P((int len, int align));
+int OF_free_virt __P((vaddr_t vaddr, int len));
+int OF_unmap_virt __P((vaddr_t vaddr, int len));
+int OF_map_phys __P((u_int64_t paddr, off_t size, vaddr_t vaddr, int mode));
 u_int64_t OF_alloc_phys __P((int len, int align));
-u_int64_t OF_claim_phys __P((vm_offset_t phys, int len));
-int OF_free_phys __P((vm_offset_t paddr, int len));
+u_int64_t OF_claim_phys __P((paddr_t phys, int len));
+int OF_free_phys __P((paddr_t paddr, int len));
 
 extern int openfirmware(void *);
 
@@ -450,9 +450,9 @@ setup()
  *
  * Only works while the prom is actively mapping us.
  */
-vm_offset_t
+vaddr_t
 OF_claim_virt(vaddr, len)
-vm_offset_t vaddr;
+vaddr_t vaddr;
 int len;
 {
 	static struct {
@@ -463,7 +463,7 @@ int len;
 		int pad2; int ihandle;
 		u_int64_t align;
 		u_int64_t len;
-		int pad3; vm_offset_t vaddr;
+		int pad3; vaddr_t vaddr;
 		int64_t status;
 		int64_t retaddr;
 	} args = {
@@ -498,7 +498,7 @@ int len;
  *
  * Only works while the prom is actively mapping us.
  */
-vm_offset_t
+vaddr_t
 OF_alloc_virt(len, align)
 int len;
 int align;
@@ -537,7 +537,7 @@ int align;
 	args.len = len;
 	if(openfirmware(&args) != 0)
 		return -1LL;
-	return (vm_offset_t)args.retaddr; /* Kluge till we go 64-bit */
+	return (vaddr_t)args.retaddr; /* Kluge till we go 64-bit */
 }
 
 /* 
@@ -547,7 +547,7 @@ int align;
  */
 int
 OF_free_virt(vaddr, len)
-vm_offset_t vaddr;
+vaddr_t vaddr;
 int len;
 {
 	static struct {
@@ -557,7 +557,7 @@ int len;
 		int pad1; char *method;
 		int pad2; int ihandle;
 		u_int64_t len;
-		int pad3; vm_offset_t vaddr;
+		int pad3; vaddr_t vaddr;
 	} args = {
 		0,"call-method",
 		4,
@@ -588,7 +588,7 @@ int len;
  */
 int
 OF_unmap_virt(vaddr, len)
-vm_offset_t vaddr;
+vaddr_t vaddr;
 int len;
 {
 	static struct {
@@ -598,7 +598,7 @@ int len;
 		int pad1; char *method;
 		int pad2; int ihandle;
 		u_int64_t len;
-		int pad3; vm_offset_t vaddr;
+		int pad3; vaddr_t vaddr;
 	} args = {
 		0,"call-method",
 		4,
@@ -630,7 +630,7 @@ int
 OF_map_phys(paddr, size, vaddr, mode)
 u_int64_t paddr;
 off_t size;
-vm_offset_t vaddr;
+vaddr_t vaddr;
 int mode;
 {
 	int phys_hi, phys_lo;
@@ -642,9 +642,9 @@ int mode;
 		int pad2; int ihandle;
 		int64_t mode;
 		u_int64_t size;
-		int pad3; vm_offset_t vaddr;
-		int pad4; vm_offset_t paddr_hi;
-		int pad6; vm_offset_t paddr_lo;
+		int pad3; vaddr_t vaddr;
+		paddr_t paddr_hi;
+		paddr_t paddr_lo;
 		int64_t status;
 		int64_t retaddr;
 	} args = {
@@ -739,7 +739,7 @@ int align;
  */
 u_int64_t
 OF_claim_phys(phys, len)
-vm_offset_t phys;
+paddr_t phys;
 int len;
 {
 	static struct {
@@ -790,7 +790,7 @@ int len;
  */
 int
 OF_free_phys(phys, len)
-vm_offset_t phys;
+paddr_t phys;
 int len;
 {
 	static struct {

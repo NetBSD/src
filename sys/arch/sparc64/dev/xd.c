@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.2 1998/06/20 06:01:11 mrg Exp $	*/
+/*	$NetBSD: xd.c,v 1.2.2.1 1998/07/30 14:03:52 eeh Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.2 1998/06/20 06:01:11 mrg Exp $
+ * id: $NetBSD: xd.c,v 1.2.2.1 1998/07/30 14:03:52 eeh Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -1733,8 +1733,8 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 			    iorq->buf->b_resid =
 			       iorq->sectcnt * XDFM_BPS;
 			    dvma_mapout(
-				    (vm_offset_t)iorq->dbufbase,
-				    (vm_offset_t)iorq->buf->b_un.b_addr,
+				    (vaddr_t)iorq->dbufbase,
+				    (vaddr_t)iorq->buf->b_un.b_addr,
 				    iorq->buf->b_bcount);
 			    disk_unbusy(&xdcsc->reqs[lcv].xd->sc_dk,
 				(xdcsc->reqs[lcv].buf->b_bcount -
@@ -1939,8 +1939,8 @@ xdc_remove_iorq(xdcsc)
 			} else {
 				bp->b_resid = 0;	/* done */
 			}
-			dvma_mapout((vm_offset_t) iorq->dbufbase,
-				    (vm_offset_t) bp->b_un.b_addr,
+			dvma_mapout((vaddr_t) iorq->dbufbase,
+				    (vaddr_t) bp->b_un.b_addr,
 				    bp->b_bcount);
 			disk_unbusy(&iorq->xd->sc_dk,
 			    (bp->b_bcount - bp->b_resid));

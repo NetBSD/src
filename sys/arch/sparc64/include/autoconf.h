@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: autoconf.h,v 1.1.1.1.2.1 1998/07/30 14:03:52 eeh Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ union obio_attach_args {
 };
 
 #define obio_bus_map(t, a, o, s, f, v, hp)		\
-	bus_space_map2(t, 0, (long)(a) + o, s, f, (vm_offset_t)v, hp)
+	bus_space_map2(t, 0, (long)(a) + o, s, f, (vaddr_t)v, hp)
 
 /* obio specific bus flag */
 #define OBIO_BUS_MAP_USE_ROM	BUS_SPACE_MAP_BUS1
@@ -229,6 +229,8 @@ void	bootstrap __P((int));
 int	firstchild __P((int));
 int	nextsibling __P((int));
 void	callrom __P((void));
+void	romboot __P((char *));
+void	romhalt __P((void));
 struct device *getdevunit __P((char *, int));
 void	*findzs __P((int));
 int	romgetcursoraddr __P((int **, int **));

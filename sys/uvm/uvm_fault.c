@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.11 1998/06/02 20:51:24 mark Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.11.2.1 1998/07/30 14:04:10 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -550,7 +550,7 @@ int uvmfault_anonget(ufi, amap, anon)
 int
 uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_map_t orig_map;
-	vm_offset_t vaddr;
+	vaddr_t vaddr;
 	vm_fault_t fault_type;
 	vm_prot_t access_type;
 {
@@ -558,7 +558,8 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_prot_t enter_prot;
 	boolean_t wired, narrow, promote, locked, shadowed;
 	int npages, nback, nforw, centeridx, result, lcv, gotpages;
-	vm_offset_t orig_startva, startva, objaddr, currva, pa, offset;
+	vaddr_t orig_startva, startva, objaddr, currva, offset;
+	paddr_t pa; 
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons, *anon, *oanon;
@@ -1667,9 +1668,9 @@ Case2:
 int
 uvm_fault_wire(map, start, end)
 	vm_map_t map;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	pmap_t  pmap;
 	int rv;
 
@@ -1710,9 +1711,10 @@ uvm_fault_wire(map, start, end)
 void
 uvm_fault_unwire(pmap, start, end)
 	struct pmap *pmap;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 {
-	vm_offset_t va, pa;
+	vaddr_t va;
+	paddr_t pa;
 	struct vm_page *pg;
 
 	/*
@@ -1728,7 +1730,7 @@ uvm_fault_unwire(pmap, start, end)
 		pa = pmap_extract(pmap, va);
 
 		/* XXX: assumes PA 0 cannot be in map */
-		if (pa == (vm_offset_t) 0) {
+		if (pa == (paddr_t) 0) {
 			panic("uvm_fault_unwire: unwiring non-wired memory");
 		}
 		pmap_change_wiring(pmap, va, FALSE);  /* tell the pmap */

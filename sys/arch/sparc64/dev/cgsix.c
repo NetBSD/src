@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.1.1.1 1998/06/20 04:58:50 eeh Exp $ */
+/*	$NetBSD: cgsix.c,v 1.1.1.1.2.1 1998/07/30 14:03:50 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -588,7 +588,7 @@ struct mmo {
  *
  * XXX	needs testing against `demanding' applications (e.g., aviator)
  */
-int
+paddr_t
 cgsixmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
@@ -632,7 +632,7 @@ cgsixmmap(dev, off, prot)
 					   BUS_SPACE_MAP_LINEAR, &bh))
 				return (-1);
 
-			return ((int)bh);
+			return (bh);
 		}
 	}
 

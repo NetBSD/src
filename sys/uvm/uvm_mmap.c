@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.11 1998/07/07 23:22:13 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.11.2.1 1998/07/30 14:04:13 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -211,13 +211,13 @@ sys_mmap(p, v, retval)
 		syscallarg(long) pad;
 		syscallarg(off_t) pos;
 	} */ *uap = v;
-	vm_offset_t addr;
+	vaddr_t addr;
 	struct vattr va;
 	off_t pos;
-	vm_size_t size, pageoff;
+	vsize_t size, pageoff;
 	vm_prot_t prot, maxprot;
 	int flags, fd;
-	vm_offset_t vm_min_address = VM_MIN_ADDRESS;
+	vaddr_t vm_min_address = VM_MIN_ADDRESS;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vnode *vp;
@@ -228,18 +228,18 @@ sys_mmap(p, v, retval)
 	 * first, extract syscall args from the uap.
 	 */
 
-	addr = (vm_offset_t) SCARG(uap, addr);
-	size = (vm_size_t) SCARG(uap, len);
+	addr = (vaddr_t) SCARG(uap, addr);
+	size = (vsize_t) SCARG(uap, len);
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
 	flags = SCARG(uap, flags);
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
 
 	/*
-	 * make sure that the newsize fits within a vm_offset_t
+	 * make sure that the newsize fits within a vaddr_t
 	 * XXX: need to revise addressing data types
 	 */
-	if (pos + size > (vm_offset_t)-PAGE_SIZE) {
+	if (pos + size > (vaddr_t)-PAGE_SIZE) {
 #ifdef DEBUG
 		printf("mmap: pos=%qx, size=%x too big\n", pos, (int)size);
 #endif
@@ -253,7 +253,7 @@ sys_mmap(p, v, retval)
 	pageoff = (pos & PAGE_MASK);
 	pos  -= pageoff;
 	size += pageoff;			/* add offset */
-	size = (vm_size_t) round_page(size);	/* round up */
+	size = (vsize_t) round_page(size);	/* round up */
 	if ((ssize_t) size < 0)
 		return (EINVAL);			/* don't allow wrap */
 
@@ -427,8 +427,8 @@ sys___msync13(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	vm_map_t map;
 	int rv, flags, uvmflags;
 
@@ -436,8 +436,8 @@ sys___msync13(p, v, retval)
 	 * extract syscall args from the uap
 	 */
 
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 	flags = SCARG(uap, flags);
 
 	/* sanity check flags */
@@ -455,7 +455,7 @@ sys___msync13(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 
 	/* disallow wrap-around. */
 	if (addr + size < addr)
@@ -537,18 +537,18 @@ sys_munmap(p, v, retval)
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	vm_map_t map;
-	vm_offset_t vm_min_address = VM_MIN_ADDRESS;
+	vaddr_t vm_min_address = VM_MIN_ADDRESS;
 	struct vm_map_entry *dead_entries;
 
 	/*
 	 * get syscall args...
 	 */
 
-	addr = (vm_offset_t) SCARG(uap, addr);
-	size = (vm_size_t) SCARG(uap, len);
+	addr = (vaddr_t) SCARG(uap, addr);
+	size = (vsize_t) SCARG(uap, len);
 	
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
@@ -557,7 +557,7 @@ sys_munmap(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 
 	if ((int)size < 0)
 		return (EINVAL);
@@ -617,8 +617,8 @@ sys_mprotect(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) prot;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	vm_prot_t prot;
 	int rv;
 
@@ -626,8 +626,8 @@ sys_mprotect(p, v, retval)
 	 * extract syscall args from uap
 	 */
 
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
 
 	/*
@@ -636,7 +636,7 @@ sys_mprotect(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 	if ((int)size < 0)
 		return (EINVAL);
 
@@ -669,12 +669,12 @@ sys_minherit(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) inherit;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	register vm_inherit_t inherit;
 	
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 	inherit = SCARG(uap, inherit);
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
@@ -683,7 +683,7 @@ sys_minherit(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 
 	if ((int)size < 0)
 		return (EINVAL);
@@ -712,15 +712,15 @@ sys_mlock(p, v, retval)
 		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	int error;
 
 	/*
 	 * extract syscall args from uap
 	 */
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 
 	/*
 	 * align the address to a page boundary and adjust the size accordingly
@@ -728,7 +728,7 @@ sys_mlock(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 	
 	/* disallow wrap-around. */
 	if (addr + (int)size < addr)
@@ -764,16 +764,16 @@ sys_munlock(p, v, retval)
 		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-	vm_offset_t addr;
-	vm_size_t size, pageoff;
+	vaddr_t addr;
+	vsize_t size, pageoff;
 	int error;
 
 	/*
 	 * extract syscall args from uap
 	 */
 
-	addr = (vm_offset_t)SCARG(uap, addr);
-	size = (vm_size_t)SCARG(uap, len);
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
 
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
@@ -781,7 +781,7 @@ sys_munlock(p, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vm_size_t) round_page(size);
+	size = (vsize_t) round_page(size);
 
 	/* disallow wrap-around. */
 	if (addr + (int)size < addr)
@@ -808,12 +808,12 @@ sys_munlock(p, v, retval)
 int
 uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 	vm_map_t map;
-	vm_offset_t *addr;
-	vm_size_t size;
+	vaddr_t *addr;
+	vsize_t size;
 	vm_prot_t prot, maxprot;
 	int flags;
 	caddr_t handle;		/* XXX: VNODE? */
-	vm_offset_t foff;
+	vaddr_t foff;
 {
 	struct uvm_object *uobj;
 	struct vnode *vp;

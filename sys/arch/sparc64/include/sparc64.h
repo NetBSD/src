@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $	*/
+/*	$NetBSD: sparc64.h,v 1.1.1.1.2.1 1998/07/30 14:03:54 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -38,16 +38,16 @@ struct mem_region {
 	u_int64_t size;
 };
 
-int prom_set_trap_table __P((vm_offset_t tba));
-u_int64_t prom_vtop __P((vm_offset_t vaddr));
-u_int64_t prom_claim_virt __P((vm_offset_t vaddr, int len));
-u_int64_t prom_alloc_virt __P((int len, int align));
-int prom_free_virt __P((vm_offset_t vaddr, int len));
-int prom_unmap_virt __P((vm_offset_t vaddr, int len));
-int prom_map_phys __P((u_int64_t paddr, off_t size, vm_offset_t vaddr, int mode));
+int prom_set_trap_table __P((vaddr_t tba));
+u_int64_t prom_vtop __P((vaddr_t vaddr));
+vaddr_t prom_claim_virt __P((vaddr_t vaddr, int len));
+vaddr_t prom_alloc_virt __P((int len, int align));
+int prom_free_virt __P((vaddr_t vaddr, int len));
+int prom_unmap_virt __P((vaddr_t vaddr, int len));
+int prom_map_phys __P((u_int64_t paddr, off_t size, vaddr_t vaddr, int mode));
 u_int64_t prom_alloc_phys __P((int len, int align));
-u_int64_t prom_claim_phys __P((vm_offset_t phys, int len));
-int prom_free_phys __P((vm_offset_t paddr, int len));
+u_int64_t prom_claim_phys __P((paddr_t phys, int len));
+int prom_free_phys __P((paddr_t paddr, int len));
 u_int64_t prom_get_msgbuf __P((int len, int align));
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.19 1998/06/09 01:57:46 tv Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.19.2.1 1998/07/30 14:03:59 eeh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -110,7 +110,7 @@ X_db_sym_init(symsize, vsymtab, vesymtab, name)
 	estrtab = strtab + slen;
 
 #define	round_to_size(x) \
-	(((vm_offset_t)(x) + sizeof(vm_size_t) - 1) & ~(sizeof(vm_size_t) - 1))
+	(((vaddr_t)(x) + sizeof(vsize_t) - 1) & ~(sizeof(vsize_t) - 1))
 
 	if (round_to_size(estrtab) != round_to_size(vesymtab)) {
 	    printf("[ %s symbol table not valid ]\n", name);

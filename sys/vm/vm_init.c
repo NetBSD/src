@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_init.c,v 1.11 1998/01/09 06:00:50 thorpej Exp $	*/
+/*	$NetBSD: vm_init.c,v 1.11.2.1 1998/07/30 14:04:20 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -85,10 +85,10 @@
 void vm_mem_init()
 {
 #if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-	extern vm_offset_t	avail_start, avail_end;
-	extern vm_offset_t	virtual_avail, virtual_end;
+	extern paddr_t	avail_start, avail_end;
+	extern vaddr_t	virtual_avail, virtual_end;
 #else
-	vm_offset_t	start, end;
+	vaddr_t	start, end;
 #endif
 
 	/*

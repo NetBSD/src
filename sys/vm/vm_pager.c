@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.c,v 1.26 1998/03/01 02:24:02 fvdl Exp $	*/
+/*	$NetBSD: vm_pager.c,v 1.26.2.1 1998/07/30 14:04:24 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -158,7 +158,7 @@ vm_pager_t
 vm_pager_allocate(type, handle, size, prot, off)
 	int type;
 	caddr_t handle;
-	vm_size_t size;
+	vsize_t size;
 	vm_prot_t prot;
 	vm_offset_t off;
 {
@@ -315,7 +315,7 @@ vm_pager_map_pages(mlist, npages, canwait)
 	boolean_t	canwait;
 {
 	vm_offset_t kva, va;
-	vm_size_t size;
+	vsize_t size;
 	vm_page_t m;
 
 	/*
@@ -360,7 +360,7 @@ vm_pager_unmap_pages(kva, npages)
 	vm_offset_t	kva;
 	int		npages;
 {
-	vm_size_t size = npages * PAGE_SIZE;
+	vsize_t size = npages * PAGE_SIZE;
 
 #ifdef DEBUG
 	vm_offset_t va;

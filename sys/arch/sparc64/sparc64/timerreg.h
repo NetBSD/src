@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: timerreg.h,v 1.1.1.1.2.1 1998/07/30 14:03:57 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,7 +126,6 @@ struct timerreg_4u {
 	struct timer_4u*	t_timer;		/* There are two of them */
 	volatile int64_t*	t_clrintr;		/* There are two of these, too. */
 	volatile int64_t*	t_mapintr;		/* Same here. */
-	vm_offset_t		t_base;			/* timer base address */
 };
 
 struct counter_4m {		/* counter that interrupts at ipl 14 */

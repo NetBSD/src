@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_fault.c,v 1.24 1998/03/26 21:41:16 chuck Exp $	*/
+/*	$NetBSD: vm_fault.c,v 1.24.2.1 1998/07/30 14:04:19 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,15 +98,15 @@
 int
 vm_fault(map, vaddr, fault_type, change_wiring)
 	vm_map_t	map;
-	vm_offset_t	vaddr;
+	vaddr_t	vaddr;
 	vm_prot_t	fault_type;
 	boolean_t	change_wiring;
 {
 	vm_object_t		first_object;
-	vm_offset_t		first_offset;
+	vaddr_t		first_offset;
 	vm_map_entry_t		entry;
 	register vm_object_t	object;
-	register vm_offset_t	offset;
+	register vaddr_t	offset;
 	register vm_page_t	m;
 	vm_page_t		first_m;
 	vm_prot_t		prot;
@@ -542,7 +542,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
     RetryCopy:
 	if (first_object->copy != NULL) {
 		vm_object_t copy_object = first_object->copy;
-		vm_offset_t copy_offset;
+		vaddr_t copy_offset;
 		vm_page_t copy_m;
 
 		/*
@@ -737,7 +737,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 
 	if (!lookup_still_valid) {
 		vm_object_t	retry_object;
-		vm_offset_t	retry_offset;
+		vaddr_t	retry_offset;
 		vm_prot_t	retry_prot;
 
 		/*
@@ -860,9 +860,9 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 int
 vm_fault_wire(map, start, end)
 	vm_map_t	map;
-	vm_offset_t	start, end;
+	vaddr_t	start, end;
 {
-	register vm_offset_t	va;
+	register vaddr_t	va;
 	register pmap_t		pmap;
 	int			rv;
 
@@ -901,10 +901,11 @@ vm_fault_wire(map, start, end)
 void
 vm_fault_unwire(map, start, end)
 	vm_map_t	map;
-	vm_offset_t	start, end;
+	vaddr_t	start, end;
 {
 
-	register vm_offset_t	va, pa;
+	register vaddr_t	va;
+	register paddr_t	pa;
 	register pmap_t		pmap;
 
 	pmap = vm_map_pmap(map);
@@ -918,7 +919,7 @@ vm_fault_unwire(map, start, end)
 
 	for (va = start; va < end; va += PAGE_SIZE) {
 		pa = pmap_extract(pmap, va);
-		if (pa == (vm_offset_t) 0) {
+		if (pa == (paddr_t) 0) {
 			panic("unwire: page not in pmap");
 		}
 #ifdef DIAGNOSTIC
@@ -961,10 +962,10 @@ vm_fault_copy_entry(dst_map, src_map, dst_entry, src_entry)
 
 	vm_object_t	dst_object;
 	vm_object_t	src_object;
-	vm_offset_t	dst_offset;
-	vm_offset_t	src_offset;
+	vaddr_t	dst_offset;
+	vaddr_t	src_offset;
 	vm_prot_t	prot;
-	vm_offset_t	vaddr;
+	vaddr_t	vaddr;
 	vm_page_t	dst_m;
 	vm_page_t	src_m;
 
@@ -981,7 +982,7 @@ vm_fault_copy_entry(dst_map, src_map, dst_entry, src_entry)
 	 *	directly.)
 	 */
 	dst_object = vm_object_allocate(
-			(vm_size_t) (dst_entry->end - dst_entry->start));
+			(vsize_t) (dst_entry->end - dst_entry->start));
 
 	dst_entry->object.vm_object = dst_object;
 	dst_entry->offset = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.8 1998/06/09 07:32:57 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.8.2.1 1998/07/30 14:04:03 eeh Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -775,7 +775,7 @@ pcmcia_card_intr(arg)
 		printf("%s: intr flags=%x fct=%d physaddr=%lx cor=%02x csr=%02x pin=%02x",
 		       sc->dev.dv_xname, pf->pf_flags, pf->number,
 		       pmap_extract(pmap_kernel(),
-		           (vm_offset_t) pf->pf_ccrh) + pf->pf_ccr_offset,
+		           (vaddr_t) pf->pf_ccrh) + pf->pf_ccr_offset,
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION),
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS),
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_PIN));

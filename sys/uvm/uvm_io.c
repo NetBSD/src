@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.5 1998/05/05 20:51:05 kleink Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.5.2.1 1998/07/30 14:04:11 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -71,8 +71,8 @@ uvm_io(map, uio)
 	vm_map_t map;
 	struct uio *uio;
 {
-	vm_offset_t baseva, endva, pageoffset, kva;
-	vm_size_t chunksz, togo, sz;
+	vaddr_t baseva, endva, pageoffset, kva;
+	vsize_t chunksz, togo, sz;
 	vm_map_entry_t dead_entries;
 	int error;
 
@@ -86,7 +86,7 @@ uvm_io(map, uio)
 		return(0);
 	togo = uio->uio_resid;
 
-	baseva = (vm_offset_t) uio->uio_offset;
+	baseva = (vaddr_t) uio->uio_offset;
 	endva = baseva + (togo - 1);
 
 	if (endva < baseva)   /* wrap around? */

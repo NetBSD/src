@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.13 1998/05/27 04:30:07 thorpej Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.13.2.1 1998/07/30 14:04:03 eeh Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -37,7 +37,7 @@
 #include <pmax/pmax/pmaxtype.h>
 extern int pmax_boardtype;
 
-extern vm_offset_t kvtophys __P((vm_offset_t));
+extern paddr_t kvtophys __P((vaddr_t));
 
 extern tc_addr_t ioasic_base;	/* XXX */
 
@@ -185,16 +185,16 @@ asic_dma_start(asc, state, cp, flag, len, off)
 
 	/* If R4K, writeback and invalidate  the buffer */
 	if (CPUISMIPS3)
-		mips3_HitFlushDCache((vm_offset_t)cp, len);
+		mips3_HitFlushDCache((vaddr_t)cp, len);
 
 	/* Get physical address of buffer start, no next phys addr */
-	phys = (u_int)kvtophys((vm_offset_t)cp);
+	phys = (u_int)kvtophys((vaddr_t)cp);
 	nphys = -1;
 
 	/* Compute 2nd DMA pointer only if next page is part of this I/O */
 	if ((NBPG - (phys & (NBPG - 1))) < len) {
 		cp = (caddr_t)mips_trunc_page(cp + NBPG);
-		nphys = (u_int)kvtophys((vm_offset_t)cp);
+		nphys = (u_int)kvtophys((vaddr_t)cp);
 	}
 
 	/* If not R4K, need to invalidate cache lines for both physical segments */
@@ -217,7 +217,7 @@ asic_dma_start(asc, state, cp, flag, len, off)
 #ifdef MIPS3
 	/* If R4K, need to writeback the bounce buffer */
 	if (CPUISMIPS3)
-		mips3_HitFlushDCache((vm_offset_t)cp, len);
+		mips3_HitFlushDCache((vaddr_t)cp, len);
 #endif /* MIPS3 */
 	phys = MIPS_KSEG0_TO_PHYS(cp);
 	cp = (caddr_t)mips_trunc_page(cp + NBPG);

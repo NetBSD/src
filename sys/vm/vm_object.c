@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.53 1998/03/01 02:24:01 fvdl Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.53.2.1 1998/07/30 14:04:22 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -156,11 +156,11 @@ boolean_t vm_object_collapse_allowed = TRUE;
 int	vmdebug = VMDEBUG;
 #endif
 
-static void	_vm_object_allocate __P((vm_size_t, vm_object_t));
+static void	_vm_object_allocate __P((vsize_t, vm_object_t));
 int		vm_object_bypass __P((vm_object_t));
 int		vm_object_overlay __P((vm_object_t));
 int		vm_object_remove_from_pager
-		    __P((vm_object_t, vm_offset_t, vm_offset_t));
+		    __P((vm_object_t, vaddr_t, vaddr_t));
 void		vm_object_set_shadow __P((vm_object_t, vm_object_t));
 void		vm_object_terminate __P((vm_object_t));
 
@@ -171,7 +171,7 @@ void		vm_object_terminate __P((vm_object_t));
  */
 void
 vm_object_init(size)
-	vm_size_t	size;
+	vsize_t	size;
 {
 	register int	i;
 
@@ -198,7 +198,7 @@ vm_object_init(size)
  */
 vm_object_t
 vm_object_allocate(size)
-	vm_size_t	size;
+	vsize_t	size;
 {
 	register vm_object_t	result;
 
@@ -212,7 +212,7 @@ vm_object_allocate(size)
 
 static void
 _vm_object_allocate(size, object)
-	vm_size_t		size;
+	vsize_t		size;
 	register vm_object_t	object;
 {
 	TAILQ_INIT(&object->memq);
@@ -231,7 +231,7 @@ _vm_object_allocate(size, object)
 	object->pager = NULL;
 	object->paging_offset = 0;
 	object->shadow = NULL;
-	object->shadow_offset = (vm_offset_t) 0;
+	object->shadow_offset = (vaddr_t) 0;
 	LIST_INIT(&object->shadowers);
 
 	simple_lock(&vm_object_list_lock);
@@ -461,8 +461,8 @@ vm_object_terminate(object)
 boolean_t
 vm_object_page_clean(object, start, end, syncio, de_queue)
 	register vm_object_t	object;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 	boolean_t		syncio;
 	boolean_t		de_queue;
 {
@@ -486,7 +486,7 @@ vm_object_page_clean(object, start, end, syncio, de_queue)
 			vm_object_unlock(object);
 			pager = vm_pager_allocate(PG_DFLT, (caddr_t)0,
 						  object->size, VM_PROT_ALL,
-						  (vm_offset_t)0);
+						  (vaddr_t)0);
 			if (pager)
 				vm_object_setpager(object, pager, 0, FALSE);
 			vm_object_lock(object);
@@ -636,8 +636,8 @@ vm_object_cache_trim()
 void
 vm_object_pmap_copy(object, start, end)
 	register vm_object_t	object;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 {
 	register vm_page_t	p;
 
@@ -665,8 +665,8 @@ vm_object_pmap_copy(object, start, end)
 void
 vm_object_pmap_remove(object, start, end)
 	register vm_object_t	object;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 {
 	register vm_page_t	p;
 
@@ -695,15 +695,15 @@ void
 vm_object_copy(src_object, src_offset, size,
 		    dst_object, dst_offset, src_needs_copy)
 	register vm_object_t	src_object;
-	vm_offset_t		src_offset;
-	vm_size_t		size;
+	vaddr_t		src_offset;
+	vsize_t		size;
 	vm_object_t		*dst_object;	/* OUT */
-	vm_offset_t		*dst_offset;	/* OUT */
+	vaddr_t		*dst_offset;	/* OUT */
 	boolean_t		*src_needs_copy;	/* OUT */
 {
 	register vm_object_t	new_copy;
 	register vm_object_t	old_copy;
-	vm_offset_t		new_start, new_end;
+	vaddr_t		new_start, new_end;
 
 	register vm_page_t	p;
 
@@ -832,7 +832,7 @@ Retry2:
 		 * Consistency check
 		 */
 		if (old_copy->shadow != src_object ||
-		    old_copy->shadow_offset != (vm_offset_t) 0)
+		    old_copy->shadow_offset != (vaddr_t) 0)
 			panic("vm_object_copy: copy/shadow inconsistency");
 
 		/*
@@ -845,8 +845,8 @@ Retry2:
 		vm_object_unlock(old_copy);
 	}
 
-	new_start = (vm_offset_t)0;
-	new_end = (vm_offset_t)new_copy->size;
+	new_start = (vaddr_t)0;
+	new_end = (vaddr_t)new_copy->size;
 
 	/*
 	 * Point the new copy at the existing object.
@@ -886,8 +886,8 @@ Retry2:
 void
 vm_object_shadow(object, offset, length)
 	vm_object_t	*object;	/* IN/OUT */
-	vm_offset_t	*offset;	/* IN/OUT */
-	vm_size_t	length;
+	vaddr_t	*offset;	/* IN/OUT */
+	vsize_t	length;
 {
 	register vm_object_t	source;
 	register vm_object_t	result;
@@ -935,7 +935,7 @@ void
 vm_object_setpager(object, pager, paging_offset, read_only)
 	vm_object_t	object;
 	vm_pager_t	pager;
-	vm_offset_t	paging_offset;
+	vaddr_t	paging_offset;
 	boolean_t	read_only;
 {
 #ifdef	lint
@@ -1094,7 +1094,7 @@ vm_object_cache_clear()
 int
 vm_object_remove_from_pager(object, from, to)
 	vm_object_t	object;
-	vm_offset_t	from, to;
+	vaddr_t	from, to;
 {
 	vm_pager_t	pager = object->pager;
 	int		cnt = 0;
@@ -1132,8 +1132,8 @@ vm_object_overlay(object)
 	vm_object_t	object;
 {
 	vm_object_t	backing_object = object->shadow;
-	vm_offset_t	backing_offset = object->shadow_offset;
-	vm_offset_t	new_offset, paged_offset;
+	vaddr_t	backing_offset = object->shadow_offset;
+	vaddr_t	new_offset, paged_offset;
 	vm_page_t	backing_page, next_page, page;
 	int		rv;
 
@@ -1441,8 +1441,8 @@ vm_object_bypass(object)
 	vm_object_t	object;
 {
 	vm_object_t	backing_object = object->shadow;
-	vm_offset_t	backing_offset = object->shadow_offset;
-	vm_offset_t	new_offset;
+	vaddr_t	backing_offset = object->shadow_offset;
+	vaddr_t	new_offset;
 	vm_page_t	backing_page, page;
 
 	/*
@@ -1626,8 +1626,8 @@ vm_object_collapse(object)
 void
 vm_object_page_remove(object, start, end)
 	register vm_object_t	object;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 {
 	register vm_page_t	p, next;
 
@@ -1672,10 +1672,10 @@ vm_object_coalesce(prev_object, next_object, prev_offset, next_offset,
     prev_size, next_size)
 register vm_object_t	prev_object;
 vm_object_t	next_object;
-vm_offset_t	prev_offset, next_offset;
-vm_size_t	prev_size, next_size;
+vaddr_t	prev_offset, next_offset;
+vsize_t	prev_size, next_size;
 {
-	vm_size_t	newsize;
+	vsize_t	newsize;
 
 #ifdef	lint
 	next_offset++;

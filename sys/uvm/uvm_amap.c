@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.10 1998/06/20 13:16:29 mrg Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.10.2.1 1998/07/30 14:04:08 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -190,7 +190,7 @@ amap_alloc1(slots, padslots, waitf)
 
 struct vm_amap *
 amap_alloc(sz, padsz, waitf)
-	vm_offset_t sz, padsz;
+	vaddr_t sz, padsz;
 	int waitf;
 {
 	struct vm_amap *amap;
@@ -250,7 +250,7 @@ amap_free(amap)
 void
 amap_extend(entry, addsize)
 	vm_map_entry_t entry;
-	vm_size_t addsize;
+	vsize_t addsize;
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slotoff = entry->aref.ar_slotoff;
@@ -535,11 +535,11 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	vm_map_entry_t entry;
 	int waitf;
 	boolean_t canchunk;
-	vm_offset_t startva, endva;
+	vaddr_t startva, endva;
 {
 	struct vm_amap *amap, *srcamap;
 	int slots, lcv;
-	vm_offset_t chunksize;
+	vaddr_t chunksize;
 	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%d)", map, entry, waitf, 0);
 
@@ -821,7 +821,7 @@ ReStart:
 void
 amap_splitref(origref, splitref, offset)
 	struct vm_aref *origref, *splitref;
-	vm_offset_t offset;
+	vaddr_t offset;
 {
 	int leftslots;
 	UVMHIST_FUNC("amap_splitref"); UVMHIST_CALLED(maphist);
@@ -891,7 +891,7 @@ void
 amap_pp_adjref(amap, curslot, bytelen, adjval)
 	struct vm_amap *amap;
 	int curslot;
-	vm_size_t bytelen;
+	vsize_t bytelen;
 	int adjval;
 {
 	int slots, stopslot, *ppref, lcv;
