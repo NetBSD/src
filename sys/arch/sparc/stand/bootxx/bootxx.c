@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.8 2000/03/13 23:52:33 soren Exp $ */
+/*	$NetBSD: bootxx.c,v 1.9 2001/10/30 05:13:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <lib/libsa/stand.h>
 
 #include <machine/promlib.h>
+#include <sparc/stand/common/bbinfo.h>
 #include <sparc/stand/common/promdev.h>
 
 int debug;
@@ -55,16 +56,17 @@ const char		progname[] = "bootxx";
 struct open_file	io;
 
 /*
- * The contents of the block_* variables below is set by installboot(8)
+ * The contents of the bbinfo below are set by installboot(8)
  * to hold the filesystem data of the second-stage boot program
  * (typically `/boot'): filesystem block size, # of filesystem
  * blocks and the block numbers themselves.
  */
-#define MAXBLOCKNUM	256	/* enough for a 2MB boot program (bs 8K) */
-int32_t			block_size = 0;
-int32_t			block_count = MAXBLOCKNUM;
-daddr_t			block_table[MAXBLOCKNUM] = { 0 };
-
+struct bbinfo bbinfo = {
+	{ BBINFO_MAGIC },
+	0,
+	MAXBLOCKNUM,
+	{ 0 }
+};
 
 int	main __P((void));
 void	loadboot __P((struct open_file *, caddr_t));
@@ -113,24 +115,24 @@ loadboot(f, addr)
 	 * needed for sun4 architecture, but use it for all machines
 	 * to keep code size down as much as possible.
 	 */
-	buf = alloc(block_size);
+	buf = alloc(bbinfo.bbi_block_size);
 	if (buf == NULL)
 		panic("%s: alloc failed", progname);
 
-	for (i = 0; i < block_count; i++) {
-		if ((blk = block_table[i]) == 0)
+	for (i = 0; i < bbinfo.bbi_block_count; i++) {
+		if ((blk = bbinfo.bbi_block_table[i]) == 0)
 			panic("%s: block table corrupt", progname);
 
 #ifdef DEBUG
 		printf("%s: block # %d = %d\n", progname, i, blk);
 #endif
-		if ((f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-					    blk, block_size, buf, &n)) {
+		if ((f->f_dev->dv_strategy)(f->f_devdata, F_READ, blk,
+		    bbinfo.bbi_block_size, buf, &n)) {
 			printf("%s: read failure", progname);
 			_rtt();
 		}
-		bcopy(buf, addr, block_size);
-		if (n != block_size)
+		bcopy(buf, addr, bbinfo.bbi_block_size);
+		if (n != bbinfo.bbi_block_size)
 			panic("%s: short read", progname);
 		if (i == 0) {
 			int m = N_GETMAGIC(*(struct exec *)addr);

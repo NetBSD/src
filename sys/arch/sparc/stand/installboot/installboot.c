@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
+/*	$NetBSD: installboot.c,v 1.9 2001/10/30 05:13:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,40 +49,20 @@
 #include <err.h>
 #include <a.out.h>
 #include <fcntl.h>
-#include <nlist.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "loadfile.h"
+#include "common/bbinfo.h"
 
 int	verbose, nowrite, sparc64, uflag, hflag = 1;
 char	*boot, *proto, *dev;
 
-#if 0
-#ifdef __ELF__
-#define SYMNAME(a)	a
-#else
-#define SYMNAME(a)	__CONCAT("_",a)
-#endif
-#else
-/* XXX: Hack in libc nlist works with both formats */
-#define SYMNAME(a)	__CONCAT("_",a)
-#endif
+struct bbinfo *bbinfop;		/* bbinfo in prototype image */
 
-struct nlist nl[] = {
-#define X_BLOCKTABLE	0
-	{ {SYMNAME("block_table")} },
-#define X_BLOCKCOUNT	1
-	{ {SYMNAME("block_count")} },
-#define X_BLOCKSIZE	2
-	{ {SYMNAME("block_size")} },
-	{ {NULL} }
-};
-daddr_t	*block_table;		/* block number array in prototype image */
-int32_t	*block_count_p;		/* size of this array */
-int32_t	*block_size_p;		/* filesystem block size */
 int32_t	max_block_count;
 
 char		*loadprotoblocks __P((char *, size_t *));
@@ -242,26 +222,8 @@ loadprotoblocks(fname, size)
 	size_t *size;
 {
 	int	fd, sz;
-	u_long	ap, bp, st, en;
+	u_long	ap, bp, st, en, bbi;
 	u_long	marks[MARK_MAX];
-
-	/* Locate block number array in proto file */
-	if (nlist(fname, nl) != 0) {
-		warnx("nlist: %s: symbols not found", fname);
-		return NULL;
-	}
-	if (nl[X_BLOCKTABLE].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_BLOCKTABLE].n_un.n_name);
-		return NULL;
-	}
-	if (nl[X_BLOCKCOUNT].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_BLOCKCOUNT].n_un.n_name);
-		return NULL;
-	}
-	if (nl[X_BLOCKSIZE].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_BLOCKSIZE].n_un.n_name);
-		return NULL;
-	}
 
 	marks[MARK_START] = 0;
 	if ((fd = loadfile(fname, marks, COUNT_TEXT|COUNT_DATA)) == -1)
@@ -284,28 +246,20 @@ loadprotoblocks(fname, size)
 		return NULL;
 	(void)close(fd);
 
-	block_table = (daddr_t *) (bp + nl[X_BLOCKTABLE].n_value - st);
-	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value - st);
-	block_size_p = (int32_t *) (bp + nl[X_BLOCKSIZE].n_value - st);
-	if ((int)(u_long)block_table & 3) {
-		warn("%s: invalid address: block_table = %p",
-		     fname, block_table);
-		free((void *)bp);
+	/* Look for the bbinfo structure. */
+	for (bbi = bp; bbi < (bp + sz); bbi += sizeof(uint32_t)) {
+		bbinfop = (void *) bbi;
+		if (memcmp(bbinfop->bbi_magic, BBINFO_MAGIC,
+		    BBINFO_MAGICSIZE) == 0)
+			break;
+	}
+	if (bbi >= (bp + sz)) {
+		warn("%s: unable to locate bbinfo structure\n", fname);
+		free((void *)ap);
 		return NULL;
 	}
-	if ((int)(u_long)block_count_p & 3) {
-		warn("%s: invalid address: block_count_p = %p",
-		     fname, block_count_p);
-		free((void *)bp);
-		return NULL;
-	}
-	if ((int)(u_long)block_size_p & 3) {
-		warn("%s: invalid address: block_size_p = %p",
-		     fname, block_size_p);
-		free((void *)bp);
-		return NULL;
-	}
-	max_block_count = *block_count_p;
+
+	max_block_count = bbinfop->bbi_block_count;
 
 	if (verbose) {
 		printf("%s: entry point %#lx\n", fname, en);
@@ -313,7 +267,8 @@ loadprotoblocks(fname, size)
 		    hflag ? "left on" : "stripped off");
 		printf("proto bootblock size %d\n", sz);
 		printf("room for %d filesystem blocks at %#lx\n",
-		    max_block_count, nl[X_BLOCKTABLE].n_value);
+		    max_block_count,
+		    bbi - bp + offsetof(struct bbinfo, bbi_block_table));
 	}
 
 	if (hflag) {
@@ -408,7 +363,7 @@ int	devfd;
 	/*
 	 * Register filesystem block size.
 	 */
-	*block_size_p = fs->fs_bsize;
+	bbinfop->bbi_block_size = fs->fs_bsize;
 
 	/*
 	 * Get the block numbers; we don't handle fragments
@@ -420,14 +375,14 @@ int	devfd;
 	/*
 	 * Register block count.
 	 */
-	*block_count_p = ndb;
+	bbinfop->bbi_block_count = ndb;
 
 	if (verbose)
 		printf("%s: block numbers: ", boot);
 	ap = ip->di_db;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		block_table[i] = blk;
+		bbinfop->bbi_block_table[i] = blk;
 		if (verbose)
 			printf("%d ", blk);
 	}
@@ -448,7 +403,7 @@ int	devfd;
 	ap = (daddr_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		block_table[i] = blk;
+		bbinfop->bbi_block_table[i] = blk;
 		if (verbose)
 			printf("%d ", blk);
 	}
