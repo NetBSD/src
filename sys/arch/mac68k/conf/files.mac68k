@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.68 1997/04/09 20:11:33 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.69 1997/04/11 00:58:26 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -116,6 +116,8 @@ file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
+
+file	arch/m68k/m68k/sig_machdep.c
 
 file	dev/cons.c
 file	dev/cninit.c
