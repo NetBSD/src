@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.66 2000/03/18 20:42:14 erh Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.67 2000/03/18 22:23:13 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/ptrace.h>
+#include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
@@ -107,6 +108,7 @@
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_ptrace.h>
+#include <compat/linux/common/linux_reboot.h>
 
 int linux_ptrace_request_map[] = {
 	LINUX_PTRACE_TRACEME,	PT_TRACE_ME,
@@ -1104,3 +1106,55 @@ linux_sys_ptrace(p, v, retval)
 
 	return LINUX_SYS_PTRACE_ARCH(p, uap, retval);
 }
+
+int
+linux_sys_reboot(struct proc *p, void *v, register_t *retval)
+{
+	struct linux_sys_reboot_args /* {
+		syscallarg(int) magic1;
+		syscallarg(int) magic2;
+		syscallarg(int) cmd;
+		syscallarg(void *) arg;
+	} */ *uap = v;
+	struct sys_reboot_args /* {
+		syscallarg(int) opt;
+		syscallarg(char *) bootstr;
+	} */ sra;
+	int error;
+
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return(error);
+
+	if (SCARG(uap, magic1) != LINUX_REBOOT_MAGIC1)
+		return(EINVAL);
+	if (SCARG(uap, magic2) != LINUX_REBOOT_MAGIC2 &&
+	    SCARG(uap, magic2) != LINUX_REBOOT_MAGIC2A &&
+	    SCARG(uap, magic2) != LINUX_REBOOT_MAGIC2B)
+		return(EINVAL);
+
+	switch (SCARG(uap, cmd)) {
+	case LINUX_REBOOT_CMD_RESTART:
+		SCARG(&sra, opt) = RB_AUTOBOOT;
+		break;
+	case LINUX_REBOOT_CMD_HALT:
+		SCARG(&sra, opt) = RB_HALT;
+		break;
+	case LINUX_REBOOT_CMD_POWER_OFF:
+		SCARG(&sra, opt) = RB_HALT|RB_POWERDOWN;
+		break;
+	case LINUX_REBOOT_CMD_RESTART2:
+		/* Reboot with an argument. */
+		SCARG(&sra, opt) = RB_AUTOBOOT|RB_STRING;
+		SCARG(&sra, bootstr) = SCARG(uap, arg);
+		break;
+	case LINUX_REBOOT_CMD_CAD_ON:
+		return(EINVAL);	/* We don't implement ctrl-alt-delete */
+	case LINUX_REBOOT_CMD_CAD_OFF:
+		return(0);
+	default:
+		return(EINVAL);
+	}
+
+	return(sys_reboot(p, &sra, retval));
+}
+
