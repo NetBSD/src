@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.17 1997/05/06 20:57:47 mycroft Exp $	*/
+/*	$NetBSD: job.c,v 1.18 1997/05/06 23:51:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: job.c,v 1.17 1997/05/06 20:57:47 mycroft Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.18 1997/05/06 23:51:30 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -527,7 +527,7 @@ JobPrintCommand(cmdp, jobp)
     char     	  *cmd = (char *) cmdp;
     Job           *job = (Job *) jobp;
 
-    noSpecials = (noExecute && !(job->node->type & OP_MAKE));
+    noSpecials = noExecute && !(job->node->type & OP_MAKE);
 
     if (strcmp(cmd, "...") == 0) {
 	job->node->type |= OP_SAVE_CMDS;
@@ -1028,12 +1028,12 @@ Job_Touch(gn, silent)
 	return;
     }
 
-    if (!silent) {
+    if (!silent || (noExecute && !(gn->type & OP_MAKE))) {
 	(void) fprintf(stdout, "touch %s\n", gn->name);
 	(void) fflush(stdout);
     }
 
-    if (noExecute) {
+    if (noExecute && !(gn->type & OP_MAKE)) {
 	return;
     }
 
