@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.28 2002/01/15 02:21:49 wiz Exp $
+.\"	$NetBSD: gettytab.5,v 1.29 2003/05/20 19:20:03 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,6 +146,7 @@ hangup line on last close
 .No "program to exec when name obtained"
 .It "mb	bool	false	do flow control based on carrier"
 .It "nl	bool	false	terminal has (or might have) a newline character"
+.It "nn	bool	false	do not prompt for a login name"
 .It "np	bool	false	terminal uses no parity (i.e. 8-bit characters)"
 .It "nx	str	default	next table (for auto speed selection)"
 .It "o0	num	unused	tty output flags to write messages"
