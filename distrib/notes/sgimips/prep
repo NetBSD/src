@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.2 2002/05/23 05:44:50 pooka Exp $
+.\"	$NetBSD: prep,v 1.3 2002/06/30 12:34:38 lukem Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -6,12 +6,13 @@ of any data (e.g., an old IRIX installation) you wish to preserve.
 .Pp
 Booting
 .Nx*M
-for the first time is most commonly done from the network. You must
-set up DHCP, TFTP, and NFS for the installation procedure to be
-successful. Some SGI bootproms, such as the ones found on O2s, can read
+for the first time is most commonly done from the network.
+You must set up DHCP, TFTP, and NFS for the installation procedure to be
+successful.
+Some SGI bootproms, such as the ones found on O2s, can read
 ELF kernels directly from the network, others require that you boot
-an ECOFF version of the kernel. You will notice this from the following
-message from PROM:
+an ECOFF version of the kernel.
+You will notice this from the following message from PROM:
 .Pp
 .Dl Illegal f_magic number 0x7f45, expected MIPSELMAGIC or MIPSEBMAGIC.
 .Pp
@@ -21,8 +22,9 @@ format kernel into an ECOFF kernel using the
 tool.
 .Pp
 Different SGI hardware will require the executable code in the loadable
-image to start at a different address.  You must decide which image your
-system is capable of loading.  The current options are:
+image to start at a different address.
+You must decide which image your system is capable of loading.
+The current options are:
 .(bullet
 Indigo2, Indy, Challenge S
 .It
@@ -34,9 +36,11 @@ From now on this document assumes you are familiar with selecting the
 correct image for your system.
 .Pp
 Note that some older bootproms have an interesting bug in reading the
-kernel via TFTP. They handle the port number as a signed entity, and
-can thus not connect to ports >32767. You can work around this problem
-on the TFTP server (given that it is a NetBSD host) by using
+kernel via TFTP.
+They handle the port number as a signed entity, and
+can thus not connect to ports >32767.
+You can work around this problem on the TFTP server
+(given that it is a NetBSD host) by using
 .Dq sysctl
 to set
 .Dq net.inet.ip.anonportmin

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.18 2002/04/22 01:21:20 mbw Exp $
+.\"	$NetBSD: hardware,v 1.19 2002/06/30 12:43:05 lukem Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -115,10 +115,14 @@ sun4u and other UltraSPARC based machines
 .Pp
 These are supported by the
 .Nx
-sparc64 port.  Refer to
+sparc64 port.
+Refer to
 .Lk http://www.netbsd.org/Ports/sparc64/index.html
 .It
-JavaStation models.  Refer to the NetBSD/sparc JavaStation Support page
+JavaStation models.
+Refer to the
+.Nx*M
+JavaStation Support page
 .Lk http://www.netbsd.org/Ports/sparc/javastation.html
 .It
 Solbourne machines
@@ -250,7 +254,7 @@ Sbus card
 VME card (Interrupt driven and polled DMA)
 .It
 .Em sw ;
-5 MB/s NCR 5380 
+5 MB/s NCR 5380
 .Dq "SCSI Weird"
 controller.
 Onboard 4/110 (polled DMA only)
@@ -291,21 +295,23 @@ SCSI floppy drive, acts as a SCSI drive to kernel.
 found with some SPARCBook 3 machines
 .bullet)
 .It
-.Em nell ; 
+.Em nell ;
 PCMCIA/Cardbus devices using the sbus-to-PCMCIA bridge
 .(bullet -compact
 All 8 bit devices listed in the Machine-independent PCMCIA drivers page
-should work. Very few have been tested with
+should work.
+Very few have been tested with
 .Nx*M .
 There is a byte endian issue which
 currently prevents 16 bit devices from working.
 .Lk http://www.netbsd.org/Hardware/pcmcia.html
 .(Note
-Note: there is a conflict between the 
+Note: there is a conflict between the
 .Em audioamd
-device in sun4c and some sun4m models and the 
-.Em nell 
-device. See the FAQ for more information.
+device in sun4c and some sun4m models and the
+.Em nell
+device.
+See the FAQ for more information.
 .Lk http://www.netbsd.org/Ports/sparc/faq.html#nell
 .Note)
 .bullet)
@@ -352,7 +358,8 @@ Sun Sbus expander device
 Use of more than one processor in sun4m machines (it boots, but only uses
 one processor)
 .It
-DBRIe-based audio and ISDN.  On-board some sun4m machines (such as SS10,
+DBRIe-based audio and ISDN.
+On-board some sun4m machines (such as SS10,
 SS20, SPARC LX, and Tadpole SPARCbook)
 .It
 .Em sc ;
