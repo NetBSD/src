@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: gen.c,v 1.17 2003/11/18 21:37:39 christos Exp $ */
+/* $NetBSD: gen.c,v 1.17.2.1 2004/04/06 03:58:35 jmc Exp $ */
 
 #include "flexdef.h"
 
@@ -1436,7 +1436,7 @@ void make_tables()
 		indent_puts( "if ( yy_act == 0 )" );
 		indent_up();
 		indent_puts( C_plus_plus ?
-			"std::cerr << \"--scanner backing up\" << std:endl;" :
+			"std::cerr << \"--scanner backing up\" << std::endl;" :
 			"fprintf( stderr, \"--scanner backing up\\n\" );" );
 		indent_down();
 
