@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.23 2002/11/15 14:32:34 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.24 2002/11/20 16:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.23 2002/11/15 14:32:34 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.24 2002/11/20 16:50:08 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -428,6 +428,8 @@ el_gets(EditLine *el, int *nread)
 					break;
 				cp = &el->el_line.buffer[idx];
 			}
+			if (*cp == 4)	/* ought to be stty eof */
+				break;
 			cp++;
 			if (cp[-1] == '\r' || cp[-1] == '\n')
 				break;
