@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.189 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.190 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -445,3 +445,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	kernel: Add support for non-executable mappings for many platforms.
 		Map the stack and heap non-executable.  [chs 20030824]
 	agp(4): Add support for i865G integrated graphics.  [tron 20030826]
+	vax: Add support for the DELQA-PLUS in Turbo mode (qt).  Driver
+		written by Steven M. Schultz for 2.11BSD.  [ragge 20030829]
