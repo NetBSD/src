@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.21 1996/03/20 05:15:50 scottr Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.22 1996/03/29 02:06:04 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -50,8 +50,7 @@
 #include <mac68k/dev/ncr5380reg.h>
 
 #include <machine/stdarg.h>
-
-#include "../mac68k/via.h"
+#include <machine/viareg.h>
 
 /*
  * Set the various driver options
