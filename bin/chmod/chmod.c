@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.27 2002/05/31 18:54:01 bjh21 Exp $ */
+/* $NetBSD: chmod.c,v 1.28 2002/07/07 11:44:02 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.27 2002/05/31 18:54:01 bjh21 Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.28 2002/07/07 11:44:02 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,8 @@ done:	argv += optind;
 			fts_options &= ~FTS_PHYSICAL;
 			fts_options |= FTS_LOGICAL;
 		}
-	}
+	} else if (!hflag)
+		fts_options |= FTS_COMFOLLOW;
 	if (hflag)
 		change_mode = lchmod;
 	else
