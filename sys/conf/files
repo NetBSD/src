@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.283 1999/03/24 06:06:12 mrg Exp $
+#	$NetBSD: files,v 1.284 1999/03/25 03:39:11 explorer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -146,6 +146,7 @@ define	ether
 define	fddi
 define	hippi
 define	token
+define	sppp
 
 # devices ARPing IPv4 pull this in:
 define	arp
@@ -394,6 +395,7 @@ pseudo-device rnd
 pseudo-device loop: ifnet
 pseudo-device sl: ifnet
 pseudo-device ppp: ifnet
+pseudo-device sppp: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
@@ -644,6 +646,7 @@ file net/if_gre.c			gre			needs-count
 file net/if_loop.c			loop			needs-count
 file net/if_media.c
 file net/if_sl.c			sl			needs-count
+file net/if_spppsubr.c			sppp
 file net/if_strip.c			strip			needs-count
 file net/if_ppp.c			ppp			needs-count
 file net/if_tokensubr.c			token			needs-flag
