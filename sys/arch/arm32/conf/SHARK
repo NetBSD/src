@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.25 1999/09/16 16:49:49 matt Exp $
+#	$NetBSD: SHARK,v 1.26 1999/11/16 10:22:42 tron Exp $
 # From:  NetBSD: GENERIC,v 1.55 1999/03/27 07:11:36 explorer Exp
 #
 #	SHARK
@@ -59,6 +59,7 @@ file-system	KERNFS		# /kern
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER
 
 # Networking options
@@ -79,6 +80,13 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	NFS_BOOT_DHCP	# use NetBSD standard DHCP/NFS boot code
+
+# IPv6 options
+
+options 	INET6		# IPV6
+options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 
 # Compatibility options
 
@@ -210,3 +218,18 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 #pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
+
+# Pull in config fragments for kernel crypto.  Use only one of these,
+# and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
+# for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
