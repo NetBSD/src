@@ -1,4 +1,4 @@
-/*	$NetBSD: keysym.c,v 1.2 1999/01/02 19:01:12 nathanw Exp $ */
+/*	$NetBSD: keysym.c,v 1.3 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,6 +164,7 @@ int
 name2ksym(n)
 	char *n;
 {
+	int res;
 	struct ksym *r;
 
 	if (first_time)
@@ -174,6 +175,8 @@ name2ksym(n)
 
 	if (r != NULL)
 		return(r->value);
+	else if (sscanf(n, "unknown_%d", &res) == 1)
+		return(res);
 	else
 		return(-1);
 }

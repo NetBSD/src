@@ -1,4 +1,4 @@
-/*	$NetBSD: map_parse.y,v 1.1 1998/12/28 14:01:17 hannken Exp $ */
+/*	$NetBSD: map_parse.y,v 1.2 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@ ksym_lookup(ksym)
 %token <kval> T_KEYSYM_VAR T_KEYSYM_CMD_VAR
 %token <ival> T_NUMBER
 
+%type <kval> keysym_var
+
 %%
 
 program		: = {
@@ -125,7 +127,7 @@ expr		: keysym_expr
 		| keycode_expr
 		;
 
-keysym_expr	: T_KEYSYM T_KEYSYM_VAR "=" T_KEYSYM_VAR = {
+keysym_expr	: T_KEYSYM keysym_var "=" keysym_var = {
 			int src, dst;
 
 			dst = ksym_lookup($2);
@@ -151,31 +153,48 @@ keysym_cmd	: /* empty */
 		}
 		;
 
-keysym_list	: T_KEYSYM_VAR = {
+keysym_list	: keysym_var = {
 			cur_mp->group1[0] = $1;
 			cur_mp->group1[1] = ksym_upcase(cur_mp->group1[0]);
 			cur_mp->group2[0] = cur_mp->group1[0];
 			cur_mp->group2[1] = cur_mp->group1[1];
 		}
-		| T_KEYSYM_VAR T_KEYSYM_VAR = {
+		| keysym_var keysym_var = {
 			cur_mp->group1[0] = $1;
 			cur_mp->group1[1] = $2;
 			cur_mp->group2[0] = cur_mp->group1[0];
 			cur_mp->group2[1] = cur_mp->group1[1];
 		}
-		| T_KEYSYM_VAR T_KEYSYM_VAR T_KEYSYM_VAR = {
+		| keysym_var keysym_var keysym_var = {
 			cur_mp->group1[0] = $1;
 			cur_mp->group1[1] = $2;
 			cur_mp->group2[0] = $3;
 			cur_mp->group2[1] = ksym_upcase(cur_mp->group2[0]);
 		}
-		| T_KEYSYM_VAR T_KEYSYM_VAR T_KEYSYM_VAR T_KEYSYM_VAR = {
+		| keysym_var keysym_var keysym_var keysym_var = {
 			cur_mp->group1[0] = $1;
 			cur_mp->group1[1] = $2;
 			cur_mp->group2[0] = $3;
 			cur_mp->group2[1] = $4;
 		}
 		;
+
+keysym_var	: T_KEYSYM_VAR = {
+			$$ = $1;
+		}
+		| T_NUMBER = {
+			char name[2];
+			int res;
+
+			if ($1 < 0 || $1 > 9)
+				yyerror("keysym expected");
+			name[0] = $1 + '0';
+			name[1] = '\0';
+			res = name2ksym(name);
+			if (res < 0)
+				yyerror("keysym expected");
+			$$ = res;
+		};
 %%
 
 void
