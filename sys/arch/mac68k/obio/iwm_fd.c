@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.13 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.14 2002/09/06 17:36:19 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -58,10 +58,6 @@
 
 #include <mac68k/obio/iwmreg.h>
 #include <mac68k/obio/iwm_fdvar.h>
-
-#ifdef _LKM
-#include "iwm_mod.h"
-#endif
 
 /**
  **	Private functions
