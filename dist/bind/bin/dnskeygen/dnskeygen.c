@@ -1,7 +1,7 @@
-/*	$NetBSD: dnskeygen.c,v 1.3 2001/04/06 11:13:53 wiz Exp $	*/
+/*	$NetBSD: dnskeygen.c,v 1.4 2001/05/17 22:59:38 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: dnskeygen.c,v 1.11 2000/12/23 08:14:31 vixie Exp";
+static const char rcsid[] = "Id: dnskeygen.c,v 1.11.2.1 2001/04/26 02:56:06 marka Exp";
 #endif /* not lint */
 
 /*
@@ -35,6 +35,9 @@ static const char rcsid[] = "Id: dnskeygen.c,v 1.11 2000/12/23 08:14:31 vixie Ex
 #include "port_after.h"
 
 #define PRINT_SUPPORTED 2
+#ifndef PATH_SEP
+#define PATH_SEP '/'
+#endif
 
 static void usage(char *str, int full);
 
@@ -56,7 +59,7 @@ main(int argc, char **argv) {
 	extern char *optarg;
 
 	dst_init();
-	if ((prog = strrchr(argv[0],'/')) == NULL)
+	if ((prog = strrchr(argv[0], PATH_SEP)) == NULL)
 		prog = strdup(argv[0]);
 	else
 		prog = strdup(++prog);

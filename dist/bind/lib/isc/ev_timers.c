@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.3 2001/01/27 07:22:04 itojun Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.4 2001/05/17 23:00:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_timers.c,v 1.26 2000/07/17 07:36:54 vixie Exp";
+static const char rcsid[] = "Id: ev_timers.c,v 1.30 2001/02/12 23:13:48 marka Exp";
 #endif
 
 /* Import. */
@@ -40,6 +40,7 @@ static const char rcsid[] = "Id: ev_timers.c,v 1.26 2000/07/17 07:36:54 vixie Ex
 
 /* Constants. */
 
+#define	MILLION 1000000
 #define BILLION 1000000000
 
 /* Forward. */
@@ -113,7 +114,6 @@ evNowTime() {
 
 	if (gettimeofday(&now, NULL) < 0)
 		return (evConsTime(0, 0));
-	INSIST(now.tv_usec >= 0 && now.tv_usec < 1000000);
 	return (evTimeSpec(now));
 }
 

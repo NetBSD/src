@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.c,v 1.3 2001/01/27 07:21:56 itojun Exp $	*/
+/*	$NetBSD: dig.c,v 1.4 2001/05/17 22:59:38 itojun Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "Id: dig.c,v 8.44 2000/12/23 08:14:31 vixie Exp";
+static const char rcsid[] = "Id: dig.c,v 8.46 2001/04/01 17:35:01 vixie Exp";
 #endif
 
 /*
@@ -348,7 +348,6 @@ main(int argc, char **argv) {
 
 	res.id = 1;
 	gettimeofday(&tv1, NULL);
-	assert(tv1.tv_usec >= 0 && tv1.tv_usec < 1000000);
 
 /*
  * Main section: once if cmd-line query
@@ -864,7 +863,6 @@ main(int argc, char **argv) {
 		if (res.pfcode & RES_PRF_HEAD1)
 			fp_resstat(&res, stdout);
 		(void) gettimeofday(&start_time, NULL);
-		assert(start_time.tv_usec >= 0 && start_time.tv_usec < 1000000);
 		if (keyfile)
 			n = res_nsendsigned(&res, packet, n, &key, answer, sizeof answer);
 		else
@@ -889,7 +887,6 @@ main(int argc, char **argv) {
 			}
 		}
 		(void) gettimeofday(&end_time, NULL);
-		assert(end_time.tv_usec >= 0 && end_time.tv_usec < 1000000);
 
 		if (res.pfcode & RES_PRF_STATS) {
 			query_time = difftv(start_time, end_time);
@@ -921,11 +918,11 @@ main(int argc, char **argv) {
  * batches started at different sites somewhat synchronized.
  */
 		gettimeofday(&tv2, NULL);
-		assert(tv2.tv_usec >= 0 && tv2.tv_usec < 1000000);
 		delay = (int)(tv2.tv_sec - tv1.tv_sec);
 		if (delay < wait) {
 			sleep(wait - delay);
 		}
+		tv1 = tv2;
 	}
 	return (eecode);
 }
@@ -966,7 +963,7 @@ where:	server,\n\
 	fputs("\
 notes:	defname and search don't work; use fully-qualified names.\n\
 	this is DiG version " VSTRING "\n\
-	Id: dig.c,v 8.44 2000/12/23 08:14:31 vixie Exp\n\
+	Id: dig.c,v 8.46 2001/04/01 17:35:01 vixie Exp\n\
 ", stderr);
 }
 

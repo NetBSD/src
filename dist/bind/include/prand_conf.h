@@ -1,4 +1,4 @@
-/*	$NetBSD: prand_conf.h,v 1.1.1.2 2001/05/17 20:46:41 itojun Exp $	*/
+/*	$NetBSD: prand_conf.h,v 1.2 2001/05/17 22:59:41 itojun Exp $	*/
 
 #ifndef _PRAND_CMD_H_
 #define _PRAND_CMD_H_
@@ -9,7 +9,7 @@
 #endif /* HAVE_DEV_RANDOM */
 
 
-static static const char *cmds[] = {
+static const char *cmds[] = {
 	"/bin/ps -axlw 2>&1",
 	"/usr/sbin/arp -an 2>&1",
 	"/usr/bin/netstat -an 2>&1",

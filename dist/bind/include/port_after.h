@@ -1,4 +1,4 @@
-/*	$NetBSD: port_after.h,v 1.3 2001/01/27 07:22:02 itojun Exp $	*/
+/*	$NetBSD: port_after.h,v 1.4 2001/05/17 22:59:41 itojun Exp $	*/
 
 #ifndef	PORT_AFTER_H
 #define	PORT_AFTER_H
@@ -37,6 +37,7 @@
 #if (!defined(BSD)) || (BSD < 199306)
 #include <sys/bitypes.h>
 #endif
+#include <sys/time.h>
 
 /*
  * We need to know the IPv6 address family number even on IPv4-only systems.
@@ -79,5 +80,8 @@ struct sockaddr_in6 {
 #ifndef ISC_FACILITY
 #define ISC_FACILITY LOG_DAEMON
 #endif
+
+int isc__gettimeofday(struct timeval *, struct timezone *);
+#define gettimeofday isc__gettimeofday
 
 #endif	/* ! PORT_AFTER_H */
