@@ -1,11 +1,11 @@
-/*	$NetBSD: ichlpcib.c,v 1.5 2004/04/04 15:16:38 kochi Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.6 2004/07/31 17:32:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Minoura Makoto.
+ * by Minoura Makoto and Matthew R. Green.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,16 +41,18 @@
  *
  *  LPC Interface Bridge is basically a pcib (PCI-ISA Bridge), but has
  *  some power management and monitoring functions.
- *  Currently we support the watchdog timer.
+ *  Currently we support the watchdog timer, and SpeedStep on some
+ *  systems.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.5 2004/04/04 15:16:38 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.6 2004/07/31 17:32:31 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/sysctl.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
@@ -78,6 +80,12 @@ static void tcotimer_configure(struct lpcib_softc *,
 				struct pci_attach_args *);
 static int tcotimer_setmode(struct sysmon_wdog *);
 static int tcotimer_tickle(struct sysmon_wdog *);
+
+static void speedstep_configure(struct lpcib_softc *,
+				struct pci_attach_args *);
+static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
+
+struct lpcib_softc *speedstep_cookie;	/* XXX */
 
 /* Defined in arch/i386/pci/pcib.c. */
 extern void pcibattach(struct device *, struct device *, void *);
@@ -126,8 +134,11 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 
 	pcibattach(parent, self, aux);
 
-	/* Currently we use TCO timer feature only... */
+	/* Set up the TCO (watchdog). */
 	tcotimer_configure(sc, pa);
+
+	/* Set up SpeedStep. */
+	speedstep_configure(sc, pa);
 }
 
 /*
@@ -264,4 +275,139 @@ tcotimer_tickle(struct sysmon_wdog *smw)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 0);
 
 	return 0;
+}
+
+/*
+ * Intel ICH SpeedStep support.
+ */
+#define SS_READ(sc, reg) \
+	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (reg))
+#define SS_WRITE(sc, reg, val) \
+	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+
+/*
+ * Linux driver says that SpeedStep on older chipsets cause
+ * lockups on Dell Inspiron 8000 and 8100.
+ */
+static int
+speedstep_bad_hb_check(struct pci_attach_args *pa)
+{
+
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82815_FULL_HUB &&
+	    PCI_REVISION(pa->pa_class) < 5)
+		return (1);
+
+	return (0);
+}
+
+static void
+speedstep_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
+{
+	struct sysctlnode	*node, *ssnode;
+	int rv;
+
+	/* Supported on ICH2-M, ICH3-M and ICH4-M.  */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ISA ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC &&
+	     pci_find_device(pa, speedstep_bad_hb_check) == 0)) {
+		u_int8_t pmcon;
+
+		/* Enable SpeedStep if it isn't already enabled. */
+		pmcon = pci_conf_read(pa->pa_pc, pa->pa_tag,
+				      LPCIB_PCI_GEN_PMCON_1);
+		if ((pmcon & LPCIB_PCI_GEN_PMCON_1_SS_EN) == 0)
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+				       LPCIB_PCI_GEN_PMCON_1,
+				       pmcon | LPCIB_PCI_GEN_PMCON_1_SS_EN);
+
+		/* Put in machdep.speedstep_state (0 for low, 1 for high). */
+		if ((rv = sysctl_createv(NULL, 0, NULL, &node,
+		    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+		    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL)) != 0)
+			goto err;
+
+		/* CTLFLAG_ANYWRITE? kernel option like EST? */
+		if ((rv = sysctl_createv(NULL, 0, &node, &ssnode,
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "speedstep_state", NULL,
+		    speedstep_sysctl_helper, 0, NULL, 0, CTL_CREATE,
+		    CTL_EOL)) != 0)
+			goto err;
+
+		/* XXX save the sc for IO tag/handle */
+		speedstep_cookie = sc;
+
+		printf("%s: SpeedStep enabled\n", sc->sc_dev.dv_xname);
+	} else
+		printf("%s: No SpeedStep\n", sc->sc_dev.dv_xname);
+
+	return;
+
+err:
+	aprint_normal("%s: sysctl_createv failed (rv = %d)\n", __func__, rv);
+}
+
+/*
+ * get/set the SpeedStep state: 0 == low power, 1 == high power.
+ */
+static int
+speedstep_sysctl_helper(SYSCTLFN_ARGS)
+{
+	struct sysctlnode	node;
+	struct lpcib_softc *sc = speedstep_cookie;
+	u_int8_t		state, state2;
+	int			ostate, nstate, s, error = 0;
+
+	/*
+	 * We do the dance with spl's to avoid being at high ipl during
+	 * sysctl_lookup() which can both copyin and copyout.
+	 */
+	s = splserial();
+	state = SS_READ(sc, LPCIB_PM_SS_CNTL);
+	splx(s);
+	if ((state & LPCIB_PM_SS_STATE_LOW) == 0)
+		ostate = 1;
+	else
+		ostate = 0;
+	nstate = ostate;
+
+	node = *rnode;
+	node.sysctl_data = &nstate;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		goto out;
+
+	/* Only two states are available */
+	if (nstate != 0 && nstate != 1) {
+		error = EINVAL;
+		goto out;
+	}
+
+	s = splserial();
+	state2 = SS_READ(sc, LPCIB_PM_SS_CNTL);
+	if ((state2 & LPCIB_PM_SS_STATE_LOW) == 0)
+		ostate = 1;
+	else
+		ostate = 0;
+	if (ostate != nstate)
+	{
+		u_int8_t cntl;
+
+		if (nstate == 0)
+			state2 |= LPCIB_PM_SS_STATE_LOW;
+		else
+			state2 &= ~LPCIB_PM_SS_STATE_LOW;
+
+		/*
+		 * Must disable bus master arbitration during the change.
+		 */
+		cntl = SS_READ(sc, LPCIB_PM_CTRL);
+		SS_WRITE(sc, LPCIB_PM_CTRL, cntl | LPCIB_PM_SS_CNTL_ARB_DIS);
+		SS_WRITE(sc, LPCIB_PM_SS_CNTL, state2);
+		SS_WRITE(sc, LPCIB_PM_CTRL, cntl);
+	}
+	splx(s);
+out:
+	return (error);
 }
