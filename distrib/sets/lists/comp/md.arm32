@@ -1,7 +1,17 @@
-# $NetBSD: md.arm32,v 1.40 2001/02/17 15:00:01 bjh21 Exp $
+# $NetBSD: md.arm32,v 1.41 2001/02/23 21:29:01 reinoud Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
+./usr/include/arm/arm32			comp-c-include
+./usr/include/arm/arm32/bus.h		comp-c-include
+./usr/include/arm/arm32/frame.h		comp-c-include
+./usr/include/arm/arm32/katelib.h	comp-c-include
+./usr/include/arm/arm32/param.h		comp-c-include
+./usr/include/arm/arm32/pcb.h		comp-c-include
+./usr/include/arm/arm32/pmap.h		comp-c-include
+./usr/include/arm/arm32/psl.h		comp-c-include
+./usr/include/arm/arm32/rtc.h		comp-c-include
+./usr/include/arm/arm32/sysarch.h	comp-c-include
 ./usr/include/arm/armreg.h		comp-c-include
 ./usr/include/arm/asm.h			comp-c-include
 ./usr/include/arm/bswap.h		comp-c-include
@@ -26,13 +36,13 @@
 ./usr/include/arm/stdarg.h		comp-c-include
 ./usr/include/arm/trap.h		comp-c-include
 ./usr/include/arm/varargs.h		comp-c-include
-./usr/include/arm32		comp-c-include
+./usr/include/arm32			comp-c-include
 ./usr/include/arm32/_G_config.h		comp-c-include
 ./usr/include/arm32/ansi.h		comp-c-include
-./usr/include/arm32/aout_machdep.h		comp-c-include
+./usr/include/arm32/aout_machdep.h	comp-c-include
 ./usr/include/arm32/asm.h		comp-c-include
 ./usr/include/arm32/beep.h		comp-c-include
-./usr/include/arm32/bootconfig.h		comp-c-include
+./usr/include/arm32/bootconfig.h	comp-c-include
 ./usr/include/arm32/bswap.h		comp-c-include
 ./usr/include/arm32/bus.h		comp-c-include
 ./usr/include/arm32/cdefs.h		comp-c-include
@@ -40,13 +50,13 @@
 ./usr/include/arm32/cpu.h		comp-c-include
 ./usr/include/arm32/cpufunc.h		comp-c-include
 ./usr/include/arm32/cpus.h		comp-c-include
-./usr/include/arm32/db_machdep.h		comp-c-include
+./usr/include/arm32/db_machdep.h	comp-c-include
 ./usr/include/arm32/devmap.h		comp-c-include
 ./usr/include/arm32/disklabel.h		comp-c-include
-./usr/include/arm32/disklabel_acorn.h		comp-c-include
+./usr/include/arm32/disklabel_acorn.h	comp-c-include
 ./usr/include/arm32/elf_machdep.h	comp-c-include
 ./usr/include/arm32/endian.h		comp-c-include
-./usr/include/arm32/endian_machdep.h		comp-c-include
+./usr/include/arm32/endian_machdep.h	comp-c-include
 ./usr/include/arm32/float.h		comp-c-include
 ./usr/include/arm32/fp.h		comp-c-include
 ./usr/include/arm32/frame.h		comp-c-include
@@ -57,7 +67,7 @@
 ./usr/include/arm32/intr.h		comp-c-include
 ./usr/include/arm32/io.h		comp-c-include
 ./usr/include/arm32/ipkdb.h		comp-c-include
-./usr/include/arm32/irqhandler.h		comp-c-include
+./usr/include/arm32/irqhandler.h	comp-c-include
 ./usr/include/arm32/joystick.h		comp-c-include
 ./usr/include/arm32/katelib.h		comp-c-include
 ./usr/include/arm32/kbd.h		comp-c-include
@@ -86,10 +96,10 @@
 ./usr/include/arm32/vconsole.h		comp-c-include
 ./usr/include/arm32/vidc.h		comp-c-include
 ./usr/include/arm32/vmparam.h		comp-c-include
+./usr/include/ieeefp.h			comp-c-include
 ./usr/lib/c++rt0.o			comp-cxx-lib
 ./usr/lib/libarm32.a			comp-c-lib
 ./usr/lib/libarm32_p.a			comp-c-lib
 ./usr/lib/libarm32_pic.a		comp-c-lib
 ./usr/lib/scrt0.o			comp-c-lib
 ./usr/libdata/lint/llib-larm32.ln	comp-c-lintlib
-./usr/include/ieeefp.h		comp-c-include

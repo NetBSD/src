@@ -1,7 +1,17 @@
-# $NetBSD: md.arm26,v 1.10 2001/02/17 15:00:01 bjh21 Exp $
+# $NetBSD: md.arm26,v 1.11 2001/02/23 21:29:00 reinoud Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
+./usr/include/arm/arm32			comp-c-include
+./usr/include/arm/arm32/bus.h		comp-c-include
+./usr/include/arm/arm32/frame.h		comp-c-include
+./usr/include/arm/arm32/katelib.h	comp-c-include
+./usr/include/arm/arm32/param.h		comp-c-include
+./usr/include/arm/arm32/pcb.h		comp-c-include
+./usr/include/arm/arm32/pmap.h		comp-c-include
+./usr/include/arm/arm32/psl.h		comp-c-include
+./usr/include/arm/arm32/rtc.h		comp-c-include
+./usr/include/arm/arm32/sysarch.h	comp-c-include
 ./usr/include/arm/armreg.h		comp-c-include
 ./usr/include/arm/asm.h			comp-c-include
 ./usr/include/arm/bswap.h		comp-c-include
@@ -50,8 +60,8 @@
 ./usr/include/arm26/intr.h		comp-c-include
 ./usr/include/arm26/ipkdb.h		comp-c-include
 ./usr/include/arm26/irq.h		comp-c-include
-./usr/include/arm26/lock.h		comp-c-include
 ./usr/include/arm26/limits.h		comp-c-include
+./usr/include/arm26/lock.h		comp-c-include
 ./usr/include/arm26/math.h		comp-c-include
 ./usr/include/arm26/param.h		comp-c-include
 ./usr/include/arm26/pcb.h		comp-c-include
@@ -68,4 +78,4 @@
 ./usr/include/arm26/undefined.h		comp-c-include
 ./usr/include/arm26/varargs.h		comp-c-include
 ./usr/include/arm26/vmparam.h		comp-c-include
-./usr/include/ieeefp.h		comp-c-include
+./usr/include/ieeefp.h			comp-c-include
