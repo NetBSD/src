@@ -29,6 +29,17 @@
 #define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.6g 9 Aug 2002"
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
+/* The following macro indicates that this version of OpenSSL
+ * contains the security-related diffs between 0.9.6g and 0.9.6l
+ * that were pulled up to the netbsd-1-6 branch on 2003-11-07.
+ */
+#define OPENSSL_HAS_20031107_FIX
+
+/* The following macro indicates that this version of OpenSSL
+ * contains the security-related diffs between 0.9.6l and 0.9.6m
+ * that were pulled up to the netbsd-1-6 branch on 2004-04-01.
+ */
+#define OPENSSL_HAS_20040401_FIX
 
 /* The macros below are to be used for shared library (.so, .dll, ...)
  * versioning.  That kind of versioning works a bit differently between

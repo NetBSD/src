@@ -62,10 +62,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include "openssl/e_os.h"
 
 #include <openssl/crypto.h>
@@ -73,6 +69,10 @@ extern "C" {
 #include <openssl/bio.h> 
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 #ifndef VMS
 #define X509_CERT_AREA		OPENSSLDIR
@@ -92,10 +92,6 @@ extern "C" {
 /* size of string represenations */
 #define DECIMAL_SIZE(type)     ((sizeof(type)*8+2)/3+1)
 #define HEX_SIZE(type)         ((sizeof(type)*2)
-
-/* die if we have to */
-void OpenSSLDie(const char *file,int line,const char *assertion);
-#define die(e)	((e) ? (void)0 : OpenSSLDie(__FILE__, __LINE__, #e))
 
 #ifdef  __cplusplus
 }

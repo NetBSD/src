@@ -1079,6 +1079,13 @@ start:
 			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
 			goto err;
 			}
+		/* Check we have a cipher to change to */
+		if (s->s3->tmp.new_cipher == NULL)
+			{
+			i=SSL_AD_UNEXPECTED_MESSAGE;
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_CCS_RECEIVED_EARLY);
+			goto err;
+			}
 
 		rr->length=0;
 		s->s3->change_cipher_spec=1;
