@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.38 2002/05/29 11:04:39 enami Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.39 2002/07/14 23:53:41 chs Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.38 2002/05/29 11:04:39 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.39 2002/07/14 23:53:41 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -803,6 +803,9 @@ uvm_unloanpage(ploans, npages)
 			} else {
 				uvm_pageactivate(pg);
 			}
+		} else if (pg->loan_count == 1 && pg->uobject != NULL &&
+			   pg->uanon != NULL) {
+			uvm_pageactivate(pg);
 		}
 		if (slock != NULL) {
 			simple_unlock(slock);
