@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1999/01/02 13:14:18 dbj Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1999/01/02 13:23:31 dbj Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -188,11 +188,9 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND, rnd),	/* 38: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 39: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 40: RAIDframe disk driver */
-        cdev_wsdisplay_init(NWSDISPLAY,
-                            wsdisplay), /* 41: frame buffers, etc. */
-        cdev_mouse_init(NWSKBD, wskbd), /* 42: keyboards */
-        cdev_mouse_init(NWSMOUSE,
-                        wsmouse),       /* 43: mice */
+	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay), /* 41: frame buffers, etc. */
+	cdev_mouse_init(NWSKBD, wskbd), /* 42: keyboards */
+	cdev_mouse_init(NWSMOUSE, wsmouse),       /* 43: mice */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
