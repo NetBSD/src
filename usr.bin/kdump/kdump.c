@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.30 2000/10/12 19:02:17 is Exp $	*/
+/*	$NetBSD: kdump.c,v 1.31 2000/11/13 21:43:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.30 2000/10/12 19:02:17 is Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.31 2000/11/13 21:43:12 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,17 @@ static const char *ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
 	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
 	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
+};
+
+static const char *linux_ptrace_ops[] = {
+	"PTRACE_TRACEME",
+	"PTRACE_PEEKTEXT", "PTRACE_PEEKDATA", "PTRACE_PEEKUSER",
+	"PTRACE_POKETEXT", "PTRACE_POKEDATA", "PTRACE_POKEUSER",
+	"PTRACE_CONT", "PTRACE_KILL", "PTRACE_SINGLESTEP",
+	NULL, NULL,
+	"PTRACE_GETREGS", "PTRACE_SETREGS", "PTRACE_GETFPREGS",
+	"PTRACE_SETFPREGS", "PTRACE_ATTACH", "PTRACE_DETACH",
+	"PTRACE_SYSCALL",
 };
 
 int	main __P((int, char **));
@@ -315,11 +326,19 @@ ktrsyscall(ktr)
 				ap++;
 				argsize -= sizeof(register_t);
 			} else if (ktr->ktr_code == SYS_ptrace) {
-				if (*ap >= 0 && *ap <=
+				if (strcmp(current->name, "linux") == 0) {
+				  if (*ap >= 0 && *ap <=
+				    sizeof(linux_ptrace_ops) / sizeof(linux_ptrace_ops[0]))
+					(void)printf("(%s", linux_ptrace_ops[*ap]);
+				  else
+					(void)printf("(%ld", (long)*ap);
+				} else {
+				  if (*ap >= 0 && *ap <=
 				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
 					(void)printf("(%s", ptrace_ops[*ap]);
-				else
+				  else
 					(void)printf("(%ld", (long)*ap);
+				}
 				c = ',';
 				ap++;
 				argsize -= sizeof(register_t);
