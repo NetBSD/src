@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.7 1998/08/15 03:02:45 mycroft Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.8 1998/10/19 22:26:39 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
