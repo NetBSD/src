@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.11 2003/12/06 15:16:38 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.12 2003/12/08 12:03:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.11 2003/12/06 15:16:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.12 2003/12/08 12:03:16 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -356,11 +356,11 @@ mach_exception(l, exc, code)
 		req->req_msgh.msgh_id = MACH_EXC_RAISE_MSGID;
 		req->req_body.msgh_descriptor_count = 2;
 		req->req_thread.name = thread->mr_name;
-		req->req_thread.disposition = 0x11; /* XXX */
-		req->req_thread.type = 0; /* XXX */
+		req->req_thread.disposition = MACH_MSG_TYPE_MOVE_SEND;
+		req->req_thread.type = MACH_MSG_PORT_DESCRIPTOR;
 		req->req_task.name = task->mr_name;
-		req->req_task.disposition = 0x11; /* XXX */
-		req->req_task.type = 0; /* XXX */
+		req->req_task.disposition = MACH_MSG_TYPE_MOVE_SEND;
+		req->req_task.type = MACH_MSG_PORT_DESCRIPTOR;
 		req->req_exc = exc;
 		req->req_codecount = 2;
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
@@ -416,11 +416,11 @@ mach_exception(l, exc, code)
 		req->req_msgh.msgh_id = MACH_EXC_RAISE_STATE_IDENTITY_MSGID;
 		req->req_body.msgh_descriptor_count = 2;
 		req->req_thread.name = thread->mr_name;
-		req->req_thread.disposition = 0x11; /* XXX */
-		req->req_thread.type = 0; /* XXX */
+		req->req_thread.disposition = MACH_MSG_TYPE_MOVE_SEND;
+		req->req_thread.type = MACH_MSG_PORT_DESCRIPTOR;
 		req->req_task.name = task->mr_name;
-		req->req_task.disposition = 0x11; /* XXX */
-		req->req_task.type = 0; /* XXX */
+		req->req_task.disposition = MACH_MSG_TYPE_MOVE_SEND;
+		req->req_task.type = MACH_MSG_PORT_DESCRIPTOR;
 		req->req_exc = exc;
 		req->req_codecount = 2;
 		memcpy(&req->req_code[0], code, sizeof(req->req_code));
