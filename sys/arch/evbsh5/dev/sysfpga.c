@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.7 2002/09/28 11:16:38 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.8 2002/10/01 07:58:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -442,9 +442,10 @@ sysfpga_intr_establish(int group, int level, int inum,
 		return (NULL);
 	}
 
+	ih += inum;
+
 	KDASSERT(ih->ih_func == NULL);
 
-	ih += inum;
 	ih->ih_level = level;
 	ih->ih_group = group;
 	ih->ih_inum = inum;
