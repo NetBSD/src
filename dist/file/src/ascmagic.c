@@ -1,4 +1,5 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.4 2004/12/13 10:24:52 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.5 2005/02/21 14:33:37 pooka Exp $	*/
+
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -52,9 +53,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.41 2004/09/11 19:15:57 christos Exp")
+FILE_RCSID("@(#)Id: ascmagic.c,v 1.42 2005/02/09 19:25:13 christos Exp")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.4 2004/12/13 10:24:52 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.5 2005/02/21 14:33:37 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -90,6 +91,7 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 
 	int has_escapes = 0;
 	int has_backspace = 0;
+	int seen_cr = 0;
 
 	int n_crlf = 0;
 	int n_lf = 0;
@@ -230,6 +232,25 @@ subtype_identified:
 	 * Now try to discover other details about the file.
 	 */
 	for (i = 0; i < ulen; i++) {
+		if (ubuf[i] == '\n') {
+			if (seen_cr)
+				n_crlf++;
+			else
+				n_lf++;
+			last_line_end = i;
+		} else if (seen_cr)
+			n_cr++;
+
+		seen_cr = (ubuf[i] == '\r');
+		if (seen_cr)
+			last_line_end = i;
+
+		if (ubuf[i] == 0x85) { /* X3.64/ECMA-43 "next line" character */
+			n_nel++;
+			last_line_end = i;
+		}
+
+		/* If this line is _longer_ than MAXLINELEN, remember it. */
 		if (i > last_line_end + MAXLINELEN)
 			has_long_lines = 1;
 
@@ -237,24 +258,14 @@ subtype_identified:
 			has_escapes = 1;
 		if (ubuf[i] == '\b')
 			has_backspace = 1;
-
-		if (ubuf[i] == '\r' && (i + 1 <  ulen && ubuf[i + 1] == '\n')) {
-			n_crlf++;
-			last_line_end = i;
-		}
-		if (ubuf[i] == '\r' && (i + 1 >= ulen || ubuf[i + 1] != '\n')) {
-			n_cr++;
-			last_line_end = i;
-		}
-		if (ubuf[i] == '\n' && ((int)i - 1 < 0 || ubuf[i - 1] != '\r')){
-			n_lf++;
-			last_line_end = i;
-		}
-		if (ubuf[i] == 0x85) { /* X3.64/ECMA-43 "next line" character */
-			n_nel++;
-			last_line_end = i;
-		}
 	}
+
+	/* Beware, if the data has been truncated, the final CR could have
+	   been followed by a LF.  If we have HOWMANY bytes, it indicates
+	   that the data might have been truncated, probably even before
+	   this function was called. */
+	if (seen_cr && nbytes < HOWMANY)
+		n_cr++;
 
 	if ((ms->flags & MAGIC_MIME)) {
 		if (subtype_mime) {
