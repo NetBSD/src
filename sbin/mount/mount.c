@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.74 2005/01/31 02:32:35 erh Exp $	*/
+/*	$NetBSD: mount.c,v 1.75 2005/01/31 14:18:08 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.74 2005/01/31 02:32:35 erh Exp $");
+__RCSID("$NetBSD: mount.c,v 1.75 2005/01/31 14:18:08 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,8 @@ main(argc, argv)
 	int all, ch, forceall, i, init_flags, mntsize, rval;
 	char *options;
 	const char *mountopts, *fstypename;
+	char canonical_path_buf[MAXPATHLEN];
+	char *canonical_path;
 
 	/* started as "mount" */
 	all = forceall = init_flags = 0;
@@ -208,8 +210,6 @@ main(argc, argv)
 		 * passed to us.  It's ok for this to fail.  It's also ok
 		 * for the result to be exactly the same as the original.
 		 */
-		char canonical_path_buf[MAXPATHLEN];
-		char *canonical_path;
 		canonical_path = realpath(*argv, canonical_path_buf);
 
 		if (init_flags & MNT_UPDATE) {
