@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.5 1997/07/13 20:24:28 christos Exp $	*/
+/*	$NetBSD: strmode.c,v 1.6 1997/10/16 23:09:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,13 +38,13 @@
 #if 0
 static char *sccsid = "@(#)strmode.c	5.3 (Berkeley) 5/18/90";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.5 1997/07/13 20:24:28 christos Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.6 1997/10/16 23:09:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
+#include <unistd.h>
 
 void
 strmode(mode, p)
