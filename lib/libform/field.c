@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.4 2001/01/30 06:33:51 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.5 2001/02/03 12:35:14 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -230,6 +230,7 @@ int
 set_field_buffer(FIELD *field, int buffer, char *value)
 {
 	unsigned len;
+	int status;
 	
 	if (field == NULL)
 		return E_BAD_ARGUMENT;
@@ -245,6 +246,19 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	strcpy(field->buffers[buffer].string, value);
 	field->buffers[buffer].length = len;
 	field->buffers[buffer].allocated = len + 1;
+	field->row_count = 1; /* must be at least one row */
+
+	  /* we have to hope the wrap works - if it does not then the
+	     buffer is pretty much borked */
+	status = _formi_wrap_field(field, 0);
+	if (status != E_OK)
+		return status;
+
+	  /* redraw the field to reflect the new contents. If the field
+	   * is attached....
+	   */
+	if (field->parent != NULL)
+		_formi_redraw_field(field->parent, field->index);
 
 	return E_OK;
 }
