@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.23 1999/03/22 09:19:57 ross Exp $
+# $NetBSD: INSTALL,v 1.24 1999/04/29 01:28:41 ross Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -61,8 +61,8 @@ options 	INSECURE		# disable `kernel security level'
 # in case we have NFS root.
 options 	NFS_BOOT_DHCP		# superset of BOOTP
 
-# WS console uses SUN terminal emulation
-options 	WSEMUL_SUN
+# WS console uses SUN or VT100 terminal emulation
+options 	WSEMUL_VT100
 
 config		netbsd	root on ? type ?
 
