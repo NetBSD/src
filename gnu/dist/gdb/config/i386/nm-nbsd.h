@@ -19,3 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Get generic NetBSD native definitions. */
 #include "nm-nbsd.h"
+
+#define FLOAT_INFO extern i386_float_info (); \
+						  i386_float_info ()

@@ -64,6 +64,9 @@ struct md_core {
   struct fpreg freg;
 };
 
+static struct fpreg i386_fp_registers;
+static int i386_fp_read = 0;
+
 static void
 fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      char *core_reg_sect;
@@ -88,7 +91,9 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
   memcpy(&registers[REGISTER_BYTE (0)],
 	 &core_reg->intreg, sizeof(struct reg));
 
-  /* XXX - floating point registers? */
+  /* Floating point registers */
+  i386_fp_registers = core_reg->freg;
+  i386_fp_read = 1;
 
   registers_fetched ();
 }
@@ -154,3 +159,121 @@ fetch_kcore_registers (pcb)
   registers_fetched ();
 }
 #endif	/* FETCH_KCORE_REGISTERS */
+
+#ifdef FLOAT_INFO
+#include "language.h"			/* for local_hex_string */
+#include "floatformat.h"
+
+#include <sys/param.h>
+#include <sys/dir.h>
+#include <signal.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+
+#include <a.out.h>
+
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/uio.h>
+#define curpcb Xcurpcb	/* XXX avoid leaking declaration from pcb.h */
+#include <sys/user.h>
+#undef curpcb
+#include <sys/file.h>
+#include "gdb_stat.h"
+#include <sys/ptrace.h>
+
+extern void print_387_control_word ();		/* i387-tdep.h */
+extern void print_387_status_word ();
+
+struct env387 
+{
+  unsigned short control;
+  unsigned short r0;
+  unsigned short status;
+  unsigned short r1;
+  unsigned short tag;
+  unsigned short r2;
+  unsigned long eip;
+  unsigned short code_seg;
+  unsigned short opcode;
+  unsigned long operand;
+  unsigned short operand_seg;
+  unsigned short r3;
+  unsigned char regs[8][10];
+};
+
+static void
+print_387_status (status, ep)
+     unsigned short status;
+     struct env387 *ep;
+{
+  int i;
+  int bothstatus;
+  int top;
+  int fpreg;
+  
+  bothstatus = ((status != 0) && (ep->status != 0));
+  if (status != 0) 
+    {
+      if (bothstatus)
+	printf_unfiltered ("u: ");
+      print_387_status_word ((unsigned int)status);
+    }
+  
+  if (ep->status != 0) 
+    {
+      if (bothstatus)
+	printf_unfiltered ("e: ");
+      print_387_status_word ((unsigned int)ep->status);
+    }
+  
+  print_387_control_word ((unsigned int)ep->control);
+  printf_unfiltered ("last exception: ");
+  printf_unfiltered ("opcode %s; ", local_hex_string(ep->opcode));
+  printf_unfiltered ("pc %s:", local_hex_string(ep->code_seg));
+  printf_unfiltered ("%s; ", local_hex_string(ep->eip));
+  printf_unfiltered ("operand %s", local_hex_string(ep->operand_seg));
+  printf_unfiltered (":%s\n", local_hex_string(ep->operand));
+
+  top = (ep->status >> 11) & 7;
+  
+  printf_unfiltered ("regno     tag  msb              lsb  value\n");
+  for (fpreg = 7; fpreg >= 0; fpreg--) 
+    {
+      double val;
+      
+      printf_unfiltered ("%s %d: ", fpreg == top ? "=>" : "  ", fpreg); 
+
+      switch ((ep->tag >> (fpreg * 2)) & 3) 
+	{
+	case 0: printf_unfiltered ("valid "); break;
+	case 1: printf_unfiltered ("zero  "); break;
+	case 2: printf_unfiltered ("trap  "); break;
+	case 3: printf_unfiltered ("empty "); break;
+	}
+      for (i = 9; i >= 0; i--)
+	printf_unfiltered ("%02x", ep->regs[fpreg][i]);
+      
+      floatformat_to_double(&floatformat_i387_ext, (char *) ep->regs[fpreg], 
+			      &val);
+      printf_unfiltered ("  %g\n", val);
+    }
+}
+
+i386_float_info ()
+{
+  extern int inferior_pid;
+  
+  if (inferior_pid) 
+    {
+      ptrace (PT_GETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &i386_fp_registers,
+	      0);
+    } 
+  else if (!i386_fp_read)
+    {
+      error ("The program has no floating point registers now.");
+    }
+  
+  print_387_status (0, (struct env387 *) &i386_fp_registers);
+}
+#endif
