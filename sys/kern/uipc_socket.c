@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.5 1993/08/03 02:45:20 mycroft Exp $
+ *	$Id: uipc_socket.c,v 1.6 1993/09/08 21:12:49 mycroft Exp $
  */
 
 #include "param.h"
@@ -395,7 +395,7 @@ restart:
 				MGET(m, M_WAIT, MT_DATA);
 				mlen = MLEN;
 			}
-			if (resid >= MINCLSIZE && space >= MCLBYTES) {
+			if (resid >= MINCLSIZE) {
 				MCLGET(m, M_WAIT);
 				if ((m->m_flags & M_EXT) == 0)
 					goto nopages;
@@ -409,7 +409,8 @@ restart:
 				} else
 					len = min(MCLBYTES, resid);
 #endif
-				space -= MCLBYTES;
+				len = min(len, space);
+				space -= len;
 			} else {
 nopages:
 				len = min(min(mlen, resid), space);
