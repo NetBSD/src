@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.25 2000/07/19 16:07:00 pk Exp $	*/
+/*	$NetBSD: siop.c,v 1.26 2000/07/24 15:15:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -250,6 +250,11 @@ siop_attach(sc)
 	}
 	if (sc->maxsync == 255 || sc->minsync == 0)
 		panic("siop: can't find my sync parameters\n");
+	/* Do a bus reset, so that devices fall back to narrow/async */
+	siop_resetbus(sc);
+	/*
+	 * siop_reset() will reset the chip, thus clearing pending interrupts
+	 */
 	siop_reset(sc);
 #ifdef DUMP_SCRIPT
 	siop_dump_script(sc);
@@ -357,7 +362,7 @@ siop_intr(v)
 	struct siop_target *siop_target;
 	struct siop_cmd *siop_cmd;
 	struct scsipi_xfer *xs;
-	int istat, sist0, sist1, sstat1, dstat, scntl1;
+	int istat, sist0, sist1, sstat1, dstat;
 	u_int32_t irqcode;
 	int need_reset = 0;
 	int offset, target, lun;
@@ -601,12 +606,7 @@ siop_intr(v)
 	if (need_reset) {
 reset:
 		/* fatal error, reset the bus */
-		scntl1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1);
-		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1,
-		    scntl1 | SCNTL1_RST);
-		/* minimum 25 us, more time won't hurt */
-		delay(100);
-		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1, scntl1);
+		siop_resetbus(sc);
 		/* no table to flush here */
 		return 1;
 	}
@@ -685,6 +685,13 @@ scintr:
 					printf("%s: target %d using 8bit "
 					    "transfers\n", sc->sc_dev.dv_xname,
 					    xs->sc_link->scsipi_scsi.target);
+					if (xs->sc_link->quirks & SDEV_NOSYNC) {
+						siop_cmd->siop_target->status =
+						    TARST_OK;
+						/* no table to flush here */
+						CALL_SCRIPT(Ent_msgin_ack);
+						return 1;
+					}
 					siop_target->status = TARST_SYNC_NEG;
 					siop_cmd->siop_table->msg_out[0] =
 					    MSG_EXTENDED;
@@ -789,6 +796,8 @@ scintr:
 					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_send_msgout);
 					break;
+				case SIOP_NEG_ACK:
+					CALL_SCRIPT(Ent_msgin_ack);
 				default:
 					panic("invalid retval from "
 					    "siop_wdtr_neg()");
@@ -905,7 +914,8 @@ scintr:
 				siop_start(sc);
 				return 1;
 			}
-			if (siop_target->status == TARST_PROBING)
+			if (siop_target->status == TARST_PROBING &&
+			    xs->sc_link->device_softc != NULL)
 				siop_target->status = TARST_ASYNC;
 #ifdef DEBUG_INTR
 			printf("done, DSA=0x%lx target id 0x%x last msg "
@@ -1177,7 +1187,8 @@ siop_scsicmd(xs)
 	siop_cmd->siop_table->msg_out[2] = 0;
 #endif
 	if (sc->targets[target]->status == TARST_ASYNC) {
-		if (sc->features & SF_BUS_WIDE) {
+		if (sc->features & SF_BUS_WIDE &&
+		    (xs->sc_link->quirks & SDEV_NOWIDE) == 0) {
 			sc->targets[target]->status = TARST_WIDE_NEG;
 			siop_cmd->siop_table->msg_out[1] = MSG_EXTENDED;
 			siop_cmd->siop_table->msg_out[2] = MSG_EXT_WDTR_LEN;
@@ -1186,7 +1197,7 @@ siop_scsicmd(xs)
 			    MSG_EXT_WDTR_BUS_16_BIT;
 			siop_cmd->siop_table->t_msgout.count=
 			    htole32(MSG_EXT_WDTR_LEN + 2 + 1);
-		} else {
+		} else if ((xs->sc_link->quirks & SDEV_NOSYNC) == 0) {
 			sc->targets[target]->status = TARST_SYNC_NEG;
 			siop_cmd->siop_table->msg_out[1] = MSG_EXTENDED;
 			siop_cmd->siop_table->msg_out[2] = MSG_EXT_SDTR_LEN;
@@ -1195,6 +1206,8 @@ siop_scsicmd(xs)
 			siop_cmd->siop_table->msg_out[5] = sc->maxoff;
 			siop_cmd->siop_table->t_msgout.count=
 			    htole32(MSG_EXT_SDTR_LEN + 2 +1);
+		} else {
+			sc->targets[target]->status = TARST_OK;
 		}
 	}
 	siop_cmd->siop_table->status = htole32(0xff); /* set invalid status */
@@ -1394,19 +1407,13 @@ siop_timeout(v)
 	struct siop_cmd *siop_cmd = v;
 	struct siop_softc *sc = siop_cmd->siop_target->siop_sc;
 	int s;
-	u_int8_t scntl1;
 
 	scsi_print_addr(siop_cmd->xs->sc_link);
 	printf("command timeout\n");
 
 	s = splbio();
 	/* reset the scsi bus */
-	scntl1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1);
-	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1,
-	    scntl1 | SCNTL1_RST);
-	/* minimum 25 us, more time won't hurt */
-	delay(100);
-	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1, scntl1);
+	siop_resetbus(sc);
 
 	/* deactivate callout */
 	callout_stop(&siop_cmd->xs->xs_callout);
