@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.134 2001/07/30 19:59:06 ad Exp $
+#	$NetBSD: files.pci,v 1.135 2001/08/01 20:54:16 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -61,7 +61,7 @@ file	dev/pci/mlx_pci.c		mlx_pci
 # Newer Mylex AcceleRAID and eXtremeRAID controllers
 device	mly: scsi
 attach	mly at pci
-file	dev/pci/mly.c			mly
+file	dev/pci/mly.c			mly			needs-flag
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
