@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.192 2001/05/26 10:22:33 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.193 2001/06/03 04:03:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -320,10 +320,12 @@ union ctxinfo {
 	struct	pmap *c_pmap;		/* pmap (if busy) */
 };
 
-#define ncontext	(cpuinfo.mmu_ncontext)
-#define ctx_kick	(cpuinfo.ctx_kick)
-#define ctx_kickdir	(cpuinfo.ctx_kickdir)
-#define ctx_freelist	(cpuinfo.ctx_freelist)
+static struct simplelock ctx_lock;	/* lock for below */
+union	ctxinfo *ctxinfo;		/* allocated at in pmap_bootstrap */
+union	ctxinfo *ctx_freelist;		/* context free list */
+int	ctx_kick;			/* allocation rover when none free */
+int	ctx_kickdir;			/* ctx_kick roves both directions */
+int	ncontext;			/* sizeof ctx_freelist */
 
 void	ctx_alloc __P((struct pmap *));
 void	ctx_free __P((struct pmap *));
@@ -1697,9 +1699,10 @@ ctx_alloc(pm)
 	}
 
 	s = splvm();
+	simple_lock(&ctx_lock);
 	if ((c = ctx_freelist) != NULL) {
 		ctx_freelist = c->c_nextfree;
-		cnum = c - cpuinfo.ctxinfo;
+		cnum = c - ctxinfo;
 		doflush = 0;
 	} else {
 		if ((ctx_kick += ctx_kickdir) >= ncontext) {
@@ -1709,7 +1712,7 @@ ctx_alloc(pm)
 			ctx_kick = 1;
 			ctx_kickdir = 1;
 		}
-		c = &cpuinfo.ctxinfo[cnum = ctx_kick];
+		c = &ctxinfo[cnum = ctx_kick];
 #ifdef DEBUG
 		if (c->c_pmap == NULL)
 			panic("ctx_alloc cu_pmap");
@@ -1726,6 +1729,7 @@ ctx_alloc(pm)
 				gap_end = c->c_pmap->pm_gap_end;
 		}
 	}
+	simple_unlock(&ctx_lock);
 
 	c->c_pmap = pm;
 	pm->pm_ctx = c;
@@ -1831,6 +1835,7 @@ ctx_alloc(pm)
 		 * Note on multi-threaded processes: a context must remain
 		 * valid as long as any thread is still running on a cpu.
 		 */
+		simple_lock(&pm->pm_lock);
 #if defined(MULTIPROCESSOR)
 		for (i = 0; i < ncpu; i++)
 #else
@@ -1846,6 +1851,7 @@ ctx_alloc(pm)
 				 (pm->pm_reg_ptps_pa[i] >> SRMMU_PPNPASHIFT) |
 					SRMMU_TEPTD);
 		}
+		simple_unlock(&pm->pm_lock);
 
 		/* Set context if not yet done above to flush the cache */
 		if (!doflush)
@@ -1896,8 +1902,10 @@ ctx_free(pm)
 	}
 	setcontext(oldc);
 
+	simple_lock(&ctx_lock);
 	c->c_nextfree = ctx_freelist;
 	ctx_freelist = c;
+	simple_unlock(&ctx_lock);
 }
 
 
@@ -2695,6 +2703,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	extern char *esym;
 #endif
 
+	ncontext = nctx;
+
 	switch (cputyp) {
 	case CPU_SUN4C:
 		mmu_has_hole = 1;
@@ -2807,7 +2817,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	p += nsegment * sizeof(struct mmuentry);
 	bzero(mmusegments, nsegment * sizeof(struct mmuentry));
 
-	pmap_kernel()->pm_ctx = cpuinfo.ctxinfo = ci = (union ctxinfo *)p;
+	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
 	p += nctx * sizeof *ci;
 
 	/* Initialize MMU resource queues */
@@ -2849,6 +2859,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 *
 	 * XXX sun4c could use context 0 for users?
 	 */
+	simple_lock_init(&ctx_lock);
 	ci->c_pmap = pmap_kernel();
 	ctx_freelist = ci + 1;
 	for (i = 1; i < ncontext; i++) {
@@ -3071,6 +3082,8 @@ pmap_bootstrap4m(void)
 	extern char *esym;
 #endif
 
+	ncontext = cpuinfo.mmu_ncontext;
+
 #if defined(SUN4) || defined(SUN4C) /* setup 4M fn. ptrs for dual-arch kernel */
 	pmap_clear_modify_p 	=	pmap_clear_modify4m;
 	pmap_clear_reference_p 	= 	pmap_clear_reference4m;
@@ -3131,7 +3144,7 @@ pmap_bootstrap4m(void)
 	bzero(q, (u_int)p - (u_int)q);
 
 	/* Allocate context administration */
-	pmap_kernel()->pm_ctx = cpuinfo.ctxinfo = ci = (union ctxinfo *)p;
+	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
 	p += ncontext * sizeof *ci;
 	bzero((caddr_t)ci, (u_int)p - (u_int)ci);
 
@@ -3271,6 +3284,7 @@ pmap_bootstrap4m(void)
 	/*
 	 * Set up the ctxinfo structures (freelist of contexts)
 	 */
+	simple_lock_init(&ctx_lock);
 	ci->c_pmap = pmap_kernel();
 	ctx_freelist = ci + 1;
 	for (i = 1; i < ncontext; i++) {
@@ -3760,11 +3774,14 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 			/* Copy kernel regions */
 			kpt = &pmap_kernel()->pm_reg_ptps[n][VA_VREG(KERNBASE)];
 			for (i = 0; i < NKREG; i++) {
-				setpgt4m(upt++, kpt[i]);
+				int j = kpt[i];
+
+				setpgt4m(upt++, j);
 			}
 		}
 	}
 #endif
+
 	return (0);
 }
 
@@ -4892,7 +4909,9 @@ pmap_page_protect4m(pg, prot)
 	flags = pv->pv_flags & ~(PV_NC|PV_ANC);
 
 	while (pv != NULL) {
+
 		pm = pv->pv_pmap;
+		simple_lock(&pm->pm_lock);
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
@@ -4956,6 +4975,7 @@ pmap_page_protect4m(pg, prot)
 		npv = pv->pv_next;
 		if (pv != pv0)
 			pool_put(&pv_pool, pv);
+		simple_unlock(&pm->pm_lock);
 		pv = npv;
 	}
 
@@ -5097,6 +5117,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 	pmap_stats.ps_changeprots++;
 
 	s = splvm();		/* conservative */
+	simple_lock(&pm->pm_lock);
 
 	rp = &pm->pm_regmap[VA_VREG(va)];
 	sp = &rp->rg_segmap[VA_VSEG(va)];
@@ -5129,6 +5150,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 		 (pte & ~SRMMU_PROT_MASK) | newprot);
 
 out:
+	simple_unlock(&pm->pm_lock);
 	splx(s);
 }
 #endif /* SUN4M */
