@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 1999/05/26 19:16:35 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.66 1999/06/06 19:09:50 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -290,7 +290,7 @@ pmap_init()
 {
 	/* reserve place on SPT for UPT */
 	pte_map = uvm_km_suballoc(kernel_map, &ptemapstart, &ptemapend, 
-	    USRPTSIZE * 4 * maxproc, 0, FALSE, &pte_map_store);
+	    USRPTSIZE * 4 * maxproc, TRUE, FALSE, &pte_map_store);
 }
 
 
@@ -466,7 +466,7 @@ pmap_kenter_pa(va, pa, prot)
 	ptp = (int *)kvtopte(va);
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_kenter_pa: va: %lx, pa %lx, prot %x ptp %p\n", va, pa, prot, ptp);
+	printf("pmap_kenter_pa: va: %lx, pa %lx, prot %x ptp %p\n", va, pa, prot, ptp);
 #endif
 	ptp[0] = PG_V | ((prot & VM_PROT_WRITE)? PG_KW : PG_KR) |
 	    PG_PFNUM(pa) | PG_SREF;
@@ -490,7 +490,7 @@ pmap_kremove(va, len)
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_kremove: va: %lx, len %lx, ptp %p\n", va, len, kvtopte(va));
+	printf("pmap_kremove: va: %lx, len %lx, ptp %p\n", va, len, kvtopte(va));
 #endif
 
 	/*
@@ -521,7 +521,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
+	printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
 #endif
 
 	/*
@@ -562,6 +562,11 @@ pmap_enter(pmap, v, p, prot, wired, access_type)
 	struct	pv_entry *pv, *tmp;
 	int	i, s, newpte, oldpte, *patch;
 
+#ifdef PMAPDEBUG
+if (startpmapdebug)
+	printf("pmap_enter: pmap %p v %lx p %lx prot %x wired %d access %x\n",
+		    pmap, v, p, prot, wired, access_type);
+#endif
 	/* Can this happen with UVM??? */
 	if (pmap == 0)
 		return;
@@ -653,7 +658,7 @@ pmap_bootstrap_alloc(size)
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_bootstrap_alloc: size 0x %x\n",size);
+	printf("pmap_bootstrap_alloc: size 0x %x\n",size);
 #endif
 	size = round_page(size);
 	mem = (caddr_t)avail_start + KERNBASE;
@@ -700,7 +705,7 @@ pmap_extract(pmap, va)
 if(startpmapdebug)printf("pmap_extract: pmap %p, va %lx\n",pmap, va);
 #endif
 #ifdef DIAGNOSTIC
-	if (va & PGOFSET)
+	if (va & VAX_PGOFSET)
 		printf("Warning, pmap_extract va not aligned\n");
 #endif
 
