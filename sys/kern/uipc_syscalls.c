@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.30 1998/04/25 17:35:19 matt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.31 1998/06/25 21:17:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)uipc_syscalls.c	8.6 (Berkeley) 2/14/95
  */
+
+#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.91 1998/05/02 18:33:19 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.92 1998/06/25 21:17:15 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -32,6 +32,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ktrace.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

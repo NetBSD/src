@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.28 1998/05/02 18:33:20 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.29 1998/06/25 21:17:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)kern_ktrace.c	8.5 (Berkeley) 5/14/95
  */
+
+#include "opt_ktrace.h"
 
 #ifdef KTRACE
 

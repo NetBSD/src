@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.36 1998/03/01 02:22:32 fvdl Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.37 1998/06/25 21:17:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)sys_generic.c	8.9 (Berkeley) 2/14/95
  */
+
+#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
