@@ -1,4 +1,4 @@
-/*	$NetBSD: auto.c,v 1.2 1999/05/16 00:03:35 christos Exp $	*/
+/*	$NetBSD: auto.c,v 1.3 1999/05/16 00:15:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ static COORD *
 closest_robot(dist)
 	int *dist;
 {
-	COORD *rob, *end, *minrob;
+	COORD *rob, *end, *minrob = NULL;
 	int tdist, mindist;
 
 	mindist = 1000000;
@@ -205,7 +205,7 @@ static COORD *
 closest_heap(dist)
 	int *dist;
 {
-	COORD *hp, *end, *minhp;
+	COORD *hp, *end, *minhp = NULL;
 	int mindist, tdist;
 
 	mindist = 1000000;
