@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsfont.9,v 1.5 2002/03/13 21:45:38 wiz Exp $
+.\"     $NetBSD: wsfont.9,v 1.6 2002/03/16 12:10:18 ad Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,8 @@
 .Fn wsfont_matches "struct wsdisplay_font *font" "char *name" \
 "int width" "int height" "int stride"
 .Ft int
-.Fn wsfont_find "char *name" "int width" "int height" "int stride"
+.Fn wsfont_find "char *name" "int width" "int height" "int stride" \
+"int bitorder" "int byteorder"
 .Ft int
 .Fn wsfont_add "struct wsdisplay_font *font" "int copy"
 .Ft int
@@ -67,8 +68,7 @@
 .Ft void
 .Fn wsfont_enum "void (*callback)(char *, int, int, int)"
 .Ft int
-.Fn wsfont_lock "int cookie" "struct wsdisplay_font **ptr" \
-"int bitorder" "int byteorder"
+.Fn wsfont_lock "int cookie" "struct wsdisplay_font **ptr"
 .Ft int
 .Fn wsfont_unlock "int cookie"
 .Ft int
@@ -139,7 +139,7 @@ with the specifications
 and
 .Fa stride .
 Return zero if not matched and non-zero if matched.
-.It Fn wsfont_find "name" "width" "height" "stride"
+.It Fn wsfont_find "name" "width" "height" "stride" "bitorder" "byteorder"
 Find the font called
 .Fa name
 from the fonts loaded into the kernel.  The font aspect is specified
@@ -154,6 +154,21 @@ is called with any of the parameters as 0, it indicates that we don't
 care about that aspect of the font.  If the font is found a
 (nonnegative-valued) cookie is returned which can used with the other
 functions.
+.Pp
+The
+.Fa bitorder
+and
+.Fa byteorder
+arguments are the bit order and byte order required.  Valid values
+are:
+.Bl -tag -width compact
+.It WSDISPLAY_FONTORDER_KNOWN
+The font is in known ordered format and doesn't need converting.
+.It WSDISPLAY_FONTORDER_L2R
+The font is ordered left to right.
+.It WSDISPLAY_FONTORDER_R2L
+The font is ordered right to left.
+.El
 .Pp
 When more flexibility is required,
 .Fn wsfont_enum
@@ -177,44 +192,32 @@ Enumerate the list of fonts.  For each font in the font list, the
 .Fa callback
 function argument is called with the arguments specifying the font
 name, width, height and stride.
-.It Fn wsfont_lock "cookie" "ptr" "bitorder" "byteorder"
+.It Fn wsfont_lock "cookie" "ptr"
 Lock access to the font specified by
 .Fa cookie
 so that it cannot be unloaded from the kernel while is being used.
-The address of the wsdisplay_font pointer for the specified font is
-return in the
+If the bit or byte order of the font to be locked differs from what
+has been requested with
+.Fn wsfont_find
+then the glyph data will be modified to match.  At this point it may be
+necessary for
+.Fn wsfont_lock
+to make a copy of the font data; this action is transparent to the caller.
+A later call to
+.Fn wsfont_unlock
+will free resources used by temporary copies.
+.Pp
+The address of the wsdisplay_font pointer for the specified font is return in
+the
 .Fa ptr
-argument.  The
-.Fa bitorder
-and
-.Fa byteorder
-arguments are the bit order and byte order required.  Valid values
-are:
-.Bl -tag -width compact
-.It WSDISPLAY_FONTORDER_KNOWN
-The font is in known ordered format and doesn't need converting.
-.It WSDISPLAY_FONTORDER_L2R
-The font is ordered left to right.
-.It WSDISPLAY_FONTORDER_R2L
-The font is ordered right to left.
-.El
+argument.
 .Pp
 .Fn wsfont_lock
-returns the new lockcount on success.  The function will fail if
-.Fa cookie
-is invalid or if the font is already locked and the bit/byte order
-requested by the caller differs.
+returns zero on success, or an error code on failure.
 .It Fn wsfont_unlock "cookie"
 Unlock the font specified by
 .Fa cookie .
-Returns the new lockcount.
-.It Fn wsfont_getflg "cookie" "flg" "lc"
-Get font flags and lockcount for font
-.Fa cookie .
-The flags are returned in
-.Fa flg
-and the lockcount for the font in
-.Fa lc .
+Returns zero on succss, or an error code on failure.
 .It Fn wsfont_map_unichar "font" "c"
 Remap the unicode character
 .Fa c
