@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.shlib.mk,v 1.1 2002/09/27 21:37:58 thorpej Exp $
+#	$NetBSD: bsd.shlib.mk,v 1.2 2003/07/28 02:38:33 lukem Exp $
 
 .if !defined(_BSD_SHLIB_MK_)
 _BSD_SHLIB_MK_=1
@@ -35,4 +35,4 @@ SHLINKDIR?=	/usr/libexec
 SHLINKDIR?=	/libexec
 .endif
 
-.endif	# _BSD_SHLIB_MK_
+.endif	# !defined(_BSD_SHLIB_MK_)
