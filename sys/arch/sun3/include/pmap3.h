@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/pmap3.h,v 1.7 1994/04/24 20:10:18 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/include/pmap3.h,v 1.8 1994/06/28 21:44:38 gwr Exp $
  */
 
 #ifndef	_PMAP_MACHINE_
@@ -65,7 +65,8 @@ extern pmap_t kernel_pmap;
 #define PMEGQ_FREE     0
 #define PMEGQ_INACTIVE 1
 #define PMEGQ_ACTIVE   2
-#define PMEGQ_NONE     3
+#define PMEGQ_KERNEL   3
+#define PMEGQ_NONE     4
 
 struct pmeg_state {
 	TAILQ_ENTRY(pmeg_state) pmeg_link;
