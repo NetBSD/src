@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.29 1999/01/16 13:27:30 simonb Exp $	*/
+/*	$NetBSD: function.c,v 1.30 1999/02/04 16:41:17 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.29 1999/01/16 13:27:30 simonb Exp $");
+__RCSID("$NetBSD: function.c,v 1.30 1999/02/04 16:41:17 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: function.c,v 1.29 1999/01/16 13:27:30 simonb Exp $");
 #include <fnmatch.h>
 #include <fts.h>
 #include <grp.h>
+#include <inttypes.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,7 +79,7 @@ __RCSID("$NetBSD: function.c,v 1.29 1999/01/16 13:27:30 simonb Exp $");
 	}								\
 }
 
-static	long	find_parsenum __P((PLAN *, char *, char *, char *));
+static	int64_t	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_always_true __P((PLAN *, FTSENT *));
 	int	f_amin __P((PLAN *, FTSENT *));
 	int	f_atime __P((PLAN *, FTSENT *));
@@ -114,12 +115,12 @@ static	PLAN   *palloc __P((enum ntype, int (*) __P((PLAN *, FTSENT *))));
  * find_parsenum --
  *	Parse a string of the form [+-]# and return the value.
  */
-static long
+static int64_t
 find_parsenum(plan, option, vp, endch)
 	PLAN *plan;
 	char *option, *vp, *endch;
 {
-	long value;
+	int64_t value;
 	char *endchar, *str;	/* Pointer to character ending conversion. */
     
 	/* Determine comparison from leading + or -. */
@@ -143,7 +144,7 @@ find_parsenum(plan, option, vp, endch)
 	 * and endchar points to the beginning of the string we know we have
 	 * a syntax error.
 	 */
-	value = strtol(str, &endchar, 10);
+	value = strtoq(str, &endchar, 10);
 	if (value == 0 && endchar == str)
 		errx(1, "%s: %s: illegal numeric value", option, vp);
 	if (endchar[0] && (endch == NULL || endchar[0] != *endch))
