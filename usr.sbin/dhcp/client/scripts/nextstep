@@ -13,8 +13,19 @@ if [ x$reason = xPREINIT ]; then
 fi
 if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
    [ x$reason = xREBIND ] || [ x$reason = xREBOOT ]; then
-  if [ x$old_ip_address != x ] && [ x$old_ip_address != x$new_ip_address ]; then
-    ifconfig $interface $new_ip_address netmask $new_subnet_mask >/dev/null 2>&1
+  current_hostname=`hostname`
+  if [ x$current_hostname = x ] || \
+     [ x$current_hostname = x$old_host_name ]; then
+    if [ x$current_hostname = x ] || \
+       [ x$new_host_name != x$old_host_name ]; then
+      hostname $new_host_name
+    fi
+  fi
+    
+  if [ x$old_ip_address != x ] && [ x$old_ip_address != x$new_ip_address ]
+   then
+    ifconfig $interface $new_ip_address netmask $new_subnet_mask \
+			>/dev/null 2>&1
     route add $new_ip_address 127.1 0 >/dev/null 2>&1
     for router in $new_routers ; do
       route add default $router 1 >/dev/null 2>&1

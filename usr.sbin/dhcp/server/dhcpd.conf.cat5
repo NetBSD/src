@@ -1478,38 +1478,38 @@ dhcpd.conf(5)                                       dhcpd.conf(5)
         nnoott aauutthhoorriittaattiivvee;;
 
        The  DHCP  server will normally assume that the configura­
-       tion information about a given network segment is known to
-       be correct and is authoritative.   So if a client requests
-       an IP address on a given network segment that  the  server
-       knows  is  not  valid  for  that  segment, the server will
-       respond with a DHCPNAK message, causing the client to for­
-       get its IP address and try to get a new one.
+       tion information about a  given  network  segment  is  not
+       known  to be correct and is not authoritative.  This is so
+       that if a naive user installs  a  DHCP  server  not  fully
+       understanding how to configure it, it does not send spuri­
+       ous  DHCPNAK  messages  to  clients  that  have   obtained
+       addresses from a legitimate DHCP server on the network.
 
-       If  a  DHCP  server is being configured by somebody who is
-       not the network administrator and who therefore  does  not
-       wish to assert this level of authority, then the statement
-       "not authoritative" should be written in  the  appropriate
-       scope in the configuration file.
+       Network   administrators  setting  up  authoritative  DHCP
+       servers for their networks should always write  aauutthhoorriittaa­­
+       ttiivvee;;  at  the top of their configuration file to indicate
+       that the DHCP server _s_h_o_u_l_d send DHCPNAK messages to  mis­
+       configured clients.   If this is not done, clients will be
+       unable to get a correct IP address after changing  subnets
+       until  their old lease has expired, which could take quite
+       a long time.
 
-       Usually,  writing  nnoott  aauutthhoorriittaattiivvee;; at the top level of
-       the file should be sufficient.   However, if a DHCP server
-       is  to  be set up so that it is aware of some networks for
-       which it is authoritative and some networks for  which  it
+       Usually, writing aauutthhoorriittaattiivvee;; at the top  level  of  the
+       file  should be sufficient.   However, if a DHCP server is
+       to be set up so that it is  aware  of  some  networks  for
+       which  it  is authoritative and some networks for which it
        is not, it may be more appropriate to declare authority on
        a per-network-segment basis.
 
        Note that the most specific scope for which the concept of
-       authority  makes any sense is the physical network segment
-       - either a shared-network statement or a subnet  statement
-       that  is  not contained within a shared-network statement.
+       authority makes any sense is the physical network  segment
+       -  either a shared-network statement or a subnet statement
+       that is not contained within a  shared-network  statement.
        It is not meaningful to specify that the server is author­
-       itative  for some subnets within a shared network, but not
-       authoritative for others, nor is it meaningful to  specify
-       that  the  server  is authoritative for some host declara­
+       itative for some subnets within a shared network, but  not
+       authoritative  for others, nor is it meaningful to specify
+       that the server is authoritative for  some  host  declara­
        tions and not others.
-
-       TThhee _a_l_w_a_y_s_-_r_e_p_l_y_-_r_f_c_1_0_4_8 ssttaatteemmeenntt
-
 
 
 
@@ -1522,36 +1522,38 @@ dhcpd.conf(5)                                       dhcpd.conf(5)
 dhcpd.conf(5)                                       dhcpd.conf(5)
 
 
+       TThhee _a_l_w_a_y_s_-_r_e_p_l_y_-_r_f_c_1_0_4_8 ssttaatteemmeenntt
+
         aallwwaayyss--rreeppllyy--rrffcc11004488 _f_l_a_g;;
 
-       Some BOOTP clients expect RFC1048-style responses, but  do
-       not  follow RFC1048 when sending their requests.   You can
-       tell that a client is having this problem  if  it  is  not
-       getting  the options you have configured for it and if you
-       see in the server log the message "(non-rfc1048)"  printed
+       Some  BOOTP clients expect RFC1048-style responses, but do
+       not follow RFC1048 when sending their requests.   You  can
+       tell  that  a  client  is having this problem if it is not
+       getting the options you have configured for it and if  you
+       see  in the server log the message "(non-rfc1048)" printed
        with each BOOTREQUEST that is logged.
 
-       If  you want to send rfc1048 options to such a client, you
-       can set the aallwwaayyss--rreeppllyy--rrffcc11004488 option in  that  client's
+       If you want to send rfc1048 options to such a client,  you
+       can  set  the aallwwaayyss--rreeppllyy--rrffcc11004488 option in that client's
        host declaration, and the DHCP server will respond with an
-       RFC-1048-style vendor options field.   This  flag  can  be
-       set  in  any scope, and will affect all clients covered by
+       RFC-1048-style  vendor  options  field.   This flag can be
+       set in any scope, and will affect all clients  covered  by
        that scope.
 
        TThhee _a_l_w_a_y_s_-_b_r_o_a_d_c_a_s_t ssttaatteemmeenntt
 
         aallwwaayyss--bbrrooaaddccaasstt _f_l_a_g;;
 
-       The DHCP and BOOTP protocols both require DHCP  and  BOOTP
+       The  DHCP  and BOOTP protocols both require DHCP and BOOTP
        clients to set the broadcast bit in the flags field of the
-       BOOTP message header.  Unfortunately, some DHCP and  BOOTP
-       clients  do  not  do  this,  and therefore may not receive
-       responses from the DHCP server.   The DHCP server  can  be
-       made  to always broadcast its responses to clients by set­
-       ting this flag to 'on' for the relevant scope.   To  avoid
+       BOOTP  message header.  Unfortunately, some DHCP and BOOTP
+       clients do not do this,  and  therefore  may  not  receive
+       responses  from  the DHCP server.   The DHCP server can be
+       made to always broadcast its responses to clients by  set­
+       ting  this flag to 'on' for the relevant scope.   To avoid
        creating excess broadcast traffic on your network, we rec­
-       ommend that you restrict the use of this option to as  few
-       clients  as  possible.    For  example, the Microsoft DHCP
+       ommend  that you restrict the use of this option to as few
+       clients as possible.   For  example,  the  Microsoft  DHCP
        client is known not to have this problem, as are the Open­
        Transport and ISC DHCP clients.
 
@@ -1560,13 +1562,13 @@ dhcpd.conf(5)                                       dhcpd.conf(5)
         oonnee--lleeaassee--ppeerr--cclliieenntt _f_l_a_g;;
 
        If this flag is enabled, whenever a client sends a DHCPRE­
-       QUEST for a particular lease, the  server  will  automati­
-       cally  free any other leases the client holds.   This pre­
-       sumes that when the client sends  a  DHCPREQUEST,  it  has
-       forgotten  any  lease  not  mentioned in the DHCPREQUEST -
-       i.e., the client has only a single network  interface  _a_n_d
-       it  does  not  remember leases it's holding on networks to
-       which it is not currently  attached.    Neither  of  these
+       QUEST  for  a  particular lease, the server will automati­
+       cally free any other leases the client holds.   This  pre­
+       sumes  that  when  the  client sends a DHCPREQUEST, it has
+       forgotten any lease not mentioned  in  the  DHCPREQUEST  -
+       i.e.,  the  client has only a single network interface _a_n_d
+       it does not remember leases it's holding  on  networks  to
+       which  it  is  not  currently attached.   Neither of these
        assumptions are guaranteed or provable, so we urge caution
        in the use of this statement.
 
@@ -1574,8 +1576,6 @@ dhcpd.conf(5)                                       dhcpd.conf(5)
 
         uussee--lleeaassee--aaddddrr--ffoorr--ddeeffaauulltt--rroouuttee _f_l_a_g;;
 
-       If the _u_s_e_-_l_e_a_s_e_-_a_d_d_r_-_f_o_r_-_d_e_f_a_u_l_t_-_r_o_u_t_e parameter is  true
-       in  a  given  scope,  then  instead  of  sending the value
 
 
 
@@ -1588,36 +1588,38 @@ dhcpd.conf(5)                                       dhcpd.conf(5)
 dhcpd.conf(5)                                       dhcpd.conf(5)
 
 
-       specified in the routers option (or sending  no  value  at
-       all),  the  IP address of the lease being assigned is sent
-       to the client.   This supposedly causes Win95 machines  to
-       ARP  for  all  IP  addresses, which can be helpful if your
-       router is configured for proxy ARP.
+       If  the _u_s_e_-_l_e_a_s_e_-_a_d_d_r_-_f_o_r_-_d_e_f_a_u_l_t_-_r_o_u_t_e parameter is true
+       in a given scope, then instead of sending the value speci­
+       fied  in  the routers option (or sending no value at all),
+       the IP address of the lease being assigned is sent to  the
+       client.   This supposedly causes Win95 machines to ARP for
+       all IP addresses, which can be helpful if your  router  is
+       configured for proxy ARP.
 
        TThhee _s_e_r_v_e_r_-_i_d_e_n_t_i_f_i_e_r ssttaatteemmeenntt
 
         sseerrvveerr--iiddeennttiiffiieerr _h_o_s_t_n_a_m_e;;
 
-       The server-identifier statement can be used to define  the
-       value  that  is  sent in the DHCP Server Identifier option
-       for a given scope.   The value specified  mmuusstt  be  an  IP
-       address  for the DHCP server, and must be reachable by all
+       The  server-identifier statement can be used to define the
+       value that is sent in the DHCP  Server  Identifier  option
+       for  a  given  scope.    The value specified mmuusstt be an IP
+       address for the DHCP server, and must be reachable by  all
        clients served by a particular scope.
 
-       The use of the server-identifier statement is  not  recom­
-       mended  -  the  only  reason to use it is to force a value
+       The  use  of the server-identifier statement is not recom­
+       mended - the only reason to use it is  to  force  a  value
        other than the default value to be sent on occasions where
-       the  default value would be incorrect.   The default value
-       is the first IP address associated with the physical  net­
+       the default value would be incorrect.   The default  value
+       is  the first IP address associated with the physical net­
        work interface on which the request arrived.
 
        The usual case where the _s_e_r_v_e_r_-_i_d_e_n_t_i_f_i_e_r statement needs
-       to be sent is when a physical interface has more than  one
+       to  be sent is when a physical interface has more than one
        IP address, and the one being sent by default isn't appro­
-       priate for some or all clients served by  that  interface.
-       Another  common  case  is when an alias is defined for the
-       purpose of having a consistent IP  address  for  the  DHCP
-       server,  and  it  is  desired that the clients use this IP
+       priate  for  some or all clients served by that interface.
+       Another common case is when an alias is  defined  for  the
+       purpose  of  having  a  consistent IP address for the DHCP
+       server, and it is desired that the  clients  use  this  IP
        address when contacting the server.
 
        Supplying a value for the dhcp-server-identifier option is
@@ -1627,21 +1629,19 @@ dhcpd.conf(5)                                       dhcpd.conf(5)
 
         ddddnnss--uuppddaatteess _f_l_a_g;;
 
-       The  _d_d_n_s_-_u_p_d_a_t_e_s  parameter  controls  whether or not the
-       server will attempt to do a ddns update when  a  lease  is
-       confirmed.    Set  this  to  _o_f_f  if the server should not
-       attempt to do updates within a certain scope.   The  _d_d_n_s_-
+       The _d_d_n_s_-_u_p_d_a_t_e_s parameter controls  whether  or  not  the
+       server  will  attempt  to do a ddns update when a lease is
+       confirmed.   Set this to _o_f_f  if  the  server  should  not
+       attempt  to  do updates within a certain scope.  The _d_d_n_s_-
        _u_p_d_a_t_e_s parameter is on by default.
 
 RREEFFEERREENNCCEE:: OOPPTTIIOONN SSTTAATTEEMMEENNTTSS
-       DHCP   option  statements  are  documented  in  the  ddhhccpp--
+       DHCP  option  statements  are  documented  in  the   ddhhccpp--
        ooppttiioonnss((55)) manual page.
 
 SSEEEE AALLSSOO
        dhcpd.conf(5), dhcpd.leases(5), RFC2132, RFC2131.
 
-AAUUTTHHOORR
-       ddhhccppdd((88)) was written by Ted Lemon <mellon@vix.com> under a
 
 
 
@@ -1654,12 +1654,12 @@ AAUUTTHHOORR
 dhcpd.conf(5)                                       dhcpd.conf(5)
 
 
-       contract  with  Vixie Labs.   Funding for this project was
+AAUUTTHHOORR
+       ddhhccppdd((88)) was written by Ted Lemon <mellon@vix.com> under a
+       contract with Vixie Labs.   Funding for this  project  was
        provided by the Internet Software Consortium.  Information
-       about  the  Internet  Software  Consortium can be found at
+       about the Internet Software Consortium  can  be  found  at
        hhttttpp::////wwwwww..iisscc..oorrgg//iisscc..
-
-
 
 
 

@@ -10,7 +10,7 @@ NNAAMMEE
 SSYYNNOOPPSSIISS
        ddhhcclliieenntt  [  --pp  _p_o_r_t  ] [ --dd ] [ --DD ] [ --qq ] [ --cc ] [ --llff
        _l_e_a_s_e_-_f_i_l_e ] [ --ppff _p_i_d_-_f_i_l_e ] [ --ccff  _c_o_n_f_i_g_-_f_i_l_e  ]  [  --ss
-       server ] [ _i_f_0 [ _._._._i_f_N ] ]
+       server ] [ --ww ] [ _i_f_0 [ _._._._i_f_N ] ]
 
 DDEESSCCRRIIPPTTIIOONN
        The  Internet  Software  Consortium DHCP Client, dhclient,
@@ -160,8 +160,19 @@ dhclient(8)                                           dhclient(8)
        //vvaarr//ddbb or //vvaarr//rruunn has not yet been mounted when the DHCP
        client is started.
 
+       The  DHCP  client normally exits if it isn't able to iden­
+       tify any network interfaces to configure.   On laptop com­
+       puters  and  other computers with hot-swappable I/O buses,
+       it is possible that a broadcast  interface  may  be  added
+       after  system  startup.   The --ww flag can be used to cause
+       the client not to exit  when  it  doesn't  find  any  such
+       interfaces.    The ddhhccppccccpp ((88)) program can then be used to
+       notify the client when a network interface has been  added
+       or removed, so that the client can configure an IP address
+       on that interface.
+
 CCOONNFFIIGGUURRAATTIIOONN
-       The  syntax  of  the  dhclient.conf(8)  file  is discussed
+       The syntax  of  the  dhclient.conf(8)  file  is  discussed
        seperately.
 
 FFIILLEESS
@@ -173,23 +184,12 @@ SSEEEE AALLSSOO
        dhclient.leases(5)
 
 AAUUTTHHOORR
-       ddhhcclliieenntt((88)) has been written  for  the  Internet  Software
-       Consortium  by Ted Lemon <mellon@fugue.com> in cooperation
-       with Vixie Enterprises.  To learn more about the  Internet
+       ddhhcclliieenntt((88))  has  been  written  for the Internet Software
+       Consortium by Ted Lemon <mellon@fugue.com> in  cooperation
+       with  Vixie Enterprises.  To learn more about the Internet
        Software Consortium, see hhttttpp::////wwwwww..vviixx..ccoomm//iisscc..  To learn
        more about Vixie Enterprises, see hhttttpp::////wwwwww..vviixx..ccoomm..
 
-       This client was substantially  modified  and  enhanced  by
-       Elliot  Poger for use on Linux while he was working on the
-       MosquitoNet project at Stanford.
-
-       The current version owes much to Elliot's  Linux  enhance­
-       ments,  but  was  substantially  reorganized and partially
-       rewritten by Ted Lemon so as to use  the  same  networking
-       framework  that  the  Internet  Software  Consortium  DHCP
-       server uses.   Much system-specific configuration code was
-       moved  into  a  shell  script  so that as support for more
-       operating systems is added, it will not  be  necessary  to
 
 
 
@@ -202,20 +202,20 @@ AAUUTTHHOORR
 dhclient(8)                                           dhclient(8)
 
 
-       port  and  maintain  system-specific configuration code to
-       these operating systems - instead, the  shell  script  can
+       This  client  was  substantially  modified and enhanced by
+       Elliot Poger for use on Linux while he was working on  the
+       MosquitoNet project at Stanford.
+
+       The  current  version owes much to Elliot's Linux enhance­
+       ments, but was  substantially  reorganized  and  partially
+       rewritten  by  Ted  Lemon so as to use the same networking
+       framework  that  the  Internet  Software  Consortium  DHCP
+       server uses.   Much system-specific configuration code was
+       moved into a shell script so  that  as  support  for  more
+       operating  systems  is  added, it will not be necessary to
+       port and maintain system-specific  configuration  code  to
+       these  operating  systems  - instead, the shell script can
        invoke the native tools to accomplish the same purpose.
-
-
-
-
-
-
-
-
-
-
-
 
 
 

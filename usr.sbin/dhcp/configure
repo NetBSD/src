@@ -59,7 +59,11 @@ if [ "$sysname" = "" ]; then
 	  fi;;
       esac;;
     NetBSD)
-      sysname=netbsd;;
+      hw=`uname -m`
+      case $hw in
+	arm32) sysname=netbsd-arm32;;
+	*) sysname=netbsd;;
+      esac;;
     OpenBSD)
       sysname=openbsd;;
     FreeBSD)

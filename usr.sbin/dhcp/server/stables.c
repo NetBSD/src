@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: stables.c,v 1.1.1.1 2000/04/22 07:12:05 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: stables.c,v 1.1.1.2 2000/06/10 18:05:38 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -136,7 +136,8 @@ u_int32_t fto_allowed [] = {
 	 FTB_CLTT | FTB_REQUEST_OPTIONS | FTB_REPLY_OPTIONS), /* 3 BNDUPD */
 	(FTB_ASSIGNED_IP_ADDRESS | FTB_BINDING_STATUS | FTB_CLIENT_IDENTIFIER |
 	 FTB_CHADDR | FTB_LEASE_EXPIRY | FTB_POTENTIAL_EXPIRY | FTB_STOS |
-	 FTB_CLTT | FTB_REQUEST_OPTIONS | FTB_REPLY_OPTIONS), /* 4 BNDACK */
+	 FTB_CLTT | FTB_REQUEST_OPTIONS | FTB_REPLY_OPTIONS |
+	 FTB_REJECT_REASON | FTB_MESSAGE), /* 4 BNDACK */
 	(FTB_SERVER_ADDR | FTB_MAX_UNACKED | FTB_RECEIVE_TIMER |
 	 FTB_VENDOR_CLASS | FTB_PROTOCOL_VERSION | FTB_TLS_REQUEST |
 	 FTB_MCLT | FTB_HBA), /* 5 CONNECT */
@@ -175,6 +176,12 @@ const char *dhcp_flink_state_names [] = {
 	"disconnected"
 };
 #endif /* FAILOVER_PROTOCOL */
+
+/* Failover binding state names.   These are used even if there is no
+   failover protocol support. */
+const char *binding_state_names [] = {
+	"free", "active", "expired", "released", "abandoned",
+	"reset", "backup", "reserved", "bootp" };
 
 struct universe agent_universe;
 struct option agent_options [256] = {
@@ -469,11 +476,11 @@ struct option server_options [256] = {
 	{ "duplicates", "f",			&server_universe, 28 },
 	{ "declines", "f",			&server_universe, 29 },
 	{ "ddns-updates", "f",			&server_universe, 30 },
-	{ "option-31", "X",			&server_universe, 31 },
-	{ "option-32", "X",			&server_universe, 32 },
-	{ "option-33", "X",			&server_universe, 33 },
-	{ "option-34", "X",			&server_universe, 34 },
-	{ "option-35", "X",			&server_universe, 35 },
+	{ "omapi-port", "S",			&server_universe, 31 },
+	{ "local-port", "S",			&server_universe, 32 },
+	{ "limited-broadcast-address", "I",	&server_universe, 33 },
+	{ "remote-port", "S",			&server_universe, 34 },
+	{ "local-address", "I",			&server_universe, 35 },
 	{ "option-36", "X",			&server_universe, 36 },
 	{ "option-37", "X",			&server_universe, 37 },
 	{ "option-38", "X",			&server_universe, 38 },
@@ -716,9 +723,9 @@ void initialize_server_option_spaces()
 		log_fatal ("Can't allocate agent option hash table.");
 	for (i = 0; i < 256; i++) {
 		agent_universe.options [i] = &agent_options [i];
-		add_hash (agent_universe.hash,
-			  (const unsigned char *)agent_options [i].name, 0,
-			  (unsigned char *)&agent_options [i]);
+		option_hash_add (agent_universe.hash,
+				 agent_options [i].name, 0,
+				 &agent_options [i], MDL);
 	}
 
 	/* Set up the server option universe... */
@@ -742,18 +749,16 @@ void initialize_server_option_spaces()
 		log_fatal ("Can't allocate server option hash table.");
 	for (i = 0; i < 256; i++) {
 		server_universe.options [i] = &server_options [i];
-		add_hash (server_universe.hash,
-			  (const unsigned char *)server_options [i].name, 0,
-			  (unsigned char *)&server_options [i]);
+		option_hash_add (server_universe.hash,
+				 server_options [i].name, 0,
+				 &server_options [i], MDL);
 	}
 
 	/* Add the server and agent option spaces to the option space hash. */
-	add_hash (universe_hash,
-		  (const unsigned char *)agent_universe.name, 0,
-		  (unsigned char *)&agent_universe);
-	add_hash (universe_hash,
-		  (const unsigned char *)server_universe.name, 0,
-		  (unsigned char *)&server_universe);
+	universe_hash_add (universe_hash,
+			   agent_universe.name, 0, &agent_universe, MDL);
+	universe_hash_add (universe_hash,
+			   server_universe.name, 0, &server_universe, MDL);
 
 	/* Make the server universe the configuration option universe. */
 	config_universe = &server_universe;

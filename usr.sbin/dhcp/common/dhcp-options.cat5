@@ -94,10 +94,10 @@ dhcpd-options(5)                                 dhcpd-options(5)
           assume  that all subnets of the IP network to which the
           client is connected use the same MTU as the  subnet  of
           that network to which the client is directly connected.
-          A value of 1 indicates that all subnets share the  same
-          MTU.   A value of 0 means that the client should assume
-          that some subnets of the directly connected network may
-          have smaller MTUs.
+          A value of true indicates that all  subnets  share  the
+          same  MTU.   A  value  of  false  means that the client
+          should assume that some subnets of  the  directly  con­
+          nected network may have smaller MTUs.
 
        ooppttiioonn aarrpp--ccaacchhee--ttiimmeeoouutt _u_i_n_t_3_2;;
 
@@ -240,9 +240,9 @@ dhcpd-options(5)                                 dhcpd-options(5)
           This  option specifies whether or not the client should
           use Ethernet Version 2 (RFC 894)  or  IEEE  802.3  (RFC
           1042) encapsulation if the interface is an Ethernet.  A
-          value of 0 indicates that the client should use RFC 894
-          encapsulation.   A  value  of  1  means that the client
-          should use RFC 1042 encapsulation.
+          value of false indicates that the client should use RFC
+          894  encapsulation.   A  value  of  true means that the
+          client should use RFC 1042 encapsulation.
 
        ooppttiioonn iieenn111166--nnaammee--sseerrvveerrss _i_p_-_a_d_d_r_e_s_s [,, _i_p_-_a_d_d_r_e_s_s...  ];
 
@@ -276,9 +276,9 @@ dhcpd-options(5)                                 dhcpd-options(5)
        ooppttiioonn iipp--ffoorrwwaarrddiinngg _f_l_a_g;;
 
           This option specifies whether the client should config­
-          ure  its  IP layer for packet forwarding.  A value of 0
-          means disable IP forwarding, and a  value  of  1  means
-          enable IP forwarding.
+          ure  its  IP  layer  for packet forwarding.  A value of
+          false means disable IP forwarding, and a value of  true
+          means enable IP forwarding.
 
        ooppttiioonn iirrcc--sseerrvveerr _i_p_-_a_d_d_r_e_s_s [,, _i_p_-_a_d_d_r_e_s_s... ];;
 
@@ -302,8 +302,8 @@ dhcpd-options(5)                                 dhcpd-options(5)
 
           This  option specifies whether or not the client should
           respond to subnet mask requests using ICMP.  A value of
-          0  indicates  that  the  client  should not respond.  A
-          value of 1 means that the client should respond.
+          false  indicates that the client should not respond.  A
+          value of true means that the client should respond.
 
        ooppttiioonn mmaaxx--ddggrraamm--rreeaasssseemmbbllyy _u_i_n_t_1_6;;
 
@@ -466,7 +466,7 @@ dhcpd-options(5)                                 dhcpd-options(5)
 dhcpd-options(5)                                 dhcpd-options(5)
 
 
-          forwarding  of  such  datagrams, and a value of 1 means
+          forwarding of such datagrams, and a value of true means
           allow forwarding.
 
        ooppttiioonn nnttpp--sseerrvveerrss _i_p_-_a_d_d_r_e_s_s [,, _i_p_-_a_d_d_r_e_s_s...  ];;
@@ -492,10 +492,10 @@ dhcpd-options(5)                                 dhcpd-options(5)
        ooppttiioonn ppeerrffoorrmm--mmaasskk--ddiissccoovveerryy _f_l_a_g;;
 
           This option specifies whether or not the client  should
-          perform subnet mask discovery using ICMP.  A value of 0
-          indicates that the client should not perform mask  dis­
-          covery.  A value of 1 means that the client should per­
-          form mask discovery.
+          perform  subnet  mask discovery using ICMP.  A value of
+          false indicates that the client should not perform mask
+          discovery.   A  value  of  true  means  that the client
+          should perform mask discovery.
 
        ooppttiioonn ppoolliiccyy--ffiilltteerr _i_p_-_a_d_d_r_e_s_s _i_p_-_a_d_d_r_e_s_s
                          [,, _i_p_-_a_d_d_r_e_s_s _i_p_-_a_d_d_r_e_s_s...];;
@@ -547,10 +547,10 @@ dhcpd-options(5)                                 dhcpd-options(5)
 
           This option specifies whether or not the client  should
           solicit  routers  using  the Router Discovery mechanism
-          defined in RFC 1256.  A value of 0 indicates  that  the
-          client should not perform router discovery.  A value of
-          1 means that the client should perform  router  discov­
-          ery.
+          defined in RFC 1256.  A value of false  indicates  that
+          the  client  should  not  perform  router discovery.  A
+          value of true means  that  the  client  should  perform
+          router discovery.
 
        ooppttiioonn rroouutteerr--ssoolliicciittaattiioonn--aaddddrreessss _i_p_-_a_d_d_r_e_s_s;;
 
@@ -638,9 +638,9 @@ dhcpd-options(5)                                 dhcpd-options(5)
           This option specifies the whether  or  not  the  client
           should  send  TCP  keepalive  messages  with a octet of
           garbage for compatibility with  older  implementations.
-          A  value of 0 indicates that a garbage octet should not
-          be sent. A value of 1 indicates that  a  garbage  octet
-          should be sent.
+          A  value of false indicates that a garbage octet should
+          not be sent. A value of true indicates that  a  garbage
+          octet should be sent.
 
        ooppttiioonn ttccpp--kkeeeeppaalliivvee--iinntteerrvvaall _u_i_n_t_3_2;;
 
@@ -690,7 +690,8 @@ dhcpd-options(5)                                 dhcpd-options(5)
           negotiate the use of trailers (RFC 893 [14]) when using
           the  ARP  protocol.   A  value  of 0 indicates that the
           client should not attempt to use trailers.  A value  of
-          1 means that the client should attempt to use trailers.
+          true means that the client should attempt to use trail­
+          ers.
 
        ooppttiioonn uuaapp--sseerrvveerrss _t_e_x_t;;
 
@@ -717,7 +718,6 @@ dhcpd-options(5)                                 dhcpd-options(5)
           following in your DHCP server configuration file:
 
           set vendor-class option vendor-class-identifier;
-
 
 
 
