@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.88 2003/08/22 05:48:27 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.89 2003/08/22 06:22:24 itojun Exp $	*/
 /*	$KAME: key.c,v 1.299 2003/07/25 08:48:05 sakane Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.88 2003/08/22 05:48:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.89 2003/08/22 06:22:24 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -965,14 +965,41 @@ key_getspbyid(id)
 }
 
 struct secpolicy *
-key_newsp()
+key_newsp(id)
+	u_int32_t id;
 {
-	struct secpolicy *newsp = NULL;
+	struct secpolicy *newsp = NULL, *sp;
+	u_int32_t newid;
+
+	if (id > IPSEC_MANUAL_POLICYID_MAX) {
+		ipseclog((LOG_DEBUG,
+		    "key_newsp: policy_id=%u range "
+		    "violation, updated by kernel.\n", id));
+		id = 0;
+	}
+
+	if (id == 0) {
+		if ((newid = keydb_newspid()) == 0) {
+			ipseclog((LOG_DEBUG, 
+			    "key_newsp: new policy_id allocation failed."));
+			return NULL;
+		}
+	} else {
+		sp = key_getspbyid(id);
+		if (sp != NULL) {
+			ipseclog((LOG_DEBUG,
+			    "key_newsp: policy_id(%u) has been used.\n", id));
+			key_freesp(sp);
+			return NULL;
+		}
+		newid = id;
+	}
 
 	newsp = keydb_newsecpolicy();
 	if (!newsp)
 		return newsp;
 
+	newsp->id = newid;
 	newsp->refcnt = 1;
 	newsp->req = NULL;
 
@@ -1003,7 +1030,7 @@ key_msg2sp(xpl0, len, error)
 		return NULL;
 	}
 
-	if ((newsp = key_newsp()) == NULL) {
+	if ((newsp = key_newsp(xpl0->sadb_x_policy_id)) == NULL) {
 		*error = ENOBUFS;
 		return NULL;
 	}
@@ -1562,14 +1589,14 @@ key_spdadd(so, m, mhp)
 	for (isr = newsp->req; isr; isr = isr->next) {
 		struct sockaddr *sa;
 
-		if (isr->saidx.src.ss_family) {
+		if (isr->saidx.src.ss_family && src0) {
 			sa = (struct sockaddr *)(src0 + 1);
 			if (sa->sa_family != isr->saidx.src.ss_family) {
 				keydb_delsecpolicy(newsp);
 				return key_senderror(so, m, EINVAL);
 			}
 		}
-		if (isr->saidx.dst.ss_family) {
+		if (isr->saidx.dst.ss_family && dst0) {
 			sa = (struct sockaddr *)(dst0 + 1);
 			if (sa->sa_family != isr->saidx.dst.ss_family) {
 				keydb_delsecpolicy(newsp);
@@ -1588,7 +1615,8 @@ key_spdadd(so, m, mhp)
 	LIST_INSERT_TAIL(&sptree[newsp->dir], newsp, secpolicy, chain);
 
 	/* delete the entry in spacqtree */
-	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
+	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE &&
+	    mhp->ext[SADB_EXT_ADDRESS_SRC]) {
 		struct secspacq *spacq;
 		if ((spacq = key_getspacq(&spidx)) != NULL) {
 			/* reset counter in order to deletion by timehandler. */
@@ -1925,6 +1953,10 @@ key_spdacquire(sp)
 		panic("key_spdacquire: called but there is request.");
 	if (sp->policy != IPSEC_POLICY_IPSEC)
 		panic("key_spdacquire: policy mismathed. IPsec is expected.");
+	if (!sp->spidx) {
+		error = EOPNOTSUPP;
+		goto fail;
+	}
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/* get an entry to check whether sent message or not. */
@@ -5788,7 +5820,7 @@ key_newacq(saidx)
 	bcopy(saidx, &newacq->saidx, sizeof(newacq->saidx));
 	newacq->seq = (acq_seq == ~0 ? 1 : ++acq_seq);
 	newacq->created = time.tv_sec;
-	newacq->count = 0;
+	newacq->count = 1;
 
 	return newacq;
 }
@@ -7045,7 +7077,7 @@ key_init()
 
 	/* system default */
 #ifdef INET
-	ip4_def_policy = key_newsp();
+	ip4_def_policy = key_newsp(0);
 	if (!ip4_def_policy)
 		panic("could not initialize IPv4 default security policy");
 	ip4_def_policy->state = IPSEC_SPSTATE_ALIVE;
@@ -7054,7 +7086,7 @@ key_init()
 	ip4_def_policy->readonly = 1;
 #endif
 #ifdef INET6
-	ip6_def_policy = key_newsp();
+	ip6_def_policy = key_newsp(0);
 	if (!ip6_def_policy)
 		panic("could not initialize IPv6 default security policy");
 	ip6_def_policy->state = IPSEC_SPSTATE_ALIVE;
