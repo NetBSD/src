@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: resource.h,v 1.5 2002/03/25 17:23:20 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: resource.h,v 1.6 2004/06/10 15:58:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,7 +127,9 @@
 #define IDS_DIR_CARD_JP			10018
 #define IDS_DIR_CARD_JP1		10020
 #define IDS_DIR_CARD_JP2		10022
-#define IDS_DIR_USER_DEFINED		10024
+#define	IDS_DIR_CARD_MMCARD		10024
+#define IDS_DIR_USER_DEFINED		10026
+
 
 #define IDS_DIR_START			IDS_DIR_FFS_ROOT1
 #define IDS_DIR_END			IDS_DIR_USER_DEFINED
