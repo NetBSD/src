@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.11 2002/01/07 05:30:53 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.12 2002/05/22 15:40:49 wiz Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.11 2002/01/07 05:30:53 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.12 2002/05/22 15:40:49 wiz Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -305,7 +305,7 @@ rf_DuplicateASM(asmap)
 
 	new_pda = NULL;
 	new_asm = rf_AllocAccessStripeMapComponent();
-	bcopy((char *) asmap, (char *) new_asm, sizeof(RF_AccessStripeMap_t));
+	memcpy((char *) new_asm, (char *) asmap, sizeof(RF_AccessStripeMap_t));
 	new_asm->numFailedPDAs = 0;	/* ??? */
 	new_asm->failedPDAs[0] = NULL;
 	new_asm->physInfo = NULL;
@@ -315,7 +315,7 @@ rf_DuplicateASM(asmap)
 	for (pda = asmap->physInfo; pda; pda = pda->next) {	/* copy the physInfo
 								 * list */
 		t_pda = rf_AllocPhysDiskAddr();
-		bcopy((char *) pda, (char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+		memcpy((char *) t_pda, (char *) pda, sizeof(RF_PhysDiskAddr_t));
 		t_pda->next = NULL;
 		if (!new_asm->physInfo) {
 			new_asm->physInfo = t_pda;
@@ -330,7 +330,7 @@ rf_DuplicateASM(asmap)
 	for (pda = asmap->parityInfo; pda; pda = pda->next) {	/* copy the parityInfo
 								 * list */
 		t_pda = rf_AllocPhysDiskAddr();
-		bcopy((char *) pda, (char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+		memcpy((char *) t_pda, (char *) pda, sizeof(RF_PhysDiskAddr_t));
 		t_pda->next = NULL;
 		if (!new_asm->parityInfo) {
 			new_asm->parityInfo = t_pda;
@@ -356,7 +356,7 @@ rf_DuplicatePDA(pda)
 	RF_PhysDiskAddr_t *new;
 
 	new = rf_AllocPhysDiskAddr();
-	bcopy((char *) pda, (char *) new, sizeof(RF_PhysDiskAddr_t));
+	memcpy((char *) new, (char *) pda, sizeof(RF_PhysDiskAddr_t));
 	return (new);
 }
 /*****************************************************************************************
