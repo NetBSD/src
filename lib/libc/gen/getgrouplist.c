@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.11 1999/04/08 17:07:02 drochner Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.12 1999/04/25 14:47:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.11 1999/04/08 17:07:02 drochner Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.12 1999/04/25 14:47:46 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,10 +46,11 @@ __RCSID("$NetBSD: getgrouplist.c,v 1.11 1999/04/08 17:07:02 drochner Exp $");
  * get credential
  */
 #include "namespace.h"
-#include <sys/types.h>
+#include <sys/param.h>
+
+#include <grp.h>
 #include <string.h>
 #include <unistd.h>
-#include <grp.h>
 
 #ifdef __weak_alias
 __weak_alias(getgrouplist,_getgrouplist);
@@ -83,11 +84,16 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	 * Scan the group file to find additional groups.
 	 */
 	setgrent();
+ nextgroup:
 	while ((grp = getgrent()) != NULL) {
 		if (grp->gr_gid == agroup)
 			continue;
 		for (i = 0; grp->gr_mem[i]; i++) {
 			if (!strcmp(grp->gr_mem[i], uname)) {
+				for (i = 0; i < MIN(ngroups, maxgroups); i++) {
+					if (grp->gr_gid == groups[i])
+						goto nextgroup;
+				}
 				if (ngroups < maxgroups)
 					groups[ngroups] = grp->gr_gid;
 				else
