@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 2000/11/21 14:21:36 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56 2000/11/23 09:44:15 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55 2000/11/21 14:21:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2000/11/23 09:44:15 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55 2000/11/21 14:21:36 ad Exp $");
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 
-#include <pmax/dev/device.h>
 #include <pmax/pmax/pmaxtype.h>
 
 #include <dev/tc/tcvar.h>
@@ -66,9 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55 2000/11/21 14:21:36 ad Exp $");
 
 #include "rz.h"
 #include "tz.h"
-#include "xasc_ioasic.h"
-#include "xasc_pmaz.h"
 #include "opt_dec_3100.h"
+
+#if NRZ > 0 || NTZ > 0
+#include <pmax/dev/device.h>
+#endif
 
 struct intrhand intrtab[MAX_DEV_NCOOKIES];
 struct device *booted_device;
