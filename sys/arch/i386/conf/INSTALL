@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.80 1998/04/03 04:29:13 enami Exp $
+#	$NetBSD: INSTALL,v 1.81 1998/04/03 04:35:05 enami Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -252,6 +252,9 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+
+# ISA Plug-and-Play SCSI controllers
+aic*	at isapnp?			# Adaptec AHA-1520B
 
 # ISA SCSI controllers
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
