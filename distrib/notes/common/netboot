@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.11 2002/07/11 04:52:49 scottr Exp $
+.\"	$NetBSD: netboot,v 1.12 2002/07/22 14:39:44 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,36 +83,36 @@ kernel tries to mount the NFS share that had the kernel and starts
 executing
 .if !\n[next68k] the installation tools or
 .Xr init 8 .
-.ie \n[hp300] \{\
+.if \n[hp300] \{\
 All supported \*M systems use HP's proprietary RMP (the
 .Xr rbootd 8
 daemon) for the first discovery stage and bootstrap download stages.
 The bootstrap program uses DHCP for its discovery stage.
 .\}
-.el .ie \n[macppc]:\n[next68k]:\n[walnut] \{\
+.if \n[macppc]:\n[next68k]:\n[walnut] \{\
 All \*M systems use BOOTP for the discovery stage.
 .\}
-.el .ie \n[sparc] \{\
+.if \n[sparc] \{\
 All \*M systems use a combination of RARP and BOOTP for the discovery stage.
 In the past, these systems used RARP and BOOTPARAMS.
 .\}
 .if !\n[hp300] \{\
 TFTP is used in the bootstrap phase to download
-.ie \n[macppc] \{\
+.if \n[macppc] \{\
 the bootstrap program,
 .Pa ofwboot.xcf .
 .\}
-.el .ie \n[next68k] \{\
+.if \n[next68k] \{\
 the bootstrap program,
 .Pa boot .
 .\}
-.el .ie \n[sparc] \{\
+.if \n[sparc] \{\
 the bootstrap program,
 .Pa boot.net ,
 which has been linked to a file name appropriate to the client's
 architecture and IP address as described in the TFTP section below.
 .\}
-.el .ie \n[walnut] \{\
+.if \n[walnut] \{\
 the kernel via the on-board Ethernet card by the firmware.
 Thus,
 .Nx
@@ -373,7 +373,7 @@ or later, you can achieve this with:
 .ie \n[walnut] Now, you need to copy the kernel for your \*M machine to
 .el Now, you need to copy the bootloader for your \*M machine to
 .Pa /tftpboot .
-.ie \n[macppc] \{\
+.if \n[macppc] \{\
 Get
 .Xr ofwboot.xcf 8
 from the
@@ -383,7 +383,7 @@ directory of the distribution.
 .No # Ic "cp ofwboot.xcf /tftpboot"
 .disp)
 .\}
-.el .ie \n[next68k] \{\
+.if \n[next68k] \{\
 Get
 .Pa base.tgz
 from the
@@ -396,7 +396,7 @@ from it.
 .No # Ic "cp usr/mdec/boot /tftpboot"
 .disp)
 .\}
-.el .ie \n[sparc] \{\
+.if \n[sparc] \{\
 Get
 .Pa boot.net
 from the
@@ -435,7 +435,7 @@ A
 .No # Ic "ln -s boot.net C0A8010A.SUN4C"
 .disp)
 .Pp
-.\} \" ! \n[sparc]
+.\} \" \n[sparc]
 Just to be sure, let's make everything readable.
 .(disp
 .No # Ic "chmod -R a+rX /tftpboot"
@@ -518,7 +518,7 @@ in
 .Pa /export/client/root
 your client should boot the kernel.
 .\} \" !\n[walnut]
-.ie \n[hp300] \{\
+.if \n[hp300] \{\
 If you are netbooting the installer, you can use either
 the traditional miniroot-based installer
 .Pa installation/miniroot/miniroot.fs.gz
@@ -560,7 +560,7 @@ Also, copy the distribution files to the client's root directory.
 If you are running your \*M diskless, simply use
 .Pa binary/kernel/netbsd-GENERIC.gz .
 .\}
-.el .ie \n[macppc] \{\
+.if \n[macppc] \{\
 If you are netbooting the installer, use
 .Pa binary/kernel/netbsd.GENERIC_MD.gz
 (this has the installation tools in a RAM disk).
@@ -575,7 +575,7 @@ Also, copy the distribution files to the client's root directory.
 If you are running your \*M diskless, simply use
 .Pa binary/kernel/netbsd-GENERIC.gz .
 .\}
-.el .ie \n[next68k] \{\
+.if \n[next68k] \{\
 Use
 .Pa binary/kernel/netbsd.GENERIC.gz .
 .Pp
@@ -584,7 +584,7 @@ Use
 .No # Ic "mv netbsd.GENERIC /export/client/root/netbsd"
 .disp)
 .\}
-.el .ie \n[sparc] \{\
+.if \n[sparc] \{\
 Use
 .Pa binary/kernel/netbsd-GENERIC.gz ) .
 .Pp
@@ -603,7 +603,7 @@ the client's root directory and extract the tools from
 .No # Ic "tar -xpzf rootfs.tgz"
 .disp)
 .\}
-.el .if \n[walnut] \{\
+.if \n[walnut] \{\
 If you are netbooting the installer, use
 .Pa binary/kernel/netbsd.INSTALL.img.gz
 (this has the installation tools in a RAM disk).
