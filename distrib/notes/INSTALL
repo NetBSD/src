@@ -138,35 +138,39 @@ your fault, not ours.
 
 The source distribution sets can be found in subdirectories of the
 "source" subdirectory of the distribution tree.  They contain the 
-complete sources to the system, excluding those portions which should
-not be exported from the U.S.  (Those are contained in each
-architecture's "security" binary distribution set.)  The source
-distribution sets are as follows:
+complete sources to the system.  The source distribution sets 
+are as follows:
+
+	dsrc11	This set contains the "domestic" sources.  These
+		sources contain export-restricted encryption code
+		and should not be exported from the U.S.
+		[ 140K gzipped, 655K uncompressed ]
 
 	gsrc11	This set contains the "gnu" sources, including
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
-		[ 7.7M gzipped, 32.0M uncompressed ]
+		[ 7.1M gzipped, 30.4M uncompressed ]
 
 	ksrc11	This set contains the sources to the NetBSD 1.1
 		kernel, config(8), config.old(8) and dbsym(8).
-		[ 4.5M gzipped, 20.8M uncompressed ]
+		[ 6.0M gzipped, 27.0M uncompressed ]
 
 	ssrc11	This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
-		[ 2.3M gzipped, 8.5M uncompressed ]
+		[ 2.4M gzipped, 8.9M uncompressed ]
 
 	src11	This set contains all of the NetBSD 1.1 sources which
 		are not mentioned above.
-		[ 7.1M gzipped, 33.4M uncompressed ]
+		[ 9.3M gzipped, 41.6M uncompressed ]
 
 It is worth noting that unless all of the source distribution sets
-are installed, you can't rebuild and install the system from scratch,
-straight out of the box.  However, all that is required to rebuild the
-system in that case is a trivial modification to one Makefile.
+are installed (except the domestic set), you can't rebuild and install
+the system from scratch, straight out of the box.  However, all that is
+required to rebuild the system in that case is a trivial modification 
+to one Makefile.
 
 The source distribution sets are distributed as groups of files named
 "set_name.xx" where "set_name" is the distribution set name, and "xx"
@@ -348,6 +352,7 @@ Steve Allen		<wormey@eskimo.com>
 John Brezak		<brezak@NetBSD.ORG>
 Dave Burgess		<burgess@cynjut.infonet.net>
 Hubert Feyrer		<hubert.feyrer@rz.uni-regensburg.de>
+Adam Glass		<glass@NetBSD.ORG>
 Brad Grantham		<grantham@tenon.com>
 Matthew Green		<mrg@eterna.com.au>
 Michael L. Hitch	<osymh@gemini.oscs.montana.edu>
@@ -355,11 +360,13 @@ Lawrence Kesteloot	<kesteloo@cs.unc.edu>
 John Kohl 		<jtk@NetBSD.ORG>
 Paul Mackerras	 	<paulus@NetBSD.ORG>
 Neil J. McRae		<neil@domino.org>
+Perry Metzger		<perry@NetBSD.ORG>
 Herb Peyerl		<hpeyerl@beer.org>
 Matthias Pfaller	<leo@marco.de>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Scott Reynolds		<scottr@edsi.org>
+Thor Lancelot Simon	<tls@netbd.org>
 Wolfgang Solfrank	<ws@tools.de>
 Frank van der Linden	<fvdl@NetBSD.ORG>
 Christos Zoulas 	<christos@NetBSD.ORG>
