@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.8 1994/03/20 09:01:09 pk Exp $
+ * $Id: autoconf.c,v 1.9 1994/04/17 11:37:46 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -294,6 +294,11 @@ configure()
 	(void)spl0();
 	if (bootdv)
 		printf("Found boot device %s\n", bootdv->dv_xname);
+	/*
+	 * Configure swap area and related system
+	 * parameter based on device(s) used.
+	 */
+	swapconf();
 	cold = 0;
 }
 
@@ -815,6 +820,7 @@ swapconf()
 			if (nblks != -1 &&
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
 				swp->sw_nblks = nblks;
+			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
 }
 
