@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 1996/10/23 13:35:41 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -256,6 +256,7 @@ setroot(void)
 
 	bootdv = booted_device;
 	bootpartition = booted_partition;
+	rootdv = swapdv = NULL;		/* XXX work around gcc warning */
 
 #ifdef DEBUG
 	printf("boot device: %s\n",
