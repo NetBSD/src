@@ -1,12 +1,19 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.13 1994/05/29 04:50:03 chopps Exp $
+#	$Id: GENERIC,v 1.14 1994/06/02 08:32:58 chopps Exp $
 #
 # This configuration file contains all possible options
 #
 
 include "std.amiga"
+
+#
+# processors this kernel should support
+#
+options		"M68040"		# support for 040
+options		"M68030"		# support for 030
+options		"M68020"		# support for 020/851
 
 maxusers	8
 
