@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34 2002/03/21 01:19:41 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.34.6.1 2002/12/07 21:28:05 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -291,7 +291,9 @@ zs_attach(zsc, zsd, pri)
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
 		struct device *child;
+#if (NKBD > 0) || (NMS > 0)
 		extern struct cfdriver zstty_cd; /* in ioconf.c */
+#endif
 
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
