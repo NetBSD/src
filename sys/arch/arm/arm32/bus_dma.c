@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.18 2002/08/14 22:56:55 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19 2002/08/17 01:15:15 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,25 @@ int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 struct arm32_dma_range *_bus_dma_inrange(struct arm32_dma_range *,
 	    int, bus_addr_t);
+
+/*
+ * Check to see if the specified page is in an allowed DMA range.
+ */
+__inline struct arm32_dma_range *
+_bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
+    bus_addr_t curaddr)
+{
+	struct arm32_dma_range *dr;
+	int i;
+
+	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
+		if (curaddr >= dr->dr_sysbase &&
+		    round_page(curaddr) <= (dr->dr_sysbase + dr->dr_len))
+			return (dr);
+	}
+
+	return (NULL);
+}
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -338,7 +357,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->_dm_proc = NULL;
 }
 
-static void
+static __inline void
 _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
@@ -365,7 +384,7 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	}
 }
 
-static void
+static __inline void
 _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
@@ -413,7 +432,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	}
 }
 
-static void
+static __inline void
 _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
@@ -913,25 +932,6 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen != 0)
 		return (EFBIG);		/* XXX better return value here? */
 	return (0);
-}
-
-/*
- * Check to see if the specified page is in an allowed DMA range.
- */
-struct arm32_dma_range *
-_bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
-    bus_addr_t curaddr)
-{
-	struct arm32_dma_range *dr;
-	int i;
-
-	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
-		if (curaddr >= dr->dr_sysbase &&
-		    round_page(curaddr) <= (dr->dr_sysbase + dr->dr_len))
-			return (dr);
-	}
-
-	return (NULL);
 }
 
 /*
