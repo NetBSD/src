@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.61 2003/05/02 03:15:24 itojun Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.62 2003/06/28 14:22:07 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.61 2003/05/02 03:15:24 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.62 2003/06/28 14:22:07 darrenr Exp $");
 
 #include "tun.h"
 
@@ -228,11 +228,12 @@ tun_find_unit(dev)
  * configured in
  */
 int
-tunopen(dev, flag, mode, p)
+tunopen(dev, flag, mode, l)
 	dev_t	dev;
 	int	flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc 	*p = l->l_proc;
 	struct ifnet	*ifp;
 	struct tun_softc *tp;
 	int	error;
@@ -270,11 +271,11 @@ tunopen(dev, flag, mode, p)
  * routing info
  */
 int
-tunclose(dev, flag, mode, p)
+tunclose(dev, flag, mode, l)
 	dev_t	dev;
 	int	flag;
 	int	mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int	s;
 	struct tun_softc *tp;
@@ -534,12 +535,12 @@ tun_output(ifp, m0, dst, rt)
  * the cdevsw interface is now pretty minimal.
  */
 int
-tunioctl(dev, cmd, data, flag, p)
+tunioctl(dev, cmd, data, flag, l)
 	dev_t		dev;
 	u_long		cmd;
 	caddr_t		data;
 	int		flag;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	int		s;
 	struct tun_softc *tp;
@@ -615,7 +616,7 @@ tunioctl(dev, cmd, data, flag, p)
 	case TIOCSPGRP:
 		pgid = *(int *)data;
 		if (pgid != 0) {
-			error = pgid_in_session(p, pgid);
+			error = pgid_in_session(l->l_proc, pgid);
 			if (error != 0)
 				return error;
 		}
@@ -902,10 +903,10 @@ tunstart(ifp)
  * anyway, it either accepts the packet or drops it.
  */
 int
-tunpoll(dev, events, p)
+tunpoll(dev, events, l)
 	dev_t		dev;
 	int		events;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
@@ -929,7 +930,7 @@ tunpoll(dev, events, p)
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			TUNDEBUG("%s: tunpoll waiting\n", ifp->if_xname);
-			selrecord(p, &tp->tun_rsel);
+			selrecord(l, &tp->tun_rsel);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.134 2003/06/23 11:02:05 martin Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.135 2003/06/28 14:21:55 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.134 2003/06/23 11:02:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.135 2003/06/28 14:21:55 darrenr Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -244,7 +244,7 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 		savelen = oldlen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
-	    oldlenp, SCARG(uap, new), SCARG(uap, newlen), p);
+	    oldlenp, SCARG(uap, new), SCARG(uap, newlen), l);
 	if (SCARG(uap, old) != NULL) {
 		uvm_vsunlock(p, SCARG(uap, old), savelen);
 		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
@@ -333,7 +333,7 @@ sysctl_ncpus(void)
  */
 int
 kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	int error, level, inthostid;
 	int old_autonicetime;
@@ -410,7 +410,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &level)) ||
 		    newp == NULL)
 			return (error);
-		if (level < securelevel && p->p_pid != 1)
+		if (level < securelevel && l->l_proc->p_pid != 1)
 			return (EPERM);
 		securelevel = level;
 		return (0);
@@ -438,7 +438,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &boottime,
 		    sizeof(struct timeval)));
 	case KERN_VNODE:
-		return (sysctl_vnode(oldp, oldlenp, p));
+		return (sysctl_vnode(oldp, oldlenp, l->l_proc));
 	case KERN_PROC:
 	case KERN_PROC2:
 		return (sysctl_doeproc(name, namelen, oldp, oldlenp));
@@ -446,7 +446,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_dolwp(name, namelen, oldp, oldlenp));
 	case KERN_PROC_ARGS:
 		return (sysctl_procargs(name + 1, namelen - 1,
-		    oldp, oldlenp, p));
+		    oldp, oldlenp, l->l_proc));
 	case KERN_FILE:
 		return (sysctl_file(oldp, oldlenp));
 #ifdef GPROF
@@ -668,7 +668,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
  */
 int
 hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 
 	/* All sysctl names at this level, except for a few, are terminal. */
@@ -762,7 +762,7 @@ static struct ctldebug *debugvars[CTL_DEBUG_MAXID] = {
 
 int
 debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	struct ctldebug *cdp;
 
@@ -788,13 +788,14 @@ debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 int
 proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	struct proc *ptmp = NULL;
 	const struct proclist_desc *pd;
 	int error = 0;
 	struct rlimit alim;
 	struct plimit *newplim;
+	struct proc *p = l->l_proc;
 	char *tmps = NULL;
 	size_t len, curlen;
 	u_int i;
@@ -967,7 +968,7 @@ cleanup:
 
 int
 emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	static struct {
 		const char *name;
@@ -997,7 +998,7 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	lockmgr(&exec_lock, LK_SHARED, NULL);
 	if ((e = emul_search(ename))) {
 		error = (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen, p);
+		    newp, newlen, l);
 	} else
 		error = EOPNOTSUPP;
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
@@ -2104,7 +2105,7 @@ sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
 	auio.uio_resid = sizeof(pss);
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	error = uvm_io(&p->p_vmspace->vm_map, &auio);
 	if (error)
 		goto done;
@@ -2140,7 +2141,7 @@ sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
 	auio.uio_resid = sizeof(argv);
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	error = uvm_io(&p->p_vmspace->vm_map, &auio);
 	if (error)
 		goto done;
@@ -2162,7 +2163,7 @@ sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
 		auio.uio_resid = xlen;
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_procp = NULL;
+		auio.uio_lwp = NULL;
 		error = uvm_io(&p->p_vmspace->vm_map, &auio);
 		if (error)
 			goto done;

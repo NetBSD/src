@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.14 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.15 2003/06/28 14:21:24 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.14 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.15 2003/06/28 14:21:24 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -88,7 +88,7 @@ netbsd32_execve(l, v, retval)
 	NETBSD32TOP_UAP(argp, char *);
 	NETBSD32TOP_UAP(envp, char *);
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return netbsd32_execve2(l, &ua, retval);
 }
@@ -126,7 +126,7 @@ netbsd32_execve2(l, uap, retval)
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 
 	/*
 	 * initialize the fields of the exec package.

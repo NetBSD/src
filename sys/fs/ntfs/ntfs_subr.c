@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.5 2003/06/28 14:21:50 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.5 2003/06/28 14:21:50 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ ntfs_ntvattrget(
 		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
 				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
-				VG_EXT, curproc, &newvp);
+				VG_EXT, curlwp, &newvp);	/* XXX */
 		if (error) {
 			printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
 			       aalp->al_inumber);
@@ -1008,7 +1008,7 @@ ntfs_ntlookupfile(
 			error = ntfs_vgetex(ntmp->ntm_mountp,
 				   iep->ie_number, attrtype, attrname,
 				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
-				   curproc, &nvp);
+				   curlwp, &nvp);	/* XXX */
 			if (error)
 				goto fail;
 
@@ -2039,7 +2039,7 @@ ntfs_toupper_use(mp, ntmp)
 	MALLOC(ntfs_toupper_tab, wchar *, 256 * 256 * sizeof(wchar),
 		M_NTFSRDATA, M_WAITOK);
 
-	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
+	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp, mp->mnt_unmounter)))
 		goto out;
 	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
 			0, 256*256*sizeof(wchar), (char *) ntfs_toupper_tab,

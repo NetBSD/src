@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.253 2003/05/17 21:52:03 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.254 2003/06/28 14:21:32 darrenr Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.253 2003/05/17 21:52:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.254 2003/06/28 14:21:32 darrenr Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -914,10 +914,10 @@ wdunlock(wd)
 }
 
 int
-wdopen(dev, flag, fmt, p)
+wdopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct wd_softc *wd;
 	int part, error;
@@ -997,10 +997,10 @@ bad4:
 }
 
 int
-wdclose(dev, flag, fmt, p)
+wdclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int part = WDPART(dev);
@@ -1164,12 +1164,12 @@ wdperror(wd)
 }
 
 int
-wdioctl(dev, xfer, addr, flag, p)
+wdioctl(dev, xfer, addr, flag, l)
 	dev_t dev;
 	u_long xfer;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int error = 0;
@@ -1417,7 +1417,7 @@ bad:
 			wi->wi_uio.uio_segflg = UIO_USERSPACE;
 			wi->wi_uio.uio_rw =
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
-			wi->wi_uio.uio_procp = p;
+			wi->wi_uio.uio_lwp = l;
 			error = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
 			    minphys, &wi->wi_uio);
@@ -1428,7 +1428,7 @@ bad:
 			wi->wi_bp.b_data = 0;
 			wi->wi_bp.b_bcount = 0;
 			wi->wi_bp.b_dev = 0;
-			wi->wi_bp.b_proc = p;
+			wi->wi_bp.b_proc = l->l_proc;
 			wdioctlstrategy(&wi->wi_bp);
 			error = wi->wi_bp.b_error;
 		}

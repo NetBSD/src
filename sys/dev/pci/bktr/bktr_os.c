@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.35 2003/03/12 00:14:41 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.36 2003/06/28 14:21:41 darrenr Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.35 2003/03/12 00:14:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.36 2003/06/28 14:21:41 darrenr Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -581,7 +581,7 @@ get_bktr_mem(int unit, unsigned size)
  *
  */
 int
-bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
+bktr_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -661,7 +661,7 @@ bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
  *
  */
 int
-bktr_close(dev_t dev, int flags, int fmt, struct proc *p)
+bktr_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -799,7 +799,7 @@ bktr_mmap(dev_t dev, vm_offset_t offset, int nprot)
 	return(atop(vtophys(bktr->bigbuf) + offset));
 }
 
-int bktr_poll(dev_t dev, int events, struct proc *p)
+int bktr_poll(dev_t dev, int events, struct lwp *l)
 {
 	int		unit;
 	bktr_ptr_t	bktr;
@@ -1086,7 +1086,7 @@ get_bktr_mem(int unit, unsigned size)
  *
  */
 int
-bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
+bktr_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1149,7 +1149,7 @@ bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
  *
  */
 int
-bktr_close(dev_t dev, int flags, int fmt, struct proc *p)
+bktr_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1264,7 +1264,7 @@ int bktr_mmap(dev_t dev, vm_offset_t offset, int nprot)
 	return(i386_btop(vtophys(bktr->bigbuf) + offset));
 }
 
-int bktr_poll(dev_t dev, int events, struct proc *p)
+int bktr_poll(dev_t dev, int events, struct lwp *l)
 {
 	int		unit;
 	bktr_ptr_t	bktr;
@@ -1652,7 +1652,7 @@ free_bktr_mem(bktr, dmap, kva)
  *
  */
 int
-bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
+bktr_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1685,7 +1685,7 @@ bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
  *
  */
 int
-bktr_close(dev_t dev, int flags, int fmt, struct proc *p)
+bktr_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1744,7 +1744,7 @@ bktr_write(dev_t dev, struct uio *uio, int ioflag)
  *
  */
 int
-bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct proc* pr)
+bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1758,9 +1758,9 @@ bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct proc* pr)
 
 	switch (FUNCTION(dev)) {
 	case VIDEO_DEV:
-		return(video_ioctl(bktr, unit, cmd, arg, pr));
+		return(video_ioctl(bktr, unit, cmd, arg, l));
 	case TUNER_DEV:
-		return(tuner_ioctl(bktr, unit, cmd, arg, pr));
+		return(tuner_ioctl(bktr, unit, cmd, arg, l));
 	}
 
 	return(ENXIO);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.61 2002/12/10 07:19:25 rafal Exp $	*/
+/*	$NetBSD: lpt.c,v 1.62 2003/06/28 14:21:34 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.61 2002/12/10 07:19:25 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.62 2003/06/28 14:21:34 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,11 +127,11 @@ lpt_attach_subr(sc)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, p)
+lptopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	u_char flags = LPTFLAGS(dev);
 	struct lpt_softc *sc;
@@ -252,11 +252,11 @@ lptwakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, p)
+lptclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	bus_space_tag_t iot = sc->sc_iot;
@@ -419,12 +419,12 @@ lptintr(arg)
 }
 
 int
-lptioctl(dev, cmd, data, flag, p)
+lptioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 

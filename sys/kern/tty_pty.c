@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.68 2003/02/05 15:49:03 pk Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.69 2003/06/28 14:21:57 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.68 2003/02/05 15:49:03 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.69 2003/06/28 14:21:57 darrenr Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -302,11 +302,12 @@ ptyattach(n)
 
 /*ARGSUSED*/
 int
-ptsopen(dev, flag, devtype, p)
+ptsopen(dev, flag, devtype, l)
 	dev_t dev;
 	int flag, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
@@ -349,10 +350,10 @@ ptsopen(dev, flag, devtype, p)
 }
 
 int
-ptsclose(dev, flag, mode, p)
+ptsclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -444,10 +445,10 @@ ptswrite(dev, uio, flag)
  * Poll pseudo-tty.
  */
 int
-ptspoll(dev, events, p)
+ptspoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -455,7 +456,7 @@ ptspoll(dev, events, p)
 	if (tp->t_oproc == 0)
 		return (EIO);
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 /*
@@ -531,10 +532,10 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 int
-ptcopen(dev, flag, devtype, p)
+ptcopen(dev, flag, devtype, l)
 	dev_t dev;
 	int flag, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -559,10 +560,10 @@ ptcopen(dev, flag, devtype, p)
 
 /*ARGSUSED*/
 int
-ptcclose(dev, flag, devtype, p)
+ptcclose(dev, flag, devtype, l)
 	dev_t dev;
 	int flag, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -781,10 +782,10 @@ out:
 }
 
 int
-ptcpoll(dev, events, p)
+ptcpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -812,10 +813,10 @@ ptcpoll(dev, events, p)
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLHUP | POLLRDNORM))
-			selrecord(p, &pti->pt_selr);
+			selrecord(l, &pti->pt_selr);
 
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &pti->pt_selw);
+			selrecord(l, &pti->pt_selw);
 	}
 
 	splx(s);
@@ -953,12 +954,12 @@ ptytty(dev)
 
 /*ARGSUSED*/
 int
-ptyioctl(dev, cmd, data, flag, p)
+ptyioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -1059,9 +1060,9 @@ ptyioctl(dev, cmd, data, flag, p)
 			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);
 		}
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error == EPASSTHROUGH)
-		 error = ttioctl(tp, cmd, data, flag, p);
+		 error = ttioctl(tp, cmd, data, flag, l);
 	if (error == EPASSTHROUGH) {
 		if (pti->pt_flags & PF_UCNTL &&
 		    (cmd & ~0xff) == UIOCCMD(0)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.28 2003/04/02 10:39:36 fvdl Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.29 2003/06/28 14:22:25 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -128,18 +128,18 @@ void ffs_reinit __P((void));
 void ffs_done __P((void));
 int ffs_mountroot __P((void));
 int ffs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		   struct proc *));
-int ffs_reload __P((struct mount *, struct ucred *, struct proc *));
-int ffs_mountfs __P((struct vnode *, struct mount *, struct proc *));
-int ffs_unmount __P((struct mount *, int, struct proc *));
-int ffs_flushfiles __P((struct mount *, int, struct proc *));
-int ffs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int ffs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int ffs_vget __P((struct mount *, ino_t, struct vnode **));
-int ffs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+		   struct lwp *));
+int ffs_reload __P((struct mount *, struct ucred *, struct lwp *));
+int ffs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
+int ffs_unmount __P((struct mount *, int, struct lwp *));
+int ffs_flushfiles __P((struct mount *, int, struct lwp *));
+int ffs_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int ffs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+int ffs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
+int ffs_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
 int ffs_vptofh __P((struct vnode *, struct fid *));
 int ffs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		    struct proc *));
+		    struct lwp *));
 int ffs_sbupdate __P((struct ufsmount *, int));
 int ffs_cgupdate __P((struct ufsmount *, int));
 
@@ -167,7 +167,7 @@ void	softdep_initialize __P((void));
 void	softdep_reinitialize __P((void));
 int	softdep_mount __P((struct vnode *, struct mount *, struct fs *,
 	    struct ucred *));
-int	softdep_flushfiles __P((struct mount *, int, struct proc *));
+int	softdep_flushfiles __P((struct mount *, int, struct lwp *));
 void	softdep_update_inodeblock __P((struct inode *, struct buf *, int));
 void	softdep_load_inodeblock __P((struct inode *));
 void	softdep_freefile __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.45 2003/05/26 21:22:19 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.46 2003/06/28 14:22:24 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.45 2003/05/26 21:22:19 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.46 2003/06/28 14:22:24 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,7 @@ ext2fs_mknod(v)
 	struct vattr *vap = ap->a_vap;
 	struct vnode **vpp = ap->a_vpp;
 	struct inode *ip;
+	struct componentname *cnp = ap->a_cnp;
 	int error;
 	struct mount	*mp;	
 	ino_t		ino;
@@ -166,7 +167,7 @@ ext2fs_mknod(v)
 	vput(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
-	error = VFS_VGET(mp, ino, vpp);
+	error = VFS_VGET(mp, ino, vpp, cnp->cn_lwp);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);
@@ -188,7 +189,7 @@ ext2fs_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	/*
@@ -208,7 +209,7 @@ ext2fs_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -249,7 +250,7 @@ ext2fs_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -307,13 +308,13 @@ ext2fs_setattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct ucred *cred = ap->a_cred;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	int error;
 
 	/*
@@ -329,7 +330,7 @@ ext2fs_setattr(v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_e2fs_uid &&
-			(error = suser(cred, &p->p_acflag)))
+			(error = suser(cred, &l->l_proc->p_acflag)))
 			return (error);
 #ifdef EXT2FS_SYSTEM_FLAGS
 		if (cred->cr_uid == 0) {
@@ -360,7 +361,7 @@ ext2fs_setattr(v)
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ext2fs_chown(vp, vap->va_uid, vap->va_gid, cred, p);
+		error = ext2fs_chown(vp, vap->va_uid, vap->va_gid, cred, l->l_proc);
 		if (error)
 			return (error);
 	}
@@ -380,7 +381,7 @@ ext2fs_setattr(v)
 		default:
 			break;
 		}
-		error = VOP_TRUNCATE(vp, vap->va_size, 0, cred, p);
+		error = VOP_TRUNCATE(vp, vap->va_size, 0, cred, l);
 		if (error)
 			return (error);
 	}
@@ -389,9 +390,9 @@ ext2fs_setattr(v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_e2fs_uid &&
-			(error = suser(cred, &p->p_acflag)) &&
+			(error = suser(cred, &l->l_proc->p_acflag)) &&
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
-			(error = VOP_ACCESS(vp, VWRITE, cred, p))))
+			(error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -407,7 +408,7 @@ ext2fs_setattr(v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ext2fs_chmod(vp, (int)vap->va_mode, cred, p);
+		error = ext2fs_chmod(vp, (int)vap->va_mode, cred, l->l_proc);
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
@@ -709,10 +710,10 @@ abortit:
 		goto abortit;
 	}
 	if ((ip->i_e2fs_mode & IFMT) == IFDIR) {
-        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
+        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_lwp);
         	if (!error && tvp)
                 	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
-			    tcnp->cn_proc);
+			    tcnp->cn_lwp);
         	if (error) {
                 	VOP_UNLOCK(fvp, 0);
                 	error = EACCES;
@@ -769,7 +770,7 @@ abortit:
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
+	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_lwp);
 	VOP_UNLOCK(fvp, 0);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
@@ -778,7 +779,7 @@ abortit:
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		error = ext2fs_checkpath(ip, dp, tcnp->cn_cred);
+		error = ext2fs_checkpath(ip, dp, tcnp->cn_cred, tcnp->cn_lwp);
 		if (error != 0)
 			goto out;
 		if ((tcnp->cn_flags & SAVESTART) == 0)
@@ -897,7 +898,7 @@ abortit:
 			if (--xp->i_e2fs_nlink != 0)
 				panic("rename: linked directory");
 			error = VOP_TRUNCATE(tvp, (off_t)0, IO_SYNC,
-			    tcnp->cn_cred, tcnp->cn_proc);
+			    tcnp->cn_cred, tcnp->cn_lwp);
 		}
 		xp->i_flag |= IN_CHANGE;
 		VN_KNOTE(tvp, NOTE_DELETE);
@@ -951,7 +952,7 @@ abortit:
 			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
 				sizeof (struct ext2fs_dirtemplate), (off_t)0,
 				UIO_SYSSPACE, IO_NODELOCKED, 
-				tcnp->cn_cred, (size_t *)0, (struct proc *)0);
+				tcnp->cn_cred, (size_t *)0, (struct lwp *)0);
 			if (error == 0) {
 					namlen = dirbuf.dotdot_namlen;
 				if (namlen != 2 ||
@@ -967,7 +968,7 @@ abortit:
 					    (off_t)0, UIO_SYSSPACE,
 					    IO_NODELOCKED|IO_SYNC,
 					    tcnp->cn_cred, (size_t *)0,
-					    (struct proc *)0);
+					    (struct lwp *)0);
 					cache_purge(fdvp);
 				}
 			}
@@ -1082,7 +1083,7 @@ ext2fs_mkdir(v)
 	dirtemplate.dotdot_name[0] = dirtemplate.dotdot_name[1] = '.';
 	error = vn_rdwr(UIO_WRITE, tvp, (caddr_t)&dirtemplate,
 	    sizeof (dirtemplate), (off_t)0, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, (size_t *)0, (struct proc *)0);
+	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, (size_t *)0, (struct lwp *)0);
 	if (error) {
 		dp->i_e2fs_nlink--;
 		dp->i_flag |= IN_CHANGE;
@@ -1194,7 +1195,7 @@ ext2fs_rmdir(v)
 	 */
 	ip->i_e2fs_nlink -= 2;
 	error = VOP_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
-	    cnp->cn_proc);
+	    cnp->cn_lwp);
 	cache_purge(ITOV(ip));
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
@@ -1237,7 +1238,7 @@ ext2fs_symlink(v)
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred,
-		    (size_t *)0, (struct proc *)0);
+		    (size_t *)0, (struct lwp *)0);
 	if (error)
 		vput(vp);
 	return (error);

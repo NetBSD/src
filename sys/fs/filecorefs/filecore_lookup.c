@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.2 2003/06/28 14:21:49 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.2 2003/06/28 14:21:49 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -132,7 +132,7 @@ filecore_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&

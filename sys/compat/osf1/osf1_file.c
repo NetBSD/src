@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.14 2003/01/18 08:32:04 thorpej Exp $ */
+/* $NetBSD: osf1_file.c,v 1.15 2003/06/28 14:21:24 darrenr Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.14 2003/01/18 08:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.15 2003/06/28 14:21:24 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -105,7 +105,7 @@ osf1_sys_access(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
 
@@ -130,7 +130,7 @@ osf1_sys_execve(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -158,10 +158,10 @@ osf1_sys_lstat(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)))
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -192,10 +192,10 @@ osf1_sys_lstat2(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)))
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -219,7 +219,7 @@ osf1_sys_mknod(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
 	SCARG(&a, mode) = SCARG(uap, mode);
@@ -262,9 +262,9 @@ osf1_sys_open(l, v, retval)
 	/* pick appropriate path */
 	path = SCARG(uap, path);
 	if (SCARG(&a, flags) & O_CREAT)
-		CHECK_ALT_CREAT(p, &sg, path);
+		CHECK_ALT_CREAT(l, &sg, path);
 	else
-		CHECK_ALT_EXIST(p, &sg, path);
+		CHECK_ALT_EXIST(l, &sg, path);
 	SCARG(&a, path) = path;
 
 	return sys_open(l, &a, retval);
@@ -284,7 +284,7 @@ osf1_sys_pathconf(l, v, retval)
 
 	sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&a, path) = SCARG(uap, path);
 
 	error = osf1_cvt_pathconf_name_to_native(SCARG(uap, name),
@@ -315,10 +315,10 @@ osf1_sys_stat(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)))
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -349,10 +349,10 @@ osf1_sys_stat2(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)))
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -376,7 +376,7 @@ osf1_sys_truncate(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
 	SCARG(&a, pad) = 0;
@@ -401,7 +401,7 @@ osf1_sys_utimes(l, v, retval)
 
 	sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&a, path) = SCARG(uap, path);
 
 	error = 0;

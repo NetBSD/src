@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.24 2003/04/17 12:34:25 fvdl Exp $	*/
+/*	$NetBSD: irframe.c,v 1.25 2003/06/28 14:21:36 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ irframe_detach(struct device *self, int flags)
 }
 
 int
-irframeopen(dev_t dev, int flag, int mode, struct proc *p)
+irframeopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct irframe_softc *sc;
 	int error;
@@ -195,7 +195,7 @@ irframeopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc->sc_open)
 		return (EBUSY);
 	if (sc->sc_methods->im_open != NULL) {
-		error = sc->sc_methods->im_open(sc->sc_handle, flag, mode, p);
+		error = sc->sc_methods->im_open(sc->sc_handle, flag, mode, l);
 		if (error)
 			return (error);
 	}
@@ -208,7 +208,7 @@ irframeopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-irframeclose(dev_t dev, int flag, int mode, struct proc *p)
+irframeclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct irframe_softc *sc;
 	int error;
@@ -218,7 +218,7 @@ irframeclose(dev_t dev, int flag, int mode, struct proc *p)
 		return (ENXIO);
 	sc->sc_open = 0;
 	if (sc->sc_methods->im_close != NULL)
-		error = sc->sc_methods->im_close(sc->sc_handle, flag, mode, p);
+		error = sc->sc_methods->im_close(sc->sc_handle, flag, mode, l);
 	else
 		error = 0;
 	return (error);
@@ -336,7 +336,7 @@ irf_reset_params(struct irframe_softc *sc)
 }
 
 int
-irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct irframe_softc *sc;
 	void *vaddr = addr;
@@ -378,7 +378,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 }
 
 int
-irframepoll(dev_t dev, int events, struct proc *p)
+irframepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct irframe_softc *sc;
 
@@ -388,7 +388,7 @@ irframepoll(dev_t dev, int events, struct proc *p)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
 
-	return (sc->sc_methods->im_poll(sc->sc_handle, events, p));
+	return (sc->sc_methods->im_poll(sc->sc_handle, events, l));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.28 2003/06/09 13:10:32 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.29 2003/06/28 14:22:19 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -147,7 +147,7 @@
 		memcpy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
 		}
 
-#define nfsm_mtofh(d, v, v3, f) \
+#define nfsm_mtofh(d, v, v3, f, l) \
 		{ struct nfsnode *ttnp; nfsfh_t *ttfhp; int ttfhsize; \
 		if (v3) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
@@ -157,7 +157,7 @@
 		if (f) { \
 			nfsm_getfh(ttfhp, ttfhsize, (v3)); \
 			if ((t1 = nfs_nget((d)->v_mount, ttfhp, ttfhsize, \
-				&ttnp)) != 0) { \
+				&ttnp, l)) != 0) { \
 				error = t1; \
 				m_freem(mrep); \
 				goto nfsmout; \

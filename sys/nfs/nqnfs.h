@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.11 2003/05/05 13:21:01 yamt Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.12 2003/06/28 14:22:19 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -158,7 +158,7 @@ struct nqm {
 		(void) nqsrv_getlease((v), &nfsd->nd_duration, \
 		 ((nfsd->nd_flag & ND_LEASE) ? (nfsd->nd_flag & ND_LEASE) : \
 		 ((l) | ND_CHECK)), \
-		 slp, procp, nfsd->nd_nam, &cache, &frev, cred)
+		 slp, lwp, nfsd->nd_nam, &cache, &frev, cred)
 
 /*
  * Client side macros that check for a valid lease.
@@ -205,11 +205,11 @@ extern int nqsrv_writeslack;
 void	nqnfs_lease_updatetime __P((int));
 int	nqsrv_cmpnam __P((struct nfssvc_sock *,struct mbuf *,struct nqhost *));
 int	nqsrv_getlease __P((struct vnode *, u_int32_t *, int,
-		struct nfssvc_sock *, struct proc *, struct mbuf *, int *,
+		struct nfssvc_sock *, struct lwp *, struct mbuf *, int *,
 		u_quad_t *, struct ucred *));
-int	nqnfs_getlease __P((struct vnode *, int, struct ucred *,struct proc *));
+int	nqnfs_getlease __P((struct vnode *, int, struct ucred *,struct lwp *));
 int	nqnfs_callback __P((struct nfsmount *, struct mbuf *, struct mbuf *,
-		caddr_t));
+		caddr_t, struct lwp *));
 int	nqnfs_clientd __P((struct nfsmount *, struct ucred *,
 		struct nfsd_cargs *, int, caddr_t, struct lwp *));
 #endif /* _KERNEL */

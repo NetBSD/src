@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.99 2003/05/17 16:11:52 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.100 2003/06/28 14:21:32 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.99 2003/05/17 16:11:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.100 2003/06/28 14:21:32 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -253,10 +253,10 @@ vnddetach()
 }
 
 int
-vndopen(dev, flags, mode, p)
+vndopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -265,7 +265,7 @@ vndopen(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, p);
+		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
 	if (unit >= numvnd)
 		return (ENXIO);
@@ -318,10 +318,10 @@ vndopen(dev, flags, mode, p)
 }
 
 int
-vndclose(dev, flags, mode, p)
+vndclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -329,7 +329,7 @@ vndclose(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, p);
+		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
 
 	if (unit >= numvnd)
@@ -735,12 +735,12 @@ vndwrite(dev, uio, flags)
 
 /* ARGSUSED */
 int
-vndioctl(dev, cmd, data, flag, p)
+vndioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
@@ -749,6 +749,7 @@ vndioctl(dev, cmd, data, flag, p)
 	struct nameidata nd;
 	int error, part, pmask;
 	size_t geomsize;
+	struct proc *p = l->l_proc;
 	int fflags;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -812,10 +813,10 @@ vndioctl(dev, cmd, data, flag, p)
 		fflags = FREAD;
 		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
 			fflags |= FWRITE;
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, l);
 		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
-		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
+		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, l);
 		VOP_UNLOCK(nd.ni_vp, 0);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
@@ -916,7 +917,7 @@ vndioctl(dev, cmd, data, flag, p)
 		break;
 
 close_and_exit:
-		(void) vn_close(nd.ni_vp, fflags, p->p_ucred, p);
+		(void) vn_close(nd.ni_vp, fflags, p->p_ucred, l);
 unlock_and_exit:
 		vndunlock(vnd);
 		return (error);
@@ -976,7 +977,7 @@ unlock_and_exit:
 		vnd = &vnd_softc[vnu->vnu_unit];
 
 		if (vnd->sc_flags & VNF_INITED) {
-			error = VOP_GETATTR(vnd->sc_vp, &va, p->p_ucred, p);
+			error = VOP_GETATTR(vnd->sc_vp, &va, p->p_ucred, l);
 			if (error)
 				return (error);
 			vnu->vnu_dev = va.va_fsid;
@@ -1128,7 +1129,7 @@ vndsetcred(vnd, cred)
 		 * buffers back to stable storage.
 		 */
 		error = vinvalbuf(vnd->sc_vp, V_SAVE, vnd->sc_cred,
-			    curproc, 0, 0);
+			    curlwp, 0, 0);
 	}
 	VOP_UNLOCK(vnd->sc_vp, 0);
 
@@ -1175,7 +1176,7 @@ vndclear(vnd, myminor)
 	int myminor;
 {
 	struct vnode *vp = vnd->sc_vp;
-	struct proc *p = curproc;		/* XXX */
+	struct lwp *l = curlwp;
 	int fflags = FREAD;
 	int bmaj, cmaj, i, mn;
 
@@ -1200,7 +1201,7 @@ vndclear(vnd, myminor)
 	vnd->sc_flags &= ~(VNF_INITED | VNF_READONLY | VNF_VLABEL);
 	if (vp == (struct vnode *)0)
 		panic("vndioctl: null vp");
-	(void) vn_close(vp, fflags, vnd->sc_cred, p);
+	(void) vn_close(vp, fflags, vnd->sc_cred, l);
 	crfree(vnd->sc_cred);
 	vnd->sc_vp = (struct vnode *)0;
 	vnd->sc_cred = (struct ucred *)0;
@@ -1228,7 +1229,7 @@ vndsize(dev)
 	omask = sc->sc_dkdev.dk_openmask & (1 << part);
 	lp = sc->sc_dkdev.dk_label;
 
-	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curproc))
+	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curlwp))	/* XXX */
 		return (-1);
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -1237,7 +1238,7 @@ vndsize(dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curproc))
+	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curlwp))	/* XXX */
 		return (-1);
 
 	return (size);

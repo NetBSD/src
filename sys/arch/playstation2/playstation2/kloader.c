@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.5 2003/05/08 13:35:06 shin Exp $	*/
+/*	$NetBSD: kloader.c,v 1.6 2003/06/28 14:21:04 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -290,7 +290,7 @@ kloader_open(const char *filename)
 	struct proc *p = curlwp->l_proc;
 	struct nameidata nid;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, p);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, curlwp);
 
 	if (namei(&nid) != 0) {
 		DPRINTF("namei failed (%s)\n", filename);
