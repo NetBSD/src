@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.c,v 1.24 1998/01/09 08:11:24 perry Exp $	*/
+/*	$NetBSD: queue.c,v 1.25 1999/08/12 00:19:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1995-1997 Eric P. Allman
@@ -1072,6 +1072,8 @@ orderq(doall)
 	(void) closedir(f);
 	wn++;
 
+	if (WorkList == NULL)
+		return (0);
 	wc = min(wn, WorkListSize);
 	if (wc > MaxQueueRun && MaxQueueRun > 0)
 		wc = MaxQueueRun;
