@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: isdnd,v 1.4 2001/04/26 03:54:38 lukem Exp $
+# $NetBSD: isdnd,v 1.5 2002/01/31 01:26:05 lukem Exp $
 #
 
 # PROVIDE: isdnd
-# REQUIRE: NETWORK syslogd mountcritremote
+# REQUIRE: NETWORKING syslogd mountcritremote
 #
 #	Note that this means that syslogd will not be listening on
 #	any isdn addresses.  This is considered a feature.
