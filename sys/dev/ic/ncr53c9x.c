@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.13 1997/07/20 16:46:17 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.14 1997/07/22 18:55:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -1440,8 +1440,7 @@ printf("%s: ILL: ESP100 work-around activated\n", sc->sc_dev.dv_xname);
 			 */
 			if (sc->sc_dleft == 0 &&
 			    (sc->sc_espstat & NCRSTAT_TC) == 0 &&
-			    !((sc->sc_espintr & NCRINTR_RESEL) &&
-			      sc->sc_state == NCR_SELECTING))
+			    sc->sc_state != NCR_SELECTING)
 				printf("%s: !TC [intr %x, stat %x, step %d]"
 				       " prevphase %x, resid %x\n",
 					sc->sc_dev.dv_xname,
