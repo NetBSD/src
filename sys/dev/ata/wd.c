@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.133 1995/03/23 12:12:26 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.134 1995/03/25 19:45:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -919,15 +919,6 @@ wdopen(dev, flag, fmt)
 
 		wdunlock(wd);
 	}
-
-#if 0
-	/* Check for read-only media. */
-	if ((flag & FWRITE) != 0 &&
-	    (wd->sc_flags & WDF_WRITEPROT) != 0) {
-		error = EROFS;
-		goto bad;
-	}
-#endif
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
