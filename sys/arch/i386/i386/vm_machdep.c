@@ -144,7 +144,8 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
-	static struct pcb nullpcb;	/* pcb to overwrite on last swtch */
+	extern int _default_ldt, currentldt;
+	register struct pcb *pcb = &p->p_addr->u_pcb;
 
 #if NNPX > 0
 	npxexit(p);
@@ -155,9 +156,18 @@ cpu_exit(p)
 
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
+#ifdef USER_LDT
+	if (pcb->pcb_ldt) {
+		if (currentldt != _default_ldt)
+			lldt(currentldt = _default_ldt);
+		kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
+		    (pcb->pcb_ldt_len * sizeof(union descriptor)));
+		pcb->pcb_ldt = NULL;
+	}
+#endif
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	p->p_addr = (struct user *) &nullpcb;
 
+	curproc = 0; /* don't need to save state */
 	splclock();
 	swtch();
 	/* NOTREACHED */
@@ -172,12 +182,13 @@ cpu_exit(p)
 #if NNPX > 0
 	npxexit(p);
 #endif
-#ifdef	USER_LDT
-	if (p->p_addr->u_pcb.pcb_ldt && (currentldt != _default_ldt)) {
-		lldt(_default_ldt);
-		currentldt = _default_ldt;
-	}
+
+#ifdef USER_LDT
+	if (p->p_addr->u_pcb.pcb_ldt && (currentldt != _default_ldt))
+		lldt(currentldt = _default_ldt);
 #endif
+
+	curproc = 0; /* don't need to save state */
 	splclock();
 	swtch();
 	panic("cpu_exit: swtch returned");
@@ -191,10 +202,10 @@ cpu_wait(p)
 
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
-#ifdef	USER_LDT
+#ifdef USER_LDT
 	if (pcb->pcb_ldt) {
 		kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
-			  (pcb->pcb_ldt_len * sizeof(union descriptor)));
+		    (pcb->pcb_ldt_len * sizeof(union descriptor)));
 		pcb->pcb_ldt = NULL;
 	}
 #endif
