@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/09/04 16:36:59 abs Exp $
+#	$NetBSD: Makefile,v 1.8 2000/09/04 16:54:39 abs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -35,9 +35,9 @@ DISKTYPE=	floppy
 # 204800	1167k,  29 inodes free
 INO_BYTES=	204800
 
-CLEANFILES+=	netbsd.ram.gz netbsd.tmp
+CLEANFILES+=	netbsd.syram.gz netbsd.tmp
 
-${IMAGE}:	netbsd.ram.gz
+${IMAGE}:	netbsd.syram.gz
 	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
@@ -62,7 +62,7 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
 
-netbsd.ram.gz: ${KERN} ${RAMDISK}
+netbsd.syram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
 	gzip netbsd.tmp
@@ -82,7 +82,7 @@ release:
 	@false
 .else
 release: $(IMAGE)
-	cp netbsd.ram.gz $(RELEASEDIR)/installation/netboot
+	cp netbsd.syram.gz $(RELEASEDIR)/installation/netboot
 	gzip -c -9 < $(.OBJDIR)/$(IMAGE) \
 		> $(RELEASEDIR)/installation/bootfs/$(IMAGE).gz
 .endif	# RELEASEDIR check
