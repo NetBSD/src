@@ -1,5 +1,5 @@
-/*	$NetBSD: traceroute6.c,v 1.29 2002/10/23 03:48:07 itojun Exp $	*/
-/*	$KAME: traceroute6.c,v 1.61 2002/09/08 01:28:05 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.30 2002/10/24 12:54:14 itojun Exp $	*/
+/*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.29 2002/10/23 03:48:07 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.30 2002/10/24 12:54:14 itojun Exp $");
 #endif
 #endif
 
@@ -429,16 +429,11 @@ main(argc, argv)
 			break;
 		case 'f':
 			ep = NULL;
+			errno = 0;
 			first_hop = strtoul(optarg, &ep, 0);
-			if (!*argv || *ep) {
+			if (errno || !*optarg || *ep|| first_hop > 255) {
 				fprintf(stderr,
 				    "traceroute6: invalid min hoplimit.\n");
-				exit(1);
-			}
-			if (first_hop > max_hops) {
-				fprintf(stderr,
-				    "traceroute6: min hoplimit must be <= %lu.\n",
-				    max_hops);
 				exit(1);
 			}
 			break;
@@ -487,16 +482,11 @@ main(argc, argv)
 			break;
 		case 'm':
 			ep = NULL;
+			errno = 0;
 			max_hops = strtoul(optarg, &ep, 0);
-			if (!*argv || *ep) {
+			if (errno || !*optarg || *ep || max_hops > 255) {
 				fprintf(stderr,
 				    "traceroute6: invalid max hoplimit.\n");
-				exit(1);
-			}
-			if (max_hops < first_hop) {
-				fprintf(stderr,
-				    "traceroute6: max hoplimit must be >= %lu.\n",
-				    first_hop);
 				exit(1);
 			}
 			break;
@@ -505,9 +495,10 @@ main(argc, argv)
 			break;
 		case 'p':
 			ep = NULL;
+			errno = 0;
 			lport = strtoul(optarg, &ep, 0);
-			if (!*argv || *ep) {
-				fprintf(stderr, "traceroute6: port.\n");
+			if (errno || !*optarg || *ep) {
+				fprintf(stderr, "traceroute6: invalid port.\n");
 				exit(1);
 			}
 			if (lport == 0 || lport != (lport & 0xffff)) {
@@ -519,8 +510,9 @@ main(argc, argv)
 			break;
 		case 'q':
 			ep = NULL;
+			errno = 0;
 			nprobes = strtoul(optarg, &ep, 0);
-			if (!*argv || *ep) {
+			if (errno || !*optarg || *ep) {
 				fprintf(stderr,
 				    "traceroute6: invalid nprobes.\n");
 				exit(1);
@@ -546,8 +538,9 @@ main(argc, argv)
 			break;
 		case 'w':
 			ep = NULL;
+			errno = 0;
 			waittime = strtoul(optarg, &ep, 0);
-			if (!*argv || *ep) {
+			if (errno || !*optarg || *ep) {
 				fprintf(stderr,
 				    "traceroute6: invalid wait time.\n");
 				exit(1);
@@ -563,6 +556,12 @@ main(argc, argv)
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (max_hops < first_hop) {
+		fprintf(stderr,
+		    "traceroute6: max hoplimit must be larger than first hoplimit.\n");
+		exit(1);
+	}
 
 	if (argc < 1 || argc > 2)
 		usage();
@@ -605,8 +604,9 @@ main(argc, argv)
 
 	if (*++argv) {
 		ep = NULL;
+		errno = 0;
 		datalen = strtoul(*argv, &ep, 0);
-		if (!*argv || *ep) {
+		if (errno || !*argv || *ep) {
 			fprintf(stderr,
 			    "traceroute6: invalid packet length.\n");
 			exit(1);
