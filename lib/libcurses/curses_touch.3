@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_touch.3,v 1.5 2004/03/16 19:26:56 snj Exp $
+.\"	$NetBSD: curses_touch.3,v 1.6 2005/03/04 11:15:47 blymn Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -50,7 +50,7 @@
 .Sh SYNOPSIS
 .In curses.h
 .Ft int
-.Fn touchline "WINDOW *win" "int row" "int start" "int end"
+.Fn touchline "WINDOW *win" "int start" "int count"
 .Ft int
 .Fn touchoverlap "WINDOW *win1" "WINDOW *win2"
 .Ft int
@@ -73,12 +73,10 @@ status of lines and windows.
 .Pp
 The
 .Fn touchline
-function marks the characters from
+function marks 
+.Fa count
+lines starting from
 .Fa start
-to
-.Fa end
-on row
-.Fa row
 in window
 .Fa win
 as having been modified.
