@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.19 2003/09/22 14:36:43 cl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.20 2003/09/25 22:00:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.19 2003/09/22 14:36:43 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20 2003/09/25 22:00:02 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -451,7 +451,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
  * Send an interrupt to Linux process.
  */
 void
-linux_sendsig(ksiginfo_t *ksi, sigset_t *mask)
+linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	/* u_long code = ksi->ksi_trap; */
 	int sig = ksi->ksi_signo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.37 2003/09/22 14:35:58 cl Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.38 2003/09/25 22:00:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.37 2003/09/22 14:35:58 cl Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.38 2003/09/25 22:00:48 christos Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,7 @@ int hpuxsigpid = 0;
  * Send an interrupt to process.
  */
 void
-hpux_sendsig(ksiginfo_t *ksi, sigset_t *mask)
+hpux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	u_long code = ksi->ksi_trap;
 	int sig = ksi->ksi_signo;

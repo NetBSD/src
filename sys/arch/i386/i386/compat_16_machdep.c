@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.3 2003/09/11 19:15:12 christos Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.4 2003/09/25 22:01:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2003/09/11 19:15:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4 2003/09/25 22:01:31 christos Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -164,7 +164,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
  * specified pc, psl.
  */
 void
-sendsig_sigcontext(ksiginfo_t *ksi, sigset_t *mask)
+sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

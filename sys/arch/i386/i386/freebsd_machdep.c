@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.39 2003/09/06 22:08:14 christos Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.40 2003/09/25 22:01:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.39 2003/09/06 22:08:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.40 2003/09/25 22:01:31 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -93,7 +93,7 @@ freebsd_setregs(l, epp, stack)
  * specified pc, psl.
  */
 void
-freebsd_sendsig(ksiginfo_t *ksi, sigset_t *mask)
+freebsd_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	int sig = ksi->ksi_signo;
 	u_long code = ksi->ksi_trap;

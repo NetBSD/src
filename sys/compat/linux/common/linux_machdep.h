@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.8 2003/09/06 22:09:22 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.9 2003/09/25 22:00:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #ifdef _KERNEL
 __BEGIN_DECLS
 #ifdef __HAVE_SIGINFO
-void linux_sendsig __P((ksiginfo_t *, sigset_t *));
+void linux_sendsig __P((const ksiginfo_t *, const sigset_t *));
 #else
 void linux_sendsig __P((int, sigset_t *, u_long));
 #endif

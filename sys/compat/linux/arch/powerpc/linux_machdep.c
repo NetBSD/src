@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.23 2003/09/25 18:42:18 matt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.24 2003/09/25 22:00:02 christos Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23 2003/09/25 18:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.24 2003/09/25 22:00:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,7 @@ linux_setregs(l, pack, stack)
 
 #ifdef __HAVE_SIGINFO
 void
-linux_sendsig(ksi, mask)  /* XXX Check me */
-	ksiginfo_t *ksi;
-	sigset_t *mask;
+linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 #else
 void
 linux_sendsig(sig, mask, code)  /* XXX Check me */
