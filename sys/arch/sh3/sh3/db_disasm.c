@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.2 2000/05/25 19:57:34 jhawk Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.3 2000/08/09 20:13:42 tv Exp $	*/
 
 /*
  * Mach Operating System
@@ -1184,6 +1184,8 @@ db_disasm(loc, altfmt)
 	for (first = TRUE;
 	     i_mode != 0;
 	     i_mode >>= 8, first = FALSE) {
+		char tbuf[24];
+
 		if (!first)
 			db_printf(",");
 
@@ -1250,37 +1252,44 @@ db_disasm(loc, altfmt)
 		    case I:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, FALSE);/* unsigned */
-			db_printf("$%#n", imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Is:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, TRUE);	/* signed */
-			db_printf("$%#r", imm);
+			db_format_radix(tbuf, 24, imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Ib:
 			get_value_inc(imm, loc, 1, FALSE);	/* unsigned */
-			db_printf("$%#n", imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Ibs:
 			get_value_inc(imm, loc, 1, TRUE);	/* signed */
-			db_printf("$%#r", imm);
+			db_format_radix(tbuf, 24, imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Iw:
 			get_value_inc(imm, loc, 2, FALSE);	/* unsigned */
-			db_printf("$%#n", imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case Il:
 			get_value_inc(imm, loc, 4, FALSE);
-			db_printf("$%#n", imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			break;
 		    case O:
 			if (short_addr)
 				get_value_inc(displ, loc, 2, TRUE);
 			else
 				get_value_inc(displ, loc, 4, TRUE);
-			if (seg)
-				db_printf("%s:%#r",seg, displ);
-			else
+			if (seg) {
+				db_format_radix(tbuf, 24, displ, TRUE);
+				db_printf("%s:%s", seg, tbuf);
+			} else
 				db_printsym((db_addr_t)displ, DB_STGY_ANY,
 				    db_printf);
 			break;
@@ -1302,8 +1311,11 @@ db_disasm(loc, altfmt)
 			break;
 		    case OS:
 			get_value_inc(imm, loc, 4, FALSE);	/* offset */
+			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			db_printf("$%s", tbuf);
 			get_value_inc(imm2, loc, 2, FALSE);	/* segment */
-			db_printf("$%#n,%#n", imm2, imm);
+			db_format_radix(tbuf, 24, (unsigned int)imm2, TRUE);
+			db_printf(",%s", tbuf);
 			break;
 		}
 	}
