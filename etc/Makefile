@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.129 1999/12/13 10:19:32 christos Exp $
+#	$NetBSD: Makefile,v 1.130 2000/02/03 17:51:51 veego Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -20,8 +20,6 @@
 #	before kernel compile
 #   NO_SENDMAIL is normally undefined; if defined, it will not do a
 #	`make distribution' in the sendmail config file source directory.
-#   USE_BIND4 is normally unset; if set, it will install a named.boot
-#	instead of a named.conf in etc/namedb.
 #   EXTRA_KERNELS has a machine-dependent list of kernels to build added
 #	to it, but you may also set this to have extra ones built.
 #   BUILD_KERNELS are a machine-dependent list of kernels that should just
@@ -38,7 +36,7 @@
 #	stuff for this target is found in etc.${MACHINE}/Makefile.inc.
 #    release: a synonym for `snapshot'
 
-# XXX: For NO_SENDMAIL, USE_BIND4 and INSTPRIV
+# XXX: For NO_SENDMAIL and INSTPRIV
 .include <bsd.own.mk>
 
 TZDIR=		/usr/share/zoneinfo
@@ -102,12 +100,7 @@ BIN2+=	motd
 # -rw-------
 BIN3+=	hosts.equiv
 
-NAMEDB=	127 root.cache
-.ifdef USE_BIND4
-NAMEDB+=	named.boot
-.else
-NAMEDB+=	named.conf
-.endif
+NAMEDB=	127 root.cache named.conf
 PCS=	pcs750.bin
 
 all clean cleandir depend distclean etc includes install lint:
