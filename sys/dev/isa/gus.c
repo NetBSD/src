@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.36 1997/07/31 22:33:27 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.37 1997/08/04 09:16:42 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2803,7 +2803,7 @@ gus_init_cs4231(sc)
 			NULL,
 			NULL,
                         NULL,
-			gus_get_props,
+			gusmax_get_props,
 		};
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
 		sc->sc_codec.parent = sc;
