@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.2 2001/11/17 23:43:43 wdk Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.3 2001/11/18 09:12:00 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.2 2001/11/17 23:43:43 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.3 2001/11/18 09:12:00 wdk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -1505,7 +1505,7 @@ cpu_getmcontext(l, mcp, flags)
 	__greg_t *gr = mcp->__gregs;
 
 	/* Save register context. Dont copy R0 - it is always 0 */
-	memcpy(&gr[_REG_R0], &f->f_regs[AST], sizeof(mips_reg_t) * 31);
+	memcpy(&gr[_REG_R1], &f->f_regs[AST], sizeof(mips_reg_t) * 31);
 
 	gr[_REG_MDLO]  = f->f_regs[MULLO];
 	gr[_REG_MDHI]  = f->f_regs[MULHI];
@@ -1542,7 +1542,7 @@ cpu_setmcontext(l, mcp, flags)
 	if (flags & _UC_CPU) {
 		/* Save register context. */
 		/* XXX:  Do we validate the addresses?? */
-		memcpy(&f->f_regs[AST], &gr[_REG_R0], sizeof(mips_reg_t) * 31);
+		memcpy(&f->f_regs[AST], &gr[_REG_R1], sizeof(mips_reg_t) * 31);
 
 		f->f_regs[MULLO] = gr[_REG_MDLO];
 		f->f_regs[MULHI] = gr[_REG_MDHI];
