@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.5 2000/03/13 23:22:55 soren Exp $	*/
+/*	$NetBSD: timer.c,v 1.6 2000/05/19 10:43:44 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: timer.c,v 1.3 1999/09/15 07:45:12 jinmei Exp
+ *  KAME Id: timer.c,v 1.5 2000/05/18 16:09:39 itojun Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -131,6 +131,20 @@ age_vifs()
     for (vifi = 0, v = uvifs; vifi < numvifs; ++vifi, ++v) {
 	if (v->uv_flags & (VIFF_DISABLED | VIFF_DOWN))
 	    continue;
+
+	/* Timeout the MLD querier (unless we re the querier) */
+	if ((v->uv_flags & VIFF_QUERIER) == 0 &&
+	    v->uv_querier) { /* this must be non-NULL, but check for safety. */
+	    IF_TIMEOUT(v->uv_querier->al_timer) {
+		/* act as a querier by myself */
+		v->uv_flags |= VIFF_QUERIER;
+		v->uv_querier->al_addr = v->uv_linklocal->pa_addr;
+		v->uv_querier->al_timer = MLD6_OTHER_QUERIER_PRESENT_INTERVAL;
+		time(&v->uv_querier->al_ctime); /* reset timestamp */
+		query_groups(v);
+	    }
+	}
+
 	/* Timeout neighbors */
 	for (curr_nbr = v->uv_pim_neighbors; curr_nbr != NULL;
 	     curr_nbr = next_nbr) {
