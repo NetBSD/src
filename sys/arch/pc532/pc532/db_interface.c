@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 1996/10/13 03:30:35 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7 1997/03/20 12:00:40 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -60,12 +60,12 @@ extern int	trap_types;
 int	db_active = 0;
 int	db_active_ipl;
 
-void kdbprinttrap __P((int, int));
+static void	kdbprinttrap __P((int, int));
 
 /*
  * Print trap reason.
  */
-void
+static void
 kdbprinttrap(type, code)
 	int	type, code;
 {
@@ -80,6 +80,7 @@ kdbprinttrap(type, code)
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
+int
 kdb_trap(type, code, regs)
 	int	type, code;
 	register db_regs_t *regs;
