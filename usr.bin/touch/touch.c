@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.13 1997/10/11 03:12:17 enami Exp $	*/
+/*	$NetBSD: touch.c,v 1.14 1997/10/19 14:38:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: touch.c,v 1.13 1997/10/11 03:12:17 enami Exp $";
+static char rcsid[] = "$NetBSD: touch.c,v 1.14 1997/10/19 14:38:04 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -303,8 +303,8 @@ stime_file(fname, tvp)
 
 	if (stat(fname, &sb))
 		err(1, "%s", fname);
-	TIMESPEC_TO_TIMEVAL(tvp, &sb.st_atimespec);
-	TIMESPEC_TO_TIMEVAL(tvp + 1, &sb.st_mtimespec);
+	TIMESPEC_TO_TIMEVAL(&tvp[0], &sb.st_atimespec);
+	TIMESPEC_TO_TIMEVAL(&tvp[1], &sb.st_mtimespec);
 }
 
 int
