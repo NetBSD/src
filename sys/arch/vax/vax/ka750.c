@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.22 1998/01/24 14:16:25 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.23 1998/04/13 12:10:27 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -321,7 +321,6 @@ cmi_attach(parent, self, aux)
         struct  device  *parent, *self;
         void    *aux;
 {
-        u_int   nexnum, maxnex, minnex;
         struct  sbi_attach_args sa;
 
 	printf("I\n");

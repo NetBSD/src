@@ -1,4 +1,4 @@
-/*	$NetBSD: uvax.c,v 1.4 1997/02/19 10:04:27 ragge Exp $ */
+/*	$NetBSD: uvax.c,v 1.5 1998/04/13 12:10:28 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1988, 1990, 1993
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -62,7 +63,7 @@
 void 
 uvax_fillmap()
 {
-	extern  vm_offset_t avail_start, virtual_avail, avail_end;
+	extern  vm_offset_t virtual_avail;
 	register struct uc_map *p;
 	register u_int base, end, off, size;
 
@@ -98,7 +99,7 @@ uvax_phys2virt(phys)
 
 #ifdef DIAGNOSTIC
 	if (virt == 0)
-		panic("invalid argument %p to uvax_phys2virt()\n", phys);
+		panic("invalid argument %lx to uvax_phys2virt()\n", phys);
 #endif
 	return (virt);
 }

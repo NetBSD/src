@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.8 1997/11/02 14:07:23 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.9 1998/04/13 12:10:27 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -317,7 +317,6 @@ ka86_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	extern	char cpu_model[];
 	struct	ka86 *ka86 = (void *)&vax_cpudata;
 
 	/* Enable cache */
