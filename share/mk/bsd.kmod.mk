@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.53 2002/04/09 17:14:38 jdolecek Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.54 2002/07/20 11:44:31 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -44,6 +44,10 @@ ${PROG}: ${OBJS} ${DPADD}
 .if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
 	@rm -f sun68k && \
 	    ln -s $S/arch/sun68k/include sun68k
+.endif
+.if ${MACHINE} == "sparc64"
+	@rm -f sparc && \
+	    ln -s $S/arch/sparc/include sparc
 .endif
 .endif
 
