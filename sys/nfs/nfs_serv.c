@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.72 2003/05/03 18:36:26 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.73 2003/05/04 11:40:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.72 2003/05/03 18:36:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.73 2003/05/04 11:40:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -656,7 +656,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		tl += (NFSX_V2FATTR / sizeof (u_int32_t));
 	}
 	len = left = cnt;
-	if (cnt >= 0) {
+	if (cnt > 0) {
 		if (nfsd_use_loan) {
 			struct vm_page **pgpp;
 			voff_t pgoff = trunc_page(off);
