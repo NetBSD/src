@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2002/08/23 08:14:20 kanaoka Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2003/06/18 20:51:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2002/08/23 08:14:20 kanaoka Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2003/06/18 20:51:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,8 +83,8 @@ int main(int, char *[]);
 /*
  * Initialize variables.
  */
-    void
-tninit()
+void
+tninit(void)
 {
     init_terminal();
 
@@ -138,9 +138,7 @@ usage()
 
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;

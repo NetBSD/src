@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.13 2002/09/23 12:48:04 mycroft Exp $	*/
+/*	$NetBSD: network.c,v 1.14 2003/06/18 20:51:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.13 2002/09/23 12:48:04 mycroft Exp $");
+__RCSID("$NetBSD: network.c,v 1.14 2003/06/18 20:51:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,8 @@ unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];
  * Initialize internal network data structures.
  */
 
-    void
-init_network()
+void
+init_network(void)
 {
     if (ring_init(&netoring, netobuf, sizeof netobuf) != 1) {
 	exit(1);
@@ -83,8 +83,8 @@ init_network()
  * Telnet "synch" processing).
  */
 
-    int
-stilloob()
+int
+stilloob(void)
 {
     struct pollfd set[1];
     int value;
@@ -114,8 +114,8 @@ stilloob()
  *	Sets "neturg" to the current location.
  */
 
-    void
-setneturg()
+void
+setneturg(void)
 {
     ring_mark(&netoring);
 }
@@ -131,8 +131,8 @@ setneturg()
  */
 
 
-    int
-netflush()
+int
+netflush(void)
 {
     int n, n1;
 
