@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.24 2004/01/28 22:01:38 augustss Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.24.2.1 2004/07/10 13:32:56 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.24 2004/01/28 22:01:38 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.24.2.1 2004/07/10 13:32:56 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,7 @@ static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M130 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_TUNGSTEN_Z }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_TUNGSTEN_T }, PALM4 },
+	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_ZIRE31 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_ZIRE }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_40 }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_41 }, PALM4 },
