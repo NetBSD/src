@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.25 1996/10/11 00:44:44 christos Exp $	*/
+/*	$NetBSD: dc.c,v 1.26 1996/10/12 23:41:35 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -873,7 +873,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-/*void*/int
+void
 dcstop(tp, flag)
 	register struct tty *tp;
 {
@@ -890,7 +890,6 @@ dcstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-	return(0);
 }
 
 int
