@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.11 1998/01/28 18:31:37 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.12 1998/02/04 00:38:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -404,7 +404,7 @@ fxp_attach(parent, self, aux)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct fxp_control_data), (caddr_t *)&sc->control_data,
-	    BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) != 0) {
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;

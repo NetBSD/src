@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.19 1997/06/06 23:48:02 thorpej Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.20 1998/02/04 00:38:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ le_pci_attach(parent, self, aux)
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_PCI_MEMSIZE,
 	    (caddr_t *)&sc->sc_mem,
-	    BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) {
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf("%s: couldn't map memory for card\n",
 		    sc->sc_dev.dv_xname);
 		return;

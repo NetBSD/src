@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.5 1998/01/25 15:22:34 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.6 1998/02/04 00:39:49 thorpej Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.5 1998/01/25 15:22:34 pk Exp $
+ * id: $NetBSD: xd.c,v 1.6 1998/02/04 00:39:49 thorpej Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -449,7 +449,7 @@ xdcattach(parent, self, aux)
 	error = bus_dmamem_map(xdc->dmatag, &seg, rseg,
 				XDC_MAXIOPB * sizeof(struct xd_iopb),
 				(caddr_t *)&xdc->iopbase,
-				BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		bus_dmamem_free(xdc->dmatag, &seg, rseg);
 		printf("%s: DMA buffer map error %d\n",
@@ -649,7 +649,7 @@ xdattach(parent, self, aux)
 
 	error = bus_dmamem_map(xdc->dmatag, &seg, rseg, XDFM_BPS,
 				&buf,
-				BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xd->sc_dev.dv_xname, error);
@@ -2333,7 +2333,7 @@ xdc_ioctlcmd(xd, dev, xio)
 
 		error = bus_dmamem_map(xdcsc->dmatag, &seg, rseg, xio->dlen,
 					&buf,
-					BUS_DMA_WAITOK|BUS_DMAMEM_NOSYNC);
+					BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 		if (error) {
 			bus_dmamem_free(xdcsc->dmatag, &seg, rseg);
 			return (error);
