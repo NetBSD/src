@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.8.2.2 2004/06/05 05:00:14 jmc Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.8.2.3 2004/08/11 19:46:10 jmc Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.8.2.2 2004/06/05 05:00:14 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.8.2.3 2004/08/11 19:46:10 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -238,7 +238,6 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	}
 	wdc_cp->data32iot = wdc_cp->cmd_iot;
 	wdc_cp->data32ioh = wdc_cp->cmd_iohs[0];
-	pciide_map_compat_intr(pa, cp, compatchan);
 	return;
 
 bad:
@@ -781,9 +780,12 @@ pciide_mapchan(pa, cp, interface, cmdsizep, ctlsizep, pci_intr)
 
 	if (interface & PCIIDE_INTERFACE_PCI(wdc_cp->ch_channel))
 		pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr);
-	else
+	else {
 		pciide_mapregs_compat(pa, cp, wdc_cp->ch_channel, cmdsizep,
 		    ctlsizep);
+		if ((cp->wdc_channel.ch_flags & WDCF_DISABLED) == 0)
+			pciide_map_compat_intr(pa, cp, wdc_cp->ch_channel);
+	}
 	wdcattach(wdc_cp);
 }
 
@@ -880,8 +882,10 @@ default_chip_map(sc, pa)
 		 * not possible to have an ISA board using the same address
 		 * anyway.
 		 */
-		if (interface & PCIIDE_INTERFACE_PCI(channel))
-			goto next;
+		if (interface & PCIIDE_INTERFACE_PCI(channel)) {
+			wdcattach(&cp->wdc_channel);
+			continue;
+		}
 		if (!wdcprobe(&cp->wdc_channel)) {
 			failreason = "not responding; disabled or no drives?";
 			goto next;
@@ -911,8 +915,9 @@ next:
 			    cp->wdc_channel.cmd_baseioh, cmdsize);
 			bus_space_unmap(cp->wdc_channel.ctl_iot,
 			    cp->wdc_channel.ctl_ioh, ctlsize);
-
 		} else {
+			pciide_map_compat_intr(pa, cp,
+			    cp->wdc_channel.ch_channel);
 			wdcattach(&cp->wdc_channel);
 		}
 	}
