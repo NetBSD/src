@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.5 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.6 2005/02/22 02:29:32 elric Exp $	*/
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.70 2003/11/02 11:01:03 markus Exp $");
-__RCSID("$NetBSD: compat.c,v 1.5 2005/02/13 05:57:26 christos Exp $");
+RCSID("$OpenBSD: compat.c,v 1.66 2003/04/01 10:31:26 markus Exp $");
+__RCSID("$NetBSD: compat.c,v 1.6 2005/02/22 02:29:32 elric Exp $");
 
 #include "buffer.h"
 #include "packet.h"
@@ -133,9 +133,12 @@ compat_datafellows(const char *version)
 		  "1.2.19*,"
 		  "1.2.20*,"
 		  "1.2.21*,"
-		  "1.2.22*",		SSH_BUG_IGNOREMSG },
+		  "1.2.22*",		SSH_BUG_IGNOREMSG|SSH_BUG_K5USER },
 		{ "1.3.2*",		/* F-Secure */
-					SSH_BUG_IGNOREMSG },
+					SSH_BUG_IGNOREMSG|SSH_BUG_K5USER },
+		{ "1.2.1*,"
+		  "1.2.2*,"
+		  "1.2.3*",		SSH_BUG_K5USER },
 		{ "*SSH Compatible Server*",			/* Netscreen */
 					SSH_BUG_PASSWORDPAD },
 		{ "*OSU_0*,"
