@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.10 2003/06/29 22:32:07 fvdl Exp $	*/
+/*	$NetBSD: keysock.h,v 1.11 2004/05/26 02:59:15 itojun Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
 /*
@@ -61,12 +61,16 @@ struct pfkeystat {
 #define KEY_SENDUP_ONE		0
 #define KEY_SENDUP_ALL		1
 #define KEY_SENDUP_REGISTERED	2
+#define KEY_SENDUP_CANWAIT	4
 
 #ifdef _KERNEL
 struct keycb {
 	struct rawcb kp_raw;	/* rawcb */
 	int kp_promisc;		/* promiscuous mode */
 	int kp_registered;	/* registered socket */
+	int (*kp_receive) (struct socket *, struct mbuf **, struct uio *,
+		struct mbuf **, struct mbuf **, int *);
+	struct mbuf *kp_queue;	/* queued mbufs, linked by m_nextpkt */
 };
 
 extern struct pfkeystat pfkeystat;

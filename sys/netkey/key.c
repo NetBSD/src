@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.119 2004/05/10 09:30:23 yamt Exp $	*/
+/*	$NetBSD: key.c,v 1.120 2004/05/26 02:59:15 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.119 2004/05/10 09:30:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.120 2004/05/26 02:59:15 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2330,7 +2330,8 @@ key_spddump(so, m, mhp)
 			    mhp->msg->sadb_msg_pid);
 
 			if (n)
-				key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
+				key_sendup_mbuf(so, n,
+				    KEY_SENDUP_ONE | KEY_SENDUP_CANWAIT);
 		}
 	}
 
@@ -6811,7 +6812,8 @@ key_dump(so, m, mhp)
 				if (!n)
 					return key_senderror(so, m, ENOBUFS);
 
-				key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
+				key_sendup_mbuf(so, n,
+				    KEY_SENDUP_ONE | KEY_SENDUP_CANWAIT);
 			}
 		}
 	}
