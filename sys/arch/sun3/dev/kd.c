@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: kd.c,v 1.2 1994/05/05 04:46:51 gwr Exp $
+ *	$Id: kd.c,v 1.3 1994/06/03 02:05:19 gwr Exp $
  */
 
 /*
@@ -103,7 +103,7 @@ kdopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int unit;
+	int error, unit;
 	struct tty *tp;
 	
 	unit = minor(dev);
@@ -112,6 +112,9 @@ kdopen(dev, flag, mode, p)
 	tp = kd_tty[unit];
 	if (tp == NULL)
 		return ENXIO;
+
+	if ((error = kbd_init()) != 0)
+		return (error);
 
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
