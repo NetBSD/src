@@ -2,7 +2,7 @@
 ./sbin/ldconfig
 ./usr/lib/libamu.so.0.1
 ./usr/lib/libbfd.so.0.1
-./usr/lib/libc.so.12.26
+./usr/lib/libc.so.12.27
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.2
 ./usr/lib/libedit.so.2.0
@@ -20,7 +20,7 @@
 ./usr/lib/libtelnet.so.1.0
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.0.0
-./usr/lib/libutil.so.4.4
+./usr/lib/libutil.so.5.0
 ./usr/lib/libwrap.so.0.0
 ./usr/lib/libz.so.0.0
 ./usr/libexec/ld.so
