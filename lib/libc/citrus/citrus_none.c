@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.4.2.2 2003/06/02 14:59:32 tron Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.4.2.3 2003/06/02 15:00:34 tron Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.4.2.2 2003/06/02 14:59:32 tron Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.4.2.3 2003/06/02 15:00:34 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -290,6 +290,15 @@ _citrus_NONE_ctype_wctomb(void * __restrict cl, char * __restrict s,
 {
 	int ret;
 	size_t nr;
+
+	if (s == 0) {
+		/*
+		 * initialize state here.
+		 * (nothing to do for us.)
+		 */
+		*nresult = 0; /* we're state independent */
+		return (0);
+	}
 
 	ret = _citrus_NONE_ctype_wcrtomb(cl, s, wc, NULL, &nr);
 	*nresult = (int)nr;
