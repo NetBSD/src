@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.54 2003/10/27 07:07:34 chs Exp $ */
+/* $NetBSD: tga.c,v 1.55 2003/10/29 04:40:17 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.54 2003/10/27 07:07:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.55 2003/10/29 04:40:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1049,7 +1049,7 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	int x, y, wb;
 	int xstart, xend, xdir;
 	int ystart, yend, ydir, yinc;
-	int xleft, lastx = 0, lastleft = 0;
+	int xleft, lastx, lastleft;
 	int offset = 1 * dc->dc_tgaconf->tgac_vvbr_units;
 
 	/*
@@ -1132,13 +1132,14 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x + 0 * 64);
 				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x + 0 * 64);
 			}
-
-			lastx = x; lastleft = xleft;  /* remember for CPU loop */
 		}
+
 		TGAWALREG(dc, TGA_REG_GOPR, 0, 0x0003); /* op -> dst = src */
 		TGAWALREG(dc, TGA_REG_GMOR, 0, 0x0000); /* Simple mode */
 
+		lastleft = wb & 63;
 		if (lastleft) {
+			lastx = xstart + (wb & ~63);
 			for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
 				/* 4 byte granularity */
 				for (x = lastx, xleft = lastleft; xleft >= 4;
@@ -1177,13 +1178,14 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x - 1 * 64);
 				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x - 1 * 64);
 			}
-
-			lastx = x; lastleft = xleft;  /* remember for CPU loop */
 		}
+
 		TGAWALREG(dc, TGA_REG_GOPR, 0, 0x0003); /* op -> dst = src */
 		TGAWALREG(dc, TGA_REG_GMOR, 0, 0x0000); /* Simple mode */
 
+		lastleft = wb & 63;
 		if (lastleft) {
+			lastx = xstart - (wb & ~63);
 			for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
 				/* 4 byte granularity */
 				for (x = lastx, xleft = lastleft; xleft >= 4;
