@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.6 2003/01/10 01:08:53 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.7 2003/01/10 02:14:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ typedef struct {
 	__fpregset_t	__fpregs;	/* Floating Point Register set */
 	union {
 		long	__mc_state[202];	/* Only need 308 bytes... */
+#if defined(_KERNEL) || defined(__M68K_MCONTEXT_PRIVATE)
 		struct {
 			/* Rest of the frame. */
 			unsigned int	__mcf_format;
@@ -90,6 +91,7 @@ typedef struct {
 			union FPF_u1	__mcf_fpf_u1;
 			union FPF_u2	__mcf_fpf_u2;
 		} __mc_frame;
+#endif /* _KERNEL || __M68K_MCONTEXT_PRIVATE */
 	}		__mc_pad;
 } mcontext_t;
 
