@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.h,v 1.4 1999/10/04 23:27:03 lukem Exp $	*/
+/*	$NetBSD: screen.h,v 1.5 2000/01/01 10:15:17 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,8 +41,8 @@
 /*
  * Capabilities from TERMCAP (used in the score code).
  */
-char *SEstr;			/* end standout mode */
-char *SOstr;			/* begin standout mode */
+extern char *SEstr;		/* end standout mode */
+extern char *SOstr;		/* begin standout mode */
 
 /*
  * putpad() is for padded strings with count=1.

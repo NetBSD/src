@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.h,v 1.7 1999/09/12 09:02:24 jsm Exp $	*/
+/*	$NetBSD: tetris.h,v 1.8 2000/01/01 10:15:17 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
 #define	B_SIZE	(B_ROWS * B_COLS)
 
 typedef unsigned char cell;
-cell	board[B_SIZE];		/* 1 => occupied, 0 => empty */
+extern cell	board[B_SIZE];	/* 1 => occupied, 0 => empty */
 
 	/* the displayed area (rows) */
 #define	D_FIRST	1
@@ -76,7 +76,7 @@ cell	board[B_SIZE];		/* 1 => occupied, 0 => empty */
 #define	MINROWS	23
 #define	MINCOLS	40
 
-int	Rows, Cols;		/* current screen size */
+extern int	Rows, Cols;	/* current screen size */
 
 /*
  * Translations from board coordinates to display coordinates.
@@ -134,8 +134,8 @@ struct shape {
 extern const struct shape shapes[];
 #define	randshape() (&shapes[random() % 7])
 
-const struct shape *curshape;
-const struct shape *nextshape;
+extern const struct shape *curshape;
+extern const struct shape *nextshape;
 
 /*
  * Shapes fall at a rate faster than once per second.
@@ -147,7 +147,7 @@ const struct shape *nextshape;
  * The value eventually reaches a limit, and things stop going faster,
  * but by then the game is utterly impossible.
  */
-long	fallrate;		/* less than 1 million; smaller => faster */
+extern long	fallrate;	/* less than 1 million; smaller => faster */
 #define	faster() (fallrate -= fallrate / 3000)
 
 /*
@@ -167,11 +167,11 @@ long	fallrate;		/* less than 1 million; smaller => faster */
  * we find that it is at rest and integrate it---until then, it can
  * still be moved or rotated).
  */
-int	score;			/* the obvious thing */
+extern int	score;		/* the obvious thing */
 extern gid_t	gid, egid;
 
-char	key_msg[100];
-int	showpreview;
+extern char	key_msg[100];
+extern int	showpreview;
 
 int	fits_in __P((const struct shape *, int));
 void	place __P((const struct shape *, int, int));
