@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.34 2000/12/23 13:19:31 itojun Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.35 2000/12/30 04:13:25 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.34 2000/12/23 13:19:31 itojun Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.35 2000/12/30 04:13:25 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -316,7 +316,7 @@ vfprintf(fp, fmt0, ap)
 	uio.uio_iovcnt = 0;
 	ret = 0;
 
-	(void)mbrtowc(NULL, "", 1, &ps);
+	memset(&ps, 0, sizeof(ps));
 
 	/*
 	 * Scan the format for conversions (`%' character).
