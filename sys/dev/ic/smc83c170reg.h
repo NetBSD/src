@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170reg.h,v 1.3 1998/08/11 00:13:48 thorpej Exp $	*/
+/*	$NetBSD: smc83c170reg.h,v 1.4 1999/07/27 00:55:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,21 +49,11 @@
  * EPIC transmit descriptor.  Must be 4-byte aligned.
  */
 struct epic_txdesc {
-#if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t	et_txlength;	/* transmit length */
-	u_int16_t	et_txstatus;	/* transmit status; see below */
-#else
 	u_int16_t	et_txstatus;	/* transmit status; see below */
 	u_int16_t	et_txlength;	/* transmit length */
-#endif
 	u_int32_t	et_bufaddr;	/* buffer address */
-#if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t	et_control;	/* control word; see below */
-	u_int16_t	et_buflength;	/* buffer length */
-#else
 	u_int16_t	et_buflength;	/* buffer length */
 	u_int16_t	et_control;	/* control word; see below */
-#endif
 	u_int32_t	et_nextdesc;	/* next descriptor pointer */
 };
 
@@ -92,21 +82,11 @@ struct epic_txdesc {
  * EPIC receive descriptor.  Must be 4-byte aligned.
  */
 struct epic_rxdesc {
-#if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t	er_rxlength;	/* receive frame length */
-	u_int16_t	er_rxstatus;	/* receive status; see below */
-#else
 	u_int16_t	er_rxstatus;	/* receive status; see below */
 	u_int16_t	er_rxlength;	/* receive frame length */
-#endif
 	u_int32_t	er_bufaddr;	/* buffer address */
-#if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t	er_control;	/* control word; see below */
-	u_int16_t	er_buflength;	/* buffer length */
-#else
 	u_int16_t	er_buflength;	/* buffer length */
 	u_int16_t	er_control;	/* control word; see below */
-#endif
 	u_int32_t	er_nextdesc;	/* next descriptor pointer */
 };
 
