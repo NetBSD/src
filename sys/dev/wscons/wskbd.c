@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.22 1999/05/15 14:22:46 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.23 1999/05/16 19:21:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.22 1999/05/15 14:22:46 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.23 1999/05/16 19:21:31 thorpej Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -303,8 +303,10 @@ wskbd_attach(parent, self, aux)
 
 		printf(": console keyboard");
 
+#if NWSDISPLAY > 0
 		if ((sc->sc_displaydv = wsdisplay_set_console_kbd(self)))
 			printf(", using %s", sc->sc_displaydv->dv_xname);
+#endif
 	}
 	printf("\n");
 
