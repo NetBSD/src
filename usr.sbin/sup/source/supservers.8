@@ -1,4 +1,4 @@
-.\"	$NetBSD: supservers.8,v 1.6 1999/08/24 15:52:56 bouyer Exp $
+.\"	$NetBSD: supservers.8,v 1.7 2001/09/11 03:33:52 itojun Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -35,6 +35,12 @@ supfilesrv, supscan \- sup server processes
 .SH "SYNOPSIS"
 supfilesrv
 [
+.I 
+-4
+] [
+.I 
+-6
+] [
 .I 
 -d
 ] [
@@ -136,6 +142,12 @@ will only respond to 3 requests simultaneously, forking a child
 process for each client. If it gets additional requests it will respond
 with the error FSSETUPBUSY. The -C MaxChildren switch can be used
 to increase (or decrease) this number.
+
+.I supfilesrv
+listens to IPv4 listening socket by default.
+With the -6 flag, it will listen to IPv6 listening socket.
+For dual stack support you will want to run two instances of
+.I supfilesrv.
 
 .SH "SUPSCAN"
 It is possible to pre-compile a list of the files in a collection
