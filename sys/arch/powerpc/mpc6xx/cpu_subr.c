@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.2 2001/10/20 08:23:49 billc Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.3 2001/10/22 01:45:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -68,8 +68,20 @@ cpu_attach_common(struct device *self, int id)
 #ifdef MULTIPROCESSOR
 	ci = &cpu_info[id];
 #else
+	/*
+	 * If this isn't the primary CPU, print an error message
+	 * and just bail out.
+	 */
+	if (id != 0) {
+		printf(": ID %d\n", id);
+		printf("%s: processor off-line; multiprocessor support "
+		    "not present in kernel\n", self->dv_xname);
+		return (NULL);
+	}
+
 	ci = &cpu_info_store;
 #endif
+
 	ci->ci_cpuid = id;
 	ci->ci_intrdepth = -1;
 	ci->ci_dev = self;
