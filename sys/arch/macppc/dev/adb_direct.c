@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.6 1998/11/05 11:46:07 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.7 1998/11/15 19:41:33 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1864,7 +1864,7 @@ adb_read_date_time(unsigned long *time)
 		return 0;
 
 	case ADB_HW_PB:
-		pm_read_date_time();
+		pm_read_date_time(time);
 		return -1;
 
 	case ADB_HW_CUDA:
