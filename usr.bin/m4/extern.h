@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2001/11/14 14:57:04 tv Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2002/01/21 21:49:57 tv Exp $	*/
 /*	$OpenBSD: extern.h,v 1.28 2001/10/10 18:12:00 espie Exp $	*/
 
 /*-
@@ -38,6 +38,16 @@
  *
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#endif
+
+#ifdef HAVE_ERR_H
+#include <err.h>
+#endif
 
 #include <unistd.h>
 
