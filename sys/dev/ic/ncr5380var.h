@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.14 1999/09/21 18:07:54 ragge Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.15 2000/03/18 16:13:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -212,12 +212,13 @@ struct ncr5380_softc {
 
 };
 
-void	ncr5380_init __P((struct ncr5380_softc *));
-void	ncr5380_reset_scsibus __P((struct ncr5380_softc *));
+void	ncr5380_attach __P((struct ncr5380_softc *));
+int	ncr5380_detach __P((struct ncr5380_softc *, int));
 int 	ncr5380_intr __P((struct ncr5380_softc *));
 int 	ncr5380_scsi_cmd __P((struct scsipi_xfer *));
 int 	ncr5380_pio_in __P((struct ncr5380_softc *, int, int, u_char *));
 int 	ncr5380_pio_out __P((struct ncr5380_softc *, int, int, u_char *));
+void	ncr5380_init __P((struct ncr5380_softc *));
 
 #ifdef	NCR5380_DEBUG
 struct ncr5380_softc *ncr5380_debug_sc;

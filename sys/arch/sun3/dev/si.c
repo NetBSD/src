@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.46 1999/11/22 18:34:00 jdolecek Exp $	*/
+/*	$NetBSD: si.c,v 1.47 2000/03/18 16:13:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -118,15 +118,6 @@ int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
 static void	si_minphys __P((struct buf *));
 
-/* This is copied from julian's bt driver */
-/* "so we have a default dev struct for our link struct." */
-static struct scsipi_device si_dev = {
-	NULL,		/* Use default error handler.	    */
-	NULL,		/* Use default start handler.		*/
-	NULL,		/* Use default async handler.	    */
-	NULL,		/* Use default "done" routine.	    */
-};
-
 /*
  * New-style autoconfig attachment. The cfattach
  * structures are in si_obio.c and si_vme.c
@@ -161,22 +152,6 @@ si_attach(sc)
 #endif
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
-	/*
-	 * Fill in the adapter.
-	 */
-	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
-
-	/*
-	 * Fill in the prototype scsi_link.
-	 */
-	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
-	ncr_sc->sc_link.device = &si_dev;
-	ncr_sc->sc_link.type = BUS_SCSI;
-
 #ifdef	DEBUG
 	if (si_debug)
 		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
@@ -206,12 +181,14 @@ si_attach(sc)
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
+	ncr_sc->sc_adapter.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+
 	/*
 	 *  Initialize si board itself.
 	 */
-	ncr5380_init(ncr_sc);
-	ncr5380_reset_scsibus(ncr_sc);
-	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
+	ncr5380_attach(ncr_sc);
+
 }
 
 static void

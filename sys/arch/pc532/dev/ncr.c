@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.43 1998/11/19 21:48:00 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.44 2000/03/18 16:13:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -81,13 +81,6 @@ static void	ncr_wait_not_req __P((struct ncr5380_softc *sc));
  */
 int ncr_default_options = 0;
 
-struct scsipi_device ncr_dev = {
-	NULL,			/* use default error handler		*/
-	NULL,			/* do not have a start function		*/
-	NULL,			/* have no async handler		*/
-	NULL			/* Use default done routine		*/
-};
-
 struct cfattach ncr_ca = {
 	sizeof(struct ncr5380_softc), ncr_match, ncr_attach
 };
@@ -132,22 +125,6 @@ ncr_attach(parent, self, aux)
 		printf("\n");
 
 	/*
-	 * Fill in the adapter.
-	 */
-	sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-
-	/*
-	 * Fill in the prototype scsi_link.
-	 */
-	sc->sc_link.scsipi_scsi.channel        = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc  = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter        = &sc->sc_adapter;
-	sc->sc_link.device	   = &ncr_dev;
-	sc->sc_link.type = BUS_SCSI;
-
-	/*
 	 * Initialize NCR5380 register addresses.
 	 */
 	sc->sci_r0 = NCR5380 + 0;
@@ -180,14 +157,13 @@ ncr_attach(parent, self, aux)
 	intr_establish(IR_SCSI1, ncr_intr, (void *)sc, sc->sc_dev.dv_xname,
 		IPL_BIO, IPL_BIO, RISING_EDGE);
 
+	sc->sc_link.scsipi_scsi.adapter_target = 7;
+	sc->sc_adapter.scsipi_minphys = minphys;
+
 	/*
 	 *  Initialize the SCSI controller itself.
 	 */
-	ncr5380_init(sc);
-	if (flags & NCR_RESET_BUS)
-		ncr5380_reset_scsibus(sc);
-
-	config_found(self, &(sc->sc_link), scsiprint);
+	ncr5380_attach(sc);
 }
 
 static void
