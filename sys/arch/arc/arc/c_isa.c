@@ -1,4 +1,4 @@
-/*	$NetBSD: c_isa.c,v 1.5 2003/06/14 21:10:20 tsutsui Exp $	*/
+/*	$NetBSD: c_isa.c,v 1.6 2003/07/15 00:04:40 lukem Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 
 /*-
@@ -90,6 +90,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * for "DESKTECH-ARCStation I" and DESKTECH-TYNE
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.6 2003/07/15 00:04:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

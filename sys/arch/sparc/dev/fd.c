@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.110 2003/07/11 12:09:12 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.111 2003/07/15 00:04:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  *
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.111 2003/07/15 00:04:54 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"

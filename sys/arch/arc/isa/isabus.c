@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.23 2003/06/15 05:58:45 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.24 2003/07/15 00:04:47 lukem Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -87,6 +87,9 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
 NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.24 2003/07/15 00:04:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

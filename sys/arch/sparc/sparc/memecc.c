@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.6 2002/10/02 16:02:10 thorpej Exp $	*/
+/*	$NetBSD: memecc.c,v 1.7 2003/07/15 00:05:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * ECC memory control.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.7 2003/07/15 00:05:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2003/02/26 17:39:07 pk Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.8 2003/07/15 00:05:07 lukem Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,6 +33,9 @@
  * Machine-dependent PCI bits for PCI controller in microSPARC-IIep.
  * References are to the microSPARC-IIep manual unless noted otherwise.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2003/07/15 00:05:07 lukem Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG

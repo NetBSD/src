@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.17 2003/03/12 07:51:00 jdc Exp $ */
+/*	$NetBSD: timer.c,v 1.18 2003/07/15 00:05:09 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,9 @@
  * the timer register (aka system counter).  The statclock is provided by
  * per cpu counter register(s) (aka processor counter(s)).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.18 2003/07/15 00:05:09 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

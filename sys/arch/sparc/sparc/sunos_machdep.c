@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.11 2003/01/18 06:45:06 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.12 2003/07/15 00:05:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.12 2003/07/15 00:05:09 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

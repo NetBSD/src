@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.6 2003/06/14 17:01:09 thorpej Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.7 2003/07/15 00:04:41 lukem Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -29,6 +29,9 @@
 /*
  * for NEC PCI generation machines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.7 2003/07/15 00:04:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
