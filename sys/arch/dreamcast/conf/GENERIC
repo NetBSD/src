@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.7 2001/02/01 01:27:59 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.8 2001/02/03 23:24:30 marcus Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -9,8 +9,8 @@ include "arch/dreamcast/conf/std.dreamcast"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=2880	# size of memory disk, in blocks
-options		MINIROOTSIZE=6000
+options 	MINIROOTSIZE=2880	# size of memory disk, in blocks
+#options	MINIROOTSIZE=6000
 
 options 	DONT_INIT_BSC
 
@@ -37,14 +37,14 @@ options		IOM_RAM_SIZE=0x01000000	# 16MB
 #options		USE_RTCCLK
 #options		SYNC_CLOCK_TO_RTC
 
-options		LED_ADDR=0xa8000000
+#options		LED_ADDR=0xa8000000
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
 
 #options		RTC_OFFSET=-540
-options 	HZ=64		# clock interrupt generates every 1/HZ sec
+options 	HZ=100		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE		# system call tracing via ktrace(1)
