@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2004/01/15 19:43:45 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2004/03/04 23:42:38 kleink Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -6,7 +6,9 @@ SRCS+=	alloca.S fabs.S
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c
 SRCS+=	nanf_ieee754.c
 SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c
-SRCS+=	frexp_ieee754.c isinf_ieee754.c isnan_ieee754.c
+SRCS+=	frexp_ieee754.c
+SRCS+=	isinff_ieee754.c isinfd_ieee754.c
+SRCS+=	isnanf_ieee754.c isnand_ieee754.c
 SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c
 SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
@@ -14,7 +16,6 @@ SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 # for which the generic ieee754 versions can be used
 .if	${MACHINE_ARCH} == "m68000"
 SRCS+=	infinityl_dbl_ieee754.c
-SRCS+=	isinfl_dbl_ieee754.c isnanl_dbl_ieee754.c
 .else
 SRCS+=	infinityl.c
 SRCS+=	fpclassifyl.c isfinitel.c isinfl.c isnanl.c signbitl.c

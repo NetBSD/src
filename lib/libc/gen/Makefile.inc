@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.126 2004/01/15 19:43:45 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.127 2004/03/04 23:42:39 kleink Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -51,8 +51,8 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 confstr.3 \
 	getprogname.3 getpwent.3 getttyent.3 getusershell.3 glob.3 \
 	humanize_number.3 \
 	initgroups.3 isalnum.3 isalpha.3 isascii.3 isblank.3 iscntrl.3 \
-	isdigit.3 isfinite.3 isgraph.3 isinf.3 islower.3 isnormal.3 isprint.3 \
-	ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
+	isdigit.3 isfinite.3 isgraph.3 isinf.3 islower.3 isnan.3 isnormal.3 \
+	isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
 	_lwp_makecontext.3 makecontext.3 \
 	modf.3 nice.3 nlist.3 \
 	pause.3 popen.3 psignal.3 pwcache.3 pthread_atfork.3 \
@@ -103,7 +103,6 @@ MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
-MLINKS+=isinf.3 isnan.3
 MLINKS+=makecontext.3 swapcontext.3
 MLINKS+=popen.3 pclose.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3

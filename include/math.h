@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.33 2004/03/04 00:17:44 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.34 2004/03/04 23:42:38 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -209,10 +209,6 @@ double	erf __P((double));
 double	erfc __P((double));
 double	gamma __P((double));
 double	hypot __P((double, double));
-int	isnan __P((double));
-#if defined(_LIBC)
-int	isnanl __P((long double));
-#endif
 int	finite __P((double));
 double	j0 __P((double));
 double	j1 __P((double));
@@ -261,6 +257,26 @@ double	scalb __P((double, double));
 
 #endif /* !_ANSI_SOURCE && ... */
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+/* 7.12.3.3 int isinf(real-floating x) */
+#ifdef __isinf
+#define	isinf(__x)	__isinf(__x)
+#else
+#define	isinf(__x)	__fpmacro_unary_floating(isinf, __x)
+#endif
+
+/* 7.12.3.4 int isnan(real-floating x) */
+#ifdef __isnan
+#define	isnan(__x)	__isnan(__x)
+#else
+#define	isnan(__x)	__fpmacro_unary_floating(isnan, __x)
+#endif
+#endif /* !_ANSI_SOURCE && ... */
+
 #if defined(_NETBSD_SOURCE)
 #ifndef __cplusplus
 int	matherr __P((struct exception *));
@@ -298,10 +314,6 @@ double	lgamma_r __P((double, int *));
 
 
 #if defined(_NETBSD_SOURCE)
-int	isinf __P((double));
-#if defined(_LIBC)
-int	isinfl __P((long double));
-#endif
 
 /* float versions of ANSI/POSIX functions */
 float	acosf __P((float));
@@ -397,12 +409,18 @@ int	__fpclassifyf __P((float));
 int	__fpclassifyd __P((double));
 int	__isfinitef __P((float));
 int	__isfinited __P((double));
+int	__isinff __P((float));
+int	__isinfd __P((double));
+int	__isnanf __P((float));
+int	__isnand __P((double));
 int	__signbitf __P((float));
 int	__signbitd __P((double));
 
 #ifdef __HAVE_LONG_DOUBLE
 int	__fpclassifyl __P((long double));
 int	__isfinitel __P((long double));
+int	__isinfl __P((long double));
+int	__isnanl __P((long double));
 int	__signbitl __P((long double));
 #endif
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: isinfl_dbl_ieee754.c,v 1.2 2003/10/24 10:30:36 kleink Exp $	*/
+/*	$NetBSD: isinfd_ieee754.c,v 1.1 2004/03/04 23:42:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,38 +40,29 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isinfl_dbl_ieee754.c,v 1.2 2003/10/24 10:30:36 kleink Exp $");
+__RCSID("$NetBSD: isinfd_ieee754.c,v 1.1 2004/03/04 23:42:39 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
-#include <sys/types.h>
 #include <machine/ieee.h>
-#include <float.h>
 #include <math.h>
 
-#if 0	/* XXX Currently limited to internal use. */
+/* libc.so.12 ABI compatbility */
 #ifdef __weak_alias
-__weak_alias(isinfl,_isinfl)
-#endif
-#endif
-
-#if LDBL_MANT_DIG != DBL_MANT_DIG
-#error double / long double mismatch
+__weak_alias(isinf,__isinfd)
 #endif
 
 /*
- * isinfl() for platforms where long double == double.
+ * 7.12.3.3 isinf - test for infinity
+ *          IEEE 754 double-precision version
  */
 int
-isinfl(long double ld)
+__isinfd(double x)
 {
-	union {
-		long double ld;
-		struct ieee_double dbl;
-	} u;
+	union ieee_double_u u;
 
-	u.ld = ld;
-	return (u.dbl.dbl_exp == DBL_EXP_INFNAN &&
-	    (u.dbl.dbl_frach == 0 && u.dbl.dbl_fracl == 0));
+	u.dblu_d = x;
+
+	return (u.dblu_dbl.dbl_exp == DBL_EXP_INFNAN &&
+	    (u.dblu_dbl.dbl_frach == 0 && u.dblu_dbl.dbl_fracl == 0));
 }

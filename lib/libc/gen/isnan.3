@@ -1,4 +1,4 @@
-.\"	$NetBSD: isinf.3,v 1.11 2004/03/04 23:42:39 kleink Exp $
+.\"	$NetBSD: isnan.3,v 1.1 2004/03/04 23:42:39 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,48 +27,50 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)isinf.3	8.2 (Berkeley) 1/29/94
+.\"     From: @(#)isinf.3	8.2 (Berkeley) 1/29/94
+.\"	from: NetBSD: isinf.3,v 1.10 2003/08/07 16:42:52 agc Exp 
 .\"
 .Dd March 5, 2004
-.Dt ISINF 3
+.Dt ISNAN 3
 .Os
 .Sh NAME
-.Nm isinf
-.Nd test for infinity
+.Nm isnan
+.Nd test for not-a-number
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In math.h
 .Ft int
-.Fn isinf "real-floating x"
+.Fn isnan "real-floating x"
 .Sh DESCRIPTION
 The
-.Fn isinf
+.Fn isnan
 macro determines whether its argument
 .Fa x
-is an infinity (positive or negative).
+is not-a-number
+.Pq Dq NaN .
 An argument represented in a format wider than its semantic type is
 converted to its semantic type first.
 The determination is then based on the type of the argument.
 .Ss IEEE 754
 It is determined whether the value of
 .Fa x
-is an infinity.
+is a NaN.
 .Ss VAX
-Infinities are not supported.
+NaNs are not supported.
 .Sh RETURN VALUES
 The
-.Fn isinf
+.Fn isnan
 macro returns a non-zero value if the value of
 .Fa x
-is an infinity.
+is a NaN.
 Otherwise 0 is returned.
 .Sh SEE ALSO
 .Xr fpclassify 3 ,
 .Xr isfinite 3 ,
 .Xr isnormal 3 ,
+.Xr isinf 3 ,
 .Xr isinff 3 ,
-.Xr isnan 3 ,
 .Xr isnanf 3 ,
 .Xr math 3 ,
 .Xr signbit 3
@@ -79,6 +81,6 @@ Otherwise 0 is returned.
 .Re
 .Sh STANDARDS
 The
-.Fn isinf
+.Fn isnan
 macro conforms to
 .St -isoC-99 .

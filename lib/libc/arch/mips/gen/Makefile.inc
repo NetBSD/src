@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2004/01/15 19:43:45 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2004/03/04 23:42:38 kleink Exp $
 
 SRCS+=	fabs.S ldexp.S modf.S
 
@@ -6,9 +6,10 @@ SRCS+=	fabs.S ldexp.S modf.S
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c infinityl_dbl_ieee754.c
 SRCS+=	nanf_ieee754.c
 SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c
-SRCS+=	frexp_ieee754.c isinf_ieee754.c isinfl_dbl_ieee754.c isnan_ieee754.c
+SRCS+=	frexp_ieee754.c
+SRCS+=	isinff_ieee754.c isinfd_ieee754.c
+SRCS+=	isnanf_ieee754.c isnand_ieee754.c
 SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c
-SRCS+=	isnanl_dbl_ieee754.c
 SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2004/01/15 19:43:45 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2004/03/04 23:42:38 kleink Exp $
 
 SRCS+=	bswap16.c bswap32.c bswap64.c __sigsetjmp14.S __setjmp14.S _setjmp.S
 
@@ -8,8 +8,8 @@ SRCS+=	nanf_ieee754.c
 SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c
 SRCS+=	frexp_ieee754.c ldexp_ieee754.c
 SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c
-SRCS+=	isinf_ieee754.c isinfl_dbl_ieee754.c
-SRCS+=	isnan_ieee754.c isnanl_dbl_ieee754.c
+SRCS+=	isinff_ieee754.c isinfd_ieee754.c
+SRCS+=	isnanf_ieee754.c isnand_ieee754.c
 SRCS+=	modf_ieee754.c
 SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
