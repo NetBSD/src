@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2000/08/01 23:38:26 jeffs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.106 2000/09/13 01:12:47 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2000/08/01 23:38:26 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2000/09/13 01:12:47 chuck Exp $");
 
 /*
  *	Manages physical address maps.
@@ -652,7 +652,8 @@ pmap_activate(p)
 	if (p == curproc) {
 #ifdef	MIPS3
 		if (CPUISMIPS3) {
-			mips3_write_xcontext_upper((u_int32_t)pmap->pm_segtab);
+			extern u_int32_t mips3_segbase; /* locore_mips3.S */
+			mips3_segbase = (u_int32_t)pmap->pm_segtab;
 		}
 #endif
 		MachSetPID(pmap->pm_asid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.49 2000/09/12 15:40:36 soren Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.50 2000/09/13 01:12:47 chuck Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -148,7 +148,20 @@
  */
 	.set	noreorder
 	.set	mips3
+
+/*
+ * TLB handling data.   'mips3_segbase' points to the base of the segment
+ * table.   this is read and written by C code in mips_machdep.c.
+ *
+ * XXX: use linear mapped PTs at fixed VA in kseg2 in the future?
+ */
+	.sdata
+	.globl	_C_LABEL(mips3_segbase)
+_C_LABEL(mips3_segbase):
+	.word	0
+
 	.text
+
 
 /*
  *----------------------------------------------------------------------------
@@ -164,68 +177,48 @@
  *
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
- *
- * NOTE:  This relies on a non-standard use of the XContext register.  The
- * upper 32 bits of the XContext register is loaded with the 32-bit address
- * of the user PT segment table.  This eliminatees the need to load the
- * address of the segment table from memory on each miss.
- * Also, the BadVAddr register contains the virtual address that caused the
- * TLBmiss - the 32-bit address is signed extended to 64 bits in the BadVAddr
- * register, so the upper 32 bits will be the same as bit 31 of the virtual
- * address and is used to check for a user or kernel address.
- *
  *----------------------------------------------------------------------------
  */
-VECTOR(mips3_TLBMiss, unknown)
 	.set	noat
-	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
-	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
-	bltz	k0, 4f			# Kernel address (KSEG) if bit 31 set
-	srl	k0, k0, SEGSHIFT - 2	# compute segment table index
-	and	k0, k0, 0x7fc		# index of segment table
-	dsra	k1, k1, 32		# Tricky -- The lower bit is
-					# actually part of KSU but we must
-					# be a user address
-	add	k1, k0, k1
-	lw	k1, 0(k1)
-	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
-	beq	k1, zero, 5f			# invalid segment map
-	srl	k0, k0, PGSHIFT - 2		# compute segment map index
-	and	k0, k0, ((NPTEPG/2) - 1) << 3
-	addu	k1, k1, k0			# index into segment map
-	ld	k0, 0(k1)			# load both 32 bit pte's at once
-3:	dsll	k1, k0, 34			# Clear soft wired, ro bits
-	dsrl	k1, k1, 34
-#if	BYTE_ORDER == BIG_ENDIAN
-	dmtc0	k1, MIPS_COP_0_TLB_LO1
-	dsll	k0, k0, 2
-	dsrl	k0, k0, 34
-	dmtc0	k0, MIPS_COP_0_TLB_LO0
-#else
-	dmtc0	k1, MIPS_COP_0_TLB_LO0
-	dsll	k0, k0, 2
-	dsrl	k0, k0, 34
-	dmtc0	k0, MIPS_COP_0_TLB_LO1
-#endif
-	nop
-	nop					# required for QED5230
-	tlbwr					# update TLB
-	nop					# 3 nops for R4000/R4400
-	nop
-	nop
-	eret
-4:
-	j	_C_LABEL(mips3_TLBMissException)
-	nop
-5:
-	j	mips3_SlowFault
-	nop
+VECTOR(mips3_TLBMiss, unknown)
+	mfc0	k0, MIPS_COP_0_BAD_VADDR    #00: k0=bad address
+	lui	k1, %hi(mips3_segbase)	    #01: k1=hi of segbase
+	bltz	k0, 4f			    #02: k0<0 -> 4f (kernel fault)
+	srl	k0, 20			    #03: k0=seg offset (almost)
+	lw	k1, %lo(mips3_segbase)(k1)  #04: k1=segment tab base
+	andi	k0, k0, 0xffc		    #05: k0=seg offset (mask 0x3)
+	addu	k1, k0, k1		    #06: k1=seg entry address
+	lw	k1, 0(k1)		    #07: k1=seg entry
+	mfc0	k0, MIPS_COP_0_BAD_VADDR    #08: k0=bad address (again)
+	beq	k1, zero, 5f		    #09: ==0 -- no page table
+	srl	k0, 10			    #0a: k0=VPN (aka va>>10)
+	andi	k0, k0, 0xff8		    #0b: k0=page tab offset
+	addu	k1, k1, k0		    #0c: k1=pte address
+	lw	k0, 0(k1)		    #0d: k0=lo0 pte
+	lw	k1, 4(k1)		    #0e: k1=lo1 pte
+	sll	k0, 2			    #0f: chop top 2 bits (part 1a)
+	srl	k0, 2			    #10: chop top 2 bits (part 1b)
+	mtc0	k0, MIPS_COP_0_TLB_LO0	    #11: lo0 is loaded
+	sll	k1, 2			    #12: chop top 2 bits (part 2a)
+	srl	k1, 2			    #13: chop top 2 bits (part 2b)
+	mtc0	k1, MIPS_COP_0_TLB_LO1      #14: lo1 is loaded
+	nop				    #15: standard nop
+	nop				    #16: extra nop for QED5230
+	tlbwr				    #17: write to tlb
+	nop				    #18: standard nop
+	nop				    #19: needed by R4000/4400
+	nop				    #1a: needed by R4000/4400
+	eret				    #1b: return from exception
+4:	j _C_LABEL(mips3_TLBMissException)  #1c: kernel exception
+	nop				    #1d: branch delay slot
+5:	j	mips3_SlowFault		    #1e: no page table present
+	nop				    #1f: branch delay slot
 VECTOR_END(mips3_TLBMiss)
-
+	.set	at
 /*
  * mips3_XTLBMiss routine
  *
- *	Vector code for the TLB-miss exception vector 0x80000080 on an r4000.
+ *	Vector code for the XTLB-miss exception vector 0x80000080 on an r4000.
  *
  * This code is copied to the XTLB exception vector address to
  * handle TLB translation misses while in 64-bit mode.
@@ -236,62 +229,44 @@ VECTOR_END(mips3_TLBMiss)
  *
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
- *
- * NOTE:  This also relies on a non-standard use of the XContext register.  The
- * upper 32 bits of the XContext register is loaded with the 32-bit address
- * of the user PT segment table.  This eliminatees the need to load the
- * address of the segment table from memory on each miss.  The 32-bit address
- * is shifted to form the 64-bit address, and will be a KSEG0 compatibility
- * mode address (tricky!).
- * Bit 63 in the BadVAddr register will be 0 for a user address, 1 for
- * a kernel address.
  */
+	.set	noat
 VECTOR(mips3_XTLBMiss, unknown)
-	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
-	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
-	bltz	k0, 4f			# Kernel address if bit 63 set.
-	srl	k0, k0, SEGSHIFT - 2	# compute segment table index
-	and	k0, k0, 0x7fc		# index of segment table
-	dsra	k1, k1, 32		# Tricky -- The lower bit is
-					# actually part of KSU but we must
-					# be a user address
-	add	k1, k0, k1
-	lw	k1, 0(k1)
-	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
-	beq	k1, zero, 5f			# invalid segment map
-	srl	k0, k0, PGSHIFT - 2		# compute segment map index
-	and	k0, k0, ((NPTEPG/2) - 1) << 3
-	addu	k1, k1, k0			# index into segment map
-	ld	k0, 0(k1)			# load both 32 bit pte's at once
-3:	dsll	k1, k0, 34			# Clear soft wired, ro bits
-	dsrl	k1, k1, 34
-#if	BYTE_ORDER == _BIG_ENDIAN
-	dmtc0	k1, MIPS_COP_0_TLB_LO1
-	dsll	k0, k0, 2
-	dsrl	k0, k0, 34
-	dmtc0	k0, MIPS_COP_0_TLB_LO0
-#else
-	dmtc0	k1, MIPS_COP_0_TLB_LO0
-	dsll	k0, k0, 2
-	dsrl	k0, k0, 34
-	dmtc0	k0, MIPS_COP_0_TLB_LO1
-#endif
-	nop
-	nop					# required for QED5230
-	tlbwr					# update TLB
-	nop					# 3 nops for R4000/R4400
-	nop
-	nop
-	eret
-4:
-	j	mips3_TLBMissException
-	nop
-5:
-	j	mips3_SlowFault
-	nop
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR    #00: k0=bad address
+	lui	k1, %hi(mips3_segbase)	    #01: k1=hi of segbase
+	bltz	k0, 4f			    #02: k0<0 -> 4f (kernel fault)
+	srl	k0, 20			    #03: k0=seg offset (almost)
+	lw	k1, %lo(mips3_segbase)(k1)  #04: k1=segment tab base
+	andi	k0, k0, 0xffc		    #05: k0=seg offset (mask 0x3)
+	addu	k1, k0, k1		    #06: k1=seg entry address
+	lw	k1, 0(k1)		    #07: k1=seg entry
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR    #08: k0=bad address (again)
+	beq	k1, zero, 5f		    #09: ==0 -- no page table
+	srl	k0, 10			    #0a: k0=VPN (aka va>>10)
+	andi	k0, k0, 0xff8		    #0b: k0=page tab offset
+	addu	k1, k1, k0		    #0c: k1=pte address
+	lw	k0, 0(k1)		    #0d: k0=lo0 pte
+	lw	k1, 4(k1)		    #0e: k1=lo1 pte
+	sll	k0, 2			    #0f: chop top 2 bits (part 1a)
+	srl	k0, 2			    #10: chop top 2 bits (part 1b)
+	mtc0	k0, MIPS_COP_0_TLB_LO0	    #11: lo0 is loaded
+	sll	k1, 2			    #12: chop top 2 bits (part 2a)
+	srl	k1, 2			    #13: chop top 2 bits (part 2b)
+	mtc0	k1, MIPS_COP_0_TLB_LO1      #14: lo1 is loaded
+	nop				    #15: standard nop
+	nop				    #16: extra nop for QED5230
+	tlbwr				    #17: write to tlb
+	nop				    #18: standard nop
+	nop				    #19: needed by R4000/4400
+	nop				    #1a: needed by R4000/4400
+	eret				    #1b: return from exception
+4:	j _C_LABEL(mips3_TLBMissException)  #1c: kernel exception
+	nop				    #1d: branch delay slot
+5:	j	mips3_SlowFault		    #1e: no page table present
+	nop				    #1f: branch delay slot
 VECTOR_END(mips3_XTLBMiss)
-
 	.set	at
+
 
 /*
  *----------------------------------------------------------------------------
@@ -2496,20 +2471,6 @@ LEAF(mips3_write_compare)
 	j	ra
 	nop
 END(mips3_write_compare)
-
-LEAF(mips3_write_xcontext_upper)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
-	nop
-	nop
-	nop
-	dsll	a0, 32
-	dmtc0	a0, MIPS_COP_0_TLB_XCONTEXT	# Store segment map for access
-	nop
-	nop
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-END(mips3_write_xcontext_upper)
 
 /*
  * Clear BEV bit if it was set.
