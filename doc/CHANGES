@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.125 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.126 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -335,3 +335,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sh5: Shared libraries now supported on SH5 (but not yet enabled
 		in bsd.own.mk due to sundry toolchain issues).
 		[scw 20030325]
+	file(1): update to 4.00. [pooka 20030326]
+	libmagic: add libmagic, which is currently used by file(1)
+		[pooka 20030326]
