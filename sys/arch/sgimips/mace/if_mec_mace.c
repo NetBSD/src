@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec_mace.c,v 1.3 2004/07/11 03:13:04 tsutsui Exp $ */
+/* $NetBSD: if_mec_mace.c,v 1.4 2004/07/14 09:45:47 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.3 2004/07/11 03:13:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.4 2004/07/14 09:45:47 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1188,7 +1188,6 @@ mec_setfilter(struct mec_softc *sc)
 			return;
 		}
 
-/* XXX not sure hash CRC for MEC is be or le */
 #define mec_calchash(addr)	(ether_crc32_be((addr), ETHER_ADDR_LEN) >> 26)
 
 		hash = mec_calchash(enm->enm_addrlo);
