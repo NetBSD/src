@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.75 2000/08/24 14:49:41 minoura Exp $
+.\" $NetBSD: main,v 1.76 2000/08/25 23:51:43 jhawk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .ds MACHINE_LIST alpha amiga arm26 arm32 atari hp300 i386 mac68k macppc mvme68k
 .as MACHINE_LIST " next68k pc532 pmax sparc sun3 sun3x vax x68k
 .so \*[.CURDIR]/../common/macros
-.Dd 23 March 1999
+.Dd 24 August 2000
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
