@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 1997/01/21 20:37:05 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 1997/01/27 07:53:29 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1450,8 +1450,8 @@ bus_space_handle_t	*mhp;
 	vm_offset_t	va;
 	u_long		pa, endpa;
 
-	pa    = atari_trunc_page(bpa);
-	endpa = atari_round_page((bpa + size) - 1);
+	pa    = atari_trunc_page(bpa + t);
+	endpa = atari_round_page((bpa + t + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
