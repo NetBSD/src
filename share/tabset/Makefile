@@ -8,6 +8,14 @@ NOOBJ=	noobj
 all clean cleandir depend lint tags:
 
 install:
+	@if [ ! -d ${DESTDIR}${BINDIR}/tabset ]; then \
+                /bin/rm -f ${DESTDIR}${BINDIR}/tabset ; \
+                mkdir -p ${DESTDIR}${BINDIR}/tabset ; \
+                chown root.wheel ${DESTDIR}${BINDIR}/tabset ; \
+                chmod 755 ${DESTDIR}${BINDIR}/tabset ; \
+        else \
+                true ; \
+        fi
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}/tabset
 

@@ -7,6 +7,14 @@ NOOBJ=	noobj
 all clean cleandir depend lint tags:
 
 install:
+	@if [ ! -d ${DESTDIR}${BINDIR}/misc ]; then \
+                /bin/rm -f ${DESTDIR}${BINDIR}/misc ; \
+                mkdir -p ${DESTDIR}${BINDIR}/misc ; \
+                chown root.wheel ${DESTDIR}${BINDIR}/misc ; \
+                chmod 755 ${DESTDIR}${BINDIR}/misc ; \
+        else \
+                true ; \
+        fi
 	cd ${.CURDIR}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}/misc
 

@@ -14,6 +14,14 @@ OFILES=	tmac.an.v6compat tmac.an6n tmac.an6t tmac.a tmac.cp
 all clean cleandir depend lint tags:
 
 beforeinstall:
+	@if [ ! -d ${DESTDIR}${BINDIR}/tmac ]; then \
+                /bin/rm -f ${DESTDIR}${BINDIR}/tmac ; \
+                mkdir -p ${DESTDIR}${BINDIR}/tmac ; \
+                chown root.wheel ${DESTDIR}${BINDIR}/tmac ; \
+                chmod 755 ${DESTDIR}${BINDIR}/tmac ; \
+        else \
+                true ; \
+        fi
 	for i in ${MSRCS}; do \
 		sed -f ${STRIP_SED} < $$i > ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
