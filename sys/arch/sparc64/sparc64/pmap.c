@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 1998/09/07 23:59:08 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 1998/09/09 02:49:56 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -1281,10 +1281,11 @@ pmap_release(pm)
 								       data&TLB_PA_MASK);
 					}
 					vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)ptbl));
-					stxa(&ptbl[k], ASI_PHYS_CACHED, NULL);
+					stxa(&pdir[k], ASI_PHYS_CACHED, NULL);
 				}
 			}
 			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pdir));
+			stxa(&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
 		}
 	vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pm->pm_segs));
 	pm->pm_segs = NULL;
@@ -1348,11 +1349,12 @@ pmap_collect(pm)
 	struct pmap *pm;
 {
 #if 1
-	int i, j, k, n, m;
+	int i, j, k, n, m, s;
 	paddr_t *pdir, *ptbl;
 	/* This is a good place to scan the pmaps for page tables with
 	 * no valid mappings in them and free them. */
 	
+	s = splimp();
 	for (i=0; i<STSZ; i++) {
 		if ((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			m = 0;
@@ -1368,7 +1370,7 @@ pmap_collect(pm)
 					if (!n) {
 						/* Free the damn thing */
 						vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)ptbl));
-						stxa(&ptbl[k], ASI_PHYS_CACHED, NULL);
+						stxa(&pdir[k], ASI_PHYS_CACHED, NULL);
 					}
 				}
 			}
@@ -1379,6 +1381,7 @@ pmap_collect(pm)
 			}
 		}
 	}
+	splx(s);
 #endif
 }
 
@@ -3122,10 +3125,12 @@ int
 pmap_count_res(pm)
 	pmap_t pm;
 {
-	int i, j, k, n;
+	int i, j, k, n, s;
 	paddr_t *pdir, *ptbl;
 	/* Almost the same as pmap_collect() */
 
+	/* Don't want one of these pages reused while we're reading it. */
+	s = splimp();
 	n = 0;
 	for (i=0; i<STSZ; i++) {
 		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
@@ -3140,6 +3145,7 @@ pmap_count_res(pm)
 			}
 		}
 	}
+	splx(s);
 	return n;
 }
 
