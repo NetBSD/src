@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.36 2002/10/01 12:56:49 fvdl Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.37 2002/10/05 21:19:16 fvdl Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36 2002/10/01 12:56:49 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2002/10/05 21:19:16 fvdl Exp $");
 
 #include "opt_ddb.h"
 
@@ -79,6 +79,7 @@ const struct db_command db_machine_command_table[] = {
 void kdbprinttrap __P((int, int));
 #ifdef MULTIPROCESSOR
 extern void ddb_ipi(int, struct trapframe);
+extern void ddb_ipi_tss(struct i386tss *);
 static void ddb_suspend(struct trapframe *);
 int ddb_vec;
 #endif
@@ -99,7 +100,7 @@ db_machine_init()
 #ifdef MULTIPROCESSOR
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
 	setgate((struct gate_descriptor *)&idt[ddb_vec], &Xintrddbipi, 0,
-	    SDT_SYS386IGT, SEL_KPL);
+	    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
 #endif
 }
 
@@ -171,8 +172,11 @@ kdb_trap(type, code, regs)
 	int type, code;
 	db_regs_t *regs;
 {
-	int s;
+	int s, flags;
 	db_regs_t dbreg;
+
+	flags = regs->tf_err & TC_FLAGMASK;
+	regs->tf_err &= ~TC_FLAGMASK;
 
 	switch (type) {
 	case T_BPTFLT:	/* breakpoint */
@@ -200,7 +204,7 @@ kdb_trap(type, code, regs)
 #endif
 	/* XXX Should switch to kdb's own stack here. */
 	ddb_regs = *regs;
-	if (KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
+	if (!(flags & TC_TSS) && KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
 		/*
 		 * Kernel mode - esp and ss not saved
 		 */
@@ -241,7 +245,7 @@ kdb_trap(type, code, regs)
 	regs->tf_eip    = ddb_regs.tf_eip;
 	regs->tf_cs     = ddb_regs.tf_cs;
 	regs->tf_eflags = ddb_regs.tf_eflags;
-	if (!KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
+	if (!(flags & TC_TSS) && !KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
 		/* ring transit - saved esp and ss valid */
 		regs->tf_esp    = ddb_regs.tf_esp;
 		regs->tf_ss     = ddb_regs.tf_ss;
@@ -276,14 +280,44 @@ ddb_ipi(int cpl, struct trapframe frame)
 	ddb_suspend(&frame);
 }
 
+void
+ddb_ipi_tss(struct i386tss *tss)
+{
+	struct trapframe tf;
+
+	tf.tf_gs = tss->tss_gs;
+	tf.tf_fs = tss->tss_fs;
+	tf.tf_es = tss->__tss_es;
+	tf.tf_ds = tss->__tss_ds;
+	tf.tf_edi = tss->__tss_edi;
+	tf.tf_esi = tss->__tss_esi;
+	tf.tf_ebp = tss->tss_ebp;
+	tf.tf_ebx = tss->__tss_ebx;
+	tf.tf_edx = tss->__tss_edx;
+	tf.tf_ecx = tss->__tss_ecx;
+	tf.tf_eax = tss->__tss_eax;
+	tf.tf_trapno = 0;
+	tf.tf_err = TC_TSS;
+	tf.tf_eip = tss->__tss_eip;
+	tf.tf_cs = tss->__tss_cs;
+	tf.tf_eflags = tss->__tss_eflags;
+	tf.tf_esp = tss->tss_esp;
+	tf.tf_ss = tss->__tss_ss;
+
+	ddb_suspend(&tf);
+}
+
 static void
 ddb_suspend(struct trapframe *frame)
 {
 	volatile struct cpu_info *ci = curcpu();
 	db_regs_t regs;
+	int flags;
 
 	regs = *frame;
-	if (KERNELMODE(regs.tf_cs, regs.tf_eflags)) {
+	flags = regs.tf_err & TC_FLAGMASK;
+	regs.tf_err &= ~TC_FLAGMASK;
+	if (!(flags & TC_TSS) && KERNELMODE(regs.tf_cs, regs.tf_eflags)) {
 		/*
 		 * Kernel mode - esp and ss not saved
 		 */
