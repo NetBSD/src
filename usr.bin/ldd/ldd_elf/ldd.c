@@ -1,4 +1,40 @@
-/*	$NetBSD: ldd.c,v 1.10 2000/11/10 23:53:04 mycroft Exp $	*/
+/*	$NetBSD: ldd.c,v 1.11 2000/12/12 11:16:02 simonb Exp $	*/
+
+/*-
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -31,6 +67,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
+
+#include <a.out.h>
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -39,9 +81,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <dirent.h>
 
 #include "debug.h"
 #include "rtld.h"
@@ -64,6 +103,7 @@ Search_Path *_rtld_paths;
 Library_Xform *_rtld_xforms;
 
 static void print_needed(Obj_Entry *);
+static int ldd_aout(char *, int);
 
 int
 main(
@@ -91,11 +131,13 @@ main(
 	    continue;
 	}
 	_rtld_objmain = _rtld_map_object(*argv, fd, NULL);
-	close(fd);
 	if (_rtld_objmain == NULL) {
-	    warnx("%s", _rtld_error_message);
+		if (ldd_aout(*argv, fd) < 0)
+		    warnx("%s", _rtld_error_message);
+	    close(fd);
 	    continue;
 	}
+	close(fd);
 
 	_rtld_objmain->path = xstrdup(*argv);
 	_rtld_objmain->mainprog = true;
@@ -180,4 +222,53 @@ print_needed(
 	    printf("\t %s => not found\n", libname);
 	}
     }
+}
+
+static int
+ldd_aout(char *file, int fd)
+{
+	struct exec hdr;
+	int status, rval;
+
+	lseek(fd, 0, SEEK_SET);
+	if (read(fd, &hdr, sizeof hdr) != sizeof hdr
+	    || (N_GETFLAG(hdr) & EX_DPMASK) != EX_DYNAMIC
+#if 1 /* Compatibility */
+	    || hdr.a_entry < N_PAGSIZ(hdr)
+#endif
+	    ) {
+		/* calling function prints warning */
+		return -1;
+	}
+
+	setenv("LD_TRACE_LOADED_OBJECTS", "", 1);
+	setenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", file, 1);
+	printf("%s:\n", file);
+	fflush(stdout);
+
+	rval = 0;
+	switch (fork()) {
+	case -1:
+		err(1, "fork");
+		break;
+	default:
+		if (wait(&status) <= 0) {
+			warn("wait");
+			rval |= 1;
+		} else if (WIFSIGNALED(status)) {
+			fprintf(stderr, "%s: signal %d\n",
+					file, WTERMSIG(status));
+			rval |= 1;
+		} else if (WIFEXITED(status) && WEXITSTATUS(status)) {
+			fprintf(stderr, "%s: exit status %d\n",
+					file, WEXITSTATUS(status));
+			rval |= 1;
+		}
+		break;
+	case 0:
+		rval |= execl(file, file, NULL) != 0;
+		perror(file);
+		_exit(1);
+	}
+	return rval;
 }
