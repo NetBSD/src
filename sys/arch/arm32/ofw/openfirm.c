@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.4 2000/11/14 07:13:02 matt Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.5 2000/11/18 12:15:50 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -176,7 +176,7 @@ int
 OF_nextprop(handle, prop, nextprop)
 	int handle;
 	char *prop;
-	char *nextprop;
+	void *nextprop;
 {
 	static struct {
 		char *name;
@@ -184,7 +184,7 @@ OF_nextprop(handle, prop, nextprop)
 		int nreturns;
 		int phandle;
 		char *prop;
-		char *nextprop;
+		void *nextprop;
 		int flags;
 	} args = {
 		"nextprop",
