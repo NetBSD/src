@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.23 2004/05/21 02:26:20 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.24 2004/05/22 15:42:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -290,10 +290,12 @@ __BEGIN_DECLS
 extern struct __res_state *__res_get_state(void);
 extern void __res_put_state(struct __res_state *);
 
-#ifndef _REENTRANT
-/* Binary compatibility */
-extern struct __res_state _res;
-#endif
+/*
+ * Source and Binary compatibility; _res will not work properly
+ * with multi-threaded programs.
+ */
+extern struct __res_state *__res_state(void);
+#define _res (*__res_state())
 
 __END_DECLS
 
