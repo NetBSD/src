@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.32 2002/01/27 13:23:21 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.33 2002/02/17 20:59:36 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,11 +20,12 @@
 
 include 	"arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.32 $"
+#ident 		"GENERIC-$Revision: 1.33 $"
 
 maxusers	16		# estimated number of users
 
 # CPU support
+options		SH3
 options 	SH7708R		# 100MHz
 options 	MMEYE
 options 	MMEYE_NEW_INT
