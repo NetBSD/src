@@ -1,4 +1,4 @@
-/*	$NetBSD: mopprobe.c,v 1.5 1997/10/16 23:25:24 lukem Exp $	*/
+/*	$NetBSD: mopprobe.c,v 1.6 2001/01/11 01:42:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopprobe.c,v 1.5 1997/10/16 23:25:24 lukem Exp $");
+__RCSID("$NetBSD: mopprobe.c,v 1.6 2001/01/11 01:42:50 lukem Exp $");
 #endif
 
 /*
@@ -79,7 +79,7 @@ main(argc, argv)
 	char   *interface;
 
 	/* All error reporting is done through syslogs. */
-	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog("mopprobe", LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "ado")) != -1) {
