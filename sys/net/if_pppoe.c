@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.46 2003/09/03 21:36:31 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.47 2003/09/16 20:59:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.46 2003/09/03 21:36:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.47 2003/09/16 20:59:04 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -849,16 +849,40 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		}
 		if (parms->ac_name) {
 			size_t s;
-			char * p = malloc(parms->ac_name_len + 1, M_DEVBUF, M_WAITOK);
-			copyinstr(parms->ac_name, p, parms->ac_name_len, &s);
+			char * p = malloc(parms->ac_name_len + 1, M_DEVBUF,
+			    M_WAITOK);
+			if (p == NULL)
+				return ENOMEM;
+			error = copyinstr(parms->ac_name, p,
+			    parms->ac_name_len+1, &s);
+			if (error != 0) {
+				free(p, M_DEVBUF);
+				return error;
+			}
+			if (s != parms->ac_name_len+1) {
+				free(p, M_DEVBUF);
+				return EINVAL;
+			}
 			if (sc->sc_concentrator_name)
 				free(sc->sc_concentrator_name, M_DEVBUF);
 			sc->sc_concentrator_name = p;
 		}
 		if (parms->service_name) {
 			size_t s;
-			char * p = malloc(parms->service_name_len + 1, M_DEVBUF, M_WAITOK);
-			copyinstr(parms->service_name, p, parms->service_name_len, &s);
+			char * p = malloc(parms->service_name_len + 1, M_DEVBUF,
+			    M_WAITOK);
+			if (p == NULL)
+				return ENOMEM;
+			error = copyinstr(parms->service_name, p,
+			    parms->service_name_len+1, &s);
+			if (error != 0) {
+				free(p, M_DEVBUF);
+				return error;
+			}
+			if (s != parms->service_name_len+1) {
+				free(p, M_DEVBUF);
+				return EINVAL;
+			}
 			if (sc->sc_service_name)
 				free(sc->sc_service_name, M_DEVBUF);
 			sc->sc_service_name = p;
