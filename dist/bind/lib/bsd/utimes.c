@@ -1,5 +1,3 @@
-/*	$NetBSD: utimes.c,v 1.1.1.2 2002/06/20 10:30:13 itojun Exp $	*/
-
 /*
  * Copyright (c) 1997,1999 by Internet Software Consortium.
  *
