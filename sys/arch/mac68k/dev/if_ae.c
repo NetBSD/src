@@ -19,51 +19,20 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.8 1994/02/26 03:01:22 briggs Exp $
- */
-
-/*
- * Modification history
- *
- * $Log: if_ae.c,v $
- * Revision 1.8  1994/02/26 03:01:22  briggs
- * Cleaned up the probe a little by actually using data from the decl. ROMs.
- *
- * Revision 1.6  1994/02/22  01:15:00  briggs
- * Get rid of if_init assignment.
- *
- * Revision 1.5  1994/01/30  01:14:49  briggs
- * Include-cop strikes again.
- *
- * Revision 1.3  1993/12/21  03:18:04  briggs
- * Update ethernet driver to use config.new.  At least, it's a first stab
- * working from mycroft's magnum changes to if_ed.c.
- *
- * Revision 1.2  1993/12/15  03:38:20  briggs
- * Get rid of IFF_ALTPHYS and hence IFF_LLC0 reference.  It doesn't appear
- * to have been used in this driver ;-)
- *
- * Revision 1.1  1993/11/29  00:32:43  briggs
- * Update to current work in progress.  This includes an update to
- * use config.new.
- * Numerous updates to console so it works better on the SE/30 screen.
- * Some nice changes from Brad Parker for handling NuBUS and an ethernet
- * driver that I haven't worked on, yet.
- *
- * 
+ * $Id: if_ae.c,v 1.9 1994/02/27 03:40:26 briggs Exp $
  */
  
 #include "ae.h"
 /* bpfilter included here in case it is needed in future net includes */
 #include "bpfilter.h"
 
-#include "param.h"
-#include "systm.h"
-#include "errno.h"
-#include "ioctl.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -134,8 +103,8 @@ struct	ae_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 } ae_softc[NAE];
 
-void	ae_find();
-int	ae_attach(), ae_init(), aeintr(), ae_ioctl(), ae_probe(),
+void	ae_find(), ae_attach();
+int	ae_init(), aeintr(), ae_ioctl(), ae_probe(),
 	ae_start(), ae_reset(), ae_watchdog();
 
 struct cfdriver aecd =
@@ -187,7 +156,7 @@ ae_id_card(nu, sc)
 			break;
 		}
 	}
-	sc->type = (char *) (nu->Slot.manufacturer);
+	sc->type_str = (char *) (nu->Slot.manufacturer);
 
 	/* see if it's an Interlan/GatorCard
 	sc->rom_addr = nu->addr + GC_ROM_OFFSET;
@@ -240,7 +209,7 @@ ae_probe(parent, cf, aux)
 		break;
 
 	      case AE_VENDOR_DAYNA:
-		printf("We think we are Dayna.\n");
+		printf("We think we are a Dayna card, but ");
 		sc->nic_addr = nu->addr + AE_NIC_OFFSET;
 		sc->rom_addr = nu->addr + AE_ROM_OFFSET;
 		sc->smem_start = nu->addr + AE_DATA_OFFSET;
@@ -249,6 +218,7 @@ ae_probe(parent, cf, aux)
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
 			sc->arpcom.ac_enaddr[i] = *(sc->rom_addr + i*2);
+		printf("it is dangerous to continue.\n");
 		return 0; /* Since we don't work yet... */
 		break;
 
@@ -309,7 +279,7 @@ ae_probe(parent, cf, aux)
 /*
  * Install interface into kernel networking data structures
  */
-int
+void
 ae_attach(parent, self, aux)
 	struct cfdriver	*parent, *self;
 	void		*aux;
