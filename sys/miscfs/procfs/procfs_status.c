@@ -36,7 +36,7 @@
  *
  *	from: Id: procfs_status.c,v 3.1 1993/12/15 09:40:17 jsp Exp
  *	from: @(#)procfs_status.c	8.3 (Berkeley) 2/17/94
- *	$Id: procfs_status.c,v 1.6 1994/06/08 11:33:39 mycroft Exp $
+ *	$Id: procfs_status.c,v 1.7 1994/06/15 14:40:32 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -126,8 +126,8 @@ procfs_dostatus(curp, p, pfs, uio)
 
 	cr = p->p_ucred;
 
-	ps += sprintf(ps, " %d", cr->cr_uid, cr->cr_gid);
-	for (i = 1; i < cr->cr_ngroups; i++)
+	ps += sprintf(ps, " %d", cr->cr_uid);
+	for (i = 0; i < cr->cr_ngroups; i++)
 		ps += sprintf(ps, ",%d", cr->cr_groups[i]);
 	ps += sprintf(ps, "\n");
 
