@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.14 2000/10/09 19:11:58 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2000/11/28 05:21:57 mycroft Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.14 2000/10/09 19:11:58 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2000/11/28 05:21:57 mycroft Exp $");
 #endif
 
 /*
@@ -144,8 +144,6 @@ check1pkg(const char *pkgdir)
 	}
 	free_plist(&Plist);
 	fclose(f);
-
-	pkgcnt++;
 }
 
 static void 
