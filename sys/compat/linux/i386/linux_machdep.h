@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.1 1995/04/07 22:31:19 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.2 1995/04/22 20:27:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -74,5 +74,7 @@ struct linux_sigframe {
 	struct linux_sigcontext ls_sc;
 	sig_t	ls_handler;
 };
+
+void linux_sendsig __P((sig_t, int, int, u_long));
 
 #endif /* _LINUX_MACHDEP_H */

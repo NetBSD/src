@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.123 1995/04/21 06:43:18 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.124 1995/04/22 20:26:32 christos Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -597,6 +597,11 @@ ENTRY(sigcode)
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
+	.globl	_esigcode
+_esigcode:
+
+/*****************************************************************************/
+
 #ifdef COMPAT_SVR4
 ENTRY(svr4_sigcode)
 	call	SVR4_SIGF_HANDLER(%esp)
@@ -609,9 +614,9 @@ ENTRY(svr4_sigcode)
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SVR4_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
+	.globl	_svr4_esigcode
+_svr4_esigcode:
 #endif
-	.globl	_esigcode
-_esigcode:
 
 /*****************************************************************************/
 
@@ -621,7 +626,7 @@ _esigcode:
  */
 ENTRY(linux_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx	# scp (the call may have clobbered the
+	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 	pushl	%eax			# junk to fake return address
 	movl	$LINUX_SYS_linux_sigreturn,%eax

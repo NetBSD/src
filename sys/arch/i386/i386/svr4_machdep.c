@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.4 1995/03/31 02:49:49 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.5 1995/04/22 20:26:46 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -75,8 +75,13 @@ svr4_getcontext(p, uc, mask, oonstack)
 	/*
 	 * Set the general purpose registers
 	 */
+#ifdef notyet
+        __asm("movl %%gs,%w0" : "=r" (r[SVR4_X86_GS]));
+	__asm("movl %%fs,%w0" : "=r" (r[SVR4_X86_FS]));
+#else
 	r[SVR4_X86_GS] = 0;
 	r[SVR4_X86_FS] = 0;
+#endif
 	r[SVR4_X86_ES] = tf->tf_es;
 	r[SVR4_X86_DS] = tf->tf_ds;
 	r[SVR4_X86_EDI] = tf->tf_edi;
@@ -167,6 +172,12 @@ svr4_setcontext(p, uc)
 	/*
 	 * Restore register context.
 	 */
+#ifdef notyet
+        __asm("movl %w0,%%gs" : "=r" (r[SVR4_X86_GS]));
+	__asm("movl %w0,%%fs" : "=r" (r[SVR4_X86_FS]));
+	tf->tf_vm86_gs = r[SVR4_X86_GS];
+	tf->tf_vm86_fs = r[SVR4_X86_FS];
+#endif
 	tf->tf_es = r[SVR4_X86_ES];
 	tf->tf_ds = r[SVR4_X86_DS];
 	tf->tf_edi = r[SVR4_X86_EDI];
