@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: ufs_ops.c,v 1.1 1993/11/27 21:17:54 mycroft Exp $
+ * $Id: ufs_ops.c,v 1.2 1994/04/14 03:21:21 cgd Exp $
  *
  */
 
@@ -95,7 +95,7 @@ char *opts;
 	/*
 	 * Figure out the name of the file system type.
 	 */
-#ifdef M_NEWTYPE
+#if defined(M_NEWTYPE) || defined(__NetBSD__)
 	char *type = MOUNT_TYPE_UFS;
 #else
 	int type = MOUNT_TYPE_UFS;
