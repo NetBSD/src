@@ -1,4 +1,4 @@
-/*	$NetBSD: vars6.c,v 1.5 2000/04/24 10:40:25 itojun Exp $	*/
+/*	$NetBSD: vars6.c,v 1.6 2003/05/10 08:51:54 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vars6.c,v 1.5 2000/04/24 10:40:25 itojun Exp $");
+__RCSID("$NetBSD: vars6.c,v 1.6 2003/05/10 08:51:54 uebayasi Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,7 +46,7 @@ __weak_alias(in6addr_linklocal_allnodes, _in6addr_linklocal_allnodes)
 #endif
 
 /*
- * Definitions of some costant IPv6 addresses.
+ * Definitions of some constant IPv6 addresses.
  */
 const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
 const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
