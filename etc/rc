@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.156 2001/03/12 15:56:39 lukem Exp $
+# $NetBSD: rc,v 1.157 2001/05/09 16:53:45 lukem Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder.
@@ -11,6 +11,7 @@
 
 export HOME=/
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+umask 022
 
 . /etc/rc.subr
 . /etc/rc.conf
