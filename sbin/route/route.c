@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.26 1997/11/16 17:03:11 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.27 1998/02/05 21:09:46 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.26 1997/11/16 17:03:11 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.27 1998/02/05 21:09:46 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ static void usage __P((char *));
 static char *any_ntoa __P((const struct sockaddr *));
 static void set_metric __P((char *, int));
 static void newroute __P((int, char **));
-static void inet_makenetandmask __P((u_long, struct sockaddr_in *));
+static void inet_makenetandmask __P((u_int32_t, struct sockaddr_in *));
 static int getaddr __P((int, char *, struct hostent **));
 #ifndef SMALL
 static void flushroutes __P((int, char *[]));
@@ -120,7 +120,7 @@ int	forcehost, forcenet, doflush, nflag, af, qflag, tflag;
 int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
-u_long  rtm_inits;
+u_int32_t  rtm_inits;
 
 static void
 usage(cp)
@@ -136,7 +136,7 @@ usage(cp)
 }
 
 #define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(int32_t) - 1))) : sizeof(int32_t))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 int
@@ -431,8 +431,8 @@ netname(sa)
 	char *cp = 0;
 	static char line[50];
 	struct netent *np = 0;
-	u_long net, mask;
-	u_long i;
+	u_int32_t net, mask;
+	u_int32_t i;
 	int subnetshift;
 	struct in_addr in;
 
@@ -461,7 +461,7 @@ netname(sa)
 			 * width subnet fields.
 			 */
 			while (i &~ mask)
-				mask = (long)mask >> subnetshift;
+				mask = (int32_t)mask >> subnetshift;
 			net = i & mask;
 			while ((mask & 1) == 0)
 				mask >>= 1, net >>= 1;
@@ -780,10 +780,10 @@ newroute(argc, argv)
 
 static void
 inet_makenetandmask(net, sin)
-	u_long net;
+	u_int32_t net;
 	struct sockaddr_in *sin;
 {
-	u_long addr, mask = 0;
+	u_int32_t addr, mask = 0;
 	char *cp;
 
 	rtm_addrs |= RTA_NETMASK;
@@ -833,7 +833,7 @@ getaddr(which, s, hpp)
 	sup su;
 	struct hostent *hp;
 	struct netent *np;
-	u_long val;
+	u_int32_t val;
 	char *t;
 
 	if (af == 0) {
@@ -997,7 +997,7 @@ ns_print(sns)
 	struct sockaddr_ns *sns;
 {
 	struct ns_addr work;
-	union { union ns_net net_e; u_long long_e; } net;
+	union { union ns_net net_e; u_int32_t int32_t_e; } net;
 	u_short port;
 	static char mybuf[50], cport[10], chost[25];
 	char *host = "";
@@ -1008,7 +1008,7 @@ ns_print(sns)
 	port = ntohs(work.x_port);
 	work.x_port = 0;
 	net.net_e  = work.x_net;
-	if (ns_nullhost(work) && net.long_e == 0) {
+	if (ns_nullhost(work) && net.int32_t_e == 0) {
 		if (!port)
 			return ("*.*");
 		(void)snprintf(mybuf, sizeof mybuf, "*.%XH", port);
@@ -1033,7 +1033,7 @@ ns_print(sns)
 		*cport = 0;
 
 	(void)snprintf(mybuf, sizeof mybuf, "%XH.%s%s",
-	    (u_int32_t)ntohl(net.long_e), host, cport);
+	    (u_int32_t)ntohl(net.int32_t_e), host, cport);
 	return (mybuf);
 }
 
