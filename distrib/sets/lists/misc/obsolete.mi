@@ -1,4 +1,4 @@
-$NetBSD: obsolete.mi,v 1.1 1999/04/13 20:30:01 bouyer Exp $
+# $NetBSD: obsolete.mi,v 1.2 1999/04/19 21:10:00 perry Exp $
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
 /usr/share/doc/smm/03.fsck/2.t

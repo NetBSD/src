@@ -1,4 +1,4 @@
-$NetBSD: obsolete.mi,v 1.1 1999/04/13 20:30:00 bouyer Exp $
+# $NetBSD: obsolete.mi,v 1.2 1999/04/19 21:10:00 perry Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/ld.so.0
 /usr/share/man/cat1/pstat.0
