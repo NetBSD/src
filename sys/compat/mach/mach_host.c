@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.26 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.27 2003/12/29 01:30:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.26 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.27 2003/12/29 01:30:27 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -199,6 +199,56 @@ mach_host_get_io_master(args)
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 	mach_add_port_desc(rep, mr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int
+mach_processor_set_default(args)
+	struct mach_trap_args *args;
+{
+	mach_processor_set_default_request_t *req = args->smsg;
+	mach_processor_set_default_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	struct mach_right *mr;
+	struct mach_port *mp;
+
+	mp = mach_port_get();
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, mr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int
+mach_host_processor_set_priv(args)
+	struct mach_trap_args *args;
+{
+	mach_host_processor_set_priv_request_t *req = args->smsg;
+	mach_host_processor_set_priv_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct mach_right *smr;
+	struct mach_port *smp;
+
+	mn = req->req_set.name;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_msg_error(args, EINVAL);
+
+	smp = mach_port_get();
+	smr = mach_right_get(smp, l, MACH_PORT_TYPE_SEND, 0);
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, smr->mr_name);
 	mach_set_trailer(rep, *msglen);
 
 	return 0;

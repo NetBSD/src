@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.32 2003/12/24 23:22:22 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.33 2003/12/29 01:30:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.32 2003/12/24 23:22:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.33 2003/12/29 01:30:27 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -462,6 +462,43 @@ mach_thread_abort(args)
 
 	lwp_exit(tl);
 
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	rep->rep_retval = 0;
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int
+mach_thread_set_policy(args)
+	struct mach_trap_args *args;
+{
+	mach_thread_set_policy_request_t *req = args->smsg; 
+	mach_thread_set_policy_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *tl = args->tl;
+	mach_port_t mn;
+	struct mach_right *mr;
+	int limit_count_offset, limit_offset;
+	int limit_count;
+	int *limit;
+
+	limit_count_offset = req->req_base_count;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_base[limit_count_offset]))
+		return mach_msg_error(args, EINVAL);
+
+	limit_count = req->req_base[limit_count_offset];
+	limit_offset = limit_count_offset +
+	    (sizeof(req->req_limit_count) / sizeof(req->req_base[0]));
+	limit = &req->req_base[limit_offset];
+	if (MACH_REQMSG_OVERFLOW(args, limit[limit_count]))
+		return mach_msg_error(args, EINVAL);
+
+	mn = req->req_pset.name;
+	if ((mr = mach_right_check(mn, tl, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_msg_error(args, EINVAL);
+	
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 	rep->rep_retval = 0;
