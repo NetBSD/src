@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.12 1997/10/16 06:55:38 mikel Exp $	*/
+/*	$NetBSD: utility.c,v 1.13 2000/01/13 13:11:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.12 1997/10/16 06:55:38 mikel Exp $");
+__RCSID("$NetBSD: utility.c,v 1.13 2000/01/13 13:11:32 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -417,7 +417,7 @@ putchr(cc)
 static char fmtstr[] = { "%l:%M\
 %p on %A, %d %B %Y" };
 
-	void
+	char *
 putf(cp, where)
 	register char *cp;
 	char *where;
@@ -483,6 +483,8 @@ putf(cp, where)
 		}
 		cp++;
 	}
+	
+	return (putlocation);
 }
 
 #ifdef DIAGNOSTICS
