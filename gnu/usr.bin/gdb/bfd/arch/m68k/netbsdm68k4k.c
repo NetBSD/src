@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: netbsdm68k.c,v 1.2 1994/02/04 18:08:15 mycroft Exp $
+	$Id: netbsdm68k4k.c,v 1.1 1994/02/04 18:08:17 mycroft Exp $
 */
 
 #define	BYTES_IN_WORD	4
@@ -25,16 +25,16 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #define	HOST_IS_BIG_ENDIAN_P
 #define TARGET_IS_BIG_ENDIAN_P
 
-#define	PAGE_SIZE	8192
+#define	PAGE_SIZE	4096
 #define	SEGMENT_SIZE	PAGE_SIZE
-#define __LDPGSZ	8192
+#define __LDPGSZ	4096
 
 #define	DEFAULT_ARCH	bfd_arch_m68k
-#define MACHTYPE_OK(mtype) ((mtype) == M_M68K_NETBSD || (mtype) == M_UNKNOWN)
+#define MACHTYPE_OK(mtype) ((mtype) == M_HP300 || (mtype) == M_M68K4K_NETBSD || (mtype) == M_UNKNOWN)
 
-#define MY(OP) CAT(netbsd_m68k_,OP)
+#define MY(OP) CAT(netbsd_m68k4k_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
-#define TARGETNAME "a.out-netbsd-m68k"
+#define TARGETNAME "a.out-netbsd-m68k4k"
 
 #include "netbsd.h"
 
