@@ -1,4 +1,4 @@
-/*	$NetBSD: wrterm.c,v 1.4 1996/11/15 05:52:49 lukem Exp $	*/
+/*	$NetBSD: wrterm.c,v 1.5 1997/10/14 02:08:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,16 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wrterm.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: wrterm.c,v 1.4 1996/11/15 05:52:49 lukem Exp $";
+__RCSID("$NetBSD: wrterm.c,v 1.5 1997/10/14 02:08:05 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <string.h>
 #include "extern.h"
 
