@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.2 2001/09/16 07:51:55 manu Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.3 2002/04/18 23:18:42 christos Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -644,6 +644,18 @@ service_main(
 #endif
 
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT) && defined(MCL_FUTURE)
+	/*
+	 * Set the stack limit to something smaller so that we
+	 * don't lock a lot of unused stack memory.
+	 */
+	{
+		struct rlimit rl = { 8 * 4096, 8 * 4096 };
+		if (setrlimit(RLIMIT_STACK, &rl) == -1)
+		{
+			msyslog(LOG_ERR,
+			    "Cannot adjust stack limit for mlockall: %m");
+		}
+	}
 	/*
 	 * lock the process into memory
 	 */
