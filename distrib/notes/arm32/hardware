@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.4 1999/03/26 09:10:48 mark Exp $	
+.\"	$NetBSD: hardware,v 1.5 2000/03/21 10:50:04 soda Exp $	
 
 NetBSD/arm32 \*V runs on a number of systems with
 .Tn ARM6
@@ -121,8 +121,13 @@ Supported devices include (but is not limited to):
 			SVEC FD1000-TP
 			Znyx ZX34X
 		Qlogic ISP [12]0x0 SCSI/FibreChannel boards
-		Adaptec AHA-2x4x[U][W] cards using the AIC-7770, AIC-7850,
-			AIC-7860, AIC-7870, or AIC-7880 chip.
+		Adaptec AHA-2910, 2915, 2920, and 2930C adapters.
+		Adaptec AHA-2x4x[U][2][W] cards and onboard PCI designs
+			using the AIC-7770, AIC-7850, AIC-7860, AIC-7870,
+			AIC-7880 and AIC-789x chipsets.
+		Adaptec AHA-394x[U][W] cards [b]
+		Adaptec AHA-3950U2 cards
+		Adaptec AHA-3960, 19160 and 29160 Ultra-160 adapters
 		NE2000 PCI ethernet adapters
 		Universal Serial Bus:
 			UHCI host controllers
