@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.h,v 1.10 2004/04/21 01:05:35 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.h,v 1.11 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*
  * 
@@ -51,7 +51,7 @@ int coda_mount(struct mount *, const char *, void *, struct nameidata *,
 int coda_start(struct mount *, int, struct proc *);
 int coda_unmount(struct mount *, int, struct proc *);
 int coda_root(struct mount *, struct vnode **);
-int coda_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
+int coda_quotactl(struct mount *, int, uid_t, void *, struct proc *);
 int coda_nb_statvfs(struct mount *, struct statvfs *, struct proc *);
 int coda_sync(struct mount *, int, struct ucred *, struct proc *);
 int coda_vget(struct mount *, ino_t, struct vnode **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.119 2004/04/21 01:05:43 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.120 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -225,7 +225,7 @@ struct vfsops {
 	int	(*vfs_start)	__P((struct mount *, int, struct proc *));
 	int	(*vfs_unmount)	__P((struct mount *, int, struct proc *));
 	int	(*vfs_root)	__P((struct mount *, struct vnode **));
-	int	(*vfs_quotactl)	__P((struct mount *, int, uid_t, caddr_t,
+	int	(*vfs_quotactl)	__P((struct mount *, int, uid_t, void *,
 				    struct proc *));
 	int	(*vfs_statvfs)	__P((struct mount *, struct statvfs *,
 				    struct proc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.54 2004/04/21 02:42:28 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.55 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.54 2004/04/21 02:42:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.55 2004/04/27 17:37:31 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -107,7 +107,7 @@ int	procfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
 int	procfs_start __P((struct mount *, int, struct proc *));
 int	procfs_unmount __P((struct mount *, int, struct proc *));
-int	procfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
+int	procfs_quotactl __P((struct mount *, int, uid_t, void *,
 			     struct proc *));
 int	procfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int	procfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
@@ -255,7 +255,7 @@ procfs_quotactl(mp, cmds, uid, arg, p)
 	struct mount *mp;
 	int cmds;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 
