@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.16 1999/01/13 23:41:29 sommerfe Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.17 1999/01/14 15:00:38 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -458,7 +458,7 @@ ibcs2_sys_ioctl(p, v, retval)
 		t = (int) SCARG(uap, data);
 		t = (t ? t : 1) * hz * 4;
 		t /= 10;
-		if (error = (*ctl)(fp, TIOCSBRK, (caddr_t)0, p))
+		if ((error = (*ctl)(fp, TIOCSBRK, (caddr_t)0, p)))
 			return error;
 		error = tsleep((caddr_t)&t, PZERO | PCATCH, "ibcs2_tcsbrk", t);
 		if (error == EINTR || error == ERESTART) {
