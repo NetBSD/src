@@ -1,4 +1,4 @@
-/*	$NetBSD: manconf.c,v 1.1 2002/09/13 15:56:39 thorpej Exp $	*/
+/*	$NetBSD: manconf.c,v 1.2 2002/09/13 16:34:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -33,13 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
 #if defined(__RCSID)
-__RCSID("$NetBSD: manconf.c,v 1.1 2002/09/13 15:56:39 thorpej Exp $");
+__RCSID("$NetBSD: manconf.c,v 1.2 2002/09/13 16:34:56 thorpej Exp $");
 #endif
 #endif
 #endif /* not lint */
