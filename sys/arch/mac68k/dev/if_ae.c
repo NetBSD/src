@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.29 1995/05/05 05:40:15 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.30 1995/06/21 02:50:22 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -146,10 +146,10 @@ static u_char ones = 0xff;
 void
 bszero(u_short * addr, int len)
 {
-
 	while (len--)
 		*addr++ = 0;
 }
+
 /*
  * Memory copy, copies word at time.
  */
@@ -164,6 +164,7 @@ word_copy(a, b, len)
 	while (len--)
 		*y++ = *x++;
 }
+
 /*
  * Memory copy, copies bytes at time.
  */
@@ -286,7 +287,7 @@ aeprobe(parent, match, aux)
 	int     i, memsize;
 	int     flags = 0;
 
-	if (ae_id_card(nu, sc) < 0)
+	if (ae_id_card(nu, sc) <= 0)
 		return 0;
 
 	sc->regs_rev = 0;
@@ -374,8 +375,10 @@ aeprobe(parent, match, aux)
 		}
 
 	bcopy(nu, &sc->sc_slot, sizeof(nubus_slot));
+
 	return (1);
 }
+
 /*
  * Install interface into kernel networking data structures
  */
@@ -503,10 +506,6 @@ ae_init(sc)
 	int     i, s;
 	u_char  command;
 	u_char  mcaf[8];
-
-	/* Address not known. */
-	if (ifp->if_addrlist == 0)
-		return;
 
 	/*
 	 * Initialize the NIC in the exact order outlined in the NS manual.
