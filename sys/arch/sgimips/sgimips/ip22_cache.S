@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22_cache.S,v 1.2 2001/11/14 18:26:24 thorpej Exp $	*/
+/*	$NetBSD: ip22_cache.S,v 1.3 2002/03/13 13:12:29 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@ LEAF_NOPROFILE(ip22_sdcache_disable)
 	dsll	a0, 31
 	lui	a1, 0x9000
 	dsll32	a1, 0
-	or	a0, a1, a0  
+	or	a0, a1, a0
 	sh	zero, 0(a0)
 
 	EPILOGUE

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 2002/01/12 15:05:02 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 2002/03/13 13:12:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,8 +73,8 @@ cdev_decl(zs);
 cdev_decl(com);
 
 #include "wsdisplay.h"
-cdev_decl(wsdisplay); 
-#include "wskbd.h" 
+cdev_decl(wsdisplay);
+#include "wskbd.h"
 cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
@@ -125,7 +125,7 @@ struct bdevsw bdevsw[] =
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 /*
- * swapdev is a fake block device implemented in sw.c and only used 
+ * swapdev is a fake block device implemented in sw.c and only used
  * internally to get to swstrategy.  It cannot be provided to the
  * users, because the swstrategy routine munches the b_dev and b_blkno
  * entries before calling the appropriate driver.  This would horribly
@@ -136,7 +136,7 @@ dev_t	swapdev = makedev(1, 0);
 
 struct cdevsw cdevsw[] =
 {
-	cdev_cn_init(1,cn),             /* 0: console */
+	cdev_cn_init(1,cn),		/* 0: console */
 	cdev_swap_init(1,sw),		/* 1: /dev/drum (swap pseudo-device) */
 	cdev_disk_init(NMD,md),		/* 2: memory disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 3: concatenated disk driver */
@@ -158,8 +158,8 @@ struct cdevsw cdevsw[] =
 	cdev_notdef(),			/* 19: */
 	cdev_mm_init(1,mm),		/* 20: /dev/{null,mem,kmem,...} */
 	cdev_ctty_init(1,ctty),		/* 21: controlling terminal */
-	cdev_tty_init(NPTY,pts),        /* 22: pseudo-tty slave */
-	cdev_ptc_init(NPTY,ptc),        /* 23: pseudo-tty master */
+	cdev_tty_init(NPTY,pts),	/* 22: pseudo-tty slave */
+	cdev_ptc_init(NPTY,ptc),	/* 23: pseudo-tty master */
 	cdev_log_init(1,log),		/* 24: /dev/klog */
 	cdev_lkm_init(NLKM,lkm),	/* 25: lkm */
 	cdev_fd_init(1,filedesc),	/* 26: file descriptor pseudo-device */
@@ -218,7 +218,7 @@ iszerodev(dev)
 	return (major(dev) == mem_no && minor(dev) == 12);
 }
 
-static int chrtoblktbl[] =  {
+static int chrtoblktbl[] = {
 	/* XXX This needs to be dynamic for LKMs. */
 	/* VCHR */	/* VBLK */
 	/*  0 */	NODEV,

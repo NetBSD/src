@@ -1,9 +1,9 @@
-/*	$NetBSD: mace.c,v 1.3 2001/10/11 15:17:42 pooka Exp $	*/
+/*	$NetBSD: mace.c,v 1.4 2002/03/13 13:12:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -130,9 +130,9 @@ mace_print(aux, pnp)
 static int
 mace_search(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf; 
+	struct cfdata *cf;
 	void *aux;
-{ 
+{
 	struct mace_attach_args maa;
 	int tryagain;
 
@@ -161,8 +161,8 @@ void *
 mace_intr_establish(intr, level, func, arg)
 	int intr;
 	int level;
-        int (*func)(void *);
-        void *arg;
+	int (*func)(void *);
+	void *arg;
 {
 	/* XXX */
 

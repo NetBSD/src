@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2001/10/10 13:24:47 pooka Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2002/03/13 13:12:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,7 +131,7 @@ inittodr(base)
 
 	(*clockfns->cf_get)(clockdev, &dt);
 #ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon, 
+	printf("readclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon,
 			dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
 #endif
 	clockinitted = 1;
@@ -187,7 +187,7 @@ resettodr()
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
 
 #ifdef DEBUG
-	printf("setclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon, 
+	printf("setclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon,
 			    dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
 #endif
 	(*clockfns->cf_set)(clockdev, &dt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2 2001/05/11 04:26:17 thorpej Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.3 2002/03/13 13:12:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -52,12 +52,12 @@ struct zs_channel {
 	struct zs_chanstate	cs_zscs; 	/* Required: soft state */
 	bus_space_tag_t		cs_bustag;	/* Machine-dependent */
 	bus_space_handle_t	cs_regs;
-};	
+};
 
 struct zsc_softc {
 	struct	device		zsc_dev;	/* required: base device */
 	struct	zs_chanstate   *zsc_cs[2];	/* channel soft state */
-	struct  zs_channel	zsc_cs_store[2];
+	struct	zs_channel	zsc_cs_store[2];
 	/* Machine-dependent part follows... */
 	bus_space_tag_t		zsc_bustag;	/* Bus type */
 	bus_space_handle_t	zsc_base; 	/* Device base address */
