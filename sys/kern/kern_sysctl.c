@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.18 1996/07/17 21:54:04 explorer Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.19 1996/11/14 04:47:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -277,8 +277,10 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, MAXPARTITIONS));
 	case KERN_RAWPARTITION:
 		return (sysctl_rdint(oldp, oldlenp, newp, RAW_PART));
+#ifdef NTP
 	case KERN_NTPTIME:
 		return (sysctl_ntptime(oldp, oldlenp));
+#endif
 	case KERN_AUTONICETIME:
 	        old_autonicetime = autonicetime;
 	        error = sysctl_int(oldp, oldlenp, newp, newlen, &autonicetime);
