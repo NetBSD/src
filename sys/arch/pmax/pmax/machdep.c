@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1995/08/10 05:17:07 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1995/08/13 00:29:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -169,10 +169,10 @@ int	kn02_intr(), kmin_intr(), xine_intr(), pmax_intr();
 int	kn03_intr();
 #endif
 extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3(), splhigh();
-int	(*Mach_splnet)() = splhigh;
 int	(*Mach_splbio)() = splhigh;
-int	(*Mach_splimp)() = splhigh;
+int	(*Mach_splnet)() = splhigh;
 int	(*Mach_spltty)() = splhigh;
+int	(*Mach_splimp)() = splhigh;
 int	(*Mach_splclock)() = splhigh;
 int	(*Mach_splstatclock)() = splhigh;
 void	(*tc_slot_hand_fill)();
@@ -389,10 +389,10 @@ mach_init(argc, argv, code, cv)
 		 * Set up interrupt handling and I/O addresses.
 		 */
 		pmax_hardware_intr = pmax_intr;
-		Mach_splnet = Mach_spl1;
 		Mach_splbio = Mach_spl0;
-		Mach_splimp = Mach_spl1;
+		Mach_splnet = Mach_spl1;
 		Mach_spltty = Mach_spl2;
+		Mach_splimp = Mach_spl2;
 		Mach_splclock = Mach_spl3;
 		Mach_splstatclock = Mach_spl3;
 		Mach_clock_addr = (volatile struct chiptime *)
@@ -420,10 +420,10 @@ mach_init(argc, argv, code, cv)
 			KN02_CSR_CORRECT | 0xff;
 		pmax_hardware_intr = kn02_intr;
 		tc_enable_interrupt = kn02_enable_intr;
-		Mach_splnet = Mach_spl0;
 		Mach_splbio = Mach_spl0;
-		Mach_splimp = Mach_spl0;
+		Mach_splnet = Mach_spl0;
 		Mach_spltty = Mach_spl0;
+		Mach_splimp = Mach_spl0;
 		Mach_splclock = Mach_spl1;
 		Mach_splstatclock = Mach_spl1;
 		Mach_clock_addr = (volatile struct chiptime *)
@@ -453,10 +453,10 @@ mach_init(argc, argv, code, cv)
 		 * since we don't know what kinds of devices are in the
 		 * turbochannel option slots, just splhigh().
 		 */
-		Mach_splnet = splhigh;
 		Mach_splbio = splhigh;
-		Mach_splimp = splhigh;
+		Mach_splnet = splhigh;
 		Mach_spltty = splhigh;
+		Mach_splimp = splhigh;
 		Mach_splclock = splhigh;
 		Mach_splstatclock = splhigh;
 		Mach_clock_addr = (volatile struct chiptime *)
@@ -489,10 +489,10 @@ mach_init(argc, argv, code, cv)
 		tc_slot_hand_fill = xine_slot_hand_fill;
 		pmax_hardware_intr = xine_intr;
 		tc_enable_interrupt = xine_enable_intr;
-		Mach_splnet = Mach_spl3;
 		Mach_splbio = Mach_spl3;
-		Mach_splimp = Mach_spl3;
+		Mach_splnet = Mach_spl3;
 		Mach_spltty = Mach_spl3;
+		Mach_splimp = Mach_spl3;
 		Mach_splclock = Mach_spl1;
 		Mach_splstatclock = Mach_spl1;
 		Mach_clock_addr = (volatile struct chiptime *)
@@ -529,10 +529,10 @@ mach_init(argc, argv, code, cv)
 		 * Reset interrupts, clear any errors from newconf probes
 		 */
 
-		Mach_splnet = Mach_spl0;
 		Mach_splbio = Mach_spl0;
-		Mach_splimp = Mach_spl0;
+		Mach_splnet = Mach_spl0;
 		Mach_spltty = Mach_spl0;
+		Mach_splimp = Mach_spl0;
 		Mach_splclock = Mach_spl1;
 		Mach_splstatclock = Mach_spl1;
 		Mach_clock_addr = (volatile struct chiptime *)
