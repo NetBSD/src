@@ -1,4 +1,4 @@
-/*	$NetBSD: iicreg.h,v 1.1 2002/08/13 04:57:49 simonb Exp $	*/
+/*	$NetBSD: iicreg.h,v 1.2 2003/05/01 09:05:56 scw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -54,4 +54,26 @@
 #define	IIC_XFRCNT		0x0e	/* Transfer Count */
 #define	IIC_XTCNTLSS		0x0f	/* Extended Control and Slave Status */
 #define	IIC_DIRECTCNTL		0x10	/* Direct Control */
+#define	IIC_NREG		0x20
+
+/*
+ * Bit definitions for IIC_XTCNTLSS
+ */
+#define	IIC_XTCNTLSS_SRST	(1u << 0)	/* Soft reset */
+#define	IIC_XTCNTLSS_EPI	(1u << 1)	/* Enable pulsed IRQ */
+#define	IIC_XTCNTLSS_SDBF	(1u << 2)	/* Slave data buffer full */
+#define	IIC_XTCNTLSS_SDBD	(1u << 3)	/* Slave data buffer has data */
+#define	IIC_XTCNTLSS_SWS	(1u << 4)	/* Slave write needs service */
+#define	IIC_XTCNTLSS_SWC	(1u << 5)	/* Slave write complete */
+#define	IIC_XTCNTLSS_SRS	(1u << 6)	/* Slave read needs service */
+#define	IIC_XTCNTLSS_SRC	(1u << 7)	/* Slave read complete */
+
+/*
+ * Bit definitions for IIC_DIRECTCNTL
+ */
+#define	IIC_DIRECTCNTL_MSC	(1u << 0)	/* Monitor IIC Clock Line (ro)*/
+#define	IIC_DIRECTCNTL_MSDA	(1u << 1)	/* Monitor IIC Data Line (ro) */
+#define	IIC_DIRECTCNTL_SCC	(1u << 2)	/* IIC Clock Control */
+#define	IIC_DIRECTCNTL_SDAC	(1u << 3)	/* IIC Data Control */
+
 #endif	/* _IBM4XX_IICREG_H_ */
