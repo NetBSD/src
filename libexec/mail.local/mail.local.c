@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.16 1998/08/10 02:57:23 perry Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.17 2000/10/10 19:54:38 is Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.16 1998/08/10 02:57:23 perry Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.17 2000/10/10 19:54:38 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,8 @@ __RCSID("$NetBSD: mail.local.c,v 1.16 1998/08/10 02:57:23 perry Exp $");
 #define	NOTFATAL	0
 
 int	deliver __P((int, char *, int));
-void	err __P((int, const char *, ...));
+void	err __P((int, const char *, ...))
+     __attribute__((__format__(__printf__, 2, 3)));
 void	notifybiff __P((char *));
 int	store __P((const char *));
 void	usage __P((void));
