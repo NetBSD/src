@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/10/22 16:00:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 1997/10/24 21:18:25 thorpej Exp $
 
 .include <bsd.own.mk>			# for ECOFF_TOOLCHAIN definition
 
@@ -30,13 +30,13 @@ gcrt0.o: crt0.c
 
 crtbegin.o: crtbegin.c
 	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtend.o: crtend.c
 	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
