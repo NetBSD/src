@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.112 2004/05/08 14:41:47 chs Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.113 2004/05/18 14:44:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.112 2004/05/08 14:41:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.113 2004/05/18 14:44:14 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -154,6 +154,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.112 2004/05/08 14:41:47 chs Exp $")
 #include <sys/errno.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
+#ifdef TCP_SIGNATURE
+#include <sys/md5.h>
+#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -190,6 +193,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.112 2004/05/08 14:41:47 chs Exp $")
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
+
+#ifdef IPSEC
+#include <netkey/key.h>
+#endif
 
 #ifdef notyet
 extern struct mbuf *m_copypack();
@@ -906,7 +913,6 @@ send:
 	if (tp->t_family == AF_INET) 
 #endif
 	if (tp->t_flags & TF_SIGNATURE) {
-		int i;
 		u_char *bp;
 		/*
 		 * Initialize TCP-MD5 option (RFC2385)
@@ -915,8 +921,8 @@ send:
 		*bp++ = TCPOPT_SIGNATURE;
 		*bp++ = TCPOLEN_SIGNATURE;
 		sigoff = optlen + 2;
-		for (i = 0; i < TCP_SIGLEN; i++)
-			*bp++ = 0;
+		bzero(bp, TCP_SIGLEN);
+		bp += TCP_SIGLEN;
 		optlen += TCPOLEN_SIGNATURE;
 		/*
 		 * Terminate options list and maintain 32-bit alignment.
@@ -1065,9 +1071,29 @@ send:
 #if defined(INET6) && defined(FAST_IPSEC)
 	if (tp->t_family == AF_INET) /* XXX */
 #endif
-	if (tp->t_flags & TF_SIGNATURE)
-		tcp_signature_compute(m, th, -1, len, optlen,
-		    (u_char *)(th + 1) + sigoff, IPSEC_DIR_OUTBOUND);
+	if (sigoff && (tp->t_flags & TF_SIGNATURE)) {
+		struct secasvar *sav;
+		u_int8_t *sigp;
+
+		sav = tcp_signature_getsav(m, th);
+		
+		if (sav == NULL) {
+			if (m)
+				m_freem(m);
+			return (EPERM);
+		}
+
+		m->m_pkthdr.len = hdrlen + len;
+		sigp = (caddr_t)th + sizeof(*th) + sigoff;
+		tcp_signature(m, th, (caddr_t)th - mtod(m, caddr_t), sav, sigp);
+
+		key_sa_recordxfer(sav, m);
+#ifdef FAST_IPSEC
+		KEY_FREESAV(&sav);
+#else
+		key_freesav(sav);
+#endif
+	}
 #endif
 
 	/*
