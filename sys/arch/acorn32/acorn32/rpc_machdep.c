@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.58 2003/09/30 00:35:30 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.59 2003/12/31 18:49:00 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.58 2003/09/30 00:35:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.59 2003/12/31 18:49:00 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1124,6 +1124,15 @@ rpc_sa110_cc_setup(void)
 	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 }
 #endif	/* CPU_SA110 */
+
+/*
+ * To convert from RISC OS addresses to real CMOS addresses, do this:
+ *
+ * if (riscosaddr < 0xc0)
+ *         realaddr = riscosaddr + 0x40;
+ * else
+ *         realaddr = riscosaddr - 0xb0;
+ */
 
 /* Read a byte from CMOS RAM. */
 int
