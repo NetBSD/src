@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.24 1994/12/22 09:50:37 cgd Exp $
+#  $Id: Makefile,v 1.25 1995/02/18 01:46:41 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -51,9 +51,9 @@
 .elif (${MACHINE_ARCH} == "m68k")
 .PATH:	${.CURDIR}/arch/mc68881
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
-	    e_sinh.S e_sqrt.S s_atan.S s_ceil.S s_copysign.S s_cos.S \
-	    s_expm1.S s_finite.S s_floor.S s_log1p.S s_logb.S s_rint.S \
-	    s_scalbn.S s_sin.S s_tan.S s_tanh.S
+	    e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S s_ceil.S \
+	    s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S s_log1p.S \
+	    s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
 .endif
 
 .PATH:	${.CURDIR}/man
