@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.4 2003/10/13 18:38:34 fvdl Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.4.2.1 2004/11/12 06:33:30 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ typedef struct {
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
 
-#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_URSP])
+#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_URSP] - 128)
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_RIP])
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_RAX])
 
