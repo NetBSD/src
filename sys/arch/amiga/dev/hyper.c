@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.9 1999/05/10 22:18:47 is Exp $ */
+/*	$NetBSD: hyper.c,v 1.10 1999/12/30 20:56:45 is Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ hyperattach(parent, self, auxp)
 		printf(": Hypercom %s\n", hprpp->name);
 
 	hprsc->sc_bst.base = (u_long)zap->va + hprpp->baseoff;
-	hprsc->sc_bst.stride = 2;
+	hprsc->sc_bst.absm = &amiga_bus_stride_4;
 
 	supa.supio_iot = &hprsc->sc_bst;
 	supa.supio_ipl = 6;

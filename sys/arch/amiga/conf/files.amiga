@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.93 1999/10/15 21:50:34 is Exp $
+#	$NetBSD: files.amiga,v 1.94 1999/12/30 20:56:45 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -28,6 +28,14 @@ attach  mainbus at root
 
 device	cpu
 attach	cpu at mainbus
+
+# for bus_space
+
+define	amibus_bl
+file	arch/amiga/amiga/amiga_bus_simple_4.c
+
+define	amibus_ww
+file	arch/amiga/amiga/amiga_bus_simple_2word.c
 
 # zorro expansion bus.
 device	zbus {}
@@ -383,7 +391,6 @@ file	dev/cons.c			ite | ser
 file	dev/cninit.c			ite | ser
 file	arch/amiga/amiga/amiga_init.c
 file	arch/amiga/amiga/autoconf.c
-file	arch/amiga/amiga/busfuncs.c
 file	arch/amiga/amiga/cia.c
 file	arch/amiga/amiga/conf.c
 file	arch/amiga/amiga/disksubr.c
