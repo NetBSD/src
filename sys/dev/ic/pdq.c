@@ -1,3 +1,5 @@
+/*	$NetBSD: pdq.c,v 1.2 1995/08/19 04:35:18 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1995 Matt Thomas (matt@lkg.dec.com)
  * All rights reserved.
@@ -20,70 +22,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: pdq.c,v 1.1.1.1 1995/08/19 00:59:47 cgd Exp $
- *
- * $Log: pdq.c,v $
- * Revision 1.1.1.1  1995/08/19 00:59:47  cgd
- * Generic FDDI support by Matt Thomas.  Support for DEC "PDQ" FDDI chipset
- * and for the PCI attachment of said chipset ("if_fpa"), also from Matt Thomas.
- * Arguably, pdq* doesn't belong in sys/dev/ic, but it's going to be shared by
- * various bus attachment devices at some point in the future, and there's no
- * other place that seems to fit as well.
- *
- * Revision 1.17  1995/08/16  22:57:28  thomas
- * Add support for NetBSD
- *
- * Revision 1.16  1995/08/04  21:54:56  thomas
- * Clean IRQ processing under BSD/OS.
- * A receive tweaks.  (print source of MAC CRC errors, etc.)
- *
- * Revision 1.15  1995/06/30  23:36:21  thomas
- * Optimize fix.
- *
- * Revision 1.14  1995/06/30  23:35:39  thomas
- * Fix severe bug in transmit path (corruption of ring).
- *
- * Revision 1.13  1995/06/21  18:29:27  thomas
- * SVR4.2 changes
- *
- * Revision 1.12  1995/06/05  23:49:36  thomas
- * Fix bonehead error.  Don't try to queue a command if there
- * is a command.
- *
- * Revision 1.11  1995/06/03  15:43:26  thomas
- * Fix the command submission logic to only submit one
- * command at a time no matter what.  This simplies the
- * code significantly thereby allowing us to do some up
- * front optimizations.
- *
- * Revision 1.10  1995/06/02  22:18:34  thomas
- * Don't know why but on some motherboards, the PDQ just can't
- * multiple outstanding commands.
- *
- * Revision 1.9  1995/04/20  20:17:33  thomas
- * Add PCI support for BSD/OS.
- * Fix BSD/OS EISA support.
- * Set latency timer for DEFPA to recommended value if 0.
- *
- * Revision 1.8  1995/03/14  01:52:52  thomas
- * Update for new FreeBSD PCI Interrupt interface
- *
- * Revision 1.7  1995/03/07  23:03:16  thomas
- * Fix SMT queue processing
- *
- * Revision 1.6  1995/03/06  18:03:47  thomas
- * restart trasmitter once link is available
- *
- * Revision 1.5  1995/03/06  17:07:56  thomas
- * Add copyright/disclaimer
- * Add error recovery code.
- * Add BPF SMT support
- *
- * Revision 1.3  1995/03/03  13:48:35  thomas
- * more fixes
- *
- *
  */
 
 /*
@@ -100,7 +38,11 @@
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
 #include "pdqreg.h"
+#ifndef __NetBSD__
 #include "pdq_os.h"
+#else
+#include "pdqvar.h"
+#endif
 
 #define	PDQ_ROUNDUP(n, x)	(((n) + ((x) - 1)) & ~((x) - 1))
 #define	PDQ_CMD_RX_ALIGNMENT	16
