@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 1996/11/27 01:24:49 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 1996/12/02 06:46:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -122,10 +122,24 @@ struct alpha_bus_space {
 			    bus_size_t, const u_int64_t *, bus_size_t));
 
 	/* set multi */
-	/* XXX IMPLEMENT */
+	void		(*abs_sm_1) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t, bus_size_t));
+	void		(*abs_sm_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t, bus_size_t));
+	void		(*abs_sm_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t, bus_size_t));
+	void		(*abs_sm_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t, bus_size_t));
 
 	/* set region */
-	/* XXX IMPLEMENT */
+	void		(*abs_sr_1) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t, bus_size_t));
+	void		(*abs_sr_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t, bus_size_t));
+	void		(*abs_sr_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t, bus_size_t));
+	void		(*abs_sr_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t, bus_size_t));
 
 	/* copy */
 	/* XXX IMPLEMENT */
@@ -158,6 +172,8 @@ struct alpha_bus_space {
 	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c);	\
     } while (0)
 #endif
+#define	__abs_set(type, sz, t, h, o, v, c)				\
+	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, v, c)
 
 
 /*
@@ -254,13 +270,27 @@ struct alpha_bus_space {
 /*
  * Set multiple operations.
  */
-/* XXX IMPLEMENT */
+#define	bus_space_set_multi_1(t, h, o, v, c)				\
+	__abs_set(sm,1,(t),(h),(o),(v),(c))
+#define	bus_space_set_multi_2(t, h, o, v, c)				\
+	__abs_set(sm,2,(t),(h),(o),(v),(c))
+#define	bus_space_set_multi_4(t, h, o, v, c)				\
+	__abs_set(sm,4,(t),(h),(o),(v),(c))
+#define	bus_space_set_multi_8(t, h, o, v, c)				\
+	__abs_set(sm,8,(t),(h),(o),(v),(c))
 
 
 /*
  * Set region operations.
  */
-/* XXX IMPLEMENT */
+#define	bus_space_set_region_1(t, h, o, v, c)				\
+	__abs_set(sr,1,(t),(h),(o),(v),(c))
+#define	bus_space_set_region_2(t, h, o, v, c)				\
+	__abs_set(sr,2,(t),(h),(o),(v),(c))
+#define	bus_space_set_region_4(t, h, o, v, c)				\
+	__abs_set(sr,4,(t),(h),(o),(v),(c))
+#define	bus_space_set_region_8(t, h, o, v, c)				\
+	__abs_set(sr,8,(t),(h),(o),(v),(c))
 
 
 /*
