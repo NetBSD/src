@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.12 2000/03/02 21:02:25 christos Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.13 2000/07/27 16:34:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -41,7 +41,7 @@ char copyright[] =
 static char sccsid[] __attribute__((unused))= "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rtquery.c,v 1.12 2000/03/02 21:02:25 christos Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.13 2000/07/27 16:34:31 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,20 +64,11 @@ __RCSID("$NetBSD: rtquery.c,v 1.12 2000/03/02 21:02:25 christos Exp $");
 #include <bstring.h>
 #endif
 
+#include <md5.h>
+
 #ifndef sgi
 #define _HAVE_SIN_LEN
 #endif
-
-#define MD5_DIGEST_LEN 16
-typedef struct {
-	u_int32_t state[4];		/* state (ABCD) */
-	u_int32_t count[2];		/* # of bits, modulo 2^64 (LSB 1st) */
-	unsigned char buffer[64];	/* input buffer */
-} MD5_CTX;
-extern void MD5Init(MD5_CTX*);
-extern void MD5Update(MD5_CTX*, u_char*, u_int);
-extern void MD5Final(u_char[MD5_DIGEST_LEN], MD5_CTX*);
-
 
 #define	WTIME	15		/* Time to wait for all responses */
 #define	STIME	(250*1000)	/* usec to wait for another response */
