@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.54 2003/09/01 12:16:17 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.55 2003/09/26 04:03:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.54 2003/09/01 12:16:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.55 2003/09/26 04:03:39 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -555,6 +555,9 @@ uvmpd_scan_inactive(pglst)
 			}
 			if (p->flags & PG_CLEAN) {
 				int slot;
+				int pageidx;
+
+				pageidx = p->offset >> PAGE_SHIFT;
 				uvm_pagefree(p);
 				uvmexp.pdfreed++;
 
@@ -569,8 +572,7 @@ uvmpd_scan_inactive(pglst)
 					anon->u.an_page = NULL;
 					slot = anon->an_swslot;
 				} else {
-					slot = uao_find_swslot(uobj,
-						p->offset >> PAGE_SHIFT);
+					slot = uao_find_swslot(uobj, pageidx);
 				}
 				simple_unlock(slock);
 
