@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ckso,v 1.2 1998/01/09 08:04:58 perry Exp $
+#	$NetBSD: ckso,v 1.3 2003/05/06 10:46:44 jmmv Exp $
 #
 set x $*
 . ./.param
@@ -17,7 +17,7 @@ do
 	do
 		ln=`line < $file`
 		so=`echo $ln | sed "s/ .*//"`
-		if test "$so" = ".so" 
+		if test "$so" = ".so"
 		then
 			so=`echo $ln | sed -e "s/.so//" -e "s/^/ls/"`
 			echo $so >> $TMPDIR/tmp.$$

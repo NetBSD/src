@@ -8,7 +8,7 @@ else
 	DIR2=$ID
 fi
 
-if test ! -d $DIR2 
+if test ! -d $DIR2
 then
 	echo "mcmp: $DIR2 - not a directory"
 	exit

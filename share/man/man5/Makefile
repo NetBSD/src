@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.43 2003/01/21 12:43:13 wiz Exp $
+#	$NetBSD: Makefile,v 1.44 2003/05/06 10:46:43 jmmv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
-# missing: dump.5 plot.5 
+# missing: dump.5 plot.5
 
 MAN=	a.out.5 acct.5 ar.5 core.5 daily.conf.5 dir.5 disktab.5 elf.5 \
 	ethers.5 fs.5 fstab.5 genassym.cf.5 group.5 hesiod.conf.5 \

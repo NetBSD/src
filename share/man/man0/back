@@ -1,4 +1,4 @@
-.\"	$NetBSD: back,v 1.2 1998/01/09 08:04:05 perry Exp $
+.\"	$NetBSD: back,v 1.3 2003/05/06 10:46:41 jmmv Exp $
 .\"
 .\" Copyright (c) 1994 Regents of the University of California.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ r l r l.
 	man section 1 (commands)	1	The Unix Time \- Sharing System
 	man section 6 (games)	2	Unix Implementation
 	man section 7 (miscellaneous)	3	The Unix I/O System
-		4	Unix Programming \- Second Edition 
+		4	Unix Programming \- Second Edition
 \fBUSD	User Supplementary Documents\fP	5	4.4BSD Software Architecture Manual
 1	Unix for Beginners	6	C Language \- Reference Manual
 2	Learn \- Computer \- Aided Instruction	7	Berkeley Pascal User\'s Manual

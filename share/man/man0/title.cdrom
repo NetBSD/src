@@ -1,4 +1,4 @@
-.\" $NetBSD: title.cdrom,v 1.3 2000/06/14 06:49:15 cgd Exp $
+.\" $NetBSD: title.cdrom,v 1.4 2003/05/06 10:46:41 jmmv Exp $
 .\"
 .\" Copyright (c) 1994 Regents of the University of California.
 .\" All rights reserved.
@@ -402,7 +402,7 @@ l l.
 386 device drivers	Don Ahn, Sean Fagan and Tim Tucker
 HCX device drivers	Harris Corporation
 Kernel enhancements	Robert Elz, Peter Ivanov, Ian Johnstone, Piers Lauder,
-	John Lions, Tim Long, Chris Maltby, Greg Rose and John Wainwright 
+	John Lions, Tim Long, Chris Maltby, Greg Rose and John Wainwright
 ISO-9660 filesystem	Pace Willisson, Atsushi Murai
 .TE
 .sp -0.4
@@ -598,7 +598,7 @@ standards compliant.
 4.4BSD-Lite Features
 .PP
 The major new facilities available in the 4.4BSD-Lite release are
-a new virtual memory system, 
+a new virtual memory system,
 the addition of ISO/OSI networking support,
 a new virtual filesystem interface supporting filesystem stacking,
 a freely redistributable implementation of NFS,
@@ -753,7 +753,7 @@ We have also added a memory-based filesystem that runs in
 pageable memory, allowing large temporary filesystems without
 requiring dedicated physical memory.
 .PP
-The local ``fast filesystem'' has been enhanced to do 
+The local ``fast filesystem'' has been enhanced to do
 clustering which allows large pieces of files to be
 allocated contiguously resulting in near doubling
 of filesystem throughput.
@@ -1072,7 +1072,7 @@ to keep them from contaminating
 the more staid information of URM section 1.
 .LP
 Miscellaneous collection of information necessary for
-writing in various specialized languages such as character codes, 
+writing in various specialized languages such as character codes,
 macro packages for typesetting, etc is contained in URM section 7.
 .LP
 System calls are entries into the BSD kernel.
@@ -1113,7 +1113,7 @@ The name of the entry is in the upper corners of its pages,
 together with the section number.
 Entries within each section are alphabetized.
 The page numbers of each entry start at 1;
-it is infeasible to number consecutively the pages of 
+it is infeasible to number consecutively the pages of
 a document like this that is republished in many variant forms.
 .LP
 All entries are based on a common format;
