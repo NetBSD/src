@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.11 1997/10/19 03:32:13 lukem Exp $	*/
+/*	$NetBSD: join.c,v 1.12 1998/02/03 03:47:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.11 1997/10/19 03:32:13 lukem Exp $");
+__RCSID("$NetBSD: join.c,v 1.12 1998/02/03 03:47:47 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: join.c,v 1.11 1997/10/19 03:32:13 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /*
  * There's a structure per input file which encapsulates the state of the
