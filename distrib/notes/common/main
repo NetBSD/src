@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.53 2000/04/16 03:46:28 david Exp $
+.\" $NetBSD: main,v 1.54 2000/05/03 10:56:45 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -556,6 +556,7 @@ option to change the version string:
 		version "newstring";
 	};
 .Ed
+.\"
 .It
 .Xr sysctl 8
 pathname changed
@@ -569,6 +570,27 @@ to
 If you have hardcoded reference to full pathname
 .Pq in shell scripts, for example
 please be sure to update those.
+.\"
+.It
+.Xr sendmail 8
+configuration file pathname changed
+.
+.Pp
+Due to
+.Xr sendmail 8
+upgrade from 8.9.x to 8.10.x,
+.Pa /etc/sendmail.cf
+and
+.Pa /etc/aliases
+are moved to
+.Pa /etc/mail/sendmail.cf
+and
+.Pa /etc/mail/aliases .
+You may need to move files from the prior location to the latter,
+and/or modify configuration files like
+.Xr /etc/rc.conf 5 .
+.Pa /etc/rc.d/sendmail
+tries to cope with the situation and raises warnings when necessary.
 .El
 .
 .Pp
