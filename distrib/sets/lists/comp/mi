@@ -404,6 +404,7 @@
 ./usr/include/g++/set.h
 ./usr/include/g++/stack
 ./usr/include/g++/stack.h
+./usr/include/g++/std
 ./usr/include/g++/std/bastring.cc
 ./usr/include/g++/std/bastring.h
 ./usr/include/g++/std/complext.cc
