@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.6 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.7 2001/01/12 05:19:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -196,7 +196,8 @@ lmc_pci_probe(struct device *parent, struct cfdata *match,
 		return 0;
 	if ((PCI_CHIPID(id) != PCI_PRODUCT_LMC_HSSI)
 	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_DS3)
-	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_SSI))
+	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_SSI)
+	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_T1))
 		return 0;
 
 	return 10; /* must be > than any other tulip driver */
