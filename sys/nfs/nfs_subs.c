@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.26 1996/03/13 00:44:17 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.27 1996/04/03 23:25:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1205,8 +1205,12 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	if (vp->v_type == VNON) {
 		vp->v_type = vtyp;
 		if (vp->v_type == VFIFO) {
+#ifndef FIFO
+			return (EOPNOTSUPP);
+#else
 			extern int (**fifo_nfsv2nodeop_p) __P((void *));
 			vp->v_op = fifo_nfsv2nodeop_p;
+#endif /* FIFO */
 		}
 		if (vp->v_type == VCHR || vp->v_type == VBLK) {
 			vp->v_op = spec_nfsv2nodeop_p;
