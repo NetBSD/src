@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2001/06/06 06:23:13 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.103 2001/06/07 05:29:13 chs Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -1209,7 +1209,8 @@ boolean_t
 pmap_clear_modify(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	struct	pv_entry *pv;
+	struct pv_entry *pv;
+	boolean_t rv = FALSE;
 
 #ifdef DEBUG
 	if (IOSPACE(pa))
@@ -1221,22 +1222,39 @@ pmap_clear_modify(struct vm_page *pg)
 	if (startpmapdebug)
 		printf("pmap_clear_modify: pa %lx pv_entry %p\n", pa, pv);
 #endif
+	PVTABLE_LOCK;
+	if (pv->pv_attr & PG_M) {
+		rv = TRUE;
+	}
 	pv->pv_attr &= ~PG_M;
 
-	PVTABLE_LOCK;
-	if (pv->pv_pte)
+	if (pv->pv_pte) {
+		if (pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m |
+		    pv->pv_pte[2].pg_m | pv->pv_pte[3].pg_m |
+		    pv->pv_pte[4].pg_m | pv->pv_pte[5].pg_m |
+		    pv->pv_pte[6].pg_m | pv->pv_pte[7].pg_m) {
+			rv = TRUE;
+		}
 		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m =
 		    pv->pv_pte[2].pg_m = pv->pv_pte[3].pg_m = 
 		    pv->pv_pte[4].pg_m = pv->pv_pte[5].pg_m = 
 		    pv->pv_pte[6].pg_m = pv->pv_pte[7].pg_m = 0;
+	}
 
-	while ((pv = pv->pv_next))
+	while ((pv = pv->pv_next)) {
+		if (pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m |
+		    pv->pv_pte[2].pg_m | pv->pv_pte[3].pg_m |
+		    pv->pv_pte[4].pg_m | pv->pv_pte[5].pg_m |
+		    pv->pv_pte[6].pg_m | pv->pv_pte[7].pg_m) {
+			rv = TRUE;
+		}
 		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m =
 		    pv->pv_pte[2].pg_m = pv->pv_pte[3].pg_m = 
 		    pv->pv_pte[4].pg_m = pv->pv_pte[5].pg_m = 
 		    pv->pv_pte[6].pg_m = pv->pv_pte[7].pg_m = 0;
+	}
 	PVTABLE_UNLOCK;
-	return TRUE; /* XXX */
+	return rv;
 }
 
 /*
