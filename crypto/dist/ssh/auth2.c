@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.10 2001/09/27 03:24:02 itojun Exp $	*/
+/*	$NetBSD: auth2.c,v 1.11 2001/11/07 06:26:47 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.70 2001/09/20 13:46:48 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.71 2001/09/27 15:31:17 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -119,7 +119,7 @@ do_authentication2(void)
 
 	x_authctxt = authctxt;		/*XXX*/
 
-	/* challenge-reponse is implemented via keyboard interactive */
+	/* challenge-response is implemented via keyboard interactive */
 	if (options.challenge_response_authentication)
 		options.kbd_interactive_authentication = 1;
 
