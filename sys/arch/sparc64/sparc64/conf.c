@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 2002/03/16 16:55:59 martin Exp $ */
+/*	$NetBSD: conf.c,v 1.21.6.1 2002/12/07 21:14:05 he Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,6 +103,20 @@ cdev_decl(cdtty);
 #include "scsibus.h"
 #include "ses.h"
 cdev_decl(ses);
+#include "usb.h"
+cdev_decl(usb);
+#include "uhid.h"
+cdev_decl(uhid);
+#include "ugen.h"
+cdev_decl(ugen);
+#include "ulpt.h"
+cdev_decl(ulpt);
+#include "ucom.h"
+cdev_decl(ucom);
+#include "urio.h"
+cdev_decl(urio);
+#include "uscanner.h"
+cdev_decl(uscanner);
 
 #include "vcoda.h"
 cdev_decl(vc_nb_);
@@ -235,13 +249,13 @@ struct cdevsw	cdevsw[] =
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 75: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 76: isdn phone device */
 	cdev_notdef(),			/* 77 */
-	cdev_notdef(),			/* 78 */
-	cdev_notdef(),			/* 79 */
-	cdev_notdef(),			/* 80 */
-	cdev_notdef(),			/* 81 */
-	cdev_notdef(),			/* 82 */
-	cdev_notdef(),			/* 83 */
-	cdev_notdef(),			/* 84 */
+	cdev_usb_init(NUSB,usb),	/* 78: USB controller */
+	cdev_usbdev_init(NUHID,uhid),	/* 79: USB generic HID */
+	cdev_lpt_init(NULPT,ulpt),	/* 80: USB printer */
+	cdev_ugen_init(NUGEN,ugen),	/* 81: USB generic driver */
+	cdev_tty_init(NUCOM, ucom),	/* 82: USB tty */
+	cdev_usbdev_init(NURIO,urio),	/* 83: Diamond Rio 500 */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 84: USB scanner */
 	cdev_notdef(),			/* 85 */
 	cdev_notdef(),			/* 86 */
 	cdev_notdef(),			/* 87 */
