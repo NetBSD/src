@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.7 1998/05/10 16:48:44 mycroft Exp $
+#	$NetBSD: makesrctars,v 1.8 1998/10/12 16:28:35 perry Exp $
 #
 # Make source code tarballs.
 
@@ -43,7 +43,9 @@ find gnu \
 	> ${DESTDIR}/sets/gnusrc.tgz
 
 find sys usr.sbin/config usr.sbin/dbsym \
-    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
+    \! \( -name CVS -prune \) \! \( -name obj -prune \) \
+    \! \( -name compile -prune \) \
+	-print | \
 	sort | pax -w -d -s'|^|./usr/src/|' | gzip \
 	> ${DESTDIR}/sets/syssrc.tgz
 
