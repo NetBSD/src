@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.7 1997/11/06 22:34:03 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1998/02/14 20:44:06 kleink Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
 
-# stubs providing an entry "foo" but calling "posix_foo()"
-PSEUDO=	rename.o
+# stubs providing an entry "foo" but calling "__posix_foo()"
+PSEUDO=	chown.o fchown.o lchown.o rename.o
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
 
@@ -14,7 +14,7 @@ ${PPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
-	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
+	    PSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' | \
 	    ${CPP} -DPROF ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
@@ -23,7 +23,7 @@ ${SPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
-	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
+	    PSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' | \
 	    ${CPP} ${CPPPICFLAGS} ${CPPFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
@@ -31,7 +31,7 @@ ${PSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
-	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
+	    PSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' | \
 	    ${CPP} ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
