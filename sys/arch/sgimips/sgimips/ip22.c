@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.16 2003/10/04 09:19:23 tsutsui Exp $	*/
+/*	$NetBSD: ip22.c,v 1.17 2003/10/04 09:41:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.16 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.17 2003/10/04 09:41:27 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -101,8 +101,8 @@ ip22_init(void)
 	mach_boardrev = (sysid >> 1) & 0x0f;
 
 	printf("IOC rev %d, machine %s, board rev %d\n", (sysid >> 5) & 0x07,
-			(sysid & 1) ? "Indigo2 (Fullhouse)" : "Indy (Guiness)",
-			(sysid >> 1) & 0x0f);
+	    (sysid & 1) ? "Indigo2 (Fullhouse)" : "Indy (Guiness)",
+	    (sysid >> 1) & 0x0f);
 
 	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
 		int23addr = 0x1fbd9000;
@@ -175,7 +175,7 @@ ip22_init(void)
 	cps = cps / (sizeof(ctrdiff) / sizeof(ctrdiff[0]));
 
 	printf("Timer calibration, got %lu cycles (%lu, %lu, %lu)\n", cps,
-				ctrdiff[0], ctrdiff[1], ctrdiff[2]);
+	    ctrdiff[0], ctrdiff[1], ctrdiff[2]);
 
 	platform.clkread = ip22_clkread;
 
@@ -188,9 +188,9 @@ ip22_init(void)
 	evcnt_attach_static(&mips_int5_evcnt);
 	evcnt_attach_static(&mips_spurint_evcnt);
 
-	printf("CPU clock speed = %lu.%02luMhz\n",
-				curcpu()->ci_cpu_freq / 1000000,
-			    	(curcpu()->ci_cpu_freq / 10000) % 100);
+	printf("CPU clock speed = %lu.%02luMHz\n",
+	    curcpu()->ci_cpu_freq / 1000000,
+	    (curcpu()->ci_cpu_freq / 10000) % 100);
 }
 
 void
@@ -256,11 +256,11 @@ ip22_intr(status, cause, pc, ipending)
 
 	if (ipending & MIPS_INT_MASK_4) {
 		printf("IP22 bus error: cpu_stat %08x addr %08x, "
-		       "gio_stat %08x addr %08x\n",
-		       *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000ec),
-		       *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000e4),
-		       *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000fc),
-		       *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000f4));
+		    "gio_stat %08x addr %08x\n",
+		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000ec),
+		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000e4),
+		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000fc),
+		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000f4));
 		ip22_bus_reset();
 		cause &= ~MIPS_INT_MASK_4;
 	}
