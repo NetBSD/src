@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.5 2001/07/25 23:50:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.6 2001/08/08 16:31:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,8 @@ typedef struct pthread_mutex_st pthread_mutex_t;
 typedef struct pthread_mutexattr_st pthread_mutexattr_t;
 typedef struct pthread_cond_st pthread_cond_t;
 typedef struct pthread_condattr_st pthread_condattr_t;
-
+typedef struct pthread_once_st pthread_once_t;
+typedef int pthread_key_t;
 
 struct	pthread_attr_st {
 	unsigned int	pta_magic;
@@ -130,4 +131,10 @@ struct	pthread_condattr_st {
 #define	_PT_CONDATTR_MAGIC	0x66660006
 #define	_PT_CONDATTR_DEAD	0xDEAD0006
 
+struct	pthread_once_st {
+	pthread_mutex_t	pto_mutex;
+	int	pto_done;
+};
+
+#define PTHREAD_ONCE_INIT	{ PTHREAD_MUTEX_INITIALIZER, 0 }
 #endif	/* _LIB_PTHREAD_TYPES_H */
