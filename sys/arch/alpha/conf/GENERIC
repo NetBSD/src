@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.154 2000/05/28 23:06:39 thorpej Exp $
+# $NetBSD: GENERIC,v 1.155 2000/05/29 23:34:08 matt Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.154 $"
+#ident 		"GENERIC-$Revision: 1.155 $"
 
 maxusers 32
 
@@ -193,7 +193,7 @@ ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
-cz*	at	pci? dev ? funciton ?		# Cyclades-Z (untested)
+cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
