@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2004/10/20 04:20:05 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2004/10/23 17:07:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2004/10/20 04:20:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2004/10/23 17:07:38 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -72,9 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2004/10/20 04:20:05 thorpej Exp $"
 #if NBIOS32 > 0
 #include <machine/bios32.h>
 #endif
-
-struct device *booted_device;
-int booted_partition;
 
 /*
  * Determine i/o configuration for a machine.

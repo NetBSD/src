@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2003/07/15 00:25:08 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2004/10/23 17:07:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2003/07/15 00:25:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2004/10/23 17:07:39 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -54,9 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2003/07/15 00:25:08 lukem Exp $");
 #include <machine/intr.h>
 
 #include "sacom.h"
-
-struct device *booted_device;
-int booted_partition;
 
 extern dev_t dumpdev;
 

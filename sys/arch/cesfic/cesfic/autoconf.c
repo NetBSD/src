@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2004/09/13 14:57:31 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2004/10/23 17:07:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2004/09/13 14:57:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2004/10/23 17:07:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2004/09/13 14:57:31 drochner Exp $
 #include <m68k/cacheops.h>
 
 #include <cesfic/cesfic/isr.h>
-
-struct	device *booted_device;
-int	booted_partition;
 
 u_int	bootdev;
 
