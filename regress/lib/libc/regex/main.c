@@ -1,6 +1,7 @@
-/*	$NetBSD: main.c,v 1.3 1997/11/01 06:20:49 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2000/07/03 04:02:34 matt Exp $	*/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <regex.h>
