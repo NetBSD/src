@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.43 2002/04/04 23:11:08 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.44 2002/04/07 15:45:02 wiz Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -92,6 +92,8 @@
 /usr/share/man/cat8/arm26/boot.0
 /usr/share/man/cat8/arm26/boot26.0
 /usr/share/man/cat8/arm26/makedev.0
+/usr/share/man/cat8/arm32/MAKEDEV.0
+/usr/share/man/cat8/arm32/makedev.0
 /usr/share/man/cat8/gettable.0
 /usr/share/man/cat8/htable.0
 /usr/share/man/cat8/i386/apmd.0
@@ -213,6 +215,8 @@
 /usr/share/man/man8/arm26/boot.8
 /usr/share/man/man8/arm26/boot26.8
 /usr/share/man/man8/arm26/makedev.8
+/usr/share/man/man8/arm32/MAKEDEV.8
+/usr/share/man/man8/arm32/makedev.8
 /usr/share/man/man8/gettable.8
 /usr/share/man/man8/htable.8
 /usr/share/man/man8/i386/apmd.8

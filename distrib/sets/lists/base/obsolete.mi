@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.41 2002/04/03 16:04:04 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.42 2002/04/07 15:45:01 wiz Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -117,16 +117,19 @@
 /usr/share/man/cat4/arm26
 /usr/share/man/cat4/tahoe
 /usr/share/man/cat8/arm26
+/usr/share/man/cat8/arm32
 /usr/share/man/cat8/tahoe
 /usr/share/man/cat9/arm26
 /usr/share/man/man3/atari
 /usr/share/man/man4/arm26
 /usr/share/man/man4/tahoe
 /usr/share/man/man8/arm26
+/usr/share/man/man8/arm32
 /usr/share/man/man8/tahoe
 /usr/share/man/man9/arm26
 /usr/share/man/html4/arm26
 /usr/share/man/html8/arm26
+/usr/share/man/html8/arm32
 /usr/share/man/html9/arm26
 /usr/share/misc/getopt
 /usr/share/misc/more.help

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.464 2002/04/04 23:14:01 lukem Exp $
+# $NetBSD: mi,v 1.465 2002/04/07 15:45:02 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1210,6 +1210,8 @@
 ./usr/share/man/cat8/acorn32/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/acorn32/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/adduser.0			man-sysutil-catman
+./usr/share/man/cat8/algor/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/algor/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/boot.0		man-sys-catman
 ./usr/share/man/cat8/alpha/installboot.0	man-sysutil-catman
@@ -1228,8 +1230,6 @@
 ./usr/share/man/cat8/apmd.0			man-sysutil-catman
 ./usr/share/man/cat8/arc/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/arc/makedev.0		man-sysutil-catman
-./usr/share/man/cat8/arm32/MAKEDEV.0		man-sysutil-catman
-./usr/share/man/cat8/arm32/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/arp.0			man-netutil-catman
 ./usr/share/man/cat8/atactl.0			man-sysutil-catman
 ./usr/share/man/cat8/atari/MAKEDEV.0		man-sysutil-catman
@@ -1253,6 +1253,8 @@
 ./usr/share/man/cat8/bounce.0			man-postfix-catman
 ./usr/share/man/cat8/brconfig.0			man-netutil-catman
 ./usr/share/man/cat8/catman.0			man-man-catman
+./usr/share/man/cat8/cats/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/cats/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/chat.0			man-ppp-catman
 ./usr/share/man/cat8/chown.0			man-sysutil-catman
@@ -1306,6 +1308,8 @@
 ./usr/share/man/cat8/etcupdate.0		man-sysutil-catman
 ./usr/share/man/cat8/evbarm/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/evbarm/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/evbsh3/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/evbsh3/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/faithd.0			man-router-catman
 ./usr/share/man/cat8/fastboot.0			man-sysutil-catman
 ./usr/share/man/cat8/fasthalt.0			man-sysutil-catman
@@ -1468,6 +1472,8 @@
 ./usr/share/man/cat8/mvme68k/boot.0		man-sys-catman
 ./usr/share/man/cat8/mvme68k/installboot.0	man-sysutil-catman
 ./usr/share/man/cat8/mvme68k/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/mvmeppc/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/mvmeppc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/named-bootconf.0		man-bind-catman
 ./usr/share/man/cat8/named-xfer.0		man-bind-catman
 ./usr/share/man/cat8/named.0			man-bind-catman
@@ -1495,7 +1501,7 @@
 ./usr/share/man/cat8/nfsd.0			man-nfsserver-catman
 ./usr/share/man/cat8/nis.0			man-nis-catman
 ./usr/share/man/cat8/nologin.0			man-sysutil-catman
-./usr/share/man/cat8/nqmgr.0
+./usr/share/man/cat8/nqmgr.0			man-postfix-catman
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman
 ./usr/share/man/cat8/nsupdate.0			man-netutil-catman
 ./usr/share/man/cat8/ntpd.0			man-ntp-catman
@@ -1515,6 +1521,8 @@
 ./usr/share/man/cat8/ping.0			man-netutil-catman
 ./usr/share/man/cat8/ping6.0			man-netutil-catman
 ./usr/share/man/cat8/pipe.0			man-postfix-catman
+./usr/share/man/cat8/playstation2/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/playstation2/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/pmax/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/pmax/boot.0		man-sys-catman
 ./usr/share/man/cat8/pmax/makedev.0		man-sysutil-catman
@@ -1597,6 +1605,8 @@
 ./usr/share/man/cat8/sftp-server.0		man-secsh-catman
 ./usr/share/man/cat8/sgimips/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/sgimips/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/shark/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/shark/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/showmount.0		man-nfsclient-catman
 ./usr/share/man/cat8/showq.0			man-postfix-catman
 ./usr/share/man/cat8/shutdown.0			man-sysutil-catman
@@ -2891,6 +2901,8 @@
 ./usr/share/man/man8/acorn32/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/acorn32/makedev.8		man-sysutil-man
 ./usr/share/man/man8/adduser.8			man-sysutil-man
+./usr/share/man/man8/algor/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/algor/makedev.8		man-sysutil-man
 ./usr/share/man/man8/alpha/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/alpha/boot.8		man-sys-man
 ./usr/share/man/man8/alpha/installboot.8	man-sysutil-man
@@ -2909,8 +2921,6 @@
 ./usr/share/man/man8/apmd.8			man-sysutil-man
 ./usr/share/man/man8/arc/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/arc/makedev.8		man-sysutil-man
-./usr/share/man/man8/arm32/MAKEDEV.8		man-sysutil-man
-./usr/share/man/man8/arm32/makedev.8		man-sysutil-man
 ./usr/share/man/man8/arp.8			man-netutil-man
 ./usr/share/man/man8/atactl.8			man-sysutil-man
 ./usr/share/man/man8/atari/MAKEDEV.8		man-sysutil-man
@@ -2934,6 +2944,8 @@
 ./usr/share/man/man8/bounce.8			man-postfix-man
 ./usr/share/man/man8/brconfig.8			man-netutil-man
 ./usr/share/man/man8/catman.8			man-man-man
+./usr/share/man/man8/cats/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/cats/makedev.8		man-sysutil-man
 ./usr/share/man/man8/ccdconfig.8		man-sysutil-man
 ./usr/share/man/man8/chat.8			man-ppp-man
 ./usr/share/man/man8/chown.8			man-sysutil-man
@@ -2987,6 +2999,8 @@
 ./usr/share/man/man8/etcupdate.8		man-sysutil-man
 ./usr/share/man/man8/evbarm/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/evbarm/makedev.8		man-sysutil-man
+./usr/share/man/man8/evbsh3/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/evbsh3/makedev.8		man-sysutil-man
 ./usr/share/man/man8/faithd.8			man-router-man
 ./usr/share/man/man8/fastboot.8			man-sysutil-man
 ./usr/share/man/man8/fasthalt.8			man-sysutil-man
@@ -3149,6 +3163,8 @@
 ./usr/share/man/man8/mvme68k/boot.8		man-sys-man
 ./usr/share/man/man8/mvme68k/installboot.8	man-sysutil-man
 ./usr/share/man/man8/mvme68k/makedev.8		man-sysutil-man
+./usr/share/man/man8/mvmeppc/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/mvmeppc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/named-bootconf.8		man-bind-man
 ./usr/share/man/man8/named-xfer.8		man-bind-man
 ./usr/share/man/man8/named.8			man-bind-man
@@ -3196,6 +3212,8 @@
 ./usr/share/man/man8/ping.8			man-netutil-man
 ./usr/share/man/man8/ping6.8			man-netutil-man
 ./usr/share/man/man8/pipe.8			man-postfix-man
+./usr/share/man/man8/playstation2/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/playstation2/makedev.8		man-sysutil-man
 ./usr/share/man/man8/pmax/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/pmax/boot.8		man-sys-man
 ./usr/share/man/man8/pmax/makedev.8		man-sysutil-man
@@ -3278,6 +3296,8 @@
 ./usr/share/man/man8/sftp-server.8		man-secsh-man
 ./usr/share/man/man8/sgimips/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/sgimips/makedev.8		man-sysutil-man
+./usr/share/man/man8/shark/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/shark/makedev.8		man-sysutil-man
 ./usr/share/man/man8/showmount.8		man-nfsclient-man
 ./usr/share/man/man8/showq.8			man-postfix-man
 ./usr/share/man/man8/shutdown.8			man-sysutil-man
