@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.1.2.8 1997/10/06 16:26:40 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.1.2.9 1997/10/14 02:28:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1175,8 +1175,8 @@ smc91cxx_disable(sc)
 	struct smc91cxx_softc *sc;
 {
 
-	if (sc->sc_enabled != 0 && sc->sc_disable != NULL)
+	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
 		(*sc->sc_disable)(sc);
-
-	sc->sc_enabled = 0;
+		sc->sc_enabled = 0;
+	}
 }
