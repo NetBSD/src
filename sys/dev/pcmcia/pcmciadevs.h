@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.29 1998/12/20 03:53:03 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.30 1998/12/24 03:55:54 marc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.26 1998/12/19 23:47:51 nathanw Exp 
+ *	NetBSD: pcmciadevs,v 1.27 1998/12/20 03:52:40 nathanw Exp 
  */
 
 /*-
@@ -88,6 +88,9 @@
 #define	PCMCIA_CIS_3COM_3C574	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C574	0x0574
 #define	PCMCIA_STR_3COM_3C574	"3Com 3c574-TX 10/100Mbps Ethernet"
+#define	PCMCIA_CIS_3COM_3CXEM556	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CXEM556	0x0035
+#define	PCMCIA_STR_3COM_3CXEM556	"3Com/Megahertz 3CXEM556 Ethernet/Modem"
 
 /* Compex Products */
 #define	PCMCIA_CIS_COMPEX_LINKPORT_ENET_B	{ NULL, NULL, NULL, NULL }

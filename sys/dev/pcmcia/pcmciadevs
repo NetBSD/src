@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.27 1998/12/20 03:52:40 nathanw Exp $
+$NetBSD: pcmciadevs,v 1.28 1998/12/24 03:55:54 marc Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B SCSI Host Adapter
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
 product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
 product 3COM 3C574		0x0574 3Com 3c574-TX 10/100Mbps Ethernet
+product 3COM 3CXEM556		0x0035 3Com/Megahertz 3CXEM556 Ethernet/Modem
 
 /* Compex Products */
 product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B Ethernet
