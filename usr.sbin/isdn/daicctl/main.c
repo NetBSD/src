@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2002/04/14 11:41:43 martin Exp $ */
+/* $NetBSD: main.c,v 1.6 2003/10/03 23:27:31 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ listall(int fd)
 
 	memset(&info, 0, sizeof info);
 	ioctl(fd, I4B_CTRL_INFO_REQ, &info);
-	num = info.maxbri;
+	num = info.max_isdnif;
 	printf("There are %d controllers available:\n", info.ncontroller);
 	for (i = 0; i <= num; i++) {
 		info.controller = i;

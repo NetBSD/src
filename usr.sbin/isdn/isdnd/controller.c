@@ -27,7 +27,7 @@
  *	i4b daemon - controller state support routines
  *	----------------------------------------------
  *
- *	$Id: controller.c,v 1.6 2003/09/05 13:31:03 pooka Exp $
+ *	$Id: controller.c,v 1.7 2003/10/03 23:27:31 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -84,7 +84,7 @@ init_controller(void)
 		if((ioctl(isdnfd, I4B_CTRL_INFO_REQ, &mcir)) < 0)
 			continue;
 
-		max = mcir.maxbri;
+		max = mcir.max_isdnif;
 
 		/* init controller tab */
 

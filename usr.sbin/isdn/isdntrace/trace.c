@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.4 2003/05/08 08:32:39 martin Exp $ 
+ *	$Id: trace.c,v 1.5 2003/10/03 23:27:31 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -481,7 +481,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 	{
 		sprintf(hbuf,"\n-- %s - bri:%d ---------------- time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u ",
 			((hdr->dir) ? "NT->TE" : "TE->NT"),
-			hdr->bri,
+			hdr->isdnif,
 			s->tm_mday,
 			s->tm_mon + 1,
 			s->tm_hour,
@@ -495,7 +495,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 		{
 			sprintf(hbuf,"\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d (%d) ",
 				((hdr->dir) ? "NT->TE" : "TE->NT"),
-				hdr->bri,
+				hdr->isdnif,
 				hdr->count,
 				s->tm_mday,
 				s->tm_mon + 1,
@@ -510,7 +510,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 		{
 			sprintf(hbuf,"\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d ",
 				((hdr->dir) ? "NT->TE" : "TE->NT"),
-				hdr->bri,
+				hdr->isdnif,
 				hdr->count,
 				s->tm_mday,
 				s->tm_mon + 1,
