@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.50 2000/07/09 06:44:59 itojun Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.51 2000/07/09 14:13:04 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -702,7 +702,7 @@ ppsratecheck(lasttime, curpps, maxpps)
 	else
 		rv = 0;
 
-#if 1 /*DIAGNOSTICS?*/
+#if 1 /*DIAGNOSTIC?*/
 	/* be careful about wrap-around */
 	if (*curpps + 1 > *curpps)
 		*curpps = *curpps + 1;
@@ -712,7 +712,7 @@ ppsratecheck(lasttime, curpps, maxpps)
 	 * not sure if the assumption holds, as it depends on *caller's*
 	 * behavior, not the behavior of this function.
 	 * IMHO it is wrong to make assumption on the caller's behavior,
-	 * so the above #if is #if 1, not #ifdef DIAGNOSTICS.
+	 * so the above #if is #if 1, not #ifdef DIAGNOSTIC.
 	 */
 	*curpps = *curpps + 1;
 #endif
