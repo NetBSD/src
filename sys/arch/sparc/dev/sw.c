@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.1 2000/06/26 19:54:09 pk Exp $	*/
+/*	$NetBSD: sw.c,v 1.2 2000/06/29 14:06:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -909,12 +909,6 @@ sw_dma_stop(ncr_sc)
 		printf("sw_dma_stop: ntrans=0x%x\n", ntrans);
 	}
 #endif
-
-	if (ntrans < MIN_DMA_LEN) {
-		printf("sw: short transfer\n");
-		ncr_sc->sc_state |= NCR_ABORTING;
-		goto out;
-	}
 
 	if (ntrans > ncr_sc->sc_datalen)
 		panic("sw_dma_stop: excess transfer");

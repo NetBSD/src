@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.63 2000/06/26 19:54:08 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.64 2000/06/29 14:06:40 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -910,11 +910,7 @@ si_dma_stop(ncr_sc)
 		    resid, ntrans);
 	}
 #endif
-	if (ntrans < MIN_DMA_LEN) {
-		printf("si: fifo count: 0x%x\n", resid);
-		ncr_sc->sc_state |= NCR_ABORTING;
-		goto out;
-	}
+
 	if (ntrans > ncr_sc->sc_datalen)
 		panic("si_dma_stop: excess transfer");
 
