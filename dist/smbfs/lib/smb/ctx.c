@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.4 2003/04/07 12:36:26 jdolecek Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.5 2003/04/09 09:12:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -278,6 +278,29 @@ smb_ctx_setcharset(struct smb_ctx *ctx, const char *arg)
 int
 smb_ctx_setserver(struct smb_ctx *ctx, const char *name)
 {
+	char *d;
+
+	/*
+	 * If the name contains dot, it's likely a IP adress
+	 * or a name. Update srvaddr in that case, and use
+	 * first part of the name (up to the dot) as NetBIOS name.
+	 */
+	if ((d = strchr(name, '.'))) {
+		static char nm[SMB_MAXSRVNAMELEN+1];
+		int error;
+
+		error = smb_ctx_setsrvaddr(ctx, name);
+		if (error)
+			return (error);
+		
+		/* cut name to MAXSRVNAMELEN */
+		if (strlen(name) >= SMB_MAXSRVNAMELEN) {
+			snprintf(nm, sizeof(nm), "%.*s",
+				SMB_MAXSRVNAMELEN, name);
+			name = nm;
+		}
+	}
+
 	if (strlen(name) >= SMB_MAXSRVNAMELEN) {
 		smb_error("server name '%s' too long", 0, name);
 		return ENAMETOOLONG;
