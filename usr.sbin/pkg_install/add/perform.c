@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.58 2001/03/28 12:46:01 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.59 2001/05/21 09:17:28 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.58 2001/03/28 12:46:01 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.59 2001/05/21 09:17:28 agc Exp $");
 #endif
 #endif
 
@@ -294,7 +294,7 @@ pkg_do(char *pkg)
 		/* If we're running in MASTER mode, just output the plist and return */
 		if (AddMode == MASTER) {
 			printf("%s\n", where_playpen());
-			write_plist(&Plist, stdout);
+			write_plist(&Plist, stdout, NULL);
 			return 0;
 		}
 	}
@@ -669,7 +669,7 @@ pkg_do(char *pkg)
 			    contents);
 			goto success;	/* can't log, but still keep pkg */
 		}
-		write_plist(&Plist, cfile);
+		write_plist(&Plist, cfile, NULL);
 		fclose(cfile);
 		move_file(".", DESC_FNAME, LogDir);
 		move_file(".", COMMENT_FNAME, LogDir);

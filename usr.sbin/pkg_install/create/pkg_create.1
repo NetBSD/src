@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.28 2001/05/18 13:21:38 agc Exp $
+.\" $NetBSD: pkg_create.1,v 1.29 2001/05/21 09:17:31 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -56,6 +56,9 @@
 .Ek
 .Bk -words
 .Op Fl i Ar iscript
+.Ek
+.Bk -words
+.Op Fl I Ar realprefix
 .Ek
 .Bk -words
 .Op Fl k Ar dscript
@@ -161,6 +164,9 @@ is a
 .It Fl h
 Force tar to follow symbolic links, so that the files they point to
 are dumped, rather than the links themselves.
+.It Fl I Ar realprefix
+Provide the real prefix, as opposed to the staging prefix, for use in
+staged installations of packages.
 .It Fl i Ar iscript
 Set
 .Ar iscript
