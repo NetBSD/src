@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 2001/08/17 15:05:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.129 2001/09/21 21:01:13 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -59,10 +59,6 @@
 #   buildendmsg: displays the end time of the build.
 
 .include <bsd.own.mk>
-
-.if defined(USE_NEW_TOOLCHAIN)
-.include "${.CURDIR}/tools/Makefile.tools"
-.endif
 
 MKOBJDIRS ?= no
 
@@ -227,5 +223,10 @@ do-whatisdb:
 
 release snapshot: build
 	(cd ${.CURDIR}/etc && ${MAKE} ${_M} INSTALL_DONE=1 release)
+
+# Speedup stubs for some subtrees that don't need to run these rules
+includes-bin includes-games includes-libexec includes-regress \
+includes-sbin includes-usr.sbin:
+	@${TRUE}
 
 .include <bsd.subdir.mk>
