@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.49 1997/11/04 20:52:30 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.50 1997/11/04 22:59:28 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -112,7 +112,6 @@
 #include <ddb/db_extern.h>
 #endif
 
-void	netintr __P((void));
 void	machinecheck __P((caddr_t));
 void	cmrerr __P((void));
 
@@ -605,60 +604,6 @@ cpu_reboot(howto, b)
 }
 
 void
-netintr()
-{
-#ifdef INET
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
-#endif
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		pppintr();
-	}
-#endif
-}
-
-void
-machinecheck(frame)
-	caddr_t frame;
-{
-	if ((*dep_call->cpu_mchk) (frame) == 0)
-		return;
-	(*dep_call->cpu_memerr) ();
-	panic("machine check");
-}
-
-void
 dumpsys()
 {
 
@@ -769,10 +714,4 @@ process_sstep(p, sstep)
 		tf->psl &= ~PSL_T;
 
 	return (0);
-}
-
-void
-cmrerr()
-{
-	(*dep_call->cpu_memerr) ();
 }

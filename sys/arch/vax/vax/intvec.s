@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.23 1997/07/28 21:48:35 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.24 1997/11/04 22:59:32 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,13 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
 
+#include "assym.h"
 
-#include <machine/mtpr.h>
-#include <machine/pte.h>
-#include <machine/trap.h>
+#include "ppp.h"
 
 #define ENTRY(name) \
 	.text			; \
@@ -70,6 +67,9 @@ ENTRY(stray/**/vecnr)		; \
 	calls $2,_stray		; \
 	popr $0x3f		; \
 	rei
+
+#define	PUSHR	pushr	$0x3f
+#define	POPR	popr	$0x3f
 
 #define KSTACK 0
 #define ISTACK 1
@@ -173,10 +173,17 @@ mcheck: .globl	mcheck
 	tstl	_cold		# Ar we still in coldstart?
 	bneq	L4		# Yes.
 
-	pushr	$0x3f
+	pushr	$0x7f
 	pushab	24(sp)
-	calls	$1, _machinecheck
-	popr	$0x3f
+	movl	_dep_call,r6	# CPU dependent mchk handling
+	calls	$1,*MCHK(r6)
+	tstl	r0		# If not machine check, try memory error
+	beql	1f
+	calls	$0,*MEMERR(r6)
+	pushab	2f
+	calls	$1,_panic
+2:	.asciz	"mchk"
+1:	popr	$0x7f
 	addl2	(sp)+,sp
 
 	rei
@@ -236,13 +243,7 @@ ptelen: movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 	STRAY(0,38)
 	STRAY(0,3C)
 
-
-
-
-
-	.align 2		# Main system call 
-	.globl	syscall
-syscall:
+ENTRY(syscall)			# Main system call
 	pushl	$T_SYSCALL
 	pushr	$0xfff
 	mfpr	$PR_USP, -(sp)
@@ -272,7 +273,12 @@ ENTRY(sbiexc)
 	popr	$0x3f
 1:	rei
 
-	FASTINTR(cmrerr,cmrerr)
+ENTRY(cmrerr)
+	PUSHR
+	movl	_dep_call,r0
+	calls	$0,*MEMERR(r0)
+	POPR
+	rei
 
 ENTRY(rxcs);	/* console interrupt from some other processor */
 	pushr	$0x3f
@@ -317,7 +323,29 @@ ENTRY(rxcs);	/* console interrupt from some other processor */
 	STRAY(0,A8)
 	STRAY(0,AC)
 
-	FASTINTR(netint,netintr)	#network packet interrupt
+ENTRY(netint)
+	PUSHR
+#ifdef INET
+	bbcc	$NETISR_ARP,_netisr,1f; calls $0,_arpintr; 1:
+	bbcc	$NETISR_IP,_netisr,1f; calls $0,_ipintr; 1:
+#endif
+#ifdef NETATALK
+	bbcc	$NETISR_ATALK,_netisr,1f; calls $0,_atintr; 1:
+#endif
+#ifdef NS
+	bbcc	$NETISR_NS,_netisr,1f; calls $0,_nsintr; 1:
+#endif
+#ifdef ISO
+	bbcc	$NETISR_ISO,_netisr,1f; calls $0,_clnlintr; 1:
+#endif
+#ifdef CCITT
+	bbcc	$NETISR_CCITT,_netisr,1f; calls $0,_ccittintr; 1:
+#endif
+#if NPPP > 0
+	bbcc	$NETISR_PPP,_netisr,1f; calls $0,_pppintr; 1:
+#endif
+	POPR
+	rei
 
 	STRAY(0,B4)
 	STRAY(0,B8)

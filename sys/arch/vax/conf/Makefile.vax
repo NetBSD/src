@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.35 1997/11/03 20:00:31 ragge Exp $
+#	$NetBSD: Makefile.vax,v 1.36 1997/11/04 22:59:42 ragge Exp $
 
 # Makefile for NetBSD
 #
@@ -173,7 +173,7 @@ tmscp.o ts.o uba.o uda.o autoconf.o clock.o conf.o emulate.o intvec.o: Makefile
 machdep.o sbi.o subr.o uvaxII.o: Makefile
 
 
-intvec.o: ${VAX}/vax/intvec.s
+intvec.o: ${VAX}/vax/intvec.s assym.h
 	${NORMAL_S}
 
 subr.o: ${VAX}/vax/subr.s assym.h
