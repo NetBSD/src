@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: yylex.c,v 1.8 1998/01/05 05:16:00 perry Exp $ */
+/* $NetBSD: yylex.c,v 1.9 2001/01/06 02:09:49 christos Exp $ */
 
 #include <ctype.h>
 #include "flexdef.h"
@@ -35,11 +35,11 @@
 
 /* yylex - scan for a regular expression token */
 
+extern char *yytext;
 int yylex()
 	{
 	int toktype;
 	static int beglin = false;
-	extern char *yytext;
 
 	if ( eofseen )
 		toktype = EOF;
