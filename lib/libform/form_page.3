@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_page.3,v 1.8 2004/11/24 12:12:20 wiz Exp $
+.\"	$NetBSD: form_page.3,v 1.9 2004/11/24 12:26:23 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -63,7 +63,8 @@ returns a pointer to the structure for the field that is currently
 active on the page.
 If there is an error,
 .Fn current_field
-will return NULL.
+will return
+.Dv NULL .
 Calling
 .Fn field_index
 will return the index of the given field in the form field array.
@@ -82,7 +83,9 @@ The current field on the form may be set by calling
 .Fn set_current_field
 which will set the current field to the one given.
 .Sh RETURN VALUES
-Functions returning pointers will return NULL if an error is detected.
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
 The functions that return an int will return one of the following
 error values:
 .Pp
