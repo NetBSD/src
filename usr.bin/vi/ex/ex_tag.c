@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.13 2002/04/09 01:47:34 thorpej Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.14 2003/09/09 21:03:15 erh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -57,9 +57,10 @@ static int	 ctag_search __P((SCR *, char *, size_t, char *));
 static int	 getentry __P((char *, char **, char **, char **));
 static TAGQ	*gtag_slist __P((SCR *, char *, int));
 #endif
-static int	 ctag_sfile __P((SCR *, TAGF *, TAGQ *, char *));
+static int	 ctag_sfile __P((SCR *, TAGF *, TAGQ *, char *, int));
 static TAGQ	*ctag_slist __P((SCR *, char *));
 static char	*linear_search __P((char *, char *, char *));
+static char	*full_search __P((char *, char *, char *));
 static int	 tag_copy __P((SCR *, TAG *, TAG **));
 static int	 tag_pop __P((SCR *, TAGQ *, int));
 static int	 tagf_copy __P((SCR *, TAGF *, TAGF **));
@@ -1144,6 +1145,7 @@ ctag_slist(sp, tag)
 	TAGQ *tqp;
 	size_t len;
 	int echk;
+	int slow_search = 0;
 
 	exp = EXP(sp);
 
@@ -1158,16 +1160,21 @@ ctag_slist(sp, tag)
 	 * Find the tag, only display missing file messages once, and
 	 * then only if we didn't find the tag.
 	 */
-	for (echk = 0,
-	    tfp = exp->tagfq.tqh_first; tfp != NULL; tfp = tfp->q.tqe_next)
-		if (ctag_sfile(sp, tfp, tqp, tag)) {
-			echk = 1;
-			F_SET(tfp, TAGF_ERR);
-		} else
-			F_CLR(tfp, TAGF_ERR | TAGF_ERR_WARN);
+	do {
+		for (echk = 0,
+			tfp = exp->tagfq.tqh_first; tfp != NULL; tfp = tfp->q.tqe_next)
+			if (ctag_sfile(sp, tfp, tqp, tag, slow_search)) {
+				echk = 1;
+				F_SET(tfp, TAGF_ERR);
+			} else
+				F_CLR(tfp, TAGF_ERR | TAGF_ERR_WARN);
+			if (slow_search)
+				break;
+			slow_search = 1;
+	} while (CIRCLEQ_EMPTY(&tqp->tagq));
 
 	/* Check to see if we found anything. */
-	if (tqp->tagq.cqh_first == (void *)&tqp->tagq) {
+	if (CIRCLEQ_EMPTY(&tqp->tagq)) {
 		msgq_str(sp, M_ERR, tag, "162|%s: tag not found");
 		if (echk)
 			for (tfp = exp->tagfq.tqh_first;
@@ -1194,11 +1201,12 @@ alloc_err:
  *	Search a tags file for a tag, adding any found to the tag queue.
  */
 static int
-ctag_sfile(sp, tfp, tqp, tname)
+ctag_sfile(sp, tfp, tqp, tname, slow_search)
 	SCR *sp;
 	TAGF *tfp;
 	TAGQ *tqp;
 	char *tname;
+	int slow_search;
 {
 	struct stat sb;
 	TAG *tp;
@@ -1237,8 +1245,13 @@ ctag_sfile(sp, tfp, tqp, tname)
 
 	front = map;
 	back = front + sb.st_size;
-	front = binary_search(tname, front, back);
-	front = linear_search(tname, front, back);
+	if (slow_search)
+		front = full_search(tname, map, back);
+	else
+	{
+		front = binary_search(tname, front, back);
+		front = linear_search(tname, front, back);
+	}
 	if (front == NULL)
 		goto done;
 
@@ -1438,8 +1451,9 @@ binary_search(string, front, back)
  *
  * This routine assumes:
  *
- * 	o front points at the first character in a line.
- *	o front is before or at the first line to be printed.
+ *  o front points at the first character in a line.
+ *  o front is before or at the first line to be printed.
+ *  o the lines are sorted.
  */
 static char *
 linear_search(string, front, back)
@@ -1453,6 +1467,31 @@ linear_search(string, front, back)
 			return (NULL);
 		case GREATER:		/* Keep going. */
 			break;
+		}
+		SKIP_PAST_NEWLINE(front, back);
+	}
+	return (NULL);
+}
+
+/*
+ * Find the first line that starts with string, linearly searching from front
+ * to back.
+ *
+ * Return NULL for no such line.
+ *
+ * This routine assumes:
+ *
+ *  o front points at the first character in a line.
+ *  o front is before or at the first line to be printed.
+ */
+static char *
+full_search(string, front, back)
+	char *string, *front, *back;
+{
+	while (front < back) {
+		if (compare(string, front, back) == EQUAL)
+		{
+			return (front);
 		}
 		SKIP_PAST_NEWLINE(front, back);
 	}
