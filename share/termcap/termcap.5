@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.5,v 1.18 2000/05/16 20:23:11 jdc Exp $
+.\"	$NetBSD: termcap.5,v 1.19 2000/05/17 12:36:47 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -492,7 +492,9 @@ handshaking.
 .Sy \&so
 char (Teleray 1061).
 .It "xx	bool	(o)	Tektronix 4025 insert-line."
-.It "ZZ	str		Address of buffer allocated to hold full termcap entry."
+.It "ZZ	str		Pointer to the extended termcap entry.  See"
+.Xr tgetent 3
+for details.
 .El
 .Ss A Sample Entry
 The following entry, which describes the Concept\-100, is among the more
@@ -1778,7 +1780,12 @@ Unfortunately, due to lack of a definition for string parameters in
 .Nm termcap ,
 only
 .Xr terminfo
-supports these capabilities.
+supports these capabilities.  The 
+.Sy \&ZZ
+capability is automatically generated in the tgetent call and must
+never be defined in
+.Nm termcap
+entries.
 .Ss Glitches and Braindamage
 Hazeltine terminals, which do not allow `~' characters to be displayed,
 should indicate
@@ -1839,9 +1846,7 @@ The string capability
 can be given
 with the name of the similar terminal.
 This capability must be
-.Em last ,
-and the combined length of the entries
-must not exceed 1024.
+.Em last .
 The capabilities given before
 .Sy \&tc
 override those in the terminal type invoked by
@@ -1912,8 +1917,6 @@ allows only 256 characters for string capabilities, and the routines
 in
 .Xr termcap 3
 do not check for overflow of this buffer.
-The total length of a single entry (excluding only escaped newlines)
-may not exceed 1024.
 .Pp
 Not all programs support all entries.
 .Sh HISTORY
