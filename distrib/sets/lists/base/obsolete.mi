@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.5 2000/03/15 12:21:07 soren Exp $
+# $NetBSD: obsolete.mi,v 1.6 2000/04/15 22:02:14 tsarna Exp $
 /dev/log
 /sbin/dumpfs
 /sbin/dumplfs
@@ -13,6 +13,7 @@
 /usr/sbin/host
 /usr/sbin/htable
 /usr/sbin/mbrlabel
+/usr/sbin/nfsiod
 /usr/sbin/nslookup
 /usr/sbin/nsquery
 /usr/sbin/nstest
