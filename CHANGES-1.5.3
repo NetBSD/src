@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.63 2002/04/17 12:26:06 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.64 2002/04/22 22:33:48 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2750,3 +2750,31 @@ lib/libc/time/zdump.c				1.12
 share/man/man4/ifmedia.4			1.7
 
   Correct a minor typo.  Fixes PR#16383.
+
+lib/libc/include/namespace.h			1.71 via patch
+lib/libc/string/Makefile.inc			1.52 via patch
+lib/libc/string/_strlcat.c			1.1 (new)
+lib/libc/string/_strlcpy.c			1.1 (new)
+lib/libc/string/strlcat.c			1.12 via patch
+lib/libc/string/strlcpy.c			1.10 via patch
+
+  Use internal names for strlcat() and strlcpy().
+
+sys/dev/pci/pciide.c				1.150
+
+  Fix use of bus_space_unmap() for the native case.  Fixes PR#16307.
+
+sys/arch/macppc/conf/GENERIC			patch
+sys/arch/macppc/conf/INSTALL			patch
+
+  Set BUFPAGES to 1024 to be able to boot on large-memory machines,
+  and squeeze INSTALL so that there is enough room on the boot
+  floppy.
+
+sys/arch/macppc/macppc/conf.c			patch
+
+  Make the nvram device optional; check for NNVRAM.
+
+sys/arch/macppc/conf/GENERIC_MD			patch
+
+  Comment out BUFPAGES, now that GENERIC defines it.
