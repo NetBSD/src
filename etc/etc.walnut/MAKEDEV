@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.25 2002/08/13 01:16:24 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.26 2002/08/23 12:18:06 scw Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,7 +86,6 @@
 #	random	Random number generator
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	satlink* PlanetConnect satellite receiver driver
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	uk*	unknown SCSI device
@@ -130,8 +129,7 @@ all)
 	makedev lpt0 lpt1 lpt2 tun0 tun1 ipl
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random ttyCY0
-	makedev lkm mms0 lms0 apm local satlink0
-	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7 ttyE8
+	makedev lkm mms0 lms0 apm local
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	makedev isdns
@@ -317,7 +315,7 @@ ccd*|sd*|vnd*|wd*|raid*)
 
 ttyCY*)
 	unit=${i#ttyCY}
-	major=38
+	major=47
 	minor=$(($unit * 32))
 	eminor=$(($minor + 32))
 	while [ $minor -lt $eminor ]; do
