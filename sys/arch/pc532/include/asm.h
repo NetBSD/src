@@ -1,30 +1,30 @@
-/*	$NetBSD: asm.h,v 1.16 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.17 2004/01/23 04:12:39 simonb Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON AND HELSINKI UNIVERSITY OF TECHNOLOGY ALLOW FREE USE
  * OF THIS SOFTWARE IN ITS "AS IS" CONDITION.  CARNEGIE MELLON AND
  * HELSINKI UNIVERSITY OF TECHNOLOGY DISCLAIM ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
@@ -36,7 +36,7 @@
  *	Helsinki University of Technology 1992.
  */
 
-#ifndef _MACHINE_ASM_H_ 
+#ifndef _MACHINE_ASM_H_
 #define	_MACHINE_ASM_H_
 
 #if __STDC__
@@ -145,7 +145,7 @@
  */
 #define	GLOBAL(name)						\
 		.globl	_C_LABEL(name)			;	\
-	_C_LABEL(name):	
+	_C_LABEL(name):
 
 #define	ASGLOBAL(name)						\
 		.globl	_ASM_LABEL(name)		;	\
@@ -175,12 +175,12 @@
 #define	DATA_D(name, init) _DATA(_C_LABEL(name), .long, init)
 #define	DATA_W(name, init) _DATA(_C_LABEL(name), .word, init)
 #define	DATA_B(name, init) _DATA(_C_LABEL(name), .byte, init)
-#define	DATA_S(name, init) _DATA(_C_LABEL(name), .asciz, init) 
+#define	DATA_S(name, init) _DATA(_C_LABEL(name), .asciz, init)
 
 #define	ASDATA_D(name, init) _DATA(_ASM_LABEL(name), .long, init)
 #define	ASDATA_W(name, init) _DATA(_ASM_LABEL(name), .word, init)
 #define	ASDATA_B(name, init) _DATA(_ASM_LABEL(name), .byte, init)
-#define	ASDATA_S(name, init) _DATA(_ASM_LABEL(name), .asciz, init) 
+#define	ASDATA_S(name, init) _DATA(_ASM_LABEL(name), .asciz, init)
 
 /*
  * Items in the BSS segment.

@@ -1,6 +1,6 @@
-/*	$NetBSD: icu.h,v 1.11 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: icu.h,v 1.12 2004/01/23 04:12:39 simonb Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
  *

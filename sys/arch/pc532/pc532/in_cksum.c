@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.10 2003/08/07 16:29:02 agc Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.11 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.10 2003/08/07 16:29:02 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.11 2004/01/23 04:12:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.10 2003/08/07 16:29:02 agc Exp $");
  *
  * This routine is very heavily used in the network
  * code and should be modified for each CPU to be as fast as possible.
- * 
+ *
  * This implementation is the ns32k version.
  */
 
@@ -207,4 +207,3 @@ in_cksum(m, len)
 	ADDCARRY;
 	return (sum ^ 0xffff);
 }
-
