@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp_output.c,v 1.13 2000/09/26 08:40:25 itojun Exp $	*/
-/*	$KAME: ipcomp_output.c,v 1.19 2000/09/26 07:55:14 itojun Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.14 2000/10/02 03:55:43 itojun Exp $	*/
+/*	$KAME: ipcomp_output.c,v 1.20 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -116,16 +116,19 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	size_t compoff;
 	int afnumber;
 	int error = 0;
+	struct ipsecstat *stat;
 
 	switch (af) {
 #ifdef INET
 	case AF_INET:
 		afnumber = 4;
+		stat = &ipsecstat;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
 		afnumber = 6;
+		stat = &ipsec6stat;
 		break;
 #endif
 	default:
@@ -136,7 +139,7 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	/* grab parameters */
 	algo = ipcomp_algorithm_lookup(sav->alg_enc);
 	if ((ntohl(sav->spi) & ~0xffff) != 0 || !algo) {
-		ipsecstat.out_inval++;
+		stat->out_inval++;
 		m_freem(m);
 		return EINVAL;
 	}
@@ -181,18 +184,7 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	if (mprev == NULL || mprev->m_next != md) {
 		ipseclog((LOG_DEBUG, "ipcomp%d_output: md is not in chain\n",
 		    afnumber));
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ipsecstat.out_inval++;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			ipsec6stat.out_inval++;
-			break;
-#endif
-		}
+		stat->out_inval++;
 		m_freem(m);
 		m_freem(md0);
 		m_freem(mcopy);
@@ -214,33 +206,11 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 		m = NULL;
 		m_freem(md0);
 		m_freem(mcopy);
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ipsecstat.out_inval++;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			ipsec6stat.out_inval++;
-			break;
-#endif
-		}
+		stat->out_inval++;
 		error = EINVAL;
 		goto fail;
 	}
-	switch (af) {
-#ifdef INET
-	case AF_INET:
-		ipsecstat.out_comphist[sav->alg_enc]++;
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		ipsec6stat.out_comphist[sav->alg_enc]++;
-		break;
-#endif
-	}
+	stat->out_comphist[sav->alg_enc]++;
 	md = mprev->m_next;
 
 	/*
@@ -352,32 +322,9 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 		ipseclog((LOG_DEBUG,
 		    "NULL mbuf after compression in ipcomp%d_output",
 		    afnumber));
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ipsecstat.out_inval++;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			ipsec6stat.out_inval++;
-			break;
-#endif
-		}
-	} else {
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ipsecstat.out_success++;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			ipsec6stat.out_success++;
-			break;
-#endif
-		}
+		stat->out_inval++;
 	}
+		stat->out_success++;
 
 	/* compute byte lifetime against original packet */
 	key_sa_recordxfer(sav, mcopy);

@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_core.c,v 1.20 2000/07/18 14:56:42 itojun Exp $	*/
-/*	$KAME: ah_core.c,v 1.36 2000/07/15 16:07:48 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.21 2000/10/02 03:55:42 itojun Exp $	*/
+/*	$KAME: ah_core.c,v 1.37 2000/10/01 12:37:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -741,6 +741,7 @@ ah_update_mbuf(m, off, len, algo, algos)
 	}
 }
 
+#ifdef INET
 /*
  * Go generate the checksum. This function won't modify the mbuf chain
  * except AH itself.
@@ -959,6 +960,7 @@ fail:
 		m_free(n);
 	return error;
 }
+#endif
 
 #ifdef INET6
 /*
