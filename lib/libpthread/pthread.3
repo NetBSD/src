@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread.3,v 1.3 2003/11/27 16:30:54 cl Exp $
+.\"	$NetBSD: pthread.3,v 1.4 2005/02/01 11:38:27 daniel Exp $
 .\"
 .\" Copyright (c) 2003 Hubert Feyrer <hubertf@NetBSD.org>
 .\" and Thomas Klausner <wiz@NetBSD.org>
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 27, 2003
+.Dd February 1, 2005
 .Dt PTHREAD 3
 .Os
 .Sh NAME
@@ -54,6 +54,10 @@ in the
 kernel, providing a kernel-supported MxN scheduling system.
 .Sh ENVIRONMENT
 .Bl -tag -width PTHREAD_DEBUGCOUNTERSXX -compact
+.It Ev PTHREAD_CONCURRENCY
+The number of concurrent threads to be run.
+This value should at least be 1,
+and smaller than or equal to the number of CPUs.
 .It Ev PTHREAD_DIAGASSERT
 Possible values are any combinations of:
 .Bl -tag -width ignoreXX -offset indent -compact
