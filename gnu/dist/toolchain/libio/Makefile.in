@@ -17,7 +17,7 @@
 
 srcdir = .
 
-VERSION = 2.8.0
+VERSION = 2.8.0nb1
 # The config file (overriden by Linux).
 _G_CONFIG_H=_G_config.h
 tooldir = $(exec_prefix)/$(target)
