@@ -1,4 +1,4 @@
-.\"	$NetBSD: iwic.4,v 1.1 2002/09/24 22:17:23 pooka Exp $
+.\"	$NetBSD: iwic.4,v 1.2 2002/09/24 23:48:22 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2002 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\"	last edit-date: [Sun Jul 28 16:49:47 2002]
 .\"
-.Dd July 28, 2002
+.Dd September 25, 2002
 .Dt IWIC 4
 .Os
 .Sh NAME
@@ -43,20 +43,16 @@ I.430 and layer 1 support for the B-channel.
 .Pp
 The driver supports passive PCI ISDN cards from various manufacturers
 based on the Winbond W6692 chip.
-.Sh SUPPORTED CARDS
+.Ss SUPPORTED CARDS
 .Bl -tag -width Ds -compact
 .It Ar ASUSCOM P-IN100-ST-D
 .Pp
 .It Ar Dynalink IS64PPH
 .El
-.Sh CAVEATS
-The driver is still in a somewhat experimental state.
-.Sh BUGS
-Layer 1 persistent deactivation not yet implemented.
+.Sh SEE ALSO
+.Xr isdnd 8
 .Sh STANDARDS
 CCITT Recommendation I.430
-.Sh SEE ALSO
-.Xr isdnd 8 .
 .Sh AUTHORS
 The
 .Nm
@@ -65,3 +61,7 @@ driver was written by
 .Pp
 This manpage was written by
 .An Hellmuth Michaelis Aq hm@freebsd.org .
+.Sh CAVEATS
+The driver is still in a somewhat experimental state.
+.Sh BUGS
+Layer 1 persistent deactivation not yet implemented.
