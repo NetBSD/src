@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.2 1993/10/11 02:16:24 deraadt Exp $
+ * $Id: pmap.c,v 1.3 1994/02/03 15:08:43 deraadt Exp $
  */
 
 /*
@@ -68,6 +68,7 @@
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
+#include <sparc/sparc/vaddrs.h>
 
 #ifdef DEBUG
 #define PTE_BITS "\20\40V\37W\36S\35NC\33IO\32U\31M"
@@ -914,6 +915,9 @@ if(pm==NULL)panic("pv_changepte 1");
 
 				if (bic == PG_W &&
 				    va >= pager_sva && va < pager_eva)
+					continue;
+				if (bic == PG_NC &&
+				    va >= DVMA_BASE && va < DVMA_END)
 					continue;
 				setcontext(pm->pm_ctxnum);
 				/* XXX should flush only when necessary */
