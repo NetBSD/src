@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.25 1998/11/12 19:54:42 thorpej Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.26 1999/03/05 20:47:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -103,7 +103,9 @@ ffs_update(v)
 		return (0);
 	ip = VTOI(ap->a_vp);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	FFS_ITIMES(ip, ap->a_access, ap->a_modify, &ts);
+	FFS_ITIMES(ip,
+	    ap->a_access ? ap->a_access : &ts,
+	    ap->a_modify ? ap->a_modify : &ts, &ts);
 	if ((ip->i_flag & IN_MODIFIED) == 0)
 		return (0);
 	ip->i_flag &= ~IN_MODIFIED;
