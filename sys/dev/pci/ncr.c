@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.28 1996/03/14 03:04:22 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.29 1996/03/14 05:21:20 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -198,13 +198,13 @@ extern PRINT_ADDR();
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #define DELAY(x)	delay(x)
-#endif /* __NetBSD */
+#endif /* __NetBSD__ */
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #ifndef __NetBSD__
 #include <machine/clock.h>
-#endif /* __NetBSD */
+#endif /* __NetBSD__ */
 
 
 /*==========================================================
@@ -481,8 +481,8 @@ typedef struct lcb * lcb_p;
 typedef struct ccb * ccb_p;
 
 struct link {
-	u_long	l_cmd;
-	u_long	l_paddr;
+	ncrcmd	l_cmd;
+	ncrcmd	l_paddr;
 };
 
 struct	usrcmd {
@@ -908,7 +908,7 @@ struct ccb {
 	**	the rest of the data.
 	*/
 
-	u_long			patch[8];
+	ncrcmd			patch[8];
 
 	/*
 	**	The general SCSI driver provides a
@@ -1319,7 +1319,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.28 1996/03/14 03:04:22 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.29 1996/03/14 05:21:20 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -3066,7 +3066,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 	int relocs;
 
 #ifndef __NetBSD__
-	np->script = (struct script*) vm_page_alloc_contig 
+	np->script = (struct script*) vm_page_alloc_contig
 	(round_page(sizeof (struct script)), 0x100000, 0xffffffff, PAGE_SIZE);
 #else  /* !__NetBSD___ */
 	np->script = (struct script *)
@@ -3099,8 +3099,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 		};
 
 		if (DEBUG_FLAGS & DEBUG_SCRIPT)
-			printf ("%x:  <%x>\n",
-				(unsigned)(src-1), (unsigned)opcode);
+			printf ("%p:  <%x>\n", (src-1), (unsigned)opcode);
 
 		/*
 		**	We don't have to decode ALL commands
@@ -3341,7 +3340,7 @@ ncr_attach(parent, self, aux)
 
 	printf(": NCR ");
 	switch (pa->pa_id) {
-	case NCR_810_ID:  
+	case NCR_810_ID:
 		printf("53c810");
 		break;
 	case NCR_810AP_ID:
@@ -4238,7 +4237,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	ncb_profile (np, cp);
 
 	if (DEBUG_FLAGS & DEBUG_TINY)
-		printf ("CCB=%x STAT=%x/%x\n", (unsigned)cp & 0xfff,
+		printf ("CCB=%x STAT=%x/%x\n", (unsigned long)cp & 0xfff,
 			cp->host_status,cp->scsi_status);
 
 	xp = cp->xfer;
@@ -4397,8 +4396,8 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		**  Other protocol messes
 		*/
 		PRINT_ADDR(xp);
-		printf ("COMMAND FAILED (%x %x) @%x.\n",
-			cp->host_status, cp->scsi_status, (unsigned)cp);
+		printf ("COMMAND FAILED (%x %x) @%p.\n",
+			cp->host_status, cp->scsi_status, cp);
 
 		xp->error = XS_TIMEOUT;
 	}
@@ -5017,8 +5016,8 @@ static void ncr_timeout (ncb_p np)
 			cp->jump_ccb.l_cmd = (SCR_JUMP);
 			if (cp->phys.header.launch.l_paddr ==
 				NCB_SCRIPT_PHYS (np, select)) {
-				printf ("%s: timeout ccb=%x (skip)\n",
-					ncr_name (np), (unsigned)cp);
+				printf ("%s: timeout ccb=%p (skip)\n",
+					ncr_name (np), cp);
 				cp->phys.header.launch.l_paddr
 				= NCB_SCRIPT_PHYS (np, skip);
 			};
@@ -5075,9 +5074,9 @@ static void ncr_timeout (ncb_p np)
 
 void ncr_exception (ncb_p np)
 {
-	u_char	istat, dstat;
-	u_short	sist;
-	u_long	dsp, dsa;
+	U_INT8	istat, dstat;
+	U_INT16	sist;
+	U_INT32	dsp, dsa;
 	int	i, script_ofs;
 
 	/*
@@ -5468,15 +5467,16 @@ void ncr_int_sto (ncb_p np)
 
 static void ncr_int_ma (ncb_p np)
 {
-	u_long	dbc;
-	u_long	rest;
-	u_long	dsa;
-	u_long	dsp;
-	u_long	nxtdsp;
-	u_long	*vdsp;
-	u_long	oadr, olen;
-	u_long	*tblp, *newcmd;
-	u_char	cmd, sbcl, delta, ss0, ss2;
+	U_INT32	dbc;
+	U_INT32	rest;
+	U_INT32	dsa;
+	U_INT32	dsp;
+	U_INT32	nxtdsp;
+	U_INT32	*vdsp;
+	U_INT32	oadr, olen;
+	U_INT32	*tblp;
+	ncrcmd	*newcmd;
+	U_INT32	cmd, sbcl, delta, ss0, ss2;
 	ccb_p	cp;
 
 	dsp = INL (nc_dsp);
@@ -5538,7 +5538,7 @@ static void ncr_int_ma (ncb_p np)
 		vdsp = &cp->patch[4];
 		nxtdsp = vdsp[3];
 	} else {
-		vdsp = (u_long*) ((char*)np->script - np->p_script + dsp -8);
+		vdsp = (U_INT32 *) ((char*)np->script - np->p_script + dsp -8);
 		nxtdsp = dsp;
 	};
 
@@ -5551,10 +5551,9 @@ static void ncr_int_ma (ncb_p np)
 			(unsigned) rest, (unsigned) delta, ss0);
 	};
 	if (DEBUG_FLAGS & DEBUG_PHASE) {
-		printf ("\nCP=%x CP2=%x DSP=%x NXT=%x VDSP=%x CMD=%x ",
-			(unsigned)cp, (unsigned)np->header.cp,
-			(unsigned)dsp,
-			(unsigned)nxtdsp, (unsigned)vdsp, cmd);
+		printf ("\nCP=%p CP2=%p DSP=%x NXT=%x VDSP=%p CMD=%x ",
+			cp, np->header.cp, (unsigned)dsp,
+			(unsigned)nxtdsp, vdsp, cmd);
 	};
 
 	/*
@@ -5564,18 +5563,18 @@ static void ncr_int_ma (ncb_p np)
 	oadr = vdsp[1];
 
 	if (cmd & 0x10) {	/* Table indirect */
-		tblp = (u_long*) ((char*) &cp->phys + oadr);
+		tblp = (U_INT32 *) ((char*) &cp->phys + oadr);
 		olen = tblp[0];
 		oadr = tblp[1];
 	} else {
-		tblp = (u_long*) 0;
+		tblp = (U_INT32 *) 0;
 		olen = vdsp[0] & 0xffffff;
 	};
 
 	if (DEBUG_FLAGS & DEBUG_PHASE) {
-		printf ("OCMD=%x\nTBLP=%x OLEN=%x OADR=%x\n",
+		printf ("OCMD=%x\nTBLP=%p OLEN=%x OADR=%x\n",
 			(unsigned) (vdsp[0] >> 24),
-			(unsigned) tblp,
+			tblp,
 			(unsigned) olen,
 			(unsigned) oadr);
 	};
@@ -6424,7 +6423,7 @@ static	void ncr_alloc_ccb (ncb_p np, struct scsi_xfer * xp)
 
 	if (DEBUG_FLAGS & DEBUG_ALLOC) {
 		PRINT_ADDR(xp);
-		printf ("new ccb @%x.\n", (unsigned) cp);
+		printf ("new ccb @%p.\n", cp);
 	}
 
 	/*
