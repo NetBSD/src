@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 1996/09/30 16:34:44 ws Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 1999/12/07 15:14:57 danw Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -52,7 +52,7 @@ enable_fpu(p)
 	}
 	asm volatile ("mfmsr %0; ori %1,%0,%2; mtmsr %1; isync"
 		      : "=r"(msr), "=r"(scratch) : "K"(PSL_FP));
-	asm volatile ("lfd 0,0(%0); mtfsf 0xff,0" :: "b"(&pcb->pcb_fpu.fpcsr));
+	asm volatile ("lfd 0,0(%0); mtfsf 0xff,0" :: "b"(&pcb->pcb_fpu.fpscr));
 	asm ("lfd 0,0(%0);"
 	     "lfd 1,8(%0);"
 	     "lfd 2,16(%0);"
@@ -129,6 +129,6 @@ save_fpu(p)
 	     "stfd 29,232(%0);"
 	     "stfd 30,240(%0);"
 	     "stfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
-	asm volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpcsr));
+	asm volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpscr));
 	asm volatile ("mtmsr %0; isync" :: "r"(msr));
 }
