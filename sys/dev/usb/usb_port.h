@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.31 2000/04/27 15:26:50 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.32 2000/06/01 14:29:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -102,10 +102,10 @@ typedef struct callout usb_callout_t;
 #define logprintf printf
 
 #define USB_DECLARE_DRIVER(dname)  \
-int __CONCAT(dname,_match) __P((struct device *, struct cfdata *, void *)); \
-void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
-int __CONCAT(dname,_detach) __P((struct device *, int)); \
-int __CONCAT(dname,_activate) __P((struct device *, enum devact)); \
+int __CONCAT(dname,_match)(struct device *, struct cfdata *, void *); \
+void __CONCAT(dname,_attach)(struct device *, struct device *, void *); \
+int __CONCAT(dname,_detach)(struct device *, int); \
+int __CONCAT(dname,_activate)(struct device *, enum devact); \
 \
 extern struct cfdriver __CONCAT(dname,_cd); \
 \

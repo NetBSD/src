@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.6 2000/04/27 15:26:52 augustss Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.7 2000/06/01 14:29:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -128,9 +128,9 @@ struct uvisor_softc {
 	u_char			sc_dying;
 };
 
-Static usbd_status uvisor_init __P((struct uvisor_softc *));
+Static usbd_status uvisor_init(struct uvisor_softc *);
 
-Static void uvisor_close __P((void *, int));
+Static void uvisor_close(void *, int);
 
 
 struct ucom_methods uvisor_methods = {
@@ -265,9 +265,7 @@ bad:
 }
 
 int
-uvisor_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+uvisor_activate(device_ptr_t self, enum devact act)
 {
 	struct uvisor_softc *sc = (struct uvisor_softc *)self;
 	int rv = 0;
@@ -287,9 +285,7 @@ uvisor_activate(self, act)
 }
 
 int
-uvisor_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+uvisor_detach(device_ptr_t self, int flags)
 {
 	struct uvisor_softc *sc = (struct uvisor_softc *)self;
 	int rv = 0;
@@ -304,8 +300,7 @@ uvisor_detach(self, flags)
 }
 
 usbd_status
-uvisor_init(sc)
-	struct uvisor_softc *sc;
+uvisor_init(struct uvisor_softc *sc)
 {
 	usbd_status err;
 	usb_device_request_t req;
@@ -372,9 +367,7 @@ uvisor_init(sc)
 }
 
 void
-uvisor_close(addr, portno)
-	void *addr;
-	int portno;
+uvisor_close(void *addr, int portno)
 {
 	struct uvisor_softc *sc = addr;
 	usb_device_request_t req;

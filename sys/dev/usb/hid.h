@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.5 2000/04/27 15:26:46 augustss Exp $	*/
+/*	$NetBSD: hid.h,v 1.6 2000/06/01 14:28:57 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
 /*
@@ -80,12 +80,11 @@ struct hid_item {
 	struct hid_item *next;
 };
 
-struct hid_data *hid_start_parse __P((void *d, int len, int kindset));
-void hid_end_parse __P((struct hid_data *s));
-int hid_get_item __P((struct hid_data *s, struct hid_item *h));
-int hid_report_size __P((void *buf, int len, enum hid_kind k, u_int8_t *id));
-int hid_locate __P((void *desc, int size, u_int32_t usage, 
-		    enum hid_kind kind, struct hid_location *loc, 
-		    u_int32_t *flags));
-u_long hid_get_data __P((u_char *buf, struct hid_location *loc));
-int hid_is_collection __P((void *desc, int size, u_int32_t usage));
+struct hid_data *hid_start_parse(void *d, int len, int kindset);
+void hid_end_parse(struct hid_data *s);
+int hid_get_item(struct hid_data *s, struct hid_item *h);
+int hid_report_size(void *buf, int len, enum hid_kind k, u_int8_t *id);
+int hid_locate(void *desc, int size, u_int32_t usage, enum hid_kind kind,
+	       struct hid_location *loc, u_int32_t *flags);
+u_long hid_get_data(u_char *buf, struct hid_location *loc);
+int hid_is_collection(void *desc, int size, u_int32_t usage);

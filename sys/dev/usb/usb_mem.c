@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.20 2000/04/27 15:26:49 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.21 2000/06/01 14:29:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,9 +81,9 @@ struct usb_frag_dma {
 	LIST_ENTRY(usb_frag_dma) next;
 };
 
-Static usbd_status	usb_block_allocmem __P((bus_dma_tag_t, size_t, size_t,
-						usb_dma_block_t **));
-Static void		usb_block_freemem  __P((usb_dma_block_t *));
+Static usbd_status	usb_block_allocmem(bus_dma_tag_t, size_t, size_t,
+					   usb_dma_block_t **);
+Static void		usb_block_freemem(usb_dma_block_t *);
 
 Static LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
 	LIST_HEAD_INITIALIZER(usb_blk_freelist);
@@ -93,11 +93,8 @@ Static LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 	LIST_HEAD_INITIALIZER(usb_frag_freelist);
 
 Static usbd_status
-usb_block_allocmem(tag, size, align, dmap)
-	bus_dma_tag_t tag;
-	size_t size;
-	size_t align;
-        usb_dma_block_t **dmap;
+usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
+		   usb_dma_block_t **dmap)
 {
 	int error;
         usb_dma_block_t *p;
@@ -177,8 +174,7 @@ free:
 
 #if 0
 void
-usb_block_real_freemem(p)
-        usb_dma_block_t *p;
+usb_block_real_freemem(usb_dma_block_t *p)
 {
 #ifdef DIAGNOSTIC
 	if (!curproc) {
@@ -200,8 +196,7 @@ usb_block_real_freemem(p)
  * XXX when should we really free?
  */
 Static void
-usb_block_freemem(p)
-        usb_dma_block_t *p;
+usb_block_freemem(usb_dma_block_t *p)
 {
 	int s;
 
@@ -213,11 +208,7 @@ usb_block_freemem(p)
 }
 
 usbd_status
-usb_allocmem(bus, size, align, p)
-	usbd_bus_handle bus;
-	size_t size;
-	size_t align;
-        usb_dma_t *p;
+usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 {
 	bus_dma_tag_t tag = bus->dmatag;
 	usbd_status err;
@@ -268,9 +259,7 @@ usb_allocmem(bus, size, align, p)
 }
 
 void
-usb_freemem(bus, p)
-	usbd_bus_handle bus;
-        usb_dma_t *p;
+usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 {
 	struct usb_frag_dma *f;
 	int s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.1 2000/04/14 14:51:22 augustss Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.2 2000/06/01 14:28:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,15 +96,13 @@ struct uftdi_softc {
 	u_char			sc_dying;
 };
 
-Static void	uftdi_get_status __P((void *, int portno, u_char *lsr,
-				      u_char *msr));
-Static void	uftdi_set	__P((void *, int, int, int));
-Static int	uftdi_param	__P((void *, int, struct termios *));
-Static int	uftdi_open	__P((void *sc, int portno));
-Static void	uftdi_read	__P((void *sc, int portno, u_char **ptr,
-				     u_int32_t *count));
-Static void	uftdi_write	__P((void *sc, int portno, u_char *to,
-				     u_char *from, u_int32_t *count));
+Static void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);
+Static void	uftdi_set(void *, int, int, int);
+Static int	uftdi_param(void *, int, struct termios *);
+Static int	uftdi_open(void *sc, int portno);
+Static void	uftdi_read(void *sc, int portno, u_char **ptr,u_int32_t *count);
+Static void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
+			    u_int32_t *count);
 
 struct ucom_methods uftdi_methods = {
 	uftdi_get_status,
@@ -231,9 +229,7 @@ bad:
 }
 
 int
-uftdi_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+uftdi_activate(device_ptr_t self, enum devact act)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
 	int rv = 0;
@@ -253,9 +249,7 @@ uftdi_activate(self, act)
 }
 
 int
-uftdi_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+uftdi_detach(device_ptr_t self, int flags)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
 	int rv = 0;
@@ -270,9 +264,7 @@ uftdi_detach(self, flags)
 }
 
 Static int
-uftdi_open(vsc, portno)
-	void *vsc;
-	int portno;
+uftdi_open(void *vsc, int portno)
 {
 	struct uftdi_softc *sc = vsc;
 	usb_device_request_t req;
@@ -313,11 +305,7 @@ uftdi_open(vsc, portno)
 }
 
 Static void
-uftdi_read(vsc, portno, ptr, count)
-	void *vsc;
-	int portno;
-	u_char **ptr;
-	u_int32_t *count;
+uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
 	u_char msr, lsr;
@@ -350,12 +338,7 @@ uftdi_read(vsc, portno, ptr, count)
 }
 
 Static void
-uftdi_write(vsc, portno, to, from, count)
-	void *vsc;
-	int portno;
-	u_char *to;
-	u_char *from;
-	u_int32_t *count;
+uftdi_write(void *vsc, int portno, u_char *to, u_char *from, u_int32_t *count)
 {
 	DPRINTFN(10,("uftdi_write: sc=%p, port=%d count=%u data[0]=0x%02x\n",
 		     vsc, portno, *count, from[0]));
@@ -367,11 +350,7 @@ uftdi_write(vsc, portno, to, from, count)
 }
 
 Static void
-uftdi_set(vsc, portno, reg, onoff)
-	void *vsc;
-	int portno;
-	int reg;
-	int onoff;
+uftdi_set(void *vsc, int portno, int reg, int onoff)
 {
 	struct uftdi_softc *sc = vsc;
 	usb_device_request_t req;
@@ -405,10 +384,7 @@ uftdi_set(vsc, portno, reg, onoff)
 }
 
 Static int
-uftdi_param(vsc, portno, t)
-	void *vsc;
-	int portno;
-	struct termios *t;
+uftdi_param(void *vsc, int portno, struct termios *t)
 {
 	struct uftdi_softc *sc = vsc;
 	usb_device_request_t req;
@@ -487,10 +463,7 @@ uftdi_param(vsc, portno, t)
 }
 
 void
-uftdi_get_status(vsc, portno, lsr, msr)
-	void *vsc;
-	int portno;
-	u_char *lsr, *msr;
+uftdi_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct uftdi_softc *sc = vsc;
 
