@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.3 1994/01/20 21:22:08 ws Exp $
+ *	$Id: process_machdep.c,v 1.4 1994/01/28 21:23:49 cgd Exp $
  */
 
 /*
@@ -87,6 +87,9 @@ process_read_regs(p, regs)
 	void *ptr;
 	struct trapframe *tp;
 
+	if ((p->p_flag & SLOAD) == 0)
+		return (EIO);
+
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
 
 	tp = ptr;
@@ -116,6 +119,9 @@ process_write_regs(p, regs)
 	void *ptr;
 	struct trapframe *tp;
 	int eflags;
+
+	if ((p->p_flag & SLOAD) == 0)
+		return (EIO);
 
 	ptr = (char *)p->p_addr + ((char *) p->p_regs - (char *) kstack);
 	tp = ptr;
@@ -151,6 +157,9 @@ process_sstep(p, sstep)
 	void *ptr;
 	struct trapframe *tp;
 
+	if ((p->p_flag & SLOAD) == 0)
+		return (EIO);
+
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
 
 	tp = ptr;
@@ -176,6 +185,9 @@ process_set_pc(p, addr)
 {
 	void *ptr;
 	struct trapframe *tp;
+
+	if ((p->p_flag & SLOAD) == 0)
+		return (EIO);
 
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
 
