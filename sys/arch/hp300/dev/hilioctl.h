@@ -38,7 +38,7 @@
  * from: Utah $Hdr: hilioctl.h 1.10 92/01/21$
  *
  *	from: @(#)hilioctl.h	8.1 (Berkeley) 6/10/93
- *	$Id: hilioctl.h,v 1.4 1994/05/25 11:48:17 mycroft Exp $
+ *	$Id: hilioctl.h,v 1.5 1994/05/25 13:13:32 mycroft Exp $
  */
 
 struct _hilbell {
@@ -196,4 +196,4 @@ typedef union hilqueue {
 } HILQ;
 
 #define HEVQSIZE	\
-	((sizeof(HILQ) - sizeof(struct q_data)) / sizeof(hil_packe
+	((sizeof(HILQ) - sizeof(struct q_data)) / sizeof(hil_packet) + 1)
