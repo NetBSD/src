@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 1995/09/05 21:46:04 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.35 1995/09/12 22:03:02 chuck Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -260,10 +260,9 @@ bootstrap()
  * has 3 fields: name (device name), val[0], and val[1]. Note that:
  *
  * if (val[0] == -1) { 
- *	val[1] is a unit number    (happens with old proms )
+ *	val[1] is a unit number    (happens most often with old proms)
  * } else {
  *	val[0] is a sbus slot, and val[1] is an sbus offset [if sbus]
- *	val[0] = val[1] = 0 [!sbus, e.g. obio@0,0]
  * }
  *
  */
@@ -282,6 +281,7 @@ bootpath_build()
 	 * "vmunix -s" or whatever.
 	 * ###	DO THIS BEFORE pmap_boostrap?
 	 */
+	bzero(bootpath, sizeof(bootpath));
 	bp = bootpath;
 	if (promvec->pv_romvec_vers < 2) {
 		/*
@@ -315,6 +315,9 @@ bootpath_build()
 				cp = str2hex(++cp, &bp->val[0]);
 				if (*cp == ',')
 					cp = str2hex(++cp, &bp->val[1]);
+			} else {
+				bp->val[0] = -1; /* no #'s: assume unit 0, no
+							sbus offset/adddress */
 			}
 #ifdef notyet
 			if (strcmp(bp->name, "iommu") == 0)
@@ -398,13 +401,13 @@ bootpath_fake(bp, cp)
 
 		/*
 		 *  xylogics VME dev: xd, xy, xt 
-		 *  fake looks like: /vmel@0,0/xdc0/xd@1,0
+		 *  fake looks like: /vmel0/xdc0/xd@1,0
 		 */
 		if (cp[0] == 'x') { 
 			if (cp[1] == 'd') {/* xd? */
-				BP_APPEND(bp,"vmel",0,0);
+				BP_APPEND(bp,"vmel",-1,0);
 			} else {
-				BP_APPEND(bp,"vmes",0,0);
+				BP_APPEND(bp,"vmes",-1,0);
 			}
 			sprintf(tmpname,"x%cc", cp[1]); /* e.g. xdc */
 			BP_APPEND(bp,tmpname,-1,v0val[0]);
@@ -415,10 +418,10 @@ bootpath_fake(bp, cp)
 
 		/*
 		 * ethernet: ie, le (rom supports only obio?)
-		 * fake looks like: /obio@0,0/le@0,0
+		 * fake looks like: /obio0/le0
 		 */
 		if ((cp[0] == 'i' || cp[0] == 'l') && cp[1] == 'e')  {
-			BP_APPEND(bp,"obio",0,0);
+			BP_APPEND(bp,"obio",-1,0);
 			sprintf(tmpname,"%c%c", cp[0], cp[1]);
 			BP_APPEND(bp,tmpname,-1,0);
 			return;
@@ -426,9 +429,9 @@ bootpath_fake(bp, cp)
 
 		/*
 		 * scsi: sd, st, sr
-		 * assume: 4/100 = sw: /obio@0,0/sw0/sd@0,0
-		 * 4/200 & 4/400 = si/sc: /vmes@0,0/si0/sd@0,0
- 		 * 4/300 = esp: /obio@0,0/esp0/sd@0,0
+		 * assume: 4/100 = sw: /obio0/sw0/sd@0,0
+		 * 4/200 & 4/400 = si/sc: /vmes0/si0/sd@0,0
+ 		 * 4/300 = esp: /obio0/esp0/sd@0,0
 		 * (note we expect sc to mimic an si...)
 		 */
 		if (cp[0] == 's' && 
@@ -437,19 +440,19 @@ bootpath_fake(bp, cp)
 			switch (cpumod) {
 			case SUN4_200:
 			case SUN4_400:
-				BP_APPEND(bp,"vmes",0,0);
+				BP_APPEND(bp,"vmes",-1,0);
 				BP_APPEND(bp,"si",-1,v0val[0]);
 				sprintf(tmpname,"%c%c", cp[0], cp[1]);
 				BP_APPEND(bp,tmpname,v0val[1],v0val[2]);
 				return;
 			case SUN4_100:
-				BP_APPEND(bp,"obio",0,0);
+				BP_APPEND(bp,"obio",-1,0);
 				BP_APPEND(bp,"sw",-1,v0val[0]);
 				sprintf(tmpname,"%c%c", cp[0], cp[1]);
 				BP_APPEND(bp,tmpname,v0val[1],v0val[2]);
 				return;
 			case SUN4_300:
-				BP_APPEND(bp,"obio",0,0);
+				BP_APPEND(bp,"obio",-1,0);
 				BP_APPEND(bp,"esp",-1,v0val[0]);
 				sprintf(tmpname,"%c%c", cp[0], cp[1]);
 				BP_APPEND(bp,tmpname,v0val[1],v0val[2]);
@@ -478,21 +481,21 @@ bootpath_fake(bp, cp)
 
 	/*
 	 * ethenet: le
-	 * fake looks like: /sbus@0,0/le@0,0
+	 * fake looks like: /sbus0/le0
 	 */
 	if (cp[0] == 'l' && cp[1] == 'e') {
-		BP_APPEND(bp,"sbus",0,0);
+		BP_APPEND(bp,"sbus",-1,0);
 		BP_APPEND(bp,"le",-1,v0val[0]);
 		return;
 	}
 
 	/*
 	 * scsi: sd, st, sr
-	 * fake looks like: /sbus@0,0/esp@0,800000/sd@3,0
+	 * fake looks like: /sbus0/esp0/sd@3,0
 	 */		
 	if (cp[0] == 's' &&
 	    (cp[1] == 'd' || cp[1] == 't' || cp[1] == 'r')) {
-		BP_APPEND(bp,"sbus",0,0);
+		BP_APPEND(bp,"sbus",-1,0);
 		BP_APPEND(bp,"esp",-1,v0val[0]);
 		if (cp[1] == 'r') 
 			sprintf(tmpname, "cd"); /* netbsd uses 'cd', not 'sr'*/
