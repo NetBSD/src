@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.105 2004/06/23 12:24:01 yamt Exp $	*/
+/*	$NetBSD: npx.c,v 1.106 2004/07/06 01:30:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.105 2004/06/23 12:24:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.106 2004/07/06 01:30:08 mycroft Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -137,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.105 2004/06/23 12:24:01 yamt Exp $");
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
-static int	npxdna_notset(struct cpu_info *);
 static int	npxdna_s87(struct cpu_info *);
 #ifdef I686_CPU
 static int	npxdna_xmm(struct cpu_info  *);
@@ -175,12 +174,6 @@ fpu_save(union savefpu *addr)
 }
 
 static int
-npxdna_notset(struct cpu_info *ci)
-{
-	panic("npxdna vector not initialized");
-}
-
-static int
 npxdna_empty(struct cpu_info *ci)
 {
 
@@ -190,7 +183,7 @@ npxdna_empty(struct cpu_info *ci)
 }
 
 
-int    (*npxdna_func)(struct cpu_info *) = npxdna_notset;
+int    (*npxdna_func)(struct cpu_info *) = npxdna_empty;
 
 /*
  * This calls i8259_* directly, but currently we can count on systems
@@ -295,11 +288,6 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 
 	idt[16] = save_idt_npxtrap;
 	write_eflags(save_eflags);
-
-	if ((rv == NPX_NONE) || (rv == NPX_BROKEN)) {
-		/* No FPU. Handle it here, npxattach won't be called */
-		npxdna_func = npxdna_empty;
-	}
 
 	return (rv);
 }
