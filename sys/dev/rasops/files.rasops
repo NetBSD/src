@@ -1,4 +1,4 @@
-# 	$NetBSD: files.rasops,v 1.2 1999/04/26 04:27:47 ad Exp $
+# 	$NetBSD: files.rasops,v 1.3 1999/06/02 23:24:54 christos Exp $
 
 define rasops1
 define rasops2
@@ -8,15 +8,17 @@ define rasops16
 define rasops24
 define rasops32
 
-file dev/rasops/rasops.c rasops_glue | rasops1 | rasops2 | rasops8 | 
-    rasops15 | rasops16 | rasops24 | rasops32 needs-flag
+file dev/rasops/rasops.c ((rasterconsole | wsdisplay) & 
+    (rasops_glue | rasops1 | rasops2 | rasops8 | 
+     rasops15 | rasops16 | rasops24 | rasops32)) needs-flag
 
-file dev/rasops/rasops_masks.c rasops1 | rasops2
-file dev/rasops/rasops1.c rasops1
-file dev/rasops/rasops2.c rasops2
-file dev/rasops/rasops8.c rasops8
-file dev/rasops/rasops15.c rasops15 | rasops16
-file dev/rasops/rasops24.c rasops24
-file dev/rasops/rasops32.c rasops32
+file dev/rasops/rasops_masks.c ((rasterconsole | wsdisplay) & 
+    (rasops1 | rasops2))
+file dev/rasops/rasops1.c ((rasterconsole | wsdisplay) & rasops1)
+file dev/rasops/rasops2.c ((rasterconsole | wsdisplay) & rasops2)
+file dev/rasops/rasops8.c ((rasterconsole | wsdisplay) & rasops8)
+file dev/rasops/rasops15.c ((rasterconsole | wsdisplay) & (rasops15 | rasops16))
+file dev/rasops/rasops24.c ((rasterconsole | wsdisplay) & rasops24)
+file dev/rasops/rasops32.c ((rasterconsole | wsdisplay) & rasops32)
 
 defopt opt_rasops.h 	RASOPS_CLIPPING
