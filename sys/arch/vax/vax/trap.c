@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.25 1997/06/12 16:23:22 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.26 1997/06/13 15:16:25 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -190,19 +190,19 @@ faulter:
 		} else {
 			u_int   *ptep, *pte;
 
-			frame->code=trunc_page(frame->code);
-			if(frame->code<0x40000000){
-				ptep=(u_int *)p->p_addr->u_pcb.P0BR;
-				pte=&ptep[(frame->code>>PGSHIFT)];
-			} else if(frame->code>0x7fffffff){
-				pte=(u_int *)&Sysmap[((u_int)frame->code&
-					0x3fffffff)>>PGSHIFT];
+			frame->code = trunc_page(frame->code);
+			if ((u_int)frame->code < (u_int)0x40000000) {
+				ptep = (u_int *)p->p_addr->u_pcb.P0BR;
+				pte = &ptep[(frame->code >> PGSHIFT)];
+			} else if ((u_int)frame->code > (u_int)0x7fffffff) {
+				pte = (u_int *)&Sysmap[((u_int)frame->code &
+					0x3fffffff) >> PGSHIFT];
 			} else {
-				ptep=(u_int *)p->p_addr->u_pcb.P1BR;
-				pte=&ptep[(frame->code&0x3fffffff)>>PGSHIFT];
+				ptep = (u_int *)p->p_addr->u_pcb.P1BR;
+				pte = &ptep[(frame->code&0x3fffffff)>>PGSHIFT];
 			}
-			if(*pte&PG_SREF){
-				s=splhigh();
+			if (*pte & PG_SREF) {
+				s = splhigh();
 				*pte|=PG_REF|PG_V;*pte&=~PG_SREF;pte++;
 				*pte|=PG_REF|PG_V;*pte&=~PG_SREF;
 			/*	mtpr(frame->code,PR_TBIS); */
@@ -224,29 +224,33 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 		pm=&p->p_vmspace->vm_pmap;
 		if(frame->trap&T_PTEFETCH){
 			u_int faultaddr,testaddr=(u_int)frame->code&0x3fffffff;
-			int P0=0,P1=0,SYS=0;
+			int P0 = 0, P1 = 0, SYS = 0;
 
-			if(frame->code==testaddr) P0++;
-			else if(frame->code>0x7fffffff) SYS++;
-			else P1++;
+			if (frame->code == testaddr)
+				P0++;
+			else if ((u_int)frame->code > (u_int)0x7fffffff)
+				SYS++;
+			else
+				P1++;
 
-			if(P0){
-				faultaddr=(u_int)pm->pm_pcb->P0BR+
-					((testaddr>>PGSHIFT)<<2);
-			} else if(P1){
-				faultaddr=(u_int)pm->pm_pcb->P1BR+
-					((testaddr>>PGSHIFT)<<2);
-			} else panic("pageflt: PTE fault in SPT\n");
+			if (P0) {
+				faultaddr = (u_int)pm->pm_pcb->P0BR +
+					((testaddr >> PGSHIFT) << 2);
+			} else if (P1) {
+				faultaddr= (u_int)pm->pm_pcb->P1BR +
+					((testaddr >> PGSHIFT) << 2);
+			} else
+				panic("pageflt: PTE fault in SPT\n");
 	
-			faultaddr&=~PAGE_MASK;
+			faultaddr &= ~PAGE_MASK;
 			rv = vm_fault(pte_map, faultaddr, 
 				VM_PROT_WRITE|VM_PROT_READ, FALSE);
 			if (rv != KERN_SUCCESS) {
 	
-				sig=SIGSEGV;
+				sig = SIGSEGV;
 				goto bad;
 			} else
-				trapsig=0;
+				trapsig = 0;
 		}
 		addr=(frame->code& ~PAGE_MASK);
 		if((frame->pc>(unsigned)0x80000000)&&
@@ -279,7 +283,7 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
 #endif
-		if(frame->code<0x40000000){ /* P0 */
+		if ((u_int)frame->code < (u_int)0x40000000) { /* P0 */
 			int i;
 
 			if (p->p_vmspace == 0){
@@ -293,7 +297,7 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 			} else {
 				sig = SIGSEGV;
 			}
-		} else if (frame->code > 0x7fffffff){ /* System, segv */
+		} else if ((u_int)frame->code > (u_int)0x7fffffff){ /* System, segv */
 			sig = SIGSEGV;
 		} else { /* P1 */
 			int i;
