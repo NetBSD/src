@@ -625,6 +625,7 @@ i386_ioconf()
   fprintf(fp, "#include \"sys/param.h\"\n");
   fprintf(fp, "#include \"sys/buf.h\"\n");
   fprintf(fp, "\n");
+  fprintf(fp, "#define VEC(s)	X##s\n");
   fprintf(fp, "#define C (caddr_t)\n\n");
   /*
    * First print the isa initialization structures
@@ -639,12 +640,11 @@ i386_ioconf()
     fprintf(fp, "#include \"i386/isa/icu.h\"\n\n");
     
     for (dp = dtab; dp != 0; dp = dp->d_next) {
-      char *handler;
       mp = dp->d_conn;
       if (mp == 0 || mp == TO_NEXUS ||
 	  !eq(mp->d_name, "isa"))
 	continue;
-      fprintf(fp, "extern struct isa_driver %3.3sdriver;",
+      fprintf(fp, "extern struct isa_driver %3sdriver;",
 	      dp->d_name);
       if (dp->d_irq == 2) {
 	fprintf(stderr, "remapped irq 2 to irq 9, please update your config file\n");
@@ -668,7 +668,7 @@ i386_ioconf()
 	continue;
       fprintf(fp, "{ &%sdriver,        0, ", mp->d_name);
       fprintf(fp,
-	      "%5.5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d, %d},\n",
+	      "%5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d, %d},\n",
 	      "0", 0, 0, 0, 0, dp->d_unit, dp->d_flags,
 	      dp->d_drive, mp->d_unit);
     }
@@ -699,12 +699,12 @@ isa_devtab(fp, table)
 	continue;
     if (strcmp(dp->d_mask, table)) continue;
     if (dp->d_port)
-      fprintf(fp, "{ &%3.3sdriver, %8.8s,",
+      fprintf(fp, "{ &%3sdriver, %8s,",
 	      dp->d_name, dp->d_port);
     else
-      fprintf(fp, "{ &%3.3sdriver,	0x%04x,",
+      fprintf(fp, "{ &%3sdriver,	0x%04x,",
 	      dp->d_name, dp->d_portn);
-    fprintf(fp, "%6.6s, %2d, C 0x%05X, %5d, %8.8s,  %2d, 0x%04X, %d, %d },\n",
+    fprintf(fp, "%6s, %2d, C 0x%05X, %5d, %8s,  %2d, 0x%04X, %d, %d },\n",
 	    sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
 	    dp->d_msize, shandler(dp), dp->d_unit,
 	    dp->d_flags,
@@ -747,7 +747,7 @@ struct device *dp;
   
   if(dp->d_irq==-2)
     return ("NULL");
-  sprintf(buf, "X%.32s%d", dp->d_name, dp->d_unit);
+  sprintf(buf, "VEC(%.32s%d)", dp->d_name, dp->d_unit);
   return buf;
 }
 #endif
