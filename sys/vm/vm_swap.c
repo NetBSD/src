@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.15 1997/05/11 13:52:05 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.16 1997/05/11 14:09:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -56,38 +56,31 @@
 #include <miscfs/specfs/specdev.h>
 
 /*
- * The idea here is to provide a single interface for
- * multiple swap devices, of any kind and priority
- * in a simple and fast way.
+ * The idea here is to provide a single interface for multiple swap devices,
+ * of any kind and priority in a simple and fast way.
  *
  * Each swap device has several properties:
- *	* rate of use.
  *	* swap in use.
  *	* swap enabled.
- *
- * And the rate in use is determined by XXX.
  *
  * The arguments to swap(2) are:
  *	int cmd;
  *	void *arg;
  *	int misc;
  * The cmd can be one of:
- *	SWAP_NSWAP - swap(2) returns the number of swap devices
- *		currently in use. (done)
- *	SWAP_STATS - swap(2) takes a struct ent * in (void *arg)
- *		and writes misc or fewer (to zero) entries of
- *		configured swap devices, and returns the number of
- *		entries written.  -1 on error (EFAULT, EPERM, ..)
- *		(done).
- *	SWAP_ON - swap(2) takes a (char *) in arg to be the pathname
- *		of a device or file to begin swapping on, with it's
- *		priority in misc, returning 0 on success and -1 on
- *		failure, setting errno to indicate which (done).
- *	SWAP_OFF - swap(2) takes a (char *) n arg to be the pathname
- *		of a device or file to stop swapping on.  returning 0
- *		or -1 (done).  XXX unwritten
- *	SWAP_CTL - swap(2) changes the priority of a swap device,
- *		using the misc value (done).
+ *	SWAP_NSWAP - swap(2) returns the number of swap devices currently in
+ *		use.
+ *	SWAP_STATS - swap(2) takes a struct ent * in (void *arg) and writes
+ *		misc or fewer (to zero) entries of configured swap devices,
+ *		and returns the number of entries written or -1 on error.
+ *	SWAP_ON - swap(2) takes a (char *) in arg to be the pathname of a
+ *		device or file to begin swapping on, with it's priority in
+ *		misc, returning 0 on success and -1 on error.
+ *	SWAP_OFF - swap(2) takes a (char *) n arg to be the pathname of a
+ *		device or file to stop swapping on.  returning 0 or -1.
+ *		XXX unwritten.
+ *	SWAP_CTL - swap(2) changes the priority of a swap device, using the
+ *		misc value.
  */
 
 /*
@@ -139,7 +132,7 @@ static int swap_on __P((struct proc *, struct swapdev *));
 #ifdef SWAP_OFF_WORKS
 static int swap_off __P((struct proc *, struct swapdev *));
 #endif
-static struct swapdev *swap_getdevfromaddr __P((daddr_t));
+static struct swapdev *swap_getsdpfromaddr __P((daddr_t));
 static void swap_addmap __P((struct swapdev *, int));
 
 int
@@ -299,7 +292,6 @@ sys_swapon(p, v, retval)
 		 * XXX do we need a vrel or vput for the vp for the
 		 * SWAP_CTL case ?
 		 */
-
 		break;
 	}
 
@@ -320,13 +312,15 @@ sys_swapon(p, v, retval)
 				 * if a device isn't in use or enabled, we
 				 * can't stop swapping from it (again).
 				 */
-				if ((sdp->swd_flags & (SWF_INUSE|SWF_ENABLE)) == 0) {
+				if ((sdp->swd_flags &
+				    (SWF_INUSE|SWF_ENABLE)) == 0) {
 					error = EBUSY;
 					goto bad;
 				}
 				if ((error = swap_off(p, sdp)) != 0)
 					goto bad;
-				CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
+				CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp,
+				    swd_next);
 				free((caddr_t)sdp, M_VMSWAP);
 			}
 		}
@@ -572,7 +566,7 @@ swap_free(size, addr)
 	int size;
 	daddr_t addr;
 {
-	struct swapdev *sdp = swap_getdevfromaddr(addr);
+	struct swapdev *sdp = swap_getsdpfromaddr(addr);
 
 #ifdef DIAGNOSTIC
 	if (sdp == NULL)
@@ -590,17 +584,16 @@ swap_free(size, addr)
 }
 
 /*
- * We have a physical -> virtual mapping to address here.  There
- * are several different physical address spaces (one for each
- * swap partition) that are to be mapped onto a single virtual
- * address space.
+ * We have a physical -> virtual mapping to address here.  There are several
+ * different physical address spaces (one for each swap partition) that are
+ * to be mapped onto a single virtual address space.
  */
 #define ADDR_IN_MAP(addr, sdp) \
 	(((addr) >= (sdp)->swd_mapoffset) && \
  	 ((addr) < ((sdp)->swd_mapoffset + (sdp)->swd_mapsize)))
 
 struct swapdev *
-swap_getdevfromaddr(addr)
+swap_getsdpfromaddr(addr)
 	daddr_t addr;
 {
 	struct swapdev *sdp;
@@ -662,7 +655,7 @@ swstrategy(bp)
 	daddr_t addr;
 
 	addr = bp->b_blkno;
-	sdp = swap_getdevfromaddr(addr);
+	sdp = swap_getsdpfromaddr(addr);
 	if (sdp == NULL) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
