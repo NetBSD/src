@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.29 2003/07/20 18:56:32 hannken Exp $	*/
+/*	$NetBSD: agp.c,v 1.30 2003/08/24 09:38:53 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.29 2003/07/20 18:56:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.30 2003/08/24 09:38:53 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,6 +299,7 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->as_chipc = NULL;
 }
+
 int
 agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc)
 {
