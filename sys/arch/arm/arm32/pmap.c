@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2002/02/22 04:49:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 2002/03/03 11:22:59 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,12 +142,13 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2002/02/22 04:49:20 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2002/03/03 11:22:59 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
         	((_stat_))
 int pmap_debug_level = -2;
+void pmap_dump_pvlist(vaddr_t phys, char *m);
 
 /*
  * for switching to potentially finer grained debugging
@@ -158,10 +159,11 @@ int pmap_debug_level = -2;
 #define	PDB_REMOVE	0x0008
 #define	PDB_CREATE	0x0010
 #define	PDB_PTPAGE	0x0020
-#define	PDB_ASN		0x0040
+#define	PDB_GROWKERN	0x0040
 #define	PDB_BITS	0x0080
 #define	PDB_COLLECT	0x0100
 #define	PDB_PROTECT	0x0200
+#define	PDB_MAP_L1	0x0400
 #define	PDB_BOOTSTRAP	0x1000
 #define	PDB_PARANOIA	0x2000
 #define	PDB_WIRING	0x4000
@@ -175,10 +177,16 @@ int pmapdebug = PDB_PARANOIA | PDB_FOLLOW;
     
 #else	/* PMAP_DEBUG */
 #define	PDEBUG(_lev_,_stat_) /* Nothing */
-#define PDEBUG(_lev_,_stat_) /* Nothing */
+#define NPDEBUG(_lev_,_stat_) /* Nothing */
 #endif	/* PMAP_DEBUG */
 
 struct pmap     kernel_pmap_store;
+
+/*
+ * linked list of all non-kernel pmaps
+ */
+
+static struct pmap_head pmaps;
 
 /*
  * pool that pmap structures are allocated from
@@ -199,6 +207,7 @@ boolean_t pmap_initialized = FALSE;	/* Has pmap_init completed? */
 
 static struct lock pmap_main_lock;
 static struct simplelock pvalloc_lock;
+static struct simplelock pmaps_lock;
 #ifdef LOCKDEBUG
 #define PMAP_MAP_TO_HEAD_LOCK() \
      (void) spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
@@ -280,6 +289,7 @@ extern int max_processes;
 
 vaddr_t virtual_start;
 vaddr_t virtual_end;
+vaddr_t pmap_curmaxkvaddr;
 
 vaddr_t avail_start;
 vaddr_t avail_end;
@@ -933,7 +943,7 @@ pmap_map_in_l1(pmap, va, l2pa, selfref)
 	/* Calculate the index into the L1 page table. */
 	ptva = (va >> PDSHIFT) & ~3;
 
-	PDEBUG(0, printf("wiring %08lx in to pd%p pte0x%lx va0x%lx\n", l2pa,
+	NPDEBUG(PDB_MAP_L1, printf("wiring %08lx in to pd%p pte0x%lx va0x%lx\n", l2pa,
 	    pmap->pm_pdir, L1_PTE(l2pa), ptva));
 
 	/* Map page table into the L1. */
@@ -942,13 +952,12 @@ pmap_map_in_l1(pmap, va, l2pa, selfref)
 	pmap->pm_pdir[ptva + 2] = L1_PTE(l2pa + 0x800);
 	pmap->pm_pdir[ptva + 3] = L1_PTE(l2pa + 0xc00);
 
-	PDEBUG(0, printf("pt self reference %lx in %lx\n",
-	    L2_PTE_NC_NB(l2pa, AP_KRW), pmap->pm_vptpt));
-
 	/* Map the page table into the page table area. */
 	if (selfref) {
-		*((pt_entry_t *)(pmap->pm_vptpt + ptva)) =
-			L2_PTE_NC_NB(l2pa, AP_KRW);
+	    NPDEBUG(PDB_MAP_L1, printf("pt self reference %lx in %lx\n",
+			L2_PTE_NC_NB(l2pa, AP_KRW), pmap->pm_vptpt));
+	    *((pt_entry_t *)(pmap->pm_vptpt + ptva)) =
+		L2_PTE_NC_NB(l2pa, AP_KRW);
 	}
 	/* XXX should be a purge */
 /*	cpu_tlb_flushD();*/
@@ -1121,7 +1130,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 #endif
 
 	virtual_start = KERNEL_VM_BASE;
-	virtual_end = virtual_start + KERNEL_VM_SIZE - 1;
+	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE - 1;
 
 	ALLOC_PAGE_HOOK(page_hook0, NBPG);
 	ALLOC_PAGE_HOOK(page_hook1, NBPG);
@@ -1142,6 +1151,8 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	 */
 	spinlockinit(&pmap_main_lock, "pmaplk", 0);
 	simple_lock_init(&pvalloc_lock);
+	simple_lock_init(&pmaps_lock);
+	LIST_INIT(&pmaps);
 	TAILQ_INIT(&pv_freepages);
 	TAILQ_INIT(&pv_unusedpgs);
 
@@ -1436,6 +1447,8 @@ pmap_free_l1pt(pt)
  * of L1 page tables currently held by the kernel or it will allocate
  * a new one via pmap_alloc_l1pt().
  * It will then initialise the l1 page table for use.
+ *
+ * XXX must tidy up and fix this code, not happy about how it does the pmaps_locking
  */
 static int
 pmap_allocpagedir(pmap)
@@ -1477,16 +1490,6 @@ pmap_allocpagedir(pmap)
 	if (!(pt->pt_flags & PTFLAG_CLEAN))
 		bzero((void *)pmap->pm_pdir, (PD_SIZE - KERNEL_PD_SIZE));
 
-	/* Do we already have the kernel mappings ? */
-	if (!(pt->pt_flags & PTFLAG_KPT)) {
-		/* Duplicate the kernel mapping i.e. all mappings 0xf0000000+ */
-
-		bcopy((char *)pmap_kernel()->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
-		    (char *)pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
-		    KERNEL_PD_SIZE);
-		pt->pt_flags |= PTFLAG_KPT;
-	}
-
 	/* Allocate a page table to map all the page tables for this pmap */
 
 #ifdef DIAGNOSTIC
@@ -1497,9 +1500,18 @@ pmap_allocpagedir(pmap)
 #endif	/* DIAGNOSTIC */
 	pmap->pm_vptpt = uvm_km_zalloc(kernel_map, NBPG);
 	if (pmap->pm_vptpt == 0) {
-		pmap_freepagedir(pmap);
-		return(ENOMEM);
+	    pmap_freepagedir(pmap);
+    	    return(ENOMEM);
 	}
+
+	/* need to lock this all up  for growkernel */
+	simple_lock(&pmaps_lock);
+	/* wish we didn't have to keep this locked... */
+
+	/* Duplicate the kernel mapping i.e. all mappings 0xf0000000+ */
+	bcopy((char *)pmap_kernel()->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
+		(char *)pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
+		KERNEL_PD_SIZE);
 
 	(void) pmap_extract(pmap_kernel(), pmap->pm_vptpt, &pmap->pm_pptpt);
 	pmap->pm_pptpt &= PG_FRAME;
@@ -1512,7 +1524,7 @@ pmap_allocpagedir(pmap)
 	pmap_map_in_l1(pmap, PROCESS_PAGE_TBLS_BASE, pmap->pm_pptpt, TRUE);
 
 	pt->pt_flags &= ~PTFLAG_CLEAN;	/* L1 is dirty now */
-
+	
 	/*
 	 * Map the kernel page tables for 0xf0000000 +
 	 * into the page table used to map the
@@ -1524,6 +1536,9 @@ pmap_allocpagedir(pmap)
 	    (char *)pmap->pm_vptpt + ((PD_SIZE - KERNEL_PD_SIZE) >> 2),
 	    (KERNEL_PD_SIZE >> 2));
 
+	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
+	simple_unlock(&pmaps_lock);
+	
 	return(0);
 }
 
@@ -1629,6 +1644,14 @@ pmap_destroy(pmap)
 	/*
 	 * reference count is zero, free pmap resources and then free pmap.
 	 */
+
+	/*
+	 * remove it from global list of pmaps
+	 */
+
+	simple_lock(&pmaps_lock);
+	LIST_REMOVE(pmap, pm_list);
+	simple_unlock(&pmaps_lock);
 	
 	/* Remove the zero page mapping */
 	pmap_remove(pmap, 0x00000000, 0x00000000 + NBPG);
@@ -2678,7 +2701,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 #ifdef DIAGNOSTIC
 	/* Valid address ? */
-	if (va >= (KERNEL_VM_BASE + KERNEL_VM_SIZE))
+	if (va >= (pmap_curmaxkvaddr))
 		panic("pmap_enter: too big");
 	if (pmap != pmap_kernel() && va != 0) {
 		if (va < VM_MIN_ADDRESS || va >= VM_MAXUSER_ADDRESS)
@@ -2702,6 +2725,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	pte = pmap_pte(pmap, va);
 	if (!pte) {
 		struct vm_page *ptp;
+		KASSERT(pmap != pmap_kernel()); /* kernel should have pre-grown */
 
 		/* if failure is allowed then don't try too hard */
 		ptp = pmap_get_ptp(pmap, va, flags & PMAP_CANFAIL);
@@ -2881,43 +2905,20 @@ out:
 	return error;
 }
 
+/*
+ * pmap_kenter_pa: enter a kernel mapping
+ *
+ * => no need to lock anything assume va is already allocated
+ * => should be faster than normal pmap enter function
+ */
 void
 pmap_kenter_pa(va, pa, prot)
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	struct pmap *pmap = pmap_kernel();
 	pt_entry_t *pte;
-	struct vm_page *pg;
  
-	if (!pmap_pde_page(pmap_pde(pmap, va))) {
-
-#ifdef DIAGNOSTIC
-		if (pmap_pde_v(pmap_pde(pmap, va)))
-			panic("Trying to map kernel page into section mapping"
-			    " VA=%lx PA=%lx", va, pa);
-#endif
-		/* 
-		 * For the kernel pmaps it would be better to ensure
-		 * that they are always present, and to grow the
-		 * kernel as required.
-		 */
-
-	    	/* must lock the pmap */
-	    	simple_lock(&(pmap_kernel()->pm_obj.vmobjlock));
-		/* Allocate a page table */
-		pg = uvm_pagealloc(&(pmap_kernel()->pm_obj), 0, NULL,
-		    UVM_PGA_USERESERVE | UVM_PGA_ZERO);
-		if (pg == NULL) {
-			panic("pmap_kenter_pa: no free pages");
-		}
-		pg->flags &= ~PG_BUSY;	/* never busy */
-
-		/* Wire this page table into the L1. */
-		pmap_map_in_l1(pmap, va, VM_PAGE_TO_PHYS(pg), TRUE);
-		simple_unlock(&(pmap_kernel()->pm_obj.vmobjlock));
-	}
 	pte = vtopte(va);
 	KASSERT(!pmap_pte_v(pte));
 	*pte = L2_PTE(pa, AP_KRW);
@@ -3719,6 +3720,84 @@ pmap_alloc_ptp(struct pmap *pmap, vaddr_t va, boolean_t just_try)
 //	pmap->pm_ptphint = ptp;
 	return (ptp);
 }
+
+vaddr_t
+pmap_growkernel(maxkvaddr)
+	vaddr_t maxkvaddr;
+{
+	struct pmap *kpm = pmap_kernel(), *pm;
+	int s;
+	paddr_t ptaddr;
+	struct vm_page *ptp;
+
+	if (maxkvaddr <= pmap_curmaxkvaddr)
+		goto out;		/* we are OK */
+	NPDEBUG(PDB_GROWKERN, printf("pmap_growkernel: growing kernel from %lx to %lx\n",
+		    pmap_curmaxkvaddr, maxkvaddr));
+
+	/*
+	 * whoops!   we need to add kernel PTPs
+	 */
+
+	s = splhigh();	/* to be safe */
+	simple_lock(&kpm->pm_obj.vmobjlock);
+	/* due to the way the arm pmap works we map 4MB at a time */
+	for (/*null*/ ; pmap_curmaxkvaddr < maxkvaddr ; pmap_curmaxkvaddr += 4 * NBPD) {
+
+		if (uvm.page_init_done == FALSE) {
+
+			/*
+			 * we're growing the kernel pmap early (from
+			 * uvm_pageboot_alloc()).  this case must be
+			 * handled a little differently.
+			 */
+
+			if (uvm_page_physget(&ptaddr) == FALSE)
+				panic("pmap_growkernel: out of memory");
+			pmap_zero_page(ptaddr);
+
+			/* map this page in */
+			pmap_map_in_l1(kpm, (pmap_curmaxkvaddr + 1), ptaddr, TRUE);
+
+			/* count PTP as resident */
+			kpm->pm_stats.resident_count++;
+			continue;
+		}
+
+		/*
+		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
+		 * pmap_initialized == FALSE CASE!  WE MAY BE
+		 * INVOKED WHILE pmap_init() IS RUNNING!
+		 */
+
+		if ((ptp = pmap_alloc_ptp(kpm, (pmap_curmaxkvaddr + 1), FALSE)) == NULL) {
+			panic("pmap_growkernel: alloc ptp failed");
+		}
+
+		/* distribute new kernel PTP to all active pmaps */
+		simple_lock(&pmaps_lock);
+		LIST_FOREACH(pm, &pmaps, pm_list) {
+		    pmap_map_in_l1(pm, (pmap_curmaxkvaddr + 1), VM_PAGE_TO_PHYS(ptp), TRUE); 
+		}
+
+		simple_unlock(&pmaps_lock);
+	}
+
+	/* 
+	 * flush out the cache, expensive but growkernel will happen so
+	 * rarely
+	 */
+	cpu_tlb_flushD();
+	cpu_cpwait();
+
+	simple_unlock(&kpm->pm_obj.vmobjlock);
+	splx(s);
+
+out:
+	return (pmap_curmaxkvaddr);
+}
+
+
 
 /************************ Bootstrapping routines ****************************/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.24 2002/02/22 17:11:59 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.25 2002/03/03 11:22:59 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -138,9 +138,10 @@ extern int pmap_debug_level;
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
 #define	KERNEL_PT_KERNEL_NUM	2
 
+/* now this could move into something more generic */
 					/* L2 tables for mapping kernel VM */
 #define	KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
-#define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#define	KERNEL_PT_VMDATA_NUM	4	/* 16MB kernel VM !*/
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -547,6 +548,10 @@ initarm(bootargs)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+
+	/* update the top of the kernel VM */
+	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
+	
 	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE, &kernel_ptpt);
 
 #ifdef VERBOSE_INIT_ARM

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.7 2002/02/22 04:49:22 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.8 2002/03/03 11:23:02 chris Exp $	*/
 
 /*
  * Copyright 1997
@@ -1398,6 +1398,9 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		    >> (PGSHIFT-2)), proc0_pt_io[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
+	/* update the top of the kernel VM */
+	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_VMDATA_PTS) * 0x00400000) - 1;
+	
 	/* 
          * gross hack for the sake of not thrashing the TLB and making
 	 * cache flush more efficient: blast l1 ptes for sections.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.28 2002/02/21 21:58:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29 2002/03/03 11:22:59 chris Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -84,16 +84,24 @@ struct l1pt {
 #define PTFLAG_CLEAN		4		/* L1 is clean */
 
 /*
+ * we maintain a list of all non-kernel pmaps
+ */
+
+LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
+
+/*
  * The pmap structure itself.
  */
 struct pmap {
 	struct uvm_object	pm_obj;		/* uvm_object */
 #define	pm_lock	pm_obj.vmobjlock	
+	LIST_ENTRY(pmap)	pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
 	struct l1pt		*pm_l1pt;	/* L1 descriptor */
 	paddr_t                 pm_pptpt;	/* PA of pt's page table */
 	vaddr_t                 pm_vptpt;	/* VA of pt's page table */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
+	struct vm_page *pm_ptphint;		/* pointer to a PTP in our pmap */
 };
 
 typedef struct pmap *pmap_t;
@@ -175,6 +183,7 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 extern vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
 extern void pmap_procwr __P((struct proc *, vaddr_t, int));
 #define	PMAP_NEED_PROCWR
+#define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /*
  * Functions we use internally
@@ -198,6 +207,11 @@ void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
 boolean_t	pmap_pageidlezero __P((paddr_t));
 #define PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
+/*
+ * The current top of kernel VM
+ */
+extern vaddr_t	pmap_curmaxkvaddr;
+
 #endif	/* _KERNEL */
 
 /*
@@ -214,7 +228,8 @@ boolean_t	pmap_pageidlezero __P((paddr_t));
 	((*vtopte(va) & PG_FRAME) | ((unsigned int)(va) & ~PG_FRAME))
 
 /* L1 and L2 page table macros */
-#define pmap_pde(m, v) (&((m)->pm_pdir[((vaddr_t)(v) >> PDSHIFT)&4095]))
+#define pmap_pdei(v)	((v & PD_MASK) >> PDSHIFT)
+#define pmap_pde(m, v) (&((m)->pm_pdir[pmap_pdei(v)]))
 #define pmap_pte_pa(pte)	(*(pte) & PG_FRAME)
 #define pmap_pde_v(pde)		(*(pde) != 0)
 #define pmap_pde_section(pde)	((*(pde) & L1_MASK) == L1_SECTION)
