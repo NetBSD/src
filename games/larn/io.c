@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.12 2001/09/24 13:22:29 wiz Exp $	*/
+/*	$NetBSD: io.c,v 1.13 2001/11/02 18:27:00 christos Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.12 2001/09/24 13:22:29 wiz Exp $");
+__RCSID("$NetBSD: io.c,v 1.13 2001/11/02 18:27:00 christos Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -764,7 +764,6 @@ cursors()
  * obvious meanings.
  */
 
-static char     *cap;
 struct tinfo   *info;
 char           *CM, *CE, *CD, *CL, *SO, *SE, *AL, *DL;	/* Termcap capabilities */
 static char    *outbuf = 0;	/* translated output buffer */
@@ -775,10 +774,8 @@ static char    *outbuf = 0;	/* translated output buffer */
 void
 init_term()
 {
-	char           *capptr;
 	char           *term;
 
-	cap = NULL;
 	switch (t_getent(&info, term = getenv("TERM"))) {
 	case -1:
 		write(2, "Cannot open termcap file.\n", 26);
@@ -790,16 +787,16 @@ init_term()
 		exit(1);
 	};
 
-	CM = t_agetstr(info, "cm", &cap, &capptr);	/* Cursor motion */
-	CE = t_agetstr(info, "ce", &cap, &capptr);	/* Clear to eoln */
-	CL = t_agetstr(info, "cl", &cap, &capptr);	/* Clear screen */
+	CM = t_agetstr(info, "cm");	/* Cursor motion */
+	CE = t_agetstr(info, "ce");	/* Clear to eoln */
+	CL = t_agetstr(info, "cl");	/* Clear screen */
 
 	/* OPTIONAL */
-	AL = t_agetstr(info, "al", &cap, &capptr);	/* Insert line */
-	DL = t_agetstr(info, "dl", &cap, &capptr);	/* Delete line */
-	SO = t_agetstr(info, "so", &cap, &capptr);	/* Begin standout mode */
-	SE = t_agetstr(info, "se", &cap, &capptr);	/* End standout mode */
-	CD = t_agetstr(info, "cd", &cap, &capptr);	/* Clear to end of display */
+	AL = t_agetstr(info, "al");	/* Insert line */
+	DL = t_agetstr(info, "dl");	/* Delete line */
+	SO = t_agetstr(info, "so");	/* Begin standout mode */
+	SE = t_agetstr(info, "se");	/* End standout mode */
+	CD = t_agetstr(info, "cd");	/* Clear to end of display */
 
 	if (!CM) {		/* can't find cursor motion entry */
 		write(2, "Sorry, for a ", 13);
