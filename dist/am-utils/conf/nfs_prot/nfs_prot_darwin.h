@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_prot_darwin.h,v 1.1.1.2 2001/05/13 17:50:18 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_prot_darwin.h,v 1.1.1.1 2001/05/13 17:33:47 veego Exp $
+ * Id: nfs_prot_darwin.h,v 1.1.2.1 2001/02/10 03:52:57 ib42 Exp
  *
  */
 
