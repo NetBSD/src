@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.9 1997/03/10 23:13:59 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.10 1997/03/22 19:17:06 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -122,12 +122,12 @@ iommu_attach(parent, self, aux)
 	register int node;
 	register char *name;
 	register u_int pbase, pa;
-	register int i, mmupcrsav, s, wierdviking = 0;
+	register int i, mmupcrsave, s;
 	register iopte_t *tpte_p;
 	extern u_int *kernel_iopte_table;
 	extern u_int kernel_iopte_table_pa;
 
-/*XXX-GCC!*/mmupcrsav=0;
+/*XXX-GCC!*/mmupcrsave=0;
 	iommu_sc = sc;
 	/*
 	 * XXX there is only one iommu, for now -- do not know how to
@@ -194,10 +194,10 @@ iommu_attach(parent, self, aux)
 	 *
 	 * XXX: PGOFSET, NBPG assume same page size as SRMMU
 	 */
-	if ((getpsr() & 0x40000000) && (!(lda(SRMMU_PCR,ASI_SRMMU) & 0x800))) {
-		wierdviking = 1;
-		sta(SRMMU_PCR, ASI_SRMMU, 	/* set MMU AC bit */
-		    ((mmupcrsav = lda(SRMMU_PCR,ASI_SRMMU)) | SRMMU_PCR_AC));
+	if (cpuinfo.cpu_vers == 4 && cpuinfo.mxcc) {
+		/* set MMU AC bit */
+		sta(SRMMU_PCR, ASI_SRMMU,
+		    ((mmupcrsave = lda(SRMMU_PCR, ASI_SRMMU)) | VIKING_PCR_AC));
 	}
 
 	for (tpte_p = &sc->sc_ptes[((0 - DVMA4M_BASE)/NBPG) - 1],
@@ -210,8 +210,9 @@ iommu_attach(parent, self, aux)
 			        (tpte_p - &sc->sc_ptes[0])*NBPG + DVMA4M_BASE);
 		*tpte_p = lda(pa, ASI_BYPASS);
 	}
-	if (wierdviking) {	/* restore mmu after bug-avoidance */
-		sta(SRMMU_PCR, ASI_SRMMU, mmupcrsav);
+	if (cpuinfo.cpu_vers == 4 && cpuinfo.mxcc) {
+		/* restore mmu after bug-avoidance */
+		sta(SRMMU_PCR, ASI_SRMMU, mmupcrsave);
 	}
 
 	/*

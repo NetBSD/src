@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.18 1996/12/10 23:17:45 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.19 1997/03/22 19:17:07 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 #include <sparc/sparc/memreg.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/asm.h>
+#include <sparc/sparc/cpuvar.h>
 
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
@@ -265,9 +266,12 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 		addrold = afva;
 		addroldtop = afsr & AFSR_AFA;
 
-	} else if (type == T_STOREBUFFAULT) {
-		/* We try to reenable the store buffers to force a retry */
+	} else if (type == T_STOREBUFFAULT && cpuinfo.cpu_vers == 4) {
 
+		/*
+		 * On Supersparc, we try to reenable the store buffers
+		 * to force a retry.
+		 */
 		printf("store buffer copy-back failure at 0x%x. Retrying...\n",
 		       sfva);
 
@@ -278,8 +282,9 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 		oldtype = T_STOREBUFFAULT;
 		addrold = sfva;
 
-		sta(SRMMU_PCR, ASI_SRMMU, lda(SRMMU_PCR, ASI_SRMMU) |
-			SRMMU_PCR_SB);	/* reenable store buffer */
+		/* reenable store buffer */
+		sta(SRMMU_PCR, ASI_SRMMU,
+		    lda(SRMMU_PCR, ASI_SRMMU) | VIKING_PCR_SB);
 
 	} else if (type == T_DATAFAULT && !(sfsr & SFSR_FAV)) { /* bizarre */
 		/* XXX: Should handle better. See SuperSPARC manual pg. 9-35 */
