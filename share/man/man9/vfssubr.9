@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.1 2003/04/06 07:09:48 gmcgarry Exp $
+.\"     $NetBSD: vfssubr.9,v 1.2 2003/04/06 10:00:46 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,13 +140,14 @@ by the vnode
 .Fa vp .
 .It Fn vfs_mountroot "void"
 Mount the root file system.
-.It Fn vfs_unmountall  "p"
+.It Fn vfs_unmountall "p"
 Unmount all file systems.
 .It Fn vfs_busy "mp" "flags" "interlkp"
 Mark the mount point specified by
 .Fa mp
-as busy.  This function is used to synchronize access and to delay
-unmounting.  The interlock specified by argument
+as busy.
+This function is used to synchronize access and to delay unmounting.
+The interlock specified by argument
 .Fa interlkp
 is not released on failure.
 .It Fn vfs_unbusy "mp"
@@ -162,8 +163,9 @@ The device the root file system was mounted from is specified by the
 argument
 .Fa devname
 and is recorded in the new mount structure.
- Fn vfs_shutdown Sync and unmount all file systems before shutting
-down.  Invoked by
+.It Fn vfs_shutdown
+Sync and unmount all file systems before shutting down.
+Invoked by
 .Xr cpu_reboot 9 .
 .It Fn vfs_attach "vfs"
 Establish file system
@@ -182,7 +184,9 @@ Given a file system name specified by
 .Fa name ,
 look up the vfs operations for that file system (see
 .Xr vfsops 9 ) ,
-or return NULL if file system isn't present in the kernel.
+or return
+.Dv NULL
+if file system isn't present in the kernel.
 .It Fn vfs_sysctl "name" "namelen" "oldp" "oldlenp" "newp" "newlen" \
 "struct proc *p"
 Retrieve file system-specific information for the sysctl(3) function.
