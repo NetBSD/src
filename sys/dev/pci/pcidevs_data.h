@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.197 2000/02/16 04:29:32 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.198 2000/03/04 13:24:25 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.192 2000/02/16 04:29:20 soren Exp 
+ *	NetBSD: pcidevs,v 1.193 2000/03/04 13:23:26 tron Exp 
  */
 
 /*
@@ -578,6 +578,42 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "79C974 PCnet-PCI Ethernet & SCSI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD751 System Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_PPB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD751 PCI-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_ISA,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD756 PCI-to-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_IDE,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD756 IDE controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_PMC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD756 Power Management Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_USB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD756 USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
