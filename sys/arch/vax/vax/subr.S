@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.7 2003/01/20 04:45:57 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.8 2003/09/29 21:04:53 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -169,7 +169,7 @@ _C_LABEL(sigcode):
 	movl	0x24(%sp),%r0
 	calls	$3,(%r0)
 	popr	$0x3f
-	chmk	$SYS___sigreturn14
+	chmk	$SYS_compat_16___sigreturn14
 	chmk	$SYS_exit
 	halt	
 
@@ -191,7 +191,7 @@ _C_LABEL(ibcs2_sigcode):
 	movl	0x24(%sp),%r0
 	calls	$3,(%r0)
 	popr	$0x3f
-	chmk	$SYS___sigreturn14
+	chmk	$SYS_compat_16___sigreturn14
 	chmk	$SYS_exit
 	halt	
 _C_LABEL(ibcs2_esigcode):
