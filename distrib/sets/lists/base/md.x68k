@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.32 1999/06/21 16:00:12 minoura Exp $
+# $NetBSD: md.x68k,v 1.33 1999/07/04 04:43:53 minoura Exp $
 ./dev/mouse
 ./dev/pow
 ./usr/bin/bellctrl
@@ -10,6 +10,8 @@
 ./usr/mdec/fdboot
 ./usr/mdec/installboot
 ./usr/mdec/loadbsd.x
+./usr/mdec/mboot
+./usr/mdec/newdisk
 ./usr/mdec/sdboot
 ./usr/sbin/memswitch
 ./usr/sbin/poffd
