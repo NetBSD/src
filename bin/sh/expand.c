@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)expand.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: expand.c,v 1.5 1993/08/01 18:58:16 mycroft Exp $";
+static char rcsid[] = "$Id: expand.c,v 1.6 1993/10/22 13:20:02 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -403,7 +403,7 @@ again: /* jump here after setting a variable with ${var=text} */
 			if ((c = *p++) == CTLESC)
 				p++;
 			else if (c == CTLBACKQ || c == (CTLBACKQ|CTLQUOTE)) {
-				if (set)
+				if (set && subtype != VSASSIGN)
 					argbackq = argbackq->next;
 			} else if (c == CTLVAR) {
 				if ((*p++ & VSTYPE) != VSNORMAL)
