@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 1996/02/05 21:25:33 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.3 1996/02/15 22:07:11 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
  * Created      : 17/09/94
  * Last updated : 25/12/95
  *
- *    $Id: machdep.c,v 1.2 1996/02/05 21:25:33 mark Exp $
+ *    $Id: machdep.c,v 1.3 1996/02/15 22:07:11 mark Exp $
  */
 
 #include <sys/types.h>
@@ -1239,6 +1239,12 @@ initarm(bootconf)
 
 	printf("irq ");
 	irq_init();
+
+#ifdef DDB
+	printf("ddb ");
+	db_machine_init();
+	ddb_init();
+#endif
 	printf("done.\n");
 }
 
