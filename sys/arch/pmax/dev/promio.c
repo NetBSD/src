@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.4 1995/09/20 05:13:06 jonathan Exp $	*/
+/*	$NetBSD: promio.c,v 1.5 1995/09/20 05:36:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,7 +69,6 @@
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>
-#include <sparc/rcons/raster.h>
 #include <machine/fbvar.h>
 
 #include <pmax/dev/fbreg.h>
@@ -168,7 +167,9 @@ consinit()
 	register char *oscon;
 	int screen = 0;
 
+#ifdef RCONS_HACK
 	extern void (*v_putc) __P ((dev_t, int));
+#endif
 	cn_tab = &cd;
 
 
