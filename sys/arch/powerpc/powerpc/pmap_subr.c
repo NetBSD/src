@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.2 2002/07/18 22:51:58 matt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.3 2002/07/28 07:05:19 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -53,14 +53,6 @@
 
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	__asm __volatile("sync; mtmsr %0; isync" :: "r"(psl))
-
-static __inline u_int32_t
-mfmsr(void)
-{
-	u_int32_t psl;
-	__asm __volatile("mfmsr %0" : "=r"(psl) : );
-	return psl;
-}
 
 /*
  * This file uses a sick & twisted method to deal with the common pmap
