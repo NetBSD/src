@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.15 2001/04/19 00:47:50 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.16 2001/10/05 00:31:06 thorpej Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -157,6 +157,7 @@ static const struct scanner_id {
 	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA1236U },
 	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA2000U },
 	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA2200U },
+	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA3400 },
 
 	/* Visioneer */
 	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_5300 },
