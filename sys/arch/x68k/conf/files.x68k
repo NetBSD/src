@@ -1,11 +1,10 @@
-#	$NetBSD: files.x68k,v 1.32 2000/04/18 21:04:51 minoura Exp $
+#	$NetBSD: files.x68k,v 1.33 2000/05/14 14:13:56 minoura Exp $
 #
 # new style config file for x68k architecture
 #
 
 defopt	opt_fpuemulate.h	FPU_EMULATE
 defopt	opt_m060sp.h		M060SP
-#defopt	opt_fpsp.h		FPSP		# this will fail...
 
 defopt	opt_m680x0.h		M68020 M68030 M68040 M68060
 
