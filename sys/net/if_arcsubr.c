@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.27 1999/09/19 21:31:33 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.28 1999/09/25 17:49:28 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -78,8 +78,8 @@
 
 #define ARCNET_ALLOW_BROKEN_ARP
 
-#ifndef	ARC_PHDSMTU
-#define	ARC_PHDSMTU	1500
+#ifndef ARC_IPMTU
+#define ARC_IPMTU	1500
 #endif
 
 static struct mbuf *arc_defrag __P((struct ifnet *, struct mbuf *));
@@ -90,10 +90,10 @@ static struct mbuf *arc_defrag __P((struct ifnet *, struct mbuf *));
  * Anyway, it is possible to binpatch this or set it per kernel config
  * option.
  */
-#if ARC_PHDSMTU > 60480
-ERROR: The arc_phdsmtu is ARC_PHDSMTU, but must not exceed 60480.
+#if ARC_IPMTU > 60480
+ERROR: The arc_ipmtu is ARC_IPMTU, but must not exceed 60480.
 #endif
-u_int16_t arc_phdsmtu = ARC_PHDSMTU;
+int arc_ipmtu = ARC_IPMTU;
 u_int8_t  arcbroadcastaddr = 0;
 
 #define senderr(e) { error = (e); goto bad;}
@@ -666,7 +666,7 @@ arc_storelladdr(ifp, lla)
 		sdl->sdl_alen = ifp->if_addrlen;
 		*(LLADDR(sdl)) = lla;
 	}
-	ifp->if_mtu = (ifp->if_flags & IFF_LINK0 ? arc_phdsmtu : ARCMTU);
+	ifp->if_mtu = ARC_PHDS_MAXMTU;
 }
 
 /*
@@ -684,10 +684,10 @@ arc_ifattach(ifp, lla)
 	ifp->if_hdrlen = ARC_HDRLEN;
 	if (ifp->if_flags & IFF_BROADCAST)
 		ifp->if_flags |= IFF_MULTICAST|IFF_ALLMULTI;
-	if (ifp->if_flags & IFF_LINK0 && arc_phdsmtu > 60480)
+	if (ifp->if_flags & IFF_LINK0 && arc_ipmtu > ARC_PHDS_MAXMTU)
 		log(LOG_ERR,
-		    "%s: arc_phdsmtu is %d, but must not exceed 60480",
-		    ifp->if_xname, arc_phdsmtu);
+		    "%s: arc_ipmtu is %d, but must not exceed %d",
+		    ifp->if_xname, arc_ipmtu, ARC_PHDS_MAXMTU);
 
 	ifp->if_output = arc_output;
 	ifp->if_input = arc_input;

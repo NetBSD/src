@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.65 1999/08/21 03:46:35 matt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.66 1999/09/25 17:49:29 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,10 +112,15 @@
 #include <netinet/if_inarp.h>
 
 #include "loop.h"
+#include "arc.h"
+#if NARC > 0
+#include <net/if_arc.h>
+#endif
 #include "fddi.h"
 #if NFDDI > 0
 #include <net/if_fddi.h>
 #endif
+#include "token.h"
 #include "token.h"
 
 #define SIN(s) ((struct sockaddr_in *)s)
@@ -409,6 +414,22 @@ arp_rtrequest(req, rt, sa)
 				|| (rt->rt_rmx.rmx_mtu == 0
 				    && rt->rt_ifp->if_mtu > FDDIIPMTU))) {
 				rt->rt_rmx.rmx_mtu = FDDIIPMTU;
+			}
+#endif
+#if NARC > 0
+			if (rt->rt_ifp->if_type == IFT_ARCNET) {
+				int arcipifmtu;
+
+				if (rt->rt_ifp->if_flags & IFF_LINK0)
+					arcipifmtu = arc_ipmtu;
+				else
+					arcipifmtu = ARCMTU;
+
+			    	if (rt->rt_rmx.rmx_mtu > arcipifmtu ||
+				    (rt->rt_rmx.rmx_mtu == 0 &&
+				     rt->rt_ifp->if_mtu > arcipifmtu))
+
+					rt->rt_rmx.rmx_mtu = arcipifmtu;
 			}
 #endif
 			break;

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.316 1999/09/19 21:48:09 ad Exp $
+#	$NetBSD: files,v 1.317 1999/09/25 17:49:27 is Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -709,7 +709,7 @@ file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter | ppp
 file net/bsd-comp.c			ppp & ppp_bsdcomp
 file net/if.c
-file net/if_arcsubr.c			arc
+file net/if_arcsubr.c			arc			needs-flag
 file net/if_atmsubr.c			atm
 file net/if_ethersubr.c			ether | fddi | netatalk | token
 file net/if_fddisubr.c			fddi			needs-flag
