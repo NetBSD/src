@@ -1,4 +1,4 @@
-/*	$NetBSD: asa.c,v 1.9 1995/03/26 02:25:06 glass Exp $	*/
+/*	$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
@@ -28,11 +28,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: asa.c,v 1.9 1995/03/26 02:25:06 glass Exp $";
+static char rcsid[] = "$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $";
 #endif
 
 #include <stdio.h>
