@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.3 1999/02/04 15:41:15 tsubai Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.4 1999/03/05 06:21:17 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,9 +78,8 @@ filename(str, ppart)
 				for (cp = lp;
 				     --cp >= str && *cp != '/' && *cp != ':';);
 				if (cp >= str && *cp == ':') {
-					/* found arguments, make firmware ignore them */
-					*cp = 0;
-					for (cp = lp; *--cp && *cp != ',';);
+					/* found arguments */
+					for (cp = lp; *--cp != ':' && *cp != ',';);
 					if (*++cp >= 'a' && *cp <= 'a' + MAXPARTITIONS)
 						*ppart = *cp;
 				}
