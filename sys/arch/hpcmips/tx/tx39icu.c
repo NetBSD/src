@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.17 2002/05/03 07:31:25 takemura Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.18 2002/05/15 15:19:55 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -466,7 +466,6 @@ tx39_irqhigh_intr(u_int32_t ipending, u_int32_t pc, u_int32_t status,
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
-		intrcnt[HARDCLOCK]++;
 
 		return;
 	}
