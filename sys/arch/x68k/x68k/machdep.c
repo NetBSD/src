@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1999/03/17 16:19:46 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 1999/03/18 12:27:07 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -212,7 +212,9 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 void
 consinit()
 {
+#ifdef EXTENDED_MEMORY
 	int i;
+#endif
 
 	/*
 	 * Set cpuspeed immediately since cninit() called routines
@@ -855,7 +857,7 @@ cpu_init_kcore_hdr()
 	m->ram_segs[0].size  = mem_size;
 	for (i = 1; i < vm_nphysseg; i++) {
 		m->ram_segs[i].start = ctob(vm_physmem[i].start);
-		m->ram_segs[i].size  = ctob(vm_physmem[i].end);
+		m->ram_segs[i].size  = ctob(vm_physmem[i].end)
 		    - vm_physmem[i].start;
 	}
 }
