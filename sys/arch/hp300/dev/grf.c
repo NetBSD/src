@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25 1997/04/02 22:37:30 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.26 1997/10/12 17:53:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -492,7 +492,6 @@ grflock(gp, block)
 {
 	struct proc *p = curproc;		/* XXX */
 	int error;
-	extern char devioc[];
 
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
