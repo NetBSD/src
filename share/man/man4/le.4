@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.12 2001/04/27 18:05:22 jdolecek Exp $
+.\"	$NetBSD: le.4,v 1.13 2001/06/12 11:39:03 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -90,7 +90,7 @@
 .Ss vax
 .Cd "le0 at vsbus0 csr 0x200e0000"
 .Sh DESCRIPTION
-The 
+The
 .Nm
 interface provides access to a
 .Tn Ethernet
@@ -105,7 +105,7 @@ The
 driver also supports PCnet-PCI cards based on the
 .Tn AMD 79c970
 chipset, which is a single-chip implementation of a
-.Tn LANCE 
+.Tn LANCE
 chip and
 .Tn PCI
 bus interface.
@@ -165,7 +165,7 @@ The Ariadne card uses an autoselect between UTP and BNC, so it uses
 UTP when an active UTP line is connected or otherwise BNC.
 See
 .Xr ifmedia 4
-for media selection options for 
+for media selection options for
 .Xr ifconfig 8 .
 .Ss ISA
 The ISA-bus Ethernet cards supported by the
@@ -173,7 +173,7 @@ The ISA-bus Ethernet cards supported by the
 interface are:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It BICC Isolan 
+.It BICC Isolan
 .It Novell NE2100
 .It Digital DEPCA
 .El
@@ -219,7 +219,7 @@ baseboard device provides only a BNC connector.
 .Pp
 The
 .Nm ioasic
-baseboard devices and the 
+baseboard devices and the
 .Tn PMAD-AA
 .Tn TurboChannel
 option card provide only an AUI port.
@@ -315,11 +315,11 @@ standard.
 .It "le%d: transmit buffer error"
 .Tn LANCE
 ran out of buffer before finishing the transmission of a packet.
-If this error occurrs, the driver software has a bug.
+If this error occurs, the driver software has a bug.
 .It "le%d: underflow"
 .Tn LANCE
 ran out of buffer before finishing the transmission of a packet.
-If this error occurrs, the driver software has a bug.
+If this error occurs, the driver software has a bug.
 .It "le%d: controller failed to initialize"
 Driver failed to start the AM7990
 .Tn LANCE .
@@ -355,7 +355,7 @@ is enabled, the
 .Nm
 driver executes one or two calls to an inline Ethernet address
 comparison function for every received packet.
-On the 
+On the
 .Tn mc68000
 it is exactly eight instructions of 16-bits each.
 There is one comparison for each unicast packet, and two
@@ -393,12 +393,12 @@ The
 .Nm ioasic
 machines and the
 .Tn DECstation
-3100 must 
+3100 must
 copy packets to and from non-contiguous DMA buffers.
-The 
+The
 .Tn DECstation
 5000/200 and the
-.Tn PMAD-AA 
+.Tn PMAD-AA
 must copy to and from an onboard SRAM DMA buffer.
 The CPU overhead is noticeable, but all machines
 can sustain full 10 Mb/s media speed.
