@@ -25,7 +25,10 @@
 #
 # HISTORY
 # $Log: Makefile,v $
-# Revision 1.2  1993/04/28 08:45:51  deraadt
+# Revision 1.3  1993/06/08 03:36:39  deraadt
+# makes more sense if src is mounted readonly
+#
+# Revision 1.2  1993/04/28  08:45:51  deraadt
 # Ensure the rmaouthdr shell script is executable before running it!
 #
 # Revision 1.1  1993/03/21  18:08:11  cgd
@@ -75,8 +78,7 @@ boot: boot.sed $(OBJS)
 	$(LD) -N -T 0 -o boot $(OBJS) $(LIBS)
 	cp boot boot.sym
 	@strip boot
-	@chmod a+x ./rmaouthdr
-	@./rmaouthdr boot boot.tmp
+	@sh ./rmaouthdr boot boot.tmp
 	@mv -f boot.tmp boot
 	@ls -l boot
 
