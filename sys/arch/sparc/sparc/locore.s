@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.14 1994/08/23 11:24:55 deraadt Exp $
+ * $Id: locore.s,v 1.15 1994/08/23 14:37:22 pk Exp $
  */
 
 #define	LOCORE
@@ -3398,7 +3398,7 @@ Lsw_havectx:
 !	ld	[%o3 + VM_PMAP_CTXNUM], %o0	! (done in delay slot)
 #if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
 	sethi	%hi(_cputyp), %o1	! what cpu are we running on?
-	ld	[%o1 + %lo(_cputyp)], %01
+	ld	[%o1 + %lo(_cputyp)], %o1
 	cmp	%o1, CPU_SUN4M
 	bne	1f
 	 nop
