@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.4 2001/07/13 06:54:35 ichiro Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.5 2001/07/15 00:30:17 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -39,6 +39,7 @@
 #include <hpcarm/sa11x0/sa11x0_ppcreg.h>
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>
 #include <hpcarm/dev/ipaq_saipvar.h>
+#include <hpcarm/dev/ipaq_gpioreg.h>
 
 /* prototypes */
 static int	ipaq_match(struct device *, struct cfdata *, void *);
@@ -87,9 +88,9 @@ ipaq_attach(parent, self, aux)
 	if (bus_space_map(sc->sc_iot, SAEGPIO_BASE, 1, 0, &sc->sc_egpioh))
 		panic("%s: unable to map Extended GPIO registers\n",
 			self->dv_xname);
-# if 0
-        bus_space_write_2(sc->sc_iot, sc->sc_egpioh, 0, EGPIO_INIT);
-# endif
+
+	sc->ipaq_egpio = EGPIO_INIT;
+        bus_space_write_2(sc->sc_iot, sc->sc_egpioh, 0, sc->ipaq_egpio);
 
 	sc->sc_ppch = psc->sc_ppch;
 	sc->sc_dmach = psc->sc_dmach;
