@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.16 2002/04/18 12:33:26 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.17 2002/04/18 20:08:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -810,33 +810,33 @@ s_isitrap:
  */
 #define	INTRENTER							\
 /* Save non-volatile registers: */					\
-	stwu	1,-88(1);		/* temporarily */		\
-	stw	0,84(1);						\
+	stwu	1,-IFRAMELEN(1);	/* temporarily */		\
+	stw	0,IFRAME_R0(1);						\
 	mfsprg	0,1;			/* get original SP */		\
-	stw	0,0(1);			/* and store it */		\
-	stw	3,80(1);						\
-	stw	4,76(1);						\
-	stw	5,72(1);						\
-	stw	6,68(1);						\
-	stw	7,64(1);						\
-	stw	8,60(1);						\
-	stw	9,56(1);						\
-	stw	10,52(1);						\
-	stw	11,48(1);						\
-	stw	12,44(1);						\
-	stw	28,40(1);		/* saved LR */			\
-	stw	29,36(1);		/* saved CR */			\
-	stw	30,32(1);		/* saved XER */			\
+	stw	0,IFRAME_R1(1);		/* and store it */		\
+	stw	3,IFRAME_R3(1);						\
+	stw	4,IFRAME_R4(1);						\
+	stw	5,IFRAME_R5(1);						\
+	stw	6,IFRAME_R6(1);						\
+	stw	7,IFRAME_R7(1);						\
+	stw	8,IFRAME_R8(1);						\
+	stw	9,IFRAME_R9(1);						\
+	stw	10,IFRAME_R10(1);					\
+	stw	11,IFRAME_R11(1);					\
+	stw	12,IFRAME_R12(1);					\
+	stw	28,IFRAME_LR(1);	/* saved LR */			\
+	stw	29,IFRAME_CR(1);	/* saved CR */			\
+	stw	30,IFRAME_XER(1);	/* saved XER */			\
 	lmw	28,tempsave(0);		/* restore r28-r31 */		\
 	mfctr	6;							\
 	lis	5,_C_LABEL(intr_depth)@ha;				\
 	lwz	5,_C_LABEL(intr_depth)@l(5);				\
 	mfsrr0	4;							\
 	mfsrr1	3;							\
-	stw	6,28(1);						\
-	stw	5,20(1);						\
-	stw	4,12(1);						\
-	stw	3,8(1);							\
+	stw	6,IFRAME_CTR(1);					\
+	stw	5,IFRAME_INTR_DEPTH(1);					\
+	stw	4,IFRAME_SRR0(1);					\
+	stw	3,IFRAME_SRR1(1);					\
 	mtcr	3;							\
 	bc	4,17,99f;	/* branch if PSL_PR is false */		\
 	lis	3,EMPTY_SEGMENT@h;					\
@@ -871,16 +871,16 @@ intr_exit:
 	mtmsr	3
 	isync
 /* restore possibly overwritten registers: */
-	lwz	12,44(1)
-	lwz	11,48(1)
-	lwz	10,52(1)
-	lwz	9,56(1)
-	lwz	8,60(1)
-	lwz	7,64(1)
-	lwz	6,8(1)
-	lwz	5,12(1)
-	lwz	4,28(1)
-	lwz	3,32(1)
+	lwz	12,IFRAME_R12(1)
+	lwz	11,IFRAME_R11(1)
+	lwz	10,IFRAME_R10(1)
+	lwz	9,IFRAME_R9(1)
+	lwz	8,IFRAME_R8(1)
+	lwz	7,IFRAME_R7(1)
+	lwz	6,IFRAME_SRR1(1)
+	lwz	5,IFRAME_SRR0(1)
+	lwz	4,IFRAME_CTR(1)
+	lwz	3,IFRAME_XER(1)
 	mtsrr1	6
 	mtsrr0	5
 	mtctr	4
@@ -913,18 +913,18 @@ intr_exit:
 	andi.	4,4,1
 	beq	1f
 /* Setup for entry to realtrap: */
-	lwz	3,0(1)			/* get saved SP */
+	lwz	3,IFRAME_R1(1)		/* get saved SP */
 	mtsprg	1,3
 	li	6,EXC_AST
 	stmw	28,tempsave(0)		/* establish tempsave again */
 	mtlr	6
-	lwz	28,40(1)		/* saved LR */
-	lwz	29,36(1)		/* saved CR */
-	lwz	6,68(1)
-	lwz	5,72(1)
-	lwz	4,76(1)
-	lwz	3,80(1)
-	lwz	0,84(1)
+	lwz	28,IFRAME_LR(1)		/* saved LR */
+	lwz	29,IFRAME_CR(1)		/* saved CR */
+	lwz	6,IFRAME_R5(1)
+	lwz	5,IFRAME_R6(1)
+	lwz	4,IFRAME_R4(1)
+	lwz	3,IFRAME_R3(1)
+	lwz	0,IFRAME_R0(1)
 	lis	30,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
 	lwz	31,_C_LABEL(intr_depth)@l(30)
 	addi	31,31,-1
@@ -932,20 +932,20 @@ intr_exit:
 	b	realtrap
 1:
 /* Here is the normal exit of extintr: */
-	lwz	5,36(1)
-	lwz	6,40(1)
+	lwz	5,IFRAME_CR(1)
+	lwz	6,IFRAME_LR(1)
 	mtcr	5
 	mtlr	6
-	lwz	6,68(1)
-	lwz	5,72(1)
+	lwz	6,IFRAME_R6(1)
+	lwz	5,IFRAME_R5(1)
 	lis	3,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
 	lwz	4,_C_LABEL(intr_depth)@l(3)
 	addi	4,4,-1
 	stw	4,_C_LABEL(intr_depth)@l(3)
-	lwz	4,76(1)
-	lwz	3,80(1)
-	lwz	0,84(1)
-	lwz	1,0(1)
+	lwz	4,IFRAME_R4(1)
+	lwz	3,IFRAME_R3(1)
+	lwz	0,IFRAME_R0(1)
+	lwz	1,IFRAME_R1(1)
 	rfi
 
 /*
@@ -953,7 +953,7 @@ intr_exit:
  */
 decrintr:
 	INTRENTER
-	addi	3,1,8			/* intr frame */
+	addi	3,1,8			/* intr frame -> clock frame */
 	bl	_C_LABEL(decr_intr)
 	b	intr_exit
 

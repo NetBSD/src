@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 1999/01/10 10:13:15 tsubai Exp $	*/
+/*	$NetBSD: frame.h,v 1.3 2002/04/18 20:08:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,6 +87,35 @@ struct callframe {
 	register_t lr;
 	register_t r30;
 	register_t r31;
+};
+
+#define	IFRAMELEN	sizeof(struct intrframe)
+struct intrframe {
+	register_t r1;			/*  0 */
+	register_t _pad4;		/*  4 */
+	/*
+	 * The next 4 fields are "clockframe"
+	 */
+	register_t srr1;		/*  8 */
+	register_t srr0;		/* 12 */
+	int pri;			/* 16 */
+	int intr_depth;			/* 20 */
+	register_t vrsave;		/* 24 */
+	register_t ctr;			/* 28 */
+	register_t xer;			/* 32 */
+	register_t cr;			/* 36 */
+	register_t lr;			/* 40 */
+	register_t r12;			/* 44 */
+	register_t r11;			/* 48 */
+	register_t r10;			/* 52 */
+	register_t r9;			/* 56 */
+	register_t r8;			/* 60 */
+	register_t r7;			/* 64 */
+	register_t r6;			/* 68 */
+	register_t r5;			/* 72 */
+	register_t r4;			/* 76 */
+	register_t r3;			/* 80 */
+	register_t r0;			/* 84 */
 };
 
 #endif	/* _MACHINE_FRAME_H_ */

@@ -1,10 +1,11 @@
-#	$NetBSD: std.bebox,v 1.8 2001/11/20 12:56:23 lukem Exp $
+#	$NetBSD: std.bebox,v 1.9 2002/04/18 20:08:07 matt Exp $
 #
 # standard, required NetBSD/bebox 'options'
 
 machine		bebox powerpc
 
 options 	PPC_MPC6XX	# BeBox uses Motorola PPC60x CPUs
+makeoptions	PPCDIR="mpc6xx"	# Tell Makefile.powerpc what dir to use
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
