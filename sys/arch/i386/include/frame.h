@@ -1,6 +1,7 @@
-/*	$NetBSD: frame.h,v 1.11 1995/05/01 14:13:26 mycroft Exp $	*/
+/*	$NetBSD: frame.h,v 1.12 1995/10/11 04:20:08 mycroft Exp $	*/
 
 /*-
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -73,7 +74,9 @@ struct trapframe {
 	int	tf_vm86_gs;
 };
 
-/* Interrupt stack frame */
+/*
+ * Interrupt stack frame
+ */
 struct intrframe {
 	int	if_ppl;
 	int	if_es;
@@ -94,6 +97,17 @@ struct intrframe {
 	/* below only when transitting rings (e.g. user to kernel) */
 	int	if_esp;
 	int	if_ss;
+};
+
+/*
+ * Stack frame inside cpu_switch()
+ */
+struct switchframe {
+	int	sf_ppl;
+	int	sf_edi;
+	int	sf_esi;
+	int	sf_ebx;
+	int	sf_eip;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 1995/10/10 04:45:44 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.87 1995/10/11 04:19:50 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -645,5 +645,22 @@ syscall(frame)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
+#endif
+}
+
+void
+child_return(p, frame)
+	struct proc *p;
+	struct trapframe frame;
+{
+
+	frame.tf_eax = p->p_pid;
+	frame.tf_edx = 1;
+	frame.tf_eflags &= ~PSL_C;
+
+	userret(p, frame.tf_eip, 0);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
 #endif
 }
