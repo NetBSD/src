@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/20 06:20:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/01/05 12:25:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,37 @@ BUILDSYMLINKS=	Consortium.man	XConsortium.man	\
 		security.man	Xsecurity.man
 
 .PATH:  ${X11SRCDIR.xc}/doc/man/general
+
+.if ${MACHINE} == "amd64" || ${MACHINE} == "cats" || \
+    ${MACHINE} == "shark" || ${MACHINE} == "i386" || \
+    ${MACHINE} == "atari" || ${MACHINE} == "macppc"
+MAN+=	XF86VidMode.3
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/doc/man
+
+BUILDSYMLINKS+=	XF86VM.man XF86VidMode.man
+
+MLINKS+=XF86VidMode.3 XF86VidModeQueryExtension.3 \
+	XF86VidMode.3 XF86VidModeQueryVersion.3 \
+	XF86VidMode.3 XF86VidModeGetModeLine.3 \
+	XF86VidMode.3 XF86VidModeGetAllModeLines.3 \
+	XF86VidMode.3 XF86VidModeDeleteModeLine.3 \
+	XF86VidMode.3 XF86VidModeSwitchMode.3 \
+	XF86VidMode.3 XF86VidModeLockModeSwitch.3 \
+	XF86VidMode.3 XF86VidModeGetMonitor.3 \
+	XF86VidMode.3 XF86VidModeGetViewPort.3 \
+	XF86VidMode.3 XF86VidModeValidateModeLine.3 \
+	XF86VidMode.3 XF86VidModeSetClientVersion.3 \
+	XF86VidMode.3 XF86VidModeGetDotClocks.3 \
+	XF86VidMode.3 XF86VidModeGetGamma.3 \
+	XF86VidMode.3 XF86VidModeSetGamma.3 \
+	XF86VidMode.3 XF86VidModeSetGammaRamp.3 \
+	XF86VidMode.3 XF86VidModeGetGammaRamp.3 \
+	XF86VidMode.3 XF86VidModeGetGammaRampSize.3 \
+	XF86VidMode.3 XF86VidModeGetPermissions.3 \
+	XF86VidMode.3 XF86VidModeModModeLine.3 \
+	XF86VidMode.3 XF86VidModeSetViewPort.3 \
+	XF86VidMode.3 XF86VidModeSwitchToMode.3
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.man.mk>
