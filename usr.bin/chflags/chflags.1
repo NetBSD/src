@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.12 2000/10/10 14:27:14 ad Exp $
+.\"	$NetBSD: chflags.1,v 1.13 2001/10/17 22:36:32 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,7 +86,7 @@ the file flags of the link itself is changed.
 .Pp
 Flags are a comma separated list of keywords.
 The following keywords are currently defined:
-.Bd -literal -offset indent compact
+.Bd -literal -offset indent -compact
 arch	set the archived flag (super-user only)
 opaque	set the opaque flag (owner or super-user only)
 nodump	set the nodump flag (owner or super-user only)
@@ -100,7 +100,7 @@ Putting the letters
 .Dq no
 before an option causes the flag to be turned off.
 For example:
-.Bd -literal -offset indent compact
+.Bd -literal -offset indent -compact
 nouchg	the immutable bit should be cleared
 .Ed
 .Pp
