@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.10 2003/08/07 11:15:36 agc Exp $	*/
+/*	$NetBSD: gram.y,v 1.11 2003/10/21 02:23:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: gram.y,v 1.10 2003/08/07 11:15:36 agc Exp $");
+__RCSID("$NetBSD: gram.y,v 1.11 2003/10/21 02:23:13 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -459,7 +459,7 @@ makestr(char *str)
 	str = cp = malloc(strlen(s = str) + 1);
 	if (cp == NULL)
 		fatal("ran out of memory\n");
-	while ((*cp++ = *s++) != NULL)
+	while ((*cp++ = *s++) != 0)
 		;
 	return(str);
 }
