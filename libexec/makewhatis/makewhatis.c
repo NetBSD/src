@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.15 2001/04/08 14:49:32 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.16 2001/04/10 21:00:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.15 2001/04/08 14:49:32 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.16 2001/04/10 21:00:00 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -375,7 +375,8 @@ parsecatpage(gzFile *in)
 			free(section);
 			return NULL;
 		}
-		if (strncmp(buffer, "N\10NA\10AM\10ME\10E", 12) == 0)
+		catpreprocess(buffer);
+		if (strncmp(buffer, "NAME", 4) == 0)
 			break;
 	}
 
