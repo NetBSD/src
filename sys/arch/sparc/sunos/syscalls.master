@@ -1,4 +1,4 @@
-	$Id: syscalls.master,v 1.6 1993/11/14 14:56:05 deraadt Exp $
+	$Id: syscalls.master,v 1.7 1993/11/20 03:01:58 deraadt Exp $
 ;	from: @(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
@@ -25,7 +25,7 @@
 2	STD	0 fork
 3	STD	3 read
 4	STD	3 write
-5	STD	3 open
+5	STD	3 sun_open
 6	STD	1 close
 7	STD	4 sun_wait4
 8	STD	2 sun_creat
@@ -102,7 +102,7 @@
 79	STD	2 getgroups
 80	STD	2 setgroups
 81	STD	1 getpgrp
-82	STD	2 setpgid
+82	STD	2 sun_setpgid
 83	STD	3 setitimer
 84	COMPAT	0 wait
 85	STD	1 swapon
@@ -204,7 +204,7 @@
 #else
 171	UNIMPL	0 nosys
 #endif
-172	STD	4 auditsys
+172	STD	4 sun_auditsys
 173	UNIMPL	5 rfssys
 174	STD	3 sun_getdents
 175	STD	1 setsid
@@ -221,4 +221,4 @@
 186	UNIMPL	2 pathconf
 187	UNIMPL	2 fpathconf
 188	UNIMPL	1 sysconf
-189	UNIMPL	1 uname
+189	STD	1 sun_uname
