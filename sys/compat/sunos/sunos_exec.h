@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.h,v 1.1 1997/12/04 15:34:02 tv Exp $	*/
+/*	$NetBSD: sunos_exec.h,v 1.2 1998/08/09 03:12:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -39,7 +39,7 @@ struct sunos_exec {
 #define SUNOS_M_68020	2	/* runs only on 68020 */
 #define	SUNOS_M_SPARC	3	/* runs only on SPARC */
 
-#ifdef sparc
+#ifdef __sparc__
 #define SUNOS_M_NATIVE	SUNOS_M_SPARC
 #else
 #define SUNOS_M_NATIVE	SUNOS_M_68020
