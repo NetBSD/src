@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: scsiconf.h,v 1.8 1994/04/11 03:54:07 mycroft Exp $
+ *	$Id: scsiconf.h,v 1.9 1994/04/20 22:13:35 mycroft Exp $
  */
 
 /*
@@ -56,6 +56,7 @@ typedef	unsigned long int	u_int32;
 typedef	unsigned short int	u_int16;
 typedef	unsigned char 		u_int8;
 
+#include <sys/queue.h>
 #include <machine/cpu.h>
 #include <scsi/scsi_debug.h>
 
@@ -154,8 +155,7 @@ struct scsi_link {
 /* 12*/	u_int8	spareb[2];
 /* 16*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 /* 20*/	struct	scsi_device *device;	/* device entry points etc. */
-/* 24*/	struct	scsi_xfer *active_xs;	/* operations under way */
-/*  4*/	void	*adapter_softc;		/* e.g. the 0 in aha0 */
+/* 24*/	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
 /* 28*/	void	*fordriver;		/* for private use by the driver */
 };
 #define	SDEV_MEDIA_LOADED 	0x01	/* device figures are still valid */
@@ -184,26 +184,26 @@ struct scsibus_data {
  * (via the scsi_link structure)
  */
 struct scsi_xfer {
-/* 4*/	struct	scsi_xfer *next;	/* when free */
-/* 8*/	int	flags;
-/*12*/	struct	scsi_link *sc_link;	/* all about our device and adapter */
-/*16*/	int	retries;		/* the number of times to retry */
-/*20*/	int	timeout;		/* in milliseconds */
-/*24*/	struct	scsi_generic *cmd;	/* The scsi command to execute */
-/*28*/	int32	cmdlen;			/* how long it is */
-/*32*/	u_char	*data;			/* dma address OR a uio address */
-/*36*/	int32	datalen;		/* data len (blank if uio)    */
-/*40*/	int32	resid;			/* how much buffer was not touched */
-/*44*/	int	error;			/* an error value	*/
-/*48*/	struct	buf *bp;		/* If we need to associate with a buf */
-/*80*/	struct	scsi_sense_data	sense; /* 32 bytes*/
+/* 4*/	LIST_ENTRY(scsi_xfer) free_list;
+/*12*/	int	flags;
+/*16*/	struct	scsi_link *sc_link;	/* all about our device and adapter */
+/*20*/	int	retries;		/* the number of times to retry */
+/*24*/	int	timeout;		/* in milliseconds */
+/*28*/	struct	scsi_generic *cmd;	/* The scsi command to execute */
+/*32*/	int32	cmdlen;			/* how long it is */
+/*36*/	u_char	*data;			/* dma address OR a uio address */
+/*40*/	int32	datalen;		/* data len (blank if uio)    */
+/*44*/	int32	resid;			/* how much buffer was not touched */
+/*48*/	int	error;			/* an error value	*/
+/*52*/	struct	buf *bp;		/* If we need to associate with a buf */
+/*84*/	struct	scsi_sense_data	sense; /* 32 bytes*/
 	/*
 	 * Believe it or not, Some targets fall on the ground with
 	 * anything but a certain sense length.
 	 */
-/*84*/	int32 req_sense_length;		/* Explicit request sense length */
-/*88*/	int32 status;			/* SCSI status */
-/*100*/	struct	scsi_generic cmdstore;	/* stash the command in here */
+/*88*/	int32 req_sense_length;		/* Explicit request sense length */
+/*92*/	int32 status;			/* SCSI status */
+/*104*/	struct	scsi_generic cmdstore;	/* stash the command in here */
 };
 
 /*
@@ -251,6 +251,7 @@ int scsi_targmatch();
 
 struct scsi_xfer *get_xs __P((struct scsi_link *, int));
 void free_xs __P((struct scsi_xfer *, struct scsi_link *, int));
+void sc_print_addr __P((struct scsi_link *sc_link));
 u_int32 scsi_size __P((struct scsi_link *, int));
 int scsi_test_unit_ready __P((struct scsi_link *, int));
 int scsi_change_def __P((struct scsi_link *, int));

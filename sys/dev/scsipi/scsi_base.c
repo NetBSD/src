@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: scsi_base.c,v 1.11 1994/04/11 03:53:45 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.12 1994/04/20 22:13:33 mycroft Exp $
  */
 
 /*
@@ -52,9 +52,7 @@ int     Debugger();
 #define Debugger()
 #endif	/* DDB */
 
-void sc_print_addr __P((struct scsi_link *sc_link));
-
-struct scsi_xfer *next_free_xs;
+LIST_HEAD(xs_free_list, scsi_xfer) xs_free_list;
 
 /*
  * Get a scsi transfer structure for the caller. Charge the structure
@@ -84,21 +82,21 @@ get_xs(sc_link, flags)
 			return 0;
 		}
 		sc_link->flags |= SDEV_WAITING;
-		(void) tsleep(sc_link, PRIBIO, "get_xs", 0);
+		(void) tsleep(sc_link, PRIBIO, "getxs", 0);
 	}
 	sc_link->opennings--;
-	if (xs = next_free_xs) {
-		next_free_xs = xs->next;
+	if (xs = xs_free_list.lh_first) {
+		LIST_REMOVE(xs, free_list);
 		splx(s);
 	} else {
 		splx(s);
 		SC_DEBUG(sc_link, SDEV_DB3, ("making\n"));
-		xs = malloc(sizeof(*xs), M_TEMP,
+		xs = malloc(sizeof(*xs), M_DEVBUF,
 		    ((flags & SCSI_NOSLEEP) ? M_NOWAIT : M_WAITOK));
-		if (xs == NULL) {
+		if (!xs) {
 			sc_print_addr(sc_link);
 			printf("cannot allocate scsi xs\n");
-			return NULL;
+			return 0;
 		}
 	}
 	SC_DEBUG(sc_link, SDEV_DB3, ("returning\n"));
@@ -117,8 +115,7 @@ free_xs(xs, sc_link, flags)
 	struct scsi_link *sc_link;	/* who to credit for returning it */
 	int flags;
 {
-	xs->next = next_free_xs;
-	next_free_xs = xs;
+	LIST_INSERT_HEAD(&xs_free_list, xs, free_list);
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("free_xs\n"));
 	/* if was 0 and someone waits, wake them up */
