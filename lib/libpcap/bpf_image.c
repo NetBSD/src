@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_image.c,v 1.5 1997/10/03 15:53:02 christos Exp $	*/
+/*	$NetBSD: bpf_image.c,v 1.5.4.1 2000/10/10 21:33:41 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: bpf_image.c,v 1.22 96/09/26 23:27:56 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: bpf_image.c,v 1.5 1997/10/03 15:53:02 christos Exp $");
+__RCSID("$NetBSD: bpf_image.c,v 1.5.4.1 2000/10/10 21:33:41 he Exp $");
 #endif
 #endif
 
@@ -50,246 +50,221 @@ bpf_image(p, n)
 	int n;
 {
 	int v;
-	char *fmt, *op;
+	char *op;
 	static char image[256];
 	char operand[64];
 
+	operand[0] = 0;
+	
 	v = p->k;
 	switch (p->code) {
 
 	default:
 		op = "unimp";
-		fmt = "0x%x";
-		v = p->code;
+		snprintf(operand, sizeof operand, "0x%x", p->code);
 		break;
 
 	case BPF_RET|BPF_K:
 		op = "ret";
-		fmt = "#%d";
-		break;
+		goto immediate;
 
 	case BPF_RET|BPF_A:
 		op = "ret";
-		fmt = "";
 		break;
 
 	case BPF_LD|BPF_W|BPF_ABS:
 		op = "ld";
-		fmt = "[%d]";
+	abs:
+		snprintf(operand, sizeof operand, "[%d]", v);
 		break;
 
 	case BPF_LD|BPF_H|BPF_ABS:
 		op = "ldh";
-		fmt = "[%d]";
-		break;
+		goto abs;
 
 	case BPF_LD|BPF_B|BPF_ABS:
 		op = "ldb";
-		fmt = "[%d]";
-		break;
+		goto abs;
 
 	case BPF_LD|BPF_W|BPF_LEN:
 		op = "ld";
-		fmt = "#pktlen";
+		strlcpy(operand, "#pktlen", sizeof(operand));
 		break;
 
 	case BPF_LD|BPF_W|BPF_IND:
 		op = "ld";
-		fmt = "[x + %d]";
+	offset:
+		snprintf(operand, sizeof(operand), "[x + %d]", v);
 		break;
 
 	case BPF_LD|BPF_H|BPF_IND:
 		op = "ldh";
-		fmt = "[x + %d]";
-		break;
+		goto offset;
 
 	case BPF_LD|BPF_B|BPF_IND:
 		op = "ldb";
-		fmt = "[x + %d]";
-		break;
+		goto offset;
 
 	case BPF_LD|BPF_IMM:
 		op = "ld";
-		fmt = "#0x%x";
-		break;
+		goto immediate_hex;		
 
 	case BPF_LDX|BPF_IMM:
 		op = "ldx";
-		fmt = "#0x%x";
-		break;
+		goto immediate_hex;
 
 	case BPF_LDX|BPF_MSH|BPF_B:
 		op = "ldxb";
-		fmt = "4*([%d]&0xf)";
+		snprintf(operand, sizeof(operand), "4*([%d]&0xf)", v);
 		break;
 
 	case BPF_LD|BPF_MEM:
 		op = "ld";
-		fmt = "M[%d]";
+	mem:
+		snprintf(operand, sizeof(operand), "M[%d]", v);
 		break;
 
 	case BPF_LDX|BPF_MEM:
 		op = "ldx";
-		fmt = "M[%d]";
-		break;
+		goto mem;
 
 	case BPF_ST:
 		op = "st";
-		fmt = "M[%d]";
-		break;
-
+		goto mem;
+		
 	case BPF_STX:
 		op = "stx";
-		fmt = "M[%d]";
-		break;
-
+		goto mem;
+		
 	case BPF_JMP|BPF_JA:
 		op = "ja";
-		fmt = "%d";
-		v = n + 1 + p->k;
+		snprintf(operand, sizeof(operand), "%d", n + 1 + p->k);
 		break;
 
 	case BPF_JMP|BPF_JGT|BPF_K:
 		op = "jgt";
-		fmt = "#0x%x";
-		break;
+		goto immediate_hex;
 
 	case BPF_JMP|BPF_JGE|BPF_K:
 		op = "jge";
-		fmt = "#0x%x";
-		break;
+		goto immediate_hex;
 
 	case BPF_JMP|BPF_JEQ|BPF_K:
 		op = "jeq";
-		fmt = "#0x%x";
-		break;
+		goto immediate_hex;		
 
 	case BPF_JMP|BPF_JSET|BPF_K:
 		op = "jset";
-		fmt = "#0x%x";
-		break;
+		goto immediate_hex;
 
 	case BPF_JMP|BPF_JGT|BPF_X:
 		op = "jgt";
-		fmt = "x";
+	x:
+		strlcpy(operand, "x", sizeof(operand));
 		break;
 
 	case BPF_JMP|BPF_JGE|BPF_X:
 		op = "jge";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_JMP|BPF_JEQ|BPF_X:
 		op = "jeq";
-		fmt = "x";
-		break;
-
+		goto x;
+		
 	case BPF_JMP|BPF_JSET|BPF_X:
 		op = "jset";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_ALU|BPF_ADD|BPF_X:
 		op = "add";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_ALU|BPF_SUB|BPF_X:
 		op = "sub";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_ALU|BPF_MUL|BPF_X:
 		op = "mul";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_ALU|BPF_DIV|BPF_X:
 		op = "div";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_ALU|BPF_AND|BPF_X:
 		op = "and";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_ALU|BPF_OR|BPF_X:
 		op = "or";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_ALU|BPF_LSH|BPF_X:
 		op = "lsh";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_ALU|BPF_RSH|BPF_X:
 		op = "rsh";
-		fmt = "x";
-		break;
+		goto x;
 
 	case BPF_ALU|BPF_ADD|BPF_K:
 		op = "add";
-		fmt = "#%d";
-		break;
+		goto immediate;
 
 	case BPF_ALU|BPF_SUB|BPF_K:
 		op = "sub";
-		fmt = "#%d";
-		break;
+		goto immediate;
 
 	case BPF_ALU|BPF_MUL|BPF_K:
 		op = "mul";
-		fmt = "#%d";
-		break;
+		goto immediate;
 
 	case BPF_ALU|BPF_DIV|BPF_K:
 		op = "div";
-		fmt = "#%d";
+	immediate:
+		snprintf(operand, sizeof operand, "#%d", v);
 		break;
 
 	case BPF_ALU|BPF_AND|BPF_K:
 		op = "and";
-		fmt = "#0x%x";
-		break;
+		goto immediate_hex;
 
 	case BPF_ALU|BPF_OR|BPF_K:
 		op = "or";
-		fmt = "#0x%x";
+	immediate_hex:
+		snprintf(operand, sizeof operand, "#0x%x", v);		
 		break;
 
 	case BPF_ALU|BPF_LSH|BPF_K:
 		op = "lsh";
-		fmt = "#%d";
-		break;
+		goto immediate;
 
 	case BPF_ALU|BPF_RSH|BPF_K:
 		op = "rsh";
-		fmt = "#%d";
+		goto immediate;
 		break;
 
 	case BPF_ALU|BPF_NEG:
 		op = "neg";
-		fmt = "";
 		break;
 
 	case BPF_MISC|BPF_TAX:
 		op = "tax";
-		fmt = "";
 		break;
 
 	case BPF_MISC|BPF_TXA:
 		op = "txa";
-		fmt = "";
 		break;
 	}
-	(void)snprintf(operand, sizeof operand, fmt, v);
-	(void)snprintf(image, sizeof image,
-		      (BPF_CLASS(p->code) == BPF_JMP &&
-		       BPF_OP(p->code) != BPF_JA) ?
-		      "(%03d) %-8s %-16s jt %d\tjf %d"
-		      : "(%03d) %-8s %s",
-		      n, op, operand, n + 1 + p->jt, n + 1 + p->jf);
+
+	if (BPF_CLASS(p->code) == BPF_JMP &&
+	    BPF_OP(p->code) != BPF_JA)	
+		(void)snprintf(image, sizeof image,
+		    "(%03d) %-8s %-16s jt %d\tjf %d",
+		    n, op, operand, n + 1 + p->jt, n + 1 + p->jf);
+	else
+		(void)snprintf(image, sizeof image,
+		    "(%03d) %-8s %s",
+		    n, op, operand);
 	return image;
 }
