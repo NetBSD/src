@@ -1,5 +1,5 @@
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
-#	$NetBSD: Makefile,v 1.27 2003/06/30 18:51:28 wiz Exp $
+#	$NetBSD: Makefile,v 1.28 2003/10/19 14:10:13 lukem Exp $
 
 # IF YOU ADD TO MSRCS, MAKE SURE YOU UPDATE `CATDEPS' IN bsd.man.mk!
 #MSRCS=  andoc doc doc-ditroff doc-common doc-nroff doc-syms doc2html
@@ -19,6 +19,8 @@ realall:	${MMACS}
 
 .for i in ${MSRCS}
 $i.tmac: $i
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	sed -f ${STRIP_SED} < ${.ALLSRC} > ${.TARGET}
 .endfor
 
