@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.5 2003/03/03 14:20:13 dsl Exp $
+# $NetBSD: buildfloppies.sh,v 1.6 2003/03/07 09:33:53 lukem Exp $
 #
-# Copyright (c) 2002 The NetBSD Foundation, Inc.
+# Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -110,10 +110,9 @@ fi
 
 #	check size against available number of disks
 #
-set -- `ls -l ${floppy}`
-bytes=$5
+bytes=$( ls -l "${floppy}" | awk '{print $5}' )
 blocks=$(( ${bytes} / 512 ))
-numdisks=$(( (${blocks} - 1) / ${floppysize} + 1 ))
+numdisks=$(( ( ${blocks} + ${floppysize} - 1 ) / ${floppysize} ))
 if [ -z "${maxdisks}" ]; then
 	maxdisks=${numdisks}
 fi
