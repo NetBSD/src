@@ -1,4 +1,4 @@
-$Id: README.gre,v 1.1 1998/09/13 20:50:55 hwr Exp $
+$Id: README.gre,v 1.2 1998/09/30 06:16:07 hwr Exp $
 ---------------------------------------------------------------------------
                       A GRE Tunnel for NetBSD
 
@@ -8,7 +8,8 @@ $Id: README.gre,v 1.1 1998/09/13 20:50:55 hwr Exp $
 This is a very alpha implementation of GRE packet encapsulation.
 Generic Route Encapsulation (GRE) is described in RFC 1701 and 1702.
 The interface also supports IPIP (protocol 4) encapsulation,
-as described in RFC 2003 but default is GRE mode.
+as described in RFC 2003 and MOBILE (protcol 55) as of RFC 2004  but 
+default is GRE mode.
 
 Basically GRE allows to tunnel not only IP over IP, but also provides
 for other protocols like Appletalk etc. Cisco routers do their multicast
