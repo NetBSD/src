@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 1997/06/16 23:41:45 jonathan Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 1997/06/17 04:12:38 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -268,7 +268,6 @@ vad_to_pfn(x)
 }
 #endif
 
-#define	mips_pg_global_bit()	(MIPS1_PG_G)
 #endif /* ! _LOCORE */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
