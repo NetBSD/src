@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.69 2001/07/12 23:25:39 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.70 2001/07/12 23:35:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69 2001/07/12 23:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70 2001/07/12 23:35:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		 */
 		p2tf = p2->p_md.md_tf = (struct trapframe *)
 		    ((char *)p2->p_addr + USPACE - sizeof(struct trapframe));
-		bcopy(p1->p_md.md_tf, p2->p_md.md_tf,
+		memcpy(p2->p_md.md_tf, p1->p_md.md_tf,
 		    sizeof(struct trapframe));
 
 		/*
