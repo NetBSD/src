@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.10 1994/06/29 06:33:34 cgd Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.10.2.1 1994/10/06 12:30:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -381,6 +381,7 @@ m_cat(m, n)
 	}
 }
 
+void
 m_adj(mp, req_len)
 	struct mbuf *mp;
 	int req_len;
