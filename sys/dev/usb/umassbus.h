@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.h,v 1.4 2001/12/02 22:44:34 bouyer Exp $	*/
+/*	$NetBSD: umassbus.h,v 1.5 2001/12/02 22:59:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@
 
 #define SHORT_INQUIRY_LENGTH    36 /* XXX */
 
-#include <dev/ata/atavar.h>	/* XXX */
 #include <sys/disk.h>		/* XXX */
 #include <dev/scsipi/sdvar.h>	/* XXX */
 
