@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.3 1998/09/30 22:26:28 thorpej Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.4 1998/09/30 22:38:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
  */
 
 /*
- * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
+ * Signal "trampoline" code (22 bytes).  Invoked from RTE setup by sendsig().
  *
  * Stack looks like:
  *
@@ -71,8 +71,8 @@ GLOBAL(sigcode)
 	movl	sp@(12),a0	| signal handler addr	(4 bytes)
 	jsr	a0@		| call signal handler	(2 bytes)
 	addql	#4,sp		| pop signal number	(2 bytes)
-GLOBAL(sigcodetrap)
-	trap	#1		| special syscall entry	(2 bytes)
+	movew	#SYS___sigreturn14,d0			(4 bytes)
+	trap	#3		| special syscall entry	(2 bytes)
 	movl	d0,sp@(4)	| save errno		(4 bytes)
 	moveq	#SYS_exit,d0	| syscall == exit	(2 bytes)
 	trap	#0		| exit(errno)		(2 bytes)
