@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.13 1999/06/06 01:50:00 thorpej Exp $	*/
+/*	$NetBSD: util.h,v 1.14 1999/06/12 18:06:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -54,19 +54,25 @@
 #define	FPARSELN_UNESCALL	0x0f
 
 __BEGIN_DECLS
-void	login __P((struct utmp *));
+struct utmp;
+struct passwd;
+struct termios;
+struct termios;
+struct winsize;
+struct iovec;
+
+void	login __P((const struct utmp *));
 int	login_tty __P((int));
 int	logout __P((const char *));
 void	logwtmp __P((const char *, const char *, const char *));
-int	pw_lock __P((int retries));
+int	pw_lock __P((int));
 int	pw_mkdb __P((void));
 int	pw_abort __P((void));
 void	pw_init __P((void));
-void	pw_edit __P((int notsetuid, const char *filename));
+void	pw_edit __P((int, const char *));
 void	pw_prompt __P((void));
-void	pw_copy __P((int ffd, int tfd, struct passwd *pw,
-		     struct passwd *old_pw));
-void	pw_error __P((const char *name, int err, int eval));
+void	pw_copy __P((int, int, struct passwd *, struct passwd *));
+void	pw_error __P((const char *, int, int));
 int	openpty __P((int *, int *, char *, struct termios *,
 		     struct winsize *));
 char   *fparseln __P((FILE *, size_t *, size_t *, const char[3], int));
@@ -79,7 +85,6 @@ int	pidlock __P((const char *, int, pid_t *, const char *));
 int	ttylock __P((const char *, int, pid_t *));
 int	ttyunlock __P((const char *));
 int	ttyaction __P((const char *, const char *, const char *));
-struct iovec;
 char   *ttymsg __P((struct iovec *, int, const char *, int));
 __END_DECLS
 
