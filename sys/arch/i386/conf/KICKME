@@ -1,7 +1,7 @@
 #
 # KICKME -- 486Cx-33 development machine.
 #
-#	$Id: KICKME,v 1.8 1994/04/20 23:39:29 mycroft Exp $
+#	$Id: KICKME,v 1.9 1994/05/21 08:37:38 cgd Exp $
 #
 
 machine		"i386"
@@ -9,7 +9,6 @@ cpu		"I486_CPU"
 ident		KICKME
 timezone	8 dst
 maxusers	10
-maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
 options		INET,ISOFS,NFSSERVER,NFSCLIENT

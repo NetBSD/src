@@ -1,14 +1,13 @@
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
-#	$Id: SUN_LAMP,v 1.43 1994/04/20 23:39:34 mycroft Exp $
+#	$Id: SUN_LAMP,v 1.44 1994/05/21 08:37:45 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
 ident		SUN_LAMP
 timezone	8 dst
 maxusers	24
-maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
 options		INET,NFSSERVER,NFSCLIENT,MFS,ISOFS,LOFS
