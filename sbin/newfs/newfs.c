@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.78 2003/12/22 10:33:21 jmmv Exp $	*/
+/*	$NetBSD: newfs.c,v 1.79 2004/03/07 00:17:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.78 2003/12/22 10:33:21 jmmv Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.79 2004/03/07 00:17:04 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,6 +228,7 @@ main(int argc, char *argv[])
 	const char *opstring;
 	int byte_sized = 0;
 #ifdef MFS
+	struct mfs_args args;
 	char mountfromname[100];
 	pid_t pid, res;
 	struct statfs sf;
@@ -378,8 +379,14 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
-	if (mntflags & MNT_GETARGS)
+
+#ifdef MFS
+	/* This is enough to get through the correct kernel code paths */
+	memset(&args, 0, sizeof args);
+	args.fspec = mountfromname;
+	if (mntflags & (MNT_GETARGS | MNT_UPDATE))
 		goto doit;
+#endif
 
 	if (argc != 2 && (mfs || argc != 1))
 		usage();
@@ -599,7 +606,6 @@ main(int argc, char *argv[])
 		close(fso);
 #ifdef MFS
 	if (mfs) {
-		struct mfs_args args;
 
 		switch (pid = fork()) {
 		case -1:
@@ -654,7 +660,6 @@ main(int argc, char *argv[])
 		(void) close(2);
 		(void) chdir("/");
 
-		args.fspec = mountfromname;
 		args.export.ex_root = -2;
 		if (mntflags & MNT_RDONLY)
 			args.export.ex_flags = MNT_EXRDONLY;
@@ -664,7 +669,7 @@ main(int argc, char *argv[])
 		args.size = fssize * sectorsize;
 doit:
 		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0) {
-			if (mntflags & MNT_GETARGS)
+			if (mntflags & (MNT_GETARGS | MNT_UPDATE))
 				err(1, "mount `%s' failed", argv[1]);
 			exit(errno); /* parent prints message */
 		}
