@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.14 2003/04/10 14:14:15 jdolecek Exp $	*/
+/*	$NetBSD: do_command.c,v 1.15 2004/03/20 10:42:00 jdolecek Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.14 2003/04/10 14:14:15 jdolecek Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.15 2004/03/20 10:42:00 jdolecek Exp $");
 #endif
 #endif
 
@@ -186,7 +186,7 @@ child_process(e, u)
 		/*local*/{
 			char *x = mkprints((u_char *)e->cmd, strlen(e->cmd));
 
-			log_it(usernm, getpid(), "CMD", x);
+			log_it(usernm, getpid(), "CMD START", x);
 			free(x);
 		}
 
@@ -506,6 +506,14 @@ child_process(e, u)
 		if (WIFSIGNALED(waiter) && WCOREDUMP(waiter))
 			Debug(DPROC, (", dumped core"))
 		Debug(DPROC, ("\n"))
+	}
+
+	/* Log the time when we finished deadling with the job */
+	/*local*/{
+		char *x = mkprints((u_char *)e->cmd, strlen(e->cmd));
+
+		log_it(usernm, getpid(), "CMD FINISH", x);
+		free(x);
 	}
 }
 
