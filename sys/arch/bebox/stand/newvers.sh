@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.1 1998/01/16 04:07:36 sakamoto Exp $
+#	$NetBSD: newvers.sh,v 1.2 2000/07/08 15:36:05 jdolecek Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 #	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
 u=${USER-root} h=`hostname` t=`date`
-r=`head -1 $1 | awk ' { print $3 } '`
+r=`tail -1 $1 | sed -e 's/:.*//'`
 
 echo "char bootprog_name[] = \"NetBSD/bebox ${2}\";" > vers.c
 echo "char bootprog_rev[] = \"${r}\";" >> vers.c
