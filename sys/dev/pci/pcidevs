@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.70 1998/07/22 17:41:04 drochner Exp $
+$NetBSD: pcidevs,v 1.71 1998/07/25 11:57:50 explorer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -482,7 +482,7 @@ vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
 vendor 2MICRO		0x1217  2 Micro Inc
-vendor 3DFX		0x121A	3Dfx Interactive
+vendor 3DFX		0x121a	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
@@ -494,6 +494,7 @@ vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
+vendor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	STB Systems (2nd PCI Vendor ID)
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
@@ -902,6 +903,9 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 
 /* Realtek (Creative Labs?) products */
 product	REALTEK	RT8029	0x8029	Ethernet
+
+/* RISCom (SDL Communications, Inc?) products */
+product RISCOM N2	0x5568	N2
 
 /* S3 products */
 product S3 VIRGE	0x5631	ViRGE
