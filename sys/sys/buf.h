@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.34 1999/04/07 00:18:29 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.35 1999/11/15 18:49:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -48,6 +48,27 @@
 #define NOLIST ((struct buf *)0x87654321)
 
 /*
+ * To avoid including <ufs/ffs/softdep.h> 
+ */   
+LIST_HEAD(workhead, worklist);
+/*
+ * These are currently used only by the soft dependency code, hence
+ * are stored once in a global variable. If other subsystems wanted
+ * to use these hooks, a pointer to a set of bio_ops could be added
+ * to each buffer.
+ */
+struct buf;
+struct mount;
+struct vnode;
+extern struct bio_ops {
+ 	void	(*io_start) __P((struct buf *));
+ 	void	(*io_complete) __P((struct buf *));
+ 	void	(*io_deallocate) __P((struct buf *));
+ 	int	(*io_fsync) __P((struct vnode *));
+ 	int	(*io_sync) __P((struct mount *));
+} bioops;
+
+/*
  * The buffer header describes an I/O operation in the kernel.
  */
 struct buf {
@@ -78,6 +99,7 @@ struct buf {
 	int	b_validoff;		/* Offset in buffer of valid region. */
 	int	b_validend;		/* Offset of end of valid region. */
 	off_t	b_dcookie;		/* Offset cookie if dir block */
+	struct  workhead b_dep;		/* List of filesystem dependencies. */
 };
 
 /*
@@ -101,6 +123,7 @@ struct buf {
 #define	B_ASYNC		0x00000004	/* Start I/O, do not wait. */
 #define	B_BAD		0x00000008	/* Bad block revectoring in progress. */
 #define	B_BUSY		0x00000010	/* I/O in progress. */
+#define B_SCANNED	0x00000020	/* Block already pushed during sync */
 #define	B_CALL		0x00000040	/* Call b_iodone from biodone. */
 #define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
 #define	B_DIRTY		0x00000100	/* Dirty page to be pushed out async. */
@@ -157,6 +180,7 @@ extern int nswbuf;		/* Number of swap I/O buffer headers. */
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
 void	bawrite __P((struct buf *));
+void	bdirty __P((struct buf *));
 void	bdwrite __P((struct buf *));
 void	biodone __P((struct buf *));
 int	biowait __P((struct buf *));

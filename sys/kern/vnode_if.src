@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.20 1999/08/11 00:20:50 wrstuden Exp $
+#	$NetBSD: vnode_if.src,v 1.21 1999/11/15 18:49:10 fvdl Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -461,6 +461,18 @@ vop_valloc {
 };
 
 #
+#% balloc     vp      L L L
+#
+vop_balloc {
+	IN struct vnode *vp;
+	IN off_t startoffset;
+	IN int size;
+	IN struct ucred *cred;	
+	IN int flags;
+	OUT struct buf **bpp;
+};
+
+#
 #% reallocblks        vp      L L L
 #
 vop_reallocblks {
@@ -525,3 +537,15 @@ vop_whiteout {
 #vop_bwrite {
 #	IN struct buf *bp;
 #};
+
+#
+#% balloc     vp      L L L
+#
+vop_balloc {
+      IN struct vnode *vp;
+      IN off_t startoffset;
+      IN int size;
+      IN struct ucred *cred;  
+      IN int flags;
+      OUT struct buf **bpp;
+};

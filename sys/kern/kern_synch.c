@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.66 1999/10/14 05:59:57 ross Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.67 1999/11/15 18:49:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -225,7 +225,6 @@ schedcpu(arg)
 	register unsigned int newcpu;
 	int clkhz;
 
-	wakeup((caddr_t)&lbolt);
 	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		/*
@@ -276,6 +275,7 @@ schedcpu(arg)
 	}
 	proclist_unlock_read();
 	uvm_meter();
+	wakeup((caddr_t)&lbolt);
 	timeout(schedcpu, (void *)0, hz);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.17 1998/03/01 02:21:34 fvdl Exp $	*/
+/*	$NetBSD: specdev.h,v 1.18 1999/11/15 18:49:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@
 struct specinfo {
 	struct	vnode **si_hashchain;
 	struct	vnode *si_specnext;
-	long	si_flags;
+	struct	mount *si_mountpoint;
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
 };
@@ -53,13 +53,8 @@ struct specinfo {
 #define v_rdev		v_specinfo->si_rdev
 #define v_hashchain	v_specinfo->si_hashchain
 #define v_specnext	v_specinfo->si_specnext
-#define v_specflags	v_specinfo->si_flags
 #define v_speclockf	v_specinfo->si_lockf
-
-/*
- * Flags for specinfo
- */
-#define	SI_MOUNTEDON	0x0001	/* block special device is mounted on */
+#define v_specmountpoint v_specinfo->si_mountpoint
 
 /*
  * Special device management
