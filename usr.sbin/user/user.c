@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.49 2002/05/03 10:05:28 agc Exp $ */
+/* $NetBSD: user.c,v 1.50 2002/05/03 10:11:16 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.49 2002/05/03 10:05:28 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.50 2002/05/03 10:11:16 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1367,6 +1367,7 @@ useradd(int argc, char **argv)
 			memsave(&u.u_primgrp, optarg, strlen(optarg));
 			break;
 		case 'k':
+			defaultfield = 1;
 			memsave(&u.u_skeldir, optarg, strlen(optarg));
 			break;
 #ifdef EXTENSIONS
