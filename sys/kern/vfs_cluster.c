@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.14 1996/10/13 02:32:49 christos Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.14.14.1 1998/03/09 23:17:23 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -66,6 +66,12 @@ struct buf *cluster_rbuild __P((struct vnode *, u_quad_t, struct buf *,
 void	    cluster_wbuild __P((struct vnode *, struct buf *, long,
 	    daddr_t, int, daddr_t));
 struct cluster_save *cluster_collectbufs __P((struct vnode *, struct buf *));
+
+/*
+ * Instrument how many times a read cluster was aborted due to
+ * not being able to push memory out of a buffer.
+ */
+u_long	cluster_rbuild_too_much_memory;
 
 #ifdef DIAGNOSTIC
 /*
@@ -347,10 +353,12 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 			 * terminate the cluster early.
 			 */
 			if (tbp->b_bufsize + size > MAXBSIZE) {
-#ifdef DIAGNOSTIC
-				if (tbp->b_bufsize != MAXBSIZE)
-					panic("cluster_rbuild: too much memory");
-#endif
+				/*
+				 * Instrument this; we used to crash if
+				 * DIAGNOSTIC, but this can happen a lot
+				 * with big buffer caches.
+				 */
+				cluster_rbuild_too_much_memory++;
 				brelse(tbp);
 				break;
 			}
