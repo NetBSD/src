@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.17 2003/11/15 23:10:31 manu Exp $	*/
+/*	$NetBSD: setemul.c,v 1.18 2003/11/18 13:21:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.17 2003/11/15 23:10:31 manu Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.18 2003/11/18 13:21:54 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -238,17 +238,18 @@ struct emulation_ctx {
 	struct emulation_ctx *next;
 };
 
-const struct emulation *current;
-const struct emulation *previous;
+const struct emulation *cur_emul;
+const struct emulation *prev_emul;
 /* Mach emulation require extra emulation contexts */
 static const struct emulation *mach;
 static const struct emulation *mach_ppccalls;
 static const struct emulation *mach_fasttraps;
 
-static const struct emulation *default_emul = NULL;
+static const struct emulation *default_emul = &emulations[0];
 
 struct emulation_ctx *current_ctx;
-struct emulation_ctx *emul_ctx = NULL;
+static struct emulation_ctx emul_0 = {0, &emulations[0], NULL};
+struct emulation_ctx *emul_ctx = &emul_0;
 
 static struct emulation_ctx *ectx_find(pid_t);
 static void	ectx_update(pid_t, const struct emulation *);
@@ -273,22 +274,24 @@ setemul(const char *name, pid_t pid, int update_ectx)
 
 	if (update_ectx)
 		ectx_update(pid, match);
-
-	if (!default_emul)
+	else
 		default_emul = match;
 
-	if (current != NULL) 
-		previous = current;
+	if (cur_emul != NULL) 
+		prev_emul = cur_emul;
 	else
-		previous = match;
+		prev_emul = match;
 
-	current = match;
+	cur_emul = match;
 }
 
 /*
  * Emulation context list is very simple chained list, not even hashed.
  * We expect the number of separate traced contexts/processes to be
  * fairly low, so it's not worth it to optimize this.
+ * MMMmmmm not when I use it, it is only bounded PID_MAX!
+ * Requeue looked up item at start of list to cache result since the
+ * trace file tendes to have a burst of calls for a single process.
  */
 
 /*
@@ -297,14 +300,32 @@ setemul(const char *name, pid_t pid, int update_ectx)
 static struct emulation_ctx *
 ectx_find(pid_t pid)
 {
-	struct emulation_ctx *ctx;
+	struct emulation_ctx *ctx, **pctx;
 
-	for(ctx = emul_ctx; ctx != NULL; ctx = ctx->next) {
-		if (ctx->pid == pid)
-			return ctx;
+	/* Top of list is almost always right... (and list is never empty) */
+	if (emul_ctx->pid == pid)
+		return emul_ctx;
+
+	for (pctx = &emul_ctx; ; pctx = &ctx->next) {
+		ctx = *pctx;
+		if (ctx == NULL) {
+			/* create entry with default emulation */
+			ctx = malloc(sizeof *ctx);
+			if (ctx == NULL)
+				err(1, "malloc emul context");
+			ctx->pid = pid;
+			ctx->emulation = default_emul;
+			break;
+		}
+		if (ctx->pid != pid)
+			continue;
+		/* Cut out of chain */
+		*pctx = ctx->next;
 	}
-
-	return NULL;
+	/* Add at chain head */
+	ctx->next = emul_ctx;
+	emul_ctx = ctx;
+	return ctx;
 }
 
 /*
@@ -316,22 +337,8 @@ ectx_update(pid_t pid, const struct emulation *emul)
 {
 	struct emulation_ctx *ctx;
 
-
-	if ((ctx = ectx_find(pid)) != NULL) {
-		/* found and entry, ensure the emulation is right (exec!) */
-		ctx->emulation = emul;
-		return;
-	}
-	
-	ctx = malloc(sizeof(*ctx));
-	if (ctx == NULL)
-		err(1, NULL);
-	ctx->pid = pid;
+	ctx = ectx_find(pid);
 	ctx->emulation = emul;
-	
-	/* put the entry on start of emul_ctx chain */
-	ctx->next = emul_ctx;
-	emul_ctx = ctx;
 }
 
 /*
@@ -342,12 +349,32 @@ ectx_sanify(pid_t pid)
 {
 	struct emulation_ctx *ctx;
 
-	if ((ctx = ectx_find(pid)) != NULL)
-		current = ctx->emulation;
-	else if (default_emul)
-		current = default_emul;
-	else
-		current = &emulations[0]; /* NetBSD */
+	ctx = ectx_find(pid);
+	cur_emul = ctx->emulation;
+}
+
+/*
+ * Delete emulation context for current pid.
+ * (eg when tracing exit())
+ * Defer delete just in case we've cached a pointer...
+ */
+void
+ectx_delete(void)
+{
+	static struct emulation_ctx *ctx;
+	struct emulation_ctx *nctx;
+
+	if (ctx != NULL)
+		free(ctx);
+
+	nctx = emul_ctx->next;
+	if (nctx == NULL) {
+		/* sanity - last item on list should never be killed */
+		ctx = NULL;
+		return;
+	}
+	ctx = emul_ctx;
+	emul_ctx = nctx;
 }
 
 /*
