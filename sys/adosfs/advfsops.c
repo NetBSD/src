@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.13 1995/06/18 14:45:14 cgd Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.14 1995/08/18 15:14:37 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,10 +63,21 @@ adosfs_mount(mp, path, data, ndp, p)
 	if (error = copyin(data, (caddr_t)&args, sizeof(struct adosfs_args)))
 		return(error);
 	
+#if 0
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
+#endif
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
+	/*
+	 * If updating, check whether changing from read-only to
+	 * read/write; if there is no device name, that's all we do.
+	 */
+	if (mp->mnt_flag & MNT_UPDATE) {
+		amp = VFSTOADOSFS(mp);
+		if (args.fspec == 0)
+			return (vfs_export(mp, &amp->export, &args.export));
+	}
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
@@ -99,6 +110,7 @@ adosfs_mount(mp, path, data, ndp, p)
 		}
 		VOP_UNLOCK(devvp);
 	}
+/* MNT_UPDATE? */
 	if (error = adosfs_mountfs(devvp, mp, p)) {
 		vrele(devvp);
 		return (error);
@@ -453,15 +465,66 @@ adosfs_vget(mp, an, vpp)
 	return (0);
 }
 
+
+/*
+ * File handle to vnode
+ *
+ * Have to be really careful about stale file handles:
+ * - check that the inode number is in range
+ * - call iget() to get the locked inode
+ * - check for an unallocated inode (i_mode == 0)
+ * - check that the generation number matches
+ */
+
+struct ifid {
+	ushort	ifid_len;
+	ushort	ifid_pad;
+	int	ifid_ino;
+	long	ifid_start;
+};
+
 int
-adosfs_fhtovp(mp, fhp, vpp)
+adosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	struct mount *mp;
 	struct fid *fhp;
+	struct mbuf *nam;
 	struct vnode **vpp;
+	int *exflagsp;
+	struct ucred **credanonp;
 {
+	struct ifid *ifhp = (struct ifid *)fhp;
+	struct adosfsmount *amp = VFSTOADOSFS(mp);
+	struct anode *ap;
+	struct netcred *np;
+	struct vnode *nvp;
+	int error;
+
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
 #endif
+	
+	/*
+	 * Get the export permission structure for this <mp, client> tuple.
+	 */
+	np = vfs_export_lookup(mp, &amp->export, nam);
+	if (np == NULL)
+		return (EACCES);
+
+	if (error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) {
+		*vpp = NULLVP;
+		return (error);
+	}
+#if 0
+	ap = VTOA(nvp);
+	if (ap->inode.iso_mode == 0) {
+		vput(nvp);
+		*vpp = NULLVP;
+		return (ESTALE);
+	}
+#endif
+	*vpp = nvp;
+	*exflagsp = np->netc_exflags;
+	*credanonp = &np->netc_anon;
 	return(0);
 }
 
@@ -470,6 +533,15 @@ adosfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
+	struct anode *ap = VTOA(vp);
+	struct ifid *ifhp;
+
+	ifhp = (struct ifid *)fhp;
+	ifhp->ifid_len = sizeof(struct ifid);
+	
+	ifhp->ifid_ino = ap->block;
+	ifhp->ifid_start = ap->block;
+	
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("advptofh(%x, %x)\n", vp, fhp);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.7 1995/01/18 09:17:32 mycroft Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.8 1995/08/18 15:14:35 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -101,6 +101,7 @@ struct adosfsmount {
 	u_long mask;		/* mode mask */
 	struct vnode *devvp;	/* blk device mounted on */
 	struct vnode *rootvp;	/* out root vnode */
+	struct netexport export;
 };
 #define VFSTOADOSFS(mp) ((struct adosfsmount *)(mp)->mnt_data)
 
