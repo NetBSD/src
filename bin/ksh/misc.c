@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 2001/02/04 19:26:04 christos Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -1312,7 +1312,6 @@ ksh_get_wd(buf, bsize)
 
 	return ret;
 #else /* HAVE_GETCWD */
-	extern char *getwd ARGS((char *));
 	char *b;
 	int len;
 
