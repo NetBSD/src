@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.8 2000/06/28 17:05:20 mrg Exp $ */
+/* $NetBSD: bba.c,v 1.9 2000/07/17 04:37:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,10 +63,9 @@
 #define DPRINTF(x)
 #endif  /* AUDIO_DEBUG */
 
-#define BBA_REGISTER_SHIFT	6
 #define BBA_MAX_DMA_SEGMENTS	16
-#define BBA_DMABUF_SIZE		(BBA_MAX_DMA_SEGMENTS*PAGE_SIZE)
-#define BBA_DMABUF_ALIGN	PAGE_SIZE
+#define BBA_DMABUF_SIZE		(BBA_MAX_DMA_SEGMENTS*IOASIC_DMA_BLOCKSIZE)
+#define BBA_DMABUF_ALIGN	IOASIC_DMA_BLOCKSIZE
 #define BBA_DMABUF_BOUNDARY	0
 
 struct bba_mem {
@@ -384,7 +383,8 @@ bba_round_buffersize(addr, direction, size)
 {
 	DPRINTF(("bba_round_buffersize: size=%d\n", size));
 
-	return  (size > BBA_DMABUF_SIZE ? BBA_DMABUF_SIZE : round_page(size));
+	return (size > BBA_DMABUF_SIZE ? BBA_DMABUF_SIZE :
+	    roundup(size, IOASIC_DMA_BLOCKSIZE));
 }
 
 
@@ -472,8 +472,8 @@ bba_trigger_output(addr, start, end, blksize, intr, arg, param)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 
 	if (bus_dmamap_create(sc->sc_dmat, (char *)end - (char *)start,
-	    BBA_MAX_DMA_SEGMENTS, PAGE_SIZE, BBA_DMABUF_BOUNDARY,
-	    BUS_DMA_NOWAIT, &d->dmam)) {
+	    BBA_MAX_DMA_SEGMENTS, IOASIC_DMA_BLOCKSIZE,
+	    BBA_DMABUF_BOUNDARY, BUS_DMA_NOWAIT, &d->dmam)) {
 		printf("bba_trigger_output: can't create DMA map\n");
 		goto bad;
 	}
@@ -541,8 +541,8 @@ bba_trigger_input(addr, start, end, blksize, intr, arg, param)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 
 	if (bus_dmamap_create(sc->sc_dmat, (char *)end - (char *)start,
-	    BBA_MAX_DMA_SEGMENTS, PAGE_SIZE, BBA_DMABUF_BOUNDARY,
-	    BUS_DMA_NOWAIT, &d->dmam)) {
+	    BBA_MAX_DMA_SEGMENTS, IOASIC_DMA_BLOCKSIZE,
+	    BBA_DMABUF_BOUNDARY, BUS_DMA_NOWAIT, &d->dmam)) {
 		printf("bba_trigger_input: can't create DMA map\n");
 		goto bad;
 	}
@@ -775,9 +775,6 @@ bba_codec_iread(sc, reg)
 	return val;
 }
 
-
-#define TIMETOWASTE	50
-
 /* direct write */
 void
 bba_codec_dwrite(asc, reg, val)
@@ -786,14 +783,16 @@ bba_codec_dwrite(asc, reg, val)
 	u_int8_t val;
 {
 	struct bba_softc *sc = (struct bba_softc *)asc;
-	int i;
 
 	DPRINTF(("bba_codec_dwrite(): sc=%p, reg=%d, val=%d\n",sc,reg,val));
 
+#if defined(__alpha__)
 	bus_space_write_4(sc->sc_bst, sc->sc_codec_bsh,
-		(reg<<BBA_REGISTER_SHIFT), val);
-
-	for (i=0; i<TIMETOWASTE; i++) {};
+	    reg << 2, val << 8);
+#else
+	bus_space_write_4(sc->sc_bst, sc->sc_codec_bsh,
+	    reg << 6, val);
+#endif
 }
 
 /* direct read */
@@ -803,15 +802,14 @@ bba_codec_dread(asc, reg)
 	int reg;
 {
 	struct bba_softc *sc = (struct bba_softc *)asc;
-	u_int8_t val;
-	int i;
 
 	DPRINTF(("bba_codec_dread(): sc=%p, reg=%d\n",sc,reg));
 
-	val = bus_space_read_1(sc->sc_bst, sc->sc_codec_bsh,
-		(reg<<BBA_REGISTER_SHIFT));
-
-	for (i=0; i<TIMETOWASTE; i++) {};
-
-	return val;
+#if defined(__alpha__)
+	return ((bus_space_read_4(sc->sc_bst, sc->sc_codec_bsh,
+		reg << 2) >> 8) & 0xff);
+#else
+	return (bus_space_read_4(sc->sc_bst, sc->sc_codec_bsh,
+		reg << 6) & 0xff);
+#endif
 }
