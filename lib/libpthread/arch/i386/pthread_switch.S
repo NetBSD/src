@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.6 2003/09/07 14:47:48 cl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.7 2003/10/30 13:56:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
 	cmpl	$0, %esi		; \
 	jne 1f				; \
 	movl	PT_UC(%ecx), %esi	; \
-1:	lea	(-STACKSPACE)(%esi), %esp ; \
+1:	leal	(-STACKSPACE)(%esi), %esp ; \
 	movl	$0, PT_TRAPUC(%ecx)
 
 /*

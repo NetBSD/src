@@ -1,4 +1,4 @@
-/*	$NetBSD: _getsetc.S,v 1.2 2003/01/18 10:34:18 thorpej Exp $	*/
+/*	$NetBSD: _getsetc.S,v 1.3 2003/10/30 13:56:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 #define SETC \
 	movl	UC_FLAGS(%ecx), %eax			; \
-	bt	$_UC_USER_BIT, %eax			; \
+	btl	$_UC_USER_BIT, %eax			; \
 	jnc	1f					; \
 							; \
 	FPLOAD(%ecx)					; \
