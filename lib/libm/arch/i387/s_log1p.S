@@ -5,7 +5,9 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_log1p.S,v 1.8 1999/07/02 15:37:34 simonb Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: s_log1p.S,v 1.9 2001/06/19 00:26:30 fvdl Exp $")
 
 /*
  * Since the fyl2xp1 instruction has such a limited range:
@@ -14,9 +16,11 @@ RCSID("$NetBSD: s_log1p.S,v 1.8 1999/07/02 15:37:34 simonb Exp $")
  */
 
 ENTRY(log1p)
+	XMM_ONE_ARG_DOUBLE_PROLOGUE
 	fldln2
-	fldl 4(%esp)
+	fldl	ARG_DOUBLE_ONE
 	fld1
 	faddp
 	fyl2x
+	XMM_DOUBLE_EPILOGUE
 	ret

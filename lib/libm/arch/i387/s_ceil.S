@@ -5,9 +5,12 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_ceil.S,v 1.4 1995/05/08 23:52:13 jtc Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: s_ceil.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(ceil)
+#ifdef __i386__
 	pushl	%ebp
 	movl	%esp,%ebp
 	subl	$8,%esp
@@ -25,4 +28,18 @@ ENTRY(ceil)
 	fldcw	-12(%ebp)		/* restore original control word */
 
 	leave
+#else
+	fstcw	-12(%rsp)
+	movw	-12(%rsp),%dx
+	orw	$0x0800,%dx
+	andw	$0xfbff,%dx
+	movw	%dx,-16(%rsp)
+	fldcw	-16(%rsp)
+	movsd	%xmm0,-8(%rsp)
+	fldl	-8(%rsp)
+	frndint
+	fldcw	-12(%rsp)
+	fstpl	-8(%rsp)
+	movsd	-8(%rsp),%xmm0
+#endif
 	ret

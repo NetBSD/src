@@ -5,10 +5,14 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_significandf.S,v 1.3 1995/05/09 00:24:07 jtc Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: s_significandf.S,v 1.4 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(significandf)
-	flds	4(%esp)
+	XMM_ONE_ARG_FLOAT_PROLOGUE
+	flds	ARG_FLOAT_ONE
 	fxtract
-	fstpl	%st(1)
+	fstp	%st(1)
+	XMM_FLOAT_EPILOGUE
 	ret
