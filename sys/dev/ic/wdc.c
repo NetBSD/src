@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.40 1998/11/18 19:12:08 kenh Exp $ */
+/*	$NetBSD: wdc.c,v 1.41 1998/11/19 04:07:54 kenh Exp $ */
 
 
 /*
@@ -994,6 +994,7 @@ __wdccommand_done(chp, xfer)
 		else
 			wdc_c->callback(wdc_c->callback_arg);
 	}
+	wdcstart(chp->wdc, chp->channel);
 	return;
 }
 
