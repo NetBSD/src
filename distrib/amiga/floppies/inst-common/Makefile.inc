@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.2 1995/09/30 04:22:48 chopps Exp $
+#	$Id: Makefile.inc,v 1.3 1995/09/30 08:04:03 chopps Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -39,7 +39,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk
+	make -f ${CBIN}.mk all
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
