@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.10 2001/03/21 00:38:47 pk Exp $ */
+/*	$NetBSD: in_cksum.c,v 1.11 2001/06/03 01:37:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Zubin Dittia.
@@ -251,17 +251,19 @@ in4_cksum(m, nxt, off, len)
 	 */
 	u_int tmp1, tmp2;
 
-	/* pseudo header */
-	memset(&ipov, 0, sizeof(ipov));
-	ipov.ih_len = htons(len);
-	ipov.ih_pr = nxt; 
-	ipov.ih_src = mtod(m, struct ip *)->ip_src; 
-	ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-	w = (u_char *)&ipov;
-	/* assumes sizeof(ipov) == 20 */
-	ADD16;
-	w += 16;
-	ADD4;
+	if (nxt != 0) {
+		/* pseudo header */
+		memset(&ipov, 0, sizeof(ipov));
+		ipov.ih_len = htons(len);
+		ipov.ih_pr = nxt; 
+		ipov.ih_src = mtod(m, struct ip *)->ip_src; 
+		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = (u_char *)&ipov;
+		/* assumes sizeof(ipov) == 20 */
+		ADD16;
+		w += 16;
+		ADD4;
+	}
 
 	/* skip unnecessary part */
 	while (m && off > 0) {
