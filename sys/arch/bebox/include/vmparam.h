@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 1998/02/18 11:11:24 mycroft Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 1998/06/09 05:41:19 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_MACHINE_VMPARAM_H_
+#define	_MACHINE_VMPARAM_H_
 
 #define	USRTEXT		CLBYTES
 #define	USRSTACK	VM_MAXUSER_ADDRESS
@@ -84,12 +87,21 @@
 #define	VM_MAXUSER_ADDRESS	((vm_offset_t)0xfffff000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)(KERNEL_SR << ADDR_SR_SHFT))
+#define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + SEGMENT_LENGTH - 1)
 
 #define	VM_KMEM_SIZE		(NKMEMCLUSTERS * CLBYTES)
 #define	VM_MBUF_SIZE		(NMBCLUSTERS * CLBYTES)
 #define	VM_PHYS_SIZE		(USRIOSIZE * CLBYTES)
 
-/*
- * MACHINE_NONCONTIG is necessary for NetBSD/powerpc.
- */
-#define	MACHINE_NONCONTIG
+#define MACHINE_NEW_NONCONTIG
+
+struct pmap_physseg {
+	struct pv_entry *pvent;
+	char *attrs;
+};
+
+#define VM_PHYSSEG_MAX		32
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
+
+#endif /* _MACHINE_VMPARAM_H_ */

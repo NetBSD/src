@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 1998/06/03 06:41:51 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13 1998/06/09 05:41:19 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +112,10 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <sys/sysctl.h>
 
@@ -376,15 +381,20 @@ _bus_dmamem_free(t, segs, nsegs)
 	 */
 	TAILQ_INIT(&mlist);
 	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		for (addr = PCI_MEM_TO_PHYS(segs[curseg].ds_addr);
+		    addr < (PCI_MEM_TO_PHYS(segs[curseg].ds_addr)
+			+ segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
 			m = PHYS_TO_VM_PAGE(addr);
 			TAILQ_INSERT_TAIL(&mlist, m, pageq);
 		}
 	}
 
+#if defined(UVM)
+	uvm_pglistfree(&mlist);
+#else
 	vm_page_free_memory(&mlist);
+#endif
 }
 
 /*
@@ -406,7 +416,11 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	size = round_page(size);
 	s = splimp();
+#if defined(UVM)
+	va = uvm_km_valloc(kmem_map, size);
+#else
 	va = kmem_alloc_pageable(kmem_map, size);
+#endif
 	splx(s);
 
 	if (va == 0)
@@ -415,8 +429,9 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	*kvap = (caddr_t)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		for (addr = PCI_MEM_TO_PHYS(segs[curseg].ds_addr);
+		    addr < (PCI_MEM_TO_PHYS(segs[curseg].ds_addr)
+			+ segs[curseg].ds_len);
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
@@ -453,7 +468,11 @@ _bus_dmamem_unmap(t, kva, size)
 
 	size = round_page(size);
 	s = splimp();
+#if defined(UVM)
+	uvm_km_free(kmem_map, (vm_offset_t)kva, size);
+#else
 	kmem_free(kmem_map, (vm_offset_t)kva, size);
+#endif
 	splx(s);
 }
 
@@ -473,7 +492,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 #ifdef DIAGNOSTIC
 		if (off & PGOFSET)
 			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
+		if (PCI_MEM_TO_PHYS(segs[i].ds_addr) & PGOFSET)
 			panic("_bus_dmamem_mmap: segment unaligned");
 		if (segs[i].ds_len & PGOFSET)
 			panic("_bus_dmamem_mmap: segment size not multiple"
@@ -484,7 +503,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (vtophys((caddr_t)segs[i].ds_addr + off));
+		return (PCI_MEM_TO_PHYS((int)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */
@@ -562,7 +581,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, bounce_thresh, lastaddrp,
 		 * previous segment if possible.
 		 */
 		if (first) {
-			map->dm_segs[seg].ds_addr = curaddr;
+			map->dm_segs[seg].ds_addr = PHYS_TO_PCI_MEM(curaddr);
 			map->dm_segs[seg].ds_len = sgsize;
 			first = 0;
 		} else {
@@ -576,7 +595,8 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, bounce_thresh, lastaddrp,
 			else {
 				if (++seg >= map->_dm_segcnt)
 					break;
-				map->dm_segs[seg].ds_addr = curaddr;
+				map->dm_segs[seg].ds_addr =
+					PHYS_TO_PCI_MEM(curaddr);
 				map->dm_segs[seg].ds_len = sgsize;
 			}
 		}
@@ -625,8 +645,13 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&mlist);
+#if defined(UVM)
+	error = uvm_pglistalloc(size, low, high,
+	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+#else
 	error = vm_page_alloc_memory(size, low, high,
 	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+#endif
 	if (error)
 		return (error);
 
@@ -636,7 +661,8 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 */
 	m = mlist.tqh_first;
 	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
+	lastaddr = VM_PAGE_TO_PHYS(m);
+	segs[curseg].ds_addr = PHYS_TO_PCI_MEM(lastaddr);
 	segs[curseg].ds_len = PAGE_SIZE;
 	m = m->pageq.tqe_next;
 
@@ -653,7 +679,7 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 			segs[curseg].ds_len += PAGE_SIZE;
 		else {
 			curseg++;
-			segs[curseg].ds_addr = curaddr;
+			segs[curseg].ds_addr = PHYS_TO_PCI_MEM(curaddr);
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
 		lastaddr = curaddr;
