@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.85.2.16 2000/02/13 06:21:40 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.17 2000/02/13 06:24:00 scottr Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.85.2.16 $"
+#ident 		"GENERIC-$Revision: 1.85.2.17 $"
 
 maxusers	16		# estimated number of users
 
@@ -147,8 +147,7 @@ options 	ZS_CONSOLE_ABORT
 options 	NFS_BOOT_DHCP
 
 # Kernel root file system and dump configuration.
-#config		netbsd	root on ? type ?
-config		netbsd	root on ? type nfs
+config		netbsd	root on ? type ?
 
 #
 # Device configuration
