@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.7 2003/07/23 09:26:15 bsh Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.7 2003/07/23 09:26:15 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,12 @@ init_pallet(uint16_t *buf, int depth)
 			buf[i] = 0xffff;
 #endif
 		break;
+	case 16:
+		/* pallet is not needed */
+		break;
 	default:
+		/* other depths are not supported */
+		break;
 	}
 }
 
