@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.25 1997/10/20 17:18:04 drochner Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.26 1998/05/02 14:19:16 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -25,9 +25,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp ";
+static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp ";
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.25 1997/10/20 17:18:04 drochner Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.26 1998/05/02 14:19:16 christos Exp $");
 #endif
 #endif
 
@@ -66,8 +66,12 @@ __RCSID("$NetBSD: sys-bsd.c,v 1.25 1997/10/20 17:18:04 drochner Exp $");
 #include <sys/param.h>
 #if defined(NetBSD) && (NetBSD >= 199703)
 #include <netinet/if_inarp.h>
-#else	/* NetBSD 1.2C or earlier */
+#else	/* NetBSD 1.2D or later */
+#ifdef __FreeBSD__
 #include <netinet/if_ether.h>
+#else
+#include <net/if_ether.h>
+#endif
 #endif
 #endif
 
@@ -1401,6 +1405,15 @@ GetMask(addr)
     }
 
     return mask;
+}
+
+/*
+ * Use the hostid as part of the random number seed.
+ */
+int
+get_host_seed()
+{
+    return gethostid();
 }
 
 /*

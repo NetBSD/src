@@ -1,4 +1,4 @@
-/*	$NetBSD: ipxcp.c,v 1.3 1997/09/26 19:52:51 christos Exp $	*/
+/*	$NetBSD: ipxcp.c,v 1.4 1998/05/02 14:19:14 christos Exp $	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -23,9 +23,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: ipxcp.c,v 1.5 1997/03/04 03:39:32 paulus Exp ";
+static char rcsid[] = "Id: ipxcp.c,v 1.6 1998/03/25 03:08:16 paulus Exp ";
 #else
-__RCSID("$NetBSD: ipxcp.c,v 1.3 1997/09/26 19:52:51 christos Exp $");
+__RCSID("$NetBSD: ipxcp.c,v 1.4 1998/05/02 14:19:14 christos Exp $");
 #endif
 #endif
 
@@ -170,7 +170,7 @@ ipx_ntoa(ipxaddr)
 u_int32_t ipxaddr;
 {
     static char b[64];
-    sprintf(b, "%lx", ipxaddr);
+    sprintf(b, "%x", ipxaddr);
     return b;
 }
 
@@ -343,9 +343,6 @@ static void
 ipxcp_resetci(f)
     fsm *f;
 {
-    u_int32_t network;
-    int unit = f->unit;
-
     wo->req_node = wo->neg_node && ao->neg_node;
     wo->req_nn	 = wo->neg_nn	&& ao->neg_nn;
 
@@ -394,7 +391,6 @@ static int
 ipxcp_cilen(f)
     fsm *f;
 {
-    int unit = f->unit;
     int len;
 
     len	 = go->neg_nn	    ? CILEN_NETN     : 0;
@@ -418,8 +414,6 @@ ipxcp_addci(f, ucp, lenp)
     u_char *ucp;
     int *lenp;
 {
-    int len = *lenp;
-    int unit = f->unit;
 /*
  * Add the options to the record.
  */
@@ -469,7 +463,6 @@ ipxcp_ackci(f, p, len)
     u_char *p;
     int len;
 {
-    int unit = f->unit;
     u_short cilen, citype, cishort;
     u_char cichar;
     u_int32_t cilong;
@@ -578,7 +571,6 @@ ipxcp_nakci(f, p, len)
     u_char *p;
     int len;
 {
-    int unit = f->unit;
     u_char citype, cilen, *next;
     u_short s;
     u_int32_t l;
@@ -697,7 +689,6 @@ ipxcp_rejci(f, p, len)
     u_char *p;
     int len;
 {
-    int unit = f->unit;
     u_short cilen, citype, cishort;
     u_char cichar;
     u_int32_t cilong;
@@ -814,17 +805,15 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
     int *len;			/* Length of requested CIs */
     int reject_if_disagree;
 {
-    int unit = f->unit;
     u_char *cip, *next;		/* Pointer to current and next CIs */
     u_short cilen, citype;	/* Parsed len, type */
-    u_short cishort, ts;	/* Parsed short value */
-    u_int32_t tl, cinetwork, outnet;/* Parsed address values */
+    u_short cishort;		/* Parsed short value */
+    u_int32_t cinetwork;	/* Parsed address values */
     int rc = CONFACK;		/* Final packet return code */
     int orc;			/* Individual option return code */
     u_char *p;			/* Pointer to next char to parse */
     u_char *ucp = inp;		/* Pointer to current output char */
     int l = *len;		/* Length left */
-    u_char maxslotindex, cflag;
 
     /*
      * Reset all his options.
@@ -1101,7 +1090,6 @@ endswitch:
 
     if (rc != CONFREJ && !ho->neg_node &&
 	wo->req_nn && !reject_if_disagree) {
-	u_char *ps;
 	if (rc == CONFACK) {
 	    rc = CONFNAK;
 	    wo->req_nn = 0;		/* don't ask again */
@@ -1204,8 +1192,6 @@ static void
 ipxcp_down(f)
     fsm *f;
 {
-    u_int32_t ournn, network;
-
     IPXCPDEBUG((LOG_INFO, "ipxcp: down"));
 
     cipxfaddr (f->unit);
@@ -1223,7 +1209,6 @@ ipxcp_script(f, script)
     fsm *f;
     char *script;
 {
-    int	 unit = f->unit;
     char strspeed[32],	 strlocal[32],	   strremote[32];
     char strnetwork[32], strpid[32];
     char *argv[14],	 strproto_lcl[32], strproto_rmt[32];
