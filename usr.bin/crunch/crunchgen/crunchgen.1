@@ -39,14 +39,12 @@
 .Op Fl L Ar lib-dir
 .Op Ar conf-file
 .Sh DESCRIPTION
-
 A crunched binary is a program made up of many other programs linked
 together into a single executable.  The crunched binary main()
 function determines which component program to run by the contents of
 argv[0].  The main reason to crunch programs together is for fitting
 as many programs as possible onto an installation or system recovery
 floppy.
-
 .Pp
 .Nm Crunchgen
 reads in the specifications in
@@ -63,7 +61,6 @@ uses the companion program
 .Nm crunchide
 to eliminate link-time conflicts between the component programs by
 hiding all unnecessary symbols.
-
 .Pp
 After
 .Nm crunchgen
@@ -74,7 +71,6 @@ run make in each component program's source dir to build the object
 files for the user.  This is not done automatically since in release
 engineering circumstances it is generally not desireable to be
 modifying objects in other directories.
-
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -102,7 +98,6 @@ Try to obtain libraries from
 .Ar lib-dir .
 .El
 .Sh CRUNCHGEN CONFIGURATION FILE COMMANDS
-
 .Nm Crunchgen
 reads specifications from the 
 .Ar conf-file
@@ -144,7 +139,7 @@ whenever
 appears in argv[0].  This allows programs that change their behavior when
 run under different names to operate correctly. 
 .El
-
+.Pp
 To handle specialized situations, such as when the source is not
 available or not built via a conventional Makefile, the following
 .Nm special
@@ -185,7 +180,6 @@ pathname to each file in the
 .Nm objs
 list.
 .El
-
 .Pp
 Only the 
 .Nm objpaths
@@ -200,7 +194,6 @@ which are in turn calculated from
 so is sometimes convenient to specify the earlier parameters and let 
 .Nm crunchgen
 calculate forward from there if it can.
-
 .Pp
 The makefile produced by
 .Nm crunchgen
