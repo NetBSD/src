@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 1999/08/25 02:07:41 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2000/04/12 10:38:46 itojun Exp $
 
 PCAPDIR=${.CURDIR}/../../../lib/libpcap
 
@@ -17,7 +17,6 @@ DPADD=	${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
 CPPFLAGS+= -I. -DHAVE_PATHS_H 
 CPPFLAGS+= -I${PCAPDIR} -DPPP_FILTER
 CPPFLAGS+= -DCBCP_SUPPORT -DCHAPMS -DUSE_CRYPT -DMSLANMAN
-# XXX: Does not work (yet)
-#CPPFLAGS+= -DINET6
+CPPFLAGS+= -DINET6
 
 .include <bsd.prog.mk>
