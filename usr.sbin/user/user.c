@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.51.2.1 2002/06/04 12:10:18 lukem Exp $ */
+/* $NetBSD: user.c,v 1.51.2.2 2002/12/06 23:40:26 he Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.51.2.1 2002/06/04 12:10:18 lukem Exp $");
+__RCSID("$NetBSD: user.c,v 1.51.2.2 2002/12/06 23:40:26 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -165,7 +165,7 @@ enum {
 	MaxFieldNameLen = 32,
 	MaxCommandLen = 2048,
 	MaxEntryLen = 2048,
-	PasswordLength = 13,
+	PasswordLength = 2048,
 
 	LowGid = DEF_LOWUID,
 	HighGid = DEF_HIGHUID
@@ -1005,12 +1005,15 @@ adduser(char *login, user_t *up)
 		warnx("Warning: home directory `%s' doesn't exist, and -m was not specified",
 		    home);
 	}
-	password[PasswordLength] = '\0';
+	password[sizeof(password) - 1] = '\0';
 	if (up->u_password != NULL &&
-	    strlen(up->u_password) == PasswordLength) {
-		(void) memcpy(password, up->u_password, PasswordLength);
+	    (strlen(up->u_password) == 13 ||
+	     strncmp(up->u_password, "$1", 2) == 0 ||
+	     strncmp(up->u_password, "$2", 2) == 0)) {
+		(void) strlcpy(password, up->u_password, sizeof(password));
 	} else {
-		(void) memset(password, '*', PasswordLength);
+		(void) memset(password, '\0', sizeof(password));
+  		password[0] = '*';
 		if (up->u_password != NULL) {
 			warnx("Password `%s' is invalid: setting it to `%s'",
 				up->u_password, password);
@@ -1138,8 +1141,12 @@ moduser(char *login, char *newlogin, user_t *up)
 			}
 		}
 		if (up->u_flags & F_PASSWORD) {
-			if (up->u_password != NULL && strlen(up->u_password) == PasswordLength)
+			if (up->u_password != NULL &&
+			    (strlen(up->u_password) == 13 ||
+			     strncmp(up->u_password, "$1", 2) == 0 ||
+			     strncmp(up->u_password, "$2", 2) == 0)) {
 				pwp->pw_passwd = up->u_password;
+			}
 		}
 		if (up->u_flags & F_UID) {
 			/* check uid isn't already allocated */
@@ -1673,9 +1680,9 @@ userdel(int argc, char **argv)
 	if (u.u_preserve) {
 		u.u_flags |= F_SHELL;
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
-		(void) memset(password, '*', PasswordLength);
-		password[PasswordLength] = '\0';
-		memsave(&u.u_password, password, PasswordLength);
+		(void) memset(password, '\0', sizeof(password));
+		password[0] = '*';
+		memsave(&u.u_password, password, strlen(password));
 		u.u_flags |= F_PASSWORD;
 		return moduser(*argv, *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
