@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.17 2002/12/06 03:57:51 erh Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.18 2003/02/16 23:14:08 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -265,6 +265,7 @@ struct umass_softc {
 
 	int			sc_xfer_flags;
 	char			sc_dying;
+	int			sc_refcnt;
 
 	struct umassbus_softc	*bus;		 /* bus dependent data */
 };
