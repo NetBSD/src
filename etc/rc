@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.129 1999/08/28 03:39:59 christos Exp $
+#	$NetBSD: rc,v 1.130 1999/09/03 13:40:15 itojun Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -419,8 +419,20 @@ if checkyesno route6d; then
 	echo -n ' route6d';		route6d $route6d_flags
 fi
 
+if checkyesno rtsold; then
+	if checkyesno ip6forwarding; then
+		logger -s "WARNING: rtsold cannot be used on IPv6 router."
+	else
+		echo -n ' rtsold';	rtsold $rtsold_flags
+	fi
+fi
+
 if checkyesno rtadvd; then
-	echo -n ' rtadvd';		rtadvd $rtadvd_flags
+	if checkyesno ip6forwarding; then
+		echo -n ' rtadvd';	rtadvd $rtadvd_flags
+	else
+		logger -s "WARNING: rtadvd cannot be used on IPv6 host."
+	fi
 fi
 
 if checkyesno timed; then
