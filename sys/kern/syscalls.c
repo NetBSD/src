@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.119.2.14 2002/11/11 22:14:02 nathanw Exp $ */
+/* $NetBSD: syscalls.c,v 1.119.2.15 2002/12/19 23:59:28 thorpej Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.119.2.14 2002/11/11 22:14:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.119.2.15 2002/12/19 23:59:28 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -349,9 +349,9 @@ const char *const syscallnames[] = {
 	"fdatasync",			/* 241 = fdatasync */
 	"mlockall",			/* 242 = mlockall */
 	"munlockall",			/* 243 = munlockall */
-	"#244 (unimplemented)",		/* 244 = unimplemented */
-	"#245 (unimplemented)",		/* 245 = unimplemented */
-	"#246 (unimplemented)",		/* 246 = unimplemented */
+	"#244 (unimplemented sys_sigwaitinfo)",		/* 244 = unimplemented sys_sigwaitinfo */
+	"#245 (unimplemented sys_sigtimedwait)",		/* 245 = unimplemented sys_sigtimedwait */
+	"#246 (unimplemented sys_sigqueue)",		/* 246 = unimplemented sys_sigqueue */
 	"#247 (unimplemented)",		/* 247 = unimplemented */
 	"#248 (unimplemented)",		/* 248 = unimplemented */
 	"#249 (unimplemented)",		/* 249 = unimplemented */
