@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.35 2003/04/24 20:00:48 ragge Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.36 2003/04/24 21:18:34 ragge Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.35 2003/04/24 20:00:48 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.36 2003/04/24 21:18:34 ragge Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -420,3 +420,15 @@ db_symsplit(char *str, char **mod, char **sym)
 		*sym = str;
 	}
 }
+
+boolean_t
+db_sym_numargs(db_sym_t cursym, int *nargp, char **argnamep)
+{
+#ifdef DB_AOUT_SYMBOLS
+	if (using_aout_symtab)
+		return ((*db_symformat->sym_numargs)(NULL, cursym, nargp,
+		    argnamep));
+#endif
+	return (FALSE);
+}  
+
