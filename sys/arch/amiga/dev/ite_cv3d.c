@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cv3d.c,v 1.2 1997/11/10 12:17:20 is Exp $	*/
+/*	$NetBSD: ite_cv3d.c,v 1.3 1999/03/25 23:20:00 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -37,6 +37,7 @@
  * Ezra Story, Kari Mettinen, Markus Wild, Lutz Vieweg.
  */
 
+#include "opt_amigacons.h"
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
 

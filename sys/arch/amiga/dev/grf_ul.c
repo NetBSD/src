@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.27 1999/02/16 23:34:12 is Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.28 1999/03/25 23:20:00 is Exp $	*/
 #define UL_DEBUG
 
 /*-
@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_amigacons.h"
 #include "grful.h"
 #if NGRFUL > 0
 

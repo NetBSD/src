@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.6 1998/01/12 10:39:34 thorpej Exp $	*/
+/*	$NetBSD: grf_cv3d.c,v 1.7 1999/03/25 23:20:00 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -30,6 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_amigacons.h"
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
 

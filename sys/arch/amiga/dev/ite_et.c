@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.3 1997/03/05 22:50:41 veego Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.4 1999/03/25 23:20:00 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -33,6 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   
  */
 
+#include "opt_amigacons.h"
 #include "grfet.h"
 #if NGRFET > 0
 

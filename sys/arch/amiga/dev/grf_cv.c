@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.26 1998/10/06 22:26:42 tron Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.27 1999/03/25 23:20:00 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -30,6 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_amigacons.h"
 #include "grfcv.h"
 #if NGRFCV > 0
 
