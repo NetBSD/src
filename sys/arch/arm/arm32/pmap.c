@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2001/04/25 17:35:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2001/05/26 21:27:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -941,7 +941,7 @@ pmap_alloc_l1pt(void)
 	vaddr_t va;
 	struct l1pt *pt;
 	int error;
-	vm_page_t m;
+	struct vm_page *m;
 	pt_entry_t *pte;
 
 	/* Allocate virtual address space for the L1 page table */
