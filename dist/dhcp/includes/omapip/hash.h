@@ -3,7 +3,7 @@
    Definitions for hashing... */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,55 +81,71 @@ struct named_hash {
 	struct hash_table *hash;
 };
 
-#define HASH_FUNCTIONS_DECL(name, bufarg, type)				      \
-void name##_hash_add (struct hash_table *, bufarg, unsigned, type *,	      \
+#define HASH_FUNCTIONS_DECL(name, bufarg, type, hashtype)		      \
+void name##_hash_add (hashtype *, bufarg, unsigned, type *,		      \
 		      const char *, int);				      \
-void name##_hash_delete (struct hash_table *, bufarg, unsigned,		      \
+void name##_hash_delete (hashtype *, bufarg, unsigned,			      \
 			 const char *, int);				      \
-int name##_hash_lookup (type **, struct hash_table *, bufarg, unsigned,	      \
+int name##_hash_lookup (type **, hashtype *, bufarg, unsigned,		      \
 			const char *, int);				      \
-int name##_hash_foreach (struct hash_table *,				      \
-			 void (*) (bufarg, unsigned, type *));
+int name##_hash_foreach (hashtype *,					      \
+			 void (*) (bufarg, unsigned, type *));		      \
+int name##_new_hash (hashtype **, int, const char *, int);		      \
+void name##_free_hash_table (hashtype **, const char *, int);
 
 
-#define HASH_FUNCTIONS(name, bufarg, type)				      \
-void name##_hash_add (struct hash_table *table,				      \
+#define HASH_FUNCTIONS(name, bufarg, type, hashtype, ref, deref)	      \
+void name##_hash_add (hashtype *table,					      \
 		      bufarg buf, unsigned len, type *ptr,		      \
 		      const char *file, int line)			      \
 {									      \
-	add_hash (table,						      \
+	add_hash ((struct hash_table *)table,				      \
 		  (const unsigned char *)buf,				      \
 		  len, (hashed_object_t *)ptr, file, line);		      \
 }									      \
 									      \
-void name##_hash_delete (struct hash_table *table,			      \
+void name##_hash_delete (hashtype *table,				      \
 			 bufarg buf, unsigned len, const char *file, int line)\
 {									      \
-	delete_hash_entry (table, (const unsigned char *)buf,		      \
+	delete_hash_entry ((struct hash_table *)table,			      \
+			   (const unsigned char *)buf,			      \
 			   len, file, line);				      \
 }									      \
 									      \
-int name##_hash_lookup (type **ptr, struct hash_table *table,		      \
+int name##_hash_lookup (type **ptr, hashtype *table,			      \
 			bufarg buf, unsigned len, const char *file, int line) \
 {									      \
-	return hash_lookup ((hashed_object_t **)ptr, table,		      \
+	return hash_lookup ((hashed_object_t **)ptr,			      \
+			    (struct hash_table *)table,			      \
 			    (const unsigned char *)buf, len, file, line);     \
 }									      \
 									      \
-int name##_hash_foreach (struct hash_table *table,			      \
+int name##_hash_foreach (hashtype *table,				      \
 			 void (*func) (bufarg, unsigned, type *))	      \
 {									      \
-	return hash_foreach (table, (hash_foreach_func)func);		      \
+	return hash_foreach ((struct hash_table *)table,		      \
+			     (hash_foreach_func)func);			      \
+}									      \
+									      \
+int name##_new_hash (hashtype **tp, int c, const char *file, int line)	      \
+{									      \
+	return new_hash ((struct hash_table **)tp,			      \
+			 (hash_reference)ref, (hash_dereference)deref, c,     \
+			 file, line);					      \
+}									      \
+									      \
+void name##_free_hash_table (hashtype **table, const char *file, int line)    \
+{									      \
+	free_hash_table ((struct hash_table **)table, file, line);	      \
 }
 
-
 void relinquish_hash_bucket_hunks (void);
-struct hash_table *new_hash_table (int, const char *, int);
-void free_hash_table (struct hash_table *, const char *, int);
+int new_hash_table (struct hash_table **, int, const char *, int);
+void free_hash_table (struct hash_table **, const char *, int);
 struct hash_bucket *new_hash_bucket (const char *, int);
 void free_hash_bucket (struct hash_bucket *, const char *, int);
-struct hash_table *new_hash (hash_reference, hash_dereference, int,
-			     const char *, int);
+int new_hash (struct hash_table **,
+	      hash_reference, hash_dereference, int, const char *, int);
 void add_hash (struct hash_table *,
 		      const unsigned char *, unsigned, hashed_object_t *,
 		      const char *, int);

@@ -332,7 +332,7 @@ struct universe {
 	void (*store_tag) PROTO ((unsigned char *, u_int32_t));
 	void (*store_length) PROTO ((unsigned char *, u_int32_t));
 	int tag_size, length_size;
-	struct hash_table *hash;
+	option_hash_t *hash;
 	struct option *options [256];
 	struct option *enc_opt;
 	int index;

@@ -1,7 +1,7 @@
 # Makefile.dist
 
-CATMANPAGES = dhcp-options.cat5 dhcp-contrib.cat5 dhcp-eval.cat5
-SEDMANPAGES = dhcp-options.man5 dhcp-contrib.man5 dhcp-eval.man5
+CATMANPAGES = dhcp-options.cat5 dhcp-eval.cat5
+SEDMANPAGES = dhcp-options.man5 dhcp-eval.man5
 SRC    = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 	 lpf.c dlpi.c packet.c tr.c ethernet.c memory.c print.c options.c \
 	 inet.c tree.c tables.c alloc.c fddi.c ctrace.c \
@@ -10,7 +10,7 @@ OBJ    = raw.o parse.o nit.o icmp.o dispatch.o conflex.o upf.o bpf.o socket.o \
 	 lpf.o dlpi.o packet.o tr.o ethernet.o memory.o print.o options.o \
 	 inet.o tree.o tables.o alloc.o fddi.o ctrace.o \
 	 dns.o resolv.o execute.o discover.o comapi.o
-MAN    = dhcp-options.5 dhcp-contrib.5 dhcp-eval.5
+MAN    = dhcp-options.5 dhcp-eval.5
 
 INCLUDES = -I$(TOP) $(BINDINC) -I$(TOP)/includes
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
@@ -37,8 +37,6 @@ install: all
 				$(DESTDIR)$(FFMANDIR)/dhcp-options$(FFMANEXT)
 	$(MANINSTALL) $(MANFROM) dhcp-eval.$(MANCAT)5 $(MANTO) \
 				$(DESTDIR)$(FFMANDIR)/dhcp-eval$(FFMANEXT)
-	$(MANINSTALL) $(MANFROM) dhcp-contrib.$(MANCAT)5 $(MANTO) \
-				$(DESTDIR)$(FFMANDIR)/dhcp-contrib$(FFMANEXT)
 
 depend:
 	$(MKDEP) $(INCLUDES) $(PREDEFINES) $(SRC)
@@ -73,12 +71,5 @@ dhcp-eval.cat5:	dhcp-eval.man5
 dhcp-eval.man5:	dhcp-eval.5
 	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
 		-e "s#RUNDIR#$(VARRUN)#g" < dhcp-eval.5 >dhcp-eval.man5
-
-dhcp-contrib.cat5:	dhcp-contrib.man5
-	nroff -man dhcp-contrib.man5 >dhcp-contrib.cat5
-
-dhcp-contrib.man5:	dhcp-contrib.5
-	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
-		-e "s#RUNDIR#$(VARRUN)#g" < dhcp-contrib.5 >dhcp-contrib.man5
 
 # Dependencies (semi-automatically-generated)

@@ -3,7 +3,7 @@
    Subroutines having to do with authentication. */
 
 /*
- * Copyright (c) 1998-2000 Internet Software Consortium.
+ * Copyright (c) 1998-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,15 +43,19 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: auth.c,v 1.1.1.1 2001/08/03 11:35:36 drochner Exp $ Copyright 1998-2000 The Internet Software Consortium.";
+"$Id: auth.c,v 1.1.1.2 2002/06/11 12:24:41 drochner Exp $ Copyright 1998-2000 The Internet Software Consortium.";
 #endif
 
 #include <omapip/omapip_p.h>
 
 OMAPI_OBJECT_ALLOC (omapi_auth_key, omapi_auth_key_t, omapi_type_auth_key)
-
-struct hash_table *auth_key_hash = (struct hash_table *)0;
-HASH_FUNCTIONS_DECL (omapi_auth_key, const char *, omapi_auth_key_t)
+typedef struct hash omapi_auth_hash_t;
+HASH_FUNCTIONS_DECL (omapi_auth_key, const char *,
+		     omapi_auth_key_t, omapi_auth_hash_t)
+omapi_auth_hash_t *auth_key_hash;
+HASH_FUNCTIONS (omapi_auth_key, const char *, omapi_auth_key_t,
+		omapi_auth_hash_t,
+		omapi_auth_key_reference, omapi_auth_key_dereference)
 
 isc_result_t omapi_auth_key_new (omapi_auth_key_t **o, const char *file,
 				 int line)
@@ -102,11 +106,7 @@ isc_result_t omapi_auth_key_enter (omapi_auth_key_t *a)
 			omapi_auth_key_dereference (&tk, MDL);
 		}
 	} else {
-		auth_key_hash =
-			new_hash ((hash_reference)omapi_auth_key_reference,
-				  (hash_dereference)omapi_auth_key_dereference,
-				  1, MDL);
-		if (!auth_key_hash)
+		if (!omapi_auth_key_new_hash (&auth_key_hash, 1, MDL))
 			return ISC_R_NOMEMORY;
 	}
 	omapi_auth_key_hash_add (auth_key_hash, a -> name, 0, a, MDL);
@@ -271,5 +271,3 @@ isc_result_t omapi_auth_key_get_value (omapi_object_t *h,
 
 	return ISC_R_SUCCESS;
 }
-
-HASH_FUNCTIONS (omapi_auth_key, const char *, omapi_auth_key_t)

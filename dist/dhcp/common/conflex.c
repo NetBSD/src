@@ -3,7 +3,7 @@
    Lexical scanner for dhcpd config file... */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: conflex.c,v 1.1.1.1 2001/08/03 11:35:31 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: conflex.c,v 1.1.1.2 2002/06/11 12:24:35 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -436,8 +436,10 @@ static enum dhcp_token read_number (c, cfile)
 			token = NUMBER_OR_NAME;
 #endif
 		} else if (!isascii (c) || !isxdigit (c)) {
-			cfile -> bufix--;
-			cfile -> ugflag = 1;
+			if (c != EOF) {
+				cfile -> bufix--;
+				cfile -> ugflag = 1;
+			}
 			break;
 		}
 		cfile -> tokbuf [i] = c;
@@ -464,8 +466,10 @@ static enum dhcp_token read_num_or_name (c, cfile)
 		c = get_char (cfile);
 		if (!isascii (c) ||
 		    (c != '-' && c != '_' && !isalnum (c))) {
-			cfile -> bufix--;
-			cfile -> ugflag = 1;
+			if (c != EOF) {
+				cfile -> bufix--;
+				cfile -> ugflag = 1;
+			}
 			break;
 		}
 		if (!isxdigit (c))
@@ -608,6 +612,8 @@ static enum dhcp_token intern (atom, dfv)
 			return DOMAIN;
 		if (!strcasecmp (atom + 1, "omain-name"))
 			return DOMAIN_NAME;
+		if (!strcasecmp (atom + 1, "o-forward-update"))
+			return DO_FORWARD_UPDATE;
 		if (!strcasecmp (atom + 1, "ebug"))
 			return TOKEN_DEBUG;
 		if (!strcasecmp (atom + 1, "eny"))
