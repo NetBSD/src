@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.11 2002/03/23 23:39:18 christos Exp $	*/
+/*	$NetBSD: test.c,v 1.12 2002/08/09 10:03:58 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: test.c,v 1.11 2002/03/23 23:39:18 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.12 2002/08/09 10:03:58 soren Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 			 * moved around in history.
 			 */
 			if (history(hist, &ev, H_SET, lastevent) == -1)
-				err(1, "%d: %s\n", lastevent, ev.str);
+				err(1, "%d: %s", lastevent, ev.str);
 			history(hist, &ev, H_ADD , buf);
 		} else {
 			history(hist, &ev, H_ENTER, buf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.2 2002/08/05 15:36:51 jmcneill Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.3 2002/08/09 10:01:53 soren Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 	case DEAD_PROCESS:
 		break;
 	default:
-		errx(1, "Invalid utmpx type %d\n", (int)utx->ut_type);
+		errx(1, "Invalid utmpx type %d", (int)utx->ut_type);
 	}
 
 	if ((pwd = getpwuid(getuid())) == NULL)

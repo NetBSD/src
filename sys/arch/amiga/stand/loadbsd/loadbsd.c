@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.27 2002/01/26 13:21:12 aymeric Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.28 2002/08/09 10:07:31 soren Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -320,11 +320,11 @@ main(argc, argv)
 		printf("kernel size: %d\n", ksize);
 	}
 	if (kp == NULL)
-		err(20, "failed malloc %d\n", ksize);
+		err(20, "failed malloc %d", ksize);
 
 	if (read(fd, kp, e.a_text) != e.a_text
 	    || read(fd, kp + textsz, e.a_data) != e.a_data)
-		err(20, "unable to read kernel image\n");
+		err(20, "unable to read kernel image");
 
 	if (k_flag) {
 		fmem += 4 * 1024 * 1024;

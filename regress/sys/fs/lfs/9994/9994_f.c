@@ -1,4 +1,4 @@
-/*	$NetBSD: 9994_f.c,v 1.1 2002/08/02 19:10:50 perseant Exp $	*/
+/*	$NetBSD: 9994_f.c,v 1.2 2002/08/09 10:04:37 soren Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 			    rseed = strtoul(optarg, NULL, 0);
 			    break;
 		    default:
-			    errx(1, "usage: %s [-b bsize] [-c control-dir] [-n count] [-pq] [-s randseed]\n", prog);
+			    errx(1, "usage: %s [-b bsize] [-c control-dir] [-n count] [-pq] [-s randseed]", prog);
 			    /* NOTREACHED */
 		}
 	}
