@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.if.5,v 1.1 2001/01/11 17:56:16 itojun Exp $
+.\"	$NetBSD: ifconfig.if.5,v 1.2 2001/01/12 02:55:28 itojun Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -39,15 +39,15 @@ files contain information regarding the configuration of each network interface.
 .Nm
 is processed by
 .Pa /etc/rc.d/network
-at system boot time, if the interface exists on the system.
+at system boot time.
 .Pp
 One file should exist for each interface that is to be configured, such as
-.Pa ifconfig.fxp0 .
+.Pa /etc/ifconfig.fxp0 .
+The file will get evaluated only if the interface exists on the system.
 Multiple lines can be placed in a file, and will be evaluated sequentially.
 .Pp
-Normally, a line will be evaluated as
-.Xr ifconfig 8
-command parameter.
+Normally, a line will be evaluated as command line arguments to 
+.Xr ifconfig 8 .
 .Dq Li ifconfig if
 will be prepended on evaluation.
 .Pp
