@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.49 2000/03/01 12:49:27 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.50 2000/07/27 17:18:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  * non-external mbufs in the driver.  This has no impact on performance
  * seen from the packet statistics, and avoid header pullups in network code.
  */
-#define	MINCLSIZE	(MHLEN + 1)	/* smallest amount to put in cluster */
+#define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /*
