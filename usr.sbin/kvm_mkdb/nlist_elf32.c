@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.16 2003/07/15 12:37:35 itojun Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.17 2003/09/19 06:24:04 itojun Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_elf32.c,v 1.16 2003/07/15 12:37:35 itojun Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.17 2003/09/19 06:24:04 itojun Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -97,7 +97,7 @@ ELFNAMEEND(create_knlist)(name, db)
 	struct stat st;
 	struct nlist nbuf;
 	DBT key, data;
-	char *mappedfile, *symname, *fsymname, *tmpcp, *strtab;
+	char *mappedfile, *symname, *nsymname, *fsymname, *tmpcp, *strtab;
 	size_t mappedsize, symnamesize, fsymnamesize;
 	Elf_Ehdr *ehdrp;
 	Elf_Shdr *shdrp, *symshdrp, *symstrshdrp;
@@ -269,11 +269,12 @@ ELFNAMEEND(create_knlist)(name, db)
 		fsymname = &strtab[symp[i].st_name];
 		fsymnamesize = strlen(fsymname) + 1;
 		while (symnamesize < fsymnamesize + 1) {
-			symnamesize *= 2;
-			if ((symname = realloc(symname, symnamesize)) == NULL) {
+			if ((nsymname = realloc(symname, symnamesize * 2)) == NULL) {
 				warn("malloc");
 				punt();
 			}
+			symname = nsymname;
+			symnamesize *= 2;
 		}
 		strlcpy(symname, "_", symnamesize);
 		strlcat(symname, fsymname, symnamesize);
