@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.26 1998/07/25 01:15:54 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.27 1998/07/26 21:24:37 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -416,10 +416,6 @@ cs_isa_probe(parent, cf, aux)
 		bus_space_unmap(iot, ioh, CS8900_IOSIZE);
 	if (have_mem)
 		bus_space_unmap(memt, memh, CS8900_MEMSIZE);
-
-	/* We can't run w/ an invalid IRQ. */
-	if (irq == ISACF_IRQ_DEFAULT)
-		rv = 0;
 
 	if (rv) {
 		ia->ia_iosize = CS8900_IOSIZE;
