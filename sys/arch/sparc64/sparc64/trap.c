@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2001/05/18 21:50:45 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.65 2001/06/03 03:15:57 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1115,7 +1115,10 @@ data_access_fault(type, addr, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
+	onfault = (vaddr_t)p->p_addr->u_pcb.pcb_onfault;
+	p->p_addr->u_pcb.pcb_onfault = NULL;
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
+	p->p_addr->u_pcb.pcb_onfault = (void *)onfault;
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
