@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.7 2000/11/08 19:48:52 ad Exp $
+#	$NetBSD: files.prep,v 1.8 2000/11/22 08:55:35 matt Exp $
 #
 # prep-specific configuration info
 #
@@ -142,3 +142,16 @@ include "dev/usb/files.usb"
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+# PCMCIA drivers/support
+defopt	PCIC_ISA_ALLOC_IOBASE
+defopt	PCIC_ISA_ALLOC_IOSIZE
+defopt	PCIC_ISA_INTR_ALLOC_MASK
+
+device	pcic: pcmciabus
+file	dev/ic/i82365.c			pcic
+attach	pcic at isa with pcic_isa
+file	dev/isa/i82365_isa.c		pcic_isa
+file	dev/isa/i82365_isasubr.c	pcic_isa
+
+include "dev/pcmcia/files.pcmcia"
