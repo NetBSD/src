@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.25 1994/05/05 01:11:29 gwr Exp $
+ *	$Id: machdep.c,v 1.26 1994/05/06 07:47:08 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -317,7 +317,7 @@ void cpu_reset()
     sun3_rom_reboot();
 }
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 tweaksigcode(ishpux)
 {
 	static short *sigtrap = NULL;
@@ -347,17 +347,17 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
-	p->p_regs[PC] = entry & ~1;
-	p->p_regs[SP] = stack;
+	p->p_md.md_regs[PC] = entry & ~1;
+	p->p_md.md_regs[SP] = stack;
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 #endif
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	if (p->p_flag & SHPUX) {
 
-		p->p_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
+		p->p_md.md_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
 		retval[0] = 0;		/* no float card */
 #ifdef FPCOPROC
 		retval[1] = 1;		/* yes 68881 */
@@ -429,7 +429,7 @@ struct sun_sigframe {
 };
 #endif	
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 struct	hpuxsigcontext {
 	int	hsc_syscall;
 	char	hsc_action;
@@ -485,9 +485,9 @@ sendsig(catcher, sig, mask, code)
 	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
-	frame = (struct frame *)p->p_regs;
+	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_onstack;
+	oonstack = ps->ps_sigstk.ss_onstack;
 
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == EMUL_SUNOS)
@@ -518,15 +518,15 @@ sendsig(catcher, sig, mask, code)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-#ifdef HPUXCOMPAT
-	if (p->p_flag & SHPUX)
+#ifdef COMPAT_HPUX
+	if (p->p_emul == EMUL_HPUX)
 		fsize = sizeof(struct sigframe) + sizeof(struct hpuxsigframe);
 	else
 #endif
 	fsize = sizeof(struct sigframe);
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigsp - fsize);
-		ps->ps_onstack = 1;
+	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp - fsize);
+		ps->ps_sigstk.ss_onstack = 1;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -619,11 +619,11 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	/*
 	 * Create an HP-UX style sigcontext structure and associated goo
 	 */
-	if (p->p_flag & SHPUX) {
+	if (p->p_emul == EMUL_HPUX) {
 		register struct hpuxsigframe *hkfp;
 
 		hkfp = (struct hpuxsigframe *)&kfp[1];
@@ -649,8 +649,7 @@ sendsig(catcher, sig, mask, code)
 		kfp->sf_scp = hkfp->hsf_scp;
 	}
 #endif
-	if (copyout((caddr_t)kfp, (caddr_t)fp, fsize))
-	    panic("sendsig: unable to copyout sigframe\n");
+	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -690,9 +689,9 @@ sun_sendsig(catcher, sig, mask, code)
 	register short ft;
 	int oonstack, fsize;
 
-	frame = (struct frame *)p->p_regs;
+	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_onstack;
+	oonstack = ps->ps_sigstk.ss_onstack;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -701,9 +700,9 @@ sun_sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sun_sigframe);
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sun_sigframe *)(ps->ps_sigsp - fsize);
-		ps->ps_onstack = 1;
+	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_sp - fsize);
+		ps->ps_sigstk.ss_onstack = 1;
 	} else
 		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -826,9 +825,9 @@ sigreturn(p, uap, retval)
 		    (scp = hscp->hsc_realsc) == 0 ||
 		    useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
 		    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc)) {
-			p->p_sigacts->ps_onstack = hscp->hsc_onstack & 01;
+			p->p_sigacts->ps_sigstk.ss_onstack = hscp->hsc_onstack & 01;
 			p->p_sigmask = hscp->hsc_mask &~ sigcantmask;
-			frame = (struct frame *) p->p_regs;
+			frame = (struct frame *) p->p_md.md_regs;
 			frame->f_regs[SP] = hscp->hsc_sp;
 			frame->f_pc = hscp->hsc_pc;
 			frame->f_sr = hscp->hsc_ps &~ PSL_USERCLR;
@@ -858,9 +857,9 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_regs;
+	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 #ifndef COMPAT_SUNOS
 	frame->f_regs[A6] = scp->sc_fp;
