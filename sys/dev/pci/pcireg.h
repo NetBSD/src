@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.27 2000/05/12 03:35:34 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999
@@ -364,6 +364,16 @@ typedef u_int8_t pci_revision_t;
 #define PCI_CAP_SLOTID	4
 #define PCI_CAP_MBI	5
 #define PCI_CAP_HOTSWAP	6
+
+/*
+ * Power Management Control Status Register; access via capability pointer.
+ */
+
+#define PCI_PMCSR_STATE_MASK	0x03
+#define PCI_PMCSR_STATE_D0      0x00
+#define PCI_PMCSR_STATE_D1      0x01
+#define PCI_PMCSR_STATE_D2      0x02
+#define PCI_PMCSR_STATE_D3      0x03
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
