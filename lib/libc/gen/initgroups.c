@@ -1,4 +1,4 @@
-/*	$NetBSD: initgroups.c,v 1.11 1995/06/03 02:27:19 mycroft Exp $	*/
+/*	$NetBSD: initgroups.c,v 1.12 1997/07/04 09:14:52 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: initgroups.c,v 1.11 1995/06/03 02:27:19 mycroft Exp $";
+static char rcsid[] = "$NetBSD: initgroups.c,v 1.12 1997/07/04 09:14:52 kleink Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ static char rcsid[] = "$NetBSD: initgroups.c,v 1.11 1995/06/03 02:27:19 mycroft 
 int
 initgroups(uname, agroup)
 	const char *uname;
-	int agroup;
+	gid_t agroup;
 {
 	int groups[NGROUPS], ngroups;
 
