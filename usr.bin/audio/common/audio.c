@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.12 2001/06/07 12:48:27 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.13 2002/01/01 08:07:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -177,7 +177,7 @@ audio_encoding_to_sun(encoding, precision, sunep)
 /*
  * find a .wav header, etc. returns header length on success
  */
-size_t
+ssize_t
 audio_parse_wav_hdr(hdr, sz, enc, prec, sample, channels, datasize)
 	void	*hdr;
 	size_t	sz;
