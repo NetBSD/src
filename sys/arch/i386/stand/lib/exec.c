@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.15 2000/02/22 07:45:04 dbj Exp $	 */
+/*	$NetBSD: exec.c,v 1.15.8.1 2001/06/21 19:26:16 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -49,36 +49,16 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-#ifdef COMPAT_OLDBOOT
-#include <sys/disklabel.h>
-#endif
 
 #include <lib/libsa/stand.h>
 
 #include "loadfile.h"
 #include "libi386.h"
 #include "bootinfo.h"
-
-#ifdef COMPAT_OLDBOOT
-static int dev2major __P((char *, int *));
-
-static int
-dev2major(devname, major)
-	char           *devname;
-	int            *major;
-{
-	static char    *devices[] = {"wd", "", "fd", "", "sd"};
-#define NUMDEVICES (sizeof(devices)/sizeof(char *))
-	int             i;
-
-	for (i = 0; i < NUMDEVICES; i++)
-		if (!strcmp(devname, devices[i])) {
-			*major = i;
-			return (0);
-		}
-	return (-1);
-}
+#ifdef SUPPORT_PS2
+#include "biosmca.h"
 #endif
+
 #define BOOT_NARGS	6
 
 extern struct btinfo_console btinfo_console;
@@ -98,13 +78,6 @@ exec_netbsd(file, loadaddr, boothowto)
 #ifdef XMS
 	u_long		xmsmem;
 	physaddr_t	origaddr = loadaddr;
-#endif
-
-#ifdef COMPAT_OLDBOOT
-	char           *fsname, *devname;
-	int             unit, part;
-	const char     *filename;
-	int             bootdevnr;
 #endif
 
 #ifdef	DEBUG
@@ -153,47 +126,7 @@ exec_netbsd(file, loadaddr, boothowto)
 		goto out;
 
 	boot_argv[0] = boothowto;
-
-#ifdef COMPAT_OLDBOOT
-	/* prepare boot device information for kernel */
-	if (parsebootfile(file, &fsname, &devname, &unit, &part, &filename)
-	    || strcmp(fsname, "ufs"))
-		bootdevnr = 0;	/* XXX error out if parse error??? */
-	else {
-		int             major;
-
-		if (strcmp(devname, "hd") == 0) {
-			/* generic BIOS disk, have to guess type */
-			struct open_file *f = &files[fd];	/* XXX */
-
-			if (biosdisk_gettype(f) == DTYPE_SCSI)
-				devname = "sd";
-			else
-				devname = "wd";
-
-			/*
-			 * The old boot block performed the following
-			 * conversion:
-			 *
-			 *	hdN -> Xd0
-			 *
-			 * where X is the type specified by the label.
-			 * We mimmick that here, for lack of any better
-			 * way of doing things.
-			 */
-			unit = 0;
-		}
-
-		if (dev2major(devname, &major))
-			bootdevnr = 0;	/* XXX error out??? */
-		else
-			bootdevnr = MAKEBOOTDEV(major, 0, 0, unit, part);
-	}
-
-	boot_argv[1] = bootdevnr;
-#else
 	boot_argv[1] = 0;
-#endif
 	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
 	/* argv[3] below */
 	boot_argv[4] = extmem;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2000/09/24 18:28:21 jdolecek Exp $	*/
+/*	$NetBSD: main.c,v 1.24.4.1 2001/06/21 19:26:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -47,13 +47,17 @@
 #include <libi386.h>
 #include "devopen.h"
 
+#ifdef SUPPORT_PS2
+#include <biosmca.h>
+#endif
+
 int errno;
 extern int boot_biosdev;
 
-extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
+extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
 
-char *names[] = {
+static const char * const names[] = {
     "netbsd", "netbsd.gz",
     "netbsd.old", "netbsd.old.gz",
     "onetbsd", "onetbsd.gz",
@@ -72,7 +76,7 @@ int boottimeout = TIMEOUT; /* patchable */
 
 static char *default_devname;
 static int default_unit, default_partition;
-static char *default_filename;
+static const char *default_filename;
 
 char *sprint_bootsel __P((const char *));
 void bootit __P((const char *, int, int));
@@ -86,7 +90,7 @@ void	command_boot __P((char *));
 void	command_dev __P((char *));
 void	command_consdev __P((char *));
 
-struct bootblk_command commands[] = {
+const struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
 	{ "ls",		command_ls },
@@ -233,6 +237,10 @@ main()
 #else
 	initio(CONSDEV_PC);
 #endif
+
+#ifdef SUPPORT_PS2
+	biosmca();
+#endif
 	gateA20();
 
 #ifdef RESET_VIDEO
@@ -248,11 +256,7 @@ main()
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
 
-	printf(
-#ifdef COMPAT_OLDBOOT
-	       "Use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
-#endif
-	       "Press return to boot now, any other key for boot menu\n");
+	printf("Press return to boot now, any other key for boot menu\n");
 	currname = 0;
 	for (;;) {
 		printf("booting %s - starting in ",
@@ -293,7 +297,7 @@ command_help(arg)
 
 	printf("commands are:\n"
 	    "boot [xdNx:][filename] [-adsvq]\n"
-	    "     (ex. \"sd0a:netbsd.old -s\"\n"
+	    "     (ex. \"hd0a:netbsd.old -s\"\n"
 	    "ls [path]\n"
 	    "dev xd[N[x]]:\n"
 #ifdef SUPPORT_SERIAL
@@ -307,7 +311,7 @@ void
 command_ls(arg)
 	char *arg;
 {
-	char *save = default_filename;
+	const char *save = default_filename;
 
 	default_filename = "/";
 	ufs_ls(arg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118.2.2 2001/04/09 01:53:32 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.2.3 2001/06/21 19:25:35 nathanw Exp $	*/
 
 /*
  *
@@ -241,11 +241,11 @@
  */
 
 static struct lock pmap_main_lock;
-static simple_lock_data_t pvalloc_lock;
-static simple_lock_data_t pmaps_lock;
-static simple_lock_data_t pmap_copy_page_lock;
-static simple_lock_data_t pmap_zero_page_lock;
-static simple_lock_data_t pmap_tmpptp_lock;
+static struct simplelock pvalloc_lock;
+static struct simplelock pmaps_lock;
+static struct simplelock pmap_copy_page_lock;
+static struct simplelock pmap_zero_page_lock;
+static struct simplelock pmap_tmpptp_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
      (void) spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
@@ -574,8 +574,8 @@ pmap_unmap_ptes(pmap)
  * p m a p   k e n t e r   f u n c t i o n s
  *
  * functions to quickly enter/remove pages from the kernel address
- * space.   pmap_kremove/pmap_kenter_pgs are exported to MI kernel.
- * we make use of the recursive PTE mappings.
+ * space.   pmap_kremove is exported to MI kernel.  we make use of
+ * the recursive PTE mappings.
  */
 
 /*
@@ -651,52 +651,6 @@ pmap_kremove(va, len)
 	}
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-#endif
-}
-
-/*
- * pmap_kenter_pgs: enter in a number of vm_pages
- */
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	pt_entry_t *pte, opte;
-	int lcv;
-	vaddr_t tva;
-#if defined(I386_CPU)
-	boolean_t need_update = FALSE;
-#endif
-
-	for (lcv = 0 ; lcv < npgs ; lcv++) {
-		tva = va + lcv * PAGE_SIZE;
-		if (va < VM_MIN_KERNEL_ADDRESS)
-			pte = vtopte(tva);
-		else
-			pte = kvtopte(tva);
-		opte = *pte;
-#ifdef LARGEPAGES
-		/* XXX For now... */
-		if (opte & PG_PS)
-			panic("pmap_kenter_pgs: PG_PS");
-#endif
-		*pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V | pmap_pg_g;
-#if defined(I386_CPU)
-		if (cpu_class == CPUCLASS_386) {
-			if (pmap_valid_entry(opte))
-				need_update = TRUE;
-			continue;
-		}
-#endif
-		if (pmap_valid_entry(opte))
-			pmap_update_pg(tva);
-	}
-#if defined(I386_CPU)
-	if (need_update && cpu_class == CPUCLASS_386)
 		tlbflush();
 #endif
 }
@@ -1153,6 +1107,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
+	pmap_update();
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
 	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -1300,7 +1255,7 @@ pmap_free_pvpage()
 {
 	int s;
 	struct vm_map *map;
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 	struct pv_page *pvp;
 
 	s = splvm(); /* protect kmem_map */
@@ -1853,6 +1808,7 @@ pmap_map(va, spa, epa, prot)
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
+	pmap_update();
 	return va;
 }
 
@@ -1873,13 +1829,13 @@ pmap_zero_page(pa)
 }
 
 /*
- * pmap_zero_page_uncached: the same, except uncached.  Returns
- * TRUE if the page was zero'd, FALSE if we aborted for some
- * reason.
+ * pmap_pagezeroidle: the same, for the idle loop page zero'er.
+ * Returns TRUE if the page was zero'd, FALSE if we aborted for
+ * some reason.
  */
 
 boolean_t
-pmap_zero_page_uncached(pa)
+pmap_pageidlezero(pa)
 	paddr_t pa;
 {
 	boolean_t rv = TRUE;
@@ -1887,8 +1843,7 @@ pmap_zero_page_uncached(pa)
 
 	simple_lock(&pmap_zero_page_lock);
 
-	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
-	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
+	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW;	/* map in */
 	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
 
 	for (i = 0, ptr = (int *) zerop; i < PAGE_SIZE / sizeof(int); i++) {
@@ -2342,7 +2297,7 @@ pmap_page_remove(pg)
 {
 	int bank, off;
 	struct pv_head *pvh;
-	struct pv_entry *pve;
+	struct pv_entry *pve, *npve, **prevptr, *killlist = NULL;
 	pt_entry_t *ptes, opte;
 #if defined(I386_CPU)
 	boolean_t needs_update = FALSE;
@@ -2366,7 +2321,9 @@ pmap_page_remove(pg)
 	/* XXX: needed if we hold head->map lock? */
 	simple_lock(&pvh->pvh_lock);
 
-	for (pve = pvh->pvh_list ; pve != NULL ; pve = pve->pv_next) {
+	for (prevptr = &pvh->pvh_list, pve = pvh->pvh_list;
+	     pve != NULL; pve = npve) {
+		npve = pve->pv_next;
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
 
 #ifdef DIAGNOSTIC
@@ -2388,6 +2345,18 @@ pmap_page_remove(pg)
 #endif
 
 		opte = ptes[i386_btop(pve->pv_va)];
+#if 1 /* XXX Work-around for kern/12554. */
+		if (opte & PG_W) {
+#ifdef DEBUG
+			printf("pmap_page_remove: wired mapping for "
+			    "0x%lx (wire count %d) not removed\n",
+			    VM_PAGE_TO_PHYS(pg), pg->wire_count);
+#endif
+			prevptr = &pve->pv_next;
+			pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
+			continue;
+		}
+#endif /* kern/12554 */
 		ptes[i386_btop(pve->pv_va)] = 0;		/* zap! */
 
 		if (opte & PG_W)
@@ -2427,8 +2396,11 @@ pmap_page_remove(pg)
 			}
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
+		*prevptr = npve;			/* remove it */
+		pve->pv_next = killlist;		/* mark it for death */
+		killlist = pve;
 	}
-	pmap_free_pvs(NULL, pvh->pvh_list);
+	pmap_free_pvs(NULL, killlist);
 	pvh->pvh_list = NULL;
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
@@ -2848,7 +2820,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 		ptp = pmap_get_ptp(pmap, pdei(va));
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
-				return ENOMEM;
+				error = ENOMEM;
+				goto out;
 			}
 			panic("pmap_enter: get ptp failed");
 		}

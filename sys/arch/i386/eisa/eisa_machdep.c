@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.12 2000/08/11 00:43:21 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.12.2.1 2001/06/21 19:25:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ eisa_intr_disestablish(ec, cookie)
 	void *cookie;
 {
 
-	return isa_intr_disestablish(NULL, cookie);
+	isa_intr_disestablish(NULL, cookie);
 }
 
 int

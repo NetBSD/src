@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.112 2001/01/20 07:18:06 lukem Exp $
+#	$NetBSD: Makefile.i386,v 1.112.2.1 2001/06/21 19:25:19 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -40,7 +40,7 @@ I386=	$S/arch/i386
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Di386
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Di386
 CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
@@ -51,7 +51,9 @@ CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-Ttext c0100000 -e start
+
+TEXTADDR?=	c0100000
+LINKFLAGS=	-Ttext ${TEXTADDR} -e start
 
 .if (${OBJECT_FMT} == "ELF")
 KERN_LDSCRIPT?=	kern.ldscript
@@ -152,11 +154,18 @@ clean: __CLEANKERNEL
 
 cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
-lint:
-	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${I386}/i386/Locore.c ${CFILES} \
-	    ioconf.c param.c | \
-	    grep -v 'static function .* unused'
+ALLSFILES=	${I386}/i386/locore.s ${SFILES}
+LINTSTUBS=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
+
+.for _sfile in ${ALLSFILES}
+LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
+	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
+	      awk -f $S/kern/genlintstub.awk >${.TARGET}
+.endfor
+
+lint: ${CFILES} ${LINTSTUBS} ioconf.c param.c
+	@lint -bceghnxzF ${CPPFLAGS} -UKGDB \
+	    ${CFILES} ${LINTSTUBS} ioconf.c param.c
 
 tags:
 	@echo "see $S/kern/Makefile for tags"

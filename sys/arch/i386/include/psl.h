@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.32.28.1 2001/03/05 22:49:17 nathanw Exp $	*/
+/*	$NetBSD: psl.h,v 1.32.28.2 2001/06/21 19:25:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
 #define	PSL_MBZ		0xffc08028	/* must be zero bits */
 
 #define	PSL_USERSET	(PSL_MBO | PSL_I)
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #endif
 #ifdef VM86

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.5.4.1 2001/03/05 22:49:11 nathanw Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.5.4.2 2001/06/21 19:25:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -99,7 +99,8 @@ compat_13_sys_sigreturn(l, v, retval)
 		    !USERMODE(context.sc_cs, context.sc_eflags))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_gs = context.sc_gs;
+		tf->tf_fs = context.sc_fs;		
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
 		tf->tf_eflags = context.sc_eflags;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1999/04/08 10:23:23 drochner Exp $
+#	$NetBSD: Makefile,v 1.20.16.1 2001/06/21 19:26:18 nathanw Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -11,7 +11,6 @@ SRCS= main.c devopen.c conf.c dev_net.c exec.c
 
 CLEANFILES+= ${ROMSTART} ${BASE}.bin ${BASE}.sym
 
-#CPPFLAGS+= -DCOMPAT_OLDBOOT
 #CPPFLAGS+= -DDEBUG
 #CPPFLAGS+= -DNET_DEBUG
 #CPPFLAGS+= -DSUPPORT_BOOTP -DSUPPORT_DHCP

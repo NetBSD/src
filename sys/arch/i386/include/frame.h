@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15.2.1 2001/03/05 22:49:16 nathanw Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.2.2 2001/06/21 19:25:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@
  * Exception/Trap Stack Frame
  */
 struct trapframe {
+	int	tf_gs;
+	int	tf_fs;
 	int	tf_es;
 	int	tf_ds;
 	int	tf_edi;
@@ -118,6 +120,8 @@ struct trapframe {
  */
 struct intrframe {
 	int	if_ppl;
+	int	if_gs;
+	int	if_fs;
 	int	if_es;
 	int	if_ds;
 	int	if_edi;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sigcode.s,v 1.1 2000/11/26 11:18:20 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.s,v 1.1.6.1 2001/06/21 19:25:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #endif
 
@@ -83,14 +83,11 @@
 #include <machine/asm.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
+/* LINTSTUB: Var: char ibcs2_sigcode[1], ibcs2_esigcode[1]; */
 NENTRY(ibcs2_sigcode)
 	call    SIGF_HANDLER(%esp)
 	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-	movl    SC_FS(%eax),%ecx
-	movl    SC_GS(%eax),%edx
-	movl    %cx,%fs
-	movl    %dx,%gs
 	pushl   %eax
 	pushl   %eax                    # junk to fake return address
 	movl    $IBCS2_SYS_sigreturn,%eax

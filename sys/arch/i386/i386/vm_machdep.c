@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97.2.1 2001/03/05 22:49:15 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97.2.2 2001/06/21 19:25:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -381,7 +381,7 @@ kvtop(addr)
 	return((int)pa);
 }
 
-extern vm_map_t phys_map;
+extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.
@@ -423,6 +423,7 @@ vmapbuf(bp, len)
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
+	pmap_update();
 }
 
 /*
@@ -441,6 +442,7 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_kremove(addr, len);
+	pmap_update();
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.3 2001/04/09 01:53:30 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.4 2001/06/21 19:25:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -100,6 +100,9 @@
 #include <machine/trap.h>
 #include <machine/bootinfo.h>
 
+/* LINTSTUB: include <sys/systm.h> */
+/* LINTSTUB: include <machine/cpu.h> */
+
 /*
  * override user-land alignment before including asm.h
  */
@@ -159,8 +162,15 @@
 	pushl	%ds		; \
 	pushl	%es		; \
 	movl	%ax,%ds		; \
-	movl	%ax,%es
+	movl	%ax,%es		; \
+	pushl	%fs		; \
+	pushl	%gs		; \
+	movl	%ax,%fs		; \
+	movl	%ax,%gs		; \
+
 #define	INTRFASTEXIT \
+	popl	%gs		; \
+	popl	%fs		; \
 	popl	%es		; \
 	popl	%ds		; \
 	popl	%edi		; \
@@ -277,19 +287,19 @@ start:	movw	$0x1234,0x472			# warm boot
 	addl	$4, %eax
 	movl	(%eax), %ecx		/* address of entry */
 	pushl	%eax
-	pushl	(%ecx)		/* len */
+	pushl	(%ecx)			/* len */
+	pushl	%ecx
 	pushl	%edx
 	addl	(%ecx), %edx		/* update dest pointer */
 	cmpl	$_RELOC(_C_LABEL(bootinfo) + BOOTINFO_MAXSIZE), %edx
 	jg	2f
-	pushl	%ecx
-	call	_C_LABEL(bcopy)
+	call	_C_LABEL(memcpy)
 	addl	$12, %esp
 	popl	%eax
 	subl	$1, %ebx
 	jmp	2b
 2:	/* cleanup for overflow case */
-	addl	$12, %esp
+	addl	$16, %esp
 	movl	$RELOC(bootinfo), %edx
 	subl	%ebx, (%edx)		/* correct number of entries */
 1:
@@ -317,6 +327,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	pushl	$PSL_MBO
 	popfl
 
+	/* Clear segment registers; always null in proc0. */
+	xorl	%eax,%eax
+	movl	%ax,%fs
+	movl	%ax,%gs
 	/* Find out our CPU type. */
 
 try386:	/* Try to toggle alignment check flag; does not exist on 386. */
@@ -669,11 +683,6 @@ begin:
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
 	addl	$4,%esp
 
-	/* Clear segment registers; always null in proc0. */
-	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
-
 #ifdef SAFARI_FIFO_HACK
 	movb	$5,%al
 	movw	$0x37b,%dx
@@ -694,6 +703,13 @@ begin:
 
 	call 	_C_LABEL(main)
 
+/*
+ * XXX We need a comment here (lightly) explaining this. Probably a
+ * detailed section 9 man page, too, explaining the proc_trampoline.
+ * Almost every port has a proc_trampoline, so it needs documentation, IMHO.
+ * -- Perry Metzger, May 7, 2001
+ */
+/* LINTSTUB: Func: void proc_trampoline(void) */
 NENTRY(proc_trampoline)
 	pushl	%ebx
 	call	%esi
@@ -704,21 +720,19 @@ NENTRY(proc_trampoline)
 /*****************************************************************************/
 
 /*
+ * XXX No section 9 man page for sigcode or esigcode. IMHO,
+ * Since it is part of the MI/MD interface, it needs documentation.
+ * -- Perry Metzger, May 7, 2001
+ */
+/*
  * Signal trampoline; copied to top of user stack.
  */
+/* LINTSTUB: Var: char sigcode[1], esigcode[1]; */
 NENTRY(sigcode)
 	call	SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,SC_EFLAGS(%eax)
-	jnz	1f
-#endif
-	movl	SC_FS(%eax),%ecx
-	movl	SC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax
+	pushl	%eax
 	pushl	%eax			# junk to fake return address
 	movl	$SYS___sigreturn14,%eax
 	int	$0x80	 		# enter kernel with args on stack
@@ -742,9 +756,16 @@ _C_LABEL(esigcode):
  */
 
 /*
- * fillw(short pattern, caddr_t addr, size_t len);
+ * XXX No section 9 man page for fillw.
+ * fillw seems to be very sparsely used (only in pccons it seems.)
+ * One wonders if it couldn't be done without.
+ * -- Perry Metzger, May 7, 2001
+ */
+/*
+ * void fillw(short pattern, void *addr, size_t len);
  * Write len copies of pattern at addr.
  */
+/* LINTSTUB: Func: void fillw(short pattern, void *addr, size_t len) */
 ENTRY(fillw)
 	pushl	%edi
 	movl	8(%esp),%eax
@@ -765,133 +786,17 @@ ENTRY(fillw)
 	ret
 
 /*
- * bcopyb(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes, one byte at a time.
+ * XXX No section 9 man page for kcopy. IMHO,
+ * Since it is part of the MI/MD interface, it needs documentation.
+ * so far as I can tell it is used only in one function in the MI kernel,
+ * but it still counts.
+ * -- Perry Metzger, May 7, 2001
  */
-ENTRY(bcopyb)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	cmpl	%esi,%edi		# potentially overlapping?
-	jnb	1f
-	cld				# no; copy forward
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
-	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
-	addl	%ecx,%esi
-	std
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	cld
-	ret
-
 /*
- * bcopyw(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes, two bytes at a time.
- */
-ENTRY(bcopyw)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	cmpl	%esi,%edi		# potentially overlapping?
-	jnb	1f
-	cld				# no; copy forward
-	shrl	$1,%ecx			# copy by 16-bit words
-	rep
-	movsw
-	adc	%ecx,%ecx		# any bytes left?
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
-	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
-	addl	%ecx,%esi
-	std
-	andl	$1,%ecx			# any fractional bytes?
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	movl	20(%esp),%ecx		# copy remainder by 16-bit words
-	shrl	$1,%ecx
-	decl	%esi
-	decl	%edi
-	rep
-	movsw
-	popl	%edi
-	popl	%esi
-	cld
-	ret
-
-/*
- * bcopy(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes.
- * This routine handles overlapping regions, although bcopy
- * is not specified to do so (and should not be counted on to do so).
- */
-ENTRY(bcopy)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	movl	%edi,%eax
-	subl	%esi,%eax
-	cmpl	%ecx,%eax		# overlapping?
-	jb	1f
-	cld				# nope, copy forward
-	shrl	$2,%ecx			# copy by 32-bit words
-	rep
-	movsl
-	movl	20(%esp),%ecx
-	andl	$3,%ecx			# any bytes left?
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
-	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
-	addl	%ecx,%esi
-	std
-	andl	$3,%ecx			# any fractional bytes?
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	movl	20(%esp),%ecx		# copy remainder by 32-bit words
-	shrl	$2,%ecx
-	subl	$3,%esi
-	subl	$3,%edi
-	rep
-	movsl
-	popl	%edi
-	popl	%esi
-	cld
-	ret
-
-
-/*
- * kcopy(caddr_t from, caddr_t to, size_t len);
+ * int kcopy(const void *from, void *to, size_t len);
  * Copy len bytes, abort on fault.
  */
+/* LINTSTUB: Func: int kcopy(const void *from, void *to, size_t len) */
 ENTRY(kcopy)
 	pushl	%esi
 	pushl	%edi
@@ -954,9 +859,11 @@ ENTRY(kcopy)
  */
 
 /*
- * copyout(caddr_t from, caddr_t to, size_t len);
+ * int copyout(const void *from, void *to, size_t len);
  * Copy len bytes into the user's address space.
+ * see copyout(9)
  */
+/* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
 	pushl	%esi
 	pushl	%edi
@@ -1052,9 +959,11 @@ ENTRY(copyout)
 	ret
 
 /*
- * copyin(caddr_t from, caddr_t to, size_t len);
+ * int copyin(const void *from, void *to, size_t len);
  * Copy len bytes from the user's address space.
+ * see copyin(9)
  */
+/* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(copyin)
 	pushl	%esi
 	pushl	%edi
@@ -1095,9 +1004,11 @@ ENTRY(copyin)
 	xorl	%eax,%eax
 	ret
 
+/* LINTSTUB: Ignore */
 ENTRY(copy_efault)
 	movl	$EFAULT,%eax
 
+/* LINTSTUB: Ignore */
 ENTRY(copy_fault)
 	movl	_C_LABEL(curpcb),%edx
 	popl	PCB_ONFAULT(%edx)
@@ -1106,12 +1017,14 @@ ENTRY(copy_fault)
 	ret
 
 /*
- * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * int copyoutstr(const void *from, void *to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long, into the
  * user's address space.  Return the number of characters copied (including the
  * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
  * return 0 or EFAULT.
+ * see copyoutstr(9)
  */
+/* LINTSTUB: Func: int copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done) */
 ENTRY(copyoutstr)
 	pushl	%esi
 	pushl	%edi
@@ -1222,12 +1135,14 @@ ENTRY(copyoutstr)
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
 /*
- * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * int copyinstr(const void *from, void *to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long, from the
  * user's address space.  Return the number of characters copied (including the
  * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
  * return 0 or EFAULT.
+ * see copyinstr(9)
  */
+/* LINTSTUB: Func: int copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done) */
 ENTRY(copyinstr)
 	pushl	%esi
 	pushl	%edi
@@ -1269,9 +1184,11 @@ ENTRY(copyinstr)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
+/* LINTSTUB: Ignore */
 ENTRY(copystr_efault)
 	movl	$EFAULT,%eax
 
+/* LINTSTUB: Ignore */
 ENTRY(copystr_fault)
 copystr_return:
 	/* Set *lencopied and return %eax. */
@@ -1289,11 +1206,13 @@ copystr_return:
 	ret
 
 /*
- * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * int copystr(const void *from, void *to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long.  Return the
  * number of characters copied (including the NUL) in *lencopied.  If the
  * string is too long, return ENAMETOOLONG; else return 0.
+ * see copystr(9)
  */
+/* LINTSTUB: Func: int copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done) */
 ENTRY(copystr)
 	pushl	%esi
 	pushl	%edi
@@ -1332,9 +1251,11 @@ ENTRY(copystr)
 	ret
 
 /*
- * fuword(caddr_t uaddr);
+ * long fuword(const void *uaddr);
  * Fetch an int from the user's address space.
+ * see fuword(9)
  */
+/* LINTSTUB: Func: long fuword(const void *base) */
 ENTRY(fuword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
@@ -1346,9 +1267,11 @@ ENTRY(fuword)
 	ret
 	
 /*
- * fusword(caddr_t uaddr);
+ * int fusword(const void *uaddr);
  * Fetch a short from the user's address space.
+ * see fusword(9)
  */
+/* LINTSTUB: Func: int fusword(const void *base) */
 ENTRY(fusword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
@@ -1360,10 +1283,12 @@ ENTRY(fusword)
 	ret
 	
 /*
- * fuswintr(caddr_t uaddr);
+ * int fuswintr(const void *uaddr);
  * Fetch a short from the user's address space.  Can be called during an
  * interrupt.
+ * see fuswintr(9)
  */
+/* LINTSTUB: Func: int fuswintr(const void *base) */
 ENTRY(fuswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
@@ -1375,9 +1300,11 @@ ENTRY(fuswintr)
 	ret
 	
 /*
- * fubyte(caddr_t uaddr);
+ * int fubyte(const void *uaddr);
  * Fetch a byte from the user's address space.
+ * see fubyte(9)
  */
+/* LINTSTUB: Func: int fubyte(const void *base) */
 ENTRY(fubyte)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
@@ -1391,6 +1318,7 @@ ENTRY(fubyte)
 /*
  * Handle faults from [fs]u*().  Clean up and return -1.
  */
+/* LINTSTUB: Ignore */
 ENTRY(fusufault)
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
@@ -1401,6 +1329,7 @@ ENTRY(fusufault)
  * fusufault() in that trap() will recognize it and return immediately rather
  * than trying to page fault.
  */
+/* LINTSTUB: Ignore */
 ENTRY(fusubail)
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
@@ -1409,14 +1338,17 @@ ENTRY(fusubail)
 /*
  * Handle earlier faults from [fs]u*(), due to our of range addresses.
  */
+/* LINTSTUB: Ignore */
 ENTRY(fusuaddrfault)
 	movl	$-1,%eax
 	ret
 
 /*
- * suword(caddr_t uaddr, int x);
+ * int suword(void *uaddr, long x);
  * Store an int in the user's address space.
+ * see suword(9)
  */
+/* LINTSTUB: Func: int suword(void *base, long c) */
 ENTRY(suword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
@@ -1459,9 +1391,11 @@ ENTRY(suword)
 	ret
 	
 /*
- * susword(caddr_t uaddr, short x);
+ * int susword(void *uaddr, short x);
  * Store a short in the user's address space.
+ * see susword(9)
  */
+/* LINTSTUB: Func: int susword(void *base, short c) */
 ENTRY(susword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
@@ -1504,10 +1438,12 @@ ENTRY(susword)
 	ret
 
 /*
- * suswintr(caddr_t uaddr, short x);
+ * int suswintr(void *uaddr, short x);
  * Store a short in the user's address space.  Can be called during an
  * interrupt.
+ * see suswintr(9)
  */
+/* LINTSTUB: Func: int suswintr(void *base, short c) */
 ENTRY(suswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
@@ -1539,9 +1475,11 @@ ENTRY(suswintr)
 	ret
 
 /*
- * subyte(caddr_t uaddr, char x);
+ * int subyte(void *uaddr, char x);
  * Store a byte in the user's address space.
+ * see subyte(9)
  */
+/* LINTSTUB: Func: int subyte(void *base, int c) */
 ENTRY(subyte)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
@@ -1592,7 +1530,10 @@ ENTRY(subyte)
 /*
  * void lgdt(struct region_descriptor *rdp);
  * Change the global descriptor table.
+ * XXX should there be an MD section 9 man page for this?
+ *     or even just a better comment? --Perry, May 7, 2001
  */
+/* LINTSTUB: Func: void lgdt(struct region_descriptor *rdp) */
 NENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movl	4(%esp),%eax
@@ -1611,6 +1552,15 @@ NENTRY(lgdt)
 	pushl	%eax
 	lret
 
+
+/*
+ * XXX We need a comment here (lightly) explaining this. Probably a
+ * short section 9 man page, too, explaining how kernel setjmp differs
+ * from userland.
+ * Since it is part of the MI/MD interface, it needs documentation, IMHO.
+ * -- Perry Metzger, May 7, 2001
+ */
+/* LINTSTUB: Func: int setjmp (label_t *l) */
 ENTRY(setjmp)
 	movl	4(%esp),%eax
 	movl	%ebx,(%eax)		# save ebx
@@ -1623,6 +1573,14 @@ ENTRY(setjmp)
 	xorl	%eax,%eax		# return (0);
 	ret
 
+/*
+ * XXX We need a comment here (lightly) explaining this. Probably a
+ * short section 9 man page, too, explaining how kernel longjmp differs
+ * from userland.
+ * Since it is part of the MI/MD interface, it needs documentation, IMHO.
+ * -- Perry Metzger, May 7, 2001
+ */
+/* LINTSTUB: Func: void longjmp (label_t *l) */
 ENTRY(longjmp)
 	movl	4(%esp),%eax
 	movl	(%eax),%ebx		# restore ebx
@@ -1651,9 +1609,15 @@ ENTRY(longjmp)
 	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
 
 /*
- * setrunqueue(struct lwp *l);
+ * void setrunqueue(struct lwp *l);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
+/*
+ * XXX No section 9 man page for setrunqueue. IMHO,
+ * Since it is part of the MI/MD interface, it needs documentation.
+ * -- Perry Metzger, May 7, 2001
+ */
+/* LINTSTUB: Func: void setrunqueue(struct lwp *l) */
 NENTRY(setrunqueue)
 	movl	4(%esp),%eax
 #ifdef DIAGNOSTIC
@@ -1682,9 +1646,15 @@ NENTRY(setrunqueue)
 #endif /* DIAGNOSTIC */
 
 /*
- * remrunqueue(struct lwp *l);
+ * void remrunqueue(struct lwp *l);
  * Remove a process from its queue.  Should be called at splclock().
  */
+/*
+ * XXX No section 9 man page for remrunqueue. IMHO,
+ * Since it is part of the MI/MD interface, it needs documentation.
+ * -- Perry Metzger, May 7, 2001
+ */
+/* LINTSTUB: Func: void remrunqueue(struct lwp *l) */
 NENTRY(remrunqueue)
 	movl	4(%esp),%ecx
 	movzbl	L_PRIORITY(%ecx),%eax
@@ -1713,12 +1683,15 @@ NENTRY(remrunqueue)
 #endif /* DIAGNOSTIC */
 
 #if NAPM > 0
+/* LINTSTUB: Func: void apm_cpu_busy (void) */
+/* LINTSTUB: Func: void apm_cpu_idle (void) */
 	.globl _C_LABEL(apm_cpu_idle),_C_LABEL(apm_cpu_busy)
 #endif
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
  * something to come ready.
  */
+/* LINTSTUB: Ignore */
 ENTRY(idle)
 	/*
 	 * When we get here, interrupts are off (via cli) and
@@ -1752,6 +1725,7 @@ ENTRY(idle)
 	jmp	_C_LABEL(idle)
 
 #ifdef DIAGNOSTIC
+/* LINTSTUB: Ignore */
 NENTRY(switch_error)
 	pushl	$1f
 	call	_C_LABEL(panic)
@@ -1760,11 +1734,13 @@ NENTRY(switch_error)
 #endif /* DIAGNOSTIC */
 
 /*
- * void cpu_switch(struct proc *)
+ * void cpu_switch(struct lwp *l)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
+ * see cpu_switch(9)
  */
+/* LINTSTUB: Func: void cpu_switch(struct lwp *l) */
 ENTRY(cpu_switch)
 	pushl	%ebx
 	pushl	%esi
@@ -1887,12 +1863,6 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	movl	L_ADDR(%esi),%esi
 
-	/* Save segment registers. */
-	movl	%fs,%ax
-	movl	%gs,%cx
-	movl	%eax,PCB_FS(%esi)
-	movl	%ecx,PCB_GS(%esi)
-
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
@@ -1952,11 +1922,6 @@ switch_exited:
 #endif /* USER_LDT */
 
 	/* Restore segment registers. */
-	movl	PCB_FS(%esi),%eax
-	movl	PCB_GS(%esi),%ecx
-	movl	%ax,%fs
-	movl	%cx,%gs
-
 switch_restored:
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
@@ -2102,12 +2067,6 @@ preempt_search:
 
 	movl	L_ADDR(%esi),%esi
 
-	/* Save segment registers. */
-	movl	%fs,%ax
-	movl	%gs,%cx
-	movl	%eax,PCB_FS(%esi)
-	movl	%ecx,PCB_GS(%esi)
-
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
@@ -2166,12 +2125,6 @@ preempt_exited:
 	lldt	%dx
 #endif /* USER_LDT */
 
-	/* Restore segment registers. */
-	movl	PCB_FS(%esi),%eax
-	movl	PCB_GS(%esi),%ecx
-	movl	%ax,%fs
-	movl	%cx,%gs
-
 preempt_restored:
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
@@ -2198,12 +2151,13 @@ preempt_return:
 /* NJW */
 	
 /*
- * switch_exit(struct lwp *l);
+ * void switch_exit(struct lwp *l);
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
 	.globl	_C_LABEL(lwp0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
+/* LINTSTUB: Func: void switch_exit(struct lwp *l) */
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_C_LABEL(lwp0),%ebx
@@ -2325,18 +2279,13 @@ ENTRY(switch_lwp_exit)
 	jmp	switch_search
 
 /*
- * savectx(struct pcb *pcb);
+ * void savectx(struct pcb *pcb);
  * Update pcb, saving current processor state.
  */
+/* LINTSTUB: Func: void savectx(struct pcb *pcb) */
 ENTRY(savectx)
 	movl	4(%esp),%edx		# edx = p->p_addr
   
-	/* Save segment registers. */
-	movl	%fs,%ax
-	movl	%gs,%cx
-	movl	%eax,PCB_FS(%edx)
-	movl	%ecx,PCB_GS(%edx)
-
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%edx)
 	movl	%ebp,PCB_EBP(%edx)
@@ -2502,15 +2451,30 @@ IDTVEC(exceptions)
  * necessary, and resume as if we were handling a general protection fault.
  * This will cause the process to get a SIGBUS.
  */
+/* LINTSTUB: Var: char resume_iret[1]; */
 NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
+/* LINTSTUB: Var: char resume_pop_ds[1]; */
 NENTRY(resume_pop_ds)
+	pushl	%es
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%ax,%es
+/* LINTSTUB: Var: char resume_pop_es[1]; */
 NENTRY(resume_pop_es)
+	pushl	%fs
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
+	movl	%ax,%fs
+/* LINTSTUB: Var: char resume_pop_fs[1]; */
+NENTRY(resume_pop_fs)
+	pushl	%gs	
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
+	movl	%ax,%gs
+/* LINTSTUB: Var: char resume_pop_gs[1]; */
+NENTRY(resume_pop_gs)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
 
+/* LINTSTUB: Ignore */
 NENTRY(alltraps)
 	INTRENTRY
 calltrap:
@@ -2552,6 +2516,7 @@ calltrap:
 #endif /* DIAGNOSTIC */
 
 #ifdef IPKDB
+/* LINTSTUB: Ignore */
 NENTRY(bpttraps)
 	INTRENTRY
 	call	_C_LABEL(ipkdb_trap_glue)
@@ -2601,6 +2566,8 @@ ipkdbrestore:
 	pushl	%ecx
 	ret
 
+/* XXX: Documentation! grrr! --Perry Metzger, May 7, 2001 */
+/* LINTSTUB: Func: int ipkdbfbyte(u_char *c) */
 NENTRY(ipkdbfbyte)
 	pushl	%ebp
 	movl	%esp,%ebp
@@ -2612,6 +2579,8 @@ faultexit:
 	popl	%ebp
 	ret
 
+/* XXX: Documentation! grrr! --Perry Metzger, May 7, 2001 */
+/* LINTSTUB: Func: int ipkdbsbyte(u_char *c, int i) */
 NENTRY(ipkdbsbyte)
 	pushl	%ebp
 	movl	%esp,%ebp
@@ -2634,6 +2603,8 @@ fault:
 /*
  * Old call gate entry for syscall
  */
+/* XXX Manually doing Xblah is wrong. Yuck. --Perry */
+/* LINTSTUB: Var: char Xosyscall[1]; */
 IDTVEC(osyscall)
 	/* Set eflags in trap frame. */
 	pushfl
@@ -2644,6 +2615,8 @@ IDTVEC(osyscall)
 /*
  * Trap gate entry for syscall
  */
+/* XXX Manually doing Xblah is wrong. Yuck. --Perry */
+/* LINTSTUB: Var: char Xsyscall[1]; */
 IDTVEC(syscall)
 	pushl	$2		# size of instruction for restart
 syscall1:
@@ -2691,6 +2664,7 @@ syscall1:
  * latch stuff in probintr() can be moved to npxprobe().
  */
 
+/* LINTSTUB: Func: void probeintr(void) */
 NENTRY(probeintr)
 	ss
 	incl	_C_LABEL(npx_intrs_while_probing)
@@ -2703,12 +2677,14 @@ NENTRY(probeintr)
 	popl	%eax
 	iret
 
+/* LINTSTUB: Func: void probetrap(void) */
 NENTRY(probetrap)
 	ss
 	incl	_C_LABEL(npx_traps_while_probing)
 	fnclex
 	iret
 
+/* LINTSTUB: Func: int npx586bug1(int a, int b) */
 NENTRY(npx586bug1)
 	fildl	4(%esp)		# x
 	fildl	8(%esp)		# y

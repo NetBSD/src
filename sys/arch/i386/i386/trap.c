@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.2 2001/04/09 01:53:34 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.3 2001/06/21 19:25:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
 #include "opt_cputype.h"
@@ -175,6 +176,7 @@ trap(frame)
 	struct pcb *pcb = NULL;
 	extern char fusubail[],
 		    resume_iret[], resume_pop_ds[], resume_pop_es[],
+		    resume_pop_fs[], resume_pop_gs[],
 		    IDTVEC(osyscall)[];
 	struct trapframe *vframe;
 	int resume;
@@ -254,6 +256,21 @@ copyfault:
 		 * specific instructions we recognize only happen when
 		 * returning from a trap, syscall, or interrupt.
 		 *
+		 * At this point, there are (at least) two trap frames on
+		 * the kernel stack; we presume here that we faulted while
+		 * loading our registers out of the outer one.
+		 *
+		 * The inner frame does not involve a ring crossing, so it
+		 * ends right before &frame.tf_esp.  The outer frame has
+		 * been partially consumed by the INTRFASTEXIT; exactly
+		 * how much depends which register we were popping when we
+		 * faulted, so we compute the outer frame address based on
+		 * register-dependant offsets computed from &frame.tf_esp
+		 * below.  To decide whether this was a kernel-mode or
+		 * user-mode error, we look at this outer frame's tf_cs
+		 * and tf_eflags, which are (fortunately) not consumed until
+		 * the final instruction of INTRFASTEXIT.
+		 *
 		 * XXX
 		 * The heuristic used here will currently fail for the case of
 		 * one of the 2 pop instructions faulting when returning from a
@@ -264,16 +281,33 @@ copyfault:
 		 */
 		switch (*(u_char *)frame.tf_eip) {
 		case 0xcf:	/* iret */
-			vframe = (void *)((int)&frame.tf_esp - 44);
+			vframe = (void *)((int)&frame.tf_esp -
+			    offsetof(struct trapframe, tf_eip));
 			resume = (int)resume_iret;
 			break;
 		case 0x1f:	/* popl %ds */
-			vframe = (void *)((int)&frame.tf_esp - 4);
+			vframe = (void *)((int)&frame.tf_esp -
+			    offsetof(struct trapframe, tf_ds));
 			resume = (int)resume_pop_ds;
 			break;
 		case 0x07:	/* popl %es */
-			vframe = (void *)((int)&frame.tf_esp - 0);
+			vframe = (void *)((int)&frame.tf_esp -
+			    offsetof(struct trapframe, tf_es));
 			resume = (int)resume_pop_es;
+			break;
+		case 0x0f:	/* 0x0f prefix */
+			switch (*(u_char *)(frame.tf_eip+1)) {
+			case 0xa1:		/* popl %fs */
+				vframe = (void *)((int)&frame.tf_esp - 
+				    offsetof(struct trapframe, tf_fs));
+				resume = (int)resume_pop_fs;
+				break;
+			case 0xa9:		/* popl %gs */
+				vframe = (void *)((int)&frame.tf_esp -
+				    offsetof(struct trapframe, tf_gs));
+				resume = (int)resume_pop_gs;
+				break;
+			}
 			break;
 		default:
 			goto we_re_toast;
@@ -296,12 +330,12 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
-		trapsignal(l, SIGBUS, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGBUS, type & ~T_USER);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		trapsignal(l, SIGILL, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGILL, type & ~T_USER);
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
@@ -323,12 +357,12 @@ copyfault:
 				goto trace;
 			return;
 		}
-		trapsignal(l, rv, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, rv, type & ~T_USER);
 		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		trapsignal(l, SIGKILL, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGKILL, type & ~T_USER);
 		goto out;
 #endif
 	}
@@ -336,11 +370,11 @@ copyfault:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		trapsignal(l, SIGFPE, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGFPE, type & ~T_USER);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
-		trapsignal(l, SIGFPE, frame.tf_err);
+		(*p->p_emul->e_trapsignal)(l, SIGFPE, frame.tf_err);
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
@@ -363,9 +397,9 @@ copyfault:
 	case T_PAGEFLT|T_USER: {	/* page fault */
 		register vaddr_t va;
 		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		register struct vm_map *map;
 		vm_prot_t ftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 		unsigned nss;
 
 		if (vm == NULL)
@@ -443,9 +477,9 @@ copyfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(l, SIGKILL, T_PAGEFLT);
 		} else {
-			trapsignal(l, SIGSEGV, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(l, SIGSEGV, T_PAGEFLT);
 		}
 		break;
 	}
@@ -465,7 +499,7 @@ copyfault:
 #ifdef MATH_EMULATE
 	trace:
 #endif
-		trapsignal(l, SIGTRAP, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(l, SIGTRAP, type & ~T_USER);
 		break;
 
 #if	NISA > 0 || NMCA > 0

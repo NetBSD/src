@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.1 2001/03/05 22:49:17 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.2 2001/06/21 19:26:01 nathanw Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -63,6 +63,7 @@
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>
+#include <machine/pio.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -99,11 +100,6 @@
 #define	fp_divide_by_0()	__asm("fldz; fld1; fdiv %st,%st(1); fwait")
 #define	frstor(addr)		__asm("frstor %0" : : "m" (*addr))
 #define	fwait()			__asm("fwait")
-#define	read_eflags()		({register u_long ef; \
-				  __asm("pushfl; popl %0" : "=r" (ef)); \
-				  ef;})
-#define	write_eflags(x)		({register u_long ef = (x); \
-				  __asm("pushl %0; popfl" : : "r" (ef));})
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
