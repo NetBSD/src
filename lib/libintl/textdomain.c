@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.6 2001/12/09 11:11:01 yamt Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.7 2003/03/09 01:02:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: textdomain.c,v 1.6 2001/12/09 11:11:01 yamt Exp $");
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: textdomain.c,v 1.7 2003/03/09 01:02:35 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
