@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.6 2000/10/10 12:02:46 lukem Exp $
+.\"	$NetBSD: macros,v 1.7 2000/10/10 22:03:42 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,13 +175,26 @@
 .
 .define_all \*[MACHINE_LIST]
 .
+.\" Supported CPUs:
+.\"	alpha arm26 arm32 i386 m68k mips pc532 powerpc sh3 sparc sparc64 vax
+.\" Define registers for MACHINE_ARCHs with multiple MACHINEs
+.
+.ds A \*M
+.if \n[amiga]:\n[atari]:\n[hp300]:\n[luna68k]:\n[mac68k]:\n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .ds A m68k
+.if \n[arc]:\n[cobolt]:\n[hpcmips]:\n[newsmips]:\n[pmax]:\n[sgimips] .ds A mips
+.if \n[amigappc]:\n[bebox]:\n[macppc]:\n[ofppc]:\n[prep] .ds A powerpc
+.if \n[evbsh3]:\n[mmeye] .ds A sh3
+.if !r\*A .nr \*A 1
+.
+.
 .\" Define _ versions, sometimes these look better as with .if r_xxx
 .
-.nr _FOR_RELEASE \n[FOR_RELEASE]
 .nr _\*M 1
+.nr _\*A 1
 .
 .\" Other strings available:
 .\"
 .\"	\*M		${MACHINE} (e.g, `i386')
+.\"	\*A		${MACHINE_ARCH} (e.g, `m68k')
 .\"	\*V		Version (e.g, `1.5')
 .\"	\*[.CURDIR]	${.CURDIR}
