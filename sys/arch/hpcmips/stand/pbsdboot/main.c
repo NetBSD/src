@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.40 2000/04/23 10:20:50 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2000/05/20 07:11:25 takemura Exp $	*/
 
 /*-
- * Copyright (c) 1999 Shin Takemura.
+ * Copyright (c) 1999, 2000 Shin Takemura.
  * All rights reserved.
  *
  * This software is part of the PocketBSD.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.13.3 2000.04.23\r\n")
+	TEXT("Version 1.13.4 2000.05.20\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -206,6 +206,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("Mobile Pro 770"), BIFB_D16_0000,
 		640, 240, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_520A },
+	{ TEXT("Mobile Pro 780"), BIFB_D16_0000,
+		640, 240, 1280, 0xa180100,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530A },
 	{ TEXT("MobileGearII MC-R700"), BIFB_D16_0000,
 		800, 600, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_700 },
@@ -215,12 +218,18 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC/R730"), BIFB_D16_0000,
 		800, 600, 1600, 0xa0ea600,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_730 },
+	{ TEXT("Mobile Pro 880"), BIFB_D16_0000,
+		800, 600, 1600, 0xa0ea600,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_730A },
 	{ TEXT("Tripad PV-6000"), BIFB_D8_00,
 		640, 480, 640, 0xa000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_SHARP_TRIPAD_PV6000 },
-	{ TEXT("Vadem Clio"), BIFB_D8_00,
+	{ TEXT("Vadem Clio C-1000"), BIFB_D8_00,
 		640, 480, 640, 0xa000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_SHARP_TRIPAD_PV6000 },
+	{ TEXT("Vadem Clio C-1050"), BIFB_D16_FFFF,
+		640, 480, 1280, 0xa200000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_SHARP_TRIPAD_PV6000 },
 	{ TEXT("E-55"), BIFB_D2_M2L_0,
 		240, 320, 256, 0xa000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_CASIO_CASSIOPEIAE_E55 },
