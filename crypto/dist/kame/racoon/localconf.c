@@ -1,4 +1,4 @@
-/*	$KAME: localconf.c,v 1.31 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: localconf.c,v 1.32 2001/06/01 08:26:05 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -37,6 +37,7 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <err.h>
 
 #include "var.h"
 #include "misc.h"
@@ -49,11 +50,11 @@
 #include "isakmp_var.h"
 #include "isakmp.h"
 #include "ipsec_doi.h"
-#include "admin_var.h"
 #include "grabmyaddr.h"
 #include "vendorid.h"
 #include "str2val.h"
 #include "safefile.h"
+#include "admin.h"
 #include "gcmalloc.h"
 
 struct localconf *lcconf;
@@ -65,18 +66,12 @@ void
 initlcconf()
 {
 	lcconf = racoon_calloc(1, sizeof(*lcconf));
-	if (lcconf == NULL) {
-		fprintf(stderr, "failed to allocate local conf\n");
-		exit(1);
-		/*NOTREACHED*/
-	}
+	if (lcconf == NULL)
+		errx(1, "failed to allocate local conf.");
 
 	lcconf->algstrength = initalgstrength();
-	if (lcconf->algstrength == NULL) {
-		fprintf(stderr, "failed to allocate algorithm strength\n");
-		exit(1);
-		/*NOTREACHED*/
-	}
+	if (lcconf->algstrength == NULL)
+		errx(1, "failed to allocate algorithm strength.");
 
 	setdefault();
 
@@ -109,7 +104,6 @@ setdefault()
 {
 	lcconf->autograbaddr = 1;
 	lcconf->port_isakmp = PORT_ISAKMP;
-	lcconf->port_admin = PORT_ADMIN;
 	lcconf->default_af = AF_INET;
 	lcconf->pad_random = LC_DEFAULT_PAD_RANDOM;
 	lcconf->pad_randomlen = LC_DEFAULT_PAD_RANDOMLEN;

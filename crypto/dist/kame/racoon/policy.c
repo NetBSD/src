@@ -1,4 +1,4 @@
-/*	$KAME: policy.c,v 1.39 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: policy.c,v 1.40 2001/06/27 15:55:57 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -321,6 +321,40 @@ delsp(sp)
 	}
 	
 	racoon_free(sp);
+}
+
+void
+delsp_bothdir(spidx0)
+	struct policyindex *spidx0;
+{
+	struct policyindex spidx;
+	struct secpolicy *sp;
+	struct sockaddr_storage addr;
+	u_int8_t pref;
+
+	memcpy(&spidx, spidx0, sizeof(spidx));
+
+	sp = getsp(&spidx);
+	if (sp) {
+		remsp(sp);
+		delsp(sp);
+	}
+
+	spidx.dir = spidx.dir == IPSEC_DIR_OUTBOUND
+			? IPSEC_DIR_INBOUND
+			: IPSEC_DIR_OUTBOUND ;
+	addr = spidx.src;
+	spidx.src = spidx.dst;
+	spidx.dst = addr;
+	pref = spidx.prefs;
+	spidx.prefs = spidx.prefd;
+	spidx.prefd = pref;
+
+	sp = getsp(&spidx);
+	if (sp) {
+		remsp(sp);
+		delsp(sp);
+	}
 }
 
 void
