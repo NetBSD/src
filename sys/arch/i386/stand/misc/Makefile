@@ -1,31 +1,18 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/03 15:34:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/04/02 08:54:04 lukem Exp $
 
-MISCFILES=	pfdisk.doc pfdisk.exe pfdisktc.zip \
+MISC_FILES=	rawrite.c
+UUDECODE_FILES=	pfdisk.doc pfdisk.exe pfdisktc.zip \
 		rawr32.zip rawr32src.zip \
-		rawrite.c rawrite.doc rawrite.exe
+		rawrite.doc rawrite.exe
 
-CLEANFILES=	${MISCFILES:M*.exe} ${MISCFILES:M*.doc}
-
+.include <bsd.files.mk>
 .include <bsd.hostprog.mk>
 
-.SUFFIXES: .gze .exe .txt .doc
-
-# Extract gzipped plain executables.
-.gze.exe:
-	gzip -dc $< >$@
-
-# Convert Unix (LF) to DOS (CR-LF) line-ending.
-.txt.doc:
-	awk '{printf "%s\r\n", $$0}' $< >$@
-
-realall: ${MISCFILES}
-
-.ifndef RELEASEDIR
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-release: ${MISCFILES}
-	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} \
+release: check_RELEASEDIR .WAIT ${MISC_FILES} ${UUDECODE_FILES}
+	${_MKMSG_INSTALL} ${MISC_FILES}
+	cd ${.CURDIR} && \
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${MISC_FILES} \
 	    ${RELEASEDIR}/${MACHINE}/installation/misc
-.endif
+	${_MKMSG_INSTALL} ${UUDECODE_FILES}
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${UUDECODE_FILES} \
+	    ${RELEASEDIR}/${MACHINE}/installation/misc
