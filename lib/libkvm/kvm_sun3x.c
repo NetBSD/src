@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3x.c,v 1.3 1997/07/17 22:42:00 gwr Exp $	*/
+/*	$NetBSD: kvm_sun3x.c,v 1.4 1997/08/15 02:22:04 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,11 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_sun3x.c,v 1.3 1997/07/17 22:42:00 gwr Exp $";
+__RCSID("$NetBSD: kvm_sun3x.c,v 1.4 1997/08/15 02:22:04 mikel Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
