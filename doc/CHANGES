@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.219 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.220 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -514,7 +514,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		for better performance. [provos 20031023]
 	MAKEDEV: platform device creation script is now generated from
 		unified template driven by platform config file and
-		MD device major lists. [dolecek 20031024] 
+		MD device major lists. [jdolecek 20031024] 
 	build.sh: Add '-N noisyness', to control how "noisy" the build is.
 		[lukem 20031025]
 	amiga: Add polish wscons keymaps. From Pawel Chwalowski in PR 22961. 
