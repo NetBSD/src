@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 1997/09/19 13:55:26 leo Exp $ */
+/*	$NetBSD: param.h,v 1.31 1997/09/20 12:10:09 leo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,7 +123,7 @@ extern int nbpg, pgofset, pgshift;
 #endif
 #endif
 
-#define MSGBUFSIZE	(4096 - 3 * sizeof(long))
+#define MSGBUFSIZE	(4096 - 4 * sizeof(long))
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages.
