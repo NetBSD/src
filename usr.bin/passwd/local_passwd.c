@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.20 2000/07/06 11:19:39 ad Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.21 2000/09/21 11:11:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.20 2000/07/06 11:19:39 ad Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.21 2000/09/21 11:11:49 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: local_passwd.c,v 1.20 2000/07/06 11:19:39 ad Exp $");
 
 #include "extern.h"
 
-static	char   *getnewpasswd __P((struct passwd *, int));
+static	char   *getnewpasswd __P((struct passwd *, int, int));
 
 static uid_t uid;
 static int force_local;
@@ -67,9 +67,10 @@ static int force_local;
 char *tempname;
 
 static char *
-getnewpasswd(pw, min_pw_len)
+getnewpasswd(pw, min_pw_len, oldexpires)
 	struct passwd *pw;
 	int min_pw_len;
+	int oldexpires;
 {
 	int tries;
 	char *p, *t;
@@ -91,7 +92,13 @@ getnewpasswd(pw, min_pw_len)
 			pw_error(NULL, 0, 0);
 		}
 		if (min_pw_len > 0 && strlen(p) < min_pw_len) {
-			(void) printf("Password is too short.\n");
+			(void)printf("Password is too short.\n");
+			continue;
+		}
+		if (uid && oldexpires && pw->pw_passwd[0] &&
+		    !strcmp(crypt(p, pw->pw_passwd), pw->pw_passwd)) {
+			(void)printf("This password has expired or will"
+			    " expire soon. Set a different password.\n");
 			continue;
 		}
 		if (strlen(p) <= 5 && ++tries < 2) {
@@ -164,10 +171,12 @@ local_chpw(uname)
 	int pfd, tfd;
 	int min_pw_len = 0;
 	int pw_expiry  = 0;
+	int oldexpires = 0;
+	time_t pw_warntime = _PASSWORD_WARNDAYS * 60*60*24;
 #ifdef LOGIN_CAP
 	login_cap_t *lc;
 #endif
-	
+
 	if (!(pw = getpwnam(uname))) {
 		warnx("unknown user %s", uname);
 		return (1);
@@ -189,11 +198,17 @@ local_chpw(uname)
 	if((lc = login_getclass(pw->pw_class))) {
 		min_pw_len = (int) login_getcapnum(lc, "minpasswordlen", 0, 0);
 		pw_expiry  = (int) login_getcaptime(lc, "passwordtime", 0, 0);
+	        pw_warntime = login_getcaptime(lc, "password-warn", pw_warntime,
+	            pw_warntime);
 		login_close(lc);
 	}
 #endif
 
-	pw->pw_passwd = getnewpasswd(pw, min_pw_len);
+	if (pw->pw_change)
+		oldexpires = (pw->pw_change == _PASSWORD_CHGNOW ||
+		    pw->pw_change <= time(NULL) + pw_warntime);
+
+	pw->pw_passwd = getnewpasswd(pw, min_pw_len, oldexpires);
 	pw->pw_change = pw_expiry ? pw_expiry + time(NULL) : 0;
 
 	/*
