@@ -1,4 +1,4 @@
-/*	$NetBSD: start_pxe.S,v 1.1 2003/10/09 09:42:25 dsl Exp $	*/
+/*	$NetBSD: start_pxe.S,v 1.2 2003/10/09 10:36:26 dsl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,18 +43,24 @@
  */
 
 #include <machine/asm.h>
+#include <sys/bootblock.h>
 
 	.text
 ENTRY(start)
 	.code16
+	/* Boot parameter area in same format as boot and bootxx */
+	jmp	1f
+	.balign 4
+	.long	X86_BOOT_MAGIC_PXE
+bootparams:
+	.long	1f - bootparams
+#include <boot_params.S>
+	.space	4 * 4			/* some spare */
+1:
 	# start is loaded at 0x0:0x7c00 but we want 0x7c0:0x0
 	# ljmp to the next instruction to adjust %cs
-	ljmp	$0x7c0, $start1
-
-	# Our stack		XXX probably not!
-	.space	1024
-
-start1:
+	ljmp	$0x7c0, $2f
+2:
 	# set up %ds
 	xorl	%eax, %eax
 	mov	%cs, %ax
@@ -64,23 +70,7 @@ start1:
 	mov	%ax, %ss
 	movl	$0xfffc, %esp		/* stack at top of 64k segment */
 
-	movl	%eax, _C_LABEL(ourseg)
-	shll	$4, %eax
-
-	/* fix up GDT entries for bootstrap */
-#define	FIXUP(gdt_index) \
-	movw	%ax, gdt+gdt_index+2;	\
-	movb	%bl, gdt+gdt_index+4
-
-	shldl	$16, %eax, %ebx
-
-	FIXUP(bootcodeseg)
-	FIXUP(bootrealseg)
-	FIXUP(bootdataseg)
-
-	/* fix up GDT pointer */
-	addl	$gdt, %eax
-	movl	%eax, gdtarg+2
+	call	gdt_fixup
 
 	/* change to protected mode */
 	calll	_C_LABEL(real_to_prot)
@@ -115,290 +105,10 @@ _C_LABEL(exit):
 	/* call ROM BASIC */
 	int	$0x18
 #else
+10:
 	cli
 	hlt
+	jmp	10b
 #endif
 
 efail:	.asciz		"Boot fail\r\n"
-
-ENTRY(ourseg)
-	.long	0
-
-/**************************************************************************
-GLOBAL DESCRIPTOR TABLE
-**************************************************************************/
-#ifdef __ELF__
-	.align	16
-#else
-	.align	4
-#endif
-gdt:
-	.word	0, 0
-	.byte	0, 0x00, 0x00, 0
-
-#ifdef SUPPORT_LINUX	/* additional dummy */
-	.word	0, 0
-	.byte	0, 0x00, 0x00, 0
-#endif
-
-	/* kernel code segment */
-	.globl flatcodeseg
-flatcodeseg = . - gdt         
-	.word	0xffff, 0
-	.byte	0, 0x9f, 0xcf, 0
-
-	/* kernel data segment */
-	.globl flatdataseg
-flatdataseg = . - gdt
-	.word	0xffff, 0
-	.byte	0, 0x93, 0xcf, 0
-
-	/* boot code segment, base will be patched */
-bootcodeseg = . - gdt
-	.word	0xffff, 0
-	.byte	0, 0x9e, 0x4f, 0
-
-	/* boot data segment, base will be patched */
-bootdataseg = . - gdt
-	.word	0xffff, 0
-	.byte	0, 0x92, 0x4f, 0
-
-	/* 16 bit real mode, base will be patched */
-bootrealseg = . - gdt
-	.word	0xffff, 0
-	.byte	0, 0x9e, 0x00, 0
-
-	/* limits (etc) for data segment in real mode */
-bootrealdata = . - gdt
-	.word	0xffff, 0
-	.byte	0, 0x92, 0x00, 0
-gdtlen = . - gdt
-
-#ifdef __ELF__
-	.align	16
-#else
-	.align	4
-#endif
-gdtarg:
-	.word	gdtlen-1		/* limit */
-	.long	0			/* addr, will be inserted */
-
-CR0_PE		=	0x1
-
-/*
- * real_to_prot()
- *	transfer from real mode to protected mode.
- */
-ENTRY(real_to_prot)
-	.code16
-	# guarantee that interrupt is disabled when in prot mode 
-	cli
-	pushl	%eax
-	push	%cs			/* ensure %ds is correct */
-	pop	%ds
-
-	# load the gdtr
-	lgdt	gdtarg
-
-	# set the PE bit of CR0
-	movl	%cr0, %eax
-
-	orl	$CR0_PE, %eax
-	movl	%eax, %cr0
-
-	# make intrasegment jump to flush the processor pipeline and
-	# reload CS register   
-	ljmp	$bootcodeseg, $xprot
-
-xprot:
-	.code32
-	# we are in USE32 mode now
-	# set up the protected mode segment registers : DS, SS, ES
-	mov	$bootdataseg, %ax
-	mov	%ax, %ds
-	mov	%ax, %ss
-	mov	%ax, %es
-
-	popl	%eax
-	ret
-
-/*
- * prot_to_real()
- *	transfer from protected mode to real mode
- */
-ENTRY(prot_to_real)
-	.code32
-	pushl	%eax
-	# set up a dummy stack frame for the second seg change.
-	# Adjust the intersegment jump instruction following
-	# the clearing of protected mode bit.
-	# This is self-modifying code, but we need a writable
-	# code segment, and an intersegment return does not give us that.
-
-	movl	_C_LABEL(ourseg), %eax
-	movw	%ax, xreal-2
-
-	/*
-	 * Load the segment registers while still in protected mode.
-	 * Otherwise the control bits don't get changed.
-	 * The correct values are loaded later.
-	 */
-	movw	$bootrealdata, %ax
-	movw	%ax, %ds
-	movw	%ax, %es
-	movw	%ax, %ss
-
-	# Change to use16 mode.
-	ljmp	 $bootrealseg, $x16
-
-x16:
-	.code16
-	# clear the PE bit of CR0
-	movl	%cr0, %eax     
-	andl	$~CR0_PE, %eax
-	movl	%eax, %cr0
-	ljmp	$0, $xreal		/* segment overwritten above */
-
-xreal:
-	.code16
-	# we are in real mode now
-	# set up the real mode segment registers : DS, SS, ES
-	mov	%cs, %ax
-	mov	%ax, %ds
-	mov	%ax, %ss
-	mov	%ax, %es
-
-	sti
-	popl	%eax
-	retl
-
-/*
- * pbzero(dst, cnt)
- *	where dst is a physical address and cnt is the length
- */
-ENTRY(pbzero)
-	.code32
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%es
-	pushl	%edi
-
-	cld
-
-	# set %es to point at the flat segment
-	movl	$flatdataseg, %eax
-	mov	%ax, %es
-
-	movl	8(%ebp), %edi		# destination
-	movl	12(%ebp), %ecx		# count
-	xorl	%eax, %eax		# value
-
-	rep
-	stosb
-
-	popl	%edi
-	popl	%es
-	popl	%ebp
-	ret
-
-/*
- * vpbcopy(src, dst, cnt)
- *	where src is a virtual address and dst is a physical address
- */
-ENTRY(vpbcopy)
-	.code32
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%es
-	pushl	%esi
-	pushl	%edi
-
-	cld
-
-	# set %es to point at the flat segment
-	movl	$flatdataseg, %eax
-	mov	%ax, %es
-
-	movl	8(%ebp), %esi		# source
-	movl	12(%ebp), %edi		# destination
-	movl	16(%ebp), %ecx		# count
-
-	rep
-	movsb
-
-	popl	%edi
-	popl	%esi
-	popl	%es
-	popl	%ebp
-	ret
-
-/*
- * pvbcopy(src, dst, cnt)
- *	where src is a physical address and dst is a virtual address
- */
-ENTRY(pvbcopy)
-	.code32
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ds
-	pushl	%esi
-	pushl	%edi
-
-	cld
-
-	# set %ds to point at the flat segment
-	movl	$flatdataseg, %eax
-	mov	%ax, %ds
-
-	movl	8(%ebp), %esi		# source
-	movl	12(%ebp), %edi		# destination
-	movl	16(%ebp), %ecx		# count
-
-	rep
-	movsb
-
-	popl	%edi
-	popl	%esi
-	popl	%ds
-	popl	%ebp
-	ret
-
-ENTRY(vtophys)
-	movl	_C_LABEL(ourseg), %eax
-	shll	$4, %eax
-	addl	4(%esp), %eax
-	ret
-
-/*
- * message: write the error message in %ds:%esi to the console
- */
-message:
-	.code16
-/*
- * BIOS call "INT 10H Function 0Eh" to write character to console
- *	Call with	%ah = 0x0e
- *			%al = character
- *			%bh = page
- *			%bl = foreground color
- */
-	pushl	%eax
-	pushl	%ebx
-	pushl	%edx
-
-nextb:
-	cld
-	lodsb			# load a byte into %al
-	testb	%al, %al
-	jz	done
-
-	movb	$0x0e, %ah
-	movw	$0x0001, %bx
-	int	$0x10
-
-	jmp	nextb
-
-done:
-	popl	%edx
-	popl	%ebx
-	popl	%eax
-	ret
