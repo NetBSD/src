@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.49 1999/06/22 00:57:06 cgd Exp $	*/
+/*	$NetBSD: net.c,v 1.50 1999/06/22 18:47:07 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -266,7 +266,6 @@ config_network()
 	if (network_up)
 		return (1);
 
-	network_up = 1;
 	net_devices[0] = '\0';
 	get_ifconfig_info();
 	if (strlen(net_devices) == 0) {
@@ -275,6 +274,8 @@ config_network()
 		process_menu(MENU_ok);
 		return (-1);
 	}
+	network_up = 1;
+
 	strncpy(defname, net_devices, 255);
 	tp = defname;
 	strsep(&tp, " ");
@@ -436,7 +437,9 @@ get_via_ftp()
 	char filename[SSTRSIZE];
 	int  ret;
 
-	while (!config_network()) {
+	while ((ret = config_network()) <= 0) {
+		if (ret < 0)
+			return (-1);
 		msg_display(MSG_netnotup);
 		process_menu(MENU_yesno);
 		if (!yesno)
@@ -518,8 +521,11 @@ get_via_ftp()
 int
 get_via_nfs()
 {
+	int ret;
 
-        while (!config_network()) {
+        while ((ret = config_network()) <= 0) {
+		if (ret < 0)
+			return (-1);
                 msg_display(MSG_netnotup);
                 process_menu(MENU_yesno);
                 if (!yesno)
