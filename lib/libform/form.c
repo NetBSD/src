@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.9 2001/06/13 10:45:58 wiz Exp $	*/
+/*	$NetBSD: form.c,v 1.10 2001/07/08 13:02:29 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -433,7 +433,7 @@ int
 form_page(FORM *form)
 {
 	if (form == NULL)
-		return -1;
+		return E_BAD_ARGUMENT;
 
 	return form->page;
 }
@@ -457,6 +457,8 @@ set_current_field(FORM *form, FIELD *field)
 		return E_INVALID_FIELD; /* field is not of this form */
 
 	form->cur_field = field->index;
+
+	  /* XXX update page if posted??? */
 	return E_OK;
 }
 
@@ -542,7 +544,8 @@ data_ahead(FORM *form)
 		return FALSE;
 
 	cur = form->fields[form->cur_field];
-	
+
+	  /*XXXX wrong */
 	if (cur->lines[cur->start_line + cur->cursor_ypos].length > cur->cols)
 		return TRUE;
 
