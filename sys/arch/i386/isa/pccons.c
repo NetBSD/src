@@ -52,7 +52,7 @@
  *					cleanup, removed ctl-alt-del.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.11 1993/04/22 07:56:23 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.12 1993/04/22 20:20:56 mycroft Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -137,7 +137,9 @@ static unsigned int addr_6845 = MONO_BASE;
 u_short *Crtat = (u_short *)MONO_BUF;
 static openf;
 
-char *sgetc(int);
+static char *sgetc __P((int));
+static sputc __P((u_char, u_char));
+
 static	char	*more_chars;
 static	int	char_count;
 
@@ -154,6 +156,7 @@ int	pcstart();
 int	pcparam();
 int	ttrstrt();
 char	partab[];
+
 
 extern pcopen(dev_t, int, int, struct proc *);
 /*
@@ -468,7 +471,7 @@ pcstart(tp)
 	while(len = rb_read(rbp, buf, sizeof(buf))) {
 		int n;
 		for (n = 0; n < len; n++)
-			if (buf[n]) sput(buf[n], 0);
+			if (buf[n]) sputc(buf[n], 0);
 	}
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
@@ -521,8 +524,8 @@ pccnputc(dev, c)
 	char c;
 {
 	if (c == '\n')
-		sput('\r', 1);
-	sput(c, 1);
+		sputc('\r', 1);
+	sputc(c, 1);
 }
 
 /*
@@ -532,7 +535,7 @@ pcputchar(c, tp)
 	char c;
 	register struct tty *tp;
 {
-	sput(c, 1);
+	sputc(c, 1);
 	/*if (c=='\n') getchar();*/
 }
 
@@ -646,12 +649,15 @@ static char bgansitopc[] =
 	BG_MAGENTA, BG_CYAN, BG_LIGHTGREY};
 
 /*
- *   sput has support for emulation of the 'pc3' termcap entry.
+ *   sputc has support for emulation of the 'pc3' termcap entry.
  *   if ka, use kernel attributes.
  */
-sput(c,  ka)
-u_char c;
-u_char ka;
+#ifdef __STDC__
+static sputc(u_char c, u_char ka)
+#else
+static sputc(c, ka)
+	u_char c, ka;
+#endif
 {
 
 	int sc = 1;	/* do scroll check */
@@ -1631,30 +1637,30 @@ getchar()
 
 	pcconsoftc.cs_flags |= CSF_POLLING;
 	x = splhigh();
-	sput('>', 1);
+	sputc('>', 1);
 	/*while (1) {*/
 		thechar = *(sgetc(0));
 		pcconsoftc.cs_flags &= ~CSF_POLLING;
 		splx(x);
 		switch (thechar) {
 		    default: if (thechar >= ' ')
-			     	sput(thechar, 1);
+			     	sputc(thechar, 1);
 			     return(thechar);
 		    case cr:
-		    case lf: sput('\r', 1);
-		    		sput('\n', 1);
+		    case lf: sputc('\r', 1);
+		    		sputc('\n', 1);
 			     return(lf);
 		    case bs:
 		    case del:
-			     sput('\b', 1);
-			     sput(' ', 1);
-			     sput('\b', 1);
+			     sputc('\b', 1);
+			     sputc(' ', 1);
+			     sputc('\b', 1);
 			     return(thechar);
 		    case cntlc:
-			     sput('^', 1) ; sput('C', 1) ; sput('\r', 1) ; sput('\n', 1) ;
+			     sputc('^', 1) ; sputc('C', 1) ; sputc('\r', 1) ; sputc('\n', 1) ;
 			     cpu_reset();
 		    case cntld:
-			     sput('^', 1) ; sput('D', 1) ; sput('\r', 1) ; sput('\n', 1) ;
+			     sputc('^', 1) ; sputc('D', 1) ; sputc('\r', 1) ; sputc('\n', 1) ;
 			     return(0);
 		}
 	/*}*/
