@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.48 2001/09/10 21:19:09 chris Exp $ */
+/* $NetBSD: bus_dma.c,v 1.49 2002/04/26 04:15:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.48 2001/09/10 21:19:09 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2002/04/26 04:15:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
+	map->_dm_window = NULL;
 
 	*dmamp = map;
 	return (0);
@@ -250,6 +251,7 @@ _bus_dmamap_load_direct(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_window = t;
 	} else if (t->_next_window != NULL) {
 		/*
 		 * Give the next window a chance.
@@ -296,6 +298,7 @@ _bus_dmamap_load_mbuf_direct(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_window = t;
 	} else if (t->_next_window != NULL) {
 		/*
 		 * Give the next window a chance.
@@ -357,6 +360,7 @@ _bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_window = t;
 	} else if (t->_next_window != NULL) {
 		/*
 		 * Give the next window a chance.
@@ -391,6 +395,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_window = NULL;
 }
 
 /*
