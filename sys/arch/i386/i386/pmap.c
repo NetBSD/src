@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2000/09/07 06:06:52 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2000/09/07 17:20:59 thorpej Exp $	*/
 
 /*
  *
@@ -63,6 +63,7 @@
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_largepages.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,6 +305,15 @@ int nkpde = NKPTP;
  */
 
 int pmap_pg_g = 0;
+
+#ifdef LARGEPAGES
+/*
+ * pmap_largepages: if our processor supports PG_PS and we are
+ * using it, this is set to TRUE.
+ */
+
+int pmap_largepages;
+#endif
 
 /*
  * i386 physical memory comes in a big contig chunk with a small
@@ -617,6 +627,11 @@ pmap_kenter_pa(va, pa, prot)
 	else
 		pte = kvtopte(va);
 	opte = *pte;
+#ifdef LARGEPAGES
+	/* XXX For now... */
+	if (opte & PG_PS)
+		panic("pmap_kenter_pa: PG_PS");
+#endif
 	*pte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
 		PG_V | pmap_pg_g;	/* zap! */
 	if (pmap_valid_entry(opte))
@@ -647,6 +662,11 @@ pmap_kremove(va, len)
 			pte = vtopte(va);
 		else
 			pte = kvtopte(va);
+#ifdef LARGEPAGES
+		/* XXX For now... */
+		if (*pte & PG_PS)
+			panic("pmap_kremove: PG_PS");
+#endif
 #ifdef DIAGNOSTIC
 		if (*pte & PG_PVLIST)
 			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n",
@@ -688,6 +708,11 @@ pmap_kenter_pgs(va, pgs, npgs)
 		else
 			pte = kvtopte(tva);
 		opte = *pte;
+#ifdef LARGEPAGES
+		/* XXX For now... */
+		if (opte & PG_PS)
+			panic("pmap_kenter_pgs: PG_PS");
+#endif
 		*pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V | pmap_pg_g;
 #if defined(I386_CPU)
 		if (cpu_class == CPUCLASS_386) {
@@ -821,6 +846,49 @@ pmap_bootstrap(kva_start)
 			if (pmap_valid_entry(PTE_BASE[i386_btop(kva)]))
 				PTE_BASE[i386_btop(kva)] |= PG_G;
 	}
+
+#ifdef LARGEPAGES
+	/*
+	 * enable large pages of they are supported.
+	 */
+
+	if (cpu_feature & CPUID_PSE) {
+		paddr_t pa;
+		vaddr_t kva_end;
+		pd_entry_t *pde;
+		extern char _etext;
+
+		lcr4(rcr4() | CR4_PSE);	/* enable hardware (via %cr4) */
+		pmap_largepages = 1;	/* enable software */
+
+		/*
+		 * the TLB must be flushed after enabling large pages
+		 * on Pentium CPUs, according to section 3.6.2.2 of
+		 * "Intel Architecture Software Developer's Manual,
+		 * Volume 3: System Programming".
+		 */
+		tlbflush();
+
+		/*
+		 * now, remap the kernel text using large pages.  we
+		 * assume that the linker has properly aligned the
+		 * .data segment to a 4MB boundary.
+		 */
+		kva_end = roundup((vaddr_t)&_etext, NBPD);
+		for (pa = 0, kva = KERNBASE; kva < kva_end;
+		     kva += NBPD, pa += NBPD) {
+			pde = &kpm->pm_pdir[pdei(kva)];
+			*pde = pa | pmap_pg_g | PG_PS |
+#ifdef DDB
+			    PG_KW |
+#else
+			    PG_KR |
+#endif
+			    PG_V;	/* zap! */
+			tlbflush();
+		}
+	}
+#endif
 
 	/*
 	 * now we allocate the "special" VAs which are used for tmp mappings
@@ -2018,11 +2086,13 @@ pmap_extract(pmap, va, pap)
 	pd_entry_t pde;
 
 	if (__predict_true((pde = pmap->pm_pdir[pdei(va)]) != 0)) {
+#ifdef LARGEPAGES
 		if (pde & PG_PS) {
 			if (pap != NULL)
 				*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
 			return (TRUE);
 		}
+#endif
 
 		ptes = pmap_map_ptes(pmap);
 		pte = ptes[i386_btop(va)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.7 2000/06/29 08:44:51 mrg Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.8 2000/09/07 17:20:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_largepages.h"
 
 #if defined(DDB)
 #error "Can't build DDB and KGDB together."
@@ -108,7 +109,12 @@ kgdb_acc(va, len)
 		pte = kvtopte(va);
 		if ((*pte & PG_V) == 0)
 			return (0);
-		va  += NBPG;
+#ifdef LARGEPAGES
+		if (*pte & PG_PS)
+			va = (va & PG_LGFRAME) + NBPD;
+		else
+#endif
+			va += NBPG;
 	} while (va < last_va);
 
 	return (1);
