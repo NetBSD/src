@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.5 1997/10/19 05:04:04 lukem Exp $	*/
+/*	$NetBSD: vars.c,v 1.6 1998/10/08 17:36:56 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vars.c,v 1.5 1997/10/19 05:04:04 lukem Exp $");
+__RCSID("$NetBSD: vars.c,v 1.6 1998/10/08 17:36:56 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ assign(name, value)
 		variables[h] = vp;
 	}
 	else
-		vfree(vp->v_value);
+                v_free(vp->v_value);
 	vp->v_value = vcopy(value);
 }
 
@@ -80,7 +80,7 @@ assign(name, value)
  * Thus, we cannot free same!
  */
 void
-vfree(cp)
+v_free(cp)
 	char *cp;
 {
 	if (*cp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1998/07/26 22:07:27 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1998/10/08 17:36:55 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.9 1998/07/26 22:07:27 mycroft Exp $
+ *	$NetBSD: extern.h,v 1.10 1998/10/08 17:36:55 wsanchez Exp $
  */
 
 struct name;
@@ -256,7 +256,7 @@ int	 unread __P((void *));
 void	 unregister_file __P((FILE *));
 int	 unset __P((void *));
 int	 unstack __P((void));
-void	 vfree __P((char *));
+void	 v_free __P((char *));
 int	 visual __P((void *));
 int	 wait_child __P((int));
 int	 wait_command __P((int));
