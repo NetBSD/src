@@ -74,4 +74,6 @@
 ./usr/lib/libtelnet_pic.a
 ./usr/lib/libtermcap_pic.a
 ./usr/lib/libutil_pic.a
+./usr/lib/libwrap_pic.a
+./usr/lib/libz_pic.a
 ./usr/lib/scrt0.o
