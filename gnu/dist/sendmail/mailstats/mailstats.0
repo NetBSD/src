@@ -1,12 +1,14 @@
-MAILSTATS(8)                                         MAILSTATS(8)
 
+
+
+MAILSTATS(8)                                         MAILSTATS(8)
 
 
 NNAAMMEE
        mailstats - display mail statistics
 
 SSYYNNOOPPSSIISS
-       mmaaiillssttaattss [--oo] [--pp] [--CC _c_f_f_i_l_e] [--ff _s_t_f_i_l_e]
+       mmaaiillssttaattss [--cc] [--oo] [--pp] [--PP] [--CC _c_f_f_i_l_e] [--ff _s_t_f_i_l_e]
 
 DDEESSCCRRIIPPTTIIOONN
        The  mmaaiillssttaattss  utility  displays the current mail statis-
@@ -30,16 +32,22 @@ DDEESSCCRRIIPPTTIIOONN
        the mailers is displayed (preceded with  a  ``T''),  sepa-
        rated  from  the previous information by a line containing
        only equals (``='')  characters.   Another  line  preceded
-       with a ``C'' lists the number of connections.
+       with a ``C'' lists the number of TCP connections.
 
        The options are as follows:
 
        --CC     Read  the  specified  file  instead  of the default
               sseennddmmaaiill configuration file.
 
-       --ff     Read the specified statistics file instead  of  the
-              statistics  file specified in the sseennddmmaaiill configu-
+       --cc     Try to use submit.cf instead of the  default  sseenndd--
+              mmaaiill configuration file.
+
+       --ff     Read  the  specified statistics file instead of the
+              statistics file specified in the sseennddmmaaiill  configu-
               ration file.
+
+       --PP     Output information in program-readable mode without
+              clearing statistics.
 
        --pp     Output information  in  program-readable  mode  and
               clear statistics.
@@ -48,6 +56,19 @@ DDEESSCCRRIIPPTTIIOONN
 
        The mmaaiillssttaattss utility exits 0 on success,  and  >0  if  an
        error occurs.
+
+
+
+
+
+                   Date: 2002/09/26 23:03:39                 1
+
+
+
+
+
+MAILSTATS(8)                                         MAILSTATS(8)
+
 
 FFIILLEESS
        /etc/mail/sendmail.cf    The  default  sseennddmmaaiill configura-
@@ -60,4 +81,52 @@ SSEEEE AALLSSOO
 
 
 
-                   Date: 2001/05/07 22:06:38      MAILSTATS(8)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Date: 2002/09/26 23:03:39                 2
+
+

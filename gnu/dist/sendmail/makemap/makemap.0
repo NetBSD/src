@@ -1,5 +1,7 @@
-MAKEMAP(8)                                             MAKEMAP(8)
 
+
+
+MAKEMAP(8)                                             MAKEMAP(8)
 
 
 NNAAMMEE
@@ -7,7 +9,7 @@ NNAAMMEE
 
 SSYYNNOOPPSSIISS
        mmaakkeemmaapp  [--CC _f_i_l_e] [--NN] [--cc _c_a_c_h_e_s_i_z_e] [--dd] [--ee] [--ff] [--ll]
-       [--oo] [--rr] [--ss] [--uu] [--vv] _m_a_p_t_y_p_e _m_a_p_n_a_m
+       [--oo] [--rr] [--ss] [--tt _d_e_l_i_m] [--uu] [--vv] _m_a_p_t_y_p_e _m_a_p_n_a_m
 
 DDEESSCCRRIIPPTTIIOONN
        MMaakkeemmaapp creates the database maps used by  the  keyed  map
@@ -35,6 +37,10 @@ DDEESSCCRRIIPPTTIIOONN
        (``%%'').  Blank lines and lines beginning with ``#''  are
        ignored.
 
+       Notice:  do  nnoott  use  mmaakkeemmaapp  to create the aliases data
+       base, but nneewwaalliiaasseess which puts a special token  into  the
+       data base that is required by sseennddmmaaiill..
+
        If  the _T_r_u_s_t_e_d_U_s_e_r option is set in the sendmail configu-
        ration file and mmaakkeemmaapp is invoked as root, the  generated
        files will be owned by the specified _T_r_u_s_t_e_d_U_s_e_r_.
@@ -52,6 +58,18 @@ DDEESSCCRRIIPPTTIIOONN
        --dd     Allow duplicate keys in  the  map.   This  is  only
               allowed  on  B-Tree  format maps.  If two identical
               keys are read, they will both be inserted into  the
+
+
+
+                   Date: 2001/10/10 03:23:02                 1
+
+
+
+
+
+MAKEMAP(8)                                             MAKEMAP(8)
+
+
               map.
 
        --ee     Allow empty value (right hand side).
@@ -75,17 +93,40 @@ DDEESSCCRRIIPPTTIIOONN
               includes  checking  for  hard  or symbolic links in
               world writable directories.
 
-       --uu     dump (unmap) the content of the database  to  stan-
+       --tt     Use the specified delimiter instead of white space.
+
+       --uu     dump  (unmap)  the content of the database to stan-
               dard output.
 
        --vv     Verbosely print what it is doing.
 
 SSEEEE AALLSSOO
-       sendmail(8)
+       sendmail(8), newaliases(1)
 
 HHIISSTTOORRYY
        The mmaakkeemmaapp command appeared in 4.4BSD.
 
 
 
-                   Date: 2000/12/29 18:12:20        MAKEMAP(8)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Date: 2001/10/10 03:23:02                 2
+
+

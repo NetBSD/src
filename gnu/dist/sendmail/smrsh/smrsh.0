@@ -1,5 +1,7 @@
-SMRSH(8)                                                 SMRSH(8)
 
+
+
+SMRSH(8)                                                 SMRSH(8)
 
 
 NNAAMMEE
@@ -45,10 +47,10 @@ DDEESSCCRRIIPPTTIIOONN
 
 CCOOMMPPIILLAATTIIOONN
        Compilation  should  be  trivial on most systems.  You may
-       need to use -DPATH=\"_p_a_t_h\" to adjust the  default  search
-       path   (defaults   to  ``/bin:/usr/bin:/usr/ucb'')  and/or
-       -DCMDBIN=\"_d_i_r\" to change the default  program  directory
-       (defaults to ``/usr/adm/sm.bin'').
+       need to use -DSMRSH_PATH=\"_p_a_t_h\" to  adjust  the  default
+       search   path   (defaults  to  ``/bin:/usr/bin:/usr/ucb'')
+       and/or -DSMRSH_CMDDIR=\"_d_i_r\" to change the  default  pro-
+       gram directory (defaults to ``/usr/adm/sm.bin'').
 
 FFIILLEESS
        /usr/adm/sm.bin - directory for restricted programs
@@ -58,4 +60,7 @@ SSEEEE AALLSSOO
 
 
 
-                   Date: 2000/12/15 19:50:46          SMRSH(8)
+
+                   Date: 2002/04/25 13:33:40                 1
+
+
