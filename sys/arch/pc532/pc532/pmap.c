@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 2003/05/10 21:10:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73 2003/06/23 13:06:57 thorpej Exp $	*/
 
 /*
  *
@@ -685,8 +685,8 @@ pmap_bootstrap(kva_start)
 	kpm->pm_obj.uo_npages = 0;
 	kpm->pm_obj.uo_refs = 1;
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
-	kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_ptb + KERNBASE);
-	kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_ptb;
+	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_ptb + KERNBASE);
+	kpm->pm_pdirpa = (u_int32_t) lwp0.l_addr->u_pcb.pcb_ptb;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		ns532_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
@@ -1489,15 +1489,15 @@ pmap_reference(pmap)
  */
 
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	pcb->pcb_ptb = pmap->pm_pdirpa;
 	pcb->pcb_pmap = pmap;
-	if (p == curproc) {
+	if (l == curlwp) {
 		load_ptb(pcb->pcb_ptb);
 	}
 }
@@ -1509,8 +1509,8 @@ pmap_activate(p)
  */
 
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
 }
 
