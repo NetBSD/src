@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.9 1995/09/18 21:19:40 pk Exp $	*/
+/*	$NetBSD: rarp.c,v 1.10 1995/09/23 03:36:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -104,11 +104,28 @@ rarp_getipaddress(sock)
 
 	if (sendrecv(d,
 	    rarpsend, &wbuf.data, sizeof(wbuf.data),
-	    rarprecv, &rbuf.data, sizeof(rbuf.data)) < 0) {
+	    rarprecv, &rbuf.data, sizeof(rbuf.data)) < 0)
+	{
 		printf("No response for RARP request\n");
 		return (-1);
 	}
 
+	ap = &rbuf.data.arp;
+	bcopy(ap->arp_tpa, (char *)&myip, sizeof(myip));
+#if 0
+	/* XXX - Can NOT assume this is our root server! */
+	bcopy(ap->arp_spa, (char *)&rootip, sizeof(rootip));
+#endif
+
+	/* Compute our "natural" netmask. */
+	if (IN_CLASSA(myip.s_addr))
+		netmask = IN_CLASSA_NET;
+	else if (IN_CLASSB(myip.s_addr))
+		netmask = IN_CLASSB_NET;
+	else
+		netmask = IN_CLASSC_NET;
+
+	d->myip = myip;
 	return (0);
 }
 
@@ -131,7 +148,8 @@ rarpsend(d, pkt, len)
 }
 
 /*
- * Called when packet containing RARP is received
+ * Returns 0 if this is the packet we're waiting for
+ * else -1 (and errno == 0)
  */
 static ssize_t
 rarprecv(d, pkt, len, tleft)
@@ -150,12 +168,13 @@ rarprecv(d, pkt, len, tleft)
 #endif
 
 	n = readether(d, pkt, len, tleft, &etype);
+	errno = 0;	/* XXX */
 	if (n == -1 || n < sizeof(struct ether_arp)) {
 #ifdef RARP_DEBUG
 		if (debug)
 			printf("bad len=%d\n", n);
 #endif
-		goto bad;
+		return (-1);
 	}
 
 	if (etype != ETHERTYPE_REVARP) {
@@ -163,50 +182,43 @@ rarprecv(d, pkt, len, tleft)
 		if (debug)
 			printf("bad type=0x%x\n", etype);
 #endif
-		goto bad;
+		return (-1);
 	}
 
-	/* Verify that this is the right packet. */
 	ap = (struct ether_arp *)pkt;
+	if (ap->arp_hrd != htons(ARPHRD_ETHER) ||
+	    ap->arp_pro != htons(ETHERTYPE_IP) ||
+	    ap->arp_hln != sizeof(ap->arp_sha) ||
+	    ap->arp_pln != sizeof(ap->arp_spa) )
+	{
+#ifdef RARP_DEBUG
+		if (debug)
+			printf("bad hrd/pro/hln/pln\n")
+#endif
+		return (-1);
+	}
 
 	if (ap->arp_op != htons(ARPOP_REVREPLY)) {
 #ifdef RARP_DEBUG
 		if (debug)
 			printf("bad op=0x%x\n", ntohs(ap->arp_op));
 #endif
-		goto bad;
+		return (-1);
 	}
 
-	if (ap->arp_pro != htons(ETHERTYPE_IP)) {
-#ifdef RARP_DEBUG
-		if (debug)
-			printf("bad procol=0x%x\n", ntohs(ap->arp_pro));
-#endif
-
-		goto bad;
-	}
-
+	/* Is the reply for our Ethernet address? */
 	if (bcmp(ap->arp_tha, d->myea, 6)) {
 #ifdef RARP_DEBUG
 		if (debug)
-			printf("wrong ether address\n");
+			printf("unwanted address\n");
 #endif
-		goto bad;
+		return (-1);
 	}
 
-	bcopy(ap->arp_tpa, (char *)&myip, sizeof(myip));
-	bcopy(ap->arp_spa, (char *)&rootip, sizeof(rootip));
-
-	d->myip = myip;
+	/* We have our answer. */
 #ifdef RARP_DEBUG
-	if (debug)
-		printf("myip=0x%x\n", myip);
+ 	if (debug)
+		printf("got it\n");
 #endif
-
-	/* XXX - Compute our "natural" netmask? */
 	return (n);
-
-bad:
-	errno = 0;
-	return (-1);
 }

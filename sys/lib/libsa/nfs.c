@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.11 1995/09/18 21:19:36 pk Exp $	*/
+/*	$NetBSD: nfs.c,v 1.12 1995/09/23 03:36:08 gwr Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -92,7 +92,10 @@ struct nfs_iodesc {
 struct nfs_iodesc nfs_root_node;
 
 
-/* Fetch the root file handle (call mount daemon) */
+/*
+ * Fetch the root file handle (call mount daemon)
+ * On error, return non-zero and set errno.
+ */
 int
 nfs_getrootfh(d, path, fhp)
 	register struct iodesc *d;
@@ -136,8 +139,14 @@ nfs_getrootfh(d, path, fhp)
 
 	cc = rpc_call(d, RPCPROG_MNT, RPCMNT_VER1, RPCMNT_MOUNT,
 	    args, len, repl, sizeof(*repl));
-	if (cc < 4)
+	if (cc == -1) {
+		/* errno was set by rpc_call */
 		return (-1);
+	}
+	if (cc < 4) {
+		errno = EBADRPC;
+		return (-1);
+	}
 	if (repl->errno) {
 		errno = ntohl(repl->errno);
 		return (-1);
@@ -146,7 +155,10 @@ nfs_getrootfh(d, path, fhp)
 	return (0);
 }
 
-/* Lookup a file.  Return handle and attributes. */
+/*
+ * Lookup a file.  Store handle and attributes.
+ * Return zero or error number.
+ */
 int
 nfs_lookupfh(d, name, newfd)
 	struct nfs_iodesc *d;
@@ -196,20 +208,23 @@ nfs_lookupfh(d, name, newfd)
 
 	cc = rpc_call(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_LOOKUP,
 	    args, len, repl, rlen);
+	if (cc == -1)
+		return (errno);		/* XXX - from rpc_call */
 	if (cc < 4)
 		return (EIO);
 	if (repl->errno) {
-		/* XXX - saerrno.h should match errno.h and RPC! */
-		printf("nfs_lookup: \"%s\" error=%d\n",
-			   name, ntohl(repl->errno));
-		return (ENOENT);
+		/* saerrno.h now matches NFS error numbers. */
+		return (ntohl(repl->errno));
 	}
 	bcopy( repl->fh, &newfd->fh, sizeof(newfd->fh));
 	bcopy(&repl->fa, &newfd->fa, sizeof(newfd->fa));
 	return (0);
 }
 
-/* Read data from a file */
+/*
+ * Read data from a file.
+ * Return transfer count or -1 (and set errno)
+ */
 ssize_t
 nfs_readdata(d, off, addr, len)
 	struct nfs_iodesc *d;
@@ -245,9 +260,12 @@ nfs_readdata(d, off, addr, len)
 	cc = rpc_call(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_READ,
 	    args, sizeof(*args),
 	    repl, sizeof(*repl));
+	if (cc == -1) {
+		/* errno was already set by rpc_call */
+		return (-1);
+	}
 	if (cc < hlen) {
-		if (cc != -1)
-			errno = EBADRPC;
+		errno = EBADRPC;
 		return (-1);
 	}
 	if (repl->errno) {
@@ -267,6 +285,7 @@ nfs_readdata(d, off, addr, len)
 
 /*
  * nfs_mount - mount this nfs filesystem to a host
+ * On error, return non-zero and set errno.
  */
 int
 nfs_mount(sock, ip, path)
@@ -304,6 +323,7 @@ nfs_mount(sock, ip, path)
 
 /*
  * Open a file.
+ * return zero or error number
  */
 int
 nfs_open(path, f)
@@ -311,16 +331,15 @@ nfs_open(path, f)
 	struct open_file *f;
 {
 	struct nfs_iodesc *newfd;
-	int rc = 0;
+	int error = 0;
 
 #ifdef NFS_DEBUG
  	if (debug)
  	    printf("nfs_open: %s\n", path);
 #endif
 	if (nfs_root_node.iodesc == NULL) {
-		errno = EIO;
 		printf("nfs_open: must mount first.\n");
-		return(-1);
+		return (ENXIO);
 	}
 
 	/* allocate file system specific data structure */
@@ -329,26 +348,19 @@ nfs_open(path, f)
 	newfd->off = 0;
 
 	/* lookup a file handle */
-	rc = nfs_lookupfh(&nfs_root_node, path, newfd);
-	if (rc) {
-#ifdef NFS_DEBUG
-		if (debug)
-			printf("nfs_open: %s lookupfh failed: %s\n",
-				path, strerror(errno));
-#endif
-		free(newfd, sizeof(*newfd));
-		return(rc);
+	error = nfs_lookupfh(&nfs_root_node, path, newfd);
+	if (!error) {
+		f->f_fsdata = (void *)newfd;
+		return (0);
 	}
-	f->f_fsdata = (void *)newfd;
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_open: \"%s\", type=%d size=%d\n", path,
-			   ntohl(newfd->fa.fa_type),
-			   ntohl(newfd->fa.fa_size));
+		printf("nfs_open: %s lookupfh failed: %s\n",
+			path, strerror(error));
 #endif
-
-	return(rc);
+	free(newfd, sizeof(*newfd));
+	return (error);
 }
 
 int
@@ -396,7 +408,7 @@ nfs_read(f, buf, size, resid)
 			if (debug)
 				printf("nfs_read: read: %s", strerror(errno));
 #endif
-			return errno;
+			return (errno);	/* XXX - from nfs_readdata */
 		}
 		if (cc == 0) {
 			if (debug)
