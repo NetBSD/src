@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_ipc.c,v 1.2.2.2 2001/11/14 19:12:57 nathanw Exp $	*/
+/*	$NetBSD: hpux_ipc.c,v 1.2.2.3 2001/11/18 00:07:49 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.2.2.2 2001/11/14 19:12:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.2.2.3 2001/11/18 00:07:49 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.2.2.2 2001/11/14 19:12:57 nathanw Exp
 #include <sys/shm.h>
 #include <sys/msg.h>
 #include <sys/sem.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
@@ -229,8 +230,8 @@ hpux_to_bsd_omsqid_ds(hp, bp)
 }
 
 int
-hpux_sys_omsgctl(p, v, retval)
-	struct proc *p;
+hpux_sys_omsgctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -252,7 +253,7 @@ hpux_sys_omsgctl(p, v, retval)
 		hpux_to_bsd_omsqid_ds(&hmsqbuf, &msqbuf);
 	}
 
-	error = msgctl1(p, SCARG(uap, msqid), cmd,
+	error = msgctl1(l->l_proc, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -264,8 +265,8 @@ hpux_sys_omsgctl(p, v, retval)
 }
 
 int
-hpux_sys_msgctl(p, v, retval)
-	struct proc *p;
+hpux_sys_msgctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -287,7 +288,7 @@ hpux_sys_msgctl(p, v, retval)
 		hpux_to_bsd_msqid_ds(&hmsqbuf, &msqbuf);
 	}
 
-	error = msgctl1(p, SCARG(uap, msqid), cmd,
+	error = msgctl1(l->l_proc, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -363,8 +364,8 @@ hpux_to_bsd_osemid_ds(hp, bp)
 }
 
 int
-hpux_sys_osemctl(p, v, retval)
-	struct proc *p;
+hpux_sys_osemctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -401,7 +402,7 @@ hpux_sys_osemctl(p, v, retval)
 		hpux_to_bsd_osemid_ds(&hsembuf, &sembuf);
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l->l_proc, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -413,8 +414,8 @@ hpux_sys_osemctl(p, v, retval)
 }
 
 int
-hpux_sys_semctl(p, v, retval)
-	struct proc *p;
+hpux_sys_semctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -451,7 +452,7 @@ hpux_sys_semctl(p, v, retval)
 		hpux_to_bsd_semid_ds(&hsembuf, &sembuf);
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l->l_proc, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -545,8 +546,8 @@ hpux_to_bsd_oshmid_ds(hp, bp)
 }
 
 int
-hpux_sys_oshmctl(p, v, retval)
-	struct proc *p;
+hpux_sys_oshmctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -568,7 +569,7 @@ hpux_sys_oshmctl(p, v, retval)
 		hpux_to_bsd_oshmid_ds(&hshmbuf, &shmbuf);
 	}
 
-	error = shmctl1(p, SCARG(uap, shmid), cmd,
+	error = shmctl1(l->l_proc, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -580,8 +581,8 @@ hpux_sys_oshmctl(p, v, retval)
 }
 
 int
-hpux_sys_shmctl(p, v, retval)
-	struct proc *p;
+hpux_sys_shmctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -603,7 +604,7 @@ hpux_sys_shmctl(p, v, retval)
 		hpux_to_bsd_shmid_ds(&hshmbuf, &shmbuf);
 	}
 
-	error = shmctl1(p, SCARG(uap, shmid), cmd,
+	error = shmctl1(l->l_proc, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {

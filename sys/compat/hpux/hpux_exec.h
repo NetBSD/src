@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.h,v 1.9.2.1 2001/09/21 22:35:14 nathanw Exp $	*/
+/*	$NetBSD: hpux_exec.h,v 1.9.2.2 2001/11/18 00:07:49 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ struct hpux_exec {
 #define HPUXM_DATAWT	0x04000000
 
 int	exec_hpux_makecmds __P((struct proc *, struct exec_package *));
-void	hpux_setregs __P((struct proc *, struct exec_package *, u_long));
+void	hpux_setregs __P((struct lwp *, struct exec_package *, u_long));
 
 extern const struct emul emul_hpux;
 
