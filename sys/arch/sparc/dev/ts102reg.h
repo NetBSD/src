@@ -1,4 +1,4 @@
-/*	$NetBSD: ts102reg.h,v 1.1 1999/08/09 18:39:58 matt Exp $ */
+/*	$NetBSD: ts102reg.h,v 1.2 1999/08/11 00:46:06 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,10 +147,10 @@
  *	read 1 if asserted
  *	write 1 to clear 
  */
-#define	TS102_UCTRL_STS_TXE_REQ		0x01	/* transmit FIFO empty */
-#define	TS102_UCTRL_STS_TXNF_REQ	0x02	/* transmit FIFO not full */
-#define	TS102_UCTRL_STS_RXNE_REQ	0x04	/* receive FIFO not empty */
-#define	TS102_UCTRL_STS_RXO_REQ		0x08	/* receive FIFO overflow */
+#define	TS102_UCTRL_STS_TXE_STA		0x01	/* transmit FIFO empty */
+#define	TS102_UCTRL_STS_TXNF_STA	0x02	/* transmit FIFO not full */
+#define	TS102_UCTRL_STS_RXNE_STA	0x04	/* receive FIFO not empty */
+#define	TS102_UCTRL_STS_RXO_STA		0x08	/* receive FIFO overflow */
 
 enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_SERIAL_NUM=0x01,	/* none		ack + 4 bytes */
@@ -240,7 +240,7 @@ enum ts102_opcode {			/* Argument	Returned */
 #define	TS102_LCD_DC_OK			0x0080
 #define	TS102_LCD_COMPOSE		0x0100
     TS102_OP_CTL_BITPORT=0x21,		/* mask		ack + 1 byte */
-#define	TS102_BITPORT_TFTPWR		0x02	/* TFT power (high) */
+#define	TS102_BITPORT_TFTPWR		0x01	/* TFT power (low) */
 #define	TS102_BITPORT_SYNCINVA		0x04	/* ext. monitor sync (low) */
 #define	TS102_BITPORT_SYNCINVB		0x08	/* ext. monitor sync (low) */
 #define	TS102_BITPORT_BP_DIS		0x10	/* no bootprom from pcmcia (high) */
