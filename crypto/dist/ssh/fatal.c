@@ -1,8 +1,6 @@
-/*	$NetBSD: myproposal.h,v 1.1.1.7 2002/03/08 01:20:47 itojun Exp $	*/
-/*	$OpenBSD: myproposal.h,v 1.13 2002/01/21 22:30:12 markus Exp $	*/
-
+/*	$NetBSD: fatal.c,v 1.1.1.1 2002/03/08 01:20:41 itojun Exp $	*/
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,28 +22,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#define KEX_DEFAULT_KEX		"diffie-hellman-group-exchange-sha1,diffie-hellman-group1-sha1"
-#define	KEX_DEFAULT_PK_ALG	"ssh-rsa,ssh-dss"
-#define	KEX_DEFAULT_ENCRYPT \
-	"aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour," \
-	"aes192-cbc,aes256-cbc"
-#define	KEX_DEFAULT_MAC \
-	"hmac-md5,hmac-sha1,hmac-ripemd160," \
-	"hmac-ripemd160@openssh.com," \
-	"hmac-sha1-96,hmac-md5-96"
-#define	KEX_DEFAULT_COMP	"none,zlib"
-#define	KEX_DEFAULT_LANG	""
 
+#include "includes.h"
+RCSID("$OpenBSD: fatal.c,v 1.1 2002/02/22 12:20:34 markus Exp $");
 
-static char *myproposal[PROPOSAL_MAX] = {
-	KEX_DEFAULT_KEX,
-	KEX_DEFAULT_PK_ALG,
-	KEX_DEFAULT_ENCRYPT,
-	KEX_DEFAULT_ENCRYPT,
-	KEX_DEFAULT_MAC,
-	KEX_DEFAULT_MAC,
-	KEX_DEFAULT_COMP,
-	KEX_DEFAULT_COMP,
-	KEX_DEFAULT_LANG,
-	KEX_DEFAULT_LANG
-};
+#include "log.h"
+
+/* Fatal messages.  This function never returns. */
+
+void
+fatal(const char *fmt,...)
+{
+	va_list args;
+	va_start(args, fmt);
+	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
+	va_end(args);
+	fatal_cleanup();
+}

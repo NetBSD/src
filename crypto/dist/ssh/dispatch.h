@@ -1,5 +1,5 @@
-/*	$NetBSD: dispatch.h,v 1.1.1.4 2001/09/27 02:00:42 itojun Exp $	*/
-/*	$OpenBSD: dispatch.h,v 1.6 2001/06/26 17:27:23 markus Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.1.1.5 2002/03/08 01:20:44 itojun Exp $	*/
+/*	$OpenBSD: dispatch.h,v 1.9 2002/01/11 13:39:36 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -29,9 +29,11 @@ enum {
 	DISPATCH_NONBLOCK
 };
 
-typedef void dispatch_fn(int, int, void *);
+typedef void dispatch_fn(int, u_int32_t, void *);
 
 void	 dispatch_init(dispatch_fn *);
 void	 dispatch_set(int, dispatch_fn *);
+void	 dispatch_range(u_int, u_int, dispatch_fn *);
 void	 dispatch_run(int, int *, void *);
-void	 dispatch_protocol_error(int, int, void *);
+void	 dispatch_protocol_error(int, u_int32_t, void *);
+void	 dispatch_protocol_ignore(int, u_int32_t, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.1.1.8 2001/09/27 02:00:36 itojun Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.1.1.9 2002/03/08 01:20:30 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-options.c,v 1.20 2001/08/30 20:36:34 stevesk Exp $");
+RCSID("$OpenBSD: auth-options.c,v 1.21 2002/01/29 14:32:03 markus Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -171,7 +171,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
 			const char *remote_ip = get_remote_ipaddr();
 			const char *remote_host = get_canonical_hostname(
-			    options.reverse_mapping_check);
+			    options.verify_reverse_mapping);
 			char *patterns = xmalloc(strlen(opts) + 1);
 
 			opts += strlen(cp);

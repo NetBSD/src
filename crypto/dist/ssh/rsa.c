@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa.c,v 1.1.1.5 2001/09/27 02:00:48 itojun Exp $	*/
+/*	$NetBSD: rsa.c,v 1.1.1.6 2002/03/08 01:20:59 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: rsa.c,v 1.23 2001/06/27 05:42:24 markus Exp $");
+RCSID("$OpenBSD: rsa.c,v 1.24 2001/12/27 18:22:16 markus Exp $");
 
 #include "rsa.h"
 #include "log.h"
@@ -121,14 +121,17 @@ rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 	return len;
 }
 
+/* calculate p-1 and q-1 */
 void
 rsa_generate_additional_parameters(RSA *rsa)
 {
 	BIGNUM *aux;
 	BN_CTX *ctx;
-	/* Generate additional parameters */
-	aux = BN_new();
-	ctx = BN_CTX_new();
+
+	if ((aux = BN_new()) == NULL)
+		fatal("rsa_generate_additional_parameters: BN_new failed");
+	if ((ctx = BN_CTX_new()) == NULL)
+		fatal("rsa_generate_additional_parameters: BN_CTX_new failed");
 
 	BN_sub(aux, rsa->q, BN_value_one());
 	BN_mod(rsa->dmq1, rsa->d, aux, ctx);

@@ -1,5 +1,6 @@
-/*	$NetBSD: ttymodes.h,v 1.1.1.5 2001/05/15 15:02:40 itojun Exp $	*/
-/* RCSID("$OpenBSD: ttymodes.h,v 1.11 2001/04/14 16:33:20 stevesk Exp $"); */
+/*	$NetBSD: ttymodes.h,v 1.1.1.6 2002/03/08 01:21:46 itojun Exp $	*/
+/*	$OpenBSD: ttymodes.h,v 1.12 2002/03/04 17:27:39 stevesk Exp $	*/
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland

@@ -1,4 +1,6 @@
-/*	$NetBSD: rsa.h,v 1.1.1.5 2001/09/27 02:00:48 itojun Exp $	*/
+/*	$NetBSD: rsa.h,v 1.1.1.6 2002/03/08 01:20:59 itojun Exp $	*/
+/*	$OpenBSD: rsa.h,v 1.15 2002/03/04 17:27:39 stevesk Exp $	*/
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,8 +13,6 @@
  * incompatible with the protocol description in the RFC file, it must be
  * called by a name other than "ssh" or "Secure Shell".
  */
-
-/* RCSID("$OpenBSD: rsa.h,v 1.14 2001/06/27 05:42:24 markus Exp $"); */
 
 #ifndef RSA_H
 #define RSA_H

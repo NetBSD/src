@@ -1,4 +1,6 @@
-/*	$NetBSD: cipher.h,v 1.1.1.6 2001/09/27 02:00:41 itojun Exp $	*/
+/*	$NetBSD: cipher.h,v 1.1.1.7 2002/03/08 01:20:41 itojun Exp $	*/
+/*	$OpenBSD: cipher.h,v 1.32 2002/03/04 17:27:39 stevesk Exp $	*/
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,16 +35,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* RCSID("$OpenBSD: cipher.h,v 1.29 2001/08/23 11:31:59 markus Exp $"); */
-
 #ifndef CIPHER_H
 #define CIPHER_H
 
-#include <openssl/des.h>
-#include <openssl/blowfish.h>
-#include <openssl/rc4.h>
-#include <openssl/cast.h>
-#include "rijndael.h"
+#include <openssl/evp.h>
 /*
  * Cipher types for SSH-1.  New types can be added, but old types should not
  * be removed for compatibility.  The maximum allowed value is 31.
@@ -60,49 +56,17 @@
 #define SSH_CIPHER_RESERVED	7
 #define SSH_CIPHER_MAX		31
 
+#define CIPHER_ENCRYPT		1
+#define CIPHER_DECRYPT		0
+
 typedef struct Cipher Cipher;
 typedef struct CipherContext CipherContext;
 
+struct Cipher;
 struct CipherContext {
-	union {
-		struct {
-			des_key_schedule key;
-			des_cblock iv;
-		}	des;
-		struct {
-			des_key_schedule key1;
-			des_key_schedule key2;
-			des_key_schedule key3;
-			des_cblock iv1;
-			des_cblock iv2;
-			des_cblock iv3;
-		}       des3;
-		struct {
-			struct bf_key_st key;
-			u_char iv[8];
-		}       bf;
-		struct {
-			CAST_KEY key;
-			u_char iv[8];
-		} cast;
-		struct {
-			u_char iv[16];
-			rijndael_ctx enc;
-			rijndael_ctx dec;
-		} rijndael;
-		RC4_KEY rc4;
-	}       u;
+	int	plaintext;
+	EVP_CIPHER_CTX evp;
 	Cipher *cipher;
-};
-struct Cipher {
-	char	*name;
-	int	number;		/* for ssh1 only */
-	u_int	block_size;
-	u_int	key_len;
-	void	(*setkey)(CipherContext *, const u_char *, u_int);
-	void	(*setiv)(CipherContext *, const u_char *, u_int);
-	void	(*encrypt)(CipherContext *, u_char *, const u_char *, u_int);
-	void	(*decrypt)(CipherContext *, u_char *, const u_char *, u_int);
 };
 
 u_int	 cipher_mask_ssh1(int);
@@ -112,9 +76,10 @@ int	 cipher_number(const char *);
 char	*cipher_name(int);
 int	 ciphers_valid(const char *);
 void	 cipher_init(CipherContext *, Cipher *, const u_char *, u_int,
-    const u_char *, u_int);
-void	 cipher_encrypt(CipherContext *, u_char *, const u_char *, u_int);
-void	 cipher_decrypt(CipherContext *, u_char *, const u_char *, u_int);
-void	 cipher_set_key_string(CipherContext *, Cipher *, const char *);
-
+    const u_char *, u_int, int);
+void	 cipher_crypt(CipherContext *, u_char *, const u_char *, u_int);
+void	 cipher_cleanup(CipherContext *);
+void	 cipher_set_key_string(CipherContext *, Cipher *, const char *, int);
+u_int	 cipher_blocksize(Cipher *);
+u_int	 cipher_keylen(Cipher *);
 #endif				/* CIPHER_H */

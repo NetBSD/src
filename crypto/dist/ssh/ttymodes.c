@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymodes.c,v 1.1.1.6 2001/09/27 02:01:02 itojun Exp $	*/
+/*	$NetBSD: ttymodes.c,v 1.1.1.7 2002/03/08 01:21:46 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ttymodes.c,v 1.14 2001/06/24 17:18:31 markus Exp $");
+RCSID("$OpenBSD: ttymodes.c,v 1.16 2001/12/27 20:39:58 markus Exp $");
 
 #include "packet.h"
 #include "log.h"
@@ -397,7 +397,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 
 		default:
 			debug("Ignoring unsupported tty mode opcode %d (0x%x)",
-			      opcode, opcode);
+			    opcode, opcode);
 			if (!compat20) {
 				/*
 				 * SSH1:
@@ -423,7 +423,6 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 					 * more coming after the mode data.
 					 */
 					log("parse_tty_modes: unknown opcode %d", opcode);
-					packet_integrity_check(0, 1, SSH_CMSG_REQUEST_PTY);
 					goto set;
   				}
 			} else {

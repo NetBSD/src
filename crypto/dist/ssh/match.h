@@ -1,5 +1,5 @@
-/*	$NetBSD: match.h,v 1.1.1.7 2001/12/06 03:46:18 itojun Exp $	*/
-/*	$OpenBSD: match.h,v 1.10 2001/12/05 16:54:51 markus Exp $	*/
+/*	$NetBSD: match.h,v 1.1.1.8 2002/03/08 01:20:47 itojun Exp $	*/
+/*	$OpenBSD: match.h,v 1.12 2002/03/01 13:12:10 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

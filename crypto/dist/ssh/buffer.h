@@ -1,4 +1,6 @@
-/*	$NetBSD: buffer.h,v 1.1.1.5 2001/09/27 02:00:39 itojun Exp $	*/
+/*	$NetBSD: buffer.h,v 1.1.1.6 2002/03/08 01:20:34 itojun Exp $	*/
+/*	$OpenBSD: buffer.h,v 1.11 2002/03/04 17:27:39 stevesk Exp $	*/
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,13 +14,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: buffer.h,v 1.9 2001/06/26 17:27:23 markus Exp $"); */
-
 #ifndef BUFFER_H
 #define BUFFER_H
 
 typedef struct {
-	char	*buf;		/* Buffer for data. */
+	u_char	*buf;		/* Buffer for data. */
 	u_int	 alloc;		/* Number of bytes allocated for data. */
 	u_int	 offset;	/* Offset of first byte containing data. */
 	u_int	 end;		/* Offset of last byte containing data. */
@@ -29,12 +29,12 @@ void	 buffer_clear(Buffer *);
 void	 buffer_free(Buffer *);
 
 u_int	 buffer_len(Buffer *);
-char	*buffer_ptr(Buffer *);
+void	*buffer_ptr(Buffer *);
 
-void	 buffer_append(Buffer *, const char *, u_int);
-void	 buffer_append_space(Buffer *, char **, u_int);
+void	 buffer_append(Buffer *, const void *, u_int);
+void	*buffer_append_space(Buffer *, u_int);
 
-void	 buffer_get(Buffer *, char *, u_int);
+void	 buffer_get(Buffer *, void *, u_int);
 
 void	 buffer_consume(Buffer *, u_int);
 void	 buffer_consume_end(Buffer *, u_int);
