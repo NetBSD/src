@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.8 2001/08/30 02:52:41 briggs Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.9 2001/08/31 01:00:16 briggs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -803,8 +803,8 @@ configure_bridge(pciconf_dev_t *pd)
 		}
 		iohigh = 0;
 	}
-	io &= (PCI_BRIDGE_STATIO_STATUS_MASK <<
-	    PCI_BRIDGE_STATIO_STATUS_SHIFT);
+	io = pci_conf_read(pb->pc, pd->tag, PCI_BRIDGE_STATIO_REG) &
+	    (PCI_BRIDGE_STATIO_STATUS_MASK << PCI_BRIDGE_STATIO_STATUS_SHIFT);
 	io |= (((io_base >> 8) & PCI_BRIDGE_STATIO_IOBASE_MASK)
 	    << PCI_BRIDGE_STATIO_IOBASE_SHIFT);
 	io |= (((io_limit >> 8) & PCI_BRIDGE_STATIO_IOLIMIT_MASK)
