@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.3 1995/11/01 21:10:41 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.4 1995/11/08 22:02:35 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -75,7 +75,7 @@ twiddle()
 		sleep 1; echo -n "-";
 		sleep 1; echo -n "\\";
 		sleep 1; echo -n "|";
-	 done > /dev/tty & echo $!
+	done > /dev/tty & echo $!
 }
 
 set_terminal() {
@@ -614,7 +614,7 @@ __install_tape_2
 			2)
 				(
 					cd /mnt
-					tar -zxvpf $TAPE
+					dd if=$TAPE | tar -xvpf -
 				)
 				;;
 
@@ -668,7 +668,7 @@ __get_timezone_1
 			fi
 			if [ -f /usr/share/zoneinfo/$_a ]; then
 				TZ="$_a"
-				echo "You have selected timezone "$_a".
+				echo "You have selected timezone \"$_a\"".
 				break 2
 			fi
 			echo "'/usr/share/zoneinfo/$_a' is not a valid timezone on this system."
