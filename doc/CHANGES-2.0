@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.467 2004/09/25 21:43:07 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.468 2004/10/01 02:37:58 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7618,3 +7618,8 @@ share/tmac/doc-common				patched by hand
 
 	Welcome to 2.0_RC1
 
+
+sys/arch/amiga/amiga/pmap.c			1.109-1.110
+
+	Fix issues so debug kernels can build
+	[tron, ticket #873]
