@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: iteconfig.8,v 1.2 1994/04/05 03:56:37 cgd Exp $
+.\"	$Id: iteconfig.8,v 1.3 1994/04/10 00:56:55 chopps Exp $
 .\"
 .Dd February 3, 1994
 .Dt ITECONFIG 8 amiga
@@ -39,8 +39,8 @@
 .Nm iteconfig
 .Op Fl i
 .Op Fl v Ar volume
-.Op Fl p Ar period
-.Op Fl t Ar count
+.Op Fl p Ar pitch
+.Op Fl t Ar msec
 .Op Fl w Ar width
 .Op Fl h Ar height
 .Op Fl d Ar depth
@@ -52,7 +52,7 @@
 is used to modify or examine the attributes of the
 .Tn Amiga's
 console bell and bitmapped console display.
-The console bell's volume, period, and count may be
+The console bell's volume, pitch, and count may be
 specified, as well as
 the bitmapped display's width, height, horizontal and
 vertical offset, pixel depth, and color map.
@@ -68,11 +68,13 @@ Set the volume of the console bell to
 .Ar volume ,
 which must be between 0 and 63, inclusive.
 .It Fl p
-Set the period of the console bell to
-.Ar period .
+Set the pitch of the console bell to
+.Ar pitch ,
+which must be between 10 and 1399.
 .It Fl t
-Set the number of repititions of the console bell sample to
-.Ar count .
+Set the duration of the beep to
+.Ar msec 
+milliseconds which must be between 1 and 5000 (5 seconds).
 .It Fl w
 Set the width of the console display to
 .Ar width
@@ -150,13 +152,3 @@ is black, and a value of
 .Li 0x0
 is white.
 .El
-.Sh BUGS
-.Ar Period
-and
-.Ar count
-are something users should never deal with.  These should be changed
-to 
-.Ar pitch
-and
-.Ar time ,
-where time is in hundredths of a second.
