@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.19 2004/07/28 12:34:05 jmmv Exp $ */
+/*	$NetBSD: util.c,v 1.20 2004/07/30 11:08:03 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -201,6 +201,16 @@ field_by_value(addr)
 			return(field_tab + i);
 
 	errx(1, "internal error: field_by_value: not found");
+}
+
+void
+field_disable_by_value(addr)
+	void *addr;
+{
+	struct field *f;
+
+	f = field_by_value(addr);
+	f->flags |= FLG_DISABLED;
 }
 
 static char *
