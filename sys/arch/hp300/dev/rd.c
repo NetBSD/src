@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.30 1997/04/09 20:01:04 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.31 1997/05/05 21:07:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -64,14 +64,16 @@
 #include <hp300/dev/rdreg.h>
 #include <hp300/dev/rdvar.h>
 
-#ifdef USELEDS
-#include <hp300/hp300/led.h>
-#endif
-
 #include <vm/vm_param.h>
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
+
+#include "opt_useleds.h"
+
+#ifdef USELEDS
+#include <hp300/hp300/leds.h>
+#endif
 
 int	rderrthresh = RDRETRY-1;	/* when to start reporting errors */
 
@@ -829,8 +831,7 @@ rdgo(arg)
 	disk_busy(&rs->sc_dkdev);
 
 #ifdef USELEDS
-	if (inledcontrol == 0)
-		ledcontrol(0, 0, LED_DISK);
+	ledcontrol(0, 0, LED_DISK);
 #endif
 	hpibgo(ctlr, slave, C_EXEC, rs->sc_addr, rs->sc_resid, rw, rw != 0);
 }
