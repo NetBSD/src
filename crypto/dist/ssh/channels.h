@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.h,v 1.1.1.6 2001/04/10 07:13:53 itojun Exp $	*/
+/*	$NetBSD: channels.h,v 1.1.1.7 2001/05/15 15:02:26 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,7 +33,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* RCSID("$OpenBSD: channels.h,v 1.30 2001/04/07 08:55:17 markus Exp $"); */
+/* RCSID("$OpenBSD: channels.h,v 1.32 2001/05/04 23:47:33 markus Exp $"); */
 
 #ifndef CHANNELS_H
 #define CHANNELS_H
@@ -41,7 +41,6 @@
 #include "buffer.h"
 
 /* Definitions for channel types. */
-#define SSH_CHANNEL_FREE		0	/* This channel is free (unused). */
 #define SSH_CHANNEL_X11_LISTENER	1	/* Listening for inet X11 conn. */
 #define SSH_CHANNEL_PORT_LISTENER	2	/* Listening on a port. */
 #define SSH_CHANNEL_OPENING		3	/* waiting for confirmation */
@@ -57,8 +56,10 @@
 #define SSH_CHANNEL_DYNAMIC		13
 #define SSH_CHANNEL_MAX_TYPE		14
 
+#define SSH_CHANNEL_PATH_LEN		30
+
 /*
- * Data structure for channel data.  This is iniailized in channel_allocate
+ * Data structure for channel data.  This is initialized in channel_new
  * and cleared in channel_free.
  */
 struct Channel;
@@ -85,8 +86,8 @@ struct Channel {
 	Buffer  output;		/* data received over encrypted connection for
 				 * send on socket */
 	Buffer  extended;
-	char    path[200];	/* path for unix domain sockets, or host name
-				 * for forwards */
+	char    path[SSH_CHANNEL_PATH_LEN];
+		/* path for unix domain sockets, or host name for forwards */
 	int     listening_port;	/* port being listened for forwards */
 	int     host_port;	/* remote port to connect for forwards */
 	char   *remote_name;	/* remote hostname */
@@ -133,10 +134,6 @@ void	channel_register_filter(int id, channel_filter_fn *fn);
 void	channel_cancel_cleanup(int id);
 Channel	*channel_lookup(int id);
 
-int
-channel_new(char *ctype, int type, int rfd, int wfd, int efd,
-    int window, int maxpack, int extended_usage, char *remote_name,
-    int nonblock);
 void
 channel_set_fds(int id, int rfd, int wfd, int efd,
     int extusage, int nonblock);
@@ -163,10 +160,13 @@ void    channel_set_options(int hostname_in_open);
  * must have been allocated with xmalloc; this will free it when the channel
  * is freed.
  */
-int     channel_allocate(int type, int sock, char *remote_name);
+Channel *
+channel_new(char *ctype, int type, int rfd, int wfd, int efd,
+    int window, int maxpack, int extended_usage, char *remote_name,
+    int nonblock);
 
 /* Free the channel and close its socket. */
-void    channel_free(int channel);
+void    channel_free(Channel *c);
 
 /*
  * Allocate/update select bitmasks and add any bits relevant to channels in
@@ -307,5 +307,7 @@ void    auth_input_open_request(int type, int plen, void *ctxt);
 int	channel_connect_to(const char *host, u_short host_port);
 int	channel_connect_by_listen_adress(u_short listen_port);
 int	x11_connect_display(void);
+
+int	channel_find_open(void);
 
 #endif
