@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.52 1998/03/25 00:03:19 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.53 1998/03/26 01:35:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.52 1998/03/25 00:03:19 cgd Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.53 1998/03/26 01:35:17 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -846,7 +846,18 @@ makebootarea(boot, dp, f)
 	 */
 	if (!installboot) {
 		if (rflag) {
-			if (read(f, boot, BBSIZE) < BBSIZE)
+			off_t sectoffset = 0;
+
+#ifdef __i386__
+			if (dosdp)
+				sectoffset = dosdp->dp_start * DEV_BSIZE;
+#endif
+#ifdef __arm32__
+			/* XXX */
+			sectoffset = filecore_partition_offset * DEV_BSIZE;
+#endif	/* __arm32__ */
+			if (lseek(f, sectoffset, SEEK_SET) < 0 ||
+			    read(f, boot, BBSIZE) < BBSIZE)
 				err(4, "%s", specname);
 			(void) memset(lp, 0, sizeof *lp);
 		}
