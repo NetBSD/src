@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2003/10/24 15:54:46 kleink Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/05 01:00:53 kleink Exp $
 
 NOMAN=		# defined
 
 PROG=		nan
-
-# the next two lines are required for _isnanl(), which is internal to libc
-CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/include
-CPPFLAGS+=	-D_LIBC
 
 regress: ${PROG}
 	./${PROG}
