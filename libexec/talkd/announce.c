@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.17 2002/11/20 21:01:57 itojun Exp $	*/
+/*	$NetBSD: announce.c,v 1.18 2003/04/22 03:02:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.17 2002/11/20 21:01:57 itojun Exp $");
+__RCSID("$NetBSD: announce.c,v 1.18 2003/04/22 03:02:14 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ print_mesg(tty, request, remote_machine)
 	char line_buf[N_LINES][N_CHARS];
 	int sizes[N_LINES];
 	char big_buf[(N_LINES + 1) * N_CHARS];
-	char *bptr, *lptr, vis_user[sizeof(request->l_name) * 4];
+	char *bptr, *lptr, *vis_user;
 	int i, j, max_size;
 
 	i = 0;
@@ -129,7 +129,8 @@ print_mesg(tty, request, remote_machine)
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
-	if (strlen(request->l_name) + 1 > sizeof(vis_user) / 4)
+	vis_user = malloc(strlen(request->l_name) * 4 + 1);
+	if (!vis_user)
 		return (FAILED);
 	strvis(vis_user, request->l_name, VIS_CSTYLE);
 	(void)snprintf(line_buf[i], N_CHARS,
