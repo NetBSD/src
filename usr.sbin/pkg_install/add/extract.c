@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.15 1999/03/09 11:10:39 agc Exp $	*/
+/*	$NetBSD: extract.c,v 1.16 1999/03/12 17:32:20 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.15 1999/03/09 11:10:39 agc Exp $");
+__RCSID("$NetBSD: extract.c,v 1.16 1999/03/12 17:32:20 tron Exp $");
 #endif
 #endif
 
@@ -51,8 +51,8 @@ __RCSID("$NetBSD: extract.c,v 1.15 1999/03/09 11:10:39 agc Exp $");
 				where_args);				\
 		    }							\
 		    strcpy(where_args, TAR_CMD);			\
-		    strcpy(where_args, TAR_ARGS);			\
-		    where_count = sizeof(TAR_CMD) + sizeof(TAR_ARGS)-1;	\
+		    strcat(where_args, TAR_ARGS);			\
+		    where_count = sizeof(TAR_CMD) + sizeof(TAR_ARGS)-2;	\
 	}								\
 	if (perm_count) {						\
 		    apply_perms(todir, perm_args);			\
@@ -107,8 +107,8 @@ extract_plist(char *home, package_t *pkg)
 	errx(2, "can't get argument list space");
     }
     strcpy(where_args, TAR_CMD);
-    strcpy(where_args, TAR_ARGS);
-    where_count = sizeof(TAR_CMD) + sizeof(TAR_ARGS) - 1;
+    strcat(where_args, TAR_ARGS);
+    where_count = sizeof(TAR_CMD) + sizeof(TAR_ARGS) - 2;
     perm_args[0] = 0;
 
     last_chdir = 0;
