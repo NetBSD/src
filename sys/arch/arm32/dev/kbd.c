@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.3 1996/03/08 16:28:54 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.4 1996/03/13 21:51:32 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -818,6 +818,7 @@ kbdioctl(dev, cmd, data, flag, p)
 /*	struct kbd_softc *sc = kbdcd.cd_devs[KBDUNIT(dev)];*/
 	struct kbd_autorepeat *kbdar = (void *)data;
 	int *leds = (int *)data;
+	int s;
 
 	switch (cmd) {
 	case KBD_GETAUTOREPEAT:
@@ -829,7 +830,7 @@ kbdioctl(dev, cmd, data, flag, p)
 	case KBD_SETAUTOREPEAT:
 /*		if (KBDFLAG(dev) == KBDFLAG_RAWUNIT)
 			return(EINVAL);*/
-
+		s = spltty();
 		kbdautorepeat = *kbdar;
 		if (kbdautorepeat.ka_rate < 1)
 			kbdautorepeat.ka_rate = 1;
@@ -839,6 +840,7 @@ kbdioctl(dev, cmd, data, flag, p)
 			kbdautorepeat.ka_delay = 50;
 		if (kbdautorepeat.ka_delay < 1)
 			kbdautorepeat.ka_delay = 1;
+		(void)splx(s);
 		break;
 	case KBD_SETLEDS:
 		kbdsetleds(*leds);
@@ -970,7 +972,7 @@ getkey_polled()
 				key = ks[key].base_code;
 
 			if (modifiers & MODIFIER_CAPS) {
-				if ((key >= 'A' && key < 'Z') || (key >= 'a' && key <= 'z'))
+				if ((key >= 'A' && key <= 'Z') || (key >= 'a' && key <= 'z'))
 					key ^= 0x20;
 			}
 
@@ -1220,7 +1222,7 @@ kbddecodekey(sc, code)
 		key = ks[key].base_code;
 
 	if (modifiers & MODIFIER_CAPS) {
-		if ((key >= 'A' && key < 'Z') || (key >= 'a' && key <= 'z'))
+		if ((key >= 'A' && key <= 'Z') || (key >= 'a' && key <= 'z'))
 			key ^= 0x20;
 	}
 
