@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 2003/05/29 17:51:28 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.8 2003/05/30 17:26:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -339,25 +339,25 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update()
+md_pre_update(void)
 {
 	return 1;
 }
 
 void
-md_init()
+md_init(void)
 {
 }
 
 void
-md_set_sizemultname()
+md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
 }
 
 void
-md_set_no_x()
+md_set_no_x(void)
 {
 
 	toggle_getit (12);

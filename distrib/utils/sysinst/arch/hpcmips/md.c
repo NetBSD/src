@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 2003/05/29 17:51:29 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.25 2003/05/30 17:29:53 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,7 +70,7 @@ static void md_upgrade_mbrtype (void);
 
 
 int
-md_get_info()
+md_get_info(void)
 {
 	read_mbr(diskdev, &mbr, sizeof mbr);
 	if (!valid_mbr(&mbr)) {
@@ -92,7 +92,7 @@ md_get_info()
 
 
 int
-md_pre_disklabel()
+md_pre_disklabel(void)
 {
 	msg_display(MSG_dofdisk);
 
@@ -354,7 +354,7 @@ md_update(void)
 }
 
 void
-md_upgrade_mbrtype()
+md_upgrade_mbrtype(void)
 {
 	struct mbr_partition *mbrp;
 	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
@@ -402,8 +402,7 @@ md_cleanup_install(void)
 }
 
 int
-md_bios_info(dev)
-	char *dev;
+md_bios_info(char *dev)
 {
 	int cyl, head, sec;
 
@@ -420,25 +419,25 @@ md_bios_info(dev)
 }
 
 int
-md_pre_update()
+md_pre_update(void)
 {
 	return 1;
 }
 
 void
-md_init()
+md_init(void)
 {
 }
 
 void
-md_set_sizemultname()
+md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
 }
 
 void
-md_set_no_x()
+md_set_no_x(void)
 {
 
 	toggle_getit (8);
