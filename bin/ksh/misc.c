@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2 1997/01/12 19:12:08 tls Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 1998/10/09 02:42:28 erh Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -1270,7 +1270,7 @@ ksh_get_wd(buf, bsize)
 		b = buf;
 	else
 		b = alloc(MAXPATHLEN + 1, ATEMP);
-	if (!getwd(b)) {
+	if (!getcwd(b, MAXPATHLEN)) {
 		errno = EACCES;
 		if (b != buf)
 			afree(b, ATEMP);
