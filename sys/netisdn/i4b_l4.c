@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.25 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_l4.c,v 1.26 2004/03/21 16:29:40 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.25 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.26 2004/03/21 16:29:40 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -600,7 +600,8 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 
 	update_controller_leds(cd->l3drv);
 
-	(*cd->l4_driver->line_connected)(cd->l4_driver_softc, cd);
+	if (cd->l4_driver != NULL && cd->l4_driver_softc != NULL)
+		(*cd->l4_driver->line_connected)(cd->l4_driver_softc, cd);
 
 	i4b_l4_setup_timeout(cd);
 	
@@ -930,7 +931,8 @@ idletime_state:      IST_NONCHK             IST_CHECK       IST_SAFE
 static time_t
 i4b_get_idletime(call_desc_t *cd)
 {
-	if (cd->l4_driver->get_idletime)
+	if (cd->l4_driver != NULL && cd->l4_driver_softc != NULL
+	    && cd->l4_driver->get_idletime)
 		return cd->l4_driver->get_idletime(cd->l4_driver_softc);
 	return cd->last_active_time;
 }
