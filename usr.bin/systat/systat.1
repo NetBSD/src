@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.18 2000/01/07 04:47:24 itojun Exp $
+.\"	$NetBSD: systat.1,v 1.19 2000/01/08 23:12:37 itojun Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -114,6 +114,8 @@ argument expects to be one of:
 .Ic inet.ip ,
 .Ic inet.tcp ,
 .Ic inet.tcpsyn ,
+.Ic inet6.ip6 ,
+.Ic ipsec ,
 .Ic iostat ,
 .Ic mbufs ,
 .Ic netstat ,
@@ -159,8 +161,16 @@ may be used.
 The following commands are interpreted by the ``global''
 command interpreter.
 .Bl -tag -width Fl
-.It Ic help
+.It Ic help Ar key
 Print the names of the available displays on the command line.
+It will print long names as
+.Dq Ic inet.* .
+To print items under
+.Dq Ic inet ,
+give
+.Ic inet
+as
+.Ar key .
 .It Ic load
 Print the load average over the past 1, 5, and 15 minutes
 on the command line.
@@ -192,13 +202,17 @@ buffers and the total size of the buffers for that filesystem.
 .It Ic inet.icmp
 Display ICMP statistics.
 .It Ic inet.ip
-Display IP and UDP statistics.
+Display IPv4 and UDP statistics.
 .It Ic inet.tcp
 Display TCP statistics.
 .It Ic inet.tcpsyn
 Display statistics about the 
 .Tn TCP
 ``syncache''.
+.It Ic inet6.ip6
+Display IPv6 statistics.
+.It Ic ipsec
+Display IPsec statistics for both IPv4 and v6.
 .It Ic iostat
 Display, in the lower window, statistics about processor use
 and disk throughput.  Statistics on processor use appear as
