@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.25 2003/01/18 06:44:57 thorpej Exp $
+#	$NetBSD: Makefile,v 1.26 2003/04/11 13:54:16 jdc Exp $
 
 INCSDIR= /usr/include/sparc
 
 INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \
 	bswap.h bootinfo.h \
-	cdefs.h cgtworeg.h cpu.h \
+	cdefs.h cgtworeg.h cpu.h cpuconf.h \
 	disklabel.h \
 	eeprom.h elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h fsr.h \
