@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.385 2003/03/04 14:39:06 jmmv Exp $
+# $NetBSD: mi,v 1.386 2003/03/05 07:09:37 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -44,8 +44,10 @@
 ./dev/fd		base-sys-root
 ./dev/log		base-sys-root
 ./etc			base-sys-root
+./etc/X11		base-x11-root
 ./etc/cgd		base-sys-root
 ./etc/defaults		base-sys-root
+./etc/fonts		base-x11-root
 ./etc/kerberosIV	base-krb4-root
 ./etc/kerberosV		base-krb5-root
 ./etc/mail		base-sendmail-root
