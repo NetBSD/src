@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23.2.3 1999/12/20 15:36:09 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.23.2.4 2000/01/31 20:58:10 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23.2.3 1999/12/20 15:36:09 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23.2.4 2000/01/31 20:58:10 he Exp $");
 #endif
 #endif
 
@@ -333,5 +333,6 @@ pkg_perform(lpkg_head_t *pkgs)
 			free_lpkg(lpp);
 		}
 	}
+	ftp_stop();
 	return err_cnt;
 }
