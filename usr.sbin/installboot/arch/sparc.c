@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc.c,v 1.1 2002/05/06 16:24:46 pk Exp $ */
+/*	$NetBSD: sparc.c,v 1.2 2002/05/14 06:18:52 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc.c,v 1.1 2002/05/06 16:24:46 pk Exp $");
+__RCSID("$NetBSD: sparc.c,v 1.2 2002/05/14 06:18:52 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -74,8 +74,13 @@ sparc_clearboot(ib_params *params)
 	assert(params->fsfd != -1);
 	assert(params->filesystem != NULL);
 
-	if (params->flags & IB_STARTBLOCK) {
-		warnx("Can't use `-b bno' with `-c'");
+	if (params->flags & IB_STAGE2START) {
+		warnx("Can't use `-B bno' with `-c'");
+		return (0);
+	}
+	if (params->flags & IB_STAGE1START) {
+		warnx("`-b bno' is not supported for %s",
+		    params->machine->name);
 		return (0);
 	}
 
@@ -113,15 +118,14 @@ sparc_clearboot(ib_params *params)
 int
 sparc_setboot(ib_params *params)
 {
-	struct stat	bootstrapsb;
+	struct stat	filesystemsb, bootstrapsb;
 	char		bb[SPARC_BOOT_BLOCK_MAX_SIZE];
-	uint32_t	startblock;
 	int		retval;
 	ssize_t		rv;
 	size_t		bbi;
 	struct sparc_bbinfo	*bbinfop;	/* bbinfo in prototype image */
 	uint32_t	maxblk, nblk, blk_i;
-	ib_block	*blocks = NULL;
+	ib_block	*blocks;
 
 	assert(params != NULL);
 	assert(params->fsfd != -1);
@@ -131,13 +135,25 @@ sparc_setboot(ib_params *params)
 	assert(params->stage1 != NULL);
 	assert(SPARC_BBINFO_MAGICSIZE == 32);
 
-	if (params->stage2 == NULL) {
-		warnx("You must provide the name of the secondary bootstrap");
-		return (0);
-	}
+#define	SPARC_AOUT_OFFSET	32
 
 	retval = 0;
+	blocks = NULL;
 
+	if (params->stage2 == NULL) {
+		warnx("You must provide the name of the secondary bootstrap");
+		goto done;
+	}
+	if (params->flags & IB_STAGE1START) {
+		warnx("`-b bno' is not supported for %s",
+		    params->machine->name);
+		goto done;
+	}
+
+	if (fstat(params->fsfd, &filesystemsb) == -1) {
+		warn("Examining `%s'", params->filesystem);
+		goto done;
+	}
 	if (fstat(params->s1fd, &bootstrapsb) == -1) {
 		warn("Examining `%s'", params->stage1);
 		goto done;
@@ -157,7 +173,8 @@ sparc_setboot(ib_params *params)
 	 * Leave room for a 32-byte a.out header.
 	 */
 	memset(&bb, 0, sizeof(bb));
-	rv = read(params->s1fd, bb + 32, sizeof(bb) - 32);
+	rv = read(params->s1fd, bb + SPARC_AOUT_OFFSET,
+	    sizeof(bb) - SPARC_AOUT_OFFSET);
 	if (rv == -1) {
 		warn("Reading `%s'", params->stage1);
 		goto done;
@@ -167,7 +184,7 @@ sparc_setboot(ib_params *params)
 	 * Quick sanity check that the bootstrap given
 	 * is *not* an ELF executable.
 	 */
-	if (memcmp(bb + 32 + 1, "ELF", strlen("ELF")) == 0) {
+	if (memcmp(bb + SPARC_AOUT_OFFSET + 1, "ELF", strlen("ELF")) == 0) {
 		warnx("`%s' is an ELF executable; need raw binary", 
 		    params->stage1);
 		goto done;
@@ -200,8 +217,14 @@ sparc_setboot(ib_params *params)
 		goto done;
 	}
 
-	/* Make sure the (probably new) secondary bootstrap is on disk. */
-	sync(); sleep(1); sync();
+	if (S_ISREG(filesystemsb.st_mode)) {
+		if (fsync(params->fsfd) == -1)
+			warn("Synchronising file system `%s'",
+			    params->filesystem);
+	} else {
+		/* Ensure the secondary bootstrap is on disk. */
+		sync();
+	}
 
 	/* Collect the blocks for the secondary bootstrap. */
 	nblk = maxblk;
@@ -243,17 +266,12 @@ sparc_setboot(ib_params *params)
 	*((uint32_t *)bb) = htobe32(SUN_MAGIC);
 	*((uint32_t *)bb + 1) = htobe32(SUN4_BASTART);
 
-	if (params->flags & IB_STARTBLOCK)
-		startblock = params->startblock;
-	else
-		startblock =
-			SPARC_BOOT_BLOCK_OFFSET / SPARC_BOOT_BLOCK_BLOCKSIZE;
-
 	if (params->flags & IB_VERBOSE) {
-		printf("Bootstrap start sector: %u\n", startblock);
+		printf("Bootstrap start sector: %u\n",
+		    SPARC_BOOT_BLOCK_OFFSET / SPARC_BOOT_BLOCK_BLOCKSIZE);
 		printf("Bootstrap byte count:   %u\n", (unsigned)rv);
-		printf("Bootstrap block table:  %u entries avail, %u used:",
-		    maxblk, nblk);
+		printf("Bootstrap block table:  %u entries of %u bytes available, %u used:",
+		    maxblk, blocks[0].blocksize, nblk);
 		for (blk_i = 0; blk_i < nblk; blk_i++)
 			printf(" %u", blocks[blk_i].block);
 		printf("\n%sriting bootstrap\n",
@@ -264,8 +282,7 @@ sparc_setboot(ib_params *params)
 		goto done;
 	}
 
-	rv = pwrite(params->fsfd, &bb, sizeof(bb),
-		    startblock * SPARC_BOOT_BLOCK_BLOCKSIZE);
+	rv = pwrite(params->fsfd, &bb, sizeof(bb), SPARC_BOOT_BLOCK_OFFSET);
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;

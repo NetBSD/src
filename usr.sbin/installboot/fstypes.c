@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.2 2002/04/30 14:45:12 lukem Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.3 2002/05/14 06:18:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,23 +37,76 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <assert.h>
+#include <err.h>
 #include <stdio.h>
 
 #include "installboot.h"
 
 struct ib_fs fstypes[] = {
-	{ "ffs",	ffs_match,	ffs_findstage2 },
-	{ "raw",	raw_match,	raw_findstage2 },
+	{ "ffs",	ffs_match,	ffs_findstage2	},
+	{ "raw",	raw_match,	raw_findstage2	},
 	{ 0, 0, 0 }
 };
+
+int
+hardcode_stage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
+{
+	struct stat	s2sb;
+	uint32_t	nblk, i;
+
+	assert(params != NULL);
+	assert(params->stage2 != NULL);
+	assert(maxblk != NULL);
+	assert(blocks != NULL);
+	assert((params->flags & IB_STAGE2START) != 0);
+	assert(params->fstype != NULL);
+	assert(params->fstype->blocksize != 0);
+
+	if (stat(params->stage2, &s2sb) == -1) {
+		warn("Examining `%s'", params->stage2);
+		return (0);
+	}
+	if (!S_ISREG(s2sb.st_mode)) {
+		warnx("`%s' must be a regular file", params->stage2);
+		return (0);
+	}
+
+	nblk = s2sb.st_size / params->fstype->blocksize;
+	if (s2sb.st_size % params->fstype->blocksize != 0)
+		nblk++;
+#if 0
+	fprintf(stderr, "for %s got size %lld blksize %u blocks %u\n",
+	    params->stage2, s2sb.st_size, params->fstype->blocksize, nblk);
+#endif
+	if (nblk > *maxblk) {
+                warnx("Secondary bootstrap `%s' has too many blocks "
+                    "(calculated %u, maximum %u)\n",
+		    params->stage2, nblk, *maxblk);
+                return (0);
+        }
+
+	for (i = 0; i < nblk; i++) {
+		blocks[i].block = params->s2start +
+		    i * (params->fstype->blocksize / 512);
+		blocks[i].blocksize = params->fstype->blocksize;
+	}
+	*maxblk = nblk;
+
+	return (1);
+}
+
 
 int
 raw_match(ib_params *params)
 {
 
 	assert(params != NULL);
+	assert(params->fstype != NULL);
+
+	params->fstype->blocksize = 8192;		// XXX: hardcode
 	return (1);		/* can always write to a "raw" file system */
 }
 
@@ -62,7 +115,13 @@ raw_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 {
 
 	assert(params != NULL);
+	assert(params->stage2 != NULL);
 	assert(maxblk != NULL);
 	assert(blocks != NULL);
-	return (0);		/* no stage2 support for raw */
+
+	if ((params->flags & IB_STAGE2START) == 0) {
+		warnx("Need `-B bno' for raw file systems");
+		return (0);
+	}
+	return (hardcode_stage2(params, maxblk, blocks));
 }

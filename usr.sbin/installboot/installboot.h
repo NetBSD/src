@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.8 2002/05/06 16:24:46 pk Exp $	*/
+/*	$NetBSD: installboot.h,v 1.9 2002/05/14 06:18:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,24 +48,26 @@ typedef enum {
 	IB_VERBOSE =	1<<0,		/* verbose operation */
 	IB_NOWRITE =	1<<1,		/* don't write */
 	IB_CLEAR =	1<<2,		/* clear boot block */
-	IB_STARTBLOCK =	1<<3,		/* start block supplied */
 
 				/* flags from -o options */
 	IB_ALPHASUM =	1<<8,		/* set Alpha checksum */
 	IB_APPEND =	1<<9,		/* clear boot block */
 	IB_SUNSUM =	1<<10,		/* set Sun checksum */
+	IB_STAGE1START=	1<<11,		/* start block for stage 1 provided */
+	IB_STAGE2START=	1<<12,		/* start block for stage 2 provided */
 } ib_flags;
 
 typedef struct {
-	ib_flags	 flags;
-	struct ib_mach	*machine;
-	struct ib_fs	*fstype;
-	const char	*filesystem;
-	int		 fsfd;
-	const char	*stage1;
-	int		 s1fd;
-	const char	*stage2;
-	uint32_t	 startblock;
+	ib_flags	 flags;		/* flags (see above) */
+	struct ib_mach	*machine;	/* machine details (see below) */
+	struct ib_fs	*fstype;	/* file system details (see below) */
+	const char	*filesystem;	/* name of target file system */
+	int		 fsfd;		/*  open fd to filesystem */
+	const char	*stage1;	/* name of stage1 bootstrap */
+	int		 s1fd;		/*  open fd to stage1 */
+	uint32_t	 s1start;	/*  start block of stage1 */
+	const char	*stage2;	/* name of stage2 bootstrap */
+	uint32_t	 s2start;	/*  start block of stage2 */
 } ib_params;
 
 typedef struct {
@@ -81,9 +83,13 @@ struct ib_mach {
 };
 
 struct ib_fs {
+		/* compile time parameters */
 	const char	*name;
 	int		(*match)	(ib_params *);
 	int		(*findstage2)	(ib_params *, uint32_t *, ib_block *);
+		/* run time fs specific parameters */
+	uint32_t	 blocksize;
+	uint32_t	 needswap;
 };
 
 extern struct ib_mach	machines[];
@@ -98,6 +104,7 @@ int		no_setboot(ib_params *);
 int		no_clearboot(ib_params *);
 
 	/* fstypes.c */
+int		hardcode_stage2(ib_params *, uint32_t *, ib_block *);
 int		ffs_match(ib_params *);
 int		ffs_findstage2(ib_params *, uint32_t *, ib_block *);
 int		raw_match(ib_params *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.7 2002/04/30 14:21:17 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.8 2002/05/14 06:18:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.7 2002/04/30 14:21:17 lukem Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.8 2002/05/14 06:18:51 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -75,14 +75,17 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	params = &installboot_params;
 	memset(params, 0, sizeof(*params));
+	params->fsfd = -1;
+	params->s1fd = -1;
 	if ((p = getenv("MACHINE")) != NULL)
 		if (! getmachine(params, p, "$MACHINE"))
 			exit(1);
 
-	while ((ch = getopt(argc, argv, "b:cm:no:t:v")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:cm:no:t:v")) != -1) {
 		switch (ch) {
 
 		case 'b':
+		case 'B':
 			if (*optarg == '\0')
 				goto badblock;
 			lval = strtoul(optarg, &p, 0);
@@ -90,8 +93,13 @@ main(int argc, char *argv[])
  badblock:
 				errx(1, "Invalid block number `%s'", optarg);
 			}
-			params->startblock = (uint32_t)lval;
-			params->flags |= IB_STARTBLOCK;
+			if (ch == 'b') {
+				params->s1start = (uint32_t)lval;
+				params->flags |= IB_STAGE1START;
+			} else {
+				params->s2start = (uint32_t)lval;
+				params->flags |= IB_STAGE2START;
+			}
 			break;
 
 		case 'c':
@@ -189,6 +197,9 @@ main(int argc, char *argv[])
 
 	if (params->flags & IB_VERBOSE) {
 		printf("File system:         %s\n", params->filesystem);
+		printf("File system type:    %s (blocksize %u, needswap %d)\n",
+		    params->fstype->name,
+		    params->fstype->blocksize, params->fstype->needswap);
 		printf("Primary bootstrap:   %s\n",
 		    (params->flags & IB_CLEAR) ? "(to be cleared)"
 		    : params->stage1);
@@ -350,7 +361,7 @@ usage(void)
 	prog = getprogname();
 	fprintf(stderr,
 "Usage: %s [-nv] [-m machine] [-o options] [-t fstype]\n"
-"\t\t   [-b block] filesystem primary [secondary]\n"
+"\t\t   [-b s1start] [-B s2start] filesystem primary [secondary]\n"
 "Usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n",
 	    prog, prog);
 	exit(1);

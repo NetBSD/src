@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.11 2002/05/06 13:34:18 lukem Exp $ */
+/*	$NetBSD: sun68k.c,v 1.12 2002/05/14 06:18:52 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.11 2002/05/06 13:34:18 lukem Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.12 2002/05/14 06:18:52 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -74,10 +74,16 @@ sun68k_clearboot(ib_params *params)
 	assert(params->fsfd != -1);
 	assert(params->filesystem != NULL);
 
-	if (params->flags & IB_STARTBLOCK) {
-		warnx("Can't use `-b bno' with `-c'");
+	if (params->flags & IB_STAGE2START) {
+		warnx("Can't use `-B bno' with `-c'");
 		return (0);
 	}
+	if (params->flags & IB_STAGE1START) {
+		warnx("`-b bno' is not supported for %s",
+		    params->machine->name);
+		return (0);
+	}
+
 	/* first check that it _could_ exist here */
 	rv = pread(params->fsfd, &bb, sizeof(bb), SUN68K_BOOT_BLOCK_OFFSET);
 	if (rv == -1) {
@@ -112,9 +118,8 @@ sun68k_clearboot(ib_params *params)
 int
 sun68k_setboot(ib_params *params)
 {
-	struct stat	bootstrapsb;
+	struct stat	filesystemsb, bootstrapsb;
 	char		bb[SUN68K_BOOT_BLOCK_MAX_SIZE];
-	uint32_t	startblock;
 	int		retval;
 	ssize_t		rv;
 	size_t		bbi;
@@ -137,6 +142,10 @@ sun68k_setboot(ib_params *params)
 
 	retval = 0;
 
+	if (fstat(params->fsfd, &filesystemsb) == -1) {
+		warn("Examining `%s'", params->filesystem);
+		goto done;
+	}
 	if (fstat(params->s1fd, &bootstrapsb) == -1) {
 		warn("Examining `%s'", params->stage1);
 		goto done;
@@ -195,8 +204,14 @@ sun68k_setboot(ib_params *params)
 		goto done;
 	}
 
-	/* Make sure the (probably new) secondary bootstrap is on disk. */
-	sync(); sleep(1); sync();
+	if (S_ISREG(filesystemsb.st_mode)) {
+		if (fsync(params->fsfd) == -1)
+			warn("Synchronising file system `%s'",
+			    params->filesystem);
+	} else {
+		/* Ensure the secondary bootstrap is on disk. */
+		sync();
+	}
 
 	/* Collect the blocks for the secondary bootstrap. */
 	nblk = maxblk;
@@ -222,17 +237,12 @@ sun68k_setboot(ib_params *params)
 		}
 	}
 
-	if (params->flags & IB_STARTBLOCK)
-		startblock = params->startblock;
-	else
-		startblock = SUN68K_BOOT_BLOCK_OFFSET /
-		    SUN68K_BOOT_BLOCK_BLOCKSIZE;
-
 	if (params->flags & IB_VERBOSE) {
-		printf("Bootstrap start sector: %u\n", startblock);
+		printf("Bootstrap start sector: %u\n",
+		    SUN68K_BOOT_BLOCK_OFFSET / SUN68K_BOOT_BLOCK_BLOCKSIZE);
 		printf("Bootstrap byte count:   %u\n", (unsigned)rv);
-		printf("Bootstrap block table:  %u entries avail, %u used:",
-		    maxblk, nblk);
+		printf("Bootstrap block table:  %u entries of %u bytes available, %u used:",
+		    maxblk, blocks[0].blocksize, nblk);
 		for (blk_i = 0; blk_i < nblk; blk_i++)
 			printf(" %u", blocks[blk_i].block);
 		printf("\n%sriting bootstrap\n",
@@ -243,8 +253,7 @@ sun68k_setboot(ib_params *params)
 		goto done;
 	}
 
-	rv = pwrite(params->fsfd, &bb, sizeof(bb),
-	    startblock * SUN68K_BOOT_BLOCK_BLOCKSIZE);
+	rv = pwrite(params->fsfd, &bb, sizeof(bb), SUN68K_BOOT_BLOCK_OFFSET);
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
