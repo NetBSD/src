@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1998/03/29 04:46:40 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1998/08/29 22:53:03 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1998/03/29 04:46:40 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1998/08/29 22:53:03 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -112,7 +112,7 @@ main(argc, argv)
 
 	/* initialization */
 	bflag = 2;		/* default no board */
-	signal(2, getout);	/* trap interrupts */
+	signal(SIGINT, getout);	/* trap interrupts */
 	if (tcgetattr(0, &old) == -1)	/* get old tty mode */
 		errexit("backgammon(gtty)");
 	noech = old;
@@ -212,7 +212,7 @@ main(argc, argv)
 					else
 						writec('\n');
 					writel("Password:");
-					signal(14, getout);
+					signal(SIGALRM, getout);
 					cflag = 1;
 					alarm(10);
 					for (i = 0; i < 10; i++) {
