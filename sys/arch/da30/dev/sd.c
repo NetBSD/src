@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.4 1994/10/26 02:33:27 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.5 1995/04/10 08:13:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Mackerras.
@@ -908,24 +908,6 @@ sdclose(dev_t dev, int flags, int fmt)
 	return ENXIO;
     tp->isopen = 0;
     return 0;
-}
-
-int
-sdread(dev_t dev, struct uio *uio, int flags)
-{
-    struct target *tp;
-
-    tp = (struct target *) sdcd.cd_devs[sdunit(dev)];
-    return raw_disk_io(dev, uio, tp->blocksize);
-}
-
-int
-sdwrite(dev_t dev, struct uio *uio, int flags)
-{
-    struct target *tp;
-
-    tp = (struct target *) sdcd.cd_devs[sdunit(dev)];
-    return raw_disk_io(dev, uio, tp->blocksize);
 }
 
 sdioctl(dev_t dev, int cmd, caddr_t addr, int flag,
