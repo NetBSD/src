@@ -6,18 +6,18 @@
 #include <sys/cdefs.h>
 
 #ifdef __weak_reference
-__weak_reference(__catclose,catclose);
+__weak_reference(_catclose,catclose);
 #else
 
 #include <nl_types.h>
 
-extern void __catclose __P((nl_catd));
+extern int _catclose __P((nl_catd));
 
-void
+int
 catclose(catd)
 	nl_catd catd;
 {
-	__catclose(catd);
+	return _catclose(catd);
 }
 
 #endif
