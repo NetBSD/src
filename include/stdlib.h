@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.6 1993/10/11 19:08:26 jtc Exp $
+ *	$Id: stdlib.h,v 1.7 1993/10/13 17:56:09 jtc Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -101,23 +101,6 @@ int	 wctomb __P((char *, wchar_t));
 int	 mbtowc __P((wchar_t *, const char *, size_t));
 size_t	 wcstombs __P((char *, const wchar_t *, size_t));
 
-/* don't ask me where to put these -- MB XXX */
-double		drand48	__P((void));
-double		erand48	__P((unsigned short[3]));
-long		lrand48	__P((void));
-long		nrand48	__P((unsigned short[3]));
-long		mrand48	__P((void));
-long		jrand48	__P((unsigned short[3]));
-void		srand48	__P((long));
-unsigned short *seed48	__P((unsigned short[3]));
-void		lcong48	__P((unsigned short[7]));
-
-#ifndef _ANSI_SOURCE
-void	 cfree __P((void *));
-int	 putenv __P((const char *));
-int	 setenv __P((const char *, const char *, int));
-#endif /* not ANSI */
-
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 #include <sys/types.h>
 
@@ -126,21 +109,39 @@ void  *alloca __P((int));     /* built-in for gcc */
 #else 
 void  *alloca __P((size_t)); 
 #endif /* __GNUC__ */ 
-extern	 char *optarg;			/* getopt(3) external variables */
-extern	 int optind;
-extern	 int opterr;
+void	 cfree __P((void *));
+
 int	 getopt __P((int, char * const *, const char *));
-extern	 char *suboptarg;		/* getsubopt(3) external variable */
+extern	 char *optarg;			/* getopt(3) external variables */
+extern	 int opterr;
+extern	 int optind;
+extern	 int optopt;
 int	 getsubopt __P((char **, char * const *, char **));
+extern	 char *suboptarg;		/* getsubopt(3) external variable */
+
 int	 heapsort __P((void *, size_t, size_t,
 	    int (*)(const void *, const void *)));
-char	*initstate __P((unsigned, char *, int));
 int	 radixsort __P((const u_char **, int, const u_char *, u_char));
+
+char	*initstate __P((unsigned, char *, int));
 long	 random __P((void));
 char	*setstate __P((char *));
 void	 srandom __P((unsigned));
+
+int	 putenv __P((const char *));
+int	 setenv __P((const char *, const char *, int));
 void	 unsetenv __P((const char *));
-#endif /* neither ANSI nor POSIX */
+
+double	 drand48 __P((void));
+double	 erand48 __P((unsigned short[3]));
+long	 jrand48 __P((unsigned short[3]));
+void	 lcong48 __P((unsigned short[7]));
+long	 lrand48 __P((void));
+long	 mrand48 __P((void));
+long	 nrand48 __P((unsigned short[3]));
+unsigned short *seed48 __P((unsigned short[3]));
+void	 srand48 __P((long));
+#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
 __END_DECLS
 
