@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.9 1994/10/27 04:14:38 cgd Exp $	*/
+/*	$NetBSD: io.c,v 1.10 1995/01/09 22:13:10 ws Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -95,7 +95,7 @@ printf(format,data)
 				putchar(*--ptr);
 			while (ptr != buf);
 		} else if (c == 'x') {
-			int num = *dataptr++, dig;
+			unsigned int num = (unsigned int)*dataptr++, dig;
 			char buf[8], *ptr = buf;
 			do
 				*ptr++ = (dig = (num & 0xf)) > 9?
@@ -169,12 +169,28 @@ strcmp(s1, s2)
 	return 1;
 }
 
+strlen(s)
+	char *s;
+{
+	int n;
+
+	for (n = 0; *s++; n++);
+	return n;
+}
+
 bcopy(from, to, len)
 	char *from, *to;
 	int len;
 {
-	while (len-- > 0)
-		*to++ = *from++;
+	if (from > to)
+		while (--len >= 0)
+			*to++ = *from++;
+	else {
+		to += len;
+		from += len;
+		while (--len >= 0)
+			*--to = *--from;
+	}
 }
 
 static int tw_on;
