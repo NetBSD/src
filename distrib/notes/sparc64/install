@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.5 2000/11/17 06:20:07 mrg Exp $
+.\"	$NetBSD: install,v 1.6 2001/07/24 18:18:32 nra Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -312,7 +312,7 @@ labels,
 .Em "Always make sure all your partitions start and end on cylinder boundaries."
 .Note)
 .Pp
-Here follows an example of what you'll see while in the dislabel editor.
+Here follows an example of what you'll see while in the disklabel editor.
 Do not touch any of the parameters except for the
 .Sq Li label:
 entry and
@@ -446,7 +446,7 @@ but of course you can layout the disk however you see fit.
 .Dl "   6     backup   wm     0 - 8185     4.25GB  (8186/0/0) 8922740"
 .Dl "   7 unassigned   wm     0            0       (0/0/0)          0"
 .Pp
-After your disk has been labelled you need to create filesystems on
+After your disk has been labeled you need to create filesystems on
 your slices. The Solaris newfs command will create ffs filesystems
 that can be used by
 .Nx .
