@@ -1,8 +1,10 @@
-/*
+/* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
+ *
+ * Changed for the VAX port (and for readability) /IC
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -38,10 +40,9 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.1 1994/08/02 20:22:02 ragge Exp $
+ *	from: machdep.c,v 1.12 1993/10/13 09:36:43 cgd Exp $
+ *	$Id: machdep.c,v 1.2 1994/08/16 23:47:34 ragge Exp $
  */
-
-/* All bugs are subject to removal without further notice */
 
 #include "sys/param.h"
 #include "vax/include/sid.h"
@@ -78,13 +79,17 @@ char	machine[]="VAX";
 char	cpu_model[100];
 int	msgbufmapped=0;
 struct	msgbuf *msgbufp;
-int	physmem=0;
+int	physmem;
 struct	cfdriver nexuscd;
-int	todrstopped;
+int	todrstopped,glurg;
+
+caddr_t allocsys __P((caddr_t));
 
 /*   */
+#if 0
 #define valloc(name, type, num) \
 		(name) = (type *)v; v = (caddr_t)((name)+(num))
+#endif
 #define valloclim(name, type, num, lim) \
 		(name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
 
@@ -103,20 +108,78 @@ int     nbuf = 0;
 cpu_startup() {
 	caddr_t v,tempaddr;
 	extern char version[];
-	int base, residual,i;
+	int base, residual,i,sz;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
-	extern int cpu_type,boothowto;
+	extern int cpu_type,boothowto,startpmapdebug;
 	extern char *panicstr;
 
 	printf("%s\n", version);
-	printf("RealMem = 0x%s%x\n", PRINT_HEXF(mem_size), mem_size);
+	printf("realmem = %d\n", mem_size);
+	physmem=btoc(mem_size); 
 	panicstr=NULL;
 	mtpr(AST_NO,PR_ASTLVL);
 	spl0();
 
-/*	printf("avail mem = %d\n", ptoa(vm_page_free_count)); */
 	boothowto=0; /* XXX Vi l}ser s} att vi alltid f}r root-fr}{ga */
+
+
+    /*
+     * Find out how much space we need, allocate it,
+     * and then give everything true virtual addresses.
+     */
+    sz = (int)allocsys((caddr_t)0);
+    if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
+        panic("startup: no room for tables");
+    if (allocsys(v) - v != sz)
+        panic("startup: table size inconsistency");
+
+    /*
+     * Now allocate buffers proper.  They are different than the above
+     * in that they usually occupy more virtual memory than physical.
+     */
+    size = MAXBSIZE * nbuf;
+    buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+                               &maxaddr, size, TRUE);
+    minaddr = (vm_offset_t)buffers;
+    if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+                    &minaddr, size, FALSE) != KERN_SUCCESS)
+        panic("startup: cannot allocate buffers");
+    if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+        /* don't want to alloc more physical mem than needed */
+        bufpages = btoc(MAXBSIZE) * nbuf;
+    }
+    base = bufpages / nbuf;
+    residual = bufpages % nbuf;
+    for (i = 0; i < nbuf; i++) {
+        vm_size_t curbufsize;
+        vm_offset_t curbuf;
+
+        /*
+         * First <residual> buffers get (base+1) physical pages
+         * allocated for them.  The rest get (base) physical pages.
+         *
+         * The rest of each buffer occupies virtual space,
+         * but has no physical memory allocated for it.
+         */
+        curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+        curbufsize = CLBYTES * (i < residual ? base+1 : base);
+        vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
+        vm_map_simplify(buffer_map, curbuf);
+    }
+
+    /*
+     * Allocate a submap for exec arguments.  This map effectively
+     * limits the number of processes exec'ing at any time.
+     */
+    exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+                             16*NCARGS, TRUE);
+
+
+
+
+
+
 
         /*
          * Allocate space for system data structures.
@@ -129,17 +192,10 @@ cpu_startup() {
          * An index into the kernel page table corresponding to the
          * virtual memory address maintained in "v" is kept in "mapaddr".
          */
-
+#if 0
 	bufpages = bufpages ? bufpages : mem_size/NBPG/CLSIZE/10;
 	nbuf     = nbuf     ? nbuf     : max(bufpages, 16);
 	nswbuf   = nswbuf   ? nswbuf   : min((nbuf/2)&~1, 256);
-
-/*
-	printf("cpu_startup(): Mapping 0x%x bytes from kernel_map into v\n",
-	       (nswbuf+nbuf)*sizeof(struct buf));
-	printf("               Must allocate 0x%x bytes for the operation.\n",
-	       round_page((nswbuf+nbuf)*sizeof(struct buf)));
-*/
 
         v = (caddr_t) kmem_alloc(kernel_map,(nswbuf+nbuf)*sizeof(struct buf));
 
@@ -149,18 +205,12 @@ cpu_startup() {
         swbuf = (struct buf *) v;
         buf   = swbuf + nswbuf;
         v    += round_page((nswbuf+nbuf)*sizeof(struct buf));
-
-/*	printf("avail mem = %d\n", ptoa(vm_page_free_count)); */
-
-/*	printf("cpu_startup(), after allocation:\n");              XXX */
-/*	printf("swbuf=0x%x, buf=0x%x, v=0x%x\n", swbuf, buf, v);   XXX */
-/*	printf("nswbuf=0x%x, nbuf=0x%x\n", nswbuf, nbuf);          XXX */
-
+#endif
         /*
          * XXX Now allocate buffers proper.  They are different than the above
          * in that they usually occupy more virtual memory than physical.
          */
-
+#if 0
         size = MAXBSIZE * nbuf;
         buffer_map = kmem_suballoc(kernel_map, (vm_offset_t) &buffers,
                                    &maxaddr, size, FALSE);
@@ -169,12 +219,9 @@ cpu_startup() {
                         &minaddr, size, FALSE) != KERN_SUCCESS)
                 panic("cpu_startup(): Cannot allocate buffers");
 
-/*	printf("cpu_startup(): avail mem = %d\n",
-	       ptoa(vm_page_free_count));                         /* XXX */
-
         base = bufpages / nbuf;
         residual = bufpages % nbuf;
-
+#endif
 	/*
 	 * The first (residual) buffers get (base+1) number of
 	 * physical pages allocated from the beginning.
@@ -182,21 +229,21 @@ cpu_startup() {
 	 * pages allocated. The remaining virtual space of the
 	 * buffers stays unmapped.
 	 */
+#if 0
         for (i = 0; i < nbuf; i++) {
 	  vm_size_t   curbufsize;
 	  vm_offset_t curbuf;
+glurg=i;
 	  curbuf = (vm_offset_t) buffers + i * MAXBSIZE;
 	  curbufsize = CLBYTES * (i < residual ? base+1 : base);
 	  vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
 	  vm_map_simplify(buffer_map, curbuf);
         }
+#endif
 	/* We found it cleaner to allocate the i/o buffers in autoconf.c
 	 * instead of here, as the previous (horrid) code did.
 	 * Look in autoconf.c for its specification.   (Aqua)
 	 */
-
-/*	printf("cpu_startup(): avail mem = %d\n",
-	       ptoa(vm_page_free_count));                         /* XXX */
 
         /*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -206,9 +253,23 @@ cpu_startup() {
         mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
                                    M_MBUF, M_NOWAIT);
         bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
-        mb_map = kmem_suballoc(kernel_map, (vm_offset_t)&mbutl, &maxaddr,
+        mb_map = kmem_suballoc(kernel_map, (vm_offset_t*)&mbutl, &maxaddr,
                                VM_MBUF_SIZE, FALSE);
-/*	printf("Available physical memory = %d.\n", ptoa(vm_page_free_count));*/
+
+        /*
+         * Initialize callouts
+         */
+#if 0
+	callout=(struct callout *)
+		kmem_alloc(kernel_map, ncallout*sizeof(struct callout));
+#endif
+
+        callfree = callout;
+        for (i = 1; i < ncallout; i++)
+                callout[i-1].c_next = &callout[i];
+	callout[i-1].c_next = NULL;
+
+	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("Using %d buffers containing %d bytes of memory.\n",
 	       nbuf, bufpages * CLBYTES);
 
@@ -217,21 +278,14 @@ cpu_startup() {
          */
 
         bufinit();
-        /*
-         * Initialize callouts
-         */
-	callout=(struct callout *)
-		kmem_alloc(kernel_map, ncallout*sizeof(struct callout));
-
-        callfree = callout;
-        for (i = 1; i < ncallout; i++)
-                callout[i-1].c_next = &callout[i];
 	/*
 	 * XXX Det h{r skall inte alls g|ras s} h{r! (och inte h{r :)
 	 */
+#if 0
 	swapmap=(struct map *)
 		kmem_alloc(kernel_map, (sizeof(struct map)*512)); /* XXX */
 	nswapmap=512;
+#endif
         /*
          * Configure the system.
          */
@@ -260,19 +314,83 @@ cpu_startup() {
          */
         swapconf();
 	cold=0;
-	lastinit();
         return;
-	
+}
+/*
+ * Allocate space for system data structures.  We are given
+ * a starting virtual address and we return a final virtual
+ * address; along the way we set each data structure pointer.
+ *
+ * We call allocsys() with 0 to find out how much space we want,
+ * allocate that much and fill it with zeroes, and then call
+ * allocsys() again with the correct base virtual address.
+ */
+caddr_t
+allocsys(v)
+        register caddr_t v;
+{
+
+#define valloc(name, type, num) \
+            v = (caddr_t)(((name) = (type *)v) + (num))
+
+#ifdef REAL_CLISTS
+        valloc(cfree, struct cblock, nclist);
+#endif
+        valloc(callout, struct callout, ncallout);
+        valloc(swapmap, struct map, nswapmap = maxproc * 2);
+#ifdef SYSVSHM
+        valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM
+        valloc(sema, struct semid_ds, seminfo.semmni);
+        valloc(sem, struct sem, seminfo.semmns);
+        /* This is pretty disgusting! */
+        valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+        valloc(msgpool, char, msginfo.msgmax);
+        valloc(msgmaps, struct msgmap, msginfo.msgseg);
+        valloc(msghdrs, struct msg, msginfo.msgtql);
+        valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
+
+        /*
+         * Determine how many buffers to allocate (enough to
+         * hold 5% of total physical memory, but at least 16).
+         * Allocate 1/2 as many swap buffer headers as file i/o buffers.
+         */
+#ifdef DEBUG
+printf("physmem: %x, btoc %x, CLSIZE %x\n",physmem,btoc(2*1024*1024),CLSIZE);
+#endif
+        if (bufpages == 0)
+            if (physmem < btoc(2 * 1024 * 1024))
+                bufpages = (physmem / 10) / CLSIZE;
+            else
+                bufpages = (physmem / 20) / CLSIZE;
+        if (nbuf == 0) {
+                nbuf = bufpages;
+                if (nbuf < 16)
+                        nbuf = 16;
+        }
+        if (nswbuf == 0) {
+                nswbuf = (nbuf / 2) &~ 1;       /* force even */
+                if (nswbuf > 256)
+                        nswbuf = 256;           /* sanity */
+        }
+        valloc(swbuf, struct buf, nswbuf);
+        valloc(buf, struct buf, nbuf);
+        return v;
 }
 
-inittodr(time_t disktid){
 /*
  * disktid contains time from superblock of the root filesystem.
  * We compare this with the time in mfpr(PR_TODR) which updates
  * 100 times/second. Because todr is only 32 bits, it is simplest 
  * to start counting from 1/1 00.00 and reset todr an year later.
+ * (And that was the way they did it in old BSD Unix... :)
  * One year is about 3153600000 in todr.
  */
+inittodr(time_t disktid){
 	int todrtid,nytid;
 
 	if(todrstopped){
@@ -283,7 +401,6 @@ inittodr(time_t disktid){
 		/* XXX This is ugly time counting :( */
 		todrtid=(disktid/(3600*24*365))+1970+(mfpr(PR_TODR)/100);
 		if(disktid>todrtid){
-			/* Old well known message :) */
 			printf(
 		"WARNING: todr too small -- CHECK AND RESET THE DATE!\n");
 			/* Use filesystem time anyway */
@@ -353,17 +470,6 @@ _remque(elem)
         elem->q_prev = 0;
 }
 
-lastinit()
-{
-	caddr_t	plats;
-
-	plats=malloc(4096,M_PCB,M_NOWAIT);
-	mtpr(plats,PR_P0BR);
-	mtpr(1,PR_P0LR);
-	mtpr(plats+4096-0x800000,PR_P1BR);
-	mtpr(0x1ffffe,PR_P1LR);
-	mtpr(0x7ffffffc,PR_USP);
-	printf("lastinit: plats %x\n",plats);
-	*(int *)plats=0xa0002800;
-	*(int *)(plats+4092)=0xa0002801;
+microtime(){
+	printf("Microtime...\n");
 }
