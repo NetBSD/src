@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.18.2.2 2002/07/15 16:38:45 thorpej Exp $
+.\"	$NetBSD: hardware,v 1.18.2.3 2002/07/24 06:59:32 lukem Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -111,11 +111,15 @@ SPARCcenter 1000
 SPARCcenter 2000
 .bullet)
 .It
-sun4u and other UltraSPARC based machines
+sun4u and other UltraSPARC based machines in 64-bit mode.
+They are supported in 32-bit mode with the
+.Nx*M
+.Pa GENERIC_SUN4U 
+kernel.
 .Pp
-These are supported by the
-.Nx
-sparc64 port.
+UltraSPARC based machines in 32-bit or 64-bit mode are supported by the
+.Nx Ns /sparc64
+port.
 Refer to
 .Lk http://www.netbsd.org/Ports/sparc64/index.html
 .It
@@ -214,7 +218,7 @@ Sbus card
 100 Mbps full-duplex
 .Dq Happy Meal
 ethernet.
-Sbus card (not well tested)
+Sbus card
 .It
 .Em ie ;
 10 Mbps Intel 82586 ethernet.
@@ -242,8 +246,12 @@ functions do not
 SCSI interfaces
 .(bullet -compact
 .Em esp ;
-5 MB/s and 10 MB/s (Fast) NCR 53C9x SCSI controller.
-On-board (sun4c, sun4m, and 4/300) and Sbus card
+5 MB/s and 10 MB/s (Fast) NCR 53C9x SCSI controller,
+and 20 MB/s (Fast+Wide) FAS336 controller (known as
+.Sq fas
+on
+.Tn Solaris ) .
+On-board (sun4c, sun4m, 4/300, Ultra 1e, and Ultra 2) and Sbus cards
 .It
 .Em isp ;
 10 MB/s (Fast) and 20 MB/s (Fast+Wide) Qlogic ISP 10x0 family.
@@ -353,11 +361,15 @@ Magma Serial/Parallel ports.  Sbus card
 .Em xbox ;
 Sun Sbus expander device
 .bullet)
+.It
+.Em bpp ;
+Bi-directional parallel port.  On-board and Sbus card
 .bullet)
 .Ss2 Unsupported devices
 .(bullet -offset indent
 Use of more than one processor in sun4m machines (it boots, but only uses
-one processor)
+one processor).
+There is currently a work in progress to resolve this
 .It
 DBRIe-based audio and ISDN.
 On-board some sun4m machines (such as SS10,
@@ -365,9 +377,6 @@ SS20, SPARC LX, and Tadpole SPARCbook)
 .It
 .Em sc ;
 Sun SCSI.  VME card
-.It
-.Em bpp ;
-Bi-directional parallel port.  On-board and Sbus card
 .It
 .Em cgtwelve ;
 I.e. GS, 24 bpp framebuffer.  Sbus card
