@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.4 1996/10/14 22:52:49 mark Exp $ */
+/* $NetBSD: profile.h,v 1.5 1997/07/31 00:22:15 mark Exp $ */
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -29,8 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*#define	_MCOUNT_DECL static inline void _mcount*/
-#define	_MCOUNT_DECL static void _mcount
+#define	_MCOUNT_DECL void _mcount
 
 /*
  * Cannot implement mcount in C as GCC will trash the ip register when it
