@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.10 2004/08/30 15:05:17 drochner Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.11 2005/02/03 21:35:44 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.10 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.11 2005/02/03 21:35:44 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,19 +59,16 @@ __KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.10 2004/08/30 15:05:17 drochner Exp $");
 
 #include "mca.h"
 
-int	pcmbmatch __P((struct device *, struct cfdata *, void *));
-void	pcmbattach __P((struct device *, struct device *, void *));
+int	pcmbmatch(struct device *, struct cfdata *, void *);
+void	pcmbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcmb, sizeof(struct device),
     pcmbmatch, pcmbattach, NULL, NULL);
 
-void	pcmb_callback __P((struct device *));
+void	pcmb_callback(struct device *);
 
 int
-pcmbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcmbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -86,9 +83,7 @@ pcmbmatch(parent, match, aux)
 }
 
 void
-pcmbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcmbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
@@ -107,8 +102,7 @@ pcmbattach(parent, self, aux)
 }
 
 void
-pcmb_callback(self)
-	struct device *self;
+pcmb_callback(struct device *self)
 {
 	struct mcabus_attach_args ma;
 
