@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.6 1995/06/06 19:53:34 mycroft Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.7 1995/06/06 19:54:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,7 +67,7 @@ int *fdp;
 	strcpy(pbuf+1, key + (v[1] ? strlen(v[1]) : 0));
 
 #ifdef DEBUG
-	printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid, pcr->pcr_groups[0]);
+	printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid, pcr->pcr_gid);
 #endif
 
 	if (setegid(pcr->pcr_gid) < 0 ||
