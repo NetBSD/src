@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.233 2003/09/26 12:02:56 simonb Exp $ */
+/*	$NetBSD: machdep.c,v 1.234 2003/10/05 21:13:23 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2003/09/26 12:02:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2003/10/05 21:13:23 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2003/09/26 12:02:56 simonb Exp $")
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/savar.h>
+#include <sys/ucontext.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
@@ -466,14 +467,6 @@ int sigpid = 0;
 #define SDB_FPSTATE	0x04
 #endif
 
-struct sigframe {
-	int	sf_signo;		/* signal number */
-	int	sf_code;		/* code */
-	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
-	int	sf_addr;		/* SunOS compat, always 0 for now */
-	struct	sigcontext sf_sc;	/* actual sigcontext */
-};
-
 /*
  * machine dependent system variables.
  */
@@ -527,19 +520,27 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 /*
  * Send an interrupt to process.
  */
-void
-sendsig(sig, mask, code)
-	int sig;
-	const sigset_t *mask;
-	u_long code;
+#ifdef COMPAT_16
+struct sigframe_sigcontext {
+	int	sf_signo;		/* signal number */
+	int	sf_code;		/* code */
+	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
+	int	sf_addr;		/* SunOS compat, always 0 for now */
+	struct	sigcontext sf_sc;	/* actual sigcontext */
+};
+
+static void
+sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	struct sigframe *fp;
+	struct sigframe_sigcontext *fp;
 	struct trapframe *tf;
 	int addr, onstack, oldsp, newsp;
-	struct sigframe sf;
+	struct sigframe_sigcontext sf;
+	int sig = ksi->ksi_signo;
+	u_long code = ksi->ksi_trap;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_tf;
@@ -554,12 +555,13 @@ sendsig(sig, mask, code)
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		                               p->p_sigctx.ps_sigstk.ss_size);
+		fp = (struct sigframe_sigcontext *)
+			((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+			 p->p_sigctx.ps_sigstk.ss_size);
 	else
-		fp = (struct sigframe *)oldsp;
+		fp = (struct sigframe_sigcontext *)oldsp;
 
-	fp = (struct sigframe *)((int)(fp - 1) & ~7);
+	fp = (struct sigframe_sigcontext *)((int)(fp - 1) & ~7);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -631,11 +633,9 @@ sendsig(sig, mask, code)
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
 		addr = (int)p->p_sigctx.ps_sigcode;
 		break;
-#endif /* COMPAT_16 */
 
 	case 1:
 		addr = (int)ps->sa_sigdesc[sig].sd_tramp;
@@ -660,7 +660,140 @@ sendsig(sig, mask, code)
 		printf("sendsig: about to return to catcher\n");
 #endif
 }
+#endif /* COMPAT_16 */
 
+struct sigframe {
+	siginfo_t *sf_sip;
+	ucontext_t *sf_ucp;
+	siginfo_t sf_si;
+	ucontext_t sf_uc;
+};
+
+void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
+	struct sigframe sf, *fp;
+	struct trapframe *tf;
+	u_int onstack, oldsp, newsp;
+	u_int catcher;
+	int sig;
+
+#ifdef COMPAT_16
+	if (p->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2) {
+		sendsig_sigcontext(ksi, mask);
+		return;
+	}
+#endif /* COMPAT_16 */
+
+	sig = ksi->ksi_signo;
+	tf = l->l_md.md_tf;
+	oldsp = tf->tf_out[6];
+
+	/*
+	 * Compute new user stack addresses, subtract off
+	 * one signal frame, and align.
+	 */
+	onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	if (onstack)
+		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+		                               p->p_sigctx.ps_sigstk.ss_size);
+	else
+		fp = (struct sigframe *)oldsp;
+
+	fp = (struct sigframe *)((int)(fp - 1) & ~7);
+
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sendsig: %s[%d] sig %d newusp %p si %p uc %p\n",
+		    p->p_comm, p->p_pid, sig, fp, &fp->sf_si, &fp->sf_uc);
+#endif
+	/*
+	 * Now set up the signal frame.  We build it in kernel space
+	 * and then copy it out.  We probably ought to just build it
+	 * directly in user space....
+	 */
+
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	sf.sf_sip = &fp->sf_si;
+	sf.sf_ucp = &fp->sf_uc;
+	sf.sf_si._info = *ksi;
+	sf.sf_uc.uc_flags = _UC_SIGMASK /*|
+		((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+			? _UC_SETSTACK : _UC_CLRSTACK)*/;
+	sf.sf_uc.uc_sigmask = *mask;
+	sf.sf_uc.uc_link = NULL;
+	memset(&sf.sf_uc.uc_stack, 0, sizeof(sf.sf_uc.uc_stack));
+	cpu_getmcontext(l, &sf.sf_uc.uc_mcontext, &sf.sf_uc.uc_flags);
+
+	/*
+	 * Put the stack in a consistent state before we whack away
+	 * at it.  Note that write_user_windows may just dump the
+	 * registers into the pcb; we need them in the process's memory.
+	 * We also need to make sure that when we start the signal handler,
+	 * its %i6 (%fp), which is loaded from the newly allocated stack area,
+	 * joins seamlessly with the frame it was in when the signal occurred,
+	 * so that the debugger and _longjmp code can back up through it.
+	 * Since we're calling the handler directly, allocate a full size
+	 * C stack frame.
+	 */
+	newsp = (int)fp - sizeof(struct frame);
+	if (copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
+	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sendsig: window save or copyout error\n");
+#endif
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sendsig: %s[%d] sig %d si %p uc %p\n",
+		       p->p_comm, p->p_pid, sig, sf.sf_sip, sf.sf_ucp);
+#endif
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	default:
+		/* Unsupported trampoline version; kill the process. */
+		sigexit(l, SIGILL);
+	case 2:
+		/*
+		 * Arrange to continue execution at the user's handler.
+		 * It needs a new stack pointer, a return address and
+		 * three arguments: (signo, siginfo *, ucontext *).
+		 */
+		catcher = (u_int)SIGACTION(p, sig).sa_handler;
+		tf->tf_pc = catcher;
+		tf->tf_npc = catcher + 4;
+		tf->tf_out[0] = sig;
+		tf->tf_out[1] = (int)sf.sf_sip;
+		tf->tf_out[2] = (int)sf.sf_ucp;
+		tf->tf_out[6] = newsp;
+		tf->tf_out[7] = (int)ps->sa_sigdesc[sig].sd_tramp - 8;
+		break;
+	}
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sendsig: about to return to catcher\n");
+#endif
+}
+
+#ifdef COMPAT_16
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -672,12 +805,12 @@ sendsig(sig, mask, code)
  */
 /* ARGSUSED */
 int
-sys___sigreturn14(l, v, retval)
+compat_16_sys___sigreturn14(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys___sigreturn14_args /* {
+	struct compat_16_sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext sc, *scp;
@@ -727,6 +860,7 @@ sys___sigreturn14(l, v, retval)
 
 	return (EJUSTRETURN);
 }
+#endif /* COMPAT_16 */
 
 /*
  * cpu_upcall:
