@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.9 1998/08/25 19:18:16 ross Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.10 1998/10/23 01:27:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.9 1998/08/25 19:18:16 ross Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.10 1998/10/23 01:27:51 thorpej Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -139,11 +139,12 @@ fixinodes(fd, fs, lab, pflag, xorval)
 	long xorval;
 {
 	int inopb = INOPB(fs);
-	int size = inopb * sizeof(struct dinode);
-	struct dinode *dibuf, *dip;
-	int ino, imax;
+	int size = inopb * DINODE_SIZE;
+	caddr_t buf;
+	struct dinode *dip;
+	int i, ino, imax;
 
-	if ((dibuf = malloc(size)) == NULL)
+	if ((buf = malloc(size)) == NULL)
 		err(1, "Out of memory");
 
 	for (ino = 0, imax = fs->fs_ipg * fs->fs_ncg; ino < imax;) {
@@ -157,10 +158,11 @@ fixinodes(fd, fs, lab, pflag, xorval)
 		if (lseek(fd, sp, SEEK_SET) == (off_t) -1)
 			err(1, "Seeking to inode %d failed", ino);
 
-		if (read(fd, dibuf, size) != size)
+		if (read(fd, buf, size) != size)
 			err(1, "Reading inodes %d+%d failed", ino, inopb);
 
-		for (dip = dibuf; dip < &dibuf[inopb]; dip++) {
+		for (i = 0; i < inopb; i++) {
+			dip = (struct dinode *)(buf + (i * DINODE_SIZE));
 			if (pflag)
 				printf("ino %d gen 0x%x\n", ino,
 					ufs_rw32(dip->di_gen, needswap));
@@ -176,10 +178,10 @@ fixinodes(fd, fs, lab, pflag, xorval)
 		if (lseek(fd, sp, SEEK_SET) == (off_t) -1)
 			err(1, "Seeking to inode %d failed", ino);
 
-		if (write(fd, dibuf, size) != size)
+		if (write(fd, buf, size) != size)
 			err(1, "Writing inodes %d+%d failed", ino, inopb);
 	}
-	free(dibuf);
+	free(buf);
 }
 
 int
