@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.12 2003/08/07 16:29:00 agc Exp $	*/
+/*	$NetBSD: reg.h,v 1.13 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
  */
 
 #ifndef _MACHINE_REG_H_
-#define _MACHINE_REG_H_
+#define	_MACHINE_REG_H_
 
 /*
  * Location of the users' stored
