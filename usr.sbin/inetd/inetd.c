@@ -1,4 +1,41 @@
-/*	$NetBSD: inetd.c,v 1.41 1998/03/21 06:25:37 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.42 1998/05/01 01:57:26 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -40,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.41 1998/03/21 06:25:37 mycroft Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.42 1998/05/01 01:57:26 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,6 +209,7 @@ __RCSID("$NetBSD: inetd.c,v 1.41 1998/03/21 06:25:37 mycroft Exp $");
 #include <rpc/pmap_clnt.h>
 #endif
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -239,6 +277,8 @@ struct	servtab {
 	int	se_socktype;		/* type of socket to use */
 	int	se_family;		/* address family */
 	char	*se_proto;		/* protocol used */
+	int	se_sndbuf;		/* sndbuf size */
+	int	se_rcvbuf;		/* rcvbuf size */
 	int	se_rpcprog;		/* rpc program number */
 	int	se_rpcversl;		/* rpc program lowest version */
 	int	se_rpcversh;		/* rpc program highest version */
@@ -965,6 +1005,7 @@ setup(sep)
 	/* Set all listening sockets to close-on-exec. */
 	if (fcntl(sep->se_fd, F_SETFD, FD_CLOEXEC) < 0)
 		syslog(LOG_ERR, "fcntl (F_SETFD, FD_CLOEXEC): %m");
+
 #define	turnon(fd, opt) \
 setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	if (strcmp(sep->se_proto, "tcp") == 0 && (options & SO_DEBUG) &&
@@ -973,6 +1014,17 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	if (turnon(sep->se_fd, SO_REUSEADDR) < 0)
 		syslog(LOG_ERR, "setsockopt (SO_REUSEADDR): %m");
 #undef turnon
+
+	/* Set the socket buffer sizes, if specified. */
+	if (sep->se_sndbuf != 0 && setsockopt(sep->se_fd, SOL_SOCKET,
+	    SO_SNDBUF, (char *)&sep->se_sndbuf, sizeof(sep->se_sndbuf)) < 0)
+		syslog(LOG_ERR, "setsockopt (SO_SNDBUF %d): %m",
+		    sep->se_sndbuf);
+	if (sep->se_rcvbuf != 0 && setsockopt(sep->se_fd, SOL_SOCKET,
+	    SO_RCVBUF, (char *)&sep->se_rcvbuf, sizeof(sep->se_rcvbuf)) < 0)
+		syslog(LOG_ERR, "setsockopt (SO_RCVBUF %d): %m",
+		    sep->se_rcvbuf);
+
 	if (bind(sep->se_fd, &sep->se_ctrladdr, sep->se_ctrladdr_size) < 0) {
 		if (debug)
 			fprintf(stderr, "bind failed on %s/%s: %s\n",
@@ -1135,8 +1187,8 @@ struct servtab *
 getconfigent()
 {
 	struct servtab *sep = &serv;
-	int argc;
-	char *cp, *arg;
+	int argc, val;
+	char *cp, *cp0, *arg, *buf0, *buf1, *sz0, *sz1;
 	static char TCPMUX_TOKEN[] = "tcpmux/";
 #define MUX_LEN		(sizeof(TCPMUX_TOKEN)-1)
 	char *hostdelim;
@@ -1234,6 +1286,101 @@ more:
 		sep->se_socktype = -1;
 
 	sep->se_proto = newstr(sskip(&cp));
+
+#define	MALFORMED(arg) \
+do { \
+	syslog(LOG_ERR, "%s: malformed buffer size option `%s'", \
+	    sep->se_service, (arg)); \
+	goto more; \
+} while (0)
+
+#define	GETVAL(arg) \
+do { \
+	if (!isdigit(*(arg))) \
+		MALFORMED(arg); \
+	val = strtol((arg), &cp0, 10); \
+	if (cp0 != NULL) { \
+		if (cp0[1] != '\0') \
+			MALFORMED((arg)); \
+		if (cp0[0] == 'k') \
+			val *= 1024; \
+		if (cp0[0] == 'm') \
+			val *= 1024 * 1024; \
+	} \
+	if (val < 1) { \
+		syslog(LOG_ERR, "%s: invalid buffer size `%s'", \
+		    sep->se_service, (arg)); \
+		goto more; \
+	} \
+} while (0)
+
+#define	ASSIGN(arg) \
+do { \
+	if (strcmp((arg), "sndbuf") == 0) \
+		sep->se_sndbuf = val; \
+	else if (strcmp((arg), "rcvbuf") == 0) \
+		sep->se_rcvbuf = val; \
+	else \
+		MALFORMED((arg)); \
+} while (0)
+
+	/*
+	 * Extract the send and receive buffer sizes before parsing
+	 * the protocol.
+	 */
+	sep->se_sndbuf = sep->se_rcvbuf = 0;
+	buf0 = buf1 = sz0 = sz1 = NULL;
+	if ((buf0 = strchr(sep->se_proto, ',')) != NULL) {
+		/* Not meaningful for Tcpmux services. */
+		if (sep->se_type != NORM_TYPE) {
+			syslog(LOG_ERR, "%s: can't specify buffer sizes for "
+			    "tcpmux services", sep->se_service);
+			goto more;
+		}
+
+		/* Skip the , */
+		*buf0++ = '\0';
+
+		/* Check to see if another socket buffer size was specified. */
+		if ((buf1 = strchr(buf0, ',')) != NULL) {
+			/* Skip the , */
+			*buf1++ = '\0';
+
+			/* Make sure a 3rd one wasn't specified. */
+			if (strchr(buf1, ',') != NULL) {
+				syslog(LOG_ERR, "%s: too many buffer sizes",
+				    sep->se_service);
+				goto more;
+			}
+
+			/* Locate the size. */
+			if ((sz1 = strchr(buf1, '=')) == NULL)
+				MALFORMED(buf1);
+
+			/* Skip the = */
+			*sz1++ = '\0';
+		}
+
+		/* Locate the size. */
+		if ((sz0 = strchr(buf0, '=')) == NULL)
+			MALFORMED(buf0);
+
+		/* Skip the = */
+		*sz0++ = '\0';
+
+		GETVAL(sz0);
+		ASSIGN(buf0);
+
+		if (buf1 != NULL) {
+			GETVAL(sz1);
+			ASSIGN(buf1);
+		}
+	}
+
+#undef ASSIGN
+#undef GETVAL
+#undef MALFORMED
+
 	if (strcmp(sep->se_proto, "unix") == 0) {
 		sep->se_family = AF_UNIX;
 	} else {
