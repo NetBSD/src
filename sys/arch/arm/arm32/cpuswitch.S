@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.17 2002/08/17 16:36:33 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.18 2002/08/31 03:07:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -584,6 +584,8 @@ ENTRY(cpu_switch)
 	add	r7, r1, #PCB_R8
 	ldmia	r7, {r8-r13}
 
+	mov	r7, r1			/* preserve PCB pointer */
+
 #ifdef ARMFPE
 	add	r0, r1, #(USER_SIZE) & 0x00ff
 	add	r0, r0, #(USER_SIZE) & 0xff00 
@@ -592,6 +594,18 @@ ENTRY(cpu_switch)
 
 	/* We can enable interrupts again */
 	IRQenable
+
+	/* rem: r6 = new proc */
+	/* rem: r7 = new PCB */
+
+	/* 
+	 * Check for restartable atomic sequences (RAS).
+	 */
+
+	ldr	r2, [r6, #(P_NRAS)]
+	ldr	r4, [r7, #(PCB_TF)]	/* r4 = trapframe (used below) */
+	teq	r2, #0			/* p->p_nras == 0? */
+	bne	.Lswitch_do_ras		/* no, check for one */
 
 .Lswitch_return:
 
@@ -607,6 +621,14 @@ ENTRY(cpu_switch)
 	 * cpu_switch() was called and return.
 	 */
 	ldmfd	sp!, {r4-r7, pc}
+
+.Lswitch_do_ras:
+	ldr	r1, [r4, #(TF_PC)]	/* second ras_lookup() arg */
+	mov	r0, r6			/* first ras_lookup() arg */
+	bl	_C_LABEL(ras_lookup)
+	cmn	r0, #1			/* -1 means "not in a RAS" */
+	strne	r0, [r4, #(TF_PC)]
+	b	.Lswitch_return
 
 .Lswitch_exited:
 	/*
