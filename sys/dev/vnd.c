@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.52 1997/12/31 02:38:24 enami Exp $	*/
+/*	$NetBSD: vnd.c,v 1.53 1997/12/31 02:46:51 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -616,7 +616,7 @@ vndiodone(bp)
 
 #ifdef DIAGNOSTIC
 		if (vnx->vx_pending != 0)
-			panic("swiodone: vnx pending: %d", vnx->vx_pending);
+			panic("vndiodone: vnx pending: %d", vnx->vx_pending);
 #endif
 
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
