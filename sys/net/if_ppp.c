@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.81 2002/10/02 02:27:54 itojun Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.82 2003/01/19 23:44:03 simonb Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.81 2002/10/02 02:27:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.82 2003/01/19 23:44:03 simonb Exp $");
 
 #include "ppp.h"
 
@@ -1142,12 +1142,12 @@ ppp_dequeue(sc)
     if (protocol != PPP_LCP && protocol != PPP_CCP
 	&& sc->sc_xc_state && (sc->sc_flags & SC_COMP_RUN)) {
 	struct mbuf *mcomp = NULL;
-	int slen, clen;
+	int slen;
 
 	slen = 0;
 	for (mp = m; mp != NULL; mp = mp->m_next)
 	    slen += mp->m_len;
-	clen = (*sc->sc_xcomp->compress)
+	(*sc->sc_xcomp->compress)
 	    (sc->sc_xc_state, &mcomp, m, slen, sc->sc_if.if_mtu + PPP_HDRLEN);
 	if (mcomp != NULL) {
 	    if (sc->sc_flags & SC_CCP_UP) {
