@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_start.S,v 1.2 2003/08/04 12:38:57 bsh Exp $ */
+/*	$NetBSD: smdk2410_start.S,v 1.3 2003/08/29 12:07:33 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -102,7 +102,7 @@ Lstart_off:	.word smdk2410_start_ram-_C_LABEL(smdk2410_start)
 
 smdk2410_start_ram:	
 	/*
-	 *  Kernel is loaded in SDRAM (0x08200000..), and is expected to run
+	 *  Kernel is loaded in SDRAM (0x30200000..), and is expected to run
 	 *  in VA 0xc0200000..  
 	 */
 
