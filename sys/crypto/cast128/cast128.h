@@ -1,4 +1,4 @@
-/*	$NetBSD: cast128.h,v 1.1.1.1 2000/06/14 19:45:34 thorpej Exp $	*/
+/*	$NetBSD: cast128.h,v 1.1.1.1.2.1 2001/12/09 18:30:35 he Exp $	*/
 /*	$KAME: cast128.h,v 1.4 2000/06/14 10:41:16 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #define	CAST128_DECRYPT	0
 
 
-extern void set_cast128_subkey __P((u_int32_t *, u_int8_t *));
+extern void set_cast128_subkey __P((u_int32_t *, u_int8_t *, int));
 extern void cast128_encrypt_round16 __P((u_int8_t *, const u_int8_t *,
 					u_int32_t *));
 extern void cast128_decrypt_round16 __P((u_int8_t *, const u_int8_t *,
