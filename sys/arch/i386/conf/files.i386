@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.127 1998/12/20 17:53:28 nathanw Exp $
+#	$NetBSD: files.i386,v 1.128 1999/01/23 15:09:55 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -169,16 +169,22 @@ file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
-device	lms
+device	olms
+attach	olms at isa
+file	arch/i386/isa/olms.c		olms needs-flag
+device	lms: wsmousedev
 attach	lms at isa
-file	arch/i386/isa/lms.c		lms needs-flag
-device	mms
+file	arch/i386/isa/lms.c		lms
+device	omms
+attach	omms at isa
+file	arch/i386/isa/omms.c		omms needs-flag
+device	mms: wsmousedev
 attach	mms at isa
-file	arch/i386/isa/mms.c		mms needs-flag
-device	pms
-attach	pms at pckbcport with pms_hack
-attach	pms at pckbc with pms_pckbc
-file	arch/i386/isa/pms.c		pms | pms_hack | pms_pckbc needs-flag
+file	arch/i386/isa/mms.c		mms
+device	opms
+attach	opms at pckbcport with opms_hack
+attach	opms at pckbc with opms_pckbc
+file	arch/i386/isa/pms.c		opms | opms_hack | opms_pckbc needs-flag
 
 include "dev/wscons/files.wscons"
 
