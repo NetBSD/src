@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.10 1999/04/24 07:13:23 cgd Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.11 1999/04/26 03:10:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,6 +39,7 @@
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 
+#include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 
@@ -55,23 +56,6 @@
 
 #include <machine/vmparam.h>
 
-/* File system type numbers. */
-#define	OSF1_MOUNT_NONE		0
-#define	OSF1_MOUNT_UFS		1
-#define	OSF1_MOUNT_NFS		2
-#define	OSF1_MOUNT_MFS		3
-#define	OSF1_MOUNT_PC		4
-#define	OSF1_MOUNT_S5FS		5
-#define	OSF1_MOUNT_CDFS		6
-#define	OSF1_MOUNT_DFS		7
-#define	OSF1_MOUNT_EFS		8
-#define	OSF1_MOUNT_PROCFS	9
-#define	OSF1_MOUNT_MSFS		10
-#define	OSF1_MOUNT_FFM		11
-#define	OSF1_MOUNT_FDFS		12
-#define	OSF1_MOUNT_ADDON	13
-#define	OSF1_MOUNT_MAXTYPE	OSF1_MOUNT_ADDON
-
 #define	OSF1_MNT_WAIT		0x1
 #define	OSF1_MNT_NOWAIT		0x2
 
@@ -82,84 +66,6 @@
 #define	OSF1_GETFSSTAT_FLAGS	(OSF1_MNT_WAIT|OSF1_MNT_NOWAIT)
 #define	OSF1_MOUNT_FLAGS	0xffffffff			/* XXX */
 #define	OSF1_UNMOUNT_FLAGS	(OSF1_MNT_FORCE|OSF1_MNT_NOFORCE)
-
-struct osf1_statfs {
-	int16_t	f_type;				/*   0 */
-	int16_t	f_flags;			/*   2 */
-	int32_t	f_fsize;			/*   4 */
-	int32_t	f_bsize;			/*   8 */
-	int32_t	f_blocks;			/*  12 */
-	int32_t	f_bfree;			/*  16 */
-	int32_t	f_bavail;			/*  20 */
-	int32_t	f_files;			/*  24 */
-	int32_t	f_ffree;			/*  28 */
-	int64_t	f_fsid;				/*  32 */
-	int32_t	f_spare[9];			/*  40 (36 bytes) */
-	char	f_mntonname[90];		/*  76 (90 bytes) */
-	char	f_mntfromname[90];		/* 166 (90 bytes) */
-	char	f_xxx[80];			/* 256 (80 bytes) XXX */
-};
-
-/* Arguments to mount() for various FS types. */
-#ifdef notyet /* XXX */
-struct osf1_ufs_args {
-	char		*fspec;
-	int32_t		exflags;
-	u_int32_t	exroot;
-};
-
-struct osf1_cdfs_args {
-	char		*fspec;
-	int32_t		exflags;
-	u_int32_t	exroot;
-	int32_t		flags;
-};
-#endif
-
-struct osf1_mfs_args {
-	char		*name;
-	caddr_t		base;
-	u_int		size;
-};
-
-struct osf1_nfs_args {
-	struct sockaddr_in	*addr;
-	void			*fh;
-	int32_t			flags;
-	int32_t			wsize;
-	int32_t			rsize;
-	int32_t			timeo;
-	int32_t			retrans;
-	char			*hostname;
-	int32_t			acregmin;
-	int32_t			acregmax;
-	int32_t			acdirmin;
-	int32_t			acdirmax;
-	char			*netname;
-	void			*pathconf;
-};
-
-#define	OSF1_NFSMNT_SOFT	0x00001
-#define	OSF1_NFSMNT_WSIZE	0x00002
-#define	OSF1_NFSMNT_RSIZE	0x00004
-#define	OSF1_NFSMNT_TIMEO	0x00008
-#define	OSF1_NFSMNT_RETRANS	0x00010
-#define	OSF1_NFSMNT_HOSTNAME	0x00020
-#define	OSF1_NFSMNT_INT		0x00040
-#define	OSF1_NFSMNT_NOCONN	0x00080
-#define	OSF1_NFSMNT_NOAC	0x00100			/* ??? */
-#define	OSF1_NFSMNT_ACREGMIN	0x00200			/* ??? */
-#define	OSF1_NFSMNT_ACREGMAX	0x00400			/* ??? */
-#define	OSF1_NFSMNT_ACDIRMIN	0x00800			/* ??? */
-#define	OSF1_NFSMNT_ACDIRMAX	0x01000			/* ??? */
-#define	OSF1_NFSMNT_NOCTO	0x02000			/* ??? */
-#define	OSF1_NFSMNT_POSIX	0x04000			/* ??? */
-#define	OSF1_NFSMNT_AUTO	0x08000			/* ??? */
-
-#define OSF1_NFSMNT_FLAGS						\
-	(OSF1_NFSMNT_SOFT|OSF1_NFSMNT_WSIZE|OSF1_NFSMNT_RSIZE|		\
-	OSF1_NFSMNT_TIMEO|OSF1_NFSMNT_RETRANS|OSF1_NFSMNT_HOSTNAME|	\
-	OSF1_NFSMNT_INT|OSF1_NFSMNT_NOCONN)
 
 
 void bsd2osf_statfs __P((struct statfs *, struct osf1_statfs *));
@@ -342,37 +248,16 @@ osf1_sys_mount(p, v, retval)
 	SCARG(&a, flags) = SCARG(uap, flags);		/* XXX - xlate */
 
 	switch (SCARG(uap, type)) {
-	case OSF1_MOUNT_UFS:				/* XXX */
-		return (EINVAL);
-		break;
-
-	case OSF1_MOUNT_NFS:				/* XXX */
+	case OSF1_MOUNT_NFS:
 		if ((error = osf1_mount_nfs(p, uap, &a)))
 			return error;
 		break;
 
-	case OSF1_MOUNT_MFS:				/* XXX */
+	case OSF1_MOUNT_MFS:
 		if ((error = osf1_mount_mfs(p, uap, &a)))
 			return error;
 		break;
 
-	case OSF1_MOUNT_CDFS:				/* XXX */
-		return (EINVAL);
-		break;
-
-	case OSF1_MOUNT_PROCFS:				/* XXX */
-		return (EINVAL);
-		break;
-
-	case OSF1_MOUNT_NONE:
-	case OSF1_MOUNT_PC:
-	case OSF1_MOUNT_S5FS:
-	case OSF1_MOUNT_DFS:
-	case OSF1_MOUNT_EFS:
-	case OSF1_MOUNT_MSFS:
-	case OSF1_MOUNT_FFM:
-	case OSF1_MOUNT_FDFS:
-	case OSF1_MOUNT_ADDON:
 	default:
 		return (EINVAL);
 	}
@@ -413,6 +298,33 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 	return 0;
 }
 
+const struct emul_flags_xtab osf1_nfs_mount_flags_xtab[] = {
+    {	OSF1_NFSMNT_SOFT,	OSF1_NFSMNT_SOFT,	NFSMNT_SOFT,	},
+    {	OSF1_NFSMNT_WSIZE,	OSF1_NFSMNT_WSIZE,	NFSMNT_WSIZE,	},
+    {	OSF1_NFSMNT_RSIZE,	OSF1_NFSMNT_RSIZE,	NFSMNT_RSIZE,	},
+    {	OSF1_NFSMNT_TIMEO,	OSF1_NFSMNT_TIMEO,	NFSMNT_TIMEO,	},
+    {	OSF1_NFSMNT_RETRANS,	OSF1_NFSMNT_RETRANS,	NFSMNT_RETRANS,	},
+#if 0 /* no equivalent; needs special handling, see below */
+    {	OSF1_NFSMNT_HOSTNAME,	OSF1_NFSMNT_HOSTNAME,	???,		},
+#endif
+    {	OSF1_NFSMNT_INT,	OSF1_NFSMNT_INT,	NFSMNT_INT,	},
+    {	OSF1_NFSMNT_NOCONN,	OSF1_NFSMNT_NOCONN,	NFSMNT_NOCONN,	},
+#if 0 /* no equivalents */
+    {	OSF1_NFSMNT_NOAC,	OSF1_NFSMNT_NOAC,	???,		},
+    {	OSF1_NFSMNT_ACREGMIN,	OSF1_NFSMNT_ACREGMIN,	???,		},
+    {	OSF1_NFSMNT_ACREGMAX,	OSF1_NFSMNT_ACREGMAX,	???,		},
+    {	OSF1_NFSMNT_ACDIRMIN,	OSF1_NFSMNT_ACDIRMIN,	???,		},
+    {	OSF1_NFSMNT_ACDIRMAX,	OSF1_NFSMNT_ACDIRMAX,	???,		},
+    {	OSF1_NFSMNT_NOCTO,	OSF1_NFSMNT_NOCTO,	???,		},
+    {	OSF1_NFSMNT_POSIX,	OSF1_NFSMNT_POSIX,	???,		},
+    {	OSF1_NFSMNT_AUTO,	OSF1_NFSMNT_AUTO,	???,		},
+    {	OSF1_NFSMNT_SEC,	OSF1_NFSMNT_SEC,	???,		},
+    {	OSF1_NFSMNT_TCP,	OSF1_NFSMNT_TCP,	???,		},
+    {	OSF1_NFSMNT_PROPLIST,	OSF1_NFSMNT_PROPLIST,	???,		},
+#endif
+    {	0								}
+};
+
 int
 osf1_mount_nfs(p, osf_argp, bsd_argp)
 	struct proc *p;
@@ -424,6 +336,7 @@ osf1_mount_nfs(p, osf_argp, bsd_argp)
 	caddr_t sg = stackgap_init(p->p_emul);
 	int error, len;
 	static const char nfs_name[] = MOUNT_NFS;
+	unsigned long leftovers;
 
 	if ((error = copyin(SCARG(osf_argp, data), &osf_na, sizeof osf_na)))
 		return error;
@@ -431,36 +344,37 @@ osf1_mount_nfs(p, osf_argp, bsd_argp)
 	memset(&bsd_na, 0, sizeof bsd_na);
 	bsd_na.addr = (struct sockaddr *)osf_na.addr;
 	bsd_na.addrlen = sizeof (struct sockaddr_in);
-	bsd_na.sotype = SOCK_DGRAM; 
-	bsd_na.proto = 0; 
 	bsd_na.fh = osf_na.fh;
 
-	if (osf_na.flags & ~OSF1_NFSMNT_FLAGS)
-		return EINVAL;
-	if (osf_na.flags & OSF1_NFSMNT_SOFT)
-		bsd_na.flags |= NFSMNT_SOFT;
-	if (osf_na.flags & OSF1_NFSMNT_WSIZE) {
-		bsd_na.wsize = osf_na.wsize;
-		bsd_na.flags |= NFSMNT_WSIZE;
-	}
-	if (osf_na.flags & OSF1_NFSMNT_RSIZE) {
-		bsd_na.rsize = osf_na.rsize;
-		bsd_na.flags |= NFSMNT_RSIZE;
-	}
-	if (osf_na.flags & OSF1_NFSMNT_TIMEO) {
-		bsd_na.timeo = osf_na.timeo;
-		bsd_na.flags |= NFSMNT_TIMEO;
-	}
-	if (osf_na.flags & OSF1_NFSMNT_RETRANS) {
-		bsd_na.retrans = osf_na.retrans;
-		bsd_na.flags |= NFSMNT_RETRANS;
-	}
-	if (osf_na.flags & OSF1_NFSMNT_HOSTNAME)
+        /* translate flags */
+        bsd_na.flags = emul_flags_translate(osf1_nfs_mount_flags_xtab,
+            osf_na.flags, &leftovers);
+	if (leftovers & OSF1_NFSMNT_HOSTNAME) {
+		leftovers &= ~OSF1_NFSMNT_HOSTNAME;
 		bsd_na.hostname = osf_na.hostname;
-	if (osf_na.flags & OSF1_NFSMNT_INT)
-		bsd_na.flags |= NFSMNT_INT;
-	if (osf_na.flags & OSF1_NFSMNT_NOCONN)
-		bsd_na.flags |= NFSMNT_NOCONN;
+	} else {
+		/* XXX FILL IN HOST NAME WITH IPADDR? */
+	}
+	if (leftovers & OSF1_NFSMNT_TCP) {
+		leftovers &= ~OSF1_NFSMNT_TCP;
+		bsd_na.sotype = SOCK_DGRAM; 
+		bsd_na.proto = 0; 
+	} else {
+		bsd_na.sotype = SOCK_STREAM; 
+		bsd_na.proto = 0; 
+	}
+        if (leftovers != 0)
+                return (EINVAL);
+
+	/* copy structure elements based on flags */
+	if (bsd_na.flags & NFSMNT_WSIZE)
+		bsd_na.wsize = osf_na.wsize;
+	if (bsd_na.flags & NFSMNT_RSIZE)
+		bsd_na.rsize = osf_na.rsize;
+	if (bsd_na.flags & NFSMNT_TIMEO)
+		bsd_na.timeo = osf_na.timeo;
+	if (bsd_na.flags & NFSMNT_RETRANS)
+		bsd_na.retrans = osf_na.retrans;
 
 	SCARG(bsd_argp, data) = stackgap_alloc(&sg, sizeof bsd_na);
 	if ((error = copyout(&bsd_na, SCARG(bsd_argp, data), sizeof bsd_na)))
