@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.l,v 1.8 1999/06/20 02:07:18 cgd Exp $	*/
+/*	$NetBSD: scan.l,v 1.9 2000/08/15 02:09:11 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,6 +105,8 @@ allow { return ALLOW; }
 dynamic { return DYNAMIC; }
 
 scrollable { return SCROLLABLE; }
+
+shortcut { return SHORTCUT; }
 
 \"([^\"\n]*(\\\")?)*\"  {
 	  yylval.s_value = strdup (yytext);
