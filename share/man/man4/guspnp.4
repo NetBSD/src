@@ -1,4 +1,4 @@
-.\"	$NetBSD: guspnp.4,v 1.8 2001/06/05 12:21:34 wiz Exp $
+.\"	$NetBSD: guspnp.4,v 1.9 2001/06/12 12:04:23 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@ to allocate suitable resources for it. This version of the driver only
 uses the first logical device of 5 the interwave IC has. The 4 Unused
 logical devices are ATAPI CD-ROM device, PnP Joystick device, Legacy
 soundcard emulation device (Soundblaster) and MIDI serial device. Support
-for atleast ATAPI CD-ROM and Joystick is being worked on.
+for at least ATAPI CD-ROM and Joystick is being worked on.
 This version of the driver will use 1 IRQ and 2 DRQs.
 .Sh HARDWARE
 Cards supported by the
@@ -84,7 +84,7 @@ might not be a very nice thing to your audio equipment, but it is the only
 way I have found out to be effective.
 .Pp
 Only the Codec is used in this version of the driver, therefore only 2
-channels are supported (left and right). Also sound quality is propably
+channels are supported (left and right). Also sound quality is probably
 worse at lower kHz compared to playing through the synthesizer which does
 interpolation.
 .Pp
