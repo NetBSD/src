@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.8 2003/08/07 16:31:40 agc Exp $	*/
+/*	$NetBSD: union.h,v 1.9 2003/10/03 16:34:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -83,7 +83,7 @@ struct union_args {
 #define UNMNT_OPMASK	0x0003
 
 #define UNMNT_BITS "\177\20" \
-    "b\00above\0b\01below\0b\02replace"
+    "b\00above\0b\01below\0b\02replace\0"
 
 struct union_mount {
 	struct vnode	*um_uppervp;
