@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.9 2000/06/13 00:57:22 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.10 2000/06/13 05:35:48 itojun Exp $
 /bin/rcorder
 /dev/log
 /etc/rc.d/xntpd
@@ -23,6 +23,7 @@
 /usr/sbin/nstest
 /usr/sbin/portmap
 /usr/sbin/rdconfig
+/usr/sbin/scriptdump
 /usr/sbin/smrsh
 /usr/sbin/statmsg
 /usr/sbin/sysconfd
