@@ -6,7 +6,7 @@ MAN8=	routed.0
 SUBDIR=	rtquery
 DPADD=	${LIBCOMPAT}
 LDADD=	-lcompat
-COPTS=	-g -DDEBUG
+#COPTS=	-g -DDEBUG -Wall
 
 .include <bsd.prog.mk>
 
