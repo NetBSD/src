@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1998/06/12 23:22:53 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1998/06/16 18:36:04 cgd Exp $
+
+# use 'make -f Makefile.pcidevs' to make pcidevs.h and pcidevs_data.h
 
 INCSDIR= /usr/include/dev/pci
 
