@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.36 1997/10/16 18:27:40 carrel Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.37 1997/10/17 18:43:48 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -585,6 +585,7 @@ hpux_sys_rtprio(cp, v, retval)
 
 /* hpux_sys_advise() is found in hpux_machdep.c */
 
+#if 0 /* XXX - This really, really doesn't work anymore. --scottr */
 int
 hpux_sys_ptrace(p, v, retval)
 	struct proc *p;
@@ -661,6 +662,7 @@ hpux_sys_ptrace(p, v, retval)
 #endif
 	return (error);
 }
+#endif
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
