@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscallargs.h,v 1.19 1998/09/12 10:33:52 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_syscallargs.h,v 1.20 1998/10/03 19:35:07 eeh Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,17 @@
  * created from	NetBSD: syscalls.master,v 1.16 1998/09/12 00:47:13 mycroft Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#define	syscallarg(x)								\
+		union {								\
+			register_t pad;						\
+			struct { x datum; } le;					\
+			struct {						\
+				int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+					? 0					\
+					: sizeof (register_t) - sizeof (x)];	\
+				x datum;					\
+			} be;							\
+		}
 
 struct ibcs2_sys_read_args {
 	syscallarg(int) fd;
