@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.3 2000/06/06 20:09:20 jdolecek Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.4 2001/03/29 08:56:27 jdolecek Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,10 +39,6 @@
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/mca/mcareg.h>
 #include <dev/mca/mcavar.h>

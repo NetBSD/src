@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.1 2001/03/22 16:54:46 jdolecek Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.2 2001/03/29 08:56:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@
 #include <net/if_media.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
 
