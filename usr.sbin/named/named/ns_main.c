@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.5 1997/10/04 15:12:02 mrg Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.6 1998/03/30 02:31:22 mrg Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -160,7 +160,7 @@ usage()
 }
 
 /*ARGSUSED*/
-void
+int
 main(argc, argv, envp)
 	int argc;
 	char *argv[], *envp[];
