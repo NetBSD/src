@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.533 2003/06/07 04:29:48 ichiro Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.534 2003/06/07 05:08:45 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.532 2003/06/07 04:28:09 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.533 2003/06/07 05:07:52 ichiro Exp 
  */
 
 /*
@@ -879,32 +879,50 @@
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* Asustek ISDN */
 
 /* ATI products */
+#define	PCI_PRODUCT_ATI_RADEON_A3	0x4136		/* Radeon Mobility A3 */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
+#define	PCI_PRODUCT_ATI_RADEON_IGP_320M	0x4336		/* Radeon IGP 320M */
+#define	PCI_PRODUCT_ATI_RADEON_M6_U2	0x4337		/* Radeon Mobility M6 */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_RAGE_PRO_AGP	0x4742		/* 3D Rage Pro (AGP) */
 #define	PCI_PRODUCT_ATI_RAGE_PRO_AGP1X	0x4744		/* 3D Rage Pro (AGP 1x) */
-#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_B	0x4749		/* 3D Rage Pro */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_B	0x4749		/* 3D Rage Pro Turbo */
+#define	PCI_PRODUCT_ATI_RAGE_XC_PCI66	0x474c		/* Rage XC (PCI66) */
 #define	PCI_PRODUCT_ATI_RAGE_XL_AGP	0x474d		/* Rage XL (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_XC_AGP	0x474e		/* Rage XC (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_XL_PCI66	0x474f		/* Rage XL (PCI66) */
 #define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_P	0x4750		/* 3D Rage Pro */
 #define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_L	0x4751		/* 3D Rage Pro (limited 3D) */
 #define	PCI_PRODUCT_ATI_RAGE_XL_PCI	0x4752		/* Rage XL */
+#define	PCI_PRODUCT_ATI_RAGE_XC_PCI	0x4753		/* Rage XC */
 #define	PCI_PRODUCT_ATI_RAGE_II	0x4754		/* 3D Rage I/II */
 #define	PCI_PRODUCT_ATI_RAGE_IIP	0x4755		/* 3D Rage II+ */
 #define	PCI_PRODUCT_ATI_RAGE_IIC_PCI	0x4756		/* 3D Rage IIC */
 #define	PCI_PRODUCT_ATI_RAGE_IIC_AGP_B	0x4757		/* 3D Rage IIC (AGP) */
 #define	PCI_PRODUCT_ATI_MACH64_GX	0x4758		/* Mach64 GX */
+#define	PCI_PRODUCT_ATI_RAGE_IIC	0x4759		/* 3D Rage IIC */
 #define	PCI_PRODUCT_ATI_RAGE_IIC_AGP_P	0x475a		/* 3D Rage IIC (AGP) */
-#define	PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP	0x4c42		/* 3D Rage LT Pro (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP	0x4c42		/* 3D Rage LT Pro (AGP 133MHz) */
+#define	PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP66	0x4c44		/* 3D Rage LT Pro (AGP 66MHz) */
 #define	PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI	0x4c45		/* Rage Mobility M3 */
 #define	PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP	0x4c46		/* Rage Mobility M3 (AGP) */
 #define	PCI_PRODUCT_ATI_RAGE_LT	0x4c47		/* 3D Rage LT */
 #define	PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI	0x4c49		/* 3D Rage LT Pro */
 #define	PCI_PRODUCT_ATI_RAGE_MOBILITY	0x4c4d		/* Rage Mobility */
+#define	PCI_PRODUCT_ATI_RAGE_L_MOBILITY	0x4c4e		/* Rage L Mobility */
 #define	PCI_PRODUCT_ATI_RAGE_LT_PRO	0x4c50		/* 3D Rage LT Pro */
-#define	PCI_PRODUCT_ATI_RAGE_MOB_M1_PCI	0x4c52		/* Rage Mobility M1 */
-#define	PCI_PRODUCT_ATI_RAGEON_M7_AGP	0x4c57		/* Radeon Mobility M7 LW (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_LT_PRO2	0x4c51		/* 3D Rage LT Pro */
+#define	PCI_PRODUCT_ATI_RAGE_MOB_M1_PCI	0x4c52		/* Rage Mobility M1 (PCI) */
+#define	PCI_PRODUCT_ATI_RAGE_L_MOB_M1_PCI	0x4c53		/* Rage L Mobility (PCI) */
+#define	PCI_PRODUCT_ATI_RADEON_M7_AGP	0x4c57		/* Radeon Mobility M7 LW (AGP) */
+#define	PCI_PRODUCT_ATI_FIREGL_MOB	0x4c58		/* FireGL Mobility */
+#define	PCI_PRODUCT_ATI_RADEON_M6_AGP	0x4c59		/* Radeon Mobility M6 LY (AGP) */
+#define	PCI_PRODUCT_ATI_RADEON_M6_LZ	0x4c5a		/* Radeon Mobility M6 LZ */
+#define	PCI_PRODUCT_ATI_RADEON_M9_GL	0x4c64		/* Radeon Mobility M9 GL */
 #define	PCI_PRODUCT_ATI_RADEON_M9	0x4c66		/* Radeon Mobility M9 */
+#define	PCI_PRODUCT_ATI_RADEON_128_AGP4X	0x4d46		/* Radeon Mobility 128 AGP 4x */
+#define	PCI_PRODUCT_ATI_RADEON_128_AGP2X	0x4d4c		/* Radeon Mobility 128 AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE1PCI	0x5041		/* Rage 128 Pro PCI */
 #define	PCI_PRODUCT_ATI_RAGE1AGP2X	0x5042		/* Rage 128 Pro AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE1AGP4X	0x5043		/* Rage 128 Pro AGP 4x */
@@ -1516,6 +1534,7 @@
 #define	PCI_PRODUCT_INTEL_82801DB_USB_3	0x24C7		/* 82801DB/DBM USB UHCI Controller #3 */
 #define	PCI_PRODUCT_INTEL_82801DBM_IDE	0x24CA		/* 82801DBM IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801DB_IDE	0x24CB		/* 82801DB IDE Controller (UltraATA/100) */
+#define	PCI_PRODUCT_INTEL_82801DB_ISA	0x24CC		/* 82801DB ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82801DB_USBC	0x24CD		/* 82801DB/DBM USB EHCI Controller */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
