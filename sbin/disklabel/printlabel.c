@@ -1,4 +1,4 @@
-/*	$NetBSD: printlabel.c,v 1.9 2003/10/20 13:10:48 pooka Exp $	*/
+/*	$NetBSD: printlabel.c,v 1.10 2003/12/29 19:13:19 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: printlabel.c,v 1.9 2003/10/20 13:10:48 pooka Exp $");
+__RCSID("$NetBSD: printlabel.c,v 1.10 2003/12/29 19:13:19 jdc Exp $");
 #endif	/* not lint */
 
 #include <sys/param.h>
@@ -163,7 +163,9 @@ showpartition(FILE *f, struct disklabel *lp, int i, int ctsformat)
 		(void)fprintf(f, " # (Cyl. %6u",
 		    pp->p_offset / lp->d_secpercyl);
 
-		if (pp->p_offset % lp->d_secpercyl)
+		if (pp->p_offset > lp->d_secperunit)
+		    putc('+', f);
+		else if (pp->p_offset % lp->d_secpercyl)
 		    putc('*', f);
 		else
 		    putc(' ', f);
@@ -173,7 +175,9 @@ showpartition(FILE *f, struct disklabel *lp, int i, int ctsformat)
 		    pp->p_size + lp->d_secpercyl - 1) /
 		    lp->d_secpercyl - 1);
 
-		if ((pp->p_offset + pp->p_size) % lp->d_secpercyl)
+		if ((pp->p_offset + pp->p_size) > lp->d_secperunit)
+		    putc('+', f);
+		else if ((pp->p_offset + pp->p_size) % lp->d_secpercyl)
 		    putc('*', f);
 
 		(void)fprintf(f, ")\n");
