@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.2 2004/07/01 06:50:04 skrll Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.3 2004/07/18 20:48:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,12 +37,21 @@
  */
 
 #include <sys/errno.h>
+#include <machine/mcontext.h>
 #include "SYS.h"
 
-	.import __cerror, code
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(getcontext, _getcontext)
+#endif
 
-/* XXX - this is unimplemented at this time. */
-ENTRY(getcontext, 0)
-	ldi	EINVAL, %t1
-        b,n	__cerror
-EXIT(getcontext)
+#define _OFFSETOF_UC_GREGS (10 * 4)
+#define SZREG 4
+
+ENTRY(_getcontext, 0)
+	SYSCALL(getcontext)
+	stw	%rp, (_OFFSETOF_UC_GREGS + _REG_PCOQH * SZREG)(%arg0)
+	ldo	4(%rp), %r1
+	stw	%r1, (_OFFSETOF_UC_GREGS + _REG_PCOQT * SZREG)(%arg0)
+	bv	%r0(%rp)
+	stw	%r0, (_OFFSETOF_UC_GREGS + _REG_RET0 * SZREG)(%arg0)
+EXIT(_getcontext)
