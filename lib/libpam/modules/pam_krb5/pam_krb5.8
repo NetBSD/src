@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_krb5.8,v 1.3 2005/02/20 19:38:01 wiz Exp $
+.\" $NetBSD: pam_krb5.8,v 1.4 2005/02/26 15:02:15 thorpej Exp $
 .\" $FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.8,v 1.6 2001/11/24 23:41:32 dd Exp $
 .Dd January 15, 1999
 .Dt PAM_KRB5 8
@@ -7,22 +7,18 @@
 .Nm pam_krb5
 .Nd Kerberos 5 PAM module
 .Sh SYNOPSIS
-.Pa /usr/lib/pam_krb5.so
+.Op Ar service-name
+.Ar module-type
+.Ar control-flag
+.Pa pam_krb5
+.Op Ar arguments
 .Sh DESCRIPTION
-The Kerberos 5 service module for PAM, typically
-.Pa /usr/lib/pam_krb5.so ,
+The Kerberos 5 service module for PAM
 provides functionality for three PAM categories:
 authentication,
 account management,
 and password management.
 It also provides null functions for session management.
-The
-.Pa pam_krb5.so
-module is a shared object
-that can be dynamically loaded to provide
-the necessary functionality upon demand.
-Its path is specified in the
-PAM configuration file.
 .Ss Kerberos 5 Authentication Module
 The Kerberos 5 authentication component
 provides functions to verify the identity of a user
