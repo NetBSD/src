@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.71 2001/01/22 12:17:38 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.72 2001/01/27 11:42:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@ struct kern_target kern_targets[] = {
      { DT_REG, N("loadavg"),   0,            KTT_AVENRUN,  VREG, READ_MODE  },
      { DT_REG, N("msgbuf"),    0,	     KTT_MSGBUF,   VREG, READ_MODE  },
      { DT_REG, N("pagesize"),  &uvmexp.pagesize, KTT_INT,  VREG, READ_MODE  },
-     { DT_REG, N("physmem"),   &physmem,     KTT_INT,      VREG, READ_MODE  },
+     { DT_REG, N("physmem"),   0,	     KTT_PHYSMEM,  VREG, READ_MODE  },
 #if 0
      { DT_DIR, N("root"),      0,            KTT_NULL,     VDIR, DIR_MODE   },
 #endif
@@ -276,6 +276,10 @@ kernfs_xread(kt, off, bufp, len)
 		sprintf(*bufp, "%d %d %d %ld\n",
 		    averunnable.ldavg[0], averunnable.ldavg[1],
 		    averunnable.ldavg[2], averunnable.fscale);
+		break;
+
+	case KTT_PHYSMEM:
+		sprintf(*bufp, "%llu", (u_int64_t) ctob(physmem));
 		break;
 
 	default:
