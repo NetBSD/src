@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.571 2002/10/15 17:30:43 junyoung Exp $
+#	$NetBSD: files,v 1.572 2002/10/15 18:14:41 junyoung Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -769,10 +769,12 @@ file	dev/ic/pcdisplay_chars.c	pcdisplayops
 #
 defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
 defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
+defflag opt_vga.h		VGA_RASTERCONSOLE
 device	vga: wsemuldisplaydev, pcdisplayops
-file	dev/ic/vga.c			vga			needs-flag
-file	dev/ic/vga_common.c		vga
-file	dev/ic/vga_subr.c		vga
+file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
+file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
+file	dev/ic/vga_subr.c	vga | vga_rasterconsole
+file	dev/ic/vga_common.c	vga | vga_rasterconsole
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
 device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8
