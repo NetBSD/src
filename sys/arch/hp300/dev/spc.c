@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.3 2004/08/28 17:37:02 thorpej Exp $ */
+/* $NetBSD: spc.c,v 1.4 2005/01/02 12:03:13 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.3 2004/08/28 17:37:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.4 2005/01/02 12:03:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ spc_dio_attach(struct device *parent, struct device *self, void *aux)
 	struct dio_attach_args *da = aux;
 	bus_space_tag_t iot = &dsc->sc_tag;
 	bus_space_handle_t iohsc, iohspc;
-	u_int8_t id;
+	uint8_t id;
 
 	memcpy(iot, da->da_bst, sizeof(struct bus_space_tag));
 	dio_set_bus_space_oddbyte(iot);
@@ -181,8 +181,8 @@ spc_dio_dmago(void *arg)
 	bus_space_tag_t iot;
 	bus_space_handle_t iohsc, iohspc;
 	int len, chan;
-	u_int32_t dmaflags;
-	u_int8_t cmd;
+	uint32_t dmaflags;
+	uint8_t cmd;
 
 	iot = sc->sc_iot;
 	iohspc = sc->sc_ioh;
@@ -238,7 +238,7 @@ spc_dio_dmadone(struct spc_softc *sc)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh, iohsc;
 	int resid, trans;
-	u_int8_t cmd;
+	uint8_t cmd;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -279,7 +279,7 @@ spc_dio_dmastop(void *arg)
 {
 	struct spc_dio_softc *dsc = (struct spc_dio_softc *)arg;
 	struct spc_softc *sc = &dsc->sc_spc;
-	u_int8_t cmd;
+	uint8_t cmd;
 
 	/* XXX When is this function called? */
 	cmd = bus_space_read_1(sc->sc_iot, dsc->sc_iohsc, HPSCSI_CSR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dioreg.h,v 1.4 1997/10/09 09:06:52 jtc Exp $	*/
+/*	$NetBSD: dioreg.h,v 1.5 2005/01/02 12:03:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -118,23 +118,23 @@
  * the base address of the device.
  */
 #define	DIO_ID(base)			\
-	(*((u_int8_t *)((u_long)(base) + DIO_IDOFF)))
+	(*((uint8_t *)((u_long)(base) + DIO_IDOFF)))
 #define	DIO_SECID(base)			\
-	(*((u_int8_t *)((u_long)(base) + DIO_SECIDOFF)))
+	(*((uint8_t *)((u_long)(base) + DIO_SECIDOFF)))
 
 /*
  * Macro to extract the interrupt level, given the
  * base address of the device.
  */
 #define	DIO_IPL(base)			\
-	((((*((u_int8_t *)((u_long)(base) + DIO_IPLOFF))) >> 4) & 0x03) + 3)
+	((((*((uint8_t *)((u_long)(base) + DIO_IPLOFF))) >> 4) & 0x03) + 3)
 
 /*
  * Macro to compute the size of a DIO-II device's address
  * space, given the base address of the device.
  */
 #define DIOII_SIZE(base)		\
-	((int)((*((u_int8_t *)((u_long)(base) + DIOII_SIZEOFF)) + 1)	\
+	((int)((*((uint8_t *)((u_long)(base) + DIOII_SIZEOFF)) + 1)	\
 	    * 0x100000))
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180 2004/08/28 19:11:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.181 2005/01/02 12:03:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2004/08/28 19:11:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2005/01/02 12:03:13 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -756,7 +756,7 @@ cpu_init_kcore_hdr(void)
 	/*
 	 * Initialize pointer to kernel segment table.
 	 */
-	m->sysseg_pa = (u_int32_t)(pmap_kernel()->pm_stpa);
+	m->sysseg_pa = (uint32_t)(pmap_kernel()->pm_stpa);
 
 	/*
 	 * Initialize relocation value such that:
@@ -768,7 +768,7 @@ cpu_init_kcore_hdr(void)
 	/*
 	 * Define the end of the relocatable range.
 	 */
-	m->relocend = (u_int32_t)&end;
+	m->relocend = (uint32_t)&end;
 
 	/*
 	 * hp300 has one contiguous memory segment.
@@ -818,7 +818,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 

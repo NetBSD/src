@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.6 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.7 2005/01/02 12:03:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -81,9 +81,9 @@ struct intio_builtins {
 
 static __inline int
 intio_device_readcmd(bus_space_tag_t bst, bus_space_handle_t bsh, int cmd,
-	u_int8_t *datap)
+	uint8_t *datap)
 {
-        u_int8_t status;
+        uint8_t status;
 
 	if (cmd != 0) {
 		WAIT(bst, bsh);
@@ -100,7 +100,7 @@ intio_device_readcmd(bus_space_tag_t bst, bus_space_handle_t bsh, int cmd,
 
 static __inline int
 intio_device_writecmd(bus_space_tag_t bst, bus_space_handle_t bsh,
-	int cmd, u_int8_t *datap, int len)
+	int cmd, uint8_t *datap, int len)
 {
         WAIT(bst,bsh);
 	bus_space_write_1(bst, bsh, INTIO_DEV_3xx_CMD, cmd);
@@ -113,7 +113,7 @@ intio_device_writecmd(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 static __inline int
 intio_device_readstate(bus_space_tag_t bst, bus_space_handle_t bsh,
-	u_int8_t *statusp, u_int8_t *datap)
+	uint8_t *statusp, uint8_t *datap)
 {
 	*statusp = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_STAT);
 	*datap = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_DATA);

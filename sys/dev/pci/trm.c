@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.15 2004/09/25 11:58:19 tsutsui Exp $	*/
+/*	$NetBSD: trm.c,v 1.16 2005/01/02 12:10:34 tsutsui Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.15 2004/09/25 11:58:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.16 2005/01/02 12:10:34 tsutsui Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -90,8 +90,8 @@ int trm_debug = 1;
  * Segment Entry
  */
 struct trm_sg_entry {
-	u_int32_t address;
-	u_int32_t length;
+	uint32_t address;
+	uint32_t length;
 };
 
 #define TRM_SG_SIZE	(sizeof(struct trm_sg_entry) * TRM_MAX_SG_ENTRIES)
@@ -102,46 +102,46 @@ struct trm_sg_entry {
  **********************************************************************
  */
 struct nvram_target {
-	u_int8_t config0;		/* Target configuration byte 0 */
+	uint8_t config0;		/* Target configuration byte 0 */
 #define NTC_DO_WIDE_NEGO	0x20	/* Wide negotiate	     */
 #define NTC_DO_TAG_QUEUING	0x10	/* Enable SCSI tagged queuing  */
 #define NTC_DO_SEND_START	0x08	/* Send start command SPINUP */
 #define NTC_DO_DISCONNECT	0x04	/* Enable SCSI disconnect    */
 #define NTC_DO_SYNC_NEGO	0x02	/* Sync negotiation	     */
 #define NTC_DO_PARITY_CHK	0x01	/* Parity check enable 	     */
-	u_int8_t period;		/* Target period	       */
-	u_int8_t config2;		/* Target configuration byte 2 */
-	u_int8_t config3;		/* Target configuration byte 3 */
+	uint8_t period;			/* Target period	       */
+	uint8_t config2;		/* Target configuration byte 2 */
+	uint8_t config3;		/* Target configuration byte 3 */
 };
 
 struct trm_nvram {
-	u_int8_t subvendor_id[2];		/* 0,1 Sub Vendor ID */
-	u_int8_t subsys_id[2];			/* 2,3 Sub System ID */
-	u_int8_t subclass;			/* 4   Sub Class */
-	u_int8_t vendor_id[2];			/* 5,6 Vendor ID */
-	u_int8_t device_id[2];			/* 7,8 Device ID */
-	u_int8_t reserved0;			/* 9   Reserved */
+	uint8_t subvendor_id[2];		/* 0,1 Sub Vendor ID */
+	uint8_t subsys_id[2];			/* 2,3 Sub System ID */
+	uint8_t subclass;			/* 4   Sub Class */
+	uint8_t vendor_id[2];			/* 5,6 Vendor ID */
+	uint8_t device_id[2];			/* 7,8 Device ID */
+	uint8_t reserved0;			/* 9   Reserved */
 	struct nvram_target target[TRM_MAX_TARGETS];
 						/* 10,11,12,13
 						 * 14,15,16,17
 						 * ....
 						 * 70,71,72,73 */
-	u_int8_t scsi_id;			/* 74 Host Adapter SCSI ID */
-	u_int8_t channel_cfg;			/* 75 Channel configuration */
+	uint8_t scsi_id;			/* 74 Host Adapter SCSI ID */
+	uint8_t channel_cfg;			/* 75 Channel configuration */
 #define NAC_SCANLUN		0x20	/* Include LUN as BIOS device */
 #define NAC_DO_PARITY_CHK	0x08    /* Parity check enable        */
 #define NAC_POWERON_SCSI_RESET	0x04	/* Power on reset enable      */
 #define NAC_GREATER_1G		0x02	/* > 1G support enable	      */
 #define NAC_GT2DRIVES		0x01	/* Support more than 2 drives */
-	u_int8_t delay_time;			/* 76 Power on delay time */
-	u_int8_t max_tag;			/* 77 Maximum tags */
-	u_int8_t reserved1;			/* 78 */
-	u_int8_t boot_target;			/* 79 */
-	u_int8_t boot_lun;			/* 80 */
-	u_int8_t reserved2;			/* 81 */
-	u_int8_t reserved3[44];			/* 82,..125 */
-	u_int8_t checksum0;			/* 126 */
-	u_int8_t checksum1;			/* 127 */
+	uint8_t delay_time;			/* 76 Power on delay time */
+	uint8_t max_tag;			/* 77 Maximum tags */
+	uint8_t reserved1;			/* 78 */
+	uint8_t boot_target;			/* 79 */
+	uint8_t boot_lun;			/* 80 */
+	uint8_t reserved2;			/* 81 */
+	uint8_t reserved3[44];			/* 82,..125 */
+	uint8_t checksum0;			/* 126 */
+	uint8_t checksum1;			/* 127 */
 #define TRM_NVRAM_CKSUM	0x1234
 };
 
@@ -168,8 +168,8 @@ struct trm_srb {
 	bus_dmamap_t dmap;
 	bus_size_t sgoffset;		/* Xfer buf offset */
 
-	u_int32_t buflen;		/* Total xfer length */
-	u_int32_t sgaddr;		/* SGList physical starting address */
+	uint32_t buflen;		/* Total xfer length */
+	uint32_t sgaddr;		/* SGList physical starting address */
 
 	int sgcnt;
 	int sgindex;
@@ -193,9 +193,9 @@ struct trm_srb {
 #define SRB_TIMEOUT		0x0004
 
 	int cmdlen;			/* SCSI command length */
-	u_int8_t cmd[12];       	/* SCSI command */
+	uint8_t cmd[12];	       	/* SCSI command */
 
-	u_int8_t tag[2];
+	uint8_t tag[2];
 };
 
 /*
@@ -221,10 +221,10 @@ struct trm_tinfo {
 #define NO_RESELECT		0x0080
 	struct trm_linfo *linfo[TRM_MAX_LUNS];
 
-	u_int8_t config0;	/* Target Config */
-	u_int8_t period;	/* Max Period for nego. */
-	u_int8_t synctl;	/* Sync control for reg. */
-	u_int8_t offset;	/* Sync offset for reg. and nego.(low nibble) */
+	uint8_t config0;	/* Target Config */
+	uint8_t period;		/* Max Period for nego. */
+	uint8_t synctl;		/* Sync control for reg. */
+	uint8_t offset;		/* Sync offset for reg. and nego.(low nibble) */
 };
 
 /*
@@ -295,8 +295,8 @@ struct trm_softc {
 	int resel_target; /* XXX */
 	int resel_lun; /* XXX */
 
-	u_int8_t *sc_msg;
-	u_int8_t sc_msgbuf[6];
+	uint8_t *sc_msg;
+	uint8_t sc_msgbuf[6];
 };
 
 /*
@@ -344,15 +344,15 @@ static void trm_reset_scsi_bus(struct trm_softc *);
 static void trm_check_eeprom(struct trm_softc *, struct trm_nvram *);
 static void trm_eeprom_read_all(struct trm_softc *, struct trm_nvram *);
 static void trm_eeprom_write_all(struct trm_softc *, struct trm_nvram *);
-static void trm_eeprom_set_data(struct trm_softc *, u_int8_t, u_int8_t);
-static void trm_eeprom_write_cmd(struct trm_softc *, u_int8_t, u_int8_t);
-static u_int8_t trm_eeprom_get_data(struct trm_softc *, u_int8_t);
+static void trm_eeprom_set_data(struct trm_softc *, uint8_t, uint8_t);
+static void trm_eeprom_write_cmd(struct trm_softc *, uint8_t, uint8_t);
+static uint8_t trm_eeprom_get_data(struct trm_softc *, uint8_t);
 
 CFATTACH_DECL(trm, sizeof(struct trm_softc),
     trm_probe, trm_attach, NULL, NULL);
 
 /* real period: */
-static const u_int8_t trm_clock_period[] = {
+static const uint8_t trm_clock_period[] = {
 	12,	/*  48 ns 20.0 MB/sec */
 	18,	/*  72 ns 13.3 MB/sec */
 	25,	/* 100 ns 10.0 MB/sec */
@@ -488,7 +488,7 @@ trm_init(struct trm_softc *sc)
 	struct nvram_target *tconf;
 	int error, rseg, all_sgsize;
 	int i, target;
-	u_int8_t bval;
+	uint8_t bval;
 
 	DPRINTF(("\n"));
 
@@ -945,7 +945,7 @@ trm_select(struct trm_softc *sc, struct trm_srb *srb)
 	int target = periph->periph_target;
 	int lun = periph->periph_lun;
 	struct trm_tinfo *ti = &sc->sc_tinfo[target];
-	u_int8_t scsicmd;
+	uint8_t scsicmd;
 
 	DPRINTF(("trm_select.....\n"));
 
@@ -1317,7 +1317,7 @@ trm_dataout_phase0(struct trm_softc *sc, int stat)
 	struct trm_tinfo *ti;
 	struct trm_sg_entry *sg;
 	int sgindex;
-	u_int32_t xferlen, leftcnt = 0;
+	uint32_t xferlen, leftcnt = 0;
 
 	if (sc->sc_state == TRM_XFERPAD)
 		return;
@@ -1428,7 +1428,7 @@ trm_datain_phase0(struct trm_softc *sc, int stat)
 	struct trm_srb *srb;
 	struct trm_sg_entry *sg;
 	int sgindex;
-	u_int32_t xferlen, leftcnt = 0;
+	uint32_t xferlen, leftcnt = 0;
 
 	if (sc->sc_state == TRM_XFERPAD)
 		return;
@@ -1652,7 +1652,7 @@ trm_msgin_phase0(struct trm_softc *sc)
 	struct scsipi_periph *periph;
 	struct trm_tinfo *ti;
 	int index;
-	u_int8_t msgin_code;
+	uint8_t msgin_code;
 
 	msgin_code = bus_space_read_1(iot, ioh, TRM_SCSI_FIFO);
 	if (sc->sc_state != TRM_EXTEND_MSGIN) {
@@ -2382,13 +2382,13 @@ static void
 trm_check_eeprom(struct trm_softc *sc, struct trm_nvram *eeprom)
 {
 	struct nvram_target *target;
-	u_int16_t *ep;
-	u_int16_t chksum;
+	uint16_t *ep;
+	uint16_t chksum;
 	int i;
 
 	DPRINTF(("trm_check_eeprom......\n"));
 	trm_eeprom_read_all(sc, eeprom);
-	ep = (u_int16_t *)eeprom;
+	ep = (uint16_t *)eeprom;
 	chksum = 0;
 	for (i = 0; i < 64; i++)
 		chksum += le16toh(*ep++);
@@ -2429,7 +2429,7 @@ trm_check_eeprom(struct trm_softc *sc, struct trm_nvram *eeprom)
 		memset(eeprom->reserved3, 0, sizeof(eeprom->reserved3));
 
 		chksum = 0;
-		ep = (u_int16_t *)eeprom;
+		ep = (uint16_t *)eeprom;
 		for (i = 0; i < 63; i++)
 			chksum += le16toh(*ep++);
 
@@ -2449,8 +2449,8 @@ trm_eeprom_write_all(struct trm_softc *sc, struct trm_nvram *eeprom)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t *buf = (u_int8_t *)eeprom;
-	u_int8_t addr;
+	uint8_t *buf = (uint8_t *)eeprom;
+	uint8_t addr;
 
 	/* Enable SEEPROM */
 	bus_space_write_1(iot, ioh, TRM_GEN_CONTROL,
@@ -2482,12 +2482,12 @@ trm_eeprom_write_all(struct trm_softc *sc, struct trm_nvram *eeprom)
  * write one byte to seeprom
  */
 static void
-trm_eeprom_set_data(struct trm_softc *sc, u_int8_t addr, u_int8_t data)
+trm_eeprom_set_data(struct trm_softc *sc, uint8_t addr, uint8_t data)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
-	u_int8_t send;
+	uint8_t send;
 
 	/*
 	 * Send write command & address
@@ -2541,8 +2541,8 @@ trm_eeprom_read_all(struct trm_softc *sc, struct trm_nvram *eeprom)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t *buf = (u_int8_t *)eeprom;
-	u_int8_t addr;
+	uint8_t *buf = (uint8_t *)eeprom;
+	uint8_t addr;
 
 	/*
 	 * Enable SEEPROM
@@ -2563,13 +2563,13 @@ trm_eeprom_read_all(struct trm_softc *sc, struct trm_nvram *eeprom)
 /*
  * read one byte from seeprom
  */
-static u_int8_t
-trm_eeprom_get_data(struct trm_softc *sc, u_int8_t addr)
+static uint8_t
+trm_eeprom_get_data(struct trm_softc *sc, uint8_t addr)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
-	u_int8_t read, data = 0;
+	uint8_t read, data = 0;
 
 	/*
 	 * Send read command & address
@@ -2602,12 +2602,12 @@ trm_eeprom_get_data(struct trm_softc *sc, u_int8_t addr)
  * write SB and Op Code into seeprom
  */
 static void
-trm_eeprom_write_cmd(struct trm_softc *sc, u_int8_t cmd, u_int8_t addr)
+trm_eeprom_write_cmd(struct trm_softc *sc, uint8_t cmd, uint8_t addr)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
-	u_int8_t send;
+	uint8_t send;
 
 	/* Program SB+OP code */
 	for (i = 0; i < 3; i++, cmd <<= 1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2004/08/28 19:46:41 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2005/01/02 12:03:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,54 +93,54 @@ typedef u_long bus_space_handle_t;
 struct bus_space_tag {
 	u_int		bustype;
 
-	u_int8_t	(*bsr1)(bus_space_tag_t, bus_space_handle_t,
+	uint8_t		(*bsr1)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t);
-	u_int16_t	(*bsr2)(bus_space_tag_t, bus_space_handle_t,
+	uint16_t	(*bsr2)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t);
-	u_int32_t	(*bsr4)(bus_space_tag_t, bus_space_handle_t,
+	uint32_t	(*bsr4)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t);
 	void		(*bsrm1)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*bsrm2)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*bsrm4)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*bsrr1)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*bsrr2)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*bsrr4)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*bsw1)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int8_t);
+			    bus_size_t, uint8_t);
 	void		(*bsw2)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int16_t);
+			    bus_size_t, uint16_t);
 	void		(*bsw4)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int32_t);
+			    bus_size_t, uint32_t);
 	void		(*bswm1)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*bswm2)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*bswm4)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*bswr1)(bus_space_tag_t, bus_space_handle_t ,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*bswr2)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*bswr4)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*bssm1)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*bssm2)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*bssm4)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 	void		(*bssr1)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*bssr2)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*bssr4)(bus_space_tag_t, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 };
 
 /*
@@ -233,15 +233,15 @@ int	hp300_bus_space_probe(bus_space_tag_t t,
 
 #define	bus_space_read_1(t, h, o)					\
     (((t)->bsr1 != NULL) ? ((t)->bsr1)(t, h, o) :			\
-    (*(volatile u_int8_t *)((h) + (o))))
+    (*(volatile uint8_t *)((h) + (o))))
 
 #define	bus_space_read_2(t, h, o)					\
     (((t)->bsr2 != NULL) ? ((t)->bsr2)(t, h, o) :			\
-    (*(volatile u_int16_t *)((h) + (o))))
+    (*(volatile uint16_t *)((h) + (o))))
 
 #define	bus_space_read_4(t, h, o)					\
     (((t)->bsr4 != NULL) ? ((t)->bsr4)(t, h, o) :			\
-    (*(volatile u_int32_t *)((h) + (o))))
+    (*(volatile uint32_t *)((h) + (o))))
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
@@ -395,7 +395,7 @@ do {									\
 	if ((t)->bsw1 != NULL)						\
 		((t)->bsw1)(t, h, o, v);				\
 	else								\
-		((void)(*(volatile u_int8_t *)((h) + (o)) = (v)));	\
+		((void)(*(volatile uint8_t *)((h) + (o)) = (v)));	\
 } while (/* CONSTCOND */ 0)
 
 #define	bus_space_write_2(t, h, o, v)					\
@@ -403,7 +403,7 @@ do {									\
 	if ((t)->bsw2 != NULL)						\
 		((t)->bsw2)(t, h, o, v);				\
 	else								\
-		((void)(*(volatile u_int16_t *)((h) + (o)) = (v)));	\
+		((void)(*(volatile uint16_t *)((h) + (o)) = (v)));	\
 } while (/* CONSTCOND */ 0)
 
 #define	bus_space_write_4(t, h, o, v)					\
@@ -411,7 +411,7 @@ do {									\
 	if ((t)->bsw4 != NULL)						\
 		((t)->bsw4)(t, h, o, v);				\
 	else								\
-		((void)(*(volatile u_int32_t *)((h) + (o)) = (v)));	\
+		((void)(*(volatile uint32_t *)((h) + (o)) = (v)));	\
 } while (/* CONSTCOND */ 0)
 
 #if 0	/* Cause a link error for bus_space_write_8 */

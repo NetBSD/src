@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.5 2004/08/28 19:11:19 thorpej Exp $	*/
+/*	$NetBSD: softintr.c,v 1.6 2005/01/02 12:03:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5 2004/08/28 19:11:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.6 2005/01/02 12:03:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5 2004/08/28 19:11:19 thorpej Exp $")
 #include <machine/intr.h>
 
 struct hp300_soft_intrhand	*softnet_intrhand;
-volatile u_int8_t ssir;
+volatile uint8_t ssir;
 
 static struct hp300_soft_intr hp300_soft_intrs[IPL_NSOFT];
 
@@ -101,7 +101,7 @@ softintr_dispatch(void)
 	struct hp300_soft_intr *hsi;
 	struct hp300_soft_intrhand *sih;
 	int handled;
-	u_int8_t mask;
+	uint8_t mask;
 
 	do {
 		mask = 0x01;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.56 2004/08/28 17:37:01 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.57 2005/01/02 12:03:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.56 2004/08/28 17:37:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.57 2005/01/02 12:03:12 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -128,7 +128,7 @@ static void	le_zerobuf(struct lance_softc *, int, int);
 static const int lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
 static void
-lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
+lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t bst = lesc->sc_bst;
@@ -143,14 +143,14 @@ lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 	} while ((bus_space_read_1(bst, bsh0, LER0_STATUS) & LE_ACK) == 0);
 }
 
-static u_int16_t
-lerdcsr(struct lance_softc *sc, u_int16_t port)
+static uint16_t
+lerdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t bst = lesc->sc_bst;
 	bus_space_handle_t bsh0 = lesc->sc_bsh0;
 	bus_space_handle_t bsh1 = lesc->sc_bsh1;
-	u_int16_t val;
+	uint16_t val;
 
 	do {
 		bus_space_write_2(bst, bsh1, LER1_RAP, port);
@@ -254,7 +254,7 @@ leintr(void *arg)
 {
 	struct lance_softc *sc = arg;
 #ifdef USELEDS
-	u_int16_t isr;
+	uint16_t isr;
 
 	isr = lerdcsr(sc, LE_CSR0);
 
