@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.37 2000/11/30 23:59:03 simonb Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.38 2000/12/01 02:10:22 simonb Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.37 2000/11/30 23:59:03 simonb Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.38 2000/12/01 02:10:22 simonb Exp $");
 #endif
 #endif
 
@@ -101,8 +101,6 @@ struct nlist nl[] = {
 	{ NULL },
 };
 
-extern int dk_ndrive;		/* From dkstats.c */
-extern struct _disk cur, last;
 int hz;
 char *memf = NULL, *nlistf = NULL;
 
@@ -119,9 +117,6 @@ union {
 	struct statsswtch s2;
 	struct statstime s3;
 } stats_all;
-
-extern void dkreadstats(void);
-extern int dkinit(int, gid_t);
 
 void updatestat(int);
 void setup(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.23 2000/11/30 23:59:04 simonb Exp $	*/
+/*	$NetBSD: iostat.c,v 1.24 2000/12/01 02:10:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.23 2000/11/30 23:59:04 simonb Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.24 2000/12/01 02:10:23 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,10 +93,6 @@ __RCSID("$NetBSD: iostat.c,v 1.23 2000/11/30 23:59:04 simonb Exp $");
 #include <unistd.h>
 
 #include "dkstats.h"
-
-/* Defined in dkstats.c */
-extern struct _disk cur;
-extern int  	dk_ndrive;
 
 /* Namelist and memory files. */
 char	*nlistf, *memf;
@@ -122,9 +118,6 @@ static void usage(void);
 static void display(void);
 static void selectdrives(int, char **);
 
-void dkswap(void);
-void dkreadstats(void);
-int dkinit(int, gid_t);
 int main(int, char **);
 
 int
