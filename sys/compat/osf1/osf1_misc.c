@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.59 2000/11/17 21:40:04 thorpej Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.60 2000/11/22 08:40:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -188,7 +188,7 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 		 * XXX This is not correct, but we don't keep track
 		 * XXX of the fp_control.  Return the fpcr just for fun.
 		 */
-		synchronize_fpstate(p, 1);
+		fpusave_proc(p, 1);
 		error = copyout(&p->p_addr->u_pcb.pcb_fp.fpr_cr,
 		                SCARG(uap, buffer),
 		                sizeof(p->p_addr->u_pcb.pcb_fp.fpr_cr));
