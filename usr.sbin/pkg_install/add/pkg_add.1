@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.14.2.3 1999/12/20 15:22:25 he Exp $
+.\" $NetBSD: pkg_add.1,v 1.14.2.4 2000/01/31 20:57:28 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -32,7 +32,7 @@
 .Bk -words
 .Op Fl p Ar prefix
 .Ek
-.Ar pkg-name ...
+.Ar \fR[ftp://[\fIuser\fR[:\fIpassword]\fR@]\fIhost\fR[:\fIport\fR]][/\fIpath/\fR]pkg-name ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -71,14 +71,21 @@ command to examine the package file.
 .Sh OPTIONS
 The following command line arguments are supported:
 .Bl -tag -width indent
-.It Ar pkg-name [... pkg-name]
-The named packages are installed.  A package name of - will cause
+.It Ar pkg-name [ ... ]
+The named packages are installed. 
+.Ar pkg-name
+may be either a URL or a local pathname,
+a package name of "-" will cause
 .Nm
-to read from stdin. If the packages are not found in the current
+to read from stdin.
+If the packages are not found in the current
 working directory, 
 .Nm
-will search them in each directory named by
-.Ev PKG_PATH .
+will search them in each directory named by the
+.Ev PKG_PATH 
+environment variable.
+Any dependencies required by the installed package will be searched
+in the same location that the original package was installed from.
 .It Fl v
 Turn on verbose output.
 .It Fl I
@@ -356,10 +363,10 @@ The value of the
 is used if a given package can't be found, it's usually set to
 .Pa /usr/pkgsrc/packages/All .
 The environment variable
-should be a series of entries seperated by colons.  Each entry
-consists of a directory name. The current directory may be indicated
+should be a series of entries seperated by semicolons.  Each entry
+consists of a directory name or URL. The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
-period.
+period. FTP URLs may not end with a slash.
 .Ss PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
