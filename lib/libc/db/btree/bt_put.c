@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_put.c,v 1.13 2003/08/07 16:42:41 agc Exp $	*/
+/*	$NetBSD: bt_put.c,v 1.14 2003/12/30 21:20:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_put.c	8.8 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: bt_put.c,v 1.13 2003/08/07 16:42:41 agc Exp $");
+__RCSID("$NetBSD: bt_put.c,v 1.14 2003/12/30 21:20:16 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,7 +80,7 @@ __bt_put(dbp, key, data, flags)
 	PAGE *h;
 	indx_t idx, nxtindex;
 	pgno_t pg;
-	u_int32_t nbytes;
+	u_int32_t nbytes, temp;
 	int dflags, exact, status;
 	char *dest, db[NOVFLSIZE], kb[NOVFLSIZE];
 
@@ -144,8 +144,9 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 			tdata.data = db;
 			tdata.size = NOVFLSIZE;
 			memmove(db, &pg, sizeof(pgno_t));
+			temp = data->size;
 			memmove(db + sizeof(pgno_t),
-			    &data->size, sizeof(u_int32_t));
+			    &temp, sizeof(u_int32_t));
 			dflags |= P_BIGDATA;
 			data = &tdata;
 		}
