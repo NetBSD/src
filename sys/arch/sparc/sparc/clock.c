@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.73 2000/07/26 11:28:36 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.74 2000/11/11 12:14:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,12 +76,14 @@
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
+#include <machine/idprom.h>
 
 #include <dev/clock_subr.h>
+#include <dev/ic/mk48txxreg.h>
+#include <dev/ic/intersil7170.h>
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
-#include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/timerreg.h>
 
 /*
@@ -97,38 +99,35 @@ int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
 
-#include <dev/ic/intersil7170.h>
 
-extern struct idprom idprom;
-
-#define intersil_command(run, interrupt) \
-    (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
-     INTERSIL_CMD_NORMAL_MODE)
-
-#define intersil_disable(CLOCK) \
-    CLOCK->clk_cmd_reg = \
-    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE)
-
-#define intersil_enable(CLOCK) \
-    CLOCK->clk_cmd_reg = \
-    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE)
-
-#define intersil_clear(CLOCK) CLOCK->clk_intr_reg
+extern struct idprom sun4_idprom_store;
 
 #if defined(SUN4)
 /*
  * OCLOCK support: 4/100's and 4/200's have the old clock.
  */
-static int oldclk = 0;
-struct intersil7170 *i7;
+#define intersil_command(run, interrupt) \
+    (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
+     INTERSIL_CMD_NORMAL_MODE)
 
-static long oclk_get_secs __P((void));
-static void oclk_get_dt __P((struct intersil_dt *));
-static void dt_to_gmt __P((struct intersil_dt *, long *));
-static void oclk_set_dt __P((struct intersil_dt *));
-static void oclk_set_secs __P((long));
-static void gmt_to_dt __P((long *, struct intersil_dt *));
+#define intersil_disable() \
+	bus_space_write_1(i7_bt, i7_bh, INTERSIL_ICMD, \
+		  intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE));
+
+#define intersil_enable() \
+	bus_space_write_1(i7_bt, i7_bh, INTERSIL_ICMD, \
+		  intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE));
+
+#define intersil_clear() bus_space_read_1(i7_bt, i7_bh, INTERSIL_IINTR)
+
+static int oldclk = 0;
+bus_space_tag_t i7_bt;
+bus_space_handle_t i7_bh;
 #endif
+
+/* Location and size of the MK48xx TOD clock, if present */
+static bus_space_handle_t	mk_nvram_base;
+static bus_size_t		mk_nvram_size;
 
 static int oclockmatch __P((struct device *, struct cfdata *, void *));
 static void oclockattach __P((struct device *, struct device *, void *));
@@ -179,9 +178,7 @@ static void	clockattach_mainbus
 static void	clockattach_obio
 			__P((struct device *, struct device *, void *));
 
-static void	clockattach __P((struct clockreg *, struct idprom *, char *));
-
-static struct clockreg *clock_map __P((bus_space_handle_t, char *));
+static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
 
 struct cfattach clock_mainbus_ca = {
 	sizeof(struct device), clockmatch_mainbus, clockattach_mainbus
@@ -214,12 +211,14 @@ struct cfattach timer_obio_ca = {
 	sizeof(struct device), timermatch_obio, timerattach_obio
 };
 
-struct chiptime;
-void clk_wenable __P((int));
+/* Global TOD clock handle & idprom pointer */
+static todr_chip_handle_t todr_handle;
+struct idprom *idprom;
+
+static int clk_wenable __P((todr_chip_handle_t, int));
+static void stopcounter __P((struct counter_4m *));
+static void establish_hostid __P((struct idprom *));
 void myetheraddr __P((u_char *));
-int chiptotime __P((int, int, int, int, int, int));
-void timetochip __P((struct chiptime *));
-void stopcounter __P((struct counter_4m *));
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 
@@ -262,13 +261,12 @@ oclockattach(parent, self, aux)
 #if defined(SUN4)
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	bus_space_tag_t bt = oba->oba_bustag;
 	bus_space_handle_t bh;
-	struct idprom *idp;
-	register int h;
 
 	oldclk = 1;  /* we've got an oldie! */
 
-	if (obio_bus_map(oba->oba_bustag,
+	if (obio_bus_map(bt,
 			 oba->oba_paddr,
 			 0,			/* offset */
 			 sizeof(struct intersil7170),
@@ -278,32 +276,38 @@ oclockattach(parent, self, aux)
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	i7 = (struct intersil7170 *)bh;
-
-	idp = &idprom;
-	h = idp->id_machine << 24;
-	h |= idp->id_hostid[0] << 16;
-	h |= idp->id_hostid[1] << 8;
-	h |= idp->id_hostid[2];
-	hostid = h;
+	i7_bt = bt;
+	i7_bh = bh;
 
 	/* 
 	 * calibrate delay() 
 	 */
 	ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
 	for (timerblurb = 1; ; timerblurb++) {
-		volatile register char *ireg = &i7->clk_intr_reg;
-		register int ival;
-		*ireg = INTERSIL_INTER_CSECONDS; /* 1/100 sec */
-		intersil_enable(i7);		 /* enable clock */
-		while ((*ireg & INTERSIL_INTER_PENDING) == 0)
+		int ival;
+
+		/* Set to 1/100 second interval */
+		bus_space_write_1(bt, bh, INTERSIL_IINTR,
+				  INTERSIL_INTER_CSECONDS);
+
+		/* enable clock */
+		intersil_enable();
+
+		while ((intersil_clear() & INTERSIL_INTER_PENDING) == 0)
 			/* sync with interrupt */;
-		while ((*ireg & INTERSIL_INTER_PENDING) == 0)
+		while ((intersil_clear() & INTERSIL_INTER_PENDING) == 0)
 			/* XXX: do it again, seems to need it */;
-		delay(10000);			/* Probe 1/100 sec delay */
-		ival = *ireg;			/* clear, save value */
-		intersil_disable(i7);		/* disable clock */
-		if (ival & INTERSIL_INTER_PENDING) {
+
+		/* Probe 1/100 sec delay */
+		delay(10000);
+
+		/* clear, save value */
+		ival = intersil_clear();
+
+		/* disable clock */
+		intersil_disable();
+
+		if ((ival & INTERSIL_INTER_PENDING) != 0) {
 			printf(" delay constant %d%s\n", timerblurb,
 				(timerblurb == 1) ? " [TOO SMALL?]" : "");
 			break;
@@ -318,6 +322,12 @@ oclockattach(parent, self, aux)
 	/* link interrupt handlers */
 	intr_establish(10, &level10);
 	intr_establish(14, &level14);
+
+	/* Our TOD clock year 0 represents 1968 */
+	if ((todr_handle = intersil7170_attach(bt, bh, 1968)) == NULL)
+		panic("Can't attach tod clock");
+
+	establish_hostid(idprom = &sun4_idprom_store);
 #endif /* SUN4 */
 }
 
@@ -432,25 +442,6 @@ clockmatch_obio(parent, cf, aux)
 				NULL, NULL));
 }
 
-static struct clockreg *
-clock_map(bh, model)
-	bus_space_handle_t bh;
-	char *model;
-{
-	struct clockreg *cl;
-
-	pmap_changeprot(pmap_kernel(), (vaddr_t)bh, VM_PROT_READ, 1);
-	if (strcmp(model, "mk48t08") == 0) {
-		if (NBPG < 8192)
-			pmap_changeprot(pmap_kernel(), (vaddr_t)bh + 4096,
-					VM_PROT_READ, 1);
-		cl = (struct clockreg *)((int)bh + CLK_MK48T08_OFF);
-	} else
-		cl = (struct clockreg *)bh;
-
-	return (cl);
-}
-
 /* ARGSUSED */
 static void
 clockattach_mainbus(parent, self, aux)
@@ -458,17 +449,8 @@ clockattach_mainbus(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	char *model;
-	int sz;
-	struct clockreg *cl;
-	struct idprom *idp;
+	bus_space_tag_t bt = ma->ma_bustag;
 	bus_space_handle_t bh;
-
-	model = getpropstring(ma->ma_node, "model");
-	/*
-	 * the MK48T08 is 8K; the MK48T02 is 2K
-	 */
-	sz = strcmp(model, "mk48t08") == 0 ? 8192 : 2048;
 
 	/*
 	 * We ignore any existing virtual address as we need to map
@@ -478,10 +460,10 @@ clockattach_mainbus(parent, self, aux)
 	 * of reloading the cpu type, Ethernet address, etc, by hand from
 	 * the console FORTH interpreter.  I intend not to enjoy it again.
 	 */
-	if (bus_space_map2(ma->ma_bustag,
+	if (bus_space_map2(bt,
 			   ma->ma_iospace,
 			   ma->ma_paddr,
-			   sz,
+			   ma->ma_size,
 			   BUS_SPACE_MAP_LINEAR,
 			   0,
 			   &bh) != 0) {
@@ -489,9 +471,7 @@ clockattach_mainbus(parent, self, aux)
 		return;
 	}
 
-	cl = clock_map(bh, model);
-	idp = &cl->cl_idprom;
-	clockattach(cl, idp, model);
+	clockattach(ma->ma_node, bt, bh);
 }
 
 static void
@@ -500,80 +480,99 @@ clockattach_obio(parent, self, aux)
 	void *aux;
 {
 	union obio_attach_args *uoba = aux;
-	char *model;
-	int sz;
-	struct clockreg *cl;
-	struct idprom *idp;
+	bus_space_tag_t bt;
 	bus_space_handle_t bh;
+	int node;
 
 	if (uoba->uoba_isobio4 == 0) {
 		/* sun4m clock at obio */
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
-		model = getpropstring(sa->sa_node, "model");
-		sz = strcmp(model, "mk48t08") == 0 ? 8192 : 2048;
-		if (sbus_bus_map(sa->sa_bustag,
+		node = sa->sa_node;
+		bt = sa->sa_bustag;
+		if (sbus_bus_map(bt,
 				 sa->sa_slot,
 				 sa->sa_offset,
-				 sz,
+				 sa->sa_size,
 				 BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
 			printf("%s: can't map register\n", self->dv_xname);
 			return;
 		}
-		cl = clock_map(bh, model);
-		idp = &cl->cl_idprom;
 	} else {
 		/* sun4 clock at obio */
 		struct obio4_attach_args *oba = &uoba->uoba_oba4;
-		model = "mk48t02";
-		sz = 2048;
-		if (obio_bus_map(oba->oba_bustag,
+
+		/*
+		 * Sun4's only have mk48t02 clocks, so we hard-code
+		 * the device address space length to 2048.
+		 */
+		node = 0;
+		bt = oba->oba_bustag;
+		if (obio_bus_map(bt,
 				 oba->oba_paddr,
 				 0,			/* offset */
-				 sz,			/* size */
+				 2048,			/* size */
 				 BUS_SPACE_MAP_LINEAR,	/* flags */
 				 0,			/* vaddr */
 				 &bh) != 0) {
 			printf("%s: can't map register\n", self->dv_xname);
 			return;
 		}
-		cl = clock_map(bh, model);
-#if defined(SUN4)
-		idp = &idprom;
-#else
-		idp = NULL;
-#endif
 	}
 
-	clockattach(cl, idp, model);
+	clockattach(node, bt, bh);
 }
 
 static void
-clockattach(cl, idp, model)
-	struct clockreg *cl;
+clockattach(node, bt, bh)
+	int node;
+	bus_space_tag_t bt;
+	bus_space_handle_t bh;
+{
 	struct idprom *idp;
 	char *model;
-{
-	int h;
 
-	printf(": %s (eeprom)\n", model);
+	if (CPU_ISSUN4)
+		model = "mk48t02";	/* Hard-coded sun4 clock */
+	else if (node != 0)
+		model = getpropstring(node, "model");
+	else
+		panic("clockattach: node == 0");
 
-#if defined(SUN4)
+	/* Our TOD clock year 0 represents 1968 */
+	if ((todr_handle = mk48txx_attach(bt, bh, model, 1968)) == NULL)
+		panic("Cannot attach %s tod clock", model);
+
+	/*
+	 * Store NVRAM base address and size in globals for use
+	 * by clk_wenable().
+	 */
+	mk_nvram_base = bh;
+	if (mk48txx_get_nvram_size(todr_handle, &mk_nvram_size) != 0)
+		panic("Cannot get nvram size on %s", model);
+
+	/* Establish clock write-enable method */
+	todr_handle->todr_setwen = clk_wenable;
+
 	if (CPU_ISSUN4) {
+		idp = &sun4_idprom_store;
+#if defined(SUN4)
 		if (cpuinfo.cpu_type == CPUTYP_4_300 ||
 		    cpuinfo.cpu_type == CPUTYP_4_400) {
-			eeprom_va = (char *)cl->cl_nvram;
+			eeprom_va = (char *)bh;
 			eeprom_nvram = 1;
 		}
-	}
 #endif
+	} else {
+	/*
+	 * Location of IDPROM relative to the end of the NVRAM area
+	 */
+#define MK48TXX_IDPROM_OFFSET (mk_nvram_size - 40)
 
-	h = idp->id_machine << 24;
-	h |= idp->id_hostid[0] << 16;
-	h |= idp->id_hostid[1] << 8;
-	h |= idp->id_hostid[2];
-	hostid = h;
-	clockreg = cl;
+		idp = (struct idprom *)((u_long)bh + MK48TXX_IDPROM_OFFSET);
+	}
+
+	establish_hostid(idp);
 }
 
 /*
@@ -757,7 +756,7 @@ timerattach(cntreg, limreg)
 	 */
 	for (timerblurb = 1; ; timerblurb++) {
 		volatile int discard;
-		register int t0, t1;
+		int t0, t1;
 
 		/* Reset counter register by writing some large limit value */
 		discard = *limreg;
@@ -790,13 +789,18 @@ timerattach(cntreg, limreg)
  * Write en/dis-able clock registers.  We coordinate so that several
  * writers can run simultaneously.
  */
-void
-clk_wenable(onoff)
+int
+clk_wenable(handle, onoff)
+	todr_chip_handle_t handle;
 	int onoff;
 {
-	register int s;
-	register vm_prot_t prot;/* nonzero => change prot */
+	int s;
+	vm_prot_t prot;/* nonzero => change prot */
+	int npages;
+	vaddr_t base;
 	static int writers;
+
+	/* XXX - we ignore `handle' here... */
 
 	s = splhigh();
 	if (onoff)
@@ -804,10 +808,13 @@ clk_wenable(onoff)
 	else
 		prot = --writers == 0 ? VM_PROT_READ : 0;
 	splx(s);
+
+	npages = round_page((vsize_t)mk_nvram_size) << PAGE_SHIFT;
+	base = trunc_page((vaddr_t)mk_nvram_base);
 	if (prot)
-		pmap_changeprot(pmap_kernel(),
-				(vaddr_t)clockreg & ~(NBPG-1),
-				prot, 1);
+		pmap_changeprot(pmap_kernel(), base, prot, npages);
+
+	return (0);
 }
 
 void
@@ -828,13 +835,7 @@ void
 myetheraddr(cp)
 	u_char *cp;
 {
-	register struct clockreg *cl = clockreg;
-	register struct idprom *idp = &cl->cl_idprom;
-
-#if defined(SUN4)
-	if (CPU_ISSUN4)
-		idp = &idprom;
-#endif
+	struct idprom *idp = idprom;
 
 	cp[0] = idp->id_ether[0];
 	cp[1] = idp->id_ether[1];
@@ -843,6 +844,25 @@ myetheraddr(cp)
 	cp[4] = idp->id_ether[4];
 	cp[5] = idp->id_ether[5];
 }
+
+void
+establish_hostid(idp)
+	struct idprom *idp;
+{
+	u_long h;
+
+	h = idp->id_machine << 24;
+	h |= idp->id_hostid[0] << 16;
+	h |= idp->id_hostid[1] << 8;
+	h |= idp->id_hostid[2];
+
+	printf(": hostid %lu\n", h);
+
+	/* Save IDPROM pointer and Host ID in globals */
+	idprom = idp;
+	hostid = h;
+}
+
 
 /*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only if
@@ -853,7 +873,7 @@ myetheraddr(cp)
 void
 cpu_initclocks()
 {
-	register int statint, minint;
+	int statint, minint;
 
 #if defined(SUN4)
 	if (oldclk) {
@@ -862,13 +882,15 @@ cpu_initclocks()
 		profhz = hz = 100;
 		tick = 1000000 / hz;
 
-		i7->clk_intr_reg = INTERSIL_INTER_CSECONDS; /* 1/100 sec */
+		/* Select 1/100 second interval */
+		bus_space_write_1(i7_bt, i7_bh, INTERSIL_IINTR,
+				  INTERSIL_INTER_CSECONDS);
 
 		ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
-		intersil_disable(i7);		/* disable clock */
-		dummy = intersil_clear(i7);	/* clear interrupts */
+		intersil_disable();		/* disable clock */
+		dummy = intersil_clear();	/* clear interrupts */
 		ienab_bis(IE_L10);		/* enable l10 interrupt */
-		intersil_enable(i7);		/* enable clock */
+		intersil_enable();		/* enable clock */
 
 		return;
 	}
@@ -940,7 +962,7 @@ int
 clockintr(cap)
 	void *cap;
 {
-	register volatile int discard;
+	volatile int discard;
 	int s;
 
 	/*
@@ -953,7 +975,7 @@ clockintr(cap)
 
 #if defined(SUN4)
 	if (oldclk) {
-		discard = intersil_clear(i7);
+		discard = intersil_clear();
 		ienab_bic(IE_L10);  /* clear interrupt */
 		ienab_bis(IE_L10);  /* enable interrupt */
 		goto forward;
@@ -983,8 +1005,8 @@ int
 statintr(cap)
 	void *cap;
 {
-	register volatile int discard;
-	register u_long newint, r, var;
+	volatile int discard;
+	u_long newint, r, var;
 
 #if defined(SUN4)
 	if (oldclk) {
@@ -1031,101 +1053,6 @@ statintr(cap)
 	return (1);
 }
 
-/*
- * should use something like
- * #define LEAPYEAR(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
- * but it's unlikely that we'll still be around in 2100.
- */
-#define	LEAPYEAR(y)	(((y) & 3) == 0)
-
-/*
- * This code is defunct after 2068.
- * Will Unix still be here then??
- */
-const short dayyr[12] =
-    { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
-
-int
-chiptotime(sec, min, hour, day, mon, year)
-	register int sec, min, hour, day, mon, year;
-{
-	register int days, yr;
-
-	sec = FROMBCD(sec);
-	min = FROMBCD(min);
-	hour = FROMBCD(hour);
-	day = FROMBCD(day);
-	mon = FROMBCD(mon);
-	year = FROMBCD(year) + YEAR0;
-
-	/* simple sanity checks */
-	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31)
-		return (0);
-	days = 0;
-	for (yr = 70; yr < year; yr++)
-		days += LEAPYEAR(yr) ? 366 : 365;
-	days += dayyr[mon - 1] + day - 1;
-	if (LEAPYEAR(yr) && mon > 2)
-		days++;
-	/* now have days since Jan 1, 1970; the rest is easy... */
-	return (days * SECDAY + hour * 3600 + min * 60 + sec);
-}
-
-struct chiptime {
-	int	sec;
-	int	min;
-	int	hour;
-	int	wday;
-	int	day;
-	int	mon;
-	int	year;
-};
-
-void
-timetochip(c)
-	register struct chiptime *c;
-{
-	register int t, t2, t3, now = time.tv_sec;
-
-	/* compute the year */
-	t2 = now / SECDAY;
-	t3 = (t2 + 2) % 7;	/* day of week */
-	c->wday = TOBCD(t3 + 1);
-
-	t = 69;
-	while (t2 >= 0) {	/* whittle off years */
-		t3 = t2;
-		t++;
-		t2 -= LEAPYEAR(t) ? 366 : 365;
-	}
-	c->year = t;
-
-	/* t3 = month + day; separate */
-	t = LEAPYEAR(t);
-	for (t2 = 1; t2 < 12; t2++)
-		if (t3 < dayyr[t2] + (t && t2 > 1))
-			break;
-
-	/* t2 is month */
-	c->mon = t2;
-	c->day = t3 - dayyr[t2 - 1] + 1;
-	if (t && t2 > 2)
-		c->day--;
-
-	/* the rest is easy */
-	t = now % SECDAY;
-	c->hour = t / 3600;
-	t %= 3600;
-	c->min = t / 60;
-	c->sec = t % 60;
-
-	c->sec = TOBCD(c->sec);
-	c->min = TOBCD(c->min);
-	c->hour = TOBCD(c->hour);
-	c->day = TOBCD(c->day);
-	c->mon = TOBCD(c->mon);
-	c->year = TOBCD(c->year - YEAR0);
-}
 
 /*
  * Set up the system's time, given a `reasonable' time value.
@@ -1134,8 +1061,6 @@ void
 inittodr(base)
 	time_t base;
 {
-	register struct clockreg *cl = clockreg;
-	int sec, min, hour, day, mon, year;
 	int badbase = 0, waszero = base == 0;
 
 	if (base < 5 * SECYR) {
@@ -1149,28 +1074,10 @@ inittodr(base)
 		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
 	}
-#if defined(SUN4)
-	if (oldclk) {
-		time.tv_sec = oclk_get_secs();
-		goto forward;
-	}
-#endif
-	clk_wenable(1);
-	cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
-	sec = cl->cl_sec;
-	min = cl->cl_min;
-	hour = cl->cl_hour;
-	day = cl->cl_mday;
-	mon = cl->cl_month;
-	year = cl->cl_year;
-	cl->cl_csr &= ~CLK_READ;	/* time wears on */
-	clk_wenable(0);
-	time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
 
-#if defined(SUN4)
-forward:
-#endif
-	if (time.tv_sec == 0) {
+	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    time.tv_sec == 0) {
+
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
@@ -1201,224 +1108,13 @@ forward:
 void
 resettodr()
 {
-	register struct clockreg *cl;
-	struct chiptime c;
 
-#if defined(SUN4)
-	if (oldclk) {
-		if (!time.tv_sec || i7 == NULL)
-			return;
-		oclk_set_secs(time.tv_sec);
+	if (time.tv_sec == 0)
 		return;
-	}
-#endif
 
-	if (!time.tv_sec || (cl = clockreg) == NULL)
-		return;
-	timetochip(&c);
-	clk_wenable(1);
-	cl->cl_csr |= CLK_WRITE;	/* enable write */
-	cl->cl_sec = c.sec;
-	cl->cl_min = c.min;
-	cl->cl_hour = c.hour;
-	cl->cl_wday = c.wday;
-	cl->cl_mday = c.day;
-	cl->cl_month = c.mon;
-	cl->cl_year = c.year;
-	cl->cl_csr &= ~CLK_WRITE;	/* load them up */
-	clk_wenable(0);
+	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+		printf("Cannot set time in time-of-day clock\n");
 }
-
-#if defined(SUN4)
-/*
- * Now routines to get and set clock as POSIX time.
- */
-static long
-oclk_get_secs()
-{
-        struct intersil_dt dt;
-        long gmt;
-
-        oclk_get_dt(&dt);
-        dt_to_gmt(&dt, &gmt);
-        return (gmt);
-}
-
-static void
-oclk_set_secs(secs)
-	long secs;
-{
-        struct intersil_dt dt;
-        long gmt;
-
-        gmt = secs;
-        gmt_to_dt(&gmt, &dt);
-        oclk_set_dt(&dt);
-}
-
-/*
- * Routine to copy state into and out of the clock.
- * The clock registers have to be read or written
- * in sequential order (or so it appears). -gwr
- */
-static void
-oclk_get_dt(dt)
-	struct intersil_dt *dt;
-{
-        int s;
-        register volatile char *src, *dst;
-
-        src = (char *) &i7->counters;
-
-        s = splhigh();
-        i7->clk_cmd_reg =
-                intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
-
-        dst = (char *) dt;
-        dt++;   /* end marker */
-        do {
-                *dst++ = *src++;
-        } while (dst < (char*)dt);
-
-        i7->clk_cmd_reg =
-                intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
-        splx(s);
-}
-
-static void
-oclk_set_dt(dt)
-	struct intersil_dt *dt;
-{
-        int s;
-        register volatile char *src, *dst;
-
-        dst = (char *) &i7->counters;
-
-        s = splhigh();
-        i7->clk_cmd_reg =
-                intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
-
-        src = (char *) dt;
-        dt++;   /* end marker */
-        do {
-                *dst++ = *src++;
-        } while (src < (char *)dt);
-
-        i7->clk_cmd_reg =
-                intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
-        splx(s);
-}
-
-
-/*
- * Machine dependent base year:
- * Note: must be < 1970
- */
-#define CLOCK_BASE_YEAR 1968
-
-/* Traditional UNIX base year */
-#define POSIX_BASE_YEAR 1970
-#define FEBRUARY        2
-
-#define leapyear(year)          ((year) % 4 == 0)
-#define days_in_year(a)         (leapyear(a) ? 366 : 365)
-#define days_in_month(a)        (month_days[(a) - 1])
-
-static int month_days[12] = {
-        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-static void
-gmt_to_dt(tp, dt)
-	long *tp;
-	struct intersil_dt *dt;
-{
-        register int i;
-        register long days, secs;
-
-        days = *tp / SECDAY;
-        secs = *tp % SECDAY;
-
-        /* Hours, minutes, seconds are easy */
-        dt->dt_hour = secs / 3600;
-        secs = secs % 3600;
-        dt->dt_min  = secs / 60;
-        secs = secs % 60;
-        dt->dt_sec  = secs;
-
-        /* Day of week (Note: 1/1/1970 was a Thursday) */
-        dt->dt_dow = (days + 4) % 7;
-
-        /* Number of years in days */
-        i = POSIX_BASE_YEAR;
-        while (days >= days_in_year(i)) {
-                days -= days_in_year(i);
-                i++;
-        }
-        dt->dt_year = i - CLOCK_BASE_YEAR;
-
-        /* Number of months in days left */
-        if (leapyear(i))
-                days_in_month(FEBRUARY) = 29;
-        for (i = 1; days >= days_in_month(i); i++)
-                days -= days_in_month(i);
-        days_in_month(FEBRUARY) = 28;
-        dt->dt_month = i;
-
-        /* Days are what is left over (+1) from all that. */
-        dt->dt_day = days + 1;
-}
-
-
-static void
-dt_to_gmt(dt, tp)
-	struct intersil_dt *dt;
-	long *tp;
-{
-        register int i;
-        register long tmp;
-        int year;
-
-        /*
-         * Hours are different for some reason. Makes no sense really.
-         */
-
-        tmp = 0;
-
-        if (dt->dt_hour >= 24) goto out;
-        if (dt->dt_day  >  31) goto out;
-        if (dt->dt_month > 12) goto out;
-
-        year = dt->dt_year + CLOCK_BASE_YEAR;
-
-
-        /*
-         * Compute days since start of time
-         * First from years, then from months.
-         */
-        for (i = POSIX_BASE_YEAR; i < year; i++)
-                tmp += days_in_year(i);
-        if (leapyear(year) && dt->dt_month > FEBRUARY)
-                tmp++;
-
-        /* Months */
-        for (i = 1; i < dt->dt_month; i++)
-                tmp += days_in_month(i);
-        tmp += (dt->dt_day - 1);
-
-        /* Now do hours */
-        tmp = tmp * 24 + dt->dt_hour;
-
-        /* Now do minutes */
-        tmp = tmp * 60 + dt->dt_min;
-
-        /* Now do seconds */
-        tmp = tmp * 60 + dt->dt_sec;
-
-out:
-        *tp = tmp;
-}
-#endif /* SUN4 */
 
 #if defined(SUN4)
 /*
@@ -1433,7 +1129,7 @@ out:
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s;
 	static struct timeval lasttime;
@@ -1541,7 +1237,7 @@ eeprom_update(buf, off, cnt)
 	bp = buf + off;
 
 	if (eeprom_nvram)
-		clk_wenable(1);
+		clk_wenable(todr_handle, 1);
 
 	while (cnt > 0) {
 		/*
@@ -1570,7 +1266,7 @@ eeprom_update(buf, off, cnt)
 	}
  out:
 	if (eeprom_nvram)
-		clk_wenable(0);
+		clk_wenable(todr_handle, 0);
 
 	return (error);
 }
