@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_sv.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: dns_sv.c,v 1.1.1.1.8.1 2001/01/28 15:52:22 he Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_sv.c,v 1.17 1999/09/04 22:06:14 vixie Exp";
+static const char rcsid[] = "Id: dns_sv.c,v 1.19 2000/03/30 22:53:56 vixie Exp";
 #endif
 
 /* Imports */
@@ -107,8 +107,8 @@ irs_dns_sv(struct irs_acc *this) {
 	sv->rewind = sv_rewind;
 	sv->close = sv_close;
 	sv->minimize = sv_minimize;
-	sv->res_get = sv_res_get;
-	sv->res_set = sv_res_set;
+	sv->res_get = NULL; /* sv_res_get; */
+	sv->res_set = NULL; /* sv_res_set; */
 	return (sv);
 }
 
@@ -152,7 +152,7 @@ sv_byport(struct irs_sv *this, int port, const char *proto) {
 	char portstr[16];
 	char **hes_list;
 
-	sprintf(portstr, "%d", port);
+	sprintf(portstr, "%d", ntohs(port));
 	if (!(hes_list = hesiod_resolve(dns->hes_ctx, portstr, "port")))
 		return (NULL);
 	
@@ -195,12 +195,13 @@ parse_hes_list(struct irs_sv *this, char **hes_list, const char *proto) {
 			p++;
 		if (!*p)
 			continue;
-		proto_len = strlen(proto);
-		if (strncasecmp(++p, proto, proto_len) != 0)
-			continue;
-		if (p[proto_len] && !isspace(p[proto_len]))
-			continue;
-
+		if (proto) {
+		     proto_len = strlen(proto);
+		     if (strncasecmp(++p, proto, proto_len) != 0)
+			  continue;
+		     if (p[proto_len] && !isspace(p[proto_len]))
+			  continue;
+		}
 		/* OK, we've got a live one.  Let's parse it for real. */
 		if (pvt->svbuf)
 			free(pvt->svbuf);
