@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.63 2003/07/11 15:28:59 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.64 2003/07/18 10:29:37 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -570,6 +570,11 @@ message nonet
 {Je ne trouve aucune interface réseau utilisable.
 Vous allez retourner au menu précédent.
 }
+
+message netup	/* XXX translate */
+{The following network interfaces are active: %s
+Does one of them connect to the required server?}
+
 
 message asknetdev
 {J'ai trouvé les interfaces réseau suivantes : %s
