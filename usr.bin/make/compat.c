@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.19 1997/05/06 23:51:29 mycroft Exp $	*/
+/*	$NetBSD: compat.c,v 1.20 1997/05/07 07:31:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: compat.c,v 1.19 1997/05/06 23:51:29 mycroft Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.20 1997/05/07 07:31:37 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -447,7 +447,7 @@ CompatMake (gnp, pgnp)
 	     * Our commands are ok, but we still have to worry about the -t
 	     * flag...
 	     */
-	    if (!touchFlag) {
+	    if (!touchFlag || (gn->type & OP_MAKE)) {
 		curTarg = gn;
 		Lst_ForEach (gn->commands, CompatRunCommand, (ClientData)gn);
 		curTarg = NILGNODE;
