@@ -7,7 +7,7 @@ MACHINE_ARCH=sh3eb
 # just in case you forgot to specify this when you built gcc...
 CFLAGS="-D__NetBSD__ -v"
 export MACHINE MACHINE_ARCH CFLAGS
-TARGET=/usr/pkg/cross/sh-netbsdcoff
+TARGET=/usr/pkg/cross/bin/sh-netbsdcoff
 
 make AR=$TARGET-ar AS=$TARGET-as CC=$TARGET-gcc LD=$TARGET-ld NM=$TARGET-nm \
 	RANLIB=$TARGET-ranlib SIZE=$TARGET-size \
