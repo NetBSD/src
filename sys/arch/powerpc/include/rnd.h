@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.2 2002/03/26 21:50:39 kleink Exp $	*/
+/*	$NetBSD: rnd.h,v 1.3 2003/01/23 15:59:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -48,7 +48,7 @@ cpu_counter(void)
 	    "mfpvr	%0		\n"
 	    "srwi	%0,%0,16	\n"
 	    "cmpwi	%0,%3		\n"
-	    "bne	1f		\n"	/* branch if 601 */
+	    "bne	1f		\n"	/* branch if not 601 */
 	    "lis	%0,0x77		\n"
 	    "ori	%0,%0,0x3594	\n"	/* 7.8125e6 */
 	    "mfspr	%2,%4		\n"
