@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: xdr_float.c,v 1.1 1993/10/07 07:30:26 cgd Exp $";
+static char *rcsid = "$Id: xdr_float.c,v 1.2 1994/03/02 18:45:22 phil Exp $";
 #endif
 
 /*
@@ -54,7 +54,7 @@ static char *rcsid = "$Id: xdr_float.c,v 1.1 1993/10/07 07:30:26 cgd Exp $";
  * This routine works on Suns (Sky / 68000's), i386's, MIPS, NS32k and Vaxen.
  */
 
-#if defined(mc68000)||defined(sparc)||defined(i386)||defined(mips)||defined(ns32000)
+#if defined(mc68000)||defined(sparc)||defined(i386)||defined(mips)||defined(ns32k)
 #define IEEEFP
 #endif
 
