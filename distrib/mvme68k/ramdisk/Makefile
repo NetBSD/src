@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/08/30 23:51:50 jhawk Exp $
+#	$NetBSD: Makefile,v 1.8 2000/11/01 07:57:59 garbled Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -19,6 +19,8 @@ MOUNT_POINT?=   /mnt
 VND?=           vnd0
 VND_CDEV=       /dev/${VND}c
 VND_CRDEV=      /dev/r${VND}c
+
+CRUNCHGEN?=	crunchgen
 
 # These are all the parameters for the root fs: (384K)
 # NOTE: If you change NBLKS, you *must* also edit the
@@ -60,7 +62,7 @@ CLEANFILES+= ${CBIN} ${CBIN}.c ${CBIN}.cache ${CBIN}.mk ${CBIN}.syms
 CLEANFILES+= *.cro *_stub.o *_stub.c
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	${CRUNCHGEN} -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

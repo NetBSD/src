@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/08/30 23:51:51 jhawk Exp $
+#	$NetBSD: Makefile,v 1.14 2000/11/01 07:58:00 garbled Exp $
 
 BINDIR=		/installation/netboot
 
@@ -24,6 +24,8 @@ CLEANFILES=	${IMAGE} ${DISKIMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 LISTS=		${.CURDIR}/list
 CRUNCHCONF=	${.CURDIR}/${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 all: ${IMAGE}
 
@@ -52,7 +54,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/08/30 23:51:48 jhawk Exp $
+#	$NetBSD: Makefile,v 1.10 2000/11/01 07:57:55 garbled Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,6 +20,8 @@ MDEC=		${DESTDIR}/usr/mdec
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 all: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=9000
@@ -47,7 +49,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
