@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/04/10 04:35:23 thorpej Exp $
+#	$NetBSD: Makefile,v 1.13 2003/04/29 18:18:55 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -28,13 +28,12 @@ TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 		IQ80321		IQ80321		IQ80321_wd0	\
 		0xf0080000	netbsd-wd0			\
 								\
-		TEAMASA_NPWR	TEAMASA_NPWR	TEAMASA_NPWR_sd0 \
+		TEAMASA_NPWR	IQ80310		TEAMASA_NPWR_sd0 \
 		0x00080000	netbsd-sd0
 
 .for K G I R W in ${TARGETS}				# {
 
-GZB${G}DIR!=	cd ${.CURDIR}/../gzboot_${G}_flash_${R} && ${PRINTOBJDIR}
-GZB${G}=	${GZB${G}DIR}/gzboot_${G}_${R}.sym
+GZB${G}=	${DESTDIR}/usr/mdec/gzboot_${G}_${R}.bin
 
 GZIMGS+=	gzimg_${I}_flash_${R}.gz
 
@@ -42,9 +41,7 @@ gzimg_${I}_flash_${R}: .NOTMAIN ${GZB${G}} ${KERNOBJDIR}/${K}/${W}.bin
 	@echo "Populating ${.TARGET}"
 	-rm -f ${.TARGET}.kern.gz
 	gzip -9c ${KERNOBJDIR}/${K}/${W}.bin > ${.TARGET}.kern.gz
-	cp ${GZB${G}} ${.TARGET}
-	${MDSETIMAGE} -v -s ${.TARGET} ${.TARGET}.kern.gz
-	${OBJCOPY} -O binary ${.TARGET} ${.TARGET}
+	${CAT} ${GZB${G}} ${.TARGET}.kern.gz > ${.TARGET}
 
 gzimg_${I}_flash_${R}.gz: .NOTMAIN gzimg_${I}_flash_${R}
 	-rm -f ${.TARGET}
