@@ -1722,11 +1722,6 @@ check_format_info (info, params)
 	}
       if (wide && index (fci->flag_chars, 'w') == 0)
 	warning ("width used with `%c' format", format_char);
-      if (index (fci->flag_chars, '2') != 0)
-	warning ("`%%%c' yields only last 2 digits of year", format_char);
-      else if (index (fci->flag_chars, '3') != 0)
-	warning ("`%%%c' yields only last 2 digits of year in some locales",
-		 format_char);
       if (precise && index (fci->flag_chars, 'p') == 0)
 	warning ("precision used with `%c' format", format_char);
       if (aflag && index (fci->flag_chars, 'a') == 0)
