@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock_impl.h,v 1.1.2.1 2002/03/14 17:14:24 thorpej Exp $	*/
+/*	$NetBSD: rwlock_impl.h,v 1.1.2.2 2002/03/17 06:33:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ do {									\
 		"# BEGIN RWLOCK_ACQUIRE\n"				\
 		"1:	ldq_l	%2, %5		\n"			\
 		"	cmpeq	%2, %3, %0	\n"			\
-		"	bne	%0, 3f		\n"			\
+		"	beq	%0, 3f		\n"			\
 		"	mov	%4, %0		\n"			\
 		"	stq_c	%0, %1		\n"			\
 		"	beq	%0, 2f		\n"			\
@@ -71,7 +71,7 @@ do {									\
 		"2:	br	1b		\n"			\
 		"3:				\n"			\
 		"	# END RWLOCK_ACQUIRE"				\
-		: "=&r" (_tmp_), "=m" ((rwl)->rwl_owner), "=r" (actual)	\
+		: "=&r" (_tmp_), "=m" ((rwl)->rwl_owner), "=&r" (actual)\
 		: "r" (old), "r" (new), "m" ((rwl)->rwl_owner)		\
 		: "memory");						\
 } while (/*CONSTCOND*/0)
@@ -85,7 +85,7 @@ do {									\
 		"1:	mb			\n"			\
 		"	ldq_l	%2, %5		\n"			\
 		"	cmpeq	%2, %3, %0	\n"			\
-		"	bne	%0, 3f		\n"			\
+		"	beq	%0, 3f		\n"			\
 		"	mov	%4, %0		\n"			\
 		"	stq_c	%0, %1		\n"			\
 		"	beq	%0, 2f		\n"			\
@@ -93,7 +93,7 @@ do {									\
 		"2:	br	1b		\n"			\
 		"3:				\n"			\
 		"	# END RWLOCK_RELEASE"				\
-		: "=&r" (_tmp_), "=m" ((rwl)->rwl_owner), "=r" (actual)	\
+		: "=&r" (_tmp_), "=m" ((rwl)->rwl_owner), "=&r" (actual)\
 		: "r" (old), "r" (new), "m" ((rwl)->rwl_owner)		\
 		: "memory");						\
 } while (/*CONSTCOND*/0)
