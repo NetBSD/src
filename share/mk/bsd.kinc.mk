@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.25 2002/11/26 23:15:54 lukem Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.26 2003/07/18 08:26:07 lukem Exp $
 
 # Variables:
 #
@@ -50,7 +50,7 @@ __incinstall: .USE
 .for F in ${INCS:O:u} ${DEPINCS:O:u}
 _F:=		${DESTDIR}${INCSDIR}/${F}		# installed path
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_F}!		${F} __incinstall			# install rule
 .else
 ${_F}:		${F} __incinstall			# install rule

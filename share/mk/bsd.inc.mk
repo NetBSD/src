@@ -1,4 +1,6 @@
-#	$NetBSD: bsd.inc.mk,v 1.23 2002/10/22 18:48:27 perry Exp $
+#	$NetBSD: bsd.inc.mk,v 1.24 2003/07/18 08:26:07 lukem Exp $
+
+.include <bsd.init.mk>
 
 ##### Basic targets
 .PHONY:		incinstall
@@ -20,7 +22,7 @@ _FDIR:=		${INCSDIR_${F:C,/,_,g}:U${INCSDIR}}	# dir override
 _FNAME:=	${INCSNAME_${F:C,/,_,g}:U${INCSNAME:U${F}}} # name override
 _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_F}!		${F} __incinstall			# install rule
 .else
 ${_F}:		${F} __incinstall			# install rule
