@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.610 2003/09/28 18:32:18 wiz Exp $
+# $NetBSD: mi,v 1.611 2003/10/04 13:41:47 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1431,6 +1431,7 @@
 ./usr/share/man/cat8/evbppc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/evbsh3/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/evbsh3/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/evbsh5/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/faithd.0			man-router-catman
 ./usr/share/man/cat8/fastboot.0			man-sysutil-catman
 ./usr/share/man/cat8/fasthalt.0			man-sysutil-catman
@@ -3261,6 +3262,7 @@
 ./usr/share/man/man8/evbppc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/evbsh3/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/evbsh3/makedev.8		man-sysutil-man
+./usr/share/man/man8/evbsh5/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/faithd.8			man-router-man
 ./usr/share/man/man8/fastboot.8			man-sysutil-man
 ./usr/share/man/man8/fasthalt.8			man-sysutil-man
