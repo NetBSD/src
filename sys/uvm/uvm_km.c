@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.75 2005/01/12 09:34:35 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.76 2005/01/13 11:50:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.75 2005/01/12 09:34:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.76 2005/01/13 11:50:32 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -630,30 +630,6 @@ uvm_km_free(map, addr, size)
 }
 
 /*
- * uvm_km_free_wakeup: free an area of kernel memory and wake up
- * anyone waiting for vm space.
- *
- * => XXX: "wanted" bit + unlock&wait on other end?
- */
-
-void
-uvm_km_free_wakeup(map, addr, size)
-	struct vm_map *map;
-	vaddr_t addr;
-	vsize_t size;
-{
-	struct vm_map_entry *dead_entries;
-
-	vm_map_lock(map);
-	uvm_unmap_remove(map, trunc_page(addr), round_page(addr + size),
-	    &dead_entries, NULL);
-	wakeup(map);
-	vm_map_unlock(map);
-	if (dead_entries != NULL)
-		uvm_unmap_detach(dead_entries, 0);
-}
-
-/*
  * uvm_km_alloc1: allocate wired down memory in the kernel map.
  *
  * => we can sleep if needed
@@ -754,6 +730,7 @@ uvm_km_valloc1(map, size, align, prefer, flags)
 	uvm_flag_t flags;
 {
 	vaddr_t kva;
+	int error;
 	UVMHIST_FUNC("uvm_km_valloc1"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x, align=0x%x, prefer=0x%x)",
@@ -770,32 +747,25 @@ uvm_km_valloc1(map, size, align, prefer, flags)
 		return (0);
 
 	flags |= UVM_FLAG_QUANTUM;
-	for (;;) {
-		kva = vm_map_min(map);		/* hint */
+	if ((flags & UVM_KMF_NOWAIT) == 0) /* XXX */
+		flags |= UVM_FLAG_WAITVA;  /* XXX */
+		
+	kva = vm_map_min(map);		/* hint */
 
-		/*
-		 * allocate some virtual space.   will be demand filled
-		 * by kernel_object.
-		 */
+	/*
+	 * allocate some virtual space.   will be demand filled
+	 * by kernel_object.
+	 */
 
-		if (__predict_true(uvm_map(map, &kva, size, uvm.kernel_object,
-		    prefer, align, UVM_MAPFLAG(UVM_PROT_ALL,
-		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, flags))
-		    == 0)) {
-			UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
-			return (kva);
-		}
+	error = uvm_map(map, &kva, size, uvm.kernel_object,
+	    prefer, align, UVM_MAPFLAG(UVM_PROT_ALL,
+	    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, flags));
 
-		/*
-		 * failed.  sleep for a while (on map)
-		 */
-		if ((flags & UVM_KMF_NOWAIT) != 0)
-			return (0);
+	KASSERT(error == 0 || (flags & UVM_KMF_NOWAIT) != 0);
 
-		UVMHIST_LOG(maphist,"<<<sleeping>>>",0,0,0,0);
-		tsleep((caddr_t)map, PVM, "vallocwait", 0);
-	}
-	/*NOTREACHED*/
+	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
+
+	return (kva);
 }
 
 /* Function definitions for binary compatibility */
