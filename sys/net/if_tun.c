@@ -13,10 +13,13 @@
  * 90/02/06 15:03 - Fixed a bug in where TIOCGPGRP and TIOCSPGRP were
  * mixed up. Anders Klemets - klemets@sics.se
  *
- * $Id: if_tun.c,v 1.3 1993/05/22 11:42:13 cgd Exp $
+ * $Id: if_tun.c,v 1.3.2.1 1993/07/31 12:23:09 cgd Exp $
  * 
  * $Log: if_tun.c,v $
- * Revision 1.3  1993/05/22 11:42:13  cgd
+ * Revision 1.3.2.1  1993/07/31 12:23:09  cgd
+ * give names, err, wmesg's, to my "pain" -- i.e. convert sleep() to tsleep()
+ *
+ * Revision 1.3  1993/05/22  11:42:13  cgd
  * add include of select.h if necessary for protos, or delete if extraneous
  *
  * Revision 1.2  1993/05/18  18:19:58  cgd
@@ -472,7 +475,7 @@ struct uio     *uio;
                                 return EWOULDBLOCK;
                         }
                         tp->tun_flags |= TUN_RWAIT;
-                        sleep ((caddr_t) tp, PZERO + 1);
+                        tsleep ((caddr_t) tp, PZERO + 1, "tunread", 0);
                 }
         } while (m0 == 0);
         splx (s);
