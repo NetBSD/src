@@ -42,13 +42,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fortune.c	5.13 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: fortune.c,v 1.6 1993/08/02 18:22:46 mycroft Exp $";
+static char rcsid[] = "$Id: fortune.c,v 1.7 1993/12/04 02:19:49 jtc Exp $";
 #endif /* not lint */
 
 # include	<machine/endian.h>
 # include	<sys/param.h>
 # include	<sys/stat.h>
-# include	<sys/dir.h>
+# include	<dirent.h>
 # include	<stdio.h>
 # include	<assert.h>
 # include	<stdlib.h>
@@ -58,8 +58,6 @@ static char rcsid[] = "$Id: fortune.c,v 1.6 1993/08/02 18:22:46 mycroft Exp $";
 # include	"pathnames.h"
 
 #ifdef	SYSV
-# include	<dirent.h>
-
 # define	NO_LOCK
 # define	REGCMP
 # ifdef	NO_REGEX
@@ -671,11 +669,7 @@ add_dir(fp)
 register FILEDESC	*fp;
 {
 	register DIR		*dir;
-#ifdef SYSV
-	register struct dirent	*dirent;	/* NIH, of course! */
-#else
-	register struct direct	*dirent;
-#endif
+	register struct dirent	*dirent;
 	auto FILEDESC		*tailp;
 	auto char		*name;
 
