@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.2 2001/07/16 05:50:05 matt Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.3 2001/11/13 20:03:38 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -47,13 +47,13 @@
 
 ENTRY(setjmp)
 	/* Block all signals and retrieve the old signal mask */
-	stmfd	r13!, {r0, r14}
+	stmfd	sp!, {r0, r14}
 	mov	r0, #0x00000000
 
 	bl	PIC_SYM(_C_LABEL(sigblock), PLT)
 	mov	r1, r0
 
-	ldmfd	r13!, {r0, r14}
+	ldmfd	sp!, {r0, r14}
 
 	/* Store signal mask */
 	str	r1, [r0, #(25 * 4)]
@@ -93,12 +93,14 @@ ENTRY(longjmp)
 	ldr	r2, [r0, #(25 * 4)]
 
 	/* Set signal mask */
-	stmfd	r13!, {r0, r1, r14}
+	stmfd	sp!, {r0, r1, r14}
+	sub	sp, sp, #4	/* align the stack */
 
 	mov	r0, r2
 	bl	PIC_SYM(_C_LABEL(sigsetmask), PLT)
 
-	ldmfd	r13!, {r0, r1, r14} 
+	add	sp, sp, #4	/* unalign the stack */
+	ldmfd	sp!, {r0, r1, r14} 
 
 	add	r0, r0, #4
 #ifdef SOFTFLOAT
@@ -113,10 +115,9 @@ ENTRY(longjmp)
 	/* Restore integer registers */
         ldmia	r0, {r4-r14}
 
-	/* Validate r13 and r14 */
-	teq	r13, #0
-	beq	botch
-	teq	r14, #0
+	/* Validate sp and r14 */
+	teq	sp, #0
+	teqne	r14, #0
 	beq	botch
 
 	/* Set return value */

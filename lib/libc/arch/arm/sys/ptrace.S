@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.3 2001/07/16 05:50:06 matt Exp $ */
+/*	$NetBSD: ptrace.S,v 1.4 2001/11/13 20:03:38 chris Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,9 @@
 ENTRY(ptrace)
 #ifdef _REENTRANT
 	stmfd	sp!, {r0-r3, lr}
+	sub	sp, sp, #4	/* align stack */
 	bl	PIC_SYM(_C_LABEL(__errno), PLT)
+	add	sp, sp, #4	/* unalign stack */
 	mov	r1, #0x00000000
 	str	r1, [r0]
 	ldmfd	sp!, {r0-r3, lr}
