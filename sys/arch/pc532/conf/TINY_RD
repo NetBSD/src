@@ -12,7 +12,7 @@ options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
 options		"COMPAT_43"
 options		"RAMD_SIZE=1536000"
-#options		"RAMD_ADR=0x400000"
+options		"RAMD_ADR=0x200000"
 options		"COMDEF_SPEED=B19200"
 
 options		SCSI
