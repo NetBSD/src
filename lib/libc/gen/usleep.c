@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.12 1997/07/19 02:42:32 jtc Exp $	*/
+/*	$NetBSD: usleep.c,v 1.13 1997/07/19 15:58:31 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,8 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: usleep.c,v 1.12 1997/07/19 02:42:32 jtc Exp $";
+__RCSID("$NetBSD: usleep.c,v 1.13 1997/07/19 15:58:31 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <time.h>
