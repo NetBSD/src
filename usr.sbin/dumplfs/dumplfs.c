@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.26 2003/04/02 10:39:47 fvdl Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.27 2003/04/16 09:25:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.26 2003/04/02 10:39:47 fvdl Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.27 2003/04/16 09:25:04 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -804,6 +804,6 @@ dump_cleaner_info(struct lfs *lfsp, void *ipage)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: dumplfs [-aiS] [-b daddr] [-I daddr] [-s segnum] file\n");
+	(void)fprintf(stderr, "usage: dumplfs [-adiS] [-b blkno] [-I blkno] [-s segno] filesys|device\n");
 	exit(1);
 }
