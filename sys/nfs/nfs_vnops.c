@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.215 2005/01/08 03:12:30 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.216 2005/01/19 16:22:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.215 2005/01/08 03:12:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.216 2005/01/19 16:22:19 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -777,7 +777,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 	nfsm_request(np, NFSPROC_SETATTR, procp, cred);
 #ifndef NFS_V2_ONLY
 	if (v3) {
-		nfsm_wcc_data(vp, wccflag, 0);
+		nfsm_wcc_data(vp, wccflag, 0, FALSE);
 	} else
 #endif
 		nfsm_loadattr(vp, (struct vattr *)0, 0);
@@ -1452,7 +1452,7 @@ retry:
 #ifndef NFS_V2_ONLY
 		if (v3) {
 			wccflag = NFSV3_WCCCHK;
-			nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC);
+			nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC, !error);
 			if (!error) {
 				nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED
 					+ NFSX_V3WRITEVERF);
@@ -1634,7 +1634,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	}
 #ifndef NFS_V2_ONLY
 	if (v3)
-		nfsm_wcc_data(dvp, wccflag, 0);
+		nfsm_wcc_data(dvp, wccflag, 0, !error);
 #endif
 	nfsm_reqdone;
 	if (error) {
@@ -1772,7 +1772,7 @@ again:
 	}
 #ifndef NFS_V2_ONLY
 	if (v3)
-		nfsm_wcc_data(dvp, wccflag, 0);
+		nfsm_wcc_data(dvp, wccflag, 0, !error);
 #endif
 	nfsm_reqdone;
 	if (error) {
@@ -1942,7 +1942,7 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 	nfsm_request1(dnp, NFSPROC_REMOVE, proc, cred, &rexmit);
 #ifndef NFS_V2_ONLY
 	if (v3)
-		nfsm_wcc_data(dvp, wccflag, 0);
+		nfsm_wcc_data(dvp, wccflag, 0, !error);
 #endif
 	nfsm_reqdone;
 	VTONFS(dvp)->n_flag |= NMODIFIED;
@@ -2085,8 +2085,8 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 	nfsm_request1(fdnp, NFSPROC_RENAME, proc, cred, &rexmit);
 #ifndef NFS_V2_ONLY
 	if (v3) {
-		nfsm_wcc_data(fdvp, fwccflag, 0);
-		nfsm_wcc_data(tdvp, twccflag, 0);
+		nfsm_wcc_data(fdvp, fwccflag, 0, !error);
+		nfsm_wcc_data(tdvp, twccflag, 0, !error);
 	}
 #endif
 	nfsm_reqdone;
@@ -2167,7 +2167,7 @@ nfs_link(v)
 #ifndef NFS_V2_ONLY
 	if (v3) {
 		nfsm_postop_attr(vp, attrflag, 0);
-		nfsm_wcc_data(dvp, wccflag, 0);
+		nfsm_wcc_data(dvp, wccflag, 0, !error);
 	}
 #endif
 	nfsm_reqdone;
@@ -2250,7 +2250,7 @@ nfs_symlink(v)
 	if (v3) {
 		if (!error)
 			nfsm_mtofh(dvp, newvp, v3, gotvp);
-		nfsm_wcc_data(dvp, wccflag, 0);
+		nfsm_wcc_data(dvp, wccflag, 0, !error);
 	}
 #endif
 	nfsm_reqdone;
@@ -2338,7 +2338,7 @@ nfs_mkdir(v)
 	if (!error)
 		nfsm_mtofh(dvp, newvp, v3, gotvp);
 	if (v3)
-		nfsm_wcc_data(dvp, wccflag, 0);
+		nfsm_wcc_data(dvp, wccflag, 0, !error);
 	nfsm_reqdone;
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
@@ -2422,7 +2422,7 @@ nfs_rmdir(v)
 	nfsm_request1(dnp, NFSPROC_RMDIR, cnp->cn_proc, cnp->cn_cred, &rexmit);
 #ifndef NFS_V2_ONLY
 	if (v3)
-		nfsm_wcc_data(dvp, wccflag, 0);
+		nfsm_wcc_data(dvp, wccflag, 0, !error);
 #endif
 	nfsm_reqdone;
 	PNBUF_PUT(cnp->cn_pnbuf);
@@ -3188,7 +3188,7 @@ nfs_commit(vp, offset, cnt, procp)
 	tl += 2;
 	*tl = txdr_unsigned(cnt);
 	nfsm_request(np, NFSPROC_COMMIT, procp, np->n_wcred);
-	nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC);
+	nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC, FALSE);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
 		simple_lock(&nmp->nm_slock);
