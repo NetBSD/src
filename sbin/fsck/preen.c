@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.16 1997/09/14 14:11:02 lukem Exp $	*/
+/*	$NetBSD: preen.c,v 1.17 1997/09/16 14:52:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
+static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.16 1997/09/14 14:11:02 lukem Exp $");
+__RCSID("$NetBSD: preen.c,v 1.17 1997/09/16 14:52:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,13 +47,13 @@ __RCSID("$NetBSD: preen.c,v 1.16 1997/09/14 14:11:02 lukem Exp $");
 #include <sys/wait.h>
 #include <sys/queue.h>
 
+#include <err.h>
+#include <ctype.h>
 #include <fstab.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <unistd.h>
-#include <err.h>
 
 #include "fsutil.h"
 
@@ -255,12 +255,11 @@ finddisk(name)
 	size_t len = 0;
 	struct diskentry *d;
 
-	for (p = name + strlen(name) - 1; p >= name; --p)
+	for (len = strlen(name), p = name + len - 1; p >= name; --p)
 		if (isdigit(*p)) {
 			len = p - name + 1;
 			break;
 		}
-
 	if (p < name)
 		len = strlen(name);
 
