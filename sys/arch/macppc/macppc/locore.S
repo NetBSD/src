@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 1999/11/17 14:56:10 kleink Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 1999/12/07 16:11:49 danw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1207,7 +1207,7 @@ intr_exit:
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
-	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real addess */
+	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
 	lwz	3,PM_KERNELSR(3)
 	mtsr	KERNEL_SR,3		/* Restore kernel SR */
