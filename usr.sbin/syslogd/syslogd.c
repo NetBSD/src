@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.25 1999/02/28 11:30:18 pk Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.26 1999/02/28 11:46:26 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,7 +298,7 @@ main(argc, argv)
 		logerror("couldn't allocate funix descriptors");
 		die(0);
 	}
-	for (j = 0, pp = LogPaths; j < funixsize; pp++, j++) {
+	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
 		unlink(*pp);
 		memset(&sunx, 0, sizeof(sunx));
 		sunx.sun_family = AF_LOCAL;
@@ -470,21 +470,18 @@ logpath_add(lp, szp, maxszp, new)
 	if (*szp == *maxszp) {
 		if (*maxszp == 0) {
 			*maxszp = 4;	/* start of with enough for now */
-			*lp = (char **)malloc(sizeof(char *) * 4);
-			if (*lp == NULL) {
-				logerror("couldn't allocate line buffer");
-				die(0);
-			}
-		} else {
+			*lp = NULL;
+		}
+		else
 			*maxszp *= 2;
-			*lp = realloc(*lp, sizeof(char *) * (*maxszp));
-			if (*lp == NULL) {
-				logerror("couldn't allocate line buffer");
-				die(0);
-			}
+		*lp = realloc(*lp, sizeof(char *) * (*maxszp + 1));
+		if (*lp == NULL) {
+			logerror("couldn't allocate line buffer");
+			die(0);
 		}
 	}
 	(*lp)[(*szp)++] = new;
+	(*lp)[(*szp)] = NULL;		/* always keep it NULL terminated */
 }
 
 /* do a file of log sockets */
