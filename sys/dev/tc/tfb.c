@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.14 1999/07/30 16:23:43 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.15 1999/08/02 04:19:03 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.14 1999/07/30 16:23:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.15 1999/08/02 04:19:03 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ struct tfb_softc {
 #define	TX_PIP_OFFSET	0x0800c0
 #define	TX_SELECTION	0x100000
 #define	TX_8FB_OFFSET	0x200000
-#define	TX_8FB_SIZE	0x100000
+#define	TX_8FB_SIZE	0x200000
 #define	TX_24FB_OFFSET	0x400000
 #define	TX_24FB_SIZE	0x400000
 #define	TX_VIDEO_ENABLE	0xa00000
@@ -398,8 +398,7 @@ tfbattach(parent, self, aux)
 		    malloc(sizeof(struct fb_devconfig), M_DEVBUF, M_WAITOK);
 		tfb_getdevconfig(ta->ta_addr, sc->sc_dc);
 	}
-	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
-	    sc->sc_dc->dc_depth);
+	printf(": %d x %d, 8,24bpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht);
 
 	cm = &sc->sc_cmap;
 	memset(cm, 255, sizeof(struct hwcmap256));	/* XXX */
