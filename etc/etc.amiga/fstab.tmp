@@ -1,7 +1,7 @@
 #	fast file system on / root partition (NBR\7) lowest scsi disk unit
-/dev/sd0a	/	ufs	rw		1	1
+/dev/sd0a	/	ffs	rw		1	1
 #	fast file system on /usr (NBU\7) next to lowest scsi disk unit
-/dev/sd0d	/usr	ufs	rw		1	2	
+/dev/sd0d	/usr	ffs	rw		1	2	
 #	virtual mem file system on /tmp using swap (NBS\0) scsi id 0 size 5M
 #/dev/sd0b	/tmp	mfs	rw,-s10240
 #	amigados file system on /amiga (DOS/1)
