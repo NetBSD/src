@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.3 1994/07/02 06:03:47 hpeyerl Exp $      */
+/*	$NetBSD: ccd.c,v 1.4 1994/08/14 07:41:08 mycroft Exp $      */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -216,11 +216,11 @@ ccdinit(ccd)
 			int i, flag;
 
 			for (i = 0; i < nchrdev; i++)
-				if (ccdevsw[i].d_open == bsw->d_open)
+				if (cdevsw[i].d_open == bsw->d_open)
 					break;
-			if (i != nchrdev && ccdevsw[i].d_ioctl) {
+			if (i != nchrdev && cdevsw[i].d_ioctl) {
 				flag = 1;
-				(void)(*ccdevsw[i].d_ioctl)(dev, DIOCWLABEL,
+				(void)(*cdevsw[i].d_ioctl)(dev, DIOCWLABEL,
 					(caddr_t)&flag, FWRITE, p);
 			}
 		}
