@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: str.c,v 1.8 1994/06/16 18:50:18 jtc Exp $";
+static char *rcsid = "$Id: str.c,v 1.9 1995/02/04 23:44:41 christos Exp $";
 #endif				/* not lint */
 
 #include "make.h"
@@ -68,8 +68,10 @@ str_init()
 void
 str_end()
 {
-    free(argv[0]);
-    free((Address) argv);
+    if (argv[0]) {
+	free(argv[0]);
+	free((Address) argv);
+    }
     if (buffer)
 	free(buffer);
 }
