@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.3.6.1 1996/06/03 16:40:54 phil Exp $ */
+/*	$NetBSD: number.c,v 1.3.6.2 1996/06/05 05:14:29 phil Exp $ */
 
 /* number.c: Implements arbitrary precision numbers. */
 
@@ -31,6 +31,9 @@
 #include "bcdefs.h"
 #include "proto.h"
 #include "global.h"
+
+/* Hacks to make 1.04 number.c work in 1.03. */
+#define BASE 10
 
 /* Storage used for special numbers. */
 bc_num _zero_;
