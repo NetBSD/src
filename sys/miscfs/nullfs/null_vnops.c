@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.19 2001/06/07 13:44:47 wiz Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.20 2001/06/09 11:02:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: null_vnops.c,v 1.19 2001/06/07 13:44:47 wiz Exp $
+ *	$Id: null_vnops.c,v 1.20 2001/06/09 11:02:08 wiz Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -85,13 +85,13 @@
  * name space under a new name.  In this respect, it is
  * similar to the loopback file system.  It differs from
  * the loopback fs in two respects:  it is implemented using
- * a stackable layers technique, and it's "null-node"s stack above
+ * a stackable layers technique, and its "null-nodes" stack above
  * all lower-layer vnodes, not just over directory vnodes.
  *
  * The null layer has two purposes.  First, it serves as a demonstration
- * of layering by providing a layer which does nothing.  (It actually
+ * of layering by providing a layer which does nothing (it actually
  * does everything the loopback file system does, which is slightly
- * more than nothing.)  Second, the null layer can serve as a prototype
+ * more than nothing).  Second, the null layer can serve as a prototype
  * layer.  Since it provides all necessary layer framework,
  * new file system layers can be created very easily by starting
  * with a null layer.
