@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.20 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: cksum.c,v 1.21 2004/07/09 11:44:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.20 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.21 2004/07/09 11:44:30 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -338,7 +338,7 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: cksum [-m | [-o 1 | 2]] [file ...]\n");
+	(void)fprintf(stderr, "usage: cksum [-n] [-m | -1 | -2 | -4 | -5 | -6 | [-o 1 | 2]] [file ...]\n");
 	(void)fprintf(stderr, "       sum [file ...]\n");
 	(void)fprintf(stderr,
 	    "       md2 [-n] [-p | -t | -x | -s string] [file ...]\n");
