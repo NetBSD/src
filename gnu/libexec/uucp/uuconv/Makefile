@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/18 05:48:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 1997/11/08 06:52:29 lukem Exp $
 #
 # Makefile for uuconv
 
@@ -9,7 +9,7 @@ PROG=		uuconv
 SRCS=		uuconv.c 
 LDADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
 DPADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
-CFLAGS+=	-I$(.CURDIR)/../common_sources\
+CPPFLAGS+=	-I$(.CURDIR)/../common_sources\
 		-I$(.CURDIR)/../libuuconf\
 		-DVERSION=\"$(VERSION)\"
 

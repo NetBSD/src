@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/31 21:21:23 cjs Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 1997/11/08 06:52:04 lukem Exp $
 
 LIB=		g++
 
@@ -15,7 +15,7 @@ timer.c
 
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../../include \
 		  -I$(.CURDIR)/../../libio -I$(.CURDIR)/../../libstdc++
-CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../libio
+CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../libio
 .if (${MACHINE} == "alpha")
 LDADD=		-lcurses
 DPADD=		${LIBCURSES}

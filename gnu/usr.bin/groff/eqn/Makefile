@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 1997/10/18 05:58:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 1997/11/08 06:53:31 lukem Exp $
 
 PROG=		eqn
 SRCS=		main.cc lex.cc  box.cc limit.cc list.cc over.cc text.cc\
 		script.cc mark.cc other.cc delim.cc sqrt.cc pile.cc special.cc\
 		eqn.cc
-CFLAGS+=	-I. -I$(.CURDIR)/../include
+CPPFLAGS+=	-I. -I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
 

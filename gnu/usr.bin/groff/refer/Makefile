@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/18 05:59:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 1997/11/08 06:53:57 lukem Exp $
 
 PROG=		refer
 SRCS=		command.cc ref.cc refer.cc token.cc label.cc
-CFLAGS+=	-I. -I$(.CURDIR)/../include
+CPPFLAGS+=	-I. -I$(.CURDIR)/../include
 LDADD+=		$(LIBBIB) $(LIBGROFF) -lm
 DPADD+=		$(LIBBIB) $(LIBGROFF) $(LIBM)
 

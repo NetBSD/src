@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/18 05:59:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 1997/11/08 06:53:45 lukem Exp $
 
 PROG=		indxbib
 SRCS=		indxbib.cc dirnamemax.c signal.c
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+= 	$(LIBBIB) $(LIBGROFF) -lm
 DPADD+= 	$(LIBBIB) $(LIBGROFF) $(LIBM)
 

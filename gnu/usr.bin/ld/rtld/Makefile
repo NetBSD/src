@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1997/07/14 02:56:54 christos Exp $
+#	$NetBSD: Makefile,v 1.21.2.1 1997/11/08 06:54:12 lukem Exp $
 
 .if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
@@ -10,7 +10,7 @@ PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c vfprintf.c
 CLIB=	${.CURDIR}/../../../../lib/libc
 PICFLAG=-fpic -fno-function-cse
-CFLAGS+=$(PICFLAG) -DRTLD -DLIBC_SCCS -I${CLIB}/include
+CPPFLAGS+=$(PICFLAG) -DRTLD -DLIBC_SCCS -I${CLIB}/include
 ASFLAGS+=-k
 LDFLAGS+=-Bshareable -Bsymbolic -assert nosymbolic
 .if defined(DESTDIR)

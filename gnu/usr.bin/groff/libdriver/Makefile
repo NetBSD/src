@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/18 05:59:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 1997/11/08 06:53:49 lukem Exp $
 
 LIB=		driver
 SRCS=		input.cc printer.cc
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 
 NOMAN=		noman
 NOPROFILE=	noprofile

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 1997/09/26 15:59:40 gwr Exp $
+# $NetBSD: Makefile,v 1.3.2.1 1997/11/08 06:52:15 lukem Exp $
 
 LIB=	readline
 
@@ -12,8 +12,8 @@ dist=	$(TOP)/dist
 srcdir= $(dist)/readline
 
 # Note: sysdep.h is found here.
-CFLAGS+= -I$(.CURDIR) -I$(srcdir) -I$(dist)/include
-CFLAGS+= -DHAVE_CONFIG_H
+CPPFLAGS+= -I$(.CURDIR) -I$(srcdir) -I$(dist)/include
+CPPFLAGS+= -DHAVE_CONFIG_H
 
 .PATH:	$(srcdir)
 
