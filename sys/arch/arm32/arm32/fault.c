@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.41 1999/03/26 22:00:24 mycroft Exp $	*/
+/*	$NetBSD: fault.c,v 1.41.2.1 1999/05/06 00:19:11 perry Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -150,6 +150,15 @@ data_abort_handler(frame)
 	int error;
 
 	/*
+	 * Must get fault address and status from the CPU before
+	 * re-enabling interrupts.  (Interrupt handlers may take
+	 * R/M emulation faults.)
+	 */
+	fault_address = cpu_faultaddress();
+	fault_status = cpu_faultstatus();
+	fault_pc = frame->tf_pc;
+
+	/*
 	 * Enable IRQ's (disabled by CPU on abort) if trapframe
 	 * shows they were enabled.
 	 */
@@ -158,11 +167,6 @@ data_abort_handler(frame)
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
-
-	/* Get fault address and status from the CPU */
-	fault_address = cpu_faultaddress();
-	fault_status = cpu_faultstatus();
-	fault_pc = frame->tf_pc;
 
 	/* Extract the fault code from the fault status */
 	fault_code = fault_status & FAULT_TYPE_MASK;
