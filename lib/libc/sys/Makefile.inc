@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.129 2002/09/22 13:11:47 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.130 2002/10/12 17:41:20 jdolecek Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -71,6 +71,11 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	unmount.S utimes.S utrace.S vadvise.S wait4.S write.S writev.S \
 	__sysctl.S \
 	__posix_chown.S __posix_fchown.S __posix_lchown.S __posix_rename.S
+
+.if defined(WITH_KQUEUE) && exists(${DESTDIR}/usr/include/sys/event.h)
+ASM+=		kqueue.S kevent.S
+CPPFLAGS+=	-DWITH_KQUEUE
+.endif
 
 WEAKASM= sysarch.S
 
