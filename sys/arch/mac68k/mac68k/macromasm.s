@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.4 1995/09/02 19:27:44 briggs Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.5 1995/09/03 14:54:35 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -91,11 +91,9 @@
 	loglob(ADBState, 0xde0)		/* ptr to ADB state information? */
 	loglob(jUnimplTrap, 0x61c)	/* ptr to UnimplTrap routine */
 	loglob(jEgret, 0x648)		/* ptr to Egret trap routine */
-/* WRU950824 begin */
-	loglob(HwCfgFlags , 0xb22)	/* 2 bytes, Hardware configs flags */
-	loglob(HwCfgFlags2, 0xdd0)	/* 4 bytes, more hardware configs flags */
-	loglob(HwCfgFlags3, 0xdd4)	/* 4 bytes, more hardware configs flags */
-/* WRU950824 end */
+	loglob(HwCfgFlags , 0xb22)	/* 2 bytes, h/w config flags */
+	loglob(HwCfgFlags2, 0xdd0)	/* 4 bytes, more h/w config flags */
+	loglob(HwCfgFlags3, 0xdd4)	/* 4 bytes, more h/w config flags */
 
 #if 0
 	/* I wish I knew what these things were */
@@ -105,7 +103,6 @@
 	loglob(MMUTblSize, 0xcb8)
 	loglob(MMUType, 0xcb1)
 #endif
-
 
 	.text
 	.even

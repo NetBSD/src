@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.2 1995/09/02 19:27:42 briggs Exp $	*/
+/*	$NetBSD: macrom.h,v 1.3 1995/09/03 14:54:33 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -65,11 +65,9 @@ extern caddr_t		SCCRd;		/* SCC read base address */
 extern u_char		FinderName[20]; /* FinderName - Pascal string */
 extern void		(*jSwapMMU)();	/* Pointer to MMU Swap routine */
 extern void		(*jEgret)();	/* Pointer to MMU Swap routine */
-/* WRU950824 begin */
 extern u_int16_t	HwCfgFlags;	/* Hardware config flags */
 extern u_int32_t	HwCfgFlags2;	/* more hardware config flags */
 extern u_int32_t	HwCfgFlags3;	/* more hardware config flags */
-/* WRU950824 end */
 
 	/* Types */
 
