@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_seq.c,v 1.10 1997/07/21 14:06:37 jtc Exp $	*/
+/*	$NetBSD: bt_seq.c,v 1.11 1998/12/09 12:42:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_seq.c	8.7 (Berkeley) 7/20/94";
 #else
-__RCSID("$NetBSD: bt_seq.c,v 1.10 1997/07/21 14:06:37 jtc Exp $");
+__RCSID("$NetBSD: bt_seq.c,v 1.11 1998/12/09 12:42:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,14 +108,14 @@ __bt_seq(dbp, key, data, flags)
 	case R_NEXT:
 	case R_PREV:
 		if (F_ISSET(&t->bt_cursor, CURS_INIT)) {
-			status = __bt_seqadv(t, &e, flags);
+			status = __bt_seqadv(t, &e, (int)flags);
 			break;
 		}
 		/* FALLTHROUGH */
 	case R_FIRST:
 	case R_LAST:
 	case R_CURSOR:
-		status = __bt_seqset(t, &e, key, flags);
+		status = __bt_seqset(t, &e, key, (int)flags);
 		break;
 	default:
 		errno = EINVAL;
@@ -123,7 +123,7 @@ __bt_seq(dbp, key, data, flags)
 	}
 
 	if (status == RET_SUCCESS) {
-		__bt_setcur(t, e.page->pgno, e.index);
+		__bt_setcur(t, e.page->pgno, (u_int)e.index);
 
 		status =
 		    __bt_ret(t, &e, key, &t->bt_rkey, data, &t->bt_rdata, 0);

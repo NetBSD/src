@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1996/05/03 21:43:45 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1998/12/09 12:42:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -44,7 +44,7 @@ int	 __big_return __P((HTAB *, BUFHEAD *, int, DBT *, int));
 int	 __big_split __P((HTAB *, BUFHEAD *, BUFHEAD *, BUFHEAD *,
 		int, u_int32_t, SPLIT_RETURN *));
 int	 __buf_free __P((HTAB *, int, int));
-void	 __buf_init __P((HTAB *, int));
+void	 __buf_init __P((HTAB *, u_int));
 u_int32_t	 __call_hash __P((HTAB *, char *, int));
 int	 __delpair __P((HTAB *, BUFHEAD *, int));
 int	 __expand_table __P((HTAB *));

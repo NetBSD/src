@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.14 1998/10/14 12:09:14 kleink Exp $	*/
+/*	$NetBSD: hash.c,v 1.15 1998/12/09 12:42:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-__RCSID("$NetBSD: hash.c,v 1.14 1998/10/14 12:09:14 kleink Exp $");
+__RCSID("$NetBSD: hash.c,v 1.15 1998/12/09 12:42:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,8 +76,8 @@ static void *hash_realloc __P((SEGMENT **, int, int));
 static int   hash_seq __P((const DB *, DBT *, DBT *, u_int32_t));
 static int   hash_sync __P((const DB *, u_int32_t));
 static int   hdestroy __P((HTAB *));
-static HTAB *init_hash __P((HTAB *, const char *, HASHINFO *));
-static int   init_htab __P((HTAB *, int));
+static HTAB *init_hash __P((HTAB *, const char *, const HASHINFO *));
+static int   init_htab __P((HTAB *, size_t));
 #if BYTE_ORDER == LITTLE_ENDIAN
 static void  swap_header __P((HTAB *));
 static void  swap_header_copy __P((HASHHDR *, HASHHDR *));
@@ -100,6 +100,7 @@ int hash_accesses, hash_collisions, hash_expansions, hash_overflows;
 /************************** INTERFACE ROUTINES ***************************/
 /* OPEN/CLOSE */
 
+/* ARGSUSED */
 extern DB *
 __hash_open(file, flags, mode, info, dflags)
 	const char *file;
@@ -143,7 +144,7 @@ __hash_open(file, flags, mode, info, dflags)
 		(void)fcntl(hashp->fp, F_SETFD, 1);
 	}
 	if (new_table) {
-		if (!(hashp = init_hash(hashp, file, (HASHINFO *)info)))
+		if (!(hashp = init_hash(hashp, file, info)))
 			RETURN_ERROR(errno, error1);
 	} else {
 		/* Table already exists */
@@ -185,7 +186,7 @@ __hash_open(file, flags, mode, info, dflags)
 			return (NULL);
 		/* Read in bitmaps */
 		bpages = (hashp->SPARES[hashp->OVFL_POINT] +
-		    (hashp->BSIZE << BYTE_SHIFT) - 1) >>
+		    (unsigned int)(hashp->BSIZE << BYTE_SHIFT) - 1) >>
 		    (hashp->BSHIFT + BYTE_SHIFT);
 
 		hashp->nmaps = bpages;
@@ -289,7 +290,7 @@ static HTAB *
 init_hash(hashp, file, info)
 	HTAB *hashp;
 	const char *file;
-	HASHINFO *info;
+	const HASHINFO *info;
 {
 	struct stat statbuf;
 	int nelem;
@@ -312,7 +313,7 @@ init_hash(hashp, file, info)
 		if (stat(file, &statbuf))
 			return (NULL);
 		hashp->BSIZE = statbuf.st_blksize;
-		hashp->BSHIFT = __log2(hashp->BSIZE);
+		hashp->BSHIFT = __log2((u_int32_t)hashp->BSIZE);
 	}
 
 	if (info) {
@@ -341,7 +342,7 @@ init_hash(hashp, file, info)
 		}
 	}
 	/* init_htab should destroy the table and set errno if it fails */
-	if (init_htab(hashp, nelem))
+	if (init_htab(hashp, (size_t)nelem))
 		return (NULL);
 	else
 		return (hashp);
@@ -355,9 +356,10 @@ init_hash(hashp, file, info)
 static int
 init_htab(hashp, nelem)
 	HTAB *hashp;
-	int nelem;
+	size_t nelem;
 {
-	register int nbuckets, nsegs;
+	register int nbuckets;
+	u_int32_t nsegs;
 	int l2;
 
 	/*
@@ -376,11 +378,12 @@ init_htab(hashp, nelem)
 	hashp->LAST_FREED = 2;
 
 	/* First bitmap page is at: splitpoint l2 page offset 1 */
-	if (__ibitmap(hashp, OADDR_OF(l2, 1), l2 + 1, 0))
+	if (__ibitmap(hashp, (int)OADDR_OF(l2, 1), l2 + 1, 0))
 		return (-1);
 
 	hashp->MAX_BUCKET = hashp->LOW_MASK = nbuckets - 1;
 	hashp->HIGH_MASK = (nbuckets << 1) - 1;
+	/* LINTED constant in conditional context */
 	hashp->HDRPAGES = ((MAX(sizeof(HASHHDR), MINHDRSIZE) - 1) >>
 	    hashp->BSHIFT) + 1;
 
@@ -389,7 +392,7 @@ init_htab(hashp, nelem)
 
 	if (nsegs > hashp->DSIZE)
 		hashp->DSIZE = nsegs;
-	return (alloc_segs(hashp, nsegs));
+	return (alloc_segs(hashp, (int)nsegs));
 }
 
 /********************** DESTROY/CLOSE ROUTINES ************************/
@@ -519,8 +522,8 @@ flush_meta(hashp)
 		}
 	for (i = 0; i < NCACHED; i++)
 		if (hashp->mapp[i])
-			if (__put_page(hashp, (char *)hashp->mapp[i],
-				hashp->BITMAPS[i], 0, 1))
+			if (__put_page(hashp, (char *)(void *)hashp->mapp[i],
+				(u_int)hashp->BITMAPS[i], 0, 1))
 				return (-1);
 	return (0);
 }
@@ -548,6 +551,7 @@ hash_get(dbp, key, data, flag)
 		hashp->err = errno = EINVAL;
 		return (ERROR);
 	}
+	/* LINTED const castaway */
 	return (hash_access(hashp, HASH_GET, (DBT *)key, data));
 }
 
@@ -569,6 +573,7 @@ hash_put(dbp, key, data, flag)
 		hashp->err = errno = EPERM;
 		return (ERROR);
 	}
+	/* LINTED const castaway */
 	return (hash_access(hashp, flag == R_NOOVERWRITE ?
 	    HASH_PUTNEW : HASH_PUT, (DBT *)key, (DBT *)data));
 }
@@ -590,6 +595,7 @@ hash_delete(dbp, key, flag)
 		hashp->err = errno = EPERM;
 		return (ERROR);
 	}
+	/* LINTED const castaway */
 	return (hash_access(hashp, HASH_DELETE, (DBT *)key, NULL));
 }
 
@@ -605,7 +611,8 @@ hash_access(hashp, action, key, val)
 	register BUFHEAD *rbufp;
 	BUFHEAD *bufp, *save_bufp;
 	register u_int16_t *bp;
-	register int n, ndx, off, size;
+	register int n, ndx, off;
+	size_t size;
 	register char *kp;
 	u_int16_t pageno;
 
@@ -616,14 +623,14 @@ hash_access(hashp, action, key, val)
 	off = hashp->BSIZE;
 	size = key->size;
 	kp = (char *)key->data;
-	rbufp = __get_buf(hashp, __call_hash(hashp, kp, size), NULL, 0);
+	rbufp = __get_buf(hashp, __call_hash(hashp, kp, (int)size), NULL, 0);
 	if (!rbufp)
 		return (ERROR);
 	save_bufp = rbufp;
 
 	/* Pin the bucket chain */
 	rbufp->flags |= BUF_PIN;
-	for (bp = (u_int16_t *)rbufp->page, n = *bp++, ndx = 1; ndx < n;)
+	for (bp = (u_int16_t *)(void *)rbufp->page, n = *bp++, ndx = 1; ndx < n;)
 		if (bp[1] >= REAL_KEY) {
 			/* Real key/data pair */
 			if (size == off - *bp &&
@@ -636,19 +643,19 @@ hash_access(hashp, action, key, val)
 			bp += 2;
 			ndx += 2;
 		} else if (bp[1] == OVFLPAGE) {
-			rbufp = __get_buf(hashp, *bp, rbufp, 0);
+			rbufp = __get_buf(hashp, (u_int32_t)*bp, rbufp, 0);
 			if (!rbufp) {
 				save_bufp->flags &= ~BUF_PIN;
 				return (ERROR);
 			}
 			/* FOR LOOP INIT */
-			bp = (u_int16_t *)rbufp->page;
+			bp = (u_int16_t *)(void *)rbufp->page;
 			n = *bp++;
 			ndx = 1;
 			off = hashp->BSIZE;
 		} else if (bp[1] < REAL_KEY) {
 			if ((ndx =
-			    __find_bigpair(hashp, rbufp, ndx, kp, size)) > 0)
+			    __find_bigpair(hashp, rbufp, ndx, kp, (int)size)) > 0)
 				goto found;
 			if (ndx == -2) {
 				bufp = rbufp;
@@ -658,13 +665,14 @@ hash_access(hashp, action, key, val)
 					rbufp = bufp;
 					break;	/* FOR */
 				}
-				rbufp = __get_buf(hashp, pageno, bufp, 0);
+				rbufp = __get_buf(hashp, (u_int32_t)pageno,
+				    bufp, 0);
 				if (!rbufp) {
 					save_bufp->flags &= ~BUF_PIN;
 					return (ERROR);
 				}
 				/* FOR LOOP INIT */
-				bp = (u_int16_t *)rbufp->page;
+				bp = (u_int16_t *)(void *)rbufp->page;
 				n = *bp++;
 				ndx = 1;
 				off = hashp->BSIZE;
@@ -698,7 +706,7 @@ found:
 		save_bufp->flags &= ~BUF_PIN;
 		return (ABNORMAL);
 	case HASH_GET:
-		bp = (u_int16_t *)rbufp->page;
+		bp = (u_int16_t *)(void *)rbufp->page;
 		if (bp[ndx + 1] < REAL_KEY) {
 			if (__big_return(hashp, rbufp, ndx, val, 0))
 				return (ERROR);
@@ -759,7 +767,7 @@ hash_seq(dbp, key, data, flag)
 				if (!bufp)
 					return (ERROR);
 				hashp->cpage = bufp;
-				bp = (u_int16_t *)bufp->page;
+				bp = (u_int16_t *)(void *)bufp->page;
 				if (bp[0])
 					break;
 			}
@@ -769,7 +777,7 @@ hash_seq(dbp, key, data, flag)
 				return (ABNORMAL);
 			}
 		} else
-			bp = (u_int16_t *)hashp->cpage->page;
+			bp = (u_int16_t *)(void *)hashp->cpage->page;
 
 #ifdef DEBUG
 		assert(bp);
@@ -777,10 +785,11 @@ hash_seq(dbp, key, data, flag)
 #endif
 		while (bp[hashp->cndx + 1] == OVFLPAGE) {
 			bufp = hashp->cpage =
-			    __get_buf(hashp, bp[hashp->cndx], bufp, 0);
+			    __get_buf(hashp, (u_int32_t)bp[hashp->cndx], bufp,
+				0);
 			if (!bufp)
 				return (ERROR);
-			bp = (u_int16_t *)(bufp->page);
+			bp = (u_int16_t *)(void *)(bufp->page);
 			hashp->cndx = 1;
 		}
 		if (!bp[0]) {
@@ -841,7 +850,7 @@ __expand_table(hashp)
 			hashp->DSIZE = dirsize << 1;
 		}
 		if ((hashp->dir[new_segnum] =
-		    (SEGMENT)calloc(hashp->SGSIZE, sizeof(SEGMENT))) == NULL)
+		    (SEGMENT)calloc((size_t)hashp->SGSIZE, sizeof(SEGMENT))) == NULL)
 			return (-1);
 		hashp->exsegs++;
 		hashp->nsegs++;
@@ -851,7 +860,7 @@ __expand_table(hashp)
 	 * * increases), we need to copy the current contents of the spare
 	 * split bucket to the next bucket.
 	 */
-	spare_ndx = __log2(hashp->MAX_BUCKET + 1);
+	spare_ndx = __log2((u_int32_t)(hashp->MAX_BUCKET + 1));
 	if (spare_ndx > hashp->OVFL_POINT) {
 		hashp->SPARES[spare_ndx] = hashp->SPARES[hashp->OVFL_POINT];
 		hashp->OVFL_POINT = spare_ndx;
@@ -877,9 +886,9 @@ hash_realloc(p_ptr, oldsize, newsize)
 {
 	register void *p;
 
-	if ((p = malloc(newsize)) != NULL) {
-		memmove(p, *p_ptr, oldsize);
-		memset((char *)p + oldsize, 0, newsize - oldsize);
+	if ((p = malloc((size_t)newsize)) != NULL) {
+		memmove(p, *p_ptr, (size_t)oldsize);
+		memset((char *)p + oldsize, 0, (size_t)(newsize - oldsize));
 		free(*p_ptr);
 		*p_ptr = p;
 	}
@@ -894,7 +903,7 @@ __call_hash(hashp, k, len)
 {
 	int n, bucket;
 
-	n = hashp->hash(k, len);
+	n = hashp->hash(k, (size_t)len);
 	bucket = n & hashp->HIGH_MASK;
 	if (bucket > hashp->MAX_BUCKET)
 		bucket = bucket & hashp->LOW_MASK;
@@ -917,7 +926,8 @@ alloc_segs(hashp, nsegs)
 	int save_errno;
 
 	if ((hashp->dir =
-	    (SEGMENT *)calloc(hashp->DSIZE, sizeof(SEGMENT *))) == NULL) {
+	    (SEGMENT *)calloc((size_t)hashp->DSIZE,
+	    sizeof(SEGMENT *))) == NULL) {
 		save_errno = errno;
 		(void)hdestroy(hashp);
 		errno = save_errno;
@@ -925,7 +935,8 @@ alloc_segs(hashp, nsegs)
 	}
 	/* Allocate segments */
 	if ((store =
-	    (SEGMENT)calloc(nsegs << hashp->SSHIFT, sizeof(SEGMENT))) == NULL) {
+	    (SEGMENT)calloc((size_t)(nsegs << hashp->SSHIFT),
+	    sizeof(SEGMENT))) == NULL) {
 		save_errno = errno;
 		(void)hdestroy(hashp);
 		errno = save_errno;
