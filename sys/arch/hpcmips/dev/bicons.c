@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.3 1999/11/21 06:53:21 uch Exp $	*/
+/*	$NetBSD: bicons.c,v 1.4 1999/11/30 18:42:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  */
-#include "opt_vr41x1.h"
+#include "vrkiu.h"
 
 #define HALF_FONT
 
@@ -243,7 +243,7 @@ bicons_printf(fmt, va_alist)
 int
 bicons_getc(dev_t dev)
 {
-#ifdef VR41X1
+#if NVRKIU > 0
 	return vrkiu_getc();
 #endif
 	return 0;
