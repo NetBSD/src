@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.43.8.4 2002/06/24 22:07:34 nathanw Exp $ */
+/*	$NetBSD: db_interface.c,v 1.43.8.5 2002/12/19 00:38:01 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -271,7 +271,7 @@ ddb_suspend(struct trapframe *tf)
 
 	cpuinfo.ci_ddb_regs = &regs;
 	while (cpuinfo.flags & CPUFLG_PAUSED)
-		cpuinfo.cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
+		cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
 	cpuinfo.ci_ddb_regs = 0;
 }
 #endif

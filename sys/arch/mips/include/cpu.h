@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57.2.12 2002/12/11 06:11:01 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57.2.13 2002/12/19 00:35:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -164,6 +164,8 @@ extern int mips3_pg_cached;
 #define	CPU_MIPS_DOUBLE_COUNT		0x0080	/* 1 cp0 count == 2 clock cycles */
 #define	CPU_MIPS_USE_WAIT		0x0100	/* Use "wait"-based cpu_idle() */
 #define	CPU_MIPS_NO_WAIT		0x0200	/* Inverse of previous, for mips32/64 */
+#define	CPU_MIPS_D_CACHE_COHERENT	0x0400	/* D-cache is fully coherent */
+#define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
 #define	MIPS_NOT_SUPP			0x8000
 
 #ifdef _LKM

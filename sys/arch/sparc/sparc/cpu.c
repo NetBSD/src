@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.11 2002/12/11 06:12:12 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.12 2002/12/19 00:38:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -501,7 +501,7 @@ cpu_setup(sc)
 	cpu_hatched = 1;
 #if 0
 	/* Flush cache line */
-	cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
+	cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched), 0);
 #endif
 }
 
@@ -545,7 +545,7 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	 * Wait for this CPU to spin up.
 	 */
 	for (n = 10000; n != 0; n--) {
-		cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
+		cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
 		if (cpu_hatched != 0) {
 			return;
 		}
@@ -1348,8 +1348,15 @@ cpumatch_hypersparc(sc, mp, node)
 	int	node;
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
-	if (node == 0)
+
+	if (node == 0) {
+		/* Flush I-cache */
 		sta(0, ASI_HICACHECLR, 0);
+
+		/* Disable `unimplemented flush' traps during boot-up */
+		wrasr(rdasr(HYPERSPARC_ASRNUM_ICCR) | HYPERSPARC_ICCR_FTD,
+			HYPERSPARC_ASRNUM_ICCR);
+	}
 }
 
 void

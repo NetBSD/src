@@ -1,0 +1,26 @@
+#	$NetBSD: std.lubbock,v 1.1.2.2 2002/12/19 00:31:38 thorpej Exp $
+#
+# standard NetBSD/evbarm for LUBBOCK options
+
+machine	evbarm arm
+
+# Pull in LUBBOCK config definitions.
+include "arch/evbarm/conf/files.lubbock"
+
+options 	COTULLA
+options 	LUBBOCK
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+makeoptions	LOADADDRESS="0xc0200000"
+makeoptions	BOARDTYPE="lubbock"
+
+options 	EVBARM_BOARDTYPE=EVBARM_BOARDTYPE_PXA2X0
+
+# OS Timer    This is compatible to SA1110's OS Timer.
+saost*	at pxaip? addr 0x40a00000 size 0x20
+
+

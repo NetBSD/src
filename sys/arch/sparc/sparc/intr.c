@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.56.4.6 2002/12/11 16:11:17 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.56.4.7 2002/12/19 00:38:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,7 +153,7 @@ softnet(fp)
 #undef DONETISR
 }
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 void	nmi_hard __P((void));
 void	nmi_soft __P((struct trapframe *));
 
@@ -273,8 +273,8 @@ nmi_soft(tf)
 #endif
 		cpuinfo.flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
 		while (cpuinfo.flags & CPUFLG_PAUSED)
-			cpuinfo.cache_flush((caddr_t)&cpuinfo.flags,
-			    sizeof(cpuinfo.flags));
+			cpuinfo.sp_cache_flush((caddr_t)&cpuinfo.flags,
+			    sizeof(cpuinfo.flags), 0);
 #if defined(DDB)
 		cpuinfo.ci_ddb_regs = 0;
 #endif
@@ -293,7 +293,7 @@ nmi_soft(tf)
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
-		cpuinfo.sp_vcache_flush_page(p->va);
+		cpuinfo.sp_vcache_flush_page(p->va, p->ctx);
 		setcontext(ctx);
 		break;
 	    }
@@ -303,7 +303,7 @@ nmi_soft(tf)
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
-		cpuinfo.sp_vcache_flush_segment(p->vr, p->vs);
+		cpuinfo.sp_vcache_flush_segment(p->vr, p->vs, p->ctx);
 		setcontext(ctx);
 		break;
 	    }
@@ -313,7 +313,7 @@ nmi_soft(tf)
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
-		cpuinfo.sp_vcache_flush_region(p->vr);
+		cpuinfo.sp_vcache_flush_region(p->vr, p->ctx);
 		setcontext(ctx);
 		break;
 	    }
@@ -323,7 +323,7 @@ nmi_soft(tf)
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
-		cpuinfo.sp_vcache_flush_context();
+		cpuinfo.sp_vcache_flush_context(p->ctx);
 		setcontext(ctx);
 		break;
 	    }

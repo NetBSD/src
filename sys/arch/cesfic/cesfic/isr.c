@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.1.8.2 2002/10/18 02:36:10 nathanw Exp $	*/
+/*	$NetBSD: isr.c,v 1.1.8.3 2002/12/19 00:31:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,12 +39,6 @@
 /*
  * Link and dispatch interrupts.
  */
-
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +232,7 @@ isrlink(func, arg, ipl, priority)
 	return (newisr);
 }
 
+#if 0
 /*
  * Disestablish an interrupt handler.
  */
@@ -251,6 +246,7 @@ isrunlink(arg)
 	free(isr, M_DEVBUF);
 	isrcomputeipl();
 }
+#endif
 
 /*
  * This is the dispatcher called by the low-level
@@ -294,53 +290,18 @@ isrdispatch(evec)
 		printf("isrdispatch: stray level %d interrupt\n", ipl);
 }
 
-/*
- * XXX Why on earth isn't this in a common file?!
- */
-void	netintr __P((void));
-void	arpintr __P((void));
-void	ipintr __P((void));
-void	nsintr __P((void));
-void	clnintr __P((void));
-void	ccittintr __P((void));
-void	pppintr __P((void));
+void netintr(void);
 
 void
 netintr()
 {
-#ifdef INET
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
+#define DONETISR(bit, fn) do {			\
+		if (netisr & (1 << bit))	\
+			netisr &= ~(1 << bit);	\
+			fn();			\
+		} while(0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 }

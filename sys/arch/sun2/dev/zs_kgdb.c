@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.1.4.3 2002/09/17 21:18:10 nathanw Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.1.4.4 2002/12/19 00:38:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ zs_setparam(cs, iena, rate)
 {
 	int s, tconst;
 
-	bcopy(zs_kgdb_regs, cs->cs_preg, 16);
+	memcpy(cs->cs_preg, zs_kgdb_regs, 16);
 
 	if (iena) {
 		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
@@ -150,7 +150,7 @@ zs_kgdb_init()
 		   'a' + (kgdb_dev & 3), kgdb_rate);
 
 	/* Setup temporary chanstate. */
-	bzero((caddr_t)&cs, sizeof(cs));
+	memset((caddr_t)&cs, 0, sizeof(cs));
 	zsd = zs_find_prom(promzs_unit);
 	if (zsd == NULL) {
 		printf("zs_kgdb_init: zs not mapped.\n");

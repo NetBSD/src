@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.23.8.3 2002/08/01 02:43:24 nathanw Exp $ */
+/*	$NetBSD: pte.h,v 1.23.8.4 2002/12/19 00:37:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,9 @@
  *
  *	@(#)pte.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef	_SPARC_PTE_H_
+#define _SPARC_PTE_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -428,3 +431,4 @@ struct srmmu_pte {
 				    ASI_SRMMUFP)
 
 #endif /* _KERNEL || _STANDALONE */
+#endif /* _SPARC_PTE_H_ */

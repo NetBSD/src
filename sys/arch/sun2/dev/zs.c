@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.4.4 2002/10/18 02:40:14 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.4.5 2002/12/19 00:38:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -205,8 +205,8 @@ zs_attach(zsc, zsd, pri)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
+		memcpy(cs->cs_creg, zs_init_reg, 16);
+		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		/* XXX: Consult PROM properties for this?! */
 		cs->cs_defspeed = zs_get_speed(cs);

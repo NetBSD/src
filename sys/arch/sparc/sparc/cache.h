@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.22.10.2 2002/02/28 04:12:05 nathanw Exp $ */
+/*	$NetBSD: cache.h,v 1.22.10.3 2002/12/19 00:38:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -164,21 +164,21 @@ void	swift_cache_enable __P((void));		/* turn it on */
 void	cypress_cache_enable __P((void));	/* turn it on */
 void	turbosparc_cache_enable __P((void));	/* turn it on */
 
-void	sun4_vcache_flush_context __P((void));	/* flush current context */
-void	sun4_vcache_flush_region __P((int));	/* flush region in cur ctx */
-void	sun4_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
-void	sun4_vcache_flush_page __P((int va));	/* flush page in cur ctx */
-void	sun4_vcache_flush_page_hw __P((int va));/* flush page in cur ctx */
-void	sun4_cache_flush __P((caddr_t, u_int));/* flush region */
+void	sun4_vcache_flush_context __P((int));	/* flush current context */
+void	sun4_vcache_flush_region __P((int, int));	/* flush region in cur ctx */
+void	sun4_vcache_flush_segment __P((int, int, int));/* flush seg in cur ctx */
+void	sun4_vcache_flush_page __P((int va, int));	/* flush page in cur ctx */
+void	sun4_vcache_flush_page_hw __P((int va, int));/* flush page in cur ctx */
+void	sun4_cache_flush __P((caddr_t, u_int, int));/* flush region */
 
-void	srmmu_vcache_flush_context __P((void));	/* flush current context */
-void	srmmu_vcache_flush_region __P((int));	/* flush region in cur ctx */
-void	srmmu_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
-void	srmmu_vcache_flush_page __P((int va));	/* flush page in cur ctx */
-void	srmmu_cache_flush __P((caddr_t, u_int));/* flush region */
+void	srmmu_vcache_flush_context __P((int));	/* flush current context */
+void	srmmu_vcache_flush_region __P((int, int));	/* flush region in cur ctx */
+void	srmmu_vcache_flush_segment __P((int, int, int));/* flush seg in cur ctx */
+void	srmmu_vcache_flush_page __P((int va, int));	/* flush page in cur ctx */
+void	srmmu_cache_flush __P((caddr_t, u_int, int));/* flush region */
 
-void	ms1_cache_flush __P((caddr_t, u_int));
-void	viking_cache_flush __P((caddr_t, u_int));
+void	ms1_cache_flush __P((caddr_t, u_int, int));
+void	viking_cache_flush __P((caddr_t, u_int, int));
 void	viking_pcache_flush_page __P((paddr_t, int));
 void	srmmu_pcache_flush_line __P((int, int));
 void	hypersparc_pure_vcache_flush __P((void));
@@ -191,15 +191,15 @@ void	hypersparc_cache_flush_all __P((void));
 extern void sparc_noop __P((void));
 
 #define noop_vcache_flush_context \
-	(void (*)__P((void))) sparc_noop
+	(void (*)__P((int))) sparc_noop
 #define noop_vcache_flush_region \
-	(void (*)__P((int))) sparc_noop
-#define noop_vcache_flush_segment \
 	(void (*)__P((int,int))) sparc_noop
+#define noop_vcache_flush_segment \
+	(void (*)__P((int,int,int))) sparc_noop
 #define noop_vcache_flush_page \
-	(void (*)__P((int))) sparc_noop
+	(void (*)__P((int,int))) sparc_noop
 #define noop_cache_flush \
-	(void (*)__P((caddr_t, u_int))) sparc_noop
+	(void (*)__P((caddr_t, u_int, int))) sparc_noop
 #define noop_pcache_flush_page \
 	(void (*)__P((paddr_t, int))) sparc_noop
 #define noop_pure_vcache_flush \
@@ -211,17 +211,17 @@ extern void sparc_noop __P((void));
  * The SMP versions of the cache flush functions. These functions
  * send a "cache flush" message to each processor.
  */
-void	smp_vcache_flush_context __P((void));	/* flush current context */
-void	smp_vcache_flush_region __P((int));	/* flush region in cur ctx */
-void	smp_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
-void	smp_vcache_flush_page __P((int va));	/* flush page in cur ctx */
+void	smp_vcache_flush_context __P((int));	/* flush current context */
+void	smp_vcache_flush_region __P((int,int));	/* flush region in cur ctx */
+void	smp_vcache_flush_segment __P((int, int,int));/* flush seg in cur ctx */
+void	smp_vcache_flush_page __P((int va,int));	/* flush page in cur ctx */
 void	smp_cache_flush __P((caddr_t, u_int));	/* flush region */
 
 
-#define cache_flush_page(va)		cpuinfo.vcache_flush_page(va)
-#define cache_flush_segment(vr,vs)	cpuinfo.vcache_flush_segment(vr,vs)
-#define cache_flush_region(vr)		cpuinfo.vcache_flush_region(vr)
-#define cache_flush_context()		cpuinfo.vcache_flush_context()
+#define cache_flush_page(va,ctx)	cpuinfo.vcache_flush_page(va,ctx)
+#define cache_flush_segment(vr,vs,ctx)	cpuinfo.vcache_flush_segment(vr,vs,ctx)
+#define cache_flush_region(vr,ctx)	cpuinfo.vcache_flush_region(vr,ctx)
+#define cache_flush_context(ctx)	cpuinfo.vcache_flush_context(ctx)
 
 #define pcache_flush_page(pa,flag)	cpuinfo.pcache_flush_page(pa,flag)
 
