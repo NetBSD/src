@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.14 2002/10/25 20:06:56 yamt Exp $	*/
+/*	$NetBSD: cal.c,v 1.15 2003/06/05 00:21:20 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.14 2002/10/25 20:06:56 yamt Exp $");
+__RCSID("$NetBSD: cal.c,v 1.15 2003/06/05 00:21:20 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: cal.c,v 1.14 2002/10/25 20:06:56 yamt Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termcap.h>
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
@@ -126,9 +127,12 @@ char *j_day_headings = "  S   M  Tu   W  Th   F   S";
 	((yr) / 4 - centuries_since_1700(yr) + quad_centuries_since_1700(yr))
 
 int julian;
+int hilite;
+char *md, *me;
 
+void	init_hilite(void);
 int	getnum(const char *);
-void	ascii_day(char *, int);
+int	ascii_day(char *, int);
 void	center(char *, int, int);
 void	day_array(int, int, int *);
 int	day_in_week(int, int, int);
@@ -149,13 +153,16 @@ main(int argc, char **argv)
 
 	before = after = 0;
 	yflag = year = 0;
-	while ((ch = getopt(argc, argv, "A:B:jy3")) != -1) {
+	while ((ch = getopt(argc, argv, "A:B:hjy3")) != -1) {
 		switch (ch) {
 		case 'A':
 			after = getnum(optarg);
 			break;
 		case 'B':
 			before = getnum(optarg);
+			break;
+		case 'h':
+			init_hilite();
 			break;
 		case 'j':
 			julian = 1;
@@ -226,12 +233,12 @@ monthrange(int month, int year, int before, int after, int yearly)
 	int endmonth, endyear;
 	int i, row;
 	int days[3][MAXDAYS];
-	char lineout[80];
+	char lineout[256];
 	int inayear;
 	int newyear;
 	int day_len, week_len, head_sep;
 	int month_per_row;
-	int skip;
+	int skip, r_off, w_off;
 
 	if (julian) {
 		day_len = J_DAY_LEN;
@@ -318,19 +325,23 @@ monthrange(int month, int year, int before, int after, int yearly)
 		for (row = 0; row < 6; row++) {
 			char *p;
 			for (i = 0; i < skip; i++) {
-				p = lineout + i * (week_len + 2);
+				p = lineout + i * (week_len + 2) + w_off;
 				memset(p, ' ', week_len);
 			}
+			w_off = 0;
 			for (; i < month_per_row; i++) {
 				int col, *dp;
 
 				if (year == endyear && month + i > endmonth)
 					break;
 
-				p = lineout + i * (week_len + 2);
+				p = lineout + i * (week_len + 2) + w_off;
 				dp = &days[i][row * 7];
-				for (col = 0; col < 7; col++, p += day_len)
-					ascii_day(p, *dp++);
+				for (col = 0; col < 7;
+				     col++, p += day_len + r_off) {
+					r_off = ascii_day(p, *dp++);
+					w_off += r_off;
+				}
 			}
 			*p = '\0';
 			trim_trailing_spaces(lineout);
@@ -358,6 +369,14 @@ void
 day_array(int month, int year, int *days)
 {
 	int day, dw, dm;
+	time_t t;
+	struct tm *tm;
+
+	t = time(NULL);
+	tm = localtime(&t);
+	tm->tm_year += TM_YEAR_BASE;
+	tm->tm_mon++;
+	tm->tm_yday++; /* jan 1 is 1 for us, not 0 */
 
 	if (month == 9 && year == 1752) {
 		memmove(days,
@@ -368,8 +387,14 @@ day_array(int month, int year, int *days)
 	dm = days_in_month[leap_year(year)][month];
 	dw = day_in_week(1, month, year);
 	day = julian ? day_in_year(1, month, year) : 1;
-	while (dm--)
-		days[dw++] = day++;
+	while (dm--) {
+		if (hilite && year == tm->tm_year &&
+		    (julian ? (day == tm->tm_yday) :
+		     (month == tm->tm_mon && day == tm->tm_mday)))
+			days[dw++] = -1 - day++;
+		else
+			days[dw++] = day++;
+	}
 }
 
 /*
@@ -408,10 +433,11 @@ day_in_week(int day, int month, int year)
 	return (THURSDAY);
 }
 
-void
+int
 ascii_day(char *p, int day)
 {
-	int display, val;
+	int display, val, rc;
+	char *b;
 	static char *aday[] = {
 		"",
 		" 1", " 2", " 3", " 4", " 5", " 6", " 7",
@@ -423,8 +449,13 @@ ascii_day(char *p, int day)
 
 	if (day == SPACE) {
 		memset(p, ' ', julian ? J_DAY_LEN : DAY_LEN);
-		return;
+		return (0);
 	}
+	if (day < 0) {
+		b = p;
+		day = -1 - day;
+	} else
+		b = NULL;
 	if (julian) {
 		if ((val = day / 100) != 0) {
 			day %= 100;
@@ -444,7 +475,37 @@ ascii_day(char *p, int day)
 		*p++ = aday[day][0];
 		*p++ = aday[day][1];
 	}
+
+	rc = 0;
+	if (b != NULL) {
+		char *t, h[64];
+		int l;
+
+		l = p - b;
+		memcpy(h, b, l);
+		p = b;
+
+		if (md != NULL) {
+			for (t = md; *t; rc++)
+				*p++ = *t++;
+			memcpy(p, h, l);
+			p += l;
+			for (t = me; *t; rc++)
+				*p++ = *t++;
+		} else {
+			for (t = &h[0]; l--; t++) {
+				*p++ = *t;
+				rc++;
+				*p++ = '\b';
+				rc++;
+				*p++ = *t;
+			}
+		}
+
+	}
+
 	*p = ' ';
+	return (rc);
 }
 
 void
@@ -494,10 +555,37 @@ error:
 }
 
 void
+init_hilite(void)
+{
+	static char control[128];
+	char cap[1024];
+	char *tc;
+
+	hilite++;
+
+	if (!isatty(fileno(stdout)))
+		return;
+
+	tc = getenv("TERM");
+	if (tc == NULL)
+		tc = "dumb";
+	if (tgetent(&cap[0], tc) != 1)
+		return;
+
+	tc = &control[0];
+	if ((md = tgetstr(hilite > 1 ? "mr" : "md", &tc)))
+		*tc++ = '\0';
+	if ((me = tgetstr("me", &tc)))
+		*tc++ = '\0';
+	if (me == NULL || md == NULL)
+		md = me = NULL;
+}
+
+void
 usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: cal [-jy3] [-B before] [-A after] [[month] year]\n");
+	    "usage: cal [-hjy3] [-B before] [-A after] [[month] year]\n");
 	exit(1);
 }

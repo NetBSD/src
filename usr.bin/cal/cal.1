@@ -1,4 +1,4 @@
-.\"	$NetBSD: cal.1,v 1.14 2003/02/11 08:05:29 yamt Exp $
+.\"	$NetBSD: cal.1,v 1.15 2003/06/05 00:21:20 atatat Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"     @(#)cal.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd October 25, 2002
+.Dd June 4, 2003
 .Dt CAL 1
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Nd displays a calendar
 .Sh SYNOPSIS
 .Nm
-.Op Fl jy3
+.Op Fl hjy3
 .Op Fl A Ar after
 .Op Fl B Ar before
 .Op Oo Ar month Oc Ar \ year
@@ -63,6 +63,14 @@ months after the specified month.
 Display
 .Ar before
 months before the specified month.
+.It Fl h
+Highlight the current day, if present in the displayed calendar.
+If output is to a terminal, then the appropriate terminal sequences
+are used, otherwise overstriking is used.
+If more than one
+.Fl h
+is used and output is to a terminal, the current date will be
+highlighted in inverse video instead of bold.
 .It Fl j
 Display Julian dates (days one-based, numbered from January 1).
 .It Fl y
