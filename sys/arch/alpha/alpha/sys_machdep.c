@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.13.4.3 2002/02/28 04:06:10 nathanw Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.13.4.4 2002/02/28 23:50:10 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.4.3 2002/02/28 04:06:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.4.4 2002/02/28 23:50:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 	    {
 		struct alpha_fp_c_args args;
 
-		args.fp_c = alpha_read_fp_c(p);
+		args.fp_c = alpha_read_fp_c(l);
 		error = copyout(&args, SCARG(uap, parms), sizeof args);
 		break;
 	    }
@@ -146,7 +146,7 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 			return (error);
 		if ((args.fp_c >> 63) != 0)
 			args.fp_c |= IEEE_INHERIT;
-		alpha_write_fp_c(p, args.fp_c);
+		alpha_write_fp_c(l, args.fp_c);
 		break;
 	    }
 	case ALPHA_BUS_GET_WINDOW_COUNT:
