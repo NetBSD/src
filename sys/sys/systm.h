@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.121 2000/11/19 00:54:50 sommerfeld Exp $	*/
+/*	$NetBSD: systm.h,v 1.122 2000/11/19 00:56:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -405,10 +405,10 @@ extern struct lock kernel_lock;
 #define	KERNEL_LOCK(flag)						\
 do {									\
 	SCHED_ASSERT_UNLOCKED();					\
-	spinlock_acquire_exclusive(&kernel_lock, flag);			\
+	spinlockmgr(&kernel_lock, (flag), 0);				\
 } while (0)
 
-#define	KERNEL_UNLOCK()		spinlock_release(&kernel_lock)
+#define	KERNEL_UNLOCK()		spinlockmgr(&kernel_lock, LK_RELEASE, 0)
 
 /*
  * Acquire/release kernel lock on behalf of a process.
