@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.6 1995/09/25 21:06:29 jonathan Exp $	*/
+/*	$NetBSD: callvec.c,v 1.7 1997/05/25 05:44:13 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ const struct callback callvec = {
 	(int (*) __P((void)))0,
 	(void (*) __P((int *v, int cnt)))0,
 	(void (*) __P((void)))0,
-	(tcinfo *(*) __P(()))0,
+	(tcinfo *(*) __P((void)))0,	/* XXX what are the args for this?*/
 	(int (*) __P((char *cmd)))0,
 	(void (*) __P((char cmd)))0,
 };
