@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.2 2002/02/24 13:19:07 kleink Exp $	*/
+/*	$NetBSD: platform.h,v 1.3 2002/02/26 16:09:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,5 +77,12 @@ void reset_ibm_generic(void);
 
 void pci_intr_fixup_ibm_6050(int, int, int *);
 void pci_intr_fixup_ibm_7248(int, int, int *);
+
+/* Motorola */
+extern struct plattab plattab_mot;
+
+extern struct platform platform_mot_ulmb60xa;
+
+void pci_intr_fixup_mot_ulmb60xa(int, int, int *);
 
 #endif /* !_PREP_PLATFORM_H_ */
