@@ -1,3 +1,5 @@
+/*	$NetBSD: sbp2reg.h,v 1.2 2001/01/18 17:48:04 tv Exp $	*/
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: esm.c,v 1.3 2001/01/09 23:27:07 rh Exp $	*/
+/*	$NetBSD: esm.c,v 1.4 2001/01/18 17:48:04 tv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
