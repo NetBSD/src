@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.87 2004/08/11 19:48:57 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.88 2004/08/11 20:27:42 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.87 2004/08/11 19:48:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.88 2004/08/11 20:27:42 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -362,25 +362,12 @@ wdc_pcmcia_datain_memory(chp, flags, buf, len)
 		size_t n;
 
 		n = min(len, 1024);
-		if (flags & DRIVE_NOSTREAM) {
-			if ((flags & DRIVE_CAP32) && (n & 3) == 0)
-				bus_space_read_region_4(
-				    chp->data32iot, chp->data32ioh,
-				    0, buf, n >> 2);
-			else
-				bus_space_read_region_2(
-				    chp->data32iot, chp->data32ioh,
-				    0, buf, n >> 1);
-		} else {
-			if ((flags & DRIVE_CAP32) && (n & 3) == 0)
-				bus_space_read_region_stream_4(
-				    chp->data32iot, chp->data32ioh,
-				    0, buf, n >> 2);
-			else
-				bus_space_read_region_stream_2(
-				    chp->data32iot, chp->data32ioh,
-				    0, buf, n >> 1);
-		}
+		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
+			bus_space_read_region_stream_4(chp->data32iot,
+			    chp->data32ioh, 0, buf, n >> 2);
+		else
+			bus_space_read_region_stream_2(chp->data32iot,
+			    chp->data32ioh, 0, buf, n >> 1);
 		buf = (char *)buf + n;
 		len -= n;
 	}
@@ -398,25 +385,12 @@ wdc_pcmcia_dataout_memory(chp, flags, buf, len)
 		size_t n;
 
 		n = min(len, 1024);
-		if (flags & DRIVE_NOSTREAM) {
-			if ((flags & DRIVE_CAP32) && (n & 3) == 0)
-				bus_space_write_region_4(
-				    chp->data32iot, chp->data32ioh,
-				    0, buf, n >> 2);
-			else
-				bus_space_write_region_2(
-				    chp->data32iot, chp->data32ioh,
-				    0, buf, n >> 1);
-		} else {
-			if ((flags & DRIVE_CAP32) && (n & 3) == 0)
-				bus_space_write_region_stream_4(
-				    chp->data32iot, chp->data32ioh,
-				    0, buf, n >> 2);
-			else
-				bus_space_write_region_stream_2(
-				    chp->data32iot, chp->data32ioh,
-				    0, buf, n >> 1);
-		}
+		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
+			bus_space_write_region_stream_4(chp->data32iot,
+			    chp->data32ioh, 0, buf, n >> 2);
+		else
+			bus_space_write_region_stream_2(chp->data32iot,
+			    chp->data32ioh, 0, buf, n >> 1);
 		buf = (char *)buf + n;
 		len -= n;
 	}
