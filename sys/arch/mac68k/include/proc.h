@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.2 1993/11/29 00:38:29 briggs Exp $
+ *	$Id: proc.h,v 1.3 1994/02/27 16:41:41 briggs Exp $
  */
 
 /*
@@ -46,3 +46,6 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_AST		0x0001	/* async trap pending */
+#define	MDP_STACKADJ	0x0002	/* Frame SP adjusted, might have to
+				   undo when system call returns
+				   ERESTART. */
