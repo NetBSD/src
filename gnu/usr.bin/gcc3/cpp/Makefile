@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/08/04 06:58:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2003/09/04 04:19:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ TEXINFO=	cpp.texi
 INFOFLAGS=	-I${DIST}/gcc/doc -I${DIST}/gcc/doc/include
 
 MAN=		cpp.1
-MLINKS+=	cpp.1 gcpp.1
+MLINKS+=	cpp.1 gcpp.1 cpp.1 cccp.1
 
 .include "../Makefile.frontend"
 
