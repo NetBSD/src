@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.11 2002/09/02 13:37:35 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.12 2002/09/03 14:54:00 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.11 2002/09/02 13:37:35 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.12 2002/09/03 14:54:00 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -294,6 +294,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 			/* duplicate, silently discarded */
 			goto out;
 		}
+		bs->bs_inact = 0;
 	}
 
 	switch (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) {
@@ -362,9 +363,26 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 		}
 
 		if (ifp->if_flags & IFF_DEBUG) {
-			if (!(ic->ic_flags & IEEE80211_F_ADHOC) ||
-			    ic->ic_state == IEEE80211_S_SCAN ||
-			    subtype != IEEE80211_FC0_SUBTYPE_BEACON)
+			/* avoid to print too many frames */
+			int doprint = 0;
+
+			switch (subtype) {
+			case IEEE80211_FC0_SUBTYPE_BEACON:
+				if (ic->ic_state == IEEE80211_S_SCAN)
+					doprint = 1;
+				break;
+			case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
+				if (ic->ic_flags & IEEE80211_F_ADHOC)
+					doprint = 1;
+				break;
+			default:
+				doprint = 1;
+				break;
+			}
+#ifdef IEEE80211_DEBUG
+			doprint += ieee80211_debug;
+#endif
+			if (doprint)
 				printf("%s: received %s from %s rssi %d\n",
 				    ifp->if_xname,
 				    ieee80211_mgt_subtype_name[subtype
@@ -408,6 +426,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_bss *bs,
 
 	if (bs == NULL)
 		bs = &ic->ic_bss;
+	bs->bs_inact = 0;
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
@@ -422,12 +441,17 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_bss *bs,
 	memcpy(wh->i_addr2, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 	memcpy(wh->i_addr3, bs->bs_bssid, IEEE80211_ADDR_LEN);
 
-	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: sending %s to %s\n", ifp->if_xname,
-		    ieee80211_mgt_subtype_name[
-		    (type & IEEE80211_FC0_SUBTYPE_MASK)
-		    >> IEEE80211_FC0_SUBTYPE_SHIFT],
-		    ether_sprintf(bs->bs_macaddr));
+	if (ifp->if_flags & IFF_DEBUG) {
+		/* avoid to print too many frames */
+		if ((ic->ic_flags & IEEE80211_F_ADHOC) ||
+		    (type & IEEE80211_FC0_SUBTYPE_MASK) !=
+		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
+			printf("%s: sending %s to %s\n", ifp->if_xname,
+			    ieee80211_mgt_subtype_name[
+			    (type & IEEE80211_FC0_SUBTYPE_MASK)
+			    >> IEEE80211_FC0_SUBTYPE_SHIFT],
+			    ether_sprintf(bs->bs_macaddr));
+	}
 	IF_ENQUEUE(&ic->ic_mgtq, m);
 	ifp->if_timer = 1;
 	(*ifp->if_start)(ifp);
@@ -441,6 +465,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 	struct ether_header eh;
 	struct ieee80211_frame *wh;
 	struct llc *llc;
+	struct ieee80211_bss *bs;
 
 	if (m->m_len < sizeof(struct ether_header)) {
 		m = m_pullup(m, sizeof(struct ether_header));
@@ -448,6 +473,25 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 			return NULL;
 	}
 	memcpy(&eh, mtod(m, caddr_t), sizeof(struct ether_header));
+
+	if ((eh.ether_dhost[0] & 0x01) == 0 &&
+	    ((ic->ic_flags & IEEE80211_F_ADHOC) ||
+	     (ic->ic_flags & IEEE80211_F_HOSTAP))) {
+		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
+			if (memcmp(bs->bs_macaddr, eh.ether_dhost,
+			    IEEE80211_ADDR_LEN) == 0)
+				break;
+		}
+		if (bs == NULL ||
+		    ((ic->ic_flags & IEEE80211_F_HOSTAP) &&
+		    bs->bs_associd == 0)) {
+			m_freem(m);
+			return NULL;
+		}
+	} else
+		bs = &ic->ic_bss;
+	bs->bs_inact = 0;
+
 	m_adj(m, sizeof(struct ether_header) - sizeof(struct llc));
 	llc = mtod(m, struct llc *);
 	llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
@@ -463,21 +507,21 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA;
 	*(u_int16_t *)wh->i_dur = 0;
 	*(u_int16_t *)wh->i_seq =
-	    htole16(ic->ic_bss.bs_txseq << IEEE80211_SEQ_SEQ_SHIFT);
-	ic->ic_bss.bs_txseq++;
+	    htole16(bs->bs_txseq << IEEE80211_SEQ_SEQ_SHIFT);
+	bs->bs_txseq++;
 	if (ic->ic_flags & IEEE80211_F_ADHOC) {
 		wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
 		memcpy(wh->i_addr1, eh.ether_dhost, IEEE80211_ADDR_LEN);
 		memcpy(wh->i_addr2, eh.ether_shost, IEEE80211_ADDR_LEN);
-		memcpy(wh->i_addr3, ic->ic_bss.bs_bssid, IEEE80211_ADDR_LEN);
+		memcpy(wh->i_addr3, bs->bs_bssid, IEEE80211_ADDR_LEN);
 	} else if (ic->ic_flags & IEEE80211_F_HOSTAP) {
 		wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
 		memcpy(wh->i_addr1, eh.ether_dhost, IEEE80211_ADDR_LEN);
-		memcpy(wh->i_addr2, ic->ic_bss.bs_bssid, IEEE80211_ADDR_LEN);
+		memcpy(wh->i_addr2, bs->bs_bssid, IEEE80211_ADDR_LEN);
 		memcpy(wh->i_addr3, eh.ether_shost, IEEE80211_ADDR_LEN);
 	} else {
 		wh->i_fc[1] = IEEE80211_FC1_DIR_TODS;
-		memcpy(wh->i_addr1, ic->ic_bss.bs_bssid, IEEE80211_ADDR_LEN);
+		memcpy(wh->i_addr1, bs->bs_bssid, IEEE80211_ADDR_LEN);
 		memcpy(wh->i_addr2, eh.ether_shost, IEEE80211_ADDR_LEN);
 		memcpy(wh->i_addr3, eh.ether_dhost, IEEE80211_ADDR_LEN);
 	}
@@ -817,6 +861,7 @@ void
 ieee80211_watchdog(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211_bss *bs, *nextbs;
 
 	if (ic->ic_scan_timer) {
 		if (--ic->ic_scan_timer == 0) {
@@ -828,7 +873,33 @@ ieee80211_watchdog(struct ifnet *ifp)
 		if (--ic->ic_mgt_timer == 0)
 			ieee80211_new_state(ifp, IEEE80211_S_SCAN, -1);
 	}
-	if (ic->ic_scan_timer != 0 || ic->ic_mgt_timer != 0)
+	if (ic->ic_inact_timer) {
+		if (--ic->ic_inact_timer == 0) {
+			for (bs = TAILQ_FIRST(&ic->ic_scan); bs != NULL; ) {
+				if (++bs->bs_inact <= IEEE80211_INACT_MAX) {
+					bs = TAILQ_NEXT(bs, bs_list);
+					continue;
+				}
+				if (ifp->if_flags & IFF_DEBUG)
+					printf("%s: station %s deauthenticate"
+					    " (reason %d)\n",
+					    ifp->if_xname,
+					    ether_sprintf(bs->bs_macaddr),
+					    IEEE80211_REASON_AUTH_EXPIRE);
+				nextbs = TAILQ_NEXT(bs, bs_list);
+				IEEE80211_SEND_MGMT(ic, bs,
+				    IEEE80211_FC0_SUBTYPE_DEAUTH,
+				    IEEE80211_REASON_AUTH_EXPIRE);
+				TAILQ_REMOVE(&ic->ic_scan, bs, bs_list);
+				free(bs, M_DEVBUF);
+				bs = nextbs;
+			}
+			if (!TAILQ_EMPTY(&ic->ic_scan))
+				ic->ic_inact_timer = IEEE80211_INACT_WAIT;
+		}
+	}
+	if (ic->ic_scan_timer != 0 || ic->ic_mgt_timer != 0 ||
+	    ic->ic_inact_timer != 0)
 		ifp->if_timer = 1;
 }
 
@@ -1015,6 +1086,9 @@ ieee80211_alloc_bss(struct ieee80211com *ic, int copy)
 		memset(bs->bs_private, 0, ic->ic_bss_privlen);
 	}
 	TAILQ_INSERT_TAIL(&ic->ic_scan, bs, bs_list);
+	if ((ic->ic_flags & IEEE80211_F_HOSTAP) ||
+	    (ic->ic_flags & IEEE80211_F_ADHOC))
+		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
 	return bs;
 }
 
@@ -1028,6 +1102,7 @@ ieee80211_free_scan(struct ifnet *ifp)
 		TAILQ_REMOVE(&ic->ic_scan, bs, bs_list);
 		free(bs, M_DEVBUF);
 	}
+	ic->ic_inact_timer = 0;
 }
 
 int
@@ -1177,6 +1252,12 @@ ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_bss *bs0,
 		*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
 	} else {
 		/* TODO: TIM */
+		*frm++ = IEEE80211_ELEMID_TIM;
+		*frm++ = 4;	/* length */
+		*frm++ = 0;	/* DTIM count */
+		*frm++ = 1;	/* DTIM period */
+		*frm++ = 0;	/* bitmap control */
+		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
 	}
 	/* TODO: check MHLEN limit */
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
@@ -1213,8 +1294,12 @@ static int
 ieee80211_send_deauth(struct ieee80211com *ic, struct ieee80211_bss *bs,
     int type, int reason)
 {
+	struct ifnet *ifp = &ic->ic_if;
 	struct mbuf *m;
 
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: station %s deauthenticate (reason %d)\n",
+		    ifp->if_xname, ether_sprintf(bs->bs_macaddr), reason);
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOMEM;
@@ -1337,10 +1422,14 @@ ieee80211_send_asresp(struct ieee80211com *ic, struct ieee80211_bss *bs,
 
 static int
 ieee80211_send_disassoc(struct ieee80211com *ic, struct ieee80211_bss *bs,
-    int reason, int dummy)
+    int type, int reason)
 {
+	struct ifnet *ifp = &ic->ic_if;
 	struct mbuf *m;
 
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: station %s disassociate (reason %d)\n",
+		    ifp->if_xname, ether_sprintf(bs->bs_macaddr), reason);
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOMEM;
@@ -1479,9 +1568,12 @@ ieee80211_recv_prreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	struct ieee80211_bss *bs;
 	u_int8_t *frm, *efrm, *ssid, *rates;
 	u_int8_t rate;
+	int allocbs;
 
-	if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0 ||
-	    (ic->ic_state != IEEE80211_S_RUN))
+	if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0 &&
+	    (ic->ic_flags & IEEE80211_F_HOSTAP) == 0)
+		return;
+	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
 
 	wh = mtod(m0, struct ieee80211_frame *);
@@ -1533,7 +1625,9 @@ ieee80211_recv_prreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		DPRINTF(("ieee80211_recv_prreq: new req from %s\n",
 		    ether_sprintf(wh->i_addr2)));
 		memcpy(bs->bs_macaddr, wh->i_addr2, IEEE80211_ADDR_LEN);
-	}
+		allocbs = 1;
+	} else
+		allocbs = 0;
 	memset(bs->bs_rates, 0, IEEE80211_RATE_SIZE);
 	bs->bs_nrate = rates[1];
 	memcpy(bs->bs_rates, rates + 2, bs->bs_nrate);
@@ -1544,19 +1638,28 @@ ieee80211_recv_prreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	if (rate & IEEE80211_RATE_BASIC) {
 		DPRINTF(("ieee80211_recv_prreq: rate negotiation failed: %s\n",
 		    ether_sprintf(wh->i_addr2)));
-		return;
+	} else {
+		IEEE80211_SEND_MGMT(ic, bs, IEEE80211_FC0_SUBTYPE_PROBE_RESP,
+		    0);
 	}
-	IEEE80211_SEND_MGMT(ic, bs, IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
+	if (allocbs && (ic->ic_flags & IEEE80211_F_HOSTAP)) {
+		TAILQ_REMOVE(&ic->ic_scan, bs, bs_list);
+		free(bs, M_DEVBUF);
+		if (TAILQ_EMPTY(&ic->ic_scan))
+			ic->ic_inact_timer = 0;
+	}
 }
 
 static void
 ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
     u_int32_t rstamp)
 {
+	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
 	struct ieee80211_bss *bs;
 	u_int8_t *frm, *efrm;
 	u_int16_t algo, seq, status;
+	int allocbs;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (u_int8_t *)&wh[1];
@@ -1583,17 +1686,16 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 	if (ic->ic_flags & IEEE80211_F_ADHOC) {
-		if (ic->ic_state != IEEE80211_S_RUN)
+		if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
 			return;
-		if (seq == 1) {
-			ieee80211_new_state(&ic->ic_if, IEEE80211_S_AUTH,
-			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-			return;
-		}
+		ieee80211_new_state(&ic->ic_if, IEEE80211_S_AUTH,
+		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		return;
 	}
 	if (ic->ic_flags & IEEE80211_F_HOSTAP) {
-		if (ic->ic_state != IEEE80211_S_RUN)
+		if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
 			return;
+		allocbs = 0;
 		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
 			if (memcmp(bs->bs_macaddr, wh->i_addr2,
 			    IEEE80211_ADDR_LEN) == 0)
@@ -1605,8 +1707,14 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 			memcpy(bs->bs_macaddr, wh->i_addr2, IEEE80211_ADDR_LEN);
 			memcpy(bs->bs_bssid, ic->ic_bss.bs_bssid,
 			    IEEE80211_ADDR_LEN);
+			allocbs = 1;
 		}
 		IEEE80211_SEND_MGMT(ic, bs, IEEE80211_FC0_SUBTYPE_AUTH, 2);
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s %s authenticated\n",
+			    ifp->if_xname,
+			    (allocbs ? "newly" : "already"),
+			    ether_sprintf(bs->bs_macaddr));
 		return;
 	}
 	if (ic->ic_state != IEEE80211_S_AUTH || seq != 2)
@@ -1631,11 +1739,12 @@ static void
 ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
     u_int32_t rstamp)
 {
+	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
 	struct ieee80211_bss *bs = &ic->ic_bss;
 	u_int8_t *frm, *efrm, *ssid, *rates;
 	u_int16_t capinfo, bintval;
-	int reassoc, resp;
+	int reassoc, resp, newassoc;
 
 	if ((ic->ic_flags & IEEE80211_F_HOSTAP) == 0 ||
 	    (ic->ic_state != IEEE80211_S_RUN))
@@ -1715,11 +1824,11 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	}
 	if (bs == NULL)
 		return;
-	bs->bs_associd = 0;
 	if ((capinfo & IEEE80211_CAPINFO_ESS) == 0 ||
 	    (capinfo & IEEE80211_CAPINFO_PRIVACY) !=
 	    ((ic->ic_flags & IEEE80211_F_WEPON) ?
 	     IEEE80211_CAPINFO_PRIVACY : 0)) {
+		bs->bs_associd = 0;
 		IEEE80211_SEND_MGMT(ic, bs, resp, IEEE80211_STATUS_CAPINFO);
 		return;
 	}
@@ -1729,6 +1838,7 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	ieee80211_fix_rate(ic, bs, IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
 	    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 	if (bs->bs_nrate == 0) {
+		bs->bs_associd = 0;
 		IEEE80211_SEND_MGMT(ic, bs, resp, IEEE80211_STATUS_BASIC_RATE);
 		return;
 	}
@@ -1739,8 +1849,16 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	bs->bs_chan = ic->ic_bss.bs_chan;
 	bs->bs_fhdwell = ic->ic_bss.bs_fhdwell;
 	bs->bs_fhindex = ic->ic_bss.bs_fhindex;
-	bs->bs_associd = 0xc000 | ic->ic_bss.bs_associd++;
+	if (bs->bs_associd == 0) {
+		bs->bs_associd = 0xc000 | ic->ic_bss.bs_associd++;
+		newassoc = 1;
+	} else
+		newassoc = 0;
 	IEEE80211_SEND_MGMT(ic, bs, resp, IEEE80211_STATUS_SUCCESS);
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: station %s %s associated\n",
+		    ifp->if_xname, (newassoc ? "newly" : "already"),
+		    ether_sprintf(bs->bs_macaddr));
 }
 
 static void
@@ -1752,6 +1870,11 @@ ieee80211_recv_asresp(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	struct ieee80211_bss *bs = &ic->ic_bss;
 	u_int8_t *frm, *efrm, *rates;
 	int status;
+
+	if ((ic->ic_flags & IEEE80211_F_HOSTAP) ||
+	    (ic->ic_flags & IEEE80211_F_ADHOC) ||
+	    ic->ic_state != IEEE80211_S_ASSOC)
+		return;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (u_int8_t *)&wh[1];
@@ -1805,10 +1928,40 @@ static void
 ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0, int rssi,
     u_int32_t rstamp)
 {
+	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
+	struct ieee80211_bss *bs;
+	u_int8_t *frm, *efrm;
+	u_int16_t reason;
 
 	wh = mtod(m0, struct ieee80211_frame *);
-	if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0)
+	frm = (u_int8_t *)&wh[1];
+	efrm = mtod(m0, u_int8_t *) + m0->m_len;
+	/*
+	 * disassoc frame format
+	 *	[2] reason
+	 */
+	if (frm + 2 > efrm) {
+		DPRINTF(("ieee80211_recv_disassoc: too short from %s\n",
+		    ether_sprintf(wh->i_addr2)));
+		return;
+	}
+	reason = le16toh(*(u_int16_t *)frm);
+	if (ic->ic_flags & IEEE80211_F_HOSTAP) {
+		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
+			if (memcmp(wh->i_addr2, bs->bs_macaddr,
+			    IEEE80211_ADDR_LEN) == 0) {
+				if (ifp->if_flags & IFF_DEBUG)
+					printf("%s: station %s disassociated"
+					    " by peer (reason %d)\n",
+					    ifp->if_xname,
+					    ether_sprintf(bs->bs_macaddr),
+					    reason);
+				bs->bs_associd = 0;
+				break;
+			}
+		}
+	} else if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0)
 		ieee80211_new_state(&ic->ic_if, IEEE80211_S_ASSOC,
 		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
 }
@@ -1817,10 +1970,43 @@ static void
 ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
     u_int32_t rstamp)
 {
+	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
+	struct ieee80211_bss *bs;
+	u_int8_t *frm, *efrm;
+	u_int16_t reason;
 
 	wh = mtod(m0, struct ieee80211_frame *);
-	if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0)
+	frm = (u_int8_t *)&wh[1];
+	efrm = mtod(m0, u_int8_t *) + m0->m_len;
+	/*
+	 * dauth frame format
+	 *	[2] reason
+	 */
+	if (frm + 2 > efrm) {
+		DPRINTF(("ieee80211_recv_deauth: too short from %s\n",
+		    ether_sprintf(wh->i_addr2)));
+		return;
+	}
+	reason = le16toh(*(u_int16_t *)frm);
+	if (ic->ic_flags & IEEE80211_F_HOSTAP) {
+		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
+			if (memcmp(wh->i_addr2, bs->bs_macaddr,
+			    IEEE80211_ADDR_LEN) == 0) {
+				if (ifp->if_flags & IFF_DEBUG)
+					printf("%s: station %s deauthenticated"
+					    " by peer (reason %d)\n",
+					    ifp->if_xname,
+					    ether_sprintf(bs->bs_macaddr),
+					    reason);
+				TAILQ_REMOVE(&ic->ic_scan, bs, bs_list);
+				free(bs, M_DEVBUF);
+				if (TAILQ_EMPTY(&ic->ic_scan))
+					ic->ic_inact_timer = 0;
+				break;
+			}
+		}
+	} else if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0)
 		ieee80211_new_state(&ic->ic_if, IEEE80211_S_AUTH,
 		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
 }
@@ -2024,8 +2210,13 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 		case IEEE80211_S_SCAN:		/* adhoc mode */
 		case IEEE80211_S_ASSOC:		/* infra mode */
 			if (ifp->if_flags & IFF_DEBUG) {
-				printf("%s: associated with %s ssid ",
-				    ifp->if_xname,
+				printf("%s: ", ifp->if_xname);
+				if ((ic->ic_flags & IEEE80211_F_ADHOC) ||
+				    (ic->ic_flags & IEEE80211_F_HOSTAP))
+					printf("synchronized ");
+				else
+					printf("associated ");
+				printf("with %s ssid ",
 				    ether_sprintf(ic->ic_bss.bs_bssid));
 				ieee80211_print_essid(ic->ic_bss.bs_essid,
 				    ic->ic_bss.bs_esslen);
@@ -2187,10 +2378,13 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 		}
 		if (crc != le32toh(*(u_int32_t *)crcbuf)) {
 #ifdef IEEE80211_DEBUG
-			printf("ieee80211_wep_crypt: decrypt CRC error\n");
-			if (ieee80211_debug)
-				ieee80211_dump_pkt(n0->m_data, n0->m_len,
-				    -1, -1);
+			if (ieee80211_debug) {
+				printf("%s: decrypt CRC error\n",
+				    ifp->if_xname);
+				if (ieee80211_debug > 1)
+					ieee80211_dump_pkt(n0->m_data,
+					    n0->m_len, -1, -1);
+			}
 #endif
 			goto fail;
 		}
