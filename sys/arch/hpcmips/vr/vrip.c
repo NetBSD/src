@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.7 2001/04/18 10:46:00 sato Exp $	*/
+/*	$NetBSD: vrip.c,v 1.8 2001/04/18 11:00:30 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -44,6 +44,8 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vripreg.h>
