@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.18 1999/11/20 07:28:35 jun Exp $
+#	$NetBSD: CATS,v 1.19 1999/11/28 00:34:17 mark Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -210,8 +210,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
 scsibus* at ahc?
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #scsibus* at bha?
-isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
-scsibus* at isp?
+#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+#scsibus* at isp?
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 #scsibus* at ncr?
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
