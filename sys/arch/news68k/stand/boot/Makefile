@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/01/19 16:30:04 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3 2000/01/23 17:04:05 mycroft Exp $
 
 COMMON= ${.CURDIR}/../common
 .ifnmake(print-objdir)
@@ -26,24 +26,24 @@ CPPFLAGS+= -D_STANDALONE -DBOOT_DEBUG
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S}
 AFLAGS= -D_LOCORE
 
-CLEANFILES+= ${PROG}.tmp ${.OBJDIR}/machine ${.OBJDIR}/m68k
+CLEANFILES+= ${PROG}.tmp machine m68k
 
 L= ${COMMONOBJ}/lib
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
 
-.BEGIN: ${.OBJDIR}/machine ${.OBJDIR}/m68k
+.BEGIN: machine m68k
+.NOPATH: machine m68k
+realdepend realall: machine m68k
 
-depend all: ${.OBJDIR}/machine ${.OBJDIR}/m68k
-
-${.OBJDIR}/machine::
+machine::
 	-rm -f $@
 	ln -s ${S}/arch/${MACHINE}/include $@
 
-${.OBJDIR}/m68k::
+m68k::
 	-rm -f $@
 	ln -s ${S}/arch/m68k/include $@
 
-${PROG}: ${OBJS} ${.OBJDIR}/machine ${.OBJDIR}/m68k
+${PROG}: ${OBJS} machine m68k
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBS}
 	-${SIZE} ${PROG}
 	${STRIPPROG} ${PROG}
