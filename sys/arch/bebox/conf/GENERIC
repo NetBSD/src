@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.17 1999/01/23 16:10:48 drochner Exp $
+#	$NetBSD: GENERIC,v 1.17.2.1 2000/06/03 14:45:26 he Exp $
 #
 # First try for BEBOX config file
 #
@@ -40,7 +40,7 @@ file-system 	NULLFS
 file-system 	PORTAL
 file-system 	PROCFS
 file-system 	UMAPFS
-file-system 	UNION
+#file-system 	UNION
 
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER

@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: GENERIC,v 1.8 1998/11/25 20:30:46 hwr Exp $
+# 	$NetBSD: GENERIC,v 1.8.4.1 2000/06/03 14:45:34 he Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -50,7 +50,7 @@ file-system	LFS		# Log-based filesystem (still experimental)
 file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
-file-system	UNION		# union file system
+#file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem server

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.119.2.5 2000/02/04 23:19:29 he Exp $
+#	$NetBSD: GENERIC,v 1.119.2.6 2000/06/03 14:45:18 he Exp $
 
 #
 #if 0
@@ -78,7 +78,7 @@ file-system 	NULLFS		# loopback filesystem
 #file-system 	PORTAL		# Portal filesystem
 file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION		# union filesystem
+#file-system 	UNION		# union filesystem
 
 # Filesystem options
 options 	NFSSERVER	# Network File System server side code

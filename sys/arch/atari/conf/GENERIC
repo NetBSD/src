@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.52 1998/12/15 19:50:07 itohy Exp $
+#	$NetBSD: GENERIC,v 1.52.2.1 2000/06/03 14:45:24 he Exp $
 #
 # Generic atari
 #
@@ -66,7 +66,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	NULLFS		# Loopback filesystem
 file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
-file-system 	UNION		# union file system
+#file-system 	UNION		# union file system
 file-system 	UMAPFS		# null file system (with uid & gid remapping)
 file-system 	PORTAL		# portal file system
 file-system 	EXT2FS		# second extended file system (linux)

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.43 1998/12/15 19:50:10 itohy Exp $
+#	$NetBSD: GENERIC,v 1.43.2.1 2000/06/03 14:45:27 he Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -43,7 +43,7 @@ options 	LKM		# Loadable kernel modules
 file-system	FFS		# fast filesystem
 file-system	CD9660		# CD-ROM ISO-9660 filesystem
 file-system	NFS		# Network filesystem client
-file-system	UNION		# Union filesystem (req. for FDESC)
+#file-system	UNION		# Union filesystem (req. for FDESC)
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	PROCFS		# /proc filesystem

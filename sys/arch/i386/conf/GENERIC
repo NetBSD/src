@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.231.2.9 2000/05/11 09:26:57 he Exp $
+#	$NetBSD: GENERIC,v 1.231.2.10 2000/06/03 14:45:28 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -101,7 +101,7 @@ file-system 	NULLFS		# loopback file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION		# union file system
+#file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
