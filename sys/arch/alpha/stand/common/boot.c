@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.7 1998/01/29 22:13:25 ross Exp $ */
+/* $NetBSD: boot.c,v 1.8 1998/02/12 01:53:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/prom.h>
+#include <machine/rpb.h>
 
 #include <machine/pte.h>
 
@@ -57,7 +58,7 @@ int loadfile __P((char *, u_int64_t *));
 char boot_file[128];
 char boot_flags[128];
 
-struct bootinfo bootinfo;
+struct bootinfo_v1 bootinfo_v1;
 
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
@@ -115,24 +116,23 @@ main()
 		/*
 		 * Fill in the bootinfo for the kernel.
 		 */
-		bzero(&bootinfo, sizeof(bootinfo));
-		bootinfo.version    = 1;
-		bootinfo.un.v1.ssym = ssym;
-		bootinfo.un.v1.esym = esym;
-		bcopy(name, bootinfo.un.v1.booted_kernel,
-		    sizeof(bootinfo.un.v1.booted_kernel));
-		bcopy(boot_flags, bootinfo.un.v1.boot_flags,
-		    sizeof(bootinfo.un.v1.boot_flags));
-		bootinfo.un.v1.hwrpb = NULL;
-		bootinfo.un.v1.hwrpbsize = 0;
-		bootinfo.un.v1.cngetc = NULL;
-		bootinfo.un.v1.cnputc = NULL;
-		bootinfo.un.v1.cnpollc = NULL;
+		bzero(&bootinfo_v1, sizeof(bootinfo_v1));
+		bootinfo_v1.ssym = ssym;
+		bootinfo_v1.esym = esym;
+		bcopy(name, bootinfo_v1.booted_kernel,
+		    sizeof(bootinfo_v1.booted_kernel));
+		bcopy(boot_flags, bootinfo_v1.boot_flags,
+		    sizeof(bootinfo_v1.boot_flags));
+		bootinfo_v1.hwrpb = (void *)HWRPB_ADDR;
+		bootinfo_v1.hwrpbsize = ((struct rpb *)HWRPB_ADDR)->rpb_size;
+		bootinfo_v1.cngetc = NULL;
+		bootinfo_v1.cnputc = NULL;
+		bootinfo_v1.cnpollc = NULL;
 
 		(void)printf("Entering %s at 0x%lx...\n", name, entry);
 		alpha_pal_imb();
 		(*(void (*)())entry)(ffp_save, ptbr_save,
-		    BOOTINFO_MAGIC, &bootinfo, 0);
+		    BOOTINFO_MAGIC, &bootinfo_v1, 1, 0);
 	}
 
 	(void)printf("Boot failed!  Halting...\n");
