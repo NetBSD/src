@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.2.2.1 2000/08/09 23:14:52 gmcgarry Exp $	*/
+/*	$NetBSD: if_xi.c,v 1.2.2.2 2001/06/11 19:17:03 he Exp $	*/
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -849,6 +849,7 @@ xi_get(sc)
 		return (recvcount);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = pktlen;
+	m->m_flags |= M_HASFCS;
 	len = MHLEN;
 	top = 0;
 	mp = &top;
