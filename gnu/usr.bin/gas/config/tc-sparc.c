@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-sparc.c,v 1.3 1993/12/08 15:36:57 pk Exp $";
+static char rcsid[] = "$Id: tc-sparc.c,v 1.4 1994/02/01 21:49:18 pk Exp $";
 #endif
 
 #define cypress 1234
@@ -495,7 +495,7 @@ char *str;
 		return;
 		
 	default:
-		as_fatal("failed sanity check.");
+		as_fatal("md_assemble: failed sanity check.");
 	}
 } /* md_assemble() */
 
@@ -1012,7 +1012,7 @@ char *str;
 				continue;
 				
 			default:
-				as_fatal("failed sanity check.");
+				as_fatal("sparc_ip: failed sanity check.");
 			} /* switch on arg code */
 			break;
 		} /* for each arg that we expect */
@@ -1072,17 +1072,6 @@ char *str;
 	switch (seg = expression(&the_insn.exp)) {
 		
 	case SEG_ABSOLUTE:
-		switch (the_insn.reloc) {
-		case RELOC_LO10:
-			the_insn.exp.X_add_number &= ~(~(0) << 10);
-			break;
-		case RELOC_HI22:
-			the_insn.exp.X_add_number &= (~(0) << 10);
-			break;
-		default:
-			break;
-		}
-		break;
 	case SEG_TEXT:
 	case SEG_DATA:
 	case SEG_BSS:
@@ -1199,7 +1188,7 @@ int n;
 		break;
 		
 	default:
-		as_fatal("failed sanity check.");
+		as_fatal("md_number_to_chars: failed sanity check.");
 	}
 	return;
 } /* md_number_to_chars() */
@@ -1211,6 +1200,7 @@ int bits;
 	if (((val & (-1 << bits)) != 0)
 	    && ((val & (-1 << bits)) != (-1 << (bits - 0)))) {
 		as_warn("Relocation overflow.  Value truncated.");
+		printf(" ==> val = %#x, bits = %d\n", val, bits);
 	} /* on overflow */
 
 	return;
@@ -1283,14 +1273,6 @@ long val;
 		buf[3] = 0; /* val; */
 		break;
 		
-#if 0
-	case RELOC_8:         /* These don't seem to ever be needed. */
-	case RELOC_16:
-	case RELOC_DISP8:
-	case RELOC_DISP16:
-	case RELOC_DISP32:
-#endif
-
 	case RELOC_JMP_TBL:
 	case RELOC_WDISP30:
 		val = (val >>= 2) + 1;
@@ -1332,11 +1314,11 @@ long val;
 		buf[3] = val & 0xff;
 		break;
 		
-		
-	case RELOC_PC10:
-	case RELOC_LO10:
 	case RELOC_BASE10:
 		reloc_check(val, 10);
+		/* FALLTHROUGH */
+	case RELOC_PC10:
+	case RELOC_LO10:
 						  
 		if (!fixP->fx_addsy) {
 			buf[2] |= (val >> 8) & 0x03;
@@ -1344,10 +1326,7 @@ long val;
 		} else
 		    buf[3]=0;
 		break;
-#if 0
-	case RELOC_SFA_BASE:
-	case RELOC_SFA_OFF13:
-#endif
+
 	case RELOC_BASE13:
 		reloc_check(val, 13);
 						  
@@ -1367,11 +1346,16 @@ long val;
 		break;
 		
 #if 0
-	case RELOC_PC10:
-	case RELOC_PC22:
-	case RELOC_JMP_TBL:
+	case RELOC_8:         /* These don't seem to ever be needed. */
+	case RELOC_16:
+	case RELOC_DISP8:
+	case RELOC_DISP16:
+	case RELOC_DISP32:
 	case RELOC_SEGOFF16:
-	case RELOC_GLOB_DAT:
+	case RELOC_SFA_BASE:
+	case RELOC_SFA_OFF13:
+
+	case RELOC_GLOB_DAT: /* These are output by linker only */
 	case RELOC_JMP_SLOT:
 	case RELOC_RELATIVE:
 #endif
