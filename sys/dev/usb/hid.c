@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.3 1998/11/25 22:32:04 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.4 1998/12/08 14:31:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -440,8 +440,8 @@ hid_get_data(buf, loc)
 	hsize = 32 - hsize;
 	/* Sign extend */
 	data = ((int32_t)data << hsize) >> hsize;
-	DPRINTF(("hid_get_data: loc %d/%d = %lu\n", 
-		 loc->pos, loc->size, (long)data));
+	DPRINTFN(2,("hid_get_data: loc %d/%d = %lu\n", 
+		    loc->pos, loc->size, (long)data));
 	return (data);
 }
 
