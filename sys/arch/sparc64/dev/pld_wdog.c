@@ -1,4 +1,4 @@
-/*	$NetBSD: pld_wdog.c,v 1.1 2003/07/17 20:54:41 petrov Exp $	*/
+/*	$NetBSD: pld_wdog.c,v 1.2 2003/07/24 09:10:43 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -78,7 +78,9 @@ void	pldwdog_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(pldwdog, sizeof(struct pldwdog_softc),
     pldwdog_match, pldwdog_attach, NULL, NULL);
 
+#ifdef PLD_WDOG_DEBUG
 static void pldwdog_regs(struct pldwdog_softc *);
+#endif
 
 static int
 pldwdog_tickle(struct sysmon_wdog *smw)
@@ -131,10 +133,7 @@ pldwdog_intr()
 #endif
 
 int
-pldwdog_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pldwdog_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -143,8 +142,7 @@ pldwdog_match(parent, cf, aux)
 
 #ifdef PLD_WDOG_DEBUG
 static void
-pldwdog_regs(sc)
-	struct pldwdog_softc *sc;
+pldwdog_regs(struct pldwdog_softc *sc)
 {
 
 	printf("%s: status 0x%02x, intr mask 0x%02x\n",
@@ -173,9 +171,7 @@ pldwdog_regs(sc)
 #endif
 
 void
-pldwdog_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pldwdog_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pldwdog_softc *sc = (struct pldwdog_softc *)self;
 	struct ebus_attach_args *ea = aux;
