@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.24 1999/09/27 23:09:45 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.25 1999/10/24 12:31:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.24 1999/09/27 23:09:45 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.25 1999/10/24 12:31:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,8 @@ static	FILE *cfile;
 #define	DEFAULT	1
 #define	LOGIN	2
 #define	PASSWD	3
-#define	ACCOUNT 4
-#define MACDEF  5
+#define	ACCOUNT	4
+#define	MACDEF	5
 #define	ID	10
 #define	MACH	11
 

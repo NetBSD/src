@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.31 1999/10/05 01:16:11 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.32 1999/10/24 12:31:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.31 1999/10/05 01:16:11 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.32 1999/10/24 12:31:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,6 +147,7 @@ char	rmdirhelp[] =	"remove directory on the remote machine";
 char	rmtstatushelp[]="show status of remote machine";
 char	runiquehelp[] = "toggle store unique for local files";
 char	sendhelp[] =	"send one file";
+char	sethelp[] =	"set or display options";
 char	shellhelp[] =	"escape to the shell";
 char	sitehelp[] =	"send site specific command to remote server\n"
 			"\t\tTry \"rhelp site\" or \"site help\" "
@@ -160,16 +161,18 @@ char	tenexhelp[] =	"set tenex file transfer type";
 char	tracehelp[] =	"toggle packet tracing";
 char	typehelp[] =	"set file transfer type";
 char	umaskhelp[] =	"get (set) umask on remote side";
+char	unsethelp[] =	"unset an option";
+char	usagehelp[] =	"show command usage";
 char	userhelp[] =	"send new user information";
 char	verbosehelp[] =	"toggle verbose mode";
 char	xferbufhelp[] =	"set socket send/receive buffer size";
 
 #ifdef NO_EDITCOMPLETE
-#define CMPL(x)
-#define CMPL0
+#define	CMPL(x)
+#define	CMPL0
 #else  /* !NO_EDITCOMPLETE */
-#define CMPL(x)	__STRING(x),
-#define CMPL0	"",
+#define	CMPL(x)	__STRING(x),
+#define	CMPL0	"",
 #endif /* !NO_EDITCOMPLETE */
 
 struct cmd cmdtab[] = {
@@ -196,8 +199,8 @@ struct cmd cmdtab[] = {
 	{ "exit",	quithelp,	0, 0, 0, CMPL0		quit },
 	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },
 	{ "ftp",	connecthelp,	0, 0, 1, CMPL0		setpeer },
-	{ "get",	receivehelp,	1, 1, 1, CMPL(rl)	get },
 	{ "gate",	gatehelp,	0, 0, 0, CMPL0		setgate },
+	{ "get",	receivehelp,	1, 1, 1, CMPL(rl)	get },
 	{ "glob",	globhelp,	0, 0, 0, CMPL0		setglob },
 	{ "hash",	hashhelp,	0, 0, 0, CMPL0		sethash },
 	{ "help",	helphelp,	0, 0, 1, CMPL(C)	help },
@@ -249,6 +252,7 @@ struct cmd cmdtab[] = {
 	{ "runique",	runiquehelp,	0, 0, 1, CMPL0		setrunique },
 	{ "send",	sendhelp,	1, 1, 1, CMPL(lr)	put },
 	{ "sendport",	porthelp,	0, 0, 0, CMPL0		setport },
+	{ "set",	sethelp,	0, 0, 0, CMPL(o)	setoption },
 	{ "site",	sitehelp,	0, 1, 1, CMPL0		site },
 	{ "size",	sizecmdhelp,	1, 1, 1, CMPL(r)	sizecmd },
 	{ "sndbuf",	xferbufhelp,	0, 0, 0, CMPL0		setxferbuf },
@@ -261,6 +265,8 @@ struct cmd cmdtab[] = {
 	{ "trace",	tracehelp,	0, 0, 0, CMPL0		settrace },
 	{ "type",	typehelp,	0, 1, 1, CMPL0		settype },
 	{ "umask",	umaskhelp,	0, 1, 1, CMPL0		do_umask },
+	{ "unset",	unsethelp,	0, 0, 0, CMPL(o)	unsetoption },
+	{ "usage",	usagehelp,	0, 0, 1, CMPL(C)	help },
 	{ "user",	userhelp,	0, 1, 1, CMPL0		user },
 	{ "verbose",	verbosehelp,	0, 0, 0, CMPL0		setverbose },
 	{ "xferbuf",	xferbufhelp,	0, 0, 0, CMPL0		setxferbuf },
@@ -268,4 +274,11 @@ struct cmd cmdtab[] = {
 	{ 0 },
 };
 
-int	NCMDS = (sizeof(cmdtab) / sizeof(cmdtab[0])) - 1;
+struct option optiontab[] = {
+	{ "anonpass",	NULL },
+	{ "ftp_proxy",	NULL },
+	{ "http_proxy",	NULL },
+	{ "no_proxy",	NULL },
+	{ "pager",	NULL },
+	{ 0 },
+};
