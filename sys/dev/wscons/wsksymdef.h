@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.9 1998/07/15 14:06:34 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.10 1998/09/01 18:09:27 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -438,6 +438,7 @@
 #define KB_US			0x0200
 #define KB_DE			0x0300
 #define KB_DK			0x0400
+#define KB_IT			0x0500
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
