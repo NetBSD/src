@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86call.S,v 1.1 2002/11/22 15:01:16 fvdl Exp $ */
+/* $NetBSD: kvm86call.S,v 1.2 2003/01/20 18:43:18 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 Jonathan Lemon
@@ -35,7 +35,7 @@
 
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.1 2002/11/22 15:01:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.2 2003/01/20 18:43:18 drochner Exp $");
 
 	.data
 	.align 4
@@ -82,14 +82,14 @@ ENTRY(kvm86_call)
 	rep
 	movsl				/* copy frame to new stack */
 
-	movl	_C_LABEL(cpu_info_primary)+CPU_INFO_CURPROC,%ecx
-	movl	P_ADDR(%ecx),%eax
+	movl	_C_LABEL(cpu_info_primary)+CPU_INFO_CURLWP,%ecx
+	movl	L_ADDR(%ecx),%eax
 	pushl	%eax			/* save curpcb */
 	movl	vm86pcb,%eax
-	movl	%eax,P_ADDR(%ecx)	/* set curpcb to vm86pcb */
+	movl	%eax,L_ADDR(%ecx)	/* set curpcb to vm86pcb */
 
 	movl	_C_LABEL(gdt),%eax
-	movl	P_MD_TSS_SEL(%ecx),%edi
+	movl	L_MD_TSS_SEL(%ecx),%edi
 
 	andl	$~0x0200,4(%eax,%edi,1)	/* reset "task busy" */
 
@@ -161,8 +161,8 @@ ENTRY(kvm86_ret)
 	movl	$0,kvm86_incall		/* reset trapflag */
 
 	movl	_C_LABEL(gdt),%eax
-	movl	_C_LABEL(cpu_info_primary)+CPU_INFO_CURPROC,%ecx
-	movl	P_MD_TSS_SEL(%ecx),%edi
+	movl	_C_LABEL(cpu_info_primary)+CPU_INFO_CURLWP,%ecx
+	movl	L_MD_TSS_SEL(%ecx),%edi
 	movl	SCRTSS0, %edx
 	movl	%edx, 0(%eax,%edi,1)	/* restore first word */
 	movl	SCRTSS1, %edx
@@ -170,7 +170,7 @@ ENTRY(kvm86_ret)
 	ltr	%di
 
 	popl	%eax			/* restore curpcb */
-	movl	%eax, P_ADDR(%ecx)
+	movl	%eax, L_ADDR(%ecx)
 
 	movl	12(%ebp), %eax		/* will be kvm86_call()'s retval */
 

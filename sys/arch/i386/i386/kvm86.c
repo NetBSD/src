@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.4 2002/10/01 12:56:53 fvdl Exp $ */
+/* $NetBSD: kvm86.c,v 1.5 2003/01/20 18:43:18 drochner Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.4 2002/10/01 12:56:53 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.5 2003/01/20 18:43:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ kvm86_init()
 	 *  permission bitmap
 	 * XXX do we really need the pcb or just the TSS?
 	 */
-	memcpy(pcb, &proc0.p_addr->u_pcb, sizeof(struct pcb));
+	memcpy(pcb, &lwp0.l_addr->u_pcb, sizeof(struct pcb));
 	pcb->pcb_tss.tss_esp0 = (int)vmd;
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	for (i = 0; i < sizeof(vmd->iomap) / 4; i++)
