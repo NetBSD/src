@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.11 2003/10/02 10:39:27 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.11.2.1 2004/09/11 10:40:10 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ arc4random(void)
 		arc4_randrekey();
 	}
 
-	for (i = 0, ret = 0; i < 24; ret |= arc4_randbyte() << i, i += 8)
+	for (i = 0, ret = 0; i <= 24; ret |= arc4_randbyte() << i, i += 8)
 		;
 	return ret;
 }
