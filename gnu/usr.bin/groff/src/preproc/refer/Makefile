@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2003/07/01 08:20:37 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2003/08/01 10:36:43 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/preproc/refer/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -12,5 +12,7 @@ LDADD+=		${LIBBIB} ${LIBGROFF} -lm
 # YHEADER is useless here; label.y -> label_tab.h and label.cpp.
 YFLAGS=		-d
 CLEANFILES=	label.cpp label_tab.h ${MAN} y.tab.c y.tab.h
+
+label.cpp: label.y
 
 .include <bsd.prog.mk>
