@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.18 1996/10/11 19:44:02 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.19 1996/10/13 22:54:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -497,8 +497,8 @@ ELFNAME2(exec,makecmds)(p, epp)
 	    (caddr_t) ph, phsize)) != 0)
 		goto bad;
 
-	epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
-	epp->ep_dsize = ELFDEFNNAME(NO_ADDR);
+	epp->ep_taddr = epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
+	epp->ep_daddr = epp->ep_dsize = ELFDEFNNAME(NO_ADDR);
 
 	interp[0] = '\0';
 
@@ -575,9 +575,14 @@ ELFNAME2(exec,makecmds)(p, epp)
 			 * Decide whether it's text or data by looking
 			 * at the entry point.
 			 */
-			if (eh->e_entry >= addr && eh->e_entry < (addr + size)){
+			if (eh->e_entry >= addr &&
+			    eh->e_entry < (addr + size)) {
 				epp->ep_taddr = addr;
 				epp->ep_tsize = size;
+				if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
+					epp->ep_daddr = addr;
+					epp->ep_dsize = size;
+				}
 			} else {
 				epp->ep_daddr = addr;
 				epp->ep_dsize = size;
