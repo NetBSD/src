@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 1999/03/02 14:07:24 christos Exp $
+#	$NetBSD: Makefile,v 1.100 1999/03/03 12:00:19 jonathan Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -32,7 +32,7 @@ SUBDIR+=elf2aout elf2ecoff telnet
 .else
 
 # Build ELF to {ecoff, aout} tools on mips, for old bootblocks/PROMs.
-.if (${MACHINE_ARCH} == "mips")
+.if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")
 SUBDIR+= elf2aout elf2ecoff
 .endif
 
