@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.20 1997/06/25 00:15:06 lukem Exp $	*/
+/*	$NetBSD: login.c,v 1.21 1997/06/27 16:42:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: login.c,v 1.20 1997/06/25 00:15:06 lukem Exp $";
+static char rcsid[] = "$NetBSD: login.c,v 1.21 1997/06/27 16:42:22 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -401,7 +401,7 @@ main(argc, argv)
 			(void)printf("Sorry -- your password has expired.\n");
 			sleepexit(1);
 		} else if (pwd->pw_change - tp.tv_sec <
-		    2 * DAYSPERWEEK * SECSPERDAY && !quietlog)
+		    _PASSWORD_WARNDAYS * SECSPERDAY && !quietlog)
 			(void)printf("Warning: your password expires on %s",
 			    ctime(&pwd->pw_change));
 	if (pwd->pw_expire)
@@ -409,7 +409,7 @@ main(argc, argv)
 			(void)printf("Sorry -- your account has expired.\n");
 			sleepexit(1);
 		} else if (pwd->pw_expire - tp.tv_sec <
-		    2 * DAYSPERWEEK * SECSPERDAY && !quietlog)
+		    _PASSWORD_WARNDAYS * SECSPERDAY && !quietlog)
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));
 
