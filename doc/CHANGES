@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.290 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.291 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -642,3 +642,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		and adds support for descriptions.  [atatat 20040324]
 	sendmail(8): update to 8.12.11.  [atatat 20040325]
 	gzip(1):  Switch to non GPL gzip.  [mrg 20040326]
+	aac(4): Add support for Adaptec 2200S (Vulcan 2M) & Dell PERC 320/DC
+		[gendalia 20040326]
