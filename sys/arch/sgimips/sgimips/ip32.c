@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.15 2003/01/03 09:09:22 rafal Exp $	*/
+/*	$NetBSD: ip32.c,v 1.16 2003/01/06 05:59:34 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -215,7 +215,7 @@ ip32_intr(status, cause, pc, ipending)
 			mace_intr(crime_ipending & 0xff);
 
 		if (crime_ipending & 0xff00)
-			crime_intr((crime_ipending & 0xff00) >> 8);
+			crime_intr(crime_ipending & 0xff00);
 
 		if (crime_ipending & 0xffff0000) {
 			/*
@@ -256,7 +256,23 @@ ip32_clkread(void)
 void
 ip32_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 {
-
+	/* 
+	 * XXXrkb: should use level to determine if this is a MACE,
+	 * CRIME, MACEISA, etc. device and then vector to the right
+	 * interrupt table.
+	 * 
+	 * Once that's done, then all IP32 drivers should use the
+	 * cpu_intr_establish() function rather than calling into
+	 * the individual CRIME/MACE/... interrupt establishment
+	 * functions.
+	 * 
+	 * Finally, since interrupt handlers should always have the
+	 * level associated with them, the interrupt dispatch code
+	 * can map from CRIME interrupt register bits to the right
+	 * set of interrupt handlers and we won't have to call all
+	 * our registered ISR's blindly in hopes we'll hit the right
+	 * one.
+	 */
 	(void) crime_intr_establish(level, IST_LEVEL, ipl, func, arg);
 }
 #endif	/* IP32 */
