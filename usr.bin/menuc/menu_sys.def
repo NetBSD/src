@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.49 2003/11/20 13:03:44 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.50 2003/11/22 22:18:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -137,30 +137,43 @@ init_menu(menudesc *m)
 	int wmax;
 	int hadd, wadd, exithadd;
 	int i;
-	const char *title;
+	int x, y, w;
+	const char *title, *tp, *ep;
 
+	x = m->x;
+	y = m->y;
+	w = m->w;
+	wmax = 0;
 	hadd = ((m->mopt & MC_NOBOX) ? 0 : 2);
 	wadd = ((m->mopt & MC_NOBOX) ? 2 : 4);
 
 	if (m->title && *(title = MSG_XLAT(m->title)) != 0) {
-		wmax = strlen(title);
-		hadd += 2;
+		/* Allow multiple line titles */
+		for (tp = title; ep = strchr(tp, '\n'); tp = ep + 1) {
+			i = ep - tp;
+			wmax = MAX(wmax, i);
+			hadd++;
+		}
+		hadd++;
+		i = strlen(tp);
+			wmax = MAX(wmax, i);
+		if (i != 0)
+			hadd++;
 	} else {
 		m->title = NULL;
 		title = "untitled";
-		wmax = 0;
 	}
 	exithadd = ((m->mopt & MC_NOEXITOPT) ? 0 : 1);
 
 #ifdef MSG_DEFS_H
-	if (m->y == -1)
-		m->y = msg_row();
+	if (y == -1)
+		y = msg_row();
 #endif
 
 	/* Calculate h? h == number of visible options. */
 	if (m->h == 0)
 		m->h = m->numopts + exithadd;
-	m->h = MIN(m->h, max_lines - m->y - hadd);
+	m->h = MIN(m->h, max_lines - y - hadd);
 
 	if (m->h < m->numopts + exithadd || m->mopt & MC_ALWAYS_SCROLL) {
 		if (!(m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL)) || m->h < 3) {
@@ -174,20 +187,9 @@ init_menu(menudesc *m)
 		m->h--;
 	} else
 		m->mopt &= ~MC_SCROLL;
-#if 0
-	/* check for screen fit */
-	if (m->y + m->h + hadd > max_lines) {
-		endwin();
-		(void)fprintf(stderr,
-		    "Screen too short (%d + %d + %d > %d) for menu \"%s\"\n",
-			m->y, m->h, hadd, max_lines, title);
-		exit(1);
-
-	}
-#endif
 
 	/* Calculate w? */
-	if (m->w == 0) {
+	if (w == 0) {
 		int l;
 		if (m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL)) {
 			l = strlen(scrolltext);
@@ -199,30 +201,30 @@ init_menu(menudesc *m)
 				l += 3;
 			wmax = MAX(wmax, l);
 		}
-		m->w = wmax;
+		w = wmax;
 	}
 
 	/* check and adjust for screen fit */
-	if (m->w + wadd > max_cols) {
+	if (w + wadd > max_cols) {
 		endwin();
 		(void)fprintf(stderr,
 			"Screen too narrow for menu \"%s\"\n", title);
 		exit(1);
 
 	}
-	if (m->x == -1)
-		m->x = (max_cols - (m->w + wadd)) / 2;	/* center */
-	else if (m->x + m->w + wadd > max_cols)
-		m->x = max_cols - (m->w + wadd);	/* right align */
+	if (x == -1)
+		x = (max_cols - (w + wadd)) / 2;	/* center */
+	else if (x + w + wadd > max_cols)
+		x = max_cols - (w + wadd);	/* right align */
 
 	/* Get the windows. */
-	m->mw = newwin(m->h + hadd, m->w + wadd, m->y, m->x);
+	m->mw = newwin(m->h + hadd, w + wadd, y, x);
 
 	if (m->mw == NULL) {
 		endwin();
 		(void)fprintf(stderr,
 			"Could not create window (%d + %d, %d + %d, %d, %d) for menu \"%s\"\n",
-			m->h, hadd, m->w, wadd, m->y, m->x, title);
+			m->h, hadd, w, wadd, y, x, title);
 		exit(1);
 	}
 	keypad(m->mw, TRUE); /* enable multi-key assembling for win */
@@ -279,28 +281,27 @@ draw_menu(menudesc *m, void *arg)
 	int hasbox, cury, maxy;
 	int tadd;
 	int hasexit = (m->mopt & MC_NOEXITOPT ? 0 : 1);
+	const char *tp, *ep;
 	
-	if (m->mopt & MC_NOBOX) {
-		cury = 0;
-		maxy = m->h;
-		hasbox = 0;
-	} else {
-		cury = 1;
-		maxy = m->h + 1;
-		hasbox = 1;
-	}
+	hasbox = (m->mopt & MC_NOBOX ? 0 : 1);
 
 	/* Clear the window */
 	wclear(m->mw);
 
+	tadd = hasbox;
 	if (m->title) {
-		mvwaddstr(m->mw, hasbox, hasbox, " ");
-		waddstr(m->mw, MSG_XLAT(m->title));
-		tadd = 2;
-		cury += tadd;
-		maxy += tadd;
-	} else
-		tadd = 0;
+		for (tp = MSG_XLAT(m->title); ; tp = ep + 1) {
+			ep = strchr(tp , '\n');
+			mvwaddnstr(m->mw, tadd++, hasbox + 1, tp,
+			    ep ? ep - tp : -1);
+			if (ep == NULL || *ep == 0)
+				break;
+		}
+		tadd++;
+	}
+
+	cury = tadd;
+	maxy = getmaxy(m->mw) - hasbox;
 
 	if (m->cursel == -1) {
 		m->cursel = m->numopts;
@@ -336,7 +337,7 @@ draw_menu(menudesc *m, void *arg)
 	if (!(m->mopt & MC_NOBOX))
 		box(m->mw, 0, 0);
 
-	wmove(m->mw, tadd + hasbox + m->cursel - m->topline, hasbox);
+	wmove(m->mw, tadd + m->cursel - m->topline, hasbox);
 	wrefresh(m->mw);
 }
 
@@ -573,15 +574,12 @@ void
 process_menu(int num, void *arg)
 {
 	int sel = 0;
-	int req, done;
-	int last_num;
+	int req;
 	menu_ent *opt;
 
 	menudesc *m;
 
 	m = &menus[num];
-
-	done = FALSE;
 
 	/* Initialize? */
 	if (menu_init()) {
@@ -602,8 +600,7 @@ process_menu(int num, void *arg)
 	else
 		m->cursel = 0;
 
-	while (!done) {
-		last_num = num;
+	for (;;) {
 		if (__m_endwin) {
 			wclear(stdscr);
 			wrefresh(stdscr);
@@ -626,32 +623,32 @@ process_menu(int num, void *arg)
 		}
 
 		/* Process the items */
-		if (sel < m->numopts) {
-			opt = &m->opts[sel];
-			if (opt->opt_flags & OPT_IGNORE)
+		if (sel >= m->numopts)
+			/* exit option */
+			break;
+
+		opt = &m->opts[sel];
+		if (opt->opt_flags & OPT_IGNORE)
+			continue;
+		if (opt->opt_flags & OPT_ENDWIN) {
+			endwin();
+			__m_endwin = 1;
+		}
+		if (opt->opt_action && (*opt->opt_action)(m, arg))
+			break;
+
+		if (opt->opt_menu != -1) {
+			if (!(opt->opt_flags & OPT_SUB)) {
+				num = opt->opt_menu;
+				delwin(m->mw);
+				m->mw = NULL;
+				m = &menus[num];
 				continue;
-			if (opt->opt_flags & OPT_ENDWIN) {
-				endwin();
-				__m_endwin = 1;
 			}
-			if (opt->opt_action)
-				done = (*opt->opt_action)(m, arg);
-			if (opt->opt_menu != -1) {
-				if (opt->opt_flags & OPT_SUB)
-					process_menu(opt->opt_menu, arg);
-				else
-					num = opt->opt_menu;
-			}
-
-                        if (opt->opt_flags & OPT_EXIT) 
-                                done = TRUE;
- 				
-		} else
-			done = TRUE;
-
-		/* Reselect m just in case */
-		if (num != last_num)
-			m = &menus[num];
+			process_menu(opt->opt_menu, arg);
+		}
+		if (opt->opt_flags & OPT_EXIT)
+			break;
 	}
 
 	if (m->mopt & MC_NOCLEAR) {
@@ -662,6 +659,8 @@ process_menu(int num, void *arg)
 	/* Process the exit action */
 	if (m->exit_act)
 		(*m->exit_act)(m, arg);
+	delwin(m->mw);
+	m->mw = NULL;
 }
 
 /* Control L is end of standard routines, remaining only for dynamic. */
@@ -674,10 +673,12 @@ double_menus(void)
 	menudesc *temp;
 	int sz = sizeof(menudesc) * num_menus;
 
-	temp  = realloc(menus, sz * 2);
+	temp  = malloc(sz * 2);
 	if (temp == NULL)
 		return 0;
+	(void)memcpy(temp, menus, sz);
 	(void)memset(temp + num_menus, 0, sz);
+	/* We must not free 'menus', the code may have a pointer to it */
 	menus = temp;
 	num_menus *= 2;
 
@@ -731,7 +732,7 @@ free_menu(int menu_no)
 		return;
 
 	m = menus + menu_no;
-	if ((m->mopt & MC_VALID))
+	if (!(m->mopt & MC_VALID))
 		return;
 	if (m->mw != NULL)
 		delwin(m->mw);
