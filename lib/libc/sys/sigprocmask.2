@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigprocmask.2,v 1.17 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: sigprocmask.2,v 1.18 2004/08/25 11:56:50 pooka Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@ and the current mask.
 The function is specified by
 .Fa how
 using one of the following values from
-.Aq Pa signal.h :
+.Aq Pa sys/signal.h :
 .Bl -tag -width SIG_UNBLOCK
 .It Dv SIG_BLOCK
 The new mask is the union of the current mask and the specified
