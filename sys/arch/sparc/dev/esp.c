@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.25 1995/09/11 19:41:21 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.26 1995/09/14 20:38:53 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -66,6 +66,7 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
+/*static*/ int  espprint	__P((void *, char *));
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ int	espgetbyte	__P((struct esp_softc *, u_char *));
@@ -215,6 +216,16 @@ espselect(sc, target, lun, cmd, clen)
 
 	/* new state ESP_SELECTING */
 	sc->sc_state = ESP_SELECTING;
+}
+
+int
+espprint(aux, name)
+	void *aux;
+	char *name;
+{
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 int
@@ -415,7 +426,7 @@ espattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	config_found(self, &sc->sc_link, NULL);
+	config_found(self, &sc->sc_link, espprint);
 
 	bootpath_store(1, NULL);
 }

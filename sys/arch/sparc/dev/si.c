@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.5 1995/09/11 19:35:06 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.6 1995/09/14 20:38:56 pk Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -68,6 +68,7 @@ static int si_flags = 0 /* | SDEV_DB2 */ ;
 
 static int	si_match __P((struct device *, void *, void *));
 static void	si_attach __P((struct device *, struct device *, void *));
+static int	si_print __P((void *, char *));
 static int	si_intr __P((void *));
 static void	si_dma_intr __P((struct ncr5380_softc *));
 static int	reset_adapter __P((struct ncr5380_softc *));
@@ -106,6 +107,16 @@ struct cfdriver swcd = {
 	NULL, "sw", si_match, si_attach, DV_DULL,
 	sizeof(struct ncr5380_softc), NULL, 0,
 };
+
+static int
+si_print(aux, name)
+	void *aux;
+	char *name;
+{
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
+}
 
 static int
 si_match(parent, vcf, aux)
@@ -238,7 +249,7 @@ si_attach(parent, self, aux)
 		bootpath_store(1, bp + 1);
 
 	/* Configure sub-devices */
-	config_found(self, &(ncr5380->sc_link), NULL);
+	config_found(self, &(ncr5380->sc_link), si_print);
 
 	bootpath_store(1, NULL);
 }
