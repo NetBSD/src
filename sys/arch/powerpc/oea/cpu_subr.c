@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.14 2004/06/26 21:48:30 kleink Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.15 2004/12/06 04:15:03 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.14 2004/06/26 21:48:30 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.15 2004/12/06 04:15:03 briggs Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -179,6 +179,7 @@ static const struct cputab models[] = {
 	{ "603e",	MPC603e,	REVFMT_MAJMIN },
 	{ "603ev",	MPC603ev,	REVFMT_MAJMIN },
 	{ "604",	MPC604,		REVFMT_MAJMIN },
+	{ "604e",	MPC604e,	REVFMT_MAJMIN },
 	{ "604ev",	MPC604ev,	REVFMT_MAJMIN },
 	{ "620",	MPC620,  	REVFMT_HEX },
 	{ "750",	MPC750,		REVFMT_MAJMIN },
@@ -247,6 +248,7 @@ cpu_probe_cache(void)
 		curcpu()->ci_ci.icache_size = 16 K;
 		assoc = 4;
 		break;
+	case MPC604e:
 	case MPC604ev:
 		curcpu()->ci_ci.dcache_size = 32 K;
 		curcpu()->ci_ci.icache_size = 32 K;
@@ -303,6 +305,7 @@ cpu_attach_common(struct device *self, int id)
 		switch (vers) {
 		case MPC601:
 		case MPC604:
+		case MPC604e:
 		case MPC604ev:
 		case MPC7400:
 		case MPC7410:
@@ -352,7 +355,6 @@ cpu_setup(self, ci)
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
-	case MPC604ev:
 	case MPC750:
 	case IBM750FX:
 	case MPC7400:
@@ -432,16 +434,29 @@ cpu_setup(self, ci)
 	/*
 	 * Display speed and cache configuration.
 	 */
-	if (vers == MPC750 || vers == MPC7400 || vers == IBM750FX ||
-	    vers == MPC7410 || MPC745X_P(vers)) {
+	switch (vers) {
+	case MPC604:
+	case MPC604e:
+	case MPC604ev:
+	case MPC750:
+	case IBM750FX:
+	case MPC7410:
+        case MPC7450:
+        case MPC7455:
+        case MPC7457:
 		aprint_normal("%s: ", self->dv_xname);
 		cpu_print_speed();
-		if (MPC745X_P(vers)) {
-			cpu_config_l3cr(vers);
-		} else {
-			cpu_config_l2cr(pvr);
+
+		if (vers == MPC604ev || vers == MPC750 || vers == MPC7400 ||
+		    vers == IBM750FX || vers == MPC7410 || MPC745X_P(vers)) {
+			if (MPC745X_P(vers)) {
+				cpu_config_l3cr(vers);
+			} else {
+				cpu_config_l2cr(pvr);
+			}
 		}
 		aprint_normal("\n");
+		break;
 	}
 
 #if NSYSMON_ENVSYS > 0
@@ -676,8 +691,10 @@ cpu_config_l2cr(int pvr)
 		l2cr = mfspr(SPR_L2CR);
 	}
 
-	if ((l2cr & L2CR_L2E) == 0)
+	if ((l2cr & L2CR_L2E) == 0) {
+		aprint_normal(" L2 cache present but not enabled ");
 		return;
+	}
 
 	aprint_normal(",");
 	if ((pvr >> 16) == IBM750FX ||
@@ -753,6 +770,8 @@ cpu_print_speed(void)
 	mtspr(SPR_MMCR0, MMCR0_PMC1SEL(PMCN_CYCLES));
 	delay(100000);
 	cps = (mfspr(SPR_PMC1) * 10) + 4999;
+
+	mtspr(SPR_MMCR0, MMCR0_FC);
 
 	aprint_normal("%lld.%02lld MHz", cps / 1000000, (cps / 10000) % 100);
 }
