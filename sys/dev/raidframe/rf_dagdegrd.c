@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.16 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.17 2004/01/01 20:39:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.16 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.17 2004/01/01 20:39:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -440,7 +440,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
          * may be a user buffer in which case we have to remap it.
          */
 	xorNode->results[0] = failedPDA->bufPtr;
-	RF_BZERO(bp, failedPDA->bufPtr, rf_RaidAddressToByte(raidPtr,
+	memset(failedPDA->bufPtr, 0, rf_RaidAddressToByte(raidPtr,
 		failedPDA->numSector));
 
 	/* connect nodes to form graph */
