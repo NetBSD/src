@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_toplvl.c,v 1.1.1.2 1999/02/01 18:46:04 christos Exp $	*/
+/*	$NetBSD: amfs_toplvl.c,v 1.1.1.2.2.1 1999/09/21 04:54:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amfs_toplvl.c,v 1.3 1999/01/10 21:53:43 ezk Exp 
+ * Id: amfs_toplvl.c,v 1.5 1999/02/04 07:24:14 ezk Exp 
  *
  */
 
@@ -229,8 +229,10 @@ mount_amfs_toplvl(char *dir, char *opts)
 
   /* This is it!  Here we try to mount amd on its mount points */
 #ifdef DEBUG
-  amuDebug(D_TRACE)
+  amuDebug(D_TRACE) {
     print_nfs_args(&nfs_args, 0);
+    plog(XLOG_DEBUG, "Generic mount flags 0x%x", genflags);
+  }
 #endif /* DEBUG */
   error = mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type,
 		   0, NULL, mnttab_file_name);
