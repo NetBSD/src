@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.10 1997/03/15 16:32:19 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.11 1997/06/07 11:59:44 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -45,6 +45,7 @@
 /*
  * TODO
  *	write bad block forwarding code
+ *	split the file into a separate floppy file
  */
 
 #include <sys/param.h>
@@ -233,9 +234,6 @@ ra_putonline(ra)
 		return MSCP_FAILED;
 	if (ra->ra_isafloppy)
 		return MSCP_DONE;
-	dl->d_partitions[0].p_size = dl->d_partitions[2].p_size =
-	    dl->d_secperunit;
-	dl->d_partitions[0].p_offset = dl->d_partitions[2].p_offset = 0;
 
 	printf("%s", ra->ra_dev.dv_xname);
 	if ((msg = readdisklabel(raminor(ra->ra_dev.dv_unit, 0),
@@ -280,7 +278,11 @@ raopen(dev, flag, fmt, p)
 		if (ra_putonline(ra) == MSCP_FAILED)
 			return EIO;
 
-	part = raunit(dev);
+	/* If the disk has no label; allow writing everywhere */
+	if (ra->ra_havelabel == 0)
+		ra->ra_wlabel = 1;
+
+	part = rapart(dev);
 	if (ra->ra_isafloppy == 0)
 	        if (part >= ra->ra_disk.dk_label->d_npartitions)
 			return ENXIO;
@@ -337,7 +339,7 @@ raclose(dev, flags, fmt, p)
 	 * Should wait for I/O to complete on this partition even if
 	 * others are open, but wait for work on blkflush().
 	 */
-#if 0
+#if notyet
 	if (ra->ra_openpart == 0) {
 		s = splbio();
 		while (udautab[unit].b_actf)
@@ -370,7 +372,8 @@ rastrategy(bp)
 	unit = raunit(bp->b_dev);
 	if (unit > ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		goto bad;
+		bp->b_flags |= B_ERROR;
+		goto done;
 	}
 	/*
 	 * If drive is open `raw' or reading label, let it at it.
@@ -392,16 +395,12 @@ rastrategy(bp)
 		}
 	} else
 		if (bounds_check_with_label(bp, ra->ra_disk.dk_label,
-		    ra->ra_wlabel) <= 0) {
-			bp->b_error = ENXIO;
-			goto bad;
-		}
+		    ra->ra_wlabel) <= 0)
+			goto done;
 
 	mscp_strategy(bp, ra->ra_dev.dv_parent);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	biodone(bp);
 }
@@ -533,6 +532,12 @@ raonline(usc, mp)
 	dl->d_typename[p++] = n + '0';
 	dl->d_typename[p] = 0;
 	dl->d_npartitions = MAXPARTITIONS;
+	dl->d_partitions[0].p_size = dl->d_partitions[2].p_size =
+	    dl->d_secperunit;
+	dl->d_partitions[0].p_offset = dl->d_partitions[2].p_offset = 0;
+	dl->d_interleave = dl->d_headswitch = 1;
+	dl->d_magic = dl->d_magic2 = DISKMAGIC;
+	dl->d_checksum = dkcksum(dl);
 
 	return (MSCP_DONE);
 }
@@ -651,11 +656,18 @@ raioctl(dev, cmd, data, flag, p)
 		    &lp->d_partitions[rapart(dev)];
 		break;
 
+	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
-		else
+		else {
 			error = setdisklabel(lp, (struct disklabel *)data,0,0);
+			if ((error == 0) && (cmd == DIOCWDINFO)) {
+				ra->ra_wlabel = 1;
+				error = writedisklabel(dev, rastrategy, lp,0);
+				ra->ra_wlabel = 0;
+			}
+		}
 		break;
 
 	case DIOCWLABEL:
@@ -663,16 +675,6 @@ raioctl(dev, cmd, data, flag, p)
 			error = EBADF;
 		else
 			ra->ra_wlabel = 1;
-		break;
-
-	case DIOCWDINFO:
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		else {
-			ra->ra_wlabel = 1;
-			error = writedisklabel(dev, rastrategy, lp,0);
-			ra->ra_wlabel = 0;
-		}
 		break;
 
 	default:
