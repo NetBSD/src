@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29.2.4 1998/11/14 15:56:02 drochner Exp $	*/
+/*	$NetBSD: conf.c,v 1.29.2.5 1999/03/06 12:28:15 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,8 @@ bdev_decl(ccd);
 bdev_decl(raid);
 #include "vnd.h"
 bdev_decl(vnd);
+#include "md.h"
+bdev_decl(md);
 
 struct bdevsw	bdevsw[] =
 {
@@ -80,7 +82,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 14: ULTRIX rl */
 	bdev_notdef(),			/* 15: ULTRIX tmscp */
 	bdev_notdef(),			/* 16: ULTRIX cs */
-	bdev_notdef(),			/* 17: md */
+	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_tape_init(NST,st),		/* 18: SCSI tape */
 	bdev_disk_init(NSD,sd),		/* 19: SCSI disk */
 	bdev_notdef(),			/* 20: ULTRIX tz */
@@ -137,6 +139,7 @@ cdev_decl(pts);
 cdev_decl(ptc);
 cdev_decl(raid);
 cdev_decl(sd);
+cdev_decl(md);
 #include "ss.h"
 cdev_decl(ss);
 cdev_decl(st);
@@ -262,6 +265,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_init(NLKM,lkm),	/* 94: loadable module driver */
 	cdev_scsibus_init(NSCSIBUS,scsibus),	/* 95: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 96: RAIDframe disk driver */
+	cdev_disk_init(NMD,md),	/* 97: memory disk  driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -385,6 +389,7 @@ static int chrtoblktbl[] =  {
 	/* 94 */	NODEV,
 	/* 95 */	NODEV,
 	/* 96 */	32,	/* raid */
+	/* 97 */	17,	/* md */
 };
 
 /*
