@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/18 06:21:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1998/07/27 01:11:08 tv Exp $
 
 .if	(${MACHINE_ARCH} == "arm32") || \
 	(${MACHINE_ARCH} == "i386") || \
-	(${MACHINE_ARCH} == "mips") || \
+	(${MACHINE_ARCH:Mmips*} != "") || \
 	(${MACHINE_ARCH} == "m68k") || \
 	(${MACHINE_ARCH} == "ns32k") || \
 	(${MACHINE_ARCH} == "sparc") || \
