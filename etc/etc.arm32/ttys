@@ -1,20 +1,12 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$NetBSD: ttys,v 1.8 2000/10/26 09:55:50 abs Exp $
+#	$NetBSD: ttys,v 1.9 2001/05/10 01:01:42 lukem Exp $
 #
 # name	getty				type	status		comments
 #
 # Note: For shark console replace vt100 with pc3
 #
 console	"/usr/libexec/getty Pc"		vt100	off secure
-ttyv0	"/usr/libexec/getty Pc"		vt100	on secure
-ttyv1	"/usr/libexec/getty Pc"		vt100	on secure
-ttyv2	"/usr/libexec/getty Pc"		vt100	on secure
-ttyv3	"/usr/libexec/getty Pc"		vt100	on secure
-ttyv4	"/usr/libexec/getty Pc"		vt100	off secure
-ttyv5	"/usr/libexec/getty Pc"		vt100	off secure
-ttyv6	"/usr/libexec/getty Pc"		vt100	off secure
-ttyv7	"/usr/libexec/getty Pc"		vt100	off secure
 ttyE0	"/usr/libexec/getty Pc"		vt220	on secure
 ttyE1	"/usr/libexec/getty Pc"		vt220	on secure
 ttyE2	"/usr/libexec/getty Pc"		vt220	on secure
