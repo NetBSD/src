@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.32 1995/09/27 20:26:51 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.33 1995/10/07 06:28:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -76,12 +76,12 @@ void exit1 __P((struct proc *, int));
  *	Death of process.
  */
 int
-exit(p, v, retval)
+sys_exit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct exit_args /* {
+	struct sys_exit_args /* {
 		syscallarg(int) rval;
 	} */ *uap = v;
 
@@ -269,12 +269,12 @@ exit1(p, rv)
 }
 
 int
-wait4(q, v, retval)
+sys_wait4(q, v, retval)
 	register struct proc *q;
 	void *v;
 	register_t *retval;
 {
-	register struct wait4_args /* {
+	register struct sys_wait4_args /* {
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.2 1995/09/19 22:01:58 thorpej Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.3 1995/10/07 06:26:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -58,9 +58,9 @@
 #include <sys/syscallargs.h>
 
 int
-compat_43_getdtablesize(p, uap, retval)
+compat_43_sys_getdtablesize(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -71,9 +71,9 @@ compat_43_getdtablesize(p, uap, retval)
 
 /* ARGSUSED */
 int
-compat_43_gethostid(p, uap, retval)
+compat_43_sys_gethostid(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -84,12 +84,12 @@ compat_43_gethostid(p, uap, retval)
 
 /*ARGSUSED*/
 int
-compat_43_gethostname(p, v, retval)
+compat_43_sys_gethostname(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_43_gethostname_args /* {
+	struct compat_43_sys_gethostname_args /* {
 		syscallarg(char *) hostname;
 		syscallarg(u_int) len;
 	} */ *uap = v;
@@ -109,12 +109,12 @@ compat_43_gethostname(p, v, retval)
 #define	KINFO_CLOCKRATE		(6<<8)
 
 int
-compat_43_getkerninfo(p, v, retval)
+compat_43_sys_getkerninfo(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_getkerninfo_args /* {
+	register struct compat_43_sys_getkerninfo_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) where;
 		syscallarg(int *) size;
@@ -192,12 +192,12 @@ compat_43_getkerninfo(p, v, retval)
 
 /* ARGSUSED */
 int
-compat_43_sethostid(p, v, retval)
+compat_43_sys_sethostid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_43_sethostid_args /* {
+	struct compat_43_sys_sethostid_args /* {
 		syscallarg(int32_t) hostid;
 	} */ *uap = v;
 	int error;
@@ -211,12 +211,12 @@ compat_43_sethostid(p, v, retval)
 
 /* ARGSUSED */
 int
-compat_43_sethostname(p, v, retval)
+compat_43_sys_sethostname(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_43_sethostname_args *uap = v;
+	struct compat_43_sys_sethostname_args *uap = v;
 	int name;
 	int error;
 

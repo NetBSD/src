@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.40 1995/09/19 21:57:36 thorpej Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.41 1995/10/07 06:29:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,12 +74,12 @@ int mmapdebug = 0;
 
 /* ARGSUSED */
 int
-sbrk(p, v, retval)
+sys_sbrk(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sbrk_args /* {
+	struct sys_sbrk_args /* {
 		syscallarg(int) incr;
 	} */ *uap = v;
 
@@ -89,12 +89,12 @@ sbrk(p, v, retval)
 
 /* ARGSUSED */
 int
-sstk(p, v, retval)
+sys_sstk(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sstk_args /* {
+	struct sys_sstk_args /* {
 		syscallarg(int) incr;
 	} */ *uap = v;
 
@@ -105,9 +105,9 @@ sstk(p, v, retval)
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_OSF1)
 /* ARGSUSED */
 int
-compat_43_getpagesize(p, uap, retval)
+compat_43_sys_getpagesize(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -118,12 +118,12 @@ compat_43_getpagesize(p, uap, retval)
 
 #ifdef COMPAT_43
 int
-compat_43_mmap(p, v, retval)
+compat_43_sys_mmap(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_mmap_args /* {
+	register struct compat_43_sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
@@ -131,7 +131,7 @@ compat_43_mmap(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(long) pos;
 	} */ *uap = v;
-	struct mmap_args /* {
+	struct sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
@@ -174,7 +174,7 @@ compat_43_mmap(p, v, retval)
 		SCARG(&nargs, flags) |= MAP_INHERIT;
 	SCARG(&nargs, fd) = SCARG(uap, fd);
 	SCARG(&nargs, pos) = SCARG(uap, pos);
-	return (mmap(p, &nargs, retval));
+	return (sys_mmap(p, &nargs, retval));
 }
 #endif
 
@@ -187,12 +187,12 @@ compat_43_mmap(p, v, retval)
  * and the return value is adjusted up by the page offset.
  */
 int
-mmap(p, v, retval)
+sys_mmap(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct mmap_args /* {
+	register struct sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
@@ -333,12 +333,12 @@ mmap(p, v, retval)
 }
 
 int
-msync(p, v, retval)
+sys_msync(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct msync_args /* {
+	struct sys_msync_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
@@ -423,12 +423,12 @@ msync(p, v, retval)
 }
 
 int
-munmap(p, v, retval)
+sys_munmap(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct munmap_args /* {
+	register struct sys_munmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
@@ -494,12 +494,12 @@ munmapfd(p, fd)
 }
 
 int
-mprotect(p, v, retval)
+sys_mprotect(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct mprotect_args /* {
+	struct sys_mprotect_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(int) len;
 		syscallarg(int) prot;
@@ -539,12 +539,12 @@ mprotect(p, v, retval)
 
 /* ARGSUSED */
 int
-madvise(p, v, retval)
+sys_madvise(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct madvise_args /* {
+	struct sys_madvise_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) behav;
@@ -556,12 +556,12 @@ madvise(p, v, retval)
 
 /* ARGSUSED */
 int
-mincore(p, v, retval)
+sys_mincore(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct mincore_args /* {
+	struct sys_mincore_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
@@ -572,12 +572,12 @@ mincore(p, v, retval)
 }
 
 int
-mlock(p, v, retval)
+sys_mlock(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct mlock_args /* {
+	struct sys_mlock_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
@@ -622,12 +622,12 @@ mlock(p, v, retval)
 }
 
 int
-munlock(p, v, retval)
+sys_munlock(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct munlock_args /* {
+	struct sys_munlock_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;

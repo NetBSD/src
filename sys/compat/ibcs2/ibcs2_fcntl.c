@@ -150,12 +150,16 @@ oflags2ioflags(flags)
 }
 
 int
-ibcs2_open(p, v, retval)
+ibcs2_sys_open(p, v, retval)
 	struct proc *p;
 	void *v;
-	int *retval;
+	register_t *retval;
 {
-	struct ibcs2_open_args *uap = v;
+	struct ibcs2_sys_open_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) flags;
+		syscallarg(int) mode;
+	} */ *uap = v;
 	int noctty = SCARG(uap, flags) & IBCS2_O_NOCTTY;
 	int ret;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -165,7 +169,7 @@ ibcs2_open(p, v, retval)
 		IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	else
 		IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	ret = open(p, uap, retval);
+	ret = sys_open(p, uap, retval);
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
@@ -179,47 +183,57 @@ ibcs2_open(p, v, retval)
 }
 
 int
-ibcs2_creat(p, v, retval)
+ibcs2_sys_creat(p, v, retval)
         struct proc *p;  
 	void *v;
-	int *retval;
+	register_t *retval;
 {       
-	struct ibcs2_creat_args *uap = v;
-	struct open_args cup;   
+	struct ibcs2_sys_creat_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) mode;
+	} */ *uap = v;
+	struct sys_open_args cup;   
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	SCARG(&cup, flags) = O_WRONLY | O_CREAT | O_TRUNC;
-	return open(p, &cup, retval);
+	return sys_open(p, &cup, retval);
 }       
 
 int
-ibcs2_access(p, v, retval)
+ibcs2_sys_access(p, v, retval)
         struct proc *p;
 	void *v;
-        int *retval;
+        register_t *retval;
 {
-	struct ibcs2_access_args *uap = v;
-        struct access_args cup;
+	struct ibcs2_sys_access_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) flags;
+	} */ *uap = v;
+        struct sys_access_args cup;
         caddr_t sg = stackgap_init(p->p_emul);
 
         IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
         SCARG(&cup, path) = SCARG(uap, path);
         SCARG(&cup, flags) = SCARG(uap, flags);
-        return access(p, &cup, retval);
+        return sys_access(p, &cup, retval);
 }
 
 int
-ibcs2_fcntl(p, v, retval)
+ibcs2_sys_fcntl(p, v, retval)
 	struct proc *p;
 	void *v;
-	int *retval;
+	register_t *retval;
 {
-	struct ibcs2_fcntl_args *uap = v;
+	struct ibcs2_sys_fcntl_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) cmd;
+		syscallarg(char *) arg;
+	} */ *uap = v;
 	int error;
-	struct fcntl_args fa;
+	struct sys_fcntl_args fa;
 	struct flock *flp;
 	struct ibcs2_flock ifl;
 	
@@ -228,22 +242,22 @@ ibcs2_fcntl(p, v, retval)
 		SCARG(&fa, fd) = SCARG(uap, fd);
 		SCARG(&fa, cmd) = F_DUPFD;
 		SCARG(&fa, arg) = SCARG(uap, arg);
-		return fcntl(p, &fa, retval);
+		return sys_fcntl(p, &fa, retval);
 	case IBCS2_F_GETFD:
 		SCARG(&fa, fd) = SCARG(uap, fd);
 		SCARG(&fa, cmd) = F_GETFD;
 		SCARG(&fa, arg) = SCARG(uap, arg);
-		return fcntl(p, &fa, retval);
+		return sys_fcntl(p, &fa, retval);
 	case IBCS2_F_SETFD:
 		SCARG(&fa, fd) = SCARG(uap, fd);
 		SCARG(&fa, cmd) = F_SETFD;
 		SCARG(&fa, arg) = SCARG(uap, arg);
-		return fcntl(p, &fa, retval);
+		return sys_fcntl(p, &fa, retval);
 	case IBCS2_F_GETFL:
 		SCARG(&fa, fd) = SCARG(uap, fd);
 		SCARG(&fa, cmd) = F_GETFL;
 		SCARG(&fa, arg) = SCARG(uap, arg);
-		error = fcntl(p, &fa, retval);
+		error = sys_fcntl(p, &fa, retval);
 		if (error)
 			return error;
 		*retval = oflags2ioflags(*retval);
@@ -252,7 +266,7 @@ ibcs2_fcntl(p, v, retval)
 		SCARG(&fa, fd) = SCARG(uap, fd);
 		SCARG(&fa, cmd) = F_SETFL;
 		SCARG(&fa, arg) = (void *)ioflags2oflags(SCARG(uap, arg));
-		return fcntl(p, &fa, retval);
+		return sys_fcntl(p, &fa, retval);
 
 	case IBCS2_F_GETLK:
 	    {
@@ -266,7 +280,7 @@ ibcs2_fcntl(p, v, retval)
 		SCARG(&fa, fd) = SCARG(uap, fd);
 		SCARG(&fa, cmd) = F_GETLK;
 		SCARG(&fa, arg) = (void *)flp;
-		error = fcntl(p, &fa, retval);
+		error = sys_fcntl(p, &fa, retval);
 		if (error)
 			return error;
 		cvt_flock2iflock(flp, &ifl);
@@ -286,7 +300,7 @@ ibcs2_fcntl(p, v, retval)
 		SCARG(&fa, fd) = SCARG(uap, fd);
 		SCARG(&fa, cmd) = F_SETLK;
 		SCARG(&fa, arg) = (void *)flp;
-		return fcntl(p, &fa, retval);
+		return sys_fcntl(p, &fa, retval);
 	    }
 
 	case IBCS2_F_SETLKW:
@@ -301,7 +315,7 @@ ibcs2_fcntl(p, v, retval)
 		SCARG(&fa, fd) = SCARG(uap, fd);
 		SCARG(&fa, cmd) = F_SETLKW;
 		SCARG(&fa, arg) = (void *)flp;
-		return fcntl(p, &fa, retval);
+		return sys_fcntl(p, &fa, retval);
 	    }
 	}
 	return ENOSYS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.11 1995/10/02 08:20:47 pk Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.12 1995/10/07 06:27:39 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -48,10 +48,11 @@
 #include <compat/svr4/svr4_fcntl.h>
 #include <compat/svr4/svr4_poll.h>
 
-static int
+static u_long
 svr4_to_bsd_cmd(cmd)
-	int	cmd;
+	u_long cmd;
 {
+
 	switch (cmd) {
 	case SVR4_F_DUPFD:
 		return F_DUPFD;
@@ -174,14 +175,14 @@ svr4_to_bsd_flock(iflp, oflp)
 }
 
 int
-svr4_open(p, v, retval)
-	register struct proc		*p;
-	void				*v;
-	register_t			*retval;
+svr4_sys_open(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	struct svr4_open_args	*uap = v;
+	struct svr4_sys_open_args	*uap = v;
 	int			error;
-	struct open_args	cup;
+	struct sys_open_args	cup;
 
 	caddr_t sg = stackgap_init(p->p_emul);
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -189,7 +190,7 @@ svr4_open(p, v, retval)
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, flags) = svr4_to_bsd_flags(SCARG(uap, flags));
 	SCARG(&cup, mode) = SCARG(uap, mode);
-	error = open(p, &cup, retval);
+	error = sys_open(p, &cup, retval);
 
 	if (error)
 		return error;
@@ -208,13 +209,13 @@ svr4_open(p, v, retval)
 
 
 int
-svr4_creat(p, v, retval)
-	register struct proc		*p;
-	void				*v;
-	register_t			*retval;
+svr4_sys_creat(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	struct svr4_creat_args *uap = v;
-	struct open_args cup;
+	struct svr4_sys_creat_args *uap = v;
+	struct sys_open_args cup;
 
 	caddr_t sg = stackgap_init(p->p_emul);
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -223,18 +224,18 @@ svr4_creat(p, v, retval)
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	SCARG(&cup, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 
-	return open(p, &cup, retval);
+	return sys_open(p, &cup, retval);
 }
 
 
 int
-svr4_access(p, v, retval)
-	register struct proc			*p;
-	void					*v;
-	register_t				*retval;
+svr4_sys_access(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	struct svr4_access_args *uap = v;
-	struct access_args cup;
+	struct svr4_sys_access_args *uap = v;
+	struct sys_access_args cup;
 
 	caddr_t sg = stackgap_init(p->p_emul);
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -242,19 +243,19 @@ svr4_access(p, v, retval)
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, flags) = SCARG(uap, flags);
 
-	return access(p, &cup, retval);
+	return sys_access(p, &cup, retval);
 }
 
 
 int
-svr4_fcntl(p, v, retval)
-	register struct proc		*p;
-	void				*v;
-	register_t			*retval;
+svr4_sys_fcntl(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	struct svr4_fcntl_args	*uap = v;
-	int			error;
-	struct fcntl_args	fa;
+	struct svr4_sys_fcntl_args	*uap = v;
+	int				error;
+	struct sys_fcntl_args		fa;
 
 	SCARG(&fa, fd) = SCARG(uap, fd);
 	SCARG(&fa, cmd) = svr4_to_bsd_cmd(SCARG(uap, cmd));
@@ -264,11 +265,11 @@ svr4_fcntl(p, v, retval)
 	case F_GETFD:
 	case F_SETFD:
 		SCARG(&fa, arg) = SCARG(uap, arg);
-		return fcntl(p, &fa, retval);
+		return sys_fcntl(p, &fa, retval);
 
 	case F_GETFL:
 		SCARG(&fa, arg) = SCARG(uap, arg);
-		error = fcntl(p, &fa, retval);
+		error = sys_fcntl(p, &fa, retval);
 		if (error)
 			return error;
 		*retval = bsd_to_svr4_flags(*retval);
@@ -276,7 +277,7 @@ svr4_fcntl(p, v, retval)
 
 	case F_SETFL:
 		SCARG(&fa, arg) = (void *) svr4_to_bsd_flags(SCARG(uap, arg));
-		return fcntl(p, &fa, retval);
+		return sys_fcntl(p, &fa, retval);
 
 	case F_GETLK:
 	case F_SETLK:
@@ -298,7 +299,7 @@ svr4_fcntl(p, v, retval)
 			if (error)
 				return error;
 
-			error = fcntl(p, &fa, retval);
+			error = sys_fcntl(p, &fa, retval);
 			if (error || SCARG(&fa, cmd) != F_GETLK)
 				return error;
 
@@ -362,12 +363,12 @@ svr4_pollscan(p, pl, nfd, retval)
  * differently.
  */
 int
-svr4_poll(p, v, retval)
-	register struct proc		*p;
-	void				*v;
-	register_t			*retval;
+svr4_sys_poll(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	struct svr4_poll_args *uap = v;
+	struct svr4_sys_poll_args *uap = v;
 	int i, s;
 	int error, error2;
 	size_t sz = sizeof(struct svr4_pollfd) * SCARG(uap, nfds);

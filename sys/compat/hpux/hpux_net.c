@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.11 1995/09/19 22:53:49 thorpej Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.12 1995/10/07 06:26:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,28 @@
 #include <compat/hpux/hpux_util.h>
 
 
+#define syscallarg(x)   union { x datum; register_t pad; }
+
+struct hpux_sys_setsockopt_args {
+	syscallarg(int) s;
+	syscallarg(int) level;
+	syscallarg(int) name;
+	syscallarg(caddr_t) val;
+	syscallarg(int) valsize;
+};
+
+struct hpux_sys_getsockopt_args {
+	syscallarg(int) s;
+	syscallarg(int) level;
+	syscallarg(int) name;
+	syscallarg(caddr_t) val;
+	syscallarg(int *) avalsize;
+};
+
+int	hpux_sys_setsockopt	__P((struct proc *, void *, register_t *));
+int	hpux_sys_getsockopt	__P((struct proc *, void *, register_t *));
+
+
 #define MINBSDIPCCODE	0x3EE
 #define NUMBSDIPC	32
 
@@ -78,38 +100,38 @@ struct hpuxtobsdipc {
 	int (*rout)();
 	int nargs;
 } hpuxtobsdipc[NUMBSDIPC] = {
-	{ socket,		3 }, /* 3ee */
-	{ listen,		2 }, /* 3ef */
-	{ bind,			3 }, /* 3f0 */
-	{ compat_43_accept,	3 }, /* 3f1 */
-	{ connect,		3 }, /* 3f2 */
-	{ compat_43_recv,	4 }, /* 3f3 */
-	{ compat_43_send,	4 }, /* 3f4 */
-	{ shutdown,		2 }, /* 3f5 */
-	{ compat_43_getsockname,3 }, /* 3f6 */
-	{ hpux_setsockopt,	5 }, /* 3f7 */
-	{ sendto,		6 }, /* 3f8 */
-	{ compat_43_recvfrom,	6 }, /* 3f9 */
-	{ compat_43_getpeername,3 }, /* 3fa */
-	{ NULL,			0 }, /* 3fb */
-	{ NULL,			0 }, /* 3fc */
-	{ NULL,			0 }, /* 3fd */
-	{ NULL,			0 }, /* 3fe */
-	{ NULL,			0 }, /* 3ff */
-	{ NULL,			0 }, /* 400 */
-	{ NULL,			0 }, /* 401 */
-	{ NULL,			0 }, /* 402 */
-	{ NULL,			0 }, /* 403 */
-	{ NULL,			0 }, /* 404 */
-	{ NULL,			0 }, /* 405 */
-	{ NULL,			0 }, /* 406 */
-	{ NULL,			0 }, /* 407 */
-	{ NULL,			0 }, /* 408 */
-	{ NULL,			0 }, /* 409 */
-	{ NULL,			0 }, /* 40a */
-	{ hpux_getsockopt,	5 }, /* 40b */
-	{ NULL,			0 }, /* 40c */
-	{ NULL,			0 }, /* 40d */
+	{ sys_socket,			3 }, /* 3ee */
+	{ sys_listen,			2 }, /* 3ef */
+	{ sys_bind,			3 }, /* 3f0 */
+	{ compat_43_sys_accept,		3 }, /* 3f1 */
+	{ sys_connect,			3 }, /* 3f2 */
+	{ compat_43_sys_recv,		4 }, /* 3f3 */
+	{ compat_43_sys_send,		4 }, /* 3f4 */
+	{ sys_shutdown,			2 }, /* 3f5 */
+	{ compat_43_sys_getsockname,	3 }, /* 3f6 */
+	{ hpux_sys_setsockopt,		5 }, /* 3f7 */
+	{ sys_sendto,			6 }, /* 3f8 */
+	{ compat_43_sys_recvfrom,	6 }, /* 3f9 */
+	{ compat_43_sys_getpeername,	3 }, /* 3fa */
+	{ NULL,				0 }, /* 3fb */
+	{ NULL,				0 }, /* 3fc */
+	{ NULL,				0 }, /* 3fd */
+	{ NULL,				0 }, /* 3fe */
+	{ NULL,				0 }, /* 3ff */
+	{ NULL,				0 }, /* 400 */
+	{ NULL,				0 }, /* 401 */
+	{ NULL,				0 }, /* 402 */
+	{ NULL,				0 }, /* 403 */
+	{ NULL,				0 }, /* 404 */
+	{ NULL,				0 }, /* 405 */
+	{ NULL,				0 }, /* 406 */
+	{ NULL,				0 }, /* 407 */
+	{ NULL,				0 }, /* 408 */
+	{ NULL,				0 }, /* 409 */
+	{ NULL,				0 }, /* 40a */
+	{ hpux_sys_getsockopt,		5 }, /* 40b */
+	{ NULL,				0 }, /* 40c */
+	{ NULL,				0 }, /* 40d */
 };
 
 /*
@@ -117,12 +139,12 @@ struct hpuxtobsdipc {
  * Gleened from disassembled libbsdipc.a syscall entries.
  */
 int
-hpux_netioctl(p, v, retval)
+hpux_sys_netioctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_netioctl_args *uap = v;
+	struct hpux_sys_netioctl_args *uap = v;
 	int *args, i;
 	register int code;
 	int error;
@@ -176,23 +198,13 @@ socksetsize(size, m)
 	}
 }
 
-#define syscallarg(x)   union { x datum; register_t pad; }
-
-struct hpux_setsockopt_args {
-	syscallarg(int)		s;
-	syscallarg(int)		level;
-	syscallarg(int)		name;
-	syscallarg(caddr_t)	val;
-	syscallarg(int)		valsize;
-};
-
 /* ARGSUSED */
-hpux_setsockopt(p, v, retval)
+hpux_sys_setsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_setsockopt_args *uap = v;
+	struct hpux_sys_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int tmp, error;
@@ -231,12 +243,12 @@ hpux_setsockopt(p, v, retval)
 
 /* ARGSUSED */
 int
-hpux_setsockopt2(p, v, retval)
+hpux_sys_setsockopt2(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_setsockopt2_args *uap = v;
+	register struct hpux_sys_setsockopt2_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -260,21 +272,13 @@ hpux_setsockopt2(p, v, retval)
 	    SCARG(uap, name), m));
 }
 
-struct hpux_getsockopt_args {
-	syscallarg(int)		s;
-	syscallarg(int)		level;
-	syscallarg(int)		name;
-	syscallarg(caddr_t)	val;
-	syscallarg(int *)	avalsize;
-};
-
 int
-hpux_getsockopt(p, v, retval)
+hpux_sys_getsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_getsockopt_args *uap = v;
+	struct hpux_sys_getsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int valsize, error;

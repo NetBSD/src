@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.4 1995/09/19 22:02:03 thorpej Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.5 1995/10/07 06:26:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -68,12 +68,12 @@
 #include <sys/user.h>		/* for coredump */
 
 int
-compat_43_sigblock(p, v, retval)
+compat_43_sys_sigblock(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_43_sigblock_args /* {
+	struct compat_43_sys_sigblock_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
 
@@ -86,12 +86,12 @@ compat_43_sigblock(p, v, retval)
 
 
 int
-compat_43_sigsetmask(p, v, retval)
+compat_43_sys_sigsetmask(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_43_sigsetmask_args /* {
+	struct compat_43_sys_sigsetmask_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
 
@@ -105,12 +105,12 @@ compat_43_sigsetmask(p, v, retval)
 
 /* ARGSUSED */
 int
-compat_43_sigstack(p, v, retval)
+compat_43_sys_sigstack(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sigstack_args /* {
+	register struct compat_43_sys_sigstack_args /* {
 		syscallarg(struct sigstack *) nss;
 		syscallarg(struct sigstack *) oss;
 	} */ *uap = v;
@@ -141,12 +141,12 @@ compat_43_sigstack(p, v, retval)
  */
 /* ARGSUSED */
 int
-compat_43_sigvec(p, v, retval)
+compat_43_sys_sigvec(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sigvec_args /* {
+	register struct compat_43_sys_sigvec_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct sigvec *) nsv;
 		syscallarg(struct sigvec *) osv;
@@ -193,12 +193,12 @@ compat_43_sigvec(p, v, retval)
 
 /* ARGSUSED */
 int
-compat_43_killpg(p, v, retval)
+compat_43_sys_killpg(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_killpg_args /* {
+	register struct compat_43_sys_killpg_args /* {
 		syscallarg(int) pgid;
 		syscallarg(int) signum;
 	} */ *uap = v;

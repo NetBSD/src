@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.19 1995/09/19 22:56:37 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.20 1995/10/07 06:25:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -191,12 +191,12 @@ linux_sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-linux_sigreturn(p, v, retval)
+linux_sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sigreturn_args /* {
+	struct linux_sys_sigreturn_args /* {
 		syscallarg(struct linux_sigcontext *) scp;
 	} */ *uap = v;
 	struct linux_sigcontext *scp, context;
@@ -260,7 +260,7 @@ linux_sigreturn(p, v, retval)
 int
 linux_read_ldt(p, uap, retval)
 	struct proc *p;
-	struct linux_modify_ldt_args /* {
+	struct linux_sys_modify_ldt_args /* {
 		syscallarg(int) func;
 		syscallarg(void *) ptr;
 		syscallarg(size_t) bytecount;
@@ -304,7 +304,7 @@ struct linux_ldt_info {
 int
 linux_write_ldt(p, uap, retval)
 	struct proc *p;
-	struct linux_modify_ldt_args /* {
+	struct linux_sys_modify_ldt_args /* {
 		syscallarg(int) func;
 		syscallarg(void *) ptr;
 		syscallarg(size_t) bytecount;
@@ -364,12 +364,12 @@ linux_write_ldt(p, uap, retval)
 #endif /* USER_LDT */
 
 int
-linux_modify_ldt(p, v, retval)
+linux_sys_modify_ldt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_modify_ldt_args /* {
+	struct linux_sys_modify_ldt_args /* {
 		syscallarg(int) func;
 		syscallarg(void *) ptr;
 		syscallarg(size_t) bytecount;
@@ -399,6 +399,7 @@ dev_t
 linux_fakedev(dev)
 	dev_t dev;
 {
+
 	if (major(dev) == NETBSD_CONS_MAJOR)
 		return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
 	return dev;
@@ -413,12 +414,12 @@ linux_machdepioctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct linux_ioctl_args /* {
+	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	struct ioctl_args bia, tmparg;
+	struct sys_ioctl_args bia, tmparg;
 	u_long com;
 #if NVT > 0
 	int error, mode;
@@ -470,7 +471,7 @@ linux_machdepioctl(p, v, retval)
 		break;
 	case LINUX_VT_GETMODE:
 		SCARG(&bia, com) = VT_GETMODE;
-		if ((error = ioctl(p, &bia, retval)))
+		if ((error = sys_ioctl(p, &bia, retval)))
 			return error;
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
@@ -508,7 +509,7 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	return ioctl(p, &bia, retval);
+	return sys_ioctl(p, &bia, retval);
 }
 
 /*
@@ -517,12 +518,12 @@ linux_machdepioctl(p, v, retval)
  * to rely on I/O permission maps, which are not implemented.
  */
 int
-linux_iopl(p, v, retval)
+linux_sys_iopl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_iopl_args /* {
+	struct linux_sys_iopl_args /* {
 		syscallarg(int) level;
 	} */ *uap = v;
 	struct trapframe *fp = p->p_md.md_regs;
@@ -539,12 +540,12 @@ linux_iopl(p, v, retval)
  * just let it have the whole range.
  */
 int
-linux_ioperm(p, v, retval)
+linux_sys_ioperm(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_ioperm_args /* {
+	struct linux_sys_ioperm_args /* {
 		syscallarg(unsigned int) lo;
 		syscallarg(unsigned int) hi;
 		syscallarg(int) val;

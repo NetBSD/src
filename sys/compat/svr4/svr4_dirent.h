@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_dirent.h,v 1.3 1994/10/29 00:43:14 christos Exp $	 */
+/*	$NetBSD: svr4_dirent.h,v 1.4 1995/10/07 06:27:37 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -30,23 +30,16 @@
 #ifndef	_SVR4_DIRENT_H_
 #define	_SVR4_DIRENT_H_
 
-#include <compat/svr4/svr4_types.h>
-
 #define SVR4_MAXNAMLEN	512
-#define SVR4_DIRBUF	1048
 
 struct svr4_dirent {
 	svr4_ino_t	d_ino;
 	svr4_off_t	d_off;
 	u_short		d_reclen;
-	char		d_name[1];
+	char		d_name[SVR4_MAXNAMLEN + 1];
 };
 
-typedef struct {
-	int	 dd_fd;
-	int	 dd_loc;
-	int	 dd_size;
-	char	*dd_buf;
-} SVR4_DIR;
+#define SVR4_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)dp)
+#define SVR4_RECLEN(de,namlen) ALIGN((SVR4_NAMEOFF(de) + (namlen) + 1))
 
 #endif /* !_SVR4_DIRENT_H_ */

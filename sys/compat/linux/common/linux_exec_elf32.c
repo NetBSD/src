@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.11 1995/09/19 22:37:27 thorpej Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.12 1995/10/07 06:27:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -65,6 +65,7 @@ static void *linux_aout_copyargs __P((struct exec_package *,
 
 const char linux_emul_path[] = "/emul/linux";
 extern int linux_error[];
+extern char linux_sigcode[], linux_esigcode[];
 extern struct sysent linux_sysent[];
 extern char *linux_syscallnames[];
 
@@ -394,12 +395,12 @@ linux_elf_probe(p, epp, itp, pos)
  */
 
 int
-linux_uselib(p, v, retval)
+linux_sys_uselib(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_uselib_args /* {
+	struct linux_sys_uselib_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
 	caddr_t sg;
@@ -482,12 +483,12 @@ linux_uselib(p, v, retval)
  * to the NetBSD execve().
  */
 int
-linux_execve(p, v, retval)
+linux_sys_execve(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_execve_args /* {
+	struct linux_sys_execve_args /* {
 		syscallarg(char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
@@ -497,5 +498,5 @@ linux_execve(p, v, retval)
 	sg = stackgap_init(p->p_emul);
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return execve(p, uap, retval);
+	return sys_execve(p, uap, retval);
 }
