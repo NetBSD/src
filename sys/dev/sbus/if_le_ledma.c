@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.11 2000/07/09 20:57:43 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.12 2000/10/20 05:57:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -390,23 +390,23 @@ leattach_ledma(parent, self, aux)
 		return;
 	}
 
-	/* Load DMA buffer */
-	if ((error = bus_dmamap_load_raw(dmatag, lesc->sc_dmamap,
-				&seg, rseg, MEMSIZE, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: DMA buffer map load error %d\n",
-			self->dv_xname, error);
-		bus_dmamem_free(dmatag, &seg, rseg);
-		return;
-	}
-
 	/* Map DMA buffer into kernel space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
 			       (caddr_t *)&sc->sc_mem,
 			       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s @ ledma: DMA buffer map error %d\n",
 			self->dv_xname, error);
-		bus_dmamap_unload(dmatag, lesc->sc_dmamap);
 		bus_dmamem_free(dmatag, &seg, rseg);
+		return;
+	}
+
+	/* Load DMA buffer */
+	if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap, sc->sc_mem,
+			MEMSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			self->dv_xname, error);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		bus_dmamem_unmap(dmatag, sc->sc_mem, MEMSIZE);
 		return;
 	}
 
