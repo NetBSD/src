@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/06/06 02:43:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.13 2001/01/12 01:43:48 cgd Exp $
 
 PROG=	ypserv
 SRCS=	ypserv.c ypserv_proc.c ypserv_db.c ypserv_xdr.c \
@@ -16,7 +16,7 @@ DPADD+=	${LIBWRAP} ${LIBUTIL}
 .include <bsd.prog.mk>
 
 gethnamaddr.o: gethnamaddr.c
-	${COMPILE.c} -UYP ${.IMPSRC}
+	${COMPILE.c} -UYP -D_LIBC ${.IMPSRC}
 
 getnetnamadr.o: getnetnamadr.c
-	${COMPILE.c} -UYP ${.IMPSRC}
+	${COMPILE.c} -UYP -D_LIBC ${.IMPSRC}
