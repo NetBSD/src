@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.31 1996/03/15 07:56:00 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.32 1996/03/30 22:23:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -1373,7 +1373,7 @@ void db_show_callout(addr, haddr, count, modif)
 		if (name == NULL)
 			name = "?";
 
-                db_printf("%9d %9d %8x  %s (%x)\n",
+                db_printf("%9d %9d %p  %s (%p)\n",
 			  cum, t, p1->c_arg, name, p1->c_func);
 	}
 	splx(s);

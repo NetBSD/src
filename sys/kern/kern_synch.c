@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.35 1996/02/09 18:59:50 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.36 1996/03/30 22:23:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -711,10 +711,10 @@ db_show_all_procs(addr, haddr, count, modif)
 	while (p != 0) {
 		pp = p->p_pptr;
 		if (p->p_stat) {
-			db_printf("%5d %06x %06x ",
+			db_printf("%5d %p %p ",
 			    p->p_pid, p, p->p_addr);
 			if (map)
-				db_printf("%06x %s   ",
+				db_printf("%p %s   ",
 				    p->p_vmspace, p->p_comm);
 			else
 				db_printf("%3d %5d %5d  %06x  %d  %s  %s   ",
@@ -724,7 +724,7 @@ db_show_all_procs(addr, haddr, count, modif)
 			if (p->p_wchan) {
 				if (p->p_wmesg)
 					db_printf("%s ", p->p_wmesg);
-				db_printf("%x", p->p_wchan);
+				db_printf("%p", p->p_wchan);
 			}
 			db_printf("\n");
 		}
