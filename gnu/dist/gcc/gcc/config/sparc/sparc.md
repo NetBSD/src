@@ -148,8 +148,12 @@
 	 (eq_attr "branch_type" "fcc")
 	   (if_then_else (match_operand 0 "fcc0_reg_operand" "")
 	     (if_then_else (eq_attr "empty_delay_slot" "true")
-	       (const_int 2)
-	       (const_int 1))
+	       (if_then_else (eq (symbol_ref "TARGET_V9") (const_int 0))
+		 (const_int 3)
+		 (const_int 2))
+	       (if_then_else (eq (symbol_ref "TARGET_V9") (const_int 0))
+		 (const_int 2)
+		 (const_int 1)))
 	     (if_then_else (lt (pc) (match_dup 2))
 	       (if_then_else (lt (minus (match_dup 2) (pc)) (const_int 260000))
 		 (if_then_else (eq_attr "empty_delay_slot" "true")
@@ -7024,7 +7028,7 @@
     }
 })
 
-(define_insn ""
+(define_insn "*ashrdi3_sp64"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(ashiftrt:DI (match_operand:DI 1 "register_operand" "r")
 		     (match_operand:SI 2 "arith_operand" "rI")))]
@@ -7114,7 +7118,7 @@
     }
 })
 
-(define_insn ""
+(define_insn "*lshrdi3_sp64"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(lshiftrt:DI (match_operand:DI 1 "register_operand" "r")
 		     (match_operand:SI 2 "arith_operand" "rI")))]
