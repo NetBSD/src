@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.6 1996/03/04 03:25:59 cgd Exp $
+#	$NetBSD: INSTALL,v 1.7 1996/03/05 01:32:20 thorpej Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
@@ -13,6 +13,11 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=... # size of extended memory
 
 #options	DUMMY_NOPS	# speed hack; recommended
 options		MACHINE_NONCONTIG

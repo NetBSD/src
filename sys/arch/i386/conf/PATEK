@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.29 1996/03/04 03:26:04 cgd Exp $
+#	$NetBSD: PATEK,v 1.30 1996/03/05 01:32:26 thorpej Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -9,6 +9,11 @@ machine		i386		# architecture, used by config; REQUIRED
 options		I486_CPU
 #options	I586_CPU
 #options	MATH_EMULATE	# floating point emulation
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=... # size of extended memory
 
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE

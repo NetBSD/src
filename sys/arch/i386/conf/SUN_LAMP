@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.64 1996/03/04 03:26:05 cgd Exp $
+#	$NetBSD: SUN_LAMP,v 1.65 1996/03/05 01:32:29 thorpej Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -9,6 +9,11 @@ machine		i386		# architecture, used by config; REQUIRED
 options		I486_CPU
 #options	I586_CPU
 #options	MATH_EMULATE	# floating point emulation
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=... # size of extended memory
 
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE

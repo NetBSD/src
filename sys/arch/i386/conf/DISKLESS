@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.16 1996/03/04 03:25:51 cgd Exp $
+#	$NetBSD: DISKLESS,v 1.17 1996/03/05 01:32:13 thorpej Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -11,6 +11,11 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=... # size of extended memory
 
 #options	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE

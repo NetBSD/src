@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.62 1996/03/04 03:26:09 cgd Exp $
+#	$NetBSD: TRINITY,v 1.63 1996/03/05 01:32:33 thorpej Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -9,6 +9,11 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 #options	I486_CPU
 #options	I586_CPU
 #options	MATH_EMULATE	# floating point emulation
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=... # size of extended memory
 
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
