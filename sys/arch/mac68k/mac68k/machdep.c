@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.284 2003/01/17 23:21:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.285 2003/04/02 00:44:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -293,8 +293,9 @@ mac68k_init()
 	 * high[numranges-1] was decremented in pmap_bootstrap.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    high[numranges - 1] + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    high[numranges - 1] + i * PAGE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 	pmap_update(pmap_kernel());
@@ -453,7 +454,7 @@ cpu_startup(void)
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -489,7 +490,7 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -501,7 +502,7 @@ cpu_startup(void)
 	 * XXX interrupt vectors and such writable for the Mac toolbox.
 	 */
 	if (uvm_map_protect(kernel_map,
-	    m68k_trunc_page(&start + (NBPG - 1)), m68k_round_page(&etext),
+	    m68k_trunc_page(&start + (PAGE_SIZE - 1)), m68k_round_page(&etext),
 	    (UVM_PROT_READ | UVM_PROT_EXEC), TRUE) != 0)
 		panic("can't protect kernel text");
 
@@ -696,7 +697,7 @@ cpu_init_kcore_hdr()
 	 * Initialize the `dispatcher' portion of the header.
 	 */
 	strcpy(h->name, machine);
-	h->page_size = NBPG;
+	h->page_size = PAGE_SIZE;
 	h->kernbase = KERNBASE;
 
 	/*
@@ -792,7 +793,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space in
+ * Dumps always skip the first PAGE_SIZE of disk space in
  * case there might be a disk label stored there.  If there
  * is extra space, put dump at the end to reduce the chance
  * that swapping trashes it.
@@ -824,7 +825,7 @@ cpu_dumpconf()
 
 	/*
 	 * Check to see if we will fit.  Note we always skip the
-	 * first NBPG in case there is a disk label there.
+	 * first PAGE_SIZE in case there is a disk label there.
 	 */
 	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
 		dumpsize = 0;
@@ -887,7 +888,7 @@ dumpsys()
 		goto bad;
 
 	for (pg = 0; pg < dumpsize; pg++) {
-#define NPGMB	(1024*1024/NBPG)
+#define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
 			printf("%d ", pg / NPGMB);
@@ -905,12 +906,12 @@ dumpsys()
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 		pmap_update(pmap_kernel());
 
-		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
  bad:
 		switch (error) {
 		case 0:
-			maddr += NBPG;
-			blkno += btodb(NBPG);
+			maddr += PAGE_SIZE;
+			blkno += btodb(PAGE_SIZE);
 			break;
 
 		case ENXIO:
@@ -2592,7 +2593,7 @@ get_mapping(void)
 
 	last = 0;
 	for (addr = 0; addr <= lastpage && get_physical(addr, &phys);
-	    addr += NBPG) {
+	    addr += PAGE_SIZE) {
 		if (numranges > 0 && phys != high[last]) {
 			/*
 			 * Attempt to find if this page is already
@@ -2613,7 +2614,7 @@ get_mapping(void)
 
 		if (numranges > 0 && phys == high[last]) {
 			/* Common case:  extend existing segment on high end */
-			high[last] += NBPG;
+			high[last] += PAGE_SIZE;
 		} else {
 			/* This is a new physical segment. */
 			for (last = 0; last < numranges; last++)
@@ -2630,7 +2631,7 @@ get_mapping(void)
 
 			numranges++;
 			low[last] = phys;
-			high[last] = phys + NBPG;
+			high[last] = phys + PAGE_SIZE;
 		}
 
 		/* Coalesce adjoining segments as appropriate */
@@ -2646,7 +2647,7 @@ get_mapping(void)
 	}
 	if (mac68k_machine.do_graybars) {
 		printf("System RAM: %ld bytes in %ld pages.\n",
-		    addr, addr / NBPG);
+		    addr, addr / PAGE_SIZE);
 		for (i = 0; i < numranges; i++) {
 			printf("     Low = 0x%lx, high = 0x%lx\n",
 			    low[i], high[i]);
