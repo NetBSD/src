@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isic.4,v 1.1.1.1 2001/01/05 15:43:18 martin Exp $
+.\"	$Id: isic.4,v 1.2 2001/02/12 20:07:03 is Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -109,7 +109,8 @@ ELSA MicroLink MC/all
 .Pp
 Cards on the Amiga Zorro bus:
 .Pp
-BSC/ITH ISDN Master, ITH ISDN MasterII or VMC ISDN Blaster
+BSC/ITH ISDN Master or Master II, ITH ISDN MasterII, Individual Computers
+ISDN Surfer, VMC ISDN Blaster, or Zeus ISDN Link
 .Cd "aster* at zbus?"
 .Cd "isic* at aster? port ?"
 .Pp
@@ -272,8 +273,10 @@ Valid i/o port values must be in the range (<unknown>).
 Valid interrupt configurations are (<unknown>).
 .Pp
 .It Ar "BSC ISDN Master"
+.It Ar "BSC ISDN Master II"
 .It Ar "ITH ISDN MasterII"
 .It Ar "VMC ISDN Blaster"
+.It Ar "Zeus ISDN Link"
 .Pp
 The card addresses are auto-configured by the Zorro bus kernel subsystem.
 The ISDN functions of the boards are at known (to the driver) relative
@@ -285,6 +288,19 @@ instead of IPL 6 (which is used by most AmigaOS software).
 .Pp
 Note that the ITH ISDN MasterII doesn't work in the DraCo Zorro bus. This
 is no NetBSD problem, but general.
+.Pp
+.It Ar "Individual Computers ISDN Surfer"
+.Pp
+The card addresses are auto-configured by the Zorro bus kernel subsystem.
+The ISDN functions of the boards are at known (to the driver) relative
+addresses.
+.Pp
+The card is operated by the driver at
+.Em IPL 2
+instead of IPL 6 (which is used by most AmigaOS software). Because of this,
+if an AmigaOS driver did lock the interupt priority level of the card, your
+system might hang soon after boot. In this case, boot using the boot block,
+or without enabling the AmigaOS driver if you use loadbsd.
 .El
 .Pp
 .Sh CAVEATS
