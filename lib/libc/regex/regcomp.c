@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.11 1998/11/14 16:43:49 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.12 1998/12/08 13:52:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.11 1998/11/14 16:43:49 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.12 1998/12/08 13:52:48 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -126,9 +126,9 @@ static int isinsets __P((struct re_guts *g, int c));
 static int samesets __P((struct re_guts *g, int c1, int c2));
 static void categorize __P((struct parse *p, struct re_guts *g));
 static sopno dupl __P((struct parse *p, sopno start, sopno finish));
-static void doemit __P((struct parse *p, sop op, size_t opnd));
-static void doinsert __P((struct parse *p, sop op, size_t opnd, sopno pos));
-static void dofwd __P((struct parse *p, sopno pos, sop value));
+static void doemit __P((struct parse *p, sop op, sopno opnd));
+static void doinsert __P((struct parse *p, sop op, sopno opnd, sopno pos));
+static void dofwd __P((struct parse *p, sopno pos, sopno value));
 static void enlarge __P((struct parse *p, sopno size));
 static void stripsnug __P((struct parse *p, struct re_guts *g));
 static void findmust __P((struct parse *p, struct re_guts *g));
@@ -162,9 +162,9 @@ static char nuls[10];		/* place to point scanner in event of error */
 #define	MUSTSEE(c, e)	(REQUIRE(MORE() && PEEK() == (c), e))
 #define	MUSTEAT(c, e)	(void) (REQUIRE(MORE() && GETNEXT() == (c), e))
 #define	MUSTNOTSEE(c, e)	(REQUIRE(!MORE() || PEEK() != (c), e))
-#define	EMIT(op, sopnd)	doemit(p, (sop)(op), (size_t)(sopnd))
-#define	INSERT(op, pos)	doinsert(p, (sop)(op), (size_t)(HERE()-(pos)+1), pos)
-#define	AHEAD(pos)		dofwd(p, pos, (sop)(HERE()-(pos)))
+#define	EMIT(op, sopnd)	doemit(p, (sop)(op), sopnd)
+#define	INSERT(op, pos)	doinsert(p, (sop)(op), HERE()-(pos)+1, pos)
+#define	AHEAD(pos)		dofwd(p, pos, HERE()-(pos))
 #define	ASTERN(sop, pos)	EMIT(sop, HERE()-pos)
 #define	HERE()		(p->slen)
 #define	THERE()		(p->slen - 1)
@@ -1456,7 +1456,7 @@ sopno finish;			/* to this less one */
 		return(ret);
 	enlarge(p, p->ssize + len);	/* this many unexpected additions */
 	assert(p->ssize >= p->slen + len);
-	(void)memcpy((p->strip + p->slen), (p->strip + start),
+	(void)memcpy(p->strip + p->slen, p->strip + start,
 	    (size_t)len * sizeof(sop));
 	p->slen += len;
 	return(ret);
@@ -1474,7 +1474,7 @@ static void
 doemit(p, op, opnd)
 struct parse *p;
 sop op;
-size_t opnd;
+sopno opnd;
 {
 	/* avoid making error situations worse */
 	if (p->error != 0)
@@ -1500,7 +1500,7 @@ static void
 doinsert(p, op, opnd, pos)
 struct parse *p;
 sop op;
-size_t opnd;
+sopno opnd;
 sopno pos;
 {
 	sopno sn;
@@ -1539,7 +1539,7 @@ static void
 dofwd(p, pos, value)
 struct parse *p;
 sopno pos;
-sop value;
+sopno value;
 {
 	/* avoid making error situations worse */
 	if (p->error != 0)
