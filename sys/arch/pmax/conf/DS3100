@@ -1,7 +1,7 @@
 #
 # DECstation (3100 or 2100) config file
 #
-# 	$NetBSD: DS3100,v 1.9 1998/03/25 04:17:08 jonathan Exp $
+# 	$NetBSD: DS3100,v 1.10 1998/04/19 08:39:42 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -94,6 +94,9 @@ config		netbsd root on ? type ?
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
 # (may also be present on a 5100).
 include 	"arch/pmax/conf/builtin.3100"
+
+#  baseboard devices on 5100, 3100 "ibus" virtual bus
+include 	"arch/pmax/conf/ibus.std"
 
 ########################################################################
 # SCSI configuration                                                   #
