@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.h,v 1.5 1995/04/13 06:26:39 cgd Exp $	*/
+/*	$NetBSD: igmp.h,v 1.6 1995/05/31 06:08:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -39,24 +39,54 @@
  *	@(#)igmp.h	8.1 (Berkeley) 6/10/93
  */
 
-/* Internet Group Management Protocol (IGMP) definitions. */
+/*
+ * Internet Group Management Protocol (IGMP) definitions.
+ *
+ * MULTICAST 1.3
+ */
 
 /*
  * IGMP packet format.
  */
 struct igmp {
 	u_int8_t	igmp_type;	/* version & type of IGMP message  */
-	u_int8_t	igmp_code;	/* unused, should be zero          */
+	u_int8_t	igmp_code;	/* code for routing sub-messages   */
 	u_int16_t	igmp_cksum;	/* IP-style checksum               */
 	struct in_addr	igmp_group;	/* group address being reported    */
 };					/*  (zero for queries)             */
 
 #define	IGMP_MINLEN		     8
 
-#define	IGMP_HOST_MEMBERSHIP_QUERY   0x11  /* message types, incl. version */
-#define	IGMP_HOST_MEMBERSHIP_REPORT  0x12
-#define	IGMP_DVMRP		     0x13  /* for experimental multicast   */
-					   /*  routing protocol            */
+#define	IGMP_HOST_MEMBERSHIP_QUERY	0x11  /* membership query      */
+#define	IGMP_v1_HOST_MEMBERSHIP_REPORT	0x12  /* v1 membership report  */
+#define	IGMP_DVMRP			0x13  /* DVMRP routing message */
+#define	IGMP_PIM			0x14  /* PIM routing message   */
+#define	IGMP_v2_HOST_MEMBERSHIP_REPORT	0x16  /* v2 membership report  */
+#define	IGMP_HOST_LEAVE_MESSAGE		0x17  /* leave-group message   */
+#define	IGMP_MTRACE_REPLY		0x1e  /* traceroute reply      */
+#define	IGMP_MTRACE_QUERY		0x1f  /* traceroute query      */
 
-#define	IGMP_MAX_HOST_REPORT_DELAY   10    /* max delay for response to    */
-					   /*  query (in seconds)          */
+#define	IGMP_MAX_HOST_REPORT_DELAY	10    /* max delay for response to */
+					      /*  query (in seconds)       */
+
+#define	IGMP_TIMER_SCALE		10    /* denominator for igmp_timer */
+
+/*
+ * States for the IGMP v2 state table.
+ */
+#define	IGMP_DELAYING_MEMBER	1
+#define	IGMP_IDLE_MEMBER	2
+#define	IGMP_LAZY_MEMBER	3
+#define	IGMP_SLEEPING_MEMBER	4
+#define	IGMP_AWAKENING_MEMBER	5
+
+/*
+ * States for IGMP router version cache.
+ */
+#define	IGMP_v1_ROUTER		1
+#define	IGMP_v2_ROUTER		2
+
+/*
+ * Revert to v2 if we haven't heard from the router in this amount of time.
+ */
+#define	IGMP_AGE_THRESHOLD	540
