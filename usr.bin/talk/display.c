@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $	*/
+/*	$NetBSD: display.c,v 1.4 1997/04/21 16:15:32 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $";
+static char rcsid[] = "$NetBSD: display.c,v 1.4 1997/04/21 16:15:32 is Exp $";
 #endif /* not lint */
 
 /*
@@ -139,7 +139,7 @@ display(win, text, size)
 			/* check for wraparound */
 			xscroll(win, 0);
 		}
-		if (*text < ' ' && *text != '\t') {
+		if ( !isprint((u_char)*text) && *text != '\t') {
 			waddch(win->x_win, '^');
 			getyx(win->x_win, win->x_line, win->x_col);
 			if (win->x_col == COLS-1) /* check for wraparound */
