@@ -227,9 +227,14 @@ extern int m68k_parse_long_option PARAMS ((char *));
 extern struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
 
-/* Copied from write.c */
-/* This was formerly called M68K_AIM_KLUDGE.  */
+/* We can't do a byte jump to the next instruction, so in that case
+   force word mode by faking AIM.  */
 #define md_prepare_relax_scan(fragP, address, aim, this_state, this_type) \
-  if (aim==0 && this_state== 4) { /* hard encoded from tc-m68k.c */ \
-    aim=this_type->rlx_forward+1; /* Force relaxation into word mode */ \
-  }
+  do									  \
+    {								 	  \
+      if (aim == 0 && this_type->rlx_forward == 127)			  \
+        aim = 128;							  \
+    }									  \
+  while (0)
+
+#define DWARF2_LINE_MIN_INSN_LENGTH 2
