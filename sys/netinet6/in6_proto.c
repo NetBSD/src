@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.14 2000/02/14 19:45:50 thorpej Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.15 2000/02/26 09:01:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -225,14 +225,14 @@ struct ip6protosw inet6sw[] = {
 #endif /* IPSEC */
 #if NGIF > 0
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input,0,	 	0,		0,
-  0,	  
+  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,	  
   0,		0,		0,		0,
 },
 #ifdef INET6
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input,0,	 	0,		0,
-  0,	  
+  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,	  
   0,		0,		0,		0,
 },
 #endif /* INET6 */
@@ -245,8 +245,8 @@ struct ip6protosw inet6sw[] = {
 /* raw wildcard */
 { SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC | PR_ADDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,
-  rip6_usrreq, rip6_init,
-  0,		0,		0,
+  rip6_usrreq,
+  rip6_init,	0,		0,		0,
 },
 };
 
