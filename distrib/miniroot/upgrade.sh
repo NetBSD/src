@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.8 1996/10/09 00:13:36 jtc Exp $
+#	$NetBSD: upgrade.sh,v 1.9 1997/06/20 20:28:41 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,6 +67,25 @@ MODE="upgrade"
 
 # which sets?
 THESETS="$UPGRSETS"
+
+# Files that moved between 1.2 and 1.3
+RELOCATED_FILES_13=""
+RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/rtquey /usr/sbin/rtquery"
+RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/quotacheck /usr/sbin/quotacheck"
+RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/dumpfs /usr/sbin/dumpfs"
+RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/dumplfs /usr/sbin/dumplfs"
+
+rm_relocated_files()
+{
+	# ($n, $(n+1)): pairs of (old,new) locations of relocated files
+	while [ $# -ge 2 ]; do
+		if [ -f "$2" ]; then
+			echo Removing "$1";
+			rm -f "$1"
+		fi
+		shift 2
+	done
+}
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -241,6 +260,10 @@ esac
 
 # Install sets.
 install_sets
+
+# Remove files that have just been installed in a new location
+# from the old location
+rm_relocated_files `eval echo \\$RELOCATED_FILES_${VERSION}`
 
 # Get timezone info
 get_timezone
