@@ -1,4 +1,5 @@
-# $NetBSD: md.atari,v 1.41 2001/02/27 09:07:29 leo Exp $
+# $NetBSD: md.atari,v 1.41.2.1 2002/06/18 23:45:22 lukem Exp $
+./boot.atari				base-sysutil-bin
 ./dev/mouse				base-sys-devlinks
 ./sbin/ahdilabel			base-sysutil-root
 ./sbin/binpatch				base-sysutil-root
