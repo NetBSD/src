@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.3 2001/12/25 19:04:18 manu Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.4 2002/02/12 07:17:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.3 2001/12/25 19:04:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.4 2002/02/12 07:17:18 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -68,13 +68,17 @@ bsd_to_irix_stat(bsp, isp)
 	struct irix_stat *isp;
 {
 	memset(isp, 0, sizeof(*isp));
-	isp->ist_dev = bsp->st_dev;	/* XXX translate it */
+	isp->ist_dev = (irix_dev_t)bsd_to_svr4_dev_t(bsp->st_dev);
 	isp->ist_ino = bsp->st_ino;
 	isp->ist_mode = bsp->st_mode;	/* XXX translate it */
 	isp->ist_nlink = bsp->st_nlink;
 	isp->ist_uid = bsp->st_uid;
 	isp->ist_gid = bsp->st_gid;
-	isp->ist_rdev = bsp->st_rdev;	/* XXX translate it */
+	if ((bsp->st_mode & S_IFMT) == S_IFBLK || 
+	    (bsp->st_mode & S_IFMT) == S_IFCHR)
+		isp->ist_rdev = (irix_dev_t)bsd_to_svr4_dev_t(bsp->st_rdev);
+	else
+		isp->ist_rdev = 0;
 	isp->ist_size = bsp->st_size;
 	isp->ist_atim.tv_sec = bsp->st_atimespec.tv_sec;
 	isp->ist_atim.tv_nsec = bsp->st_atimespec.tv_nsec;
@@ -96,13 +100,17 @@ bsd_to_irix_stat64(bsp, isp)
 	struct irix_stat64 *isp;
 {
 	memset(isp, 0, sizeof(*isp));
-	isp->ist_dev = bsp->st_dev;	/* XXX translate it */
+	isp->ist_dev = (irix_dev_t)bsd_to_svr4_dev_t(bsp->st_dev);
 	isp->ist_ino = bsp->st_ino;
 	isp->ist_mode = bsp->st_mode;	/* XXX translate it */
 	isp->ist_nlink = bsp->st_nlink;
 	isp->ist_uid = bsp->st_uid;
 	isp->ist_gid = bsp->st_gid;
-	isp->ist_rdev = bsp->st_rdev;	/* XXX translate it */
+	if ((bsp->st_mode & S_IFMT) == S_IFBLK || 
+	    (bsp->st_mode & S_IFMT) == S_IFCHR)
+		isp->ist_rdev = (irix_dev_t)bsd_to_svr4_dev_t(bsp->st_rdev);
+	else
+		isp->ist_rdev = 0;
 	isp->ist_size = bsp->st_size;
 	isp->ist_atim.tv_sec = bsp->st_atimespec.tv_sec;
 	isp->ist_atim.tv_nsec = bsp->st_atimespec.tv_nsec;
