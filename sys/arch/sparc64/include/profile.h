@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.4 2000/08/02 22:24:39 eeh Exp $ */
+/*	$NetBSD: profile.h,v 1.5 2001/11/03 20:24:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,17 +44,19 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#if	defined(ELF)||defined(__ELF__)
+#ifdef __ELF__
 #define _MCOUNT_SYM "__mcount"
+#define	_MCOUNT_ENTRY "_mcount"
 #else
 #define _MCOUNT_SYM "___mcount"
+#define	_MCOUNT_ENTRY "mcount"
 #endif
 
 #ifdef PIC
 /* Inline expansion of PICCY_SET() (see <machine/asm.h>). */
 #define MCOUNT \
-	__asm__(".global _mcount");\
-	__asm__("_mcount:");\
+	__asm__(".global " _MCOUNT_ENTRY);\
+	__asm__(_MCOUNT_ENTRY ":");\
 	__asm__("add %o7, 8, %o1");\
 	__asm__("1: rd %pc, %o2");\
 	__asm__("add %o2," _MCOUNT_SYM "-1b, %o2");\
@@ -63,8 +65,8 @@
 	__asm__("add %i7, 8, %o0");
 #else
 #define MCOUNT \
-	__asm__(".global _mcount");\
-	__asm__("_mcount:");\
+	__asm__(".global " _MCOUNT_ENTRY);\
+	__asm__(_MCOUNT_ENTRY ":");\
 	__asm__("add %i7, 8, %o0");\
 	__asm__("sethi %hi(" _MCOUNT_SYM "), %o2");\
 	__asm__("jmpl %o2 + %lo(" _MCOUNT_SYM "), %g0");\
