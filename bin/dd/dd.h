@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.h,v 1.6 2001/04/28 22:47:23 ross Exp $	*/
+/*	$NetBSD: dd.h,v 1.7 2001/11/25 06:53:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -53,7 +53,7 @@ typedef struct {
 #define	NOREAD		0x08		/* not readable */
 	u_int	flags;
 
-	char 	*name;			/* name */
+	const char  *name;		/* name */
 	int	fd;			/* file descriptor */
 	u_long	offset;			/* # of blocks to skip */
 
