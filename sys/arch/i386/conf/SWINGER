@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.56 2004/11/10 17:25:23 christos Exp $
+#	$NetBSD: SWINGER,v 1.57 2004/11/24 20:49:24 bouyer Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.56 $"
+#ident 		"SWINGER-$Revision: 1.57 $"
 
 maxusers	64		# estimated number of users
 
@@ -421,6 +421,7 @@ hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers

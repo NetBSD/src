@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.31 2004/11/10 17:54:04 christos Exp $
+#	$NetBSD: INTEGRATOR,v 1.32 2004/11/24 20:49:20 bouyer Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -176,6 +176,7 @@ pci*		at ppb? bus ?
 #cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 #hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 #pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+#pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 #satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 
 # ATA bus support
