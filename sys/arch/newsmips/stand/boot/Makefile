@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/12/23 01:41:11 tsubai Exp $
+#	$NetBSD: Makefile,v 1.7 2000/01/19 16:29:59 tsutsui Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -10,7 +10,7 @@ BINMODE= 444
 
 OBJCOPY?= objcopy
 SIZE?= size
-STRIP?= strip
+STRIPPROG?= strip
 
 COMMON!=  cd ${.CURDIR}/../common && ${MAKE} print-objdir
 
@@ -33,7 +33,7 @@ LIBS+= ${COMMON}/lib/kern/libkern.a
 ${PROG}: ${OBJS}
 	${LD} ${LDFLAGS} -o ${PROG}.elf ${OBJS} ${LIBS}
 	-${SIZE} ${PROG}.elf
-	${STRIP} ${PROG}.elf -o ${PROG}
+	${STRIPPROG} ${PROG}.elf -o ${PROG}
 	tail -c +177 ${PROG} > ${PROG}.tmp
 	mv ${PROG}.tmp ${PROG}
 #	${OBJCOPY} -O binary ${PROG}.elf ${PROG}	# XXX

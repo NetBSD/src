@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/12/09 14:53:21 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2000/01/19 16:30:04 tsutsui Exp $
 
 COMMON= ${.CURDIR}/../common
 .ifnmake(print-objdir)
@@ -15,7 +15,7 @@ STRIPFLAG=
 BINMODE= 444
 
 SIZE?= size
-STRIP?= strip
+STRIPPROG?= strip
 
 S= ${.CURDIR}/../../../..
 
@@ -46,7 +46,7 @@ ${.OBJDIR}/m68k::
 ${PROG}: ${OBJS} ${.OBJDIR}/machine ${.OBJDIR}/m68k
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBS}
 	-${SIZE} ${PROG}
-	${STRIP} ${PROG}
+	${STRIPPROG} ${PROG}
 	tail -c +33 ${PROG} > ${PROG}.tmp
 	mv ${PROG}.tmp ${PROG}
 
