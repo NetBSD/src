@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.10 1999/11/15 09:54:42 nisimura Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.11 1999/12/08 00:13:33 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -26,6 +26,7 @@
 
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/dev/dcvar.h>
+#include <pmax/dev/dc_cons.h>
 #include <pmax/dev/dc_ds_cons.h>
 #include <pmax/pmax/kn01.h>
 
