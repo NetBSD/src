@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.50 1999/04/19 03:11:32 simonb Exp $
+# $NetBSD: md.i386,v 1.51 1999/04/27 18:38:44 drochner Exp $
 ./sbin/fdisk
 ./sbin/ldconfig
 ./usr/bin/cursor
@@ -26,7 +26,6 @@
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
 ./usr/mdec/biosboot.sym
-./usr/mdec/biosboot_ser.sym
 ./usr/mdec/dosboot.com
 ./usr/mdec/installboot
 ./usr/mdec/mbr
