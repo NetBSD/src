@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.3 1998/04/09 13:09:47 hannken Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.4 1998/06/11 22:15:15 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -72,6 +72,8 @@ int	wskbddevprint __P((void *, const char *));
  * Callbacks from the keyboard driver to the wskbd interface driver.
  */
 void	wskbd_input __P((struct device *kbddev, u_int type, int value));
+/* for WSDISPLAY_COMPAT_RAWKBD */
+void	wskbd_rawinput __P((struct device *, char *, int));
 
 /*
  * Console interface.

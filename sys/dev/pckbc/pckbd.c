@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.7 1998/05/03 09:57:50 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.8 1998/06/11 22:15:14 drochner Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -68,6 +68,8 @@
 
 #include "locators.h"
 
+#include "opt_wsdisplay_compat.h"
+
 struct pckbd_internal {
 	int t_isconsole;
 	pckbc_tag_t t_kbctag;
@@ -87,6 +89,9 @@ struct pckbd_softc {
 	struct pckbd_internal *id;
 
 	struct device *sc_wskbddev;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int rawkbd;
+#endif
 };
 
 static int pckbd_is_console __P((pckbc_tag_t, pckbc_slot_t));
@@ -408,6 +413,13 @@ pckbd_input(vsc, data)
 	struct pckbd_softc *sc = vsc;
 	int type, key;
 
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	if (sc->rawkbd) {
+		char d = data;
+		wskbd_rawinput(sc->sc_wskbddev, &d, 1);
+		return;
+	}
+#endif
 	if (pckbd_decode(sc->id, data, &type, &key))
 		wskbd_input(sc->sc_wskbddev, type, key);
 }
@@ -448,6 +460,11 @@ pckbd_ioctl(v, cmd, data, flag, p)
 #endif
 #undef d
 		return (0);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	    case WSKBDIO_SETMODE:
+		t->t_sc->rawkbd = (*(int *)data == WSKBD_RAW);
+		return (0);
+#endif
 	}
 	return -1;
 }
