@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.15 2003/01/26 12:39:32 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.16 2003/01/26 19:02:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.15 2003/01/26 12:39:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.16 2003/01/26 19:02:14 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,11 +133,13 @@ mach_thread_create_running(args)
 	mach_thread_create_running_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct proc *p = l->l_proc;
 	struct mach_create_thread_child_args mctc;
 	vaddr_t uaddr;
 	int flags;
 	int error;
 	int inmem;
+	int s;
 
 	/* 
 	 * Prepare the data we want to transmit to the child
@@ -152,10 +154,22 @@ mach_thread_create_running(args)
                 return (ENOMEM);
 
 	flags = 0;
-	if ((error = newlwp(l, l->l_proc, uaddr, inmem, flags, NULL, 0,
+	if ((error = newlwp(l, p, uaddr, inmem, flags, NULL, 0,
 	    mach_create_thread_child, (void *)&mctc, &mctc.mctc_lwp)) != 0)
 		return mach_msg_error(args, error);
 		
+	/*
+	 * Make the child runnable
+	 */
+	SCHED_LOCK(s);
+	mctc.mctc_lwp->l_stat = LSRUN;
+	setrunqueue(mctc.mctc_lwp);
+	SCHED_UNLOCK(s);
+	simple_lock(&p->p_lwplock);
+	p->p_nrlwps++;
+	simple_unlock(&p->p_lwplock);
+	p->p_nrlwps++;
+
 	/* 
 	 * The child relies on some values in mctc, so we should not
 	 * exit until it is finished with it. We catch signals so that 
