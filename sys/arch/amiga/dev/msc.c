@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.4 1996/03/17 01:17:48 thorpej Exp $ */
+/*	$NetBSD: msc.c,v 1.5 1996/03/17 05:58:54 mhitch Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -174,7 +174,7 @@ struct cfattach msc_ca = {
 };
 
 struct cfdriver msc_cd = {
-	NULL, "msc",DV_TTY, sizeof(struct device), NULL, 0
+	NULL, "msc",DV_TTY, NULL, 0
 };
 
 #if DEBUG_MSC

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.37 1996/03/17 01:16:52 thorpej Exp $
+#	$NetBSD: files.amiga,v 1.38 1996/03/17 05:53:57 mhitch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -122,7 +122,7 @@ attach	ed at zbus with ed_zbus
 file	arch/amiga/dev/if_ed.c		ed_zbus needs-flag
 
 # C=/Ameristar A2060 / 560
-device	bah at zbus: ifnet, arc
+device	bah: ifnet, arc
 attach	bah at zbus with bah_zbus
 file	arch/amiga/dev/if_bah.c		bah_zbus needs-flag
 
@@ -145,7 +145,7 @@ file	arch/amiga/dev/msc.c		msc needs-count
 
 # bsc/Alf Data MultiFaceCard
 device	mfc { unit = -1 }
-attach	mfs at zbus
+attach	mfc at zbus
 
 device	mfcs
 attach	mfcs at mfc

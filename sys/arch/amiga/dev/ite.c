@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.37 1996/03/17 01:17:39 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.38 1996/03/17 05:58:48 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,7 +119,7 @@ static void iteprecheckwrap __P((struct ite_softc *));
 static void itecheckwrap __P((struct ite_softc *));
 
 struct cfattach ite_ca = {
-	sizeof(struct ite_softc, itematch, iteattach
+	sizeof(struct ite_softc), itematch, iteattach
 };
 
 struct cfdriver ite_cd = {

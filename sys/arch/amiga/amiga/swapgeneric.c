@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.20 1996/01/07 22:01:46 thorpej Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.21 1996/03/17 05:54:41 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -68,13 +68,13 @@ struct	swdevt swdevt[] = {
 };
 
 #if NFD > 0
-extern	struct cfdriver fdcd;
+extern	struct cfdriver fd_cd;
 #endif
 #if NSD > 0
-extern	struct cfdriver sdcd;
+extern	struct cfdriver sd_cd;
 #endif
 #if NCD > 0
-extern	struct cfdriver cdcd;
+extern	struct cfdriver cd_cd;
 #endif
 
 struct genericconf {
@@ -91,13 +91,13 @@ struct genericconf {
  */
 struct genericconf genericconf[] = {
 #if NFD > 0
-	{&fdcd,	makedev(2, 0)},
+	{&fd_cd,	makedev(2, 0)},
 #endif
 #if NSD > 0
-	{&sdcd,	makedev(4, 0)},
+	{&sd_cd,	makedev(4, 0)},
 #endif
 #if NCD > 0
-	{&cdcd,	makedev(7, 0)},
+	{&cd_cd,	makedev(7, 0)},
 #endif
 	{ 0 },
 };

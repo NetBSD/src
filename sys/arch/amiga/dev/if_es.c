@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.9 1996/03/17 01:17:33 thorpej Exp $	*/
+/*	$NetBSD: if_es.c,v 1.10 1996/03/17 05:58:45 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -125,7 +125,7 @@ int esmatch __P((struct device *, void *, void *));
 void esattach __P((struct device *, struct device *, void *));
 
 struct cfattach es_ca = {
-	sizeof(stuct es_softc), esmatch, esattach
+	sizeof(struct es_softc), esmatch, esattach
 };
 
 struct cfdriver es_cd = {

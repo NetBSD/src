@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 1996/03/17 01:17:04 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 1996/03/17 05:58:30 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,7 +94,7 @@ struct cfdriver clock_cd = {
 int
 clockmatch(pdp, match, auxp)
 	struct device *pdp;
-	void void *match, *auxp;
+	void *match, *auxp;
 {
 	struct cfdata *cfp = match;
 

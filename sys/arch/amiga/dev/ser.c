@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.29 1996/03/17 01:17:53 thorpej Exp $	*/
+/*	$NetBSD: ser.c,v 1.30 1996/03/17 05:58:58 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@ struct ser_softc {
 };
 
 struct cfattach ser_ca = {
-	sizeof(ser_softc), sermatch, serattach
+	sizeof(struct ser_softc), sermatch, serattach
 };
 
 struct cfdriver ser_cd = {
