@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.230 2004/03/17 14:20:17 wiz Exp $
+.\"	$NetBSD: options.4,v 1.231 2004/03/27 12:31:06 darcy Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -340,6 +340,10 @@ It also enables
 support for some older pre
 .Bx 4.4
 socket calls.
+.It Cd options COMPAT_AOUT
+This option enables support for a.out format executibles.  See
+.Em man a.out(5)
+for details on the ancient format.
 .It Cd options COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
