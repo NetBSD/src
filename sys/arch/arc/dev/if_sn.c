@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.19 2000/06/10 12:56:46 soda Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.20 2000/06/29 08:34:11 mrg Exp $	*/
 /*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
@@ -28,7 +28,9 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <machine/autoconf.h>
 
 #include <net/if.h>
@@ -48,8 +50,6 @@
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #endif
-
-#include <vm/vm.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

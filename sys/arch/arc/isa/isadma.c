@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.3 2000/02/22 11:26:03 soda Exp $	*/
+/*	$NetBSD: isadma.c,v 1.4 2000/06/29 08:34:11 mrg Exp $	*/
 /*	$OpenBSD: isadma.c,v 1.2 1996/11/23 21:45:34 kstailey Exp $	*/
 /*	NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp 	*/
 
@@ -11,7 +11,7 @@
 #include <sys/malloc.h>
 #include <sys/uio.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
 

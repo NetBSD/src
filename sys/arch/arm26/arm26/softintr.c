@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $ */
+/* $NetBSD: softintr.c,v 1.2 2000/06/29 08:32:35 mrg Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: softintr.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $");
+__RCSID("$NetBSD: softintr.c,v 1.2 2000/06/29 08:32:35 mrg Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: softintr.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $");
 #include <machine/intr.h>
 #include <machine/spl.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/machdep.h>

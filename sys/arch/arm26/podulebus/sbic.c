@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.2 2000/06/26 14:20:33 mrg Exp $ */
+/* $NetBSD: sbic.c,v 1.3 2000/06/29 08:32:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -56,9 +56,7 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <vm/vm.h>
-/*#include <machine/pmap.h>
-#include <machine/cpu.h>*/
+#include <uvm/uvm_extern.h>
 #include <arm26/podulebus/podulebus.h>
 #include <arm26/podulebus/sbicreg.h>
 #include <arm26/podulebus/sbicvar.h>

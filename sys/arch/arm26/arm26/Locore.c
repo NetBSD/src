@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.4 2000/05/31 05:06:46 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.5 2000/06/29 08:32:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -39,14 +39,14 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.4 2000/05/31 05:06:46 thorpej Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.5 2000/06/29 08:32:34 mrg Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/machdep.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.1 2000/06/09 05:22:22 soda Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.2 2000/06/29 08:34:12 mrg Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #include <sys/extent.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

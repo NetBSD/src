@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.2 2000/06/20 08:26:55 soda Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.3 2000/06/29 08:34:11 mrg Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.2 2000/06/20 08:26:55 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.3 2000/06/29 08:34:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.2 2000/06/20 08:26:55 soda Exp $
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 extern paddr_t avail_end;	/* from pmap.c */
 
