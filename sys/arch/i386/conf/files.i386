@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.253 2004/03/25 15:26:35 wiz Exp $
+#	$NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp $
 #
 # new style config file for i386 architecture
 #
@@ -163,7 +163,7 @@ file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
 # Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
 include	"dev/pci/files.ath"
-object	../contrib/sys/arch/i386/dev/athhal-elf.o	ath
+object	/athhal-elf.o	ath
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
