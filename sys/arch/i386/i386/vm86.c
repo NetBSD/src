@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.20 1998/09/11 12:50:06 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.21 1998/10/19 22:14:55 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

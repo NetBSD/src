@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.249 1998/10/12 16:09:14 bouyer Exp $
+#	$NetBSD: files,v 1.250 1998/10/19 22:16:22 tron Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -17,6 +17,8 @@ defopt	MULTIPROCESSOR
 defopt	DEVPAGER
 defopt	SWAPPAGER
 defopt	VNODEPAGER
+
+defopt	opt_sysv.h	SYSVMSG SYSVSEM	SYSVSHM
 
 defopt	opt_ntp.h	PPS_SYNC NTP 
 

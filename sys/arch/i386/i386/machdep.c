@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.330 1998/10/17 00:07:11 jtk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.331 1998/10/19 22:14:54 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 #include "opt_pmap_new.h"
 #include "opt_compat_netbsd.h"
 #include "opt_cpureset_delay.h"
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.80 1998/10/14 11:45:16 ws Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.81 1998/10/19 22:16:22 tron Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -61,6 +61,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
