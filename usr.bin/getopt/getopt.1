@@ -1,5 +1,5 @@
-.\"	$NetBSD: getopt.1,v 1.9 1999/12/01 12:03:16 lukem Exp $
-.Dd June 21, 1993
+.\"	$NetBSD: getopt.1,v 1.9.4.1 2001/12/09 19:21:27 he Exp $
+.Dd November 9, 2000
 .Dt GETOPT 1
 .Os
 .Sh NAME
@@ -50,19 +50,19 @@ if [ $? != 0 ]; then
 	exit 2
 fi
 set \-\- $args
-for i; do
-	shift
-	case "$i"; in
+while [ $# \-gt 0 ]; do
+	case "$1" in
 		\-a|\-b)
-			flag=$i
+			flag=$1
 			;;
 		\-c)
-			carg=$1; shift
+			carg=$2; shift
 			;;
 		\-\-)
-			break
+			shift; break
 			;;
 	esac
+	shift
 done
 .Ed
 .Pp
