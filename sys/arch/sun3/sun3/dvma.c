@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.13 1998/02/05 04:57:32 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.14 1998/06/08 20:47:46 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -51,6 +53,15 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
+/* XXX - Gratuitous name changes... */
+#define kmem_alloc uvm_km_alloc
+#define kmem_free uvm_km_free
+#define kmem_alloc_wait uvm_km_valloc_wait
+#define vm_map_create uvm_map_create
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
