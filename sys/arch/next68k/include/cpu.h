@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2001/05/30 12:28:48 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 2002/05/14 02:03:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,8 +133,8 @@ extern int want_resched; 	/* resched() was called */
 
 #define aston() (astpending++)
 
-int	astpending;	/* need to trap before returning to user mode */
-int	want_resched;	/* resched() was called */
+extern	int	astpending;	/* need to trap before returning to user mode */
+extern	int	want_resched;	/* resched() was called */
 
 extern	volatile char *intiobase;
 extern  volatile char *intiolimit;
