@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,14 +32,24 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_print.c	8.6 (Berkeley) 11/2/93"; */
-static char *rcsid = "$Id: ex_print.c,v 1.2 1994/01/24 06:40:30 cgd Exp $";
+static char sccsid[] = "@(#)ex_print.c	8.8 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -124,7 +134,7 @@ ex_print(sp, ep, fp, tp, flags)
 			col = ex_printf(EXCOOKIE, "%7ld ", from);
 		else
 			col = 0;
-	
+
 		/*
 		 * Display the line.  The format for E_F_PRINT isn't very good,
 		 * especially in handling end-of-line tabs, but they're almost

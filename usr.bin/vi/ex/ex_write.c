@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,18 +32,28 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_write.c	8.19 (Berkeley) 12/18/93"; */
-static char *rcsid = "$Id: ex_write.c,v 1.2 1994/01/24 06:40:49 cgd Exp $";
+static char sccsid[] = "@(#)ex_write.c	8.27 (Berkeley) 3/23/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -186,7 +196,7 @@ exwr(sp, ep, cmdp, cmd)
 	switch (cmdp->argc) {
 	case 1:
 		/*
-		 * Nothing to expand, write the current file. 
+		 * Nothing to expand, write the current file.
 		 * XXX
 		 * Should never happen, already checked this case.
 		 */
@@ -223,8 +233,11 @@ ex_writefp(sp, ep, name, fp, fm, tm, nlno, nch)
 	MARK *fm, *tm;
 	u_long *nlno, *nch;
 {
-	register u_long ccnt, fline, tline;
+	struct stat sb;
+	u_long ccnt;			/* XXX: can't print off_t portably. */
+	recno_t fline, tline, lcnt;
 	size_t len;
+	int sv_errno;
 	char *p;
 
 	fline = fm->lno;
@@ -234,7 +247,6 @@ ex_writefp(sp, ep, name, fp, fm, tm, nlno, nch)
 		*nch = 0;
 		*nlno = 0;
 	}
-	ccnt = 0;
 
 	/*
 	 * The vi filter code has multiple processes running simultaneously,
@@ -251,8 +263,14 @@ ex_writefp(sp, ep, name, fp, fm, tm, nlno, nch)
 	 *
 	 * "Alex, I'll take vi trivia for $1000."
 	 */
-	if (tline != 0)
-		for (; fline <= tline; ++fline) {
+	ccnt = 0;
+	lcnt = 0;
+	if (tline != 0) {
+		for (; fline <= tline; ++fline, ++lcnt) {
+			if (F_ISSET(sp, S_INTERRUPTED)) {
+				msgq(sp, M_INFO, "Interrupted.");
+				break;
+			}
 			if ((p = file_gline(sp, ep, fline, &len)) == NULL)
 				break;
 			if (fwrite(p, 1, len, fp) != len) {
@@ -265,14 +283,25 @@ ex_writefp(sp, ep, name, fp, fm, tm, nlno, nch)
 				break;
 			++ccnt;
 		}
-	if (fclose(fp)) {
-		if (!F_ISSET(ep, F_MULTILOCK))
-			msgq(sp, M_SYSERR, name);
-		return (1);
 	}
+
+	/* If it's a regular file, sync it so that NFS is forced to flush. */
+	if (!fstat(fileno(fp), &sb) &&
+	    S_ISREG(sb.st_mode) && fsync(fileno(fp))) {
+		sv_errno = errno;
+		(void)fclose(fp);
+		errno = sv_errno;
+		goto err;
+	}
+	if (fclose(fp))
+		goto err;
 	if (nlno != NULL) {
 		*nch = ccnt;
-		*nlno = tm->lno == 0 ? 0 : tm->lno - fm->lno + 1;
+		*nlno = lcnt;
 	}
 	return (0);
+
+err:	if (!F_ISSET(ep, F_MULTILOCK))
+		msgq(sp, M_SYSERR, name);
+	return (1);
 }

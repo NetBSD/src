@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,21 +35,31 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_tag.c	8.31 (Berkeley) 1/22/94"; */
-static char *rcsid = "$Id: ex_tag.c,v 1.2 1994/01/24 06:40:43 cgd Exp $";
+static char sccsid[] = "@(#)ex_tag.c	8.40 (Berkeley) 3/22/94";
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mman.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -93,8 +103,9 @@ ex_tagfirst(sp, tagarg)
 
 	/*
 	 * !!!
-	 * Historic vi accepted a line number as well as a search
-	 * string, and people are apparently still using the format.
+	 * The historic tags file format (from a long, long time ago...)
+	 * used a line number, not a search string.  I got complaints, so
+	 * people are still using the format.
 	 */
 	if (isdigit(search[0])) {
 		m.lno = atoi(search);
@@ -130,6 +141,19 @@ ex_tagfirst(sp, tagarg)
 	return (0);
 }
 
+/* Free a tag or tagf structure from a queue. */
+#define	FREETAG(tp) {							\
+	TAILQ_REMOVE(&exp->tagq, (tp), q);				\
+	if ((tp)->search != NULL)					\
+		free((tp)->search);					\
+	FREE((tp), sizeof(TAGF));					\
+}
+#define	FREETAGF(tfp) {							\
+	TAILQ_REMOVE(&exp->tagfq, (tfp), q);				\
+	free((tfp)->name);						\
+	FREE((tfp), sizeof(TAGF));					\
+}
+
 /*
  * ex_tagpush -- :tag [file]
  *	Move to a new tag.
@@ -158,7 +182,7 @@ ex_tagpush(sp, ep, cmdp)
 	int sval;
 	long tl;
 	char *name, *p, *search, *tag;
-	
+
 	exp = EXP(sp);
 	switch (cmdp->argc) {
 	case 1:
@@ -187,10 +211,15 @@ ex_tagpush(sp, ep, cmdp)
 	if (tag_get(sp, exp->tlast, &tag, &name, &search))
 		return (1);
 
-	/* Get a new FREF structure. */
-	if ((frp = file_add(sp, sp->frp, name, 1)) == NULL) {
-		FREE(tag, strlen(tag));
-		return (1);
+	/* Get the (possibly new) FREF structure. */
+	if ((frp = file_add(sp, sp->frp, name, 1)) == NULL)
+		goto modify_err;
+
+	if (sp->frp == frp)
+		which = TC_CURRENT;
+	else {
+		MODIFY_GOTO(sp, sp->ep, F_ISSET(cmdp, E_FORCE));
+		which = TC_CHANGE;
 	}
 
 	/*
@@ -220,19 +249,15 @@ ex_tagpush(sp, ep, cmdp)
 		TAILQ_INSERT_HEAD(&exp->tagq, tp, q);
 	}
 
-	/* Switch to the new file. */
-	if (sp->frp == frp)
-		which = TC_CURRENT;
-	else {
-		MODIFY_CHECK(sp, sp->ep, F_ISSET(cmdp, E_FORCE));
-
-		if (file_init(sp, frp, NULL, 0)) {
-			if (tp != NULL)
-				FREE(tp, sizeof(TAG));
-			FREE(tag, strlen(tag));
-			return (1);
-		}
-		which = TC_CHANGE;
+	/* Switch files. */
+	if (which == TC_CHANGE && file_init(sp, frp, NULL, 0)) {
+		if (tp != NULL)
+			FREETAG(tp);
+		/* Handle special, first-tag case. */
+		if (exp->tagq.tqh_first->q.tqe_next == NULL)
+			TAILQ_REMOVE(&exp->tagq, exp->tagq.tqh_first, q);
+modify_err:	free(tag);
+		return (1);
 	}
 
 	/*
@@ -281,19 +306,6 @@ ex_tagpush(sp, ep, cmdp)
 	return (0);
 }
 
-/* Free a tag or tagf structure from a queue. */
-#define	FREETAG(tp) {							\
-	TAILQ_REMOVE(&exp->tagq, (tp), q);				\
-	if ((tp)->search != NULL)					\
-		free((tp)->search);					\
-	FREE((tp), sizeof(TAGF));					\
-}
-#define	FREETAGF(tfp) {							\
-	TAILQ_REMOVE(&exp->tagfq, (tfp), q);				\
-	free((tfp)->name);						\
-	FREE((tfp), sizeof(TAGF));					\
-}
-
 /*
  * ex_tagpop -- :tagp[op][!] [number | file]
  *	Pop the tag stack.
@@ -306,9 +318,8 @@ ex_tagpop(sp, ep, cmdp)
 {
 	EX_PRIVATE *exp;
 	TAG *ntp, *tp;
-	recno_t lno;
-	long off, saved_off;
-	size_t arglen, cno;
+	long off;
+	size_t arglen;
 	char *arg, *p, *t;
 
 	/* Check for an empty stack. */
@@ -320,53 +331,41 @@ ex_tagpop(sp, ep, cmdp)
 
 	switch (cmdp->argc) {
 	case 0:				/* Pop one tag. */
-		tp = exp->tagq.tqh_first;
-		FREETAG(tp);
+		ntp = exp->tagq.tqh_first;
 		break;
 	case 1:				/* Name or number. */
 		arg = cmdp->argv[0]->bp;
-		saved_off = strtol(arg, &p, 10);
+		off = strtol(arg, &p, 10);
 		if (*p == '\0') {
-			if (saved_off < 1)
+			if (off < 1)
 				return (0);
-			for (tp = exp->tagq.tqh_first, off = saved_off;
-			    tp != NULL && off-- > 1; tp = tp->q.tqe_next);
+			for (tp = exp->tagq.tqh_first;
+			    tp != NULL && --off > 1; tp = tp->q.tqe_next);
 			if (tp == NULL) {
 				msgq(sp, M_ERR,
-"Less than %d entries on the tags stack; use :display to see the tags stack.",
-				    saved_off);
+"Less than %s entries on the tags stack; use :display to see the tags stack.",
+				    arg);
 				return (1);
 			}
-			for (off = saved_off; off-- > 1;) {
-				tp = exp->tagq.tqh_first;
-				FREETAG(tp);
-			}
+			ntp = tp;
 		} else {
 			arglen = strlen(arg);
 			for (tp = exp->tagq.tqh_first;
-			    tp != NULL; tp = tp->q.tqe_next) {
+			    tp != NULL; ntp = tp, tp = tp->q.tqe_next) {
 				/* Use the user's original file name. */
 				p = tp->frp->name;
 				if ((t = strrchr(p, '/')) == NULL)
 					t = p;
 				else
 					++t;
-				if (!strncmp(arg, t, arglen)) {
-					ntp = tp;
+				if (!strncmp(arg, t, arglen))
 					break;
-				}
 			}
 			if (tp == NULL) {
 				msgq(sp, M_ERR,
 "No file named %s on the tags stack; use :display to see the tags stack.",
 				    arg);
 				return (1);
-			}
-			for (;;) {
-				tp = exp->tagq.tqh_first;
-				if (tp == ntp)
-					break;
-				FREETAG(tp);
 			}
 		}
 		break;
@@ -375,13 +374,12 @@ ex_tagpop(sp, ep, cmdp)
 	}
 
 	/* Update the cursor from the saved TAG information. */
-	tp = exp->tagq.tqh_first;
+	tp = ntp->q.tqe_next;
 	if (tp->frp == sp->frp) {
 		sp->lno = tp->lno;
 		sp->cno = tp->cno;
 	} else {
-		MODIFY_CHECK(sp, ep, F_ISSET(cmdp, E_FORCE));
-
+		MODIFY_RET(sp, ep, F_ISSET(cmdp, E_FORCE));
 		if (file_init(sp, tp->frp, NULL, 0))
 			return (1);
 
@@ -392,16 +390,24 @@ ex_tagpop(sp, ep, cmdp)
 		F_SET(sp, S_FSWITCH);
 	}
 
-	/* If returning to the first tag, the stack is now empty. */
-	if (tp->q.tqe_next == NULL)
+	/* Pop entries off the queue up to ntp. */
+	for (;;) {
+		tp = exp->tagq.tqh_first;
 		FREETAG(tp);
+		if (tp == ntp)
+			break;
+	}
+
+	/* If returning to the first tag, the stack is now empty. */
+	if (exp->tagq.tqh_first->q.tqe_next == NULL)
+		TAILQ_REMOVE(&exp->tagq, exp->tagq.tqh_first, q);
 	return (0);
 }
 
 /*
  * ex_tagtop -- :tagt[op][!]
  *	Clear the tag stack.
- */	
+ */
 int
 ex_tagtop(sp, ep, cmdp)
 	SCR *sp;
@@ -409,39 +415,36 @@ ex_tagtop(sp, ep, cmdp)
 	EXCMDARG *cmdp;
 {
 	EX_PRIVATE *exp;
-	TAG *tp, tmp;
-	int found;
+	TAG *tp;
 
-	/* Pop to oldest saved information. */
+	/* Find oldest saved information. */
 	exp = EXP(sp);
-	for (found = 0; (tp = exp->tagq.tqh_first) != NULL; found = 1) {
-		if (exp->tagq.tqh_first == NULL)
-			tmp = *tp;
-		FREETAG(tp);
-	}
-
-	if (!found) {
+	for (tp = exp->tagq.tqh_first;
+	    tp != NULL && tp->q.tqe_next != NULL; tp = tp->q.tqe_next);
+	if (tp == NULL) {
 		msgq(sp, M_INFO, "The tags stack is empty.");
 		return (1);
 	}
 
 	/* If not switching files, it's easy; else do the work. */
-	if (tmp.frp == sp->frp) {
-		sp->lno = tmp.lno;
-		sp->cno = tmp.cno;
+	if (tp->frp == sp->frp) {
+		sp->lno = tp->lno;
+		sp->cno = tp->cno;
 	} else {
-		MODIFY_CHECK(sp, sp->ep, F_ISSET(cmdp, E_FORCE));
-
-		if (file_init(sp, tmp.frp, NULL, 0))
+		MODIFY_RET(sp, sp->ep, F_ISSET(cmdp, E_FORCE));
+		if (file_init(sp, tp->frp, NULL, 0))
 			return (1);
 
-		tmp.frp->lno = tmp.lno;
-		tmp.frp->cno = tmp.cno;
+		tp->frp->lno = tp->lno;
+		tp->frp->cno = tp->cno;
 
 		F_SET(sp->frp, FR_CURSORSET);
-
 		F_SET(sp, S_FSWITCH);
 	}
+
+	/* Empty out the queue. */
+	while ((tp = exp->tagq.tqh_first) != NULL)
+		FREETAG(tp);
 	return (0);
 }
 
@@ -561,7 +564,8 @@ ex_tagfree(sp)
 		FREETAG(tp);
 	while ((tfp = exp->tagfq.tqh_first) != NULL)
 		FREETAGF(tfp);
-	FREE(exp->tlast, strlen(exp->tlast) + 1);
+	if (exp->tlast != NULL)
+		free(exp->tlast);
 	return (0);
 }
 
@@ -602,7 +606,7 @@ ex_tagcopy(orig, sp)
 			goto nomem;
 		TAILQ_INSERT_TAIL(&nexp->tagfq, tfp, q);
 	}
-		
+
 	/* Copy the last tag. */
 	if (oexp->tlast != NULL &&
 	    (nexp->tlast = strdup(oexp->tlast)) == NULL) {
@@ -621,10 +625,12 @@ tag_get(sp, tag, tagp, filep, searchp)
 	SCR *sp;
 	char *tag, **tagp, **filep, **searchp;
 {
+	struct stat sb;
 	EX_PRIVATE *exp;
 	TAGF *tfp;
+	size_t plen, slen, tlen;
 	int dne;
-	char *p;
+	char *p, pbuf[MAXPATHLEN];
 
 	/*
 	 * Find the tag, only display missing file messages once, and
@@ -644,8 +650,11 @@ tag_get(sp, tag, tagp, filep, searchp)
 				}
 			} else
 				msgq(sp, M_SYSERR, tfp->name);
+		else
+			if (p != NULL)
+				break;
 	}
-	
+
 	if (p == NULL) {
 		msgq(sp, M_ERR, "%s: tag not found.", tag);
 		if (dne)
@@ -661,8 +670,8 @@ tag_get(sp, tag, tagp, filep, searchp)
 
 	/*
 	 * Set the return pointers; tagp points to the tag, and, incidentally
-	 * the allocated string, filep points to the nul-terminated file name,
-	 * searchp points to the nul-terminated search string.
+	 * the allocated string, filep points to the file name, and searchp
+	 * points to the search string.  All three are nul-terminated.
 	 */
 	for (*tagp = p; *p && !isblank(*p); ++p);
 	if (*p == '\0')
@@ -677,6 +686,38 @@ tag_get(sp, tag, tagp, filep, searchp)
 malformed:	free(*tagp);
 		msgq(sp, M_ERR, "%s: corrupted tag in %s.", tag, tfp->name);
 		return (1);
+	}
+
+	/*
+	 * !!!
+	 * If the tag file path is a relative path, see if it exists.  If it
+	 * doesn't, look relative to the tags file path.  It's okay for a tag
+	 * file to not exist, and, historically, vi simply displayed a "new"
+	 * file.  However, if the path exists relative to the tag file, it's
+	 * pretty clear what's happening, so we may as well do it right.
+	 */
+	if ((*filep)[0] != '/'
+	    && stat(*filep, &sb) && (p = strrchr(tfp->name, '/')) != NULL) {
+		*p = '\0';
+		plen = snprintf(pbuf, sizeof(pbuf), "%s/%s", tfp->name, *filep);
+		*p = '/';
+		if (stat(pbuf, &sb) == 0) {
+			slen = strlen(*searchp);
+			tlen = strlen(*tagp);
+			MALLOC(sp, p, char *, plen + slen + tlen + 5);
+			if (p != NULL) {
+				memmove(p, *tagp, tlen);
+				free(*tagp);
+				*tagp = p;
+				*(p += tlen) = '\0';
+				memmove(++p, pbuf, plen);
+				*filep = p;
+				*(p += plen) = '\0';
+				memmove(++p, *searchp, slen);
+				*searchp = p;
+				*(p += slen) = '\0';
+			}
+		}
 	}
 	return (0);
 }
@@ -745,40 +786,40 @@ done:	if (munmap(map, (size_t)sb.st_size))
 
 /*
  * Binary search for "string" in memory between "front" and "back".
- * 
+ *
  * This routine is expected to return a pointer to the start of a line at
  * *or before* the first word matching "string".  Relaxing the constraint
  * this way simplifies the algorithm.
- * 
+ *
  * Invariants:
- * 	front points to the beginning of a line at or before the first 
+ * 	front points to the beginning of a line at or before the first
  *	matching string.
- * 
- * 	back points to the beginning of a line at or after the first 
+ *
+ * 	back points to the beginning of a line at or after the first
  *	matching line.
- * 
+ *
  * Base of the Invariants.
- * 	front = NULL; 
+ * 	front = NULL;
  *	back = EOF;
- * 
+ *
  * Advancing the Invariants:
- * 
+ *
  * 	p = first newline after halfway point from front to back.
- * 
- * 	If the string at "p" is not greater than the string to match, 
+ *
+ * 	If the string at "p" is not greater than the string to match,
  *	p is the new front.  Otherwise it is the new back.
- * 
+ *
  * Termination:
- * 
- * 	The definition of the routine allows it return at any point, 
+ *
+ * 	The definition of the routine allows it return at any point,
  *	since front is always at or before the line to print.
- * 
- * 	In fact, it returns when the chosen "p" equals "back".  This 
- *	implies that there exists a string is least half as long as 
- *	(back - front), which in turn implies that a linear search will 
+ *
+ * 	In fact, it returns when the chosen "p" equals "back".  This
+ *	implies that there exists a string is least half as long as
+ *	(back - front), which in turn implies that a linear search will
  *	be no more expensive than the cost of simply printing a string or two.
- * 
- * 	Trying to continue with binary search at this point would be 
+ *
+ * 	Trying to continue with binary search at this point would be
  *	more trouble than it's worth.
  */
 #define	SKIP_PAST_NEWLINE(p, back)	while (p < back && *p++ != '\n');
@@ -806,12 +847,12 @@ binary_search(string, front, back)
 /*
  * Find the first line that starts with string, linearly searching from front
  * to back.
- * 
+ *
  * Return NULL for no such line.
- * 
+ *
  * This routine assumes:
- * 
- * 	o front points at the first character in a line. 
+ *
+ * 	o front points at the first character in a line.
  *	o front is before or at the first line to be printed.
  */
 static char *
@@ -822,10 +863,8 @@ linear_search(string, front, back)
 		switch (compare(string, front, back)) {
 		case EQUAL:		/* Found it. */
 			return (front);
-			break;
 		case LESS:		/* No such string. */
 			return (NULL);
-			break;
 		case GREATER:		/* Keep going. */
 			break;
 		}
@@ -837,10 +876,10 @@ linear_search(string, front, back)
 /*
  * Return LESS, GREATER, or EQUAL depending on how the string1 compares
  * with string2 (s1 ??? s2).
- * 
- * 	o Matches up to len(s1) are EQUAL. 
+ *
+ * 	o Matches up to len(s1) are EQUAL.
  *	o Matches up to len(s2) are GREATER.
- * 
+ *
  * The string "s1" is null terminated.  The string s2 is '\t', space, (or
  * "back") terminated.
  *

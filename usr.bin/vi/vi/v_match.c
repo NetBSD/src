@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,23 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_match.c	8.7 (Berkeley) 12/9/93"; */
-static char *rcsid = "$Id: v_match.c,v 1.2 1994/01/24 06:41:42 cgd Exp $";
+static char sccsid[] = "@(#)v_match.c	8.10 (Berkeley) 3/10/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -48,33 +58,33 @@ static char *rcsid = "$Id: v_match.c,v 1.2 1994/01/24 06:41:42 cgd Exp $";
  *	Search to matching character.
  */
 int
-v_match(sp, ep, vp, fm, tm, rp)
+v_match(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	register int cnt, matchc, startc;
 	VCS cs;
+	MARK *mp;
 	recno_t lno;
-	size_t len, off;
-	int (*gc)__P((SCR *, EXF *, VCS *));
+	size_t cno, len, off;
+	int cnt, matchc, startc, (*gc)__P((SCR *, EXF *, VCS *));
 	char *p;
 
-	if ((p = file_gline(sp, ep, fm->lno, &len)) == NULL) {
+	if ((p = file_gline(sp, ep, vp->m_start.lno, &len)) == NULL) {
 		if (file_lline(sp, ep, &lno))
 			return (1);
 		if (lno == 0)
 			goto nomatch;
-		GETLINE_ERR(sp, fm->lno);
+		GETLINE_ERR(sp, vp->m_start.lno);
 		return (1);
 	}
 
 	/*
 	 * !!!
-	 * Historical practice was to search in the forward direction only.
+	 * Historical practice was to search for the initial character
+	 * in the forward direction only.
 	 */
-	for (off = fm->cno;; ++off) {
+	for (off = vp->m_start.cno;; ++off) {
 		if (off >= len) {
 nomatch:		msgq(sp, M_BERR, "No match character on this line.");
 			return (1);
@@ -110,7 +120,7 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line.");
 		break;
 	}
 
-	cs.cs_lno = fm->lno;
+	cs.cs_lno = vp->m_start.lno;
 	cs.cs_cno = off;
 	if (cs_init(sp, ep, &cs))
 		return (1);
@@ -131,23 +141,47 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line.");
 		msgq(sp, M_BERR, "Matching character not found.");
 		return (1);
 	}
-	rp->lno = cs.cs_lno;
-	rp->cno = cs.cs_cno;
+
+	vp->m_stop.lno = cs.cs_lno;
+	vp->m_stop.cno = cs.cs_cno;
 
 	/*
-	 * Movement commands go one space further.  Increment the return
-	 * MARK or from MARK depending on the direction of the search.
+	 * If moving right, non-motion commands move to the end of the range.
+	 * VC_D and VC_Y stay at the start.  If moving left, non-motion and
+	 * VC_D commands move to the end of the range.  VC_Y remains at the
+	 * start.  Ignore VC_C and VC_S.
+	 *
+	 * !!!
+	 * Don't correct for leftward movement -- historic vi deleted the
+	 * starting cursor position when deleting to a match.
 	 */
-	if (F_ISSET(vp, VC_C | VC_D | VC_Y)) {
-		if (file_gline(sp, ep, rp->lno, &len) == NULL) {
-			GETLINE_ERR(sp, rp->lno);
-			return (1);
+	if (vp->m_start.lno < vp->m_stop.lno ||
+	    vp->m_start.lno == vp->m_stop.lno &&
+	    vp->m_start.cno < vp->m_stop.cno)
+		vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
+	else
+		vp->m_final = ISMOTION(vp) &&
+		    F_ISSET(vp, VC_Y) ? vp->m_start : vp->m_stop;
+
+	/*
+	 * !!!
+	 * If the motion is across lines, and the earliest cursor position
+	 * is at or before any non-blank characters in its line, i.e. the
+	 * movement is cutting all of the line's text, the buffer is in line
+	 * mode.
+	 */
+	if (ISMOTION(vp) && vp->m_start.lno != vp->m_stop.lno) {
+		mp = vp->m_start.lno < vp->m_stop.lno ?
+		    &vp->m_start : &vp->m_stop;
+		if (mp->cno == 0) {
+			F_SET(vp, VM_LMODE);
+			return (0);
 		}
-		if (len)
-			if (gc == cs_next)
-				++rp->cno;
-			else
-				++fm->cno;
+		cno = 0;
+		if (nonblank(sp, ep, mp->lno, &cno))
+			return (1);
+		if (cno >= mp->cno)
+			F_SET(vp, VM_LMODE);
 	}
 	return (0);
 }
