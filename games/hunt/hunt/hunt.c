@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.19 2003/06/11 12:00:21 wiz Exp $	*/
+/*	$NetBSD: hunt.c,v 1.20 2003/06/11 12:04:06 wiz Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.19 2003/06/11 12:00:21 wiz Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.20 2003/06/11 12:04:06 wiz Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -764,7 +764,8 @@ sigterm(dummy)
  *	Handle a usr1 signal
  */
 SIGNAL_TYPE
-sigusr1()
+sigusr1(dummy)
+	int dummy;
 {
 	leavex(1, "Unable to start driver.  Try again.");
 	/* NOTREACHED */

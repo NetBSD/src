@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.8 2003/06/11 12:00:22 wiz Exp $	*/
+/*	$NetBSD: hunt.h,v 1.9 2003/06/11 12:04:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -477,4 +477,5 @@ SIGNAL_TYPE	intr __P((int));
 SIGNAL_TYPE	sigalrm __P((int));
 SIGNAL_TYPE	sigemt __P((int));
 SIGNAL_TYPE	sigterm __P((int));
+SIGNAL_TYPE	sigusr1 __P((int));
 SIGNAL_TYPE	tstp __P((int));
