@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.30 2002/01/29 18:53:14 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.31 2002/01/31 17:56:35 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -49,13 +49,12 @@
 #include <machine/locore.h>   /* cpu_id */
 #include <machine/bootinfo.h> /* bootinfo */
 #include <machine/sysconf.h>  /* platform */
+#include <machine/vmparam.h>  /* mem_cluster */
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
 #include <machine/bus.h>
-
-#include <hpcmips/hpcmips/machdep.h> /* cpu_name, mem_cluster */
 
 #include <hpcmips/tx/tx39biureg.h>
 #include <hpcmips/tx/tx39reg.h>
