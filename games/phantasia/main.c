@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2001/12/06 12:15:37 blymn Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2003/05/08 13:03:49 wiz Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -57,7 +57,7 @@
 
 #include "include.h"
 
-int	main __P((int, char **));
+int	main(int, char **);
 
 int
 main(argc, argv)
