@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.33 2004/01/14 00:11:53 grant Exp $
+$NetBSD: acronyms.comp,v 1.34 2004/01/14 13:46:26 keihan Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -101,6 +101,7 @@ LBA	logical block addressing
 LCD	liquid crystal display
 LDAP	lightweight directory access protocol
 LED	light emitting diode
+LIR	local internet registry
 LSB	least significant bit [or: byte]
 LUN	logical unit number
 MAC	media access control
@@ -122,6 +123,7 @@ NIS	network information service
 NUMA	non uniform memory access
 OEM	original equipment manufacturer
 OTP	one time password
+PAM	pluggable authentication modules
 PAX	portable archive exchange
 PCI	peripheral component interconnect
 PCMCIA	Personal Computer Memory Card International Association
