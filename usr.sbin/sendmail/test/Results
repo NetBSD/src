@@ -21,7 +21,8 @@ HP-UX	9.01	OK	93.11.19  Cassidy (on 7xx series)
 Solaris	2.1
 Solaris	2.2	FAIL	93.07.19  Bill Wisner
 
-OSF/1	T1.3-4	OK	93.07.19  eric
+OSF/1	T1.3-4	OK	93.07.19  eric (on DEC Alpha)
+OSF/1	1.3	OK	94.12.10  Jeff A. Earickson (on Intel Paragon)
 
 CxOS	11.0	OK	93.01.21  Eric Schnoebelen (CxOS 11.0 beta 1)
 CxOS	10.x	OK	93.01.21  Eric Schnoebelen
@@ -29,12 +30,16 @@ CxOS	10.x	OK	93.01.21  Eric Schnoebelen
 AIX	3.1.5	FAIL	93.08.07  David J. N. Begley
 AIX	3.2.3e	FAIL	93.07.26  Steve Bauer <sbauer@silver.sdsmt.edu>
 AIX	3.2.4	FAIL	93.10.07  David J. N. Begley
+AIX	3.2.5	FAIL	94.05.17  Steve Bauer <sbauer@hpcmmib.hpc.sdsmt.edu>
 
 IRIX	4.0.4	OK	93.09.25  Robert Elz
+IRIX	5.2	OK	94.12.06  Mark Andrews <mandrews@alias.com>
+IRIX	5.3	OK	94.12.06  Mark Andrews <mandrews@alias.com>
 
 SCO	3.2v4.0	OK	93.10.02  Peter Wemm (with -lsocket from 3.2v4 devsys)
 
 NeXT	2.1	OK	93.07.28  eric
+NeXT	3.0	OK	34.05.05  Kevin John Wang <kwang@lore.acs.calpoly.edu>
 
 Linux	0.99p10	OK	93.08.08  Karl London
 Linux	0.99p13	OK	93.09.27  Christian Kuhtz
@@ -44,3 +49,5 @@ Linux	1.0	OK	94.03.19  Shayne Smith <snsmith@rastus.brisnet.org.au>
 BSD/386	1.0	OK	93.11.13  Tony Sanders
 
 DELL	2.2	OK	93.11.15  Peter Wemm (using -DSETEUID)
+
+Pyramid	5.0d	OK	95.01.14  David Miller <davem@nadzieja.rutgers.edu>
