@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.7 1997/10/11 02:12:15 lukem Exp $	*/
+/*	$NetBSD: mach.c,v 1.8 1997/10/13 21:09:59 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.7 1997/10/11 02:12:15 lukem Exp $");
+__RCSID("$NetBSD: mach.c,v 1.8 1997/10/13 21:09:59 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ setup(sflag, seed)
 		time(&seed);
 	srandom(seed);
 	if (debug)
-		(void) printf("seed = %ld\n", seed);
+		(void) printf("seed = %ld\n", (long) seed);
 	return(0);
 }
 
