@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.9 2000/07/01 01:53:37 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.10 2000/09/03 02:01:32 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.109 2000/06/28 15:09:12 roger Exp */
 
@@ -537,20 +537,25 @@ common_bktr_attach( bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev )
  
 	/* using the pci device id and revision id */
 	/* and determine the card type            */
-	switch (pci_id) {
-	case BROOKTREE_848_PCI_ID:
-		if (rev == 0x12) bktr->id = BROOKTREE_848A;
-		else             bktr->id = BROOKTREE_848;
-		break;
-        case BROOKTREE_849_PCI_ID:
-		bktr->id = BROOKTREE_849A;
-		break;
-        case BROOKTREE_878_PCI_ID:
-		bktr->id = BROOKTREE_878;
-		break;
-        case BROOKTREE_879_PCI_ID:
-		bktr->id = BROOKTREE_879;
-		break;
+	if (PCI_VENDOR(pci_id) == PCI_VENDOR_BROOKTREE)
+	{
+		switch (PCI_PRODUCT(pci_id)) {
+		case PCI_PRODUCT_BROOKTREE_BT848:
+			if (rev == 0x12)
+				bktr->id = BROOKTREE_848A;
+			else
+				bktr->id = BROOKTREE_848;
+			break;
+		case PCI_PRODUCT_BROOKTREE_BT849:
+			bktr->id = BROOKTREE_849A;
+			break;
+		case PCI_PRODUCT_BROOKTREE_BT878:
+			bktr->id = BROOKTREE_878;
+			break;
+		case PCI_PRODUCT_BROOKTREE_BT879:
+			bktr->id = BROOKTREE_879;
+			break;
+		}
 	};
 
 	bktr->clr_on_start = FALSE;

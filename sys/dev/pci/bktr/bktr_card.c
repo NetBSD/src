@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.6 2000/07/01 01:39:01 wiz Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.7 2000/09/03 02:01:32 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.12 2000/06/28 15:09:12 roger Exp */
 
@@ -142,7 +142,7 @@ static const struct CARDTYPE cards[] = {
 	   0 },					/* GPIO mask */
 
 	{  CARD_MIRO,				/* the card id */
-	  "Miro TV",				/* the 'name' */
+	  "Pinnacle/Miro TV",			/* the 'name' */
 	   NULL,				/* the tuner */
 	   0,					/* the tuner i2c address */
 	   0,					/* dbx unknown */
@@ -357,7 +357,7 @@ writeEEProm( bktr_ptr_t bktr, int offset, int count, u_char *data )
 
 /*
  * Read the contents of the configuration EEPROM on the card.
- * (This is not fitted to all makes of card. All Hauppuage cards have them
+ * (This is not fitted to all makes of card. All Hauppauge cards have them
  * and so do newer Bt878 based cards.
  */
 int
@@ -520,13 +520,17 @@ static int locate_eeprom_address( bktr_ptr_t bktr) {
  * configuration EEPROM used on Bt878/879 cards. They should match the
  * number assigned to the company by the PCI Special Interest Group
  */
-#define VENDOR_AVER_MEDIA	0x1461
-#define VENDOR_HAUPPAUGE	0x0070
-#define VENDOR_FLYVIDEO		0x1851
-#define VENDOR_STB		0x10B4
-#define VENDOR_ASKEY_COMP	0x144F
-#define VENDOR_LEADTEK		0x6606
-
+#ifndef __NetBSD__
+#define PCI_VENDOR_HAUPPAUGE	0x0070
+#define PCI_VENDOR_AVERMEDIA	0x1461
+#define PCI_VENDOR_STB		0x10B4
+#define PCI_VENDOR_ASKEY	0x144F
+#endif
+/* Following not confirmed with http://members.hyperlink.net.au/~chart,
+   so not added to NetBSD's pcidevs */
+#define PCI_VENDOR_LEADTEK_ALT	0x6606
+#define PCI_VENDOR_FLYVIDEO	0x1851
+#define PCI_VENDOR_PINNACLE_ALT	0xBD11
 
 void
 probeCard( bktr_ptr_t bktr, int verbose, int unit )
@@ -611,47 +615,54 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 	            printf("%s: subsystem 0x%04x 0x%04x\n", bktr_name(bktr),
 			   subsystem_vendor_id, subsystem_id);
 
-                if (subsystem_vendor_id == VENDOR_AVER_MEDIA) {
+                if (subsystem_vendor_id == PCI_VENDOR_AVERMEDIA) {
                     bktr->card = cards[ (card = CARD_AVER_MEDIA) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_HAUPPAUGE) {
+                if (subsystem_vendor_id == PCI_VENDOR_HAUPPAUGE) {
                     bktr->card = cards[ (card = CARD_HAUPPAUGE) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_FLYVIDEO) {
+                if (subsystem_vendor_id == PCI_VENDOR_FLYVIDEO) {
                     bktr->card = cards[ (card = CARD_FLYVIDEO) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_STB) {
+                if (subsystem_vendor_id == PCI_VENDOR_STB) {
                     bktr->card = cards[ (card = CARD_STB) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_ASKEY_COMP) {
+                if (subsystem_vendor_id == PCI_VENDOR_ASKEY) {
                     bktr->card = cards[ (card = CARD_ASKEY_DYNALINK_MAGIC_TVIEW) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == VENDOR_LEADTEK) {
+                if (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT) {
                     bktr->card = cards[ (card = CARD_LEADTEK) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
+
+		if (subsystem_vendor_id == PCI_VENDOR_PINNACLE_ALT) {
+                    bktr->card = cards[ (card = CARD_MIRO) ];
+		    bktr->card.eepromAddr = eeprom_i2c_address;
+		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
+                    goto checkTuner;
+		}		    
 
                 /* Vendor is unknown. We will use the standard probe code */
 		/* which may not give best results */
