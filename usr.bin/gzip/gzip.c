@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.32 2004/03/30 11:42:04 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.33 2004/03/31 15:19:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.32 2004/03/30 11:42:04 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.33 2004/03/31 15:19:14 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -592,9 +592,9 @@ file_compress(char *file)
 		}
 #endif
 		if (stat(file, &isb) == 0) {
-			if (isb.st_nlink > 1) {
+			if (isb.st_nlink > 1 && fflag == 0) {
 				maybe_warnx("%s has %d other link%s -- "
-					    "skipping", file, isb.st_nlink-1,
+					    "skipping", file, isb.st_nlink - 1,
 					    isb.st_nlink == 1 ? "" : "s");
 				goto lose;
 			}
@@ -759,7 +759,7 @@ close_it:
 #endif
 		if (stat(file, &isb) == 0) {
 #ifndef SMALL
-			if (isb.st_nlink > 1 && lflag == 0) {
+			if (isb.st_nlink > 1 && lflag == 0 && fflag == 0) {
 				maybe_warnx("%s has %d other links -- skipping",
 				    file, isb.st_nlink - 1);
 				goto lose;
