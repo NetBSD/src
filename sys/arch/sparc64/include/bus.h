@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.33 2002/02/07 21:36:54 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.34 2002/03/01 07:19:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ typedef u_int64_t	bus_size_t;
 /* For buses which have an iospace. */
 #define	BUS_ADDR_IOSPACE(x)	((x)>>32)
 #define	BUS_ADDR_PADDR(x)	((x)&0xffffffff)
-#define	BUS_ADDR(io, pa)	(((io)<<32)|(pa))
+#define	BUS_ADDR(io, pa)	((((paddr_t)io)<<32)|(pa))
 
 /*
  * Access methods for bus resources and address space.
