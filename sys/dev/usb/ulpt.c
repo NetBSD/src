@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.47 2002/02/11 10:04:28 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.48 2002/02/11 15:11:49 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.47 2002/02/11 10:04:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.48 2002/02/11 15:11:49 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ USB_ATTACH(ulpt)
 	USETW2(req.wIndex, id->bInterfaceNumber, id->bAlternateSetting);
 	USETW(req.wLength, sizeof devinfo - 1);
 	err = usbd_do_request_flags(dev, &req, devinfo, USBD_SHORT_XFER_OK,
-		  &alen);
+		  &alen, USBD_DEFAULT_TIMEOUT);
 	if (err) {
 		printf("%s: cannot get device id\n", USBDEVNAME(sc->sc_dev));
 	} else if (alen <= 2) {
