@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.19 1999/07/25 06:24:23 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.20 1999/07/26 23:02:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -305,7 +305,7 @@ lockmgr(lkp, flags, interlkp)
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
 		SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
 		if (lkp->lk_waitcount)
-			wakeup((void *)lkp);
+			wakeup_one((void *)lkp);
 		break;
 
 	case LK_EXCLUPGRADE:
@@ -371,7 +371,7 @@ lockmgr(lkp, flags, interlkp)
 		 * lock, then request an exclusive lock.
 		 */
 		if (lkp->lk_sharecount == 0 && lkp->lk_waitcount)
-			wakeup((void *)lkp);
+			wakeup_one((void *)lkp);
 		/* fall into exclusive request */
 
 	case LK_EXCLUSIVE:
@@ -456,7 +456,7 @@ lockmgr(lkp, flags, interlkp)
 			COUNT(p, -1);
 		}
 		if (lkp->lk_waitcount)
-			wakeup((void *)lkp);
+			wakeup_one((void *)lkp);
 		break;
 
 	case LK_DRAIN:
@@ -522,7 +522,7 @@ lockmgr(lkp, flags, interlkp)
 	     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) == 0 &&
 	     lkp->lk_sharecount == 0 && lkp->lk_waitcount == 0)) {
 		lkp->lk_flags &= ~LK_WAITDRAIN;
-		wakeup((void *)&lkp->lk_flags);
+		wakeup_one((void *)&lkp->lk_flags);
 	}
 	simple_unlock(&lkp->lk_interlock);
 	return (error);
