@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.171 2000/03/30 02:04:30 simonb Exp $	*/
+/*	$NetBSD: com.c,v 1.172 2000/05/03 19:19:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ comspeed(speed, frequency)
 		return (-1);
 	return (x);
 
-#undef	divrnd(n, q)
+#undef	divrnd
 }
 
 #ifdef COM_DEBUG
