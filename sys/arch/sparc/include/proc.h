@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8 2003/01/03 15:12:02 pk Exp $ */
+/*	$NetBSD: proc.h,v 1.9 2003/01/06 18:32:32 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,3 +56,8 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_FIXALIGN	0x1		/* Fix unaligned memory accesses */
+
+/* FPU context switch lock */
+extern struct simplelock	fpulock;
+#define FPU_LOCK()		simple_lock(&fpulock)
+#define FPU_UNLOCK()		simple_unlock(&fpulock)
