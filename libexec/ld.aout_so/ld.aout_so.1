@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.aout_so.1,v 1.4 2002/09/29 14:05:54 wiz Exp $
+.\"	$NetBSD: ld.aout_so.1,v 1.5 2003/03/31 01:51:01 perry Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@ After all shared libraries have been successfully loaded,
 .Nm
 proceeds to resolve external references from both the main program and
 all objects loaded.
-A mechanism is provided for initialisation routines to be called,
+A mechanism is provided for initialization routines to be called,
 on a per-object basis, giving a shared object an opportunity
 to perform any extra set-up, before execution of the program proper begins.
 .Nm
@@ -80,7 +80,7 @@ address space as a result of calling
 Note that while an object's
 .Em .init
 is always called, whether the object is loaded automatically at program
-startup or programatically by using
+startup or programmatically by using
 .Xr dlopen 3 ,
 the
 .Em .fini
@@ -141,8 +141,8 @@ library-name, major-version-number, minor-version-number
 .Ac Ns \&.
 .Pp
 .Nm
-recognises a number of environment variables that can be used to modify
-its behaviour as follows:
+recognizes a number of environment variables that can be used to modify
+its behavior as follows:
 .Pp
 .Bl -tag -width LD_TRACE_LOADED_OBJECTS \" intentionally not the longest
 .It Ev LD_LIBRARY_PATH
@@ -205,7 +205,7 @@ Additionally,
 .Sy \en
 and
 .Sy \et
-are recognised and have their usual meaning.
+are recognized and have their usual meaning.
 .It Ev LD_NO_INTERN_SEARCH
 When set,
 .Nm
