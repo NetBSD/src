@@ -1,7 +1,7 @@
-/*	$NetBSD: in_cksum.c,v 1.5 1994/10/27 04:15:21 cgd Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.6 1995/04/26 09:40:36 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -51,6 +51,8 @@
 
 #define REDUCE          {sum = (sum & 0xffff) + (sum >> 16);}
 #define	ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
+#define	SWAP		{sum <<= 8;}
+#define	ADVANCE(x)	{w += x; mlen -= x;}
 
 /*
  * Thanks to gcc we don't have to guess
@@ -60,7 +62,9 @@
 #define ADD(n)  Asm("addl " #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADC(n)  Asm("adcl " #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define MOP     Asm("adcl $0,%0" :         "=r" (sum) : "0" (sum))
-#define	ROL	Asm("roll $8,%0" :	   "=r" (sum) : "0" (sum))
+#define	UNSWAP	Asm("roll $8,%0" :	   "=r" (sum) : "0" (sum))
+#define	ADDBYTE	{sum += *w; SWAP; byte_swapped ^= 1;}
+#define	ADDWORD	{sum += *(u_short *)w;}
 
 int
 in_cksum(m, len)
@@ -84,35 +88,29 @@ in_cksum(m, len)
 		 * Force to long boundary so we do longword aligned
 		 * memory operations
 		 */
-		if ((3 & (int) w) != 0) {
+		if ((3 & (long)w) != 0) {
 			REDUCE;
-			if ((1 & (int) w) != 0 && mlen >= 1) {
-				sum += *w;
-				ROL;
-				byte_swapped ^= 1;
-				w += 1;
-				mlen -= 1;
+			if ((1 & (long)w) != 0 && mlen >= 1) {
+				ADDBYTE;
+				ADVANCE(1);
 			}
-			if ((2 & (int) w) != 0 && mlen >= 2) {
-				sum += *(u_short *)w;
-				w += 2;
-				mlen -= 2;
+			if ((2 & (long)w) != 0 && mlen >= 2) {
+				ADDWORD;
+				ADVANCE(2);
 			}
 		}
 		/*
 		 * Align 4 bytes past a 16-byte cache line boundary.
 		 */
-		if ((4 & (int) w) == 0 && mlen >= 4) {
+		if ((4 & (long)w) == 0 && mlen >= 4) {
 			ADD(0);
 			MOP;
-			w += 4;
-			mlen -= 4;
+			ADVANCE(4);
 		}
-		if ((8 & (int) w) != 0 && mlen >= 8) {
+		if ((8 & (long)w) != 0 && mlen >= 8) {
 			ADD(0);  ADC(4);
 			MOP;
-			w += 8;
-			mlen -= 8;
+			ADVANCE(8);
 		}
 		/*
 		 * Do as much of the checksum as possible 32 bits at at time.
@@ -137,33 +135,29 @@ in_cksum(m, len)
 		if (mlen >= 16) {
 			ADD(12); ADC(0);  ADC(4);  ADC(8);
 			MOP;
-			w += 16;
-			mlen -= 16;
+			ADVANCE(16);
 		}
 		if (mlen >= 8) {
 			ADD(0);  ADC(4);
 			MOP;
-			w += 8;
-			mlen -= 8;
+			ADVANCE(8);
 		}
 		if (mlen == 0)
 			continue;
 		REDUCE;
 		while ((mlen -= 2) >= 0) {
-			sum += *(u_short *)w;
+			ADDWORD;
 			w += 2;
 		}
 		if (mlen == -1) {
-			sum += *w;
-			ROL;
-			byte_swapped ^= 1;
+			ADDBYTE;
 		}
 	}
 
 	if (len)
 		printf("cksum: out of data\n");
 	if (byte_swapped) {
-		ROL;
+		UNSWAP;
 	}
 	REDUCE;
 	ADDCARRY;
