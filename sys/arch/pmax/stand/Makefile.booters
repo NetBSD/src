@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile.booters,v 1.21 1999/04/01 06:05:04 simonb Exp $
+#	$NetBSD: Makefile.booters,v 1.22 1999/04/11 04:24:41 simonb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
-
-BINDIR?=/usr/mdec
-BINMODE?=444
 
 .BEGIN: ${.OBJDIR}/machine ${.OBJDIR}/mips
 ${PROG} depend all: ${.OBJDIR}/machine ${.OBJDIR}/mips
@@ -22,7 +19,7 @@ COPTS=	-Os				# -Os gives smaller code
 
 C_MACHDEP=-mmemcpy -mno-abicalls -G 128	# even smaller code
 
-DEFS?=	-DSMALL -D_STANDALONE -D_NO_PROM_DEFINES -DNO_ABICALLS \
+DEFS?=	-D_STANDALONE -D_NO_PROM_DEFINES -DNO_ABICALLS \
 	${BOOTDEFADD}
 INCL?=	-nostdinc -I${.OBJDIR} -I$S -I${PMAX_STAND_DIR}/lib -I$S/lib/libsa
 
@@ -53,7 +50,9 @@ KERN_AS=	library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
 
-.endif	# ${PROG} != "bootxx"
+.else	# ${PROG} == "bootxx"
+LIBZ=
+.endif
 
 PMAX_STAND_DIR?= $S/arch/pmax/stand
 ### find out what to use for libpmax
