@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.37 2000/04/13 09:12:16 itojun Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.37.4.1 2000/08/30 17:10:45 abs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.37 2000/04/13 09:12:16 itojun Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.37.4.1 2000/08/30 17:10:45 abs Exp $");
 #endif
 
 
@@ -939,6 +939,8 @@ rarp_reply(ii, ep, ipaddr, hp)
 	len = sizeof(*ep) + sizeof(*ap);
 #endif
 
+	debug("%s asked; %s replied", hp->h_name,
+			    ether_ntoa((struct ether_addr *)ar_tha(ap)));
 	if (lflag)
 		syslog(LOG_INFO, "%s asked; %s replied", hp->h_name, 
 		    ether_ntoa((struct ether_addr *)ar_tha(ap)));
