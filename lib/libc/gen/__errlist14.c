@@ -1,4 +1,4 @@
-/*	$NetBSD: __errlist14.c,v 1.4 2002/11/12 08:20:02 skrll Exp $	*/
+/*	$NetBSD: __errlist14.c,v 1.5 2002/11/12 10:28:27 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: __errlist14.c,v 1.4 2002/11/12 08:20:02 skrll Exp $");
+__RCSID("$NetBSD: __errlist14.c,v 1.5 2002/11/12 10:28:27 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -165,7 +165,7 @@ static const char *const __errlist14[] = {
 
 /* XSI STREAMS option errors  */
 	"No message available",			/* 89 - ENODATA */
-	"No STREAM resource",			/* 90 - ENOSR */
+	"No STREAM resources",			/* 90 - ENOSR */
 	"Not a STREAM"				/* 91 - ENOSTR */
 };
 
