@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.9 2003/10/13 14:34:25 agc Exp $	*/
+/*	$NetBSD: command.c,v 1.10 2003/10/21 12:02:32 agc Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)command.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: command.c,v 1.9 2003/10/13 14:34:25 agc Exp $");
+__RCSID("$NetBSD: command.c,v 1.10 2003/10/21 12:02:32 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,7 @@ getcc()
 	/* left over from error() routine. */
 	if (cmdstack) {
 		ch = cmdstack;
-		cmdstack = NULL;
+		cmdstack = 0;
 		return(ch);
 	}
 	if (cp > cmdbuf && position(TOP) == NULL_POSITION) {
