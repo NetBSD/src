@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2002/05/14 21:21:45 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.31.4.1 2003/06/24 09:30:52 grant Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,6 +101,14 @@ struct cpu_info {
 	int			ci_upaid;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
+	/*
+	 * Variables used by cc_microtime().
+	 */
+	struct timeval ci_cc_time;
+	int64_t ci_cc_cc;
+	int64_t ci_cc_ms_delta;
+	int64_t ci_cc_denom;
+
 	/* DEBUG/DIAGNOSTIC stuff */
 	u_long			ci_spin_locks;	/* # of spin locks held */
 	u_long			ci_simple_locks;/* # of simple locks held */
@@ -132,6 +140,16 @@ extern struct cpu_info cpu_info_store;
 #else
 #define	cpu_number()	(curcpu()->ci_number)
 #endif
+
+/*
+ * definitions for MI microtime().
+ */
+extern struct timeval cc_microset_time;
+#define microtime(tv)	cc_microtime(tv)
+void	cc_microtime __P((struct timeval *));
+void	cc_microset __P((struct cpu_info *));
+
+extern uint64_t cpu_clockrate[];
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
