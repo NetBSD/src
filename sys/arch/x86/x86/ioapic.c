@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.2 2003/03/04 22:43:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ ioapic_lock(struct ioapic_softc *sc)
 {
 	u_long flags;
 
-	flags = read_eflags();
+	flags = read_psl();
 	disable_intr();
 	if (sc->sc_pic.pic_lock == __SIMPLELOCK_LOCKED) {
 		enable_intr();
@@ -139,7 +139,7 @@ static __inline void
 ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 {
 	__cpu_simple_unlock(&sc->sc_pic.pic_lock);
-	write_eflags(flags);
+	write_psl(flags);
 }
 
 /*
