@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.1.2.5 1997/08/24 22:24:40 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.1.2.6 1997/08/24 22:34:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -383,6 +383,11 @@ smc91cxx_init(sc)
 	bus_space_write_1(bst, bsh, INTR_MASK_REG_B, 0);
 
 	/*
+	 * Set current media.
+	 */
+	smc91cxx_set_media(sc, sc->sc_media.ifm_cur->ifm_media);
+
+	/*
 	 * Set the receive filter.  We want receive enable and auto
 	 * strip of CRC from received packet.  If we are in promisc. mode,
 	 * then set that bit as well.
@@ -412,11 +417,6 @@ smc91cxx_init(sc)
 #endif
 
 	bus_space_write_2(bst, bsh, TXMIT_CONTROL_REG_W, tmp);
-
-	/*
-	 * Set current media.
-	 */
-	smc91cxx_set_media(sc, sc->sc_media.ifm_cur->ifm_media);
 
 	/*
 	 * Now, enable interrupts.
@@ -977,8 +977,13 @@ smc91cxx_ioctl(ifp, cmd, data)
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl), 
 				    ETHER_ADDR_LEN);
 			}
-			/* Set new address. */
-			smc91cxx_init(sc);
+
+			/*
+			 * Set new address.  Reset, because the receiver
+			 * has to be stopped before we can set the new
+			 * MAC address.
+			 */
+			smc91cxx_reset(sc);
 			break;
 		    }
 #endif
