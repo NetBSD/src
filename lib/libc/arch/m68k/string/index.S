@@ -1,4 +1,4 @@
-/*	$NetBSD: index.S,v 1.7 1997/01/04 03:26:21 jtc Exp $	*/
+/*	$NetBSD: index.S,v 1.8 1999/05/02 20:34:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)index.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: index.S,v 1.7 1997/01/04 03:26:21 jtc Exp $")
+	RCSID("$NetBSD: index.S,v 1.8 1999/05/02 20:34:04 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,6 +60,9 @@ ixloop:
 	tstb	a0@+			| null?
 	jne	ixloop			| no, keep going
 	moveq	#0,d0			| not found, return null
+#ifdef __SVR4_ABI__
+	moveal	d0,a0
+#endif
 	rts
 ixfound:
 	movl	a0,d0			| found, return pointer

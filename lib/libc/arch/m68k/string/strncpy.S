@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy.S,v 1.8 1997/05/13 19:27:26 jtc Exp $	*/
+/*	$NetBSD: strncpy.S,v 1.9 1999/05/02 20:34:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strncpy.S,v 1.8 1997/05/13 19:27:26 jtc Exp $")
+	RCSID("$NetBSD: strncpy.S,v 1.9 1999/05/02 20:34:04 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,9 @@ Lscloop:
 	subql	#1,d1			| adjust count
 	jne	Lscloop			| more room, keep going
 Lscdone:
+#ifdef __SVR4_ABI__
+	moveal	d0,a0
+#endif
 	rts
 Lscploop:
 	subql	#1,d1			| adjust count
