@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.22.2.3 1999/04/09 04:47:27 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.22.2.4 1999/05/30 15:38:54 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1810,6 +1810,9 @@ uvm_swap_io(pps, startslot, npages, flags)
 		sbp->sw_aio.kva = kva;
 		sbp->sw_aio.npages = npages;
 		sbp->sw_aio.pd_ptr = sbp;	/* backpointer */
+		/* XXX pagedaemon */
+		sbp->sw_aio.flags = (curproc == uvm.pagedaemon_proc) ?
+			UVM_AIO_PAGEDAEMON : 0;
 		bp->b_flags |= B_CALL;		/* set callback */
 		bp->b_iodone = uvm_swap_bufdone;/* "buf" iodone function */
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
