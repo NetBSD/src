@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.401 2003/04/15 19:46:39 jdolecek Exp $
+# $NetBSD: mi,v 1.402 2003/04/18 05:00:25 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -707,6 +707,7 @@
 ./usr/sbin/postmap		base-postfix-bin
 ./usr/sbin/postqueue		base-postfix-bin
 ./usr/sbin/postsuper		base-postfix-bin
+./usr/sbin/powerd		base-sysutil-bin
 ./usr/sbin/pppd			base-ppp-bin
 ./usr/sbin/pppdump		base-ppp-bin
 ./usr/sbin/pppstats		base-ppp-bin
