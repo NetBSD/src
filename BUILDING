@@ -13,10 +13,10 @@ STATUS
      plementation are noted specially, as with the note below:
 
      Note: This document applies only to platforms which use the new toolchain
-     as indicated by the setting of USE_NEW_TOOLCHAIN in /etc/mk.conf or
-     <bsd.own.mk>.  Platforms which have not yet been switched to the new
-     toolchain should continue building traditionally, using the notes speci-
-     fied in the file UPDATING.
+     as indicated by the default setting of USE_NEW_TOOLCHAIN in <bsd.own.mk>.
+     Platforms which have not yet been switched to the new toolchain should
+     continue building traditionally, using the notes specified in the file
+     UPDATING.
 
 REQUIREMENTS
      NetBSD is designed to be buildable on most POSIX-compliant host systems.
