@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.18 2003/10/04 09:19:23 tsutsui Exp $	*/
+/*	$NetBSD: ip32.c,v 1.19 2003/10/04 09:41:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.18 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.19 2003/10/04 09:41:27 tsutsui Exp $");
 
 #include "opt_machtypes.h"
 
@@ -130,9 +130,9 @@ ip32_init(void)
 	evcnt_attach_static(&mips_int5_evcnt);
 	evcnt_attach_static(&mips_spurint_evcnt);
 
-	printf("CPU clock speed = %lu.%02luMhz\n",
-				curcpu()->ci_cpu_freq / 1000000,
-			    	(curcpu()->ci_cpu_freq / 10000) % 100);
+	printf("CPU clock speed = %lu.%02luMHz\n",
+	    curcpu()->ci_cpu_freq / 1000000,
+	    (curcpu()->ci_cpu_freq / 10000) % 100);
 }
 
 void
