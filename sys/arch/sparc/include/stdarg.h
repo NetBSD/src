@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.12 1999/02/13 20:35:02 christos Exp $ */
+/*	$NetBSD: stdarg.h,v 1.13 1999/02/20 00:33:55 kristerw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@ typedef _BSD_VA_LIST_	va_list;
  */
 
 #ifdef __lint__
-# define va_arg(ap, type) (0)
+# define va_arg(ap, type)	(*(type *)(void *)(ap)) 
 #else /* !__lint__ */
 # if __GNUC__ == 1 && !defined(__extension__)
 #  define __extension__
