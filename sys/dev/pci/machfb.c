@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.15 2003/07/14 15:47:25 lukem Exp $	*/
+/*	$NetBSD: machfb.c,v 1.16 2004/03/22 08:36:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.15 2003/07/14 15:47:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.16 2004/03/22 08:36:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.15 2003/07/14 15:47:25 lukem Exp $");
 #include <sys/callout.h>
 
 #ifdef __sparc__
-#include <machine/openfirm.h>
+#include <machine/promlib.h>
 #endif
 
 #include <dev/ic/videomode.h>
@@ -1159,7 +1159,7 @@ mach64_is_console(struct pci_attach_args *pa)
 	if (node == -1)
 		return 0;
 
-	return (node == OF_instance_to_package(OF_stdout()));
+	return (node == OF_instance_to_package(prom_stdout()));
 #else
 	return 1;
 #endif
