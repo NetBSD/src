@@ -34,11 +34,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.2 1993/09/08 16:55:17 jtc Exp $
+ *	$Id: asm.h,v 1.3 1993/12/20 05:25:06 mycroft Exp $
  */
 
-#ifndef _SYS_ASM_H_
-#define _SYS_ASM_H_
+#ifndef _I386_ASM_H_
+#define _I386_ASM_H_
 
 /*
  * XXX assumes that arguments are not passed in %eax
@@ -68,4 +68,4 @@
 
 #define	ASMSTR		.asciz
 
-#endif /* !_SYS_ASM_H_ */
+#endif /* !_I386_ASM_H_ */
