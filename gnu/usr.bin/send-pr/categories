@@ -16,6 +16,7 @@ port-cobalt
 port-dreamcast
 port-hp300
 port-hpcmips
+port-hpcsh
 port-i386
 port-luna68k
 port-m68k
