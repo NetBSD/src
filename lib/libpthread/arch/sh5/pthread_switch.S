@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.4 2003/03/26 22:33:57 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.5 2003/05/16 22:40:56 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -214,8 +214,8 @@ Llocked_return_point:
 	ld.q	r15, RND_CTXSIZE+8, r29
 	ld.q	r15, RND_CTXSIZE, r28
 	add	r15, r0, r15
-	PIC_PROLOGUE
-	blink	tr0, r18
+	PIC_EPILOGUE
+	blink	tr0, r63
 
 
 /*
