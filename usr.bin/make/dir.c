@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.42 2004/07/01 04:39:30 jmc Exp $	*/
+/*	$NetBSD: dir.c,v 1.43 2004/07/01 20:38:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.42 2004/07/01 04:39:30 jmc Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.43 2004/07/01 20:38:09 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.42 2004/07/01 04:39:30 jmc Exp $");
+__RCSID("$NetBSD: dir.c,v 1.43 2004/07/01 20:38:09 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -860,12 +860,8 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
  *-----------------------------------------------------------------------
  */
 static char *
-#if __GNUC__
-DirLookup(Path *p, const char *name __attribute__((unused)), const char *cp, 
-          Boolean hasSlash __attribute__((unused)))
-#else
-DirLookup(Path *p, const char *name, const char *cp, Boolean hasSlash)
-#endif
+DirLookup(Path *p, const char *name __unused, const char *cp, 
+          Boolean hasSlash __unused)
 {
     char *file;		/* the current filename to check */
 
@@ -1007,12 +1003,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
  *-----------------------------------------------------------------------
  */
 static char *
-#if __GNUC__
-DirFindDot(Boolean hasSlash __attribute__((unused)), const char *name, 
-           const char *cp)
-#else
-DirFindDot(Boolean hasSlash, const char *name, const char *cp)
-#endif
+DirFindDot(Boolean hasSlash __unused, const char *name, const char *cp)
 {
 
 	if (Hash_FindEntry (&dot->files, cp) != (Hash_Entry *)NULL) {
