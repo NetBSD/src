@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper.c,v 1.5 2004/01/08 19:23:19 christos Exp $	*/
+/*	$NetBSD: citrus_mapper.c,v 1.6 2004/12/30 05:05:01 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper.c,v 1.5 2004/01/08 19:23:19 christos Exp $");
+__RCSID("$NetBSD: citrus_mapper.c,v 1.6 2004/12/30 05:05:01 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -89,7 +89,7 @@ _citrus_mapper_create_area(
 		goto quit;
 	}
 
-	snprintf(path, PATH_MAX, "%s/%s", area, _CITRUS_MAPPER_DIR);
+	snprintf(path, (size_t)PATH_MAX, "%s/%s", area, _CITRUS_MAPPER_DIR);
 
 	ret = stat(path, &st);
 	if (ret)
@@ -142,7 +142,7 @@ lookup_mapper_entry(const char *dir, const char *mapname,
 	char path[PATH_MAX];
 
 	/* create mapper.dir path */
-	snprintf(path, PATH_MAX, "%s/%s", dir, _CITRUS_MAPPER_DIR);
+	snprintf(path, (size_t)PATH_MAX, "%s/%s", dir, _CITRUS_MAPPER_DIR);
 
 	/* open read stream */
 	ret = _map_file(&r, path);
@@ -338,8 +338,8 @@ _citrus_mapper_open(struct _citrus_mapper_area *__restrict ma,
 	}
 
 	/* search mapper entry */
-	ret = lookup_mapper_entry(ma->ma_dir, mapname, linebuf, PATH_MAX,
-				  &module, &variable);
+	ret = lookup_mapper_entry(ma->ma_dir, mapname, linebuf,
+	    (size_t)PATH_MAX, &module, &variable);
 	if (ret)
 		goto quit;
 
