@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.17 1998/08/29 03:17:28 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.18 1998/08/29 03:53:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -133,7 +133,8 @@ pv_addr_t kernelstack;
 pv_addr_t fiqstack;
 #endif
 
-char *boot_args;
+char *boot_args = NULL;
+char *boot_file = NULL;
 
 vm_offset_t msgbufphys;
 
