@@ -1,4 +1,4 @@
-/*	$NetBSD: fwrite.c,v 1.10 1999/09/16 12:45:34 lukem Exp $	*/
+/*	$NetBSD: fwrite.c,v 1.11 1999/09/17 13:03:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fwrite.c,v 1.10 1999/09/16 12:45:34 lukem Exp $");
+__RCSID("$NetBSD: fwrite.c,v 1.11 1999/09/17 13:03:46 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,8 +66,6 @@ fwrite(buf, size, count, fp)
 	struct __suio uio;
 	struct __siov iov;
 
-	if (size == 0 || count == 0)	/* check first, according to SUS */
-		return (0);
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(fp != NULL);
 #ifdef _DIAGNOSTIC
