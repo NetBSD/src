@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.16 2002/10/02 05:30:42 thorpej Exp $	*/
+/*	$NetBSD: mesh.c,v 1.17 2003/04/02 03:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -576,7 +576,7 @@ mesh_dma_setup(sc, scb)
 
 	count = scb->dlen;
 
-	if (count / NBPG > 32)
+	if (count / PAGE_SIZE > 32)
 		panic("mesh: transfer size >= 128k");
 
 	va = scb->daddr;
@@ -584,7 +584,7 @@ mesh_dma_setup(sc, scb)
 
 	/* if va is not page-aligned, setup the first page */
 	if (offset != 0) {
-		int rest = NBPG - offset;	/* the rest in the page */
+		int rest = PAGE_SIZE - offset;	/* the rest in the page */
 
 		if (count > rest) {		/* if continues to next page */
 			DBDMA_BUILD(cmdp, cmd, 0, rest, vtophys(va),
@@ -597,15 +597,15 @@ mesh_dma_setup(sc, scb)
 	}
 
 	/* now va is page-aligned */
-	while (count > NBPG) {
-		DBDMA_BUILD(cmdp, cmd, 0, NBPG, vtophys(va),
+	while (count > PAGE_SIZE) {
+		DBDMA_BUILD(cmdp, cmd, 0, PAGE_SIZE, vtophys(va),
 			DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-		count -= NBPG;
-		va += NBPG;
+		count -= PAGE_SIZE;
+		va += PAGE_SIZE;
 		cmdp++;
 	}
 
-	/* the last page (count <= NBPG here) */
+	/* the last page (count <= PAGE_SIZE here) */
 	cmd = datain ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
 	DBDMA_BUILD(cmdp, cmd , 0, count, vtophys(va),
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);

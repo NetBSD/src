@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.15 2002/10/02 05:30:41 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.16 2003/04/02 03:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm_param.h>	/* for trunc_page */
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -330,7 +330,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 	count = *dmasize;
 
-	if (count / NBPG > 32)
+	if (count / PAGE_SIZE > 32)
 		panic("esp: transfer size >= 128k");
 
 	esc->sc_dmaaddr = addr;
@@ -342,7 +342,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 	/* if va is not page-aligned, setup the first page */
 	if (offset != 0) {
-		int rest = NBPG - offset;	/* the rest of the page */
+		int rest = PAGE_SIZE - offset;	/* the rest of the page */
 
 		if (count > rest) {		/* if continues to next page */
 			DBDMA_BUILD(cmdp, cmd, 0, rest, kvtop((caddr_t)va),
@@ -355,15 +355,15 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	}
 
 	/* now va is page-aligned */
-	while (count > NBPG) {
-		DBDMA_BUILD(cmdp, cmd, 0, NBPG, kvtop((caddr_t)va),
+	while (count > PAGE_SIZE) {
+		DBDMA_BUILD(cmdp, cmd, 0, PAGE_SIZE, kvtop((caddr_t)va),
 			DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-		count -= NBPG;
-		va += NBPG;
+		count -= PAGE_SIZE;
+		va += PAGE_SIZE;
 		cmdp++;
 	}
 
-	/* the last page (count <= NBPG here) */
+	/* the last page (count <= PAGE_SIZE here) */
 	cmd = datain ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
 	DBDMA_BUILD(cmdp, cmd , 0, count, kvtop((caddr_t)va),
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);

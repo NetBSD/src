@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.35 2003/01/18 06:33:45 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36 2003/04/02 02:56:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -119,10 +119,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 #endif /* SH4 */
 
 	l2->l_md.md_pcb = pcb;
-	fptop = (vaddr_t)pcb + NBPG;
+	fptop = (vaddr_t)pcb + PAGE_SIZE;
 
 	/* set up the kernel stack pointer */
-	spbase = (vaddr_t)l2->l_addr + NBPG;
+	spbase = (vaddr_t)l2->l_addr + PAGE_SIZE;
 #ifdef P1_STACK
 	/* Convert to P1 from P3 */
 	/*
@@ -146,9 +146,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 
 #ifdef KSTACK_DEBUG
 	/* Fill magic number for tracking */
-	memset((char *)fptop - NBPG + sizeof(struct user), 0x5a,
-	    NBPG - sizeof(struct user));
-	memset((char *)spbase, 0xa5, (USPACE - NBPG));
+	memset((char *)fptop - PAGE_SIZE + sizeof(struct user), 0x5a,
+	    PAGE_SIZE - sizeof(struct user));
+	memset((char *)spbase, 0xa5, (USPACE - PAGE_SIZE));
 	memset(&pcb->pcb_sf, 0xb4, sizeof(struct switchframe));
 #endif /* KSTACK_DEBUG */
 
@@ -168,7 +168,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	sf = &pcb->pcb_sf;
 	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
 	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
-	sf->sf_r15 = spbase + USPACE - NBPG;	/* current stack pointer */
+	sf->sf_r15 = spbase + USPACE - PAGE_SIZE;/* current stack pointer */
 	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
 	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
 	/* when switch to me, jump to proc_trampoline */
@@ -212,11 +212,11 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 		pcb = &l->l_addr->u_pcb;
 #endif /* SH4 */
 
-	fptop = (vaddr_t)pcb + NBPG;
+	fptop = (vaddr_t)pcb + PAGE_SIZE;
 	l->l_md.md_pcb = pcb;
 
 	/* set up the kernel stack pointer */
-	spbase = (vaddr_t)l->l_addr + NBPG;
+	spbase = (vaddr_t)l->l_addr + PAGE_SIZE;
 #ifdef P1_STACK
 	/* Convert to P1 from P3 */
 	/*
@@ -240,9 +240,9 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 #ifdef KSTACK_DEBUG
 	/* Fill magic number for tracking */
-	memset((char *)fptop - NBPG + sizeof(struct user), 0x5a,
-	    NBPG - sizeof(struct user));
-	memset((char *)spbase, 0xa5, (USPACE - NBPG));
+	memset((char *)fptop - PAGE_SIZE + sizeof(struct user), 0x5a,
+	    PAGE_SIZE - sizeof(struct user));
+	memset((char *)spbase, 0xa5, (USPACE - PAGE_SIZE));
 	memset(&pcb->pcb_sf, 0xb4, sizeof(struct switchframe));
 #endif /* KSTACK_DEBUG */
 
@@ -253,7 +253,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	sf = &pcb->pcb_sf;
 	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
 	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
-	sf->sf_r15 = spbase + USPACE - NBPG;	/* current stack pointer */
+	sf->sf_r15 = spbase + USPACE - PAGE_SIZE;/* current stack pointer */
 	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
 	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
 	/* when switch to me, jump to proc_trampoline */
@@ -370,9 +370,9 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 		*fpte++ = 0;
 		sh_tlb_invalidate_addr(0, (vaddr_t)from);
 		sh_tlb_invalidate_addr(0, (vaddr_t)to);
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
 }
 

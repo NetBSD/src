@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.8 2002/05/09 12:29:16 uch Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.9 2003/04/02 02:56:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -133,11 +133,11 @@ kgdb_acc(vaddr_t va, size_t len)
 {
 	vaddr_t last_va;
 
-	last_va = va + len + NBPG - 1;
+	last_va = va + len + PAGE_SIZE - 1;
 	va  &= ~PGOFSET;
 	last_va &= ~PGOFSET;
 
-	for (; va < last_va; va += NBPG) {
+	for (; va < last_va; va += PAGE_SIZE) {
 		if (kvacc(va) == 0)
 			return 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.7 2003/01/01 01:47:30 thorpej Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.8 2003/04/02 03:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -31,6 +31,8 @@
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -103,7 +105,7 @@ mediabay_attach(parent, self, aux)
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
-	sc->sc_addr = mapiodev(ca->ca_reg[0], NBPG);
+	sc->sc_addr = mapiodev(ca->ca_reg[0], PAGE_SIZE);
 	sc->sc_fcr = sc->sc_addr + 1;
 	sc->sc_node = ca->ca_node;
 	sc->sc_baseaddr = ca->ca_baseaddr;

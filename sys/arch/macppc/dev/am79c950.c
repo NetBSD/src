@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.12 2002/01/16 06:04:23 thorpej Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.13 2003/04/02 03:04:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -48,6 +48,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -481,7 +483,7 @@ maceput(sc, m)
 		MFREE(m, n);
 	}
 
-	if (totlen > NBPG)
+	if (totlen > PAGE_SIZE)
 		panic("%s: maceput: packet overflow", sc->sc_dev.dv_xname);
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 2003/02/12 13:15:49 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 2003/04/02 03:04:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,6 +36,8 @@
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -368,7 +370,7 @@ OF_interpret(cmd, nreturns, va_alist)
 	ofw_stack();
 	if (nreturns > 8)
 		return -1;
-	if ((i = strlen(cmd)) >= NBPG)
+	if ((i = strlen(cmd)) >= PAGE_SIZE)
 		return -1;
 	ofbcopy(cmd, OF_buf, i + 1);
 	args.cmd = OF_buf;

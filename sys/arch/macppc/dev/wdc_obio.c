@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.22 2002/10/02 05:30:43 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.23 2003/04/02 03:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -456,7 +456,7 @@ wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 
 	/* if va is not page-aligned, setup the first page */
 	if (offset != 0) {
-		int rest = NBPG - offset;	/* the rest of the page */
+		int rest = PAGE_SIZE - offset;	/* the rest of the page */
 
 		if (datalen > rest) {		/* if continues to next page */
 			DBDMA_BUILD(cmdp, cmd, 0, rest, vtophys(va),
@@ -469,15 +469,15 @@ wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 	}
 
 	/* now va is page-aligned */
-	while (datalen > NBPG) {
-		DBDMA_BUILD(cmdp, cmd, 0, NBPG, vtophys(va),
+	while (datalen > PAGE_SIZE) {
+		DBDMA_BUILD(cmdp, cmd, 0, PAGE_SIZE, vtophys(va),
 			DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-		datalen -= NBPG;
-		va += NBPG;
+		datalen -= PAGE_SIZE;
+		va += PAGE_SIZE;
 		cmdp++;
 	}
 
-	/* the last page (datalen <= NBPG here) */
+	/* the last page (datalen <= PAGE_SIZE here) */
 	cmd = read ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
 	DBDMA_BUILD(cmdp, cmd, 0, datalen, vtophys(va),
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 2003/01/18 06:33:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 2003/04/02 02:56:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #define	__PMAP_PTP_SHIFT	22
 #define	__PMAP_PTP_TRUNC(va)						\
 	(((va) + (1 << __PMAP_PTP_SHIFT) - 1) & ~((1 << __PMAP_PTP_SHIFT) - 1))
-#define	__PMAP_PTP_PG_N		(NBPG / sizeof(pt_entry_t))
+#define	__PMAP_PTP_PG_N		(PAGE_SIZE / sizeof(pt_entry_t))
 #define	__PMAP_PTP_INDEX(va)	(((va) >> __PMAP_PTP_SHIFT) & (__PMAP_PTP_N - 1))
 #define	__PMAP_PTP_OFSET(va)	((va >> PGSHIFT) & (__PMAP_PTP_PG_N - 1))
 

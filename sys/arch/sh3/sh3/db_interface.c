@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.21 2002/11/08 14:58:25 tsutsui Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.22 2003/04/02 02:56:40 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -516,7 +516,7 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	db_printf("sf_r6_bank\t0x%08x\n", sf->sf_r6_bank);
 	db_printf("sf_r7_bank\t0x%08x\n", sf->sf_r7_bank);
 
-	tftop = (struct trapframe *)((vaddr_t)curpcb + NBPG);
+	tftop = (struct trapframe *)((vaddr_t)curpcb + PAGE_SIZE);
 
 	/* Print trap frame stack */
 	db_printf("[trap frame]\n");
@@ -580,8 +580,8 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	u_int32_t *t32;
 	u_int8_t *t8;
 	int i, j;
-#define	MAX_STACK	(USPACE - NBPG)
-#define	MAX_FRAME	(NBPG - sizeof(struct user))
+#define	MAX_STACK	(USPACE - PAGE_SIZE)
+#define	MAX_FRAME	(PAGE_SIZE - sizeof(struct user))
 	db_printf("stack max: %d byte, frame max %d byte,"
 	    " sizeof(struct trapframe) %d byte\n", MAX_STACK, MAX_FRAME,
 	    sizeof(struct trapframe));
@@ -597,7 +597,7 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		i = MAX_STACK - i * sizeof(int);
 
 		/* frame */
-		t8 = (u_int8_t *)((vaddr_t)pcb + NBPG - MAX_FRAME);
+		t8 = (u_int8_t *)((vaddr_t)pcb + PAGE_SIZE - MAX_FRAME);
 		for (j = 0; *t8++ == 0x5a; j++)
 			;
 		j = MAX_FRAME - j;
@@ -605,7 +605,7 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		db_printf("%-6d 0x%08x %6d (%3d%%) 0x%08lx %6d (%3d%%) %d %s\n",
 		    p->p_pid,
 		    pcb->pcb_sf.sf_r7_bank, i, i * 100 / MAX_STACK,
-		    (vaddr_t)pcb + NBPG, j, j * 100 / MAX_FRAME,
+		    (vaddr_t)pcb + PAGE_SIZE, j, j * 100 / MAX_FRAME,
 		    j / sizeof(struct trapframe),
 		    p->p_comm);
 	}
