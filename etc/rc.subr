@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.35 2001/05/09 16:40:59 lukem Exp $
+# $NetBSD: rc.subr,v 1.36 2001/05/10 14:04:22 atatat Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -681,27 +681,32 @@ backup_file()
 		_msg0="backup archive"
 		_msg1="update"
 
+		# ensure that history file is not locked
+		if [ -f $_cur,v ]; then
+			rcs -q -u -U -M $_cur
+		fi
+
 		# ensure after switching to rcs that the
 		# current backup is not lost
 		if [ -f $_cur ]; then
 			# no archive, or current newer than archive
 			if [ ! -f $_cur,v -o $_cur -nt $_cur,v ]; then
-				ci -q -f -l -t-"$_msg0" -m"$_msg1" $_cur
-				rcs -q -kb $_cur
+				ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
+				rcs -q -kb -U $_cur
 			fi
 		fi
 
 		case $_action in
 		add|update)
 			cp -p $_file $_cur
-			ci -q -f -l -t-"$_msg0" -m"$_msg1" $_cur
-			rcs -q -kb $_cur
+			ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
+			rcs -q -kb -U $_cur
 			chown root:wheel $_cur $_cur,v
 			;;
 		remove)
 			cp /dev/null $_cur
-			ci -q -f -l -t-"$_msg0" -m"$_msg1" $_cur
-			rcs -q -kb $_cur
+			ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
+			rcs -q -kb -U $_cur
 			chown root:wheel $_cur $_cur,v
 			rm $_cur
 			;;
