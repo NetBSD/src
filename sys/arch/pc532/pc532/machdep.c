@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 1995/04/10 13:15:48 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 1995/04/21 20:20:15 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -689,10 +689,8 @@ boot(arghowto)
 		/*
 		 * Unmount filesystems
 		 */
-#if 0
 		if (panicstr == 0)
 			vfs_unmountall();
-#endif
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
 			for (bp = &buf[nbuf]; --bp >= buf; )
