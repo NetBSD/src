@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2004/01/29 08:34:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.42 2004/01/29 09:27:53 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -84,7 +84,8 @@ maketarsetup: .PHONY
 do-${tar}: .PHONY
 	${SETSENV} ${HOST_SH} ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
 	    ${METALOG.unpriv} -N ${NETBSDSRCDIR}/etc \
-	    -t ${RELEASEDIR}/${MACHINE}/binary/sets ${tar}
+	    -t ${RELEASEDIR}/${MACHINE}/binary/sets ${tar} \
+	|| rm -f ${RELEASEDIR}/${MACHINE}/binary/sets/${tar}.tgz
 .endfor
 
 makesrctars: .PRECIOUS .PHONY check_RELEASEDIR
