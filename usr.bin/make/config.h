@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.16 2003/08/07 11:14:49 agc Exp $	*/
+/*	$NetBSD: config.h,v 1.16.2.1 2004/05/10 15:41:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -158,7 +158,7 @@
  */
 #define USE_IOVEC
 
-#if !defined(MAKE_BOOTSTRAP) && !defined(__ELF__)
+#if defined(MAKE_NATIVE) && !defined(__ELF__)
 # ifndef RANLIBMAG
 #  define RANLIBMAG "__.SYMDEF"
 # endif
