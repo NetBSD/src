@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.13 1998/02/22 15:40:39 christos Exp $	*/
+/*	$NetBSD: cgram.y,v 1.14 1998/11/13 16:48:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -1224,9 +1224,7 @@ opt_stmnt_list:
 	;
 
 stmnt_list:
-	  stmnt {
-		clrwflgs();
-	  }
+	  stmnt
 	| stmnt_list stmnt {
 		clrwflgs();
 	  }
@@ -1253,15 +1251,19 @@ selection_stmnt:
 	| if_without_else T_ELSE {
 		if2();
 	  } stmnt {
+		clrwflgs();
 		if3(1);
 	  }
 	| if_without_else T_ELSE error {
+		clrwflgs();
 		if3(0);
 	  }
 	| switch_expr stmnt {
+		clrwflgs();
 		switch2();
 	  }
 	| switch_expr error {
+		clrwflgs();
 		switch2();
 	  }
 	;
@@ -1285,24 +1287,35 @@ switch_expr:
 	  }
 	;
 
+do_stmnt:
+	  do stmnt {
+		clrwflgs();
+	  }
+	;
+
 iteration_stmnt:
 	  while_expr stmnt {
+		clrwflgs();
 		while2();
 	  }
 	| while_expr error {
+		clrwflgs();
 		while2();
 	  }
-	| do stmnt do_while_expr {
-		do2($3);
+	| do_stmnt do_while_expr {
+		do2($2);
 		ftflg = 0;
 	  }
 	| do error {
+		clrwflgs();
 		do2(NULL);
 	  }
 	| for_exprs stmnt {
+		clrwflgs();
 		for2();
 	  }
 	| for_exprs error {
+		clrwflgs();
 		for2();
 	  }
 	;
