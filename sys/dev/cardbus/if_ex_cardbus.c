@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.29 2004/05/08 23:40:01 christos Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.30 2004/07/22 15:48:17 mycroft Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.29 2004/05/08 23:40:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.30 2004/07/22 15:48:17 mycroft Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -404,26 +404,23 @@ ex_cardbus_setup(csc)
 	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
 	    PCI_PWR_D0);
 
+	/* Program the BAR */
+	cardbus_conf_write(cc, cf, csc->sc_tag,
+		csc->sc_bar_reg, csc->sc_bar_val); 
 	/* Make sure the right access type is on the CardBus bridge. */
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 	if (csc->sc_cardtype == EX_CB_CYCLONE) {
+		/* Program the BAR */
+		cardbus_conf_write(cc, cf, csc->sc_tag,
+			csc->sc_bar_reg1, csc->sc_bar_val1); 
 		/*
 		 * Make sure CardBus brigde can access memory space.  Usually
 		 * memory access is enabled by BIOS, but some BIOSes do not
 		 * enable it.
 		 */
 		(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
-
-		/* Program the BAR */
-		cardbus_conf_write(cc, cf, csc->sc_tag,
-			csc->sc_bar_reg1, csc->sc_bar_val1); 
 	}
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
-
-	/* Program the BAR */
-	cardbus_conf_write(cc, cf, csc->sc_tag,
-		csc->sc_bar_reg, csc->sc_bar_val); 
 
 	/* Enable the appropriate bits in the CARDBUS CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
