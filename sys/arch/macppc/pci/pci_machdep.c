@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22 2003/08/18 07:08:11 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.23 2003/08/20 14:41:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2003/08/18 07:08:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2003/08/20 14:41:56 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -344,26 +344,32 @@ fixpci(parent, pc)
 		 * Make sure the line register is programmed with the
 		 * interrupt mapping.
 		 */
-		if (ilen == 0)
-			continue;
-		iaddr.phys_hi = addr[0].phys_hi;
-		iaddr.phys_mid = addr[0].phys_mid;
-		iaddr.phys_lo = addr[0].phys_lo;
-		/*
-		 * Thankfully, PCI can only have one entry in its "interrupts" 
-		 * property.
-		 */
-		len = OF_getprop(node, "interrupts", &iaddr.icells[0], 4*ilen);
-		if (len != 4*ilen)
-			continue;
-		if (find_node_intr(node, &iaddr.phys_hi, irqs) == -1) {
-			printf("find_node_intr failed\n");
-			continue;
+		if (ilen == 0) {
+			/*
+			 * Early Apple OFW implementation don't handle
+			 * interrupts as defined by the OFW PCI bindings.
+			 */
+			len = OF_getprop(node, "AAPL,interrupts", irqs, 4);
+		} else {
+			iaddr.phys_hi = addr[0].phys_hi;
+			iaddr.phys_mid = addr[0].phys_mid;
+			iaddr.phys_lo = addr[0].phys_lo;
+			/*
+			 * Thankfully, PCI can only have one entry in its
+			 * "interrupts" property.
+			 */
+			len = OF_getprop(node, "interrupts", &iaddr.icells[0],
+			    4*ilen);
+			if (len != 4*ilen)
+				continue;
+			len = find_node_intr(node, &iaddr.phys_hi, irqs);
 		}
-		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-		intr &= ~PCI_INTERRUPT_LINE_MASK;
-		intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
-		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
+		if (len > 0) {
+			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+			intr &= ~PCI_INTERRUPT_LINE_MASK;
+			intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
+			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
+		}
 	}
 }
 
@@ -382,10 +388,6 @@ find_node_intr(node, addr, intr)
 	u_int32_t imask[8], maskedaddr[8];
 	u_int32_t acells, icells;
 	char name[32];
-
-	len = OF_getprop(node, "AAPL,interrupts", intr, 4) ;
-	if (len == 4)
-		return len;
 
 	parent = OF_parent(node);
 	len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
