@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbvar.h,v 1.2 2004/05/21 21:45:04 heas Exp $	*/
+/*	$NetBSD: ffbvar.h,v 1.3 2004/07/19 01:04:35 heas Exp $	*/
 /*	$OpenBSD: creatorvar.h,v 1.6 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -51,6 +51,7 @@ struct ffb_softc {
 	int sc_console;
 	int sc_node;
 	int sc_type;
+	u_int sc_dacrev;
 	u_int sc_mode;
 	struct rasops_info sc_rasops;
 	int32_t sc_fifo_cache, sc_fg_cache;
