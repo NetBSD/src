@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_cd9660.8,v 1.18 2003/02/25 10:35:00 wiz Exp $
+.\" $NetBSD: mount_cd9660.8,v 1.19 2003/04/18 14:53:50 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"     @(#)mount_cd9660.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd July 15, 2000
+.Dd April 18, 2003
 .Dt MOUNT_CD9660 8
 .Os
 .Sh NAME
@@ -53,9 +53,6 @@ command attaches the ISO-9660 filesystem residing on the device
 .Pa special
 to the global filesystem namespace at the location indicated by
 .Pa node .
-This command is normally executed by
-.Xr mount 8
-at boot time.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
