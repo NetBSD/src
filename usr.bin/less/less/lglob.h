@@ -1,5 +1,3 @@
-/*	$NetBSD: lglob.h,v 1.1.1.3 2001/07/26 12:00:32 mrg Exp $	*/
-
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
  *
