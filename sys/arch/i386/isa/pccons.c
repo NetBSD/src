@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.59 1994/03/11 12:22:31 deraadt Exp $
+ *	$Id: pccons.c,v 1.60 1994/03/12 03:45:05 mycroft Exp $
  */
 
 /*
@@ -202,21 +202,6 @@ kbd_cmd(val, polling)
 {
 	u_int retries = 3;
 	register u_int i;
-
-#if 1
-	/*
-	 * XXX This is a fugly backward-compatibility hack for jokers who
-	 * aren't on current-users or don't pay attention.
-	 */
-	if (!polling && (cpl & 2)) {
-		static int warned;
-		if (!warned) {
-			warned = 1;
-			printf("PLEASE UPDATE YOUR COPY OF CONFIG(8)!\r\n");
-		}
-		polling = 1;
-	}
-#endif
 
 	do {
 		if (!kbd_wait())
