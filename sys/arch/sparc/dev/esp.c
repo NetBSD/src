@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.53 1996/08/28 19:00:35 cgd Exp $ */
+/*	$NetBSD: esp.c,v 1.54 1996/09/09 18:01:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -594,7 +594,6 @@ espselect(sc, target, lun, cmd, clen)
 
 	/* And get the targets attention */
 	ESPCMD(sc, ESPCMD_SELATN);
-
 }
 
 /*
@@ -660,7 +659,6 @@ esp_scsi_cmd(xs)
 
 	ESP_MISC(("SUCCESSFULLY_QUEUED"));
 	return SUCCESSFULLY_QUEUED;
-
 }
 
 /*
@@ -1117,7 +1115,7 @@ sc_print_addr(ecb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
 					}
 #ifdef ESP_DEBUG
 					printf("max sync rate %d.%02dMb/s\n",
-					        r, s);
+						r, s);
 #endif
 				}
 				ti->flags &= ~T_NEGOTIATE;
