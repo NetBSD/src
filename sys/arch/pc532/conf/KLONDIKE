@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.29 2005/02/18 21:05:53 dsl Exp $
+#	$NetBSD: KLONDIKE,v 1.30 2005/02/22 14:39:52 chs Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -67,7 +67,7 @@ options 	PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 # pc532 specific options
 options 	CPU30MHZ
 options 	CONSOLE_SPEED=B9600	# default console baud rate
-options 	SCNDEF_CFLAG="CREAD+CS8+HUPCL"
+options 	SCNDEF_CFLAG="CREAD|CS8|HUPCL"
 options 	NS381			# FPU installed
 options 	PLIP			# PLIP driver in dev/lpt.c
 
