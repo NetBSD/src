@@ -1,4 +1,4 @@
-/* $NetBSD: verify.c,v 1.2 2001/09/25 11:42:56 agc Exp $ */
+/* $NetBSD: verify.c,v 1.2.4.1 2002/06/28 12:43:06 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: verify.c,v 1.2 2001/09/25 11:42:56 agc Exp $");
+__RCSID("$NetBSD: verify.c,v 1.2.4.1 2002/06/28 12:43:06 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -65,10 +65,10 @@ static char	*verification_type;	/* the verification type which has been selected
 
 /* called when gpg verification type is selected */
 static int
-do_verify(const char *pkgname, const char *cmd, const char **extensions)
+do_verify(const char *pkgname, const char *cmd, const char *const *extensions)
 {
 	struct stat	st;
-	const char    **ep;
+	const char    *const *ep;
 	char		buf[BUFSIZ];
 	char		f[FILENAME_MAX];
 	int		i;
@@ -104,7 +104,7 @@ do_verify(const char *pkgname, const char *cmd, const char **extensions)
 }
 
 /* table holding possible verifications which can be made */
-static ver_t	vertab[] = {
+static const ver_t	vertab[] = {
 	{ "none",	NULL,			{ NULL } },
 	{ "gpg",	"gpg --verify %s",	{ ".sig", ".asc", NULL } },
 	{ "pgp5",	"pgpv %s",		{ ".sig", ".asc", ".pgp", NULL } },
@@ -125,7 +125,7 @@ set_verification(const char *type)
 char *
 get_verification(void)
 {
-	ver_t  *vp;
+	const ver_t *vp;
 
 	if (verification_type != NULL) {
 		for (vp = vertab ; vp->name ; vp++) {
@@ -141,7 +141,7 @@ get_verification(void)
 int
 verify(const char *pkg)
 {
-	ver_t   *vp;
+	const ver_t *vp;
 
 	if (verification_type == NULL) {
 		return do_verify(pkg, NULL, NULL);
