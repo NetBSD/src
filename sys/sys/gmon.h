@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)gmon.h	8.2 (Berkeley) 1/4/94
+ *	from: @(#)gmon.h	8.2 (Berkeley) 1/4/94
+ *	$Id: gmon.h,v 1.2 1994/05/19 03:38:42 mycroft Exp $
  */
 
 #ifndef _SYS_GMON_H_
