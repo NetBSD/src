@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.3 1994/11/25 23:56:21 deraadt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.4 1995/02/01 21:51:48 pk Exp $ */
 
 /* 
  * Mach Operating System
@@ -42,6 +42,8 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_command.h>
 #include <machine/bsd_openprom.h>
+#include <machine/ctlreg.h>
+#include <sparc/sparc/asm.h>
 
 extern jmp_buf	*db_recover;
 
@@ -112,7 +114,40 @@ db_read_bytes(addr, size, data)
 		*data++ = *src++;
 }
 
-struct pte *pmap_pte(pmap_t, vm_offset_t);
+
+/*
+ * XXX - stolen from pmap.c
+ */
+#define	getpte(va)		lda(va, ASI_PTE)
+#define	setpte(va, pte)		sta(va, ASI_PTE, pte)
+#define	splpmap() splimp()
+
+static void
+db_write_text(dst, ch)
+	unsigned char *dst;
+	int ch;
+{        
+	int s, pte0, pte;
+	vm_offset_t va;
+
+	s = splpmap();
+	va = (unsigned long)dst & (~PGOFSET);
+	pte0 = getpte(va);
+
+	if ((pte0 & PG_V) == 0) { 
+		db_printf(" address 0x%x not a valid page\n", dst);
+		splx(s);
+		return;
+	}
+
+	pte = pte0 | PG_W;
+	setpte(va, pte);
+
+	*dst = (unsigned char)ch;
+
+	setpte(va, pte0);
+	splx(s);
+}
 
 /*
  * Write bytes to kernel address space for debugger.
@@ -123,11 +158,17 @@ db_write_bytes(addr, size, data)
 	register int	size;
 	register char	*data;
 {
+	extern char	etext[];
 	register char	*dst;
 
 	dst = (char *)addr;
-	while (--size >= 0)
-		*dst++ = *data++;
+	while (--size >= 0) {
+		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) && (dst < etext))
+			db_write_text(dst, *data);
+		else
+			*dst = *data;
+		dst++, data++;
+	}
 
 }
 
