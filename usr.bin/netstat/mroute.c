@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.9 1995/10/03 21:42:42 thorpej Exp $	*/
+/*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -167,6 +167,7 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 	banner_printed = 0;
 	nmfc = 0;
 
+	if (mfchashtbl != 0)
 	for (i = 0; i <= mfchash; ++i) {
 		kread((u_long)&mfchashtbl[i], (char *)&mfcp, sizeof(mfcp));
 
