@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.18 2003/12/05 06:01:59 gson Exp $	*/
+/*	$NetBSD: umidi.c,v 1.19 2004/01/06 05:42:47 gson Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.18 2003/12/05 06:01:59 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.19 2004/01/06 05:42:47 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -935,7 +935,9 @@ close_in_jack(struct umidi_jack *jack)
 {
 	if (jack->opened) {
 		jack->opened = 0;
-		jack->endpoint->num_open--;
+		if (--jack->endpoint->num_open == 0) {
+		    usbd_abort_pipe(jack->endpoint->pipe);
+		}
 	}
 }
 
