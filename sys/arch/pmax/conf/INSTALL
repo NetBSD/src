@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.18 1999/03/28 05:46:53 simonb Exp $
+# 	$NetBSD: INSTALL,v 1.18.2.1 1999/04/20 23:46:34 cjs Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -71,6 +71,8 @@ cpu*		at mainbus0
 
 
 #########################################################################
+options 	NFS_BOOT_DHCP	# superset of BOOTP
+
 # I/O bus and device options						#
 #########################################################################
 
