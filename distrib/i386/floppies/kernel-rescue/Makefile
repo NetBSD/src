@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/05/02 18:02:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2002/05/08 21:44:56 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,9 +13,8 @@ ${V}DIR!=	cd ${.CURDIR}/../${F} && ${PRINTOBJDIR}
 ${V}=		${${V}DIR}/${F}.fs
 .endfor
 
-MDSETTARGETS=	INSTALL_SMALL	${RAMDISK_S}	netbsd.RESCUE_SMALL	\
-		INSTALL_TINY	${RAMDISK_T}	netbsd.RESCUE_TINY
-
+MDSETTARGETS=		INSTALL_SMALL	${RAMDISK_S}	netbsd.RESCUE_SMALL \
+			INSTALL_TINY	${RAMDISK_T}	netbsd.RESCUE_TINY
 MDSET_RELEASEDIR=	binary/kernel
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
