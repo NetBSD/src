@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)a.out.h	5.6 (Berkeley) 4/30/91
- *	$Id: a.out.h,v 1.6 1993/08/01 18:45:02 mycroft Exp $
+ *	$Id: a.out.h,v 1.7 1993/09/01 08:44:05 deraadt Exp $
  */
 
 #ifndef	_AOUT_H_
@@ -42,7 +42,7 @@
 #if defined(amiga)
 #define	__LDPGSZ	8192
 #endif
-#if defined(hp300) || defined(i386)
+#if defined(hp300) || defined(i386) || defined(pc532)
 #define	__LDPGSZ	4096
 #endif
 #if defined(tahoe) || defined(vax)
