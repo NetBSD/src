@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.18 2001/05/25 13:46:15 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.19 2001/06/04 11:44:30 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -135,9 +135,17 @@ bump_lines(FIELD *field, int pos, int amt)
 	}
 #endif
 		
-	field->lines[row].length += amt;
+	if (((int)field->lines[row].length + amt) < 0) {
+		field->lines[row].length = 0;
+		field->lines[row].end = 0;
+	} else
+		field->lines[row].length += amt;
+	
 	if (field->lines[row].length > 1)
 		field->lines[row].end += amt;
+	else
+		field->lines[row].end = field->lines[row].start;
+	
 	for (i = row + 1; i < field->row_count; i++) {
 #ifdef DEBUG
 		if (dbg_ok) {
@@ -1298,23 +1306,13 @@ _formi_manipulate_field(FORM *form, int c)
 		break;
 		
 	case REQ_NEXT_LINE:
-		cur->cursor_ypos++;
-		if (cur->cursor_ypos > cur->rows) {
-			if ((cur->opts & O_STATIC) == O_STATIC) {
-				if (cur->start_line + cur->cursor_ypos
-				    > cur->drows) {
-					cur->cursor_ypos--;
-					return E_REQUEST_DENIED;
-				}
-			} else {
-				if (cur->start_line + cur->cursor_ypos
-				    > cur->nrows + cur->rows) {
-					cur->cursor_ypos--;
-					return E_REQUEST_DENIED;
-				}
-			}
+		if ((cur->start_line + cur->cursor_ypos + 1) >= cur->row_count)
+			return E_REQUEST_DENIED;
+		
+		if ((cur->cursor_ypos + 1) >= cur->rows) {
 			cur->start_line++;
-		}
+		} else
+			cur->cursor_ypos++;
 		break;
 		
 	case REQ_PREV_LINE:
@@ -1599,34 +1597,56 @@ _formi_manipulate_field(FORM *form, int c)
 		break;
 		
 	case REQ_DEL_PREV:
-		if ((cur->cursor_xpos == 0) && (cur->start_char == 0))
+		if ((cur->cursor_xpos == 0) && (cur->start_char == 0)
+		    && (cur->start_line == 0) && (cur->cursor_ypos == 0))
 			   return E_REQUEST_DENIED;
 
-		start = cur->cursor_xpos + cur->start_char;
-		end = cur->buffers[0].length;
 		row = cur->start_line + cur->cursor_ypos;
-		
-		if (cur->lines[row].start ==
-		    (cur->start_char + cur->cursor_xpos)) {
-			_formi_join_line(cur,
-					 cur->start_char + cur->cursor_xpos,
-					 JOIN_PREV);
-		} else {
-			bcopy(&cur->buffers[0].string[start],
-			      &cur->buffers[0].string[start - 1],
-			      (unsigned) end - start + 1);
-			bump_lines(cur, _FORMI_USE_CURRENT, -1);
+		start = cur->cursor_xpos + cur->start_char
+			+ cur->lines[row].start;
+		end = cur->buffers[0].length;
+
+		if ((cur->start_char + cur->cursor_xpos) == 0) {
+			if (_formi_join_line(cur, cur->lines[row].start,
+					     JOIN_PREV_NW) != E_OK) {
+				return E_REQUEST_DENIED;
+			}
 		}
-
+		
+		bcopy(&cur->buffers[0].string[start],
+		      &cur->buffers[0].string[start - 1],
+		      (unsigned) end - start + 1);
+		bump_lines(cur, start - 1, -1);
 		cur->buffers[0].length--;
-		if ((cur->cursor_xpos == 0) && (cur->start_char > 0))
-			cur->start_char--;
-		else if ((cur->cursor_xpos == cur->cols - 1)
-			 && (cur->start_char > 0))
-			cur->start_char--;
-		else if (cur->cursor_xpos > 0)
-			cur->cursor_xpos--;
 
+		if ((cur->rows + cur->nrows) == 1) {
+			if ((cur->cursor_xpos == 0) && (cur->start_char > 0))
+				cur->start_char--;
+			else if ((cur->cursor_xpos == cur->cols - 1)
+				 && (cur->start_char > 0))
+				cur->start_char--;
+			else if (cur->cursor_xpos > 0)
+				cur->cursor_xpos--;
+		} else {
+			pos = start - 1;
+			if (pos >= cur->buffers[0].length)
+				pos = cur->buffers[0].length - 1;
+
+			if ((_formi_wrap_field(cur, pos) != E_OK)) {
+				/* XXX back out char deletion here */
+				return E_REQUEST_DENIED;
+			}
+			
+			row = find_cur_line(cur, pos);
+			cur->cursor_xpos = start - cur->lines[row].start - 1;
+
+			if (row >= cur->rows)
+				cur->start_line = row - cur->cursor_ypos;
+			else {
+				cur->start_line = 0;
+				cur->cursor_ypos = row;
+			}
+		}
 		break;
 		
 	case REQ_DEL_LINE:
