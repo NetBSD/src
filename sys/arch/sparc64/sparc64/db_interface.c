@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.15 1999/02/28 00:22:32 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.16 1999/03/22 05:35:40 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -321,10 +321,20 @@ db_dump_dtlb(addr, have_addr, count, modif)
 
 	if (have_addr) {
 		int i;
-		long* p = (long*)addr;
+		int64_t* p = (int64_t*)addr;
+		static int64_t buf[128];
+		extern void dump_dtlb(int64_t *);
+		
+		dump_dtlb(buf);
+		p = buf;
 		for (i=0; i<64;) {
+#ifdef __arch64__
 			db_printf("%2d:%016.16lx %016.16lx ", i++, *p++, *p++);
 			db_printf("%2d:%016.16lx %016.16lx\n", i++, *p++, *p++);
+#else
+			db_printf("%2d:%016.16qx %016.16qx ", i++, *p++, *p++);
+			db_printf("%2d:%016.16qx %016.16qx\n", i++, *p++, *p++);
+#endif
 		}
 	} else
 		print_dtlb();
