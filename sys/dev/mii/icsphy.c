@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.32 2003/07/01 22:46:08 msaitoh Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.33 2003/07/01 22:51:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.32 2003/07/01 22:46:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.33 2003/07/01 22:51:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,6 +278,7 @@ icsphy_reset(sc)
 {
 
 	mii_phy_reset(sc);
+	/* set powerdown feature */
 	switch (sc->mii_mpd_model) {
 		case MII_MODEL_ICS_1890:
 		case MII_MODEL_ICS_1893:
