@@ -162,7 +162,7 @@ int BN_rshift(BIGNUM *r, BIGNUM *a, int n)
 	nw=n/BN_BITS2;
 	rb=n%BN_BITS2;
 	lb=BN_BITS2-rb;
-	if (nw > a->top)
+	if (nw > a->top || a->top == 0)
 		{
 		BN_zero(r);
 		return(1);
@@ -171,6 +171,11 @@ int BN_rshift(BIGNUM *r, BIGNUM *a, int n)
 		{
 		r->neg=a->neg;
 		if (bn_wexpand(r,a->top-nw+1) == NULL) return(0);
+		}
+	else
+		{
+		if (n == 0)
+			return 1; /* or the copying loop will go berserk */
 		}
 
 	f= &(a->d[nw]);
