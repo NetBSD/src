@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.2 1998/09/13 16:02:49 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -60,5 +60,5 @@ sunos_sys_sigreturn(p, v, retval)
 {
 	struct sunos_sys_sigreturn_args *uap = v;
 
-	return (sys_sigreturn(p, (struct sys_sigreturn_args *)uap, retval));
+	return (sys___sigreturn14(p, (struct sys_sigreturn_args *)uap, retval));
 }
