@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.114 2003/02/15 16:53:15 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.115 2003/02/20 07:00:47 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3706,3 +3706,19 @@ share/tmac/doc-common                           patched by hand
 
         Update to 1.6.1_RC2
 
+etc/namedb/root.cache				1.9
+
+	Update to 20021105 version
+	[martin, ticket #1176]
+
+distrib/utils/sysinst/arch/sparc/md.h		1.11-1.12
+distrib/utils/sysinst/arch/sparc/md.c		1.32
+distrib/utils/sysinst/arch/sparc/menus.md.en	1.16
+distrib/utils/sysinst/arch/sparc/menus.md.fr	1.17
+distrib/utils/sysinst/arch/sparc/menus.md.pl	1.3
+
+	Fix installation of kernel problems. PR#18502
+	Also various small fixes with set selection.
+	[mrg, ticket #1177]
+
+Moved RC2 tag for these last 6 files.
