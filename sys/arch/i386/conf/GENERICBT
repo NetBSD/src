@@ -1,7 +1,7 @@
 #
 # GENERICBT -- Generic machine w/bt driver -- distribution floppy
 #
-#	$Id: GENERICBT,v 1.6 1994/04/26 00:04:25 mycroft Exp $
+#	$Id: GENERICBT,v 1.7 1994/04/27 08:25:54 mycroft Exp $
 #
 
 machine		"i386"
@@ -47,7 +47,7 @@ controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
 disk		fd0	at fdc0 drive ?
 disk		fd1	at fdc0 drive ?
 
-device		wt0	at isa? port 0x300 irq 5 drq 1
+#device		wt0	at isa? port 0x300 irq 5 drq 1
 
 controller	bt0	at isa? port "IO_BT0" irq 11
 master		scsibus0 at bt0
@@ -96,7 +96,7 @@ disk		cd1	at scsibus3 slave ?
 device ed0 at isa? port 0x280 irq 9 iomem 0xd0000
 device ed1 at isa? port 0x250 irq 9 iomem 0xd8000
 device ed2 at isa? port 0x300 irq 10 iomem 0xcc000
-device el0 at isa? port 0x300 irq 9
+#device el0 at isa? port 0x300 irq 9
 device ep0 at isa? port ? irq ?
 device ie0 at isa? port 0x360 irq 7 iomem 0xd0000
 device is0 at isa? port 0x320 irq 10 drq 7
