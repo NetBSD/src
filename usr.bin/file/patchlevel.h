@@ -1,16 +1,21 @@
 #define	FILE_VERSION_MAJOR	3
-#define	patchlevel		21
+#define	patchlevel		22
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
- * $NetBSD: patchlevel.h,v 1.7 1997/01/09 20:18:58 tls Exp $
+ * $NetBSD: patchlevel.h,v 1.8 1997/01/28 00:49:45 christos Exp $
  *
- * $Log: patchlevel.h,v $
- * Revision 1.7  1997/01/09 20:18:58  tls
- * RCS ID police
- *
- * Revision 1.6  1996/10/05 20:20:29  christos
- * Changes from file-3.21
+ * Log: patchlevel.h,v
+ * Revision 1.22  1997/01/15 17:23:24  christos
+ * - add support for elf core files: find the program name under SVR4 [Ken Pizzini]
+ * - print strings only up to the first carriage return [various]
+ * - freebsd international ascii support [J Wunsch]
+ * - magic fixes and additions [Guy Harris]
+ * - 64 bit fixes [Larry Schwimmer]
+ * - support for both utime and utimes, but don't restore file access times
+ *   by default [various]
+ * - \xXX only takes 2 hex digits, not 3.
+ * - re-implement support for core files [Guy Harris]
  *
  * Revision 1.21  1996/10/05 18:15:29  christos
  * Segregate elf stuff and conditionally enable it with -DBUILTIN_ELF

@@ -1,5 +1,5 @@
 .TH FILE 1 "Copyright but distributable"
-.\"	$NetBSD: file.1,v 1.10 1997/01/09 20:18:51 tls Exp $
+.\"	$NetBSD: file.1,v 1.11 1997/01/28 00:49:39 christos Exp $
 .SH NAME
 file
 \- determine file type
@@ -16,7 +16,7 @@ namefile ]
 magicfiles ]
 file ...
 .SH DESCRIPTION
-This manual page documents version 3.21 of the
+This manual page documents version 3.22 of the
 .B file
 command.
 .B File
@@ -43,7 +43,7 @@ meaning anything else (data is usually `binary' or non-printable).
 Exceptions are well-known file formats (core files, tar archives)
 that are known to contain binary data.
 When modifying the file
-.I /usr/local/etc/magic
+.I /etc/magic
 or the program itself, 
 .B "preserve these keywords" .
 People depend on knowing that all the readable files in a directory
@@ -79,7 +79,7 @@ The concept of `magic number' has been applied by extension to data files.
 Any file with some invariant identifier at a small fixed
 offset into the file can usually be described in this way.
 The information in these files is read from the magic file
-.I /usr/local/etc/magic.
+.I /etc/magic.
 .PP
 If an argument appears to be an
 .SM ASCII 
@@ -136,7 +136,7 @@ option causes symlinks to be followed, as the like-named option in
 .BR ls (1).
 (on systems that support symbolic links).
 .SH FILES
-.I /usr/local/etc/magic
+.I /etc/magic
 \- default list of magic numbers
 .SH ENVIRONMENT
 The environment variable
@@ -202,7 +202,7 @@ If your old
 command uses a magic file,
 keep the old magic file around for comparison purposes
 (rename it to 
-.IR /usr/local/etc/magic.orig ).
+.IR /etc/magic.orig ).
 .SH HISTORY
 There has been a 
 .B file
@@ -248,7 +248,7 @@ the process running
 .RE
 .PP
 Changes by Ian Darwin and various authors including
-Christos Zoulas (christos@ee.cornell.edu), 1990-1992.
+Christos Zoulas (christos@deshaw.com), 1990-1997.
 .SH LEGAL NOTICE
 Copyright (c) Ian F. Darwin, Toronto, Canada,
 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993.
@@ -360,6 +360,6 @@ This manual page, and particularly this section, is too long.
 .SH AVAILABILITY
 You can obtain the original author's latest version by anonymous FTP
 on
-.B tesla.ee.cornell.edu
+.B ftp.deshaw.com
 in the directory
-.I /pub/file-X.YY.tar.gz
+.I /pub/file/file-X.YY.tar.gz
