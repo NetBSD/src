@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgctl.2,v 1.6 1999/03/22 19:45:06 garbled Exp $	
+.\"	$NetBSD: msgctl.2,v 1.7 1999/08/25 20:30:05 thorpej Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,68 +29,50 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 17, 1995
+.Dd August 25, 1999
 .Dt MSGCTL 2
 .Os
 .Sh NAME
 .Nm msgctl
 .Nd message control operations
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/ipc.h>
 .Fd #include <sys/msg.h>
 .Ft int
 .Fn msgctl "int msqid" "int cmd" "struct msqid_ds *buf"
 .Sh DESCRIPTION
 The
 .Fn msgctl
-system call performs some control operations on the message queue specified
+system call performs control operations on the message queue specified
 by
 .Fa msqid .
 .Pp
-Each message queue has a data structure associated with it, parts of which
-may be altered by
-.Fn msgctl
-and parts of which determine the actions of
-.Fn msgctl .
-The data structure is defined in
-.Aq Pa sys/msg.h
-and contains (amongst others) the following members:
+Each message queue has a
+.Sy msqid_ds
+structure associated with it which contains the following members:
 .Bd -literal
-struct msqid_ds {
-    struct ipc_perm msg_perm;	/* msg queue permission bits */
-    u_long msg_cbytes; /* # of bytes in use on the queue */
-    u_long msg_qnum;   /* # of msgs in the queue */
-    u_long msg_qbytes; /* max # of bytes on the queue */
-    pid_t  msg_lspid;  /* pid of last msgsnd() */
-    pid_t  msg_lrpid;  /* pid of last msgrcv() */
-    time_t msg_stime;  /* time of last msgsnd() */
-    time_t msg_rtime;  /* time of last msgrcv() */
-    time_t msg_ctime;  /* time of last msgctl() */
-};
+    struct ipc_perm msg_perm; /* msg queue permission bits */
+    msgqnum_t msg_qnum;       /* # of msgs in the queue */
+    msglen_t  msg_qbytes;     /* max # of bytes on the queue */
+    pid_t     msg_lspid;      /* pid of last msgsnd() */
+    pid_t     msg_lrpid;      /* pid of last msgrcv() */
+    time_t    msg_stime;      /* time of last msgsnd() */
+    time_t    msg_rtime;      /* time of last msgrcv() */
+    time_t    msg_ctime;      /* time of last msgctl() */
 .Ed
 .Pp
 The
-.Bf -literal
-ipc_perm
-.Ef
+.Sy ipc_perm
 structure used inside the
-.Bf -literal
-msgid_ds
-.Ef
+.Sy msgid_ds
 structure is defined in
 .Aq Pa sys/ipc.h
-and looks like this:
+and contains the following members:
 .Bd -literal
-struct ipc_perm {
-    ushort cuid; /* creator user id */
-    ushort cgid; /* creator group id */
-    ushort uid;	 /* user id */
-    ushort gid;	 /* group id */
-    ushort mode; /* permission (9 bits, see chmod(2)) */
-    ushort seq;	 /* sequence # (to generate unique id) */
-    key_t key;	 /* user specified msg/sem/shm key */
-};
+    uid_t cuid;  /* creator user id */
+    gid_t cgid;  /* creator group id */
+    uid_t uid;   /* user id */
+    gid_t gid;   /* group id */
+    mode_t mode; /* permission (lower 9 bits) */
 .Ed
 .Pp
 The operation to be performed by
@@ -205,6 +187,11 @@ specifies an invalid address.
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
 .Xr msgsnd 2
+.Sh STANDARDS
+The
+.Nm
+system call conforms to
+.St -xsh5 .
 .Sh HISTORY
 Message queues appeared in the first release of
 .At V .
