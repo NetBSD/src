@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.11 1994/06/29 06:45:25 cgd Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.12 1994/10/30 19:11:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -56,8 +56,8 @@ struct	sigacts {
 	int	ps_flags;		/* signal flags, below */
 	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	int	ps_sig;			/* for core dump/debugger XXX */
-	int	ps_code;		/* for core dump/debugger XXX */
-	int	ps_addr;		/* for core dump/debugger XXX */
+	long	ps_code;		/* for core dump/debugger XXX */
+	long	ps_addr;		/* for core dump/debugger XXX */
 	sigset_t ps_usertramp;		/* SunOS compat; libc sigtramp XXX */
 };
 
@@ -159,11 +159,11 @@ void	pgsignal __P((struct pgrp *pgrp, int sig, int checkctty));
 void	postsig __P((int sig));
 void	psignal __P((struct proc *p, int sig));
 void	siginit __P((struct proc *p));
-void	trapsignal __P((struct proc *p, int sig, unsigned code));
+void	trapsignal __P((struct proc *p, int sig, u_long code));
 
 /*
  * Machine-dependent functions:
  */
-void	sendsig __P((sig_t action, int sig, int returnmask, unsigned code));
+void	sendsig __P((sig_t action, int sig, int returnmask, u_long code));
 #endif	/* KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */
