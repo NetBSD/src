@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2001/06/10 03:16:31 briggs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 2001/08/20 12:20:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -208,7 +208,7 @@ pci_intr_map(pa, ihp)
 	} else {
 		/*
 		 * Sandpoint has 4 PCI slots.
-		 * Sandpoint rev. X2 has them in a wierd order.  Counting
+		 * Sandpoint rev. X2 has them in a weird order.  Counting
 		 * from center out toward the edge, we have:
 		 * 	Slot 1 (dev 14?) (labelled 1)
 		 * 	Slot 0 (dev 13?) (labelled 2)

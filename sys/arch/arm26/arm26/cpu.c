@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10 2001/03/17 18:12:10 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.11 2001/08/20 12:20:05 wiz Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2001/03/17 18:12:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2001/08/20 12:20:05 wiz Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -217,7 +217,7 @@ swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 		return 0;
 	uaddr = (caddr_t)getreg(rn);
 	/* We want the page wired so we won't sleep */
-	/* XXX only wire one byte due to wierdness with unaligned words */
+	/* XXX only wire one byte due to weirdness with unaligned words */
 	err = uvm_vslock(curproc, uaddr, 1, VM_PROT_READ | VM_PROT_WRITE);
 	if (err != 0) {
 		trapsignal(p, SIGSEGV, (u_int)uaddr);

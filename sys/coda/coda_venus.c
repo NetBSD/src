@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.9 2001/08/05 11:22:33 jdolecek Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.10 2001/08/20 12:20:06 wiz Exp $	*/
 
 /*
  * 
@@ -413,7 +413,7 @@ venus_lookup(void *mdp, ViceFid *fid,
     /* NOTE:
      * Between version 1 and version 2 we have added an extra flag field
      * to this structure.  But because the string was at the end and because
-     * of the wierd way we represent strings by having the slot point to
+     * of the weird way we represent strings by having the slot point to
      * where the string characters are in the "heap", we can just slip the
      * flag parameter in after the string slot pointer and veni that don't
      * know better won't see this new flag field ...

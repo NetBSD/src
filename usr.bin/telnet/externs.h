@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.21 2001/06/18 11:23:01 wiz Exp $	*/
+/*	$NetBSD: externs.h,v 1.22 2001/08/20 12:20:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -40,7 +40,7 @@
 #endif
 
 /*
- * ucb stdio.h defines BSD as something wierd
+ * ucb stdio.h defines BSD as something weird
  */
 #if defined(sun) && defined(__svr4__) && !defined(BSD)
 #define BSD 43

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.1 1997/02/04 03:52:51 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.2 2001/08/20 12:20:05 wiz Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -355,7 +355,7 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 		}
 #ifdef SLOWSCSI
 		/*
-		 * XXX we have wierd transient problems with booting from
+		 * XXX we have weird transient problems with booting from
 		 * slow scsi disks on fast machines.  I have never been
 		 * able to pin the problem down, but a large delay here
 		 * seems to always work.
