@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: search.h,v 1.2 1993/10/21 21:03:33 jtc Exp $
+ *	$Id: search.h,v 1.3 1993/10/22 17:40:15 jtc Exp $
  */
 
 #ifndef _SEARCH_H_
@@ -42,6 +42,10 @@ typedef	_SIZE_T_	size_t;
 
 __BEGIN_DECLS
 extern void	*bsearch __P((const void *, const void *, size_t, size_t,
+			      int (*)(const void *, const void *)));
+extern void	*lfind __P((const void *, const void *, size_t *, size_t,
+			      int (*)(const void *, const void *)));
+extern void	*lsearch __P((const void *, const void *, size_t *, size_t,
 			      int (*)(const void *, const void *)));
 extern void	 insque __P((void *, void *));
 extern void	 remque __P((void *));
