@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/12/12 23:08:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2002/02/11 21:36:34 tv Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,6 +9,7 @@ LIB=		g2c
 
 .if defined(USE_NEW_TOOLCHAIN)
 
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	1
@@ -52,6 +53,9 @@ L${f}.po: f2cext.c
 .include <bsd.lib.mk>
 
 ${OBJS}: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
+.else
+.include <bsd.prog.mk> # do nothing
+.endif
 
 .else
 #
