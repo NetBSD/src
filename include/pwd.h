@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.20 1999/12/22 21:59:49 kleink Exp $	*/
+/*	$NetBSD: pwd.h,v 1.20.4.1 2002/01/23 17:19:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -50,6 +50,7 @@
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	_PATH_PASSWD		"/etc/passwd"
+#define	_PATH_PASSWDCONF	"/etc/passwd.conf"
 #define	_PATH_MASTERPASSWD	"/etc/master.passwd"
 #define	_PATH_MASTERPASSWD_LOCK	"/etc/ptmp"
 
@@ -63,6 +64,7 @@
 #define	_PW_KEYBYUID		'3'	/* stored by uid */
 
 #define	_PASSWORD_EFMT1		'_'	/* extended encryption format */
+#define	_PASSWORD_NONDES	'$'	/* non-DES encryption formats */
 
 #define	_PASSWORD_LEN		128	/* max length, not counting NUL */
 
