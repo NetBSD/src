@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.h,v 1.2 2003/09/21 19:33:13 matt Exp $	*/
+/*	$NetBSD: ifpga_intr.h,v 1.3 2004/08/07 11:08:58 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -76,6 +76,8 @@ ifpga_splx(int new)
 	extern void ifpga_do_pending(void);
 	int oldirqstate, hwpend;
 
+	__insn_barrier();
+
 	oldirqstate = disable_interrupts(I32_bit);
 	current_spl_level = new;
 
@@ -99,7 +101,9 @@ ifpga_splraise(int ipl)
 	int	old;
 
 	old = current_spl_level;
-	current_spl_level |= ifpga_imask[ipl];
+	current_spl_level = old | ifpga_imask[ipl];
+
+	__insn_barrier();
 
 	return (old);
 }
