@@ -1,4 +1,4 @@
-/*	$NetBSD: field_types.c,v 1.5 2002/08/22 11:34:00 blymn Exp $	*/
+/*	$NetBSD: field_types.c,v 1.6 2003/03/09 00:57:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -28,6 +28,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: field_types.c,v 1.6 2003/03/09 00:57:17 lukem Exp $");
 
 #include <stdlib.h>
 #include <stdarg.h>
