@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.12 2003/03/24 09:17:52 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.13 2003/03/24 14:11:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.12 2003/03/24 09:17:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.13 2003/03/24 14:11:32 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,6 +503,10 @@ smb_smb_read(struct smb_share *ssp, u_int16_t fid,
 	u_int8_t wc;
 	int error, rlen, blksz;
 
+	/* Cannot read at/beyond 4G */
+	if (uio->uio_offset >= (1LL << 32))
+		return (EFBIG);
+
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_READ, scred, &rqp);
 	if (error)
 		return error;
@@ -577,6 +581,10 @@ smb_smb_write(struct smb_share *ssp, u_int16_t fid, int *len, int *rresid,
 	u_int16_t resid;
 	u_int8_t wc;
 	int error, blksz;
+
+	/* Cannot write at/beyond 4G */
+	if (uio->uio_offset >= (1LL << 32))
+		return (EFBIG);
 
 	blksz = SSTOVC(ssp)->vc_txmax - SMB_HDRLEN - 16;
 	if (blksz > 0xffff)
