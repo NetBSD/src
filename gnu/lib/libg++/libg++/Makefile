@@ -1,54 +1,38 @@
-#	@(#)Makefile	6.2 (Berkeley) 4/24/91
-
-#
-# Define g++ compilation rules.
-#
-
-.SUFFIXES:
-.SUFFIXES: .out .o .po .s .c .f .y .cc .l .8 .7 .6 .5 .4 .3 .2 .1 .0
-
-CFLAGS+=-I$(.CURDIR)/../g++-include
-.ifmake (depend)
-CFLAGS+=-+
-.endif
-CXXFLAGS+=-felide-constructors
-
-.cc.o:
-	$(CXX) $(CXXFLAGS) -c $(.IMPSRC)
-	@$(LD) -x -r $(.TARGET)
-	@mv a.out $(.TARGET)
-
-.cc.po:
-	$(CXX) -p $(CXXFLAGS) -c $(.IMPSRC) -o $(.TARGET)
-	@$(LD) -X -r $(.TARGET)
-	@mv a.out $(.TARGET)
-
-#
-# Build the library.
-#
-
 LIB=		g++
-CXXFLAGS+=	-I$(.CURDIR)/../g++-include -DHAVE_VPRINTF -DHAVE_VSCANF \
-		-DHAVE_SETVBUF -DHAVE_SETLINEBUF -DHAVE_GETPAGESIZE
-SRCS=		AllocRing.cc Obstack.cc File.cc ostream.cc istream.cc \
-		streambuf.cc filebuf.cc Filebuf.cc open.cc PlotFile.cc \
-		SFile.cc builtin.cc regex.cc Regex.cc String.cc \
-		Integer.cc Rational.cc Complex.cc Random.cc BitSet.cc \
-		BitString.cc LogNorm.cc SmplHist.cc SmplStat.cc \
+SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
+		regex.cc Regex.cc String.cc  Integer.cc Rational.cc Complex.cc Random.cc \
+		BitSet.cc BitString.cc LogNorm.cc SmplHist.cc SmplStat.cc \
 		Normal.cc NegExp.cc Weibull.cc Erlang.cc DiscUnif.cc \
 		Uniform.cc Poisson.cc HypGeom.cc Geom.cc Binomial.cc \
-		max.cc min.cc RNG.cc ACG.cc MLCG.cc RndInt.cc \
-		Fix.cc Fix16.cc Fix24.cc CursesW.cc GetOpt.cc EH.cc \
-		EH2.c xyzzy.cc gnulib3.c new.cc delete.cc  \
-		chr.cc dtoa.cc error.cc form.cc gcd.cc hash.cc \
-		itoa.cc lg.cc fmtq.cc ioob.cc pow.cc sqrt.cc str.cc \
-		timer.cc compare.cc ctype.cc curses.cc math.cc std.cc
+		RNG.cc ACG.cc MLCG.cc  RndInt.cc  \
+		Fix.cc Fix16.cc Fix24.cc CursesW.cc GetOpt.cc $(EH_FILES) \
+		new.cc chr.cc dtoa.cc error.cc gcd.cc hash.cc \
+		lg.cc fmtq.cc ioob.cc pow.cc sqrt.cc str.cc timer.cc \
+		math.cc compare.cc SLList.cc DLList.cc \
+		streambuf.C stdstrbufs.C iostream.C stdstreams.C \
+		strstream.C indstream.C PlotFile.C SFile.C fstream.C \
+		parsestream.C stream.C makebuf.C editbuf.C filebuf.C \
+		sgetline.C igetline.C igetsb.C procbuf.C sbufvform.C \
+		sbufvscan.C stdiostream.C floatconv.C outfloat.C iomanip.C \
+		insque.c strerror.c
+
+CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libiberty
+GFLAGS=		-nostdinc++ -I$(.CURDIR) -I$(.CURDIR)/../g++-include \
+		-I$(.CURDIR)/../iostream
 NOMAN=		noman
+.PATH:		$(.CURDIR)/../iostream $(.CURDIR)/../libiberty
 
 .include <bsd.lib.mk>
 
-#
-# For some reason, pmake won't cut it without this redundant declaration.
-#
-.SUFFIXES:
-.SUFFIXES: .out .o .po .s .c .f .y .cc .l .8 .7 .6 .5 .4 .3 .2 .1 .0
+.SUFFIXES: .cc .C
+.cc.o:
+	$(CC) $(GFLAGS) -c $(.IMPSRC)
+
+.cc.po:
+	$(CC) -p $(GFLAGS) -c $(.IMPSRC) -o $(.TARGET)
+
+.C.o:
+	$(CC) $(GFLAGS) -c $(.IMPSRC)
+
+.C.po:
+	$(CC) -p $(GFLAGS) -c $(.IMPSRC) -o $(.TARGET)
