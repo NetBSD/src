@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/02/20 07:14:13 mycroft Exp $
+#	$NetBSD: Makefile,v 1.11 2000/07/10 22:45:25 eeh Exp $
 
 PROG=	ldd
 SRCS=	ldd.c \
@@ -7,12 +7,12 @@ MAN=	ldd.1
 
 .PATH:	${.CURDIR}/..
 
-.if (${MACHINE_ARCH} == "alpha")
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64")
 CPPFLAGS+= -DELFSIZE=64
 .else
 CPPFLAGS+= -DELFSIZE=32
 .endif
-.if (${MACHINE_ARCH} == "sparc")
+.if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64")
 CPPFLAGS+= -DVARPSZ
 .endif
 
