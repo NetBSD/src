@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.7 1997/06/26 21:57:00 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.8 1997/06/26 22:20:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -2313,9 +2313,9 @@ syn_cache_respond(sc, m, ti, win, ts)
 	long win;
 	u_long ts;
 {
-	u_char *optp;
+	u_int8_t *optp;
 	int optlen;
-	u_short mss;
+	u_int16_t mss;
 	extern unsigned long in_maxmtu;
 	extern int tcp_mssdflt;
 
@@ -2346,22 +2346,22 @@ syn_cache_respond(sc, m, ti, win, ts)
 		ti = mtod(m, struct tcpiphdr *);
 	}
 
-	optp = (u_char *)(ti + 1);
-	*((u_long *)optp) = htonl((TCPOPT_MAXSEG << 24) | (4 << 16) | mss);
+	optp = (u_int8_t *)(ti + 1);
 	optp[0] = TCPOPT_MAXSEG;
 	optp[1] = 4;
-	bcopy((caddr_t)&mss, (caddr_t)(optp + 2), sizeof(mss));
+	optp[2] = (mss >> 8) & 0xff;
+	optp[3] = mss & 0xff;
 	optlen = 4;
+
 	if (sc->sc_request_r_scale != 15) {
-		*((u_long *) (optp + optlen)) = htonl(
-			TCPOPT_NOP << 24 |
-			TCPOPT_WINDOW << 16 |
-			TCPOLEN_WINDOW << 8 |
-			sc->sc_request_r_scale);
+		*((u_int32_t *)(optp + optlen)) = htonl(TCPOPT_NOP << 24 |
+		    TCPOPT_WINDOW << 16 | TCPOLEN_WINDOW << 8 |
+		    sc->sc_request_r_scale);
 		optlen += 4;
 	}
+
 	if (sc->sc_tstmp) {
-		u_long *lp = (u_long *)(optp + optlen);
+		u_int32_t *lp = (u_int32_t *)(optp + optlen);
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
 		*lp++ = htonl(tcp_now);
@@ -2383,7 +2383,7 @@ syn_cache_respond(sc, m, ti, win, ts)
 	 * Fill in the fields that tcp_respond() will not touch, and
 	 * then send the response.
 	 */
-	ti->ti_off = (sizeof (struct tcphdr) + optlen) >> 2;
+	ti->ti_off = (sizeof(struct tcphdr) + optlen) >> 2;
 	ti->ti_win = htons(win);
 	return (tcp_respond(NULL, ti, m, sc->sc_irs + 1, sc->sc_iss,
 	    TH_SYN|TH_ACK));
