@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.2.2.3 2000/10/30 22:27:19 tv Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.2.2.4 2000/12/12 21:28:46 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.2.2.3 $"
+#ident 		"GENERIC-$Revision: 1.2.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -455,6 +455,7 @@ ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
 
 # PCMCIA network interfaces
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
