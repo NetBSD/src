@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.27 2001/12/28 12:22:00 martin Exp $
+# 	$NetBSD: GENERIC32,v 1.28 2001/12/30 13:28:13 augustss Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 maxusers	64
 
@@ -432,7 +432,9 @@ usb*	at ohci?					# USB bus support
 uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ? configuration ? interface ?
 
-uhid*	at uhub? port ? configuration ? interface ?	# USB Generic HID
+uhidev*	at uhub? port ? configuration ? interface ?	# USB HID
+uhid*	at uhidev? reportid ?				# USB Generic HID
+
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 
 umodem*	at uhub? port ? configuration ?			# USB Modem
