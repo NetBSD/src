@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2001/07/14 07:57:16 scottr Exp $ */
+/*	$NetBSD: md.c,v 1.21 2002/02/03 20:04:31 wormey Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -629,6 +629,7 @@ md_pre_disklabel()
 {
     int fd;
     char devname[100];
+    struct disklabel lp;
 
     /*
      * Danger Will Robinson!  We're about to turn that nice MacOS disk
