@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.114 1998/03/10 11:49:33 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.115 1998/03/27 13:02:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1382,7 +1382,7 @@ sys_readlink(p, v, retval)
 	register struct sys_readlink_args /* {
 		syscallarg(const char *) path;
 		syscallarg(char *) buf;
-		syscallarg(int) count;
+		syscallarg(size_t) count;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct iovec aiov;
