@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael.h,v 1.8 2003/08/27 14:23:27 itojun Exp $	*/
+/*	$NetBSD: rijndael.h,v 1.9 2003/08/28 08:38:19 itojun Exp $	*/
 /*	$KAME: rijndael.h,v 1.3 2003/07/15 10:47:16 itojun Exp $	*/
 
 /**
@@ -31,7 +31,6 @@
 #define	__RIJNDAEL_H
 
 #include <crypto/rijndael/rijndael-alg-fst.h>
-#include <crypto/rijndael/rijndael-api-fst.h>
 
 typedef struct {
 	int	decrypt;
