@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.18 2000/01/13 16:20:27 jsm Exp $	*/
+/*	$NetBSD: strfile.c,v 1.19 2000/01/13 16:22:10 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.18 2000/01/13 16:20:27 jsm Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.19 2000/01/13 16:22:10 jsm Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -101,9 +101,9 @@ __RCSID("$NetBSD: strfile.c,v 1.18 2000/01/13 16:20:27 jsm Exp $");
 
 # define	ALLOC(ptr,sz)	do { \
 			if (ptr == NULL) \
-				ptr = malloc((unsigned int) (CHUNKSIZE * sizeof *ptr)); \
+				ptr = malloc(CHUNKSIZE * sizeof *ptr); \
 			else if (((sz) + 1) % CHUNKSIZE == 0) \
-				ptr = realloc((void *) ptr, ((unsigned int) ((sz) + CHUNKSIZE) * sizeof *ptr)); \
+				ptr = realloc(ptr, ((sz) + CHUNKSIZE) * sizeof *ptr); \
 			if (ptr == NULL) \
 				die("out of space"); \
 		} while (0)
@@ -246,9 +246,9 @@ main(ac, av)
 			puts("There was 1 string");
 		else
 			printf("There were %d strings\n", (int)(Num_pts - 1));
-		printf("Longest string: %lu byte%s\n", Tbl.str_longlen,
+		printf("Longest string: %lu byte%s\n", (unsigned long)Tbl.str_longlen,
 		       Tbl.str_longlen == 1 ? "" : "s");
-		printf("Shortest string: %lu byte%s\n", Tbl.str_shortlen,
+		printf("Shortest string: %lu byte%s\n", (unsigned long)Tbl.str_shortlen,
 		       Tbl.str_shortlen == 1 ? "" : "s");
 	}
 
