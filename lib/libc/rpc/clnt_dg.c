@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.10 2003/06/06 00:48:45 yamt Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.11 2003/09/09 00:22:17 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -162,7 +162,6 @@ clnt_dg_create(fd, svcaddr, program, version, sendsz, recvsz)
 {
 	CLIENT *cl = NULL;		/* client handle */
 	struct cu_data *cu = NULL;	/* private data */
-	struct timeval now;
 	struct rpc_msg call_msg;
 #ifdef _REENTRANT
 	sigset_t mask;
@@ -252,8 +251,7 @@ clnt_dg_create(fd, svcaddr, program, version, sendsz, recvsz)
 	cu->cu_total.tv_usec = -1;
 	cu->cu_sendsz = sendsz;
 	cu->cu_recvsz = recvsz;
-	(void) gettimeofday(&now, NULL);
-	call_msg.rm_xid = __RPC_GETXID(&now);
+	call_msg.rm_xid = __RPC_GETXID();
 	call_msg.rm_call.cb_prog = program;
 	call_msg.rm_call.cb_vers = version;
 	xdrmem_create(&(cu->cu_outxdrs), cu->cu_outbuf, sendsz, XDR_ENCODE);
