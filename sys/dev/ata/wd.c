@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.271 2003/12/14 05:37:25 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.272 2003/12/14 05:38:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.271 2003/12/14 05:37:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.272 2003/12/14 05:38:20 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -187,6 +187,7 @@ void  wdgetdisklabel(struct wd_softc *);
 void  wdstart(void *);
 void  __wdstart(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
+void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 void  wd_flushcache(struct wd_softc *, int);
 void  wd_shutdown(void *);
