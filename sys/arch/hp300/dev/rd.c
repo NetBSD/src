@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.55 2002/11/01 11:31:52 mrg Exp $	*/
+/*	$NetBSD: rd.c,v 1.56 2003/02/14 06:55:17 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.55 2002/11/01 11:31:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.56 2003/02/14 06:55:17 gmcgarry Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -852,7 +852,7 @@ again:
 	rdreset(rs);
 	if (rs->sc_errcnt++ < RDRETRY)
 		goto again;
-	printf("%s: rdstart err: cmd 0x%x sect %ld blk %d len %d\n",
+	printf("%s: rdstart err: cmd 0x%x sect %ld blk %" PRId64 " len %d\n",
 	       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 	       bp->b_blkno, rs->sc_resid);
 	bp->b_flags |= B_ERROR;
@@ -1084,7 +1084,7 @@ rderror(unit)
 	 * out b_blkno which is just the beginning block number
 	 * of the transfer, not necessary where the error occurred.
 	 */
-	printf("%s%c: hard error sn%d\n", rs->sc_dev.dv_xname,
+	printf("%s%c: hard error sn%" PRId64 "\n", rs->sc_dev.dv_xname,
 	    'a'+rdpart(bp->b_dev), pbn);
 	/*
 	 * Now report the status as returned by the hardware with
