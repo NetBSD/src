@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.48 2000/03/30 13:25:01 augustss Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.49 2000/04/16 20:59:49 chs Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1434,13 +1434,9 @@ encap_send(ip, vifp, m)
 	HTONS(ip->ip_len);
 	HTONS(ip->ip_off);
 	ip->ip_sum = 0;
-#if defined(LBL) && !defined(ultrix) && !defined(i386)
-	ip->ip_sum = ~oc_cksum((caddr_t)ip, ip->ip_hl << 2, 0);
-#else
 	mb_copy->m_data += sizeof(multicast_encap_iphdr);
 	ip->ip_sum = in_cksum(mb_copy, ip->ip_hl << 2);
 	mb_copy->m_data -= sizeof(multicast_encap_iphdr);
-#endif
 	
 	if (vifp->v_rate_limit <= 0)
 		tbf_send_packet(vifp, mb_copy);
