@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.6 1995/12/24 02:30:48 mycroft Exp $ */
+/*	$NetBSD: if_ie.c,v 1.7 1996/02/28 01:48:48 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -178,8 +178,6 @@ static int command_and_wait __P((struct ie_softc *, int,
     void volatile *, int));
 static void ierint __P((struct ie_softc *));
 static void ietint __P((struct ie_softc *));
-static int ieget __P((struct ie_softc *, struct mbuf **,
-		      struct ether_header *, int *));
 static void setup_bufs __P((struct ie_softc *));
 static int mc_setup __P((struct ie_softc *, void *));
 static void mc_reset __P((struct ie_softc *));
