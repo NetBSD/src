@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 1999/03/31 00:44:49 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.8 1999/04/09 10:24:40 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,44 +62,53 @@ int md_get_info()
 	return edit_mbr();
 }
 
-void md_pre_disklabel()
+int md_pre_disklabel()
 {
 	printf ("%s", msg_string (MSG_dofdisk));
 
 	/* write edited MBR onto disk. */
-	write_mbr(diskdev, mbr, sizeof mbr);
+	if (write_mbr(diskdev, mbr, sizeof mbr) != 0) {
+		msg_display(MSG_wmbrfail);
+		process_menu(MENU_ok);
+		return 1;
+	}
+	return 0;
 }
 
-void md_post_disklabel(void)
+int md_post_disklabel(void)
 {
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
 		printf ("%s", msg_string (MSG_dobad144));
-		run_prog(0, 1, "/usr/sbin/bad144 %s 0", diskdev);
+		return run_prog(0, 1, "/usr/sbin/bad144 %s 0", diskdev);
 	}
+	return 0;
 }
 
-void md_post_newfs(void)
+int md_post_newfs(void)
 {
 	/* boot blocks ... */
 	printf (msg_string(MSG_dobootblks), diskdev);
 	run_prog (0, 1, "/usr/mdec/installboot -v /usr/mdec/biosboot.sym "
 		  "/dev/r%sa", diskdev);
+	return 0;
 }
 
-void md_copy_filesystem (void)
+int md_copy_filesystem (void)
 {
 	if (target_already_root()) {
-		return;
+		return 0;
 	}
 
 	/* Copy the instbin(s) to the disk */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog (0, 1, "pax -X -r -w -pe / /mnt");
+	if (run_prog (0, 1, "pax -X -r -w -pe / /mnt") != 0)
+		return 1;
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target ("/tmp/.hdprofile", "/.profile");
-	cp_to_target ("/usr/share/misc/termcap", "/.termcap");
+	if (cp_to_target ("/tmp/.hdprofile", "/.profile")!= 0)
+		return 1;
+	return cp_to_target ("/usr/share/misc/termcap", "/.termcap");
 }
 
 
