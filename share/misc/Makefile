@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2003/03/02 20:12:16 jhawk Exp $
+#	$NetBSD: Makefile,v 1.25 2003/03/02 21:32:33 jhawk Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 NOOBJ=	# defined
@@ -15,7 +15,6 @@ update-domains:
 	( \
 	  mkdir /tmp/domains.$$$$; cd /tmp/domains.$$$$ ; \
 	  ftp -o - http://www.iana.org/cctld/cctld-whois.htm | \
-	  tr -d \\015 | \
 	  sed -f ${.CURDIR}/domains.sed > list ;\
 	  echo '# $$''NetBSD: $$' ;  \
 	  echo '# ISO 3166 country codes, from http://www.iana.org/cctld/cctld-whois.htm' ; \
