@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.4.2.2 2001/12/09 19:36:41 he Exp $	*/
+/*	$NetBSD: cmds.c,v 1.4.2.3 2002/04/11 21:15:35 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cmds.c,v 1.4.2.2 2001/12/09 19:36:41 he Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.4.2.3 2002/04/11 21:15:35 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -211,7 +211,7 @@ cmd_cstatus(char **argv)
 	    model, enq.me_actual_channels,
 	    enq.me_actual_channels > 1 ? "s" : "",
 	    enq.me_firmware_id[0], enq.me_firmware_id[1],
-	    enq.me_firmware_id[2], enq.me_firmware_id[3],
+	    enq.me_firmware_id[3], enq.me_firmware_id[2],
 	    le32toh(enq.me_mem_size) / (1024 * 1024));
 
 	if (verbosity > 0) {
