@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.290 2001/01/15 23:29:04 thorpej Exp $
+$NetBSD: pcidevs,v 1.291 2001/01/17 20:55:47 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1112,7 +1112,9 @@ product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
 product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
-product INTEL 82452		0x1000	Pro/1000
+product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
+product INTEL LIVENGOOD		0x1001	PRO/1000 Gigabit Ethernet (LIVENGOOD)
+product INTEL 82452_SC		0x1003	PRO/1000 Gigabit Ethernet (i82452-SC)
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
