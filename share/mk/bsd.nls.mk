@@ -1,17 +1,25 @@
-#	$NetBSD: bsd.nls.mk,v 1.30 2001/08/14 08:28:24 tv Exp $
+#	$NetBSD: bsd.nls.mk,v 1.31 2001/11/02 05:21:51 tv Exp $
 
-.if !target(__initialized__)
-__initialized__:
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-.MAIN:		all
-.endif
+.include <bsd.init.mk>
 
+##### Basic targets
 .PHONY:		cleannls nlsinstall
 cleandir:	cleannls
+realinstall:	nlsinstall
 
+##### Default values
 GENCAT?=	gencat
+NLSNAME?=	${PROG:Ulib${LIB}}
+
+NLS?=
+
+##### Build rules
+.if ${MKNLS} != "no"
+
+NLSALL=		${NLS:.msg=.cat}
+
+realall:	${NLSALL}
+.NOPATH:	${NLSALL}
 
 .SUFFIXES: .cat .msg
 
@@ -19,23 +27,15 @@ GENCAT?=	gencat
 	@rm -f ${.TARGET}
 	${GENCAT} ${.TARGET} ${.IMPSRC}
 
-.if defined(NLS) && !empty(NLS)
-NLSALL= ${NLS:.msg=.cat}
-.NOPATH: ${NLSALL}
+.endif # ${MKNLS} != "no"
 
-NLSNAME?=${PROG:Ulib${LIB}}
-
+##### Install rules
+nlsinstall::	# ensure existence
 .if ${MKNLS} != "no"
-realinstall: nlsinstall
-realall: ${NLSALL}
-.endif
 
-cleannls:
-	rm -f ${NLSALL}
-
-nlsinstall:: ${DESTDIR}${NLSDIR}
-.PRECIOUS:: ${DESTDIR}${NLSDIR}
-.PHONY:: ${DESTDIR}${NLSDIR}
+nlsinstall::	${DESTDIR}${NLSDIR}
+.PRECIOUS:	${DESTDIR}${NLSDIR}
+.PHONY:		${DESTDIR}${NLSDIR}
 
 ${DESTDIR}${NLSDIR}:
 	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
@@ -45,23 +45,28 @@ ${DESTDIR}${NLSDIR}:
 		    ${.TARGET}; \
 	fi
 
-nlsinstall:: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
-.PRECIOUS: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
-.if !defined(UPDATE)
-.PHONY: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
-.endif
-
 __nlsinstall: .USE
 	${INSTALL} ${INSTPRIV} -d -o ${NLSOWN} -g ${NLSGRP} ${.TARGET:H}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${NLSOWN} \
 	    -g ${NLSGRP} -m ${NLSMODE} ${.ALLSRC} ${.TARGET}
 
 .for F in ${NLSALL:O:u}
+_F:=		${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat # installed path
+
+${_F}:		${F} __nlsinstall			# install rule
+nlsinstall::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
+.PHONY:		${UPDATE:U${_F}}			# noclobber install
 .if !defined(BUILD) && !make(all) && !make(${F})
-${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: .MADE
+${_F}:		.MADE					# no build at install
 .endif
-${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: ${F} __nlsinstall
 .endfor
-.else
+
+.undef _F
+.endif # ${MKNLS} != "no"
+
+##### Clean rules
 cleannls:
+.if !empty(NLS)
+	rm -f ${NLSALL}
 .endif

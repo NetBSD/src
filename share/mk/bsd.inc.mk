@@ -1,28 +1,31 @@
-#	$NetBSD: bsd.inc.mk,v 1.19 2001/10/31 21:15:41 tv Exp $
+#	$NetBSD: bsd.inc.mk,v 1.20 2001/11/02 05:21:50 tv Exp $
 
+##### Basic targets
 .PHONY:		incinstall
 includes:	${INCS} incinstall
 
-.if defined(INCS)
-incinstall:: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
-.PRECIOUS: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
-.if !defined(UPDATE)
-.PHONY: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
-.endif
+##### Install rules
+incinstall::	# ensure existence
 
+# -c is forced on here, in order to preserve modtimes for "make depend"
 __incinstall: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
-	    (echo "${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c \
-		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} \
-		${.TARGET}" && \
-	     ${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${BINOWN} \
-		 -g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
+	    (echo "${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET}" && \
+	     ${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
 
-.for I in ${INCS:O:u}
-${DESTDIR}${INCSDIR}/$I: $I __incinstall
+.for F in ${INCS:O:u}
+_FDIR:=		${INCSDIR_${F:C,/,_,g}:U${INCSDIR}}	# dir override
+_FNAME:=	${INCSNAME_${F:C,/,_,g}:U${INCSNAME:U${F}}} # name override
+_F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
+
+${_F}:		${F} __incinstall			# install rule
+incinstall::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
+.PHONY:		${UPDATE:U${_F}}			# clobber unless UPDATE
 .endfor
-.endif
 
-.if !target(incinstall)
-incinstall::
-.endif
+.undef _FDIR
+.undef _FNAME
+.undef _F

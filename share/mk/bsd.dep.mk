@@ -1,15 +1,21 @@
-#	$NetBSD: bsd.dep.mk,v 1.32 2001/08/14 07:02:13 tv Exp $
+#	$NetBSD: bsd.dep.mk,v 1.33 2001/11/02 05:21:49 tv Exp $
 
+##### Basic targets
 .PHONY:		cleandepend
 cleandir:	cleandepend
+realdepend:	beforedepend .depend afterdepend
+.ORDER:		beforedepend .depend afterdepend
 
+beforedepend .depend afterdepend: # ensure existence
+
+##### Default values
 MKDEP?=		mkdep
 
+##### Build rules
 # some of the rules involve .h sources, so remove them from mkdep line
-realdepend: beforedepend
+
 .if defined(SRCS)
-realdepend: .depend
-.NOPATH: .depend
+.NOPATH:	.depend
 .depend: ${SRCS} ${DPSRCS}
 	@rm -f .depend
 	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
@@ -41,22 +47,19 @@ realdepend: .depend
 	  ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
-cleandepend:
-	rm -f .depend ${.CURDIR}/tags ${CLEANDEPEND}
-.else
-cleandepend:
-.endif
-realdepend: afterdepend
+.endif # defined(SRCS)
 
-beforedepend:
-afterdepend:
-
-.if !target(tags)
+##### Clean rules
+cleandepend:
 .if defined(SRCS)
+	rm -f .depend ${.CURDIR}/tags ${CLEANDEPEND}
+.endif
+
+##### Custom rules
+.if !target(tags)
 tags: ${SRCS}
+.if defined(SRCS)
 	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    sed "s;\${.CURDIR}/;;" > tags
-.else
-tags:
 .endif
 .endif

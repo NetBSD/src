@@ -1,21 +1,14 @@
-#	$NetBSD: bsd.doc.mk,v 1.52 2001/08/14 10:38:27 tv Exp $
+#	$NetBSD: bsd.doc.mk,v 1.53 2001/11/02 05:21:50 tv Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
-.if !target(__initialized__)
-__initialized__:
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-.include <bsd.own.mk>
-.MAIN:		all
-.endif
+.include <bsd.init.mk>
 
+##### Basic targets
 .PHONY:		cleandoc docinstall print spell
-.if ${MKSHARE} != "no"
-realinstall:	docinstall
-.endif
 clean:		cleandoc
+realinstall:	docinstall
 
+##### Default values
 BIB?=		bib
 EQN?=		eqn
 GREMLIN?=	grn
@@ -27,58 +20,55 @@ ROFF?=		groff -Tps
 SOELIM?=	soelim
 TBL?=		tbl
 
-.if !target(all)
-.if ${MKSHARE} != "no"
-realall: paper.ps
-.else
-realall:
-.endif
-.endif
-
+##### Build rules
 .if !target(paper.ps)
 paper.ps: ${SRCS}
 	${ROFF} ${MACROS} ${PAGES} ${.ALLSRC} > ${.TARGET}
 .endif
 
+.if ${MKSHARE} != "no"
+realall:	paper.ps
+.endif
+
+##### Install rules
+docinstall::	# ensure existence
+.if ${MKDOC} != "no"
+
+__docinstall: .USE
+	${INSTALL_FILE} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} \
+		${.ALLSRC} ${.TARGET}
+
+FILES?=		${SRCS}
+
+.for F in Makefile ${FILES:O:u} ${EXTRA}
+_F:=		${DESTDIR}${DOCDIR}/${DIR}/${F}		# installed path
+
+${_F}:		${F} __docinstall			# install rule
+docinstall::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
+.PHONY:		${UPDATE:U${_F}}			# clobber unless UPDATE
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}:		.MADE					# no build at install
+.endif
+.endfor
+
+.undef _F
+.endif # ${MKDOC} != "no"
+
+##### Clean rules
+cleandoc:
+	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
+
+##### Custom rules
 .if !target(print)
 print: paper.ps
 	lpr -P${PRINTER} ${.ALLSRC}
 .endif
 
-cleandoc:
-	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
-
-.if ${MKDOC} != "no"
-FILES?=${SRCS}
-ALLFILES=Makefile ${FILES} ${EXTRA}
-
-docinstall:: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
-.PRECIOUS: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
-.if !defined(UPDATE)
-.PHONY: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
-.endif
-
-__docinstall: .USE
-	${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${DOCOWN} \
-	    -g ${DOCGRP} -m ${DOCMODE} ${.ALLSRC} ${.TARGET}
-
-.for F in ${ALLFILES:O:u}
-.if !defined(BUILD) && !make(all) && !make(${F})
-${DESTDIR}${DOCDIR}/${DIR}/${F}: .MADE
-.endif
-${DESTDIR}${DOCDIR}/${DIR}/${F}: ${F} __docinstall
-.endfor
-.endif
-
-.if !target(docinstall)
-docinstall::
-.endif
-
 spell: ${SRCS}
 	spell ${.ALLSRC} | sort | comm -23 - spell.ok > paper.spell
 
-depend includes lint obj tags:
-
-dependall: all
-
+##### Pull in related .mk logic
 .include <bsd.obj.mk>
+
+${TARGETS}:	# ensure existence

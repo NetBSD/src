@@ -1,87 +1,73 @@
-#	$NetBSD: bsd.kmod.mk,v 1.42 2001/10/05 15:30:06 simonb Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.43 2001/11/02 05:21:50 tv Exp $
 
-.if !target(__initialized__)
-__initialized__:
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.depall.mk>
-.MAIN:		all
-.endif
+.include <bsd.init.mk>
 
+##### Basic targets
 .PHONY:		cleankmod kmodinstall load unload
-realinstall:	kmodinstall
+beforedepend:	machine-links
 clean:		cleankmod
+realinstall:	kmodinstall
 
+##### Default values
 S?=		/sys
 KERN=		$S/kern
 
 CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I. -I${.CURDIR} -I$S -I$S/arch
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${DPSRCS}
-.if defined(YHEADER)
-CLEANFILES+=	${SRCS:M*.y:.y=.h}
-.endif
+CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}} \
+		machine ${MACHINE_CPU}
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+PROG?=		${KMOD}.o
+MAN?=		${KMOD}.4
 
-.if !defined(PROG)
-PROG=	${KMOD}.o
-.endif
+##### Build rules
+realall:	machine-links ${PROG}
+.ORDER:		machine-links ${PROG}
 
 ${PROG}: ${DPSRCS} ${OBJS} ${DPADD}
 	${LD} -r ${LDFLAGS} -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
 
-.if	!defined(MAN)
-MAN=	${KMOD}.4
+# XXX.  This should be done a better way.  It's @'d to reduce visual spew.
+machine-links:
+	@rm -f machine && \
+	    ln -s $S/arch/${MACHINE}/include machine
+	@rm -f ${MACHINE_CPU} && \
+	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
+
+##### Install rules
+.if !target(kmodinstall)
+_PROG:=		${DESTDIR}${KMODDIR}/${PROG}		# installed path
+
+${_PROG}: ${PROG}					# install rule
+	${INSTALL_FILE} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
+		${.ALLSRC} ${.TARGET}
+
+kmodinstall::	${_PROG}
+.PRECIOUS:	${_PROG}				# keep if install fails
+.PHONY:		${UPDATE:U${_PROG}}			# clobber unless UPDATE
+.if !defined(BUILD) && !make(all) && !make(${PROG})
+${_PROG}:	.MADE					# no build at install
 .endif
 
-realall: machine-links ${PROG}
+.undef _PROG
+.endif # !target(kmodinstall)
 
-.PHONY:	machine-links
-beforedepend: machine-links
-machine-links:
-	-rm -f machine && \
-	    ln -s $S/arch/${MACHINE}/include machine
-	-rm -f ${MACHINE_CPU} && \
-	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
-CLEANFILES+=machine ${MACHINE_CPU}
-
+##### Clean rules
 cleankmod:
 	rm -f a.out [Ee]rrs mklog core *.core \
 		${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 
-#
-# define various install targets
-#
-.if !target(kmodinstall)
-kmodinstall:: ${DESTDIR}${KMODDIR}/${PROG}
-.PRECIOUS: ${DESTDIR}${KMODDIR}/${PROG}
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${KMODDIR}/${PROG}
-.endif
-
-__kmodinstall: .USE
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${KMODOWN} \
-	    -g ${KMODGRP} -m ${KMODMODE} ${.ALLSRC} ${.TARGET}
-
-.if !defined(BUILD) && !make(all) && !make(${PROG})
-${DESTDIR}${KMODDIR}/${PROG}: .MADE
-.endif
-${DESTDIR}${KMODDIR}/${PROG}: ${PROG} __kmodinstall
-.endif
-
+##### Custom rules
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
 	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 
 .if !target(load)
-load:	${PROG}
+load: ${PROG}
 	/sbin/modload ${KMOD_LOADFLAGS} -o ${KMOD} ${PROG}
 .endif
 
@@ -90,6 +76,7 @@ unload:
 	/sbin/modunload -n ${KMOD}
 .endif
 
+##### Pull in related .mk logic
 .include <bsd.man.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>

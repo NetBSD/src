@@ -1,21 +1,14 @@
-#	$NetBSD: bsd.prog.mk,v 1.137 2001/10/19 15:55:52 tv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.138 2001/11/02 05:21:51 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
-.if !target(__initialized__)
-__initialized__:
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.depall.mk>
-.MAIN:		all
-.endif
+.include <bsd.init.mk>
 
+##### Basic targets
 .PHONY:		cleanprog proginstall scriptsinstall
 realinstall:	proginstall scriptsinstall
 clean:		cleanprog
 
+##### Default values
 CFLAGS+=	${COPTS}
 
 # ELF platforms depend on crtbegin.o and crtend.o
@@ -83,6 +76,7 @@ LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
 LIBZ?=		${DESTDIR}/usr/lib/libz.a
 
+##### Build and install rules
 .if defined(SHAREDSTRINGS)
 CLEANFILES+=strings
 .c.o:
@@ -222,6 +216,7 @@ lint: ${LOBJS}
 	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 
+##### Pull in related .mk logic
 .include <bsd.man.mk>
 .include <bsd.nls.mk>
 .include <bsd.files.mk>
@@ -230,5 +225,4 @@ lint: ${LOBJS}
 .include <bsd.dep.mk>
 .include <bsd.sys.mk>
 
-# Make sure all of the standard targets are defined, even if they do nothing.
-regress:
+${TARGETS}:	# ensure existence
