@@ -1,5 +1,5 @@
 .\"
-.\" Copyright (c) 1996 Jonathan Stone.
+.\" Copyright (c) 1996, 1997 Jonathan Stone.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: tc.4,v 1.2 1997/10/13 11:24:01 lukem Exp $
+.\"	$NetBSD: tc.4,v 1.2.2.1 1997/11/30 08:34:43 mellon Exp $
 .\"
 .Dd August 6, 1996
 .Dt TC 4 pmax
@@ -37,22 +37,23 @@
 .Nd
 turbochannel SCSI adaptor
 .Sh SYNOPSIS
-.Cd "tc? at ioasic?"
+.Cd "tc? at mainbus"
 .Sh DESCRIPTION
 The
 .Nm
 driver provies support for the DEC TURBOchannel expansion
 bus on Decstation 5000 series machines. Turbochannel is a 32-bit wide
 synchronous DMA-capable bus, running at 25 Mhz on higher-end machines
-and at 12.5MHz on  lower-end machines.
-.Nm
+and at 12.5MHz on lower-end machines.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr asc 4 ,
+.Xr ioasic 4 ,
 .Xr le 4 ,
 .Xr cfb 4 ,
 .Xr sfb 4 ,
 .Xr mfb 4 ,
+.Xr px 4 .
 .Sh HISTORY
 The
 .Nm
@@ -60,11 +61,7 @@ driver
 first appeared in
 .Nx 1.1 .
 .Sh BUGS
-The Decstation 5000/200 does not actually have an
-.Nm ioasic
-chip, but for consistency it must be configured as if it
-did.
-
+.Pp
 The
 .Nm
 driver makes poor use of interrupt priority on the 5000/1xx
