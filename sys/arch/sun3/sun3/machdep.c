@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 1996/06/17 15:27:16 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 1996/06/17 15:40:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -138,9 +138,16 @@ void identifycpu();
  */
 void consinit()
 {
-    extern void cninit();
-    cninit();
+	extern void cninit();
+	cninit();
 
+#ifdef KGDB
+	/* XXX - Ask on console for kgdb_dev? */
+	zs_kgdb_init();		/* XXX */
+	/* Note: kgdb_connect() will just return if kgdb_dev<0 */
+	if (boothowto & RB_KDB)
+		kgdb_connect(1);
+#endif
 #ifdef DDB
 	/* Now that we have a console, we can stop in DDB. */
 	db_machine_init();
