@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.374 2004/08/11 19:46:45 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.375 2004/08/11 19:48:22 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6349,3 +6349,13 @@ sys/dev/pci/cypide.c				1.8
 	should really be enabled, and in case it's not we would keep the 
 	interrupt mapped.  PR#26502
 	[bouyer, ticket #734]
+
+sys/dev/ata/wd.c				1.282-1.283
+
+	Move cleaning of the bad block list in wddetach() after the call to
+	disk_detach(), to avoid a race condition with the interrupt code.
+	wddetach(): move lockmgr(LK_DRAIN) near the end; otherwise we'll panic 
+	in wddone() (vdevgone() may end up calling it) trying to get the lock.
+	wdopen(): check for DVF_ACTIVE.
+
+	[bouyer, ticket #735]
