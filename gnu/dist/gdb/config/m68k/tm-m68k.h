@@ -255,8 +255,8 @@ extern CORE_ADDR m68k_saved_pc_after_call PARAMS ((struct frame_info *));
    (which isn't really on the stack.  I'm not sure this is right for anything
    but BSD4.3 on an hp300.  */
 #define FRAME_CHAIN(thisframe)  \
-  (thisframe->signal_handler_caller \
-   ? thisframe->frame \
+  ((thisframe)->signal_handler_caller \
+   ? (thisframe)->frame \
    : (!inside_entry_file ((thisframe)->pc) \
       ? read_memory_integer ((thisframe)->frame, 4) \
       : 0))
@@ -266,6 +266,7 @@ extern CORE_ADDR m68k_saved_pc_after_call PARAMS ((struct frame_info *));
 /* A macro that tells us whether the function invocation represented
    by FI does not have a frame on the stack associated with it.  If it
    does not, FRAMELESS is set to 1, else 0.  */
+
 #define FRAMELESS_FUNCTION_INVOCATION(FI, FRAMELESS) \
   do { \
     if ((FI)->signal_handler_caller) \
@@ -274,24 +275,14 @@ extern CORE_ADDR m68k_saved_pc_after_call PARAMS ((struct frame_info *));
       (FRAMELESS) = frameless_look_for_prologue(FI); \
   } while (0)
 
-/* This was determined by experimentation on hp300 BSD 4.3.  Perhaps
-   it corresponds to some offset in /usr/include/sys/user.h or
-   something like that.  Using some system include file would
-   have the advantage of probably being more robust in the face
-   of OS upgrades, but the disadvantage of being wrong for
-   cross-debugging.  */
-
-#define SIG_PC_FP_OFFSET 530
+/* Saved Pc.  Get it from sigcontext if within sigtramp.  */
 
 #define FRAME_SAVED_PC(FRAME) \
-  (((FRAME)->signal_handler_caller \
-    ? ((FRAME)->next \
-       ? read_memory_integer ((FRAME)->next->frame + SIG_PC_FP_OFFSET, 4) \
-       : read_memory_integer (read_register (SP_REGNUM) \
-			      + SIG_PC_FP_OFFSET - 8, 4) \
-       ) \
-    : read_memory_integer ((FRAME)->frame + 4, 4)) \
-   )
+  ((FRAME)->signal_handler_caller \
+   ? sigtramp_saved_pc (FRAME) \
+   : read_memory_integer ((FRAME)->frame + 4, 4))
+
+extern CORE_ADDR sigtramp_saved_pc PARAMS ((struct frame_info *));
 
 #define FRAME_ARGS_ADDRESS(fi) ((fi)->frame)
 
