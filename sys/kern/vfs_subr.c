@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.165 2001/11/30 10:31:32 msaitoh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.166 2001/12/06 04:34:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.165 2001/11/30 10:31:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.166 2001/12/06 04:34:33 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -485,12 +485,10 @@ getnewvnode(tag, mp, vops, vpp)
 				if ((vp->v_flag & VLAYER) == 0) {
 					break;
 				}
-				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT |
-					    LK_RECURSEFAIL | LK_INTERLOCK)) {
-					continue;
-				}
-				VOP_UNLOCK(vp, 0);
-				break;
+				if (VOP_ISLOCKED(vp) == 0)
+					break;
+				else
+					simple_unlock(&vp->v_interlock);
 			}
 		}
 		/*
@@ -531,6 +529,7 @@ getnewvnode(tag, mp, vops, vpp)
 		if (vp->v_numoutput)
 			panic("clean vnode has pending I/O's, vp %p", vp);
 #endif
+		KASSERT((vp->v_flag & VONWORKLST) == 0);
 		vp->v_flag = 0;
 		vp->v_socket = NULL;
 	}
@@ -655,20 +654,18 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	struct proc *p;
 	int slpflag, slptimeo;
 {
-	struct uvm_object *uobj = &vp->v_uobj;
 	struct buf *bp, *nbp;
 	int s, error;
-	int flushflags = PGO_ALLPAGES|PGO_FREE|PGO_SYNCIO|
+	int flushflags = PGO_ALLPAGES | PGO_FREE | PGO_SYNCIO |
 		(flags & V_SAVE ? PGO_CLEANIT : 0);
 
 	/* XXXUBC this doesn't look at flags or slp* */
-	if (TAILQ_FIRST(&uobj->memq)) {
-		simple_lock(&uobj->vmobjlock);
-		error = (uobj->pgops->pgo_put)(uobj, 0, 0, flushflags);
-		if (error) {
-			return error;
-		}
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
+	if (error) {
+		return error;
 	}
+
 	if (flags & V_SAVE) {
 		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0, p);
 		if (error)
@@ -750,21 +747,18 @@ vtruncbuf(vp, lbn, slpflag, slptimeo)
 	daddr_t lbn;
 	int slpflag, slptimeo;
 {
-	struct uvm_object *uobj = &vp->v_uobj;
 	struct buf *bp, *nbp;
 	int s, error;
+	voff_t off;
+
+	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
+	if (error) {
+		return error;
+	}
 
 	s = splbio();
-	if (TAILQ_FIRST(&uobj->memq)) {
-		simple_lock(&uobj->vmobjlock);
-		error = (uobj->pgops->pgo_put)(uobj,
-		    round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift), 0,
-		    PGO_FREE|PGO_SYNCIO);
-		if (error) {
-			splx(s);
-			return error;
-		}
-	}
 
 restart:
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
@@ -813,16 +807,12 @@ vflushbuf(vp, sync)
 	struct vnode *vp;
 	int sync;
 {
-	struct uvm_object *uobj = &vp->v_uobj;
 	struct buf *bp, *nbp;
+	int flags = PGO_CLEANIT | PGO_ALLPAGES | (sync ? PGO_SYNCIO : 0);
 	int s;
 
-	if (TAILQ_FIRST(&uobj->memq)) {
-		int flags = PGO_CLEANIT|PGO_ALLPAGES| (sync ? PGO_SYNCIO : 0);
-
-		simple_lock(&uobj->vmobjlock);
-		(void) (uobj->pgops->pgo_put)(uobj, 0, 0, flags);
-	}
+	simple_lock(&vp->v_interlock);
+	(void) VOP_PUTPAGES(vp, 0, 0, flags);
 
 loop:
 	s = splbio();
@@ -1480,14 +1470,16 @@ vclean(vp, flags, p)
 {
 	int active;
 
+	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+
 	/*
 	 * Check to see if the vnode is in use.
 	 * If so we have to reference it before we clean it out
 	 * so that its count cannot fall to zero and generate a
 	 * race against ourselves to recycle it.
 	 */
+
 	if ((active = vp->v_usecount) != 0) {
-		/* We have the vnode interlock. */
 		vp->v_usecount++;
 #ifdef DIAGNOSTIC
 		if (vp->v_usecount == 0) {
@@ -1522,8 +1514,11 @@ vclean(vp, flags, p)
 	/*
 	 * Clean out any cached data associated with the vnode.
 	 */
-	if (flags & DOCLOSE)
+	if (flags & DOCLOSE) {
 		vinvalbuf(vp, V_SAVE, NOCRED, p, 0, 0);
+		KASSERT((vp->v_flag & VONWORKLST) == 0);
+	}
+	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));
 
 	/*
 	 * If purging an active vnode, it must be closed and
@@ -1639,29 +1634,38 @@ vgonel(vp, p)
 	struct vnode *vq;
 	struct vnode *vx;
 
+	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+
 	/*
 	 * If a vgone (or vclean) is already in progress,
 	 * wait until it is done and return.
 	 */
+
 	if (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
-		ltsleep((caddr_t)vp, PINOD | PNORELOCK,
-		    "vgone", 0, &vp->v_interlock);
+		ltsleep(vp, PINOD | PNORELOCK, "vgone", 0, &vp->v_interlock);
 		return;
 	}
+
 	/*
 	 * Clean out the filesystem specific data.
 	 */
+
 	vclean(vp, DOCLOSE, p);
+	KASSERT((vp->v_flag & VONWORKLST) == 0);
+
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
+
 	if (vp->v_mount != NULL)
 		insmntque(vp, (struct mount *)0);
+
 	/*
 	 * If special device, remove it from special device alias list.
 	 * if it is on one.
 	 */
+
 	if ((vp->v_type == VBLK || vp->v_type == VCHR) && vp->v_specinfo != 0) {
 		simple_lock(&spechash_slock);
 		if (vp->v_hashchain != NULL) {
@@ -1700,6 +1704,7 @@ vgonel(vp, p)
 		FREE(vp->v_specinfo, M_VNODE);
 		vp->v_specinfo = NULL;
 	}
+
 	/*
 	 * If it is on the freelist and not already at the head,
 	 * move it to the head of the list. The test of the back
@@ -1713,6 +1718,7 @@ vgonel(vp, p)
 	 * getnewvnode after removing it from the freelist to ensure
 	 * that we do not try to move it here.
 	 */
+
 	if (vp->v_usecount == 0) {
 		simple_lock(&vnode_free_list_slock);
 		if (vp->v_holdcnt > 0)
