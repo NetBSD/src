@@ -1,4 +1,4 @@
-/* $NetBSD: SYS.h,v 1.4 1996/10/17 22:47:14 jtc Exp $ */
+/*	$NetBSD: SYS.h,v 1.5 1997/05/02 18:15:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,29 +47,34 @@
 #define SYSTRAP(x)	swi SYS_/**/x
 #endif
 
-#define SYSCALL(x) \
-	.text; .align 0; \
-	ENTRY(x) ; \
-	SYSTRAP(x); \
-	bcs cerror;
+#define _SYSCALL_NOERROR(x,y)						\
+	.text; .align 0;						\
+	ENTRY(x);							\
+	SYSTRAP(y)
 
-#define RSYSCALL(x) \
-	SYSCALL(x); \
+#define _SYSCALL(x, y)							\
+	_SYSCALL_NOERROR(x,y);						\
+	bcs cerror
+
+#define SYSCALL_NOERROR(x)						\
+	_SYSCALL_NOERROR(x,x)
+
+#define SYSCALL(x)							\
+	_SYSCALL(x,x)
+
+#define PSEUDO_NOERROR(x,y)						\
+	_SYSCALL_NOERROR(x,y);						\
 	mov r15, r14
 
-#define SYSCALL_NOERROR(x) \
-	.text; .align 0; \
-	ENTRY(x); \
-	SYSTRAP(x)
-
-#define RSYSCALL_NOERROR(x) \
-	SYSCALL_NOERROR(x); \
+#define PSEUDO(x,y)							\
+	_SYSCALL(x,y);							\
 	mov r15, r14
 
-#define PSEUDO(x, y) \
-	.text; .align 0; \
-	ENTRY(x); \
-	SYSTRAP(y); \
-	mov r15, r14
+#define RSYSCALL_NOERROR(x)						\
+	PSEUDO_NOERROR(x,x)
+
+#define RSYSCALL(x)							\
+	PSEUDO(x,x)
+
 
 	.globl	cerror

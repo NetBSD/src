@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.8 1997/03/15 08:52:16 jonathan Exp $ */
+/*	$NetBSD: SYS.h,v 1.9 1997/05/02 18:15:23 kleink Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan STone
@@ -100,22 +100,20 @@
 /*
  * Helper macro: produce a possibly-PIC entry point 'x' that syscalls 'y'.
  */
-#define PIC_SYSTRAP(x,y) \
-	PIC_LEAF(x,t9);	\
+#define PIC_SYSTRAP(x,y)						\
+	PIC_LEAF(x,t9);							\
 	SYSTRAP(y)
 
 /*
  * Do a syscall that cannot fail (sync, get{p,u,g,eu,eg)id)
  */
-#define RSYSCALL_NOERROR(x) \
-	PIC_SYSTRAP(x,x); \
-	j ra; \
-	END(x)
+#define RSYSCALL_NOERROR(x)						\
+	PSEUDO_NOERROR(x,x)
 
 /*
  * Do a normal syscall.
  */
-#define RSYSCALL(x) \
+#define RSYSCALL(x)							\
 	PSEUDO(x,x)
 
 
@@ -123,9 +121,14 @@
  * Do a renamed or pseudo syscall (e.g., _exit()), where the entrypoint
  * and syscall name are not the same.
  */
-#define PSEUDO(x,y) \
-	PIC_SYSTRAP(x,y); \
-	bne a3,zero,err; j ra; \
-err:	PIC_CALL(cerror,t9); \
+#define PSEUDO_NOERROR(x,y)						\
+	PIC_SYSTRAP(x,y);						\
+	j ra;								\
+	END(x)
+
+#define PSEUDO(x,y)							\
+	PIC_SYSTRAP(x,y);						\
+	bne a3,zero,err; j ra;						\
+err:	PIC_CALL(cerror,t9);						\
 	END(x)
 

@@ -35,7 +35,7 @@
  *
  *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  *
- *	$Id: SYS.h,v 1.6 1996/11/07 07:42:38 matthias Exp $
+ *	$NetBSD: SYS.h,v 1.7 1997/05/02 18:15:26 kleink Exp $
  *
  *  Modified for the ns532 by Phil Nelson, 12/1/92
  *
@@ -44,33 +44,40 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#define SYSTRAP(x) \
-	movd CAT(SYS_,x),r0; \
+#define SYSTRAP(x)							\
+	movd CAT(SYS_,x),r0;						\
 	SVC
 
-#define SYSCALL_NOERROR(x) \
-	ENTRY(x); \
-	SYSTRAP(x); 
+#define _SYSCALL_NOERROR(x,y)						\
+	ENTRY(x);							\
+	SYSTRAP(y)							\
 
-#define RSYSCALL_NOERROR(x) \
-	SYSCALL_NOERROR(x); \
-	ret 0
-
-#define	SYSCALL(x) \
-	SYSCALL_NOERROR(x); \
+#define _SYSCALL(x,y)							\
+	_SYSCALL_NOERROR(x,y);						\
 	bcs cerror
 
-#define	RSYSCALL(x) \
-	SYSCALL(x); \
+#define SYSCALL_NOERROR(x)						\
+	_SYSCALL_NOERROR(x,x)
+
+#define SYSCALL(x)							\
+	_SYSCALL(x,x)
+
+#define PSEUDO_NOERROR(x,y)						\
+	_SYSCALL_NOERROR(x,y);						\
 	ret 0
 
-#define	PSEUDO(x,y) \
-	ENTRY(x); \
-	SYSTRAP(y); \
+#define PSEUDO(x,y)							\
+	_SYSCALL(x,y);							\
 	ret 0
 
-#define	CALL(x,y) \
-	bsr CAT(_,y); \
+#define RSYSCALL_NOERROR(x)						\
+	PSEUDO_NOERROR(x,x)
+
+#define RSYSCALL(x)							\
+	PSEUDO(x,x)
+
+#define CALL(x,y)							\
+	bsr CAT(_,y);							\
 	adjspd -4*x
 
 	.globl	cerror

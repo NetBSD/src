@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
+/*	$NetBSD: SYS.h,v 1.5 1997/05/02 18:15:15 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -62,6 +62,12 @@ END(name)
 
 
 #define	PSEUDO(label,name)					\
+LEAF(label,0);				/* XXX # of args? */	\
+	CALLSYS_ERROR(name);					\
+	RET;							\
+END(label);
+
+#define	PSEUDO_NOERROR(label,name)				\
 LEAF(label,0);				/* XXX # of args? */	\
 	CALLSYS_NOERROR(name);					\
 	RET;							\
