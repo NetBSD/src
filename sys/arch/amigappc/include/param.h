@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2002/05/16 19:56:13 wiz Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2002/05/28 19:09:38 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,11 +157,12 @@ extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 */
 
 /* ADAM: redefiniton of cpu.h */
-/*
+#if 0
 #ifndef	_LOCORE
 void delay __P((int));
 void DELAY __P((int));
 #endif	/* !_LOCORE */
+#endif	/* 0 */
 #endif	/* _KERNEL */
 
 #endif /* def _MACHINE_PARAM_H_ */
