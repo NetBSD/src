@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.1 2002/02/12 20:38:40 scw Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.1.10.1 2002/05/16 12:03:21 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -83,10 +83,11 @@ struct cfattach clmpcc_pcctwo_ca = {
 
 extern struct cfdriver clmpcc_cd;
 
+extern const struct cdevsw clmpcc_cdevsw;
+
 /*
- * For clmpccopen() and clmpcccn*()
+ * For clmpcccn*()
  */
-cdev_decl(clmpcc);
 cons_decl(clmpcc);
 
 
@@ -255,10 +256,7 @@ clmpcccnprobe(cp)
 	/*
 	 * Locate the major number
 	 */
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == clmpccopen)
-			break;
-	}
+	maj = cdevsw_lookup_major(&clmpcc_cdevsw);
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);
