@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scc.c	8.2 (Berkeley) 11/30/93
- *      $Id: scc.c,v 1.5 1994/05/30 06:13:58 glass Exp $
+ *      $Id: scc.c,v 1.6 1994/06/02 06:15:01 glass Exp $
  */
 
 /* 
@@ -195,15 +195,13 @@ sccprobe(cp)
 	pdp = &sc->scc_pdma[0];
 
 	/* init pseudo DMA structures */
-	tp = scc_tty[cp->pmax_unit * 2];
-	if (tp == NULL) 
-		tp = scc_tty[cp->pmax_unit * 2] = ttymalloc();
 	for (cntr = 0; cntr < 2; cntr++) {
 		pdp->p_addr = (void *)cp->pmax_addr;
+		tp = scc_tty[cp->pmax_unit * 2 + cntr] = ttymalloc();
 		pdp->p_arg = (int)tp;
 		pdp->p_fcn = (void (*)())0;
 		tp->t_dev = (dev_t)((cp->pmax_unit << 1) | cntr);
-		pdp++, tp++;
+		pdp++;
 	}
 	sc->scc_softCAR = cp->pmax_flags | 0x2;
 
@@ -649,8 +647,8 @@ sccintr(unit)
 			if (tp->t_state & TS_FLUSH)
 				tp->t_state &= ~TS_FLUSH;
 			else {
-				ndflush(&tp->t_outq, dp->p_mem - (caddr_t)
-					tp->t_outq.c_cf);
+				ndflush(&tp->t_outq, dp->p_mem -
+					(caddr_t) tp->t_outq.c_cf);
 				dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 			}
 			if (tp->t_line)

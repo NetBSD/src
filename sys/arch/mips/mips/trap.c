@@ -38,7 +38,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.4 1994/05/27 09:04:15 glass Exp $
+ *      $Id: trap.c,v 1.5 1994/06/02 06:15:08 glass Exp $
  */
 
 #include <sys/param.h>
@@ -345,6 +345,10 @@ trap(statusReg, causeReg, vadr, pc, args)
 		map = &vm->vm_map;
 		va = trunc_page((vm_offset_t)vadr);
 		rv = vm_fault(map, va, ftype, FALSE);
+#ifdef VMFAULT_TRACE
+		printf("vm_fault(%x (pmap %x), %x (%x), %x, %d) -> %x at pc %x\n",
+		       map, &vm->vm_pmap, va, vadr, ftype, FALSE, rv, pc);
+#endif
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -399,8 +403,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 		struct sysent *systab;
 		extern int nsysent;
 #ifdef COMPAT_ULTRIX
-		extern struct sysent ultrixsysent[];
-		extern int ultrixnsysent;
+		extern struct sysent ultrix_sysent[];
+		int nultrix_sysent;
 #endif
 
 		cnt.v_syscall++;
@@ -416,8 +420,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 			break;
 #ifdef COMPAT_ULTRIX
 		case EMUL_ULTRIX:
-			systab = ultrixsysent;
-			numsys = ultrixnsysent;
+			systab = ultrix_sysent;
+			numsys = nultrix_sysent;
 			break;
 #endif
 		}
