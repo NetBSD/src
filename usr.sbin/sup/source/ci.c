@@ -1,4 +1,4 @@
-/*	$NetBSD: ci.c,v 1.2 1997/06/17 18:56:08 christos Exp $	*/
+/*	$NetBSD: ci.c,v 1.3 1997/10/18 07:15:16 lukem Exp $	*/
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
@@ -139,7 +139,7 @@
  */
 
 
-#include <strings.h>
+#include <string.h>
 #include <libc.h>
 #include <ci.h>
 #include <del.h>

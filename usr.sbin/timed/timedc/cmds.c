@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.7 1997/10/17 14:19:58 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.8 1997/10/18 07:13:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.7 1997/10/17 14:19:58 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.8 1997/10/18 07:13:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.8 $"
 #endif
 
 #include "timedc.h"
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: cmds.c,v 1.7 1997/10/17 14:19:58 lukem Exp $");
 #include <netinet/ip_icmp.h>
 
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 
 #define TSPTYPES
