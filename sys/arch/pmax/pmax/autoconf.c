@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 2000/01/14 13:45:23 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47 2000/02/19 04:16:18 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,19 +43,10 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2000/01/14 13:45:23 simonb Exp $");
-
-/*
- * Setup the system to run on the current machine.
- *
- * Configure() is called at boot time.  Available
- * devices are determined (from possibilities mentioned in ioconf.c),
- * and the drivers are initialized.
- */
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2000/02/19 04:16:18 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/dkstat.h>
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
@@ -66,18 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2000/01/14 13:45:23 simonb Exp $")
 
 #include <pmax/dev/device.h>
 
-
 struct intrhand intrtab[MAX_INTR_COOKIES];
-
-static void	findroot __P((struct device **, int *));
+struct device *booted_device;
+int	booted_slot, booted_unit, booted_partition;
+char	*booted_protocol;
 
 /*
- * Determine mass storage and memory configuration for a machine.
- * Print cpu type, and then iterate over an array of devices
- * found on the baseboard or in turbochannel option slots.
- * Once devices are configured, enable interrupts, and probe
- * for attached scsi devices.
- */
+ * Configure all devices on system
+ */     
 void
 cpu_configure()
 {
@@ -92,141 +79,67 @@ cpu_configure()
 	/* Configuration is finished, turn on interrupts. */
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 
-	/*
-	 * Probe SCSI bus using old-style pmax configuration table.
-	 * We do not yet have machine-independent SCSI support or polled
-	 * SCSI.
-	 */
 	printf("Beginning old-style SCSI device autoconfiguration\n");
 	configure_scsi();
 }
 
-void
-cpu_rootconf()
-{
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
-
-	printf("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
-
-	setroot(booted_device, booted_partition);
-}
-
-u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
-
 /*
- * Attempt to find the device from which we were booted.
- */
-static void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
-{
-	int i, majdev, unit, part, controller;
-	struct pmax_scsi_device *dp;
-	const char *bootdv_name;
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-	*partp = 0;
-	bootdv_name = NULL;
-
-	if ((bootdev & B_MAGICMASK) != B_DEVMAGIC)
-		return;
-
-	majdev = B_TYPE(bootdev);
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++) {
-		if (majdev == dev_name2blk[i].d_maj) {
-			bootdv_name = dev_name2blk[i].d_name;
-			break;
-		}
-	}
-
-	if (bootdv_name == NULL) {
-#if defined(DEBUG)
-		printf("findroot(): no name2blk for boot device %d\n", majdev);
-#endif
-		return;
-	}
-
-	controller = B_CONTROLLER(bootdev);
-	part = B_PARTITION(bootdev);
-	unit = B_UNIT(bootdev);
-
-	for (dp = scsi_dinit; dp->sd_driver != NULL; dp++) {
-		if (dp->sd_alive && dp->sd_drive == unit &&
-		    dp->sd_ctlr == controller &&
-		    dp->sd_driver->d_name[0] == bootdv_name[0] &&
-		    dp->sd_driver->d_name[1] == bootdv_name[1]) {
-			*devpp = dp->sd_devp;
-			*partp = part;
-			return;
-		}
-	}
-#if defined(DEBUG)
-	printf("findroot(): no driver for boot device %s\n", bootdv_name);
-#endif
-}
-
-/*
- * Look at the string 'cp' and decode the boot device.
- * Boot names can be something like 'rz(0,0,0)vmunix' or '5/rz0/vmunix'.
+ * Look at the string 'cp' and decode the boot device.  Boot names
+ * can be something like 'rz(0,0,0)vmunix' or '5/rz0/vmunix'.
  */
 void
 makebootdev(cp)
 	char *cp;
 {
-	int majdev, unit, part, ctrl;
+	booted_device = NULL;
+	booted_slot = booted_unit = -1;
+	booted_partition = 0;
+	booted_protocol = NULL;
 
-	if (*cp >= '0' && *cp <= '9') {
-		/* XXX should be able to specify controller */
-		if (cp[1] != '/' || cp[4] < '0' || cp[4] > '9')
-			goto defdev;
-		unit = cp[4] - '0';
-		if (cp[5] >= 'a' && cp[5] <= 'h')
-			part = cp[5] - 'a';
-		else
-			part = 0;
-		cp += 2;
-		for (majdev = 0; dev_name2blk[majdev].d_name != NULL;
-		    majdev++) {
-			if (cp[0] == dev_name2blk[majdev].d_name[0] &&
-			    cp[1] == dev_name2blk[majdev].d_name[1]) {
-				bootdev = MAKEBOOTDEV(
-				    dev_name2blk[majdev].d_maj, 0, 0,
-				    unit, part);
-				return;
-			}
-		}
-		goto defdev;
+	if (cp[0] == 'r' && cp[1] == 'z' && cp[2] == '(') {
+		if (cp[3] >= '0' && cp[3] <= '9' && cp[4] == ','
+		    && cp[5] >= '0' && cp[5] <= '9' && cp[6] == ','
+		    && cp[7] >= '0' && cp[7] <= '9' && cp[8] == ')')
+			return;
+		booted_slot = cp[3] - '0';
+		booted_unit = cp[5] - '0';
+		booted_partition = cp[7] - '0';
+		booted_protocol = "SCSI";
 	}
-	for (majdev = 0; dev_name2blk[majdev].d_name != NULL; majdev++)
-		if (cp[0] == dev_name2blk[majdev].d_name[0] &&
-		    cp[1] == dev_name2blk[majdev].d_name[1] &&
-		    cp[2] == '(')
-			goto fndmaj;
-defdev:
-	bootdev = B_DEVMAGIC;
-	return;
+	if (cp[0] >= '0' && cp[0] <= '9' && cp[1] == '/') {
+		booted_slot = cp[0] - '0';
+		booted_unit = booted_partition = 0;
+		if (cp[2] == 'r' && cp[3] == 'z'
+		    && cp[4] >= '0' && cp[4] <= '9') {
+			booted_protocol = "SCSI";
+			booted_unit = cp[4] - '0';
+		}
+		else if (strncmp(cp+2, "tftp", 4) == 0)
+			booted_protocol = "BOOTP";
+		else if (strncmp(cp+2, "mop", 3) == 0)
+			booted_protocol = "MOP";
+	}
+}
 
-fndmaj:
-	majdev = dev_name2blk[majdev].d_maj;
-	for (ctrl = 0, cp += 3; *cp >= '0' && *cp <= '9'; )
-		ctrl = ctrl * 10 + *cp++ - '0';
-	if (*cp == ',')
-		cp++;
-	for (unit = 0; *cp >= '0' && *cp <= '9'; )
-		unit = unit * 10 + *cp++ - '0';
-	if (*cp == ',')
-		cp++;
-	for (part = 0; *cp >= '0' && *cp <= '9'; )
-		part = part * 10 + *cp++ - '0';
-	if (*cp != ')')
-		goto defdev;
-	bootdev = MAKEBOOTDEV(majdev, 0, ctrl, unit, part);
+void
+cpu_rootconf()
+{
+	struct device *dv;
+	char name[4];
+
+	/*
+	 * N.B., below works for rz drive on primary SCSI controller.
+	 */
+	booted_device = NULL;
+	snprintf(name, sizeof(name), "rz%d", booted_unit);
+	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
+		if (dv->dv_class == DV_DISK && !strcmp(dv->dv_xname, name)) {
+			booted_device = dv;
+			break;
+		}
+	}
+	printf("boot device: %s\n",
+	    booted_device ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, booted_partition);
 }
