@@ -1,4 +1,4 @@
-#	$NetBSD: mtree.common,v 1.4 2003/05/09 01:45:08 lukem Exp $
+#	$NetBSD: mtree.common,v 1.4.2.1 2004/04/30 03:43:04 jmc Exp $
 
 /set				type=dir uname=root gname=wheel mode=0755
 
@@ -10,6 +10,7 @@
 ./mnt2
 ./kern
 ./sbin
+./targetroot
 ./tmp				mode=01777
 ./usr
 ./usr/bin
