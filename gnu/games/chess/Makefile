@@ -7,6 +7,17 @@ MAN6=	chess.0
 DPADD=	${LIBCURSES} ${LIBTERM}
 LDADD=	-lcurses -ltermlib
 HIDEGAME=hidegame
+MANALL+= chess.6
+
+chess.6:
+	@if [ -d ${.CURDIR}/obj ]; then \
+		/bin/rm -rf ${.CURDIR}/obj/chess.6 ; \
+		ln -s ${.CURDIR}/DOCUMENTATION/MAN-PAGE ${.CURDIR}/obj/chess.6 ; \
+	else \
+		true; \
+		/bin/rm -rf ${.CURDIR}/chess.6 ; \
+		ln -s ${.CURDIR}/DOCUMENTATION/MAN-PAGE ${.CURDIR}/chess.6 ; \
+	fi
 
 beforeinstall: 
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/gnuchess.book \
