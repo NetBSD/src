@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.69 2003/04/20 19:55:33 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.70 2003/05/02 03:26:11 atatat Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.69 2003/04/20 19:55:33 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.70 2003/05/02 03:26:11 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,8 @@ union dinode {
 	struct ufs2_dinode dp2;
 };
 
-static void initcg(int, time_t);
-static int fsinit(time_t, mode_t, uid_t, gid_t);
+static void initcg(int, const struct timeval *);
+static int fsinit(const struct timeval *, mode_t, uid_t, gid_t);
 static int makedir(struct direct *, int);
 static daddr_t alloc(int, int);
 static void iput(union dinode *, ino_t);
@@ -133,13 +133,13 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 {
 	int fragsperinode, optimalfpg, origdensity, minfpg, lastminfpg;
 	int32_t cylno, i, csfrags;
-	time_t utime;
+	struct timeval tv;
 	long long sizepb;
 	char *writebuf2;		/* dynamic buffer */
 	int nprintcols, printcolwidth;
 
 #ifndef STANDALONE
-	time(&utime);
+	gettimeofday(&tv, NULL);
 #endif
 #ifdef MFS
 	if (mfs) {
@@ -176,7 +176,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 
 	if (isappleufs) {
 		struct appleufslabel appleufs;
-		ffs_appleufs_set(&appleufs,appleufs_volname,utime);
+		ffs_appleufs_set(&appleufs,appleufs_volname,tv.tv_sec);
 		wtfs(APPLEUFS_LABEL_OFFSET/sectorsize,APPLEUFS_LABEL_SIZE,&appleufs);
 	}
 
@@ -424,7 +424,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	sblock.fs_state = 0;
 	sblock.fs_clean = FS_ISCLEAN;
 	sblock.fs_ronly = 0;
-	sblock.fs_id[0] = (long)utime;	/* XXXfvdl huh? */
+	sblock.fs_id[0] = (long)tv.tv_sec;	/* XXXfvdl huh? */
 	sblock.fs_id[1] = random();
 	sblock.fs_fsmnt[0] = '\0';
 	csfrags = howmany(sblock.fs_cssize, sblock.fs_fsize);
@@ -440,9 +440,9 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	sblock.fs_cstotal.cs_nifree = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
 	sblock.fs_cstotal.cs_ndir = 0;
 	sblock.fs_dsize -= csfrags;
-	sblock.fs_time = utime;
+	sblock.fs_time = tv.tv_sec;
 	if (Oflag <= 1) {
-		sblock.fs_old_time = utime;
+		sblock.fs_old_time = tv.tv_sec;
 		sblock.fs_old_dsize = sblock.fs_dsize;
 		sblock.fs_old_csaddr = sblock.fs_csaddr;
 		sblock.fs_old_cstotal.cs_ndir = sblock.fs_cstotal.cs_ndir;
@@ -501,7 +501,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	if (!mfs)
 		printf("super-block backups (for fsck -b #) at:");
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++) {
-		initcg(cylno, utime);
+		initcg(cylno, &tv);
 		if (mfs)
 			continue;
 		if (cylno % nprintcols == 0)
@@ -519,9 +519,9 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	 * Now construct the initial file system,
 	 * then write out the super-block.
 	 */
-	if (fsinit(utime, mfsmode, mfsuid, mfsgid) == 0 && mfs)
+	if (fsinit(&tv, mfsmode, mfsuid, mfsgid) == 0 && mfs)
 		errx(1, "Error making filesystem");
-	sblock.fs_time = utime;
+	sblock.fs_time = tv.tv_sec;
 	if (Oflag <= 1) {
 		sblock.fs_old_cstotal.cs_ndir = sblock.fs_cstotal.cs_ndir;
 		sblock.fs_old_cstotal.cs_nbfree = sblock.fs_cstotal.cs_nbfree;
@@ -569,7 +569,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
  * Initialize a cylinder group.
  */
 void
-initcg(int cylno, time_t utime)
+initcg(int cylno, const struct timeval *tv)
 {
 	daddr_t cbase, dmax;
 	int32_t i, j, d, dlower, dupper, blkno;
@@ -593,7 +593,7 @@ initcg(int cylno, time_t utime)
 		dupper += howmany(sblock.fs_cssize, sblock.fs_fsize);
 	cs = fscs + cylno;
 	memset(&acg, 0, sblock.fs_cgsize);
-	acg.cg_time = utime;
+	acg.cg_time = tv->tv_sec;
 	acg.cg_magic = CG_MAGIC;
 	acg.cg_cgx = cylno;
 	acg.cg_niblk = sblock.fs_ipg;
@@ -802,7 +802,7 @@ char buf[MAXBSIZE];
 static void copy_dir(struct direct *, struct direct *);
 
 int
-fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
+fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 #ifdef LOSTDIR
 	int i;
@@ -831,9 +831,12 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			copy_dir(&lost_found_dir[2], (struct direct*)&buf[i]);
 	}
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {
-		node.dp1.di_atime = utime;
-		node.dp1.di_mtime = utime;
-		node.dp1.di_ctime = utime;
+		node.dp1.di_atime = tv->tv_sec;
+		node.dp1.di_atimensec = tv->tv_usec * 1000;
+		node.dp1.di_mtime = tv->tv_sec;
+		node.dp1.di_mtimensec = tv->tv_usec * 1000;
+		node.dp1.di_ctime = tv->tv_sec;
+		node.dp1.di_ctimensec = tv->tv_usec * 1000;
 		node.dp1.di_mode = IFDIR | UMASK;
 		node.dp1.di_nlink = 2;
 		node.dp1.di_size = sblock.fs_bsize;
@@ -847,9 +850,14 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		wtfs(fsbtodb(&sblock, node.dp1.di_db[0]), node.dp1.di_size,
 		    buf);
 	} else {
-		node.dp2.di_atime = utime;
-		node.dp2.di_mtime = utime;
-		node.dp2.di_ctime = utime;
+		node.dp2.di_atime = tv->tv_sec;
+		node.dp2.di_atimensec = tv->tv_usec * 1000;
+		node.dp2.di_mtime = tv->tv_sec;
+		node.dp2.di_mtimensec = tv->tv_usec * 1000;
+		node.dp2.di_ctime = tv->tv_sec;
+		node.dp2.di_ctimensec = tv->tv_usec * 1000;
+		node.dp2.di_birthtime = tv->tv_sec;
+		node.dp2.di_birthnsec = tv->tv_usec * 1000;
 		node.dp2.di_mode = IFDIR | UMASK;
 		node.dp2.di_nlink = 2;
 		node.dp2.di_size = sblock.fs_bsize;
@@ -900,6 +908,14 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			node.dp2.di_uid = geteuid();
 			node.dp2.di_gid = getegid();
 		}
+		node.dp2.di_atime = tv->tv_sec;
+		node.dp2.di_atimensec = tv->tv_usec * 1000;
+		node.dp2.di_mtime = tv->tv_sec;
+		node.dp2.di_mtimensec = tv->tv_usec * 1000;
+		node.dp2.di_ctime = tv->tv_sec;
+		node.dp2.di_ctimensec = tv->tv_usec * 1000;
+		node.dp2.di_birthtime = tv->tv_sec;
+		node.dp2.di_birthnsec = tv->tv_usec * 1000;
 		node.dp2.di_nlink = PREDEFDIR;
 		node.dp2.di_size = makedir(root_dir, PREDEFDIR);
 		node.dp2.di_db[0] = alloc(sblock.fs_fsize, node.dp2.di_mode);
