@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_cam.h,v 1.2 2003/04/19 19:38:21 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
 
 /*
  * Data structures and definitions for the CAM system.
@@ -44,7 +44,7 @@
 
 #define	CAM_BUS_WILDCARD ((u_int)~0)
 #define	CAM_TARGET_WILDCARD ((u_int)~0)
-#define	CAM_LUN_WILDCARD AHC_LUN_WILDCARD
+#define	CAM_LUN_WILDCARD -1
 
 /*
  * XXX translate FreeBSD SCSI status byte values to NetBSD, and define

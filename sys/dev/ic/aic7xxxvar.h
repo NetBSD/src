@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.33 2003/04/19 19:33:30 fvdl Exp $
+ * $Id: aic7xxxvar.h,v 1.34 2003/04/20 11:17:20 fvdl Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -136,8 +136,6 @@ union ins_formats {
 		uint8_t		   bytes[4];
 		uint32_t	   integer;
 };
-
-#define AHC_LUN_WILDCARD	-1
 
 /************************* Forward Declarations *******************************/
 struct ahc_platform_data;
