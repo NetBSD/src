@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.36 1998/02/07 02:44:57 chs Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.37 1998/09/13 20:27:48 hwr Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -38,6 +38,10 @@
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
+
+#if NGRE > 0
+extern struct gre_softc gre_softc[NGRE];
+#endif
 
 #include <machine/stdarg.h>
 
@@ -1458,6 +1462,16 @@ ipip_input(m, va_alist)
 	hlen = va_arg(ap, int);
 	va_end(ap);
 
+#if NGRE > 0
+	/*
+	 * check if packet came in on a if_gre with IPIP encaps.
+	 * If yes, then process it.
+	 * If the box is also Mrouter, this will slow mrouting (over
+	 * tunnels) down ;-(
+	 */
+	if ((ret=gre_input2(m,hlen,IPPROTO_IPIP))==1)
+		return;
+#endif
 	if (!have_encap_tunnel) {
 		rip_input(m);
 		return;

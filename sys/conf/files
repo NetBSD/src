@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.244 1998/09/12 15:05:47 rvb Exp $
+#	$NetBSD: files,v 1.245 1998/09/13 20:27:47 hwr Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -357,6 +357,7 @@ pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device ipfilter: ifnet
+pseudo-device gre: ifnet
 
 pseudo-device sequencer
 
@@ -531,6 +532,7 @@ file net/if_atmsubr.c			atm
 file net/if_ethersubr.c			ether | fddi
 file net/if_fddisubr.c			fddi
 file net/if_hippisubr.c                 hippi                   needs-flag
+file net/if_gre.c			gre				needs-count	
 file net/if_loop.c			loop			needs-count
 file net/if_media.c
 file net/if_sl.c			sl			needs-count
@@ -572,6 +574,7 @@ file netinet/igmp.c			inet
 file netinet/in.c			inet
 file netinet/in_pcb.c			inet
 file netinet/in_proto.c			inet
+file netinet/ip_gre.c			inet
 file netinet/ip_flow.c			inet & gateway
 file netinet/ip_icmp.c			inet
 file netinet/ip_input.c			inet
