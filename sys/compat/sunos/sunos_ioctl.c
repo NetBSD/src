@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.28 1997/12/11 09:52:57 pk Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.29 1998/06/20 03:43:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -37,13 +37,16 @@
 #include <sys/socket.h>
 #include <sys/audioio.h>
 #include <sys/vnode.h>
-#include <net/if.h>
-
 #include <sys/mount.h>
+#include <sys/disklabel.h>
+#include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
 
-#include <sys/syscallargs.h>
+#include <net/if.h>
+
+#include <dev/sun/disklabel.h>
+
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
 #include <compat/sunos/sunos_util.h>
@@ -397,13 +400,17 @@ sunos_sys_ioctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos_sys_ioctl_args *uap = v;
+	struct sunos_sys_ioctl_args /* {
+		int	fd;
+		u_long	com;
+		caddr_t	data;
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	register int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
-	if ( (unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
 		return EBADF;
 
@@ -812,6 +819,57 @@ sunos_sys_ioctl(p, v, retval)
 			return EOPNOTSUPP;
                 return (*ctl)(fp, FIOASYNC, (caddr_t)&on, p);
 	    }
+	/*
+	 * SunOS disk ioctls, taken from arch/sparc/sparc/disksubr.c
+	 * (which was from the old sparc/scsi/sun_disklabel.c), and
+	 * modified to suite.
+	 */
+	case DKIOCGGEOM:
+            {
+		struct disklabel dl;
+
+		error = (*ctl)(fp, DIOCGDINFO, (caddr_t)&dl, p);
+		if (error)
+			return (error);
+
+#define datageom	((struct sun_dkgeom *)SCARG(uap, data))
+		bzero(SCARG(uap, data), sizeof(*datageom));
+
+		datageom->sdkc_ncylinders = dl.d_ncylinders;
+		datageom->sdkc_acylinders = dl.d_acylinders;
+		datageom->sdkc_ntracks = dl.d_ntracks;
+		datageom->sdkc_nsectors = dl.d_nsectors;
+		datageom->sdkc_interleave = dl.d_interleave;
+		datageom->sdkc_sparespercyl = dl.d_sparespercyl;
+		datageom->sdkc_rpm = dl.d_rpm;
+		datageom->sdkc_pcylinders = dl.d_ncylinders + dl.d_acylinders;
+#undef datageom
+		break;
+	    }
+
+	case DKIOCINFO:
+		/* Homey don't do DKIOCINFO */
+		bzero(SCARG(uap, data), sizeof(struct sun_dkctlr));
+		break;
+
+	case DKIOCGPART:
+            {
+		struct partinfo pi;
+
+		error = (*ctl)(fp, DIOCGPART, (caddr_t)&pi, p);
+		if (error)
+			return (error);
+
+		if (pi.disklab->d_secpercyl == 0)
+			return (ERANGE);	/* XXX */
+		if (pi.part->p_offset % pi.disklab->d_secpercyl != 0)
+			return (ERANGE);	/* XXX */
+#define datapart	((struct sun_dkpart *)SCARG(uap, data))
+		datapart->sdkp_cyloffset = pi.part->p_offset / pi.disklab->d_secpercyl;
+		datapart->sdkp_nsectors = pi.part->p_size;
+#undef datapart
+	    }
+
 	}
 	return (sys_ioctl(p, uap, retval));
 }
