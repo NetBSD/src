@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.19 2002/09/20 19:51:35 mycroft Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.20 2002/09/20 22:04:31 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/param.h>
-#include <sys/poll.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -53,6 +52,8 @@
 #include <stdarg.h>
 #include <ifaddrs.h>
 #include <util.h>
+#include <poll.h>
+
 #include "rtsold.h"
 
 struct ifinfo *iflist;
@@ -208,6 +209,8 @@ main(int argc, char **argv)
 	set[0].fd = s;
 	set[0].events = POLLIN;
 
+	set[1].fd = -1;
+
 #ifdef USE_RTSOCK
 	if ((rtsock = rtsock_open()) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "failed to open a socket");
@@ -216,8 +219,6 @@ main(int argc, char **argv)
 	}
 	set[1].fd = rtsock;
 	set[1].events = POLLIN;
-#else
-	set[1].fd = -1;
 #endif
 
 	/* configuration per interface */
