@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 2003/04/27 10:42:54 ragge Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 2003/04/29 00:20:12 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,7 @@ ASLOCAL(tmpstk)
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 #include <m68k/m68k/trap_subr.s>
 
 ENTRY_NOPROFILE(buserr)
@@ -132,7 +132,7 @@ Lnobpe:
 Lberr3:
 	movl	%d1,%sp@-		| push fault VA
 	movl	%d0,%sp@-		| and FSLW
-	andw	#0x1f80,%d0 
+	andw	#0x1f80,%d0
 	jeq	Lisberr
 	jra	Lismerr
 Lbenot060:
@@ -363,7 +363,7 @@ ENTRY_NOPROFILE(trap0)
 	movw	#SPL1,%sr
 	tstb	_C_LABEL(ssir)
 	jne	Lsir1
-Ltrap1:	
+Ltrap1:
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most registers
@@ -683,7 +683,7 @@ Lgotsir:
 	moveml	#0xFFFF,%sp@-		| save all registers
 	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lsir1:	
+Lsir1:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_SSIR,%sp@-		| type == software interrupt
@@ -785,7 +785,7 @@ Lnot68030:
 	tstl	%d0			| zero?
 	jeq	Lis68040		| yes, we have 68040
 	RELOC(mmutype, %a0)		| no, we have 68060
-	movl	#MMU_68040,%a0@		| with a 68040 compatible MMU 
+	movl	#MMU_68040,%a0@		| with a 68040 compatible MMU
 	RELOC(cputype, %a0)
 	movl	#CPU_68060,%a0@		| and a 68060 CPU
 	jra	Lstart1
@@ -880,7 +880,7 @@ Lstploaddone:
 	jne	Ljupiterdone		| no, skip
 	movl	#0x0100a240,%d0		| to access system register
 	.long	0x4e7b0006		| movc d0,dtt0
-	movb	#0x01,0x01800003	| set "SUPER" bit	
+	movb	#0x01,0x01800003	| set "SUPER" bit
 Ljupiterdone:
 #endif /* JUPITER */
 	moveq	#0,%d0			| ensure TT regs are disabled
@@ -999,7 +999,7 @@ GLOBAL(proc_trampoline)
 
 /*
  * Primitives
- */ 
+ */
 
 /*
  * Use common m68k support routines.
@@ -1042,7 +1042,7 @@ Lslerr:
 	moveq	#-1,%d0
 Lsldone:
 	movl	_C_LABEL(curpcb),%a1	| current pcb
-	clrl	%a1@(PCB_ONFAULT) 	| clear fault address
+	clrl	%a1@(PCB_ONFAULT)	| clear fault address
 	rts
 #endif
 
