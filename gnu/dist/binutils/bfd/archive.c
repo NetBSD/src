@@ -160,6 +160,8 @@ struct ar_cache {
 #define arch_eltdata(bfd) ((struct areltdata *) ((bfd)->arelt_data))
 #define arch_hdr(bfd) ((struct ar_hdr *) arch_eltdata(bfd)->arch_header)
 
+static const char * normalize (bfd *, const char *);
+
 
 bfd_boolean
 _bfd_generic_mkarchive (bfd *abfd)
