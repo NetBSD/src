@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.53 2004/08/23 16:41:48 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.54 2004/08/23 17:52:45 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.53 2004/08/23 16:41:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.54 2004/08/23 17:52:45 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -141,8 +141,6 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rbus_iot = cba->cba_rbus_iot;
 	sc->sc_rbus_memt = cba->cba_rbus_memt;
 #endif
-
-	sc->sc_funcs = NULL;
 }
 
 static int
@@ -407,18 +405,6 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	return (1); /* XXX */
 }
 
-static struct cardbus_devfunc *
-cb_findfunc(struct cardbus_softc *sc, int func)
-{
-	struct cardbus_devfunc *ct;
-
-	for (ct = sc->sc_funcs; ct; ct = ct->ct_next)
-		if (ct->ct_func == func)
-			return (ct);
-
-	return (NULL);
-}
-
 int
 cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 {
@@ -431,9 +417,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	u_int8_t tuple[2048];
 	int cdstatus;
 	int function, nfunction;
-	struct cardbus_devfunc **previous_next = &(sc->sc_funcs);
 	struct device *csc;
-	int no_work_funcs = 0;
 	cardbus_devfunc_t ct;
 
 	cc = sc->sc_cc;
@@ -498,7 +482,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		    && (locators[CARDBUSCF_FUNCTION] != function))
 			continue;
 
-		if (cb_findfunc(sc, function))
+		if (sc->sc_funcs[function])
 			continue;
 
 		tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device,
@@ -562,8 +546,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		ct->ct_dev = sc->sc_device;
 		ct->ct_func = function;
 		ct->ct_sc = sc;
-		ct->ct_next = NULL;
-		*previous_next = ct;
+		sc->sc_funcs[function] = ct;
 
 		memset(&ca, 0, sizeof(ca));
 
@@ -606,13 +589,11 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 			&ca, cardbusprint, cardbussubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
+			sc->sc_funcs[function] = NULL;
 			free(ct, M_DEVBUF);
-			*previous_next = NULL;
 		} else {
 			/* found */
-			previous_next = &(ct->ct_next);
 			ct->ct_device = csc;
-			++no_work_funcs;
 		}
 	}
 	/*
@@ -680,19 +661,22 @@ cardbusprint(void *aux, const char *pnp)
 void
 cardbus_detach_card(struct cardbus_softc *sc)
 {
-	struct cardbus_devfunc *ct, *ct_next;
+	int f;
+	struct cardbus_devfunc *ct;
 
-	for (ct = sc->sc_funcs; ct != NULL; ct = ct_next) {
-		struct device *fndev = ct->ct_device;
-		ct_next = ct->ct_next;
+	for (f = 0; f < 8; f++) {
+		ct = sc->sc_funcs[f];
+		if (!ct)
+			continue;
 
 		DPRINTF(("%s: detaching %s\n", sc->sc_dev.dv_xname,
-		    fndev->dv_xname));
+		    ct->ct_device->dv_xname));
 		/* call device detach function */
 
-		if (0 != config_detach(fndev, 0)) {
+		if (0 != config_detach(ct->ct_device, 0)) {
 			printf("%s: cannot detach dev %s, function %d\n",
-			    sc->sc_dev.dv_xname, fndev->dv_xname, ct->ct_func);
+			    sc->sc_dev.dv_xname, ct->ct_device->dv_xname,
+			    ct->ct_func);
 		}
 	}
 
@@ -705,27 +689,14 @@ void
 cardbus_childdetached(struct device *self, struct device *child)
 {
 	struct cardbus_softc *sc = (struct cardbus_softc *)self;
-	struct cardbus_devfunc *ct, *ct_next, **prev_next;
+	struct cardbus_devfunc *ct;
 
-	prev_next = &(sc->sc_funcs);
+	ct = sc->sc_funcs[child->dv_locators[CARDBUSCF_FUNCTION]];
+	KASSERT(ct->ct_device == child);
 
-	for (ct = sc->sc_funcs; ct != NULL; ct = ct_next) {
-		ct_next = ct->ct_next;
-
-		if (ct->ct_device == child) {
-			KASSERT(child->dv_locators[CARDBUSCF_FUNCTION]
-				== ct->ct_func);
-			sc->sc_poweron_func &= ~(1 << ct->ct_func);
-			*prev_next = ct->ct_next;
-			free(ct, M_DEVBUF);
-			return;
-		}
-
-		prev_next = &(ct->ct_next);
-	}
-
-	printf("%s: cardbus_childdetached: %s not found\n",
-	       self->dv_xname, child->dv_xname);
+	sc->sc_poweron_func &= ~(1 << ct->ct_func);
+	sc->sc_funcs[ct->ct_func] = NULL;
+	free(ct, M_DEVBUF);
 }
 
 /*
