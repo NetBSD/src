@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.2 2001/02/04 15:38:17 mrg Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.3 2001/02/05 06:28:55 mrg Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -116,7 +116,7 @@ static struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static u_long s2btab[] = {
+static netbsd32_u_long s2btab[] = {
 	0,
 	50,
 	75,
@@ -160,7 +160,7 @@ stios2btios(st, bt)
 	struct sunos_termios *st;
 	struct termios *bt;
 {
-	u_long l, r;
+	netbsd32_u_long l, r;
 
 	l = st->c_iflag;
 	r = 	((l & 0x00000001) ? IGNBRK	: 0);
@@ -282,7 +282,7 @@ btios2stios(bt, st)
 	struct termios *bt;
 	struct sunos_termios *st;
 {
-	u_long l, r;
+	netbsd32_u_long l, r;
 	int s;
 
 	l = bt->c_iflag;
@@ -923,8 +923,8 @@ sunos32_sys_ioctl(p, v, retval)
 struct sunos_flock {
 	short	l_type;
 	short	l_whence;
-	long	l_start;
-	long	l_len;
+	netbsd32_long	l_start;
+	netbsd32_long	l_len;
 	short	l_pid;
 	short	l_xxx;
 };
@@ -957,8 +957,8 @@ bsd_to_sunos_flock(iflp, oflp)
 	}
 
 	oflp->l_whence = (short) iflp->l_whence;
-	oflp->l_start = (long) iflp->l_start;
-	oflp->l_len = (long) iflp->l_len;
+	oflp->l_start = (netbsd32_long) iflp->l_start;
+	oflp->l_len = (netbsd32_long) iflp->l_len;
 	oflp->l_pid = (short) iflp->l_pid;
 	oflp->l_xxx = 0;
 }
@@ -991,8 +991,8 @@ sunos_to_bsd_flock(iflp, oflp)
 
 }
 static struct {
-	long	sun_flg;
-	long	bsd_flg;
+	netbsd32_long	sun_flg;
+	netbsd32_long	bsd_flg;
 } sunfcntl_flgtab[] = {
 	/* F_[GS]ETFLags that differ: */
 #define SUN_FSETBLK	0x0010
@@ -1017,14 +1017,17 @@ sunos32_sys_fcntl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_fcntl_args *uap = v;
-	long flg;
+	struct sunos32_sys_fcntl_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) cmd;
+		syscallarg(netbsd32_voidp) arg;
+	} */ *uap = v;
+	netbsd32_long flg;
 	int n, ret;
-
 
 	switch (SCARG(uap, cmd)) {
 	case F_SETFL:
-		flg = (long)SCARG(uap, arg);
+		flg = (netbsd32_long)SCARG(uap, arg);
 		n = sizeof(sunfcntl_flgtab) / sizeof(sunfcntl_flgtab[0]);
 		while (--n >= 0) {
 			if (flg & sunfcntl_flgtab[n].sun_flg) {
@@ -1032,7 +1035,7 @@ sunos32_sys_fcntl(p, v, retval)
 				flg |= sunfcntl_flgtab[n].bsd_flg;
 			}
 		}
-		SCARG(uap, arg) = (netbsd32_voidp)(u_long)(void *)flg;
+		SCARG(uap, arg) = (netbsd32_voidp)flg;
 		break;
 
 	case F_GETLK:
@@ -1083,7 +1086,7 @@ sunos32_sys_fcntl(p, v, retval)
 	default:
 	}
 
-	ret = sys_fcntl(p, uap, retval);
+	ret = netbsd32_fcntl(p, uap, retval);
 
 	switch (SCARG(uap, cmd)) {
 	case F_GETFL:
