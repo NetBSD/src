@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.38.2.1 1999/06/21 14:26:57 perry Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.38.2.2 2000/01/17 19:19:34 he Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -257,6 +257,7 @@ com2	at isa? port 0x3e8 irq 5
 # PCI SCSI controllers
 #ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+#dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 
@@ -264,6 +265,7 @@ com2	at isa? port 0x3e8 irq 5
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+dpt*	at eisa? slot ?			# DPT SmartCache/SmartRAID
 uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers
@@ -291,6 +293,7 @@ scsibus* at ahb?
 scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
+scsibus* at dpt?
 #scsibus* at isp?
 #scsibus* at ncr?
 scsibus* at sea?
