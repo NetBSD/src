@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87.4.2 2005/01/27 14:31:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87.4.3 2005/01/31 12:19:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2169,8 +2169,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				    (vaddr_t)ptpmap->pm_stab + ATARI_STSIZE);
 				uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t)
 							     ptpmap->pm_stpa));
-				uvm_km_free_wakeup(kernel_map,
-				    (vaddr_t)ptpmap->pm_stab, ATARI_STSIZE);
+				uvm_km_free(kernel_map,
+				    (vaddr_t)ptpmap->pm_stab, ATARI_STSIZE,
+				    UVM_KMF_WIRED);
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpa = Segtabzeropa;
 #if defined(M68040) || defined(M68060)
@@ -2405,7 +2406,8 @@ pmap_enter_ptpage(pmap, va)
 	 */
 	if (pmap->pm_stab == Segtabzero) {
 		pmap->pm_stab = (u_int *)
-			uvm_km_zalloc(kernel_map, ATARI_STSIZE);
+		    uvm_km_alloc(kernel_map, ATARI_STSIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO);
 		(void) pmap_extract(pmap_kernel(),
 		    (vaddr_t)pmap->pm_stab, (paddr_t *)&pmap->pm_stpa);
 #if defined(M68040) || defined(M68060)
