@@ -29,6 +29,7 @@ file arch/da30/dev/id.c			id needs-count
 major { sd = 1 }
 major { wd = 2 }
 major { id = 4 }
+major { vn = 6 }
 
 file arch/da30/da30/autoconf.c
 file arch/da30/da30/conf.c
