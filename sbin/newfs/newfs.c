@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)newfs.c	6.27 (Berkeley) 7/3/91";*/
-static char rcsid[] = "$Id: newfs.c,v 1.8 1994/02/06 08:19:56 cgd Exp $";
+static char rcsid[] = "$Id: newfs.c,v 1.9 1994/04/20 03:56:05 cgd Exp $";
 #endif /* not lint */
 
 #ifndef lint
@@ -88,11 +88,11 @@ char copyright[] =
  * only the superuser may continue to allocate blocks. This may
  * be set to 0 if no reserve of free blocks is deemed necessary,
  * however throughput drops by fifty percent if the file system
- * is run at between 95% and 100% full; thus the default value of
- * fs_minfree is 5%. With 5% free space, fragmentation is not a
+ * is run at between 90% and 100% full; thus the default value of
+ * fs_minfree is 10%. With 10% free space, fragmentation is not a
  * problem, so we choose to optimize for time.
  */
-#define MINFREE		5
+#define MINFREE		10
 #define DEFAULTOPT	FS_OPTTIME
 
 /*
