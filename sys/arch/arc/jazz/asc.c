@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.4 2001/06/24 05:00:40 chs Exp $	*/
+/*	$NetBSD: asc.c,v 1.5 2001/07/05 16:02:21 thorpej Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -1202,7 +1202,7 @@ printf("asc_intr: fifo flush %d len %d fifo %x\n", fifo, len, regs->asc_fifo);
 					regs->asc_cmd = ASC_CMD_FLUSH;
 					readback(regs->asc_cmd);
 				}
-				asc->cmd[asc->target]->error = XS_DRIVER_STUFFUP;
+				asc->cmd[asc->target]->error = XS_SELTIMEOUT;
 				asc_end(asc, status, ss, ir);
 				return(1);
 			}
