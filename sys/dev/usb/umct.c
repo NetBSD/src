@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.11 2003/05/11 16:26:49 augustss Exp $	*/
+/*	$NetBSD: umct.c,v 1.12 2003/11/10 08:58:39 wiz Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,12 +37,12 @@
 
 /*
  * MCT USB-RS232 Interface Controller
- * http://www.mct.com.tw/p_u232.html
+ * http://www.mct.com.tw/prod/rs232.html
  * http://www.dlink.com/products/usb/dsbs25
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.11 2003/05/11 16:26:49 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.12 2003/11/10 08:58:39 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
