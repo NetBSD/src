@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/nfa.c,v 1.6 1993/12/09 19:06:26 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/nfa.c,v 1.7 1994/08/19 16:22:21 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -264,9 +264,11 @@ int mach, variable_trail_rule, headcnt, trailcnt;
 
 	/* Okay, in the action code at this point yytext and yyleng have
 	 * their proper final values for this rule, so here's the point
-	 * to do any user action.
+	 * to do any user action.  But don't do it for continued actions,
+	 * as that'll result in multiple YY_USER_ACTION's.
 	 */
-	add_action( "YY_USER_ACTION\n" );
+	if ( ! continued_action )
+		add_action( "YY_USER_ACTION\n" );
 
 	line_directive_out( (FILE *) 0 );
 	}
