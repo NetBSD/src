@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.17 2001/09/22 03:56:29 perry Exp $	*/
+/*	$NetBSD: mtree.c,v 1.18 2001/10/01 02:30:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.17 2001/09/22 03:56:29 perry Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.18 2001/10/01 02:30:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,11 +60,11 @@ __RCSID("$NetBSD: mtree.c,v 1.17 2001/09/22 03:56:29 perry Exp $");
 
 extern int crc_total;
 
-int ftsoptions = FTS_PHYSICAL;
-int cflag, dflag, eflag, iflag, lflag, mflag,
-    rflag, sflag, tflag, uflag, Uflag;
-int keys;
-char fullpath[MAXPATHLEN];
+int	ftsoptions = FTS_PHYSICAL;
+int	cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
+    	rflag, sflag, tflag, uflag, Uflag;
+int	keys;
+char	fullpath[MAXPATHLEN];
 
 	int	main(int, char **);
 static	void	usage(void);
@@ -80,13 +80,16 @@ main(int argc, char **argv)
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:iK:k:lmp:rs:tUux")) != -1)
+	while ((ch = getopt(argc, argv, "cdDef:iK:k:lmp:rR:s:tUux")) != -1)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
 			break;
 		case 'd':
 			dflag = 1;
+			break;
+		case 'D':
+			Dflag = 1;
 			break;
 		case 'e':
 			eflag = 1;
@@ -120,6 +123,11 @@ main(int argc, char **argv)
 			break;
 		case 'r':
 			rflag = 1;
+			break;
+		case 'R':
+			while ((p = strsep(&optarg, " \t,")) != NULL)
+				if (*p != '\0')
+					keys &= ~parsekey(p, NULL);
 			break;
 		case 's':
 			sflag = 1;
@@ -155,6 +163,9 @@ main(int argc, char **argv)
 	if ((cflag || sflag) && !getcwd(fullpath, MAXPATHLEN))
 		mtree_err("%s", strerror(errno));
 
+	if (cflag == 1 && Dflag == 1)
+		mtree_err("-c and -D flags are mutually exclusive");
+
 	if (iflag == 1 && mflag == 1)
 		mtree_err("-i and -m flags are mutually exclusive");
 
@@ -163,6 +174,10 @@ main(int argc, char **argv)
 
 	if (cflag) {
 		cwalk();
+		exit(0);
+	}
+	if (Dflag) {
+		dump_nodes("", spec());
 		exit(0);
 	}
 	status = verify();
@@ -175,7 +190,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: mtree [-cdelrUux] [-i|-m] [-f spec]"
-	    " [-K key] [-k key] [-p path] [-s seed]\n");
+	(void)fprintf(stderr, "usage: mtree [-cdDelrUux] [-i|-m] [-f spec]"
+	    " [-k key] [-K key] [-R key] [-p path] [-s seed]\n");
 	exit(1);
 }
