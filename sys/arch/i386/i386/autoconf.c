@@ -38,9 +38,6 @@ configure()
 		panic("configure: no root");
 	splnone();
 	cold = 0;
-	setroot();
-	swapconf();
-	dumpconf();
 }
 
 /*
