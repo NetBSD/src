@@ -1,2 +1,3 @@
-# $NetBSD: obsolete.sgimips,v 1.2 2002/11/17 02:48:07 lukem Exp $
+# $NetBSD: obsolete.sgimips,v 1.3 2003/10/25 22:26:09 mycroft Exp $
+./usr/include/sgimips/_G_config.h
 ./usr/include/sgimips/conf.h

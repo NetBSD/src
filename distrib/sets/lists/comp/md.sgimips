@@ -1,7 +1,6 @@
-# $NetBSD: md.sgimips,v 1.5 2003/01/18 17:50:29 thorpej Exp $
+# $NetBSD: md.sgimips,v 1.6 2003/10/25 22:26:08 mycroft Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/sgimips			comp-c-include
-./usr/include/sgimips/_G_config.h	comp-c-include
 ./usr/include/sgimips/ansi.h		comp-c-include
 ./usr/include/sgimips/aout_machdep.h	comp-c-include
 ./usr/include/sgimips/asm.h		comp-c-include

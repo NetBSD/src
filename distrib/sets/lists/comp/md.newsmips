@@ -1,6 +1,5 @@
-# $NetBSD: md.newsmips,v 1.18 2003/01/18 17:50:27 thorpej Exp $
+# $NetBSD: md.newsmips,v 1.19 2003/10/25 22:26:08 mycroft Exp $
 ./usr/include/newsmips	comp-c-include
-./usr/include/newsmips/_G_config.h	comp-c-include
 ./usr/include/newsmips/adrsmap.h	comp-c-include
 ./usr/include/newsmips/ansi.h	comp-c-include
 ./usr/include/newsmips/aout_machdep.h	comp-c-include

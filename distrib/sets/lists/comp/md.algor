@@ -1,6 +1,5 @@
-# $NetBSD: md.algor,v 1.5 2003/01/18 17:50:21 thorpej Exp $
+# $NetBSD: md.algor,v 1.6 2003/10/25 22:26:08 mycroft Exp $
 ./usr/include/algor			comp-c-include
-./usr/include/algor/_G_config.h		comp-c-include
 ./usr/include/algor/ansi.h		comp-c-include
 ./usr/include/algor/aout_machdep.h	comp-c-include
 ./usr/include/algor/asm.h		comp-c-include
