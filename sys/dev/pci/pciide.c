@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.7 1998/06/08 06:55:57 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.8 1998/08/14 20:35:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -94,6 +94,7 @@ int	pciide_map_channel_compat __P((struct pciide_softc *,
 	    struct pci_attach_args *, int));
 const char *pciide_compat_channel_probe __P((struct pciide_softc *,
 	    struct pci_attach_args *, int));
+static int pciide_wdc_regcheck __P((struct pciide_channel *));
 int	pciide_probe_wdc __P((struct pciide_channel *));
 int	pciide_map_channel_native __P((struct pciide_softc *,
 	    struct pci_attach_args *, int));
@@ -369,11 +370,31 @@ out:
 	return (failreason);
 }
 
+/*
+ * Check writability of wd_cyl_lo and non-writability of wd_error.
+ * (wd_error in the middle to catch cases where the last written
+ *  value sticks on the bus)
+ */
+static int
+pciide_wdc_regcheck(cp)
+	struct pciide_channel *cp;
+{
+
+	bus_space_write_1(cp->cmd_iot, cp->cmd_ioh, wd_cyl_lo, 0xa5);
+	bus_space_write_1(cp->cmd_iot, cp->cmd_ioh, wd_error, 0x5a);
+	if (bus_space_read_1(cp->cmd_iot, cp->cmd_ioh, wd_error) == 0x5a ||
+	    bus_space_read_1(cp->cmd_iot, cp->cmd_ioh, wd_cyl_lo) != 0xa5)
+		return (0);
+
+	return (1);
+}
+
 int
 pciide_probe_wdc(cp)
 	struct pciide_channel *cp;
 {
-	u_int8_t st0, st1;
+	int masterprobe, slaveprobe;
+	u_int8_t st;
 	int timeout;
 
 	/*
@@ -393,21 +414,41 @@ pciide_probe_wdc(cp)
         delay(1000);
         (void)bus_space_read_1(cp->cmd_iot, cp->cmd_ioh, wd_error);
 
+	masterprobe = slaveprobe = 1;
 	timeout = 0;
 	while (timeout++ < PCIIDE_PROBE_WDC_NDELAY) {
-		st0 = bus_space_read_1(cp->cmd_iot, cp->cmd_ioh, wd_status);
-		bus_space_write_1(cp->cmd_iot, cp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | 0x10);
-		st1 = bus_space_read_1(cp->cmd_iot, cp->cmd_ioh, wd_status);
+		if (masterprobe) {
+			bus_space_write_1(cp->cmd_iot, cp->cmd_ioh, wd_sdh,
+					  WDSD_IBM);
+			st = bus_space_read_1(cp->cmd_iot, cp->cmd_ioh,
+					      wd_status);
+			if ((st & WDCS_BSY) == 0) {
+				if (pciide_wdc_regcheck(cp))
+					return (1);
+				else
+					masterprobe = 0;
+			}
+		}
+		if (slaveprobe) {
+			bus_space_write_1(cp->cmd_iot, cp->cmd_ioh, wd_sdh,
+					  WDSD_IBM | 0x10);
+			st = bus_space_read_1(cp->cmd_iot, cp->cmd_ioh,
+					      wd_status);
+			if ((st & WDCS_BSY) == 0) {
+				if (pciide_wdc_regcheck(cp))
+					return (1);
+				else
+					slaveprobe = 0;
+			}
+		}
 
-		if ((st0 & WDCS_BSY) == 0 || (st1 & WDCS_BSY) == 0)
-			return (1);
+		if (!(masterprobe || slaveprobe))
+			break;
 
 		delay(PCIIDE_PROBE_WDC_DELAY);
 	}
-	/* timed out; nothing there */
 
-	return (0);	
+	return (0);
 }
 
 int
