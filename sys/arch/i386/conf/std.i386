@@ -1,7 +1,7 @@
 #
 #	std.i386 -- things included in every 386 kernel
 #
-#	$Id: std.i386,v 1.2 1993/09/24 08:45:04 mycroft Exp $
+#	$Id: std.i386,v 1.3 1993/10/26 12:18:28 mycroft Exp $
 #
 
 # standard options
@@ -10,4 +10,4 @@ options		MACHINE_NONCONTIG	# temporary kluge
 # ISA bus
 isa0 at root
 clock0 at isa? port 0x70
-timer0 at isa? port 0x40
+timer0 at isa? port 0x40 irq 0
