@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.25 2001/10/22 07:11:46 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.26 2001/10/25 14:47:39 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 22, 2001
+.Dd October 26, 2001
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl cdDelrUux
+.Op Fl cdDelrUuWx
 .Bk -words
 .Op Fl i | Fl m
 .Ek
@@ -195,6 +195,14 @@ Same as
 .Fl U
 except a status of 2 is returned if the file hierarchy did not match
 the specification.
+.It Fl W
+Don't attempt to set various file attributes such as the
+ownership, mode, flags, or time
+when creating new directories or changing existing entries.
+This option will be most useful when used in conjunction with
+.Fl u
+or
+.Fl U .
 .It Fl x
 Don't descend below mount points in the file hierarchy.
 .El
@@ -528,8 +536,9 @@ keywords,
 .Fl l ,
 .Fl D ,
 .Fl E ,
-.Fl I
+.Fl I ,
+.Fl R ,
 and
-.Fl R
+.Fl W
 flags, and support for full paths appeared in
 .Nx 1.6 .

@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.22 2001/10/22 07:07:46 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.23 2001/10/25 14:47:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.22 2001/10/22 07:07:46 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.23 2001/10/25 14:47:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,13 +172,17 @@ miss(NODE *p, char *tail)
 
 		create = 0;
 		if (!(p->flags & F_VISIT) && uflag) {
+			if (Wflag)
+				goto makeit;
 			if (!(p->flags & (F_UID | F_UNAME)))
 			    (void)printf(" (not created: user not specified)");
 			else if (!(p->flags & (F_GID | F_GNAME)))
 			    (void)printf(" (not created: group not specified)");
 			else if (!(p->flags & F_MODE))
 			    (void)printf(" (not created: mode not specified)");
-			else if (mkdir(path, S_IRWXU))
+			else 
+ makeit:
+			if (mkdir(path, S_IRWXU))
 				(void)printf(" (not created: %s)",
 				    strerror(errno));
 			else {
@@ -195,7 +199,7 @@ miss(NODE *p, char *tail)
 		miss(p->child, tp + 1);
 		*tp = '\0';
 
-		if (!create)
+		if (!create || Wflag)
 			continue;
 	/* XXXLUKEM: what about devices? */
 		if (chown(path, p->st_uid, p->st_gid)) {
