@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2002/09/22 20:48:09 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2002/10/01 21:07:31 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -51,7 +51,8 @@
 #define	IPL_NONE	0	/* nothing */
 #define	IPL_SOFT	1	/* miscellaneous soft interrupts */
 #define	IPL_SOFTCLOCK	2	/* timeouts */
-#define	IPL_SOFTNET	4	/* protocol stacks */
+#define	IPL_SOFTNET	3	/* protocol stacks */
+/* 4 - 7 available for misc hardware interrupts */
 #define	IPL_BIO		8	/* Block I/O */
 #define	IPL_NET		9	/* Network */
 #define	IPL_SOFTSERIAL	10	/* serial */
