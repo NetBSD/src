@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.11 2003/05/11 03:20:09 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.12 2003/05/31 23:22:27 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.11 2003/05/11 03:20:09 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.12 2003/05/31 23:22:27 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,18 @@ static const struct wsdisplay_accessops igsfb_accessops = {
  */
 static int	igsfb_make_text_cursor(struct igsfb_devconfig *);
 static void	igsfb_accel_cursor(void *, int, int, int);
+
+static int	igsfb_accel_wait(struct igsfb_devconfig *);
+static void	igsfb_accel_fill(struct igsfb_devconfig *,
+				 u_int32_t, u_int32_t, u_int16_t, u_int16_t);
+static void	igsfb_accel_copy(struct igsfb_devconfig *,
+				 u_int32_t, u_int32_t, u_int16_t, u_int16_t);
+
+static void	igsfb_accel_copycols(void *, int, int, int, int);
+static void	igsfb_accel_erasecols(void *, int, int, int, long);
+static void	igsfb_accel_copyrows(void *, int, int, int);
+static void	igsfb_accel_eraserows(void *, int, int, long);
+static void	igsfb_accel_putchar(void *, int, int, u_int, long);
 
 
 /*
@@ -329,6 +341,32 @@ igsfb_init_video(dc)
 	igs_ext_write(dc->dc_iot, dc->dc_ioh, IGS_EXT_SPRITE_CTL, curctl);
 	dc->dc_curenb = 0;
 
+	/*
+	 * Map abd init graphic coprocessor for accelerated rasops.
+	 */
+	if (dc->dc_id >= 0x2000) { /* XXX */
+		if (bus_space_map(dc->dc_iot,
+				  dc->dc_iobase + IGS_COP_BASE_B, IGS_COP_SIZE,
+				  dc->dc_ioflags,
+				  &dc->dc_coph) != 0)
+		{
+			printf("unable to map COP registers\n");
+			return (1);
+		}
+
+		/* XXX: hardcoded 8bpp */
+		bus_space_write_2(dc->dc_iot, dc->dc_coph,
+				  IGS_COP_SRC_MAP_WIDTH_REG,
+				  dc->dc_width - 1);
+		bus_space_write_2(dc->dc_iot, dc->dc_coph,
+				  IGS_COP_DST_MAP_WIDTH_REG,
+				  dc->dc_width - 1);
+
+		bus_space_write_1(dc->dc_iot, dc->dc_coph,
+				  IGS_COP_MAP_FMT_REG,
+				  IGS_COP_MAP_8BPP);
+	}
+
 	/* make sure screen is not blanked */
 	dc->dc_blanked = 0;
 	igsfb_blank_screen(dc, dc->dc_blanked);
@@ -419,6 +457,7 @@ igsfb_init_wsdisplay(dc)
 	/* XXX: TODO: compute term size based on font dimensions? */
 	rasops_init(ri, 34, 80);
 
+
 	/* use the sprite for the text mode cursor */
 	igsfb_make_text_cursor(dc);
 
@@ -428,8 +467,18 @@ igsfb_init_wsdisplay(dc)
 	/* propagate sprite data to the device */
 	igsfb_update_cursor(dc, WSDISPLAY_CURSOR_DOSHAPE);
 
-	/* override rasops default method */
+	/* accelerated text cursor */
 	ri->ri_ops.cursor = igsfb_accel_cursor;
+
+	/* accelerated erase/copy */
+	ri->ri_ops.copycols = igsfb_accel_copycols;
+	ri->ri_ops.erasecols = igsfb_accel_erasecols;
+	ri->ri_ops.copyrows = igsfb_accel_copyrows;
+	ri->ri_ops.eraserows = igsfb_accel_eraserows;
+
+	/* putchar hook to sync with the cop */
+	dc->dc_ri_putchar = ri->ri_ops.putchar;
+	ri->ri_ops.putchar = igsfb_accel_putchar;
 
 	igsfb_stdscreen.nrows = ri->ri_rows;
 	igsfb_stdscreen.ncols = ri->ri_cols;
@@ -1159,7 +1208,6 @@ igsfb_accel_cursor(cookie, on, row, col)
 		cc->cc_pos.y = ri->ri_yorigin
 			+ ri->ri_crow * ri->ri_font->fontheight;
 		which |= WSDISPLAY_CURSOR_DOPOS;
-
 	} else
 		ri->ri_flg &= ~RI_CURSOR;
 
@@ -1170,4 +1218,214 @@ igsfb_accel_cursor(cookie, on, row, col)
 
 	/* propagate changes to the device */
 	igsfb_update_cursor(dc, which);
+}
+
+
+
+/*
+ * Accelerated raster ops that use graphic coprocessor.
+ */
+
+static int
+igsfb_accel_wait(dc)
+	struct igsfb_devconfig *dc;
+{
+	bus_space_tag_t t = dc->dc_iot;
+	bus_space_handle_t h = dc->dc_coph;
+	int timo = 100000;
+	u_int8_t reg;
+
+	while (timo--) {
+		reg = bus_space_read_1(t, h, IGS_COP_CTL_REG);
+		if ((reg & IGS_COP_CTL_BUSY) == 0)
+			return (0);
+	}
+
+	return (1);
+}
+
+
+static void
+igsfb_accel_copy(dc, src, dst, width, height)
+	struct igsfb_devconfig *dc;
+	u_int32_t src, dst;
+	u_int16_t width, height;
+{
+	bus_space_tag_t t = dc->dc_iot;
+	bus_space_handle_t h = dc->dc_coph;
+	u_int32_t toend;
+	u_int8_t drawcmd;
+
+	drawcmd = IGS_COP_DRAW_ALL;
+	if (dst > src) {
+		toend = height * dc->dc_ri.ri_width;
+		src += toend;
+		dst += toend;
+		drawcmd |= IGS_COP_OCTANT_X_NEG | IGS_COP_OCTANT_Y_NEG;
+	}
+
+	igsfb_accel_wait(dc);
+	bus_space_write_1(t, h, IGS_COP_CTL_REG, 0);
+
+	bus_space_write_1(t, h, IGS_COP_FG_MIX_REG, IGS_COP_MIX_S);
+
+	bus_space_write_2(t, h, IGS_COP_WIDTH_REG, width - 1);
+	bus_space_write_2(t, h, IGS_COP_HEIGHT_REG, height - 1);
+
+	bus_space_write_4(t, h, IGS_COP_SRC_START_REG, src);
+	bus_space_write_4(t, h, IGS_COP_DST_START_REG, dst);
+
+	bus_space_write_1(t, h, IGS_COP_PIXEL_OP_0_REG, drawcmd);
+	bus_space_write_1(t, h, IGS_COP_PIXEL_OP_1_REG, IGS_COP_PPM_FIXED_FG);
+	bus_space_write_1(t, h, IGS_COP_PIXEL_OP_2_REG, 0);
+	bus_space_write_1(t, h, IGS_COP_PIXEL_OP_3_REG,
+			  IGS_COP_OP_PXBLT | IGS_COP_OP_FG_FROM_SRC);
+}
+
+static void
+igsfb_accel_fill(dc, color, dst, width, height)
+	struct igsfb_devconfig *dc;
+	u_int32_t color;
+	u_int32_t dst;
+	u_int16_t width, height;
+{
+	bus_space_tag_t t = dc->dc_iot;
+	bus_space_handle_t h = dc->dc_coph;
+
+	igsfb_accel_wait(dc);
+	bus_space_write_1(t, h, IGS_COP_CTL_REG, 0);
+
+	bus_space_write_1(t, h, IGS_COP_FG_MIX_REG, IGS_COP_MIX_S);
+
+	bus_space_write_2(t, h, IGS_COP_WIDTH_REG, width - 1);
+	bus_space_write_2(t, h, IGS_COP_HEIGHT_REG, height - 1);
+
+	bus_space_write_4(t, h, IGS_COP_DST_START_REG, dst);
+	bus_space_write_4(t, h, IGS_COP_FG_REG, color);
+
+	bus_space_write_1(t, h, IGS_COP_PIXEL_OP_0_REG, IGS_COP_DRAW_ALL);
+	bus_space_write_1(t, h, IGS_COP_PIXEL_OP_1_REG, IGS_COP_PPM_FIXED_FG);
+	bus_space_write_1(t, h, IGS_COP_PIXEL_OP_2_REG, 0);
+	bus_space_write_1(t, h, IGS_COP_PIXEL_OP_3_REG, IGS_COP_OP_PXBLT);
+}
+
+
+static void
+igsfb_accel_copyrows(cookie, src, dst, num)
+	void *cookie;
+	int src, dst, num;
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
+	u_int32_t srp, dsp;
+	u_int16_t width, height;
+
+	width = ri->ri_emuwidth;
+	height = num * ri->ri_font->fontheight;
+
+	srp = ri->ri_xorigin
+		+ ri->ri_width * (ri->ri_yorigin
+				  + src * ri->ri_font->fontheight);
+	dsp = ri->ri_xorigin
+		+ ri->ri_width * (ri->ri_yorigin
+				  + dst * ri->ri_font->fontheight);
+
+	igsfb_accel_copy(dc, srp, dsp, width, height);
+}
+
+
+void
+igsfb_accel_copycols(cookie, row, src, dst, num)
+	void *cookie;
+	int row, src, dst, num;
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
+	u_int32_t rowp, srp, dsp;
+	u_int16_t width, height;
+	
+	width = num * ri->ri_font->fontwidth;
+	height = ri->ri_font->fontheight;
+
+	rowp = ri->ri_xorigin
+		+ ri->ri_width * (ri->ri_yorigin
+				  + row * ri->ri_font->fontheight);
+
+	srp = rowp + src * ri->ri_font->fontwidth;
+	dsp = rowp + dst * ri->ri_font->fontwidth;
+
+	igsfb_accel_copy(dc, srp, dsp, width, height);	
+}
+
+
+static void
+igsfb_accel_eraserows(cookie, row, num, attr)
+	void *cookie;
+	int row, num;
+	long attr;
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
+	u_int32_t color;
+	u_int32_t dsp;
+	u_int16_t width, height;
+
+	width = ri->ri_emuwidth;
+	height = num * ri->ri_font->fontheight;
+
+	dsp = ri->ri_xorigin
+		+ ri->ri_width * (ri->ri_yorigin
+				  + row * ri->ri_font->fontheight);
+
+	/* XXX: we "know" the encoding that rasops' allocattr uses */
+	color = (attr >> 16) & 0xff;
+
+	igsfb_accel_fill(dc, color, dsp, width, height);
+}
+
+
+void
+igsfb_accel_erasecols(cookie, row, col, num, attr)
+	void *cookie;
+	int row, col, num;
+	long attr;
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
+	u_int32_t color;
+	u_int32_t rowp, dsp;
+	u_int16_t width, height;
+
+	width = num * ri->ri_font->fontwidth;
+	height = ri->ri_font->fontheight;
+
+	rowp = ri->ri_xorigin
+		+ ri->ri_width * (ri->ri_yorigin
+				  + row * ri->ri_font->fontheight);
+
+	dsp = rowp + col * ri->ri_font->fontwidth;
+
+	/* XXX: we "know" the encoding that rasops' allocattr uses */
+	color = (attr >> 16) & 0xff;
+
+	igsfb_accel_fill(dc, color, dsp, width, height);
+}
+
+
+/*
+ * Not really implemented here, but we need to hook into the one
+ * supplied by rasops so that we can synchronize with the COP.
+ */
+static void
+igsfb_accel_putchar(cookie, row, col, uc, attr)
+	void *cookie;
+	int row, col;
+	u_int uc;
+	long attr;
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
+
+	igsfb_accel_wait(dc);
+	(*dc->dc_ri_putchar)(cookie, row, col, uc, attr);
 }
