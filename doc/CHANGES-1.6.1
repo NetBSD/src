@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.69 2002/12/13 00:03:40 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.70 2002/12/13 07:54:42 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2638,3 +2638,10 @@ sys/dev/ic/dpt.c				patch
 
 	Implement DPT EATA ioctl interface.
 	[ad, ticket #1031]
+
+sys/dev/scsipi/cd_scsi.c			1.26-1.27
+
+	Apply patch from Takeshi Nakayama on current-users which fixes problems
+	when trying to play audio CD's on some drives.
+	Fixes PR 7299 and probably PR 15155 and PR 16883 too.
+	[jdc, ticket #969]
