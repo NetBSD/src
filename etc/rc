@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.63 1997/01/05 12:01:55 mrg Exp $
+#	$NetBSD: rc,v 1.64 1997/02/07 08:59:18 mrg Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -165,7 +165,7 @@ fi
 
 # /var/crash should be a directory or a symbolic link
 # to the crash directory if core dumps are to be saved.
-if [ X"savecore_flags" != XNO -a -d /var/crash ]; then
+if [ X"$savecore_flags" != XNO -a -d /var/crash ]; then
 	echo checking for core dump...
 	savecore $savecore_flags /var/crash
 fi
