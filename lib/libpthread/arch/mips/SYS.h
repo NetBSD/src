@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1.2.1 2001/11/28 10:43:56 wdk Exp $ */
+/*	$NetBSD: SYS.h,v 1.1.2.2 2002/11/20 09:29:17 wdk Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan Stone
@@ -83,11 +83,10 @@
 #ifdef ABICALLS
 	.abicalls
 # define PIC_PROLOGUE(x,sr)	.set noreorder; .cpload sr; .set reorder
-# define PIC_CALL(l,sr)		la sr, _C_LABEL(l); jr sr
 #else
 # define PIC_PROLOGUE(x,sr)
-# define PIC_CALL(l,sr)		j  _C_LABEL(l)
 #endif
+#define  PIC_CALL(l,sr)		la sr, _C_LABEL(l); jr sr
 
 
 #ifdef __STDC__
