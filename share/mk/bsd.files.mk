@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.30 2004/03/18 02:00:00 jmc Exp $
+#	$NetBSD: bsd.files.mk,v 1.31 2004/03/18 03:26:55 jmc Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -79,13 +79,20 @@ cleanbuildsymlinks: .PHONY
 
 #
 # .uue -> "" handling (i.e. decode a given binary/object)
+#
+# UUDECODE_FILES -	List of files which are stored in the source tree
+#			as <file>.uue and should be uudecoded.
+#
+# UUDECODE_FILES_RENAME_fn - For this file, rename it's output to the provided
+#			     name (handled via -p and redirecting stdout)
+
 .if defined(UUDECODE_FILES)					# {
 .SUFFIXES:	.uue
 
 .uue:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${TOOL_UUDECODE} ${.IMPSRC}
+	${TOOL_UUDECODE} ${UUDECODE_FILES_RENAME_${.TARGET}:?-p:} ${.IMPSRC} ${UUDECODE_FILES_RENAME_${.TARGET}:?>:} ${UUDECODE_FILES_RENAME_${.TARGET}:U}
 
 realall: ${UUDECODE_FILES}
 
