@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2002/04/29 02:06:14 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2002/05/03 01:13:55 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,6 +35,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_execfmt.h"
+#include "opt_cputype.h"
 #include "opt_machtypes.h"
 
 #include <sys/param.h>
@@ -96,8 +97,6 @@ struct sgimips_intrhand intrtab[NINTR];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
-
-unsigned long cpuspeed;	/* Approximate number of instructions per usec */
 
 /* Maps for VM objects. */
 struct vm_map *exec_map = NULL;
@@ -250,10 +249,11 @@ mach_init(argc, argv, magic, btinfo)
 	if (cpufreq == 0)
 		panic("no $cpufreq");
 
-	cpuspeed = strtoul(cpufreq, NULL, 10) / 2;	/* XXX MIPS3 only */
-#if 0	/* XXX create new mips/mips interface */
-	... something ... = strtoul(cpufreq, NULL, 10) * 5000000;
-#endif
+	/* 
+	 * Note initial estimate of CPU speed... If we care enough, we'll
+	 * use the RTC to get a better estimate later.
+	 */
+	curcpu()->ci_cpu_freq = strtoul(cpufreq, NULL, 10) * 1000000;
 
 	/*
 	 * argv[0] can be either the bootloader loaded by the PROM, or a
@@ -763,9 +763,12 @@ __inline void
 delay(n)
 	unsigned long n;
 {
-	register long N = cpuspeed * n;
+	u_long i;
+	long divisor = curcpu()->ci_divisor_delay;
 
-	while (--N > 0);
+	while (n-- > 0)
+		for (i = divisor; i > 0; i--)
+			;
 }
 
 /*
