@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1997/10/22 23:35:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 1998/02/18 22:08:12 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 CPPFLAGS+=#-DTFILE=\"/dev/ttyp0\"
@@ -13,6 +13,10 @@ SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
 MAN=	curses.3
 INCS=	curses.h unctrl.h
 INCSDIR=/usr/include
+
+CPPFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D
+SRCS+=	termcap.c tgoto.c tputs.c
+.PATH: ${.CURDIR}/../libterm
 
 .if make(install)
 SUBDIR+=PSD.doc
