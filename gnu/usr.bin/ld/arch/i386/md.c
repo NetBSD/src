@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.11 1995/01/17 06:41:43 mycroft Exp $
+ *	$Id: md.c,v 1.11.2.1 1998/11/22 07:02:09 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -162,7 +162,9 @@ u_long		addr;
 	sp->addr[0] = fudge & 0xffff;
 	sp->addr[1] = fudge >> 16;
 #endif
+#if 0
 	sp->reloc_index = 0;
+#endif
 }
 
 /*
