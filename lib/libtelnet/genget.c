@@ -31,9 +31,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/* from: static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95"; */
-static char *rcsid = "$NetBSD: genget.c,v 1.5 1996/02/24 01:15:21 jtk Exp $";
+#if 0
+static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95";
+#else
+__RCSID("$NetBSD: genget.c,v 1.6 1997/10/09 13:52:42 lukem Exp $");
+#endif
 #endif /* not lint */
 
 
@@ -55,7 +59,6 @@ int Ambiguous __P((char *));
 isprefix(s1, s2)
 	register char *s1, *s2;
 {
-	register int n = 0;
 	char *os1;
 	register char c1, c2;
 
