@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: toolchain2netbsd,v 1.8 2001/08/10 11:57:48 mrg Exp $
+#	$NetBSD: toolchain2netbsd,v 1.9 2001/08/13 03:25:41 rafal Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -260,7 +260,7 @@ for f in auto-host config gencheck hconfig options specs tconfig tm; do
 	write_c usr.bin/gcc/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 done
 
-##### gnu/usr.bin/gcc #####
+##### gnu/usr.bin/gdb #####
 
 mkdir -p usr.bin/gdb/arch/$MACHINE_ARCH
 
