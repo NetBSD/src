@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.1 2002/01/17 17:26:03 bjh21 Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.2 2002/01/23 15:52:58 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: linux_syscall.c,v 1.1 2002/01/17 17:26:03 bjh21 Exp $");
+__RCSID("$NetBSD: linux_syscall.c,v 1.2 2002/01/23 15:52:58 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -102,6 +102,10 @@ __RCSID("$NetBSD: linux_syscall.c,v 1.1 2002/01/17 17:26:03 bjh21 Exp $");
 #include <compat/linux/common/linux_errno.h>
 #include <compat/linux/linux_syscall.h>
 
+/* ARMLinux has some system calls of its very own. */
+#define LINUX_ARM_NR_BASE	0x9f0000
+#define LINUX_SYS_ARMBASE	0x000100 /* Must agree with syscalls.master */
+
 void
 linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
 {
@@ -110,7 +114,11 @@ linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
 	u_int nargs;
 	register_t *args, rval[2];
 
-	code = insn & (LINUX_SYS_NSYSENT - 1);
+	code = insn & 0x00ffffff;
+	/* Remap ARM-specific syscalls onto the end of the standard range. */
+	if (code > LINUX_ARM_NR_BASE)
+		code = code - LINUX_ARM_NR_BASE + LINUX_SYS_ARMBASE;
+	code &= LINUX_SYS_NSYSENT - 1;
 
 	/* Linux passes all arguments in order in registers, which is nice. */
 	args = &frame->tf_r0;
