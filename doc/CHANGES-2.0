@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.210 2004/05/17 10:40:21 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.211 2004/05/17 15:42:10 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2527,4 +2527,9 @@ lib/libc/time/strftime.c			1.16
 	this code path, attempt get it right for DST as well. Addresses
 	PR standards/21722 from Richard Earnshaw.
 	[kleink, ticket #349]
+
+share/man/man4/umass.4				1.20
+
+	No channel locator for atapibus. From PR 24994.
+	[jmc, ticket #341]
 
