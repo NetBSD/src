@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.101 2000/01/25 01:15:29 fvdl Exp $	*/
+/*	$NetBSD: systm.h,v 1.102 2000/02/03 22:44:11 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -73,10 +73,12 @@
 
 #include <machine/endian.h>
 
+struct clockframe;
 struct device;
 struct proc;
-struct uio;
+struct timeval;
 struct tty;
+struct uio;
 struct vnode;
 
 extern int securelevel;		/* system security level */
@@ -114,10 +116,6 @@ extern const char *rootspec;	/* how root device was specified */
  */
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
-
-struct proc;
-struct tty;
-struct uio;
 
 typedef int	sy_call_t __P((struct proc *, void *, register_t *));
 
@@ -221,13 +219,11 @@ int	fuswintr __P((const void *));
 long	fuword __P((const void *));
 long	fuiword __P((const void *));
 
-struct timeval;
 int	hzto __P((struct timeval *tv));
 void	timeout __P((void (*func)(void *), void *arg, int ticks));
 void	untimeout __P((void (*func)(void *), void *arg));
 void	realitexpire __P((void *));
 
-struct clockframe;
 void	hardclock __P((struct clockframe *frame));
 void	softclock __P((void));
 void	statclock __P((struct clockframe *frame));
