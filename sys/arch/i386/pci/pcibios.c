@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.2 1999/11/17 07:33:41 thorpej Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.3 2000/04/28 17:15:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibios.h>
 #ifdef PCIBIOS_INTR_FIXUP
@@ -85,6 +86,9 @@
 #endif
 #ifdef PCIBIOS_BUS_FIXUP
 #include <i386/pci/pci_bus_fixup.h>
+#endif
+#ifdef PCIBIOS_ADDR_FIXUP
+#include <i386/pci/pci_addr_fixup.h>
 #endif
 
 #include <machine/bios32.h> 
@@ -203,6 +207,10 @@ pcibios_init()
 #ifdef PCIBIOSVERBOSE
 	printf("PCI bus #%d is the last bus\n", pcibios_max_bus);
 #endif
+#endif
+
+#ifdef PCIBIOS_ADDR_FIXUP
+	pci_addr_fixup(NULL, 0); /* PCI bus #0 only */
 #endif
 }
 
@@ -471,3 +479,57 @@ pcibios_print_pir_table()
 	}
 }
 #endif
+
+void
+pci_device_foreach(pc, maxbus, func)
+	pci_chipset_tag_t pc;
+	int maxbus;
+	void (*func) __P((pci_chipset_tag_t, pcitag_t));
+{
+	const struct pci_quirkdata *qd;
+	int bus, device, function, maxdevs, nfuncs;
+	pcireg_t id, bhlcr;
+	pcitag_t tag;
+
+	for (bus = 0; bus <= maxbus; bus++) {
+		maxdevs = pci_bus_maxdevs(pc, bus);
+		for (device = 0; device < maxdevs; device++) {
+			tag = pci_make_tag(pc, bus, device, 0);
+			id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+			/* Invalid vendor ID value? */
+			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+				continue;
+			/* XXX Not invalid, but we've done this ~forever. */
+			if (PCI_VENDOR(id) == 0)
+				continue;
+
+			qd = pci_lookup_quirkdata(PCI_VENDOR(id),
+			    PCI_PRODUCT(id));
+
+			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+			if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
+			    (qd != NULL &&
+			     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+				nfuncs = 8;
+			else
+				nfuncs = 1;
+
+			for (function = 0; function < nfuncs; function++) {
+				tag = pci_make_tag(pc, bus, device, function);
+				id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+				/* Invalid vendor ID value? */
+				if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+					continue;
+				/*
+				 * XXX Not invalid, but we've done this
+				 * ~forever.
+				 */
+				if (PCI_VENDOR(id) == 0)
+					continue;
+				(*func)(pc, tag);
+			}
+		}
+	}
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.4 2000/01/25 17:20:47 augustss Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.5 2000/04/28 17:15:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ int	pciintr_link_fixup __P((void));
 int	pciintr_link_route __P((u_int16_t *));
 int	pciintr_irq_release __P((u_int16_t *));
 int	pciintr_header_fixup __P((pci_chipset_tag_t));
+void	pciintr_do_header_fixup __P((pci_chipset_tag_t, pcitag_t));
 
 SIMPLEQ_HEAD(, pciintr_link_map) pciintr_link_map_list;
 
@@ -378,48 +379,62 @@ pciintr_link_fixup()
 		}
 	}
 
-#ifdef PCIBIOS_IRQS
-	/* In case the user supplied a mask for the PCI irqs we use it. */
-	pciirq = PCIBIOS_IRQS;
-#endif
-
 	/*
 	 * Stage 2: Attempt to connect PIRQs which we didn't
 	 * connect in Stage 1.
 	 */
 	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
 	     l = SIMPLEQ_NEXT(l, list)) {
-		if (l->irq == 0) {
-			bitmap = l->bitmap;
-			for (i = 0; i < 16; i++) {
-				if ((pciirq & (1 << i)) != 0 &&
-				    (bitmap & (1 << i)) != 0) {
-					/*
-					 * This IRQ is a valid PCI
-					 * IRQ already connected to
-					 * another PIRQ, and also an
-					 * IRQ our PIRQ can use; connect
-					 * it up!
-					 */
-					l->irq = i;
-					l->old_irq = 0xff;
-					l->fixup_stage = 2;
+		if (l->irq != 0)
+			continue;
+		bitmap = l->bitmap;
+		for (i = 0; i < 16; i++) {
+			if ((pciirq & (1 << i)) != 0 &&
+			    (bitmap & (1 << i)) != 0) {
+				/*
+				 * This IRQ is a valid PCI IRQ already 
+				 * connected to another PIRQ, and also an
+				 * IRQ our PIRQ can use; connect it up!
+				 */
+				l->irq = i;
+				l->old_irq = 0xff;
+				l->fixup_stage = 2;
 #ifdef PCIINTR_DEBUG
-					printf("pciintr_link_fixup: assigning "
-					    "IRQ %d to PIRQ %d\n", l->irq,
-					    l->clink);
+				printf("pciintr_link_fixup: assigning "
+				       "IRQ %d to PIRQ %d\n", l->irq,
+				       l->clink);
 #endif
-					break;
-				}
+				break;
 			}
 		}
 	}
 
+#ifdef PCIBIOS_IRQS_HINT
 	/*
-	 * Stage 3: Allow the user to specify interrupt routing
-	 * information, overriding what we've done above.
+	 * Stage 3: The worst case. I need configuration hint that
+	 * user supplied a mask for the PCI irqs
 	 */
-	/* XXX Not implemented. */
+	pciirq = PCIBIOS_IRQS_HINT;
+	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
+	     l = SIMPLEQ_NEXT(l, list)) {
+		if (l->irq != 0)
+			continue;
+		for (i = 0; i < 16; i++) {
+			if ((pciirq & (1 << i)) != 0 &&
+			    (bitmap & (1 << i)) != 0) {
+				l->irq = i;
+				l->old_irq = 0xff;
+				l->fixup_stage = 3;
+#ifdef PCIINTR_DEBUG
+				printf("pciintr_link_fixup (stage 3): "
+				       "assigning IRQ %d to PIRQ %d\n",
+				       l->irq, l->clink);
+#endif
+				break;
+			}
+		}
+	}
+#endif /* PCIBIOS_IRQS_HINT */
 
 	return (0);
 }
@@ -473,122 +488,80 @@ int
 pciintr_header_fixup(pc)
 	pci_chipset_tag_t pc;
 {
-	const struct pci_quirkdata *qd;
-	struct pcibios_intr_routing *pir;
-	struct pciintr_link_map *l;
-	int pin, bus, device, function, maxdevs, nfuncs, irq, link;
-	pcireg_t id, bhlcr, intr;
-	pcitag_t tag;
-
 #ifdef PCIBIOSVERBOSE
 	printf("--------------------------------------------\n");
 	printf("  device vendor product pin PIRQ   IRQ stage\n");
 	printf("--------------------------------------------\n");
 #endif
-
-	for (bus = 0; bus <= pcibios_max_bus; bus++) {
-		maxdevs = pci_bus_maxdevs(pc, bus);
-		for (device = 0; device < maxdevs; device++) {
-			tag = pci_make_tag(pc, bus, device, 0);
-			id = pci_conf_read(pc, tag, PCI_ID_REG);
-
-			/* Invalid vendor ID value? */
-			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-				continue;
-			/* XXX Not invalid, but we've done this ~forever. */
-			if (PCI_VENDOR(id) == 0)
-				continue;
-
-			qd = pci_lookup_quirkdata(PCI_VENDOR(id),
-			    PCI_PRODUCT(id));
-
-			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-			if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
-			    (qd != NULL &&
-			     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
-				nfuncs = 8;
-			else
-				nfuncs = 1;
-
-			for (function = 0; function < nfuncs; function++) {
-				tag = pci_make_tag(pc, bus, device, function);
-				id = pci_conf_read(pc, tag, PCI_ID_REG);
-				intr = pci_conf_read(pc, tag,
-				    PCI_INTERRUPT_REG);
-
-				/* Invalid vendor ID value? */
-				if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-					continue;
-				/*
-				 * XXX Not invalid, but we've done this
-				 * ~forever.
-				 */
-				if (PCI_VENDOR(id) == 0)
-					continue;
-
-				pin = PCI_INTERRUPT_PIN(intr);
-				irq = PCI_INTERRUPT_LINE(intr);
-
-				if (pin == 0) {
-					/*
-					 * No interrupt used.
-					 */
-					continue;
-				}
-
-				pir = pciintr_pir_lookup(bus, device);
-				if (pir == NULL ||
-				    (link = pir->linkmap[pin - 1].link) == 0) {
-					/*
-					 * Interrupt not connected; no
-					 * need to change.
-					 */
-					continue;
-				}
-
-				l = pciintr_link_lookup_link(link);
-				if (l == NULL) {
-					/*
-					 * No link map entry?!
-					 */
-					printf("pciintr_header_fixup: no entry "
-					    "for link 0x%02x (%d:%d:%d:%c)\n",
-					    link, bus, device, function,
-					    '@' + pin);
-					continue;
-				}
-
-				/*
-				 * IRQs 14 and 15 are reserved for
-				 * PCI IDE interrupts; don't muck
-				 * with them.
-				 */
-				if (irq == 14 || irq == 15)
-					continue;
-
-#ifdef PCIBIOSVERBOSE
-				printf("%03d:%02d:%d 0x%04x 0x%04x  %c   "
-				    "0x%02x   %02d  %d\n",
-				    bus, device, function,
-				    PCI_VENDOR(id), PCI_PRODUCT(id),
-				    '@' + pin, l->clink, l->irq,
-				    l->fixup_stage);
-#endif
-
-				intr &= ~(PCI_INTERRUPT_LINE_MASK <<
-				    PCI_INTERRUPT_LINE_SHIFT);
-				intr |= (l->irq << PCI_INTERRUPT_LINE_SHIFT);
-				pci_conf_write(pc, tag, PCI_INTERRUPT_REG,
-				    intr);
-			}
-		}
-	}
-
+	pci_device_foreach(pc, 0, pciintr_do_header_fixup);
 #ifdef PCIBIOSVERBOSE
 	printf("--------------------------------------------\n");
 #endif
 
 	return (0);
+}
+
+void
+pciintr_do_header_fixup(pc, tag)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+{
+	struct pcibios_intr_routing *pir;
+	struct pciintr_link_map *l;
+	int pin, irq, link;
+	int bus, device, function;
+	pcireg_t intr, id;
+
+	pci_decompose_tag(pc, tag, &bus, &device, &function);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+	pin = PCI_INTERRUPT_PIN(intr);
+	irq = PCI_INTERRUPT_LINE(intr);
+
+	if (pin == 0) {
+		/*
+		 * No interrupt used.
+		 */
+		return;
+	}
+
+	pir = pciintr_pir_lookup(bus, device);
+	if (pir == NULL || (link = pir->linkmap[pin - 1].link) == 0) {
+		/*
+		 * Interrupt not connected; no
+		 * need to change.
+		 */
+		return;
+	}
+
+	l = pciintr_link_lookup_link(link);
+	if (l == NULL) {
+		/*
+		 * No link map entry?!
+		 */
+		printf("pciintr_header_fixup: no entry for link 0x%02x "
+		       "(%d:%d:%d:%c)\n", link, bus, device, function,
+		       '@' + pin);
+		return;
+	}
+	
+	/*
+	 * IRQs 14 and 15 are reserved for PCI IDE interrupts; don't muck
+	 * with them.
+	 */
+	if (irq == 14 || irq == 15)
+		return;
+
+#ifdef PCIBIOSVERBOSE
+	printf("%03d:%02d:%d 0x%04x 0x%04x  %c   0x%02x   %02d  %d\n",
+	       bus, device, function, PCI_VENDOR(id), PCI_PRODUCT(id),
+	       '@' + pin, l->clink, l->irq, l->fixup_stage);
+#endif
+
+	intr &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
+	intr |= (l->irq << PCI_INTERRUPT_LINE_SHIFT);
+	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
 }
 
 int
