@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.5 1998/02/04 00:37:51 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.6 1998/06/09 00:05:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ struct satlink_softc {
 	struct	device sc_dev;		/* device glue */
 	bus_space_tag_t sc_iot;		/* space tag */
 	bus_space_handle_t sc_ioh;	/* space handle */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 	int	sc_drq;			/* the DRQ we're using */
 	caddr_t	sc_buf;			/* ring buffer for incoming data */
 	int	sc_uptr;		/* user index into ring buffer */
@@ -169,6 +170,7 @@ satlinkattach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_ic = ia->ia_ic;
 	sc->sc_drq = ia->ia_drq;
 
 	/* Reset the card. */
@@ -194,26 +196,28 @@ satlinkattach(parent, self, aux)
 	    sc->sc_id.sid_serial);
 
 	/* Allocate and map the ring buffer. */
-	if (isa_dmamem_alloc(parent, sc->sc_drq, SATLINK_BUFSIZE,
+	if (isa_dmamem_alloc(sc->sc_ic, sc->sc_drq, SATLINK_BUFSIZE,
 	    &ringaddr, BUS_DMA_NOWAIT)) {
 		printf("%s: can't allocate ring buffer\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	if (isa_dmamem_map(parent, sc->sc_drq, ringaddr, SATLINK_BUFSIZE,
+	if (isa_dmamem_map(sc->sc_ic, sc->sc_drq, ringaddr, SATLINK_BUFSIZE,
 	    &sc->sc_buf, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf("%s: can't map ring buffer\n", sc->sc_dev.dv_xname);
-		isa_dmamem_free(parent, sc->sc_drq, ringaddr, SATLINK_BUFSIZE);
+		isa_dmamem_free(sc->sc_ic, sc->sc_drq, ringaddr,
+		    SATLINK_BUFSIZE);
 		return;
 	}
 
 	/* Create the DMA map. */
-	if (isa_dmamap_create(parent, sc->sc_drq, SATLINK_BUFSIZE,
+	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq, SATLINK_BUFSIZE,
 	    BUS_DMA_NOWAIT)) {
 		printf("%s: can't create DMA map\n", sc->sc_dev.dv_xname);
-		isa_dmamem_unmap(parent, sc->sc_drq, sc->sc_buf,
+		isa_dmamem_unmap(sc->sc_ic, sc->sc_drq, sc->sc_buf,
 		    SATLINK_BUFSIZE);
-		isa_dmamem_free(parent, sc->sc_drq, ringaddr, SATLINK_BUFSIZE);
+		isa_dmamem_free(sc->sc_ic, sc->sc_drq, ringaddr,
+		    SATLINK_BUFSIZE);
 		return;
 	}
 }
@@ -242,7 +246,7 @@ satlinkopen(dev, flags, fmt, p)
 	sc->sc_sptr = 0; 
 	sc->sc_lastresid = SATLINK_BUFSIZE;
 	bzero(sc->sc_buf, SATLINK_BUFSIZE);
-	error = isa_dmastart(sc->sc_dev.dv_parent, sc->sc_drq, sc->sc_buf,
+	error = isa_dmastart(sc->sc_ic, sc->sc_drq, sc->sc_buf,
 	    SATLINK_BUFSIZE, NULL, DMAMODE_READ|DMAMODE_LOOP, BUS_DMA_WAITOK);
 	if (error)
 		return (error);
@@ -268,7 +272,7 @@ satlinkclose(dev, flags, fmt, p)
 	sc->sc_flags &= ~SATF_ISOPEN;
 	splx(s);
 
-	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_drq);
+	isa_dmaabort(sc->sc_ic, sc->sc_drq);
 	untimeout(satlinktimeout, sc);
 
 	return (0);
@@ -373,7 +377,7 @@ satlinkioctl(dev, cmd, data, flags, p)
 	case SATIORESET:
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, SATLINK_COMMAND,
 		    SATLINK_CMD_RESET);
-		sc->sc_uptr = isa_dmacount(sc->sc_dev.dv_parent, sc->sc_drq);
+		sc->sc_uptr = isa_dmacount(sc->sc_ic, sc->sc_drq);
 		sc->sc_sptr = sc->sc_uptr;
 		break;
 
@@ -430,7 +434,7 @@ satlinktimeout(arg)
 	 * Get the current residual count from the DMA controller
 	 * and compute the satlink's index into the ring buffer.
 	 */
-	resid = isa_dmacount(sc->sc_dev.dv_parent, sc->sc_drq);
+	resid = isa_dmacount(sc->sc_ic, sc->sc_drq);
 	newidx = SATLINK_BUFSIZE - resid;
 	if (newidx == SATLINK_BUFSIZE)
 		newidx = 0;

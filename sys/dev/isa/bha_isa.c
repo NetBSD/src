@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.10 1997/10/20 18:43:06 thorpej Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.11 1998/06/09 00:05:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -137,7 +137,7 @@ bha_isa_attach(parent, self, aux)
 
 	sc->sc_dmaflags = 0;
 	if (bpd.sc_drq != -1)
-		isa_dmacascade(parent, bpd.sc_drq);
+		isa_dmacascade(ic, bpd.sc_drq);
 	else {
 		/*
 		 * We have a VLB controller.  If we're at least both

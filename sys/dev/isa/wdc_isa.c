@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.6 1998/03/13 16:50:07 cgd Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.7 1998/06/09 00:05:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -58,6 +58,7 @@
 struct wdc_isa_softc {
 	struct wdc_softc sc_wdcdev;
 	struct wdc_attachment_data sc_ad;
+	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
 };
@@ -134,6 +135,7 @@ wdc_isa_attach(parent, self, aux)
 
 	sc->sc_ad.iot = ia->ia_iot;
 	sc->sc_ad.auxiot = ia->ia_iot;
+	sc->sc_ic = ia->ia_ic;
 	if (bus_space_map(sc->sc_ad.iot, ia->ia_iobase, WDC_ISA_REG_NPORTS, 0,
 	      &sc->sc_ad.ioh) ||
 	    bus_space_map(sc->sc_ad.auxiot,
@@ -165,7 +167,7 @@ wdc_isa_dma_setup(scv)
 {
 	struct wdc_isa_softc *sc = scv;
 
-	if (isa_dmamap_create(sc->sc_wdcdev.sc_dev.dv_parent, sc->sc_drq,
+	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
@@ -181,7 +183,7 @@ wdc_isa_dma_start(scv, buf, size, read)
 {
 	struct wdc_isa_softc *sc = scv;
 
-	isa_dmastart(sc->sc_wdcdev.sc_dev.dv_parent, sc->sc_drq, buf,
+	isa_dmastart(sc->sc_ic, sc->sc_drq, buf,
 	    size, NULL, read ? DMAMODE_READ : DMAMODE_WRITE,
 	    BUS_DMA_NOWAIT);
 }
@@ -192,5 +194,5 @@ wdc_isa_dma_finish(scv)
 {
 	struct wdc_isa_softc *sc = scv;
 
-	isa_dmadone(sc->sc_wdcdev.sc_dev.dv_parent, sc->sc_drq);
+	isa_dmadone(sc->sc_ic, sc->sc_drq);
 }
