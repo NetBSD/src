@@ -82,3 +82,7 @@ extern void *malloc (), *realloc (), *calloc ();
 /* OSF/1 is POSIX.1 compliant.  */
 
 #define POSIX
+
+/* OSF/1 has strerror. */
+
+#define HAVE_STRERROR
