@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.4 1995/10/02 17:21:37 jpo Exp $	*/
+/*	$NetBSD: init.c,v 1.5 1998/02/22 15:40:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,8 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: init.c,v 1.4 1995/10/02 17:21:37 jpo Exp $";
+__RCSID("$NetBSD");
 #endif
 
 #include <stdlib.h>

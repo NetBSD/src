@@ -1,4 +1,4 @@
-/*	$NetBSD: chk.c,v 1.4 1997/11/03 22:33:53 cgd Exp $	*/
+/*	$NetBSD: chk.c,v 1.5 1998/02/22 15:40:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,8 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: chk.c,v 1.4 1997/11/03 22:33:53 cgd Exp $";
+__RCSID("$NetBSD: chk.c,v 1.5 1998/02/22 15:40:40 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -435,7 +436,7 @@ chkfaui(hte, def, decl)
 	sym_t	*def, *decl;
 {
 	type_t	*tp1, *tp2, **ap1, **ap2;
-	pos_t	*pos1p;
+	pos_t	*pos1p = NULL;
 	fcall_t	*calls, *call, *call1;
 	int	n, as;
 	char	*pos1;
@@ -708,7 +709,7 @@ printflike(hte, call, n, fmt, ap)
 	const	char *fp;
 	int	fc;
 	int	fwidth, prec, left, sign, space, alt, zero;
-	tspec_t	sz, t1, t2;
+	tspec_t	sz, t1, t2 = NULL;
 	type_t	*tp;
 
 	fp = fmt;
@@ -938,8 +939,8 @@ scanflike(hte, call, n, fmt, ap)
 	const	char *fp;
 	int	fc;
 	int	noasgn, fwidth;
-	tspec_t	sz, t1, t2;
-	type_t	*tp;
+	tspec_t	sz, t1 = NULL, t2 = NULL;
+	type_t	*tp = NULL;
 
 	fp = fmt;
 	fc = *fp++;
