@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.42 2003/09/26 11:51:53 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.43 2003/12/06 02:43:17 jonathan Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -76,10 +76,25 @@
 #define NFS_READDIRSIZE	8192		/* Def. readdir size */
 #endif
 
+/*
+ * NFS client IO daemon threads. May be overridden by config options.
+ */
+#ifndef NFS_MAXASYNCDAEMON
+#define	NFS_MAXASYNCDAEMON 	128	/* Max. number async_daemons runable */
+#endif
+
+/*
+ * NFS client read-ahead. May be overridden by config options.
+ * Should be no more than NFS_MAXASYNCDAEMON as each read-ahead operation
+ * requires one IO thread.
+ */
+#ifndef NFS_MAXRAHEAD
+#define	NFS_MAXRAHEAD	32		/* Max. read ahead # blocks */
+#endif
 #define	NFS_DEFRAHEAD	2		/* Def. read ahead # blocks */
-#define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */
+
 #define	NFS_MAXUIDHASH	64		/* Max. # of hashed uid entries/mp */
-#define	NFS_MAXASYNCDAEMON 	20	/* Max. number async_daemons runable */
+
 #ifdef _KERNEL
 extern int nfs_niothreads;              /* Number of async_daemons desired */
 #ifndef NFS_DEFAULT_NIOTHREADS
