@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.1 1997/09/26 04:37:02 gwr Exp $
+# $NetBSD: Makefile,v 1.2 1997/09/26 16:38:37 gwr Exp $
 
 # PROG=	gdb # No, this needs custom rules.
 # Use <bsd.prog.mk> somehow?
@@ -137,10 +137,10 @@ clean:
 	-rm -f $(CLEANFILES)
 	-rm -f $(OBJS)
 
-DPSRCS = ${OBJS:.o=.c}
+DPSRCS = ${OBJS:.o=.c} nm.h tm.h
 depend: .depend
 .depend: ${DPSRCS}
-	${CC} -MM $(CPPFLAGS) ${.ALLSRC} > .depend.tmp
+	${CC} -MM $(CPPFLAGS) ${.ALLSRC:M*.c} > .depend.tmp
 	-mv -f .depend.tmp $@
 
 proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
