@@ -1,4 +1,6 @@
-/*	$NetBSD: if_tribm_isa.c,v 1.2.20.1 2001/11/14 19:14:49 nathanw Exp $	*/
+/*	$NetBSD: if_tribm_isa.c,v 1.2.20.2 2002/01/11 23:39:08 nathanw Exp $	*/
+
+/* XXXJRT changes isa_attach_args too early */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.2.20.1 2001/11/14 19:14:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.2.20.2 2002/01/11 23:39:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,16 +78,30 @@ tribm_isa_probe(parent, match, aux)
 	int i, irq;
 	u_int8_t s;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 #ifdef notyet
 /* XXX Try both 0xa20 and 0xa24 and store that info like 3com */
 	if (ia->ia_iobase == IOBASEUNK)
 		ia->ia_iobase = 0xa20;
 #else
-	if (ia->ia_iobase == IOBASEUNK)
-		return 0;
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
 #endif
 
-	ia->ia_iosize = 4;
+	/*
+	 * XXXJRT Should not modify attach_args unless we know we match!
+	 */
+
+	ia->ia_io[0].ir_size = 4;
 	ia->ia_aux = NULL;
 
 	if (tr_isa_map_io(ia, &pioh, &mmioh))
@@ -109,7 +125,7 @@ tribm_isa_probe(parent, match, aux)
 	case 0xF:
 	case 0xE:
 	case 0xD:
-		if (ia->ia_maddr == MADDRUNK)
+		if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
 #ifdef notyet
 			ia->ia_maddr = TR_SRAM_DEFAULT;
 #else
@@ -118,12 +134,12 @@ tribm_isa_probe(parent, match, aux)
 		break;
 	case 0xC:
 		i = bus_space_read_1(memt, mmioh, TR_ACA_OFFSET) << 12;
-		if (ia->ia_maddr == MADDRUNK)
-			ia->ia_maddr = i;
-		else if (ia->ia_maddr != i) {
+		if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
+			ia->ia_iomem[0].ir_addr = i;
+		else if (ia->ia_iomem[0].ir_addr != i) {
 			printf(
 "tribm_isa_probe: sram mismatch; kernel configured %x != board configured %x\n",
-				ia->ia_maddr, i);
+				ia->ia_iomem[0].ir_addr, i);
 			tr_isa_unmap_io(ia, pioh, mmioh);
 			return 0;
 		}
@@ -151,26 +167,33 @@ tribm_isa_probe(parent, match, aux)
 		return 0;
 	}
 
-	if (ia->ia_irq == IRQUNK)
-		ia->ia_irq = irq;
-	else if (ia->ia_irq != irq) {
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		ia->ia_irq[0].ir_irq = irq;
+	else if (ia->ia_irq[0].ir_irq != irq) {
 		printf(
 "tribm_isa_probe: irq mismatch; kernel configured %d != board configured %d\n",
-			ia->ia_irq, irq);
+			ia->ia_irq[0].ir_irq, irq);
 		tr_isa_unmap_io(ia, pioh, mmioh);
 		return 0;
 	}
 /*
  * XXX 0x0c == MSIZEMASK (MSIZEBITS)
  */
-	ia->ia_msize = 8192 <<
+	ia->ia_iomem[0].ir_size = 8192 <<
 	    ((bus_space_read_1(memt, mmioh, TR_ACA_OFFSET + 1) & 0x0c) >> 2);
 	tr_isa_unmap_io(ia, pioh, mmioh);
 	/* Check alignment of membase. */
-	if ((ia->ia_maddr & (ia->ia_msize-1)) != 0) {
+	if ((ia->ia_iomem[0].ir_addr & (ia->ia_iomem[0].ir_size-1)) != 0) {
 		printf("tribm_isa_probe: SRAM unaligned 0x%04x/%d\n",
-		    ia->ia_maddr, ia->ia_msize);
+		    ia->ia_iomem[0].ir_addr, ia->ia_iomem[0].ir_size);
 		return 0;
 	}
+
+	ia->ia_nio = 1;
+	ia->ia_niomem = 1;
+	ia->ia_nirq = 1;
+
+	ia->ia_ndrq = 0;
+
  	return 1;
 }

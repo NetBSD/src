@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.312.2.9 2002/01/08 00:31:11 nathanw Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312.2.10 2002/01/11 23:39:23 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.379 2002/01/01 21:47:08 augustss Exp 
+ *	NetBSD: pcidevs,v 1.383 2002/01/09 19:29:07 augustss Exp 
  */
 
 /*
@@ -523,6 +523,7 @@
 #define	PCI_VENDOR_USR	0x12b9		/* US Robotics (3Com) */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
+#define	PCI_VENDOR_RAINBOW	0x12de		/* Rainbow Technologies */
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
@@ -547,12 +548,15 @@
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
+#define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SIBYTE	0x166d		/* SiByte, Inc. */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
+#define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
+#define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
@@ -801,7 +805,6 @@
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_MACH64_ET	0x4554		/* Mach64 ET */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x4654		/* Mach64 VT */
-#define	PCI_PRODUCT_ATI_MACH64_B	0x4750		/* Mach64 B */
 #define	PCI_PRODUCT_ATI_MACH64_GB	0x4742		/* Mach64 GB */
 #define	PCI_PRODUCT_ATI_MACH64_GD	0x4744		/* Mach64 GD */
 #define	PCI_PRODUCT_ATI_MACH64_GI	0x4749		/* Mach64 GI */
@@ -1016,6 +1019,9 @@
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
 #define	PCI_PRODUCT_CONTAQ_82C693	0xc693		/* 82C693 PCI-ISA Bridge */
 
+/* Corega products */
+#define	PCI_PRODUCT_COREGA_CGWLPCIA11	0x0130		/* CGWLPCIA11 */
+
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* \"C-Bus II\"-PCI Bridge */
 
@@ -1121,6 +1127,9 @@
 /* ESS Technology Inc products */
 #define	PCI_PRODUCT_ESSTECH2_MAESTRO1	0x0100		/* Maestro 1 PCI Audio Accelerator */
 
+/* Eumitcom products */
+#define	PCI_PRODUCT_EUMITCOM_WL11000	0x1100		/* WL11000 */
+
 /* O2 Micro Inc */
 #define	PCI_PRODUCT_O2MICRO_OZ6729	0x6729		/* OZ6729 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6730	0x673A		/* OZ6730 PCI-PCMCIA Bridge */
@@ -1161,6 +1170,10 @@
 #define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64260	0x6430		/* GT-64260 System Controller */
+
+/* Global Sun Tech products */
+#define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P */
+#define	PCI_PRODUCT_GLOBALSUN_GL24110P_2	0x1102		/* GL24110P */
 
 /* Guillemot products */
 #define	PCI_PRODUCT_GUILLEMOT_MAXIRADIO	0x1001		/* MAXIRADIO */
@@ -1293,8 +1306,22 @@
 #define	PCI_PRODUCT_INTEL_82801BA_IDE	0x244b		/* 82801BA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801BAM_LPC	0x244c		/* 82801BAM LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801BA_HPB	0x244e		/* 82801BA Hub-to-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_82801CA_LPC	0x2480		/* 82801CA LPC Interface */
+#define	PCI_PRODUCT_INTEL_82801CA_USB	0x2482		/* 82801CA/CAM USB Controller */
+#define	PCI_PRODUCT_INTEL_82801CA_SMB	0x2483		/* 82801CA/CAM SMBus Controller */
+#define	PCI_PRODUCT_INTEL_82801CA_USBB	0x2484		/* 82801CA/CAM USB Controller */
+#define	PCI_PRODUCT_INTEL_82801CA_AC	0x2485		/* 82801CA/CAM AC'97 Audio Controller */
+#define	PCI_PRODUCT_INTEL_82801CA_MOD	0x2486		/* 82801CA/CAM Modem */
+#define	PCI_PRODUCT_INTEL_82801CA_USBC	0x2487		/* 82801CA/CAM USB Controller */
+#define	PCI_PRODUCT_INTEL_82801CA_ATAA	0x248A		/* 82801CA UltraATA IDE Controller */
+#define	PCI_PRODUCT_INTEL_82801CA_ATAB	0x248B		/* 82801CA UltraATA IDE Controller */
+#define	PCI_PRODUCT_INTEL_82801CAM_LPC	0x2482		/* 82801CAM LPC Interface */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
+#define	PCI_PRODUCT_INTEL_82830MP_IO1	0x3575		/* 82830MP CPU to I/O Bridge */
+#define	PCI_PRODUCT_INTEL_82830MP_AGP	0x3576		/* 82830MP CPU to AGP Bridge */
+#define	PCI_PRODUCT_INTEL_82830MP_IV	0x3577		/* 82830MP Integrated Video */
+#define	PCI_PRODUCT_INTEL_82830MP_IO2	0x3578		/* 82830MP CPU to I/O Bridge */
 #define	PCI_PRODUCT_INTEL_80312_ATU	0x530d		/* 80310 ATU */
 #define	PCI_PRODUCT_INTEL_82371SB_ISA	0x7000		/* 82371SB PCI-to-ISA Bridge (PIIX3) */
 #define	PCI_PRODUCT_INTEL_82371SB_IDE	0x7010		/* 82371SB IDE Interface (PIIX3) */
@@ -1515,6 +1542,7 @@
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 1000baseSX Gigabit Ethernet */
 #define	PCI_PRODUCT_NETGEAR_GA620T	0x630a		/* GA620 1000baseT Gigabit Ethernet */
+#define	PCI_PRODUCT_NETGEAR_MA301	0x4100		/* MA301 */
 
 /* Netmos products */
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Dual UART and 1284 Printer port */
@@ -1603,6 +1631,9 @@
 /* Quantum Designs products */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8500	0x0001		/* 8500 */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8580	0x0002		/* 8580 */
+
+/* Rainbow Technologies products */
+#define	PCI_PRODUCT_RAINBOW_CS200	0x0200		/* CryptoSwift 200 PKI Accelerator */
 
 /* Realtek (Creative Labs?) products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.12.2.1 2001/11/14 19:14:45 nathanw Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.12.2.2 2002/01/11 23:39:04 nathanw Exp $	*/
 
 /*
  * cy.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.12.2.1 2001/11/14 19:14:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.12.2.2 2002/01/11 23:39:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,19 +40,23 @@ cy_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	struct cy_softc sc;
 	int found;
 
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
 	memcpy(&sc.sc_dev, match, sizeof(struct device));
 
 	sc.sc_memt = ia->ia_memt;
 	sc.sc_bustype = CY_BUSTYPE_ISA;
 
 	/* Disallow wildcarded memory address. */
-	if (ia->ia_maddr == ISACF_IOMEM_DEFAULT)
-		return (0);
-
-	if (ia->ia_irq == IRQUNK)
+	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
+		return 0;
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return 0;
 
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr, CY_MEMSIZE, 0,
+	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr, CY_MEMSIZE, 0,
 	    &sc.sc_bsh) != 0)
 		return 0;
 
@@ -61,10 +65,14 @@ cy_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	bus_space_unmap(ia->ia_memt, sc.sc_bsh, CY_MEMSIZE);
 
 	if (found) {
-		ia->ia_iosize = 0;
-		ia->ia_msize = CY_MEMSIZE;
-	}
+		ia->ia_niomem = 1;
+		ia->ia_iomem[0].ir_size = CY_MEMSIZE;
 
+		ia->ia_nirq = 1;
+
+		ia->ia_nio = 0;
+		ia->ia_ndrq = 0;
+	}
 	return (found);
 }
 
@@ -79,7 +87,7 @@ cy_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": Cyclades-Y multiport serial\n");
 
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr, CY_MEMSIZE, 0,
+	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr, CY_MEMSIZE, 0,
 	    &sc->sc_bsh) != 0) {
 		printf("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
@@ -93,7 +101,7 @@ cy_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	cy_attach(sc);
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_TTY, cy_intr, sc);
 	if (sc->sc_ih == NULL)
 		printf("%s: unable to establish interrupt",

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.2.4 2002/01/08 00:32:09 nathanw Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.2.5 2002/01/11 23:39:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.4 2002/01/08 00:32:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.5 2002/01/11 23:39:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ Static void uhid_intr(struct uhidev *, void *, u_int len);
 
 Static int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
-Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int,struct proc*);
+Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int, usb_proc_ptr);
 
 USB_DECLARE_DRIVER(uhid);
 

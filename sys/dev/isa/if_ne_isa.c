@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.10.2.2 2001/11/14 19:14:49 nathanw Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.10.2.3 2002/01/11 23:39:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.10.2.2 2001/11/14 19:14:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.10.2.3 2002/01/11 23:39:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,18 +96,26 @@ ne_isa_match(parent, match, aux)
 	bus_space_handle_t asich;
 	int rv = 0;
 
-	/* Disallow wildcarded values. */
-	if (ia->ia_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_nio < 1)
 		return (0);
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	/* Disallow wildcarded values. */
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return (0);
 
 	/* Make sure this is a valid NE[12]000 i/o address. */
-	if ((ia->ia_iobase & 0x1f) != 0)
+	if ((ia->ia_io[0].ir_addr & 0x1f) != 0)
 		return (0);
 
 	/* Map i/o space. */
-	if (bus_space_map(nict, ia->ia_iobase, NE2000_NPORTS, 0, &nich))
+	if (bus_space_map(nict, ia->ia_io[0].ir_addr, NE2000_NPORTS, 0, &nich))
 		return (0);
 
 	asict = nict;
@@ -118,8 +126,15 @@ ne_isa_match(parent, match, aux)
 	/* Look for an NE2000-compatible card. */
 	rv = ne2000_detect(nict, nich, asict, asich);
 
-	if (rv)
-		ia->ia_iosize = NE2000_NPORTS;
+	if (rv) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = NE2000_NPORTS;
+
+		ia->ia_nirq = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
+	}
 
  out:
 	bus_space_unmap(nict, nich, NE2000_NPORTS);
@@ -145,7 +160,8 @@ ne_isa_attach(parent, self, aux)
 	printf("\n");
 
 	/* Map i/o space. */
-	if (bus_space_map(nict, ia->ia_iobase, NE2000_NPORTS, 0, &nich)) {
+	if (bus_space_map(nict, ia->ia_io[0].ir_addr, NE2000_NPORTS,
+	    0, &nich)) {
 		printf("%s: can't map i/o space\n", dsc->sc_dev.dv_xname);
 		return;
 	}
@@ -208,8 +224,8 @@ ne_isa_attach(parent, self, aux)
 	ne2000_attach(nsc, NULL);
 
 	/* Establish the interrupt handler. */
-	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, dp8390_intr, dsc);
+	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, dp8390_intr, dsc);
 	if (isc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt handler\n",
 		    dsc->sc_dev.dv_xname);

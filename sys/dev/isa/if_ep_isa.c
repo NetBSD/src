@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.26.14.3 2001/11/14 19:14:48 nathanw Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.26.14.4 2002/01/11 23:39:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.26.14.3 2001/11/14 19:14:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.26.14.4 2002/01/11 23:39:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,9 @@ ep_isa_probe(parent, match, aux)
 	u_int16_t vendor, model;
 	struct ep_isa_done_probe *er;
 	int bus = parent->dv_unit;
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
 
 	if (ep_isa_probes_initialized == 0) {
 		LIST_INIT(&ep_isa_all_probes);
@@ -319,27 +322,42 @@ ep_isa_probe(parent, match, aux)
 
 bus_probed:
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
 	for (i = 0; i < nepcards; i++) {
 		if (epcards[i].bus != bus)
 			continue;
 		if (epcards[i].available == 0)
 			continue;
-		if (ia->ia_iobase != IOBASEUNK &&
-		    ia->ia_iobase != epcards[i].iobase)
+
+		if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+		    ia->ia_io[0].ir_addr != epcards[i].iobase)
 			continue;
-		if (ia->ia_irq != IRQUNK &&
-		    ia->ia_irq != epcards[i].irq)
+
+		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		    ia->ia_irq[0].ir_irq != epcards[i].irq)
 			continue;
+
 		goto good;
 	}
 	return 0;
 
 good:
 	epcards[i].available = 0;
-	ia->ia_iobase = epcards[i].iobase;
-	ia->ia_irq = epcards[i].irq;
-	ia->ia_iosize = 0x10;
-	ia->ia_msize = 0;
+
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_addr = epcards[i].iobase;
+	ia->ia_io[0].ir_size = 0x10;
+
+	ia->ia_nirq = 1;
+	ia->ia_irq[0].ir_irq = epcards[i].irq;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
+
 	ia->ia_aux = (void *)epcards[i].model;
 	return 1;
 }
@@ -356,7 +374,7 @@ ep_isa_attach(parent, self, aux)
 	int chipset;
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 0x10, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -382,6 +400,6 @@ ep_isa_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, epintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, epintr, sc);
 }

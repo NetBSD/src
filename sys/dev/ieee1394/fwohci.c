@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.7 2002/01/08 00:30:16 nathanw Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.8 2002/01/11 23:39:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.7 2002/01/08 00:30:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.8 2002/01/11 23:39:02 nathanw Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -612,7 +612,7 @@ fwohci_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", name, pnp);
 
-	return QUIET;
+	return UNCONF;
 }
 
 static void

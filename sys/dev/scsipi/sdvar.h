@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.12.6.1 2001/06/21 20:06:02 nathanw Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.12.6.2 2002/01/11 23:39:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,6 +109,8 @@ struct sd_ops {
 	int	(*sdo_get_parms) __P((struct sd_softc *, struct disk_parms *,
 		    int));
 	int	(*sdo_flush) __P((struct sd_softc *, int));
+	int	(*sdo_getcache) __P((struct sd_softc *, int *));
+	int	(*sdo_setcache) __P((struct sd_softc *, int));
 };
 #define	SDGP_RESULT_OK		0	/* paramters obtained */
 #define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */

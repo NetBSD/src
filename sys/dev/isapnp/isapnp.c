@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.34.14.1 2001/11/14 19:14:57 nathanw Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.34.14.2 2002/01/11 23:39:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.34.14.1 2001/11/14 19:14:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.34.14.2 2002/01/11 23:39:16 nathanw Exp $");
 
 #include "isadma.h"
 
@@ -924,8 +924,12 @@ isapnp_match(parent, match, aux)
 	 * We always match.  We must let all legacy ISA devices map
 	 * their address spaces before we look for a read port.
 	 */
-	ia->ia_iobase = ISAPNP_ADDR;
-	ia->ia_iosize = 1;
+	ia->ia_io[0].ir_addr = ISAPNP_ADDR;
+	ia->ia_io[0].ir_size = 1;
+
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
 
 	return (1);
 }

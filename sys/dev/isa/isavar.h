@@ -1,12 +1,11 @@
-/*	$NetBSD: isavar.h,v 1.38 2000/06/04 19:15:12 cgd Exp $	*/
+/*	$NetBSD: isavar.h,v 1.38.4.1 2002/01/11 23:39:09 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Jason R. Thorpe of Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -102,6 +101,76 @@ struct isabus_attach_args {
 };
 
 /*
+ * ISA bus resources.
+ */
+
+struct isa_io {
+	int ir_addr;
+	int ir_size;
+};
+
+struct isa_iomem {
+	int ir_addr;
+	int ir_size;
+};
+
+struct isa_irq {
+	int ir_irq;
+};
+
+struct isa_drq {
+	int ir_drq;
+};
+
+struct isa_pnpname {
+	struct isa_pnpname *ipn_next;
+	char *ipn_name;
+};
+
+/*
+ * Machine-dependent code provides a list of these to describe
+ * devices on the ISA bus which should be attached via direct
+ * configuration.
+ *
+ * All of this information is dynamically allocated, so that
+ * the ISA bus driver may free all of this information if the
+ * bus does not support dynamic attach/detach of devices (e.g.
+ * on a docking station).
+ *
+ * Some info on the "ik_key" field: This is a unique number for
+ * each knowndev node.  If, when we need to re-enumerate the
+ * knowndevs, we discover that a node with key N is in the old
+ * list but not in the new, the device has disappeared.  Similarly,
+ * if a node with key M is in the new list but not in the old,
+ * the device is new.  Note that the knowndevs list must be
+ * sorted in ascending "key" order.
+ */
+struct isa_knowndev {
+	TAILQ_ENTRY(isa_knowndev) ik_list;
+	uintptr_t ik_key;
+	struct device *ik_claimed;
+
+	/*
+	 * The rest of these fields correspond to isa_attach_args
+	 * fields.
+	 */
+	char *ik_pnpname;
+	struct isa_pnpname *ik_pnpcompatnames;
+
+	struct isa_io *ik_io;
+	int ik_nio;
+
+	struct isa_iomem *ik_iomem;
+	int ik_niomem;
+
+	struct isa_irq *ik_irq;
+	int ik_nirq;
+
+	struct isa_drq *ik_drq;
+	int ik_ndrq;
+};
+
+/*
  * ISA driver attach arguments
  */
 struct isa_attach_args {
@@ -111,22 +180,38 @@ struct isa_attach_args {
 
 	isa_chipset_tag_t ia_ic;
 
-	int	ia_iobase;		/* base i/o address */
-	int	ia_iosize;		/* span of ports used */
-	int	ia_irq;			/* interrupt request */
-	int	ia_drq;			/* DMA request */
-	int	ia_drq2;		/* second DMA request */
-	int	ia_maddr;		/* physical i/o mem addr */
-	u_int	ia_msize;		/* size of i/o memory */
+	/*
+	 * PNP (or other) names to with which we can match a device
+	 * driver to a device that machine-dependent code tells us
+	 * is there (i.e. support for direct-configuration of ISA
+	 * devices).
+	 */
+	char *ia_pnpname;
+	struct isa_pnpname *ia_pnpcompatnames;
+
+	struct isa_io *ia_io;		/* I/O resources */
+	int ia_nio;
+
+	struct isa_iomem *ia_iomem;	/* memory resources */
+	int ia_niomem;
+
+	struct isa_irq *ia_irq;		/* IRQ resources */
+	int ia_nirq;
+
+	struct isa_drq *ia_drq;		/* DRQ resources */
+	int ia_ndrq;
+
 	void	*ia_aux;		/* driver specific */
 };
 
-#include "locators.h"
+/*
+ * Test to determine if a given call to an ISA device probe routine
+ * is actually an attempt to do direct configuration.
+ */
+#define	ISA_DIRECT_CONFIG(ia)						\
+	((ia)->ia_pnpname != NULL || (ia)->ia_pnpcompatnames != NULL)
 
-#define	IOBASEUNK	ISACF_PORT_DEFAULT	/* i/o address is unknown */
-#define	IRQUNK		ISACF_IRQ_DEFAULT	/* interrupt request line is unknown */
-#define	DRQUNK		ISACF_DRQ_DEFAULT	/* DMA request line is unknown */
-#define	MADDRUNK	ISACF_IOMEM_DEFAULT	/* shared memory address is unknown */
+#include "locators.h"
 
 /*
  * ISA master bus
@@ -139,6 +224,9 @@ struct isa_softc {
 	bus_dma_tag_t sc_dmat;		/* isa DMA tag */
 
 	isa_chipset_tag_t sc_ic;
+
+	TAILQ_HEAD(, isa_knowndev) sc_knowndevs;
+	int sc_dynamicdevs;
 };
 
 #define		cf_iobase		cf_loc[ISACF_PORT]

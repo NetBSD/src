@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.8 2002/01/09 00:36:29 nathanw Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.9 2002/01/11 23:39:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.8 2002/01/09 00:36:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.9 2002/01/11 23:39:01 nathanw Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -443,28 +443,65 @@ void wi_update_stats(sc)
 
 	wi_read_data(sc, id, 0, (char *)&gen, 4);
 
-	if (gen.wi_type != WI_INFO_COUNTERS)
-		return;
+	switch (gen.wi_type) {
+	case WI_INFO_COUNTERS:
+		/* some card versions have a larger stats structure */
+		len = (gen.wi_len - 1 < sizeof(sc->wi_stats) / 4) ?
+			gen.wi_len - 1 : sizeof(sc->wi_stats) / 4;
+		ptr = (u_int32_t *)&sc->wi_stats;
 
-	/* some card versions have a larger stats structure */
-	len = (gen.wi_len - 1 < sizeof(sc->wi_stats) / 4) ?
-		gen.wi_len - 1 : sizeof(sc->wi_stats) / 4;
-	ptr = (u_int32_t *)&sc->wi_stats;
-
-	for (i = 0; i < len; i++) {
-		t = CSR_READ_2(sc, WI_DATA1);
+		for (i = 0; i < len; i++) {
+			t = CSR_READ_2(sc, WI_DATA1);
 #ifdef WI_HERMES_STATS_WAR
-		if (t > 0xF000)
-			t = ~t & 0xFFFF;
+			if (t > 0xF000)
+				t = ~t & 0xFFFF;
 #endif
-		ptr[i] += t;
+			ptr[i] += t;
+		}
+
+		ifp->if_collisions = sc->wi_stats.wi_tx_single_retries +
+			sc->wi_stats.wi_tx_multi_retries +
+			sc->wi_stats.wi_tx_retry_limit;
+		break;
+
+	case WI_INFO_LINK_STAT: {
+		static char *msg[] = {
+			"connected",
+			"disconnected",
+			"AP change",
+			"AP out of range",
+			"AP in range"
+		};
+
+		if (gen.wi_len != 2) {
+#ifdef WI_DEBUG
+			printf("WI_INFO_LINK_STAT: len=%d\n", gen.wi_len);
+#endif
+			break;
+		}
+		t = CSR_READ_2(sc, WI_DATA1);
+		if ((t < 1) || (t > 5)) {
+#ifdef WI_DEBUG
+			printf("WI_INFO_LINK_STAT: status %d\n", t);
+#endif
+			break;
+		}
+		printf("%s: %s\n", sc->sc_dev.dv_xname, msg[t - 1]);
+		break;
+		}
+
+	default:
+#if 0
+		printf("Got info type: %04x\n", gen.wi_type);
+#endif
+		for (i = 0; i < gen.wi_len; i++) {
+			t = CSR_READ_2(sc, WI_DATA1);
+#if 0
+			printf("[0x%02x] = 0x%04x\n", i, t);
+#endif
+		}
+		break;
 	}
-
-	ifp->if_collisions = sc->wi_stats.wi_tx_single_retries +
-	    sc->wi_stats.wi_tx_multi_retries +
-	    sc->wi_stats.wi_tx_retry_limit;
-
-	return;
 }
 
 int wi_intr(arg)

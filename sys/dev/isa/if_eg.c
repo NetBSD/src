@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.52.2.3 2002/01/08 00:30:26 nathanw Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.52.2.4 2002/01/11 23:39:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -33,14 +33,14 @@
  * Support for 3Com 3c505 Etherlink+ card.
  */
 
-/* To do:
+/*
+ * To do:
  * - multicast
  * - promiscuous
- * - get rid of isa indirect stuff
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.52.2.3 2002/01/08 00:30:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.52.2.4 2002/01/11 23:39:06 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -335,17 +335,29 @@ egprobe(parent, match, aux)
 
 	rval = 0;
 
-	if ((ia->ia_iobase & ~0x07f0) != 0) {
-		DPRINTF(("Weird iobase %x\n", ia->ia_iobase));
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
+	/* Disallow wildcarded IRQ. */
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		return (0);
+
+	if ((ia->ia_io[0].ir_addr & ~0x07f0) != 0) {
+		DPRINTF(("Weird iobase %x\n", ia->ia_io[0].ir_addr));
 		return 0;
 	}
 
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
-		return (0);
-
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, 0x08, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 0x08, 0, &ioh)) {
 		DPRINTF(("egprobe: can't map i/o space in probe\n"));
 		return 0;
 	}
@@ -375,8 +387,14 @@ egprobe(parent, match, aux)
 		goto out;
 	}
 
-	ia->ia_iosize = 0x08;
-	ia->ia_msize = 0;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = 0x08;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
+
 	rval = 1;
 
  out:
@@ -399,7 +417,7 @@ egattach(parent, self, aux)
 	printf("\n");
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 0x08, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
@@ -489,8 +507,8 @@ egattach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
 	
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, egintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, egintr, sc);
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,

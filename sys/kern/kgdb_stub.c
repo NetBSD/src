@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7.2.5 2002/01/08 00:32:36 nathanw Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7.2.6 2002/01/11 23:39:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.7.2.5 2002/01/08 00:32:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.7.2.6 2002/01/11 23:39:39 nathanw Exp $");
 
 #include "opt_kgdb.h"
 
@@ -94,6 +94,7 @@ static int (*kgdb_getc) __P((void *));
 static void (*kgdb_putc) __P((void *, int));
 static void *kgdb_ioarg;
 
+/* KGDB_BUFLEN must be at least (2*KGDB_NUMREGS*sizeof(kgdb_reg_t)+1) */
 static u_char buffer[KGDB_BUFLEN];
 static kgdb_reg_t gdb_regs[KGDB_NUMREGS];
 
@@ -514,10 +515,12 @@ kgdb_trap(type, regs)
 			kgdb_send("OK");
 			continue;
 
+		case KGDB_DETACH:
 		case KGDB_KILL:
 			kgdb_active = 0;
 			printf("kgdb detached\n");
 			db_clear_single_step(regs);
+			kgdb_send("OK");
 			goto out;
 
 		case KGDB_CONT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.15.2.2 2002/01/08 00:23:06 nathanw Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.15.2.3 2002/01/11 23:37:59 nathanw Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -724,6 +724,8 @@ u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
     defined(CPU_SA110) || defined(CPU_XSCALE)
+static void get_cachetype __P((void));
+
 static void
 get_cachetype()
 {
@@ -1328,6 +1330,8 @@ struct cpu_option {
 	int	co_trueop;
 	int	co_value;
 };
+
+static u_int parse_cpu_options __P((char *, struct cpu_option *, u_int));
 
 static u_int
 parse_cpu_options(args, optlist, cpuctrl)

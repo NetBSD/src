@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.3.2.7 2002/01/09 02:54:45 nathanw Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.3.2.8 2002/01/11 23:39:44 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.7 2002/01/09 02:54:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.8 2002/01/11 23:39:44 nathanw Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.7 2002/01/09 02:54:45 nathanw Exp
 #include <net/if_types.h>
 #include <net/if_ether.h>
 #include <net/if_sppp.h>
+#include <net/if_spppvar.h>
 #include <net/if_pppoe.h>
 
 #if NBPFILTER > 0
@@ -102,11 +103,6 @@ struct pppoe_softc {
 	LIST_ENTRY(pppoe_softc) sc_list;
 	struct ifnet *sc_eth_if;	/* ethernet interface we are using */
 	
-#define PPPOE_STATE_INITIAL	0
-#define PPPOE_STATE_PADI_SENT	1
-#define	PPPOE_STATE_PADR_SENT	2
-#define	PPPOE_STATE_SESSION	3
-#define	PPPOE_STATE_CLOSING	4
 	int sc_state;			/* discovery phase or session connected */
 	struct ether_addr sc_dest;	/* hardware address of concentrator */
 	u_int16_t sc_session;		/* PPPoE session id */
@@ -658,6 +654,16 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		memset(parms, 0, sizeof *parms);
 		if (sc->sc_eth_if)
 			strncpy(parms->ifname, sc->sc_eth_if->if_xname, IFNAMSIZ);
+		return 0;
+	}
+	break;
+	case PPPOEGETSESSION:
+	{
+		struct pppoeconnectionstate *state = (struct pppoeconnectionstate*)data;
+		state->state = sc->sc_state;
+		state->session_id = sc->sc_session;
+		state->padi_retry_no = sc->sc_padi_retried;
+		state->padr_retry_no = sc->sc_padr_retried;
 		return 0;
 	}
 	break;

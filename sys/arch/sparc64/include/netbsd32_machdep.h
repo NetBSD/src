@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.6.8.2 2002/01/04 19:12:25 eeh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.6.8.3 2002/01/11 23:38:45 nathanw Exp $	*/
 
 /*
- * Copyright (c) 1998 Matthew R. Green
+ * Copyright (c) 1998, 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,10 @@
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
+
+#include <sys/types.h>
+#include <sys/proc.h>
+#include <compat/netbsd32/netbsd32.h>
 
 /* from <arch/sparc/include/signal.h> */
 typedef u_int32_t netbsd32_sigcontextp_t;
@@ -60,11 +64,16 @@ struct netbsd32_sigcontext13 {
 };
 
 struct exec_package;
-void netbsd32_setregs __P((struct lwp *l, struct exec_package *pack, u_long stack));
-int netbsd32_sigreturn __P((struct proc *p, void *v, register_t *retval));
-void netbsd32_sendsig __P((sig_t catcher, int sig, sigset_t *mask, u_long code));
+void netbsd32_setregs (struct lwp *l, struct exec_package *pack, u_long stack);
+int netbsd32_sigreturn (struct proc *p, void *v, register_t *retval);
+void netbsd32_sendsig (sig_t catcher, int sig, sigset_t *mask, u_long code);
 
 extern char netbsd32_esigcode[], netbsd32_sigcode[];
 
+/*
+ * Need to plug into get sparc specific ioctl's.
+ */
+#define	NETBSD32_MD_IOCTL	/* enable netbsd32_md_ioctl() */
+int netbsd32_md_ioctl (struct file *, netbsd32_u_long, caddr_t, struct proc *);
 
 #endif /* _MACHINE_NETBSD32_H_ */

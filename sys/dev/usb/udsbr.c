@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.4.2.2 2002/01/08 00:32:07 nathanw Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.4.2.3 2002/01/11 23:39:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.4.2.2 2002/01/08 00:32:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.4.2.3 2002/01/11 23:39:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,6 +193,8 @@ udsbr_req(struct udsbr_softc *sc, int ureq, int value, int index)
 	usbd_status err;
 	u_char data;
 
+	DPRINTFN(1,("udsbr_req: ureq=0x%02x value=0x%04x index=0x%04x\n",
+		    ureq, value, index));
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = ureq;
 	USETW(req.wValue, value);
@@ -231,15 +233,15 @@ udsbr_setfreq(struct udsbr_softc *sc, int freq)
          * units of 12.5kHz.  We add one to the IFM to make rounding
          * easier. 
          */
-        freq = (freq + 10700001) / 12500;
+        freq = (freq * 1000 + 10700001) / 12500;
 	(void)udsbr_req(sc, 0x01, (freq >> 8) & 0xff, freq & 0xff);
 	(void)udsbr_req(sc, 0x00, 0x0096, 0x00b7);
+	usbd_delay_ms(sc->sc_udev, 240); /* wait for signal to settle */
 }
 
 int
 udsbr_status(struct udsbr_softc *sc)
 {
-	usbd_delay_ms(sc->sc_udev, 240); /* XXX wait for signal to settle */
 	return (udsbr_req(sc, 0x00, 0x0000, 0x0024));
 }
 

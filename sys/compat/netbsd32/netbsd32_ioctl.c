@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.8.2.3 2001/11/14 19:13:16 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.8.2.4 2002/01/11 23:38:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,11 +29,11 @@
  */
 
 /*
- * handle ioctl conversions from netbsd32 -> sparc64
+ * handle ioctl conversions from netbsd32 -> 64-bit kernel
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.8.2.3 2001/11/14 19:13:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.8.2.4 2002/01/11 23:38:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,14 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.8.2.3 2001/11/14 19:13:16 natha
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 /* prototypes for the converters */
-#ifdef __sparc__
-static __inline void
-netbsd32_to_fbcmap(struct netbsd32_fbcmap *, struct fbcmap *, u_long);
-static __inline void
-netbsd32_to_fbcursor(struct netbsd32_fbcursor *, struct fbcursor *, u_long);
-static __inline void
-netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *, struct opiocdesc *, u_long);
-#endif
 static __inline void
 netbsd32_to_partinfo(struct netbsd32_partinfo *, struct partinfo *, u_long);
 static __inline void
@@ -94,15 +86,6 @@ static __inline void
 netbsd32_to_sioc_vif_req(struct netbsd32_sioc_vif_req *, struct sioc_vif_req *, u_long);
 static __inline void
 netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *, struct sioc_sg_req *, u_long);
-
-#ifdef __sparc__
-static __inline void
-netbsd32_from_fbcmap(struct fbcmap *, struct netbsd32_fbcmap *);
-static __inline void
-netbsd32_from_fbcursor(struct fbcursor *, struct netbsd32_fbcursor *);
-static __inline void
-netbsd32_from_opiocdesc(struct opiocdesc *, struct netbsd32_opiocdesc *);
-#endif
 static __inline void
 netbsd32_from_partinfo(struct partinfo *, struct netbsd32_partinfo *);
 static __inline void
@@ -119,54 +102,6 @@ static __inline void
 netbsd32_from_sioc_sg_req(struct sioc_sg_req *, struct netbsd32_sioc_sg_req *);
 
 /* convert to/from different structures */
-
-#ifdef __sparc__
-
-static __inline void
-netbsd32_to_fbcmap(s32p, p, cmd)
-	struct netbsd32_fbcmap *s32p;
-	struct fbcmap *p;
-	u_long cmd;
-{
-
-	p->index = s32p->index;
-	p->count = s32p->count;
-	p->red = (u_char *)(u_long)s32p->red;
-	p->green = (u_char *)(u_long)s32p->green;
-	p->blue = (u_char *)(u_long)s32p->blue;
-}
-
-static __inline void
-netbsd32_to_fbcursor(s32p, p, cmd)
-	struct netbsd32_fbcursor *s32p;
-	struct fbcursor *p;
-	u_long cmd;
-{
-
-	p->set = s32p->set;
-	p->enable = s32p->enable;
-	p->pos = s32p->pos;
-	p->hot = s32p->hot;
-	netbsd32_to_fbcmap(&s32p->cmap, &p->cmap, cmd);
-	p->size = s32p->size;
-	p->image = (char *)(u_long)s32p->image;
-	p->mask = (char *)(u_long)s32p->mask;
-}
-
-static __inline void
-netbsd32_to_opiocdesc(s32p, p, cmd)
-	struct netbsd32_opiocdesc *s32p;
-	struct opiocdesc *p;
-	u_long cmd;
-{
-
-	p->op_nodeid = s32p->op_nodeid;
-	p->op_namelen = s32p->op_namelen;
-	p->op_name = (char *)(u_long)s32p->op_name;
-	p->op_buflen = s32p->op_buflen;
-	p->op_buf = (char *)(u_long)s32p->op_buf;
-}
-#endif
 
 static __inline void
 netbsd32_to_partinfo(s32p, p, cmd)
@@ -273,60 +208,8 @@ netbsd32_to_sioc_sg_req(s32p, p, cmd)
 }
 
 /*
- * handle ioctl conversions from sparc64 -> netbsd32
+ * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
-
-#ifdef __sparc__
-
-static __inline void
-netbsd32_from_fbcmap(p, s32p)
-	struct fbcmap *p;
-	struct netbsd32_fbcmap *s32p;
-{
-
-	s32p->index = p->index;
-	s32p->count = p->count;
-/* filled in */
-#if 0
-	s32p->red = (netbsd32_u_charp)p->red;
-	s32p->green = (netbsd32_u_charp)p->green;
-	s32p->blue = (netbsd32_u_charp)p->blue;
-#endif
-}
-
-static __inline void
-netbsd32_from_fbcursor(p, s32p)
-	struct fbcursor *p;
-	struct netbsd32_fbcursor *s32p;
-{
-
-	s32p->set = p->set;
-	s32p->enable = p->enable;
-	s32p->pos = p->pos;
-	s32p->hot = p->hot;
-	netbsd32_from_fbcmap(&p->cmap, &s32p->cmap);
-	s32p->size = p->size;
-/* filled in */
-#if 0
-	s32p->image = (netbsd32_charp)p->image;
-	s32p->mask = (netbsd32_charp)p->mask;
-#endif
-}
-
-static __inline void
-netbsd32_from_opiocdesc(p, s32p)
-	struct opiocdesc *p;
-	struct netbsd32_opiocdesc *s32p;
-{
-
-	s32p->op_nodeid = p->op_nodeid;
-	s32p->op_namelen = p->op_namelen;
-	s32p->op_name = (netbsd32_charp)(u_long)p->op_name;
-	s32p->op_buflen = p->op_buflen;
-	s32p->op_buf = (netbsd32_charp)(u_long)p->op_buf;
-}
-
-#endif
 
 static __inline void
 netbsd32_from_partinfo(p, s32p)
@@ -537,21 +420,6 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	else if (com&IOC_VOID)
 		*(caddr_t *)data32 = (caddr_t)(u_long)SCARG(uap, data);
 
-/* we define some handy macros here... */
-#define IOCTL_STRUCT_CONV_TO(cmd, type)	\
-		com = cmd; \
-		size = IOCPARM_LEN(com); \
-		if (size > sizeof(stkbuf)) \
-			data = memp = malloc(size, M_IOCTLOPS, M_WAITOK); \
-		else \
-			data = (caddr_t)stkbuf; \
-		__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
-			data32, (struct type *)data, com); \
-		error = (*fp->f_ops->fo_ioctl)(fp, com, data, p); \
-		__CONCAT(netbsd32_from_, type)((struct type *)data, \
-			(struct __CONCAT(netbsd32_, type) *)data32); \
-		break
-
 	/*
 	 * convert various structures, pointers, and other objects that
 	 * change size from 32 bit -> 64 bit, for all ioctl commands.
@@ -603,28 +471,6 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data32, p);
 		*(int *)data32 = -*(int *)data32;
 		break;
-
-#ifdef __sparc__
-/*
- * Here are calls that need explicit conversion.
- */
-	case FBIOPUTCMAP32:
-		IOCTL_STRUCT_CONV_TO(FBIOPUTCMAP, fbcmap);
-	case FBIOGETCMAP32:
-		IOCTL_STRUCT_CONV_TO(FBIOGETCMAP, fbcmap);
-
-	case FBIOSCURSOR32:
-		IOCTL_STRUCT_CONV_TO(FBIOSCURSOR, fbcursor);
-	case FBIOGCURSOR32:
-		IOCTL_STRUCT_CONV_TO(FBIOGCURSOR, fbcursor);
-
-	case OPIOCGET32:
-		IOCTL_STRUCT_CONV_TO(OPIOCGET, opiocdesc);
-	case OPIOCSET32:
-		IOCTL_STRUCT_CONV_TO(OPIOCSET, opiocdesc);
-	case OPIOCNEXTPROP32:
-		IOCTL_STRUCT_CONV_TO(OPIOCNEXTPROP, opiocdesc);
-#endif
 
 	case DIOCGPART32:
 		IOCTL_STRUCT_CONV_TO(DIOCGPART, partinfo);
@@ -718,7 +564,11 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		IOCTL_STRUCT_CONV_TO(SIOCGETSGCNT, sioc_sg_req);
 
 	default:
+#ifdef NETBSD32_MD_IOCTL
+		error = netbsd32_md_ioctl(fp, com, data32, p);
+#else
 		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, p);
+#endif
 		break;
 	}
 

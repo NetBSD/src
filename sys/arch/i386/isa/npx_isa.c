@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.2.2.1 2002/01/08 00:25:37 nathanw Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.2.2.2 2002/01/11 23:38:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.2.2.1 2002/01/08 00:25:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.2.2.2 2002/01/11 23:38:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,25 +68,43 @@ npx_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	bus_space_handle_t ioh;
 	enum npx_type result;
 
-	ia->ia_iosize = 16;
-	ia->ia_msize = 0;
-
-	if (bus_space_map(ia->ia_iot, 0xf0, ia->ia_iosize, 0, &ioh) != 0)
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
 		return (0);
 
-	result = npxprobe1(ia->ia_iot, ioh, ia->ia_irq);
-	if (result != NPX_INTERRUPT)
-		ia->ia_irq = IRQUNK;	/* zap the interrupt */
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
 
-	bus_space_unmap(ia->ia_iot, ioh, ia->ia_iosize);
+	if (bus_space_map(ia->ia_iot, 0xf0, 16, 0, &ioh) != 0)
+		return (0);
 
-	/*
-	 * Remember our result -- we don't want to have to npxprobe1()
-	 * again (especially if we've zapped the IRQ).
-	 */
-	ia->ia_aux = (void *)(u_long)result;
+	result = npxprobe1(ia->ia_iot, ioh, ia->ia_irq[0].ir_irq);
 
-	return (result != NPX_NONE);
+	bus_space_unmap(ia->ia_iot, ioh, 16);
+
+	if (result != NPX_NONE) {
+		/*
+		 * Remember our result -- we don't want to have to npxprobe1()
+		 * again (especially if we've zapped the IRQ).
+		 */
+		ia->ia_aux = (void *)(u_long)result;
+
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_addr = 0xf0;
+		ia->ia_io[0].ir_size = 16;
+
+		if (result != NPX_INTERRUPT)
+			ia->ia_nirq = 0;	/* zap the interrupt */
+		else
+			ia->ia_nirq = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
+		return (1);
+	}
+
+	return (0);
 }
 
 void
@@ -97,7 +115,7 @@ npx_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = ia->ia_iot;
 
-	if (bus_space_map(sc->sc_iot, 0xf0, ia->ia_iosize, 0, &sc->sc_ioh)) {
+	if (bus_space_map(sc->sc_iot, 0xf0, 16, 0, &sc->sc_ioh)) {
 		printf("\n");
 		panic("npxattach: unable to map I/O space");
 	}
@@ -108,7 +126,7 @@ npx_isa_attach(struct device *parent, struct device *self, void *aux)
 	case NPX_INTERRUPT:
 		printf("\n");
 		lcr0(rcr0() & ~CR0_NE);
-		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 		    IST_EDGE, IPL_NONE, npxintr, 0);
 		break;
 	case NPX_EXCEPTION:

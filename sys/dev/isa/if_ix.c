@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.8.2.3 2002/01/08 00:30:27 nathanw Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.8.2.4 2002/01/11 23:39:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.8.2.3 2002/01/08 00:30:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.8.2.4 2002/01/11 23:39:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -531,9 +531,22 @@ ix_match(parent, cf, aux)
 	struct isa_attach_args * const ia = aux;
 	short irq_translate[] = {0, 0x09, 0x03, 0x04, 0x05, 0x0a, 0x0b, 0};
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	iot = ia->ia_iot;
 
-	if (bus_space_map(iot, ia->ia_iobase,
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr,
 			  IX_IOSIZE, 0, &ioh) != 0) {
 		DPRINTF(("Can't map io space at 0x%x\n", ia->ia_iobase));
 		return (0);
@@ -615,18 +628,16 @@ ix_match(parent, cf, aux)
 		goto out;
 	}
 
-	if (ia->ia_maddr == ISACF_IOMEM_DEFAULT)
-		ia->ia_maddr = maddr;
-	else if (ia->ia_maddr != maddr) {
+	if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	    ia->ia_iomem[0].ir_addr != maddr) {
 		DPRINTF((
 		  "ix_match: memaddr of board @ 0x%x doesn't match config\n",
 		  ia->ia_iobase));
 		goto out;
 	}
 
-	if (ia->ia_msize == ISACF_IOSIZ_DEFAULT)
-		ia->ia_msize = msize;
-	else if (ia->ia_msize != msize) {
+	if (ia->ia_iomem[0].ir_size != ISACF_IOSIZ_DEFAULT &&
+	    ia->ia_iomem[0].ir_size != msize) {
 		DPRINTF((
 		   "ix_match: memsize of board @ 0x%x doesn't match config\n",
 		   ia->ia_iobase));
@@ -655,7 +666,7 @@ ix_match(parent, cf, aux)
 	if (msize != 0 && msize != 16384) {
 		/* Set board up with memory-mapping info */
 	adjust = IX_MCTRL_FMCS16 | (pg & 0x3) << 2;
-	decode = ((1 << (ia->ia_msize / 16384)) - 1) << pg;
+	decode = ((1 << (ia->ia_iomem[0].ir_size / 16384)) - 1) << pg;
 	edecode = ((~decode >> 4) & 0xF0) | (decode >> 8);
 
 	bus_space_write_1(iot, ioh, IX_MEMDEC, decode & 0xFF);
@@ -669,15 +680,14 @@ ix_match(parent, cf, aux)
 	/*
 	 * Get the encoded interrupt number from the EEPROM, check it
 	 * against the passed in IRQ.  Issue a warning if they do not
-	 * match, and fail the probe.  If irq is 'IRQUNK' then we
+	 * match, and fail the probe.  If irq is 'ISACF_IRQ_DEFAULT' then we
 	 * use the EEPROM irq, and continue.
 	 */
 	irq_encoded = ix_read_eeprom(iot, ioh, IX_EEPROM_CONFIG1);
 	irq_encoded = (irq_encoded & IX_EEPROM_IRQ) >> IX_EEPROM_IRQ_SHIFT;
 	irq = irq_translate[irq_encoded];
-	if (ia->ia_irq == ISACF_IRQ_DEFAULT)
-		ia->ia_irq = irq;
-	else if (irq != ia->ia_irq) {
+	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+	    irq != ia->ia_irq[0].ir_irq) {
 		DPRINTF(("board IRQ %d does not match config\n", irq));
 		goto out;
 	}
@@ -695,7 +705,17 @@ ix_match(parent, cf, aux)
 	delay(100);
 
 	rv = 1;
-	ia->ia_iosize = IX_IOSIZE;
+
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = IX_IOSIZE;
+
+	ia->ia_niomem = 1;
+	ia->ia_iomem[0].ir_addr = maddr;
+	ia->ia_iomem[0].ir_size = msize;
+
+	ia->ia_nirq = 1;
+	ia->ia_irq[0].ir_irq = irq;
+
 	DPRINTF(("ix_match: found board @ 0x%x\n", ia->ia_iobase));
 
 out:
@@ -730,25 +750,25 @@ ix_attach(parent, self, aux)
 	 * disable shared memory access if the board is in 16K mode.  If 
 	 * no memory is mapped, we have no choice but to use PIO
 	 */
-	isc->use_pio = (ia->ia_msize <= (16 * 1024));
+	isc->use_pio = (ia->ia_iomem[0].ir_size <= (16 * 1024));
 
-	if (bus_space_map(iot, ia->ia_iobase,
-			  ia->ia_iosize, 0, &ioh) != 0) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr,
+			  ia->ia_io[0].ir_size, 0, &ioh) != 0) {
 
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
-			  sc->sc_dev.dv_xname, ia->ia_iobase,
-			  ia->ia_iobase + ia->ia_iosize - 1));
+			  sc->sc_dev.dv_xname, ia->ia_[0].ir_addr,
+			  ia->ia_io[0].ir_addr + ia->ia_io[0].ir_size - 1));
 		return;
 	}
 
 	/* We map memory even if using PIO so something else doesn't grab it */
-	if (ia->ia_msize) {
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr,
-			  ia->ia_msize, 0, &memh) != 0) {
+	if (ia->ia_iomem[0].ir_size) {
+	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
+			  ia->ia_iomem[0].ir_size, 0, &memh) != 0) {
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
-			sc->sc_dev.dv_xname, ia->ia_maddr,
-			ia->ia_maddr + ia->ia_msize - 1));
-		bus_space_unmap(iot, ioh, ia->ia_iosize);
+			sc->sc_dev.dv_xname, ia->ia_iomem[0].ir_addr,
+			ia->ia_iomem[0].ir_addr + ia->ia_iomem[0].ir_size - 1));
+		bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 		return;
 	}
 	}
@@ -885,7 +905,7 @@ ix_attach(parent, self, aux)
 		if (memsize == 0)  {
 			DPRINTF(("\n%s: can't determine size of on-card RAM\n",
 				sc->sc_dev.dv_xname));
-			bus_space_unmap(iot, ioh, ia->ia_iosize);
+			bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 			return;
 		}
 
@@ -898,7 +918,7 @@ ix_attach(parent, self, aux)
 	sc->bt = ia->ia_memt;
 	sc->bh = memh;
 
-	sc->sc_msize = ia->ia_msize;
+	sc->sc_msize = ia->ia_iomem[0].ir_size;
 	sc->sc_maddr = (void *)memh;
 	}
 
@@ -949,10 +969,10 @@ ix_attach(parent, self, aux)
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: Can't talk to i82586!\n",
 			sc->sc_dev.dv_xname));
-		bus_space_unmap(iot, ioh, ia->ia_iosize);
+		bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 
-		if (ia->ia_msize)
-		bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
+		if (ia->ia_iomem[0].ir_size)
+		bus_space_unmap(ia->ia_memt, memh, ia->ia_iomem[0].ir_size);
 		return;
 	}
 
@@ -983,7 +1003,8 @@ ix_attach(parent, self, aux)
 			  irq_encoded | IX_IRQ_ENABLE);
 
 	/* Flush all writes to registers */
-	bus_space_barrier(iot, ioh, 0, ia->ia_iosize, BUS_SPACE_BARRIER_WRITE);
+	bus_space_barrier(iot, ioh, 0, ia->ia_io[0].ir_size,
+	    BUS_SPACE_BARRIER_WRITE);
 
 	isc->irq_encoded = irq_encoded;
 
@@ -993,8 +1014,8 @@ ix_attach(parent, self, aux)
 	if (isc->use_pio)
 		printf("%s: unsupported memory config, using PIO to access %d bytes of memory\n", sc->sc_dev.dv_xname, sc->sc_msize);
 
-	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-					IPL_NET, i82586_intr, sc);
+	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, i82586_intr, sc);
 	if (isc->sc_ih == NULL)
 		DPRINTF(("\n%s: can't establish interrupt\n",
 			sc->sc_dev.dv_xname));

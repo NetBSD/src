@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.7.2.8 2002/01/09 00:36:29 nathanw Exp $	*/
+/*	$NetBSD: wireg.h,v 1.7.2.9 2002/01/11 23:39:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999

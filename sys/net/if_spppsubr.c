@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.20.2.6 2002/01/08 00:33:53 nathanw Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.20.2.7 2002/01/11 23:39:44 nathanw Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.20.2.6 2002/01/08 00:33:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.20.2.7 2002/01/11 23:39:44 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.20.2.6 2002/01/08 00:33:53 nathanw
 #include "opt_ns.h"
 
 #include <sys/param.h>
-
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/sockio.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.20.2.6 2002/01/08 00:33:53 nathanw
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-
+#include <sys/callout.h>
 #include <sys/md5.h>
 
 #include <net/if.h>
@@ -82,8 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.20.2.6 2002/01/08 00:33:53 nathanw
 #endif
 
 #include <net/if_sppp.h>
+#include <net/if_spppvar.h>
 
-#define MAXALIVECNT     3               /* max. alive packets */
+#define MAXALIVECNT     		3	/* max. alive packets */
+#define DEFAULT_MAX_AUTH_FAILURES	5	/* max. auth. failures */
 
 /*
  * Interface flags that can be set in an ifconfig command.
@@ -356,11 +358,10 @@ static const char *sppp_ipcp_opt_name(u_char opt);
 static const char *sppp_ipv6cp_opt_name(u_char opt);
 #endif
 static const char *sppp_lcp_opt_name(u_char opt);
-static const char *sppp_phase_name(enum ppp_phase phase);
+static const char *sppp_phase_name(int phase);
 static const char *sppp_proto_name(u_short proto);
 static const char *sppp_state_name(int state);
 static int sppp_params(struct sppp *sp, int cmd, void *data);
-static int sppp_strnlen(u_char *p, int max);
 static void sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
 			      u_int32_t *srcmask);
 static void sppp_keepalive(void *dummy);
@@ -577,18 +578,18 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		m_freem (m);
 		return;
 	case PPP_PAP:
-		if (sp->pp_phase >= PHASE_AUTHENTICATE)
+		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE)
 			sppp_pap_input(sp, m);
 		m_freem (m);
 		return;
 	case PPP_CHAP:
-		if (sp->pp_phase >= PHASE_AUTHENTICATE)
+		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE)
 			sppp_chap_input(sp, m);
 		m_freem (m);
 		return;
 #ifdef INET
 	case PPP_IPCP:
-		if (sp->pp_phase == PHASE_NETWORK)
+		if (sp->pp_phase == SPPP_PHASE_NETWORK)
 			sppp_cp_input(&ipcp, sp, m);
 		m_freem (m);
 		return;
@@ -596,12 +597,13 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPCP] == STATE_OPENED) {
 			schednetisr (NETISR_IP);
 			inq = &ipintrq;
+			sp->pp_last_activity = time.tv_sec;
 		}
 		break;
 #endif
 #ifdef INET6
 	case PPP_IPV6CP:
-		if (sp->pp_phase == PHASE_NETWORK)
+		if (sp->pp_phase == SPPP_PHASE_NETWORK)
 			sppp_cp_input(&ipv6cp, sp, m);
 		m_freem (m);
 		return;
@@ -610,13 +612,14 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
 			schednetisr (NETISR_IPV6);
 			inq = &ip6intrq;
+			sp->pp_last_activity = time.tv_sec;
 		}
 		break;
 #endif
 #ifdef IPX
 	case PPP_IPX:
 		/* IPX IPXCP not implemented yet */
-		if (sp->pp_phase == PHASE_NETWORK) {
+		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			schednetisr (NETISR_IPX);
 			inq = &ipxintrq;
 		}
@@ -625,7 +628,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef NS
 	case PPP_XNS:
 		/* XNS IDPCP not implemented yet */
-		if (sp->pp_phase == PHASE_NETWORK) {
+		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			schednetisr (NETISR_NS);
 			inq = &nsintrq;
 		}
@@ -634,7 +637,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef ISO
 	case PPP_ISO:
 		/* OSI NLCP not implemented yet */
-		if (sp->pp_phase == PHASE_NETWORK) {
+		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			schednetisr (NETISR_ISO);
 			inq = &clnlintrq;
 		}
@@ -676,6 +679,8 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splnet();
+
+	sp->pp_last_activity = time.tv_sec;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
@@ -919,14 +924,20 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_cpq.ifq_maxlen = 20;
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
+	sp->pp_last_activity = 0;
+	sp->pp_idle_timeout = 0;
 	memset(&sp->pp_seq[0], 0, sizeof(sp->pp_seq));
 	memset(&sp->pp_rseq[0], 0, sizeof(sp->pp_rseq));
-	sp->pp_phase = PHASE_DEAD;
+	sp->pp_auth_failures = 0;
+	sp->pp_max_auth_fail = DEFAULT_MAX_AUTH_FAILURES;
+	sp->pp_phase = SPPP_PHASE_DEAD;
 	sp->pp_up = lcp.Up;
 	sp->pp_down = lcp.Down;
 
 	if_alloc_sadl(ifp);
 
+	memset(&sp->myauth, 0, sizeof sp->myauth);
+	memset(&sp->hisauth, 0, sizeof sp->hisauth);
 	sppp_lcp_init(sp);
 	sppp_ipcp_init(sp);
 	sppp_ipv6cp_init(sp);
@@ -956,6 +967,12 @@ sppp_detach(struct ifnet *ifp)
 		callout_stop(&sp->ch[i]);
 	}
 	callout_stop(&sp->pap_my_to_ch);
+
+	/* free authentication info */
+	if (sp->myauth.name) free(sp->myauth.name, M_DEVBUF);
+	if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
+	if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
+	if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
 
 	if_free_sadl(ifp);
 }
@@ -1031,7 +1048,7 @@ sppp_pick(struct ifnet *ifp)
 
 	m = sp->pp_cpq.ifq_head;
 	if (m == NULL &&
-	    (sp->pp_phase == PHASE_NETWORK ||
+	    (sp->pp_phase == SPPP_PHASE_NETWORK ||
 	     (sp->pp_flags & PP_CISCO) != 0))
 		if ((m = sp->pp_fastq.ifq_head) == NULL)
 			m = sp->pp_if.if_snd.ifq_head;
@@ -1117,8 +1134,22 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCDELMULTI:
 		break;
 
-	case SIOCGIFGENERIC:
-	case SIOCSIFGENERIC:
+	case SPPPSETAUTHCFG:
+	case SPPPSETLCPCFG:
+	case SPPPSETIDLETO:
+	case SPPPSETAUTHFAILURE:
+	{
+		struct proc *p = curproc;		/* XXX */
+
+		if ((rv = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
+	}
+	/* FALLTHROUGH */
+	case SPPPGETAUTHCFG:
+	case SPPPGETLCPCFG:
+	case SPPPGETSTATUS:
+	case SPPPGETIDLETO:
+	case SPPPGETAUTHFAILURES:
 		rv = sppp_params(sp, cmd, data);
 		break;
 
@@ -2139,7 +2170,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			}
 			/*
 			 * Remote want us to authenticate, remember this,
-			 * so we stay in PHASE_AUTHENTICATE after LCP got
+			 * so we stay in SPPP_PHASE_AUTHENTICATE after LCP got
 			 * up.
 			 */
 			sp->pp_flags |= PP_NEEDAUTH;
@@ -2332,10 +2363,10 @@ sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 			/*
 			 * Peer doesn't want to authenticate himself,
 			 * deny unless this is a dialout call, and
-			 * AUTHFLAG_NOCALLOUT is set.
+			 * SPPP_AUTHFLAG_NOCALLOUT is set.
 			 */
 			if ((sp->pp_flags & PP_CALLIN) == 0 &&
-			    (sp->hisauth.flags & AUTHFLAG_NOCALLOUT) != 0) {
+			    (sp->hisauth.flags & SPPP_AUTHFLAG_NOCALLOUT) != 0) {
 				if (debug)
 					addlog(" [don't insist on auth "
 					       "for callout]");
@@ -2454,9 +2485,9 @@ sppp_lcp_tlu(struct sppp *sp)
 
 	if ((sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0 ||
 	    (sp->pp_flags & PP_NEEDAUTH) != 0)
-		sp->pp_phase = PHASE_AUTHENTICATE;
+		sp->pp_phase = SPPP_PHASE_AUTHENTICATE;
 	else
-		sp->pp_phase = PHASE_NETWORK;
+		sp->pp_phase = SPPP_PHASE_NETWORK;
 
 	if(debug)
 	{
@@ -2475,7 +2506,7 @@ sppp_lcp_tlu(struct sppp *sp)
 		if ((cps[i])->flags & CP_AUTH)
 			(cps[i])->Open(sp);
 
-	if (sp->pp_phase == PHASE_NETWORK) {
+	if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 		/* Notify all NCPs. */
 		for (i = 0; i < IDX_COUNT; i++)
 			if ((cps[i])->flags & CP_NCP)
@@ -2491,7 +2522,7 @@ sppp_lcp_tlu(struct sppp *sp)
 	if (sp->pp_chg)
 		sp->pp_chg(sp, (int)sp->pp_phase);
 	
-	if (sp->pp_phase == PHASE_NETWORK)
+	if (sp->pp_phase == SPPP_PHASE_NETWORK)
 		/* if no NCP is starting, close down */
 		sppp_lcp_check_and_close(sp);
 }
@@ -2503,7 +2534,7 @@ sppp_lcp_tld(struct sppp *sp)
 	int i;
 	u_int32_t mask;
 
-	sp->pp_phase = PHASE_TERMINATE;
+	sp->pp_phase = SPPP_PHASE_TERMINATE;
 
 	if(debug)
 	{
@@ -2529,7 +2560,14 @@ sppp_lcp_tls(struct sppp *sp)
 {
 	STDDCL;
 
-	sp->pp_phase = PHASE_ESTABLISH;
+	if (sp->pp_max_auth_fail != 0 && sp->pp_auth_failures >= sp->pp_max_auth_fail) {
+	    printf("%s: authentication failed %d times, not retrying again\n",
+		sp->pp_if.if_xname, sp->pp_auth_failures);
+	    if_down(&sp->pp_if);
+	    return;
+	}
+
+	sp->pp_phase = SPPP_PHASE_ESTABLISH;
 
 	if(debug)
 	{
@@ -2547,7 +2585,7 @@ sppp_lcp_tlf(struct sppp *sp)
 {
 	STDDCL;
 
-	sp->pp_phase = PHASE_DEAD;
+	sp->pp_phase = SPPP_PHASE_DEAD;
 
 	if(debug)
 	{
@@ -2621,7 +2659,7 @@ static void
 sppp_lcp_check_and_close(struct sppp *sp)
 {
 
-	if (sp->pp_phase < PHASE_NETWORK)
+	if (sp->pp_phase < SPPP_PHASE_NETWORK)
 		/* don't bother, we are already going down */
 		return;
 
@@ -3250,7 +3288,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		case IPV6CP_OPT_IFID:
 			memset(&desiredaddr, 0, sizeof(desiredaddr));
 			bcopy(&p[2], &desiredaddr.s6_addr[8], 8);
-			collision = (bcmp(&desiredaddr.s6_addr[8],
+			collision = (memcmp(&desiredaddr.s6_addr[8],
 					&myaddr.s6_addr[8], 8) == 0);
 			nohisaddr = IN6_IS_ADDR_UNSPECIFIED(&desiredaddr);
 
@@ -3669,7 +3707,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	STDDCL;
 	struct lcp_header *h;
 	int len, x;
-	u_char *value, *name, digest[AUTHKEYLEN], dsize;
+	u_char *value, *name, digest[sizeof(sp->myauth.challenge)], dsize;
 	int value_len, name_len;
 	MD5_CTX ctx;
 
@@ -3688,6 +3726,13 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	switch (h->type) {
 	/* challenge, failure and success are his authproto */
 	case CHAP_CHALLENGE:
+		if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
+		    /* can't do anything usefull */
+		    sp->pp_auth_failures++;
+		    printf(SPP_FMT "chap input without my name and my secret being set\n",
+		    	SPP_ARGS(ifp));
+		    break;
+		}
 		value = 1 + (u_char*)(h+1);
 		value_len = value[-1];
 		name = value + value_len;
@@ -3722,8 +3767,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		/* Compute reply value. */
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
-		MD5Update(&ctx, sp->myauth.secret,
-			  sppp_strnlen(sp->myauth.secret, AUTHKEYLEN));
+		MD5Update(&ctx, sp->myauth.secret, strlen(sp->myauth.secret));
 		MD5Update(&ctx, value, value_len);
 		MD5Final(digest, &ctx);
 		dsize = sizeof digest;
@@ -3731,7 +3775,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		sppp_auth_send(&chap, sp, CHAP_RESPONSE, h->ident,
 			       sizeof dsize, (const char *)&dsize,
 			       sizeof digest, digest,
-			       (size_t)sppp_strnlen(sp->myauth.name, AUTHNAMELEN),
+			       strlen(sp->myauth.name),
 			       sp->myauth.name,
 			       0);
 		break;
@@ -3747,6 +3791,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			addlog("\n");
 		}
 		x = splnet();
+		sp->pp_auth_failures = 0;
 		sp->pp_flags &= ~PP_NEEDAUTH;
 		if (sp->myauth.proto == PPP_CHAP &&
 		    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) &&
@@ -3764,6 +3809,9 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		break;
 
 	case CHAP_FAILURE:
+		x = splnet();
+		sp->pp_auth_failures++;
+		splx(x);
 		if (debug) {
 			log(LOG_INFO, SPP_FMT "chap failure",
 			    SPP_ARGS(ifp));
@@ -3780,6 +3828,12 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 
 	/* response is my authproto */
 	case CHAP_RESPONSE:
+		if (sp->hisauth.secret == NULL) {
+		    /* can't do anything usefull */
+		    printf(SPP_FMT "chap input without his secret being set\n",
+		    	SPP_ARGS(ifp));
+		    break;
+		}
 		value = 1 + (u_char*)(h+1);
 		value_len = value[-1];
 		name = value + value_len;
@@ -3807,16 +3861,18 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 				    h->ident, sp->confid[IDX_CHAP]);
 			break;
 		}
-		if (name_len != sppp_strnlen(sp->hisauth.name, AUTHNAMELEN)
-		    || bcmp(name, sp->hisauth.name, name_len) != 0) {
+		if (sp->hisauth.name != NULL && 
+		    (name_len != strlen(sp->hisauth.name)
+		    || memcmp(name, sp->hisauth.name, name_len) != 0)) {
 			log(LOG_INFO, SPP_FMT "chap response, his name ",
 			    SPP_ARGS(ifp));
 			sppp_print_string(name, name_len);
 			addlog(" != expected ");
 			sppp_print_string(sp->hisauth.name,
-					  sppp_strnlen(sp->hisauth.name, AUTHNAMELEN));
+					  strlen(sp->hisauth.name));
 			addlog("\n");
-		}    
+		    goto chap_failure;
+		}
 		if (debug) {
 			log(LOG_DEBUG, SPP_FMT "chap input(%s) "
 			    "<%s id=0x%x len=%d name=",
@@ -3829,35 +3885,40 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_bytes(value, value_len);
 			addlog(">\n");
 		}
-		if (value_len != AUTHKEYLEN) {
+		if (value_len != sizeof(sp->myauth.challenge)) {
 			if (debug)
 				log(LOG_DEBUG,
 				    SPP_FMT "chap bad hash value length: "
-				    "%d bytes, should be %d\n",
+				    "%d bytes, should be %ld\n",
 				    SPP_ARGS(ifp), value_len,
-				    AUTHKEYLEN);
-			break;
+				    (long) sizeof(sp->myauth.challenge));
+			goto chap_failure;
 		}
 
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
 		MD5Update(&ctx, sp->hisauth.secret,
-			  sppp_strnlen(sp->hisauth.secret, AUTHKEYLEN));
-		MD5Update(&ctx, sp->myauth.challenge, AUTHKEYLEN);
+			  strlen(sp->hisauth.secret));
+		MD5Update(&ctx, sp->myauth.challenge, sizeof(sp->myauth.challenge));
 		MD5Final(digest, &ctx);
 
 #define FAILMSG "Failed..."
 #define SUCCMSG "Welcome!"
 
 		if (value_len != sizeof digest ||
-		    bcmp(digest, value, value_len) != 0) {
+		    memcmp(digest, value, value_len) != 0) {
+chap_failure:
 			/* action scn, tld */
+			x = splnet();
+			sp->pp_auth_failures++;
+			splx(x);
 			sppp_auth_send(&chap, sp, CHAP_FAILURE, h->ident,
 				       sizeof(FAILMSG) - 1, (u_char *)FAILMSG,
 				       0);
 			chap.tld(sp);
 			break;
 		}
+		sp->pp_auth_failures = 0;
 		/* action sca, perhaps tlu */
 		if (sp->state[IDX_CHAP] == STATE_REQ_SENT ||
 		    sp->state[IDX_CHAP] == STATE_OPENED)
@@ -3972,7 +4033,7 @@ sppp_chap_tlu(struct sppp *sp)
 	 * initial challenge-response exchange has taken place.
 	 * Provide for an option to avoid rechallenges.
 	 */
-	if ((sp->hisauth.flags & AUTHFLAG_NORECHALLENGE) == 0) {
+	if ((sp->hisauth.flags & SPPP_AUTHFLAG_NORECHALLENGE) == 0) {
 		/*
 		 * Compute the re-challenge timeout.  This will yield
 		 * a number between 300 and 810 seconds.
@@ -3986,14 +4047,15 @@ sppp_chap_tlu(struct sppp *sp)
 		log(LOG_DEBUG,
 		    SPP_FMT "chap %s, ",
 		    SPP_ARGS(ifp),
-		    sp->pp_phase == PHASE_NETWORK? "reconfirmed": "tlu");
-		if ((sp->hisauth.flags & AUTHFLAG_NORECHALLENGE) == 0)
+		    sp->pp_phase == SPPP_PHASE_NETWORK? "reconfirmed": "tlu");
+		if ((sp->hisauth.flags & SPPP_AUTHFLAG_NORECHALLENGE) == 0)
 			addlog("next re-challenge in %d seconds\n", i);
 		else
 			addlog("re-challenging supressed\n");
 	}
 
 	x = splnet();
+	sp->pp_auth_failures = 0;
 	/* indicate to LCP that we need to be closed down */
 	sp->lcp.protos |= (1 << IDX_CHAP);
 
@@ -4012,7 +4074,7 @@ sppp_chap_tlu(struct sppp *sp)
 	 * If we are already in phase network, we are done here.  This
 	 * is the case if this is a dummy tlu event after a re-challenge.
 	 */
-	if (sp->pp_phase != PHASE_NETWORK)
+	if (sp->pp_phase != SPPP_PHASE_NETWORK)
 		sppp_phase_network(sp);
 }
 
@@ -4036,6 +4098,13 @@ sppp_chap_scr(struct sppp *sp)
 	u_int32_t *ch, seed;
 	u_char clen;
 
+	if (sp->myauth.name == NULL) {
+	    /* can't do anything usefull */
+	    printf(SPP_FMT "chap starting without my name being set\n",
+	    	SPP_ARGS(&sp->pp_if));
+	    return;
+	}
+
 	/* Compute random challenge. */
 	ch = (u_int32_t *)sp->myauth.challenge;
 	microtime(&tv);
@@ -4044,14 +4113,14 @@ sppp_chap_scr(struct sppp *sp)
 	ch[1] = seed ^ random();
 	ch[2] = seed ^ random();
 	ch[3] = seed ^ random();
-	clen = AUTHKEYLEN;
+	clen = 16;	/* 4 * sizeof(u_int32_t) */
 
 	sp->confid[IDX_CHAP] = ++sp->pp_seq[IDX_CHAP];
 
 	sppp_auth_send(&chap, sp, CHAP_CHALLENGE, sp->confid[IDX_CHAP],
 		       sizeof clen, (const char *)&clen,
-		       (size_t)AUTHKEYLEN, sp->myauth.challenge,
-		       (size_t)sppp_strnlen(sp->myauth.name, AUTHNAMELEN),
+		       sizeof(sp->myauth.challenge), sp->myauth.challenge,
+		       strlen(sp->myauth.name),
 		       sp->myauth.name,
 		       0);
 }
@@ -4077,7 +4146,8 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	STDDCL;
 	struct lcp_header *h;
 	int len, x;
-	u_char *name, *passwd, mlen;
+	u_char mlen;
+	char *name, *passwd;
 	int name_len, passwd_len;
 
 	len = m->m_pkthdr.len;
@@ -4094,6 +4164,12 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	switch (h->type) {
 	/* PAP request is my authproto */
 	case PAP_REQ:
+		if (sp->hisauth.name == NULL || sp->hisauth.secret == NULL) {
+		    /* can't do anything usefull */
+		    printf(SPP_FMT "pap request without his name and his secret being set\n",
+		    	SPP_ARGS(ifp));
+		    break;
+		}
 		name = 1 + (u_char*)(h+1);
 		name_len = name[-1];
 		passwd = name + name_len + 1;
@@ -4123,11 +4199,10 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_string((char*)passwd, passwd_len);
 			addlog(">\n");
 		}
-		if (name_len > AUTHNAMELEN ||
-		    passwd_len > AUTHKEYLEN ||
-		    bcmp(name, sp->hisauth.name, name_len) != 0 ||
-		    bcmp(passwd, sp->hisauth.secret, passwd_len) != 0) {
+		if (memcmp(name, sp->hisauth.name, name_len) != 0 ||
+		    memcmp(passwd, sp->hisauth.secret, passwd_len) != 0) {
 			/* action scn, tld */
+			sp->pp_auth_failures++;
 			mlen = sizeof(FAILMSG) - 1;
 			sppp_auth_send(&pap, sp, PAP_NAK, h->ident,
 				       sizeof mlen, (const char *)&mlen,
@@ -4165,6 +4240,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			addlog("\n");
 		}
 		x = splnet();
+		sp->pp_auth_failures = 0;
 		sp->pp_flags &= ~PP_NEEDAUTH;
 		if (sp->myauth.proto == PPP_PAP &&
 		    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) &&
@@ -4183,6 +4259,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 
 	case PAP_NAK:
 		callout_stop(&sp->pap_my_to_ch);
+		sp->pp_auth_failures++;
 		if (debug) {
 			log(LOG_INFO, SPP_FMT "pap failure",
 			    SPP_ARGS(ifp));
@@ -4319,6 +4396,7 @@ sppp_pap_tlu(struct sppp *sp)
 		    SPP_ARGS(ifp), pap.name);
 
 	x = splnet();
+	sp->pp_auth_failures = 0;
 	/* indicate to LCP that we need to be closed down */
 	sp->lcp.protos |= (1 << IDX_PAP);
 
@@ -4354,15 +4432,22 @@ sppp_pap_scr(struct sppp *sp)
 {
 	u_char idlen, pwdlen;
 
+	if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
+	    /* can't do anything usefull */
+	    printf(SPP_FMT "pap starting without my name and secret being set\n",
+	    	SPP_ARGS(&sp->pp_if));
+	    return;
+	}
+	
 	sp->confid[IDX_PAP] = ++sp->pp_seq[IDX_PAP];
-	pwdlen = sppp_strnlen(sp->myauth.secret, AUTHKEYLEN);
-	idlen = sppp_strnlen(sp->myauth.name, AUTHNAMELEN);
+	pwdlen = strlen(sp->myauth.secret);
+	idlen = strlen(sp->myauth.name);
 
 	sppp_auth_send(&pap, sp, PAP_REQ, sp->confid[IDX_PAP],
 		       sizeof idlen, (const char *)&idlen,
-		       (size_t)idlen, sp->myauth.name,
+		       idlen, sp->myauth.name,
 		       sizeof pwdlen, (const char *)&pwdlen,
-		       (size_t)pwdlen, sp->myauth.secret,
+		       pwdlen, sp->myauth.secret,
 		       0);
 }
 /*
@@ -4468,10 +4553,25 @@ sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
 	int s;
+	time_t now;
 
 	s = splnet();
+	now = time.tv_sec;
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		struct ifnet *ifp = &sp->pp_if;
+
+		/* check idle timeout */
+		if ((sp->pp_idle_timeout != 0) && (ifp->if_flags & IFF_RUNNING)) {
+		    /* idle timeout is enabled for this interface */
+		    if ((now-sp->pp_last_activity) >= sp->pp_idle_timeout) {
+		    	if (ifp->if_flags & IFF_DEBUG)
+			    printf("%s: no activitiy for %lu seconds\n",
+				sp->pp_if.if_xname,
+				(unsigned long)(now-sp->pp_last_activity));
+			lcp.Close(sp);
+			continue;
+		    }
+		}
 
 		/* Keepalive mode disabled or channel down? */
 		if (! (sp->pp_flags & PP_KEEPALIVE) ||
@@ -4480,7 +4580,7 @@ sppp_keepalive(void *dummy)
 
 		/* No keepalive in PPP mode if LCP not opened yet. */
 		if (! (sp->pp_flags & PP_CISCO) &&
-		    sp->pp_phase < PHASE_AUTHENTICATE)
+		    sp->pp_phase < SPPP_PHASE_AUTHENTICATE)
 			continue;
 
 		if (sp->pp_alivecnt == MAXALIVECNT) {
@@ -4509,7 +4609,7 @@ sppp_keepalive(void *dummy)
 		if (sp->pp_flags & PP_CISCO)
 			sppp_cisco_send (sp, CISCO_KEEPALIVE_REQ,
 			    ++sp->pp_seq[IDX_LCP], sp->pp_rseq[IDX_LCP]);
-		else if (sp->pp_phase >= PHASE_AUTHENTICATE) {
+		else if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE) {
 			int32_t nmagic = htonl (sp->lcp.magic);
 			sp->lcp.echoid = ++sp->pp_seq[IDX_LCP];
 			sppp_cp_send (sp, PPP_LCP, ECHO_REQ,
@@ -4795,104 +4895,141 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 }
 #endif /*INET6*/
 
+/*
+ * Process ioctl requests specific to the PPP interface.
+ * Permissions have already been checked.
+ */
 static int
 sppp_params(struct sppp *sp, int cmd, void *data)
 {
-	struct ifreq *ifr = (struct ifreq *)data;
-	struct spppreq spr;
-
-#if 0
-	/*
-	 * ifr->ifr_data is supposed to point to a struct spppreq.
-	 * Check the cmd word first before attempting to fetch all the
-	 * data.
-	 */
-	if ((subcmd = fuword(ifr->ifr_data)) == -1)
-		return EFAULT;
-#endif
-
-	if (copyin((caddr_t)ifr->ifr_data, &spr, sizeof spr) != 0)
-		return EFAULT;
-
-	switch (spr.cmd) {
-	case SPPPIOGDEFS:
-		if (cmd != (int)SIOCGIFGENERIC)
-			return EINVAL;
-		/*
-		 * We copy over the entire current state, but clean
-		 * out some of the stuff we don't wanna pass up.
-		 * Remember, SIOCGIFGENERIC is unprotected, and can be
-		 * called by any user.  No need to ever get PAP or
-		 * CHAP secrets back to userland anyway.
-		 */
-		bcopy(sp, &spr.defs, sizeof(struct sppp));
-		memset(spr.defs.myauth.secret, 0, AUTHKEYLEN);
-		memset(spr.defs.myauth.challenge, 0, AUTHKEYLEN);
-		memset(spr.defs.hisauth.secret, 0, AUTHKEYLEN);
-		memset(spr.defs.hisauth.challenge, 0, AUTHKEYLEN);
-		return copyout(&spr, (caddr_t)ifr->ifr_data, sizeof spr);
-
-	case SPPPIOSDEFS:
-		if (cmd != (int)SIOCSIFGENERIC)
-			return EINVAL;
-		/*
-		 * We have a very specific idea of which fields we allow
-		 * being passed back from userland, so to not clobber our
-		 * current state.  For one, we only allow setting
-		 * anything if LCP is in dead phase.  Once the LCP
-		 * negotiations started, the authentication settings must
-		 * not be changed again.  (The administrator can force an
-		 * ifconfig down in order to get LCP back into dead
-		 * phase.)
-		 *
-		 * Also, we only allow for authentication parameters to be
-		 * specified.
-		 *
-		 * XXX Should allow to set or clear pp_flags.
-		 *
-		 * Finally, if the respective authentication protocol to
-		 * be used is set differently than 0, but the secret is
-		 * passed as all zeros, we don't trash the existing secret.
-		 * This allows an administrator to change the system name
-		 * only without clobbering the secret (which he didn't get
-		 * back in a previous SPPPIOGDEFS call).  However, the
-		 * secrets are cleared if the authentication protocol is
-		 * reset to 0.
-		 */
-		if (sp->pp_phase != PHASE_DEAD)
-			return EBUSY;
-
-		if ((spr.defs.myauth.proto != 0 && spr.defs.myauth.proto != PPP_PAP &&
-		     spr.defs.myauth.proto != PPP_CHAP) ||
-		    (spr.defs.hisauth.proto != 0 && spr.defs.hisauth.proto != PPP_PAP &&
-		     spr.defs.hisauth.proto != PPP_CHAP))
-			return EINVAL;
-
-		if (spr.defs.myauth.proto == 0)
-			/* resetting myauth */
-			memset(&sp->myauth, 0, sizeof sp->myauth);
-		else {
-			/* setting/changing myauth */
-			sp->myauth.proto = spr.defs.myauth.proto;
-			bcopy(spr.defs.myauth.name, sp->myauth.name, AUTHNAMELEN);
-			if (spr.defs.myauth.secret[0] != '\0')
-				bcopy(spr.defs.myauth.secret, sp->myauth.secret,
-				      AUTHKEYLEN);
+	switch (cmd) {
+	case SPPPGETAUTHCFG:
+	    {
+		struct spppauthcfg * cfg = (struct spppauthcfg*)data;
+		cfg->myauthflags = sp->myauth.flags;
+		cfg->hisauthflags = sp->hisauth.flags;
+		strncpy(cfg->ifname, sp->pp_if.if_xname, IFNAMSIZ);
+		cfg->hisauth = 0;
+		if (sp->hisauth.proto)
+		    cfg->hisauth = sp->hisauth.proto == PPP_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
+		cfg->myauth = 0;
+		if (sp->myauth.proto)
+		    cfg->myauth = sp->myauth.proto == PPP_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
+		if (cfg->myname_length == 0) {
+		    if (sp->myauth.name != NULL)
+			cfg->myname_length = strlen(sp->myauth.name)+1;
+		} else {
+		    int rv;
+		    size_t len = strlen(sp->myauth.name);
+		    if (cfg->myname_length < len+1)
+			return ENAMETOOLONG;
+		    rv = copyout(sp->myauth.name, cfg->myname, len);
+		    if (rv) return rv;
 		}
-		if (spr.defs.hisauth.proto == 0)
-			/* resetting hisauth */
-			memset(&sp->hisauth, 0, sizeof sp->hisauth);
-		else {
-			/* setting/changing hisauth */
-			sp->hisauth.proto = spr.defs.hisauth.proto;
-			sp->hisauth.flags = spr.defs.hisauth.flags;
-			bcopy(spr.defs.hisauth.name, sp->hisauth.name, AUTHNAMELEN);
-			if (spr.defs.hisauth.secret[0] != '\0')
-				bcopy(spr.defs.hisauth.secret, sp->hisauth.secret,
-				      AUTHKEYLEN);
+		if (cfg->hisname_length == 0) {
+		    if(sp->hisauth.name != NULL)
+			cfg->hisname_length = strlen(sp->hisauth.name)+1;
+		} else {
+		    int rv;
+		    size_t len = strlen(sp->hisauth.name);
+		    if (cfg->hisname_length < len+1)
+			return ENAMETOOLONG;
+		    rv = copyout(sp->hisauth.name, cfg->hisname, len);
+		    if (rv) return rv;
 		}
-		break;
+	    }
+	    break;
+	case SPPPSETAUTHCFG:
+	    {
+		struct spppauthcfg * cfg = (struct spppauthcfg*)data;
+		int rv;
 
+		if (sp->myauth.name) free(sp->myauth.name, M_DEVBUF);
+		sp->myauth.name = NULL;
+		if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
+		sp->myauth.secret = NULL;
+		if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
+		sp->hisauth.name = NULL;
+		if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
+		sp->hisauth.secret = NULL;
+
+		if (cfg->hisname != NULL && cfg->hisname_length) {
+		    sp->hisauth.name = malloc(cfg->hisname_length, M_DEVBUF, M_WAITOK);
+		    rv = copyin(cfg->hisname, sp->hisauth.name, cfg->hisname_length);
+		    if (rv) return rv;
+		    sp->hisauth.name[cfg->hisname_length-1] = 0;
+		}
+		if (cfg->hissecret != NULL && cfg->hissecret_length) {
+		    sp->hisauth.secret = malloc(cfg->hissecret_length, M_DEVBUF, M_WAITOK);
+		    rv = copyin(cfg->hissecret, sp->hisauth.secret, cfg->hissecret_length);
+		    if (rv) return rv;
+		    sp->hisauth.secret[cfg->hisname_length-1] = 0;
+		}
+		if (cfg->myname != NULL && cfg->myname_length) {
+		    sp->myauth.name = malloc(cfg->myname_length, M_DEVBUF, M_WAITOK);
+		    rv = copyin(cfg->myname, sp->myauth.name, cfg->myname_length);
+		    if (rv) return rv;
+		    sp->myauth.name[cfg->myname_length-1] = 0;
+		}
+		if (cfg->mysecret != NULL && cfg->mysecret_length) {
+		    sp->myauth.secret = malloc(cfg->mysecret_length, M_DEVBUF, M_WAITOK);
+		    rv = copyin(cfg->mysecret, sp->myauth.secret, cfg->mysecret_length);
+		    if (rv) return rv;
+		    sp->myauth.secret[cfg->myname_length-1] = 0;
+		}
+		sp->myauth.flags = cfg->myauthflags;
+		if (cfg->myauth)
+		    sp->myauth.proto = cfg->myauth == SPPP_AUTHPROTO_PAP ? PPP_PAP : PPP_CHAP;
+		sp->hisauth.flags = cfg->hisauthflags;
+		if (cfg->hisauth)
+		    sp->hisauth.proto = cfg->hisauth == SPPP_AUTHPROTO_PAP ? PPP_PAP : PPP_CHAP;
+		sp->pp_auth_failures = 0;
+	    }
+	    break;
+	case SPPPGETLCPCFG:
+	    {
+	    	struct sppplcpcfg * lcp = (struct sppplcpcfg*)data;
+	    	lcp->lcp_timeout = sp->lcp.timeout;
+	    }
+	    break;
+	case SPPPSETLCPCFG:
+	    {
+	    	struct sppplcpcfg * lcp = (struct sppplcpcfg*)data;
+	    	sp->lcp.timeout = lcp->lcp_timeout;
+	    }
+	    break;
+	case SPPPGETSTATUS:
+	    {
+		struct spppstatus * status = (struct spppstatus*)data;
+		status->phase = sp->pp_phase;
+	    }
+	    break;
+	case SPPPGETIDLETO:
+	    {
+	    	struct spppidletimeout * to = (struct spppidletimeout*)data;
+		to->idle_seconds = sp->pp_idle_timeout;
+	    }
+	    break;
+	case SPPPSETIDLETO:
+	    {
+	    	struct spppidletimeout * to = (struct spppidletimeout*)data;
+	    	sp->pp_idle_timeout = to->idle_seconds;
+	    }
+	    break;
+	case SPPPSETAUTHFAILURE:
+	    {
+	    	struct spppauthfailuresettings * afsettings = (struct spppauthfailuresettings*)data;
+	    	sp->pp_max_auth_fail = afsettings->max_failures;
+	    	sp->pp_auth_failures = 0;
+	    }
+	    break;
+	case SPPPGETAUTHFAILURES:
+	    {
+	    	struct spppauthfailurestats * stats = (struct spppauthfailurestats*)data;
+	    	stats->auth_failures = sp->pp_auth_failures;
+	    	stats->max_failures = sp->pp_max_auth_fail;
+	    }
+	    break;
 	default:
 		return EINVAL;
 	}
@@ -4907,7 +5044,7 @@ sppp_phase_network(struct sppp *sp)
 	int i;
 	u_int32_t mask;
 
-	sp->pp_phase = PHASE_NETWORK;
+	sp->pp_phase = SPPP_PHASE_NETWORK;
 
 	if(debug)
 	{
@@ -5037,14 +5174,14 @@ sppp_state_name(int state)
 }
 
 static const char *
-sppp_phase_name(enum ppp_phase phase)
+sppp_phase_name(int phase)
 {
 	switch (phase) {
-	case PHASE_DEAD:	return "dead";
-	case PHASE_ESTABLISH:	return "establish";
-	case PHASE_TERMINATE:	return "terminate";
-	case PHASE_AUTHENTICATE: return "authenticate";
-	case PHASE_NETWORK:	return "network";
+	case SPPP_PHASE_DEAD:		return "dead";
+	case SPPP_PHASE_ESTABLISH:	return "establish";
+	case SPPP_PHASE_TERMINATE:	return "terminate";
+	case SPPP_PHASE_AUTHENTICATE: 	return "authenticate";
+	case SPPP_PHASE_NETWORK:	return "network";
 	}
 	return "illegal";
 }
@@ -5099,16 +5236,6 @@ sppp_dotted_quad(u_int32_t addr)
 		(int)((addr >> 8) & 0xff),
 		(int)(addr & 0xff));
 	return s;
-}
-
-static int
-sppp_strnlen(u_char *p, int max)
-{
-	int len;
-
-	for (len = 0; len < max && *p; ++p)
-		++len;
-	return len;
 }
 
 /* a dummy, used to drop uninteresting events */

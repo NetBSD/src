@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.1.10.2 2002/01/08 00:25:45 nathanw Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.1.10.3 2002/01/11 23:38:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.1.10.2 2002/01/08 00:25:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.1.10.3 2002/01/11 23:38:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,11 +80,10 @@ struct pckbc_pnpbios_softc {
 	int sc_irq;
 	int sc_ist;
 	pckbc_slot_t sc_slot;
-
-	/* Only on keyboard port... */
-	void *sc_ih;
-	struct pckbc_pnpbios_softc *sc_aux_port;
 };
+
+/* Save first port: */
+static struct pckbc_pnpbios_softc *first;
 
 extern struct cfdriver pckbc_cd;
 
@@ -116,14 +115,14 @@ pckbc_pnpbios_attach(struct device *parent,
     struct device *self,
     void *aux)
 {
-	struct pckbc_pnpbios_softc *psc = (void *) self, *peer_psc, *kbd_psc;
+	struct pckbc_pnpbios_softc *psc = (void *) self;
 	struct pckbc_softc *sc = &psc->sc_pckbc;
 	struct pckbc_internal *t;
 	struct pnpbiosdev_attach_args *aa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh_d, ioh_c;
 	pckbc_slot_t peer;
-	int iobase, i;
+	int iobase;
 
 	if (strncmp(aa->idstr, "PNP03", 5) == 0) {
 		psc->sc_slot = PCKBC_KBD_SLOT;
@@ -145,13 +144,13 @@ pckbc_pnpbios_attach(struct device *parent,
 		return;
 	}
 
-	if (psc->sc_slot == PCKBC_KBD_SLOT) {
-		if (pnpbios_getiobase(aa->pbt, aa->resc, 0, &iot, &iobase)) {
-			printf("%s: can't get iobase\n", sc->sc_dv.dv_xname);
-			return;
-		}
+	if (!first)
+		first = psc;
 
-		sc->intr_establish = pckbc_pnpbios_intr_establish;
+	if (!first->sc_pckbc.id) {
+
+		if (pnpbios_getiobase(aa->pbt, aa->resc, 0, &iot, &iobase))
+			return;
 
 		if (pckbc_is_console(iot, iobase)) {
 			t = &pckbc_consdata;
@@ -177,32 +176,12 @@ pckbc_pnpbios_attach(struct device *parent,
 			callout_init(&t->t_cleanup);
 		}
 
-		t->t_sc = sc;
-		sc->id = t;
-	}
+		t->t_sc = &first->sc_pckbc;
+		first->sc_pckbc.id = t;
 
-	for (i = 0; i < pckbc_cd.cd_ndevs; i++) {
-		peer_psc = pckbc_cd.cd_devs[i];
-		if (peer_psc != NULL &&
-		    peer_psc != psc &&
-		    peer_psc->sc_pckbc.sc_dv.dv_parent ==
-		     psc->sc_pckbc.sc_dv.dv_parent)
-			break;
-		peer_psc = NULL;
-	}
-
-	if (peer_psc != NULL) {
-		/*
-		 * Have both -- finish attaching the one marked "keyboard".
-		 */
-		if (psc->sc_slot == PCKBC_KBD_SLOT) {
-			kbd_psc = psc;
-			kbd_psc->sc_aux_port = peer_psc;
-		} else {
-			kbd_psc = peer_psc;
-			kbd_psc->sc_aux_port = psc;
-		}
-		pckbc_attach(&kbd_psc->sc_pckbc);
+		first->sc_pckbc.intr_establish = pckbc_pnpbios_intr_establish;
+		config_defer(&first->sc_pckbc.sc_dv,
+			     (void(*)(struct device *))pckbc_attach);
 	}
 }
 
@@ -210,23 +189,24 @@ void
 pckbc_pnpbios_intr_establish(struct pckbc_softc *sc,
     pckbc_slot_t slot)
 {
-	struct pckbc_pnpbios_softc *psc = (void *) sc;
-	void *rv;
+	struct pckbc_pnpbios_softc *psc;
+	void *rv = NULL;
 	int irq, ist;
+	int i;
 
 	/*
-	 * Note we're always called with the keyboard slot.
+	 * Note we're always called with sc == first.
 	 */
-
-	if (slot == PCKBC_KBD_SLOT) {
-		irq = psc->sc_irq;
-		ist = psc->sc_ist;
-	} else {
-		irq = psc->sc_aux_port->sc_irq;
-		ist = psc->sc_aux_port->sc_ist;
+	for (i = 0; i < pckbc_cd.cd_ndevs; i++) {
+		psc = pckbc_cd.cd_devs[i];
+		if (psc && psc->sc_slot == slot) {
+			irq = psc->sc_irq;
+			ist = psc->sc_ist;
+			break;
+		}
 	}
-
-	rv = isa_intr_establish(0/*XXX*/, irq, ist, IPL_TTY, pckbcintr, sc);
+	if (i < pckbc_cd.cd_ndevs)
+		rv = isa_intr_establish(0/*XXX*/, irq, ist, IPL_TTY, pckbcintr, sc);
 	if (rv == NULL) {
 		printf("%s: unable to establish interrupt for %s slot\n",
 		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);

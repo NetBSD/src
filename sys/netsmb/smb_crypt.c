@@ -1,7 +1,7 @@
-/*	$NetBSD: smb_crypt.c,v 1.1.4.1 2001/11/14 19:18:40 nathanw Exp $	*/
+/*	$NetBSD: smb_crypt.c,v 1.1.4.2 2002/01/11 23:39:48 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * FreeBSD: src/sys/netsmb/smb_crypt.c,v 1.3 2001/08/21 08:07:18 bp Exp
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.1.4.1 2001/11/14 19:18:40 nathanw Exp $");
-
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -44,16 +42,18 @@ __KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.1.4.1 2001/11/14 19:18:40 nathanw Ex
 #include <sys/fcntl.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/sysctl.h>
 
-#include <sys/tree.h>
+#include <sys/md4.h>
 
 #include <netsmb/smb.h>
 #include <netsmb/smb_conn.h>
 #include <netsmb/smb_subr.h>
 #include <netsmb/smb_dev.h>
-#include <netsmb/md4.h>
 
-#ifdef SMB_CRYPTO
+#include "opt_smb.h"
+
+#ifdef NETSMBCRYPTO
 
 #include <crypto/des/des.h>
 
@@ -61,9 +61,9 @@ static u_char N8[] = {0x4b, 0x47, 0x53, 0x21, 0x40, 0x23, 0x24, 0x25};
 
 
 static void
-smb_E(u_char *key, u_char *data, u_char *dest)
+smb_E(const u_char *key, u_char *data, u_char *dest)
 {
-	des_key_schedule ks;
+	des_key_schedule *ksp;
 	u_char kk[8];
 
 	kk[0] = key[0] & 0xfe;
@@ -74,20 +74,24 @@ smb_E(u_char *key, u_char *data, u_char *dest)
 	kk[5] = key[4] << 3 | (key[5] >> 5 & 0xfe);
 	kk[6] = key[5] << 2 | (key[6] >> 6 & 0xfe);
 	kk[7] = key[6] << 1;
-	des_set_key((C_Block*)kk, ks);
-	des_ecb_encrypt((C_Block*)data, (C_Block*)dest, ks, 1);
+	ksp = malloc(sizeof(des_key_schedule), M_SMBTEMP, M_WAITOK);
+	des_set_key((des_cblock *)kk, *ksp);
+	des_ecb_encrypt((des_cblock *)data, (des_cblock *)dest, *ksp, 1);
+	free(ksp, M_SMBTEMP);
 }
 #endif
 
 
 int
-smb_encrypt(u_char *apwd, u_char *C8, u_char *RN)
+smb_encrypt(const u_char *apwd, u_char *C8, u_char *RN)
 {
-#ifdef SMB_CRYPTO
-	u_char P14[14], S21[21];
+#ifdef NETSMBCRYPTO
+	u_char *p, *P14, *S21;
 
-	bzero(P14, 14);
-	bzero(S21, 21);
+	p = malloc(14 + 21, M_SMBTEMP, M_WAITOK);
+	bzero(p, 14 + 21);
+	P14 = p;
+	S21 = p + 14;
 	bcopy(apwd, P14, min(14, strlen(apwd)));
 	/*
 	 * S21 = concat(Ex(P14, N8), zeros(5));
@@ -98,6 +102,7 @@ smb_encrypt(u_char *apwd, u_char *C8, u_char *RN)
 	smb_E(S21, C8, RN);
 	smb_E(S21 + 7, C8, RN + 8);
 	smb_E(S21 + 14, C8, RN + 16);
+	free(p, M_SMBTEMP);
 	return 0;
 #else
 	SMBERROR("password encryption is not available\n");
@@ -107,27 +112,27 @@ smb_encrypt(u_char *apwd, u_char *C8, u_char *RN)
 }
 
 int
-smb_ntencrypt(u_char *apwd, u_char *C8, u_char *RN)
+smb_ntencrypt(const u_char *apwd, u_char *C8, u_char *RN)
 {
-#ifdef SMB_CRYPTO
+#ifdef NETSMBCRYPTO
 	u_char S21[21];
 	u_int16_t *unipwd;
-	MD4_CTX ctx;
+	MD4_CTX *ctxp;
 	int len;
 
 	len = strlen(apwd);
-	unipwd = malloc(len * sizeof(u_int16_t), M_SMBTEMP, M_WAITOK);
-	if (unipwd == NULL)
-		return ENOMEM;
+	unipwd = malloc((len + 1) * sizeof(u_int16_t), M_SMBTEMP, M_WAITOK);
 	/*
 	 * S21 = concat(MD4(U(apwd)), zeros(5));
 	 */
 	smb_strtouni(unipwd, apwd);
-	MD4Init(&ctx);
-	MD4Update(&ctx, (u_char*)unipwd, len * sizeof(u_int16_t));
+	ctxp = malloc(sizeof(MD4_CTX), M_SMBTEMP, M_WAITOK);
+	MD4Init(ctxp);
+	MD4Update(ctxp, (u_char*)unipwd, len * sizeof(u_int16_t));
 	free(unipwd, M_SMBTEMP);
 	bzero(S21, 21);
-	MD4Final(S21, &ctx);
+	MD4Final(S21, ctxp);
+	free(ctxp, M_SMBTEMP);
 
 	smb_E(S21, C8, RN);
 	smb_E(S21 + 7, C8, RN + 8);

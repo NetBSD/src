@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.47.6.4 2001/11/14 19:14:52 nathanw Exp $	*/
+/*	$NetBSD: pas.c,v 1.47.6.5 2002/01/11 23:39:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.47.6.4 2001/11/14 19:14:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.47.6.5 2002/01/11 23:39:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,18 @@ pasprobe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
+	struct isa_attach_args *ia = aux;
 	struct pas_softc probesc, *sc = &probesc;
+
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
 
 	memset(sc, 0, sizeof *sc);
 	sc->sc_sbdsp.sc_dev.dv_cfdata = match;
@@ -298,8 +309,9 @@ pasfind(parent, sc, ia, probing)
 	int rc = 0;  /* failure */
 
         /* ensure we can set this up as a sound blaster */
-       	if (!SB_BASE_VALID(ia->ia_iobase)) {
-		printf("pas: configured SB iobase 0x%x invalid\n", ia->ia_iobase);
+       	if (!SB_BASE_VALID(ia->ia_io[0].ir_addr)) {
+		printf("pas: configured SB iobase 0x%x invalid\n",
+		    ia->ia_io[0].ir_addr);
 		return 0;
 	}
 
@@ -371,11 +383,12 @@ pasfind(parent, sc, ia, probing)
 	}
 
         if (sc->model >= 0) {
-                if (ia->ia_irq == IRQUNK) {
+                if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
                         printf("pas: sb emulation requires known irq\n");
 			goto unmap1;
                 } 
-                pasconf(sc->model, ia->ia_iobase, ia->ia_irq, 1);
+                pasconf(sc->model, ia->ia_io[0].ir_addr,
+                    ia->ia_irq[0].ir_irq, 1);
         } else {
                 DPRINTF(("pas: could not probe pas\n"));
 		goto unmap1;
@@ -385,14 +398,14 @@ pasfind(parent, sc, ia, probing)
          * appropriately
          */
 
-	sc->sc_sbdsp.sc_iobase = ia->ia_iobase;
+	sc->sc_sbdsp.sc_iobase = ia->ia_io[0].ir_addr;
 	sc->sc_sbdsp.sc_iot = ia->ia_iot;
 
 	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
-	if (bus_space_map(sc->sc_sbdsp.sc_iot, ia->ia_iobase, SBP_NPORT, 0,
-	    &sc->sc_sbdsp.sc_ioh)) {
+	if (bus_space_map(sc->sc_sbdsp.sc_iot, ia->ia_io[0].ir_addr,
+	    SBP_NPORT, 0, &sc->sc_sbdsp.sc_ioh)) {
 		printf("pas: can't map i/o space 0x%x/%d in probe\n",
-		    ia->ia_iobase, SBP_NPORT);
+		    ia->ia_io[0].ir_addr, SBP_NPORT);
 		goto unmap1;
 	}
 
@@ -404,30 +417,19 @@ pasfind(parent, sc, ia, probing)
 	/*
 	 * Cannot auto-discover DMA channel.
 	 */
-	if (!SB_DRQ_VALID(ia->ia_drq)) {
-		printf("pas: configured dma chan %d invalid\n", ia->ia_drq);
+	if (!SB_DRQ_VALID(ia->ia_drq[0].ir_drq)) {
+		printf("pas: configured dma chan %d invalid\n",
+		    ia->ia_drq[0].ir_drq);
 		goto unmap;
 	}
-#ifdef NEWCONFIG
-	/*
-	 * If the IRQ wasn't compiled in, auto-detect it.
-	 */
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = isa_discoverintr(pasforceintr, aux);
-		sbdsp_reset(&sc->sc_sbdsp);
-		if (!SB_IRQ_VALID(ia->ia_irq)) {
-			printf("pas: couldn't auto-detect interrupt");
-			goto unmap;
-		}
-	} else
-#endif
-	if (!SB_IRQ_VALID(ia->ia_irq)) {
-		printf("pas: configured irq chan %d invalid\n", ia->ia_irq);
+	if (!SB_IRQ_VALID(ia->ia_irq[0].ir_irq)) {
+		printf("pas: configured irq chan %d invalid\n",
+		    ia->ia_drq[0].ir_drq);
 		goto unmap;
 	}
 
-	sc->sc_sbdsp.sc_irq = ia->ia_irq;
-	sc->sc_sbdsp.sc_drq8 = ia->ia_drq;
+	sc->sc_sbdsp.sc_irq = ia->ia_irq[0].ir_irq;
+	sc->sc_sbdsp.sc_drq8 = ia->ia_drq[0].ir_drq;
 	sc->sc_sbdsp.sc_drq16 = -1; /* XXX */
 	
 	if (sbdsp_probe(&sc->sc_sbdsp) == 0) {
@@ -436,44 +438,26 @@ pasfind(parent, sc, ia, probing)
 	}
 
 	rc = 1;
-	ia->ia_iosize = SB_NPORT;
+
+	if (probing) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = SBP_NPORT;
+
+		ia->ia_nirq = 1;
+		ia->ia_ndrq = 1;
+
+		ia->ia_niomem = 0;
+	}
 
  unmap:
 	if (rc == 0 || probing)
-	        bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh, SBP_NPORT);
+	        bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh,
+	            SBP_NPORT);
  unmap1:
 	if (rc == 0 || probing)
 	        bus_space_unmap(sc->sc_sbdsp.sc_iot, PAS_DEFAULT_BASE, 1);
 	return rc;
 }
-
-#ifdef NEWCONFIG
-void
-pasforceintr(aux)
-	void *aux;
-{
-	static char dmabuf;
-	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
-
-	/*
-	 * Set up a DMA read of one byte.
-	 * XXX Note that at this point we haven't called 
-	 * at_setup_dmachan().  This is okay because it just
-	 * allocates a buffer in case it needs to make a copy,
-	 * and it won't need to make a copy for a 1 byte buffer.
-	 * (I think that calling at_setup_dmachan() should be optional;
-	 * if you don't call it, it will be called the first time
-	 * it is needed (and you pay the latency).  Also, you might
-	 * never need the buffer anyway.)
-	 */
-	at_dma(DMAMODE_READ, &dmabuf, 1, ia->ia_drq);
-	if (pas_wdsp(iobase, SB_DSP_RDMA) == 0) {
-		(void)pas_wdsp(iobase, 0);
-		(void)pas_wdsp(iobase, 0);
-	}
-}
-#endif
 
 /*
  * Attach hardware to driver, attach hardware driver to audio
@@ -486,7 +470,7 @@ pasattach(parent, self, aux)
 {
 	struct pas_softc *sc = (struct pas_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	int iobase = ia->ia_iobase;
+	int iobase = ia->ia_io[0].ir_addr;
 	
 	if (!pasfind(parent, sc, ia, PASATTACH)) {
 		printf("%s: pasfind failed\n", sc->sc_sbdsp.sc_dev.dv_xname);
@@ -495,7 +479,7 @@ pasattach(parent, self, aux)
 
 	sc->sc_sbdsp.sc_ic = ia->ia_ic;
 	sc->sc_sbdsp.sc_iobase = iobase;
-	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp);
 
 	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model],

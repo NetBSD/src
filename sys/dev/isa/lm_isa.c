@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.3.4.1 2001/11/14 19:14:51 nathanw Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.3.4.2 2002/01/11 23:39:09 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.3.4.1 2001/11/14 19:14:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.3.4.2 2002/01/11 23:39:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,11 +88,17 @@ lm_isa_match(parent, match, aux)
 	int rv;
 
 	/* Must supply an address */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
-		return 0;
+	if (ia->ia_nio < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
 
 	iot = ia->ia_iot;
-	iobase = ia->ia_iobase;
+	iobase = ia->ia_io[0].ir_addr;
 
 	if (bus_space_map(iot, iobase, 8, 0, &ioh))
 		return (0);
@@ -104,8 +110,12 @@ lm_isa_match(parent, match, aux)
 	bus_space_unmap(iot, ioh, 8);
 
 	if (rv) {
-		ia->ia_iosize = 8;
-		ia->ia_msize = 0;
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = 8;
+
+		ia->ia_niomem = 0;
+		ia->ia_nirq = 0;
+		ia->ia_ndrq = 0;
 	}
 
 	return (rv);
@@ -122,7 +132,7 @@ lm_isa_attach(parent, self, aux)
 	bus_space_tag_t iot;
 	struct isa_attach_args *ia = aux;
 
-        iobase = ia->ia_iobase;
+        iobase = ia->ia_io[0].ir_addr;
 	iot = lmsc->lm_iot = ia->ia_iot;
 
 	if (bus_space_map(iot, iobase, 8, 0, &lmsc->lm_ioh)) {

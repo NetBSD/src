@@ -1,11 +1,11 @@
-#	$NetBSD: P6032,v 1.1.8.2 2002/01/08 00:22:50 nathanw Exp $
+#	$NetBSD: P6032,v 1.1.8.3 2002/01/11 23:37:53 nathanw Exp $
 #
 # Algorithmics P-6032 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P6032-$Revision: 1.1.8.2 $"
+#ident 		"P6032-$Revision: 1.1.8.3 $"
 
 maxusers 32
 
@@ -129,7 +129,7 @@ pci*	at	bonito?
 #fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 #gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
 #isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
-le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
+pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcib*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 #siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
@@ -167,15 +167,28 @@ ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 #mpu*	at	yds?
 
 # MII/PHY support
+acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
+amhphy*	at mii? phy ?			# AMD 79c901 10BASE-T PHY
+#bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+#brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
+#dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?		# Integrated Circuit Systems ICS1890
+#glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+#gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+#icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
-#lxtphy*	at mii? phy ?		# Level One LXT-970 PHYs
-#nsphy*	at mii? phy ?			# NS83840 PHYs
+#iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+#makphy* at mii? phy ?			# Margell Semiconductor 88E1000 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+#nsphyter* at mii? phy ?			# NS83843 PHYs
 #qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+pnaphy*	at mii? phy ?			# generic HomePNA PHYs
+#nsphy*	at mii? phy ?			# NS83840 PHYs
 #sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
-#ukphy*	at mii? phy ?			# generic unknown PHYs
+#tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ISA/EISA bus support
 isa*	at	pcib?

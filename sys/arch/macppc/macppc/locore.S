@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.41.8.2 2002/01/08 00:26:12 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.41.8.3 2002/01/11 23:38:37 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_syscallargs.h,v 1.49.2.3 2001/11/15 10:54:07 pk Exp $ */
+/* $NetBSD: sunos_syscallargs.h,v 1.49.2.4 2002/01/11 23:38:50 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -18,8 +18,9 @@
 	union {								\
 		register_t pad;						\
 		struct { x datum; } le;					\
-		struct {						\
-			int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+		struct { /* LINTED zero array dimension */		\
+			int8_t pad[  /* CONSTCOND */			\
+				(sizeof (register_t) < sizeof (x))	\
 				? 0					\
 				: sizeof (register_t) - sizeof (x)];	\
 			x datum;					\
@@ -132,6 +133,12 @@ struct sunos_sys_fcntl_args {
 	syscallarg(void *) arg;
 };
 
+struct sunos_sys_socket_args {
+	syscallarg(int) domain;
+	syscallarg(int) type;
+	syscallarg(int) protocol;
+};
+
 struct sunos_sys_setsockopt_args {
 	syscallarg(int) s;
 	syscallarg(int) level;
@@ -148,6 +155,13 @@ struct sunos_sys_sigvec_args {
 
 struct sunos_sys_sigsuspend_args {
 	syscallarg(int) mask;
+};
+
+struct sunos_sys_socketpair_args {
+	syscallarg(int) domain;
+	syscallarg(int) type;
+	syscallarg(int) protocol;
+	syscallarg(int *) rsv;
 };
 
 struct sunos_sys_sigreturn_args {
@@ -302,7 +316,7 @@ int	sunos_sys_fcntl(struct lwp *, void *, register_t *);
 int	sys_select(struct lwp *, void *, register_t *);
 int	sys_fsync(struct lwp *, void *, register_t *);
 int	sys_setpriority(struct lwp *, void *, register_t *);
-int	sys_socket(struct lwp *, void *, register_t *);
+int	sunos_sys_socket(struct lwp *, void *, register_t *);
 int	sys_connect(struct lwp *, void *, register_t *);
 int	compat_43_sys_accept(struct lwp *, void *, register_t *);
 int	sys_getpriority(struct lwp *, void *, register_t *);
@@ -335,7 +349,7 @@ int	compat_43_sys_ftruncate(struct lwp *, void *, register_t *);
 int	sys_flock(struct lwp *, void *, register_t *);
 int	sys_sendto(struct lwp *, void *, register_t *);
 int	sys_shutdown(struct lwp *, void *, register_t *);
-int	sys_socketpair(struct lwp *, void *, register_t *);
+int	sunos_sys_socketpair(struct lwp *, void *, register_t *);
 int	sys_mkdir(struct lwp *, void *, register_t *);
 int	sys_rmdir(struct lwp *, void *, register_t *);
 int	sys_utimes(struct lwp *, void *, register_t *);

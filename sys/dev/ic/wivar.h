@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.4.2.7 2002/01/09 00:36:29 nathanw Exp $	*/
+/*	$NetBSD: wivar.h,v 1.4.2.8 2002/01/11 23:39:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3.2.2 2002/01/08 00:23:08 nathanw Exp $	*/
+/*	$NetBSD: intr.c,v 1.3.2.3 2002/01/11 23:38:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -50,11 +50,15 @@
 #include <net/netisr.h>
 
 #include <machine/conf.h>
-
+#include <arm/arm32/machdep.h>
+ 
 #ifndef NPLCOM
 #define NPLCOM 0
 #endif
 
+/* Prototypes */
+static void clearsoftintr __P((u_int)); 
+ 
 u_int soft_interrupts = 0;
 
 extern int current_spl_level;
@@ -91,7 +95,7 @@ setsoftintr(intrmask)
 	atomic_set_bit(&soft_interrupts, intrmask);
 }
 
-void
+static void
 clearsoftintr(intrmask)
 	u_int intrmask;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.13.2.3 2002/01/08 00:34:49 nathanw Exp $	*/
+/*	$NetBSD: fs.h,v 1.13.2.4 2002/01/11 23:39:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,8 +37,6 @@
 
 #ifndef	_UFS_FFS_FS_H_
 #define	_UFS_FFS_FS_H_
-
-#include <ufs/ufs/dinode.h>
 
 /*
  * Each disk drive contains some number of file systems.

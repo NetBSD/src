@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.59.2.6 2002/01/08 00:34:42 nathanw Exp $	*/
+/*	$NetBSD: malloc.h,v 1.59.2.7 2002/01/11 23:39:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -54,7 +54,7 @@
 #define	M_CANFAIL	0x0004	/* can fail if requested memory can't ever
 				 * be allocated */
 /*
- * Types of memory to be allocated
+ * Types of memory to be allocated (don't forget to update malloc.9)
  */
 #define	M_FREE		0	/* should be on free list */
 #define	M_MBUF		1	/* mbuf */
@@ -177,10 +177,22 @@
 #define	M_PIPE		118	/* Pipe structures */
 #define	M_AGP		119	/* AGP memory */
 #define	M_PROP		120	/* Kernel properties structures */
-#define M_NEWDIRBLK	121	/* Unclaimed new dir block (softdeps) */
-#define M_SA		122
-#define	M_LAST		123	/* Must be last type + 1 */
+#define	M_NEWDIRBLK	121	/* Unclaimed new dir block (softdeps) */
+#define	M_SMBIOD	122	/* SMB network id daemon */
+#define	M_SMBCONN	123	/* SMB connection */
+#define	M_SMBRQ		124	/* SMB request */
+#define	M_SMBDATA	125	/* Misc netsmb data */
+#define	M_SMBSTR	126	/* netsmb string data */
+#define	M_SMBTEMP	127	/* Temp netsmb data */
+#define	M_ICONV		128	/* ICONV data */
+#define	M_SMBNODE	129	/* SMBFS node */
+#define	M_SMBNODENAME	130	/* SMBFS node name */
+#define	M_SMBFSDATA	131	/* SMBFS private data */
+#define	M_SMBFSHASH	132	/* SMBFS hash table */
+#define M_SA		133	/* Scheduler activations */
+#define	M_LAST		134	/* Must be last type + 1 */
 
+/* added something?  don't forget to update malloc.9 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -305,8 +317,19 @@
 	"AGP",		/* 119 M_AGP */ \
 	"prop",		/* 120 M_PROP */ \
 	"newdirblk",	/* 121 M_NEWDIRBLK */ \
-	"sa",		/* 122 M_SA */ \
-	NULL,		/* 123 */ \
+	"smbiod",	/* 122 M_SMBIOD */ \
+	"smbconn",	/* 123 M_SMBCONN */ \
+	"smbrq",	/* 124 M_SMBRQ */ \
+	"smbdata",	/* 125 M_SMBDATA */ \
+	"smbstr",	/* 126 M_SMBDATA */ \
+	"smbtemp",	/* 127 M_SMBTEMP */ \
+	"iconv",	/* 128 M_ICONV */ \
+	"smbnode",	/* 129 M_SMBNODE */ \
+	"smbnodename",	/* 130 M_SMBNODENAME */ \
+	"smbfsdata",	/* 131 M_SMBFSDATA */ \
+	"smbfshash",	/* 132 M_SMBFSHASH */ \
+	"sa",		/* 133 M_SA */ \
+	NULL,		/* 134 */ \
 }
 
 struct kmemstats {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.4.14.1 2001/11/14 19:14:52 nathanw Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.4.14.2 2002/01/11 23:39:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.4.14.1 2001/11/14 19:14:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.4.14.2 2002/01/11 23:39:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,16 +77,34 @@ mpu_isa_match(parent, match, aux)
 	struct mpu_isa_softc sc;
 	int r;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		return (0);
+
 	memset(&sc, 0, sizeof sc);
 	sc.sc_mpu.iot = ia->ia_iot;
-	if (bus_space_map(sc.sc_mpu.iot, ia->ia_iobase, MPU401_NPORT, 0, 
+	if (bus_space_map(sc.sc_mpu.iot, ia->ia_io[0].ir_addr, MPU401_NPORT, 0, 
 			  &sc.sc_mpu.ioh))
 		return (0);
 	r = mpu_find(&sc.sc_mpu);
         bus_space_unmap(sc.sc_mpu.iot, sc.sc_mpu.ioh, MPU401_NPORT);
 	if (r) {
-		ia->ia_iosize = MPU401_NPORT;
-		ia->ia_msize = 0;
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = MPU401_NPORT;
+
+		ia->ia_nirq = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
 	}
 	return (r);
 }
@@ -102,16 +120,15 @@ mpu_isa_attach(parent, self, aux)
 
 	printf("\n");
 	
-	if (bus_space_map(sc->sc_mpu.iot, ia->ia_iobase, MPU401_NPORT, 0, 
-			  &sc->sc_mpu.ioh)) {
+	if (bus_space_map(sc->sc_mpu.iot, ia->ia_io[0].ir_addr, MPU401_NPORT,
+	    0, &sc->sc_mpu.ioh)) {
 		printf("mpu_isa_attach: bus_space_map failed\n");
 		return;
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
-				       mpu_intr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_AUDIO, mpu_intr, sc);
 	
 	sc->sc_mpu.model = "Roland MPU-401 MIDI UART";
 	mpu_attach(&sc->sc_mpu);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.4.2.2 2001/09/21 22:35:21 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.4.2.3 2002/01/11 23:38:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,55 +28,19 @@
  * SUCH DAMAGE.
  */
 
-/* from arch/sparc/include/fbio.h */
-#if 0
-/* unused */
-#define	FBIOGINFO	_IOR('F', 2, struct fbinfo)
-#endif
-
-#ifdef __sparc__
-struct netbsd32_fbcmap {
-	int	index;		/* first element (0 origin) */
-	int	count;		/* number of elements */
-	netbsd32_u_charp	red;		/* red color map elements */
-	netbsd32_u_charp	green;		/* green color map elements */
-	netbsd32_u_charp	blue;		/* blue color map elements */
-};
-#if 1
-#define	FBIOPUTCMAP32	_IOW('F', 3, struct netbsd32_fbcmap)
-#define	FBIOGETCMAP32	_IOW('F', 4, struct netbsd32_fbcmap)
-#endif
-
-struct netbsd32_fbcursor {
-	short set;		/* what to set */
-	short enable;		/* enable/disable cursor */
-	struct fbcurpos pos;	/* cursor's position */
-	struct fbcurpos hot;	/* cursor's hot spot */
-	struct netbsd32_fbcmap cmap;	/* color map info */
-	struct fbcurpos size;	/* cursor's bit map size */
-	netbsd32_charp image;	/* cursor's image bits */
-	netbsd32_charp mask;	/* cursor's mask bits */
-};
-#if 1
-#define FBIOSCURSOR32	_IOW('F', 24, struct netbsd32_fbcursor)
-#define FBIOGCURSOR32	_IOWR('F', 25, struct netbsd32_fbcursor)
-#endif
-
-/* from arch/sparc/include/openpromio.h */
-struct netbsd32_opiocdesc {
-	int	op_nodeid;		/* passed or returned node id */
-	int	op_namelen;		/* length of op_name */
-	netbsd32_charp op_name;		/* pointer to field name */
-	int	op_buflen;		/* length of op_buf (value-result) */
-	netbsd32_charp op_buf;		/* pointer to field value */
-};
-#if 1
-#define	OPIOCGET32	_IOWR('O', 1, struct netbsd32_opiocdesc) /* get openprom field */
-#define	OPIOCSET32	_IOW('O', 2, struct netbsd32_opiocdesc) /* set openprom field */
-#define	OPIOCNEXTPROP32	_IOWR('O', 3, struct netbsd32_opiocdesc) /* get next property */
-#endif
-
-#endif /* __sparc__ */
+/* we define some handy macros here... */
+#define IOCTL_STRUCT_CONV_TO(cmd, type)	\
+		size = IOCPARM_LEN(cmd); \
+		if (size > sizeof(stkbuf)) \
+			data = memp = malloc(size, M_IOCTLOPS, M_WAITOK); \
+		else \
+			data = (caddr_t)stkbuf; \
+		__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
+			data32, (struct type *)data, cmd); \
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, p); \
+		__CONCAT(netbsd32_from_, type)((struct type *)data, \
+			(struct __CONCAT(netbsd32_, type) *)data32); \
+		break
  
 /* from <sys/audioio.h> */
 #if 0

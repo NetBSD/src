@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.84.2.4 2002/01/08 00:34:40 nathanw Exp $	*/
+/*	$NetBSD: conf.h,v 1.84.2.5 2002/01/11 23:39:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -380,6 +380,7 @@ extern struct cdevsw cdevsw[];
 #define	cdev_ugen_init(c,n)	cdev__ocrwip_init(c,n)
 #define cdev_midi_init(c,n)	cdev__ocrwip_init(c,n)
 #define cdev_ir_init(c,n)	cdev__ocrwip_init(c,n)
+#define cdev_netsmb_init(c,n)	cdev__ocrwip_init(c,n)
 
 /* open, close, ioctl, poll, mmap */
 #define	cdev_fb_init(c,n)	cdev__ocipm_init(c,n)

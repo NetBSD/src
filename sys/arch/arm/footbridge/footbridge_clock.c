@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.2.6.2 2002/01/08 00:23:10 nathanw Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.2.6.3 2002/01/11 23:38:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -52,6 +52,11 @@
 
 extern struct footbridge_softc *clock_sc;
 extern u_int dc21285_fclk;
+
+int clockhandler __P((void *));
+int statclockhandler __P((void *));
+static int load_timer __P((int, int));
+
 
 #if 0
 static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
@@ -114,9 +119,10 @@ clockattach(parent, self, aux)
  */
 
 int
-clockhandler(frame)
-	struct clockframe *frame;
+clockhandler(aframe)
+	void *aframe;
 {
+	struct clockframe *frame = aframe;
 	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    TIMER_1_CLEAR, 0);
 	hardclock(frame);
@@ -132,9 +138,10 @@ clockhandler(frame)
  */
  
 int
-statclockhandler(frame)
-	struct clockframe *frame;
+statclockhandler(aframe)
+	void *aframe;
 {
+	struct clockframe *frame = aframe;
 	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    TIMER_2_CLEAR, 0);
 	statclock(frame);

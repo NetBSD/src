@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.8.1 2002/01/08 00:27:56 nathanw Exp $
+#	$NetBSD: Makefile,v 1.13.8.2 2002/01/11 23:38:45 nathanw Exp $
 
 NOMAN=	# defined
 
@@ -21,6 +21,7 @@ CPPFLAGS+=-I${.CURDIR}/..
 
 LDSTATIC?=	-static
 
+.if !defined(HOSTPROGNAME)
 .if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../../${MACHINE}/include machine)
@@ -28,5 +29,8 @@ LDSTATIC?=	-static
 .NOPATH: machine sparc
 .endif
 CLEANFILES+= machine sparc
+.endif
 
+.ifndef HOSTPROG
 .include <bsd.prog.mk>
+.endif

@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack2.c,v 1.4.2.2 2002/01/08 00:30:30 nathanw Exp $ */
+/* $NetBSD: radiotrack2.c,v 1.4.2.3 2002/01/11 23:39:11 nathanw Exp $ */
 /* $OpenBSD: radiotrack2.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
@@ -124,8 +124,16 @@ rtii_probe(struct device *parent, struct cfdata *cf, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	u_int r;
+	int iosize = 1, iobase;
 
-	int iosize = 1, iobase = ia->ia_iobase;
+	if (ISA_DIRECT_CONFIG(ia))
+		return 0;
+
+	if (ia->ia_nio < 1)
+		return 0;
+
+	iobase = ia->ia_io[0].ir_addr;
 
 	if (!RTII_BASE_VALID(iobase)) {
 		printf("rtii: configured iobase 0x%x invalid\n", iobase);
@@ -135,13 +143,22 @@ rtii_probe(struct device *parent, struct cfdata *cf, void *aux)
 	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
 		return 0;
 
+	r = rtii_find(iot, ioh);
+
 	bus_space_unmap(iot, ioh, iosize);
 
-	if (!rtii_find(iot, ioh))
-		return 0;
+	if (r != 0) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = iosize;
 
-	ia->ia_iosize = iosize;
-	return 1;
+		ia->ia_niomem = 0;
+		ia->ia_nirq = 0;
+		ia->ia_ndrq = 0;
+
+		return (1);
+	}
+
+	return (0);
 }
 
 void
@@ -158,8 +175,8 @@ rtii_attach(struct device *parent, struct device *self, void *aux)
 	sc->lock = TEA5757_S030;
 
 	/* remap I/O */
-	if (bus_space_map(sc->tea.iot, ia->ia_iobase, ia->ia_iosize,
-			  0, &sc->tea.ioh))
+	if (bus_space_map(sc->tea.iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->tea.ioh))
 		panic("rtiiattach: bus_space_map() failed");
 
 	sc->tea.offset = 0;
@@ -169,7 +186,7 @@ rtii_attach(struct device *parent, struct device *self, void *aux)
 	sc->tea.write_bit = rtii_write_bit;
 	sc->tea.read = rtii_hw_read;
 
-	printf(": AIMS Lab Radiotrack II");
+	printf(": AIMS Lab Radiotrack II\n");
 	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
 	rtii_set_mute(sc);
 
