@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.92 2004/09/17 14:11:25 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.93 2005/01/09 19:22:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.92 2004/09/17 14:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.93 2005/01/09 19:22:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.92 2004/09/17 14:11:25 skrll Exp $
 #include <sys/uio.h>
 #include <sys/user.h>
 #include <sys/ras.h>
+#include <sys/malloc.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -136,6 +137,7 @@ sys_ptrace(l, v, retval)
 	struct ptrace_io_desc piod;
 	struct ptrace_lwpinfo pl;
 	int s, error, write, tmp, size;
+	char *path;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -350,7 +352,23 @@ sys_ptrace(l, v, retval)
 		return (error);
 
 	case  PT_DUMPCORE:
-		return coredump(lt);
+		if ((path = SCARG(uap, addr)) != NULL) {
+			char *dst;
+			int len = SCARG(uap, data);
+			if (len >= MAXPATHLEN)
+				return EINVAL;
+			dst = malloc(len + 1, M_TEMP, M_WAITOK); 
+			if ((error = copyin(path, dst, len)) != 0) {
+				free(dst, M_TEMP);
+				return error;
+			}
+			path[len] = '\0';
+			path = dst;
+		}
+		error = coredump(lt, path);
+		if (path)
+			free(path, M_TEMP);
+		return error;
 
 #ifdef PT_STEP
 	case  PT_STEP:
