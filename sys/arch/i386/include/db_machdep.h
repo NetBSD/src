@@ -23,49 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: db_machdep.h,v 1.2 1993/05/22 08:00:12 cgd Exp $
- */
-/*
- * HISTORY
- * $Log: db_machdep.h,v $
- * Revision 1.2  1993/05/22 08:00:12  cgd
- * add rcsids to everything and clean up headers
- *
- * Revision 1.1.1.1  1993/03/21  09:45:47  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 2.8  92/02/19  15:07:56  elf
- * 	Added db_thread_fp_used.
- * 	[92/02/19            rpd]
- * 
- * Revision 2.7  91/10/09  16:06:28  af
- * 	 Revision 2.6.3.1  91/10/05  13:10:32  jeffreyh
- * 	 	Added access and task name macros.
- * 	 	[91/08/29            tak]
- * 
- * Revision 2.6.3.1  91/10/05  13:10:32  jeffreyh
- * 	Added access and task name macros.
- * 	[91/08/29            tak]
- * 
- * Revision 2.6  91/05/14  16:05:58  mrt
- * 	Correcting copyright
- *
- * Revision 2.5  91/02/05  17:11:17  mrt
- * 	Changed to new Mach copyright
- * 	[91/02/01  17:31:24  mrt]
- * 
- * Revision 2.4  91/01/08  15:10:16  rpd
- * 	Added dummy inst_load/inst_store macros.
- * 	[90/12/11            rpd]
- * 
- * Revision 2.3  90/10/25  14:44:49  rwd
- * 	Added watchpoint support.
- * 	[90/10/18            rpd]
- * 
- * Revision 2.2  90/08/27  21:56:15  dbg
- * 	Created.
- * 	[90/07/25            dbg]
- * 
+ *	$Id: db_machdep.h,v 1.3 1993/12/19 03:41:51 mycroft Exp $
  */
 
 #ifndef	_I386_DB_MACHDEP_H_
@@ -76,17 +34,12 @@
  */
 
 
-/* #include <mach/i386/vm_types.h> */
-/* #include <mach/i386/vm_param.h> */
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
 #include <vm/lock.h>
-/* #include <i386/thread.h> */		/* for thread_status */
-#include <machine/frame.h>	/* for struct trapframe */
-/* #include <i386/eflags.h> */
-#include <machine/eflags.h>		/* from Mach... */
-/* #include <i386/trap.h> */
+#include <machine/frame.h>
+#include <machine/psl.h>
 #include <machine/trap.h>
 
 #define i386_saved_state trapframe
@@ -107,14 +60,11 @@ db_regs_t	ddb_regs;	/* register state */
 
 #define	FIXUP_PC_AFTER_BREAK	ddb_regs.tf_eip -= 1;
 
-#define	db_clear_single_step(regs)	((regs)->tf_eflags &= ~EFL_TF)
-#define	db_set_single_step(regs)	((regs)->tf_eflags |=  EFL_TF)
+#define	db_clear_single_step(regs)	((regs)->tf_eflags &= ~PSL_T)
+#define	db_set_single_step(regs)	((regs)->tf_eflags |=  PSL_T)
 
-/* #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_INT3) */
-/* #define IS_WATCHPOINT_TRAP(type, code)	((type) == T_WATCHPOINT) */
-/* using the 386bsd values, rather than the Mach ones: */
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BPTFLT)
-#define IS_WATCHPOINT_TRAP(type, code)	((type) == T_KDBTRAP)
+#define IS_WATCHPOINT_TRAP(type, code)	((type) == T_TRCTRAP && (code) & 15)
 
 #define	I_CALL		0xe8
 #define	I_CALLI		0xff
@@ -141,7 +91,7 @@ db_regs_t	ddb_regs;	/* register state */
 	 (addr) < VM_MAX_KERNEL_ADDRESS)
 #define DB_VALID_ADDRESS(addr,user)				\
 	((!(user) && DB_VALID_KERN_ADDR(addr)) ||		\
-	 ((user) && (addr) < VM_MIN_KERNEL_ADDRESS))
+	 ((user) && (addr) < VM_MAX_ADDRESS))
 
 boolean_t 	db_check_access(/* vm_offset_t, int, task_t */);
 boolean_t	db_phys_eq(/* task_t, vm_offset_t, task_t, vm_offset_t */);
