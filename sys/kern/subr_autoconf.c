@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.85 2003/04/29 00:56:52 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.86 2003/07/04 00:24:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.85 2003/04/29 00:56:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.86 2003/07/04 00:24:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -129,6 +129,11 @@ extern const struct cfattachinit cfattachinit[];
  */
 struct cftablelist allcftables;
 static struct cftable initcftable;
+
+/*
+ * Database of device properties.
+ */
+propdb_t dev_propdb;
 
 #define	ROOT ((struct device *)NULL)
 
@@ -235,6 +240,11 @@ configure(void)
 
 	/* Initialize data structures. */
 	config_init();
+
+	/* Initialize the device property database. */
+	dev_propdb = propdb_create("device properties");
+	if (dev_propdb == NULL)
+		panic("unable to create device property database");
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
