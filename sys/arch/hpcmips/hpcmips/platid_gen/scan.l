@@ -1,4 +1,5 @@
-/*	$NetBSD: platid.c,v 1.3 2000/02/06 08:47:05 takemura Exp $	*/
+%{
+/*	$NetBSD: scan.l,v 1.1 2000/02/06 08:47:16 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,98 +34,78 @@
  * SUCH DAMAGE.
  *
  */
-#include <sys/types.h>
-#include <sys/systm.h>
-#include <machine/platid.h>
 
-void
-platid_ntoh(platid_t *pid)
-{
-	pid->dw.dw0 = ntohl(pid->dw.dw0);
-	pid->dw.dw1 = ntohl(pid->dw.dw1);
-}
+#include <strings.h>
+#include "gram.h"
 
+#include "platid_gen.h"
 
-void
-platid_hton(platid_t *pid)
-{
-	pid->dw.dw0 = htonl(pid->dw.dw0);
-	pid->dw.dw1 = htonl(pid->dw.dw1);
-}
+int	yyline;
+char	*getstr __P((char*));
+void	getcomment __P((void));
 
+#define	yywrap() 1
 
-void
-platid_dump(char *name, void* pxx)
-{
-	int i;
-	unsigned char* p = (unsigned char*)pxx;
-	printf("%14s: ", name);
+%}
 
-	for (i = 0; i < 8; i++) {
-		printf("%02x", p[i]);
-	}
-	printf("\n");
-}
+%%
+\"([^"]|\\\")*\"	{ yylval.str = getstr(yytext); return NAME; }
+[a-zA-Z][0-9a-zA-Z]*	{ yylval.str = strdup(yytext); return FSYM; }
+[a-zA-Z][_0-9a-zA-Z]*	{ yylval.str = strdup(yytext); return MOD; }
+[0-9a-zA-Z]+	{ yylval.str = strdup(yytext); return SYM; }
+\n		{ yyline++; }
+"/*"		{ getcomment(); }
+[ \t]+		{ /* ignored */; }
+.		{ return yytext[0]; }
 
-
-platid_t platid_unknown = {{ PLATID_UNKNOWN, PLATID_UNKNOWN }};
-platid_t platid_wild = {{ PLATID_WILD, PLATID_WILD }};
-platid_t platid = {{ PLATID_UNKNOWN, PLATID_UNKNOWN }};
-
-
-int
-platid_match(platid_t *platid, platid_mask_t *mask)
-{
-	return platid_match_sub(platid, mask, 0);
-}
-
-
-int
-platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
-{
-	int match_count;
-
-#define PLATID_MATCH(mbr) \
-	if (platid->s.mbr != mask->s.mbr && \
-	    mask->s.mbr != platid_wild.s.mbr && \
-	    !(platid->s.mbr == platid_unknown.s.mbr && unknown_is_match)) { \
-		return (0); \
-	} else if (platid->s.mbr == mask->s.mbr) \
-		match_count++;
-
-	match_count = 1;
-	PLATID_MATCH(cpu_submodel);
-	PLATID_MATCH(cpu_model);
-	PLATID_MATCH(cpu_series);
-	PLATID_MATCH(cpu_arch);
-
-	PLATID_MATCH(submodel);
-	PLATID_MATCH(model);
-	PLATID_MATCH(series);
-	PLATID_MATCH(vendor);
-
-	return (match_count);
-
-#undef PLATID_MATCH
-}
+%%
 
 char*
-platid_name(platid_t *platid)
+getstr(char*s)
 {
-	int match_level;
-	struct platid_name *p, *match, *pe;
-
-	match_level = 0;
-	pe = &platid_name_table[platid_name_table_size];
-	for (p = platid_name_table; p < pe; p++) {
-		int res = platid_match(platid, p->mask);
-		if (match_level < res) {
-			match = p;
-			match_level = res;
+	char *res, *p, *p2;
+	res = strdup(s + 1);
+	for (p = p2 = res; *p != '\"'; p++) {
+		if (*p == '\\') {
+			*p2++ = *++p;
+		} else {
+			*p2++ = *p;
 		}
 	}
-	if (0 < match_level)
-		return (match->name);
-	else
-		return ("UNKNOWN");
+	*p2 = '\0';
+	return (res);
+}
+
+void
+getcomment()
+{
+	int c;
+
+	for ( ; ; ) {
+		while ( (c = input()) != '*' && c != EOF ) {
+			if (c == '\n') yyline++;
+		}
+		if (c == '\n') yyline++;
+
+		if ( c == '*' ) {
+			while ( (c = input()) == '*' ) {
+				if (c == '\n') yyline++;
+			}
+			if (c == '\n') yyline++;
+			if ( c == '/' )
+				break;    /* found the end */
+		}
+
+		if ( c == EOF ) {
+			yyerror( "EOF in comment" );
+			break;
+		}
+	}
+}
+
+read_def()
+{
+	yyline = 1;
+	def_tree = NULL;
+	return yyparse();
 }
