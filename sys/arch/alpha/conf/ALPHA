@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.60 1997/08/24 06:40:18 cgd Exp $
+# $NetBSD: ALPHA,v 1.61 1997/09/06 02:04:18 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -29,6 +29,7 @@ options 	KTRACE			# System call tracing support
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DEBUG			# Expensive debugging checks/support
 options 	KMEMSTATS		# Collect kmem usage statistics
+options 	DDB			# Kernel Dynamic Debugger
 
 # File systems
 file-system	FFS		# Fast file system
