@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.29 2001/01/01 01:42:03 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.30 2001/01/04 01:35:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.29 2001/01/01 01:42:03 sato Exp $";
+    "$Id: hpcfb.c,v 1.30 2001/01/04 01:35:21 enami Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,6 @@ hpcfbattach(parent, self, aux)
 #endif /* HPCFB_MULTI */
 		sc->sc_dc = &hpcfb_console_dc;
 		sc->nscreens = 1;
-		sc->sc_dc->dc_state |= HPCFB_DC_CURRENT;
 		hpcfb_console_dc.dc_sc = sc;
 	} else {
 #ifdef HPCFB_MULTI
@@ -332,7 +331,6 @@ hpcfbattach(parent, self, aux)
 		}
 		sc->sc_dc->dc_tvram = hpcfb_console_tvram;
 		bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
-		sc->sc_dc->dc_state |= HPCFB_DC_CURRENT;
 		sc->sc_dc->dc_sc = sc;
 	}
 	sc->sc_polling = 0; /* XXX */
@@ -505,6 +503,7 @@ hpcfb_init(fbconf, dc)
 	dc->dc_cury = -1;
 	dc->dc_rows = dc->dc_rinfo.ri_rows;
 	dc->dc_cols = dc->dc_rinfo.ri_cols;
+	dc->dc_state |= HPCFB_DC_CURRENT;
 #ifdef HPCFB_JUMP
 	dc->dc_max_row = 0;
 	dc->dc_min_row = dc->dc_rows;
