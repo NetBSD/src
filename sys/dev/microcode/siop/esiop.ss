@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.2 2002/04/22 15:53:40 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.3 2002/04/22 15:55:09 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -356,3 +356,9 @@ get_extmsgdata:
 	CLEAR ACK;
 	MOVE FROM t_ext_msg_data, WHEN MSG_IN;
 	INT int_extmsgdata; 
+
+PROC siop_led_on:
+	MOVE GPREG & 0xfe TO GPREG;
+
+PROC siop_led_off:
+	MOVE GPREG | 0x01 TO GPREG;
