@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.16 1995/06/04 05:07:00 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.17 1995/06/04 05:58:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -338,9 +338,9 @@ icmp_input(m, hlen)
 		icp->icmp_mask = ia->ia_sockmask.sin_addr.s_addr;
 		if (ip->ip_src.s_addr == 0) {
 			if (ia->ia_ifp->if_flags & IFF_BROADCAST)
-			    ip->ip_src = satosin(&ia->ia_broadaddr)->sin_addr;
+				ip->ip_src = ia->ia_broadaddr.sin_addr;
 			else if (ia->ia_ifp->if_flags & IFF_POINTOPOINT)
-			    ip->ip_src = satosin(&ia->ia_dstaddr)->sin_addr;
+				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
 reflect:
 		ip->ip_len += hlen;	/* since ip_input deducts this */
@@ -428,10 +428,10 @@ icmp_reflect(m)
 	 * to the incoming interface.
 	 */
 	for (ia = in_ifaddr; ia; ia = ia->ia_next) {
-		if (t.s_addr == IA_SIN(ia)->sin_addr.s_addr)
+		if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
 			break;
 		if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
-		    t.s_addr == satosin(&ia->ia_broadaddr)->sin_addr.s_addr)
+		    t.s_addr == ia->ia_broadaddr.sin_addr.s_addr)
 			break;
 	}
 	icmpdst.sin_addr = t;
@@ -444,7 +444,7 @@ icmp_reflect(m)
 	 */
 	if (ia == (struct in_ifaddr *)0)
 		ia = in_ifaddr;
-	t = IA_SIN(ia)->sin_addr;
+	t = ia->ia_addr.sin_addr;
 	ip->ip_src = t;
 	ip->ip_ttl = MAXTTL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.12 1995/06/01 21:35:34 mycroft Exp $	*/
+/*	$NetBSD: igmp.c,v 1.13 1995/06/04 05:58:20 mycroft Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -289,7 +289,7 @@ igmp_input(m, iphlen)
 		 * group.
 		 */
 		IFP_TO_IA(ifp, ia);
-		if (ia && ip->ip_src.s_addr == IA_SIN(ia)->sin_addr.s_addr)
+		if (ia && ip->ip_src.s_addr == ia->ia_addr.sin_addr.s_addr)
 			break;
 #endif
 
