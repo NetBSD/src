@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.87 2002/05/19 20:26:58 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.87.2.1 2002/05/28 06:17:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -880,12 +880,11 @@ Lstart0:
 	jle	Lstart0
 	/*
 	 * Enter kernel at destination address and continue copy
-	 * The 'start2' label is used to defeat the assembler optimizer. If
-	 * we jump to a local label, it tries to use a pc-relative jump.
+	 * Make sure that the jump is absolute (by adding ':l') otherwise
+	 * the assembler tries to use a pc-relative jump.
 	 * Which is definitely not what is needed at this point!
 	 */
-	jmp	_ASM_LABEL(start2)
-GLOBAL(start2)
+	jmp	Lstart2:l
 Lstart2:
 	movl	%a0@+,%a5@+		| copy the rest of the kernel
 	subl	#4, %d4
