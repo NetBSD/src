@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.19 1998/06/09 07:28:31 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.20 1998/07/23 19:30:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -45,6 +45,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 static void isapnp_init __P((struct isapnp_softc *));
 static __inline u_char isapnp_shift_bit __P((struct isapnp_softc *));
@@ -569,6 +570,27 @@ isapnp_submatch(parent, match, aux)
 	struct cfdata *cf = (struct cfdata *) match;
 	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
+
+/* isapnp_devmatch():
+ *	Match a probed device with the information from the driver
+ */
+int
+isapnp_devmatch(ipa, dinfo)
+	const struct isapnp_attach_args *ipa;
+	const struct isapnp_devinfo *dinfo;
+{
+	const char *const *name;
+
+	for (name = dinfo->devlogic; *name; name++)
+		if (strcmp(*name, ipa->ipa_devlogic) == 0)
+			return 1;
+
+	for (name = dinfo->devcompat; *name; name++)
+		if (strcmp(*name, ipa->ipa_devcompat) == 0)
+			return 1;
+
+	return 0;
+}
 #endif
 
 
@@ -594,7 +616,7 @@ isapnp_find(sc, all)
 		sc->sc_read_port = p;
 		if (isapnp_map_readport(sc))
 			continue;
-		DPRINTF(("%s: Trying port %x\n", sc->sc_dev.dv_xname, p));
+		DPRINTF(("%s: Trying port %x\r", sc->sc_dev.dv_xname, p));
 		if (isapnp_findcard(sc))
 			break;
 		isapnp_unmap_readport(sc);
