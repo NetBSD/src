@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.116 2004/01/17 05:30:01 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.117 2004/01/29 08:48:23 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,6 +89,7 @@ distinfo dist_list[] = {
 	{NULL,			SET_X11,		MSG_set_X11},
 	{"xbase",		SET_X11_BASE,		MSG_set_X11_base},
 	{"xcomp",		SET_X11_PROG,		MSG_set_X11_prog},
+	{"xetc",		SET_X11_ETC,		MSG_set_X11_etc},
 	{"xfont",		SET_X11_FONTS,		MSG_set_X11_fonts},
 	{"xserver",		SET_X11_SERVERS,	MSG_set_X11_servers},
 #ifdef SET_MD_1_NAME
