@@ -1,3 +1,1 @@
-# $NetBSD: md.hpcsh,v 1.1 2002/05/02 15:42:21 wiz Exp $
-./etc/fstab.md		etc-sys-etc
-./etc/fstab.wd		etc-sys-etc
+# $NetBSD: md.hpcsh,v 1.1.2.1 2002/06/06 08:27:09 lukem Exp $

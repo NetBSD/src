@@ -1,2 +1,1 @@
-# $NetBSD: md.dreamcast,v 1.1 2002/05/02 15:42:20 wiz Exp $
-./etc/fstab.md		etc-sys-etc
+# $NetBSD: md.dreamcast,v 1.1.2.1 2002/06/06 08:26:45 lukem Exp $
