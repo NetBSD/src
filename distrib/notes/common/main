@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.71 2000/08/07 11:58:04 hubertf Exp $
+.\" $NetBSD: main,v 1.72 2000/08/21 14:08:00 ad Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -889,6 +889,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Nick Hudson Ta Mt skrll@NetBSD.ORG
 .It Ta Martin Husemann Ta Mt martin@netbsd.org
 .It Ta Dean Huxley Ta Mt dean@netbsd.org
+.It Ta Bernardo Innocenti Ta Mt bernie@NetBSD.ORG
 .It Ta ITOH Yasufumi Ta Mt itohy@NetBSD.ORG
 .It Ta Matthew Jacob Ta Mt mjacob@NetBSD.ORG
 .It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@NetBSD.ORG
@@ -967,8 +968,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Jim Wise Ta Mt jwise@NetBSD.ORG
 .It Ta Michael Wolfson Ta Mt mbw@NetBSD.ORG
 .It Ta Colin Wood Ta Mt ender@NetBSD.ORG
-.It Ta Bernardo Innocenti Ta Mt bernie@NetBSD.ORG
-.
+..
 .El
 .
 .Ss "Legal Mumbo-Jumbo"
