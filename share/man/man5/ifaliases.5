@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifaliases.5,v 1.9 2000/11/08 01:33:18 lukem Exp $
+.\"	$NetBSD: ifaliases.5,v 1.10 2000/11/08 02:56:26 itojun Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -69,3 +69,10 @@ The
 .Nm
 file appeared in
 .Nx 1.2 .
+.Sh BUGS
+.Nm
+assumes IPv4, and does not support other protocol families.
+Please check
+.Xr rc.conf 5
+for alternatives like
+.Pa /etc/ifconfig.xxN .
