@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.21 1998/11/20 00:35:39 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.22 1998/12/08 00:19:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -1201,6 +1201,9 @@ seclose(dev, flag, fmt, p)
 	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
 
 	SC_DEBUG(sc->sc_link, SDEV_DB1, ("closing\n"));
+
+	scsipi_wait_drain(sc->sc_link);
+
 	scsipi_adapter_delref(sc->sc_link);
 	sc->sc_link->flags &= ~SDEV_OPEN;
 

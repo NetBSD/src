@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.26 1998/11/20 00:35:40 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.27 1998/12/08 00:19:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -178,6 +178,9 @@ ukclose(dev, flag, fmt, p)
 	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
 	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closing\n"));
+
+	scsipi_wait_drain(uk->sc_link);
+
 	scsipi_adapter_delref(uk->sc_link);
 	uk->sc_link->flags &= ~SDEV_OPEN;
 
