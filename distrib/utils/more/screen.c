@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.3 1998/01/09 08:03:36 perry Exp $	*/
+/*	$NetBSD: screen.c,v 1.4 1998/02/04 11:09:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)screen.c	8.2 (Berkeley) 4/20/94";
+#else
+__RCSID("$NetBSD: screen.c,v 1.4 1998/02/04 11:09:10 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -47,7 +52,11 @@ static char sccsid[] = "@(#)screen.c	8.2 (Berkeley) 4/20/94";
 
 #include <stdio.h>
 #include <string.h>
-#include <less.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "less.h"
+#include "extern.h"
 
 #define TERMIOS 1
 
@@ -61,6 +70,9 @@ static char sccsid[] = "@(#)screen.c	8.2 (Berkeley) 4/20/94";
 #else
 #include <sgtty.h>
 #endif
+#endif
+#ifdef __NetBSD__
+#include <termcap.h>
 #endif
 
 #ifdef TIOCGWINSZ
@@ -117,10 +129,6 @@ int so_width, se_width;		/* Printing width of standout sequences */
 /*extern*/ short ospeed;	/* Terminal output baud rate */
 /*extern*/ char PC;		/* Pad character */
 
-extern int back_scroll;
-char *tgetstr();
-char *tgoto();
-
 /*
  * Change terminal to "raw mode", or restore to "normal" mode.
  * "Raw mode" means 
@@ -132,6 +140,7 @@ char *tgoto();
  *	   etc. are NOT disabled.
  * It doesn't matter whether an input \n is mapped to \r, or vice versa.
  */
+void
 raw_mode(on)
 	int on;
 {
@@ -232,6 +241,7 @@ raw_mode(on)
 /*
  * Get terminal capabilities via termcap.
  */
+void
 get_term()
 {
 	char termbuf[2048];
@@ -246,8 +256,6 @@ get_term()
 #endif
 #endif
 	static char sbuf[1024];
-
-	char *getenv(), *strcpy();
 
 	/*
 	 * Find out what kind of terminal this is.
@@ -447,11 +455,10 @@ get_term()
  * terminal-specific screen manipulation.
  */
 
-int putchr();
-
 /*
  * Initialize terminal
  */
+void
 init()
 {
 	tputs(sc_init, sc_height, putchr);
@@ -460,6 +467,7 @@ init()
 /*
  * Deinitialize terminal
  */
+void
 deinit()
 {
 	tputs(sc_deinit, sc_height, putchr);
@@ -468,6 +476,7 @@ deinit()
 /*
  * Home cursor (move to upper left corner of screen).
  */
+void
 home()
 {
 	tputs(sc_home, 1, putchr);
@@ -477,12 +486,14 @@ home()
  * Add a blank line (called with cursor at home).
  * Should scroll the display down.
  */
+void
 add_line()
 {
 	tputs(sc_addline, sc_height, putchr);
 }
 
 int short_file;				/* if file less than a screen */
+void
 lower_left()
 {
 	if (short_file) {
@@ -496,6 +507,7 @@ lower_left()
 /*
  * Ring the terminal bell.
  */
+void
 bell()
 {
 	putchr('\7');
@@ -504,6 +516,7 @@ bell()
 /*
  * Clear the screen.
  */
+void
 clear()
 {
 	tputs(sc_clear, sc_height, putchr);
@@ -513,6 +526,7 @@ clear()
  * Clear from the cursor to the end of the cursor's line.
  * {{ This must not move the cursor. }}
  */
+void
 clear_eol()
 {
 	tputs(sc_eol_clear, 1, putchr);
@@ -521,6 +535,7 @@ clear_eol()
 /*
  * Begin "standout" (bold, underline, or whatever).
  */
+void
 so_enter()
 {
 	tputs(sc_s_in, 1, putchr);
@@ -529,6 +544,7 @@ so_enter()
 /*
  * End "standout".
  */
+void
 so_exit()
 {
 	tputs(sc_s_out, 1, putchr);
@@ -538,6 +554,7 @@ so_exit()
  * Begin "underline" (hopefully real underlining, 
  * otherwise whatever the terminal provides).
  */
+void
 ul_enter()
 {
 	tputs(sc_u_in, 1, putchr);
@@ -546,6 +563,7 @@ ul_enter()
 /*
  * End "underline".
  */
+void
 ul_exit()
 {
 	tputs(sc_u_out, 1, putchr);
@@ -554,6 +572,7 @@ ul_exit()
 /*
  * Begin "bold"
  */
+void
 bo_enter()
 {
 	tputs(sc_b_in, 1, putchr);
@@ -562,6 +581,7 @@ bo_enter()
 /*
  * End "bold".
  */
+void
 bo_exit()
 {
 	tputs(sc_b_out, 1, putchr);
@@ -571,6 +591,7 @@ bo_exit()
  * Erase the character to the left of the cursor 
  * and move the cursor left.
  */
+void
 backspace()
 {
 	/* 
@@ -584,6 +605,7 @@ backspace()
 /*
  * Output a plain backspace, without erasing the previous char.
  */
+void
 putbs()
 {
 	tputs(sc_backspace, 1, putchr);

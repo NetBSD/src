@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.3 1998/01/09 08:03:32 perry Exp $	*/
+/*	$NetBSD: option.c,v 1.4 1998/02/04 11:08:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,12 +34,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)option.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: option.c,v 1.4 1998/02/04 11:08:59 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <stdio.h>
-#include <less.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "less.h"
+#include "extern.h"
 
 int top_scroll;			/* Repaint screen from top */
 int bs_mode;			/* How to process backspaces */
@@ -51,14 +60,12 @@ int squeeze;			/* Squeeze multiple blank lines into one */
 int tabstop = 8;		/* Tab settings */
 
 char *firstsearch;
-extern int sc_height;
 
+int
 option(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
 	static int sc_window_set = 0;
 	int ch;
 	char *p;
@@ -70,7 +77,7 @@ option(argc, argv)
 			(*a)[0] = '-';
 
 	optind = 1;		/* called twice, re-init getopt. */
-	while ((ch = getopt(argc, argv, "0123456789/:ceinst:ux:f")) != EOF)
+	while ((ch = getopt(argc, argv, "0123456789/:ceinst:ux:f")) != -1)
 		switch((char)ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':

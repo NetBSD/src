@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.2 1998/01/09 08:03:29 perry Exp $	*/
+/*	$NetBSD: line.c,v 1.3 1998/02/04 11:08:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)line.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: line.c,v 1.3 1998/02/04 11:08:53 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -47,7 +52,9 @@ static char sccsid[] = "@(#)line.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/types.h>
 #include <ctype.h>
-#include <less.h>
+
+#include "less.h"
+#include "extern.h"
 
 static char linebuf[1024];	/* Buffer which holds the current output line */
 static char *curr;		/* Pointer into linebuf */
@@ -91,16 +98,10 @@ static int ln_state;		/* Currently in normal/underline/bold/etc mode? */
 
 char *line;			/* Pointer to the current line.
 				   Usually points to linebuf. */
-
-extern int bs_mode;
-extern int tabstop;
-extern int bo_width, be_width;
-extern int ul_width, ue_width;
-extern int sc_width, sc_height;
-
 /*
  * Rewind the line buffer.
  */
+void
 prewind()
 {
 	line = curr = linebuf;
@@ -119,6 +120,7 @@ prewind()
 	else \
 		column += addon
 
+int
 pappend(c)
 	int c;
 {
@@ -417,9 +419,9 @@ off_t
 forw_raw_line(curr_pos)
 	off_t curr_pos;
 {
-	register char *p;
-	register int c;
-	off_t new_pos, ch_tell();
+	char *p;
+	int c;
+	off_t new_pos;
 
 	if (curr_pos == NULL_POSITION || ch_seek(curr_pos) ||
 		(c = ch_forw_get()) == EOI)
@@ -461,9 +463,9 @@ off_t
 back_raw_line(curr_pos)
 	off_t curr_pos;
 {
-	register char *p;
-	register int c;
-	off_t new_pos, ch_tell();
+	char *p;
+	int c;
+	off_t new_pos;
 
 	if (curr_pos == NULL_POSITION || curr_pos <= (off_t)0 ||
 		ch_seek(curr_pos-1))

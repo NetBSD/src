@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.2 1998/01/09 08:03:24 perry Exp $	*/
+/*	$NetBSD: ch.c,v 1.3 1998/02/04 11:08:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)ch.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: ch.c,v 1.3 1998/02/04 11:08:41 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -47,8 +52,12 @@ static char sccsid[] = "@(#)ch.c	8.1 (Berkeley) 6/6/93";
 #include <sys/types.h>
 #include <sys/file.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include <less.h>
+#include <err.h>
+
+#include "less.h"
+#include "extern.h"
 
 int file = -1;		/* File descriptor of the input file */
 
@@ -75,8 +84,6 @@ static struct {
 	struct buf *next, *prev;
 } buf_anchor = { END_OF_CHAIN, END_OF_CHAIN };
 
-extern int ispipe, cbufs, sigs;
-
 /*
  * Current position in file.
  * Stored as a block number and an offset into the block.
@@ -100,14 +107,16 @@ static off_t last_piped_pos;
 	    ch_offset < buf_head->datasize) ? \
 	    buf_head->data[ch_offset] : fch_get())
 
-static
+static int fch_get __P((void));
+static int buffered __P((long));
+
+static int
 fch_get()
 {
-	extern int bs_mode;
-	register struct buf *bp;
-	register int n, ch;
-	register char *p, *t;
-	off_t pos, lseek();
+	struct buf *bp;
+	int n, ch;
+	char *p, *t;
+	off_t pos;
 
 	/* look for a buffer holding the desired block. */
 	for (bp = buf_head;  bp != END_OF_CHAIN;  bp = bp->next)
@@ -241,11 +250,11 @@ found:
 /*
  * Determine if a specific block is currently in one of the buffers.
  */
-static
+static int
 buffered(block)
 	long block;
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	for (bp = buf_head; bp != END_OF_CHAIN; bp = bp->next)
 		if (bp->block == block)
@@ -257,8 +266,9 @@ buffered(block)
  * Seek to a specified position in the file.
  * Return 0 if successful, non-zero if can't seek there.
  */
+int
 ch_seek(pos)
-	register off_t pos;
+	off_t pos;
 {
 	long new_block;
 
@@ -277,10 +287,9 @@ ch_seek(pos)
 /*
  * Seek to the end of the file.
  */
+int
 ch_end_seek()
 {
-	off_t ch_length();
-
 	if (!ispipe)
 		return(ch_seek(ch_length()));
 
@@ -298,9 +307,10 @@ ch_end_seek()
  * We may not be able to seek there if input is a pipe and the
  * beginning of the pipe is no longer buffered.
  */
+int
 ch_beg_seek()
 {
-	register struct buf *bp, *firstbp;
+	struct buf *bp, *firstbp;
 
 	/*
 	 * Try a plain ch_seek first.
@@ -329,8 +339,6 @@ ch_beg_seek()
 off_t
 ch_length()
 {
-	off_t lseek();
-
 	if (ispipe)
 		return(ch_fsize);
 	return((off_t)(lseek(file, (off_t)0, L_XTND)));
@@ -348,9 +356,10 @@ ch_tell()
 /*
  * Get the current char and post-increment the read pointer.
  */
+int
 ch_forw_get()
 {
-	register int c;
+	int c;
 
 	c = ch_get();
 	if (c != EOI && ++ch_offset >= BUFSIZ) {
@@ -363,6 +372,7 @@ ch_forw_get()
 /*
  * Pre-decrement the read pointer and get the new current char.
  */
+int
 ch_back_get()
 {
 	if (--ch_offset < 0) {
@@ -382,11 +392,12 @@ ch_back_get()
  * keep==1 means keep the data in the current buffers;
  * otherwise discard the old data.
  */
+void
 ch_init(want_nbufs, keep)
 	int want_nbufs;
 	int keep;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	char message[80];
 
 	cbufs = nbufs;
@@ -422,12 +433,12 @@ ch_init(want_nbufs, keep)
  * Allocate some new buffers.
  * The buffers are added to the tail of the buffer chain.
  */
+int
 ch_addbuf(nnew)
 	int nnew;
 {
-	register struct buf *bp;
-	register struct buf *newbufs;
-	char *calloc();
+	struct buf *bp;
+	struct buf *newbufs;
 
 	/*
 	 * We don't have enough buffers.  
