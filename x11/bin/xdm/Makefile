@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/12/20 01:22:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/01/02 17:19:51 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,6 @@ CPPFLAGS.resource.c=	\
 	-DDEF_SYSTEM_SHELL=\"/bin/sh\" \
 	-DDEF_FAILSAFE_CLIENT=\"${X11BINDIR}/xterm\" \
 	-DDEF_XDM_CONFIG=\"${X11LIBDIR}/xdm/xdm-config\" \
-	-DDEF_CHOOSER=\"${X11LIBDIR}/xdm/chooser\" \
 	-DDEF_AUTH_DIR=\"${X11LIBDIR}/xdm\" \
 	-DDEF_GREETER_LIB=\"${X11LIBDIR}/xdm/libXdmGreet.so\"
 
@@ -43,6 +42,10 @@ SUBDIR=		chooser config sessreg
 .PATH:		${X11SRCDIR.xc}/programs/${PROG}/greeter
 
 .include "Makefile.xdm"
+
+CPPFLAGS.resource.c+=	-DDEF_CHOOSER=\"${CHOOSERPATH}\"
+X11EXTRAMANDEFS+=	-DCHOOSERPATH=${CHOOSERPATH}
+SYMLINKS+=		${CHOOSERPATH} ${X11LIBDIR}/xdm/chooser
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

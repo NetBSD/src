@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/20 06:20:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/01/02 17:19:51 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,10 @@ BUILDSYMLINKS=	Xres.cpp Xresources.cpp \
 		xdm-conf.cpp xdm-config.cpp
 
 .PATH:		${X11SRCDIR.xc}/programs/xdm/config
+
+.include "../Makefile.xdm"
+
+CPPSCRIPTFLAGS_xdm-config+=	-DCHOOSERPATH=${CHOOSERPATH}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
