@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.h,v 1.1 2000/06/07 14:34:40 bouyer Exp $	*/
+/*	$NetBSD: lockd_lock.h,v 1.2 2000/06/09 14:00:54 fvdl Exp $	*/
 
 /* Headers and function declarations for file-locking utilities */
 
@@ -17,4 +17,4 @@ void notify __P((char *, int));
 /* callbacks from lock_proc.c */
 void	transmit_result __P((int, nlm_res *, struct sockaddr *));
 void	transmit4_result __P((int, nlm4_res *, struct sockaddr *));
-CLIENT  *get_client __P((struct sockaddr_in *, u_long));
+CLIENT  *get_client __P((struct sockaddr *, rpcvers_t));
