@@ -1,4 +1,4 @@
-/*	$NetBSD: rmp.h,v 1.3 1995/08/21 17:05:19 thorpej Exp $	*/
+/*	$NetBSD: rmp.h,v 1.4 1995/10/06 05:12:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -77,21 +77,21 @@
  */
 
 struct hp_hdr {
-	u_char	daddr[RMP_ADDRLEN];
-	u_char	saddr[RMP_ADDRLEN];
-	u_short	len;
+	u_int8_t	daddr[RMP_ADDRLEN];
+	u_int8_t	saddr[RMP_ADDRLEN];
+	u_int16_t	len;
 };
 
 /*
  * HP uses 802.2 LLC with their own local extensions.  This struct makes
- * sence out of this data (encapsulated in the above 802.3 packet).
+ * sense out of this data (encapsulated in the above 802.3 packet).
  */
 
 struct hp_llc {
-	u_char	dsap;		/* 802.2 DSAP */
-	u_char	ssap;		/* 802.2 SSAP */
-	u_short	cntrl;		/* 802.2 control field */
-	u_short	filler;		/* HP filler (must be zero) */
-	u_short	dxsap;		/* HP extended DSAP */
-	u_short	sxsap;		/* HP extended SSAP */
+	u_int8_t	dsap;		/* 802.2 DSAP */
+	u_int8_t	ssap;		/* 802.2 SSAP */
+	u_int16_t	cntrl;		/* 802.2 control field */
+	u_int16_t	filler;		/* HP filler (must be zero) */
+	u_int16_t	dxsap;		/* HP extended DSAP */
+	u_int16_t	sxsap;		/* HP extended SSAP */
 };
