@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	8.2 (Berkeley) 1/2/94
-#	$Id: Makefile,v 1.8 1994/06/30 05:33:30 cgd Exp $
+#	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 CFLAGS+=#-DTFILE=\"/dev/ttyp0\"
 CFLAGS+=-D_CURSES_PRIVATE -I${.CURDIR}

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,19 +32,17 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)tscroll.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: tscroll.c,v 1.2 1993/11/09 04:08:54 cgd Exp $";
+static char sccsid[] = "@(#)tscroll.c	8.4 (Berkeley) 7/27/94";
 #endif /* not lint */
 
-#include <curses.h>
+#include "curses.h"
 
 #define	MAXRETURNSIZE	64
 
 /*
- * Routine to perform scrolling.  Derived from tgoto.c in tercamp(3) library.
- * Cap is a string containing printf type escapes to allow
- * scrolling.
- * The following escapes are defined for substituting n:
+ * Routine to perform scrolling.  Derived from tgoto.c in tercamp(3)
+ * library.  Cap is a string containing printf type escapes to allow
+ * scrolling.  The following escapes are defined for substituting n:
  *
  *	%d	as in printf
  *	%2	like %2d
@@ -63,31 +61,22 @@ static char *rcsid = "$Id: tscroll.c,v 1.2 1993/11/09 04:08:54 cgd Exp $";
  * all other characters are ``self-inserting''.
  */
 char *
-__tscroll(cap, n)
+__tscroll(cap, n1, n2)
 	const char *cap;
-	int n;
+	int n1, n2;
 {
 	static char result[MAXRETURNSIZE];
-	register char *dp;
-	register int c;
-	char *cp;
+	int c, n;
+	char *dp;
 
-	if (cap == NULL) {
-toohard:
-		/*
-		 * ``We don't do that under BOZO's big top''
-		 */
-		return ("OOPS");
-	}
-
-	cp = (char *) cap;
-	dp = result;
-	while (c = *cp++) {
+	if (cap == NULL)
+		goto err;
+	for (n = n1, dp = result; (c = *cap++) != '\0';) {
 		if (c != '%') {
 			*dp++ = c;
 			continue;
 		}
-		switch (c = *cp++) {
+		switch (c = *cap++) {
 		case 'n':
 			n ^= 0140;
 			continue;
@@ -96,26 +85,25 @@ toohard:
 				goto one;
 			if (n < 100)
 				goto two;
-			/* fall into... */
+			/* FALLTHROUGH */
 		case '3':
 			*dp++ = (n / 100) | '0';
 			n %= 100;
-			/* fall into... */
+			/* FALLTHROUGH */
 		case '2':
-two:	
-			*dp++ = n / 10 | '0';
-one:
-			*dp++ = n % 10 | '0';
+two:			*dp++ = n / 10 | '0';
+one:			*dp++ = n % 10 | '0';
+			n = n2;
 			continue;
 		case '>':
-			if (n > *cp++)
-				n += *cp++;
+			if (n > *cap++)
+				n += *cap++;
 			else
-				cp++;
+				cap++;
 			continue;
 		case '+':
-			n += *cp++;
-			/* fall into... */
+			n += *cap++;
+			/* FALLTHROUGH */
 		case '.':
 			*dp++ = n;
 			continue;
@@ -125,17 +113,27 @@ one:
 		case '%':
 			*dp++ = c;
 			continue;
-
 		case 'B':
 			n = (n / 10 << 4) + n % 10;
 			continue;
 		case 'D':
 			n = n - 2 * (n % 16);
 			continue;
+		/*
+		 * XXX
+		 * System V terminfo files have lots of extra gunk.
+		 * The only one we've seen in scrolling strings is
+		 * %pN, and it seems to work okay if we ignore it.
+		 */
+		case 'p':
+			++cap;
+			continue;
 		default:
-			goto toohard;
+			goto err;
 		}
 	}
 	*dp = '\0';
 	return (result);
+
+err:	return("curses: __tscroll failed");
 }

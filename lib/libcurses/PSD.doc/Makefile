@@ -1,10 +1,9 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 8/14/93
-#	$Id: Makefile,v 1.3 1994/07/01 06:14:02 cgd Exp $
+#	@(#)Makefile	8.2 (Berkeley) 5/23/94
 
 DIR=	psd/19.curses
 SRCS=	Master
 MACROS=	-me
-EXTRA=	appen.A appen.B appen.C appenA c_macros doc.I doc.II doc.III \
+EXTRA=	appen.A appen.B appen.C c_macros doc.I doc.II doc.III \
 	doc.IV ex1.c ex2.c fns.doc intro.0 intro.1 intro.2 intro.3 \
 	intro.4 intro.5 intro.6 life.c macros twinkle1.c twinkle2.c \
 	win_st.c
@@ -27,7 +26,7 @@ VFONT=	/usr/libexec/vfontedpr
 	${VFONT} $*.c | grep -v "^'wh" > $*.gr
 
 paper.ps: ${SRCS}
-	${ROFF} ${SRCS} > ${.TARGET}
+	soelim ${SRCS} | ${ROFF} > ${.TARGET}
 
 Master: twinkle1.gr ex1.gr ex2.gr fns.doc intro.5 intro.2.tbl intro.0 intro.1 \
 	intro.3 intro.4 intro.6 macros c_macros

@@ -29,8 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)twinkle1.c	8.1 (Berkeley) 6/8/93
-.\"	$Id: twinkle1.c,v 1.2 1993/11/09 04:09:57 cgd Exp $
+.\"	@(#)twinkle1.c	8.1 (Berkeley) 6/8/93
 .\"
 # include	<curses.h>
 # include	<signal.h>
