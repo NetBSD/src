@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.6 2003/08/18 16:52:21 agc Exp $
+#	$NetBSD: TODO,v 1.7 2003/08/30 21:30:51 jmmv Exp $
 
 THINGS TO BE DONE:
 
@@ -85,3 +85,4 @@ This is a list of suggested smaller projects (in no particular order):
 + better LKM version checking
 + add a native scheme interpreter
 + add platform support for TenDRA compiler suite
++ merge moused(8) with wsmoused(8) as a new work mode (i.e. serial)
