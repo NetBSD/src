@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.63 2003/02/16 18:16:07 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.64 2003/02/23 04:20:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.63 2003/02/16 18:16:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.64 2003/02/23 04:20:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1221,7 +1221,6 @@ usbd_status
 uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 {
 	usb_interface_descriptor_t *id;
-	usbd_status err;
 	char *buf;
 	int size, offs;
 
@@ -1245,7 +1244,7 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 			sc->sc_nullalt = id->bAlternateSetting;
 			break;
 		case 1:
-			err = uaudio_process_as(sc, buf, &offs, size, id);
+			uaudio_process_as(sc, buf, &offs, size, id);
 			break;
 		default:
 #ifdef UAUDIO_DEBUG
