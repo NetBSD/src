@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.15 1999/02/20 00:12:02 scw Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.16 2000/02/26 14:31:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -45,6 +45,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <machine/cpu.h>
 #include <machine/autoconf.h>
 
 #include <mvme68k/dev/dmavar.h>
