@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.1 1997/11/02 00:44:25 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.2 1997/11/02 05:17:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -624,7 +624,7 @@ ec_write_mbuf(sc, m, buf)
 	struct ec_softc *esc = (struct ec_softc *)sc;
 	bus_space_tag_t asict = esc->sc_asict;
 	bus_space_handle_t asich = esc->sc_asich;
-	int savelen, offset;
+	int savelen;
 
 	savelen = m->m_pkthdr.len;
 
@@ -636,8 +636,8 @@ ec_write_mbuf(sc, m, buf)
 		bus_space_write_1(asict, asich, ELINK2_GACFR,
 		    ELINK2_GACFR_RSEL);
 
-	for (offset = 0; m != NULL; offset += m->m_len, m = m->m_next)
-		ec_writemem(esc, mtod(m, u_int8_t *), offset, m->m_len);
+	for (; m != NULL; buf += m->m_len, m = m->m_next)
+		ec_writemem(esc, mtod(m, u_int8_t *), buf, m->m_len);
 
 	/*
 	 * Switch back to receive page.
