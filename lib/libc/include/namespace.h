@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.58 2000/09/28 08:38:55 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.59 2000/10/20 18:46:07 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -601,6 +601,7 @@
 #define dlsym			__dlsym
 #define dlerror			__dlerror
 #define dladdr			__dladdr
+#define fmtcheck		__fmtcheck
 #endif
 
 #endif
