@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.5 1993/05/22 09:00:49 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.6 1993/06/03 01:12:44 cgd Exp $
  */
 
 /*
@@ -383,8 +383,13 @@ nfs_setattr(vp, vap, cred, p)
 	else
 		sp->sa_gid = txdr_unsigned(vap->va_gid);
 	sp->sa_size = txdr_unsigned(vap->va_size);
+	/* jfw@ksr.com 6/2/93 */
+#if 0 /* bad assumption; Suns (at least) make full use of usec field */
 	sp->sa_atime.tv_sec = txdr_unsigned(vap->va_atime.tv_sec);
 	sp->sa_atime.tv_usec = txdr_unsigned(vap->va_flags);
+#else
+	txdr_time(&vap->va_atime, &sp->sa_atime);
+#endif
 	txdr_time(&vap->va_mtime, &sp->sa_mtime);
 	if (vap->va_size != VNOVAL || vap->va_mtime.tv_sec != VNOVAL ||
 	    vap->va_atime.tv_sec != VNOVAL) {
@@ -1848,6 +1853,8 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	vap->va_bytes_rsv = 0;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_fileid = fxdr_unsigned(long, fp->fa_fileid);
+	/* jfw@ksr.com 6/2/93 */
+#if 0   /* bad assumption; Suns make full (and obvious) use of .usec fields */
 	vap->va_atime.tv_sec = fxdr_unsigned(long, fp->fa_atime.tv_sec);
 	vap->va_atime.tv_usec = 0;
 	vap->va_flags = fxdr_unsigned(u_long, fp->fa_atime.tv_usec);
@@ -1855,6 +1862,13 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	vap->va_ctime.tv_sec = fxdr_unsigned(long, fp->fa_ctime.tv_sec);
 	vap->va_ctime.tv_usec = 0;
 	vap->va_gen = fxdr_unsigned(u_long, fp->fa_ctime.tv_usec);
+#else
+	fxdr_time(&fp->fa_atime, &vap->va_atime);
+	vap->va_mtime = mtime;
+	fxdr_time(&fp->fa_ctime, &vap->va_ctime);
+	vap->va_gen = 0;   /* can reliably learn nothing about this via NFS. */
+	vap->va_flags = 0; /* can reliably learn nothing about this via NFS. */
+#endif
 	np->n_attrstamp = time.tv_sec;
 	*dposp = dpos;
 	*mdp = md;
