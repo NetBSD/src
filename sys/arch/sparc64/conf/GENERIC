@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.25 2000/02/29 06:32:29 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.26 2000/03/22 00:58:22 cgd Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.26 $"
 
 maxusers	32
 
@@ -96,6 +96,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
 options 	PCIVERBOSE
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 ## `INSECURE' turns off the kernel security level (securelevel = 0 always).
 ## This allows writing to /dev/mem, loading kernel modules while multi-user,

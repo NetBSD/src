@@ -1,4 +1,4 @@
-#	$NetBSD: BIKINI,v 1.24 2000/02/26 17:12:37 itojun Exp $
+#	$NetBSD: BIKINI,v 1.25 2000/03/22 00:58:19 cgd Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	BIKINI -- Mycroft's development machine
@@ -136,6 +136,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Warning, these may compile large string tables into the kernel!
 #options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages

@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.4 2000/02/22 11:25:59 soda Exp $
+#	$NetBSD: P4032,v 1.5 2000/03/22 00:58:18 cgd Exp $
 #	$OpenBSD: P4032,v 1.5 1998/03/16 09:38:36 pefo Exp $
 #
 #	configuration file for Algorithmics P4032 board
@@ -113,6 +113,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # Warning, these may compile large string tables into the kernel!
 #options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.

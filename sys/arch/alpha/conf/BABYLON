@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.15 1999/07/29 10:37:12 augustss Exp $
+# $NetBSD: BABYLON,v 1.16 2000/03/22 00:58:16 cgd Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -105,6 +105,7 @@ options 	SYSVSHM
 options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 #options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)

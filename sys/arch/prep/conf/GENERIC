@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.1 2000/02/29 15:21:25 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.2 2000/03/22 00:58:22 cgd Exp $
 #
 #	GENERIC config file
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.1 $"
+#ident		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -97,6 +97,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
