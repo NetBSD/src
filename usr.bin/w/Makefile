@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/05/08 21:12:00 gwr Exp $
+#	$NetBSD: Makefile,v 1.11 1998/02/09 06:25:18 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	w
@@ -13,3 +13,8 @@ LINKS=	${BINDIR}/w ${BINDIR}/uptime
 .PATH: ${.CURDIR}/../../bin/ps
 
 .include <bsd.prog.mk>
+
+# XXX
+.if defined(UVM)
+CPPFLAGS+=      -DUVM
+.endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/24 09:01:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 1998/02/09 06:25:17 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	systat
@@ -14,3 +14,8 @@ BINGRP=	kmem
 BINMODE=2555
 
 .include <bsd.prog.mk>
+
+# XXX
+.if defined(UVM)
+CPPFLAGS+=	-DUVM
+.endif
