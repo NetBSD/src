@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	5.24 (Berkeley) 7/16/92"; */
-static char *rcsid = "$Id: main.c,v 1.1 1993/12/22 10:24:47 cgd Exp $";
+static char *rcsid = "$Id: main.c,v 1.2 1994/03/28 01:50:05 cgd Exp $";
 #endif /* not lint */
 
 #ifdef sunos
@@ -108,6 +108,10 @@ main(argc, argv)
 	if (TP_BSIZE / DEV_BSIZE == 0 || TP_BSIZE % DEV_BSIZE != 0)
 		quit("TP_BSIZE must be a multiple of DEV_BSIZE\n");
 	level = '0';
+	if (argc == 1) {
+		(void) fprintf(stderr, "Must specify a key.\n");
+		Exit(X_ABORT);
+	}
 	argv++;
 	argc -= 2;
 	for (cp = *argv++; *cp; cp++) {
