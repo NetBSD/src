@@ -38,7 +38,7 @@
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
  *	from: @(#)swap_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: swap_pager.c,v 1.14 1994/01/07 20:33:14 mycroft Exp $
+ *	$Id: swap_pager.c,v 1.15 1994/01/13 02:43:09 cgd Exp $
  */
 
 /*
@@ -845,6 +845,7 @@ swap_pager_finish(spc)
 		printf("swap_pager_finish: clean of page %x failed\n",
 		       VM_PAGE_TO_PHYS(spc->spc_m));
 		spc->spc_m->flags |= PG_LAUNDRY;
+		panic("not taking chances right now...");
 	} else {
 		spc->spc_m->flags |= PG_CLEAN;
 		pmap_clear_modify(VM_PAGE_TO_PHYS(spc->spc_m));
@@ -913,16 +914,6 @@ swap_pager_iodone(bp)
 		bswlist.b_flags &= ~B_WANTED;
 		thread_wakeup((int)&bswlist);
 	}
-	/*
-	 * Only kick the pageout daemon if we are really hurting
-	 * for pages, otherwise this page will be picked up later.
-	 */
-#ifdef notyet /* XXX */
-	if (cnt.v_free_count < cnt.v_free_min)
-#else
-	/* XXX shouldn't this be the same test as in vm_page_alloc()? */
-	if (vm_page_free_count < vm_page_free_min)
-#endif
-		thread_wakeup((int) &vm_pages_needed);
+	thread_wakeup((int) &vm_pages_needed);
 	splx(s);
 }
