@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
+/*	$NetBSD: gdt.c,v 1.29 2002/12/14 09:46:36 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.29 2002/12/14 09:46:36 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,12 +56,12 @@ int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
 struct lock gdt_lock_store;
 
-static __inline void gdt_lock __P((void));
-static __inline void gdt_unlock __P((void));
-void gdt_init __P((void));
-void gdt_grow __P((void));
-int gdt_get_slot __P((void));
-void gdt_put_slot __P((int));
+static __inline void gdt_lock(void);
+static __inline void gdt_unlock(void);
+void gdt_init(void);
+void gdt_grow(void);
+int gdt_get_slot(void);
+void gdt_put_slot(int);
 
 /*
  * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
@@ -191,7 +191,7 @@ gdt_reload_cpu(struct cpu_info *ci)
 
 
 /*
- * Grow or shrink the GDT.
+ * Grow the GDT.
  */
 void
 gdt_grow()
