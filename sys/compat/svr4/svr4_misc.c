@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.49 1997/10/10 01:42:21 fvdl Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.50 1997/10/10 22:16:22 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -269,7 +269,7 @@ again:
 	inp = buf;
 	outp = (char *) SCARG(uap, dp);
 	resid = SCARG(uap, nbytes);
-	if (eofflag || (len = buflen - auio.uio_resid) == 0)
+	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
 
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
