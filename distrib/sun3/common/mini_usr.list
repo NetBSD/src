@@ -1,5 +1,5 @@
 #
-#	$NetBSD: mini_usr.list,v 1.13 2001/05/26 06:12:11 chs Exp $
+#	$NetBSD: mini_usr.list,v 1.14 2001/10/02 06:43:15 chs Exp $
 #
 # miniroot files from /usr:
 
@@ -11,15 +11,15 @@
 SPECIAL	cd usr; ln -s lib libexec
 COPY	${DESTDIR}/usr/libexec/ld.elf_so	usr/lib
 COPY	${DESTDIR}/usr/lib/libc.so		usr/lib
-COPY	${DESTDIR}/usr/lib/libc.so.12		usr/lib
+LINK	usr/lib/libc.so				usr/lib/libc.so.12
 COPY	${DESTDIR}/usr/lib/libcurses.so		usr/lib
-COPY	${DESTDIR}/usr/lib/libcurses.so.4	usr/lib
+LINK	usr/lib/libcurses.so			usr/lib/libcurses.so.4
 COPY	${DESTDIR}/usr/lib/libedit.so		usr/lib
-COPY	${DESTDIR}/usr/lib/libedit.so.2		usr/lib
+LINK	usr/lib/libedit.so			usr/lib/libedit.so.2
 COPY	${DESTDIR}/usr/lib/libtermcap.so	usr/lib
-COPY	${DESTDIR}/usr/lib/libtermcap.so.0	usr/lib
+LINK	usr/lib/libtermcap.so			usr/lib/libtermcap.so.0
 COPY	${DESTDIR}/usr/lib/libutil.so		usr/lib
-COPY	${DESTDIR}/usr/lib/libutil.so.5		usr/lib
+LINK	usr/lib/libutil.so			usr/lib/libutil.so.6
 
 # usr.sbin:
 COPY	${DESTDIR}/usr/sbin/chown		usr/sbin
