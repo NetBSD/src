@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_compr.h,v 1.3 1999/07/26 14:02:31 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_ihash.h,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -25,11 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: ntfs_compr.h,v 1.4 1999/05/12 09:42:55 semenu Exp
+ *	Id: ntfs_ihash.h,v 1.3 1999/05/12 09:42:59 semenu Exp
  */
 
-#define NTFS_COMPBLOCK_SIZE	0x1000
-#define NTFS_COMPUNIT_CL	16
-
-int	ntfs_uncompblock(u_int8_t *, u_int8_t *);
-int	ntfs_uncompunit(struct ntfsmount *, u_int8_t *, u_int8_t *);
+extern struct lock ntfs_hashlock;
+void ntfs_nthashinit __P((void));
+void ntfs_nthashreinit __P((void));
+void ntfs_nthashdone __P((void));
+struct ntnode   *ntfs_nthashlookup __P((dev_t, ino_t));
+struct ntnode   *ntfs_nthashget __P((dev_t, ino_t));
+void ntfs_nthashins __P((struct ntnode *));
+void ntfs_nthashrem __P((struct ntnode *));
