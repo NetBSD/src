@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.29 1996/03/15 02:28:03 paulus Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.30 1996/03/19 01:00:49 paulus Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -161,10 +161,10 @@ extern struct compressor ppp_bsd_compress;
 extern struct compressor ppp_deflate;
 
 struct compressor *ppp_compressors[8] = {
-#if DO_BSD_COMPRESS
+#if DO_BSD_COMPRESS && defined(PPP_BSDCOMP)
     &ppp_bsd_compress,
 #endif
-#if DO_DEFLATE
+#if DO_DEFLATE && defined(PPP_DEFLATE)
     &ppp_deflate,
 #endif
     NULL
