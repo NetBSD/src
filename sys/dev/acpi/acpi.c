@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.48 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.49 2003/11/01 01:03:23 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.48 2003/10/31 20:54:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.49 2003/11/01 01:03:23 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -789,7 +789,6 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
-	ACPI_OBJECT *param;
 
 	if (handle == NULL)
 		handle = ACPI_ROOT_OBJECT;
@@ -799,7 +798,7 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 
 	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_STRING);
 	if (rv == AE_OK) {
-		param = buf.Pointer;
+		ACPI_OBJECT *param = buf.Pointer;
 		char *ptr = param->String.Pointer;
 		size_t len = param->String.Length;
 		if ((*stringp = AcpiOsAllocate(len)) == NULL)
