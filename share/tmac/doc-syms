@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-syms,v 1.68 2001/11/24 02:41:48 jdolecek Exp $
+.\"	$NetBSD: doc-syms,v 1.69 2001/11/29 14:58:24 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -379,7 +379,7 @@
 .		ds b1 \&\\*(tNIEEE S\\*(aatd 754-1985
 .       \}
 .       if "\\*(A\\n(aP"-iso8802-3" \{\
-.		ds b1 \\*(tNISO \\*(aa8802-3:1989\\*(sV
+.		ds b1 \\*(tNISO/IEC \\*(aa8802-3:1989\\*(sV
 .\" .		as b1 (``\\*(tNANSI C\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-xpg3" \{\
