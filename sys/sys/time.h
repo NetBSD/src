@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.41 2003/09/06 22:01:21 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.42 2004/04/27 01:12:44 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -235,13 +235,16 @@ void	realtimerexpire __P((void *));
 
 __BEGIN_DECLS
 int	adjtime __P((const struct timeval *, struct timeval *));
-int	futimes __P((int, const struct timeval *));
+int	futimes __P((int, const struct timeval [2]));
 int	getitimer __P((int, struct itimerval *));
-int	gettimeofday __P((struct timeval *, struct timezone *));
-int	lutimes __P((const char *, const struct timeval *));
-int	setitimer __P((int, const struct itimerval *, struct itimerval *));
-int	settimeofday __P((const struct timeval *, const struct timezone *));
-int	utimes __P((const char *, const struct timeval *));
+int	gettimeofday __P((struct timeval * __restrict,
+	    void * __restrict));
+int	lutimes __P((const char *, const struct timeval [2]));
+int	setitimer __P((int, const struct itimerval * __restrict,
+	    struct itimerval * __restrict));
+int	settimeofday __P((const struct timeval * __restrict,
+	    const void * __restrict));
+int	utimes __P((const char *, const struct timeval [2]));
 __END_DECLS
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
