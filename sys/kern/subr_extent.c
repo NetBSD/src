@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.32 2000/06/16 16:48:56 mrg Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.32.2.1 2000/06/27 21:54:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -668,7 +668,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				    - 1;
 
 #if 0
-				printf("newstart=%x newend=%x ex_start=%x ex_end=%x boundary=%x dontcross=%x\n",
+				printf("newstart=%lx newend=%lx ex_start=%lx ex_end=%lx boundary=%lx dontcross=%lx\n",
 				    newstart, newend, ex->ex_start, ex->ex_end,
 				    boundary, dontcross);
 #endif
@@ -762,7 +762,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			    - 1;
 
 #if 0
-			printf("newstart=%x newend=%x ex_start=%x ex_end=%x boundary=%x dontcross=%x\n",
+			printf("newstart=%lx newend=%lx ex_start=%lx ex_end=%lx boundary=%lx dontcross=%lx\n",
 			    newstart, newend, ex->ex_start, ex->ex_end,
 			    boundary, dontcross);
 #endif
