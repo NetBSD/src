@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.30 1997/06/06 23:43:50 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.31 1997/07/09 03:03:21 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -292,31 +292,30 @@ struct ics2101_volume {
 /*
  * Mixer & MUX devices for CS4231
  */
-#define GUSMAX_MIX_IN			0 /* input to MUX from mixer output */
-#define GUSMAX_MONO_LVL			1 /* mic input to MUX;
+#define GUSMAX_MONO_LVL			0 /* mic input to MUX;
 					     also mono mixer input */
-#define GUSMAX_DAC_LVL			2 /* input to MUX; also mixer input */
-#define GUSMAX_LINE_IN_LVL		3 /* input to MUX; also mixer input */
-#define GUSMAX_CD_LVL			4 /* mixer input only */
-#define GUSMAX_MONITOR_LVL		5 /* digital mix (?) */
-#define GUSMAX_OUT_LVL			6 /* output level. (?) */
-#define GUSMAX_SPEAKER_LVL		7 /* pseudo-device for mute */
-#define GUSMAX_LINE_IN_MUTE		8 /* pre-mixer */
-#define GUSMAX_DAC_MUTE			9 /* pre-mixer */
-#define GUSMAX_CD_MUTE			10 /* pre-mixer */
-#define GUSMAX_MONO_MUTE		11 /* pre-mixer--microphone/mono */
-#define GUSMAX_MONITOR_MUTE		12 /* post-mixer level/mute */
-#define GUSMAX_SPEAKER_MUTE		13 /* speaker mute */
+#define GUSMAX_DAC_LVL			1 /* input to MUX; also mixer input */
+#define GUSMAX_LINE_IN_LVL		2 /* input to MUX; also mixer input */
+#define GUSMAX_CD_LVL			3 /* mixer input only */
+#define GUSMAX_MONITOR_LVL		4 /* digital mix (?) */
+#define GUSMAX_OUT_LVL			5 /* output level. (?) */
+#define GUSMAX_SPEAKER_LVL		6 /* pseudo-device for mute */
+#define GUSMAX_LINE_IN_MUTE		7 /* pre-mixer */
+#define GUSMAX_DAC_MUTE			8 /* pre-mixer */
+#define GUSMAX_CD_MUTE			9 /* pre-mixer */
+#define GUSMAX_MONO_MUTE		10 /* pre-mixer--microphone/mono */
+#define GUSMAX_MONITOR_MUTE		11 /* post-mixer level/mute */
+#define GUSMAX_SPEAKER_MUTE		12 /* speaker mute */
 
-#define GUSMAX_REC_LVL			14 /* post-MUX gain */
+#define GUSMAX_REC_LVL			13 /* post-MUX gain */
 
-#define GUSMAX_RECORD_SOURCE		15
+#define GUSMAX_RECORD_SOURCE		14
 
 /* Classes */
-#define GUSMAX_INPUT_CLASS		16
-#define GUSMAX_RECORD_CLASS		17
-#define GUSMAX_MONITOR_CLASS		18
-#define GUSMAX_OUTPUT_CLASS		19
+#define GUSMAX_INPUT_CLASS		15
+#define GUSMAX_RECORD_CLASS		16
+#define GUSMAX_MONITOR_CLASS		17
+#define GUSMAX_OUTPUT_CLASS		18
 
 #ifdef AUDIO_DEBUG
 #define GUSPLAYDEBUG	/*XXX*/
@@ -2892,17 +2891,10 @@ gusmax_set_in_port(addr, port)
 	DPRINTF(("gusmax_set_in_port: %d\n", port));
 
 	switch(port) {
-	case GUSMAX_MONO_LVL:
-		port = MIC_IN_PORT;
-		break;
-	case GUSMAX_LINE_IN_LVL:
-		port = LINE_IN_PORT;
-		break;
-	case GUSMAX_DAC_LVL:
-		port = AUX1_IN_PORT;
-		break;
-	case GUSMAX_MIX_IN:
-		port = DAC_IN_PORT;
+	case MIC_IN_PORT:
+	case LINE_IN_PORT:
+	case AUX1_IN_PORT:
+	case DAC_IN_PORT:
 		break;
 	default:
 		return(EINVAL);
@@ -2916,23 +2908,9 @@ gusmax_get_in_port(addr)
 	void * addr;
 {
 	register struct ad1848_softc *sc = addr;
-	int port = GUSMAX_MONO_LVL;
+	int port;
     
-	switch(ad1848_get_rec_port(sc)) {
-	case MIC_IN_PORT:
-		port = GUSMAX_MONO_LVL;
-		break;
-	case LINE_IN_PORT:
-		port = GUSMAX_LINE_IN_LVL;
-		break;
-	case DAC_IN_PORT:
-		port = GUSMAX_MIX_IN;
-		break;
-	case AUX1_IN_PORT:
-		port = GUSMAX_DAC_LVL;
-		break;
-	}
-
+	port = ad1848_get_rec_port(sc);
 	DPRINTF(("gusmax_get_in_port: %d\n", port));
 
 	return(port);
@@ -3861,14 +3839,6 @@ gusmax_mixer_query_devinfo(addr, dip)
 	DPRINTF(("gusmax_query_devinfo: index=%d\n", dip->index));
 
 	switch(dip->index) {
-	case GUSMAX_MIX_IN:	/* mixed MUX input */
-		dip->type = AUDIO_MIXER_ENUM;
-		dip->mixer_class = GUSMAX_INPUT_CLASS;
-		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmixerout);
-		dip->un.e.num_mem = 0;		/* XXX */
-		break;
-
 #if 0
     case GUSMAX_MIC_IN_LVL:	/* Microphone */
 	dip->type = AUDIO_MIXER_VALUE;
@@ -4018,13 +3988,13 @@ gusmax_mixer_query_devinfo(addr, dip)
 	strcpy(dip->label.name, AudioNsource);
 	dip->un.e.num_mem = 4;
 	strcpy(dip->un.e.member[0].label.name, AudioNoutput);
-	dip->un.e.member[0].ord = GUSMAX_MIX_IN;
+	dip->un.e.member[0].ord = DAC_IN_PORT;
 	strcpy(dip->un.e.member[1].label.name, AudioNmicrophone);
-	dip->un.e.member[1].ord = GUSMAX_MONO_LVL;
+	dip->un.e.member[1].ord = MIC_IN_PORT;
 	strcpy(dip->un.e.member[2].label.name, AudioNdac);
-	dip->un.e.member[2].ord = GUSMAX_DAC_LVL;
+	dip->un.e.member[2].ord = AUX1_IN_PORT;
 	strcpy(dip->un.e.member[3].label.name, AudioNline);
-	dip->un.e.member[3].ord = GUSMAX_LINE_IN_LVL;
+	dip->un.e.member[3].ord = LINE_IN_PORT;
 	break;
 
     case GUSMAX_INPUT_CLASS:			/* input class descriptor */
