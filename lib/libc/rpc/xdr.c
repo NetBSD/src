@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.6 1995/04/24 23:33:39 jtc Exp $	*/
+/*	$NetBSD: xdr.c,v 1.7 1995/04/25 21:41:48 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr.c 1.35 87/08/12";*/
 /*static char *sccsid = "from: @(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr.c,v 1.6 1995/04/24 23:33:39 jtc Exp $";
+static char *rcsid = "$NetBSD: xdr.c,v 1.7 1995/04/25 21:41:48 christos Exp $";
 #endif
 
 /*
@@ -163,7 +163,7 @@ xdr_long(xdrs, lp)
 		return (XDR_PUTLONG(xdrs, lp));
 	case XDR_DECODE:
 		return (XDR_GETLONG(xdrs, lp));
-	dase XDR_FREE:
+	case XDR_FREE:
 		return (TRUE);
 	}
 
