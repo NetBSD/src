@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.20 1998/08/18 08:00:17 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.21 1998/10/30 23:30:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -401,15 +401,11 @@ tl_pci_attach(parent, self, aux)
 	ifmedia_init(&sc->tl_mii.mii_media, IFM_IMASK, tl_mediachange,
 	    tl_mediastatus);
 	mii_phy_probe(self, &sc->tl_mii, 0xffffffff);
-#ifndef notyet	/* XXX XXX XXX */
 	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) { 
 		ifmedia_add(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_AUTO);
-#else
-	ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
-#endif
 
 	bcopy(sc->sc_dev.dv_xname, sc->tl_if.if_xname, IFNAMSIZ);
 	sc->tl_if.if_softc = sc;
