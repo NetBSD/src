@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.63 2003/10/17 16:00:43 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.64 2003/10/17 16:39:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.63 2003/10/17 16:00:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.64 2003/10/17 16:39:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,7 +272,7 @@ do {									\
 	__d->vr_ctl = htole32(VR_RXCTL_CHAIN | VR_RXCTL_RX_INTR |	\
 	    ((MCLBYTES - 1) & VR_RXCTL_BUFLEN));			\
 	VR_CDRXSYNC((sc), (i), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * register space access macros
@@ -321,27 +321,27 @@ int	vr_copy_small = 0;
 
 #define	VR_SETBIT(sc, reg, x)				\
 	CSR_WRITE_1(sc, reg,				\
-		CSR_READ_1(sc, reg) | x)
+	    CSR_READ_1(sc, reg) | (x))
 
 #define	VR_CLRBIT(sc, reg, x)				\
 	CSR_WRITE_1(sc, reg,				\
-		CSR_READ_1(sc, reg) & ~x)
+	    CSR_READ_1(sc, reg) & ~(x))
 
 #define	VR_SETBIT16(sc, reg, x)				\
 	CSR_WRITE_2(sc, reg,				\
-		CSR_READ_2(sc, reg) | x)
+	    CSR_READ_2(sc, reg) | (x))
 
 #define	VR_CLRBIT16(sc, reg, x)				\
 	CSR_WRITE_2(sc, reg,				\
-		CSR_READ_2(sc, reg) & ~x)
+	    CSR_READ_2(sc, reg) & ~(x))
 
 #define	VR_SETBIT32(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
-		CSR_READ_4(sc, reg) | x)
+	    CSR_READ_4(sc, reg) | (x))
 
 #define	VR_CLRBIT32(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
-		CSR_READ_4(sc, reg) & ~x)
+	    CSR_READ_4(sc, reg) & ~(x))
 
 /*
  * MII bit-bang glue.
@@ -518,7 +518,7 @@ vr_reset(sc)
 			    sc->vr_dev.dv_xname);
 			VR_SETBIT(sc, VR_MISC_CR1, VR_MISCCR1_FORSRST);
 		}
-	}			
+	}
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -1034,7 +1034,7 @@ vr_start(ifp)
 		d->vr_ctl |=
 		    htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|
 		    VR_TXCTL_LASTFRAG);
-		
+
 		/*
 		 * If this is the first descriptor we're enqueuing,
 		 * don't give it to the Rhine yet.  That could cause
@@ -1478,7 +1478,7 @@ vr_attach(parent, self, aux)
 
 	/* Get revision */
 	sc->vr_revid = PCI_REVISION(pa->pa_class);
-	
+
 	/*
 	 * Map control/status registers.
 	 */
