@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 1998/10/19 03:09:33 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.18 1998/12/17 10:54:34 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@ static int reloc_target_bitsize[] = {
 	32, 0, 22	/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
 };
 
+static void iflush __P((jmpslot_t *));
+
 static __inline void
 iflush(sp)
 	jmpslot_t		*sp;
@@ -136,7 +138,7 @@ md_relocate(r, relocation, addr, relocatable_output)
 	relocation >>= RELOC_VALUE_RIGHTSHIFT(r);
 
 	/* Unshifted mask for relocation */
-	mask = 1 << RELOC_TARGET_BITSIZE(r) - 1;
+	mask = 1 << (RELOC_TARGET_BITSIZE(r) - 1);
 	mask |= mask - 1;
 	relocation &= mask;
 
@@ -173,6 +175,45 @@ md_relocate(r, relocation, addr, relocatable_output)
 	}
 }
 
+/*
+ * Set up a "direct" transfer (ie. not through the run-time binder) from
+ * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
+ * and by `ld.so' after resolving the symbol.
+ * On the i386, we use the JMP instruction which is PC relative, so no
+ * further RRS relocations will be necessary for such a jmpslot.
+ *
+ * OFFSET unused on Sparc.
+ */
+void
+md_fix_jmpslot(sp, offset, addr, first)
+	jmpslot_t	*sp;
+	long		offset;
+	u_long		addr;
+	int		first;
+{
+	/*
+	 * Here comes a RELOC_{LO10,HI22} relocation pair
+	 * The resulting code is:
+	 *	sethi	%hi(addr), %g1
+	 *	jmp	%g1+%lo(addr)
+	 *	nop	! delay slot
+	 */
+	sp->opcode1 = SETHI | ((addr >> 10) & 0x003fffff);
+	sp->opcode2 = JMP | (addr & 0x000003ff);
+	sp->reloc_index = NOP;
+	iflush(sp);
+}
+
+void
+md_set_breakpoint(where, savep)
+	long	where;
+	long	*savep;
+{
+	*savep = *(long *)where;
+	*(long *)where = TRAP;
+}
+
+
 #ifndef RTLD
 /*
  * Machine dependent part of claim_rrs_reloc().
@@ -204,7 +245,6 @@ md_make_reloc(rp, r, type)
 
 	return 1;
 }
-#endif
 
 /*
  * Set up a transfer from jmpslot at OFFSET (relative to the PLT table)
@@ -221,35 +261,6 @@ md_make_jmpslot(sp, offset, index)
 	/* The following is a RELOC_WDISP30 relocation */
 	sp->opcode2 = CALL | ((fudge >> 2) & 0x3fffffff);
 	sp->reloc_index = NOP | index;
-	iflush(sp);
-}
-
-/*
- * Set up a "direct" transfer (ie. not through the run-time binder) from
- * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
- * and by `ld.so' after resolving the symbol.
- * On the i386, we use the JMP instruction which is PC relative, so no
- * further RRS relocations will be necessary for such a jmpslot.
- *
- * OFFSET unused on Sparc.
- */
-void
-md_fix_jmpslot(sp, offset, addr, first)
-	jmpslot_t	*sp;
-	long		offset;
-	u_long		addr;
-	int		first;
-{
-	/*
-	 * Here comes a RELOC_{LO10,HI22} relocation pair
-	 * The resulting code is:
-	 *	sethi	%hi(addr), %g1
-	 *	jmp	%g1+%lo(addr)
-	 *	nop	! delay slot
-	 */
-	sp->opcode1 = SETHI | ((addr >> 10) & 0x003fffff);
-	sp->opcode2 = JMP | (addr & 0x000003ff);
-	sp->reloc_index = NOP;
 	iflush(sp);
 }
 
@@ -302,16 +313,6 @@ md_make_cpyreloc(rp, r)
 	r->r_addend = 0;
 }
 
-void
-md_set_breakpoint(where, savep)
-	long	where;
-	long	*savep;
-{
-	*savep = *(long *)where;
-	*(long *)where = TRAP;
-}
-
-#ifndef RTLD
 /*
  * Initialize (output) exec header such that useful values are
  * obtained from subsequent N_*() macro evaluations.
