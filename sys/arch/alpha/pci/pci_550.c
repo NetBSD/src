@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.4 1998/06/05 17:42:53 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.5 1998/06/05 19:04:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.4 1998/06/05 17:42:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.5 1998/06/05 19:04:51 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.4 1998/06/05 17:42:53 thorpej Exp $");
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -187,14 +188,35 @@ dec_550_intr_map(ccv, bustag, buspin, line, ihp)
 	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
 
 	/*
-	 * The PCI-ISA bridge lives on device 7 of bus 0.  On the MiataGL
-	 * this is a Cypress chip with PCI IDE wired to compatibility
-	 * mode on functions 1 and 2.  There will be no interrupt mapping
-	 * for this device, so just bail out now.
+	 * There are two main variants of Miata: Miata 1 (Intel SIO)
+	 * and Miata {1.5,2} (Cypress).
+	 *
+	 * The Miata 1 has a CMD PCI IDE wired to compatibility mode at
+	 * device 4 of bus 0.  This variant apparently also has the
+	 * Pyxis DMA bug.
+	 *
+	 * On the Miata 1.5 and Miata 2, the Cypress PCI-ISA bridge lives
+	 * on device 7 of bus 0.  This device has PCI IDE wired to
+	 * compatibility mode on functions 1 and 2.
+	 *
+	 * There will be no interrupt mapping for these devices, so just
+	 * bail out now.
 	 */
-	if (bus == 0 && device == 7) {
-		if (function == 0)
-			panic("dec_550_intr_map: SIO device");
+	if (bus == 0) {
+		if ((hwrpb->rpb_variation & SV_ST_MASK) < SV_ST_MIATA_1_5) {
+			/* Miata 1 */
+			if (device == 7)
+				panic("dec_550_intr_map: SIO device");
+			else if (device == 4)
+				return (1);
+		} else {
+			/* Miata 1.5 or Miata 2 */
+			if (device == 7) {
+				if (function == 0)
+					panic("dec_550_intr_map: SIO device");
+				return (1);
+			}
+		}
 	}
 
 	/*
