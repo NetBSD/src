@@ -10,21 +10,11 @@ out as follows:
 
 			INSTALL		these installation notes
 
-<<<<<<< contents
 			binary/		mac68k system binaries;
 					see below.
 
 			installation/	installation helper items
-||||||| 1.7
-			utils/		The mac68k installation utilities.
-=======
-			X11/		mac68k X distribution sets;
-					see below.
 
-			utils/		The mac68k installation utilities.
->>>>>>> 1.8
-
-<<<<<<< contents
 The NetBSD/mac68k system binaries include the NetBSD/mac68k binary
 distribution sets, additional kernels, and security-related system
 binaries.  The NetBSD _VER release for the mac68k port is comprised of
@@ -93,145 +83,7 @@ kernel distribution sets, and five X distribution sets.  The files in the
 			including groff, all related programs, and their
 			manual pages. 
 			[ 1.0M gzipped, 3.7M uncompressed ]
-||||||| 1.7
-The NetBSD/mac68k binary distribution sets contain the binaries which
-comprise the NetBSD _VER release for the mac68k.  There are eight binary
-distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "mac68k/binary"
-subdirectory of the NetBSD _VER distribution tree, and are as follows:
 
-	netbsd13 The NetBSD/mac68k _VER kernel binary.  You MUST
-		install this file.  It is the kernel that you need
-		to boot the system.
-		[ 606K gzipped, 1.32M uncompressed ]
-
-	base13	The NetBSD/mac68k _VER base binary distribution.  You
-		MUST install this distribution set.  It contains the
-		base NetBSD utilities that are necessary for the
-		system to run and be minimally functional.  It
-		includes shared library support, and excludes
-		everything described below.
-		[ 8.6M gzipped, 25.1M uncompressed ]
-
-	comp13	The NetBSD/mac68k Compiler tools; all of the tools
-		relating to C and C++.
-		This set includes the system include files
-		(/usr/include), the linker, the compiler tool chain,
-		and the various system libraries (except the shared
-		libraries, which are included as part of the base
-		set).  This set also includes the manual pages for all
-		of the utilities it contains, as well as the system
-		call and library manual pages.
-		[ 6.2M gzipped, 21.6M uncompressed ]
-
-	etc13	This distribution set contains the system
-		configuration files that reside in /etc and in several
-		other places.  This set MUST be installed if you are
-		installing the system from scratch, but should NOT be
-		used if you are upgrading.  (If you are upgrading,
-		it's recommended that you get a copy of this set and
-		CAREFULLY upgrade your configuration files by hand.)
-		[ 49K gzipped, 288K uncompressed ]
-
-	games13	This set includes the games and their manual pages.
-		[ 2.8M gzipped, 7.2M uncompressed ]
-
-	man13	This set includes all of the manual pages for the
-		binaries and other software contained in the base set.
-		Note that it does not include any of the manual pages
-		that are included in the other sets.
-		[ 2.2M gzipped, 8.8M uncompressed ]
-
-	misc13	This set includes the system dictionaries (which are
-		rather large), the typesettable document set, and
-		man pages for other architectures which happen to be
-		installed from the source tree by default.
-		[ 2.1M gzipped, 7.6M uncompressed ]
-
-	text13	This set includes NetBSD's text processing tools,
-		including groff, all related programs, and their
-		manual pages.
-		[ 1.0M gzipped, 3.7M uncompressed ]
-
-The mac68k security distribution set is named "secr13" and can be found
-in the "mac68k/security" subdirectory of the NetBSD _VER distribution
-tree.  It contains the crypt libraries (for the DES encryption algorithm)
-and the binaries which depend on it.  It can only be found on those sites
-which carry the complete NetBSD distribution and that can legally obtain
-it.  (Remember, because of United States law, it may not be legal to
-distribute this set to locations outside of the United States and Canada.)
-[ 779K gzipped, 2.5M uncompressed ]
-=======
-The NetBSD/mac68k binary distribution sets contain the binaries which
-comprise the NetBSD _VER release for the mac68k.  There are eight binary
-distribution sets, the "security" distribution set, and five X distribution
-sets.  The binary distribution sets can be found in the "mac68k/binary"
-subdirectory of the NetBSD _VER distribution tree, and are as follows:
-
-	netbsd13 The NetBSD/mac68k _VER kernel binary.  You MUST
-		install this file.  It is the kernel that you need
-		to boot the system.
-		[ 606K gzipped, 1.32M uncompressed ]
-
-	base13	The NetBSD/mac68k _VER base binary distribution.  You
-		MUST install this distribution set.  It contains the
-		base NetBSD utilities that are necessary for the
-		system to run and be minimally functional.  It
-		includes shared library support, and excludes
-		everything described below.
-		[ 8.6M gzipped, 25.1M uncompressed ]
-
-	comp13	The NetBSD/mac68k Compiler tools; all of the tools
-		relating to C and C++.
-		This set includes the system include files
-		(/usr/include), the linker, the compiler tool chain,
-		and the various system libraries (except the shared
-		libraries, which are included as part of the base
-		set).  This set also includes the manual pages for all
-		of the utilities it contains, as well as the system
-		call and library manual pages.
-		[ 6.2M gzipped, 21.6M uncompressed ]
-
-	etc13	This distribution set contains the system
-		configuration files that reside in /etc and in several
-		other places.  This set MUST be installed if you are
-		installing the system from scratch, but should NOT be
-		used if you are upgrading.  (If you are upgrading,
-		it's recommended that you get a copy of this set and
-		CAREFULLY upgrade your configuration files by hand.)
-		[ 49K gzipped, 288K uncompressed ]
-
-	games13	This set includes the games and their manual pages.
-		[ 2.8M gzipped, 7.2M uncompressed ]
-
-	man13	This set includes all of the manual pages for the
-		binaries and other software contained in the base set.
-		Note that it does not include any of the manual pages
-		that are included in the other sets.
-		[ 2.2M gzipped, 8.8M uncompressed ]
-
-	misc13	This set includes the system dictionaries (which are
-		rather large), the typesettable document set, and
-		man pages for other architectures which happen to be
-		installed from the source tree by default.
-		[ 2.1M gzipped, 7.6M uncompressed ]
-
-	text13	This set includes NetBSD's text processing tools,
-		including groff, all related programs, and their
-		manual pages.
-		[ 1.0M gzipped, 3.7M uncompressed ]
-
-The mac68k security distribution set is named "secr13" and can be found
-in the "mac68k/security" subdirectory of the NetBSD _VER distribution
-tree.  It contains the crypt libraries (for the DES encryption algorithm)
-and the binaries which depend on it.  It can only be found on those sites
-which carry the complete NetBSD distribution and that can legally obtain
-it.  (Remember, because of United States law, it may not be legal to
-distribute this set to locations outside of the United States and Canada.)
-[ 779K gzipped, 2.5M uncompressed ]
->>>>>>> 1.8
-
-<<<<<<< contents
 	xbase.tgz	X clients, shared libraries, and related man pages.
 			Also includes bitmaps and miscellaneous
 			configuration files.
@@ -304,53 +156,3 @@ follows:
 
 These files are all binhexed, self-extracting archives.  If you need them,
 the sources for these utilities are in the "src" subdirectory.
-||||||| 1.7
-The mac68k binary distribution sets are distributed as full .tar.gz
-files (without that extension).  The instructions given for extracting
-the source sets work equally well for the binary sets, but it is worth
-noting that if you use that method, the files are extracted "below" the
-current directory.  That is, if you want to extract the binaries "into"
-your system, i.e. replace the system binaries with them, you have to run
-the "tar xfp" from /.  Also note that if you upgrade or install this way,
-those programs that you are using at the time will NOT be replaced.  If
-you follow the normal installation or upgrade procedures, this will be
-taken care of for you.
-=======
-The NetBSD _VER distribution includes a full X11 build for NetBSD/mac68k
-systems.  Except for some minor changes to facilitate building under
-NetBSD in general, the X clients and related libraries were built "out of
-the box" from an XFree86 3.3.1 tree, which in turn was based on X11R6.3.
-The binaries were built on, and require, a NetBSD/mac68k _VER system.  The
-mac68k X distribution sets can be found in the "mac68k/X11" subdirectory
-of the NetBSD _VER distribution tree, and are as follows:
-
-        xbase13		X clients, shared libraries, and related man pages.
-			Also includes bitmaps and miscellaneous
-			configuration files.
-			[ 2.34 M gzipped, 7.46M uncompressed ]
-
-        xserver13	The Xmac68k _monochrome_ server with man pages.
-			[ 1.32M gzipped, 3.25M uncompressed ]
-
-	xfont13		X fonts.
-			[ 5.66M gzipped, 6.99M uncompressed ]
-
-        xcomp13		Static libraries, include files (except bitmaps),
-			X config files (for xmkmf), and related man pages.
-			[ 1.57M gzipped, 6.38M uncompressed ]
-
-	xcontrib	User-contributed X binaries (e.g. xev, xload) with
-			man pages and default config files.
-			[ 178K gzipped, 661K uncompressed ]
-
-The mac68k binary distribution sets are distributed as full .tar.gz files
-(without that extension).  The instructions given for extracting the
-source sets work equally well for the binary sets, but it is worth noting
-that if you use that method, the files are extracted "below" the current
-directory.  That is, if you want to extract the binaries "into" your
-system, i.e. replace the system binaries with them, you have to run the
-"tar xfp" from /.  Also note that if you upgrade or install this way,
-those programs that you are using at the time will NOT be replaced.  If
-you follow the normal installation or upgrade procedures, this will be
-taken care of for you.
->>>>>>> 1.8
