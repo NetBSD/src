@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.c,v 1.2 2002/03/03 14:31:28 uch Exp $	*/
+/*	$NetBSD: mmu_sh3.c,v 1.3 2002/03/17 14:03:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,9 +98,18 @@ sh3_tlb_invalidate_asid(int asid)
 void
 sh3_tlb_invalidate_all()
 {
+	u_int32_t aw, a;
+	int e, w;
 
-	/* SH3 has no wired entry. so merely clear whole V bit  */
-	_reg_write_4(SH3_MMUCR, _reg_read_4(SH3_MMUCR) | SH3_MMUCR_TF);
+	/* Zero clear all TLB entry to avoid unexpected VPN match. */
+	for (w = 0; w < SH3_MMU_WAY; w++) {
+		aw = (w << SH3_MMU_WAY_SHIFT);
+		for (e = 0; e < SH3_MMU_ENTRY; e++) {
+			a = aw | (e << SH3_MMU_VPN_SHIFT);
+			_reg_write_4(SH3_MMUAA | a, 0);
+			_reg_write_4(SH3_MMUDA | a, 0);		
+		}
+	}
 }
 
 void
