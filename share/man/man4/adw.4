@@ -1,4 +1,4 @@
-.\"	$NetBSD: adw.4,v 1.6 2001/09/11 00:08:25 wiz Exp $
+.\"	$NetBSD: adw.4,v 1.7 2001/09/11 17:39:00 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Baldassare Dante Profeta
 .\" 	All rights reserved.
@@ -37,7 +37,6 @@
 .Cd "options SCSI_ADW_WDTR_DISABLE=mask"
 .Cd "options SCSI_ADW_SDTR_DISABLE=mask"
 .Cd "options SCSI_ADW_TAGQ_DISABLE=mask"
-.Pp
 .Sh DESCRIPTION
 The
 .Nm
@@ -84,17 +83,17 @@ Disable
 for the peripherals specified by the mask value.
 .El
 .Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
 .Xr intro 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
-.Xr cd 4 ,
-.Xr ch 4 ,
 .Xr uk 4
-.Sh AUTHORS
-Baldassare Dante Profeta
 .Sh HISTORY
 The
 .Nm
 device driver appeared in
 .Nx 1.4 .
+.Sh AUTHORS
+.An Baldassare Dante Profeta Aq dante@netbsd.org

@@ -1,4 +1,4 @@
-.\"	$NetBSD: atalk.4,v 1.13 2001/06/12 14:54:19 wiz Exp $
+.\"	$NetBSD: atalk.4,v 1.14 2001/09/11 17:39:01 wiz Exp $
 .\"
 .\" This file is derived from the atalk.4 man page in the Netatalk 1.4b2
 .\" distribution. That distribution is covered by the following copyright:
@@ -61,14 +61,13 @@ Link Access Protocol (ELAP).
 Local network address resolution is
 handled using the AppleTalk Address Resolution Protocol (AARP).
 Neither of these protocols is exposed to user-mode applications.
-.Pp
 .Sh ADDRESSING
 AppleTalk addresses are three byte quantities, stored in network
 byte order.
 The include file
 .Aq Pa netatalk/at.h
 defines the AppleTalk address format.
-
+.Pp
 Sockets in the AppleTalk protocol family use the following address
 structure:
 .Bd -literal -offset indent
@@ -166,7 +165,6 @@ services are provided by a user library.
 and
 .Tn AFP
 services are provided by user programs and daemons.
-.Pp
 .Sh SEE ALSO
 .\" .BR ddp (4P),
 .\" .BR atp (3N),
