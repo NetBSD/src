@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.12 2002/01/03 04:25:15 thorpej Exp $	*/
+/*	$NetBSD: externs1.h,v 1.13 2002/01/18 21:01:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -42,7 +42,6 @@ extern	int	eflag;
 extern	int	Fflag;
 extern	int	gflag;
 extern	int	hflag;
-extern	int	pflag;
 extern	int	rflag;
 extern	int	sflag;
 extern	int	tflag;
