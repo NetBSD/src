@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
+/*	$NetBSD: create.c,v 1.12 1997/07/11 07:05:30 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $";
+static char rcsid[] = "$NetBSD: create.c,v 1.12 1997/07/11 07:05:30 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ cwalk()
 	argv[1] = NULL;
 	if ((t = fts_open(argv, ftsoptions, dsort)) == NULL)
 		err("fts_open: %s", strerror(errno));
-	while (p = fts_read(t))
+	while ((p = fts_read(t)) != NULL)
 		switch(p->fts_info) {
 		case FTS_D:
 			(void)printf("\n# %s\n", p->fts_path);
@@ -116,7 +116,7 @@ cwalk()
 	(void)fts_close(t);
 	if (sflag && keys & F_CKSUM)
 		(void)fprintf(stderr,
-		    "mtree: %s checksum: %lu\n", fullpath, crc_total);
+		    "mtree: %s checksum: %u\n", fullpath, crc_total);
 }
 
 static void
