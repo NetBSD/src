@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.18 1998/02/13 21:53:48 kleink Exp $
+.\"	$NetBSD: stty.1,v 1.19 1999/01/13 23:55:26 sommerfe Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -580,6 +580,22 @@ Same as the control character
 Same as the control character
 .Cm reprint .
 .El
+.Ss Control operations:
+.Pp
+These operations are not modes, but rather commands to be performed by
+the tty layer.
+.Bl -tag -width Fl
+.It Cm ostart
+Performs a "start output" operation, as normally done by an
+incoming START character when
+.Cm ixon
+is set.
+.It Cm ostop
+Performs a "stop output" operation, as normally done by an
+incoming STOP character when
+.Cm ixon
+is set.
+.El
 .Pp
 The
 .Nm
@@ -596,4 +612,5 @@ compatible.  The flags
 and
 .Fl f
 are
-extensions to the standard.
+extensions to the standard, as are the operands mentioned in the control
+operations section.
