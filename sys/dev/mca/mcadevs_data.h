@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.3 2001/03/17 00:16:38 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.4 2001/03/19 22:20:30 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.2 2001/03/17 00:15:33 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.3 2001/03/19 22:20:05 jdolecek Exp 
  */
 
 /*-
@@ -123,10 +123,13 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x613F,	"SONIC Model 50" },
     { 0x6157,	"Novell Remote III Adapter" },
     { 0x616A,	"NewPort WNIC Adapter" },
+    { 0x616E,	"Computone PS6" },
     { 0x617E,	"Computone PS8 8-port Adapter" },
     { 0x61BF,	"Intel SatisFAXtion Adapter" },
     { 0x61C8,	"WD/SMC 8013EP/A Ethernet Adapter" },
     { 0x61C9,	"WD/SMC 8013WP/A Ethernet Adapter" },
+    { 0x61F2,	"Computone IntelliPort-II MC-8" },
+    { 0x61F3,	"Computone IntelliPort-IIEX MC-CEX" },
     { 0x61FD,	"Computone PSCC Cluster Controller" },
     { 0x6201,	"Quadport PS/Q I/O Adapter" },
     { 0x6203,	"Quadport PS/Q I/O Adapter" },
