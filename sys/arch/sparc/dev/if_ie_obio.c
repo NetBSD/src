@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.4 1998/03/21 20:14:14 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.5 1998/03/22 22:12:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -338,37 +338,31 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	sc->sc_iobase = (caddr_t)IEOB_ADBASE; /* 24 bit base addr */
 	wzero(sc->sc_maddr, sc->sc_msize);
 
-	/* Map iscp at location zero */
-	sc->iscp = (int)sc->bh;
-
-	/* scb follows iscp */
-	sc->scb = IE_ISCP_SZ;
-
-	ie_obio_write16(sc, IE_ISCP_SCB((u_long)sc->iscp), sc->scb);
-	ie_obio_write24(sc, IE_ISCP_BASE((u_long)sc->iscp),
-			    (u_long)IEOB_ADBASE - (u_long)sc->bh);
-	ie_obio_write24(sc, IE_SCP_ISCP((u_long)sc->scp),
-			    (u_long)IEOB_ADBASE - (u_long)sc->iscp);
-
 	/*
-	 * SCP: the scp must appear at KVA IEOB_ADBASE.  The
-	 * ROM seems to have page up there, but I'm not sure all
-	 * ROMs will have it there.  Also, I'm not sure if that
-	 * page is on some free list somewhere or not.   Let's
-	 * map the first page of the buffer we just allocated
-	 * to IEOB_ADBASE to be safe.
-	 */
+	 * The i82586's 24-bit address space maps to the last 16MB of
+	 * KVA space ().  In addition, the SCP must appear
+	 * at IE_SCP_ADDR within the 24-bit address space,
+	 * i.e. at KVA  IEOB_ADBASE+IE_SCP_ADDR, at the very top of
+	 * kernel space.  We double-map this last page to the first
+	 * page (starting at `maddr') of the memory we allocate to the chip.
+	 * (a side-effect of this double-map is that the ISCP and SCB
+	 * structures also get aliased there, but we ignore this). The
+	 * first page at `maddr' is only used for ISCP, SCB and the aliased
+	 * SCP; the actual buffers start at maddr+NBPG.
+	 *
+	 * In a picture:
 
-#if 0
 	|---//--- ISCP-SCB-----scp-|--//- buffers -//-|... |iscp-scb-----SCP-|
-	|         |                |                  |    |                 |
-	|         |<----- NBPG --->|                  |    |<----- NBPG ---->|
-	|         |<------------- msize ------------->|    |       ^
-	|         |                                                |
+	|         |                |                  |    |             |   |
+	|         |<----- NBPG --->|                  |    |<----- NBPG -+-->|
+	|         |<------------- msize ------------->|    |       ^     |
+	|         |                                                |     |
 	|         \@maddr                                 (last page dbl mapped)
-	|
-	\@IEOB_ADBASE
-#endif
+	|                                                                |
+	\@IEOB_ADBASE                           @IEOB_ADBASE+IE_SCP_ADDR-+
+
+	 *
+	 */
 
 	pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);
 	if (pa == 0)
@@ -378,7 +372,19 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 		   (vm_offset_t)pa | PMAP_NC /*| PMAP_IOC*/,
 		   VM_PROT_READ | VM_PROT_WRITE, 1);
 
+	/* Map iscp at location zero */
+	sc->iscp = 0;
+
+	/* scb follows iscp */
+	sc->scb = IE_ISCP_SZ;
+
 	sc->scp = IEOB_ADBASE + IE_SCP_ADDR;
+
+	ie_obio_write16(sc, IE_ISCP_SCB((u_long)sc->iscp), sc->scb);
+	ie_obio_write24(sc, IE_ISCP_BASE((u_long)sc->iscp), IEOB_ADBASE);
+	ie_obio_write24(sc, IE_SCP_ISCP((u_long)sc->scp),
+			    (u_long)sc->iscp - (u_long)IEOB_ADBASE);
+
 
 	/*
 	 * Rest of first page is unused (wasted!); rest of ram
