@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.11 2004/12/27 06:12:28 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.12 2004/12/28 22:07:04 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -377,13 +377,14 @@ struct rtw_softc {
 
 	/* s/w Tx/Rx descriptors */
 	struct rtw_txctl_blk	sc_txctl_blk[RTW_NTXPRI];
-	struct rtw_rxctl	sc_rxctl[RTW_RXQLEN];
 	u_int			sc_txq;
 	u_int			sc_txnext;
 
 	struct rtw_txdesc_blk	sc_txdesc_blk[RTW_NTXPRI];
 	struct rtw_rxdesc	*sc_rxdesc;
+	struct rtw_rxctl	sc_rxctl[RTW_RXQLEN];
 	u_int			sc_rxnext;
+	u_int			sc_nrxdesc;
 
 	struct rtw_descs	*sc_descs;
 
