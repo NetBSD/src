@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.1 1998/11/13 04:20:29 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.2 1998/11/13 11:48:26 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -502,7 +502,7 @@ static void FireNodeArray(
     node = nodeList[i];
     dstat = node->dagHdr->status;
     RF_ASSERT((node->status == rf_wait) || (node->status == rf_good));
-    if (NodeReady(node))
+    if (NodeReady(node)) {
       if ((dstat == rf_enable) || (dstat == rf_rollForward)) {
 	RF_ASSERT(node->status == rf_wait);
 	if (node->commitNode)
@@ -517,6 +517,7 @@ static void FireNodeArray(
 	RF_ASSERT(node->commitNode == RF_FALSE); /* only one commit node per graph */
 	node->status = rf_recover;
       }
+    }
   }
   /* now, fire the nodes */
   for (i = 0; i < numNodes; i++) {
@@ -543,7 +544,7 @@ static void FireNodeList(RF_DagNode_t *nodeList)
       next = node->next;
       dstat = node->dagHdr->status;
       RF_ASSERT((node->status == rf_wait) || (node->status == rf_good));
-      if (NodeReady(node))
+      if (NodeReady(node)) {
         if ((dstat == rf_enable) || (dstat == rf_rollForward)) {
           RF_ASSERT(node->status == rf_wait);
           if (node->commitNode)
@@ -558,6 +559,7 @@ static void FireNodeList(RF_DagNode_t *nodeList)
           RF_ASSERT(node->commitNode == RF_FALSE); /* only one commit node per graph */
           node->status = rf_recover;
         }
+      }
     }
     /* now, fire the nodes */
     for (node = nodeList; node; node = next) {
