@@ -1,4 +1,4 @@
-/* $NetBSD: irq.S,v 1.10 1996/11/23 04:02:42 mark Exp $ */
+/* $NetBSD: irq.S,v 1.11 1997/01/06 02:35:46 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -220,6 +220,38 @@ irq_entry:
 	orr	r0, r0, r8
 	str	r0, [r1]
 
+	/*
+ 	 * Need to block all interrupts at the IPL or lower for
+	 * all asserted interrupts.
+	 * This basically emulates hardware interrupt priority levels.
+	 * Means we need to go through the interrupt mask and for
+	 * every asserted interrupt we need to mask out all other
+	 * interrupts at the same or lower IPL.
+	 * If only we could wait until the main loop but we need to sort
+	 * this out first so interrupts can be re-enabled.
+	 *
+	 * This would benefit from a special ffs type routine
+	 */
+
+	mov	r9, #0x00000001
+	ldr	r7, Lirqblock
+
+emulate_hwipl_loop:
+	tst	r8, r9
+	ldrne	r6, [r7]
+	orrne	r0, r0, r6
+
+	add	r7, r7, #4
+	mov	r9, r9, lsl #1		/* move on to next bit */
+#ifdef CPU_ARM7500
+	teq	r9, #0			/* done the last bit ? */
+#else
+	teq	r9, #(1 << 24)		/* done the last bit ? */
+#endif	/* CPU_ARM7500 */
+	bne	emulate_hwipl_loop	/* no - loop back. */
+
+	str	r0, [r1]	
+
 	/* Update the IOMD irq masks */
 
 	bl	_irq_setmasks
@@ -234,6 +266,7 @@ irq_entry:
 	stmfd	sp!, {r8}
 
 irqloop:
+	/* This would benefit from a special ffs type routine */
 	tst	r8, r9			/* Is a bit set ? */
 	beq	nextirq			/* No ? try next bit */
 
@@ -300,22 +333,6 @@ nextirq:
 
 	bl	_dosoftints		/* Handle the soft interrupts */
 
-#if 0
-	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
-
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
-	teq	r0, #(PSR_USR32_MODE)
-	ldreq	r0, Lastpending		/* Do we have an AST pending ? */
-	ldreq	r1, [r0]
-	teqeq	r1, #0x00000001
-	moveq	r1, #0x00000000		/* Clear it */
-	streq	r1, [r0]
-
-	moveq	r0, sp			/* arg 0 = irq frame */
-	bleq	_ast			/* call the AST handler */
-#else
 	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
 
 	ldr	r0, [sp]		/* Get the SPSR from stack */
@@ -327,7 +344,7 @@ nextirq:
 	teqeq	r1, #0x00000001
 
 	beq	irqast			/* call the AST handler */
-#endif
+
 	/* Kill IRQ's in preparation for exit */
 
         mrs     r0, cpsr_all
@@ -392,6 +409,9 @@ Lspl_mask:
 
 Lcurrent_mask:
 	.word	_current_mask		/* irq's that are usable */
+
+Lirqblock:
+	.word	_irqblock
 
 	.global	_irq_setmasks
 
