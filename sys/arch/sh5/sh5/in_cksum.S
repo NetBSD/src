@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.4 2003/11/09 12:24:48 scw Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.5 2005/01/29 11:22:30 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -51,13 +51,12 @@
 /*
  * Add With Carry two quads, "q1" and "q2. Put the result in "result".
  *
- * Trashes r0 and q1.
+ * Trashes r0.
  */
 #define	ADDC(q1, q2, result)		 \
-	add	q2, q1, r0		;\
-	or	q2, q1, q1		;\
-	cmpgtu	q1, r0, q1		;\
-	add	r0, q1, result
+	add	q2, q1, result		;\
+	cmpgtu	q1, result, r0		;\
+	add	r0, result, result
 
 /*
  * Reduce the quad in "q" to a 32-bit sum, dealing with any
