@@ -1,0 +1,2704 @@
+#!/usr/pkg/bin/perl
+#
+#	$NetBSD: ntp2netbsd,v 1.1 1999/10/13 22:18:53 jonathan Exp $
+#
+#  Perl script to convert a standard distribution directory for ntpv4.0 into
+#	a NetBSD source tree.
+#
+#  This is done as a script so that as each distribution is released,
+#	only changes from the previous one need to be dealt with as
+#	modifications to this script and related files.  This should
+#	reduce the cost of updating from a new release of ntp by an
+#	order of magnitude (or more?)
+#
+#  This script requires two environment variables set:
+#	SRCDIR - gcc source directory from FSF
+#	TARGETDIR - name of the high level directory to make
+#
+#  Written by Christos Zoulas April 17, 1997 for xntp 3-5.90
+#  Updated by Jonathan Stone Oct 10, 1999    for ntp 4-0.93a
+#
+
+$version = "4-0.93a";
+
+# definitions ...
+
+@subdirs = ("lib/libntp", "domestic/lib/libntp", 
+	    "usr.sbin/ntp/include", "usr.sbin/ntp/html",    
+	    "usr.sbin/ntp/ntpdate", "usr.sbin/ntp/ntptime", 
+	    "usr.sbin/ntp/ntpq",    "usr.sbin/ntp/ntptrace", 
+            "usr.sbin/ntp/ntpd",   "usr.sbin/ntp/ntpdc");
+
+@includef = (
+	     "adjtime.h",     "mbg_gps166.h",  "ntp_filegen.h", "ntp_request.h", "ntpd.h",
+	     "ascii.h",       "md5.h",         "ntp_fp.h",      "ntp_select.h",  "parse.h",
+	     "binio.h",       "mx4200.h",      "ntp_if.h",      "ntp_stdlib.h",  "parse_conf.h",
+	     "global.h",      "ntif.h",        "ntp_io.h",      "ntp_string.h",  "recvbuff.h",
+	     "gps.h",         "ntp.h",         "ntp_machine.h", "ntp_syscall.h", "trimble.h",
+	     "ieee754io.h",   "ntp_calendar.h","ntp_malloc.h",  "ntp_syslog.h",
+	     "iosignal.h",    "ntp_control.h", "ntp_proto.h",   "ntp_types.h",
+	     "l_stdlib.h",    "ntp_datum.h",   "ntp_refclock.h","ntp_unixtime.h");
+
+
+#	l_stdlib.h", "ntp.h", "ntp_calendar.h", "ntp_control.h",
+#	     "ntp_filegen.h", "ntp_fp.h", "ntp_if.h", "ntp_io.h", 
+#	     "ntp_machine.h", "ntp_malloc.h", "ntp_proto.h", "ntp_refclock.h",
+#	     "ntp_request.h", "ntp_select.h", "ntp_stdlib.h", "ntp_string.h",
+#	     "ntp_syslog.h", "ntp_types.h", "ntp_unixtime.h", "ntpd.h",
+#	     "parse.h", "parse_conf.h");
+
+@libntpf = (	"a_md5encrypt.c", "adjtime.c", "atoint.c", "atolfp.c",
+	"atouint.c", "authencrypt.c", "authkeys.c", "authparity.c",
+	"authreadkeys.c", "authusekey.c", "buftvtots.c", "caljulian.c",
+	"calleapwhen.c", "caltontp.c", "calyearstart.c", "clocktime.c",
+	"clocktypes.c", "decodenetnum.c", "dofptoa.c", "dolfptoa.c",
+	"emalloc.c", "findconfig.c", "fptoa.c", "fptoms.c", "getopt.c",
+	"hextoint.c", "hextolfp.c", "humandate.c", "inttoa.c", "lib_strbuf.c",
+	"machines.c", "md5c.c", "memmove.c", "mexit.c", "mfptoa.c", 
+	"mfptoms.c", "modetoa.c", "mstolfp.c", "msutotsf.c", "msyslog.c",
+	"netof.c", "numtoa.c", "numtohost.c", "octtoint.c", "prettydate.c",
+	"ranny.c", "refnumtoa.c", "statestr.c", "syssignal.c", "systime.c",
+	"tsftomsu.c", "tstotv.c", "tvtoa.c", "tvtots.c", "uglydate.c",
+	"uinttoa.c", "utvtoa.c", "ymd2yd.c", "mfp_mul.c", "binio.c",
+	"ieee754io.c", "gpstolfp.c", "recvbuff.c", "iosignal.c",
+	"lib_strbuf.h");
+
+@ntpdf = (	"map_vme.c", "ntp_config.c", "ntp_control.c", "ntp_io.c",
+	"ntp_loopfilter.c", "ntp_monitor.c", "ntp_peer.c", "ntp_proto.c",
+	"ntp_refclock.c", "ntp_request.c", "ntp_restrict.c", "ntp_timer.c",
+	"ntp_util.c", "ntp_intres.c", "ntp_filegen.c", "ntpd.c",
+	"refclock_conf.c", "refclock_chu.c", "refclock_local.c",
+	"refclock_pst.c", "refclock_wwvb.c", "refclock_mx4200.c",
+	"refclock_parse.c", "refclock_as2201.c", "refclock_bancomm.c",
+	"refclock_tpro.c", "refclock_leitch.c", "refclock_irig.c",
+	"refclock_msfees.c", "refclock_trak.c", "refclock_datum.c",
+	"refclock_acts.c", "refclock_heath.c", "refclock_nmea.c",
+	"refclock_atom.c", "refclock_ptbacts.c", "refclock_jupiter.c",
+	"refclock_usno.c", "refclock_true.c", "refclock_hpgps.c",
+	"refclock_shm.c", "refclock_gpsvme.c", "refclock_arbiter.c",
+	"refclock_arc.c", "refclock_palisade.c", 
+	"refclock_oncore.c", "refclock_chronolog.c", "refclock_dumbclock.c",
+	"refclock_ulink.c",
+	"jupiter.h", "refclock_palisade.h" );
+
+
+
+
+@ntpd_pf = ( "parse.c", "parse_conf.c", "clk_meinberg.c", 
+	     "clk_schmid.c", "clk_rawdcf.c", "clk_trimtsip.c", 
+	     "clk_dcf7000.c", "clk_trimtaip.c", "clk_rcc8000.c", 
+	     "clk_hopf6021.c", "clk_computime.c", "clk_wharton.c", 
+	     "clk_varitext.c", "data_mbg.c", "info_trimble.c", 
+	     "trim_info.c");
+
+@ntpdcf = ("ntpdc.c", "ntpdc.h", "ntpdc_ops.c");
+
+@ntpdatef = ("ntpdate.c", "ntpdate.h");
+
+@ntptimef = ("ntptime.c");
+
+@ntpqf = ("ntpq.c", "ntpq.h", "ntpq_ops.c");
+
+@ntptracef = ("ntptrace.c", "ntptrace.h");
+
+@htmlf = (
+	"accopt.htm",	"assoc.htm",	"authopt.htm",	
+	"biblio.htm",		"build.htm",	"clockopt.htm",	
+	"config.htm",		"confopt.htm",	"copyright.htm",	
+	"debug.htm",		"driver1.htm",	"driver10.htm",	
+	"driver11.htm",		"driver12.htm",	"driver18.htm",	
+	"driver19.htm",		"driver2.htm",	"driver20.htm",	
+	"driver22.htm",		"driver23.htm",	"driver24.htm",	
+	"driver26.htm",		"driver27.htm",	"driver28.htm",	
+	"driver29.htm",		"driver3.htm",	"driver30.htm",	
+	"driver32.htm",		"driver33.htm",	"driver34.htm",	
+	"driver4.htm",		"driver5.htm",	"driver6.htm",	
+	"driver7.htm",		"driver8.htm",	"driver9.htm",	
+	"exec.htm",		"extern.htm",	"gadget.htm",	
+	"hints.htm",		"howto.htm",	"htmlprimer.htm",	
+	"index.htm",		"kern.htm",	"kernpps.htm",	
+	"ldisc.htm",		"measure.htm",	"miscopt.htm",	
+	"monopt.htm",		"mx4200data.htm",	"notes.htm",	
+	"ntpd.htm",		"ntpdate.htm",	"ntpdc.htm",	
+	"ntpq.htm",		"ntptime.htm",	"ntptrace.htm",	
+	"parsedata.htm",	"parsenew.htm",	"patches.htm",	
+	"porting.htm",		"pps.htm",	"prefer.htm",	
+	"quick.htm",		"rdebug.htm",	"refclock.htm",	
+	"release.htm",		"tickadj.htm",	"vxworks.htm",
+	"y2k.htm");
+
+#
+# Utility Subroutines
+#
+
+sub makedir {
+    system("mkdir -p @_");
+}
+
+# &copyfiles (fromdir, todir, list of files);
+sub copyfiles {
+    local ($fdir, $tdir, @list) = @_;
+    local ($f);
+
+    foreach $f (@list) {
+	print "  $fdir/$f --> $tdir/$f\n";
+	system ("cp $fdir/$f $tdir/$f");
+    }
+}
+
+sub uniq {
+    local (@inlist) = @_;
+    local (@outlist);
+
+    @outlist = ($inlist[0]);
+    for ( $i=1; $i < @inlist; $i++ ) {
+	if ($inlist[$i] ne $inlist[$i-1]) {
+	    push (@outlist, $inlist[$i]);
+	}
+    }
+
+    @outlist;
+}
+
+sub dumpsrcs {
+    local (@names) = @_;
+    local ($count);
+
+    print ODATA "SRCS=\t";
+    $count = 0;
+    while ($f = pop(@names)) {
+        print ODATA "$f ";
+	if ($count == 5 && @names > 0) {
+	    print ODATA "\\\n";
+	    $count = 0;
+	} else {
+	    $count += 1;
+	}
+    }
+    if ($count != 0) {
+	print ODATA "\n";
+    }
+}
+
+#
+# Main progarm.
+# 
+
+$srcdir = $ENV{'SRCDIR'};
+$targetdir = $ENV{'TARGETDIR'};
+$incdirs = "-I. -I$srcdir/config -I$srcdir";
+
+if (!$srcdir | !targetdir) {
+    die "You must define the environment variables SRCDIR and TARGETDIR.\n"
+} 
+print "Making the NetBSD directory tree.\n";
+foreach $f (@subdirs) { 
+    print "   -->$f\n";
+    makedir ("$targetdir/$f");
+}
+
+
+print "Populating the lib/libntp directory.\n";
+&copyfiles ("$srcdir", "$targetdir/lib/libntp", "COPYRIGHT");
+&copyfiles ("$srcdir/libntp", "$targetdir/lib/libntp", @libntpf);
+system("cp $srcdir/libntp/authdes.c.export $targetdir/lib/libntp/authdes.c");
+
+print "Populating the domestic/lib/libntp directory.\n";
+&copyfiles ("$srcdir", "$targetdir/domestic/lib/libntp", "COPYRIGHT");
+system("cp $srcdir/libntp/authdes.c $targetdir/domestic/lib/libntp/authdes.c");
+
+print "Populating the usr.sbin/ntp directory.\n";
+&copyfiles ("$srcdir", "$targetdir/usr.sbin/ntp", "COPYRIGHT");
+
+print "Populating the usr.sbin/ntp/include directory.\n";
+&copyfiles ("$srcdir/include", "$targetdir/usr.sbin/ntp/include", @includef);
+
+print "Populating the usr.sbin/ntp/ntpd directory.\n";
+&copyfiles ("$srcdir/ntpd", "$targetdir/usr.sbin/ntp/ntpd", @ntpdf);
+&copyfiles ("$srcdir/libparse", "$targetdir/usr.sbin/ntp/ntpd", @ntpd_pf);
+
+print "Populating the usr.sbin/ntp/ntpdc directory.\n";
+&copyfiles ("$srcdir/ntpdc", "$targetdir/usr.sbin/ntp/ntpdc", @ntpdcf);
+
+print "Populating the usr.sbin/ntp/ntpdate directory.\n";
+&copyfiles ("$srcdir/ntpdate", "$targetdir/usr.sbin/ntp/ntpdate", @ntpdatef);
+
+print "Populating the usr.sbin/ntp/ntptime directory.\n";
+&copyfiles ("$srcdir/util", "$targetdir/usr.sbin/ntp/ntptime", @ntptimef);
+
+print "Populating the usr.sbin/ntp/ntpq directory.\n";
+&copyfiles ("$srcdir/ntpq", "$targetdir/usr.sbin/ntp/ntpq", @ntpqf);
+
+print "Populating the usr.sbin/ntp/ntptrace directory.\n";
+&copyfiles ("$srcdir/ntptrace", "$targetdir/usr.sbin/ntp/ntptrace", @ntptracef);
+
+print "Populating the usr.sbin/ntp/html directory.\n";
+&copyfiles ("$srcdir/html", "$targetdir/usr.sbin/ntp/html", @htmlf);
+
+#
+# Build makefiles
+#
+
+$first = "True";
+while ($line = <DATA>) {
+    chop ($line);
+    if (substr($line,0,2) eq "%%") {
+	@cmd = split (/ /,$line);
+	if ($cmd[1] eq "file") {
+	    print "Building $targetdir/$cmd[2]\n";
+	    if ($first eq "") {
+		close (ODATA);
+	    } else {
+		$first = "";
+	    }
+	    open (ODATA, ">$targetdir/$cmd[2]") ||
+		die "Could not create $targetdir/$cmd[2]";
+	} elsif ($cmd[1] eq "srcs") {
+	    print "  Defining SRCS for $cmd[2]\n";
+	    if ($first) {
+		die "Data file must start with a %% file!";
+	    }
+	    if ($cmd[2] eq "ntpd") {
+		&dumpsrcs (@ntpdf, @ntpd_pf);
+	    } elsif ($cmd[2] eq "ntpdc") {
+		&dumpsrcs (@ntpdcf);
+	    } elsif ($cmd[2] eq "ntpq") {
+		&dumpsrcs (@ntpqf);
+	    } elsif ($cmd[2] eq "ntpdate") {
+		&dumpsrcs (@ntpdatef);
+	    } elsif ($cmd[2] eq "ntptime") {
+		&dumpsrcs (@ntptimef);
+	    } elsif ($cmd[2] eq "ntptrace") {
+		&dumpsrcs (@ntptracef);
+	    } elsif ($cmd[2] eq "html") {
+		&dumpsrcs (@htmlf);
+	    } elsif ($cmd[2] eq "libntp") {
+		&dumpsrcs (@libntpf);
+	    } else {
+		die "Unknown SRCS command";
+	    }
+	} elsif ($cmd[1] eq "NetBSD") {
+	    if ($first) {
+		die "Data section must start with a %% file!";
+	    }
+	    print ODATA "$cmd[2]	\$"."NetBSD".": \$\n";
+	}
+    } else {
+	if ($first) {
+	    die "Data file must start with a %% file!";
+	}
+	print ODATA "$line\n";
+    }
+}    
+close (ODATA);
+
+#
+# Sed transformations of files
+#
+
+foreach $n (keys(%sedlist)) {
+    print "Modifying $n\n";
+    system ("cd $targetdir; sed $sedlist{$n} $n > tmp;  mv -f tmp $n");
+}
+
+#
+# end of the script
+#
+
+# what follows is the data for makefiles and other special files
+# that need to be created.
+
+__END__
+%% file usr.sbin/ntp/Makefile
+%% NetBSD #
+SUBDIR= ntpdate ntpq ntptime ntptrace ntpd ntpdc
+
+.include <bsd.subdir.mk>
+%% file usr.sbin/ntp/Makefile.inc
+%% NetBSD #
+CPPFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H
+LDADD += -lntp
+DPADD += ${LIBNTP}
+
+.if exists(${.CURDIR}/../../Makefile.inc)
+.include "${.CURDIR}/../../Makefile.inc"
+.endif
+%% file usr.sbin/ntp/ntpd/Makefile
+%% NetBSD #
+
+PROG= ntpd
+%% srcs ntpd
+LDADD+= -lm
+MAN+= ntpd.8
+
+.include <bsd.prog.mk>
+%% file usr.sbin/ntp/ntpdc/Makefile
+%% NetBSD #
+
+PROG= ntpdc
+%% srcs ntpdc
+MAN+= ntpdc.8
+
+.include <bsd.prog.mk>
+%% file usr.sbin/ntp/ntpq/Makefile
+%% NetBSD #
+
+PROG= ntpq
+%% srcs ntpq
+MAN+= ntpq.8
+
+.include <bsd.prog.mk>
+%% file usr.sbin/ntp/ntpdate/Makefile
+%% NetBSD #
+
+PROG= ntpdate
+%% srcs ntpdate
+MAN+= ntpdate.8
+
+.include <bsd.prog.mk>
+%% file usr.sbin/ntp/ntptrace/Makefile
+%% NetBSD #
+
+PROG= ntptrace
+%% srcs ntptrace
+MAN+= ntptrace.8
+
+.include <bsd.prog.mk>
+%% file usr.sbin/ntp/ntptime/Makefile
+%% NetBSD #
+
+PROG= ntptime
+%% srcs ntptime
+MAN+= ntptime.8
+
+.include <bsd.prog.mk>
+%% file usr.sbin/ntp/html/Makefile
+%% NetBSD #
+
+%% srcs html
+
+DIR=html/ntp
+FILES=${SRCS}
+
+docinstall::
+	${INSTALL} -d -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} ${DESTDIR}/${DOCDIR}/${DIR}
+
+.include <bsd.doc.mk>
+%% file lib/libntp/Makefile
+%% NetBSD #
+
+LIB=	ntp
+%% srcs libntp
+SRCS += version.c
+
+CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../usr.sbin/ntp/include
+
+.include <bsd.lib.mk>
+%% file domestic/lib/libntp/Makefile
+%% NetBSD #
+
+LIB=	ntp
+%% srcs libntp
+SRCS += version.c
+
+CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../../usr.sbin/ntp/include
+.PATH: ${.CURDIR}/../../../lib/libntp
+
+.include <bsd.lib.mk>
+%% file domestic/lib/libntp/shlib_version
+major=0
+minor=0
+%% file lib/libntp/shlib_version
+major=1
+minor=0
+%% file lib/libntp/version.c
+/*
+ * version file for 5.93c
+ */
+char * Version = "5.93c 3-NetBSD Wed Aug 12 10:05:25 EDT 1998 (1)";
+%% file usr.sbin/ntp/include/config.h
+/* config.h.  Generated automatically by configure.  */
+/* config.h.in.  Generated automatically from configure.in by autoheader.  */
+
+/* Define if on AIX 3.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _ALL_SOURCE
+/* #undef _ALL_SOURCE */
+#endif
+
+/* Define if type char is unsigned and you are not using gcc.  */
+#ifndef __CHAR_UNSIGNED__
+/* #undef __CHAR_UNSIGNED__ */
+#endif
+
+/* Define to empty if the keyword does not work.  */
+/* #undef const */
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+/* #undef gid_t */
+
+/* Define as __inline if that's what the C compiler calls it.  */
+/* #undef inline */
+
+/* Define if on MINIX.  */
+/* #undef _MINIX */
+
+/* Define if your struct nlist has an n_un member.  */
+/* #undef NLIST_NAME_UNION */
+
+/* Define if you have <nlist.h>.  */
+#define NLIST_STRUCT 1
+
+/* Define to `long' if <sys/types.h> doesn't define.  */
+/* #undef off_t */
+
+/* Define if the system does not provide POSIX.1 features except
+   with this defined.  */
+/* #undef _POSIX_1_SOURCE */
+
+/* Define if you need to in order for stat and other things to work.  */
+/* #undef _POSIX_SOURCE */
+
+/* Define as the return type of signal handlers (int or void).  */
+#define RETSIGTYPE void
+
+/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+/* #undef size_t */
+
+/* Define if you have the ANSI C header files.  */
+#define STDC_HEADERS 1
+
+/* Define if you can safely include both <sys/time.h> and <time.h>.  */
+#define TIME_WITH_SYS_TIME 1
+
+/* Define if your <sys/time.h> declares struct tm.  */
+/* #undef TM_IN_SYS_TIME */
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+/* #undef uid_t */
+
+/* Define if your processor stores words with the most significant
+   byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+/* #undef WORDS_BIGENDIAN */
+
+/* debugging code */
+#define DEBUG 1
+
+/* Minutes per DST adjustment */
+#define DSTMINUTES 60
+
+/* MD5 authentication */
+#define MD5 1
+
+/* DES authentication (COCOM only) */
+/* #undef DES */
+
+/* time_t */
+/* #undef time_t */
+
+/* reference clock interface */
+#define REFCLOCK 1
+
+/* Audio CHU? */
+/* #undef AUDIO_CHU */
+
+/* ACTS modem service */
+#define CLOCK_ACTS 1
+
+/* Arbiter 1088A/B GPS receiver */
+#define CLOCK_ARBITER 1
+
+/* DHD19970505: ARCRON support. */
+#define CLOCK_ARCRON_MSF 1
+
+/* Austron 2200A/2201A GPS receiver */
+#define CLOCK_AS2201 1
+
+/* PPS interface */
+#define CLOCK_ATOM 1
+
+/* PPS auxiliary interface for ATOM */
+#define PPS_SAMPLE 1
+
+/* Datum/Bancomm bc635/VME interface */
+/* #undef CLOCK_BANC */
+
+/* ELV/DCF7000 clock */
+#define CLOCK_DCF7000 1
+
+/* HOPF 6021 clock */
+#define CLOCK_HOPF6021 1
+
+/* Meinberg clocks */
+#define CLOCK_MEINBERG 1
+
+/* DCF77 raw time code */
+#define CLOCK_RAWDCF 1
+
+/* RCC 8000 clock */
+#define CLOCK_RCC8000 1
+
+/* Schmid DCF77 clock */
+#define CLOCK_SCHMID 1
+
+/* Trimble GPS receiver/TAIP protocol */
+#define CLOCK_TRIMTAIP 1
+
+/* Trimble GPS receiver/TSIP protocol */
+#define CLOCK_TRIMTSIP 1
+
+/* WHARTON 400A Series protocol */
+#define CLOCK_WHARTON_400A 1
+
+/* VARITEXT protocol */
+#define CLOCK_VARITEXT 1
+
+/* Diems Computime Radio Clock */
+#define CLOCK_COMPUTIME 1
+
+/* Datum Programmable Time System */
+#define CLOCK_DATUM 1
+
+/* TrueTime GPS receiver/VME interface */
+/* #undef CLOCK_GPSVME */
+
+/* Heath GC-1000 WWV/WWVH receiver */
+#define CLOCK_HEATH 1
+
+/* HP 58503A GPS receiver */
+#define CLOCK_HPGPS 1
+
+/* Sun IRIG audio decoder */
+#define CLOCK_IRIG 1
+
+/* Rockwell Jupiter GPS clock */
+/* #undef CLOCK_JUPITER */
+
+/* Leitch CSD 5300 Master Clock System Driver */
+#define CLOCK_LEITCH 1
+
+/* local clock reference */
+#define CLOCK_LOCAL 1
+
+/* EES M201 MSF receiver */
+#define CLOCK_MSFEES 1
+
+/* Magnavox MX4200 GPS receiver */
+/* #undef CLOCK_MX4200 */
+
+/* NMEA GPS receiver */
+#define CLOCK_NMEA 1
+
+/* Palisade clock */
+#define CLOCK_PALISADE 1
+
+/* PARSE driver interface */
+#define CLOCK_PARSE 1
+
+/* PARSE kernel PLL PPS support */
+/* #undef PPS_SYNC */
+
+/* PCL 720 clock support */
+/* #undef CLOCK_PPS720 */
+
+/* PST/Traconex 1020 WWV/WWVH receiver */
+#define CLOCK_PST 1
+
+/* PTB modem service */
+#define CLOCK_PTBACTS 1
+
+/* clock thru shared memory */
+/* #undef CLOCK_SHM */
+
+/* Motorola UT Oncore GPS */
+#define CLOCK_ONCORE 1
+
+/* KSI/Odetics TPRO/S GPS receiver/IRIG interface */
+/* #undef CLOCK_TPRO */
+
+/* TRAK 8810 GPS receiver */
+#define CLOCK_TRAK 1
+
+/* Kinemetrics/TrueTime receivers */
+#define CLOCK_TRUETIME 1
+
+/* USNO modem service */
+#define CLOCK_USNO 1
+
+/* Spectracom 8170/Netclock/2 WWVB receiver */
+#define CLOCK_WWVB 1
+
+/* Ultralink M320 WWVB receiver */
+#define CLOCK_ULINK 1
+
+/* Chronolog K-series WWVB receiver */
+#define CLOCK_CHRONOLOG 1
+
+/* Dumb generic hh:mm:ss local clock */
+#define CLOCK_DUMBCLOCK 1
+
+/* define if we need to declare int errno; */
+/* #undef DECL_ERRNO */
+
+/* define if we may declare int h_errno; */
+#define DECL_H_ERRNO 1
+
+/* define if it's OK to declare char *sys_errlist[]; */
+/* #undef CHAR_SYS_ERRLIST */
+
+/* define if it's OK to declare int syscall P((int, struct timeval *, struct timeval *)); */
+#define DECL_SYSCALL 1
+
+/* define if we have syscall is buggy (Solaris 2.4) */
+/* #undef SYSCALL_BUG */
+
+/* Do we need extra room for SO_RCVBUF? (HPUX <8) */
+/* #undef NEED_RCVBUF_SLOP */
+
+/* Should we open the broadcast socket? */
+#define OPEN_BCAST_SOCKET 1
+
+/* Do we want the HPUX FindConfig()? */
+/* #undef NEED_HPUX_FINDCONFIG */
+
+#include <sys/param.h>
+
+/* canonical system (cpu-vendor-os) string */
+#define STR_SYSTEM MACHINE_ARCH ## "-unknown-netbsd"
+
+/* define if NetInfo support is available */
+/* #undef HAVE_NETINFO */
+
+/* define if [gs]ettimeofday() only takes 1 argument */
+/* #undef SYSV_TIMEOFDAY */
+
+/* define if struct sockaddr has sa_len */
+#define HAVE_SA_LEN_IN_STRUCT_SOCKADDR 1
+
+/* define if struct clockinfo has hz */
+#define HAVE_HZ_IN_STRUCT_CLOCKINFO 1
+
+/* define if struct sigaction has sa_sigaction */
+/* #undef HAVE_SA_SIGACTION_IN_STRUCT_SIGACTION */
+
+/* define if struct clockinfo has tickadj */
+#define HAVE_TICKADJ_IN_STRUCT_CLOCKINFO 1
+
+/* define if struct ntptimeval uses time.tv_nsec instead of time.tv_usec */ 
+/* #undef HAVE_TV_NSEC_IN_NTPTIMEVAL */ 
+
+/* Does a system header defind struct ppsclockev? */
+/* #undef HAVE_STRUCT_PPSCLOCKEV */
+
+/* define if function prototypes are OK */
+#define HAVE_PROTOTYPES 1
+
+/* define if setpgrp takes 0 arguments */
+/* #undef HAVE_SETPGRP_0 */
+
+/* hardwire a value for tick? */
+#define PRESET_TICK 1000000L/hz
+
+/* hardwire a value for tickadj? */
+#define PRESET_TICKADJ 500/hz
+
+/* is adjtime() accurate? */
+/* #undef ADJTIME_IS_ACCURATE */
+
+/* should we NOT read /dev/kmem? */
+/* #undef NOKMEM */
+
+/* use UDP Wildcard Delivery? */
+/* #undef UDP_WILDCARD_DELIVERY */
+
+/* always slew the clock? */
+/* #undef SLEWALWAYS */
+
+/* step, then slew the clock? */
+/* #undef STEP_SLEW */
+
+/* force ntpdate to step the clock if !defined(STEP_SLEW) ? */
+/* #undef FORCE_NTPDATE_STEP */
+
+/* synch TODR hourly? */
+/* #undef DOSYNCTODR */
+
+/* do we set process groups with -pid? */
+/* #undef UDP_BACKWARDS_SETOWN */
+
+/* must we have a CTTY for fsetown? */
+/* #undef USE_FSETOWNCTTY */
+
+/* can we use SIGIO for tcp and udp IO? */
+/* #undef HAVE_SIGNALED_IO */
+
+/* can we use SIGPOLL for UDP? */
+/* #undef USE_UDP_SIGPOLL */
+
+/* can we use SIGPOLL for tty IO? */
+/* #undef USE_TTY_SIGPOLL */
+
+/* do we want the CHU driver? */
+#define CLOCK_CHU 1
+
+/* do we have the ppsclock streams module? */
+/* #undef PPS */
+
+/* do we have the tty_clk line discipline/streams module? */
+/* #undef TTYCLK */
+
+/* does the kernel support precision time discipline? */
+#define KERNEL_PLL 1
+
+/* does the kernel support multicasting IP? */
+#define MCAST 1
+
+/* do we have ntp_{adj,get}time in libc? */
+#define NTP_SYSCALLS_LIBC 1
+
+/* do we have ntp_{adj,get}time in the kernel? */
+/* #undef NTP_SYSCALLS_STD */
+
+/* do we have STREAMS/TLI? (Can we replace this with HAVE_SYS_STROPTS_H? */
+/* #undef STREAMS_TLI */
+
+/* do we need an s_char typedef? */
+#define NEED_S_CHAR_TYPEDEF 1
+
+/* does SIOCGIFCONF return size in the buffer? */
+/* #undef SIZE_RETURNED_IN_BUFFER */
+
+/* what is the name of TICK in the kernel? */
+#define K_TICK_NAME "_tick"
+
+/* Is K_TICK_NAME (nsec_per_tick, for example) in nanoseconds? */
+/* #undef TICK_NANO */
+
+/* what is the name of TICKADJ in the kernel? */
+#define K_TICKADJ_NAME "_tickadj"
+
+/* Is K_TICKADJ_NAME (hrestime_adj, for example) in nanoseconds? */
+/* #undef TICKADJ_NANO */
+
+/* what is (probably) the name of DOSYNCTODR in the kernel? */
+#define K_DOSYNCTODR_NAME "_dosynctodr"
+
+/* what is (probably) the name of NOPRINTF in the kernel? */
+#define K_NOPRINTF_NAME "_noprintf"
+
+/* do we need HPUX adjtime() library support? */
+/* #undef NEED_HPUX_ADJTIME */
+
+/* Might nlist() values require an extra level of indirection (AIX)? */
+/* #undef NLIST_EXTRA_INDIRECTION */
+
+/* Should we recommend a minimum value for tickadj? */
+/* #undef MIN_REC_TICKADJ */
+
+/* Is there a problem using PARENB and IGNPAR (IRIX)? */
+/* #undef NO_PARENB_IGNPAR */
+
+/* Should we not IGNPAR (Linux)? */
+/* #undef RAWDCF_NO_IGNPAR */
+
+/* Does the compiler like "volatile"? */
+/* #undef volatile */
+
+/* Does qsort expect to work on "void *" stuff? */
+#define QSORT_USES_VOID_P 1
+
+/* What is the fallback value for HZ? */
+#define DEFAULT_HZ 100
+
+/* Do we need to override the system's idea of HZ? */
+/* #undef OVERRIDE_HZ */
+
+/* Do we want the SCO clock hacks? */
+/* #undef SCO5_CLOCK */
+
+/* Does the kernel have an FLL bug? */
+/* #undef KERNEL_FLL_BUG */
+
+/* Define if you have the TIOCGPPSEV ioctl (Solaris) */
+/* #undef HAVE_TIOCGPPSEV */
+
+/* Define if you have the TIOCSPPS ioctl (Solaris) */
+/* #undef HAVE_TIOCSPPS */
+
+/* Define if you have the CIOGETEV ioctl (SunOS, Linux) */
+/* #undef HAVE_CIOGETEV */
+
+/* Define if you have the TIOCGSERIAL, TIOCSSERIAL, ASYNC_PPS_CD_POS, and ASYNC_PPS_CD_NEG ioctls (linux) */
+/* #undef HAVE_TIO_SERIAL_STUFF */
+
+/* Define if you use struct timespec rather than struct timeval (time in ns rather than us) */
+#define HAVE_TIMESPEC 1
+
+/* Define if you have the interface in the Draft RFC */
+/* #define PPSAPI 1  explicitly disabled on NetBSD by mills@huey.udel.edu? */
+/* #undef HAVE_PPSAPI */
+
+/* Do we need to #define _SVID3 when we #include <termios.h>? */
+/* #undef TERMIOS_NEEDS__SVID3 */
+
+/* adjtime()? */
+/* #undef DECL_ADJTIME_0 */
+
+/* bcopy()? */
+/* #undef DECL_BCOPY_0 */
+
+/* bzero()? */
+/* #undef DECL_BZERO_0 */
+
+/* cfset[io]speed()? */
+/* #undef DECL_CFSETISPEED_0 */
+
+/* ioctl()? */
+/* #undef DECL_IOCTL_0 */
+
+/* IPC? (bind, connect, recvfrom, sendto, setsockopt, socket) */
+/* #undef DECL_IPC_0 */
+
+/* memmove()? */
+/* #undef DECL_MEMMOVE_0 */
+
+/* mkstemp()? */
+/* #undef DECL_MKSTEMP_0 */
+
+/* mktemp()? */
+/* #undef DECL_MKTEMP_0 */
+
+/* mrand48()? */
+/* #undef DECL_MRAND48_0 */
+
+/* nlist()? */
+/* #undef DECL_NLIST_0 */
+
+/* plock()? */
+/* #undef DECL_PLOCK_0 */
+
+/* rename()? */
+/* #undef DECL_RENAME_0 */
+
+/* select()? */
+/* #undef DECL_SELECT_0 */
+
+/* setitimer()? */
+/* #undef DECL_SETITIMER_0 */
+
+/* setpriority()? */
+/* #undef DECL_SETPRIORITY_0 */
+/* #undef DECL_SETPRIORITY_1 */
+
+/* sigvec()? */
+/* #undef DECL_SIGVEC_0 */
+
+/* srand48()? */
+/* #undef DECL_SRAND48_0 */
+
+/* stdio stuff? */
+/* #undef DECL_STDIO_0 */
+
+/* stime()? */
+/* #undef DECL_STIME_0 */
+
+/* strtol()? */
+/* #undef DECL_STRTOL_0 */
+
+/* syslog() stuff? */
+/* #undef DECL_SYSLOG_0 */
+
+/* time()? */
+/* #undef DECL_TIME_0 */
+
+/* [gs]ettimeofday()? */
+/* #undef DECL_TIMEOFDAY_0 */
+
+/* tolower()? */
+/* #undef DECL_TOLOWER_0 */
+
+/* The number of bytes in a int.  */
+#define SIZEOF_INT 4
+
+/* The number of bytes in a long.  */
+/* #undef SIZEOF_LONG 4 */
+
+/* The number of bytes in a signed char.  */
+#define SIZEOF_SIGNED_CHAR 1
+
+/* Define if you have the K_open function.  */
+/* #undef HAVE_K_OPEN */
+
+/* Define if you have the __adjtimex function.  */
+/* #undef HAVE___ADJTIMEX */
+
+/* Define if you have the __ntp_gettime function.  */
+/* #undef HAVE___NTP_GETTIME */
+
+/* Define if you have the clock_settime function.  */
+#define HAVE_CLOCK_SETTIME 1
+
+/* Define if you have the daemon function.  */
+#define HAVE_DAEMON 1
+
+/* Define if you have the getbootfile function.  */
+/* #undef HAVE_GETBOOTFILE */
+
+/* Define if you have the getdtablesize function.  */
+#define HAVE_GETDTABLESIZE 1
+
+/* Define if you have the getrusage function.  */
+#define HAVE_GETRUSAGE 1
+
+/* Define if you have the gettimeofday function.  */
+#define HAVE_GETTIMEOFDAY 1
+
+/* Define if you have the getuid function.  */
+#define HAVE_GETUID 1
+
+/* Define if you have the kvm_open function.  */
+#define HAVE_KVM_OPEN 1
+
+/* Define if you have the memcpy function.  */
+#define HAVE_MEMCPY 1
+
+/* Define if you have the memmove function.  */
+#define HAVE_MEMMOVE 1
+
+/* Define if you have the memset function.  */
+#define HAVE_MEMSET 1
+
+/* Define if you have the mkstemp function.  */
+#define HAVE_MKSTEMP 1
+
+/* Define if you have the mktime function.  */
+#define HAVE_MKTIME 1
+
+/* Define if you have the mlockall function.  */
+/* #undef HAVE_MLOCKALL */
+
+/* Define if you have the mrand48 function.  */
+#define HAVE_MRAND48 1
+
+/* Define if you have the nice function.  */
+#define HAVE_NICE 1
+
+/* Define if you have the nlist function.  */
+#define HAVE_NLIST 1
+
+/* Define if you have the ntp_adjtime function.  */
+#define HAVE_NTP_ADJTIME 1
+
+/* Define if you have the ntp_gettime function.  */
+#define HAVE_NTP_GETTIME 1
+
+/* Define if you have the plock function.  */
+/* #undef HAVE_PLOCK */
+
+/* Define if you have the pututline function.  */
+/* #undef HAVE_PUTUTLINE */
+
+/* Define if you have the pututxline function.  */
+/* #undef HAVE_PUTUTXLINE */
+
+/* Define if you have the random function.  */
+#define HAVE_RANDOM 1
+
+/* Define if you have the rtprio function.  */
+/* #undef HAVE_RTPRIO */
+
+/* Define if you have the sched_setscheduler function.  */
+/* #undef HAVE_SCHED_SETSCHEDULER */
+
+/* Define if you have the setlinebuf function.  */
+#define HAVE_SETLINEBUF 1
+
+/* Define if you have the setpgid function.  */
+#define HAVE_SETPGID 1
+
+/* Define if you have the setpriority function.  */
+#define HAVE_SETPRIORITY 1
+
+/* Define if you have the setsid function.  */
+#define HAVE_SETSID 1
+
+/* Define if you have the settimeofday function.  */
+#define HAVE_SETTIMEOFDAY 1
+
+/* Define if you have the setvbuf function.  */
+#define HAVE_SETVBUF 1
+
+/* Define if you have the sigaction function.  */
+#define HAVE_SIGACTION 1
+
+/* Define if you have the sigset function.  */
+/* #undef HAVE_SIGSET */
+
+/* Define if you have the sigsuspend function.  */
+#define HAVE_SIGSUSPEND 1
+
+/* Define if you have the sigvec function.  */
+#define HAVE_SIGVEC 1
+
+/* Define if you have the srand48 function.  */
+#define HAVE_SRAND48 1
+
+/* Define if you have the srandom function.  */
+#define HAVE_SRANDOM 1
+
+/* Define if you have the stime function.  */
+/* #undef HAVE_STIME */
+
+/* Define if you have the strchr function.  */
+#define HAVE_STRCHR 1
+
+/* Define if you have the strerror function.  */
+#define HAVE_STRERROR 1
+
+/* Define if you have the sysconf function.  */
+#define HAVE_SYSCONF 1
+
+/* Define if you have the sysctl function.  */
+#define HAVE_SYSCTL 1
+
+/* Define if you have the timer_create function.  */
+/* #undef HAVE_TIMER_CREATE */
+
+/* Define if you have the timer_settime function.  */
+/* #undef HAVE_TIMER_SETTIME */
+
+/* Define if you have the umask function.  */
+#define HAVE_UMASK 1
+
+/* Define if you have the uname function.  */
+#define HAVE_UNAME 1
+
+/* Define if you have the updwtmp function.  */
+/* #undef HAVE_UPDWTMP */
+
+/* Define if you have the updwtmpx function.  */
+/* #undef HAVE_UPDWTMPX */
+
+/* Define if you have the vsprintf function.  */
+#define HAVE_VSPRINTF 1
+
+/* Define if you have the </sys/sync/queue.h> header file.  */
+/* #undef HAVE__SYS_SYNC_QUEUE_H */
+
+/* Define if you have the </sys/sync/sema.h> header file.  */
+/* #undef HAVE__SYS_SYNC_SEMA_H */
+
+/* Define if you have the <arpa/nameser.h> header file.  */
+#define HAVE_ARPA_NAMESER_H 1
+
+/* Define if you have the <bstring.h> header file.  */
+/* #undef HAVE_BSTRING_H */
+
+/* Define if you have the <errno.h> header file.  */
+#define HAVE_ERRNO_H 1
+
+/* Define if you have the <fcntl.h> header file.  */
+#define HAVE_FCNTL_H 1
+
+/* Define if you have the <machine/inline.h> header file.  */
+/* #undef HAVE_MACHINE_INLINE_H */
+
+/* Define if you have the <memory.h> header file.  */
+#define HAVE_MEMORY_H 1
+
+/* Define if you have the <net/if.h> header file.  */
+#define HAVE_NET_IF_H 1
+
+/* Define if you have the <netdb.h> header file.  */
+#define HAVE_NETDB_H 1
+
+/* Define if you have the <netinet/in.h> header file.  */
+#define HAVE_NETINET_IN_H 1
+
+/* Define if you have the <netinet/ip.h> header file.  */
+#define HAVE_NETINET_IP_H 1
+
+/* Define if you have the <netinfo/ni.h> header file.  */
+/* #undef HAVE_NETINFO_NI_H */
+
+/* Define if you have the <poll.h> header file.  */
+#define HAVE_POLL_H 1
+
+/* Define if you have the <resolv.h> header file.  */
+#define HAVE_RESOLV_H 1
+
+/* Define if you have the <sched.h> header file.  */
+/* #undef HAVE_SCHED_H */
+
+/* Define if you have the <sgtty.h> header file.  */
+#define HAVE_SGTTY_H 1
+
+/* Define if you have the <stdlib.h> header file.  */
+#define HAVE_STDLIB_H 1
+
+/* Define if you have the <string.h> header file.  */
+#define HAVE_STRING_H 1
+
+/* Define if you have the <sun/audioio.h> header file.  */
+/* #undef HAVE_SUN_AUDIOIO_H */
+
+/* Define if you have the <sys/audioio.h> header file.  */
+#define HAVE_SYS_AUDIOIO_H 1
+
+/* Define if you have the <sys/clkdefs.h> header file.  */
+/* #undef HAVE_SYS_CLKDEFS_H */
+
+/* Define if you have the <sys/file.h> header file.  */
+#define HAVE_SYS_FILE_H 1
+
+/* Define if you have the <sys/i8253.h> header file.  */
+/* #undef HAVE_SYS_I8253_H */
+
+/* Define if you have the <sys/ioctl.h> header file.  */
+#define HAVE_SYS_IOCTL_H 1
+
+/* Define if you have the <sys/lock.h> header file.  */
+#define HAVE_SYS_LOCK_H 1
+
+/* Define if you have the <sys/mman.h> header file.  */
+#define HAVE_SYS_MMAN_H 1
+
+/* Define if you have the <sys/modem.h> header file.  */
+/* #undef HAVE_SYS_MODEM_H */
+
+/* Define if you have the <sys/param.h> header file.  */
+#define HAVE_SYS_PARAM_H 1
+
+/* Define if you have the <sys/pcl720.h> header file.  */
+/* #undef HAVE_SYS_PCL720_H */
+
+/* Define if you have the <sys/ppsclock.h> header file.  */
+/* #undef HAVE_SYS_PPSCLOCK_H */
+
+/* Define if you have the <sys/ppstime.h> header file.  */
+/* #undef HAVE_SYS_PPSTIME_H */
+
+/* Define if you have the <sys/proc.h> header file.  */
+#define HAVE_SYS_PROC_H 1
+
+/* Define if you have the <sys/resource.h> header file.  */
+#define HAVE_SYS_RESOURCE_H 1
+
+/* Define if you have the <sys/sched.h> header file.  */
+#define HAVE_SYS_SCHED_H 1
+
+/* Define if you have the <sys/select.h> header file.  */
+#define HAVE_SYS_SELECT_H 1
+
+/* Define if you have the <sys/sockio.h> header file.  */
+#define HAVE_SYS_SOCKIO_H 1
+
+/* Define if you have the <sys/stat.h> header file.  */
+#define HAVE_SYS_STAT_H 1
+
+/* Define if you have the <sys/stream.h> header file.  */
+/* #undef HAVE_SYS_STREAM_H */
+
+/* Define if you have the <sys/stropts.h> header file.  */
+/* #undef HAVE_SYS_STROPTS_H */
+
+/* Define if you have the <sys/sysctl.h> header file.  */
+#define HAVE_SYS_SYSCTL_H 1
+
+/* Define if you have the <sys/syssgi.h> header file.  */
+/* #undef HAVE_SYS_SYSSGI_H */
+
+/* Define if you have the <sys/termios.h> header file.  */
+#define HAVE_SYS_TERMIOS_H 1
+
+/* Define if you have the <sys/time.h> header file.  */
+#define HAVE_SYS_TIME_H 1
+
+/* Define if you have the <sys/timepps.h> header file.  */
+#define HAVE_SYS_TIMEPPS_H 1
+
+/* Define if you have the <sys/timers.h> header file.  */
+/* #undef HAVE_SYS_TIMERS_H */
+
+/* Define if you have the <sys/timex.h> header file.  */
+#define HAVE_SYS_TIMEX_H 1
+
+/* Define if you have the <sys/tpro.h> header file.  */
+/* #undef HAVE_SYS_TPRO_H */
+
+/* Define if you have the <sys/types.h> header file.  */
+#define HAVE_SYS_TYPES_H 1
+
+/* Define if you have the <sys/wait.h> header file.  */
+#define HAVE_SYS_WAIT_H 1
+
+/* Define if you have the <termio.h> header file.  */
+/* #undef HAVE_TERMIO_H */
+
+/* Define if you have the <termios.h> header file.  */
+#define HAVE_TERMIOS_H 1
+
+/* Define if you have the <timepps.h> header file.  */
+#define HAVE_TIMEPPS_H 1
+
+/* Define if you have the <timex.h> header file.  */
+/* #undef HAVE_TIMEX_H */
+
+/* Define if you have the <unistd.h> header file.  */
+#define HAVE_UNISTD_H 1
+
+/* Define if you have the <utmp.h> header file.  */
+#define HAVE_UTMP_H 1
+
+/* Define if you have the <utmpx.h> header file.  */
+/* #undef HAVE_UTMPX_H */
+
+/* Define if you have the advapi32 library (-ladvapi32).  */
+/* #undef HAVE_LIBADVAPI32 */
+
+/* Define if you have the elf library (-lelf).  */
+/* #undef HAVE_LIBELF */
+
+/* Define if you have the gen library (-lgen).  */
+/* #undef HAVE_LIBGEN */
+
+/* Define if you have the kvm library (-lkvm).  */
+#define HAVE_LIBKVM 1
+
+/* Define if you have the ld library (-lld).  */
+/* #undef HAVE_LIBLD */
+
+/* Define if you have the mld library (-lmld).  */
+/* #undef HAVE_LIBMLD */
+
+/* Define if you have the nsl library (-lnsl).  */
+/* #undef HAVE_LIBNSL */
+
+/* Define if you have the rt library (-lrt).  */
+/* #undef HAVE_LIBRT */
+
+/* Define if you have the socket library (-lsocket).  */
+/* #undef HAVE_LIBSOCKET */
+
+/* Name of package */
+#define PACKAGE "ntp"
+
+/* Version number of package */
+#define VERSION "4.0.98a"
+
+/* Define if compiler has function prototypes */
+#define PROTOTYPES 1
+
+/* Do we have struct ntptimeval? */
+#define HAVE_STRUCT_NTPTIMEVAL 1
+
+/* Does ntptimeval use struct timespec? */
+/* #undef TIMESPEC_IN_NTPTIMEVAL */
+
+%% file usr.sbin/ntp/ntpdate/ntpdate.8
+%% NetBSD .\"
+.\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
+.\"
+.Dd April 17, 1997
+.Dt NTPDATE 8
+.Os
+.Sh NAME
+.Nm ntpdate
+.Nd set the date and time via NTP
+.Sh SYNOPSIS
+.Nm ntpdate
+.Op Fl bBdoqsuv
+.Op Fl a Ar key
+.Op Fl e Ar authdelay
+.Op Fl k Ar keyfile
+.Op Fl o Ar version
+.Op Fl p Ar samples
+.Op Fl t Ar timeout
+.Ar server
+.Op Ar ...
+.Sh DESCRIPTION
+.Nm
+sets the local date and time by polling the
+Network Time Protocol (NTP) server(s) given as the
+.Ar server
+arguments to determine the correct time. It must be run as root on the
+local host. A number of samples are obtained from each of the servers
+specified and a subset of the NTP clock filter and selection algorithms
+are applied to select the best of these. Note that the accuracy and
+reliability of 
+.Nm 
+depends on the number of servers, the number of polls each time it
+is run and the interval between runs.
+.Pp
+.Nm
+can be run manually as necessary to set the host clock, or it can
+be run from the host startup script to set the clock at boot time.
+This is useful in some cases to set the clock initially before
+starting the NTP daemon
+.Xr ntpd 8 .
+It is also possible
+to run 
+.Nm
+from a 
+.Xr cron 8
+script. However, it is important to note that
+.Nm
+with contrived
+.Xr cron 8
+scripts is no substitute for the NTP daemon, which
+uses sophisticated algorithms to maximize accuracy and reliability while
+minimizing resource use. Finally, since
+.Nm 
+does not discipline the host clock frequency as does
+.Xr ntpd 8 ,
+the accuracy using
+.Nm
+is limited.
+.Pp
+Time adjustments are made by
+.Nm
+in one of two ways.
+If 
+.Nm
+determines the clock is in error more than 0.5
+second it will simply step the time by calling the system
+.Xr settimeofday 2
+routine. If the error is less than 0.5
+seconds, it will slew the time by calling the system
+.Xr adjtime 2
+routine. The latter technique is less disruptive
+and more accurate when the error is small, and works quite well when
+.Nm
+is run by
+.Xr cron 8
+every hour or two.
+.Pp
+.Nm 
+will decline to set the date if an NTP server
+daemon (e.g., 
+.Xr ntpd 8 )
+is running on the same host. When running 
+.Nm
+on a regular basis from 
+.Xr cron 8
+as an alternative to running a daemon, doing so once every hour or two
+will result in precise enough timekeeping to avoid stepping the clock.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl a Ar key
+Enable the authentication function and specify the key identifier to
+be used for authentication as the argument
+.Ar key
+.Nm 
+The keys and key identifiers must match
+in both the client and server key files. The default is to disable the
+authentication function.
+.It Fl B
+Force the time to always be slewed using the
+.Xr adjtime 2
+system call,
+even if the measured offset is greater than +-128 ms. The default is to
+step the time using 
+.Xr settimeofday 2
+if the offset is greater than +-128
+ms. Note that, if the offset is much greater than +-128 ms in this case,
+that it can take a long time (hours) to slew the clock to the correct
+value. During this time. the host should not be used to synchronize
+clients.
+.It Fl b
+Force the time to be stepped using the
+.Xr settimeofday 2
+system call,
+rather than slewed (default) using the
+.Xr adjtime 2
+system call. This
+option should be used when called from a startup file at boot time.
+.It Fl d
+Enable the debugging mode, in which
+.Nm
+will go
+through all the steps, but not adjust the local clock. Information
+useful for general debugging will also be printed.
+.It Fl e Ar authdelay
+Specify the processing delay to perform an authentication function
+as the value
+.Ar authdelay ,
+in seconds and fraction (see
+.Xr ntpd 8
+for details). This number is usually small enough to
+be negligible for most purposes, though specifying a value may improve
+timekeeping on very slow CPU's.
+.It Fl k Ar keyfile
+Specify the path for the authentication key file as the string
+.Ar keyfile .
+The default is 
+.Pa /etc/ntp.keys .
+This file should be in the format described in
+.Xr xntpd 8 .
+.It Fl o Ar version
+Specify the NTP version for outgoint packets as the integer
+.Ar version ,
+which can be 1 or 2. The default is 3. This allows
+.Nm
+to be used with older NTP versions.
+.It Fl p Ar samples
+Specify the number of samples to be acquired from each server as the
+integer
+.Ar samples ,
+with values from 1 to 8 inclusive. The default is 4.
+.It Fl q
+Query only - don't set the clock.
+.It Fl s
+Divert logging output from the standard output (default) to the
+system 
+.Xr syslog 3
+facility. This is designed primarily for convenience of
+.Xr cron 8
+scripts.
+.It Fl t Ar timeout
+Specify the maximum time waiting for a server response as the value
+.Ar timeout ,
+in seconds and fraction. The value is is rounded to a
+multiple of 0.2 seconds. The default is 1 second, a value suitable for
+polling across a LAN.
+.It Fl u
+Direct 
+.Nm
+to use an unprivileged port or outgoing
+packets. This is most useful when behind a firewall that blocks incoming
+traffic to privileged ports, and you want to synchronise with hosts
+beyond the firewall. Note that the 
+.Fl d
+option always uses
+unprivileged ports.
+.It Fl v
+Be verbose.  This option will cause the
+.Nm
+version
+identification string to be logged.
+.El
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /etc/gettytab
+.It Pa /usr/share/doc/xntp/index.html
+.It Pa /usr/share/doc/xntp/ntpdate.html
+.El
+.Sh BUGS
+The slew adjustment is actually 50% larger than the measured offset,
+since this (it is argued) will tend to keep a badly drifting clock more
+accurate. This is probably not a good idea and may cause a troubling
+hunt for some values of the kernel variables 
+.Xr tick 9
+and
+.Xr tickadj 9 .
+.Sh AUTHOR
+David L. Mills (mills@udel.edu)
+%% file usr.sbin/xntp/ntptime/ntptime.8
+%% NetBSD .\"
+.\" Converted from HTML to mandoc by Christos Zoulas
+.Dd June 23, 1997
+.Dt NTPTIME 8
+.Os NetBSD
+.Sh NAME
+.Nm ntptime
+.Nd read kernel time variables
+.Sh SYNOPSIS
+.Nm 
+.Op Fl cdhr
+.Op Fl e Ar est_error
+.Op Fl f Ar frequency
+.Op Fl m Ar max_error
+.Op Fl o Ar offset
+.Op Fl s Ar status
+.Op Fl t Ar time_constant
+.Sh DESCRIPTION
+.Nm
+reads and displays time-related kernel variables using the
+.Ar ntp_gettime
+system call. A similar display can be
+obtained using the 
+.Xr xntpdc 8
+program.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl c
+Display the execution time of 
+.Nm
+itself.
+.It Fl d
+Turn on debugging.
+.It Fl e Ar est_error
+Specify estimated error, in microseconds.
+.It Fl f Ar frequency
+Specify frequency offset, in parts per million.
+.It Fl h
+Display help information.
+.It Fl m Ar max_error
+Specify maximum error, in microseconds.
+.It Fl o Ar offset
+Specify clock offset, in microseconds.
+.It Fl r
+Display Unix and NTP times in raw format.
+.It Fl s Ar status
+Specify clock status. Better know what you are doing.
+.It Fl t Ar time_constant
+Specify time constant, an integer in the range 0-4.
+.El
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /usr/share/doc/xntp/index.html
+.It Pa /usr/share/doc/xntp/ntptime.html
+.Pp
+.Sh AUTHOR
+David L. Mills (mills@udel.edu)
+%% file usr.sbin/xntp/ntpq/ntpq.8
+%% NetBSD .\"
+.\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
+.\"
+.Dd April 17, 1997
+.Dt NTPQ 8
+.Os
+.Sh NAME
+.Nm ntpq
+.Nd standard NTP query program
+.Sh SYNOPSIS
+.Nm ntpq
+.Op Fl inp
+.Op Fl c Ar command
+.Ar host
+.Op Ar ...
+.Sh DESCRIPTION
+.Nm
+is used to query NTP servers which implement the
+recommended NTP mode 6 control message format about current state and to
+request changes in that state. The program may be run either in
+interactive mode or controlled using command line arguments. Requests to
+read and write arbitrary variables can be assembled, with raw and
+pretty-printed output options being available.
+.Nm
+can also obtain and print a list of peers in a common format by sending
+multiple queries to the server.
+.Pp
+If one or more request options is included on the command line when
+.Nm
+is executed, each of the requests will be sent to the
+NTP servers running on each of the hosts given as command line
+arguments, or on localhost by default. If no request options are given,
+.Nm
+will attempt to read commands from the standard input
+and execute these on the NTP server running on the first host given on
+the command line, again defaulting to localhost when no other host is
+specified.
+.Nm
+will prompt for commands if the standard
+input is a terminal device.
+.Pp
+.Nm
+uses NTP mode 6 packets to communicate with the NTP
+server, and hence can be used to query any compatable server on the
+network which permits it. Note that since NTP is a UDP protocol this
+communication will be somewhat unreliable, especially over large
+distances in terms of network topology. .Nm
+makes one
+attempt to retransmit requests, and will time requests out if the remote
+host is not heard from within a suitable timeout time.
+.Pp
+Command line options are described following. Specifying a command
+line option other than 
+.Op Fl i
+or
+.Op Fl n
+will cause the specified query (queries)
+to be sent to the indicated host(s) immediately. Otherwise,
+.Nm
+will attempt to read interactive format commands from
+the standard input.
+.Bl -tag -width indent
+.It Fl c
+The following argument is interpreted as an interactive format
+command and is added to the list of commands to be 
+.Cd cooked .
+Variables which are recognized by the server will have their values
+reformatted for human consumption. Variables which
+.Nm
+thinks should have a decodeable value but didn't are marked with a
+trailing 
+.Cd ? .
+.It Cd debug Ar more | less | off
+Turns internal query program debugging on and off.
+.It Cd delay Ar milliseconds
+Specify a time interval to be added to timestamps included in
+requests which require authentication. This is used to enable
+(unreliable) server reconfiguration over long delay network paths or
+between machines whose clocks are unsynchronized. Actually the server
+does not now require timestamps in authenticated requests, so this
+command may be obsolete.
+.It Cd host Ar hostname
+Set the host to which future queries will be sent. Hostname may be
+either a host name or a numeric address.
+.It Cd hostnames Op yes | no 
+If 
+.Op yes
+is specified, host names are printed in
+information displays. If 
+.Op no
+is specified, numeric
+addresses are printed instead. The default is 
+.Op yes ,
+unless
+modified using the command line
+.Fl n
+switch.
+.It Cd keyid Ar keyid
+This command allows the specification of a key number to be used to
+authenticate configuration requests. This must correspond to a key
+number the server has been configured to use for this purpose.
+.It Cd ntpversion Ar 1 | 2 | 3
+Sets the NTP version number which .Nm
+claims in
+packets. Defaults to 3, Note that mode 6 control messages (and modes,
+for that matter) didn't exist in NTP version 1. There appear to be no
+servers left which demand version 1.
+.It Cd quit
+Exit
+.Nm
+.It Cd passwd
+This command prompts you to type in a password (which will not be
+echoed) which will be used to authenticate configuration requests. The
+password must correspond to the key configured for use by the NTP server
+for this purpose if such requests are to be successful.
+.It Cd raw
+Causes all output from query commands is printed as received from
+the remote server. The only formating/intepretation done on the data is
+to transform nonascii data into a printable (but barely understandable)
+form.
+.It Cd timeout Ar millseconds
+Specify a timeout period for responses to server queries. The
+default is about 5000 milliseconds. Note that since
+.Nm
+retries each query once after a timeout, the total waiting time for a
+timeout will be twice the timeout value set.
+.El
+.Sh CONTROL MESSAGE COMMANDS
+Each peer known to an NTP server has a 16 bit integer association
+identifier assigned to it. NTP control messages which carry peer
+variables must identify the peer the values correspond to by including
+its association ID. An association ID of 0 is special, and indicates the
+variables are system variables, whose names are drawn from a separate
+name space.
+.Pp
+Control message commands result in one or more NTP mode 6 messages
+being sent to the server, and cause the data returned to be printed in
+some format. Most commands currently implemented send a single message
+and expect a single response. The current exceptions are the peers
+command, which will send a preprogrammed series of messages to obtain
+the data it needs, and the mreadlist and mreadvar commands, which will
+iterate over a range of associations.
+.Bl -tag -width indent
+.It Cd associations
+Obtains and prints a list of association identifiers and peer
+statuses for in-spec peers of the server being queried. The list is
+printed in columns. The first of these is an index numbering the
+associations from 1 for internal use, the second the actual association
+identifier returned by the server and the third the status word for the
+peer. This is followed by a number of columns containing data decoded
+from the status word. Note that the data returned by the
+.Cd associations
+command is cached internally in
+.Nm
+The index is then of use when dealing with stupid
+servers which use association identifiers which are hard for humans to
+type, in that for any subsequent commands which require an association
+identifier as an argument, the form &amp;index may be used as an
+alternative.
+.It Cd clockvar Op assocID variable_name =value ...
+Requests that a list of the server's clock variables be sent.
+Servers which have a radio clock or other external synchronization will
+respond positively to this. If the association identifier is omitted or
+zero the request is for the variables of the 
+.Pa system clock
+and will generally get a positive response from all servers with a
+clock. If the server treats clocks as pseudo-peers, and hence can
+possibly have more than one clock connected at once, referencing the
+appropriate peer association ID will show the variables of a particular
+clock. Omitting the variable list will cause the server to return a
+default variable display.
+.It Cd lassocations
+Obtains and prints a list of association identifiers and peer
+statuses for all associations for which the server is maintaining state.
+This command differs from the
+.Cd associations
+command only
+for servers which retain state for out-of-spec client associations
+(i.e., fuzzballs). Such associations are normally omitted from the
+display when the 
+.Cd associations
+command is used, but are
+included in the output of 
+.Cd lassociations .
+.It Cd lpassociations
+Print data for all associations, including out-of-spec client
+associations, from the internally cached list of associations. This
+command differs from 
+.Cd passociations
+only when dealing with fuzzballs.
+.It Cd lpeers
+Like R peers, except a summary of all associations for which the
+server is maintaining state is printed. This can produce a much longer
+list of peers from fuzzball servers.
+.It Cd mreadlist Ar assocID Ar assocID
+.It Cd mrl Ar assocID Ar assocID
+Like the 
+.Cd readlist
+command, except the query is done for
+each of a range of (nonzero) association IDs. This range is determined
+from the association list cached by the most recent
+.Cd associations
+command.
+.It Cd mreadvar Ar assocID assocID Op variable_name=value ...
+.It Cd mrv Ar assocID assocID Op variable_name=value ...
+Like the 
+.Cd readvar command, except the query is done for
+each of a range of (nonzero) association IDs. This range is determined
+from the association list cached by the most recent
+.Cd associations
+command.
+.It Cd opeers
+An old form of the 
+.Cd peers command with the reference ID
+replaced by the local interface address.
+.It Cd passociations
+Prints association data concerning in-spec peers from the internally
+cached list of associations. This command performs identically to the
+.Cd associations
+except that it displays the internally
+stored data rather than making a new query.
+.It Cd peers
+Obtains a list of in-spec peers of the server, along with a summary
+of each peer's state. Summary information includes the address of the
+remote peer, the reference ID (0.0.0.0 if the refID is unknown), the
+stratum of the remote peer, the type of the peer (local, unicast,
+multicast or broadcast), when the last packet was received, the polling
+interval, in seconds, the reachability register, in octal, and the
+current estimated delay, offset and dispersion of the peer, all in
+seconds.
+.Pp
+The character in the left margin indicates the fate of this peer
+in the clock selection process. The codes mean:
+.Cd "\ "
+discarded due
+to high stratum and/or failed sanity checks; 
+.Cd "x"
+designated
+falseticker by the intersection algorithm; 
+.Cd "."
+culled from
+the end of the candidate list; 
+.Cd "-"
+discarded by the clustering algorithm;
+.Cd "+"
+included in the final selection set; 
+.Cd "#"
+selected for synchronization but distance exceeds
+maximum; 
+.Cd "*"
+selected for synchronization; and
+.Cd "o"
+selected for synchronization, PPS signal in use.
+.Pp
+Note that since the peers command depends on the ability to parse
+the values in the responses it gets it may fail to work from time to
+time with servers which poorly control the data formats.
+.Pp
+The contents of the host field may be one of four forms. It may
+be a host name, an IP address, a reference clock implementation name
+with its parameter or 
+.Cd "REFCLK(<implementation number>,<parameter>)" .
+On 
+.Cd "hostnames no"
+only IP-addresses will be displayed.
+.It Cd pstatus Ar assocID
+Sends a read status request to the server for the given association.
+The names and values of the peer variables returned will be printed.
+Note that the status word from the header is displayed preceding the
+variables, both in hexidecimal and in pidgeon English.
+.It Cd readlist Op assocID
+.It Cd rl Op assocID
+Requests that the values of the variables in the internal variable
+list be returned by the server. If the association ID is omitted or is 0
+the variables are assumed to be system variables. Otherwise they are
+treated as peer variables. If the internal variable list is empty a
+request is sent without data, which should induce the remote server to
+return a default display.
+.It Cd readvar Ar assocID Op variable_name=value ...
+.It Cd rv Ar assocID Op variable_name=value ...
+Requests that the values of the specified variables be returned by
+the server by sending a read variables request. If the association ID is
+omitted or is given as zero the variables are system variables,
+otherwise they are peer variables and the values returned will be those
+of the corresponding peer. Omitting the variable list will send a
+request with no data which should induce the server to return a default
+display.
+.It Cd writevar Ar assocID Op variable_name=value ...
+Like the readvar request, except the specified variables are written
+instead of read.
+.It Cd writelist Op assocID
+Like the readlist request, except the internal list variables are
+written instead of read.
+.El
+.Sh BUGS
+The peers command is non-atomic and may occasionally result in
+spurious error messages about invalid associations occurring and
+terminating the command. The timeout time is a fixed constant, which
+means you wait a long time for timeouts since it assumes sort of a worst
+case. The program should improve the timeout estimate as it sends
+queries to a particular host, but doesn't.
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /usr/share/doc/ntp/index.html
+.It Pa /usr/share/doc/ntp/ntpq.html.
+.Sh AUTHOR
+David L. Mills (mills@udel.edu)
+%% file usr.sbin/ntp/ntptrace/ntptrace.8
+%% NetBSD .\"
+.\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
+.\"
+.Dd April 17, 1997
+.Dt NTPTRACE 8
+.Os
+.Sh NAME
+.Nm ntptrace
+.Nd trace a chain of NTP servers back to the primary
+.Sh SYNOPSIS
+.Nm
+.Op Fl vdn
+.Op Fl r Ar retries
+.Op Fl t Ar timeout
+.Ar server
+.Sh DESCRIPTION
+.Nm
+determines where a given Network Time Protocol
+(NTP) server gets its time from, and follows the chain of NTP servers
+back to their master time source. If given no arguments, it starts with
+.Pa localhost
+Here is an example of the output from
+.Nm 
+.nf
+% ntptrace
+localhost: stratum 4, offset 0.0019529, synch distance 0.144135
+server2ozo.com: stratum 2, offset 0.0124263, synch distance 0.115784
+usndh.edu: stratum 1, offset 0.00192, synch distance 0.011, refid 'WWVB'
+.fi
+.Pp
+On each line, the fields are (left to right): the host name, the host
+stratum, the time offset between that host and the local host (as
+measured by 
+.Nm 
+this is why it is not always zero for
+.Pa localhost, 
+the host synchronization distance, and (only
+for stratum-1 servers) the reference clock ID. All times are given in
+seconds. Note that the stratum is the server hop count to the primary
+source, while the synchronization distance is the estimated error
+relative to the primary source. These terms are precisely defined in
+RFC-1305.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl d
+Turns on some debugging output.
+.It Fl n
+Turns off the printing of host names; instead, host IP addresses are
+given. This may be useful if a nameserver is down.
+.It Fl r Ar retries
+Sets the number of retransmission attempts for each host (default = 5).
+.It Fl t Ar timeout
+Sets the retransmission timeout (in seconds) (default = 2).
+.It Fl v
+Prints verbose information about the NTP servers.
+.Sh BUGS
+This program makes no attempt to improve accuracy by doing multiple
+samples.
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /usr/share/doc/ntp/index.html
+.It Pa /usr/share/doc/ntp/ntptrace.html
+.Sh AUTHOR
+David L. Mills (mills@udel.edu)
+%% file usr.sbin/ntp/ntpd/ntpd.8
+%% NetBSD .\"
+.\" Converted from HTML to mandoc by Jason R. Thorpe <thorpej@NetBSD.ORG>
+.Dd April 17, 1997
+.Dt NTPD 8
+.Os NetBSD
+.Sh NAME
+.Nm ntpd
+.Nd Network Time Protocol (NTP) daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl aAbdm
+.Op Fl c Ar conffile
+.Op Fl f Ar driftfile
+.Op Fl k Ar keyfile
+.Op Fl l Ar logfile
+.Op Fl p Ar pidfile
+.Op Fl r Ar broadcastdelay
+.Op Fl s Ar statsdir
+.Op Fl t Ar key
+.Op Fl v Ar variable
+.Op Fl V Ar variable
+.Sh DESCRIPTION
+.Nm
+is an operating system daemon which sets and
+maintains the system time-of-day in synchronism with Internet
+standard time servers.
+.Nm
+is a complete
+implementation of the Network Time Protocol (NTP) version 3, as
+defined by RFC-1305, but also retains compatibility with version 1
+and 2 servers as defined by RFC-1059 and RFC-1119,
+respectively.
+.Nm
+does all computations in 64-bit
+fixed point arithmetic and requires no floating point
+support. While the ultimate precision of this design, about 232
+picoseconds, is not achievable with ordinary workstations and
+networks of today, it may be required with future nanosecond CPU
+clocks and gigabit LANs.
+.Pp
+The daemon can operate in any of several modes, including
+symmetric active/passive, client/server and broadcast/multicast,
+as described in RFC-1305. A broadcast/multicast client can
+discover remote servers, compute server-client propagation delay
+correction factors and configure itself automatically. This makes
+it possible to deploy a fleet of workstations without specifying
+configuration details specific to the local environment.
+.Pp
+Ordinarily,
+.Nm
+reads the
+.Pa ntp.conf
+configuration file at startup time in order to determine the
+synchronization sources and operating modes. It is also possible
+to specify a working, although limited, configuration entirely on
+the command line, obviating the need for a configuration
+file. This may be particularly appropriate when the local host is
+to be configured as a broadcast or multicast client, with all
+peers being determined by listening to broadcasts at run time.
+.Pp
+Various internal
+.Nm
+variables can be displayed
+and configuration options altered while the daemon is running
+using the
+.Xr ntpq 8
+and
+.Xr ntpdc 8
+utility programs.
+.Pp
+When
+.Nm
+starts it looks at the value of
+.Pa umask ,
+and if it's zero
+.Nm
+will set
+.Pa umask
+to
+.Pa 022 .
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl a
+Enable authentication mode. The default is enabled, so this option
+is obsolete now.
+.It Fl A
+Disable authentication mode.
+.It Fl b
+Synchronize using NTP broadcast messages.
+.It Fl c Ar conffile
+Specify the name and path of the configuration file.
+.It Fl d
+Specify debugging mode. This flag may occur multiple times, with
+each occurrence indicating greater detail of display.
+.It Fl f Ar driftfile
+Specify the name and path of the drift file.
+.It Fl k Ar keyfile
+Specify the name and path of the file containing the NTP
+authentication keys.
+.It Fl l Ar logfile
+Specify the name and path of the log file. The default is the system
+log facility.
+.It Fl m
+Synchronize using NTP multicast messages on the IP multicast group
+address 224.0.1.1 (requires multicast kernel).
+.It Fl p Ar pidfile
+Specify the name and path to record the daemon's process ID.
+.It Fl r Ar broadcastdelay
+Specify the default propagation delay from the broadcast/multicast
+server and this computer. This is used only if the delay cannot be
+computed automatically by the protocol.
+.It Fl s Ar statsdir
+Specify the directory path for files created by the statistics
+facility.
+.It Fl t Ar key
+Add a key number to the trusted key list.
+.It Fl v Ar variable
+Add a system variable.
+.It Fl V Ar variable
+Add a system variable listed by default.
+.El
+.Pp
+.Sh THE CONFIGURATION FILE
+The
+.Nm
+configuration file is read at initial startup
+in order to specify the synchronization sources, modes and other related
+information. Usually, it is installed in the
+.Pa /etc
+directory, but could be installed elsewhere (see the
+.Fl -c Ar conffile
+command line option). The file format is similar
+to other Unix configuration files - comments begin with a
+.Pa #
+character and extend to the end of the line; blank lines are ignored.
+Configuration commands consist of an initial keyword followed by a list
+of arguments, some of which may be optional, separated by whitespace.
+Commands may not be continued over multiple lines. Arguments may be host
+names, host addresses written in numeric, dotted-quad form, integers,
+floating point numbers (when specifying times in seconds) and text
+strings. Optional arguments are delimited by
+.Pa [ ]
+in the
+following descriptions, while alternatives are separated by
+.Pa | .
+The notation [ ... ] means an optional, indefinite
+repetition of the last item before the [ ... ].
+.Pp
+See the following pages for configuration and control options. While
+there is a rich set of options available, the only required option is
+one or more
+.Pa server, peer
+or
+.Pa broadcast
+commands
+described in the
+.Pa Configuration Options
+page. The
+.Pa Notes on Configuring NTP and Setting up a NTP Subnet
+page contains
+an extended discussion of these options.
+.\" XXX
+.\" <p><a href="confopt.html"> Configuration Options </a>
+.\" <br><a href="authopt.html"> Authentication Options </a>
+.\" <br><a href="monopt.html"> Monitoring Options </a>
+.\" <br><a href="accopt.html"> Access Control Options </a>
+.\" <br><a href="clockopt.html"> Reference Clock Options </a>
+.\" <br><a href="miscopt.html"> Miscellaneous Options </a>
+.\" XXX
+.Sh FILES
+.Bl -tag -width /etc/ntp.driftXXX -compact
+.It Pa /etc/ntp.conf
+the default name of the configuration file
+.It Pa /etc/ntp.drift
+the default name of the drift file
+.It Pa /etc/ntp.keys
+the default name of the key file
+.It Pa /usr/share/doc/ntp/index.html
+.It Pa /usr/share/doc/ntp/ntpd.html
+.Sh BUGS
+.Nm
+has gotten rather fat. While not huge, it has gotten
+larger than might be desireable for an elevated-priority daemon running
+on a workstation, particularly since many of the fancy features which
+consume the space were designed more with a busy primary server, rather
+than a high stratum workstation, in mind.
+.Sh AUTHOR
+David L. Mills (mills@udel.edu)
+%% file usr.sbin/ntp/ntpdc/ntpdc.8
+%% NetBSD .\"
+.\" Converted from HTML to mandoc by Jason R. Thorpe <thorpej@NetBSD.ORG>
+.Dd April 17, 1997
+.Dt NTPDC 8
+.Os NetBSD
+.Sh NAME
+.Nm ntpdc
+.Nd special NTP query program
+.Sh SYNOPSIS
+.Nm 
+.Op Fl ilnps
+.Op Fl c Ar command
+.Oo
+.Ar host Oo ...
+.Oc
+.Oc
+.Sh DESCRIPTION
+.Nm
+is used to query the
+.Xr ntpd 8
+daemon
+about its current state and to request changes in that state. The
+program may be run either in interactive mode or controlled using
+command line arguments. Extensive state and statistics information is
+available through the
+.Nm
+interface. In addition, nearly
+all the configuration options which can be specified at start up using
+ntpd's configuration file may also be specified at run time using
+.Nm
+.Pp
+If one or more request options is included on the command line when
+.Nm
+is executed, each of the requests will be sent to
+the NTP servers running on each of the hosts given as command line
+arguments, or on localhost by default. If no request options are given,
+.Nm
+will attempt to read commands from the standard
+input and execute these on the NTP server running on the first host
+given on the command line, again defaulting to localhost when no other
+host is specified.
+.Nm
+will prompt for commands if the
+standard input is a terminal device.
+.Pp
+.Nm
+uses NTP mode 7 packets to communicate with the
+NTP server, and hence can be used to query any compatable server on the
+network which permits it. Note that since NTP is a UDP protocol this
+communication will be somewhat unreliable, especially over large
+distances in terms of network topology.
+.Nm
+makes no
+attempt to retransmit requests, and will time requests out if the remote
+host is not heard from within a suitable timeout time.
+.Pp
+The operation of
+.Nm
+are specific to the particular
+implementation of the
+.Xr ntpd 8
+daemon and can be expected to
+work only with this and maybe some previous versions of the daemon.
+Requests from a remote
+.Nm
+program which affect the
+state of the local server must be authenticated, which requires both the
+remote program and local server share a common key and key identifier.
+.Pp
+The options are as follows:
+.Pp
+Specifying a command line option other than
+.Fl i
+or
+.Fl n
+will cause the specified query (queries) to be sent to
+the indicated host(s) immediately. Otherwise,
+.Nm
+will
+attempt to read interactive format commands from the standard input.
+.Bl -tag -width indent
+.It Fl c Ar command
+The following argument is interpreted as an interactive format
+command and is added to the list of commands to be executed on the
+specified host(s). Multiple 
+.Fl c
+options may be given.
+.It Fl i
+Force
+.Nm
+to operate in interactive mode. Prompts
+will be written to the standard output and commands read from the
+standard input.
+.It Fl l
+Obtain a list of peers which are known to the server(s). This switch
+is equivalent to
+.Fl c Ar listpeers .
+.It Fl n
+Output all host addresses in dotted-quad numeric format rather than
+converting to the canonical host names.
+.It Fl p
+Print a list of the peers known to the server as well as a summary
+of their state. This is equivalent to 
+.Fl c Ar peers .
+.It Fl s
+Print a list of the peers known to the server as well as a summary
+of their state, but in a slightly different format than the
+.Fl p
+switch.
+This is equivalent to
+.Fl c Ar dmpeers .
+.El
+.Pp
+.Sh INTERACTIVE COMMANDS
+Interactive format commands consist of a keyword followed by zero to
+four arguments. Only enough characters of the full keyword to uniquely
+identify the command need be typed. The output of a command is normally
+sent to the standard output, but optionally the output of individual
+commands may be sent to a file by appending a
+.\" XXX I don't think this is right, but it's what the HTML said... --thorpej
+.Pa < ,
+followed by a file name, to the command line.
+.Pp
+A number of interactive format commands are executed entirely within
+the
+.Nm
+program itself and do not result in NTP mode 7
+requests being sent to a server. These are described following.
+.Bl -tag -width indent
+.It ? Op Ar command_keyword
+.It help Op Ar command_keyword
+A
+.Pa ?
+by itself will print a list of all the command
+keywords known to this incarnation of
+.Xr ntpq 8 .
+A
+.Pa ?
+followed by a command keyword will print funcation and
+usage information about the command. This command is probably a better
+source of information about
+.Nm ntpq
+than this manual page.
+.It delay Ar milliseconds
+Specify a time interval to be added to timestamps included in
+requests which require authentication. This is used to enable
+(unreliable) server reconfiguration over long delay network paths or
+between machines whose clocks are unsynchronized. Actually the server
+does not now require timestamps in authenticated requests, so this
+command may be obsolete.
+.It host Ar hostname
+Set the host to which future queries will be sent. Hostname may be
+either a host name or a numeric address.
+.It hostname Op Ar yes | no
+If
+.Ar yes
+is specified, host names are printed in
+information displays. If
+.Ar no
+is specified, numeric addresses
+are printed instead. The default is
+.Ar yes ,
+unless modified
+using the command line
+.Fl n
+switch.
+.It keyid Ar keyid
+This command allows the specification of a key number to be used to
+authenticate configuration requests. This must correspond to a key
+number the server has been configured to use for this purpose.
+.It quit
+Exit
+.Nm
+.It passwd
+This command prompts you to type in a password (which will not be
+echoed) which will be used to authenticate configuration requests. The
+password must correspond to the key configured for use by the NTP server
+for this purpose if such requests are to be successful.
+.It timeout Ar milliseconds
+Specify a timeout period for responses to server queries. The
+default is about 8000 milliseconds. Note that since
+.Nm
+retries each query once after a timeout, the total waiting time for a
+timeout will be twice the timeout value set.
+.El
+.Pp
+.Sh CONTROL MESSAGE COMMANDS
+Query commands result in NTP mode 7 packets containing requests for
+information being sent to the server. These are read-only commands in
+that they make no modification of the server configuration state.
+.Bl -tag -width indent
+.It listpeers
+Obtains and prints a brief list of the peers for which the server is
+maintaining state. These should include all configured peer associations
+as well as those peers whose stratum is such that they are considered by
+the server to be possible future synchonization candidates.
+.It peers
+Obtains a list of peers for which the server is maintaining state,
+along with a summary of that state. Summary information includes the
+address of the remote peer, the local interface address (0.0.0.0 if a
+local address has yet to be determined), the stratum of the remote peer
+(a stratum of 16 indicates the remote peer is unsynchronized), the
+polling interval, in seconds, the reachability register, in octal, and
+the current estimated delay, offset and dispersion of the peer, all in
+seconds. In addition, the character in the left margin indicates the
+mode this peer entry is operating in. A
+.Pa +
+denotes symmetric
+active, a
+.Pa -
+indicates symmetric passive, a
+.Pa =
+means the remote server is being polled in client mode, a
+.Pa ^
+indicates that the server is broadcasting to this address, a
+.Pa ~
+denotes that the remote peer is sending broadcasts and a
+.Pa *
+marks the peer the server is currently synchonizing to.
+.Pp
+The contents of the host field may be one of four forms. It may be a
+host name, an IP address, a reference clock implementation name with its
+parameter or
+.Pa REFCLK(implementation number, parameter) .
+On
+.Pa hostnames no
+only IP-addresses
+will be displayed.
+.It dmpeers
+A slightly different peer summary list. Identical to the output of
+the
+.Pa peers
+command, except for the character in the leftmost
+column. Characters only appear beside peers which were included in the
+final stage of the clock selection algorithm. A
+.Pa .
+indicates
+that this peer was cast off in the falseticker detection, while a
+.Pa +
+indicates that the peer made it through. A
+.Pa *
+denotes the peer the server is currently synchronizing with.
+.It showpeer Ar peer_address Op Ar ...
+Shows a detailed display of the current peer variables for one or
+more peers. Most of these values are described in the NTP Version 2
+specification.
+.It pstats Ar peer_address Op Ar ...
+Show per-peer statistic counters associated with the specified
+peer(s).
+.It clockinfo clock_peer_address Op Ar ...
+Obtain and print information concerning a peer clock. The values
+obtained provide information on the setting of fudge factors and other
+clock performance information.
+.It kerninfo
+Obtain and print kernel phase-lock loop operating parameters. This
+information is available only if the kernel has been specially modified
+for a precision timekeeping function.
+.It loopinfo Op Ar oneline | multiline
+Print the values of selected loop filter variables. The loop filter
+is the part of NTP which deals with adjusting the local system clock.
+The
+.Pa offset
+is the last offset given to the loop filter by
+the packet processing code. The
+.Pa frequency
+is the frequency
+error of the local clock in parts-per-million (ppm). The
+.Pa time_const
+controls the stiffness of the phase-lock loop
+and thus the speed at which it can adapt to oscillator drift. The
+.Pa watchdog timer
+value is the number of seconds which have
+elapsed since the last sample offset was given to the loop filter. The
+.Ar oneline
+and
+.Ar multiline
+options specify the
+format in which this information is to be printed, with
+.Ar multiline
+as the default.
+.It sysinfo
+Print a variety of system state variables, i.e., state related to
+the local server. All except the last four lines are described in the
+NTP Version 3 specification, RFC-1305.
+.Pp
+The
+.Pa system flags
+show various system flags, some of
+which can be set and cleared by the
+.Pa enable
+and
+.Pa disable
+configuration commands, respectively. These are the
+.Pa auth ,
+.Pa bclient ,
+.Pa monitor ,
+.Pa pll ,
+.Pa pps
+and
+.Pa stats
+flags. See the
+.Xr ntpd 8
+documentation for the meaning of these flags. There
+are two additional flags which are read only, the
+.Pa kernel_pll
+and
+.Pa kernel_pps .
+These flags
+indicate the synchronization status when the precision time kernel
+modifications are in use. The
+.Pa kernel_pll
+indicates that the
+local clock is being disciplined by the kernel, while the kernel_pps
+indicates the kernel discipline is provided by the PPS signal.
+.Pp
+The
+.Pa stability
+is the residual frequency error
+remaining after the system frequency correction is applied and is
+intended for maintenance and debugging. In most architectures, this
+value will initially decrease from as high as 500 ppm to a nominal value
+in the range .01 to 0.1 ppm. If it remains high for some time after
+starting the daemon, something may be wrong with the local clock, or the
+value of the kernel variable
+.Pa tick
+may be incorrect.
+.Pp
+The
+.Pa broadcastdelay
+shows the default broadcast
+delay, as set by the
+.Pa broadcastdelay
+configuration command.
+.Pp
+The
+.Pa authdelay
+shows the default authentication
+delay, as set by the
+.Pa authdelay
+configuration command.
+.Pp
+.It sysstats
+Print statistics counters maintained in the protocol module.
+.It memstats
+Print statistics counters related to memory allocation code.
+.It iostats
+Print statistics counters maintained in the input-output module.
+.It timerstats
+Print statistics counters maintained in the timer/event queue
+support code.
+.It reslist
+Obtain and print the server's restriction list. This list is
+(usually) printed in sorted order and may help to understand how the
+restrictions are applied.
+.It monlist Op Ar version
+Obtain and print traffic counts collected and maintained by the
+monitor facility. The version number should not normally need to be
+specified.
+.It clkbug Ar clock_peer_address Op Ar ...
+Obtain debugging information for a reference clock driver. This
+information is provided only by some clock drivers and is mostly
+undecodable without a copy of the driver source in hand.
+.El
+.Pp
+.Sh RUNTIME CONFIGURATION REQUESTS
+All requests which cause state changes in the server are
+authenticated by the server using a configured NTP key (the facility can
+also be disabled by the server by not configuring a key). The key number
+and the corresponding key must also be made known to
+.Nm xtnpdc .
+This can be
+done using the
+.Pa keyid
+and
+.Pa passwd
+commands, the latter of which will
+prompt at the terminal for a password to use as the encryption key. You
+will also be prompted automatically for both the key number and password
+the first time a command which would result in an authenticated request
+to the server is given. Authentication not only provides verification
+that the requester has permission to make such changes, but also gives
+an extra degree of protection again transmission errors.
+.Pp
+Authenticated requests always include a timestamp in the packet data,
+which is included in the computation of the authentication code. This
+timestamp is compared by the server to its receive time stamp. If they
+differ by more than a small amount the request is rejected. This is done
+for two reasons. First, it makes simple replay attacks on the server, by
+someone who might be able to overhear traffic on your LAN, much more
+difficult. Second, it makes it more difficult to request configuration
+changes to your server from topologically remote hosts. While the
+reconfiguration facility will work well with a server on the local host,
+and may work adequately between time-synchronized hosts on the same LAN,
+it will work very poorly for more distant hosts. As such, if reasonable
+passwords are chosen, care is taken in the distribution and protection
+of keys and appropriate source address restrictions are applied, the run
+time reconfiguration facility should provide an adequate level of
+security.
+.Pp
+The following commands all make authenticated requests.
+.Bl -tag -width indent
+.It addpeer Ar peer_address Op keyid version prefer
+Add a configured peer association at the given address and operating
+in symmetric active mode. Note that an existing association with the
+same peer may be deleted when this command is executed, or may simply be
+converted to conform to the new configuration, as appropriate. If the
+optional
+.Ar keyid
+is a nonzero integer, all outgoing packets
+to the remote server will have an authentication field attached
+encrypted with this key. If the value is 0 (or not given) no
+authentication will be done. The
+.Ar version
+can be 1, 2 or 3
+and defaults to 3. The
+.Ar prefer
+keyword indicates a preferred
+peer (and thus will be used primarily for clock synchronisation if
+possible). The preferred peer also determines the validity of the PPS
+signal - if the preferred peer is suitable for synchronisation so is the
+PPS signal.
+.It addserver Ar peer_address Op keyid version prefer
+Identical to the
+.Pa addpeer
+command, except that the operating mode is
+client.
+.It broadcast Ar peer_address keyid version prefer
+Identical to the addpeer command, except that the operating mode is
+broadcast. In this case a valid key identifier and key are required. The
+.Ar peer_address
+parameter can be the broadcast address of the
+local network or a multicast group address assigned to NTP. If a
+multicast address, a multicast-capable kernel is required.
+.It unconfig Ar peer_address Op Ar ...
+This command causes the configured bit to be removed from the
+specified peer(s). In many cases this will cause the peer association to
+be deleted. When appropriate, however, the association may persist in an
+unconfigured mode if the remote peer is willing to continue on in this
+fashion.
+.It fudge Ar peer_address Op time1 time2 stratum refid
+This command provides a way to set certain data for a reference
+clock. See the source listing for further information.
+.It enable Op flag ... 
+.It disable Op Ar flag Op Ar ...
+These commands operate in the same way as the
+.Pa enable
+and
+.Pa disable
+configuration file commands of
+.Xr ntpd 8 .
+Following is a description of the flags. Note that
+only the
+.Pa auth ,
+.Pa bclient ,
+.Pa monitor ,
+.Pa pll ,
+.Pa pps
+and
+.Pa stats
+flags can be
+set by
+.Nm
+the
+.Pa pll_kernel
+and
+.Pa pps_kernel
+flags are read-only.
+.Pp
+.Pa auth
+Enables the server to synchronize with unconfigured peers only if
+the peer has been correctly authenticated using a trusted key and key
+identifier. The default for this flag is enable.
+.Pp
+.Pa bclient
+Enables the server to listen for a message from a broadcast or
+multicast server, as in the
+.Pa multicastclient
+command with
+default address. The default for this flag is disable.
+.Pp
+.Pa monitor
+Enables the monitoring facility. See the
+.Xr ntpdc 8
+program
+and the
+.Pa monlist
+command or further information. The default
+for this flag is enable.
+.Pp
+.Pa pll
+Enables the server to adjust its local clock by means of NTP. If
+disabled, the local clock free-runs at its intrinsic time and frequency
+offset. This flag is useful in case the local clock is controlled by
+some other device or protocol and NTP is used only to provide
+synchronization to other clients. In this case, the local clock driver
+is used. See the
+.Pa Reference Clock Drivers
+page for further information. The default for this flag is enable.
+.Pp
+.Pa pps
+Enables the pulse-per-second (PPS) signal when frequency and time is
+disciplined by the precision time kernel modifications. See the
+.Pa A Kernel Model for Precision Timekeeping
+page for
+further information. The default for this flag is disable.
+.Pp
+.Pa stats
+Enables the statistics facility. See the
+.Pa Monitoring Options
+page for further information. The default for this flag is enable.
+.Pp
+.Pa pll_kernel
+When the precision time kernel modifications are installed, this
+indicates the kernel controls the clock discipline; otherwise, the
+daemon controls the clock discipline.
+.Pp
+.Pa pps_kernel
+When the precision time kernel modifications are installed and a
+pulse-per-second (PPS) signal is available, this indicates the PPS
+signal controls the clock discipline; otherwise, the daemon or kernel
+controls the clock discipline, as indicated by the
+.Pa pll_kernel
+flag.
+.It restrict Ar address mask flag Op Ar flag
+This command operates in the same way as the
+.Pa restrict
+configuration file commands of
+.Xr ntpd 8 .
+.It unrestrict Ar address mask flag Op Ar flag
+Unrestrict the matching entry from the restrict list.
+.It delrestrict Ar address mask Op Ar ntpport
+Delete the matching entry from the restrict list.
+.It readkeys
+Causes the current set of authentication keys to be purged and a new
+set to be obtained by rereading the keys file (which must have been
+specified in the
+.Xr ntpd 8
+configuration file). This allows
+encryption keys to be changed without restarting the server.
+.It trustkey Ar keyid Op Ar ...
+.It untrustkey Ar keyid Op Ar ...
+These commands operate in the same way as the
+.Pa trustedkey
+and
+.Pa untrustkey
+configuration file
+commands of
+.Xr ntpd 8 .
+.It authinfo
+Returns information concerning the authentication module, including
+known keys and counts of encryptions and decryptions which have been
+done.
+.It traps
+Display the traps set in the server. See the source listing for
+further information.
+.It addtrap Op Ar address Op port interface
+Set a trap for asynchronous messages. See the source listing for
+further information.
+.It clrtrap Op Ar address Op port interface
+Clear a trap for asynchronous messages. See the source listing for
+further information.
+.It reset
+Clear the statistics counters in various modules of the server. See
+the source listing for further information.
+.El
+.Sh BUGS
+.Nm
+is a crude hack. Much of the information it shows
+is deadly boring and could only be loved by its implementer. The program
+was designed so that new (and temporary) features were easy to hack in,
+at great expense to the program's ease of use. Despite this, the program
+is occasionally useful.
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /usr/share/doc/ntp/index.html
+.It Pa /usr/share/doc/ntp/ntpdc.html
+.El
+.Sh AUTHOR
+David L. Mills (mills@udel.edu)
