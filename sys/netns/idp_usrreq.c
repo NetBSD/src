@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.12 1996/10/10 23:25:50 christos Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.13 1997/07/18 19:30:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -218,7 +218,7 @@ idp_output(m0, va_alist)
 		len += sizeof (struct idp);
 	}
 
-	idp->idp_len = htons((u_short)len);
+	idp->idp_len = htons((u_int16_t)len);
 
 	if (idpcksum) {
 		idp->idp_sum = 0;
@@ -251,7 +251,6 @@ idp_ctloutput(req, so, level, name, value)
 	register struct mbuf *m;
 	struct nspcb *nsp = sotonspcb(so);
 	int mask, error = 0;
-	extern long ns_pexseq;
 
 	if (nsp == NULL)
 		return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.19 1996/10/13 01:59:56 christos Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.20 1997/07/18 19:30:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -289,7 +289,7 @@ nsipoutput(ifp, m, dst, rt)
 	 * Calculate data length and make space
 	 * for IP header.
 	 */
-	len =  ntohs(idp->idp_len);
+	len = ntohs(idp->idp_len);
 	if (len & 1) len++;		/* Preserve Garbage Byte */
 	/* following clause not necessary on vax */
 	if (3 & (int)m->m_data) {
@@ -314,11 +314,11 @@ nsipoutput(ifp, m, dst, rt)
 	 * Fill in IP header.
 	 */
 	ip = mtod(m, struct ip *);
-	*(long *)ip = 0;
+	*(int32_t *)ip = 0;
 	ip->ip_p = IPPROTO_IDP;
 	ip->ip_src = ifn->ifen_src;
 	ip->ip_dst = ifn->ifen_dst;
-	ip->ip_len = (u_short)len + sizeof (struct ip);
+	ip->ip_len = (u_int16_t)len + sizeof (struct ip);
 	ip->ip_ttl = MAXTTL;
 
 	/*
@@ -420,7 +420,7 @@ nsip_route(m)
 
 int
 nsip_free(ifp)
-struct ifnet *ifp;
+	struct ifnet *ifp;
 {
 	register struct ifnet_en *ifn = (struct ifnet_en *)ifp;
 	struct route *ro = & ifn->ifen_route;

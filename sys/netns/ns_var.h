@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_var.h,v 1.5 1996/10/10 23:22:58 christos Exp $	*/
+/*	$NetBSD: ns_var.h,v 1.6 1997/07/18 19:30:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -30,6 +30,9 @@
  */
 
 #ifdef _KERNEL
+extern	long ns_pexseq;
+extern	u_char nsctlerrmap[];
+
 struct socket;
 struct nspcb;
 struct ifnet;
@@ -51,14 +54,14 @@ int ns_ifinit __P((struct ifnet *, struct ns_ifaddr *, struct sockaddr_ns *,
 struct ns_ifaddr *ns_iaonnetof __P((struct ns_addr *));
 
 /* ns_cksum.c */
-u_short ns_cksum __P((struct mbuf *, int));
+u_int16_t ns_cksum __P((struct mbuf *, int));
 
 /* ns_error.c */
 int ns_err_x __P((int));
 void ns_error __P((struct mbuf *, int, int ));
 void ns_printhost __P((struct ns_addr *));
 void ns_err_input __P((struct mbuf *));
-u_long nstime __P((void));
+u_int32_t nstime __P((void));
 int ns_echo __P((struct mbuf *));
 
 /* ns_input.c */
