@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.2 2001/03/25 21:46:16 marcus Exp $
+#	$NetBSD: MAKEDEV,v 1.3 2001/03/28 20:55:27 marcus Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -82,7 +82,7 @@ do
 case $i in
 
 all)
-	sh $0 std gdrom0
+	sh $0 std fd gdrom0
 	sh $0 scif0 sci0 pty0 pty1
 	sh $0 vnd0 vnd1
 	sh $0 ttyE0 ttyEcfg wsmouse0 wskbd0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
@@ -176,13 +176,6 @@ ccd*|fd*|sd*|vnd*|wd*)
 	chmod 640 $name$unit? r$name$unit?
 	;;
 
-com*|tty*)					# (XXX -- com should die)
-	unit=${i#???}
-	rm -f com$unit tty0$unit
-	mknod tty0$unit c 8 $unit
-	chown uucp.wheel tty0$unit
-	;;
-
 scif*|sci*)
 	case $i in
 	scif*) name=scif; unit=${i#scif}; chr=10;;
@@ -200,11 +193,18 @@ ttyEcfg)
 	;;
 
 ttyE*)
-	unit=${i#ttyE};	major=52; minor=$unit
+	name=ttyE; unit=${i#ttyE};	major=52; minor=$unit
         rm -f $name$unit
         mknod $name$unit c $major $minor
         chown uucp.wheel $name$unit
         ;;
+
+com*|tty*)					# (XXX -- com should die)
+	unit=${i#???}
+	rm -f com$unit tty0$unit
+	mknod tty0$unit c 8 $unit
+	chown uucp.wheel tty0$unit
+	;;
 
 pty*)
 	class=${i#pty}
