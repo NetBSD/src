@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.25 1999/01/10 13:30:48 tron Exp $	*/
+/*	$NetBSD: wesc.c,v 1.26 2001/04/25 17:53:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -58,13 +58,6 @@ int wesc_dmaintr __P((void *));
 void wesc_dump __P((void));
 #endif
 
-struct scsipi_device wesc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
-
 
 #ifdef DEBUG
 #endif
@@ -95,15 +88,17 @@ wescattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	struct siop_softc *sc;
+	struct siop_softc *sc = (struct siop_softc *)dp;
 	struct zbus_args *zap;
 	siop_regmap_p rp;
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
+
 
 	printf("\n");
 
 	zap = auxp;
 
-	sc = (struct siop_softc *)dp;
 	sc->sc_siopp = rp = (siop_regmap_p)((caddr_t)zap->va + 0x40000);
 
 	/*
@@ -113,18 +108,27 @@ wescattach(pdp, dp, auxp)
 	sc->sc_ctest7 = SIOP_CTEST7_SC0 | SIOP_CTEST7_TT1;
 	sc->sc_dcntl = 0x00;
 
-	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
-	sc->sc_adapter.scsipi_minphys = siop_minphys;
+	/*
+	 * Fill in the scsipi_adapter.
+	 */
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = 7;    
+	adapt->adapt_max_periph = 1;
+	adapt->adapt_request = siop_scsipi_request;
+	adapt->adapt_minphys = siop_minphys;
 
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &wesc_scsidev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	/*
+	 * Fill in the scsipi_channel.
+	 */
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;      
+	chan->chan_nluns = 8;
+	chan->chan_id = 7;
 
 	siopinitialize(sc);
 
@@ -136,7 +140,7 @@ wescattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, scsiprint);
+	config_found(dp, chan, scsiprint);
 }
 
 int

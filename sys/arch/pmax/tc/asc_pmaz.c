@@ -1,4 +1,4 @@
-/* $NetBSD: asc_pmaz.c,v 1.6 2000/06/05 07:59:53 nisimura Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.7 2001/04/25 17:53:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.6 2000/06/05 07:59:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.7 2001/04/25 17:53:22 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,7 +198,9 @@ asc_pmaz_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
 }
 
 static void
@@ -266,7 +268,7 @@ asc_pmaz_setup(sc, addr, len, datain, dmasize)
 
 	asc->sc_bounce = asc->sc_base + PMAZ_OFFSET_RAM;
 	asc->sc_bounce += PER_TGT_DMA_SIZE *
-	    sc->sc_nexus->xs->sc_link->scsipi_scsi.target;
+	    sc->sc_nexus->xs->xs_periph->periph_target;
 	asc->sc_target = *addr;
 
 	if (!asc->sc_ispullup)

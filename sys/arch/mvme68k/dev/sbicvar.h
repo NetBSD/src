@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.7 2000/03/23 06:41:28 thorpej Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.8 2001/04/25 17:53:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,7 +66,6 @@ struct sbic_acb {
 #define ACB_FREE        0x00
 #define ACB_ACTIVE      0x01
 #define ACB_DONE        0x04
-#define ACB_CHKSENSE    0x08
 #define ACB_BBUF        0x10    /* DMA input needs to be copied from bounce */
 #define ACB_DATAIN      0x20    /* DMA direction flag */
 
@@ -87,7 +86,6 @@ struct sbic_acb {
 struct sbic_tinfo {
     int                     cmds;       /* #commands processed */
     int                     dconns;     /* #disconnects */
-    int                     senses;     /* #request sense commands sent */
     int                     lubusy;     /* What local units/subr. are busy? */
 } tinfo_t;
 
@@ -100,7 +98,7 @@ struct  sbic_softc {
     } sc_sync[8];
     u_char                  target;     /* Currently active target */
     u_char                  lun;
-    struct  scsipi_link     sc_link;    /* proto for sub devices */
+    struct  scsipi_channel  sc_channel;    /* proto for sub devices */
     struct  scsipi_adapter  sc_adapter;
     sbic_regmap_p           sc_sbicp;   /* the SBIC */
     void                   *sc_driver;  /* driver specific field */
@@ -204,7 +202,8 @@ struct buf;
 struct scsipi_xfer;
 
 void sbic_minphys __P((struct buf *bp));
-int sbic_scsicmd __P((struct scsipi_xfer *));
+void sbic_scsi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 void sbicinit __P((struct sbic_softc *));
 int sbicintr __P((struct sbic_softc *));
 

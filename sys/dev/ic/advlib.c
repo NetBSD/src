@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.13 2000/06/28 17:12:49 mrg Exp $        */
+/*      $NetBSD: advlib.c,v 1.14 2001/04/25 17:53:28 bouyer Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -3235,7 +3235,6 @@ AscInquiryHandling(sc, tid_no, inq)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	ASC_SCSI_BIT_ID_TYPE tid_bit = ASC_TIX_TO_TARGET_ID(tid_no);
 	ASC_SCSI_BIT_ID_TYPE orig_init_sdtr, orig_use_tagged_qng;
-
 
 	orig_init_sdtr = sc->init_sdtr;
 	orig_use_tagged_qng = sc->use_tagged_qng;

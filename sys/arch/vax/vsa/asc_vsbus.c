@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.23 2001/04/25 17:53:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.23 2001/04/25 17:53:26 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -305,7 +305,9 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n%s", self->dv_xname);	/* Pretty print */
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
 }
 
 /*

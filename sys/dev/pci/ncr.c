@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.105 2000/12/28 22:59:14 sommerfeld Exp $	*/
+/*	$NetBSD: ncr.c,v 1.106 2001/04/25 17:53:36 bouyer Exp $	*/
 
 /**************************************************************************
 **
@@ -1538,7 +1538,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.105 2000/12/28 22:59:14 sommerfeld Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.106 2001/04/25 17:53:36 bouyer Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4519,7 +4519,26 @@ ncr_intr(vnp)
 **==========================================================
 */
 
-static INT32 ncr_start (struct scsipi_xfer * xp)
+static void ncr_scsipi_request(struct scsipi_channel *chan,
+    scsipi_adapter_req_t req, void *arg)
+{
+
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		ncr_start((struct scsipi_xfer *)arg);
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX XXX XXX */
+		return;
+	}
+}
+
+static void ncr_start(struct scsipi_xfer *xp)
 {
 	ncb_p np  = (ncb_p) xp->sc_link->adapter_softc;
 
@@ -4928,8 +4947,6 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	cp->sensecmd[0]			= 0x03;
 	cp->sensecmd[1]			= xp->sc_link->scsipi_scsi.lun << 5;
 	cp->sensecmd[4]			= sizeof(struct scsipi_sense_data);
-	if (xp->req_sense_length)
-		cp->sensecmd[4]		= xp->req_sense_length;
 	/*
 	**	sense data
 	*/
@@ -5288,8 +5305,6 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		xp->error = XS_TIMEOUT;
 	}
 
-	xp->xs_status |= XS_STS_DONE;
-
 	/*
 	**	trace output
 	*/
@@ -5310,7 +5325,8 @@ void ncr_complete (ncb_p np, ccb_p cp)
 			case S_CHECK_COND:
 				printf ("  SENSE:");
 				p = (u_char*) &xp->sense.scsi_sense;
-				for (i=0; i<xp->req_sense_length; i++)
+				for (i=0; i<sizeof(struct scsipi_sense_data);
+				    i++)
 					printf (" %x", *p++);
 				break;
 			default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.28 2001/01/22 07:00:39 mycroft Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.29 2001/04/25 17:53:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX for atapi_adapter */
+/* XXX For scsipi_adapter and scsipi_channel. */
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/atapiconf.h>
 
@@ -75,6 +75,7 @@ struct channel_softc { /* Per channel data */
 	struct ata_drive_datas ch_drive[2];
 
 	struct device *atapibus;
+	struct scsipi_channel ch_atapi_channel;
 
 	/*
 	 * channel queues. May be the same for all channels, if hw channels
@@ -210,4 +211,3 @@ void	wdc_print_modes (struct channel_softc *);
 #define WDC_RESET_WAIT 31000
 
 void wdc_atapibus_attach __P((struct channel_softc *));
-int   atapi_print       __P((void *, const char *));

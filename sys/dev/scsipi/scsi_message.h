@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_message.h,v 1.4 2000/03/15 02:02:37 fvdl Exp $	*/
+/*	$NetBSD: scsi_message.h,v 1.5 2001/04/25 17:53:39 bouyer Exp $	*/
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
@@ -39,6 +39,7 @@
 #define MSG_EXT_WDTR		0x03
 #define MSG_EXT_WDTR_LEN	0x02
 
-#define MSG_EXT_WDTR_BUS_8_BIT  0x00
-#define MSG_EXT_WDTR_BUS_16_BIT 0x01
-#define MSG_EXT_WDTR_BUS_32_BIT 0x02 
+#define MSG_EXT_WDTR_BUS_8_BIT	0x00
+#define MSG_EXT_WDTR_BUS_16_BIT	0x01
+#define MSG_EXT_WDTR_BUS_32_BIT	0x02 
+

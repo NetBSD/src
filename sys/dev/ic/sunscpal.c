@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.1 2001/04/20 16:35:22 fredette Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.2 2001/04/25 17:53:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -148,7 +148,6 @@ int sunscpal_debug = 0;
 #define	SUNSCPAL_BREAK() \
 	do { if (sunscpal_debug & SUNSCPAL_DBG_BREAK) Debugger(); } while (0)
 static void sunscpal_show_scsi_cmd __P((struct scsipi_xfer *));
-static void sunscpal_show_sense __P((struct scsipi_xfer *));
 #ifdef DDB
 void	sunscpal_clear_trace __P((void));
 void	sunscpal_show_trace __P((void));
@@ -159,7 +158,6 @@ void	sunscpal_show_state __P((void));
 
 #define	SUNSCPAL_BREAK() 		/* nada */
 #define sunscpal_show_scsi_cmd(xs) /* nada */
-#define sunscpal_show_sense(xs) /* nada */
 
 #endif	/* SUNSCPAL_DEBUG */
 
@@ -661,7 +659,7 @@ sunscpal_cmd_timeout(arg)
 {
 	struct sunscpal_req *sr = arg;
 	struct scsipi_xfer *xs;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct sunscpal_softc *sc;
 	int s;
 
@@ -673,8 +671,8 @@ sunscpal_cmd_timeout(arg)
 		printf("sunscpal_cmd_timeout: no scsipi_xfer\n");
 		goto out;
 	}
-	sc_link = xs->sc_link;
-	sc = sc_link->adapter_softc;
+	periph = xs->xs_periph;
+	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
 	printf("%s: cmd timeout, targ=%d, lun=%d\n",
 	    sc->sc_dev.dv_xname,
@@ -730,93 +728,103 @@ out:
  * WARNING:  This can be called recursively!
  * (see comment in sunscpal_done)
  */
-int
-sunscpal_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+sunscpal_scsipi_reqyest(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct	sunscpal_softc *sc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct	sunscpal_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct sunscpal_req	*sr;
-	int s, rv, i, flags;
+	int s, i, flags;
 
-	sc = xs->sc_link->adapter_softc;
-	flags = xs->xs_control;
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
-	if (sc->sc_flags & SUNSCPAL_FORCE_POLLING)
-		flags |= XS_CTL_POLL;
+		if (sc->sc_flags & SUNSCPAL_FORCE_POLLING)
+			flags |= XS_CTL_POLL;
 
-	if (flags & XS_CTL_DATA_UIO)
-		panic("sunscpal: scsi data uio requested");
+		if (flags & XS_CTL_DATA_UIO)
+			panic("sunscpal: scsi data uio requested");
 
-	s = splbio();
+		s = splbio();
 
-	if (flags & XS_CTL_POLL) {
-		/* Terminate any current command. */
-		sr = sc->sc_current;
-		if (sr) {
-			printf("%s: polled request aborting %d/%d\n",
-			    sc->sc_dev.dv_xname,
-			    sr->sr_target, sr->sr_lun);
-			sunscpal_abort(sc);
+		if (flags & XS_CTL_POLL) {
+			/* Terminate any current command. */
+			sr = sc->sc_current;
+			if (sr) {
+				printf("%s: polled request aborting %d/%d\n",
+				    sc->sc_dev.dv_xname,
+				    sr->sr_target, sr->sr_lun);
+				sunscpal_abort(sc);
+			}
+			if (sc->sc_state != SUNSCPAL_IDLE) {
+				panic("sunscpal_scsi_cmd: polled request, abort failed");
+			}
 		}
-		if (sc->sc_state != SUNSCPAL_IDLE) {
-			panic("sunscpal_scsi_cmd: polled request, abort failed");
-		}
-	}
 
-	/*
-	 * Find lowest empty slot in ring buffer.
-	 * XXX: What about "fairness" and cmd order?
-	 */
-	for (i = 0; i < SUNSCPAL_OPENINGS; i++)
-		if (sc->sc_ring[i].sr_xs == NULL)
-			goto new;
+		/*
+		 * Find lowest empty slot in ring buffer.
+		 * XXX: What about "fairness" and cmd order?
+		 */
+		for (i = 0; i < SUNSCPAL_OPENINGS; i++)
+			if (sc->sc_ring[i].sr_xs == NULL)
+				goto new;
 
-	rv = TRY_AGAIN_LATER;
-	SUNSCPAL_TRACE("scsipi_cmd: no openings, rv=%d\n", rv);
-	goto out;
+		xs->error = XS_RESOURCE_SHORTAGE;
+		SUNSCPAL_TRACE("scsipi_cmd: no openings, rv=%d\n", rv);
+		goto out;
 
 new:
-	/* Create queue entry */
-	sr = &sc->sc_ring[i];
-	sr->sr_xs = xs;
-	sr->sr_target = xs->sc_link->scsipi_scsi.target;
-	sr->sr_lun = xs->sc_link->scsipi_scsi.lun;
-	sr->sr_dma_hand = NULL;
-	sr->sr_dataptr = xs->data;
-	sr->sr_datalen = xs->datalen;
-	sr->sr_flags = (flags & XS_CTL_POLL) ? SR_IMMED : 0;
-	sr->sr_status = -1;	/* no value */
-	sc->sc_ncmds++;
-	rv = SUCCESSFULLY_QUEUED;
+		/* Create queue entry */
+		sr = &sc->sc_ring[i];
+		sr->sr_xs = xs;
+		sr->sr_target = xs->xs_periph->periph_target;
+		sr->sr_lun = xs->xs_periph->periph_lun;
+		sr->sr_dma_hand = NULL;
+		sr->sr_dataptr = xs->data;
+		sr->sr_datalen = xs->datalen;
+		sr->sr_flags = (flags & XS_CTL_POLL) ? SR_IMMED : 0;
+		sr->sr_status = -1;	/* no value */
+		sc->sc_ncmds++;
 
-	SUNSCPAL_TRACE("scsipi_cmd: new sr=0x%x\n", (long)sr);
+		SUNSCPAL_TRACE("scsipi_cmd: new sr=0x%x\n", (long)sr);
 
-	if (flags & XS_CTL_POLL) {
-		/* Force this new command to be next. */
-		sc->sc_rr = i;
-	}
+		if (flags & XS_CTL_POLL) {
+			/* Force this new command to be next. */
+			sc->sc_rr = i;
+		}
 
-	/*
-	 * If we were idle, run some commands...
-	 */
-	if (sc->sc_state == SUNSCPAL_IDLE) {
-		SUNSCPAL_TRACE("scsipi_cmd: call sched, cur=0x%x\n",
+		/*
+		 * If we were idle, run some commands...
+		 */
+		if (sc->sc_state == SUNSCPAL_IDLE) {
+			SUNSCPAL_TRACE("scsipi_cmd: call sched, cur=0x%x\n",
 				  (long) sc->sc_current);
-		sunscpal_sched(sc);
-		SUNSCPAL_TRACE("scsipi_cmd: sched done, cur=0x%x\n",
+			sunscpal_sched(sc);
+			SUNSCPAL_TRACE("scsipi_cmd: sched done, cur=0x%x\n",
 				  (long) sc->sc_current);
-	}
+		}
 
-	if (flags & XS_CTL_POLL) {
-		/* Make sure sunscpal_sched() finished it. */
-		if ((xs->xs_status & XS_STS_DONE) == 0)
-			panic("sunscpal_scsi_cmd: poll didn't finish");
-		rv = COMPLETE;
-	}
+		if (flags & XS_CTL_POLL) {
+			/* Make sure sunscpal_sched() finished it. */
+			if ((xs->xs_status & XS_STS_DONE) == 0)
+				panic("sunscpal_scsi_cmd: poll didn't finish");
+		}
 
 out:
-	splx(s);
-	return (rv);
+		splx(s);
+		return;
+	case ADAPTER_REQ_GROW_RESOURCES:
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* not supported */
+		return;
+	}
 }
 
 
@@ -870,37 +878,12 @@ sunscpal_done(sc)
 
 	SUNSCPAL_TRACE("done: check status=%d\n", sr->sr_status);
 
+	xs->status = sr->sr_status;
 	switch (sr->sr_status) {
 	case SCSI_OK:	/* 0 */
-		if (sr->sr_flags & SR_SENSE) {
-#ifdef	SUNSCPAL_DEBUG
-			if (sunscpal_debug & SUNSCPAL_DBG_CMDS) {
-				sunscpal_show_sense(xs);
-			}
-#endif
-			xs->error = XS_SENSE;
-		}
 		break;
 
 	case SCSI_CHECK:
-		if (sr->sr_flags & SR_SENSE) {
-			/* Sense command also asked for sense? */
-			printf("sunscpal_done: sense asked for sense\n");
-			SUNSCPAL_BREAK();
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-		}
-		sr->sr_flags |= SR_SENSE;
-		SUNSCPAL_TRACE("done: get sense, sr=0x%x\n", (long) sr);
-		/*
-		 * Leave queued, but clear sc_current so we start over
-		 * with selection.  Guaranteed to get the same request.
-		 */
-		sc->sc_state = SUNSCPAL_IDLE;
-		sc->sc_current = NULL;
-		sc->sc_matrix[sr->sr_target][sr->sr_lun] = NULL;
-		return;		/* XXX */
-
 	case SCSI_BUSY:
 		xs->error = XS_BUSY;
 		break;
@@ -941,7 +924,6 @@ finish:
 	sc->sc_ncmds--;
 
 	/* Tell common SCSI code it is done. */
-	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 
 	sc->sc_state = SUNSCPAL_IDLE;
@@ -983,10 +965,6 @@ next_job:
 
 	/*
 	 * Always start the search where we last looked.
-	 * The REQUEST_SENSE logic depends on this to
-	 * choose the same job as was last picked, so it
-	 * can just clear sc_current and reschedule.
-	 * (Avoids loss of "contingent allegiance".)
 	 */
 	i = sc->sc_rr;
 	sr = NULL;
@@ -1103,16 +1081,6 @@ next_job:
 	}
 
 	/*
-	 * This may be the continuation of some job that
-	 * completed with a "check condition" code.
-	 */
-	if (sr->sr_flags & SR_SENSE) {
-		SUNSCPAL_TRACE("sched: get sense, sr=0x%x\n", (long)sr);
-		/* Do not allocate DMA, nor set timeout. */
-		goto have_nexus;
-	}
-
-	/*
 	 * OK, we are starting a new command.
 	 * Initialize and allocate resources for the new command.
 	 * Device reset is special (only uses MSG_OUT phase).
@@ -1122,7 +1090,7 @@ next_job:
 #ifdef	SUNSCPAL_DEBUG
 	if (sunscpal_debug & SUNSCPAL_DBG_CMDS) {
 		printf("sunscpal_sched: begin, target=%d, LUN=%d\n",
-		    xs->sc_link->scsipi_scsi.target, xs->sc_link->scsipi_scsi.lun);
+		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun);
 		sunscpal_show_scsi_cmd(xs);
 	}
 #endif
@@ -1460,7 +1428,7 @@ have_msg:
 		SUNSCPAL_TRACE("msg_in: DISCONNECT\n", 0);
 		/* Target is about to disconnect. */
 		act_flags |= ACT_DISCONNECT;
-		if ((xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
+		if ((xs->xs_periph->periph_quirks & PQUIRK_AUTOSAVE) == 0)
 			break;
 		/*FALLTHROUGH*/
 
@@ -1559,24 +1527,12 @@ sunscpal_command(sc)
 {
 	struct sunscpal_req *sr = sc->sc_current;
 	struct scsipi_xfer *xs = sr->sr_xs;
-	struct scsipi_sense rqs;
 	int len;
 
-	if (sr->sr_flags & SR_SENSE) {
-		rqs.opcode = REQUEST_SENSE;
-		rqs.byte2 = xs->sc_link->scsipi_scsi.lun << 5;
-		rqs.length = sizeof(xs->sense.scsi_sense);
-
-		rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
-		len = sunscpal_pio_out(sc, SUNSCPAL_PHASE_COMMAND, sizeof(rqs),
-			(u_char *)&rqs);
-	}
-	else {
-		/* Assume command can be sent in one go. */
-		/* XXX: Do this using DMA, and get a phase change intr? */
-		len = sunscpal_pio_out(sc, SUNSCPAL_PHASE_COMMAND, xs->cmdlen,
-			(u_char *)xs->cmd);
-	}
+	/* Assume command can be sent in one go. */
+	/* XXX: Do this using DMA, and get a phase change intr? */
+	len = sunscpal_pio_out(sc, SUNSCPAL_PHASE_COMMAND, xs->cmdlen,
+		(u_char *)xs->cmd);
 
 	if (len != xs->cmdlen) {
 #ifdef	SUNSCPAL_DEBUG
@@ -1609,17 +1565,6 @@ sunscpal_data_xfer(sc, phase)
 	struct scsipi_xfer *xs = sr->sr_xs;
 	int expected_phase;
 	int len;
-
-	if (sr->sr_flags & SR_SENSE) {
-		SUNSCPAL_TRACE("data_xfer: get sense, sr=0x%x\n", (long)sr);
-		if (phase != SUNSCPAL_PHASE_DATA_IN) {
-			printf("%s: sense phase error\n", sc->sc_dev.dv_xname);
-			goto abort;
-		}
-		len = sunscpal_pio_in(sc, phase, sizeof(xs->sense.scsi_sense),
-				(u_char *)&xs->sense.scsi_sense);
-		return ACT_CONTINUE;
-	}
 
 	/*
 	 * When aborting a command, disallow any data phase.
@@ -1964,37 +1909,20 @@ sunscpal_show_scsi_cmd(xs)
 	u_char	*b = (u_char *) xs->cmd;
 	int	i  = 0;
 
+	scsipi_printaddr(xs->xs_periph);
 	if ( ! ( xs->xs_control & XS_CTL_RESET ) ) {
-		printf("sc(%d:%d:%d)-",
-		    xs->sc_link->scsipi_scsi.scsibus,
-		    xs->sc_link->scsipi_scsi.target,
-		    xs->sc_link->scsipi_scsi.lun);
+		printf("-");
 		while (i < xs->cmdlen) {
 			if (i) printf(",");
 			printf("%x",b[i++]);
 		}
 		printf("-\n");
 	} else {
-		printf("sc(%d:%d:%d)-RESET-\n",
-		    xs->sc_link->scsipi_scsi.scsibus,
-		    xs->sc_link->scsipi_scsi.target,
-		    xs->sc_link->scsipi_scsi.lun);
+		
+		printf("-RESET-\n");
 	}
 }
 
-
-static void
-sunscpal_show_sense(xs)
-	struct scsipi_xfer *xs;
-{
-	u_char	*b = (u_char *)&xs->sense.scsi_sense;
-	int	i;
-
-	printf("sense:");
-	for (i = 0; i < sizeof(xs->sense.scsi_sense); i++)
-		printf(" %02x", b[i]);
-	printf("\n");
-}
 
 int sunscpal_traceidx = 0;
 
@@ -2125,13 +2053,6 @@ sunscpal_show_state()
 #endif	/* DDB */
 #endif	/* SUNSCPAL_DEBUG */
 
-struct scsipi_device sunscpal_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
 void
 sunscpal_attach(sc, options)
 	struct sunscpal_softc *sc;
@@ -2169,27 +2090,26 @@ sunscpal_attach(sc, options)
 	/*
 	 * Fill in the adapter.
 	 */
-	sc->sc_adapter.scsipi_cmd = sunscpal_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = sunscpal_minphys;
+	memset(&sc->sc_adapter, 0, sizeof(sc->sc_adapter));
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = SUNSCPAL_OPENINGS;
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_request = sunscpal_scsipi_request;
+	sc->sc_adapter.adapt_minphys = sunscpal_minphys;
 
-	/*
-	 * Fill in the prototype scsipi_link
-	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &sunscpal_dev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.type = BUS_SCSI;
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = 8;
+	sc->sc_channel.chan_nluns = 8;
+	sc->sc_channel.chan_id = 7;
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
 	 * config_found() to make sure the adatper is disabled.
 	 */
-	if (scsipi_adapter_addref(&sc->sc_link) != 0) {
+	if (scsipi_adapter_addref(&sc->sc_adapter) != 0) {
 		printf("%s: unable to enable controller\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -2201,8 +2121,8 @@ sunscpal_attach(sc, options)
 	/*
 	 * Ask the adapter what subunits are present
 	 */
-	(void) config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
-	scsipi_adapter_delref(&sc->sc_link);
+	(void) config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	scsipi_adapter_delref(&sc->sc_adapter);
 }
 
 int

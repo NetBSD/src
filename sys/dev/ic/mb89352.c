@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.6 2001/04/25 17:53:33 bouyer Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 #ifdef DDB
@@ -161,7 +161,8 @@ int spc_debug = 0x00; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 void	spc_minphys	__P((struct buf *));
 void	spc_done	__P((struct spc_softc *, struct spc_acb *));
 void	spc_dequeue	__P((struct spc_softc *, struct spc_acb *));
-int	spc_scsi_cmd	__P((struct scsipi_xfer *));
+void	spc_scsipi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 int	spc_poll	__P((struct spc_softc *, struct scsipi_xfer *, int));
 integrate void	spc_sched_msgout __P((struct spc_softc *, u_char));
 integrate void	spc_setsync	__P((struct spc_softc *, struct spc_tinfo *));
@@ -170,9 +171,8 @@ void	spc_timeout	__P((void *));
 void	spc_scsi_reset	__P((struct spc_softc *));
 void	spc_reset	__P((struct spc_softc *));
 void	spc_free_acb	__P((struct spc_softc *, struct spc_acb *, int));
-struct spc_acb* spc_get_acb __P((struct spc_softc *, int));
+struct spc_acb* spc_get_acb __P((struct spc_softc *));
 int	spc_reselect	__P((struct spc_softc *, int));
-void	spc_sense	__P((struct spc_softc *, struct spc_acb *));
 void	spc_msgin	__P((struct spc_softc *));
 void	spc_abort	__P((struct spc_softc *, struct spc_acb *));
 void	spc_msgout	__P((struct spc_softc *));
@@ -188,12 +188,6 @@ void	spc_print_active_acb __P((void));
 
 extern struct cfdriver spc_cd;
 
-struct scsipi_device spc_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
 
 /*
  * INITIALIZATION ROUTINES (probe, attach ++)
@@ -271,26 +265,24 @@ spcattach(sc)
 	/*
 	 * Fill in the adapter.
 	 */
-	sc->sc_adapter.scsipi_cmd = spc_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = spc_minphys;
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = 7;
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_minphys = spc_minphys;
+	sc->sc_adapter.adapt_request = spc_scsipi_request;
 
-	/*
-	 * Fill in the prototype scsipi_link
-	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_initiator;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &spc_dev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = 8;
+	sc->sc_channel.chan_nluns = 8;
+	sc->sc_channel.chan_id = sc->sc_initiator;
 
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found((struct device*)sc, &sc->sc_channel, scsiprint);
 }
 
 /*
@@ -423,36 +415,23 @@ spc_free_acb(sc, acb, flags)
 
 	acb->flags = 0;
 	TAILQ_INSERT_HEAD(&sc->free_list, acb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (acb->chain.tqe_next == 0)
-		wakeup(&sc->free_list);
-
 	splx(s);
 }
 
 struct spc_acb *
-spc_get_acb(sc, flags)
+spc_get_acb(sc)
 	struct spc_softc *sc;
-	int flags;
 {
 	struct spc_acb *acb;
 	int s;
 
 	SPC_TRACE(("spc_get_acb  "));
 	s = splbio();
-
-	while ((acb = sc->free_list.tqh_first) == NULL &&
-	       (flags & XS_CTL_NOSLEEP) == 0)
-		tsleep(&sc->free_list, PRIBIO, "spcacb", 0);
-	if (acb) {
+	acb = TAILQ_FIRST(&sc->free_list);
+	if (acb != NULL) {
 		TAILQ_REMOVE(&sc->free_list, acb, chain);
 		acb->flags |= ACB_ALLOC;
 	}
-
 	splx(s);
 	return acb;
 }
@@ -474,8 +453,6 @@ spc_get_acb(sc, flags)
  * 6) Send or receive data
  * 7) Receive status
  * 8) Receive message (command complete etc.)
- * 9) If status == SCSI_CHECK construct a synthetic request sense SCSI cmd.
- *    Repeat 2-8 (no disconnects please...)
  */
 
 /*
@@ -483,71 +460,86 @@ spc_get_acb(sc, flags)
  * This function is called by the higher level SCSI-driver to queue/run
  * SCSI-commands.
  */
-int
-spc_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+spc_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct spc_softc *sc = sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct spc_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct spc_acb *acb;
 	int s, flags;
 
-	SPC_TRACE(("spc_scsi_cmd  "));
-	SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
-	    sc_link->scsipi_scsi.target));
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		SPC_TRACE(("spc_scsipi_request  "));
+		SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
+		    periph->periph_target));
 
-	flags = xs->xs_control;
-	if ((acb = spc_get_acb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return TRY_AGAIN_LATER;
-	}
+		flags = xs->xs_control;
+		if ((acb = spc_get_acb(sc)) == NULL) {
+			xs->error = XS_DRIVER_STUFFUP;
+			scsipi_done(xs);
+			return;
+		}
 
-	/* Initialize acb */
-	acb->xs = xs;
-	acb->timeout = xs->timeout;
+		/* Initialize acb */
+		acb->xs = xs;
+		acb->timeout = xs->timeout;
 
-	if (xs->xs_control & XS_CTL_RESET) {
-		acb->flags |= ACB_RESET;
-		acb->scsipi_cmd_length = 0;
-		acb->data_length = 0;
-	} else {
-		bcopy(xs->cmd, &acb->scsipi_cmd, xs->cmdlen);
+		if (xs->xs_control & XS_CTL_RESET) {
+			acb->flags |= ACB_RESET;
+			acb->scsipi_cmd_length = 0;
+			acb->data_length = 0;
+		} else {
+			bcopy(xs->cmd, &acb->scsipi_cmd, xs->cmdlen);
 #if 1
-		acb->scsipi_cmd.bytes[0] |= sc_link->scsipi_scsi.lun << 5; /* XXX? */
+			acb->scsipi_cmd.bytes[0] |= periph->periph_lun << 5; /* XXX? */
 #endif
-		acb->scsipi_cmd_length = xs->cmdlen;
-		acb->data_addr = xs->data;
-		acb->data_length = xs->datalen;
-	}
-	acb->target_stat = 0;
+			acb->scsipi_cmd_length = xs->cmdlen;
+			acb->data_addr = xs->data;
+			acb->data_length = xs->datalen;
+		}
+		acb->target_stat = 0;
 
-	s = splbio();
+		s = splbio();
 
-	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
-	/*
-	 * Start scheduling unless a queue process is in progress.
-	 */
-	if (sc->sc_state == SPC_IDLE)
-		spc_sched(sc);
-	/*
-	 * After successful sending, check if we should return just now.
-	 * If so, return SUCCESSFULLY_QUEUED.
-	 */
+		TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
+		/*
+		 * Start scheduling unless a queue process is in progress.
+		 */
+		if (sc->sc_state == SPC_IDLE)
+			spc_sched(sc);
+		/*
+		 * After successful sending, check if we should return just now.
+		 * If so, return SUCCESSFULLY_QUEUED.
+		 */
 
-	splx(s);
+		splx(s);
 
-	if ((flags & XS_CTL_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
+		if ((flags & XS_CTL_POLL) == 0)
+			return;
 
-	/* Not allowed to use interrupts, use polling instead */
-	s = splbio();
-	if (spc_poll(sc, xs, acb->timeout)) {
-		spc_timeout(acb);
-		if (spc_poll(sc, xs, acb->timeout))
+		/* Not allowed to use interrupts, use polling instead */
+		s = splbio();
+		if (spc_poll(sc, xs, acb->timeout)) {
 			spc_timeout(acb);
+			if (spc_poll(sc, xs, acb->timeout))
+				spc_timeout(acb);
+		}
+		splx(s);
+		return;
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
 	}
-	splx(s);
-	return COMPLETE;
 }
 
 /*
@@ -630,16 +622,15 @@ spc_setsync(sc, ti)
 }
 
 /*
- * Start a selection.  This is used by spc_sched() to select an idle target,
- * and by spc_done() to immediately reselect a target to get sense information.
+ * Start a selection.  This is used by spc_sched() to select an idle target.
  */
 void
 spc_select(sc, acb)
 	struct spc_softc *sc;
 	struct spc_acb *acb;
 {
-	struct scsipi_link *sc_link = acb->xs->sc_link;
-	int target = sc_link->scsipi_scsi.target;
+	struct scsipi_periph *periph = acb->xs->xs_periph;
+	int target = periph->periph_target;
 	struct spc_tinfo *ti = &sc->sc_tinfo[target];
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -686,7 +677,7 @@ spc_reselect(sc, message)
 {
 	u_char selid, target, lun;
 	struct spc_acb *acb;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct spc_tinfo *ti;
 
 	SPC_TRACE(("spc_reselect  "));
@@ -713,9 +704,9 @@ spc_reselect(sc, message)
 	lun = message & 0x07;
 	for (acb = sc->nexus_list.tqh_first; acb != NULL;
 	     acb = acb->chain.tqe_next) {
-		sc_link = acb->xs->sc_link;
-		if (sc_link->scsipi_scsi.target == target &&
-		    sc_link->scsipi_scsi.lun == lun)
+		periph = acb->xs->xs_periph;
+		if (periph->periph_target == target &&
+		    periph->periph_lun == lun)
 			break;
 	}
 	if (acb == NULL) {
@@ -766,7 +757,7 @@ spc_sched(sc)
 	struct spc_softc *sc;
 {
 	struct spc_acb *acb;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct spc_tinfo *ti;
 
 	/* missing the hw, just return and wait for our hw */
@@ -779,56 +770,23 @@ spc_sched(sc)
 	 */
 	for (acb = sc->ready_list.tqh_first; acb != NULL;
 	    acb = acb->chain.tqe_next) {
-		sc_link = acb->xs->sc_link;
-		ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
-		if ((ti->lubusy & (1 << sc_link->scsipi_scsi.lun)) == 0) {
+		periph = acb->xs->xs_periph;
+		ti = &sc->sc_tinfo[periph->periph_target];
+		if ((ti->lubusy & (1 << periph->periph_lun)) == 0) {
 			SPC_MISC(("selecting %d:%d  ",
-			    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
+			    periph->periph_target, periph->periph_lun));
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
 			sc->sc_nexus = acb;
 			spc_select(sc, acb);
 			return;
 		} else
 			SPC_MISC(("%d:%d busy\n",
-			    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
+			    periph->periph_target, periph->periph_lun));
 	}
 	SPC_MISC(("idle  "));
 	/* Nothing to start; just enable reselections and wait. */
 }
 
-void
-spc_sense(sc, acb)
-	struct spc_softc *sc;
-	struct spc_acb *acb;
-{
-	struct scsipi_xfer *xs = acb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct spc_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
-	struct scsipi_sense *ss = (void *)&acb->scsipi_cmd;
-
-	SPC_MISC(("requesting sense  "));
-	/* Next, setup a request sense command block */
-	bzero(ss, sizeof(*ss));
-	ss->opcode = REQUEST_SENSE;
-	ss->byte2 = sc_link->scsipi_scsi.lun << 5;
-	ss->length = sizeof(struct scsipi_sense_data);
-	acb->scsipi_cmd_length = sizeof(*ss);
-	acb->data_addr = (char *)&xs->sense.scsi_sense;
-	acb->data_length = sizeof(struct scsipi_sense_data);
-	acb->flags |= ACB_SENSE;
-	ti->senses++;
-	if (acb->flags & ACB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
-	if (acb == sc->sc_nexus) {
-		spc_select(sc, acb);
-	} else {
-		spc_dequeue(sc, acb);
-		TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
-		if (sc->sc_state == SPC_IDLE)
-			spc_sched(sc);
-	}
-}
-
 /*
  * POST PROCESSING OF SCSI_CMD (usually current)
  */
@@ -838,33 +796,22 @@ spc_done(sc, acb)
 	struct spc_acb *acb;
 {
 	struct scsipi_xfer *xs = acb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct spc_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct spc_tinfo *ti = &sc->sc_tinfo[periph->periph_target];
 
 	SPC_TRACE(("spc_done  "));
 
-	/*
-	 * Now, if we've come here with no error code, i.e. we've kept the
-	 * initial XS_NOERROR, and the status code signals that we should
-	 * check sense, we'll need to set up a request sense cmd block and
-	 * push the command back into the ready queue *before* any other
-	 * commands for this target/lunit, else we lose the sense info.
-	 * We don't support chk sense conditions for the request sense cmd.
-	 */
 	if (xs->error == XS_NOERROR) {
 		if (acb->flags & ACB_ABORT) {
 			xs->error = XS_DRIVER_STUFFUP;
-		} else if (acb->flags & ACB_SENSE) {
-			xs->error = XS_SENSE;
 		} else {
 			switch (acb->target_stat) {
 			case SCSI_CHECK:
 				/* First, save the return values */
 				xs->resid = acb->data_length;
-				xs->status = acb->target_stat;
-				spc_sense(sc, acb);
-				return;
+				/* FALLBACK */
 			case SCSI_BUSY:
+				xs->status = acb->target_stat;
 				xs->error = XS_BUSY;
 				break;
 			case SCSI_OK:
@@ -881,14 +828,10 @@ spc_done(sc, acb)
 		}
 	}
 
-	xs->xs_status |= XS_STS_DONE;
-
 #if SPC_DEBUG
 	if ((spc_debug & SPC_SHOWMISC) != 0) {
 		if (xs->resid != 0)
 			printf("resid=%d ", xs->resid);
-		if (xs->error == XS_SENSE)
-			printf("sense=0x%02x\n", xs->sense.scsi_sense.error_code);
 		else
 			printf("error=%d\n", xs->error);
 	}
@@ -898,7 +841,7 @@ spc_done(sc, acb)
 	 * Remove the ACB from whatever queue it happens to be on.
 	 */
 	if (acb->flags & ACB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
+		ti->lubusy &= ~(1 << periph->periph_lun);
 	if (acb == sc->sc_nexus) {
 		sc->sc_nexus = NULL;
 		sc->sc_state = SPC_IDLE;
@@ -1055,21 +998,21 @@ nextbyte:
 	/* We now have a complete message.  Parse it. */
 	switch (sc->sc_state) {
 		struct spc_acb *acb;
-		struct scsipi_link *sc_link;
+		struct scsipi_periph *periph;
 		struct spc_tinfo *ti;
 
 	case SPC_CONNECTED:
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
-		ti = &sc->sc_tinfo[acb->xs->sc_link->scsipi_scsi.target];
+		ti = &sc->sc_tinfo[acb->xs->xs_periph->periph_target];
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
 			if (sc->sc_dleft < 0) {
-				sc_link = acb->xs->sc_link;
+				periph = acb->xs->xs_periph;
 				printf("%s: %d extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
-				    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
+				    periph->periph_target, periph->periph_lun);
 				acb->data_length = 0;
 			}
 			acb->xs->resid = acb->data_length = sc->sc_dleft;
@@ -1147,7 +1090,7 @@ nextbyte:
 					ti->period = ti->offset = 0;
 					spc_sched_msgout(sc, SEND_SDTR);
 				} else {
-					scsi_print_addr(acb->xs->sc_link);
+					scsipi_printaddr(acb->xs->xs_periph);
 					printf("sync, offset %d, period %dnsec\n",
 					    ti->offset, ti->period * 4);
 				}
@@ -1166,7 +1109,7 @@ nextbyte:
 					ti->width = 0;
 					spc_sched_msgout(sc, SEND_WDTR);
 				} else {
-					scsi_print_addr(acb->xs->sc_link);
+					scsipi_printaddr(acb->xs->xs_periph);
 					printf("wide, width %d\n",
 					    1 << (3 + ti->width));
 				}
@@ -1290,14 +1233,14 @@ nextmsg:
 	case SEND_IDENTIFY:
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		sc->sc_omess[0] =
-		    MSG_IDENTIFY(sc->sc_nexus->xs->sc_link->scsipi_scsi.lun, 1);
+		    MSG_IDENTIFY(sc->sc_nexus->xs->xs_periph->periph_lun, 1);
 		n = 1;
 		break;
 
 #if SPC_USE_SYNCHRONOUS
 	case SEND_SDTR:
 		SPC_ASSERT(sc->sc_nexus != NULL);
-		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
 		sc->sc_omess[4] = MSG_EXTENDED;
 		sc->sc_omess[3] = 3;
 		sc->sc_omess[2] = MSG_EXT_SDTR;
@@ -1310,7 +1253,7 @@ nextmsg:
 #if SPC_USE_WIDE
 	case SEND_WDTR:
 		SPC_ASSERT(sc->sc_nexus != NULL);
-		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
 		sc->sc_omess[3] = MSG_EXTENDED;
 		sc->sc_omess[2] = 2;
 		sc->sc_omess[1] = MSG_EXT_WDTR;
@@ -1674,7 +1617,7 @@ spcintr(arg)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char ints;
 	struct spc_acb *acb;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct spc_tinfo *ti;
 	int n;
 
@@ -1777,8 +1720,8 @@ loop:
 			}
 			SPC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
-			sc_link = acb->xs->sc_link;
-			ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+			periph = acb->xs->xs_periph;
+			ti = &sc->sc_tinfo[periph->periph_target];
 
 			sc->sc_msgpriq = SEND_IDENTIFY;
 			if (acb->flags & ACB_RESET)
@@ -1797,7 +1740,7 @@ loop:
 			}
 
 			acb->flags |= ACB_NEXUS;
-			ti->lubusy |= (1 << sc_link->scsipi_scsi.lun);
+			ti->lubusy |= (1 << periph->periph_lun);
 
 			/* Do an implicit RESTORE POINTERS. */
 			sc->sc_dp = acb->data_addr;
@@ -1872,8 +1815,8 @@ loop:
 				 * or immediately after sending a SDTR or WDTR
 				 * message, disable negotiation.
 				 */
-				sc_link = acb->xs->sc_link;
-				ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+				periph = acb->xs->xs_periph;
+				ti = &sc->sc_tinfo[periph->periph_target];
 				switch (sc->sc_lastmsg) {
 #if SPC_USE_SYNCHRONOUS
 				case SEND_SDTR:
@@ -1903,8 +1846,9 @@ loop:
 				printf("%s: unexpected disconnect; sending REQUEST SENSE\n",
 				    sc->sc_dev.dv_xname);
 				SPC_BREAK();
-				spc_sense(sc, acb);
-				goto out;
+				acb->target_stat = SCSI_CHECK;
+				acb->xs->error = XS_NOERROR;
+				goto finish;
 			}
 
 			acb->xs->error = XS_DRIVER_STUFFUP;
@@ -2070,11 +2014,11 @@ spc_timeout(arg)
 {
 	struct spc_acb *acb = arg;
 	struct scsipi_xfer *xs = acb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct spc_softc *sc = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct spc_softc *sc = (void*)periph->periph_channel->chan_adapter->adapt_dev;
 	int s;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	printf("timed out");
 
 	s = splbio();
@@ -2104,10 +2048,9 @@ spc_show_scsi_cmd(acb)
 	struct spc_acb *acb;
 {
 	u_char  *b = (u_char *)&acb->scsipi_cmd;
-	struct scsipi_link *sc_link = acb->xs->sc_link;
 	int i;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(acb->xs->xs_periph);
 	if ((acb->xs->xs_control & XS_CTL_RESET) == 0) {
 		for (i = 0; i < acb->scsipi_cmd_length; i++) {
 			if (i)

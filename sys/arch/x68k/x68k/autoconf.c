@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2001/02/21 05:53:35 minoura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 2001/04/25 17:53:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -241,7 +241,7 @@ scsi_find(bdev)
 	char tname[16];
 	struct device *scsibus;
 	struct scsibus_softc *sbsc;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 
 	ifid = B_X68K_SCSI_IF(bdev);
 	if (ifid >= sizeof name_scsiif/sizeof name_scsiif[0] ||
@@ -275,9 +275,9 @@ scsi_find(bdev)
 	if (!scsibus)
 		return NULL;
 	sbsc = (struct scsibus_softc *) scsibus;
-	sc_link = sbsc->sc_link[B_X68K_SCSI_ID(bdev)][B_X68K_SCSI_LUN(bdev)];
+	periph = sbsc->sc_channel->chan_periphs[B_X68K_SCSI_ID(bdev)][B_X68K_SCSI_LUN(bdev)];
 
-	return sc_link ? sc_link->device_softc : NULL;
+	return periph ? periph->periph_dev : NULL;
 }
 
 /*

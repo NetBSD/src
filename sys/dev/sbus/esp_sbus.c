@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.13 2001/03/29 02:58:38 petrov Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -520,7 +520,10 @@ espattach(esc, gluep)
 		sc->sc_features |= NCR_F_DMASELECT;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
+
 }
 
 /*

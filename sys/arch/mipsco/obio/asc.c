@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.8 2001/03/30 07:49:07 wdk Exp $	*/
+/*	$NetBSD: asc.c,v 1.9 2001/04/25 17:53:16 bouyer Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -194,7 +194,9 @@ ascattach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
 
 	bus_intr_establish(esc->sc_bst, SYS_INTR_SCSI, 0, 0, asc_intr, esc); 
 }

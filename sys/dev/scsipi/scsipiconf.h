@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipiconf.h,v 1.47 2001/03/20 22:39:08 augustss Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.48 2001/04/25 17:53:40 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -63,38 +63,11 @@ typedef	int	boolean;
 #include <sys/queue.h>
 #include <dev/scsipi/scsipi_debug.h>
 
-/*
- * The following documentation tries to describe the relationship between the
- * various structures defined in this file:
- *
- * each adapter type has a scsipi_adapter struct. This describes the adapter
- *    and identifies routines that can be called to use the adapter.
- * each device type has a scsipi_device struct. This describes the device and
- *    identifies routines that can be called to use the device.
- * each existing device position (scsibus + target + lun or atapibus + drive)
- *    can be described by a scsipi_link struct.
- *    Only scsipi positions that actually have devices, have a scsipi_link
- *    structure assigned. so in effect each device has scsipi_link struct.
- *    The scsipi_link structure contains information identifying both the
- *    device driver and the adapter driver for that position on that scsipi
- *    bus, and can be said to 'link' the two.
- * each individual scsipi bus has an array that points to all the scsipi_link
- *    structs associated with that scsipi bus. Slots with no device have
- *    a NULL pointer.
- * each individual device also knows the address of it's own scsipi_link
- *    structure.
- *
- *				-------------
- *
- * The key to all this is the scsipi_link structure which associates all the
- * other structures with each other in the correct configuration.  The
- * scsipi_link is the connecting information that allows each part of the
- * scsipi system to find the associated other parts.
- */
-
 struct buf;
 struct proc;
-struct scsipi_link;
+struct device;
+struct scsipi_channel;
+struct scsipi_periph;
 struct scsipi_xfer;
 
 /*
@@ -109,162 +82,377 @@ struct scsipi_generic {
 
 
 /*
- * return values for scsipi_cmd()
+ * scsipi_async_event_t:
+ *
+ *	Asynchronous events from the adapter to the mid-layer and
+ *	peripherial.
+ *
+ *	Arguments:
+ *
+ *	ASYNC_EVENT_MAX_OPENINGS	scsipi_max_openings * -- max
+ *					openings, device specified in
+ *					parameters
+ *
+ *	ASYNC_EVENT_XFER_MODE		scsipi_xfer_mode * -- xfer mode
+ *					parameters changed for I_T Nexus
+ *	ASYNC_EVENT_RESET		NULL - channel has been reset
  */
-#define SUCCESSFULLY_QUEUED	0
-#define TRY_AGAIN_LATER		1
-#define	COMPLETE		2
-#define	ESCAPE_NOT_SUPPORTED	3
+typedef enum {
+	ASYNC_EVENT_MAX_OPENINGS,	/* set max openings on periph */
+	ASYNC_EVENT_XFER_MODE,		/* xfer mode update for I_T */
+	ASYNC_EVENT_RESET,		/* channel reset */
+} scsipi_async_event_t;
 
 /*
- * Device Specific Sense Handlers return either an errno
- * or one of these three items.
+ * scsipi_max_openings:
+ *
+ *	Argument for an ASYNC_EVENT_MAX_OPENINGS event.
  */
-
-#define SCSIRET_NOERROR   0	/* No Error */
-#define SCSIRET_RETRY    -1	/* Retry the command that got this sense */
-#define SCSIRET_CONTINUE -2	/* Continue with standard sense processing */
-
-/*
- * These entry points are called by the low-end drivers to get services from
- * whatever high-end drivers they are attached to.  Each device type has one
- * of these statically allocated.
- */
-struct scsipi_device {
-	int	(*err_handler) __P((struct scsipi_xfer *));
-			/* returns -1 to say err processing done */
-	void	(*start) __P((void *));
-	int	(*async) __P((void));
-	void	(*done)  __P((struct scsipi_xfer *));
+struct scsipi_max_openings {
+	int	mo_target;		/* openings are for this target... */
+	int	mo_lun;			/* ...and this lun */
+	int	mo_openings;		/* openings value */
 };
 
 /*
- * These entrypoints are called by the high-end drivers to get services from
- * whatever low-end drivers they are attached to.  Each adapter instance has
- * one of these.
+ * scsipi_xfer_mode:
  *
- *	scsipi_cmd		required
- *	scsipi_minphys		required
- *	scsipi_ioctl		optional
- *	scsipi_enable		optional
- *	scsipi_getgeom		optional
- *	scsipi_accesschk	optional
+ *	Argument for an ASYNC_EVENT_XFER_MODE event.
  */
+struct scsipi_xfer_mode {
+	int	xm_target;		/* target, for I_T Nexus */
+	int	xm_mode;		/* PERIPH_CAP* bits */
+	int	xm_period;		/* sync period */
+	int	xm_offset;		/* sync offset */
+};
+
+
+/*
+ * scsipi_adapter_req_t:
+ *
+ *	Requests that can be made of an adapter.
+ *
+ *	Arguments:
+ *
+ *	ADAPTER_REQ_RUN_XFER		scsipi_xfer * -- the xfer which
+ *					is to be run
+ *
+ *	ADAPTER_REQ_GROW_RESOURCES	no argument
+ *
+ *	ADAPTER_REQ_SET_XFER_MODE	scsipi_xfer_mode * -- set the xfer
+ *					mode for the I_T Nexus according to
+ *					this
+ */
+typedef enum {
+	ADAPTER_REQ_RUN_XFER,		/* run a scsipi_xfer */
+	ADAPTER_REQ_GROW_RESOURCES,	/* grow xfer execution resources */
+	ADAPTER_REQ_SET_XFER_MODE,	/* set xfer mode */
+} scsipi_adapter_req_t;
+
+
+/*
+ * scsipi_periphsw:
+ *
+ *	Callbacks into periph driver from midlayer.
+ *
+ *	psw_error	Called by the bustype's interpret-sense routine
+ *			to do periph-specific sense handling.
+ *
+ *	psw_start	Called by midlayer to restart a device once
+ *			more command openings become available.
+ *
+ *	psw_async	Called by midlayer when an asynchronous event
+ *			from the adapter occurs.
+ *
+ *	psw_done	Called by the midlayer when an xfer has completed.
+ */
+struct scsipi_periphsw {
+	int	(*psw_error) __P((struct scsipi_xfer *));
+	void	(*psw_start) __P((struct scsipi_periph *));
+	int	(*psw_async) __P((struct scsipi_periph *,
+		    scsipi_async_event_t, void *));
+	void	(*psw_done) __P((struct scsipi_xfer *));
+};
+
 struct disk_parms;
 struct scsipi_inquiry_pattern;
-struct scsipi_adapter {
-	int	scsipi_refcnt;		/* adapter reference count */
-	int	(*scsipi_cmd) __P((struct scsipi_xfer *));
-	void	(*scsipi_minphys) __P((struct buf *));
-	int	(*scsipi_ioctl) __P((struct scsipi_link *, u_long,
-		    caddr_t, int, struct proc *));
-	int	(*scsipi_enable) __P((void *, int));
-	int	(*scsipi_getgeom) __P((struct scsipi_link *,
-		    struct disk_parms *, u_long));
-	int	(*scsipi_accesschk) __P((struct scsipi_link *,
-		    struct scsipi_inquiry_pattern *));
-};
 
 /*
- * This structure describes the connection between an adapter driver and
- * a device driver, and is used by each to call services provided by
- * the other, and to allow generic scsipi glue code to call these services
- * as well.
+ * scsipi_adapter:
+ *
+ *	This structure describes an instance of a SCSIPI adapter.
+ *
+ *	Note that `adapt_openings' is used by (the common case of) adapters
+ *	which have per-adapter resources.  If an adapter's command resources
+ *	are associated with a channel, the the 	`chan_openings' below will
+ *	be used instead.
+ *
+ *	Note that all adapter entry points take a pointer to a channel,
+ *	as an adapter may have more than one channel, and the channel
+ *	structure contains the channel number.
+ */
+struct scsipi_adapter {
+	struct device *adapt_dev;	/* pointer to adapter's device */
+	int	adapt_nchannels;	/* numnber of adapter channels */
+	int	adapt_refcnt;		/* adapter's reference count */
+	int	adapt_openings;		/* total # of command openings */
+	int	adapt_max_periph;	/* max openings per periph */
+
+	void	(*adapt_request) __P((struct scsipi_channel *,
+		    scsipi_adapter_req_t, void *));
+	void	(*adapt_minphys) __P((struct buf *));
+	int	(*adapt_ioctl) __P((struct scsipi_channel *, u_long,
+		    caddr_t, int, struct proc *));
+	int	(*adapt_enable) __P((struct device *, int));
+	int	(*adapt_getgeom) __P((struct scsipi_periph *,
+			struct disk_parms *, u_long));
+	int	(*adapt_accesschk) __P((struct scsipi_periph *,
+			struct scsipi_inquiry_pattern *));
+};
+
+#define	scsipi_adapter_minphys(chan, bp)				\
+	(*(chan)->chan_adapter->adapt_minphys)((bp))
+
+#define	scsipi_adapter_request(chan, req, arg)				\
+	(*(chan)->chan_adapter->adapt_request)((chan), (req), (arg))
+
+#define	scsipi_adapter_ioctl(chan, cmd, data, flag, p)			\
+	(*(chan)->chan_adapter->adapt_ioctl)((chan), (cmd), (data), (flag), (p))
+
+#define	scsipi_adapter_enable(chan, enable)				\
+	(*(chan)->chan_adapt->adapt_enable)((chan), (enable))
+
+
+/*
+ * scsipi_bustype:
+ *
+ *	This structure describes a SCSIPI bus type.
+ */
+struct scsipi_bustype {
+	int	bustype_type;		/* symbolic name of type */
+	
+	int	(*bustype_cmd) __P((struct scsipi_periph *,
+		    struct scsipi_generic *, int, void *, size_t, int,
+		    int, struct buf *, int));
+	int	(*bustype_interpret_sense) __P((struct scsipi_xfer *));
+	void	(*bustype_printaddr) __P((struct scsipi_periph *));
+	void	(*bustype_kill_pending) __P((struct scsipi_periph *));
+};
+
+/* bustype_type */
+#define	SCSIPI_BUSTYPE_SCSI	0
+#define	SCSIPI_BUSTYPE_ATAPI	1
+
+
+/*
+ * scsipi_channel:
+ *
+ *	This structure describes a single channel of a SCSIPI adapter.
+ *	An adapter may have one or more channels.  See the comment above
+ *	regarding the resource counter.
+ */
+struct scsipi_channel {
+	int type; /* XXX will die, compat with ata_atapi_attach for umass */
+#define BUS_SCSI                0
+#define BUS_ATAPI               1
+/*define BUS_ATA                2*/
+
+	struct scsipi_adapter *chan_adapter; /* pointer to our adapter */
+
+	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
+
+	/*
+	 * Periphs for this channel.  2-dimensional array is dynamically
+	 * allocated.
+	 *
+	 * XXX Consider a different data structure to save space.
+	 */
+	struct scsipi_periph ***chan_periphs;
+
+	int	chan_channel;		/* channel number */
+	int	chan_flags;		/* channel flags */
+	int	chan_openings;		/* number of command openings */
+	int	chan_max_periph;	/* max openings per periph */
+
+	int	chan_ntargets;		/* number of targets */
+	int	chan_nluns;		/* number of luns */
+	int	chan_id;		/* adapter's ID for this channel */
+
+	int	chan_defquirks;		/* default device's quirks */
+
+	struct proc *chan_thread;	/* completion thread */
+
+	int	chan_qfreeze;		/* freeze count for queue */
+
+	/* Job queue for this channel. */
+	struct scsipi_xfer_queue chan_queue;
+
+	/* Completed (async) jobs. */
+	struct scsipi_xfer_queue chan_complete;
+};
+
+/* chan_flags */
+#define	SCSIPI_CHAN_SHUTDOWN	0x01	/* channel is shutting down */
+#define	SCSIPI_CHAN_OPENINGS	0x02	/* use chan_openings */
+#define	SCSIPI_CHAN_CANGROW	0x04	/* channel can grow resources */
+#define	SCSIPI_CHAN_NOSETTLE	0x08	/* don't wait for devices to settle */
+
+#define	SCSIPI_CHAN_MAX_PERIPH(chan)					\
+	(((chan)->chan_flags & SCSIPI_CHAN_OPENINGS) ?			\
+	 (chan)->chan_max_periph : (chan)->chan_adapter->adapt_max_periph)
+
+
+#define	scsipi_printaddr(periph)					\
+	(*(periph)->periph_channel->chan_bustype->bustype_printaddr)((periph))
+
+#define	scsipi_periph_bustype(periph)					\
+	(periph)->periph_channel->chan_bustype->bustype_type
+
+
+/*
+ * Number of tag words in a periph structure:
+ *
+ *	n_tag_words = ((256 / NBBY) / sizeof(u_int32_t))
+ */
+#define	PERIPH_NTAGWORDS	((256 / 8) / sizeof(u_int32_t))
+
+
+/*
+ * scsipi_periph:
+ *
+ *	This structure describes the path between a peripherial device
+ *	and an adapter.  It contains a pointer to the adapter channel
+ *	which in turn contains a pointer to the adapter.
  *
  * XXX Given the way NetBSD's autoconfiguration works, this is ...
  * XXX nasty.
+ *
+ *	Well, it's a lot nicer than it used to be, but there could
+ *	still be an improvement.
  */
+struct scsipi_periph {
+	struct device *periph_dev;	/* pointer to peripherial's device */
+	struct scsipi_channel *periph_channel; /* channel we're connected to */
+
+	const struct scsipi_periphsw *periph_switch; /* peripherial's entry
+							points */
+	int	periph_openings;	/* max # of outstanding commands */
+	int	periph_active;		/* current # of outstanding commands */
+	int	periph_sent;		/* current # of commands sent to adapt*/
+
+	int	periph_mode;		/* operation modes, CAP bits */
+	int	periph_period;		/* sync period (factor) */
+	int	periph_offset;		/* sync offset */
+
+	/*
+	 * Information gleaned from the inquiry data.
+	 */
+	u_int8_t periph_type;		/* basic device type */
+	int	periph_cap;		/* capabilities */
+	int	periph_quirks;		/* device's quirks */
+
+	int	periph_flags;		/* misc. flags */
+	int	periph_dbflags;		/* debugging flags */
+
+	int	periph_target;		/* target ID (drive # on ATAPI) */
+	int	periph_lun;		/* LUN (not used on ATAPI) */
+
+	int	periph_version;		/* ANSI SCSI version */
+
+	int	periph_qfreeze;		/* queue freeze count */
+
+	/* Bitmap of free command tags. */
+	u_int32_t periph_freetags[PERIPH_NTAGWORDS];
+
+	/* Pending scsipi_xfers on this peripherial. */
+	struct scsipi_xfer_queue periph_xferq;
+
+	struct callout periph_callout;
+
+	/* xfer which has a pending CHECK_CONDITION */
+	struct scsipi_xfer *periph_xscheck;
+
+};
 
 /*
- * XXX Small hack alert
- * NOTE:  The first field of struct scsipi_link is shared with 
- * dev/scspi/scsipiconf.h's struct ata_atapi_attach.  This allows
- * atapibus and scsibus to attach to the same device.
+ * Macro to return the current xfer mode of a periph.
  */
-struct scsipi_link {
-	u_int8_t type;			/* device type, i.e. SCSI, ATAPI, ...*/
-#define BUS_SCSI		0
-#define BUS_ATAPI		1
-/*define BUS_ATA		2*/
-	int openings;			/* max # of outstanding commands */
-	int active;			/* current # of outstanding commands */
-	int flags;			/* flags that all devices have */
-#define	SDEV_REMOVABLE	 	0x01	/* media is removable */
-#define	SDEV_MEDIA_LOADED 	0x02	/* device figures are still valid */
-#define	SDEV_WAITING	 	0x04	/* a process is waiting for this */
-#define	SDEV_OPEN	 	0x08	/* at least 1 open session */
-#define	SDEV_DBX		0xf0	/* debuging flags (scsipi_debug.h) */
-#define	SDEV_WAITDRAIN		0x100	/* waiting for pending_xfers to drain */
-#define	SDEV_KEEP_LABEL		0x200	/* retain label after 'full' close */
-	u_int32_t quirks;		/* per-device oddities */
-#define	SDEV_AUTOSAVE		0x0001	/*
-					 * Do implicit SAVEDATAPOINTER on
-					 * disconnect (ancient).
-					 */
-#define	SDEV_NOSYNC	    0x00000002	/* does not grok SDTR */
-#define	SDEV_NOWIDE	    0x00000004	/* does not grok WDTR */
-#define	SDEV_NOTAG	    0x00000008	/* does not do command tagging */
-#define	SDEV_NOLUNS	    0x00000010	/* does not grok LUNs */
-#define	SDEV_FORCELUNS	    0x00000020	/* prehistoric drive/ctlr groks LUNs */
-#define SDEV_NOMODESENSE    0x00000040	/* removable media/optical drives */
-#define SDEV_NOSTARTUNIT    0x00000080	/* Do not issue START UNIT requests */
-#define	SDEV_NOSYNCCACHE    0x00000100	/* does not grok SYNCHRONIZE CACHE */
-#define SDEV_CDROM	    0x00000200	/* device is a CD-ROM */
-#define SDEV_ONLYBIG	    0x00000400	/* only use SCSI_{READ,WRITE}_BIG */
+#define	PERIPH_XFER_MODE(periph)					\
+	(((periph)->periph_flags & PERIPH_MODE_VALID) ?			\
+	 (periph)->periph_mode : 0)
 
-#define ADEV_LITTLETOC	    0x00010000	/* Audio TOC uses wrong byte order */
-#define ADEV_NOCAPACITY	    0x00020000	/* no READ_CD_CAPACITY command */
-#define ADEV_NOTUR	    0x00040000	/* no TEST_UNIT_READY command */
-#define ADEV_NODOORLOCK	    0x00080000	/* device can't lock door */
-#define ADEV_NOSENSE	    0x00100000	/* device can't handle request sense */
-#define ADEV_BYTE5_ZERO     0x00200000	/* byte5 in capacity is wrong */
-#define ADEV_NO_FLEX_PAGE   0x00400000  /* does not support flex geom page */
+/* periph_cap */
+#define	PERIPH_CAP_ANEC		0x0001	/* async event notification */
+#define	PERIPH_CAP_TERMIOP	0x0002	/* terminate i/o proc. messages */
+#define	PERIPH_CAP_RELADR	0x0004	/* relative addressing */
+#define	PERIPH_CAP_WIDE32	0x0008	/* wide-32 transfers */
+#define	PERIPH_CAP_WIDE16	0x0010	/* wide-16 transfers */
+		/*	XXX	0x0020	   reserved for ATAPI_CFG_DRQ_MASK */
+		/*	XXX	0x0040	   reserved for ATAPI_CFG_DRQ_MASK */
+#define	PERIPH_CAP_SYNC		0x0080	/* synchronous transfers */
+#define	PERIPH_CAP_LINKCMDS	0x0100	/* linked commands */
+#define	PERIPH_CAP_TQING	0x0200	/* tagged queueing */
+#define	PERIPH_CAP_SFTRESET	0x0400	/* soft RESET condition response */
+#define	PERIPH_CAP_CMD16	0x0800	/* 16 byte commands (ATAPI) */
 
-	struct	scsipi_device *device;	/* device entry points etc. */
-	void	*device_softc;		/* needed for call to foo_start */
-	struct	scsipi_adapter *adapter;/* adapter entry points etc. */
-	void    *adapter_softc;		/* needed for call to foo_scsipi_cmd */
-	union {				/* needed for call to foo_scsipi_cmd */
-		struct scsi_link {
-			int channel;	/* channel, i.e. bus # on controller */
+/* periph_flags */
+#define	PERIPH_REMOVABLE	0x0001	/* media is removable */
+#define	PERIPH_MEDIA_LOADED	0x0002	/* media is loaded */
+#define	PERIPH_WAITING		0x0004	/* process waiting for opening */
+#define	PERIPH_OPEN		0x0008	/* device is open */
+#define	PERIPH_WAITDRAIN	0x0010	/* waiting for pending xfers to drain */
+#define	PERIPH_GROW_OPENINGS	0x0020	/* allow openings to grow */
+#define	PERIPH_MODE_VALID	0x0040	/* periph_mode is valid */
+#define	PERIPH_RECOVERING	0x0080	/* periph is recovering */
+#define	PERIPH_RECOVERY_ACTIVE	0x0100	/* a recovery command is active */
+#define PERIPH_KEEP_LABEL	0x0200	/* retain label after 'full' close */
+#define	PERIPH_SENSE		0x0400	/* periph has sense pending */
+#define PERIPH_UNTAG		0x0800	/* untagged command running */
 
-			u_int8_t scsi_version;	/* SCSI-I, SCSI-II, etc. */
-			u_int8_t scsibus;	/* the Nth scsibus */
-			u_int8_t target;	/* targ of this dev */
-			u_int8_t lun;		/* lun of this dev */
-			u_int8_t adapter_target;/* what are we on the scsi
-						   bus */
-			int16_t max_target;	/* XXX max target supported
-						   by adapter (inclusive) */
-			int16_t max_lun;	/* XXX number of luns supported
-						   by adapter (inclusive) */
-		} scsipi_scsi;
-		struct atapi_link {
-			u_int8_t drive; 	/* drive number on the bus */
-			u_int8_t channel;	/* channel, i.e. bus # on
-						   controller */
-			u_int8_t atapibus;
-			u_int8_t cap;		/* drive capability */
-/* 0x20-0x40 reserved for ATAPI_CFG_DRQ_MASK */
-#define ACAP_LEN            0x01  /* 16 bit commands */
-		} scsipi_atapi;
-	} _scsipi_link;
-	struct scsipi_xfer_queue pending_xfers;
-	int (*scsipi_cmd) __P((struct scsipi_link *, struct scsipi_generic *,
-	    int cmdlen, u_char *data_addr, int datalen, int retries,
-	    int timeout, struct buf *bp, int flags));
-	int (*scsipi_interpret_sense) __P((struct scsipi_xfer *));
-	void (*sc_print_addr) __P((struct scsipi_link *sc_link));
-	void (*scsipi_kill_pending) __P((struct scsipi_link *));
-};
-#define scsipi_scsi _scsipi_link.scsipi_scsi
-#define scsipi_atapi _scsipi_link.scsipi_atapi
+/* periph_quirks */
+#define	PQUIRK_AUTOSAVE		0x00000001	/* do implicit SAVE POINTERS */
+#define	PQUIRK_NOSYNC		0x00000002	/* does not grok SDTR */
+#define	PQUIRK_NOWIDE		0x00000004	/* does not grok WDTR */
+#define	PQUIRK_NOTAG		0x00000008	/* does not grok tagged cmds */
+#define	PQUIRK_NOLUNS		0x00000010	/* DTWT with LUNs */
+#define	PQUIRK_FORCELUNS	0x00000020	/* prehistoric device groks
+						   LUNs */
+#define	PQUIRK_NOMODESENSE	0x00000040	/* device doesn't do MODE SENSE
+						   properly */
+#define	PQUIRK_NOSTARTUNIT	0x00000080	/* do not issue START UNIT */
+#define	PQUIRK_NOSYNCCACHE	0x00000100	/* do not issue SYNC CACHE */
+#define	PQUIRK_CDROM		0x00000200	/* device is a CD-ROM, no
+						   matter what else it claims */
+#define	PQUIRK_LITTLETOC	0x00000400	/* audio TOC is little-endian */
+#define	PQUIRK_NOCAPACITY	0x00000800	/* no READ CD CAPACITY */
+#define	PQUIRK_NOTUR		0x00001000	/* no TEST UNIT READY */
+#define	PQUIRK_NODOORLOCK	0x00002000	/* can't lock door */
+#define	PQUIRK_NOSENSE		0x00004000	/* can't REQUEST SENSE */
+#define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
+#define PQUIRK_BYTE5_ZERO	0x00010000	/* byte5 in capacity is wrong */
+#define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom page */
+
+
+/*
+ * Error values an adapter driver may return
+ */
+typedef enum {
+	XS_NOERROR,		/* there is no error, (sense is invalid)  */
+	XS_SENSE,		/* Check the returned sense for the error */
+	XS_SHORTSENSE,		/* Check the ATAPI sense for the error	  */
+	XS_DRIVER_STUFFUP,	/* Driver failed to perform operation     */
+	XS_RESOURCE_SHORTAGE,	/* adapter resource shortage		  */
+	XS_SELTIMEOUT,		/* The device timed out.. turned off?     */
+	XS_TIMEOUT,		/* The Timeout reported was caught by SW  */
+	XS_BUSY,		/* The device busy, try again later?      */
+	XS_RESET,		/* bus was reset; possible retry command  */
+	XS_REQUEUE,		/* requeue this command */
+} scsipi_xfer_result_t;
 
 /*
  * Each scsipi transaction is fully described by one of these structures
  * It includes information about the source of the command and also the
  * device and adapter for which the command is destined.
- * (via the scsipi_link structure)
  *
  * The adapter_q member may be used by host adapter drivers to queue
  * requests, if necessary.
@@ -276,32 +464,41 @@ struct scsipi_link {
  * its pending commands to complete.
  */
 struct scsipi_xfer {
-	TAILQ_ENTRY(scsipi_xfer) adapter_q; /* queue entry for use by adapter */
+	TAILQ_ENTRY(scsipi_xfer) channel_q; /* entry on channel queue */
 	TAILQ_ENTRY(scsipi_xfer) device_q;  /* device's pending xfers */
 	struct callout xs_callout;	/* callout for adapter use */
 	int	xs_control;		/* control flags */
 	__volatile int xs_status;	/* status flags */
-	struct	scsipi_link *sc_link;	/* all about our device and adapter */
-	int	retries;		/* the number of times to retry */
+	struct scsipi_periph *xs_periph;/* peripherial doing the xfer */
+	int	xs_retries;		/* the number of times to retry */
+	int	xs_requeuecnt;		/* number of requeues */
 	int	timeout;		/* in milliseconds */
 	struct	scsipi_generic *cmd;	/* The scsipi command to execute */
 	int	cmdlen;			/* how long it is */
 	u_char	*data;			/* dma address OR a uio address */
 	int	datalen;		/* data len (blank if uio) */
 	int	resid;			/* how much buffer was not touched */
-	int	error;			/* an error value */
+	scsipi_xfer_result_t error;	/* an error value */
 	struct	buf *bp;		/* If we need to associate with */
 					/* a buf */
 	union {
 		struct  scsipi_sense_data scsi_sense; /* 32 bytes */
 		u_int32_t atapi_sense;
 	} sense;
-	/*
-	 * Believe it or not, Some targets fall on the ground with
-	 * anything but a certain sense length.
-	 */
-	int	req_sense_length;	/* Explicit request sense length */
+
+	struct scsipi_xfer *xs_sensefor;/* we are requesting sense for this */
+					/* xfer */
+
 	u_int8_t status;		/* SCSI status */
+
+	/*
+	 * Info for tagged command queueing.  This may or may not
+	 * be used by a given adapter driver.  These are the same
+	 * as the bytes in the tag message.
+	 */
+	u_int8_t xs_tag_type;		/* tag type */
+	u_int8_t xs_tag_id;		/* tag ID */
+
 	struct	scsipi_generic cmdstore
 	    __attribute__ ((aligned (4)));/* stash the command in here */
 };
@@ -313,7 +510,7 @@ struct scsipi_xfer {
  *
  *	- figure out what to do with XS_CTL_ESCAPE
  *
- *	- replace XS_CTL_URGENT with an `xs_priority' field
+ *	- replace XS_CTL_URGENT with an `xs_priority' field?
  */
 #define	XS_CTL_NOSLEEP		0x00000001	/* don't sleep */
 #define	XS_CTL_POLL		0x00000002	/* poll for completion */
@@ -333,28 +530,25 @@ struct scsipi_xfer {
 #define	XS_CTL_DATA_OUT		0x00001000	/* data going out of memory */
 #define	XS_CTL_TARGET		0x00002000	/* target mode operation */
 #define	XS_CTL_ESCAPE		0x00004000	/* escape operation */
-#define	XS_CTL_URGENT		0x00008000	/* urgent operation */
+#define	XS_CTL_URGENT		0x00008000	/* urgent (recovery)
+						   operation */
 #define	XS_CTL_SIMPLE_TAG	0x00010000	/* use a Simple Tag */
 #define	XS_CTL_ORDERED_TAG	0x00020000	/* use an Ordered Tag */
-#define	XS_CTL_DATA_ONSTACK	0x00040000	/* data is alloc'ed on stack */
+#define	XS_CTL_HEAD_TAG		0x00040000	/* use a Head of Queue Tag */
+#define	XS_CTL_THAW_PERIPH	0x00080000	/* thaw periph once enqueued */
+#define	XS_CTL_FREEZE_PERIPH	0x00100000	/* freeze periph when done */
+#define XS_CTL_DATA_ONSTACK	0x00200000	/* data is alloc'ed on stack */
+#define XS_CTL_REQSENSE		0x00400000	/* xfer is a request sense */
+
+#define	XS_CTL_TAGMASK	(XS_CTL_SIMPLE_TAG|XS_CTL_ORDERED_TAG|XS_CTL_HEAD_TAG)
+
+#define	XS_CTL_TAGTYPE(xs)	((xs)->xs_control & XS_CTL_TAGMASK)
 
 /*
  * scsipi_xfer status flags
  */
 #define	XS_STS_DONE		0x00000001	/* scsipi_xfer is done */
 #define	XS_STS_PRIVATE		0xf0000000	/* reserved for HBA's use */
-
-/*
- * Error values an adapter driver may return
- */
-#define XS_NOERROR	0	/* there is no error, (sense is invalid)  */
-#define XS_SENSE	1	/* Check the returned sense for the error */
-#define XS_SHORTSENSE	2	/* Check the ATAPI sense for the error */
-#define	XS_DRIVER_STUFFUP 3	/* Driver failed to perform operation	  */
-#define XS_SELTIMEOUT	4	/* The device timed out.. turned off?	  */
-#define XS_TIMEOUT	5	/* The Timeout reported was caught by SW  */
-#define XS_BUSY		7	/* The device busy, try again later?	  */
-#define	XS_RESET	8	/* bus was reset; possible retry command  */
 
 /*
  * This describes matching information for scsipi_inqmatch().  The more things
@@ -372,11 +566,10 @@ struct scsipi_inquiry_pattern {
  * This is used to pass information from the high-level configuration code
  * to the device-specific drivers.
  */
-
 struct scsipibus_attach_args {
-	struct scsipi_link *sa_sc_link;
+	struct scsipi_periph *sa_periph;
 	struct scsipi_inquiry_pattern sa_inqbuf;
-	struct scsipi_inquiry_data *sa_inqptr; 
+	struct scsipi_inquiry_data *sa_inqptr;
 	union {				/* bus-type specific infos */
 		u_int8_t scsi_version;	/* SCSI version */
 	} scsipi_info;
@@ -385,10 +578,9 @@ struct scsipibus_attach_args {
 /*
  * this describes a quirk entry
  */
-
 struct scsi_quirk_inquiry_pattern {
 	struct scsipi_inquiry_pattern pattern;
-	u_int32_t quirks;
+	int quirks;
 };
 
 /*
@@ -396,43 +588,67 @@ struct scsi_quirk_inquiry_pattern {
  */
 #define SCSIPIRETRIES 4
 
-/*
- * Similar, but invoke the controller directly with a scsipi_xfer.
- */
-#define	scsipi_command_direct(xs)					\
-	(*(xs)->sc_link->adapter->scsipi_cmd)((xs))
 
 #ifdef _KERNEL
 void	scsipi_init __P((void));
-int	scsipi_command __P((struct scsipi_link *,
+int	scsipi_command __P((struct scsipi_periph *,
 	    struct scsipi_generic *, int, u_char *, int,
 	    int, int, struct buf *, int));
+void	scsipi_create_completion_thread __P((void *));
 caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *));
 char	*scsipi_dtype __P((int));
 void	scsipi_strvis __P((u_char *, int, u_char *, int));
 int	scsipi_execute_xs __P((struct scsipi_xfer *));
-u_long	scsipi_size __P((struct scsipi_link *, int));
-int	scsipi_test_unit_ready __P((struct scsipi_link *, int));
-int	scsipi_prevent __P((struct scsipi_link *, int, int));
-int	scsipi_inquire __P((struct scsipi_link *,
+u_long	scsipi_size __P((struct scsipi_periph *, int));
+int	scsipi_test_unit_ready __P((struct scsipi_periph *, int));
+int	scsipi_prevent __P((struct scsipi_periph *, int, int));
+int	scsipi_inquire __P((struct scsipi_periph *,
 	    struct scsipi_inquiry_data *, int));
-int	scsipi_start __P((struct scsipi_link *, int, int));
+int	scsipi_start __P((struct scsipi_periph *, int, int));
 void	scsipi_done __P((struct scsipi_xfer *));
 void	scsipi_user_done __P((struct scsipi_xfer *));
 int	scsipi_interpret_sense __P((struct scsipi_xfer *));
-void	scsipi_wait_drain __P((struct scsipi_link *));
-void	scsipi_kill_pending __P((struct scsipi_link *));
+void	scsipi_wait_drain __P((struct scsipi_periph *));
+void	scsipi_kill_pending __P((struct scsipi_periph *));
+struct scsipi_periph *scsipi_alloc_periph __P((int));
 #ifdef SCSIVERBOSE
 void	scsipi_print_sense __P((struct scsipi_xfer *, int));
 void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
 char   *scsipi_decode_sense __P((void *, int));
 #endif
-int	scsipi_do_ioctl __P((struct scsipi_link *, dev_t, u_long, caddr_t,
+void	scsipi_async_event __P((struct scsipi_channel *,
+	    scsipi_async_event_t, void *));
+int	scsipi_do_ioctl __P((struct scsipi_periph *, dev_t, u_long, caddr_t,
 	    int, struct proc *));
 
-int	scsipi_adapter_addref __P((struct scsipi_link *));
-void	scsipi_adapter_delref __P((struct scsipi_link *));
+void	scsipi_print_xfer_mode __P((struct scsipi_periph *));
+void	scsipi_set_xfer_mode __P((struct scsipi_channel *, int, int));
+
+int	scsipi_channel_init __P((struct scsipi_channel *));
+void	scsipi_channel_shutdown __P((struct scsipi_channel *));
+
+void	scsipi_insert_periph __P((struct scsipi_channel *,
+	    struct scsipi_periph *));
+void	scsipi_remove_periph __P((struct scsipi_channel *,
+	    struct scsipi_periph *));
+struct scsipi_periph *scsipi_lookup_periph __P((struct scsipi_channel *,
+	    int, int));
+
+int	scsipi_adapter_addref __P((struct scsipi_adapter *));
+void	scsipi_adapter_delref __P((struct scsipi_adapter *));
+
+void	scsipi_channel_freeze __P((struct scsipi_channel *, int));
+void	scsipi_channel_thaw __P((struct scsipi_channel *, int));
+void	scsipi_channel_timed_thaw __P((void *));
+
+void	scsipi_periph_freeze __P((struct scsipi_periph *, int));
+void	scsipi_periph_thaw __P((struct scsipi_periph *, int));
+void	scsipi_periph_timed_thaw __P((void *));
+
+int	scsipi_sync_period_to_factor __P((int));
+int	scsipi_sync_factor_to_period __P((int));
+int	scsipi_sync_factor_to_freq __P((int));
 
 void	show_scsipi_xs __P((struct scsipi_xfer *));
 void	show_scsipi_cmd __P((struct scsipi_xfer *));

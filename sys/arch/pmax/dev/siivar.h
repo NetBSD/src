@@ -1,4 +1,4 @@
-/*	$NetBSD: siivar.h,v 1.6 2000/06/02 20:16:51 mhitch Exp $	*/
+/*	$NetBSD: siivar.h,v 1.7 2001/04/25 17:53:21 bouyer Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
@@ -33,7 +33,7 @@ typedef struct scsi_state {
 struct siisoftc {
 	struct device sc_dev;		/* us as a device */
 #if NXSII > 0
-	struct scsipi_link sc_link;		/* scsipi link struct */
+	struct scsipi_channel sc_channel;
 	struct scsipi_adapter sc_adapter;	/* scsipi adapter glue */
 	ScsiCmd sc_cmd_fake[SII_NCMD];		/* XXX - hack!!! */
 	struct scsipi_xfer *sc_xs[SII_NCMD];	/* XXX - hack!!! */
@@ -54,10 +54,9 @@ int	siiintr __P((void *sc));
 /* Machine-indepedent back-end attach entry point */
 
 #if NXSII > 0
-void	siiattach __P((struct siisoftc *, struct scsipi_device *));
-int	sii_scsi_cmd __P((struct scsipi_xfer *));
-#else
-void	siiattach __P((struct siisoftc *sc));
+void	sii_scsi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 #endif
+void	siiattach __P((struct siisoftc *));
 
 #endif	/* _SIIVAR_H */

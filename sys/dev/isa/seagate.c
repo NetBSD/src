@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.39 2000/12/17 19:35:23 bouyer Exp $	*/
+/*	$NetBSD: seagate.c,v 1.40 2001/04/25 17:53:35 bouyer Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -196,8 +196,9 @@ struct sea_softc {
 	caddr_t	maddr_cr_sr;		/* Address of control and status reg */
 	caddr_t	maddr_dr;		/* Address of data register */
 
-	struct scsipi_link sc_link;	/* prototype for subdevs */
 	struct scsipi_adapter sc_adapter;
+	struct scsipi_channel sc_channel;
+
 	TAILQ_HEAD(, sea_scb) free_list, ready_list, nexus_list;
 	struct sea_scb *nexus;		/* currently connected command */
 	int numscbs;			/* number of scsi control blocks */
@@ -273,7 +274,8 @@ static const char *bases[] = {
 #endif
 
 int seaintr __P((void *));
-int sea_scsi_cmd __P((struct scsipi_xfer *));
+void sea_scsipi_request __P((struct scsipi_channel *,
+	scsipi_adapter_req_t, void *));
 void sea_timeout __P((void *));
 void sea_done __P((struct sea_softc *, struct sea_scb *));
 struct sea_scb *sea_get_scb __P((struct sea_softc *, int));
@@ -289,13 +291,7 @@ int sea_transfer_pio __P((struct sea_softc *sea, u_char *phase,
     int *count, u_char **data));
 int sea_abort __P((struct sea_softc *, struct sea_scb *scb));
 
-/* the below structure is so we have a default dev struct for our link struct */
-struct scsipi_device sea_dev = {
-	NULL,		/* use default error handler */
-	NULL,		/* have a queue, served by this */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default 'done' routine */
-};
+void	sea_grow_scb __P((struct sea_softc *));
 
 int	seaprobe __P((struct device *, struct cfdata *, void *));
 void	seaattach __P((struct device *, struct device *, void *));
@@ -392,6 +388,8 @@ seaattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct sea_softc *sea = (void *)self;
+	struct scsipi_adapter *adapt = &sea->sc_adapter;
+	struct scsipi_channel *chan = &sea->sc_channel;
 	int i;
 
 	sea->maddr = ISA_HOLE_VADDR(ia->ia_maddr);
@@ -440,23 +438,27 @@ seaattach(parent, self, aux)
 	sea_init(sea);
 
 	/*
-	 * Fill in the adapter.
+	 * Fill in the scsipi_adapter.
 	 */
-	sea->sc_adapter.scsipi_cmd = sea_scsi_cmd;
-	sea->sc_adapter.scsipi_minphys = minphys;
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sea->sc_dev;
+	adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = sea->numscbs;
+	adapt->adapt_max_periph = 1;
+	adapt->adapt_request = sea_scsipi_request;
+	adapt->adapt_minphys = minphys;
 
 	/*
-	 * fill in the prototype scsipi_link.
+	 * Fill in the scsipi_channel.
 	 */
-	sea->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sea->sc_link.adapter_softc = sea;
-	sea->sc_link.scsipi_scsi.adapter_target = sea->our_id;
-	sea->sc_link.adapter = &sea->sc_adapter;
-	sea->sc_link.device = &sea_dev;
-	sea->sc_link.openings = 1;
-	sea->sc_link.scsipi_scsi.max_target = 7;
-	sea->sc_link.scsipi_scsi.max_lun = 7;
-	sea->sc_link.type = BUS_SCSI;
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = sea->our_id;
+	chan->chan_flags = SCSIPI_CHAN_CANGROW;
   
 	printf("\n");
 
@@ -466,7 +468,7 @@ seaattach(parent, self, aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sea->sc_link, scsiprint);
+	config_found(self, &sea->sc_channel, scsiprint);
 }
 
 /*
@@ -551,71 +553,104 @@ sea_init(sea)
  * start a scsi operation given the command and the data address. Also needs
  * the unit, target and lu.
  */
-int
-sea_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+sea_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct sea_softc *sea = sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct sea_softc *sea = (void *)chan->chan_adapter->adapt_dev;
 	struct sea_scb *scb;
 	int flags;
 	int s;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sea_scsi_cmd\n"));
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
-	flags = xs->xs_control;
-	if ((scb = sea_get_scb(sea, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return TRY_AGAIN_LATER;
-	}
-	scb->flags = SCB_ACTIVE;
-	scb->xs = xs;
+		SC_DEBUG(periph, SCSIPI_DB2, ("sea_scsipi_requeset\n"));
 
-	if (flags & XS_CTL_RESET) {
+		/* XXX Reset not implemented. */
+		if (flags & XS_CTL_RESET) {
+			printf("%s: resetting\n", sea->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			scsipi_done(xs);
+			return;
+		}
+
+		/* Get an SCB to use. */
+		scb = sea_get_scb(sea, flags);
+#ifdef DIAGNOSTIC
 		/*
-		 * Try to send a reset command to the card.
-		 * XXX Not implemented.
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
 		 */
-		printf("%s: resetting\n", sea->sc_dev.dv_xname);
-		xs->error = XS_DRIVER_STUFFUP;
-		return COMPLETE;
-	}
-
-	/*
-	 * Put all the arguments for the xfer in the scb
-	 */
-	scb->datalen = xs->datalen;
-	scb->data = xs->data;
-
-#ifdef SEA_DEBUGQUEUE
-	sea_queue_length(sea);
+		if (scb == NULL) {
+			scsipi_printaddr(periph);
+			printf("unable to allocate scb\n");
+			panic("sea_scsipi_request");
+		}
 #endif
 
-	s = splbio();
+		scb->flags = SCB_ACTIVE;
+		scb->xs = xs;
 
-	sea_send_scb(sea, scb);
+		/*
+		 * Put all the arguments for the xfer in the scb
+		 */
+		scb->datalen = xs->datalen;
+		scb->data = xs->data;
 
-	/*
-	 * Usually return SUCCESSFULLY QUEUED
-	 */
-	if ((flags & XS_CTL_POLL) == 0) {
-		callout_reset(&scb->xs->xs_callout, (xs->timeout * hz) / 1000,
-		    sea_timeout, scb);
+#ifdef SEA_DEBUGQUEUE
+		sea_queue_length(sea);
+#endif
+
+		s = splbio();
+
+		sea_send_scb(sea, scb);
+
+		if ((flags & XS_CTL_POLL) == 0) {
+			callout_reset(&scb->xs->xs_callout,
+			    (xs->timeout * hz) / 1000, sea_timeout, scb);
+			splx(s);
+			return;
+		}
+
 		splx(s);
-		return SUCCESSFULLY_QUEUED;
-	}
 
-	splx(s);
-
-	/*
-	 * If we can't use interrupts, poll on completion
-	 */
-	if (sea_poll(sea, xs, xs->timeout)) {
-		sea_timeout(scb);
-		if (sea_poll(sea, xs, 2000))
+		/*
+		 * If we can't use interrupts, poll on completion
+		 */
+		if (sea_poll(sea, xs, xs->timeout)) {
 			sea_timeout(scb);
+			if (sea_poll(sea, xs, 2000))
+				sea_timeout(scb);
+		}
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+		sea_grow_scb(sea);
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+	    {
+		struct scsipi_xfer_mode *xm = arg;
+
+		/*
+		 * We don't support sync or wide or tagged queueing,
+		 * so announce that now.
+		 */
+		xm->xm_mode = 0;
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
+		return;
+	    }
 	}
-	return COMPLETE;
 }
 
 /*
@@ -631,35 +666,11 @@ sea_get_scb(sea, flags)
 	struct sea_scb *scb;
 
 	s = splbio();
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	for (;;) {
-		scb = sea->free_list.tqh_first;
-		if (scb) {
-			TAILQ_REMOVE(&sea->free_list, scb, chain);
-			break;
-		}
-		if (sea->numscbs < SEA_SCB_MAX) {
-			scb = (struct sea_scb *) malloc(sizeof(struct sea_scb),
-			    M_TEMP, M_NOWAIT);
-			if (scb) {
-				bzero(scb, sizeof(struct sea_scb));
-				sea->numscbs++;
-			} else
-				printf("%s: can't malloc scb\n",
-				    sea->sc_dev.dv_xname);
-			break;
-		}
-		if ((flags & XS_CTL_NOSLEEP) != 0)
-			break;
-		tsleep(&sea->free_list, PRIBIO, "seascb", 0);
-	}
-
+	if ((scb = TAILQ_FIRST(&sea->free_list)) != NULL)
+		TAILQ_REMOVE(&sea->free_list, scb, chain);
 	splx(s);
-	return scb;
+
+	return (scb);
 }
 
 /*
@@ -687,6 +698,7 @@ sea_send_scb(sea, scb)
  * adapter in a system.  Both sea_scsi_cmd and sea_intr will try to start it in
  * case it is not running.
  */
+
 void
 sea_main()
 {
@@ -716,8 +728,8 @@ loop:
 			 */
 			for (scb = sea->ready_list.tqh_first; scb;
 			    scb = scb->chain.tqe_next) {
-				if (!(sea->busy[scb->xs->sc_link->scsipi_scsi.target] &
-				    (1 << scb->xs->sc_link->scsipi_scsi.lun))) {
+				if (!(sea->busy[scb->xs->xs_periph->periph_target] &
+				    (1 << scb->xs->xs_periph->periph_lun))) {
 					TAILQ_REMOVE(&sea->ready_list, scb,
 					    chain);
 	    
@@ -784,6 +796,31 @@ loop:
 	main_running = 0;
 }
 
+/*
+ * Allocate an scb and add it to the free list.
+ * We are called at splbio.
+ */
+void
+sea_grow_scb(sea)
+	struct sea_softc *sea;
+{
+	struct sea_scb *scb;
+
+	if (sea->numscbs == SEA_SCB_MAX) {
+		sea->sc_channel.chan_flags &= ~SCSIPI_CHAN_CANGROW;
+		return;
+	}
+
+	scb = malloc(sizeof(struct sea_scb), M_DEVBUF, M_NOWAIT);
+	if (scb == NULL)
+		return;
+
+	memset(scb, 0, sizeof(struct sea_scb));
+
+	TAILQ_INSERT_TAIL(&sea->free_list, scb, chain);
+	sea->numscbs++;
+	sea->sc_adapter.adapt_openings++;
+}
 void
 sea_free_scb(sea, scb, flags)
 	struct sea_softc *sea;
@@ -793,17 +830,8 @@ sea_free_scb(sea, scb, flags)
 	int s;
 
 	s = splbio();
-
 	scb->flags = SCB_FREE;
 	TAILQ_INSERT_HEAD(&sea->free_list, scb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (!scb->chain.tqe_next)
-		wakeup((caddr_t)&sea->free_list);
-
 	splx(s);
 }
 
@@ -813,11 +841,12 @@ sea_timeout(arg)
 {
 	struct sea_scb *scb = arg;
 	struct scsipi_xfer *xs = scb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct sea_softc *sea = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct sea_softc *sea =
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	int s;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	printf("timed out");
 
 	s = splbio();
@@ -830,7 +859,7 @@ sea_timeout(arg)
 	if (scb->flags & SCB_ABORTED) {
 		/* abort timed out */
 		printf(" AGAIN\n");
-	 	scb->xs->retries = 0;
+	 	scb->xs->xs_retries = 0;
 		scb->flags |= SCB_ABORTED;
 		sea_done(sea, scb);
 	} else {
@@ -911,8 +940,8 @@ sea_reselect(sea)
 		 */
 		for (scb = sea->nexus_list.tqh_first; scb;
 		    scb = scb->chain.tqe_next)
-			if (target_mask == (1 << scb->xs->sc_link->scsipi_scsi.target) &&
-			    lun == scb->xs->sc_link->scsipi_scsi.lun) {
+			if (target_mask == (1 << scb->xs->xs_periph->periph_target) &&
+			    lun == scb->xs->xs_periph->periph_lun) {
 				TAILQ_REMOVE(&sea->nexus_list, scb,
 				    chain);
 				break;
@@ -1062,7 +1091,7 @@ sea_select(sea, scb)
 	}
 
 	delay(2);
-	DATA = (u_char)((1 << scb->xs->sc_link->scsipi_scsi.target) |
+	DATA = (u_char)((1 << scb->xs->xs_periph->periph_target) |
 		sea->our_id_mask);
 	CONTROL =
 #ifdef SEA_NOMSGS
@@ -1105,7 +1134,7 @@ sea_select(sea, scb)
 		 * (THIS IS NOT AN ERROR!)
 		 */
 	} else {
-		msg[0] = MSG_IDENTIFY(scb->xs->sc_link->scsipi_scsi.lun, 1);
+		msg[0] = MSG_IDENTIFY(scb->xs->xs_periph->periph_lun, 1);
 		len = 1;
 		data = msg;
 		phase = PH_MSGOUT;
@@ -1117,8 +1146,8 @@ sea_select(sea, scb)
 		    sea->sc_dev.dv_xname);
   
 	sea->nexus = scb;
-	sea->busy[scb->xs->sc_link->scsipi_scsi.target] |=
-						1 << scb->xs->sc_link->scsipi_scsi.lun;
+	sea->busy[scb->xs->xs_periph->periph_target] |=
+	    1 << scb->xs->xs_periph->periph_lun;
 	/* This assignment should depend on possibility to send a message to target. */
 	CONTROL = BASE_CMD | CMD_DRVR_ENABLE;
 	/* XXX Reset pointer in command? */
@@ -1209,7 +1238,6 @@ sea_done(sea, scb)
 		if (scb->flags & SCB_ERROR)
 			xs->error = XS_DRIVER_STUFFUP;
 	}
-	xs->xs_status |= XS_STS_DONE;
 	sea_free_scb(sea, scb, xs->xs_control);
 	scsipi_done(xs);
 }
@@ -1379,8 +1407,8 @@ sea_information_transfer(sea)
 				s = splbio();
 				sea->nexus = NULL;
 				splx(s);
-				sea->busy[scb->xs->sc_link->scsipi_scsi.target] &= 
-				    ~(1 << scb->xs->sc_link->scsipi_scsi.lun);
+				sea->busy[scb->xs->xs_periph->periph_target] &= 
+				    ~(1 << scb->xs->xs_periph->periph_lun);
 				CONTROL = BASE_CMD;
 				sea_done(sea, scb);
 				return;
@@ -1421,8 +1449,8 @@ sea_information_transfer(sea)
 				printf("%s: sent message abort to target\n",
 				    sea->sc_dev.dv_xname);
 				s = splbio();
-				sea->busy[scb->xs->sc_link->scsipi_scsi.target] &= 
-				    ~(1 << scb->xs->sc_link->scsipi_scsi.lun);
+				sea->busy[scb->xs->xs_periph->periph_target] &= 
+				    ~(1 << scb->xs->xs_periph->periph_lun);
 				sea->nexus = NULL;
 				scb->flags = SCB_ABORTED;
 				splx(s); 

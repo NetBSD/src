@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.30 2001/03/07 23:07:13 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.31 2001/04/25 17:53:30 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -102,7 +102,7 @@ integrate void aha_finish_ccbs __P((struct aha_softc *));
 integrate void aha_reset_ccb __P((struct aha_softc *, struct aha_ccb *));
 void aha_free_ccb __P((struct aha_softc *, struct aha_ccb *));
 integrate int aha_init_ccb __P((struct aha_softc *, struct aha_ccb *));
-struct aha_ccb *aha_get_ccb __P((struct aha_softc *, int));
+struct aha_ccb *aha_get_ccb __P((struct aha_softc *));
 struct aha_ccb *aha_ccb_phys_kv __P((struct aha_softc *, u_long));
 void aha_queue_ccb __P((struct aha_softc *, struct aha_ccb *));
 void aha_collect_mbo __P((struct aha_softc *));
@@ -111,18 +111,11 @@ void aha_done __P((struct aha_softc *, struct aha_ccb *));
 int aha_init __P((struct aha_softc *));
 void aha_inquire_setup_information __P((struct aha_softc *));
 void ahaminphys __P((struct buf *));
-int aha_scsi_cmd __P((struct scsipi_xfer *));
+void aha_scsipi_request __P((struct scsipi_channel *,
+    scsipi_adapter_req_t, void *));
 int aha_poll __P((struct aha_softc *, struct scsipi_xfer *, int));
 void aha_timeout __P((void *arg));
 int aha_create_ccbs __P((struct aha_softc *, struct aha_ccb *, int));
-
-/* the below structure is so we have a default dev struct for out link struct */
-struct scsipi_device aha_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
 
 #define AHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	AHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
@@ -264,29 +257,32 @@ aha_attach(sc, apd)
 	struct aha_softc *sc;
 	struct aha_probe_data *apd;
 {
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
-	TAILQ_INIT(&sc->sc_queue);
 
 	/*
-	 * Fill in the adapter.
+	 * Fill in the scsipi_adapter.
 	 */
-	sc->sc_adapter.scsipi_cmd = aha_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = ahaminphys;
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	/* adapt_openings initialized below */
+	/* adapt_max_periph initialized below */
+	adapt->adapt_request = aha_scsipi_request;
+	adapt->adapt_minphys = ahaminphys;
 
 	/*
-	 * fill in the prototype scsipi_link.
+	 * Fill in the scsipi_channel.
 	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = apd->sc_scsi_dev;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &aha_dev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = apd->sc_scsi_dev;
 
 	aha_inquire_setup_information(sc);
 	if (aha_init(sc) != 0) {
@@ -297,7 +293,7 @@ aha_attach(sc, apd)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
 integrate void
@@ -473,17 +469,8 @@ aha_free_ccb(sc, ccb)
 	int s;
 
 	s = splbio();
-
 	aha_reset_ccb(sc, ccb);
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (ccb->chain.tqe_next == 0)
-		wakeup(&sc->sc_free_ccb);
-
 	splx(s);
 }
 
@@ -553,33 +540,18 @@ aha_create_ccbs(sc, ccbstore, count)
  * the hash table too otherwise either return an error or sleep.
  */
 struct aha_ccb *
-aha_get_ccb(sc, flags)
+aha_get_ccb(sc)
 	struct aha_softc *sc;
-	int flags;
 {
 	struct aha_ccb *ccb;
 	int s;
 
 	s = splbio();
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
-		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
-			break;
-		}
-		if ((flags & XS_CTL_NOSLEEP) != 0)
-			goto out;
-		tsleep(&sc->sc_free_ccb, PRIBIO, "ahaccb", 0);
+	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+	if (ccb != NULL) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
+		ccb->flags |= CCB_ALLOC;
 	}
-
-	ccb->flags |= CCB_ALLOC;
-
-out:
 	splx(s);
 	return (ccb);
 }
@@ -723,7 +695,7 @@ aha_done(sc, ccb)
 	struct scsipi_sense_data *s1, *s2;
 	struct scsipi_xfer *xs = ccb->xs;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("aha_done\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("aha_done\n"));
 
 	/*
 	 * If we were a data transfer, unload the map that described
@@ -787,19 +759,7 @@ aha_done(sc, ccb)
 			xs->resid = 0;
 	}
 	aha_free_ccb(sc, ccb);
-	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
-
-	/*
-	 * If there are queue entries in the software queue, try to
-	 * run the first one.  We should be more or less guaranteed
-	 * to succeed, since we just freed a CCB.
-	 *
-	 * NOTE: aha_scsi_cmd() relies on our calling it with
-	 * the first entry in the queue.
-	 */
-	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
-		(void) aha_scsi_cmd(xs);
 }
 
 /*
@@ -969,11 +929,11 @@ aha_init(sc)
 				initial_ccbs += 1;
 		}
 	}
-	initial_ccbs *= sc->sc_link.openings;
+	initial_ccbs *= 2;
 	if (initial_ccbs > AHA_CCB_MAX)
 		initial_ccbs = AHA_CCB_MAX;
 	if (initial_ccbs == 0)	/* yes, this can happen */
-		initial_ccbs = sc->sc_link.openings;
+		initial_ccbs = 2;
 
 	/* Obtain setup information from. */
 	setup.cmd.opcode = AHA_INQUIRE_SETUP;
@@ -1044,6 +1004,9 @@ aha_init(sc)
 		printf("%s: WARNING: only %d of %d control blocks created\n",
 		    sc->sc_dev.dv_xname, i, initial_ccbs);
 	}
+
+	sc->sc_adapter.adapt_openings = i;
+	sc->sc_adapter.adapt_max_periph = sc->sc_adapter.adapt_openings;
 
 	/*
 	 * Set up initial mail box for round-robin operation.
@@ -1177,208 +1140,178 @@ ahaminphys(bp)
  * start a scsi operation given the command and the data address. Also needs
  * the unit, target and lu.
  */
-int
-aha_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+
+void
+aha_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct aha_softc *sc = sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct aha_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct aha_ccb *ccb;
 	int error, seg, flags, s;
-	int fromqueue = 0, dontqueue = 0, nowait = 0;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("aha_scsi_cmd\n"));
 
-	s = splbio();		/* protect the queue */
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
-	/*
-	 * If we're running the queue from aha_done(), we've been
-	 * called with the first queue entry as our argument.
-	 */
-	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
-		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-		fromqueue = 1;
-		nowait = 1;
-		goto get_ccb;
-	}
+		SC_DEBUG(periph, SCSIPI_DB2, ("aha_scsipi_request\n"));
 
-	/* Polled requests can't be queued for later. */
-	dontqueue = xs->xs_control & XS_CTL_POLL;
-
-	/*
-	 * If there are jobs in the queue, run them first.
-	 */
-	if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
+		/* Get a CCB to use. */
+		ccb = aha_get_ccb(sc);
+#ifdef DIAGNOSTIC
 		/*
-		 * If we can't queue, we have to abort, since
-		 * we have to preserve order.
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
 		 */
-		if (dontqueue) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
+		if (ccb == NULL) {
+			scsipi_printaddr(periph);
+			printf("unable to allocate ccb\n");
+			panic("aha_scsipi_request");
 		}
-
-		/*
-		 * Swap with the first queue entry.
-		 */
-		TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-		xs = TAILQ_FIRST(&sc->sc_queue);
-		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-		fromqueue = 1;
-	}
-
- get_ccb:
-	/*
-	 * get a ccb to use. If the transfer
-	 * is from a buf (possibly from interrupt time)
-	 * then we can't allow it to sleep
-	 */
-	flags = xs->xs_control;
-	if (nowait)
-		flags |= XS_CTL_NOSLEEP;
-	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
-		/*
-		 * If we can't queue, we lose.
-		 */
-		if (dontqueue) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
-		}
-
-		/*
-		 * Stuff ourselves into the queue, in front
-		 * if we came off in the first place.
-		 */
-		if (fromqueue)
-			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
-		else
-			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-		splx(s);
-		return (SUCCESSFULLY_QUEUED);
-	}
-
-	splx(s);		/* done playing with the queue */
-
-	ccb->xs = xs;
-	ccb->timeout = xs->timeout;
-
-	/*
-	 * Put all the arguments for the xfer in the ccb
-	 */
-	if (flags & XS_CTL_RESET) {
-		ccb->opcode = AHA_RESET_CCB;
-		ccb->scsi_cmd_length = 0;
-	} else {
-		/* can't use S/G if zero length */
-		ccb->opcode = (xs->datalen ? AHA_INIT_SCAT_GATH_CCB
-					   : AHA_INITIATOR_CCB);
-		bcopy(xs->cmd, &ccb->scsi_cmd,
-		    ccb->scsi_cmd_length = xs->cmdlen);
-	}
-
-	if (xs->datalen) {
-		/*
-		 * Map the DMA transfer.
-		 */
-#ifdef TFS
-		if (flags & XS_CTL_DATA_UIO) {
-			error = bus_dmamap_load_uio(dmat,
-			    ccb->dmamap_xfer, (struct uio *)xs->data,
-			    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
-		} else
 #endif
-		{
-			error = bus_dmamap_load(dmat,
-			    ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+
+		ccb->xs = xs;
+		ccb->timeout = xs->timeout;
+
+		/*
+		 * Put all the arguments for the xfer in the ccb
+		 */
+		if (flags & XS_CTL_RESET) {
+			ccb->opcode = AHA_RESET_CCB;
+			ccb->scsi_cmd_length = 0;
+		} else {
+			/* can't use S/G if zero length */
+			ccb->opcode = (xs->datalen ? AHA_INIT_SCAT_GATH_CCB
+						   : AHA_INITIATOR_CCB);
+			bcopy(xs->cmd, &ccb->scsi_cmd,
+			    ccb->scsi_cmd_length = xs->cmdlen);
 		}
-		
-		if (error) {
-			if (error == EFBIG) {
-				printf("%s: aha_scsi_cmd, more than %d"
-				    " dma segments\n",
-				    sc->sc_dev.dv_xname, AHA_NSEG);
-			} else {
-				printf("%s: aha_scsi_cmd, error %d loading"
-				    " dma map\n",
-				    sc->sc_dev.dv_xname, error);
+
+		if (xs->datalen) {
+			/*
+			 * Map the DMA transfer.
+			 */
+#ifdef TFS
+			if (flags & XS_CTL_DATA_UIO) {
+				error = bus_dmamap_load_uio(dmat,
+				    ccb->dmamap_xfer, (struct uio *)xs->data,
+				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+			} else
+#endif
+			{
+				error = bus_dmamap_load(dmat,
+				    ccb->dmamap_xfer, xs->data, xs->datalen,
+				    NULL,
+				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 			}
-			goto bad;
+
+			switch (error) {
+			case 0:
+				break;
+
+			case ENOMEM:
+			case EAGAIN:
+				xs->error = XS_RESOURCE_SHORTAGE;
+				goto out_bad;
+
+			default:
+				xs->error = XS_DRIVER_STUFFUP;
+				if (error == EFBIG) {
+					printf("%s: aha_scsi_cmd, more than %d"
+					    " dma segments\n",
+					    sc->sc_dev.dv_xname, AHA_NSEG);
+				} else {
+					printf("%s: error %d loading DMA map\n",
+					    sc->sc_dev.dv_xname, error);
+				}
+out_bad:
+				aha_free_ccb(sc, ccb);
+				scsipi_done(xs);
+				return;
+			}
+
+			bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
+			    ccb->dmamap_xfer->dm_mapsize,
+			    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
+			    BUS_DMASYNC_PREWRITE);
+
+			/*
+			 * Load the hardware scatter/gather map with the
+			 * contents of the DMA map.
+			 */
+			for (seg = 0; seg < ccb->dmamap_xfer->dm_nsegs; seg++) {
+				ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_addr,
+				    ccb->scat_gath[seg].seg_addr);
+				ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_len,
+				    ccb->scat_gath[seg].seg_len);
+			}
+
+			ltophys(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+			    AHA_CCB_OFF(ccb) +
+			    offsetof(struct aha_ccb, scat_gath),
+			    ccb->data_addr);
+			ltophys(ccb->dmamap_xfer->dm_nsegs *
+			    sizeof(struct aha_scat_gath), ccb->data_length);
+		} else {
+			/*
+			 * No data xfer, use non S/G values.
+			 */
+			ltophys(0, ccb->data_addr);
+			ltophys(0, ccb->data_length);
 		}
 
-		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
-		    ccb->dmamap_xfer->dm_mapsize,
-		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
-		    BUS_DMASYNC_PREWRITE);
+		ccb->data_out = 0;
+		ccb->data_in = 0;
+		ccb->target = periph->periph_target;
+		ccb->lun = periph->periph_lun;
+		ccb->req_sense_length = sizeof(ccb->scsi_sense);
+		ccb->host_stat = 0x00;
+		ccb->target_stat = 0x00;
+		ccb->link_id = 0;
+		ltophys(0, ccb->link_addr);
 
-		/*
-		 * Load the hardware scatter/gather map with the
-		 * contents of the DMA map.
-		 */
-		for (seg = 0; seg < ccb->dmamap_xfer->dm_nsegs; seg++) {
-			ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_addr,
-			    ccb->scat_gath[seg].seg_addr);
-			ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_len,
-			    ccb->scat_gath[seg].seg_len);
-		}
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    AHA_CCB_OFF(ccb), sizeof(struct aha_ccb),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-		ltophys(sc->sc_dmamap_control->dm_segs[0].ds_addr +
-		    AHA_CCB_OFF(ccb) + offsetof(struct aha_ccb, scat_gath),
-		    ccb->data_addr);
-		ltophys(ccb->dmamap_xfer->dm_nsegs *
-		    sizeof(struct aha_scat_gath), ccb->data_length);
-	} else {
-		/*
-		 * No data xfer, use non S/G values.
-		 */
-		ltophys(0, ccb->data_addr);
-		ltophys(0, ccb->data_length);
-	}
+		s = splbio();
+		aha_queue_ccb(sc, ccb);
+		splx(s);
 
-	ccb->data_out = 0;
-	ccb->data_in = 0;
-	ccb->target = sc_link->scsipi_scsi.target;
-	ccb->lun = sc_link->scsipi_scsi.lun;
-	ccb->req_sense_length = sizeof(ccb->scsi_sense);
-	ccb->host_stat = 0x00;
-	ccb->target_stat = 0x00;
-	ccb->link_id = 0;
-	ltophys(0, ccb->link_addr);
+		SC_DEBUG(periph, SCSIPI_DB3, ("cmd_sent\n"));
+		if ((flags & XS_CTL_POLL) == 0)
+			return;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
-	    AHA_CCB_OFF(ccb), sizeof(struct aha_ccb),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-	s = splbio();
-	aha_queue_ccb(sc, ccb);
-	splx(s);
-
-	/*
-	 * Usually return SUCCESSFULLY QUEUED
-	 */
-	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
-	if ((flags & XS_CTL_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
-
-	/*
-	 * If we can't use interrupts, poll on completion
-	 */
-	if (aha_poll(sc, xs, ccb->timeout)) {
-		aha_timeout(ccb);
-		if (aha_poll(sc, xs, ccb->timeout))
+		/* Not allowed to use interrupts, poll for completion. */
+		if (aha_poll(sc, xs, ccb->timeout)) {
 			aha_timeout(ccb);
-	}
-	return (COMPLETE);
+			if (aha_poll(sc, xs, ccb->timeout))
+				aha_timeout(ccb);
+		}
+		return;
 
-bad:
-	xs->error = XS_DRIVER_STUFFUP;
-	aha_free_ccb(sc, ccb);
-	return (COMPLETE);
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/*
+		 * Can't really do this on the Adaptec; it has
+		 * its own config mechanism, but we do know how
+		 * to query what the firmware negotiated.
+		 */
+		/* XXX XXX XXX */
+		return;
+	}
 }
 
 /*
@@ -1415,11 +1348,12 @@ aha_timeout(arg)
 {
 	struct aha_ccb *ccb = arg;
 	struct scsipi_xfer *xs = ccb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct aha_softc *sc = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct aha_softc *sc =
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	int s;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	printf("timed out");
 
 	s = splbio();

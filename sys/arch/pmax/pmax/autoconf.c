@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57 2001/01/06 16:59:53 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.58 2001/04/25 17:53:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2001/01/06 16:59:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2001/04/25 17:53:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ device_register(dev, aux)
 
 		if (parent->dv_parent != booted_controller)
 			return;
-		if (booted_unit != sa->sa_sc_link->scsipi_scsi.target)
+		if (booted_unit != sa->sa_periph->periph_target)
 			return;
 		booted_device = dev;
 		found = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.61 2000/11/02 21:00:04 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.62 2001/04/25 17:53:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -515,26 +515,26 @@ ascattach(asc, bus_speed)
 	/*
 	 * Fill in the adapter.
 	 */
-	asc->sc_adapter.scsipi_cmd = asc_scsi_cmd;
-	asc->sc_adapter.scsipi_minphys = minphys;
 
-	/*
-	 * fill in the prototype scsi_link.
-	 */
-	asc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	asc->sc_link.adapter_softc = asc;
-	asc->sc_link.scsipi_scsi.adapter_target = asc->sc_id;
-	asc->sc_link.adapter = &asc->sc_adapter;
-	asc->sc_link.device = &asc_dev;
-	asc->sc_link.openings = 2;
-	asc->sc_link.scsipi_scsi.max_target = 7;
-	asc->sc_link.scsipi_scsi.max_lun = 7;
-	asc->sc_link.type = BUS_SCSI;
+	asc->sc_adapter.adapt_dev = &asc->sc_dev;
+	asc->sc_adapter.adapt_nchannels = 1;
+	asc->sc_adapter.adapt_openings = 7;
+	asc->sc_adapter.adapt_max_periph = 1;
+	asc->sc_adapter.adapt_ioctl = NULL;
+	asc->sc_adapter.adapt_minphys = minphys;
+	asc->sc_adapter.adapt_request = asc_scsi_request;
+
+	asc->sc_channel.chan_adapter = &asc->sc_adapter;
+	asc->sc_channel.chan_bustype = &scsi_bustype;
+	asc->sc_channel.chan_channel = 0;
+	asc->sc_channel.chan_ntargets = 8;
+	asc->sc_channel.chan_nluns = 8;
+	asc->sc_channel.chan_id = asc->sc_id;
 
 	/*
 	 * Now try to attach all the sub-devices.
 	 */
-	config_found(self, &asc->sc_link, scsiprint);
+	config_found(self, &asc->sc_channel, scsiprint);
 
 #endif /* USE_NEW_SCSI */
 }
@@ -1415,7 +1415,7 @@ asc_end(asc, status, ss, ir)
 			/* Set up sense request command */
 			bzero(ss, sizeof(*ss));
 			ss->opcode = REQUEST_SENSE;
-			ss->byte2 = sc_link->lun << 5;
+			ss->byte2 = periph->periph_lun << 5;
 			ss->length = sizeof(struct scsipi_sense_data);
 			state->cmdlen = sizeof(*ss);
 			state->buf = (vaddr_t)&scsicmd->sense;

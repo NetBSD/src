@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.16 2000/06/02 20:20:30 mhitch Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.17 2001/04/25 17:53:21 bouyer Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -66,12 +66,6 @@ static void	sii_ds_attach __P((struct device *parent, struct device *self,
 struct cfattach xsii_ds_ca = {
 	sizeof(struct siisoftc), sii_ds_match, sii_ds_attach
 };
-struct scsipi_device sii_ds_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
 #else
 extern struct cfattach sii_ds_ca;
 struct cfattach sii_ds_ca = {
@@ -133,12 +127,10 @@ sii_ds_attach(parent, self, aux)
 
 	/* Do the common parts of attachment. */
 #if NXSII > 0
-	sc->sc_adapter.scsipi_cmd = sii_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	siiattach(sc, &sii_ds_dev);
-#else
-	siiattach(sc);
+	sc->sc_adapter.adapt_request = sii_scsi_request;
+	sc->sc_adapter.adapt_minphys = minphys;
 #endif
+	siiattach(sc);
 
 	/* tie pseudo-slot to device */
 	ibus_intr_establish(parent, (void*)ia->ia_cookie, IPL_BIO, siiintr, sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.15 2000/06/09 08:54:28 enami Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.16 2001/04/25 17:53:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ sd_scsibus_match(parent, match, aux)
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
-	if (sa->sa_sc_link->type != BUS_SCSI)
+	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_SCSI)
 		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
@@ -138,9 +138,9 @@ sd_scsibus_attach(parent, self, aux)
 {
 	struct sd_softc *sd = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sd_scsibus_attach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("sd_scsibus_attach: "));
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	scsipi_strvis(sd->name, 16, sa->sa_inqbuf.product, 16);
@@ -148,10 +148,10 @@ sd_scsibus_attach(parent, self, aux)
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
-	if ((sa->scsipi_info.scsi_version & SID_ANSII) == 0)
+	if (periph->periph_version == 0)
 		sd->flags |= SDF_ANCIENT;
 
-	sdattach(parent, sd, sc_link, &sd_scsibus_ops);
+	sdattach(parent, sd, periph, &sd_scsibus_ops);
 }
 
 static int
@@ -172,7 +172,7 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	 */
 	bzero(scsipi_sense, sizeof(*scsipi_sense));
 
-	if (sd->sc_link->quirks & SDEV_ONLYBIG) {
+	if (sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) {
 		memset(&sensebig_cmd, 0, sizeof(sensebig_cmd));
 		sensebig_cmd.opcode = SCSI_MODE_SENSE_BIG;
 		sensebig_cmd.page = page;
@@ -187,11 +187,12 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 		cmd = (struct scsipi_generic *)&sense_cmd;
 		len = sizeof(sense_cmd); 
 	}
+
 	/*
 	 * If the command worked, use the results to fill out
 	 * the parameter structure
 	 */
-	return (scsipi_command(sd->sc_link,
+	return (scsipi_command(sd->sc_periph,
 	    cmd, len, (u_char *)scsipi_sense, sizeof(*scsipi_sense),
 	    SDRETRIES, 6000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK));
@@ -209,7 +210,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	int error;
 
 	dp->blksize = 512;
-	if ((sectors = scsipi_size(sd->sc_link, flags)) == 0)
+	if ((sectors = scsipi_size(sd->sc_periph, flags)) == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	/* XXX
@@ -224,7 +225,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	scsipi_cmd.length = sizeof(struct scsi_mode_header) +
 	    sizeof(struct scsi_blk_desc);
 
-	if ((error = scsipi_command(sd->sc_link,  
+	if ((error = scsipi_command(sd->sc_periph,  
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),  
 	    (u_char *)&scsipi_sense, sizeof(scsipi_sense), SDRETRIES,
 	    6000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK)) != 0)
@@ -256,7 +257,6 @@ sd_scsibus_get_parms(sd, dp, flags)
 	int flags;
 {
 	struct sd_scsibus_mode_sense_data scsipi_sense;
-	struct scsipi_link *link = sd->sc_link;
 	u_long sectors;
 	int page;
 	int error;
@@ -272,7 +272,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, page = 4,
 	    flags)) == 0) {
-		SC_DEBUG(link, SDEV_DB3,
+		SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(scsipi_sense.pages.rigid_geometry.ncyl),
 		    scsipi_sense.pages.rigid_geometry.nheads,
@@ -296,7 +296,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		sectors = scsipi_size(link, flags);
+		sectors = scsipi_size(sd->sc_periph, flags);
 		dp->disksize = sectors;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
@@ -321,7 +321,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	}
 
 fake_it:
-	if ((link->quirks & SDEV_NOMODESENSE) == 0) {
+	if ((sd->sc_periph->periph_quirks & PQUIRK_NOMODESENSE) == 0) {
 		if (error == 0)
 			printf("%s: mode sense (%d) returned nonsense",
 			    sd->sc_dev.dv_xname, page);
@@ -330,14 +330,19 @@ fake_it:
 			    sd->sc_dev.dv_xname);
 		printf("; using fictitious geometry\n");
 	}
-
-	sectors = scsipi_size(link, flags);
-	dp->disksize = sectors;
+	/*
+	 * use adaptec standard fictitious geometry
+	 * this depends on which controller (e.g. 1542C is
+	 * different. but we have to put SOMETHING here..)
+	 */
+	sectors = scsipi_size(sd->sc_periph, flags);
 	dp->blksize = 512;
-
+	dp->disksize = sectors;
 	/* Try calling driver's method for figuring out geometry. */
-	if (link->adapter->scsipi_getgeom == NULL ||
-	    !(*link->adapter->scsipi_getgeom)(link, dp, sectors)) {
+	if (sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom ==
+	    NULL ||
+	    !(*sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom)
+		(sd->sc_periph, dp, sectors)) {
 		/*
 		 * Use adaptec standard fictitious geometry
 		 * this depends on which controller (e.g. 1542C is
@@ -347,7 +352,7 @@ fake_it:
 		dp->sectors = 32;
 		dp->cyls = sectors / (64 * 32);
 	}
-
+ 
 	return (SDGP_RESULT_OK);
 }
 
@@ -356,7 +361,7 @@ sd_scsibus_flush(sd, flags)
 	struct sd_softc *sd;
 	int flags;
 {
-	struct scsipi_link *sc_link = sd->sc_link;
+	struct scsipi_periph *periph = sd->sc_periph;
 	struct scsi_synchronize_cache sync_cmd;
 
 	/*
@@ -373,13 +378,13 @@ sd_scsibus_flush(sd, flags)
 	 *
 	 * XXX What about older devices?
 	 */
-	if ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) >= 2 &&
-	    (sc_link->quirks & SDEV_NOSYNCCACHE) == 0) {
+	if (periph->periph_version >= 2 &&
+	    (periph->periph_quirks & PQUIRK_NOSYNCCACHE) == 0) {
 		sd->flags |= SDF_FLUSHING;
 		bzero(&sync_cmd, sizeof(sync_cmd));
 		sync_cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
 
-		return(scsipi_command(sc_link,
+		return(scsipi_command(periph,
 		       (struct scsipi_generic *)&sync_cmd, sizeof(sync_cmd),
 		       NULL, 0, SDRETRIES, 100000, NULL,
 		       flags|XS_CTL_IGNORE_ILLEGAL_REQUEST));

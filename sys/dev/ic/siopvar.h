@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.15 2001/03/15 17:38:59 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.16 2001/04/25 17:53:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -39,7 +39,8 @@ TAILQ_HEAD(lunsw_list, siop_lunsw);
 /* Driver internal state */
 struct siop_softc {
 	struct device sc_dev;
-	struct scsipi_link sc_link;	/* link to upper level */
+	struct scsipi_channel sc_chan;
+	struct scsipi_adapter sc_adapt;
 	int features;			/* chip's features */
 	int ram_size;
 	int maxburst;
@@ -61,8 +62,6 @@ struct siop_softc {
 	int sc_currschedslot;		/* current scheduler slot */
 	struct cbd_list cmds;		/* list of command block descriptors */
 	struct cmd_list free_list;	/* cmd descr free list */
-	struct cmd_list urgent_list;	/* hitgh priority cmd descr list */
-	struct cmd_list ready_list;	/* cmd descr ready list */
 	struct lunsw_list lunsw_list;	/* lunsw free list */
 	u_int32_t script_free_lo;	/* free ram offset from sc_scriptaddr */
 	u_int32_t script_free_hi;	/* free ram offset from sc_scriptaddr */
@@ -71,7 +70,7 @@ struct siop_softc {
 	u_int32_t sc_flags;
 };
 /* defs for sc_flags */
-/* none for now */
+#define SCF_CHAN_NOSLOT	0x0001		/* channel out of sheduler slot */
 
 /* features */
 #define SF_BUS_WIDE	0x00000001 /* wide bus */

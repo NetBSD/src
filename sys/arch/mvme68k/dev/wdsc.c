@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.19 2000/08/12 20:09:12 scw Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.20 2001/04/25 17:53:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -72,14 +72,6 @@ void    wdsc_dmastop    __P((struct sbic_softc *));
 int     wdsc_dmaintr    __P((void *));
 int     wdsc_scsiintr   __P((void *));
 
-struct scsipi_device wdsc_scsidev = {
-    NULL,       /* use default error handler */
-    NULL,       /* do not have a start functio */
-    NULL,       /* have no async handler */
-    NULL,       /* Use default done routine */
-};
-
-
 /*
  * Match for SCSI devices on the onboard WD33C93 chip
  */
@@ -126,21 +118,22 @@ wdsc_pcc_attach(pdp, dp, auxp)
     sc->sc_dmastop = wdsc_dmastop;
     sc->sc_dmacmd  = 0;
 
-    sc->sc_adapter.scsipi_cmd = sbic_scsicmd;
-    sc->sc_adapter.scsipi_minphys = sbic_minphys;
+    sc->sc_adapter.adapt_dev = &sc->sc_dev;
+    sc->sc_adapter.adapt_nchannels = 1;
+    sc->sc_adapter.adapt_openings = 7; 
+    sc->sc_adapter.adapt_max_periph = 1;
+    sc->sc_adapter.adapt_ioctl = NULL; 
+    sc->sc_adapter.adapt_minphys = sbic_minphys;
+    sc->sc_adapter.adapt_request = sbic_scsi_request;
 
-    sc->sc_link.scsipi_scsi.channel        = SCSI_CHANNEL_ONLY_ONE;
-    sc->sc_link.adapter_softc  = sc;
-    sc->sc_link.scsipi_scsi.adapter_target = 7;
-    sc->sc_link.adapter        = &sc->sc_adapter;
-    sc->sc_link.device         = &wdsc_scsidev;
-    sc->sc_link.openings       = 2;
-    sc->sc_link.scsipi_scsi.max_target     = 7;
-    sc->sc_link.scsipi_scsi.max_lun = 7;
-    sc->sc_link.type = BUS_SCSI;
+    sc->sc_channel.chan_adapter = &sc->sc_adapter;
+    sc->sc_channel.chan_bustype = &scsi_bustype;
+    sc->sc_channel.chan_channel = 0;
+    sc->sc_channel.chan_ntargets = 8;
+    sc->sc_channel.chan_nluns = 8;
+    sc->sc_channel.chan_id = 7;
 
-    printf(": WD33C93 SCSI, target %d\n",
-		sc->sc_link.scsipi_scsi.adapter_target);
+    printf(": WD33C93 SCSI, target %d\n", sc->sc_channel.chan_id);
 
     /*
      * Eveything is a valid dma address.
@@ -172,7 +165,7 @@ wdsc_pcc_attach(pdp, dp, auxp)
     pcc_reg_write(sys_pcc, PCCREG_SCSI_INTR_CTRL,
         sc->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
 
-    (void)config_found(dp, &sc->sc_link, scsiprint);
+    (void)config_found(dp, &sc->sc_channel, scsiprint);
 }
 
 /*

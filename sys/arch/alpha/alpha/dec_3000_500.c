@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.32 2000/10/17 08:55:43 nisimura Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.33 2001/04/25 17:53:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.32 2000/10/17 08:55:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.33 2001/04/25 17:53:04 bouyer Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -250,7 +250,7 @@ dec_3000_500_device_register(dev, aux)
 		if (parent->dv_parent != scsidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+		if (b->unit / 100 != sa->sa_periph->periph_target)
 			return;
 
 		/* XXX LUN! */

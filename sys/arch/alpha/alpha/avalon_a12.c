@@ -1,4 +1,4 @@
-/* $NetBSD: avalon_a12.c,v 1.5 2000/05/22 20:13:32 thorpej Exp $ */
+/* $NetBSD: avalon_a12.c,v 1.6 2001/04/25 17:53:04 bouyer Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.5 2000/05/22 20:13:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.6 2001/04/25 17:53:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ avalon_a12_device_register(dev, aux)
 		if (parent->dv_parent != scsidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+		if (b->unit / 100 != sa->sa_periph->periph_target)
 			return;
 
 		/* XXX LUN! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.16 2000/02/04 09:31:07 enami Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.17 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -69,7 +69,7 @@ struct cfattach aic_pcmcia_ca = {
 	aic_pcmcia_detach, aic_activate
 };
 
-int	aic_pcmcia_enable __P((void *, int));
+int	aic_pcmcia_enable __P((struct device *, int));
 
 const struct pcmcia_product aic_pcmcia_products[] = {
 	{ PCMCIA_STR_ADAPTEC_APA1460,		PCMCIA_VENDOR_ADAPTEC,
@@ -169,7 +169,7 @@ aic_pcmcia_attach(parent, self, aux)
 	printf(": %s\n", pp->pp_name);
 
 	/* We can enable and disable the controller. */
-	sc->sc_adapter.scsipi_enable = aic_pcmcia_enable;
+	sc->sc_adapter.adapt_enable = aic_pcmcia_enable;
 
 	psc->sc_flags |= AIC_PCMCIA_ATTACH;
 	aicattach(sc);
@@ -214,11 +214,11 @@ aic_pcmcia_detach(self, flags)
 	return (0);
 }
 int
-aic_pcmcia_enable(arg, onoff)
-	void *arg;
+aic_pcmcia_enable(self, onoff)
+	struct device *self;
 	int onoff;
 {
-	struct aic_pcmcia_softc *psc = arg;
+	struct aic_pcmcia_softc *psc = (void *)self;
 
 	if (onoff) {
 		/* Establish the interrupt handler. */

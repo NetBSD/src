@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.16 2000/12/03 01:42:30 matt Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.17 2001/04/25 17:53:19 bouyer Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -37,7 +37,8 @@ struct cfattach sc_ca = {
 void cxd1185_init __P((struct sc_softc *));
 static void free_scb __P((struct sc_softc *, struct sc_scb *));
 static struct sc_scb *get_scb __P((struct sc_softc *, int));
-static int sc_scsi_cmd __P((struct scsipi_xfer *));
+static void sc_scsipi_request __P((struct scsipi_channel *,
+					scsipi_adapter_req_t, void *));
 static int sc_poll __P((struct sc_softc *, int, int));
 static void sc_sched __P((struct sc_softc *));
 void sc_done __P((struct sc_scb *));
@@ -51,13 +52,6 @@ extern int sc_busy __P((struct sc_softc *, int));
 extern paddr_t kvtophys __P((vaddr_t));
 
 static int sc_disconnect = IDT_DISCON;
-
-struct scsipi_device cxd1185_dev = {
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
 
 int
 cxd1185_match(parent, cf, aux)
@@ -99,18 +93,21 @@ cxd1185_attach(parent, self, aux)
 	else
 		sc->scsi_1185AQ = 0;
 
-	sc->sc_adapter.scsipi_cmd = sc_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = 7;
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_ioctl = NULL;
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = sc_scsipi_request;
 
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &cxd1185_dev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	memset(&sc->sc_channel, 0, sizeof(sc->sc_channel));
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = 8;
+	sc->sc_channel.chan_nluns = 8;
+	sc->sc_channel.chan_id = 7;
 
 	TAILQ_INIT(&sc->ready_list);
 	TAILQ_INIT(&sc->free_list);
@@ -126,7 +123,7 @@ cxd1185_attach(parent, self, aux)
 
 	hb_intr_establish(intlevel, IPL_BIO, sc_intr, sc);
 
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
 void
@@ -183,52 +180,62 @@ get_scb(sc, flags)
 	return scb;
 }
 
-int
-sc_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+sc_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct sc_softc *sc = sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct sc_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct sc_scb *scb;
 	int flags, s;
-	int chan;
+	int target;
 
-	flags = xs->xs_control;
-	if ((scb = get_scb(sc, flags)) == NULL)
-		return TRY_AGAIN_LATER;
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
 
-	scb->xs = xs;
-	scb->flags = 0;
-	scb->sc_ctag = 0;
-	scb->sc_coffset = 0;
-	scb->istatus = 0;
-	scb->tstatus = 0;
-	scb->message = 0;
-	bzero(scb->msgbuf, sizeof(scb->msgbuf));
+		flags = xs->xs_control;
+		if ((scb = get_scb(sc, flags)) == NULL)
+			panic("sc_scsipi_request: no scb");
 
-	s = splbio();
+		scb->xs = xs;
+		scb->flags = 0;
+		scb->sc_ctag = 0;
+		scb->sc_coffset = 0;
+		scb->istatus = 0;
+		scb->tstatus = 0;
+		scb->message = 0;
+		bzero(scb->msgbuf, sizeof(scb->msgbuf));
 
-	TAILQ_INSERT_TAIL(&sc->ready_list, scb, chain);
-	sc_sched(sc);
-	splx(s);
+		s = splbio();
 
-	if ((flags & XS_CTL_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
+		TAILQ_INSERT_TAIL(&sc->ready_list, scb, chain);
+		sc_sched(sc);
+		splx(s);
 
-	chan = sc_link->scsipi_scsi.target;
-
-	if (sc_poll(sc, chan, xs->timeout)) {
-		printf("sc: timeout (retry)\n");
-		if (sc_poll(sc, chan, xs->timeout)) {
-			printf("sc: timeout\n");
-			return COMPLETE;
+		if (flags & XS_CTL_POLL) {
+			target = periph->periph_target;
+			if (sc_poll(sc, target, xs->timeout)) {
+				printf("sc: timeout (retry)\n");
+				if (sc_poll(sc, target, xs->timeout)) {
+					printf("sc: timeout\n");
+				}
+			}
+			/* called during autoconfig only... */
+			MachFlushCache(); /* Flush all caches */
 		}
+		return;
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
 	}
-
-	/* called during autoconfig only... */
-
-	MachFlushCache(); /* Flush all caches */
-	return COMPLETE;
 }
 
 /*
@@ -268,7 +275,7 @@ sc_sched(sc)
 	struct sc_softc *sc;
 {
 	struct scsipi_xfer *xs;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	int ie = 0;
 	int flags;
 	int chan, lun;
@@ -280,8 +287,8 @@ start:
 		return;
 
 	xs = scb->xs;
-	sc_link = xs->sc_link;
-	chan = sc_link->scsipi_scsi.target;
+	periph = xs->xs_periph;
+	chan = periph->periph_target;
 	flags = xs->xs_control;
 
 	if (cold)
@@ -296,7 +303,7 @@ start:
 	if (flags & XS_CTL_RESET)
 		printf("SCSI RESET\n");
 
-	lun = sc_link->scsipi_scsi.lun;
+	lun = periph->periph_lun;
 
 	scb->identify = MSG_IDENT | sc_disconnect | (lun & IDT_DRMASK);
 	scb->sc_ctrnscnt = xs->datalen;
@@ -354,10 +361,9 @@ sc_done(scb)
 	struct sc_scb *scb;
 {
 	struct scsipi_xfer *xs = scb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct sc_softc *sc = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct sc_softc *sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
-	xs->xs_status |= XS_STS_DONE;
 	xs->resid = 0;
 	xs->status = 0;
 
@@ -377,16 +383,9 @@ sc_done(scb)
 		break;
 
 	case TGST_CC:
-		break;		/* XXX */
-#if 0
-		chan = sc_link->scsipi_scsi.target;
-		lun = sc_link->scsipi_scsi.lun;
-		scop_rsense(chan, scb, lun, SCSI_INTDIS, 18, 0);
-		if (scb->tstatus != TGST_GOOD) {
-			printf("SC(t2): [istatus=0x%x, tstatus=0x%x]\n",
-				scb->istatus, scb->tstatus);
-		}
-#endif
+		xs->status = SCSI_CHECK;
+		if (xs->error == 0)
+			xs->error = XS_BUSY;
 
 	default:
 		printf("SC(t): [istatus=0x%x, tstatus=0x%x]\n",
@@ -396,7 +395,7 @@ sc_done(scb)
 
 	scsipi_done(xs);
 	free_scb(sc, scb);
-	sc->inuse[sc_link->scsipi_scsi.target] = 0;
+	sc->inuse[periph->periph_target] = 0;
 	sc_sched(sc);
 }
 
@@ -466,10 +465,10 @@ cxd1185_timeout(arg)
 {
 	struct sc_scb *scb = arg;
 	struct scsipi_xfer *xs = scb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
+	struct scsipi_periph *periph = xs->xs_periph;
 	int chan;
 
-	chan = sc_link->scsipi_scsi.target;
+	chan = periph->periph_target;
 
 	printf("sc: timeout ch=%d\n", chan);
 

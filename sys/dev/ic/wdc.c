@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.95 2001/03/21 08:44:14 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.96 2001/04/25 17:53:35 bouyer Exp $ */
 
 
 /*
@@ -149,7 +149,7 @@ wdprint(aux, pnp)
 }
 
 int
-atapi_print(aux, pnp)
+atapiprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
@@ -429,7 +429,7 @@ wdcattach(chp)
 		aa_link.aa_drv_data = 0;
 		aa_link.aa_bus_private = NULL;
 		chp->atapibus = config_found(&chp->wdc->sc_dev,
-		    (void *)&aa_link, atapi_print);
+		    (void *)&aa_link, atapiprint);
 #endif
 	}
 
@@ -1586,15 +1586,15 @@ wdc_addref(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_softc *wdc = chp->wdc; 
-	struct atapi_adapter *adapter = &wdc->sc_atapi_adapter;
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
 	int s, error = 0;
 
 	s = splbio();
-	if (adapter->_generic.scsipi_refcnt++ == 0 &&
-	    adapter->_generic.scsipi_enable != NULL) {
-		error = (*adapter->_generic.scsipi_enable)(wdc, 1);
+	if (adapt->adapt_refcnt++ == 0 &&
+	    adapt->adapt_enable != NULL) {
+		error = (*adapt->adapt_enable)(&wdc->sc_dev, 1);
 		if (error)
-			adapter->_generic.scsipi_refcnt--;
+			adapt->adapt_refcnt--;
 	}
 	splx(s);
 	return (error);
@@ -1605,13 +1605,13 @@ wdc_delref(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_softc *wdc = chp->wdc;
-	struct atapi_adapter *adapter = &wdc->sc_atapi_adapter;
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
 	int s;
 
 	s = splbio();
-	if (adapter->_generic.scsipi_refcnt-- == 1 &&
-	    adapter->_generic.scsipi_enable != NULL)
-		(void) (*adapter->_generic.scsipi_enable)(wdc, 0);
+	if (adapt->adapt_refcnt-- == 1 &&
+	    adapt->adapt_enable != NULL)
+		(void) (*adapt->adapt_enable)(&wdc->sc_dev, 0);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.1 2000/10/30 10:07:35 tsubai Exp $	*/
+/*	$NetBSD: spifi.c,v 1.2 2001/04/25 17:53:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -74,7 +74,8 @@ struct spifi_scb {
 
 struct spifi_softc {
 	struct device sc_dev;
-	struct scsipi_link sc_link;
+	struct scsipi_channel sc_channel;
+	struct scsipi_adapter sc_adapter;
 
 	struct spifi_reg *sc_reg;
 	struct spifi_scb *sc_nexus;
@@ -103,7 +104,7 @@ struct spifi_softc {
 int spifi_match(struct device *, struct cfdata *, void *);
 void spifi_attach(struct device *, struct device *, void *);
 
-int spifi_scsi_cmd(struct scsipi_xfer *);
+void spifi_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
 struct spifi_scb *spifi_get_scb(struct spifi_softc *);
 void spifi_free_scb(struct spifi_softc *, struct spifi_scb *);
 int spifi_poll(struct spifi_softc *);
@@ -128,21 +129,6 @@ static void spifi_write_count(struct spifi_reg *, int);
 
 #define DMAC3_FASTACCESS(sc)  dmac3_misc((sc)->sc_dma, DMAC3_CONF_FASTACCESS)
 #define DMAC3_SLOWACCESS(sc)  dmac3_misc((sc)->sc_dma, DMAC3_CONF_SLOWACCESS)
-
-struct scsipi_device spifi_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
-struct scsipi_adapter spifi_adapter = {
-	0,
-	spifi_scsi_cmd,
-	spifi_minphys,
-	NULL,
-	NULL,
-};
 
 struct cfattach spifi_ca = {
 	sizeof(struct spifi_softc), spifi_match, spifi_attach
@@ -198,15 +184,21 @@ spifi_attach(parent, self, aux)
 	spifi_reset(sc);
 	DMAC3_FASTACCESS(sc);
 
-	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_id;
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &spifi_adapter;
-	sc->sc_link.device = &spifi_dev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.type = BUS_SCSI;
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = 7;
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_ioctl = NULL;
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = spifi_scsipi_request;
+
+	memset(&sc->sc_channel, 0, sizeof(sc->sc_channel));
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = 8;
+	sc->sc_channel.chan_nluns = 8;
+	sc->sc_channel.chan_id = sc->sc_id;
 
 	if (apa->apa_slotno == 0)
 		intr = NEWS5000_INT0_DMAC;
@@ -215,62 +207,76 @@ spifi_attach(parent, self, aux)
 	apbus_intr_establish(0, intr, 0, spifi_intr, sc, apa->apa_name,
 	    apa->apa_ctlnum);
 
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
-int
-spifi_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+spifi_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
+	
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct spifi_softc *sc = sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct spifi_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct spifi_scb *scb;
 	u_int flags;
 	int s;
 
-	DPRINTF("spifi_scsi_cmd\n");
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
 
-	flags = xs->xs_control;
+		DPRINTF("spifi_scsi_cmd\n");
 
-	scb = spifi_get_scb(sc);
-	if (scb == NULL) {
-		DPRINTF("no scb\n");
-		return TRY_AGAIN_LATER;
+		flags = xs->xs_control;
+
+		scb = spifi_get_scb(sc);
+		if (scb == NULL) {
+			panic("spifi_scsipi_request: no scb\n");
+		}
+
+		scb->xs = xs;
+		scb->flags = 0;
+		scb->status = 0;
+		scb->daddr = (vaddr_t)xs->data;
+		scb->resid = xs->datalen;
+		bcopy(xs->cmd, &scb->cmd, xs->cmdlen);
+		scb->cmdlen = xs->cmdlen;
+
+		scb->target = periph->periph_target;
+		scb->lun = periph->periph_lun;
+		scb->lun_targ = scb->target | (scb->lun << 3);
+
+		if (flags & XS_CTL_DATA_IN)
+			scb->flags |= SPIFI_READ;
+
+		s = splbio();
+
+		TAILQ_INSERT_TAIL(&sc->ready_scb, scb, chain);
+
+		if (sc->sc_nexus == NULL)	/* IDLE */
+			spifi_sched(sc);
+
+		splx(s);
+
+		if (flags & XS_CTL_POLL) {
+			if (spifi_poll(sc)) {
+				printf("spifi: timeout\n");
+				if (spifi_poll(sc))
+					printf("spifi: timeout again\n");
+			}
+		}
+		return;
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
 	}
-
-	scb->xs = xs;
-	scb->flags = 0;
-	scb->status = 0;
-	scb->daddr = (vaddr_t)xs->data;
-	scb->resid = xs->datalen;
-	bcopy(xs->cmd, &scb->cmd, xs->cmdlen);
-	scb->cmdlen = xs->cmdlen;
-
-	scb->target = sc_link->scsipi_scsi.target;
-	scb->lun = sc_link->scsipi_scsi.lun;
-	scb->lun_targ = scb->target | (scb->lun << 3);
-
-	if (flags & XS_CTL_DATA_IN)
-		scb->flags |= SPIFI_READ;
-
-	s = splbio();
-
-	TAILQ_INSERT_TAIL(&sc->ready_scb, scb, chain);
-
-	if (sc->sc_nexus == NULL)	/* IDLE */
-		spifi_sched(sc);
-
-	splx(s);
-
-	if ((flags & XS_CTL_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
-
-	if (spifi_poll(sc)) {
-		printf("spifi: timeout\n");
-		if (spifi_poll(sc))
-			printf("spifi: timeout again\n");
-	}
-	return COMPLETE;
 }
 
 struct spifi_scb *
@@ -616,7 +622,7 @@ spifi_sendmsg(sc, msg)
 	}
 	if (msg & SEND_IDENTIFY) {
 		DPRINTF(" IDENTIFY");
-		lun = scb->xs->sc_link->scsipi_scsi.lun;
+		lun = scb->xs->xs_periph->periph_lun;
 		sc->sc_omsg[len++] = MSG_IDENTIFY(lun, 0);
 	}
 	if (msg & SEND_SDTR) {
@@ -720,12 +726,13 @@ spifi_done(sc)
 
 	DPRINTF("spifi_done\n");
 
-	/* XXX sense */
-
-	if (scb->status == SCSI_CHECK)
+	xs->status = scb->status;
+	if (xs->status == SCSI_CHECK) {
 		DPRINTF("spifi_done: CHECK CONDITION\n");
+		if (xs->error == XS_NOERROR)
+			xs->error = XS_BUSY;
+	}
 
-	xs->xs_status |= XS_STS_DONE;
 	xs->resid = scb->resid;
 
 	scsipi_done(xs);

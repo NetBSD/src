@@ -1,7 +1,7 @@
-/*	$NetBSD: dpt_isa.c,v 1.4 2000/06/30 13:36:47 ad Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.5 2001/04/25 17:53:35 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
+ * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,18 +31,14 @@
  * ISA front-end for DPT EATA SCSI driver. 
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.4 2000/06/30 13:36:47 ad Exp $");
-
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/queue.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
@@ -58,27 +54,25 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.4 2000/06/30 13:36:47 ad Exp $");
 #define	DPT_ISA_IOSIZE		16
 #define DPT_ISA_MAXCCBS		16
 
-static int dpt_isa_match __P((struct device *, struct cfdata *, void *));
-static void dpt_isa_attach __P((struct device *, struct device *, void *));
-static int dpt_isa_probe __P((struct isa_attach_args *, int));
-static int dpt_isa_wait __P((bus_space_handle_t, bus_space_tag_t, u_int8_t,
-    u_int8_t));
+static void	dpt_isa_attach(struct device *, struct device *, void *);
+static int	dpt_isa_match(struct device *, struct cfdata *, void *);
+static int	dpt_isa_probe(struct isa_attach_args *, int);
+static int	dpt_isa_wait(bus_space_handle_t, bus_space_tag_t, u_int8_t,
+			     u_int8_t);
 
 struct cfattach dpt_isa_ca = {
 	sizeof(struct dpt_softc), dpt_isa_match, dpt_isa_attach
 };
 
 /* Try 'less intrusive' addresses first */
-static int dpt_isa_iobases[] = { 0x230, 0x330, 0x1f0, 0x170, -1 };
+static const int	dpt_isa_iobases[] = { 0x230, 0x330, 0x1f0, 0x170, 0 };
 
 /*
  * Wait for the HBA status register to reach a specific state.
  */
 static int
-dpt_isa_wait(ioh, iot, mask, state)
-	bus_space_handle_t ioh;
-	bus_space_tag_t iot;
-	u_int8_t mask, state;
+dpt_isa_wait(bus_space_handle_t ioh, bus_space_tag_t iot, u_int8_t mask,
+	     u_int8_t state)
 {
 	int ms;
 
@@ -87,6 +81,7 @@ dpt_isa_wait(ioh, iot, mask, state)
 			return (0);
 		DELAY(100);
 	}
+
 	return (-1);
 }
 
@@ -94,10 +89,7 @@ dpt_isa_wait(ioh, iot, mask, state)
  * Match a supported board.
  */
 static int
-dpt_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+dpt_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia;
 	int i;
@@ -106,13 +98,12 @@ dpt_isa_match(parent, match, aux)
 
 	if (ia->ia_iobase != ISACF_PORT_DEFAULT) 
 		return (dpt_isa_probe(ia, ia->ia_iobase));
-	
-	for (i = 0; dpt_isa_iobases[i] != -1; i++) {
+
+	for (i = 0; dpt_isa_iobases[i] != 0; i++)
 		if (dpt_isa_probe(ia, dpt_isa_iobases[i])) {
 			ia->ia_iobase = dpt_isa_iobases[i];
 			return (1);
 		}
-	}
 
 	return (0);
 }
@@ -121,9 +112,7 @@ dpt_isa_match(parent, match, aux)
  * Probe for a supported board.
  */
 static int
-dpt_isa_probe(ia, iobase)
-	struct isa_attach_args *ia;
-	int iobase;
+dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 {
 	struct eata_cfg ec;
 	bus_space_handle_t ioh;
@@ -138,7 +127,7 @@ dpt_isa_probe(ia, iobase)
 
 	/* 
 	 * Assumuing the DPT BIOS reset the board, we shouldn't need to
-	 * re-do it here. The tests below should weed out non-EATA devices
+	 * re-do it here.  The tests below should weed out non-EATA devices
 	 * before we start poking any registers.
 	 */
 	for (i = 1000; i; i--) {
@@ -146,30 +135,25 @@ dpt_isa_probe(ia, iobase)
 			break;
 		DELAY(2000);
 	}
-	
-	if (i == 0) {
-		bus_space_unmap(iot, ioh, DPT_ISA_IOSIZE);
-		return (0);
-	}
+
+	if (i == 0)
+		goto bad;
 
 	while((((stat = bus_space_read_1(iot, ioh, HA_STATUS))
 	    != (HA_ST_READY|HA_ST_SEEK_COMPLETE))
 	    && (stat != (HA_ST_READY|HA_ST_SEEK_COMPLETE|HA_ST_ERROR))
 	    && (stat != (HA_ST_READY|HA_ST_SEEK_COMPLETE|HA_ST_ERROR|HA_ST_DRQ)))
-	    || (dpt_isa_wait(ioh, iot, HA_ST_BUSY, 0))) {
+	    || (dpt_isa_wait(ioh, iot, HA_ST_BUSY, 0)))
 		/* RAID drives still spinning up? */
-		if((bus_space_read_1(iot, ioh, HA_ERROR) != 'D')
-		    || (bus_space_read_1(iot, ioh, HA_ERROR + 1) != 'P')
-		    || (bus_space_read_1(iot, ioh, HA_ERROR + 2) != 'T')) {
-		    	bus_space_unmap(iot, ioh, DPT_ISA_IOSIZE);
-			return (0);
-		}
-	}
+		if (bus_space_read_1(iot, ioh, HA_ERROR) != 'D' ||
+		    bus_space_read_1(iot, ioh, HA_ERROR + 1) != 'P' ||
+		    bus_space_read_1(iot, ioh, HA_ERROR + 2) != 'T')
+			goto bad;
 
 	/* 
 	 * At this point we can be confident that we are dealing with a DPT
-	 * HBA. Issue the read-config command and wait for the data to
-	 * appear. XXX we shouldn't be doing this with PIO, but it makes it
+	 * HBA.  Issue the read-config command and wait for the data to
+	 * appear.  XXX We shouldn't be doing this with PIO, but it makes it
 	 * a lot easier as no DMA setup is required.
 	 */
 	bus_space_write_1(iot, ioh, HA_COMMAND, CP_PIO_GETCFG);
@@ -178,14 +162,12 @@ dpt_isa_probe(ia, iobase)
 	    sizeof(ec.ec_cfglen)) >> 1;
 	p = (u_int16_t *)&ec;
 	
-	if (dpt_isa_wait(ioh, iot, 0xFF, HA_ST_DATA_RDY)) {
-		bus_space_unmap(iot, ioh, DPT_ISA_IOSIZE);
-  		return (0);
-  	}
+	if (dpt_isa_wait(ioh, iot, 0xFF, HA_ST_DATA_RDY))
+		goto bad;
 
 	/* Begin reading */
  	while (i--)
-		*p++ = bus_space_read_2(iot, ioh, HA_DATA);
+		*p++ = bus_space_read_stream_2(iot, ioh, HA_DATA);
 
 	if ((i = ec.ec_cfglen) > (sizeof(struct eata_cfg)
 	    - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
@@ -199,42 +181,37 @@ dpt_isa_probe(ia, iobase)
 	i >>= 1;
 
 	while (i--)
-		*p++ = bus_space_read_2(iot, ioh, HA_DATA);
+		*p++ = bus_space_read_stream_2(iot, ioh, HA_DATA);
 
 	/* Flush until we have read 512 bytes. */
 	i = (512 - j + 1) >> 1;
 	while (i--)
- 		bus_space_read_2(iot, ioh, HA_DATA);
+ 		bus_space_read_stream_2(iot, ioh, HA_DATA);
 
 	/* Puke if we don't like the returned configuration data. */
 	if ((bus_space_read_1(iot, ioh,  HA_STATUS) & HA_ST_ERROR) != 0 ||
 	    memcmp(ec.ec_eatasig, "EATA", 4) != 0 ||
 	    (ec.ec_feat0 & (EC_F0_HBA_VALID | EC_F0_DMA_SUPPORTED)) != 
-	    (EC_F0_HBA_VALID | EC_F0_DMA_SUPPORTED)) {
-	    	bus_space_unmap(iot, ioh, DPT_ISA_IOSIZE);
-		return (0);
-	}
+	    (EC_F0_HBA_VALID | EC_F0_DMA_SUPPORTED))
+	    	goto bad;
 
 	/* 
-	 * Which DMA channel to use: if it was hardwired in the kernel 
-	 * configuration, use that value. If the HBA told us, use that
-	 * value. Otherwise, puke.
+	 * Which DMA channel to use: if it was hardwired in the kernel
+	 * configuration, use that value.  If the HBA told us, use that
+	 * value.  Otherwise, puke.
 	 */
 	if (ia->ia_drq == -1) {
 		int dmanum = ((ec.ec_feat1 & EC_F1_DMA_NUM_MASK) >> 
 		    EC_F1_DMA_NUM_SHIFT);
 	
-		if ((ec.ec_feat0 & EC_F0_DMA_NUM_VALID) == 0 || dmanum > 3) {
-			bus_space_unmap(iot, ioh, DPT_ISA_IOSIZE);
-			return (0);
-		}
-		
+		if ((ec.ec_feat0 & EC_F0_DMA_NUM_VALID) == 0 || dmanum > 3)
+			goto bad;
 		ia->ia_drq = "\0\7\6\5"[dmanum];
 	}
 
 	/* 
 	 * Which IRQ to use: if it was hardwired in the kernel configuration, 
-	 * use that value. Otherwise, use what the HBA told us.
+	 * use that value.  Otherwise, use what the HBA told us.
 	 */
 	if (ia->ia_irq == -1)
 		ia->ia_irq = ((ec.ec_feat1 & EC_F1_IRQ_NUM_MASK) >> 
@@ -244,15 +221,16 @@ dpt_isa_probe(ia, iobase)
 	ia->ia_iosize = DPT_ISA_IOSIZE;
 	bus_space_unmap(iot, ioh, DPT_ISA_IOSIZE);
 	return (1);
+ bad:
+	bus_space_unmap(iot, ioh, DPT_ISA_IOSIZE);
+	return (0);
 }
 
 /*
  * Attach a matched board.
  */
 static void
-dpt_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dpt_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia;
 	isa_chipset_tag_t ic;
@@ -285,8 +263,9 @@ dpt_isa_attach(parent, self, aux)
 	}
 
 	/* Establish the interrupt. */
-	if ((sc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
-	    dpt_intr, sc)) == NULL) {
+	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
+	    dpt_intr, sc);
+	if (sc->sc_ih == NULL) {
 		printf("can't establish interrupt\n");
 		return;
 	}
@@ -297,16 +276,13 @@ dpt_isa_attach(parent, self, aux)
 	}
 
 	/* 
-	 * Now attach to the bus-independent code. XXX We need to force
-	 * parameters that aren't filled in by some ISA boards. In
+	 * Now attach to the bus-independent code.  XXX We need to force
+	 * parameters that aren't filled in by some ISA boards.  In
 	 * particular, due to the limited amount of memory we have to play
-	 * with for DMA, clamp the number of CCBs to 16. I don't know if
-	 * making the DMA map non-contigiuous would allow us to play with
-	 * more CCBs, but in any case that *could* cause a performance hit,
-	 * at least for ISA HBAs.
+	 * with for DMA, clamp the number of CCBs to 16.
 	 */
 	ec = &sc->sc_ec;
-	 
+
 	if (be16toh(*(int16_t *)ec->ec_queuedepth) > DPT_ISA_MAXCCBS)
 		*(int16_t *)ec->ec_queuedepth = htobe16(DPT_ISA_MAXCCBS);
 	if (ec->ec_maxlun == 0)
@@ -316,6 +292,6 @@ dpt_isa_attach(parent, self, aux)
 		ec->ec_feat3 = (ec->ec_feat3 & ~EC_F3_MAX_TARGET_MASK) |
 		    (7 << EC_F3_MAX_TARGET_SHIFT);
 
-	/* Now attach to the bus-independent code */
+	/* Now attach to the bus-independent code. */
 	dpt_init(sc, NULL);
 }

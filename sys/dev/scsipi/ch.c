@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.43 2000/06/09 08:54:21 enami Exp $	*/
+/*	$NetBSD: ch.c,v 1.44 2001/04/25 17:53:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 struct ch_softc {
 	struct device	sc_dev;		/* generic device info */
-	struct scsipi_link *sc_link;	/* link in the SCSI bus */
+	struct scsipi_periph *sc_periph;/* our periph data */
 
 	u_int		sc_events;	/* event bitmask */
 	struct selinfo	sc_selq;	/* select/poll queue for events */
@@ -120,7 +120,7 @@ struct scsipi_inquiry_pattern ch_patterns[] = {
 /* SCSI glue */
 int	ch_interpret_sense __P((struct scsipi_xfer *));
 
-struct scsipi_device ch_switch = {
+const struct scsipi_periphsw ch_switch = {
 	ch_interpret_sense,	/* check our error handler first */
 	NULL,			/* no queue; our commands are synchronous */
 	NULL,			/* have no async handler */
@@ -186,13 +186,12 @@ chattach(parent, self, aux)
 {
 	struct ch_softc *sc = (struct ch_softc *)self;
 	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *link = sa->sa_sc_link;
+	struct scsipi_periph *periph = sa->sa_periph;
 
 	/* Glue into the SCSI bus */
-	sc->sc_link = link;
-	link->device = &ch_switch;
-	link->device_softc = sc;
-	link->openings = 1;
+	sc->sc_periph = periph;
+	periph->periph_dev = &sc->sc_dev;
+	periph->periph_switch = &ch_switch;
 
 	printf("\n");
 
@@ -249,6 +248,8 @@ chopen(dev, flags, fmt, p)
 	struct proc *p;
 {
 	struct ch_softc *sc;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
 	int unit, error;
 
 	unit = CHUNIT(dev);
@@ -256,16 +257,19 @@ chopen(dev, flags, fmt, p)
 	    ((sc = ch_cd.cd_devs[unit]) == NULL))
 		return (ENXIO);
 
+	periph = sc->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
+
 	/*
 	 * Only allow one open at a time.
 	 */
-	if (sc->sc_link->flags & SDEV_OPEN)
+	if (periph->periph_flags & PERIPH_OPEN)
 		return (EBUSY);
 
-	if ((error = scsipi_adapter_addref(sc->sc_link)) != 0)
+	if ((error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
 
-	sc->sc_link->flags |= SDEV_OPEN;
+	periph->periph_flags |= PERIPH_OPEN;
 
 	/*
 	 * Make sure the unit is on-line.  If a UNIT ATTENTION
@@ -275,7 +279,7 @@ chopen(dev, flags, fmt, p)
 	 * We ignore NOT READY in case e.g a magazine isn't actually
 	 * loaded into the changer or a tape isn't in the drive.
 	 */
-	error = scsipi_test_unit_ready(sc->sc_link, XS_CTL_IGNORE_NOT_READY);
+	error = scsipi_test_unit_ready(periph, XS_CTL_IGNORE_NOT_READY);
 	if (error)
 		goto bad;
 
@@ -288,8 +292,8 @@ chopen(dev, flags, fmt, p)
 	return (0);
 
  bad:
-	scsipi_adapter_delref(sc->sc_link);
-	sc->sc_link->flags &= ~SDEV_OPEN;
+	scsipi_adapter_delref(adapt);
+	periph->periph_flags &= ~PERIPH_OPEN;
 	return (error);
 }
 
@@ -300,14 +304,16 @@ chclose(dev, flags, fmt, p)
 	struct proc *p;
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct scsipi_periph *periph = sc->sc_periph;
+	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
-	scsipi_wait_drain(sc->sc_link);
+	scsipi_wait_drain(periph);
 
-	scsipi_adapter_delref(sc->sc_link);
+	scsipi_adapter_delref(adapt);
 
 	sc->sc_events = 0;
 
-	sc->sc_link->flags &= ~SDEV_OPEN;
+	periph->periph_flags &= ~PERIPH_OPEN;
 	return (0);
 }
 
@@ -403,7 +409,7 @@ chioctl(dev, cmd, data, flags, p)
 	case CHIOIELEM:
 		error = ch_ielem(sc);
 		if (error == 0) {
-			sc->sc_link->flags |= SDEV_MEDIA_LOADED;
+			sc->sc_periph->periph_flags |= PERIPH_MEDIA_LOADED;
 		}
 		break;
 
@@ -430,7 +436,8 @@ chioctl(dev, cmd, data, flags, p)
 	/* Implement prevent/allow? */
 
 	default:
-		error = scsipi_do_ioctl(sc->sc_link, dev, cmd, data, flags, p);
+		error = scsipi_do_ioctl(sc->sc_periph, dev, cmd, data,
+		    flags, p);
 		break;
 	}
 
@@ -463,10 +470,17 @@ int
 ch_interpret_sense(xs)
 	struct scsipi_xfer *xs;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
+	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
-	struct ch_softc *sc = sc_link->device_softc;
+	struct ch_softc *sc = (void *)periph->periph_dev;
 	u_int16_t asc_ascq;
+
+	/*
+	 * If the periph is already recovering, just do the
+	 * normal error recovering.
+	 */
+	if (periph->periph_flags & PERIPH_RECOVERING)
+		return (EJUSTRETURN);
 
 	/*
 	 * If it isn't an extended or extended/deferred error, let
@@ -474,7 +488,7 @@ ch_interpret_sense(xs)
 	 */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
 	    (sense->error_code & SSD_ERRCODE) != 0x71)
-		return (SCSIRET_CONTINUE);
+		return (EJUSTRETURN);
 
 	/*
 	 * We're only interested in condtions that
@@ -491,24 +505,23 @@ ch_interpret_sense(xs)
 		/* "Not Ready To Ready Transition (Medium May Have Changed)" */
 	case 0x2900:
 		/* "Power On, Reset, or Bus Device Reset Occurred" */
-		sc->sc_link->flags &= ~SDEV_MEDIA_LOADED;
+		sc->sc_periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 		/*
 		 * Enqueue an Element-Status-Changed event, and
 		 * wake up any processes waiting for them.
 		 */
-		if ((xs->xs_control & XS_CTL_IGNORE_MEDIA_CHANGE) == 0) {
-			ch_event(sc, CHEV_ELEMENT_STATUS_CHANGED);
-		}
 		/*
-		 * When we get interrupt threads, we can possibly
-		 * run automatic corrective commands here if the
-		 * policy is that we do so.
+		 * Enqueue an Element-Status-Changed event, and wake up
+		 * any processes waiting for them.
 		 */
+		if ((xs->xs_control & XS_CTL_IGNORE_MEDIA_CHANGE) == 0)
+			ch_event(sc, CHEV_ELEMENT_STATUS_CHANGED);
 		break;
 	default:
 		break;
 	}
-	return (SCSIRET_CONTINUE);
+
+	return (EJUSTRETURN);
 }
 
 void
@@ -564,7 +577,7 @@ ch_move(sc, cm)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_link,
+	return (scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
 	    100000, NULL, 0));
 }
@@ -621,7 +634,7 @@ ch_exchange(sc, ce)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_link,
+	return (scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
 	    100000, NULL, 0));
 }
@@ -660,7 +673,7 @@ ch_position(sc, cp)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_link,
+	return (scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
 	    100000, NULL, 0));
 }
@@ -763,9 +776,8 @@ ch_usergetelemstatus(sc, cesr)
 	struct ch_softc *sc;
 	struct changer_element_status_request *cesr;
 {
-	struct scsibus_softc *parent;
-	struct scsipi_link *dtlink;
-	struct device *dtdev;
+	struct scsipi_channel *chan = sc->sc_periph->periph_channel;
+	struct scsipi_periph *dtperiph;
 	struct read_element_status_header *st_hdrp, st_hdr;
 	struct read_element_status_page_header *pg_hdrp;
 	struct read_element_status_descriptor *desc;
@@ -892,14 +904,13 @@ ch_usergetelemstatus(sc, cesr)
 		else if ((ces.ces_flags &
 			  (CESTATUS_TARGET_VALID|CESTATUS_LUN_VALID)) ==
 			 (CESTATUS_TARGET_VALID|CESTATUS_LUN_VALID)) {
-			parent = (struct scsibus_softc *)sc->sc_dev.dv_parent;
-			if (ces.ces_target <= parent->sc_maxtarget &&
-			    ces.ces_lun <= parent->sc_maxlun &&
-			    (dtlink =
-			     parent->sc_link[ces.ces_target][ces.ces_lun])
-			     != NULL &&
-			    (dtdev = dtlink->device_softc) != NULL) {
-				strcpy(ces.ces_xname, dtdev->dv_xname);
+			if (ces.ces_target < chan->chan_ntargets &&
+			    ces.ces_lun < chan->chan_nluns &&
+			    (dtperiph = scsipi_lookup_periph(chan,
+			     ces.ces_target, ces.ces_lun)) != NULL &&
+			    dtperiph->periph_dev != NULL) {
+				strcpy(ces.ces_xname,
+				    dtperiph->periph_dev->dv_xname);
 				ces.ces_flags |= CESTATUS_XNAME_VALID;
 			}
 		}
@@ -1009,7 +1020,7 @@ ch_getelemstatus(sc, first, count, data, datalen, scsiflags, flags)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_link,
+	return (scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)data, datalen, CHRETRIES, 100000, NULL,
 	    scsiflags | XS_CTL_DATA_IN));
@@ -1077,7 +1088,7 @@ ch_setvoltag(sc, csvr)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_link,
+	return (scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)data, datalen, CHRETRIES, 100000, NULL,
 	    datalen ? XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK : 0));
@@ -1115,7 +1126,7 @@ ch_ielem(sc)
 	tmo *= 5 * 60 * 1000;
 	tmo += (10 * 60 * 1000);
 
-	return (scsipi_command(sc->sc_link,
+	return (scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    NULL, 0, CHRETRIES, tmo, NULL, XS_CTL_IGNORE_ILLEGAL_REQUEST));
 }
@@ -1150,7 +1161,7 @@ ch_get_params(sc, scsiflags)
 	cmd.byte2 |= 0x08;	/* disable block descriptors */
 	cmd.page = 0x1d;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = scsipi_command(sc->sc_link,
+	error = scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
 	    scsiflags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
@@ -1183,7 +1194,7 @@ ch_get_params(sc, scsiflags)
 	cmd.byte2 = 0x08;	/* disable block descriptors */
 	cmd.page = 0x1f;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = scsipi_command(sc->sc_link,
+	error = scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
 	    scsiflags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
@@ -1202,18 +1213,18 @@ ch_get_params(sc, scsiflags)
 		sc->sc_exchangemask[from] = exchanges[from];
 	}
 
-#ifdef	CH_AUTOMATIC_IELEM_POLICY
+#ifdef CH_AUTOMATIC_IELEM_POLICY
 	/*
 	 * If we need to do an Init-Element-Status,
 	 * do that now that we know what's in the changer.
 	 */
 	if ((scsiflags & XS_CTL_IGNORE_MEDIA_CHANGE) == 0) {
-		if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
+		if ((sc->sc_periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)
 			error = ch_ielem(sc);
 		if (error == 0)
-			sc->sc_link->flags |= SDEV_MEDIA_LOADED;
+			sc->sc_periph->periph_flags |= PERIPH_MEDIA_LOADED;
 		else
-			sc->sc_link->flags &= ~SDEV_MEDIA_LOADED;
+			sc->sc_periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 	}
 #endif
 	return (error);

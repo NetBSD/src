@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.15 2001/03/18 15:56:05 bjh21 Exp $	*/
+/*	$NetBSD: cosc.c,v 1.16 2001/04/25 17:53:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -61,14 +61,8 @@
 
 void coscattach	__P((struct device *, struct device *, void *));
 int coscmatch	__P((struct device *, struct cfdata *, void *));
-int cosc_scsicmd	__P((struct scsipi_xfer *));
-
-struct scsipi_device cosc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start function */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
+void cosc_scsi_request	__P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 
 struct cfattach cosc_ca = {
 	sizeof(struct cosc_softc), coscmatch, coscattach
@@ -251,18 +245,20 @@ coscattach(pdp, dp, auxp)
 
 	escinitialize((struct esc_softc *)sc);
 
-	sc->sc_softc.sc_adapter.scsipi_cmd = cosc_scsicmd;
-	sc->sc_softc.sc_adapter.scsipi_minphys = esc_minphys;
+	sc->sc_softc.sc_adapter.adapt_dev = &sc->sc_softc.sc_dev;
+	sc->sc_softc.sc_adapter.adapt_nchannels = 1;
+	sc->sc_softc.sc_adapter.adapt_openings = 7;
+	sc->sc_softc.sc_adapter.adapt_max_periph = 1;
+	sc->sc_softc.sc_adapter.adapt_ioctl = NULL;
+	sc->sc_softc.sc_adapter.adapt_minphys = esc_minphys;
+	sc->sc_softc.sc_adapter.adapt_request = cosc_scsi_request;
 
-	sc->sc_softc.sc_link.scsipi_scsi.channel	    = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_softc.sc_link.adapter_softc  = sc;
-	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
-	sc->sc_softc.sc_link.adapter	    = &sc->sc_softc.sc_adapter;
-	sc->sc_softc.sc_link.device	    = &cosc_scsidev;
-	sc->sc_softc.sc_link.openings	    = 1;
-	sc->sc_softc.sc_link.scsipi_scsi.max_target     = 7;
-	sc->sc_softc.sc_link.scsipi_scsi.max_lun     = 7;
-	sc->sc_softc.sc_link.type = BUS_SCSI;
+	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_softc.sc_adapter;
+	sc->sc_softc.sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_softc.sc_channel.chan_channel = 0;
+	sc->sc_softc.sc_channel.chan_ntargets = 8;
+	sc->sc_softc.sc_channel.chan_nluns = 8;  
+	sc->sc_softc.sc_channel.chan_id = sc->sc_softc.sc_host_id;
 
 	/* initialise the card */
 #if 0
@@ -293,7 +289,7 @@ coscattach(pdp, dp, auxp)
 	printf("\n");
 
 	/* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
+	config_found(dp, &sc->sc_softc.sc_channel, scsiprint);
 }
 
 
@@ -443,21 +439,29 @@ cosc_build_dma_chain(sc, chain, p, l)
 }
 
 
-int
-cosc_scsicmd(xs)
-	struct scsipi_xfer *xs;
+void
+cosc_scsi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-/*	struct scsipi_link *sc_link = xs->sc_link;*/
+	struct scsipi_xfer *xs;
+
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
 
 #if COSC_POLL > 0
-	if (cosc_poll)
-		xs->xs_control |= XS_CTL_POLL;
+		if (cosc_poll)
+			xs->xs_control |= XS_CTL_POLL;
 #endif
 #if 0
-	if (sc_link->scsipi_scsi.lun == 0)
-	printf("id=%d lun=%d cmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
-	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
-	    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);
+		if (periph->periph_lun == 0)
+		printf("id=%d lun=%d cmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
+		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
+		    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);
 #endif
-	return(esc_scsicmd(xs));
+	default:
+	}
+	esc_scsi_request(chan, req, arg);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.1 2000/07/04 02:22:19 nisimura Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.2 2001/04/25 17:53:42 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,12 +68,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.1 2000/07/04 02:22:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.2 2001/04/25 17:53:42 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -235,7 +236,9 @@ asc_tcds_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
 }
 
 static void

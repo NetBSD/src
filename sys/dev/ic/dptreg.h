@@ -1,7 +1,7 @@
-/*	$NetBSD: dptreg.h,v 1.9 2000/06/13 13:36:44 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.10 2001/04/25 17:53:32 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
+ * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,32 +35,6 @@
 #define DPT_MAX_LUNS		8
 #define DPT_MAX_CHANNELS	3
 
-/* Software parameters */
-#define	DPT_MAX_XFER		((DPT_SG_SIZE - 1) << PGSHIFT)
-#define DPT_MAX_CCBS		256
-#define DPT_SG_SIZE        	64
-#define DPT_ABORT_TIMEOUT	2000	/* milliseconds */
-#define DPT_MORE_TIMEOUT	1000	/* microseconds */
-#define DPT_SCRATCH_SIZE	256	/* bytes */
-
-#ifdef _KERNEL
-
-#define dpt_inb(x, o)	\
-    bus_space_read_1((x)->sc_iot, (x)->sc_ioh, (o))
-#define dpt_inw(x, o)	\
-    bus_space_read_2((x)->sc_iot, (x)->sc_ioh, (o))
-#define dpt_inl(x, o)	\
-    bus_space_read_4((x)->sc_iot, (x)->sc_ioh, (o))
-
-#define dpt_outb(x, o, d) \
-    bus_space_write_1((x)->sc_iot, (x)->sc_ioh, (o), (d))
-#define dpt_outw(x, o, d) \
-    bus_space_write_2((x)->sc_iot, (x)->sc_ioh, (o), (d))
-#define dpt_outl(x, o, d) \
-    bus_space_write_4((x)->sc_iot, (x)->sc_ioh, (o), (d))
-
-#endif	/* _KERNEL */
- 
 /*
  * HBA registers
  */
@@ -129,7 +103,7 @@ struct eata_cp {
 	u_int32_t	cp_dataaddr;		/* Addr of data/SG list */
 	u_int32_t	cp_stataddr;		/* Addr of status packet */
 	u_int32_t	cp_senseaddr;		/* Addr of req. sense */
-};
+} __attribute__ ((__packed__));
 
 #define CP_C0_SCSI_RESET	0x01	/* Cause a bus reset */
 #define CP_C0_HBA_INIT		0x02	/* Reinitialize HBA */
@@ -161,7 +135,7 @@ struct eata_cp {
 #define CP_C4_IDENTIFY		0x80	/* Always true */
 
 /*
- * EATA status packet as returned by controller upon command completion. It 
+ * EATA status packet as returned by controller upon command completion.  It 
  * contains status, message info and a handle on the initiating CCB. 
  */
 struct eata_sp {
@@ -174,10 +148,10 @@ struct eata_sp {
 	u_int8_t	sp_que_message;
 	u_int8_t	sp_tag_message;
 	u_int8_t	sp_messages[9];
-};
+} __attribute__ ((__packed__));
 
 /* 
- * HBA status as returned by status packet. Bit 7 signals end of command. 
+ * HBA status as returned by status packet.  Bit 7 signals end of command. 
  */
 #define SP_HBA_NO_ERROR		0x00    /* No error on command */
 #define SP_HBA_ERROR_SEL_TO	0x01    /* Device selection timeout */
@@ -209,10 +183,10 @@ struct eata_sp {
 struct eata_sg {
 	u_int32_t	sg_addr;
 	u_int32_t	sg_len;
-};
+} __attribute__ ((__packed__));
 
 /*
- * EATA configuration data as returned by HBA. XXX this is bogus - it
+ * EATA configuration data as returned by HBA.  XXX This is bogus - it
  * doesn't sync up with the structure FreeBSD uses. [ad]
  */
 struct eata_cfg {
@@ -237,7 +211,7 @@ struct eata_cfg {
 	u_int8_t	ec_maxlun;		/* Maximum LUN supported */
 	u_int8_t	ec_feat4;		/* 5th feature byte */
 	u_int8_t	ec_raidnum;		/* RAID host adapter humber */
-};
+} __attribute__ ((__packed__));
 
 #define EC_F0_OVERLAP_CMDS	0x01	/* Overlapped cmds supported */
 #define EC_F0_TARGET_MODE	0x02	/* Target mode supported */
@@ -295,6 +269,6 @@ struct eata_inquiry_data {
 	char		ei_fw[3];		/* Firmware */
 	char		ei_fwrev[1];		/* Firmware revision */
 	u_int8_t	ei_extra[8];
-};
+} __attribute__ ((__packed__));
 
 #endif	/* !defined _IC_DPTREG_H_ */

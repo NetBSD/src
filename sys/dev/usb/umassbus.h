@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.h,v 1.1 2001/04/13 12:24:10 augustss Exp $	*/
+/*	$NetBSD: umassbus.h,v 1.2 2001/04/25 17:53:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,15 +64,13 @@
 struct umass_softc;
 
 struct umassbus_softc {
-	union {
-		struct scsipi_link	sc_link;
-		struct {
-			struct ata_atapi_attach	sc_aa;
-			struct ata_drive_datas	sc_aa_drive;
-		} aa;
-	} u;
+	struct {
+		struct ata_atapi_attach sc_aa;
+		struct ata_drive_datas  sc_aa_drive;
+	} aa;
 	struct atapi_adapter	sc_atapi_adapter;
 #define sc_adapter sc_atapi_adapter._generic
+	struct scsipi_channel sc_channel;
 	usbd_status		sc_sync_status;
 	struct scsipi_sense	sc_sense_cmd;
 

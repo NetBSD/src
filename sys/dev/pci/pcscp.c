@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.14 2001/03/29 03:26:52 petrov Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.15 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -56,10 +56,9 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <dev/scsipi/scsi_message.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -330,7 +329,9 @@ pcscp_attach(parent, self, aux)
 	/* Do the common parts of attachment. */
 	printf("%s", sc->sc_dev.dv_xname);
 
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
 
 	/* Turn on target selection using the `dma' method */
 	sc->sc_features |= NCR_F_DMASELECT;
