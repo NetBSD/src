@@ -91,7 +91,7 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arith.y	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: arith.y,v 1.3 1994/07/15 23:45:30 jtc Exp $";
+static char *rcsid = "$Id: arith.y,v 1.4 1994/12/23 13:20:10 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -119,7 +119,6 @@ arith(s)
 yyerror(s)
 	char *s;
 {
-	extern yytext, yylval;
 
 	yyerrok;
 	yyclearin;
