@@ -1,4 +1,4 @@
-/* $NetBSD: fusu.c,v 1.2 1996/03/27 22:42:08 mark Exp $ */
+/* $NetBSD: fusu.c,v 1.3 1996/04/26 20:35:23 mark Exp $ */
 
 /*
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -31,19 +31,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
+
 /*
  * Emulate fubyte.
  */
 
 int
 fubyte(addr)
-char *addr;
+void *addr;
 {
 	unsigned char c;
 	
-	if (copyin(addr,&c,sizeof(c)))
-		return -1;
-	return c;
+	if (copyin(addr, &c, sizeof(c)))
+		return(-1);
+	return(c);
 }
 
 /*
@@ -54,7 +57,7 @@ char *addr;
 
 int
 fuibyte(addr)
-char *addr;
+void *addr;
 {
 	unsigned char c;
 	
@@ -69,9 +72,9 @@ char *addr;
  *	 In case of separate I&D space this MUST be replaced.
  */
 
-int
+long
 fuiword(addr)
-char *addr;
+void *addr;
 {
 	unsigned long l;
 	
@@ -86,7 +89,7 @@ char *addr;
 
 int
 fuswintr(addr)
-char *addr;
+ caddr_t addr;
 {
 	unsigned short s;
 	extern int nopagefault;
@@ -120,9 +123,9 @@ char *addr;
  * Emulate fuword
  */
 
-int
+long
 fuword(addr)
-char *addr;
+void *addr;
 {
 	unsigned long l;
 	
@@ -136,10 +139,12 @@ char *addr;
  */
 
 int
-subyte(addr,c)
-char *addr;
-unsigned char c;
+subyte(addr,byte)
+void *addr;
+int byte;
 {
+	unsigned char c = byte;
+
 	if (copyout(&c,addr,sizeof(c)))
 		return -1;
 	return 0;
@@ -152,10 +157,12 @@ unsigned char c;
  */
 
 int
-suibyte(addr,c)
-char *addr;
-unsigned char c;
+suibyte(addr,byte)
+void *addr;
+int byte;
 {
+	unsigned char c = byte;
+
 	if (copyout(&c,addr,sizeof(c)))
 		return -1;
 	return 0;
@@ -169,8 +176,8 @@ unsigned char c;
 
 int
 suiword(addr,l)
-char *addr;
-unsigned long l;
+void *addr;
+long l;
 {
 	if (copyout(&l,addr,sizeof(l)))
 		return -1;
@@ -182,12 +189,13 @@ unsigned long l;
  */
 
 int
-suswintr(addr,s)
-char *addr;
-unsigned short s;
+suswintr(addr,word)
+caddr_t addr;
+unsigned int word;
 {
 	extern int nopagefault;
 	int ret;
+	unsigned short int s = word;
 	
 	nopagefault++;
 	ret = copyout(&s,addr,sizeof(s)) ? -1 : 0;
@@ -201,7 +209,7 @@ unsigned short s;
 
 int
 susword(addr,s)
-char *addr;
+void *addr;
 unsigned short s;
 {
 	if (copyout(&s,addr,sizeof(s)))
@@ -215,8 +223,8 @@ unsigned short s;
 
 int
 suword(addr,l)
-char *addr;
-unsigned long l;
+void *addr;
+long l;
 {
 	if (copyout(&l,addr,sizeof(l)))
 		return -1;
