@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50.4.9 2002/04/01 07:40:41 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.4.10 2002/04/01 22:06:31 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.9 2002/04/01 07:40:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.10 2002/04/01 22:06:31 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -454,8 +454,9 @@ svr4_sys_sysarch(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_sysarch_args *uap = v;
+	struct proc *p = l->l_proc;
 #ifdef USER_LDT
-	caddr_t sg = stackgap_init(l->l_proc, 0);
+	caddr_t sg = stackgap_init(p, 0);
 	int error;
 #endif
 	*retval = 0;	/* XXX: What to do */
