@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.3 2000/04/08 03:08:20 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.4 2000/04/08 15:15:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -217,7 +217,7 @@ sabre_init(sc, pba)
 	printf("sabre: ");
 
 	/* setup the PCI control register; there is only one for the sabre */
-	csr = bus_space_read_8(sc->sc_bustag, &sc->sc_regs->psy_pcictl[0].pci_csr, 0);
+	csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)&sc->sc_regs->psy_pcictl[0].pci_csr, 0);
 	csr = PCICTL_SERR | PCICTL_ARB_PARK | PCICTL_ERRINTEN | PCICTL_4ENABLE;
 	bus_space_write_8(sc->sc_bustag, &sc->sc_regs->psy_pcictl[0].pci_csr, 0, csr);
 
