@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.173 2002/09/22 05:40:35 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.174 2002/11/04 20:02:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.173 2002/09/22 05:40:35 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.174 2002/11/04 20:02:10 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -319,7 +319,7 @@ trap(status, cause, vaddr, opc, frame)
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
 		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
-			frame->tf_epc = (int)fswintrberr;
+			frame->tf_regs[TF_EPC] = (int)fswintrberr;
 			return; /* KERN */
 		}
 		goto pagefault;
@@ -403,7 +403,7 @@ trap(status, cause, vaddr, opc, frame)
 	copyfault:
 		if (p == NULL || p->p_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
-		frame->tf_epc = (int)p->p_addr->u_pcb.pcb_onfault;
+		frame->tf_regs[TF_EPC] = (int)p->p_addr->u_pcb.pcb_onfault;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
