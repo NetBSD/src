@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 1998/03/12 05:46:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107 1998/03/24 08:39:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 1998/03/12 05:46:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 1998/03/24 08:39:02 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 1998/03/12 05:46:21 thorpej Exp $"
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/trap.h>		/* mboard-specific interrupt fns */
 #include <pmax/pmax/cons.h>
+#include <pmax/dev/promiovar.h>		/* prom console I/O vector */
 
 #include "pm.h"
 #include "cfb.h"
@@ -123,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 1998/03/12 05:46:21 thorpej Exp $"
 
 
 extern struct consdev *cn_tab;	/* Console I/O table... */
-extern struct consdev cd;
+
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -313,7 +314,7 @@ mach_init(argc, argv, code, cv)
 	}
 
 	/* Use PROM console output until we initialize a console driver. */
-	cn_tab = &cd;
+	cn_tab = &promcd;
 
 	/* check for direct boot from DS5000 PROM */
 	if (argc > 0 && strcmp(argv[0], "boot") == 0) {

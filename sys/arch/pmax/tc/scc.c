@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.38 1998/03/24 00:23:56 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.39 1998/03/24 08:39:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.38 1998/03/24 00:23:56 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.39 1998/03/24 08:39:02 jonathan Exp $");
 
 #ifdef alpha
 #include "opt_dec_3000_300.h"
@@ -151,7 +151,6 @@ extern void ttrstrt	__P((void *));
 #if NRASTERCONSOLE > 0
 #define HAVE_RCONS
 #endif
-extern int pending_remcons;
 #endif
 
 /*
@@ -167,30 +166,14 @@ extern int pending_remcons;
 #define RASTER_CONSOLE() 1	/* Treat test for cn_screen as true */
 #endif
 
+
 /*
- * Is there a framebuffer console device using this serial driver?
- * XXX used for ugly special-cased console input that should be redone
- * more cleanly.
+ * Extract unit (scc chip), channel on chip, and dialin/dialout unit.
  */
-
-#ifdef RCONS_BRAINDAMAGE
-static inline int
-raster_console(void)
-{
-#if 1
-	return (cn_tab->cn_pri == CN_NORMAL || cn_tab->cn_pri == CN_INTERNAL);
-#else
-	register int israster =
-	    (cn_tab->cn_pri == CN_NORMAL || cn_tab->cn_pri == CN_INTERNAL);
-	printf("israster: %d\n", israster);
-	return israster;
-#endif
-}
-#endif
-
-
-#define	SCCUNIT(dev)	(minor(dev) >> 1)
+#define	SCCUNIT(dev)	((minor(dev) & 0x7ffff) >> 1)
 #define	SCCLINE(dev)	(minor(dev) & 0x1)
+#define	SCCDIALOUT(x)	(minor(x) & 0x80000)
+
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
 void	(*sccDivertXInput) __P((int cc)); /* X windows keyboard input routine */
@@ -299,7 +282,12 @@ void		scc_kbd_init __P((struct scc_softc *sc, dev_t dev));
 void		scc_mouse_init __P((struct scc_softc *sc, dev_t dev));
 void		scc_tty_init __P((struct scc_softc *sc, dev_t dev));
 
+static void	scc_txintr __P((struct scc_softc *, int, scc_regmap_t *));
+static void	scc_rxintr __P((struct scc_softc *, int, scc_regmap_t *, int));
+inline
+static void	scc_stintr __P((struct scc_softc *, int, scc_regmap_t *, int));
 int	sccintr __P((void *));
+
 #ifdef alpha
 void	scc_alphaintr __P((int));
 #endif
@@ -466,7 +454,10 @@ sccattach(parent, self, aux)
 
 	unit = sc->sc_dv.dv_unit;
 
+#ifdef pmax
 	sccaddr = (void*)MIPS_PHYS_TO_KSEG1(d->iada_addr);
+#endif
+
 #ifdef SPARSE
 	sccaddr = (void *)TC_DENSE_TO_SPARSE((tc_addr_t)sccaddr);
 #endif
@@ -475,28 +466,25 @@ sccattach(parent, self, aux)
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
 		sccintr, (void *)sc);
 
-	/* serial console debugging */
-#if defined(DEBUG) && defined(HAVE_RCONS) && 0 /*XXX*/
-	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE)) {
-		DELAY(10000);
-		printf("(attached interrupt, delaying)\n");
+#ifdef alpha
+	/*
+	 * XXX
+	 * If  is the mandated remote console, point cn_tab at it now,
+	 * to make later tests for console-ness MI.
+	 */
+	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
+	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0)) {
+		cn_tab->cn_dev = makedev(SCCDEV, sc->sc_dv.dv_unit * 2);
 	}
-#endif /* defined(DEBUG) && defined(HAVE_RCONS)*/
+#endif
 
 	/*
-	 * For a remote console, wait a while for previous output to
-	 * complete.
+	 * If this is the console, wait a while for any previous
+	 *  output to complete.
 	 */
-#ifdef pmax
-	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE))
+	if (CONSOLE_ON_UNIT(unit))
 		DELAY(10000);
-#endif
 
-#ifdef alpha
-	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
-	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0))
-		DELAY(10000);
-#endif
 	pdp = &sc->scc_pdma[0];
 
 	/* init pseudo DMA structures */
@@ -511,65 +499,42 @@ sccattach(parent, self, aux)
 		pdp++;
 	}
 	/* What's the warning here? Defaulting to softCAR on line 2? */
-	sc->scc_softCAR = sc->sc_dv.dv_cfdata->cf_flags | 0x2;	/* XXX */
+	sc->scc_softCAR = sc->sc_dv.dv_cfdata->cf_flags;
 
-	/* reset chip, initialize  register-copies in softc */
+	/*
+	 * Reset chip, initialize  register-copies in softc.
+	 * XXX if this was console, no more printf()s until after
+	 * scc_tty_init()!
+	 */
 	sccreset(sc);
+
 
 	/*
 	 * Special handling for consoles.
 	 */
-#ifdef pmax
-	if (pending_remcons) {
+	if (CONSOLE_ON_UNIT(unit)) {
 		/*
 		 * We were using PROM callbacks for console I/O,
 		 * and we just reset the chip under the console.
-		 * wire up this driver as console ASAP.
-		 */
-
-		/*XXX*/ /* test for correct unit */
-		DELAY(10000);
-
-		/*
-		 * XXX PROM  and NetBSD unit numbers swapped
-		 * on kn03, maybe kmin?
-		 * And what about maxine?
-		 */
-		if (cn_tab->cn_dev == unit && cputype != DS_MAXINE) {
-			printf ("\n");
-			return;
-		}
-
-		/*
-		 * If we are using the PROM serial-console routines
-		 * as console, now is the time to set up the scc
-		 * driver as console.
+		 * Re-wire  this unit up as console ASAP.
 		 */
 		cn_tab = &scccons;
 		cn_tab->cn_dev = makedev(SCCDEV,
 		    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
-#ifdef notyet
-		scc_consinit(cn_tab->cn_dev, sccaddr);
-#else
-		scc_tty_init(sc, cn_tab->cn_dev);
-#endif
 
-		printf(" (In sccattach: cn_dev = 0x%x)", cn_tab->cn_dev);
-	 	printf(" (Unit = %d)", unit);
+		/* Wire carrier for console. */
+		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
+		scc_tty_init(sc, cn_tab->cn_dev);
+
+		DELAY(20000);
+
 		printf(": console");
-		pending_remcons = 0;
-		/*
-		 * XXX We should support configurations where the PROM
-		 * console device is a serial console, and a
-		 * framebuffer, keyboard, and mouse are present.
-		 */
-#ifdef BREAKS_X_WITH_REMOTE_CONSOLE
-		return;
-#endif
 	}
-#endif /* pmax */
+	printf("\n");
+
+
+	/* Wire up any childre, like keyboards or mice. */
 #ifdef HAVE_RCONS
-	/* XXX test below may be too inclusive ? */
 	if (cputype != DS_MAXINE) {
 		if (unit == 1) {
 			scc_kbd_init(sc, makedev(SCCDEV, SCCKBD_PORT));
@@ -579,31 +544,6 @@ sccattach(parent, self, aux)
 	}
 #endif /* HAVE_RCONS */
 
-#ifdef alpha
-	if (SCCUNIT(cn_tab->cn_dev) == unit) {
-		scc_tty_init(sc,
-		    makedev(SCCDEV, (sc->sc_dv.dv_unit == 0 ?
-		        SCCCOMM2_PORT : SCCCOMM3_PORT)));
-	}
-
-	/*
-	 * XXX
-	 * Unit 1 is the remote console, wire it up now.
-	 */
-	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
-	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0)) {
-		cn_tab = &scccons;
-		cn_tab->cn_dev = makedev(SCCDEV, sc->sc_dv.dv_unit * 2);
-
-		printf(": console\n");
-
-		/* wire carrier for console. */
-		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
-	} else
-		printf("\n");
-#else	/* pmax */
-	printf("\n");
-#endif	/* pmax */
 }
 
 
@@ -778,6 +718,11 @@ sccopen(dev, flag, mode, p)
 	if (!sc)
 		return (ENXIO);
 
+#ifdef DEBUG_CARRIER
+	printf("sccopen: line %d %x, dialout %d\n", 
+		major(dev), minor(dev), SCCDIALOUT(dev));
+#endif /* DEBUG_CARRIER */
+
 	line = SCCLINE(dev);
 	if (sc->scc_pdma[line].p_addr == NULL)
 		return (ENXIO);
@@ -789,6 +734,11 @@ sccopen(dev, flag, mode, p)
 	tp->t_oproc = sccstart;
 	tp->t_param = sccparam;
 	tp->t_dev = dev;
+
+	/*
+	 * Do the following only for first opens.
+	 */
+	s = spltty();
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 #ifndef PORTSELECTOR
@@ -806,10 +756,14 @@ sccopen(dev, flag, mode, p)
 #endif
 		(void) sccparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
-		return (EBUSY);
+	}
+	else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0) {
+		error = EBUSY;
+		splx(s);
+		goto bad;
+	}
 	(void) sccmctl(dev, DML_DTR, DMSET);
-	s = spltty();
+
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	    !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
@@ -820,19 +774,21 @@ sccopen(dev, flag, mode, p)
 			break;
 	}
 	splx(s);
+
 	if (error)
-		return (error);
+		goto bad;
+
+
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
 
-#if defined(HAVE_RCONS) && defined(RCONS_BRAINDAMAGE)
-	/* handle raster console specially */
-	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) &&
-	    raster_console() && firstopen) {
-	  	extern struct tty *fbconstty;
-		tp->t_winsize = fbconstty->t_winsize;
-	}
-#endif /* old rcons brain-damage */
+#ifdef DEBUG_CARRIER
+	printf("sccopen: ldisc open %d %x, dialout %d sez %d\n", 
+		major(dev), minor(dev), SCCDIALOUT(dev), error);
+#endif
 
+	if (error)
+		goto bad;
+bad:
 	return (error);
 }
 
@@ -1152,6 +1108,143 @@ cold_sccparam(tp, t, sc)
 
 
 /*
+ * transmission done interrupts 
+ */
+static void
+scc_txintr(sc, chan, regs)
+	struct scc_softc *sc;
+	int chan;
+	scc_regmap_t *regs;
+{
+	register struct tty *tp = sc->scc_tty[chan];
+	register struct pdma *dp = &sc->scc_pdma[chan];
+	register int cc;
+
+	tp = sc->scc_tty[chan];
+	dp = &sc->scc_pdma[chan];
+	if (dp->p_mem < dp->p_end) {
+		SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
+#ifdef pmax	/* Alpha handles the 1.6 msec settle time in hardware */
+		DELAY(2);
+#endif
+		tc_mb();
+	} else {
+		tp->t_state &= ~TS_BUSY;
+		if (tp->t_state & TS_FLUSH)
+			tp->t_state &= ~TS_FLUSH;
+		else {
+			ndflush(&tp->t_outq, dp->p_mem -
+				(caddr_t) tp->t_outq.c_cf);
+			dp->p_end = dp->p_mem = tp->t_outq.c_cf;
+		}
+		if (tp->t_line)
+			(*linesw[tp->t_line].l_start)(tp);
+		else
+			sccstart(tp);
+		if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
+			SCC_READ_REG(regs, chan, SCC_RR15, cc);
+			cc &= ~ZSWR15_TXUEOM_IE;
+			SCC_WRITE_REG(regs, chan, SCC_WR15, cc);
+			cc = sc->scc_wreg[chan].wr1 & ~ZSWR1_TIE;
+			SCC_WRITE_REG(regs, chan, SCC_WR1, cc);
+			sc->scc_wreg[chan].wr1 = cc;
+			tc_mb();
+		}
+	}
+}
+
+/* 
+ * receive interrupts 
+ */
+static void
+scc_rxintr(sc, chan, regs, unit)
+	struct scc_softc *sc;
+	int chan;
+	scc_regmap_t *regs;
+	int unit;
+{
+	register struct tty *tp = sc->scc_tty[chan];
+	int cc, rr1 = 0, rr2 = 0;	/* XXX */
+
+	SCC_READ_DATA(regs, chan, cc);
+	if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
+		rr2 == SCC_RR2_B_RECV_SPECIAL) {
+		SCC_READ_REG(regs, chan, SCC_RR1, rr1);
+		SCC_WRITE_REG(regs, chan, SCC_RR0, ZSWR0_RESET_ERRORS);
+		if (rr1 & ZSRR1_DO) {
+			log(LOG_WARNING, "scc%d,%d: silo overflow\n",
+				unit >> 1, chan);
+		}
+	}
+
+	/*
+	 * Keyboard needs special treatment.
+	 */
+	if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT))) {
+#if defined(DDB) && defined(LK_DO)
+			if (cc == LK_DO) {
+				spl0();
+				Debugger();
+				return;
+			}
+#endif
+#ifdef DEBUG
+		debugChar = cc;
+#endif
+		if (sccDivertXInput) {
+			(*sccDivertXInput)(cc);
+			return;
+		}
+#ifdef HAVE_RCONS
+		if ((cc = kbdMapChar(cc)) < 0)
+			return;
+		rcons_input(0, cc);
+#endif
+	/*
+	 * Now for mousey
+	 */
+	} else if (tp == scctty(makedev(SCCDEV, SCCMOUSE_PORT)) &&
+	    sccMouseButtons) {
+#ifdef HAVE_RCONS
+		/*XXX*/
+		mouseInput(cc);
+#endif
+		return;
+	}
+	if (!(tp->t_state & TS_ISOPEN)) {
+		wakeup((caddr_t)&tp->t_rawq);
+#ifdef PORTSELECTOR
+		if (!(tp->t_state & TS_WOPEN))
+#endif
+			return;
+	}
+	if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
+		rr2 == SCC_RR2_B_RECV_SPECIAL) {
+		if (rr1 & ZSRR1_PE)
+			cc |= TTY_PE;
+		if (rr1 & ZSRR1_FE)
+			cc |= TTY_FE;
+	}
+	(*linesw[tp->t_line].l_rint)(cc, tp);
+}
+
+/*
+ * Modem status interrupts
+ */
+static void inline
+scc_stintr(sc, chan, regs, unit)
+	struct scc_softc *sc;
+	int chan;
+	scc_regmap_t *regs;
+	int unit;
+{
+
+	SCC_WRITE_REG(regs, chan, SCC_RR0, ZSWR0_RESET_STATUS);
+	scc_modem_intr(unit | chan);
+}
+
+
+/*
  * Check for interrupts from all devices.
  */
 int
@@ -1161,136 +1254,60 @@ sccintr(xxxsc)
 	register struct scc_softc *sc = (struct scc_softc *)xxxsc;
 	register int unit = (long)sc->sc_dv.dv_unit;
 	register scc_regmap_t *regs;
-	register struct tty *tp;
-	register struct pdma *dp;
-	register int cc, chan, rr1, rr2, rr3;
-	int overrun = 0;
+	register int rr3;
 
-	rr1 = 0;		/* shut up gcc -Wall */
 	regs = (scc_regmap_t *)sc->scc_pdma[0].p_addr;
 	unit <<= 1;
-	for (;;) {
-	    SCC_READ_REG(regs, SCC_CHANNEL_B, ZSRR_IVEC, rr2);
-	    rr2 = SCC_RR2_STATUS(rr2);
-	    /* are we done yet ? */
-	    if (rr2 == 6) {	/* strange, distinguished value */
-		SCC_READ_REG(regs, SCC_CHANNEL_A, ZSRR_IPEND, rr3);
-		if (rr3 == 0)
-			return 0 ;/* XXX FIXME why ? */
-	    }
 
-	    SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_RR0, ZSWR0_CLR_INTR);
-	    if ((rr2 == SCC_RR2_A_XMIT_DONE) || (rr2 == SCC_RR2_B_XMIT_DONE)) {
-		chan = (rr2 == SCC_RR2_A_XMIT_DONE) ?
-			SCC_CHANNEL_A : SCC_CHANNEL_B;
-		tp = sc->scc_tty[chan];
-		dp = &sc->scc_pdma[chan];
-		if (dp->p_mem < dp->p_end) {
-			SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
-#ifdef pmax	/* Alpha handles the 1.6 msec settle time in hardware */
-			DELAY(2);
-#endif
-			tc_mb();
-		} else {
-			tp->t_state &= ~TS_BUSY;
-			if (tp->t_state & TS_FLUSH)
-				tp->t_state &= ~TS_FLUSH;
-			else {
-				ndflush(&tp->t_outq, dp->p_mem -
-					(caddr_t) tp->t_outq.c_cf);
-				dp->p_end = dp->p_mem = tp->t_outq.c_cf;
-			}
-			if (tp->t_line)
-				(*linesw[tp->t_line].l_start)(tp);
-			else
-				sccstart(tp);
-			if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
-				SCC_READ_REG(regs, chan, SCC_RR15, cc);
-				cc &= ~ZSWR15_TXUEOM_IE;
-				SCC_WRITE_REG(regs, chan, SCC_WR15, cc);
-				cc = sc->scc_wreg[chan].wr1 & ~ZSWR1_TIE;
-				SCC_WRITE_REG(regs, chan, SCC_WR1, cc);
-				sc->scc_wreg[chan].wr1 = cc;
-				tc_mb();
-			}
-		}
-	    } else if (rr2 == SCC_RR2_A_RECV_DONE ||
-		rr2 == SCC_RR2_B_RECV_DONE || rr2 == SCC_RR2_A_RECV_SPECIAL ||
-		rr2 == SCC_RR2_B_RECV_SPECIAL) {
-		if (rr2 == SCC_RR2_A_RECV_DONE || rr2 == SCC_RR2_A_RECV_SPECIAL)
-			chan = SCC_CHANNEL_A;
-		else
-			chan = SCC_CHANNEL_B;
-		tp = sc->scc_tty[chan];
-		SCC_READ_DATA(regs, chan, cc);
-		if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
-			rr2 == SCC_RR2_B_RECV_SPECIAL) {
-			SCC_READ_REG(regs, chan, SCC_RR1, rr1);
-			SCC_WRITE_REG(regs, chan, SCC_RR0, ZSWR0_RESET_ERRORS);
-			if ((rr1 & ZSRR1_DO) && overrun == 0) {
-				log(LOG_WARNING, "scc%d,%d: silo overflow\n",
-					unit >> 1, chan);
-				overrun = 1;
-			}
+	/* Note: only channel A has an RR3 */
+	SCC_READ_REG(regs, SCC_CHANNEL_A, ZSRR_IPEND, rr3);
+
+	/*
+	 * Clear interrupt first to avoid a race condition.
+	 * If a new interrupt condition happens while we are
+	 * servicing this one, we will get another interrupt
+	 * shortly.  We can NOT just sit here in a loop, or
+	 * we will cause horrible latency for other devices
+	 * on this interrupt level (i.e. sun3x floppy disk).
+	 */
+
+	/*
+	 * At elast some, maybe all DECstation chips have modem
+	 * leads crosswired: the data comes in one channel and the
+	 * bulkead modem signals for that port are wired to the
+	 * _other_ channel of the chip. Yes, really.
+	 * This code cannot get that right.
+	 */
+
+	/* First look at channel A. */
+	if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
+		SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_RR0, ZSWR0_CLR_INTR);
+		if (rr3 & ZSRR3_IP_A_RX)
+			scc_rxintr(sc, SCC_CHANNEL_A, regs, unit);
+
+		if (rr3 & ZSRR3_IP_A_STAT) {
+			/* XXX swapped channels */
+			scc_stintr(sc, SCC_CHANNEL_A, regs, unit);
 		}
 
-		/*
-		 * Keyboard needs special treatment.
-		 */
-		if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT))) {
-#if defined(DDB) && defined(LK_DO)
-			if (cc == LK_DO) {
-				spl0();
-				Debugger();
-				return -1;
-			}
-#endif
-
-#ifdef DEBUG
-			debugChar = cc;
-#endif
-			if (sccDivertXInput) {
-				(*sccDivertXInput)(cc);
-				continue;
-			}
-#ifdef HAVE_RCONS
-			if ((cc = kbdMapChar(cc)) < 0)
-				continue;
-			rcons_input(0, cc);
-#endif
-		/*
-		 * Now for mousey
-		 */
-		} else if (tp == scctty(makedev(SCCDEV, SCCMOUSE_PORT)) &&
-			   sccMouseButtons) {
-#ifdef HAVE_RCONS
-			/*XXX*/
-			mouseInput(cc);
-#endif
-			continue;
-		}
-		if (!(tp->t_state & TS_ISOPEN)) {
-			wakeup((caddr_t)&tp->t_rawq);
-#ifdef PORTSELECTOR
-			if (tp->t_wopen == 0)
-#endif
-				continue;
-		}
-		if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
-			rr2 == SCC_RR2_B_RECV_SPECIAL) {
-			if (rr1 & ZSRR1_PE)
-				cc |= TTY_PE;
-			if (rr1 & ZSRR1_FE)
-				cc |= TTY_FE;
-		}
-		(*linesw[tp->t_line].l_rint)(cc, tp);
-	    } else if ((rr2 == SCC_RR2_A_EXT_STATUS) || (rr2 == SCC_RR2_B_EXT_STATUS)) {
-		chan = (rr2 == SCC_RR2_A_EXT_STATUS) ?
-		    SCC_CHANNEL_A : SCC_CHANNEL_B;
-		SCC_WRITE_REG(regs, chan, SCC_RR0, ZSWR0_RESET_STATUS);
-		scc_modem_intr(unit | chan);
-	    }
+		if (rr3 & ZSRR3_IP_A_TX)
+			scc_txintr(sc, SCC_CHANNEL_A, regs);
 	}
+
+	/* Now look at channel B. */
+	if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) {
+		SCC_WRITE_REG(regs, SCC_CHANNEL_B, SCC_RR0, ZSWR0_CLR_INTR);
+		if (rr3 & ZSRR3_IP_B_RX)
+			scc_rxintr(sc, SCC_CHANNEL_B, regs, unit);
+		if (rr3 & ZSRR3_IP_B_STAT) {
+			/* XXX swapped channels */
+			scc_stintr(sc, SCC_CHANNEL_B, regs, unit);
+		}
+		if (rr3 & ZSRR3_IP_B_TX)
+			scc_txintr(sc, SCC_CHANNEL_B, regs);
+	}
+
+	return 1;
 }
 
 void
@@ -1320,28 +1337,6 @@ sccstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 
-#ifdef RCONS_BRAINDAMAGE
-	/* handle console specially */
-	/* XXX raster console output via serial port! */
-	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) && raster_console()) {
-		while (tp->t_outq.c_cc > 0) {
-			cc = getc(&tp->t_outq) & 0x7f;
-			cnputc(cc);
-		}
-		/*
-		 * After we flush the output queue we may need to wake
-		 * up the process that made the output.
-		 */
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup((caddr_t)&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
-		goto out;
-	}
-#endif
 	cc = ndqb(&tp->t_outq, 0);
 
 	tp->t_state |= TS_BUSY;
@@ -1478,11 +1473,24 @@ scc_modem_intr(dev)
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	tp = sc->scc_tty[chan];
 	regs = (scc_regmap_t *)sc->scc_pdma[chan].p_addr;
-	if (chan == SCC_CHANNEL_A)
-		return;
-	s = spltty();
 
+	if (chan == SCC_CHANNEL_A) {
+#ifdef DEBUG_CARRIER
+	printf("scc_modem_intr: line %d,%d nomodem!\n",
+	       SCCUNIT(dev), SCCLINE(dev));
+#endif
+		return;
+	}
+
+	s = spltty();
 	SCC_READ_REG_ZERO(regs, chan, value);
+
+#ifdef DEBUG_CARRIER
+	printf("scc_modem_intr: line %d,%d carrier  %d softcar %d\n",
+	       SCCUNIT(dev), SCCLINE(dev), value & ZSRR0_DCD,
+	       sc->scc_softCAR & (1 << chan));
+#endif
+
 	if (sc->scc_softCAR & (1 << chan))
 		car = 1;
 	else {
@@ -1503,10 +1511,10 @@ scc_modem_intr(dev)
 	/*
 	 * The pmax driver follows carrier-detect. The Alpha does not.
 	 * On pmax, ignore hups on a console tty.
-	 * On alpha, a no-op, for historical reasons. XXXXXX
+	 * On alpha, a no-op, for historical reasons.
 	 */
 #ifdef pmax
-	if (!CONSOLE_ON_UNIT(sc->sc_dv.dv_unit) && !pending_remcons) {
+	if (!CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
 		if (car) {
 			/* carrier present */
 			if (!(tp->t_state & TS_CARR_ON))
