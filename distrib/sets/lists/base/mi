@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.6 2000/08/02 07:23:13 kleink Exp $
+# $NetBSD: mi,v 1.169.2.7 2000/08/06 21:15:42 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -474,7 +474,6 @@
 ./usr/libexec/hpropd
 ./usr/libexec/identd
 ./usr/libexec/kadmind
-./usr/libexec/kdc
 ./usr/libexec/kfd
 ./usr/libexec/kpasswdd
 ./usr/libexec/lfs_cleanerd
@@ -600,6 +599,7 @@
 ./usr/sbin/ipsend
 ./usr/sbin/iptest
 ./usr/sbin/kadmin
+./usr/sbin/kdc
 ./usr/sbin/kstash
 ./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb
