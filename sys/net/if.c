@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.93 2001/07/24 16:35:29 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.94 2001/07/28 01:13:56 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -396,7 +396,7 @@ if_attach(ifp)
 	 */
 
 	if (ifp->if_snd.ifq_maxlen == 0)
-	    ifp->if_snd.ifq_maxlen = ifqmaxlen;
+		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
