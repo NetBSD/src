@@ -19,7 +19,7 @@
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  *
- *      $Id: ultra14f.c,v 1.13.2.2 1993/11/28 20:33:37 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.13.2.3 1993/11/28 20:44:42 mycroft Exp $
  */
 
 #include "uha.h"
@@ -69,88 +69,88 @@ typedef struct {
 #define	MSCP_HASH_SHIFT	9	/* only hash on multiples of 512 */
 #define MSCP_HASH(x)	((((long)(x))>>MSCP_HASH_SHIFT) % MSCP_HASH_SIZE)
 
-#define UHA_NSEG        33	/* number of dma segments supported */
+#define UHA_NSEG	33	/* number of dma segments supported */
 
 /************************** board definitions *******************************/
 /*
  * I/O Port Interface
  */
-#define UHA_LMASK              (0x000)	/* local doorbell mask reg */
-#define UHA_LINT               (0x001)	/* local doorbell int/stat reg */
-#define UHA_SMASK              (0x002)	/* system doorbell mask reg */
-#define UHA_SINT               (0x003)	/* system doorbell int/stat reg */
-#define UHA_ID0                (0x004)	/* product id reg 0 */
-#define UHA_ID1                (0x005)	/* product id reg 1 */
-#define UHA_CONF1              (0x006)	/* config reg 1 */
-#define UHA_CONF2              (0x007)	/* config reg 2 */
-#define UHA_OGM0               (0x008)	/* outgoing mail ptr 0 least sig */
-#define UHA_OGM1               (0x009)	/* outgoing mail ptr 1 least mid */
-#define UHA_OGM2               (0x00a)	/* outgoing mail ptr 2 most mid  */
-#define UHA_OGM3               (0x00b)	/* outgoing mail ptr 3 most sig  */
-#define UHA_ICM0               (0x00c)	/* incoming mail ptr 0 */
-#define UHA_ICM1               (0x00d)	/* incoming mail ptr 1 */
-#define UHA_ICM2               (0x00e)	/* incoming mail ptr 2 */
-#define UHA_ICM3               (0x00f)	/* incoming mail ptr 3 */
+#define UHA_LMASK		(0x000)	/* local doorbell mask reg */
+#define UHA_LINT		(0x001)	/* local doorbell int/stat reg */
+#define UHA_SMASK		(0x002)	/* system doorbell mask reg */
+#define UHA_SINT		(0x003)	/* system doorbell int/stat reg */
+#define UHA_ID0			(0x004)	/* product id reg 0 */
+#define UHA_ID1			(0x005)	/* product id reg 1 */
+#define UHA_CONF1		(0x006)	/* config reg 1 */
+#define UHA_CONF2		(0x007)	/* config reg 2 */
+#define UHA_OGM0		(0x008)	/* outgoing mail ptr 0 least sig */
+#define UHA_OGM1		(0x009)	/* outgoing mail ptr 1 least mid */
+#define UHA_OGM2		(0x00a)	/* outgoing mail ptr 2 most mid  */
+#define UHA_OGM3		(0x00b)	/* outgoing mail ptr 3 most sig  */
+#define UHA_ICM0		(0x00c)	/* incoming mail ptr 0 */
+#define UHA_ICM1		(0x00d)	/* incoming mail ptr 1 */
+#define UHA_ICM2		(0x00e)	/* incoming mail ptr 2 */
+#define UHA_ICM3		(0x00f)	/* incoming mail ptr 3 */
 
 /*
  * UHA_LMASK bits (read only) 
  */
-#define UHA_LDIE                0x80	/* local doorbell int enabled */
-#define UHA_SRSTE               0x40	/* soft reset enabled */
-#define UHA_ABORTEN             0x10	/* abort MSCP enabled */
-#define UHA_OGMINTEN            0x01	/* outgoing mail interrupt enabled */
+#define UHA_LDIE		0x80	/* local doorbell int enabled */
+#define UHA_SRSTE		0x40	/* soft reset enabled */
+#define UHA_ABORTEN		0x10	/* abort MSCP enabled */
+#define UHA_OGMINTEN		0x01	/* outgoing mail interrupt enabled */
 
 /*
  * UHA_LINT bits (read)
  */
-#define UHA_LDIP                0x80	/* local doorbell int pending */
+#define UHA_LDIP		0x80	/* local doorbell int pending */
 
 /*
  * UHA_LINT bits (write)
  */
-#define UHA_ADRST               0x40	/* adapter soft reset */
-#define UHA_SBRST               0x20	/* scsi bus reset */
-#define UHA_ASRST               0x60	/* adapter and scsi reset */
-#define UHA_ABORT               0x10	/* abort MSCP */
-#define UHA_OGMINT              0x01	/* tell adapter to get mail */
+#define UHA_ADRST		0x40	/* adapter soft reset */
+#define UHA_SBRST		0x20	/* scsi bus reset */
+#define UHA_ASRST		0x60	/* adapter and scsi reset */
+#define UHA_ABORT		0x10	/* abort MSCP */
+#define UHA_OGMINT		0x01	/* tell adapter to get mail */
 
 /*
  * UHA_SMASK bits (read)
  */
-#define UHA_SINTEN              0x80	/* system doorbell interupt Enabled */
+#define UHA_SINTEN		0x80	/* system doorbell interupt Enabled */
 #define UHA_ABORT_COMPLETE_EN   0x10	/* abort MSCP command complete int Enabled */
-#define UHA_ICM_ENABLED         0x01	/* ICM interrupt enabled */
+#define UHA_ICM_ENABLED		0x01	/* ICM interrupt enabled */
 
 /*
  * UHA_SMASK bits (write)
  */
-#define UHA_ENSINT              0x80	/* enable system doorbell interrupt */
+#define UHA_ENSINT		0x80	/* enable system doorbell interrupt */
 #define UHA_EN_ABORT_COMPLETE   0x10	/* enable abort MSCP complete int */
-#define UHA_ENICM               0x01	/* enable ICM interrupt */
+#define UHA_ENICM		0x01	/* enable ICM interrupt */
 
 /*
  * UHA_SINT bits (read)
  */
-#define UHA_SINTP               0x80	/* system doorbell int pending */
-#define UHA_ABORT_SUCC          0x10	/* abort MSCP successful */
-#define UHA_ABORT_FAIL          0x18	/* abort MSCP failed */
+#define UHA_SINTP		0x80	/* system doorbell int pending */
+#define UHA_ABORT_SUCC		0x10	/* abort MSCP successful */
+#define UHA_ABORT_FAIL		0x18	/* abort MSCP failed */
 
 /*
  * UHA_SINT bits (write)
  */
-#define UHA_ABORT_ACK           0x18	/* acknowledge status and clear */
-#define UHA_ICM_ACK             0x01	/* acknowledge ICM and clear */
+#define UHA_ABORT_ACK		0x18	/* acknowledge status and clear */
+#define UHA_ICM_ACK		0x01	/* acknowledge ICM and clear */
 
 /* 
  * UHA_CONF1 bits (read only)
  */
-#define UHA_DMA_CH5             0x00	/* DMA channel 5 */
-#define UHA_DMA_CH6             0x40	/* 6 */
-#define UHA_DMA_CH7             0x80	/* 7 */
-#define UHA_IRQ15               0x00	/* IRQ 15 */
-#define UHA_IRQ14               0x10	/* 14 */
-#define UHA_IRQ11               0x20	/* 11 */
-#define UHA_IRQ10               0x30	/* 10 */
+#define UHA_DMA_CH5		0x00	/* DMA channel 5 */
+#define UHA_DMA_CH6		0x40	/* 6 */
+#define UHA_DMA_CH7		0x80	/* 7 */
+#define UHA_IRQ15		0x00	/* IRQ 15 */
+#define UHA_IRQ14		0x10	/* 14 */
+#define UHA_IRQ11		0x20	/* 11 */
+#define UHA_IRQ10		0x30	/* 10 */
 
 /*
  * ha_status error codes
@@ -202,9 +202,9 @@ struct mscp {
 	struct mscp *next;	/* in free list */
 	struct scsi_xfer *xs;	/* the scsi_xfer for this cmd */
 	int flags;
-#define MSCP_FREE        0
-#define MSCP_ACTIVE      1
-#define MSCP_ABORTED     2
+#define MSCP_FREE	0
+#define MSCP_ACTIVE	1
+#define MSCP_ABORTED	2
 	struct uha_dma_seg uha_dma[UHA_NSEG];
 	struct scsi_sense_data mscp_sense;
 	struct mscp *nexthash;
@@ -217,7 +217,7 @@ struct uha_data {
 	struct intrhand sc_ih;
 
 	int flags;
-#define UHA_INIT        0x01;
+#define UHA_INIT	0x01
 	int baseport;
 	struct mscp *mscphash[MSCP_HASH_SIZE];
 	struct mscp *free_mscp;
@@ -228,19 +228,26 @@ struct uha_data {
 	struct scsi_link sc_link;
 } *uhadata[NUHA];
 
+void uha_send_mbox __P((struct uha_data *, struct mscp *));
+int uha_abort __P((struct uha_data *, struct mscp *));
+int uha_poll __P((struct uha_data *, int));
 int uhaprobe __P((struct device *, struct cfdata *, void *));
 void uhaattach __P((struct device *, struct device *, void *));
+u_int uha_adapter_info __P((struct uha_data *));
+int uhaintr __P((void *));
+void uha_done __P((struct uha_data *, struct mscp *));
+void uha_free_mscp __P((struct uha_data *, struct mscp *, int flags));
+struct mscp *uha_get_mscp __P((struct uha_data *, int));
+struct mscp *uha_mscp_phys_kv __P((struct uha_data *, u_long));
 int uha_find __P((struct uha_data *));
 void uha_init __P((struct uha_data *));
-int uhaintr __P((void *));
+void uhaminphys __P((struct buf *));
 int uha_scsi_cmd __P((struct scsi_xfer *));
 void uha_timeout __P((caddr_t));
-void uha_free_mscp __P((struct uha_data *, struct mscp *, int flags));
-int uha_abort __P((struct uha_data *, struct mscp *));
-void uhaminphys __P((struct buf *));
-void uha_done __P((struct uha_data *, struct mscp *));
-u_int uha_adapter_info __P((struct uha_data *));
-struct mscp *uha_mscp_phys_kv __P((struct uha_data *, u_long));
+#ifdef UHADEBUG
+void uha_print_mscp __P((struct mscp *));
+void uha_print_active_mscp __P((struct uha_data *));
+#endif
 
 u_long	scratch;
 #define UHA_SHOWMSCPS 0x01
@@ -270,12 +277,12 @@ struct scsi_adapter uha_switch =
 /* the below structure is so we have a default dev struct for out link struct */
 struct scsi_device uha_dev =
 {
-    NULL,			/* Use default error handler */
-    NULL,			/* have a queue, served by this */
-    NULL,			/* have no async handler */
-    NULL,			/* Use default 'done' routine */
-    "uha",
-    0
+	NULL,			/* Use default error handler */
+	NULL,			/* have a queue, served by this */
+	NULL,			/* have no async handler */
+	NULL,			/* Use default 'done' routine */
+	"uha",
+	0
 };
 
 /*
@@ -295,9 +302,9 @@ uha_send_mbox(uha, mscp)
 			break;
 		delay(100);
 	}
-	if (spincount == 0) {
+	if (!spincount) {
 		printf("%s: uha_send_mbox, board not responding\n",
-		       uha->sc_dev.dv_xname);
+			uha->sc_dev.dv_xname);
 		Debugger();
 	}
 
@@ -327,7 +334,7 @@ uha_abort(uha, mscp)
 	}
 	if (!spincount) {
 		printf("%s: uha_abort, board not responding\n",
-		       uha->sc_dev.dv_xname);
+			uha->sc_dev.dv_xname);
 		Debugger();
 	}
 
@@ -341,7 +348,7 @@ uha_abort(uha, mscp)
 	}
 	if (!abortcount) {
 		printf("%s: uha_abort, board not responding\n",
-		       uha->sc_dev.dv_xname);
+			uha->sc_dev.dv_xname);
 		Debugger();
 	}
 
@@ -374,7 +381,7 @@ uha_poll(uha, wait)
 	}
 	if (!wait) {
 		printf("%s: uha_poll, board not responding\n",
-		       uha->sc_dev.dv_xname);
+			uha->sc_dev.dv_xname);
 		return EIO;
 	}
 
@@ -424,7 +431,7 @@ uhaprobe(parent, cf, aux)
 	} else {
 		if (ia->ia_irq != (1 << uha->vect)) {
 			printf("uha%d: irq mismatch, %x != %x\n", unit,
-			       ia->ia_irq, (1 << uha->vect));
+				ia->ia_irq, (1 << uha->vect));
 			uhadata[unit] = NULL;
 			free(uha, M_TEMP);
 			return 0;
@@ -436,7 +443,7 @@ uhaprobe(parent, cf, aux)
 	} else {
 		if (ia->ia_drq != uha->dma) {
 			printf("uha%d: drq mismatch, %x != %x\n", unit,
-			       ia->ia_drq, uha->dma);
+				ia->ia_drq, uha->dma);
 			uhadata[unit] = NULL;
 			free(uha, M_TEMP);
 			return 0;
@@ -688,13 +695,13 @@ uha_get_mscp(uha, flags)
 				uha->mscphash[hashnum] = mscpp;
 			} else {
 				printf("%s: Can't malloc MSCP\n",
-				       uha->sc_dev.dv_xname);
+					uha->sc_dev.dv_xname);
 			}
 			goto gottit;
 		} else {
 			if (!(flags & SCSI_NOSLEEP))
 				tsleep((caddr_t)&uha->free_mscp, PRIBIO,
-				       "uhamsc", 0);
+					"uhamsc", 0);
 		}
 	}
 	if (mscpp) {
@@ -807,7 +814,7 @@ uha_find(uha)
 	}
 	if (!resetcount) {
 		printf("%s: board timed out during reset\n",
-		       uha->sc_dev.dv_xname);
+			uha->sc_dev.dv_xname);
 		return ENXIO;
 	}
 
@@ -1015,7 +1022,7 @@ uha_scsi_cmd(xs)
 
 		if (datalen) {	/* there's still data, must have run out of segs! */
 			printf("%s: uha_scsi_cmd, more than %d DMA segs\n",
-			       uha->sc_dev.dv_xname, UHA_NSEG);
+				uha->sc_dev.dv_xname, UHA_NSEG);
 			xs->error = XS_DRIVER_STUFFUP;
 			uha_free_mscp(uha, mscp, flags);
 			return HAD_ERROR;
@@ -1062,7 +1069,7 @@ uha_scsi_cmd(xs)
 				printf("%s: cmd fail\n", uha->sc_dev.dv_xname);
 			if (!(uha_abort(uha, mscp))) {
 				printf("%s: abort failed in wait\n",
-				       uha->sc_dev.dv_xname);
+					uha->sc_dev.dv_xname);
 				uha_free_mscp(uha, mscp, flags);
 			}
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1090,7 +1097,7 @@ uha_timeout(arg)
 #endif /*UHADEBUG */
 
 	if ((uha_abort(uha, mscp) != 1) || (mscp->flags == MSCP_ABORTED)) {
-		printf("AGAIN");
+		printf("AGAIN\n");
 		mscp->xs->retries = 0;	/* I MEAN IT ! */
 		uha_done(uha, mscp);
 	} else {		/* abort the operation that has timed out */
@@ -1108,10 +1115,10 @@ uha_print_mscp(mscp)
 {
 
 	printf("mscp:%x op:%x cmdlen:%d senlen:%d\n",
-	       mscp, mscp->opcode, mscp->cdblen, mscp->senselen);
+		mscp, mscp->opcode, mscp->cdblen, mscp->senselen);
 	printf("	sg:%d sgnum:%x datlen:%d hstat:%x tstat:%x flags:%x\n",
-	       mscp->sgth, mscp->sg_num, mscp->datalen, mscp->ha_status,
-	       mscp->targ_status, mscp->flags);
+		mscp->sgth, mscp->sg_num, mscp->datalen, mscp->ha_status,
+		mscp->targ_status, mscp->flags);
 	show_scsi_cmd(mscp->xs);
 }
 
