@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.10 2002/09/27 15:35:49 provos Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.11 2003/04/06 12:56:45 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -73,7 +73,7 @@ struct bus_space sa11x0_bs_tag = {
 	sa11x0_bs_vaddr,
 
 	/* mmap bus space for userland */
-	bs_notimpl_bs_mmap,
+	sa11x0_bs_mmap,
 
 	/* barrier */
 	sa11x0_bs_barrier,
@@ -147,11 +147,13 @@ sa11x0_bs_map(t, bpa, size, cacheable, bshp)
 	vaddr_t va;
 	pt_entry_t *pte;
 
+#ifdef hpcarm
 	if ((u_long)bpa > (u_long)KERNEL_BASE) {
 		/* XXX This is a temporary hack to aid transition. */
 		*bshp = bpa;
 		return(0);
 	}
+#endif
 
 	startpa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
@@ -224,6 +226,20 @@ sa11x0_bs_subregion(t, bsh, offset, size, nbshp)
 
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+paddr_t
+sa11x0_bs_mmap(t, paddr, offset, prot, flags)
+	void *t;
+	bus_addr_t paddr;
+	off_t offset;
+	int prot;
+	int flags;
+{
+	/*
+	 * mmap from address `paddr+offset' for one page
+	 */
+	 return (arm_btop((paddr + offset)));
 }
 
 void *
