@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35.2.7 2002/06/24 22:12:32 nathanw Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.2.8 2002/07/15 20:53:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.7 2002/06/24 22:12:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.8 2002/07/15 20:53:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,8 +231,7 @@ lfs_availwait(struct lfs *fs, int db)
 		wakeup(&lfs_allclean_wakeup);
 		wakeup(&fs->lfs_nextseg);
 #ifdef DIAGNOSTIC
-		if (fs->lfs_seglock && 
-		    fs->lfs_lockpid == curproc->p_pid)
+		if (fs->lfs_seglock && fs->lfs_lockpid == curproc->p_pid)
 			panic("lfs_availwait: deadlock");
 #endif
 		error = tsleep(&fs->lfs_avail, PCATCH | PUSER, "cleaner", 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13.2.8 2002/07/12 01:40:40 nathanw Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13.2.9 2002/07/15 20:52:18 nathanw Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.8 2002/07/12 01:40:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.9 2002/07/15 20:52:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5374,8 +5374,8 @@ softdep_flush_indir(vp)
 				continue;
 			}
 
-			VOP_FSYNC(bp->b_vp, curproc->p_ucred, 
-			    FSYNC_WAIT, 0, 0, curproc);
+			VOP_FSYNC(bp->b_vp, curproc->p_ucred, FSYNC_WAIT, 0, 0,
+				  curproc);
 			return;
 		}
 	}
