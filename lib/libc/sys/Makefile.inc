@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.147 2004/01/29 02:00:02 tsarna Exp $
+#	$NetBSD: Makefile.inc,v 1.148 2004/02/08 22:52:41 lukem Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -101,29 +101,36 @@ ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
 
 ${ASM}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' >${.TARGET}
 
 ${WEAKASM}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nWSYSCALL(${.PREFIX},_sys_${.PREFIX})\nWEAK_ALIAS(_${.PREFIX},_sys_${.PREFIX})\n' >${.TARGET}
 
 ${NOERR}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' >${.TARGET}
 
 ${PSEUDONOERR}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
 
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
+	${_MKTARGET_CREATE}
 	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM} ${WEAKASM}
 
 LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
+	${_MKTARGET_CREATE}
 	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
 
 LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
+	${_MKTARGET_CREATE}
 	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
