@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.63 1999/12/05 20:09:17 danw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.64 1999/12/23 19:46:27 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.62 1999/12/05 20:08:41 danw Exp 
+ *	NetBSD: pcmciadevs,v 1.63 1999/12/23 19:45:56 augustss Exp 
  */
 
 /*-
@@ -64,6 +64,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
+#define	PCMCIA_VENDOR_WEBGEAR	0x01a6	/* WebGear */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
@@ -303,9 +304,15 @@
 #define	PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE	0x0002
 #define	PCMCIA_STR_LUCENT_WAVELAN_IEEE	"WaveLAN/IEEE"
 
+/* Bey Networks */
 #define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_BAY_STACK_650	0x804
+#define	PCMCIA_PRODUCT_BAY_STACK_650	0x0804
 #define	PCMCIA_STR_BAY_STACK_650	"BayStack 650 Wireless LAN"
+
+/* WebGear */
+#define	PCMCIA_CIS_WEBGEAR_WLAN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_WEBGEAR_WLAN	0x0000
+#define	PCMCIA_STR_WEBGEAR_WLAN	"WLAN Adapter"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
