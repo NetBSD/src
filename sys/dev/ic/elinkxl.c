@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.41 2000/10/01 23:32:42 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.42 2000/10/11 16:57:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ void ex_set_filter __P((struct ex_softc *));
 void ex_set_media __P((struct ex_softc *));
 struct mbuf *ex_get __P((struct ex_softc *, int));
 u_int16_t ex_read_eeprom __P((struct ex_softc *, int));
-void ex_init __P((struct ex_softc *));
+int ex_init __P((struct ifnet *));
 void ex_read __P((struct ex_softc *));
 void ex_reset __P((struct ex_softc *));
 void ex_set_mc __P((struct ex_softc *));
@@ -429,6 +429,8 @@ ex_config(sc)
 	ifp->if_start = ex_start;
 	ifp->if_ioctl = ex_ioctl;
 	ifp->if_watchdog = ex_watchdog;
+	ifp->if_init = ex_init;
+	ifp->if_stop = ex_stop;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
@@ -597,11 +599,11 @@ ex_probemedia(sc)
 /*
  * Bring device up.
  */
-void
-ex_init(sc)
-	struct ex_softc *sc;
+int
+ex_init(ifp)
+	struct ifnet *ifp;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int s, i;
@@ -609,7 +611,7 @@ ex_init(sc)
 	s = splnet();
 
 	ex_waitcmd(sc);
-	ex_stop(sc);
+	ex_stop(ifp, 0);
 
 	/*
 	 * Set the station address and clear the station mask. The latter
@@ -686,6 +688,8 @@ ex_init(sc)
 	splx(s);
 
 	callout_reset(&sc->ex_mii_callout, hz, ex_tick, sc);
+
+	return (0);
 }
 
 #define	ex_mchash(addr)	(ether_crc32_be((addr), ETHER_ADDR_LEN) & 0xff)
@@ -736,6 +740,7 @@ static void
 ex_txstat(sc)
 	struct ex_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
@@ -752,7 +757,7 @@ ex_txstat(sc)
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
-			ex_init(sc);
+			ex_init(ifp);
 			/* TODO: be more subtle here */
 		} else if (i & TXS_UNDERRUN) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
@@ -764,7 +769,7 @@ ex_txstat(sc)
 				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
 					    sc->tx_start_thresh + 20);
 			sc->tx_succ_ok = 0;
-			ex_init(sc);
+			ex_init(ifp);
 			/* TODO: be more subtle here */
 		} else if (i & TXS_MAX_COLLISION) {
 			++sc->sc_ethercom.ec_if.if_collisions;
@@ -779,10 +784,9 @@ int
 ex_media_chg(ifp)
 	struct ifnet *ifp;
 {
-	struct ex_softc *sc = ifp->if_softc;
 
 	if (ifp->if_flags & IFF_UP)
-		ex_init(sc);
+		ex_init(ifp);
 	return 0;
 }
 
@@ -1117,7 +1121,7 @@ ex_intr(arg)
 			printf("%s: adapter failure (%x)\n",
 			    sc->sc_dev.dv_xname, stat);
 			ex_reset(sc);
-			ex_init(sc);
+			ex_init(ifp);
 			return 1;
 		}
 		if (stat & S_TX_COMPLETE) {
@@ -1231,7 +1235,7 @@ ex_intr(arg)
 			if (bus_space_read_4(iot, ioh, ELINK_UPLISTPTR) == 0) {
 				printf("%s: uplistptr was 0\n",
 				       sc->sc_dev.dv_xname);
-				ex_init(sc);
+				ex_init(ifp);
 			} else if (bus_space_read_4(iot, ioh, ELINK_UPPKTSTATUS)
 				   & 0x2000) {
 				printf("%s: receive stalled\n",
@@ -1255,80 +1259,19 @@ ex_ioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct ex_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
-	int s, error = 0;
+	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			ex_init(sc);
-			arp_ifinit(&sc->sc_ethercom.ec_if, ifa);
-			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    ifp->if_addrlen);
-			/* Set new address. */
-			ex_init(sc);
-			break;
-		    }
-#endif
-		default:
-			ex_init(sc);
-			break;
-		}
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->ex_mii.mii_media, cmd);
 		break;
 
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			ex_stop(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			ex_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Deal with other flags that change hardware
-			 * state, i.e. IFF_PROMISC.
-			 */
-			ex_set_mc(sc);
-		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
+	default:
+		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -1337,10 +1280,6 @@ ex_ioctl(ifp, cmd, data)
 			ex_set_mc(sc);
 			error = 0;
 		}
-		break;
-
-	default:
-		error = EINVAL;
 		break;
 	}
 
@@ -1452,16 +1391,17 @@ ex_watchdog(ifp)
 	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	ex_reset(sc);
-	ex_init(sc);
+	ex_init(ifp);
 }
 
 void
-ex_stop(sc)
-	struct ex_softc *sc;
+ex_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
+	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ex_txdesc *tx;
 	struct ex_rxdesc *rx;
 	int i;
@@ -1620,7 +1560,7 @@ ex_shutdown(arg)
 {
 	struct ex_softc *sc = arg;
 
-	ex_stop(sc);
+	ex_stop(&sc->sc_ethercom.ec_if, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.78 2000/10/11 14:59:52 onoe Exp $	*/
+/*	$NetBSD: tulip.c,v 1.79 2000/10/11 16:57:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,13 +107,13 @@ const struct tulip_txthresh_tab tlp_dm9102_txthresh_tab[] =
 void	tlp_start __P((struct ifnet *));
 void	tlp_watchdog __P((struct ifnet *));
 int	tlp_ioctl __P((struct ifnet *, u_long, caddr_t));
+int	tlp_init __P((struct ifnet *));
+void	tlp_stop __P((struct ifnet *, int));
 
 void	tlp_shutdown __P((void *));
 
 void	tlp_reset __P((struct tulip_softc *));
-int	tlp_init __P((struct tulip_softc *));
 void	tlp_rxdrain __P((struct tulip_softc *));
-void	tlp_stop __P((struct tulip_softc *, int));
 int	tlp_add_rxbuf __P((struct tulip_softc *, int));
 void	tlp_idle __P((struct tulip_softc *, u_int32_t));
 void	tlp_srom_idle __P((struct tulip_softc *));
@@ -501,6 +501,8 @@ tlp_attach(sc, enaddr)
 	ifp->if_ioctl = tlp_ioctl;
 	ifp->if_start = tlp_start;
 	ifp->if_watchdog = tlp_watchdog;
+	ifp->if_init = tlp_init;
+	ifp->if_stop = tlp_stop;
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -683,7 +685,7 @@ tlp_shutdown(arg)
 {
 	struct tulip_softc *sc = arg;
 
-	tlp_stop(sc, 1);
+	tlp_stop(&sc->sc_ethercom.ec_if, 1);
 }
 
 /*
@@ -967,7 +969,7 @@ tlp_watchdog(ifp)
 	else
 		printf("%s: spurious watchdog timeout\n", sc->sc_dev.dv_xname);
 
-	(void) tlp_init(sc);
+	(void) tlp_init(ifp);
 
 	/* Try to get more packets going. */
 	tlp_start(ifp);
@@ -986,110 +988,28 @@ tlp_ioctl(ifp, cmd, data)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s, error = 0;
+	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
-		if ((error = tlp_enable(sc)) != 0)
-			break;
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if ((error = tlp_init(sc)) != 0)
-				break;
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    ifp->if_addrlen);
-			/* Set new address. */
-			error = tlp_init(sc);
-			break;
-		    }
-#endif /* NS */
-		default:
-			error = tlp_init(sc);
-			break;
-		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCSIFFLAGS:
-#ifdef TLP_STATS
-		if (ifp->if_flags & IFF_DEBUG)
-			tlp_print_stats(sc);
-#endif
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			tlp_stop(sc, 1);
-			tlp_disable(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interfase it marked up and it is stopped, then
-			 * start it.
-			 */
-			if ((error = tlp_enable(sc)) != 0)
-				break;
-			error = tlp_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect the hardware state.
-			 */
-			if ((error = tlp_enable(sc)) != 0)
-				break;
-			error = tlp_init(sc);
-		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (TULIP_IS_ENABLED(sc) && error == ENETRESET) {
-			/*
-			 * Multicast list has changed.  Set the filter
-			 * accordingly.
-			 */
-			(*sc->sc_filter_setup)(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			if (TULIP_IS_ENABLED(sc)) {
+				/*
+				 * Multicast list has changed.  Set the
+				 * hardware filter accordingly.
+				 */
+				(*sc->sc_filter_setup)(sc);
+			}
+			error = 0;
+		}
 		break;
 	}
 
@@ -1226,7 +1146,7 @@ tlp_intr(arg)
 			if (status & STATUS_RPS)
 				printf("%s: receive process stopped\n",
 				    sc->sc_dev.dv_xname);
-			(void) tlp_init(sc);
+			(void) tlp_init(ifp);
 			break;
 		}
 
@@ -1251,7 +1171,7 @@ tlp_intr(arg)
 			}
 			printf("%s: fatal system error: %s\n",
 			    sc->sc_dev.dv_xname, str);
-			(void) tlp_init(sc);
+			(void) tlp_init(ifp);
 			break;
 		}
 
@@ -1333,7 +1253,7 @@ tlp_rxintr(sc)
 		    (TDSTAT_Rx_FS|TDSTAT_Rx_LS)) {
 			printf("%s: incoming packet spilled, resetting\n",
 			    sc->sc_dev.dv_xname);
-			(void) tlp_init(sc);
+			(void) tlp_init(ifp);
 			return;
 		}
 
@@ -1649,23 +1569,26 @@ tlp_reset(sc)
 }
 
 /*
- * tlp_init:
+ * tlp_init:		[ ifnet interface function ]
  *
  *	Initialize the interface.  Must be called at splnet().
  */
 int
-tlp_init(sc)
-	struct tulip_softc *sc;
+tlp_init(ifp)
+	struct ifnet *ifp;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct tulip_softc *sc = ifp->if_softc;
 	struct tulip_txsoft *txs;
 	struct tulip_rxsoft *rxs;
 	int i, error = 0;
 
+	if ((error = tlp_enable(sc)) != 0)
+		goto out;
+
 	/*
 	 * Cancel any pending I/O.
 	 */
-	tlp_stop(sc, 0);
+	tlp_stop(ifp, 0);
 
 	/*
 	 * Initialize `opmode' to 0, and call the pre-init routine, if
@@ -1976,8 +1899,11 @@ tlp_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
-	if (error)
+	if (error) {
+		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_timer = 0;
 		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+	}
 	return (error);
 }
 
@@ -2034,13 +1960,13 @@ tlp_power(why, arg)
 
 	s = splnet();
 	if (why != PWR_RESUME) {
-		tlp_stop(sc, 0);
+		tlp_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
 	} else if (ifp->if_flags & IFF_UP) {
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
-		tlp_init(sc);
+		tlp_init(ifp);
 	}
 	splx(s);
 }
@@ -2068,16 +1994,16 @@ tlp_rxdrain(sc)
 }
 
 /*
- * tlp_stop:
+ * tlp_stop:		[ ifnet interface function ]
  *
  *	Stop transmission on the interface.
  */
 void
-tlp_stop(sc, drain)
-	struct tulip_softc *sc;
-	int drain;
+tlp_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct tulip_softc *sc = ifp->if_softc;
 	struct tulip_txsoft *txs;
 
 	if (sc->sc_tick != NULL) {
@@ -2112,11 +2038,9 @@ tlp_stop(sc, drain)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
-	if (drain) {
-		/*
-		 * Release the receive buffers.
-		 */
+	if (disable) {
 		tlp_rxdrain(sc);
+		tlp_disable(sc);
 	}
 
 	sc->sc_flags &= ~(TULIPF_WANT_SETUP|TULIPF_DOING_SETUP);
@@ -5056,7 +4980,7 @@ tlp_2114x_isv_tmsw_set(sc)
 	 * time through.
 	 */
 	if (TULIP_MEDIA_NEEDSRESET(sc, tm->tm_opmode))
-		return (tlp_init(sc));
+		return (tlp_init(&sc->sc_ethercom.ec_if));
 
 	return ((*tm->tm_set)(sc));
 }

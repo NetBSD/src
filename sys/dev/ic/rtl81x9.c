@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.14 2000/10/01 23:32:42 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.15 2000/10/11 16:57:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -141,8 +141,9 @@ STATIC void rtk_rxeof		__P((struct rtk_softc *));
 STATIC void rtk_txeof		__P((struct rtk_softc *));
 STATIC void rtk_start		__P((struct ifnet *));
 STATIC int rtk_ioctl		__P((struct ifnet *, u_long, caddr_t));
-STATIC void rtk_init		__P((void *));
-STATIC void rtk_stop		__P((struct rtk_softc *));
+STATIC int rtk_init		__P((struct ifnet *));
+STATIC void rtk_stop		__P((struct ifnet *, int));
+
 STATIC void rtk_watchdog	__P((struct ifnet *));
 STATIC void rtk_shutdown	__P((void *));
 STATIC int rtk_ifmedia_upd	__P((struct ifnet *));
@@ -166,9 +167,6 @@ STATIC void rtk_power		__P((int, void *));
 
 STATIC void rtk_setmulti	__P((struct rtk_softc *));
 STATIC int rtk_list_tx_init	__P((struct rtk_softc *));
-
-STATIC int rtk_ether_ioctl __P((struct ifnet *, u_long, caddr_t));
-
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RTK_EECMD,			\
@@ -729,15 +727,12 @@ rtk_attach(sc)
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = rtk_ioctl;
-#if 0
-	ifp->if_output = ether_output;
-#endif
 	ifp->if_start = rtk_start;
 	ifp->if_watchdog = rtk_watchdog;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	ifp->if_init = rtk_init;
+	ifp->if_stop = rtk_stop;
 
 	/*
 	 * Do ifmedia setup.
@@ -942,13 +937,13 @@ rtk_power(why, arg)
 
 	s = splnet();
 	if (why != PWR_RESUME) {
-		rtk_stop(sc);
+		rtk_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
 	} else if (ifp->if_flags & IFF_UP) {
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
-		rtk_init(sc);
+		rtk_init(ifp);
 	}
 	splx(s);
 
@@ -1050,7 +1045,7 @@ STATIC void rtk_rxeof(sc)
 			}
 			break;
 #else
-			rtk_init(sc);
+			rtk_init(ifp);
 			return;
 #endif
 		}
@@ -1233,7 +1228,7 @@ int rtk_intr(arg)
 
 		if (status & RTK_ISR_SYSTEM_ERR) {
 			rtk_reset(sc);
-			rtk_init(sc);
+			rtk_init(ifp);
 		}
 
 	}
@@ -1353,20 +1348,20 @@ STATIC void rtk_start(ifp)
 	return;
 }
 
-STATIC void rtk_init(xsc)
-	void			*xsc;
+STATIC int rtk_init(ifp)
+	struct ifnet *ifp;
 {
-	struct rtk_softc	*sc = xsc;
-	struct ifnet		*ifp = &sc->ethercom.ec_if;
-	int			s, i;
+	struct rtk_softc	*sc = ifp->if_softc;
+	int			error = 0, i;
 	u_int32_t		rxcfg;
 
-	s = splnet();
+	if ((error = rtk_enable(sc)) != 0)
+		goto out;
 
 	/*
-	 * Cancel pending I/O and free all RX/TX buffers.
+	 * Cancel pending I/O.
 	 */
-	rtk_stop(sc);
+	rtk_stop(ifp, 0);
 
 	/* Init our MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
@@ -1442,9 +1437,15 @@ STATIC void rtk_init(xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	(void)splx(s);
-
 	callout_reset(&sc->rtk_tick_ch, hz, rtk_tick, sc);
+
+ out:
+	if (error) {
+		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_timer = 0;
+		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+	}
+	return (error);
 }
 
 /*
@@ -1476,58 +1477,6 @@ STATIC void rtk_ifmedia_sts(ifp, ifmr)
 	ifmr->ifm_active = sc->mii.mii_media_active;
 }
 
-STATIC int
-rtk_ether_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
-{
-	struct ifaddr *ifa = (struct ifaddr *) data;
-	struct rtk_softc *sc = ifp->if_softc;
-	int error = 0;
-
-	switch (cmd) {
-	case SIOCSIFADDR:
-		if ((error = rtk_enable(sc)) != 0)
-			break;
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			rtk_init(sc);
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			 struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			 if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			 else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    ifp->if_addrlen);
-			 /* Set new address. */
-			 rtk_init(sc);
-			 break;
-		    }
-#endif
-		default:
-			rtk_init(sc);
-			break;
-		}
-		break;
-
-	default:
-		return (EINVAL);
-	}
-
-	return (error);
-}
-
 STATIC int rtk_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
@@ -1540,45 +1489,23 @@ STATIC int rtk_ioctl(ifp, command, data)
 	s = splnet();
 
 	switch (command) {
-	case SIOCSIFADDR:
-	case SIOCGIFADDR:
-	case SIOCSIFMTU:
-		error = rtk_ether_ioctl(ifp, command, data);
-		break;
-	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if ((error = rtk_enable(sc)) != 0)
-				break;
-			rtk_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING) {
-				rtk_stop(sc);
-				rtk_disable(sc);
-			}
-		}
-		error = 0;
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->ethercom) :
-		    ether_delmulti(ifr, &sc->ethercom);
-
-		if (error == ENETRESET) { 
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			rtk_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->mii.mii_media, command);
 		break;
+
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, command, data);
+		if (error == ENETRESET) {
+			if (RTK_IS_ENABLED(sc)) {
+				/*
+				 * Multicast list has changed.  Set the
+				 * hardware filter accordingly.
+				 */
+				rtk_setmulti(sc);
+			}
+			error = 0;
+		}
 		break;
 	}
 
@@ -1598,7 +1525,7 @@ STATIC void rtk_watchdog(ifp)
 	ifp->if_oerrors++;
 	rtk_txeof(sc);
 	rtk_rxeof(sc);
-	rtk_init(sc);
+	rtk_init(ifp);
 
 	return;
 }
@@ -1607,14 +1534,12 @@ STATIC void rtk_watchdog(ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-STATIC void rtk_stop(sc)
-	struct rtk_softc	*sc;
+STATIC void rtk_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
-	int			i;
-	struct ifnet		*ifp;
-
-	ifp = &sc->ethercom.ec_if;
-	ifp->if_timer = 0;
+	struct rtk_softc *sc = ifp->if_softc;
+	int i;
 
 	callout_stop(&sc->rtk_tick_ch);
 
@@ -1635,9 +1560,11 @@ STATIC void rtk_stop(sc)
 		}
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	if (disable)
+		rtk_disable(sc);
 
-	return;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
 }
 
 /*
@@ -1649,9 +1576,7 @@ STATIC void rtk_shutdown(vsc)
 {
 	struct rtk_softc	*sc = (struct rtk_softc *)vsc;
 
-	rtk_stop(sc);
-
-	return;
+	rtk_stop(&sc->ethercom.ec_if, 0);
 }
 
 STATIC void

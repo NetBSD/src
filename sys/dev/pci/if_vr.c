@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.38 2000/10/01 23:32:44 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.39 2000/10/11 16:58:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -301,8 +301,8 @@ static void vr_txeof		__P((struct vr_softc *));
 static int vr_intr		__P((void *));
 static void vr_start		__P((struct ifnet *));
 static int vr_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static int vr_init		__P((struct vr_softc *));
-static void vr_stop		__P((struct vr_softc *, int));
+static int vr_init		__P((struct ifnet *));
+static void vr_stop		__P((struct ifnet *, int));
 static void vr_rxdrain		__P((struct vr_softc *));
 static void vr_watchdog		__P((struct ifnet *));
 static void vr_tick		__P((void *));
@@ -856,7 +856,7 @@ vr_intr(arg)
 
 	/* Suppress unwanted interrupts. */
 	if ((ifp->if_flags & IFF_UP) == 0) {
-		vr_stop(sc, 1);
+		vr_stop(ifp, 1);
 		return (0);
 	}
 
@@ -906,7 +906,7 @@ vr_intr(arg)
 			printf("%s: PCI bus error\n", sc->vr_dev.dv_xname);
 			/* vr_init() calls vr_start() */
 			dotx = 0;
-			(void) vr_init(sc);
+			(void) vr_init(ifp);
 		}
 	}
 
@@ -1089,16 +1089,16 @@ vr_start(ifp)
  * Initialize the interface.  Must be called at splnet.
  */
 static int
-vr_init(sc)
-	struct vr_softc *sc;
+vr_init(ifp)
+	struct ifnet *ifp;
 {
-	struct ifnet *ifp = &sc->vr_ec.ec_if;
+	struct vr_softc *sc = ifp->if_softc;
 	struct vr_desc *d;
 	struct vr_descsoft *ds;
 	int i, error = 0;
 
 	/* Cancel pending I/O. */
-	vr_stop(sc, 0);
+	vr_stop(ifp, 0);
 
 	/* Reset the Rhine to a known state. */
 	vr_reset(sc);
@@ -1228,73 +1228,18 @@ vr_ioctl(ifp, command, data)
 {
 	struct vr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (command) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if ((error = vr_init(sc)) != 0)
-				break;
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-		default:
-			error = vr_init(sc);
-			break;
-		}
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->vr_mii.mii_media, command);
 		break;
 
-	case SIOCGIFADDR:
-		bcopy((caddr_t) sc->vr_enaddr,
-			(caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-			ETHER_ADDR_LEN);
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			vr_stop(sc, 1);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			error = vr_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect the hardware state.
-			 */
-			error = vr_init(sc);
-		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if (command == SIOCADDMULTI)
-			error = ether_addmulti(ifr, &sc->vr_ec);
-		else
-			error = ether_delmulti(ifr, &sc->vr_ec);
-
+	default:
+		error = ether_ioctl(ifp, command, data);
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -1303,15 +1248,6 @@ vr_ioctl(ifp, command, data)
 			vr_setmulti(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->vr_mii.mii_media, command);
-		break;
-
-	default:
-		error = EINVAL;
 		break;
 	}
 
@@ -1328,7 +1264,7 @@ vr_watchdog(ifp)
 	printf("%s: device timeout\n", sc->vr_dev.dv_xname);
 	ifp->if_oerrors++;
 
-	(void) vr_init(sc);
+	(void) vr_init(ifp);
 }
 
 /*
@@ -1373,12 +1309,12 @@ vr_rxdrain(sc)
  * transmit lists.
  */
 static void
-vr_stop(sc, drain)
-	struct vr_softc *sc;
-	int drain;
-{
-	struct vr_descsoft *ds;
+vr_stop(ifp, disable)
 	struct ifnet *ifp;
+	int disable;
+{
+	struct vr_softc *sc = ifp->if_softc;
+	struct vr_descsoft *ds;
 	int i;
 
 	/* Cancel one second timer. */
@@ -1408,12 +1344,8 @@ vr_stop(sc, drain)
 		}
 	}
 
-	if (drain) {
-		/*
-		 * Release the receive buffers.
-		 */
+	if (disable)
 		vr_rxdrain(sc);
-	}
 
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
@@ -1469,7 +1401,7 @@ vr_shutdown(arg)
 {
 	struct vr_softc *sc = (struct vr_softc *)arg;
 
-	vr_stop(sc, 1);
+	vr_stop(&sc->vr_ec.ec_if, 1);
 }
 
 /*
@@ -1694,6 +1626,8 @@ vr_attach(parent, self, aux)
 	ifp->if_ioctl = vr_ioctl;
 	ifp->if_start = vr_start;
 	ifp->if_watchdog = vr_watchdog;
+	ifp->if_init = vr_init;
+	ifp->if_stop = vr_stop;
 	bcopy(sc->vr_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.33 2000/10/01 23:32:42 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.34 2000/10/11 16:57:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -87,13 +87,13 @@
 void	epic_start __P((struct ifnet *));
 void	epic_watchdog __P((struct ifnet *));
 int	epic_ioctl __P((struct ifnet *, u_long, caddr_t));
+int	epic_init __P((struct ifnet *));
+void	epic_stop __P((struct ifnet *, int));
 
 void	epic_shutdown __P((void *));
 
 void	epic_reset __P((struct epic_softc *));
-int	epic_init __P((struct epic_softc *));
 void	epic_rxdrain __P((struct epic_softc *));
-void	epic_stop __P((struct epic_softc *, int));
 int	epic_add_rxbuf __P((struct epic_softc *, int));
 void	epic_read_eeprom __P((struct epic_softc *, int, int, u_int16_t *));
 void	epic_set_mchash __P((struct epic_softc *));
@@ -253,6 +253,8 @@ epic_attach(sc)
 	ifp->if_ioctl = epic_ioctl;
 	ifp->if_start = epic_start;
 	ifp->if_watchdog = epic_watchdog;
+	ifp->if_init = epic_init;
+	ifp->if_stop = epic_stop;
 
 	/*
 	 * Attach the interface.
@@ -310,7 +312,7 @@ epic_shutdown(arg)
 {
 	struct epic_softc *sc = arg;
 
-	epic_stop(sc, 1);
+	epic_stop(&sc->sc_ethercom.ec_if, 1);
 }
 
 /*
@@ -502,7 +504,7 @@ epic_watchdog(ifp)
 	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 
-	(void) epic_init(sc);
+	(void) epic_init(ifp);
 }
 
 /*
@@ -517,82 +519,18 @@ epic_ioctl(ifp, cmd, data)
 {
 	struct epic_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s, error = 0;
+	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if ((error = epic_init(sc)) != 0)
-				break;
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    ifp->if_addrlen);
-			/* Set new address. */
-			error = epic_init(sc);
-			break;
-		    }
-#endif /* NS */
-		default:
-			error = epic_init(sc);
-			break;
-		}
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			epic_stop(sc, 1);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interfase it marked up and it is stopped, then
-			 * start it.
-			 */
-			error = epic_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect the hardware state.
-			 */
-			error = epic_init(sc);
-		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
+	default:
+		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -603,15 +541,6 @@ epic_ioctl(ifp, cmd, data)
 			epic_set_mchash(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = EINVAL;
 		break;
 	}
 
@@ -867,7 +796,7 @@ epic_intr(arg)
 		else
 			printf("%s: unknown fatal error\n",
 			    sc->sc_dev.dv_xname);
-		(void) epic_init(sc);
+		(void) epic_init(ifp);
 	}
 
 	/*
@@ -937,12 +866,12 @@ epic_reset(sc)
  * Initialize the interface.  Must be called at splnet().
  */
 int
-epic_init(sc)
-	struct epic_softc *sc;
+epic_init(ifp)
+	struct ifnet *ifp;
 {
+	struct epic_softc *sc = ifp->if_softc;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
 	struct epic_txdesc *txd;
 	struct epic_descsoft *ds;
@@ -952,7 +881,7 @@ epic_init(sc)
 	/*
 	 * Cancel any pending I/O.
 	 */
-	epic_stop(sc, 0);
+	epic_stop(ifp, 0);
 
 	/*
 	 * Reset the EPIC to a known state.
@@ -1118,13 +1047,13 @@ epic_rxdrain(sc)
  * Stop transmission on the interface.
  */
 void
-epic_stop(sc, drain)
-	struct epic_softc *sc;
-	int drain;
+epic_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
+	struct epic_softc *sc = ifp->if_softc;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct epic_descsoft *ds;
 	u_int32_t reg;
 	int i;
@@ -1165,12 +1094,8 @@ epic_stop(sc, drain)
 		}
 	}
 
-	if (drain) {
-		/*
-		 * Release the receive buffers.
-		 */
+	if (disable)
 		epic_rxdrain(sc);
-	}
 
 	/*
 	 * Mark the interface down and cancel the watchdog timer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.39 2000/10/03 23:35:02 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.40 2000/10/11 16:57:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -177,10 +177,11 @@ inline void fxp_scb_wait __P((struct fxp_softc *));
 
 void	fxp_start __P((struct ifnet *));
 int	fxp_ioctl __P((struct ifnet *, u_long, caddr_t));
-int	fxp_init __P((struct fxp_softc *));
-void	fxp_rxdrain __P((struct fxp_softc *));
-void	fxp_stop __P((struct fxp_softc *, int));
 void	fxp_watchdog __P((struct ifnet *));
+int	fxp_init __P((struct ifnet *));
+void	fxp_stop __P((struct ifnet *, int));
+
+void	fxp_rxdrain __P((struct fxp_softc *));
 int	fxp_add_rfabuf __P((struct fxp_softc *, bus_dmamap_t, int));
 int	fxp_mdi_read __P((struct device *, int, int));
 void	fxp_statchg __P((struct device *));
@@ -331,6 +332,8 @@ fxp_attach(sc)
 	ifp->if_ioctl = fxp_ioctl;
 	ifp->if_start = fxp_start;
 	ifp->if_watchdog = fxp_watchdog;
+	ifp->if_init = fxp_init;
+	ifp->if_stop = fxp_stop;
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -459,7 +462,7 @@ fxp_shutdown(arg)
 	 * Since the system's going to halt shortly, don't bother
 	 * freeing mbufs.
 	 */
-	fxp_stop(sc, 0);
+	fxp_stop(&sc->sc_ethercom.ec_if, 0);
 }
 /*
  * Power handler routine. Called when the system is transitioning
@@ -473,16 +476,15 @@ fxp_power(why, arg)
 	void *arg;
 {
 	struct fxp_softc *sc = arg;
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int s;
 
 	s = splnet();
 	if (why != PWR_RESUME)
-		fxp_stop(sc, 0);
+		fxp_stop(ifp, 0);
 	else {
-		ifp = &sc->sc_ethercom.ec_if;
 		if (ifp->if_flags & IFF_UP)
-			fxp_init(sc);
+			fxp_init(ifp);
 	}
 	splx(s);
 }
@@ -1060,7 +1062,7 @@ fxp_intr(arg)
 				 * If we want a re-init, do that now.
 				 */
 				if (sc->sc_flags & FXPF_WANTINIT)
-					(void) fxp_init(sc);
+					(void) fxp_init(ifp);
 			}
 
 			/*
@@ -1139,7 +1141,7 @@ fxp_tick(arg)
 	 * speed transition).
 	 */
 	if (sc->sc_rxidle > FXP_MAX_RX_IDLE) {
-		(void) fxp_init(sc);
+		(void) fxp_init(ifp);
 		splx(s);
 		return;
 	}
@@ -1211,11 +1213,11 @@ fxp_rxdrain(sc)
  * the interface.
  */
 void
-fxp_stop(sc, drain)
-	struct fxp_softc *sc;
-	int drain;
+fxp_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct fxp_softc *sc = ifp->if_softc;
 	struct fxp_txsoft *txs;
 	int i;
 
@@ -1254,11 +1256,9 @@ fxp_stop(sc, drain)
 	}
 	sc->sc_txpending = 0;
 
-	if (drain) {
-		/*
-		 * Release the receive buffers.
-		 */
+	if (disable) {
 		fxp_rxdrain(sc);
+		fxp_disable(sc);
 	}
 
 }
@@ -1278,27 +1278,30 @@ fxp_watchdog(ifp)
 	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 
-	(void) fxp_init(sc);
+	(void) fxp_init(ifp);
 }
 
 /*
  * Initialize the interface.  Must be called at splnet().
  */
 int
-fxp_init(sc)
-	struct fxp_softc *sc;
+fxp_init(ifp)
+	struct ifnet *ifp;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct fxp_softc *sc = ifp->if_softc;
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txd;
 	bus_dmamap_t rxmap;
 	int i, prm, save_bf, allm, error = 0;
 
+	if ((error = fxp_enable(sc)) != 0)
+		goto out;
+
 	/*
 	 * Cancel any pending I/O
 	 */
-	fxp_stop(sc, 0);
+	fxp_stop(ifp, 0);
 
 	/* 
 	 * XXX just setting sc_flags to 0 here clears any FXPF_MII
@@ -1529,8 +1532,11 @@ fxp_init(sc)
 	fxp_start(ifp);
 
  out:
-	if (error)
+	if (error) {
+		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_timer = 0;
 		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+	}
 	return (error);
 }
 
@@ -1691,122 +1697,45 @@ fxp_mdi_write(self, phy, reg, value)
 }
 
 int
-fxp_ioctl(ifp, command, data)
+fxp_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	u_long command;
+	u_long cmd;
 	caddr_t data;
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s, error = 0;
+	int s, error;
 
 	s = splnet();
 
-	switch (command) {
-	case SIOCSIFADDR:
-		if ((error = fxp_enable(sc)) != 0)
-			break;
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if ((error = fxp_init(sc)) != 0)
-				break;
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			 struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			 if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			 else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    ifp->if_addrlen);
-			 /* Set new address. */
-			 error = fxp_init(sc);
-			 break;
-		    }
-#endif /* NS */
-		default:
-			error = fxp_init(sc);
-			break;
-		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			fxp_stop(sc, 1);
-			fxp_disable(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			if((error = fxp_enable(sc)) != 0)
-				break;
-			error = fxp_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Reset the interface to pick up change in any other
-			 * flags that affect the hardware state.
-			 */
-			if((error = fxp_enable(sc)) != 0)
-				break;
-			error = fxp_init(sc);
-		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if(sc->sc_enabled == 0) {
-			error = EIO;
-			break;
-		}
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			if (sc->sc_txpending) {
-				sc->sc_flags |= FXPF_WANTINIT;
-				error = 0;
-			} else
-				error = fxp_init(sc);
-		}
-		break;
-
+	switch (cmd) {
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			if (sc->sc_enabled) {
+				/*
+				 * Multicast list has changed; set the
+				 * hardware filter accordingly.
+				 */
+				if (sc->sc_txpending) {
+					sc->sc_flags |= FXPF_WANTINIT;
+					error = 0;
+				} else
+					error = fxp_init(ifp);
+			} else
+				error = 0;
+		}
 		break;
 	}
+
+	/* Try to get more packets going. */
+	if (sc->sc_enabled)
+		fxp_start(ifp);
 
 	splx(s);
 	return (error);
