@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.3 2002/04/23 20:41:16 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.4 2002/04/24 09:43:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -41,12 +41,14 @@
  */
 struct esiop_slot {
 	u_int32_t dsa; /* DSA of the xfer. The first 2 bits holds flags */
-	u_int32_t id;  /* for SELECT */
 } __attribute__((__packed__));
+
+#define CMD_SLOTSIZE (sizeof(struct esiop_slot) / sizeof(u_int32_t))
 
 /*
  * xfer description of the script: tables and reselect script
  * In struct siop_common_cmd siop_xfer will point to this.
+ * If you change this don't forget to update o_cmd_* and cmd_slot_size in script
  */
 struct esiop_xfer {
 	struct siop_common_xfer siop_tables;
