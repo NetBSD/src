@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 1998/03/26 23:51:08 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.9 1998/04/15 21:46:23 drochner Exp $
 #
 # First try for BEBOX config file
 #
@@ -128,7 +128,8 @@ ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards
 #ipkdbif0 at ne?
 
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-#spkr0	at pckbd? port 0x61
+#pcppi0 at isa?
+#spkr0	at pcppi?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
