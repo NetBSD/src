@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.33 1999/11/16 22:03:25 hubertf Exp $
+.\"	$NetBSD: sh.1,v 1.33.4.1 2000/07/18 01:59:14 jhawk Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1011,17 +1011,21 @@ A null command that returns a 0 (true) exit value.
 .It \&. file
 The commands in the specified file are read and executed by the shell.
 .It alias Op Ar name Ns Op Ar "=string ..."
-If name=string is specified, the shell defines the
-alias
-.Dq name
+If
+.Ar name=string
+is specified, the shell defines the alias
+.Ar name
 with value
-.Dq string .
+.Ar string .
 If just
-.Dq name
+.Ar name
 is specified, the value of the alias
-.Dq name
-is printed. With no arguments, the alias builtin prints the
-names and values of all defined aliases (see unalias).
+.Ar name
+is printed. With no arguments, the
+.Ic alias
+builtin prints the
+names and values of all defined aliases (see
+.Ic unalias ) .
 .It bg [ Ar job ] ...
 Continue the specified jobs (or the current job if no
 jobs are given) in the background.
@@ -1031,9 +1035,11 @@ have a shell function with the same name as a builtin command.)
 .It cd Op Ar directory
 Switch to the specified directory (default
 .Ev $HOME ) .
-If the an entry for
+If an entry for
 .Ev CDPATH
-appears in the environment of the cd command or the shell variable
+appears in the environment of the
+.Ic cd
+command or the shell variable
 .Ev CDPATH
 is set and the directory name does not begin with a slash, then the
 directories listed in
@@ -1042,7 +1048,9 @@ will be searched for the specified directory.  The format of
 .Ev CDPATH
 is the same as that of
 .Ev PATH .
-In an interactive shell, the cd command will print out the name of the
+In an interactive shell, the
+.Ic cd
+command will print out the name of the
 directory that it actually switched to if this is different from the name
 that the user gave.  These may be different either because the
 .Ev CDPATH
@@ -1053,12 +1061,16 @@ the command.
 .It exec Op Ar command arg...
 Unless command is omitted, the shell process is replaced with the
 specified program (which must be a real program, not a shell builtin or
-function).  Any redirections on the exec command are marked as permanent,
-so that they are not undone when the exec command finishes.
+function).  Any redirections on the
+.Ic exec
+command are marked as permanent, so that they are not undone when the
+.Ic exec
+command finishes.
 .It exit Op Ar exitstatus
-Terminate the shell process.  If exitstatus is given it is used as the
-exit status of the shell; otherwise the exit status of the preceding
-command is used.
+Terminate the shell process.  If
+.Ar exitstatus
+is given it is used as the exit status of the shell; otherwise the
+exit status of the preceding command is used.
 .It export Ar name...
 .It export Fl p
 The specified names are exported so that they will appear in the
@@ -1082,8 +1094,10 @@ option specified the output will be formatted suitably for non-interactive use.
 .It Xo fc Fl s Op Ar old=new
 .Op Ar first
 .Xc
-The fc builtin lists, or edits and re-executes, commands
-previously entered to an interactive shell.
+The
+.Ic fc
+builtin lists, or edits and re-executes, commands previously entered
+to an interactive shell.
 .Bl -tag -width 5n
 .It Fl e No editor
 Use the editor named by editor to edit the commands.  The
@@ -1226,13 +1240,18 @@ to
 .It hash Fl rv Ar command...
 The shell maintains a hash table which remembers the
 locations of commands.  With no arguments whatsoever,
-the hash command  prints out the contents of this
-table.  Entries which have not been looked at since
-the last cd command are marked with an asterisk; it
-is possible for these entries to be invalid.
+the
+.Ic hash
+command prints out the contents of this table.  Entries which have not
+been looked at since the last
+.Ic cd
+command are marked with an asterisk; it is possible for these entries
+to be invalid.
 .Pp
-With arguments, the hash command removes the specified commands from the
-hash table (unless they are functions) and then locates them.  With the
+With arguments, the
+.Ic hash
+command removes the specified commands from the hash table (unless
+they are functions) and then locates them.  With the
 .Fl v
 option, hash prints the locations of the commands as it finds them.  The
 .Fl r
@@ -1240,7 +1259,9 @@ option causes the hash command to delete all the entries in the hash table
 except for functions.
 .It jobid Op Ar job
 Print the process id's of the processes in the job.
-If the job argument is omitted, use the current job.
+If the
+.Ar job
+argument is omitted, the current job is used.
 .It jobs
 This command lists out all the background processes
 which are children of the current shell process.
@@ -1250,8 +1271,9 @@ differ from the program of the same name because the
 builtin command remembers what the current directory
 is rather than recomputing it each time.  This makes
 it faster.  However, if the current directory is
-renamed, the builtin version of pwd will continue to
-print the old name for the directory.
+renamed, the builtin version of
+.Ic pwd
+will continue to print the old name for the directory.
 .It Xo read Op Fl p Ar prompt
 .Op Fl r
 .Op Ar variable...
@@ -1267,9 +1289,10 @@ characters in
 .Ev IFS
 that separated them) are assigned to the last variable. If there are more
 variables than pieces, the remaining variables are assigned the null
-string.
-The 'read' builtin will indicate success unless EOF is encountered
-on input, in which case failure is returned. 
+string. The
+.Ic read
+builtin will indicate success unless EOF is encountered on input, in
+which case failure is returned.
 .Pp
 By default, unless the
 .Fl r
@@ -1297,7 +1320,9 @@ option specified the output will be formatted suitably for non-interactive use.
 .Fl options | Cm +options | Cm -- }
 .Oc Ar arg...
 .Xc
-The set command performs three different functions.
+The
+.Ic set
+command performs three different functions.
 .Pp
 With no arguments, it lists the values of all shell
 variables.
@@ -1316,28 +1341,51 @@ will clear all the positional parameters (equivalent to executing
 .Dq shift $# . )
 .It setvar Ar variable Ar value
 Assigns value to variable. (In general it is better to write
-variable=value rather than using setvar. Setvar is intended to be used in
+variable=value rather than using
+.Ic setvar .
+.Ic setvar 
+is intended to be used in
 functions that assign values to variables whose names are passed as
 parameters.)
 .It shift Op Ar n
-Shift the positional parameters n times.  A shift sets the value of $1 to
-the value of $2, the value of $2 to the value of $3, and so on, decreasing
-the value of $# by one. If there are zero positional parameters, shifting
-doesn't do anything.
+Shift the positional parameters n times.  A
+.Ic shift
+sets the value of
+.Va $1
+to the value of
+.Va $2 ,
+the value of
+.Va $2
+to the value of
+.Va $3 ,
+and so on, decreasing
+the value of
+.Va $#
+by one. If there are zero positional parameters,
+.Ic shift
+does nothing.
 .It Xo trap
 .Op Ar action
 .Ar signal...
 .Xc
 Cause the shell to parse and execute action when any of the specified
-signals are received. The signals are specified by signal number. Action
+signals are received. The signals are specified by signal number. If
+.Ar signal
+is
+.Li 0 ,
+the action is executed when the shell exits.
+.Ar action
 may be null or omitted; the former causes the specified signal to be
 ignored and the latter causes the default action to be taken. When the
 shell forks off a subshell, it resets trapped (but not ignored) signals to
-the default action. The trap command has no effect on signals that were
+the default action. The
+.Ic trap
+command has no effect on signals that were
 ignored on entry to the shell.
 .It type Op Ar name ...
 Interpret each name as a command and print the resolution of the command
-search. Possible resolutions are: shell keyword, alias, shell builtin,
+search. Possible resolutions are:
+shell keyword, alias, shell builtin,
 command, tracked alias and not found.  For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
 command is printed.
