@@ -95,6 +95,9 @@ extern int h_errno;
 
 #if defined (USE_DEFAULT_NETWORK)
 #  define USE_BPF
+#  define NETBSD_FDDI
+#  define FDDI_HEADER_SIZE 16
+#  include <net/if_types.h>
 #endif
 
 #ifdef __alpha__
