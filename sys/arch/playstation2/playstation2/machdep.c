@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2001/10/16 15:38:55 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2001/11/23 16:08:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_builtin_kernel_loader.h"
+#include "opt_kloader_kernel_path.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,8 @@
 #include <machine/intr.h>/* hardintr_init */
 #include <playstation2/playstation2/sifbios.h>
 #include <playstation2/playstation2/interrupt.h>
-#ifdef BUILTIN_KERNEL_LOADER
+#ifdef KLOADER_KERNEL_PATH
 #include <playstation2/playstation2/kloader.h>
-#ifndef KERNEL_PATH
-#define KERNEL_PATH	"/netbsd"
-#endif
 #endif
 
 /* For sysctl. */
@@ -313,8 +310,8 @@ cpu_reboot(int howto, char *bootstr)
 	if (boothowto & RB_HALT) {
 		howto |= RB_HALT;
 	} else {
-#ifdef BUILTIN_KERNEL_LOADER		
-		kloader_reboot_setup(KERNEL_PATH);
+#ifdef KLOADER_KERNEL_PATH
+		kloader_reboot_setup(KLOADER_KERNEL_PATH);
 #endif
 	}
 
@@ -343,7 +340,7 @@ cpu_reboot(int howto, char *bootstr)
 	else if (howto & RB_HALT)
 		sifbios_halt(1); /* halt */
 	else {
-#ifdef BUILTIN_KERNEL_LOADER
+#ifdef KLOADER_KERNEL_PATH
 		kloader_reboot();
 		/* NOTREACHED */
 #endif
