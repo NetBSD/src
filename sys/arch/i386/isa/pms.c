@@ -71,6 +71,24 @@
 #define CNTRL	4       /* Offset for control port, write-only */
 #define STATUS	4	/* Offset for status port, read-only */
 
+/* status bits */
+#define	PMS_OUTPUT_ACK	0x02	/* output acknowledge */
+
+/* controller commands */
+#define	PMS_ENABLE	0xa7	/* enable auxiliary port */
+#define	PMS_DISABLE	0xa8	/* disable auxiliary port */
+#define	PMS_INT_ENABLE	0x47	/* enable controller interrupts */
+#define	PMS_INT_DISABLE	0x65	/* disable controller interrupts */
+
+/* mouse commands */
+#define	PMS_SET_RES	0xe8	/* set resolution */
+#define	PMS_SET_SCALE	0xe9	/* set scaling factor */
+#define	PMS_SET_STREAM	0xea	/* set streaming mode */
+#define	PMS_SET_SAMPLE	0xf3	/* set sampling rate */
+#define	PMS_DEV_ENABLE	0xf4	/* mouse on */
+#define	PMS_DEV_DISABLE	0xf5	/* mouse off */
+#define	PMS_RESET	0xff	/* reset */
+
 #define PMSUNIT(dev)	(minor(dev) >> 1)
 
 #ifndef min
@@ -395,41 +413,45 @@ void pmsintr(unit)
 		dy >>= 2;
 		++state;
 
-	dy = -dy;
+		dy = -dy;
 
-	changed = buttons ^ sc->button;
-	sc->button = buttons;
-	sc->status = buttons | (sc->status & ~BUTSTATMASK) | (changed << 3);
+		changed = buttons ^ sc->button;
+		sc->button = buttons;
+		sc->status = buttons | (sc->status & ~BUTSTATMASK) | (changed << 3);
 
-	/* Update accumulated movements */
+		/* Update accumulated movements */
 
-	sc->x += dx;
-	sc->y += dy;
+		sc->x += dx;
+		sc->y += dy;
 
-	/* If device in use and a change occurred... */
+		/* If device in use and a change occurred... */
 
-	if (sc->state & OPEN && (dx || dy || changed)) {
-		sc->inq.queue[sc->inq.last++] = 0x40 | (buttons ^ BUTSTATMASK);
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = dx;
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = dy;
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = 0;
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = 0;
-		sc->inq.last = sc->inq.last % MSBSZ;
-		sc->inq.count += 5;
+		if (sc->state & OPEN && (dx || dy || changed)) {
+			sc->inq.queue[sc->inq.last++] = 0x40 |
+							(buttons ^ BUTSTATMASK);
+			sc->inq.queue[sc->inq.last++ % MSBSZ] = dx;
+			sc->inq.queue[sc->inq.last++ % MSBSZ] = dy;
+			sc->inq.queue[sc->inq.last++ % MSBSZ] = 0;
+			sc->inq.queue[sc->inq.last++ % MSBSZ] = 0;
+			sc->inq.last = sc->inq.last % MSBSZ;
+			sc->inq.count += 5;
 
-		if (sc->state & ASLP) {
-			sc->state &= ~ASLP;
-			wakeup(sc);
-		}
+			if (sc->state & ASLP) {
+				sc->state &= ~ASLP;
+				wakeup(sc);
+			}
 #ifdef 386BSD_KERNEL
-		if (sc->rsel) {
-			selwakeup(&sc->rsel, 0);
-			sc->rsel = 0;
-		}
+			if (sc->rsel) {
+				selwakeup(&sc->rsel, 0);
+				sc->rsel = 0;
+			}
 #else
-		selwakeup(&sc->rsel);
+			selwakeup(&sc->rsel);
 #endif
 		}
+
+		break;
+	}
 }
 
 int pmsselect(dev_t dev, int rw, struct proc *p)
