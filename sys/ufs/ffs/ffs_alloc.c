@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.51 2001/09/15 20:36:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,15 +59,13 @@
 #include <ufs/ffs/ffs_extern.h>
 
 static ufs_daddr_t ffs_alloccg __P((struct inode *, int, ufs_daddr_t, int));
-static ufs_daddr_t ffs_alloccgblk __P((struct inode *, struct buf *,
-					ufs_daddr_t));
+static ufs_daddr_t ffs_alloccgblk __P((struct inode *, struct buf *, ufs_daddr_t));
 static ufs_daddr_t ffs_clusteralloc __P((struct inode *, int, ufs_daddr_t, int));
 static ino_t ffs_dirpref __P((struct inode *));
 static ufs_daddr_t ffs_fragextend __P((struct inode *, int, long, int, int));
 static void ffs_fserr __P((struct fs *, u_int, char *));
-static u_long ffs_hashalloc
-		__P((struct inode *, int, long, int,
-		     ufs_daddr_t (*)(struct inode *, int, ufs_daddr_t, int)));
+static u_long ffs_hashalloc __P((struct inode *, int, long, int,
+    ufs_daddr_t (*)(struct inode *, int, ufs_daddr_t, int)));
 static ufs_daddr_t ffs_nodealloccg __P((struct inode *, int, ufs_daddr_t, int));
 static ufs_daddr_t ffs_mapsearch __P((struct fs *, struct cg *,
 				      ufs_daddr_t, int));
@@ -117,9 +115,10 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 #endif
 	
 #ifdef UVM_PAGE_TRKOWN
-	if (ITOV(ip)->v_type == VREG && lbn > 0) {
+	if (ITOV(ip)->v_type == VREG &&
+	    lblktosize(fs, (voff_t)lbn) < round_page(ITOV(ip)->v_size)) {
 		struct vm_page *pg;
-		struct uvm_object *uobj = &ITOV(ip)->v_uvm.u_obj;
+		struct uvm_object *uobj = &ITOV(ip)->v_uobj;
 		voff_t off = trunc_page(lblktosize(fs, lbn));
 		voff_t endoff = round_page(lblktosize(fs, lbn) + size);
 
@@ -205,7 +204,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 #ifdef UVM_PAGE_TRKOWN
 	if (ITOV(ip)->v_type == VREG) {
 		struct vm_page *pg;
-		struct uvm_object *uobj = &ITOV(ip)->v_uvm.u_obj;
+		struct uvm_object *uobj = &ITOV(ip)->v_uobj;
 		voff_t off = trunc_page(lblktosize(fs, lbprev));
 		voff_t endoff = round_page(lblktosize(fs, lbprev) + osize);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.30 2001/07/25 23:05:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.31 2001/09/15 20:36:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -126,17 +126,12 @@ struct vm_page {
 	struct vm_anon		*uanon;		/* anon (O,P) */
 	struct uvm_object	*uobject;	/* object (O,P) */
 	voff_t			offset;		/* offset into object (O,P) */
-
-	u_int			flags:      16,	/* object flags [O] */
-				version:    16;	/* version count [O] */
-
-	u_int			wire_count: 16,	/* wired down map refs [P] */
-				pqflags:    8,	/* page queue flags [P] */
-				       :    8;
-
-	u_int			loan_count;	/* number of active loans
+	uint16_t		flags;		/* object flags [O] */
+	uint16_t		loan_count;	/* number of active loans
 						 * to read: [O or P]
 						 * to modify: [O _and_ P] */
+	uint16_t		wire_count;	/* wired down map refs [P] */
+	uint16_t		pqflags;	/* page queue flags [P] */
 	paddr_t			phys_addr;	/* physical address of page */
 
 #ifdef __HAVE_VM_PAGE_MD
@@ -169,11 +164,11 @@ struct vm_page {
 #define	PG_WANTED	0x0002		/* someone is waiting for page */
 #define	PG_TABLED	0x0004		/* page is in VP table  */
 #define	PG_CLEAN	0x0008		/* page has not been modified */
-#define PG_CLEANCHK	0x0010		/* clean bit has been checked */
-#define PG_RELEASED	0x0020		/* page released while paging */
+#define	PG_PAGEOUT	0x0010		/* page to be freed for pagedaemon */
+#define PG_RELEASED	0x0020		/* page to be freed when unbusied */
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
-#define PG_RDONLY	0x0080		/* page must be mapped read-only */
-#define PG_ZERO		0x0100		/* page is pre-zero'd */
+#define	PG_RDONLY	0x0080		/* page must be mapped read-only */
+#define	PG_ZERO		0x0100		/* page is pre-zero'd */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
@@ -286,6 +281,7 @@ PAGE_INLINE void uvm_pageactivate __P((struct vm_page *));
 vaddr_t uvm_pageboot_alloc __P((vsize_t));
 PAGE_INLINE void uvm_pagecopy __P((struct vm_page *, struct vm_page *));
 PAGE_INLINE void uvm_pagedeactivate __P((struct vm_page *));
+PAGE_INLINE void uvm_pagedequeue __P((struct vm_page *));
 void uvm_pagefree __P((struct vm_page *));
 void uvm_page_unbusy __P((struct vm_page **, int));
 PAGE_INLINE struct vm_page *uvm_pagelookup __P((struct uvm_object *, voff_t));
@@ -303,6 +299,8 @@ static int vm_physseg_find __P((paddr_t, int *));
 /*
  * macros
  */
+
+#define UVM_PAGE_HASH_PENALTY	4	/* XXX: a guess */
 
 #define uvm_lock_pageq()	simple_lock(&uvm.pageqlock)
 #define uvm_unlock_pageq()	simple_unlock(&uvm.pageqlock)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.48 2001/07/13 20:30:23 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.49 2001/09/15 20:36:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -392,12 +392,8 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	ufs_ihashins(ip);
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
-	error = ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
+	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	ip = VTOI(vp);
-	if (error) {
-		vput(vp);
-		goto errout;
-	}
 	/* printf("lfs_ialloc[2]: ino %d vp %p\n", new_ino, vp);*/
 	
 	*vpp = vp;

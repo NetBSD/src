@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.31 2001/08/27 02:34:29 chuck Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.32 2001/09/15 20:36:46 chs Exp $	*/
 
 /*
  *
@@ -463,7 +463,6 @@ uvm_loanuobj(ufi, output, flags, va)
 
 	if (result == EBUSY) {
 		uvmfault_unlockall(ufi, amap, NULL, NULL);
-
 		npages = 1;
 		/* locked: uobj */
 		result = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
@@ -500,7 +499,6 @@ uvm_loanuobj(ufi, output, flags, va)
 		if ((pg->flags & PG_RELEASED) != 0 ||
 		    (locked && amap && amap_lookup(&ufi->entry->aref,
 		    ufi->orig_rvaddr - ufi->entry->start))) {
-
 			if (locked)
 				uvmfault_unlockall(ufi, amap, NULL, NULL);
 			locked = FALSE;
@@ -511,24 +509,15 @@ uvm_loanuobj(ufi, output, flags, va)
 		 */
 
 		if (locked == FALSE) {
-
-			if (pg->flags & PG_WANTED)
-				/* still holding object lock */
+			if (pg->flags & PG_WANTED) {
 				wakeup(pg);
-
+			}
 			if (pg->flags & PG_RELEASED) {
-#ifdef DIAGNOSTIC
-				if (uobj->pgops->pgo_releasepg == NULL)
-			panic("uvm_loanuobj: object has no releasepg function");
-#endif
-				/* frees page */
-				if (uobj->pgops->pgo_releasepg(pg, NULL))
-					simple_unlock(&uobj->vmobjlock);
+				uvm_pagefree(pg);
 				return (0);
 			}
-
 			uvm_lock_pageq();
-			uvm_pageactivate(pg); /* make sure it is in queues */
+			uvm_pageactivate(pg);
 			uvm_unlock_pageq();
 			pg->flags &= ~(PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(pg, NULL);
