@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1995/12/30 18:25:25 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1996/02/14 02:56:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,6 @@
  */
 int	cold;		    /* if 1, still working on cold-start */
 int	cpuspeed = 0;	    /* relative cpu speed -- can be patched */	
-struct	isr isrqueue[NISR];
 struct	hp_hw sc_table[MAXCTLRS];
 
 /* XXX must be allocated statically because of early console init */
@@ -935,27 +934,6 @@ iounmap(kva, size)
 	physunaccess(kva, size);
 	ix = btoc(kva - extiobase) + 1;
 	rmfree(extiomap, btoc(size), ix);
-}
-
-isrinit()
-{
-	register int i;
-
-	for (i = 0; i < NISR; i++)
-		isrqueue[i].isr_forw = isrqueue[i].isr_back = &isrqueue[i];
-}
-
-void
-isrlink(isr)
-	register struct isr *isr;
-{
-	int i = ISRIPL(isr->isr_ipl);
-
-	if (i < 0 || i >= NISR) {
-		printf("bad IPL %d\n", i);
-		panic("configure");
-	}
-	insque(isr, isrqueue[i].isr_back);
 }
 
 /*
