@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.4 2001/01/14 05:22:32 itojun Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.5 2001/01/21 02:44:05 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssh-add.c,v 1.4 2001/01/14 05:22:32 itojun Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.5 2001/01/21 02:44:05 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -106,6 +106,8 @@ ssh_askpass(const char *askpass, char *msg)
 	int p[2], status;
 	char buf[1024];
 
+	if (fflush(stdout) != 0)
+		error("ssh_askpass: fflush: %s", strerror(errno));
 	if (askpass == NULL)
 		fatal("internal error: askpass undefined");
 	if (pipe(p) < 0)
