@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.1 1998/07/05 07:53:45 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.2 1998/07/13 04:01:39 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -146,6 +146,11 @@
 void	espattach_intio	__P((struct device *, struct device *, void *));
 int	espmatch_intio	__P((struct device *, struct cfdata *, void *));
 
+/* DMA callbacks */
+bus_dmamap_t esp_dmacb_continue __P((void *arg));
+void esp_dmacb_completed __P((bus_dmamap_t map, void *arg));
+void esp_dmacb_shutdown __P((void *arg));
+
 void	espattach	__P((struct esp_softc *));
 
 /* Linkup to the rest of the kernel */
@@ -239,16 +244,28 @@ espattach_intio(parent, self, aux)
 
 		esc->sc_scsi_dma.nd_intr = NEXT_I_SCSI_DMA;
 		esc->sc_scsi_dma.nd_chaining_flag = 0;
-		esc->sc_scsi_dma.nd_shutdown_cb  = NULL;
-		esc->sc_scsi_dma.nd_continue_cb  = NULL;
-		esc->sc_scsi_dma.nd_completed_cb = NULL;
-		esc->sc_scsi_dma.nd_cb_arg       = NULL;
+		esc->sc_scsi_dma.nd_shutdown_cb  = &esp_dmacb_shutdown;
+		esc->sc_scsi_dma.nd_continue_cb  = &esp_dmacb_continue;
+		esc->sc_scsi_dma.nd_completed_cb = &esp_dmacb_completed;
+		esc->sc_scsi_dma.nd_cb_arg       = sc;
 		nextdma_config(&esc->sc_scsi_dma);
+		nextdma_init(&esc->sc_scsi_dma);
 
+		/* @@@ maxxfer is not set yet here */
+		{
+			int error;
+			if ((error = bus_dmamap_create(esc->sc_scsi_dma.nd_dmat,
+					sc->sc_maxxfer, 1, sc->sc_maxxfer,
+					0, BUS_DMA_ALLOCNOW, &esc->sc_dmamap)) != 0) {
+				panic("%s: can't create i/o DMA map, error = %d\n",
+						sc->sc_dev.dv_xname,error);
+			}
+		}
+
+		espattach(esc);
 	}
-
-	espattach(esc);
 }
+
 /*
  * Attach this instance, and then all the sub-devices
  */
@@ -390,9 +407,7 @@ int
 esp_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
-	panic("Not yet implemented");
-	return (0);
+	return (INTR_OCCURRED(NEXT_I_SCSI));
 }
 
 void
@@ -400,15 +415,16 @@ esp_dma_reset(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	panic("Not yet implemented");
+	nextdma_reset(&esc->sc_scsi_dma);
 }
 
 int
 esp_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
-	panic("Not yet implemented");
+	/* Do nothing here, since the DMA has real interrupts
+	 * of its own.
+	 */
 	return (0);
 }
 
@@ -421,7 +437,25 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	size_t *dmasize;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	panic("Not yet implemented");
+
+#ifdef DIAGNOSTIC
+	if (esc->sc_datain != -1) {
+		panic("%s: map already loaded in esp_dma_setup, datain = %d",
+				sc->sc_dev.dv_xname,esc->sc_datain);
+	}
+#endif
+
+	{
+		int error;
+		error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
+				esc->sc_dmamap, *addr, *dmasize, NULL, BUS_DMA_NOWAIT);
+		if (error) {
+			panic("%s: can't start DMA\n");
+		}
+	}
+
+	esc->sc_datain = datain;
+
 	return (0);
 }
 
@@ -430,14 +464,14 @@ esp_dma_go(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	panic("Not yet implemented");
+	nextdma_start(&esc->sc_scsi_dma, 
+			(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
 }
 
 void
 esp_dma_stop(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
 	panic("Not yet implemented");
 }
 
@@ -446,6 +480,70 @@ esp_dma_isactive(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	panic("Not yet implemented");
-	return(0);
+	return(	!nextdma_finished(&esc->sc_scsi_dma));
+}
+
+/****************************************************************/
+
+/* Internal dma callback routines */
+bus_dmamap_t
+esp_dmacb_continue(arg)
+	void *arg;
+{
+	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
+  bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap,
+			0, esc->sc_dmamap->dm_mapsize, 
+			(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+
+#ifdef DIAGNOSTIC
+	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
+		panic("%s: map not loaded in dma continue callback, datain = %d",
+				sc->sc_dev.dv_xname,esc->sc_datain);
+	}
+#endif
+
+	return(esc->sc_dmamap);
+}
+
+void
+esp_dmacb_completed(map, arg)
+	bus_dmamap_t map;
+	void *arg;
+{
+	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
+#ifdef DIAGNOSTIC
+	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
+		panic("%s: map not loaded in dma completed callback, datain = %d",
+				sc->sc_dev.dv_xname,esc->sc_datain);
+	}
+	if (map != esc->sc_dmamap) {
+		panic("%s: unexpected tx completed map", sc->sc_dev.dv_xname);
+	}
+#endif
+
+  bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap,
+			0, esc->sc_dmamap->dm_mapsize, 
+			(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+}
+
+void
+esp_dmacb_shutdown(arg)
+	void *arg;
+{
+	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
+#ifdef DIAGNOSTIC
+	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
+		panic("%s: map not loaded in dma shutdown callback, datain = %d",
+				sc->sc_dev.dv_xname,esc->sc_datain);
+	}
+#endif
+
+	bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
+	esc->sc_datain = -1;
 }

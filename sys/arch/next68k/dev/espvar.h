@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.1 1998/07/05 07:53:45 dbj Exp $	*/
+/*	$NetBSD: espvar.h,v 1.2 1998/07/13 04:01:39 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,4 +42,6 @@ struct esp_softc {
 	struct nextdma_config sc_scsi_dma;
 	bus_space_tag_t	sc_bst;				
 	bus_space_handle_t sc_bsh;		/* the device registers */
+	bus_dmamap_t  sc_dmamap;			/* i/o dma map */
+	int sc_datain;								/* dma direction for map */
 };
