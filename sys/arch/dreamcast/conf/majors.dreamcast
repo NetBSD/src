@@ -1,4 +1,4 @@
-#	$NetBSD: majors.dreamcast,v 1.11 2003/10/22 16:53:22 jdolecek Exp $
+#	$NetBSD: majors.dreamcast,v 1.12 2003/10/24 08:17:34 jdolecek Exp $
 #
 # Device majors for dreamcast
 #
@@ -14,7 +14,7 @@ device-major	log		char 7
 device-major	com		char 8			com
 
 device-major	scif		char 10			scif
-
+device-major	sci		char 11	 		sci
 device-major	sd		char 13  block 4	sd
 device-major	st		char 14  block 5	st
 device-major	cd		char 15  block 6	cd
