@@ -4,6 +4,13 @@
 @settitle dc, an arbitrary precision calculator
 @c %**end of header
 
+@ifinfo
+@dircategory Miscellaneous
+@direntry
+* dc: (dc).                     Calculator.
+@end direntry
+@end ifinfo
+
 @c This file has the new style title page commands.
 @c Run `makeinfo' rather than `texinfo-format-buffer'.
 
