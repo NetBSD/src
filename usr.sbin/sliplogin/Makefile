@@ -1,9 +1,10 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.3 1994/12/22 11:42:57 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/17 08:49:29 mrg Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	sliplogin
 MAN=	sliplogin.8
 BINOWN=	root
 BINMODE=4555
+#INSTALLFLAGS=-fschg
 
 .include <bsd.prog.mk>
