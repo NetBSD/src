@@ -291,7 +291,9 @@ enum dhcp_token {
 	PAUSED = 587,
 	RECOVER_DONE = 588,
 	SHUTDOWN = 589,
-	STARTUP = 590
+	STARTUP = 590,
+	ENCAPSULATE = 591,
+	VENDOR = 592
 };
 
 #define is_identifier(x)	((x) >= FIRST_TOKEN &&	\
