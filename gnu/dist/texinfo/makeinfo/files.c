@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.3 2003/01/17 15:25:53 wiz Exp $	*/
+/*	$NetBSD: files.c,v 1.4 2003/07/03 12:47:32 wiz Exp $	*/
 
 /* files.c -- file-related functions for makeinfo.
    Id: files.c,v 1.1 2002/08/25 23:38:38 karl Exp
@@ -158,7 +158,7 @@ find_and_load (filename)
     goto error_exit;
 
   /* Load the file, with enough room for a newline and a null. */
-  result = xmalloc (file_size * 2);
+  result = xmalloc (file_size + 2);
 
   /* VMS stat lies about the st_size value.  The actual number of
      readable bytes is always less than this value.  The arcane
