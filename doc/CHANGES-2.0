@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.443 2004/09/11 22:07:47 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.444 2004/09/13 17:38:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7307,3 +7307,18 @@ sys/kern/uipc_mbuf.c				1.87
 	Restore behaviour of m_split() on M_PKTHDR which was
 	unintentionally changed when m_copyback_cow() was added.
 	[yamt, ticket #841]
+
+sys/arch/arm/conf/kern.ldscript.head		1.1
+sys/arch/arm/conf/kern.ldscript.tail		1.1
+sys/arch/arm/conf/mkldscript.sh			1.1
+sys/arch/cats/conf/Makefile.cats.inc		1.16
+sys/arch/shark/conf/Makefile.shark.inc		1.5
+sys/conf/Makefile.kern.inc			1.57
+
+	Work around a binutils bug where converting ELF kernels to a.out with
+	objcopy produces corrupted binaries when the link_set_* sections
+	extend into another page after the end of the .text section by using
+	a generated an ldscript that puts all the link_set_* data into the
+	.text section in the first place.
+	[chs, ticket #843]
+
