@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.5 2000/06/04 02:19:26 matt Exp $	*/
+/*	$NetBSD: cfl.c,v 1.6 2000/06/04 06:16:58 matt Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -137,7 +137,7 @@ cflrw(dev, uio, flag)
 
 	if (uio->uio_resid == 0) 
 		return (0);
-	s = splconsfloppy();
+	s = splconsmedia();
 	while (cfltab.cfl_state == BUSY)
 		(void) tsleep(&cfltab, PRIBIO, "cflbusy", 0);
 	cfltab.cfl_state = BUSY;
@@ -158,7 +158,7 @@ cflrw(dev, uio, flag)
 				break;
 		}
 		bp->b_flags = uio->uio_rw == UIO_WRITE ? B_WRITE : B_READ;
-		s = splconsfloppy(); 
+		s = splconsmedia(); 
 		cflstart();
 		while ((bp->b_flags & B_DONE) == 0)
 			(void) tsleep(bp, PRIBIO, "cflrw", 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.18 2000/03/30 12:45:36 augustss Exp $	*/
+/*	$NetBSD: dhu.c,v 1.19 2000/06/04 06:17:01 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -68,6 +68,8 @@
 
 struct	dhu_softc {
 	struct	device	sc_dev;		/* Device struct used by config */
+	struct	evcnt	sc_rintrcnt;	/* Interrupt statistics */
+	struct	evcnt	sc_tintrcnt;	/* Interrupt statistics */
 	int		sc_type;	/* controller type, DHU or DHV */
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -245,8 +247,12 @@ dhu_attach(parent, self, aux)
 
 	/* Now establish RX & TX interrupt handlers */
 
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec    , dhurint, sc);
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec + 4, dhuxint, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+		dhurint, sc, &sc->sc_rintrcnt);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec + 4,
+		dhuxint, sc, &sc->sc_tintrcnt);
+	evcnt_attach(&sc->sc_dev, "rintr", &sc->sc_rintrcnt);
+	evcnt_attach(&sc->sc_dev, "tintr", &sc->sc_tintrcnt);
 }
 
 /* Receiver Interrupt */

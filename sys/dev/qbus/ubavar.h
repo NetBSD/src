@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.28 2000/06/04 02:14:13 matt Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.29 2000/06/04 06:17:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -69,6 +69,7 @@
  */
 struct	uba_softc {
 	struct	device uh_dev;		/* Device struct, autoconfig */
+	struct	evcnt uh_intrcnt;		/* interrupt counting */
 	SIMPLEQ_HEAD(, uba_unit) uh_resq;	/* resource wait chain */
 	SIMPLEQ_HEAD(, uba_reset) uh_resetq;	/* ubareset queue */
 	int	uh_lastiv;		/* last free interrupt vector */

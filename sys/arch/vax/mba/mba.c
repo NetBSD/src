@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.19 2000/05/19 18:54:29 thorpej Exp $ */
+/*	$NetBSD: mba.c,v 1.20 2000/06/04 06:16:55 matt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -132,9 +132,11 @@ mbaattach(parent, self, aux)
 	sc->sc_dsp = idsptch;
 	sc->sc_dsp.pushlarg = sc;
 	sc->sc_dsp.hoppaddr = mbaintr;
+	sc->sc_dsp.ev = &sc->sc_intrcnt;
 	scb->scb_nexvec[0][sa->nexnum] = scb->scb_nexvec[1][sa->nexnum] =
 	    scb->scb_nexvec[2][sa->nexnum] = scb->scb_nexvec[3][sa->nexnum] =
 	    &sc->sc_dsp;
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	sc->sc_physnr = sa->nexnum - 8; /* MBA's have TR between 8 - 11... */
 #if VAX750

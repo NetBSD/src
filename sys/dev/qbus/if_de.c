@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.2 2000/05/28 17:23:44 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.3 2000/06/04 06:17:03 matt Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -118,6 +118,7 @@ struct	de_cdata {
  */
 struct	de_softc {
 	struct	device sc_dev;		/* Configuration common part */
+	struct	evcnt sc_intrcnt;	/* Interrupt counting */
 	struct	ethercom sc_ec;		/* Ethernet common part */
 #define sc_if	sc_ec.ec_if		/* network-visible interface */
 	bus_space_tag_t sc_iot;
@@ -300,8 +301,10 @@ deattach(struct device *parent, struct device *self, void *aux)
 	printf("\n%s: %s, hardware address %s\n", sc->sc_dev.dv_xname, c,
 		ether_sprintf(myaddr));
 
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, deintr, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, deintr,
+		sc, &sc->sc_intrcnt);
 	uba_reset_establish(dereset, &sc->sc_dev);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;

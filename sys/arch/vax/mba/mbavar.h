@@ -1,4 +1,4 @@
-/*	$NetBSD: mbavar.h,v 1.5 2000/01/21 23:39:56 thorpej Exp $ */
+/*	$NetBSD: mbavar.h,v 1.6 2000/06/04 06:16:55 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -30,6 +30,7 @@
  */
 
 #include <sys/device.h>
+#include <machine/scb.h>
 
 #define MBCR_INIT	1
 #define	MBCR_IE		(1<<2)
@@ -102,6 +103,7 @@ struct	mba_device {
 
 struct	mba_softc {
 	struct  device sc_dev;
+	struct	evcnt sc_intrcnt;
 	struct  ivec_dsp sc_dsp;	/* Interrupt catch routine */
 	struct  mba_regs *sc_mbareg;
 	struct	mba_device *sc_first, *sc_last;

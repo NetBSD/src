@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.45 2000/05/27 04:52:33 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.46 2000/06/04 06:16:57 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -60,11 +60,10 @@
 #include <machine/nexus.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
-#include <machine/trap.h>
 #include <machine/frame.h>
 
 #include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
+#include <dev/qbus/ubavar.h>
 
 volatile int /* rbr, rcvec,*/ svec;
 
@@ -154,7 +153,8 @@ dw780_attach(parent, self, aux)
 
 	for (i = 0; i < 4; i++)
 		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
-		    sc->uh_dev.dv_unit, SCB_ISTACK);
+		    sc->uh_dev.dv_unit, SCB_ISTACK, &sc->uh_intrcnt);
+	evcnt_attach(&sc->uh_dev, "intr", &sc->uh_intrcnt);
 
 	uba_attach(sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
 	    UMEMA8600(ubaddr)) + (UBAPAGES * VAX_NBPG));
@@ -214,8 +214,8 @@ uba_dw780int(uba)
 	if (cold)
 		scb_fake(vec + sc->uh_ibase, br);
 	else {
-		struct ivec_dsp *scb_vec = (struct ivec_dsp *)((int)scb + 512 + vec * 4);
-		(*scb_vec->hoppaddr)(scb_vec->pushlarg);
+		struct ivec_dsp *ivec = &scb_vec[vec / 4];
+		(*ivec->hoppaddr)(ivec->pushlarg);
 	}
 }
 
@@ -864,7 +864,6 @@ ubasearch(parent, cf, aux)
 	if (vec == 0)
 		goto fail;
 		
-	scb_vecalloc(vec, ua.ua_ivec, cf->cf_unit, SCB_ISTACK);
 	if (ua.ua_reset) { /* device wants ubareset */
 		if (sc->uh_resno == 0) {
 			sc->uh_reset = malloc(1024, M_DEVBUF, M_NOWAIT);

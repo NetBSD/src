@@ -1,4 +1,4 @@
-/*	$NetBSD: bivar.h,v 1.6 2000/06/04 02:14:42 matt Exp $ */
+/*	$NetBSD: bivar.h,v 1.7 2000/06/04 06:17:00 matt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,4 +70,4 @@ struct bi_list {
 
 /* Prototype */
 void bi_attach (struct bi_softc *);
-void bi_intr_establish (void *, int, void (*)(void *), void *), struct evcnt *);
+void bi_intr_establish (void *, int, void (*)(void *), void *, struct evcnt *);

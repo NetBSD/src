@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 2000/05/28 05:17:25 matt Exp $	 */
+/*	$NetBSD: clock.c,v 1.35 2000/06/04 06:16:58 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -60,6 +60,8 @@
 
 int	yeartonum __P((int));
 int	numtoyear __P((int));
+
+struct evcnt clock_intrcnt;
 
 /*
  * microtime() should return number of usecs in struct timeval.
@@ -189,6 +191,7 @@ cpu_initclocks()
 {
 	mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+	evcnt_attach(NULL, "clock", &clock_intrcnt);
 }
 
 /*

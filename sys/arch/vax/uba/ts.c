@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.16 2000/05/27 04:52:32 thorpej Exp $ */
+/*	$NetBSD: ts.c,v 1.17 2000/06/04 06:16:56 matt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -137,8 +137,8 @@ int tstrace = 1;
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
 
-#include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
+#include <dev/qbus/ubareg.h>
+#include <dev/qbus/ubavar.h>
 
 #include <vax/uba/tsreg.h>
 
