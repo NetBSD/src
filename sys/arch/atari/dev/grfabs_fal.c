@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.9 1997/05/19 21:07:19 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.10 1997/06/10 18:45:05 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -574,16 +574,16 @@ u_char	depth;
 	 * the entire page. Since you did not allocate up to a page boundry
 	 * (or more) the user writes into someone elses memory. -ch
 	 */
-	bm_size    = atari_round_page((width * height * depth) / NBBY);
+	bm_size    = m68k_round_page((width * height * depth) / NBBY);
 	total_size = bm_size + sizeof(bmap_t) + NBPG;
 
 	if ((bm = (bmap_t*)alloc_stmem(total_size, &hw_address)) == NULL)
 		return(NULL);
 
 	bm->plane         = (u_char*)bm + sizeof(bmap_t);
-	bm->plane         = (u_char*)atari_round_page(bm->plane);
+	bm->plane         = (u_char*)m68k_round_page(bm->plane);
 	bm->hw_address    = (u_char*)hw_address + sizeof(bmap_t);
-	bm->hw_address    = (u_char*)atari_round_page(bm->hw_address);
+	bm->hw_address    = (u_char*)m68k_round_page(bm->hw_address);
 	bm->bytes_per_row = (width * depth) / NBBY;
 	bm->rows          = height;
 	bm->depth         = depth;
