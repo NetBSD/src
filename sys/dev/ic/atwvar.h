@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.7 2004/01/29 10:06:19 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.8 2004/01/29 10:25:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -254,7 +254,7 @@ struct atw_softc {
 	u_int32_t	sc_linkint_mask;/* link-state interrupts mask */
 
 	/* interrupt acknowledge hook */
-	void (*sc_intr_ack) __P((struct atw_softc *));
+	void (*sc_intr_ack)(struct atw_softc *);
 
 	enum atw_rftype		sc_rftype;
 	enum atw_bbptype	sc_bbptype;
@@ -466,11 +466,11 @@ do {									\
 #define	ATW_ISSET(sc, reg, mask)					\
 	(ATW_READ((sc), (reg)) & (mask))
 
-void	atw_attach __P((struct atw_softc *));
-int	atw_detach __P((struct atw_softc *));
-int	atw_activate __P((struct device *, enum devact));
-int	atw_intr __P((void *arg));
-void	atw_power __P((int, void *));
-void	atw_shutdown __P((void *));
+void	atw_attach(struct atw_softc *);
+int	atw_detach(struct atw_softc *);
+int	atw_activate(struct device *, enum devact);
+int	atw_intr(void *arg);
+void	atw_power(int, void *);
+void	atw_shutdown(void *);
 
 #endif /* _DEV_IC_ATWVAR_H_ */
