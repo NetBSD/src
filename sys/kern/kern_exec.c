@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.185.2.1 2004/06/27 13:28:00 he Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.185.2.2 2004/06/27 13:33:52 he Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.185.2.1 2004/06/27 13:28:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.185.2.2 2004/06/27 13:33:52 he Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1322,6 +1322,18 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 
 	/* Just a hint to uvm_map where to put it. */
 	va = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, round_page(sz));
+
+#ifdef __alpha__
+	/*
+	 * Tru64 puts /sbin/loader at the end of user virtual memory,
+	 * which causes the above calculation to put the sigcode at
+	 * an invalid address.  Put it just below the text instead.
+	 */
+	if (va == (vaddr_t)p->p_vmspace->vm_map.max_offset) {
+		va = (vaddr_t)p->p_vmspace->vm_taddr - round_page(sz);
+	}
+#endif
+
 	(*uobj->pgops->pgo_reference)(uobj);
 	error = uvm_map(&p->p_vmspace->vm_map, &va, round_page(sz),
 			uobj, 0, 0,
