@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.134 2003/04/01 02:30:35 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.135 2004/01/04 06:25:31 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -20,7 +20,7 @@ usr.bin/Makefile				1.126
 usr.bin/kf/Makefile				1.10
 
 	Don't build kf or kfd; there are security issues with
-	Heimdal 0.4e, and we don't actually need them.
+	Heimdal 0.4e, and we don't actually need them. SA#2002-018
 	[joda, ticket #782]
 
 sys/arch/vax/vsa/asc_vsbus.c			1.25
@@ -137,7 +137,7 @@ games/rogue/message.c				1.9
 games/rogue/rogue.h				1.13
 games/rogue/save.c				1.8
 
-	Fix buffer overflows.
+	Fix buffer overflows. SA#2002-021
 	[mrg, ticket #892]
 
 sys/arch/arm/arm32/fault.c			1.23
@@ -166,7 +166,7 @@ sys/dev/pci/if_fxp_pci.c			1.26
 
 gnu/dist/groff/src/preproc/pic/pic.y		1.2
 
-	Avoid a possible buffer overflow.
+	Avoid a possible buffer overflow. SA#2002-022
 	[wiz, ticket #869]
 
 sys/dev/pcmcia/if_xi.c				1.23
@@ -179,7 +179,7 @@ libexec/talkd/extern.h				1.3
 libexec/talkd/process.c				1.8 (via patch)
 libexec/talkd/talkd.c				1.14
 
-	Fix response buffer & string handling.
+	Fix response buffer & string handling. SA#2002-019
 	[itojun, ticket #846]
 
 usr.sbin/lpr/lpd/lpd.c				1.43 (via patch)
@@ -198,7 +198,7 @@ gnu/dist/sendmail/smrsh/smrsh.c			1.9
 
 	More strict checking on command invocation.
 	Refer to http://www.sendmail.org/smrsh.adv.txt.
-	Resolves PR#18516.
+	Resolves PR#18516. SA#2002-023
 	[itojun, ticket #898]
 
 gnu/dist/toolchain/gdb/i386nbsd-nat.c		1.7
@@ -329,7 +329,7 @@ sys/ufs/ufs/ufs_readwrite.c			1.43
 
 games/trek/getpar.c				1.10
 
-	Avoid buffer overrun.
+	Avoid buffer overrun. SA#2002-025
 	[itojun, ticket #927]
 
 sys/arch/macppc/stand/ofwboot/version		1.7
@@ -486,7 +486,7 @@ sys/netinet/ip_state.c				1.41-1.42
 sys/netinet/ip_state.h				1.23
 sys/netinet/ipl.h				1.14
 
-	Upgrade IPFilter to 3.4.29.
+	Upgrade IPFilter to 3.4.29. SA#2002-024
 
 	NOTE:	this requires a new kernel, reinstalled headers,
 		and a rebuilt /sbin/ipf.  The headers and ipf(8)
@@ -501,7 +501,7 @@ sys/netinet/ipl.h				1.14
 libexec/ftpd/cmds.c				1.19
 
 	Turns out that our implementation of STAT wasn't RFC 959 compliant.
-	This version is now RFC 959 compliant.
+	This version is now RFC 959 compliant. SA#2002-027
 	[itojun, ticket #942]
 
 sys/ufs/mfs/mfs_vfsops.c			1.42
@@ -1071,7 +1071,7 @@ sbin/sysctl/sysctl.c				1.59
 
 lib/libc/net/getnetnamadr.c			1.25
 
-	Fix remote buffer overrun.
+	Fix remote buffer overrun. SA#2002-028
 	[itojun, ticket #986]
 
 dist/bind/bin/named/db_defs.h			1.5
@@ -1087,6 +1087,7 @@ dist/bind/lib/nameser/ns_samedomain.c		1.2
 	to fix recent vulnerabilities:
 	 o BIND: Remote Execution of Code (BIND 4 & 8)
 	 o BIND: Multiple Denial of Service (BIND 8 only)
+	SA#2002-029
 	[itojun, ticket #989]
 
 lib/libc/net/getnetnamadr.c			1.26
@@ -3730,6 +3731,7 @@ crypto/dist/openssl/ssl/s3_pkt.c		1.2
 	block cipher padding has been found.  This is a countermeasure
 	against active attacks where the attacker has to distinguish
 	between bad padding and a MAC verification error. (CAN-2003-0078)
+	SA#2003-001
 	[wiz, ticket #1179]
 
 share/mk/bsd.own.mk				1.304-1.305
@@ -3769,6 +3771,7 @@ gnu/dist/sendmail/sendmail/parseaddr.c		1.9
 gnu/dist/sendmail/sendmail/sendmail.h		1.11
 
 	Apply patch from sendmail.org to handle a new header overflow bug.
+	SA#2003-002
 	[atatat, ticket #1190]
 
 	[Moved RC2 tag for these files]
@@ -3785,6 +3788,7 @@ sys/net/if_pppoe.c				1.40
 lib/libz/gzio.c					1.14
 
 	Fix for potential buffer overflow in snprintf() (from OpenBSD)
+	SA#2003-004
 	[groo, ticket #1194]
 
 lib/libz/gzio.c					1.15
@@ -3798,7 +3802,7 @@ lib/libz/gzio.c					1.15
 usr.bin/file/softmagic.c			1.30-1.31 (hand patch)
 usr.bin/file/readelf.c				1.17 (hand patch)
 
-	Fixes possible buffer overflows.
+	Fixes possible buffer overflows. SA#2003-003
 	[pooka, ticket #1199]
 
 	[Moved RC2 tag for these 2 files]
@@ -3806,20 +3810,20 @@ usr.bin/file/readelf.c				1.17 (hand patch)
 crypto/dist/openssl/crypto/rsa/rsa_eay.c	1.2
 crypto/dist/openssl/crypto/rsa/rsa_lib.c	1.2
 
-	Enable RSA blinding by default.
+	Enable RSA blinding by default. SA#2003-005
 	[itojun, ticket #1221]
 
 crypto/dist/openssl/ssl/s3_srvr.c		1.4
 
 	OpenSSL Security Advisory [19 March 2003]
-	Klima-Pokorny-Rosa attack on RSA in SSL/TLS
+	Klima-Pokorny-Rosa attack on RSA in SSL/TLS. SA#2003-007
 	[itojun, ticket #1222]
 
 include/rpc/xdr.h				1.20
 lib/libc/rpc/xdr_mem.c				1.16
 
 	CERT Advisory CA-2003-10:
-	Fix buffer overflow in Sun RPC implementation.
+	Fix buffer overflow in Sun RPC implementation. SA#2003-008
 	[david, ticket #1224]
 
 include/heimdal/version.h			1.13 (via patch)
@@ -3832,7 +3836,7 @@ crypto/dist/heimdal/kdc/kerberos4.c		1.2 (via patch)
 
 	Fix Kerberos 4 procotocol problem mentioned in
 	[MIT krb5 Security Advisory 2003-004]/[heimdal-0.5.2 release notes]
-	by disable support for it.
+	by disable support for it. SA#2003-006
 	[lha, ticket #1225]
 
 sys/arch/vax/boot/boot/Makefile			1.31
@@ -3869,6 +3873,7 @@ gnu/dist/sendmail/sendmail/version.c		patch
 	Problem found by Michal Zalewski.
 	Note: an MTA that is not patched might be vulnerable to data
 	that it receives from untrusted sources, which includes DNS.
+	SA#2003-009
 	[atatat, ticket #1237]
 
 	[Moved RC3 tag for these 3 files]

@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.254 2004/01/03 15:57:16 he Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.255 2004/01/04 06:25:31 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -54,6 +54,7 @@ sys/netiso/clnp_er.c				1.13
 
 	Keep pkthdr when prepending new mbuf in front of a given chain.
 	This keeps us from panic()ing in the interface output routine.
+	SA#2003-010
 	[is, ticket #1295]
 
 sys/kern/init_main.c				1.215
@@ -1145,7 +1146,7 @@ sys/dev/pci/if_wi_pci.c				1.21,1.23 (via patch)
 
 lib/libc/gen/getcwd.c				1.29
 
-	fix off-by-one error in realpath()
+	Fix off-by-one error in realpath(). SA#2003-011
 	[itojun, ticket #1394]
 
 sys/dev/ic/dpt.c				1.38
@@ -1745,6 +1746,7 @@ gnu/dist/sendmail/sendmail/version.c		1.14 (via patch)
 
 	Fix prescan() bug (potentially remotely exploitable), CAN-2003-0694.
 	Bump version number after parse8.359.2.8 patch has been applied.
+	SA#2003-016
 	[tron, ticket #1473]
 
 crypto/dist/ssh/ssh-agent.c			1.23
@@ -2108,12 +2110,12 @@ crypto/dist/openssl/crypto/x509/x509_vfy.c	patch
 	invalid tags (CAN-2003-0543 and CAN-2003-0544).
 	If verify callback ignores invalid public key errors don't try to check
 	certificate signature with the NULL public key.
+	SA#2003-017
 	[christos, ticket #1492]
 
 sys/kern/kern_sysctl.c				1.147
 
-	make debug_sysctl() sysctl MIB check more strict. from smak.
-	Attack similar to NetBSD-SA2003-014 can be mounted due to this flaw.
+	Make debug_sysctl() sysctl MIB check more strict. SA#2003-014
 	[itojun, ticket #1493]
 
 sbin/route/route.8				1.36
@@ -3040,7 +3042,7 @@ dist/bind/bin/named/ns_init.c			1.7
 dist/bind/bin/named/ns_resp.c			1.12
 dist/bind/bin/nslookup/commands.l		1.5
 
-	Sync with BIND 8.3.7.
+	Sync with BIND 8.3.7. SA#2003-018
 	[itojun, ticket #1568]
 
 lib/libc/sys/intro.2				1.36
