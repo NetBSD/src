@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.73 2003/10/27 14:11:47 junyoung Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.74 2005/03/12 16:02:02 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.73 2003/10/27 14:11:47 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.74 2005/03/12 16:02:02 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -528,6 +528,10 @@ svr4_fasttrap(frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct schedstate_percpu *spc;
+	struct timeval tv;
+	uint64_t tm;
+	int s;
 
 	l->l_md.md_regs = &frame;
 
@@ -548,20 +552,15 @@ svr4_fasttrap(frame)
 		 * guaranteed to be monotonically increasing, which we
 		 * obtain from mono_time(9).
 		 */
-		{
-			struct timeval tv;
-			quad_t tm;
-			int s;
+		s = splclock();
+		tv = mono_time;
+		splx(s);
 
-			s = splclock();
-			tv = mono_time;
-			splx(s);
-
-			tm = (u_quad_t) tv.tv_sec * 1000000000 +
-			    (u_quad_t) tv.tv_usec * 1000;
-			frame.tf_edx = ((u_int32_t *)(void *) &tm)[0];
-			frame.tf_eax = ((u_int32_t *)(void *) &tm)[1];
-		}
+		tm =  tv.tv_usec * 1000u;
+		tm += tv.tv_sec * (uint64_t)1000000000u;
+		/* XXX: dsl - I would have expected the msb in %edx */
+		frame.tf_edx = tm & 0xffffffffu;
+		frame.tf_eax = (tm >> 32);
 		break;
 
 	case SVR4_TRAP_GETHRVTIME:
@@ -572,26 +571,18 @@ svr4_fasttrap(frame)
 		 * for now using the process's real time augmented with its
 		 * current runtime is the best we can do.
 		 */
-		{
-			struct schedstate_percpu *spc =
-			    &curcpu()->ci_schedstate;
-			struct timeval tv;
-			quad_t tm;
+		spc = &curcpu()->ci_schedstate;
 
-			microtime(&tv);
+		microtime(&tv);
 
-			tm =
-			    (u_quad_t) (p->p_rtime.tv_sec +
-			                tv.tv_sec -
-			                    spc->spc_runtime.tv_sec)
-			                * 1000000 +
-			    (u_quad_t) (p->p_rtime.tv_usec +
-			                tv.tv_usec -
-			                    spc->spc_runtime.tv_usec)
-			                * 1000;
-			frame.tf_edx = ((u_int32_t *)(void *) &tm)[0];
-			frame.tf_eax = ((u_int32_t *)(void *) &tm)[1];
-		}
+		tm = (p->p_rtime.tv_sec + tv.tv_sec -
+		    spc->spc_runtime.tv_sec) * 1000000ull;
+		tm += p->p_rtime.tv_usec + tv.tv_usec -
+		    spc->spc_runtime.tv_usec;
+		tm *= 1000u;
+		/* XXX: dsl - I would have expected the msb in %edx */
+		frame.tf_edx = tm & 0xffffffffu;
+		frame.tf_eax = (tm >> 32);
 		break;
 
 	case SVR4_TRAP_GETHRESTIME:
@@ -600,13 +591,10 @@ svr4_fasttrap(frame)
 		 * proc's wall time. Seconds are returned in %eax, nanoseconds
 		 * in %edx.
 		 */
-		{
-			struct timeval tv;
-			microtime(&tv);
+		microtime(&tv);
 
-			frame.tf_eax = (u_int32_t) tv.tv_sec;
-			frame.tf_edx = (u_int32_t) tv.tv_usec * 1000;
-		}
+		frame.tf_eax = (u_int32_t) tv.tv_sec;
+		frame.tf_edx = (u_int32_t) tv.tv_usec * 1000;
 		break;
 
 	default:
