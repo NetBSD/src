@@ -1,4 +1,4 @@
-.\"	$NetBSD: intersil7170.4,v 1.8 2003/04/16 13:35:17 wiz Exp $
+.\"	$NetBSD: intersil7170.4,v 1.9 2003/06/27 18:32:02 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,14 +50,15 @@ The
 .Nm
 driver provides access to the
 .Tn Intersil 7170
-time-of-day clock chip. Access methods to retrieve and set date and time
+time-of-day clock chip.
+Access methods to retrieve and set date and time
 are provided through the
 .Em TODR
 interface defined in
 .Xr todr 9 .
 .Pp
-To tie in instance of this device to the system, use
-.nr nS 1
+To tie an instance of this device to the system, use
+.Pp
 .Ft "todr_chip_handle_t"
 .Fn intersil7170_attach "bus_space_tag_t bus_tag" \
 "bus_space_handle_t bus_handle" "int year0"
@@ -70,15 +71,17 @@ Specify bus space access to the chip's non-volatile memory
 .It Fa year0
 The actual year represented by the clock's
 .Sq year
-counter. This is generally dependent on the system configuration in which
-the clock device is mounted. For instance, on Sun Microsystems machines
+counter.
+This is generally dependent on the system configuration in which
+the clock device is mounted.
+For instance, on Sun Microsystems machines
 the convention is to have clock's two-digit year represent the year 1968.
 .El
 .Pp
 Note that if the resulting date retrieved with the todr_gettime() method
 is earlier that January 1, 1970, the driver will assume that the chip's
-year counter actually represents a year in the 21st century. This
-behaviour can be overridden by setting the global variable
+year counter actually represents a year in the 21st century.
+This behaviour can be overridden by setting the global variable
 .Va intersil7170_auto_century_adjust
 to zero.
 .Sh SEE ALSO
