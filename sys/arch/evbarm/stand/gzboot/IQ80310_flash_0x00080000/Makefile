@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/29 05:04:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2003/04/29 05:36:20 thorpej Exp $
 
 S=	${.CURDIR}/../../../../..
 
 PLATFORM= IQ80310
 RELOC= 0x80000
-MAXIMAGESIZE= 2097152	# 2M
+MAXIMAGESIZE= 0		# concatenate
 LOADADDR= 0xa0200000
 
 CPPFLAGS+= -DCONSPEED=115200
