@@ -28,8 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/control.c,v 1.6 1994/03/01 08:23:04 glass Exp $
+ *	$Id: control.c,v 1.7 1994/05/06 07:47:07 gwr Exp $
  */
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 

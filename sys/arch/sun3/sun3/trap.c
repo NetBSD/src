@@ -39,7 +39,7 @@
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
  *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
- *	$Id: trap.c,v 1.16 1994/05/05 04:48:52 gwr Exp $
+ *	$Id: trap.c,v 1.17 1994/05/06 07:47:13 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -135,13 +135,13 @@ int mmudebug = 0;
 void userret(p, pc, oticks)
 	struct proc *p;
 	int pc;
-	struct timeval oticks;
+	u_quad_t oticks;
 {
         int sig;
     
 	while ((sig = CURSIG(p)) !=0)
 		psig(sig);
-	p->p_pri = p->p_usrpri;
+	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
 		 * Since we are curproc, clock will normally just change
@@ -163,23 +163,10 @@ void userret(p, pc, oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
+	if (p->p_flag & P_PROFIL)
+		addupc_task(p, pc, (int)(p->p_sticks - oticks));
 
-		ticks = ((tv->tv_sec - oticks.tv_sec) * 1000 +
-			(tv->tv_usec - oticks.tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
-#else
-			addupc(pc, &p->p_stats->p_prof, ticks);
-#endif
-		}
-	}
-
-	curpri = p->p_pri;
+	curpriority = p->p_priority;
 }
 /*
  * Trap is called from locore to handle most types of processor traps,
@@ -196,17 +183,17 @@ trap(type, code, v, frame)
 	register int i = 0;
 	unsigned ucode = 0;
 	register struct proc *p = curproc;
-	struct timeval stime;
+	u_quad_t sticks;
 	unsigned ncode;
 	int s;
 
 	cnt.v_trap++;
 	if ((p = curproc) == NULL)
 		p = &proc0;
-	stime = p->p_stime;
+	sticks = p->p_sticks;
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
-		p->p_regs = frame.f_regs;
+		p->p_md.md_regs = frame.f_regs;
 	}
 	switch (type) {
 	default:
@@ -283,7 +270,7 @@ copyfault:
 #endif
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_flag & SHPUX) {
 			ucode = HPUX_ILL_ILLINST_TRAP;
 			i = SIGILL;
@@ -292,7 +279,7 @@ copyfault:
 		/* fall through */
 #endif
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_flag & SHPUX)
 			ucode = HPUX_ILL_PRIV_TRAP;
 		else
@@ -302,7 +289,7 @@ copyfault:
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_flag & SHPUX)
 			ucode = HPUX_FPE_INTDIV_TRAP;
 		else
@@ -312,7 +299,7 @@ copyfault:
 		break;
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_flag & SHPUX) {
 			/* handled differently under hp-ux */
 			i = SIGILL;
@@ -325,7 +312,7 @@ copyfault:
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_flag & SHPUX) {
 			/* handled differently under hp-ux */
 			i = SIGILL;
@@ -393,7 +380,7 @@ copyfault:
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
-			softclock((caddr_t)frame.f_pc, (int)frame.f_sr);
+			softclock( /* XXX? (caddr_t)frame.f_pc, (int)frame.f_sr */ );
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
@@ -504,7 +491,7 @@ copyfault:
 	if (i)
 	    trapsignal(p, i, ucode);
 out:
-	userret(p, frame.f_pc, stime);
+	userret(p, frame.f_pc, sticks);
 }
 
 /*
@@ -519,23 +506,23 @@ syscall(code, frame)
 	register struct sysent *callp;
 	register struct proc *p = curproc;
 	int error, opc, numsys, s;
-	struct timeval stime;
+	u_quad_t sticks;
 	struct args {
 		int i[8];
 	} args;
 	int rval[2];
 	struct timeval syst;
 	struct sysent *systab;
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	extern struct sysent hpuxsysent[];
 	extern int hpuxnsysent, notimp();
 #endif
 
 	cnt.v_syscall++;
-	stime = p->p_stime;
+	sticks = p->p_sticks;
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
-	p->p_regs = frame.f_regs;
+	p->p_md.md_regs = frame.f_regs;
 	opc = frame.f_pc - 2;
 	switch (p->p_emul) {
 #ifdef COMPAT_SUNOS
@@ -563,7 +550,7 @@ syscall(code, frame)
 	}
 	    break;
 #endif
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	case EMUL_HPUX: 
 		systab = hpuxsysent;
 		numsys = hpuxnsysent;
@@ -599,7 +586,7 @@ syscall(code, frame)
 		callp = &systab[code];
 	if ((i = callp->sy_narg * sizeof (int)) &&
 	    (error = copyin(params, (caddr_t)&args, (u_int)i))) {
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_flag & SHPUX)
 			error = bsdtohpuxerrno(error);
 #endif
@@ -625,7 +612,7 @@ syscall(code, frame)
 #endif
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	/* debug kludge */
 	if (callp->sy_call == notimp)
 		error = notimp(p, args.i, rval, code, callp->sy_narg);
@@ -636,7 +623,7 @@ syscall(code, frame)
 		frame.f_pc = opc;
 	else if (error != EJUSTRETURN) {
 		if (error) {
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 			if (p->p_flag & SHPUX)
 				error = bsdtohpuxerrno(error);
 #endif
@@ -670,7 +657,7 @@ done:
 	    p->p_md.md_flags &= ~MDP_STACKADJ;
 	  }
 #endif
-	userret(p, opc, stime);
+	userret(p, opc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
