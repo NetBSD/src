@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.105 2000/03/28 17:07:04 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.106 2000/03/29 01:49:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -179,10 +179,8 @@ Static void		uhci_idone __P((uhci_intr_info_t *));
 
 Static void		uhci_abort_xfer __P((usbd_xfer_handle,
 			    usbd_status status));
-Static void		uhci_abort_xfer_end __P((void *v));
 Static void		uhci_abort_unlink_qh __P((struct uhci_pipe *));
 Static void		uhci_abort_relink_qh __P((struct uhci_pipe *));
-Static void		uhci_wait_abort __P((usbd_pipe_handle));
 
 Static void		uhci_timeout __P((void *));
 Static void		uhci_add_ctrl __P((uhci_softc_t *, uhci_soft_qh_t *));
@@ -1712,72 +1710,20 @@ uhci_device_bulk_abort(xfer)
 }
 
 /*
- * Aborting a xfer on the UHCI host controller is tricky.
- * The problem is that the HC can asynchronously manipulate
- * the very fields in the QH and TD that we need to abort a
- * xfer.
- * The problematic field are qh_elink (which points to the first
- * TD) and td_status which contains the active flag.
- * 
- * Here's my current (convoluted) strategy:
- * - Block HC interrupt.  We need this to check if the xfer
- *   might already be over.  If called outside splusb() this can
- *   happen.
- * - Check if an abort is already in progress (see below), if so
- *   just link out the xfer, run the callback, and return.
- * - Otherwise, flag that abort is in progress.
- * - Remove the QH for the xfer from the list of QHs (this
- *   can be done safely).
- * - Remove the transaction from the list of transactions examined
- *   when the HC interrupts.
- *     At this point we know that the transaction will never be considered
- *     by the interrupt routine.  The trouble we have is that the HC might
- *     be following the chain of TDs rooted at the unlinked QH because it
- *     started before the unlink.
- *     We would like to run the xfer callback function at this point
- *     to inform it that the xfer has been aborted, but running the
- *     callback might result in freeing the xfer.  This would be bad
- *     since the HC might still use it.  So we need to avoid this by:
- * - Disable the active flag in all TD belonging to the xfer.
- *   If we do this we can guarantee that the HC will execute at most one 
- *   TD after we turn off the flag in the last TD.
- * - Busy-wait until the HC has finished with the TD.  We do this by
- *   keeping track of the longest TD and using delay() for the time it
- *   takes to complete it (one byte takes a little less than 1 (LS 6) us).
- * - Run the callback routine, since at this point the HC can not be
- *   using any TDs in the xfer.
- *     We still cannot manipulate the qh_elink field in the QH since the
- *     HC might be following TDs further down the chain for another 1 ms.
- *     So...
- * - Set up a timeout 1 ms into the future.
- * - Turn on interrupts.
- * - Return.
- *
- * When the timeout happens we do the following:
- * - Check if the qh_elink field points anywhere in the TD chain we had
- *   when the timeout was set up.  If it is, leave qh_elink alone,
- *   otherwise set qh_elink pointing to the next (if any) xfer in
- *   the TD chain.
- * - Link the QH back where we got it.
- * - Turn off flag about abort in progress.
- * Done!
- *
- * If the pipe is closed, the abort must be allowed to finish.
+ * XXX This way of aborting is neither safe, nor good.
+ * But it will have to do until I figure out what to do.
+ * I apologize for the delay().
  */
-
 void
 uhci_abort_xfer(xfer, status)
 	usbd_xfer_handle xfer;
 	usbd_status status;
 {
-	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
 	uhci_intr_info_t *ii = &UXFER(xfer)->iinfo;
 	uhci_soft_td_t *std;
 	int s;
-	int len, maxlen;
 
-	DPRINTFN(1,("uhci_abort_xfer: xfer=%p, xfer->status=%d, status=%d\n", 
-		    xfer, xfer->status, status));
+	DPRINTFN(1,("uhci_abort_xfer: xfer=%p, status=%d\n", xfer, status));
 
 	s = splusb();
 
@@ -1788,266 +1734,29 @@ uhci_abort_xfer(xfer, status)
 		return;
 	}
 
-	/* Give xfer the requested abort code. */
+	/* Make interrupt routine ignore it, */
 	xfer->status = status;
 
-	/* If already aborting, bail out early. */
-	if (upipe->aborting) {
-		/* Unlink the xfer from HC */
-		/*XXX only one xfer for now*/
-		printf("uhci_abort_xfer: abort while aborting\n");
-		/* Finalize xfer. */
-		usb_transfer_complete(xfer);
-		splx(s);
-		return;
-	}
-
-	upipe->aborting = 1;
-	upipe->abortstart = SIMPLEQ_NEXT(xfer, next);
-	upipe->abortend = NULL;	/* XXX only one xfer for now */
-
-	/* Remove QH(s) from HC schedule. */
-	uhci_abort_unlink_qh(upipe);
-
-	/* Remove intr_info from list is done by usb_transfer_complete() .*/
-	
-	/* Disable active bit. */
-	maxlen = 0;
-	for (std = ii->stdstart; std != NULL; std = std->link.std) {
-		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));
-		len = UHCI_TD_GET_MAXLEN(std->td.td_token);
-		if (len > maxlen)
-			maxlen = len;
-	}
-	/* compute delay in us */
-	if (upipe->pipe.device->lowspeed)
-		maxlen *= 6;
-	/* wait for HC to complete TDs */
-	delay(maxlen);
-
-	/* Don't timeout, */
+	/* don't timeout, */
 	usb_uncallout(xfer->timeout_handle, uhci_timeout, ii);
 
+	/* make hardware ignore it, */
+	for (std = ii->stdstart; std != NULL; std = std->link.std)
+		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));
+
+	xfer->hcpriv = ii;
+
+	splx(s);
+
+	delay(1000);
+
+	s = splusb();
 #ifdef DIAGNOSTIC
-	UXFER(xfer)->iinfo.isdone = 1;
+	ii->isdone = 1;
 #endif
-	/* Run callback and remove from interrupt list. */
 	usb_transfer_complete(xfer);
-
-	/* Set up final processing. */
-	usb_callout(upipe->pipe.abort_handle, hz / USB_FRAMES_PER_SECOND,
-		    uhci_abort_xfer_end, upipe);
-
-	/* XXX This isn't right, but use it until we figure out a better way. */
-	switch (UE_GET_XFERTYPE(upipe->pipe.endpoint->edesc->bmAttributes)) {
-	case UE_CONTROL:
-	case UE_BULK:
-		/* No QH to link back, just return. */
-		upipe->aborting = 0;
-		splx(s);
-		return;
-	}
-
-	/* Pretend we are running to avoid QH manipulation. */
-	upipe->pipe.running = 1;
-
-	/* And return. */
 	splx(s);
 }
-
-void
-uhci_abort_xfer_end(v)
-	void *v;
-{
-	struct uhci_pipe *upipe = v;
-	usbd_xfer_handle xfer;
-	uhci_soft_td_t *std;
-	uhci_soft_qh_t *sqh, **qhs;
-	usbd_status err;
-	int s;
-	int i, nqhs;
-
-	DPRINTFN(2,("uhci_abort_xfer_end: upipe=%p\n", upipe));
-
-	switch (UE_GET_XFERTYPE(upipe->pipe.endpoint->edesc->bmAttributes)) {
-	case UE_CONTROL:
-#if 0
-		qhs = &upipe->u.ctl.sqh;
-		nqhs = 1;
-#else
-/* only one ctl transfer; qh unlinked by usb_transfer_complete() */
-		nqhs = 0;
-#endif
-		break;
-	case UE_ISOCHRONOUS:
-		printf("uhci_abort_xfer_end: iso\n");
-		nqhs = 0;
-		break;
-	case UE_BULK:
-		qhs = &upipe->u.bulk.sqh;
-		nqhs = 1;
-		break;
-	case UE_INTERRUPT:
-		qhs = upipe->u.intr.qhs;
-		nqhs = upipe->u.intr.npoll;
-		break;
-	}
-
-	s = splusb();
-
-	for (i = 0; i < nqhs; i++) {
-		sqh = qhs[i];
-		/* Check if inside remaining TD chain. */
-		for (xfer = upipe->abortstart; xfer != NULL; 
-		     xfer = SIMPLEQ_NEXT(xfer, next)) {
-			for (std = UXFER(xfer)->iinfo.stdstart; std != NULL; 
-			     std = std->link.std) {
-				if (std->physaddr == le32toh(sqh->qh.qh_elink))
-					goto outside;
-			}
-			if (xfer == upipe->abortend)
-				break;
-		}
-		if (upipe->abortstart != NULL) {
-			std = UXFER(upipe->abortstart)->iinfo.stdstart;
-			DPRINTFN(5,("uhci_abort_xfer_end: new std=%p\n", std));
-			sqh->elink = std;
-			sqh->qh.qh_elink = htole32(std->physaddr);
-		} else {
-			DPRINTFN(5,("uhci_abort_xfer_end: new std=NULL\n"));
-			sqh->elink = NULL;
-			sqh->qh.qh_elink = htole32(UHCI_PTR_T);
-		}
-	}
-
-outside:
-
-	/* Insert QH again. */
-	uhci_abort_relink_qh(upipe);
-
-	/* No longer aborting */
-	upipe->aborting = 0;
-
-	/* Wake anyone waiting for the abort to finish. */
-	wakeup(&upipe->aborting);
-
-	/* Start next xfer, if there is one. */
-	xfer = SIMPLEQ_FIRST(&upipe->pipe.queue);
-	if (xfer == NULL) {
-		upipe->pipe.running = 0;
-	} else {
-		err = upipe->pipe.methods->start(xfer);
-		if (err != USBD_IN_PROGRESS) {
-			printf("uhci_abort_xfer: start next error=%d\n", err);
-			upipe->pipe.running = 0;
-			/* XXX do what? */
-		}
-	}
-
-	splx(s);
-}
-
-void
-uhci_abort_unlink_qh(upipe)
-	struct uhci_pipe *upipe;
-{
-	uhci_softc_t *sc = (uhci_softc_t *)upipe->pipe.device->bus;
-	uhci_soft_qh_t *sqh, *pqh, **qhs;
-	int i, npoll;
-
-	DPRINTFN(5,("uhci_abort_unlink_qh: sc=%p pipe=%p\n", sc, upipe));
-
-	switch (UE_GET_XFERTYPE(upipe->pipe.endpoint->edesc->bmAttributes)) {
-	case UE_CONTROL:
-#if 0
-/* At the moment the done routine removes the QH */
-		sqh = upipe->u.ctl.sqh;
-		pqh = uhci_find_prev_qh(sc->sc_ctl_start, sqh);
-		pqh->qh.qh_hlink = sqh->qh.qh_hlink;
-#endif
-		break;
-#ifdef DIAGNOSTIC
-	case UE_ISOCHRONOUS:
-		printf("uhci_abort_unlink_qh: iso\n");
-		break;
-#endif
-	case UE_BULK:
-#if 0
-/* At the moment the done routine removes the QH */
-		sqh = upipe->u.bulk.sqh;
-		pqh = uhci_find_prev_qh(sc->sc_bulk_start, sqh);
-		pqh->qh.qh_hlink = sqh->qh.qh_hlink;
-#endif
-		break;
-	case UE_INTERRUPT:
-		npoll = upipe->u.intr.npoll;
-		qhs = upipe->u.intr.qhs;
-		for (i = 0; i < npoll; i++) {
-			sqh = qhs[i];
-			pqh = uhci_find_prev_qh(sc->sc_vframes[sqh->pos].hqh,
-						sqh);
-			pqh->qh.qh_hlink = sqh->qh.qh_hlink;
-		}
-		break;
-	}
-}
-
-void
-uhci_abort_relink_qh(upipe)
-	struct uhci_pipe *upipe;
-{
-	uhci_softc_t *sc = (uhci_softc_t *)upipe->pipe.device->bus;
-	uhci_soft_qh_t *sqh, *pqh, **qhs;
-	int i, npoll;
-
-	switch (UE_GET_XFERTYPE(upipe->pipe.endpoint->edesc->bmAttributes)) {
-	case UE_CONTROL:
-#if 0
-/* At the moment the done routine removes the QH */
-		sqh = upipe->u.ctl.sqh;
-		pqh = uhci_find_prev_qh(sc->sc_ctl_start, sqh);
-		pqh->qh.qh_hlink = htole32(sqh->physaddr | UHCI_PTR_Q);
-#endif
-		break;
-#ifdef DIAGNOSTIC
-	case UE_ISOCHRONOUS:
-		printf("uhci_abort_relink_qh: iso\n");
-		break;
-#endif
-	case UE_BULK:
-#if 0
-/* At the moment the done routine removes the QH */
-		sqh = upipe->u.bulk.sqh;
-		pqh = uhci_find_prev_qh(sc->sc_bulk_start, sqh);
-		pqh->qh.qh_hlink = htole32(sqh->physaddr | UHCI_PTR_Q);
-#endif
-		break;
-	case UE_INTERRUPT:
-		npoll = upipe->u.intr.npoll;
-		qhs = upipe->u.intr.qhs;
-		for (i = 0; i < npoll; i++) {
-			sqh = qhs[i];
-			pqh = uhci_find_prev_qh(sc->sc_vframes[sqh->pos].hqh,
-						sqh);
-			pqh->qh.qh_hlink = htole32(sqh->physaddr | UHCI_PTR_Q);
-		}
-		break;
-	}
-}
-
-void
-uhci_wait_abort(pipe)
-	usbd_pipe_handle pipe;
-{
-	struct uhci_pipe *upipe = (struct uhci_pipe *)pipe;
-	int s;
-
-	s = splusb();
-	while (upipe->aborting)
-		tsleep(&upipe->aborting, PWAIT, "uhciab", 0);
-	splx(s);
-}
-
 
 /* Close a device bulk pipe. */
 void
@@ -2058,7 +1767,6 @@ uhci_device_bulk_close(pipe)
 	usbd_device_handle dev = upipe->pipe.device;
 	uhci_softc_t *sc = (uhci_softc_t *)dev->bus;
 
-	uhci_wait_abort(pipe);
 	uhci_free_sqh(sc, upipe->u.bulk.sqh);
 }
 
@@ -2208,7 +1916,6 @@ void
 uhci_device_ctrl_close(pipe)
 	usbd_pipe_handle pipe;
 {
-	uhci_wait_abort(pipe);
 }
 
 /* Abort a device interrupt request. */
@@ -2233,8 +1940,6 @@ uhci_device_intr_close(pipe)
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
 	int i, npoll;
 	int s;
-
-	uhci_wait_abort(pipe);
 
 	/* Unlink descriptors from controller data structures. */
 	npoll = upipe->u.intr.npoll;
