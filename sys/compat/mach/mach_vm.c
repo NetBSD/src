@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.31 2003/09/06 23:52:27 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.32 2003/11/03 20:58:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.31 2003/09/06 23:52:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.32 2003/11/03 20:58:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.31 2003/09/06 23:52:27 manu Exp $");
 #include <sys/proc.h>
 #include <sys/sa.h>
 #include <sys/mman.h>
+#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.31 2003/09/06 23:52:27 manu Exp $");
 #include <compat/mach/mach_clock.h> 
 #include <compat/mach/mach_vm.h> 
 #include <compat/mach/mach_errno.h> 
+#include <compat/mach/mach_port.h> 
 #include <compat/mach/mach_syscallargs.h>
 
 int
@@ -481,20 +483,33 @@ mach_vm_make_memory_entry(args)
 	mach_vm_make_memory_entry_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
+	struct mach_memory_entry *mme;
 	
-	/* 
-	 * XXX Find some documentation about what 
-	 * this is supposed to do, and implement it.
-	 */
-	printf("pid %d.%d: Unimplemented mach_vm_make_memory_entry\n",
-	    l->l_proc->p_pid, l->l_lid);
+	printf("mach_vm_make_memory_entry, offset 0x%lx, size 0x%lx\n",
+	    (u_long)req->req_offset, (u_long)req->req_size);
 
+	mp = mach_port_get();
+	mp->mp_flags |= (MACH_MP_INKERNEL | MACH_MP_DATA_ALLOCATED);
+	mp->mp_datatype = MACH_MP_MEMORY_ENTRY;
+
+	mme = malloc(sizeof(*mme), M_EMULDATA, M_WAITOK);
+	mme->mme_offset = req->req_offset;
+	mme->mme_size = req->req_size;
+	mp->mp_data = mme;
+
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+	
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_obj_handle.name = (mach_port_t)mr->mr_name;
+	rep->rep_obj_handle.disposition = 0x11; /* XXX */
+	rep->rep_size = req->req_size;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);

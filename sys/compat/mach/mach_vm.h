@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.15 2003/09/06 23:52:27 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.16 2003/11/03 20:58:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -326,4 +326,8 @@ int mach_vm_region_64(struct mach_trap_args *);
 int mach_vm_msync(struct mach_trap_args *);
 int mach_vm_copy(struct mach_trap_args *);
 
+struct mach_memory_entry {
+	vaddr_t	mme_offset;
+	size_t mme_size;
+};
 #endif /* _MACH_VM_H_ */
