@@ -1,7 +1,7 @@
-/*	$NetBSD: restart.c,v 1.1.1.4 2001/05/13 17:50:13 veego Exp $	*/
+/*	$NetBSD: restart.c,v 1.1.1.5 2002/11/29 22:58:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: restart.c,v 1.3.2.1 2001/01/10 03:23:12 ezk Exp
+ * Id: restart.c,v 1.7 2002/02/02 20:58:56 ezk Exp
  *
  */
 
@@ -144,6 +143,7 @@ restart(void)
       /*
        * Partially fake up an opts structure
        */
+      memset(&mo, 0, sizeof(mo));
       mo.opt_rhost = 0;
       mo.opt_rfs = 0;
       if (cp) {

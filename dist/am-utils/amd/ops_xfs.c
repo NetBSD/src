@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_xfs.c,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $	*/
+/*	$NetBSD: ops_xfs.c,v 1.1.1.5 2002/11/29 22:58:21 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: ops_xfs.c,v 1.3.2.2 2001/01/12 23:28:58 ro Exp
+ * Id: ops_xfs.c,v 1.13 2002/03/29 20:01:29 ib42 Exp
  *
  */
 
@@ -56,8 +55,8 @@
 
 /* forward declarations */
 static char *xfs_match(am_opts *fo);
-static int xfs_fmount(mntfs *mf);
-static int xfs_fumount(mntfs *mf);
+static int xfs_mount(am_node *am, mntfs *mf);
+static int xfs_umount(am_node *am, mntfs *mf);
 
 /*
  * Ops structure
@@ -67,17 +66,19 @@ am_ops xfs_ops =
   "xfs",
   xfs_match,
   0,				/* xfs_init */
-  amfs_auto_fmount,
-  xfs_fmount,
-  amfs_auto_fumount,
-  xfs_fumount,
-  amfs_error_lookuppn,
+  xfs_mount,
+  xfs_umount,
+  amfs_error_lookup_child,
+  amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* xfs_readlink */
   0,				/* xfs_mounted */
   0,				/* xfs_umounted */
   find_amfs_auto_srvr,
-  FS_MKMNT | FS_NOTIMEOUT | FS_UBACKGROUND | FS_AMQINFO
+  FS_MKMNT | FS_NOTIMEOUT | FS_UBACKGROUND | FS_AMQINFO, /* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_XFS_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -93,9 +94,7 @@ xfs_match(am_opts *fo)
     return 0;
   }
 
-#ifdef DEBUG
   dlog("XFS: mounting device \"%s\" on \"%s\"", fo->opt_dev, fo->opt_fs);
-#endif /* DEBUG */
 
   /*
    * Determine magic cookie to put in mtab
@@ -105,7 +104,7 @@ xfs_match(am_opts *fo)
 
 
 static int
-mount_xfs(char *dir, char *fs_name, char *opts)
+mount_xfs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_autofs)
 {
   xfs_args_t xfs_args;
   mntent_t mnt;
@@ -122,33 +121,38 @@ mount_xfs(char *dir, char *fs_name, char *opts)
    * Fill in the mount structure
    */
   memset((voidp) &mnt, 0, sizeof(mnt));
-  mnt.mnt_dir = dir;
+  mnt.mnt_dir = mntdir;
   mnt.mnt_fsname = fs_name;
   mnt.mnt_type = MNTTAB_TYPE_XFS;
   mnt.mnt_opts = opts;
 
   flags = compute_mount_flags(&mnt);
+#ifdef HAVE_FS_AUTOFS
+  if (on_autofs)
+    genflags |= autofs_compute_mount_flags(&mnt);
+#endif /* HAVE_FS_AUTOFS */
 
-#ifdef HAVE_FIELD_XFS_ARGS_T_FLAGS
+#ifdef HAVE_XFS_ARGS_T_FLAGS
   xfs_args.flags = 0;		/* XXX: fix this to correct flags */
-#endif /* HAVE_FIELD_XFS_ARGS_T_FLAGS */
-#ifdef HAVE_FIELD_XFS_ARGS_T_FSPEC
+#endif /* HAVE_XFS_ARGS_T_FLAGS */
+#ifdef HAVE_XFS_ARGS_T_FSPEC
   xfs_args.fspec = fs_name;
-#endif /* HAVE_FIELD_XFS_ARGS_T_FSPEC */
+#endif /* HAVE_XFS_ARGS_T_FSPEC */
 
   /*
    * Call generic mount routine
    */
-  return mount_fs(&mnt, flags, (caddr_t) &xfs_args, 0, type, 0, NULL, mnttab_file_name);
+  return mount_fs2(&mnt, real_mntdir, flags, (caddr_t) &xfs_args, 0, type, 0, NULL, mnttab_file_name);
 }
 
 
 static int
-xfs_fmount(mntfs *mf)
+xfs_mount(am_node *am, mntfs *mf)
 {
   int error;
 
-  error = mount_xfs(mf->mf_mount, mf->mf_info, mf->mf_mopts);
+  error = mount_xfs(mf->mf_mount, mf->mf_real_mount, mf->mf_info, mf->mf_mopts,
+		    am->am_flags & AMF_AUTOFS);
   if (error) {
     errno = error;
     plog(XLOG_ERROR, "mount_xfs: %m");
@@ -160,7 +164,7 @@ xfs_fmount(mntfs *mf)
 
 
 static int
-xfs_fumount(mntfs *mf)
+xfs_umount(am_node *am, mntfs *mf)
 {
-  return UMOUNT_FS(mf->mf_mount, mnttab_file_name);
+  return UMOUNT_FS(mf->mf_mount, mf->mf_real_mount, mnttab_file_name);
 }

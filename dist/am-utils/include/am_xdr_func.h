@@ -1,7 +1,7 @@
-/*	$NetBSD: am_xdr_func.h,v 1.1.1.4 2001/05/13 17:50:31 veego Exp $	*/
+/*	$NetBSD: am_xdr_func.h,v 1.1.1.5 2002/11/29 22:59:03 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: am_xdr_func.h,v 1.3.2.2 2001/01/10 03:23:38 ezk Exp
+ * Id: am_xdr_func.h,v 1.9 2002/02/02 20:59:04 ezk Exp
  *
  */
 
@@ -183,23 +182,4 @@ bool_t xdr_symlinkargs(XDR *xdrs, nfssymlinkargs *objp);
 #ifndef HAVE_XDR_WRITEARGS
 bool_t xdr_writeargs(XDR *xdrs, nfswriteargs *objp);
 #endif /* not HAVE_XDR_WRITEARGS */
-
-/*
- * AUTOFS XDR FUNCTIONS:
- */
-#ifdef HAVE_FS_AUTOFS
-# ifndef HAVE_XDR_MNTREQUEST
-bool_t xdr_mntrequest(XDR *xdrs, mntrequest *objp);
-# endif /* not HAVE_XDR_MNTREQUEST */
-# ifndef HAVE_XDR_MNTRES
-bool_t xdr_mntres(XDR *xdrs, mntres *objp);
-# endif /* not HAVE_XDR_MNTRES */
-# ifndef HAVE_XDR_UMNTREQUEST
-bool_t xdr_umntrequest(XDR *xdrs, umntrequest *objp);
-# endif /* not HAVE_XDR_UMNTREQUEST */
-# ifndef HAVE_XDR_UMNTRES
-bool_t xdr_umntres(XDR *xdrs, umntres *objp);
-# endif /* not HAVE_XDR_UMNTRES */
-#endif /* HAVE_FS_AUTOFS */
-
 #endif /* not _AM_XDR_FUNC_H */
