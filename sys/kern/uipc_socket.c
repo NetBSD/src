@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.64 2002/05/02 17:55:51 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.65 2002/05/03 00:35:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.64 2002/05/02 17:55:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.65 2002/05/03 00:35:14 thorpej Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -135,6 +135,10 @@ soinit(void)
 }
 
 #ifdef SOSEND_LOAN
+int use_sosend_loan = 1;
+#else
+int use_sosend_loan = 0;
+#endif
 
 struct mbuf *so_pendfree;
 
@@ -303,8 +307,6 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	return (space);
 }
 
-#endif /* SOSEND_LOAN */
-
 /*
  * Socket operation routines.
  * These routines are called by the routines in
@@ -390,9 +392,7 @@ solisten(struct socket *so, int backlog)
 void
 sofree(struct socket *so)
 {
-#ifdef SOSEND_LOAN
 	struct mbuf *m;
-#endif
 
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
 		return;
@@ -407,13 +407,11 @@ sofree(struct socket *so)
 	}
 	sbrelease(&so->so_snd);
 	sorflush(so);
-#ifdef SOSEND_LOAN
 	while ((m = so->so_pendfree) != NULL) {
 		so->so_pendfree = m->m_next;
 		m->m_next = so_pendfree;
 		so_pendfree = m;
 	}
-#endif
 	pool_put(&socket_pool, so);
 }
 
@@ -569,9 +567,7 @@ sodisconnect(struct socket *so)
 	    (struct proc *)0);
  bad:
 	splx(s);
-#ifdef SOSEND_LOAN
 	sodopendfree(so);
-#endif
 	return (error);
 }
 
@@ -602,9 +598,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	long		space, len, resid, clen, mlen;
 	int		error, s, dontroute, atomic;
 
-#ifdef SOSEND_LOAN
 	sodopendfree(so);
-#endif
 
 	p = curproc;		/* XXX */
 	clen = 0;
@@ -691,8 +685,8 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					MGET(m, M_WAIT, MT_DATA);
 					mlen = MLEN;
 				}
-#ifdef SOSEND_LOAN
-				if (uio->uio_iov->iov_len >= SOCK_LOAN_THRESH &&
+				if (use_sosend_loan &&
+				    uio->uio_iov->iov_len >= SOCK_LOAN_THRESH &&
 				    space >= SOCK_LOAN_THRESH &&
 				    (len = sosend_loan(so, uio, m,
 						       space)) != 0) {
@@ -700,7 +694,6 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					space -= len;
 					goto have_data;
 				}
-#endif /* SOSEND_LOAN */
 				if (resid >= MINCLSIZE && space >= MCLBYTES) {
 					SOSEND_COUNTER_INCR(&sosend_copy_big);
 					MCLGET(m, M_WAIT);
@@ -728,9 +721,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				}
 				error = uiomove(mtod(m, caddr_t), (int)len,
 				    uio);
-#ifdef SOSEND_LOAN
  have_data:
-#endif
 				resid = uio->uio_resid;
 				m->m_len = len;
 				*mp = m;
@@ -807,9 +798,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct protosw	*pr;
 	struct mbuf	*nextrecord;
 
-#ifdef SOSEND_LOAN
 	sodopendfree(so);
-#endif
 
 	pr = so->so_proto;
 	mp = mp0;
