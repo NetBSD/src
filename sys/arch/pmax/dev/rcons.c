@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.32 1999/08/26 20:49:40 thorpej Exp $	*/
+/*	$NetBSD: rcons.c,v 1.33 1999/12/30 00:31:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -59,10 +59,10 @@
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/asic.h>
+#include <pmax/pmax/cons.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/dev/rconsvar.h>
-#include <dev/cons.h>
 
 #include <sys/device.h>
 #include <machine/fbio.h>
