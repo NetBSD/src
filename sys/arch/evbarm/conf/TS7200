@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.7 2005/01/09 21:44:32 joff Exp $
+#	$NetBSD: TS7200,v 1.8 2005/01/24 02:40:00 joff Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -337,6 +337,7 @@ ucom*	at uplcom? portno ?
 
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
+atu*	at uhub? port ?		# Atmel AT76C50XX 802.11b adapter
 
 # Diamond Multimedia Rio 500
 # urio*	at uhub? port ?
@@ -402,12 +403,12 @@ audio*	at audiobus?
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
-#pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	loop			# network loopback
-#pseudo-device	kttcp			# network loopback
+pseudo-device	kttcp			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
