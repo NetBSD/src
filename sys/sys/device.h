@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.28 1998/09/13 14:46:23 christos Exp $	*/
+/*	$NetBSD: device.h,v 1.29 1998/10/06 20:44:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,6 +153,7 @@ struct pdevinit {
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
 
+void configure __P((void));		/* machine-dependent */
 void config_init __P((void));
 struct cfdata *config_search __P((cfmatch_t, struct device *, void *));
 struct cfdata *config_rootsearch __P((cfmatch_t, char *, void *));
