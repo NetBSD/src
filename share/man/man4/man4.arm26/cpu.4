@@ -1,4 +1,4 @@
-.\" $NetBSD: cpu.4,v 1.2 2000/05/14 10:00:38 bjh21 Exp $
+.\" $NetBSD: cpu.4,v 1.3 2000/05/14 10:08:15 bjh21 Exp $
 .\"
 .\" Copyright (c) 2000 Ben Harris.
 .\" All rights reserved.
@@ -25,8 +25,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 29, 2000
-.Os "NetBSD experimental"
+.Dd May 14, 2000
+.Os
 .Dt CPU 4 arm26
 .Sh NAME
 .Nm cpu
@@ -47,13 +47,9 @@ The following options are available relating to the
 driver:
 .Bl -ohang
 .It Cd options CPU_ARM2
-Enables support for ARM2 CPUs.  This includes inserting NOPs after
-processor mode changes.
+Enables support for ARM2 CPUs.
 .It Cd options CPU_ARM250
 Enables support for ARM2as CPUs (as found in the ARM250).
 .It Cd options CPU_ARM3
-Enables support for ARM3 CPUs.  This currently does nothing.
+Enables support for ARM3 CPUs.
 .El
-.Sh BUGS
-The cache on ARM3s isn't currently enabled.
-
