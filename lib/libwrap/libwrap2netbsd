@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: libwrap2netbsd,v 1.3 1996/12/17 04:24:19 mrg Exp $
+#	$NetBSD: libwrap2netbsd,v 1.4 1997/01/20 06:22:50 cjs Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -57,31 +57,6 @@ misc='DISCLAIMER'
 pax -rvw $src $man $inc $misc $d
 
 cd $d
-
-echo creating Makefile
-cat > Makefile<<'__eof_makefile'
-#	$NetBSD: libwrap2netbsd,v 1.3 1996/12/17 04:24:19 mrg Exp $
-
-LIB=	wrap 
-
-SRCS=	hosts_access.c options.c shell_cmd.c rfc931.c eval.c hosts_ctl.c \
-	refuse.c percent_x.c clean_exit.c fix_options.c socket.c \
-	workarounds.c update.c misc.c diag.c
-MAN=	hosts_access.3 hosts_access.5 hosts_options.5
-
-CFLAGS+= -DFACILITY=LOG_AUTHPRIV -DSEVERITY=LOG_INFO -DPARANOID
-CFLAGS+= -DREAL_DAEMON_DIR=\"/usr/libexec\" -DHOSTS_ACCESS -DDAEMON_UMASK=022
-CFLAGS+= -DRFC931_TIMEOUT=10 -DALWAYS_HOSTNAME -DSYS_ERRLIST_DEFINED
-CFLAGS+= -DHOSTS_ALLOW=\"/etc/hosts.allow\" -DHOSTS_DENY=\"/etc/hosts.deny\"
-
-includes:
-	-cd ${.CURDIR}; cmp -s tcpd.h ${DESTDIR}/usr/include/tcpd.h > \
-	    /dev/null 2>&1 || \
-	    ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 tcpd.h \
-	    ${DESTDIR}/usr/include
-
-.include <bsd.lib.mk>
-__eof_makefile
 
 echo done
 exit 0
