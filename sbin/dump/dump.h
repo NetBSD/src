@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.25 2001/05/12 08:03:01 tron Exp $	*/
+/*	$NetBSD: dump.h,v 1.26 2001/05/27 14:17:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -122,100 +122,95 @@ int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
 int needswap;	/* file system in swapped byte order */
 /* some inline functs to help the byte-swapping mess */
-static __inline u_int16_t iswap16 __P((u_int16_t));
-static __inline u_int32_t iswap32 __P((u_int32_t));
-static __inline u_int64_t iswap64 __P((u_int64_t));
-    
-static __inline u_int16_t iswap16(x)
-	u_int16_t x;
-{           
+static __inline u_int16_t iswap16(u_int16_t);
+static __inline u_int32_t iswap32(u_int32_t);
+static __inline u_int64_t iswap64(u_int64_t);
+
+static __inline u_int16_t iswap16(u_int16_t x)
+{
 	if (needswap)
 		return bswap16(x);
-	else return x;  
+	else
+		return x;
 }
 
-static __inline u_int32_t iswap32(x)
-    u_int32_t x;
+static __inline u_int32_t iswap32(u_int32_t x)
 {
 	if (needswap)
 		return bswap32(x);
-	else return x;
+	else
+		return x;
 }
 
-static __inline u_int64_t iswap64(x)
-	u_int64_t x;
+static __inline u_int64_t iswap64(u_int64_t x)
 {
 	if (needswap)
 		return bswap64(x);
-	else return x;
-}  
-
-#ifndef __P
-#include <sys/cdefs.h>
-#endif
+	else
+		return x;
+}
 
 /* filestore-specific hooks */
-int	fs_read_sblock __P((char *));
-struct ufsi *fs_parametrize __P((void));
-ino_t	fs_maxino __P((void));
+int	fs_read_sblock(char *);
+struct ufsi *fs_parametrize(void);
+ino_t	fs_maxino(void);
 
 /* operator interface functions */
-void	broadcast __P((char *message));
-void	lastdump __P((int arg));	/* int should be char */
-void	msg __P((const char *fmt, ...)) __attribute__((__format__(__printf__,1,2)));
-void	msgtail __P((const char *fmt, ...)) __attribute__((__format__(__printf__,1,2)));
-int	query __P((char *question));
-void	quit __P((const char *fmt, ...)) __attribute__((__format__(__printf__,1,2)));
-void	set_operators __P((void));
-time_t	do_stats __P((void));
-void	statussig __P((int));
-void	timeest __P((void));
-time_t	unctime __P((char *str));
+void	broadcast(char *);
+void	lastdump(char);
+void	msg(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
+void	msgtail(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
+int	query(char *);
+void	quit(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
+void	set_operators(void);
+time_t	do_stats(void);
+void	statussig(int);
+void	timeest(void);
+time_t	unctime(char *);
 
 /* mapping routines */
 struct	dinode;
-long	blockest __P((struct dinode *dp));
-void	mapfileino __P((ino_t, long *, int *));
-int	mapfiles __P((ino_t maxino, long *tapesize, char *disk,
-		    char * const *dirv));
-int	mapdirs __P((ino_t maxino, long *tapesize));
+long	blockest(struct dinode *);
+void	mapfileino(ino_t, long *, int *);
+int	mapfiles(ino_t, long *, char *, char * const *);
+int	mapdirs(ino_t, long *);
 
 /* file dumping routines */
-void	blksout __P((daddr_t *blkp, int frags, ino_t ino));
-void	dumpino __P((struct dinode *dp, ino_t ino));
-void	dumpmap __P((char *map, int type, ino_t ino));
-void	writeheader __P((ino_t ino));
+void	blksout(daddr_t *, int, ino_t);
+void	dumpino(struct dinode *, ino_t);
+void	dumpmap(char *, int, ino_t);
+void	writeheader(ino_t);
 
 /* data block caching */
-void	bread __P((daddr_t blkno, char *buf, int size));	
-void	rawread __P((daddr_t, char *, int));
-void	initcache __P((int, int));
-void	printcachestats __P((void));
+void	bread(daddr_t, char *, int);
+void	rawread(daddr_t, char *, int);
+void	initcache(int, int);
+void	printcachestats(void);
 
 /* tape writing routines */
-int	alloctape __P((void));
-void	close_rewind __P((void));
-void	dumpblock __P((daddr_t blkno, int size));
-void	startnewtape __P((int top));
-void	trewind __P((int));
-void	writerec __P((char *dp, int isspcl));
+int	alloctape(void);
+void	close_rewind(void);
+void	dumpblock(daddr_t, int);
+void	startnewtape(int);
+void	trewind(int);
+void	writerec(char *, int);
 
-void	Exit __P((int status));
-void	dumpabort __P((int signo));
-void	getfstab __P((void));
+void	Exit(int);
+void	dumpabort(int);
+void	getfstab(void);
 
-char	*rawname __P((char *cp));
-struct	dinode *getino __P((ino_t inum));
+char	*rawname(char *);
+struct	dinode *getino(ino_t);
 
 /* rdump routines */
 #if defined(RDUMP) || defined(RRESTORE)
-void	rmtclose __P((void));
-int	rmthost __P((char *host));
-int	rmtopen __P((char *tape, int mode));
-int	rmtwrite __P((char *buf, int count));
+void	rmtclose(void);
+int	rmthost(char *);
+int	rmtopen(char *, int);
+int	rmtwrite(char *, int);
 #endif /* RDUMP || RRESTORE */
 
-void	interrupt __P((int signo));	/* in case operator bangs on console */
+void	interrupt(int);	/* in case operator bangs on console */
 
 /*
  *	Exit status codes
@@ -227,7 +222,7 @@ void	interrupt __P((int signo));	/* in case operator bangs on console */
 #define	OPGRENT	"operator"		/* group entry to notify */
 #define DIALUP	"ttyd"			/* prefix for dialups */
 
-struct	fstab *fstabsearch __P((char *key));	/* search fs_file and fs_spec */
+struct	fstab *fstabsearch(char *);	/* search fs_file and fs_spec */
 
 #ifndef NAME_MAX
 #define NAME_MAX 255
@@ -252,13 +247,13 @@ extern int	nddates;		/* number of records (might be zero) */
 extern int	ddates_in;		/* we have read the increment file */
 extern struct	dumpdates **ddatev;	/* the arrayfied version */
 
-void	initdumptimes __P((void));
-void	getdumptime __P((void));
-void	putdumptime __P((void));
+void	initdumptimes(void);
+void	getdumptime(void);
+void	putdumptime(void);
 #define	ITITERATE(i, ddp) \
 	for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
 
-void	sig __P((int signo));
+void	sig(int signo);
 
 /*
  * Compatibility with old systems.
@@ -277,18 +272,4 @@ extern int errno;
 #endif
 #ifndef	_PATH_FSTAB
 #define	_PATH_FSTAB	"/etc/fstab"
-#endif
-
-#ifdef sunos
-extern char *calloc();
-extern char *malloc();
-extern long atol();
-extern char *strcpy();
-extern char *strncpy();
-extern char *strcat();
-extern time_t time();
-extern void endgrent();
-extern void exit();
-extern off_t lseek();
-extern const char *strerror();
 #endif
