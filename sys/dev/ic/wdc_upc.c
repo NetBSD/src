@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.15 2004/01/03 22:56:53 thorpej Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.16 2004/05/25 20:42:41 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.15 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.16 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,6 +94,7 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	}
+	wdc_init_shadow_regs(&sc->sc_channel);
 
 	upc_intr_establish(ua->ua_irqhandle, IPL_BIO, wdcintr,
 			   &sc->sc_channel);
