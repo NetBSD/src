@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.19 1999/12/28 07:14:53 darrenr Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.20 1999/12/29 08:19:07 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_state.c,v 1.19 1999/12/28 07:14:53 darrenr Exp $";
+static const char rcsid[] = "$NetBSD: ip_state.c,v 1.20 1999/12/29 08:19:07 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.3.2.14 1999/11/30 13:46:05 darrenr Exp";
@@ -1040,11 +1040,11 @@ void fr_timeoutstate()
 				ips_num--;
 			} else
 				isp = &is->is_next;
+	RWLOCK_EXIT(&ipf_state);
 	if (fr_state_doflush) {
 		(void) fr_state_flush(1);
 		fr_state_doflush = 0;
 	}
-	RWLOCK_EXIT(&ipf_state);
 	SPL_X(s);
 }
 
