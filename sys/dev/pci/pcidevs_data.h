@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.614 2004/04/01 08:00:32 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.615 2004/04/03 00:41:10 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -7580,6 +7580,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Realtek Semiconductor",
 	    "8169 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8180,
+	    0,
+	    "Realtek Semiconductor",
+	    "8180 802.11b",
 	},
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C465,
