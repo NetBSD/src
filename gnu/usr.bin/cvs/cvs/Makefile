@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/07/23 23:20:35 itojun Exp $
+#	$NetBSD: Makefile,v 1.9 2003/07/24 00:25:24 lha Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -22,7 +22,6 @@ DPADD+= ${LIBDIFF} ${LIBCVS} ${LIBCRYPT} ${LIBZ}
 LDADD+= ${LIBDIFF} ${LIBCVS} -lcrypt -lz
 
 .if (${USE_KERBEROS4} != "no")
-CPPFLAGS+= -DENCRYPTION
 CPPFLAGS+= -DHAVE_KERBEROS -I${DESTDIR}/usr/include/kerberosIV
 DPADD+= ${LIBKRB}
 LDADD+= -lkrb
@@ -35,6 +34,7 @@ LDADD+= -lgssapi -lkrb5 -lasn1
 .endif
 
 .if (${USE_KERBEROS4} != "no" || ${USE_KERBEROS} != "no")
+CPPFLAGS+= -DENCRYPTION
 DPADD+= ${LIBCRYPTO} ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPT}
 LDADD+= -lcrypto -lcom_err -lroken -lcrypt
 .endif
