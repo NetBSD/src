@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.12 1997/10/18 14:49:41 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.13 1997/10/18 14:53:52 lukem Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -26,9 +26,10 @@
  *
  * 4. This notice may not be removed or altered.
  */
+
+#include <sys/cdefs.h>
 #ifndef	lint
-static char *moduleid = 
-	"@(#)$NetBSD: file.c,v 1.12 1997/10/18 14:49:41 lukem Exp $";
+__RCSID("$NetBSD: file.c,v 1.13 1997/10/18 14:53:52 lukem Exp $");
 #endif	/* lint */
 
 #include <stdio.h>
@@ -80,6 +81,7 @@ char *progname;		/* used throughout 			*/
 int lineno;		/* line number in the magic file	*/
 
 
+	int	main __P((int, char **));
 static void	unwrap		__P((char *fn));
 #if 0
 static int	byteconv4	__P((int, int, int));
@@ -91,8 +93,8 @@ static short	byteconv2	__P((int, int, int));
  */
 int
 main(argc, argv)
-int argc;
-char *argv[];
+	int argc;
+	char *argv[];
 {
 	int c;
 	int check = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;

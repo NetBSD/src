@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.12 1997/04/19 05:21:36 thorpej Exp $	*/
+/*	$NetBSD: print.c,v 1.13 1997/10/18 14:53:58 lukem Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -40,9 +40,9 @@
 #include <time.h>
 #include "file.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char *moduleid =
-	"@(#)$NetBSD: print.c,v 1.12 1997/04/19 05:21:36 thorpej Exp $";
+__RCSID("$NetBSD: print.c,v 1.13 1997/10/18 14:53:58 lukem Exp $");
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))

@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.13 1997/01/28 00:49:37 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.14 1997/10/18 14:53:48 lukem Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -34,9 +34,9 @@
 #include <errno.h>
 #include "file.h"
 
+#include <sys/cdefs.h>
 #ifndef	lint
-static char *moduleid = 
-	"@(#)$NetBSD: apprentice.c,v 1.13 1997/01/28 00:49:37 christos Exp $";
+__RCSID("$NetBSD: apprentice.c,v 1.14 1997/10/18 14:53:48 lukem Exp $");
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
