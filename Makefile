@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142 2001/10/24 02:45:34 tv Exp $
+#	$NetBSD: Makefile,v 1.143 2001/10/24 03:21:20 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -49,6 +49,9 @@
 #   do-make-tools:   builds host toolchain.
 #   do-distrib-dirs: creates the distribution directories.
 #   includes:        installs include files.
+#   do-lib-csu:      builds and installs prerequisites from lib/csu.
+#   do-lib:          builds and installs prerequisites from lib.
+#   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
 #   do-build:        builds and installs the entire system.
 
 .include "${.CURDIR}/share/mk/bsd.own.mk"
@@ -113,7 +116,7 @@ BUILDTARGETS+=	do-distrib-dirs
 .if !defined(NOINCLUDES)
 BUILDTARGETS+=	includes
 .endif
-BUILDTARGETS+=	do-build
+BUILDTARGETS+=	do-lib-csu do-lib do-gnu-lib do-build
 
 # Enforce proper ordering of some rules.
 
@@ -145,13 +148,15 @@ do-make-tools:
 do-distrib-dirs:
 	cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=${DESTDIR} distrib-dirs
 
-do-build:
 .for dir in lib/csu lib gnu/lib
+do-${dir:S/\//-/}:
 .for targ in dependall install
 	cd ${.CURDIR}/${dir} && \
 		${MAKE} ${_M} ${_J} MKSHARE=no MKLINT=no ${targ}
 .endfor
 .endfor
+
+do-build:
 	${MAKE} ${_M} ${_J} dependall
 	${MAKE} ${_M} ${_J} install
 
