@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.19 1993/11/11 01:18:03 jtc Exp $
+#	$Id: Makefile,v 1.20 1993/11/14 16:48:54 pk Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -11,7 +11,6 @@
 # actually call the YP functions, put -DYP on the CFLAGS line below.
 
 LIB=c
-INSTALL_PIC_ARCHIVE= yes
 CFLAGS+=-DYP -DLIBC_SCCS -DSYSLIBC_SCCS
 AINC=	-I${.CURDIR}/arch/${MACHINE}
 
