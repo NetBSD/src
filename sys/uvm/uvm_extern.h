@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.67 2001/09/15 20:36:45 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.68 2001/12/08 00:35:33 thorpej Exp $	*/
 
 /*
  *
@@ -647,13 +647,7 @@ void			uvm_pglistfree __P((struct pglist *));
 void			uvm_swap_init __P((void));
 
 /* uvm_unix.c */
-int			uvm_coredump __P((struct proc *, struct vnode *,
-				struct ucred *, struct core *));
 int			uvm_grow __P((struct proc *, vaddr_t));
-/* should only be needed if COMPAT_NETBSD32 is defined */
-struct core32;
-int			uvm_coredump32 __P((struct proc *, struct vnode *,
-				struct ucred *, struct core32 *));
 
 /* uvm_user.c */
 void			uvm_deallocate __P((struct vm_map *, vaddr_t, vsize_t));

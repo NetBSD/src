@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.134 2001/09/18 19:36:32 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.135 2001/12/08 00:35:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -208,6 +208,7 @@ struct proc {
 					 * Per-process emulation data, or NULL.
 					 * Malloc type M_EMULDATA
 					 */
+	const struct execsw *p_execsw;	/* Exec package information */
 
 /*
  * End area that is zeroed on creation

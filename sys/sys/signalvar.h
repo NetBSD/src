@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.30 2001/06/06 21:46:59 mrg Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.31 2001/12/08 00:35:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -163,17 +163,15 @@ const int sigprop[NSIG] = {
 
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
 
-/*
- * Set if we need to short-cut coredump() with the 32-bit version
- * on a 64-bit platform.
- */
 struct vnode;
-extern	int (*coredump32_hook)(struct proc *p, struct vnode *vp);
+struct ucred;
 
 /*
  * Machine-independent functions:
  */
 int	coredump __P((struct proc *p));
+int	coredump_netbsd __P((struct proc *p, struct vnode *vp,
+	    struct ucred *cred));
 void	execsigs __P((struct proc *p));
 void	gsignal __P((int pgid, int sig));
 int	issignal __P((struct proc *p));
@@ -210,8 +208,6 @@ void	sigactsfree __P((struct proc *));
 void	sendsig __P((sig_t action, int sig, sigset_t *returnmask, u_long code));
 struct core;
 struct core32;
-struct vnode;
-struct ucred;
 int	cpu_coredump __P((struct proc *, struct vnode *, struct ucred *,
 			  struct core *));
 int	cpu_coredump32 __P((struct proc *, struct vnode *, struct ucred *, 

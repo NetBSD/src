@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.81 2001/07/29 21:23:19 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.82 2001/12/08 00:35:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -101,6 +101,8 @@ struct ps_strings {
 
 struct proc;
 struct exec_package;
+struct vnode;
+struct ucred;
 
 typedef int (*exec_makecmds_fcn) __P((struct proc *, struct exec_package *));
 
@@ -123,6 +125,8 @@ struct execsw {
 					/* Set registers before execution */
 	void	(*es_setregs) __P((struct proc *, struct exec_package *,
 				  u_long));
+	int	(*es_coredump) __P((struct proc *, struct vnode *,
+				    struct ucred *));
 };
 
 #define EXECSW_PRIO_ANY		0x000	/* default, no preference */
