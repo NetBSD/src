@@ -32,7 +32,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.2 1999/03/24 11:57:10 christos Exp $
+ * $Id: m_netbsd13.c,v 1.3 1999/04/12 01:53:06 ross Exp $
  */
 #define UVM
 
@@ -658,11 +658,12 @@ getkval(offset, ptr, size, refstr)
  */
 
 #define ORDERKEY_PCTCPU \
-    if (lresult = PP(p2, p_pctcpu) - PP(p1, p_pctcpu),\
+    if (lresult = (pctcpu)PP(p2, p_pctcpu) - (pctcpu)PP(p1, p_pctcpu),\
 	(result = lresult > 0 ? 1 : lresult < 0 ? -1 : 0) == 0)
 
 #define ORDERKEY_CPTICKS \
-    if (lresult = PP(p2, p_rtime).tv_sec - PP(p1, p_rtime).tv_sec,\
+    if (lresult = (pctcpu)PP(p2, p_rtime).tv_sec \
+		- (pctcpu)PP(p1, p_rtime).tv_sec,\
 	(result = lresult > 0 ? 1 : lresult < 0 ? -1 : 0) == 0)
 
 #define ORDERKEY_STATE \
