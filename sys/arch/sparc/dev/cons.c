@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.28 1996/10/11 00:46:31 christos Exp $ */
+/*	$NetBSD: cons.c,v 1.29 1996/10/13 02:59:42 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,7 +126,7 @@ consinit()
 
 		node = findroot();
 		if (no->no_proplen(node, "stdin-path") >= sizeof(buffer)) {
-			kprintf("consinit: increase buffer size and recompile\n");
+			printf("consinit: increase buffer size and recompile\n");
 			goto setup_output;
 		}
 		/* XXX: fix above */
@@ -142,7 +142,7 @@ consinit()
 		 */
 		if ((fd = op->v2_open(buffer)) == 0 ||
 		     (node = op->v2_fd_phandle(fd)) == 0) {
-			kprintf("consinit: bogus stdin path %s.\n",buffer);
+			printf("consinit: bogus stdin path %s.\n",buffer);
 			goto setup_output;
 		}
 		if (no->no_proplen(node,"keyboard") >= 0) {
@@ -174,7 +174,7 @@ consinit()
 setup_output:
 		node = findroot();
 		if (no->no_proplen(node, "stdout-path") >= sizeof(buffer)) {
-			kprintf("consinit: increase buffer size and recompile\n");
+			printf("consinit: increase buffer size and recompile\n");
 			goto setup_console;
 		}
 		/* XXX: fix above */
@@ -183,7 +183,7 @@ setup_output:
 
 		if ((fd = op->v2_open(buffer)) == 0 ||
 		     (node = op->v2_fd_phandle(fd)) == 0) {
-			kprintf("consinit: bogus stdout path %s.\n",buffer);
+			printf("consinit: bogus stdout path %s.\n",buffer);
 			goto setup_output;
 		}
 		if (strcmp(getpropstring(node,"device_type"),"display") == 0) {
@@ -239,7 +239,7 @@ setup_console:
 
 	default:
 		rom_console_input = 1;
-		kprintf("unknown console input source %d; using rom\n", in);
+		printf("unknown console input source %d; using rom\n", in);
 		break;
 	}
 	switch (out) {
@@ -261,7 +261,7 @@ setup_console:
 		break;
 
 	default:
-		kprintf("unknown console output sink %d; using rom\n", out);
+		printf("unknown console output sink %d; using rom\n", out);
 		tp->t_oproc = cnstart;
 		fcnstop = (void (*)(struct tty *, int))nullop;
 		break;

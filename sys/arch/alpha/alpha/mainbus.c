@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 1996/10/10 23:50:33 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12 1996/10/13 02:59:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -91,7 +91,7 @@ mbattach(parent, self, aux)
 	extern int cputype, ncpus;
 	extern char *cpu_iobus;
 
-	kprintf("\n");
+	printf("\n");
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
 	sc->sc_bus.ab_type = BUS_MAIN;
@@ -120,7 +120,7 @@ mbattach(parent, self, aux)
 			cpuattachcnt++;
 	}
 	if (ncpus != cpuattachcnt)
-		kprintf("WARNING: %d cpus in machine, %d attached\n",
+		printf("WARNING: %d cpus in machine, %d attached\n",
 			ncpus, cpuattachcnt);
 
 	if (cpu_iobus != NULL) {
@@ -140,7 +140,7 @@ mbprint(aux, pnp)
 	struct confargs *ca = aux;
 
 	if (pnp)
-		kprintf("%s at %s", ca->ca_name, pnp);
+		printf("%s at %s", ca->ca_name, pnp);
 
 	return (UNCONF);
 }
