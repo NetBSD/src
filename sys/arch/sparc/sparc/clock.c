@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.90 2003/01/06 12:50:45 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.91 2003/01/18 06:45:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,7 +144,6 @@ struct idprom *idprom;
 void establish_hostid(struct idprom *);
 void myetheraddr(u_char *);
 
-
 /*
  * XXX this belongs elsewhere
  */
@@ -242,11 +241,11 @@ setstatclockrate(newhz)
  */
 void schedintr(void *v)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 
 	/* XXX - should consult a cpuinfo.schedtickpending */
-	if (p != NULL)
-		schedclock(p);
+	if (l != NULL)
+		schedclock(l);
 }
 
 /*

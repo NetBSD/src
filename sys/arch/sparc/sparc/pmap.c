@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.230 2003/01/17 14:15:17 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.231 2003/01/18 06:45:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -7144,10 +7144,10 @@ pmap_redzone()
  * process is the current process, load the new MMU context.
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	pmap_t pm = p->p_vmspace->vm_map.pmap;
+	pmap_t pm = l->l_proc->p_vmspace->vm_map.pmap;
 	int s;
 
 	/*
@@ -7158,7 +7158,7 @@ pmap_activate(p)
 	 */
 
 	s = splvm();
-	if (p == curproc) {
+	if (l->l_proc == curproc) {
 		write_user_windows();
 		if (pm->pm_ctx == NULL) {
 			ctx_alloc(pm);	/* performs setcontext() */
@@ -7179,13 +7179,20 @@ pmap_activate(p)
  * Deactivate the address space of the specified process.
  */
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
 #if defined(MULTIPROCESSOR)
 	pmap_t pm;
+	struct proc *p;
 
-	if (p && p->p_vmspace &&
+#ifdef DIAGNOSTIC
+	if (l == NULL)
+		panic("pmap_deactivate: l==NULL");
+#endif
+
+	p = l->l_proc;
+	if (p->p_vmspace &&
 	    (pm = p->p_vmspace->vm_map.pmap) != pmap_kernel()) {
 		if (pm->pm_ctx && CPU_HAS_SRMMU)
 			sp_tlb_flush(0, pm->pm_ctxnum, ASI_SRMMUFP_L0);
