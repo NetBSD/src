@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.23 1996/09/17 19:34:40 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.24 1996/09/25 20:48:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,31 +86,22 @@
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
 
-#include <pmax/dev/pdma.h>
 #include <pmax/dev/lk201.h>
 
+/*
+ * XXX in dcvar.h or not?
+ * #include <pmax/dev/pdma.h>
+ */
 #include "dcvar.h"
+
 #include "tc.h"
 
 #include <pmax/dev/lk201var.h>		/* XXX KbdReset band friends */
 
-extern int pmax_boardtype;
+#include <pmax/dev/dcvar.h>
+#include <pmax/dev/dc_cons.h>
+
 extern struct cfdriver mainbus_cd;
-
-struct dc_softc {
-	struct device sc_dv;
-	struct pdma dc_pdma[4];
-	struct	tty *dc_tty[4];
-	/*
-	 * Software copy of brk register since it isn't readable
-	 */
-	int	dc_brk;
-
-	char	dc_19200;		/* this unit supports 19200 */
-	char	dcsoftCAR;		/* mask, lines with carrier on (DSR) */
-	char	dc_rtscts;		/* mask, lines with hw flow control */
-	char	dc_modem;		/* mask, lines with  DTR wired  */
-};
 
 #define DCUNIT(dev) (minor(dev) >> 2)
 #define DCLINE(dev) (minor(dev) & 3)
@@ -121,20 +112,11 @@ struct dc_softc {
  * Use the statically-allocated softc until old autoconfig code and
  * config.old are completely gone.
  */
-int	dcmatch  __P((struct device * parent, void *cfdata, void *aux));
-void	dcattach __P((struct device *parent, struct device *self, void *aux));
+int	old_dcmatch  __P((struct device * parent, void *cfdata, void *aux));
+void	old_dcattach __P((struct device *parent, struct device *self, void *aux));
 
-int	dc_doprobe __P((struct dc_softc *sc, void *addr,
-			int dtrmask, int rts_ctsmask,
-			int speed, int consline));
-int	dcintr __P((void * xxxunit));
 
 extern struct cfdriver dc_cd;
-
-struct cfattach dc_ca = {
-	sizeof(struct dc_softc), dcmatch, dcattach
-};
-
 struct  cfdriver dc_cd = {
 	NULL, "dc", DV_TTY
 };
@@ -152,6 +134,8 @@ int dcmctl	 __P((dev_t dev, int bits, int how));
 void dcscan	__P((void *));
 int dcparam	__P((struct tty *, struct termios *));
 extern void ttrstrt __P((void *));
+
+void	dc_reset __P ((dcregs *dcaddr));
 
 /* console I/O */
 int  dcGetc	__P((dev_t));
@@ -208,94 +192,11 @@ struct speedtab dcspeedtab[] = {
 #define	LFLAG	(TTYDEF_LFLAG & ~ECHO)
 #endif
 
-
-
-
 /*
- * Match driver based on name
+ * Console line variables, for use when cold
  */
-int
-dcmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	caddr_t dcaddr;
-	struct confargs *ca = aux;
-#if NTC>0
-	struct ioasicdev_attach_args *d = aux;
-#endif
-
-#if NTC > 0
-	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
-		if (strcmp(d->iada_modname, "dc") != 0 &&
-		    strcmp(d->iada_modname, "dc7085") != 0)
-			return (0);
-		dcaddr = (caddr_t)d->iada_addr;
-	}
-	else
-#endif /* NTC */
-
-	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
-		if (strcmp(ca->ca_name, "dc") != 0 &&
-		    strcmp(ca->ca_name, "mdc") != 0 &&
-		    strcmp(ca->ca_name, "dc7085") != 0)
-			return (0);
-		dcaddr = (caddr_t)ca->ca_addr;
-
-	}
-	else
-		return (0);
-
-	if (badaddr(dcaddr, 2))
-		return (0);
-
-	return (1);
-}
-
-void
-dcattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	register struct confargs *ca = aux;
-#if NTC > 0
-	struct ioasicdev_attach_args *d = aux;
-#endif /* NTC */
-	caddr_t dcaddr;
-	struct dc_softc *sc = (void*) self;
-
-
-#if NTC > 0
-	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
-		dcaddr = (caddr_t)d->iada_addr;
-		(void) dc_doprobe(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
-	/* dtr/dsr mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
-#ifdef HW_FLOW_CONTROL
-	/* rts/cts mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
-#else
-				  0,
-#endif
-				  1, 3);
-		/* tie pseudo-slot to device */
-		ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
-			     dcintr, self);
-	}
-	else
-#endif /* NTC */
-	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
-		dcaddr = (caddr_t)ca->ca_addr;
-		DELAY(1000000); /* let PROM console  output complete */
-
-		(void) dc_doprobe(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
-				  1 << DCCOMM_PORT, 0x0, 0, DCCOMM_PORT);
-
-		/* tie pseudo-slot to device */
-		BUS_INTR_ESTABLISH(ca, dcintr, self);
-	}
-	printf("\n");
-}
+extern int cold;
+dcregs *dc_cons_addr = 0;
 
 /*
  * Is there a framebuffer console device using this serial driver?
@@ -312,6 +213,11 @@ raster_console()
 }
 
 
+/* XXX move back into dc_consinit when debugged */
+static struct consdev dccons = {
+	NULL, NULL, dcGetc, dcPutc, dcPollc, NODEV, CN_REMOTE
+};
+
 /*
  * Special-case code to attach a console.
  * We were using PROM callbacks for console I/O,
@@ -325,12 +231,15 @@ dc_consinit(dev, dcaddr)
 	dev_t dev;
 	register dcregs *dcaddr;
 {
-	static struct consdev dccons = {
-		NULL, NULL, dcGetc, dcPutc, dcPollc, NODEV, CN_REMOTE
-	};
   	struct termios cterm;
   	struct tty ctty;
 
+	/* save address in case we're cold */
+	if (cold && dc_cons_addr == 0)
+		dc_cons_addr = dcaddr;
+
+	/* reset chip */
+	dc_reset(dcaddr);
 
 	dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 		LPR_B9600 | DCLINE(dev);
@@ -343,17 +252,16 @@ dc_consinit(dev, dcaddr)
 	dccons.cn_dev = dev;
 	cterm.c_cflag = CS8;
 	cterm.c_cflag |= CLOCAL;
+	*cn_tab = dccons;
 	dcparam(&ctty, &cterm); /* XXX untested on 5000/200*/
-	cn_tab = &dccons;
 }
 
 
 /*
- * DC7085 (dz-11) probe routine from old-style config.
- * This is only here out of intertia.
+ * Attach DC7085 (dz-11) device.
  */
 int
-dc_doprobe(sc, addr, dtr_mask, rtscts_mask, speed,
+dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	   console_line)
 	register struct dc_softc *sc;
 	void *addr;
@@ -365,6 +273,7 @@ dc_doprobe(sc, addr, dtr_mask, rtscts_mask, speed,
 	register int line;
 	int s;
 	
+	dcaddr = (dcregs *)addr;
 
 	/*
 	 * For a remote console, wait a while for previous output to
@@ -374,18 +283,12 @@ dc_doprobe(sc, addr, dtr_mask, rtscts_mask, speed,
 	 */
 	if (sc->sc_dv.dv_unit == 0 &&	/* XXX why only unit 0? */
 	    (major(cn_tab->cn_dev) == DCDEV || major(cn_tab->cn_dev) == 0) &&
-	    (cn_tab->cn_pri == CN_REMOTE || (cn_tab->cn_pri == CN_DEAD)))
+	    (cn_tab->cn_pri == CN_REMOTE || (cn_tab->cn_pri == CN_DEAD))) {
 		DELAY(10000);
-
-	/* reset chip */
-	dcaddr = (dcregs *)addr;
-	dcaddr->dc_csr = CSR_CLR;
-	wbflush();
-	DELAY(1000);
-
-	while (dcaddr->dc_csr & CSR_CLR)
-		;
-	dcaddr->dc_csr = CSR_MSE | CSR_TIE | CSR_RIE;
+	}
+	/* reset chip and enable interrupts */
+	dc_reset(dcaddr);
+	dcaddr->dc_csr |= (CSR_MSE | CSR_TIE | CSR_RIE);
 
 	/* init pseudo DMA structures */
 	pdp = &sc->dc_pdma[0];
@@ -427,29 +330,41 @@ dc_doprobe(sc, addr, dtr_mask, rtscts_mask, speed,
 			KBDReset(makedev(DCDEV, DCKBD_PORT), dcPutc);
 			MouseInit(makedev(DCDEV, DCMOUSE_PORT), dcPutc, dcGetc);
 			splx(s);
-		} else if (major(cn_tab->cn_dev) == DCDEV) {
+		}
+		else if (major(cn_tab->cn_dev) == DCDEV) {
 			s = spltty();
 			dc_consinit(cn_tab->cn_dev, dcaddr);
+			dcaddr->dc_csr |= (CSR_MSE | CSR_TIE | CSR_RIE);
 			splx(s);
-		} else if (cn_tab->cn_dev == 0) {
-			/* work around buggy consinit() not setting cn_dev */
-		  	dev_t dev;
-
-   			s = spltty();
-			dev = makedev(DCDEV, 4 * sc->sc_dv.dv_unit +
-				      console_line);
-			dc_consinit(dev, dcaddr);
-			splx(s);
-			printf("serial console, case 2, dev=%d,%d)",
-			       major(dev), minor(dev));
-
 		}
-
-
 	}
-
 	return (1);
 }
+
+
+/*
+ * Reset chip.  Does not change modem control output bits
+ * or modem state register.
+ * Does not enable interrupts; caller must explicitly or
+ * TIE and RIE on if desired (XXX not true yet)
+ */
+void
+dc_reset(dcaddr)
+	register dcregs *dcaddr;
+{
+	/* Reset CSR and wait until cleared. */
+	dcaddr->dc_csr = CSR_CLR;
+	wbflush();
+	DELAY(10);
+	while (dcaddr->dc_csr & CSR_CLR)
+		;
+
+	/* Enable scanner. */
+	dcaddr->dc_csr = CSR_MSE;
+	wbflush();
+	DELAY(10);
+}
+
 
 int
 dcopen(dev, flag, mode, p)
@@ -1121,7 +1036,8 @@ dcscan(arg)
 	dtr = TCR_DTR2;
 	dsr = MSR_DSR2;
 #ifdef HW_FLOW_CONTROL
-	limit = (pmax_boardtype == DS_PMAX) ? 2 : 3;
+	/*limit = (pmax_boardtype == DS_PMAX) ? 2 : 3;*/
+	limit =  (sc->dc_rtscts & (1 << 3)) :3  : 2;	/*XXX*/
 #else
 	limit = 2;
 #endif
@@ -1183,15 +1099,19 @@ int
 dcGetc(dev)
 	dev_t dev;
 {
-	register struct dc_softc *sc;
 	register dcregs *dcaddr;
 	register int c;
 	register int line;
 	int s;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	line = DCLINE(dev);
-	dcaddr = (dcregs *)sc->dc_pdma[line].p_addr;
+	if (cold) {
+		dcaddr = dc_cons_addr;
+	} else {
+		struct dc_softc *sc;
+		sc = dc_cd.cd_devs[DCUNIT(dev)];
+		dcaddr = (dcregs *)sc->dc_pdma[line].p_addr;
+	}
 	if (!dcaddr)
 		return (0);
 	s = spltty();
@@ -1215,16 +1135,24 @@ dcPutc(dev, c)
 	dev_t dev;
 	int c;
 {
-	struct dc_softc *sc;
 	register dcregs *dcaddr;
 	register u_short tcr;
 	register int timeout;
 	int s, out_line, activeline;
+	int brk;
 
 	s = spltty();
 	out_line = DCLINE(dev);
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	dcaddr = (dcregs *)sc->dc_pdma[out_line].p_addr;
+	if (cold) {
+		brk = 0;
+		dcaddr = dc_cons_addr;
+	} else {
+		struct dc_softc *sc;
+
+		sc = dc_cd.cd_devs[DCUNIT(dev)];
+		dcaddr = (dcregs *)sc->dc_pdma[out_line].p_addr;
+		brk = sc->dc_brk;
+	}
 	tcr = dcaddr->dc_tcr;
 	dcaddr->dc_tcr = tcr | (1 << out_line);
 	wbflush();
@@ -1254,7 +1182,7 @@ dcPutc(dev, c)
 		/*
 		 * Start sending the character.
 		 */
-		dcaddr->dc_tdr = sc->dc_brk | (c & 0xff);
+		dcaddr->dc_tdr = brk | (c & 0xff);
 		wbflush();
 		DELAY(10);
 		/*
