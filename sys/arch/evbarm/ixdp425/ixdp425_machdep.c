@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.9 2003/10/23 10:50:01 scw Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.10 2003/10/28 08:26:33 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.9 2003/10/23 10:50:01 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.10 2003/10/28 08:26:33 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -404,7 +404,7 @@ initarm(void *arg)
 #endif
 	int loop;
 	int loop1;
-	u_int kerneldatasize, symbolsize;
+	u_int kerneldatasize;
 	u_int l1pagetable;
 	u_int freemempos;
 	pv_addr_t kernel_l1pt;
@@ -445,7 +445,6 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
         printf("kernsize=0x%x\n", kerneldatasize);
 #endif
-        kerneldatasize += symbolsize;
         kerneldatasize = ((kerneldatasize - 1) & ~(PAGE_SIZE * 4 - 1)) + PAGE_SIZE * 8;
 
 	/*
