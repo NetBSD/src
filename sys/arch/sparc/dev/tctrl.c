@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.22 2002/12/10 13:44:50 pk Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.23 2003/06/29 09:56:25 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -897,10 +897,10 @@ tctrl_write(sc, off, v)
 }
 
 int
-tctrlopen(dev, flags, mode, p)
+tctrlopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = (minor(dev)&0xf0);
 	int ctl = (minor(dev)&0x0f);
@@ -931,10 +931,10 @@ tctrlopen(dev, flags, mode, p)
 }
 
 int
-tctrlclose(dev, flags, mode, p)
+tctrlclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int ctl = (minor(dev)&0x0f);
 	struct tctrl_softc *sc;
@@ -954,13 +954,14 @@ tctrlclose(dev, flags, mode, p)
 }
 
 int
-tctrlioctl(dev, cmd, data, flags, p)
+tctrlioctl(dev, cmd, data, flags, l)
         dev_t dev;
         u_long cmd;
         caddr_t data;
         int flags;
-        struct proc *p;
+        struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct tctrl_req req, *reqn;
 	struct tctrl_pwr *pwrreq;  
 	envsys_range_t *envrange;
@@ -1194,10 +1195,10 @@ tctrlioctl(dev, cmd, data, flags, p)
 }
 
 int
-tctrlpoll(dev, events, p)
+tctrlpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tctrl_softc *sc = tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	int revents = 0;
@@ -1206,7 +1207,7 @@ tctrlpoll(dev, events, p)
 		if (sc->sc_event_count)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 	}
 
 	return (revents);
