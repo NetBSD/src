@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.6 2000/09/24 15:59:31 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.7 2000/09/25 11:46:38 abs Exp $
 #
 # First try for BEBOX config file
 #
@@ -6,6 +6,11 @@
 include "arch/bebox/conf/std.bebox"
 
 maxusers	32
+
+# Saving space
+makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
+#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
+#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
 
 # Enable the hooks used for initializing the root memory-disk.
 options		MEMORY_DISK_HOOKS

@@ -1,13 +1,18 @@
-# $NetBSD: INSTALL,v 1.43 2000/09/24 15:59:27 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.44 2000/09/25 11:46:37 abs Exp $
 #
 # Alpha INSTALL kernel.
 
 include	"arch/alpha/conf/std.alpha"
 
+# Saving space
+makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
+#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
+#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
+
 maxusers 8
 
 options 	DDB
-makeoptions	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
