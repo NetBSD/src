@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.1 2001/02/22 18:37:55 uch Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.2 2001/03/01 16:41:36 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -329,8 +329,11 @@ __hpckbd_input(void *arg, int flag, int scancode)
 	}
 	
 	if ((key = hc->hc_keymap[scancode]) == UNK) {
-		printf("hpckbd: unknown scan code %#x\n", scancode);
-
+#ifdef DEBUG
+		printf("hpckbd: unknown scan code %#x (%d, %d)\n",
+		       scancode, scancode >> 3,
+		       scancode - ((scancode >> 3) << 3));
+#endif /* DEBUG */
 		return (0);
 	}
 
