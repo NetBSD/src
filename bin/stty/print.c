@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: print.c,v 1.5 1993/08/01 18:57:37 mycroft Exp $";
+static char rcsid[] = "$Id: print.c,v 1.6 1993/08/18 12:52:39 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,6 +71,9 @@ print(tp, wp, ldisc, fmt)
 			break;
 		case SLIPDISC:	
 			cnt += printf("slip disc; ");
+			break;
+		case PPPDISC:	
+			cnt += printf("ppp disc; ");
 			break;
 		default:	
 			cnt += printf("#%d disc; ", ldisc);
