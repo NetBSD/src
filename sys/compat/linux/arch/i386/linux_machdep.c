@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.97 2003/09/21 17:42:23 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.98 2003/09/21 19:29:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.97 2003/09/21 17:42:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.98 2003/09/21 19:29:10 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.97 2003/09/21 17:42:23 christos 
 #include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_errno.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -274,6 +275,7 @@ linux_rt_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 	struct linux_rt_sigframe *fp, frame;
 	int onstack;
 	linux_siginfo_t *lsi;
+	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
@@ -331,7 +333,7 @@ linux_rt_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 		lsi->lsi_pid = ksi->ksi_pid;
 		if (lsi->lsi_signo == LINUX_SIGALRM ||
 		    lsi->lsi_signo >= LINUX_SIGRTMIN)
-			lsi->lsi_sigval.sival_ptr = ksi->ksi_sigval.sival_ptr;
+			lsi->lsi_value.sival_ptr = ksi->ksi_sigval.sival_ptr;
 		break;
 	}
 
