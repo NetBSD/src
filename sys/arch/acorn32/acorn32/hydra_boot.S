@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra_boot.S,v 1.2 2002/10/05 23:30:03 bjh21 Exp $	*/
+/*	$NetBSD: hydra_boot.S,v 1.3 2002/10/06 10:21:10 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -38,7 +38,7 @@
 #include <arch/acorn32/acorn32/hydrareg.h>
 #include <arch/acorn32/acorn32/hydravar.h>
 
-RCSID("$NetBSD: hydra_boot.S,v 1.2 2002/10/05 23:30:03 bjh21 Exp $")
+RCSID("$NetBSD: hydra_boot.S,v 1.3 2002/10/06 10:21:10 bjh21 Exp $")
 
 ENTRY_NP(hydra_probecode)
 	/*
@@ -47,7 +47,7 @@ ENTRY_NP(hydra_probecode)
 	 */
 	mov	r0, #HYDRA_PHYS_BASE
 	ldr	r1, [r0, #(HYDRA_ID_STATUS << 2)]
-	and	r1, r1, #3		/* Mask off slave ID */
+	and	r1, r1, #HYDRA_ID_SLAVE_MASK	/* Mask off slave ID */
 	mov	r2, #1
 	mov	r2, r2, lsl r1		/* Get the bit for this CPU */
 	str	r2, [r0, #(HYDRA_HALT_SET << 2)] /* Halt ourselves */
@@ -87,7 +87,7 @@ ENTRY_NP(hydra_hatchcode)
 	/* Disable Hydra MMU for this processor. */
 	mov	r0, #HYDRA_PHYS_BASE
 	ldr	r1, [r0, #(HYDRA_ID_STATUS << 2)]
-	and	r1, r1, #3		/* Mask off slave ID */
+	and	r1, r1, #HYDRA_ID_SLAVE_MASK	/* Mask off slave ID */
 	mov	r2, #1
 	mov	r2, r2, lsl r1		/* Get the bit for this CPU */
 	str	r2, [r0, #(HYDRA_MMU_CLR << 2)] /* Disable MMU */
@@ -110,7 +110,6 @@ ENTRY_NP(hydra_hatchcode)
 	mcr	p15, 0, r5, c1, c0, 0
 	/* Run away before the pipeline runs out */
 	mov	pc, r0
-	b	.
 	.align	0
 	.global	_C_LABEL(hydra_ehatchcode)
 _C_LABEL(hydra_ehatchcode):
