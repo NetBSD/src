@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.22.2.1 2004/06/30 21:17:20 jdc Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.22.2.2 2004/07/02 17:38:52 he Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.22.2.1 $"
+#ident 		"GENERIC_TINY-$Revision: 1.22.2.2 $"
 
 maxusers	4
 
@@ -22,6 +22,7 @@ options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
