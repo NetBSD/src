@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.48 2003/01/07 18:54:08 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.49 2003/02/26 21:28:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.48 2003/01/07 18:54:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.49 2003/02/26 21:28:23 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,11 +122,11 @@ union mainbus_attach_args {
  * time it's checked below, then mainbus attempts to attach an ISA.
  */
 int	isa_has_been_seen;
-struct i386_isa_chipset i386_isa_chipset;
+struct x86_isa_chipset i386_isa_chipset;
 #if NISA > 0
 struct isabus_attach_args mba_iba = {
 	"isa",
-	I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
+	X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
 	&isa_bus_dma_tag,
 	&i386_isa_chipset
 };
@@ -240,15 +240,15 @@ mainbus_attach(parent, self, aux)
 	/*
 	 * ACPI and PNPBIOS need ISA DMA initialized before they start probing.
 	 */
-	isa_dmainit(&i386_isa_chipset, I386_BUS_SPACE_IO, &isa_bus_dma_tag,
+	isa_dmainit(&i386_isa_chipset, X86_BUS_SPACE_IO, &isa_bus_dma_tag,
 	    self);
 #endif
 
 #if NACPI > 0
 	if (acpi_present) {
 		mba.mba_acpi.aa_busname = "acpi";
-		mba.mba_acpi.aa_iot = I386_BUS_SPACE_IO;
-		mba.mba_acpi.aa_memt = I386_BUS_SPACE_MEM;
+		mba.mba_acpi.aa_iot = X86_BUS_SPACE_IO;
+		mba.mba_acpi.aa_memt = X86_BUS_SPACE_MEM;
 		mba.mba_acpi.aa_pc = NULL;
 		mba.mba_acpi.aa_pciflags =
 		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
@@ -288,8 +288,8 @@ mainbus_attach(parent, self, aux)
 #if NPCI > 0
 	if (pci_mode != 0) {
 		mba.mba_pba.pba_busname = "pci";
-		mba.mba_pba.pba_iot = I386_BUS_SPACE_IO;
-		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
+		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
+		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 		mba.mba_pba.pba_pc = NULL;
 		mba.mba_pba.pba_flags = pci_bus_flags();
@@ -303,8 +303,8 @@ mainbus_attach(parent, self, aux)
 	/* Note: MCA bus probe is done in i386/machdep.c */
 	if (MCA_system) {
 		mba.mba_mba.mba_busname = "mca";
-		mba.mba_mba.mba_iot = I386_BUS_SPACE_IO;
-		mba.mba_mba.mba_memt = I386_BUS_SPACE_MEM;
+		mba.mba_mba.mba_iot = X86_BUS_SPACE_IO;
+		mba.mba_mba.mba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_mba.mba_dmat = &mca_bus_dma_tag;
 		mba.mba_mba.mba_mc = NULL;
 		mba.mba_mba.mba_bus = 0;
@@ -315,8 +315,8 @@ mainbus_attach(parent, self, aux)
 	if (memcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN) == 0 &&
 	    eisa_has_been_seen == 0) {
 		mba.mba_eba.eba_busname = "eisa";
-		mba.mba_eba.eba_iot = I386_BUS_SPACE_IO;
-		mba.mba_eba.eba_memt = I386_BUS_SPACE_MEM;
+		mba.mba_eba.eba_iot = X86_BUS_SPACE_IO;
+		mba.mba_eba.eba_memt = X86_BUS_SPACE_MEM;
 #if NEISA > 0
 		mba.mba_eba.eba_dmat = &eisa_bus_dma_tag;
 #endif
