@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.31.2.1 2000/06/28 13:31:25 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.31.2.2 2000/10/06 20:00:31 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -336,7 +336,7 @@ si_dma_go(void *arg)
 	 */
 	if (dh->dh_flags & SIDH_OUT) {
 		vsbus_copyfromproc(dh->dh_proc, dh->dh_addr,
-			    sc->ncr_addr, dh->dh_len);
+			    sc->ncr_addr + sc->ncr_off, dh->dh_len);
 		bus_space_write_1(ncr_sc->sc_regt, ncr_sc->sc_regh,
 		    sc->ncr_dmadir, 0);
 	} else {
@@ -409,7 +409,8 @@ si_dma_stop(struct ncr5380_softc *ncr_sc)
 	}
 	if (count == 0) {
 		if (((dh->dh_flags & SIDH_OUT) == 0)) {
-			vsbus_copytoproc(dh->dh_proc, sc->ncr_addr,
+			vsbus_copytoproc(dh->dh_proc,
+			    sc->ncr_addr + sc->ncr_off,
 			    dh->dh_addr, dh->dh_len);
 		}
 		ncr_sc->sc_dataptr += dh->dh_len;
