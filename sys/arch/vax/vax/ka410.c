@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.14 1999/01/01 21:43:19 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.15 1999/01/19 21:04:49 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -82,6 +82,7 @@ struct	cpu_dep ka410_calls = {
 	chip_clkread,
 	chip_clkwrite,
 	1,      /* ~VUPS */
+	2,	/* SCB pages */
 	ka410_halt,
 	ka410_reboot,
 };

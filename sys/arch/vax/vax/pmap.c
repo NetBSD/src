@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 1999/01/01 21:43:19 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.57 1999/01/19 21:04:49 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -232,25 +232,18 @@ pmap_bootstrap()
         MAPVIRT(qd_ubaio, 16);
 #endif
 
-	/*
-	 * We move SCB here from physical address 0 to an address
-	 * somewhere else, so that we can dynamically allocate
-	 * space for interrupt vectors and other machine-specific
-	 * things. We move it here, but the rest of the allocation
-	 * is done in a cpu-specific routine.
-	 * avail_start is modified in the cpu-specific routine.
-	 */
-	scb = (struct scb *)(avail_start + KERNBASE);
-	bcopy(0, (void *)avail_start, VAX_NBPG >> 1);
-	mtpr(avail_start, PR_SCBB);
+	/* Init SCB and set up stray vectors. */
+	avail_start = scb_init(avail_start);
 	bzero(0, VAX_NBPG >> 1);
+
 	(*dep_call->cpu_steal_pages)();
+
 	avail_start = ROUND_PAGE(avail_start);
 	virtual_avail = ROUND_PAGE(virtual_avail);
 	virtual_end = TRUNC_PAGE(virtual_end);
 
 
-#ifdef PMAPDEBUG
+#if defined(PMAPDEBUG)
 	cninit();
 	printf("Sysmap %p, istack %lx, scratch %p\n",Sysmap,istack,scratch);
 	printf("etext %p\n", &etext);
@@ -847,6 +840,35 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 	mtpr(0,PR_TBIA);
 }
 
+#ifdef NEW_REF
+/*
+ * Called from interrupt vector routines if we get a page invalid fault.
+ * Note: the save mask must be or'ed with 0x3f for this function.
+ * Returns 0 if normal call, 1 if CVAX bug detected.
+ */
+int
+pmap_simulref(bits, addr)
+	int	bits, addr;
+{
+
+
+#ifdef DEBUG
+	if (bits & 1)
+		panic("pte trans len");
+#endif
+	/* First decode userspace addr */
+	if (addr >= 0) {
+		if ((addr << 1) < 0)
+			pte = mfpr(PR_P1BR);
+		else
+			pte = mfpr(PR_P0BR);
+		if (bits & 2) { /* PTE reference */
+			
+
+
+
+
+#endif
 /*
  * Checks if page is referenced; returns true or false depending on result.
  */
@@ -873,6 +895,7 @@ pmap_is_referenced(pa)
 	if (pv->pv_attr & PG_V)
 		return 1;
 
+#ifndef NEW_REF
 	if (pv->pv_pte)
 		if ((pv->pv_pte[0].pg_v | pv->pv_pte[2].pg_v |
 		    pv->pv_pte[4].pg_v | pv->pv_pte[6].pg_v)) {
@@ -893,6 +916,7 @@ pmap_is_referenced(pa)
 	}
 #ifdef PMAPDEBUG
 	if (startpmapdebug) printf("No pmap_is_referenced\n");
+#endif
 #endif
 	return 0;
 }

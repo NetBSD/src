@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.10 1998/11/29 14:48:53 ragge Exp $	*/
+/*	$NetBSD: ka780.c,v 1.11 1999/01/19 21:04:49 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -75,6 +75,7 @@ struct	cpu_dep ka780_calls = {
 	generic_clkread,
 	generic_clkwrite,
 	2,	/* ~VUPS */
+	5,	/* SCB pages */
 };
 
 /*

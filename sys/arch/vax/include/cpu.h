@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.32 1998/10/27 21:18:53 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.33 1999/01/19 21:04:48 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -57,7 +57,8 @@ struct	cpu_dep {
 	void	(*cpu_conf) __P((struct device *, struct device *, void *));
 	int	(*cpu_clkread) __P((time_t));	/* Read cpu clock time */
 	void	(*cpu_clkwrite) __P((void));	/* Write system time to cpu */
-	int	cpu_vups;	/* speed of cpu */
+	short	cpu_vups;	/* speed of cpu */
+	short	cpu_scbsz;	/* (estimated) size of system control block */
 	void	(*cpu_halt) __P((void)); /* Cpu dependent halt call */
 	void	(*cpu_reboot) __P((int)); /* Cpu dependent reboot call */
 	void	(*cpu_clrf) __P((void)); /* Clear cold/warm start flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.32 1999/01/01 21:43:19 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.33 1999/01/19 21:04:49 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -95,6 +95,7 @@ start()
 {
 	extern char cpu_model[];
 	extern void *scratch;
+	struct pte *pt;
 
 	mtpr(AST_NO, PR_ASTLVL); /* Turn off ASTs */
 
@@ -264,6 +265,10 @@ start()
 	proc0.p_addr = (void *)proc0paddr; /* XXX */
 
 	pmap_bootstrap();
+
+	/* Now running virtual. set red zone for proc0 */
+	pt = kvtopte((u_int)proc0.p_addr + VAX_NBPG);
+        pt->pg_v = 0;
 
 	((struct pcb *)proc0paddr)->framep = scratch;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.5 1998/04/13 12:14:42 ragge Exp $	*/
+/*	$NetBSD: dl.c,v 1.6 1999/01/19 21:04:48 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
 
 #include <machine/pte.h>
 #include <machine/trap.h>
+#include <machine/scb.h>
 
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
@@ -217,10 +218,9 @@ dl_attach (parent, self, aux)
 	tty_attach(sc->sc_tty);
 
 	/* Now register the RX interrupt handler */
-	ubasetvec(self, ua->ua_cvec-1, dlrint);
+	scb_vecalloc(ua->ua_cvec - 4, dlrint, self->dv_unit, SCB_ISTACK);
 
 	printf("\n");
-	return;
 }
 
 /* Receiver Interrupt Handler */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.25 1998/11/29 14:48:53 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.26 1999/01/19 21:04:49 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -71,6 +71,7 @@ struct	cpu_dep	ka750_calls = {
 	generic_clkread,
 	generic_clkwrite,
 	1,      /* ~VUPS */
+	4,	/* SCB pages */
 	0,	/* halt call */
 	0,	/* Reboot call */
 	ka750_clrf,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.15 1999/01/01 21:43:19 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.16 1999/01/19 21:04:49 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -80,6 +80,7 @@ struct	cpu_dep	ka650_calls = {
 	generic_clkread,
 	generic_clkwrite,
 	4,      /* ~VUPS */
+	2,	/* SCB pages */
 	ka650_halt,
 	ka650_reboot,
 };
@@ -109,16 +110,13 @@ uvaxIII_conf(parent, self, aux)
 void
 uvaxIII_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail;
-	int	junk, *jon;
+	extern	vm_offset_t virtual_avail;
 
 	/*
-	 * MicroVAX III: We map in SCB, interrupt vectors,
-	 * Qbus map registers, memory
+	 * MicroVAX III: We map in Qbus map registers, memory
 	 * error registers, cache control registers, SSC registers,
 	 * interprocessor registers and cache diag space.
 	 */
-	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE); /* SCB & vectors */
 	MAPVIRT(nexus, vax_btoc(0x400000)); /* Qbus map registers */
 	pmap_map((vm_offset_t)nexus, 0x20088000, 0x20090000,
 	    VM_PROT_READ|VM_PROT_WRITE);
@@ -143,8 +141,7 @@ uvaxIII_steal_pages()
 	pmap_map((vm_offset_t)KA650_CACHE_ptr, (vm_offset_t)KA650_CACHE,
 	    KA650_CACHE + KA650_CACHESIZE, VM_PROT_READ|VM_PROT_WRITE);
 
-	jon = (int *)0x20040004;
-	subtyp = *jon;
+	subtyp = *(int *)0x20040004;
 }
 
 void

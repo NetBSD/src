@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.h,v 1.4 1995/12/13 18:54:56 ragge Exp $	*/
+/*	$NetBSD: scb.h,v 1.5 1999/01/19 21:04:48 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -103,6 +103,14 @@ struct scb {
 	struct	ivec_dsp *scb_nexvec[4][16];	/* Nexus interrupt vectors */
 };
 
+#define	SCB_KSTACK	0
+#define	SCB_ISTACK	1
+
 #ifdef _KERNEL
 extern	struct scb *scb;
+
+extern	paddr_t scb_init __P((paddr_t));
+extern	int scb_vecref __P((int *, int *));
+extern	void scb_fake __P((int, int));
+extern	void scb_vecalloc __P((int, void(*)(int), int, int));
 #endif

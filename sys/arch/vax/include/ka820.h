@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.h,v 1.1 1996/07/20 17:33:09 ragge Exp $	*/
+/*	$NetBSD: ka820.h,v 1.2 1999/01/19 21:04:48 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -89,6 +89,9 @@
 #define KA820PORT_CRDEN		0x00000004	/* enable CRD interrupts */
 #define KA820PORT_CRDCLR	0x00000002	/* clear CRD interrupt */
 #define KA820PORT_CRDINTR	0x00000001	/* CRD interrupt request */
+
+/* interrupt vectors unique for this CPU */
+#define	KA820_INT_RXCD		0x58
 
 /* what the heck */
 #define KA820PORT_BITS \

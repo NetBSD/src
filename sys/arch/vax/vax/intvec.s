@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.35 1998/11/07 20:58:09 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.36 1999/01/19 21:04:49 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -64,20 +64,12 @@ ENTRY(namn)			; \
 	popr $0x3f		; \
 	rei
 
-#define STRAY(scbnr, vecnr) \
-ENTRY(stray/**/vecnr)		; \
-	pushr $0x3f		; \
-	pushl $/**/0x/**/vecnr	; \
-	pushl $scbnr		; \
-	calls $2,_stray		; \
-	popr $0x3f		; \
-	rei
-
 #define	PUSHR	pushr	$0x3f
 #define	POPR	popr	$0x3f
 
 #define KSTACK 0
 #define ISTACK 1
+#define	NOVEC	.long 0
 #define INTVEC(label,stack)	\
 	.long	label+stack;
 		.text
@@ -93,14 +85,10 @@ _rpb:
  * and move the SCB later to somewhere else.
  */
 
-#if VAX8200
-	INTVEC(stray00, ISTACK) 	# Passive Release, 0
-#else
-	INTVEC(stray00, ISTACK) 	# Unused., 0
-#endif
+	NOVEC;				# Unused, 0
 	INTVEC(mcheck, ISTACK)		# Machine Check., 4
 	INTVEC(invkstk, ISTACK) 	# Kernel Stack Invalid., 8
-	INTVEC(stray0C, ISTACK) 	# Power Failed., C
+	NOVEC;			 	# Power Failed., C
 	INTVEC(privinflt, KSTACK)	# Privileged/Reserved Instruction.
 	INTVEC(xfcflt, KSTACK)		# Customer Reserved Instruction, 14
 	INTVEC(resopflt, KSTACK)	# Reserved Operand/Boot Vector(?), 18
@@ -109,81 +97,61 @@ _rpb:
 	INTVEC(transl_v, KSTACK)	# Translation Invalid, 24
 	INTVEC(tracep, KSTACK)		# Trace Pending, 28
 	INTVEC(breakp, KSTACK)		# Breakpoint Instruction, 2C
-	INTVEC(stray30, ISTACK) 	# Compatibility Exception, 30
+	NOVEC;			 	# Compatibility Exception, 30
 	INTVEC(arithflt, KSTACK)	# Arithmetic Fault, 34
-	INTVEC(stray38, ISTACK) 	# Unused, 38
-	INTVEC(stray3C, ISTACK) 	# Unused, 3C
+	NOVEC;			 	# Unused, 38
+	NOVEC;			 	# Unused, 3C
 	INTVEC(syscall, KSTACK)		# main syscall trap, chmk, 40
 	INTVEC(resopflt, KSTACK)	# chme, 44
 	INTVEC(resopflt, KSTACK)	# chms, 48
 	INTVEC(resopflt, KSTACK)	# chmu, 4C
-	INTVEC(sbiexc, ISTACK)		# System Backplane Exception/BIerror, 50
+	NOVEC;				# System Backplane Exception/BIerror, 50
 	INTVEC(cmrerr, ISTACK)		# Corrected Memory Read, 54
-	INTVEC(rxcs, ISTACK)		# System Backplane Alert/RXCD, 58
+	NOVEC;				# System Backplane Alert/RXCD, 58
 	INTVEC(sbiflt, ISTACK)		# System Backplane Fault, 5C
-	INTVEC(stray60, ISTACK)		# Memory Write Timeout, 60
-	INTVEC(stray64, ISTACK)		# Unused, 64
-	INTVEC(stray68, ISTACK)		# Unused, 68
-	INTVEC(stray6C, ISTACK)		# Unused, 6C
-	INTVEC(stray70, ISTACK)		# Unused, 70
-	INTVEC(stray74, ISTACK)		# Unused, 74
-	INTVEC(stray78, ISTACK)		# Unused, 78
-	INTVEC(stray7C, ISTACK)		# Unused, 7C
-	INTVEC(stray80, ISTACK)		# Unused, 80
-	INTVEC(stray84, ISTACK)		# Unused, 84
+	NOVEC;				# Memory Write Timeout, 60
+	NOVEC;				# Unused, 64
+	NOVEC;				# Unused, 68
+	NOVEC;				# Unused, 6C
+	NOVEC;				# Unused, 70
+	NOVEC;				# Unused, 74
+	NOVEC;				# Unused, 78
+	NOVEC;				# Unused, 7C
+	NOVEC;				# Unused, 80
+	NOVEC;				# Unused, 84
 	INTVEC(astintr,	KSTACK)		# Asynchronous Sustem Trap, AST
-	INTVEC(stray8C, ISTACK)		# Unused, 8C
-	INTVEC(stray90, ISTACK)		# Unused, 90
-	INTVEC(stray94, ISTACK)		# Unused, 94
-	INTVEC(stray98, ISTACK)		# Unused, 98
-	INTVEC(stray9C, ISTACK)		# Unused, 9C
+	NOVEC;				# Unused, 8C
+	NOVEC;				# Unused, 90
+	NOVEC;				# Unused, 94
+	NOVEC;				# Unused, 98
+	NOVEC;				# Unused, 9C
 	INTVEC(softclock,ISTACK)	# Software clock interrupt
-	INTVEC(strayA4, ISTACK)		# Unused, A4
-	INTVEC(strayA8, ISTACK)		# Unused, A8
-	INTVEC(strayAC, ISTACK)		# Unused, AC
+	NOVEC;				# Unused, A4
+	NOVEC;				# Unused, A8
+	NOVEC;				# Unused, AC
 	INTVEC(netint,	ISTACK)		# Network interrupt
-	INTVEC(strayB4, ISTACK)		# Unused, B4
-	INTVEC(strayB8, ISTACK)		# Unused, B8
+	NOVEC;				# Unused, B4
+	NOVEC;				# Unused, B8
 	INTVEC(ddbtrap, ISTACK) 	# Kernel debugger trap, BC
 	INTVEC(hardclock,ISTACK)	# Interval Timer
-	INTVEC(strayC4, ISTACK)		# Unused, C4
-#if VAX8200
-	INTVEC(slu1rintr, ISTACK)	# Serial Unit 1 Receive Interrupt
-	INTVEC(slu1tintr, ISTACK)	# Serial Unit 1 Transmit Interrupt
-	INTVEC(slu2rintr, ISTACK)	# Serial Unit 2 Receive Interrupt
-	INTVEC(slu2tintr, ISTACK)	# Serial Unit 2 Transmit Interrupt
-	INTVEC(slu3rintr, ISTACK)	# Serial Unit 3 Receive Interrupt
-	INTVEC(slu3tintr, ISTACK)	# Serial Unit 3 Transmit Interrupt
-#else
-	INTVEC(emulate, KSTACK)		# Subset instruction emulation
-	INTVEC(strayCC, ISTACK)		# Unused, CC
-	INTVEC(strayD0, ISTACK)		# Unused, D0
-	INTVEC(strayD4, ISTACK)		# Unused, D4
-	INTVEC(strayD8, ISTACK)		# Unused, D8
-	INTVEC(strayDC, ISTACK)		# Unused, DC
-#endif
-	INTVEC(strayE0, ISTACK)		# Unused, E0
-	INTVEC(strayE4, ISTACK)		# Unused, E4
-	INTVEC(strayE8, ISTACK)		# Unused, E8
-	INTVEC(strayEC, ISTACK)		# Unused, EC
-#if VAX8200
-	INTVEC(crx50int, ISTACK)	# Console storage on VAX 8200 (RX50)
-#else
-	INTVEC(strayF0, ISTACK)
-#endif
-	INTVEC(strayF4, ISTACK)
-#if VAX8600 || VAX8200 || VAX750 || VAX780 || VAX630 || VAX650
-	INTVEC(consrint, ISTACK)	# Console Terminal Recieve Interrupt
-	INTVEC(constint, ISTACK)	# Console Terminal Transmit Interrupt
-#else
-	INTVEC(strayF8, ISTACK)
-	INTVEC(strayFC, ISTACK)
-#endif
+	NOVEC;				# Unused, C4
+	INTVEC(emulate, KSTACK)		# Subset instruction emulation, C8
+	NOVEC;				# Unused, CC
+	NOVEC;				# Unused, D0
+	NOVEC;				# Unused, D4
+	NOVEC;				# Unused, D8
+	NOVEC;				# Unused, DC
+	NOVEC;				# Unused, E0
+	NOVEC;				# Unused, E4
+	NOVEC;				# Unused, E8
+	NOVEC;				# Unused, EC
+	NOVEC;		
+	NOVEC;		
+	NOVEC;		
+	NOVEC;		
 
 	/* space for adapter vectors */
 	.space 0x100
-
-	STRAY(0,00)
 
 		.align 2
 #
@@ -229,7 +197,6 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	rei
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)
-	STRAY(0,0C)
 
 	TRAPCALL(privinflt, T_PRIVINFLT)
 	TRAPCALL(xfcflt, T_XFCFLT);
@@ -303,12 +270,8 @@ ptelen: movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 
 	TRAPCALL(tracep, T_TRCTRAP)
 	TRAPCALL(breakp, T_BPTFLT)
-	STRAY(0,30)
 
 	TRAPARGC(arithflt, T_ARITHFLT)
-
-	STRAY(0,38)
-	STRAY(0,3C)
 
 ENTRY(syscall)			# Main system call
 	pushl	$T_SYSCALL
@@ -326,19 +289,6 @@ ENTRY(syscall)			# Main system call
 	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
 	rei
 
-	STRAY(0,44)
-	STRAY(0,48)
-	STRAY(0,4C)
-
-ENTRY(sbiexc)
-	tstl	_cold	/* Is it ok to get errs during boot??? */
-	bneq	1f
-	pushr	$0x3f
-	pushl	$0x50
-	pushl	$0
-	calls	$2,_stray
-	popr	$0x3f
-1:	rei
 
 ENTRY(cmrerr)
 	PUSHR
@@ -347,48 +297,13 @@ ENTRY(cmrerr)
 	POPR
 	rei
 
-ENTRY(rxcs);	/* console interrupt from some other processor */
-	pushr	$0x3f
-#if VAX8200
-	cmpl	$5,_vax_cputype
-	bneq	1f
-	calls	$0,_rxcdintr
-	brb	2f
-#endif
-1:	pushl	$0x58
-	pushl	$0
-	calls	$2,_stray
-2:	popr	$0x3f
-	rei
-
-	ENTRY(sbiflt);
+ENTRY(sbiflt);
 	movab	sbifltmsg, -(sp)
 	calls	$1, _panic
 
-	STRAY(0,60)
-	STRAY(0,64)
-	STRAY(0,68)
-	STRAY(0,6C)
-	STRAY(0,70)
-	STRAY(0,74)
-	STRAY(0,78)
-	STRAY(0,7C)
-	STRAY(0,80)
-	STRAY(0,84)
-
 	TRAPCALL(astintr, T_ASTFLT)
 
-	STRAY(0,8C)
-	STRAY(0,90)
-	STRAY(0,94)
-	STRAY(0,98)
-	STRAY(0,9C)
-
 	FASTINTR(softclock,softclock)
-
-	STRAY(0,A4)
-	STRAY(0,A8)
-	STRAY(0,AC)
 
 ENTRY(netint)
 	PUSHR
@@ -416,8 +331,6 @@ ENTRY(netint)
 	POPR
 	rei
 
-	STRAY(0,B4)
-	STRAY(0,B8)
 	TRAPCALL(ddbtrap, T_KDBTRAP)
 
 		.align	2
@@ -435,72 +348,6 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		calls	$1,_hardclock
 		popr	$0x3f
 		rei
-
-	STRAY(0,C4)
-#if VAX8200
-ENTRY(slu1rintr)	# May be emulate on some machines.
-	cmpl	_vax_cputype,$VAX_TYP_8SS
-	beql	1f
-	jmp	emulate
-1:	pushr	$0x3f
-	pushl	$1
-	jbr	rint
-
-ENTRY(slu2tintr)
-	pushr	$0x3f
-	pushl	$2
-	jbr	tint
-ENTRY(slu3tintr)
-	pushr	$0x3f
-	pushl	$3
-	jbr	tint
-ENTRY(slu1tintr)
-	pushr	$0x3f
-	pushl	$1
-	jbr	tint
-ENTRY(slu2rintr)
-	pushr	$0x3f
-	pushl	$2
-	jbr	rint
-ENTRY(slu3rintr)
-	pushr	$0x3f
-	pushl	$3
-	jbr	rint
-#else
-	STRAY(0,CC)
-	STRAY(0,D0)
-	STRAY(0,D4)
-	STRAY(0,D8)
-	STRAY(0,DC)
-#endif
-	STRAY(0,E0)
-	STRAY(0,E4)
-	STRAY(0,E8)
-	STRAY(0,EC)
-#if VAX8200
-	FASTINTR(crx50int,crxintr)
-#else
-	STRAY(0,F0)
-#endif
-	STRAY(0,F4)
-#if VAX8600 || VAX8200 || VAX750 || VAX780 || VAX630 || VAX650
-ENTRY(consrint)
-	pushr	$0x3f
-	pushl	$0
-rint:	calls	$1,_gencnrint
-	popr	$0x3f
-	rei
-
-ENTRY(constint)
-	pushr	$0x3f
-	pushl	$0
-tint:	calls	$1,_gencntint
-	popr	$0x3f
-	rei
-#else
-	STRAY(0,F8)
-	STRAY(0,FC)
-#endif
 
 /*
  * Main routine for traps; all go through this.

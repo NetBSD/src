@@ -1,4 +1,4 @@
-/*	$Id: crx.c,v 1.1 1998/11/07 20:58:09 ragge Exp $	*/
+/*	$Id: crx.c,v 1.2 1999/01/19 21:04:48 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -236,9 +236,10 @@ crxrw(dev, uio, flags)
 	return (error);
 }
 
-void	crxintr __P((void));
+void	crxintr __P((int));
 void
-crxintr()
+crxintr(arg)
+	int arg;
 {
 	register struct rx50state *rs = &rx50state;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.69 1999/01/09 22:10:22 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.70 1999/01/19 21:04:49 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -843,3 +843,23 @@ process_sstep(p, sstep)
 
 	return (0);
 }
+
+#ifdef notyet
+/*
+ * Allocates a virtual range suitable for mapping in physical memory.
+ * This differs from the bus_space routines in that it allocates on
+ * physical page sizes instead of logical sizes.
+ */
+vaddr_t
+vax_map_physmem(phys, size)
+	paddr_t phys;
+	psize_t size;
+{
+
+	if (size > NBPG) { /* Need to alloc new virtual chunk */
+
+	} else {
+
+	}
+}
+#endif
