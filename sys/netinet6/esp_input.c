@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.12 2000/10/19 00:40:45 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.13 2000/12/09 01:29:50 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.37 2000/10/19 00:37:50 itojun Exp $	*/
 
 /*
@@ -983,23 +983,21 @@ esp6_ctlinput(cmd, sa, d)
 			espp = (struct newesp*)(mtod(m, caddr_t) + off);
 
 		if (cmd == PRC_MSGSIZE) {
+			int valid = 0;
 			/*
 			 * Check to see if we have a valid SA corresponding to
 			 * the address in the ICMP message payload.
 			 */
 			sav = key_allocsa(AF_INET6, (caddr_t)&s,
 			    (caddr_t)&finaldst, IPPROTO_ESP, espp->esp_spi);
-			if (sav == NULL)
-				return;
-			if (sav->state != SADB_SASTATE_MATURE &&
-			    sav->state != SADB_SASTATE_DYING) {
+			if (sav) {
+				if (sav->state == SADB_SASTATE_MATURE ||
+				    sav->state == SADB_SASTATE_DYING)
+					valid++;
 				key_freesav(sav);
-				return;
 			}
 
 			/* XXX Further validation? */
-
-			key_freesav(sav);
 
 			/*
 			 * Now that we've validated that we are actually
@@ -1007,7 +1005,7 @@ esp6_ctlinput(cmd, sa, d)
 			 * message, recalculate the new MTU, and create the
 			 * corresponding routing entry.
 			 */
-			icmp6_mtudisc_update((struct ip6ctlparam *)d);
+			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 
 			return;
 		}
