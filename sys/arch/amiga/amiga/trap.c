@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 1997/07/08 16:56:31 kleink Exp $	*/
+/*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,8 @@
 #include <machine/reg.h>
 #include <machine/mtpr.h>
 #include <machine/pte.h>
+
+#include <m68k/fpe/fpu_emulate.h>
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
@@ -589,6 +591,18 @@ trap(type, code, v, frame)
 		ucode = frame.f_format;
 		i = SIGFPE;
 		break;
+  
+	case T_FPEMULI|T_USER:
+	case T_FPEMULD|T_USER:
+#ifdef FPU_EMULATE
+		i = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
+		/* XXX - Deal with tracing? (frame.f_sr & PSL_T) */
+#else
+		printf("pid %d killed: no floating point support\n", p->p_pid);
+		i = SIGILL;
+#endif
+		break;
+
 #ifdef FPCOPROC
 	/* 
 	 * User coprocessor violation
@@ -711,7 +725,8 @@ trap(type, code, v, frame)
 		printf("trapsignal(%d, %d, %d, %x, %x)\n", p->p_pid, i,
 		    ucode, v, frame.f_pc);
 #endif
-	trapsignal(p, i, ucode);
+	if (i)
+		trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
 	userret(p, frame.f_pc, sticks); 

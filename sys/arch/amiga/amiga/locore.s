@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.87 1997/07/04 20:52:53 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.88 1997/07/16 00:01:45 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -276,15 +276,15 @@ _fpfline:
 #ifdef FPSP
 	.globl fpsp_unimp
 	jmp	fpsp_unimp		| yes, go handle it
-#else
+#endif
+#endif
+	.globl _fpemuli
+_fpemuli:
+	addql	#1,Lfpecnt
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save registers
-	moveq	#T_FPEMULI,d0		| denote as FP emulation trap
+	movql	#T_FPEMULI,d0		| denote as FP emulation trap
 	jra	fault			| do it
-#endif
-#else
-	jra	_illinst
-#endif
 
 _fpunsupp:
 #if defined(M68040)
@@ -296,7 +296,7 @@ _fpunsupp:
 #else
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save registers
-	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
+	movql	#T_FPEMULD,d0		| denote as FP emulation trap
 	jra	fault			| do it
 #endif
 #else
@@ -958,9 +958,9 @@ Lunshadow:
 #ifdef FPCOPROC
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
 |WRONG!	movl	a1,sp@-
-	pea	a1@(PCB_FPCTX)
-	jbsr	_m68881_restore		| restore it (does not kill a1)
-	addql	#4,sp
+|	pea	a1@(PCB_FPCTX)
+|	jbsr	_m68881_restore		| restore it (does not kill a1)
+|	addql	#4,sp
 #endif
 /* flush TLB and turn on caches */
 
@@ -1254,6 +1254,10 @@ Lsw2:
 	movl	a2,a1@(PCB_USP)		| and save it
 	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
 #ifdef FPCOPROC
+#ifdef FPU_EMULATE
+	tstl	_fputype		| do we have any FPU?
+	jeq	Lswnofpsave		| no, dont save
+#endif
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
@@ -1336,13 +1340,21 @@ Lres3:
 	pmove	a0@,crp			| load new user root pointer
 	jra	Lres5
 Lres4:
-	.word	0x4e7b,0x0806	| movc d0,URP
+	.word	0x4e7b,0x0806		| movc d0,URP
 Lres5:
 	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
 #ifdef FPCOPROC
+#ifdef FPU_EMULATE
+	tstl	_fputype		| do we _have_ any fpu?
+	jne	Lresnonofpatall
+	movw	a1@(PCB_PS),sr		| no, restore PS
+	moveq	#1,d0			| return 1 (for alternate returns)
+	rts
+Lresnonofpatall:
+#endif
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
@@ -1388,6 +1400,10 @@ ENTRY(savectx)
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
 #ifdef FPCOPROC
+#ifdef FPU_EMULATE
+	tstl	_fputype
+	jeq	Lsavedone
+#endif
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
@@ -2212,6 +2228,9 @@ _intrnames:
 	.asciz	"60fpeaemu"
 	.asciz	"60bpe"
 #endif
+#ifdef FPU_EMULATE
+	.asciz	"fpe"
+#endif
 _eintrnames:
 	.align	2
 _intrcnt:
@@ -2226,5 +2245,8 @@ L60fpiem:	.long	0
 L60fpdem:	.long	0
 L60fpeaem:	.long	0
 L60bpe:		.long	0
+#endif
+#ifdef FPU_EMULATE
+Lfpecnt:	.long	0
 #endif
 _eintrcnt:

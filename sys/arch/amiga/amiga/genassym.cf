@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 1997/06/17 00:17:26 is Exp $
+#	$NetBSD: genassym.cf,v 1.3 1997/07/16 00:01:49 is Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -75,6 +75,10 @@ define	FPU_68882	FPU_68882
 define	FPU_68040	FPU_68040
 define	FPU_68060	FPU_68060
 define	FPU_UNKNOWN	FPU_UNKNOWN
+
+ifdef FPU_EMULATE
+define	FPU_EMULATE	FPU_EMULATE
+endif
 
 # values for machineid
 define	AMIGA_68020	AMIGA_68020
