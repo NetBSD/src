@@ -755,7 +755,8 @@ badfile:
 			strcpy(namebuf+len, d->d_name);
 			if(f_exclude && check_exclude(namebuf))
 				continue;
-			dump_file(namebuf, our_device);
+			if (!f_only)
+				dump_file(namebuf, our_device);
 		}
 
 		closedir(dirp);

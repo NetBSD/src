@@ -201,6 +201,13 @@ struct option long_options[] =
 	{"sparse",		0,	&f_sparse_files,	1},
 	{"tape-length",		1,	0,			'L'},
 
+	{"only",		0,	&f_only,		1},
+	{"only-files",		0,	&f_only,		1},
+	{"dont-descend",	0,	&f_only,		1},
+
+	{"force",		0,	&f_force,		1},
+	{"force-install",	0,	&f_force,		1},
+
 	{0, 0, 0, 0}
 };
 
