@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.20.2.1 2005/04/06 17:12:07 he Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.20.2.2 2005/04/06 17:16:03 he Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.20.2.1 2005/04/06 17:12:07 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.20.2.2 2005/04/06 17:16:03 he Exp $");
 
 #include "bpfilter.h"
 
@@ -113,45 +113,14 @@ static void	sq_set_filter(struct sq_softc *);
 static int	sq_intr(void *);
 static int	sq_rxintr(struct sq_softc *);
 static int	sq_txintr(struct sq_softc *);
+static void	sq_txring_hpc1(struct sq_softc *);
+static void	sq_txring_hpc3(struct sq_softc *);
 static void	sq_reset(struct sq_softc *);
 static int 	sq_add_rxbuf(struct sq_softc *, int);
 static void 	sq_dump_buffer(u_int32_t addr, u_int32_t len);
+static void	sq_trace_dump(struct sq_softc *);
 
 static void	enaddr_aton(const char*, u_int8_t*);
-
-/* Actions */
-#define SQ_RESET		1
-#define SQ_ADD_TO_DMA		2
-#define SQ_START_DMA		3
-#define SQ_DONE_DMA		4
-#define SQ_RESTART_DMA		5
-#define SQ_TXINTR_ENTER		6
-#define SQ_TXINTR_EXIT		7
-#define SQ_TXINTR_BUSY		8
-
-struct sq_action_trace {
-	int action;
-	int bufno;
-	int status;
-	int freebuf;
-};
-
-#define SQ_TRACEBUF_SIZE	100
-int sq_trace_idx = 0;
-struct sq_action_trace sq_trace[SQ_TRACEBUF_SIZE];
-
-void sq_trace_dump(struct sq_softc* sc);
-
-#define SQ_TRACE(act, buf, stat, free) do {				\
-	sq_trace[sq_trace_idx].action = (act);				\
-	sq_trace[sq_trace_idx].bufno = (buf);				\
-	sq_trace[sq_trace_idx].status = (stat);				\
-	sq_trace[sq_trace_idx].freebuf = (free);			\
-	if (++sq_trace_idx == SQ_TRACEBUF_SIZE) {			\
-		memset(&sq_trace, 0, sizeof(sq_trace));			\
-		sq_trace_idx = 0;					\
-	}								\
-} while (0)
 
 CFATTACH_DECL(sq, sizeof(struct sq_softc),
     sq_match, sq_attach, NULL, NULL);
@@ -315,7 +284,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	memset(&sq_trace, 0, sizeof(sq_trace));
+	memset(&sc->sq_trace, 0, sizeof(sc->sq_trace));
 	/* Done! */
 	return;
 
@@ -368,7 +337,7 @@ sq_init(struct ifnet *ifp)
 	sc->sc_nfreetx = SQ_NTXDESC;
 	sc->sc_nexttx = sc->sc_prevtx = 0;
 
-	SQ_TRACE(SQ_RESET, 0, 0, sc->sc_nfreetx);
+	SQ_TRACE(SQ_RESET, sc, 0, 0);
 
 	/* Set into 8003 mode, bank 0 to program ethernet address */
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCMD, TXCMD_BANK0);
@@ -405,9 +374,9 @@ sq_init(struct ifnet *ifp)
 	/* Set up HPC ethernet DMA config */
 	if (sc->hpc_regs->revision == 3) {
 		reg = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-				sc->hpc_regs->enetr_dmacfg);
+			 	HPC_ENETR_DMACFG);	
 		bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				sc->hpc_regs->enetr_dmacfg,
+				HPC_ENETR_DMACFG,	
 			    	reg | ENETR_DMACFG_FIX_RXDC |
 				ENETR_DMACFG_FIX_INTR |
 				ENETR_DMACFG_FIX_EOP);
@@ -420,6 +389,14 @@ sq_init(struct ifnet *ifp)
 	/* And turn on the HPC ethernet receive channel */
 	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, sc->hpc_regs->enetr_ctl,
 				       sc->hpc_regs->enetr_ctl_active);
+
+	/*
+	 * Turn off delayed receive interrupts on HPC1.
+	 * (see Hollywood HPC Specification 2.1.4.3)
+	 */ 
+	if (sc->hpc_regs->revision != 3)
+		bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENET_INTDELAY,
+		    HPC1_ENET_INTDELAYVAL);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -471,6 +448,8 @@ int
 sq_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	int s, error = 0;
+
+	SQ_TRACE(SQ_IOCTL, (struct sq_softc *)ifp->if_softc, 0, 0);
 
 	s = splnet();
 
@@ -611,6 +590,8 @@ sq_start(struct ifnet *ifp)
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
 		 */
 
+		SQ_TRACE(SQ_ENQUEUE, sc, sc->sc_nexttx, 0);
+
 		/* Sync the DMA map. */
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
@@ -680,7 +661,6 @@ sq_start(struct ifnet *ifp)
 		/* Advance the tx pointer. */
 		sc->sc_nfreetx -= dmamap->dm_nsegs;
 		sc->sc_nexttx = nexttx;
-
 	}
 
 	/* All transmit descriptors used up, let upper layers know */
@@ -697,8 +677,9 @@ sq_start(struct ifnet *ifp)
 		 * last packet we enqueued, mark it as the last
 		 * descriptor.
 		 *
-		 * HDD_CTL_EOPACKET && HDD_CTL_INTR cause an 
-		 * interrupt.
+		 * HDD_CTL_INTR will generate an interrupt on
+		 * HPC1 by itself. HPC3 will not interrupt unless 
+		 * HDD_CTL_EOPACKET is set as well.
 		 */
 		KASSERT(lasttx != -1);
 		if (sc->hpc_regs->revision == 3) {
@@ -729,32 +710,52 @@ sq_start(struct ifnet *ifp)
 				sc->hpc_regs->enetx_ctl);
 
 		if ((status & sc->hpc_regs->enetx_ctl_active) != 0) {
-			SQ_TRACE(SQ_ADD_TO_DMA, firsttx, status,
-			    sc->sc_nfreetx);
+			SQ_TRACE(SQ_ADD_TO_DMA, sc, firsttx, status);
 
 			/* NB: hpc3_hdd_ctl is also hpc1_hdd_bufptr */
 			sc->sc_txdesc[SQ_PREVTX(firsttx)].hpc3_hdd_ctl &=
 			    ~HDD_CTL_EOCHAIN;
 
+			if (sc->hpc_regs->revision != 3)
+				sc->sc_txdesc[SQ_PREVTX(firsttx)].hpc1_hdd_ctl
+				    &= ~HPC1_HDD_CTL_INTR;
+
 			SQ_CDTXSYNC(sc, SQ_PREVTX(firsttx),  1,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-		} else {
-			SQ_TRACE(SQ_START_DMA, firsttx, status, sc->sc_nfreetx);
+		} else if (sc->hpc_regs->revision == 3) { 
+			SQ_TRACE(SQ_START_DMA, sc, firsttx, status);
 
 			bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-			    sc->hpc_regs->enetx_ndbp, SQ_CDTXADDR(sc, firsttx));
-
-			if (sc->hpc_regs->revision != 3) {
-				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				  HPC1_ENETX_CFXBP, SQ_CDTXADDR(sc, firsttx));
-				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				  HPC1_ENETX_CBP, SQ_CDTXADDR(sc, firsttx));
-			}
+			    HPC_ENETX_NDBP, SQ_CDTXADDR(sc, firsttx));
 
 			/* Kick DMA channel into life */
 			bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-					  sc->hpc_regs->enetx_ctl,
-					  sc->hpc_regs->enetx_ctl_active);
+			    HPC_ENETX_CTL, ENETX_CTL_ACTIVE); 
+		} else {
+			/*
+			 * In the HPC1 case where transmit DMA is
+			 * inactive, we can either kick off if
+			 * the ring was previously empty, or call
+			 * our transmit interrupt handler to
+			 * figure out if the ring stopped short
+			 * and restart at the right place.
+			 */
+			if (ofree == SQ_NTXDESC) {
+				SQ_TRACE(SQ_START_DMA, sc, firsttx, status);
+
+				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
+				    HPC1_ENETX_NDBP, 
+				    SQ_CDTXADDR(sc, firsttx));
+				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
+				    HPC1_ENETX_CFXBP, SQ_CDTXADDR(sc, firsttx));
+				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
+				    HPC1_ENETX_CBP, SQ_CDTXADDR(sc, firsttx));
+
+				/* Kick DMA channel into life */
+				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
+				    HPC1_ENETX_CTL, HPC1_ENETX_CTL_ACTIVE); 
+			} else
+				sq_txring_hpc1(sc);
 		}
 
 		/* Set a watchdog timer in case the chip flakes out. */
@@ -801,23 +802,39 @@ sq_watchdog(struct ifnet *ifp)
 
 	sq_trace_dump(sc);
 
-	memset(&sq_trace, 0, sizeof(sq_trace));
-	sq_trace_idx = 0;
+	memset(&sc->sq_trace, 0, sizeof(sc->sq_trace));
+	sc->sq_trace_idx = 0;
 
 	++ifp->if_oerrors;
 
 	sq_init(ifp);
 }
 
-void sq_trace_dump(struct sq_softc* sc)
+static void
+sq_trace_dump(struct sq_softc *sc)
 {
 	int i;
+	char *act;
 
-	for(i = 0; i < sq_trace_idx; i++) {
-		printf("%s: [%d] action %d, buf %d, free %d, status %08x\n",
-			sc->sc_dev.dv_xname, i, sq_trace[i].action,
-			sq_trace[i].bufno, sq_trace[i].freebuf,
-			sq_trace[i].status);
+	for (i = 0; i < sc->sq_trace_idx; i++) {
+		switch (sc->sq_trace[i].action) {
+		case SQ_RESET:		act = "SQ_RESET";		break;
+		case SQ_ADD_TO_DMA:	act = "SQ_ADD_TO_DMA";		break;
+		case SQ_START_DMA:	act = "SQ_START_DMA";		break;
+		case SQ_DONE_DMA:	act = "SQ_DONE_DMA";		break; 
+		case SQ_RESTART_DMA:	act = "SQ_RESTART_DMA";		break;
+		case SQ_TXINTR_ENTER:	act = "SQ_TXINTR_ENTER";	break;
+		case SQ_TXINTR_EXIT:	act = "SQ_TXINTR_EXIT";		break;
+		case SQ_TXINTR_BUSY:	act = "SQ_TXINTR_BUSY";		break;
+		case SQ_IOCTL:		act = "SQ_IOCTL";		break;
+		case SQ_ENQUEUE:	act = "SQ_ENQUEUE";		break;
+		default:		act = "UNKNOWN";
+		}
+
+		printf("%s: [%03d] action %-16s buf %03d free %03d "
+		    "status %08x line %d\n", sc->sc_dev.dv_xname, i, act,
+		    sc->sq_trace[i].bufno, sc->sq_trace[i].freebuf,
+		    sc->sq_trace[i].status, sc->sq_trace[i].line);
 	}
 }
 
@@ -928,6 +945,8 @@ sq_rxintr(struct sq_softc *sc)
 			    sc->sc_rxmap[i]->dm_mapsize,
 			    BUS_DMASYNC_PREREAD);
 			SQ_INIT_RXDESC(sc, i);
+			SQ_DPRINTF(("%s: sq_rxintr: buf %d no RXSTAT_GOOD\n",
+			    sc->sc_dev.dv_xname, i));
 			continue;
 		}
 
@@ -937,6 +956,8 @@ sq_rxintr(struct sq_softc *sc)
 			    sc->sc_rxmap[i]->dm_mapsize,
 			    BUS_DMASYNC_PREREAD);
 			SQ_INIT_RXDESC(sc, i);
+			SQ_DPRINTF(("%s: sq_rxintr: buf %d sq_add_rxbuf() "
+			    "failed\n", sc->sc_dev.dv_xname, i));
 			continue;
 		}
 
@@ -995,11 +1016,8 @@ sq_rxintr(struct sq_softc *sc)
 static int
 sq_txintr(struct sq_softc *sc)
 {
-	int i;
 	int shift = 0;
 	u_int32_t status;
-	u_int32_t hpc1_ready = 0;
-	u_int32_t hpc3_not_ready = 1;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if (sc->hpc_regs->revision != 3)
@@ -1008,10 +1026,9 @@ sq_txintr(struct sq_softc *sc)
 	status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
 				  sc->hpc_regs->enetx_ctl) >> shift;
 
-	SQ_TRACE(SQ_TXINTR_ENTER, sc->sc_prevtx, status, sc->sc_nfreetx);
+	SQ_TRACE(SQ_TXINTR_ENTER, sc, sc->sc_prevtx, status);
 
 	if ((status & ( (sc->hpc_regs->enetx_ctl_active >> shift) | TXSTAT_GOOD)) == 0) {
-/* XXX */ printf("txstat: %x\n", status);
 		if (status & TXSTAT_COLL)
 			ifp->if_collisions++;
 
@@ -1021,11 +1038,132 @@ sq_txintr(struct sq_softc *sc)
 		}
 
 		if (status & TXSTAT_16COLL) {
-			printf("%s: max collisions reached\n", sc->sc_dev.dv_xname);
+			printf("%s: max collisions reached\n",
+			    sc->sc_dev.dv_xname);
 			ifp->if_oerrors++;
 			ifp->if_collisions += 16;
 		}
 	}
+
+	/* prevtx now points to next xmit packet not yet finished */
+	if (sc->hpc_regs->revision == 3)
+		sq_txring_hpc3(sc);
+	else
+		sq_txring_hpc1(sc);
+
+	/* If we have buffers free, let upper layers know */
+	if (sc->sc_nfreetx > 0)
+		ifp->if_flags &= ~IFF_OACTIVE;
+
+	/* If all packets have left the coop, cancel watchdog */
+	if (sc->sc_nfreetx == SQ_NTXDESC)
+		ifp->if_timer = 0;
+
+	SQ_TRACE(SQ_TXINTR_EXIT, sc, sc->sc_prevtx, status);
+	sq_start(ifp);
+
+	return 1;
+}
+
+/*
+ * Reclaim used transmit descriptors and restart the transmit DMA
+ * engine if necessary.
+ */
+static void 
+sq_txring_hpc1(struct sq_softc *sc)
+{
+	/*
+	 * HPC1 doesn't tag transmitted descriptors, however,
+	 * the NDBP register points to the next descriptor that
+	 * has not yet been processed. If DMA is not in progress,
+	 * we can safely reclaim all descriptors up to NDBP, and,
+	 * if necessary, restart DMA at NDBP. Otherwise, if DMA
+	 * is active, we can only safely reclaim up to CBP.
+	 *
+	 * For now, we'll only reclaim on inactive DMA and assume
+	 * that a sufficiently large ring keeps us out of trouble.
+	 */
+	u_int32_t reclaimto, status;
+	int reclaimall, i = sc->sc_prevtx;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENETX_CTL);
+	if (status & HPC1_ENETX_CTL_ACTIVE) {
+		SQ_TRACE(SQ_TXINTR_BUSY, sc, i, status);
+		return;
+	} else {
+		reclaimto = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
+		    HPC1_ENETX_NDBP);
+	}
+
+	if (sc->sc_nfreetx == 0 && SQ_CDTXADDR(sc, i) == reclaimto)
+		reclaimall = 1;
+	else
+		reclaimall = 0;
+
+	while (sc->sc_nfreetx < SQ_NTXDESC) {
+		if (SQ_CDTXADDR(sc, i) == reclaimto && !reclaimall)
+			break;
+
+		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
+				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		/* Sync the packet data, unload DMA map, free mbuf */
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_txmap[i], 0,
+				sc->sc_txmap[i]->dm_mapsize,
+				BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_txmap[i]);
+		m_freem(sc->sc_txmbuf[i]);
+		sc->sc_txmbuf[i] = NULL;
+
+		ifp->if_opackets++;
+		sc->sc_nfreetx++;
+
+		SQ_TRACE(SQ_DONE_DMA, sc, i, status);
+
+		i = SQ_NEXTTX(i);
+	}
+
+	if (sc->sc_nfreetx < SQ_NTXDESC) {
+		SQ_TRACE(SQ_RESTART_DMA, sc, i, status);
+
+		KASSERT(reclaimto == SQ_CDTXADDR(sc, i));
+
+		bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENETX_CFXBP,
+		    reclaimto);
+		bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENETX_CBP,
+		    reclaimto);
+
+		/* Kick DMA channel into life */
+		bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENETX_CTL,
+		    HPC1_ENETX_CTL_ACTIVE); 
+
+		/*
+		 * Set a watchdog timer in case the chip
+		 * flakes out.
+		 */
+		ifp->if_timer = 5;
+	}
+
+	sc->sc_prevtx = i;	
+}
+
+/*
+ * Reclaim used transmit descriptors and restart the transmit DMA
+ * engine if necessary.
+ */
+static void 
+sq_txring_hpc3(struct sq_softc *sc)
+{
+	/*
+	 * HPC3 tags descriptors with a bit once they've been
+	 * transmitted. We need only free each XMITDONE'd
+	 * descriptor, and restart the DMA engine if any
+	 * descriptors are left over. 
+	 */
+	int i;
+	u_int32_t status = 0;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	i = sc->sc_prevtx;
 	while (sc->sc_nfreetx < SQ_NTXDESC) {
@@ -1035,58 +1173,30 @@ sq_txintr(struct sq_softc *sc)
 		 * has gone idle.
 		 */
 		status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-					sc->hpc_regs->enetx_ctl) >> shift;
+		    HPC_ENETX_CTL);
 
 		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
 				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		/*
-		 * If not yet transmitted, try and start DMA engine again.
-		 * HPC3 tags transmitted descriptors with XMITDONE whereas
-		 * HPC1 will not halt before sending through EOCHAIN.
-		 */
-		if (sc->hpc_regs->revision == 3) {
-			hpc3_not_ready =
-			    sc->sc_txdesc[i].hpc3_hdd_ctl & HDD_CTL_XMITDONE;
-		} else {
-			if (hpc1_ready)
-				hpc1_ready++;
-			else {
-				if (sc->sc_txdesc[i].hpc1_hdd_ctl &
-							HPC1_HDD_CTL_EOPACKET)
-					hpc1_ready = 1;
-			} 
-		}
-		
-		if (hpc3_not_ready == 0 || hpc1_ready == 2) {
-			if ((status & (sc->hpc_regs->enetx_ctl_active >> shift)) == 0) { // XXX
-				SQ_TRACE(SQ_RESTART_DMA, i, status,
-				    sc->sc_nfreetx);
+		/* Check for used descriptor and restart DMA chain if needed */
+		if ((sc->sc_txdesc[i].hpc3_hdd_ctl & HDD_CTL_XMITDONE) == 0) {
+			if ((status & ENETX_CTL_ACTIVE) == 0) {
+				SQ_TRACE(SQ_RESTART_DMA, sc, i, status);
 
 				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				  sc->hpc_regs->enetx_ndbp, SQ_CDTXADDR(sc, i));
-
-				if (sc->hpc_regs->revision != 3) {
-				  bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-                                          HPC1_ENETX_CFXBP, SQ_CDTXADDR(sc, i));
-                                  bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-                                          HPC1_ENETX_CBP, SQ_CDTXADDR(sc, i));
-				}
+				  HPC_ENETX_NDBP, SQ_CDTXADDR(sc, i));
 
 				/* Kick DMA channel into life */
 				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-					  sc->hpc_regs->enetx_ctl,
-					  sc->hpc_regs->enetx_ctl_active);
+					  HPC_ENETX_CTL, ENETX_CTL_ACTIVE); 
 
 				/*
 				 * Set a watchdog timer in case the chip
 				 * flakes out.
 				 */
 				ifp->if_timer = 5;
-			} else {
-				SQ_TRACE(SQ_TXINTR_BUSY, i, status,
-				    sc->sc_nfreetx);
-			}
+			} else
+				SQ_TRACE(SQ_TXINTR_BUSY, sc, i, status);
 			break;
 		}
 
@@ -1101,27 +1211,12 @@ sq_txintr(struct sq_softc *sc)
 		ifp->if_opackets++;
 		sc->sc_nfreetx++;
 
-		SQ_TRACE(SQ_DONE_DMA, i, status, sc->sc_nfreetx);
+		SQ_TRACE(SQ_DONE_DMA, sc, i, status);
 		i = SQ_NEXTTX(i);
 	}
 
-	/* prevtx now points to next xmit packet not yet finished */
-	sc->sc_prevtx = i;
-
-	/* If we have buffers free, let upper layers know */
-	if (sc->sc_nfreetx > 0)
-		ifp->if_flags &= ~IFF_OACTIVE;
-
-	/* If all packets have left the coop, cancel watchdog */
-	if (sc->sc_nfreetx == SQ_NTXDESC)
-		ifp->if_timer = 0;
-
-	SQ_TRACE(SQ_TXINTR_EXIT, sc->sc_prevtx, status, sc->sc_nfreetx);
-	sq_start(ifp);
-
-	return 1;
+	sc->sc_prevtx = i;	
 }
-
 
 void
 sq_reset(struct sq_softc *sc)
@@ -1192,7 +1287,6 @@ sq_dump_buffer(u_int32_t addr, u_int32_t len)
 
 	printf("\n");
 }
-
 
 void
 enaddr_aton(const char* str, u_int8_t* eaddr)
