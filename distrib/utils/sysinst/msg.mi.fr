@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.25 1999/07/04 08:01:39 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.26 1999/07/04 09:41:03 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,9 +73,9 @@ message installusure
 informations contenues sur votre disque dur. Vous devriez faire une sauvegarde
 complète de celui ci avant de continuer la procédure d'installation. Cette
 procédure va réaliser les actions suivantes :
-      a) Partitionner votre disque dur.
-      b) Créer de nouveaux systèmes de fichier BSD.
-      c) Installer les différents composants.
+	a) Partitionner votre disque dur.
+	b) Créer de nouveaux systèmes de fichier BSD.
+	c) Installer les différents composants.
 
 (Après avoir indiqué les informations sur les partitions mais avant de 
 modifier votre disque, vous aurez la possibilité de quitter cette procédure.)
@@ -182,12 +182,12 @@ message layout
 {NetBSD utilise un disklabel BSD pour séparer la portion du disque réservée à
 NetBSD en de multiples partitions BSD. Vous devez maintenant paramétrer le
 disklabel BSD. Vous avez différent choix:
--- Standard : les partitions sont calculées par ce programme.
--- Standard avec X : le double de swap plus la taille des binaires X.
--- Personnalisée : vous choisissez la taille des partitions.
+-- Standard : les partitions sont calculées par ce programme. 
+-- Standard avec X : le double de swap plus la taille des binaires X. 
+-- Personnalisée : vous choisissez la taille des partitions. 
 
-La taille allouée pour NetBSD sur votre disque est de %.2f Megaoctets.
-L'installation standard requière au moins %.2f Megaoctets.
+La taille allouée pour NetBSD sur votre disque est de %.2f Megaoctets. 
+L'installation standard requière au moins %.2f Megaoctets. 
 L'installation standard avec X requière au moins %.2f Megaoctets.
 }
 
@@ -376,10 +376,11 @@ message ftpsource
 le mot de passe prêt à l'emplois actuellement. Si l'utilisateur est ftp, alors
 le mot de passe n'est pas nécessaire.
 
-serveur:      %s
-répertoire:   %s
-utilisateur:  %s
-mot de passe:  }
+serveur:	%s
+répertoire:	%s
+utilisateur:	%s
+mot de passe:	%s
+}
 
 message host
 {serveur}
@@ -404,8 +405,8 @@ message nfssource
 les composants. Rappelez vous que le répertoire doit contenir les
 fichiers .tgz et qu'il doit être accessible par nfs.
 
-serveur:    %s
-répertoire: %s
+serveur:	%s
+répertoire:	%s
 }
 
 message nfsbadmount
@@ -416,8 +417,8 @@ message cdromsource
 contenant les composants. Rappelez vous que le répertoire doit contenir les
 fichiers .tgz .
 
-device:    %s
-répertoire: %s
+device:		%s
+répertoire:	%s
 }
 
 
@@ -426,16 +427,16 @@ message localfssource
 contenant les composants. Rappelez vous que le répertoire doit contenir les
 fichiers .tgz .
 
-device:               %s
-système de fichiers : %s
-répertoire:           %s
+device:			%s
+système de fichiers:	%s
+répertoire:		%s
 }
 
 message localdir
 {Entrez le répertoire local (déjà monté) ou se trouve la distribution.
 Rapellez vous que ce répertoire doit contenir les fichiers .tgz.
 
-Répertoie: %s
+Répertoie:	%s
 }
 
 message filesys
@@ -499,13 +500,13 @@ message net_media
 message netok
 {Vous avez spécifié les valeurs suivantes. Sont elles exactes?
 
-Domaine (DNS):              %s
-Nom de machine:             %s
-Adresse IP:                 %s
-Masque de réseau (Netmask): %s
-Adresse du serveur de noms: %s
-Adresse de la paserelle:    %s
-Type de réseau (media):     %s
+Domaine (DNS):			%s 
+Nom de machine:			%s 
+Adresse IP:			%s 
+Masque de réseau (Netmask):	%s 
+Adresse du serveur de noms:	%s 
+Adresse de la paserelle:	%s 
+Type de réseau (media):	%s 
 }
 
 message netagain
@@ -683,9 +684,11 @@ disquette contenant ce fichier.
 
 message fdremount
 {La disquette n'a pas été montée correctement. Vous devez :
-    Réessayer en inserrant la disquette contenant le fichier %s.
-    Ne plus charger d'autre fichiers depuis la disquette et interrompre le 
-    processus
+
+Réessayer en inserrant la disquette contenant le fichier %s.
+
+Ne plus charger d'autre fichiers depuis la disquette et interrompre le 
+processus
 }
 
 message mntnetconfig
@@ -738,7 +741,7 @@ la géométrie utilisée par le BIOS est %d cylindres %d secteurs %d têtes\n}
 
 message cmdfail
 {La commande
-        %s
+	%s
 ne s'est pas executée correctement. Impossible de continuer.}
 
 message noactivepart

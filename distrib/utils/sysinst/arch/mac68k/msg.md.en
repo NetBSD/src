@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.5 1999/07/04 08:01:40 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.6 1999/07/04 09:41:04 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,12 +50,14 @@ for use on MacOS.  This program gets the disk layout of your disk by
 reading the Disk Partition Map which is written by the disk formatter
 when it prepared the disk for use with the Macintosh system.  Your
 options are:
-    -- Abort the install. You can format and define a preliminary
-       partition structure with any disk formatter.  Partitions do not
-       have to be defined as A/UX types; the NetBSD install process will
-       allow you to redefine them as necessary.
-    -- Allow sysinst to initialize the Disk Partition Map for you. This
-       will make the disk unbootable and/or unusable under MacOS. 
+
+* Abort the install. You can format and define a preliminary
+partition structure with any disk formatter.  Partitions do not
+have to be defined as A/UX types; the NetBSD install process will
+allow you to redefine them as necessary.
+
+* Allow sysinst to initialize the Disk Partition Map for you. This
+will make the disk unbootable and/or unusable under MacOS. 
 
 }
 
@@ -124,11 +126,12 @@ there is no room in the Disk Partition Map to map the second part. This
 is probably because your disk formatter didn't reserve additional space
 in the original Disk Partition Map for future modifications such as this.
 Your options at this point are:
-   -- Abandon any hope of splitting this partition, with the present
-      Disk Partition Map, or
-   -- Allow sysinst to install a new Disk Map on your disk. This will
-      destroy all existing data on all partitions on the volume.
-                  Use With Care!
+
+* Abandon any hope of splitting this partition, with the present
+Disk Partition Map, or
+
+* Allow sysinst to install a new Disk Map on your disk. This will
+destroy all existing data on all partitions on the volume.  USE WITH CARE!
 
 Would you like to Abandon splitting this partition?}
 
