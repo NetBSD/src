@@ -1,4 +1,4 @@
-/*	$NetBSD: fputc.c,v 1.4 1995/02/02 02:09:30 jtc Exp $	*/
+/*	$NetBSD: fputc.c,v 1.5 1996/03/29 23:29:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,11 +40,12 @@
 #if 0
 static char sccsid[] = "@(#)fputc.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: fputc.c,v 1.4 1995/02/02 02:09:30 jtc Exp $";
+static char rcsid[] = "$NetBSD: fputc.c,v 1.5 1996/03/29 23:29:06 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 
+int
 fputc(c, fp)
 	int c;
 	register FILE *fp;

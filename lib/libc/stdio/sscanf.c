@@ -1,4 +1,4 @@
-/*	$NetBSD: sscanf.c,v 1.6 1995/02/02 02:10:38 jtc Exp $	*/
+/*	$NetBSD: sscanf.c,v 1.7 1996/03/29 23:29:25 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)sscanf.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: sscanf.c,v 1.6 1995/02/02 02:10:38 jtc Exp $";
+static char rcsid[] = "$NetBSD: sscanf.c,v 1.7 1996/03/29 23:29:25 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -63,6 +63,7 @@ eofread(cookie, buf, len)
 	return (0);
 }
 
+int
 #if __STDC__
 sscanf(const char *str, char const *fmt, ...)
 #else

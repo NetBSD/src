@@ -1,4 +1,4 @@
-/*	$NetBSD: wbuf.c,v 1.4 1995/02/02 02:10:58 jtc Exp $	*/
+/*	$NetBSD: wbuf.c,v 1.5 1996/03/29 23:29:34 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wbuf.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: wbuf.c,v 1.4 1995/02/02 02:10:58 jtc Exp $";
+static char rcsid[] = "$NetBSD: wbuf.c,v 1.5 1996/03/29 23:29:34 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: wbuf.c,v 1.4 1995/02/02 02:10:58 jtc Exp $";
  * the given file.  Flush the buffer out if it is or becomes full,
  * or if c=='\n' and the file is line buffered.
  */
+int
 __swbuf(c, fp)
 	register int c;
 	register FILE *fp;

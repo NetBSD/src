@@ -1,4 +1,4 @@
-/*	$NetBSD: ungetc.c,v 1.4 1995/02/02 02:10:47 jtc Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.5 1996/03/29 23:29:27 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #endif
-static char rcsid[] = "$NetBSD: ungetc.c,v 1.4 1995/02/02 02:10:47 jtc Exp $";
+static char rcsid[] = "$NetBSD: ungetc.c,v 1.5 1996/03/29 23:29:27 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -54,7 +54,7 @@ static char rcsid[] = "$NetBSD: ungetc.c,v 1.4 1995/02/02 02:10:47 jtc Exp $";
  * and move the bytes in the buffer around as necessary so that they
  * are all at the end (stack-style).
  */
-static
+static int
 __submore(fp)
 	register FILE *fp;
 {
@@ -87,6 +87,7 @@ __submore(fp)
 	return (0);
 }
 
+int
 ungetc(c, fp)
 	int c;
 	register FILE *fp;
