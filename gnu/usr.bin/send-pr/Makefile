@@ -15,7 +15,7 @@ VERSION=3.2
 GNATS_ROOT =
 
 # Email address to which people should submit bugs.
-GNATS_ADDR = gnats-bugs@sun-lamp.cs.berkeley.edu
+GNATS_ADDR = gnats-bugs@NetBSD.ORG
 
 # The default release for this send-pr.
 DEFAULT_RELEASE =

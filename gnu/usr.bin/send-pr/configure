@@ -173,7 +173,7 @@ test -n "$verbose" && echo "	setting PASSWD to ${PASSWD}"
 
 GNATS_SITE=sun-lamp
 SUBMITTER=net
-GNATS_ADDR=gnats-bugs@sun-lamp.cs.berkeley.edu
+GNATS_ADDR=gnats-bugs@NetBSD.ORG
 DEFAULT_ORGANIZATION=
 DEFAULT_RELEASE=
 
