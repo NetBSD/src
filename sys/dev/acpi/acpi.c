@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.47 2003/10/31 17:22:28 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.48 2003/10/31 20:54:18 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.47 2003/10/31 17:22:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.48 2003/10/31 20:54:18 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -213,7 +213,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_softc *sc = (void *) self;
 	struct acpibus_attach_args *aa = aux;
-	ACPI_TABLE_HEADER *ap = &AcpiGbl_XSDT->Header;
 	ACPI_STATUS rv;
 
 	printf("\n");
@@ -228,8 +227,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
 	    sc->sc_dev.dv_xname,
-	    ap->OemId, ap->OemTableId, ap->OemRevision,
-	    ap->AslCompilerId, ap->AslCompilerRevision);
+	    AcpiGbl_XSDT->OemId, AcpiGbl_XSDT->OemTableId,
+	    AcpiGbl_XSDT->OemRevision,
+	    AcpiGbl_XSDT->AslCompilerId, AcpiGbl_XSDT->AslCompilerRevision);
 
 	sc->sc_quirks = acpi_find_quirks();
 
@@ -473,20 +473,20 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO *di)
 
 #ifdef ACPI_DEBUG
 	printf("acpi_activate_device: %s, old status=%x\n", 
-	       di->HardwareId, di->CurrentStatus);
+	       di->HardwareId.Value, di->CurrentStatus);
 #endif
 
 	rv = acpi_allocate_resources(handle);
 	if (ACPI_FAILURE(rv)) {
-		printf("acpi: activate failed for %s\n", di->HardwareId);
+		printf("acpi: activate failed for %s\n", di->HardwareId.Value);
 	} else {
-		printf("acpi: activated %s\n", di->HardwareId);
+		printf("acpi: activated %s\n", di->HardwareId.Value);
 	}
 
 #ifdef ACPI_DEBUG
 	(void)AcpiGetObjectInfo(handle, di);
 	printf("acpi_activate_device: %s, new status=%x\n", 
-	       di->HardwareId, di->CurrentStatus);
+	       di->HardwareId.Value, di->CurrentStatus);
 #endif
 }
 #endif /* ACPI_ACTIVATE_DEV */
@@ -506,12 +506,15 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 #endif
 	struct acpi_scope *as = state->scope;
 	struct acpi_devnode *ad;
-	ACPI_DEVICE_INFO devinfo;
 	ACPI_OBJECT_TYPE type;
+	ACPI_BUFFER buf;
+	ACPI_DEVICE_INFO devinfo;
 	ACPI_STATUS rv;
 
 	if (AcpiGetType(handle, &type) == AE_OK) {
-		rv = AcpiGetObjectInfo(handle, &devinfo);
+		buf.Pointer = &devinfo;
+		buf.Length = sizeof(devinfo);
+		rv = AcpiGetObjectInfo(handle, &buf);
 		if (rv != AE_OK) {
 #ifdef ACPI_DEBUG
 			printf("%s: AcpiGetObjectInfo failed\n",
@@ -531,7 +534,9 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 				acpi_activate_device(handle, &devinfo);
 
 				/* Update devinfo. */
-				rv = AcpiGetObjectInfo(handle, &devinfo);
+				buf.Pointer = &devinfo;
+				buf.Length = sizeof(devinfo);
+				rv = AcpiGetObjectInfo(handle, &buf);
 				if (rv != AE_OK)
 					goto out;
 			}
@@ -559,7 +564,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 
 #ifdef ACPI_EXTRA_DEBUG
 			printf("%s: HID %s found in scope %s level %d\n",
-			    sc->sc_dev.dv_xname, ad->ad_devinfo.HardwareId,
+			    sc->sc_dev.dv_xname, ad->ad_devinfo.HardwareId.Value,
 			    as->as_name, ad->ad_level);
 			if (ad->ad_devinfo.Valid & ACPI_VALID_UID)
 				printf("       UID %s\n",
@@ -589,7 +594,7 @@ acpi_print(void *aux, const char *pnp)
 
 	if (pnp) {
 		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_HID) {
-			char *pnpstr = aa->aa_node->ad_devinfo.HardwareId;
+			char *pnpstr = aa->aa_node->ad_devinfo.HardwareId.Value;
 			char *str;
 
 			aprint_normal("%s ", pnpstr);
@@ -621,14 +626,13 @@ acpi_print(void *aux, const char *pnp)
 		aprint_normal("at %s", pnp);
 	} else {
 		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_HID) {
-			aprint_normal(" (%s", aa->aa_node->ad_devinfo.HardwareId);
+			aprint_normal(" (%s", aa->aa_node->ad_devinfo.HardwareId.Value);
 			if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_UID) {
 				char *uid;
 
-				if (aa->aa_node->ad_devinfo.UniqueId[0] == '\0')
+				uid = aa->aa_node->ad_devinfo.UniqueId.Value;
+				if (uid[0] == '\0')
 					uid = "<null>";
-				else
-					uid = aa->aa_node->ad_devinfo.UniqueId;
 				aprint_normal("-%s", uid);
 			}
 			aprint_normal(")");
@@ -846,76 +850,6 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 
 	return ((*getit)(handle, buf));
 }
-
-
-/*
- * acpi_acquire_global_lock:
- *
- *	Acquire global lock, with sleeping appropriately.
- */
-#define ACQUIRE_WAIT 1000
-
-ACPI_STATUS
-acpi_acquire_global_lock(UINT32 *handle)
-{
-	ACPI_STATUS status;
-	UINT32 h;
-	int s;
-
-	s = splhigh();
-	simple_lock(&acpi_slock);
-	while (acpi_locked)
-		ltsleep(&acpi_slock, PVM, "acpi_lock", 0, &acpi_slock);
-	acpi_locked = 1;
-	simple_unlock(&acpi_slock);
-	splx(s);
-	status = AcpiAcquireGlobalLock(ACQUIRE_WAIT, &h);
-	if (ACPI_SUCCESS(status))
-		*handle = h;
-	else {
-		printf("acpi: cannot acquire lock. status=0x%X\n", status);
-		s = splhigh();
-		simple_lock(&acpi_slock);
-		acpi_locked = 0;
-		simple_unlock(&acpi_slock);
-		splx(s);
-	}
-
-	return (status);
-}
-
-void
-acpi_release_global_lock(UINT32 handle)
-{
-	ACPI_STATUS status;
-	int s;
-
-	if (!acpi_locked) {
-		printf("acpi: not locked.\n");
-		return;
-	}
-
-	status = AcpiReleaseGlobalLock(handle);
-	if (ACPI_FAILURE(status)) {
-		printf("acpi: AcpiReleaseGlobalLock failed. status=0x%X\n",
-		       status);
-		return;
-	}
- 
-	s = splhigh();
-	simple_lock(&acpi_slock);
-	acpi_locked = 0;
-	simple_unlock(&acpi_slock);
-	splx(s);
-	wakeup(&acpi_slock);
-}
-
-int
-acpi_is_global_locked(void)
-{
-	return (acpi_locked);
-}
-
 
 
 /*****************************************************************************

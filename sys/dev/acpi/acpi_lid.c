@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.8 2003/04/18 01:31:34 thorpej Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.9 2003/10/31 20:54:18 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.8 2003/04/18 01:31:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.9 2003/10/31 20:54:18 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ acpilid_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0D") == 0)
+	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "PNP0C0D") == 0)
 		return (1);
 
 	return (0);
