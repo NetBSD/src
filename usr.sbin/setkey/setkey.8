@@ -1,6 +1,9 @@
+.\"	$NetBSD: setkey.8,v 1.9 2000/04/16 16:15:59 itojun Exp $
+.\"     $KAME: setkey.8,v 1.25 2000/04/16 16:11:17 itojun Exp $
+.\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -12,7 +15,7 @@
 .\" 3. Neither the name of the project nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -25,17 +28,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: setkey.8,v 1.8 2000/04/11 00:11:46 hubertf Exp $
-.\"     KAME Id: setkey.8,v 1.23 2000/03/13 05:33:53 itojun Exp
-.\"
 .Dd May 17, 1998
 .Dt SETKEY 8
 .Os
-.\" 
+.\"
 .Sh NAME
 .Nm setkey
 .Nd manually manipulate the IPsec SA/SP database.
-.\" 
+.\"
 .Sh SYNOPSIS
 .Nm setkey
 .Op Fl dv
@@ -52,7 +52,7 @@
 .Nm setkey
 .Op Fl h
 .Fl x
-.\" 
+.\"
 .Sh DESCRIPTION
 .Nm
 addes, updates, dumpes, or flushes
@@ -102,7 +102,7 @@ socket.
 .It Fl h
 Add hexadecimal dump on
 .Fl x
-mode. The order is significant.
+mode.
 .It Fl l
 Loop forever with short output on
 .Fl D .
@@ -228,10 +228,10 @@ attached
 .Pp
 .It Ar extensions
 take some of the following:
-.Bl -tag -width Fl -compact 
+.Bl -tag -width Fl -compact
 .\"
 .It Fl m Ar mode
-Specify a security protocol mode for use.  
+Specify a security protocol mode for use.
 .Ar mode
 is one of following:
 .Li transport , tunnel
@@ -268,7 +268,7 @@ Specify hard/soft lifetime.
 .\"
 .Pp
 .It Ar algorithm
-.Bl -tag -width Fl -compact 
+.Bl -tag -width Fl -compact
 .It Fl E Ar ealgo Ar key
 Specify encryption algorithm.
 .It Fl A Ar ealgo Ar key
@@ -522,7 +522,7 @@ algorithm	comment
 deflate		rfc2394
 lzs		rfc2395
 .Ed
-.\" 
+.\"
 .Sh EXAMPLES
 .Bd -literal -offset
 add	3ffe:501:4819::1 3ffe:501:481d::1 esp 123457
@@ -545,14 +545,14 @@ spdadd	10.0.11.41/32[21] 10.0.11.33/32[any] any
 		-P out ipsec esp/tunnel/192.168.0.1-192.168.1.2/require ;
 
 .Ed
-.\" 
+.\"
 .Sh RETURN VALUES
 The command exits with 0 on success, and non-zero on errors.
-.\" 
+.\"
 .Sh SEE ALSO
 .Xr ipsec_set_policy 3 ,
 .Xr sysctl 8
-.\" 
+.\"
 .Sh HISTORY
 The
 .Nm
