@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.51 1999/04/25 02:56:28 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.52 1999/05/18 01:36:52 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.51 1999/04/25 02:56:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.52 1999/05/18 01:36:52 nisimura Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
@@ -1215,25 +1215,4 @@ mips_init_msgbuf()
 		printf("WARNING: %ld bytes not available for msgbuf "
 		    "in last cluster (%d used)\n",
 		    round_page(MSGBUFSIZE), sz);
-}
-
-/*
- * Initialize the U-area for proc0.  Since these need to be set up
- * before we can probe for memory, we have to use stolen pages before
- * they're loaded into the VM system.
- *
- * "space" is USPACE in size, must be page aligned, and in KSEG0.
- */
-void
-mips_init_proc0(space)
-	caddr_t space;
-{
-	/* XXX Flush cache?? */
-	memset(space, 0, USPACE);
-
-	proc0.p_addr = proc0paddr = (struct user *)space;
-
-	curpcb = &proc0.p_addr->u_pcb;
-	MachSetPID(1);		/* Also establishes context using curpcb */
-	proc0.p_md.md_regs = (void *)((struct frame *)((int)curpcb+USPACE) - 1);
 }
