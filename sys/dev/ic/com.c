@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.118.2.3 1997/11/04 23:18:31 mellon Exp $	*/
+/*	$NetBSD: com.c,v 1.118.2.4 1997/12/17 15:37:16 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -610,6 +610,8 @@ comopen(dev, flag, mode, p)
 			SET(t.c_cflag, CRTSCTS);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
+		/* Make sure comparam() will do something. */
+		tp->t_ospeed = 0;
 		(void) comparam(tp, &t);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -995,6 +997,15 @@ comparam(tp, t)
 		SET(t->c_cflag, CLOCAL);
 		CLR(t->c_cflag, HUPCL);
 	}
+
+	/*
+	 * If there were no changes, don't do anything.  This avoids dropping
+	 * input and improves performance when all we did was frob things like
+	 * VMIN and VTIME.
+	 */
+	if (tp->t_ospeed == t->c_ospeed &&
+	    tp->t_cflag == t->c_cflag)
+		return (0);
 
 	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
 
