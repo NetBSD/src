@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.95 2001/09/17 19:39:43 jdolecek Exp $
+.\"	$NetBSD: hardware,v 1.96 2001/09/30 00:34:50 hubertf Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -458,7 +458,7 @@ Cirrus Logic CS461x, CS4280 and CS4281 audio [*] [+]
 .It
 Ensoniq AudioPCI [*] [+]
 .It
-ESS Technology ES1777/1868/1869/1887/1888/888, Maestro 1/2/2E and
+ESS Technology ESS 1688 Audiodrive, ES1777/1868/1869/1887/1888/888, Maestro 1/2/2E and
 Solo-1 ES1938/1946 [*] [+]
 .It
 Gravis Ultrasound Plug and Play [*] [+]
