@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)reboot_hp300.8	5.4 (Berkeley) 7/23/91
-.\"	$Id: reboot_hp300.8,v 1.2 1993/08/01 07:38:28 mycroft Exp $
+.\"	$Id: reboot_hp300.8,v 1.3 1994/02/14 21:34:42 cgd Exp $
 .\"
 .Dd July 23, 1991
 .Dt REBOOT 8
@@ -42,7 +42,7 @@
 .Sh NAME
 .Nm reboot
 .Nd
-.Tn UNIX
+.Tn NetBSD
 bootstrapping procedures
 .Sh SYNOPSIS
 .Nm reboot
@@ -51,8 +51,9 @@ bootstrapping procedures
 .Op Fl q
 .Op Fl s
 .Sh DESCRIPTION
-.Tn UNIX
-is started by placing it at the beginning of physical memory
+The
+.Tn NetBSD
+kernel is started by placing it at the beginning of physical memory
 and transferring to the entry point.
 Since the system is not reenterable,
 it is necessary to read it in from disk or tape
@@ -60,8 +61,8 @@ each time it is to be bootstrapped.
 .Pp
 .Sy Rebooting a running system .
 When a
-.Tn UNIX
-is running and a reboot is desired,
+.Tn NetBSD
+kernel is running and a reboot is desired,
 .Xr shutdown 8
 is normally used.
 If there are no users then
@@ -126,7 +127,7 @@ This
 .Em boot
 program
 finds the corresponding file on the given device 
-.Pf ( Ar vmunix
+.Pf ( Ar netbsd
 by default),
 loads that file into memory,
 and starts the program at the entry address specified in the program header.
@@ -156,7 +157,7 @@ specifier.
 For example,
 to boot from the `a' file system of unit 0 on HP-IB 2,
 type
-.Ql rd(16,0)vmunix
+.Ql rd(16,0)netbsd
 to the boot prompt.
 For tapes, the minor device number gives a file offset.
 .Pp
@@ -165,7 +166,7 @@ In an emergency, the bootstrap methods described in the paper
 can be used to boot from a distribution tape.
 .Sh FILES
 .Bl -tag -width /usr/mdec/installboot -compact
-.It Pa /vmunix
+.It Pa /netbsd
 system code
 .It Pa /usr/mdec/bootrd
 .Tn LIF
