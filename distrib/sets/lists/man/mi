@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.365 2001/06/09 13:59:06 bjh21 Exp $
+# $NetBSD: mi,v 1.366 2001/06/13 15:18:28 simonb Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1534,6 +1534,8 @@
 ./usr/share/man/cat8/vax/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/vipw.0			man-sysutil-catman
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman
+./usr/share/man/cat8/walnut/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/walnut/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/wdogctl.0			man-sysutil-catman
 ./usr/share/man/cat8/wiconfig.0			man-netutil-catman
 ./usr/share/man/cat8/wire-test.0		man-netutil-catman
@@ -3066,6 +3068,8 @@
 ./usr/share/man/man8/vax/makedev.8		man-sysutil-man
 ./usr/share/man/man8/vipw.8			man-sysutil-man
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man
+./usr/share/man/man8/walnut/MAKEDEV.0		man-sysutil-man
+./usr/share/man/man8/walnut/makedev.0		man-sysutil-man
 ./usr/share/man/man8/wdogctl.8			man-sysutil-man
 ./usr/share/man/man8/wiconfig.8			man-netutil-man
 ./usr/share/man/man8/wire-test.8		man-netutil-man
