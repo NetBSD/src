@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.8 2004/02/02 10:36:19 soren Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.9 2004/03/24 09:14:58 martin Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.8 2004/02/02 10:36:19 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.9 2004/03/24 09:14:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	struct acpitz_softc *sc = (struct acpitz_softc *)self;
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
+	ACPI_INTEGER v;
 
 #if 0
 	sc->sc_flags = ATZ_F_VERBOSE;
@@ -152,13 +153,13 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": ACPI Thermal Zone\n");
 
-	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TZP",
-	    &sc->sc_zone.tzp);
+	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TZP", &v);
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to get polling interval; using default of",
 		    sc->sc_dev.dv_xname);
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
 	} else {
+		sc->sc_zone.tzp = v;
 		printf("%s: polling interval is", sc->sc_dev.dv_xname);
 	}
 	printf(" %d.%ds\n", sc->sc_zone.tzp / 10, sc->sc_zone.tsp % 10);
@@ -189,14 +190,15 @@ acpitz_get_status(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
 	ACPI_STATUS rv;
+	ACPI_INTEGER v;
 
-	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TMP",
-	    &sc->sc_zone.tmp);
+	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TMP", &v);
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate _TMP: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
+	sc->sc_zone.tmp = v;
 
 	/*
 	 * The temperature unit for envsys(9) is microKelvin, so convert to
