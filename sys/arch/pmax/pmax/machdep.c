@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1996/02/06 01:59:46 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1996/03/23 04:35:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -174,6 +174,10 @@ void	kn01_enable_intr  __P ((u_int slotno,
 				int (*handler) __P ((intr_arg_t sc)),
 				intr_arg_t sc, int onoff));
 #endif /* DS3100 */
+
+#ifdef DS5100 /* mipsmate */
+# include <pmax/pmax/kn230var.h>   /* kn230_establish_intr(), kn230_intr() */
+#endif
 
 #ifdef DS5000_240
 int	kn03_intr();
@@ -393,6 +397,8 @@ mach_init(argc, argv, code, cv)
 	pmax_boardtype = ((i >> 16) & 0xff);
 
 	switch (pmax_boardtype) {
+
+#ifdef DS3100
 	case DS_PMAX:	/* DS3100 Pmax */
 		/*
 		 * Set up interrupt handling and I/O addresses.
@@ -409,13 +415,16 @@ mach_init(argc, argv, code, cv)
 			MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK);
 		strcpy(cpu_model, "3100");
 		break;
+#endif /* DS3100 */
 
-	case DS_MIPSMATE:	/* DS5100 mipsmate */
+
+#ifdef DS5100
+	case DS_MIPSMATE:	/* DS5100 aka mipsmate aka kn230 */
 		/* XXX just a guess */
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		pmax_hardware_intr = kn01_intr;
+		pmax_hardware_intr = kn230_intr;
 		tc_enable_interrupt = kn01_enable_intr; /*XXX*/
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl1;
@@ -427,6 +436,7 @@ mach_init(argc, argv, code, cv)
 			MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK);
 		strcpy(cpu_model, "5100");
 		break;
+#endif /* DS5100 */
 
 #ifdef DS5000
 	case DS_3MAX:	/* DS5000/200 3max */
@@ -843,7 +853,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 /*
  * Set registers on exec.
- * Clear all registers except sp, pc.
+ * Clear all registers except sp, pc, and t9.
+ * $sp is set to the stack pointer passed in.  $pc is set to the entry
+ * point given by the exec_package passed in, as is $t9 (used for PIC
+ * code by the MIPS elf abi).
  */
 void
 setregs(p, pack, stack, retval)
@@ -857,6 +870,7 @@ setregs(p, pack, stack, retval)
 	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
 	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
+        p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
 	p->p_md.md_regs[PS] = PSL_USERSET;
 	p->p_md.md_flags & ~MDP_FPUSED;
 	if (machFPCurProcPtr == p)
@@ -1391,7 +1405,7 @@ out:
 }
 
 
-#ifdef DS5000
+#ifdef DS3100
 
 /*
  * Enable an interrupt from a slot on the KN01 internal bus.
@@ -1417,7 +1431,10 @@ kn01_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].sc = 0;
 	}
 }
+#endif /* DS3100 */
 
+
+#ifdef DS5000
 
 /*
  * Enable/Disable interrupts for a TURBOchannel slot on the 3MAX.
