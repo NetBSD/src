@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.9 1998/03/01 02:23:23 fvdl Exp $	*/
+/*	$NetBSD: lfs.h,v 1.10 1998/09/11 21:27:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -82,70 +82,119 @@ struct finfo {
 	ufs_daddr_t	  fi_blocks[1];		/* array of logical block numbers */
 };
 
-/* On-disk and in-memory super block. */
-struct lfs {
+/* On-disk super block. */
+struct dlfs {
 #define	LFS_MAGIC	0x070162
-	u_int32_t lfs_magic;		/* magic number */
+        u_int32_t dlfs_magic;     /* 0: magic number */
 #define	LFS_VERSION	1
-	u_int32_t lfs_version;		/* version number */
+        u_int32_t dlfs_version;   /* 4: version number */
 
-	u_int32_t lfs_size;		/* number of blocks in fs */
-	u_int32_t lfs_ssize;		/* number of blocks per segment */
-	u_int32_t lfs_dsize;		/* number of disk blocks in fs */
-	u_int32_t lfs_bsize;		/* file system block size */
-	u_int32_t lfs_fsize;		/* size of frag blocks in fs */
-	u_int32_t lfs_frag;		/* number of frags in a block in fs */
+        u_int32_t dlfs_size;      /* 8: number of blocks in fs */
+        u_int32_t dlfs_ssize;     /* 12: number of blocks per segment */
+        u_int32_t dlfs_dsize;     /* 16: number of disk blocks in fs */
+        u_int32_t dlfs_bsize;     /* 20: file system block size */
+        u_int32_t dlfs_fsize;     /* 24: size of frag blocks in fs */
+        u_int32_t dlfs_frag;      /* 28: number of frags in a block in fs */
 
 /* Checkpoint region. */
-	ino_t	  lfs_free;		/* start of the free list */
-	u_int32_t lfs_bfree;		/* number of free disk blocks */
-	u_int32_t lfs_nfiles;		/* number of allocated inodes */
-	int32_t	  lfs_avail;		/* blocks available for writing */
-	u_int32_t lfs_uinodes;		/* inodes in cache not yet on disk */
-	ufs_daddr_t  lfs_idaddr;	/* inode file disk address */
-	ino_t	  lfs_ifile;		/* inode file inode number */
-	ufs_daddr_t  lfs_lastseg;	/* address of last segment written */
-	ufs_daddr_t  lfs_nextseg;	/* address of next segment to write */
-	ufs_daddr_t  lfs_curseg;	/* current segment being written */
-	ufs_daddr_t  lfs_offset;	/* offset in curseg for next partial */
-	ufs_daddr_t  lfs_lastpseg;	/* address of last partial written */
-	u_int32_t lfs_tstamp;		/* time stamp */
+        ino_t     dlfs_free;      /* 32: start of the free list */
+        u_int32_t dlfs_bfree;     /* 36: number of free disk blocks */
+        u_int32_t dlfs_nfiles;    /* 40: number of allocated inodes */
+        int32_t   dlfs_avail;     /* 44: blocks available for writing */
+        u_int32_t dlfs_uinodes;   /* 48: inodes in cache not yet on disk */
+        ufs_daddr_t  dlfs_idaddr; /* 52: inode file disk address */
+        ino_t     dlfs_ifile;     /* 56: inode file inode number */
+        ufs_daddr_t  dlfs_lastseg; /* 60: address of last segment written */
+        ufs_daddr_t  dlfs_nextseg; /* 64: address of next segment to write */
+        ufs_daddr_t  dlfs_curseg; /* 68: current segment being written */
+        ufs_daddr_t  dlfs_offset; /* 72: offset in curseg for next partial */
+        ufs_daddr_t  dlfs_lastpseg; /* 76: address of last partial written */
+        u_int32_t dlfs_tstamp;    /* 80: time stamp */
 
 /* These are configuration parameters. */
-	u_int32_t lfs_minfree;		/* minimum percentage of free blocks */
+        u_int32_t dlfs_minfree;   /* 84: minimum percentage of free blocks */
 
 /* These fields can be computed from the others. */
-	u_int64_t lfs_maxfilesize;	/* maximum representable file size */
-	u_int32_t lfs_dbpseg;		/* disk blocks per segment */
-	u_int32_t lfs_inopb;		/* inodes per block */
-	u_int32_t lfs_ifpb;		/* IFILE entries per block */
-	u_int32_t lfs_sepb;		/* SEGUSE entries per block */
-	u_int32_t lfs_nindir;		/* indirect pointers per block */
-	u_int32_t lfs_nseg;		/* number of segments */
-	u_int32_t lfs_nspf;		/* number of sectors per fragment */
-	u_int32_t lfs_cleansz;		/* cleaner info size in blocks */
-	u_int32_t lfs_segtabsz;		/* segment table size in blocks */
+        u_int64_t dlfs_maxfilesize; /* 88: maximum representable file size */
+        u_int32_t dlfs_dbpseg;    /* 96: disk blocks per segment */
+        u_int32_t dlfs_inopb;     /* 100: inodes per block */
+        u_int32_t dlfs_ifpb;      /* 104: IFILE entries per block */
+        u_int32_t dlfs_sepb;      /* 108: SEGUSE entries per block */
+        u_int32_t dlfs_nindir;    /* 112: indirect pointers per block */
+        u_int32_t dlfs_nseg;      /* 116: number of segments */
+        u_int32_t dlfs_nspf;      /* 120: number of sectors per fragment */
+        u_int32_t dlfs_cleansz;   /* 124: cleaner info size in blocks */
+        u_int32_t dlfs_segtabsz;  /* 128: segment table size in blocks */
+        u_int32_t dlfs_segmask;   /* 132: calculate offset within a segment */
+        u_int32_t dlfs_segshift;  /* 136: fast mult/div for segments */
+        u_int32_t dlfs_bshift;    /* 140: calc block number from file offset */
+        u_int32_t dlfs_ffshift;   /* 144: fast mult/div for frag from file */
+        u_int32_t dlfs_fbshift;   /* 148: fast mult/div for frag from block */
+        u_int64_t dlfs_bmask;     /* 152: calc block offset from file offset */
+        u_int64_t dlfs_ffmask;    /* 160: calc frag offset from file offset */
+        u_int64_t dlfs_fbmask;    /* 168: calc frag offset from block offset */
+        u_int32_t dlfs_fsbtodb;   /* 176: fsbtodb and dbtofsb shift constant */
+        u_int32_t dlfs_sushift;   /* 180: fast mult/div for segusage table */
 
-	u_int32_t lfs_segmask;		/* calculate offset within a segment */
-	u_int32_t lfs_segshift;		/* fast mult/div for segments */
-	u_int64_t lfs_bmask;		/* calc block offset from file offset */
-	u_int32_t lfs_bshift;		/* calc block number from file offset */
-	u_int64_t lfs_ffmask;		/* calc frag offset from file offset */
-	u_int32_t lfs_ffshift;		/* fast mult/div for frag from file */
-	u_int64_t lfs_fbmask;		/* calc frag offset from block offset */
-	u_int32_t lfs_fbshift;		/* fast mult/div for frag from block */
-	u_int32_t lfs_fsbtodb;		/* fsbtodb and dbtofsb shift constant */
-	u_int32_t lfs_sushift;		/* fast mult/div for segusage table */
-
-	int32_t	  lfs_maxsymlinklen;	/* max length of an internal symlink */
+        int32_t   dlfs_maxsymlinklen; /* 184: max length of an internal symlink */
 
 #define	LFS_MIN_SBINTERVAL	5	/* minimum superblock segment spacing */
-#define	LFS_MAXNUMSB		10	/* superblock disk offsets */
-	ufs_daddr_t	  lfs_sboffs[LFS_MAXNUMSB];
+#define LFS_MAXNUMSB            10 /* 188: superblock disk offsets */
+        ufs_daddr_t       dlfs_sboffs[LFS_MAXNUMSB];
 
 /* Checksum -- last valid disk field. */
-	u_int32_t lfs_cksum;		/* checksum for superblock checking */
+        u_int32_t dlfs_cksum;     /* 228: checksum for superblock checking */
+        int32_t   dlfs_pad[70];   /* 232: round to 512 bytes */
+};
 
+/* In-memory super block. */
+struct lfs {
+        struct dlfs lfs_dlfs;           /* on-disk parameters */
+#define lfs_magic lfs_dlfs.dlfs_magic
+#define lfs_version lfs_dlfs.dlfs_version
+#define lfs_size lfs_dlfs.dlfs_size
+#define lfs_ssize lfs_dlfs.dlfs_ssize
+#define lfs_dsize lfs_dlfs.dlfs_dsize
+#define lfs_bsize lfs_dlfs.dlfs_bsize
+#define lfs_fsize lfs_dlfs.dlfs_fsize
+#define lfs_frag lfs_dlfs.dlfs_frag
+#define lfs_free lfs_dlfs.dlfs_free
+#define lfs_bfree lfs_dlfs.dlfs_bfree
+#define lfs_nfiles lfs_dlfs.dlfs_nfiles
+#define lfs_avail lfs_dlfs.dlfs_avail
+#define lfs_uinodes lfs_dlfs.dlfs_uinodes
+#define lfs_idaddr lfs_dlfs.dlfs_idaddr
+#define lfs_ifile lfs_dlfs.dlfs_ifile
+#define lfs_lastseg lfs_dlfs.dlfs_lastseg
+#define lfs_nextseg lfs_dlfs.dlfs_nextseg
+#define lfs_curseg lfs_dlfs.dlfs_curseg
+#define lfs_offset lfs_dlfs.dlfs_offset
+#define lfs_lastpseg lfs_dlfs.dlfs_lastpseg
+#define lfs_tstamp lfs_dlfs.dlfs_tstamp
+#define lfs_minfree lfs_dlfs.dlfs_minfree
+#define lfs_maxfilesize lfs_dlfs.dlfs_maxfilesize
+#define lfs_dbpseg lfs_dlfs.dlfs_dbpseg
+#define lfs_inopb lfs_dlfs.dlfs_inopb
+#define lfs_ifpb lfs_dlfs.dlfs_ifpb
+#define lfs_sepb lfs_dlfs.dlfs_sepb
+#define lfs_nindir lfs_dlfs.dlfs_nindir
+#define lfs_nseg lfs_dlfs.dlfs_nseg
+#define lfs_nspf lfs_dlfs.dlfs_nspf
+#define lfs_cleansz lfs_dlfs.dlfs_cleansz
+#define lfs_segtabsz lfs_dlfs.dlfs_segtabsz
+#define lfs_segmask lfs_dlfs.dlfs_segmask
+#define lfs_segshift lfs_dlfs.dlfs_segshift
+#define lfs_bmask lfs_dlfs.dlfs_bmask
+#define lfs_bshift lfs_dlfs.dlfs_bshift
+#define lfs_ffmask lfs_dlfs.dlfs_ffmask
+#define lfs_ffshift lfs_dlfs.dlfs_ffshift
+#define lfs_fbmask lfs_dlfs.dlfs_fbmask
+#define lfs_fbshift lfs_dlfs.dlfs_fbshift
+#define lfs_fsbtodb lfs_dlfs.dlfs_fsbtodb
+#define lfs_sushift lfs_dlfs.dlfs_sushift
+#define lfs_maxsymlinklen lfs_dlfs.dlfs_maxsymlinklen
+#define lfs_sboffs lfs_dlfs.dlfs_sboffs
+#define lfs_cksum lfs_dlfs.dlfs_cksum
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
@@ -161,8 +210,6 @@ struct lfs {
 	int8_t	  lfs_ronly;		/* mounted read-only flag */
 	int8_t	  lfs_flags;		/* currently unused flag */
 	u_char	  lfs_fsmnt[MNAMELEN];	/* name mounted on */
-
-	int32_t	  lfs_pad[40];		/* round to 512 bytes */
 };
 
 /*

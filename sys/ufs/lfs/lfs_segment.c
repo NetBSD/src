@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.11 1998/05/08 18:31:13 kleink Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.12 1998/09/11 21:27:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -973,10 +973,10 @@ lfs_writesuper(fs)
 	strategy = VTOI(fs->lfs_ivnode)->i_devvp->v_op[VOFFSET(vop_strategy)];
 
 	/* Checksum the superblock and copy it into a buffer. */
-	fs->lfs_cksum = cksum(fs, sizeof(struct lfs) - sizeof(fs->lfs_cksum));
+	fs->lfs_cksum = lfs_sb_cksum(&(fs->lfs_dlfs));
 	bp = lfs_newbuf(VTOI(fs->lfs_ivnode)->i_devvp, fs->lfs_sboffs[0],
 	    LFS_SBPAD);
-	*(struct lfs *)bp->b_data = *fs;
+	*(struct dlfs *)bp->b_data = fs->lfs_dlfs;
 
 	/* XXX Toggle between first two superblocks; for now just write first */
 	bp->b_dev = i_dev;

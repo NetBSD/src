@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.10 1998/09/01 03:26:05 thorpej Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.11 1998/09/11 21:27:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -67,6 +67,7 @@ int lfs_check __P((struct vnode *, ufs_daddr_t));
 
 /* lfs_cksum.c */
 u_long cksum __P((void *, size_t));
+u_long lfs_sb_cksum __P((struct dlfs *));
 
 /* lfs_debug.c */
 #ifdef DEBUG
