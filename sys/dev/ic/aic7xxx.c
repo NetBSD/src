@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.21 1997/03/09 06:10:32 mikel Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.22 1997/03/13 00:38:48 cgd Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -159,6 +159,12 @@
 #undef DEBUGTARG
 #define DEBUGTARG	17
 #endif
+#ifdef alpha		/* XXX */
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
+extern vm_offset_t alpha_XXX_dmamap(vm_offset_t);
+#undef vtophys
+#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t) va)
+#endif	/* alpha */
 #endif /* defined(__NetBSD__) */
 
 #include <sys/kernel.h>
@@ -1610,6 +1616,7 @@ ahc_handle_seqint(ahc, intstat)
 #ifdef AHC_DEBUG
 			if(ahc_debug & AHC_SHOWSENSE)
 			{
+
 				sc_print_addr(xs->sc_link);
 				printf("requests Check Status\n");
 			}
@@ -1634,7 +1641,6 @@ ahc_handle_seqint(ahc, intstat)
 				sc->byte2 =  xs->sc_link->lun << 5;
 				sc->length = sizeof(struct scsi_sense_data);
 				sc->control = 0;
-
 				sg->addr = KVTOPHYS(&xs->sense);
 				sg->len = sizeof(struct scsi_sense_data);
 
@@ -2409,7 +2415,7 @@ ahc_scsi_cmd(xs)
 	struct	scb *scb;
 	struct	ahc_dma_seg *sg;
 	int	seg;		/* scatter gather seg being worked on */
-	int	thiskv;
+	unsigned long thiskv, nextkv;
 	physaddr thisphys, nextphys;
 	int	bytes_this_seg, bytes_this_page, datalen, flags;
 	struct	ahc_data *ahc;
@@ -2571,7 +2577,7 @@ ahc_scsi_cmd(xs)
 		SC_DEBUG(xs->sc_link, SDEV_DB4,
 			 ("%ld @%p:- ", xs->datalen, xs->data));
 		datalen = xs->datalen;
-		thiskv = (int) xs->data;
+		thiskv = (unsigned long) xs->data;
 		thisphys = KVTOPHYS(thiskv);
 
 		while ((datalen) && (seg < AHC_NSEG)) {
@@ -2595,15 +2601,17 @@ ahc_scsi_cmd(xs)
 					   + PAGE_SIZE;
 				bytes_this_page = nextphys - thisphys;
 				/**** or the data ****/
-				bytes_this_page = min(bytes_this_page ,datalen);
+				bytes_this_page = min(bytes_this_page, datalen);
 				bytes_this_seg += bytes_this_page;
 				datalen -= bytes_this_page;
 
 				/* get more ready for the next page */
-				thiskv = (thiskv & (~(PAGE_SIZE - 1)))
-					 + PAGE_SIZE;
+				nextkv = thiskv;
+				nextkv &= ~((unsigned long) PAGE_SIZE - 1);
+				nextkv += PAGE_SIZE;
 				if (datalen)
-					thisphys = KVTOPHYS(thiskv);
+					thisphys = KVTOPHYS(nextkv);
+				thiskv = nextkv;
 			}
 			/*
 			 * next page isn't contiguous, finish the seg
