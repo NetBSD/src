@@ -1,4 +1,4 @@
-/* $NetBSD: sh3disasm.c,v 1.2 2000/09/04 23:02:43 tsubai Exp $ */
+/* $NetBSD: sh3disasm.c,v 1.3 2000/09/04 23:18:36 tsubai Exp $ */
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -32,8 +32,8 @@
  * sh3disasm.c	: SH-3/SH-3E disassembler
  *
  * $Author: tsubai $
- * $Date: 2000/09/04 23:02:43 $
- * $Revision: 1.2 $
+ * $Date: 2000/09/04 23:18:36 $
+ * $Revision: 1.3 $
  */
 
 #include <sys/param.h>
@@ -225,19 +225,19 @@ f_02(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "STC     SR, R%d", rn);
+			sprintf(buf, "stc     sr, r%d", rn);
 			break;
 
 		case 1:
-			sprintf(buf, "STC     GBR, R%d", rn);
+			sprintf(buf, "stc     gbr, r%d", rn);
 			break;
 
 		case 2:
-			sprintf(buf, "STC     VBR, R%d", rn);
+			sprintf(buf, "stc     vbr, r%d", rn);
 			break;
 
 		case 3:
-			sprintf(buf, "STC     SSR, R%d", rn);
+			sprintf(buf, "stc     ssr, r%d", rn);
 			break;
 
 		}
@@ -246,17 +246,17 @@ f_02(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 0:
-			sprintf(buf, "STC     SPC, R%d", rn);
+			sprintf(buf, "stc     spc, r%d", rn);
 			break;
 		}
 		break;
 
 	case 2:
-		sprintf(buf, "STC     R%d_BANK, R%d", md, rn);
+		sprintf(buf, "stc     r%d_bank, r%d", md, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "STC     R%d_BANK, R%d", md+4, rn);
+		sprintf(buf, "stc     r%d_bank, r%d", md+4, rn);
 		break;
 	} /* end of switch (type) */
 }
@@ -275,11 +275,11 @@ f_03(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "BSRF    R%d", rn);
+			sprintf(buf, "bsrf    r%d", rn);
 			break;
 
 		case 2:
-			sprintf(buf, "BRAF    R%d", rn);
+			sprintf(buf, "braf    r%d", rn);
 			break;
 		}
 		break;
@@ -287,7 +287,7 @@ f_03(u_short *code, u_char *buf)
 	case 2:
 		switch (md) {
 		case 0:
-			sprintf(buf, "PREF    @R%d", rn);
+			sprintf(buf, "pref    @r%d", rn);
 			break;
 		}
 		break;
@@ -306,19 +306,19 @@ f_04(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "MOV.B   R%d, @(R0, R%d)", rm, rn);
+		sprintf(buf, "mov.b   r%d, @(r0, r%d)", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "MOV.W   R%d, @(R0, R%d)", rm, rn);
+		sprintf(buf, "mov.w   r%d, @(r0, r%d)", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "MOV.L   R%d, @(R0, R%d)", rm, rn);
+		sprintf(buf, "mov.l   r%d, @(r0, r%d)", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "MUL.L   R%d, R%d)", rm, rn);
+		sprintf(buf, "mul.l   r%d, r%d)", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -339,19 +339,19 @@ f_08(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "CLRT");
+			sprintf(buf, "clrt");
 			break;
 
 		case 1:
-			sprintf(buf, "SETT");
+			sprintf(buf, "sett");
 			break;
 
 		case 2:
-			sprintf(buf, "CLRMAC");
+			sprintf(buf, "clrmac");
 			break;
 
 		case 3:
-			sprintf(buf, "LDTLB");
+			sprintf(buf, "ldtlb");
 			break;
 		}
 		break;
@@ -359,11 +359,11 @@ f_08(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 0:
-			sprintf(buf, "CLRS");
+			sprintf(buf, "clrs");
 			break;
 
 		case 1:
-			sprintf(buf, "SETS");
+			sprintf(buf, "sets");
 			break;
 		}
 		break;
@@ -382,16 +382,16 @@ f_09(u_short *code, u_char *buf)
 	switch (fx) {
 	case 0:
 		if (rn != 0)	return;
-		sprintf(buf, "NOP");
+		sprintf(buf, "nop");
 		break;
 
 	case 1:
 		if (rn != 0)	return;
-		sprintf(buf, "DIV0U");
+		sprintf(buf, "div0u");
 		break;
 
 	case 2:
-		sprintf(buf, "MOVT    R%d", rn);
+		sprintf(buf, "movt    r%d", rn);
 		break;
 	} /* end of switch (fx) */
 }
@@ -410,15 +410,15 @@ f_0a(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "STS     MACH, R%d", rn);
+			sprintf(buf, "sts     mach, r%d", rn);
 			break;
 
 		case 1:
-			sprintf(buf, "STS     MACL, R%d", rn);
+			sprintf(buf, "sts     macl, r%d", rn);
 			break;
 
 		case 2:
-			sprintf(buf, "STS     PR, R%d", rn);
+			sprintf(buf, "sts     pr, r%d", rn);
 			break;
 		}
 		break;
@@ -426,11 +426,11 @@ f_0a(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 1:
-			sprintf(buf, "STS     FPUL, R%d", rn);
+			sprintf(buf, "sts     fpul, r%d", rn);
 			break;
 
 		case 2:
-			sprintf(buf, "STS     FPSCR, R%d", rn);
+			sprintf(buf, "sts     fpscr, r%d", rn);
 			break;
 		}
 		break;
@@ -449,15 +449,15 @@ f_0b(u_short *code, u_char *buf)
 	fx = (*code & 0x00f0) >> 4;
 	switch (fx) {
 	case 0:
-		sprintf(buf, "RTS");
+		sprintf(buf, "rts");
 		break;
 
 	case 1:
-		sprintf(buf, "SLEEP");
+		sprintf(buf, "sleep");
 		break;
 
 	case 2:
-		sprintf(buf, "RTE");
+		sprintf(buf, "rte");
 		break;
 	} /* end of switch (fx) */
 }
@@ -474,19 +474,19 @@ f_0c(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "MOV.B   @(R0, R%d), R%d", rm, rn);
+		sprintf(buf, "mov.b   @(r0, r%d), r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "MOV.W   @(R0, R%d), R%d", rm, rn);
+		sprintf(buf, "mov.w   @(r0, r%d), r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "MOV.L   @(R0, R%d), R%d", rm, rn);
+		sprintf(buf, "mov.l   @(r0, r%d), r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "MAC.L   @R%d+, R%d+", rm, rn);
+		sprintf(buf, "mac.l   @r%d+, r%d+", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -502,7 +502,7 @@ f_10(u_short *code, u_char *buf)
 	disp = (*code & 0x000f);
 	disp *= 4;
 
-	sprintf(buf, "MOV.L   R%d, @(%d, R%d)", rm, disp, rn);
+	sprintf(buf, "mov.l   r%d, @(%d, r%d)", rm, disp, rn);
 }
 
 
@@ -517,15 +517,15 @@ f_20(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "MOV.B   R%d, @R%d", rm, rn);
+		sprintf(buf, "mov.b   r%d, @r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "MOV.W   R%d, @R%d", rm, rn);
+		sprintf(buf, "mov.w   r%d, @r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "MOV.L   R%d, @R%d", rm, rn);
+		sprintf(buf, "mov.l   r%d, @r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -542,19 +542,19 @@ f_24(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "MOV.B   R%d, @-R%d", rm, rn);
+		sprintf(buf, "mov.b   r%d, @-r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "MOV.W   R%d, @-R%d", rm, rn);
+		sprintf(buf, "mov.w   r%d, @-r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "MOV.L   R%d, @-R%d", rm, rn);
+		sprintf(buf, "mov.l   r%d, @-r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "DIV0S   R%d, R%d)", rm, rn);
+		sprintf(buf, "div0s   r%d, r%d)", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -571,19 +571,19 @@ f_28(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "TST     R%d, R%d", rm, rn);
+		sprintf(buf, "tst     r%d, r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "AND     R%d, R%d", rm, rn);
+		sprintf(buf, "and     r%d, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "XOR     R%d, R%d", rm, rn);
+		sprintf(buf, "xor     r%d, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "OR      R%d, R%d", rm, rn);
+		sprintf(buf, "or      r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -600,19 +600,19 @@ f_2c(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "CMP/STR R%d, R%d", rm, rn);
+		sprintf(buf, "cmp/str r%d, r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "XTRCT   R%d, R%d", rm, rn);
+		sprintf(buf, "xtrct   r%d, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "MULU.W  R%d, R%d", rm, rn);
+		sprintf(buf, "mulu.w  r%d, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "MULS.W  R%d, R%d", rm, rn);
+		sprintf(buf, "muls.w  r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -629,15 +629,15 @@ f_30(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "CMP/EQ  R%d, R%d", rm, rn);
+		sprintf(buf, "cmp/eq  r%d, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "CMP/HS  R%d, R%d", rm, rn);
+		sprintf(buf, "cmp/hs  r%d, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "CMP/GE  R%d, R%d", rm, rn);
+		sprintf(buf, "cmp/ge  r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -654,19 +654,19 @@ f_34(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "DIV1    R%d, R%d", rm, rn);
+		sprintf(buf, "div1    r%d, r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "DMULU.L R%d, R%d", rm, rn);
+		sprintf(buf, "dmulu.l r%d, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "CMP/HI  R%d, R%d", rm, rn);
+		sprintf(buf, "cmp/hi  r%d, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "CMP/GT  R%d, R%d", rm, rn);
+		sprintf(buf, "cmp/gt  r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -683,15 +683,15 @@ f_38(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "SUB     R%d, R%d", rm, rn);
+		sprintf(buf, "sub     r%d, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "SUBC    R%d, R%d", rm, rn);
+		sprintf(buf, "subc    r%d, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "SUBV    R%d, R%d", rm, rn);
+		sprintf(buf, "subv    r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -708,19 +708,19 @@ f_3c(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "ADD     R%d, R%d", rm, rn);
+		sprintf(buf, "add     r%d, r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "DMULU.L R%d, R%d", rm, rn);
+		sprintf(buf, "dmulu.l r%d, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "ADDC    R%d, R%d", rm, rn);
+		sprintf(buf, "addc    r%d, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "ADDV    R%d, R%d", rm, rn);
+		sprintf(buf, "addv    r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -736,15 +736,15 @@ f_40(u_short *code, u_char *buf)
 
 	switch (fx) {
 	case 0:
-		sprintf(buf, "SHLL    R%d", rn);
+		sprintf(buf, "shll    r%d", rn);
 		break;
 
 	case 1:
-		sprintf(buf, "DT      R%d", rn);
+		sprintf(buf, "dt      r%d", rn);
 		break;
 
 	case 2:
-		sprintf(buf, "SHAL    R%d", rn);
+		sprintf(buf, "shal    r%d", rn);
 		break;
 	} /* end of switch (fx) */
 }
@@ -760,15 +760,15 @@ f_41(u_short *code, u_char *buf)
 
 	switch (fx) {
 	case 0:
-		sprintf(buf, "SHLR    R%d", rn);
+		sprintf(buf, "shlr    r%d", rn);
 		break;
 
 	case 1:
-		sprintf(buf, "CMP/PZ  R%d", rn);
+		sprintf(buf, "cmp/pz  r%d", rn);
 		break;
 
 	case 2:
-		sprintf(buf, "SHAR    R%d", rn);
+		sprintf(buf, "shar    r%d", rn);
 		break;
 	} /* end of switch (fx) */
 }
@@ -787,15 +787,15 @@ f_42(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "STS.L   MACH, @-R%d", rn);
+			sprintf(buf, "sts.l   mach, @-r%d", rn);
 			break;
 
 		case 1:
-			sprintf(buf, "STS.L   MACL, @-R%d", rn);
+			sprintf(buf, "sts.l   macl, @-r%d", rn);
 			break;
 
 		case 2:
-			sprintf(buf, "STS.L   PR, @-R%d", rn);
+			sprintf(buf, "sts.l   pr, @-r%d", rn);
 			break;
 		}
 		break;
@@ -803,11 +803,11 @@ f_42(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 1:
-			sprintf(buf, "STS.L   FPUL, @-R%d", rn);
+			sprintf(buf, "sts.l   fpul, @-r%d", rn);
 			break;
 
 		case 2:
-			sprintf(buf, "STS.L   FPSCR, @-R%d", rn);
+			sprintf(buf, "sts.l   fpscr, @-r%d", rn);
 			break;
 		}
 		break;
@@ -828,19 +828,19 @@ f_43(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "STC.L   SR, @-R%d", rn);
+			sprintf(buf, "stc.l   sr, @-r%d", rn);
 			break;
 
 		case 1:
-			sprintf(buf, "STC.L   GBR, @-R%d", rn);
+			sprintf(buf, "stc.l   gbr, @-r%d", rn);
 			break;
 
 		case 2:
-			sprintf(buf, "STC.L   VBR, @-R%d", rn);
+			sprintf(buf, "stc.l   vbr, @-r%d", rn);
 			break;
 
 		case 3:
-			sprintf(buf, "STC.L   SSR, @-R%d", rn);
+			sprintf(buf, "stc.l   ssr, @-r%d", rn);
 			break;
 		}
 		break;
@@ -848,17 +848,17 @@ f_43(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 0:
-			sprintf(buf, "STC.L   SPC, @-R%d", rn);
+			sprintf(buf, "stc.l   spc, @-r%d", rn);
 			break;
 		}
 		break;
 
 	case 2:
-		sprintf(buf, "STC.L   R%d_BANK, @-R%d", md, rn);
+		sprintf(buf, "stc.l   r%d_bank, @-r%d", md, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "STC.L   R%d_BANK, @-R%d", md+4, rn);
+		sprintf(buf, "stc.l   r%d_bank, @-r%d", md+4, rn);
 		break;
 	} /* end of switch (type) */
 }
@@ -874,11 +874,11 @@ f_44(u_short *code, u_char *buf)
 
 	switch (fx) {
 	case 0:
-		sprintf(buf, "ROTL    R%d", rn);
+		sprintf(buf, "rotl    r%d", rn);
 		break;
 
 	case 2:
-		sprintf(buf, "ROTCL   R%d", rn);
+		sprintf(buf, "rotcl   r%d", rn);
 		break;
 	} /* end of switch (fx) */
 }
@@ -894,15 +894,15 @@ f_45(u_short *code, u_char *buf)
 
 	switch (fx) {
 	case 0:
-		sprintf(buf, "ROTR    R%d", rn);
+		sprintf(buf, "rotr    r%d", rn);
 		break;
 
 	case 1:
-		sprintf(buf, "CMP/PL  R%d", rn);
+		sprintf(buf, "cmp/pl  r%d", rn);
 		break;
 
 	case 2:
-		sprintf(buf, "ROTCR   R%d", rn);
+		sprintf(buf, "rotcr   r%d", rn);
 		break;
 	} /* end of switch (fx) */
 }
@@ -921,15 +921,15 @@ f_46(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "LDS.L   @R%d+, MACH", rm);
+			sprintf(buf, "lds.l   @r%d+, mach", rm);
 			break;
 
 		case 1:
-			sprintf(buf, "LDS.L   @R%d+, MACL", rm);
+			sprintf(buf, "lds.l   @r%d+, macl", rm);
 			break;
 
 		case 2:
-			sprintf(buf, "LDS.L   @R%d+, PR", rm);
+			sprintf(buf, "lds.l   @r%d+, pr", rm);
 			break;
 		}
 		break;
@@ -937,11 +937,11 @@ f_46(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 1:
-			sprintf(buf, "LDS.L   @R%d+, FPUL", rm);
+			sprintf(buf, "lds.l   @r%d+, fpul", rm);
 			break;
 
 		case 2:
-			sprintf(buf, "LDS.L   @R%d+, FPSCR", rm);
+			sprintf(buf, "lds.l   @r%d+, fpscr", rm);
 			break;
 		}
 		break;
@@ -962,19 +962,19 @@ f_47(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "LDC.L   @R%d+, SR", rm);
+			sprintf(buf, "ldc.l   @r%d+, sr", rm);
 			break;
 
 		case 1:
-			sprintf(buf, "LDC.L   @R%d+, GBR", rm);
+			sprintf(buf, "ldc.l   @r%d+, gbr", rm);
 			break;
 
 		case 2:
-			sprintf(buf, "LDC.L   @R%d+, VBR", rm);
+			sprintf(buf, "ldc.l   @r%d+, vbr", rm);
 			break;
 
 		case 3:
-			sprintf(buf, "LDC.L   @R%d+, SSR", rm);
+			sprintf(buf, "ldc.l   @r%d+, ssr", rm);
 			break;
 		}
 		break;
@@ -982,17 +982,17 @@ f_47(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 0:
-			sprintf(buf, "LDC.L   @R%d+, SPC", rm);
+			sprintf(buf, "ldc.l   @r%d+, spc", rm);
 			break;
 		}
 		break;
 
 	case 2:
-		sprintf(buf, "LDC.L   @R%d+, R%d_BANK", rm, md);
+		sprintf(buf, "ldc.l   @r%d+, r%d_bank", rm, md);
 		break;
 
 	case 3:
-		sprintf(buf, "LDC.L   @R%d+, R%d_BANK", rm, md+4);
+		sprintf(buf, "ldc.l   @r%d+, r%d_bank", rm, md+4);
 		break;
 	} /* end of switch (type) */
 }
@@ -1008,15 +1008,15 @@ f_48(u_short *code, u_char *buf)
 
 	switch (fx) {
 	case 0:
-		sprintf(buf, "SHLL2   R%d", rn);
+		sprintf(buf, "shll2   r%d", rn);
 		break;
 
 	case 1:
-		sprintf(buf, "SHLL8   R%d", rn);
+		sprintf(buf, "shll8   r%d", rn);
 		break;
 
 	case 2:
-		sprintf(buf, "SHLL16  R%d", rn);
+		sprintf(buf, "shll16  r%d", rn);
 		break;
 	} /* end of switch (fx) */
 }
@@ -1032,15 +1032,15 @@ f_49(u_short *code, u_char *buf)
 
 	switch (fx) {
 	case 0:
-		sprintf(buf, "SHLR2   R%d", rn);
+		sprintf(buf, "shlr2   r%d", rn);
 		break;
 
 	case 1:
-		sprintf(buf, "SHLR8   R%d", rn);
+		sprintf(buf, "shlr8   r%d", rn);
 		break;
 
 	case 2:
-		sprintf(buf, "SHLR16  R%d", rn);
+		sprintf(buf, "shlr16  r%d", rn);
 		break;
 	} /* end of switch (fx) */
 }
@@ -1059,15 +1059,15 @@ f_4a(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "LDS     R%d, MACH", rm);
+			sprintf(buf, "lds     r%d, mach", rm);
 			break;
 
 		case 1:
-			sprintf(buf, "LDS     R%d, MACL", rm);
+			sprintf(buf, "lds     r%d, macl", rm);
 			break;
 
 		case 2:
-			sprintf(buf, "LDS     R%d, PR", rm);
+			sprintf(buf, "lds     r%d, pr", rm);
 			break;
 		}
 		break;
@@ -1075,11 +1075,11 @@ f_4a(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 1:
-			sprintf(buf, "LDS     R%d, FPUL", rm);
+			sprintf(buf, "lds     r%d, fpul", rm);
 			break;
 
 		case 2:
-			sprintf(buf, "LDS     R%d, FPSCR", rm);
+			sprintf(buf, "lds     r%d, fpscr", rm);
 			break;
 		}
 		break;
@@ -1097,15 +1097,15 @@ f_4b(u_short *code, u_char *buf)
 
 	switch (fx) {
 	case 0:
-		sprintf(buf, "JSR     @R%d", rm);
+		sprintf(buf, "jsr     @r%d", rm);
 		break;
 
 	case 1:
-		sprintf(buf, "TAS.B   @R%d", rm);
+		sprintf(buf, "tas.b   @r%d", rm);
 		break;
 
 	case 2:
-		sprintf(buf, "JMP     @R%d", rm);
+		sprintf(buf, "jmp     @r%d", rm);
 		break;
 	} /* end of switch (fx) */
 }
@@ -1118,7 +1118,7 @@ f_4c(u_short *code, u_char *buf)
 
 	rn   = (*code & 0x0f00) >> 8;
 	rm   = (*code & 0x00f0) >> 4;
-	sprintf(buf, "SHAD    R%d, R%d", rm, rn);
+	sprintf(buf, "shad    r%d, r%d", rm, rn);
 }
 
 
@@ -1129,7 +1129,7 @@ f_4d(u_short *code, u_char *buf)
 
 	rn   = (*code & 0x0f00) >> 8;
 	rm   = (*code & 0x00f0) >> 4;
-	sprintf(buf, "SHLD    R%d, R%d", rm, rn);
+	sprintf(buf, "shld    r%d, r%d", rm, rn);
 }
 
 
@@ -1146,19 +1146,19 @@ f_4e(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "LDC     R%d, SR", rm);
+			sprintf(buf, "ldc     r%d, sr", rm);
 			break;
 
 		case 1:
-			sprintf(buf, "LDC     R%d, GBR", rm);
+			sprintf(buf, "ldc     r%d, gbr", rm);
 			break;
 
 		case 2:
-			sprintf(buf, "LDC     R%d, VBR", rm);
+			sprintf(buf, "ldc     r%d, vbr", rm);
 			break;
 
 		case 3:
-			sprintf(buf, "LDC     R%d, SSR", rm);
+			sprintf(buf, "ldc     r%d, ssr", rm);
 			break;
 		}
 		break;
@@ -1166,17 +1166,17 @@ f_4e(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 0:
-			sprintf(buf, "LDC     R%d, SPC", rm);
+			sprintf(buf, "ldc     r%d, spc", rm);
 			break;
 		}
 		break;
 
 	case 2:
-		sprintf(buf, "LDC     R%d, R%d_BANK", rm, md);
+		sprintf(buf, "ldc     r%d, r%d_bank", rm, md);
 		break;
 
 	case 3:
-		sprintf(buf, "LDC     R%d, R%d_BANK", rm, md+4);
+		sprintf(buf, "ldc     r%d, r%d_bank", rm, md+4);
 		break;
 	} /* end of switch (type) */
 }
@@ -1189,7 +1189,7 @@ f_4f(u_short *code, u_char *buf)
 
 	rn   = (*code & 0x0f00) >> 8;
 	rm   = (*code & 0x00f0) >> 4;
-	sprintf(buf, "MAC.W   @R%d+, @R%d+", rm, rn);
+	sprintf(buf, "mac.w   @r%d+, @r%d+", rm, rn);
 }
 
 
@@ -1203,7 +1203,7 @@ f_50(u_short *code, u_char *buf)
 	disp = (*code & 0x000f);
 	disp *= 4;
 
-	sprintf(buf, "MOV.L   @(%d, R%d), R%d", disp, rm, rn);
+	sprintf(buf, "mov.l   @(%d, r%d), r%d", disp, rm, rn);
 }
 
 
@@ -1218,19 +1218,19 @@ f_60(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "MOV.B   @R%d, R%d", rm, rn);
+		sprintf(buf, "mov.b   @r%d, r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "MOV.W   @R%d, R%d", rm, rn);
+		sprintf(buf, "mov.w   @r%d, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "MOV.L   @R%d, R%d", rm, rn);
+		sprintf(buf, "mov.l   @r%d, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "MOV     R%d, R%d", rm, rn);
+		sprintf(buf, "mov     r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -1247,19 +1247,19 @@ f_64(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "MOV.B   @R%d+, R%d", rm, rn);
+		sprintf(buf, "mov.b   @r%d+, r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "MOV.W   @R%d+, R%d", rm, rn);
+		sprintf(buf, "mov.w   @r%d+, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "MOV.L   @R%d+, R%d", rm, rn);
+		sprintf(buf, "mov.l   @r%d+, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "NOT     R%d, R%d", rm, rn);
+		sprintf(buf, "not     r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -1276,19 +1276,19 @@ f_68(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "SWAP.B  R%d, R%d", rm, rn);
+		sprintf(buf, "swap.b  r%d, r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "SWAP.W  R%d, R%d", rm, rn);
+		sprintf(buf, "swap.w  r%d, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "NEGC    R%d, R%d", rm, rn);
+		sprintf(buf, "negc    r%d, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "NEG     R%d, R%d", rm, rn);
+		sprintf(buf, "neg     r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -1305,19 +1305,19 @@ f_6c(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "EXTU.B  R%d, R%d", rm, rn);
+		sprintf(buf, "extu.b  r%d, r%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "EXTU.W  R%d, R%d", rm, rn);
+		sprintf(buf, "extu.w  r%d, r%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "EXTS.B  R%d, R%d", rm, rn);
+		sprintf(buf, "exts.b  r%d, r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "EXTS.W  R%d, R%d", rm, rn);
+		sprintf(buf, "exts.w  r%d, r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -1331,7 +1331,7 @@ f_70(u_short *code, u_char *buf)
 	rn   = (*code & 0x0f00) >> 8;
 	imm  = (int) ((char) (*code & 0x00ff));
 
-	sprintf(buf, "ADD     #0x%X, R%d", imm, rn);
+	sprintf(buf, "add     #0x%x, r%d", imm, rn);
 }
 
 
@@ -1350,12 +1350,12 @@ f_80(u_short *code, u_char *buf)
 
 		switch (md) {
 		case 0:
-			sprintf(buf, "MOV.B   R0, @(%d, R%d)", disp, rn);
+			sprintf(buf, "mov.b   r0, @(%d, r%d)", disp, rn);
 			break;
 
 		case 1:
 			disp *= 2;
-			sprintf(buf, "MOV.W   R0, @(%d, R%d)", disp, rn);
+			sprintf(buf, "mov.w   r0, @(%d, r%d)", disp, rn);
 			break;
 		}
 		break;
@@ -1366,12 +1366,12 @@ f_80(u_short *code, u_char *buf)
 
 		switch (md) {
 		case 0:
-			sprintf(buf, "MOV.B   @(%d, R%d), R0", disp, rn);
+			sprintf(buf, "mov.b   @(%d, r%d), r0", disp, rn);
 			break;
 
 		case 1:
 			disp *= 2;
-			sprintf(buf, "MOV.W   @(%d, R%d), R0", disp, rn);
+			sprintf(buf, "mov.w   @(%d, r%d), r0", disp, rn);
 			break;
 		}
 		break;
@@ -1381,19 +1381,19 @@ f_80(u_short *code, u_char *buf)
 
 		switch (md) {
 		case 0:
-			sprintf(buf, "CMP/EQ  #%d, R0", disp);
+			sprintf(buf, "cmp/eq  #%d, r0", disp);
 			break;
 
 		case 1:
 			disp = (int) ((char) disp);
 			disp *= 2;
-			sprintf(buf, "BT      0x%X", disp);
+			sprintf(buf, "bt      0x%x", disp);
 			break;
 
 		case 3:
 			disp = (int) ((char) disp);
 			disp *= 2;
-			sprintf(buf, "BF      0x%X", disp);
+			sprintf(buf, "bf      0x%x", disp);
 			break;
 		}
 		break;
@@ -1404,11 +1404,11 @@ f_80(u_short *code, u_char *buf)
 
 		switch (md) {
 		case 1:
-			sprintf(buf, "BT/S    0x%X", disp);
+			sprintf(buf, "bt/s    0x%x", disp);
 			break;
 
 		case 3:
-			sprintf(buf, "BF/S    0x%X", disp);
+			sprintf(buf, "bf/s    0x%x", disp);
 			break;
 		}
 		break;
@@ -1425,7 +1425,7 @@ f_90(u_short *code, u_char *buf)
 	disp = (*code & 0x00ff);
 	disp *= 2;
 
-	sprintf(buf, "MOV.W   @(%d, PC), R%d", disp, rn);
+	sprintf(buf, "mov.w   @(%d, pc), r%d", disp, rn);
 }
 
 
@@ -1443,7 +1443,7 @@ f_a0(u_short *code, u_char *buf)
 	}
 	disp *= 2;
 
-	sprintf(buf, "BRA     %d(0x%X)", disp, disp);
+	sprintf(buf, "bra     %d(0x%x)", disp, disp);
 }
 
 
@@ -1461,7 +1461,7 @@ f_b0(u_short *code, u_char *buf)
 	}
 	disp *= 2;
 
-	sprintf(buf, "BSR     %d(0x%X)", disp, disp);
+	sprintf(buf, "bsr     %d(0x%x)", disp, disp);
 }
 
 
@@ -1478,21 +1478,21 @@ f_c0(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "MOV.B   R0, @(%d, GBR)", imm);
+			sprintf(buf, "mov.b   r0, @(%d, gbr)", imm);
 			break;
 
 		case 1:
 			imm *= 2;
-			sprintf(buf, "MOV.W   R0, @(%d, GBR)", imm);
+			sprintf(buf, "mov.w   r0, @(%d, gbr)", imm);
 			break;
 
 		case 2:
 			imm *= 4;
-			sprintf(buf, "MOV.L   R0, @(%d, GBR)", imm);
+			sprintf(buf, "mov.l   r0, @(%d, gbr)", imm);
 			break;
 
 		case 3:
-			sprintf(buf, "TRAPA   #%d", imm);
+			sprintf(buf, "trapa   #%d", imm);
 			break;
 		}
 		break;
@@ -1500,22 +1500,22 @@ f_c0(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 0:
-			sprintf(buf, "MOV.B   @(%d, GBR), R0", imm);
+			sprintf(buf, "mov.b   @(%d, gbr), r0", imm);
 			break;
 
 		case 1:
 			imm *= 2;
-			sprintf(buf, "MOV.W   @(%d, GBR), R0", imm);
+			sprintf(buf, "mov.w   @(%d, gbr), r0", imm);
 			break;
 
 		case 2:
 			imm *= 4;
-			sprintf(buf, "MOV.L   @(%d, GBR), R0", imm);
+			sprintf(buf, "mov.l   @(%d, gbr), r0", imm);
 			break;
 
 		case 3:
 			imm *= 4;
-			sprintf(buf, "MOVA    @(%d, PC), R0", imm);
+			sprintf(buf, "mova    @(%d, pc), r0", imm);
 			break;
 		}
 		break;
@@ -1523,19 +1523,19 @@ f_c0(u_short *code, u_char *buf)
 	case 2:
 		switch (md) {
 		case 0:
-			sprintf(buf, "TST     #%d, R0", imm);
+			sprintf(buf, "tst     #%d, r0", imm);
 			break;
 
 		case 1:
-			sprintf(buf, "AND     #%d, R0", imm);
+			sprintf(buf, "and     #%d, r0", imm);
 			break;
 
 		case 2:
-			sprintf(buf, "XOR     #%d, R0", imm);
+			sprintf(buf, "xor     #%d, r0", imm);
 			break;
 
 		case 3:
-			sprintf(buf, "OR      #%d, R0", imm);
+			sprintf(buf, "or      #%d, r0", imm);
 			break;
 		}
 		break;
@@ -1543,19 +1543,19 @@ f_c0(u_short *code, u_char *buf)
 	case 3:
 		switch (md) {
 		case 0:
-			sprintf(buf, "TST.B   #%d, @(R0, GBR)", imm);
+			sprintf(buf, "tst.b   #%d, @(r0, gbr)", imm);
 			break;
 
 		case 1:
-			sprintf(buf, "AND.B   #%d, @(R0, GBR)", imm);
+			sprintf(buf, "and.b   #%d, @(r0, gbr)", imm);
 			break;
 
 		case 2:
-			sprintf(buf, "XOR.B   #%d, @(R0, GBR)", imm);
+			sprintf(buf, "xor.b   #%d, @(r0, gbr)", imm);
 			break;
 
 		case 3:
-			sprintf(buf, "OR.B    #%d, @(R0, GBR)", imm);
+			sprintf(buf, "or.b    #%d, @(r0, gbr)", imm);
 			break;
 		}
 		break;
@@ -1572,7 +1572,7 @@ f_d0(u_short *code, u_char *buf)
 	disp = (*code & 0x00ff);
 	disp *= 4;
 
-	sprintf(buf, "MOV.L   @(%d, PC), R%d", disp, rn);
+	sprintf(buf, "mov.l   @(%d, pc), r%d", disp, rn);
 }
 
 
@@ -1584,7 +1584,7 @@ f_e0(u_short *code, u_char *buf)
 	rn   = (*code & 0x0f00) >> 8;
 	imm  = (int) ((char) (*code & 0x00ff));
 
-	sprintf(buf, "MOV     #0x%X, R%d", imm, rn);
+	sprintf(buf, "mov     #0x%x, r%d", imm, rn);
 }
 
 
@@ -1599,19 +1599,19 @@ f_f0(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "FADD    FR%d, FR%d", rm, rn);
+		sprintf(buf, "fadd    fr%d, fr%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "FSUB    FR%d, FR%d", rm, rn);
+		sprintf(buf, "fsub    fr%d, fr%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "FMUL    FR%d, FR%d", rm, rn);
+		sprintf(buf, "fmul    fr%d, fr%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "FDIV    FR%d, FR%d", rm, rn);
+		sprintf(buf, "fdiv    fr%d, fr%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -1628,19 +1628,19 @@ f_f4(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "FCMP/EQ FR%d, FR%d", rm, rn);
+		sprintf(buf, "fcmp/eq fr%d, fr%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "FCMP/GT FR%d, FR%d", rm, rn);
+		sprintf(buf, "fcmp/gt fr%d, fr%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "FMOV.S  @(R0, R%d), FR%d", rm, rn);
+		sprintf(buf, "fmov.s  @(r0, r%d), fr%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "FMOV.S  FR%d, @(R0, R%d)", rm, rn);
+		sprintf(buf, "fmov.s  fr%d, @(r0, r%d)", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -1657,19 +1657,19 @@ f_f8(u_short *code, u_char *buf)
 
 	switch (md) {
 	case 0:
-		sprintf(buf, "FMOV.S  @R%d, FR%d", rm, rn);
+		sprintf(buf, "fmov.s  @r%d, fr%d", rm, rn);
 		break;
 
 	case 1:
-		sprintf(buf, "FMOV.S  @R%d+, FR%d", rm, rn);
+		sprintf(buf, "fmov.s  @r%d+, fr%d", rm, rn);
 		break;
 
 	case 2:
-		sprintf(buf, "FMOV.S  FR%d, @R%d", rm, rn);
+		sprintf(buf, "fmov.s  fr%d, @r%d", rm, rn);
 		break;
 
 	case 3:
-		sprintf(buf, "FMOV.S  FR%d, @-R%d", rm, rn);
+		sprintf(buf, "fmov.s  fr%d, @-r%d", rm, rn);
 		break;
 	} /* end of switch (md) */
 }
@@ -1683,7 +1683,7 @@ f_fc(u_short *code, u_char *buf)
 	rn   = (*code & 0x0f00) >> 8;
 	rm   = (*code & 0x00f0) >> 4;
 
-	sprintf(buf, "FMOV    FR%d, FR%d", rm, rn);
+	sprintf(buf, "fmov    fr%d, fr%d", rm, rn);
 }
 
 
@@ -1700,19 +1700,19 @@ f_fd(u_short *code, u_char *buf)
 	case 0:
 		switch (md) {
 		case 0:
-			sprintf(buf, "FSTS    FPUL, FR%d", rn);
+			sprintf(buf, "fsts    fpul, fr%d", rn);
 			break;
 
 		case 1:
-			sprintf(buf, "FLDS    FR%d, FPUL", rn);
+			sprintf(buf, "flds    fr%d, fpul", rn);
 			break;
 
 		case 2:
-			sprintf(buf, "FLOAT   FPUL, FR%d", rn);
+			sprintf(buf, "float   fpul, fr%d", rn);
 			break;
 
 		case 3:
-			sprintf(buf, "FTRC    FR%d, FPUL", rn);
+			sprintf(buf, "ftrc    fr%d, fpul", rn);
 			break;
 		}
 		break;
@@ -1720,15 +1720,15 @@ f_fd(u_short *code, u_char *buf)
 	case 1:
 		switch (md) {
 		case 0:
-			sprintf(buf, "FNEG    FR%d", rn);
+			sprintf(buf, "fneg    fr%d", rn);
 			break;
 
 		case 1:
-			sprintf(buf, "FABS    FR%d", rn);
+			sprintf(buf, "fabs    fr%d", rn);
 			break;
 
 		case 2:
-			sprintf(buf, "FSQRT   FR%d", rn);
+			sprintf(buf, "fsqrt   fr%d", rn);
 			break;
 		}
 		break;
@@ -1737,7 +1737,7 @@ f_fd(u_short *code, u_char *buf)
 		switch (md) {
 		case 0:
 		case 1:
-			sprintf(buf, "FLDI%d   FR%d", md, rn);
+			sprintf(buf, "fldi%d   fr%d", md, rn);
 			break;
 		}
 		break;
@@ -1753,5 +1753,5 @@ f_fe(u_short *code, u_char *buf)
 	rn   = (*code & 0x0f00) >> 8;
 	rm   = (*code & 0x00f0) >> 4;
 
-	sprintf(buf, "FMAC    FR0, FR%d, FR%d", rm, rn);
+	sprintf(buf, "fmac    fr0, fr%d, fr%d", rm, rn);
 }
