@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.5 1998/10/15 01:02:55 ross Exp $ */
+/* $NetBSD: start.S,v 1.6 1999/03/31 03:03:01 cgd Exp $ */
 
 /*  
  * Mach Operating System
@@ -51,29 +51,23 @@ Lstartgp:
 #ifndef PRIMARY_BOOTBLOCK
 	lda	sp,start		/* start stack below text */
 	lda	sp,-ENTRY_FRAME(sp)
-#endif
 
 	or	a0,zero,s0
+#endif
 	lda	a0,_edata
 	lda	a1,_end
 	subq	a1,a0,a1
 	CALL(bzero)
+#ifndef PRIMARY_BOOTBLOCK
 	or	s0,zero,a0
+#endif
 
-
-	CALL(main)			/* transfer to C */
+	CALL(main_)			/* transfer to C */
 
 XLEAF(_rtt, 0)
 XLEAF(halt, 0)
 	call_pal PAL_halt		/* halt if we ever return */
 END(start)
-
-/*
- * Dummy routine for GCC2.
- */
-LEAF(__main,0)
-	RET
-END(__main)
 
 /*
  * cpu_number
