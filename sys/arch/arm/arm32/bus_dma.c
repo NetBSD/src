@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.42 2005/01/02 22:47:26 chris Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.43 2005/03/09 19:04:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2005/01/02 22:47:26 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43 2005/03/09 19:04:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	 * previous segment if possible.
 	 */
 	if (nseg > 0 && curaddr == lastaddr &&
-	    segs[nseg-1].ds_len + sgsize <= map->_dm_maxsegsz &&
+	    segs[nseg-1].ds_len + sgsize <= map->dm_maxsegsz &&
 	    (map->_dm_boundary == 0 ||
 	     (segs[nseg-1].ds_addr & bmask) == (curaddr & bmask))) {
 	     	/* coalesce */
@@ -202,12 +202,13 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map = (struct arm32_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->_dm_origbuf = NULL;
 	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
 	map->_dm_proc = NULL;
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -233,6 +234,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	/*
 	 * Explicit unload.
 	 */
+	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	map->_dm_origbuf = NULL;
@@ -262,6 +264,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -302,6 +305,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -413,6 +417,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.12 2004/11/28 17:34:46 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.13 2005/03/09 19:04:44 matt Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2004/11/28 17:34:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2005/03/09 19:04:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,12 +108,13 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map = (struct m68k_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	if (t->_boundary != 0 && t->_boundary < boundary)
 		map->_dm_boundary = t->_boundary;
 	else
 		map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -200,7 +201,7 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz &&
+			     map->dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
 			     (curaddr & bmask)))
@@ -258,6 +259,7 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -291,6 +293,7 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -339,6 +342,7 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -404,7 +408,7 @@ _bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
 		int i;
 		for (i=0;i<nsegs;i++) {
 #ifdef DIAGNOSTIC
-			if (map->_dm_maxsegsz < map->dm_segs[i].ds_len) {
+			if (map->dm_maxsegsz < map->dm_segs[i].ds_len) {
 				panic("_bus_dmamap_load_raw_direct: segment too large for map");
 			}
 #endif
@@ -432,6 +436,7 @@ _bus_dmamap_unload(t, map)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
