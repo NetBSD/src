@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.4 1997/04/16 23:32:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,7 +54,7 @@ struct ofc_softc {
 
 static int stdin, stdout;
 
-static int ofcmatch __P((struct device *, void *, void *));
+static int ofcmatch __P((struct device *, struct cfdata *, void *));
 static void ofcattach __P((struct device *, struct device *, void *));
 
 struct cfattach ofcons_ca = {
@@ -70,7 +70,8 @@ static int ofcprobe __P((void));
 static int
 ofcmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct ofprobe *ofp = aux;
 	
