@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.88 2000/10/27 22:09:48 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.89 2000/10/31 14:01:33 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1858,3 +1858,16 @@ lib/libkvm/kvm_sparc64.c			1.6
 lib/libkvm/kvm_vax.c				1.11-1.12
 
   Use %lx to format u_long parameter.
+
+libexec/ld.aout_so/rtld.c			1.77
+
+  In dlopen(), use the main program's library search path, to match
+  semantics of other systems (and our ELF).
+
+usr.sbin/tcpdump/print-atalk.c			1.7-1.8
+usr.sbin/tcpdump/print-icmp.c			1.7
+usr.sbin/tcpdump/util.c				1.8
+
+  Change from sprintf() to snprintf() where we may print externally
+  supplied data of unknown length.  Also fix an endianness problem
+  in print-atalk.c.
