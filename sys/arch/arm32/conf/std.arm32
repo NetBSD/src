@@ -1,4 +1,4 @@
-#	$NetBSD: std.arm32,v 1.7 1998/06/09 01:15:50 tv Exp $
+#	$NetBSD: std.arm32,v 1.8 1998/09/06 02:37:48 mark Exp $
 #
 # standard NetBSD/arm32 options
 
@@ -7,6 +7,8 @@ machine	arm32
 options 	SWAPPAGER	# paging; REQUIRED
 options 	VNODEPAGER	# mmap() of files
 options 	DEVPAGER	# mmap() of devices
+
+options 	UVM		# Use UVM instead of Mach VM.
 
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT

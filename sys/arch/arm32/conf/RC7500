@@ -1,4 +1,4 @@
-#	$NetBSD: RC7500,v 1.23 1998/09/05 01:14:43 mark Exp $
+#	$NetBSD: RC7500,v 1.24 1998/09/06 02:37:47 mark Exp $
 #
 #	RC7500 - Config for the VLSI RC7500 board
 #
@@ -16,7 +16,6 @@ maxusers	32
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
-options 	UVM		# Use UVM instead of Mach VM.
 
 # CPU options
 
