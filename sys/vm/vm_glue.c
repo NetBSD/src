@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.57 1996/10/02 18:05:10 ws Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.58 1996/10/10 17:16:20 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -389,7 +389,7 @@ loop:
 	}
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: running, procp %p pri %d\n", pp, ppri);
+		kprintf("scheduler: running, procp %p pri %d\n", pp, ppri);
 #endif
 	/*
 	 * Nothing to do, back to sleep
@@ -407,9 +407,9 @@ loop:
 	if (cnt.v_free_count > atop(USPACE)) {
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPIN)
-			printf("swapin: pid %d(%s)@%p, pri %d free %d\n",
-			       p->p_pid, p->p_comm, p->p_addr,
-			       ppri, cnt.v_free_count);
+			kprintf("swapin: pid %d(%s)@%p, pri %d free %d\n",
+			    p->p_pid, p->p_comm, p->p_addr,
+			    ppri, cnt.v_free_count);
 #endif
 		swapin(p);
 		goto loop;
@@ -420,15 +420,15 @@ loop:
 	 */
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: no room for pid %d(%s), free %d\n",
-		       p->p_pid, p->p_comm, cnt.v_free_count);
+		kprintf("scheduler: no room for pid %d(%s), free %d\n",
+		    p->p_pid, p->p_comm, cnt.v_free_count);
 #endif
 	(void) splhigh();
 	VM_WAIT;
 	(void) spl0();
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: room again, free %d\n", cnt.v_free_count);
+		kprintf("scheduler: room again, free %d\n", cnt.v_free_count);
 #endif
 	goto loop;
 }
@@ -495,7 +495,7 @@ swapout_threads()
 			p = outp2;
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
-			printf("swapout_threads: no duds, try procp %p\n", p);
+			kprintf("swapout_threads: no duds, try procp %p\n", p);
 #endif
 		if (p)
 			swapout(p);
@@ -511,9 +511,9 @@ swapout(p)
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
-		printf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
-		       p->p_pid, p->p_comm, p->p_addr, p->p_stat,
-		       p->p_slptime, cnt.v_free_count);
+		kprintf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
+		    p->p_pid, p->p_comm, p->p_addr, p->p_stat,
+		    p->p_slptime, cnt.v_free_count);
 #endif
 
 	/*
@@ -607,20 +607,27 @@ void
 #if __STDC__
 iprintf(void (*pr)(const char *, ...), const char *fmt, ...)
 #else
-iprintf(pr, fmt /* , va_alist */)
-	void (*pr)();
-	char *fmt;
-	/* va_dcl */
+iprintf(va_alist)
+	va_dcl
 #endif
 {
 	register int i;
 	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	void (*pr) __P((const char *, ...));
+	const char *fmt;
+
+	va_start(ap);
+	pr = va_arg(ap, void (*) __P((const char *, ...)));
+	fmt = va_arg(ap, const char *);
+#endif
 
 	for (i = indent; i >= 8; i -= 8)
 		(*pr)("\t");
 	while (--i >= 0)
 		(*pr)(" ");
-	va_start(ap, fmt);
 	(*pr)("%:", fmt, ap);
 	va_end(ap);
 }
