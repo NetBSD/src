@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $ */
+/* $NetBSD: disksubr.c,v 1.16.12.1 2000/11/20 19:56:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.12.1 2000/11/20 19:56:33 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -46,16 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $
 #include <machine/autoconf.h>
 
 extern struct device *bootdv;
-
-#define	b_cylin	b_resid				/* XXX */
-
-/* was this the boot device ? */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-}
 
 /*
  * Attempt to read a disk label from a device
@@ -95,7 +85,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);  
@@ -106,7 +96,7 @@ readdisklabel(dev, strat, lp, clp)
 		goto done;
 	}
 
-	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp))
 			msg = "NetBSD disk label corrupted";
@@ -131,7 +121,7 @@ readdisklabel(dev, strat, lp, clp)
 			else
 				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
 			bp->b_bcount = lp->d_secsize;
-			bp->b_cylin = lp->d_ncylinders - 1;
+			bp->b_cylinder = lp->d_ncylinders - 1;
 			(*strat)(bp);
 
 			/* if successful, validate, otherwise try another */
@@ -233,14 +223,14 @@ writedisklabel(dev, strat, lp, clp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;           /* get current label */
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
-	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	*dlp = *lp;     /* struct assignment */
 
 	/*
@@ -251,7 +241,7 @@ writedisklabel(dev, strat, lp, clp)
 		int i;
 		u_long *dp, sum;
 
-		dp = (u_long *)bp->b_un.b_addr;
+		dp = (u_long *)bp->b_data;
 		sum = 0;
 		for (i = 0; i < 63; i++)
 			sum += dp[i];
@@ -279,9 +269,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-#define dkpart(dev) (minor(dev) & 7)
-
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsect = lp->d_partitions[RAW_PART].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;

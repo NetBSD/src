@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.14 1999/03/26 00:15:05 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.14.8.1 2000/11/20 19:56:56 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,7 @@
  * consider doing that at some point, but it might require changes
  * to the exec code.
  */
-#define	USRTEXT		CLBYTES
+#define	USRTEXT		NBPG
 #define	USRSTACK	((vaddr_t)0x0000000200000000)		/* 8G */
 
 /*
@@ -99,18 +99,6 @@
 #endif
 
 /*
- * Boundary at which to place first MAPMEM segment if not explicitly
- * specified.  Should be a power of two.  This allows some slop for
- * the data segment to grow underneath the first mapped segment.
- */
-#define MMSEG		0x200000
-
-/*
- * The size of the clock loop.
- */
-#define	LOOPPAGES	(maxfree - firstfree)
-
-/*
  * The time for a process to be blocked before being very swappable.
  * This is a number of seconds which the system takes as being a non-trivial
  * amount of real time.  You probably shouldn't change this;
@@ -120,17 +108,6 @@
  * change over time.
  */
 #define	MAXSLP 		20
-
-/*
- * A swapped in process is given a small amount of core without being bothered
- * by the page replacement algorithm.  Basically this says that if you are
- * swapped in you deserve some resources.  We protect the last SAFERSS
- * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES+CLSIZE pages which are not
- * paged anyways, in addition to SAFERSS.
- */
-#define	SAFERSS		10		/* nominal ``small'' resident set size
-					   protected against replacement */
 
 /*
  * Mach derived constants
@@ -144,17 +121,7 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)ALPHA_K1SEG_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define _VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define _VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
-
-#ifndef	_KERNEL
-#define VM_KMEM_SIZE		_VM_KMEM_SIZE
-#define VM_PHYS_SIZE		_VM_PHYS_SIZE
-#else
-extern u_int32_t vm_kmem_size, vm_phys_size;
-#define VM_KMEM_SIZE		vm_kmem_size
-#define VM_PHYS_SIZE		vm_phys_size
-#endif /* _KERNEL */
+#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 /* some Alpha-specific constants */
 #define	VPTBASE		((vaddr_t)0xfffffffc00000000)	/* Virt. pg table */

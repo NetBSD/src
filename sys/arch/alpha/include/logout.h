@@ -1,4 +1,4 @@
-/* $NetBSD: logout.h,v 1.1 1998/07/08 00:36:18 mjacob Exp $ */
+/* $NetBSD: logout.h,v 1.1.14.1 2000/11/20 19:56:52 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -140,5 +140,5 @@ typedef struct {
 
 
 #ifdef	_KERNEL
-extern void ev5_logout_print __P((mc_hdr_ev5 *, mc_uc_ev5 *));
+extern void ev5_logout_print(mc_hdr_ev5 *, mc_uc_ev5 *);
 #endif

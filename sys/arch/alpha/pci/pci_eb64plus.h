@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.h,v 1.1 1998/04/29 00:25:17 thorpej Exp $ */
+/* $NetBSD: pci_eb64plus.h,v 1.1.14.1 2000/11/20 19:57:15 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,3 @@
  */
 
 void	pci_eb64plus_pickintr __P((struct apecs_config *));
-
-#ifdef EVCNT_COUNTERS
-extern struct evcnt eb64plus_intr_evcnt;
-#endif

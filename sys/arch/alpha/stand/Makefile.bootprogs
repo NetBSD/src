@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.14 1999/09/10 07:31:16 ross Exp $
+# $NetBSD: Makefile.bootprogs,v 1.14.2.1 2000/11/20 19:57:20 bouyer Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -24,7 +24,7 @@ machine-links:
 	    ln -s $S/arch/alpha/include alpha
 CLEANFILES+=machine alpha
 
-all: machine-links ${PROG}
+realall: machine-links ${PROG}
 
 AFLAGS+=	-DASSEMBLER
 # -I${.CURDIR}/../.. done by Makefile.inc
@@ -37,6 +37,17 @@ CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
+.endif
+
+# if there is a 'version' file, add rule for vers.c and add it to SRCS
+# and CLEANFILES
+.if exists(version)
+.PHONY: vers.c
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "alpha"
+
+SRCS+=	vers.c
+CLEANFILES+= vers.c
 .endif
 
 # For descriptions of regions available to bootstrap programs, see

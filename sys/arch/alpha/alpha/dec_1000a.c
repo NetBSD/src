@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.5.2.1 1999/10/19 19:25:24 thorpej Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.5.2.2 2000/11/20 19:56:22 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.5.2.1 1999/10/19 19:25:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.5.2.2 2000/11/20 19:56:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.5.2.1 1999/10/19 19:25:24 thorpej Ex
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -107,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.5.2.1 1999/10/19 19:25:24 thorpej Ex
 #endif
 static int comcnrate = CONSPEED;
 
-void dec_1000a_init __P((void));
+void _dec_1000a_init __P((void));
 static void dec_1000a_cons_init __P((void));
 static void dec_1000a_device_register __P((struct device *, void *));
 
@@ -122,7 +124,7 @@ static const struct alpha_variation_table dec_1000a_variations[] = {
 };
 
 void
-dec_1000a_init()
+_dec_1000a_init()
 {
 	u_int64_t variation;
 
@@ -200,7 +202,7 @@ dec_1000a_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(iot, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(iot, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
@@ -240,7 +242,8 @@ dec_1000a_device_register(dev, aux)
 
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
 #if 0
 		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
 #endif

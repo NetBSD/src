@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_pci.c,v 1.1 1999/06/29 06:46:47 ross Exp $ */
+/* $NetBSD: tsp_pci.c,v 1.1.6.1 2000/11/20 19:57:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -39,7 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 

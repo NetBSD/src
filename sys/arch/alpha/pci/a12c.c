@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.4 1998/05/14 00:01:31 thorpej Exp $ */
+/* $NetBSD: a12c.c,v 1.4.14.1 2000/11/20 19:57:04 bouyer Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.4 1998/05/14 00:01:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.4.14.1 2000/11/20 19:57:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.4 1998/05/14 00:01:31 thorpej Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
@@ -144,13 +144,10 @@ a12cattach(parent, self, aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.4 $", 
+	printf(": driver %s over logic %x\n", "$Revision: 1.4.14.1 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);
-#ifdef EVCNT_COUNTERS
-	evcnt_attach(self, "intr", &a12_intr_evcnt);
-#endif
 	clockfns = &noclock_fns;	/* XXX? */
 
 	bzero(&pba, sizeof(pba));
@@ -160,7 +157,8 @@ a12cattach(parent, self, aux)
 	pba.pba_dmat = &ccp->ac_dmat_direct;
 	pba.pba_pc = &ccp->ac_pc;
 	pba.pba_bus = 0;
-	pba.pba_flags = PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_MEM_ENABLED |
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
 	config_found(self, &pba, a12cprint);
 

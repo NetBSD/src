@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.13.2.1 1999/10/19 19:25:25 thorpej Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.13.2.2 2000/11/20 19:56:28 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.13.2.1 1999/10/19 19:25:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.13.2.2 2000/11/20 19:56:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.13.2.1 1999/10/19 19:25:25 thorpej E
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -139,7 +141,8 @@ dec_kn300_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&ccp->cc_iot, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
@@ -179,11 +182,10 @@ dec_kn300_device_register(dev, aux)
 		return;
 
 	if (!initted) {
-		scsiboot = (strcmp(b->protocol, "scsi") == 0) ||
-		    (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "bootp") == 0) ||
-		    (strcmp(b->protocol, "mop") == 0);
-#if	BDEBUG
+		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
+#ifdef BDEBUG
 		printf("proto:%s bus:%d slot:%d chan:%d", b->protocol,
 		    b->bus, b->slot, b->channel);
 		if (b->remote_address)
@@ -208,7 +210,7 @@ dec_kn300_device_register(dev, aux)
 				return;
 	
 			pcidev = dev;
-#if	BDEBUG
+#ifdef BDEBUG
 			printf("\npcidev = %s\n", pcidev->dv_xname);
 #endif
 			return;
@@ -227,7 +229,7 @@ dec_kn300_device_register(dev, aux)
 			/* XXX function? */
 	
 			scsidev = dev;
-#if	BDEBUG
+#ifdef BDEBUG
 			printf("\nscsidev = %s\n", scsidev->dv_xname);
 #endif
 
@@ -260,7 +262,7 @@ dec_kn300_device_register(dev, aux)
 
 		/* we've found it! */
 		booted_device = dev;
-#if	BDEBUG
+#ifdef BDEBUG
 		printf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 		found = 1;
@@ -278,8 +280,9 @@ dec_kn300_device_register(dev, aux)
 			/* XXX function? */
 	
 			booted_device = dev;
-#if	BDEBUG
-			printf("\nbooted_device = %s\n", booted_device->dv_xname);
+#ifdef BDEBUG
+			printf("\nbooted_device = %s\n",
+			    booted_device->dv_xname);
 #endif
 			found = 1;
 			return;
@@ -412,7 +415,7 @@ kn300_mcheck(mces, type, logout, framep)
 	/*
 	 * If we expected a machine check, just go handle it in common code.
 	 */
-	mcp  = cpu_mchkinfo();
+	mcp = &curcpu()->ci_mcinfo;
 	if (mcp->mc_expected) {
 		machine_check(mces, framep, type, logout);
 		return;

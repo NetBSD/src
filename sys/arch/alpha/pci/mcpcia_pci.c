@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.3 1998/05/05 22:01:54 mjacob Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.3.14.1 2000/11/20 19:57:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,13 +32,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.3 1998/05/05 22:01:54 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.3.14.1 2000/11/20 19:57:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

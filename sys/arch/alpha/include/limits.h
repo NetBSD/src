@@ -1,4 +1,4 @@
-/* $NetBSD: limits.h,v 1.5 1998/08/06 11:25:04 kleink Exp $ */
+/* $NetBSD: limits.h,v 1.5.12.1 2000/11/20 19:56:51 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #define	_MACHINE_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
-#define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
+#define	MB_LEN_MAX	32		/* Allow 31 bit UTF2 */
 
 /*
  * According to ANSI (section 2.2.4.2), the values below must be usable by
@@ -72,6 +72,13 @@
 
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
+
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L
+#define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
+#define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
+#define	LLONG_MIN	(-0x7fffffffffffffffLL-1) /* min signed long long */
+#endif
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */

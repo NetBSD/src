@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.13 1998/08/14 16:50:04 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.13.12.1 2000/11/20 19:57:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,14 +39,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.13 1998/08/14 16:50:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.13.12.1 2000/11/20 19:57:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -57,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.13 1998/08/14 16:50:04 thorpej Exp $")
 #include <alpha/pci/ciavar.h>
 
 bus_dma_tag_t cia_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
+
+int	cia_bus_dmamap_create_direct __P((bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
 
 int	cia_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
@@ -97,7 +101,7 @@ void	(*cia_tlb_invalidate_fn) __P((void));
 #define	CIA_TLB_INVALIDATE()	(*cia_tlb_invalidate_fn)()
 
 struct alpha_sgmap cia_pyxis_bug_sgmap;
-#define	CIA_PYXIS_BUG_BASE	(1*128*1024)
+#define	CIA_PYXIS_BUG_BASE	(128*1024*1024)
 #define	CIA_PYXIS_BUG_SIZE	(2*1024*1024)
 
 void
@@ -118,7 +122,7 @@ cia_dma_init(ccp)
 	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = cia_dma_get_tag;
-	t->_dmamap_create = _bus_dmamap_create;
+	t->_dmamap_create = cia_bus_dmamap_create_direct;
 	t->_dmamap_destroy = _bus_dmamap_destroy;
 	t->_dmamap_load = _bus_dmamap_load_direct;
 	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf_direct;
@@ -282,6 +286,50 @@ cia_dma_get_tag(t, bustype)
 	default:
 		panic("cia_dma_get_tag: shouldn't be here, really...");
 	}
+}
+
+/*
+ * Create a CIA direct-mapped DMA map.
+ */
+int
+cia_bus_dmamap_create_direct(t, size, nsegments, maxsegsz, boundary,
+    flags, dmamp)
+	bus_dma_tag_t t;
+	bus_size_t size;
+	int nsegments;
+	bus_size_t maxsegsz;
+	bus_size_t boundary;
+	int flags;
+	bus_dmamap_t *dmamp;
+{
+	struct cia_config *ccp = t->_cookie;
+	bus_dmamap_t map;
+	int error;
+
+	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
+	    boundary, flags, dmamp);
+	if (error)
+		return (error);
+
+	map = *dmamp;
+
+	if ((ccp->cc_flags & CCF_PYXISBUG) != 0 &&
+	    map->_dm_segcnt > 1) {
+		/*
+		 * We have a Pyxis with the DMA page crossing bug, make
+		 * sure we don't coalesce adjacent DMA segments.
+		 *
+		 * NOTE: We can only do this if the max segment count
+		 * is greater than 1.  This is because many network
+		 * drivers allocate large contiguous blocks of memory
+		 * for control data structures, even though they won't
+		 * do any single DMA that crosses a page coundary.
+		 *	-- thorpej@netbsd.org, 2/5/2000
+		 */
+		map->_dm_flags |= DMAMAP_NO_COALESCE;
+	}
+
+	return (0);
 }
 
 /*

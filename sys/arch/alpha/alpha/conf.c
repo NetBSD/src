@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.41 1999/08/16 22:27:12 augustss Exp $ */
+/* $NetBSD: conf.c,v 1.41.2.1 2000/11/20 19:56:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.41 1999/08/16 22:27:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.41.2.1 2000/11/20 19:56:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.41 1999/08/16 22:27:12 augustss Exp $");
 
 #include <machine/conf.h>
 
-#include <vm/vm.h>		/* XXX for _PMAP_MAY_USE_PROM_CONSOLE */
+#include <uvm/uvm_extern.h>	/* XXX for _PMAP_MAY_USE_PROM_CONSOLE */
 
 #include "fdc.h"
 bdev_decl(fd);
@@ -70,6 +70,8 @@ bdev_decl(raid);
 bdev_decl(ccd);
 #include "md.h"
 bdev_decl(md);
+#include "lsu.h"
+bdev_decl(lsu);
 
 struct bdevsw	bdevsw[] =
 {
@@ -89,7 +91,8 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_lkm_dummy(),		/* 15 */
-	bdev_disk_init(NRAID,raid),	/* 16 */
+	bdev_disk_init(NRAID,raid),	/* 16: RAIDframe disk driver */
+	bdev_disk_init(NLSU,lsu),	/* 17: logical storage unit */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
@@ -142,6 +145,8 @@ cdev_decl(ms);
 cdev_decl(lpt);
 cdev_decl(md);
 cdev_decl(raid);
+#include "ses.h"
+cdev_decl(ses);
 #include "ss.h"
 cdev_decl(ss);
 #include "uk.h"
@@ -160,6 +165,11 @@ cdev_decl(music);
 #include "a12dc.h"
 #include "scc.h"
 #include "zstty.h"
+
+#include "cy.h"
+cdev_decl(cy);
+#include "cz.h"
+cdev_decl(cztty);
 
 #include "se.h"
 #include "rnd.h"
@@ -190,8 +200,12 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
-#include "umodem.h"
-cdev_decl(umodem);
+#include "ucom.h"
+cdev_decl(ucom);
+#include "urio.h"
+cdev_decl(urio);
+#include "uscanner.h"
+cdev_decl(uscanner);
 
 #ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
@@ -318,8 +332,13 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 55 */
 #endif
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
-	cdev_tty_init(NUMODEM, umodem),	/* 57: USB modem */
-	
+	cdev_tty_init(NUCOM, ucom),	/* 57: USB tty */
+	cdev_ses_init(NSES,ses),	/* 58: SCSI SES/SAF-TE */
+	cdev_disk_init(NLSU,lsu),	/* 59: logical storage unit */
+	cdev_tty_init(NCY,cy),		/* 60: Cyclades Cyclom-Y serial */
+	cdev_tty_init(NCZ,cztty),	/* 61: Cyclades-Z serial */
+	cdev_usbdev_init(NURIO,urio),	/* 62: Diamond Rio 500 */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 63: USB scanner */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -419,6 +438,12 @@ static int chrtoblktbl[] = {
 	/* 55 */	NODEV,
 	/* 56 */	NODEV,
 	/* 57 */	NODEV,
+	/* 58 */	NODEV,
+	/* 59 */	17,
+	/* 60 */	NODEV,
+	/* 61 */	NODEV,
+	/* 62 */	NODEV,
+	/* 63 */	NODEV,
 };
 
 /*

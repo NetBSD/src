@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn20aa.c,v 1.40.2.1 1999/10/19 19:25:25 thorpej Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.40.2.2 2000/11/20 19:56:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.40.2.1 1999/10/19 19:25:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.40.2.2 2000/11/20 19:56:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.40.2.1 1999/10/19 19:25:25 thorpej 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -131,7 +133,8 @@ dec_kn20aa_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&ccp->cc_iot, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
@@ -171,7 +174,8 @@ dec_kn20aa_device_register(dev, aux)
 
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
 #if 0
 		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
 #endif

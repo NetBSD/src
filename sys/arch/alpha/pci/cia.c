@@ -1,7 +1,7 @@
-/* $NetBSD: cia.c,v 1.47 1999/04/10 01:21:38 cgd Exp $ */
+/* $NetBSD: cia.c,v 1.47.8.1 2000/11/20 19:57:06 bouyer Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -72,17 +72,19 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.47 1999/04/10 01:21:38 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.47.8.1 2000/11/20 19:57:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
+#include <machine/sysarch.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -119,6 +121,9 @@ extern struct cfdriver cia_cd;
 
 static int	ciaprint __P((void *, const char *pnp));
 
+int	cia_bus_get_window __P((int, int,
+	    struct alpha_bus_space_translation *));
+
 /* There can be only one. */
 int ciafound;
 struct cia_config cia_configuration;
@@ -130,6 +135,12 @@ struct cia_config cia_configuration;
  *
  * EXCEPT!  Some devices have a really hard time if BWX is used (WHY?!).
  * So, we decouple the uses for PCI config space and PCI bus space.
+ *
+ * FURTHERMORE!  The Pyxis, most notably earlier revs, really don't
+ * do so well if you don't use BWX for bus access.  So we default to
+ * forcing BWX on those chips.
+ *
+ * Geez.
  */
 
 #ifndef CIA_PCI_USE_BWX
@@ -140,8 +151,13 @@ struct cia_config cia_configuration;
 #define	CIA_BUS_USE_BWX	0
 #endif
 
+#ifndef CIA_PYXIS_FORCE_BWX
+#define	CIA_PYXIS_FORCE_BWX 0
+#endif
+
 int	cia_pci_use_bwx = CIA_PCI_USE_BWX;
 int	cia_bus_use_bwx = CIA_BUS_USE_BWX;
+int	cia_pyxis_force_bwx = CIA_PYXIS_FORCE_BWX;
 
 int
 ciamatch(parent, match, aux)
@@ -169,6 +185,8 @@ cia_init(ccp, mallocsafe)
 	struct cia_config *ccp;
 	int mallocsafe;
 {
+	int pci_use_bwx = cia_pci_use_bwx;
+	int bus_use_bwx = cia_bus_use_bwx;
 
 	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
 	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
@@ -181,8 +199,11 @@ cia_init(ccp, mallocsafe)
 	 */
 	if ((cputype == ST_EB164 &&
 	     (hwrpb->rpb_variation & SV_ST_MASK) >= SV_ST_ALPHAPC164LX_400) ||
-	    cputype == ST_DEC_550)
+	    cputype == ST_DEC_550) {
 		ccp->cc_flags |= CCF_ISPYXIS;
+		if (cia_pyxis_force_bwx)
+			pci_use_bwx = bus_use_bwx = 1;
+	}
 
 	/*
 	 * ALCOR/ALCOR2 Revisions >= 2 and Pyxis have the CNFG register.
@@ -201,15 +222,14 @@ cia_init(ccp, mallocsafe)
 	 *	- BWX is enabled in the CPU's capabilities mask (yes,
 	 *	  the bit is really cleared if the capability exists...)
 	 */
-	if ((cia_pci_use_bwx || cia_bus_use_bwx) &&
+	if ((pci_use_bwx || bus_use_bwx) &&
 	    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
-	    alpha_implver() == ALPHA_IMPLVER_EV5 &&
-	    alpha_amask(ALPHA_AMASK_BWX) == 0) {
+	    (cpu_amask & ALPHA_AMASK_BWX) != 0) {
 		u_int32_t ctrl;
 
-		if (cia_pci_use_bwx)
+		if (pci_use_bwx)
 			ccp->cc_flags |= CCF_PCI_USE_BWX;
-		if (cia_bus_use_bwx)
+		if (bus_use_bwx)
 			ccp->cc_flags |= CCF_BUS_USE_BWX;
 
 		/*
@@ -230,14 +250,30 @@ cia_init(ccp, mallocsafe)
 		if (ccp->cc_flags & CCF_BUS_USE_BWX) {
 			cia_bwx_bus_io_init(&ccp->cc_iot, ccp);
 			cia_bwx_bus_mem_init(&ccp->cc_memt, ccp);
+
+			/*
+			 * We have one window for both PCI I/O and MEM
+			 * in BWX mode.
+			 */
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 1;
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 1;
 		} else {
 			cia_swiz_bus_io_init(&ccp->cc_iot, ccp);
 			cia_swiz_bus_mem_init(&ccp->cc_memt, ccp);
+
+			/*
+			 * We have two I/O windows and 4 MEM windows in
+			 * SWIZ mode.
+			 */
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 2;
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 4;
 		}
+		alpha_bus_get_window = cia_bus_get_window;
 	}
 	ccp->cc_mallocsafe = mallocsafe;
 
 	cia_pci_init(&ccp->cc_pc, ccp);
+	alpha_pci_chipset = &ccp->cc_pc;
 
 	ccp->cc_initted = 1;
 }
@@ -314,15 +350,19 @@ ciaattach(parent, self, aux)
 		 * PCI-ISA bridge (i.e. Miata 1.5 and Miata 2) do not
 		 * have the bug, so we use this check.
 		 *
-		 * XXX We also need to deal with this boundary constraint
-		 * XXX in the PCI bus 0 (and ISA) DMA tags, but some
-		 * XXX drivers are going to need to be changed first.
+		 * NOTE: This bug is actually worked around in cia_dma.c,
+		 * when direct-mapped DMA maps are created.
+		 *
+		 * XXX WE NEED TO THINK ABOUT HOW TO HANDLE THIS FOR
+		 * XXX SGMAP DMA MAPPINGS!
 		 */
 		u_int32_t ctrl;
 
 		/* XXX no bets... */
 		printf("%s: WARNING: Pyxis pass 1 DMA bug; no bets...\n",
 		    self->dv_xname);
+
+		ccp->cc_flags |= CCF_PYXISBUG;
 
 		alpha_mb();
 		ctrl = REGVAL(CIA_CSR_CTRL);
@@ -379,6 +419,9 @@ ciaattach(parent, self, aux)
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	if ((ccp->cc_flags & CCF_PYXISBUG) == 0)
+		pba.pba_flags |= PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
+		    PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, ciaprint);
 }
 
@@ -394,4 +437,52 @@ ciaprint(aux, pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
+}
+
+int
+cia_bus_get_window(type, window, abst)
+	int type, window;
+	struct alpha_bus_space_translation *abst;
+{
+	struct cia_config *ccp = &cia_configuration;
+	bus_space_tag_t st;
+
+	switch (type) {
+	case ALPHA_BUS_TYPE_PCI_IO:
+		st = &ccp->cc_iot;
+		break;
+
+	case ALPHA_BUS_TYPE_PCI_MEM:
+		st = &ccp->cc_memt;
+		break;
+
+	default:
+		panic("cia_bus_get_window");
+	}
+
+	return (alpha_bus_space_get_window(st, window, abst));
+}
+
+void
+cia_pyxis_intr_enable(irq, onoff)
+	int irq, onoff;
+{
+	u_int64_t imask;
+	int s;
+
+#if 0
+	printf("cia_pyxis_intr_enable: %s %d\n",
+	    onoff ? "enabling" : "disabling", irq);
+#endif
+
+	s = splhigh();
+	alpha_mb();
+	imask = REGVAL64(PYXIS_INT_MASK);
+	if (onoff)
+		imask |= (1UL << irq);
+	else
+		imask &= ~(1UL << irq);
+	REGVAL64(PYXIS_INT_MASK) = imask;
+	alpha_mb();
+	splx(s);
 }

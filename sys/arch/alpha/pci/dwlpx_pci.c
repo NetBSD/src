@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.9 1998/04/15 00:48:58 mjacob Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.9.14.1 2000/11/20 19:57:08 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,13 +32,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.9 1998/04/15 00:48:58 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.9.14.1 2000/11/20 19:57:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

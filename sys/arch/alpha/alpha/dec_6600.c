@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.1.6.1 1999/10/19 19:25:24 thorpej Exp $ */
+/* $NetBSD: dec_6600.c,v 1.1.6.2 2000/11/20 19:56:24 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.1.6.1 1999/10/19 19:25:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.1.6.2 2000/11/20 19:56:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.1.6.1 1999/10/19 19:25:24 thorpej Exp
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -56,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.1.6.1 1999/10/19 19:25:24 thorpej Exp
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/ata/atavar.h>
 
 #include "pckbd.h"
 
@@ -99,7 +102,10 @@ dec_6600_cons_init()
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 	ctbslot = ctb->ctb_turboslot;
 
-	tsp = tsp_init(0, 0);
+	/* Console hose defaults to hose 0. */
+	tsp_console_hose = 0;
+
+	tsp = tsp_init(0, tsp_console_hose);
 
 	switch (ctb->ctb_term_type) {
 	case 2: 
@@ -126,14 +132,16 @@ dec_6600_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&tsp->pc_iot, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(&tsp->pc_iot, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctbslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
 			isa_display_console(&tsp->pc_iot, &tsp->pc_memt);
 		else {
 			/* The display PCI might be different */
-			tsp = tsp_init(0, CTB_TURBOSLOT_HOSE(ctbslot));
+			tsp_console_hose = CTB_TURBOSLOT_HOSE(ctbslot);
+			tsp = tsp_init(0, tsp_console_hose);
 			pci_display_console(&tsp->pc_iot, &tsp->pc_memt,
 			    &tsp->pc_pc, CTB_TURBOSLOT_BUS(ctbslot),
 			    CTB_TURBOSLOT_SLOT(ctbslot), 0);
@@ -170,7 +178,8 @@ dec_6600_device_register(dev, aux)
 
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
 		/*
 		 * Add an extra check to boot from ide drives:
 		 * Newer SRM firmware use the protocol identifier IDE,
@@ -207,11 +216,12 @@ dec_6600_device_register(dev, aux)
 				return;
 	
 			pcidev = dev;
-			DR_VERBOSE(printf("\npcidev = %s\n", pcidev->dv_xname));
+			DR_VERBOSE(printf("\npcidev = %s\n",
+			    pcidev->dv_xname));
 			return;
 		}
 	}
-	if ((ideboot || scsiboot) && scsipidev == NULL) {
+	if ((ideboot || scsiboot) && (scsipidev == NULL)) {
 		if (parent != pcidev)
 			return;
 		else {
@@ -228,7 +238,7 @@ dec_6600_device_register(dev, aux)
 			return;
 		}
 	}
-	if ((scsiboot || ideboot) &&
+	if ((ideboot || scsiboot) &&
 	    (!strcmp(cd->cd_name, "sd") ||
 	     !strcmp(cd->cd_name, "st") ||
 	     !strcmp(cd->cd_name, "cd"))) {
@@ -237,7 +247,11 @@ dec_6600_device_register(dev, aux)
 		if (parent->dv_parent != scsipidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_periph->periph_target)
+		if ((sa->sa_periph->periph_channel->chan_bustype->bustype_type
+		     == SCSIPI_BUSTYPE_SCSI ||
+		     sa->sa_periph->periph_channel->chan_bustype->bustype_type
+		     == SCSIPI_BUSTYPE_ATAPI)
+		    && b->unit / 100 != sa->sa_periph->periph_target)
 			return;
 
 		/* XXX LUN! */
@@ -265,22 +279,26 @@ dec_6600_device_register(dev, aux)
 
 	/*
 	 * Support to boot from IDE drives.
-	 * Should work with all SRM firmware versions, but is at the
-	 * moment limited to hard disks. Support for IDE CD ROM is
-	 * included above, under the theory that it will always be
-	 * via the pci ide controller.
 	 */
 	if ((ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
+		struct ata_atapi_attach *aa_link = aux;
 		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
 			return;
 		} else {
 			if (parent != scsipidev)
 				return;
 		}
+		DR_VERBOSE(printf("\nAtapi info: drive: %d, channel %d\n",
+		    aa_link->aa_drv_data->drive, aa_link->aa_channel));
+		DR_VERBOSE(printf("Bootdev info: unit: %d, channel: %d\n",
+		    b->unit, b->channel));
+		if (b->unit != aa_link->aa_drv_data->drive ||
+		    b->channel != aa_link->aa_channel)
+			return;
 
 		/* we've found it! */
 		booted_device = dev;
-		DR_VERBOSE(printf("\nbooted_device = %s\n",
+		DR_VERBOSE(printf("booted_device = %s\n",
 		    booted_device->dv_xname));
 		found = 1;
 	}

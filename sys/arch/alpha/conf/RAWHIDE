@@ -1,11 +1,11 @@
-# $NetBSD: RAWHIDE,v 1.7 1999/07/29 10:37:13 augustss Exp $
+# $NetBSD: RAWHIDE,v 1.7.2.1 2000/11/20 19:56:44 bouyer Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
 include	"arch/alpha/conf/std.alpha"
 maxusers	64
 #makeoptions	DEBUG="-g"
-options 	DEC_KN300	# KN300:	AlphaServer 4100
+options 	DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 options 	KTRACE		# System call tracing support
 options 	DEBUG		# Expensive debugging checks/support
 options 	KMEMSTATS	# Collect kmem usage statistics
@@ -36,6 +36,7 @@ options 	SYSVSEM
 options 	SYSVSHM
 options 	EISAVERBOSE
 options 	PCIVERBOSE
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE
 options 	UCONSOLE
 
@@ -60,7 +61,8 @@ esh*	at	pci? dev ? function ?		# Essential HIPPI card
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
-ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
@@ -77,7 +79,9 @@ fd*	at	fdc? drive ?			# floppy drives
 scsibus* at	ahc?
 scsibus* at	bha?
 scsibus* at	isp?
-scsibus* at	ncr?
+#scsibus* at	ncr?
+scsibus* at	siop?
+
 cd*	at	scsibus? target ? lun ?
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
@@ -89,6 +93,6 @@ pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
 pseudo-device	ppp		4
-pseudo-device	pty		64
+pseudo-device	pty
 pseudo-device	sl		4
 pseudo-device	vnd		4

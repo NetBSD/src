@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.15 1999/07/29 10:37:12 augustss Exp $
+# $NetBSD: BABYLON,v 1.15.2.1 2000/11/20 19:56:41 bouyer Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -105,6 +105,7 @@ options 	SYSVSHM
 options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 #options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
@@ -171,8 +172,10 @@ de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 #isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-ncr0	at	pci0 dev 7 function 0		# NCR 53c8xx SCSI
-ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#ncr0	at	pci0 dev 7 function 0		# NCR 53c8xx SCSI
+#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+siop0	at	pci? dev 7 function ?		# Symbios 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 #ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
@@ -228,8 +231,10 @@ scsibus* at	ahc? channel ?
 #scsibus* at	asc?
 #scsibus* at	bha?
 #scsibus* at	isp?
-scsibus0 at	ncr0
-scsibus* at	ncr?
+#scsibus0 at	ncr0
+#scsibus* at	ncr?
+scsibus0 at	siop0
+scsibus* at	siop?
 #scsibus* at	uha?
 
 # SCSI devices
@@ -269,7 +274,7 @@ pseudo-device	ipfilter	1
 pseudo-device	loop		1
 #pseudo-device	md		1
 #pseudo-device	ppp		4
-pseudo-device	pty		128
+pseudo-device	pty
 #pseudo-device	sl		4
 #pseudo-device	strip		4
 #pseudo-device	tun		4

@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.h,v 1.31 1999/05/24 20:11:58 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.31.2.1 2000/11/20 19:56:53 bouyer Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -113,6 +113,7 @@ struct pmap {
 	unsigned int		*pm_asn;	/* address space number */
 	unsigned long		*pm_asngen;	/* ASN generation number */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
+	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
 };
 
 typedef struct pmap	*pmap_t;
@@ -188,8 +189,13 @@ struct pv_head {
 #endif /* NEW_SCC_DRIVER */
 
 #if defined(MULTIPROCESSOR)
-void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t));
-void	pmap_do_tlb_shootdown __P((void));
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t);
+void	pmap_do_tlb_shootdown(void);
+void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
+#define	PMAP_TLB_SHOOTDOWN(pm, va, pte)					\
+	pmap_tlb_shootdown((pm), (va), (pte))
+#else
+#define	PMAP_TLB_SHOOTDOWN(pm, va, pte)		/* nothing */
 #endif /* MULTIPROCESSOR */
 #endif /* _LKM */
  
@@ -206,14 +212,14 @@ extern	pt_entry_t *VPT;		/* Virtual Page Table */
 #define	PMAP_MAP_POOLPAGE(pa)		ALPHA_PHYS_TO_K0SEG((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)		ALPHA_K0SEG_TO_PHYS((va))
 
-paddr_t vtophys __P((vaddr_t));
+paddr_t vtophys(vaddr_t);
 
 /* Machine-specific functions. */
-void	pmap_bootstrap __P((paddr_t ptaddr, u_int maxasn, u_long ncpuids));
-void	pmap_emulate_reference __P((struct proc *p, vaddr_t v,
-		int user, int write));
+void	pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids);
+void	pmap_emulate_reference(struct proc *p, vaddr_t v,
+		int user, int write);
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
-int	pmap_uses_prom_console __P((void));
+int	pmap_uses_prom_console(void);
 #endif
 
 #define	pmap_pte_pa(pte)	(PG_PFNUM(*(pte)) << PGSHIFT)
@@ -242,8 +248,8 @@ do {									\
 
 #define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
 
-static __inline pt_entry_t *pmap_l2pte __P((pmap_t, vaddr_t, pt_entry_t *));
-static __inline pt_entry_t *pmap_l3pte __P((pmap_t, vaddr_t, pt_entry_t *));
+static __inline pt_entry_t *pmap_l2pte(pmap_t, vaddr_t, pt_entry_t *);
+static __inline pt_entry_t *pmap_l3pte(pmap_t, vaddr_t, pt_entry_t *);
 
 #define	pmap_l1pte(pmap, v)						\
 	(&(pmap)->pm_lev1map[l1pte_index((vaddr_t)(v))])
@@ -292,27 +298,31 @@ pmap_l3pte(pmap, v, l2pte)
 /*
  * Macros for locking pmap structures.
  *
- * Note that the kernel pmap can be accessed from interrupt context,
- * so when we have the kernel pmap lock asserted, we must block any
- * interrupts that can cause memory allocation, otherwise we can deadlock
- * if an interrupt occurs and causes us to recurse into the pmap and
- * attempt to try to assert the lock while it is already held.
- *
- * No other pmap can be accessed from interrupt context, so we do not
- * need to block interrupts in any other case.
+ * Note that we if we access the kernel pmap in interrupt context, it
+ * is only to update statistics.  Since stats are updated using atomic
+ * operations, locking the kernel pmap is not necessary.  Therefore,
+ * it is not necessary to block interrupts when locking pmap strucutres.
  */
-#define	PMAP_LOCK(pmap, s)						\
-do {									\
-	if ((pmap) == pmap_kernel())					\
-		(s) = splimp();						\
-	simple_lock(&(pmap)->pm_slock);					\
-} while (0)
+#define	PMAP_LOCK(pmap)		simple_lock(&(pmap)->pm_slock)
+#define	PMAP_UNLOCK(pmap)	simple_unlock(&(pmap)->pm_slock)
 
-#define	PMAP_UNLOCK(pmap, s)						\
+/*
+ * Macro for processing deferred I-stream synchronization.
+ *
+ * The pmap module may defer syncing the user I-stream until the
+ * return to userspace, since the IMB PALcode op can be quite
+ * expensive.  Since user instructions won't be executed until
+ * the return to userspace, this can be deferred until userret().
+ */
+#define	PMAP_USERRET(pmap)						\
 do {									\
-	simple_unlock(&(pmap)->pm_slock);				\
-	if ((pmap) == pmap_kernel())					\
-		splx((s));						\
+	u_long cpu_mask = (1UL << cpu_number());			\
+									\
+	if ((pmap)->pm_needisync & cpu_mask) {				\
+		atomic_clearbits_ulong(&(pmap)->pm_needisync,		\
+		    cpu_mask);						\
+		alpha_pal_imb();					\
+	}								\
 } while (0)
 
 #endif /* _KERNEL */

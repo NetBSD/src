@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.3 1999/05/18 23:52:51 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.3.2.1 2000/11/20 19:56:18 bouyer Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -129,9 +129,7 @@
 #include <netns/ns_if.h>
 #endif
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #if defined(__FreeBSD__)
 #include <vm/pmap.h>
@@ -4188,7 +4186,7 @@ tulip_ifstart(
 	do {
 	    int len = m0->m_len;
 	    caddr_t addr = mtod(m0, caddr_t);
-	    unsigned clsize = CLBYTES - (((u_long) addr) & (CLBYTES-1));
+	    unsigned clsize = NBPG - (((u_long) addr) & PGOFSET);
 
 	    next_m0 = m0->m_next;
 	    while (len > 0) {
@@ -4256,7 +4254,7 @@ tulip_ifstart(
 		if (partial)
 		    continue;
 #endif
-		clsize = CLBYTES;
+		clsize = NBPG;
 	    }
 	} while ((m0 = next_m0) != NULL);
 

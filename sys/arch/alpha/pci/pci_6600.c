@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.1 1999/06/29 06:46:46 ross Exp $ */
+/* $NetBSD: pci_6600.c,v 1.1.6.1 2000/11/20 19:57:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,20 +33,20 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.1 1999/06/29 06:46:46 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.1.6.1 2000/11/20 19:57:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/rpb.h>
-#include <machine/intrcnt.h>
 #include <machine/alpha.h>
 
 #include <dev/pci/pcireg.h>
@@ -65,17 +65,26 @@ __KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.1 1999/06/29 06:46:46 ross Exp $");
 #include <alpha/pci/siovar.h>
 #endif
 
+#define	PCI_NIRQ		64
 #define	PCI_STRAY_MAX		5
-#define	DEC_6600_MAX_IRQ	INTRCNT_OTHER_LEN
+
+/*
+ * Some Tsunami models have a PCI device (the USB controller) with interrupts
+ * tied to ISA IRQ lines.  The IRQ is encoded as:
+ *
+ *	line = 0xe0 | isa_irq;
+ */
+#define	DEC_6600_LINE_IS_ISA(line)	((line) >= 0xe0 && (line) <= 0xef)
+#define	DEC_6600_LINE_ISA_IRQ(line)	((line) & 0x0f)
 
 static char *irqtype = "6600 irq";
 static struct tsp_config *sioprimary;
 
-static void checkmaxirq __P((pci_intr_handle_t ih));
 void dec_6600_intr_disestablish __P((void *, void *));
 void *dec_6600_intr_establish __P((
     void *, pci_intr_handle_t, int, int (*func)(void *), void *));
 const char *dec_6600_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_6600_intr_evcnt __P((void *, pci_intr_handle_t));
 int dec_6600_intr_map __P((void *, pcitag_t, int, int, pci_intr_handle_t *));
 void *dec_6600_pciide_compat_intr_establish __P((void *, struct device *,
     struct pci_attach_args *, int, int (*)(void *), void *));
@@ -92,11 +101,13 @@ pci_6600_pickintr(pcp)
 {
 	bus_space_tag_t iot = &pcp->pc_iot;
 	pci_chipset_tag_t pc = &pcp->pc_pc;
+	char *cp;
 	int i;
 
         pc->pc_intr_v = pcp;
         pc->pc_intr_map = dec_6600_intr_map;
         pc->pc_intr_string = dec_6600_intr_string;
+	pc->pc_intr_evcnt = dec_6600_intr_evcnt;
         pc->pc_intr_establish = dec_6600_intr_establish;
         pc->pc_intr_disestablish = dec_6600_intr_disestablish;
 	pc->pc_pciide_compat_intr_establish = NULL;
@@ -108,10 +119,19 @@ pci_6600_pickintr(pcp)
 		sioprimary = pcp;
 		pc->pc_pciide_compat_intr_establish =
 		    dec_6600_pciide_compat_intr_establish;
-		dec_6600_pci_intr = alpha_shared_intr_alloc(DEC_6600_MAX_IRQ);
-		for (i = 0; i < DEC_6600_MAX_IRQ; i++)
+		dec_6600_pci_intr = alpha_shared_intr_alloc(PCI_NIRQ, 8);
+		for (i = 0; i < PCI_NIRQ; i++) {
 			alpha_shared_intr_set_maxstrays(dec_6600_pci_intr, i,
 			    PCI_STRAY_MAX);
+			alpha_shared_intr_set_private(dec_6600_pci_intr, i,
+			    sioprimary);
+
+			cp = alpha_shared_intr_string(dec_6600_pci_intr, i);
+			sprintf(cp, "irq %d", i);
+			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+			    dec_6600_pci_intr, 1), EVCNT_TYPE_INTR, NULL,
+			    "dec_6600", cp);
+		}
 #if NSIO
 		sio_intr_setup(pc, iot);
 		dec_6600_intr_enable(55);	/* irq line for sio */
@@ -140,31 +160,32 @@ dec_6600_intr_map(acv, bustag, buspin, line, ihp)
 		return 1;
 	}
 
+	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
+
 	/*
 	 * The console places the interrupt mapping in the "line" value.
 	 * A value of (char)-1 indicates there is no mapping.
 	 */
-	if (line >= 64) {	/* for usb host bridge, line == 0xea (?!) */
-		alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
-		printf("intr_map: line=0x%x, no mapping for %d/%d/%d\n",
-		    line, bus, device, function);
+	if (line == 0xff) {
+		printf("dec_6600_intr_map: no mapping for %d/%d/%d\n",
+		    bus, device, function);
 		return (1);
 	}
 
-	if (line >= INTRCNT_OTHER_LEN)
-		panic("intr_map: irq too large (%d)\n", line);
+#if NSIO == 0
+	if (DEC_6600_LINE_IS_ISA(line)) {
+		printf("dec_6600_intr_map: ISA IRQ %d for %d/%d/%d\n",
+		    DEC_6600_LINE_ISA_IRQ(line), bus, device, function);
+		return (1);
+	}
+#endif
+
+	if (DEC_6600_LINE_IS_ISA(line) == 0 && line >= PCI_NIRQ)
+		panic("dec_6600_intr_map: dec 6600 irq too large (%d)\n",
+		    line);
 
 	*ihp = line;
-	checkmaxirq(*ihp);
 	return (0);
-}
-
-static void
-checkmaxirq(ih)
-	pci_intr_handle_t ih;
-{
-	if (ih  > DEC_6600_MAX_IRQ)
-		panic("extreme irq %ld\n", ih);
 }
 
 const char *
@@ -173,12 +194,32 @@ dec_6600_intr_string(acv, ih)
 	pci_intr_handle_t ih;
 {
 
-	static const char irqfmt[] = "dec_6600 irq %ld";
-        static char irqstr[sizeof irqfmt];
+	static const char irqfmt[] = "dec 6600 irq %ld";
+	static char irqstr[sizeof irqfmt];
 
-	checkmaxirq(ih);
-        snprintf(irqstr, sizeof irqstr, irqfmt, ih);
-        return (irqstr);
+#if NSIO
+	if (DEC_6600_LINE_IS_ISA(ih))
+		return (sio_intr_string(NULL /*XXX*/,
+		    DEC_6600_LINE_ISA_IRQ(ih)));
+#endif
+
+	snprintf(irqstr, sizeof irqstr, irqfmt, ih);
+	return (irqstr);
+}
+
+const struct evcnt *
+dec_6600_intr_evcnt(acv, ih)
+	void *acv;
+	pci_intr_handle_t ih;
+{
+
+#if NSIO
+	if (DEC_6600_LINE_IS_ISA(ih))
+		return (sio_intr_evcnt(NULL /*XXX*/,
+		    DEC_6600_LINE_ISA_IRQ(ih)));
+#endif
+
+	return (alpha_shared_intr_evcnt(dec_6600_pci_intr, ih));
 }
 
 void *
@@ -190,7 +231,16 @@ dec_6600_intr_establish(acv, ih, level, func, arg)
 {
 	void *cookie;
 
-	checkmaxirq(ih);
+#if NSIO
+	if (DEC_6600_LINE_IS_ISA(ih))
+		return (sio_intr_establish(NULL /*XXX*/,
+		    DEC_6600_LINE_ISA_IRQ(ih), IST_LEVEL, level, func, arg));
+#endif
+
+	if (ih >= PCI_NIRQ)
+		panic("dec_6600_intr_establish: bogus dec 6600 IRQ 0x%lx\n",
+		    ih);
+
 	cookie = alpha_shared_intr_establish(dec_6600_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, irqtype);
 
@@ -206,6 +256,19 @@ dec_6600_intr_disestablish(acv, cookie)
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
 	int s;
+
+#if NSIO
+	/*
+	 * We have to determine if this is an ISA IRQ or not!  We do this
+	 * by checking to see if the intrhand points back to an intrhead
+	 * that points to the sioprimary TSP.  If not, it's an ISA IRQ.
+	 * Pretty disgusting, eh?
+	 */
+	if (ih->ih_intrhead->intr_private != sioprimary) {
+		sio_intr_disestablish(NULL /*XXX*/, cookie);
+		return;
+	}
+#endif
  
 	s = splhigh();
 
@@ -229,9 +292,8 @@ dec_6600_iointr(framep, vec)
 	if (vec >= 0x900) {
 		irq = (vec - 0x900) >> 4;
 
-		if(irq >= INTRCNT_OTHER_LEN)
+		if (irq >= PCI_NIRQ)
 			panic("iointr: irq %d is too high", irq);
-		++intrcnt[INTRCNT_OTHER_BASE + irq];
 
 		if (!alpha_shared_intr_dispatch(dec_6600_pci_intr, irq)) {
 			alpha_shared_intr_stray(dec_6600_pci_intr, irq,
@@ -283,13 +345,21 @@ dec_6600_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 
 	alpha_pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
+	/*
+	 * If this isn't PCI bus #0 on the TSP that holds the PCI-ISA
+	 * bridge, all bets are off.
+	 */
 	if (bus != 0 || pc->pc_intr_v != sioprimary)
-		printf("Warning: strange pciide\n");
+		return (NULL);
 
 	irq = PCIIDE_COMPAT_IRQ(chan);
 #if NSIO
 	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
 	    func, arg);
+	if (cookie == NULL)
+		return (NULL);
+	printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
+	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq));
 #endif
 	return (cookie);
 }

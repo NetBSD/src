@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.30.2.1 1999/10/19 19:25:24 thorpej Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.30.2.2 2000/11/20 19:56:26 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.30.2.1 1999/10/19 19:25:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.30.2.2 2000/11/20 19:56:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.30.2.1 1999/10/19 19:25:24 thorpej E
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -59,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.30.2.1 1999/10/19 19:25:24 thorpej E
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/ata/atavar.h>
 
 #include "pckbd.h"
 
@@ -66,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.30.2.1 1999/10/19 19:25:24 thorpej E
 #define CONSPEED TTYDEF_SPEED
 #endif
 static int comcnrate = CONSPEED;
+
+#define	DR_VERBOSE(f) while (0)
 
 void dec_eb164_init __P((void));
 static void dec_eb164_cons_init __P((void));
@@ -123,7 +128,8 @@ dec_eb164_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&ccp->cc_iot, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
@@ -163,18 +169,17 @@ dec_eb164_device_register(dev, aux)
 
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
 		/*
 		 * Add an extra check to boot from ide drives:
 		 * Newer SRM firmware use the protocol identifier IDE,
 		 * older SRM firmware use the protocol identifier SCSI.
 		 */
 		ideboot = (strcmp(b->protocol, "IDE") == 0);
-#if 0
-		printf("scsiboot = %d, ideboot = %d, netboot = %d\n", scsiboot,
-			ideboot, netboot);
-#endif
-		initted =1;
+		DR_VERBOSE(printf("scsiboot = %d, ideboot = %d, netboot = %d\n",
+		    scsiboot, ideboot, netboot));
+		initted = 1;
 	}
 
 	if (pcidev == NULL) {
@@ -187,14 +192,13 @@ dec_eb164_device_register(dev, aux)
 				return;
 	
 			pcidev = dev;
-#if 0
-			printf("\npcidev = %s\n", pcidev->dv_xname);
-#endif
+			DR_VERBOSE(printf("\npcidev = %s\n",
+			    pcidev->dv_xname));
 			return;
 		}
 	}
 
-	if ( (ideboot || scsiboot) && (scsipidev == NULL) ) {
+	if ((ideboot || scsiboot) && (scsipidev == NULL)) {
 		if (parent != pcidev)
 			return;
 		else {
@@ -206,14 +210,13 @@ dec_eb164_device_register(dev, aux)
 				return;
 	
 			scsipidev = dev;
-#if 0
-			printf("\nscsipidev = %s\n", scsipidev->dv_xname);
-#endif
+			DR_VERBOSE(printf("\nscsipidev = %s\n",
+			    scsipidev->dv_xname));
 			return;
 		}
 	}
 
-	if (scsiboot &&
+	if ((ideboot || scsiboot) &&
 	    (!strcmp(cd->cd_name, "sd") ||
 	     !strcmp(cd->cd_name, "st") ||
 	     !strcmp(cd->cd_name, "cd"))) {
@@ -222,7 +225,11 @@ dec_eb164_device_register(dev, aux)
 		if (parent->dv_parent != scsipidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_periph->periph_target)
+		if ((sa->sa_periph->periph_channel->chan_bustype->bustype_type
+		     == SCSIPI_BUSTYPE_SCSI ||
+		     sa->sa_periph->periph_channel->chan_bustype->bustype_type
+		     == SCSIPI_BUSTYPE_ATAPI)
+		    && b->unit / 100 != sa->sa_periph->periph_target)
 			return;
 
 		/* XXX LUN! */
@@ -243,31 +250,34 @@ dec_eb164_device_register(dev, aux)
 
 		/* we've found it! */
 		booted_device = dev;
-#if 0
-		printf("\nbooted_device = %s\n", booted_device->dv_xname);
-#endif
+		DR_VERBOSE(printf("\nbooted_device = %s\n",
+		    booted_device->dv_xname));
 		found = 1;
 	}
 
 	/*
 	 * Support to boot from IDE drives.
-	 * Should work with all SRM firmware versions, but is at the
-	 * moment limited to hard disks. (No support for booting from an
-	 * IDE cdrom).
 	 */
-	if ( (ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
+	if ((ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
+		struct ata_atapi_attach *aa_link = aux;
 		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
 			return;
 		} else {
 			if (parent != scsipidev)
 				return;
 		}
+		DR_VERBOSE(printf("\nAtapi info: drive: %d, channel %d\n",
+		    aa_link->aa_drv_data->drive, aa_link->aa_channel));
+		DR_VERBOSE(printf("Bootdev info: unit: %d, channel: %d\n",
+		    b->unit, b->channel));
+		if (b->unit != aa_link->aa_drv_data->drive ||
+		    b->channel != aa_link->aa_channel)
+			return;
 
 		/* we've found it! */
 		booted_device = dev;
-#if 0
-		printf("\nbooted_device = %s\n", booted_device->dv_xname);
-#endif
+		DR_VERBOSE(printf("booted_device = %s\n",
+		    booted_device->dv_xname));
 		found = 1;
 	}
 
@@ -283,9 +293,8 @@ dec_eb164_device_register(dev, aux)
 			/* XXX function? */
 	
 			booted_device = dev;
-#if 0
-			printf("\nbooted_device = %s\n", booted_device->dv_xname);
-#endif
+			DR_VERBOSE(printf("\nbooted_device = %s\n",
+			    booted_device->dv_xname));
 			found = 1;
 			return;
 		}
