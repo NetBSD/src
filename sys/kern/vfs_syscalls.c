@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.68 1996/02/09 19:01:05 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.69 1996/03/18 23:06:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1088,8 +1088,8 @@ sys_unlink(p, v, retval)
 		goto out;
 	}
 
-	if (vp->v_flag & VTEXT)
-		(void)vnode_pager_uncache(vp);
+	(void)vnode_pager_uncache(vp);
+
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
