@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.146 2001/04/25 17:53:23 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.147 2001/05/21 21:25:28 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1450,6 +1450,7 @@ static struct {
 	char	*cfname;
 } dev_compat_tab[] = {
 	{ "espdma",	"dma" },
+	{ "SUNW,fas",   "esp" },
 	{ "QLGC,isp",	"isp" },
 	{ "PTI,isp",	"isp" },
 	{ "ptisp",	"isp" },
