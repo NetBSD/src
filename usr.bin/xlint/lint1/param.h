@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 2001/10/21 21:39:49 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.17 2001/10/28 05:24:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -64,7 +64,7 @@
 /*
  * Make sure this matches wchar_t.
  */
-#define WCHAR	SHORT
+#define WCHAR	INT
 
 #ifndef __GNUC__
 #ifndef lint
