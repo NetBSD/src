@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.110 1999/02/28 17:14:57 explorer Exp $ */
+/*	$NetBSD: st.c,v 1.110.2.1 2000/01/23 13:40:22 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -905,6 +905,7 @@ st_decide_mode(st, first_read)
 	case QIC_150:
 	case QIC_525:
 	case QIC_1320:
+	case QIC_3095:
 		st->flags |= ST_FIXEDBLOCKS;
 		if (st->media_blksize > 0)
 			st->blksize = st->media_blksize;
@@ -957,6 +958,7 @@ done:
 	case QIC_150:
 	case QIC_525:
 	case QIC_1320:
+	case QIC_3095:
 		st->flags &= ~ST_2FM_AT_EOD;
 		break;
 	default:
