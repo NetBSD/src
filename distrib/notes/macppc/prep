@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1.2.3 2000/02/22 23:42:12 he Exp $
+.\"	$NetBSD: prep,v 1.1.2.4 2000/02/23 22:51:22 he Exp $
 .
 .(Note
 Currently
@@ -9,10 +9,10 @@ drive.  In other words,
 .Nx
 \*V
 cannot be installed on the hard drive on which MacOS and/or any other
-oparating systems reside.  This is because of
+oparating systems reside.  This is because the
 .Nx
 \*V
-currently does not support Apple's Disk Partition Map.
+install tools currently do not support Apple's Disk Partition Map.
 .Note)
 .Pp
 Before you start, you must choose a boot medium.  There are
