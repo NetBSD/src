@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.117 2004/02/19 03:56:30 atatat Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.118 2004/02/22 01:00:41 dan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.117 2004/02/19 03:56:30 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.118 2004/02/22 01:00:41 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,11 +430,11 @@ buf_canrelease(void)
 
 	LOCK_ASSERT(simple_lock_held(&bqueue_slock));
 
-	TAILQ_FOREACH(bp, &bufqueues[BQ_AGE], b_freelist)
-		ninvalid += bp->b_bufsize;
-
 	if (bufmem < bufmem_lowater)
 		return 0;
+
+	TAILQ_FOREACH(bp, &bufqueues[BQ_AGE], b_freelist)
+		ninvalid += bp->b_bufsize;
 
 	pagedemand = uvmexp.freetarg - uvmexp.free;
 	if (pagedemand < 0)
