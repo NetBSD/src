@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.34 2004/08/08 15:12:20 mycroft Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.35 2004/08/08 15:44:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.34 2004/08/08 15:12:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.35 2004/08/08 15:44:13 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,22 @@ sm_pcmcia_attach(parent, self, aux)
 	aprint_normal("\n");
 
 	psc->sc_pf = pa->pf;
-	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
+
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
+		if (cfe->num_iospace != 1)
+			continue;
+
+		/* Allocate I/O space for the card. */
+		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
+		    cfe->iospace[0].length, cfe->iospace[0].length,
+		    &psc->sc_pcioh) == 0)
+			break;
+	}
+
+	if (cfe == 0) {
+		aprint_error("%s: can't allocate i/o space\n", self->dv_xname);
+		goto ioalloc_failed;
+	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
@@ -155,13 +170,6 @@ sm_pcmcia_attach(parent, self, aux)
 	}
 
 	/* XXX sanity check number of mem and i/o spaces */
-
-	/* Allocate and map i/o space for the card. */
-	if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-	    cfe->iospace[0].length, &psc->sc_pcioh)) {
-		aprint_error("%s: can't allocate i/o space\n", self->dv_xname);
-		goto ioalloc_failed;
-	}
 
 	sc->sc_bst = psc->sc_pcioh.iot;
 	sc->sc_bsh = psc->sc_pcioh.ioh;
@@ -199,15 +207,13 @@ sm_pcmcia_attach(parent, self, aux)
 	pcmcia_function_disable(pa->pf);
 	return;
 
- iomap_failed:
-	/* Free our i/o space. */
-	pcmcia_io_free(pa->pf, &psc->sc_pcioh);
-
- ioalloc_failed:
-	/* Disable the device */
+iomap_failed:
 	pcmcia_function_disable(pa->pf);
 
- enable_failed:
+enable_failed:
+	pcmcia_io_free(pa->pf, &psc->sc_pcioh);
+
+ioalloc_failed:
 	psc->sc_io_window = -1;
 }
 
