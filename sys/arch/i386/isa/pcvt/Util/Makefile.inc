@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.5 1997/03/28 20:22:55 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1997/07/17 19:47:10 phil Exp $
 
 ECHO	?=	echo
 
-BINDIR	=	/usr/local/bin
+BINDIR	?=	/usr/local/bin
 FONTDIR	=	/usr/share/misc/pcvtfonts
 LIBDIR	=	/usr/local/lib
 LIBMODE	=	644
