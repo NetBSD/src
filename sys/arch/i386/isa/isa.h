@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.11.2.3 1993/09/30 20:17:56 mycroft Exp $
+ *	$Id: isa.h,v 1.11.2.4 1993/10/06 12:12:38 mycroft Exp $
  */
 
 /*
@@ -52,8 +52,6 @@ unsigned kbd_8042cmd __P((int));
 /*
  * Input / Output Port Assignments
  */
-
-#define	IOBASEUNK	0xffff
 
 #define	IO_ISABEGIN	0x000		/* 0x000 - Beginning of I/O Registers */
 
