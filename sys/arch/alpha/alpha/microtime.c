@@ -1,4 +1,4 @@
-/* $NetBSD: microtime.c,v 1.1 2001/04/28 06:10:49 thorpej Exp $ */
+/* $NetBSD: microtime.c,v 1.2 2001/04/29 17:04:41 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: microtime.c,v 1.1 2001/04/28 06:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: microtime.c,v 1.2 2001/04/29 17:04:41 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ microtime(struct timeval *tvp)
 		usec = (alpha_rpcc() & 0xffffffffUL) - ci->ci_pcc_pcc;
 		if (usec < 0)
 			usec += 0x100000000L;
-		t.tv_usec = (usec * ci->ci_pcc_ms_delta) / ci->ci_pcc_denom;
+		t.tv_usec += (usec * ci->ci_pcc_ms_delta) / ci->ci_pcc_denom;
 		while (t.tv_usec >= 1000000) {
 			t.tv_usec -= 1000000;
 			t.tv_sec++;
@@ -199,7 +199,7 @@ microset(struct cpu_info *ci, struct trapframe *framep)
 		ci->ci_pcc_denom = denom;
 	} else {
 #if 0
-		printf("microset: delta %d, resetting state\n", delta);
+		printf("microset: delta %ld, resetting state\n", delta);
 #endif
 		ci->ci_pcc_ms_delta = 1000000; 
 		ci->ci_pcc_denom = hwrpb->rpb_cc_freq; 
