@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.7 2001/01/07 15:36:35 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.8 2001/01/07 15:56:02 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,11 +43,12 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.7 2001/01/07 15:36:35 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.8 2001/01/07 15:56:02 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>	/* For bootverbose */
 #include <sys/syslog.h>
@@ -199,15 +200,25 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	struct arckbd_attach_args aka;
+	size_t intnamelen;
+	char *rintname, *xintname;
 
 	bst = sc->sc_bst = ioc->ioc_fast_t;
 	bsh = sc->sc_bsh = ioc->ioc_fast_h; 
 
-	sc->sc_rirq = irq_establish(IOC_IRQ_SRX, IPL_TTY, arckbd_rint, self);
+	intnamelen = strlen(self->dv_xname) + 4 + 1;
+	rintname = malloc(intnamelen, M_DEVBUF, M_WAITOK);
+	snprintf(rintname, intnamelen, "%s(rx)", self->dv_xname);
+	sc->sc_rirq = irq_establish(IOC_IRQ_SRX, IPL_TTY, arckbd_rint, self,
+	    rintname);
 	if (bootverbose)
 		printf("\n%s: interrupting at %s (rx)", self->dv_xname,
 		    irq_string(sc->sc_rirq));
-	sc->sc_xirq = irq_establish(IOC_IRQ_STX, IPL_TTY, arckbd_xint, self);
+
+	xintname = malloc(intnamelen, M_DEVBUF, M_WAITOK);
+	snprintf(xintname, intnamelen, "%s(tx)", self->dv_xname);
+	sc->sc_xirq = irq_establish(IOC_IRQ_STX, IPL_TTY, arckbd_xint, self,
+	    xintname);
 	irq_disable(sc->sc_xirq);
 	if (bootverbose)
 		printf(" and %s (tx)", irq_string(sc->sc_xirq));
