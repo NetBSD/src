@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,48 +32,65 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)chroot.c	5.8 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #endif /* not lint */
 
-#include <stdio.h>
-#include <paths.h>
+#include <sys/types.h>
 
+#include <err.h>
+#include <errno.h>
+#include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern int errno;
-	char *shell, *getenv(), *strerror();
+	int ch;
+	char *shell;
 
-	if (argc < 2) {
-		(void)fprintf(stderr, "usage: chroot newroot [command]\n");
-		exit(1);
+	while ((ch = getopt(argc, argv, "")) != EOF)
+		switch(ch) {
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1)
+		usage();
+
+	if (chdir(argv[0]) || chroot("."))
+		err(1, "%s", argv[0]);
+
+	if (argv[1]) {
+		execvp(argv[1], &argv[1]);
+		err(1, "%s", argv[1]);
 	}
-	if (chdir(argv[1]) || chroot("."))
-		fatal(argv[1]);
-	if (argv[2]) {
-		execvp(argv[2], &argv[2]);
-		fatal(argv[2]);
-	} else {
-		if (!(shell = getenv("SHELL")))
-			shell = _PATH_BSHELL;
-		execlp(shell, shell, "-i", (char *)NULL);
-		fatal(shell);
-	}
+
+	if (!(shell = getenv("SHELL")))
+		shell = _PATH_BSHELL;
+	execlp(shell, shell, "-i", NULL);
+	err(1, "%s", shell);
 	/* NOTREACHED */
 }
 
-fatal(msg)
-	char *msg;
+void
+usage()
 {
-	extern int errno;
-
-	(void)fprintf(stderr, "chroot: %s: %s\n", msg, strerror(errno));
+	(void)fprintf(stderr, "usage: chroot newroot [command]\n");
 	exit(1);
 }
