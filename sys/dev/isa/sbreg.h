@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.17 1997/03/20 11:03:16 mycroft Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.18 1997/03/20 21:42:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -84,6 +84,7 @@
 
 #define SBP_SET_IRQ		0x80	/* Soft-configured irq (SB16-) */
 #define SBP_SET_DRQ		0x81	/* Soft-configured drq (SB16-) */
+#define	SBP_IRQ_STATUS		0x82	/* Pending IRQ status (SB16-) */
 
 #define	SBP_RECORD_SOURCE	0x0C
 #define	SBP_STEREO		0x0E
@@ -144,8 +145,10 @@
 #define SB_DSP_DACWRITE		0x10	/* programmed I/O write to DAC */
 #define SB_DSP_WDMA		0x14	/* begin 8-bit linear DMA output */
 #define SB_DSP_WDMA_2		0x16	/* begin 2-bit ADPCM DMA output */
+#define	SB_DSP_WDMA_LOOP	0x1C	/* begin 8-bit linear DMA output loop */
 #define SB_DSP_ADCREAD		0x20	/* programmed I/O read from ADC */
 #define SB_DSP_RDMA		0x24	/* begin 8-bit linear DMA input */
+#define	SB_DSP_RDMA_LOOP	0x2C	/* begin 8-bit linear DMA input loop */
 #define SB_MIDI_POLL		0x30	/* initiate a polling read for MIDI */
 #define SB_MIDI_READ		0x31	/* read a MIDI byte on recv intr */
 #define SB_MIDI_UART_POLL	0x34	/* enter UART mode w/ read polling */
@@ -158,14 +161,14 @@
 #define SB_DSP_WDMA_4		0x74	/* begin 4-bit ADPCM DMA output */
 #define SB_DSP_WDMA_2_6		0x76	/* begin 2.6-bit ADPCM DMA output */
 #define SB_DSP_SILENCE		0x80	/* send a block of silence */
-#define SB_DSP_HS_OUTPUT	0x91	/* set high speed mode for wdma */
-#define SB_DSP_HS_INPUT		0x99	/* set high speed mode for rdma */
+#define SB_DSP_HS_OUTPUT	0x90	/* set high speed mode for wdma */
+#define SB_DSP_HS_INPUT		0x98	/* set high speed mode for rdma */
 #define SB_DSP_RECORD_MONO	0xA0	/* set mono recording */
 #define SB_DSP_RECORD_STEREO	0xA8	/* set stereo recording */
-#define	SB_DSP16_WDMA_16	0xB2	/* begin 16-bit linear output */
-#define	SB_DSP16_RDMA_16	0xBA	/* begin 16-bit linear input */
-#define	SB_DSP16_WDMA_8		0xC2	/* begin 8-bit linear output */
-#define	SB_DSP16_RDMA_8		0xCA	/* begin 8-bit linear input */
+#define	SB_DSP16_WDMA_16	0xB6	/* begin 16-bit linear output */
+#define	SB_DSP16_RDMA_16	0xBE	/* begin 16-bit linear input */
+#define	SB_DSP16_WDMA_8		0xC6	/* begin 8-bit linear output */
+#define	SB_DSP16_RDMA_8		0xCE	/* begin 8-bit linear input */
 #define SB_DSP_HALT		0xd0	/* temporarilty suspend DMA */
 #define SB_DSP_SPKR_ON		0xd1	/* turn speaker on */
 #define SB_DSP_SPKR_OFF		0xd3	/* turn speaker off */
