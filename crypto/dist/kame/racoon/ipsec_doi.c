@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.164 2003/10/23 07:22:45 itojun Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.169 2004/03/27 03:27:45 suz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipsec_doi.c,v 1.14 2003/10/23 07:23:50 itojun Exp $");
+__RCSID("$NetBSD: ipsec_doi.c,v 1.15 2004/04/12 03:34:07 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,7 +85,7 @@ __RCSID("$NetBSD: ipsec_doi.c,v 1.14 2003/10/23 07:23:50 itojun Exp $");
 #include "gcmalloc.h"
 
 #ifdef HAVE_GSSAPI
-#include "gssapi.h"
+#include "auth_gssapi.h"
 #endif
 
 int verbose_proposal_check = 1;
@@ -103,7 +103,7 @@ static struct prop_pair *get_ph2approvalx __P((struct ph2handle *,
 static void free_proppair0 __P((struct prop_pair *));
 
 static int get_transform
-	__P((struct isakmp_pl_p *, struct prop_pair **, int *, int));
+	__P((struct isakmp_pl_p *, struct prop_pair **, int *));
 static u_int32_t ipsecdoi_set_ld __P((vchar_t *));
 
 static int check_doi __P((u_int32_t));
@@ -374,11 +374,11 @@ get_ph1approvalx(p, proposal, sap)
 		 * if responder side and peer's key length in proposal
 		 * is bigger than mine, it might be accepted.
 		 */
-		if(tsap->enctype == s->enctype 
-		 && tsap->authmethod == s->authmethod
-		 && tsap->hashtype == s->hashtype
-		 && tsap->dh_group == s->dh_group
-		 && tsap->encklen == s->encklen)
+		if(tsap->enctype == s->enctype &&
+		    tsap->authmethod == s->authmethod &&
+		    tsap->hashtype == s->hashtype &&
+		    tsap->dh_group == s->dh_group &&
+		    tsap->encklen == s->encklen)
 			break;
 	}
 
@@ -826,7 +826,7 @@ ipsecdoi_checkph2proposal(iph2)
 		goto end;
 
 	/* make a SA to be replayed. */
-	vfree(iph2->sa_ret);
+	VPTRINIT(iph2->sa_ret);
 	iph2->sa_ret = get_sabyproppair(p, iph2->ph1);
 	free_proppair0(p);
 	if (iph2->sa_ret == NULL)
@@ -1166,14 +1166,6 @@ get_proppair(sa, mode)
 			vfree(pbuf);
 			return NULL;
 		}
-		if (mode == IPSECDOI_TYPE_PH1
-		 && pa != (struct isakmp_parse_t *)pbuf->v) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"Only a single proposal payload is allowed "
-				"during phase 1 processing.\n");
-			vfree(pbuf);
-			return NULL;
-		}
 
 		prop = (struct isakmp_pl_p *)pa->ptr;
 		proplen = pa->len;
@@ -1203,7 +1195,7 @@ get_proppair(sa, mode)
 			continue;
 
 		/* get transform */
-		if (get_transform(prop, pair, &num_p, mode) < 0) {
+		if (get_transform(prop, pair, &num_p) < 0) {
 			vfree(pbuf);
 			return NULL;
 		}
@@ -1280,11 +1272,10 @@ get_proppair(sa, mode)
  *	0	: No valid transform found.
  */
 static int
-get_transform(prop, pair, num_p, mode)
+get_transform(prop, pair, num_p)
 	struct isakmp_pl_p *prop;
 	struct prop_pair **pair;
 	int *num_p;
-	int mode;
 {
 	int tlen; /* total length of all transform in a proposal */
 	caddr_t bp;
@@ -1314,13 +1305,6 @@ get_transform(prop, pair, num_p, mode)
 		if (pa->type != ISAKMP_NPTYPE_T) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"Invalid payload type=%u\n", pa->type);
-			break;
-		}
-		if (mode == IPSECDOI_TYPE_PH1
-		 && pa != (struct isakmp_parse_t *)pbuf->v) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"Only a single transform payload is allowed "
-				"during phase 1 processing.\n");
 			break;
 		}
 
@@ -1740,7 +1724,7 @@ check_spi_size(proto_id, size)
 	case IPSECDOI_PROTO_ISAKMP:
 		if (size != 0) {
 			/* WARNING */
-			plog(LLV_WARNING, LOCATION, NULL,
+			plog(LLV_DEBUG, LOCATION, NULL,
 				"SPI size isn't zero, but IKE proposal.\n");
 		}
 		return 0;
@@ -2120,8 +2104,8 @@ check_attr_ipsec(proto_id, trns)
 
 			switch (lorv) {
 			case IPSECDOI_ATTR_AUTH_HMAC_MD5:
-				if (proto_id == IPSECDOI_PROTO_IPSEC_AH
-				 && trns->t_id != IPSECDOI_AH_MD5) {
+				if (proto_id == IPSECDOI_PROTO_IPSEC_AH &&
+				    trns->t_id != IPSECDOI_AH_MD5) {
 ahmismatch:
 					plog(LLV_ERROR, LOCATION, NULL,
 						"auth algorithm %u conflicts "
@@ -2230,16 +2214,16 @@ ahmismatch:
 		}
 	}
 
-	if (proto_id == IPSECDOI_PROTO_IPSEC_AH
-	 && !attrseen[IPSECDOI_ATTR_AUTH]) {
+	if (proto_id == IPSECDOI_PROTO_IPSEC_AH &&
+	    !attrseen[IPSECDOI_ATTR_AUTH]) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"attr AUTH must be present for AH.\n", type);
 		return -1;
 	}
 
-	if (proto_id == IPSECDOI_PROTO_IPSEC_ESP
-	 && trns->t_id == IPSECDOI_ESP_NULL
-	 && !attrseen[IPSECDOI_ATTR_AUTH]) {
+	if (proto_id == IPSECDOI_PROTO_IPSEC_ESP &&
+	    trns->t_id == IPSECDOI_ESP_NULL &&
+	    !attrseen[IPSECDOI_ATTR_AUTH]) {
 		plog(LLV_ERROR, LOCATION, NULL,
 		    "attr AUTH must be present for ESP NULL encryption.\n");
 		return -1;
@@ -2373,8 +2357,8 @@ check_attr_ipcomp(trns)
 	}
 
 #if 0
-	if (proto_id == IPSECDOI_PROTO_IPCOMP
-	 && !attrseen[IPSECDOI_ATTR_AUTH]) {
+	if (proto_id == IPSECDOI_PROTO_IPCOMP &&
+	    !attrseen[IPSECDOI_ATTR_AUTH]) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"attr AUTH must be present for AH.\n", type);
 		return -1;
@@ -2794,6 +2778,12 @@ setph2proposal0(iph2, pp, pr)
 		trnsoff += (sizeof(*trns) + attrlen);
 	}
 
+	if (np_t == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"no suitable proposal was created.\n");
+		return NULL;
+	}
+
 	/* update length of this protocol. */
 	prop->h.len = htons(p->l);
 
@@ -2836,7 +2826,7 @@ ipsecdoi_setph2proposal(iph2)
 		for (b = a->head; b; b = b->next) {
 			q = setph2proposal0(iph2, a, b);
 			if (q == NULL) {
-				vfree(iph2->sa);
+				VPTRINIT(iph2->sa);
 				return -1;
 			}
 
@@ -2981,6 +2971,8 @@ ipsecdoi_checkid1(iph1)
 	struct ph1handle *iph1;
 {
 	struct ipsecdoi_id_b *id_b;
+	struct sockaddr *sa;
+	caddr_t sa1, sa2;
 
 	if (iph1->id_p == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -2997,8 +2989,8 @@ ipsecdoi_checkid1(iph1)
 	id_b = (struct ipsecdoi_id_b *)iph1->id_p->v;
 
 	/* In main mode with pre-shared key, only address type can be used. */
-	if (iph1->etype == ISAKMP_ETYPE_IDENT
-	 && iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_PSKEY) {
+	if (iph1->etype == ISAKMP_ETYPE_IDENT &&
+	    iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_PSKEY) {
 		 if (id_b->type != IPSECDOI_ID_IPV4_ADDR
 		  && id_b->type != IPSECDOI_ID_IPV6_ADDR) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -3021,8 +3013,8 @@ ipsecdoi_checkid1(iph1)
 	}
 
 	/* if phase 1 ID payload conformed RFC2407 4.6.2. */
-	if (id_b->type == IPSECDOI_ID_IPV4_ADDR
-	 && id_b->type == IPSECDOI_ID_IPV6_ADDR) {
+	if (id_b->type == IPSECDOI_ID_IPV4_ADDR &&
+	    id_b->type == IPSECDOI_ID_IPV6_ADDR) {
 
 		if (id_b->proto_id == 0 && ntohs(id_b->port) != 0) {
 			plog(LLV_WARNING, LOCATION, NULL,
@@ -3086,10 +3078,36 @@ ipsecdoi_checkid1(iph1)
 			ident.v = (caddr_t)(id_b + 1);
 			ident.l = ident0->l;
 			if (eay_cmp_asn1dn(ident0, &ident)) {
+    err:
 				plog(LLV_WARNING, LOCATION, NULL,
 					"ID value mismatched.\n");
 				if (iph1->rmconf->verify_identifier)
 					return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
+			}
+			break;
+		case IDTYPE_ADDRESS:
+			sa = (struct sockaddr *)ident0->v;
+	                sa2 = (caddr_t)(id_b + 1);
+			switch (sa->sa_family) {
+		        case AF_INET:
+				if (iph1->id_p->l - sizeof(*id_b) != sizeof(struct in_addr))
+					goto err;
+
+		                sa1 = (caddr_t)&((struct sockaddr_in *)sa)->sin_addr;
+		                if (memcmp(sa1, sa2, sizeof(struct in_addr)) != 0)
+					goto err;
+               		 break;  
+#ifdef INET6
+		        case AF_INET6:
+				if (iph1->id_p->l - sizeof(*id_b) != sizeof(struct in6_addr))
+					goto err;
+		                sa1 = (caddr_t)&((struct sockaddr_in6 *)sa)->sin6_addr;
+		                if (memcmp(sa1, sa2, sizeof(struct in6_addr)) != 0)
+					goto err;
+               		 break;  
+#endif
+			default:
+				goto err;
 			}
 			break;
 		default:
@@ -3365,8 +3383,7 @@ ipsecdoi_setid2(iph2)
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get ID for %s\n",
 			spidx2str(&sp->spidx));
-		vfree(iph2->id);
-		iph2->id = NULL;
+		VPTRINIT(iph2->id);
 		return -1;
 	}
 	plog(LLV_DEBUG, LOCATION, NULL,
@@ -3770,8 +3787,8 @@ ipsecdoi_t2satrns(t, pp, pr, tr)
 			break;
 
 		case IPSECDOI_ATTR_ENC_MODE:
-			if (pr->encmode
-			 && pr->encmode != (u_int16_t)ntohs(d->lorv)) {
+			if (pr->encmode &&
+			    pr->encmode != (u_int16_t)ntohs(d->lorv)) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"multiple encmode exist "
 					"in a transform.\n");

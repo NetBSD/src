@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_quick.c,v 1.94 2003/06/27 07:32:38 sakane Exp $	*/
+/*	$KAME: isakmp_quick.c,v 1.95 2003/10/21 07:18:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isakmp_quick.c,v 1.7 2003/10/21 03:03:39 fvdl Exp $");
+__RCSID("$NetBSD: isakmp_quick.c,v 1.8 2004/04/12 03:34:07 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

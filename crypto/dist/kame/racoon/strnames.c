@@ -1,4 +1,4 @@
-/*	$KAME: strnames.c,v 1.24 2003/08/19 09:10:24 itojun Exp $	*/
+/*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strnames.c,v 1.4 2003/11/13 10:35:40 itojun Exp $");
+__RCSID("$NetBSD: strnames.c,v 1.5 2004/04/12 03:34:07 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

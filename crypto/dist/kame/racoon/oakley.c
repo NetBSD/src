@@ -1,4 +1,4 @@
-/*	$KAME: oakley.c,v 1.115 2003/01/10 08:38:23 sakane Exp $	*/
+/*	$KAME: oakley.c,v 1.117 2004/03/27 03:27:46 suz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: oakley.c,v 1.10 2003/07/12 09:37:11 itojun Exp $");
+__RCSID("$NetBSD: oakley.c,v 1.11 2004/04/12 03:34:07 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: oakley.c,v 1.10 2003/07/12 09:37:11 itojun Exp $");
 #endif
 
 #ifdef HAVE_GSSAPI
-#include "gssapi.h"
+#include "auth_gssapi.h"
 #endif
 
 #define OUTBOUND_SA	0
@@ -108,6 +108,8 @@ struct dhgroup dh_modp4096;
 struct dhgroup dh_modp6144;
 struct dhgroup dh_modp8192;
 
+
+static int oakley_check_dh_pub __P((vchar_t *, vchar_t **));
 static int oakley_compute_keymat_x __P((struct ph2handle *, int, int));
 #ifdef HAVE_SIGNING_C
 static int get_cert_fromlocal __P((struct ph1handle *, int));
@@ -160,6 +162,44 @@ oakley_dhgrp_free(dhgrp)
 	if (dhgrp->order)
 		vfree(dhgrp->order);
 	racoon_free(dhgrp);
+}
+
+/*
+ * RFC2409 5
+ * The length of the Diffie-Hellman public value MUST be equal to the
+ * length of the prime modulus over which the exponentiation was
+ * performed, prepending zero bits to the value if necessary.
+ */
+static int
+oakley_check_dh_pub(prime, pub0)
+	vchar_t *prime, **pub0;
+{
+	vchar_t *tmp;
+	vchar_t *pub = *pub0;
+
+	if (prime->l == pub->l)
+		return 0;
+
+	if (prime->l < pub->l) {
+		/* what should i do ? */
+		plog(LLV_ERROR, LOCATION, NULL,
+			"invalid public information was generated.\n");
+		return -1;
+	}
+
+	/* prime->l > pub->l */
+	tmp = vmalloc(prime->l);
+	if (tmp == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to get DH buffer.\n");
+		return -1;
+	}
+	memcpy(tmp->v + prime->l - pub->l, pub->v, pub->l);
+
+	vfree(*pub0);
+	*pub0 = tmp;
+
+	return 0;
 }
 
 /*
@@ -256,6 +296,10 @@ oakley_dh_generate(dh, pub, priv)
 		s_attr_isakmp_group(dh->type), dh->prime->l << 3,
 		timedelta(&start, &end));
 #endif
+
+	if (oakley_check_dh_pub(dh->prime, pub) != 0)
+		return -1;
+
 	plog(LLV_DEBUG, LOCATION, NULL, "compute DH's private.\n");
 	plogdump(LLV_DEBUG, (*priv)->v, (*priv)->l);
 	plog(LLV_DEBUG, LOCATION, NULL, "compute DH's public.\n");

@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.c,v 1.28 2003/07/12 08:44:44 itojun Exp $	*/
+/*	$KAME: algorithm.c,v 1.29 2003/10/21 07:18:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: algorithm.c,v 1.6 2003/10/21 03:06:55 fvdl Exp $");
+__RCSID("$NetBSD: algorithm.c,v 1.7 2004/04/12 03:34:05 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

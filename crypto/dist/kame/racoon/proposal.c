@@ -1,4 +1,4 @@
-/*	$KAME: proposal.c,v 1.49 2003/08/19 09:12:38 itojun Exp $	*/
+/*	$KAME: proposal.c,v 1.50 2004/04/08 05:39:33 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: proposal.c,v 1.4 2003/08/26 03:31:51 itojun Exp $");
+__RCSID("$NetBSD: proposal.c,v 1.5 2004/04/12 03:34:07 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -292,7 +292,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 			goto err;
 		}
 		newpp->lifebyte = pp1->lifebyte;
-		newpp->lifebyte = pp1->lifebyte;
+		newpp->lifetime = pp1->lifetime;
 		newpp->pfs_group = pp1->pfs_group;
 		break;
 	default:
