@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.2 2003/02/21 23:55:38 martin Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.3 2003/03/10 09:23:50 wiz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -11,13 +11,13 @@
  *		     7D C8 61 52 5D E7 2D 39  4E F1 31 3E E8 B3 27 4B
  */
 /*
- * ffs_resize:
+ * resize_ffs:
  *
  * Resize a filesystem.  Is capable of both growing and shrinking.
  *
- * Usage: fsresize filesystem newsize
+ * Usage: resize_ffs filesystem newsize
  *
- * Example: fsresize /dev/rsd1e 29574
+ * Example: resize_ffs /dev/rsd1e 29574
  *
  * newsize is in DEV_BSIZE units (ie, disk sectors, usually 512 bytes
  *  each).
