@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.16 2004/08/14 15:08:04 thorpej Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.17 2004/08/20 06:39:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.16 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.17 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,7 +95,7 @@ wdc_obio_match(parent, match, aux)
 
 	memset(&wdc, 0, sizeof(wdc));
 	memset(&ch, 0, sizeof(ch));
-	ch.ch_wdc = &wdc;
+	ch.ch_atac = &wdc.sc_atac;
 	wdc.regs = &wdr;
 
 	switch (current_mac_model->machineid) {
@@ -177,7 +177,7 @@ wdc_obio_attach(parent, self, aux)
 	if (bus_space_map(wdr->cmd_iot, oa->oa_addr,
 		      WDC_OBIO_REG_NPORTS, 0, &wdr->cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
-			sc->sc_wdcdev.sc_dev.dv_xname);
+			sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 
@@ -189,7 +189,7 @@ wdc_obio_attach(parent, self, aux)
 				    wdr->cmd_baseioh, 4 * i, 4,
 				    &wdr->cmd_iohs[i]) != 0) {
 			printf("%s: unable to subregion control register\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
 		}
 	}
@@ -200,7 +200,7 @@ wdc_obio_attach(parent, self, aux)
 				WDC_OBIO_AUXREG_OFFSET, WDC_OBIO_AUXREG_NPORTS,
 				&wdr->ctl_ioh)) {
 		printf("%s: unable to subregion aux register\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 
@@ -210,7 +210,7 @@ wdc_obio_attach(parent, self, aux)
 			  oa->oa_addr+WDC_OBIO_ISR_OFFSET,
 			  WDC_OBIO_ISR_NPORTS, 0, &wdc_obio_isr_hdl)) {
 		printf("%s: couldn't map intr status register\n",
-			sc->sc_wdcdev.sc_dev.dv_xname);
+			sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 
@@ -239,15 +239,15 @@ wdc_obio_attach(parent, self, aux)
 	}
 
 	ch_sc = chp;
-	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_CAPABILITY_NOIRQ)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NOIRQ;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.PIO_cap = 0;
+	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags & ATAC_CAP_NOIRQ)
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_NOIRQ;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_chanlist[0] = chp;
-	sc->sc_wdcdev.channels = sc->sc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	chp->ch_channel = 0;
-	chp->ch_wdc = &sc->sc_wdcdev;
+	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_chqueue;
 
 	printf("\n");

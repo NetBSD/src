@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.20 2004/08/19 23:25:35 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.21 2004/08/20 06:39:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -403,19 +403,19 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	if (scs_cmd & SCS_CMD_BA5_EN) {
 		aprint_verbose("%s: SATALink BA5 register space enabled\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
 				   PCI_MAPREG_TYPE_MEM|
 				   PCI_MAPREG_MEM_TYPE_32BIT, 0,
 				   &sc->sc_ba5_st, &sc->sc_ba5_sh,
 				   NULL, NULL) != 0)
 			aprint_error("%s: unable to map SATALink BA5 "
-			    "register space\n", sc->sc_wdcdev.sc_dev.dv_xname);
+			    "register space\n", sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		else
 			sc->sc_ba5_en = 1;
 	} else {
 		aprint_verbose("%s: SATALink BA5 register space disabled\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 
 		cfgctl = pci_conf_read(pa->pa_pc, pa->pa_tag,
 				       SII3112_PCI_CFGCTL);
@@ -424,7 +424,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
@@ -469,21 +469,21 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if ((reg44 & 0x7) < cls)
 		ba5_write_4(sc, 0x44, (reg44 & ~0x07) | cls);
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		sc->sc_wdcdev.DMA_cap = 2;
-		sc->sc_wdcdev.UDMA_cap = 6;
+		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 	}
-	sc->sc_wdcdev.set_modes = sii3112_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = sii3112_setup_channel;
 
 	/* We can use SControl and SStatus to probe for drives. */
-	sc->sc_wdcdev.drv_probe = sii3112_drv_probe;
+	sc->sc_wdcdev.sc_atac.atac_probe = sii3112_drv_probe;
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -499,7 +499,8 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
@@ -520,7 +521,7 @@ sii3114_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.dma_start = pciide_dma_start;
 	sc->sc_wdcdev.dma_finish = pciide_dma_finish;
 
-	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags &
+	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
 		aprint_normal(
 		    ", but unused (forced off by config file)");
@@ -582,13 +583,13 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 
 	cp->name = channel_names[channel];
 	cp->ata_channel.ch_channel = channel;
-	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 		return (0);
 	}
 	return (1);
@@ -610,7 +611,7 @@ sii3114_mapchan(struct pciide_channel *cp)
 			satalink_ba5_regmap[wdc_cp->ch_channel].ba5_IDE_TF0,
 			9, &wdr->cmd_baseioh) != 0) {
 		aprint_error("%s: couldn't subregion %s cmd base\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 		goto bad;
 	}
 
@@ -619,7 +620,7 @@ sii3114_mapchan(struct pciide_channel *cp)
 			satalink_ba5_regmap[wdc_cp->ch_channel].ba5_IDE_TF8,
 			1, &cp->ctl_baseioh) != 0) {
 		aprint_error("%s: couldn't subregion %s ctl base\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 		goto bad;
 	}
 	wdr->ctl_ioh = cp->ctl_baseioh;
@@ -630,7 +631,7 @@ sii3114_mapchan(struct pciide_channel *cp)
 					&wdr->cmd_iohs[i]) != 0) {
 			aprint_error("%s: couldn't subregion %s channel "
 				     "cmd regs\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 			goto bad;
 		}
 	}
@@ -690,12 +691,12 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			   &sc->sc_ba5_st, &sc->sc_ba5_sh,
 			   NULL, NULL) != 0) {
 		aprint_error("%s: unable to map SATALink BA5 "
-		    "register space\n", sc->sc_wdcdev.sc_dev.dv_xname);
+		    "register space\n", sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 	sc->sc_ba5_en = 1;
 
-	aprint_verbose("%s: %dMHz PCI bus\n", sc->sc_wdcdev.sc_dev.dv_xname,
+	aprint_verbose("%s: %dMHz PCI bus\n", sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 	    (scs_cmd & SCS_CMD_M66EN) ? 66 : 33);
 
 	/*
@@ -707,32 +708,32 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	BA5_WRITE_4(sc, 2, ba5_IDEDMA_CMD, IDEDMA_CMD_INT_STEER);
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	sii3114_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		sc->sc_wdcdev.DMA_cap = 2;
-		sc->sc_wdcdev.UDMA_cap = 6;
+		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 	}
-	sc->sc_wdcdev.set_modes = sii3112_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = sii3112_setup_channel;
 
 	/* We can use SControl and SStatus to probe for drives. */
-	sc->sc_wdcdev.drv_probe = sii3112_drv_probe;
+	sc->sc_wdcdev.sc_atac.atac_probe = sii3112_drv_probe;
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = 4;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 4;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	/* Map and establish the interrupt handler. */
 	if (pci_intr_map(pa, &intrhandle) != 0) {
 		aprint_error("%s: couldn't map native-PCI interrupt\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
@@ -741,18 +742,19 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 					   pciide_pci_intr, sc);
 	if (sc->sc_pci_ih != NULL) {
 		aprint_normal("%s: using %s for native-PCI interrupt\n",
-			      sc->sc_wdcdev.sc_dev.dv_xname,
+			      sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 			      intrstr ? intrstr : "unknown interrupt");
 	} else {
 		aprint_error("%s: couldn't establish native-PCI interrupt",
-			     sc->sc_wdcdev.sc_dev.dv_xname);
+			     sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (sii3114_chansetup(sc, channel) == 0)
 			continue;
@@ -803,7 +805,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 	sstatus = BA5_READ_4(sc, chp->ch_channel, ba5_SStatus);
 #if 0
 	aprint_normal("%s: port %d: SStatus=0x%08x, SControl=0x%08x\n",
-	    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel, sstatus,
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel, sstatus,
 	    BA5_READ_4(sc, chp->ch_channel, ba5_SControl));
 #endif
 	switch (sstatus & SStatus_DET_mask) {
@@ -814,12 +816,12 @@ sii3112_drv_probe(struct ata_channel *chp)
 	case SStatus_DET_DEV_NE:
 		aprint_error("%s: port %d: device connected, but "
 		    "communication not established\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel);
 		break;
 
 	case SStatus_DET_OFFLINE:
 		aprint_error("%s: port %d: PHY offline\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel);
 		break;
 
 	case SStatus_DET_DEV:
@@ -843,7 +845,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 				      wdr->cmd_iohs[wd_cyl_hi], 0);
 #if 0
 		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel,
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
 		    scnt, sn, cl, ch);
 #endif
 		/*
@@ -856,13 +858,13 @@ sii3112_drv_probe(struct ata_channel *chp)
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 
 		aprint_normal("%s: port %d: device present, speed: %s\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel,
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
 		    sata_speed(sstatus));
 		break;
 
 	default:
 		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel, sstatus);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel, sstatus);
 	}
 }
 

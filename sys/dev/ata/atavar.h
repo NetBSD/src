@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.59 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.60 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -311,7 +311,7 @@ struct ata_device {
 struct ata_channel {
 	struct callout ch_callout;	/* callout handle */
 	int ch_channel;			/* location */
-	struct wdc_softc *ch_wdc;	/* controller's softc */
+	struct atac_softc *ch_atac;	/* ATA controller softc */
 
 	/* Our state */
 	volatile int ch_flags;
@@ -348,6 +348,58 @@ struct ata_channel {
 
 	/* The channel kernel thread */
 	struct proc *ch_thread;
+};
+
+/*
+ * ATA controller softc.
+ *
+ * This contains a bunch of generic info that all ATA controllers need
+ * to have.
+ *
+ * XXX There is still some lingering wdc-centricity here.
+ */
+struct atac_softc {
+	struct device atac_dev;		/* generic device info */
+
+	int	atac_cap;		/* controller capabilities */
+
+#define	ATAC_CAP_DATA16	0x0001		/* can do 16-bit data access */
+#define	ATAC_CAP_DATA32	0x0002		/* can do 32-bit data access */
+#define	ATAC_CAP_DMA	0x0008		/* can do ATA DMA modes */
+#define	ATAC_CAP_UDMA	0x0010		/* can do ATA Ultra DMA modes */
+#define	ATAC_CAP_ATA_NOSTREAM 0x0040	/* don't use stream funcs on ATA */
+#define	ATAC_CAP_ATAPI_NOSTREAM 0x0080	/* don't use stream funcs on ATAPI */
+#define	ATAC_CAP_NOIRQ	0x1000		/* controller never interrupts */
+#define	ATAC_CAP_RAID	0x4000		/* controller "supports" RAID */
+
+	uint8_t	atac_pio_cap;		/* highest PIO mode supported */
+	uint8_t	atac_dma_cap;		/* highest DMA mode supported */
+	uint8_t	atac_udma_cap;		/* highest UDMA mode supported */
+
+	/* Array of pointers to channel-specific data. */
+	struct ata_channel **atac_channels;
+	int		     atac_nchannels;
+
+	/*
+	 * Glue between ATA and SCSIPI for the benefit of ATAPI.
+	 *
+	 * Note: The reference count here is used for both ATA and ATAPI
+	 * devices.
+	 */
+	struct atapi_adapter atac_atapi_adapter;
+
+	/* Driver callback to probe for drives. */
+	void (*atac_probe)(struct ata_channel *);
+
+	/* Optional callbacks to lock/unlock hardware. */
+	int  (*atac_claim_hw)(struct ata_channel *, int);
+	void (*atac_free_hw)(struct ata_channel *);
+
+	/*
+	 * Optional callbacks to set drive mode.  Required for anything
+	 * but basic PIO operation.
+	 */
+	void (*atac_set_modes)(struct ata_channel *);
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.44 2004/08/19 23:30:09 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.45 2004/08/20 06:39:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.44 2004/08/19 23:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.45 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ wdc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 
 	memset(&wdc, 0, sizeof(wdc));
 	memset(&ch, 0, sizeof(ch));
-	ch.ch_wdc = &wdc;
+	ch.ch_atac = &wdc.sc_atac;
 	wdc.regs = &wdr;
 
 	wdr.cmd_iot = ia->ia_iot;
@@ -189,7 +189,7 @@ wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT) {
 		sc->sc_drq = ia->ia_drq[0].ir_drq;
 
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.dma_arg = sc;
 		sc->sc_wdcdev.dma_init = wdc_isa_dma_init;
 		sc->sc_wdcdev.dma_start = wdc_isa_dma_start;
@@ -197,20 +197,21 @@ wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 		wdc_isa_dma_setup(sc);
 	}
 #endif
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_PREATA;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_PREATA;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	if (wdc_cf_flags & WDC_OPTIONS_32)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
 	if (wdc_cf_flags & WDC_OPTIONS_ATA_NOSTREAM)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATA_NOSTREAM;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_ATA_NOSTREAM;
 	if (wdc_cf_flags & WDC_OPTIONS_ATAPI_NOSTREAM)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATAPI_NOSTREAM;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_ATAPI_NOSTREAM;
 
-	sc->sc_wdcdev.PIO_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->wdc_chanlist[0] = &sc->ata_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->ata_channel.ch_channel = 0;
-	sc->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
 	wdc_init_shadow_regs(&sc->ata_channel);
 
@@ -231,14 +232,14 @@ wdc_isa_dma_setup(struct wdc_isa_softc *sc)
 	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq)) < MAXPHYS) {
 		printf("%s: max DMA size %lu is less than required %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, (u_long)maxsize, MAXPHYS);
-		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap &= ~ATAC_CAP_DMA;
 		return;
 	}
 
 	if (isa_drq_alloc(sc->sc_ic, sc->sc_drq) != 0) {
 		printf("%s: can't reserve drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
-		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap &= ~ATAC_CAP_DMA;
 		return;
 	}
 
@@ -246,7 +247,7 @@ wdc_isa_dma_setup(struct wdc_isa_softc *sc)
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
-		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap &= ~ATAC_CAP_DMA;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.16 2004/08/19 23:25:35 thorpej Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.17 2004/08/20 06:39:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -208,31 +208,31 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		interface |= PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_RAID;
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_RAID;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	if (PDC_IS_276(sc))
-		sc->sc_wdcdev.UDMA_cap = 6;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 	else if (PDC_IS_265(sc))
-		sc->sc_wdcdev.UDMA_cap = 5;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 	else if (PDC_IS_262(sc))
-		sc->sc_wdcdev.UDMA_cap = 4;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 	else
-		sc->sc_wdcdev.UDMA_cap = 2;
-	sc->sc_wdcdev.set_modes = PDC_IS_268(sc) ?
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = PDC_IS_268(sc) ?
 			pdc20268_setup_channel : pdc202xx_setup_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -251,7 +251,7 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		mode = PDC2xx_TIM_SET_MB(mode, pdc2xx_dma_mb[0]);
 		mode = PDC2xx_TIM_SET_MC(mode, pdc2xx_dma_mc[0]);
 		for (channel = 0;
-		     channel < sc->sc_wdcdev.nchannels;
+		     channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 		     channel++) {
 			ATADEBUG_PRINT(("pdc202xx_setup_chip: channel %d "
 			    "drive 0 initial timings  0x%x, now 0x%x\n",
@@ -301,14 +301,15 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh, PDC2xx_SM,
 		    mode | 0x1);
 	}
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		if ((st & (PDC_IS_262(sc) ?
 		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
@@ -337,7 +338,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 
 	idedma_ctl = 0;
 	ATADEBUG_PRINT(("pdc202xx_setup_channel %s: scr 0x%x\n",
-	    sc->sc_wdcdev.sc_dev.dv_xname,
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh, PDC262_U66)),
 	    DEBUG_PROBE);
 
@@ -368,7 +369,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    PDC262_U66, scr);
 		ATADEBUG_PRINT(("pdc202xx_setup_channel %s:%d: ATAPI 0x%x\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, channel,
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, channel,
 		    bus_space_read_4(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    PDC262_ATAPI(channel))), DEBUG_PROBE);
 		if (chp->ch_drive[0].drive_flags & DRIVE_ATAPI ||
@@ -424,7 +425,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		}
 		ATADEBUG_PRINT(("pdc202xx_setup_channel: %s:%d:%d "
 		    "timings 0x%x\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, 
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, 
 		    chp->ch_channel, drive, mode), DEBUG_PROBE);
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    PDC2xx_TIM(chp->ch_channel, drive), mode);
@@ -496,7 +497,7 @@ pdc202xx_pci_intr(void *arg)
 
 	rv = 0;
 	scr = bus_space_read_4(sc->sc_dma_iot, sc->sc_dma_ioh, PDC2xx_SCR);
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->ata_channel;
 		/* If a compat channel skip. */
@@ -506,7 +507,7 @@ pdc202xx_pci_intr(void *arg)
 			crv = wdcintr(wdc_cp);
 			if (crv == 0) {
 				printf("%s:%d: bogus intr (reg 0x%x)\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname, i, scr);
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i, scr);
 				pciide_irqack(wdc_cp);
 			} else
 				rv = 1;
@@ -525,7 +526,7 @@ pdc20265_pci_intr(void *arg)
 	u_int32_t dmastat;
 
 	rv = 0;
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->ata_channel;
 		/* If a compat channel skip. */
@@ -549,7 +550,7 @@ pdc20265_pci_intr(void *arg)
 		crv = wdcintr(wdc_cp);
 		if (crv == 0)
 			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, i);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
 		else
 			rv = 1;
 	}

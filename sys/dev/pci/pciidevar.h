@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.24 2004/08/19 23:25:35 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.25 2004/08/20 06:39:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -145,7 +145,7 @@ struct pciide_softc {
 };
 
 /* Given an ata_channel, get the pciide_softc. */
-#define	CHAN_TO_PCIIDE(chp)	((struct pciide_softc *) (chp)->ch_wdc)
+#define	CHAN_TO_PCIIDE(chp)	((struct pciide_softc *) (chp)->ch_atac)
 
 /* Given an ata_channel, get the pciide_channel. */
 #define	CHAN_TO_PCHAN(chp)	((struct pciide_channel *) (chp))

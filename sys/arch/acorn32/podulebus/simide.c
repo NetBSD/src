@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.20 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.21 2004/08/20 06:39:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.20 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.21 2004/08/20 06:39:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,10 +248,10 @@ simide_attach(parent, self, aux)
 	    CONTROL_REGISTER_OFFSET, sc->sc_ctl_reg);
 
 	/* Fill in wdc and channel infos */
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.PIO_cap = 0;
-	sc->sc_wdcdev.channels = sc->sc_chanarray;
-	sc->sc_wdcdev.nchannels = 2;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {
 		scp = &sc->simide_channels[channel];
 		sc->sc_chanarray[channel] = &scp->sc_channel;
@@ -259,7 +259,7 @@ simide_attach(parent, self, aux)
 		wdr = &sc->sc_wdc_regs[channel];
 
 		cp->ch_channel = channel;
-		cp->ch_wdc = &sc->sc_wdcdev;
+		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &scp->sc_chqueue;
 		wdr->cmd_iot = wdr->ctl_iot = &sc->sc_tag;
 		iobase = pa->pa_podule->mod_base;

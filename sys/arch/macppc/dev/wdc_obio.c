@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.39 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.40 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.39 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.40 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ wdc_obio_attach(parent, self, aux)
 	int use_dma = 0;
 	char path[80];
 
-	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_DMA) {
+	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags & WDC_OPTIONS_DMA) {
 		if (ca->ca_nreg >= 16 || ca->ca_nintr == -1)
 			use_dma = 1;	/* XXX Don't work yet. */
 	}
@@ -163,7 +163,7 @@ wdc_obio_attach(parent, self, aux)
 	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
 		printf("%s: couldn't map registers\n",
-			sc->sc_wdcdev.sc_dev.dv_xname);
+			sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 	for (i = 0; i < WDC_NREG; i++) {
@@ -172,7 +172,7 @@ wdc_obio_attach(parent, self, aux)
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    WDC_REG_NPORTS);
 			printf("%s: couldn't subregion registers\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
 		}
 	}
@@ -188,38 +188,38 @@ wdc_obio_attach(parent, self, aux)
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
 		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
 					 ca->ca_reg[3]);
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-		sc->sc_wdcdev.DMA_cap = 2;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
+		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 		if (strcmp(ca->ca_name, "ata-4") == 0) {
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-			sc->sc_wdcdev.UDMA_cap = 4;
-			sc->sc_wdcdev.set_modes = ata4_adjust_timing;
+			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
+			sc->sc_wdcdev.sc_atac.atac_set_modes = ata4_adjust_timing;
 		} else {
-			sc->sc_wdcdev.set_modes = adjust_timing;
+			sc->sc_wdcdev.sc_atac.atac_set_modes = adjust_timing;
 		}
 #ifdef notyet
 		/* Minimum cycle time is 150ns (DMA MODE 1) on ohare. */
 		if (ohare) {
-			sc->sc_wdcdev.PIO_cap = 3;
-			sc->sc_wdcdev.DMA_cap = 1;
+			sc->sc_wdcdev.sc_atac.atac_pio_cap = 3;
+			sc->sc_wdcdev.sc_atac.atac_dma_cap = 1;
 		}
 #endif
 	} else {
 		/* all non-DMA controllers can use adjust_timing */
-		sc->sc_wdcdev.set_modes = adjust_timing;
+		sc->sc_wdcdev.sc_atac.atac_set_modes = adjust_timing;
 	}
 
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	sc->sc_chanptr = chp;
-	sc->sc_wdcdev.channels = &sc->sc_chanptr;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = &sc->sc_chanptr;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_wdcdev.dma_arg = sc;
 	sc->sc_wdcdev.dma_init = wdc_obio_dma_init;
 	sc->sc_wdcdev.dma_start = wdc_obio_dma_start;
 	sc->sc_wdcdev.dma_finish = wdc_obio_dma_finish;
 	chp->ch_channel = 0;
-	chp->ch_wdc = &sc->sc_wdcdev;
+	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_chqueue;
 
 #define OHARE_FEATURE_REG	0xf3000038
@@ -281,8 +281,8 @@ wdc_obio_select(chp, drive)
 	struct ata_channel *chp;
 	int drive;
 {
-	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->ch_wdc;
-	struct wdc_regs *wdr = chp->ch_wdc->regs;
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->ch_atac;
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 
 	bus_space_write_4(wdr->cmd_iot, wdr->cmd_baseioh,
 			CONFIG_REG, sc->sc_dmaconf[drive]);
@@ -292,7 +292,7 @@ void
 adjust_timing(chp)
 	struct ata_channel *chp;
 {
-	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->ch_wdc;
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->ch_atac;
 	int drive;
 	int min_cycle = 0, min_active = 0;
 	int cycle_tick = 0, act_tick = 0, inact_tick = 0, half_tick;
@@ -358,7 +358,7 @@ void
 ata4_adjust_timing(chp)
 	struct ata_channel *chp;
 {
-	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->ch_wdc;
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->ch_atac;
 	int drive;
 	int min_cycle = 0, min_active = 0;
 	int cycle_tick = 0, act_tick = 0, inact_tick = 0;

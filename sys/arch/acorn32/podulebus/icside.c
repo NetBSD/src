@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.22 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.23 2004/08/20 06:39:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.22 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.23 2004/08/20 06:39:37 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -254,20 +254,20 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag.bs_wm_2 = icside_bs_wm_2;
 
 	/* Initialize wdc struct */
-	sc->sc_wdcdev.channels = sc->sc_chp;
-	sc->sc_wdcdev.nchannels = ide->channels;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.PIO_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chp;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = ide->channels;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_pa = pa;
 
 	for (channel = 0; channel < ide->channels; ++channel) {
 		icp = &sc->sc_chan[channel];
-		sc->sc_wdcdev.channels[channel] = &icp->ic_channel;
+		sc->sc_wdcdev.sc_atac.atac_channels[channel] = &icp->ic_channel;
 		cp = &icp->ic_channel;
 		wdr = &sc->sc_wdc_regs[channel];
 
 		cp->ch_channel = channel;
-		cp->ch_wdc = &sc->sc_wdcdev;
+		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &icp->ic_chqueue;
 		wdr->cmd_iot = &sc->sc_tag;
 		wdr->ctl_iot = &sc->sc_tag;
@@ -304,7 +304,7 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 		    icside_intr, icp, &icp->ic_intrcnt);
 		if (icp->ic_ih == NULL) {
 			printf("%s: Cannot claim interrupt %d\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 			    pa->pa_podule->interrupt);
 			continue;
 		}

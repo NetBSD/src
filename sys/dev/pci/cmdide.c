@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.15 2004/08/19 23:25:35 thorpej Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.16 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -146,7 +146,7 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	sc->wdc_chanarray[channel] = &cp->ata_channel;
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
 	cp->ata_channel.ch_channel = channel;
-	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 
 	/*
 	 * Older CMD64X doesn't have independant channels
@@ -170,12 +170,12 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 		    return;
 	}
 
 	aprint_normal("%s: %s channel %s to %s mode\n",
-	    sc->sc_wdcdev.sc_dev.dv_xname, cp->name,
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?
 	    "configured" : "wired",
 	    (interface & PCIIDE_INTERFACE_PCI(channel)) ?
@@ -188,7 +188,7 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	 */
 	if (channel != 0 && (ctrl & CMD_CTRL_2PORT) == 0) {
 		aprint_normal("%s: %s channel ignored (disabled)\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 		cp->ata_channel.ch_flags |= ATACH_DISABLED;
 		return;
 	}
@@ -208,7 +208,7 @@ cmd_pci_intr(void *arg)
 	rv = 0;
 	priirq = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CONF);
 	secirq = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_ARTTIM23);
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->ata_channel;
 		/* If a compat channel skip. */
@@ -219,7 +219,7 @@ cmd_pci_intr(void *arg)
 			crv = wdcintr(wdc_cp);
 			if (crv == 0) {
 				printf("%s:%d: bogus intr\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname, i);
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
 				sc->sc_wdcdev.irqack(wdc_cp);
 			} else
 				rv = 1;
@@ -249,16 +249,17 @@ cmd_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 #endif
 
 	aprint_normal("%s: hardware does not support DMA\n",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	sc->sc_dma_ok = 0;
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cmd_channel_map(pa, sc, channel);
 	}
 }
@@ -285,27 +286,27 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 #endif
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_CMDTECH_649:
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			sc->sc_wdcdev.irqack = cmd646_9_irqack;
 			break;
 		case PCI_PRODUCT_CMDTECH_648:
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-			sc->sc_wdcdev.UDMA_cap = 4;
+			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 			sc->sc_wdcdev.irqack = cmd646_9_irqack;
 			break;
 		case PCI_PRODUCT_CMDTECH_646:
 			if (rev >= CMD0646U2_REV) {
-				sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-				sc->sc_wdcdev.UDMA_cap = 2;
+				sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 			} else if (rev >= CMD0646U_REV) {
 			/*
 			 * Linux's driver claims that the 646U is broken
@@ -313,8 +314,8 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			 * doing
 			 */
 #ifdef PCIIDE_CMD0646U_ENABLEUDMA
-				sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-				sc->sc_wdcdev.UDMA_cap = 2;
+				sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 #endif
 				/* explicitly disable UDMA */
 				pciide_pci_write(sc->sc_pc, sc->sc_tag,
@@ -329,11 +330,11 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		}
 	}
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.set_modes = cmd0643_9_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = cmd0643_9_setup_channel;
 
 	ATADEBUG_PRINT(("cmd0643_9_chip_map: old timings reg 0x%x 0x%x\n",
 		pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
@@ -342,7 +343,8 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++)
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++)
 		cmd_channel_map(pa, sc, channel);
 
 	/*
@@ -390,7 +392,7 @@ cmd0643_9_setup_channel(struct ata_channel *chp)
 					drvp->UDMA_mode = 2;
 				if (drvp->UDMA_mode > 2)
 					udma_reg &= ~CMD_UDMATIM_UDMA33(drive);
-				else if (sc->sc_wdcdev.UDMA_cap > 2) 
+				else if (sc->sc_wdcdev.sc_atac.atac_udma_cap > 2) 
 					udma_reg |= CMD_UDMATIM_UDMA33(drive);
 				udma_reg |= CMD_UDMATIM_UDMA(drive);
 				udma_reg &= ~(CMD_UDMATIM_TIM_MASK <<
@@ -407,7 +409,7 @@ cmd0643_9_setup_channel(struct ata_channel *chp)
 				 * so adjust DMA mode if needed
 				 * if we have a 0646U2/8/9, turn off UDMA
 				 */
-				if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
+				if (sc->sc_wdcdev.sc_atac.atac_cap & ATAC_CAP_UDMA) {
 					udma_reg = pciide_pci_read(sc->sc_pc,
 					    sc->sc_tag,
 					    CMD_UDMATIM(chp->ch_channel));
@@ -459,22 +461,22 @@ cmd680_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.UDMA_cap = 6;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.set_modes = cmd680_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = cmd680_setup_channel;
 
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x80, 0x00);
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x84, 0x00);
@@ -483,7 +485,8 @@ cmd680_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++)
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++)
 		cmd680_channel_map(pa, sc, channel);
 }
 
@@ -510,14 +513,14 @@ cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	sc->wdc_chanarray[channel] = &cp->ata_channel;
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
 	cp->ata_channel.ch_channel = channel;
-	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 
 	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 		    return;
 	}
 
@@ -527,7 +530,7 @@ cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, reg + i, init_val[i]);
 
 	aprint_normal("%s: %s channel %s to %s mode\n",
-	    sc->sc_wdcdev.sc_dev.dv_xname, cp->name,
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?
 	    "configured" : "wired",
 	    (interface & PCIIDE_INTERFACE_PCI(channel)) ?

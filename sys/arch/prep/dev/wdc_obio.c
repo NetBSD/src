@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.17 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.18 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.17 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.18 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,7 +87,7 @@ wdc_obio_probe(struct device *parent, struct cfdata *match, void *aux)
 
 	memset(&wdc, 0, sizeof(wdc));
 	memset(&ch, 0, sizeof(ch));
-	ch.ch_wdc = &wdc;
+	ch.ch_atac = &wdc.sc_atac;
 	wdc.regs = &wdr;
 
 	wdr.cmd_iot = oa->oa_iot;
@@ -140,7 +140,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	      oa->oa_iobase + WDC_OBIO_AUXREG_OFFSET, WDC_OBIO_AUXREG_NPORTS,
 	      0, &wdr->ctl_ioh)) {
 		printf("%s: couldn't map registers\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	}
 
 	for (i = 0; i < WDC_OBIO_REG_NPORTS; i++) {
@@ -159,15 +159,16 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = obio_intr_establish(oa->oa_irq, IST_LEVEL,
 	    IPL_BIO, wdcintr, &sc->sc_channel);
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_PREATA;
-	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_32)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.PIO_cap = 0;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_PREATA;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
+	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags & WDC_OPTIONS_32)
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_chanlist[0] = &sc->sc_channel;
-	sc->sc_wdcdev.channels = sc->sc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_channel.ch_channel = 0;
-	sc->sc_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 
 	wdcattach(&sc->sc_channel);
