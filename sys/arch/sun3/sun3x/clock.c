@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 1997/04/28 23:30:19 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 1997/05/01 14:58:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -226,6 +226,7 @@ clock_match(parent, cf, args)
 	struct cfdata *cf;
     void *args;
 {
+	struct confargs *ca = args;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
