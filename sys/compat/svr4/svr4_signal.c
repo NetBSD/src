@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.13 1995/08/13 22:57:10 mycroft Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.14 1995/08/14 00:41:02 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -399,44 +399,39 @@ svr4_signal(p, uap, retval)
 	case SVR4_SIGNAL_MASK:
 		{
 			struct sigaction_args sa_args;
-			struct sigaction *sap = stackgap_alloc(&sg,
-						sizeof(struct sigaction));
-			struct sigaction *osap = stackgap_alloc(&sg,
-						sizeof(struct sigaction));
-			struct sigaction sa;
+			struct sigaction *nbsa, *obsa, sa;
 
+			nbsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+			obsa = stackgap_alloc(&sg, sizeof(struct sigaction));
 			SCARG(&sa_args, signum) = signum;
-			SCARG(&sa_args, nsa) = sap;
-			SCARG(&sa_args, osa) = osap;
+			SCARG(&sa_args, nsa) = nbsa;
+			SCARG(&sa_args, osa) = obsa;
 
 			sa.sa_handler = SCARG(uap, handler);
-			sa.sa_mask = (sigset_t) 0;
+			sigemptyset(&sa.sa_mask);
 			sa.sa_flags = 0;
 #if 0
 			if (signum != SIGALRM)
 				sa.sa_flags = SA_RESTART;
 #endif
-			error = copyout(&sa, sap, sizeof(sa));
-			if (error)
+			if ((error = copyout(&sa, nbsa, sizeof(sa))) != 0)
 				return error;
-			error = sigaction(p, &sa_args, retval);
-			if (error) {
+			if ((error = sigaction(p, &sa_args, retval)) != 0) {
 				DPRINTF(("signal: sigaction failed: %d\n",
 					 error));
-				*retval = (int) SVR4_SIG_ERR;
+				*retval = (int)SVR4_SIG_ERR;
 				return error;
 			}
-			error = copyin(osap, &sa, sizeof(sa));
-			if (error)
+			if ((error = copyin(obsa, &sa, sizeof(sa))) != 0)
 				return error;
-
-			*retval = (int) sa.sa_handler;
+			*retval = (int)sa.sa_handler;
 			return 0;
 		}
 
 	case SVR4_SIGHOLD_MASK:
 		{
 			struct sigprocmask_args sa;
+
 			SCARG(&sa, how) = SIG_BLOCK;
 			SCARG(&sa, mask) = sigmask(signum);
 			return sigprocmask(p, &sa, retval);
@@ -445,6 +440,7 @@ svr4_signal(p, uap, retval)
 	case SVR4_SIGRELSE_MASK:
 		{
 			struct sigprocmask_args sa;
+
 			SCARG(&sa, how) = SIG_UNBLOCK;
 			SCARG(&sa, mask) = sigmask(signum);
 			return sigprocmask(p, &sa, retval);
@@ -452,22 +448,20 @@ svr4_signal(p, uap, retval)
 
 	case SVR4_SIGIGNORE_MASK:
 		{
-			struct sigaction *sap = stackgap_alloc(&sg, 
-						sizeof(struct sigaction));
-			struct sigaction sa;
 			struct sigaction_args sa_args;
+			struct sigaction *bsa, sa;
 
+			bsa = stackgap_alloc(&sg, sizeof(struct sigaction));
 			SCARG(&sa_args, signum) = signum;
-			SCARG(&sa_args, nsa) = sap;
+			SCARG(&sa_args, nsa) = bsa;
 			SCARG(&sa_args, osa) = NULL;
+
 			sa.sa_handler = SIG_IGN;
-			sa.sa_mask = (sigset_t) 0;
+			sigemptyset(&sa.sa_mask);
 			sa.sa_flags = 0;
-			error = copyout(&sa, sap, sizeof(sa));
-			if (error)
+			if ((error = copyout(&sa, bsa, sizeof(sa))) != 0)
 				return error;
-			error = sigaction(p, &sa_args, retval);
-			if (error) {
+			if ((error = sigaction(p, &sa_args, retval)) != 0) {
 				DPRINTF(("sigignore: sigaction failed\n"));
 				return error;
 			}
@@ -477,6 +471,7 @@ svr4_signal(p, uap, retval)
 	case SVR4_SIGPAUSE_MASK:
 		{
 			struct sigsuspend_args sa;
+
 			SCARG(&sa, mask) = p->p_sigmask & ~sigmask(signum);
 			return sigsuspend(p, &sa, retval);
 		}
@@ -499,8 +494,6 @@ svr4_sigprocmask(p, uap, retval)
 	svr4_sigset_t sss;
 	sigset_t bss;
 	int error = 0;
-
-	*retval = 0;
 
 	if (SCARG(uap, oset) != NULL) {
 		/* Fix the return value first if needed */
