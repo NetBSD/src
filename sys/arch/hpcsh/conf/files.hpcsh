@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.22 2002/03/02 22:26:25 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.23 2002/03/03 14:34:00 uch Exp $
 #
 maxpartitions 8
 
@@ -78,7 +78,8 @@ file	arch/hpcsh/dev/pfckbd.c			pfckbd	needs-flag
 define	hd64461if {}
 device	hd64461if: hd64461if
 attach	hd64461if at shb
-file	arch/hpcsh/dev/hd64461/hd64461.c	hd64461if
+file	arch/hpcsh/dev/hd64461/hd64461.c		hd64461if
+file	arch/hpcsh/dev/hd64461/hd64461_machdep.c	hd64461if
 
 device	hd64461pcmcia: pcmciabus
 attach	hd64461pcmcia at hd64461if
@@ -114,3 +115,8 @@ include	"dev/mii/files.mii"
 include "dev/usb/files.usb"
 include	"dev/wscons/files.wscons"
 
+#
+# Machine-independent PCMCIA drivers
+#
+device	fdc {drive = -1}	# files.pcmcia requires.
+include "dev/pcmcia/files.pcmcia"
