@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2001/09/10 23:40:02 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2001/09/13 22:45:23 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2001/09/10 23:40:02 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2001/09/13 22:45:23 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1770,6 +1770,7 @@ pmap_clean_page(pv, is_src)
 			/* This doesn't work, because pmap_protect
 			   doesn't flush changes on pages that it
 			   has write-protected.  */
+
 			/* If the page is not writeable and this
 			   is the source, then there is no need
 			   to flush it from the cache.  */
@@ -3161,10 +3162,13 @@ pmap_clearbit(pa, maskbits)
 	struct pv_head *pvh;
 	pt_entry_t *pte;
 	vaddr_t va;
-	int bank, off;
+	int bank, off, tlbentry;
 
 	PDEBUG(1, printf("pmap_clearbit: pa=%08lx mask=%08x\n",
 	    pa, maskbits));
+
+	tlbentry = 0;
+	
 	if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
 		return;
 	PMAP_HEAD_TO_MAP_LOCK();
@@ -3200,14 +3204,46 @@ pmap_clearbit(pa, maskbits)
 		pte = pmap_pte(pv->pv_pmap, va);
 		KASSERT(pte != NULL);
 		if (maskbits & (PT_Wr|PT_M))
-			*pte &= ~PT_AP(AP_W);
+		{
+		    if ((pv->pv_flags & PT_NC))
+		    {
+			/*
+			 * entry is not cacheable, so reenable the cache,
+			 * nothing to flush
+			 */
+			*pte |= (PT_C | PT_B);
+			pv->pv_flags &= ~PT_NC;
+		    } else {
+			/*
+			 * entry is cacheable check if pmap is current if it
+			 * is flush it, otherwise it won't be in the cache
+			 */
+			if (pmap_is_curpmap(pv->pv_pmap))
+			{
+			    /* entry is in current pmap purge it */
+			    cpu_cache_purgeID_rng(pv->pv_va, NBPG);
+			}
+		    }
+
+		    /* make the pte read only */
+	    	    *pte &= ~PT_AP(AP_W);
+		  
+	    	    if (pmap_is_curpmap(pv->pv_pmap))
+			/* 
+			 * if we had cacheable pte's we'd clean the pte out to
+			 * memory here
+			 */
+    			/* 
+			 * flush tlb entry as it's in the current pmap
+			 */
+			cpu_tlb_flushID_SE(pv->pv_va); 
+
+		}
 		if (maskbits & PT_H)
 			*pte = (*pte & ~L2_MASK) | L2_INVAL;
 	}
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
-	cpu_tlb_flushID();
-
 }
 
 
