@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/05/15 10:15:59 tsubai Exp $
+#	$NetBSD: Makefile,v 1.2 1998/06/12 21:07:24 tsubai Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -48,10 +48,10 @@ LIBSA=		${SALIB}
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
-	${LD} -N -Ttext ${RELOC} -Bstatic -o ${PROG} \
+	${LD} -s -N -Ttext ${RELOC} -Bstatic -o ${PROG} \
 	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	mv ${PROG} ${PROG}.elf
-	../elfextract/elfextract ${PROG}.elf ${PROG}
+	tail -c +117 ${PROG}.elf > ${PROG}
 #	${OBJCOPY} --input-target=elf32-powerpc \
 #	    --output-target=xcoff-powermac ${PROG}.elf ${PROG}.xcf
 
