@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.22 1999/02/28 17:10:52 explorer Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.23 1999/03/25 23:18:31 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -77,10 +77,6 @@ static int		dp8390_test_mem __P((struct dp8390_softc *));
 
 int	dp8390_mediachange __P((struct ifnet *));
 void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
-
-#define	ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 int	dp8390_debug = 0;
 
