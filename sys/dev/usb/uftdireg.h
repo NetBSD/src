@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdireg.h,v 1.2 2001/05/21 20:47:13 jhawk Exp $ */
+/*	$NetBSD: uftdireg.h,v 1.3 2001/06/12 14:59:28 wiz Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter - 
@@ -261,7 +261,7 @@ enum {
  *         1 = active 
  *
  * FTDI_SIO_GET_MODEM_STATUS
- * Retreive the current value of the modem status register.
+ * Retrieve the current value of the modem status register.
  */
 #define FTDI_SIO_CTS_MASK 0x10
 #define FTDI_SIO_DSR_MASK 0x20
