@@ -1,7 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/09/19 03:09:36 lukem Exp $
-
-# XXX - This gdb.new directory should be renamed to "gdb" after all platforms
-# have been migrated to the new toolchain.
+#	$NetBSD: Makefile,v 1.15 2002/09/22 12:58:24 wiz Exp $
 
 .include <bsd.own.mk>
 
