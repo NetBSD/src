@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
+/* $NetBSD: locore.s,v 1.95 2001/04/29 06:54:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.95 2001/04/29 06:54:04 thorpej Exp $");
 
 #include "assym.h"
 
@@ -743,9 +743,15 @@ LEAF(idle, 0)
 #endif
 	mov	zero, a0			/* enable all interrupts */
 	call_pal PAL_OSF1_swpipl
-2:	ldl	t0, sched_whichqs		/* look for non-empty queue */
+	ldl	t0, sched_whichqs		/* look for non-empty queue */
+	bne	t0, 4f
+2:	lda	t0, uvm
+	ldl	t0, UVM_PAGE_IDLE_ZERO(t0)	/* should we zero some pages? */
+	beq	t0, 3f				/* nope. */
+	CALL(uvm_pageidlezero)
+3:	ldl	t0, sched_whichqs		/* look for non-empty queue */
 	beq	t0, 2b
-	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
+4:	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	CALL(sched_lock_idle)			/* acquire sched_lock */
