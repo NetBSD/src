@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.3 2002/02/10 11:48:56 pooka Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.4 2002/04/18 21:58:02 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.3 2002/02/10 11:48:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.4 2002/04/18 21:58:02 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -1102,39 +1102,13 @@ u_int16_t
 cs_hash_index(addr)
 	char *addr;
 {
-	u_int POLY = 0x04c11db6;
-	u_int crc_value = 0xffffffff;
-	u_int16_t hash_code = 0;
-	int i;
-	u_int current_bit;
-	char current_byte = *addr;
-	u_int cur_crc_high;
+	uint32_t crc;
+	uint16_t hash_code;
 
-	for (i = 0; i < 6; i++) {
-		current_byte = *addr;
-		addr++;
+	crc = ether_crc32_le(addr, ETHER_ADDR_LEN);
 
-		for (current_bit = 8; current_bit; current_bit--) {
-			cur_crc_high = crc_value >> 31;
-			crc_value <<= 1;
-			if (cur_crc_high ^ (current_byte & 0x01)) {
-				crc_value ^= POLY;
-				crc_value |= 0x00000001;
-			}
-			current_byte >>= 1;
-		}
-	}
-
-	/*
-         * The hash code is the 6 least significant bits of the CRC
-         * in the reverse order: CRC[0] = hash[5],CRC[1] = hash[4],etc.
-         */
-	for (i = 0; i < 6; i++) {
-		hash_code = (u_int16_t) ((hash_code << 1) |
-		    (u_int16_t) ((crc_value >> i) & 0x00000001));
-	}
-
-	return hash_code;
+	hash_code = crc >> 26;
+	return (hash_code);
 }
 
 void 
@@ -2008,25 +1982,29 @@ static int
 cs_enable(sc)
 	struct cs_softc *sc;
 {
-	if (!CS_IS_ENABLED(sc) && sc->sc_enable) {
-		int error;
 
-		error = (*sc->sc_enable)(sc);
-		if (error)
-			return error;
+	if (CS_IS_ENABLED(sc) == 0) {
+		if (sc->sc_enable != NULL) {
+			int error;
 
+			error = (*sc->sc_enable)(sc);
+			if (error)
+				return (error);
+		}
 		sc->sc_cfgflags |= CFGFLG_ENABLED;
 	}
 
-	return 0;
+	return (0);
 }
 
 static void
 cs_disable(sc)
 	struct cs_softc *sc;
 {
-	if (CS_IS_ENABLED(sc) && sc->sc_disable) {
-		(*sc->sc_disable)(sc);
+
+	if (CS_IS_ENABLED(sc)) {
+		if (sc->sc_disable != NULL)
+			(*sc->sc_disable)(sc);
 
 		sc->sc_cfgflags &= ~CFGFLG_ENABLED;
 	}
