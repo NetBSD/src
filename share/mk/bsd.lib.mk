@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.208 2002/10/22 18:48:28 perry Exp $
+#	$NetBSD: bsd.lib.mk,v 1.209 2002/11/09 08:22:04 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -96,29 +96,30 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 # APICFLAGS:		flags for ${AS} to assemble .[sS] to .so objects.
 
 .if ${MACHINE_ARCH} == "alpha"
-		# Alpha-specific shared library flags
+
 FPICFLAGS ?= -fPIC
 CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
-.elif ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
-		# mips-specific shared library flags
 
-# On mips, all libs are compiled with ABIcalls, not just sharedlibs.
+.elif ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
+
+# On MIPS, all libs are compiled with ABIcalls (and are thus PIC),
+# not just sharedlibs.
 MKPICLIB= no
 
 # so turn shlib PIC flags on for ${AS}.
 AINC+=-DABICALLS
-AFLAGS+= -fPIC
-AS+=	-KPIC
 
 .elif ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
+
 # On the VAX, all object are PIC by default, not just sharedlibs.
 MKPICLIB= no
 
 .elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") && \
        ${OBJECT_FMT} == "ELF"
+
 # If you use -fPIC you need to define BIGPIC to turn on 32-bit 
 # relocations in asm code
 FPICFLAGS ?= -fPIC
