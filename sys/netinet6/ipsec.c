@@ -1,4 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.15 2000/02/06 12:49:46 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.16 2000/02/25 00:29:55 itojun Exp $	*/
+/*	$KAME: ipsec.c,v 1.49 2000/02/23 08:52:52 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -335,13 +336,7 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 	bzero(&spidx, sizeof(spidx));
 
 	/* make a index to look for a policy */
-	if ((flag & IP_FORWARDING) == IP_FORWARDING) {
-		/* Case: IP forwarding */
-		*error = ipsec_setspidx_mbuf(&spidx, dir, AF_INET, m);
-	} else {
-		/* Case: ICMP echo reply */
-		*error = ipsec_setspidx_mbuf(&spidx, dir, AF_INET, m);
-	}
+	*error = ipsec_setspidx_mbuf(&spidx, dir, AF_INET, m);
 
 	if (*error != 0)
 		return NULL;
@@ -552,13 +547,7 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 	bzero(&spidx, sizeof(spidx));
 
 	/* make a index to look for a policy */
-	if ((flag & IP_FORWARDING) == IP_FORWARDING) {
-		/* Case: IP forwarding */
-		*error = ipsec_setspidx_mbuf(&spidx, dir, AF_INET6, m);
-	} else {
-		/* Case: ICMP echo reply */
-		*error = ipsec_setspidx_mbuf(&spidx, dir, AF_INET6, m);
-	}
+	*error = ipsec_setspidx_mbuf(&spidx, dir, AF_INET6, m);
 
 	if (*error != 0)
 		return NULL;
