@@ -34,8 +34,8 @@
 ./usr/include/m68k/varargs.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/aout_machdep.h
-./usr/include/machine/bus.h
 ./usr/include/machine/asm.h
+./usr/include/machine/bus.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/conf.h
 ./usr/include/machine/cpu.h
@@ -78,8 +78,8 @@
 ./usr/lib/libm_pic.a
 ./usr/lib/libntp_pic.a
 ./usr/lib/libossaudio_pic.a
-./usr/lib/libposix_pic.a
 ./usr/lib/libpcap_pic.a
+./usr/lib/libposix_pic.a
 ./usr/lib/libresolv_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libstdc++_pic.a

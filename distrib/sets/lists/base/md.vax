@@ -1,4 +1,4 @@
 ./sbin/ldconfig
-./usr/mdec/xxboot
-./usr/mdec/raboot
 ./usr/mdec/hpboot
+./usr/mdec/raboot
+./usr/mdec/xxboot
