@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.21 2003/01/05 23:20:00 sommerfeld Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.22 2003/01/05 23:23:43 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.21 2003/01/05 23:20:00 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.22 2003/01/05 23:23:43 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,6 +320,7 @@ wsemul_vt100_nextline(struct wsemul_vt100_emuldata *edp)
 	}
 }	
 
+static void
 wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *edp, u_char c,
 	int kernel)
 {
