@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.55 1998/08/31 23:55:37 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.56 1999/03/22 17:39:44 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -568,7 +568,7 @@ fdavail(p, n)
 	if ((i = lim - fdp->fd_nfiles) > 0 && (n -= i) <= 0)
 		return (1);
 	fpp = &fdp->fd_ofiles[fdp->fd_freefile];
-	for (i = fdp->fd_nfiles - fdp->fd_freefile; --i >= 0; fpp++)
+	for (i = min(lim,fdp->fd_nfiles) - fdp->fd_freefile; --i >= 0; fpp++)
 		if (*fpp == NULL && --n <= 0)
 			return (1);
 	return (0);
