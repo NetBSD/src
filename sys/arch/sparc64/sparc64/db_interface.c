@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.76 2004/03/21 14:15:35 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.77 2004/05/20 00:52:58 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.76 2004/03/21 14:15:35 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.77 2004/05/20 00:52:58 petrov Exp $");
 
 #include "opt_ddb.h"
 
@@ -349,7 +349,9 @@ kdb_trap(type, tf)
 
 	s = splhigh();
 	db_active++;
+#if defined(MULTIPROCESSOR)
 	sparc64_ipi_pause_cpus();
+#endif
 	cnpollc(TRUE);
 	/* Need to do spl stuff till cnpollc works */
 	tl = ddb_regs.ddb_tl = savetstate(ts);
@@ -358,7 +360,9 @@ kdb_trap(type, tf)
 	restoretstate(tl,ts);
 	cnpollc(FALSE);
 	db_active--;
+#if defined(MULTIPROCESSOR)
 	sparc64_ipi_resume_cpus();
+#endif
 	splx(s);
 
 	if (fplwp) {	

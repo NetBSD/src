@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2004/03/24 15:34:51 atatat Exp $ */
+/*	$NetBSD: machdep.c,v 1.166 2004/05/20 00:52:58 petrov Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2004/03/24 15:34:51 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2004/05/20 00:52:58 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -630,8 +630,10 @@ cpu_reboot(howto, user_boot_string)
 	}
 	(void) splhigh();		/* ??? */
 
+#if defined(MULTIPROCESSOR)
 	/* Stop all secondary cpus */
 	sparc64_ipi_halt_cpus();
+#endif
 
 	/* If rebooting and a dump is requested, do it. */
 	if (howto & RB_DUMP)
