@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.12 1998/08/13 02:11:00 eeh Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.13 1998/10/11 23:07:42 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -257,8 +257,8 @@ uvmfault_amapcopy(ufi)
 		 */
 
 		if (UVM_ET_ISNEEDSCOPY(ufi->entry))
-			amap_copy(ufi->map, ufi->entry, M_NOWAIT, TRUE, ufi->rvaddr, 
-		ufi->rvaddr + 1);
+			amap_copy(ufi->map, ufi->entry, M_NOWAIT, TRUE, 
+				ufi->orig_rvaddr, ufi->orig_rvaddr + 1);
 
 		/*
 		 * didn't work?  must be out of RAM.   unlock and sleep.
@@ -331,7 +331,7 @@ int uvmfault_anonget(ufi, amap, anon)
 		 */
 
 		if (pg && pg->loan_count)
-				pg = uvm_anon_lockloanpg(anon);
+			pg = uvm_anon_lockloanpg(anon);
 
 		/*
 		 * page there?   make sure it is not busy/released.
@@ -513,7 +513,7 @@ int uvmfault_anonget(ufi, amap, anon)
 		 */
 
 		if (amap_lookup(&ufi->entry->aref, 
-		    ufi->rvaddr - ufi->entry->start) != anon) {
+		    ufi->orig_rvaddr - ufi->entry->start) != anon) {
 			
 			uvmfault_unlockall(ufi, amap, NULL, anon);
 			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
@@ -558,7 +558,7 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_prot_t enter_prot;
 	boolean_t wired, narrow, promote, locked, shadowed;
 	int npages, nback, nforw, centeridx, result, lcv, gotpages;
-	vaddr_t orig_startva, startva, objaddr, currva, offset;
+	vaddr_t startva, objaddr, currva, offset;
 	paddr_t pa; 
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
@@ -687,11 +687,10 @@ ReFault:
 			panic("fault: advice mismatch!");
 #endif
 		nback = min(uvmadvice[ufi.entry->advice].nback,
-		(ufi.rvaddr - ufi.entry->start) / PAGE_SIZE);
-		startva = ufi.rvaddr - (nback * PAGE_SIZE);
-		orig_startva = ufi.orig_rvaddr - (nback * PAGE_SIZE);
+		(ufi.orig_rvaddr - ufi.entry->start) / PAGE_SIZE);
+		startva = ufi.orig_rvaddr - (nback * PAGE_SIZE);
 		nforw = min(uvmadvice[ufi.entry->advice].nforw,
-		((ufi.entry->end - ufi.rvaddr) / PAGE_SIZE) - 1);
+		((ufi.entry->end - ufi.orig_rvaddr) / PAGE_SIZE) - 1);
 		/*
 		 * note: "-1" because we don't want to count the
 		 * faulting page as forw
@@ -705,16 +704,15 @@ ReFault:
 		
 		/* narrow fault! */
 		nback = nforw = 0;
-		startva = ufi.rvaddr;
-		orig_startva = ufi.orig_rvaddr;
+		startva = ufi.orig_rvaddr;
 		npages = 1;
 		centeridx = 0;
 
 	}
 
 	/* locked: maps(read) */
-	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, orig_startva=0x%x",
-	narrow, nback, nforw, orig_startva);
+	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%x",
+	narrow, nback, nforw, startva);
 	UVMHIST_LOG(maphist, "  entry=0x%x, amap=0x%x, obj=0x%x", ufi.entry,
 	amap, uobj, 0);
 
@@ -760,7 +758,6 @@ ReFault:
 		if (amap)
 			anons += nback;
 		startva = startva + (nback * PAGE_SIZE);
-		orig_startva = orig_startva + (nback * PAGE_SIZE);
 		npages -= nback;
 		nback = centeridx = 0;
 	}
@@ -773,13 +770,13 @@ ReFault:
 	 * we go.
 	 */
 
-	currva = orig_startva;
+	currva = startva;
 	shadowed = FALSE;
 	for (lcv = 0 ; lcv < npages ; lcv++, currva += PAGE_SIZE) {
 
 		/*
 		 * dont play with VAs that are already mapped
-		 * *except for center)
+		 * except for center)
 		 * XXX: return value of pmap_extract disallows PA 0
 		 */
 		if (lcv != centeridx) {
@@ -844,9 +841,6 @@ ReFault:
 	 * prefer to handle the fault itself (rather than letting us do it
 	 * with the usual pgo_get hook).  the backing object signals this by
 	 * providing a pgo_fault routine.
-	 *
-	 * note: pgo_fault can obtain the correct VA for pmap_enter by using:
-	 *    real_va = [ ufi->orig_rvaddr + (startva - ufi->rvaddr)]
 	 */
 
 	if (uobj && shadowed == FALSE && uobj->pgops->pgo_fault != NULL) {
@@ -901,7 +895,7 @@ ReFault:
 		uobjpage = NULL;
 
 		if (gotpages) {
-			currva = orig_startva;
+			currva = startva;
 			for (lcv = 0 ; lcv < npages ;
 			    lcv++, currva += PAGE_SIZE) {
 
@@ -1169,7 +1163,7 @@ ReFault:
 		uvm_pagecopy(oanon->u.an_page, pg);	/* pg now !PG_CLEAN */
 		pg->flags &= ~(PG_BUSY|PG_FAKE);	/* un-busy! new page */
 		UVM_PAGE_OWN(pg, NULL);
-		amap_add(&ufi.entry->aref, ufi.rvaddr - ufi.entry->start,
+		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
 		    anon, 1);
 
 		/* deref: can not drop to zero here by defn! */
@@ -1280,7 +1274,7 @@ Case2:
 		uvmexp.fltget++;
 		gotpages = 1;
 		result = uobj->pgops->pgo_get(uobj,
-		    (ufi.rvaddr - ufi.entry->start) + ufi.entry->offset,
+		    (ufi.orig_rvaddr - ufi.entry->start) + ufi.entry->offset,
 		    &uobjpage, &gotpages, 0,
 		    UVM_ET_ISCOPYONWRITE(ufi.entry) ?
 			VM_PROT_READ : access_type,
@@ -1334,7 +1328,7 @@ Case2:
 		if ((uobjpage->flags & PG_RELEASED) != 0 ||
 		    (locked && amap && 
 		    amap_lookup(&ufi.entry->aref,
-		      ufi.rvaddr - ufi.entry->start))) {
+		      ufi.orig_rvaddr - ufi.entry->start))) {
 			if (locked) 
 				uvmfault_unlockall(&ufi, amap, NULL, NULL);
 			locked = FALSE;
@@ -1603,7 +1597,7 @@ Case2:
 			    anon, pg, 0, 0);
 		}
 
-		amap_add(&ufi.entry->aref, ufi.rvaddr - ufi.entry->start,
+		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
 		    anon, 0);
 		
 	}
