@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.27 1997/06/06 23:43:58 thorpej Exp $	*/
+/*	$NetBSD: pas.c,v 1.28 1997/07/25 01:42:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,6 +32,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ */
+/*
+ * jfw 7/13/97 - The soundblaster code requires the generic bus-space 
+ * structures to be set up properly.  Rather than go to the effort of making
+ * code for a dead line fully generic, properly set up the SB structures and
+ * leave the rest x86/ISA/default-configuration specific.  If you have a
+ * REAL computer, go buy a REAL sound card.
  */
 /*
  * Todo:
@@ -258,6 +265,12 @@ pasprobe(parent, match, aux)
 	register int iobase;
 	u_char id, t;
 
+        /* ensure we can set this up as a sound blaster */
+       	if (!SB_BASE_VALID(ia->ia_iobase)) {
+		printf("pas: configured SB iobase 0x%x invalid\n", ia->ia_iobase);
+		return 0;
+	}
+
 	/*
 	 * WARNING: Setting an option like W:1 or so that disables
 	 * warm boot reset of the card will screw up this detect code
@@ -329,12 +342,24 @@ pasprobe(parent, match, aux)
                 return (0);
         }
 
-	/* Now a SoundBlaster */
+	/* Now a SoundBlaster, so set up proper bus-space hooks
+         * appropriately
+         */
+
 	sc->sc_sbdsp.sc_iobase = ia->ia_iobase;
 	sc->sc_sbdsp.sc_iot = ia->ia_iot;
+
+	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
+	if (bus_space_map(sc->sc_sbdsp.sc_iot, ia->ia_iobase, SBP_NPORT, 0,
+	    &sc->sc_sbdsp.sc_ioh)) {
+		printf("pas: can't map i/o space 0x%x/%d in probe\n",
+		    ia->ia_iobase, SBP_NPORT);
+		return 0;
+	}
+
 	if (sbdsp_reset(&sc->sc_sbdsp) < 0) {
 		DPRINTF(("pas: couldn't reset card\n"));
-		return 0;
+		goto unmap;
 	}
 
 	/*
@@ -342,7 +367,7 @@ pasprobe(parent, match, aux)
 	 */
 	if (!SB_DRQ_VALID(ia->ia_drq)) {
 		printf("pas: configured dma chan %d invalid\n", ia->ia_drq);
-		return 0;
+		goto unmap;
 	}
 #ifdef NEWCONFIG
 	/*
@@ -353,13 +378,13 @@ pasprobe(parent, match, aux)
 		sbdsp_reset(&sc->sc_sbdsp);
 		if (!SB_IRQ_VALID(ia->ia_irq)) {
 			printf("pas: couldn't auto-detect interrupt");
-			return 0;
+			goto unmap;
 		}
 	} else
 #endif
 	if (!SB_IRQ_VALID(ia->ia_irq)) {
 		printf("pas: configured irq chan %d invalid\n", ia->ia_irq);
-		return 0;
+		goto unmap;
 	}
 
 	sc->sc_sbdsp.sc_irq = ia->ia_irq;
@@ -368,11 +393,15 @@ pasprobe(parent, match, aux)
 	
 	if (sbdsp_probe(&sc->sc_sbdsp) == 0) {
 		DPRINTF(("pas: sbdsp probe failed\n"));
-		return 0;
+		goto unmap;
 	}
 
 	ia->ia_iosize = SB_NPORT;
 	return 1;
+
+ unmap:
+	bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh, SBP_NPORT);
+	return 0;
 }
 
 #ifdef NEWCONFIG
