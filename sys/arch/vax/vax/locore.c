@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.2 1995/02/13 00:46:10 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.3 1995/02/23 17:53:54 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -37,9 +37,11 @@
 #include "sys/types.h"
 #include "machine/cpu.h"
 #include "machine/sid.h"
+#include "machine/uvaxII.h"
 #include "machine/loconf.h"
 #include "machine/param.h"
 #include "machine/vmparam.h"
+#include "machine/pcb.h"
 #include "vm/vm.h"
 
 #define ROUND_PAGE(x)   (((uint)(x)+PAGE_SIZE-1)& ~(PAGE_SIZE-1))
@@ -88,6 +90,7 @@ to_kmem:
 
 	PAGE_SIZE = NBPG*2; /* Set logical page size */
 	proc0paddr=ROUND_PAGE(&end);
+	mtpr(proc0paddr, PR_PCBB); /* must be set before ksp for some cpus */
 	mtpr(proc0paddr+UPAGES*NBPG,PR_KSP); /* new kernel stack */
 
 /*
@@ -99,6 +102,10 @@ to_kmem:
 asm("	movw	$0xfff,_arithflt
 	movw	$0xfff,_syscall
 ");
+        ((struct pcb *)proc0paddr)->P0LR = 0;
+        ((struct pcb *)proc0paddr)->P0BR = 0;
+        ((struct pcb *)proc0paddr)->P1LR = 0;
+        ((struct pcb *)proc0paddr)->P1BR = (void *)0x80000000;
 	mtpr(0,PR_P0LR);
 	mtpr(0,PR_P0BR);
 	mtpr(0,PR_P1LR);
@@ -112,9 +119,13 @@ asm("	movw	$0xfff,_arithflt
 
 	/* Count up memory etc... early machine dependent routines */
 	if((cpunumber=MACHID(mfpr(PR_SID)))>VAX_MAX) cpunumber=0;
+	cpu_type=mfpr(PR_SID);
+#if VAX630 || VAX410
+        if (cpunumber == VAX_78032)
+                cpu_type=(((*UVAXIISID) >> 24) & 0xff)|(cpu_type & 0xff000000);
+#endif
 	pmap_bootstrap();
 
-	cpu_type=mfpr(PR_SID);
 	main();
 	/* XXX det {r dumt att fastna vid att init startar p} 2 */
 	asm("

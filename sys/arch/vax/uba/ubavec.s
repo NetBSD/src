@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavec.s,v 1.1 1995/02/13 00:44:26 ragge Exp $ */
+/*	$NetBSD: ubavec.s,v 1.2 1995/02/23 17:53:22 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -95,6 +95,7 @@ tre:	subl3   $ubatre, (sp), r0
         pushl   $2
         brb     1f
 
+	.globl ett,tva,tre,fyra
 fyra:	subl3   $ubafyra, (sp), r0
         ashl    $-3, r0, (sp)
         pushl   $3

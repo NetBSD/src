@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.4 1995/02/13 00:46:17 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.5 1995/02/23 17:54:05 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -241,7 +241,20 @@ _copystr:	.word 0x7c
 	movl	16(ap),r3	# copied
 #	halt
 
-	locc	$0, r2, (r4)	# check for null byte
+#if VAX630
+        movl    r4, r1          # (3) string address == r1
+        movl    r2, r0          # (2) string length == r0
+        jeql    Llocc_out       # forget zero length strings
+Llocc_loop:
+        tstb    (r1)
+        jeql    Llocc_out
+        incl    r1
+        sobgtr  r0,Llocc_loop
+Llocc_out:
+        tstl    r0              # be sure of condition codes
+#else
+        locc    $0, r2, (r4)    # check for null byte
+#endif
 	beql	1f
 
 	subl3	r0, r2, r6	# Len to copy.
@@ -287,26 +300,12 @@ _savectx:
 		mfpr	$PR_ESP,r0	# PR_ESP == start chld pcb
 		mtpr	$0,$PR_ESP	# Clear ESP, used in fault routine
 		clrl	4(r0)		# Clear ESP in child
-                addl2   _uofset,8(r0)   # set pointer to ret frame
-                                        # (used in syscall())
                 movl    _ustat,(r0)     # New kernel sp in chld
                 addl2   _uofset,68(r0)  # set fp to new stack
                 movl    _ustat,r0
                 movl    (sp),(r0)
                 movl    4(sp),4(r0)
-#               halt
                 rei
-
-
-
-
-
-		subl2	$8,(r0)
-#		movl	_tmpsp,r0
-		movl	(sp),(r0)
-		movl	4(sp),4(r0)
-#		halt
-		rei
 
 
 	.data
