@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.145 2004/04/25 21:02:26 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.146 2004/04/26 01:40:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.145 2004/04/25 21:02:26 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.146 2004/04/26 01:40:40 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -124,8 +124,7 @@ POOL_INIT(ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0, "dino1pl",
 POOL_INIT(ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0, "dino2pl",
     &pool_allocator_nointr);
 
-static void ffs_oldfscompat_read(struct fs *, struct ufsmount *,
-				   daddr_t);
+static void ffs_oldfscompat_read(struct fs *, struct ufsmount *, daddr_t);
 static void ffs_oldfscompat_write(struct fs *, struct ufsmount *);
 
 /*
