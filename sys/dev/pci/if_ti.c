@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.36 2001/06/30 17:53:59 bjh21 Exp $ */
+/* $NetBSD: if_ti.c,v 1.37 2001/07/05 21:27:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -136,15 +136,15 @@
 
 static const struct ti_type ti_devs[] = {
 	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC,
-		"Alteon AceNIC 1000BASE-SX Gigabit Ethernet" },
+		"Alteon AceNIC 1000BASE-SX Ethernet" },
 	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC_COPPER,
-		"Alteon AceNIC 1000BASE-T Gigabit Ethernet" },
+		"Alteon AceNIC 1000BASE-T Ethernet" },
 	{ PCI_VENDOR_3COM,	PCI_PRODUCT_3COM_3C985,
 		"3Com 3c985-SX Gigabit Ethernet" },
 	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
-		"Netgear GA620 1000BASE-SX Gigabit Ethernet" },
+		"Netgear GA620 1000BASE-SX Ethernet" },
 	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T,
-		"Netgear GA620 1000BASE-T Gigabit Ethernet" },
+		"Netgear GA620 1000BASE-T Ethernet" },
 	{ PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
 		"Silicon Graphics Gigabit Ethernet" },
 	{ 0, 0, NULL }
