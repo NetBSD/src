@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.12 1998/11/09 15:35:16 frueauf Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.13 1999/02/09 20:21:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -317,7 +317,7 @@ hpux_sys_execv(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_execv_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 	} */ *uap = v;
 	struct sys_execve_args ap;
@@ -340,7 +340,7 @@ hpux_sys_execve(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_execve_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
