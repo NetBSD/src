@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.7 2003/03/18 16:40:20 matt Exp $
+#	$NetBSD: files.mvmeppc,v 1.8 2003/07/27 01:19:33 thorpej Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -24,7 +24,6 @@ file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 # General files
 file	dev/cons.c
-file	dev/clock_subr.c
 
 #
 # Machine-independent SCSI drivers

@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.4 2003/05/05 22:43:38 bjh21 Exp $
+# $NetBSD: files.acorn26,v 1.5 2003/07/27 01:17:38 thorpej Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -76,7 +76,6 @@ file	arch/acorn26/ioc/iic.c			iic
 device	rtc
 attach	rtc at iic
 file	arch/acorn26/ioc/rtc.c			rtc
-file	dev/clock_subr.c			rtc
 
 # DS2401 Silicon Serial Number
 device	ssn

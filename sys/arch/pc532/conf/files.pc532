@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.50 2003/06/24 04:57:58 thorpej Exp $
+#	$NetBSD: files.pc532,v 1.51 2003/07/27 01:19:29 thorpej Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -22,7 +22,6 @@ device	rtc
 attach	rtc at mainbus
 device	clock
 attach	clock at mainbus
-file	dev/clock_subr.c
 file	arch/pc532/pc532/clock.c
 
 device	scn: tty

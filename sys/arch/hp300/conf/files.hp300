@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.66 2003/06/28 08:22:02 he Exp $
+#	$NetBSD: files.hp300,v 1.67 2003/07/27 01:19:25 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -215,7 +215,6 @@ file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
-file	dev/clock_subr.c
 file	dev/cons.c
 
 #

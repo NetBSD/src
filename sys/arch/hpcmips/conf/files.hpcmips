@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.90 2003/05/01 07:01:58 igy Exp $
+#	$NetBSD: files.hpcmips,v 1.91 2003/07/27 01:19:26 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -365,7 +365,6 @@ file	dev/hpc/video_subr.c		tx3912video | plumvideo
 #	Real-time clock (not optional)
 #
 file	arch/hpcmips/hpcmips/clock.c
-file	dev/clock_subr.c
 
 # Floppy disk controller
 device	fdc {drive = -1}
