@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.11 1994/12/08 06:43:30 jtc Exp $	*/
+/*	$NetBSD: resource.h,v 1.12 1995/01/08 22:53:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -105,8 +105,8 @@ struct rlimit {
 
 /* Load average structure. */
 struct loadavg {
-	fixpt_t ldavg[3];
-	long fscale;
+	fixpt_t	ldavg[3];
+	long	fscale;
 };
 
 #ifdef KERNEL
