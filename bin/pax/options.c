@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.32 2001/07/22 13:33:58 wiz Exp $	*/
+/*	$NetBSD: options.c,v 1.33 2001/10/25 05:33:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.32 2001/07/22 13:33:58 wiz Exp $");
+__RCSID("$NetBSD: options.c,v 1.33 2001/10/25 05:33:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,18 +76,18 @@ static OPLIST *ophead = NULL;	/* head for format specific options -x */
 static OPLIST *optail = NULL;	/* option tail */
 static char *firstminusC;	/* first -C argument encountered. */
 
-static int no_op __P((void));
-static void printflg __P((unsigned int));
-static int c_frmt __P((const void *, const void *));
-static off_t str_offt __P((char *));
-static void pax_options __P((int, char **));
-static void pax_usage __P((void));
-static void tar_options __P((int, char **));
-static void tar_usage __P((void));
-static void cpio_options __P((int, char **));
-static void cpio_usage __P((void));
+static int no_op(void);
+static void printflg(unsigned int);
+static int c_frmt(const void *, const void *);
+static off_t str_offt(char *);
+static void pax_options(int, char **);
+static void pax_usage(void);
+static void tar_options(int, char **);
+static void tar_usage(void);
+static void cpio_options(int, char **);
+static void cpio_usage(void);
 
-static void checkpositionalminusC __P((char ***, int (*)(char *, int)));
+static void checkpositionalminusC(char ***, int (*)(char *, int));
 
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
@@ -153,15 +153,8 @@ int ford[] = {F_USTAR, F_TAR, F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO, -1};
  *	parser
  */
 
-#if __STDC__
 void
 options(int argc, char **argv)
-#else
-void
-options(argc, argv)
-	int argc;
-	char **argv;
-#endif
 {
 
 	/*
@@ -188,15 +181,8 @@ options(argc, argv)
  *	the user specified a legal set of flags. If not, complain and exit
  */
 
-#if __STDC__
 static void
 pax_options(int argc, char **argv)
-#else
-static void
-pax_options(argc, argv)
-	int argc;
-	char **argv;
-#endif
 {
 	int c;
 	int i;
@@ -719,15 +705,8 @@ struct option tar_longopts[] = {
 	{ 0,			0,			0,	0 },
 };
 
-#if __STDC__
 static void
 tar_options(int argc, char **argv)
-#else
-static void
-tar_options(argc, argv)
-	int argc;
-	char **argv;
-#endif
 {
 	int c;
 	int fstdin = 0;
@@ -975,15 +954,8 @@ tar_options(argc, argv)
  *	the user specified a legal set of flags. If not, complain and exit
  */
 
-#if __STDC__
 static void
 cpio_options(int argc, char **argv)
-#else
-static void
-cpio_options(argc, argv)
-	int argc;
-	char **argv;
-#endif
 {
 	FSUB tmp;
 	unsigned int flg = 0;
@@ -1244,14 +1216,8 @@ cpio_options(argc, argv)
  *	print out those invalid flag sets found to the user
  */
 
-#if __STDC__
 static void
 printflg(unsigned int flg)
-#else
-static void
-printflg(flg)
-	unsigned int flg;
-#endif
 {
 	int nxt;
 	int pos = 0;
@@ -1271,15 +1237,8 @@ printflg(flg)
  *	by the user
  */
 
-#if __STDC__
 static int
 c_frmt(const void *a, const void *b)
-#else
-static int
-c_frmt(a, b)
-	void *a;
-	void *b;
-#endif
 {
 	return(strcmp(((FSUB *)a)->name, ((FSUB *)b)->name));
 }
@@ -1292,13 +1251,8 @@ c_frmt(a, b)
  *	pointer to next OPLIST entry or NULL (end of list).
  */
 
-#if __STDC__
 OPLIST *
 opt_next(void)
-#else
-OPLIST *
-opt_next()
-#endif
 {
 	OPLIST *opt;
 
@@ -1313,13 +1267,8 @@ opt_next()
  *	when the format does not support options.
  */
 
-#if __STDC__
 int
 bad_opt(void)
-#else
-int
-bad_opt()
-#endif
 {
 	OPLIST *opt;
 
@@ -1344,14 +1293,8 @@ bad_opt()
  *	0 if format in name=value format, -1 if -o is passed junk
  */
 
-#if __STDC__
 int
 opt_add(const char *str)
-#else
-int
-opt_add(str)
-	const char *str;
-#endif
 {
 	OPLIST *opt;
 	char *frpt;
@@ -1413,25 +1356,14 @@ opt_add(str)
  *	0 for an error, a positive value o.w.
  */
 
-#if __STDC__
 static off_t
 str_offt(char *val)
-#else
-static off_t
-str_offt(val)
-	char *val;
-#endif
 {
 	char *expr;
 	off_t num, t;
 
-#	ifdef NET2_STAT
-	num = strtol(val, &expr, 0);
-	if ((num == LONG_MAX) || (num <= 0) || (expr == val))
-#	else
-	num = strtoq(val, &expr, 0);
-	if ((num == QUAD_MAX) || (num <= 0) || (expr == val))
-#	endif
+	num = STRTOOFFT(val, &expr, 0);
+	if ((num == OFFT_MAX) || (num <= 0) || (expr == val))
 		return(0);
 
 	switch(*expr) {
@@ -1488,13 +1420,8 @@ str_offt(val)
  *	0
  */
 
-#if __STDC__
 static int
 no_op(void)
-#else
-static int
-no_op()
-#endif
 {
 	return(0);
 }
@@ -1504,13 +1431,8 @@ no_op()
  *	print the usage summary to the user
  */
 
-#if __STDC__
 void
 pax_usage(void)
-#else
-void
-pax_usage()
-#endif
 {
 	(void)fputs("usage: pax [-cdnvz] [-E limit] [-f archive] ", stderr);
 	(void)fputs("[-s replstr] ... [-U user] ...", stderr);
@@ -1544,13 +1466,8 @@ pax_usage()
  *	print the usage summary to the user
  */
 
-#if __STDC__
 void
 tar_usage(void)
-#else
-void
-tar_usage()
-#endif
 {
 	(void)fputs("usage: tar -{txru}[cevfbhlmopwBLPX014578] [tapefile] ",
 		 stderr);
@@ -1564,13 +1481,8 @@ tar_usage()
  *	print the usage summary to the user
  */
 
-#if __STDC__
 void
 cpio_usage(void)
-#else
-void
-cpio_usage()
-#endif
 {
 
 #if 1
@@ -1604,14 +1516,8 @@ cpio_usage()
  * Returns: -1 for listing, else what ftree_add or pat_add returned.
  */
 
-#ifdef __STDC__
 int
 opt_chdir(char *name)
-#else
-int
-opt_chdir(name)
-	char *name;
-#endif
 {
 	switch (act) {
 	default:
@@ -1631,15 +1537,8 @@ opt_chdir(name)
  * checkpositionalminusC(argvp, addfunc)
  */
 
-#ifdef __STDC__
 void
 checkpositionalminusC(char ***argvp, int (*addfunc)(char *, int))
-#else
-void
-checkpositionalminusC(argvp, addfunc)
-	char ***argvp;
-	int (*addfunc)();
-#endif
 {
 	while (**argvp != (char *)NULL) {
 		if (!strcmp(**argvp, "-C")) {

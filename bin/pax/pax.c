@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.13 2000/10/22 15:41:31 kleink Exp $	*/
+/*	$NetBSD: pax.c,v 1.14 2001/10/25 05:33:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.13 2000/10/22 15:41:31 kleink Exp $");
+__RCSID("$NetBSD: pax.c,v 1.14 2001/10/25 05:33:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: pax.c,v 1.13 2000/10/22 15:41:31 kleink Exp $");
 #include <errno.h>
 #include "pax.h"
 #include "extern.h"
-static int gen_init __P((void));
+static int gen_init(void);
 
 /*
  * PAX main routines, general globals and some simple start up routines
@@ -223,15 +223,8 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
  * Return: 0 if ok, 1 otherwise
  */
 
-#if __STDC__
 int
 main(int argc, char **argv)
-#else
-int
-main(argc, argv)
-	int argc;
-	char **argv;
-#endif
 {
 	/*
 	 * parse options, determine operational mode, general init
@@ -277,14 +270,8 @@ main(argc, argv)
  *	never....
  */
 
-#if __STDC__
 void
 sig_cleanup(int which_sig)
-#else
-void
-sig_cleanup(which_sig)
-	int which_sig;
-#endif
 {
 	/*
 	 * restore modes and times for any dirs we may have created
@@ -311,13 +298,8 @@ sig_cleanup(which_sig)
  *	when dealing with a medium to large sized archives.
  */
 
-#if __STDC__
 static int
 gen_init(void)
-#else
-static int
-gen_init()
-#endif
 {
 	struct rlimit reslimit;
 	struct sigaction n_hand;

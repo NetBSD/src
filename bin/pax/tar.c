@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.18 2000/02/17 03:12:26 itohy Exp $	*/
+/*	$NetBSD: tar.c,v 1.19 2001/10/25 05:33:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.18 2000/02/17 03:12:26 itohy Exp $");
+__RCSID("$NetBSD: tar.c,v 1.19 2001/10/25 05:33:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,11 +68,11 @@ __RCSID("$NetBSD: tar.c,v 1.18 2000/02/17 03:12:26 itohy Exp $");
  * Routines for reading, writing and header identify of various versions of tar
  */
 
-static u_long tar_chksm __P((char *, int));
-static char *name_split __P((char *, int));
-static int ul_oct __P((u_long, char *, int, int));
+static u_long tar_chksm(char *, int);
+static char *name_split(char *, int);
+static int ul_oct(u_long, char *, int, int);
 #ifndef NET2_STAT
-static int uqd_oct __P((u_quad_t, char *, int, int));
+static int ull_oct(u_longlong_t, char *, int, int);
 #endif
 
 /*
@@ -90,13 +90,8 @@ char *gnu_hack_string;			/* ././@LongLink hackery */
  *	0 if ok, -1 otherwise (what wr_skip returns)
  */
 
-#if __STDC__
 int
 tar_endwr(void)
-#else
-int
-tar_endwr()
-#endif
 {
 	return(wr_skip((off_t)(NULLCNT*BLKMULT)));
 }
@@ -108,13 +103,8 @@ tar_endwr()
  *	size of trailer (2 * BLKMULT)
  */
 
-#if __STDC__
 off_t
 tar_endrd(void)
-#else
-off_t
-tar_endrd()
-#endif
 {
 	return((off_t)(NULLCNT*BLKMULT));
 }
@@ -130,16 +120,8 @@ tar_endrd()
  *	could never contain a header.
  */
 
-#if __STDC__
 int
 tar_trail(char *buf, int in_resync, int *cnt)
-#else
-int
-tar_trail(buf, in_resync, cnt)
-	char *buf;
-	int in_resync;
-	int *cnt;
-#endif
 {
 	int i;
 
@@ -181,17 +163,8 @@ tar_trail(buf, in_resync, cnt)
  *	0 if the number fit into the string, -1 otherwise
  */
 
-#if __STDC__
 static int
 ul_oct(u_long val, char *str, int len, int term)
-#else
-static int
-ul_oct(val, str, len, term)
-	u_long val;
-	char *str;
-	int len;
-	int term;
-#endif
 {
 	char *pt;
 
@@ -235,8 +208,8 @@ ul_oct(val, str, len, term)
 
 #ifndef NET2_STAT
 /*
- * uqd_oct()
- *	convert an u_quad_t to an octal string. one of many oddball field
+ * ull_oct()
+ *	convert an u_longlong_t to an octal string. one of many oddball field
  *	termination characters are used by the various versions of tar in the
  *	different fields. term selects which kind to use. str is '0' padded
  *	at the front to len. we are unable to use only one format as many old
@@ -245,17 +218,8 @@ ul_oct(val, str, len, term)
  *	0 if the number fit into the string, -1 otherwise
  */
 
-#if __STDC__
 static int
-uqd_oct(u_quad_t val, char *str, int len, int term)
-#else
-static int
-uqd_oct(val, str, len, term)
-	u_quad_t val;
-	char *str;
-	int len;
-	int term;
-#endif
+ull_oct(u_longlong_t val, char *str, int len, int term)
 {
 	char *pt;
 
@@ -292,7 +256,7 @@ uqd_oct(val, str, len, term)
 
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_quad_t)0)
+	if (val != (u_longlong_t)0)
 		return(-1);
 	return(0);
 }
@@ -308,15 +272,8 @@ uqd_oct(val, str, len, term)
  *	unsigned long checksum
  */
 
-#if __STDC__
 static u_long
 tar_chksm(char *blk, int len)
-#else
-static u_long
-tar_chksm(blk, len)
-	char *blk;
-	int len;
-#endif
 {
 	char *stop;
 	char *pt;
@@ -356,15 +313,8 @@ tar_chksm(blk, len)
  *	0 if a tar header, -1 otherwise
  */
 
-#if __STDC__
 int
 tar_id(char *blk, int size)
-#else
-int
-tar_id(blk, size)
-	char *blk;
-	int size;
-#endif
 {
 	HD_TAR *hd;
 	HD_USTAR *uhd;
@@ -397,13 +347,8 @@ tar_id(blk, size)
  *	0 if ok -1 otherwise
  */
 
-#if __STDC__
 int
 tar_opt(void)
-#else
-int
-tar_opt()
-#endif
 {
 	OPLIST *opt;
 
@@ -441,15 +386,8 @@ tar_opt()
  *	0
  */
 
-#if __STDC__
 int
 tar_rd(ARCHD *arcn, char *buf)
-#else
-int
-tar_rd(arcn, buf)
-	ARCHD *arcn;
-	char *buf;
-#endif
 {
 	HD_TAR *hd;
 	char *pt;
@@ -481,11 +419,7 @@ tar_rd(arcn, buf)
 	    0xfff);
 	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
 	arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
-#	ifdef NET2_STAT
-	arcn->sb.st_size = (off_t)asc_ul(hd->size, sizeof(hd->size), OCT);
-#	else
-	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
-#	endif
+	arcn->sb.st_size = (off_t)ASC_OFFT(hd->size, sizeof(hd->size), OCT);
 	arcn->sb.st_mtime = (time_t)asc_ul(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
@@ -594,14 +528,8 @@ tar_rd(arcn, buf)
  *	data to write after the header, -1 if archive write failed
  */
 
-#if __STDC__
 int
 tar_wr(ARCHD *arcn)
-#else
-int
-tar_wr(arcn)
-	ARCHD *arcn;
-#endif
 {
 	HD_TAR *hd;
 	int len;
@@ -703,13 +631,7 @@ tar_wr(arcn)
 		 */
 		hd->linkflag = AREGTYPE;
 		memset(hd->linkname, 0, sizeof(hd->linkname));
-#		ifdef NET2_STAT
-		if (ul_oct((u_long)arcn->sb.st_size, hd->size,
-		    sizeof(hd->size), 1)) {
-#		else
-		if (uqd_oct((u_quad_t)arcn->sb.st_size, hd->size,
-		    sizeof(hd->size), 1)) {
-#		endif
+		if (OFFT_OCT(arcn->sb.st_size, hd->size, sizeof(hd->size), 1)) {
 			tty_warn(1,"File is too large for tar %s",
 			    arcn->org_name);
 			return(1);
@@ -761,13 +683,8 @@ tar_wr(arcn)
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 int
 ustar_strd(void)
-#else
-int
-ustar_strd()
-#endif
 {
 	return(0);
 }
@@ -779,13 +696,8 @@ ustar_strd()
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 int
 ustar_stwr(void)
-#else
-int
-ustar_stwr()
-#endif
 {
 	return(0);
 }
@@ -798,15 +710,8 @@ ustar_stwr()
  *	0 if a ustar header, -1 otherwise
  */
 
-#if __STDC__
 int
 ustar_id(char *blk, int size)
-#else
-int
-ustar_id(blk, size)
-	char *blk;
-	int size;
-#endif
 {
 	HD_USTAR *hd;
 
@@ -839,15 +744,8 @@ ustar_id(blk, size)
  *	0
  */
 
-#if __STDC__
 int
 ustar_rd(ARCHD *arcn, char *buf)
-#else
-int
-ustar_rd(arcn, buf)
-	ARCHD *arcn;
-	char *buf;
-#endif
 {
 	HD_USTAR *hd;
 	char *dest;
@@ -886,11 +784,7 @@ ustar_rd(arcn, buf)
 	 */
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode, sizeof(hd->mode), OCT) &
 	    0xfff);
-#	ifdef NET2_STAT
-	arcn->sb.st_size = (off_t)asc_ul(hd->size, sizeof(hd->size), OCT);
-#	else
-	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
-#	endif
+	arcn->sb.st_size = (off_t)ASC_OFFT(hd->size, sizeof(hd->size), OCT);
 	arcn->sb.st_mtime = (time_t)asc_ul(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
@@ -1002,14 +896,8 @@ ustar_rd(arcn, buf)
  *	data to write after the header, -1 if archive write failed
  */
 
-#if __STDC__
 int
 ustar_wr(ARCHD *arcn)
-#else
-int
-ustar_wr(arcn)
-	ARCHD *arcn;
-#endif
 {
 	HD_USTAR *hd;
 	char *pt;
@@ -1125,13 +1013,7 @@ ustar_wr(arcn)
 		memset(hd->devmajor, 0, sizeof(hd->devmajor));
 		memset(hd->devminor, 0, sizeof(hd->devminor));
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
-#		ifdef NET2_STAT
-		if (ul_oct((u_long)arcn->sb.st_size, hd->size,
-		    sizeof(hd->size), 3)) {
-#		else
-		if (uqd_oct((u_quad_t)arcn->sb.st_size, hd->size,
-		    sizeof(hd->size), 3)) {
-#		endif
+		if (OFFT_OCT(arcn->sb.st_size, hd->size, sizeof(hd->size), 3)) {
 			tty_warn(1,"File is too long for ustar %s",
 			    arcn->org_name);
 			return(1);
@@ -1192,15 +1074,8 @@ ustar_wr(arcn)
  *	the file name is too long
  */
 
-#if __STDC__
 static char *
 name_split(char *name, int len)
-#else
-static char *
-name_split(name, len)
-	char *name;
-	int len;
-#endif
 {
 	char *start;
 

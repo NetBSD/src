@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.10 2001/01/04 15:39:51 lukem Exp $	*/
+/*	$NetBSD: cpio.c,v 1.11 2001/10/25 05:33:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cpio.c,v 1.10 2001/01/04 15:39:51 lukem Exp $");
+__RCSID("$NetBSD: cpio.c,v 1.11 2001/10/25 05:33:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,9 +59,9 @@ __RCSID("$NetBSD: cpio.c,v 1.10 2001/01/04 15:39:51 lukem Exp $");
 #include "cpio.h"
 #include "extern.h"
 
-static int rd_nm __P((ARCHD *, int));
-static int rd_ln_nm __P((ARCHD *));
-static int com_rd __P((ARCHD *));
+static int rd_nm(ARCHD *, int);
+static int rd_ln_nm(ARCHD *);
+static int com_rd(ARCHD *);
 
 /*
  * Routines which support the different cpio versions
@@ -80,13 +80,8 @@ int cpio_swp_head;		/* binary cpio header byte swap */
  *	0 if ok -1 otherwise (the return values of lnk_start())
  */
 
-#if __STDC__
 int
 cpio_strd(void)
-#else
-int
-cpio_strd()
-#endif
 {
 	return(lnk_start());
 }
@@ -101,14 +96,8 @@ cpio_strd()
  *	0 if a valid trailer, -1 if not a valid trailer,
  */
 
-#if __STDC__
 int
 cpio_subtrail(ARCHD *arcn)
-#else
-int
-cpio_subtrail(arcn)
-	ARCHD *arcn;
-#endif
 {
 	/*
 	 * look for trailer id in file we are about to process
@@ -125,14 +114,8 @@ cpio_subtrail(arcn)
  *	0
  */
 
-#if __STDC__
 static int
 com_rd(ARCHD *arcn)
-#else
-static int
-com_rd(arcn)
-	ARCHD *arcn;
-#endif
 {
 	arcn->skip = 0;
 	arcn->pat = NULL;
@@ -180,13 +163,8 @@ com_rd(arcn)
  *	result of the write of the trailer from the cpio specific write func
  */
 
-#if __STDC__
 int
 cpio_endwr(void)
-#else
-int
-cpio_endwr()
-#endif
 {
 	ARCHD last;
 
@@ -208,15 +186,8 @@ cpio_endwr()
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 static int
 rd_nm(ARCHD *arcn, int nsz)
-#else
-static int
-rd_nm(arcn, nsz)
-	ARCHD *arcn;
-	int nsz;
-#endif
 {
 	/*
 	 * do not even try bogus values
@@ -245,27 +216,16 @@ rd_nm(arcn, nsz)
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 static int
 rd_ln_nm(ARCHD *arcn)
-#else
-static int
-rd_ln_nm(arcn)
-	ARCHD *arcn;
-#endif
 {
 	/*
 	 * check the length specified for bogus values
 	 */
 	if ((arcn->sb.st_size == 0) ||
 	    (arcn->sb.st_size >= sizeof(arcn->ln_name))) {
-#		ifdef NET2_STAT
-		tty_warn(1, "Cpio link name length is invalid: %lu",
-		    arcn->sb.st_size);
-#		else
-		tty_warn(1, "Cpio link name length is invalid: %llu",
-		    (unsigned long long) arcn->sb.st_size);
-#		endif
+		tty_warn(1, "Cpio link name length is invalid: " OFFT_F,
+		    (OFFT_T) arcn->sb.st_size);
 		return(-1);
 	}
 
@@ -302,15 +262,8 @@ rd_ln_nm(arcn)
  *	0 if a valid header, -1 otherwise
  */
 
-#if __STDC__
 int
 cpio_id(char *blk, int size)
-#else
-int
-cpio_id(blk, size)
-	char *blk;
-	int size;
-#endif
 {
 	if ((size < sizeof(HD_CPIO)) ||
 	    (strncmp(blk, AMAGIC, sizeof(AMAGIC) - 1) != 0))
@@ -326,15 +279,8 @@ cpio_id(blk, size)
  *	0 if a valid header, -1 otherwise.
  */
 
-#if __STDC__
 int
 cpio_rd(ARCHD *arcn, char *buf)
-#else
-int
-cpio_rd(arcn, buf)
-	ARCHD *arcn;
-	char *buf;
-#endif
 {
 	int nsz;
 	HD_CPIO *hd;
@@ -362,13 +308,8 @@ cpio_rd(arcn, buf)
 	arcn->sb.st_mtime = (time_t)asc_ul(hd->c_mtime, sizeof(hd->c_mtime),
 	    OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
-#	ifdef NET2_STAT
-	arcn->sb.st_size = (off_t)asc_ul(hd->c_filesize,sizeof(hd->c_filesize),
-	    OCT);
-#	else
-	arcn->sb.st_size = (off_t)asc_uqd(hd->c_filesize,sizeof(hd->c_filesize),
-	    OCT);
-#	endif
+	arcn->sb.st_size = (off_t)ASC_OFFT(hd->c_filesize,
+	    sizeof(hd->c_filesize), OCT);
 
 	/*
 	 * check name size and if valid, read in the name of this entry (name
@@ -409,13 +350,8 @@ cpio_rd(arcn, buf)
  *	size of trailer header in this format
  */
 
-#if __STDC__
 off_t
 cpio_endrd(void)
-#else
-off_t
-cpio_endrd()
-#endif
 {
 	return((off_t)(sizeof(HD_CPIO) + sizeof(TRAILER)));
 }
@@ -427,13 +363,8 @@ cpio_endrd()
  *	0 if ok, -1 otherwise (what dev_start() returns)
  */
 
-#if __STDC__
 int
 cpio_stwr(void)
-#else
-int
-cpio_stwr()
-#endif
 {
 	return(dev_start());
 }
@@ -447,14 +378,8 @@ cpio_stwr()
  *	data to write after the header, -1 if archive write failed
  */
 
-#if __STDC__
 int
 cpio_wr(ARCHD *arcn)
-#else
-int
-cpio_wr(arcn)
-	ARCHD *arcn;
-#endif
 {
 	HD_CPIO *hd;
 	int nsz;
@@ -479,13 +404,8 @@ cpio_wr(arcn)
 		/*
 		 * set data size for file data
 		 */
-#		ifdef NET2_STAT
-		if (ul_asc((u_long)arcn->sb.st_size, hd->c_filesize,
+		if (OFFT_ASC(arcn->sb.st_size, hd->c_filesize,
 		    sizeof(hd->c_filesize), OCT)) {
-#		else
-		if (uqd_asc((u_quad_t)arcn->sb.st_size, hd->c_filesize,
-		    sizeof(hd->c_filesize), OCT)) {
-#		endif
 			tty_warn(1,"File is too large for cpio format %s",
 			    arcn->org_name);
 			return(1);
@@ -585,15 +505,8 @@ cpio_wr(arcn)
  *	0 if a valid header, -1 otherwise
  */
 
-#if __STDC__
 int
 vcpio_id(char *blk, int size)
-#else
-int
-vcpio_id(blk, size)
-	char *blk;
-	int size;
-#endif
 {
 	if ((size < sizeof(HD_VCPIO)) ||
 	    (strncmp(blk, AVMAGIC, sizeof(AVMAGIC) - 1) != 0))
@@ -609,15 +522,8 @@ vcpio_id(blk, size)
  *	0 if a valid header, -1 otherwise
  */
 
-#if __STDC__
 int
 crc_id(char *blk, int size)
-#else
-int
-crc_id(blk, size)
-	char *blk;
-	int size;
-#endif
 {
 	if ((size < sizeof(HD_VCPIO)) ||
 	    (strncmp(blk, AVCMAGIC, sizeof(AVCMAGIC) - 1) != 0))
@@ -632,13 +538,8 @@ crc_id(blk, size)
  *	0 if ok -1 otherwise (the return values of lnk_start())
  */
 
-#if __STDC__
 int
 crc_strd(void)
-#else
-int
-crc_strd()
-#endif
 {
 	docrc = 1;
 	return(lnk_start());
@@ -652,15 +553,8 @@ crc_strd()
  *	0 if a valid header, -1 otherwise.
  */
 
-#if __STDC__
 int
 vcpio_rd(ARCHD *arcn, char *buf)
-#else
-int
-vcpio_rd(arcn, buf)
-	ARCHD *arcn;
-	char *buf;
-#endif
 {
 	HD_VCPIO *hd;
 	dev_t devminor;
@@ -691,13 +585,8 @@ vcpio_rd(arcn, buf)
 	arcn->sb.st_gid = (gid_t)asc_ul(hd->c_gid, sizeof(hd->c_gid), HEX);
 	arcn->sb.st_mtime = (time_t)asc_ul(hd->c_mtime,sizeof(hd->c_mtime),HEX);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
-#	ifdef NET2_STAT
-	arcn->sb.st_size = (off_t)asc_ul(hd->c_filesize,
+	arcn->sb.st_size = (off_t)ASC_OFFT(hd->c_filesize,
 	    sizeof(hd->c_filesize), HEX);
-#	else
-	arcn->sb.st_size = (off_t)asc_uqd(hd->c_filesize,
-	    sizeof(hd->c_filesize), HEX);
-#	endif
 	arcn->sb.st_nlink = (nlink_t)asc_ul(hd->c_nlink, sizeof(hd->c_nlink),
 	    HEX);
 	devmajor = (dev_t)asc_ul(hd->c_maj, sizeof(hd->c_maj), HEX);
@@ -758,13 +647,8 @@ vcpio_rd(arcn, buf)
  *	size of trailer header in this format
  */
 
-#if __STDC__
 off_t
 vcpio_endrd(void)
-#else
-off_t
-vcpio_endrd()
-#endif
 {
 	return((off_t)(sizeof(HD_VCPIO) + sizeof(TRAILER) +
 		(VCPIO_PAD(sizeof(HD_VCPIO) + sizeof(TRAILER)))));
@@ -777,13 +661,8 @@ vcpio_endrd()
  *	0 if ok, -1 otherwise (what dev_start() returns)
  */
 
-#if __STDC__
 int
 crc_stwr(void)
-#else
-int
-crc_stwr()
-#endif
 {
 	docrc = 1;
 	return(dev_start());
@@ -798,14 +677,8 @@ crc_stwr()
  *	NO data to write after the header, -1 if archive write failed
  */
 
-#if __STDC__
 int
 vcpio_wr(ARCHD *arcn)
-#else
-int
-vcpio_wr(arcn)
-	ARCHD *arcn;
-#endif
 {
 	HD_VCPIO *hd;
 	unsigned int nsz;
@@ -848,13 +721,8 @@ vcpio_wr(arcn)
 		 * much to pad.
 		 */
 		arcn->pad = VCPIO_PAD(arcn->sb.st_size);
-#		ifdef NET2_STAT
-		if (ul_asc((u_long)arcn->sb.st_size, hd->c_filesize,
+		if (OFFT_ASC(arcn->sb.st_size, hd->c_filesize,
 		    sizeof(hd->c_filesize), HEX)) {
-#		else
-		if (uqd_asc((u_quad_t)arcn->sb.st_size, hd->c_filesize,
-		    sizeof(hd->c_filesize), HEX)) {
-#		endif
 			tty_warn(1,"File is too large for sv4cpio format %s",
 			    arcn->org_name);
 			return(1);
@@ -963,15 +831,8 @@ vcpio_wr(arcn)
  *	0 if a valid header, -1 otherwise
  */
 
-#if __STDC__
 int
 bcpio_id(char *blk, int size)
-#else
-int
-bcpio_id(blk, size)
-	char *blk;
-	int size;
-#endif
 {
 	if (size < sizeof(HD_BCPIO))
 		return(-1);
@@ -998,15 +859,8 @@ bcpio_id(blk, size)
  *	0 if a valid header, -1 otherwise.
  */
 
-#if __STDC__
 int
 bcpio_rd(ARCHD *arcn, char *buf)
-#else
-int
-bcpio_rd(arcn, buf)
-	ARCHD *arcn;
-	char *buf;
-#endif
 {
 	HD_BCPIO *hd;
 	int nsz;
@@ -1102,13 +956,8 @@ bcpio_rd(arcn, buf)
  *	size of trailer header in this format
  */
 
-#if __STDC__
 off_t
 bcpio_endrd(void)
-#else
-off_t
-bcpio_endrd()
-#endif
 {
 	return((off_t)(sizeof(HD_BCPIO) + sizeof(TRAILER) +
 		(BCPIO_PAD(sizeof(HD_BCPIO) + sizeof(TRAILER)))));
@@ -1125,14 +974,8 @@ bcpio_endrd()
  *	data to write after the header, -1 if archive write failed
  */
 
-#if __STDC__
 int
 bcpio_wr(ARCHD *arcn)
-#else
-int
-bcpio_wr(arcn)
-	ARCHD *arcn;
-#endif
 {
 	HD_BCPIO *hd;
 	int nsz;

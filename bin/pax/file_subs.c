@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.19 2000/06/17 18:19:10 mrg Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.20 2001/10/25 05:33:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.19 2000/06/17 18:19:10 mrg Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.20 2001/10/25 05:33:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: file_subs.c,v 1.19 2000/06/17 18:19:10 mrg Exp $");
 #include "extern.h"
 
 static int
-mk_link __P((char *,struct stat *,char *, int));
+mk_link(char *,struct stat *,char *, int);
 
 /*
  * routines that deal with file operations such as: creating, removing;
@@ -81,14 +81,8 @@ mk_link __P((char *,struct stat *,char *, int));
  *	file descriptor or -1 for failure
  */
 
-#if __STDC__
 int
 file_creat(ARCHD *arcn)
-#else
-int
-file_creat(arcn)
-	ARCHD *arcn;
-#endif
 {
 	int fd = -1;
 	mode_t file_mode;
@@ -144,15 +138,8 @@ file_creat(arcn)
  *	0 for success, -1 for failure
  */
 
-#if __STDC__
 void
 file_close(ARCHD *arcn, int fd)
-#else
-void
-file_close(arcn, fd)
-	ARCHD *arcn;
-	int fd;
-#endif
 {
 	int res = 0;
 
@@ -193,14 +180,8 @@ file_close(arcn, fd)
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 int
 lnk_creat(ARCHD *arcn)
-#else
-int
-lnk_creat(arcn)
-	ARCHD *arcn;
-#endif
 {
 	struct stat sb;
 
@@ -233,14 +214,8 @@ lnk_creat(arcn)
  *	0 if cross_lnk() ok, -1 for fatal flaw (like linking to self).
  */
 
-#if __STDC__
 int
 cross_lnk(ARCHD *arcn)
-#else
-int
-cross_lnk(arcn)
-	ARCHD *arcn;
-#endif
 {
 	/*
 	 * try to make a link to original file (-l flag in copy mode). make
@@ -263,14 +238,8 @@ cross_lnk(arcn)
  *	0 skip it file exists (-k) or may be the same as source file
  */
 
-#if __STDC__
 int
 chk_same(ARCHD *arcn)
-#else
-int
-chk_same(arcn)
-	ARCHD *arcn;
-#endif
 {
 	struct stat sb;
 
@@ -306,18 +275,8 @@ chk_same(arcn)
  *	allowed option). -1 an error occurred.
  */
 
-#if __STDC__
 static int
-mk_link(char *to, struct stat *to_sb, char *from,
-	int ign)
-#else
-static int
-mk_link(to, to_sb, from, ign)
-	char *to;
-	struct stat *to_sb;
-	char *from;
-	int ign;
-#endif
+mk_link(char *to, struct stat *to_sb, char *from, int ign)
 {
 	struct stat sb;
 	int oerrno;
@@ -388,14 +347,8 @@ mk_link(to, to_sb, from, ign)
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 int
 node_creat(ARCHD *arcn)
-#else
-int
-node_creat(arcn)
-	ARCHD *arcn;
-#endif
 {
 	int res;
 	int ign = 0;
@@ -552,15 +505,8 @@ node_creat(arcn)
  *	1 we found a directory and we were going to create a directory.
  */
 
-#if __STDC__
 int
 unlnk_exist(char *name, int type)
-#else
-int
-unlnk_exist(name, type)
-	char *name;
-	int type;
-#endif
 {
 	struct stat sb;
 
@@ -610,16 +556,8 @@ unlnk_exist(name, type)
  *	0 otherwise
  */
 
-#if __STDC__
 int
 chk_path( char *name, uid_t st_uid, gid_t st_gid)
-#else
-int
-chk_path(name, st_uid, st_gid)
-	char *name;
-	uid_t st_uid;
-	gid_t st_gid;
-#endif
 {
 	char *spt = name;
 	struct stat sb;
@@ -703,17 +641,8 @@ chk_path(name, st_uid, st_gid)
  *	not set request.
  */
 
-#if __STDC__
 void
 set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
-#else
-void
-set_ftime(fnm, mtime, atime, frc)
-	char *fnm;
-	time_t mtime;
-	time_t atime;
-	int frc;
-#endif
 {
 	struct timeval tv[2];
 	struct stat sb;
@@ -752,16 +681,8 @@ set_ftime(fnm, mtime, atime, frc)
  *	0 when set, -1 on failure
  */
 
-#if __STDC__
 int
 set_ids(char *fnm, uid_t uid, gid_t gid)
-#else
-int
-set_ids(fnm, uid, gid)
-	char *fnm;
-	uid_t uid;
-	gid_t gid;
-#endif
 {
 	if (lchown(fnm, uid, gid) < 0) {
 		syswarn(1, errno, "Unable to set file uid/gid of %s", fnm);
@@ -775,15 +696,8 @@ set_ids(fnm, uid, gid)
  *	Set file access mode
  */
 
-#if __STDC__
 void
 set_pmode(char *fnm, mode_t mode)
-#else
-void
-set_pmode(fnm, mode)
-	char *fnm;
-	mode_t mode;
-#endif
 {
 	mode &= ABITS;
 	if (lchmod(fnm, mode) < 0)
@@ -795,15 +709,8 @@ set_pmode(fnm, mode)
  * set_chflags()
  *	Set 4.4BSD file flags
  */
-#if __STDC__
 void
 set_chflags(char *fnm, u_int32_t flags)
-#else
-void
-set_chflags(fnm, flags)
-	char *fnm;
-	u_int32_t flags;
-#endif
 {
 	
 #if 0
@@ -861,21 +768,9 @@ set_chflags(fnm, flags)
  *	number of bytes written, -1 on write (or lseek) error.
  */
 
-#if __STDC__
 int
 file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 	char *name)
-#else
-int
-file_write(fd, str, cnt, rem, isempt, sz, name)
-	int fd;
-	char *str;
-	int cnt;
-	int *rem;
-	int *isempt;
-	int sz;
-	char *name;
-#endif
 {
 	char *pt;
 	char *end;
@@ -966,16 +861,8 @@ file_write(fd, str, cnt, rem, isempt, sz, name)
  *	write the last BYTE with a zero (back up one byte and write a zero).
  */
 
-#if __STDC__
 void
 file_flush(int fd, char *fname, int isempt)
-#else
-void
-file_flush(fd, fname, isempt)
-	int fd;
-	char *fname;
-	int isempt;
-#endif
 {
 	static char blnk[] = "\0";
 
@@ -1005,15 +892,8 @@ file_flush(fd, fname, isempt)
  *	reset access time (tflag) do so (the times are stored in arcn).
  */
 
-#if __STDC__
 void
 rdfile_close(ARCHD *arcn, int *fd)
-#else
-void
-rdfile_close(arcn, fd)
-	ARCHD *arcn;
-	int *fd;
-#endif
 {
 	/*
 	 * make sure the file is open
@@ -1042,15 +922,8 @@ rdfile_close(arcn, fd)
  *	0 if was able to calculate the crc, -1 otherwise
  */
 
-#if __STDC__
 int
 set_crc(ARCHD *arcn, int fd)
-#else
-int
-set_crc(arcn, fd)
-	ARCHD *arcn;
-	int fd;
-#endif
 {
 	int i;
 	int res;

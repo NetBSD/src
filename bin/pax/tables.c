@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.14 2001/10/24 11:28:55 lukem Exp $	*/
+/*	$NetBSD: tables.c,v 1.15 2001/10/25 05:33:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.14 2001/10/24 11:28:55 lukem Exp $");
+__RCSID("$NetBSD: tables.c,v 1.15 2001/10/25 05:33:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ static u_long dircnt;		/* entries in dir time/mode storage */
 #endif
 static int ffd = -1;		/* tmp file for file time table name storage */
 
-static DEVT *chk_dev __P((dev_t, int));
+static DEVT *chk_dev(dev_t, int);
 
 /*
  * hard link table routines
@@ -113,13 +113,8 @@ static DEVT *chk_dev __P((dev_t, int));
  *	0 if created, -1 if failure
  */
 
-#if __STDC__
 int
 lnk_start(void)
-#else
-int
-lnk_start()
-#endif
 {
 	if (ltab != NULL)
 		return(0);
@@ -142,14 +137,8 @@ lnk_start()
  *	if found returns 1; if not found returns 0; -1 on error
  */
 
-#if __STDC__
 int
 chk_lnk(ARCHD *arcn)
-#else
-int
-chk_lnk(arcn)
-	ARCHD *arcn;
-#endif
 {
 	HRDLNK *pt;
 	HRDLNK **ppt;
@@ -234,14 +223,8 @@ chk_lnk(arcn)
  *	we do not want to accidently point another file at it later on.
  */
 
-#if __STDC__
 void
 purg_lnk(ARCHD *arcn)
-#else
-void
-purg_lnk(arcn)
-	ARCHD *arcn;
-#endif
 {
 	HRDLNK *pt;
 	HRDLNK **ppt;
@@ -294,13 +277,8 @@ purg_lnk(arcn)
  *	write phase
  */
 
-#if __STDC__
 void
 lnk_end(void)
-#else
-void
-lnk_end()
-#endif
 {
 	int i;
 	HRDLNK *pt;
@@ -359,13 +337,8 @@ lnk_end()
  *	0 if the table and file was created ok, -1 otherwise
  */
 
-#if __STDC__
 int
 ftime_start(void)
-#else
-int
-ftime_start()
-#endif
 {
 	const char *tmpdir;
 	char template[MAXPATHLEN];
@@ -406,14 +379,8 @@ ftime_start()
  *	-1 on error
  */
 
-#if __STDC__
 int
 chk_ftime(ARCHD *arcn)
-#else
-int
-chk_ftime(arcn)
-	ARCHD *arcn;
-#endif
 {
 	FTM *pt;
 	int namelen;
@@ -531,13 +498,8 @@ chk_ftime(arcn)
  *	0 if successful, -1 otherwise
  */
 
-#if __STDC__
 int
 name_start(void)
-#else
-int
-name_start()
-#endif
 {
 	if (ntab != NULL)
 		return(0);
@@ -558,16 +520,8 @@ name_start()
  *	0 if added, -1 otherwise
  */
 
-#if __STDC__
 int
 add_name(char *oname, int onamelen, char *nname)
-#else
-int
-add_name(oname, onamelen, nname)
-	char *oname;
-	int onamelen;
-	char *nname;
-#endif
 {
 	NAMT *pt;
 	u_int indx;
@@ -634,15 +588,8 @@ add_name(oname, onamelen, nname)
  *	new name (oname is the link to name)
  */
 
-#if __STDC__
 void
 sub_name(char *oname, int *onamelen)
-#else
-void
-sub_name(oname, onamelen)
-	char *oname;
-	int *onamelen;
-#endif
 {
 	NAMT *pt;
 	u_int indx;
@@ -724,13 +671,8 @@ sub_name(oname, onamelen)
  *	0 if successful, -1 otherwise
  */
 
-#if __STDC__
 int
 dev_start(void)
-#else
-int
-dev_start()
-#endif
 {
 	if (dtab != NULL)
 		return(0);
@@ -751,14 +693,8 @@ dev_start()
  *	0 if added ok, -1 otherwise
  */
 
-#if __STDC__
 int
 add_dev(ARCHD *arcn)
-#else
-int
-add_dev(arcn)
-	ARCHD *arcn;
-#endif
 {
 	if (chk_dev(arcn->sb.st_dev, 1) == NULL)
 		return(-1);
@@ -778,15 +714,8 @@ add_dev(arcn)
  *	is returned (indicates an error).
  */
 
-#if __STDC__
 static DEVT *
 chk_dev(dev_t dev, int add)
-#else
-static DEVT *
-chk_dev(dev, add)
-	dev_t dev;
-	int add;
-#endif
 {
 	DEVT *pt;
 	u_int indx;
@@ -843,16 +772,8 @@ chk_dev(dev, add)
  *	0 if all ok, -1 otherwise.
  */
 
-#if __STDC__
 int
 map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
-#else
-int
-map_dev(arcn, dev_mask, ino_mask)
-	ARCHD *arcn;
-	u_long dev_mask;
-	u_long ino_mask;
-#endif
 {
 	DEVT *pt;
 	DLIST *dpt;
@@ -994,13 +915,8 @@ map_dev(arcn, dev_mask, ino_mask)
  *	0 is created ok, -1 otherwise.
  */
 
-#if __STDC__
 int
 atdir_start(void)
-#else
-int
-atdir_start()
-#endif
 {
 	if (atab != NULL)
 		return(0);
@@ -1020,13 +936,8 @@ atdir_start()
  *	entries are for directories READ by pax
  */
 
-#if __STDC__
 void
 atdir_end(void)
-#else
-void
-atdir_end()
-#endif
 {
 	ATDIR *pt;
 	int i;
@@ -1056,18 +967,8 @@ atdir_end()
  *	and chained by inode number. This is for directories READ by pax
  */
 
-#if __STDC__
 void
 add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
-#else
-void
-add_atdir(fname, dev, ino, mtime, atime)
-	char *fname;
-	dev_t dev;
-	ino_t ino;
-	time_t mtime;
-	time_t atime;
-#endif
 {
 	ATDIR *pt;
 	u_int indx;
@@ -1128,17 +1029,8 @@ add_atdir(fname, dev, ino, mtime, atime)
  *	0 if found, -1 if not found.
  */
 
-#if __STDC__
 int
 get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
-#else
-int
-get_atdir(dev, ino, mtime, atime)
-	dev_t dev;
-	ino_t ino;
-	time_t *mtime;
-	time_t *atime;
-#endif
 {
 	ATDIR *pt;
 	ATDIR **ppt;
@@ -1216,13 +1108,8 @@ static DIRDATA *dirdata_head;
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 int
 dir_start(void)
-#else
-int
-dir_start()
-#endif
 {
 #ifdef DIRS_USE_FILE
 	const char *tmpdir;
@@ -1262,17 +1149,8 @@ dir_start()
  *	pax spec)
  */
 
-#if __STDC__
 void
 add_dir(char *name, int nlen, struct stat *psb, int frc_mode)
-#else
-void
-add_dir(name, nlen, psb, frc_mode)
-	char *name;
-	int nlen;
-	struct stat *psb;
-	int frc_mode;
-#endif
 {
 #ifdef DIRS_USE_FILE
 	DIRDATA dblk;
@@ -1338,13 +1216,8 @@ add_dir(name, nlen, psb, frc_mode)
  *	by pax
  */
 
-#if __STDC__
 void
 proc_dir(void)
-#else
-void
-proc_dir()
-#endif
 {
 #ifdef DIRS_USE_FILE
 	char name[PAXPATHLEN+1];
@@ -1431,16 +1304,8 @@ proc_dir()
  *	the hash value of the string MOD (%) the table size.
  */
 
-#if __STDC__
 u_int
 st_hash(char *name, int len, int tabsz)
-#else
-u_int
-st_hash(name, len, tabsz)
-	char *name;
-	int len;
-	int tabsz;
-#endif
 {
 	char *pt;
 	char *dest;

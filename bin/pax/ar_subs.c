@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.14 2000/02/17 03:12:23 itohy Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.15 2001/10/25 05:33:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.14 2000/02/17 03:12:23 itohy Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.15 2001/10/25 05:33:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,9 @@ __RCSID("$NetBSD: ar_subs.c,v 1.14 2000/02/17 03:12:23 itohy Exp $");
 #include "pax.h"
 #include "extern.h"
 
-static void wr_archive __P((ARCHD *, int is_app));
-static int get_arc __P((void));
-static int next_head __P((ARCHD *));
+static void wr_archive(ARCHD *, int is_app);
+static int get_arc(void);
+static int next_head(ARCHD *);
 extern sigset_t s_mask;
 
 /*
@@ -82,13 +82,8 @@ ARCHD archd;
  *	(no pattern matches all).
  */
 
-#if __STDC__
 void
 list(void)
-#else
-void
-list()
-#endif
 {
 	ARCHD *arcn;
 	int res;
@@ -163,13 +158,8 @@ list()
  *	pattern(s) (no patterns extracts all members)
  */
 
-#if __STDC__
 void
 extract(void)
-#else
-void
-extract()
-#endif
 {
 	ARCHD *arcn;
 	int res;
@@ -364,21 +354,14 @@ extract()
  *	previously written archive.
  */
 
-#if __STDC__
 static void
 wr_archive(ARCHD *arcn, int is_app)
-#else
-static void
-wr_archive(arcn, is_app)
-	ARCHD *arcn;
-	int is_app;
-#endif
 {
 	int res;
 	int hlk;
 	int wr_one;
 	off_t cnt;
-	int (*wrf) __P((ARCHD *));
+	int (*wrf)(ARCHD *);
 	int fd = -1;
 
 	/*
@@ -570,13 +553,8 @@ wr_archive(arcn, is_app)
  *	over write existing files that it creates.
  */
 
-#if __STDC__
 void
 append(void)
-#else
-void
-append()
-#endif
 {
 	ARCHD *arcn;
 	int res;
@@ -710,13 +688,8 @@ append()
  *	write a new archive
  */
 
-#if __STDC__
 void
 archive(void)
-#else
-void
-archive()
-#endif
 {
 
 	/*
@@ -740,13 +713,8 @@ archive()
  *	(except the files are forced to be under the destination directory).
  */
 
-#if __STDC__
 void
 copy(void)
-#else
-void
-copy()
-#endif
 {
 	ARCHD *arcn;
 	int res;
@@ -991,14 +959,8 @@ copy()
  *	the specs for rd_wrbuf() for more details)
  */
 
-#if __STDC__
 static int
 next_head(ARCHD *arcn)
-#else
-static int
-next_head(arcn)
-	ARCHD *arcn;
-#endif
 {
 	int ret;
 	char *hdend;
@@ -1142,13 +1104,8 @@ next_head(arcn)
  *	0 if archive found -1 otherwise
  */
 
-#if __STDC__
 static int
 get_arc(void)
-#else
-static int
-get_arc()
-#endif
 {
 	int i;
 	int hdsz = 0;
