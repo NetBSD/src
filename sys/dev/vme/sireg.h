@@ -1,4 +1,4 @@
-/*	$NetBSD: sireg.h,v 1.5 2000/06/26 19:54:09 pk Exp $	*/
+/*	$NetBSD: sireg.h,v 1.1 2000/07/03 23:30:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,22 +37,12 @@
  */
 
 /*
- * Register map for the Sun3 SCSI Interface (si)
+ * Register map for the VME SCSI-3 adpater (si)
  * The first part of this register map is an NCR5380
  * SCSI Bus Interface Controller (SBIC).  The rest is a
- * DMA controller and custom logic in one of two flavors,
- * one for the OBIO interface (3/50,3/60) and one for the
- * VME interface (3/160,3/260,etc.), where some registers
- * are implemented only on one or the other, some on both.
- *
- * Modified for Sun 4 systems by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * DMA controller and custom logic.
  */
 
-/*
- * Note that the obio version on the 4/1xx (the so-called "SCSI Weird", or
- * "sw" controller) is laid out a bit differently, and hence the evilness
- * with unions.  Also, the "sw" doesn't appear to have a FIFO.
- */
 
 #if __for_reference_only__
 /*
@@ -118,6 +108,11 @@ struct si_regs {
  *	(v)	vme host adaptor interface only.
  *	(o)	sun3/50 onboard host adaptor interface only.
  *	(b)	both vme and sun3/50 host adaptor interfaces.
+ *
+ * Note 2: because of the historical connections of this VME driver
+ * with the on-board SCSI interfaces found in sun3/50, sun3/60 and sun4/100
+ * systems, the (v), (o) and (b) qualifications are left in for
+ * cross-reference.
  */
 #define SI_CSR_DMA_ACTIVE	0x8000	/* (r,o) dma transfer active */
 #define SI_CSR_DMA_CONFLICT	0x4000	/* (r,b) reg accessed while dmaing */

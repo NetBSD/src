@@ -1,4 +1,4 @@
-#	$NetBSD: files.vme,v 1.5 1999/06/30 15:06:05 drochner Exp $
+#	$NetBSD: files.vme,v 1.6 2000/07/03 23:30:34 pk Exp $
 #
 # Config file and device description for machine-independent VME code.
 # Included by ports that need it.
@@ -30,6 +30,10 @@ attach	xyc at vme
 device	xy: disk
 attach	xy at xyc
 file	dev/vme/xy.c		xy | xyc needs-flag
+
+device si: scsi, ncr5380sbc
+attach si at vme
+file	dev/vme/si.c		si
 
 device vmegeneric
 attach vmegeneric at vme

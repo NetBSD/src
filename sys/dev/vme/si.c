@@ -1,11 +1,12 @@
-/*	$NetBSD: si.c,v 1.65 2000/07/03 20:55:12 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.1 2000/07/03 23:30:33 pk Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Adam Glass, David Jones, Gordon W. Ross, and Jason R. Thorpe.
+ * by Adam Glass, David Jones, Gordon W. Ross, Jason R. Thorpe and
+ * Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,15 +38,13 @@
  */
 
 /*
- * This file contains only the machine-dependent parts of the
- * Sun4 SCSI driver.  (Autoconfig stuff and DMA functions.)
- * The machine-independent parts are in ncr5380sbc.c
+ * This file contains VME bus-dependent of the `si' SCSI adapter.
+ * This hardware is frequently found on Sun 3 and Sun 4 machines.
  *
- * Supported hardware includes:
- * Sun "SCSI Weird" on OBIO (sw: Sun 4/100-series)
- * Sun SCSI-3 on VME (si: Sun 4/200-series, others)
+ * The SCSI machinery on this adapter is implemented by an NCR5380,
+ * which is taken care of by the chipset driver in /sys/dev/ic/ncr5380sbc.c
  *
- * The VME variant has a bit to enable or disable the DMA engine,
+ * The logic has a bit to enable or disable the DMA engine,
  * but that bit also gates the interrupt line from the NCR5380!
  * Therefore, in order to get any interrupt from the 5380, (i.e.
  * for reselect) one must clear the DMA engine transfer count and
@@ -54,6 +53,12 @@
  * we have to turn DMA back off before we even look at the 5380.
  *
  * What wonderfully whacky hardware this is!
+ *
+ */
+
+/*
+ * This driver originated as an MD implementation for the sun3 and sun4
+ * ports. The notes pertaining to that history are included below.
  *
  * David Jones wrote the initial version of this module for NetBSD/sun3,
  * which included support for the VME adapter only. (no reselection).
@@ -72,23 +77,6 @@
  * David Gilbert and Andrew Gillham who risked filesystem life-and-limb
  * for the sake of testing.  Andrew Gillham helped work out the bugs
  * the 4/100 DMA code.
- */
-
-/*
- * NOTE: support for the 4/100 "SCSI Weird" is not complete!  DMA
- * works, but interrupts (and, thus, reselection) don't.  I don't know
- * why, and I don't have a machine to test this on further.
- *
- * DMA, DMA completion interrupts, and reselection work fine on my
- * 4/260 with modern SCSI-II disks attached.  I've had reports of
- * reselection failing on Sun Shoebox-type configurations where
- * there are multiple non-SCSI devices behind Emulex or Adaptec
- * bridges.  These devices pre-date the SCSI-I spec, and might not
- * bahve the way the 5380 code expects.  For this reason, only
- * DMA is enabled by default in this driver.
- *
- *	Jason R. Thorpe <thorpej@NetBSD.ORG>
- *	December 8, 1995
  */
 
 #include "opt_ddb.h"
@@ -200,14 +188,17 @@ void	si_dma_stop __P((struct ncr5380_softc *));
 void	si_intr_on  __P((struct ncr5380_softc *));
 void	si_intr_off __P((struct ncr5380_softc *));
 
-/* Shorthand bus space access */
+/*
+ * Shorthand bus space access
+ * XXX - must look into endian issues here.
+ */
 #define SIREG_READ(sc, index) \
 	bus_space_read_2((sc)->sc_regt, (sc)->sc_regh, index)
 #define SIREG_WRITE(sc, index, v) \
 	bus_space_write_2((sc)->sc_regt, (sc)->sc_regh, index, v)
 
 
-/* The Sun SCSI-3 VME controller. */
+/* Auto-configuration glue. */
 struct cfattach si_ca = {
 	sizeof(struct si_softc), si_match, si_attach
 };
@@ -470,8 +461,7 @@ si_reset_adapter(struct ncr5380_softc *ncr_sc)
 
 /*
  * Allocate a DMA handle and put it in sc->sc_dma.  Prepare
- * for DMA transfer.  On the Sun4, this means mapping the buffer
- * into DVMA space.
+ * for DMA transfer.
  */
 void
 si_dma_alloc(ncr_sc)
@@ -842,6 +832,7 @@ si_dma_stop(ncr_sc)
 #endif
 		return;
 	}
+
 	ncr_sc->sc_state &= ~NCR_DOINGDMA;
 
 	csr = SIREG_READ(ncr_sc, SIREG_CSR);
