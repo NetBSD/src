@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/17 04:03:26 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/17 06:39:43 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,14 @@ LDADD=	${LDADD.dix} ${LDADD.hw/netbsd/amiga} ${LDADD.afb} -lXfont \
 	${LDADD.randr} ${LDADD.render} ${LDADD.dix/xpstubs} \
 	${LDADD.dbe} ${LDADD.record} ${LDADD.GL/glx} ${LDADD.GL/GLcore} \
 	-lXau -lXdmcp -lz -lm
+
+DPADD=	${DPADD.dix} ${DPADD.hw/netbsd/amiga} ${DPADD.afb} ${LIBXFONT} \
+	${LIBFREETYPE} ${DPADD.os} ${DPADD.cfb} ${DPADD.cfb16} \
+	${DPADD.cfb24} ${DPADD.cfb32} ${DPADD.mfb} ${DPADD.xkb} \
+	${DPADD.mi} ${DPADD.Xext/ext} ${DPADD.xinput} ${DPADD.lbx} \
+	${LIBLBXUTIL} ${DPADD.randr} ${DPADD.render} ${DPADD.dix/xpstubs} \
+	${DPADD.dbe} ${DPADD.record} ${DPADD.GL/glx} ${DPADD.GL/GLcore} \
+	${LIBXAU} ${LIBXDMCP} ${LIBZ} ${LIBM}
 
 SYMLINKS=	${X11BINDIR}/Xamiga ${X11BINDIR}/X
 
