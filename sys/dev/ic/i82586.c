@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.42 2001/11/26 23:30:59 fredette Exp $	*/
+/*	$NetBSD: i82586.c,v 1.43 2002/06/14 15:21:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,12 +144,12 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.42 2001/11/26 23:30:59 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.43 2002/06/14 15:21:45 thorpej Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.42 2001/11/26 23:30:59 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.43 2002/06/14 15:21:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1847,9 +1847,9 @@ again:
 	if (size > sc->mcast_addrs_size) {
 		/* Need to allocate more space */
 		if (sc->mcast_addrs_size)
-			free(sc->mcast_addrs, M_IPMADDR);
+			free(sc->mcast_addrs, M_IFMADDR);
 		sc->mcast_addrs = (char *)
-			malloc(size, M_IPMADDR, M_WAITOK);
+			malloc(size, M_IFMADDR, M_WAITOK);
 		sc->mcast_addrs_size = size;
 	}
 
