@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.25 2002/04/16 20:15:03 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.26 2002/04/20 07:43:35 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.25 2002/04/16 20:15:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.26 2002/04/20 07:43:35 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -219,6 +219,7 @@ irix_sys_syssgi(p, v, retval)
 		return irix_syssgi_sysconf((int)arg1, p, retval);	
 		break;
 
+	case IRIX_SGI_SATCTL:		/* control audit stream */
 	case IRIX_SGI_RXEV_GET:		/* Trusted IRIX call */
 		/* Undocumented (?) and unimplemented */
 		return 0;
