@@ -1,3 +1,25 @@
+2003-01-15  Karl Fogel  <kfogel@collab.net>
+
+	* server.c (dirswitch): Don't free dir_name until right before
+	allocating it again.  This removes a potential double-free
+	problem, whereby this function could free dir_name and then
+	immediately return due to invalid directory syntax (without ever
+	reassigning dir_name), then reenter and free dir_name again. 
+
+        Thanks to Stefan Esser <s.esser@e-matters.de> for the fix.
+
+2003-01-08  Larry Jones  <lawrence.jones@eds.com>
+
+	* client.c (update_entries): Only "0" is a special version number;
+	other numbers starting with 0 (like 0.1) are normal version numbers.
+	* commit.c (find_fileproc): Ditto.  Also reorganize the code to
+	simplify the conditions.
+	(Reported by Michele Zamparelli <michele.zamparelli@eso.org>.)
+
+2003-01-02  Larry Jones  <lawrence.jones@eds.com>
+
+	* rcs.c (getdelta): Use RCSDEAD rather than literal "dead".
+
 2002-12-27  Derek Price  <derek@ximbiot.com>
 
 	* admin.c: s/LOCK_(NONE|WRITE|READ)/CVS_$&/g; since the definition of
@@ -63,6 +85,7 @@
 
 	* commit.c (commit): Strip leading zeros from numeric revision
 	in addition to trailing dots.
+	(Reported by Peter Meszaros <pme@prolan.hu>.)
 
 2002-11-22  Larry Jones  <lawrence.jones@eds.com>
 
