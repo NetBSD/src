@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.14 2000/02/02 23:28:10 thorpej Exp $	*/
+/*	$NetBSD: in6.c,v 1.15 2000/02/04 08:54:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -408,7 +408,7 @@ in6_len2mask(mask, len)
 int	in6_interfaces;		/* number of external internet interfaces */
 
 #define ifa2ia6(ifa)	((struct in6_ifaddr *)(ifa))
-#define ia62ifa(ia6)	((struct ifaddr *)(ia6))
+#define ia62ifa(ia6)	(&(((ia6)->ia_ifa))
 
 int
 in6_control(so, cmd, data, ifp, p)
@@ -520,13 +520,7 @@ in6_control(so, cmd, data, ifp, p)
 			}
 		}
 	}
-#if 0
-	if (ifra->ifra_addr.sin6_family == AF_INET6) {
-		ia = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
-	}
-#else
  	ia = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
-#endif
 
 	switch (cmd) {
 
@@ -561,8 +555,8 @@ in6_control(so, cmd, data, ifp, p)
 				in6_ifaddr = ia;
 			IFAREF(&ia->ia_ifa);
 
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
-				(struct ifaddr *)ia, ifa_list);
+			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
+			    ifa_list);
 			IFAREF(&ia->ia_ifa);
 
 			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
@@ -843,7 +837,7 @@ in6_control(so, cmd, data, ifp, p)
 		case IFT_PPP:
 #endif
 			ia->ia6_flags |= IN6_IFF_TENTATIVE;
-			nd6_dad_start((struct ifaddr *)ia, NULL);
+			nd6_dad_start(&ia->ia_ifa, NULL);
 			break;
 		case IFT_FAITH:
 		case IFT_GIF:
