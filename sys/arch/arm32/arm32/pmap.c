@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1998/07/08 04:48:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 1998/07/17 19:12:48 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -2476,7 +2476,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * then we must be mapping a page table. In this case we should
 	 * also map the page table into the page directory
 	 */
-	if (va >= PROCESS_PAGE_TBLS_BASE && va < 0xf0000000)
+	if (va >= PROCESS_PAGE_TBLS_BASE && va < VM_MIN_KERNEL_ADDRESS)
 		panic("pmap_enter: Mapping into page table area\n");
 
 	/* Better flush the TLB ... */
