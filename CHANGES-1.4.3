@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.67 2000/10/06 16:00:15 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.68 2000/10/07 20:14:12 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1422,3 +1422,24 @@ distrib/sets/lists/base/shl.mi			patch
 
   Introduce the issetugid() system call.
   Bump libc's tiny number to 2.
+
+domestic/libexec/ftpd/Makefile			1.3
+domestic/libexec/telnetd/Makefile		patch
+domestic/usr.bin/kdestroy/Makefile		1.3 via patch
+domestic/usr.bin/kinit/Makefile			1.5 via patch
+domestic/usr.bin/klist/Makefile			1.3 via patch
+domestic/usr.bin/login/Makefile			patch
+domestic/usr.bin/rlogin/Makefile		patch
+domestic/usr.bin/su/Makefile			patch
+domestic/usr.bin/telnet/Makefile		patch
+domestic/usr.sbin/ext_srvtab/Makefile		1.5 via patch
+domestic/usr.sbin/kdb_edit/Makefile		1.5 via patch
+domestic/usr.sbin/kdb_init/Makefile		1.5 via patch
+domestic/usr.sbin/kdb_util/Makefile		1.5 via patch
+domestic/usr.sbin/kerberos/Makefile		1.5 via patch
+domestic/usr.sbin/kprop/Makefile		1.6 via patch
+domestic/usr.sbin/kpropd/Makefile		1.6 via patch
+domestic/usr.sbin/kstash/Makefile		1.5 via patch
+
+  Kerberos IV needs libcom_err, so explicitly list it.
+  Add DPADD+= where missing.
