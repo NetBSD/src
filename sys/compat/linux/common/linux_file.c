@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.59 2003/06/28 14:21:21 darrenr Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.60 2003/06/29 14:51:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.59 2003/06/28 14:21:21 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.60 2003/06/29 14:51:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,8 +427,14 @@ linux_sys_fcntl(l, v, retval)
 		fdp = p->p_fd;
 		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return EBADF;
-		/* FILE_USE() not needed here */
-		if (fp->f_type != DTYPE_VNODE) {
+		FILE_USE(fp);
+
+		/* Check it's a character device vnode */
+		if (fp->f_type != DTYPE_VNODE
+		    || (vp = (struct vnode *)fp->f_data) == NULL
+		    || vp->v_type != VCHR) {
+			FILE_UNUSE(fp, l);
+
 	    not_tty:
 			/* Not a tty, proceed with common fcntl() */
 			cmd = cmd == LINUX_F_SETOWN ? F_SETOWN : F_GETOWN;
@@ -436,11 +442,13 @@ linux_sys_fcntl(l, v, retval)
 		}
 
 		/* check that the vnode is a tty */
-		vp = (struct vnode *)fp->f_data;
-		if (vp->v_type != VCHR)
-			goto not_tty;
-		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)))
+		error = VOP_GETATTR(vp, &va, p->p_ucred, l);
+
+		FILE_UNUSE(fp, l);	/* Don't need anymore */
+
+		if (error)
 			return error;
+
 		cdev = cdevsw_lookup(va.va_rdev);
 		if (cdev == NULL)
 			return (ENXIO);
