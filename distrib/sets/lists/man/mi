@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.258 2000/07/13 00:35:23 thorpej Exp $
+# $NetBSD: mi,v 1.259 2000/07/17 14:39:33 minoura Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -750,6 +750,7 @@
 ./usr/share/man/cat8/compat_ibcs2.0
 ./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_osf1.0
+./usr/share/man/cat8/compat_pecoff.0
 ./usr/share/man/cat8/compat_sco.0
 ./usr/share/man/cat8/compat_solaris.0
 ./usr/share/man/cat8/compat_sunos.0
@@ -1780,6 +1781,7 @@
 ./usr/share/man/man8/compat_ibcs2.8
 ./usr/share/man/man8/compat_linux.8
 ./usr/share/man/man8/compat_osf1.8
+./usr/share/man/man8/compat_pecoff.8
 ./usr/share/man/man8/compat_sco.8
 ./usr/share/man/man8/compat_solaris.8
 ./usr/share/man/man8/compat_sunos.8
