@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.7 1999/10/17 23:39:15 cgd Exp $	*/
+/*	$NetBSD: cnode.h,v 1.8 2001/11/24 01:11:34 perry Exp $	*/
 
 /*
  * 
@@ -109,6 +109,7 @@ struct cnode {
     struct cnode	*c_next;	/* links if on NetBSD machine */
 };
 #define	VTOC(vp)	((struct cnode *)(vp)->v_data)
+#define	SET_VTOC(vp)	((vp)->v_data)
 #define	CTOV(cp)	((struct vnode *)((cp)->c_vnode))
 
 /* flags */

@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.28 2001/11/23 17:42:48 perry Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.29 2001/11/24 01:11:35 perry Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.28 2001/11/23 17:42:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.29 2001/11/24 01:11:35 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1813,7 +1813,7 @@ coda_reclaim(v)
     }
     cache_purge(vp);
     coda_free(VTOC(vp));
-    VTOC(vp) = NULL;
+    SET_VTOC(vp) = NULL;
     return (0);
 }
 
