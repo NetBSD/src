@@ -1,4 +1,4 @@
-/*	$NetBSD: info_hesiod.c,v 1.1.1.1 1999/02/01 18:46:09 christos Exp $	*/
+/*	$NetBSD: info_hesiod.c,v 1.1.1.1.2.1 1999/09/21 04:55:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: info_hesiod.c,v 1.4 1999/01/13 23:30:58 ezk Exp 
+ * Id: info_hesiod.c,v 1.5 1999/02/04 07:24:15 ezk Exp 
  *
  */
 
@@ -64,6 +64,7 @@ extern int hesiod_init(void **context);
 static voidp hesiod_context;
 #endif /* HAVE_HESIOD_INIT */
 
+/* forward declarations */
 int amu_hesiod_init(mnt_map *m, char *map, time_t *tp);
 int hesiod_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp);
 int hesiod_isup(mnt_map *m, char *map);
