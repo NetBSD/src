@@ -193,7 +193,7 @@ prep_pci_conf_interrupt(void *v, int bus, int dev, int pin,
 }
 
 int
-prep_pci_conf_hook(void *v, int bus, int dev, int func, int id)
+prep_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
 
 	/*
