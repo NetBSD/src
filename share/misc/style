@@ -1,4 +1,4 @@
-/*	$NetBSD: style,v 1.6 1996/08/30 17:43:09 thorpej Exp $	*/
+/*	$NetBSD: style,v 1.7 1998/02/09 06:58:39 enami Exp $	*/
 
 /*
  * Style guide for the 4BSD KNF (Kernel Normal Form).
@@ -167,7 +167,7 @@ main(argc, argv)
 	while (cnt < 20)
 		z = a + really + long + statment + that + needs + two lines +
 		    gets + indented + four + spaces + on + the + second +
-		    and + subsequent + lines.
+		    and + subsequent + lines;
 
 	/*
 	 * Closing and opening braces go on the same line as the else.
