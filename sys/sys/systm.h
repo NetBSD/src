@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.43 1996/03/14 18:59:12 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.44 1996/03/16 23:12:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -127,16 +127,18 @@ int	seltrue __P((dev_t dev, int which, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
-#ifdef __GNUC__
-volatile void	panic __P((const char *, ...));
-#else
-void	panic __P((const char *, ...));
-#endif
+void	panic __P((const char *, ...)) 
+    __attribute__((__noreturn__,__format__(printf,1,2)));
+void	printf __P((const char *, ...))
+    __attribute__((__format__(printf,1,2))); 
+void	uprintf __P((const char *, ...))
+    __attribute__((__format__(printf,1,2))); 
+int	sprintf __P((char *buf, const char *, ...))
+    __attribute__((__format__(printf,2,3)));
+void	ttyprintf __P((struct tty *, const char *, ...))
+    __attribute__((__format__(printf,2,3)));
+
 void	tablefull __P((const char *));
-void	printf __P((const char *, ...));
-void	uprintf __P((const char *, ...));
-int	sprintf __P((char *buf, const char *, ...));
-void	ttyprintf __P((struct tty *, const char *, ...));
 
 void	bcopy __P((const void *from, void *to, size_t len));
 void	ovbcopy __P((const void *from, void *to, size_t len));
