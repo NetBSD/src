@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.69 2001/03/26 12:33:25 lukem Exp $ */
+/*	$NetBSD: conf.c,v 1.70 2001/10/05 13:32:00 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,8 @@
 #include "zstty.h"
 #include "bpp.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
+#include "siosixteen.h"
+cdev_decl(cdtty);
 
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 
@@ -270,6 +272,12 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 120: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
 	cdev_fb_init(NPNOZZ,p9100),	/* 122: /dev/cgfourteen */
+#ifdef notyet
+	cdev_pci_init(NPCI,pci),	/* 123: PCI bus access device */
+#else
+	cdev_lkm_dummy(),		/* 123 */
+#endif
+	cdev_tty_init(NCLCD,cdtty),	 /* 124: Aurora multiport serial */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
