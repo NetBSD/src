@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.16 2003/11/06 18:22:01 ragge Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.17 2003/11/17 10:16:18 cube Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.16 2003/11/06 18:22:01 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.17 2003/11/17 10:16:18 cube Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -121,6 +121,7 @@ struct symtab {
 	const char *sd_name;	/* Name of this table */
 	Elf_Sym *sd_symstart;	/* Address of symbol table */
 	caddr_t sd_strstart;	/* Adderss of corresponding string table */
+	int sd_usroffset;	/* Real address for userspace */
 	int sd_symsize;		/* Size in bytes of symbol table */
 	int sd_strsize;		/* Size of string table */
 	int *sd_symnmoff;	/* Used when calculating the name offset */
@@ -268,11 +269,12 @@ ptree_gen(char *off, struct symtab *tab)
  * Finds a certain symbol name in a certain symbol table.
  */
 static Elf_Sym *
-findsym(char *name, struct symtab *table)
+findsym(char *name, struct symtab *table, int userreq)
 {
 	Elf_Sym *start = table->sd_symstart;
 	int i, sz = table->sd_symsize/sizeof(Elf_Sym);
 	char *np;
+	caddr_t realstart = table->sd_strstart - (userreq ? 0 : table->sd_usroffset);
 
 #ifdef USE_PTREE
 	if (table == &kernel_symtab && (i = ptree_find(name)) != 0)
@@ -280,7 +282,7 @@ findsym(char *name, struct symtab *table)
 #endif
 
 	for (i = 0; i < sz; i++) {
-		np = table->sd_strstart + start[i].st_name;
+		np = realstart + start[i].st_name;
 		if (name[0] == np[0] && name[1] == np[1] &&
 		    strcmp(name, np) == 0)
 			return &start[i];
@@ -495,7 +497,7 @@ ksyms_init(int symsize, void *start, void *end)
  * Returns 0 if success or ENOENT if no such entry.
  */
 int
-ksyms_getval(const char *mod, char *sym, unsigned long *val, int type)
+ksyms_getval(const char *mod, char *sym, unsigned long *val, int type, int userreq)
 {
 	struct symtab *st;
 	Elf_Sym *es;
@@ -511,7 +513,7 @@ ksyms_getval(const char *mod, char *sym, unsigned long *val, int type)
 	CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
 		if (mod && strcmp(st->sd_name, mod))
 			continue;
-		if ((es = findsym(sym, st)) == NULL)
+		if ((es = findsym(sym, st, userreq)) == NULL)
 			continue;
 
 		/* Skip if bad binding */
@@ -563,7 +565,7 @@ ksyms_getname(const char **mod, char **sym, vaddr_t v, int f)
 				laddr = les->st_value;
 				es = les;
 				lmod = st->sd_name;
-				stable = st->sd_strstart;
+				stable = st->sd_strstart - st->sd_usroffset;
 			}
 		}
 	}
@@ -593,10 +595,11 @@ ksyms_sizes_calc(void)
 			for (i = 0; i < st->sd_symsize/sizeof(Elf_Sym); i++)
 				st->sd_symstart[i].st_name =
 				    strsz + st->sd_symnmoff[i];
+			st->sd_usroffset = strsz;
 		}
                 symsz += st->sd_symsize;
                 strsz += st->sd_strsize;
-        }                               
+        }
 }
 #endif
 
@@ -693,7 +696,7 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 			continue;
 			
 		/* Check if the symbol exists */
-		if (ksyms_getval(NULL, strstart + sym[i].st_name,
+		if (ksyms_getval_from_kernel(NULL, strstart + sym[i].st_name,
 		    &rval, KSYMS_EXTERN) == 0) {
 			/* Check (and complain) about differing values */
 			if (sym[i].st_value != rval) {
@@ -776,6 +779,31 @@ ksyms_delsymtab(const char *mod)
 	return 0;
 }
 
+int
+ksyms_rensymtab(const char *old, const char *new)
+{
+	struct symtab *st, *oldst = NULL;
+	char *newstr;
+
+	CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
+		if (strcmp(old, st->sd_name) == 0)
+			oldst = st;
+		if (strcmp(new, st->sd_name) == 0)
+			return (EEXIST);
+	}
+	if (oldst == NULL)
+		return (ENOENT);
+
+	newstr = malloc(strlen(new)+1, M_DEVBUF, M_WAITOK);
+	if (!newstr)
+		return (ENOMEM);
+	strcpy(newstr, new);
+	free((char *)oldst->sd_name, M_DEVBUF);
+	oldst->sd_name = newstr;
+
+	return (0);
+}
+
 #ifdef DDB
 
 /*
@@ -801,7 +829,8 @@ ksyms_sift(char *mod, char *sym, int mode)
 			Elf_Sym *les = st->sd_symstart + i;
 			char c;
 
-			if (strstr(sb + les->st_name, sym) == NULL)
+			if (strstr(sb + les->st_name - st->sd_usroffset, sym)
+			    == NULL)
 				continue;
 
 			if (mode == 'F') {
@@ -822,9 +851,11 @@ ksyms_sift(char *mod, char *sym, int mode)
 					c = ' ';
 					break;
 				}
-				db_printf("%s%c ", sb + les->st_name, c);
+				db_printf("%s%c ", sb + les->st_name -
+				    st->sd_usroffset, c);
 			} else
-				db_printf("%s ", sb + les->st_name);
+				db_printf("%s ", sb + les->st_name -
+				    st->sd_usroffset);
 		}
 	}
 	return ENOENT;
@@ -1033,7 +1064,7 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 		 */
 		if ((error = copyinstr(kg->kg_name, str, ksyms_maxlen, NULL)))
 			break;
-		if ((error = ksyms_getval(NULL, str, &val, KSYMS_EXTERN)))
+		if ((error = ksyms_getval_from_userland(NULL, str, &val, KSYMS_EXTERN)))
 			break;
 		error = copyout(&val, kg->kg_value, sizeof(long));
 		break;
@@ -1046,7 +1077,7 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 		if ((error = copyinstr(kg->kg_name, str, ksyms_maxlen, NULL)))
 			break;
 		CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
-			if ((sym = findsym(str, st)) == NULL)
+			if ((sym = findsym(str, st, 1)) == NULL) /* from userland */
 				continue;
 
 			/* Skip if bad binding */
