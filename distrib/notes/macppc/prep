@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.27.2.6 2002/07/09 14:32:26 lukem Exp $
+.\"	$NetBSD: prep,v 1.27.2.7 2002/07/11 18:41:48 thorpej Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -795,13 +795,13 @@ output-device       screen              screen
 .Pp
 Each version of Open Firmware is capable of booting from a variety of
 media (such as hard drives, floppy disks, CD-ROMs, and ethernet).
-Open Firmware is able to boot files from a variety of filesystems
+Open Firmware is able to boot files from a variety of file systems
 (such as ISO9660, MS-DOS, and on some models HFS and HFS+).
 Unfortunately, Open Firmware is
 .Em not
 able to use the
 .Nx
-filesystem (FFS), so we must put the bootloader in a location that Open
+file system (FFS), so we must put the bootloader in a location that Open
 Firmware is capable of using.
 .Pp
 Therefore, to boot the
@@ -847,9 +847,9 @@ Partition zero
 .It
 Ethernet (netboot)
 .It
-ISO9660 CD-ROM filesystem
+ISO9660 CD-ROM file system
 .It
-MS-DOS filesystem
+MS-DOS file system
 .bullet)
 .It
 .Em "Open Firmware 2.4"
@@ -859,26 +859,26 @@ Partition zero
 .It
 Ethernet (netboot)
 .It
-ISO9660 CD-ROM filesystem
+ISO9660 CD-ROM file system
 .It
-HFS or HFS+ filesystems
+HFS or HFS+ file systems
 .It
-Hybrid (both ISO9660 and HFS) filesystem
+Hybrid (both ISO9660 and HFS) file system
 .It
-MS-DOS filesystem
+MS-DOS file system
 .bullet)
 .It
 .Em "Open Firmware 3"
 .br
 .(bullet -compact
-HFS, HFS+, or Hybrid (ISO9660 and HFS) filesystem
+HFS, HFS+, or Hybrid (ISO9660 and HFS) file system
 .It
 Ethernet (netboot)
 .It
 Partition zero (not supported by
 .Nx )
 .It
-MS-DOS filesystem
+MS-DOS file system
 .bullet)
 .bullet)
 .Pp
@@ -899,7 +899,7 @@ Such as the boot floppy, or an installed
 partition.
 .
 .It
-.Em "HFS or HFS+ filesystem"
+.Em "HFS or HFS+ file system"
 .Pp
 Only on Open Firmware 2.4 or Open Firmware 3 systems.
 .
@@ -918,7 +918,7 @@ bootloader and
 .Pa ofwboot.xcf
 on a hybrid partition so it can be booted on all Open Firmware
 versions.
-The boot CD-R image also has an ISO9660 filesystem with
+The boot CD-R image also has an ISO9660 file system with
 an installation kernel and the distribution sets.
 .Pp
 .
@@ -973,7 +973,7 @@ from an HFS or HFS+ partition which then loads the kernel from an acceptable
 source (such as an FFS partition or an HFS or HFS+ partition).
 The FFS-based kernel may be on a previously installed
 .Nx
-filesystem.
+file system.
 .Pp
 Alternatively, the kernel (compressed
 or non-compressed) may be on an HFS or HFS+ partition.
@@ -987,10 +987,10 @@ Due to Open Firmware pickiness, it must be on the same partition as
 .Pp
 Load the
 .Pa ofwboot.xcf
-bootloader from an MS-DOS filesystem (such as a floppy or Zip disk).
+bootloader from an MS-DOS file system (such as a floppy or Zip disk).
 It can then load a
 .Nx
-kernel from the same MS-DOS filesystem or elsewhere.
+kernel from the same MS-DOS file system or elsewhere.
 This has only been thoroughly tested on floppy disks,
 but may work on FDISK-formatted hard drives.
 This does not work for MS-DOS partitions on a hard drive with an Apple
@@ -1045,10 +1045,10 @@ CD-R
 .Pp
 Load the
 .Pa ofwboot.xcf
-bootloader from the CD-ROM's HFS filesystem.
+bootloader from the CD-ROM's HFS file system.
 It can then load a
 .Nx
-kernel from the HFS or ISO9660 filesystem.
+kernel from the HFS or ISO9660 file system.
 .Pp
 Make sure that the CD has an Apple Partition Map.
 .(Note
@@ -1226,7 +1226,7 @@ files:
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#disk-sharing
 .It Em UFS
 Any size.
-This filesystem type is not currently supported by
+This file system type is not currently supported by
 .Nx*M
 although it might be in the future.
 .Em UFS
@@ -1505,7 +1505,7 @@ Place
 .Pa ofwboot.xcf
 and the installation kernel
 .Pa netbsd.GENERIC_MD.gz
-at the top level of your Macintosh filesystem.
+at the top level of your Macintosh file system.
 That is, drag the two icons onto your hard drive icon (not the desktop).
 Make sure they're both on the same partition.
 .Pp
@@ -1813,7 +1813,7 @@ a Compact Flash drive, or even a spare hard drive.
 The floppy image has a
 .Sq "partition zero"
 bootloader which ultimately loads the installation kernel from the FFS
-filesystem from the disk image.
+file system from the disk image.
 .Pp
 .(bullet -compact
 .Em "From a UNIX machine"

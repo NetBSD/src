@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.24.2.4 2002/07/02 04:20:06 lukem Exp $
+.\"	$NetBSD: xfer,v 1.24.2.5 2002/07/11 18:41:45 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@ To boot
 .Nx ,
 you will need the bootloader
 .Pq Ic boot26
-and the kernel you wish to boot on a RISC OS filesystem somewhere.
+and the kernel you wish to boot on a RISC OS file system somewhere.
 .Ic boot26
 can boot gzipped kernels, so there's no need to gunzip it.
 .Pp
@@ -442,7 +442,7 @@ See above how to write the images to floppies.
 .Pp
 To start the `floppy-root' installation system, insert the `kern' floppy
 to your floppy drive 0, and reboot your computer with OPT.1 key pressed.
-When you are prompted that `Insert filesystem floppy and press return.',
+When you are prompted that `Insert file system floppy and press return.',
 replace the `kern' floppy with `inst' floppy and press return key.
 .Pp
 Once booted, the `floppy-root' installation system is identical with

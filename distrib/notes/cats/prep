@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1.2.3 2002/07/02 04:20:04 lukem Exp $
+.\"	$NetBSD: prep,v 1.1.2.4 2002/07/11 18:41:43 thorpej Exp $
 .
 A \*M machine usually needs little or no preparation before installing
 .Nx ,
@@ -19,9 +19,9 @@ Berkeley FFS
 .It
 Linux ext2
 .It
-ISO9660 CD-ROM filesystem
+ISO9660 CD-ROM file system
 .It
-MS-DOS filesystem
+MS-DOS file system
 .bullet)
 .bullet)
 .Pp

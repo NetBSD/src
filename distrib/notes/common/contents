@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.11 2002/07/09 08:51:38 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.12 2002/07/11 18:41:44 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -993,7 +993,7 @@ This allows you to reserve a partition for use by
 .It
 The
 .Ic file2swp.ttp
-program can be used to transfer an installation filesystem image, like
+program can be used to transfer an installation file system image, like
 .Pa sysinst.fs
 to a partition with id SWP.
 In this way, you can run the installation from the swap partition
@@ -1213,7 +1213,7 @@ The following are included in the
 .	(tag miniroot.gz
 .	It Pa miniroot.gz
 A copy of the miniroot file system.
-This filesystem image is copied into the swap partition of the disk which
+This file system image is copied into the swap partition of the disk which
 you intend to boot
 .Nx
 from.
