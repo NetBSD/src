@@ -1,4 +1,4 @@
-/*	$NetBSD: gaitest.c,v 1.2 2002/07/05 15:46:21 itojun Exp $	*/
+/*	$NetBSD: gaitest.c,v 1.3 2002/07/05 15:47:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, and 2002 WIDE Project.
@@ -43,6 +43,10 @@ struct addrinfo ai;
 char host[NI_MAXHOST];
 char serv[NI_MAXSERV];
 int vflag = 0;
+
+static void usage __P((void));
+static void print1 __P((const char *, const struct addrinfo *, char *, char *));
+int main __P((int, char *[]));
 
 static void
 usage()
