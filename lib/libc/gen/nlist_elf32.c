@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.22 2003/05/11 12:47:42 ragge Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.23 2003/05/11 20:56:51 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -113,7 +113,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	/*
 	 * Read the elf header of the file.
 	 */
-	if ((i = pread(fd, &ehdr, sizeof(Elf_Ehdr), 0)) == -1)
+	if ((ssize_t)(i = pread(fd, &ehdr, sizeof(Elf_Ehdr), (off_t)0)) == -1)
 		BAD;
 
 	/*
