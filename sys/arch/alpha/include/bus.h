@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.25 1998/07/31 04:37:02 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.26 1998/08/30 23:40:15 cgd Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,10 +66,6 @@
 
 #ifndef _ALPHA_BUS_H_
 #define	_ALPHA_BUS_H_
-
-#ifndef	__BUS_SPACE_COMPAT_OLDDEFS
-#define	__BUS_SPACE_COMPAT_OLDDEFS
-#endif
 
 /*
  * Turn on BUS_SPACE_DEBUG if the global DEBUG option is enabled.

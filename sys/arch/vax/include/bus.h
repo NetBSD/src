@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1998/08/30 23:40:15 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,10 +70,6 @@
 
 #ifndef _VAX_BUS_H_
 #define _VAX_BUS_H_
-
-#ifndef __BUS_SPACE_COMPAT_OLDDEFS
-#define	__BUS_SPACE_COMPAT_OLDDEFS
-#endif
 
 #ifdef BUS_SPACE_DEBUG
 /*
