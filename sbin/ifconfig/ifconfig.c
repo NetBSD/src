@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.145 2004/10/11 20:13:37 dsl Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.146 2004/10/28 20:10:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.145 2004/10/11 20:13:37 dsl Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.146 2004/10/28 20:10:29 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -982,7 +982,7 @@ setvlan(const char *val, int d)
 	struct vlanreq vlr;
 
 	if (strncmp(ifr.ifr_name, "vlan", 4) != 0 ||
-	    !isdigit(ifr.ifr_name[4]))
+	    !isdigit((unsigned char)ifr.ifr_name[4]))
 		errx(EXIT_FAILURE,
 		    "``vlan'' valid only with vlan(4) interfaces");
 
@@ -1006,7 +1006,7 @@ setvlanif(const char *val, int d)
 	struct vlanreq vlr;
 
 	if (strncmp(ifr.ifr_name, "vlan", 4) != 0 ||
-	    !isdigit(ifr.ifr_name[4]))
+	    !isdigit((unsigned char)ifr.ifr_name[4]))
 		errx(EXIT_FAILURE,
 		    "``vlanif'' valid only with vlan(4) interfaces");
 
@@ -1033,7 +1033,7 @@ unsetvlanif(const char *val, int d)
 	struct vlanreq vlr;
 
 	if (strncmp(ifr.ifr_name, "vlan", 4) != 0 ||
-	    !isdigit(ifr.ifr_name[4]))
+	    !isdigit((unsigned char)ifr.ifr_name[4]))
 		errx(EXIT_FAILURE,
 		    "``vlanif'' valid only with vlan(4) interfaces");
 
@@ -1412,7 +1412,7 @@ setifnwkey(const char *val, int d)
 		goto set_nwkey;
 	} else {
   set_nwkey:
-		if (isdigit(val[0]) && val[1] == ':') {
+		if (isdigit((unsigned char)val[0]) && val[1] == ':') {
 			/* specifying a full set of four keys */
 			nwkey.i_defkid = val[0] - '0';
 			val += 2;
@@ -2189,7 +2189,7 @@ vlan_status(void)
 	struct vlanreq vlr;
 
 	if (strncmp(ifr.ifr_name, "vlan", 4) != 0 ||
-	    !isdigit(ifr.ifr_name[4]))
+	    !isdigit((unsigned char)ifr.ifr_name[4]))
 		return;
 
 	memset(&vlr, 0, sizeof(vlr));
