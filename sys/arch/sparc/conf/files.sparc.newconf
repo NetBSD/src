@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc.newconf,v 1.27 1995/04/25 20:07:10 pk Exp $
+#	$NetBSD: files.sparc.newconf,v 1.28 1995/04/27 12:16:31 christos Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -142,30 +142,19 @@ file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c
 file	arch/sparc/sparc/disksubr.c
 
-file	compat/sunos/sunos_misc.c	compat_sunos
-file	compat/sunos/sunos_init_sysent.c	compat_sunos
-file	compat/sunos/sunos_ioctl.c	compat_sunos
-file	compat/sunos/sunos_exec.c	compat_sunos
-
-file	compat/svr4/svr4_exec.c		compat_svr4
-file	compat/svr4/svr4_fcntl.c	compat_svr4
-file	compat/svr4/svr4_ioctl.c	compat_svr4
-file	compat/svr4/svr4_misc.c		compat_svr4
-file	compat/svr4/svr4_signal.c	compat_svr4
-file	compat/svr4/svr4_stat.c		compat_svr4
-file	compat/svr4/svr4_syscalls.c	compat_svr4
-file	compat/svr4/svr4_sysent.c	compat_svr4
-file	compat/svr4/svr4_util.c		compat_svr4
-file	compat/svr4/svr4_net.c		compat_svr4
-file	compat/svr4/svr4_termios.c	compat_svr4
-file	compat/svr4/svr4_stream.c	compat_svr4
-file	compat/svr4/svr4_ttold.c	compat_svr4
-file	compat/svr4/svr4_filio.c	compat_svr4
-file	compat/svr4/svr4_error.c	compat_svr4
-file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
-
 file	kludge_for_in_proto.c		hy needs-flag
 
 file	arch/sparc/sparc/db_interface.c	ddb
 file	arch/sparc/sparc/db_trace.c	ddb
 file	arch/sparc/sparc/db_disasm.c	ddb
+
+#
+# Compatibility modules
+#
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "../../../compat/svr4/files.svr4"
+file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
