@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25 2001/03/09 20:55:47 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.26 2001/05/28 07:16:11 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -505,6 +505,15 @@ struct atari_bus_space {
 	__abs_copy(4, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
 	__abs_copy(8, (t), (h1), (o1), (h2), (o2), (c))
+
+/*
+ *	void *bus_space_vaddr __P((bus_space_tag_t, bus_space_handle_t));
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ *  (XXX not enforced)
+ */
+#define bus_space_vaddr(t, h)	((void)(t), (void *)(h))
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
