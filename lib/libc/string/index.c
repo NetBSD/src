@@ -1,4 +1,4 @@
-/*	$NetBSD: index.c,v 1.11 1999/09/20 04:39:44 lukem Exp $	*/
+/*	$NetBSD: index.c,v 1.12 2001/02/09 11:47:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)index.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: index.c,v 1.11 1999/09/20 04:39:44 lukem Exp $");
+__RCSID("$NetBSD: index.c,v 1.12 2001/02/09 11:47:21 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,8 +63,10 @@ index(p, ch)
 	_DIAGASSERT(p != NULL);
 
 	for (;; ++p) {
-		if (*p == ch)
+		if (*p == ch) {
+			/* LINTED const cast-away */
 			return((char *)p);
+		}
 		if (!*p)
 			return((char *)NULL);
 	}
