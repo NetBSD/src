@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.9 1998/02/04 09:01:44 thorpej Exp $	*/
+/*	$NetBSD: memset.c,v 1.10 1998/03/26 23:53:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.9 1998/02/04 09:01:44 thorpej Exp $");
+__RCSID("$NetBSD: memset.c,v 1.10 1998/03/26 23:53:37 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: memset.c,v 1.9 1998/02/04 09:01:44 thorpej Exp $");
 
 #include <limits.h>
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
