@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/10/04 07:15:07 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2000/10/05 01:55:58 itojun Exp $
 
 VERSION=	0.9.5a
 CRYPTODIST=	${.CURDIR}/../../../crypto/dist
@@ -9,9 +9,12 @@ manpages:
 		if [ "$$fn" = "config" ]; then \
 			sec=5; \
 			dst=openssl.cnf.$$sec; \
-		else \
+		elif [ "$$fn" = "openssl" ]; then \
 			sec=1; \
 			dst=`basename $$i .pod`.$$sec; \
+		else \
+			sec=1; \
+			dst=openssl_`basename $$i .pod`.$$sec; \
 		fi; \
 		(cd `dirname $$i`; \
 		 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
@@ -34,6 +37,9 @@ manpages:
 			 sed -e '/$$RCSfile/d' -e '/$$Log/d' > `basename $$i .pod`.$$sec; \
 		fi \
 	done
+	mv md5.3 MD5_Init.3
+	mv err.3 openssl_err.3
+	mv rand.3 RAND_seed.3
 
 clean:
 	-/bin/rm -f *.[0-9]
