@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.16 2001/06/30 16:19:12 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.17 2001/06/30 16:20:37 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.16 2001/06/30 16:19:12 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.17 2001/06/30 16:20:37 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -456,6 +456,7 @@ arcvideo_show_screen(void *cookie, void *scookie, int waitok,
 {
 
 	/* Do nothing, since there can only be one screen. */
+	return 0;
 }
 
 static int
