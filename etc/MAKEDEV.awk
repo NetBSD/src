@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.5 2003/10/19 19:07:26 jdolecek Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.6 2003/10/24 08:27:26 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,12 +64,14 @@ BEGIN {
 
 	# file with major definitions
 	majors[0] = "conf/majors"
-	if (maarch == "arm32")
+	if (maarch == "arm" && system("test -f '" top "arch/" machine "/conf/majors." machine "'") != 0)
 		majors[1] = "arch/arm/conf/majors.arm32";
 	else if (machine == "evbsh5") {
 		majors[1] = "arch/evbsh5/conf/majors.evbsh5";
 		majors[2] = "arch/sh5/conf/majors.sh5";
-	} else
+	} else if (machine == "sbmips")
+		majors[1] = "arch/evbmips/conf/majors.evbmips";
+	else
 		majors[1] = "arch/" machine "/conf/majors." machine;
 
 	# process all files with majors and fill the chr[] and blk[]
@@ -132,17 +134,13 @@ BEGIN {
 		}
 		incdir = 0
 		while (getline < inc) {
-			if ($2 == "MAXPARTITIONS") {
-				# if 8, we are done; otherwise have
-				# to check if it's 16 partitions with
-				# back compat mapping
+			if ($1 == "#define" && $2 == "MAXPARTITIONS")
 				diskpartitions = $3
-				if (diskpartitions == 8)
-					break;
-			} else if ($2 == "OLDMAXPARTITIONS") {
-				diskbackcompat = 1
-				break
-			} else if ($1 == "#include" && $2 ~ "<.*/disklabel.h>"){
+			else if ($1 == "#define" && $2 == "OLDMAXPARTITIONS")
+				diskbackcompat = $3
+			else if ($1 == "#define" && $2 == "RAW_PART")
+				RAWDISK_OFF = $3
+			else if ($1 == "#include" && $2 ~ "<.*/disklabel.h>") {
 				# wrapper, switch to the right file
 				incdir = substr($2, 2)
 				sub("/.*", "", incdir)
@@ -159,8 +157,12 @@ BEGIN {
 		}
 	}
 	MKDISK = "makedisk_p" diskpartitions	# routine to create disk devs
-	if (diskbackcompat)
+	DISKMINOROFFSET = diskpartitions
+	if (diskbackcompat) {
 		MKDISK = MKDISK "high"
+		DISKMINOROFFSET = diskbackcompat
+	}
+	RAWDISK_NAME = sprintf("%c", 97 + RAWDISK_OFF)		# a+offset
 
 	# initially no substitutions
 	devsubst = 0
@@ -196,6 +198,9 @@ BEGIN {
 {
 	sub("^%MD_DEVICES%", MDDEV)
 	sub("%MKDISK%", MKDISK)
+	sub("%DISKMINOROFFSET%", DISKMINOROFFSET)
+	sub("%RAWDISK_OFF%", RAWDISK_OFF)
+	sub("%RAWDISK_NAME%", RAWDISK_NAME)
 
 	# if device substitutions are not active, do nothing more
 	if (!devsubst) {
