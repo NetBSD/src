@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21 2001/02/18 10:44:22 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.22 2002/02/27 01:20:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,9 +58,7 @@
 
 #include "leds.h"
 
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
+#define DEV_LEDS	13	/* minor device 13 is leds */
 
 extern	unsigned int avail_end;
 static	caddr_t zeropage;
@@ -101,8 +99,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
-		case 0:
+		case DEV_MEM:
 			v = uio->uio_offset;
 			if (v < 0 || v >= avail_end) {
 				return (EFAULT);
@@ -111,8 +108,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			c = min(iov->iov_len, MAXPHYS);
 			error = uiomove((caddr_t)v + KERNBASE, c, uio);
 			continue;
-/* minor device 1 is kernel memory */
-		case 1:
+		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			if (!uvm_kernacc((caddr_t)v, c,
@@ -121,14 +117,12 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
-		case 2:
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
-		case 12:
+		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
 				break;
@@ -142,7 +136,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove(zeropage, c, uio);
 			continue;
 #if NLEDS
-		case 13:	/*  /dev/leds  */
+		case DEV_LEDS:
 			error = leds_uio(uio);
 			/* Yes, return (not break) so EOF works. */
 			return (error);
