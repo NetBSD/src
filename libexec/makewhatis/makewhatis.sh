@@ -21,12 +21,12 @@ find $MANDIR \( -type f -o -type l \) -name '*.[0-9]*' -ls | \
     sort -n | awk '{if (u[$1]) next; u[$1]++ ; print $11}' > $LIST
  
 egrep '\.[1-9]$' $LIST | xargs /usr/libexec/getNAME | \
-	sed -e 's/ [a-zA-Z0-9]* \\-/ -/' >> $TMP
+	sed -e 's/ [a-zA-Z0-9]* \\-/ -/' > $TMP
 
 egrep '\.0$' $LIST | while read file
 do
 	sed -n -f /usr/share/man/makewhatis.sed $file;
-done > $TMP
+done >> $TMP
 
 egrep '\.[0].(gz|Z)$' $LIST | while read file
 do
