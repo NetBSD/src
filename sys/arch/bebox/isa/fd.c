@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.6 1998/08/15 17:47:16 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.7 1999/06/22 01:41:48 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,6 @@ enum fdc_state {
 /* software state, per controller */
 struct fdc_softc {
 	struct device sc_dev;		/* boilerplate */
-	struct isadev sc_id;
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
