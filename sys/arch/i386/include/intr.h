@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.34 2002/12/01 00:15:37 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.35 2002/12/11 12:02:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ struct intrhand {
 #define IMASK(ci,level) (ci)->ci_imask[(level)]
 #define IUNMASK(ci,level) (ci)->ci_iunmask[(level)]
 
-extern void Xspllower __P((void));
+extern void Xspllower __P((int));
 
 static __inline int splraise __P((int));
 static __inline void spllower __P((int));
@@ -158,14 +158,15 @@ spllower(int nlevel)
 	struct cpu_info *ci = curcpu();
 
 	__splbarrier();
-	ci->ci_ilevel = nlevel;
 	/*
 	 * Since this should only lower the interrupt level,
 	 * the XOR below should only show interrupts that
 	 * are being unmasked.
 	 */
 	if (ci->ci_ipending & IUNMASK(ci,nlevel))
-		Xspllower();
+		Xspllower(nlevel);
+	else
+		ci->ci_ilevel = nlevel;
 }
 
 /*
