@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.20 2002/06/17 15:34:37 itojun Exp $
+#	$NetBSD: list,v 1.21 2002/06/18 02:02:21 itojun Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -38,9 +38,11 @@ PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/newfs_msdos
 PROG	sbin/ping
+PROG	sbin/ping6
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore
 PROG	sbin/route
+PROG	sbin/rtsol
 PROG	sbin/shutdown
 PROG	sbin/swapctl
 PROG	sbin/umount
@@ -67,6 +69,7 @@ SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	more		srcdir	distrib/utils/more
 SPECIAL	mount		srcdir	distrib/utils/x_mount
 SPECIAL	ping		srcdir	distrib/utils/x_ping
+SPECIAL	ping6		srcdir	distrib/utils/x_ping6
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
