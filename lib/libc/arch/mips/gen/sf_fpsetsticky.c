@@ -1,4 +1,4 @@
-/*	$NetBSD: sf_fpsetsticky.c,v 1.1.1.1 1999/09/16 12:18:26 takemura Exp $	*/
+/*	$NetBSD: sf_fpsetsticky.c,v 1.2 1999/12/26 00:22:32 shin Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -13,7 +13,7 @@ fpsetsticky(sticky)
 {
 	fp_except old;
 
-	old = sfp_getsticky();
-	sfp_setsticky(sticky);
+	old = _mips_sfp_getsticky();
+	_mips_sfp_setsticky(sticky);
 	return old;
 }
