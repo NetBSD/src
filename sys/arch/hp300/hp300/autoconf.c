@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 1998/01/12 18:31:14 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42 1998/06/17 13:08:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -388,7 +388,7 @@ device_register(dev, aux)
 	void *aux;
 {
 	struct dev_data *dd;
-	static int seen_netdevice;
+	static int seen_netdevice = 0;
 
 	/*
 	 * Allocate a dev_data structure and fill it in.
