@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.3 1999/02/19 03:14:01 mycroft Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.3.2.1 2000/05/22 21:10:10 he Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -156,11 +156,6 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 	bus_space_free(iot, ioh_high, length);
 
 	/*
-	 * XXX mycroft recommends I/O space range 0x400-0xfff .  I should put
-	 * this in a header somewhere
-	 */
-
-	/*
 	 * XXX some hardware doesn't seem to grok addresses in 0x400 range--
 	 * apparently missing a bit or more of address lines. (e.g.
 	 * CIRRUS_PD672X with Linksys EthernetCard ne2000 clone in TI
@@ -174,22 +169,8 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 		sc->iobase = 0x300;
 		sc->iosize = 0x0ff;
 	} else {
-#if 0
-		/*
-		 * This is what we'd like to use, but...
-		 */
 		sc->iobase = 0x400;
 		sc->iosize = 0xbff;
-#else
-		/*
-		 * ...the above bus width probe doesn't always work.
-		 * So, experimentation has shown the following range
-		 * to not lose on systems that 0x300-0x3ff loses on
-		 * (e.g. the NEC Versa 6030X).
-		 */
-		sc->iobase = 0x330;
-		sc->iosize = 0x0cf;
-#endif
 	}
 
 	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (probed)\n",
