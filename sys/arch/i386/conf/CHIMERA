@@ -1,4 +1,4 @@
-#	$NetBSD: CHIMERA,v 1.9 1994/12/11 16:20:49 mycroft Exp $
+#	$NetBSD: CHIMERA,v 1.10 1995/01/25 04:58:16 cgd Exp $
 #
 #	CHIMERA -- Adam Glass's confused machine
 #
@@ -96,4 +96,4 @@ pseudo-device	tun	3		# network tunneling over tty
 
 pseudo-device	pty	32		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vn	4		# paging to files
+pseudo-device	vnd	4		# paging to files
