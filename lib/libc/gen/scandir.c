@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.12 1998/08/10 02:43:10 perry Exp $	*/
+/*	$NetBSD: scandir.c,v 1.13 1998/08/26 00:38:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.12 1998/08/10 02:43:10 perry Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.13 1998/08/26 00:38:40 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,7 +113,7 @@ scandir(dirname, namelist, select, dcomp)
 		p->d_reclen = d->d_reclen;
 		p->d_type = d->d_type;
 		p->d_namlen = d->d_namlen;
-		memcpy(p->d_name, d->d_name,  (size_t)(p->d_namlen + 1));
+		memmove(p->d_name, d->d_name,  (size_t)(p->d_namlen + 1));
 		/*
 		 * Check to make sure the array has space left and
 		 * realloc the maximum size.
