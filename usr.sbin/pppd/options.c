@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: options.c,v 1.3 1993/11/28 23:39:38 paulus Exp $";
+static char rcsid[] = "$Id: options.c,v 1.4 1994/01/25 05:58:10 paulus Exp $";
 #endif
 
 #include <stdio.h>
@@ -461,7 +461,7 @@ getword(f, word, newlinep, filename)
 		word[len] = c;
 	    ++len;
 	    if (c == '\\')
-		quoted = 1;
+		escape = 1;
 	}
 	if ((c = getc(f)) == EOF)
 	    break;
