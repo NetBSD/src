@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.70 2000/08/01 22:45:05 jeffs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.71 2000/09/13 01:53:01 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70 2000/08/01 22:45:05 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.71 2000/09/13 01:53:01 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
 
 	pcb = &p2->p_addr->u_pcb;
-	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
 	pcb->pcb_context[8] = (int)f - 24;		/* SP */
 	pcb->pcb_context[0] = (int)func;		/* S0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.50 2000/09/13 01:12:47 chuck Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.51 2000/09/13 01:53:01 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -150,16 +150,11 @@
 	.set	mips3
 
 /*
- * TLB handling data.   'mips3_segbase' points to the base of the segment
+ * TLB handling data.   'segbase' points to the base of the segment
  * table.   this is read and written by C code in mips_machdep.c.
  *
  * XXX: use linear mapped PTs at fixed VA in kseg2 in the future?
  */
-	.sdata
-	.globl	_C_LABEL(mips3_segbase)
-_C_LABEL(mips3_segbase):
-	.word	0
-
 	.text
 
 
@@ -182,10 +177,10 @@ _C_LABEL(mips3_segbase):
 	.set	noat
 VECTOR(mips3_TLBMiss, unknown)
 	mfc0	k0, MIPS_COP_0_BAD_VADDR    #00: k0=bad address
-	lui	k1, %hi(mips3_segbase)	    #01: k1=hi of segbase
+	lui	k1, %hi(segbase)	    #01: k1=hi of segbase
 	bltz	k0, 4f			    #02: k0<0 -> 4f (kernel fault)
 	srl	k0, 20			    #03: k0=seg offset (almost)
-	lw	k1, %lo(mips3_segbase)(k1)  #04: k1=segment tab base
+	lw	k1, %lo(segbase)(k1)	    #04: k1=segment tab base
 	andi	k0, k0, 0xffc		    #05: k0=seg offset (mask 0x3)
 	addu	k1, k0, k1		    #06: k1=seg entry address
 	lw	k1, 0(k1)		    #07: k1=seg entry
@@ -233,10 +228,10 @@ VECTOR_END(mips3_TLBMiss)
 	.set	noat
 VECTOR(mips3_XTLBMiss, unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR    #00: k0=bad address
-	lui	k1, %hi(mips3_segbase)	    #01: k1=hi of segbase
+	lui	k1, %hi(segbase)	    #01: k1=hi of segbase
 	bltz	k0, 4f			    #02: k0<0 -> 4f (kernel fault)
 	srl	k0, 20			    #03: k0=seg offset (almost)
-	lw	k1, %lo(mips3_segbase)(k1)  #04: k1=segment tab base
+	lw	k1, %lo(segbase)(k1)	    #04: k1=segment tab base
 	andi	k0, k0, 0xffc		    #05: k0=seg offset (mask 0x3)
 	addu	k1, k0, k1		    #06: k1=seg entry address
 	lw	k1, 0(k1)		    #07: k1=seg entry
