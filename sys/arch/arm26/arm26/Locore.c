@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.7 2001/02/13 13:16:37 bjh21 Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7.8.1 2001/11/15 08:16:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.7 2001/02/13 13:16:37 bjh21 Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.7.8.1 2001/11/15 08:16:27 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -59,22 +59,22 @@ static void idle(void);
  * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
  */
 void
-setrunqueue(struct proc *p)
+setrunqueue(struct lwp *l)
 {
-	struct  prochd *q;
-	struct proc *oldlast;
-	int which = p->p_priority >> 2;
+	struct prochd *q;
+	struct lwp *oldlast;
+	int which = l->l_priority >> 2;
 	
 #ifdef	DIAGNOSTIC
-	if (p->p_back)
+	if (l->l_back)
 		panic("setrunqueue");
 #endif
 	q = &sched_qs[which];
 	sched_whichqs |= 1 << which;
-	p->p_forw = (struct proc *)q;
-	p->p_back = oldlast = q->ph_rlink;
-	q->ph_rlink = p;
-	oldlast->p_forw = p;
+	l->l_forw = (struct lwp *)q;
+	l->l_back = oldlast = q->ph_rlink;
+	q->ph_rlink = l;
+	oldlast->l_forw = l;
 }
 
 /*
@@ -83,20 +83,20 @@ setrunqueue(struct proc *p)
  * Calls should be made at splstatclock().
  */
 void
-remrunqueue(struct proc *p)
+remrunqueue(struct lwp *l)
 {
-	int which = p->p_priority >> 2;
+	int which = l->l_priority >> 2;
 	struct prochd *q;
 
 #ifdef	DIAGNOSTIC	
 	if (!(sched_whichqs & (1 << which)))
 		panic("remrunqueue");
 #endif
-	p->p_forw->p_back = p->p_back;
-	p->p_back->p_forw = p->p_forw;
-	p->p_back = NULL;
+	l->l_forw->l_back = l->l_back;
+	l->l_back->l_forw = l->l_forw;
+	l->l_back = NULL;
 	q = &sched_qs[which];
-	if (q->ph_link == (struct proc *)q)
+	if (q->ph_link == (struct lwp *)q)
 		sched_whichqs &= ~(1 << which);
 }
 
@@ -124,41 +124,67 @@ extern int want_resched; /* XXX should be in <machine/cpu.h> */
 /*
  * Find the highest-priority runnable process and switch to it.
  */
-void
-cpu_switch(struct proc *p1)
+int
+cpu_switch(struct lwp *l1)
 {
 	int which;
 	struct prochd *q;
-	struct proc *p2;
+	struct lwp *l2;
 
 	/*
 	 * We enter here with interrupts blocked and sched_lock held.
 	 */
 
 #if 0
-	printf("cpu_switch: %p ->", p1);
+	printf("cpu_switch: %p ->", l1);
 #endif
 	curproc = NULL;
 	while (sched_whichqs == 0)
 		idle();
 	which = ffs(sched_whichqs) - 1;
 	q = &sched_qs[which];
-	p2 = q->ph_link;
-	remrunqueue(p2);
+	l2 = q->ph_link;
+	remrunqueue(l2);
 	want_resched = 0;
 #ifdef LOCKDEBUG
 	sched_unlock_idle();
 #endif
 	/* p->p_cpu initialized in fork1() for single-processor */
-	p2->p_stat = SONPROC;
-	curproc = p2;
+	l2->l_stat = LSONPROC;
+	curproc = l2;
 #if 0
-	printf(" %p\n", p2);
+	printf(" %p\n", l2);
 #endif
-	if (p2 == p1)
+	if (l2 == l1)
+		return (0);
+	pmap_deactivate(l1);
+	pmap_activate(l2);
+	cpu_loswitch(&l1->l_addr->u_pcb.pcb_sf, l2->l_addr->u_pcb.pcb_sf);
+	/* We only get back here after the other process has run. */
+	return (1);
+}
+
+/*
+ * Switch to the specified process.
+ */
+void
+cpu_preempt(struct lwp *old, struct lwp *new)
+{
+
+	/*
+	 * We enter here with interrupts blocked and sched_lock held.
+	 */
+	remrunqueue(new);
+#ifdef LOCKDEBUG
+	sched_unlock_idle();
+#endif
+	/* p->p_cpu initialized in fork1() for single-processor */
+	new->l_stat = LSONPROC;
+	curproc = new;
+	if (new == old)
 		return;
-	pmap_deactivate(p1);
-	pmap_activate(p2);
-	cpu_loswitch(&p1->p_addr->u_pcb.pcb_sf, p2->p_addr->u_pcb.pcb_sf);
+	pmap_deactivate(old);
+	pmap_activate(new);
+	cpu_loswitch(&old->l_addr->u_pcb.pcb_sf, new->l_addr->u_pcb.pcb_sf);
 	/* We only get back here after the other process has run. */
 }
