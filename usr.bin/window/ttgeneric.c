@@ -1,4 +1,4 @@
-/*	$NetBSD: ttgeneric.c,v 1.7 2003/02/02 17:43:16 jdc Exp $	*/
+/*	$NetBSD: ttgeneric.c,v 1.8 2003/02/28 05:48:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,11 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)ttgeneric.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttgeneric.c,v 1.7 2003/02/02 17:43:16 jdc Exp $");
+__RCSID("$NetBSD: ttgeneric.c,v 1.8 2003/02/28 05:48:25 matt Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
+#include <string.h>
 #include <termcap.h>
 #include "ww.h"
 #include "tt.h"
