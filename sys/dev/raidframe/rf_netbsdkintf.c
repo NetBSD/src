@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.13 1999/03/09 02:59:25 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.14 1999/03/09 03:53:18 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -292,7 +292,8 @@ void
 raidattach(num)
 	int     num;
 {
-	int     raidID;
+	int raidID;
+	int i, rc;
 
 #ifdef DEBUG
 	printf("raidattach: Asked for %d units\n", num);
@@ -312,10 +313,23 @@ raidattach(num)
 	if (raidPtrs == NULL) {
 		panic("raidPtrs is NULL!!\n");
 	}
-	rf_kbooted = rf_boot();
-	if (rf_kbooted) {
-		panic("Serious error booting RAID!!\n");
+	
+	rc = rf_mutex_init(&rf_sparet_wait_mutex);
+	if (rc) {
+		RF_PANIC();
 	}
+
+	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
+	recon_queue = NULL;
+
+	for (i = 0; i < numraid; i++)
+		raidPtrs[i] = NULL;
+	rc = rf_BootRaidframe();
+	if (rc == 0)
+		printf("Kernelized RAIDframe activated\n");
+	else
+		panic("Serious error booting RAID!!\n");
+
 	rf_kbooted = RFK_BOOT_GOOD;
 
 	/* put together some datastructures like the CCD device does.. This
@@ -398,23 +412,8 @@ raidopen(dev, flags, fmt, p)
 	struct raid_softc *rs;
 	struct disklabel *lp;
 	int     part, pmask;
-	unsigned int raidID;
-	int     rc;
 	int     error = 0;
 
-	/* This whole next chunk of code is somewhat suspect... Not sure it's
-	 * needed here at all... XXX */
-
-	if (rf_kbooted == RFK_BOOT_NONE) {
-		printf("Doing restart on raidopen.\n");
-		rf_kbooted = RFK_BOOT_GOOD;
-		rc = rf_boot();
-		if (rc) {
-			rf_kbooted = RFK_BOOT_BAD;
-			printf("Someone is unhappy...\n");
-			return (rc);
-		}
-	}
 	if (unit >= numraid)
 		return (ENXIO);
 	rs = &raid_softc[unit];
@@ -423,13 +422,11 @@ raidopen(dev, flags, fmt, p)
 		return (error);
 	lp = rs->sc_dkdev.dk_label;
 
-	raidID = raidunit(dev);
-
 	part = DISKPART(dev);
 	pmask = (1 << part);
 
 	db1_printf(("Opening raid device number: %d partition: %d\n",
-		raidID, part));
+		unit, part));
 
 
 	if ((rs->sc_flags & RAIDF_INITED) &&
@@ -1355,35 +1352,6 @@ raid_shutdown(arg)
 	rs->sc_flags &= ~RAIDF_INITED;
 
 
-}
-
-
-/*********************************************************
- *
- * initialization code called at boot time (startup.c)
- *
- ********************************************************/
-int 
-rf_boot()
-{
-	int     i, rc;
-
-	rc = rf_mutex_init(&rf_sparet_wait_mutex);
-	if (rc) {
-		RF_PANIC();
-	}
-
-	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
-	recon_queue = NULL;
-
-	for (i = 0; i < numraid; i++)
-		raidPtrs[i] = NULL;
-	rc = rf_BootRaidframe();
-	if (rc == 0)
-		printf("Kernelized RAIDframe activated\n");
-	else
-		rf_kbooted = RFK_BOOT_BAD;
-	return (rc);
 }
 
 /*
