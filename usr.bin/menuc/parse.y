@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.2 1997/11/09 20:59:16 phil Exp $	*/
+/*	$NetBSD: parse.y,v 1.3 1998/06/24 06:46:24 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,11 +55,11 @@ static optn_info *cur_optn;
 }
 
 
-%token <i_value> X Y W H NO BOX SUB MENU NEXT EXIT ACTION ENDWIN OPTION TITLE 
-%token <i_value> DEFAULT DISPLAY ERROR
+%token <i_value> X Y W H NO BOX SUB HELP MENU NEXT EXIT ACTION ENDWIN OPTION 
+%token <i_value> TITLE DEFAULT DISPLAY ERROR
 %token <s_value> STRING NAME CODE INT_CONST CHAR_CONST
 
-%type <s_value> init_code system
+%type <s_value> init_code system helpstr
 %type <optn_value> option option_list
 %type <i_value> act_opt
 %type <a_value> action exitact
@@ -102,7 +102,7 @@ menu_def  :  MENU NAME
 			  *(cur_menu->info) = default_info;
 		  }
 		}
-	     opts ";" dispact option_list exitact
+	     opts ";" dispact option_list exitact helpstr
 		{ optn_info *t;
 		  cur_menu->info->optns = NULL;
 		  while ($7 != NULL) {
@@ -196,3 +196,6 @@ exitact	  : /* empty */ 	{ cur_menu->info->exitact.code = ""; }
 	  | EXIT action	";"	{ cur_menu->info->exitact = $2; }
 	  ;
 
+helpstr	  : /* empty */ 	{ cur_menu->info->helpstr = NULL; }
+	  | HELP CODE ";" 	{ cur_menu->info->helpstr = $2; } 
+	  ;

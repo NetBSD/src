@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.4 1997/11/14 18:27:17 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.5 1998/06/24 06:46:24 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,11 +54,13 @@
 /* Initialization state. */
 static int __menu_init = 0;
 int __m_endwin = 0;
+static int max_lines = 0;
 
 /* prototypes for in here! */
 
 static void init_menu (struct menudesc *m);
 static void post_menu (struct menudesc *m);
+static void process_help (struct menudesc *m, int num);
 static void process_req (struct menudesc *m, int num, int req);
 static void mbeep (void);
 static int menucmd (WINDOW *w);
@@ -130,7 +132,7 @@ static int menucmd (WINDOW *w)
 		        return REQ_REDISPLAY;
 		}
 		
-		if (isalpha(ch))
+		if (isalpha(ch) || ch == '?')
 			return (ch);
 
 		mbeep();
@@ -218,6 +220,65 @@ static void post_menu (struct menudesc *m)
 	wmove(m->mw,tadd+hasbox+m->cursel, hasbox);
 }
 
+static void process_help (struct menudesc *m, int num)
+{
+	char *help = m->helpstr;
+        int lineoff = 0;
+	int curoff = 0;
+	int again;
+        int winin;
+
+        do {
+		if (lineoff < curoff) {
+			help = m->helpstr;
+			curoff = 0;
+		}
+		while (*help && curoff < lineoff) {
+			if (*help == '\n')
+				curoff++;
+			help++;
+		}
+	
+		wclear(stdscr);
+		mvwaddstr (stdscr, 0, 0, 
+			"Help: exit: q,  page up: u <, page down: d >");
+		mvwaddstr (stdscr, 2, 0, help);
+		wmove (stdscr, 1, 0);
+	  	wrefresh(stdscr);
+
+		do {
+			winin = mgetch(stdscr);
+			winin = tolower(winin);
+			again = 0;
+			switch (winin) {
+				case '<':
+				case 'u':
+		                case KEYPAD_UP_ARROW:
+					if (lineoff)
+						lineoff -= max_lines - 2;
+					break;
+				case '>':
+				case 'd':
+		                case KEYPAD_DOWN_ARROW:
+					if (*help)
+						lineoff += max_lines - 2;
+					break;
+				case 'q':
+					break;
+				default:
+					again = 1;
+			}
+		} while (again);
+	} while (winin != 'q');
+
+	/* Restore current menu */    
+	wclear(stdscr);
+	wrefresh(stdscr);
+	process_item (&num, -2);
+	post_menu (m);
+	wrefresh (m->mw);
+}
+
 static void process_req (struct menudesc *m, int num, int req)
 {
 	int ch;
@@ -246,6 +307,8 @@ static void process_req (struct menudesc *m, int num, int req)
 		post_menu (m);
 		wrefresh (m->mw);
 
+	} else if (req == '?') {
+		process_help (m, num);
 	} else {
 		ch = tolower (req);
 		if (ch == 'x' && hasexit)
@@ -294,6 +357,7 @@ void process_menu (int num)
 		}
 		cbreak();
 		noecho();
+		max_lines = stdscr->maxy;
 		__menu_init = 1;
 	}
 	if (__m_endwin) {
