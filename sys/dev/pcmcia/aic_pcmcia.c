@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.27 2004/08/10 15:29:56 mycroft Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.28 2004/08/10 16:04:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.27 2004/08/10 15:29:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.28 2004/08/10 16:04:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,7 @@ aic_pcmcia_enable(self, onoff)
 			error = pcmcia_function_enable(sc->sc_pf);
 			if (error) {
 				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+				sc->sc_ih = 0;
 				return (error);
 			}
 

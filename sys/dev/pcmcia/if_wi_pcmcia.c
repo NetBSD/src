@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.54 2004/08/10 15:29:56 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.55 2004/08/10 16:04:16 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.54 2004/08/10 15:29:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.55 2004/08/10 16:04:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,6 +299,7 @@ wi_pcmcia_enable(sc)
 	error = pcmcia_function_enable(pf);
 	if (error) {
 		pcmcia_intr_disestablish(pf, sc->sc_ih);
+		sc->sc_ih = 0;
 		return (EIO);
 	}
 
