@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.6 1997/07/23 16:27:50 thorpej Exp $	*/
+/*	$NetBSD: trpt.c,v 1.7 1997/07/23 16:41:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.6 1997/07/23 16:27:50 thorpej Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.7 1997/07/23 16:41:43 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -421,8 +421,16 @@ numeric(v1, v2)
 {
 	const caddr_t *c1 = v1;
 	const caddr_t *c2 = v2;
+	int rv;
 
-	return ((int)(*c1 - *c2));
+	if (*c1 < *c2)
+		rv = -1;
+	else if (*c1 > *c2)
+		rv = 1;
+	else
+		rv = 0;
+
+	return (rv);
 }
 
 void
