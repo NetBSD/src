@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.27 1998/03/01 02:25:05 fvdl Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.28 1998/03/24 12:57:15 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -623,7 +623,7 @@ char *
 ether_sprintf(ap)
 	register u_char *ap;
 {
-	register i;
+	register int i;
 	static char etherbuf[18];
 	register char *cp = etherbuf;
 
