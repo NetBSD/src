@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.5 2003/01/19 21:42:09 thorpej Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.6 2003/01/22 13:49:14 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
