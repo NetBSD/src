@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.2 2003/01/18 11:33:19 thorpej Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.3 2003/01/19 19:48:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -285,12 +285,13 @@ __weak_alias(__libc_thr_errno,__libc_thr_errno_stub)
 int
 __libc_thr_once_stub(once_t *o, void (*r)(void))
 {
-	/* LINTED deliberate lack of effect */
-	(void)o;
-	/* LINTED deliberate lack of effect */
-	(void)r;
 
-	DIE();
+	/* XXX Knowledge of libpthread types. */
+
+	if (o->pto_done == 0) {
+		(*r)();
+		o->pto_done = 1;
+	}
 
 	return (0);
 }
