@@ -15,31 +15,39 @@
 <h2>Table of Contents</h2>
 <ul>
 <li><a href="#report">Reporting Bugs</a>
- <ul>
- <li><a href="#need">What we need</a></li>
- <li><a href="#dontwant">What we DON'T want</a></li>
- <li><a href="#where">Where to post it</a></li>
- <li><a href="#detailed">Detailed bug reporting instructions</a></li>
- <li><a href="#gnat">Detailed bug reporting instructions for GNAT</a></li>
- <li><a href="#pch">Detailed bug reporting instructions when using a precompiled header</a></li>
- </ul>
+  <ul>
+  <li><a href="#need">What we need</a></li>
+  <li><a href="#dontwant">What we DON'T want</a></li>
+  <li><a href="#where">Where to post it</a></li>
+  <li><a href="#detailed">Detailed bug reporting instructions</a></li>
+  <li><a href="#gnat">Detailed bug reporting instructions for GNAT</a></li>
+  <li><a href="#pch">Detailed bug reporting instructions when using a precompiled header</a></li>
+  </ul>
 </li>
 <li><a href="#known">Frequently Reported Bugs in GCC</a>
- <ul>
- <li><a href="#general">General</a></li>
- <li><a href="#fortran">Fortran</a></li>
- <li><a href="#c">C</a></li>
- <li><a href="#cplusplus">C++</a>
   <ul>
-  <li><a href="#updating">Common problems updating from G++ 2.95 to
-  G++ 3.0</a></li>
-  <li><a href="#nonbugs">Non-bugs</a></li>
-  <li><a href="#missing">Missing features</a></li>
-  <li><a href="#parsing">Parse errors for "simple" code</a></li>
-  </ul>
+  <li><a href="#cxx">C++</a>
+    <ul>
+    <li><a href="#cxx-abi">ABI bugs</a></li>
+    <li><a href="#missing">Missing features</a></li>
+    <li><a href="#parsing">Parse errors for "simple" code</a></li>
+    </ul>
   </li>
- </ul>
- </li>
+  <li><a href="#fortran">Fortran</a></li>
+  </ul>
+</li>
+<li><a href="#nonbugs">Non-bugs</a>
+  <ul>
+  <li><a href="#nonbugs_general">General</a></li>
+  <li><a href="#nonbugs_c">C</a></li>
+  <li><a href="#nonbugs_cxx">C++</a>
+    <ul>
+    <li><a href="#updating">Common problems updating from G++ 2.95 to
+      G++ 3.0</a></li>
+    </ul>
+  </li>
+  </ul>
+</li>
 </ul>
 
 <hr />
@@ -69,8 +77,8 @@ requested in this summary.</p>
 
 <h3><a name="need">What we need</a></h3>
 
-Please include in your bug report all of the following items, the first
-three of which can be obtained from the output of <code>gcc -v</code>:
+<p>Please include in your bug report all of the following items, the first
+three of which can be obtained from the output of <code>gcc -v</code>:</p>
 
 <ul>
   <li>the exact version of GCC;</li> 
@@ -155,8 +163,8 @@ that</a> when reporting bugs that appear when using a precompiled header.</p>
 collecting the command line below, as well as its output and the
 preprocessed file it generates.</p>
 
-<blockquote><code>gcc -v -save-temps <i>all-your-options
-source-file</i></code></blockquote>
+<blockquote><p><code>gcc -v -save-temps <i>all-your-options
+source-file</i></code></p></blockquote>
 
 <p>Typically the preprocessed file (extension <code>.i</code> for C or
 <code>.ii</code> for C++, and <code>.f</code> if the preprocessor is used on
@@ -280,6 +288,139 @@ reproduce the problem.</p>
 
 <h1><a name="known">Frequently Reported Bugs in GCC</a></h1>
 
+<p>This is a list of bugs in GCC that are reported very often, but not
+yet fixed. While it is certainly better to fix bugs instead of documenting
+them, this document might save people the effort of writing a bug report
+when the bug is already well-known.</p>
+
+<p>There are many reasons why a reported bug doesn't get fixed.
+It might be difficult to fix, or fixing it might break compatibility.
+Often, reports get a low priority when there is a simple work-around.
+In particular, bugs caused by invalid code have a simple work-around:
+<em>fix the code</em>.</p>
+
+<hr />
+
+<h2><a name="cxx">C++</a></h2>
+
+<h3><a name="cxx-abi">ABI bugs</a></h3>
+
+<p>GCC 3.0 had a new ABI, which affected class layout, function mangling and
+calling conventions. We had intended it to be complete, but unfortunately
+some issues came to light, too late to fix in the 3.0 series.
+The ABI should not change in dot releases, so we addressed most issues
+in GCC 3.1.</p>
+
+<dl>
+
+<dt>Covariant return types</dt>
+
+<dd>Up to (and including) GCC 3.3 we did not implement non-trivial
+covariant returns.  This has been addressed for GCC 3.4.</dd>
+
+</dl>
+
+<h3><a name="missing">Missing features</a></h3>
+<p>We know some things are missing from G++.</p>
+
+<dl>
+
+<dt>The <code>export</code> keyword is not implemented.</dt>
+<dd><p>Most C++ compilers (G++ included) do not yet implement
+<code>export</code>, which is necessary for separate compilation of
+template declarations and definitions. Without <code>export</code>, a
+template definition must be in scope to be used. The obvious
+workaround is simply to place all definitions in the header
+itself. Alternatively, the compilation unit containing template
+definitions may be included from the header.</p></dd>
+
+<dt>Two stage lookup in templates is not implemented.</dt>
+<dd><p>[14.6] specifies how names are looked up inside a template. G++
+does not do this correctly, but for most templates this will not be
+noticeable.</p></dd>
+
+</dl>
+
+<h3><a name="parsing">Parse errors for "simple" code</a></h3>
+
+<p>Up to and including GCC 3.0, the compiler will give "parse error" for
+seemingly simple code, such as</p>
+
+<pre>
+struct A{
+  A();
+  A(int);
+  void func();
+};
+
+struct B{
+  B(A);
+  B(A,A);
+  void func();
+};
+
+void foo(){
+  B b(A(),A(1));     //Variable b, initialized with two temporaries
+  B(A(2)).func();    //B temporary, initialized with A temporary
+}
+</pre>
+
+<p>The problem is that GCC starts to parse the declaration of
+<code>b</code> as a function <code>b</code> returning <code>B</code>,
+taking a function returning <code>A</code> as an argument. When it
+sees the 1, it is too late. The work-around in these cases is to add
+additional parentheses around the expressions that are mistaken as
+declarations:</p>
+
+<pre>
+  (B(A(2))).func();
+</pre>
+
+<p>Sometimes, even that is not enough; to show the compiler that this
+should be really an expression, a comma operator with a dummy argument
+can be used:</p>
+
+<pre>
+  B b((0,A()),A(1));
+</pre>
+
+<p>Another example is the parse error for the <code>return</code>
+statement in</p>
+
+<pre>
+struct A{};
+
+struct B{
+  A a;
+  A f1(bool);
+};
+
+A B::f1(bool b)
+{
+  if (b)
+    return (A());
+  return a;
+}
+</pre>
+
+<p>The problem is that the compiler interprets <code>A()</code> as a
+function (taking no arguments, returning <code>A</code>), and
+<code>(A()</code>) as a cast - with a missing expression, hence the
+parse error. The work-around is to omit the parentheses:</p>
+
+<pre>
+  if (b)
+    return A();
+</pre>
+
+<p>This problem occurs in a number of variants; in <code>throw</code>
+statements, people also frequently put the object in parentheses. The
+exact error also somewhat varies with the compiler version. The
+work-arounds proposed do not change the semantics of the program at
+all; they make them perhaps less readable.</p>
+
+<hr />
+
 <h2><a name="fortran">Fortran</a></h2>
 
 <p>Fortran bugs are documented in the G77 manual rather than
@@ -289,12 +430,190 @@ Trouble with GNU Fortran</a> in the G77 manual.</p>
 
 <hr />
 
-<h2><a name="c">C</a></h2>
+<h1><a name="nonbugs">Non-bugs</a></h1>
 
-<p>The following are not bugs in the C compiler, but are reported
-often enough to warrant a mention here.</p>
+<p>The following are not actually bugs, but are reported often
+enough to warrant a mention here.</p>
+
+<p>It is not always a bug in the compiler, if code which "worked" in a
+previous version, is now rejected.  Earlier versions of GCC sometimes were
+less picky about standard conformance and accepted invalid source code.
+In addition, programming languages themselves change, rendering code
+invalid that used to be conforming (this holds especially for C++).
+In either case, you should update your code to match recent language
+standards.</p>
+
+<hr />
+
+<h2><a name="nonbugs_general">General</a></h2>
 
 <dl>
+<dt>Problems with floating point numbers - the
+<a href="http://gcc.gnu.org/PR323">most often reported non-bug</a>.</dt>
+<dd><p>In a number of cases, GCC appears to perform floating point
+computations incorrectly. For example, the C++ program</p>
+<blockquote><pre>
+#include &lt;iostream&gt;
+
+int main()
+{
+  double a = 0.5;
+  double b = 0.01;
+  std::cout &lt;&lt; (int)(a / b) &lt;&lt; std::endl;
+  return 0;
+}
+</pre></blockquote>
+<p>might print 50 on some systems and optimization levels, and 49 on
+others.</p>
+
+<p>The is the result of <em>rounding</em>: The computer cannot
+represent all real numbers exactly, so it has to use
+approximations. When computing with approximation, the computer needs
+to round to the nearest representable number.</p>
+
+<p>This is not a bug in the compiler, but an inherent limitation of
+the floating point types. Please study
+<a href="http://www.validlab.com/goldberg/paper.ps">this paper</a>
+for more information.</p></dd>
+</dl>
+
+<hr />
+
+<h2><a name="nonbugs_c">C</a></h2>
+
+<dl>
+<dt>Casting does not work as expected when optimization is turned on.</dt>
+
+<dd><p>This is often caused by a violation of aliasing rules, which are part
+of the ISO C standard.  These rules say that a program is invalid if you try
+to access a variable through a pointer of an incompatible type.  This is
+happening in the following example where a short is accessed through a
+pointer to integer (the code assumes 16-bit <code>short</code>s and 32-bit
+<code>int</code>s):</p>
+<blockquote><pre>
+#include &lt;stdio.h&gt;
+
+int main()
+{
+  short a[2];
+
+  a[0]=0x1111;
+  a[1]=0x1111;
+
+  *(int *)a = 0x22222222; /* violation of aliasing rules */
+
+  printf("%x %x\n", a[0], a[1]);
+  return 0;
+}
+</pre></blockquote>
+<p>The aliasing rules were designed to allow compilers more aggressive
+optimization.  Basically, a compiler can assume that all changes to variables
+happen through pointers or references to variables of a type compatible to
+the accessed variable.  Dereferencing a pointer that violates the aliasing
+rules results in undefined behavior.</p>
+
+<p>In the case above, the compiler may assume that no access through an
+integer pointer can change the array <code>a</code>, consisting of shorts.
+Thus, <code>printf</code> may be called with the original values of
+<code>a[0]</code> and <code>a[1]</code>.  What really happens is up to
+the compiler and may change with architecture and optimization level.</p>
+
+<p>Recent versions of GCC turn on the option <code>-fstrict-aliasing</code>
+(which allows alias-based optimizations) by default with <code>-O2</code>.
+And some architectures then really print "1111 1111" as result.  Without
+optimization the executable will generate the "expected" output
+"2222 2222".</p>
+
+<p>To disable optimizations based on alias-analysis for faulty legacy code,
+the option <code>-fno-strict-aliasing</code> can be used as a work-around.</p>
+
+<p>The option <code>-Wstrict-aliasing</code> (which is included in
+<code>-Wall</code>) warns about some - but not all - cases of violation
+of aliasing rules when <code>-fstrict-aliasing</code> is active.</p>
+
+<p>To fix the code above, you can use a <code>union</code> instead of a
+cast (note that this is a GCC extension which might not work with other
+compilers):</p>
+<blockquote><pre>
+#include &lt;stdio.h&gt;
+
+int main()
+{
+  union
+  {
+    short a[2];
+    int i;
+  } u;
+
+  u.a[0]=0x1111;
+  u.a[1]=0x1111;
+
+  u.i = 0x22222222;
+
+  printf("%x %x\n", u.a[0], u.a[1]);
+  return 0;
+}
+</pre></blockquote>
+<p>Now the result will always be "2222 2222".</p>
+
+<p>For some more insight into the subject, please have a look at
+<a href="http://mail-index.NetBSD.org/tech-kern/2003/08/11/0001.html">this
+article</a>.</p></dd>
+
+
+<dt>Cannot use preprocessor directive in macro arguments.</dt>
+<dd><p>Let me guess... you used an older version of GCC to compile code
+that looks something like this:</p>
+<blockquote><pre>
+  memcpy(dest, src,
+#ifdef PLATFORM1
+	 12
+#else
+	 24
+#endif
+	);
+</pre></blockquote>
+<p>and you got a whole pile of error messages:</p>
+<blockquote><pre>
+test.c:11: warning: preprocessing directive not recognized within macro arg
+test.c:11: warning: preprocessing directive not recognized within macro arg
+test.c:11: warning: preprocessing directive not recognized within macro arg
+test.c: In function `foo':
+test.c:6: undefined or invalid # directive
+test.c:8: undefined or invalid # directive
+test.c:9: parse error before `24'
+test.c:10: undefined or invalid # directive
+</pre></blockquote>
+
+<p>This is because your C library's <code>&lt;string.h&gt;</code> happens
+to define <code>memcpy</code> as a macro - which is perfectly legitimate.
+In recent versions of glibc, for example, <code>printf</code> is among those
+functions which are implemented as macros.</p>
+
+<p>Versions of GCC prior to 3.3 did not allow you to put <code>#ifdef</code>
+(or any other preprocessor directive) inside the arguments of a macro.  The
+code therefore would not compile.</p>
+
+<p>As of GCC 3.3 this kind of construct is always accepted and the
+preprocessor will probably do what you expect, but see the manual for
+detailed semantics.</p>
+
+<p>However, this kind of code is not portable.  It is "undefined behavior"
+according to the C standard; that means different compilers may do
+different things with it.  It is always possible to rewrite code which
+uses conditionals inside macros so that it doesn't.  You could write
+the above example</p>
+<blockquote><pre>
+#ifdef PLATFORM1
+   memcpy(dest, src, 12);
+#else
+   memcpy(dest, src, 24);
+#endif
+</pre></blockquote>
+<p>This is a bit more typing, but I personally think it's better style
+in addition to being more portable.</p></dd>
+
+
 <dt>Cannot initialize a static variable with <code>stdin</code>.</dt>
 <dd><p>This has nothing to do with GCC, but people ask us about it a
 lot.  Code like this:</p>
@@ -305,11 +624,11 @@ lot.  Code like this:</p>
 FILE *yyin = stdin;
 </pre></blockquote>
 
-<p>will not compile with GNU libc (GNU/Linux libc6), because
-<code>stdin</code> is not a constant.  This was done deliberately, to make
-it easier to maintain binary compatibility when the type <code>FILE</code>
-needs to be changed.  It is surprising for people used to traditional Unix
-C libraries, but it is permitted by the C standard.</p>
+<p>will not compile with GNU libc, because <code>stdin</code> is not a
+constant.  This was done deliberately, to make it easier to maintain
+binary compatibility when the type <code>FILE</code> needs to be changed.
+It is surprising for people used to traditional Unix C libraries, but it
+is permitted by the C standard.</p>
 
 <p>This construct commonly occurs in code generated by old versions of
 lex or yacc.  We suggest you try regenerating the parser with a
@@ -323,87 +642,74 @@ projects; please check the
 <a href="http://www.gnu.org/software/glibc/">GNU libc web pages</a>
 for details.
 </p></dd>
-
-<dt>Cannot use preprocessor directive in macro arguments.</dt>
-<dd><p>Let me guess... you wrote code that looks something like this:</p>
-<blockquote><pre>
-  memcpy(dest, src,
-#ifdef PLATFORM1
-	 12
-#else
-	 24
-#endif
-	);
-</pre></blockquote>
-<p>and you got a whole pile of error messages:</p>
-<blockquote><code>
-
-test.c:11: warning: preprocessing directive not recognized within
-macro arg<br />
-test.c:11: warning: preprocessing directive not recognized within
-macro arg<br />
-test.c:11: warning: preprocessing directive not recognized within
-macro arg<br />
-test.c: In function `foo':<br />
-test.c:6: undefined or invalid # directive<br />
-test.c:8: undefined or invalid # directive<br />
-test.c:9: parse error before `24'<br />
-test.c:10: undefined or invalid # directive<br />
-test.c:11: parse error before `#'<br />
-</code></blockquote>
-
-<p><strong>Update:</strong> As of GCC 3.2 this kind of construct is
-always accepted and CPP will probably do what you expect, but see the
-manual for detailed semantics.</p>
-
-<p>However, versions of GCC prior to 3.2 did not allow you to put
-<code>#ifdef</code> (or any other directive) inside the arguments of a
-macro.  Your C library's <code>&lt;string.h&gt;</code> happens to
-define <code>memcpy</code> as a macro - this is perfectly legitimate.
-The code therefore would not compile.</p>
-
-<p>This kind of code is not portable.  It is "undefined behavior"
-according to the C standard; that means different compilers will do
-different things with it.  It is always possible to rewrite code which
-uses conditionals inside macros so that it doesn't.  You could write
-the above example</p>
-<blockquote><pre>
-#ifdef PLATFORM1
-   memcpy(dest, src, 12);
-#else
-   memcpy(dest, src, 24);
-#endif
-</pre></blockquote>
-<p>This is a bit more typing, but I personally think it's better style
-in addition to being more portable.</p>
-
-<p>In recent versions of glibc, <code>printf</code> is among the
-functions which are implemented as macros.</p></dd>
 </dl>
 
 <hr />
 
-<h2><a name="cplusplus">C++</a></h2>
+<h2><a name="nonbugs_cxx">C++</a></h2>
 
-<p>This is the list of bugs (and non-bugs) in g++ (aka GNU C++) that
-are reported very often, but not yet fixed. While it is certainly
-better to fix bugs instead of documenting them, this document might
-save people the effort of writing a bug report when the bug is already
-well-known.  <a href="#report">How to report bugs</a> tells you how to
-report a bug.</p>
+<dl>
+<dt>Nested classes can access private members and types of the containing
+class.</dt>
 
-<p>There are many reasons why reported bugs don't get fixed. It might
-be difficult to fix, or fixing it might break compatibility. Often,
-reports get a low priority when there is a simple work-around. In
-particular, bugs caused by invalid C++ code have a simple work-around,
-<em>fix the code</em>. Now that there is an agreed ISO/ANSI standard
-for C++, the compiler has a definitive document to adhere to. Earlier
-versions might have accepted source code that is <em>no longer</em>
-C++. This means that code which might have `worked' in a previous
-version, is now rejected. You should update your code to be C++.</p>
+<dd><p>Defect report 45 clarifies that nested classes are members of the
+class they are nested in, and so are granted access to private members of
+that class.</p></dd>
 
-<p>You should try to use the latest stable release of the GNU C++
-compiler.</p>
+<dt>G++ emits two copies of constructors and destructors.</dt>
+
+<dd><p>In general there are <em>three</em> types of constructors (and
+destructors).</p>
+<ol>
+<li>The complete object constructor/destructor.</li>
+<li>The base object constructor/destructor.</li>
+<li>The allocating constructor/deallocating destructor.</li>
+</ol>
+<p>The first two are different, when virtual base classes are involved.
+</p></dd>
+
+<dt>Global destructors are not run in the correct order.</dt>
+
+<dd><p>Global destructors should be run in the reverse order of their
+constructors <em>completing</em>. In most cases this is the same as
+the reverse order of constructors <em>starting</em>, but sometimes it
+is different, and that is important. You need to compile and link your
+programs with <code>--use-cxa-atexit</code>. We have not turned this
+switch on by default, as it requires a <code>cxa</code> aware runtime
+library (<code>libc</code>, <code>glibc</code>, or equivalent).</p></dd>
+
+<dt>Classes in exception specifiers must be complete types.</dt>
+
+<dd><p>[15.4]/1 tells you that you cannot have an incomplete type, or
+pointer to incomplete (other than <code><i>cv</i> void *</code>) in
+an exception specification.</p></dd>
+
+<dt>Exceptions don't work in multithreaded applications.</dt>
+
+<dd><p>You need to rebuild g++ and libstdc++ with
+<code>--enable-threads</code>.  Remember, C++ exceptions are not like
+hardware interrupts. You cannot throw an exception in one thread and
+catch it in another. You cannot throw an exception from a signal
+handler and catch it in the main thread.</p></dd>
+
+<dt>Templates, scoping, and digraphs.</dt>
+
+<dd><p>If you have a class in the global namespace, say named <code>X</code>,
+and want to give it as a template argument to some other class, say
+<code>std::vector</code>, then <code>std::vector&lt;::X&gt;</code>
+fails with a parser error.</p>
+
+<p>The reason is that the standard mandates that the sequence
+<code>&lt;:</code> is treated as if it were the token <code>[</code>.
+(There are several such combinations of characters - they are called
+<em>digraphs</em>.) Depending on the version, the compiler then reports
+a parse error before the character <code>:</code> (the colon before
+<code>X</code>) or a missing closing bracket <code>]</code>.</p>
+
+<p>The simplest way to avoid this is to write <code>std::vector&lt;
+::X&gt;</code>, i.e. place a space between the opening angle bracket
+and the scope operator.</p></dd>
+</dl>
 
 <h3><a name="updating">Common problems updating from G++ 2.95 to G++
 3.0</a></h3>
@@ -414,9 +720,9 @@ compiler.</p>
 <p>We have also implemented some of the core and library defect reports
 (available at
 <a href="http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html">http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html</a>
-&amp; 
+&amp;
 <a href="http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html">
-http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html</a> 
+http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html</a>
 respectively).</p>
 
 <ul>
@@ -450,10 +756,10 @@ doesn't exist, you need to recompile libstdc++ with
 
 </ul>
 
-This means you may get lots of errors about things like
+<p>This means you may get lots of errors about things like
 <code>strcmp</code> not being found. You've most likely forgotten to
 tell the compiler to look in the <code>std::</code> namespace. There are
-several ways to do this,
+several ways to do this,</p>
 
 <ul>
 
@@ -472,221 +778,10 @@ same.</li>
 
 </ul>
 
-<h3><a name="abi">ABI bugs</a></h3>
 
-<p>3.0 had a new ABI, which affected class layout, function mangling and
-calling conventions. We had intended it to be complete, unfortunately
-some issues came to light, too late to fix in the 3.0 series.
-The ABI should not change in dot releases, so we addressed most issues
-in GCC 3.1.
-</p>
-
-<dl>
-
-<dt>Covariant return types</dt>
-
-<dd>Up to (and including) GCC 3.3 we did not implement non-trivial
-covariant returns.  This has been addressed for GCC 3.4.</dd>
-
-</dl>
-
-<h3><a name="nonbugs">Non-bugs</a></h3>
-
-<p>This section lists several features that have been reported as bugs, but
-are not; in addition, the manual contains a section on 
+<p>In addition to the problems listed above, the manual contains a section on
 <a href="http://gcc.gnu.org/onlinedocs/gcc/C---Misunderstandings.html">Common
 Misunderstandings with GNU C++</a>.</p>
-
-<dl>
-
-<dt>Nested classes can access private types of the containing
-class.</dt>
-<dd><p>G++ now implements type access control on member types. Defect
-report 45 clarifies that nested classes are members of the class they
-are nested in, and so are granted access to private members of that
-class.</p></dd>
-
-<dt>Classes in exception specifiers must be complete types.</dt>
-<dd><p>[15.4]/1 tells you that you cannot have an incomplete type, or
-pointer to incomplete (other than <code><i>cv</i> void *</code>) in
-an exception specification.</p></dd>
-
-<dt>G++ emits two copies of constructors and destructors.</dt>
-
-<dd><p>In general there are <em>three</em> types of constructors (and
-destructors).</p>
-<ol>
-<li>The complete object constructor/destructor.</li>
-<li>The base object constructor/destructor.</li>
-<li>The allocating destructor/deallocating destructor.</li>
-</ol>
-<p>The first two are different, when virtual base classes are involved.
-</p></dd>
-
-<dt>Exceptions don't work in multithreaded applications.</dt>
-
-<dd><p>You need to rebuild g++ and libstdc++ with
-<code>--enable-threads</code>.  Remember, c++ exceptions are not like
-hardware interrupts. You cannot throw an exception in one thread and
-catch it in another. You cannot throw an exception from a signal
-handler, and catch it in the main thread.</p></dd>
-
-<dt>Global destructors are not run in the correct order.</dt>
-
-<dd><p>Global destructors should be run in the reverse order of their
-constructors <em>completing</em>. In most cases this is the same as
-the reverse order of constructors <em>starting</em>, but sometimes it
-is different, and that is important. You need to compile and link your
-programs with <code>--use-cxa-atexit</code>. We have not turned this
-switch on by default, as it requires a <code>cxa</code> aware runtime
-library (<code>libc</code>, <code>glibc</code>, or
-equivalent).</p></dd>
-
-<dt>Problems with floating point computations.</dt>
-<dd><p>In a number of cases, GCC appears to perform floating point
-computations incorrectly. For example, the program</p>
-<blockquote><code>
-#include &lt;iostream&gt;<br />
-<br />
-int main() {<br />
-<br />
- double min = 0.0;<br />
- double max = 0.5;<br />
- double width = 0.01;<br />
- std::cout &lt;&lt; (int)(((max - min) / width) - 1) &lt;&lt;
- std::endl;<br />
-<br />
-}<br />
-</code></blockquote>
-<p>might print 49 on some systems and optimization levels, and 48 on
-others.</p>
-
-<p>The is the result of <em>rounding</em>: The computer cannot
-represent all real numbers exactly, so it has to use
-approximations. When computing with approximation, the computer needs
-to round to the nearest representable number.</p>
-
-<p>This is not a bug in the compiler, but an inherent limitation of
-the float and double types. Please study 
-<a href="http://www.validlab.com/goldberg/paper.ps">this paper</a>
-for more information.</p></dd>
-
-<dt>Templates, scoping, and digraphs.</dt>
-
-<dd><p>If you have a class in global namespace, say named
-<code>X</code>, and want to give it as a template argument to some
-other class, say <code>std::vector</code>, then this here fails with a
-parser error: <code>std::vector&lt;::X&gt;</code>.
-</p>
-
-<p>
-The reason is that the standard mandates that the sequence
-<code>&lt;:</code> is treated as if it were the token
-<code>[</code>, and the parser then reports a parse error before the
-character <code>:</code> (by which it means the second
-colon). There are several such combinations of characters, and 
-they are called <em>digraphs</em>.
-</p>
-
-<p>
-The simplest way to avoid this is to write <code>std::vector&lt;
-::X&gt;</code>, i.e. place a space between the opening angle bracket
-and the scope operator.
-</p></dd>
-
-
-</dl>
-
-<h3><a name="missing">Missing features</a></h3>
-<p>We know some things are missing from G++.</p>
-
-<dl>
-
-<dt>The <code>export</code> keyword is not implemented.</dt>
-<dd><p>Most C++ compilers (G++ included) do not yet implement
-<code>export</code>, which is necessary for separate compilation of
-template declarations and definitions. Without <code>export</code>, a
-template definition must be in scope to be used. The obvious
-workaround is simply to place all definitions in the header
-itself. Alternatively, the compilation unit containing template
-definitions may be included from the header.</p></dd>
-
-<dt>Two stage lookup in templates is not implemented.</dt>
-<dd><p>[14.6] specifies how names are looked up inside a template. G++
-does not do this correctly, but for most templates this will not be
-noticeable.</p></dd>
-
-</dl>
-
-<h3><a name="parsing">Parse errors for "simple" code</a></h3> 
-
-Up to and including GCC 3.0, the compiler will give "parse error" for
-seemingly simple code, such as
-
-<pre>
-struct A{
-  A();
-  A(int);
-  void func();
-};
-
-struct B{
-  B(A);
-  B(A,A);
-  void func();
-};
-
-void foo(){
-  B b(A(),A(1));     //Variable b, initialized with two temporaries
-  B(A(2)).func();    //B temporary, initialized with A temporary
-}
-</pre>
-The problem is that GCC starts to parse the declaration of
-<code>b</code> as a function <code>b</code> returning <code>B</code>,
-taking a function returning <code>A</code> as an argument. When it
-sees the 1, it is too late. The work-around in these cases is to add
-additional parentheses around the expressions that are mistaken as
-declarations:
-<pre>
-  (B(A(2))).func();
-</pre>
-Sometimes, even that is not enough; to show the compiler that this
-should be really an expression, a comma operator with a dummy argument
-can be used:
-<pre>
-  B b((0,A()),A(1));
-</pre>
-<p>
-Another example is the parse error for the <code>return</code>
-statement in</p>
-<pre>
-struct A{};
-
-struct B{
-  A a;
-  A f1(bool);
-};
-
-A B::f1(bool b)
-{
-  if (b)
-    return (A()); 
-  return a;
-}
-</pre>
-<p>The problem is that the compiler interprets <code>A()</code> as a
-function (taking no arguments, returning <code>A</code>), and
-<code>(A()</code>) as a cast - with a missing expression, hence the
-parse error. The work-around is to omit the parentheses:</p>
-<pre>
-  if (b)
-    return A(); 
-</pre>
-<p>This problem occurs in a number of variants; in <code>throw</code>
-statements, people also frequently put the object in parentheses. The
-exact error also somewhat varies with the compiler version. The
-work-arounds proposed do not change the semantics of the program at
-all; they make them perhaps less readable.</p>
 
 </body>
 </html>
