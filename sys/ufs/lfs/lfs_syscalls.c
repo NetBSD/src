@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56.4.2 2001/06/29 03:56:42 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.4.3 2001/07/02 17:48:20 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		return (ENOENT);
 
 	fs = VFSTOUFS(mntp)->um_lfs;
-	maxino = (dbtofsb(fs, VTOI(fs->lfs_ivnode)->i_ffs_blocks) -
+	maxino = (fragstoblks(fs, fsbtofrags(fs, VTOI(fs->lfs_ivnode)->i_ffs_blocks)) -
 		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
 
 	cnt = blkcnt;
@@ -308,11 +308,11 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		 */
 		for(j=0;j<LFS_THROTTLE;j++) {
 			if(fs->lfs_pending[j] != LFS_UNUSED_DADDR
-			   && datosn(fs,fs->lfs_pending[j])==datosn(fs,blkp->bi_daddr)
+			   && dtosn(fs,fs->lfs_pending[j])==dtosn(fs,blkp->bi_daddr)
 			   && blkp->bi_daddr != LFS_FORCE_WRITE)
 			{
 				printf("lfs_markv: attempt to clean pending segment? (#%d)\n",
-				       datosn(fs, fs->lfs_pending[j]));
+				       dtosn(fs, fs->lfs_pending[j]));
 				/* return (EBUSY); */
 			}
 		}
@@ -385,7 +385,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 #ifdef DEBUG_LFS
 				printf("lfs_markv: lfs_fastvget failed with %d (ino %d, segment %d)\n", 
 				       error, blkp->bi_inode,
-				       datosn(fs, blkp->bi_daddr));
+				       dtosn(fs, blkp->bi_daddr));
 #endif /* DEBUG_LFS */
 				/*
 				 * If we got EAGAIN, that means that the
@@ -445,13 +445,13 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		b_daddr = 0;
 		if(blkp->bi_daddr != LFS_FORCE_WRITE) {
 			if (VOP_BMAP(vp, blkp->bi_lbn, NULL, &b_daddr, NULL) ||
-			    b_daddr != blkp->bi_daddr)
+			    dbtofsb(fs, b_daddr) != blkp->bi_daddr)
 			{
-				if(datosn(fs,b_daddr)
-				   == datosn(fs,blkp->bi_daddr))
+				if(dtosn(fs,dbtofsb(fs, b_daddr))
+				   == dtosn(fs,blkp->bi_daddr))
 				{
 					printf("lfs_markv: wrong da same seg: %x vs %x\n",
-					       blkp->bi_daddr, b_daddr);
+					       blkp->bi_daddr, dbtofsb(fs, b_daddr));
 				}
 				continue;
 			}
@@ -485,7 +485,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			bp = lfs_fakebuf(vp, blkp->bi_lbn,
 					 blkp->bi_size, blkp->bi_bp);
 			/* Pretend we used bread() to get it */
-			bp->b_blkno = blkp->bi_daddr;
+			bp->b_blkno = fsbtodb(fs, blkp->bi_daddr);
 		} else {
 			/* Indirect block */
 			bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
@@ -574,7 +574,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				goto again;
 			}
 			if(bp->b_flags & B_DELWRI) 
-				fs->lfs_avail += btodb(bp->b_bcount);
+				fs->lfs_avail += btofsb(fs, bp->b_bcount);
 			bremfree(bp);
 			splx(s);
 			brelse(bp);
@@ -730,9 +730,9 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	for (blkp = blkiov; cnt--; ++blkp)
 	{
 #ifdef DEBUG
-		if (datosn(fs, fs->lfs_curseg) == datosn(fs, blkp->bi_daddr)) {
+		if (dtosn(fs, fs->lfs_curseg) == dtosn(fs, blkp->bi_daddr)) {
 			printf("lfs_bmapv: attempt to clean current segment? (#%d)\n",
-			       datosn(fs, fs->lfs_curseg));
+			       dtosn(fs, fs->lfs_curseg));
 			vfs_unbusy(mntp);
 			return (EBUSY);
 		}
@@ -745,10 +745,10 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		 */
 		for(j=0;j<LFS_THROTTLE;j++) {
 			if(fs->lfs_pending[j] != LFS_UNUSED_DADDR
-			   && datosn(fs,fs->lfs_pending[j])==datosn(fs,blkp->bi_daddr))
+			   && dtosn(fs,fs->lfs_pending[j])==dtosn(fs,blkp->bi_daddr))
 			{
 				printf("lfs_bmapv: attempt to clean pending segment? (#%d)\n",
-				       datosn(fs, fs->lfs_pending[j]));
+				       dtosn(fs, fs->lfs_pending[j]));
 				vfs_unbusy(mntp);
 				return (EBUSY);
 			}
@@ -863,6 +863,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				blkp->bi_daddr = LFS_UNUSED_DADDR;
 				continue;
 			}
+			blkp->bi_daddr = dbtofsb(fs, blkp->bi_daddr);
 		}
 	}
 	
@@ -922,7 +923,7 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
 	
 	fs = VFSTOUFS(mntp)->um_lfs;
 	
-	if (datosn(fs, fs->lfs_curseg) == SCARG(uap, segment))
+	if (dtosn(fs, fs->lfs_curseg) == SCARG(uap, segment))
 		return (EBUSY);
 	
 	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0) 
@@ -939,16 +940,16 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
 		return (EALREADY);
 	}
 	
-	fs->lfs_avail += segtodb(fs, 1);
+	fs->lfs_avail += segtod(fs, 1);
 	if (sup->su_flags & SEGUSE_SUPERBLOCK)
-		fs->lfs_avail -= btodb(LFS_SBPAD);
+		fs->lfs_avail -= btofsb(fs, LFS_SBPAD);
 	if (fs->lfs_version > 1 && SCARG(uap, segment) == 0 &&
-	    fs->lfs_start < btodb(LFS_LABELPAD))
-		fs->lfs_avail -= btodb(LFS_LABELPAD) - fs->lfs_start;
-	fs->lfs_bfree += sup->su_nsums * btodb(fs->lfs_sumsize) +
-		btodb(sup->su_ninos * fs->lfs_ibsize);
-	fs->lfs_dmeta -= sup->su_nsums * btodb(fs->lfs_sumsize) +
-		btodb(sup->su_ninos * fs->lfs_ibsize);
+	    fs->lfs_start < btofsb(fs, LFS_LABELPAD))
+		fs->lfs_avail -= btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
+	fs->lfs_bfree += sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
+		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
+	fs->lfs_dmeta -= sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
+		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
 	if (fs->lfs_dmeta < 0)
 		fs->lfs_dmeta = 0;
 	sup->su_flags &= ~SEGUSE_DIRTY;
@@ -1168,9 +1169,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 		if(ip->i_number != ino)
 			panic("lfs_fastvget: I was fed the wrong inode!");
 	} else {
-		error = bread(ump->um_devvp, daddr, (fs->lfs_version == 1 ?
-						     (int)fs->lfs_bsize :
-						     DEV_BSIZE),
+		error = bread(ump->um_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
 			      NOCRED, &bp);
 		if (error) {
 			printf("lfs_fastvget: bread failed with %d\n",error);

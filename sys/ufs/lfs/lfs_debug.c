@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.11.4.2 2001/06/29 03:56:40 perseant Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.11.4.3 2001/07/02 17:48:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@ lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 				       (*bpp)->b_blkno);
 			}
 		}
-		blkno += btodb((*bpp)->b_bcount);
+		blkno += fsbtodb(fs, btofsb(fs, (*bpp)->b_bcount));
 	}
 }
 #endif /* DEBUG */

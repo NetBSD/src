@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.8.2.1 2001/06/27 03:49:41 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.8.2.2 2001/07/02 17:48:13 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,29 +98,32 @@ pass5()
 			}
 		}
 		if (su->su_flags & SEGUSE_DIRTY) {
-			bb += btodb(su->su_nbytes +
+			bb += btofsb(&sblock, su->su_nbytes +
 				    su->su_nsums * sblock.lfs_sumsize);
-			ubb += btodb(su->su_nbytes +
+			ubb += btofsb(&sblock, su->su_nbytes +
 				     su->su_nsums * sblock.lfs_sumsize +
 				     su->su_ninos * sblock.lfs_ibsize);
-			dmeta += btodb(sblock.lfs_sumsize * su->su_nsums);
-			dmeta += btodb(sblock.lfs_ibsize * su->su_ninos);
+			dmeta += btofsb(&sblock, 
+				sblock.lfs_sumsize * su->su_nsums);
+			dmeta += btofsb(&sblock, 
+				sblock.lfs_ibsize * su->su_ninos);
 		} else {
 			nclean++;
-			avail += segtodb(&sblock, 1);
+			avail += segtod(&sblock, 1);
 			if (su->su_flags & SEGUSE_SUPERBLOCK)
-				avail -= btodb(LFS_SBPAD);
+				avail -= btofsb(&sblock, LFS_SBPAD);
 			if (i == 0 && sblock.lfs_version > 1 &&
-			    sblock.lfs_start < btodb(LFS_LABELPAD))
-				avail -= btodb(LFS_LABELPAD) - sblock.lfs_start;
+			    sblock.lfs_start < btofsb(&sblock, LFS_LABELPAD))
+				avail -= btofsb(&sblock, LFS_LABELPAD) - 
+					sblock.lfs_start;
 		}
 		bp->b_flags &= ~B_INUSE;
 	}
 	/* Also may be available bytes in current seg */
-	i = datosn(&sblock, sblock.lfs_offset);
-	avail += sntoda(&sblock, i + 1) - sblock.lfs_offset;
+	i = dtosn(&sblock, sblock.lfs_offset);
+	avail += sntod(&sblock, i + 1) - sblock.lfs_offset;
 	/* But do not count minfreesegs */
-	avail -= segtodb(&sblock, (sblock.lfs_minfreeseg -
+	avail -= segtod(&sblock, (sblock.lfs_minfreeseg -
 				   (sblock.lfs_minfreeseg / 2)));
 
 	if (dmeta != sblock.lfs_dmeta) { 
@@ -147,7 +150,8 @@ pass5()
 			sbdirty();
 		}
 	}
-	labelskew = (sblock.lfs_version == 1 ? 0 : btodb(LFS_LABELPAD));
+	labelskew = (sblock.lfs_version == 1 ? 0 : 
+		btofsb(&sblock, LFS_LABELPAD));
 	if (sblock.lfs_bfree > sblock.lfs_dsize - bb - labelskew ||
 	    sblock.lfs_bfree < sblock.lfs_dsize - ubb - labelskew) {
 		pwarn("bfree given as %d, should be between %ld and %ld\n",

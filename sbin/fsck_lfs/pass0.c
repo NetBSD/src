@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.8.2.1 2001/06/27 03:49:41 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.8.2.2 2001/07/02 17:48:13 perseant Exp $	 */
 
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
@@ -68,7 +68,7 @@ check_segment(int, int, daddr_t, struct lfs *, int,
  * finfo blocks, for one thing.
  */
 
-#define dbshift (sblock.lfs_bshift - sblock.lfs_fsbtodb)
+#define dbshift (sblock.lfs_bshift - sblock.lfs_blktodb)
 
 void
 pass0()
@@ -170,6 +170,7 @@ dump_segsum(SEGSUM * sump, daddr_t addr)
 	       sump->ss_flags & SS_CONT ? 'c' : '-');
 }
 
+/* XXX Don't use... broken.  -JO */
 void
 check_segment(int fd, int segnum, daddr_t addr, struct lfs * fs, int flags, int (*func)(struct lfs *, SEGSUM *, daddr_t))
 {
@@ -181,7 +182,7 @@ check_segment(int fd, int segnum, daddr_t addr, struct lfs * fs, int flags, int 
 	off_t           sum_offset, db_ssize;
 	int             bc, su_flags, su_nsums, su_ninos;
 
-	db_ssize = sblock.lfs_ssize << sblock.lfs_fsbtodb;
+	db_ssize = segtod(&sblock, 1);
 
 	su = lfs_gseguse(segnum, &bp);
 	su_flags = su->su_flags;
@@ -297,8 +298,8 @@ check_summary(struct lfs * fs, SEGSUM * sp, daddr_t pseg_addr)
 	u_long         *datap;
 	u_int32_t       ccksum;
 
-	sn = datosn(fs, pseg_addr);
-	seg_addr = sntoda(fs, sn);
+	sn = dtosn(fs, pseg_addr);
+	seg_addr = sntod(fs, sn);
 
 	/*
 	 * printf("Pseg at 0x%x, %d inos, %d
@@ -324,7 +325,7 @@ check_summary(struct lfs * fs, SEGSUM * sp, daddr_t pseg_addr)
 	dp--;
 
 	idp = dp;
-	daddr = pseg_addr + (sblock.lfs_sumsize / dev_bsize);
+	daddr = pseg_addr + btofsb(&sblock, sblock.lfs_sumsize);
 	fp = (FINFO *)(sp + 1);
 	for (i = 0, j = 0; i < sp->ss_nfinfo || j < howmany(sp->ss_ninos, INOPB(fs)); i++) {
 		/* printf("*idp=%x, daddr=%x\n", *idp, daddr); */
@@ -335,22 +336,22 @@ check_summary(struct lfs * fs, SEGSUM * sp, daddr_t pseg_addr)
 			break;
 		}
 		while (j < howmany(sp->ss_ninos, INOPB(fs)) && *idp == daddr) {
-			bp = getddblk(daddr, (1 << fs->lfs_bshift));
+			bp = getddblk(daddr, fs->lfs_bsize);
 			datap[datac++] = ((u_long *)(bp->b_un.b_buf))[0];
 			bp->b_flags &= ~B_INUSE;
 
 			++j;
-			daddr += (1 << fs->lfs_bshift) / dev_bsize;
+			daddr += btofsb(&sblock, fs->lfs_bsize);
 			--idp;
 		}
 		if (i < sp->ss_nfinfo) {
 			for (k = 0; k < fp->fi_nblocks; k++) {
 				len = (k == fp->fi_nblocks - 1 ? fp->fi_lastlength
-				       : (1 << fs->lfs_bshift));
+				       : fs->lfs_bsize);
 				bp = getddblk(daddr, len);
 				datap[datac++] = ((u_long *)(bp->b_un.b_buf))[0];
 				bp->b_flags &= ~B_INUSE;
-				daddr += len / dev_bsize;
+				daddr += btofsb(&sblock, len);
 			}
 			fp = (FINFO *)(fp->fi_blocks + fp->fi_nblocks);
 		}
