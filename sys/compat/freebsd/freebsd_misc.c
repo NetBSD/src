@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.8 2000/12/01 12:28:31 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.9 2000/12/01 18:03:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -35,7 +35,9 @@
  * FreeBSD compatibility module. Try to deal with various FreeBSD system calls.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ntp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
