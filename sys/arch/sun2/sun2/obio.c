@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 2001/04/10 12:37:49 fredette Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 2001/06/14 15:57:59 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
+#include <machine/idprom.h>
+#include <machine/pte.h>
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
@@ -66,8 +68,14 @@ static	int obio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 static	int _obio_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       bus_size_t, int,
 			       vaddr_t, bus_space_handle_t *));
+static	int _obio_addr_bad __P((bus_space_tag_t, bus_space_handle_t, 
+				bus_size_t, size_t));
+static	int _obio_bus_peek __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, size_t, void *));
+static	int _obio_bus_poke __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, size_t, u_int32_t));
 
-static struct sun2_bus_space_tag obio_space_tag = {
+static struct sun68k_bus_space_tag obio_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
 	_obio_bus_map,			/* bus_space_map */ 
@@ -75,7 +83,9 @@ static struct sun2_bus_space_tag obio_space_tag = {
 	NULL,				/* bus_space_subregion */
 	NULL,				/* bus_space_barrier */ 
 	obio_bus_mmap,			/* bus_space_mmap */ 
-	NULL				/* bus_intr_establish */
+	NULL,				/* bus_intr_establish */
+	_obio_bus_peek,			/* bus_space_peek_N */
+	_obio_bus_poke			/* bus_space_poke_N */
 }; 
 
 static int
@@ -122,7 +132,7 @@ obio_attach(parent, self, aux)
 	/*
 	 * Prepare the skeleton attach arguments for our devices.
 	 * The values we give in the locators are indications to
-	 * sun2_bus_search about which locators must and must not
+	 * sun68k_bus_search about which locators must and must not
 	 * be defined.
 	 */
 	sub_ca = *ca;
@@ -133,12 +143,12 @@ obio_attach(parent, self, aux)
 	/* Find all `early' obio devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		sub_ca.ca_name = *cpp;
-		(void)config_search(sun2_bus_search, self, &sub_ca);
+		(void)config_search(sun68k_bus_search, self, &sub_ca);
 	}
 
 	/* Find all other obio devices */
 	sub_ca.ca_name = NULL;
-	(void)config_search(sun2_bus_search, self, &sub_ca);
+	(void)config_search(sun68k_bus_search, self, &sub_ca);
 }
 
 int
@@ -155,7 +165,7 @@ _obio_bus_map(t, btype, paddr, size, flags, vaddr, hp)
 	struct obio_softc *sc = t->cookie;
 
 	return (bus_space_map2(sc->sc_bustag, PMAP_OBIO, paddr,
-				size, flags | _SUN2_BUS_MAP_USE_PROM, vaddr, hp));
+				size, flags | _SUN68K_BUS_MAP_USE_PROM, vaddr, hp));
 }
 
 int
@@ -169,4 +179,62 @@ obio_bus_mmap(t, btype, paddr, flags, hp)
 	struct obio_softc *sc = t->cookie;
 
 	return (bus_space_mmap(sc->sc_bustag, PMAP_OBIO, paddr, flags, hp));
+}
+
+/*
+ * The sun2 obio bus doesn't give bus errors, so we check on 
+ * probed obio physical addresses to make sure they're ok.
+ */
+int
+_obio_addr_bad(t, h, o, s)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	size_t s;
+{
+	u_int pte;
+	paddr_t pa;
+
+	/* Get the physical address for this page. */
+	pte = get_pte((vm_offset_t) (h + o));
+	if (!(pte & PG_VALID))
+		return (-1);
+	pa = PG_PA(pte);
+
+	/*
+	 * Return nonzero if it's bad.  All sun2 Multibus
+	 * machines have all obio devices in the below 
+	 * range, and all sun2 VME machines have all obio
+	 * devices not in the below range.
+	 */
+	return ((cpu_machine_id == SUN2_MACH_120) !=
+		(pa >= 0x2000 && pa <= 0x3800));
+}
+	
+int
+_obio_bus_peek(t, h, o, s, vp)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	size_t s;
+	void *vp;
+{
+	struct obio_softc *sc = t->cookie;
+
+	return (_obio_addr_bad(t, h, o, s) ||
+		_bus_space_peek(sc->sc_bustag, h, o, s, vp));
+}
+
+int
+_obio_bus_poke(t, h, o, s, v)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	size_t s;
+	u_int32_t v;
+{
+	struct obio_softc *sc = t->cookie;
+
+	return (_obio_addr_bad(t, h, o, s) ||
+		_bus_space_poke(sc->sc_bustag, h, o, s, v));
 }
