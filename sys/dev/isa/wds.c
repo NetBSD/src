@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.32 1998/06/09 07:25:06 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.33 1998/06/25 19:18:06 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -366,6 +366,7 @@ wdsattach(parent, self, aux)
 	bus_space_handle_t ioh;
 	struct wds_probe_data wpd;
 	isa_chipset_tag_t ic = ia->ia_ic;
+	int error;
 
 	printf("\n");
 
@@ -384,14 +385,24 @@ wdsattach(parent, self, aux)
 
 	bus_space_write_1(iot, ioh, WDS_HCR, WDSH_DRQEN);
 #ifdef notyet
-	if (wpd.sc_drq != -1)
-		isa_dmacascade(ic, wpd.sc_drq);
+	if (wpd.sc_drq != -1) {
+		if ((error = isa_dmacascade(ic, wpd.sc_drq)) != 0) {
+			printf("%s: unable to cascade DRQ, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
+	}
 
 	sc->sc_ih = isa_intr_establish(ic, wpd.sc_irq, IST_EDGE, IPL_BIO,
 	    wdsintr, sc);
 #else
-	if (ia->ia_drq != -1)
-		isa_dmacascade(ic, ia->ia_drq);
+	if (ia->ia_drq != -1) {
+		if ((error = isa_dmacascade(ic, ia->ia_drq)) != 0) {
+			printf("%s: unable to cascade DRQ, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
+	}
 
 	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
 	    wdsintr, sc);
