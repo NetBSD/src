@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.59 2002/10/23 09:14:18 jdolecek Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.60 2002/11/10 03:30:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.59 2002/10/23 09:14:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.60 2002/11/10 03:30:34 thorpej Exp $");
 
 #include "opt_ktrace.h"
 
@@ -126,7 +126,7 @@ ktrsyscall(struct proc *p, register_t code, register_t args[])
 	register_t *argp;
 	int argsize;
 	size_t len;
-	int i;
+	u_int i;
 
 	argsize = p->p_emul->e_sysent[code].sy_narg * sizeof (register_t);
 	len = sizeof(struct ktr_syscall) + argsize;
