@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tape.c	8.3 (Berkeley) 4/1/94";*/
-static char *rcsid = "$Id: tape.c,v 1.11 1994/06/08 19:33:45 mycroft Exp $";
+static char *rcsid = "$Id: tape.c,v 1.12 1994/09/18 05:11:03 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -545,6 +545,24 @@ extractfile(name)
 			return (GOOD);
 		}
 		return (linkit(lnkbuf, name, SYMLINK));
+
+	case IFIFO:
+		vprintf(stdout, "extract fifo %s\n", name);
+		if (Nflag) {
+			skipfile();
+			return (GOOD);
+		}
+		if (mkfifo(name, mode) < 0) {
+			fprintf(stderr, "%s: cannot create fifo: %s\n",
+			    name, strerror(errno));
+			skipfile();
+			return (FAIL);
+		}
+		(void) chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
+		(void) chmod(name, mode);
+		skipfile();
+		utimes(name, timep);
+		return (GOOD);
 
 	case IFCHR:
 	case IFBLK:
