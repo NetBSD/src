@@ -1,3 +1,4 @@
+/*	$NetBSD: ieee80211_ioctl.h,v 1.3 2003/09/14 01:14:55 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
