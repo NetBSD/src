@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.156 2004/03/14 14:13:42 minoura Exp $
+#	$NetBSD: DEVNAMES,v 1.157 2004/05/08 09:23:14 nisimura Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -456,6 +456,10 @@ grful			amigappc
 gsfb			playstation2
 gt			cobalt
 gt			evbmips
+gt			evbppc
+gfe			evbppc
+gtmpsc			evbppc
+gtidma			evbppc
 gten			prep
 gtsc			amiga
 gtsc			amigappc
@@ -817,6 +821,7 @@ obio			prep
 obio			sparc
 obio			sun2
 obio			sun3
+obio			evbppc
 obio_norm		mac68k		Attribute
 obio_scsi5380		mac68k		Attribute
 obmem			sun2
