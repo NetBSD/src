@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ntfs.8,v 1.14 2003/05/14 12:14:42 wiz Exp $
+.\" $NetBSD: mount_ntfs.8,v 1.15 2003/05/20 10:18:50 wiz Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" Copyright (c) 1999 Semen Ustimenko
@@ -87,7 +87,7 @@ in the file system.
 .El
 .Sh FEATURES
 .Ss NTFS file attributes
-NTFS file attributes can be accessed in following way:
+NTFS file attributes can be accessed in the following way:
 .Bd -literal -offset indent
 foo[[:ATTRTYPE]:ATTRNAME]
 .Ed
@@ -115,7 +115,7 @@ There is limited writing ability for files.
 Limitations:
 .Bl -bullet -compact
 .It
-file must be nonresident
+file must be non-resident
 .It
 file must
 .Em not
@@ -124,13 +124,13 @@ contain any holes (uninitialized areas)
 file can't be compressed
 .El
 .Pp
-Note that that it's not currently possible to create or remove files
-on NTFS filesystem.
+Note that it's not currently possible to create or remove files
+on NTFS filesystems.
 .Pp
 .Sy Warning :
 do not mount NTFS filesystems read-write.
 The write support is not very useful and is not tested well.
-It's not safe to write to any file on NTFS, you might damage the filesystem.
+It's not safe to write to any file on NTFS; you might damage the filesystem.
 Unless you want to debug NTFS filesystem code, mount the NTFS filesystem
 read-only.
 .Sh SEE ALSO
@@ -143,7 +143,7 @@ read-only.
 .Sh HISTORY
 Support for NTFS first appeared in
 .Fx 3.0 .
-It has been ported to
+It was ported to
 .Nx
 and first appeared in
 .Nx 1.5 .
@@ -162,11 +162,11 @@ and
 .An Jaromir Dolecek
 .Aq jdolecek@NetBSD.org .
 .Sh BUGS
-The write support should be enhanced to actually be able change
+The write support should be enhanced to actually be able to change
 file size, and to create and remove files and directories.
 It's not very useful right now.
 .Pp
-If the attempt to mount NTFS gives you error like this:
+If the attempt to mount NTFS gives you an error like this:
 .Bd -literal
 # mount -t ntfs /dev/wd0k /mnt
 mount_ntfs: /dev/wd0k on /mnt: Invalid argument
@@ -180,7 +180,7 @@ offset should be '63' on i386 (see
 .Xr mbrlabel 8
 could help you to set up the disk label correctly.
 .Pp
-If you mark the NTFS partition as
+If the the NTFS partition is marked as
 .Ql dynamic
 under Microsoft Windows XP,
 it won't be possible to access it under
