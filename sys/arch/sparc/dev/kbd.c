@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.9 1994/04/16 11:18:58 deraadt Exp $
+ * $Id: kbd.c,v 1.10 1994/05/05 09:53:41 deraadt Exp $
  */
 
 /*
@@ -391,14 +391,14 @@ kbd_translate(register int c, register struct kbd_state *ks)
 
 
 void
-kbd_repeat(caddr_t arg)
+kbd_repeat(void *arg)
 {
 	struct kbd_softc *k = (struct kbd_softc *)arg;
 	int s = spltty();
 
 	if (k->k_repeating && k->k_repeatc >= 0 && k->k_cons != NULL) {
 		ttyinput(k->k_repeatc, k->k_cons);
-		timeout(kbd_repeat, (caddr_t)k, kbd_repeat_step);
+		timeout(kbd_repeat, k, kbd_repeat_step);
 	}
 	splx(s);
 }
@@ -412,7 +412,7 @@ kbd_rint(register int c)
 
 	if (k->k_repeating) {
 		k->k_repeating = 0;
-		untimeout(kbd_repeat, (caddr_t)k);
+		untimeout(kbd_repeat, k);
 	}
 
 	/*
@@ -453,7 +453,7 @@ kbd_rint(register int c)
 			ttyinput(c, k->k_cons);
 			k->k_repeating = 1;
 			k->k_repeatc = c;
-			timeout(kbd_repeat, (caddr_t)k, kbd_repeat_start);
+			timeout(kbd_repeat, k, kbd_repeat_start);
 		}
 		return;
 	}
