@@ -3,7 +3,7 @@
    Buffer access functions for the object management protocol... */
 
 /*
- * Copyright (c) 1999-2000 Internet Software Consortium.
+ * Copyright (c) 1999-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,18 +43,118 @@
 
 #include <omapip/omapip_p.h>
 
+#if defined (TRACING)
+static void trace_connection_input_input (trace_type_t *, unsigned, char *);
+static void trace_connection_input_stop (trace_type_t *);
+static void trace_connection_output_input (trace_type_t *, unsigned, char *);
+static void trace_connection_output_stop (trace_type_t *);
+static trace_type_t *trace_connection_input;
+static trace_type_t *trace_connection_output;
+static isc_result_t omapi_connection_reader_trace (omapi_object_t *,
+						   unsigned, char *,
+						   unsigned *);
+extern omapi_array_t *omapi_connections;
+
+void omapi_buffer_trace_setup ()
+{
+	trace_connection_input =
+		trace_type_register ("connection-input",
+				     (void *)0,
+				     trace_connection_input_input,
+				     trace_connection_input_stop, MDL);
+	trace_connection_output =
+		trace_type_register ("connection-output",
+				     (void *)0,
+				     trace_connection_output_input,
+				     trace_connection_output_stop, MDL);
+}
+
+static void trace_connection_input_input (trace_type_t *ttype,
+					  unsigned length, char *buf)
+{
+	unsigned left, ol, cc = 0;
+	char *s;
+	int32_t connect_index;
+	isc_result_t status;
+	omapi_connection_object_t *c = (omapi_connection_object_t *)0;
+
+	memcpy (&connect_index, buf, sizeof connect_index);
+	connect_index = ntohl (connect_index);
+
+	omapi_array_foreach_begin (omapi_connections,
+				   omapi_connection_object_t, lp) {
+		if (lp -> index == ntohl (connect_index)) {
+			omapi_connection_reference (&c, lp, MDL);
+			break;
+		}
+	} omapi_array_foreach_end (omapi_connections,
+				   omapi_connection_object_t, lp);
+
+	if (!c) {
+		log_error ("trace connection input: no connection index %ld",
+			   (long int)connect_index);
+		return;
+	}
+
+	s = buf + sizeof connect_index;
+	left = length - sizeof connect_index;;
+
+	while (left) {
+		ol = left;
+		status = omapi_connection_reader_trace ((omapi_object_t *)c,
+							left, s, &length);
+		if (status != ISC_R_SUCCESS) {
+			log_error ("trace connection input: %s",
+				   isc_result_totext (status));
+			break;
+		}
+		if (ol == left) {
+			if (cc > 0) {
+				log_error ("trace connection_input: %s",
+					   "input is not being consumed.");
+				break;
+			}
+			cc++;
+		} else
+			cc = 0;
+	}
+}
+
+static void trace_connection_input_stop (trace_type_t *ttype) { }
+
+static void trace_connection_output_input (trace_type_t *ttype,
+					  unsigned length, char *buf)
+{
+	/* We *could* check to see if the output is correct, but for now
+	   we aren't going to do that. */
+}
+
+static void trace_connection_output_stop (trace_type_t *ttype) { }
+
+#endif
+
 /* Make sure that at least len bytes are in the input buffer, and if not,
    read enough bytes to make up the difference. */
 
 isc_result_t omapi_connection_reader (omapi_object_t *h)
 {
+#if defined (TRACING)
+	return omapi_connection_reader_trace (h, 0, (char *)0, (unsigned *)0);
+}
+
+static isc_result_t omapi_connection_reader_trace (omapi_object_t *h,
+						   unsigned stuff_len,
+						   char *stuff_buf,
+						   unsigned *stuff_taken)
+{
+#endif
 	omapi_buffer_t *buffer;
 	isc_result_t status;
 	unsigned read_len;
 	int read_status;
 	omapi_connection_object_t *c;
 	unsigned bytes_to_read;
-
+	
 	if (!h || h -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
 	c = (omapi_connection_object_t *)h;
@@ -62,11 +162,12 @@ isc_result_t omapi_connection_reader (omapi_object_t *h)
 	/* Make sure c -> bytes_needed is valid. */
 	if (c -> bytes_needed < 0)
 		return ISC_R_INVALIDARG;
-
+	
 	/* See if there are enough bytes. */
 	if (c -> in_bytes >= OMAPI_BUF_SIZE - 1 &&
 	    c -> in_bytes > c -> bytes_needed)
 		return ISC_R_SUCCESS;
+
 
 	if (c -> inbufs) {
 		for (buffer = c -> inbufs; buffer -> next;
@@ -93,8 +194,28 @@ isc_result_t omapi_connection_reader (omapi_object_t *h)
 		else
 			read_len = buffer -> head - buffer -> tail;
 
-		read_status = read (c -> socket,
-				    &buffer -> buf [buffer -> tail], read_len);
+#if defined (TRACING)
+		if (trace_playback()) {
+			if (stuff_len) {
+				if (read_len > stuff_len)
+					read_len = stuff_len;
+				if (stuff_taken)
+					*stuff_taken += read_len;
+				memcpy (&buffer -> buf [buffer -> tail],
+					stuff_buf, read_len);
+				stuff_len -= read_len;
+				stuff_buf += read_len;
+				read_status = read_len;
+			} else {
+				break;
+			}
+		} else
+#endif
+		{
+			read_status = read (c -> socket,
+					    &buffer -> buf [buffer -> tail],
+					    read_len);
+		}
 		if (read_status < 0) {
 			if (errno == EWOULDBLOCK)
 				break;
@@ -108,12 +229,34 @@ isc_result_t omapi_connection_reader (omapi_object_t *h)
 			} else
 				return ISC_R_UNEXPECTED;
 		}
+
 		/* If we got a zero-length read, as opposed to EWOULDBLOCK,
 		   the remote end closed the connection. */
 		if (read_status == 0) {
 			omapi_disconnect (h, 0);
 			return ISC_R_SHUTTINGDOWN;
 		}
+#if defined (TRACING)
+		if (trace_record ()) {
+			trace_iov_t iov [2];
+			int32_t connect_index;
+
+			connect_index = htonl (c -> index);
+
+			iov [0].buf = (char *)&connect_index;
+			iov [0].len = sizeof connect_index;
+			iov [1].buf = &buffer -> buf [buffer -> tail];
+			iov [1].len = read_status;
+
+			status = (trace_write_packet_iov
+				  (trace_connection_input, 2, iov, MDL));
+			if (status != ISC_R_SUCCESS) {
+				trace_stop ();
+				log_error ("trace connection input: %s",
+					   isc_result_totext (status));
+			}
+		}
+#endif
 		buffer -> tail += read_status;
 		c -> in_bytes += read_status;
 		if (buffer -> tail == sizeof buffer -> buf)
@@ -300,6 +443,7 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 	omapi_buffer_t *buffer;
 	unsigned char *bufp;
 	omapi_connection_object_t *c;
+	isc_result_t status;
 
 	if (!h || h -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
@@ -354,6 +498,30 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 			}
 			if (bytes_written == 0)
 				return ISC_R_SUCCESS;
+
+#if defined (TRACING)
+			if (trace_record ()) {
+				trace_iov_t iov [2];
+				int32_t connect_index;
+				
+				connect_index = htonl (c -> index);
+				
+				iov [0].buf = (char *)&connect_index;
+				iov [0].len = sizeof connect_index;
+				iov [1].buf = &buffer -> buf [buffer -> tail];
+				iov [1].len = bytes_written;
+				
+				status = (trace_write_packet_iov
+					  (trace_connection_input, 2, iov,
+					   MDL));
+				if (status != ISC_R_SUCCESS) {
+					trace_stop ();
+					log_error ("trace %s output: %s",
+						   "connection",
+						   isc_result_totext (status));
+				}
+			}
+#endif
 
 			buffer -> head = first_byte + bytes_written - 1;
 			c -> out_bytes -= bytes_written;

@@ -74,12 +74,26 @@ dhcpctl_status dhcpctl_new_authenticator (dhcpctl_handle *h,
 	}
 	strcpy (key -> name, name);
 
-	key -> algorithm = dmalloc (strlen (algorithm) + 1, MDL);
-	if (!key -> algorithm) {
-		omapi_auth_key_dereference (&key, MDL);
-		return ISC_R_NOMEMORY;
+	/* If the algorithm name isn't an FQDN, tack on the
+	   .SIG-ALG.REG.NET. domain. */
+	if (strchr (algorithm, '.') == 0) {
+		static char add[] = ".SIG-ALG.REG.INT.";
+		key -> algorithm = dmalloc (strlen (algorithm) +
+		                            sizeof (add), MDL);
+		if (!key -> algorithm) {
+			omapi_auth_key_dereference (&key, MDL);
+			return ISC_R_NOMEMORY;
+		}
+		strcpy (key -> algorithm, algorithm);
+		strcat (key -> algorithm, add);
+	} else {
+		key -> algorithm = dmalloc (strlen (algorithm) + 1, MDL);
+		if (!key -> algorithm) {
+			omapi_auth_key_dereference (&key, MDL);
+			return ISC_R_NOMEMORY;
+		}
+		strcpy (key -> algorithm, algorithm);
 	}
-	strcpy (key -> algorithm, algorithm);
 
 	status = omapi_data_string_new (&key -> key, secret_len, MDL);
 	if (status != ISC_R_SUCCESS) {
