@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.4 1996/04/26 06:59:57 leo Exp $	*/
+/*	$NetBSD: md_root.c,v 1.5 1996/09/16 06:27:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,6 +46,8 @@
 
 #include <dev/cons.h>
 #include <dev/ramdisk.h>
+
+#include <atari/atari/device.h>
 
 /*
  * Misc. defines:
@@ -106,8 +108,6 @@ rd_attach_hook(unit, rd)
 int		unit;
 struct rd_conf	*rd;
 {
-	extern int	atari_realconfig;
-
 	if (atari_realconfig && (unit < RAMD_NDEV) && rd_info[unit].ramd_flag) {
 		printf ("rd%d:%sauto-load on open. Size %ld bytes.\n", unit,
 		    rd_info[unit].ramd_flag & RAMD_LCOMP ? " decompress/" : "",
