@@ -1,11 +1,11 @@
-/* $NetBSD: tlsb.c,v 1.12 1998/07/08 01:03:41 mjacob Exp $ */
+/* $NetBSD: tlsb.c,v 1.13 1998/09/29 04:22:36 thorpej Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
  * All rights reserved.
  *
  * Based in part upon a prototype version by Jason Thorpe
- * Copyright (c) 1996 by Jason Thorpe.
+ * Copyright (c) 1996, 1998 by Jason Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +39,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.12 1998/07/08 01:03:41 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.13 1998/09/29 04:22:36 thorpej Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.12 1998/07/08 01:03:41 mjacob Exp $");
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
 #include <machine/pte.h>
+
+#include <alpha/alpha/cpuvar.h>
 
 #include <alpha/tlsb/tlsbreg.h>
 #include <alpha/tlsb/tlsbvar.h>
@@ -144,12 +148,9 @@ tlsbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	extern struct cfdriver cpu_cd;
 	struct tlsb_dev_attach_args ta;
 	u_int32_t tldev;
-	u_int8_t vid;
 	int node;
-	struct cfdriver *cfd = &cpu_cd;
 
 	printf("\n");
 
@@ -195,20 +196,11 @@ tlsbattach(parent, self, aux)
 		 * Deal with hooking CPU instances to TurboLaser nodes.
 		 */
 		if (TLDEV_ISCPU(tldev)) {
-			printf("%s node %d: %s", self->dv_xname,
+			printf("%s node %d: %s\n", self->dv_xname,
 			    node, tlsb_node_type_str(tldev));
-
-			/*
-			 * Hook in the first CPU unit.
-			 */
-			vid = (TLSB_GET_NODEREG(node, TLVID) &
-			    TLVID_VIDA_MASK) >> TLVID_VIDA_SHIFT;
-			printf(", VID %d -> %s", vid, cfd->cd_name);
-			printf("\n");
-			TLSB_PUT_NODEREG(node, TLCPUMASK, (1<<vid));
 		}
 		/*
-		 * Attach any  children nodes, including a CPU's GBus
+		 * Attach any children nodes, including a CPU's GBus
 		 */
 		config_found_sm(self, &ta, tlsbprint, tlsbsubmatch);
 	}
@@ -223,6 +215,34 @@ tlsbattach(parent, self, aux)
 			continue;
 		}
 		if (TLDEV_ISIOPORT(tldev)) {
+#if defined(MULTIPROCESSOR)
+			/*
+			 * XXX Eventually, we want to select a secondary
+			 * XXX processor on which to field interrupts for
+			 * XXX this node.  However, we just send them to
+			 * XXX the primary CPU for now.
+			 *
+			 * XXX Maybe multiple CPUs?  Does the hardware
+			 * XXX round-robin, or check the length of the
+			 * XXX per-CPU interrupt queue?
+			 */
+			printf("%s node %d: routing interrupts to %s\n",
+			    self->dv_xname, node,
+			    cpus[hwrpb->rpb_primary_cpu_id]->sc_dev.dv_xname);
+			TLSB_PUT_NODEREG(node, TLCPUMASK,
+			    (1UL << hwrpb->rpb_primary_cpu_id));
+#else
+			/*
+			 * Make sure interrupts are sent to the primary
+			 * CPU.
+			 */
+			printf("%s node %d: routing interrupts to %s\n",
+			    self->dv_xname, node,
+			    cpus[hwrpb->rpb_primary_cpu_id]->sc_dev.dv_xname);
+			TLSB_PUT_NODEREG(node, TLCPUMASK,
+			    (1UL << hwrpb->rpb_primary_cpu_id));
+#endif /* MULTIPROCESSOR */
+
 			ta.ta_node = node;
 			ta.ta_dtype = TLDEV_DTYPE(tldev);
 			ta.ta_swrev = TLDEV_SWREV(tldev);
