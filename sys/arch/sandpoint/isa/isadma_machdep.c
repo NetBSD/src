@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.1 2001/02/04 18:32:16 briggs Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.2 2001/06/10 03:16:30 briggs Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -47,7 +47,7 @@
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
-#define _SANDPOINT_BUS_DMA_PRIVATE
+#define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/pio.h>
@@ -64,6 +64,42 @@ extern paddr_t avail_end;		/* XXX temporary */
  * ISA can DMA to 0-16M.
  */
 #define	ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
+
+/*
+ * Cookie used by ISA dma.  A pointer to one of these it stashed in
+ * the DMA map.
+ */
+struct sandpoint_isa_dma_cookie {
+	int	id_flags;		/* flags; see below */
+
+	/*
+	 * Information about the original buffer used during
+	 * DMA map syncs.  Note that origbuflen is only used
+	 * for ID_BUFTYPE_LINEAR.
+	 */
+	void	*id_origbuf;		/* pointer to orig buffer if
+					   bouncing */
+	bus_size_t id_origbuflen;	/* ...and size */
+	int	id_buftype;		/* type of buffer */
+
+	void	*id_bouncebuf;		/* pointer to the bounce buffer */
+	bus_size_t id_bouncebuflen;	/* ...and size */
+	int	id_nbouncesegs;		/* number of valid bounce segs */
+	bus_dma_segment_t id_bouncesegs[0]; /* array of bounce buffer
+					       physical memory segments */
+};
+
+/* id_flags */
+#define	ID_MIGHT_NEED_BOUNCE	0x01	/* map could need bounce buffers */
+#define	ID_HAS_BOUNCE		0x02	/* map currently has bounce buffers */
+#define	ID_IS_BOUNCING		0x04	/* map is bouncing current xfer */
+
+/* id_buftype */
+#define	ID_BUFTYPE_INVALID	0
+#define	ID_BUFTYPE_LINEAR	1
+#define	ID_BUFTYPE_MBUF		2
+#define	ID_BUFTYPE_UIO		3
+#define	ID_BUFTYPE_RAW		4
 
 int	_isa_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
@@ -92,7 +128,7 @@ void	_isa_dma_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
  * the generic functions that understand how to deal with bounce
  * buffers, if necessary.
  */
-struct sandpoint_bus_dma_tag isa_bus_dma_tag = {
+struct powerpc_bus_dma_tag isa_bus_dma_tag = {
 	ISA_DMA_BOUNCE_THRESHOLD,
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,
