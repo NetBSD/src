@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: mgnsc.c,v 1.2 1994/05/12 05:57:21 chopps Exp $
+ *	$Id: mgnsc.c,v 1.3 1994/06/14 00:58:49 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ mgnscattach(pdp, dp, auxp)
 	 */
 	sc->sc_clock_freq = 0x0240;
 	
-	siopreset(sc);
+	siopinitialize(sc);
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_targ = 7;

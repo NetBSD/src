@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
- *	$Id: sys_machdep.c,v 1.6 1994/06/02 08:32:10 chopps Exp $
+ *	$Id: sys_machdep.c,v 1.7 1994/06/14 00:58:11 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -120,7 +120,7 @@ cachectl(req, addr, len)
 {
 	int error = 0;
 #ifdef M68040
-	if (mmutype == MMU_68040) {
+	if (cpu040) {
 		register int inc = 0;
 		int pa = 0, doall = 0;
 		caddr_t end;
@@ -217,6 +217,51 @@ cachectl(req, addr, len)
 		break;
 	}
 	return(error);
+}
+
+/*
+ * DMA cache control
+ */
+
+/*ARGSUSED1*/
+dma_cachectl(addr, len)
+	caddr_t	addr;
+	int len;
+{
+#ifdef M68040
+	if (cpu040) {
+		register int inc = 0;
+		int pa = 0;
+		caddr_t end;
+
+		end = addr + len;
+		if (len <= 1024) {
+			addr = (caddr_t)((int)addr & ~0xF);
+			inc = 16;
+		} else {
+			addr = (caddr_t)((int)addr & ~PGOFSET);
+			inc = NBPG;
+		}
+		do {
+			/*
+			 * Convert to physical address.
+			 */
+			if (pa == 0 || ((int)addr & PGOFSET) == 0) {
+				pa = kvtop ((vm_offset_t)addr);
+			}
+			if (inc == 16) {
+				DCFL(pa);
+				ICPL(pa);
+			} else {
+				DCFP(pa);
+				ICPP(pa);
+			}
+			pa += inc;
+			addr += inc;
+		} while (addr < end);
+	}
+#endif	/* M68040 */
+	return(0);
 }
 
 int

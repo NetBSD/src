@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.26 1994/06/04 11:58:48 chopps Exp $
+ *	$Id: locore.s,v 1.27 1994/06/14 00:58:05 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -1356,7 +1356,7 @@ Lres1:
 	pflusha				| flush entire TLB
 	jra	Lres3
 Lres2:
-	.word	0xf4f8		| cpusha bc
+|	.word	0xf4f8		| cpusha bc
 	.word	0xf518		| pflusha (68040)
 	movl	#CACHE40_ON,d0
 	movc	d0,cacr			| invalidate cache(s)
@@ -1520,7 +1520,7 @@ Lmc68851a:
 	rts
 Ltbia040:
 	.word	0xf518		| pflusha
-	.word	0xf478		| cpush dc [cinv or cpush ??]
+|	.word	0xf478		| cpush dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1550,7 +1550,7 @@ Ltbis040:
 	moveq	#FC_USERD,d0		| select user
 	movc	d0,dfc
 	.word	0xf508		| pflush a0@
-	.word	0xf478		| cpusha dc [cinv or cpush ??]
+|	.word	0xf478		| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1575,7 +1575,7 @@ Lmc68851c:
 Ltbias040:
 | 68040 can't specify supervisor/user on pflusha, so we flush all
 	.word	0xf518		| pflusha
-	.word	0xf478		| cpusha dc [cinv or cpush ??]
+|	.word	0xf478		| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1600,7 +1600,7 @@ Lmc68851d:
 Ltbiau040:
 | 68040 can't specify supervisor/user on pflusha, so we flush all
 	.word	0xf518		| pflusha
-	.word	0xf478		| cpusha dc [cinv or cpush ??]
+|	.word	0xf478		| cpusha dc [cinv or cpush ??]
 	rts
 
 /*

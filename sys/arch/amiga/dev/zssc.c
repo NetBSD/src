@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: zssc.c,v 1.3 1994/05/22 07:22:34 chopps Exp $
+ *	$Id: zssc.c,v 1.4 1994/06/14 00:59:31 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -117,7 +117,7 @@ zsscattach(pdp, dp, auxp)
 	sc->sc_clock_freq = 0xc0;
 
 	
-	siopreset(sc);
+	siopinitialize(sc);
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_targ = 7;

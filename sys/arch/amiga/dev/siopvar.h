@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siopvar.h	7.1 (Berkeley) 5/8/90
- *	$Id: siopvar.h,v 1.3 1994/05/12 05:57:25 chopps Exp $
+ *	$Id: siopvar.h,v 1.4 1994/06/14 00:59:17 chopps Exp $
  */
 #ifndef _SIOPVAR_H_
 #define _SIOPVAR_H_
@@ -87,6 +87,11 @@ struct	siop_softc {
 	TAILQ_HEAD(,siop_pending) sc_xslist;	/* LIFO */
 	struct	siop_pending sc_xsstore[8][8];	/* one for every unit */
 	struct	scsi_xfer *sc_xs;	/* transfer from high level code */
+	u_long	sc_scriptspa;		/* physical address of scripts */
+	u_long	sc_dspa;		/* physical address of DS */
+	u_long	sc_lunpa;
+	u_long	sc_statuspa;
+	u_long	sc_msgpa;
 	u_char	sc_flags;
 	u_char	sc_lun;
 	u_long	sc_clock_freq;
