@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_axppci_33.c,v 1.6 1996/07/14 04:08:22 cgd Exp $	*/
+/*	$NetBSD: pci_axppci_33.c,v 1.7 1996/10/10 23:51:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -75,7 +75,7 @@ pci_axppci_33_pickintr(lcp)
         sioII = (sioclass & 0xff) >= 3;
 
 	if (!sioII)
-		printf("WARNING: SIO NOT SIO II... NO BETS...\n");
+		kprintf("WARNING: SIO NOT SIO II... NO BETS...\n");
 
 	pc->pc_intr_v = lcp;
 	pc->pc_intr_map = dec_axppci_33_intr_map;
@@ -109,7 +109,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
                 return 1;
         }
         if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
+                kprintf("pci_map_int: bad interrupt pin %d\n", buspin);
                 return 1;
         }
 
@@ -165,7 +165,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 		};
 		break;
 	default:
-		printf("dec_axppci_33_pci_map_int: unknown device %d\n",
+		kprintf("dec_axppci_33_pci_map_int: unknown device %d\n",
 			device);
 		panic("dec_axppci_33_pci_map_int: bad device number");
 	}
@@ -173,7 +173,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, LCA_SIO_DEVICE, 0),
 	    SIO_PCIREG_PIRQ_RTCTRL);
 #if 0
-	printf("pci_axppci_33_map_int: device %d pin %c: pirq %d, reg = %x\n",
+	kprintf("pci_axppci_33_map_int: device %d pin %c: pirq %d, reg = %x\n",
 		device, '@' + buspin, pirq, pirqreg);
 #endif
 	pirqline = (pirqreg >> (pirq * 8)) & 0xff;
@@ -182,7 +182,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 	pirqline &= 0xf;
 
 #if 0
-	printf("pci_axppci_33_map_int: device %d pin %c: mapped to line %d\n",
+	kprintf("pci_axppci_33_map_int: device %d pin %c: mapped to line %d\n",
 	    device, '@' + buspin, pirqline);
 #endif
 

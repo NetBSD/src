@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 1996/09/15 22:42:29 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.7 1996/10/10 23:50:50 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -436,7 +436,7 @@ label:	ASCIZ msg;						\
  */
 #define	PRINTF(msg,label)					\
 	MSG(msg,a0,label);					\
-	CALL(printf)
+	CALL(kprintf)
 
 /*
  * PANIC

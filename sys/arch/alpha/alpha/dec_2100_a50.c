@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.12 1996/09/17 19:46:37 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.13 1996/10/10 23:50:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -76,7 +76,7 @@ dec_2100_a50_modelname()
 		return "AlphaStation 255/233";
 
 	default:
-		sprintf(s, "DEC 2100/A50 (\"Avanti\") family, variation %lx",
+		ksprintf(s, "DEC 2100/A50 (\"Avanti\") family, variation %lx",
 		    hwrpb->rpb_variation & SV_ST_MASK);
 		return s;
 	}
@@ -135,8 +135,8 @@ dec_2100_a50_consinit()
 		break;
 
 	default:
-		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
+		kprintf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
+		kprintf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
@@ -162,7 +162,7 @@ dec_2100_a50_device_register(dev, aux)
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
 		netboot = (strcmp(b->protocol, "BOOTP") == 0);
 #if 0
-		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
+		kprintf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
 #endif
 		initted =1;
 	}
@@ -178,7 +178,7 @@ dec_2100_a50_device_register(dev, aux)
 	
 			pcidev = dev;
 #if 0
-			printf("\npcidev = %s\n", pcidev->dv_xname);
+			kprintf("\npcidev = %s\n", pcidev->dv_xname);
 #endif
 			return;
 		}
@@ -197,7 +197,7 @@ dec_2100_a50_device_register(dev, aux)
 	
 			scsidev = dev;
 #if 0
-			printf("\nscsidev = %s\n", scsidev->dv_xname);
+			kprintf("\nscsidev = %s\n", scsidev->dv_xname);
 #endif
 			return;
 		}
@@ -234,7 +234,7 @@ dec_2100_a50_device_register(dev, aux)
 		/* we've found it! */
 		booted_device = dev;
 #if 0
-		printf("\nbooted_device = %s\n", booted_device->dv_xname);
+		kprintf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 		found = 1;
 	}
@@ -252,7 +252,7 @@ dec_2100_a50_device_register(dev, aux)
 	
 			booted_device = dev;
 #if 0
-			printf("\nbooted_device = %s\n", booted_device->dv_xname);
+			kprintf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 			found = 1;
 			return;

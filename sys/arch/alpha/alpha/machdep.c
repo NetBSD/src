@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1996/10/01 20:21:37 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1996/10/10 23:50:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -271,23 +271,23 @@ alpha_init(pfn, ptb)
 #define cnt	 mddtp->mddt_cluster_cnt
 #define	usage(n) mddtp->mddt_clusters[(n)].mddt_usage
 	if (cnt != 2 && cnt != 3) {
-		printf("WARNING: weird number (%ld) of mem clusters\n", cnt);
+		kprintf("WARNING: weird number (%ld) of mem clusters\n", cnt);
 		mddtweird = 1;
 	} else if (usage(0) != MDDT_PALCODE ||
 		   usage(1) != MDDT_SYSTEM ||
 	           (cnt == 3 && usage(2) != MDDT_PALCODE)) {
 		mddtweird = 1;
-		printf("WARNING: %ld mem clusters, but weird config\n", cnt);
+		kprintf("WARNING: %ld mem clusters, but weird config\n", cnt);
 	}
 
 	for (i = 0; i < cnt; i++) {
 		if ((usage(i) & MDDT_mbz) != 0) {
-			printf("WARNING: mem cluster %d has weird usage %lx\n",
+			kprintf("WARNING: mem cluster %d has weird usage %lx\n",
 			    i, usage(i));
 			mddtweird = 1;
 		}
 		if (mddtp->mddt_clusters[i].mddt_pg_cnt == 0) {
-			printf("WARNING: mem cluster %d has pg cnt == 0\n", i);
+			kprintf("WARNING: mem cluster %d has pg cnt == 0\n", i);
 			mddtweird = 1;
 		}
 		/* XXX other things to check? */
@@ -296,26 +296,26 @@ alpha_init(pfn, ptb)
 #undef usage
 
 	if (mddtweird) {
-		printf("\n");
-		printf("complete memory cluster information:\n");
+		kprintf("\n");
+		kprintf("complete memory cluster information:\n");
 		for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
-			printf("mddt %d:\n", i);
-			printf("\tpfn %lx\n",
+			kprintf("mddt %d:\n", i);
+			kprintf("\tpfn %lx\n",
 			    mddtp->mddt_clusters[i].mddt_pfn);
-			printf("\tcnt %lx\n",
+			kprintf("\tcnt %lx\n",
 			    mddtp->mddt_clusters[i].mddt_pg_cnt);
-			printf("\ttest %lx\n",
+			kprintf("\ttest %lx\n",
 			    mddtp->mddt_clusters[i].mddt_pg_test);
-			printf("\tbva %lx\n",
+			kprintf("\tbva %lx\n",
 			    mddtp->mddt_clusters[i].mddt_v_bitaddr);
-			printf("\tbpa %lx\n",
+			kprintf("\tbpa %lx\n",
 			    mddtp->mddt_clusters[i].mddt_p_bitaddr);
-			printf("\tbcksum %lx\n",
+			kprintf("\tbcksum %lx\n",
 			    mddtp->mddt_clusters[i].mddt_bit_cksum);
-			printf("\tusage %lx\n",
+			kprintf("\tusage %lx\n",
 			    mddtp->mddt_clusters[i].mddt_usage);
 		}
-		printf("\n");
+		kprintf("\n");
 	}
 	/*
 	 * END MDDT WEIRDNESS CHECKING
@@ -350,13 +350,13 @@ alpha_init(pfn, ptb)
 	maxmem = physmem;
 
 #if 0
-	printf("totalphysmem = %d\n", totalphysmem);
-	printf("physmem = %d\n", physmem);
-	printf("firstusablepage = %d\n", firstusablepage);
-	printf("lastusablepage = %d\n", lastusablepage);
-	printf("resvmem = %d\n", resvmem);
-	printf("unusedmem = %d\n", unusedmem);
-	printf("unknownmem = %d\n", unknownmem);
+	kprintf("totalphysmem = %d\n", totalphysmem);
+	kprintf("physmem = %d\n", physmem);
+	kprintf("firstusablepage = %d\n", firstusablepage);
+	kprintf("lastusablepage = %d\n", lastusablepage);
+	kprintf("resvmem = %d\n", resvmem);
+	kprintf("unusedmem = %d\n", unusedmem);
+	kprintf("unknownmem = %d\n", unknownmem);
 #endif
 
 	/*
@@ -581,7 +581,7 @@ alpha_init(pfn, ptb)
 	 */
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
 #if 0
-	printf("boot flags = \"%s\"\n", boot_flags);
+	kprintf("boot flags = \"%s\"\n", boot_flags);
 #endif
 
 	boothowto = RB_SINGLE;
@@ -667,14 +667,14 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	kprintf(version);
 	identifycpu();
-	printf("real mem = %d (%d reserved for PROM, %d used by NetBSD)\n",
+	kprintf("real mem = %d (%d reserved for PROM, %d used by NetBSD)\n",
 	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
 	if (unusedmem)
-		printf("WARNING: unused memory = %d bytes\n", ctob(unusedmem));
+		kprintf("WARNING: unused memory = %d bytes\n", ctob(unusedmem));
 	if (unknownmem)
-		printf("WARNING: %d bytes of memory with unknown purpose\n",
+		kprintf("WARNING: %d bytes of memory with unknown purpose\n",
 		    ctob(unknownmem));
 
 	/*
@@ -740,8 +740,8 @@ cpu_startup()
 #if defined(DEBUG)
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", (long)ptoa(cnt.v_free_count));
-	printf("using %ld buffers containing %ld bytes of memory\n",
+	kprintf("avail mem = %ld\n", (long)ptoa(cnt.v_free_count));
+	kprintf("using %ld buffers containing %ld bytes of memory\n",
 		(long)nbuf, (long)(bufpages * CLBYTES));
 
 	/*
@@ -762,17 +762,17 @@ identifycpu()
 	/*
 	 * print out CPU identification information.
 	 */
-	printf("%s, %ldMHz\n", cpu_model,
+	kprintf("%s, %ldMHz\n", cpu_model,
 	    hwrpb->rpb_cc_freq / 1000000);	/* XXX true for 21164? */
-	printf("%ld byte page size, %d processor%s.\n",
+	kprintf("%ld byte page size, %d processor%s.\n",
 	    hwrpb->rpb_page_size, ncpus, ncpus == 1 ? "" : "s");
 #if 0
 	/* this isn't defined for any systems that we run on? */
-	printf("serial number 0x%lx 0x%lx\n",
+	kprintf("serial number 0x%lx 0x%lx\n",
 	    ((long *)hwrpb->rpb_ssn)[0], ((long *)hwrpb->rpb_ssn)[1]);
 
 	/* and these aren't particularly useful! */
-	printf("variation: 0x%lx, revision 0x%lx\n",
+	kprintf("variation: 0x%lx, revision 0x%lx\n",
 	    hwrpb->rpb_variation, *(long *)hwrpb->rpb_revision);
 #endif
 }
@@ -825,13 +825,13 @@ haltsys:
 	doshutdownhooks();
 
 #ifdef BOOTKEY
-	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
+	kprintf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
 	cngetc();
-	printf("\n");
+	kprintf("\n");
 #endif
 
 	/* Finally, halt/reboot the system. */
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
+	kprintf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT);
 	/*NOTREACHED*/
 }
@@ -966,15 +966,15 @@ dumpsys()
 	if (dumpsize == 0)
 		dumpconf();
 	if (dumplo < 0) {
-		printf("\ndump to dev %x not possible\n", dumpdev);
+		kprintf("\ndump to dev %x not possible\n", dumpdev);
 		return;
 	}
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	kprintf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-	printf("dump ");
+	kprintf("dump ");
 	if (psize == -1) {
-		printf("area unavailable\n");
+		kprintf("area unavailable\n");
 		return;
 	}
 
@@ -993,7 +993,7 @@ dumpsys()
 		/* Print out how many MBs we to go. */
 		n = bytes - i;
 		if (n && (n % (1024*1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+			kprintf("%d ", n / (1024 * 1024));
 
 		/* Limit size for next transfer. */
 		if (n > BYTES_PER_DUMP)
@@ -1013,34 +1013,34 @@ err:
 	switch (error) {
 
 	case ENXIO:
-		printf("device bad\n");
+		kprintf("device bad\n");
 		break;
 
 	case EFAULT:
-		printf("device not ready\n");
+		kprintf("device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("area improper\n");
+		kprintf("area improper\n");
 		break;
 
 	case EIO:
-		printf("i/o error\n");
+		kprintf("i/o error\n");
 		break;
 
 	case EINTR:
-		printf("aborted from console\n");
+		kprintf("aborted from console\n");
 		break;
 
 	case 0:
-		printf("succeeded\n");
+		kprintf("succeeded\n");
 		break;
 
 	default:
-		printf("error %d\n", error);
+		kprintf("error %d\n", error);
 		break;
 	}
-	printf("\n\n");
+	kprintf("\n\n");
 	delay(1000);
 }
 
@@ -1131,7 +1131,7 @@ printregs(regp)
 	int i;
 
 	for (i = 0; i < 32; i++)
-		printf("R%d:\t0x%016lx%s", i, regp->r_regs[i],
+		kprintf("R%d:\t0x%016lx%s", i, regp->r_regs[i],
 		   i & 1 ? "\n" : "\t");
 }
 
@@ -1144,7 +1144,7 @@ regdump(framep)
 	frametoreg(framep, &reg);
 	reg.r_regs[R_SP] = alpha_pal_rdusp();
 
-	printf("REGISTERS:\n");
+	kprintf("REGISTERS:\n");
 	printregs(&reg);
 }
 
@@ -1194,13 +1194,13 @@ sendsig(catcher, sig, mask, code)
 		(void)grow(p, (u_long)scp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
+		kprintf("sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
 		    sig, &oonstack, scp);
 #endif
 	if (useracc((caddr_t)scp, fsize, B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): useracc failed on sig %d\n",
+			kprintf("sendsig(%d): useracc failed on sig %d\n",
 			    p->p_pid, sig);
 #endif
 		/*
@@ -1256,7 +1256,7 @@ sendsig(catcher, sig, mask, code)
 	(void) copyout((caddr_t)&ksc, (caddr_t)scp, fsize);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %p code %lx\n", p->p_pid, sig,
+		kprintf("sendsig(%d): sig %d scp %p code %lx\n", p->p_pid, sig,
 		    scp, code);
 #endif
 
@@ -1273,10 +1273,10 @@ sendsig(catcher, sig, mask, code)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): pc %lx, catcher %lx\n", p->p_pid,
+		kprintf("sendsig(%d): pc %lx, catcher %lx\n", p->p_pid,
 		    frame->tf_regs[FRAME_PC], frame->tf_regs[FRAME_A3]);
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n",
+		kprintf("sendsig(%d): sig %d returns\n",
 		    p->p_pid, sig);
 #endif
 }
@@ -1307,7 +1307,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-	    printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
+	    kprintf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 
 	if (ALIGN(scp) != (u_int64_t)scp)
@@ -1348,7 +1348,7 @@ sys_sigreturn(p, v, retval)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn(%d): returns\n", p->p_pid);
+		kprintf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.16 1996/08/19 04:28:25 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.17 1996/10/10 23:51:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -140,7 +140,7 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
                 return 1;
         }
         if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
+                kprintf("pci_map_int: bad interrupt pin %d\n", buspin);
                 return 1;
         }
 
@@ -177,7 +177,7 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 	default:
 #ifdef KN20AA_BOGUS_IRQ_FROB
 		*ihp = 0xdeadbeef;
-		printf("\n\n BOGUS INTERRUPT MAPPING: dev %d, pin %d\n",
+		kprintf("\n\n BOGUS INTERRUPT MAPPING: dev %d, pin %d\n",
 		    device, buspin);
 		return (0);
 #endif
@@ -204,7 +204,7 @@ dec_kn20aa_intr_string(ccv, ih)
 
 #ifdef KN20AA_BOGUS_IRQ_FROB
 	if (ih == 0xdeadbeef) {
-		sprintf(irqstr, "BOGUS");
+		ksprintf(irqstr, "BOGUS");
 		return (irqstr);
 	}
 #endif
@@ -212,7 +212,7 @@ dec_kn20aa_intr_string(ccv, ih)
                 panic("dec_kn20aa_a50_intr_string: bogus kn20aa IRQ 0x%x\n",
 		    ih);
 
-        sprintf(irqstr, "kn20aa irq %d", ih);
+        ksprintf(irqstr, "kn20aa irq %d", ih);
         return (irqstr);
 }
 
@@ -231,13 +231,13 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg)
 		int i;
 		char chars[10];
 
-		printf("dec_kn20aa_intr_establish: BOGUS IRQ\n");
+		kprintf("dec_kn20aa_intr_establish: BOGUS IRQ\n");
 		do {
-			printf("IRQ to enable? ");
+			kprintf("IRQ to enable? ");
 			getstr(chars, 10);
 			i = atoi(chars);
 		} while (i < 0 || i > 32);
-		printf("ENABLING IRQ %d\n", i);
+		kprintf("ENABLING IRQ %d\n", i);
 		kn20aa_enable_intr(i);
 		return ((void *)0xbabefacedeadbeef);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 1996/09/07 22:26:42 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.15 1996/10/10 23:50:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -187,8 +187,8 @@ sigfpe:			i = SIGFPE;
 #ifdef NEW_PMAP
 {
 int instr;
-printf("REAL SIGILL: PC = 0x%lx, RA = 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
-printf("INSTRUCTION (%d) = 0x%lx\n", copyin((void*)framep->tf_regs[FRAME_PC] - 4, &instr, 4), instr);
+kprintf("REAL SIGILL: PC = 0x%lx, RA = 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
+kprintf("INSTRUCTION (%d) = 0x%lx\n", copyin((void*)framep->tf_regs[FRAME_PC] - 4, &instr, 4), instr);
 regdump(framep);
 panic("foo");
 }
@@ -202,7 +202,7 @@ panic("foo");
 			 * FP is enabled.
 			 */
 			if (fpcurproc == p) {
-				printf("trap: fp disabled for fpcurproc == %p",
+				kprintf("trap: fp disabled for fpcurproc == %p",
 				    p);
 				goto dopanic;
 			}
@@ -218,34 +218,34 @@ panic("foo");
 			goto out;
 
 		default:
-			printf("trap: unknown IF type 0x%lx\n", a0);
+			kprintf("trap: unknown IF type 0x%lx\n", a0);
 			goto dopanic;
 		}
 		break;
 
 	case ALPHA_KENTRY_MM:
 #ifdef NEW_PMAP
-		printf("mmfault: 0x%lx, 0x%lx, %d\n", a0, a1, a2);
+		kprintf("mmfault: 0x%lx, 0x%lx, %d\n", a0, a1, a2);
 #endif
 		switch (a1) {
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:
 #ifdef NEW_PMAP
-			printf("mmfault for/foe in\n");
+			kprintf("mmfault for/foe in\n");
 #endif
 			pmap_emulate_reference(p, a0, user, 0);
 #ifdef NEW_PMAP
-			printf("mmfault for/foe out\n");
+			kprintf("mmfault for/foe out\n");
 #endif
 			goto out;
 
 		case ALPHA_MMCSR_FOW:
 #ifdef NEW_PMAP
-			printf("mmfault fow in\n");
+			kprintf("mmfault fow in\n");
 #endif
 			pmap_emulate_reference(p, a0, user, 1);
 #ifdef NEW_PMAP
-			printf("mmfault fow out\n");
+			kprintf("mmfault fow out\n");
 #endif
 			goto out;
 
@@ -261,7 +261,7 @@ panic("foo");
 			extern vm_map_t kernel_map;
 
 #ifdef NEW_PMAP
-			printf("mmfault invaltrans/access in\n");
+			kprintf("mmfault invaltrans/access in\n");
 #endif
 			/*
 			 * If it was caused by fuswintr or suswintr,
@@ -276,13 +276,13 @@ panic("foo");
 			      (unsigned long)fswintrberr &&
 			    p->p_addr->u_pcb.pcb_accessaddr == a0) {
 #ifdef NEW_PMAP
-				printf("mmfault nfintr in\n");
+				kprintf("mmfault nfintr in\n");
 #endif
 				framep->tf_regs[FRAME_PC] =
 				    p->p_addr->u_pcb.pcb_onfault;
 				p->p_addr->u_pcb.pcb_onfault = 0;
 #ifdef NEW_PMAP
-				printf("mmfault nfintr out\n");
+				kprintf("mmfault nfintr out\n");
 #endif
 				goto out;
 			}
@@ -315,11 +315,11 @@ panic("foo");
 	
 			va = trunc_page((vm_offset_t)a0);
 #ifdef NEW_PMAP
-			printf("mmfault going to vm_fault\n");
+			kprintf("mmfault going to vm_fault\n");
 #endif
 			rv = vm_fault(map, va, ftype, FALSE);
 #ifdef NEW_PMAP
-			printf("mmfault back from vm_fault\n");
+			kprintf("mmfault back from vm_fault\n");
 #endif
 			/*
 			 * If this was a stack access we keep track of the
@@ -342,14 +342,14 @@ panic("foo");
 			}
 			if (rv == KERN_SUCCESS) {
 #ifdef NEW_PMAP
-				printf("mmfault vm_fault success\n");
+				kprintf("mmfault vm_fault success\n");
 #endif
 				goto out;
 			}
 
 			if (!user) {
 #ifdef NEW_PMAP
-				printf("mmfault check copyfault\n");
+				kprintf("mmfault check copyfault\n");
 #endif
 				/* Check for copyin/copyout fault */
 				if (p != NULL &&
@@ -367,7 +367,7 @@ panic("foo");
 		    }
 
 		default:
-			printf("trap: unknown MMCSR value 0x%lx\n", a1);
+			kprintf("trap: unknown MMCSR value 0x%lx\n", a1);
 			goto dopanic;
 		}
 		break;
@@ -383,20 +383,20 @@ out:
 	return;
 
 dopanic:
-	printf("\n");
-	printf("fatal %s trap:\n", user ? "user" : "kernel");
-	printf("\n");
-	printf("    trap entry = 0x%lx\n", entry);
-	printf("    a0         = 0x%lx\n", a0);
-	printf("    a1         = 0x%lx\n", a1);
-	printf("    a2         = 0x%lx\n", a2);
-	printf("    pc         = 0x%lx\n", framep->tf_regs[FRAME_PC]);
-	printf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
-	printf("    curproc    = %p\n", curproc);
+	kprintf("\n");
+	kprintf("fatal %s trap:\n", user ? "user" : "kernel");
+	kprintf("\n");
+	kprintf("    trap entry = 0x%lx\n", entry);
+	kprintf("    a0         = 0x%lx\n", a0);
+	kprintf("    a1         = 0x%lx\n", a1);
+	kprintf("    a2         = 0x%lx\n", a2);
+	kprintf("    pc         = 0x%lx\n", framep->tf_regs[FRAME_PC]);
+	kprintf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
+	kprintf("    curproc    = %p\n", curproc);
 	if (curproc != NULL)
-		printf("        pid = %d, comm = %s\n", curproc->p_pid,
+		kprintf("        pid = %d, comm = %s\n", curproc->p_pid,
 		    curproc->p_comm);
-	printf("\n");
+	kprintf("\n");
 
 	/* XXX dump registers */
 	/* XXX kernel debugger */
@@ -509,7 +509,7 @@ syscall(code, framep)
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args + hidden);
 #ifdef NEW_PMAP
-	printf("called from 0x%lx, ra 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
+	kprintf("called from 0x%lx, ra 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
 #endif
 #endif
 	if (error == 0) {
@@ -543,7 +543,7 @@ syscall(code, framep)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #ifdef NEW_PMAP
-	printf("outgoing pc 0x%lx, ra 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
+	kprintf("outgoing pc 0x%lx, ra 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
 #endif
 #endif
 

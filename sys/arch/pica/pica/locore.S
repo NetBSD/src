@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 1996/03/31 03:38:21 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 1996/10/10 23:45:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2146,7 +2146,7 @@ NLEAF(MachTLBMissException)
 	sw	a3, 20(sp)
 	sw	sp, 24(sp)
 	move	a2, ra
-	jal	_C_LABEL(printf)
+	jal	_C_LABEL(kprintf)
 	mfc0	a3, MACH_COP_0_BAD_VADDR
 	.data
 1:
@@ -3000,7 +3000,7 @@ sys_stk_chk:
 	sw	a2, 16(sp)
 	sw	a3, 20(sp)
 	move	a2, ra
-	jal	printf
+	jal	kprintf
 	dmfc0	a3, MACH_COP_0_BAD_VADDR
 	.data
 1:

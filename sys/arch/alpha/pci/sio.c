@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.9 1996/08/27 21:54:03 cgd Exp $	*/
+/*	$NetBSD: sio.c,v 1.10 1996/10/10 23:51:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -125,7 +125,7 @@ sioattach(parent, self, aux)
 	haseisa = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo,
+	kprintf(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	if (sio) {
@@ -134,7 +134,7 @@ sioattach(parent, self, aux)
 		rev = PCI_REVISION(pa->pa_class);
 		
 		if (rev < 3)
-			printf("%s: WARNING: SIO I SUPPORT UNTESTED\n",
+			kprintf("%s: WARNING: SIO I SUPPORT UNTESTED\n",
 			    self->dv_xname);
 	}
 
@@ -176,7 +176,7 @@ sioprint(aux, pnp)
         register union sio_attach_args *sa = aux;
 
         if (pnp)
-                printf("%s at %s", sa->sa_name, pnp);
+                kprintf("%s at %s", sa->sa_name, pnp);
         return (UNCONF);
 }
 
@@ -216,12 +216,12 @@ sio_eisa_intr_map(v, irq, ihp)
 #define	ICU_LEN		16	/* number of ISA IRQs (XXX) */
 
 	if (irq >= ICU_LEN) {
-		printf("sio_eisa_intr_map: bad IRQ %d\n", irq);
+		kprintf("sio_eisa_intr_map: bad IRQ %d\n", irq);
 		*ihp = -1;
 		return 1;
 	}
 	if (irq == 2) {
-		printf("sio_eisa_intr_map: changed IRQ 2 to IRQ 9\n");
+		kprintf("sio_eisa_intr_map: changed IRQ 2 to IRQ 9\n");
 		irq = 9;
 	}
 

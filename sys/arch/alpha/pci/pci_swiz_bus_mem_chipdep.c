@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.7 1996/07/09 00:55:00 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.8 1996/10/10 23:51:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -110,9 +110,9 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, cacheable, memhp)
                 } else
 #endif
 		{
-			printf("\n");
+			kprintf("\n");
 #ifdef CHIP_D_MEM_W1_START
-			printf("%s: window[1]=0x%lx-0x%lx\n",
+			kprintf("%s: window[1]=0x%lx-0x%lx\n",
 			    __S(__C(CHIP,_mem_map)), CHIP_D_MEM_W1_START(v),
 			    CHIP_D_MEM_W1_END(v)-1);
 #endif
@@ -142,19 +142,19 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, cacheable, memhp)
 		} else
 #endif
 		{
-			printf("\n");
+			kprintf("\n");
 #ifdef CHIP_S_MEM_W1_START
-			printf("%s: window[1]=0x%lx-0x%lx\n",
+			kprintf("%s: window[1]=0x%lx-0x%lx\n",
 			    __S(__C(CHIP,_mem_map)), CHIP_S_MEM_W1_START(v),
 			    CHIP_S_MEM_W1_END(v)-1);
 #endif
 #ifdef CHIP_S_MEM_W2_START
-			printf("%s: window[2]=0x%lx-0x%lx\n",
+			kprintf("%s: window[2]=0x%lx-0x%lx\n",
 			    __S(__C(CHIP,_mem_map)), CHIP_S_MEM_W2_START(v),
 			    CHIP_S_MEM_W2_END(v)-1);
 #endif
 #ifdef CHIP_S_MEM_W3_START
-			printf("%s: window[3]=0x%lx-0x%lx\n",
+			kprintf("%s: window[3]=0x%lx-0x%lx\n",
 			    __S(__C(CHIP,_mem_map)), CHIP_S_MEM_W3_START(v),
 			    CHIP_S_MEM_W3_END(v)-1);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock.c,v 1.2 1996/04/17 22:22:32 cgd Exp $	*/
+/*	$NetBSD: mcclock.c,v 1.3 1996/10/10 23:50:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -59,7 +59,7 @@ mcclock_attach(sc, busfns)
 	const struct mcclock_busfns *busfns;
 {
 
-	printf(": mc146818 or compatible");
+	kprintf(": mc146818 or compatible");
 
 	sc->sc_busfns = busfns;
 

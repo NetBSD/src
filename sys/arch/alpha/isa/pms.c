@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.1 1996/04/12 01:53:06 cgd Exp $	*/
+/*	$NetBSD: pms.c,v 1.2 1996/10/10 23:50:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -213,13 +213,13 @@ pmsattach(parent, self, aux)
 
 	if (bus_io_map(pms_bc, PMS_DATA, 1, &pms_data_ioh) ||
 	    bus_io_map(pms_bc, PMS_CNTRL, 1, &pms_cntrl_ioh)) {
-		printf(": can't map I/O ports!\n");
+		kprintf(": can't map I/O ports!\n");
 		return;
 	}
 
 	msattach(self, &pms_mdev_spec);
 
-	printf("\n");
+	kprintf("\n");
 
 	/* Other initialization was done by pmsprobe. */
 	sc->sc_state = 0;

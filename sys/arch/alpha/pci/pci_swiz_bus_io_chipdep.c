@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.6 1996/07/09 00:54:57 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.7 1996/10/10 23:51:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -134,14 +134,14 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, iohp)
 	} else
 #endif
 	{
-		printf("\n");
+		kprintf("\n");
 #ifdef CHIP_IO_W1_START
-		printf("%s: window[1]=0x%lx-0x%lx\n",
+		kprintf("%s: window[1]=0x%lx-0x%lx\n",
 		    __S(__C(CHIP,_io_map)), CHIP_IO_W1_START(v),
 		    CHIP_IO_W1_END(v)-1);
 #endif
 #ifdef CHIP_IO_W2_START
-		printf("%s: window[2]=0x%lx-0x%lx\n",
+		kprintf("%s: window[2]=0x%lx-0x%lx\n",
 		    __S(__C(CHIP,_io_map)), CHIP_IO_W2_START(v),
 		    CHIP_IO_W2_END(v)-1);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_2100_a50.c,v 1.8 1996/07/14 04:08:21 cgd Exp $	*/
+/*	$NetBSD: pci_2100_a50.c,v 1.9 1996/10/10 23:51:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -74,7 +74,7 @@ pci_2100_a50_pickintr(acp)
         sioII = (sioclass & 0xff) >= 3;
 
 	if (!sioII)
-		printf("WARNING: SIO NOT SIO II... NO BETS...\n");
+		kprintf("WARNING: SIO NOT SIO II... NO BETS...\n");
 
 	pc->pc_intr_v = acp;
 	pc->pc_intr_map = dec_2100_a50_intr_map;
@@ -108,7 +108,7 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
                 return 1;
         }
         if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
+                kprintf("pci_map_int: bad interrupt pin %d\n", buspin);
                 return 1;
         }
 
@@ -169,7 +169,7 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, APECS_SIO_DEVICE, 0),
 	    SIO_PCIREG_PIRQ_RTCTRL);
 #if 0
-	printf("pci_2100_a50_map_int: device %d pin %c: pirq %d, reg = %x\n",
+	kprintf("pci_2100_a50_map_int: device %d pin %c: pirq %d, reg = %x\n",
 		device, '@' + buspin, pirq, pirqreg);
 #endif
 	pirqline = (pirqreg >> (pirq * 8)) & 0xff;
@@ -178,7 +178,7 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 	pirqline &= 0xf;
 
 #if 0
-	printf("pci_2100_a50_map_int: device %d pin %c: mapped to line %d\n",
+	kprintf("pci_2100_a50_map_int: device %d pin %c: mapped to line %d\n",
 	    device, '@' + buspin, pirqline);
 #endif
 
