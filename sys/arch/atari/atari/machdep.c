@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 2001/01/07 20:59:29 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 2001/01/07 21:12:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -368,6 +368,9 @@ identifycpu()
 				break;
 		case ATARI_HADES:
 				mach = "Atari Hades";
+				break;
+		case ATARI_MILAN:
+				mach = "Atari Milan";
 				break;
 		default:
 				mach = "Atari UNKNOWN";
