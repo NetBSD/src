@@ -1,3 +1,5 @@
+/*	$NetBSD: disksubr.c,v 1.6 1994/10/26 08:25:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -30,9 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	
- *	$Id: disksubr.c,v 1.5 1994/04/01 23:16:56 phil Exp $
+ *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 
 #include "param.h"

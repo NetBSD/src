@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_hi.c,v 1.3 1994/10/26 08:25:53 cgd Exp $	*/
+
 /****************************************************************************
  * NS32K Monitor SCSI high-level driver
  * Bruce Culbertson

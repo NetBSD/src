@@ -1,4 +1,3 @@
-/* Another empty file!  Phil Nelson.
- *
- *	mtpr.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
- */
+/*	$NetBSD: mtpr.h,v 1.3 1994/10/26 08:24:32 cgd Exp $	*/
+
+/* EMPTY */

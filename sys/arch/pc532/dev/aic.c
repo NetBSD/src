@@ -1,3 +1,5 @@
+/*	$NetBSD: aic.c,v 1.2 1994/10/26 08:24:07 cgd Exp $	*/
+
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
  *
@@ -16,8 +18,6 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
- *
- *	$Id: aic.c,v 1.1.1.1 1993/09/09 23:53:53 phil Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: db_trace.c,v 1.2 1994/10/26 08:24:58 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -31,8 +33,6 @@
  *	Helsinki University of Technology 1992.
  *
  *	Stack trace and special register support for debugger.
- *
- *	$Id: db_trace.c,v 1.1.1.1 1993/09/09 23:53:48 phil Exp $
  */
 
 

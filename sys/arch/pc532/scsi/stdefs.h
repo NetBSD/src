@@ -1,6 +1,4 @@
-/*
- *	$Id: stdefs.h,v 1.1 1994/04/01 23:18:22 phil Exp $
- */
+/*	$NetBSD: stdefs.h,v 1.2 1994/10/26 08:25:40 cgd Exp $	*/
 
 #define STQSIZE		4
 struct	st_data {

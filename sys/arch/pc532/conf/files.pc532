@@ -1,5 +1,4 @@
-#
-#	$Id: files.pc532,v 1.9 1994/09/25 04:23:17 phil Exp $
+#	$NetBSD: files.pc532,v 1.10 1994/10/26 08:24:04 cgd Exp $
 #
 arch/pc532/pc532/autoconf.c		standard 
 arch/pc532/pc532/clock.c		standard

@@ -1,3 +1,5 @@
+/*	$NetBSD: process_machdep.c,v 1.4 1994/10/26 08:25:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -33,14 +35,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * From:
- *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *
- * And then from:
- *	Id: process_machdep.c,v 1.2 1994/01/09 15:02:24 mycroft Exp 
- *
- *	$Id: process_machdep.c,v 1.3 1994/10/06 06:07:28 phil Exp $
  */
 
 /* Modified by Phil Nelson for the pc532 port.  1/12/94 */

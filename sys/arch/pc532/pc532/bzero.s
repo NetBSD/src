@@ -1,3 +1,5 @@
+/*	$NetBSD: bzero.s,v 1.2 1994/10/26 08:24:51 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -29,7 +31,7 @@
  * 	File: ns532/bzero.s
  *	Author: Tero Kivinen, Helsinki University of Technology 1992.
  *
- *	$Id: bzero.s,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	$Id: bzero.s,v 1.2 1994/10/26 08:24:51 cgd Exp $
  */
 
 #include <machine/asm.h>

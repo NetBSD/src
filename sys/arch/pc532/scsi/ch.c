@@ -1,6 +1,4 @@
-/*
- *	$Id: ch.c,v 1.2 1994/06/30 01:12:47 phil Exp $
- */
+/*	$NetBSD: ch.c,v 1.3 1994/10/26 08:25:26 cgd Exp $	*/
 
 #include "ch.h"
 

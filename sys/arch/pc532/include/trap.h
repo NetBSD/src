@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.h,v 1.3 1994/10/26 08:24:44 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -30,8 +32,6 @@
  *	Author: Tatu Ylonen, Helsinki University of Technology 1992.
  *      Modified for NetBSD by Phil Nelson
  *	Hardware trap vectors for ns532.
- *
- *	trap.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
 #ifndef _MACHINE_TRAP_H_
