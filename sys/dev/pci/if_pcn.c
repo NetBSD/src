@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.21 2003/10/19 03:32:25 matt Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.22 2003/10/25 18:31:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.21 2003/10/19 03:32:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.22 2003/10/25 18:31:11 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -890,7 +890,7 @@ pcn_start(struct ifnet *ifp)
 	struct mbuf *m0, *m;
 	struct pcn_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, nexttx, lasttx, ofree, seg;
+	int error, nexttx, lasttx = -1, ofree, seg;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1064,6 +1064,7 @@ pcn_start(struct ifnet *ifp)
 			}
 		}
 
+		KASSERT(lasttx != -1);
 		/* Interrupt on the packet, if appropriate. */
 		if ((sc->sc_txsnext & PCN_TXINTR_MASK) == 0)
 			sc->sc_txdescs[lasttx].tmd1 |= htole32(LE_T1_LTINT);
