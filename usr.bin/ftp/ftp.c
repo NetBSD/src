@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.66 1999/09/24 14:28:14 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.67 1999/09/27 23:09:44 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.66 1999/09/24 14:28:14 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.67 1999/09/27 23:09:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,6 @@ __RCSID("$NetBSD: ftp.c,v 1.66 1999/09/24 14:28:14 lukem Exp $");
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -405,7 +404,7 @@ command(va_alist)
 		code = -1;
 		return (0);
 	}
-	oldintr = signal(SIGINT, cmdabort);
+	oldintr = xsignal(SIGINT, cmdabort);
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
@@ -420,7 +419,7 @@ command(va_alist)
 	r = getreply(!strcmp(fmt, "QUIT"));
 	if (abrtflag && oldintr != SIG_IGN)
 		(*oldintr)(SIGINT);
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	return (r);
 }
 
@@ -438,7 +437,7 @@ getreply(expecteof)
 	int pflag = 0;
 	char *cp, *pt = pasv;
 
-	oldintr = signal(SIGINT, cmdabort);
+	oldintr = xsignal(SIGINT, cmdabort);
 	for (line = 0 ;; line++) {
 		dig = n = code = 0;
 		cp = current_line;
@@ -465,7 +464,7 @@ getreply(expecteof)
 			dig++;
 			if (c == EOF) {
 				if (expecteof) {
-					(void)signal(SIGINT, oldintr);
+					(void)xsignal(SIGINT, oldintr);
 					code = 221;
 					return (0);
 				}
@@ -537,7 +536,7 @@ getreply(expecteof)
 		*cp = '\0';
 		if (n != '1')
 			cpend = 0;
-		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINT, oldintr);
 		if (code == 421 || originalcode == 421)
 			lostpeer();
 		if (abrtflag && oldintr != cmdabort && oldintr != SIG_IGN)
@@ -680,26 +679,26 @@ sendrequest(cmd, local, remote, printnames)
 			data = -1;
 		}
 		if (oldintr)
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 		if (oldintp)
-			(void)signal(SIGPIPE, oldintp);
+			(void)xsignal(SIGPIPE, oldintp);
 		if (oldinti)
 			(void)xsignal(SIGINFO, oldinti);
 		code = -1;
 		goto cleanupsend;
 	}
-	oldintr = signal(SIGINT, abortsend);
+	oldintr = xsignal(SIGINT, abortsend);
 	oldinti = xsignal(SIGINFO, psummary);
 	if (strcmp(local, "-") == 0) {
 		fin = stdin;
 		progress = 0;
 	} else if (*local == '|') {
-		oldintp = signal(SIGPIPE, SIG_IGN);
+		oldintp = xsignal(SIGPIPE, SIG_IGN);
 		fin = popen(local + 1, "r");
 		if (fin == NULL) {
 			warn("%s", local + 1);
-			(void)signal(SIGINT, oldintr);
-			(void)signal(SIGPIPE, oldintp);
+			(void)xsignal(SIGINT, oldintr);
+			(void)xsignal(SIGPIPE, oldintp);
 			(void)xsignal(SIGINFO, oldinti);
 			code = -1;
 			goto cleanupsend;
@@ -710,7 +709,7 @@ sendrequest(cmd, local, remote, printnames)
 		fin = fopen(local, "r");
 		if (fin == NULL) {
 			warn("local: %s", local);
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 			(void)xsignal(SIGINFO, oldinti);
 			code = -1;
 			goto cleanupsend;
@@ -718,7 +717,7 @@ sendrequest(cmd, local, remote, printnames)
 		closefunc = fclose;
 		if (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode)) {
 			fprintf(ttyout, "%s: not a plain file.\n", local);
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 			(void)xsignal(SIGINFO, oldinti);
 			fclose(fin);
 			code = -1;
@@ -727,10 +726,10 @@ sendrequest(cmd, local, remote, printnames)
 		filesize = st.st_size;
 	}
 	if (initconn()) {
-		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINT, oldintr);
 		(void)xsignal(SIGINFO, oldinti);
 		if (oldintp)
-			(void)signal(SIGPIPE, oldintp);
+			(void)xsignal(SIGPIPE, oldintp);
 		code = -1;
 		if (closefunc != NULL)
 			(*closefunc)(fin);
@@ -773,20 +772,20 @@ sendrequest(cmd, local, remote, printnames)
 	}
 	if (remote) {
 		if (command("%s %s", cmd, remote) != PRELIM) {
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 			(void)xsignal(SIGINFO, oldinti);
 			if (oldintp)
-				(void)signal(SIGPIPE, oldintp);
+				(void)xsignal(SIGPIPE, oldintp);
 			if (closefunc != NULL)
 				(*closefunc)(fin);
 			goto cleanupsend;
 		}
 	} else
 		if (command("%s", cmd) != PRELIM) {
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 			(void)xsignal(SIGINFO, oldinti);
 			if (oldintp)
-				(void)signal(SIGPIPE, oldintp);
+				(void)xsignal(SIGPIPE, oldintp);
 			if (closefunc != NULL)
 				(*closefunc)(fin);
 			goto cleanupsend;
@@ -805,7 +804,7 @@ sendrequest(cmd, local, remote, printnames)
 		fprintf(ttyout, "using a buffer size of %d\n", (int)bufsize);
 
 	progressmeter(-1);
-	oldintp = signal(SIGPIPE, SIG_IGN);
+	oldintp = xsignal(SIGPIPE, SIG_IGN);
 
 	switch (curtype) {
 
@@ -906,18 +905,18 @@ sendrequest(cmd, local, remote, printnames)
 		(*closefunc)(fin);
 	(void)fclose(dout);
 	(void)getreply(0);
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	(void)xsignal(SIGINFO, oldinti);
 	if (oldintp)
-		(void)signal(SIGPIPE, oldintp);
+		(void)xsignal(SIGPIPE, oldintp);
 	if (bytes > 0)
 		ptransfer(0);
 	goto cleanupsend;
 abort:
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	(void)xsignal(SIGINFO, oldinti);
 	if (oldintp)
-		(void)signal(SIGPIPE, oldintp);
+		(void)xsignal(SIGPIPE, oldintp);
 	if (!cpend) {
 		code = -1;
 		return;
@@ -1017,7 +1016,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 			data = -1;
 		}
 		if (oldintr)
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 		if (oldinti)
 			(void)xsignal(SIGINFO, oldinti);
 		progress = oprogress;
@@ -1025,7 +1024,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		code = -1;
 		return;
 	}
-	oldintr = signal(SIGINT, abortrecv);
+	oldintr = xsignal(SIGINT, abortrecv);
 	oldinti = xsignal(SIGINFO, psummary);
 	if (ignorespecial || (strcmp(local, "-") && *local != '|')) {
 		if (access(local, W_OK) < 0) {
@@ -1033,7 +1032,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 
 			if (errno != ENOENT && errno != EACCES) {
 				warn("local: %s", local);
-				(void)signal(SIGINT, oldintr);
+				(void)xsignal(SIGINT, oldintr);
 				(void)xsignal(SIGINFO, oldinti);
 				code = -1;
 				return;
@@ -1046,7 +1045,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 				*dir = '/';
 			if (d < 0) {
 				warn("local: %s", local);
-				(void)signal(SIGINT, oldintr);
+				(void)xsignal(SIGINT, oldintr);
 				(void)xsignal(SIGINFO, oldinti);
 				code = -1;
 				return;
@@ -1054,21 +1053,21 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 			if (!runique && errno == EACCES &&
 			    chmod(local, (S_IRUSR|S_IWUSR)) < 0) {
 				warn("local: %s", local);
-				(void)signal(SIGINT, oldintr);
+				(void)xsignal(SIGINT, oldintr);
 				(void)xsignal(SIGINFO, oldinti);
 				code = -1;
 				return;
 			}
 			if (runique && errno == EACCES &&
 			   (local = gunique(local)) == NULL) {
-				(void)signal(SIGINT, oldintr);
+				(void)xsignal(SIGINT, oldintr);
 				(void)xsignal(SIGINFO, oldinti);
 				code = -1;
 				return;
 			}
 		}
 		else if (runique && (local = gunique(local)) == NULL) {
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 			(void)xsignal(SIGINFO, oldinti);
 			code = -1;
 			return;
@@ -1083,7 +1082,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		filesize = remotesize(remote, 0);
 	}
 	if (initconn()) {
-		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINT, oldintr);
 		(void)xsignal(SIGINFO, oldinti);
 		code = -1;
 		return;
@@ -1099,13 +1098,13 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		return;
 	if (remote) {
 		if (command("%s %s", cmd, remote) != PRELIM) {
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 			(void)xsignal(SIGINFO, oldinti);
 			return;
 		}
 	} else {
 		if (command("%s", cmd) != PRELIM) {
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 			(void)xsignal(SIGINFO, oldinti);
 			return;
 		}
@@ -1118,7 +1117,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		progress = 0;
 		preserve = 0;
 	} else if (!ignorespecial && *local == '|') {
-		oldintp = signal(SIGPIPE, SIG_IGN);
+		oldintp = xsignal(SIGPIPE, SIG_IGN);
 		fout = popen(local + 1, "w");
 		if (fout == NULL) {
 			warn("%s", local+1);
@@ -1286,10 +1285,10 @@ break2:
 	progressmeter(1);
 	if (closefunc != NULL)
 		(*closefunc)(fout);
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	(void)xsignal(SIGINFO, oldinti);
 	if (oldintp)
-		(void)signal(SIGPIPE, oldintp);
+		(void)xsignal(SIGPIPE, oldintp);
 	(void)fclose(din);
 	(void)getreply(0);
 	if (bare_lfs) {
@@ -1326,11 +1325,11 @@ abort:
 	progress = oprogress;
 	preserve = opreserve;
 	if (oldintp)
-		(void)signal(SIGPIPE, oldintp);
-	(void)signal(SIGINT, SIG_IGN);
+		(void)xsignal(SIGPIPE, oldintp);
+	(void)xsignal(SIGINT, SIG_IGN);
 	if (!cpend) {
 		code = -1;
-		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINT, oldintr);
 		(void)xsignal(SIGINFO, oldinti);
 		return;
 	}
@@ -1347,7 +1346,7 @@ abort:
 		(void)fclose(din);
 	if (bytes > 0)
 		ptransfer(0);
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	(void)xsignal(SIGINFO, oldinti);
 }
 
@@ -1804,7 +1803,7 @@ pswitch(flag)
 	struct comvars *ip, *op;
 
 	abrtflag = 0;
-	oldintr = signal(SIGINT, psabort);
+	oldintr = xsignal(SIGINT, psabort);
 	if (flag) {
 		if (proxy)
 			return;
@@ -1862,7 +1861,7 @@ pswitch(flag)
 	(void)strncpy(ip->mo, mapout, sizeof(ip->mo) - 1);
 	(ip->mo)[sizeof(ip->mo) - 1] = '\0';
 	(void)strcpy(mapout, op->mo);
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	if (abrtflag) {
 		abrtflag = 0;
 		(*oldintr)(SIGINT);
@@ -1930,7 +1929,7 @@ proxtrans(cmd, local, remote)
 	}
 	if (setjmp(ptabort))
 		goto abort;
-	oldintr = signal(SIGINT, abortpt);
+	oldintr = xsignal(SIGINT, abortpt);
 	if ((restart_point &&
 #ifndef NO_QUAD
 	    (command("REST %lld", (long long) restart_point) != CONTINUE)
@@ -1938,7 +1937,7 @@ proxtrans(cmd, local, remote)
 	    (command("REST %ld", (long) restart_point) != CONTINUE)
 #endif
 	    ) || (command("%s %s", cmd, remote) != PRELIM)) {
-		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINT, oldintr);
 		pswitch(1);
 		return;
 	}
@@ -1957,13 +1956,13 @@ proxtrans(cmd, local, remote)
 	(void)getreply(0);
 	pswitch(0);
 	(void)getreply(0);
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	pswitch(1);
 	ptflag = 0;
 	fprintf(ttyout, "local: %s remote: %s\n", local, remote);
 	return;
 abort:
-	(void)signal(SIGINT, SIG_IGN);
+	(void)xsignal(SIGINT, SIG_IGN);
 	ptflag = 0;
 	if (strcmp(cmd, "RETR") && !proxy)
 		pswitch(1);
@@ -1978,7 +1977,7 @@ abort:
 		pswitch(1);
 		if (ptabflg)
 			code = -1;
-		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINT, oldintr);
 		return;
 	}
 	if (cpend)
@@ -1992,7 +1991,7 @@ abort:
 			pswitch(1);
 			if (ptabflg)
 				code = -1;
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 			return;
 		}
 	}
@@ -2016,7 +2015,7 @@ abort:
 	pswitch(1);
 	if (ptabflg)
 		code = -1;
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 }
 
 void

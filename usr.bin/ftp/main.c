@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 1999/09/24 06:14:40 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.52 1999/09/27 23:09:44 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -72,7 +72,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.51 1999/09/24 06:14:40 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 1999/09/27 23:09:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,6 @@ __RCSID("$NetBSD: main.c,v 1.51 1999/09/24 06:14:40 lukem Exp $");
 #include <err.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -380,8 +379,8 @@ main(argc, argv)
 
 			if (setjmp(toplevel))
 				exit(0);
-			(void)signal(SIGINT, (sig_t)intr);
-			(void)signal(SIGPIPE, (sig_t)lostpeer);
+			(void)xsignal(SIGINT, (sig_t)intr);
+			(void)xsignal(SIGPIPE, (sig_t)lostpeer);
 			xargv[0] = __progname;
 			xargv[1] = argv[0];
 			xargv[2] = argv[1];
@@ -407,8 +406,8 @@ main(argc, argv)
 #endif /* !NO_EDITCOMPLETE */
 	top = setjmp(toplevel) == 0;
 	if (top) {
-		(void)signal(SIGINT, (sig_t)intr);
-		(void)signal(SIGPIPE, (sig_t)lostpeer);
+		(void)xsignal(SIGINT, (sig_t)intr);
+		(void)xsignal(SIGPIPE, (sig_t)lostpeer);
 	}
 	for (;;) {
 		cmdscanner(top);
@@ -558,8 +557,8 @@ cmdscanner(top)
 		if (c->c_handler != help)
 			break;
 	}
-	(void)signal(SIGINT, (sig_t)intr);
-	(void)signal(SIGPIPE, (sig_t)lostpeer);
+	(void)xsignal(SIGINT, (sig_t)intr);
+	(void)xsignal(SIGPIPE, (sig_t)lostpeer);
 }
 
 struct cmd *
