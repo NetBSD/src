@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.40 1997/02/04 04:32:19 perry Exp $
+# 	$NetBSD: Makefile.sparc,v 1.41 1997/02/04 05:08:49 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -130,7 +130,7 @@ clean:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${SPARC}/sparc/Locore.c ${CFILES} ${SPARC}/sparc/swapgeneric.c \
+	    ${SPARC}/sparc/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 

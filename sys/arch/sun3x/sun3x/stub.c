@@ -1,4 +1,4 @@
-/*	$NetBSD: stub.c,v 1.1.1.1 1997/01/14 20:57:09 gwr Exp $	*/
+/*	$NetBSD: stub.c,v 1.2 1997/02/04 04:57:18 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,13 +42,7 @@
 
 #include <sys/cdefs.h>
 
-void swapgeneric __P((void));
 void Debugger __P((void));
-
-/* Called by autoconf.c */
-#ifndef	GENERIC
-void swapgeneric() {}
-#endif
 
 /*
  * XXX: isr.c:netintr() - move to conf.c?

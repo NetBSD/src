@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 1997/01/21 20:37:15 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 1997/02/04 05:02:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -265,11 +265,6 @@ int	nvram_uio __P((struct uio *));
  */
 int	cachectl __P((int, caddr_t, int));
 int	dma_cachectl __P((caddr_t, int));
-
-/*
- * Prototypes from swapgeneric.c:
- */
-void	setconf __P((void));
 
 /*
  * Prototypes from trap.c:

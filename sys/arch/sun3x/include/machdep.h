@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 1997/01/27 22:09:50 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.6 1997/02/04 04:57:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -171,7 +171,6 @@ void	sunmon_init __P((void));
 void	sunmon_reboot __P((char *));
 
 void	swapconf __P((void));
-void	swapgeneric __P((void));
 
 void	switch_exit __P((struct proc *));
 
