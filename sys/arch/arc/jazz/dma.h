@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.2 2001/07/24 16:26:53 tsutsui Exp $	*/
+/*	$NetBSD: dma.h,v 1.3 2003/02/10 11:43:29 tsutsui Exp $	*/
 /*	$OpenBSD: dma.h,v 1.3 1997/04/19 17:19:51 pefo Exp $	*/
 
 /*
@@ -106,7 +106,6 @@ typedef struct dma_softc {
 #define	DMA_DRAIN(r)
 #define	DMA_END(r)		((r->end)(r))
 
-void picaDmaInit __P((void));
 void picaDmaTLBAlloc __P((dma_softc_t *));
 void picaDmaTLBFree __P((dma_softc_t *));
 void picaDmaMap __P((struct dma_softc *, char *, size_t, int));

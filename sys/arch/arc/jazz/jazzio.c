@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.8 2003/01/01 00:32:05 thorpej Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.9 2003/02/10 11:43:29 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -42,6 +42,7 @@
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/jazzdmatlbreg.h>
+#include <arc/jazz/jazzdmatlbvar.h>
 #include <arc/jazz/dma.h>
 #include <arc/jazz/pckbc_jazzioreg.h>
 
@@ -145,8 +146,8 @@ jazzioattach(parent, self, aux)
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
 
-	/* Initialize PICA Dma */
-	picaDmaInit();
+	/* Initialize jazzio dma mapping register area and pool */
+	jazz_dmatlb_init(&jazzio_bus, jazzio_conf->jc_dmatlbreg);
 
 	/* Create bus_dma_tag */
 	jazz_bus_dma_tag_init(&sc->sc_dmat);
