@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.57 2002/09/01 22:30:09 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.58 2002/11/25 01:44:56 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.57 2002/09/01 22:30:09 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.58 2002/11/25 01:44:56 thorpej Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -734,7 +734,7 @@ isp_dog(void *arg)
 			    "possible command timeout on handle %x", handle);
 			XS_CMD_C_WDOG(xs);
 			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
-			if (isp_getrqentry(isp, &nxti, &optr, (void **) &qe)) {
+			if (isp_getrqentry(isp, &nxti, &optr, (void *) &qe)) {
 				ISP_UNLOCK(isp);
 				return;
 			}
