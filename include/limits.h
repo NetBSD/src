@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.10 1998/07/08 19:51:25 kleink Exp $	*/
+/*	$NetBSD: limits.h,v 1.11 1998/08/03 14:32:04 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -63,6 +63,8 @@
 #define	_POSIX2_RE_DUP_MAX	255
 
 #if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#define	_XOPEN_IOV_MAX		16
+
 #define PASS_MAX		128
 
 #define NL_ARGMAX		9
