@@ -1,7 +1,5 @@
-
-
-
 VACATION(1)                                           VACATION(1)
+
 
 
 NNAAMMEE
@@ -59,17 +57,6 @@ DDEESSCCRRIIPPTTIIOONN
               Ignored,  available  only  for  compatibility  with
               Sun's vacation program.
 
-
-
-                   Date: 2000/12/29 18:12:23                 1
-
-
-
-
-
-VACATION(1)                                           VACATION(1)
-
-
        --xx     reads an exclusion list from stdin (one address per
               line).  Mails coming from an address in this exclu-
               sion  list  won't  get  a reply by vvaaccaattiioonn.  It is
@@ -123,76 +110,9 @@ FFIILLEESS
 SSEEEE AALLSSOO
        sendmail(8), syslog(8)
 
-
-
-
-
-                   Date: 2000/12/29 18:12:23                 2
-
-
-
-
-
-VACATION(1)                                           VACATION(1)
-
-
 HHIISSTTOORRYY
        The vvaaccaattiioonn command appeared in 4.3BSD.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                   Date: 2000/12/29 18:12:23                 3
-
-
+                   Date: 2000/12/29 18:12:23       VACATION(1)
