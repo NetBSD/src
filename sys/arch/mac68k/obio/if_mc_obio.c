@@ -1,3 +1,5 @@
+/*	$NetBSD: if_mc_obio.c,v 1.3 1997/11/07 13:31:16 briggs Exp $	*/
+
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
  * All rights reserved.
