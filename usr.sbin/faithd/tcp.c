@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.5 2001/09/05 01:22:24 itojun Exp $	*/
+/*	$NetBSD: tcp.c,v 1.6 2001/11/21 06:52:35 itojun Exp $	*/
 /*	$KAME: tcp.c,v 1.6 2001/07/02 14:36:49 itojun Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ sig_child(int sig)
 	pid_t pid;
 
 	pid = wait3(&status, WNOHANG, (struct rusage *)0);
-	if (pid && WEXITSTATUS(status))
+	if (pid > 0 && WEXITSTATUS(status))
 		syslog(LOG_WARNING, "child %d exit status 0x%x", pid, status);
 	exit_success("terminate connection due to child termination");
 }
