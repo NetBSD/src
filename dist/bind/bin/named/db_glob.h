@@ -1,8 +1,8 @@
-/*	$NetBSD: db_glob.h,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: db_glob.h,v 1.1.1.2 2001/01/27 06:16:38 itojun Exp $	*/
 
 /*
  *	from db.h	4.16 (Berkeley) 6/1/90
- *	Id: db_glob.h,v 8.12 1999/08/08 21:10:01 vixie Exp
+ *	Id: db_glob.h,v 8.14 2000/04/21 06:54:02 vixie Exp
  */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 /*
- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Portions Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -97,6 +97,7 @@ DECL	struct hashbuf	*fcachetab	INIT(NULL);
 	/* state of ns_reload() and ns_reconfig(). */
 DECL	int		reloading	INIT(0);
 DECL	int		reconfiging	INIT(0);
+DECL	int		noexpired	INIT(0);
 
 DECL	const int hashsizes[]
 #ifdef MAIN_PROGRAM

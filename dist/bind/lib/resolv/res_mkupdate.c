@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkupdate.c,v 1.1.1.1 1999/11/20 18:54:12 veego Exp $	*/
+/*	$NetBSD: res_mkupdate.c,v 1.1.1.2 2001/01/27 06:20:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_mkupdate.c,v 1.24 1999/10/13 17:11:32 vixie Exp";
+static const char rcsid[] = "Id: res_mkupdate.c,v 1.25 2000/11/22 01:20:46 marka Exp";
 #endif /* not lint */
 
 #include "port_before.h"
@@ -863,6 +863,8 @@ res_mkupdrec(int section, const char *dname,
 			free((char *)rrecp);
 		return (NULL);
 	}
+	INIT_LINK(rrecp, r_link);
+	INIT_LINK(rrecp, r_glink);
  	rrecp->r_class = class;
 	rrecp->r_type = type;
 	rrecp->r_ttl = ttl;

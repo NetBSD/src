@@ -1,7 +1,7 @@
-/*	$NetBSD: bsafe_link.c,v 1.1.1.2 2000/11/10 09:34:37 itojun Exp $	*/
+/*	$NetBSD: bsafe_link.c,v 1.1.1.3 2001/01/27 06:18:57 itojun Exp $	*/
 
 #if defined(BSAFE) || defined(DNSSAFE)
-static const char rcsid[] = "Header: /proj/cvs/isc/bind/src/lib/dst/bsafe_link.c,v 1.11 1999/10/13 16:39:22 vixie Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/bsafe_link.c,v 1.11 1999/10/13 16:39:22 vixie Exp";
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.

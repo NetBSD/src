@@ -1,8 +1,8 @@
-/*	$NetBSD: db_sec.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: db_sec.c,v 1.1.1.2 2001/01/27 06:16:52 itojun Exp $	*/
 
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: db_sec.c,v 8.30 1999/10/15 21:06:49 vixie Exp";
+static const char rcsid[] = "Id: db_sec.c,v 8.32 2000/12/23 08:14:36 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -59,7 +59,7 @@ static const char rcsid[] = "Id: db_sec.c,v 8.30 1999/10/15 21:06:49 vixie Exp";
  */
 
 /*
- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Portions Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -574,7 +574,7 @@ verify_set(struct db_rrset *rrset) {
 		    namefield == NS_KEY_NAME_RESERVED)
 			continue;
 		if (namefield == NS_KEY_NAME_ENTITY &&
-		    (key->dk_flags & NS_KEY_SIGNATORYMASK == 0))
+		    (key->dk_flags & NS_KEY_SIGNATORYMASK) == 0)
 			continue;
 
 		/*

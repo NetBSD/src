@@ -1,4 +1,4 @@
-/*	$NetBSD: nis.c,v 1.1.1.1 1999/11/20 18:54:10 veego Exp $	*/
+/*	$NetBSD: nis.c,v 1.1.1.2 2001/01/27 06:19:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nis.c,v 1.13 1999/01/18 07:46:58 vixie Exp";
+static const char rcsid[] = "Id: nis.c,v 1.14 2000/02/28 07:52:16 vixie Exp";
 #endif
 
 /* Imports */
@@ -116,7 +116,7 @@ nis_res_get(struct irs_acc *this) {
 		nis_res_set(this, res, free);
 	}
 
-	if ((nis->res->options | RES_INIT) == 0 &&
+	if ((nis->res->options & RES_INIT) == 0 &&
 	    res_ninit(nis->res) < 0)
 		return (NULL);
 
