@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.7 1997/01/31 01:58:18 thorpej Exp $
+#	$NetBSD: PICA,v 1.8 1997/02/04 04:32:15 perry Exp $
 #
 #
 include		"arch/pica/conf/std.pica"
@@ -49,7 +49,6 @@ options		GATEWAY		# IP packet forwarding
 #options	EON
 
 config		netbsd	root on sd0 type ffs swap on sd0 and sd1
-#options	GENERIC
 
 
 mainbus0	at root

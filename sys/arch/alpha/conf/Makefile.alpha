@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.30 1997/01/23 22:47:31 cgd Exp $
+#	$NetBSD: Makefile.alpha,v 1.31 1997/02/04 04:31:55 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -133,7 +133,7 @@ cleankernel:
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${ALPHA}/alpha/Locore.c ${CFILES} ${ALPHA}/alpha/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.53 1996/12/17 21:10:35 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.54 1997/02/04 04:32:21 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -155,7 +155,7 @@ clean::
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${SUN3}/sun3/Locore.c ${CFILES} ${SUN3}/sun3/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'

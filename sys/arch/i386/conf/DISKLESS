@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.39 1997/01/31 01:50:47 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.40 1997/02/04 04:32:02 perry Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -83,7 +83,6 @@ options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
 
 config		netbsd	root on ? type nfs
-#options	GENERIC
 #options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 
 mainbus0 at root
