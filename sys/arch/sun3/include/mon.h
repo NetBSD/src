@@ -197,7 +197,7 @@ typedef struct {
 
 	unsigned	romvecVersion;		/* Version # of Romvec */ 
 	struct globram  *globRam;		/* monitor global variables */
-	Address		kbdZscc;		/* Addr of keyboard in use */
+	caddr_t		kbdZscc;		/* Addr of keyboard in use */
 
 	int		*keyrInit;		/* ms before kbd repeat */
 	unsigned char	*keyrTick; 		/* ms between repetitions */
@@ -326,5 +326,6 @@ extern  void    Mach_MonTrap _ARGS_((Address address_to_trap_to));
 #define mon_printf (romVectorPtr->printf)
 #define mon_putchar (romVectorPtr->printf)
 #define mon_exit_to_mon (romVectorPtr->exitToMon)
+#define romp (romVectorPtr)
 #endif /* _MACHMON */
 #endif /* MON_H */     
