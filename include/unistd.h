@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.7 1993/08/06 21:13:32 jtc Exp $
+ *	$Id: unistd.h,v 1.8 1993/09/10 01:07:39 jtc Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -120,6 +120,7 @@ int	 fchflags __P((int, long));
 int	 fchown __P((int, int, int));
 int	 fsync __P((int));
 int	 ftruncate __P((int, off_t));
+int	 getdomainname __P((char *, int));
 int	 getdtablesize __P((void));
 long	 gethostid __P((void));
 int	 gethostname __P((char *, int));
@@ -149,6 +150,7 @@ int	 rresvport __P((int *));
 int	 ruserok __P((const char *, int, const char *, const char *));
 char	*sbrk __P((int));
 int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
+int	 setdomainname __P((const char *, int));
 int	 setegid __P((gid_t));
 int	 seteuid __P((uid_t));
 int	 setgroups __P((int, const int *));
