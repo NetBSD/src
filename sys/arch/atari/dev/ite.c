@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.12 1996/04/18 08:51:59 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.13 1996/06/18 05:54:59 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -396,10 +396,12 @@ iteopen(dev, mode, devtype, p)
 	
 	ip = getitesp(dev);
 
-	if (ip->tp == NULL)
+	if (ip->tp == NULL) {
 		tp = ip->tp = ttymalloc();
-	else
-		tp = ip->tp;
+		tty_attach(tp);
+	}
+	else tp = ip->tp;
+
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
 	    && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
