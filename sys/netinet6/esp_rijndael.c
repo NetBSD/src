@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.5 2001/06/18 11:23:00 wiz Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.6 2001/10/15 11:12:44 itojun Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 #include <net/net_osdep.h>
 
-/* as rijndael uses asymmetric scheduled keys, we need to do it twice. */
+/* as rijndael uses assymetric scheduled keys, we need to do it twice. */
 int
 esp_rijndael_schedlen(algo)
 	const struct esp_algorithm *algo;
