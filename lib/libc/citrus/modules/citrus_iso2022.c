@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.3 2002/03/27 17:54:41 yamt Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.4 2002/03/28 01:59:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.3 2002/03/27 17:54:41 yamt Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.4 2002/03/28 01:59:50 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -90,7 +90,7 @@ typedef struct {
 		singlegr:3;
 	char ch[7];	/* longest escape sequence (ESC & V ESC $ ( F) */
 	int chlen;
-} _ISO2022State __attribute__((__packed__));
+} _ISO2022State;
 
 typedef struct {
 	_ISO2022Charset	*recommend[4];
