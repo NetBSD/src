@@ -35,8 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)hsearch.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: hsearch.c,v 1.4 1993/08/26 00:43:48 jtc Exp $";
+/* from: static char sccsid[] = "@(#)hsearch.c	8.2 (Berkeley) 9/7/93"; */
+static char *rcsid = "$Id: hsearch.c,v 1.5 1993/09/09 02:42:09 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ hcreate(nel)
 	info.cachesize = NULL;
 	info.hash = NULL;
 	info.lorder = 0;
-	dbp = (DB *)__hash_open(NULL, O_CREAT | O_RDWR, 0600, &info);
+	dbp = (DB *)__hash_open(NULL, O_CREAT | O_RDWR, 0600, &info, 0);
 	return ((int)dbp);
 }
 

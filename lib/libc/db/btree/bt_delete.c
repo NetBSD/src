@@ -35,8 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bt_delete.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: bt_delete.c,v 1.3 1993/08/26 00:43:19 jtc Exp $";
+/* from: static char sccsid[] = "@(#)bt_delete.c	8.2 (Berkeley) 9/7/93"; */
+static char *rcsid = "$Id: bt_delete.c,v 1.4 1993/09/09 02:41:22 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -71,10 +71,18 @@ __bt_delete(dbp, key, flags)
 	int status;
 
 	t = dbp->internal;
+
+	/* Toss any page pinned across calls. */
+	if (t->bt_pinned != NULL) {
+		mpool_put(t->bt_mp, t->bt_pinned, 0);
+		t->bt_pinned = NULL;
+	}
+
 	if (ISSET(t, B_RDONLY)) {
 		errno = EPERM;
 		return (RET_ERROR);
 	}
+
 	switch(flags) {
 	case 0:
 		status = bt_bdelete(t, key);
