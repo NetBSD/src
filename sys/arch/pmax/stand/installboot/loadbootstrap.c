@@ -1,4 +1,4 @@
-/* $NetBSD: loadbootstrap.c,v 1.4 2000/06/16 23:24:30 matt Exp $ */
+/* $NetBSD: loadbootstrap.c,v 1.5 2000/06/21 20:41:13 matt Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ load_bootstrap(const char *bootstrap, char **data,
 		errx(EXIT_FAILURE, "no ELF header in %s", bootstrap);
 	
 	nsegs = highaddr = 0;
-	lowaddr = (uint32_t) ULONG_MAX;
+	lowaddr = (u_int32_t) ULONG_MAX;
 
 	for (i = 0; i < ehdr.e_phnum; i++) {
 		if (lseek(fd, (off_t) ehdr.e_phoff + i * sizeof(phdr), 0) < 0)
