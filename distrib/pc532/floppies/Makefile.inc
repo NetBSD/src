@@ -1,5 +1,3 @@
-#	$Id: Makefile.inc,v 1.5 1997/03/16 11:26:26 veego Exp $
+#	$Id: Makefile.inc,v 1.6 1997/05/11 08:59:05 veego Exp $
 
-# Revision is 1.2D
-# all these private copies of the version number really lose.
-REV=	12D
+REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
