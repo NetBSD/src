@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1994/11/21 21:38:48 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1994/11/23 05:43:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -579,7 +579,7 @@ void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	unsigned code;
+	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
@@ -786,7 +786,7 @@ void
 sun_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	unsigned code;
+	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct sun_sigframe *fp;
