@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.52 1997/07/27 01:16:44 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.53 1997/07/27 23:06:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -471,6 +471,8 @@ audio_init_ringbuffer(rp)
 	int nblks;
 	int blksize = rp->blksize;
 
+	if (blksize < AUMINBLK)
+		blksize = AUMINBLK;
 	nblks = rp->bufsize / blksize;
 	if (nblks < AUMINNOBLK) {
 		nblks = AUMINNOBLK;
@@ -1511,10 +1513,9 @@ audio_pint(v)
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp;
-	int cc, n;
+	int cc;
 	int error;
 
-	n = (cb->outp - cb->start) / cb->blksize;
 	cb->outp += cb->blksize;
 	if (cb->outp >= cb->end)
 		cb->outp = cb->start;
@@ -1758,6 +1759,9 @@ audio_check_params(p)
 	default:
 		return (EINVAL);
 	}
+
+	if (p->channels < 1 || p->channels > 8)	/* sanity check # of channels */
+		return (EINVAL);
 
 	return (0);
 }
