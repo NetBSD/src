@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 1999/03/13 19:58:44 sommerfe Exp $
+#	$NetBSD: Makefile.inc,v 1.17 1999/03/13 21:43:34 sommerfe Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -27,7 +27,10 @@ DISKSIZE?=	2880
 #
 #   6144	1147k, 189 inodes free
 #  16384	1159k,  93 inodes free
-# 204800	1167k,  29 inodes free
+# on 1.44M:
+# 204800	1407k,  27 inodes free
+# (with a 4k blocksize, one cannot get fewer than ~32 inodes allocated)
+
 INO_BYTES?=	204800
 
 CLEANFILES+=	netbsd.ram.gz
