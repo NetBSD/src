@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.49 2001/06/01 20:33:37 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.50 2001/06/11 04:20:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.49 2001/06/01 20:33:37 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.50 2001/06/11 04:20:32 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.49 2001/06/01 20:33:37 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.50 2001/06/11 04:20:32 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2360,7 +2360,6 @@ Job_CatchChildren(block)
 	    }
 	} else {
 	    job = (Job *) Lst_Datum(jnode);
-	    Job_CatchOutput();
 	    (void) Lst_Remove(jobs, jnode);
 	    nJobs -= 1;
 #ifdef REMOTE
