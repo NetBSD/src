@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.363 2001/08/19 17:18:02 mrg Exp $
+#	$NetBSD: mi,v 1.364 2001/08/25 16:46:17 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -42,7 +42,6 @@
 ./usr/bin/objdump		comp-util-bin
 ./usr/bin/ranlib		comp-util-bin
 ./usr/bin/rcs2log		comp-cvs-bin
-./usr/bin/readelf		comp-util-bin
 ./usr/bin/rpcgen		comp-c-bin
 ./usr/bin/size			comp-util-bin
 ./usr/bin/strings		comp-util-bin
@@ -212,7 +211,6 @@
 ./usr/include/g++/algobase.h		comp-cxx-include
 ./usr/include/g++/algorithm		comp-cxx-include
 ./usr/include/g++/alloc.h		comp-cxx-include
-./usr/include/g++/bitset		comp-cxx-include
 ./usr/include/g++/builtinbuf.h		comp-cxx-include
 ./usr/include/g++/bvector.h		comp-cxx-include
 ./usr/include/g++/cassert		comp-cxx-include
@@ -290,28 +288,19 @@
 ./usr/include/g++/set.h			comp-cxx-include
 ./usr/include/g++/slist			comp-cxx-include
 ./usr/include/g++/slist.h		comp-cxx-include
-./usr/include/g++/sstream		comp-cxx-include
 ./usr/include/g++/stack			comp-cxx-include
 ./usr/include/g++/stack.h		comp-cxx-include
 ./usr/include/g++/std			comp-cxx-include
 ./usr/include/g++/std/bastring.cc	comp-cxx-include
 ./usr/include/g++/std/bastring.h	comp-cxx-include
+./usr/include/g++/std/bastring_inst.h	comp-cxx-include
 ./usr/include/g++/std/complext.cc	comp-cxx-include
 ./usr/include/g++/std/complext.h	comp-cxx-include
+./usr/include/g++/std/complext_inst.h	comp-cxx-include
 ./usr/include/g++/std/dcomplex.h	comp-cxx-include
 ./usr/include/g++/std/fcomplex.h	comp-cxx-include
-./usr/include/g++/std/gslice.h		comp-cxx-include
-./usr/include/g++/std/gslice_array.h	comp-cxx-include
-./usr/include/g++/std/indirect_array.h	comp-cxx-include
 ./usr/include/g++/std/ldcomplex.h	comp-cxx-include
-./usr/include/g++/std/mask_array.h	comp-cxx-include
-./usr/include/g++/std/slice.h		comp-cxx-include
-./usr/include/g++/std/slice_array.h	comp-cxx-include
-./usr/include/g++/std/std_valarray.h	comp-cxx-include
 ./usr/include/g++/std/straits.h		comp-cxx-include
-./usr/include/g++/std/valarray_array.h	comp-cxx-include
-./usr/include/g++/std/valarray_array.tcc	comp-cxx-include
-./usr/include/g++/std/valarray_meta.h	comp-cxx-include
 ./usr/include/g++/stdexcept		comp-cxx-include
 ./usr/include/g++/stdiostream.h		comp-cxx-include
 ./usr/include/g++/stl.h			comp-cxx-include
@@ -357,7 +346,6 @@
 ./usr/include/g++/type_traits.h		comp-cxx-include
 ./usr/include/g++/typeinfo		comp-cxx-include
 ./usr/include/g++/utility		comp-cxx-include
-./usr/include/g++/valarray		comp-cxx-include
 ./usr/include/g++/vector		comp-cxx-include
 ./usr/include/g++/vector.h		comp-cxx-include
 ./usr/include/getopt.h			comp-c-include
@@ -1013,7 +1001,7 @@
 ./usr/lib/gcrt0.o		comp-c-lib
 ./usr/lib/libasn1.a		comp-c-lib
 ./usr/lib/libasn1_p.a		comp-c-proflib
-./usr/lib/libbfd_pic.a		comp-c-lib
+./usr/lib/libbfd.a		comp-c-lib
 ./usr/lib/libbz2.a		comp-c-lib
 ./usr/lib/libbz2_p.a		comp-c-proflib
 ./usr/lib/libc.a		comp-c-lib
