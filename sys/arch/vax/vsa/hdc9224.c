@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.10 2000/06/25 16:00:44 ragge Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.11 2000/06/27 09:09:53 mrg Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -69,7 +69,6 @@
 #include <sys/reboot.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <ufs/ufs/dinode.h> /* For BBSIZE */
 #include <ufs/ffs/fs.h>
