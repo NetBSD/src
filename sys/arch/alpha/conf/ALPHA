@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.172 2002/10/06 02:50:28 tsutsui Exp $
+# $NetBSD: ALPHA,v 1.173 2002/10/14 19:40:58 elric Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.172 $"
+ident		"ALPHA-$Revision: 1.173 $"
 
 maxusers 32
 
@@ -547,6 +547,7 @@ wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
+pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
