@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.7 2004/10/12 16:46:59 sjg Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.8 2004/11/01 21:12:59 dsl Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.7 2004/10/12 16:46:59 sjg Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.8 2004/11/01 21:12:59 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -71,12 +71,12 @@ trim(char *line)
 	char *ptr;
 
 	for (ptr = &line[strlen(line)-1]; ptr > line; ptr--) {
-		if (!isspace(*ptr))
+		if (!isspace((unsigned char)*ptr))
 			break;
 	}
 	ptr[1] = '\0';
 
-	for (ptr = line; *ptr && isspace(*ptr); ptr++)
+	for (ptr = line; *ptr && isspace((unsigned char)*ptr); ptr++)
 		;
 
 	return(ptr);
