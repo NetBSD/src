@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.169.2.4 2004/04/28 05:33:39 jmc Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.169.2.5 2004/05/10 14:32:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169.2.4 2004/04/28 05:33:39 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169.2.5 2004/05/10 14:32:43 tron Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -1937,6 +1937,8 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	pnode = root;
 	error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
 	if (error) {
+		printf("sysctl_createv: sysctl_locate(%s) returned %d\n",
+		       nnode.sysctl_name, error);
 		sysctl_unlock(NULL);
 		return (error);
 	}
