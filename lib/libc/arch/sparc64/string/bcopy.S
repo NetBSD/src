@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.2 2001/07/01 22:19:51 eeh Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.3 2001/07/01 22:48:30 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001	Eduardo E. Horvath
@@ -46,7 +46,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: bcopy.S,v 1.2 2001/07/01 22:19:51 eeh Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.3 2001/07/01 22:48:30 eeh Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 #define	EMPTY	nop
@@ -68,7 +68,7 @@
  *
  * Must not use %g7 (see copyin/copyout above).
  */
-ENTRY(mempcpy) /* dest, src, size */
+ENTRY(memcpy) /* dest, src, size */
 	/*
 	 * Swap args for bcopy.  Gcc generates calls to memcpy for
 	 * structure assignments.
