@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.23 2003/11/01 04:42:56 shin Exp $	*/
+/*	$NetBSD: cache.c,v 1.24 2003/12/21 07:59:25 nisimura Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.23 2003/11/01 04:42:56 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.24 2003/12/21 07:59:25 nisimura Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -676,8 +676,6 @@ primary_cache_is_2way:
 			(MIPS3_MAX_PCACHE_SIZE - 1) & ~(PAGE_SIZE - 1);
 		mips_cache_prefer_mask = MIPS3_MAX_PCACHE_SIZE - 1;
 		/* FALLTHROUGH */
-	case MIPS_R4100:
-	case MIPS_R4300:
 	case MIPS_R4600:
 #ifdef ENABLE_MIPS_R4700
 	case MIPS_R4700:
