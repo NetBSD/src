@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_input.c	7.25 (Berkeley) 6/30/90
- *	$Id: tcp_input.c,v 1.7 1994/04/12 18:07:46 mycroft Exp $
+ *	$Id: tcp_input.c,v 1.8 1994/04/25 19:16:53 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -81,7 +81,10 @@ struct	inpcb *tcp_last_inpcb = &tcb;
 	if ((ti)->ti_seq == (tp)->rcv_nxt && \
 	    (tp)->seg_next == (struct tcpiphdr *)(tp) && \
 	    (tp)->t_state == TCPS_ESTABLISHED) { \
-		tp->t_flags |= TF_DELACK; \
+		if ((ti)->ti_flags & TH_PUSH) \
+			tp->t_flags |= TF_ACKNOW; \
+		else \
+			tp->t_flags |= TF_DELACK; \
 		(tp)->rcv_nxt += (ti)->ti_len; \
 		flags = (ti)->ti_flags & TH_FIN; \
 		tcpstat.tcps_rcvpack++;\
@@ -444,7 +447,10 @@ findpcb:
 			m->m_len -= sizeof(struct tcpiphdr);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
-			tp->t_flags |= TF_DELACK;
+			if (ti->ti_flags & TH_PUSH)
+				tp->t_flags |= TF_ACKNOW;
+			else
+				tp->t_flags |= TF_DELACK;
 			return;
 		}
 	}
