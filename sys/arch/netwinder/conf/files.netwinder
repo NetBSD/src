@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.5 2001/05/06 18:38:59 bjh21 Exp $
+#	$NetBSD: files.netwinder,v 1.6 2001/05/23 21:21:43 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -19,8 +19,6 @@ defopt	XSERVER
 defopt	COMPAT_OLD_BOOTLOADER
 
 # Architectures and core logic
-defopt	EBSA285
-defopt	FOOTBRIDGE
 defopt	NETWINDER
 
 define todservice {}
@@ -34,6 +32,9 @@ include "dev/isa/files.isa"
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
+
+# Include arm32 footbridge
+include "arch/arm/conf/files.footbridge"
 
 #
 # Machine-independent ATA drivers
@@ -101,30 +102,6 @@ file	dev/cninit.c				!footbridge
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
 file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.s		armfpe
-
-# DC21285 "Footbridge" specific files
-define	footbridge {}
-device	footbridge: pcibus, todservice
-attach	footbridge at mainbus
-file	arch/arm32/footbridge/footbridge.c		footbridge
-file	arch/arm32/footbridge/footbridge_machdep.c	footbridge
-file	arch/arm32/footbridge/footbridge_io.c		footbridge
-file	arch/arm32/footbridge/footbridge_io_asm.S	footbridge
-file	arch/arm32/footbridge/footbridge_pci.c		footbridge
-file	arch/arm32/footbridge/footbridge_irq.S		footbridge
-file	arch/arm32/footbridge/footbridge_irqhandler.c	footbridge
-file	arch/arm32/footbridge/footbridge_clock.c	footbridge
-
-# DC21285 "Footbridge" serial port
-device	fcom: tty
-attach	fcom at footbridge
-file	arch/arm32/footbridge/footbridge_com.c		fcom needs-flag
-file	arch/arm32/footbridge/footbridge_com_io.c	fcom
-file	arch/arm32/footbridge/footbridge_com_io_asm.S	fcom
-
-# EBSA285/CATS class board
-# DC21285 based board with cyclone firmware
-file	arch/netwinder/netwinder/netwinder_machdep.c	footbridge & netwinder
 
 # ISA support.
 file	arch/netwinder/isa/isa_machdep.c		isa & netwinder

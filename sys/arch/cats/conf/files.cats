@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.1 2001/05/22 20:59:27 chris Exp $
+#	$NetBSD: files.cats,v 1.2 2001/05/23 21:21:43 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -20,7 +20,6 @@ defopt	XSERVER
 
 # Architectures and core logic
 defopt	EBSA285
-defopt	FOOTBRIDGE
 
 define todservice {}
 
@@ -28,6 +27,9 @@ define todservice {}
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
 include "dev/isa/files.isa"
+
+# Include arm32 footbridge
+include "arch/arm/conf/files.footbridge"
 
 #
 # Machine-independent ATA drivers
@@ -94,30 +96,6 @@ file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # ISA Plug 'n Play autoconfiguration glue.
 file	arch/arm32/isa/isapnp_machdep.c		isapnp
-
-# DC21285 "Footbridge" specific files
-define	footbridge {}
-device	footbridge: pcibus, todservice
-attach	footbridge at mainbus
-file	arch/arm32/footbridge/footbridge.c		footbridge
-file	arch/arm32/footbridge/footbridge_machdep.c	footbridge
-file	arch/arm32/footbridge/footbridge_io.c		footbridge
-file	arch/arm32/footbridge/footbridge_io_asm.S	footbridge
-file	arch/arm32/footbridge/footbridge_pci.c		footbridge
-file	arch/arm32/footbridge/footbridge_irq.S		footbridge
-file	arch/arm32/footbridge/footbridge_irqhandler.c	footbridge
-file	arch/arm32/footbridge/footbridge_clock.c	footbridge
-
-# DC21285 "Footbridge" serial port
-device	fcom: tty
-attach	fcom at footbridge
-file	arch/arm32/footbridge/footbridge_com.c		fcom needs-flag
-file	arch/arm32/footbridge/footbridge_com_io.c	fcom
-file	arch/arm32/footbridge/footbridge_com_io_asm.S	fcom
-
-# EBSA285/CATS class board
-# DC21285 based board with cyclone firmware
-file	arch/arm32/footbridge/ebsa285_machdep.c		footbridge & ebsa285
 
 # CATS boards have an EBSA285 based core with an ISA bus
 file	arch/cats/isa/isa_machdep.c			isa & ebsa285
