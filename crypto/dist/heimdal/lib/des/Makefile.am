@@ -1,9 +1,9 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 20:00:02 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:47 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 lib_LTLIBRARIES = libdes.la
-libdes_la_LDFLAGS = -version-info 2:0:0
+libdes_la_LDFLAGS = -version-info 3:0:0
 
 include_HEADERS = des.h md4.h md5.h sha.h rc4.h
 

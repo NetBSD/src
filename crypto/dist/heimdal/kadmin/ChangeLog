@@ -1,3 +1,123 @@
+2001-01-29  Assar Westerlund  <assar@sics.se>
+
+	* kadm_conn.c (spawn_child): close the newly created socket in the
+	packet, it's not used.  from <shadow@dementia.org>
+	* version4.c (decode_packet): check success of
+	krb5_425_conv_principal.  from <shadow@dementia.org>
+
+2001-01-12  Assar Westerlund  <assar@sics.se>
+
+	* util.c (parse_attributes): make empty string mean no attributes,
+	specifying the empty string at the command line should give you no
+	attributes, but just pressing return at the prompt gives you
+	default attributes
+	(edit_entry): only pick up values from the default principal if they
+	aren't set in the principal being edited
+
+2001-01-04  Assar Westerlund  <assar@sics.se>
+
+	* load.c (doit): print an error and bail out if storing an entry
+	in the database fails.  The most likely reason for it failing is
+	out-of-space.
+
+2000-12-31  Assar Westerlund  <assar@sics.se>
+
+	* kadmind.c (main): handle krb5_init_context failure consistently
+	* kadmin.c (main): handle krb5_init_context failure consistently
+	* add-random-users.c (add_user): handle krb5_init_context failure
+	consistently
+
+	* kadm_conn.c (spawn_child): use a struct sockaddr_storage
+
+2000-12-15  Johan Danielsson  <joda@pdc.kth.se>
+
+	* get.c: avoid asprintf'ing NULL strings
+
+2000-12-14  Johan Danielsson  <joda@pdc.kth.se>
+
+	* load.c: fix option parsing
+
+2000-11-16  Assar Westerlund  <assar@sics.se>
+
+	* kadm_conn.c (wait_for_connection): check for fd's being too
+	large to select on
+
+2000-11-09  Johan Danielsson  <joda@pdc.kth.se>
+
+	* get.c: don't try to print modifier name if it isn't set (from
+	Jacques A. Vidrine" <n@nectar.com>)
+
+2000-09-19  Assar Westerlund  <assar@sics.se>
+
+	* server.c (kadmind_loop): send in keytab to v4 handling function
+	* version4.c: allow the specification of what keytab to use
+
+	* get.c (print_entry_long): actually print the actual saltvalue
+	used if it's not the default
+
+2000-09-10  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kadmin.c: add option parsing, and add `privs' as an alias for
+	`privileges'
+
+	* init.c: complain if there's no realm name specified
+
+	* rename.c: add option parsing
+
+	* load.c: add option parsing
+
+	* get.c: make `get' and `list' aliases to each other, but with
+	different defaults
+
+	* del_enctype.c: add option parsing
+
+	* del.c: add option parsing
+
+	* ank.c: calling the command `add' make more sense from an english
+	pov
+
+	* Makefile.am: add kadmin manpage
+
+	* kadmin.8: short manpage
+
+	* kadmin.c: `quit' should be a alias for `exit', not `help'
+
+2000-08-27  Assar Westerlund  <assar@sics.se>
+
+	* server.c (handle_v5): do not try to perform stupid stunts when
+	printing errors
+
+2000-08-19  Assar Westerlund  <assar@sics.se>
+
+	* util.c (str2time_t): add alias for `now'.
+
+2000-08-18  Assar Westerlund  <assar@sics.se>
+
+	* server.c (handle_v5): accept any kadmin/admin@* principal as the
+	server
+	* kadmind.c: remove extra prototype of kadmind_loop
+	* kadmin_locl.h (kadmind_loop): add prototype
+	
+	* init.c (usage): print init-usage and not add-dito
+	
+2000-08-07  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kadmind.c: use roken_getsockname
+
+2000-08-07  Assar Westerlund  <assar@sics.se>
+
+	* kadmind.c, kadm_conn.c: use socklen_t instead of int where
+	appropriate.  From <thorpej@netbsd.org>
+
+2000-08-04  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: link with pidfile library
+
+	* kadmind.c: write a pid file, and setup password quality
+	functions
+
+	* kadmin_locl.h: util.h
+
 2000-07-27  Assar Westerlund  <assar@sics.se>
 
 	* version4.c (decode_packet): be totally consistent with the
@@ -57,6 +177,12 @@
 	type-correct and static
 
 	* kadmin_locl.h: add limits.h and sys/select.h
+
+2000-07-17  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kadm_conn.c: put all processes in a new process group
+
+	* server.c (v5_loop): use krb5_{read,write}_priv_message
 
 2000-07-11  Johan Danielsson  <joda@pdc.kth.se>
 

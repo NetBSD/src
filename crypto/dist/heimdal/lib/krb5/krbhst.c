@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 #include <resolve.h>
 
-RCSID("$Id: krbhst.c,v 1.1.1.2 2000/08/02 19:59:34 assar Exp $");
+RCSID("$Id: krbhst.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
 
 /*
  * assuming that `*res' contains `*count' strings, add a copy of `string'.
@@ -184,8 +184,15 @@ krb5_get_krb_changepw_hst (krb5_context context,
 			   const krb5_realm *realm,
 			   char ***hostlist)
 {
-    return get_krbhst (context, realm, "admin_server", "kpasswd",
-		       hostlist);
+    krb5_error_code ret;
+
+    ret = get_krbhst (context, realm, "kpasswd_server", "kpasswd",
+		      hostlist);
+    if (ret)
+	return ret;
+    ret = get_krbhst (context, realm, "admin_server", "kpasswd",
+		      hostlist);
+    return ret;
 }
 
 /*

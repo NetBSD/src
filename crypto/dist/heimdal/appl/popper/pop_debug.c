@@ -34,7 +34,7 @@
 /* Tiny program to help debug popper */
 
 #include "popper.h"
-RCSID("$Id: pop_debug.c,v 1.1.1.2 2000/08/02 19:58:24 assar Exp $");
+RCSID("$Id: pop_debug.c,v 1.1.1.3 2001/02/11 13:51:15 assar Exp $");
 
 static void
 loop(int s)
@@ -137,7 +137,9 @@ doit_v5 (char *host, int port)
     krb5_principal server;
     int s = get_socket (host, port);
 
-    krb5_init_context (&context);
+    ret = krb5_init_context (&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
     
     ret = krb5_sname_to_principal (context,
 				   host,

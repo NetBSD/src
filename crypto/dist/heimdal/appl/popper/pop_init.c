@@ -5,7 +5,7 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_init.c,v 1.1.1.2 2000/08/02 19:58:25 assar Exp $");
+RCSID("$Id: pop_init.c,v 1.1.1.3 2001/02/11 13:51:15 assar Exp $");
 
 
 #if defined(KRB4) || defined(KRB5)
@@ -245,7 +245,7 @@ pop_init(POP *p,int argcount,char **argmessage)
 {
     struct sockaddr_storage cs_ss;
     struct sockaddr *cs = (struct sockaddr *)&cs_ss;
-    int                     len;
+    socklen_t		    len;
     char                *   trace_file_name = "/tmp/popper-trace";
     int			    portnum = 0;
     int 		    optind = 0;
@@ -263,10 +263,16 @@ pop_init(POP *p,int argcount,char **argmessage)
     gethostname(p->myhost,MaxHostNameLen);
 
 #ifdef KRB5
-    krb5_init_context (&p->context);
+    {
+	krb5_error_code ret;
 
-    krb5_openlog(p->context, p->myname, &p->logf);
-    krb5_set_warn_dest(p->context, p->logf);
+	ret = krb5_init_context (&p->context);
+	if (ret)
+	    errx (1, "krb5_init_context failed: %d", ret);
+
+	krb5_openlog(p->context, p->myname, &p->logf);
+	krb5_set_warn_dest(p->context, p->logf);
+    }
 #else
     /*  Open the log file */
     roken_openlog(p->myname,POP_LOGOPTS,POP_FACILITY);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -41,7 +41,7 @@
 #include <krb_err.h>
 #include <kadm_err.h>
 
-RCSID("$Id: version4.c,v 1.1.1.2 2000/08/02 19:58:53 assar Exp $");
+RCSID("$Id: version4.c,v 1.1.1.3 2001/02/11 13:51:33 assar Exp $");
 
 #define KADM_NO_OPCODE -1
 #define KADM_NO_ENCRYPT -2
@@ -791,6 +791,7 @@ dispatch(krb5_context context,
 
 static void
 decode_packet(krb5_context context,
+	      krb5_keytab keytab,
 	      struct sockaddr_in *admin_addr,
 	      struct sockaddr_in *client_addr,
 	      krb5_data message,
@@ -809,6 +810,7 @@ decode_packet(krb5_context context,
     void *kadm_handle;
     krb5_principal client;
     char *client_str;
+    krb5_keytab_entry entry;
     
     if(message.length < KADM_VERSIZE
        || strncmp(msg, KADM_VERSTR, KADM_VERSIZE) != 0) {
@@ -834,13 +836,16 @@ decode_packet(krb5_context context,
 	    make_you_loose_packet (KADM_NOMEM, reply);
 	    return;
 	}
-	ret = krb5_kt_read_service_key(context, 
-				       "HDB:",
-				       principal,
-				       0,
-/*				       ETYPE_DES_CBC_CRC,*/
-				       ETYPE_DES_CBC_MD5,
-				       &key);
+	ret = krb5_kt_get_entry (context, keytab, principal, 0,
+				 ETYPE_DES_CBC_MD5, &entry);
+	krb5_kt_close (context, keytab);
+	if (ret) {
+	    krb5_free_principal(context, principal);
+	    make_you_loose_packet (KADM_NO_AUTH, reply);
+	    return;
+	}
+	ret = krb5_copy_keyblock (context, &entry.keyblock,& key);
+	krb5_kt_free_entry(context, &entry);
 	krb5_free_principal(context, principal);
 	if(ret) {
 	    if(ret == KRB5_KT_NOTFOUND)
@@ -868,8 +873,14 @@ decode_packet(krb5_context context,
 	return;
     }
 
-    krb5_425_conv_principal(context, ad.pname, ad.pinst, ad.prealm,
-			    &client);
+    ret = krb5_425_conv_principal(context, ad.pname, ad.pinst, ad.prealm,
+				  &client);
+    if (ret) {
+	krb5_warnx (context, "krb5_425_conv_principal: %d", ret);
+	make_you_loose_packet (KADM_NOMEM, reply);
+	return;
+    }
+
     krb5_unparse_name(context, client, &client_str);
 
     ret = kadm5_init_with_password_ctx(context, 
@@ -924,12 +935,13 @@ out:
 
 void
 handle_v4(krb5_context context,
+	  krb5_keytab keytab,
 	  int len,
 	  int fd)
 {
     int first = 1;
     struct sockaddr_in admin_addr, client_addr;
-    int addr_len;
+    socklen_t addr_len;
     krb5_data message, reply;
     ssize_t n;
 
@@ -975,7 +987,7 @@ handle_v4(krb5_context context,
 		krb5_err (context, 1, errno, "krb5_net_read");
 	}
 	doing_useful_work = 1;
-	decode_packet(context, &admin_addr, &client_addr, 
+	decode_packet(context, keytab, &admin_addr, &client_addr, 
 		      message, &reply);
 	krb5_data_free(&message);
 	{

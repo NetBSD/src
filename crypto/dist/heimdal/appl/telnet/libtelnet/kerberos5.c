@@ -53,7 +53,7 @@
 
 #include <config.h>
 
-RCSID("$Id: kerberos5.c,v 1.1.1.2 2000/08/02 19:58:18 assar Exp $");
+RCSID("$Id: kerberos5.c,v 1.1.1.3 2001/02/11 13:51:14 assar Exp $");
 
 #ifdef	KRB5
 
@@ -145,9 +145,12 @@ Data(Authenticator *ap, int type, void *d, int c)
 int
 kerberos5_init(Authenticator *ap, int server)
 {
-    krb5_init_context(&context);
+    krb5_error_code ret;
+
+    ret = krb5_init_context(&context);
+    if (ret)
+	return 0;
     if (server) {
-	krb5_error_code ret;
 	krb5_keytab kt;
 	krb5_kt_cursor cursor;
 
@@ -169,6 +172,7 @@ kerberos5_init(Authenticator *ap, int server)
     return(1);
 }
 
+extern int net;
 static int
 kerberos5_send(char *name, Authenticator *ap)
 {
@@ -177,9 +181,7 @@ kerberos5_send(char *name, Authenticator *ap)
     int ap_opts;
     krb5_data cksum_data;
     char foo[2];
-    extern int net;
     
-    printf("[ Trying %s ... ]\r\n", name);
     if (!UserNameRequested) {
 	if (auth_debug_mode) {
 	    printf("Kerberos V5: no user name supplied\r\n");
@@ -229,10 +231,42 @@ kerberos5_send(char *name, Authenticator *ap)
 
     cksum_data.length = sizeof(foo);
     cksum_data.data   = foo;
-    ret = krb5_mk_req(context, &auth_context, ap_opts,
-		      "host", RemoteHostName, 
-		      &cksum_data, ccache, &auth);
 
+
+    {
+	krb5_principal service;
+	char sname[128];
+
+
+	ret = krb5_sname_to_principal (context,
+				       RemoteHostName,
+				       NULL,
+				       KRB5_NT_SRV_HST,
+				       &service);
+	if(ret) {
+	    if (auth_debug_mode) {
+		printf ("Kerberos V5:"
+			" krb5_sname_to_principal(%s) failed (%s)\r\n",
+			RemoteHostName, krb5_get_err_text(context, ret));
+	    }
+	    return 0;
+	}
+	ret = krb5_unparse_name_fixed(context, service, sname, sizeof(sname));
+	if(ret) {
+	    if (auth_debug_mode) {
+		printf ("Kerberos V5:"
+			" krb5_unparse_name_fixed failed (%s)\r\n",
+			krb5_get_err_text(context, ret));
+	    }
+	    return 0;
+	}
+	printf("[ Trying %s (%s)... ]\r\n", name, sname);
+	ret = krb5_mk_req_exact(context, &auth_context, ap_opts,
+				service, 
+				&cksum_data, ccache, &auth);
+	krb5_free_principal (context, service);
+
+    }
     if (ret) {
 	if (1 || auth_debug_mode) {
 	    printf("Kerberos V5: mk_req failed (%s)\r\n",
@@ -334,8 +368,8 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 			  NULL,
 			  NULL,
 			  &ticket);
-	krb5_free_principal (context, server);
 
+	krb5_free_principal (context, server);
 	if (ret) {
 	    char *errbuf;
 
@@ -386,7 +420,7 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 	}
 
 	if ((ap->way & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL) {
-	    ret = krb5_mk_rep(context, &auth_context, &outbuf);
+	    ret = krb5_mk_rep(context, auth_context, &outbuf);
 	    if (ret) {
 		Data(ap, KRB_REJECT,
 		     "krb5_mk_rep failed", -1);
@@ -477,12 +511,12 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 	}
 
 #if defined(DCE)
-	setenv("KRB5CCNAME", ccname, 1);
+	esetenv("KRB5CCNAME", ccname, 1);
 #endif
-	ret = krb5_rd_cred (context,
-			    auth_context,
-			    ccache,
-			    &inbuf);
+	ret = krb5_rd_cred2 (context,
+			     auth_context,
+			     ccache,
+			     &inbuf);
 	if(ret) {
 	    char *errbuf;
 
@@ -772,9 +806,9 @@ kerberos5_dfspag(void)
 {
     if (dfsk5ok) {
 	dfspag = krb5_dfs_pag(context, dfsfwd, ticket->client,
-				UserNameRequested);
+			      UserNameRequested);
     }
 }
 #endif
- 
+
 #endif /* KRB5 */

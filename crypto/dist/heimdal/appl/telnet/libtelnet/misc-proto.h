@@ -53,7 +53,7 @@
  * or implied warranty.
  */
 
-/* $Id: misc-proto.h,v 1.1.1.2 2000/08/02 19:58:18 assar Exp $ */
+/* $Id: misc-proto.h,v 1.1.1.3 2001/02/11 13:51:14 assar Exp $ */
 
 #ifndef	__MISC_PROTO__
 #define	__MISC_PROTO__
@@ -73,7 +73,7 @@ int Ambiguous(void *s);
 int telnet_net_write (unsigned char *, int);
 void net_encrypt (void);
 int telnet_spin (void);
-char *telnet_getenv (char *);
+char *telnet_getenv (const char *);
 char *telnet_gets (char *, char *, int, int);
 void printsub(int direction, unsigned char *pointer, int length);
 #endif

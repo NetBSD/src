@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: krb5.h,v 1.1.1.2 2000/08/02 19:59:31 assar Exp $ */
+/* $Id: krb5.h,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $ */
 
 #ifndef __KRB5_H__
 #define __KRB5_H__
@@ -87,7 +87,8 @@ typedef enum krb5_enctype {
   ETYPE_DES_CBC_NONE		= -0x1000,
   ETYPE_DES3_CBC_NONE		= -0x1001,
   ETYPE_DES_CFB64_NONE		= -0x1002,
-  ETYPE_DES_PCBC_NONE		= -0x1003
+  ETYPE_DES_PCBC_NONE		= -0x1003,
+  ETYPE_DES3_CBC_NONE_IVEC	= -0x1004
 } krb5_enctype;
 
 typedef PADATA_TYPE krb5_preauthtype;
@@ -159,8 +160,8 @@ typedef enum krb5_key_usage {
     /* seal in GSSAPI krb5 mechanism */
     KRB5_KU_USAGE_SIGN = 23,
     /* sign in GSSAPI krb5 mechanism */
-    KRB5_KU_USAGE_MIC = 24
-    /* MIC in GSSAPI krb5 mechanism */
+    KRB5_KU_USAGE_SEQ = 24
+    /* SEQ in GSSAPI krb5 mechanism */
 } krb5_key_usage;
 
 typedef enum krb5_salttype {
@@ -388,7 +389,7 @@ typedef krb5_authenticator_data *krb5_authenticator;
 
 struct krb5_rcache_data;
 typedef struct krb5_rcache_data *krb5_rcache;
-typedef Authenticator krb5_donot_reply;
+typedef Authenticator krb5_donot_replay;
 
 #define KRB5_STORAGE_HOST_BYTEORDER			0x01
 #define KRB5_STORAGE_PRINCIPAL_WRONG_NUM_COMPONENTS	0x02
@@ -447,11 +448,27 @@ struct krb5_keytab_key_proc_args {
 
 typedef struct krb5_keytab_key_proc_args krb5_keytab_key_proc_args;
 
+typedef struct krb5_replay_data {
+    krb5_timestamp timestamp;
+    u_int32_t usec;
+    u_int32_t seq;
+} krb5_replay_data;
+
+/* flags for krb5_auth_con_setflags */
 enum {
     KRB5_AUTH_CONTEXT_DO_TIME      = 1,
     KRB5_AUTH_CONTEXT_RET_TIME     = 2,
     KRB5_AUTH_CONTEXT_DO_SEQUENCE  = 4,
-    KRB5_AUTH_CONTEXT_RET_SEQUENCE = 8
+    KRB5_AUTH_CONTEXT_RET_SEQUENCE = 8,
+    KRB5_AUTH_CONTEXT_PERMIT_ALL   = 16
+};
+
+/* flags for krb5_auth_con_genaddrs */
+enum {
+    KRB5_AUTH_CONTEXT_GENERATE_LOCAL_ADDR       = 1,
+    KRB5_AUTH_CONTEXT_GENERATE_LOCAL_FULL_ADDR  = 3,
+    KRB5_AUTH_CONTEXT_GENERATE_REMOTE_ADDR      = 4,
+    KRB5_AUTH_CONTEXT_GENERATE_REMOTE_FULL_ADDR = 12
 };
 
 typedef struct krb5_auth_context_data {
@@ -485,7 +502,7 @@ typedef struct {
     KRB_ERROR error;
 } krb5_kdc_rep;
 
-extern char *heimdal_version, *heimdal_long_version;
+extern const char *heimdal_version, *heimdal_long_version;
 
 typedef void (*krb5_log_log_func_t)(const char*, const char*, void*);
 typedef void (*krb5_log_close_func_t)(void*);
@@ -577,6 +594,7 @@ extern const krb5_cc_ops krb5_mcc_ops;
 extern const krb5_kt_ops krb5_fkt_ops;
 extern const krb5_kt_ops krb5_mkt_ops;
 extern const krb5_kt_ops krb5_akf_ops;
+extern const krb5_kt_ops krb4_fkt_ops;
 
 #define KRB5_KPASSWD_SUCCESS	0
 #define KRB5_KPASSWD_MALFORMED	0

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: randkey_s.c,v 1.1.1.2 2000/08/02 19:59:21 assar Exp $");
+RCSID("$Id: randkey_s.c,v 1.1.1.3 2001/02/11 13:51:43 assar Exp $");
 
 /*
  * Set the keys of `princ' to random values, returning the random keys
@@ -72,7 +72,9 @@ kadm5_s_randkey_principal(void *server_handle,
     if (ret)
 	goto out2;
 
-    hdb_seal_keys(context->context, context->db, &ent);
+    ret = hdb_seal_keys(context->context, context->db, &ent);
+    if (ret)
+	goto out2;
 
     kadm5_log_modify (context,
 		      &ent,

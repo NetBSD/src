@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,12 +33,11 @@
 
 #include "headers.h"
 
-RCSID("$Id: kstash.c,v 1.1.1.2 2000/08/02 19:58:55 assar Exp $");
+RCSID("$Id: kstash.c,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $");
 
 krb5_context context;
 
 char *keyfile = HDB_DB_DIR "/m-key";
-char *v4_keyfile;
 int convert_flag;
 int help_flag;
 int version_flag;
@@ -50,10 +49,8 @@ char *enctype_str = "des3-cbc-sha1";
 struct getargs args[] = {
     { "enctype", 'e', arg_string, &enctype_str, "encryption type" },
     { "key-file", 'k', arg_string, &keyfile, "master key file", "file" },
-    { "version4-key-file", '4', arg_string, &v4_keyfile, 
-      "kerberos 4 master key file", "file" },
     { "convert-file", 0, arg_flag, &convert_flag, 
-      "just convert keyfile to now format" },
+      "just convert keyfile to new format" },
     { "master-key-fd", 0, arg_integer, &master_key_fd, 
       "filedescriptor to read passphrase from", "fd" },
     { "help", 'h', arg_flag, &help_flag },
@@ -87,9 +84,12 @@ main(int argc, char **argv)
 
     ret = hdb_read_master_key(context, keyfile, &mkey);
     if(ret && ret != ENOENT)
-	krb5_err(context, 1, ret, "reading master key");
+	krb5_err(context, 1, ret, "reading master key from %s", keyfile);
 
-    if(!convert_flag) {
+    if (convert_flag) {
+	if (ret)
+	    krb5_err(context, 1, ret, "reading master key from %s", keyfile);
+    } else {
 	krb5_keyblock key;
 	krb5_salt salt;
 	salt.salttype = KRB5_PW_SALT;

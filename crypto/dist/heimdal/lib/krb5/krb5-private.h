@@ -18,7 +18,7 @@ _krb5_crc_init_table __P((void));
 
 u_int32_t
 _krb5_crc_update __P((
-	char *p,
+	const char *p,
 	size_t len,
 	u_int32_t res));
 

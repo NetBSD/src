@@ -37,7 +37,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-RCSID("$Id: init_c.c,v 1.1.1.2 2000/08/02 19:59:18 assar Exp $");
+RCSID("$Id: init_c.c,v 1.1.1.3 2001/02/11 13:51:42 assar Exp $");
 
 static void
 set_funcs(kadm5_client_context *c)
@@ -478,7 +478,9 @@ init_context(const char *client_name,
     kadm5_ret_t ret;
     kadm5_server_context *ctx;
     
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	return ret;
     ret = kadm5_c_init_with_context(context,
 				    client_name,
 				    password,

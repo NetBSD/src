@@ -69,22 +69,25 @@ CATMAN = @CATMAN@
 CATMANEXT = @CATMANEXT@
 CC = @CC@
 CPP = @CPP@
-CPPFLAGS_roken = @CPPFLAGS_roken@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 DBLIB = @DBLIB@
 DEPDIR = @DEPDIR@
+DIR_des = @DIR_des@
 DIR_roken = @DIR_roken@
 DLLTOOL = @DLLTOOL@
 EXEEXT = @EXEEXT@
 EXTRA_LIB45 = @EXTRA_LIB45@
 GROFF = @GROFF@
+INCLUDES_roken = @INCLUDES_roken@
 INCLUDE_ = @INCLUDE_@
 LEX = @LEX@
 LIBOBJS = @LIBOBJS@
 LIBTOOL = @LIBTOOL@
 LIB_ = @LIB_@
 LIB_AUTH_SUBDIRS = @LIB_AUTH_SUBDIRS@
+LIB_des = @LIB_des@
+LIB_des_appl = @LIB_des_appl@
 LIB_kdb = @LIB_kdb@
 LIB_otp = @LIB_otp@
 LIB_roken = @LIB_roken@
@@ -110,22 +113,22 @@ dpagaix_CFLAGS = @dpagaix_CFLAGS@
 dpagaix_LDADD = @dpagaix_LDADD@
 install_sh = @install_sh@
 
-# $Id: Makefile.in,v 1.1.1.2 2000/08/02 19:58:57 assar Exp $
+# $Id: Makefile.in,v 1.1.1.3 2001/02/11 13:51:34 assar Exp $
 
 
-# $Id: Makefile.in,v 1.1.1.2 2000/08/02 19:58:57 assar Exp $
+# $Id: Makefile.in,v 1.1.1.3 2001/02/11 13:51:34 assar Exp $
 
 
-# $Id: Makefile.in,v 1.1.1.2 2000/08/02 19:58:57 assar Exp $
+# $Id: Makefile.in,v 1.1.1.3 2001/02/11 13:51:34 assar Exp $
 
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
 SUFFIXES = .et .h .1 .3 .5 .8 .cat1 .cat3 .cat5 .cat8 .x
 
-INCLUDES = -I$(top_builddir)/include $(INCLUDE_krb4)
+INCLUDES = -I$(top_builddir)/include $(INCLUDES_roken) $(INCLUDE_krb4)
 
-AM_CFLAGS =  $(WFLAGS) $(CPPFLAGS_roken)
+AM_CFLAGS =  $(WFLAGS)
 
 CP = cp
 
@@ -148,6 +151,7 @@ LIB_getsockopt = @LIB_getsockopt@
 LIB_logout = @LIB_logout@
 LIB_logwtmp = @LIB_logwtmp@
 LIB_odm_initialize = @LIB_odm_initialize@
+LIB_pidfile = @LIB_pidfile@
 LIB_readline = @LIB_readline@
 LIB_res_search = @LIB_res_search@
 LIB_setpcred = @LIB_setpcred@
@@ -155,6 +159,8 @@ LIB_setsockopt = @LIB_setsockopt@
 LIB_socket = @LIB_socket@
 LIB_syslog = @LIB_syslog@
 LIB_tgetent = @LIB_tgetent@
+
+LIBS = @LIBS@
 
 HESIODLIB = @HESIODLIB@
 HESIODINCLUDE = @HESIODINCLUDE@
@@ -170,14 +176,6 @@ LIB_openldap = @LIB_openldap@
 INCLUDE_readline = @INCLUDE_readline@
 
 LEXLIB = @LEXLIB@
-
-cat1dir = $(mandir)/cat1
-cat3dir = $(mandir)/cat3
-cat5dir = $(mandir)/cat5
-cat8dir = $(mandir)/cat8
-
-MANRX = \(.*\)\.\([0-9]\)
-CATSUFFIX = @CATSUFFIX@
 
 NROFF_MAN = groff -mandoc -Tascii
 
@@ -203,7 +201,7 @@ kauth_LDADD = \
 	$(LIB_kafs) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_krb4) \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
 
@@ -216,7 +214,7 @@ klist_LDADD = $(kauth_LDADD)
 
 LDADD = \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
 
@@ -234,7 +232,6 @@ PROGRAMS =  $(bin_PROGRAMS) $(noinst_PROGRAMS)
 DEFS = @DEFS@ -I. -I$(srcdir) -I../include
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
 X_CFLAGS = @X_CFLAGS@
 X_LIBS = @X_LIBS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
@@ -243,65 +240,57 @@ generate_requests_SOURCES = generate-requests.c
 generate_requests_OBJECTS =  generate-requests.$(OBJEXT)
 generate_requests_LDADD = $(LDADD)
 generate_requests_DEPENDENCIES =  $(top_builddir)/lib/krb5/libkrb5.la \
-$(top_builddir)/lib/des/libdes.la $(top_builddir)/lib/asn1/libasn1.la
+$(top_builddir)/lib/asn1/libasn1.la
 generate_requests_LDFLAGS = 
 am_kauth_OBJECTS =  kinit.$(OBJEXT) kauth_options.$(OBJEXT)
 kauth_OBJECTS =  $(am_kauth_OBJECTS)
 @KRB4_FALSE@kauth_DEPENDENCIES =  $(top_builddir)/lib/krb5/libkrb5.la \
-@KRB4_FALSE@$(top_builddir)/lib/des/libdes.la \
 @KRB4_FALSE@$(top_builddir)/lib/asn1/libasn1.la
 @KRB4_TRUE@kauth_DEPENDENCIES =  $(top_builddir)/lib/kafs/libkafs.la \
 @KRB4_TRUE@$(top_builddir)/lib/krb5/libkrb5.la \
-@KRB4_TRUE@$(top_builddir)/lib/des/libdes.la \
 @KRB4_TRUE@$(top_builddir)/lib/asn1/libasn1.la
 kauth_LDFLAGS = 
 kdecode_ticket_SOURCES = kdecode_ticket.c
 kdecode_ticket_OBJECTS =  kdecode_ticket.$(OBJEXT)
 kdecode_ticket_LDADD = $(LDADD)
 kdecode_ticket_DEPENDENCIES =  $(top_builddir)/lib/krb5/libkrb5.la \
-$(top_builddir)/lib/des/libdes.la $(top_builddir)/lib/asn1/libasn1.la
+$(top_builddir)/lib/asn1/libasn1.la
 kdecode_ticket_LDFLAGS = 
 kdestroy_SOURCES = kdestroy.c
 kdestroy_OBJECTS =  kdestroy.$(OBJEXT)
 @KRB4_FALSE@kdestroy_DEPENDENCIES =  $(top_builddir)/lib/krb5/libkrb5.la \
-@KRB4_FALSE@$(top_builddir)/lib/des/libdes.la \
 @KRB4_FALSE@$(top_builddir)/lib/asn1/libasn1.la
 @KRB4_TRUE@kdestroy_DEPENDENCIES =  $(top_builddir)/lib/kafs/libkafs.la \
 @KRB4_TRUE@$(top_builddir)/lib/krb5/libkrb5.la \
-@KRB4_TRUE@$(top_builddir)/lib/des/libdes.la \
 @KRB4_TRUE@$(top_builddir)/lib/asn1/libasn1.la
 kdestroy_LDFLAGS = 
 kgetcred_SOURCES = kgetcred.c
 kgetcred_OBJECTS =  kgetcred.$(OBJEXT)
 kgetcred_LDADD = $(LDADD)
 kgetcred_DEPENDENCIES =  $(top_builddir)/lib/krb5/libkrb5.la \
-$(top_builddir)/lib/des/libdes.la $(top_builddir)/lib/asn1/libasn1.la
+$(top_builddir)/lib/asn1/libasn1.la
 kgetcred_LDFLAGS = 
 am_kinit_OBJECTS =  kinit.$(OBJEXT) kinit_options.$(OBJEXT)
 kinit_OBJECTS =  $(am_kinit_OBJECTS)
 @KRB4_FALSE@kinit_DEPENDENCIES =  $(top_builddir)/lib/krb5/libkrb5.la \
-@KRB4_FALSE@$(top_builddir)/lib/des/libdes.la \
 @KRB4_FALSE@$(top_builddir)/lib/asn1/libasn1.la
 @KRB4_TRUE@kinit_DEPENDENCIES =  $(top_builddir)/lib/kafs/libkafs.la \
 @KRB4_TRUE@$(top_builddir)/lib/krb5/libkrb5.la \
-@KRB4_TRUE@$(top_builddir)/lib/des/libdes.la \
 @KRB4_TRUE@$(top_builddir)/lib/asn1/libasn1.la
 kinit_LDFLAGS = 
 klist_SOURCES = klist.c
 klist_OBJECTS =  klist.$(OBJEXT)
 @KRB4_FALSE@klist_DEPENDENCIES =  $(top_builddir)/lib/krb5/libkrb5.la \
-@KRB4_FALSE@$(top_builddir)/lib/des/libdes.la \
 @KRB4_FALSE@$(top_builddir)/lib/asn1/libasn1.la
 @KRB4_TRUE@klist_DEPENDENCIES =  $(top_builddir)/lib/kafs/libkafs.la \
 @KRB4_TRUE@$(top_builddir)/lib/krb5/libkrb5.la \
-@KRB4_TRUE@$(top_builddir)/lib/des/libdes.la \
 @KRB4_TRUE@$(top_builddir)/lib/asn1/libasn1.la
 klist_LDFLAGS = 
 kverify_SOURCES = kverify.c
 kverify_OBJECTS =  kverify.$(OBJEXT)
 kverify_LDADD = $(LDADD)
 kverify_DEPENDENCIES =  $(top_builddir)/lib/krb5/libkrb5.la \
-$(top_builddir)/lib/des/libdes.la $(top_builddir)/lib/asn1/libasn1.la
+$(top_builddir)/lib/asn1/libasn1.la
 kverify_LDFLAGS = 
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -608,7 +597,10 @@ install-suid-programs:
 	for file in $$foo; do \
 	x=$(DESTDIR)$(bindir)/$$file; \
 	if chown 0:0 $$x && chmod u+s $$x; then :; else \
-	chmod 0 $$x; fi; done
+	echo "*"; \
+	echo "* Failed to install $$x setuid root"; \
+	echo "*"; \
+	fi; done
 
 install-exec-hook: install-suid-programs
 
@@ -690,87 +682,8 @@ dist-cat8-mans:
 
 dist-hook: dist-cat1-mans dist-cat3-mans dist-cat5-mans dist-cat8-mans
 
-install-cat1-mans:
-	@ext=1;\
-	foo='$(man1_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.1) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat1dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat1/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat1dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat1dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat3-mans:
-	@ext=3;\
-	foo='$(man3_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.3) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat3dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat3/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat3dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat3dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat5-mans:
-	@ext=5;\
-	foo='$(man5_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.5) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat5dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat5/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat5dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat5dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat8-mans:
-	@ext=8;\
-	foo='$(man8_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.8) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat8dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat8/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat8dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat8dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat-mans: install-cat1-mans install-cat3-mans install-cat5-mans install-cat8-mans
+install-cat-mans:
+	$(SHELL) $(top_srcdir)/cf/install-catman.sh "$(INSTALL_DATA)" "$(mkinstalldirs)" "$(srcdir)" "$(DESTDIR)$(mandir)" '$(CATMANEXT)' $(man_MANS) $(man1_MANS) $(man3_MANS) $(man5_MANS) $(man8_MANS)
 
 install-data-local: install-cat-mans
 

@@ -1,3 +1,37 @@
+2001-01-09  Assar Westerlund  <assar@sics.se>
+
+	* rshd.c (save_krb5_creds): use krb5_rd_cred2 instead of
+	krb5_rd_cred
+
+2000-12-31  Assar Westerlund  <assar@sics.se>
+
+	* rshd.c (main): handle krb5_init_context failure consistently
+	* rsh.c (main): handle krb5_init_context failure consistently
+
+2000-12-05  Johan Danielsson  <joda@pdc.kth.se>
+
+	* rshd.c: require encryption if passed -x
+
+2000-11-15  Assar Westerlund  <assar@sics.se>
+
+	* rshd.c (loop): check that the fd's aren't too large to select on
+	* rsh.c (loop, proto): check that the fd's aren't too large to
+	select on
+
+2000-08-10  Assar Westerlund  <assar@sics.se>
+
+	* rsh.c: move code to do config/command parsing correctly.
+
+2000-08-09  Assar Westerlund  <assar@sics.se>
+
+	* rsh.c (main): only fetch stuff from krb5.conf when no option has
+	been given
+
+2000-08-01  Assar Westerlund  <assar@sics.se>
+
+	* rsh.c (doit): loop until we create an error socket of an
+	supported socket family
+
 2000-07-02  Assar Westerlund  <assar@sics.se>
 
 	* rshd.c: DCE stuff from Ake Sandgren <ake@cs.umu.se>

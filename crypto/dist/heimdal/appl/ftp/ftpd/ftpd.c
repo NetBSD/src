@@ -38,7 +38,7 @@
 #endif
 #include "getarg.h"
 
-RCSID("$Id: ftpd.c,v 1.1.1.2 2000/08/02 19:58:39 assar Exp $");
+RCSID("$Id: ftpd.c,v 1.1.1.3 2001/02/11 13:51:19 assar Exp $");
 
 static char version[] = "Version 6.00";
 
@@ -206,6 +206,8 @@ int use_builtin_ls = -1;
 static int help_flag;
 static int version_flag;
 
+static const char *good_chars = "+-=_,.";
+
 struct getargs args[] = {
     { NULL, 'a', arg_string, &auth_string, "required authentication" },
     { NULL, 'i', arg_flag, &interactive_flag, "don't assume stdin is a socket" },
@@ -218,6 +220,7 @@ struct getargs args[] = {
     { NULL, 'd', arg_flag, &debug, "enable debugging" },
     { NULL, 'v', arg_flag, &debug, "enable debugging" },
     { "builtin-ls", 'B', arg_flag, &use_builtin_ls, "use built-in ls to list files" },
+    { "good-chars", 0, arg_string, &good_chars, "allowed anonymous upload filename chars" },
     { "version", 0, arg_flag, &version_flag },
     { "help", 'h', arg_flag, &help_flag }
 };
@@ -252,7 +255,8 @@ show_file(const char *file, int code)
 int
 main(int argc, char **argv)
 {
-    int his_addr_len, ctrl_addr_len, on = 1;
+    socklen_t his_addr_len, ctrl_addr_len;
+    int on = 1;
     int port;
     struct servent *sp;
 
@@ -887,8 +891,8 @@ pass(char *passwd)
 
 	/* some clients insists on sending a password */
 	if (logged_in && askpasswd == 0){
-	     reply(230, "Dumpucko!");
-	     return;
+	    reply(230, "Password not necessary");
+	    return;
 	}
 
 	if (logged_in || askpasswd == 0) {
@@ -1101,7 +1105,6 @@ done:
 int 
 filename_check(char *filename)
 {
-  static const char good_chars[] = "+-=_,.";
     char *p;
 
     p = strrchr(filename, '/');
@@ -1117,7 +1120,7 @@ filename_check(char *filename)
 	if(*p == '\0')
 	    return 0;
     }
-    lreply(553, "\"%s\" is an illegal filename.", filename);
+    lreply(553, "\"%s\" is not an acceptable filename.", filename);
     lreply(553, "The filename must start with an alphanumeric "
 	   "character and must only");
     reply(553, "consist of alphanumeric characters or any of the following: %s", 
@@ -1254,7 +1257,7 @@ dataconn(const char *name, off_t size, const char *mode)
 		struct sockaddr_storage from_ss;
 		struct sockaddr *from = (struct sockaddr *)&from_ss;
 		int s;
-		int fromlen = sizeof(from_ss);
+		socklen_t fromlen = sizeof(from_ss);
 
 		s = accept(pdata, from, &fromlen);
 		if (s < 0) {
@@ -1922,7 +1925,7 @@ myoob(int signo)
 void
 pasv(void)
 {
-	int len;
+	socklen_t len;
 	char *p, *a;
 	struct sockaddr_in *sin;
 
@@ -1931,6 +1934,9 @@ pasv(void)
 		      "You cannot do PASV with something that's not IPv4");
 		return;
 	}
+
+	if(pdata != -1)
+	    close(pdata);
 
 	pdata = socket(ctrl_addr->sa_family, SOCK_STREAM, 0);
 	if (pdata < 0) {
@@ -1972,7 +1978,7 @@ pasv_error:
 void
 epsv(char *proto)
 {
-	int len;
+	socklen_t len;
 
 	pdata = socket(ctrl_addr->sa_family, SOCK_STREAM, 0);
 	if (pdata < 0) {
@@ -2133,9 +2139,9 @@ list_file(char *file)
 	pdata = -1;
     } else {
 #ifdef HAVE_LS_A
-	const char *cmd = "/bin/ls -lA -- %s";
+	const char *cmd = "/bin/ls -lA %s";
 #else
-	const char *cmd = "/bin/ls -la -- %s";
+	const char *cmd = "/bin/ls -la %s";
 #endif
 	retrieve(cmd, file);
     }

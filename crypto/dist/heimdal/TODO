@@ -1,6 +1,6 @@
 -*- indented-text -*-
 
-$Id: TODO,v 1.1.1.2 2000/08/02 19:58:00 assar Exp $
+$Id: TODO,v 1.1.1.3 2001/02/11 13:51:07 assar Exp $
 
 * configure
 
@@ -8,23 +8,27 @@ use more careful checking before starting to use berkeley db.  it only
 makes sense to do so if we have the appropriate library and the header
 file.
 
+handle readline hiding in readline/readline.h
+
 * appl
 
 ** appl/popper
 
 Implement RFC1731 and 1734, pop over GSS-API
 
-** appl/rsh
-
-add rcp program
+* doc
 
 * kdc
 
-preferably use keys with default salt for v5 requests
-
 * kadmin
 
+make it happy with reading and parsing kdc.conf
+
 is in need of a major cleanup
+
+* kpasswdd
+
+figure out what's the deal with do_sequence and the MIT client
 
 * lib
 
@@ -36,21 +40,27 @@ prepend a prefix on all generated symbols
 
 PAM
 
+** lib/com_err
+
+write a man-page
+
+** lib/des
+
+make everything work with openssl and make prototypes compatible
+
 ** lib/gssapi
 
-process_context_token, display_status, add_cred, inquire_cred_by_mech,
-export_sec_context, import_sec_context, inquire_names_for_mech, and
+process_context_token, add_cred, inquire_cred_by_mech,
+inquire_names_for_mech, and
 inquire_mechs_for_name not implemented.
-
-only DES MAC MD5 and DES implemented.
 
 set minor_status in all functions
 
-init_sec_context: `initiator_cred_handle' and `time_req' ignored.
-
 anonymous credentials not implemented
 
-add 3des, rc4
+add rc4
+
+** lib/hdb
 
 ** lib/kadm5
 
@@ -75,6 +85,6 @@ OTP?
 make checksum/encryption type configuration more realm-specific.  make
 some simple way of handling the w2k situtation
 
-** lib/roken
+crypto: allow scather/gather creation of checksums
 
-getifaddrs
+** lib/roken

@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:05 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:10 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -16,6 +16,7 @@ SUBDIRS = 					\
 	  popper				\
 	  push					\
 	  rsh					\
+	  rcp					\
 	  su					\
 	  xnlock				\
 	  telnet				\

@@ -1,5 +1,5 @@
-.\" $Heimdal: kadmin.8,v 1.1 2000/09/10 19:14:24 joda Exp $
-.\" $NetBSD: kadmin.8,v 1.1 2000/09/10 19:45:04 joda Exp $
+.\" $Id: kadmin.8,v 1.1.1.1 2001/02/11 13:51:32 assar Exp $
+.\"
 .Dd September 10, 2000
 .Dt KADMIN 8
 .Os HEIMDAL
@@ -30,7 +30,7 @@ Kerberos administration utility
 .Op Fl l | Fl -local
 .Op Fl h | Fl -help
 .Op Fl v | Fl -version
-.Ar [command]
+.Op Ar command
 .Sh DESCRIPTION
 The
 .Nm
@@ -145,6 +145,7 @@ creates a keytab with the keys of the specified principals
 .Pp
 .Nm get
 .Op Fl l | Fl -long
+.Op Fl s | Fl -short
 .Op Fl t | Fl -terse
 .Ar expression...
 .Pp
@@ -189,7 +190,7 @@ When running in local mode, the following commands can also be used.
 .Bd -ragged -offset indent
 .Nm dump
 .Op Fl d | Fl -decrypt
-.Ar [dump-file]
+.Op Ar dump-file
 .Pp
 .Bd -filled -offset indent
 writes the database in

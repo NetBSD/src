@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  */
-/* $Id: admin.h,v 1.1.1.2 2000/08/02 19:59:15 assar Exp $ */
+/* $Id: admin.h,v 1.1.1.3 2001/02/11 13:51:41 assar Exp $ */
 
 #ifndef __KADM5_ADMIN_H__
 #define __KADM5_ADMIN_H__
@@ -105,14 +105,14 @@ typedef struct _krb5_key_data {
     int16_t key_data_kvno;	/* Key Version */
     int16_t key_data_type[2];	/* Array of types */
     int16_t key_data_length[2];	/* Array of lengths */
-    void** key_data_contents[2];/* Array of pointers */
+    void*   key_data_contents[2];/* Array of pointers */
 } krb5_key_data;
 
 typedef struct _krb5_tl_data {
     struct _krb5_tl_data* tl_data_next;
     int16_t tl_data_type;         
     int16_t tl_data_length;       
-    void **tl_data_contents;     
+    void*   tl_data_contents;     
 } krb5_tl_data;
 
 typedef struct _kadm5_principal_ent_t {

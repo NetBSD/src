@@ -1,8 +1,6 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:59:23 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:43 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
-
-INCLUDES += $(INCLUDE_krb4)
 
 bin_PROGRAMS = verify_krb5_conf
 
@@ -11,14 +9,14 @@ noinst_PROGRAMS = dump_config test_get_addrs
 check_PROGRAMS = n-fold-test string-to-key-test
 TESTS = n-fold-test string-to-key-test
 
-if KRB4
-KRB4LIB = $(LIB_krb4)
-keytab_krb4_c = keytab_krb4.c
-endif
-
 LDADD = libkrb5.la \
-	$(KRB4LIB) \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
+	$(top_builddir)/lib/asn1/libasn1.la \
+	$(LIB_roken)
+
+libkrb5_la_LIBADD = \
+	../com_err/error.lo ../com_err/com_err.lo \
+	$(LIB_des) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
 
@@ -74,8 +72,8 @@ libkrb5_la_SOURCES = \
 	keytab.c \
 	keytab_file.c \
 	keytab_memory.c \
-	$(keytab_krb4_c) \
 	keytab_keyfile.c \
+	keytab_krb4.c \
 	krbhst.c \
 	kuserok.c \
 	log.c \
@@ -102,6 +100,7 @@ libkrb5_la_SOURCES = \
 	rd_safe.c \
 	read_message.c \
 	recvauth.c \
+	replay.c \
 	send_to_kdc.c \
 	sendauth.c \
 	set_default_realm.c \
@@ -120,9 +119,7 @@ libkrb5_la_SOURCES = \
 	write_message.c \
 	$(ERR_FILES)
 
-EXTRA_libkrb5_la_SOURCES = keytab_krb4.c
-
-libkrb5_la_LDFLAGS = -version-info 12:0:1
+libkrb5_la_LDFLAGS = -version-info 15:0:0
 
 $(libkrb5_la_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
 
@@ -132,9 +129,10 @@ $(srcdir)/krb5-protos.h:
 $(srcdir)/krb5-private.h:
 	cd $(srcdir); perl ../../cf/make-proto.pl -p krb5-private.h $(libkrb5_la_SOURCES) || rm -f krb5-private.h
 
-libkrb5_la_LIBADD = ../com_err/error.lo ../com_err/com_err.lo
+#libkrb5_la_LIBADD = ../com_err/error.lo ../com_err/com_err.lo
 
 man_MANS =					\
+	kerberos.8				\
 	krb5.conf.5				\
 	krb5_425_conv_principal.3		\
 	krb5_appdefault.3			\
@@ -146,7 +144,10 @@ man_MANS =					\
 	krb5_sname_to_principal.3		\
 	krb5_unparse_name.3			\
 	krb5_warn.3				\
-	verify_krb5_conf.8
+	verify_krb5_conf.8			\
+	krb5_auth_context.3			\
+	krb5_context.3				\
+	krb5_init_context.3
 
 include_HEADERS = krb5.h krb5-protos.h krb5-private.h krb5_err.h heim_err.h
 

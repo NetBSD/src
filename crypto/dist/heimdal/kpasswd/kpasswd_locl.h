@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: kpasswd_locl.h,v 1.1.1.2 2000/08/02 19:58:57 assar Exp $ */
+/* $Id: kpasswd_locl.h,v 1.1.1.3 2001/02/11 13:51:34 assar Exp $ */
 
 #ifndef __KPASSWD_LOCL_H__
 #define __KPASSWD_LOCL_H__
@@ -85,6 +85,12 @@
 #endif
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#ifdef HAVE_DLFCN_H
+#include <dlfcn.h>
+#endif
+#ifdef HAVE_UTIL_H
+#include <util.h>
 #endif
 #include <err.h>
 #include <roken.h>

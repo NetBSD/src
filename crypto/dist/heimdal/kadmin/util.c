@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <parse_units.h>
 
-RCSID("$Id: util.c,v 1.1.1.2 2000/08/02 19:58:52 assar Exp $");
+RCSID("$Id: util.c,v 1.1.1.3 2001/02/11 13:51:33 assar Exp $");
 
 /*
  * util.c - functions for parsing, unparsing, and editing different
@@ -103,9 +103,7 @@ parse_attributes (const char *resp, krb5_flags *attr, int *mask, int bit)
 {
     krb5_flags tmp = *attr;
 
-    if (resp[0] == '\0')
-	return 0;
-    else if (str2attributes(resp, &tmp) == 0) {
+    if (str2attributes(resp, &tmp) == 0) {
 	*attr = tmp;
 	if (mask)
 	    *mask |= bit;
@@ -133,6 +131,8 @@ edit_attributes (const char *prompt, krb5_flags *attr, int *mask, int bit)
     attributes2str(*attr, buf, sizeof(buf));
     for (;;) {
 	get_response("Attributes", buf, resp, sizeof(resp));
+	if (resp[0] == '\0')
+	    break;
 	if (parse_attributes (resp, attr, mask, bit) == 0)
 	    break;
     }
@@ -168,7 +168,7 @@ time_t2str(time_t t, char *str, size_t len, int include_time)
  */
 
 int
-str2time_t (const char *str, time_t *time)
+str2time_t (const char *str, time_t *t)
 {
     const char *p;
     struct tm tm, tm2;
@@ -176,7 +176,12 @@ str2time_t (const char *str, time_t *time)
     memset (&tm, 0, sizeof (tm));
 
     if(strcasecmp(str, "never") == 0) {
-	*time = 0;
+	*t = 0;
+	return 0;
+    }
+
+    if(strcasecmp(str, "now") == 0) {
+	*t = time(NULL);
 	return 0;
     }
 
@@ -196,7 +201,7 @@ str2time_t (const char *str, time_t *time)
 	tm.tm_sec  = tm2.tm_sec;
     }
 
-    *time = tm2time (tm, 0);
+    *t = tm2time (tm, 0);
     return 0;
 }
 
@@ -337,27 +342,37 @@ int
 edit_entry(kadm5_principal_ent_t ent, int *mask,
 	   kadm5_principal_ent_t default_ent, int default_mask)
 {
-    if (default_ent && (default_mask & KADM5_MAX_LIFE))
+    if (default_ent
+	&& (default_mask & KADM5_MAX_LIFE)
+	&& !(*mask & KADM5_MAX_LIFE))
 	ent->max_life = default_ent->max_life;
     edit_deltat ("Max ticket life", &ent->max_life, mask,
 		 KADM5_MAX_LIFE);
 
-    if (default_ent && (default_mask & KADM5_MAX_RLIFE))
+    if (default_ent
+	&& (default_mask & KADM5_MAX_RLIFE)
+	&& !(*mask & KADM5_MAX_RLIFE))
 	ent->max_renewable_life = default_ent->max_renewable_life;
     edit_deltat ("Max renewable life", &ent->max_renewable_life, mask,
 		 KADM5_MAX_RLIFE);
 
-    if (default_ent && (default_mask & KADM5_PRINC_EXPIRE_TIME))
+    if (default_ent
+	&& (default_mask & KADM5_PRINC_EXPIRE_TIME)
+	&& !(*mask & KADM5_PRINC_EXPIRE_TIME))
 	ent->princ_expire_time = default_ent->princ_expire_time;
     edit_timet ("Principal expiration time", &ent->princ_expire_time, mask,
 	       KADM5_PRINC_EXPIRE_TIME);
 
-    if (default_ent && (default_mask & KADM5_PW_EXPIRATION))
+    if (default_ent
+	&& (default_mask & KADM5_PW_EXPIRATION)
+	&& !(*mask & KADM5_PW_EXPIRATION))
 	ent->pw_expiration = default_ent->pw_expiration;
     edit_timet ("Password expiration time", &ent->pw_expiration, mask,
 	       KADM5_PW_EXPIRATION);
 
-    if (default_ent && (default_mask & KADM5_ATTRIBUTES))
+    if (default_ent
+	&& (default_mask & KADM5_ATTRIBUTES)
+	&& !(*mask & KADM5_ATTRIBUTES))
 	ent->attributes = default_ent->attributes & ~KRB5_KDB_DISALLOW_ALL_TIX;
     edit_attributes ("Attributes", &ent->attributes, mask,
 		     KADM5_ATTRIBUTES);
@@ -542,7 +557,7 @@ hex2n (char c)
 
 /*
  * convert a key in a readable format into a keyblock.
- * return 0 iff succesful.
+ * return 0 iff succesful, otherwise `err' should point to an error message
  */
 
 int

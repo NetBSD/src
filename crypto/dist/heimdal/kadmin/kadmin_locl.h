@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kadmin_locl.h,v 1.1.1.2 2000/08/02 19:58:51 assar Exp $
+ * $Id: kadmin_locl.h,v 1.1.1.3 2001/02/11 13:51:33 assar Exp $
  */
 
 #ifndef __ADMIN_LOCL_H__
@@ -72,6 +72,9 @@
 #include <netinet6/in6.h>
 #endif
 
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
@@ -164,7 +167,7 @@ kadmind_loop (krb5_context, krb5_auth_context, krb5_keytab, int);
 /* version4.c */
 
 void
-handle_v4(krb5_context context, int len, int fd);
+handle_v4(krb5_context context, krb5_keytab keytab, int len, int fd);
 
 /* random_password.c */
 
@@ -177,5 +180,10 @@ sig_atomic_t term_flag, doing_useful_work;
 
 void parse_ports(krb5_context, const char*);
 int start_server(krb5_context);
+
+/* server.c */
+
+krb5_error_code
+kadmind_loop (krb5_context, krb5_auth_context, krb5_keytab, int);
 
 #endif /* __ADMIN_LOCL_H__ */

@@ -8,7 +8,7 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: xnlock.c,v 1.1.1.2 2000/08/02 19:58:28 assar Exp $");
+RCSID("$Id: xnlock.c,v 1.1.1.3 2001/02/11 13:51:16 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -985,8 +985,12 @@ main (int argc, char **argv)
 #endif
 #ifdef KRB5
     {
+	krb5_error_code ret;
 	char *str;
-	krb5_init_context(&context);
+
+	ret = krb5_init_context(&context);
+	if (ret)
+	    errx (1, "krb5_init_context failed: %d", ret);
 	krb5_get_default_principal(context, &client);
 	krb5_unparse_name(context, client, &str);
 	snprintf(userprompt, sizeof(userprompt), "User: %s", str);

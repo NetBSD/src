@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: init_s.c,v 1.1.1.2 2000/08/02 19:59:18 assar Exp $");
+RCSID("$Id: init_s.c,v 1.1.1.3 2001/02/11 13:51:42 assar Exp $");
 
 
 static kadm5_ret_t 
@@ -113,7 +113,9 @@ kadm5_s_init_with_password(const char *client_name,
     kadm5_ret_t ret;
     kadm5_server_context *ctx;
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	return ret;
     ret = kadm5_s_init_with_password_ctx(context, 
 					 client_name, 
 					 password, 
@@ -163,7 +165,9 @@ kadm5_s_init_with_skey(const char *client_name,
     kadm5_ret_t ret;
     kadm5_server_context *ctx;
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	return ret;
     ret = kadm5_s_init_with_skey_ctx(context, 
 				     client_name, 
 				     keytab, 
@@ -213,7 +217,9 @@ kadm5_s_init_with_creds(const char *client_name,
     kadm5_ret_t ret;
     kadm5_server_context *ctx;
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	return ret;
     ret = kadm5_s_init_with_creds_ctx(context, 
 				      client_name, 
 				      ccache, 

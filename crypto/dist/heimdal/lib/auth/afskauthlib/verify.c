@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: verify.c,v 1.1.1.2 2000/08/02 20:00:22 assar Exp $");
+RCSID("$Id: verify.c,v 1.1.1.3 2001/02/11 13:51:50 assar Exp $");
 #endif
 #include <unistd.h>
 #include <sys/types.h>
@@ -123,7 +123,11 @@ verify_krb5(struct passwd *pwd,
     krb5_ccache ccache;
     krb5_principal principal;
     
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret) {
+	syslog(LOG_AUTH|LOG_DEBUG, "krb5_init_context failed: %d", ret);
+	goto out;
+    }
 
     ret = krb5_parse_name (context, pwd->pw_name, &principal);
     if (ret) {
@@ -286,10 +290,10 @@ afs_gettktstring (void)
 	}
     }
 #ifdef KRB5
-    setenv("KRB5CCNAME",krb5ccname,1);
+    esetenv("KRB5CCNAME",krb5ccname,1);
 #endif
 #ifdef KRB4
-    setenv("KRBTKFILE",krbtkfile,1);
+    esetenv("KRBTKFILE",krbtkfile,1);
     return krbtkfile;
 #else
     return "";

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.1.1.2 2000/08/02 19:58:38 assar Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.1.1.3 2001/02/11 13:51:18 assar Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -43,7 +43,7 @@
 %{
 
 #include "ftpd_locl.h"
-RCSID("$Id: ftpcmd.y,v 1.1.1.2 2000/08/02 19:58:38 assar Exp $");
+RCSID("$Id: ftpcmd.y,v 1.1.1.3 2001/02/11 13:51:18 assar Exp $");
 
 off_t	restart_point;
 
@@ -159,18 +159,21 @@ cmd
 			eprt ($3);
 			free ($3);
 		}
-	| PASV CRLF
+	| PASV CRLF check_login
 		{
+		    if($3)
 			pasv ();
 		}
-	| EPSV CRLF
+	| EPSV CRLF check_login
 		{
+		    if($3)
 			epsv (NULL);
 		}
-	| EPSV SP STRING CRLF
+	| EPSV SP STRING CRLF check_login
 		{
+		    if($5)
 			epsv ($3);
-			free ($3);
+		    free ($3);
 		}
 	| TYPE SP type_code CRLF
 		{

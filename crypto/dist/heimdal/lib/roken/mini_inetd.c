@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: mini_inetd.c,v 1.1.1.2 2000/08/02 19:59:52 assar Exp $");
+RCSID("$Id: mini_inetd.c,v 1.1.1.3 2001/02/11 13:51:46 assar Exp $");
 #endif
 
 #include <err.h>
@@ -48,7 +48,7 @@ accept_it (int s)
 {
     int s2;
 
-    s2 = accept(s, NULL, 0);
+    s2 = accept(s, NULL, NULL);
     if(s2 < 0)
 	err (1, "accept");
     close(s);
@@ -103,6 +103,8 @@ mini_inetd (int port)
 	    err (1, "bind");
 	if (listen (fds[i], SOMAXCONN) < 0)
 	    err (1, "listen");
+	if (fds[i] >= FD_SETSIZE)
+	    errx (1, "fd too large");
 	FD_SET(fds[i], &orig_read_set);
 	max_fd = max(max_fd, fds[i]);
 	++i;

@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$Id: common.c,v 1.1.1.2 2000/08/02 19:58:30 assar Exp $");
+RCSID("$Id: common.c,v 1.1.1.3 2001/02/11 13:51:16 assar Exp $");
 
 char x_socket[MaxPathLen];
 
@@ -601,14 +601,17 @@ find_auth_cookie (FILE *f)
     Xauth *ret = NULL;
     char local_hostname[MaxHostNameLen];
     char *display = getenv("DISPLAY");
+    char d[MaxHostNameLen + 4];
     char *colon;
     struct addrinfo *ai;
     struct addrinfo hints;
     int disp;
     int error;
 
-    if (display == NULL)
+    if(display == NULL)
 	display = ":0";
+    strlcpy(d, display, sizeof(d));
+    display = d;
     colon = strchr (display, ':');
     if (colon == NULL)
 	disp = 0;
@@ -732,7 +735,7 @@ int
 suspicious_address (int sock, struct sockaddr_in addr)
 {
     char data[40];
-    int len = sizeof(data);
+    socklen_t len = sizeof(data);
 
     return addr.sin_addr.s_addr != htonl(INADDR_LOOPBACK)
 #if defined(IP_OPTIONS) && defined(HAVE_GETSOCKOPT)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kaserver.c,v 1.1.1.2 2000/08/02 19:58:54 assar Exp $");
+RCSID("$Id: kaserver.c,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $");
 
 #ifdef KASERVER
 
@@ -469,6 +469,11 @@ do_authenticate (struct rx_header *hdr,
     krb5_ret_int32 (reply_sp, &chal);
     krb5_storage_free (reply_sp);
 
+    if (abs(chal - kdc_time) > context->max_skew) {
+	make_error_reply (hdr, KACLOCKSKEW, reply);
+	goto out;
+    }
+
     /* life */
     max_life = end_time - kdc_time;
     if (client_entry->max_life)
@@ -496,14 +501,10 @@ out:
 	free (name);
     if (instance)
 	free (instance);
-    if (client_entry) {
-	hdb_free_entry (context, client_entry);
-	free (client_entry);
-    }
-    if (server_entry) {
-	hdb_free_entry (context, server_entry);
-	free (server_entry);
-    }
+    if (client_entry)
+	free_ent (client_entry);
+    if (server_entry)
+	free_ent (server_entry);
 }
 
 static krb5_error_code
@@ -650,6 +651,14 @@ do_getticket (struct rx_header *hdr,
 	char sinstance[SNAME_SZ];
 	u_int32_t paddress;
 
+	if (aticket.length > sizeof(ticket.dat)) {
+	    kdc_log(0, "ticket too long (%u > %u)",
+		    (unsigned)aticket.length,
+		    (unsigned)sizeof(ticket.dat));
+	    make_error_reply (hdr, KABADTICKET, reply);
+	    goto out;
+	}
+
 	ticket.length = aticket.length;
 	memcpy (ticket.dat, aticket.data, ticket.length);
 
@@ -730,14 +739,10 @@ out:
 	free (name);
     if (instance)
 	free (instance);
-    if (krbtgt_entry) {
-	hdb_free_entry (context, krbtgt_entry);
-	free (krbtgt_entry);
-    }
-    if (server_entry) {
-	hdb_free_entry (context, server_entry);
-	free (server_entry);
-    }
+    if (krbtgt_entry)
+	free_ent (krbtgt_entry);
+    if (server_entry)
+	free_ent (server_entry);
 }
 
 krb5_error_code

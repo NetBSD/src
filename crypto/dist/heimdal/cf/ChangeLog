@@ -1,3 +1,100 @@
+2000-12-26  Assar Westerlund  <assar@sics.se>
+
+	* krb-ipv6.m4: remove some dnl that weren't the correct with
+	modern autoconf
+
+2000-12-15  Assar Westerlund  <assar@sics.se>
+
+	* roken-frag.m4 (inet_ntoa, inet_ntop, inet_pton): add necessary
+	includes when testing
+	* broken2.m4: new variant of broken, with includes and arguments
+
+	* test-package.m4: s/ifval/m4_ifval/ to keep in sync with
+ 	autoconf.  from Ake Sandgren <ake@cs.umu.se>
+	* check-var.m4: s/ifval/m4_ifval/ to keep in sync with autoconf.
+  	from Ake Sandgren <ake@cs.umu.se>
+
+2000-12-13  Assar Westerlund  <assar@sics.se>
+
+	* krb-irix.m4: need to set irix to no first.  From Ake Sandgren
+	<ake@cs.umu.se>
+
+2000-12-12  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken-frag.m4: move sa_len test to before test for broken
+	getnameinfo
+
+2000-12-12  Assar Westerlund  <assar@sics.se>
+
+	* roken-frag.m4: only test for broken getnameinfo if it exists
+
+2000-12-10  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken-frag.m4: ifaddrs.h
+
+2000-12-06  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken-frag.m4: test for unvis, and vis.h
+
+	* roken-frag.m4: test for strvis*
+
+2000-12-05  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am.common: just warn if we fail to setuid a program
+
+	* broken-getnameinfo.m4: add more quotes
+
+	* roken-frag.m4: test for getifaddrs
+
+	* roken-frag.m4: test for broken AIX getnameinfo
+
+	* broken-getnameinfo.m4: test for broken getnameinfo
+
+2000-12-01  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am.common: add kludge for LIBS
+
+2000-11-30  Johan Danielsson  <joda@pdc.kth.se>
+
+	* check-man.m4: update this after recent changes
+
+	* Makefile.am.common: use install-catman.sh
+
+	* install-catman.sh: script to install preformatted manual pages
+
+	* Makefile.am.common: change cat handling
+
+2000-11-29  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken-frag.m4: don't use AC_CONFIG_FILES here, since it doesn't
+	work with automake
+
+2000-11-15  Assar Westerlund  <assar@sics.se>
+
+	* krb-readline.m4: link against the libtool-versions of
+	libeditline and libel_compat
+
+	* Makefile.am.common (INCLUDES): add $(INCLUDES_roken)
+	* roken-frag.m4 (CPPFLAGS_roken): rename to INCLUDES_roken
+
+2000-11-05  Johan Danielsson  <joda@pdc.kth.se>
+
+	* aix.m4: set aix
+
+2000-08-19  Assar Westerlund  <assar@sics.se>
+
+	* krb-bigendian.m4: merge from arla: make it work better
+
+2000-08-07  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken-frag.m4: check getsockname for proto compat
+
+2000-08-04  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am.common: add library for pidfile
+
+	* roken-frag.m4: tests for util.h and pidfile
+
 2000-07-19  Johan Danielsson  <joda@pdc.kth.se>
 
 	* check-var.m4: rename to rk_CHECK_VAR, transposing the arguments,

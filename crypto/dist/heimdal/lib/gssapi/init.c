@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,11 +33,15 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: init.c,v 1.1.1.2 2000/08/02 19:59:09 assar Exp $");
+RCSID("$Id: init.c,v 1.1.1.3 2001/02/11 13:51:39 assar Exp $");
 
 void
 gssapi_krb5_init (void)
 {
-    if(gssapi_krb5_context == NULL)
-	krb5_init_context (&gssapi_krb5_context);
+    krb5_error_code ret;
+
+    if(gssapi_krb5_context == NULL) {
+	ret = krb5_init_context (&gssapi_krb5_context);
+	/* and what do we do when that failed? */
+    }
 }

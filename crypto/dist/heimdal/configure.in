@@ -1,10 +1,15 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_REVISION($Revision: 1.1.1.2 $)
+AC_REVISION($Revision: 1.1.1.3 $)
 AC_PREREQ(2.14.-1.1)dnl 2.14a
-AC_INIT(heimdal, 0.3a, heimdal-bugs@pdc.kth.se)
+AC_INIT(heimdal, 0.3e, heimdal-bugs@pdc.kth.se)
 AM_CONFIG_HEADER(include/config.h)
 
-AM_INIT_AUTOMAKE(heimdal,0.3a)
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_CC_STDC
+
+AM_INIT_AUTOMAKE(heimdal,0.3e)
 
 AC_PREFIX_DEFAULT(/usr/heimdal)
 
@@ -44,9 +49,6 @@ esac
 
 #test -z "$CFLAGS" && CFLAGS="-g"
 
-dnl Checks for programs.
-AC_PROG_CC_STDC
-
 AC_OBJEXT
 AC_EXEEXT
 
@@ -78,7 +80,7 @@ LIB_roken="\$(top_builddir)/lib/vers/libvers.la $LIB_roken"
 AC_TEST_PACKAGE_NEW(openldap,[#include <ldap.h>],[-lldap -llber],,,OPENLDAP)
 
 if test "$openldap_libdir"; then
-	LIB_openldap="-rpath $openldap_libdir $LIB_openldap"
+	LIB_openldap="-R $openldap_libdir $LIB_openldap"
 fi
 
 AC_TEST_PACKAGE_NEW(krb4,[#include <krb.h>],-lkrb,-ldes,/usr/athena, KRB4)
@@ -152,12 +154,14 @@ if test "$with_krb4" != "no"; then
 	CFLAGS="$save_CFLAGS"
 	LIB_kdb="-lkdb -lkrb"
 	if test "$krb4_libdir"; then
-		LIB_krb4="-rpath $krb4_libdir $LIB_krb4"
-		LIB_kdb="-rpath $krb4_libdir -L$krb4_libdir $LIB_kdb"
+		LIB_krb4="-R $krb4_libdir $LIB_krb4"
+		LIB_kdb="-R $krb4_libdir -L$krb4_libdir $LIB_kdb"
 	fi
 fi
 AM_CONDITIONAL(KRB4, test "$with_krb4" != "no")
 AM_CONDITIONAL(KRB5, true)
+AM_CONDITIONAL(do_roken_rename, true)
+
 AC_DEFINE(KRB5, 1, [Enable Kerberos 5 support in applications.])dnl
 AC_SUBST(LIB_kdb)dnl
 
@@ -165,13 +169,12 @@ AC_ARG_ENABLE(dce, [  --enable-dce	if you want support for DCE/DFS PAG's.])
 if test "$enable_dce" = yes; then
     AC_DEFINE(DCE, 1, [Define if you want support for DCE/DFS PAG's.])
 fi
-AM_CONDITIONAL(DCE, test "$with_dce" = yes)
+AM_CONDITIONAL(DCE, test "$enable_dce" = yes)
 
 ## XXX quite horrible:
 if test -f /etc/ibmcxx.cfg; then
-	x=`sed -n '/^xlc_r4/,/^$/p' /etc/ibmcxx.cfg`
-	dpagaix_LDADD=`echo $x | sed -n -e '/libraries/{;s/^[^=]*=\(.*\)/\1/;s/,/ /gp;}'`
-	dpagaix_CFLAGS=`echo $x | sed -n -e '/options/{;s/^[^=]*=\(.*\)/\1/;s/-q[^,]*//;s/,/ /gp;}'`
+	dpagaix_LDADD=`sed -n '/^xlc_r4/,/^$/p' /etc/ibmcxx.cfg | sed -n -e '/libraries/{;s/^[^=]*=\(.*\)/\1/;s/,/ /gp;}'`
+	dpagaix_CFLAGS=`sed -n '/^xlc_r4/,/^$/p' /etc/ibmcxx.cfg | sed -n -e '/options/{;s/^[^=]*=\(.*\)/\1/;s/-q[^,]*//;s/,/ /gp;}'`
 else
 	dpagaix_CFLAGS="-D_THREAD_SAFE -D_AIX_PTHREADS_D7 -D_AIX32_THREADS=1 -D_AES_SOURCE -D_AIX41 -I/usr/include/dce"
 	dpagaix_LDADD="-L/usr/lib/threads -ldcelibc_r -ldcepthreads -lpthreads_compat lpthreads -lc_r"
@@ -219,7 +222,7 @@ AM_CONDITIONAL(OTP, test "$otp" = yes)dnl
 
 AC_CHECK_OSFC2
 
-AC_CHECK_MAN
+rk_CHECK_MAN
 
 AC_TEST_PACKAGE_NEW(readline,
 [#include <stdio.h>
@@ -231,6 +234,7 @@ KRB_C_BIGENDIAN
 AC_C_INLINE
 
 KRB_AIX
+KRB_IRIX
 
 KRB_CHECK_X
 
@@ -272,6 +276,7 @@ AC_CHECK_HEADERS([\
 	errno.h					\
 	fcntl.h					\
 	fnmatch.h				\
+	gdbm/ndbm.h				\
 	grp.h					\
 	inttypes.h				\
 	io.h					\
@@ -418,7 +423,6 @@ AC_CHECK_FUNCS([				\
 	_getpty					\
 	_scrsize				\
 	fcntl					\
-	getmsg					\
 	gettimeofday				\
 	getuid					\
 	grantpt					\
@@ -535,20 +539,43 @@ AC_HAVE_STRUCT_FIELD(struct sockaddr, sa_len, [#include <sys/types.h>
 #include <sys/socket.h>])
 
 
-AC_GROK_TYPES(int8_t int16_t int32_t int64_t)
-AC_GROK_TYPES(u_int8_t u_int16_t u_int32_t u_int64_t)
+AC_GROK_TYPES([int8_t int16_t int32_t int64_t \
+	u_int8_t u_int16_t u_int32_t u_int64_t \
+	uint8_t uint16_t uint32_t uint64_t])
 
 dnl
 dnl crypto functions tests
 dnl
 
-AC_FIND_FUNC_NO_LIBS(MD4Init, crypto)
-AC_FIND_FUNC_NO_LIBS(MD4_Init, crypto)
-AC_FIND_FUNC_NO_LIBS(MD5Init, crypto)
-AC_FIND_FUNC_NO_LIBS(MD5_Init, crypto)
-AC_FIND_FUNC_NO_LIBS(SHA1Init, crypto)
-AC_FIND_FUNC_NO_LIBS(SHA1_Init, crypto)
-AC_FIND_FUNC_NO_LIBS(des_cbc_encrypt, crypto des)
+AC_CHECK_HEADERS([				\
+	openssl/md4.h				\
+	openssl/md5.h				\
+	openssl/sha.h				\
+	openssl/des.h				\
+	openssl/rc4.h				\
+])
+
+AC_FIND_FUNC_NO_LIBS2(MD4_Init, crypto des, [], [], [], [$LIB_krb4])
+AC_FIND_FUNC_NO_LIBS2(MD5_Init, crypto des, [], [], [], [$LIB_krb4])
+AC_FIND_FUNC_NO_LIBS2(SHA1_Init, crypto des, [], [], [], [$LIB_krb4])
+AC_FIND_FUNC_NO_LIBS2(des_cbc_encrypt, crypto des, [], [], [], [$LIB_krb4])
+AC_FIND_FUNC_NO_LIBS2(RC4, crypto des, [], [], [], [$LIB_krb4])
+if test "$ac_cv_func_des_cbc_encrypt" = "yes" -a \
+"$ac_cv_func_MD4_Init"  = "yes" -a \
+"$ac_cv_func_MD5_Init"  = "yes" -a \
+"$ac_cv_func_SHA1_Init" = "yes" -a \
+"$ac_cv_func_RC4" = "yes"; then
+  DIR_des=''
+  LIB_des="-R $krb4_libdir -L$krb4_libdir $ac_cv_funclib_MD4_Init"
+  LIB_des_appl="$LIB_des"
+else
+  DIR_des='des'
+  LIB_des='$(top_builddir)/lib/des/libdes.la'
+  LIB_des_appl="-ldes"
+fi
+AC_SUBST(DIR_des)
+AC_SUBST(LIB_des)
+AC_SUBST(LIB_des_appl)
 
 KRB_READLINE
 
@@ -574,7 +601,32 @@ fi
 #
 # And also something wierd has happend with dec-osf1, fallback to bsd-ptys
 
-if test "$ac_cv_func_getmsg" = yes; then
+AC_CHECK_FUNC(getmsg)
+
+if test "$ac_cv_func_getmsg" = "yes"; then
+
+AC_CACHE_CHECK(for working getmsg, ac_cv_func_getmsg_work,
+AC_TRY_RUN(
+[
+#include <stdio.h>
+#include <errno.h>
+
+int main()
+{
+  int ret;
+  ret = getmsg(open("/dev/null", 0), NULL, NULL, NULL);
+  if(ret < 0 && errno == ENOSYS)
+    return 1;
+  return 0;
+}
+], ac_cv_func_getmsg_work=yes, ac_cv_func_getmsg_work=no,
+ac_cv_func_getmsg_work=no))
+test "$ac_cv_func_getmsg_work" = "yes" &&
+AC_DEFINE(HAVE_GETMSG, 1, [Define if you have a working getmsg.])
+
+fi
+
+if test "$ac_cv_func_getmsg_work" = yes; then
 AC_MSG_CHECKING(for streamspty)
 case "$host" in
 *-*-aix3*|*-*-sunos4*|*-*-osf*|*-*-hpux1[[01]]*)
@@ -639,6 +691,7 @@ AC_CONFIG_FILES(Makefile 		\
 	lib/kdfs/Makefile		\
 	lib/krb5/Makefile		\
 	lib/otp/Makefile		\
+	lib/roken/Makefile		\
 	lib/sl/Makefile			\
 	lib/vers/Makefile		\
 	kuser/Makefile			\
@@ -658,6 +711,7 @@ AC_CONFIG_FILES(Makefile 		\
 	appl/popper/Makefile		\
 	appl/push/Makefile		\
 	appl/rsh/Makefile		\
+	appl/rcp/Makefile		\
 	appl/su/Makefile		\
 	appl/xnlock/Makefile		\
 	appl/telnet/Makefile		\
@@ -668,6 +722,7 @@ AC_CONFIG_FILES(Makefile 		\
 	appl/kf/Makefile		\
 	appl/dceutils/Makefile		\
 	doc/Makefile			\
+	tools/Makefile			\
 )
 
 AC_OUTPUT

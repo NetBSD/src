@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,8 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "krb5_locl.h"
+#include <err.h>
 
-RCSID("$Id: test_get_addrs.c,v 1.1.1.1 2000/08/02 19:59:42 assar Exp $");
+RCSID("$Id: test_get_addrs.c,v 1.1.1.2 2001/02/11 13:51:45 assar Exp $");
 
 /* print all addresses that we find */
 
@@ -56,7 +57,9 @@ main(int argc, char **argv)
     krb5_error_code ret;
     krb5_addresses addrs;
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
 
     ret = krb5_get_all_client_addrs (context, &addrs);
     if (ret)

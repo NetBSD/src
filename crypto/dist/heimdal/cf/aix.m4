@@ -1,4 +1,17 @@
+dnl
+dnl $Id: aix.m4,v 1.1.1.2 2001/02/11 13:51:51 assar Exp $
+dnl
+
 AC_DEFUN(KRB_AIX,[
+aix=no
+case "$host" in 
+*-*-aix3*)
+	aix=3
+	;;
+*-*-aix4*)
+	aix=4
+	;;
+esac
 AM_CONDITIONAL(AIX, test "$aix" != no)dnl
 AM_CONDITIONAL(AIX4, test "$aix" = 4)
 aix_dynamic_afs=yes

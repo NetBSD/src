@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <kadm5/private.h>
 
-RCSID("$Id: init.c,v 1.1.1.2 2000/08/02 19:58:51 assar Exp $");
+RCSID("$Id: init.c,v 1.1.1.3 2001/02/11 13:51:32 assar Exp $");
 
 static kadm5_ret_t
 create_random_entry(krb5_principal princ,
@@ -97,7 +97,7 @@ static int num_args = sizeof(args) / sizeof(args[0]);
 static void
 usage(void)
 {
-    arg_printusage (args, num_args, "ank", "principal");
+    arg_printusage (args, num_args, "init", "realm...");
 }
 
 int
@@ -115,6 +115,11 @@ init(int argc, char **argv)
     args[1].value = &realm_max_rlife;
 
     if(getarg(args, num_args, argc, argv, &optind)) {
+	usage();
+	return 0;
+    }
+
+    if(argc - optind < 1) {
 	usage();
 	return 0;
     }

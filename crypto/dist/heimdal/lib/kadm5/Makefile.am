@@ -1,10 +1,10 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:59:14 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:41 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 lib_LTLIBRARIES = libkadm5srv.la libkadm5clnt.la
-libkadm5srv_la_LDFLAGS = -version-info 7:0:0
-libkadm5clnt_la_LDFLAGS = -version-info 6:0:2
+libkadm5srv_la_LDFLAGS = -version-info 7:3:0
+libkadm5clnt_la_LDFLAGS = -version-info 6:1:2
 sbin_PROGRAMS = dump_log replay_log truncate_log
 
 libexec_PROGRAMS = ipropd-master ipropd-slave
@@ -100,7 +100,7 @@ LDADD = \
 	$(LIB_openldap) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(top_builddir)/lib/asn1/libasn1.la \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(LIB_roken) \
 	$(DBLIB) \
 	$(LIB_dlopen)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: der.h,v 1.1.1.2 2000/08/02 19:59:02 assar Exp $ */
+/* $Id: der.h,v 1.1.1.3 2001/02/11 13:51:36 assar Exp $ */
 
 #ifndef __DER_H__
 #define __DER_H__
@@ -66,7 +66,7 @@ enum {
 time_t timegm (struct tm *);
 #endif
 
-void time2generalizedtime (time_t t, octet_string *s);
+int time2generalizedtime (time_t t, octet_string *s);
 
 int der_get_int (const unsigned char *p, size_t len, int *ret, size_t *size);
 int der_get_length (const unsigned char *p, size_t len,

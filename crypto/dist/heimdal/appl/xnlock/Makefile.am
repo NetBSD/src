@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:27 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:16 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -16,15 +16,15 @@ bin_PROGRAMS =
 
 endif
 
-man1_MANS = xnlock.man
+man_MANS = xnlock.1
 
-EXTRA_DIST = $(man1_MANS) nose.0.left nose.0.right nose.1.left nose.1.right \
+EXTRA_DIST = $(man_MANS) nose.0.left nose.0.right nose.1.left nose.1.right \
 	nose.down nose.front nose.left.front nose.right.front
 
 LDADD = \
 	$(LIB_kafs) \
 	$(LIB_krb5) \
 	$(LIB_krb4) \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(LIB_roken) \
 	$(X_LIBS) -lXt $(X_PRE_LIBS) -lX11 $(X_EXTRA_LIBS)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -35,7 +35,7 @@
 #include <gssapi.h>
 #include <krb5.h>
 
-RCSID("$Id: gss_userok.c,v 1.1.1.2 2000/08/02 19:58:39 assar Exp $");
+RCSID("$Id: gss_userok.c,v 1.1.1.3 2001/02/11 13:51:20 assar Exp $");
 
 /* XXX a bit too much of krb5 dependency here... 
    What is the correct way to do this? 
@@ -79,17 +79,24 @@ gss_userok(void *app_data, char *username)
            krb5_ccache ccache = NULL; 
            char* ticketfile;
            struct passwd *pw;
+	   OM_uint32 minor_status;
            
            pw = getpwnam(username);
            
+	   if (pw == NULL) {
+	       ret = 1;
+	       goto fail;
+	   }
+
            asprintf (&ticketfile, "%s%u", KRB5_DEFAULT_CCROOT, pw->pw_uid);
         
            ret = krb5_cc_resolve(gssapi_krb5_context, ticketfile, &ccache);
            if (ret)
               goto fail;
            
-           ret = krb5_cc_copy_cache(gssapi_krb5_context, 
-                     data->delegated_cred_handle->ccache, ccache);
+           ret = gss_krb5_copy_ccache(&minor_status,
+				      data->delegated_cred_handle,
+				      ccache);
            if (ret)
               goto fail;
            
@@ -100,7 +107,7 @@ gss_userok(void *app_data, char *username)
               krb5_afslog(gssapi_krb5_context, ccache, 0, 0);
            }
 #endif
-           setenv ("KRB5CCNAME", ticketfile, 1);
+           esetenv ("KRB5CCNAME", ticketfile, 1);
            
 fail:
            if (ccache)

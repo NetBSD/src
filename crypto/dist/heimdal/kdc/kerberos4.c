@@ -33,11 +33,9 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kerberos4.c,v 1.1.1.2 2000/08/02 19:58:55 assar Exp $");
+RCSID("$Id: kerberos4.c,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $");
 
 #ifdef KRB4
-
-#include "kerberos4.h"
 
 #ifndef swap32
 static u_int32_t
@@ -61,7 +59,7 @@ make_err_reply(krb5_data *reply, int code, const char *msg)
 {
     KTEXT_ST er;
 
-    /* name, instance and realm is not checked in most (all?) version
+    /* name, instance and realm are not checked in most (all?)
        implementations; msg is also never used, but we send it anyway
        (for debugging purposes) */
 
@@ -74,36 +72,40 @@ make_err_reply(krb5_data *reply, int code, const char *msg)
 static krb5_boolean
 valid_princ(krb5_context context, krb5_principal princ)
 {
+    krb5_error_code ret;
     char *s;
     hdb_entry *ent;
-    krb5_unparse_name(context, princ, &s);
-    ent = db_fetch(princ);
-    if(ent == NULL){
-	kdc_log(7, "Lookup %s failed", s);
+
+    ret = krb5_unparse_name(context, princ, &s);
+    if (ret)
+	return 0;
+    ret = db_fetch(princ, &ent);
+    if (ret) {
+	kdc_log(7, "Lookup %s failed: %s", s,
+		krb5_get_err_text (context, ret));
 	free(s);
 	return 0;
     }
     kdc_log(7, "Lookup %s succeeded", s);
     free(s);
-    hdb_free_entry(context, ent);
-    free(ent);
+    free_ent(ent);
     return 1;
 }
 
-hdb_entry*
-db_fetch4(const char *name, const char *instance, const char *realm)
+krb5_error_code
+db_fetch4(const char *name, const char *instance, const char *realm,
+	  hdb_entry **ent)
 {
     krb5_principal p;
-    hdb_entry *ent;
     krb5_error_code ret;
     
     ret = krb5_425_conv_principal_ext(context, name, instance, realm, 
 				      valid_princ, 0, &p);
     if(ret)
-	return NULL;
-    ent = db_fetch(p);
+	return ret;
+    ret = db_fetch(p, ent);
     krb5_free_principal(context, p);
-    return ent;
+    return ret;
 }
 
 krb5_error_code
@@ -225,15 +227,17 @@ do_version4(unsigned char *buf,
 	kdc_log(0, "AS-REQ %s from %s for %s",
 		client_name, from, server_name);
 
-	client = db_fetch4(name, inst, realm);
-	if(client == NULL){
-	    kdc_log(0, "Client not found in database: %s", client_name);
+	ret = db_fetch4(name, inst, realm, &client);
+	if(ret) {
+	    kdc_log(0, "Client not found in database: %s: %s",
+		    client_name, krb5_get_err_text(context, ret));
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, NULL);
 	    goto out1;
 	}
-	server = db_fetch4(sname, sinst, v4_realm);
-	if(server == NULL){
-	    kdc_log(0, "Server not found in database: %s", server_name);
+	ret = db_fetch4(sname, sinst, v4_realm, &server);
+	if(ret){
+	    kdc_log(0, "Server not found in database: %s: %s",
+		    server_name, krb5_get_err_text(context, ret));
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, NULL);
 	    goto out1;
 	}
@@ -351,12 +355,13 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 
-	tgt = db_fetch(tgt_princ);
-	if(tgt == NULL){
+	ret = db_fetch(tgt_princ, &tgt);
+	if(ret){
 	    char *s;
 	    s = kdc_log_msg(0, "Ticket-granting ticket not "
-			    "found in database: krbtgt.%s@%s", 
-			    realm, v4_realm);
+			    "found in database: krbtgt.%s@%s: %s", 
+			    realm, v4_realm,
+			    krb5_get_err_text(context, ret));
 	    make_err_reply(reply, KFAILURE, s);
 	    free(s);
 	    goto out2;
@@ -427,22 +432,23 @@ do_version4(unsigned char *buf,
 	}
 	
 #if 0
-	client = db_fetch4(ad.pname, ad.pinst, ad.prealm);
-	if(client == NULL){
+	ret = db_fetch4(ad.pname, ad.pinst, ad.prealm, &client);
+	if(ret){
 	    char *s;
-	    s = kdc_log_msg(0, "Client not found in database: %s.%s@%s", 
-			    ad.pname, ad.pinst, ad.prealm);
+	    s = kdc_log_msg(0, "Client not found in database: %s.%s@%s: %s", 
+			    ad.pname, ad.pinst, ad.prealm,
+			    krb5_get_err_text(context, ret));
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, s);
 	    free(s);
 	    goto out2;
 	}
 #endif
 	
-	server = db_fetch4(sname, sinst, v4_realm);
-	if(server == NULL){
+	ret = db_fetch4(sname, sinst, v4_realm, &server);
+	if(ret){
 	    char *s;
-	    s = kdc_log_msg(0, "Server not found in database: %s",
-			    server_name);
+	    s = kdc_log_msg(0, "Server not found in database: %s: %s",
+			    server_name, krb5_get_err_text(context, ret));
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, s);
 	    free(s);
 	    goto out2;
@@ -502,11 +508,8 @@ do_version4(unsigned char *buf,
     out2:
 	if(tgt_princ)
 	    krb5_free_principal(context, tgt_princ);
-	if(tgt){
-	    hdb_free_entry(context, tgt);
-	    free(tgt);
-	}
-
+	if(tgt)
+	    free_ent(tgt);
 	break;
     }
     
@@ -529,14 +532,10 @@ out:
 	free(sname);
     if(sinst)
 	free(sinst);
-    if(client){
-	hdb_free_entry(context, client);
-	free(client);
-    }
-    if(server){
-	hdb_free_entry(context, server);
-	free(server);
-    }
+    if(client)
+	free_ent(client);
+    if(server)
+	free_ent(server);
     krb5_storage_free(sp);
     return 0;
 }
@@ -567,8 +566,8 @@ encrypt_v4_ticket(void *buf, size_t len, des_cblock *key, EncryptedData *reply)
 }
 
 krb5_error_code
-encode_v4_ticket(void *buf, size_t len, EncTicketPart *et, 
-		 PrincipalName *service, size_t *size)
+encode_v4_ticket(void *buf, size_t len, const EncTicketPart *et,
+		 const PrincipalName *service, size_t *size)
 {
     krb5_storage *sp;
     krb5_error_code ret;

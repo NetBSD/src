@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: sock_principal.c,v 1.1.1.2 2000/08/02 19:59:40 assar Exp $");
+RCSID("$Id: sock_principal.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
 			
 krb5_error_code
 krb5_sock_to_principal (krb5_context context,
@@ -46,7 +46,7 @@ krb5_sock_to_principal (krb5_context context,
     krb5_address address;
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
-    int len = sizeof(__ss);
+    socklen_t len = sizeof(__ss);
     struct hostent *hostent;
     int family;
     char hname[256];

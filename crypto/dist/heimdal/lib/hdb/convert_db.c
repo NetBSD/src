@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -38,9 +38,10 @@
  */
 
 #include "hdb_locl.h"
-#include "getarg.h"
+#include <getarg.h>
+#include <err.h>
 
-RCSID("$Id: convert_db.c,v 1.1.1.2 2000/08/02 19:59:11 assar Exp $");
+RCSID("$Id: convert_db.c,v 1.1.1.3 2001/02/11 13:51:40 assar Exp $");
 
 static krb5_error_code
 update_keytypes(krb5_context context, HDB *db, hdb_entry *entry, void *data)
@@ -150,7 +151,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if(ret != 0)
-	krb5_err(NULL, 1, ret, "krb5_init_context");
+	errx(1, "krb5_init_context failed: %d", ret);
     
     ret = hdb_create(context, &db, old_database);
     if(ret != 0)

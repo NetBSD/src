@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: login_locl.h,v 1.1.1.2 2000/08/02 19:58:08 assar Exp $ */
+/* $Id: login_locl.h,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $ */
 
 #ifndef __LOGIN_LOCL_H__
 #define __LOGIN_LOCL_H__
@@ -127,6 +127,10 @@
 
 #ifndef _PATH_ETC_ENVIRONMENT
 #define _PATH_ETC_ENVIRONMENT "/etc/environment"
+#endif
+
+#ifndef _PATH_DEFPATH
+#define _PATH_DEFPATH "/usr/bin:/bin"
 #endif
 
 struct spwd;

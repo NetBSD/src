@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: get_cred.c,v 1.1.1.2 2000/08/02 19:59:27 assar Exp $");
+RCSID("$Id: get_cred.c,v 1.1.1.3 2001/02/11 13:51:44 assar Exp $");
 
 /*
  * Take the `body' and encode it into `padata' using the credentials
@@ -82,7 +82,8 @@ make_pa_tgs_req(krb5_context context,
     in_data.data   = buf + buf_size - len;
     ret = krb5_mk_req_internal(context, &ac, 0, &in_data, creds,
 			       &padata->padata_value,
-			       KRB5_KU_TGS_REQ_AUTH_CKSUM);
+			       KRB5_KU_TGS_REQ_AUTH_CKSUM,
+			       KRB5_KU_TGS_REQ_AUTH);
 out:
     free (buf);
     if(ret)
@@ -325,7 +326,9 @@ decrypt_tkt_with_subkey (krb5_context context,
     size_t size;
     krb5_crypto crypto;
     
-    krb5_crypto_init(context, key, 0, &crypto);
+    ret = krb5_crypto_init(context, key, 0, &crypto);
+    if (ret)
+	return ret;
     ret = krb5_decrypt_EncryptedData (context,
 				      crypto,
 				      usage,
@@ -334,7 +337,9 @@ decrypt_tkt_with_subkey (krb5_context context,
     krb5_crypto_destroy(context, crypto);
     if(ret && subkey){
 	/* DCE compat -- try to decrypt with subkey */
-	krb5_crypto_init(context, (krb5_keyblock*)subkey, 0, &crypto);
+	ret = krb5_crypto_init(context, (krb5_keyblock*)subkey, 0, &crypto);
+	if (ret)
+	    return ret;
 	ret = krb5_decrypt_EncryptedData (context,
 					  crypto,
 					  KRB5_KU_TGS_REP_ENC_PART_SUB_KEY,
@@ -616,7 +621,7 @@ get_cred_from_kdc_flags(krb5_context context,
 {
     krb5_error_code ret;
     krb5_creds *tgt, tmp_creds;
-    krb5_realm client_realm, server_realm;
+    krb5_const_realm client_realm, server_realm, try_realm;
 
     *out_creds = NULL;
 
@@ -626,9 +631,15 @@ get_cred_from_kdc_flags(krb5_context context,
     ret = krb5_copy_principal(context, in_creds->client, &tmp_creds.client);
     if(ret)
 	return ret;
+
+    try_realm = krb5_config_get_string(context, NULL, "libdefaults",
+				       "capath", server_realm, NULL);
+    if (try_realm == NULL)
+	try_realm = client_realm;
+
     ret = krb5_make_principal(context,
 			      &tmp_creds.server,
-			      client_realm,
+			      try_realm,
 			      KRB5_TGS_NAME,
 			      server_realm,
 			      NULL);

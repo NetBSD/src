@@ -1,4 +1,4 @@
--- $Id: k5.asn1,v 1.1.1.2 2000/08/02 19:59:05 assar Exp $
+-- $Id: k5.asn1,v 1.1.1.3 2001/02/11 13:51:37 assar Exp $
 
 KERBEROS5 DEFINITIONS ::=
 BEGIN
@@ -154,6 +154,7 @@ KDCOptions ::= BIT STRING {
 	unused10(10),
 	unused11(11),
 	request-anonymous(14),
+	canonicalize(15),
 	disable-transited-check(26),
 	renewable-ok(27),
 	enc-tkt-in-skey(28),

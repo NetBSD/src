@@ -33,7 +33,7 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id: generate-requests.c,v 1.1.1.1 2000/08/02 19:58:58 assar Exp $");
+RCSID("$Id: generate-requests.c,v 1.1.1.2 2001/02/11 13:51:34 assar Exp $");
 
 static krb5_error_code
 null_key_proc (krb5_context context,
@@ -80,7 +80,9 @@ generate_requests (const char *filename, unsigned nreq)
     char **words;
     unsigned nwords;
 
-    krb5_init_context (&context);
+    ret = krb5_init_context (&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
 
     nwords = read_words (filename, &words);
 
