@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.71 2001/07/18 20:52:47 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.72 2001/10/03 00:04:50 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -613,6 +613,9 @@ struct audio_hw_if gus_hw_if = {
 	ad1848_isa_round_buffersize, 
 	ad1848_isa_mappage, 
 	gus_get_props,
+	NULL,
+	NULL,
+	NULL,
 };
 
 static struct audio_hw_if gusmax_hw_if = {
@@ -648,6 +651,9 @@ static struct audio_hw_if gusmax_hw_if = {
 	ad1848_isa_round_buffersize, 
 	ad1848_isa_mappage, 
 	gusmax_get_props,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*

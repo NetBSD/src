@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.140 2001/10/02 23:31:54 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.141 2001/10/03 00:04:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1670,8 +1670,12 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	default:
-		DPRINTF(("audio_ioctl: unknown ioctl\n"));
-		error = EINVAL;
+		if (hw->dev_ioctl) {
+			error = hw->dev_ioctl(sc, cmd, addr, flag, p);
+		} else {
+			DPRINTF(("audio_ioctl: unknown ioctl\n"));
+			error = EINVAL;
+		}
 		break;
 	}
 	DPRINTF(("audio_ioctl(%lu,'%c',%lu) result %d\n",
@@ -2887,7 +2891,11 @@ mixer_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	default:
-		error = EINVAL;
+		if (hw->dev_ioctl) {
+			error = hw->dev_ioctl(sc, cmd, addr, flag, p);
+		} else {
+			error = EINVAL;
+		}
 		break;
 	}
 	DPRINTF(("mixer_ioctl(%lu,'%c',%lu) result %d\n",

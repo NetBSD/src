@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.70 2000/12/19 01:09:15 mjl Exp $	*/
+/*	$NetBSD: sb.c,v 1.71 2001/10/03 00:04:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -110,6 +110,7 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_get_props,
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,
+	0,
 };
 
 /*

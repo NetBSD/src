@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.57 1999/02/18 17:27:39 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.58 2001/10/03 00:04:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -108,6 +108,7 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_isa_get_props,
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
+	NULL,
 };
 
 /*

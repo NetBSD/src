@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.5 2001/09/16 16:34:38 wiz Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.6 2001/10/03 00:04:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -129,6 +129,7 @@ struct audio_hw_if cs4281_hw_if = {
 	cs428x_get_props,
 	cs4281_trigger_output,
 	cs4281_trigger_input,
+	NULL,
 };
 
 #if NMIDI > 0 && 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.17 2000/11/26 11:08:59 takemura Exp $	*/
+/*	$NetBSD: ym.c,v 1.18 2001/10/03 00:04:51 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -200,6 +200,7 @@ struct audio_hw_if ym_hw_if = {
 	ad1848_isa_get_props,
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
+	NULL,
 };
 
 static __inline int ym_read __P((struct ym_softc *, int));

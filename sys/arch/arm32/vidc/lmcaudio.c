@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.31 2001/07/28 18:12:45 chris Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.32 2001/10/03 00:04:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -160,6 +160,9 @@ struct audio_hw_if lmcaudio_hw_if = {
 	0,
 	0,
 	lmcaudio_get_props,
+	0,
+	0,
+	0,
 };
 
 void

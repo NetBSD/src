@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.1 2000/12/06 23:42:34 matt Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.2 2001/10/03 00:04:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ static struct audio_hw_if paud_hw_if = {
 	ad1848_isa_get_props,
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
+	NULL,
 };
 
 /* autoconfig routines */

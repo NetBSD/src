@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.15 2000/02/07 22:07:32 thorpej Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.16 2001/10/03 00:04:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -106,6 +106,9 @@ static struct audio_hw_if guspnp_hw_if = {
 	iw_round_buffersize,
 	iw_mappage,
 	iw_get_props,
+	NULL,
+	NULL,
+	NULL,
 };
 
 
