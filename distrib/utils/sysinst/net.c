@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.78 2002/06/06 09:53:22 lukem Exp $	*/
+/*	$NetBSD: net.c,v 1.79 2002/06/19 16:30:52 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -444,7 +444,7 @@ again:
 	msg_display(MSG_netinfo);
 
 	/* ethernet medium */
-	if (strlen(net_media) == 0)
+	if (strlen(net_media) != 0)
 		msg_prompt_add(MSG_net_media, net_media, net_media, STRSIZE);
 
 	/* try a dhcp configuration */
