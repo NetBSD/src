@@ -1,4 +1,4 @@
-/*	$NetBSD: etherdrv.h,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: etherdrv.h,v 1.2 1997/03/15 22:17:35 perry Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -36,3 +36,8 @@ int EtherInit __P((char*));
 int EtherSend __P((char*, int));
 int EtherReceive __P((char*, int));
 void EtherStop __P((void));
+
+extern int ether_medium;
+#define ETHERMEDIUM_BNC 0
+#define ETHERMEDIUM_UTP 1
+#define ETHERMEDIUM_AUI 2
