@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.11 2001/02/08 18:08:22 is Exp $ */
+/*	$NetBSD: aster.c,v 1.12 2001/02/14 21:05:31 is Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ asterattach(parent, self, auxp)
 	}
 
 	if (parent)
-		printf(": ISDN %s\n", cardname);
+		printf(" IPL %d: ISDN %s \n", supa.supio_ipl, cardname);
 
 
 	supa.supio_iot = &astrsc->sc_bst;
