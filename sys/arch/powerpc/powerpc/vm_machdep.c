@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 2003/03/05 05:27:24 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49 2003/03/14 05:37:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -384,7 +384,8 @@ vmapbuf(bp, len)
 	/*
 	 * XXX Reimplement this with vmaprange (on at least PPC_IBM4XX CPUs).
 	 */
-	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
+	bp->b_saveaddr = bp->b_data;
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_valloc_wait(phys_map, len);
