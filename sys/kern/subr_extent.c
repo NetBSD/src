@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.24 1999/02/18 18:52:29 mycroft Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.25 1999/05/11 11:02:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -604,11 +604,11 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	}
 
 	/*
-	 * If there are no allocated regions beyond where we want to be,
-	 * relocate the start of our candidate region to the end of
-	 * the last allocated region (if there was one).
+	 * Relocate the start of our candidate region to the end of
+	 * the last allocated region (if there was one overlapping
+	 * our subrange).
 	 */
-	if (rp == NULL && last != NULL)
+	if (last != NULL && last->er_end >= newstart)
 		newstart = EXTENT_ALIGN((last->er_end + 1), alignment, skew);
 
 	for (; rp != NULL; rp = rp->er_link.le_next) {
