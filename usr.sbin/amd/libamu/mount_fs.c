@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fs.c,v 1.1.1.7 1999/09/04 22:24:56 christos Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.1.1.7.8.1 2000/10/17 19:50:18 tv Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -176,14 +176,10 @@ mount_fs(mntent_t *mnt, int flags, caddr_t mnt_data, int retry, MTYPE_TYPE type,
   char optsbuf[48];
 # endif /* defined(MNTTAB_OPT_DEV) || (defined(HAVE_FS_NFS3) && defined(MNTTAB_OPT_VERS)) || defined(MNTTAB_OPT_PROTO) */
 #endif /* MOUNT_TABLE_ON_FILE */
-#ifdef DEBUG
-  char buf[80];			/* buffer for sprintf */
-#endif /* DEBUG */
 
 #ifdef DEBUG
-  sprintf(buf, "%s%s%s",
-	  "%s fstype ", MTYPE_PRINTF_TYPE, " (%s) flags %#x (%s)");
-  dlog(buf, mnt->mnt_dir, type, mnt->mnt_type, flags, mnt->mnt_opts);
+  dlog("%s fstype " MTYPE_PRINTF_TYPE " (%s) flags %#x (%s)", 
+       mnt->mnt_dir, type, mnt->mnt_type, flags, mnt->mnt_opts);
 #endif /* DEBUG */
 
 again:
