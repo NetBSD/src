@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.78 2003/11/19 18:39:34 jonathan Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.78.2.1 2004/05/10 15:00:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.78 2003/11/19 18:39:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.78.2.1 2004/05/10 15:00:12 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.78 2003/11/19 18:39:34 jonathan Exp $")
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
+#include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
 #endif	/* FAST_IPSEC*/
 
 struct inpcbtable rawcbtable;
