@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.22 1997/02/19 10:06:03 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.23 1997/03/15 15:09:41 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -68,8 +68,10 @@ struct clockframe {
         int     ps;
 };
 
+extern struct device *booted_from;
 extern int cold;
 extern int mastercpu;
+extern int bootdev;
 
 #define	setsoftnet()	mtpr(12,PR_SIRR)
 #define setsoftclock()	mtpr(8,PR_SIRR)
