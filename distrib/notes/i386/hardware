@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.60 2000/01/24 23:15:50 mcr Exp $	
+.\"	$NetBSD: hardware,v 1.61 2000/01/25 12:15:32 augustss Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -223,7 +223,7 @@ Supported devices include:
 	Game Ports (Joysticks). [*] [+]
 	Miscellaneous:
 		Advanced power management (APM) [*]
-	Universal Serial Bus:
+	Universal Serial Bus (USB):
 		UHCI host controllers [*] [+]
 		OHCI host controllers [*] [+]
 		Hubs [*] [+]
@@ -232,6 +232,7 @@ Supported devices include:
 		Printers [*] [+]
 		Modems using Abstract Control Model [*] [+]
 		Generic support for HID devices [*] [+]
+		Ethernet adapters [*] [+]
 	PCMCIA Controllers:
 		ISA, PCI, and ISA Plug\*&Play attachments for:
 			Intel 82365 PCIC, rev 0 and rev 1
