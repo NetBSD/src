@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.24 2002/11/09 09:03:58 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.25 2002/11/29 19:13:15 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.24 2002/11/09 09:03:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.25 2002/11/29 19:13:15 jdolecek Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -159,9 +159,7 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 	char *itp; 
 	vaddr_t *pos; 
 {
-	const char *bp;
 	int error;
-	size_t len;
 
 #ifdef DEBUG_IRIX
 	printf("irix_probe_o32()\n");
@@ -175,12 +173,9 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 		if (strncmp(itp, "/lib/libc.so", 12) && 
 		    strncmp(itp, "/usr/lib/libc.so", 16))
 			return ENOEXEC;
-		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-		    itp, &bp, 0)))
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+		    itp)))
 			return error;
-		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
-		free((void *)bp, M_TEMP);
 	}
 	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_IRIX
@@ -202,9 +197,7 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 	char *itp; 
 	vaddr_t *pos; 
 {
-	const char *bp;
 	int error;
-	size_t len;
 
 #ifdef DEBUG_IRIX
 	printf("irix_probe_n32()\n");
@@ -218,12 +211,9 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 		if (strncmp(itp, "/lib32/libc.so", 14) &&
 		    strncmp(itp, "/usr/lib32/libc.so", 18))
 			return ENOEXEC;
-		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-		    itp, &bp, 0)))
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+		    itp)))
 			return error;
-		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
-		free((void *)bp, M_TEMP);
 	}
 	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_IRIX
