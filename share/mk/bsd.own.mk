@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.320 2002/12/08 20:19:56 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.321 2002/12/19 12:44:03 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -302,7 +302,7 @@ HRDLINK?=	-l h
 SYMLINK?=	-l s
 
 METALOG?=	${DESTDIR}/METALOG
-INSTPRIV?=	${UNPRIVED:D-U -M ${METALOG}}
+INSTPRIV?=	${UNPRIVED:D-U -M ${METALOG}} -N${NETBSDSRCDIR}/etc
 SYSPKGTAG?=	${SYSPKG:D-T ${SYSPKG}_pkg}
 SYSPKGDOCTAG?=	${SYSPKG:D-T ${SYSPKG}-doc_pkg}
 STRIPFLAG?=	-s
