@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.13.2.3 2002/04/17 11:59:26 he Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.13.2.4 2002/04/17 12:00:56 he Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.13.2.3 2002/04/17 11:59:26 he Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.13.2.4 2002/04/17 12:00:56 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -254,7 +254,7 @@ hesiod_to_bind(void *context, const char *name, const char *type)
 
 		/* Make a copy of the result and return it to the caller. */
 	ret = strdup(bindname);
-	if (!ret)
+	if (ret == NULL)
 		errno = ENOMEM;
 	return ret;
 }
@@ -351,15 +351,24 @@ read_config_file(ctx, filename)
 		while (*p == ' ' || *p == '\t')
 			p++;
 		key = p;
-		while (*p != ' ' && *p != '\t' && *p != '=')
+		while (*p != ' ' && *p != '\t' && *p != '=' && *p)
 			p++;
+
+		if (*p == '\0')
+			continue;
+
 		*p++ = 0;
 
 		while (isspace((u_char) *p) || *p == '=')
 			p++;
+
+		if (*p == '\0')
+			continue;
+
 		data = p;
-		while (!isspace((u_char) *p))
+		while (!isspace((u_char) *p) && *p)
 			p++;
+
 		*p = 0;
 
 		if (strcasecmp(key, "lhs") == 0 ||
