@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.12.16.3 2000/03/18 13:52:04 scw Exp $	*/
+/*	$NetBSD: pcc.c,v 1.12.16.4 2000/03/18 22:00:16 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,9 +88,9 @@
  * Autoconfiguration stuff for the PCC chip on mvme147
  */
 
-void	pccattach __P((struct device *, struct device *, void *));
-int 	pccmatch __P((struct device *, struct cfdata *, void *));
-int 	pccprint __P((void *, const char *));
+void pccattach __P((struct device *, struct device *, void *));
+int pccmatch __P((struct device *, struct cfdata *, void *));
+int pccprint __P((void *, const char *));
 
 struct cfattach pcc_ca = {
 	sizeof(struct pcc_softc), pccmatch, pccattach
@@ -103,50 +103,52 @@ static int pccintr __P((void *));
  * Structure used to describe a device for autoconfiguration purposes.
  */
 struct pcc_device {
-	char		*pcc_name;	/* name of device (e.g. "clock") */
-	bus_addr_t	pcc_offset;	/* offset from PCC base */
+	char *pcc_name;		/* name of device (e.g. "clock") */
+	bus_addr_t pcc_offset;	/* offset from PCC base */
 };
 
 /*
  * Devices that live on the PCC, attached in this order.
  */
 static struct pcc_device pcc_devices[] = {
-	{"clock",	PCC_RTC_OFF},
-	{"nvram",	PCC_NVRAM_OFF},
-	{"zsc",		PCC_ZS0_OFF},
-	{"zsc",		PCC_ZS1_OFF},
-	{"le",		PCC_LE_OFF},
-	{"wdsc",	PCC_WDSC_OFF},
-	{"lpt",		PCC_LPT_OFF},
-	{"vmepcc",	PCC_VME_OFF},
-	{NULL,		0},
+	{"clock", PCC_RTC_OFF},
+	{"nvram", PCC_NVRAM_OFF},
+	{"zsc", PCC_ZS0_OFF},
+	{"zsc", PCC_ZS1_OFF},
+	{"le", PCC_LE_OFF},
+	{"wdsc", PCC_WDSC_OFF},
+	{"lpt", PCC_LPT_OFF},
+	{"vmepcc", PCC_VME_OFF},
+	{NULL, 0},
 };
 
 static int pcc_vec2intctrl[] = {
-	PCCREG_ACFAIL_INTR_CTRL,	/* PCCV_ACFAIL */
-	PCCREG_BUSERR_INTR_CTRL,	/* PCCV_BERR */
-	PCCREG_ABORT_INTR_CTRL,		/* PCCV_ABORT */
-	PCCREG_SERIAL_INTR_CTRL,	/* PCCV_ZS */
-	PCCREG_LANCE_INTR_CTRL,		/* PCCV_LE */
-	PCCREG_SCSI_INTR_CTRL,		/* PCCV_SCSI */
-	PCCREG_DMA_INTR_CTRL,		/* PCCV_DMA */
-	PCCREG_PRNT_INTR_CTRL,		/* PCCV_PRINTER */
-	PCCREG_TMR1_INTR_CTRL,		/* PCCV_TIMER1 */
-	PCCREG_TMR2_INTR_CTRL,		/* PCCV_TIMER2 */
-	PCCREG_SOFT1_INTR_CTRL,		/* PCCV_SOFT1 */
-	PCCREG_SOFT2_INTR_CTRL		/* PCCV_SOFT2 */
+	PCCREG_ACFAIL_INTR_CTRL,/* PCCV_ACFAIL */
+	PCCREG_BUSERR_INTR_CTRL,/* PCCV_BERR */
+	PCCREG_ABORT_INTR_CTRL,	/* PCCV_ABORT */
+	PCCREG_SERIAL_INTR_CTRL,/* PCCV_ZS */
+	PCCREG_LANCE_INTR_CTRL,	/* PCCV_LE */
+	PCCREG_SCSI_INTR_CTRL,	/* PCCV_SCSI */
+	PCCREG_DMA_INTR_CTRL,	/* PCCV_DMA */
+	PCCREG_PRNT_INTR_CTRL,	/* PCCV_PRINTER */
+	PCCREG_TMR1_INTR_CTRL,	/* PCCV_TIMER1 */
+	PCCREG_TMR2_INTR_CTRL,	/* PCCV_TIMER2 */
+	PCCREG_SOFT1_INTR_CTRL,	/* PCCV_SOFT1 */
+	PCCREG_SOFT2_INTR_CTRL	/* PCCV_SOFT2 */
 };
 
 struct pcc_softc *sys_pcc;
 
-
+/* ARGSUSED */
 int
 pccmatch(parent, cf, args)
 	struct device *parent;
 	struct cfdata *cf;
 	void *args;
 {
-	struct mainbus_attach_args *ma = (struct mainbus_attach_args *) args;
+	struct mainbus_attach_args *ma;
+
+	ma = args;
 
 	/* Only attach one PCC. */
 	if (sys_pcc)
@@ -155,9 +157,11 @@ pccmatch(parent, cf, args)
 	return (strcmp(ma->ma_name, pcc_cd.cd_name) == 0);
 }
 
+/* ARGSUSED */
 void
 pccattach(parent, self, args)
-	struct device *parent, *self;
+	struct device *parent;
+	struct device *self;
 	void *args;
 {
 	struct mainbus_attach_args *ma;
@@ -166,8 +170,8 @@ pccattach(parent, self, args)
 	u_int8_t reg;
 	int i;
 
-	ma = (struct mainbus_attach_args *) args;
-	sys_pcc = sc = (struct pcc_softc *) self;
+	ma = args;
+	sc = sys_pcc = (struct pcc_softc *) self;
 
 	/* Get a handle to the PCC's registers. */
 	sc->sc_bust = ma->ma_bust;
@@ -204,7 +208,7 @@ pccattach(parent, self, args)
 		npa.pa_offset = pcc_devices[i].pcc_offset + ma->ma_offset;
 
 		/* Attach the device if configured. */
-		(void)config_found(self, &npa, pccprint);
+		(void) config_found(self, &npa, pccprint);
 	}
 }
 
@@ -213,7 +217,9 @@ pccprint(aux, cp)
 	void *aux;
 	const char *cp;
 {
-	struct pcc_attach_args *pa = aux;
+	struct pcc_attach_args *pa;
+
+	pa = aux;
 
 	if (cp)
 		printf("%s at %s", pa->pa_name, cp);
@@ -234,13 +240,13 @@ pccintr_establish(pccvec, hand, lvl, arg)
 	int (*hand) __P((void *)), lvl;
 	void *arg;
 {
+
 #ifdef DEBUG
-	if ((pccvec < 0) || (pccvec >= PCC_NVEC)) {
+	if (pccvec < 0 || pccvec >= PCC_NVEC) {
 		printf("pcc: illegal vector offset: 0x%x\n", pccvec);
 		panic("pccintr_establish");
 	}
-
-	if ((lvl < 1) || (lvl > 7)) {
+	if (lvl < 1 || lvl > 7) {
 		printf("pcc: illegal interrupt level: %d\n", lvl);
 		panic("pccintr_establish");
 	}
@@ -253,8 +259,9 @@ void
 pccintr_disestablish(pccvec)
 	int pccvec;
 {
+
 #ifdef DEBUG
-	if ((pccvec < 0) || (pccvec >= PCC_NVEC)) {
+	if (pccvec < 0 || pccvec >= PCC_NVEC) {
 		printf("pcc: illegal vector offset: 0x%x\n", pccvec);
 		panic("pccintr_disestablish");
 	}
@@ -277,5 +284,5 @@ pccintr(frame)
 	pcc_reg_write(sys_pcc, PCCREG_ABORT_INTR_CTRL,
 	    PCC_ABORT_IEN | PCC_ABORT_ACK);
 
-	return nmihand(frame);
+	return (nmihand(frame));
 }

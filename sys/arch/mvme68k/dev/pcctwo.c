@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.2.16.3 2000/03/18 13:52:04 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.2.16.4 2000/03/18 22:00:17 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -56,9 +56,9 @@
 /*
  * Autoconfiguration stuff.
  */
-void	pcctwoattach __P((struct device *, struct device *, void *));
-int 	pcctwomatch __P((struct device *, struct cfdata *, void *));
-int 	pcctwoprint __P((void *, const char *));
+void pcctwoattach __P((struct device *, struct device *, void *));
+int pcctwomatch __P((struct device *, struct cfdata *, void *));
+int pcctwoprint __P((void *, const char *));
 
 struct cfattach pcctwo_ca = {
 	sizeof(struct pcctwo_softc), pcctwomatch, pcctwoattach
@@ -75,30 +75,33 @@ struct pcctwo_softc *sys_pcctwo;
  * Structure used to describe a device for autoconfiguration purposes.
  */
 struct pcctwo_device {
-	char		*pcc_name;	/* name of device (e.g. "clock") */
-	bus_addr_t	pcc_offset;	/* offset from PCC2 base */
+	char *pcc_name;		/* name of device (e.g. "clock") */
+	bus_addr_t pcc_offset;	/* offset from PCC2 base */
 };
 
 /*
  * Devices that live on the PCCchip2, attached in this order.
  */
 struct pcctwo_device pcctwo_devices[] = {
-	{"clock",	PCCTWO_RTC_OFF},
-	{"clmpcc",	PCCTWO_SCC_OFF},
-	{"ie",		PCCTWO_IE_OFF},
-	{"ncrsc",	PCCTWO_NCRSC_OFF},
-	{"lpt",		PCCTWO_LPT_OFF},
-	{"nvram",	PCCTWO_NVRAM_OFF},
-	{NULL,		0}
+	{"clock", PCCTWO_RTC_OFF},
+	{"clmpcc", PCCTWO_SCC_OFF},
+	{"ie", PCCTWO_IE_OFF},
+	{"ncrsc", PCCTWO_NCRSC_OFF},
+	{"lpt", PCCTWO_LPT_OFF},
+	{"nvram", PCCTWO_NVRAM_OFF},
+	{NULL, 0}
 };
 
+/* ARGSUSED */
 int
 pcctwomatch(parent, cf, args)
 	struct device *parent;
 	struct cfdata *cf;
 	void *args;
 {
-	struct mainbus_attach_args *ma = (struct mainbus_attach_args *) args;
+	struct mainbus_attach_args *ma;
+
+	ma = args;
 
 	/*
 	 * Note: We don't need to check we're running on a 'machineid'
@@ -113,9 +116,11 @@ pcctwomatch(parent, cf, args)
 	return (strcmp(ma->ma_name, pcctwo_cd.cd_name) == 0);
 }
 
+/* ARGSUSED */
 void
 pcctwoattach(parent, self, args)
-	struct device *parent, *self;
+	struct device *parent;
+	struct device *self;
 	void *args;
 {
 	struct mainbus_attach_args *ma;
@@ -123,8 +128,8 @@ pcctwoattach(parent, self, args)
 	struct pcctwo_attach_args npa;
 	int i;
 
-	ma = (struct mainbus_attach_args *) args;
-	sys_pcctwo = sc = (struct pcctwo_softc *) self;
+	ma = args;
+	sc = sys_pcctwo = (struct pcctwo_softc *) self;
 
 	/* Get a handle to the PCCChip2's registers */
 	sc->sc_bust = ma->ma_bust;
@@ -162,7 +167,7 @@ pcctwoattach(parent, self, args)
 		npa.pa_offset = pcctwo_devices[i].pcc_offset + ma->ma_offset;
 
 		/* Attach the device if configured. */
-		(void)config_found(self, &npa, pcctwoprint);
+		(void) config_found(self, &npa, pcctwoprint);
 	}
 }
 
@@ -171,7 +176,9 @@ pcctwoprint(aux, cp)
 	void *aux;
 	const char *cp;
 {
-	struct pcctwo_attach_args *pa = aux;
+	struct pcctwo_attach_args *pa;
+
+	pa = aux;
 
 	if (cp)
 		printf("%s at %s", pa->pa_name, cp);
@@ -192,13 +199,13 @@ pcctwointr_establish(vec, hand, lvl, arg)
 	int (*hand) __P((void *)), lvl;
 	void *arg;
 {
+
 #ifdef DEBUG
-	if ( vec < 0 || vec >= PCCTWOV_MAX ) {
+	if (vec < 0 || vec >= PCCTWOV_MAX) {
 		printf("pcctwo: illegal vector offset: 0x%x\n", vec);
 		panic("pcctwointr_establish");
 	}
-
-	if ( lvl < 1 || lvl > 7 ) {
+	if (lvl < 1 || lvl > 7) {
 		printf("pcctwo: illegal interrupt level: %d\n", lvl);
 		panic("pcctwointr_establish");
 	}
@@ -211,8 +218,9 @@ void
 pcctwointr_disestablish(vec)
 	int vec;
 {
+
 #ifdef DEBUG
-	if ( vec < 0 || vec >= PCCTWOV_MAX ) {
+	if (vec < 0 || vec >= PCCTWOV_MAX) {
 		printf("pcctwo: illegal vector offset: 0x%x\n", vec);
 		panic("pcctwointr_disestablish");
 	}

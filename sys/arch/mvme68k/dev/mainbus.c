@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.2.2 2000/03/18 13:52:02 scw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.2.3 2000/03/18 22:00:15 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,9 +53,9 @@
 #include <mvme68k/dev/mainbus.h>
 
 
-void	mainbus_attach __P((struct device *, struct device *, void *));
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-int	mainbus_print __P((void *, const char *));
+void mainbus_attach __P((struct device *, struct device *, void *));
+int mainbus_match __P((struct device *, struct cfdata *, void *));
+int mainbus_print __P((void *, const char *));
 
 struct mainbus_softc {
 	struct device sc_dev;
@@ -73,20 +73,21 @@ struct mainbus_devices {
 };
 
 #ifdef MVME147
-static	struct mainbus_devices mainbusdevs_147[] = {
+static struct mainbus_devices mainbusdevs_147[] = {
 	{"pcc", MAINBUS_PCC_OFFSET},
 	{NULL, 0}
 };
 #endif
 
 #if defined(MVME167) || defined(MVME177)
-static	struct mainbus_devices mainbusdevs_1x7[] = {
+static struct mainbus_devices mainbusdevs_1x7[] = {
 	{"pcctwo", MAINBUS_PCCTWO_OFFSET},
 	{"vmetwo", MAINBUS_VMETWO_OFFSET},
 	{NULL, 0}
 };
 #endif
 
+/* ARGSUSED */
 int
 mainbus_match(parent, cf, args)
 	struct device *parent;
@@ -101,9 +102,11 @@ mainbus_match(parent, cf, args)
 	return ((mainbus_matched = 1));
 }
 
+/* ARGSUSED */
 void
 mainbus_attach(parent, self, args)
-	struct device *parent, *self;
+	struct device *parent;
+	struct device *self;
 	void *args;
 {
 	struct mainbus_softc *sc;
@@ -136,7 +139,7 @@ mainbus_attach(parent, self, args)
 	/*
 	 * Attach children appropriate for this CPU.
 	 */
-	switch ( machineid ) {
+	switch (machineid) {
 #ifdef MVME147
 	case MVME_147:
 		devices = mainbusdevs_147;
@@ -167,7 +170,7 @@ mainbus_attach(parent, self, args)
 		ma.ma_bust = MVME68K_INTIO_BUS_SPACE;
 		ma.ma_offset = devices[i].md_offset;
 
-		(void)config_found(self, &ma, mainbus_print);
+		(void) config_found(self, &ma, mainbus_print);
 	}
 }
 
@@ -176,7 +179,9 @@ mainbus_print(aux, cp)
 	void *aux;
 	const char *cp;
 {
-	struct mainbus_attach_args *ma = (struct mainbus_attach_args *) aux;
+	struct mainbus_attach_args *ma;
+
+	ma = aux;
 
 	if (cp)
 		printf("%s at %s", ma->ma_name, cp);

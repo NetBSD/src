@@ -1,4 +1,4 @@
-#	$NetBSD: VME167,v 1.4.10.1 2000/03/18 13:51:56 scw Exp $
+#	$NetBSD: VME167,v 1.4.10.2 2000/03/18 22:00:12 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -68,7 +68,7 @@ vmetwo0 	at mainbus0
 vme0 		at vmetwo0
 
 # Example VMEbus device
-#foo0 		at vme0 addr 0x00ef0000 irq 3 vect 0x80
+#foo0 		at vme0 addr 0x10001000 am 0x0d irq 3 vect 0x80
 
 # SCSI Bus Support
 scsibus*	at ncrsc?

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pccreg.h,v 1.2.26.1 2000/03/11 20:51:50 scw Exp $	*/
+/*	$NetBSD: vme_pccreg.h,v 1.2.26.2 2000/03/18 22:00:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -157,20 +157,25 @@
  * onboard RAM is >= 16Mb, the A24D32 range is unavailable and the RAM
  * starts encroaching on the A32D32 range.
  */
+#define VME1_A24D32_LOC_START	(0x00000000u)
 #define VME1_A24D32_START	(0x00000000u)
 #define VME1_A24D32_END		(0x00ffffffu)
 
+#define VME1_A32D32_LOC_START	(0x00000000u)
 #define VME1_A32D32_START	(0x01000000u)
 #define VME1_A32D32_END		(0xefffffffu)
 
-#define VME1_A24D16_START	(0xf0000000u)
-#define VME1_A24D16_END		(0xf0ffffffu)
+#define VME1_A24D16_LOC_START	(0xf0000000u)
+#define VME1_A24D16_START	(0x00000000u)
+#define VME1_A24D16_END		(0x00ffffffu)
 
+#define VME1_A32D16_LOC_START	(0x00000000u)
 #define VME1_A32D16_START	(0xf1000000u)
 #define VME1_A32D16_END		(0xff7fffffu)
 
-#define VME1_A16D16_START	(0xffff0000u)
-#define VME1_A16D16_END		(0xffffffffu)
+#define VME1_A16D16_LOC_START	(0xffff0000u)
+#define VME1_A16D16_START	(0x00000000u)
+#define VME1_A16D16_END		(0x0000ffffu)
 
 #define VME1_A32_MASK		(0xffffffffu)
 #define VME1_A24_MASK		(0x00ffffffu)

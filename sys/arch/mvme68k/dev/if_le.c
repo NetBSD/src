@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.20.16.2 2000/03/13 12:15:27 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.20.16.3 2000/03/18 22:00:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,8 +109,8 @@
 #include <mvme68k/dev/if_levar.h>
 
 
-int 	le_pcc_match __P((struct device *, struct cfdata  *, void *));
-void	le_pcc_attach __P((struct device *, struct device *, void *));
+int le_pcc_match __P((struct device *, struct cfdata *, void *));
+void le_pcc_attach __P((struct device *, struct device *, void *));
 
 struct cfattach le_pcc_ca = {
 	sizeof(struct le_softc), le_pcc_match, le_pcc_attach
@@ -134,10 +134,12 @@ hide u_int16_t le_pcc_rdcsr __P((struct lance_softc *, u_int16_t));
 hide void
 le_pcc_wrcsr(sc, port, val)
 	struct lance_softc *sc;
-	u_int16_t port, val;
+	u_int16_t port;
+	u_int16_t val;
 {
-	struct le_softc *lsc = (struct le_softc *) sc;
+	struct le_softc *lsc;
 
+	lsc = (struct le_softc *) sc;
 	bus_space_write_2(lsc->sc_bust, lsc->sc_bush, LEPCC_RAP, port);
 	bus_space_write_2(lsc->sc_bust, lsc->sc_bush, LEPCC_RDP, val);
 }
@@ -147,12 +149,14 @@ le_pcc_rdcsr(sc, port)
 	struct lance_softc *sc;
 	u_int16_t port;
 {
-	struct le_softc *lsc = (struct le_softc *) sc;
+	struct le_softc *lsc;
 
+	lsc = (struct le_softc *) sc;
 	bus_space_write_2(lsc->sc_bust, lsc->sc_bush, LEPCC_RAP, port);
-	return bus_space_read_2(lsc->sc_bust, lsc->sc_bush, LEPCC_RDP);
+	return (bus_space_read_2(lsc->sc_bust, lsc->sc_bush, LEPCC_RDP));
 }
 
+/* ARGSUSED */
 int
 le_pcc_match(parent, cf, aux)
 	struct device *parent;
@@ -168,36 +172,40 @@ le_pcc_match(parent, cf, aux)
 	return (1);
 }
 
+/* ARGSUSED */
 void
 le_pcc_attach(parent, self, aux)
-	struct device *parent, *self;
+	struct device *parent;
+	struct device *self;
 	void *aux;
 {
-	struct le_softc *lsc = (void *)self;
-	struct lance_softc *sc = &lsc->sc_am7990.lsc;
-	struct pcc_attach_args *pa = aux;
+	struct le_softc *lsc;
+	struct lance_softc *sc;
+	struct pcc_attach_args *pa;
 	bus_dma_segment_t seg;
 	int rseg;
+
+	lsc = (struct le_softc *) self;
+	sc = &lsc->sc_am7990.lsc;
+	pa = aux;
 
 	/* Map control registers. */
 	lsc->sc_bust = pa->pa_bust;
 	bus_space_map(pa->pa_bust, pa->pa_offset, 4, 0, &lsc->sc_bush);
 
 	/* Get contiguous DMA-able memory for the lance */
-	if ( bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, NBPG, 0,
+	if (bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, NBPG, 0,
 	    &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT) != 0 ) {
+	    BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT)) {
 		printf("%s: Failed to allocate ether buffer\n", self->dv_xname);
 		return;
 	}
-
-	if ( bus_dmamem_map(pa->pa_dmat, &seg, rseg, ether_data_buff_size,
-	    (caddr_t *) &sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0 ) {
+	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg, ether_data_buff_size,
+	    (caddr_t *) & sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
 		printf("%s: Failed to map ether buffer\n", self->dv_xname);
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
 		return;
 	}
-
 	sc->sc_addr = seg.ds_addr;
 	sc->sc_memsize = ether_data_buff_size;
 	sc->sc_conf3 = LE_C3_BSWP;
@@ -217,7 +225,7 @@ le_pcc_attach(parent, self, aux)
 	am7990_config(&lsc->sc_am7990);
 
 	/* Are we the boot device? */
-	if (PCC_PADDR(pa->pa_offset) == bootaddr) 
+	if (PCC_PADDR(pa->pa_offset) == bootaddr)
 		booted_device = self;
 
 	pccintr_establish(PCCV_LE, am7990_intr, pa->pa_ipl, sc);
