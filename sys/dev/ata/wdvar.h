@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.25 2003/12/14 05:37:25 thorpej Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.26 2003/12/14 05:38:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -79,7 +79,5 @@ struct wd_softc {
 #define sc_mode sc_wdc_bio.mode
 #define sc_multi sc_wdc_bio.multi
 #define sc_badsect sc_wdc_bio.badsect
-
-void wddone __P((void *));
 
 #endif /* _DEV_ATA_WDVAR_H_ */
