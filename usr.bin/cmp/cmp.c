@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cmp.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: cmp.c,v 1.4 1993/11/23 00:50:46 jtc Exp $";
+static char rcsid[] = "$Id: cmp.c,v 1.5 1993/12/02 01:56:04 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ __dead void endoffile	__P(());
 __dead void usage	__P(());
 
 int	all, fd1, fd2, silent;
-u_char	buf1[MAXBSIZE], buf2[MAXBSIZE];
+u_char	buffer1[MAXBSIZE], buffer2[MAXBSIZE];
 char	*file1, *file2;
 
 int
@@ -134,8 +134,8 @@ skip(dist, fd, fname)
 	register int rlen, nread;
 
 	for (; dist; dist -= rlen) {
-		rlen = MIN(dist, sizeof(buf1));
-		if ((nread = read(fd, buf1, rlen)) != rlen) {
+		rlen = MIN(dist, sizeof(buffer1));
+		if ((nread = read(fd, buffer1, rlen)) != rlen) {
 			if (nread < 0)
 				error(fname);
 			else
@@ -148,20 +148,29 @@ void
 cmp()
 {
 	register u_char	*p1, *p2;
-	register int cnt, len1, len2;
+	u_char *buf1, *buf2;
+	register int cnt;
+	int len = 0, len1 = 0, len2 = 0;
 	register long byte, line;
 	int dfound = 0;
 
 	for (byte = 0, line = 1; ; ) {
-		switch (len1 = read(fd1, buf1, MAXBSIZE)) {
-		case -1:
-			error(file1);
-		case 0:
-			/*
-			 * read of file 1 just failed, find out
-			 * if there's anything left in file 2
-			 */
-			switch (read(fd2, buf2, 1)) {
+		len1 -= len;
+		len2 -= len;
+		if (len1)
+			buf1 += cnt;
+		else
+			switch (len1 = read(fd1, buf1 = buffer1, MAXBSIZE)) {
+			case -1:
+				error(file1);
+			case 0:
+				if (len2)
+					endoffile(file1);
+				/*
+				 * read of file 1 just failed, find out
+				 * if there's anything left in file 2
+				 */
+				switch (read(fd2, buf2 = buffer2, 1)) {
 				case -1:
 					error(file2);
 					/* NOTREACHED */
@@ -171,21 +180,38 @@ cmp()
 				default:
 					endoffile(file1);
 					break;
+				}
 			}
-		}
+		if (len2)
+			buf2 += cnt;
+		else
+			switch (len2 = read(fd2, buf2 = buffer2, MAXBSIZE)) {
+			case -1:
+				error(file2);
+			case 0:
+				/*
+				 * read of file 2 just failed; we know there is
+				 * data left in file 1 if we got this far
+				 */
+				endoffile(file2);
+				break;
+			}
 		/*
-		 * file1 might be stdio, which means that a read of less than
-		 * MAXBSIZE might not mean an EOF.  So, read whatever we read
-		 * from file1 from file2.
+		 * Either file might be stdio.  We compare only the minimum
+		 * number of bytes we know are common, then loop back to the
+		 * top.  This avoids blocking on input if a difference is
+		 * found early.
 		 */
-		if ((len2 = read(fd2, buf2, len1)) == -1)
-			error(file2);
-		if (memcmp(buf1, buf2, len2)) {
+		if (len1 < len2)
+			len = len1;
+		else
+			len = len2;
+		if (memcmp(buf1, buf2, len)) {
 			if (silent)
 				exit(EXITDIFF);
 			if (all) {
 				dfound = 1;
-				for (p1 = buf1, p2 = buf2, cnt = len2; cnt--;
+				for (p1 = buf1, p2 = buf2, cnt = len; cnt--;
 				    ++p1, ++p2) {
 					++byte;
 					if (*p1 != *p2)
@@ -202,7 +228,7 @@ cmp()
 					++line;
 			}
 		} else {
-			byte += len2;
+			byte += len;
 			/*
 			 * here's the real performance problem, we've got to
 			 * count the stupid lines, which means that -l is a
@@ -210,17 +236,10 @@ cmp()
 			 * *want* to know the line number, run -s or -l.
 			 */
 			if (!silent && !all)
-				for (p1 = buf1, cnt = len2; cnt--; )
+				for (p1 = buf1, cnt = len; cnt--; )
 					if (*p1++ == '\n')
 						++line;
 		}
-		/*
-		 * couldn't read as much from file2 as from file1; checked
-		 * here because there might be a difference before we got
-		 * to this point, which would have precedence.
-		 */
-		if (len2 < len1)
-			endoffile(file2);
 	}
 }
 
