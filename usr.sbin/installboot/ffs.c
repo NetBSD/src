@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.5 2002/05/14 06:18:50 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.6 2002/05/15 09:44:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.5 2002/05/14 06:18:50 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.6 2002/05/15 09:44:55 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -298,8 +298,8 @@ ffs_findstage2_blocks(ib_params *params, void *_state,
 	assert(_state != NULL);
 
 	if (state->nblk == state->maxblk) {
-		warnx("Secondary bootstrap `%s' has too many blocks " \
-		    "(max %d)\n", params->stage2, state->maxblk);
+		warnx("Secondary bootstrap `%s' has too many blocks (max %d)",
+		    params->stage2, state->maxblk);
 		return (0);
 	}
 	state->blocks[state->nblk].block = blk;
@@ -364,16 +364,20 @@ ffs_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 
 	/* Get the inode number of the secondary bootstrap. */
 	rv = ffs_find_disk_blocks(params, ROOTINO, ffs_findstage2_ino, &ino);
-	if (rv != 2)
+	if (rv != 2) {
+		warnx("Could not find secondary bootstrap `%s' in `%s'",
+		    params->stage2, params->filesystem);
 		return (0);
+	}
 
 	/* Record the disk blocks of the secondary bootstrap. */
 	state.maxblk = *maxblk;
 	state.nblk = 0;
 	state.blocks = blocks;
 	rv = ffs_find_disk_blocks(params, ino, ffs_findstage2_blocks, &state);
-	if (! rv)
+	if (! rv) {
 		return (0);
+	}
 
 	*maxblk = state.nblk;
 	return (1);

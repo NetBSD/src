@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 2002/05/15 04:07:42 lukem Exp $ */
+/*	$NetBSD: bootxx.c,v 1.8 2002/05/15 09:44:55 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,10 +64,10 @@
  * (typically `/ufsboot'): filesystem block size, # of filesystem
  * blocks and the block numbers themselves.
  */
-struct sun68k_bbinfo bbinfo = {
+struct shared_bbinfo bbinfo = {
 	{ SUN68K_BBINFO_MAGIC },
 	0,
-	SUN68K_BBINFO_MAXBLOCKS,
+	SHARED_BBINFO_MAXBLOCKS,
 	{ 0 }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.4 2002/05/15 02:17:06 lukem Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.5 2002/05/15 09:44:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ hardcode_stage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 #endif
 	if (nblk > *maxblk) {
                 warnx("Secondary bootstrap `%s' has too many blocks "
-                    "(calculated %u, maximum %u)\n",
+                    "(calculated %u, maximum %u)",
 		    params->stage2, nblk, *maxblk);
                 return (0);
         }
