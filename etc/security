@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.81 2003/02/13 01:55:10 jhawk Exp $
+#	$NetBSD: security,v 1.82 2003/02/13 02:42:06 jhawk Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -741,9 +741,14 @@ fi
 # the mtree(8) manual page.
 #
 if checkyesno check_mtree; then
+	if checkyesno check_mtree_follow_symlinks; then
+		check_mtree_flags="-L"
+	else
+		check_mtree_flags=""
+	fi
 	for file in $special_files; do
 		[ ! -s $file ] && continue
-		mtree -e -l -p / -f $file
+		mtree -e -l -p / $check_mtree_flags -f $file
 	done > $OUTPUT
 	if [ -s $OUTPUT ]; then
 		printf "\nChecking special files and directories.\n"
@@ -753,7 +758,7 @@ if checkyesno check_mtree; then
 	for file in /etc/mtree/*.secure; do
 		[ $file = '/etc/mtree/*.secure' ] && continue
 		tree=`sed -n -e '3s/.* //p' -e 3q $file`
-		mtree -f $file -p $tree > $TMP1
+		mtree $check_mtree_flags -f $file -p $tree > $TMP1
 		if [ -s $TMP1 ]; then
 			printf "\nChecking $tree:\n"
 			cat $TMP1
