@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.13.4.1 1999/06/21 00:48:33 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.13.4.2 1999/08/02 19:42:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -613,7 +613,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = pmap_extract(pmap, vaddr);
+		(void) pmap_extract(pmap, vaddr, &curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.

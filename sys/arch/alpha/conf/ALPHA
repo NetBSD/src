@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.94.2.1.2.2 1999/07/01 23:00:56 thorpej Exp $
+# $NetBSD: ALPHA,v 1.94.2.1.2.3 1999/08/02 19:34:26 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -82,6 +82,7 @@ options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
+options 	COMPAT_14
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1

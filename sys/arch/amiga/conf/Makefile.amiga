@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.80 1999/01/15 23:37:05 thorpej Exp $
+#	$NetBSD: Makefile.amiga,v 1.80.4.1 1999/08/02 19:36:40 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -60,6 +60,8 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
 
+%INCLUDES
+
 ### find out what to use for libkern
 KERN_AS=	obj
 .include "$S/lib/libkern/Makefile.inc"
@@ -119,8 +121,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.60.4.1 1999/06/21 00:48:36 thorpej Exp $
+#	$NetBSD: files.atari,v 1.60.4.2 1999/08/02 19:42:55 thorpej Exp $
 
 maxpartitions 16
 
@@ -119,10 +119,10 @@ file	arch/atari/dev/font_8x8.c	ite
 file	arch/atari/dev/font_8x16.c	ite
 
 
-pseudo-device	view
+defpseudo	view
 file	arch/atari/dev/view.c		view | grfcc | grfet needs-count
 
-pseudo-device	mouse
+defpseudo	mouse
 file	arch/atari/dev/ms.c		mouse needs-count
 
 #
@@ -213,4 +213,4 @@ include "compat/linux/arch/m68k/files.linux_m68k"
 include "compat/ossaudio/files.ossaudio"
 
 # network devices MII bus
-include "../../../dev/mii/files.mii"
+include "dev/mii/files.mii"

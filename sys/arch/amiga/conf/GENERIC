@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.119.2.1.2.1 1999/06/21 00:46:39 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.119.2.1.2.2 1999/08/02 19:36:40 thorpej Exp $
 
 #
 #if 0
@@ -95,6 +95,7 @@ options 	COMPAT_09	# compatibility with NetBSD 0.9
 options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
+options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
@@ -292,10 +293,10 @@ qn*		at zbus0		# Quicknet
 # Arcnet
 bah*		at zbus0		# C=/Ameristar A2060 / 560
 
+#ifdef AMIGA_CONFIGURATION
 # Greater Valley Product Bus
 gvpbus* 	at zbus0
 
-#ifdef AMIGA_CONFIGURATION
 # scsi stuff, all possible
 gtsc0		at gvpbus?		# GVP series II scsi
 scsibus*	at gtsc0

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bebox,v 1.11.4.1 1999/07/01 23:06:28 thorpej Exp $
+#	$NetBSD: Makefile.bebox,v 1.11.4.2 1999/08/02 19:44:01 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -57,6 +57,8 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 0x3100 -e __start
 STRIPFLAGS=	--strip-debug
 
+%INCLUDES
+
 ### find out what to use for libkern
 KERN_AS=	obj
 .include "$S/lib/libkern/Makefile.inc"
@@ -104,8 +106,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.13.4.1 1999/06/21 00:47:30 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13.4.2 1999/08/02 19:37:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -646,7 +646,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = pmap_extract(pmap, (vm_offset_t)vaddr);
+		(void) pmap_extract(pmap, (vaddr_t)vaddr, &curaddr);
 
 		/*
 		 * Make sure we're in an allowed DMA range.
