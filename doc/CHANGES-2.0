@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.310 2004/07/02 18:45:02 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.311 2004/07/02 20:02:30 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4768,9 +4768,21 @@ sys/dev/ieee1394/sbp2.c				1.19
 sys/arch/acorn26/conf/GENERIC			1.21
 sys/arch/acorn32/conf/GENERIC			1.42
 sys/arch/alpha/conf/GENERIC			1.246
+sys/arch/amiga/conf/AMIGA			regenerate
+sys/arch/amiga/conf/DRACO			regenerate
+sys/arch/amiga/conf/GENERIC			regenerate
 sys/arch/amiga/conf/GENERIC.in			1.23
+sys/arch/amiga/conf/INSTALL			regenerate
+sys/arch/amiga/conf/WSCONS			regenerate
 sys/arch/arc/conf/GENERIC			1.103
+sys/arch/atari/conf/ATARITT			regenerate
+sys/arch/atari/conf/BOOT			regenerate
+sys/arch/atari/conf/BOOTX			regenerate
+sys/arch/atari/conf/FALCON			regenerate
 sys/arch/atari/conf/GENERIC.in			1.38
+sys/arch/atari/conf/HADES			regenerate
+sys/arch/atari/conf/MILAN-ISAIDE		regenerate
+sys/arch/atari/conf/MILAN-PCIIDE		regenerate
 sys/arch/cats/conf/GENERIC			1.66
 sys/arch/cesfic/conf/GENERIC			1.25
 sys/arch/cobalt/conf/GENERIC			1.60
