@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.18 2002/04/23 17:33:28 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.19 2002/04/23 20:41:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
