@@ -1,16 +1,15 @@
-#	$Netbsd$
+#	$NetBSD: Makefile,v 1.1.1.2 1999/08/27 15:16:17 itojun Exp $
 
 PROG=	tcpdchk
 SRCS=	tcpdchk.c fakelog.c inetcf.c scaffold.c percent_m.c
 MAN=	tcpdchk.8
-LDADD=	-lwrap
+LDADD=	-L/usr/home/itojun/NetBSD2/src/lib/libwrap -lwrap
+DPADD=	${LIBWRAP}
 
-CFLAGS+= -I${.CURDIR}/../../lib/libwrap
+CPPFLAGS+= -I${.CURDIR}/../../lib/libwrap
 
-CFLAGS+=-DFACILITY=LOG_AUTHPRIV -DSEVERITY=LOG_INFO -DPARANOID
-CFLAGS+=-DREAL_DAEMON_DIR=\"/usr/libexec\" -DHOSTS_ACCESS -DDAEMON_UMASK=022
-CFLAGS+=-DRFC931_TIMEOUT=10 -DALWAYS_HOSTNAME -DSYS_ERRLIST_DEFINED
-CFLAGS+=-DHOSTS_ALLOW=\"/etc/hosts.allow\" -DHOSTS_DENY=\"/etc/hosts.deny\"
-CFLAGS+=-DPROCESS_OPTIONS
+.include "${.CURDIR}/../../lib/libwrap/Makefile.cflags"
 
 .include <bsd.prog.mk>
+
+CFLAGS=

@@ -6,7 +6,7 @@
   */
 
 #ifndef lint
-static char sccsid[] = "@(#) inetcf.c 1.6 96/02/11 17:01:29";
+static char sccsid[] = "@(#) inetcf.c 1.7 97/02/12 02:13:23";
 #endif
 
 #include <sys/types.h>
@@ -118,6 +118,8 @@ char   *conf;
 	    if ((path = strtok((char *) 0, whitespace)) == 0)
 		continue;
 	}
+	if (path[0] == '?')			/* IRIX optional service */
+	    path++;
 	if (STR_EQ(path, "internal"))
 	    continue;
 	if (path[strspn(path, "-0123456789")] == 0) {

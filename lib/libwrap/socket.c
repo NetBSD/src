@@ -16,7 +16,7 @@
   */
 
 #ifndef lint
-static char sccsid[] = "@(#) socket.c 1.14 95/01/30 19:51:50";
+static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #endif
 
 /* System libraries. */
@@ -185,8 +185,8 @@ struct host_info *host;
 	     * problem. It could also be that someone is trying to spoof us.
 	     */
 
-	    tcpd_warn("host name/name mismatch: %s != %s",
-		      host->name, hp->h_name);
+	    tcpd_warn("host name/name mismatch: %s != %.*s",
+		      host->name, STRING_LENGTH, hp->h_name);
 
 	} else {
 
@@ -210,8 +210,8 @@ struct host_info *host;
 	     * server.
 	     */
 
-	    tcpd_warn("host name/address mismatch: %s != %s",
-		      inet_ntoa(sin->sin_addr), hp->h_name);
+	    tcpd_warn("host name/address mismatch: %s != %.*s",
+		      inet_ntoa(sin->sin_addr), STRING_LENGTH, hp->h_name);
 	}
 	strcpy(host->name, paranoid);		/* name is bad, clobber it */
     }

@@ -5,7 +5,7 @@
   */
 
 #ifndef lint
-static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
+static char sccs_id[] = "@(#) scaffold.c 1.6 97/03/21 19:27:24";
 #endif
 
 /* System libraries. */
@@ -114,7 +114,7 @@ char   *host;
     }
     if (STR_NE(host, hp->h_name)) {
 	tcpd_warn("%s: hostname alias", host);
-	tcpd_warn("(official name: %s)", hp->h_name);
+	tcpd_warn("(official name: %.*s)", STRING_LENGTH, hp->h_name);
     }
     return (dup_hostent(hp));
 }

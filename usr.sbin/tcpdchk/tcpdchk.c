@@ -15,7 +15,7 @@
   */
 
 #ifndef lint
-static char sccsid[] = "@(#) tcpdchk.c 1.7 96/02/11 17:01:34";
+static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #endif
 
 /* System libraries. */
@@ -236,7 +236,8 @@ struct request_info *request;
 #ifdef PROCESS_OPTIONS
 	    real_verdict = defl_verdict;
 	    if (sh_cmd) {
-		if ((verdict = setjmp(tcpd_buf)) != 0) {
+		verdict = setjmp(tcpd_buf);
+		if (verdict != 0) {
 		    real_verdict = (verdict == AC_PERMIT);
 		} else {
 		    dry_run = 1;

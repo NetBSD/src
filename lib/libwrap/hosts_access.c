@@ -18,7 +18,7 @@
   */
 
 #ifndef lint
-static char sccsid[] = "@(#) hosts_access.c 1.20 96/02/11 17:01:27";
+static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #endif
 
 /* System libraries. */
@@ -111,7 +111,8 @@ struct request_info *request;
 
     if (resident <= 0)
 	resident++;
-    if ((verdict = setjmp(tcpd_buf)) != 0)
+    verdict = setjmp(tcpd_buf);
+    if (verdict != 0)
 	return (verdict == AC_PERMIT);
     if (table_match(hosts_allow_table, request))
 	return (YES);
