@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.19 2000/03/15 17:08:37 soren Exp $
+#	$NetBSD: files.arc,v 1.20 2000/05/29 10:17:44 soda Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -174,6 +174,3 @@ file	dev/cons.c
 #file	dev/cninit.c
 #file	netinet/in_cksum.c
 #file	netns/ns_cksum.c			ns
-
-# Ultrix binary compatibility (COMPAT_ULTRIX)
-include "compat/ultrix/files.ultrix"
