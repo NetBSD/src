@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.70 2003/03/14 21:38:26 dsl Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.71 2003/05/16 14:25:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.70 2003/03/14 21:38:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.71 2003/05/16 14:25:03 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,6 +503,7 @@ limcopy(lim)
 	struct plimit *lim;
 {
 	struct plimit *newlim;
+	size_t l;
 
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
 	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
@@ -510,9 +511,9 @@ limcopy(lim)
 	if (lim->pl_corename == defcorename) {
 		newlim->pl_corename = defcorename;
 	} else {
-		newlim->pl_corename = malloc(strlen(lim->pl_corename)+1,
-		    M_TEMP, M_WAITOK);
-		strcpy(newlim->pl_corename, lim->pl_corename);
+		l = strlen(lim->pl_corename) + 1;
+		newlim->pl_corename = malloc(l, M_TEMP, M_WAITOK);
+		strlcpy(newlim->pl_corename, lim->pl_corename, l);
 	}
 	newlim->p_lflags = 0;
 	newlim->p_refcnt = 1;
