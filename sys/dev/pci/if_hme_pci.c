@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.6 2001/09/26 20:53:13 eeh Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.7 2001/10/05 17:49:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -92,12 +92,16 @@ hmeattach_pci(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct hme_pci_softc *hsc = (void *)self;
 	struct hme_softc *sc = &hsc->hsc_hme;
-	pci_intr_handle_t intrhandle;
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
+	pci_intr_handle_t ih;
 	pcireg_t csr;
 	const char *intrstr;
 	int type;
+
+	/* XXX the following declarations should be elsewhere */
+	extern void myetheraddr __P((u_char *));
+
+	printf(": Sun Happy Meal Ethernet, rev. %d\n",
+	    PCI_REVISION(pa->pa_class));
 
 	/*
 	 * enable io/memory-space accesses.  this is kinda of gross; but
@@ -138,16 +142,55 @@ hmeattach_pci(parent, self, aux)
 	if (pci_mapreg_map(pa, PCI_HME_BASEADDR, type, 0,
 	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, NULL) != 0)
 	{
-		printf(": could not map hme registers\n");
+		printf("%s: unable to map device registers\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	sc->sc_seb = hsc->hsc_memh;
-	sc->sc_etx = hsc->hsc_memh + 0x2000;
-	sc->sc_erx = hsc->hsc_memh + 0x4000;
-	sc->sc_mac = hsc->hsc_memh + 0x6000;
-	sc->sc_mif = hsc->hsc_memh + 0x7000;
+	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x2000,
+	    0x1000, &sc->sc_etx)) {
+		printf("%s: unable to subregion ETX registers\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x4000,
+	    0x1000, &sc->sc_erx)) {
+		printf("%s: unable to subregion ERX registers\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x6000,
+	    0x1000, &sc->sc_mac)) {
+		printf("%s: unable to subregion MAC registers\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x7000,
+	    0x1000, &sc->sc_mif)) {
+		printf("%s: unable to subregion MIF registers\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	myetheraddr(sc->sc_enaddr);
+
+	/*
+	 * Map and establish our interrupt.
+	 */
+	if (pci_intr_map(pa, &ih) != 0) {
+		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		return;
+	}	
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	hsc->hsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, hme_intr, sc);
+	if (hsc->hsc_ih == NULL) {
+		printf("%s: unable to establish interrupt",
+		    sc->sc_dev.dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+	}
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 #if 0
 	/*
@@ -173,34 +216,6 @@ hmeattach_pci(parent, self, aux)
 
 	sc->sc_burst = 16;	/* XXX */
 
-	/*
-	 * call the main configure
-	 */
+	/* Finish off the attach. */
 	hme_config(sc);
-
-#if 0
-printf("%s: ", sc->sc_dev.dv_xname);
-pci_conf_print(pa->pa_pc, pa->pa_tag, 0);
-#endif
-
-	if (pci_intr_map(pa, &intrhandle) != 0) {
-		printf("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return;	/* bus_unmap ? */
-	}	
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	hsc->hsc_ih = pci_intr_establish(pa->pa_pc,
-	    intrhandle, IPL_NET, hme_intr, sc);
-	if (hsc->hsc_ih != NULL) {
-		printf("%s: using %s for interrupt\n",
-		    sc->sc_dev.dv_xname,
-		    intrstr ? intrstr : "unknown interrupt");
-	} else {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;	/* bus_unmap ? */
-	}
 }
