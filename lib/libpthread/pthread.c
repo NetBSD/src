@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.33 2004/03/14 01:19:41 cl Exp $	*/
+/*	$NetBSD: pthread.c,v 1.34 2004/06/25 16:33:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.33 2004/03/14 01:19:41 cl Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.34 2004/06/25 16:33:32 drochner Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -1038,7 +1038,8 @@ pthread__errno(void)
 ssize_t	_sys_write(int, const void *, size_t);
 
 void
-pthread__assertfunc(char *file, int line, char *function, char *expr)
+pthread__assertfunc(const char *file, int line, const char *function,
+		    const char *expr)
 {
 	char buf[1024];
 	int len;
@@ -1062,7 +1063,8 @@ pthread__assertfunc(char *file, int line, char *function, char *expr)
 
 
 void
-pthread__errorfunc(char *file, int line, char *function, char *msg)
+pthread__errorfunc(const char *file, int line, const char *function,
+		   const char *msg)
 {
 	char buf[1024];
 	size_t len;
