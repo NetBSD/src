@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.2 1996/05/15 16:12:51 oki Exp $	*/
+/*	$NetBSD: pow.c,v 1.3 1996/10/11 00:39:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -83,15 +83,15 @@ powattach(num)
 			mfp.ierb |= sw;
 		}
 
-		printf("pow%d: started by ", minor);
+		kprintf("pow%d: started by ", minor);
 		if ((sw & POW_ALARMSW) && sramtop[0x26] == 0)
-			printf ("RTC alarm.\n");
+			kprintf ("RTC alarm.\n");
 		else if (sw & POW_EXTERNALSW)
-			printf ("external power switch.\n");
+			kprintf ("external power switch.\n");
 		else if (sw & POW_FRONTSW)
-			printf ("front power switch.\n");
+			kprintf ("front power switch.\n");
 		else
-			printf ("???.\n");
+			kprintf ("???.\n");
 	}
 }
 

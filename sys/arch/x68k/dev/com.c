@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.4 1996/07/16 16:29:16 oki Exp $	*/
+/*	$NetBSD: com.c,v 1.5 1996/10/11 00:39:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -231,7 +231,7 @@ comprobeHAYESP(iobase, sc)
 	if (sc->sc_iobase != combaselist[dips & 0x03])
 		return 0;
 
-	printf(": ESP");
+	kprintf(": ESP");
 
  	/* Check ESP Self Test bits. */
 	/* Check for ESP version 2.0: bits 4,5,6 == 010 */
@@ -239,14 +239,14 @@ comprobeHAYESP(iobase, sc)
 	val = inb(iobase + HAYESP_STATUS1);	/* Clear reg 1 */
 	val = inb(iobase + HAYESP_STATUS2);
 	if ((val & 0x70) < 0x20) {
-		printf("-old (%o)", val & 0x70);
+		kprintf("-old (%o)", val & 0x70);
 		/* we do not support the necessary features */
 		return 0;
 	}
 
 	/* Check for ability to emulate 16550: bit 8 == 1 */
 	if ((dips & 0x80) == 0) {
-		printf(" slave");
+		kprintf(" slave");
 		/* XXX Does slave really mean no 16550 support?? */
 		return 0;
 	}
@@ -257,7 +257,7 @@ comprobeHAYESP(iobase, sc)
 	 */
 
 	SET(sc->sc_hwflags, COM_HW_HAYESP);
-	printf(", 1024 byte fifo\n");
+	kprintf(", 1024 byte fifo\n");
 	return 1;
 }
 #endif
@@ -307,7 +307,7 @@ comattach(parent, dev, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	printf(": iobase %lx", sc->sc_iobase);
+	kprintf(": iobase %lx", sc->sc_iobase);
 
 #if 0
 	if (sc->sc_dev.dv_unit == comconsole)
@@ -332,11 +332,11 @@ comattach(parent, dev, aux)
 	if (ISSET(inb(pio(iobase , com_iir)), IIR_FIFO_MASK) == IIR_FIFO_MASK)
 		if (ISSET(inb(pio(iobase , com_fifo)), FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
-			printf(": ns16550a, working fifo\n");
+			kprintf(": ns16550a, working fifo\n");
 		} else
-			printf(": ns16550, broken fifo\n");
+			kprintf(": ns16550, broken fifo\n");
 	else
-		printf(": ns8250 or ns16450, no fifo\n");
+		kprintf(": ns8250 or ns16450, no fifo\n");
 	outb(pio(iobase , com_fifo), 0);
 #ifdef COM_HAYESP
 	}
@@ -364,10 +364,10 @@ comattach(parent, dev, aux)
 				 * Print prefix of device name,
 				 * let kgdb_connect print the rest.
 				 */
-				printf("%s: ", sc->sc_dev.dv_xname);
+				kprintf("%s: ", sc->sc_dev.dv_xname);
 				kgdb_connect(1);
 			} else
-				printf("%s: kgdb enabled\n",
+				kprintf("%s: kgdb enabled\n",
 				    sc->sc_dev.dv_xname);
 		}
 	}
@@ -1073,7 +1073,7 @@ comintr(arg)
 		}
 #ifdef COMDEBUG
 		else if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
-			printf("weird lsr %02x\n", lsr);
+			kprintf("weird lsr %02x\n", lsr);
 #endif
 
 		msr = inb(pio(iobase , com_msr));

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.2 1996/05/21 15:32:42 oki Exp $	*/
+/*	$NetBSD: par.c,v 1.3 1996/10/11 00:39:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -129,7 +129,7 @@ parattach(pdp, dp, aux)
 	register struct par_softc *sc = (struct par_softc *)dp;
 	
 	sc->sc_flags = PARF_ALIVE;
-	printf(": parallel port (write only, interrupt)\n");
+	kprintf(": parallel port (write only, interrupt)\n");
 	ioctlr.intr &= (~PRTI_EN);
 }
 
@@ -187,7 +187,7 @@ parstart(unit)
 	struct par_softc *sc = par_cd.cd_devs[unit];
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parstart(%x)\n", unit);
+		kprintf("parstart(%x)\n", unit);
 #endif
 	sc->sc_flags &= ~PARF_DELAY;
 	wakeup(sc);
@@ -200,7 +200,7 @@ partimo(unit)
 	struct par_softc *sc = par_cd.cd_devs[unit];
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("partimo(%x)\n", unit);
+		kprintf("partimo(%x)\n", unit);
 #endif
 	sc->sc_flags &= ~(PARF_UIO|PARF_TIMO);
 	wakeup(sc);
@@ -214,7 +214,7 @@ parwrite(dev, uio)
 	
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parwrite(%x, %x)\n", dev, uio);
+		kprintf("parwrite(%x, %x)\n", dev, uio);
 #endif
 	return (parrw(dev, uio));
 }
@@ -262,7 +262,7 @@ parrw(dev, uio)
 		if ((sc->sc_flags & PARF_UIO) == 0) {
 #ifdef DEBUG
 			if (pardebug & PDB_IO)
-				printf("parrw: uiomove/sleep timo, flags %x\n",
+				kprintf("parrw: uiomove/sleep timo, flags %x\n",
 				       sc->sc_flags);
 #endif
 			if (sc->sc_flags & PARF_TIMO) {
@@ -289,7 +289,7 @@ parrw(dev, uio)
 		if ((sc->sc_flags & PARF_UIO) == 0) {
 #ifdef DEBUG
 			if (pardebug & PDB_IO)
-				printf("parrw: timeout/done\n");
+				kprintf("parrw: timeout/done\n");
 #endif
 			splx(s);
 			break;
@@ -335,14 +335,14 @@ parrw(dev, uio)
 		uio->uio_resid += (len - cnt);
 #ifdef DEBUG
 			if (pardebug & PDB_IO)
-				printf("parrw: short write, adjust by %d\n",
+				kprintf("parrw: short write, adjust by %d\n",
 				       len-cnt);
 #endif
 	}
 	free(buf, M_DEVBUF);
 #ifdef DEBUG
 	if (pardebug & (PDB_FOLLOW|PDB_IO))
-		printf("parrw: return %d, resid %d\n", error, uio->uio_resid);
+		kprintf("parrw: return %d, resid %d\n", error, uio->uio_resid);
 #endif
 	return (error);
 }
@@ -431,7 +431,7 @@ parintr(arg)
 
 #ifdef DEBUG
 	if (pardebug & PDB_INTERRUPT)
-		printf ("parintr %d(%s)\n", mask, mask ? "FLG" : "tout");
+		kprintf ("parintr %d(%s)\n", mask, mask ? "FLG" : "tout");
 #endif
 	/* if invoked from timeout handler, mask will be 0,
 	 * if from interrupt, it will contain the cia-icr mask,
@@ -480,7 +480,7 @@ parsendch (ch)
 			if (error = tsleep (parintr, PCATCH|PZERO-1, "parsendch", 0)) {
 #ifdef DEBUG
 				if (pardebug & PDB_INTERRUPT)
-					printf ("parsendch interrupted, error = %d\n", error);
+					kprintf ("parsendch interrupted, error = %d\n", error);
 #endif
 				if (partimeout_pending)
 					untimeout (parintr, 0);
@@ -492,7 +492,7 @@ parsendch (ch)
 	if (!error) {
 #ifdef DEBUG
 		if (pardebug & PDB_INTERRUPT)
-			printf ("#%d", ch);
+			kprintf ("#%d", ch);
 #endif
 		printer.data = ch;
 		DELAY(1);	/* (DELAY(1) == 1us) > 0.5us */

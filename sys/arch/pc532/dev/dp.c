@@ -1,4 +1,4 @@
-/*	$NetBSD: dp.c,v 1.9 1996/02/02 18:06:54 mycroft Exp $	*/
+/*	$NetBSD: dp.c,v 1.10 1996/10/11 00:40:58 christos Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -182,31 +182,31 @@ long int dp_adapter_info(int unit)
 void
 dp_print_stat1(u_char stat1)
 {
-    printf("stat1=");
-    if ( stat1 & 0x80 ) printf(" /RST");
-    if ( stat1 & 0x40 ) printf(" /BSY");
-    if ( stat1 & 0x20 ) printf(" /REQ");
-    if ( stat1 & 0x10 ) printf(" /MSG");
-    if ( stat1 & 0x08 ) printf(" /CD");
-    if ( stat1 & 0x04 ) printf(" /IO");
-    if ( stat1 & 0x02 ) printf(" /SEL");
-    if ( stat1 & 0x01 ) printf(" /DBP");
-    printf("\n");
+    kprintf("stat1=");
+    if ( stat1 & 0x80 ) kprintf(" /RST");
+    if ( stat1 & 0x40 ) kprintf(" /BSY");
+    if ( stat1 & 0x20 ) kprintf(" /REQ");
+    if ( stat1 & 0x10 ) kprintf(" /MSG");
+    if ( stat1 & 0x08 ) kprintf(" /CD");
+    if ( stat1 & 0x04 ) kprintf(" /IO");
+    if ( stat1 & 0x02 ) kprintf(" /SEL");
+    if ( stat1 & 0x01 ) kprintf(" /DBP");
+    kprintf("\n");
 }
 
 void
 dp_print_stat2(u_char stat2)
 {
-    printf("stat2=");
-    if ( stat2 & 0x80 ) printf(" EDMA");
-    if ( stat2 & 0x40 ) printf(" DRQ");
-    if ( stat2 & 0x20 ) printf(" SPER");
-    if ( stat2 & 0x10 ) printf(" INT");
-    if ( stat2 & 0x08 ) printf(" PHSM");
-    if ( stat2 & 0x04 ) printf(" BSY");
-    if ( stat2 & 0x02 ) printf(" /ATN");
-    if ( stat2 & 0x01 ) printf(" /ACK");
-    printf("\n");
+    kprintf("stat2=");
+    if ( stat2 & 0x80 ) kprintf(" EDMA");
+    if ( stat2 & 0x40 ) kprintf(" DRQ");
+    if ( stat2 & 0x20 ) kprintf(" SPER");
+    if ( stat2 & 0x10 ) kprintf(" INT");
+    if ( stat2 & 0x08 ) kprintf(" PHSM");
+    if ( stat2 & 0x04 ) kprintf(" BSY");
+    if ( stat2 & 0x02 ) kprintf(" /ATN");
+    if ( stat2 & 0x01 ) kprintf(" /ACK");
+    kprintf("\n");
 }
 #endif
 
@@ -233,7 +233,7 @@ int dp_scsi_cmd(struct scsi_xfer *xs)
 	int	ti_val;		/* For timeouts. */
 
 #if DP_DEBUG
-	printf("\n");
+	kprintf("\n");
 #endif
 	x = splhigh();
 	if (dp_dvr_state == DP_DVR_READY)
@@ -250,20 +250,20 @@ int dp_scsi_cmd(struct scsi_xfer *xs)
 	flags = xs->flags;
 	if (!(flags & INUSE)) {
 #if DP_DEBUG
-		printf("dp xs not in use!\n");
+		kprintf("dp xs not in use!\n");
 #endif
 		xs->flags |= INUSE;
 	}
 	if (flags & ITSDONE) {
 #if DP_DEBUG
-		printf("dp xs already done!\n");
+		kprintf("dp xs already done!\n");
 #endif
 		xs->flags &= ~ITSDONE;
 	}
 	if (dp_needs_reset || (xs->flags & SCSI_RESET))
 		dp_reset();
 #if DP_DEBUG
-	printf ("scsi_cmd: flags=0x%x, targ=%d, lu=%d, cmdlen=%d, cmd=%x\n",
+	kprintf ("scsi_cmd: flags=0x%x, targ=%d, lu=%d, cmdlen=%d, cmd=%x\n",
 		xs->flags, xs->targ, xs->lu, xs->cmdlen, xs->cmd->opcode);
 #endif
 #if 1
@@ -284,7 +284,7 @@ int dp_scsi_cmd(struct scsi_xfer *xs)
 	if (retval != SUCCESSFULLY_QUEUED)
 		return retval;
 #if DP_DEBUG > 1
-	printf("polling for interrupts\n");
+	kprintf("polling for interrupts\n");
 #endif
 	ti_val = WAIT_MUL * xs->timeout;
 	while (dp_dvr_state != DP_DVR_READY) {
@@ -302,10 +302,10 @@ int dp_scsi_cmd(struct scsi_xfer *xs)
 	}
 	if (xs->error == XS_SWTIMEOUT) {
 		/* Software Timeout! */
-		printf ("scsi timeout!\n");
+		kprintf ("scsi timeout!\n");
 #if DP_DEBUG
 		dp_print_regs();
-		printf("TCMD = 0x%x\n", RD_ADR(u_char, DP_TCMD));
+		kprintf("TCMD = 0x%x\n", RD_ADR(u_char, DP_TCMD));
 #endif
 		dp_reset();
 	}
@@ -330,7 +330,7 @@ void dp_intr(void)
 {
 	int x = splhigh();
 #if DP_DEBUG
-	printf("\n REAL dp_intr\n");
+	kprintf("\n REAL dp_intr\n");
 #endif
 	dp_intr_work();
 	splx(x);
@@ -355,7 +355,7 @@ void dp_intr_work(void)
 	new_phase = (stat1 >> 2) & 7;
 
 #if DP_DEBUG
-	printf ("dp_intr: dvr_state %d isr=0x%x new_phase = %d %s\n",
+	kprintf ("dp_intr: dvr_state %d isr=0x%x new_phase = %d %s\n",
 		dp_dvr_state, isr, new_phase, dp_phase_names[new_phase]);
 #if DP_DEBUG > 1
 	dp_print_regs();
@@ -369,20 +369,20 @@ void dp_intr_work(void)
 #endif
 	if (isr & DP_ISR_BSYERR) {
 #if DP_DEBUG
-		printf("dp_intr: Busy error\n");
+		kprintf("dp_intr: Busy error\n");
 #endif
 	}
 	if (isr & DP_ISR_EDMA) {
 #if DP_DEBUG > 1
-		printf("dp_intr: EDMA detected\n");
+		kprintf("dp_intr: EDMA detected\n");
 #endif
 		RD_ADR(u_char, DP_MODE) &= ~DP_M_DMA;
 		WR_ADR(u_char, DP_ICMD, DP_EMODE);
 	}
         if (!(isr & DP_ISR_APHS)) {
 #if DP_DEBUG > 1
-	 	printf("dp_intr: Not an APHS!\n");
-		printf("dp_intr: dvr_state %d isr=0x%x (exit)\n",
+	 	kprintf("dp_intr: Not an APHS!\n");
+		kprintf("dp_intr: dvr_state %d isr=0x%x (exit)\n",
 			dp_dvr_state, isr);
 #endif
 		return;
@@ -392,7 +392,7 @@ void dp_intr_work(void)
 	case DP_DVR_ARB: 	/* Next comes the command phase! */
 		if (new_phase != DP_PHASE_CMD) {
 #if DP_DEBUG
-		    printf ("Phase mismatch cmd!\n");
+		    kprintf ("Phase mismatch cmd!\n");
 #endif
 		    goto phase_mismatch;
 		}
@@ -422,7 +422,7 @@ void dp_intr_work(void)
 		    if (!(cur_xs->flags & SCSI_DATA_IN)) {
 #endif
 #if DP_DEBUG
-			printf("Phase mismatch in.\n");
+			kprintf("Phase mismatch in.\n");
 #endif
 			goto phase_mismatch;
 		    }
@@ -443,7 +443,7 @@ void dp_intr_work(void)
 		    if (!(cur_xs->flags & SCSI_DATA_OUT)) {
 #endif
 #if DP_DEBUG
-			printf("Phase mismatch out.\n");
+			kprintf("Phase mismatch out.\n");
 #endif
 			goto phase_mismatch;
 		    }
@@ -458,7 +458,7 @@ void dp_intr_work(void)
 	case DP_DVR_DATA:	/* Next comes the stat phase */
 		if (new_phase != DP_PHASE_STATUS) {
 #if DP_DEBUG
-		    printf("Phase mismatch stat.\n");
+		    kprintf("Phase mismatch stat.\n");
 #endif
 		    goto phase_mismatch;
 		}
@@ -466,14 +466,14 @@ void dp_intr_work(void)
 		dp_pdma_in(&status, 1, DP_PHASE_STATUS);
 		dp_clear_isr();
 #if DP_DEBUG > 1
-		printf("status = 0x%x\n", status);
+		kprintf("status = 0x%x\n", status);
 #endif
 		break;
 
 	case DP_DVR_STAT:
 		if (new_phase != DP_PHASE_MSGI) {
 #if DP_DEBUG
-			printf ("msgi phase mismatch\n");
+			kprintf ("msgi phase mismatch\n");
 #endif
 			goto phase_mismatch;
 		}
@@ -481,11 +481,11 @@ void dp_intr_work(void)
 		dp_pdma_in(&message, 1, DP_PHASE_MSGI);
 		dp_clear_isr();
 #if DP_DEBUG > 1
-		printf("message = 0x%x\n", message);
+		kprintf("message = 0x%x\n", message);
 #endif
 #if 0
 		if (status != SCSI_OK && dp_try_count < cur_xs->retries) {
-		    printf("dp_intr: retry: dp_try_count = %d\n",
+		    kprintf("dp_intr: retry: dp_try_count = %d\n",
 			dp_try_count);
 		    dp_restart_cmd();
 		}
@@ -507,7 +507,7 @@ phase_mismatch:
 
     if (dp_dvr_state == DP_DVR_MSGI) {
 #if DP_DEBUG > 1
-	printf ("dvr_stat: dp_try_count = %d\n", dp_try_count);
+	kprintf ("dvr_stat: dp_try_count = %d\n", dp_try_count);
 #endif
 	WR_ADR (u_char, DP_MODE, 0);	/* Turn off monbsy, dma, ... */
 	if (status == SCSI_OK) {
@@ -525,19 +525,19 @@ phase_mismatch:
 	cur_xs->flags |= ITSDONE;
 	dp_dvr_state = DP_DVR_READY;
 #if DP_DEBUG > 1
-	printf("calling wakeup on 0x%x\n", cur_xs);
+	kprintf("calling wakeup on 0x%x\n", cur_xs);
 #endif
 	wakeup((caddr_t) cur_xs);
 	/* If this true interrupt code, call the done routine. */
 	if (cur_xs->when_done) {
 #if DP_DEBUG > 1
-	  printf("dp_intr: calling when_done 0x%x\n", cur_xs->when_done);
+	  kprintf("dp_intr: calling when_done 0x%x\n", cur_xs->when_done);
 #endif
 	  (*(cur_xs->when_done))(cur_xs->done_arg, cur_xs->done_arg2);
 	}
     }
 #if DP_DEBUG > 1
-  printf ("exit dp_intr.\n");
+  kprintf ("exit dp_intr.\n");
 #endif
 }
 
@@ -549,7 +549,7 @@ phase_mismatch:
 dp_initialize()
 {
 #if DP_DEBUG
-	printf("dp_initialize()\n");
+	kprintf("dp_initialize()\n");
 #endif
 	scsi_select_ctlr (DP8490);
 	WR_ADR (u_char, DP_ICMD, DP_EMODE);	/* Set Enhanced mode */
@@ -616,7 +616,7 @@ dp_wait_bus_free()
     return OK;
   }
 #if DP_DEBUG
-  printf("wait bus free failed\n");
+  kprintf("wait bus free failed\n");
   dp_print_stat1(stat1);
 #endif
   dp_needs_reset = 1;
@@ -635,7 +635,7 @@ long adr;
   int i, stat1;
 
 #if DP_DEBUG > 1
-  printf("dp_select(0x%x)\n", adr);
+  kprintf("dp_select(0x%x)\n", adr);
 #endif
   WR_ADR (u_char, DP_TCMD, 0);		/* get to harmless state */
   WR_ADR (u_char, DP_MODE, 0);		/* get to harmless state */
@@ -649,9 +649,9 @@ long adr;
       WR_ADR(u_char, DP_EMR_ISR, DP_EF_ISR_NEXT);
       isr = RD_ADR (u_char, DP_EMR_ISR);
 #if DP_DEBUG
-      printf ("SCSI: SELECT timeout adr %d\n", adr);
+      kprintf ("SCSI: SELECT timeout adr %d\n", adr);
       dp_print_regs();
-      printf("ICMD = 0x%x isr = 0x%x\n", RD_ADR(u_char, DP_ICMD), isr);
+      kprintf("ICMD = 0x%x isr = 0x%x\n", RD_ADR(u_char, DP_ICMD), isr);
 #endif
       dp_reset();
       return NOT_OK;
@@ -700,7 +700,7 @@ int dp_start_cmd(struct scsi_xfer *xs)
 
   if (!dp_wait_bus_free()) {
 #if DP_DEBUG
-	printf("dp_start_cmd: DP DRIVER BUSY\n");
+	kprintf("dp_start_cmd: DP DRIVER BUSY\n");
 #endif
 	xs->error = XS_BUSY;
 	return TRY_AGAIN_LATER;
@@ -708,7 +708,7 @@ int dp_start_cmd(struct scsi_xfer *xs)
 
   if (!dp_select(1 << xs->targ)) {
 #if DP_DEBUG
-	printf("dp_start_cmd: DP DRIVER STUFFUP\n");
+	kprintf("dp_start_cmd: DP DRIVER STUFFUP\n");
 #endif
 	xs->error = XS_DRIVER_STUFFUP;
 	return HAD_ERROR;
@@ -722,7 +722,7 @@ int dp_start_cmd(struct scsi_xfer *xs)
   if (!(xs->flags & SCSI_NOMASK)) {
     /* Set up the timeout! */
 #if DP_DEBUG > 1
-    printf ("dp_start_cmd: dp timeouts not done\n");
+    kprintf ("dp_start_cmd: dp timeouts not done\n");
 #endif
   }
   return SUCCESSFULLY_QUEUED;
@@ -745,7 +745,7 @@ int dp_restart_cmd()
 
   DELAY(50);
 #if DP_DEBUG
-  printf ("restart .. stat1=0x%x stat2=0x%x\n", RD_ADR(u_char, DP_STAT1),
+  kprintf ("restart .. stat1=0x%x stat2=0x%x\n", RD_ADR(u_char, DP_STAT1),
     RD_ADR(u_char, DP_STAT2));
 #endif
   if (!dp_wait_bus_free()) {
@@ -754,9 +754,9 @@ int dp_restart_cmd()
   }
 
 #if DP_DEBUG
-  printf ("restart .1 stat1=0x%x stat2=0x%x\n", RD_ADR(u_char, DP_STAT1),
+  kprintf ("restart .1 stat1=0x%x stat2=0x%x\n", RD_ADR(u_char, DP_STAT1),
     RD_ADR(u_char, DP_STAT2));
-  printf ("cur_xs->targ=%d\n",cur_xs->targ);
+  kprintf ("cur_xs->targ=%d\n",cur_xs->targ);
 #endif
   if (!dp_select (1 << cur_xs->targ)) {
 	cur_xs->error = XS_DRIVER_STUFFUP;
@@ -764,7 +764,7 @@ int dp_restart_cmd()
   }
 
 #if DP_DEBUG
-  printf ("restart .2 stat1=0x%x stat2=0x%x\n", RD_ADR(u_char, DP_STAT1),
+  kprintf ("restart .2 stat1=0x%x stat2=0x%x\n", RD_ADR(u_char, DP_STAT1),
     RD_ADR(u_char, DP_STAT2));
 #endif
   /* After selection, we now wait for the APHS interrupt! */
@@ -774,7 +774,7 @@ int dp_restart_cmd()
   if (!(cur_xs->flags & SCSI_NOMASK)) {
     /* Set up the timeout! */
 #if DP_DEBUG
-    printf ("dp_restart_cmd: dp timeouts not done\n");
+    kprintf ("dp_restart_cmd: dp timeouts not done\n");
 #endif
   }
 }
@@ -794,11 +794,11 @@ int dp_pdma_out(char *buf, int count, int phase)
   u_int stat2;
 
 #if DP_DEBUG
-  printf("dp_pdma_out: write %d bytes\n", count);
+  kprintf("dp_pdma_out: write %d bytes\n", count);
 #endif
 #if DP_DEBUG > 1
   if (RD_ADR(u_char, DP_STAT2) & DP_S_IRQ)
-    printf("WARNING: stat2:IRQ set on call to dp_pdma_out\n");
+    kprintf("WARNING: stat2:IRQ set on call to dp_pdma_out\n");
 #endif
 
   /* Set it up. */
@@ -830,7 +830,7 @@ int dp_pdma_out(char *buf, int count, int phase)
   else {
     /* dma error! */
 #if DP_DEBUG
-    printf ("dma write error!\n");
+    kprintf ("dma write error!\n");
     dp_print_stat1(RD_ADR(u_char, DP_STAT1));
     dp_print_stat2(stat2);
 #endif
@@ -865,7 +865,7 @@ int dp_pdma_in(char *buf, int count, int phase)
   u_char *dma_adr = (u_char *) DP_DMA;	/* Address for last few bytes. */
 
 #if DP_DEBUG > 1
-  printf("dp_pdma_in: read %d bytes\n", count);
+  kprintf("dp_pdma_in: read %d bytes\n", count);
 #endif
   /* Set it up. */
   WR_ADR(u_char, DP_TCMD, phase);
@@ -896,14 +896,14 @@ dp_wait_for_edma()
 		u_char tcmd = RD_ADR(u_char, DP_TCMD);
 		if (tcmd & DP_TCMD_EDMA) {
 #if DP_DEBUG > 1
-			printf("dp_wait_for_phase: EDMA detected\n");
+			kprintf("dp_wait_for_phase: EDMA detected\n");
 #endif
 			RD_ADR(u_char, DP_MODE) &= ~DP_M_DMA;
 			WR_ADR(u_char, DP_ICMD, DP_EMODE);
 			return;
 		}
 	}
-	printf("wait for edma timeout\n");
+	kprintf("wait for edma timeout\n");
 #if DP_DEBUG
 	dp_print_regs();
 #endif
@@ -916,7 +916,7 @@ dp_wait_for_phase(u_char phase)
     u_char isr;
 
 #if DP_DEBUG > 1
-    printf("wait for phase %d...", phase);
+    kprintf("wait for phase %d...", phase);
 #endif
     /* set the TCR register */
     WR_ADR(u_char, DP_TCMD, phase);
@@ -925,7 +925,7 @@ dp_wait_for_phase(u_char phase)
 	u_char stat2 = RD_ADR(u_char, DP_STAT2);
 	if (stat2 & DP_S_PHASE) {
 #if DP_DEBUG > 1
-	    printf("done\n");
+	    kprintf("done\n");
 #endif
 	    /* completely clear the isr */
 	    WR_ADR(u_char, DP_EMR_ISR, DP_EF_ISR_NEXT);
@@ -934,7 +934,7 @@ dp_wait_for_phase(u_char phase)
 	    return;
 	}
     }
-    printf("wait for phase %d timeout\n", phase);
+    kprintf("wait for phase %d timeout\n", phase);
 #if DP_DEBUG
     dp_print_regs();
 #endif
@@ -963,22 +963,22 @@ dp_get_sense (struct scsi_xfer *xs)
     WR_ADR(u_char, DP_ICMD, DP_EMODE);
 
 #if DP_DEBUG > 2
-    printf ("sense 1: wait bus free\n");
+    kprintf ("sense 1: wait bus free\n");
 #endif
     if (!dp_wait_bus_free()) {
 #if DP_DEBUG > 2
-	printf("sense 1: wait-bus-free failed\n");
+	kprintf("sense 1: wait-bus-free failed\n");
 #endif
 	xs->error = XS_BUSY;
 	return;
     }
 
 #if DP_DEBUG > 2
-    printf ("sense 2: select device\n");
+    kprintf ("sense 2: select device\n");
 #endif
     if (!dp_select (1 << xs->targ)) {
 #if DP_DEBUG
-	printf("sense 2: select failed\n");
+	kprintf("sense 2: select failed\n");
 #endif
 	xs->error = XS_DRIVER_STUFFUP;
 	return;
@@ -999,7 +999,7 @@ dp_get_sense (struct scsi_xfer *xs)
     ret = dp_pdma_out(sense_cmd, sizeof(sense_cmd), DP_PHASE_CMD);
     if (ret != OK) {
 #if DP_DEBUG
-	printf("dp_pdma_out: ret=%d\n", ret);
+	kprintf("dp_pdma_out: ret=%d\n", ret);
 #endif
 	return;
     }
@@ -1010,7 +1010,7 @@ dp_get_sense (struct scsi_xfer *xs)
     ret = dp_pdma_in((u_char *) &xs->sense, sense_cmd[4], DP_PHASE_DATAI);
     if (ret != OK) {
 #if DP_DEBUG
-      printf ("dp_pdma_in: ret=%d\n", ret);
+      kprintf ("dp_pdma_in: ret=%d\n", ret);
 #endif
     }
 
@@ -1019,7 +1019,7 @@ dp_get_sense (struct scsi_xfer *xs)
     ret = dp_pdma_in(&status, 1, DP_PHASE_STATUS);
     if (ret != OK) {
 #if DP_DEBUG
-      printf ("dp_pdma_in: ret=%d\n", ret);
+      kprintf ("dp_pdma_in: ret=%d\n", ret);
 #endif
     }
 
@@ -1028,13 +1028,13 @@ dp_get_sense (struct scsi_xfer *xs)
     ret = dp_pdma_in(&message, 1, DP_PHASE_MSGI);
     if (ret != OK) {
 #if DP_DEBUG
-      printf ("dp_pdma_in: ret=%d\n", ret);
+      kprintf ("dp_pdma_in: ret=%d\n", ret);
 #endif
     }
 
 #if DP_DEBUG
-    printf("sense status = 0x%x\n", status);
-    printf("  sense (0x%x) valid = %d code = 0x%x class = 0x%x\n",
+    kprintf("sense status = 0x%x\n", status);
+    kprintf("  sense (0x%x) valid = %d code = 0x%x class = 0x%x\n",
 	*(u_char *) &xs->sense,
 	xs->sense.valid, xs->sense.error_code, xs->sense.error_class);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 1996/10/09 07:45:25 matthias Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 1996/10/11 00:41:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -175,10 +175,10 @@ trap(frame)
 
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap type=%d, pc=0x%x, tear=0x%x, msr=0x%x\n",
+		kprintf("trap type=%d, pc=0x%x, tear=0x%x, msr=0x%x\n",
 			type, frame.tf_regs.r_pc,
 			frame.tf_tear, frame.tf_msr);
-		printf("curproc %p\n", curproc);
+		kprintf("curproc %p\n", curproc);
 	}
 #endif
 
@@ -235,11 +235,11 @@ trap(frame)
 	}
 #endif
 		if (frame.tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame.tf_trapno]);
+			kprintf("fatal %s", trap_type[frame.tf_trapno]);
 		else
-			printf("unknown trap %d", frame.tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type=%d, pc=0x%x, tear=0x%x, msr=0x%x\n",
+			kprintf("unknown trap %d", frame.tf_trapno);
+		kprintf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+		kprintf("trap type=%d, pc=0x%x, tear=0x%x, msr=0x%x\n",
 			type, frame.tf_regs.r_pc, frame.tf_tear, frame.tf_msr);
 
 		panic("trap");
@@ -372,7 +372,7 @@ trap(frame)
 
 #ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %lx\n", va);
+			kprintf("trap: bad kernel access at %lx\n", va);
 			goto we_re_toast;
 		}
 #endif
@@ -421,7 +421,7 @@ trap(frame)
 				frame.tf_regs.r_pc = (int)curpcb->pcb_onfault;
 				return;
 			}
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			kprintf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
@@ -440,7 +440,7 @@ trap(frame)
 	case T_NMI | T_USER: 
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
-		printf ("NMI ... going to debugger\n");
+		kprintf ("NMI ... going to debugger\n");
 # ifdef KGDB
 		if (kgdb_trap(type, &frame))
 			return;
