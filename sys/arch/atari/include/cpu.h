@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 1997/02/04 05:02:56 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 1997/04/09 19:46:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -246,8 +246,6 @@ void	ICPP __P((vm_offset_t));
 typedef void (*si_farg)(void *, void *);	/* XXX */
 void	add_sicallback __P((si_farg, void *, void *));
 void	rem_sicallback __P((si_farg));
-struct frame;
-void	regdump __P((struct frame *, int));
 void	cpu_startup __P((void));
 void	dumpsys __P((void));
 vm_offset_t reserve_dumppages __P((vm_offset_t));
