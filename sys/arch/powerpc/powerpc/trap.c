@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 2001/06/10 16:31:59 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.47 2001/06/19 07:14:24 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,6 +56,7 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <powerpc/spr.h>
 
 /* These definitions should probably be somewhere else			XXX */
 #define	FIRSTARG	3		/* first argument is in reg 3 */
