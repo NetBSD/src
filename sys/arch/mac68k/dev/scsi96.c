@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.6 1994/11/29 03:43:54 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.7 1994/12/03 14:17:20 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -318,13 +318,6 @@ ncr53c96_show_scsi_cmd(struct scsi_xfer *xs)
 /*
  * Actual chip control.
  */
-
-static void
-delay(int timeo)
-{
-	int	len;
-	for (len=0;len<timeo*2;len++);
-}
 
 extern void
 ncr53c96_intr(int adapter)
