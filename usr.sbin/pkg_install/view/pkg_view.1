@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.12 2003/08/25 20:58:04 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.13 2003/08/25 21:55:29 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,10 +112,15 @@ taken from the value of the environment variable
 .Ev PKG_DBDIR ,
 otherwise it defaults to
 .Pa /var/db/pkg .
+.It Fl n
+Don't actually execute the commands for manipulating the depoted packages.
 .It Fl V
 Print the version number and exit.
 .It Fl v
 Turn on verbose output.
+Specifying
+.Fl v
+multiple times increases the level of verbosity.
 .It Fl W Ar viewbase
 Set
 .Ar viewbase

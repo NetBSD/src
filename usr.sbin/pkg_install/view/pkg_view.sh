@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.29 2003/08/25 21:21:19 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.30 2003/08/25 21:55:29 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -52,7 +52,7 @@ sedprog=/usr/bin/sed
 touchprog=/usr/bin/touch
 
 usage() {
-	echo 'Usage: pkg_view [-v] [-i ignore] [-k pkg_dbdir_dflt] [-w viewname] [-d stowdir] [-W viewbase] add|check|delete pkgname...'
+	echo 'Usage: pkg_view [-n] [-v] [-i ignore] [-k pkg_dbdir_dflt] [-w viewname] [-d stowdir] [-W viewbase] add|check|delete pkgname...'
 	exit 1
 }
 
@@ -70,13 +70,14 @@ checkpkg() {
 	fi
 }
 
+doit=""
 stowdir=""
 viewbase=${LOCALBASE:-/usr/pkg}
 view=${PKG_VIEW:-""}
 dflt_ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig *,v"}
 dflt_pkg_dbdir=${PKG_DBDIR:-/var/db/pkg}
 ignorefiles=""
-verbose=no
+verbose=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -86,8 +87,9 @@ while [ $# -gt 0 ]; do
 	-i*)		ignorefiles="$ignorefiles `echo $1 | $sedprog -e 's|^-i||'`" ;;
 	-k)		dflt_pkg_dbdir="$2"; shift ;;
 	-k*)		dflt_pkg_dbdir=`echo $1 | $sedprog -e 's|^-k||'` ;;
+	-n)		doit=":" ;;
 	-V)		version ;;
-	-v)		verbose=yes ;;
+	-v)		verbose=`expr $verbose + 1` ;;
 	-W)		viewbase=$2; shift ;;
 	-W*)		viewbase=`echo $1 | $sedprog -e 's|^-p||'` ;;
 	-w)		view=$2; shift ;;
@@ -101,6 +103,12 @@ done
 if [ $# -lt 1 ]; then
 	usage
 fi
+
+# echoN will actually give output if ${verbose} > N.
+echo1=":"
+echo2=":"
+if [ ${verbose} -gt 0 ]; then echo1=echo; fi
+if [ ${verbose} -gt 1 ]; then echo2=echo; fi
 
 action=""
 case "$1" in
@@ -142,83 +150,12 @@ depot_pkg_dbdir=${stowdir:-${DEPOTBASE:-${viewbase}/packages}}
 while [ $# -gt 0 ]; do
 	case $action in
 	add)
-		if [ -f ${pkg_dbdir}/$1/+DEPOT ]; then
-			echo "pkg_view: \`$1' already exists in $viewstr." 1>&2
-			exit 1
-		else
-			if [ "${verbose}" = "yes" ]; then
-				echo "Adding package $1 to ${targetdir}."
-			fi
-			checkpkg $1 ${depot_pkg_dbdir}
-			if [ -f ${depot_pkg_dbdir}/$1/+BUILD_INFO ]; then
-				ignore=`$grepprog "^_PLIST_IGNORE_FILES=" ${depot_pkg_dbdir}/$1/+BUILD_INFO | $sedprog -e 's|^_PLIST_IGNORE_FILES=[ 	]*||'`
-			fi
-			case "$ignore" in
-			"")	ignore="${dflt_ignorefiles}" ;;
-			esac
-			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
-			ignore="${ignore} ${ignorefiles} $dbs"
-			env PLIST_IGNORE_FILES="${ignore}" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
-			$mkdirprog -p ${depot_pkg_dbdir}/$1
-			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
-			$touchprog ${depot_pkg_dbdir}/$1/+VIEWS
-			$cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
-			($grepprog -v '^'${pkg_dbdir}'$' ${temp} || true; echo ${pkg_dbdir}) > ${depot_pkg_dbdir}/$1/+VIEWS
-			$rmprog ${temp}
-			$mkdirprog -p ${pkg_dbdir}/$1
-			#
-			# Copy all of the metadata files except for +VIEWS,
-			# which is only for the depoted package, and
-			# +REQUIRED_BY, which is irrelevant for a package in
-			# a view.
-			#
-			(cd ${depot_pkg_dbdir}/$1; $paxprog -rwpe '-s|\./\+VIEWS$||' '-s|\./\+REQUIRED_BY$||' ./+* ${pkg_dbdir}/$1)
-			$sedprog -e 's|'${depot_pkg_dbdir}/$1'|'${targetdir}'|g' < ${depot_pkg_dbdir}/$1/+CONTENTS > ${pkg_dbdir}/$1/+CONTENTS
-			echo "${depot_pkg_dbdir}/$1" > ${pkg_dbdir}/$1/+DEPOT
-			if [ -f ${pkg_dbdir}/$1/+INSTALL ]; then
-				$chmodprog +x ${pkg_dbdir}/$1/+INSTALL
-				$envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+INSTALL $1 VIEW-INSTALL
-				exit $?
-			fi
-		fi
-		;;
-	check)
-		if [ "${verbose}" = "yes" ]; then
-			echo "Checking package $1 in ${targetdir}."
-		fi
 		checkpkg $1 ${depot_pkg_dbdir}
-		$linkfarmprog -c --target=${targetdir} --dir=${depot_pkg_dbdir} $1
-		exit $?
-		;;
-	delete)
 		if [ -f ${pkg_dbdir}/$1/+DEPOT ]; then
-			:
-		else
-			echo "pkg_view: \`$1' does not exist in $viewstr." 1>&2
+			echo "pkg_view: \`$1' already exists in $viewstr" 1>&2
 			exit 1
 		fi
-		if [ "${verbose}" = "yes" ]; then
-			echo "Deleting package $1 from ${targetdir}."
-		fi
-		if [ -f ${pkg_dbdir}/$1/+REQUIRED_BY ]; then
-			if $cmpprog -s ${pkg_dbdir}/$1/+REQUIRED_BY /dev/null; then
-				: not really required by another pkg
-			else
-				(echo "pkg_view: package \`$1' is required by other packages:"
-				$sedprog -e 's|^|	|' ${pkg_dbdir}/$1/+REQUIRED_BY) 1>&2
-				exit 1
-			fi
-		fi
-		if [ -f ${pkg_dbdir}/$1/+DEINSTALL ]; then
-			$chmodprog +x ${pkg_dbdir}/$1/+DEINSTALL
-			$envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+DEINSTALL $1 VIEW-DEINSTALL
-			ec=$?
-			if [ $ec != 0 ]; then
-				echo "pkg_view: de-install script returned an error." 1>&2
-				exit $ec
-			fi
-		fi
-		checkpkg $1 ${depot_pkg_dbdir}
+		$echo1 "Adding $1 to ${targetdir}."
 		if [ -f ${depot_pkg_dbdir}/$1/+BUILD_INFO ]; then
 			ignore=`$grepprog "^_PLIST_IGNORE_FILES=" ${depot_pkg_dbdir}/$1/+BUILD_INFO | $sedprog -e 's|^_PLIST_IGNORE_FILES=[ 	]*||'`
 		fi
@@ -227,12 +164,83 @@ while [ $# -gt 0 ]; do
 		esac
 		dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
 		ignore="${ignore} ${ignorefiles} $dbs"
-		env PLIST_IGNORE_FILES="${ignore}" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+		$doit $envprog PLIST_IGNORE_FILES="${ignore}" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+		$doit $mkdirprog -p ${depot_pkg_dbdir}/$1
 		temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
-		$cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
-		($grepprog -v '^'${pkg_dbdir}'$' ${temp} || true) > ${depot_pkg_dbdir}/$1/+VIEWS
-		$rmprog ${temp}
-		$rmprog -rf ${pkg_dbdir}/$1
+		$doit $touchprog ${depot_pkg_dbdir}/$1/+VIEWS
+		$doit $cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
+		case "$doit" in
+		"")	($grepprog -v '^'${pkg_dbdir}'$' ${temp} || true; echo ${pkg_dbdir}) > ${depot_pkg_dbdir}/$1/+VIEWS ;;
+		esac
+		$doit $rmprog ${temp}
+		$doit $mkdirprog -p ${pkg_dbdir}/$1
+		#
+		# Copy all of the metadata files except for +VIEWS,
+		# which is only for the depoted package, and
+		# +REQUIRED_BY, which is irrelevant for a package in
+		# a view.
+		#
+		case "$doit" in
+		"")	(cd ${depot_pkg_dbdir}/$1; $paxprog -rwpe '-s|\./\+VIEWS$||' '-s|\./\+REQUIRED_BY$||' ./+* ${pkg_dbdir}/$1)
+			$sedprog -e 's|'${depot_pkg_dbdir}/$1'|'${targetdir}'|g' < ${depot_pkg_dbdir}/$1/+CONTENTS > ${pkg_dbdir}/$1/+CONTENTS
+			echo "${depot_pkg_dbdir}/$1" > ${pkg_dbdir}/$1/+DEPOT
+			;;
+		esac
+		if [ -f ${pkg_dbdir}/$1/+INSTALL ]; then
+			$doit $chmodprog +x ${pkg_dbdir}/$1/+INSTALL
+			$doit $envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+INSTALL $1 VIEW-INSTALL
+			exit $?
+		fi
+		;;
+	check)
+		checkpkg $1 ${depot_pkg_dbdir}
+		$echo1 "Checking $1 in ${targetdir}."
+		$doit $linkfarmprog -c --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+		exit $?
+		;;
+	delete)
+		checkpkg $1 ${depot_pkg_dbdir}
+		if [ -f ${pkg_dbdir}/$1/+DEPOT ]; then
+			:
+		else
+			echo "pkg_view: \`$1' doesn't exist in $viewstr" 1>&2
+			exit 1
+		fi
+		$echo1 "Deleting $1 from ${targetdir}."
+		if [ -f ${pkg_dbdir}/$1/+REQUIRED_BY ]; then
+			if $cmpprog -s ${pkg_dbdir}/$1/+REQUIRED_BY /dev/null; then
+				: # not really required by another pkg
+			else
+				(echo "pkg_view: \`$1' is required by other packages:"
+				$sedprog -e 's|^|	|' ${pkg_dbdir}/$1/+REQUIRED_BY) 1>&2
+				exit 1
+			fi
+		fi
+		if [ -f ${pkg_dbdir}/$1/+DEINSTALL ]; then
+			$doit $chmodprog +x ${pkg_dbdir}/$1/+DEINSTALL
+			$doit envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+DEINSTALL $1 VIEW-DEINSTALL
+			ec=$?
+			if [ $ec != 0 ]; then
+				echo "pkg_view: de-install script returned an error." 1>&2
+				exit $ec
+			fi
+		fi
+		if [ -f ${depot_pkg_dbdir}/$1/+BUILD_INFO ]; then
+			ignore=`$grepprog "^_PLIST_IGNORE_FILES=" ${depot_pkg_dbdir}/$1/+BUILD_INFO | $sedprog -e 's|^_PLIST_IGNORE_FILES=[ 	]*||'`
+		fi
+		case "$ignore" in
+		"")	ignore="${dflt_ignorefiles}" ;;
+		esac
+		dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
+		ignore="${ignore} ${ignorefiles} $dbs"
+		$doit env PLIST_IGNORE_FILES="${ignore}" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+		temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
+		$doit $cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
+		case "$doit" in
+		"")	($grepprog -v '^'${pkg_dbdir}'$' ${temp} || true) > ${depot_pkg_dbdir}/$1/+VIEWS ;;
+		esac
+		$doit $rmprog ${temp}
+		$doit $rmprog -rf ${pkg_dbdir}/$1
 		;;
 	esac
 	shift
