@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.13 2004/11/11 04:03:23 christos Exp $	*/
+/*	$NetBSD: devname.c,v 1.14 2004/12/14 03:08:01 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)devname.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: devname.c,v 1.13 2004/11/11 04:03:23 christos Exp $");
+__RCSID("$NetBSD: devname.c,v 1.14 2004/12/14 03:08:01 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -197,7 +197,6 @@ devname(dev, type)
 		strncpy(ptr->name, (char *)data.data, NAME_MAX);
 		ptr->name[NAME_MAX - 1] = '\0';
 		ptr->valid = VALID;
-		return (ptr->name);
 	} else {
 		if (ptr == NULL)
 			return (NULL);
@@ -214,6 +213,9 @@ devname(dev, type)
 		}
 		ptr->dev = dev;
 		ptr->type = type;
-		return (NULL);
 	}
+	if (ptr->valid == VALID)
+		return (ptr->name);
+	else
+		return (NULL);
 }
