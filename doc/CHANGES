@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.155 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.156 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -391,3 +391,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[lukem 20030508]
 	build.sh: Add "sourcesets" option to build the source sets.
 		[lukem 20030510]
+	olms(4),omms(4): Removed olms(4) and omms(4) from the i386 port,
+		since they have been superseded by lms(4) and mms(4)
+		respectively. [wiz 20030516]
