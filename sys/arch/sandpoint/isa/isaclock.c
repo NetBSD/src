@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.1 2001/02/04 18:32:16 briggs Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.2 2001/07/22 15:04:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -348,7 +348,7 @@ resettodr()
 
 	s = splclock();
 	if (rtcget(&rtclk))
-		bzero(&rtclk, sizeof(rtclk));
+		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
 	diff = rtc_offset * 60;
