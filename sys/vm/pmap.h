@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/7/91
- *	$Id: pmap.h,v 1.4 1993/08/27 23:48:09 brezak Exp $
+ *	$Id: pmap.h,v 1.5 1993/08/29 12:12:20 brezak Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -135,10 +135,8 @@ extern void		pmap_virtual_space();	/* During VM initialization,
 #endif /* MACHINE_NONCONTIG */
 
 #ifdef	MACHINE_NONCONTIG
-void		pmap_bootstrap __P((vm_offset_t s));
 void		pmap_init __P((void));
 #else
-void		pmap_bootstrap __P((vm_offset_t f, vm_offset_t l));
 void		pmap_init __P((vm_offset_t s, vm_offset_t e));
 #endif
 void		pmap_pinit __P((struct pmap *pmap));
