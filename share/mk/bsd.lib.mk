@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.138 1998/08/22 18:59:40 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.139 1998/09/13 23:25:18 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -40,8 +40,6 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 #			with ELF, also set shared-lib version for ld.so.
 # SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
 # SHLIB_LDENDFILE:	support .o file, call C++ file-level destructors
-# SHLIB_WHOLE:		turn on whole-archive
-# SHLIB_NOWHOLE:	turn off whole-archive
 # CPPICFLAGS:	flags for ${CPP} to preprocess  .[sS]  files for ${AS}
 # CPICFLAGS:	flags for ${CC} to compile  .[cC] files to .so objects.
 # CAPICFLAGS	flags for {$CC} to compiling .[Ss] files
@@ -82,8 +80,6 @@ SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
 SHLIB_SHFLAGS=
 SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
-SHLIB_WHOLE=-Bforcearchive
-SHLIB_NOWHOLE=
 CPICFLAGS?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
@@ -93,8 +89,6 @@ APICFLAGS?= -k
 
 # Platform-independent linker flags for ELF shared libraries
 .if (${OBJECT_FMT} == "ELF")
-SHLIB_WHOLE=--whole-archive
-SHLIB_NOWHOLE=--no-whole-archive
 SHLIB_SOVERSION=${SHLIB_MAJOR}
 SHLIB_SHFLAGS=-soname lib${LIB}.so.${SHLIB_SOVERSION}
 .endif
@@ -176,14 +170,14 @@ CFLAGS+=	${COPTS}
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if !defined(NOSTATICLIB) || defined(NOPIC) || \
-	(defined(LDSTATIC) && ${LDSTATIC} != "")
+.if defined(NOPIC) || (defined(LDSTATIC) && ${LDSTATIC} != "") \
+	|| !defined(NOLINKLIB)
 _LIBS=lib${LIB}.a
 .else
 _LIBS=
 .endif
 
-.if !defined(NOPROFILE)
+.if !defined(NOPROFILE) && !defined(NOLINKLIB)
 _LIBS+=lib${LIB}_p.a
 .endif
 
@@ -194,7 +188,7 @@ _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
 .endif
 
-.if !defined(NOLINT)
+.if !defined(NOLINT) && !defined(NOLINKLIB)
 _LIBS+=llib-l${LIB}.ln
 .endif
 
@@ -269,8 +263,10 @@ afterdepend: .depend
 .endif
 
 .if !target(libinstall)
-.if !defined(NOSTATICLIB) || defined(NOPIC) || \
-	(defined(LDSTATIC) && ${LDSTATIC} != "")
+# Make sure it gets defined, in case NOPIC && NOLINKLIB are defined
+libinstall::
+
+.if !defined(NOLINKLIB)
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.a
@@ -283,7 +279,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 .endif
 
-.if !defined(NOPROFILE)
+.if !defined(NOPROFILE) && !defined(NOLINKLIB)
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
@@ -296,7 +292,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 .endif
 
-.if !defined(NOPIC) && !defined(NOPICINSTALL)
+.if !defined(NOPIC) && !defined(NOPICINSTALL) && !defined(NOLINKLIB)
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
@@ -327,12 +323,14 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${S
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so
+.if !defined(NOLINKLIB)
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
 .endif
 .endif
+.endif
 
-.if !defined(NOLINT)
+.if !defined(NOLINT) && !defined(NOLINKLIB)
 libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln

@@ -1,14 +1,11 @@
-#	$NetBSD: Makefile,v 1.16 1998/08/17 22:23:37 tv Exp $
+#	$NetBSD: Makefile,v 1.17 1998/09/13 23:25:19 tv Exp $
 
 .include "../Makefile.inc"
 
 LIB=	cc1
 
-NOLINT=
 NOMAN=
-NOPICINSTALL=
-NOPROFILE=
-NOSTATICLIB=
+NOLINKLIB=
 YHEADER=1
 
 CPPFLAGS+=	-DTARGET_NAME=\"${MACHINE_GNU_ARCH}-netbsd\"
@@ -76,17 +73,9 @@ insn-${_GEN_}.h: gen${_GEN_}
 	./gen${_GEN_} ${MD} >$@
 .endfor
 
-install: __libinstall
-
 .include <bsd.lib.mk>
 
 ${OBJS} ${SOBJS} genattrtab.lo genextract.lo: \
 		insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 
 .PATH:		${DIST}/config/${MACHINE_GNU_ARCH}
-
-.if !defined(NOPIC)
-__libinstall: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-.else
-__libinstall:
-.endif
