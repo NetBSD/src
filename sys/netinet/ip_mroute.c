@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.25 1996/02/13 23:42:46 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.26 1996/03/16 23:54:00 christos Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -766,14 +766,14 @@ add_mfc(m)
 		    rt->mfc_mcastgrp.s_addr == mfccp->mfcc_mcastgrp.s_addr &&
 		    rt->mfc_stall != NULL) {
 			if (nstl++)
-				log(LOG_ERR, "add_mfc %s o %x g %x p %x dbx %x",
+				log(LOG_ERR, "add_mfc %s o %x g %x p %x dbx %p",
 				    "multiple kernel entries",
 				    ntohl(mfccp->mfcc_origin.s_addr),
 				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 				    mfccp->mfcc_parent, rt->mfc_stall);
 
 			if (mrtdebug & DEBUG_MFC)
-				log(LOG_DEBUG,"add_mfc o %x g %x p %x dbg %x",
+				log(LOG_DEBUG,"add_mfc o %x g %x p %x dbg %p",
 				    ntohl(mfccp->mfcc_origin.s_addr),
 				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 				    mfccp->mfcc_parent, rt->mfc_stall);
@@ -947,7 +947,7 @@ ip_mforward(m, ifp)
 #endif /* RSVP_ISI */
 
     if (mrtdebug & DEBUG_FORWARD)
-	log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %x",
+	log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p",
 	    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr), ifp);
 
     if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
@@ -1242,7 +1242,7 @@ ip_mdq(m, ifp, rt)
     if ((vifi >= numvifs) || (viftable[vifi].v_ifp != ifp)) {
 	/* came in the wrong interface */
 	if (mrtdebug & DEBUG_FORWARD)
-	    log(LOG_DEBUG, "wrong if: ifp %x vifi %d vififp %x",
+	    log(LOG_DEBUG, "wrong if: ifp %p vifi %d vififp %p",
 		ifp, vifi, viftable[vifi].v_ifp); 
 	++mrtstat.mrts_wrong_if;
 	++rt->mfc_wrong_if;
