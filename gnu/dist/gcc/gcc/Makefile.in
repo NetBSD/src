@@ -1184,6 +1184,8 @@ c-parse.o : $(srcdir)/c-parse.c $(CONFIG_H) $(TREE_H) $(GGC_H) intl.h \
 	       -c $(srcdir)/c-parse.c $(OUTPUT_OPTION)
 
 $(srcdir)/c-parse.c: $(srcdir)/c-parse.y
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_c-parse.c:
 	cd $(srcdir) && \
 	if $(BISON) $(BISONFLAGS) -o c-p$$$$.c c-parse.y; then \
 	  test -f c-p$$$$.output && mv -f c-p$$$$.output c-parse.output ; \

@@ -72,6 +72,8 @@ objc-parse.o : $(srcdir)/objc/objc-parse.c \
 
 po-generated: $(srcdir)/objc/objc-parse.c
 $(srcdir)/objc/objc-parse.c : $(srcdir)/objc/objc-parse.y
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_objc-parse.c:
 	cd $(srcdir)/objc; \
 	if $(BISON) $(BISONFLAGS) -o op$$$$.c objc-parse.y ; then \
 	  test -f op$$$$.output && mv -f op$$$$.output objc-parse.output ; \
