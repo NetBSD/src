@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.7 2003/04/08 22:33:34 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.8 2003/04/10 15:23:19 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -278,7 +278,7 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 		} while (tries-- > 0 && (GE_READ(sc, ESDCMR) & (ETH_ESDCMR_AR|ETH_ESDCMR_AT)));
 	}
 
-	sc->sc_pcr &= ~ETH_EPCR_EN;
+	sc->sc_pcr &= ~(ETH_EPCR_EN | ETH_EPCR_RBM | ETH_EPCR_PM | ETH_EPCR_PBF);
 
 #if defined(DEBUG)
 	aprint_normal(", pcr %#x, pcxr %#x", sc->sc_pcr, sc->sc_pcxr);
