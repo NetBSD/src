@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.20 1998/11/04 20:12:12 christos Exp $	*/
+/*	$NetBSD: test.c,v 1.20.2.1 2000/06/03 14:26:33 he Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.20 1998/11/04 20:12:12 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.20.2.1 2000/06/03 14:26:33 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -150,6 +150,7 @@ static int primary __P((enum token));
 static int binop __P((void));
 static int filstat __P((char *, enum token));
 static enum token t_lex __P((char *));
+static int isoperand __P((void));
 static int getn __P((const char *));
 static int newerf __P((const char *, const char *));
 static int olderf __P((const char *, const char *));
@@ -170,42 +171,11 @@ main(argc, argv)
 		argv[argc] = NULL;
 	}
 
-	/* Implement special cases from POSIX.2, section 4.62.4 */
-	switch (argc) {
-	case 1:
-		return 1;
-	case 2:
-		return (*argv[1] == '\0');
-	case 3:
-		if (argv[1][0] == '!' && argv[1][1] == '\0') {
-			return !(*argv[2] == '\0');
-		}
-		break;
-	case 4:
-		if (argv[1][0] != '!' || argv[1][1] != '\0') {
-			if (t_lex(argv[2]), 
-			    t_wp_op && t_wp_op->op_type == BINOP) {
-				t_wp = &argv[1];
-				return (binop() == 0);
-			}
-		}
-		break;
-	case 5:
-		if (argv[1][0] == '!' && argv[1][1] == '\0') {
-			if (t_lex(argv[3]), 
-			    t_wp_op && t_wp_op->op_type == BINOP) {
-				t_wp = &argv[2];
-				return !(binop() == 0);
-			}
-		}
-		break;
-	}
-
 	t_wp = &argv[1];
 	res = !oexpr(t_lex(*t_wp));
 
 	if (*t_wp != NULL && *++t_wp != NULL)
-		syntax(*t_wp, "unknown operand");
+		syntax(*t_wp, "unexpected operator");
 
 	return res;
 }
@@ -260,12 +230,15 @@ static int
 primary(n)
 	enum token n;
 {
+	enum token nn;
 	int res;
 
 	if (n == EOI)
-		syntax(NULL, "argument expected");
+		return 0;		/* missing expression */
 	if (n == LPAREN) {
-		res = oexpr(t_lex(*++t_wp));
+		if ((nn = t_lex(*++t_wp)) == RPAREN)
+			return 0;	/* missing expression */
+		res = oexpr(nn);
 		if (t_lex(*++t_wp) != RPAREN)
 			syntax(NULL, "closing paren expected");
 		return res;
@@ -401,6 +374,9 @@ t_lex(s)
 	}
 	while (op->op_text) {
 		if (strcmp(s, op->op_text) == 0) {
+			if ((op->op_type == UNOP && isoperand()) ||
+			    (op->op_num == LPAREN && *(t_wp+1) == 0))
+				break;
 			t_wp_op = op;
 			return op->op_num;
 		}
@@ -408,6 +384,26 @@ t_lex(s)
 	}
 	t_wp_op = (struct t_op *)0;
 	return OPERAND;
+}
+
+static int
+isoperand()
+{
+	struct t_op const *op = ops;
+	char *s;
+	char *t;
+
+	if ((s  = *(t_wp+1)) == 0)
+		return 1;
+	if ((t = *(t_wp+2)) == 0)
+		return 0;
+	while (op->op_text) {
+		if (strcmp(s, op->op_text) == 0)
+	    		return op->op_type == BINOP &&
+	    		    (t[0] != ')' || t[1] != '\0'); 
+		op++;
+	}
+	return 0;
 }
 
 /* atoi with error detection */
