@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resourcevar.h	7.1 (Berkeley) 5/9/91
- *	$Id: resourcevar.h,v 1.4.4.1 1993/09/27 21:41:26 deraadt Exp $
+ *	$Id: resourcevar.h,v 1.4.4.2 1993/09/27 22:41:53 deraadt Exp $
  */
 
 #ifndef _SYS_RESOURCEVAR_H_
@@ -62,7 +62,7 @@ struct pstats {
 	struct	timeval p_start;	/* starting time */
 };
 
-void addupc __P((int, struct uprof *, int));	/* process profiling */ 
+void addupc __P((int, struct uprof *, int));  /* oldstyle: process profiling */ 
 void addupc_intr __P((struct proc *p, u_long pc, u_int ticks));
 void addupc_task __P((struct proc *p, u_long pc, u_int ticks));
 
@@ -86,7 +86,7 @@ struct plimit {
 /* make copy of plimit structure */
 struct	plimit *limcopy __P((struct plimit *lim));
 
-define ADDUPROF(p)	addupc_task(p, (p)->p_stats->p_prof.pr_addr, \
+#define ADDUPROF(p)	addupc_task(p, (p)->p_stats->p_prof.pr_addr, \
 				(p)->p_stats->p_prof.pr_ticks)
 
 #endif /* !_SYS_RESOURCEVAR_H_ */
