@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.24 2000/12/27 04:47:43 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.25 2001/01/22 16:39:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -699,7 +699,8 @@ genfs_getpages(v)
 		 * overwriting pages with valid data.
 		 */
 
-		iobytes = min(((lbn + 1 + run) << fs_bshift) - offset, bytes);
+		iobytes =
+		    min((((off_t)lbn + 1 + run) << fs_bshift) - offset, bytes);
 		if (offset + iobytes > round_page(offset)) {
 			pcount = 1;
 			while (pidx + pcount < npages &&
@@ -757,7 +758,7 @@ genfs_getpages(v)
 		bp->b_private = mbp;
 
 		/* adjust physical blkno for partial blocks */
-		bp->b_blkno = blkno + ((offset - (lbn << fs_bshift)) >>
+		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
 				       dev_bshift);
 
 		UVMHIST_LOG(ubchist, "bp %p offset 0x%x bcount 0x%x blkno 0x%x",
@@ -987,7 +988,8 @@ genfs_putpages(v)
 			break;
 		}
 
-		iobytes = min(((lbn + 1 + run) << fs_bshift) - offset, bytes);
+		iobytes =
+		    min((((off_t)lbn + 1 + run) << fs_bshift) - offset, bytes);
 		if (blkno == (daddr_t)-1) {
 			skipbytes += iobytes;
 			continue;
@@ -1015,7 +1017,7 @@ genfs_putpages(v)
 		bp->b_private = mbp;
 
 		/* adjust physical blkno for partial blocks */
-		bp->b_blkno = blkno + ((offset - (lbn << fs_bshift)) >>
+		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
 				       dev_bshift);
 		UVMHIST_LOG(ubchist, "vp %p offset 0x%x bcount 0x%x blkno 0x%x",
 			    vp, offset, bp->b_bcount, bp->b_blkno);
