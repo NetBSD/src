@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.23 2001/04/12 19:41:53 thorpej Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.24 2001/05/26 21:29:45 ragge Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -752,7 +752,7 @@ typedef	struct	{
 	__u32	th_seq;
 	__u32	th_ack;
 # if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
-    defined(vax)
+    defined(__vax__)
 	__u8	th_res:4;
 	__u8	th_off:4;
 #else
@@ -774,7 +774,7 @@ typedef	struct	{
 
 typedef	struct	{
 # if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
-    defined(vax)
+    defined(__vax__)
 	__u8	ip_hl:4;
 	__u8	ip_v:4;
 # else
