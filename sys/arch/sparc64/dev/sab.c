@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.13.2.1 2004/08/03 10:41:24 skrll Exp $	*/
+/*	$NetBSD: sab.c,v 1.13.2.2 2004/08/26 19:28:30 skrll Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.13.2.1 2004/08/03 10:41:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.13.2.2 2004/08/26 19:28:30 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -640,13 +640,14 @@ sabtty_softintr(sc)
 }
 
 int
-sabopen(dev, flags, mode, p)
+sabopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sabtty_softc *sc;
 	struct tty *tp;
+	struct proc *p;
 	int s, s1;
 
 	sc = device_lookup(&sabtty_cd, SABUNIT(dev));
@@ -655,6 +656,7 @@ sabopen(dev, flags, mode, p)
 
 	tp = sc->sc_tty;
 	tp->t_dev = dev;
+	p = l->l_proc;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
@@ -742,10 +744,10 @@ sabopen(dev, flags, mode, p)
 }
 
 int
-sabclose(dev, flags, mode, p)
+sabclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct sab_softc *bc = sc->sc_parent;
@@ -809,22 +811,23 @@ sabwrite(dev, uio, flags)
 }
 
 int
-sabioctl(dev, cmd, data, flags, p)
+sabioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
+	struct proc *p = l->l_proc;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, l);
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flags, p);
+	error = ttioctl(tp, cmd, data, flags, l);
 	if (error >= 0)
 		return (error);
 
@@ -904,15 +907,15 @@ sabstop(tp, flag)
 }
 
 int
-sabpoll(dev, events, p)
+sabpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int

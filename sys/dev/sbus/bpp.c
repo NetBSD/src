@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.21.2.1 2004/08/03 10:51:04 skrll Exp $ */
+/*	$NetBSD: bpp.c,v 1.21.2.2 2004/08/26 19:28:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.21.2.1 2004/08/03 10:51:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.21.2.2 2004/08/26 19:28:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -256,10 +256,10 @@ bpp_setparams(sc, hw)
 }
 
 int
-bppopen(dev, flags, mode, p)
+bppopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = BPPUNIT(dev);
 	struct bpp_softc *sc;
@@ -290,10 +290,10 @@ bppopen(dev, flags, mode, p)
 }
 
 int
-bppclose(dev, flags, mode, p)
+bppclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
 	struct lsi64854_softc *lsi = &sc->sc_lsi64854;
@@ -409,14 +409,15 @@ out:
 #define BPPIOCGPARAM	_IOR('P', 0x2, struct hwstate)
 
 int
-bppioctl(dev, cmd, data, flag, p)
+bppioctl(dev, cmd, data, flag, l)
 	dev_t	dev;
 	u_long	cmd;
 	caddr_t	data;
 	int	flag;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
+	struct proc *p = l->l_proc;
 	struct hwstate *hw, *chw;
 	int error = 0;
 	int s;
@@ -477,10 +478,10 @@ bppioctl(dev, cmd, data, flag, p)
 }
 
 int
-bpppoll(dev, events, p)
+bpppoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
 	int revents = 0;
@@ -496,9 +497,9 @@ bpppoll(dev, events, p)
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &sc->sc_wsel);
+			selrecord(l, &sc->sc_wsel);
 	}
 
 	return (revents);

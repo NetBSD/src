@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.14.2.2 2004/08/03 10:44:21 skrll Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.14.2.3 2004/08/26 19:28:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.2 2004/08/03 10:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.3 2004/08/26 19:28:30 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -59,11 +59,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.2 2004/08/03 10:44:21 skrll E
 #include <compat/netbsd32/netbsd32_conv.h>
 
 
-static int dofilereadv32 __P((struct proc *, int, struct file *, struct netbsd32_iovec *, 
+static int dofilereadv32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *, 
 			      int, off_t *, int, register_t *));
-static int dofilewritev32 __P((struct proc *, int, struct file *, struct netbsd32_iovec *, 
+static int dofilewritev32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *, 
 			       int,  off_t *, int, register_t *));
-static int change_utimes32 __P((struct vnode *, netbsd32_timevalp_t, struct proc *));
+static int change_utimes32 __P((struct vnode *, netbsd32_timevalp_t, struct lwp *));
 
 int
 netbsd32_readv(l, v, retval)
@@ -89,15 +89,15 @@ netbsd32_readv(l, v, retval)
 
 	FILE_USE(fp);
 
-	return (dofilereadv32(p, fd, fp,
+	return (dofilereadv32(l, fd, fp,
 	    (struct netbsd32_iovec *)NETBSD32PTR64(SCARG(uap, iovp)), 
 	    SCARG(uap, iovcnt), &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
 /* Damn thing copies in the iovec! */
 int
-dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
-	struct proc *p;
+dofilereadv32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
+	struct lwp *l;
 	int fd;
 	struct file *fp;
 	struct netbsd32_iovec *iovp;
@@ -110,6 +110,7 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
+	struct proc *p = l->l_proc;
 	long i, cnt, error = 0;
 	u_int iovlen;
 #ifdef KTRACE
@@ -174,7 +175,7 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
-			ktrgenio(p, fd, UIO_READ, ktriov, cnt,
+			ktrgenio(l, fd, UIO_READ, ktriov, cnt,
 			    error);
 		free(ktriov, M_TEMP);
 	}
@@ -184,7 +185,7 @@ done:
 	if (needfree)
 		free(needfree, M_IOV);
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -212,14 +213,14 @@ netbsd32_writev(l, v, retval)
 
 	FILE_USE(fp);
 
-	return (dofilewritev32(p, fd, fp,
+	return (dofilewritev32(l, fd, fp,
 	    (struct netbsd32_iovec *)NETBSD32PTR64(SCARG(uap, iovp)),
 	    SCARG(uap, iovcnt), &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
 int
-dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
-	struct proc *p;
+dofilewritev32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
+	struct lwp *l;
 	int fd;
 	struct file *fp;
 	struct netbsd32_iovec *iovp;
@@ -232,6 +233,7 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
+	struct proc *p = l->l_proc;
 	long i, cnt, error = 0;
 	u_int iovlen;
 #ifdef KTRACE
@@ -299,7 +301,7 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
-			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt,
+			ktrgenio(l, fd, UIO_WRITE, ktriov, cnt,
 			    error);
 		free(ktriov, M_TEMP);
 	}
@@ -309,7 +311,7 @@ done:
 	if (needfree)
 		free(needfree, M_IOV);
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -325,14 +327,13 @@ netbsd32_utimes(l, v, retval)
 	} */ *uap = v;
 	int error;
 	struct nameidata nd;
-	struct proc *p = l->l_proc;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE,
 	    (char *)NETBSD32PTR64(SCARG(uap, path)), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
-	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), p);
+	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), l);
 
 	vrele(nd.ni_vp);
 	return (error);
@@ -342,13 +343,14 @@ netbsd32_utimes(l, v, retval)
  * Common routine to set access and modification times given a vnode.
  */
 static int
-change_utimes32(vp, tptr, p)
+change_utimes32(vp, tptr, l)
 	struct vnode *vp;
 	netbsd32_timevalp_t tptr;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct netbsd32_timeval tv32[2];
 	struct timeval tv[2];
+	struct proc *p = l->l_proc;
 	struct vattr vattr;
 	int error;
 
@@ -365,13 +367,13 @@ change_utimes32(vp, tptr, p)
 		netbsd32_to_timeval(&tv32[0], &tv[0]);
 		netbsd32_to_timeval(&tv32[1], &tv[1]);
 	}
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(vp, l, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vattr.va_atime.tv_sec = tv[0].tv_sec;
 	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
 	vattr.va_mtime.tv_sec = tv[1].tv_sec;
 	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+	error = VOP_SETATTR(vp, &vattr, p->p_ucred, l);
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
@@ -387,7 +389,6 @@ netbsd32_statvfs1(l, v, retval)
 		syscallarg(netbsd32_statvfsp_t) buf;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statvfs *sbuf;
 	struct netbsd32_statvfs *s32;
@@ -403,7 +404,7 @@ netbsd32_statvfs1(l, v, retval)
 	    M_WAITOK);
 	mp = nd.ni_vp->v_mount;
 	vrele(nd.ni_vp);
-	if ((error = dostatvfs(mp, sbuf, p, SCARG(uap, flags), 1)) != 0)
+	if ((error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 1)) != 0)
 		goto out;
 	s32 = (struct netbsd32_statvfs *)
 	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
@@ -440,7 +441,7 @@ netbsd32_fstatvfs1(l, v, retval)
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
 	    M_WAITOK);
-	if ((error = dostatvfs(mp, sbuf, p, SCARG(uap, flags), 1)) != 0)
+	if ((error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 1)) != 0)
 		goto out;
 	s32 = (struct netbsd32_statvfs *)
 	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
@@ -450,7 +451,7 @@ netbsd32_fstatvfs1(l, v, retval)
 	free(s32, M_TEMP);
  out:
 	free(sbuf, M_TEMP);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -489,7 +490,7 @@ netbsd32_getvfsstat(l, v, retval)
 			continue;
 		}
 		if (sfsp && count < maxcount) {
-			error = dostatvfs(mp, sbuf, p, SCARG(uap, flags), 0);
+			error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 0);
 			if (error) {
 				simple_lock(&mountlist_slock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
@@ -515,7 +516,7 @@ netbsd32_getvfsstat(l, v, retval)
 		/*
 		 * fake a root entry
 		 */
-		if ((error = dostatvfs(p->p_cwdi->cwdi_rdir->v_mount, sbuf, p,
+		if ((error = dostatvfs(p->p_cwdi->cwdi_rdir->v_mount, sbuf, l,
 		    SCARG(uap, flags), 1)) != 0)
 			goto out;
 		if (sfsp) {
@@ -572,7 +573,7 @@ netbsd32_fhstatvfs1(l, v, retval)
 	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
 	    M_WAITOK);
 	mp = vp->v_mount;
-	if ((error = dostatvfs(mp, sbuf, p, SCARG(uap, flags), 1)) != 0) {
+	if ((error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 1)) != 0) {
 		vput(vp);
 		goto out;
 	}
@@ -609,8 +610,8 @@ netbsd32_futimes(l, v, retval)
 		return (error);
 
 	error = change_utimes32((struct vnode *)fp->f_data, 
-				SCARG(uap, tptr), p);
-	FILE_UNUSE(fp, p);
+				SCARG(uap, tptr), l);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -637,10 +638,10 @@ netbsd32_getdents(l, v, retval)
 		goto out;
 	}
 	error = vn_readdir(fp, (caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
-	    UIO_USERSPACE, SCARG(uap, count), &done, p, 0, 0);
+	    UIO_USERSPACE, SCARG(uap, count), &done, l, 0, 0);
 	*retval = done;
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -656,14 +657,13 @@ netbsd32_lutimes(l, v, retval)
 	} */ *uap = v;
 	int error;
 	struct nameidata nd;
-	struct proc *p = l->l_proc;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE,
 	    (caddr_t)NETBSD32PTR64(SCARG(uap, path)), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
-	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), p);
+	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), l);
 
 	vrele(nd.ni_vp);
 	return (error);
@@ -694,7 +694,7 @@ netbsd32___stat13(l, v, retval)
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -726,8 +726,8 @@ netbsd32___fstat13(l, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
-	FILE_UNUSE(fp, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
+	FILE_UNUSE(fp, l);
 
 	if (error == 0) {
 		netbsd32_from___stat13(&ub, &sb32);
@@ -762,7 +762,7 @@ netbsd32___lstat13(l, v, retval)
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -815,12 +815,12 @@ netbsd32_preadv(l, v, retval)
 	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
 		goto out;
 
-	return (dofilereadv32(p, fd, fp,
+	return (dofilereadv32(l, fd, fp,
 	    (struct netbsd32_iovec *)NETBSD32PTR64(SCARG(uap, iovp)),
 	    SCARG(uap, iovcnt), &offset, 0, retval));
 
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -867,12 +867,12 @@ netbsd32_pwritev(l, v, retval)
 	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
 		goto out;
 
-	return (dofilewritev32(p, fd, fp,
+	return (dofilewritev32(l, fd, fp,
 	    (struct netbsd32_iovec *)NETBSD32PTR64(SCARG(uap, iovp)),
 	    SCARG(uap, iovcnt), &offset, 0, retval));
 
 out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -882,9 +882,10 @@ out:
  * Use vfs vnode-to-name reverse cache; if that fails, fall back
  * to reading directory contents.
  */
+/* XXX NH Why does this exist */
 int
 getcwd_common __P((struct vnode *, struct vnode *,
-		   char **, char *, int, int, struct proc *));
+		   char **, char *, int, int, struct lwp *));
 
 int netbsd32___getcwd(l, v, retval) 
 	struct lwp *l;
@@ -922,7 +923,7 @@ int netbsd32___getcwd(l, v, retval)
 	 */
 #define GETCWD_CHECK_ACCESS 0x0001
 	error = getcwd_common (p->p_cwdi->cwdi_cdir, NULL, &bp, path, len/2,
-			       GETCWD_CHECK_ACCESS, p);
+			       GETCWD_CHECK_ACCESS, l);
 
 	if (error)
 		goto out;

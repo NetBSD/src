@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.37.2.1 2004/08/03 10:51:16 skrll Exp $	*/
+/*	$NetBSD: kbd.c,v 1.37.2.2 2004/08/26 19:28:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37.2.1 2004/08/03 10:51:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37.2.2 2004/08/26 19:28:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,10 +166,10 @@ static void	kbd_input_event(struct kbd_softc *, int);
  * setup event channel, clear ASCII repeat stuff.
  */
 int
-kbdopen(dev, flags, mode, p)
+kbdopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct kbd_softc *k;
 	int error, unit;
@@ -192,7 +192,7 @@ kbdopen(dev, flags, mode, p)
 	/* exclusive open required for /dev/kbd */
 	if (k->k_events.ev_io)
 		return (EBUSY);
-	k->k_events.ev_io = p;
+	k->k_events.ev_io = l->l_proc;
 
 	/* stop pending autorepeat of console input */
 	if (k->k_repeating) {
@@ -220,10 +220,10 @@ kbdopen(dev, flags, mode, p)
  * unless it is supplying console input.
  */
 int
-kbdclose(dev, flags, mode, p)
+kbdclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct kbd_softc *k;
 
@@ -255,15 +255,15 @@ kbdread(dev, uio, flags)
 
 
 int
-kbdpoll(dev, events, p)
+kbdpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct kbd_softc *k;
 
 	k = kbd_cd.cd_devs[minor(dev)];
-	return (ev_poll(&k->k_events, events, p));
+	return (ev_poll(&k->k_events, events, l));
 }
 
 int
@@ -278,12 +278,12 @@ kbdkqfilter(dev, kn)
 }
 
 int
-kbdioctl(dev, cmd, data, flag, p)
+kbdioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct kbd_softc *k;
 	struct kbd_state *ks;
