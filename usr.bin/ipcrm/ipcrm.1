@@ -1,8 +1,8 @@
-.\"	$NetBSD: ipcrm.1,v 1.5 1999/11/19 01:12:42 enami Exp $
+.\"	$NetBSD: ipcrm.1,v 1.6 2001/04/09 12:32:06 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Adam Glass
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -10,7 +10,7 @@
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. The name of the Author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -22,10 +22,10 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\" 
-.\" $NetBSD: ipcrm.1,v 1.5 1999/11/19 01:12:42 enami Exp $
+.\"
+.\" $NetBSD: ipcrm.1,v 1.6 2001/04/09 12:32:06 wiz Exp $
 .\""
-.Dd August 8th, 1994
+.Dd August 8, 1994
 .Dt ipcrm 1
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ Remove the message queue associated with the id
 .Ar msqid
 from the system.
 .It Fl m Ar shmid
-Mark the shared memory segment associated with id 
+Mark the shared memory segment associated with id
 .Ar shmid
 for removal.
 This marked segment will be destroyed after the last detach.
@@ -75,11 +75,11 @@ Removes the semaphore set associated with id
 .Ar semid
 from the system.
 .It Fl Q Ar msgkey
-Remove the message queue associated with key 
+Remove the message queue associated with key
 .Ar msgkey
 from the system.
 .It Fl M Ar shmkey
-Mark the shared memory segment associated with key 
+Mark the shared memory segment associated with key
 .Ar shmkey
 for removal.
 This marked segment will be destroyed after the last detach.
