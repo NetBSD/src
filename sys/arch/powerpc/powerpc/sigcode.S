@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.1 1999/11/17 14:56:11 kleink Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.1.16.1 2001/11/05 19:46:19 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,7 +41,7 @@
  * On entry r1 points to a struct sigframe at bottom of current stack.
  * All other registers are unchanged.
  */
-	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
+	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode),_C_LABEL(upcallcode)
 _C_LABEL(sigcode):
 	addi	1,1,-16			/* reserved space for callee */
 	blrl
@@ -50,4 +50,8 @@ _C_LABEL(sigcode):
 	sc				/* sigreturn(scp) */
 	li	0,SYS_exit
 	sc				/* exit(errno) */
+_C_LABEL(upcallcode):
+	blrl
+	li	0,SYS_exit
+	sc
 _C_LABEL(esigcode):

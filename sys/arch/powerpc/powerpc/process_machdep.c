@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.4.10.1 2001/11/05 19:46:17 briggs Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7.6.2 2001/11/05 19:46:18 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,61 +31,117 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Some additional routines that happened to be in locore.S traditionally,
- * but have no need to be coded in assembly.
- */
-
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/sched.h>
-#include <sys/systm.h>
 #include <sys/lwp.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/systm.h>
+#include <sys/ptrace.h>
 
-/*
- * Put process p on the run queue indicated by its priority.
- * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
- */
-void
-setrunqueue(l)
+#include <machine/fpu.h>
+#include <machine/pcb.h>
+#include <machine/reg.h>
+
+int
+process_read_regs(l, regs)
 	struct lwp *l;
+	struct reg *regs;
 {
-	struct  prochd *q;
-	struct lwp *oldlast;
-	int which = l->l_priority >> 2;
-	
-#ifdef	DIAGNOSTIC
-	if (l->l_back)
-		panic("setrunqueue");
+	struct trapframe *tf = trapframe(l);
+
+	memcpy(regs->fixreg, tf->fixreg, sizeof(regs->fixreg));
+	regs->lr = tf->lr;
+	regs->cr = tf->cr;
+	regs->xer = tf->xer;
+	regs->ctr = tf->ctr;
+	regs->pc = tf->srr0;
+
+	return 0;
+}
+
+int
+process_write_regs(l, regs)
+	struct lwp *l;
+	struct reg *regs;
+{
+	struct trapframe *tf = trapframe(l);
+
+	memcpy(tf->fixreg, regs->fixreg, sizeof(regs->fixreg));
+	tf->lr = regs->lr;
+	tf->cr = regs->cr;
+	tf->xer = regs->xer;
+	tf->ctr = regs->ctr;
+	tf->srr0 = regs->pc;
+
+	return 0;
+}
+
+int
+process_read_fpregs(l, regs)
+	struct lwp *l;
+	struct fpreg *regs;
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+
+	/* Is the process using the fpu? */
+	if ((pcb->pcb_flags & PCB_FPU) == 0) {
+		memset(regs, 0, sizeof (struct fpreg));
+		return 0;
+	}
+
+#ifdef PPC_HAVE_FPU
+	if (l == fpuproc)
+		save_fpu(l);
 #endif
-	q = &sched_qs[which];
-	sched_whichqs |= 0x80000000 >> which;
-	l->l_forw = (struct lwp *)q;
-	l->l_back = oldlast = q->ph_rlink;
-	q->ph_rlink = l;
-	oldlast->l_forw = l;
+	memcpy(regs, &pcb->pcb_fpu, sizeof (struct fpreg));
+
+	return 0;
+}
+
+int
+process_write_fpregs(l, regs)
+	struct lwp *l;
+	struct fpreg *regs;
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+
+#ifdef PPC_HAVE_FPU
+	if (l == fpuproc)
+		fpuproc = NULL;
+#endif
+
+	memcpy(&pcb->pcb_fpu, regs, sizeof(struct fpreg));
+
+	/* pcb_fpu is initialized now. */
+	pcb->pcb_flags |= PCB_FPU;
+
+	return 0;
 }
 
 /*
- * Remove process p from its run queue, which should be the one
- * indicated by its priority.
- * Calls should be made at splstatclock().
+ * Set the process's program counter.
  */
-void
-remrunqueue(l)
+int
+process_set_pc(l, addr)
 	struct lwp *l;
+	caddr_t addr;
 {
-	int which = l->l_priority >> 2;
-	struct prochd *q;
+	struct trapframe *tf = trapframe(l);
+	
+	tf->srr0 = (int)addr;
+	return 0;
+}
 
-#ifdef	DIAGNOSTIC	
-	if (!(sched_whichqs & (0x80000000 >> which)))
-		panic("remrunqueue");
-#endif
-	l->l_forw->l_back = l->l_back;
-	l->l_back->l_forw = l->l_forw;
-	l->l_back = NULL;
-	q = &sched_qs[which];
-	if (q->ph_link == (struct lwp *)q)
-		sched_whichqs &= ~(0x80000000 >> which);
+int
+process_sstep(l, sstep)
+	struct lwp *l;
+	int sstep;
+{
+	struct trapframe *tf = trapframe(l);
+	
+	if (sstep)
+		tf->srr1 |= PSL_SE;
+	else
+		tf->srr1 &= ~PSL_SE;
+	return 0;
 }

@@ -1,8 +1,9 @@
-/*	$NetBSD: sys_machdep.c,v 1.3.10.1 2001/11/05 19:46:19 briggs Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.8.2 2001/11/05 19:46:21 briggs Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.8.2 2001/11/05 19:46:21 briggs Exp $	*/
 
 /*
- * Copyright (C) 1996 Wolfgang Solfrank.
- * Copyright (C) 1996 TooLs GmbH.
+ * Copyright (C) 1995, 1996 Wolfgang Solfrank.
+ * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,20 +31,64 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef	_MACHINE_FRAME_H_
+#define	_MACHINE_FRAME_H_
 
-#include <sys/param.h>
+#include <machine/types.h>
 
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
+/*
+ * We have to save all registers on every trap, because
+ *	1. user could attach this process every time
+ *	2. we must be able to restore all user registers in case of fork
+ * Actually, we do not save the fp registers on trap, since
+ * these are not used by the kernel. They are saved only when switching
+ * between processes using the FPU.
+ *
+ * Change ordering to cluster together these register_t's.		XXX
+ */
+struct trapframe {
+	register_t fixreg[32];
+	register_t lr;
+	int cr;
+	int xer;
+	register_t ctr;
+	register_t srr0;
+	register_t srr1;
+	register_t dear;			/* dar & dsisr are only filled on a DSI trap */
+	int esr;
+	int exc;
+  	int pid;
+};
+/*
+ * This is to ensure alignment of the stackpointer
+ */
+#define	FRAMELEN	roundup(sizeof(struct trapframe) + 8, 16)
+#define	trapframe(l)	((struct trapframe *)((char *)(l)->l_addr + USPACE - FRAMELEN + 8))
 
-int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	/*
-	 * Currently no special system calls
-	 */
-	return (ENOSYS);
-}
+struct switchframe {
+	register_t sp;
+	int fill;
+	int user_vsid;
+	int cr;
+	register_t fixreg2;
+	register_t fixreg[19];		/* R13-R31 */
+};
+
+struct clockframe {
+	register_t srr1;
+	register_t srr0;
+	int pri;
+	int depth;
+};
+
+/*
+ * Call frame for PowerPC used during fork.
+ */
+struct callframe {
+	register_t sp;
+	register_t lr;
+	register_t r30;
+	register_t r31;
+};
+
+#endif	/* _MACHINE_FRAME_H_ */
