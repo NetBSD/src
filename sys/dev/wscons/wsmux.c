@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.2 1999/07/30 20:52:28 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.3 1999/08/07 15:04:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -485,8 +485,8 @@ int wsmuxdoclose(dv, flags, mode, p)
 
 	DPRINTF(("wsmuxclose: %s: sc=%p\n", sc->sc_dv.dv_xname, sc));
 	if (!(flags & FREAD)) {
-		/* Not closing read, so read still allowed. */
-		return 0;
+		/* Nothing to do, because open didn't do anything. */
+		return (0);
 	}
 
 	for (m = LIST_FIRST(&sc->sc_reals); m; m = LIST_NEXT(m, next)) {

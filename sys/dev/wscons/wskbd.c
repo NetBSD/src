@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.28 1999/07/30 20:52:28 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.29 1999/08/07 15:04:35 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.28 1999/07/30 20:52:28 augustss Exp $";
+    "$NetBSD: wskbd.c,v 1.29 1999/08/07 15:04:35 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -658,6 +658,11 @@ wskbdopen(dev, flags, mode, p)
 	if (sc->sc_dying)
 		return (EIO);
 
+	if (!(flags & FREAD)) {
+		/* Not opening for read, only ioctl is available. */
+		return (0);
+	}
+
 #if NWSMUX > 0 || NWSDISPLAY > 0
 	if (sc->sc_mux)
 		return (EBUSY);
@@ -692,6 +697,11 @@ wskbddoclose(dv, flags, mode, p)
 	struct proc *p;
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
+
+	if (!(flags & FREAD)) {
+		/* Nothing to do, because open didn't do anything. */
+		return (0);
+	}
 
 	sc->sc_ready = 0;			/* stop accepting events */
 	sc->sc_translating = 1;
