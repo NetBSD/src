@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.6 1995/03/30 20:55:46 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.7 1995/07/05 08:24:48 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -1051,6 +1051,24 @@ udastrat1(bp)
 	splx(s);
 }
 
+int
+udaread(dev, uio)
+        dev_t dev;
+        struct uio *uio;
+{
+
+        return (physio(udastrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+udawrite(dev, uio)
+        dev_t dev;
+        struct uio *uio;
+{
+
+        return (physio(udastrategy, NULL, dev, B_WRITE, minphys, uio));
+}
+
 /*
  * Start up whatever transfers we can find.
  * Note that udastart() must be called at splbio().
@@ -1876,11 +1894,11 @@ udadump(dev)
 	char *start;
 	int num, blk, unit, maxsz, blkoff, reg;
 	struct partition *pp;
-	register struct uba_regs *uba;
-	register struct uba_device *ui;
-	register struct uda1 *ud;
-	register struct pte *io;
-	register int i;
+	struct uba_regs *uba;
+	struct uba_device *ui;
+	struct uda1 *ud;
+	struct pte *io;
+	int i;
 
 	/*
 	 * Make sure the device is a reasonable place on which to dump.
@@ -1902,7 +1920,7 @@ udadump(dev)
 	ubainit(uba);
 	udaddr = (struct udadevice *)ui->ui_physaddr;
 	ud = phys(struct uda1 *, &uda1);
-
+printf("H{r.\n");
 	/*
 	 * Map the ca+packets into Unibus I/O space so the UDA50 can get
 	 * at them.  Use the registers at the end of the Unibus map (since
