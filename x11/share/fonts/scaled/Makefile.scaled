@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile.scaled,v 1.2 2004/03/06 03:13:06 rtr Exp $
+#	$NetBSD: Makefile.scaled,v 1.3 2004/03/09 13:25:49 rtr Exp $
 
 FILESDIR=	${X11FONTDIR}/${FONTSUBDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/scaled/${FONTSUBDIR}
 
-.if ${FONTSUBDIR} != "CID" && \
-    ${FONTSUBDIR} != "TTF" && \
-    ${FONTSUBDIR} != "Type1"
+.if ${FONTSUBDIR} == "Speedo"
 FILES+=		fonts.scale
 .endif
 
