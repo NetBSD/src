@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.17 1997/06/23 22:16:56 veego Exp $
+#	$NetBSD: Makefile,v 1.18 1997/10/05 23:52:14 mark Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
-.if	(${MACHINE} != "arm32")  && \
-	(${MACHINE} != "i386")   && \
+.if	(${MACHINE} != "i386")   && \
 	(${MACHINE} != "pica")   && \
 	(${MACHINE} != "pmax")   && \
 	(${MACHINE} != "x68k")
@@ -33,8 +32,7 @@ MLINKS+=kvm_read.3 kvm_write.3
 MLINKS+=kvm_dump.3 kvm_dump_mkheader.3 kvm_dump.3 kvm_dump_wrtheader.3
 MLINKS+=kvm_dump.3 kvm_dump_inval.3
 
-.if	(${MACHINE} != "arm32")  && \
-	(${MACHINE} != "i386")   && \
+.if	(${MACHINE} != "i386")   && \
 	(${MACHINE} != "pica")   && \
 	(${MACHINE} != "pmax")   && \
 	(${MACHINE} != "x68k")
