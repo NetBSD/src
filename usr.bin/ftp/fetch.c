@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.33 1998/08/08 04:40:50 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.34 1998/08/08 11:23:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.33 1998/08/08 04:40:50 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.34 1998/08/08 11:23:46 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -781,7 +781,7 @@ auto_fetch(argc, argv, outfile)
 		 * Finally, try host:file.
 		 */
 		if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
-			int urltype;
+			url_t urltype;
 
 			if (ftpproxy) {
 				if (url_get(line, ftpproxy, outfile) == -1)
