@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.3 2000/01/07 11:20:41 msaitoh Exp $
+#	$NetBSD: MMTA,v 1.4 2000/05/08 13:49:48 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -96,6 +96,7 @@ options 	NS		# XNS
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.

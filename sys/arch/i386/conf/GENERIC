@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.334 2000/05/07 00:44:45 wiz Exp $
+#	$NetBSD: GENERIC,v 1.335 2000/05/08 13:49:47 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.334 $"
+#ident 		"GENERIC-$Revision: 1.335 $"
 
 maxusers	32		# estimated number of users
 
@@ -155,6 +155,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
