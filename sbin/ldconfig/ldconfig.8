@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldconfig.8,v 1.9 1998/09/05 13:08:40 pk Exp $
+.\"	$NetBSD: ldconfig.8,v 1.10 1999/02/22 23:07:16 msaitoh Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,7 +115,8 @@ for shared libraries.  (Directories listed in
 are still scanned.)
 .It Fl v
 Switch on verbose mode.
-.Sh Security
+.El
+.Sh SECURITY
 Special care must be taken when loading shared libraries into the address
 space of
 .Ev set-user-ID
@@ -125,6 +126,8 @@ will only load shared libraries from the
 .Pa ld.so.hints
 file.  In particular, the
 .Ev LD_LIBRARY_PATH
+and
+.Ev LD_PRELOAD
 is not used to search for libraries.  Thus, the role of ldconfig is dual.  In
 addition to building a set of hints for quick lookup, it also serves to
 specify the trusted collection of directories from which shared objects can
@@ -134,6 +137,8 @@ is under control of the system's administrator.
 .Nm ld.so
 further assists set-user-ID programs by erasing the
 .Ev LD_LIBRARY_PATH
+and
+.Ev LD_PRELOAD
 from the environment.
 
 .Sh FILES
