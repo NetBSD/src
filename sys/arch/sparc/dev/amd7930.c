@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.21 1997/05/15 22:32:56 pk Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.22 1997/05/24 20:15:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -293,8 +293,7 @@ amd7930attach(parent, self, args)
 	pri = ra->ra_intr[0].int_pri;
 	printf(" pri %d, softpri %d\n", pri, PIL_AUSOFT);
 	amd = (volatile struct amd7930 *)(ra->ra_vaddr ?
-		ra->ra_vaddr : mapiodev(ra->ra_reg, 0, sizeof (*amd),
-					ca->ca_bustype));
+		ra->ra_vaddr : mapiodev(ra->ra_reg, 0, sizeof (*amd)));
 
 	sc->sc_map.mr_mmr1 = AMD_MMR1_GX | AMD_MMR1_GER |
 			     AMD_MMR1_GR | AMD_MMR1_STG;
