@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.14 2002/05/07 03:34:17 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.15 2002/05/08 21:44:55 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -21,25 +21,26 @@
 # Optional variables:
 #	MDSET_RELEASEDIR		Where to install release kernels.
 #
-#	MDSET.${FILENAME}.nosymbols	If defined, don't generate
+#	MDSET_NOSYMBOLS.${FILENAME}	If defined, don't generate
 #					${FILENAME}.symbols.gz
 #
-#	MDSET.${FILENAME}.post		For each kernel named ${FILENAME},
+#	MDSET_POST.${FILENAME}		For each kernel named ${FILENAME},
 #					execute this after ${NM} / ${STRIP}.
-#					Kernel is available as "${.TARGET:R}"
-#					If MDSET.${FILENAME}.suffixes uses
-#					this to build extra kernels, the
-#					resultant file must be gzipped by this
-#					as "${.TARGET:R}.${suffix}.gz"
+#					Kernel is available as "${.TARGET}"
 #
-#	MDSET.${FILENAME}.suffixes	List of extra install kernel suffixes.
-#					The extra kernels are usually created
-#					by MDSET.${FILENAME}.post.
+#	MDSET_SUFFIXES.${FILENAME}	List of extra install kernel suffixes
+#					and build commands to create from
+#					${FILENAME} after its created by
+#					${MDSET} ; ${NM} ; ${STRIP}:
+#						SUFFIX	COMMANDVAR
+#					"${.TARGET}" is "${FILENAME}.${SUFFIX}"
+#					COMMANDVAR is the name of the variable
+#					containing the command to build
+#					${.TARGET}.
 #
 # Variables modified by this:
 #	KERNELS			List of kernel .gz files to build
 #	KERNELSYMS		List of kernel .symbol.gz files to build
-#	_KERNEL.${KERNEL}	Target filename for ${KERNEL}
 #
 
 .include <bsd.kernobj.mk>
@@ -53,33 +54,51 @@ _KERNEL.${_K}:=	${_F}
 .endif
 
 KERNELS+=	${_KERNEL.${_K}}.gz
-.for suf in ${MDSET.${_FILENAME}.suffixes}
-KERNELS+=	${_KERNEL.${_K}}.${suf}.gz
-CLEANFILES+=	${_KERNEL.${_K}}.${suf}
-.endfor
-.if !defined(MDSET.${_FILENAME}.nosymbols)
+
+.for _S _C in ${MDSET_SUFFIXES.${_FILENAME}}		# {
+KERNELS+=	${_KERNEL.${_K}}.${_S}.gz
+CLEANFILES+=	${_KERNEL.${_K}}.${_S}
+
+${_KERNEL.${_K}}.${_S}: ${_KERNEL.${_K}}
+.if defined(${_C})
+	${${_C}}
+.else
+	@echo "No such variable \"${_C}\""
+	false
+.endif
+
+${_KERNEL.${_K}}.${_S}.gz: ${_KERNEL.${_K}}.${_S}
+	-rm -f ${.TARGET}
+	gzip -9c ${.ALLSRC} > ${.TARGET}
+
+.endfor							# }
+
+.if !defined(MDSET_NOSYMBOLS.${_FILENAME})
 KERNELSYMS+=	${_KERNEL.${_K}}.symbols.gz
 .endif
 
-.if defined(MDSET.${_FILENAME}.post)
-_POST.${_KERNEL.${_K}}:= ${MDSET.${_FILENAME}.post}
+.if defined(MDSET_POST.${_FILENAME})
+_POST.${_KERNEL.${_K}}:= ${MDSET_POST.${_FILENAME}}
 .endif
 
-${_KERNEL.${_K}}.gz: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
+${_KERNEL.${_K}}: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
 	@echo "mdsetimage: ${KERNOBJDIR}/${_K}/netbsd"
 	@echo "      with: ${_I}"
 	@echo "      into: ${.TARGET}"
-	@rm -f ${.TARGET:R} ${.TARGET:R}.symbols.gz
-	@cp ${KERNOBJDIR}/${_K}/netbsd ${.TARGET:R}
-	${MDSETIMAGE} -v ${.TARGET:R} ${_I}
-.if !defined(MDSET.${_FILENAME}.nosymbols)
-	${NM} ${.TARGET:R} | gzip -9 > ${.TARGET:R}.symbols.gz
+	@rm -f ${.TARGET} ${.TARGET}.symbols.gz
+	@cp ${KERNOBJDIR}/${_K}/netbsd ${.TARGET}
+	${MDSETIMAGE} -v ${.TARGET} ${_I}
+.if !defined(MDSET_NOSYMBOLS.${_FILENAME})
+	${NM} ${.TARGET} | gzip -9 > ${.TARGET}.symbols.gz
 .endif
-	${STRIP} ${.TARGET:R}
-.if defined(_POST.${.TARGET:R})
-	${_POST.${.TARGET:R}}
+	${STRIP} ${.TARGET}
+.if defined(MDSET_POST.${_FILENAME})
+	${_POST.${.TARGET}}
 .endif
-	gzip -9f ${.TARGET:R}
+
+${_KERNEL.${_K}}.gz: ${_KERNEL.${_K}}
+	-rm -f ${.TARGET}
+	gzip -9c ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	${_KERNEL.${_K}} 
 
