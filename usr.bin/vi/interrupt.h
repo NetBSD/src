@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)interrupt.h	8.1 (Berkeley) 1/9/94
+ *	from: @(#)interrupt.h	8.1 (Berkeley) 1/9/94
+ *	$Id: interrupt.h,v 1.2 1994/01/24 06:38:54 cgd Exp $
  */
 
 /*

@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)vi.summary	8.1 (Berkeley) 6/8/93
+.\"	from: @(#)vi.summary	8.1 (Berkeley) 6/8/93
+.\"	$Id: vi.summary,v 1.2 1994/01/24 06:39:58 cgd Exp $
 .\"
 .ds CH
 .ds CF

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	8.5 (Berkeley) 12/21/93
+ *	from: @(#)pathnames.h	8.5 (Berkeley) 12/21/93
+ *	$Id: pathnames.h,v 1.2 1994/01/24 06:39:07 cgd Exp $
  */
 
 #define	_PATH_BSHELL	"/bin/sh"

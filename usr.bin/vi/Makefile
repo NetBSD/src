@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.26 (Berkeley) 1/12/94
+#	from: @(#)Makefile	8.26 (Berkeley) 1/12/94
+#	$Id: Makefile,v 1.2 1994/01/24 06:38:43 cgd Exp $
 
 PROG=	nvi
 MAN1=	vi.0

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)trace.c	8.1 (Berkeley) 6/9/93
+ *	from: @(#)trace.c	8.1 (Berkeley) 6/9/93
+ *	$Id: trace.c,v 1.2 1994/01/24 06:39:20 cgd Exp $
  */
 
 #ifdef DEBUG

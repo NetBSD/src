@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)gs.h	8.26 (Berkeley) 1/9/94
+ *	from: @(#)gs.h	8.26 (Berkeley) 1/9/94
+ *	$Id: gs.h,v 1.2 1994/01/24 06:38:53 cgd Exp $
  */
 
 struct _gs {

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.h	8.2 (Berkeley) 12/19/93
+ *	from: @(#)mem.h	8.2 (Berkeley) 12/19/93
+ *	$Id: mem.h,v 1.2 1994/01/24 06:39:02 cgd Exp $
  */
 
 /* Increase the size of a malloc'd buffer.  Two versions, one that
