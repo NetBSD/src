@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.25 2003/07/28 09:55:24 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.26 2003/09/25 18:32:10 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -495,3 +495,9 @@ msg_table_add(msg msg_no, ...)
 	va_end(ap);
 }
 
+int
+msg_row(void)
+{
+
+	return getcury(msg_win) + getbegy(msg_win);
+}
