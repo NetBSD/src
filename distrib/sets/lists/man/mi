@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.396 2001/08/25 03:31:32 thorpej Exp $
+# $NetBSD: mi,v 1.397 2001/08/25 04:14:26 thorpej Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -438,6 +438,7 @@
 ./usr/share/man/cat4/ahc.0			man-sys-catman
 ./usr/share/man/cat4/ai.0			man-sys-catman
 ./usr/share/man/cat4/aic.0			man-sys-catman
+./usr/share/man/cat4/amhphy.0			man-sys-catman
 ./usr/share/man/cat4/amiga/afsc.0		man-sys-catman
 ./usr/share/man/cat4/amiga/ahsc.0		man-sys-catman
 ./usr/share/man/cat4/amiga/amidisplaycc.0	man-sys-catman
@@ -2017,6 +2018,7 @@
 ./usr/share/man/man4/ahc.4			man-sys-man
 ./usr/share/man/man4/ai.4			man-sys-man
 ./usr/share/man/man4/aic.4			man-sys-man
+./usr/share/man/man4/amhphy.4			man-sys-man
 ./usr/share/man/man4/amiga/afsc.4		man-sys-man
 ./usr/share/man/man4/amiga/ahsc.4		man-sys-man
 ./usr/share/man/man4/amiga/amidisplaycc.4	man-sys-man
