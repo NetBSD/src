@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_cpu.h,v 1.1 1998/09/03 05:09:37 nisimura Exp $	*/
+/*	$NetBSD: mips_cpu.h,v 1.2 1998/09/07 06:32:18 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -472,9 +472,11 @@
 #define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
 #define	MIPS_R3SONY	0x21	/* Sony R3000 based CPU		ISA I   */
 #define	MIPS_R4700	0x21	/* QED R4700 Orion              ISA III */
-#define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based CPU	ISA I	*/
-#define	MIPS_R3NKK	0x23	/* NKK R3000 based CPU		ISA I   */
+#define	MIPS_R3TOSH	0x22	/* ? Toshiba R3000 based CPU	ISA I	*/
+#define	MIPS_R4650	0x22	/* QED R4650			ISA IV	*/
+#define	MIPS_R3NKK	0x23	/* ? NKK R3000 based CPU	ISA I   */
 #define	MIPS_R5000	0x23	/* MIPS R5000 based CPU		ISA IV  */
+#define	MIPS_RC32364	0x26	/* IDT RC32364			ISA II+	*/
 #define	MIPS_RM5230	0x28	/* QED RM5230 based CPU		ISA IV	*/
 
 /*
@@ -490,7 +492,7 @@
 #define	MIPS_R10010	0x09	/* MIPS R10000/T5 FPU		ISA IV  */
 #define	MIPS_R4210	0x0a	/* MIPS R4200 FPC (ICE)		ISA III */
 #define MIPS_UNKF1	0x0b	/* ? unnanounced product cpu	ISA III */
-#define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
+#define	MIPS_R8000	0x10	/* ? MIPS R8000 Blackbird/TFP	ISA IV  */
 #define	MIPS_R4600	0x20	/* ? QED R4600 Orion		ISA III */
 #define	MIPS_R3SONY	0x21	/* ? Sony R3000 based FPU	ISA I   */
 #define	MIPS_R3TOSH	0x22	/* ? Toshiba R3000 based FPU	ISA I	*/
