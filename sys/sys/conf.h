@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.68 1999/09/09 23:24:11 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.69 2000/01/21 17:52:29 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -293,6 +293,7 @@ extern struct cdevsw cdevsw[];
 #define	cdev_uk_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_scsibus_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_se_init(c,n)	cdev__oci_init(c,n)
+#define	cdev_ses_init(c,n)	cdev__oci_init(c,n)
 
 #define	cdev_usb_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
