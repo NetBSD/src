@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.3 2000/12/03 15:51:53 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.4 2001/01/03 21:01:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -332,16 +332,12 @@ ld_iop_detach(struct device *self, int flags)
 {
 	struct ld_iop_softc *sc;
 	struct iop_softc *iop;
-	int s, rv;
+	int rv;
 
 	sc = (struct ld_iop_softc *)self;
 
-	/* XXX */
-	if ((flags & DETACH_FORCE) == 0 && sc->sc_ld.sc_dk.dk_openmask != 0)
-		return (EBUSY);
-	s = splbio();
-	sc->sc_ld.sc_flags |= LDF_DRAIN;
-	splx(s);
+	if ((rv = lddrain(&sc->sc_ld, flags)) != 0)
+		return (rv);
 
 	iop = (struct iop_softc *)self->dv_parent;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.2 2000/12/03 13:03:30 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.3 2001/01/03 21:01:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -113,6 +113,20 @@ ldattach(struct ld_softc *sc)
 	BUFQ_INIT(&sc->sc_bufq);
 }
 
+int
+lddrain(struct ld_softc *sc, int flags)
+{
+	int s;
+
+	if ((flags & DETACH_FORCE) == 0 && sc->sc_dk.dk_openmask != 0)
+		return (EBUSY);
+
+	s = splbio();
+	sc->sc_flags |= LDF_DRAIN;
+	splx(s);
+	return (0);
+}
+
 void
 lddetach(struct ld_softc *sc)
 {
@@ -121,7 +135,7 @@ lddetach(struct ld_softc *sc)
 
 	/* Wait for commands queued with the hardware to complete. */
 	if (sc->sc_queuecnt != 0)
-		tsleep(&sc->sc_queuecnt, PRIBIO, "lddrn", 0);
+		tsleep(&sc->sc_queuecnt, PRIBIO, "lddrn", 30 * hz);
 
 	/* Locate the major numbers. */
 	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
@@ -568,21 +582,21 @@ lddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	int unit, part, nsects, sectoff, towrt, nblk, maxblkcnt, rv;
 	static int dumping;
 
-	/* Check if recursive dump; if so, punt. */
-	if (dumping)
-		return (EFAULT);
-	dumping = 1;
-	if (sc->sc_dump == NULL)
-		return (ENXIO);
-
 	unit = DISKUNIT(dev);
 	if ((sc = device_lookup(&ld_cd, unit)) == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
-	part = DISKPART(dev);
+	if (sc->sc_dump == NULL)
+		return (ENXIO);
+
+	/* Check if recursive dump; if so, punt. */
+	if (dumping)
+		return (EFAULT);
+	dumping = 1;
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
+	part = DISKPART(dev);
 	lp = sc->sc_dk.dk_label;
 	if ((size % lp->d_secsize) != 0)
 		return (EFAULT);
@@ -600,9 +614,9 @@ lddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	blkno += sectoff;
 
 	/* Start dumping and return when done. */
-	maxblkcnt = sc->sc_maxxfer / sc->sc_secsize;
+	maxblkcnt = sc->sc_maxxfer / sc->sc_secsize - 1;
 	while (towrt > 0) {
-		nblk = max(maxblkcnt, towrt);
+		nblk = min(maxblkcnt, towrt);
 
 		if ((rv = (*sc->sc_dump)(sc, va, blkno, nblk)) != 0)
 			return (rv);
