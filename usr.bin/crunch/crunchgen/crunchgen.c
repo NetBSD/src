@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.10 1999/05/06 18:40:39 wrstuden Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.11 1999/06/21 05:57:10 cgd Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.10 1999/05/06 18:40:39 wrstuden Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.11 1999/06/21 05:57:10 cgd Exp $");
 #endif
 
 #include <stdlib.h>
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 	(void)snprintf(execfname, sizeof(execfname), "%s", confname);
 
     (void)snprintf(cachename, sizeof(cachename), "%s.cache", confname);
-    (void)snprintf(tempfname, sizeof(tempfname), ".tmp_%sXXXXXX", confname);
+    (void)snprintf(tempfname, sizeof(tempfname), "/tmp/%sXXXXXX", confname);
 
     parse_conf_file();
     gen_outputs();
@@ -523,7 +523,7 @@ void fillin_program(prog_t *p)
     if(p->srcdir)
 	(void)snprintf(path, sizeof(path), "%s/Makefile", p->srcdir);
     if(!p->objs && p->srcdir && is_nonempty_file(path))
-	fillin_program_objs(p, path);
+	fillin_program_objs(p, p->srcdir);
 
     if(!p->objpaths && p->objdir && p->objs)
 	for(s = p->objs; s != NULL; s = s->next) {
@@ -546,7 +546,7 @@ void fillin_program(prog_t *p)
     }
 }
 
-void fillin_program_objs(prog_t *p, char *path)
+void fillin_program_objs(prog_t *p, char *dirpath)
 {
     char *obj, *cp;
     int rc;
@@ -566,16 +566,16 @@ void fillin_program_objs(prog_t *p, char *path)
 	return;
     }
 	
-    fprintf(f, ".include \"%s\"\n", path);
+    fprintf(f, ".include \"Makefile\"\n");
     fprintf(f, ".if defined(PROG) && !defined(OBJS)\n");
     fprintf(f, "OBJS=${PROG}.o\n");
     fprintf(f, ".endif\n");
     fprintf(f, "crunchgen_objs:\n\t@echo 'OBJS= '${OBJS}\n");
     fclose(f);
 
-    (void)snprintf(line, sizeof(line), "make -f %s crunchgen_objs 2>&1",
-	tempfname);
-    if((f = popen(line, "r")) == NULL) {
+    (void)snprintf(line, sizeof(line),
+	"cd %s && make -f %s crunchgen_objs 2>&1", dirpath, tempfname);
+    if((f = popen(line, "r+")) == NULL) {
 	perror("submake pipe");
 	goterror = 1;
 	return;
