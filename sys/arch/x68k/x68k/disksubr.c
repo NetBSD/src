@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 2000/01/18 19:52:40 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 2000/02/05 07:38:10 itohy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -159,8 +159,16 @@ readdisklabel(dev, strat, lp, osdep)
 #endif
 				if (!bcmp(dp->dp_typname, "Human68k", 8))
 					fstype = FS_MSDOS;
+				else if (!bcmp(dp->dp_typname, "BSD ffs ", 8))
+					fstype = FS_BSDFFS;
+				else if (!bcmp(dp->dp_typname, "BSD lfs ", 8))
+					fstype = FS_BSDLFS;
+				else if (!bcmp(dp->dp_typname, "BSD swap", 8))
+					fstype = FS_SWAP;
+#ifndef COMPAT_14
 				else if (part == 1)
 					fstype = FS_SWAP;
+#endif
 				else
 					fstype = FS_BSDFFS; /* XXX */
 				lp->d_partitions[part].p_fstype = fstype; /* XXX */
@@ -367,6 +375,14 @@ writedisklabel(dev, strat, lp, osdep)
 
 				case FS_BSDFFS:
 					np = "BSD ffs ";
+					if (part == 0)
+						dp->dp_flag = 0; /* 自動起動 */
+					else
+						dp->dp_flag = 2; /* 使用可能 */
+					break;
+
+				case FS_BSDLFS:
+					np = "BSD lfs ";
 					if (part == 0)
 						dp->dp_flag = 0; /* 自動起動 */
 					else
