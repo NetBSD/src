@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.7 1996/03/17 22:56:38 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.8 1996/04/08 18:38:58 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,6 +41,7 @@
  *  Dual-port operations should be supported.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -50,10 +51,12 @@
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/syslog.h>
+#include <sys/cpu.h>
 
 #include <machine/trap.h>
 #include <machine/pte.h>
 #include <machine/mtpr.h>
+#include <machine/cpu.h>
 
 #include <vax/mba/mbavar.h>
 #include <vax/mba/mbareg.h>
@@ -190,7 +193,6 @@ hpstrategy(bp)
 
 done:
 	bp->b_resid = bp->b_bcount;
-err:
 	biodone(bp);
 }
 
@@ -342,7 +344,7 @@ hpioctl(dev, cmd, addr, flag, p)
 		break;
 
 	default:
-		printf("hpioctl: command %x\n", cmd);
+		printf("hpioctl: command %x\n", (unsigned int)cmd);
 		return ENOTTY;
 	}
 	return 0;
@@ -447,6 +449,7 @@ hpdump(dev, a1, a2, size)
 	size_t	size;
 {
 	printf("hpdump: Not implemented yet.\n");
+	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.8 1996/03/17 22:56:15 ragge Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.9 1996/04/08 18:32:57 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -45,11 +45,19 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 
+#include <dev/cons.h>
+
+#include <ufs/ffs/ffs_extern.h>
+
 #include <machine/pte.h>
 #include <machine/mtpr.h>
+#include <machine/cpu.h>
 
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
+
+
+void	gets __P((char *));
 
 /*
  * Generic configuration;  all in one
@@ -67,8 +75,7 @@ struct	swdevt swdevt[] = {
 long	dumplo;
 int	dmmin, dmmax, dmtext;
 
-extern int ffs_mountroot();
-int (*mountroot)() = ffs_mountroot;
+int (*mountroot) __P((void)) = ffs_mountroot;
 
 extern	struct uba_driver scdriver;
 extern	struct uba_driver hkdriver;
@@ -107,6 +114,7 @@ struct	genericconf {
 	{ 0 },
 };
 
+void
 setconf()
 {
 #if NUDA > 0
@@ -213,6 +221,7 @@ doswap:
 		rootdev = dumpdev;
 }
 
+void
 gets(cp)
 	char *cp;
 {

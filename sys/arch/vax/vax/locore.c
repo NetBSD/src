@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.13 1996/03/02 13:45:42 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.14 1996/04/08 18:32:46 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -39,12 +39,18 @@
 
 #include <vm/vm.h>
 
+#include <dev/cons.h>
+
 #include <machine/cpu.h>
 #include <machine/sid.h>
 #include <machine/uvaxII.h>
 #include <machine/param.h>
 #include <machine/vmparam.h>
 #include <machine/pcb.h>
+#include <machine/pmap.h>
+
+void	start __P((void));
+void	main __P((void));
 
 u_int	proc0paddr;
 int	cpunumber, *Sysmap, boothowto, cpu_type;
@@ -63,7 +69,7 @@ start()
 {
 	extern	u_int *end;
 	extern	void *scratch;
-	register curtop, tmpptr;
+	register tmpptr;
 
 	mtpr(0x1f, PR_IPL); /* No interrupts before istack is ok, please */
 

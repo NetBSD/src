@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 1996/02/02 18:08:51 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9 1996/04/08 18:32:35 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -41,6 +41,8 @@
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/cpu.h>
+
 #include <machine/macros.h>
 
 /* XXX encoding of disk minor numbers, should be elsewhere... */
@@ -49,6 +51,11 @@
 #define dkminor(unit, part)	(((unit) << 3) | (part))
 
 #define	b_cylin	b_resid
+
+int	cpu_setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
+	    struct cpu_disklabel *));
+int	cpu_writedisklabel __P((dev_t, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *));
 
 /*
  * Determine the size of the transfer, and make sure it is
@@ -104,6 +111,7 @@ bad:
  * Check new disk label for sensibility
  * before setting it.
  */
+int
 setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
@@ -116,9 +124,10 @@ setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
+int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -139,7 +148,7 @@ writedisklabel(dev, strat, lp, osdep)
 char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -187,6 +196,7 @@ readdisklabel(dev, strat, lp, osdep)
  * Check new disk label for sensibility
  * before setting it.
  */
+int
 cpu_setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
@@ -231,9 +241,10 @@ cpu_setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
+int
 cpu_writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -254,7 +265,7 @@ cpu_writedisklabel(dev, strat, lp, osdep)
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
 	(*strat)(bp);
-	if (error = biowait(bp))
+	if ((error = biowait(bp)))
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_un.b_addr;
 	    dlp <= (struct disklabel *)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.11 1996/03/17 22:56:42 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.12 1996/04/08 18:37:30 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -172,6 +172,7 @@
 #include <sys/uio.h>
 #include <sys/proc.h>
 #include <sys/tprintf.h>
+#include <sys/proc.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -225,7 +226,27 @@ struct tmscp {
 	struct mscp	tmscp_cmd[NCMD];  /* command packets */
 } tmscp[NTMSCP];
 
-void tmscpstrategy(struct buf *);
+int	tmscpprobe __P((caddr_t, int, struct uba_ctlr *, struct  uba_softc *));
+int	tmscpslave __P((struct uba_device *, caddr_t));
+int	tmscpinit __P((int));
+void	tmscpattach __P((struct uba_device *));
+void	tmscpintr __P((int));
+void	tmscprsp __P((struct uba_ctlr *, struct tmscp *,
+	    struct tmscp_softc *, int));
+void	tmscpstart __P((struct uba_ctlr *));
+void	tmscpcommand __P((dev_t, int, int));
+struct mscp *tmscpgetcp __P((struct uba_ctlr *));
+void	errinfo __P((int));
+int	tmscpcmd __P((int, struct tmscp *, struct tmscpdevice *));
+
+int	tmscpopen __P((dev_t, int, int, struct proc *p));
+int	tmscpclose __P((dev_t, int, int, struct proc *p));
+void	tmscpstrategy __P((struct buf *));
+int	tmscpread __P((dev_t, struct uio *));
+int	tmscpwrite __P((dev_t, struct uio *));
+int	tmscpdump __P((dev_t, daddr_t, caddr_t, size_t));
+int	tmscpioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+void	tmscpreset __P((int));
 
 /*
  * Per drive-unit info
@@ -246,6 +267,10 @@ struct tms_info {
 	short		tms_format;	/* the unit's current format (density) */
 	tpr_t 		tms_tpr;	/* tprintf handle */
 } tms_info[NTMS];
+
+void	tmserror __P((struct uba_ctlr *, struct mslg *));
+
+
 struct uba_ctlr *tmscpminfo[NTMSCP];
 struct uba_device *tmsdinfo[NTMS];
 /* 
@@ -298,7 +323,6 @@ short  utoctlr[NTMS];			/* Slave unit to controller mapping */
 int     tmscperror = 0;		/* causes hex dump of packets */
 int	tmscp_cp_wait = 0;	/* Something to wait on for command */
 				/* packets and or credits. */
-void	wakeup();
 extern	int	hz;		/* Should find the right include */
 
 #ifdef	DEBUG
@@ -307,13 +331,10 @@ int tmscpdebug = 1;
 #define	printd10 if(tmscpdebug >= 10) printf
 #endif 
 
-int     tmscpprobe(), tmscpslave(), tmscpattach(), tmscpintr();
-struct  mscp *tmscpgetcp();
-
 #define DRVNAME "tms"
 #define CTRLNAME "tmscp"
 
-u_short tmscpstd[] = { 0174500, 0 };
+u_short tmscpstd[] = { 0174504, 0 };
 struct  uba_driver tmscpdriver =
 { tmscpprobe, tmscpslave, tmscpattach, 0, tmscpstd, DRVNAME, tmsdinfo, CTRLNAME
 , tmscpminfo, 0};
@@ -333,10 +354,12 @@ extern	struct cfdriver uba_cd;
  * has been acknowledged by the cpu. If you are at spl6(), the TMSCP_STEP2
  * flag never gets set and you return (0).
  */
-tmscpprobe(reg, ctlr, um)
+int
+tmscpprobe(reg, ctlr, um, uh)
 	caddr_t reg;		/* address of the IP register */
 	int ctlr;		/* index of controller in the tmscp_softc array */
 	struct uba_ctlr *um;
+	struct  uba_softc *uh;
 {
 	/* register int br, cvec; MUST be 1st (r11 & r10): IPL and intr vec */
 	register struct tmscp_softc *sc = &tmscp_softc[ctlr];
@@ -396,6 +419,7 @@ tmscpprobe(reg, ctlr, um)
  * Try to find a slave (a drive) on the controller.
  * If the controller is not in the run state, call init to initialize it.
  */
+int
 tmscpslave (ui, reg)
 	struct uba_device *ui;	/* ptr to the uba device structure */
 	caddr_t reg;		/* addr of the device controller */
@@ -481,6 +505,7 @@ tmscpslave (ui, reg)
  * Unit to Controller mapping is set up here.
  * Open routine will issue the online command, later.
  */
+void
 tmscpattach (ui)
 	register struct uba_device *ui;		/* ptr to unibus dev struct */
 {
@@ -502,7 +527,9 @@ tmscpattach (ui)
 /*
  * TMSCP interrupt routine.
  */
+void
 tmscpintr(d)
+	int d;
 {
 	volatile struct uba_ctlr *um = tmscpminfo[d];
 	volatile struct tmscpdevice *tmscpaddr =
@@ -709,7 +736,8 @@ tmscpintr(d)
 			i %= NRSP;
 			if (tm->tmscp_ca.ca_rspdsc[i]&TMSCP_OWN)
 			    break;
-			tmscprsp(um, tm, sc, i);
+			tmscprsp((struct uba_ctlr *)um, tm,
+			    (struct tmscp_softc *)sc, i);
 			tm->tmscp_ca.ca_rspdsc[i] |= TMSCP_OWN;
 			}
 		sc->sc_lastrsp = i;
@@ -727,7 +755,7 @@ tmscpintr(d)
 		}
     	if(tmscp_cp_wait)
 		wakeup((caddr_t)&tmscp_cp_wait);
-    	(void) tmscpstart(um);
+    	(void) tmscpstart((struct uba_ctlr *)um);
 }
 
 
@@ -737,9 +765,11 @@ tmscpintr(d)
  */
 
 /* ARGSUSED */
-tmscpopen(dev, flag)
+int
+tmscpopen(dev, flag, type, p)
 	dev_t dev;
-	int flag;
+	int flag, type;
+	struct proc *p;
 {
 	register int unit;
 	register struct uba_device *ui;
@@ -859,9 +889,11 @@ tmscpopen(dev, flag)
  *	command with the CSE modifier.
  * Make the tape available to others, by clearing openf flag.
  */
-tmscpclose(dev, flag)
+int
+tmscpclose(dev, flag, type, p)
 	register dev_t dev;
-	register flag;
+	register flag, type;
+	struct proc *p;
 {
 	register struct tms_info *tms;
 	register struct uba_device *ui;
@@ -873,7 +905,7 @@ tmscpclose(dev, flag)
 	if(tmscpdebug)DELAY(10000);
 #	endif
 	tms = &tms_info[ui->ui_unit];
-	if (flag == FWRITE || (flag&FWRITE) && tms->tms_lastiow)
+	if (flag == FWRITE || ((flag&FWRITE) && tms->tms_lastiow))
 		{
 		/*	   device, command, count */
 		tmscpcommand (dev, TMS_WRITM, 1);
@@ -908,7 +940,7 @@ tmscpclose(dev, flag)
  * with the command.  The start routine is called by the strategy or the
  * interrupt routine.
  */
-
+void
 tmscpcommand (dev, com, count)
 	register dev_t dev;
 	int com, count;
@@ -1005,6 +1037,7 @@ tmscpgetcp(um)
  * initialize data structures, and start hardware
  * initialization sequence.
  */
+int
 tmscpinit (d)
 	int d;			/* index to the controller */
 {
@@ -1058,7 +1091,7 @@ tmscpinit (d)
  * Start I/O operation
  * This code is convoluted.  The majority of it was copied from the uda driver.
  */
-
+void
 tmscpstart(um)
 	register struct uba_ctlr *um;
 {
@@ -1354,7 +1387,7 @@ tmscpstart(um)
 	    i %= NRSP;
 	    if (tm->tmscp_ca.ca_rspdsc[i]&TMSCP_OWN)
 		    break;
-	    tmscprsp(um, tm, sc, i);
+	    tmscprsp(um, (struct tmscp *)tm, sc, i);
 	    tm->tmscp_ca.ca_rspdsc[i] |= TMSCP_OWN;
 	    }
     sc->sc_lastrsp = i;
@@ -1364,9 +1397,10 @@ tmscpstart(um)
 /*
  * Process a response packet
  */
+void
 tmscprsp(um, tm, sc, i)
 	register struct uba_ctlr *um;
-	register volatile struct tmscp *tm;
+	struct tmscp *tm;
 	register struct tmscp_softc *sc;
 	int i;
 {
@@ -1464,7 +1498,7 @@ tmscprsp(um, tm, sc, i)
 			}	/* end if st == M_ST_SUCC */
 		else 
 			{
-			if (bp = dp->b_actf)
+			if ((bp = dp->b_actf))
 				tprintf(tms->tms_tpr,
 				    "tms%d: hard error bn%d: OFFLINE\n",
 				    minor(bp->b_dev)&03, bp->b_blkno);
@@ -1472,7 +1506,7 @@ tmscprsp(um, tm, sc, i)
 				tprintf(tms->tms_tpr,
 				    "tms%d: hard error: OFFLINE\n",
 				    ui->ui_unit);
-			while (bp = dp->b_actf)
+			while ((bp = dp->b_actf))
 				{
 				dp->b_actf = bp->b_actf;
 				bp->b_flags |= B_ERROR;
@@ -1662,6 +1696,7 @@ tmscprsp(um, tm, sc, i)
  * Give a meaningful error when the mscp_status field returns an error code.
  */
 
+void
 errinfo(st)
 	int st;			/* the status code */
 {
@@ -1814,8 +1849,12 @@ tmscpwrite(dev, uio)
 
 struct  tmscp     tmscpd[NTMSCP];
 
-tmscpdump(dev)
+int
+tmscpdump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 #ifdef notyet
 	volatile struct tmscpdevice *tmscpaddr;
@@ -1905,10 +1944,11 @@ tmscpdump(dev)
  * Perform a standalone tmscp command.  This routine is only used by tmscpdump.
  */
 
+int
 tmscpcmd(op, tmscpp, tmscpaddr)
 	int op;
-	register volatile struct tmscp *tmscpp;
-	volatile struct tmscpdevice *tmscpaddr;
+	struct tmscp *tmscpp;
+	struct tmscpdevice *tmscpaddr;
 {
 	volatile int i;
 
@@ -1947,11 +1987,13 @@ tmscpcmd(op, tmscpp, tmscpaddr)
  */
 
 /* ARGSUSED */
-tmscpioctl(dev, cmd, data, flag)
+int
+tmscpioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	register struct buf *bp = &ctmscpbuf[TMSCPCTLR(dev)];
 	register callcount;	/* number of times to call cmd routine */
@@ -2030,7 +2072,7 @@ tmscpioctl(dev, cmd, data, flag)
 /*
  * Reset (for raw mode use only).
  */
-
+void
 tmscpreset (uban)
 	int uban;
 {
@@ -2090,7 +2132,7 @@ tmscpreset (uban)
  * information is printed.  Eventually should
  * send message to an error logger.
  */
-
+void
 tmserror(um, mp)
 	register struct uba_ctlr *um;
 	register struct mslg *mp;
@@ -2111,7 +2153,8 @@ tmserror(um, mp)
 		break;
 	case M_FM_BUSADDR:
 		log(TMS_PRI, "host memory access error, event 0%o, addr 0%o\n",
-			mp->mslg_event, mp->mslg_unitid & 0xffffffff);
+		    mp->mslg_event,
+		    (unsigned int)(mp->mslg_unitid & 0xffffffff));
 		break;
 	case M_FM_TAPETRN:
 		log(TMS_PRI, "tape transfer error, unit %d, grp 0x%x, event 0%o\n",
@@ -2145,11 +2188,12 @@ tmserror(um, mp)
 		register long *p = (long *)mp;
 
 		for (i = 0; i < mp->mslg_header.tmscp_msglen; i += sizeof(*p))
-			printf("%x ", *p++);
+			printf("%x ", (unsigned int)*p++);
 		printf("\n");
 		}
 }
 
+int
 tmscp_match(parent, match, aux)
         struct device *parent;
         void *match, *aux;

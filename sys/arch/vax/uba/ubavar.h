@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.14 1996/03/18 16:47:33 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.15 1996/04/08 18:37:36 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -78,7 +78,7 @@ struct	uba_softc {
 	int	uh_memsize;		/* size of uba memory, pages */
 	caddr_t	uh_mem;			/* start of uba memory address space */
 	caddr_t	uh_iopage;		/* start of uba io page */
-	void	(**uh_reset)();		/* UBA reset function array */
+	void	(**uh_reset) __P((int));/* UBA reset function array */
 	int	*uh_resarg;		/* array of ubareset args */
 	int	uh_resno;		/* Number of devices to reset */
 	struct	ivec_dsp *uh_idsp;	/* Interrupt dispatch area */
@@ -122,7 +122,7 @@ struct uba_ctlr {
 	short	um_ctlr;	/* controller index in driver */
 	short	um_ubanum;	/* the uba it is on */
 	short	um_alive;	/* controller exists */
-	void	(*um_intr)();	/* interrupt handler(s) */
+	void	(*um_intr) __P((int));	/* interrupt handler(s) XXX */
 	caddr_t	um_addr;	/* address of device in i/o space */
 	struct	uba_softc *um_hd;
 /* the driver saves the prototype command here for use in its go routine */
@@ -154,7 +154,7 @@ struct uba_device {
 	short	ui_ctlr;	/* mass ctlr number; -1 if none */
 	short	ui_ubanum;	/* the uba it is on */
 	short	ui_slave;	/* slave on controller */
-	void	(*ui_intr)();	/* interrupt handler(s) */
+	void	(*ui_intr) __P((int));	/* interrupt handler(s) XXX */
 	caddr_t	ui_addr;	/* address of device in i/o space */
 	short	ui_dk;		/* if init 1 set to number for iostat */
 	int	ui_flags;	/* parameter from system specification */
@@ -176,10 +176,15 @@ struct uba_device {
  * These are used at boot time by the configuration program.
  */
 struct uba_driver {
-	int	(*ud_probe)();		/* see if a driver is really there */
-	int	(*ud_slave)();		/* see if a slave is there */
-	int	(*ud_attach)();		/* setup driver for a slave */
-	int	(*ud_dgo)();		/* fill csr/ba to start transfer */
+	    /* see if a driver is really there XXX*/
+	int	(*ud_probe) __P((caddr_t, int, struct uba_ctlr *,
+	    struct  uba_softc *));
+	    /* see if a slave is there XXX */
+	int	(*ud_slave) __P((struct uba_device *, caddr_t));
+	    /* setup driver for a slave XXX */
+	void	(*ud_attach) __P((struct uba_device *));
+	    /* fill csr/ba to start transfer XXX */
+	void	(*ud_dgo) __P((struct uba_ctlr *));
 	u_short	*ud_addr;		/* device csr addresses */
 	char	*ud_dname;		/* name of a device */
 	struct	uba_device **ud_dinfo;	/* backpointers to ubdinit structs */
@@ -187,7 +192,8 @@ struct uba_driver {
 	struct	uba_ctlr **ud_minfo;	/* backpointers to ubminit structs */
 	short	ud_xclu;		/* want exclusive use of bdp's */
 	short	ud_keepbdp;		/* hang on to bdp's once allocated */
-	int	(*ud_ubamem)();		/* see if dedicated memory is present */
+	int	(*ud_ubamem) __P((struct uba_device *, int));
+	    /* see if dedicated memory is present */
 };
 
 /*
@@ -196,8 +202,10 @@ struct uba_driver {
  */
 struct uba_attach_args {
 	caddr_t	ua_addr;
-	void	(*ua_ivec)();	/* Pointer to int routine, filled in by probe*/
-	void	(*ua_reset)();	/* UBA reset routine, filled in by probe */
+	    /* Pointer to int routine, filled in by probe*/
+	void	(*ua_ivec) __P((int));
+	    /* UBA reset routine, filled in by probe */
+	void	(*ua_reset) __P((int));
 	int	ua_iaddr;
 	int	ua_br;
 	int	ua_cvec;
@@ -250,10 +258,13 @@ extern	struct	uba_device ubdinit[];
 extern	struct cfdriver	uba_cd;
 
 void	ubainit __P((struct uba_softc *));
-void    ubasetvec __P((struct device *, int, void (*)()));
+void    ubasetvec __P((struct device *, int, void (*) __P((int))));
 int	uballoc __P((int, caddr_t, int, int));
 void	ubarelse __P((int, int *));
-
+int	ubaqueue __P((struct uba_device *, int));
+void	ubadone __P((struct uba_ctlr *));
+void	ubareset __P((int));
+int	ubasetup __P((int, struct buf *, int));
 
 #endif /* _KERNEL */
 #endif !_LOCORE

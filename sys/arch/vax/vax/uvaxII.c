@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.c,v 1.7 1996/03/07 23:03:03 ragge Exp $	*/
+/*	$NetBSD: uvaxII.c,v 1.8 1996/04/08 18:32:59 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1994 Gordon W. Ross 
@@ -41,6 +41,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -55,8 +56,8 @@ struct uvaxIIcpu *uvaxIIcpu_ptr;
 
 #if VAX630
 struct	ka630clock *ka630clk_ptr;
-time_t	ka630_clkread();
-void	ka630_clkwrite();
+static	time_t	ka630_clkread __P((int *));
+static	void	ka630_clkwrite __P((time_t));
 
 struct watclk {
     u_short wat_sec;
@@ -96,6 +97,7 @@ uvaxII_conf(parent, self, aux)
 	printf(": %s\n", cpu_model);
 }
 
+int
 uvaxII_clock()
 {
 	mtpr(0x40, PR_ICCS); /* Start clock and enable interrupt */
@@ -103,6 +105,7 @@ uvaxII_clock()
 }
 
 /* log crd errors */
+void
 uvaxII_memerr()
 {
 	printf("memory err!\n");
@@ -124,6 +127,7 @@ struct mc78032frame {
 	int	mc63_psl;		/* trapped psl */
 };
 
+int
 uvaxII_mchk(cmcf)
 	caddr_t cmcf;
 {
@@ -137,11 +141,11 @@ uvaxII_mchk(cmcf)
 	    mcf->mc63_mrvaddr, mcf->mc63_istate,
 	    mcf->mc63_pc, mcf->mc63_psl);
 	if (uvaxIIcpu_ptr && uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_MERR) {
-		printf("\tmser=0x%x ", uvaxIIcpu_ptr->uvaxII_mser);
+		printf("\tmser=0x%x ", (int)uvaxIIcpu_ptr->uvaxII_mser);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_CPUE)
-			printf("page=%d", uvaxIIcpu_ptr->uvaxII_cear);
+			printf("page=%d", (int)uvaxIIcpu_ptr->uvaxII_cear);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_DQPE)
-			printf("page=%d", uvaxIIcpu_ptr->uvaxII_dear);
+			printf("page=%d", (int)uvaxIIcpu_ptr->uvaxII_dear);
 		printf("\n");
 	}
 	return (-1);
@@ -261,6 +265,7 @@ ka630_clkwrite(year_secs)
 }
 #endif
 
+void
 uvaxII_steal_pages()
 {
 	extern  vm_offset_t avail_start, virtual_avail, avail_end;
@@ -288,7 +293,7 @@ uvaxII_steal_pages()
 	/*
 	 * Clear restart and boot in progress flags
 	 * in the CPMBX.
-	 /
+	 */
 	ka630clk_ptr->cpmbx = (ka630clk_ptr->cpmbx & KA630CLK_LANG);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.1 1996/03/08 12:32:50 ragge Exp $	*/
+/*	$NetBSD: crl.c,v 1.2 1996/04/08 18:32:30 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -66,7 +66,14 @@ struct {
 	int	crl_ds;		/* saved drive status */
 } crlstat;
 
-void	crlintr();
+void	crlintr __P((int));
+void	crlattach __P((void));
+static	void crlstart __P((void));
+
+int	crlopen __P((dev_t, int, struct proc *));
+int	crlclose __P((dev_t, int, struct proc *));
+int	crlrw __P((dev_t, struct uio *, int));
+
 
 struct  ivec_dsp crl_intr;
 
@@ -81,12 +88,12 @@ crlattach()
 }       
 
 /*ARGSUSED*/
-crlopen(dev, flag)
+int
+crlopen(dev, flag, p)
 	dev_t dev;
 	int flag;
+	struct proc *p;
 {
-	struct buf *geteblk();
-
 	if (cpunumber != VAX_8600)
 		return (ENXIO);
 	if (crltab.crl_state != CRL_IDLE)
@@ -97,16 +104,20 @@ crlopen(dev, flag)
 }
 
 /*ARGSUSED*/
-crlclose(dev, flag)
+int
+crlclose(dev, flag, p)
 	dev_t dev;
 	int flag;
+	struct proc *p;
 {
 
 	brelse(crltab.crl_buf);
 	crltab.crl_state = CRL_IDLE;
+	return 0;
 }
 
 /*ARGSUSED*/
+int
 crlrw(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -159,6 +170,7 @@ crlrw(dev, uio, flag)
 	return (error);
 }
 
+void
 crlstart()
 {
 	register struct buf *bp;
@@ -184,7 +196,8 @@ crlstart()
 }
 
 void
-crlintr()
+crlintr(arg)
+	int arg;
 {
 	register struct buf *bp;
 	int i;

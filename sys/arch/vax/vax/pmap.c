@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.25 1996/03/17 22:49:55 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.26 1996/04/08 18:32:53 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/msgbuf.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -51,9 +52,10 @@
 #include <machine/scb.h>
 
 
-pt_entry_t *pmap_virt2pte(pmap_t, u_int);
-static	pv_entry_t alloc_pv_entry();
-static	void	free_pv_entry();
+static	pt_entry_t *pmap_virt2pte __P((pmap_t, u_int));
+static	pv_entry_t alloc_pv_entry __P((void));
+static	void	free_pv_entry __P((pv_entry_t));
+static	int	remove_pmap_from_mapping __P((pv_entry_t, pmap_t));
 
 
 #define	ISTACK_SIZE (4 * NBPG)
@@ -95,7 +97,7 @@ void
 pmap_bootstrap()
 {
 	unsigned int junk, sysptsize, istack;
-	extern	unsigned int proc0paddr, sigcode, esigcode, etext;
+	extern	unsigned int proc0paddr, etext;
 	extern	struct vmspace vmspace0;
 	struct	pmap *p0pmap;
 
@@ -110,7 +112,7 @@ pmap_bootstrap()
 	 * a variable here that is changed dependent of the physical
 	 * memory size.
 	 */
-	while (!badaddr(avail_end, 4)) /* Memory is in 64K hunks */
+	while (!badaddr((caddr_t)avail_end, 4)) /* Memory is in 64K hunks */
 		avail_end += NBPG * 128;
 	sysptsize += avail_end >> PGSHIFT;
 	virtual_avail = KERNBASE;
@@ -313,7 +315,7 @@ pmap_enter(pmap, v, p, prot, wired)
 	vm_prot_t       prot;
 	boolean_t       wired;
 {
-	u_int j, i, pte, s, *patch;
+	u_int	i, pte, s, *patch;
 	pv_entry_t pv, tmp;
 
 	if (v > 0x7fffffff) pte = kernel_prot[prot] | PG_PFNUM(p) | PG_V;
@@ -436,7 +438,7 @@ pmap_extract(pmap, va)
 	vm_offset_t va;
 {
 
-	int	*pte, nypte;
+	int	*pte;
 #ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_extract: pmap %x, va %x\n",pmap, va);
 #endif
@@ -502,7 +504,7 @@ pmap_remove(pmap, start, slut)
 	pmap_t	pmap;
 	vm_offset_t	start, slut;
 {
-	u_int		*ptestart, *pteslut, i, s, *temp;
+	u_int		*ptestart, *pteslut, s, *temp;
 	pv_entry_t	pv;
 	vm_offset_t	countup;
 
@@ -556,7 +558,7 @@ printf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
 	splx(s);
 }
 
-
+int
 remove_pmap_from_mapping(pv, pmap)
 	pv_entry_t pv;
 	pmap_t	pmap;
@@ -701,7 +703,7 @@ pmap_is_referenced(pa)
 		pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
 		spte|=*pte++;
 		spte|=*pte;
-	} while(pv=pv->pv_next);
+	} while((pv=pv->pv_next));
 	return((spte&PG_REF)?1:0);
 }
 
@@ -718,7 +720,7 @@ pmap_is_modified(pa)
                 pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
                 spte|=*pte++;
                 spte|=*pte;
-	} while(pv=pv->pv_next);
+	} while((pv=pv->pv_next));
 	return((spte&PG_M)?1:0);
 }
 
@@ -732,7 +734,7 @@ pmap_clear_reference(pa)
 	vm_offset_t     pa;
 {
 	struct pv_entry *pv;
-	int *pte,s,i;
+	int *pte;
 /*
  * Simulate page reference bit
  */
@@ -750,7 +752,7 @@ if(startpmapdebug) printf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
 		*pte++|=PG_SREF;
 		*pte&= ~(PG_REF|PG_V);
 		*pte|=PG_SREF;
-	} while(pv=pv->pv_next);
+	} while((pv=pv->pv_next));
 	mtpr(0,PR_TBIA);
 }
 
@@ -759,7 +761,7 @@ pmap_clear_modify(pa)
 	vm_offset_t     pa;
 {
 	struct pv_entry *pv;
-	u_int *pte,spte=0,s;
+	u_int *pte;
 
 	pv=PHYS_TO_PV(pa);
 	if(!pv->pv_pmap) return;
@@ -767,7 +769,7 @@ pmap_clear_modify(pa)
 		pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
 		*pte++&= ~PG_M;
 		*pte&= ~PG_M;
-	} while(pv=pv->pv_next);
+	} while((pv=pv->pv_next));
 }
 
 void 
@@ -828,7 +830,7 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 				*pte1|=nyprot;
 			}
 			splx(s);
-		} while(pv=pv->pv_next);
+		} while((pv=pv->pv_next));
 		mtpr(0,PR_TBIA);
 		break;
 
@@ -889,7 +891,7 @@ pmap_virt2pte(pmap, vaddr)
 	pmap_t	pmap;
 	u_int	vaddr;
 {
-	u_int *pte, scr;
+	u_int *pte;
 
 	if (vaddr < 0x40000000) {
 		pte = (unsigned *)pmap->pm_pcb->P0BR;
@@ -907,6 +909,7 @@ pmap_virt2pte(pmap, vaddr)
 	return ((pt_entry_t *)&pte[vaddr >> PGSHIFT]);
 }
 
+void
 pmap_expandp0(pmap, ny_storlek)
 	struct	pmap *pmap;
 {
@@ -932,6 +935,7 @@ pmap_expandp0(pmap, ny_storlek)
 		kmem_free_wakeup(pte_map, (vm_offset_t)oaddr, osize);
 }
 
+void
 pmap_expandp1(pmap)
 	struct	pmap *pmap;
 {
