@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.5 1994/11/14 23:50:57 dean Exp $	*/
+/*	$NetBSD: start.s,v 1.6 1994/12/15 17:02:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,40 +90,40 @@ start:
 	nop
 
 /* dummy routine for gcc2 */
-	.globl	__main
-__main:
+	.globl	_C_LABEL(__main)
+_C_LABEL(__main):
 	j	ra
 	nop
 
-LEAF(_prom_restart)
+LEAF(prom_restart)
 	li	v0, DEC_PROM_RESTART
 	j	v0
 	nop
-END(_prom_restart)
+END(prom_restart)
 
-LEAF(_prom_open)
+LEAF(prom_open)
 	li	v0, DEC_PROM_OPEN
 	j	v0
 	nop
-END(_prom_open)
+END(prom_open)
 
-LEAF(_prom_lseek)
+LEAF(prom_lseek)
 	li	v0, DEC_PROM_LSEEK
 	j	v0
 	nop
-END(_prom_lseek)
+END(prom_lseek)
 
-LEAF(_prom_read)
+LEAF(prom_read)
 	li	v0, DEC_PROM_READ
 	j	v0
 	nop
-END(_prom_read)
+END(prom_read)
 
-LEAF(_printf)
+LEAF(printf)
 	lw	v0, callv	# get pointer to call back vectors
 	sw	a1, 4(sp)	# store args on stack for printf
 	lw	v0, 48(v0)	# offset for callv->printf
 	sw	a2, 8(sp)
 	j	v0		# call PROM printf
 	sw	a3, 12(sp)
-END(_printf)
+END(printf)
