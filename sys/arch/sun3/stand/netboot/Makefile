@@ -1,24 +1,27 @@
-#	$NetBSD: Makefile,v 1.9 1998/02/05 04:57:18 gwr Exp $
+#	$NetBSD: Makefile,v 1.10 1998/07/01 22:56:45 gwr Exp $
 
 SA_PROG= netboot
-SRC1=   boot.c conf.c
-OBJS+= ${SRC1:.c=.o}
 
 # Using local rule for this
-OBJS+= dev_net.o
+SRCxx= ${.CURDIR}/../libsa/xxboot.c
+
+# Regular local source
+SRC1= conf.c
 
 # Build these locally too
-SRC2= bootparam.c globals.c nfs.c rpc.c
-OBJS+= ${SRC2:.c=.o}
+SRC2= dev_net.c bootparam.c globals.c nfs.c rpc.c
 
-SRCS= ${SRC1} ${SRC2}
+SRCS= ${SRCxx} ${SRC1} ${SRC2}
+OBJS= boot.o ${SRC1:.c=.o} ${SRC2:.c=.o}
 
 all:	${SA_PROG}.bin
 
 .include <bsd.prog.mk>
 .PATH: ${S}/lib/libsa
+DEFS+=  -DSUN_BOOTPARAMS
 
-# How about -DSUPPORT_BOOTP instead?
-dev_net.o : ${S}/lib/libsa/dev_net.c
-	${COMPILE.c} -DSUN_BOOTPARAMS ${.IMPSRC}
+# This file is common to netboot and ufsboot,
+# but gets a define so it knows which it is.
+boot.o : ${SRCxx}
+	${COMPILE.c} -DXX='"net"' -o $@ ${SRCxx}
 
