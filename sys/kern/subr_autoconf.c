@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.82 2003/01/02 00:12:16 mrg Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.83 2003/02/09 09:14:58 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.82 2003/01/02 00:12:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.83 2003/02/09 09:14:58 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -608,7 +608,7 @@ config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
 	return (m.match);
 }
 
-static const char *msgs[3] = { "", " not configured\n", " unsupported\n" };
+static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" };
 
 /*
  * The given `aux' argument describes a device that has been found
