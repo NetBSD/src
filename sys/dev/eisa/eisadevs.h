@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.27 2002/11/16 10:04:19 tsutsui Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.28 2003/03/22 14:31:28 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.25 2002/11/16 10:03:32 tsutsui Exp 
+ *	NetBSD: eisadevs,v 1.26 2003/03/22 14:30:48 jdolecek Exp 
  */
 
 /*
@@ -159,3 +159,4 @@
 #define	EISA_PRODUCT_TCM5970	"3Com 3C597 Fast Etherlink TX"
 #define	EISA_PRODUCT_TCM5971	"3Com 3C597 Fast Etherlink T4"
 #define	EISA_PRODUCT_TCM5972	"3Com 3C597 Fast Etherlink MII"
+#define	EISA_PRODUCT_TCM6790	"3Com 3C679 Tokenlink III 16/4"
