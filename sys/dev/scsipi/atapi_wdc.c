@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.27.2.3 1999/10/20 22:39:42 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.27.2.4 1999/10/20 22:42:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -147,17 +147,18 @@ wdc_atapi_minphys(bp)
 }
 
 /*
- * Kill off all pending xfers for a scsipi_link.
+ * Kill off all pending xfers for a periph.
  *
  * Must be called at splbio().
  */
 void
-atapi_kill_pending(sc_link)
-	struct scsipi_link *sc_link;
+atapi_kill_pending(periph)
+	struct scsipi_periph *periph;
 {
-	struct wdc_softc *wdc = (void *)sc_link->adapter_softc;
+	struct wdc_softc *wdc =
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	struct channel_softc *chp =
-	    wdc->channels[sc_link->scsipi_atapi.channel];
+	    wdc->channels[periph->periph_channel->chan_channel];
 
 	wdc_kill_pending(chp);
 }
@@ -172,7 +173,6 @@ wdc_atapi_kill_xfer(chp, xfer)
 	untimeout(wdctimeout, chp);
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
-	sc_xfer->xs_status |= XS_STS_DONE;
 	sc_xfer->error = XS_DRIVER_STUFFUP;
 	scsipi_done(sc_xfer);
 }
