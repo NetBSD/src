@@ -1,0 +1,16 @@
+#!/bin/sh
+# $NetBSD: script1,v 1.1 2001/04/29 04:53:07 garbled Exp $
+
+ls -l /etc/localtime | grep -- '->' >/dev/null 2>&1
+if [ "$?" = "0" ]; then
+	NAME=`ls -l /etc/localtime | sed -e 's/.*-> \(.*\)/\1/' | \
+		sed -e 's@/usr/share/zoneinfo/@@'`
+else
+	# else we gotta do it the hard way
+	MD5=`md5 /etc/localtime | awk '{print $4}'`
+	NAME=`find /usr/share/zoneinfo | xargs md5 | grep $MD5 | head -1 | \
+		sed -e 's/.*(\(.*\)).*/\1/' | sed -e 's@/usr/share/zoneinfo/@@'`
+fi
+echo $NAME
+find /usr/share/zoneinfo -type f | sed -e 's@/usr/share/zoneinfo/@@' \
+	| grep -v $NAME

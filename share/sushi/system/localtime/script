@@ -1,0 +1,10 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/29 04:53:07 garbled Exp $
+
+if [ "$2" = "link" ]; then
+	rm -f /etc/localtime
+	ln -s /usr/share/zoneinfo/$1 /etc/localtime
+else
+	cp -f /usr/share/zoneinfo/$1 /etc/localtime
+fi
+echo "This machine's local timezone has been set to $1"
