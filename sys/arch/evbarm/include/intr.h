@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.9 2002/11/20 18:15:43 bsh Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2003/01/02 23:38:04 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -94,9 +94,9 @@ void	_setsoftintr(int);
 
 #else	/* _LKM */
 
-#if defined(EVBARM_BOARDTYPE)
+#include "opt_arm_intr_impl.h"
 
-#include <machine/cpu.h>
+#if defined(ARM_INTR_IMPL)
 
 /*
  * Each board needs to define the following functions:
@@ -130,26 +130,15 @@ void	_setsoftintr(int);
  *	}
  */
 
-#if EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_IQ80310
-#include <arch/evbarm/iq80310/iq80310_intr.h>
-#elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_I80321
-#include <arch/arm/xscale/i80321_intr.h>
-#elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_IXM1200
-#include <arch/evbarm/ixm1200/ixm1200_intr.h>
-#elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_PXA2X0
-#include <arch/arm/xscale/pxa2x0_intr.h>
-#elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_S3C2800 || \
-      EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_S3C24X0
-#include <arch/arm/s3c2xx0/s3c2xx0_intr.h>
-#endif
+#include ARM_INTR_IMPL
 
-#else	/* EVBARM_BOARDTYPE */
+#else /* ARM_INTR_IMPL */
 
-#error EVBARM_BOARDTYPE not defined.
+#error ARM_INTR_IMPL not defined.
 
-#endif	/* else EVBARM_BOARDTYPE */
+#endif	/* ARM_INTR_IMPL */
 
-#endif /* else _LKM */
+#endif /* _LKM */
 
 #define	splhigh()	_splraise(IPL_HIGH)
 #define	splsoft()	_splraise(IPL_SOFT)
@@ -173,7 +162,7 @@ void	_setsoftintr(int);
 /* Use generic software interrupt support. */
 #include <arm/softintr.h>
 
-#endif /* _LOCORE */
+#endif /* ! _LOCORE */
 
 #endif /* __OLD_INTERRUPT_CODE */
 
