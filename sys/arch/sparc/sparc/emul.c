@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.5 1998/10/01 21:26:55 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.6 2002/12/16 16:59:11 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -429,7 +429,7 @@ emulinstr(pc, tf)
 
 	switch (code.i_op3.i_op3) {
 	case IOP3_FLUSH:
-		cpuinfo.cache_flush((caddr_t)(rs1 + rs2), 4); /*XXX*/
+		cache_flush((caddr_t)(rs1 + rs2), 4); /*XXX*/
 		return 0;
 
 	default:
