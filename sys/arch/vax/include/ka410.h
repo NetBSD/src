@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.h,v 1.3 1998/05/22 09:49:08 ragge Exp $ */
+/*	$NetBSD: ka410.h,v 1.4 1998/10/06 04:04:31 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -192,6 +192,3 @@ struct ka410_clock {
 	u_long  :2;	u_long	csr3	:8;	u_long  :22;
 	u_long  :2;	u_long	cpmbx	:8;	u_long  :22;
 };
-
-/* Prototypes */
-int ka410_setup __P((struct uvax_calls *p, int flags));

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 1998/06/08 18:42:40 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 1998/10/06 04:04:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -61,7 +61,7 @@ struct nexus *nexus;
 int	mastercpu;	/* chief of the system */
 struct device *booted_from;
 
-#define BACKPLANE	0
+#define MAINBUS	0
 
 struct devnametobdevmaj vax_nam2blk[] = {
 	{ "hp",		0 },
@@ -95,30 +95,30 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition, vax_nam2blk);
 }
 
-int	printut __P((void *, const char *));
-int	backplane_match __P((struct device *, struct cfdata *, void *));
-void	backplane_attach __P((struct device *, struct device *, void *));
+int	mainbus_print __P((void *, const char *));
+int	mainbus_match __P((struct device *, struct cfdata *, void *));
+void	mainbus_attach __P((struct device *, struct device *, void *));
 
 int
-printut(aux, hej)
+mainbus_print(aux, hej)
 	void *aux;
 	const char *hej;
 {
 	struct bp_conf *bp = aux;
 	if (hej)
-		printf("printut %s %s %d\n",hej, bp->type, bp->num);
-	return (UNSUPP);
+		printf("%s%d at %s", bp->type, bp->num, hej);
+	return (UNCONF);
 }
 
 int
-backplane_match(parent, cf, aux)
+mainbus_match(parent, cf, aux)
 	struct	device	*parent;
 	struct cfdata *cf;
 	void	*aux;
 {
 	if (cf->cf_unit == 0 &&
-	    strcmp(cf->cf_driver->cd_name, "backplane") == 0)
-		return 1; /* First (and only) backplane */
+	    strcmp(cf->cf_driver->cd_name, "mainbus") == 0)
+		return 1; /* First (and only) mainbus */
 
 	return (0);
 }
@@ -129,48 +129,48 @@ static	void find_sbi __P((struct device *, struct bp_conf *,
 #endif
 
 void
-backplane_attach(parent, self, hej)
+mainbus_attach(parent, self, hej)
 	struct	device	*parent, *self;
 	void	*hej;
 {
 	struct bp_conf bp;
 
 	printf("\n");
-	bp.partyp = BACKPLANE;
+	bp.partyp = MAINBUS;
 
 	if (vax_bustype & VAX_CPUBUS) {
 		bp.type = "cpu";
 		bp.num = 0;
-		config_found(self, &bp, printut);
+		config_found(self, &bp, mainbus_print);
 	}
 	if (vax_bustype & VAX_VSBUS) {
 		bp.type = "vsbus";
 		bp.num = 0;
-		config_found(self, &bp, printut);
+		config_found(self, &bp, mainbus_print);
 	}
 	if (vax_bustype & VAX_SBIBUS) {
 		bp.type = "sbi";
 		bp.num = 0;
-		config_found(self, &bp, printut);
+		config_found(self, &bp, mainbus_print);
 	}
 	if (vax_bustype & VAX_CMIBUS) {
 		bp.type = "cmi";
 		bp.num = 0;
-		config_found(self, &bp, printut);
+		config_found(self, &bp, mainbus_print);
 	}
 	if (vax_bustype & VAX_UNIBUS) {
 		bp.type = "uba";
 		bp.num = 0;
-		config_found(self, &bp, printut);
+		config_found(self, &bp, mainbus_print);
 	}
 #if VAX8600
 	if (vax_bustype & VAX_MEMBUS) {
 		bp.type = "mem";
 		bp.num = 0;
-		config_found(self, &bp, printut);
+		config_found(self, &bp, mainbus_print);
 	}
 	if (vax_cputype == VAX_8600)
-		find_sbi(self, &bp, printut);
+		find_sbi(self, &bp, mainbus_print);
 #endif
 
 #if VAX8200 || VAX8800
@@ -183,7 +183,7 @@ backplane_attach(parent, self, hej)
 			extern void *bi_nodebase;
 
 			bp.bp_addr = (int)bi_nodebase;
-			config_found(self, &bp, printut);
+			config_found(self, &bp, mainbus_print);
 			break;
 		}
 #endif
@@ -197,7 +197,7 @@ backplane_attach(parent, self, hej)
 					continue;
 
 				bp.bp_addr = BI_BASE(bi);
-				config_found(self, &bp, printut);
+				config_found(self, &bp, mainbus_print);
 			}
 			break;
 		}
@@ -231,7 +231,7 @@ find_sbi(self, bp, print)
 		case IOA_SBIA:
 			bp->type = "sbi";
 			bp->num = i;
-			config_found(self, bp, printut);
+			config_found(self, bp, mainbus_print);
 			sbiar = (void *)&ioa[i];
 			sbiar->sbi_errsum = -1;
 			sbiar->sbi_error = 0x1000;
@@ -269,7 +269,7 @@ cpu_match(parent, cf, aux)
 	case VAX_780:
 	case VAX_8600:
 	default:
-		if(cf->cf_unit == 0 && bp->partyp == BACKPLANE)
+		if(cf->cf_unit == 0 && bp->partyp == MAINBUS)
 			return 1;
 		break;
 #endif
@@ -299,7 +299,7 @@ mem_match(parent, cf, aux)
 #if VAX8600
 	struct	bp_conf *bp = aux;
 
-	if (vax_cputype == VAX_8600 && !strcmp(parent->dv_xname, "backplane0")) {
+	if (vax_cputype == VAX_8600 && !strcmp(parent->dv_xname, "mainbus0")) {
 		if (strcmp(bp->type, "mem"))
 			return 0;
 		return 1;
@@ -364,15 +364,15 @@ mem_attach(parent, self, aux)
 #endif
 }
 
-struct	cfattach backplane_ca = {
-	sizeof(struct device), backplane_match, backplane_attach
+struct	cfattach mainbus_ca = {
+	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-struct	cfattach cpu_backplane_ca = {
+struct	cfattach cpu_mainbus_ca = {
 	sizeof(struct device), cpu_match, cpu_attach
 };
 
-struct	cfattach mem_backplane_ca = {
+struct	cfattach mem_mainbus_ca = {
 	sizeof(struct mem_softc), mem_match, mem_attach
 };
 
