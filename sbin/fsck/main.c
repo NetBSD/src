@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 1995/03/18 14:55:48 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.16 1995/04/12 21:24:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.15 1995/03/18 14:55:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.16 1995/04/12 21:24:10 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ main(argc, argv)
 	extern int optind;
 
 	sync();
+	skipclean = 1;
 	while ((ch = getopt(argc, argv, "dpnNyYb:c:l:m:")) != EOF) {
 		switch (ch) {
 		case 'p':
@@ -86,11 +87,13 @@ main(argc, argv)
 			break;
 
 		case 'b':
+			skipclean = 0;
 			bflag = argtoi('b', "number", optarg, 10);
 			printf("Alternate super block location: %d\n", bflag);
 			break;
 
 		case 'c':
+			skipclean = 0;
 			cvtlevel = argtoi('c', "conversion level", optarg, 10);
 			break;
 		
@@ -193,9 +196,11 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	cdevname = filesys;
 	if (debug && preen)
 		pwarn("starting\n");
-	if (setup(filesys) == 0) {
+	switch (setup(filesys)) {
+	case 0:
 		if (preen)
 			pfatal("CAN'T CHECK FILE SYSTEM.");
+	case -1:
 		return (0);
 	}
 	/*
@@ -296,7 +301,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			bwrite(fswritefd, (char *)&sblock,
 			    fsbtodb(&sblock, cgsblock(&sblock, cylno)), SBSIZE);
 	}
-	ckfini();
+	ckfini(1);
 	free(blockmap);
 	free(statemap);
 	free((char *)lncntp);

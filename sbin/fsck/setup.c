@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.20 1995/03/21 01:30:20 cgd Exp $	*/
+/*	$NetBSD: setup.c,v 1.21 1995/04/12 21:24:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.20 1995/03/21 01:30:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.21 1995/04/12 21:24:12 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,9 +78,11 @@ setup(dev)
 	off_t sizepb;
 	struct stat statb;
 	struct fs proto;
+	int doskipclean;
 
 	havesb = 0;
 	fswritefd = -1;
+	doskipclean = skipclean;
 	if (stat(dev, &statb) < 0) {
 		printf("Can't stat %s: %s\n", dev, strerror(errno));
 		return (0);
@@ -139,7 +141,18 @@ setup(dev)
 				"INFORMATION; SEE fsck(8).");
 			return(0);
 		}
+		doskipclean = 0;
 		pwarn("USING ALTERNATE SUPERBLOCK AT %d\n", bflag);
+	}
+	if (debug)
+		printf("clean = %d\n", sblock.fs_clean);
+	if (sblock.fs_clean & FS_ISCLEAN) {
+		if (preen && doskipclean) {
+			pwarn("file system is clean; not checking\n");
+			return (-1);
+		}
+		if (!preen)
+			pwarn("** File system is already clean\n");
 	}
 	maxfsblock = sblock.fs_size;
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
@@ -300,7 +313,7 @@ setup(dev)
 	return (1);
 
 badsblabel:
-	ckfini();
+	ckfini(0);
 	return (0);
 }
 
@@ -352,7 +365,7 @@ readsb(listerr)
 	if (asblk.b_errs)
 		return (0);
 	altsblock.fs_firstfield = sblock.fs_firstfield;
-	altsblock.fs_unused_1 = sblock.fs_unused_1;
+	altsblock.fs_fscktime = sblock.fs_fscktime;
 	altsblock.fs_time = sblock.fs_time;
 	altsblock.fs_cstotal = sblock.fs_cstotal;
 	altsblock.fs_cgrotor = sblock.fs_cgrotor;

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1995/03/18 14:55:42 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1995/04/12 21:24:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -35,7 +35,7 @@ void cacheino __P((struct dinode *, ino_t));
 int changeino __P((ino_t, char *, ino_t));
 int checkfstab __P((int, int, int (*)(), int (*)() ));
 int chkrange __P((daddr_t, int));
-void ckfini();
+void ckfini __P((int));
 int ckinode __P((struct dinode *, struct inodesc *));
 void clri __P((struct inodesc *, char *, int));
 int dircheck __P((struct inodesc *, struct direct *));
