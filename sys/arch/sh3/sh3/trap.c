@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 2002/02/11 18:06:06 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 2002/02/11 18:55:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -167,6 +167,7 @@ __setup_pte_sh3(vaddr_t va, u_int32_t pte)
 	SHREG_PTEL = pte & PG_HW_BITS;
 }
 
+#ifdef SH4
 void
 __setup_pte_sh4(vaddr_t va, u_int32_t pte)
 {
@@ -185,6 +186,7 @@ __setup_pte_sh4(vaddr_t va, u_int32_t pte)
 		SHREG_PTEA = 0;
 	}
 }
+#endif /* SH4 */
 
 /*
  * trap(frame):
