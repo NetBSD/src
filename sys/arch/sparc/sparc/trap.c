@@ -44,7 +44,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.3 1993/10/11 10:53:28 deraadt Exp $
+ * $Id: trap.c,v 1.4 1993/10/27 17:29:31 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -693,7 +693,7 @@ syscall(code, tf, pc, suncompat)
 	sticks = p->p_sticks;
 	p->p_md.md_tf = tf;
 #ifdef DEBUG_SCALL
-printf("sc[%d] %s%d(", p->p_pid, suncompat ? "sun" : "", code);
+printf("sc[%d] %s%d/X%x(", p->p_pid, suncompat ? "sun" : "", code, code);
 #endif
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
@@ -799,6 +799,9 @@ printf(") = ");
 				error = EINVAL;
 				goto bad;
 			}
+#ifdef DEBUG_SCALL
+printf("[new]");
+#endif
 		} else {
 			/* old system call convention: clear C on success */
 			tf->tf_psr &= ~PSR_C;	/* success */
