@@ -35,7 +35,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: parse.c,v 1.2 1997/01/14 06:47:10 cgd Exp $";
+static	char	rcsid[] = "$Id: parse.c,v 1.3 1997/01/29 18:39:47 mark Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -111,7 +111,7 @@ char	*line;
 			cpp++;
 			if (*(*cpp + 11) == '(') {
 				fil.fr_icode = icmpcode(*cpp + 12);
-				if (fil.fr_icode == -1) {
+				if (fil.fr_icode == (unsigned char)-1) {
 					fprintf(stderr,
 						"uncrecognised icmp code %s\n",
 						*cpp + 12);
