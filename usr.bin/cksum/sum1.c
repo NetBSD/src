@@ -1,4 +1,4 @@
-/*	$NetBSD: sum1.c,v 1.11 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: sum1.c,v 1.12 2005/01/12 17:04:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sum1.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sum1.c,v 1.11 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: sum1.c,v 1.12 2005/01/12 17:04:35 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,10 +48,7 @@ __RCSID("$NetBSD: sum1.c,v 1.11 2004/06/20 22:20:15 jmc Exp $");
 #include "extern.h"
 
 int
-csum1(fd, cval, clen)
-	register int fd;
-	u_int32_t *cval;
-	off_t *clen;
+csum1(register int fd, u_int32_t *cval, off_t *clen)
 {
 	register off_t total;
 	register int nr;
@@ -71,9 +68,9 @@ csum1(fd, cval, clen)
 			thecrc = ((thecrc >> 1) + *p) & 0xffff;
 		}
 	if (nr < 0)
-		return(1);
+		return 1;
 
 	*cval = thecrc;
 	*clen = total;
-	return(0);
+	return 0;
 }
