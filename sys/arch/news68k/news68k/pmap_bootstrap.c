@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1 1999/12/09 14:53:18 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2 2000/04/07 12:09:30 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -444,6 +444,14 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	if (RELOC(ectype, int) == EC_VIRT) {
 		RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
+	}
+#endif
+#ifdef news1700
+	if (RELOC(systype, int) == NEWS1700) {
+		RELOC(cache_ctl, char *) = 0xe1300000 - INTIOBASE1700 +
+					  RELOC(intiobase, char *);
+		RELOC(cache_clr, char *) = 0xe1900000 - INTIOBASE1700 +
+					  RELOC(intiobase, char *);
 	}
 #endif
 
