@@ -10,5 +10,5 @@ file	arch/mips/mips/mips_machdep.c		# shared mips machdep.c
 file	arch/mips/mips/sys_machdep.c		# shared mips sys_machdep
 file	arch/mips/mips/process_machdep.c	# shared process_machdep
 
-file	arch/mips/mips/in_cksum.c	inet
+file	netinet/in_cksum.c		inet
 file	netns/ns_cksum.c		ns
