@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.9 1997/11/04 11:28:46 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.10 1997/11/13 18:35:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.9 1997/11/04 11:28:46 lukem Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.10 1997/11/13 18:35:57 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -243,7 +243,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	FILE *data_file;
 	char myname[MAXHOSTNAMELEN];
 	int line_no = 0;
-	int len;
+	size_t len;
 	char *p, *k, *v, *slash;
 	DBM *new_db;
 	static char mapname[] = "ypdbXXXXXX";
