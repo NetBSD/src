@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 1999/03/19 21:40:24 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.63 1999/04/01 00:17:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -111,6 +111,9 @@ configure()
 	splx(s);
 #endif
 	cold = 0;
+#ifdef DEBUG_KERNEL_START
+	printf("survived configure...\n");
+#endif
 }
 
 void
