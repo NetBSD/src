@@ -1,4 +1,4 @@
-$NetBSD: README.files,v 1.6 1996/06/13 20:50:33 cgd Exp $
+$NetBSD: README.files,v 1.7 1996/09/14 04:39:54 cgd Exp $
 
 README.files			This list.
 
@@ -10,6 +10,8 @@ and day, in directories with names of the form "YYMMDD".
 
 In each directory:
 
+CKSUMS				Checksums (generated with NetBSD's "cksum"
+				utility) of all files in this snapshot.
 README_FIRST			Important last-minute notes about the snapshot.
 README				Installation notes; incomplete.
 STATUS				Status of NetBSD/Alpha, supported hardware list.
