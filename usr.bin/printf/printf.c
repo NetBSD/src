@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.25 2002/11/24 22:35:45 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.26 2003/02/24 14:42:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.25 2002/11/24 22:35:45 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.26 2003/02/24 14:42:27 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: printf.c,v 1.25 2002/11/24 22:35:45 christos Exp $");
 #define ESCAPE 033
 #endif
 
-static char	*conv_escape_str(char *);
+static void	 conv_escape_str(char *, void (*)(int));
 static char	*conv_escape(char *, char *);
 static char	*conv_expand(const char *);
 static int	 getchr(void);
@@ -81,6 +81,11 @@ static char	*getstr(void);
 static char	*mklong(const char *, int);
 static void      check_conversion(const char *, const char *);
 static void	 usage(void); 
+
+static void	b_count(int);
+static void	b_output(int);
+static int	b_length;
+static char	*b_fmt;
 
 static int	rval;
 static char  **gargv;
@@ -104,6 +109,18 @@ static char  **gargv;
 		(void)printf(f, precision, func); \
 	else \
 		(void)printf(f, func); \
+}
+
+#define APF(cpp, f, func) { \
+	if (fieldwidth != -1) { \
+		if (precision != -1) \
+			(void)asprintf(cpp, f, fieldwidth, precision, func); \
+		else \
+			(void)asprintf(cpp, f, fieldwidth, func); \
+	} else if (precision != -1) \
+		(void)asprintf(cpp, f, precision, func); \
+	else \
+		(void)asprintf(cpp, f, func); \
 }
 
 int main(int, char **);
@@ -197,9 +214,34 @@ int main(int argc, char *argv[])
 				break;
 			}
 			case 'b': {
-				char *p = conv_escape_str(getstr());
+				/* There has to be a better way to do this,
+				 * but the string we generate might have
+				 * embedded nulls. */
+				static char *a, *t;
+				char *cp = getstr();
+				/* Free on entry in case shell longjumped out */
+				if (a != NULL)
+					free(a);
+				a = NULL;
+				if (t != NULL)
+					free(t);
+				t = NULL;
+				/* Count number of bytes we want to output */
+				b_length = 0;
+				conv_escape_str(cp, b_count);
+				t = malloc(b_length + 1);
+				if (t == NULL)
+					break;
+				memset(t, 'x', b_length);
+				t[b_length] = 0;
+				/* Get printf to calculate the lengths */
 				*fmt = 's';
-				PF(start, p);
+				APF(&a, start, t);
+				b_fmt = a;
+				/* Output leading spaces and data bytes */
+				conv_escape_str(cp, b_output);
+				/* Add any trailing spaces */
+				printf("%s", b_fmt);
 				break;
 			}
 			case 'c': {
@@ -252,30 +294,49 @@ int main(int argc, char *argv[])
 	return (rval);
 }
 
+/* helper functions for conv_escape_str */
+
+static void
+b_count(int ch)
+{
+	b_length++;
+}
+
+/* Output one converted character for every 'x' in the 'format' */
+
+static void
+b_output(int ch)
+{
+	for (;;) {
+		switch (*b_fmt++) {
+		case 0:
+			b_fmt--;
+			return;
+		case ' ':
+			putchar(' ');
+			break;
+		default:
+			putchar(ch);
+			return;
+		}
+	}
+}
+
 
 /*
  * Print SysV echo(1) style escape string 
  *	Halts processing string if a \c escape is encountered.
  */
-static char *
-conv_escape_str(char *str)
+static void
+conv_escape_str(char *str, void (*do_putchar)(int))
 {
 	int value;
 	int ch;
-	static char *conv_str;
-	char *cp;
-
-	/* convert string into a temporary buffer... */
-	if (conv_str)
-		free(conv_str);
-	conv_str = malloc(strlen(str) + 4);
-	if (!conv_str)
-		return "<no memory>";
-	cp = conv_str;
+	char c;
 
 	while ((ch = *str++)) {
 		if (ch != '\\') {
-			*cp++ = ch;
+			do_putchar(ch);
 			continue;
 		}
 
@@ -297,14 +358,14 @@ conv_escape_str(char *str)
 			octnum[1] = str[1];
 			octnum[2] = str[2];
 			octnum[3] = 0;
-			*cp++ = strtoul(octnum, &oct_end, 8);
+			do_putchar(strtoul(octnum, &oct_end, 8));
 			str += oct_end - octnum;
 			continue;
 		}
 
 		/* \[M][^|-]C as defined by vis(3) */
 		if (ch == 'M' && *str == '-') {
-			*cp++ = 0200 | str[1];
+			do_putchar(0200 | str[1]);
 			str += 2;
 			continue;
 		}
@@ -320,17 +381,14 @@ conv_escape_str(char *str)
 				value |= 0177;
 			else
 				value |= ch & 037;
-			*cp++ = value;
+			do_putchar(value);
 			continue;
 		}
 
 		/* Finally test for sequences valid in the format string */
-		str = conv_escape(str - 1, cp);
-		cp++;
+		str = conv_escape(str - 1, &c);
+		do_putchar(c);
 	}
-	*cp = 0;
-
-	return conv_str;
 }
 
 /*
@@ -383,9 +441,9 @@ conv_escape(char *str, char *conv_ch)
 	case 'v':	value = '\v';	break;	/* vertical-tab */
 
 	default:
-		warnx("unknown escape sequence `\\%c'", *str);
+		warnx("unknown escape sequence `\\%c'", ch);
 		rval = 1;
-		value = *str;
+		value = ch;
 		break;
 	}
 
