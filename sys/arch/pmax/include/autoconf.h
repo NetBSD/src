@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 1996/03/18 01:47:08 jonathan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6 1996/04/14 00:58:21 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,10 +35,19 @@
 
 struct confargs;
 
+
 /* Handle device interrupt for  given unit of a driver */
 
 typedef void* intr_arg_t;		/* pointer to some softc */
 typedef int (*intr_handler_t) __P((intr_arg_t));
+/*
+ * XXX Establish interrupt on an arbitrary decstation/decsystem bus.
+ */
+extern void
+generic_intr_establish __P(( void * parent, void * cookie,
+			 int level,
+			 intr_handler_t handler, intr_arg_t arg));
+
 
 #define KN02_ASIC_NAME "KN02    "	/* ROM name in 3max system slot */
 	
@@ -47,7 +56,7 @@ typedef int (*intr_handler_t) __P((intr_arg_t));
 
 #define	BUS_INTR_ESTABLISH(ca,  handler, val)			\
     generic_intr_establish( ((struct device*)(val))->dv_parent, \
-    			   (ca)->ca_slotpri, 0, (handler), (val))
+    			   (void*)(ca)->ca_slotpri, 0, (handler), (val))
 
 
 struct confargs {
