@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1996/05/23 04:54:46 phil Exp $
+#	$NetBSD: Makefile,v 1.6 1997/05/07 07:15:39 mycroft Exp $
 
 LIB=	cc1
 
@@ -6,11 +6,11 @@ NOMAN=
 NOPIC=
 NOPROFILE=
 
-XXXX != cd $(.CURDIR)/../common; \
-	 printf "xxxx:\n\techo -I\$${.OBJDIR}\n" | ${MAKE} -r -s -f - xxxx
+COMMON!=cd $(.CURDIR)/../common; \
+	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch \
-	-I${.CURDIR}/../arch/$(MACHINE_ARCH) $(XXXX)
+	-I${.CURDIR}/../arch/$(MACHINE_ARCH) -I$(COMMON)
 
 MD= ${.CURDIR}/../arch/${MACHINE_ARCH}/${MACHINE_ARCH}.md
 

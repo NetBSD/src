@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1997/05/06 20:45:43 gwr Exp $
+#	$NetBSD: Makefile,v 1.21 1997/05/07 07:15:50 mycroft Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -32,20 +32,16 @@ DEPSRCS += genget.c
 PROG = tn3270
 
 MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | \
-	${MAKE} -r -s -f - xxx | grep mkastosc
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkastosc\n" | ${MAKE} -s -f-
 
 MKASTODS!=cd $(.CURDIR)/../tools/mkastods; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkastods\n" | \
-	${MAKE} -r -s -f - xxx | grep mkastods
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkastods\n" | ${MAKE} -s -f-
 
 MKDSTOAS!=cd $(.CURDIR)/../tools/mkdstoas; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkdstoas\n" | \
-	${MAKE} -r -s -f - xxx | grep mkdstoas
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkdstoas\n" | ${MAKE} -s -f-
 
 MKHITS!=cd $(.CURDIR)/../tools/mkhits; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkhits\n" | \
-	${MAKE} -r -s -f - xxx | grep mkhits
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkhits\n" | ${MAKE} -s -f-
 
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out

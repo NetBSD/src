@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.1 1996/05/17 19:58:54 chuck Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/05/07 07:15:48 mycroft Exp $
 
 WRTVID_BASE_DIR=${S}/arch/${MACHINE}/stand/wrtvid
 
-WRTVID_DIR!= cd ${WRTVID_BASE_DIR}; \
-     printf "xxx:\n\techo \$${.OBJDIR}\n" | ${MAKE} -r -s -f - xxx
+WRTVID_DIR!=cd ${WRTVID_BASE_DIR}; \
+     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 WRTVID=${WRTVID_DIR}/wrtvid
 
