@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.51 1999/07/07 21:29:29 drochner Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.52 1999/09/03 20:06:46 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -211,6 +211,8 @@ nfs_boot_ifupdown(ifp, procp, up)
 		goto out;
 	}
 
+	if (up)
+		delay(3000000); /* give the link some time to get up */
 out:
 	soclose(so);
 	return (error);
@@ -268,6 +270,7 @@ nfs_boot_setaddress(ifp, procp, addr, netmask, braddr)
 		goto out;
 	}
 
+	delay(3000000); /* give the link some time to get up */
 out:
 	soclose(so);
 	return (error);
