@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.3 2001/06/20 22:14:33 chris Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.4 2001/09/05 16:17:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
 
 #define _ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
