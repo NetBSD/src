@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.43 1999/01/08 11:59:38 kleink Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.44 1999/01/21 23:07:20 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -75,18 +75,17 @@ static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
 void svr4_fasttrap __P((struct trapframe));
 
 #ifdef DEBUG_SVR4
-static void svr4_printcontext __P((const char *, struct svr4_ucontext *));
+static void svr4_printmcontext __P((const char *, svr4_mcontext_t *));
 
 
 static void
-svr4_printcontext(fun, uc)
+svr4_printmcontext(fun, mc)
 	const char *fun;
-	struct svr4_ucontext *uc;
+	svr4_mcontext_t *mc;
 {
-	svr4_greg_t *r = uc->uc_mcontext.greg;
-	struct svr4_sigaltstack *s = &uc->uc_stack;
+	svr4_greg_t *r = mc->greg;
 
-	uprintf("%s at %p\n", fun, uc);
+	uprintf("%s at %p\n", fun, mc);
 
 	uprintf("Regs: ");
 	uprintf("GS = 0x%x ", r[SVR4_X86_GS]);
@@ -109,11 +108,6 @@ svr4_printcontext(fun, uc)
 	uprintf("UESP = 0x%x ",  r[SVR4_X86_UESP]);
 	uprintf("SS = 0x%x ",  r[SVR4_X86_SS]);
 	uprintf("\n");
-
-	uprintf("Signal Stack: sp %p, size %d, flags 0x%x\n",
-	    s->ss_sp, s->ss_size, s->ss_flags);
-
-	uprintf("Flags: 0x%lx\n", uc->uc_flags);
 }
 #endif
 
@@ -129,16 +123,14 @@ svr4_setregs(p, epp, stack)
 	pcb->pcb_savefpu.sv_env.en_cw = __SVR4_NPXCW__;
 }
 
-void
-svr4_getcontext(p, uc, mask)
+void *
+svr4_getmcontext(p, mc, flags)
 	struct proc *p;
-	struct svr4_ucontext *uc;
-	sigset_t *mask;
+	svr4_mcontext_t *mc;
+	u_long *flags;
 {
-	register struct trapframe *tf;
-	svr4_greg_t *r = uc->uc_mcontext.greg;
-
-	memset(uc, 0, sizeof(struct svr4_ucontext));
+	register struct trapframe *tf = p->p_md.md_regs;
+	svr4_greg_t *r = mc->greg;
 
 	/* Save register context. */
 	tf = p->p_md.md_regs;
@@ -173,27 +165,18 @@ svr4_getcontext(p, uc, mask)
 	r[SVR4_X86_UESP] = tf->tf_esp;
 	r[SVR4_X86_SS] = tf->tf_ss;
 
-	/* Save signal stack. */
-	native_to_svr4_sigaltstack(&p->p_sigacts->ps_sigstk, &uc->uc_stack);
-
-	/* Save signal mask. */
-	native_to_svr4_sigset(mask, &uc->uc_sigmask);
-
-	/*
-	 * Set the flags
-	 */
-	uc->uc_flags = SVR4_UC_CPU|SVR4_UC_SIGMASK|SVR4_UC_STACK;
+	*flags |= SVR4_UC_CPU;
 #ifdef DEBUG_SVR4
-	svr4_printcontext("getcontext", uc);
+	svr4_printmcontext("getmcontext", mc);
 #endif  
+	return (void *) tf->tf_esp;
 
 }
 
 
 /*
- * Set to ucontext specified.
- * has been taken.  Reset signal mask and
- * stack state from context.
+ * Set to mcontext specified.
+ * has been taken. 
  * Return to previous pc and psl as specified by
  * context left by sendsig. Check carefully to
  * make sure that the user has not modified the
@@ -201,79 +184,65 @@ svr4_getcontext(p, uc, mask)
  * a machine fault.
  */
 int
-svr4_setcontext(p, uc)
+svr4_setmcontext(p, mc, flags)
 	struct proc *p;
-	struct svr4_ucontext *uc;
+	svr4_mcontext_t *mc;
+	u_long flags;
 {
 	register struct trapframe *tf;
-	svr4_greg_t *r = uc->uc_mcontext.greg;
-	sigset_t mask;
+	svr4_greg_t *r = mc->greg;
 
 #ifdef DEBUG_SVR4
-	svr4_printcontext("setcontext", uc);
+	svr4_printcontext("setmcontext", mc);
 #endif  
 	/*
-	 * XXX:
-	 * Should we check the value of flags to determine what to restore?
-	 * What to do with uc_link?
-	 * What to do with floating point stuff?
+	 * XXX: What to do with floating point stuff?
 	 */
+	if ((flags & SVR4_UC_CPU) == 0)
+		return 0;
 
-	if (uc->uc_flags & SVR4_UC_CPU) {
-		/* Restore register context. */
-		tf = p->p_md.md_regs;
+	/* Restore register context. */
+	tf = p->p_md.md_regs;
 #ifdef VM86
-		if (r[SVR4_X86_EFL] & PSL_VM) {
-			tf->tf_vm86_gs = r[SVR4_X86_GS];
-			tf->tf_vm86_fs = r[SVR4_X86_FS];
-			tf->tf_vm86_es = r[SVR4_X86_ES];
-			tf->tf_vm86_ds = r[SVR4_X86_DS];
-			set_vflags(p, r[SVR4_X86_EFL]);
-		} else
+	if (r[SVR4_X86_EFL] & PSL_VM) {
+		tf->tf_vm86_gs = r[SVR4_X86_GS];
+		tf->tf_vm86_fs = r[SVR4_X86_FS];
+		tf->tf_vm86_es = r[SVR4_X86_ES];
+		tf->tf_vm86_ds = r[SVR4_X86_DS];
+		set_vflags(p, r[SVR4_X86_EFL]);
+	} else
 #endif
-		{
-			/*
-			 * Check for security violations.  If we're returning to
-			 * protected mode, the CPU will validate the segment registers
-			 * automatically and generate a trap on violations.  We handle
-			 * the trap, rather than doing all of the checking here.
-			 */
-			if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-			    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
-				return (EINVAL);
+	{
+		/*
+		 * Check for security violations.  If we're returning to
+		 * protected mode, the CPU will validate the segment registers
+		 * automatically and generate a trap on violations.  We handle
+		 * the trap, rather than doing all of the checking here.
+		 */
+		if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
+			return (EINVAL);
 
-			/* %fs and %gs were restored by the trampoline. */
-			tf->tf_es = r[SVR4_X86_ES];
-			tf->tf_ds = r[SVR4_X86_DS];
-			tf->tf_eflags = r[SVR4_X86_EFL];
-		}
-		tf->tf_edi = r[SVR4_X86_EDI];
-		tf->tf_esi = r[SVR4_X86_ESI];
-		tf->tf_ebp = r[SVR4_X86_EBP];
-		tf->tf_ebx = r[SVR4_X86_EBX];
-		tf->tf_edx = r[SVR4_X86_EDX];
-		tf->tf_ecx = r[SVR4_X86_ECX];
-		tf->tf_eax = r[SVR4_X86_EAX];
-		tf->tf_trapno = r[SVR4_X86_TRAPNO];
-		tf->tf_err = r[SVR4_X86_ERR];
-		tf->tf_eip = r[SVR4_X86_EIP];
-		tf->tf_cs = r[SVR4_X86_CS];
-		tf->tf_ss = r[SVR4_X86_SS];
-		tf->tf_esp = r[SVR4_X86_UESP];
+		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_es = r[SVR4_X86_ES];
+		tf->tf_ds = r[SVR4_X86_DS];
+		tf->tf_eflags = r[SVR4_X86_EFL];
 	}
+	tf->tf_edi = r[SVR4_X86_EDI];
+	tf->tf_esi = r[SVR4_X86_ESI];
+	tf->tf_ebp = r[SVR4_X86_EBP];
+	tf->tf_ebx = r[SVR4_X86_EBX];
+	tf->tf_edx = r[SVR4_X86_EDX];
+	tf->tf_ecx = r[SVR4_X86_ECX];
+	tf->tf_eax = r[SVR4_X86_EAX];
+	tf->tf_trapno = r[SVR4_X86_TRAPNO];
+	tf->tf_err = r[SVR4_X86_ERR];
+	tf->tf_eip = r[SVR4_X86_EIP];
+	tf->tf_cs = r[SVR4_X86_CS];
+	tf->tf_ss = r[SVR4_X86_SS];
+	tf->tf_esp = r[SVR4_X86_UESP];
 
-	if (uc->uc_flags & SVR4_UC_STACK) {
-		/* Restore signal stack. */
-		svr4_to_native_sigaltstack(&uc->uc_stack, &p->p_sigacts->ps_sigstk);
-	}
-
-	if (uc->uc_flags & SVR4_UC_SIGMASK) {
-		/* Restore signal mask. */
-		svr4_to_native_sigset(&uc->uc_sigmask, &mask);
-		(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
-	}
-
-	return (EJUSTRETURN);
+	return 0;
 }
 
 
