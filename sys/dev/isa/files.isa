@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.131 2004/01/25 11:35:46 jdolecek Exp $
+#	$NetBSD: files.isa,v 1.132 2004/01/31 13:59:20 jdolecek Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -79,9 +79,9 @@ attach	lpt at isa with lpt_isa
 file	dev/isa/lpt_isa.c		lpt_isa & !ppbus
 
 # Parallel port chipset
-attach	atppc at isa with atppc_isa
+attach	atppc at isa with atppc_isa: isadma
 file	dev/isa/atppc_isa.c		atppc_isa
-file	dev/isa/atppc_isadma.c		atppc_isa | atppc_acpi | atppc_pnpbios
+file	dev/isa/atppc_isadma.c		atppc_isa | atppc_acpi | atppc_pnpbios | atppc_ofisa | atppc_isapnp
 
 #
 # SCSI host adapters
