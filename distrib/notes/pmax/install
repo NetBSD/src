@@ -4,22 +4,22 @@ Installing NetBSD is a relatively complex process, but if you have
 the above document in hand it shouldn't be too much trouble.
 
 It has not been possible to reproduce the pmax installation Web page
-in fixed-font hardcopy format for the 1.2 release.  You must either visit
+in fixed-font hardcopy format for the _VER release.  You must either visit
 the URL above, or request a rendered version (e.g, PostScript).
 
 Please follow the dinstructions at 
 
-    http://111.netbsd.org/ports/pmax/pmax-install.html,
+    http://www.netbsd.org/ports/pmax/pmax-install.html,
 
 now,and return to this document when you used those instructions
-to  install a miniroot, label a disk, and extract the NetBSD/pmax 1.2
+to  install a miniroot, label a disk, and extract the NetBSD/pmax _VER
 installation tar sets.
 
 
 
 Post-intallation notes:
 ----------------------
-Some of the files in the NetBSD 1.2 distribution might need to be
+Some of the files in the NetBSD _VER distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like
