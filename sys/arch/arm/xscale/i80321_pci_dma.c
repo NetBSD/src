@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci_dma.c,v 1.2 2002/03/27 23:17:03 thorpej Exp $	*/
+/*	$NetBSD: i80321_pci_dma.c,v 1.3 2002/05/02 16:50:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -266,7 +266,7 @@ i80321_pci_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 		map->_dm_proc = NULL;	/* always kernel */
 	}
 
-	return (0);
+	return (error);
 }
 
 /*
