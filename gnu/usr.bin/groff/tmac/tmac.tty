@@ -42,6 +42,57 @@
 .tty-char \(ae ae
 .tty-char \(an -
 .cp \n(_C
+.
+.
 .\" If you want the character definitions in tmac.tty-char to be loaded
 .\" automatically, remove the `\"' from the next line.
 .\"do mso tmac.tty-char
+.
+.
+.\" Shifting to an unknown font is ignored, and then a pop-request such
+.\" as a zero-argument .ft or a \fP will DTWT. So, define aliases for
+.\" the occasionally referenced CW and C fonts, as well as all the
+.\" grops(1) fonts.
+.
+.ftr CW B
+.ftr C B
+.
+.ftr AB B
+.ftr ABI BI
+.ftr AI I
+.ftr AR R
+.
+.ftr BMB B
+.ftr BMBI BI
+.ftr BMI I
+.ftr BMR R
+.
+.ftr CB B
+.ftr CBI BI
+.ftr CI I
+.ftr CR R
+.
+.ftr HB B
+.ftr HBI BI
+.ftr HI I
+.ftr HR R
+.
+.ftr HNB B
+.ftr HNBI BI
+.ftr HNI I
+.ftr HNR R
+.
+.ftr NB B
+.ftr NBI BI
+.ftr NI I
+.ftr NR R
+.
+.ftr PB B
+.ftr PBI BI
+.ftr PI I
+.ftr PR R
+.
+.ftr TB B
+.ftr TBI BI
+.ftr TI I
+.ftr TR R
