@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.66 1996/03/16 06:09:16 thorpej Exp $
+#	$NetBSD: files.i386,v 1.67 1996/03/17 01:31:01 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -44,7 +44,8 @@ major	{cd = 6}
 # System bus types
 #
 
-device mainbus at root: isabus, eisabus, pcibus
+device	mainbus: isabus, eisabus, pcibus
+attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
 #device	mca at root {...}
@@ -74,7 +75,8 @@ file	arch/i386/isa/isa_machdep.c	isa
 file	arch/i386/isa/clock.c		isa
 
 # Numeric Processing Extension; Math Co-processor
-device	npx at isa
+device	npx
+attach	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
 
 # attribute used to represent the "keyboard controller"
@@ -82,11 +84,13 @@ file	arch/i386/isa/npx.c		npx needs-flag
 define pckbd { irq = -1 }
 
 # PC console support a la "pccons"
-device	pc at isa: tty, pckbd
+device	pc: tty, pckbd
+attach	pc at isa
 file	arch/i386/isa/pccons.c		pc needs-flag
 
 # PC console support a la "pcvt"
-device	vt at isa: tty, pckbd
+device	vt: tty, pckbd
+attach	vt at isa
 file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
@@ -95,27 +99,35 @@ file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
-device	lms at isa
+device	lms
+attach	lms at isa
 file	arch/i386/isa/lms.c		lms needs-flag
-device	mms at isa
+device	mms
+attach	mms at isa
 file	arch/i386/isa/mms.c		mms needs-flag
-device	pms at pckbd
+device	pms
+attach	pms at pckbd
 file	arch/i386/isa/pms.c		pms needs-flag
 
 # Floppy disk controller
-device	fdc at isa {drive = -1}
-device	fd at fdc: disk, isadma
+device	fdc {drive = -1}
+attach	fdc at isa
+device	fd: disk, isadma
+attach	fd at fdc
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
 
 # PC speaker
-device	spkr at isa: tty
+device	spkr: tty
+attach	spkr at isa
 file	arch/i386/isa/spkr.c		spkr needs-flag
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
 # XXX conflicts with other ports; can't be in files.isa
-device	le at isa, pci: ether, ifnet, isadma
+device	le: ether, ifnet
+attach	le at isa with le_isa: isadma
+attach	le at pci with le_pci
 file	dev/isa/if_le.c			le
 
 #

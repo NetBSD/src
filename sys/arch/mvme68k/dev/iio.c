@@ -1,4 +1,4 @@
-/* $Id: iio.c,v 1.1.1.1 1995/07/25 23:12:10 chuck Exp $ */
+/* $Id: iio.c,v 1.2 1996/03/17 01:35:02 thorpej Exp $ */
 
 /*
  *
@@ -63,9 +63,12 @@ struct iiosoftc {
 	struct device	sc_dev;
 };
 
-struct cfdriver iiocd = {
-	NULL, "iio", iiomatch, iioattach,
-	DV_DULL, sizeof(struct iiosoftc), 0
+struct cfattach iio_ca = {
+	sizeof(struct iiosoftc), iiomatch, iioattach
+};
+
+struct cfdriver iio_cd = {
+	NULL, "iio", DV_DULL, 0
 };
 
 int
@@ -83,7 +86,7 @@ iioattach(parent, self, args)
 	void *args;
 {
 	extern struct cfdata cfdata[];
-	extern struct cfdriver pcccd;
+	extern struct cfdriver pcc_cd;
 	struct cfdata *cf, *pcccf = NULL;
 
 	printf(" addr 0x%x\n", INTIOBASE);
@@ -92,7 +95,7 @@ iioattach(parent, self, args)
 	 * attach the pcc first!
 	 */
 	for (cf = cfdata; pcccf==NULL && cf->cf_driver; cf++) {
-		if (cf->cf_driver != &pcccd)
+		if (cf->cf_driver != &pcc_cd)
 			continue;
 		pcccf = cf;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.22 1996/03/07 20:47:01 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.23 1996/03/17 01:33:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -202,25 +202,29 @@ extern __inline__ void finish_req(SC_REQ *reqp)
  */
 int	ncr_cprint __P((void *auxp, char *));
 void	ncr_attach __P((struct device *, struct device *, void *));
-int	ncr_match __P((struct device *, struct cfdata *, void *));
+int	ncr_match __P((struct device *, void *, void *));
 
 /*
  * Tricks to make driver-name configurable
  */
-#define CFNAME(n)	__CONCAT(n,cd)
+#define CFNAME(n)	__CONCAT(n,_cd)
+#define CANAME(n)	__CONCAT(n,_ca)
 #define CFSTRING(n)	__STRING(n)
 
+struct cfattach CANAME(DRNAME) = {
+	sizeof(struct ncr_softc), ncr_match, ncr_attach
+};
+
 struct cfdriver CFNAME(DRNAME) = {
-	NULL, CFSTRING(DRNAME), (cfmatch_t)ncr_match, ncr_attach, 
-	DV_DULL, sizeof(struct ncr_softc), NULL, 0 };
+	NULL, CFSTRING(DRNAME), DV_DULL, NULL, 0
+};
 
 int
-ncr_match(pdp, cdp, auxp)
+ncr_match(pdp, match, auxp)
 struct device	*pdp;
-struct cfdata	*cdp;
-void		*auxp;
+void		*match, *auxp;
 {
-	return (machine_match(pdp, cdp, auxp, &CFNAME(DRNAME)));
+	return (machine_match(pdp, match, auxp, &CFNAME(DRNAME)));
 }
 
 void

@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.1.1.1 1995/07/25 23:11:56 chuck Exp $ */
+/*      $NetBSD: clock.c,v 1.2 1996/03/17 01:35:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,9 +75,12 @@ u_char clock_lvl;
 void clockattach __P((struct device *, struct device *, void *));
 int  clockmatch __P((struct device *, void *, void *));
 
-struct cfdriver clockcd = {
-	NULL, "clock", clockmatch, clockattach,
-	DV_DULL, sizeof(struct clocksc), 0
+struct cfattach clock_ca = {
+	sizeof(struct clocksc), clockmatch, clockattach
+};
+
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL, 0
 };
 
 void clockintr __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.8 1996/02/22 10:11:27 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.9 1996/03/17 01:26:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,18 +100,22 @@ static void	ite_switch __P((int));
 void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const u_char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
-int itematch __P((struct device *, struct cfdata *, void *));
+int itematch __P((struct device *, void *, void *));
 
-struct cfdriver itecd = {
-	NULL, "ite", (cfmatch_t)itematch, iteattach, DV_DULL,
-	sizeof(struct ite_softc), NULL, 0 };
+struct cfattach ite_ca = {
+	sizeof(struct ite_softc), itematch, iteattach
+};
+
+struct cfdriver ite_cd = {
+	NULL, "ite", DV_DULL, NULL, 0
+};
 
 int
-itematch(pdp, cdp, auxp)
+itematch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct grf_softc *gp;
 	int maj;
 	
@@ -200,7 +204,7 @@ getitesp(dev)
 	extern int	atari_realconfig;
 
 	if(atari_realconfig && (con_itesoftc.grf == NULL))
-		return(itecd.cd_devs[ITEUNIT(dev)]);
+		return(ite_cd.cd_devs[ITEUNIT(dev)]);
 
 	if(con_itesoftc.grf == NULL)
 		panic("no ite_softc for console");

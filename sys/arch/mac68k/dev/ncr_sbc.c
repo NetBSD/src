@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sbc.c,v 1.2 1996/02/22 14:31:26 scottr Exp $	*/
+/*	$NetBSD: ncr_sbc.c,v 1.3 1996/03/17 01:33:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -191,9 +191,12 @@ static struct scsi_device sbc_dev = {
 	NULL,		/* Use default "done" routine.	    */
 };
 
-struct cfdriver sbccd = {
-	NULL, sbc_name, sbc_match, sbc_attach,
-	DV_DULL, sizeof(struct sbc_softc), NULL, 0,
+struct cfattach sbc_ca = {
+	sizeof(struct sbc_softc), sbc_match, sbc_attach
+};
+
+struct cfdriver sbc_cd = {
+	NULL, sbc_name, DV_DULL, NULL, 0,
 };
 
 

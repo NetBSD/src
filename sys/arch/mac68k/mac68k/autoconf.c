@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1996/02/28 04:14:05 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1996/03/17 01:33:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -201,7 +201,7 @@ target_to_unit(u_long bus, u_long target, u_long lun)
 	struct scsibus_softc	*scsi;
 	struct scsi_link	*sc_link;
 	struct device		*sc_dev;
-extern	struct cfdriver		scsibuscd;
+extern	struct cfdriver		scsibus_cd;
 
 	if (target < 0 || target > 7 || lun < 0 || lun > 7) {
 		printf("scsi target to unit, target (%d) or lun (%d)"
@@ -210,10 +210,10 @@ extern	struct cfdriver		scsibuscd;
 	}
 
 	if (bus == -1) {
-		for (bus = 0 ; bus < scsibuscd.cd_ndevs ; bus++) {
-			if (scsibuscd.cd_devs[bus]) {
+		for (bus = 0 ; bus < scsibus_cd.cd_ndevs ; bus++) {
+			if (scsibus_cd.cd_devs[bus]) {
 				scsi = (struct scsibus_softc *)
-						scsibuscd.cd_devs[bus];
+						scsibus_cd.cd_devs[bus];
 				if (scsi->sc_link[target][lun]) {
 					sc_link = scsi->sc_link[target][lun];
 					sc_dev = (struct device *)
@@ -224,12 +224,12 @@ extern	struct cfdriver		scsibuscd;
 		}
 		return -1;
 	}
-	if (bus < 0 || bus >= scsibuscd.cd_ndevs) {
+	if (bus < 0 || bus >= scsibus_cd.cd_ndevs) {
 		printf("scsi target to unit, bus (%d) out of range.\n", bus);
 		return -1;
 	}
-	if (scsibuscd.cd_devs[bus]) {
-		scsi = (struct scsibus_softc *) scsibuscd.cd_devs[bus];
+	if (scsibus_cd.cd_devs[bus]) {
+		scsi = (struct scsibus_softc *) scsibus_cd.cd_devs[bus];
 		if (scsi->sc_link[target][lun]) {
 			sc_link = scsi->sc_link[target][lun];
 			sc_dev = (struct device *) sc_link->device_softc;
@@ -431,6 +431,10 @@ mainbus_attach(parent, self, aux)
 	}
 }
 
-struct cfdriver mainbuscd =
-      { NULL, "mainbus", root_matchbyname, mainbus_attach,
-	DV_DULL, sizeof(struct device), 1, 0 };
+struct cfattach mainbus_ca = {
+	sizeof(struct device), root_matchbyname, mainbus_attach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL, 1, 0
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.21 1995/12/24 02:30:17 mycroft Exp $	*/
+/*	$NetBSD: lms.c,v 1.22 1996/03/17 01:31:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -70,8 +70,12 @@ int lmsprobe __P((struct device *, void *, void *));
 void lmsattach __P((struct device *, struct device *, void *));
 int lmsintr __P((void *));
 
-struct cfdriver lmscd = {
-	NULL, "lms", lmsprobe, lmsattach, DV_TTY, sizeof(struct lms_softc)
+struct cfattach lms_ca = {
+	sizeof(struct lms_softc), lmsprobe, lmsattach
+};
+
+struct cfdriver lms_cd = {
+	NULL, "lms", DV_TTY
 };
 
 #define	LMSUNIT(dev)	(minor(dev))
@@ -131,9 +135,9 @@ lmsopen(dev, flag)
 	int unit = LMSUNIT(dev);
 	struct lms_softc *sc;
 
-	if (unit >= lmscd.cd_ndevs)
+	if (unit >= lms_cd.cd_ndevs)
 		return ENXIO;
-	sc = lmscd.cd_devs[unit];
+	sc = lms_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -158,7 +162,7 @@ lmsclose(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	struct lms_softc *sc = lmscd.cd_devs[LMSUNIT(dev)];
+	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
 
 	/* Disable interrupts. */
 	outb(sc->sc_iobase + LMS_CNTRL, 0x10);
@@ -176,7 +180,7 @@ lmsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct lms_softc *sc = lmscd.cd_devs[LMSUNIT(dev)];
+	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
 	int s;
 	int error;
 	size_t length;
@@ -224,7 +228,7 @@ lmsioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct lms_softc *sc = lmscd.cd_devs[LMSUNIT(dev)];
+	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
 	struct mouseinfo info;
 	int s;
 	int error;
@@ -332,7 +336,7 @@ lmsselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	struct lms_softc *sc = lmscd.cd_devs[LMSUNIT(dev)];
+	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
 	int s;
 	int ret;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.13 1995/08/14 03:55:28 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.14 1996/03/17 01:33:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -106,9 +106,13 @@ extern int matchbyname();
 static int ncr96probe();
 static void ncr96attach();
 
-struct cfdriver ncr96scsicd =
-{NULL, "ncr96scsi", ncr96probe, ncr96attach,
-DV_DULL, sizeof(struct ncr53c96_softc), NULL, 0};
+struct cfattach ncr96scsi_ca = {
+	sizeof(struct ncr53c96_softc), ncr96probe, ncr96attach
+};
+
+struct cfdriver ncr96scsi_cd = {
+	NULL, "ncr96scsi", DV_DULL, NULL, 0
+};
 
 static int
 ncr96_print(aux, name)

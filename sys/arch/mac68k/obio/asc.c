@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.9 1995/11/01 04:58:21 briggs Exp $	*/
+/*	$NetBSD: asc.c,v 1.10 1996/03/17 01:33:20 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -61,9 +61,13 @@ static int ascprobe __P((struct device *, struct cfdata *, void *));
 static void ascattach __P((struct device *, struct device *, void *));
 extern int matchbyname __P((struct device *, void *, void *));
 
-struct cfdriver asccd =
-{NULL, "asc", matchbyname, ascattach,
-DV_DULL, sizeof(struct device), NULL, 0};
+struct cfattach asc_ca = {
+	sizeof(struct device), matchbyname, ascattach
+};
+
+struct cfdriver asc_cd = {
+	NULL, "asc", DV_DULL, NULL, 0
+};
 
 static int
 ascprobe(parent, cf, aux)
@@ -71,7 +75,7 @@ ascprobe(parent, cf, aux)
 	struct cfdata *cf;
 	void   *aux;
 {
-	if (strcmp(*((char **) aux), asccd.cd_name))
+	if (strcmp(*((char **) aux), asc_cd.cd_name))
 		return 0;
 
 	return 1;

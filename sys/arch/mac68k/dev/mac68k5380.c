@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.19 1996/02/19 02:51:03 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.20 1996/03/17 01:33:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -185,12 +185,13 @@ scsi_mach_init(sc)
 }
 
 static int
-machine_match(pdp, cdp, auxp, cd)
+machine_match(pdp, match, auxp, cd)
 	struct device	*pdp;
-	struct cfdata	*cdp;
-	void		*auxp;
+	void		*match, *auxp;
 	struct cfdriver	*cd;
 {
+	struct cfdata *cdp = match;
+
 	if (matchbyname(pdp, cdp, auxp) == 0)
 		return 0;
 	if (!mac68k_machine.scsi80)

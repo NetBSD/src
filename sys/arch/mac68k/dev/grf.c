@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.29 1995/09/21 11:13:27 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.30 1996/03/17 01:33:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,9 +96,12 @@ extern int	grfiv_init __P((struct grf_softc *gp));
 extern int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 extern caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
 
-struct cfdriver grfcd = {
-	NULL, "grf", grf_match, grf_attach, DV_DULL,
-	sizeof(struct grf_softc)
+struct cfattach grf_ca = {
+	sizeof(struct grf_softc), grf_match, grf_attach
+};
+
+struct cfdriver grf_cd = {
+	NULL, "grf", DV_DULL
 };
 
 struct grfdev grfdev[] = {
@@ -178,9 +181,9 @@ grfopen(dev, flag, mode, p)
 	int error;
 
 	unit = GRFUNIT(dev);
-	gp = grfcd.cd_devs[unit];
+	gp = grf_cd.cd_devs[unit];
 
-	if (unit >= grfcd.cd_ndevs || (gp->g_flags & GF_ALIVE) == 0)
+	if (unit >= grf_cd.cd_ndevs || (gp->g_flags & GF_ALIVE) == 0)
 		return (ENXIO);
 
 	if ((gp->g_flags & (GF_OPEN | GF_EXCLUDE)) == (GF_OPEN | GF_EXCLUDE))
@@ -207,7 +210,7 @@ grfclose(dev, flag, mode, p)
 {
 	register struct grf_softc *gp;
 
-	gp = grfcd.cd_devs[GRFUNIT(dev)];
+	gp = grf_cd.cd_devs[GRFUNIT(dev)];
 
 	(void) grfoff(dev);
 	gp->g_flags &= GF_ALIVE;
@@ -227,7 +230,7 @@ grfioctl(dev, cmd, data, flag, p)
 	int     error;
 	int	unit = GRFUNIT(dev);
 
-	gp = grfcd.cd_devs[unit];
+	gp = grf_cd.cd_devs[unit];
 	error = 0;
 
 	switch (cmd) {
@@ -300,7 +303,7 @@ grfmmap(dev, off, prot)
 	int     unit = GRFUNIT(dev);
 	struct grf_softc *gp;
 
-	gp = grfcd.cd_devs[unit];
+	gp = grf_cd.cd_devs[unit];
 	return (grfaddr(gp, off));
 }
 
@@ -311,7 +314,7 @@ grfon(dev)
 	int     unit = GRFUNIT(dev);
 	struct grf_softc *gp;
 
-	gp = grfcd.cd_devs[unit];
+	gp = grf_cd.cd_devs[unit];
 
 	/*
 	 * XXX: iteoff call relies on devices being in same order
@@ -331,7 +334,7 @@ grfoff(dev)
 	struct grf_softc *gp;
 	int     error;
 
-	gp = grfcd.cd_devs[unit];
+	gp = grf_cd.cd_devs[unit];
 
 	(void) grfunmap(dev, (caddr_t) 0, curproc);
 
@@ -372,7 +375,7 @@ grfmap(dev, addrp, p)
 	int len, error;
 	int flags;
 
-	gp = grfcd.cd_devs[GRFUNIT(dev)];
+	gp = grf_cd.cd_devs[GRFUNIT(dev)];
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
 		printf("grfmap(%d): addr %x\n", p->p_pid, *addrp);
@@ -412,7 +415,7 @@ grfunmap(dev, addr, p)
 	vm_size_t size;
 	int     rv;
 
-	gp = grfcd.cd_devs[GRFUNIT(dev)];
+	gp = grf_cd.cd_devs[GRFUNIT(dev)];
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)

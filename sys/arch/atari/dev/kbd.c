@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.6 1996/02/22 10:11:32 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.7 1996/03/17 01:26:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -97,21 +97,23 @@ void	kbd_write __P((u_char *, int));
 
 static void kbdsoft __P((void));
 static void kbdattach __P((struct device *, struct device *, void *));
-static int  kbdmatch __P((struct device *, struct cfdata *, void *));
+static int  kbdmatch __P((struct device *, void *, void *));
 static int  kbd_write_poll __P((u_char *, int));
 static void kbd_pkg_start __P((struct kbd_softc *, u_char));
 
-struct cfdriver kbdcd = {
-	NULL, "kbd", (cfmatch_t)kbdmatch, kbdattach,
-	DV_DULL, sizeof(struct device), NULL, 0 };
+struct cfattach kbd_ca = {
+	sizeof(struct device), kbdmatch, kbdattach
+};
 
+struct cfdriver kbd_cd = {
+	NULL, "kbd", DV_DULL, NULL, 0
+};
 
 /*ARGSUSED*/
 static	int
-kbdmatch(pdp, cfp, auxp)
+kbdmatch(pdp, match, auxp)
 struct	device *pdp;
-struct	cfdata *cfp;
-void	*auxp;
+void	*match, *auxp;
 {
 	if (!strcmp((char *)auxp, "kbd"))
 		return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.16 1996/03/08 21:50:40 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.17 1996/03/17 01:26:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -170,11 +170,16 @@ static u_long zs_freqs_generic[] = {
 static u_long *zs_frequencies;
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch __P((struct device *, struct cfdata *, void *));
+static int	zsmatch __P((struct device *, void *, void *));
 static void	zsattach __P((struct device *, struct device *, void *));
-struct cfdriver zscd = {
-	NULL, "zs", (cfmatch_t)zsmatch, zsattach, DV_TTY,
-	sizeof(struct zs_softc), NULL, 0 };
+
+struct cfattach zs_ca = {
+	sizeof(struct zs_softc), zsmatch, zsattach
+};
+
+struct cfdriver zs_cd = {
+	NULL, "zs", DV_TTY, NULL, 0
+};
 
 /* {b,c}devsw[] function prototypes */
 dev_type_open(zsopen);
@@ -207,11 +212,12 @@ static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 static int zsshortcuts;	/* number of "shortcut" software interrupts */
 
 static int
-zsmatch(pdp, cfp, auxp)
+zsmatch(pdp, match, auxp)
 struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+void		*match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if(strcmp("zs", auxp) || cfp->cf_unit != 0)
 		return(0);
 	return(1);
@@ -312,7 +318,7 @@ struct proc	*p;
 		 int			zs = unit >> 1;
 		 int			error, s;
 
-	if(zs >= zscd.cd_ndevs || (zi = zscd.cd_devs[zs]) == NULL)
+	if(zs >= zs_cd.cd_ndevs || (zi = zs_cd.cd_devs[zs]) == NULL)
 		return (ENXIO);
 	cs = &zi->zi_cs[unit & 1];
 
@@ -404,7 +410,7 @@ struct proc	*p;
 		 int			unit = ZS_UNIT(dev);
 		 int			s;
 
-	zi = zscd.cd_devs[unit >> 1];
+	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
 	linesw[tp->t_line].l_close(tp, flags);
@@ -447,7 +453,7 @@ int		flags;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zscd.cd_devs[unit >> 1];
+	zi   = zs_cd.cd_devs[unit >> 1];
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
@@ -466,7 +472,7 @@ int		flags;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zscd.cd_devs[unit >> 1];
+	zi   = zs_cd.cd_devs[unit >> 1];
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
@@ -482,7 +488,7 @@ dev_t	dev;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zscd.cd_devs[unit >> 1];
+	zi   = zs_cd.cd_devs[unit >> 1];
 	cs   = &zi->zi_cs[unit & 1];
 	return(cs->cs_ttyp);
 }
@@ -784,7 +790,7 @@ int		flag;
 struct proc	*p;
 {
 		 int			unit = ZS_UNIT(dev);
-		 struct zs_softc	*zi = zscd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
 	register struct tty		*tp = zi->zi_cs[unit & 1].cs_ttyp;
 	register int			error, s;
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
@@ -905,7 +911,7 @@ register struct tty *tp;
 	register struct zs_chanstate	*cs;
 	register int			s, nch;
 		 int			unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zscd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
 
 	cs = &zi->zi_cs[unit & 1];
 	s  = spltty();
@@ -965,7 +971,7 @@ register struct tty	*tp;
 {
 	register struct zs_chanstate	*cs;
 	register int			s, unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zscd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
 
 	cs = &zi->zi_cs[unit & 1];
 	s  = splzs();
@@ -992,7 +998,7 @@ register struct tty	*tp;
 register struct termios	*t;
 {
 		 int			unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zscd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
 		 int			cdiv, clkm, brgm, tcon;
 	register int			tmp, tmp5, cflag, s;

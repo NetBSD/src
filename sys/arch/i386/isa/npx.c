@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.53 1996/01/07 02:00:31 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.54 1996/03/17 01:31:18 thorpej Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -115,8 +115,12 @@ struct npx_softc {
 int npxprobe __P((struct device *, void *, void *));
 void npxattach __P((struct device *, struct device *, void *));
 
-struct cfdriver npxcd = {
-	NULL, "npx", npxprobe, npxattach, DV_DULL, sizeof(struct npx_softc)
+struct cfattach npx_ca = {
+	sizeof(struct npx_softc), npxprobe, npxattach
+};
+
+struct cfdriver npx_cd = {
+	NULL, "npx", DV_DULL
 };
 
 enum npx_type {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.11 1996/03/10 19:54:41 briggs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.12 1996/03/17 01:33:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -52,9 +52,13 @@ extern int  matchbyname __P((struct device *, void *, void *));
 static void fpu_attach __P((struct device *, struct device *, void *));
 static int  fpu_probe __P((void));
 
-struct cfdriver fpucd = {
-	NULL, "fpu", matchbyname, fpu_attach,
-	DV_DULL, sizeof(struct device), 0 };
+struct cfattach fpu_ca = {
+	sizeof(struct device), matchbyname, fpu_attach
+};
+
+struct cfdriver fpu_cd = {
+	NULL, "fpu", DV_DULL, 0
+};
 
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE

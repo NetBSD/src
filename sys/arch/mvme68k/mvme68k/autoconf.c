@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1995/12/28 19:16:51 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.3 1996/03/17 01:35:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,9 +81,12 @@ struct mainbus_softc {
 	struct device sc_dev;
 };
 
-struct cfdriver mainbuscd = {
-	NULL, "mainbus", mainbus_match, mainbus_attach,
-	DV_DULL, sizeof(struct mainbus_softc), 0
+struct cfattach mainbus_ca = {
+	sizeof(struct mainbus_softc), mainbus_match, mainbus_attach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL, 0
 };
 
 int
