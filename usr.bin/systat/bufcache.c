@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.15 2003/12/30 12:52:48 pk Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.16 2004/02/19 03:56:30 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.15 2003/12/30 12:52:48 pk Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.16 2004/02/19 03:56:30 atatat Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -237,13 +237,12 @@ void
 fetchbufcache(void)
 {
 	int count;
-	struct buf *bp;
+	struct buf_sysctl *bp, *buffers;
 	struct vnode *vn;
 	struct mount *mt;
 	struct ml_entry *ml;
-	int mib[2];
+	int mib[6];
 	size_t size;
-	struct buf *buffers;
 	int extraslop = 0;
 
 	/* Re-read pages used for vnodes & executables */
@@ -254,25 +253,29 @@ fetchbufcache(void)
 	ml_init();
 
 	/* Get metadata buffers */
-again:
 	size = 0;
 	buffers = NULL;
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BUF;
-	if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0) {
+	mib[2] = KERN_BUF_ALL;
+	mib[3] = KERN_BUF_ALL;
+	mib[4] = (int)sizeof(struct buf_sysctl);
+	mib[5] = INT_MAX; /* we want them all */
+again:
+	if (sysctl(mib, 6, NULL, &size, NULL, 0) < 0) {
 		error("can't get buffers size: %s\n", strerror(errno));
 		return;
 	}
 	if (size == 0)
 		return;
 
-	size += extraslop * sizeof(struct buf);
+	size += extraslop * sizeof(struct buf_sysctl);
 	buffers = malloc(size);
 	if (buffers == NULL) {
 		error("can't allocate buffers: %s\n", strerror(errno));
 		return;
 	}
-	if (sysctl(mib, 2, buffers, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 6, buffers, &size, NULL, 0) < 0) {
 		free(buffers);
 		if (extraslop == 0) {
 			extraslop = 100;
@@ -282,11 +285,11 @@ again:
 		return;
 	}
 
-	nbuf = size / sizeof(struct buf);
+	nbuf = size / sizeof(struct buf_sysctl);
 	for (bp = buffers; bp < buffers + nbuf; bp++) {
-		if (bp->b_vp != NULL) {
+		if (UINT64TOPTR(bp->b_vp) != NULL) {
 			struct mount *mp;
-			vn = vc_lookup(bp->b_vp);
+			vn = vc_lookup(UINT64TOPTR(bp->b_vp));
 			if (vn == NULL)
 				break;
 

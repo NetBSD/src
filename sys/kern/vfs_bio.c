@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.116 2004/02/16 09:34:15 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.117 2004/02/19 03:56:30 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.116 2004/02/16 09:34:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.117 2004/02/19 03:56:30 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1434,53 +1434,95 @@ fail:;
 	return nbusy;
 }
 
+static void
+sysctl_fillbuf(struct buf *i, struct buf_sysctl *o)
+{
+
+	o->b_flags = i->b_flags;
+	o->b_error = i->b_error;
+	o->b_prio = i->b_prio;
+	o->b_dev = i->b_dev;
+	o->b_bufsize = i->b_bufsize;
+	o->b_bcount = i->b_bcount;
+	o->b_resid = i->b_resid;
+	o->b_addr = PTRTOUINT64(i->b_un.b_addr);
+	o->b_blkno = i->b_blkno;
+	o->b_rawblkno = i->b_rawblkno;
+	o->b_iodone = PTRTOUINT64(i->b_iodone);
+	o->b_proc = PTRTOUINT64(i->b_proc);
+	o->b_vp = PTRTOUINT64(i->b_vp);
+	o->b_saveaddr = PTRTOUINT64(i->b_saveaddr);
+	o->b_lblkno = i->b_lblkno;
+}
+
 #define KERN_BUFSLOP 20
 static int
 sysctl_dobuf(SYSCTLFN_ARGS)
 {
 	struct buf *bp;
+	struct buf_sysctl bs;
 	char *dp;
-	u_int i, elem_size;
-	size_t len, buflen, needed;
-	int error, s;
+	u_int i, op, arg;
+	size_t len, needed, elem_size, out_size;
+	int error, s, elem_count;
+
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+
+	if (namelen != 4)
+		return (EINVAL);
 
 	dp = oldp;
-	len = buflen = oldp != NULL ? *oldlenp : 0;
+	len = (oldp != NULL) ? *oldlenp : 0;
+	op = name[0];
+	arg = name[1];
+	elem_size = name[2];
+	elem_count = name[3];
+	out_size = MIN(sizeof(bs), elem_size);
+
+	/*
+	 * at the moment, these are just "placeholders" to make the
+	 * API for retrieving kern.buf data more extensible in the
+	 * future.
+	 *
+	 * XXX kern.buf currently has "netbsd32" issues.  hopefully
+	 * these will be resolved at a later point.
+	 */
+	if (op != KERN_BUF_ALL || arg != KERN_BUF_ALL ||
+	    elem_size < 1 || elem_count < 0)
+		return (EINVAL);
+
 	error = 0;
 	needed = 0;
-	elem_size = sizeof(struct buf);
-
 	s = splbio();
 	simple_lock(&bqueue_slock);
 	for (i = 0; i < BQUEUES; i++) {
 		TAILQ_FOREACH(bp, &bufqueues[i], b_freelist) {
-			if (len >= elem_size) {
-				error = copyout(bp, dp, elem_size);
+			if (len >= elem_size && elem_count > 0) {
+				sysctl_fillbuf(bp, &bs);
+				error = copyout(&bs, dp, out_size);
 				if (error)
 					goto cleanup;
 				dp += elem_size;
 				len -= elem_size;
 			}
-			needed += elem_size;
+			if (elem_count > 0) {
+				needed += elem_size;
+				if (elem_count != INT_MAX)
+					elem_count--;
+			}
 		}
 	}
 cleanup:
 	simple_unlock(&bqueue_slock);
 	splx(s);
 
-	if (oldp != NULL) {
-		*oldlenp = (char *)dp - (char *)oldp;
-		if (needed > *oldlenp)
-			error = ENOMEM;
-	} else {
-		needed += KERN_BUFSLOP;
-		*oldlenp = needed;
-	}
+	*oldlenp = needed;
+	if (oldp == NULL)
+		*oldlenp += KERN_BUFSLOP * sizeof(struct buf);
 
 	return (error);
 }
-
-static int sysctlnum_bufcache, sysctlnum_bufmemhiwater, sysctlnum_bufmemlowater;
 
 static int
 sysctl_bufvm_update(SYSCTLFN_ARGS)
@@ -1495,7 +1537,7 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (rnode->sysctl_num == sysctlnum_bufcache) {
+	if (rnode->sysctl_data == &bufcache) {
 		if (t < 0 || t > 100)
 			return (EINVAL);
 		bufcache = t;
@@ -1505,9 +1547,9 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 			/* Ensure a reasonable minimum value */
 			bufmem_lowater = 64 * 1024;
 
-	} else if (rnode->sysctl_num == sysctlnum_bufmemlowater) {
+	} else if (rnode->sysctl_data == &bufmem_lowater) {
 		bufmem_lowater = t;
-	} else if (rnode->sysctl_num == sysctlnum_bufmemhiwater) {
+	} else if (rnode->sysctl_data == &bufmem_hiwater) {
 		bufmem_hiwater = t;
 	} else
 		return (EINVAL);
@@ -1536,33 +1578,24 @@ SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
 
 SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
 {
-	struct sysctlnode *rnode;
 
 	sysctl_createv(SYSCTL_PERMANENT,
 		       CTLTYPE_NODE, "vm", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VM, CTL_EOL);
 
-	rnode = NULL;
-	if (sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
-			   CTLTYPE_INT, "bufcache", &rnode,
-			   sysctl_bufvm_update, 0, &bufcache, 0,
-			   CTL_VM, CTL_CREATE, CTL_EOL) == 0)
-		sysctlnum_bufcache = rnode->sysctl_num;
-
-	rnode = NULL;
-	if (sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
-			   CTLTYPE_INT, "bufmem_lowater", &rnode,
-			   sysctl_bufvm_update, 0, &bufmem_lowater, 0,
-			   CTL_VM, CTL_CREATE, CTL_EOL) == 0)
-		sysctlnum_bufmemlowater = rnode->sysctl_num;
-
-	rnode = NULL;
-	if (sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
-			   CTLTYPE_INT, "bufmem_hiwater", &rnode,
-			   sysctl_bufvm_update, 0, &bufmem_hiwater, 0,
-			   CTL_VM, CTL_CREATE, CTL_EOL) == 0)
-		sysctlnum_bufmemhiwater = rnode->sysctl_num;
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "bufcache", NULL,
+		       sysctl_bufvm_update, 0, &bufcache, 0,
+		       CTL_VM, CTL_CREATE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "bufmem_lowater", NULL,
+		       sysctl_bufvm_update, 0, &bufmem_lowater, 0,
+		       CTL_VM, CTL_CREATE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "bufmem_hiwater", NULL,
+		       sysctl_bufvm_update, 0, &bufmem_hiwater, 0,
+		       CTL_VM, CTL_CREATE, CTL_EOL);
 }
 
 #ifdef DEBUG
