@@ -7,8 +7,7 @@
  * Leland Stanford Junior University.
  *
  *
- * From: Id: dvmrp.h,v 1.3 1993/05/30 01:36:38 deering Exp $
- *      $Id: dvmrp.h,v 1.2 1994/05/08 15:08:53 brezak Exp $
+ * $Id: dvmrp.h,v 1.3 1995/06/01 02:25:52 mycroft Exp $
  */
 
 /*
@@ -94,15 +93,20 @@
 #define DVMRP_NEIGHBORS		4	/* response to such a request */
 #define DVMRP_ASK_NEIGHBORS2	5	/* as above, want new format reply */
 #define DVMRP_NEIGHBORS2	6
+#define DVMRP_PRUNE		7	/* prune message */
+#define DVMRP_GRAFT		8	/* graft message */
+#define DVMRP_GRAFT_ACK		9	/* graft acknowledgement */
 
 /*
  * 'flags' byte values in DVMRP_NEIGHBORS2 reply.
  */
 #define DVMRP_NF_TUNNEL		0x01	/* neighbors reached via tunnel */
 #define DVMRP_NF_SRCRT		0x02	/* tunnel uses IP source routing */
+#define DVMRP_NF_PIM		0x04	/* neighbor is a PIM neighbor */
 #define DVMRP_NF_DOWN		0x10	/* kernel state of interface */
 #define DVMRP_NF_DISABLED	0x20	/* administratively disabled */
 #define DVMRP_NF_QUERIER	0x40	/* I am the subnet's querier */
+#define DVMRP_NF_LEAF		0x80	/* Neighbor reports that it is a leaf */
 
 /*
  * Limit on length of route data
@@ -117,7 +121,9 @@
  * Various protocol constants (all times in seconds)
  */
 				        /* address for multicast DVMRP msgs */
-#define INADDR_DVMRP_GROUP	(u_long)0xe0000004    /* 224.0.0.4 */
+#define INADDR_DVMRP_GROUP	(u_int32_t)0xe0000004     /* 224.0.0.4 */
+					/* address for multicast mtrace msg */
+#define INADDR_ALLRTRS_GROUP	(u_int32_t)0xe0000002	/* 224.0.0.2 */
 
 #define ROUTE_MAX_REPORT_DELAY	5	/* max delay for reporting changes  */
 					/*  (This is the timer interrupt    */
@@ -131,12 +137,25 @@
 
 #define LEAF_CONFIRMATION_TIME	200	/* time to consider subnet a leaf   */
 
-#define NEIGHBOR_PROBE_INTERVAL	190	/* periodic neighbor probe interval */
+#define NEIGHBOR_PROBE_INTERVAL	10	/* periodic neighbor probe interval */
 #define NEIGHBOR_EXPIRE_TIME	140	/* time to consider neighbor gone   */
 
 #define GROUP_QUERY_INTERVAL	125	/* periodic group query interval    */
 #define GROUP_EXPIRE_TIME	270	/* time to consider group gone      */
+#define LEAVE_EXPIRE_TIME	3	/* " " after receiving a leave	    */
+/* Note: LEAVE_EXPIRE_TIME should ideally be shorter, but the resolution of
+ * the timer in mrouted doesn't allow us to follow the spec and make it any
+ * shorter. */
 
 #define UNREACHABLE		32	/* "infinity" metric, must be <= 64 */
 #define DEFAULT_METRIC		1	/* default subnet/tunnel metric     */
 #define DEFAULT_THRESHOLD	1	/* default subnet/tunnel threshold  */
+
+#define MAX_RATE_LIMIT      	100000 	/* max rate limit      	    	    */
+#define DEFAULT_PHY_RATE_LIMIT  0 	/* default phyint rate limit  	    */
+#define DEFAULT_TUN_RATE_LIMIT	500	/* default tunnel rate limit	    */
+
+#define DEFAULT_CACHE_LIFETIME 	300   	/* kernel route entry discard time  */
+#define GRAFT_TIMEOUT_VAL	5	/* retransmission time for grafts   */
+
+#define OLD_AGE_THRESHOLD	2

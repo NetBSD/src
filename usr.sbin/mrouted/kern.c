@@ -7,13 +7,9 @@
  * Leland Stanford Junior University.
  *
  *
- * from: Id: kern.c,v 1.3 1993/05/30 01:36:38 deering Exp
- *      $Id: kern.c,v 1.1 1994/01/11 20:15:56 brezak Exp $
+ * $Id: kern.c,v 1.2 1995/06/01 02:25:56 mycroft Exp $
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: kern.c,v 1.1 1994/01/11 20:15:56 brezak Exp $";
-#endif
 
 #include "defs.h"
 
@@ -22,7 +18,7 @@ void k_set_rcvbuf(bufsize)
     int bufsize;
 {
     if (setsockopt(igmp_socket, SOL_SOCKET, SO_RCVBUF,
-			(char *)&bufsize, sizeof(bufsize)) < 0)
+		   (char *)&bufsize, sizeof(bufsize)) < 0)
 	log(LOG_ERR, errno, "setsockopt SO_RCVBUF %u", bufsize);
 }
 
@@ -32,7 +28,7 @@ void k_hdr_include(bool)
 {
 #ifdef IP_HDRINCL
     if (setsockopt(igmp_socket, IPPROTO_IP, IP_HDRINCL,
-			(char *)&bool, sizeof(bool)) < 0)
+		   (char *)&bool, sizeof(bool)) < 0)
 	log(LOG_ERR, errno, "setsockopt IP_HDRINCL %u", bool);
 #endif
 }
@@ -63,7 +59,7 @@ void k_set_loop(l)
 
 
 void k_set_if(ifa)
-    u_long ifa;
+    u_int32_t ifa;
 {
     struct in_addr adr;
 
@@ -76,8 +72,8 @@ void k_set_if(ifa)
 
 
 void k_join(grp, ifa)
-    u_long grp;
-    u_long ifa;
+    u_int32_t grp;
+    u_int32_t ifa;
 {
     struct ip_mreq mreq;
 
@@ -92,8 +88,8 @@ void k_join(grp, ifa)
 
 
 void k_leave(grp, ifa)
-    u_long grp;
-    u_long ifa;
+    u_int32_t grp;
+    u_int32_t ifa;
 {
     struct ip_mreq mreq;
 
@@ -109,17 +105,24 @@ void k_leave(grp, ifa)
 
 void k_init_dvmrp()
 {
-    if (setsockopt(igmp_socket, IPPROTO_IP, DVMRP_INIT,
-			(char *)NULL, 0) < 0)
-	log(LOG_ERR, errno, "can't enable DVMRP routing in kernel");
+#ifdef OLD_KERNEL
+    if (setsockopt(igmp_socket, IPPROTO_IP, MRT_INIT,
+		   (char *)NULL, 0) < 0)
+#else
+    int v=1;
+
+    if (setsockopt(igmp_socket, IPPROTO_IP, MRT_INIT,
+		   (char *)&v, sizeof(int)) < 0)
+#endif
+	log(LOG_ERR, errno, "can't enable Multicast routing in kernel");
 }
 
 
 void k_stop_dvmrp()
 {
-    if (setsockopt(igmp_socket, IPPROTO_IP, DVMRP_DONE,
-			(char *)NULL, 0) < 0)
-	log(LOG_WARNING, errno, "can't disable DVMRP routing in kernel");
+    if (setsockopt(igmp_socket, IPPROTO_IP, MRT_DONE,
+		   (char *)NULL, 0) < 0)
+	log(LOG_WARNING, errno, "can't disable Multicast routing in kernel");
 }
 
 
@@ -132,86 +135,89 @@ void k_add_vif(vifi, v)
     vc.vifc_vifi            = vifi;
     vc.vifc_flags           = v->uv_flags & VIFF_KERNEL_FLAGS;
     vc.vifc_threshold       = v->uv_threshold;
+    vc.vifc_rate_limit	    = v->uv_rate_limit;
     vc.vifc_lcl_addr.s_addr = v->uv_lcl_addr;
     vc.vifc_rmt_addr.s_addr = v->uv_rmt_addr;
 
-    if (setsockopt(igmp_socket, IPPROTO_IP, DVMRP_ADD_VIF,
-			(char *)&vc, sizeof(vc)) < 0)
-	log(LOG_ERR, errno, "setsockopt DVMRP_ADD_VIF");
+    if (setsockopt(igmp_socket, IPPROTO_IP, MRT_ADD_VIF,
+		   (char *)&vc, sizeof(vc)) < 0)
+	log(LOG_ERR, errno, "setsockopt MRT_ADD_VIF");
 }
 
 
 void k_del_vif(vifi)
     vifi_t vifi;
 {
-    if (setsockopt(igmp_socket, IPPROTO_IP, DVMRP_DEL_VIF,
-			(char *)&vifi, sizeof(vifi)) < 0)
-	log(LOG_ERR, errno, "setsockopt DVMRP_DEL_VIF");
+    if (setsockopt(igmp_socket, IPPROTO_IP, MRT_DEL_VIF,
+		   (char *)&vifi, sizeof(vifi)) < 0)
+	log(LOG_ERR, errno, "setsockopt MRT_DEL_VIF");
 }
 
 
-void k_add_group(vifi, group)
-    vifi_t vifi;
-    u_long group;
+/*
+ * Adds a (source, mcastgrp) entry to the kernel
+ */
+void k_add_rg(origin, g)
+    u_long origin;
+    struct gtable *g;
 {
-    struct lgrplctl lc;
+    struct mfcctl mc;
+    int i;
 
-    lc.lgc_vifi         = vifi;
-    lc.lgc_gaddr.s_addr = group;
+    /* copy table values so that setsockopt can process it */
+    mc.mfcc_origin.s_addr = origin;
+#ifdef OLD_KERNEL
+    mc.mfcc_originmask.s_addr = 0xffffffff;
+#endif
+    mc.mfcc_mcastgrp.s_addr = g->gt_mcastgrp;
+    mc.mfcc_parent = g->gt_route ? g->gt_route->rt_parent : NO_VIF;
+    for (i = 0; i < numvifs; i++)
+	mc.mfcc_ttls[i] = g->gt_ttls[i];
 
-    if (setsockopt(igmp_socket, IPPROTO_IP, DVMRP_ADD_LGRP,
-			(char *)&lc, sizeof(lc)) < 0)
-	log(LOG_WARNING, errno, "setsockopt DVMRP_ADD_LGRP");
+    /* write to kernel space */
+    if (setsockopt(igmp_socket, IPPROTO_IP, MRT_ADD_MFC,
+		   (char *)&mc, sizeof(mc)) < 0)
+	log(LOG_WARNING, errno, "setsockopt MRT_ADD_MFC");
 }
 
 
-void k_del_group(vifi, group)
-    vifi_t vifi;
-    u_long group;
+/*
+ * Deletes a (source, mcastgrp) entry from the kernel
+ */
+int k_del_rg(origin, g)
+    u_long origin;
+    struct gtable *g;
 {
-    struct lgrplctl lc;
+    struct mfcctl mc;
+    int retval, i;
 
-    lc.lgc_vifi         = vifi;
-    lc.lgc_gaddr.s_addr = group;
+    /* copy table values so that setsockopt can process it */
+    mc.mfcc_origin.s_addr = origin;
+#ifdef OLD_KERNEL
+    mc.mfcc_originmask.s_addr = 0xffffffff;
+#endif
+    mc.mfcc_mcastgrp.s_addr = g->gt_mcastgrp;
 
-    if (setsockopt(igmp_socket, IPPROTO_IP, DVMRP_DEL_LGRP,
-			(char *)&lc, sizeof(lc)) < 0)
-	log(LOG_WARNING, errno, "setsockopt DVMRP_DEL_LGRP");
-}
+    /* write to kernel space */
+    if ((retval = setsockopt(igmp_socket, IPPROTO_IP, MRT_DEL_MFC,
+		   (char *)&mc, sizeof(mc))) < 0)
+	log(LOG_WARNING, errno, "setsockopt MRT_DEL_MFC");
 
+    return retval;
+}	
 
-void k_add_route(r)
-    struct rtentry *r;
+/*
+ * Get the kernel's idea of what version of mrouted needs to run with it.
+ */
+int k_get_version()
 {
-    struct mrtctl mc;
+    int vers;
+    int len = sizeof(vers);
 
-    mc.mrtc_origin.s_addr     = r->rt_origin;
-    mc.mrtc_originmask.s_addr = r->rt_originmask;
-    mc.mrtc_parent            = r->rt_parent;
-    VIFM_COPY(r->rt_children, mc.mrtc_children);
-    VIFM_COPY(r->rt_leaves,   mc.mrtc_leaves);
+    if (getsockopt(igmp_socket, IPPROTO_IP, MRT_VERSION,
+			(char *)&vers, &len) < 0)
+	log(LOG_ERR, errno,
+		"getsockopt MRT_VERSION: perhaps your kernel is too old");
 
-    if (setsockopt(igmp_socket, IPPROTO_IP, DVMRP_ADD_MRT,
-			(char *)&mc, sizeof(mc)) < 0)
-	log(LOG_WARNING, errno, "setsockopt DVMRP_ADD_MRT");
-}
-
-
-void k_update_route(r)
-    struct rtentry *r;
-{
-    k_add_route(r);
-}
-
-
-void k_del_route(r)
-    struct rtentry *r;
-{
-    struct in_addr orig;
-
-    orig.s_addr = r->rt_origin;
-
-    if (setsockopt(igmp_socket, IPPROTO_IP, DVMRP_DEL_MRT,
-			(char *)&orig, sizeof(orig)) < 0)
-	log(LOG_WARNING, errno, "setsockopt DVMRP_DEL_MRT");
+    return vers;
 }
