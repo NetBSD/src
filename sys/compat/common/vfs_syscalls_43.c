@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.5 1997/06/06 19:36:31 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.6 1997/10/10 01:47:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -382,7 +382,7 @@ unionread:
 		MALLOC(dirbuf, caddr_t, SCARG(uap, count), M_TEMP, M_WAITOK);
 		kiov.iov_base = dirbuf;
 		error = VOP_READDIR(vp, &kuio, fp->f_cred, &eofflag,
-			    (u_long *)0, 0);
+			    (off_t *)0, 0);
 		fp->f_offset = kuio.uio_offset;
 		if (error == 0) {
 			readcnt = SCARG(uap, count) - kuio.uio_resid;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.6 1996/10/25 23:14:00 cgd Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.7 1997/10/10 01:47:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -41,6 +41,8 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/syslog.h>
+#include <sys/mount.h>
 
 #include <vm/vm_param.h>
 
@@ -191,4 +193,18 @@ stackgap_alloc(sgp, sz)
 
 	*sgp += ALIGN(sz);
 	return p;
+}
+
+void
+compat_offseterr(vp, msg)
+	struct vnode *vp;
+	char *msg;
+{
+	struct mount *mp;
+
+	mp = vp->v_mount;
+
+	log(LOG_ERR, "%s: dir offset too large on fs %s (mounted from %s)\n",
+	    msg, mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
+	uprintf("%s: dir offset too large for emulated program\n", msg);
 }
