@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.53 1999/12/13 15:17:21 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.54 1999/12/22 04:03:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -372,6 +372,13 @@ udp6_input(mp, offp, proto)
 
 	if (plen != ulen) {
 		udp6stat.udp6s_badlen++;
+		goto bad;
+	}
+
+	/* Be proactive about malicious use of IPv4 mapped address */
+	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+		/* XXX stat */
 		goto bad;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.13 1999/12/15 06:28:44 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.14 1999/12/22 04:03:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -143,6 +143,15 @@ rip6_input(mp, offp, proto)
 		}
 	}
 #endif
+
+	/* Be proactive about malicious use of IPv4 mapped address */
+	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+		/* XXX stat */
+		m_freem(m);
+		return IPPROTO_DONE;
+	}
+
 	bzero(&rip6src, sizeof(rip6src));
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);
 	rip6src.sin6_family = AF_INET6;
