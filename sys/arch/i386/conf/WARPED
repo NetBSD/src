@@ -1,4 +1,4 @@
-#	$Id: WARPED,v 1.2 1996/02/28 02:02:46 cgd Exp $
+#	$Id: WARPED,v 1.3 1996/03/04 03:26:10 cgd Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -38,8 +38,10 @@ options		INET		# IP + ICMP + TCP + UDP
 config		netbsd	root on sd0a swap on sd0b and sd1b
 options         NMBCLUSTERS=2048
 
-isa0	at root
-pci0	at root
+mainbus0 at root
+
+isa0	at mainbus0
+pci0	at mainbus0
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 

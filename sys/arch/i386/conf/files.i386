@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.64 1996/02/28 01:58:25 cgd Exp $
+#	$NetBSD: files.i386,v 1.65 1996/03/04 03:26:11 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -43,6 +43,9 @@ major	{cd = 6}
 #
 # System bus types
 #
+
+device mainbus at root: isabus, eisabus, pcibus
+file	arch/i386/i386/mainbus.c	mainbus
 
 #device	mca at root {...}
 
