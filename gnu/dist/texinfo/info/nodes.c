@@ -1,5 +1,5 @@
 /* nodes.c -- how to get an Info file and node.
-   $Id: nodes.c,v 1.1.1.2 2001/07/25 16:20:50 assar Exp $
+   $Id: nodes.c,v 1.2 2002/01/16 17:22:37 tv Exp $
 
    Copyright (C) 1993, 98, 99 Free Software Foundation, Inc.
 
@@ -152,6 +152,7 @@ info_get_node_of_file_buffer (nodename, file_buffer)
   if (strcmp (nodename, "*") == 0)
     {
       node = (NODE *)xmalloc (sizeof (NODE));
+      memset (node, 0, sizeof (NODE));
       node->filename = file_buffer->fullpath;
       node->parent   = NULL;
       node->nodename = xstrdup ("*");
