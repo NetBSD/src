@@ -93,7 +93,7 @@ static void lpt_attach(struct device *, struct device *, void *);
 static int lpt_detach(struct device *, int);
 
 /* Autoconf structure */
-CFATTACH_DECL(lpt, sizeof(struct lpt_softc), lpt_probe, lpt_attach, 
+CFATTACH_DECL(lpt_ppbus, sizeof(struct lpt_softc), lpt_probe, lpt_attach, 
 	lpt_detach, NULL);
 
 extern struct cfdriver lpt_cd;
@@ -256,7 +256,7 @@ lpt_request_ppbus(struct lpt_softc * lpt, int how)
 		lpt->sc_state |= HAVEBUS;
 	}
 	else {
-		LPT_DPRINTF(("%s(%s): error requesting bus.\n", __func__, 
+		LPT_DPRINTF(("%s(%s): error %d requesting bus.\n", __func__, 
 			dev->dv_xname, error));
 	}
 
