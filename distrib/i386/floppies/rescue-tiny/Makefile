@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2002/04/16 05:23:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2002/04/16 09:08:01 lukem Exp $
 
-FLOPPYBASE=	rescue-tiny.fs
+FLOPPYBASE=	rescue-tiny
 FLOPPYKERNDIR=	kernel-rescue
 FLOPPYKERNEL=	netbsd.RESCUE_TINY.gz
 FLOPPYSIZE=	2400
