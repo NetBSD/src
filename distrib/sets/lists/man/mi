@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.550 2003/02/24 13:29:55 wiz Exp $
+# $NetBSD: mi,v 1.551 2003/03/04 14:51:52 jmmv Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1252,6 +1252,7 @@
 ./usr/share/man/cat5/virtual.0			man-postfix-catman
 ./usr/share/man/cat5/weekly.conf.0		man-sys-catman
 ./usr/share/man/cat5/wscons.conf.0		man-sys-catman
+./usr/share/man/cat5/wsmoused.conf.0		man-sys-catman
 ./usr/share/man/cat5/wtmp.0			man-sys-catman
 ./usr/share/man/cat5/wtmpx.0			man-sys-catman
 ./usr/share/man/cat7/ascii.0			man-reference-catman
@@ -3034,6 +3035,7 @@
 ./usr/share/man/man5/virtual.5			man-postfix-man
 ./usr/share/man/man5/weekly.conf.5		man-sys-man
 ./usr/share/man/man5/wscons.conf.5		man-sys-man
+./usr/share/man/man5/wsmoused.conf.5		man-sys-man
 ./usr/share/man/man5/wtmp.5			man-sys-man
 ./usr/share/man/man5/wtmpx.5			man-sys-man
 ./usr/share/man/man7/ascii.7			man-reference-man
