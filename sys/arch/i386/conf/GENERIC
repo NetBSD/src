@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.20 1995/08/22 19:43:14 jtc Exp $
+#	$NetBSD: GENERIC,v 1.21 1995/09/14 12:46:42 hpeyerl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -68,9 +68,6 @@ options		UNION		# union file system
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
 options		NS		# XNS
-options		ISO,TPIP	# OSI
-options		EON		# OSI tunneling over IP
-options		CCITT,LLC,HDLC	# X.25
 
 config		netbsd	swap generic
 options		GENERIC
@@ -109,22 +106,6 @@ mms1	at isa? port 0x238 irq 5
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
-ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
-scsibus* at ahb?
-aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
-scsibus* at aic?
-bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt2	at isa? port ? irq ?
-scsibus* at bt?
-ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
-scsibus* at ncr?
-sea0	at isa? iomem 0xc8000 irq 5
-scsibus* at sea?
-uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
-scsibus* at uha?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -149,7 +130,7 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN & 3C507 ethernet cards
+ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 de*	at pci? bus ? dev ?
 
