@@ -153,8 +153,8 @@ char **argv;
 	}
 	
 	if (db_symtab_adr == 0 || db_symtabsize_adr == 0) {
-		fprintf (stderr, "couldn't find db_symtab symbols\n");
-		exit (1);
+/*		fprintf (stderr, "couldn't find db_symtab symbols\n");*/
+		exit (0);
 	}
 
 	*(int *)new_strtab = new_strtab_size;
