@@ -1,16 +1,16 @@
-#	$NetBSD: bsd.inc.mk,v 1.13 1999/08/21 06:17:46 simonb Exp $
+#	$NetBSD: bsd.inc.mk,v 1.14 2000/06/06 05:40:47 mycroft Exp $
 
 .PHONY:		incinstall
 includes:	${INCS} incinstall
 
 .if defined(INCS)
-.for I in ${INCS}
-incinstall:: ${DESTDIR}${INCSDIR}/$I
-
-.PRECIOUS: ${DESTDIR}${INCSDIR}/$I
+incinstall:: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${INCSDIR}/$I
+.PHONY: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
+.PRECIOUS: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
+
+.for I in ${INCS}
 ${DESTDIR}${INCSDIR}/$I: $I
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c \
