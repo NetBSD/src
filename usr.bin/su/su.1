@@ -61,7 +61,6 @@ with the appropriate user ID is executed; no additional Kerberos tickets
 are obtained.
 .Pp
 By default, the environment is unmodified with the exception of
-.Ev LOGNAME
 .Ev USER ,
 .Ev HOME ,
 and
@@ -70,11 +69,9 @@ and
 and
 .Ev SHELL
 are set to the target login's default values.
-.Ev LOGNAME
-and
 .Ev USER
-are set to the target login, unless the target login has a user ID of 0,
-in which case they are unmodified.
+is set to the target login, unless the target login has a user ID of 0,
+in which case it is unmodified.
 The invoked shell is the target login's.
 This is the traditional behavior of
 .Nm su .
@@ -96,17 +93,14 @@ The environment is discarded except for
 .Ev SHELL ,
 .Ev PATH ,
 .Ev TERM ,
-.Ev LOGNAME ,
 and
 .Ev USER .
 .Ev HOME
 and
 .Ev SHELL
 are modified as above.
-.Ev LOGNAME
-and
 .Ev USER
-are set to the target login.
+is set to the target login.
 .Ev PATH
 is set to
 .Dq Pa /bin:/usr/bin .
@@ -157,7 +151,7 @@ to remind one of its awesome power.
 .Sh ENVIRONMENT
 Environment variables used by
 .Nm su :
-.Bl -tag -width indent
+.Bl -tag -width HOME
 .It Ev HOME
 Default home directory of real user ID unless modified as
 specified above.
@@ -166,7 +160,7 @@ Default search path of real user ID unless modified as specified above.
 .It Ev TERM
 Provides terminal type which may be retained for the substituted
 user ID.
-.It Ev LOGNAME , USER
+.It Ev USER
 The user ID is always the effective ID (the target user ID) after an
 .Nm su
 unless the user ID is 0 (root).
