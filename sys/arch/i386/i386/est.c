@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.5 2004/10/25 15:42:24 hannken Exp $	*/
+/*	$NetBSD: est.c,v 1.6 2004/12/24 17:37:43 christos Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.5 2004/10/25 15:42:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.6 2004/12/24 17:37:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,6 +249,35 @@ static const struct fq_info pentium_m_n765[] = {
 	{  600,  988 }
 };
 
+/* Intel Pentium M processor 723 1.0 GHz */
+static const struct fq_info pentium_m_n723[] = {
+	{ 1000, 940 },
+	{  900, 908 },
+	{  800, 876 },
+	{  600, 812 }
+};
+
+/* Intel Pentium M processor 733 1.1 GHz */
+static const struct fq_info pentium_m_n733[] = {
+	{ 1100, 940 },
+	{ 1000, 920 },
+	{  900, 892 },
+	{  800, 876 },
+	{  600, 812 }
+};
+
+/* Intel Pentium M processor 738 1.4 GHz */
+static const struct fq_info pentium_m_n738[] = {
+	{ 1400, 1116 },
+	{ 1300, 1116 },
+	{ 1200, 1100 },
+	{ 1100, 1068 },
+	{ 1000, 1052 },
+	{  900, 1036 },
+	{  800, 1020 },
+	{  600,  988 }
+};
+
 struct fqlist {
 	const char *brand_tag;
 	size_t tablec;
@@ -275,6 +304,9 @@ static const struct fqlist pentium_m_dothan[] = {
 	ENTRY("1.80", pentium_m_n745),
 	ENTRY("2.00", pentium_m_n755),
 	ENTRY("2.10", pentium_m_n765),
+	ENTRY("1.00", pentium_m_n723),
+	ENTRY("1.10", pentium_m_n733),
+	ENTRY("1.40", pentium_m_n738),
 };
 #undef ENTRY
 
