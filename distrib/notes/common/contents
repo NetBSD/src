@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.78 2002/07/30 03:32:47 lukem Exp $
+.\"	$NetBSD: contents,v 1.79 2002/08/02 14:35:50 is Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,7 @@ four megabytes of RAM.
 .if \n[amiga] \{\
 .			It Pa netbsd.INSTALL.gz
 A somewhat smaller kernel, which you can use to boot the system
-using loadbsd for installation on memory-tight systems.
+on memory-tight systems.
 This is the same kernel as present on the miniroot.
 .\}
 .

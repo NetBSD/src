@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.23 2002/06/29 09:36:24 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.24 2002/08/02 14:35:50 is Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,20 +79,6 @@ your System for
 Installation" section above.
 .Pp
 Now boot up
-.Nx
-using the \*V kernel using the loadbsd
-command:
-.Pp
-.Dl Ic "loadbsd -b netbsd"
-.Pp
-If you machine has a split memory space, like, e.g., DraCo
-machines, use this instead:
-.Pp
-.Dl Ic "loadbsd -bn2 netbsd"
-.Pp
-If you have a M680x0 + PPC board, make sure the PPC cpu is inactive
-before using loadbsd, else the kernel will hang!
-.Ss2 Directly booting
 .Nx ,
 with boot blocks installed
 .(Note
@@ -124,22 +110,25 @@ Entering an empty line will accept the
 default.
 .Pp
 The bootblock uses command lines of the form:
+.br
 .Ar \ \ \ \ file Op Ar options
+.br
 where
 .Ar file
 is the kernel file name on the partition where the
 boot block is on, and
 .Ar options
-are the same as with loadbsd.
-E.g., instead of
+may contain the same as described in the INSTALL section.
 .Pp
-.Dl Ic "loadbsd -bsSn2 netbsd"
+For installing, use
+.Dl Ic "netbsd -b"
 .Pp
-use
+If you machine has a split memory space, like, e.g., DraCo
+machines, use this instead:
 .Pp
-.Dl "netbsd -bsSn2"
+.Dl Ic "netbsd -bn2"
 .Pp
-.
+
 .Ss2 Once your kernel boots
 .
 You should see the screen clear and some information about
