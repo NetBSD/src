@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.7 2001/09/15 01:32:10 thorpej Exp $	*/
+/*	$NetBSD: agp.c,v 1.8 2001/09/15 13:01:44 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -284,10 +284,9 @@ agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc)
 	 */
 	if (pci_mapreg_map(pa, AGP_APBASE, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR,
-	    &sc->as_apt, &sc->as_aph, &sc->as_apaddr, &sc->as_apsize) != 0) {
-		printf("%s: can't map aperture space\n", sc->as_dev.dv_xname);
+	    &sc->as_apt, &sc->as_aph, &sc->as_apaddr, &sc->as_apsize) != 0)
 		return ENXIO;
-	}
+
 	return 0;
 }
 
