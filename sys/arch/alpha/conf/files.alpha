@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.41 1997/03/21 01:09:02 cgd Exp $
+#	$NetBSD: files.alpha,v 1.42 1997/03/24 00:00:33 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -14,7 +14,7 @@ define  wsconsdev {[console = -1]}
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
 file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
-					dec_kn20aa
+					dec_eb64plus | dec_kn20aa
 
 device	vga: wsconsdev
 file	arch/alpha/common/vga.c		vga
