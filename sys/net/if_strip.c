@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.28 2001/01/11 22:23:11 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.29 2001/01/11 22:31:49 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -270,6 +270,7 @@ int	strip_newpacket __P((struct strip_softc *sc, u_char *ptr, u_char *end));
 struct mbuf * strip_send __P((struct strip_softc *sc, struct mbuf *m0));
 
 void	strip_timeout __P((void *x));
+void	stripintr(void);
 
 
 
@@ -517,10 +518,11 @@ stripclose(tp)
 		if_down(&sc->sc_if);
 		sc->sc_ttyp = NULL;
 		tp->t_sc = NULL;
-
 		m_freem(sc->sc_mbuf);
 		sc->sc_mbuf = NULL;
 		sc->sc_ep = sc->sc_mp = sc->sc_pktstart = NULL;
+		IF_PURGE(&sc->sc_fastq);
+		IF_PURGE(&sc->sc_inq);
 
 		/* XXX */
 		free((caddr_t)(sc->sc_rxbuf - SLBUFSIZE + SLMAX), M_DEVBUF);
@@ -1271,25 +1273,14 @@ stripinput(c, tp)
 
 		hp[SLX_DIR] = SLIPDIR_IN;
 		memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
-
-		bpf_mtap(sc->sc_if.if_bpf, m);
 	}
 #endif
 
-	m_adj(m, SLIP_HDRLEN);
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_lastchange = time;
+	IF_ENQUEUE(&sc->sc_inq, m);
 	s = splimp();
-	if (IF_QFULL(&ipintrq)) {
-		IF_DROP(&ipintrq);
-		sc->sc_if.if_ierrors++;
-		sc->sc_if.if_iqdrops++;
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(&ipintrq, m);
-		schednetisr(NETISR_IP);
-	}
+	schednetisr(NETISR_STRIP);
 	splx(s);
+
 	goto newpack;
 
 error:
@@ -1298,6 +1289,46 @@ error:
 newpack:
 	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
 	    BUFOFFSET;
+}
+
+void
+stripintr(void)
+{
+	struct strip_softc *sc;
+	struct mbuf *m;
+	int i, s;
+
+	for (i = 0; i < NSTRIP; i++) {
+		sc = &strip_softc[i];
+		for (;;) {
+			s = spltty();
+			IF_DEQUEUE(&sc->sc_inq, m);
+			splx(s);
+			if (m == NULL)
+				break;
+#if NPBFILTER > 0
+			if (sc->sc_if.if_bpf) {
+				s = splnet();
+				bpf_mtap(sc->sc_if.if_bpf, m);
+				splx(s);
+			}
+#endif
+			m_adj(m, SLIP_HDRLEN);
+			sc->sc_if.if_ipackets++;
+			sc->sc_if.if_lastchange = time;
+			s = splimp();
+			if (IF_QFULL(&ipintrq)) {
+				IF_DROP(&ipintrq);
+				sc->sc_if.if_ierrors++;
+				sc->sc_if.if_iqdrops++;
+				m_freem(m);
+			} else {
+				IF_ENQUEUE(&ipintrq, m);
+				schednetisr(NETISR_IP);
+			}
+			splx(s);
+		}
+	}
 }
 
 /*
