@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.5.2.1 1997/11/08 15:12:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 1997/11/24 23:30:29 mellon Exp $
 
 PROG=	rarpd
+SRCS=	rarpd.c mkarp.c
 MAN=	rarpd.8
 
 # Uncomment the following to require a boot file in TFTP_DIR
