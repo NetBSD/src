@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.28 2000/08/01 23:55:10 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.29 2000/08/08 22:58:31 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -53,7 +53,6 @@
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
 static void ispminphys __P((struct buf *));
-static int32_t ispcmd_slow __P((XS_T *));
 static int32_t ispcmd __P((XS_T *));
 static int
 ispioctl __P((struct scsipi_link *, u_long, caddr_t, int, struct proc *));
@@ -74,6 +73,7 @@ isp_attach(isp)
 	int maxluns;
 	isp->isp_osinfo._adapter.scsipi_minphys = ispminphys;
 	isp->isp_osinfo._adapter.scsipi_ioctl = ispioctl;
+	isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
 
 	isp->isp_state = ISP_RUNSTATE;
 	isp->isp_osinfo._link.scsipi_scsi.channel =
@@ -91,14 +91,9 @@ isp_attach(isp)
 	TAILQ_INIT(&isp->isp_osinfo.waitq);	/* The 2nd bus will share.. */
 
 	if (IS_FC(isp)) {
-		/*
-		 * Give it another chance here to come alive...
-		 */
-		isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_FC_TARG-1;
 	} else {
 		sdparam *sdp = isp->isp_param;
-		isp->isp_osinfo._adapter.scsipi_cmd = ispcmd_slow;
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_TARGETS-1;
 		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
 		    sdp->isp_initiator_id;
@@ -124,13 +119,11 @@ isp_attach(isp)
 		int bus = 0;
 		ISP_LOCK(isp);
 		(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
-		ISP_UNLOCK(isp);
 		if (IS_DUALBUS(isp)) {
 			bus++;
-			ISP_LOCK(isp);
 			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
-			ISP_UNLOCK(isp);
 		}
+		ISP_UNLOCK(isp);
 	} else {
 		int defid;
 		fcparam *fcp = isp->isp_param;
@@ -190,59 +183,6 @@ ispminphys(bp)
 	minphys(bp);
 }
 
-static int32_t
-ispcmd_slow(xs)
-	XS_T *xs;
-{
-	sdparam *sdp;
-	int tgt, chan, s;
-	u_int16_t flags;
-	struct ispsoftc *isp = XS_ISP(xs);
-
-	/*
-	 * Have we completed discovery for this target on this adapter?
-	 */
-	tgt = XS_TGT(xs);
-	chan = XS_CHANNEL(xs);
-	if ((xs->xs_control & XS_CTL_DISCOVERY) != 0 ||
-	    (isp->isp_osinfo.discovered[chan] & (1 << tgt)) != 0) {
-		return (ispcmd(xs));
-	}
-
-	flags = DPARM_DEFAULT;
-	if (xs->sc_link->quirks & SDEV_NOSYNC) {
-		flags ^= DPARM_SYNC;
-	} else {
-		isp_prt(isp, ISP_LOGDEBUG0,
-		    "channel %d target %d SYNC enabled", chan, tgt);
-	}
-	if (xs->sc_link->quirks & SDEV_NOWIDE) {
-		flags ^= DPARM_WIDE;
-	} else {
-		isp_prt(isp, ISP_LOGDEBUG0,
-		    "channel %d target %d WIDE enabled", chan, tgt);
-	}
-	if (xs->sc_link->quirks & SDEV_NOTAG) {
-		flags ^= DPARM_TQING;
-	} else {
-		isp_prt(isp, ISP_LOGDEBUG0,
-		    "channel %d target %d TAG enabled", chan, tgt);
-	}
-	/*
-	 * Okay, we know about this device now,
-	 * so mark parameters to be updated for it.
-	 */
-	s = splbio();
-	isp->isp_osinfo.discovered[chan] |= (1 << tgt);
-	sdp = isp->isp_param;
-	sdp += chan;
-	sdp->isp_devparam[tgt].dev_flags = flags;
-	sdp->isp_devparam[tgt].dev_update = 1;
-	isp->isp_update |= (1 << chan);
-	splx(s);
-	return (ispcmd(xs));
-}
-
 static int      
 ispioctl(sc_link, cmd, addr, flag, p)
 	struct scsipi_link *sc_link;
@@ -254,9 +194,38 @@ ispioctl(sc_link, cmd, addr, flag, p)
 	struct ispsoftc *isp = sc_link->adapter_softc;
 	int s, chan, retval = ENOTTY;
 	
+	chan = (sc_link->scsipi_scsi.channel == SCSI_CHANNEL_ONLY_ONE)? 0 :
+	    sc_link->scsipi_scsi.channel;
+
 	switch (cmd) {
+	case SCBUSACCEL:
+	{
+		struct scbusaccel_args *sp = (struct scbusaccel_args *)addr;
+		if (IS_SCSI(isp) && sp->sa_lun == 0) {
+			int dflags = 0;
+			sdparam *sdp = SDPARAM(isp);
+
+			sdp += chan;
+			if (sp->sa_flags & SC_ACCEL_TAGS)
+				dflags |= DPARM_TQING;
+			if (sp->sa_flags & SC_ACCEL_WIDE)
+				dflags |= DPARM_WIDE;
+			if (sp->sa_flags & SC_ACCEL_SYNC)
+				dflags |= DPARM_SYNC;
+			s = splbio();
+			sdp->isp_devparam[sp->sa_target].dev_flags |= dflags;
+			dflags = sdp->isp_devparam[sp->sa_target].dev_flags;
+			sdp->isp_devparam[sp->sa_target].dev_update = 1;
+			isp->isp_update |= (1 << chan);
+			splx(s);
+			isp_prt(isp, ISP_LOGDEBUG1,
+			    "ispioctl: device flags 0x%x for %d.%d.X",
+			    dflags, chan, sp->sa_target);
+		}
+		retval = 0;
+		break;
+	}
 	case SCBUSIORESET:
-		chan = sc_link->scsipi_scsi.channel;
 		s = splbio();
 		if (isp_control(isp, ISPCTL_RESET_BUS, &chan))
 			retval = EIO;
@@ -539,7 +508,7 @@ isp_command_requeue(arg)
 	struct scsipi_xfer *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
 	int s = splbio();
-	switch (ispcmd_slow(xs)) {
+	switch (ispcmd(xs)) {
 	case SUCCESSFULLY_QUEUED:
 		isp_prt(isp, ISP_LOGINFO,
 		    "requeued commands for %d.%d", XS_TGT(xs), XS_LUN(xs));

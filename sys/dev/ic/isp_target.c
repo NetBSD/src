@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.7 2000/08/01 23:55:11 mjacob Exp $ */
+/* $NetBSD: isp_target.c,v 1.8 2000/08/08 22:58:31 mjacob Exp $ */
 /*
  * Machine and OS Independent Target Mode Code for the Qlogic SCSI/FC adapters.
  *
@@ -525,11 +525,9 @@ isp_target_async(isp, bus, event)
 		 */
 		MEMZERO(&msg, sizeof msg);
 		if (IS_FC(isp)) {
-			msg.nt_iid =
-			    ((fcparam *)isp->isp_param)->isp_loopid;
+			msg.nt_iid = FCPARAM(isp)->isp_loopid;
 		} else {
-			msg.nt_iid =
-			    ((sdparam *)isp->isp_param)->isp_initiator_id;
+			msg.nt_iid = SDPARAM(isp)->isp_initiator_id;
 		}
 		msg.nt_bus = bus;
 		msg.nt_msg[0] = MSG_BUS_DEV_RESET;
