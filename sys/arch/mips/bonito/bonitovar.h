@@ -1,7 +1,7 @@
-/*	$NetBSD: bonitovar.h,v 1.2 2002/01/09 00:43:38 thorpej Exp $	*/
+/*	$NetBSD: bonitovar.h,v 1.3 2002/01/09 00:44:06 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
