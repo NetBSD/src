@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.5 1997/09/28 13:31:45 drochner Exp $	 */
+/*	$NetBSD: exec.c,v 1.6 1999/01/28 20:21:24 christos Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,9 +42,7 @@
 /*
  * starts NetBSD a.out kernel needs lowlevel startup from startprog.S
  */
-
 #include <sys/param.h>
-#include <sys/exec_aout.h>
 #include <sys/reboot.h>
 #ifdef COMPAT_OLDBOOT
 #include <sys/disklabel.h>
@@ -52,6 +50,7 @@
 
 #include <lib/libsa/stand.h>
 
+#include "loadfile.h"
 #include "libi386.h"
 #include "bootinfo.h"
 
@@ -73,6 +72,7 @@ dev2major(devname, major)
 	return (-1);
 }
 #endif
+#define BOOT_NARGS	6
 
 extern struct btinfo_console btinfo_console;
 
@@ -82,127 +82,36 @@ exec_netbsd(file, loadaddr, boothowto)
 	physaddr_t      loadaddr;
 	int             boothowto;
 {
-	register int    io;
-	struct exec     x;
-	int             cc, magic;
-	physaddr_t      entry;
-	register physaddr_t cp;
-	u_long          boot_argv[6];
-
+	u_long          boot_argv[BOOT_NARGS];
+	int		fd;
 #ifdef COMPAT_OLDBOOT
 	char           *fsname, *devname;
 	int             unit, part;
 	const char     *filename;
 	int             bootdevnr;
+	u_long		marks[LOAD_MAX];
+	struct btinfo_symtab btinfo_symtab;
 #endif
 
 #ifdef	DEBUG
 	printf("exec: file=%s loadaddr=0x%lx\n", file, loadaddr);
 #endif
 
-	BI_ALLOC(5); /* ??? */
+	BI_ALLOC(6); /* ??? */
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
 
-	io = open(file, 0);
-	if (io < 0)
+	marks[LOAD_START] = loadaddr;
+	if ((fd = loadfile(file, marks)) == -1)
 		goto out;
 
-	/*
-	 * Read in the exec header, and validate it.
-	 */
-	if (read(io, (char *) &x, sizeof(x)) != sizeof(x))
-		goto shread;
-	magic = N_GETMAGIC(x);
+	marks[LOAD_END] = (((u_long) marks[LOAD_END] + sizeof(int) - 1)) &
+	    (-sizeof(int));
 
-	if ((magic != ZMAGIC) || (N_GETMID(x) != MID_MACHINE)) {
-#ifdef DEBUG
-		printf("invalid NetBSD kernel (%o/%d)\n", magic, N_GETMID(x));
-#endif
-		errno = EFTYPE;
-		goto closeout;
-	}
-	entry = x.a_entry & 0xffffff;
-
-	if (!loadaddr)
-		loadaddr = (entry & 0x100000);
-
-	cp = loadaddr;
-
-	/*
-	 * Leave a copy of the exec header before the text.
-	 * The kernel may use this to verify that the
-	 * symbols were loaded by this boot program.
-	 */
-	vpbcopy(&x, cp, sizeof(x));
-	cp += sizeof(x);
-	/*
-	 * Read in the text segment.
-	 */
-
-	printf("%ld", x.a_text);
-
-	if (pread(io, cp, x.a_text - sizeof(x)) != x.a_text - sizeof(x))
-		goto shread;
-	cp += x.a_text - sizeof(x);
-
-	/*
-	 * Read in the data segment.
-	 */
-
-	printf("+%ld", x.a_data);
-
-	if (pread(io, cp, x.a_data) != x.a_data)
-		goto shread;
-	cp += x.a_data;
-
-	/*
-	 * Zero out the BSS section.
-	 * (Kernel doesn't care, but do it anyway.)
-	 */
-
-
-	printf("+%ld", x.a_bss);
-
-	pbzero(cp, x.a_bss);
-	cp += x.a_bss;
-
-	/*
-	 * Read in the symbol table and strings.
-	 * (Always set the symtab size word.)
-	 */
-	vpbcopy(&x.a_syms, cp, sizeof(x.a_syms));
-	cp += sizeof(x.a_syms);
-
-	if (x.a_syms > 0) {
-
-		/* Symbol table and string table length word. */
-
-		printf("+[%ld", x.a_syms);
-
-		if (pread(io, cp, x.a_syms) != x.a_syms)
-			goto shread;
-		cp += x.a_syms;
-
-		read(io, &cc, sizeof(cc));
-
-		vpbcopy(&cc, cp, sizeof(cc));
-		cp += sizeof(cc);
-
-		/* String table.  Length word includes itself. */
-
-		printf("+%d]", cc);
-
-		cc -= sizeof(int);
-		if (cc <= 0)
-			goto shread;
-		if (pread(io, cp, cc) != cc)
-			goto shread;
-		cp += cc;
-	}
-	boot_argv[3] = (((u_int) cp + sizeof(int) - 1)) & (-sizeof(int));
-
-	printf("=0x%lx\n", cp - loadaddr);
+	btinfo_symtab.nsym = marks[LOAD_NSYM];
+	btinfo_symtab.ssym = marks[LOAD_SYM];
+	btinfo_symtab.esym = marks[LOAD_END];
+	BI_ADD(&btinfo_symtab, BTINFO_SYMTAB, sizeof(struct btinfo_symtab));
 
 	boot_argv[0] = boothowto;
 
@@ -216,7 +125,7 @@ exec_netbsd(file, loadaddr, boothowto)
 
 		if (strcmp(devname, "hd") == 0) {
 			/* generic BIOS disk, have to guess type */
-			struct open_file *f = &files[io];	/* XXX */
+			struct open_file *f = &files[fd];	/* XXX */
 
 			if (biosdisk_gettype(f) == DTYPE_SCSI)
 				devname = "sd";
@@ -250,26 +159,20 @@ exec_netbsd(file, loadaddr, boothowto)
 	bi_getbiosgeom();
 #endif
 	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
-	/*
-	 * boot_argv[3] = end (set above)
-	 */
+	boot_argv[3] = marks[LOAD_END];
 	boot_argv[4] = getextmem();
 	boot_argv[5] = getbasemem();
 
-	close(io);
+	close(fd);
 
 #ifdef DEBUG
-	printf("Start @ 0x%lx ...\n", entry);
+	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[LOAD_START],
+	    marks[LOAD_NSYM], marks[LOAD_SYM], marks[LOAD_END]);
 #endif
 
-	startprog(entry, 6, boot_argv, 0x90000);
+	startprog(marks[LOAD_START], BOOT_NARGS, boot_argv, 0x90000);
 	panic("exec returned");
 
-shread:
-	printf("exec: short read\n");
-	errno = EIO;
-closeout:
-	close(io);
 out:
 	BI_FREE();
 	bootinfo = 0;
