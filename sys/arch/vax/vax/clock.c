@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.14 1996/05/19 16:43:57 ragge Exp $  */
+/*      $NetBSD: clock.c,v 1.15 1996/07/10 23:48:42 ragge Exp $  */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -214,7 +214,7 @@ delay(i)
 	case VAX_750:
 	case VAX_78032:
 	case VAX_780:
-		mul = 1; /* <= 1 VUPS */
+		mul = 2; /* <= 2 VUPS */
 		break;
 #endif
 #if VAX650
