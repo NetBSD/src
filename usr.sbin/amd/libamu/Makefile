@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/09/18 03:54:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2003/10/19 06:11:38 lukem Exp $
 
 NOLINKLIB=	# defined
 
@@ -17,8 +17,12 @@ SRCS=	hasmntopt.c misc_rpc.c mount_fs.c mtab.c mtab_bsd.c \
 
 # some host specific compile time settings amd wants to have compiled in
 config_local.h: mkconf
-	@rm -f ${.TARGET}
-	sh ${.ALLSRC} `sh ${NETBSDSRCDIR}/sys/conf/osrelease.sh` > ${.TARGET}
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	rm -f ${.TARGET}
+	${_MKCMD}\
+	${HOST_SH} ${.ALLSRC} \
+	    `${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh` > ${.TARGET}
 
 CLEANFILES+=	config_local.h
 
