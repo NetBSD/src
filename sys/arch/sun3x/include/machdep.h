@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.7 1997/02/11 00:56:08 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.8 1997/03/17 19:03:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -95,7 +95,7 @@ struct reg;
 struct trapframe;
 
 extern int cold;
-extern int fpu_type;
+extern int fputype;
 extern int has_iocache;
 
 /* This is set by locore.s with the monitor's root ptr. */

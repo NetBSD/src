@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 1997/02/18 15:53:15 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 1997/03/17 19:03:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -105,7 +105,7 @@ extern char kernel_text[];
 extern char etext[];
 
 int	physmem;
-int	fpu_type;
+int	fputype;
 int	msgbufmapped;
 
 vm_offset_t vmmap;
@@ -401,7 +401,7 @@ setregs(p, pack, stack, retval)
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	if (fpu_type) {
+	if (fputype) {
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 	}
 	p->p_md.md_flags = 0;

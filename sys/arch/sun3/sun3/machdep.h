@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 1997/02/11 00:18:25 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.6 1997/03/17 19:03:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -81,7 +81,7 @@ struct trapframe;
 
 extern int cache_size;
 extern int cold;
-extern int fpu_type;
+extern int fputype;
 
 extern label_t *nofault;
 
