@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsd.c	8.7 (Berkeley) 2/22/94";*/
-static char *rcsid = "$Id: nfsd.c,v 1.12 1994/09/23 14:27:46 mycroft Exp $";
+static char *rcsid = "$Id: nfsd.c,v 1.13 1994/10/18 14:12:55 mycroft Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -239,7 +239,7 @@ main(argc, argv, envp)
 			continue;
 		}
 
-		setproctitle("nfsd-srv");
+		setproctitle("server");
 		nfssvc_flag = NFSSVC_NFSD;
 		nsd.nsd_nfsd = NULL;
 #ifdef KERBEROS
@@ -470,7 +470,7 @@ main(argc, argv, envp)
 	if (connect_type_cnt == 0)
 		exit(0);
 
-	setproctitle("nfsd-master");
+	setproctitle("master");
 
 	/*
 	 * Loop forever accepting connections and passing the sockets
