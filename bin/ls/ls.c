@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.45 2002/09/27 12:01:51 simonb Exp $	*/
+/*	$NetBSD: ls.c,v 1.46 2003/05/07 13:00:24 grant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.45 2002/09/27 12:01:51 simonb Exp $");
+__RCSID("$NetBSD: ls.c,v 1.46 2003/05/07 13:00:24 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ int f_accesstime;		/* use time of last access */
 int f_column;			/* columnated format */
 int f_columnacross;		/* columnated format, sorted across */
 int f_flags;			/* show flags associated with a file */
+int f_grouponly;		/* long listing without owner */
 int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
 int f_listdot;			/* list files beginning with . */
@@ -151,6 +152,9 @@ ls_main(int argc, char *argv[])
 			f_columnacross = f_longform = f_singlecol = f_stream =
 			    0;
 			break;
+		/* The -g option implies -l */
+		case 'g':
+			f_grouponly = 1;
 		case 'l':
 			f_longform = 1;
 			f_column = f_columnacross = f_singlecol = f_stream = 0;
@@ -196,8 +200,6 @@ ls_main(int argc, char *argv[])
 			break;
 		case 'f':
 			f_nosort = 1;
-			break;
-		case 'g':		/* Compatibility with 4.3BSD. */
 			break;
 		case 'i':
 			f_inode = 1;
