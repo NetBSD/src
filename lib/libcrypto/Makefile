@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2003/04/06 18:12:36 perry Exp $
+#	$NetBSD: Makefile,v 1.30 2003/04/17 00:32:22 thorpej Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -26,8 +26,6 @@ WARNS=0
 
 LIB=	crypto
 CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
-DPADD+=	${LIBCRYPT}
-LDADD+=	-lcrypt
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 
@@ -38,6 +36,11 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 
 # NetBSD local addition to des library.
 SRCS+=  rnd_keys.c
+
+# NetBSD's crypt(3) library, in lieu of the one included with OpenSSL,
+# since NetBSD's also supports MD5 and Blowfish passwords.
+.PATH: ${NETBSDSRCDIR}/lib/libcrypt
+SRCS+=	crypt.c md5crypt.c bcrypt.c
 
 # XXX
 .if ${OBJECT_FMT} == "ELF"
