@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.1 2002/04/22 21:05:21 ad Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.2 2002/04/24 15:08:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.1 2002/04/22 21:05:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.2 2002/04/24 15:08:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.1 2002/04/22 21:05:21 ad Exp $");
 int	icp_pci_match(struct device *, struct cfdata *, void *);
 void	icp_pci_attach(struct device *, struct device *, void *);
 void	icp_pci_enable_intr(struct icp_softc *);
-const struct	icp_pci_ident *icp_pci_find_ident(struct pci_attach_args *);
+int	icp_pci_find_class(struct pci_attach_args *);
 
 void	icp_pci_copy_cmd(struct icp_softc *, struct icp_ccb *);
 u_int8_t icp_pci_get_status(struct icp_softc *);
@@ -193,59 +193,19 @@ struct cfattach icp_pci_ca = {
 };
 
 struct icp_pci_ident {
-	u_short gpi_vendor;
+	u_short	gpi_vendor;
 	u_short	gpi_product;
 	u_short	gpi_class;
 } const icp_pci_ident[] = {
 	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_60x0,	ICP_PCI },
 	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6000B,	ICP_PCI },
 
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x10,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x20,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6530,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6550,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x17,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x27,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6537,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6557,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x15,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x25,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6535,	ICP_PCINEW },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6555,	ICP_PCINEW },
-
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x17RP,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x27RP,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6537RP,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6557RP,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x11RP,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x21RP,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x17RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x27RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6537RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6557RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x11RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x21RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x18RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x28RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x38RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x58RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6518RS,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_7x18RN,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_7x28RN,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_7x38RN,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_7x58RN,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x19RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_6x29RD,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_7x19RN,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_7x29RN,	ICP_MPR },
-	{ PCI_VENDOR_VORTEX,	PCI_PRODUCT_VORTEX_GDT_7x43RN,	ICP_MPR },
-
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_GDT_RAID1,	ICP_MPR },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_GDT_RAID2,	ICP_MPR },
 };
 
-const struct icp_pci_ident *
-icp_pci_find_ident(struct pci_attach_args *pa)
+int
+icp_pci_find_class(struct pci_attach_args *pa)
 {
 	const struct icp_pci_ident *gpi, *maxgpi;
 
@@ -255,9 +215,16 @@ icp_pci_find_ident(struct pci_attach_args *pa)
 	for (; gpi < maxgpi; gpi++)
 		if (PCI_VENDOR(pa->pa_id) == gpi->gpi_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == gpi->gpi_product)
-			return (gpi);
+			return (gpi->gpi_class);
 
-	return (NULL);
+	/*
+	 * ICP-Vortex only make RAID controllers, so we employ a heuristic
+	 * to match unlisted boards.
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VORTEX)
+		return (PCI_PRODUCT(pa->pa_id) < 0x100 ? ICP_PCINEW : ICP_MPR);
+
+	return (-1);
 }
 
 int
@@ -270,7 +237,7 @@ icp_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_I2O)
 		return (0);
 
-	return (icp_pci_find_ident(pa) != NULL);
+	return (icp_pci_find_class(pa) != -1);
 }
 
 void
@@ -282,8 +249,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t dpmemh, iomemh, ioh;
 	bus_addr_t dpmembase, iomembase, iobase;
 	bus_size_t dpmemsize, iomemsize, iosize;
-	u_int16_t prod;
-	u_int32_t status = 0;
+	u_int32_t status;
 #define	DPMEM_MAPPED		1
 #define	IOMEM_MAPPED		2
 #define	IO_MAPPED		4
@@ -292,23 +258,16 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 	u_int8_t protocol;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	const struct icp_pci_ident *gpi;
+
+	pa = aux;
+	status = 0;
+	icp = (struct icp_softc *)self;
+	icp->icp_class = icp_pci_find_class(pa);
 
 	printf(": ");
 
-	pa = aux;
-	icp = (struct icp_softc *)self;
-
-	prod = PCI_PRODUCT(pa->pa_id);
-	gpi = icp_pci_find_ident(pa);
-	icp->icp_class = gpi->gpi_class;
-
-	/* If we don't recognize it, determine class heuristically.  */
-	if (icp->icp_class == 0)
-		icp->icp_class = prod < 0x100 ? ICP_PCINEW : ICP_MPR;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL &&
-	    prod >= ICP_PCI_PRODUCT_FC)
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VORTEX &&
+	    PCI_PRODUCT(pa->pa_id) >= ICP_PCI_PRODUCT_FC)
 		icp->icp_class |= ICP_FC;
 
 	if (pci_mapreg_map(pa,
@@ -604,7 +563,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	status |= INTR_ESTABLISHED;
 
-	if (gpi->gpi_vendor == PCI_VENDOR_INTEL)
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL)
 		printf("Intel Storage RAID controller\n");
 	else
 		printf("ICP-Vortex RAID controller\n");
