@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.20 2001/04/04 11:22:27 wiz Exp $
+.\"	$NetBSD: diskless.8,v 1.21 2001/06/24 01:04:49 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -37,23 +37,24 @@ The ability to boot a machine over the network is useful for
 or
 .Em dataless
 machines, or as a temporary measure while repairing or
-re-installing filesystems on a local disk.
+re-installing file systems on a local disk.
 This file provides a general description of the interactions between
 a client and its server when a client is booting over the network.
 The general description is followed by specific instructions for
 configuring a server for diskless Sun clients.
-.Pp
 .Sh OPERATION
 When booting a system over the network, there are three
 phases of interaction between client and server:
 .Pp
 .Bl -tag -width 1.2 -compact
-.It 1.
+.It 1 .
 The PROM (or stage-1 bootstrap) loads a boot program.
-.It 2.
+.It 2 .
 The boot program loads a kernel.
-.It 3.
-The kernel does NFS mounts for root.
+.It 3 .
+The kernel does
+.Tn NFS
+mounts for root.
 .El
 .Pp
 Each of these phases are described in further detail below.
@@ -78,7 +79,7 @@ using a special PROM on the network card.
 In phase 2, the boot program loads a kernel.  Operation in
 this phase depends on the design of the boot program.
 (The design described here is the one used by Sun and
-.Nx Ns Tn /hp300 Ns .)
+.Nx Ns Tn /hp300 Ns . )
 The boot program:
 .Pp
 .Bl -tag -width 2.2 -compact
@@ -112,7 +113,9 @@ read calls on the kernel file handle.
 transfers control to the kernel entry point.
 .El
 .Pp
-In phase 3, the kernel does NFS mounts for root.
+In phase 3, the kernel does
+.Tn NFS
+mounts for root.
 The kernel repeats much of the work done by the boot program
 because there is no standard way for the boot program to pass
 the information it gathered on to the kernel.
@@ -149,10 +152,10 @@ This example will demonstrate how a Sun client
 might be configured -- other clients should be similar.
 .Pp
 Assuming the client's hostname is to be
-"myclient",
+.Dq myclient ,
 .Pp
 .Bl -tag -width 2.1 -compact
-.It 1.
+.It 1 .
 Add an entry to
 .Pa /etc/ethers
 corresponding to the client's ethernet address:
@@ -162,7 +165,7 @@ corresponding to the client's ethernet address:
 This will be used by
 .Xr rarpd 8 .
 .Pp
-.It 2.
+.It 2 .
 Assign an IP address for myclient in your
 .Pa /etc/hosts
 or DNS database:
@@ -170,7 +173,7 @@ or DNS database:
 192.197.96.12           myclient
 .Ed
 .Pp
-.It 3.
+.It 3 .
 If booting a Sun machine, ensure that
 .Pa /etc/inetd.conf
 is configured to run
@@ -190,10 +193,12 @@ See the
 .Xr rbootd 8
 manual page for more information.
 .Pp
-.It 4.
+.It 4 .
 If booting a SPARC machine, install a copy of the appropriate diskless boot
 loader (such as
-.Pa /usr/mdec/boot )
+.Pa /usr/mdec/boot
+or
+.Pa ofwboot.net )
 in the
 .Pa /tftpboot
 directory.
@@ -206,8 +211,8 @@ For example:
 # ln -s boot C0C5600C.SUN4
 .Ed
 .Pp
-For a Sun3 machine, the name would be just C0C5600C
-(the sun3 PROM does not append the architecture name). The name
+For a Sun3 or Ultra Sparc machine, the name would be just C0C5600C
+(there the PROM does not append the architecture name). The name
 used is architecture dependent, it simply has to match what the
 booting client's PROM wishes to it to be.
 If the client's PROM fails to fetch the expected file,
@@ -221,16 +226,19 @@ If booting an HP 300-series machine, ensure that the network boot program
 before installation)
 is installed in the directory
 .Pa /usr/mdec/rbootd .
-
-.It 5.
+.Pp
+.It 5 .
 Add myclient to the bootparams database
 .Pa /etc/bootparams :
 .Bd -literal -offset indent -compact
 myclient  root=server:/export/myclient/root \\
 	gateway=mygw:255.255.255.0
 .Ed
+and ensure that
+.Xr rpc.bootparamd 8
+is running.
 .Pp
-.It 6.
+.It 6 .
 Build the swap file for myclient:
 .Bd -literal -offset indent -compact
 # cd /export/myclient/root
@@ -238,19 +246,19 @@ Build the swap file for myclient:
 .Ed
 This creates a 16 Megabyte swap file.
 .Pp
-.It 7.
+.It 7 .
 Populate myclient's
 .Pa /
-filesystem on the server.  How this is done depends on the
+file system on the server.  How this is done depends on the
 client architecture and the version of the
 .Nx
 distribution.
 It can be as simple as copying and modifying the server's root
-filesystem, or perhaps you need to get those files out of the
+file system, or perhaps you need to get those files out of the
 standard binary distribution.
 .Pp
-.It 8.
-Export the required filesystems in
+.It 8 .
+Export the required file systems in
 .Pa /etc/exports :
 .Bd -literal -offset indent -compact
 /usr -ro myclient
@@ -263,7 +271,7 @@ Export the required filesystems in
 If the server and client are of the same architecture, then the client
 can share the server's
 .Pa /usr
-filesystem (as is done above).
+file system (as is done above).
 If not, you must build a properly fleshed out
 .Pa /usr
 partition for the client in some other place.
@@ -279,26 +287,30 @@ lines:
 /export/myclient -rw=myclient,root=myclient
 .Ed
 .Pp
-.It 9.
+Of course, in either case you will have to have an
+.Tn NFS
+server running on the server side.
+.Pp
+.It 9 .
 Copy and customize at least the following files in
 .Pa /export/myclient/root :
 .Bd -literal -offset indent -compact
 # cd /export/myclient/root/etc
-# cp fstab.nfs fstab
+# vi fstab
 # cp /etc/hosts hosts
-# echo myclient > myname
+# echo 'hostname="myclient"' >> rc.conf
 # echo "inet 192.197.96.12" > ifconfig.le0
 .Ed
 .Pp
 Note that "le0" above should be replaced with the name of
 the network interface that the client will use for booting.
 .Pp
-.It 10.
+.It 10 .
 Correct the critical mount points and the swap file in the client's
 .Pa /etc/fstab
 (which will be
 .Pa /export/myclient/root/etc/fstab )
-ie.
+i.e.
 .Bd -literal -offset indent -compact
 myserver:/export/myclient/root / nfs rw 0 0
 myserver:/usr /usr nfs rw 0 0
@@ -316,7 +328,9 @@ Ethernet addresses of known clients
 .It Pa /etc/bootparams
 client root pathname
 .It Pa /etc/exports
-exported NFS mount points
+exported
+.Tn NFS
+mount points
 .It Pa /etc/rbootd.conf
 configuration file for HP Remote Boot Daemon
 .It Pa /tftpboot
@@ -325,13 +339,13 @@ location of boot programs loaded by the Sun PROM
 location of boot programs loaded by the HP Boot ROM
 .El
 .Sh SEE ALSO
-.Xr rarpd 8 ,
-.Xr ethers 5 ,
-.Xr tftpd 8 ,
-.Xr rpc.bootparamd 8 ,
 .Xr bootparams 5 ,
-.Xr mountd 8 ,
+.Xr ethers 5 ,
 .Xr exports 5 ,
+.Xr mountd 8 ,
 .Xr nfsd 8 ,
+.Xr rarpd 8 ,
 .Xr rbootd 8 ,
-.Xr reboot 8
+.Xr reboot 8 ,
+.Xr rpc.bootparamd 8 ,
+.Xr tftpd 8
