@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.9.4.4 2002/07/15 16:17:53 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.9.4.5 2002/08/17 15:46:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -1224,6 +1224,7 @@ wm_start(struct ifnet *ifp)
 			 * Note: we currently only use 32-bit DMA
 			 * addresses.
 			 */
+			sc->sc_txdescs[nexttx].wtx_addr.wa_high = 0;
 			sc->sc_txdescs[nexttx].wtx_addr.wa_low =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
 			sc->sc_txdescs[nexttx].wtx_cmdlen = cksumcmd |
