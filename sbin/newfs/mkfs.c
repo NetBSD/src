@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.56 2001/09/24 08:21:44 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.57 2001/10/14 01:38:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.56 2001/09/24 08:21:44 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.57 2001/10/14 01:38:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.56 2001/09/24 08:21:44 lukem Exp $");
 #include <ufs/ffs/ffs_extern.h>
 #include <sys/disklabel.h>
 
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -1159,14 +1160,14 @@ rdfs(daddr_t bno, int size, void *bf)
 	offset = bno;
 	offset *= sectorsize;
 	if (lseek(fsi, offset, SEEK_SET) < 0) {
-		printf("seek error: %d\n", bno);
-		perror("rdfs");
+		printf("rdfs: seek error for sector %d: %s\n",
+		    bno, strerror(errno));
 		exit(33);
 	}
 	n = read(fsi, bf, size);
 	if (n != size) {
-		printf("read error: %d\n", bno);
-		perror("rdfs");
+		printf("rdfs: read error for sector %d: %s\n",
+		    bno, strerror(errno));
 		exit(34);
 	}
 }
@@ -1189,14 +1190,14 @@ wtfs(daddr_t bno, int size, void *bf)
 	offset = bno;
 	offset *= sectorsize;
 	if (lseek(fso, offset, SEEK_SET) < 0) {
-		printf("seek error: %d\n", bno);
-		perror("wtfs");
+		printf("wtfs: seek error for sector %d: %s\n",
+		    bno, strerror(errno));
 		exit(35);
 	}
 	n = write(fso, bf, size);
 	if (n != size) {
-		printf("write error: %d\n", bno);
-		perror("wtfs");
+		printf("wtfs: write error for sector %d: %s\n",
+		    bno, strerror(errno));
 		exit(36);
 	}
 }
