@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.38 1998/10/01 15:58:53 erh Exp $	*/
+/*	$NetBSD: signal.h,v 1.39 1998/11/13 12:06:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -154,8 +154,8 @@ typedef struct {
 /*
  * Macro for manipulating signal masks.
  */
-#define __sigmask(n)		(1 << (((n) - 1) & 31))
-#define	__sigword(n)		(((n) - 1) >> 5)
+#define __sigmask(n)		(1 << (((u_int32_t)(n) - 1) & 31))
+#define	__sigword(n)		(((u_int32_t)(n) - 1) >> 5)
 #define	__sigaddset(s, n)	((s)->__bits[__sigword(n)] |= __sigmask(n))
 #define	__sigdelset(s, n)	((s)->__bits[__sigword(n)] &= ~__sigmask(n))
 #define	__sigismember(s, n)	(((s)->__bits[__sigword(n)] & __sigmask(n)) != 0)
