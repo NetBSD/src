@@ -1,7 +1,7 @@
-/* $NetBSD: bus_dma.c,v 1.7 1998/01/09 06:37:04 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.8 1998/01/19 03:12:20 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7 1998/01/09 06:37:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 1998/01/19 03:12:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,6 +402,15 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	bus_addr_t addr;
 	int curseg, s;
 
+	/*
+	 * If we're only mapping 1 segment, use K0SEG, to avoid
+	 * TLB thrashing.
+	 */
+	if (nsegs == 1) {
+		*kvap = (caddr_t)ALPHA_PHYS_TO_K0SEG(segs[0].ds_addr);
+		return (0);
+	}
+
 	size = round_page(size);
 
 	s = splimp();
@@ -447,6 +456,13 @@ _bus_dmamem_unmap(t, kva, size)
 	if ((u_long)kva & PGOFSET)
 		panic("_bus_dmamem_unmap");
 #endif
+
+	/*
+	 * Nothing to do if we mapped it with K0SEG.
+	 */
+	if (kva >= (caddr_t)ALPHA_K0SEG_BASE &&
+	    kva <= (caddr_t)ALPHA_K0SEG_END)
+		return;
 
 	size = round_page(size);
 	s = splimp();
