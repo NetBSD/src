@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.57 1999/01/26 17:05:41 drochner Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.58 1999/01/28 00:05:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -122,7 +122,7 @@ extern	int db_radix;		/* XXX: for non-standard '%r' format */
  * local prototypes
  */
 
-static int	 kprintf __P((const char *, int, struct tty *, 
+static int	 kprintf __P((const char *, int, void *, 
 				char *, va_list));
 static void	 putchar __P((int, int, struct tty *));
 static void	 klogpri __P((int));
@@ -634,6 +634,55 @@ vsprintf(buf, fmt, ap)
 }
 
 /*
+ * snprintf: print a message to a buffer
+ */
+int
+#ifdef __STDC__
+snprintf(char *buf, size_t size, const char *fmt, ...)
+#else
+snprintf(buf, size, fmt, va_alist)
+        char *buf;
+        size_t size;
+        const char *cfmt;
+        va_dcl
+#endif
+{
+	int retval;
+	va_list ap;
+	char *p;
+
+	if (size < 1)
+		return (-1);
+	p = buf + size - 1;
+	va_start(ap, fmt);
+	retval = kprintf(fmt, TOBUFONLY, &p, buf, ap);
+	va_end(ap);
+	*(p) = 0;	/* null terminate */
+	return(retval);
+}
+
+/*
+ * vsnprintf: print a message to a buffer [already have va_alist]
+ */
+int
+vsnprintf(buf, size, fmt, ap)
+        char *buf;
+        size_t size;
+        const char *fmt;
+        va_list ap;
+{
+	int retval;
+	char *p;
+
+	if (size < 1)
+		return (-1);
+	p = buf + size - 1;
+	retval = kprintf(fmt, TOBUFONLY, &p, buf, ap);
+	*(p) = 0;	/* null terminate */
+	return(retval);
+}
+
+/*
  * bitmask_snprintf: print a kernel-printf "%b" message to a buffer
  *
  * => returns pointer to the buffer
@@ -852,17 +901,26 @@ out:
 	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
 	    (u_long)va_arg(ap, u_int))
 
-#define KPRINTF_PUTCHAR(C) \
-	(oflags == TOBUFONLY) ? *sbuf++ = (C) : putchar((C), oflags, tp);
+#define KPRINTF_PUTCHAR(C) {									\
+	if (oflags == TOBUFONLY) {									\
+		if ((vp != NULL) && (sbuf == tailp)) {					\
+			ret += 1;		/* indicate error */				\
+			goto overflow;										\
+		}														\
+		*sbuf++ = (C);											\
+	} else {													\
+		putchar((C), oflags, (struct tty *)vp);					\
+	}															\
+}
 
 /*
  * Guts of kernel printf.  Note, we already expect to be in a mutex!
  */
 static int
-kprintf(fmt0, oflags, tp, sbuf, ap)
+kprintf(fmt0, oflags, vp, sbuf, ap)
 	const char *fmt0;
 	int oflags;
-	struct tty *tp;
+	void *vp;
 	char *sbuf;
 	va_list ap;
 {
@@ -883,6 +941,10 @@ kprintf(fmt0, oflags, tp, sbuf, ap)
 	int size;		/* size of converted field or string */
 	char *xdigs;		/* digits for [xX] conversion */
 	char buf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
+	char *tailp;	/* tail pointer for snprintf */
+
+	if (oflags == TOBUFONLY)
+		tailp = (vp != NULL) ?  *(char **)vp : NULL;
 
 	cp = NULL;	/* XXX: shutup gcc */
 	size = 0;	/* XXX: shutup gcc */
@@ -897,8 +959,8 @@ kprintf(fmt0, oflags, tp, sbuf, ap)
 	 */
 	for (;;) {
 		while (*fmt != '%' && *fmt) {
-			KPRINTF_PUTCHAR(*fmt++);
 			ret++;
+			KPRINTF_PUTCHAR(*fmt++);
 		}
 		if (*fmt == 0)
 			goto done;
@@ -918,7 +980,7 @@ reswitch:	switch (ch) {
 		case ':': 
 			if (oflags != TOBUFONLY) {
 				cp = va_arg(ap, char *);
-				kprintf(cp, oflags, tp, 
+				kprintf(cp, oflags, vp, 
 					NULL, va_arg(ap, va_list));
 			}
 			continue;	/* no output */
@@ -941,19 +1003,19 @@ reswitch:	switch (ch) {
 
 			z = buf;
 			while (*z) {
-				KPRINTF_PUTCHAR(*z++);
 				ret++;
+				KPRINTF_PUTCHAR(*z++);
 			}
 
 			if (_uquad) {
 				tmp = 0;
 				while ((n = *b++) != 0) {
 					if (_uquad & (1 << (n - 1))) {
-						KPRINTF_PUTCHAR(tmp ? ',':'<');
 						ret++;
+						KPRINTF_PUTCHAR(tmp ? ',':'<');
 						while ((n = *b) > ' ') {
-							KPRINTF_PUTCHAR(n);
 							ret++;
+							KPRINTF_PUTCHAR(n);
 							b++;
 						}
 						tmp = 1;
@@ -963,8 +1025,8 @@ reswitch:	switch (ch) {
 					}
 				}
 				if (tmp) {
-					KPRINTF_PUTCHAR('>');
 					ret++;
+					KPRINTF_PUTCHAR('>');
 				}
 			}
 			continue;	/* no output */
@@ -1282,6 +1344,9 @@ number:			if ((dprec = prec) >= 0)
 		else if (flags & HEXPREFIX)
 			realsz+= 2;
 
+		/* adjust ret */
+		ret += width > realsz ? width : realsz;
+
 		/* right-adjusting blank padding */
 		if ((flags & (LADJUST|ZEROPAD)) == 0) {
 			n = width - realsz;
@@ -1318,12 +1383,12 @@ number:			if ((dprec = prec) >= 0)
 			while (n-- > 0)
 				KPRINTF_PUTCHAR(' ');
 		}
-
-		/* finally, adjust ret */
-		ret += width > realsz ? width : realsz;
-
 	}
+
 done:
+	if ((oflags == TOBUFONLY) && (vp != NULL))
+		*(char **)vp = sbuf;
+overflow:
 	return (ret);
 	/* NOTREACHED */
 }
