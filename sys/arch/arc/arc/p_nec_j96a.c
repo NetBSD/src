@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_j96a.c,v 1.3 2002/12/09 13:36:27 tsutsui Exp $	*/
+/*	$NetBSD: p_nec_j96a.c,v 1.4 2003/01/31 22:07:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2002 Izumi Tsutsui.  All rights reserved.
@@ -43,7 +43,7 @@ struct platform platform_nec_j96a = {
 	c_jazz_eisa_mainbusdevs,
 	platform_generic_match,
 	c_nec_eisa_init,
-	c_jazz_eisa_cons_init,
+	c_nec_eisa_cons_init,
 	jazzio_reset,
 	c_nec_jazz_set_intr,
 };
