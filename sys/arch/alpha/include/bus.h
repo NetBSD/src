@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.43 2001/06/21 12:15:03 wiz Exp $ */
+/* $NetBSD: bus.h,v 1.44 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -506,7 +506,6 @@ do {									\
  */
 #define	DMAMAP_NO_COALESCE	0x40000000	/* don't coalesce adjacent
 						   segments */
-#define	DMAMAP_HAS_SGMAP	0x80000000	/* sgva/len are valid */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -596,6 +595,16 @@ struct alpha_bus_dma_tag {
 	struct alpha_sgmap *_sgmap;
 
 	/*
+	 * The SGMAP MMU implements a prefetch FIFO to keep data
+	 * moving down the pipe, when doing host->bus DMA writes.
+	 * The threshold (distance until the next page) used to
+	 * trigger the prefetch is differnet on different chipsets,
+	 * and we need to know what it is in order to know whether
+	 * or not to allocate a spill page.
+	 */
+	bus_size_t _pfthresh;
+
+	/*
 	 * Internal-use only utility methods.  NOT TO BE USED BY
 	 * MACHINE-INDEPENDENT CODE!
 	 */
@@ -677,15 +686,6 @@ struct alpha_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-
-	/*
-	 * This is used only for SGMAP-mapped DMA, but we keep it
-	 * here to avoid pointless indirection.
-	 */
-	int		_dm_pteidx;	/* PTE index */
-	int		_dm_ptecnt;	/* PTE count */
-	u_long		_dm_sgva;	/* allocated sgva */
-	bus_size_t	_dm_sgvalen;	/* svga length */
 
 	/*
 	 * Private cookie to be used by the DMA back-end.
