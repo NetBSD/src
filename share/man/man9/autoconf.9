@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.13 2002/10/14 13:43:15 wiz Exp $
+.\"     $NetBSD: autoconf.9,v 1.14 2003/01/07 17:11:28 jonb Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .Sh SYNOPSIS
 .Fd #include \*[Lt]sys/param.h\*[Gt]
 .Fd #include \*[Lt]sys/device.h\*[Gt]
-.Fd #include \*[Lt]sys/error.h\*[Gt]
+.Fd #include \*[Lt]sys/errno.h\*[Gt]
 .Ft struct cfdata *
 .Fn config_search "cfmatch_t func" "struct device *parent" "void *aux"
 .Ft struct device *
