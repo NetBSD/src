@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.26 2003/06/29 22:29:10 fvdl Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.27 2003/08/25 09:24:53 drochner Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.26 2003/06/29 22:29:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.27 2003/08/25 09:24:53 drochner Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -436,7 +436,6 @@ coda_nb_statfs(vfsp, sbp, p)
 	return(EINVAL);
     }
     
-    memset(sbp, 0, sizeof(struct statfs));
     /* XXX - what to do about f_flags, others? --bnoble */
     /* Below This is what AFS does
     	#define NB_SFS_SIZ 0x895440
