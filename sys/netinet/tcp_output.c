@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.60 2000/10/17 03:06:43 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.61 2000/10/19 20:23:00 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -210,7 +210,7 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 	if (inp)
 		rt = in_pcbrtentry(inp);
 #endif
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 	if (in6p)
 		rt = in6_pcbrtentry(in6p);
 #endif
@@ -272,7 +272,7 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 	} else
 #endif
 	if (in6p && tp->t_family == AF_INET6) {
-#if defined(IPSEC) && !defined(TCP6)
+#ifdef IPSEC
 		size -= ipsec6_hdrsiz_tcp(tp);
 #endif
 		size -= ip6_optlen(in6p);
@@ -627,7 +627,7 @@ send:
 		if (tp->t_inpcb)
 			rt = in_pcbrtentry(tp->t_inpcb);
 #endif
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 		if (tp->t_in6pcb)
 			rt = in6_pcbrtentry(tp->t_in6pcb);
 #endif
