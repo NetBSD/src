@@ -1682,9 +1682,9 @@
 	    (match_operand:SI 3 "arm_rhs_operand" "rI,rI")])
 	  (match_operand:SI 1 "s_register_operand" "0,?r")]))
    (clobber (reg:CC 24))]
-  "GET_CODE (operands[1]) != REG
+  "0 && (GET_CODE (operands[1]) != REG
    || (REGNO(operands[1]) != FRAME_POINTER_REGNUM
-       && REGNO(operands[1]) != ARG_POINTER_REGNUM)"
+       && REGNO(operands[1]) != ARG_POINTER_REGNUM))"
   "*
 {
   enum rtx_code code = GET_CODE (operands[4]);
