@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.146 2003/08/07 16:31:48 agc Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.147 2003/08/11 21:18:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.146 2003/08/07 16:31:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.147 2003/08/11 21:18:19 fvdl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -888,7 +888,8 @@ psignal1(struct proc *p, int signum,
 		SCHED_LOCK(s);
 
 	/* XXXUPSXXX LWPs might go to sleep without passing signal handling */ 
-	if (p->p_nrlwps > 0 && (p->p_stat != SSTOP)) {
+	if (p->p_nrlwps > 0 && (p->p_stat != SSTOP) 
+	    && !((p->p_flag & P_SA) && (p->p_sa->sa_idle != NULL))) {
 		/*
 		 * At least one LWP is running or on a run queue. 
 		 * The signal will be noticed when one of them returns 
@@ -931,8 +932,7 @@ psignal1(struct proc *p, int signum,
 			}
 		}
 		if (p->p_stat == SACTIVE) {
-			/* All LWPs must be sleeping */
-			KDASSERT(((p->p_flag & P_SA) == 0) || (l != NULL));
+		
 
 			if (l != NULL && (p->p_flag & P_TRACED))
 				goto run;
