@@ -42,11 +42,7 @@ extern char  csmsg[];		/* error message for chrsave */
 
 extern	char *	optarg;
 extern	int	optind;
-#ifdef	__STDC__
-extern	int	getopt(int, char **, char *);
-#else
 extern	int	getopt();
-#endif
 
 #ifdef	__STDC__
 #include <stdlib.h>
