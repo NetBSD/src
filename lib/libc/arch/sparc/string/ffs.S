@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs.S,v 1.4 1997/07/16 14:37:52 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,14 +37,16 @@
  * SUCH DAMAGE.
  *
  * from: Header: ffs.s,v 1.3 92/07/07 00:23:57 torek Exp
- * $Id: ffs.S,v 1.3 1996/11/16 20:53:31 pk Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
-#endif  /* LIBC_SCCS and not lint */
-
 #include <machine/asm.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: ffs.S,v 1.4 1997/07/16 14:37:52 christos Exp $")
+#endif
+#endif  /* LIBC_SCCS and not lint */
 
 /*
  * ffs returns the number of the rightmost bit set in its argument,

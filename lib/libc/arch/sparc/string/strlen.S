@@ -1,3 +1,5 @@
+/*	$NetBSD: strlen.S,v 1.3 1997/07/16 14:37:52 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,14 +37,16 @@
  * SUCH DAMAGE.
  *
  * from: Header: strlen.s,v 1.1 92/06/25 12:52:47 torek Exp
- * $Id: strlen.S,v 1.2 1996/11/16 20:53:32 pk Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)strlen.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
-
 #include <machine/asm.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	.asciz "@(#)strlen.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: strlen.S,v 1.3 1997/07/16 14:37:52 christos Exp $")
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 ENTRY(strlen)
 	add	%o0, 1, %o1	! save starting point + 1

@@ -1,3 +1,5 @@
+/*	$NetBSD: pipe.S,v 1.2 1997/07/16 14:37:58 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,12 +37,16 @@
  * SUCH DAMAGE.
  *
  * from: Header: pipe.s,v 1.1 91/07/06 13:05:58 torek Exp
- * $Id: pipe.S,v 1.1 1993/10/07 00:22:19 cgd Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#include <machine/asm.h>
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)pipe.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#else
+	RCSID("$NetBSD: pipe.S,v 1.2 1997/07/16 14:37:58 christos Exp $")
+#endif
+#endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: fork.S,v 1.6 1997/07/16 14:37:30 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,12 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fork.s	5.1 (Berkeley) 4/23/90
- *	$Id: fork.S,v 1.5 1994/01/27 15:02:38 mycroft Exp $
  */
 
+#include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	.text
-	.asciz "$Id: fork.S,v 1.5 1994/01/27 15:02:38 mycroft Exp $"
+	RCSID("$NetBSD: fork.S,v 1.6 1997/07/16 14:37:30 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
