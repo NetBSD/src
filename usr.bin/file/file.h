@@ -1,8 +1,8 @@
-/*	$NetBSD: file.h,v 1.10 1997/01/28 00:49:41 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.11 1997/09/30 17:00:40 is Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
- * @(#)$NetBSD: file.h,v 1.10 1997/01/28 00:49:41 christos Exp $
+ * @(#)$NetBSD: file.h,v 1.11 1997/09/30 17:00:40 is Exp $
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -37,7 +37,7 @@ typedef unsigned int uint32;
 #ifndef HOWMANY
 # define HOWMANY 8192		/* how much of the file to look at */
 #endif
-#define MAXMAGIS 1000		/* max entries in /etc/magic */
+#define MAXMAGIS 1000		/* max entries in MAGIC */
 #define MAXDESC	50		/* max leng of text description */
 #define MAXstring 32		/* max leng of "string" types */
 
