@@ -5,6 +5,7 @@
 # Alternately, if you discover you've got the wrong time zone, you can just
 #	zic -l rightzone
 
+# This line has been moved to /usr/src/etc/Makefile
 LOCALTIME=	US/Pacific
 
 # If you want something other than Eastern United States time as a template
@@ -132,8 +133,6 @@ right_posix: right_only other_two
 realinstall: ${DATA} ${REDO}
 	(cd ${.CURDIR}/datfiles; \
 	    ../obj/zic -d ${TZDIR} -p ${POSIXRULES})
-	/bin/rm -f ${DESTDIR}/etc/localtime
-	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	chown -R ${BINOWN}.${BINGRP} ${TZDIR}
 	chmod -R a-w ${TZDIR}
 
