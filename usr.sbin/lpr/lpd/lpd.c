@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.8 1996/09/21 15:57:22 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -98,6 +98,7 @@ static char sccsid[] = "@(#)lpd.c	8.4 (Berkeley) 4/17/94";
 #include "extern.h"
 
 int	lflag;				/* log requests flag */
+int	sflag;				/* secure (no inet) flag */
 int	from_remote;			/* from remote socket */
 
 static void       reapchild __P((int));
@@ -134,6 +135,9 @@ main(argc, argv)
 				break;
 			case 'l':
 				lflag++;
+				break;
+			case 's':
+				sflag++;
 				break;
 			}
 	}
@@ -200,7 +204,10 @@ main(argc, argv)
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
 	listen(funix, 5);
-	finet = socket(AF_INET, SOCK_STREAM, 0);
+	if (!sflag)
+		finet = socket(AF_INET, SOCK_STREAM, 0);
+	else
+		finet = -1;	/* pretend we couldn't open TCP socket. */
 	if (finet >= 0) {
 		struct servent *sp;
 
@@ -261,7 +268,8 @@ main(argc, argv)
 			signal(SIGQUIT, SIG_IGN);
 			signal(SIGTERM, SIG_IGN);
 			(void) close(funix);
-			(void) close(finet);
+			if (!sflag)
+				(void) close(finet);
 			dup2(s, 1);
 			(void) close(s);
 			if (domain == AF_INET) {
