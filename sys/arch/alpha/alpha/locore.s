@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 1995/03/09 12:05:34 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 1995/03/24 15:07:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -81,22 +81,8 @@ NESTED(__start,1,0,ra,0,0)
 	CALL(pal_wrvptptr)
 
 	/*
-	 * Switch to proc0's PCB, which is at U_PCB off of proc0paddr,
-	 * and map its upages in at UADDR.
+	 * Switch to proc0's PCB, which is at U_PCB off of proc0paddr.
 	 */
-	lda	t0, proc0
-	CONST(UPAGES, t1)			/* t1 = # of pages to map */
-	lda	t2, P_MD_UPTE(t0)		/* t2 = &proc0->p_md.md_upte */
-	ldq	t3, Sysmap			/* t3 = &Sysmap[UMAPPING] */
-	lda	t3, (SYSMAP_UPTES * 8)(t3)
-5:
-	ldq	t0, 0(t2)			/* load pte from md_upte */
-	addq	t2, 8, t2			/* increment "from" pointer */
-	stq	t0, 0(t3)			/* store pte to Sysmap */
-	addq	t3, 8, t3			/* increment "to" pointer */
-	subq	t1, 1, t1			/* decrement number to do */
-	bne	t1, 5b
-	
 	lda	t0,proc0			/* get phys addr of pcb */
 	ldq	a0,P_MD_PCBPADDR(t0)
 	call_pal PAL_OSF1_swpctx
@@ -720,39 +706,15 @@ LEAF(restorefpstate, 1)
 /**************************************************************************/
 
 /*
- * copykstack: Copy a process's kernel stack
- *
- * Arguments:
- *	a0	'struct user *' of new process
- */
-
-	.set	at
-LEAF(copykstack, 1)
-	SETGP(pv)
-	mov	sp, t0			/* t0 = old stack address ("from") */
-	subq	t0, UADDR, t1		/* compute offset from U to stack */
-	addq	a0, t1, t1		/* t1 = new stack address ("to") */
-	lda	t2, KSTACKTOP
-	subq	t2, sp, t2		/* t2 = number of bytes to copy */
-
-	ble	t2, 2f			/* make sure we have work to do */
-1:
-	subq	t2, 8, t2		/* mark 8 as having been copied */
-	ldq	t3, 0(t0)		/* bring in a quad of the stack */
-	addq	t0, 8, t0		/* increment the "from" pointer */
-	stq	t3, 0(t1)		/* store the quad */
-	addq	t1, 8, t1		/* increment the "to" pointer */
-	bgt	t2, 1b
-2:
-
-/*
  * savectx: save process context, i.e. callee-saved registers
  *
  * Note that savectx() only works for processes other than curproc,
- * since cpu_switch will copy over the info saved here.
+ * since cpu_switch will copy over the info saved here.  (It _can_
+ * sanely be used for curproc iff cpu_switch won't be called again, e.g.
+ * from if called from boot().)
  *
  * Arguments:
- *	a0	'struct user *' of process who needs context saved
+ *	a0	'struct user *' of the process that needs its context saved
  *
  * Return:
  *	v0	0.  (note that for child processes, it seems
@@ -760,7 +722,7 @@ LEAF(copykstack, 1)
  *		in the PCB is set to the return address from savectx().)
  */
 
-XLEAF(savectx, 2)
+LEAF(savectx, 1)
 	br	pv, 1f
 1:	SETGP(pv)
 	stq	sp, U_PCB_KSP(a0)		/* store sp */
@@ -777,7 +739,7 @@ XLEAF(savectx, 2)
 
 	mov	zero, v0
 	RET
-	END(copykstack)
+	END(savectx)
 
 /**************************************************************************/
 
@@ -815,7 +777,8 @@ LEAF(idle, 0)
 LEAF(cpu_switch, 0)
 	SETGP(pv)
 	/* do an inline savectx(), to save old context */
-	lda	a0, UADDR
+	ldq	a0, curproc
+	ldq	a0, P_ADDR(a0)
 	/* NOTE: ksp is stored by the swpctx */
 	stq	s0, U_PCB_CONTEXT+(0 * 8)(a0)	/* store s0 - s6 */
 	stq	s1, U_PCB_CONTEXT+(1 * 8)(a0)
@@ -883,19 +846,6 @@ sw1:
 	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
 	stq	t5, curpcb			/* and store it in curpcb */
 
-	/* Replace the PTE's to map the u struct. */
-	CONST(UPAGES, t1)			/* t1 = # of pages to map */
-	lda	t2, P_MD_UPTE(t4)		/* t2 = &p->p_md.md_upte */
-	ldq	t3, Sysmap			/* t3 = &Sysmap[UMAPPING] */
-	lda	t3, (SYSMAP_UPTES * 8)(t3)
-6:
-	ldq	t0, 0(t2)			/* load pte from md_upte */
-	addq	t2, 8, t2			/* increment "from" pointer */
-	stq	t0, 0(t3)			/* store pte to Sysmap */
-	addq	t3, 8, t3			/* increment "to" pointer */
-	subq	t1, 1, t1			/* decrement number to do */
-	bne	t1, 6b
-
 	/*
 	 * Do the context swap, and invalidate old TLB entries (XXX).
 	 * XXX should do the ASN thing, and therefore not have to invalidate.
@@ -913,7 +863,8 @@ sw1:
 	 * Now running on the new u struct.
 	 * Restore registers and return.
 	 */
-	lda	t0, UADDR
+	ldq	t0, curproc
+	ldq	t0, P_ADDR(t0)
 	/* NOTE: ksp is restored by the swpctx */
 	ldq	s0, U_PCB_CONTEXT+(0 * 8)(t0)		/* restore s0 - s6 */
 	ldq	s1, U_PCB_CONTEXT+(1 * 8)(t0)
@@ -932,6 +883,22 @@ sw1:
 	END(cpu_switch)
 
 /*
+ * proc_trampoline()
+ *
+ * Arrange for a function to be invoked neatly, after a cpu_switch().
+ *
+ * Invokes the function specified by the s0 register with the return
+ * address specified by the s1 register and with one argument, a
+ * pointer to the executing process's proc structure.
+ */
+LEAF(proc_trampoline, 0)
+	mov	s0, pv
+	mov	s1, ra
+	ldq	a0, curproc
+	jmp	zero, (pv)
+	END(proc_trampoline)
+
+/*
  * switch_exit(struct proc *p)
  * Make a the named process exit.  Partially switch to proc0, unmap
  * the old proc's user struct, and jump into the middle of cpu_switch
@@ -948,19 +915,6 @@ LEAF(switch_exit, 1)
 	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
 	stq	t5, curpcb			/* and store it in curpcb */
 	
-	/* Replace the PTE's to map the u struct. */
-	CONST(UPAGES, t1)			/* t1 = # of pages to map */
-	lda	t2, P_MD_UPTE(t4)		/* t2 = &p->p_md.md_upte */
-	ldq	t3, Sysmap			/* t3 = &Sysmap[UMAPPING] */
-	lda	t3, (SYSMAP_UPTES * 8)(t3)
-5:
-	ldq	t0, 0(t2)			/* load pte from md_upte */
-	addq	t2, 8, t2			/* increment "from" pointer */
-	stq	t0, 0(t3)			/* store pte to Sysmap */
-	addq	t3, 8, t3			/* increment "to" pointer */
-	subq	t1, 1, t1			/* decrement number to do */
-	bne	t1, 5b
-
 	/*
 	 * Do the context swap, and invalidate old TLB entries (XXX).
 	 * XXX should do the ASN thing, and therefore not have to invalidate.
@@ -1041,12 +995,14 @@ NESTED(copyinstr, 4, 16, ra, 0, 0)
 	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(copystr)				/* do the copy.		     */
 	.set noat
-	lda	at_reg, UADDR			/* kill the fault handler.   */
+	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
@@ -1063,12 +1019,14 @@ NESTED(copyoutstr, 4, 16, ra, 0, 0)
 	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(copystr)				/* do the copy.		     */
 	.set noat
-	lda	at_reg, UADDR			/* kill the fault handler.   */
+	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
@@ -1114,12 +1072,14 @@ NESTED(copyin, 3, 16, ra, 0, 0)
 	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(bcopy)				/* do the copy.		     */
 	.set noat
-	lda	at_reg, UADDR			/* kill the fault handler.   */
+	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
@@ -1136,12 +1096,14 @@ NESTED(copyout, 3, 16, ra, 0, 0)
 	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(bcopy)				/* do the copy.		     */
 	.set noat
-	lda	at_reg, UADDR			/* kill the fault handler.   */
+	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
@@ -1174,13 +1136,15 @@ XLEAF(fuiword, 1)
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	v0, 0(a0)
 	zap	v0, 0xf0, v0
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	RET
@@ -1194,12 +1158,14 @@ XLEAF(fuisword, 1)
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	RET
@@ -1213,12 +1179,14 @@ XLEAF(fuibyte, 1)
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	RET
@@ -1232,12 +1200,14 @@ LEAF(suword, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	stq	a1, 0(a0)			/* do the wtore. */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	mov	zero, v0
@@ -1252,12 +1222,14 @@ LEAF(suiword, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	call_pal PAL_OSF1_imb			/* sync instruction stream */
@@ -1272,12 +1244,14 @@ LEAF(susword, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	mov	zero, v0
@@ -1291,12 +1265,14 @@ LEAF(suisword, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	call_pal PAL_OSF1_imb			/* sync instruction stream */
@@ -1312,7 +1288,8 @@ LEAF(subyte, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	zap	a1, 0xfe, a1			/* kill arg's high bytes */
@@ -1322,7 +1299,8 @@ LEAF(subyte, 2)
 	or	t0, a1, a1			/* put the result together */
 	stq_u	a1, 0(a0)			/* and store it. */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	mov	zero, v0
@@ -1336,7 +1314,8 @@ LEAF(suibyte, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	zap	a1, 0xfe, a1			/* kill arg's high bytes */
@@ -1346,7 +1325,8 @@ LEAF(suibyte, 2)
 	or	t0, a1, a1			/* put the result together */
 	stq_u	a1, 0(a0)			/* and store it. */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	call_pal PAL_OSF1_imb			/* sync instruction stream */
@@ -1376,12 +1356,14 @@ LEAF(fuswintr, 2)
 	beq	t1, fswintrberr			/* if it's not, error out. */
 	lda	t0, fswintrberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	RET
@@ -1394,12 +1376,14 @@ LEAF(suswintr, 2)
 	beq	t1, fswintrberr			/* if it's not, error out. */
 	lda	t0, fswintrberr
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	lda	at_reg, UADDR
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	mov	zero, v0

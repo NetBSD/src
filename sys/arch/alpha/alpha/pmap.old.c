@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.old.c,v 1.2 1995/03/08 00:38:53 cgd Exp $	*/
+/*	$NetBSD: pmap.old.c,v 1.3 1995/03/24 15:07:15 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -412,7 +412,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	avail_end = alpha_ptob(maxmem);
 	mem_size = avail_end - avail_start;
 
-	virtual_avail = VM_MIN_KERNEL_ADDRESS + (SYSMAP_UPTES + UPAGES) * NBPG;
+	virtual_avail = VM_MIN_KERNEL_ADDRESS;
 	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 
 	simple_lock_init(&kernel_pmap_store.pm_lock);
