@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68.2.5 2000/08/07 01:23:34 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.68.2.6 2000/10/17 02:11:00 tv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -172,7 +172,16 @@ int bus_type_asi[] = {
 	ASI_PHYS_NON_CACHED,			/* SBUS */
 	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI configuration space */
 	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI memory space */
-	ASI_PHYS_NON_CACHED_LITTLE,			/* PCI I/O space */
+	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI I/O space */
+	0
+};
+
+int bus_stream_asi[] = {
+	ASI_PHYS_NON_CACHED,			/* UPA */
+	ASI_PHYS_NON_CACHED,			/* SBUS */
+	ASI_PHYS_NON_CACHED,			/* PCI configuration space */
+	ASI_PHYS_NON_CACHED,			/* PCI memory space */
+	ASI_PHYS_NON_CACHED,			/* PCI I/O space */
 	0
 };
 #else
@@ -180,11 +189,20 @@ int bus_type_asi[] = {
  * MMU access - we want to use the MMU for all this..
  */
 int bus_type_asi[] = {
-	ASI_PRIMARY,
-	ASI_PRIMARY,
+	ASI_PRIMARY,				/* UPA */
+	ASI_PRIMARY,				/* SBUS */
 	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI configuration space */
-	ASI_PRIMARY,
-	ASI_PRIMARY,
+	ASI_PRIMARY,				/* PCI memory space */
+	ASI_PRIMARY,				/* PCI I/O space */
+	0
+};
+
+int bus_stream_asi[] = {
+	ASI_PRIMARY,				/* UPA */
+	ASI_PRIMARY,				/* SBUS */
+	ASI_PHYS_NON_CACHED,			/* PCI configuration space */
+	ASI_PRIMARY_LITTLE,			/* PCI memory space */
+	ASI_PRIMARY_LITTLE,			/* PCI I/O space */
 	0
 };
 #endif
