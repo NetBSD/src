@@ -1,7 +1,7 @@
-/*	$NetBSD: line.c,v 1.7 2002/03/05 12:54:34 simonb Exp $	*/
+/*	$NetBSD: line.c,v 1.8 2003/04/14 02:56:47 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -20,7 +20,6 @@
 #include "less.h"
 
 #define IS_CONT(c)  (((c) & 0xC0) == 0x80)
-#define LINENUM_WIDTH   8       /* Chars to use for line number */
 
 public char *linebuf = NULL;	/* Buffer which holds the current output line */
 static char *attr = NULL;	/* Extension of linebuf to hold attributes */
@@ -36,6 +35,7 @@ static int curr;		/* Index into linebuf */
 static int column;		/* Printable length, accounting for
 				   backspaces, etc. */
 static int overstrike;		/* Next char should overstrike previous char */
+static int last_overstrike = AT_NORMAL;
 static int is_null_line;	/* There is no current line */
 static int lmargin;		/* Left margin */
 static int hilites;		/* Number of hilites in this line */
@@ -119,13 +119,11 @@ prewind()
 	is_null_line = 0;
 	pendc = '\0';
 	lmargin = 0;
+	if (status_col)
+		lmargin += 1;
 #if HILITE_SEARCH
 	hilites = 0;
 #endif
-	if (status_col)
-		lmargin += 1;
-	if (linenums == OPT_ONPLUS)
-		lmargin += LINENUM_WIDTH+1;
 }
 
 /*
@@ -135,7 +133,7 @@ prewind()
 plinenum(pos)
 	POSITION pos;
 {
-	register int lno;
+	register LINENUM linenum = 0;
 	register int i;
 
 	if (linenums == OPT_ONPLUS)
@@ -148,7 +146,7 @@ plinenum(pos)
 		 * {{ Since forw_raw_line modifies linebuf, we must
 		 *    do this first, before storing anything in linebuf. }}
 		 */
-		lno = find_linenum(pos);
+		linenum = find_linenum(pos);
 	}
 
 	/*
@@ -171,11 +169,22 @@ plinenum(pos)
 	 */
 	if (linenums == OPT_ONPLUS)
 	{
-		sprintf(&linebuf[curr], "%*d", LINENUM_WIDTH, lno);
-		column += LINENUM_WIDTH;
-		for (i = 0;  i < LINENUM_WIDTH;  i++)
-			attr[curr++] = 0;
+		char buf[INT_STRLEN_BOUND(pos) + 2];
+		int n;
+
+		linenumtoa(linenum, buf);
+		n = strlen(buf);
+		if (n < MIN_LINENUM_WIDTH)
+			n = MIN_LINENUM_WIDTH;
+		sprintf(linebuf+curr, "%*s ", n, buf);
+		n++;  /* One space after the line number. */
+		for (i = 0; i < n; i++)
+			attr[curr+i] = AT_NORMAL;
+		curr += n;
+		column += n;
+		lmargin += n;
 	}
+
 	/*
 	 * Append enough spaces to bring us to the lmargin.
 	 */
@@ -410,6 +419,8 @@ store_char(c, a, pos)
 {
 	register int w;
 
+	if (a != AT_NORMAL)
+		last_overstrike = a;
 #if HILITE_SEARCH
 	if (is_hilited(pos, pos+1, 0))
 	{
@@ -562,6 +573,11 @@ pappend(c, pos)
 	return (r);
 }
 
+#define IS_UTF8_4BYTE(c) ( ((c) & 0xf8) == 0xf0 )
+#define IS_UTF8_3BYTE(c) ( ((c) & 0xf0) == 0xe0 )
+#define IS_UTF8_2BYTE(c) ( ((c) & 0xe0) == 0xc0 )
+#define IS_UTF8_TRAIL(c) ( ((c) & 0xc0) == 0x80 )
+
 	static int
 do_append(c, pos)
 	int c;
@@ -599,37 +615,64 @@ do_append(c, pos)
 		 * or just deletion of the character in the buffer.
 		 */
 		overstrike--;
-		if (utf_mode && curr > 1 && (char)c == linebuf[curr-2])
+		if (utf_mode && IS_UTF8_4BYTE(c) && curr > 2 && (char)c == linebuf[curr-3])
 		{
 			backc();
 			backc();
+			backc();
+			STORE_CHAR(linebuf[curr], AT_BOLD, pos);
+			overstrike = 3;
+		} else if (utf_mode && (IS_UTF8_3BYTE(c) || (overstrike==2 && IS_UTF8_TRAIL(c))) && curr > 1 && (char)c == linebuf[curr-2])
+		{
+			backc();
+			backc();
+			STORE_CHAR(linebuf[curr], AT_BOLD, pos);
 			overstrike = 2;
-		} else if (utf_mode && curr > 0 && (char)c == linebuf[curr-1])
+		} else if (utf_mode && curr > 0 && (IS_UTF8_2BYTE(c) || (overstrike==1 && IS_UTF8_TRAIL(c))) && (char)c == linebuf[curr-1])
 		{
 			backc();
 			STORE_CHAR(linebuf[curr], AT_BOLD, pos);
 			overstrike = 1;
+		} else if (utf_mode && curr > 0 && IS_UTF8_TRAIL(c) && attr[curr-1] == AT_UNDERLINE)
+		{
+			STOREC(c, AT_UNDERLINE);
 		} else if ((char)c == linebuf[curr])
 		{
-			STOREC(c, AT_BOLD);
+			/*
+			 * Overstriking a char with itself means make it bold.
+			 * But overstriking an underscore with itself is
+			 * ambiguous.  It could mean make it bold, or
+			 * it could mean make it underlined.
+			 * Use the previous overstrike to resolve it.
+			 */
+			if (c == '_' && last_overstrike != AT_NORMAL)
+				STOREC(c, last_overstrike);
+			else
+				STOREC(c, AT_BOLD);
 		} else if (c == '_')
 		{
 			if (utf_mode)
 			{
-				if (curr > 0 && IS_CONT(linebuf[curr]))
-					attr[curr-1] = AT_UNDERLINE;
-				if (curr > 1 && IS_CONT(linebuf[curr-1]))
-					attr[curr-2] = AT_UNDERLINE;
-				if (curr > 2 && IS_CONT(linebuf[curr-2]))
-					attr[curr-3] = AT_UNDERLINE;
-				if (curr > 3 && IS_CONT(linebuf[curr-3]))
-					attr[curr-4] = AT_UNDERLINE;
-				if (curr > 4 && IS_CONT(linebuf[curr-4]))
-					attr[curr-5] = AT_UNDERLINE;
+				int i;
+				for (i = 0;  i < 5;  i++)
+				{
+					if (curr <= i || !IS_CONT(linebuf[curr-i]))
+						break;
+					attr[curr-i-1] = AT_UNDERLINE;
+				}
 			}
 			STOREC(linebuf[curr], AT_UNDERLINE);
 		} else if (linebuf[curr] == '_')
 		{
+			if (utf_mode)
+			{
+				if (IS_UTF8_2BYTE(c))
+					overstrike = 1;
+				else if (IS_UTF8_3BYTE(c))
+					overstrike = 2;
+				else if (IS_UTF8_4BYTE(c))
+					overstrike = 3;
+			}
 			STOREC(c, AT_UNDERLINE);
 		} else if (control_char(c))
 			goto do_control_char;
