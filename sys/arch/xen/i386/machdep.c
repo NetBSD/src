@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2005/03/09 23:40:08 xtraeme Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2005/04/01 11:59:36 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2005/03/09 23:40:08 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2005/04/01 11:59:36 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -329,7 +329,8 @@ cpu_startup()
 	/*
 	 * Initialize error message buffer (et end of core).
 	 */
-	msgbuf_vaddr = uvm_km_valloc(kernel_map, x86_round_page(MSGBUFSIZE));
+	msgbuf_vaddr = uvm_km_alloc(kernel_map, x86_round_page(MSGBUFSIZE), 0,
+	    UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
@@ -1883,9 +1884,8 @@ init386(paddr_t first_avail)
 		}
 #endif
 		paddr=realmode_reserved_start+realmode_reserved_size-PAGE_SIZE;
-		pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), paddr,
-			   VM_PROT_READ|VM_PROT_WRITE,
-			   PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa((vaddr_t)vtopte(0), paddr,
+			   VM_PROT_READ|VM_PROT_WRITE);
 		pmap_update(pmap_kernel());
 		/* make sure it is clean before using */
 		memset(vtopte(0), 0, PAGE_SIZE);
@@ -1953,16 +1953,14 @@ init386(paddr_t first_avail)
 	}
 #endif
 
-	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
-	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+ 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
 #if !defined(XEN)
 	idt = (struct gate_descriptor *)idt_vaddr;
 #ifdef I586_CPU
-	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
-	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
+ 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
 #endif

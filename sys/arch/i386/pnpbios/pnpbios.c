@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.45 2005/02/03 20:08:44 perry Exp $ */
+/* $NetBSD: pnpbios.c,v 1.46 2005/04/01 11:59:31 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.45 2005/02/03 20:08:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.46 2005/04/01 11:59:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,8 @@ pnpbios_mapit(u_long addr, u_long len, int prot)
 	pa = startpa = x86_trunc_page(addr);
 	endpa = x86_round_page(addr + len);
 
-	va = startva = uvm_km_valloc(kernel_map, endpa - startpa);
+	va = startva = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY);
 	if (!startva)
 		return (0);
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)

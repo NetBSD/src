@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.38 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.39 2005/04/01 11:59:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.38 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.39 2005/04/01 11:59:37 yamt Exp $");
 
 #define SYSVMSG
 
@@ -119,7 +119,9 @@ msginit()
 		+ msginfo.msgseg * sizeof(struct msgmap)
 		+ msginfo.msgtql * sizeof(struct __msg)
 		+ msginfo.msgmni * sizeof(struct msqid_ds);
-	if ((v = uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
+	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	if (v == 0)
 		panic("sysv_msg: cannot allocate memory");
 	msgpool = (void *)v;
 	msgmaps = (void *) (msgpool + msginfo.msgmax);
