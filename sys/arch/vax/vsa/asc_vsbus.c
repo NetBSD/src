@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.3 2000/03/04 18:20:53 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.4 2000/03/05 23:20:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.3 2000/03/04 18:20:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.4 2000/03/05 23:20:25 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,6 +73,7 @@ struct asc_vsbus_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* Must be first */
 	bus_space_tag_t sc_bst;			/* bus space tag */
 	bus_space_handle_t sc_bsh;		/* bus space handle */
+	bus_space_handle_t sc_ncrh;		/* ncr bus space handle */
 	bus_dma_tag_t sc_dmat;			/* bus dma tag */
 	bus_dmamap_t sc_dmamap;
 	caddr_t *sc_dmaaddr;
@@ -81,7 +82,7 @@ struct asc_vsbus_softc {
 	unsigned int sc_flags;
 #define	ASC_DMAACTIVE		0x0001
 #define	ASC_ISWRITE		0x0002
-#define	ASC_INTR		0x0004
+#define	ASC_MAPLOADED		0x0004
 };
 
 #define	ASC_REG_ADR		0x0000
@@ -89,15 +90,14 @@ struct asc_vsbus_softc {
 #define	ASC_REG_NCR		0x0080
 #define	ASC_REG_END		0x00B0
 
-#define	ASC_DIR_TO_MEMORY	0x0000
-#define	ASC_DIR_FROM_MEMORY	0x0001
+#define	ASC_TOMEMORY		0x0000
+#define	ASC_FROMMEMORY		0x0001
 
 #define	ASC_MAXXFERSIZE		65536
 #define	ASC_FREQUENCY		20000000
 
 static int asc_vsbus_match __P((struct device *, struct cfdata *, void *));
 static void asc_vsbus_attach __P((struct device *, struct device *, void *));
-static void ascintr __P((void *));
 
 struct cfattach asc_vsbus_ca = {
 	sizeof(struct asc_vsbus_softc), asc_vsbus_match, asc_vsbus_attach
@@ -123,7 +123,6 @@ static int	asc_vsbus_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
 static void	asc_vsbus_dma_go __P((struct ncr53c9x_softc *));
 static void	asc_vsbus_dma_stop __P((struct ncr53c9x_softc *));
 static int	asc_vsbus_dma_isactive __P((struct ncr53c9x_softc *));
-static void	asc_vsbus_clear_latched_intr __P((struct ncr53c9x_softc *));
 
 static struct ncr53c9x_glue asc_vsbus_glue = {
 	asc_vsbus_read_reg,
@@ -135,7 +134,7 @@ static struct ncr53c9x_glue asc_vsbus_glue = {
 	asc_vsbus_dma_go,
 	asc_vsbus_dma_stop,
 	asc_vsbus_dma_isactive,
-	asc_vsbus_clear_latched_intr,
+	NULL,
 };
 
 static int
@@ -197,6 +196,14 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 		printf(": failed to map registers: error=%d\n", error);
 		return;
 	}
+	error = bus_space_subregion(asc->sc_bst, asc->sc_bsh, ASC_REG_NCR,
+	    ASC_REG_END - ASC_REG_NCR, &asc->sc_ncrh);
+	if (error) {
+		printf(": failed to map ncr registers: error=%d\n", error);
+		return;
+	}
+	error = bus_dmamap_create(asc->sc_dmat, ASC_MAXXFERSIZE, 1, 
+	    ASC_MAXXFERSIZE, 0, BUS_DMA_NOWAIT, &asc->sc_dmamap);
 
 	sc->sc_id = 7;	/* XXX need to get this from VMB */
 	sc->sc_freq = ASC_FREQUENCY;
@@ -204,7 +211,8 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	/* gimme Mhz */
 	sc->sc_freq /= 1000000;
 
-	scb_vecalloc(va->va_cvec, ascintr, asc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr53c9x_intr,
+	    &asc->sc_ncr53c9x, SCB_ISTACK);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -217,7 +225,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB;
 	sc->sc_cfg2 = NCRCFG2_SCSI2;
-	sc->sc_cfg3 = NCRCFG3_CDB;
+	sc->sc_cfg3 = 0;
 	sc->sc_rev = NCR_VARIANT_NCR53C94;
 
 	/*
@@ -254,15 +262,6 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 		booted_from = self;
 }
 
-static void
-ascintr(void *arg)
-{
-	struct asc_vsbus_softc *asc = arg;
-	asc->sc_flags |= ASC_INTR;
-	ncr53c9x_intr(&asc->sc_ncr53c9x);
-	asc->sc_flags &= ~ASC_INTR;
-}
-
 /*
  * Glue functions.
  */
@@ -271,12 +270,9 @@ static u_char
 asc_vsbus_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
-	u_char v;
 
-	v = bus_space_read_1(asc->sc_bst, asc->sc_bsh,
-	    ASC_REG_NCR + reg * sizeof(u_int32_t));
-
-	return (v);
+	return bus_space_read_1(asc->sc_bst, asc->sc_ncrh,
+	    reg * sizeof(u_int32_t));
 }
 
 static void
@@ -287,8 +283,8 @@ asc_vsbus_write_reg(sc, reg, val)
 {
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
 
-	bus_space_write_1(asc->sc_bst, asc->sc_bsh,
-	    ASC_REG_NCR + reg * sizeof(u_int32_t), val);
+	bus_space_write_1(asc->sc_bst, asc->sc_ncrh,
+	    reg * sizeof(u_int32_t), val);
 }
 
 static int
@@ -296,30 +292,67 @@ asc_vsbus_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
-	int isintr = (asc->sc_flags & ASC_INTR);
-	asc->sc_flags &= ~ASC_INTR;
-	return isintr;		/* this is the only reason */
+	return bus_space_read_1(asc->sc_bst, asc->sc_ncrh,
+	    NCR_STAT * sizeof(u_int32_t)) & NCRSTAT_INT;
 }
 
 static void
 asc_vsbus_dma_reset(sc)
 	struct ncr53c9x_softc *sc;
 {
-#if 0
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
-#endif
 
-	/* nothing to do */
+	if (asc->sc_flags & ASC_MAPLOADED)
+		bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
+	asc->sc_flags &= ~(ASC_DMAACTIVE|ASC_MAPLOADED);
 }
 
 static int
 asc_vsbus_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-#if 0
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
-#endif
+	u_int tcl, tcm;
+	int trans, resid;
+	
+	if ((asc->sc_flags & ASC_DMAACTIVE) == 0)
+		panic("asc_vsbus_dma_intr: DMA wasn't active");
 
+	asc->sc_flags &= ~ASC_DMAACTIVE;
+
+	if (asc->sc_dmasize == 0) {
+		/* A "Transfer Pad" operation completed */
+		tcl = NCR_READ_REG(sc, NCR_TCL); 
+		tcm = NCR_READ_REG(sc, NCR_TCM);
+		NCR_DMA(("asc_vsbus_intr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+		    tcl | (tcm << 8), tcl, tcm));
+		return 0;
+	}
+
+	resid = 0;
+	if ((resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+		NCR_DMA(("asc_vsbus_intr: empty FIFO of %d ", resid));
+		DELAY(1);
+	}
+	if (asc->sc_flags & ASC_MAPLOADED)
+		bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
+	asc->sc_flags &= ~ASC_MAPLOADED;
+
+	resid += (tcl = NCR_READ_REG(sc, NCR_TCL));
+	resid += (tcm = NCR_READ_REG(sc, NCR_TCM)) << 8;
+
+	trans = asc->sc_dmasize - resid;
+	if (trans < 0) {			/* transferred < 0 ? */
+		printf("ioasic_intr: xfer (%d) > req (%d)\n",
+		    trans, asc->sc_dmasize);
+		trans = asc->sc_dmasize;
+	}
+	NCR_DMA(("asc_vsbus_intr: tcl=%d, tcm=%d; trans=%d, resid=%d\n",
+	    tcl, tcm, trans, resid));
+
+	*asc->sc_dmalen -= trans;
+	*asc->sc_dmaaddr += trans;
+	
 	return 0;
 }
 
@@ -354,9 +387,9 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 		bus_space_write_4(asc->sc_bst, asc->sc_bsh, ASC_REG_ADR,
 				  asc->sc_dmamap->dm_segs[0].ds_addr);
 		bus_space_write_4(asc->sc_bst, asc->sc_bsh, ASC_REG_DIR,
-				  datain ? 0 : 1);
+				  datain ? ASC_TOMEMORY : ASC_FROMMEMORY);
+		asc->sc_flags |= ASC_MAPLOADED;
 	}
-
 
 	return 0;
 }
@@ -364,23 +397,20 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 static void
 asc_vsbus_dma_go(struct ncr53c9x_softc *sc)
 {
-#if 0
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
-#endif
 
-	/* Nothing to do */
+	asc->sc_flags |= ASC_DMAACTIVE;
 }
 
 static void
 asc_vsbus_dma_stop(struct ncr53c9x_softc *sc)
 {
-#if 0
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
-#endif
 
-	/*
-	 * XXX STOP DMA HERE!
-	 */
+	if (asc->sc_flags & ASC_MAPLOADED)
+		bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
+
+	asc->sc_flags &= ~(ASC_DMAACTIVE|ASC_MAPLOADED);
 }
 
 static int
@@ -389,12 +419,4 @@ asc_vsbus_dma_isactive(struct ncr53c9x_softc *sc)
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
 
 	return (asc->sc_flags & ASC_DMAACTIVE) != 0;
-}
-
-static void
-asc_vsbus_clear_latched_intr(struct ncr53c9x_softc *sc)
-{
-#if 0
-	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;
-#endif
 }
