@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.33 2005/01/18 06:05:52 uwe Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.34 2005/01/19 03:23:50 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -820,7 +820,7 @@ const uint8_t persona_hpw50pad_jp_keytrans[] = {
 };
 
 const int persona_hpw50pad_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	=  0,
+	[KEY_SPECIAL_OFF]	=  5,
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 
@@ -830,26 +830,26 @@ const int persona_hpw50pad_special_keymap[] = {
 /* US */
 const uint8_t persona_hpw200ec_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */
-/* 0 */	SPL, UNK,   2,  3,  UNK,   5,   6, UNK,
-/* 1 */	UNK, UNK, UNK,  11, UNK, UNK, UNK, UNK,
-/* 2 */	UNK, UNK, UNK,  19, UNK,  21, UNK, UNK,
-/* 3 */	UNK, UNK,  26,  27, UNK,  29,  30, UNK,
-/* 4 */	 32, UNK,  34,  35, UNK, UNK,  26, UNK,
-/* 5 */	 40, UNK,  42,  43, UNK, UNK,  46, UNK,
-/* 6 */	 48, UNK,  50,  51, UNK,  53,  54, UNK,
-/* 7 */	 56, UNK,  58,  59, UNK,  61,  62, UNK,
-/* 8 */	UNK, UNK,  66,  67,  68,  69,  70,  71,
-/* 9 */	UNK, UNK,  74,  75,  76,  77,  78,  79,
-/*10 */	UNK, UNK,  82,  83,  84,  85, UNK, UNK,
-/*11 */	UNK, UNK,  90,  91,  92,  93,  94,  95,
-/*12 */	UNK, UNK,  98,  99, 100, 101, 102, 103,
-/*13 */	104, UNK, 106, 107, 108, 109, 110, 111,
-/*14 */	UNK, UNK, 114, 115, 124, 117, 118, 119,
-/*15 */	UNK, UNK, 122, 123, UNK, UNK, 126, UNK,
+/* 0 */  3 ,  2 , 71 , 69 , 67 , SPL, UNK, UNK,
+/* 1 */ 11 , UNK, 79 , 77 , 75 , UNK, UNK, UNK,
+/* 2 */ 19 , UNK, UNK, 85 , 83 , UNK, UNK, UNK,
+/* 3 */ 27 , 26 , 95 , 93 , 91 , UNK, UNK, UNK,
+/* 4 */ 35 , 34 , 103, 101, 99 , 32 , UNK, UNK,
+/* 5 */ 43 , 42 , 111, 109, 107, 40 , UNK, UNK,
+/* 6 */ 51 , 50 , 119, 117, 115, 48 , UNK, UNK,
+/* 7 */ 59 , 58 , UNK, UNK, 123, 56 , UNK, UNK,
+/* 8 */  5 ,  6 , 70 , 68 , 66 , UNK, UNK, UNK,
+/* 9 */ UNK, UNK, 78 , 76 , 74 , UNK, UNK, UNK,
+/*10 */ 21 , UNK, UNK, 84 , 82 , UNK, UNK, UNK,
+/*11 */ 29 , 30 , 94 , 92 , 90 , UNK, UNK, UNK,
+/*12 */ UNK, 26 , 102, 100, 98 , UNK, UNK, UNK,
+/*13 */ UNK, 46 , 110, 108, 106, 104, UNK, UNK,
+/*14 */ 53 , 54 , 118, 124, 114, UNK, UNK, UNK,
+/*15 */ 61 , 62 , 126, UNK, 122, UNK, UNK, UNK,
 };
 
 const int persona_hpw200ec_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	=  0,
+	[KEY_SPECIAL_OFF]	=  5,
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 
