@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.11 1994/10/27 04:15:43 cgd Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.12 1995/01/15 00:42:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -75,19 +75,29 @@
 
 extern int kstack[];		/* XXX */
 
+static inline struct trapframe *
+process_frame(p)
+	struct proc *p;
+{
+	void *ptr;
+
+	if ((p->p_flag & P_INMEM) == 0)
+		return (NULL);
+
+	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
+	return (ptr);
+}
+
 int
 process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	void *ptr;
 	struct trapframe *tf;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	tf = process_frame(p);
+	if (tf == NULL)
 		return (EIO);
-
-	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
-	tf = ptr;
 
 	regs->r_es     = tf->tf_es;
 	regs->r_ds     = tf->tf_ds;
@@ -112,21 +122,18 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	void *ptr;
 	struct trapframe *tf;
-	int eflags;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	tf = process_frame(p);
+	if (tf == NULL)
 		return (EIO);
 
-	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
-	tf = ptr;
-
-	eflags = regs->r_eflags;
-	if ((eflags & PSL_USERCLR) != 0 ||
-	    (eflags & PSL_USERSET) != PSL_USERSET ||
-	    (eflags & PSL_IOPL) > (tf->tf_eflags & PSL_IOPL))
-		return (EPERM);
+	/*
+	 * Check for security violations.
+	 */
+	if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    ISPL(regs->r_cs) != SEL_UPL)
+		return (EINVAL);
 
 	tf->tf_es     = regs->r_es;
 	tf->tf_ds     = regs->r_ds;
@@ -139,7 +146,7 @@ process_write_regs(p, regs)
 	tf->tf_eax    = regs->r_eax;
 	tf->tf_eip    = regs->r_eip;
 	tf->tf_cs     = regs->r_cs;
-	tf->tf_eflags = eflags;
+	tf->tf_eflags = regs->r_eflags;
 	tf->tf_esp    = regs->r_esp;
 	tf->tf_ss     = regs->r_ss;
 
@@ -150,14 +157,11 @@ int
 process_sstep(p, sstep)
 	struct proc *p;
 {
-	void *ptr;
 	struct trapframe *tf;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	tf = process_frame(p);
+	if (tf == NULL)
 		return (EIO);
-
-	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
-	tf = ptr;
 
 	if (sstep)
 		tf->tf_eflags |= PSL_T;
@@ -172,14 +176,11 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-	void *ptr;
 	struct trapframe *tf;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	tf = process_frame(p);
+	if (tf == NULL)
 		return (EIO);
-
-	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
-	tf = ptr;
 
 	tf->tf_eip = (int)addr;
 
