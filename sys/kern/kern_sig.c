@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.201 2005/01/09 19:22:55 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.201.4.1 2005/01/25 12:59:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.201 2005/01/09 19:22:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.201.4.1 2005/01/25 12:59:35 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -100,15 +100,16 @@ static void *
 sigacts_poolpage_alloc(struct pool *pp, int flags)
 {
 
-	return (void *)uvm_km_kmemalloc1(kernel_map,
-	    uvm.kernel_object, (PAGE_SIZE)*2, (PAGE_SIZE)*2, UVM_UNKNOWN_OFFSET,
-	    (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK);
+	return (void *)uvm_km_alloc(kernel_map,
+	    (PAGE_SIZE)*2, (PAGE_SIZE)*2,
+	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK)
+	    | UVM_KMF_WIRED);
 }
 
 static void
 sigacts_poolpage_free(struct pool *pp, void *v)
 {
-        uvm_km_free(kernel_map, (vaddr_t)v, (PAGE_SIZE)*2);
+        uvm_km_free(kernel_map, (vaddr_t)v, (PAGE_SIZE)*2, UVM_KMF_WIRED);
 }
 
 static struct pool_allocator sigactspool_allocator = {

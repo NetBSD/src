@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.107 2004/09/03 18:14:09 darrenr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.107.6.1 2005/01/25 12:59:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.107 2004/09/03 18:14:09 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.107.6.1 2005/01/25 12:59:35 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -234,7 +234,7 @@ sokvaalloc(vsize_t len, struct socket *so)
 	 * allocate kva.
 	 */
 
-	lva = uvm_km_valloc_wait(kernel_map, len);
+	lva = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (lva == 0) {
 		sokvaunreserve(len);
 		return (0);
@@ -255,7 +255,7 @@ sokvafree(vaddr_t sva, vsize_t len)
 	 * free kva.
 	 */
 
-	uvm_km_free(kernel_map, sva, len);
+	uvm_km_free(kernel_map, sva, len, UVM_KMF_VAONLY);
 
 	/*
 	 * unreserve kva.

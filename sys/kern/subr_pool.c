@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.99 2005/01/01 21:09:56 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.99.4.1 2005/01/25 12:59:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.99 2005/01/01 21:09:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.99.4.1 2005/01/25 12:59:35 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2251,7 +2251,7 @@ pool_page_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *) uvm_km_alloc_poolpage_cache(kmem_map, NULL, waitok));
+	return ((void *) uvm_km_alloc_poolpage_cache(kmem_map, waitok));
 }
 
 void
@@ -2266,14 +2266,14 @@ pool_page_alloc_meta(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *) uvm_km_alloc_poolpage1(kmem_map, NULL, waitok));
+	return ((void *) uvm_km_alloc_poolpage(kmem_map, waitok));
 }
 
 static void
 pool_page_free_meta(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage1(kmem_map, (vaddr_t) v);
+	uvm_km_free_poolpage(kmem_map, (vaddr_t) v);
 }
 
 #ifdef POOL_SUBPAGE
@@ -2318,8 +2318,7 @@ pool_page_alloc_nointr(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *) uvm_km_alloc_poolpage_cache(kernel_map,
-	    uvm.kernel_object, waitok));
+	return ((void *) uvm_km_alloc_poolpage_cache(kernel_map, waitok));
 }
 
 void
