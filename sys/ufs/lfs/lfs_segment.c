@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.38 2000/01/14 21:38:46 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.39 2000/01/16 05:56:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -436,13 +436,6 @@ lfs_writevnodes(fs, mp, sp, op)
 			}
 			(void) lfs_writeinode(fs, sp, ip);
 			inodes_written++;
-		}
-
-		if(vp->v_flag & VDIROP) {
-			--lfs_dirvcount;
-			vp->v_flag &= ~VDIROP;
-			wakeup(&lfs_dirvcount);
-			lfs_vunref(vp);
 		}
 
 		if(lfs_clean_vnhead && only_cleaning)
