@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.18 1996/04/03 00:51:32 scottr Exp $
+#	$Id: 4.4BSD.dist,v 1.19 1996/04/05 01:53:05 cgd Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -489,9 +489,9 @@ vax
 # ./usr/share/doc/smm/02.config
 ..
 
-# ./usr/share/doc/smm/03.fsck
-03.fsck
-# ./usr/share/doc/smm/03.fsck
+# ./usr/share/doc/smm/03.fsck_ffs
+03.fsck_ffs
+# ./usr/share/doc/smm/03.fsck_ffs
 ..
 
 # ./usr/share/doc/smm/04.quotas
