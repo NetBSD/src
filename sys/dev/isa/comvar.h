@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.6 1996/10/21 22:40:34 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.7 1996/11/13 19:41:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,8 +42,10 @@ struct commulti_attach_args {
 int comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
 int comintr __P((void *));
 
+/* For other ports that use 'com' as console (alpha). */
 extern int comconsaddr;
 extern int comconsattached;
 extern bus_space_tag_t comconstag;
 extern bus_space_handle_t comconsbah;
 extern tcflag_t comconscflag;
+void cominit __P((bus_space_tag_t, bus_space_handle_t, int));

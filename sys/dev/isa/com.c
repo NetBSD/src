@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.92 1996/10/22 00:45:25 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.93 1996/11/13 19:41:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -156,8 +156,6 @@ struct cfattach com_commulti_ca = {
 struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
 };
-
-void cominit __P((bus_space_tag_t, bus_space_handle_t, int));
 
 #ifdef COMCONSOLE
 int	comdefaultrate = CONSPEED;		/* XXX why set default? */
