@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.33 1994/08/05 22:56:49 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.34 1994/08/11 23:51:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -48,8 +48,9 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/dkbad.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/dkbad.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -838,6 +839,7 @@ cd_size(cd, flags)
 	struct scsi_read_cd_cap_data rdcap;
 	struct scsi_read_cd_capacity scsi_cmd;
 	u_int32 size, blksize;
+	int error;
 
 	/*
 	 * make up a scsi command and ask the scsi driver to do
@@ -850,25 +852,42 @@ cd_size(cd, flags)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks and a blocksize
 	 */
-	if (scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
+	error = scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *) &rdcap, sizeof(rdcap), CDRETRIES,
-	    20000, NULL, SCSI_DATA_IN | flags) != 0) {
+	    20000, NULL, SCSI_DATA_IN | flags);
+	if (error == EBUSY) {
+		if (!(flags & SCSI_SILENT))
+			printf("%s: waiting for drive to spin up\n",
+			    cd->sc_dev.dv_xname);
+		if (flags & SCSI_NOSLEEP)
+			delay(2000000);
+		else
+			tsleep(cd, PRIBIO + 1, "cd_size", 2 * hz);
+		error = scsi_scsi_cmd(cd->sc_link,
+		    (struct scsi_generic *) &scsi_cmd, sizeof(scsi_cmd),
+		    (u_char *) &rdcap, sizeof(rdcap), CDRETRIES, 20000, NULL,
+		    SCSI_DATA_IN | flags);
+	}
+
+	if (error) {
 		if (!(flags & SCSI_SILENT))
 			printf("%s: could not get size\n",
 			    cd->sc_dev.dv_xname);
 		return 0;
-	} else {
-		size = (rdcap.addr_3 << 24) + (rdcap.addr_2 << 16) +
-		    (rdcap.addr_1 << 8) + rdcap.addr_0 + 1;
-		blksize = (rdcap.length_3 << 24) + (rdcap.length_2 << 16) +
-		    (rdcap.length_1 << 8) + rdcap.length_0;
 	}
+
+	blksize = (rdcap.length_3 << 24) + (rdcap.length_2 << 16) +
+	    (rdcap.length_1 << 8) + rdcap.length_0;
 	if (blksize < 512)
 		blksize = 2048;	/* some drives lie ! */
+	cd->params.blksize = blksize;
+
+	size = (rdcap.addr_3 << 24) + (rdcap.addr_2 << 16) +
+	    (rdcap.addr_1 << 8) + rdcap.addr_0 + 1;
 	if (size < 100)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
-	cd->params.blksize = blksize;
+
 	return size;
 }
 
