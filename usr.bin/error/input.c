@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.8 2000/11/15 19:54:43 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.9 2002/05/26 22:41:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.8 2000/11/15 19:54:43 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.9 2002/05/26 22:41:21 wiz Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,30 +50,28 @@ __RCSID("$NetBSD: input.c,v 1.8 2000/11/15 19:54:43 christos Exp $");
 int	wordc;		/* how long the current error message is */
 char	**wordv;	/* the actual error message */
 
-Errorclass	catchall __P((void));
-Errorclass	cpp __P((void));
-Errorclass	f77 __P((void));
-Errorclass	lint0 __P((void));
-Errorclass	lint1 __P((void));
-Errorclass	lint2 __P((void));
-Errorclass	lint3 __P((void));
-Errorclass	make __P((void));
-Errorclass	mod2 __P((void));
-Errorclass	onelong __P((void));
-Errorclass	pccccom __P((void));	/* Portable C Compiler C Compiler */
-Errorclass	pi __P((void));
-Errorclass	ri __P((void));
-Errorclass	richieccom __P((void));	/* Richie Compiler for 11 */
-Errorclass	troff __P((void));
+Errorclass	catchall(void);
+Errorclass	cpp(void);
+Errorclass	f77(void);
+Errorclass	lint0(void);
+Errorclass	lint1(void);
+Errorclass	lint2(void);
+Errorclass	lint3(void);
+Errorclass	make(void);
+Errorclass	mod2(void);
+Errorclass	onelong(void);
+Errorclass	pccccom(void);	/* Portable C Compiler C Compiler */
+Errorclass	pi(void);
+Errorclass	ri(void);
+Errorclass	richieccom(void);	/* Richie Compiler for 11 */
+Errorclass	troff(void);
 
 /*
  *	Eat all of the lines in the input file, attempting to categorize
  *	them by their various flavors
  */
 void
-eaterrors(r_errorc, r_errorv)
-	int	*r_errorc;
-	Eptr	**r_errorv;
+eaterrors(int *r_errorc, Eptr **r_errorv)
 {
 	Errorclass	errorclass = C_SYNC;
 	char *line;
@@ -123,11 +121,8 @@ eaterrors(r_errorc, r_errorv)
  *	create a new error entry, given a zero based array and count
  */
 void
-erroradd(errorlength, errorv, errorclass, errorsubclass)
-	int		errorlength;
-	char		**errorv;
-	Errorclass	errorclass;
-	Errorclass	errorsubclass;
+erroradd(int errorlength, char **errorv, Errorclass errorclass,
+	 Errorclass errorsubclass)
 {
 	Eptr	newerror;
 	char	*cp;
@@ -169,7 +164,7 @@ erroradd(errorlength, errorv, errorclass, errorsubclass)
 }
 
 Errorclass
-onelong()
+onelong(void)
 {
 	char	**nwordv;
 	if ( (wordc == 1) && (language != INLD) ){
@@ -216,7 +211,7 @@ onelong()
 }	/* end of one long */
 
 Errorclass
-cpp()
+cpp(void)
 {
 	/* 
 	 *	Now attempt a cpp error message match
@@ -241,7 +236,7 @@ cpp()
 }	/*end of cpp*/
 
 Errorclass
-pccccom()
+pccccom(void)
 {
 	/*
 	 *	Now attempt a ccom error message match:
@@ -282,7 +277,7 @@ pccccom()
  */
 
 Errorclass
-richieccom()
+richieccom(void)
 {
 	char	*cp;
 	char	**nwordv;
@@ -313,7 +308,7 @@ richieccom()
 }
 
 Errorclass
-lint0()
+lint0(void)
 {
 	char	**nwordv;
 	char	*line, *file;
@@ -344,7 +339,7 @@ lint0()
 }
 
 Errorclass
-lint1()
+lint1(void)
 {
 	char	*line1, *line2;
 	char	*file1, *file2;
@@ -382,7 +377,7 @@ lint1()
 } /* end of lint 1*/
 
 Errorclass
-lint2()
+lint2(void)
 {
 	char	*file;
 	char	*line;
@@ -417,7 +412,7 @@ char	*Lint31[4] = {"returns", "value", "which", "is"};
 char	*Lint32[6] = {"value", "is", "used,", "but", "none", "returned"};
 
 Errorclass
-lint3()
+lint3(void)
 {
 	if (wordc < 3)
 		return(C_UNKNOWN);
@@ -438,7 +433,7 @@ char	*F77_warning[3] = {"Warning", "on", "line"};
 char    *F77_no_ass[3] = {"Error.","No","assembly."};
 
 Errorclass 
-f77()
+f77(void)
 {
 	char	**nwordv;
 	/*
@@ -479,7 +474,7 @@ char	*Make_Croak[3] = {"***", "Error", "code"};
 char	*Make_NotRemade[5] = {"not", "remade", "because", "of", "errors"};
 
 Errorclass
-make()
+make(void)
 {
 	if (wordvcmp(wordv+1, 3, Make_Croak) == 0){
 		language = INMAKE;
@@ -493,7 +488,7 @@ make()
 }
 
 Errorclass
-ri()
+ri(void)
 {
 /*
  *	Match an error message produced by ri; here is the
@@ -531,7 +526,7 @@ ri()
 }
 
 Errorclass
-catchall()
+catchall(void)
 {
 	/*
 	 *	Catches random things.
@@ -541,7 +536,7 @@ catchall()
 } /* end of catch all*/
 
 Errorclass
-troff()
+troff(void)
 {
 	/*
 	 *	troff source error message, from eqn, bib, tbl...
@@ -570,7 +565,7 @@ troff()
 }
 
 Errorclass
-mod2()
+mod2(void)
 {
 	/*
 	 *	for decwrl modula2 compiler (powell)
