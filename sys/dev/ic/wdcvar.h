@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.59 2004/08/02 22:02:35 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.60 2004/08/02 22:20:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -153,6 +153,11 @@ struct wdc_softc {
 #define WDC_DMA_READ	0x01
 #define WDC_DMA_IRQW	0x02
 #define WDC_DMA_LBA48	0x04
+
+/* values passed to dma_finish */
+#define WDC_DMAEND_END	0	/* check for proper end of a DMA xfer */
+#define WDC_DMAEND_ABRT 1	/* abort a DMA xfer, verbose */
+#define WDC_DMAEND_ABRT_QUIET 2	/* abort a DMA xfer, quiet */
 
 	int		dma_status; /* status returned from dma_finish() */
 #define WDC_DMAST_NOIRQ	0x01	/* missing IRQ */

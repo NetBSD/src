@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.13 2004/08/02 19:37:33 bouyer Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.14 2004/08/02 22:20:54 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.13 2004/08/02 19:37:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.14 2004/08/02 22:20:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -693,7 +693,7 @@ pciide_dma_finish(v, channel, drive, force)
 	WDCDEBUG_PRINT(("pciide_dma_finish: status 0x%x\n", status),
 	    DEBUG_XFERS);
 
-	if (force == 0 && (status & IDEDMA_CTL_INTR) == 0)
+	if (force == WDC_DMAEND_END && (status & IDEDMA_CTL_INTR) == 0)
 		return WDC_DMAST_NOIRQ;
 
 	/* stop DMA channel */
@@ -708,20 +708,20 @@ pciide_dma_finish(v, channel, drive, force)
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, dma_maps->dmamap_xfer);
 
-	if ((status & IDEDMA_CTL_ERR) != 0) {
+	if ((status & IDEDMA_CTL_ERR) != 0 && force != WDC_DMAEND_ABRT_QUIET) {
 		printf("%s:%d:%d: bus-master DMA error: status=0x%x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, channel, drive, status);
 		error |= WDC_DMAST_ERR;
 	}
 
-	if ((status & IDEDMA_CTL_INTR) == 0) {
+	if ((status & IDEDMA_CTL_INTR) == 0 && force != WDC_DMAEND_ABRT_QUIET) {
 		printf("%s:%d:%d: bus-master DMA error: missing interrupt, "
 		    "status=0x%x\n", sc->sc_wdcdev.sc_dev.dv_xname, channel,
 		    drive, status);
 		error |= WDC_DMAST_NOIRQ;
 	}
 
-	if ((status & IDEDMA_CTL_ACT) != 0) {
+	if ((status & IDEDMA_CTL_ACT) != 0 && force != WDC_DMAEND_ABRT_QUIET) {
 		/* data underrun, may be a valid condition for ATAPI */
 		error |= WDC_DMAST_UNDER;
 	}
