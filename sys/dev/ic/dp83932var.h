@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932var.h,v 1.3 2001/07/06 16:20:07 thorpej Exp $	*/
+/*	$NetBSD: dp83932var.h,v 1.3.18.1 2003/01/26 16:19:52 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -157,6 +157,8 @@ struct sonic_softc {
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
+	bus_dmamap_t sc_nulldmamap;	/* DMA map for the pad buffer */
+#define sc_nulldma     sc_nulldmamap->dm_segs[0].ds_addr
 
 	/*
 	 * Software state for transmit and receive descriptors.
