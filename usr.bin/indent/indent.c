@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.9 1998/10/08 01:30:27 wsanchez Exp $	*/
+/*	$NetBSD: indent.c,v 1.10 1998/12/19 17:00:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\n\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.9 1998/10/08 01:30:27 wsanchez Exp $");
+__RCSID("$NetBSD: indent.c,v 1.10 1998/12/19 17:00:08 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -535,7 +535,7 @@ check_type:
 			    (ps.last_token != ident || proc_calls_space
 				|| (ps.its_a_keyword && (!ps.sizeof_keyword || Bill_Shannon))))
 				*e_code++ = ' ';
-			if (ps.in_decl && !ps.block_init)
+			if (ps.in_decl && !ps.block_init) {
 				if (troff && !ps.dumped_decl_indent && !is_procname && ps.last_token == decl) {
 					ps.dumped_decl_indent = 1;
 					sprintf(e_code, "\n.Du %dp+\200p \"%s\"\n", dec_ind * 7, token);
@@ -547,7 +547,7 @@ check_type:
 					}
 					*e_code++ = token[0];
 				}
-			else
+			} else
 				*e_code++ = token[0];
 			ps.paren_indents[ps.p_l_follow - 1] = e_code - s_code;
 			if (sp_sw && ps.p_l_follow == 1 && extra_expression_indent
@@ -1011,7 +1011,7 @@ check_type:
 				e_code = chfont(&bodyf, &keywordf, e_code);
 				for (t_ptr = token; *t_ptr; ++t_ptr) {
 					CHECK_SIZE_CODE;
-					*e_code++ = keywordf.allcaps && islower(*t_ptr)
+					*e_code++ = keywordf.allcaps && islower((unsigned char)*t_ptr)
 					    ? toupper(*t_ptr) : *t_ptr;
 				}
 				e_code = chfont(&keywordf, &bodyf, e_code);
@@ -1156,14 +1156,14 @@ check_type:
 				} else
 					diag(1, "#if stack overflow");
 			} else
-				if (strncmp(s_lab, "#else", 5) == 0)
+				if (strncmp(s_lab, "#else", 5) == 0) {
 					if (ifdef_level <= 0)
 						diag(1, "Unmatched #else");
 					else {
 						match_state[ifdef_level - 1] = ps;
 						ps = state_stack[ifdef_level - 1];
 					}
-				else
+				} else
 					if (strncmp(s_lab, "#endif", 6) == 0) {
 						if (ifdef_level <= 0)
 							diag(1, "Unmatched #endif");
