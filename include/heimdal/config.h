@@ -164,9 +164,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the `dlopen' function. */
-#if !defined(NO_DLOPEN)
 #define HAVE_DLOPEN 1
-#endif
 
 /* Define to 1 if you have the `dn_expand' function. */
 #define HAVE_DN_EXPAND 1
@@ -542,7 +540,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_POLL 1
 
 /* Define to 1 if you have the <pthread.h> header file. */
-/* #undef HAVE_PTHREAD_H */
+#define HAVE_PTHREAD_H 1
 
 /* Define to 1 if you have the `ptsname' function. */
 /* #undef HAVE_PTSNAME */
@@ -656,7 +654,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_SETSTATE 1
 
 /* Define to 1 if you have the `setutent' function. */
-/* #undef HAVE_SETUTENT */
+#define HAVE_SETUTENT 1
 
 /* Define to 1 if you have the `sgi_getcapabilitybyname' function. */
 /* #undef HAVE_SGI_GETCAPABILITYBYNAME */
@@ -1263,13 +1261,13 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_NAME "Heimdal"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Heimdal 0.5"
+#define PACKAGE_STRING "Heimdal 0.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "heimdal"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.5"
+#define PACKAGE_VERSION "0.6"
 
 /* Define if getlogin has POSIX flavour (and not BSD). */
 /* #undef POSIX_GETLOGIN */
@@ -1305,7 +1303,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "0.5"
+#define VERSION "0.6"
 
 /* Define if signal handlers return void. */
 #define VOID_RETSIGTYPE 1
@@ -1357,6 +1355,13 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to `int' if <sys/types.h> doesn't define. */
 /* #undef uid_t */
 
+#if defined(HAVE_FOUR_VALUED_KRB_PUT_INT) || !defined(KRB4)
+#define KRB_PUT_INT(F, T, L, S) krb_put_int((F), (T), (L), (S))
+#else
+#define KRB_PUT_INT(F, T, L, S) krb_put_int((F), (T), (S))
+#endif
+
+
 
 #if defined(ENCRYPTION) && !defined(AUTHENTICATION)
 #define AUTHENTICATION 1
@@ -1381,6 +1386,14 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #include "roken_rename.h"
 #endif
 
+#ifndef HAVE_KRB_KDCTIMEOFDAY
+#define krb_kdctimeofday(X) gettimeofday((X), NULL)
+#endif
+
+#ifndef HAVE_KRB_GET_KDC_TIME_DIFF
+#define krb_get_kdc_time_diff() (0)
+#endif
+
 #ifdef VOID_RETSIGTYPE
 #define SIGRETURN(x) return
 #else
@@ -1390,21 +1403,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #ifdef BROKEN_REALLOC
 #define realloc(X, Y) isoc_realloc((X), (Y))
 #define isoc_realloc(X, Y) ((X) ? realloc((X), (Y)) : malloc(Y))
-#endif
-
-#if defined(HAVE_FOUR_VALUED_KRB_PUT_INT) || !defined(KRB4)
-#define KRB_PUT_INT(F, T, L, S) krb_put_int((F), (T), (L), (S))
-#else
-#define KRB_PUT_INT(F, T, L, S) krb_put_int((F), (T), (S))
-#endif
-
-
-#ifndef HAVE_KRB_KDCTIMEOFDAY
-#define krb_kdctimeofday(X) gettimeofday((X), NULL)
-#endif
-
-#ifndef HAVE_KRB_GET_KDC_TIME_DIFF
-#define krb_get_kdc_time_diff() (0)
 #endif
 
 
