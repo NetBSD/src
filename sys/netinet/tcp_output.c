@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.22 1997/11/20 19:12:41 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.23 1997/12/11 06:37:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -624,6 +624,8 @@ out:
 		return (error);
 	}
 	tcpstat.tcps_sndtotal++;
+	if (tp->t_flags & TF_DELACK)
+		tcpstat.tcps_delack++;
 
 	/*
 	 * Data sent (as far as we can tell).
