@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.6 2003/04/02 11:18:08 jdolecek Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.7 2003/04/07 12:04:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -97,7 +97,6 @@ int smbfs_doio(struct buf *bp, struct ucred *cr, struct proc *p);
 int smbfs_vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, 
 	struct proc *p, int intrflg);
 int smbfs_kqfilter(void *);
-void smbfs_kqinit(void);
 #endif	/* KERNEL */
 
 #endif /* _SMBFS_SMBFS_H_ */
