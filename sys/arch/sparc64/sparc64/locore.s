@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62.2.3 2000/07/31 05:12:43 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.62.2.4 2000/08/07 01:16:34 mrg Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -223,6 +223,23 @@
 #endif
 
 
+/*
+ * Combine 2 regs -- used to convert 64-bit ILP32
+ * values to LP64.
+ */
+#define	COMBINE(r1, r2, d)	\
+	sllx	r1, 32, d;	\
+	or	d, r2, d
+
+/*
+ * Split 64-bit value in 1 reg into high and low halves.
+ * Used for ILP32 return values.
+ */
+#define	SPLIT(r0, r1)		\
+	srl	r0, 0, r1;	\
+	srlx	r0, 32, r0
+	
+	
 /*
  * A handy macro for maintaining instrumentation counters.
  * Note that this clobbers %o0 and %o1.  Normal usage is
@@ -2942,7 +2959,8 @@ winfixsave:
 
 	set	CPCB, %g6	! Load up nsaved
 	LDPTR	[%g6], %g6
-	ldub	[%g6 + PCB_NSAVED], %g6
+	clr	%g6
+!	ldub	[%g6 + PCB_NSAVED], %g6! this could fault
 	sllx	%g6, 9, %g6
 	or	%g6, %g4, %g4
 
@@ -4191,6 +4209,11 @@ _C_LABEL(sparc_interrupt):
 	wr	%g0, 1, CLEAR_SOFTINT
 	DLFLUSH(%g3, %g2)
 #ifndef TICK_IS_TIME
+	rd	TICK_CMPR, %g2
+	rd	%tick, %g5
+	srax	%g2, 1, %g2
+	cmp	%g2, %g5
+	tg	%xcc, 1
 	wrpr	%g0, 0, %tick	! Reset %tick so we'll get another interrupt
 #endif
 	ba,pt	%icc, setup_sparcintr
@@ -6110,11 +6133,42 @@ _C_LABEL(blast_vcache):
 	flush	%o2
 	retl
 	 wrpr	%o3, %pstate
+
+
 /*
- * dcache_flush_page()
+ * blast_icache()
  *
- * Clear one page from D$.  We should do one for the I$,
- * but it does not alias and is not likely as large a problem.
+ * Clear out all of I$ regardless of contents
+ * Does not modify %o0
+ *
+ */
+	.align 8
+	.globl	_C_LABEL(blast_icache)
+	.proc 1
+	FTYPE(blast_icache)
+_C_LABEL(blast_icache):
+/*
+ * We turn off interrupts for the duration to prevent RED exceptions.
+ */
+	rdpr	%pstate, %o3
+	set	(2*NBPG)-8, %o1
+	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
+	wrpr	%o4, 0, %pstate
+1:
+	stxa	%g0, [%o1] ASI_ICACHE_TAG
+	brnz,pt	%o1, 1b
+	 dec	8, %o1
+	sethi	%hi(KERNBASE), %o2
+	flush	%o2
+	retl
+	 wrpr	%o3, %pstate
+
+
+
+/*
+ * dcache_flush_page(vaddr_t pa)
+ *
+ * Clear one page from D$ and I$.
  *
  */
 	.align 8
@@ -6122,27 +6176,184 @@ _C_LABEL(blast_vcache):
 	.proc 1
 	FTYPE(dcache_flush_page)
 _C_LABEL(dcache_flush_page):
-	mov	-1, %g1		! Generate mask for tag: bits [29..2]
-	srlx	%o0, 13-2, %g2	! Tag is VA bits <40:13> in bits <29:2>
-	srl	%g1, 2, %g1	! Now we have bits <29:0> set
-	andn	%g1, 3, %g1	! Now we have bits <29:2> set
+#ifdef _LP64
+	COMBINE(%o0, %o1, %o0)
+#endif
 
-	set	(2*NBPG), %o3
-	clr	%o1
+	!! Try using cache_flush_phys for a change.
+	
+	mov	-1, %o1		! Generate mask for tag: bits [29..2]
+	srlx	%o0, 13-2, %o2	! Tag is VA bits <40:13> in bits <29:2>
+	srl	%o1, 2, %o1	! Now we have bits <29:0> set
+	andn	%o1, 3, %o1	! Now we have bits <29:2> set
+	
+	set	(2*NBPG), %o5
+	clr	%o4
 1:
-	ldxa	[%o1] ASI_DCACHE_TAG, %g3
-	xor	%g3, %g2, %g3
-	andcc	%g3, %g1, %g0
+	ldxa	[%o4] ASI_DCACHE_TAG, %o3
+	xor	%o3, %o2, %o3
+	andcc	%o3, %o1, %g0
 	bne,pt	%xcc, 2f
-	 dec	16, %o3
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
+	 dec	16, %o5
+	membar	#LoadStore
+	stxa	%g0, [%o4] ASI_DCACHE_TAG
+	membar	#StoreLoad
 2:
-	brnz,pt	%o3, 1b
-	 inc	16, %o1
+	brnz,pt	%o5, 1b
+	 inc	16, %o4
+	
+	!! Now do the I$
+	mov	-1, %o1		! Generate mask for tag: bits [35..8]
+	srlx	%o0, 13-8, %o2
+	srl	%o1, 32-35+7, %o1
+	sll	%o1, 7, %o1	! Mask
+
+	set	(2*NBPG), %o5
+	clr	%o4
+1:
+	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
+	xor	%g1, %o2, %g1
+	andcc	%g1, %o1, %g0
+	bne,pt	%xcc, 2f
+	 dec	16, %o5
+	membar	#LoadStore
+	stxa	%g0, [%o4] ASI_ICACHE_TAG
+	membar	#StoreLoad
+2:
+	brnz,pt	%o5, 1b
+	 inc	16, %o4
+	
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
+	membar	#Sync
 	retl
 	 nop
+
+/*
+ * cache_flush_virt(va, len)
+ *
+ * Clear everything in that va range from D$ and I$.
+ *
+ */
+	.align 8
+	.globl	_C_LABEL(cache_flush_virt)
+	.proc 1
+	FTYPE(cache_flush_virt)
+_C_LABEL(cache_flush_virt):
+	brz,pn	%o1, 2f		! What? nothing to clear?
+	 add	%o0, %o1, %o2
+	mov	0x1ff, %o3
+	sllx	%o3, 5, %o3	! Generate mask for VA bits
+	and	%o0, %o3, %o0
+	and	%o2, %o3, %o2
+	sub	%o2, %o1, %o4	! End < start? need to split flushes.
+	sethi	%hi((1<<13)), %o5
+	brlz,pn	%o4, 1f
+	 movrz	%o4, %o3, %o4	! If start == end we need to wrap
+
+	!! Clear from start to end
+1:	
+	stxa	%g0, [%o0] ASI_DCACHE_TAG
+	dec	16, %o4
+	xor	%o5, %o0, %o3	! Second way	
+	stxa	%g0, [%o0] ASI_ICACHE_TAG
+	stxa	%g0, [%o3] ASI_ICACHE_TAG
+	brgz,pt	%o4, 1b
+	 inc	16, %o0
+2:	
+	sethi	%hi(KERNBASE), %o5
+	flush	%o5
+	membar	#Sync
+	retl
+	 nop
+
+	!! We got a hole.  Clear from start to hole
+	clr	%o4
+3:	
+	stxa	%g0, [%o4] ASI_DCACHE_TAG
+	dec	16, %o1
+	xor	%o5, %o4, %g1	! Second way	
+	stxa	%g0, [%o4] ASI_ICACHE_TAG
+	stxa	%g0, [%g1] ASI_ICACHE_TAG
+	brgz,pt	%o1, 3b
+	 inc	16, %o4
+	
+	!! Now clear to the end.
+	sub	%o3, %o2, %o4	! Size to clear (NBPG - end)
+	ba,pt	%icc, 1b
+	 mov	%o2, %o0	! Start of clear
+
+/*
+ *	cache_flush_phys __P((paddr_t, psize_t, int));
+ *
+ *	Clear a set of paddrs from the D$, I$ and if param3 is
+ *	non-zero, E$.  (E$ is not supported yet).
+ */
+
+		.align 8
+	.globl	_C_LABEL(cache_flush_phys)
+	.proc 1
+	FTYPE(cache_flush_phys)
+_C_LABEL(cache_flush_phys):
+#ifndef _LP64
+	COMBINE(%o0, %o1, %o0)
+	COMBINE(%o2, %o3, %o1)
+	mov	%o4, %o2
+#endif
+#ifdef DEBUG
+	tst	%o2		! Want to clear E$?
+	tnz	1		! Error!
+#endif
+	add	%o0, %o1, %o1	! End PA
+
+	!!
+	!! Both D$ and I$ tags match pa bits 40-13, but
+	!! they are shifted different amounts.  So we'll
+	!! generate a mask for bits 40-13.
+	!!
+	
+	mov	-1, %o2		! Generate mask for tag: bits [40..13]
+	srl	%o2, 5, %o2	! 32-5 = [27..0]
+	sllx	%o2, 13, %o2	! 27+13 = [40..13]
+
+	and	%o2, %o0, %o0	! Mask away uninteresting bits
+	and	%o2, %o1, %o1	! (probably not necessary)
+		
+	set	(2*NBPG), %o5
+	clr	%o4
+1:
+	ldxa	[%o4] ASI_DCACHE_TAG, %o3
+	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
+	sllx	%o3, 40-29, %o3	! Shift D$ tag into place
+	and	%o3, %o2, %o3	! Mask out trash
+	cmp	%o0, %o3
+	blt,pt	%xcc, 2f	! Too low
+	 sllx	%g1, 40-35, %g1	! Shift I$ tag into place
+	cmp	%o1, %o3
+	bgt,pt	%xcc, 2f	! Too high
+	 nop
+
+	membar	#LoadStore
+	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
+2:
+	cmp	%o0, %g1
+	blt,pt	%xcc, 3f
+	 cmp	%o1, %g1
+	bgt,pt	%icc, 3f
+	 nop
+	stxa	%g0, [%o4] ASI_ICACHE_TAG
+3:	
+	membar	#StoreLoad
+	dec	16, %o5
+	brgz,pt	%o5, 1b
+	 inc	16, %o4
+	
+	sethi	%hi(KERNBASE), %o5
+	flush	%o5
+	membar	#Sync
+	retl
+	 nop
+
 
 #ifdef _LP64
 /*
@@ -7455,7 +7666,35 @@ idle:
 	brnz,a,pt	%o3, Lsw_scan
 	 wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
 	
+#if 1		/* Don't enable the zeroing code just yet. */
 	ba,a,pt %icc, 1b
+	nop
+#else
+	! Check uvm.page_idle_zero
+	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
+	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
+	brz,pn	%o3, 1b
+	 nop
+	/*
+	 * We must preserve several global registers across the call
+	 * to uvm_pageidlezero().  Use the %ix registers for this, but
+	 * since we might still be running in our our caller's frame
+	 * (if we came here from cpu_switch()), we need to setup a
+	 * frame first.
+	 */
+	save	%sp, -CCFSZ, %sp
+	GLOBTOLOC
+
+	! zero some pages
+	call	_C_LABEL(uvm_pageidlezero)
+	 nop
+
+	! restore global registers again which are now
+	! clobbered by uvm_pageidlezero()
+	LOCTOGLOB
+	ba,pt	%icc, 1b
+	 restore
+#endif
 
 Lsw_panic_rq:
 	sethi	%hi(1f), %o0
@@ -7762,7 +8001,7 @@ Lsw_load:
 2:
 #endif
 	ldx	[%g1 + PCB_SP], %i6
-	call	_C_LABEL(blast_vcache)		! Clear out I$ and D$
+!	call	_C_LABEL(blast_vcache)		! Clear out I$ and D$
 	 ldx	[%g1 + PCB_PC], %i7
 	wrpr	%g0, 0, %otherwin	! These two insns should be redundant
 	wrpr	%g0, 0, %canrestore
@@ -8222,8 +8461,7 @@ ENTRY(subyte)
 ENTRY(probeget)
 #ifndef _LP64
 	!! Shuffle the args around into LP64 format
-	sllx	%o0, 32, %o0
-	or	%o0, %o1, %o0
+	COMBINE(%o0, %o1, %o0)
 	mov	%o2, %o1
 	mov	%o3, %o2
 #endif
@@ -8264,8 +8502,7 @@ ENTRY(probeget)
 0:
 	ldxa	[%o0] %asi, %o0		!	value = *(long *)addr;
 #ifndef _LP64
-	srl	%o0, 0, %o1		! Split the result again
-	srlx	%o0, 32, %o0
+	SPLIT(%o0, %o1)
 #endif
 1:	membar	#Sync
 #ifndef _LP64
@@ -8301,12 +8538,10 @@ _C_LABEL(Lfsprobe):
 ENTRY(probeset)
 #ifndef _LP64
 	!! Shuffle the args around into LP64 format
-	sllx	%o0, 32, %o0
-	or	%o0, %o1, %o0
+	COMBINE(%o0, %o1, %o0)
 	mov	%o2, %o1
 	mov	%o3, %o2
-	sllx	%o4, 32, %o3
-	or	%o3, %o5, %o3
+	COMBINE(%o4, %o5, %o3)
 #endif
 	mov	%o2, %o4
 	! %o0 = addr, %o1 = asi, %o4 = (1,2,4), %o3 = val
@@ -8390,8 +8625,7 @@ ENTRY(pmap_zero_page)
 	!!
 #ifndef _LP64
 #if PADDRT == 8
-	sllx	%o0, 32, %o0
-	or	%o0, %o1, %o0
+	COMBINE(%o0, %o1, %o0)
 #endif
 #endif
 #ifdef DEBUG
@@ -8682,10 +8916,8 @@ ENTRY(pmap_copy_page)
 	!!
 #ifndef _LP64
 #if PADDRT == 8
-	sllx	%o0, 32, %o0
-	or	%o0, %o1, %o0
-	sllx	%o2, 32, %o1
-	or	%o3, %o1, %o1
+	COMBINE(%o0, %o1, %o0)
+	COMBINE(%o2, %o3, %o1)
 #endif
 #endif
 #ifdef DEBUG
@@ -8740,7 +8972,7 @@ ENTRY(pmap_copy_page)
 	mov	%i2, %o2
 	mov	%i3, %o3
 	wr	%g0, FPRS_FEF, %fprs
-#else
+#else	/* NEW_FPSTATE */
 /*
  * New version, new scheme:
  *
@@ -8804,8 +9036,8 @@ ENTRY(pmap_copy_page)
 	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
 	STPTR	%l5, [%l1 + %lo(FPPROC)]		! Set new fpproc
 	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-#endif
-#else
+#endif	/* NEW_FPSTATE */
+#else	/* PMAP_FPSTATE */
 	!!
 	!! Don't use FP regs if the kernel's already using them
 	!!
@@ -8818,7 +9050,7 @@ ENTRY(pmap_copy_page)
 	brz,pn	%o4, pmap_copy_phys		! No userland fpstate so do this the slow way
 1:
 	 wr	%o5, 0, %fprs			! Enable the FPU
-#endif
+#endif	/* PMAP_FPSTATE */
 
 #ifdef DEBUG
 	sethi	%hi(paginuse), %o4		! Prevent this from nesting
@@ -8828,7 +9060,7 @@ ENTRY(pmap_copy_page)
 	bnz,pn	%icc, pmap_copy_phys
 	 inc	%o5
 	stw	%o5, [%o4 + %lo(paginuse)]
-#endif
+#endif	/*  DEBUG */
 
 	rdpr	%pil, %g1
 	wrpr	%g0, 15, %pil			! s = splhigh();
@@ -8942,7 +9174,7 @@ ENTRY(pmap_copy_page)
 
 	sethi	%hi(paginuse), %o4		! Prevent this from nesting
 	stw	%g0, [%o4 + %lo(paginuse)]
-#endif
+#endif	/* PARANOID */
 
 	wrpr	%g1, 0, %pil			! splx(s)
 
@@ -8958,7 +9190,7 @@ ENTRY(pmap_copy_page)
 	 wr	%l1, 0, %fprs
 	ret
 	 restore
-#else
+#else	/* NEW_FPSTATE */
 #ifdef DEBUG
 	LDPTR	[%l1 + %lo(FPPROC)], %l7
 	cmp	%l7, %l5
@@ -8966,99 +9198,23 @@ ENTRY(pmap_copy_page)
 	LDPTR	[%l5 + P_FPSTATE], %l7
 	cmp	%l7, %l0
 	tnz	1		! fpstate has changed!
-#endif
+#endif	/* DEBUG */
 	STPTR	%g0, [%l1 + %lo(FPPROC)]		! Clear fpproc
 	STPTR	%l6, [%l5 + P_FPSTATE]			! Save old fpstate
 	wr	%g0, 0, %fprs				! Disable FPU
 	ret
 	 restore
-#endif
-#else
+#endif	/* NEW_FPSTATE */
+#else	/* PMAP_FPSTATE */
 	ba	_C_LABEL(blast_vcache)
 	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
 	
 	retl					! Any other mappings have inconsistent D$
 	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
-#endif
+#endif	/* PMAP_FPSTATE */
 pmap_copy_phys:
 #endif
 #if 0
-#if 0
-	save	%sp, -CC64FSZ, %sp	! Get 8 locals for scratch
-	set	NBPG, %o1
-	sub	%o1, 8, %o0
-1:
-	ldxa	[%i0] ASI_PHYS_CACHED, %l0
-	inc	8, %i0
-	ldxa	[%i0] ASI_PHYS_CACHED, %l1
-	inc	8, %i0
-	ldxa	[%i0] ASI_PHYS_CACHED, %l2
-	inc	8, %i0
-	ldxa	[%i0] ASI_PHYS_CACHED, %l3
-	inc	8, %i0
-	ldxa	[%i0] ASI_PHYS_CACHED, %l4
-	inc	8, %i0
-	ldxa	[%i0] ASI_PHYS_CACHED, %l5
-	inc	8, %i0
-	ldxa	[%i0] ASI_PHYS_CACHED, %l6
-	inc	8, %i0
-	ldxa	[%i0] ASI_PHYS_CACHED, %l7
-	inc	8, %i0
-	stxa	%l0, [%i1] ASI_PHYS_CACHED
-	inc	8, %i1
-	stxa	%l1, [%i1] ASI_PHYS_CACHED
-	inc	8, %i1
-	stxa	%l2, [%i1] ASI_PHYS_CACHED
-	inc	8,%i1
-	stxa	%l3, [%i1] ASI_PHYS_CACHED
-	inc	8, %i1
-	stxa	%l4, [%i1] ASI_PHYS_CACHED
-	inc	8, %i1
-	stxa	%l5, [%i1] ASI_PHYS_CACHED
-	inc	8, %i1
-	stxa	%l6, [%i1] ASI_PHYS_CACHED
-	inc	8, %i1
-	stxa	%l7, [%i1] ASI_PHYS_CACHED
-	inc	8, %i1
-
-	stxa	%g0, [%o0] ASI_DCACHE_TAG! Blast away at the D$
-	dec	8, %o0
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	inc	8, %o1
-	stxa	%g0, [%o0] ASI_DCACHE_TAG! Blast away at the D$
-	dec	8, %o0
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	inc	8, %o1
-	stxa	%g0, [%o0] ASI_DCACHE_TAG! Blast away at the D$
-	dec	8, %o0
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	inc	8, %o1
-	stxa	%g0, [%o0] ASI_DCACHE_TAG! Blast away at the D$
-	dec	8, %o0
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	inc	8, %o1
-	stxa	%g0, [%o0] ASI_DCACHE_TAG! Blast away at the D$
-	dec	8, %o0
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	inc	8, %o1
-	stxa	%g0, [%o0] ASI_DCACHE_TAG! Blast away at the D$
-	dec	8, %o0
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	inc	8, %o1
-	stxa	%g0, [%o0] ASI_DCACHE_TAG! Blast away at the D$
-	dec	8, %o0
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	inc	8, %o1
-	stxa	%g0, [%o0] ASI_DCACHE_TAG! Blast away at the D$
-	dec	8, %o0
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	brnz,pt	%o0, 1b
-	 inc	8, %o1
-	sethi	%hi(KERNBASE), %o2
-	flush	%o2
-	return
-	 nop
-#else
 	/* This is the short, slow, safe version that uses %g1 */
 
 	set	NBPG, %o3
@@ -9080,7 +9236,6 @@ pmap_copy_phys:
 	flush	%o5
 	retl
 	 nop
-#endif
 #else
 	set	NBPG, %o3
 	add	%o3, %o0, %o3
@@ -9273,8 +9428,7 @@ ENTRY(pseg_set)
 	call	pseg_get
 	 mov	%o2, %o5
 #ifndef _LP64
-	sllx	%o0, 32, %o0
-	or	%o1, %o0, %o0
+	COMBINE(%o0, %o1, %o0)
 #endif
 	cmp	%o0, %o5
 	tne	1
@@ -9640,7 +9794,11 @@ Lbzero_longs:
 3:
 	stx	%o2, [%o0]		! Do 1 longword at a time
 	deccc	8, %o1
+#ifdef _LP64
 	brgez,pt	%o1, 3b
+#else
+	bge,pt	%icc, 3b
+#endif
 	 inc	8, %o0
 
 	/*
@@ -9687,6 +9845,7 @@ Lbzero_small:
 
 Lbzero_block:
 	!! Make sure our trap table is installed
+	ba,a,pt	%icc, Lbzero_longs
 	rdpr	%tba, %o3
 	set	_C_LABEL(trapbase), %o5
 	sub	%o3, %o5, %o3
@@ -9793,14 +9952,8 @@ Lbzero_block:
 5:
 	stda	%f0, [%i0] ASI_BLK_COMMIT_P		! Store 64 bytes
 	deccc	64, %i1
-	ble,pn	%xcc, 6f
+	bg,pt	%icc, 5b
 	 inc	64, %i0
-
-	stda	%f0, [%i0] ASI_BLK_COMMIT_P		! Store 64 bytes
-	deccc	64, %i1
-	bg,pn	%xcc, 5b
-	 inc	64, %i0
-6:
 /*
  * We've saved our possible fpstate, now disable the fpu
  * and continue with life.
