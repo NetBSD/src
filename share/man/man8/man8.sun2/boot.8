@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.4.2.2 2003/06/16 21:39:32 grant Exp $
+.\"	$NetBSD: boot.8,v 1.4.2.3 2003/06/16 21:49:51 grant Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 8, 2003
+.Dd April 29, 2003
 .Dt BOOT 8 sun2
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm b
 .Oo
-.Ar dev 
+.Ar dev
 .Oo ( Ar cntrl , unit , part )
 .Oc
 .Oc
@@ -61,9 +61,10 @@ Normally, the
 command alone is sufficient to boot the system, as the PROM chooses
 a default boot device
 .Ar dev
-if none is specified.  The PROM chooses the first device present on
+if none is specified.
+The PROM chooses the first device present on
 the system from the following ordered list:
-.Pp 
+.Pp
 .Bd -unfilled -offset indent -compact
 sd	SCSI disk
 ie	Intel Ethernet
@@ -84,15 +85,17 @@ For example, use
 .Dq ie(1,,)
 to boot off of the second Intel Ethernet in the system.
 .Pp
-The unit number specifies one of the many devices attached to a 
-controller.  The exact meaning and values vary depending on the device name.
+The unit number specifies one of the many devices attached to a
+controller.
+The exact meaning and values vary depending on the device name.
 For example,
 .Dq sd(,18,)
 boots the disk at target 6 on the first SCSI controller, 18 being the target
 number 6, multiplied by 4, and given in hexadecimal.
 .Pp
-The partition number specifies one of the many partitions on a device.  The
-exact meaning and values vary depending on the device name.  For example,
+The partition number specifies one of the many partitions on a device.
+The exact meaning and values vary depending on the device name.
+For example,
 .Dq sd(,18,1)
 boots the second partition on the disk at target 6 on the first SCSI
 controller.
@@ -101,7 +104,8 @@ The PROM only loads a first-stage boot program, currently either
 .Pa /usr/mdec/bootxx
 (for a disk boot), or
 .Pa /usr/mdec/bootyy
-(for a network boot).  This first-stage boot program then loads the
+(for a network boot).
+This first-stage boot program then loads the
 second-stage boot program from the same device, currently either
 .Pa /usr/mdec/ufsboot
 (for a disk boot), or
@@ -115,7 +119,7 @@ The second-stage boot program will then attempt to load the kernel named
 if none is specified).
 The second-stage disk boot program
 .Pa /usr/mdec/ufsboot
-loads the kernel from the same device that it was loaded from, 
+loads the kernel from the same device that it was loaded from,
 while the second-stage network boot program
 .Pa /usr/mdec/netboot
 will load the kernel
