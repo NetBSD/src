@@ -23,8 +23,6 @@ branch from/to" MSR contents) to allow for sane debugging.
 
  - careful code review of all diffs from -current
 
- - test and fix npx on i386 (npx exceptions through ISA interrupts).
-
 "would be nice":
 
  - use atomic ops to modify ci_flags and cpu_feature to avoid losing bits.
