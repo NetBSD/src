@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.157 2002/09/27 15:37:43 provos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.158 2002/10/08 15:50:11 junyoung Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.157 2002/09/27 15:37:43 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.158 2002/10/08 15:50:11 junyoung Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -494,13 +494,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/* Now map address space */
 	vm = p->p_vmspace;
-	vm->vm_taddr = (char *) pack.ep_taddr;
+	vm->vm_taddr = (caddr_t) pack.ep_taddr;
 	vm->vm_tsize = btoc(pack.ep_tsize);
-	vm->vm_daddr = (char *) pack.ep_daddr;
+	vm->vm_daddr = (caddr_t) pack.ep_daddr;
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
-	vm->vm_maxsaddr = (char *) pack.ep_maxsaddr;
-	vm->vm_minsaddr = (char *) pack.ep_minsaddr;
+	vm->vm_maxsaddr = (caddr_t) pack.ep_maxsaddr;
+	vm->vm_minsaddr = (caddr_t) pack.ep_minsaddr;
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
@@ -576,7 +576,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		goto exec_abort;
 	}
 
-	/* copy out the process's signal trapoline code */
+	/* copy out the process's signal trampoline code */
 	if (szsigcode) {
 		if ((error = copyout((char *)pack.ep_es->es_emul->e_sigcode,
 		    p->p_sigctx.ps_sigcode = (char *)p->p_psstr - szsigcode,
