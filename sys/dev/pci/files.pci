@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.113 2000/12/24 06:39:01 augustss Exp $
+#	$NetBSD: files.pci,v 1.114 2001/01/05 13:09:17 martin Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -387,3 +387,14 @@ file	dev/pci/hifn7751.c		hifn
 # Aironet PC4500/PC4800
 attach	an at pci with an_pci
 file	dev/pci/if_an_pci.c		an_pci
+
+
+# ISDN devices
+attach isic at pci with pci_isic
+file dev/pci/pci_isic.c				pci_isic
+
+defopt	opt_isicpci.h	ISICPCI_ELSA_QS1PCI ISICPCI_AVM_A1
+
+file dev/pci/i4b_elsa_qs1p.c			pci_isic
+file dev/pci/i4b_avm_fritz_pci.c		pci_isic
+

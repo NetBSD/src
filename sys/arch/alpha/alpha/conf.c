@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.52 2000/12/14 23:55:31 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.53 2001/01/05 13:09:16 martin Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.52 2000/12/14 23:55:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.53 2001/01/05 13:09:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,6 @@ cdev_decl(urio);
 #include "uscanner.h"
 cdev_decl(uscanner);
 
-#ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
 #define cdev_i4bctl_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -253,7 +252,6 @@ cdev_decl(i4bctl);
 cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
-#endif
 
 #include <altq/altqconf.h>
 
@@ -320,19 +318,11 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUGEN,ugen),	/* 48: USB generic driver */
 	cdev_midi_init(NMIDI,midi),	/* 49: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
-#ifdef __I4B_IS_INTEGRATED
 	cdev_i4b_init(NI4B, i4b),		/* 51: i4b main device */
 	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 52: i4b control device */
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 53: i4b raw b-chnl access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 54: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 55: i4b phone device */
-#else
-	cdev_notdef(),			/* 51 */
-	cdev_notdef(),			/* 52 */
-	cdev_notdef(),			/* 53 */
-	cdev_notdef(),			/* 54 */
-	cdev_notdef(),			/* 55 */
-#endif
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 57: USB tty */
 	cdev_ses_init(NSES,ses),	/* 58: SCSI SES/SAF-TE */
