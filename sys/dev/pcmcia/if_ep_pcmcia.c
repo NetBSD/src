@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.45 2004/08/09 18:11:01 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.46 2004/08/09 18:30:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.45 2004/08/09 18:11:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.46 2004/08/09 18:30:51 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ int	ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
 int	ep_pcmcia_enable __P((struct ep_softc *));
 void	ep_pcmcia_disable __P((struct ep_softc *));
 
-int	ep_pcmcia_enable1 __P((struct ep_softc *));
 void	ep_pcmcia_disable1 __P((struct ep_softc *));
 
 struct ep_pcmcia_softc {
@@ -188,24 +187,10 @@ ep_pcmcia_enable(sc)
 		return (1);
 	}
 
-	if ((error = ep_pcmcia_enable1(sc)) != 0) {
+	if ((error = pcmcia_function_enable(pf))) {
 		pcmcia_intr_disestablish(pf, sc->sc_ih);
-		return error;
+		return (error);
 	}
-
-	return 0;
-}
-
-int
-ep_pcmcia_enable1(sc)
-	struct ep_softc *sc;
-{
-	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
-	struct pcmcia_function *pf = psc->sc_pf;
-	int ret;
-
-	if ((ret = pcmcia_function_enable(pf)))
-		return (ret);
 
 	if ((psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) ||
 	    (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3CXEM556) ||
@@ -222,7 +207,7 @@ ep_pcmcia_enable1(sc)
 
 	}
 
-	return (ret);
+	return (0);
 }
 
 void
@@ -231,22 +216,8 @@ ep_pcmcia_disable(sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 
-	/* 
-	 * We must disestablish the interrupt before disabling the function,
-	 * because on a multifunction card the interrupt disestablishment
-	 * accesses CCR registers.
-	 */
-	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
-	ep_pcmcia_disable1(sc);
-}
-
-void
-ep_pcmcia_disable1(sc)
-	struct ep_softc *sc;
-{
-	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
-
 	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 }
 
 void

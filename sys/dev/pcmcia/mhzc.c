@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.21 2004/08/09 18:11:01 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.22 2004/08/09 18:30:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.21 2004/08/09 18:11:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.22 2004/08/09 18:30:51 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -504,8 +504,8 @@ mhzc_disable(sc, flag)
 	if ((sc->sc_flags & (MHZC_MODEM_ENABLED|MHZC_ETHERNET_ENABLED)) != 0)
 		return;
 
-	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 	pcmcia_function_disable(sc->sc_pf);
+	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 }
 
 /*****************************************************************************

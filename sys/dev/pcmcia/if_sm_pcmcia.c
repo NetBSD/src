@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.36 2004/08/08 23:17:13 mycroft Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.37 2004/08/09 18:30:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.36 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.37 2004/08/09 18:30:51 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,10 +285,6 @@ sm_pcmcia_enable(sc)
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 	int rv;
 
-	rv = pcmcia_function_enable(psc->sc_pf);
-	if (rv != 0)
-		return (rv);
-
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
 	    sc);
@@ -297,6 +293,13 @@ sm_pcmcia_enable(sc)
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
+
+	rv = pcmcia_function_enable(psc->sc_pf);
+	if (rv != 0) {
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		return (rv);
+	}
+
 	return (0);
 }
 
@@ -306,6 +309,6 @@ sm_pcmcia_disable(sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 }

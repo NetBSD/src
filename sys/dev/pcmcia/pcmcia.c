@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.47 2004/08/09 16:59:10 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.48 2004/08/09 18:30:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.47 2004/08/09 16:59:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.48 2004/08/09 18:30:51 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -584,6 +584,7 @@ pcmcia_function_disable(pf)
 	struct pcmcia_function *pf;
 {
 	struct pcmcia_function *tmp;
+	int reg;
 
 	if (pf->cfe == NULL)
 		panic("pcmcia_function_enable: function not initialized");
@@ -593,6 +594,14 @@ pcmcia_function_disable(pf)
 		 * Don't do anything but decrement if we're already disabled.
 		 */
 		goto out;
+	}
+
+	if (pcmcia_mfc(pf->sc)) {
+		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
+		reg &= ~(PCMCIA_CCR_OPTION_FUNC_ENABLE|
+			 PCMCIA_CCR_OPTION_ADDR_DECODE|
+		         PCMCIA_CCR_OPTION_IREQ_ENABLE);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 	}
 
 	/*
@@ -864,9 +873,11 @@ pcmcia_intr_disestablish(pf, ih)
 			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 			    pf->sc->ih);
 
-			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
-			reg &= ~PCMCIA_CCR_OPTION_IREQ_ENABLE;
-			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
+			if (pf->pf_flags & PFF_ENABLED) {
+				reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
+				reg &= ~PCMCIA_CCR_OPTION_IREQ_ENABLE;
+				pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
+			}
 
 			pf->ih_fct = NULL;
 			pf->ih_arg = NULL;
