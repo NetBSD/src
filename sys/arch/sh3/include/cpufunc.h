@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 1999/09/13 10:31:16 itojun Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 1999/09/16 14:42:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -46,6 +46,8 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sh3/mmureg.h>
+
+#ifdef _KERNEL
 
 static __inline void
 tlbflush(void)
@@ -96,5 +98,7 @@ enable_intr(void)
 	__asm __volatile("mov.l @r15+, r1");
 	__asm __volatile("mov.l @r15+, r0");
 }
+
+#endif
 
 #endif /* !_SH3_CPUFUNC_H_ */
