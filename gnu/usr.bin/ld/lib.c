@@ -1,5 +1,5 @@
 /*
- * $Id: lib.c,v 1.6 1993/12/08 10:14:01 pk Exp $	- library routines
+ * $Id: lib.c,v 1.7 1993/12/10 20:24:48 pk Exp $	- library routines
  */
 
 #include <sys/param.h>
@@ -499,7 +499,9 @@ subfile_wanted_p(entry)
 			return 1;
 		} else {
 			struct localsymbol *lsp;
-			int             defs = 0;
+
+			if (sp->sorefs == NULL)
+				continue;
 
 			/* Check for undefined symbols in shared objects */
 			for (lsp = sp->sorefs; lsp; lsp = lsp->next) {
