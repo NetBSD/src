@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.23 1993/12/13 05:03:18 deraadt Exp $
+#	$Id: TDR,v 1.24 1994/01/05 17:17:19 mycroft Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -18,7 +18,7 @@ options		COMPAT_NOMID
 options		DUMMY_NOPS
 options		MACHINE_NONCONTIG
 
-config		netbsd	at 0xfe100000 root on sd0 swap on sd0 and sd1
+config		netbsd	root on sd0 swap on sd0 and sd1
 
 controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
