@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.12 2002/12/28 20:11:57 kristerw Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.13 2003/02/23 02:45:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -89,11 +89,25 @@ struct btinfo_symtab {
 	int esym;
 };
 
+#ifdef __x86_64__
+/*
+ * Split in 32 bit values for the alignment of things, that must match
+ * for i386 and x86_64, since they share a bootloader.
+ */
+struct bi_memmap_entry {
+        u_int32_t addrlo;
+        u_int32_t addrhi;
+        u_int32_t sizelo;
+        u_int32_t sizehi;
+        u_int32_t type;
+};
+#else
 struct bi_memmap_entry {
 	u_int64_t addr;		/* beginning of block */	/* 8 */
 	u_int64_t size;		/* size of block */		/* 8 */
 	u_int32_t type;		/* type of block */		/* 4 */
 };							/*	== 20 */
+#endif
 
 #define	BIM_Memory	1	/* available RAM usable by OS */
 #define	BIM_Reserved	2	/* in use or reserved by the system */
