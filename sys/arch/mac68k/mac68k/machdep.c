@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.233 1999/05/20 08:21:44 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.234 1999/05/24 18:40:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -340,7 +340,7 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	caddr_t v, firstaddr;
+	caddr_t v;
 	unsigned i;
 	int vers;
 	int base, residual;
