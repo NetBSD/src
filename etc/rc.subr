@@ -1,4 +1,4 @@
-#	$NetBSD: rc.subr,v 1.1 1997/08/29 02:24:08 cjs Exp $
+#	$NetBSD: rc.subr,v 1.2 1997/08/30 03:34:29 cjs Exp $
 # functions used by various rc scripts
 
 # Test $1 variable, and warn if not set to YES or NO.
@@ -11,13 +11,5 @@ checkyesno() {
 			logger -s "WARNING: \$${1} is not set properly."
 		fi
 		return 1;
-	fi
-}
-
-# Set $1_flags to $2 if it's currently "DEFAULT".
-checkflags() {
-	eval value=\$${1}_flags;
-	if [ "$value" = DEFAULT ]; then
-		eval ${1}_flags="\$2";  
 	fi
 }
