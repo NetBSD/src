@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.7 1999/03/25 23:08:28 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.7.2.1 1999/04/09 17:19:03 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -71,6 +71,8 @@ struct	ether_header {
 
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+
+#ifndef _STANDALONE
 
 #ifdef _KERNEL
 /*
@@ -189,5 +191,7 @@ int	ether_hostton __P((const char *, struct ether_addr *));
 int	ether_line __P((const char *, struct ether_addr *, char *));
 __END_DECLS
 #endif
+
+#endif /* _STANDALONE */
 
 #endif /* _NET_IF_ETHER_H_ */
