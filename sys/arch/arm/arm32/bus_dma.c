@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.17 2002/08/14 20:50:37 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.18 2002/08/14 22:56:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -353,11 +353,10 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		break;
 
 	case BUS_DMASYNC_PREREAD:
-#if 1
-		cpu_dcache_wbinv_range(addr, len);
-#else
-		cpu_dcache_inv_range(addr, len);
-#endif
+		if (((addr | len) & arm_dcache_align_mask) == 0)
+			cpu_dcache_inv_range(addr, len);
+		else
+			cpu_dcache_wbinv_range(addr, len);
 		break;
 
 	case BUS_DMASYNC_PREWRITE:
@@ -399,11 +398,10 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			break;
 
 		case BUS_DMASYNC_PREREAD:
-#if 1
-			cpu_dcache_wbinv_range(maddr, minlen);
-#else
-			cpu_dcache_inv_range(maddr, minlen);
-#endif
+			if (((maddr | minlen) & arm_dcache_align_mask) == 0)
+				cpu_dcache_inv_range(maddr, minlen);
+			else
+				cpu_dcache_wbinv_range(maddr, minlen);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
@@ -448,11 +446,10 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			break;
 
 		case BUS_DMASYNC_PREREAD:
-#if 1
-			cpu_dcache_wbinv_range(addr, minlen);
-#else
-			cpu_dcache_inv_range(addr, minlen);
-#endif
+			if (((addr | minlen) & arm_dcache_align_mask) == 0)
+				cpu_dcache_inv_range(addr, minlen);
+			else
+				cpu_dcache_wbinv_range(addr, minlen);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
