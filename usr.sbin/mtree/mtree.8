@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.30 2002/02/05 12:15:13 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.31 2002/02/11 12:43:55 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd February 5, 2002
+.Dd February 11, 2002
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -494,6 +494,10 @@ The first path name entry listed must be a directory named
 .Ql \&. ,
 as this ensures that intermixing full and relative path names will
 work consistently and correctly.
+Multiple entries for a directory named
+.Ql \&.
+are permitted; the settings for the last such entry override those
+of the existing entry.
 .Pp
 A path name that contains a slash
 .Pq Ql /
@@ -502,6 +506,9 @@ that is not the first character will be treated as a full path
 All parent directories referenced in the path name must exist.
 The current directory path used by relative path names will be updated
 appropriately.
+Multiple entries for the same full path are permitted if the types
+are the same;
+in this case the settings for the last entry take precedence.
 .Pp
 A path name that does not contain a slash will be treated as a relative path.
 Specifying a directory will cause subsequent files to be searched
