@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1997/02/04 07:12:33 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1997/03/26 22:42:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -256,7 +256,7 @@ halt()
 
 
 /*
- * void boot(int howto, char *bootstr)
+ * void cpu_reboot(int howto, char *bootstr)
  *
  * Reboots the system
  *
@@ -279,7 +279,7 @@ extern int userret_count0;
 extern int userret_count1;
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
@@ -2333,10 +2333,6 @@ cpu_startup()
 	 */
  
 	configure();
-
-	/* Set the root, swap and dump devices from the boot args */
-
-	set_boot_devs();
 
 	dump_spl_masks();
 

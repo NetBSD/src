@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 1997/03/03 23:07:15 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.75 1997/03/26 22:43:05 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -640,7 +640,7 @@ sys_sigreturn(p, v, retval)
 int	waittime = -1;
 
 void
-boot(howto, user_boot_string)
+cpu_reboot(howto, user_boot_string)
 	register int howto;
 	char *user_boot_string;
 {
@@ -710,7 +710,7 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
 void
-dumpconf()
+cpu_dumpconf()
 {
 	register int nblks, dumpblks;
 
@@ -778,7 +778,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo <= 0)
 		return;
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);

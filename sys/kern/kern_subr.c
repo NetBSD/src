@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.22 1997/02/24 12:20:47 leo Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.23 1997/03/26 22:42:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -540,7 +540,7 @@ setroot(bootdv, bootpartition, nam2blk)
 			if (len == 0)
 				break;
 			if (len == 4 && strcmp(buf, "halt") == 0)
-				boot(RB_HALT, NULL);
+				cpu_reboot(RB_HALT, NULL);
 			else if (len == 7 && strcmp(buf, "generic") == 0) {
 				mountroot = NULL;
 				break;
@@ -775,7 +775,7 @@ parsedisk(str, len, defpart, nam2blk, devp)
 		return (NULL);
 
 	if (len == 4 && strcmp(str, "halt") == 0)
-		boot(RB_HALT, NULL);
+		cpu_reboot(RB_HALT, NULL);
 
 	cp = str + len - 1;
 	c = *cp;

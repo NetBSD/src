@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.38 1997/01/09 05:38:22 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.39 1997/03/26 22:42:18 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -140,7 +140,7 @@ panic(fmt, va_alist)
 	if (db_onpanic)
 		Debugger();
 #endif
-	boot(bootopt, NULL);
+	cpu_reboot(bootopt, NULL);
 }
 
 /*
