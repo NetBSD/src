@@ -1,4 +1,4 @@
-.\"	$NetBSD: du.1,v 1.5 1996/01/04 18:25:47 jtc Exp $
+.\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd April 1, 1994
+.Dd October 4, 1996
 .Dt DU 1
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Nm du
 .Op Fl H | Fl L | Fl P
 .Op Fl a | Fl s
-.Op Fl kx
+.Op Fl ckx
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -76,6 +76,8 @@ If the
 flag is specified, the number displayed is the number of 1024-byte
 blocks.
 Partial numbers of blocks are rounded up.
+.It Fl c
+Display the grand total after all the arguments have been processed.
 .It Fl s
 Display only the grand total for the specified files.
 .It Fl x
