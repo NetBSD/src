@@ -1,7 +1,7 @@
 #
 # DECstation 5000/240 kernel config
 #
-# 	$NetBSD: DS5000_100,v 1.8 1998/03/25 04:17:08 jonathan Exp $
+# 	$NetBSD: DS5000_100,v 1.9 1998/04/19 08:46:51 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -13,10 +13,6 @@ options 	MIPS3			# R4000/R4400 support
 
 # Support for specific models of DECstation
 options 	DEC_3MIN		# kn02ba: 5000/1xx (3min) support
-
-# old stype options (deprecated, still required)
-options 	DS5000_100		# 3MIN (kn02ba/kmin) support
-
 
 
 # Standard system options
