@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.1 1995/02/21 01:36:56 brezak Exp $	*/
+/*	$NetBSD: audio.c,v 1.2 1995/03/25 00:04:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: audio.c,v 1.1 1995/02/21 01:36:56 brezak Exp $
+ *	$Id: audio.c,v 1.2 1995/03/25 00:04:08 mycroft Exp $
  */
 
 /*
@@ -178,7 +178,7 @@ audioattach(num)
 int
 audio_hardware_attach(hwp, hdlp)
 	struct audio_hw_if *hwp;
-	caddr_t hdlp;
+	void *hdlp;
 {
 	int *zp, i;
 	struct audio_softc *sc;
@@ -461,7 +461,7 @@ audio_sleep(chan, label)
 		label = "audio";
 	
 	*chan = 1;
-	st = (tsleep((caddr_t)chan, PWAIT | PCATCH, label, 0));
+	st = (tsleep(chan, PWAIT | PCATCH, label, 0));
 	*chan = 0;
 	return (st);
 }
@@ -472,7 +472,7 @@ audio_wakeup(chan)
 {
 
 	if (*chan) {
-		wakeup((caddr_t)chan);
+		wakeup(chan);
 		*chan = 0;
 	}
 }
@@ -832,7 +832,7 @@ audio_silence_copyout(sc, n, uio)
 			break;
 
                 case UIO_SYSSPACE:
-                        bcopy((caddr_t)&auzero, iov->iov_base, 1);
+                        bcopy(&auzero, iov->iov_base, 1);
                         break;
                 }
                 iov->iov_base++;

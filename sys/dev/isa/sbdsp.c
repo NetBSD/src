@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.4 1995/03/14 18:43:22 brezak Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.5 1995/03/25 00:01:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdsp.c,v 1.4 1995/03/14 18:43:22 brezak Exp $
+ *	$Id: sbdsp.c,v 1.5 1995/03/25 00:01:00 mycroft Exp $
  */
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
@@ -164,11 +164,11 @@ sbdsp_attach(sc)
 	sc->sc_chans = 1;
 	sc->encoding = AUDIO_ENCODING_LINEAR;
 
-	(void) sbdsp_set_in_sr_real((caddr_t)sc, sc->sc_irate);
-	(void) sbdsp_set_out_sr_real((caddr_t)sc, sc->sc_orate);
+	(void) sbdsp_set_in_sr_real(sc, sc->sc_irate);
+	(void) sbdsp_set_out_sr_real(sc, sc->sc_orate);
 
-	(void) sbdsp_set_in_port((caddr_t)sc, SB_MIC_PORT);
-	(void) sbdsp_set_out_port((caddr_t)sc, SB_SPEAKER);
+	(void) sbdsp_set_in_port(sc, SB_MIC_PORT);
+	(void) sbdsp_set_out_port(sc, SB_SPEAKER);
 
 	if (ISSBPROCLASS(sc)) {
 		int i;
@@ -222,10 +222,10 @@ sbdsp_mix_read(sc, mixerport)
 
 int
 sbdsp_set_in_sr(addr, sr)
-	caddr_t addr;
+	void *addr;
 	u_long sr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	sc->sc_irate = sr;
 
@@ -234,10 +234,10 @@ sbdsp_set_in_sr(addr, sr)
 
 int
 sbdsp_set_in_sr_real(addr, sr)
-	caddr_t addr;
+	void *addr;
 	u_long sr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 	int rval;
 
 	if (rval = sbdsp_set_sr(sc, &sr, SB_INPUT_RATE))
@@ -250,19 +250,19 @@ sbdsp_set_in_sr_real(addr, sr)
 
 u_long
 sbdsp_get_in_sr(addr)
-	caddr_t addr;
+	void *addr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	return(sc->sc_irate);
 }
 
 int
 sbdsp_set_out_sr(addr, sr)
-	caddr_t addr;
+	void *addr;
 	u_long sr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	sc->sc_orate = sr;
 	return(0);
@@ -270,10 +270,10 @@ sbdsp_set_out_sr(addr, sr)
 
 int
 sbdsp_set_out_sr_real(addr, sr)
-	caddr_t addr;
+	void *addr;
 	u_long sr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 	int rval;
 
 	if (rval = sbdsp_set_sr(sc, &sr, SB_OUTPUT_RATE))
@@ -285,19 +285,19 @@ sbdsp_set_out_sr_real(addr, sr)
 
 u_long
 sbdsp_get_out_sr(addr)
-	caddr_t addr;
+	void *addr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	return(sc->sc_orate);
 }
 
 int
 sbdsp_query_encoding(addr, fp)
-    caddr_t addr;
+    void *addr;
     struct audio_encoding *fp;
 {
-    register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+    register struct sbdsp_softc *sc = addr;
 
     switch (fp->index) {
     case 0:
@@ -317,10 +317,10 @@ sbdsp_query_encoding(addr, fp)
 
 int
 sbdsp_set_encoding(addr, enc)
-	caddr_t addr;
+	void *addr;
 	u_int enc;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 	
 	switch(enc){
 	case AUDIO_ENCODING_ULAW:
@@ -337,16 +337,16 @@ sbdsp_set_encoding(addr, enc)
 
 int
 sbdsp_get_encoding(addr)
-	caddr_t addr;
+	void *addr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	return(sc->encoding);
 }
 
 int
 sbdsp_set_precision(addr, prec)
-	caddr_t addr;
+	void *addr;
 	u_int prec;
 {
 
@@ -357,17 +357,17 @@ sbdsp_set_precision(addr, prec)
 
 int
 sbdsp_get_precision(addr)
-	caddr_t addr;
+	void *addr;
 {
 	return(8);
 }
 
 int
 sbdsp_set_channels(addr, chans)
-	caddr_t addr;
+	void *addr;
 	int chans;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 	int rval;
 
 	if (ISSBPROCLASS(sc)) {
@@ -395,9 +395,9 @@ sbdsp_set_channels(addr, chans)
 
 int
 sbdsp_get_channels(addr)
-	caddr_t addr;
+	void *addr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 	
 #if 0
 	/* recording stereo may frob the mixer output */
@@ -419,10 +419,10 @@ sbdsp_get_channels(addr)
 
 int
 sbdsp_set_out_port(addr, port)
-	caddr_t addr;
+	void *addr;
 	int port;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 	
 	sc->out_port = port; /* Just record it */
 
@@ -431,9 +431,9 @@ sbdsp_set_out_port(addr, port)
 
 int
 sbdsp_get_out_port(addr)
-	caddr_t addr;
+	void *addr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	return(sc->out_port);
 }
@@ -441,10 +441,10 @@ sbdsp_get_out_port(addr)
 
 int
 sbdsp_set_in_port(addr, port)
-	caddr_t addr;
+	void *addr;
 	int port;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 	int mixport, sbport;
 	
 	switch (port) {
@@ -492,9 +492,9 @@ sbdsp_set_in_port(addr, port)
 
 int
 sbdsp_get_in_port(addr)
-	caddr_t addr;
+	void *addr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	return(sc->in_port);
 }
@@ -502,10 +502,10 @@ sbdsp_get_in_port(addr)
 
 int
 sbdsp_speaker_ctl(addr, newstate)
-	caddr_t addr;
+	void *addr;
 	int newstate;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	if ((newstate == SPKR_ON) &&
 	    (sc->spkr_state == SPKR_OFF)) {
@@ -522,10 +522,10 @@ sbdsp_speaker_ctl(addr, newstate)
 
 int
 sbdsp_round_blocksize(addr, blk)
-	caddr_t addr;
+	void *addr;
 	int blk;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	sc->sc_last_hsr_size = sc->sc_last_hsw_size = 0;
 
@@ -543,14 +543,14 @@ sbdsp_round_blocksize(addr, blk)
 
 int
 sbdsp_commit_settings(addr)
-	caddr_t addr;
+	void *addr;
 {
 	/* due to potentially unfortunate ordering in the above layers,
 	   re-do a few sets which may be important--input gains
 	   (adjust the proper channels), number of input channels (hit the
 	   record rate and set mode) */
 
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 
 	sbdsp_set_out_sr_real(addr, sc->sc_orate);
 	sbdsp_set_in_sr_real(addr, sc->sc_irate);
@@ -597,9 +597,9 @@ sbdsp_open(sc, dev, flags)
 
 void
 sbdsp_close(addr)
-	caddr_t addr;
+	void *addr;
 {
-	struct sbdsp_softc *sc = (struct sbdsp_softc *) addr;
+	struct sbdsp_softc *sc = addr;
 
         DPRINTF(("sbdsp_close: sc=0x%x\n", sc));
 
@@ -701,7 +701,7 @@ sbdsp_pause(sc)
 	extern int hz;
 
 	timeout(sbdsp_to, sbdsp_to, hz/8);
-	(void)tsleep((caddr_t)sbdsp_to, PWAIT, "sbpause", 0);
+	(void)tsleep(sbdsp_to, PWAIT, "sbpause", 0);
 }
 
 /*
@@ -757,9 +757,9 @@ sbversion(sc)
  */
 int
 sbdsp_haltdma(addr)
-	caddr_t addr;
+	void *addr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc*) addr;
+	register struct sbdsp_softc *sc = addr;
 
 	DPRINTF(("sbdsp_haltdma: sc=0x%x\n", sc));
 
@@ -779,9 +779,9 @@ sbdsp_haltdma(addr)
 
 int
 sbdsp_contdma(addr)
-	caddr_t addr;
+	void *addr;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc*) addr;
+	register struct sbdsp_softc *sc = addr;
 
 	DPRINTF(("sbdsp_contdma: sc=0x%x\n", sc));
 
@@ -949,13 +949,13 @@ sbdsp_set_sr(sc, srp, isdac)
 
 int
 sbdsp_dma_input(addr, p, cc, intr, arg)
-	caddr_t addr;
+	void *addr;
 	void *p;
 	int cc;
 	void (*intr)();
 	void *arg;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 	register u_short iobase;
 	u_int phys;
 	
@@ -1033,13 +1033,13 @@ badmode:
 
 int
 sbdsp_dma_output(addr, p, cc, intr, arg)
-	caddr_t addr;
+	void *addr;
 	void *p;
 	int cc;
 	void (*intr)();
 	void *arg;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+	register struct sbdsp_softc *sc = addr;
 	register u_short iobase;
 	
 #ifdef DEBUG
@@ -1339,7 +1339,7 @@ sbdsp_expand(e, p, cc)
 
 int
 sbdsp_setfd(addr, flag)
-	caddr_t addr;
+	void *addr;
 	int flag;
 {
 	/* Can't do full-duplex */
@@ -1348,10 +1348,10 @@ sbdsp_setfd(addr, flag)
 
 int
 sbdsp_mixer_set_port(addr, cp)
-    caddr_t addr;
+    void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+    register struct sbdsp_softc *sc = addr;
     int error = 0;
     int src, gain;
     int left, right;
@@ -1446,10 +1446,10 @@ sbdsp_mixer_set_port(addr, cp)
 
 int
 sbdsp_mixer_get_port(addr, cp)
-    caddr_t addr;
+    void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+    register struct sbdsp_softc *sc = addr;
     int error = 0;
     int done = 0;
     
@@ -1511,10 +1511,10 @@ sbdsp_mixer_get_port(addr, cp)
 
 int
 sbdsp_mixer_query_devinfo(addr, dip)
-    caddr_t addr;
+    void *addr;
     register mixer_devinfo_t *dip;
 {
-    register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
+    register struct sbdsp_softc *sc = addr;
     int done = 0;
 
     DPRINTF(("sbdsp_mixer_query_devinfo: index=%d\n", dip->index));

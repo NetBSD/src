@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.1 1995/02/21 02:28:42 brezak Exp $	*/
+/*	$NetBSD: wss.c,v 1.2 1995/03/25 00:01:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: wss.c,v 1.1 1995/02/21 02:28:42 brezak Exp $
+ *	$Id: wss.c,v 1.2 1995/03/25 00:01:07 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -109,16 +109,16 @@ int	wssprobe();
 void	wssattach();
 int	wssopen __P((dev_t, int));
 
-int	wss_getdev __P((caddr_t, struct audio_device *));
-int	wss_setfd __P((caddr_t, int));
+int	wss_getdev __P((void *, struct audio_device *));
+int	wss_setfd __P((void *, int));
 
-int	wss_set_out_port __P((caddr_t, int));
-int	wss_get_out_port __P((caddr_t));
-int	wss_set_in_port __P((caddr_t, int));
-int	wss_get_in_port __P((caddr_t));
-int	wss_mixer_set_port __P((caddr_t, mixer_ctrl_t *));
-int	wss_mixer_get_port __P((caddr_t, mixer_ctrl_t *));
-int	wss_query_devinfo __P((caddr_t, mixer_devinfo_t *));
+int	wss_set_out_port __P((void *, int));
+int	wss_get_out_port __P((void *));
+int	wss_set_in_port __P((void *, int));
+int	wss_get_in_port __P((void *));
+int	wss_mixer_set_port __P((void *, mixer_ctrl_t *));
+int	wss_mixer_get_port __P((void *, mixer_ctrl_t *));
+int	wss_query_devinfo __P((void *, mixer_devinfo_t *));
 
 /*
  * Define our interface to the higher level audio driver.
@@ -261,9 +261,9 @@ wssattach(parent, self, aux)
     printf(" (vers %d)", inb(sc->wss_iobase+WSS_STATUS) & 0x1f);
     printf("\n");
 
-    sc->sc_ad1848.parent = (caddr_t)sc;
+    sc->sc_ad1848.parent = sc;
 
-    if (audio_hardware_attach(&wss_hw_if, (caddr_t)&sc->sc_ad1848) != 0)
+    if (audio_hardware_attach(&wss_hw_if, &sc->sc_ad1848) != 0)
 	printf("wss: could not attach to audio pseudo-device driver\n");
 }
 
@@ -321,7 +321,7 @@ wssopen(dev, flags)
 
 int
 wss_getdev(addr, retp)
-    caddr_t addr;
+    void *addr;
     struct audio_device *retp;
 {
     *retp = wss_device;
@@ -330,7 +330,7 @@ wss_getdev(addr, retp)
 
 int
 wss_setfd(addr, flag)
-    caddr_t addr;
+    void *addr;
     int flag;
 {
     /* Can't do full-duplex */
@@ -340,7 +340,7 @@ wss_setfd(addr, flag)
 
 int
 wss_set_out_port(addr, port)
-    caddr_t addr;
+    void *addr;
     int port;
 {
     DPRINTF(("wss_set_out_port:\n"));
@@ -349,7 +349,7 @@ wss_set_out_port(addr, port)
 
 int
 wss_get_out_port(addr)
-    caddr_t addr;
+    void *addr;
 {
     DPRINTF(("wss_get_out_port:\n"));
     return(EINVAL);
@@ -357,11 +357,11 @@ wss_get_out_port(addr)
 
 int
 wss_set_in_port(addr, port)
-    caddr_t addr;
+    void *addr;
     int port;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct wss_softc *sc = (struct wss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct wss_softc *sc = ac->parent;
 	
     DPRINTF(("wss_set_in_port: %d\n", port));
 
@@ -385,10 +385,10 @@ wss_set_in_port(addr, port)
 
 int
 wss_get_in_port(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct wss_softc *sc = (struct wss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct wss_softc *sc = ac->parent;
     int port = WSS_MIC_IN_LVL;
     
     switch(ad1848_get_rec_port(ac)) {
@@ -410,11 +410,11 @@ wss_get_in_port(addr)
 
 int
 wss_mixer_set_port(addr, cp)
-    caddr_t addr;
+    void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct wss_softc *sc = (struct wss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct wss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     u_char eq;
     int error = EINVAL;
@@ -497,11 +497,11 @@ wss_mixer_set_port(addr, cp)
 
 int
 wss_mixer_get_port(addr, cp)
-    caddr_t addr;
+    void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct wss_softc *sc = (struct wss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct wss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     u_char eq;
     int error = EINVAL;
@@ -587,11 +587,11 @@ wss_mixer_get_port(addr, cp)
 
 int
 wss_query_devinfo(addr, dip)
-    caddr_t addr;
+    void *addr;
     register mixer_devinfo_t *dip;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct wss_softc *sc = (struct wss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct wss_softc *sc = ac->parent;
 
     DPRINTF(("wss_query_devinfo: index=%d\n", dip->index));
 
