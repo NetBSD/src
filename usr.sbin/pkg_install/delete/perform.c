@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.43 2003/09/02 07:34:55 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.44 2003/09/08 07:08:11 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.43 2003/09/02 07:34:55 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.44 2003/09/08 07:08:11 jlam Exp $");
 #endif
 #endif
 
@@ -608,21 +608,43 @@ pkg_do(char *pkg)
 	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s",
 	    _pkgdb_getPKGDB_DIR(), pkg);
 	if (!fexists(LogDir) || !isdir(LogDir)) {
-		{
-			/* Check if the given package name matches something
-			 * with 'pkg-[0-9]*' */
-			char    try[FILENAME_MAX];
-			snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
-			if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-				add_to_list_fn, &pkgs) != 0) {
-				return 0;	/* we've just appended some names to the pkgs list,
-						 * they will be processed after this package. */
-			}
+		/* Check if the given package name matches something
+		 * with 'pkg-[0-9]*' */
+		char	        try[FILENAME_MAX];
+		lpkg_head_t     trypkgs;
+		lpkg_t	       *lpp;
+		int		qlen = 0;
+
+		TAILQ_INIT(&trypkgs);
+		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
+		if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+			add_to_list_fn, &trypkgs) == NULL) {
+			warnx("package '%s' not installed", pkg);
+			return 1;
 		}
 
-		/* No match */
-		warnx("package '%s' not installed", pkg);
-		return 1;
+		TAILQ_FOREACH(lpp, &trypkgs, lp_link)
+			qlen++;
+
+		if (qlen > 1) {
+			warnx("'%s' matches more than one package:", pkg);
+			while ((lpp = TAILQ_FIRST(&trypkgs))) {
+				TAILQ_REMOVE(&trypkgs, lpp, lp_link);
+				fprintf(stderr, "\t%s\n", lpp->lp_name);
+				free_lpkg(lpp);
+			}
+			return 1;
+		}
+
+		/*
+		 * Append the package names we've discovered to the
+		 * pkgs list after this one, and return 0 so that we
+		 * continue processing the pkgs list.
+		 */
+		TAILQ_FOREACH(lpp, &trypkgs, lp_link)
+			TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+
+		return 0;
 	}
 	if (!getcwd(home, FILENAME_MAX)) {
 		cleanup(0);
@@ -677,7 +699,9 @@ pkg_do(char *pkg)
 			if (Verbose) {
 				printf("Deleting package %s instance from `%s' view\n", pkg, view);
 			}
-			if (vsystem("%s -K %s %s", ProgramPath, view, pkg) != 0) {
+			if (vsystem("%s -K %s %s%s", ProgramPath, view,
+					(Force > 1) ? "-f -f " : (Force == 1) ? "-f " : "",
+					pkg) != 0) {
 				warnx("unable to delete package %s from view %s", pkg, view);
 				(void) fclose(fp);
 				return 1;
