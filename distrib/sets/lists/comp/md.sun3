@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.38 2000/06/26 15:50:02 kleink Exp $
+# $NetBSD: md.sun3,v 1.39 2000/11/18 05:14:28 tv Exp $
 ./usr/include/sun3	comp-c-include
 ./usr/include/sun3/_G_config.h	comp-c-include
 ./usr/include/sun3/ansi.h	comp-c-include
@@ -61,5 +61,4 @@
 ./usr/include/sun3/vmparam3x.h	comp-c-include
 ./usr/include/sun3/vuid_event.h	comp-c-include
 ./usr/include/sun3/z8530var.h	comp-c-include
-./usr/lib/c++rt0.o	comp-cxx-lib
 ./usr/sbin/dbsym	comp-sysutil-bin
