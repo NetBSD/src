@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.5 1997/10/11 01:53:36 lukem Exp $	*/
+/*	$NetBSD: subr.c,v 1.6 1998/08/24 22:07:37 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.5 1997/10/11 01:53:36 lukem Exp $");
+__RCSID("$NetBSD: subr.c,v 1.6 1998/08/24 22:07:37 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -92,7 +92,7 @@ liq2(pbotl)
 }
 
 int
-liq(foo)
+liq()
 {
 	int     i;
 	i = prop[bottle];
@@ -133,7 +133,7 @@ forced(locc)
 }
 
 int
-dark(foo)
+dark()
 {
 	if ((cond[loc] % 2) == 0 && (prop[lamp] == 0 || !here(lamp)))
 		return (TRUE);
@@ -588,7 +588,7 @@ trtake()
 	if (fixed[obj] != 0)
 		return (2011);
 	if (obj == water || obj == oil) {
-		if (here(bottle) && liq(0) == obj) {
+		if (here(bottle) && liq() == obj) {
 			obj = bottle;
 			goto l9017;
 		}
@@ -621,7 +621,7 @@ l9017:	if (holdng >= 7) {
 l9014:	if ((obj == bird || obj == cage) && prop[bird] != 0)
 		carry(bird + cage - obj, loc);
 	carry(obj, loc);
-	k = liq(0);
+	k = liq();
 	if (obj == bottle && k != 0)
 		place[k] = -1;
 	return (2009);
@@ -631,7 +631,7 @@ l9014:	if ((obj == bird || obj == cage) && prop[bird] != 0)
 int
 dropper()
 {				/* 9021                 */
-	k = liq(0);
+	k = liq();
 	if (k == obj)
 		obj = bottle;
 	if (obj == bottle && k != 0)
@@ -987,12 +987,12 @@ trfill()
 	spk = 107;
 	if (liqloc(loc) == 0)
 		spk = 106;
-	if (liq(0) != 0)
+	if (liq() != 0)
 		spk = 105;
 	if (spk != 107)
 		return (2011);
 	prop[bottle] = ((cond[loc] % 4) / 2) * 2;
-	k = liq(0);
+	k = liq();
 	if (toting(bottle))
 		place[k] = -1;
 	if (k == oil)
