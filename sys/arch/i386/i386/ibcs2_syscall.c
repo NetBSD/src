@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.10 2000/12/11 17:36:03 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.11 2000/12/12 03:33:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -77,9 +77,11 @@ ibcs2_syscall_intern(p)
 	struct proc *p;
 {
 
+#ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
 		p->p_md.md_syscall = ibcs2_syscall_fancy;
 	else
+#endif
 		p->p_md.md_syscall = ibcs2_syscall_plain;
 }
 

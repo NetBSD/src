@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2000/12/11 17:36:03 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5 2000/12/12 03:33:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -73,9 +73,11 @@ syscall_intern(p)
 	struct proc *p;
 {
 
+#ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
 		p->p_md.md_syscall = syscall_fancy;
 	else
+#endif
 		p->p_md.md_syscall = syscall_plain;
 }
 
