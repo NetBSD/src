@@ -1,5 +1,5 @@
 #!/bin/sh -
-# $NetBSD: makelintstub,v 1.7.4.1 2001/11/14 19:32:05 nathanw Exp $
+# $NetBSD: makelintstub,v 1.7.4.2 2002/05/04 16:39:21 thorpej Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou
 # All rights reserved.
@@ -52,6 +52,7 @@ header()
 	#include <sys/time.h>
 	#include <sys/mount.h>
 	#include <sys/stat.h>
+	#include <sys/sa.h>
 	#include <ufs/ufs/dinode.h>
 	#include <ufs/lfs/lfs.h>
 	#include <sys/resource.h>
