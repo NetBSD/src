@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.29 1996/03/05 01:32:23 thorpej Exp $
+#	$NetBSD: KICKME,v 1.30 1996/03/25 05:45:38 perry Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -34,6 +34,7 @@ options		KTRACE		# system call tracing, a la ktrace(1)
 options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options		COMPAT_09	# NetBSD 0.9,
 options		COMPAT_10	# NetBSD 1.0,
+options		COMPAT_11	# NetBSD 1.1,
 options		COMPAT_43	# and 4.3BSD
 
 options		FFS		# UFS
