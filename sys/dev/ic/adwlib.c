@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.13 2000/05/14 18:25:49 dante Exp $        */
+/* $NetBSD: adwlib.c,v 1.14 2000/05/14 19:53:32 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -3437,7 +3437,7 @@ ADW_SCSI_REQ_Q *scsiq;
 			 * and WDTR messages to negotiate synchronous speed
 			 * and offset, transfer width, and protocol options.
 			 */
-			if ((inq->flags4 & SID_Cloacking) &
+			if ((inq->flags4 & SID_Clocking) &
 					SIDV_CLOCKING_DT_ONLY)
 			{
 				ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_PPR_ABLE,
