@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.17 1995/01/25 04:45:38 cgd Exp $	*/
+/*	$NetBSD: vnd.c,v 1.18 1995/02/27 19:31:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,12 +92,17 @@ int vnddebug = 0x00;
 
 #define b_cylin	b_resid
 
-#define	vndunit(x)	((minor(x) >> 3) & 0x7)	/* for consistency */
+#define	vndunit(x)	DISKUNIT(x)
+
+struct vndbuf {
+	struct buf	vb_buf;
+	struct buf	*vb_obp;
+};
 
 #define	getvndbuf()	\
-	((struct buf *)malloc(sizeof(struct buf), M_DEVBUF, M_WAITOK))
-#define putvndbuf(bp)	\
-	free((caddr_t)(bp), M_DEVBUF)
+	((struct vndbuf *)malloc(sizeof(struct vndbuf), M_DEVBUF, M_WAITOK))
+#define putvndbuf(vbp)	\
+	free((caddr_t)(vbp), M_DEVBUF)
 
 struct vnd_softc {
 	int		 sc_flags;	/* flags */
@@ -186,7 +191,7 @@ vndstrategy(bp)
 {
 	int unit = vndunit(bp->b_dev);
 	register struct vnd_softc *vnd = &vnd_softc[unit];
-	register struct buf *nbp;
+	register struct vndbuf *nbp;
 	register int bn, bsize, resid;
 	register caddr_t addr;
 	int sz, flags, error;
@@ -244,26 +249,29 @@ vndstrategy(bp)
 #endif
 
 		nbp = getvndbuf();
-		nbp->b_flags = flags;
-		nbp->b_bcount = sz;
-		nbp->b_bufsize = bp->b_bufsize;
-		nbp->b_error = 0;
+		nbp->vb_buf.b_flags = flags;
+		nbp->vb_buf.b_bcount = sz;
+		nbp->vb_buf.b_bufsize = bp->b_bufsize;
+		nbp->vb_buf.b_error = 0;
 		if (vp->v_type == VBLK || vp->v_type == VCHR)
-			nbp->b_dev = vp->v_rdev;
+			nbp->vb_buf.b_dev = vp->v_rdev;
 		else
-			nbp->b_dev = NODEV;
-		nbp->b_data = addr;
-		nbp->b_blkno = nbn + btodb(off);
-		nbp->b_proc = bp->b_proc;
-		nbp->b_iodone = vndiodone;
-		nbp->b_vp = vp;
-		nbp->b_pfcent = (int) bp;	/* XXX */
-		nbp->b_rcred = vnd->sc_cred;	/* XXX crdup? */
-		nbp->b_wcred = vnd->sc_cred;	/* XXX crdup? */
-		nbp->b_dirtyoff = bp->b_dirtyoff;
-		nbp->b_dirtyend = bp->b_dirtyend;
-		nbp->b_validoff = bp->b_validoff;
-		nbp->b_validend = bp->b_validend;
+			nbp->vb_buf.b_dev = NODEV;
+		nbp->vb_buf.b_data = addr;
+		nbp->vb_buf.b_blkno = nbn + btodb(off);
+		nbp->vb_buf.b_proc = bp->b_proc;
+		nbp->vb_buf.b_iodone = vndiodone;
+		nbp->vb_buf.b_vp = vp;
+		nbp->vb_buf.b_rcred = vnd->sc_cred;	/* XXX crdup? */
+		nbp->vb_buf.b_wcred = vnd->sc_cred;	/* XXX crdup? */
+		nbp->vb_buf.b_dirtyoff = bp->b_dirtyoff;
+		nbp->vb_buf.b_dirtyend = bp->b_dirtyend;
+		nbp->vb_buf.b_validoff = bp->b_validoff;
+		nbp->vb_buf.b_validend = bp->b_validend;
+
+		/* save a reference to the old buffer */
+		nbp->vb_obp = bp;
+
 		/*
 		 * If there was an error or a hole in the file...punt.
 		 * Note that we deal with this after the nbp allocation.
@@ -274,18 +282,18 @@ vndstrategy(bp)
 		 * a hassle (in the write case).
 		 */
 		if (error) {
-			nbp->b_error = error;
-			nbp->b_flags |= B_ERROR;
+			nbp->vb_buf.b_error = error;
+			nbp->vb_buf.b_flags |= B_ERROR;
 			bp->b_resid -= (resid - sz);
-			biodone(nbp);
+			biodone(&nbp->vb_buf);
 			return;
 		}
 		/*
 		 * Just sort by block number
 		 */
-		nbp->b_cylin = nbp->b_blkno;
+		nbp->vb_buf.b_cylin = nbp->vb_buf.b_blkno;
 		s = splbio();
-		disksort(&vnd->sc_tab, nbp);
+		disksort(&vnd->sc_tab, &nbp->vb_buf);
 		if (vnd->sc_tab.b_active < vnd->sc_maxactive) {
 			vnd->sc_tab.b_active++;
 			vndstart(vnd);
@@ -326,30 +334,31 @@ vndstart(vnd)
 }
 
 void
-vndiodone(bp)
-	register struct buf *bp;
+vndiodone(vbp)
+	register struct vndbuf *vbp;
 {
-	register struct buf *pbp = (struct buf *)bp->b_pfcent;	/* XXX */
+	register struct buf *pbp = vbp->vb_obp;
 	register struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
 	int s;
 
 	s = splbio();
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndiodone(%d): bp %x vp %x blkno %x addr %x cnt %x\n",
-		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
-		    bp->b_bcount);
+		printf("vndiodone(%d): vbp %x vp %x blkno %x addr %x cnt %x\n",
+		    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
+		    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
 #endif
-	if (bp->b_error) {
+	if (vbp->vb_buf.b_error) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndiodone: bp %x error %d\n", bp, bp->b_error);
+			printf("vndiodone: vbp %x error %d\n", vbp,
+			    vbp->vb_buf.b_error);
 #endif
 		pbp->b_flags |= B_ERROR;
-		pbp->b_error = biowait(bp);
+		pbp->b_error = biowait(&vbp->vb_buf);
 	}
-	pbp->b_resid -= bp->b_bcount;
-	putvndbuf(bp);
+	pbp->b_resid -= vbp->vb_buf.b_bcount;
+	putvndbuf(vbp);
 	if (pbp->b_resid == 0) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
