@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: fsort.h,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -55,7 +55,7 @@ extern u_char *buffer, *linebuf;
  * are sorted.
 */
 struct tempfile {
-	FILE *fd;
+	FILE *fp;
 	u_char maxb;
 	u_char lastb;
 	long max_o;

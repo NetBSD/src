@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: fsort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -62,10 +62,10 @@ extern char *toutpath;
 int PANIC = FSORTMAX;
 
 void
-fsort(binno, depth, infiles, nfiles, outfd, ftbl)
+fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 	register int binno, depth, nfiles;
 	register union f_handle infiles;
-	FILE *outfd;
+	FILE *outfp;
 	register struct field *ftbl;
 {
 	register const u_char **keypos;
@@ -79,10 +79,10 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 		u_char *, struct field *);
 	register struct recheader *crec;
 	struct field tfield[2];
-	FILE *prevfd, *tailfd[FSORTMAX+1];
+	FILE *prevfp, *tailfp[FSORTMAX+1];
 
-	memset(tailfd, 0, sizeof(tailfd));
-	prevfd = outfd;
+	memset(tailfp, 0, sizeof(tailfp));
+	prevfp = outfp;
 	memset(tfield, 0, sizeof(tfield));
 	if (ftbl[0].flags & R)
 		tfield[0].weights = Rascii;
@@ -113,7 +113,7 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 		if (binno == weights[REC_D] &&
 		    !(SINGL_FLD && ftbl[0].flags & F)) {	/* pop */
 			rd_append(weights[REC_D],
-			    infiles, nfiles, prevfd, buffer, bufend);
+			    infiles, nfiles, prevfp, buffer, bufend);
 			break;
 		} else if (binno == weights[REC_D]) {
 			depth = 0;		/* start over on flat weights */
@@ -136,12 +136,12 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 			}
 			if (c == BUFFEND || ntfiles || mfct) {	/* push */
 				if (panic >= PANIC) {
-					fstack[MAXFCT-16+mfct].fd = ftmp();
+					fstack[MAXFCT-16+mfct].fp = ftmp();
 					if (radixsort(keylist, nelem, weights,
 					    REC_D))
 						err(2, NULL);
 					append(keylist, nelem, depth, fstack[
-					 MAXFCT-16+mfct].fd, putrec, ftbl);
+					 MAXFCT-16+mfct].fp, putrec, ftbl);
 					mfct++;
 					/* reduce number of open files */
 					if (mfct == 16 ||(c == EOF && ntfiles)) {
@@ -149,10 +149,10 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 						    crec->data);
 						memmove(tmpbuf, crec->data,
 						    bufend - crec->data);
-						fstack[tfiles.top + ntfiles].fd
+						fstack[tfiles.top + ntfiles].fp
 						    = ftmp();
 						fmerge(0, mstart, mfct, geteasy,
-						  fstack[tfiles.top+ntfiles].fd,
+						  fstack[tfiles.top+ntfiles].fp,
 						  putrec, ftbl);
 						++ntfiles;
 						mfct = 0;
@@ -161,9 +161,9 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 						free(tmpbuf);
 					}
 				} else {
-					fstack[tfiles.top + ntfiles].fd= ftmp();
+					fstack[tfiles.top + ntfiles].fp= ftmp();
 					onepass(keylist, depth, nelem, sizes,
-					weights, fstack[tfiles.top+ntfiles].fd);
+					weights, fstack[tfiles.top+ntfiles].fp);
 					++ntfiles;
 				}
 			}
@@ -173,16 +173,16 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 			if (nelem > 1)
 			   if (radixsort(keylist, nelem, weights, REC_D))
 				err(2, NULL);
-			append(keylist, nelem, depth, outfd, putline, ftbl);
+			append(keylist, nelem, depth, outfp, putline, ftbl);
 			break;					/* pop */
 		}
 		if (panic >= PANIC) {
 			if (!ntfiles)
 				fmerge(0, mstart, mfct, geteasy,
-				    outfd, putline, ftbl);
+				    outfp, putline, ftbl);
 			else
 				fmerge(0, tfiles, ntfiles, geteasy,
-				    outfd, putline, ftbl);
+				    outfp, putline, ftbl);
 			break;
 				
 		}
@@ -205,18 +205,18 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 			if (!sizes[i])	/* bin empty; step ahead file offset */
 				get(i, tfiles, ntfiles, crec, bufend, 0);
 			else
-				fsort(i, depth+1, tfiles, ntfiles, outfd, ftbl);
+				fsort(i, depth+1, tfiles, ntfiles, outfp, ftbl);
 		}
 		if (lastb != maxb) {
-			if (prevfd != outfd)
-				tailfd[panic] = prevfd;
-			prevfd = ftmp();
+			if (prevfp != outfp)
+				tailfp[panic] = prevfp;
+			prevfp = ftmp();
 			for (i = maxb+1; i <= lastb; i++)
 				if (!sizes[i])
 					get(i, tfiles, ntfiles, crec, bufend,0);
 				else
 					fsort(i, depth+1, tfiles, ntfiles,
-					    prevfd, ftbl);
+					    prevfp, ftbl);
 		}
 
 		/* sort biggest (or last) bin at this level */
@@ -226,14 +226,14 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 		infiles.top = tfiles.top;	/* getnext will free tfiles, */
 		nfiles = ntfiles;		/* so overwrite them */
 	}
-	if (prevfd != outfd) {
-		concat(outfd, prevfd);
-		fclose(prevfd);
+	if (prevfp != outfp) {
+		concat(outfp, prevfp);
+		fclose(prevfp);
 	}
 	for (i = panic; i >= 0; --i)
-		if (tailfd[i]) {
-			concat(outfd, tailfd[i]);
-			fclose(tailfd[i]);
+		if (tailfp[i]) {
+			concat(outfp, tailfp[i]);
+			fclose(tailfp[i]);
 		}
 }
 
@@ -242,12 +242,12 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
  */
 #define swap(a, b, t) t = a, a = b, b = t
 void
-onepass(a, depth, n, sizes, tr, fd)
+onepass(a, depth, n, sizes, tr, fp)
 	const u_char **a;
 	int depth;
 	long n, sizes[];
 	u_char *tr;
-	FILE *fd;
+	FILE *fp;
 {
 	long tsizes[NBINS+1];
 	const u_char **bin[257], ***bp, ***bpmax, **top[256], ***tp;
@@ -283,9 +283,9 @@ onepass(a, depth, n, sizes, tr, fd)
 		n = an - ak;
 		tsizes[c] += n * sizeof(TRECHEADER);
 		/* tell getnext how many elements in this bin, this segment. */
-		EWRITE(tsizes+c, sizeof(long), 1, fd);
+		EWRITE(tsizes+c, sizeof(long), 1, fp);
 		sizes[c] += tsizes[c];
 		for (; ak < an; ++ak)
-			putrec((RECHEADER *) *ak, fd);
+			putrec((RECHEADER *) *ak, fp);
 	}
 }
