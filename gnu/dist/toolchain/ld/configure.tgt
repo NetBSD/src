@@ -257,7 +257,7 @@ m68*-*-lynxos*)		targ_emul=m68klynx ;;
 m68k4k-*-netbsd*)	targ_emul=m68k4knbsd
 			targ_extra_emuls=m68knbsd
 			;;
-m68*-*-netbsdelf*)	targ_emul=m68kelf
+m68*-*-netbsdelf*)	targ_emul=m68kelfnbsd
 			targ_extra_emuls="m68knbsd m68k4knbsd"
 			;;
 m68*-*-netbsd*)		targ_emul=m68knbsd
