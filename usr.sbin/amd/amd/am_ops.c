@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: am_ops.c,v 1.4 1997/07/24 23:16:15 christos Exp $
+ * $Id: am_ops.c,v 1.5 1997/09/22 22:10:02 christos Exp $
  *
  */
 
@@ -104,13 +104,13 @@ static am_ops *vops[] =
   &pcfs_ops,			/* Floppy/MSDOS F/S */
 #endif /* HAVE_FS_PCFS */
 #ifdef HAVE_FS_NULLFS
-				/* null (loopback) F/S */
+/* FILL IN */			/* null (loopback) F/S */
 #endif /* HAVE_FS_NULLFS */
 #ifdef HAVE_FS_UNIONFS
-				/* union (bsd44) F/S */
+/* FILL IN */			/* union (bsd44) F/S */
 #endif /* HAVE_FS_UNIONFS */
 #ifdef HAVE_FS_UMAPFS
-				/* uid/gid mapping F/S */
+/* FILL IN */			/* uid/gid mapping F/S */
 #endif /* HAVE_FS_UMAPFS */
 
 
@@ -119,7 +119,8 @@ static am_ops *vops[] =
    *	(1) afs
    *	(2) dfs
    *	(3) toplvl
-   *	(4) efs
+   *	(4) autofs
+   *	(5) efs
    */
 #ifdef HAVE_AM_FS_AFS
   &afs_ops,			/* Automounter F/S */
@@ -130,6 +131,9 @@ static am_ops *vops[] =
 #ifdef HAVE_AM_FS_TOPLVL
   &toplvl_ops,			/* top-level mount F/S */
 #endif /* HAVE_AM_FS_TOPLVL */
+#ifdef HAVE_AM_FS_AUTOFS
+  &autofs_ops,			/* autofs mount F/S */
+#endif /* HAVE_AM_FS_AUTOFS */
 #ifdef HAVE_AM_FS_EFS
   &efs_ops,			/* error F/S */
 #endif /* HAVE_AM_FS_EFS */

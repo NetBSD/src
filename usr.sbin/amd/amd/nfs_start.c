@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_start.c,v 1.5 1997/07/24 23:16:48 christos Exp $
+ * $Id: nfs_start.c,v 1.6 1997/09/22 22:10:30 christos Exp $
  *
  */
 
@@ -54,6 +54,11 @@
 
 SVCXPRT *nfsxprt;
 u_short nfs_port;
+
+#ifdef HAVE_FS_AUTOFS
+SVCXPRT *autofsxprt = NULL;
+u_short autofs_port = 0;
+#endif /* HAVE_FS_AUTOFS */
 
 #ifndef HAVE_SIGACTION
 # define MASKED_SIGS	(sigmask(SIGINT)|sigmask(SIGTERM)|sigmask(SIGCHLD)|sigmask(SIGHUP))
@@ -346,6 +351,9 @@ mount_automounter(int ppid)
 #ifdef HAVE_TRANSPORT_TYPE_TLI
   struct netconfig *udp_amqncp, *tcp_amqncp;
 #endif /* HAVE_TRANSPORT_TYPE_TLI */
+#ifdef HAVE_FS_AUTOFS
+  int soAUTOFS;
+#endif /* HAVE_FS_AUTOFS */
 
   /*
    * Create the nfs service for amd
@@ -364,25 +372,21 @@ mount_automounter(int ppid)
   if (ret != 0)
     return ret;
 
+#ifdef HAVE_FS_AUTOFS
+  /*
+   * Create the autofs service for amd.
+   */
+  plog(XLOG_INFO, "creating autofs service listener");
+  ret = create_autofs_service(&soAUTOFS, &autofs_port, &autofsxprt, autofs_program_1);
+  if (ret != 0)
+    return ret;
+#endif /* HAVE_FS_AUTOFS */
+
   /*
    * Start RPC forwarding
    */
   if (fwd_init() != 0)
     return 3;
-
-#if 0
-  /*
-   * One or other of so, fwd_sock
-   * must be the highest fd on
-   * which to select.
-   */
-  if (soNFS > max_fds)
-    max_fds = soNFS;
-  if (soAMQ > max_fds)
-    max_fds = soAMQ;
-  if (fwd_sock > max_fds)
-    max_fds = fwd_sock;
-#endif
 
   /*
    * Construct the root automount node
@@ -423,22 +427,26 @@ mount_automounter(int ppid)
     unregister_amq();
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
-    ret = svc_reg(tcp_amqp, AMQ_PROGRAM, AMQ_VERSION, amq_program_1, tcp_amqncp);
+    ret = svc_reg(tcp_amqp, get_amd_program_number(), AMQ_VERSION,
+		  amq_program_1, tcp_amqncp);
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
-    ret = svc_register(tcp_amqp, AMQ_PROGRAM, AMQ_VERSION, amq_program_1, IPPROTO_TCP);
+    ret = svc_register(tcp_amqp, get_amd_program_number(), AMQ_VERSION,
+		       amq_program_1, IPPROTO_TCP);
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
     if (ret != 1) {
-      plog(XLOG_FATAL, "unable to register (AMQ_PROGRAM, AMQ_VERSION, tcp)");
+      plog(XLOG_FATAL, "unable to register (AMQ_PROGRAM=%d, AMQ_VERSION, tcp)", get_amd_program_number());
       return 3;
     }
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
-    ret = svc_reg(udp_amqp, AMQ_PROGRAM, AMQ_VERSION, amq_program_1, udp_amqncp);
+    ret = svc_reg(udp_amqp, get_amd_program_number(), AMQ_VERSION,
+		  amq_program_1, udp_amqncp);
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
-    ret = svc_register(udp_amqp, AMQ_PROGRAM, AMQ_VERSION, amq_program_1, IPPROTO_UDP);
+    ret = svc_register(udp_amqp, get_amd_program_number(), AMQ_VERSION,
+		       amq_program_1, IPPROTO_UDP);
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
     if (ret != 1) {
-      plog(XLOG_FATAL, "unable to register (AMQ_PROGRAM, AMQ_VERSION, udp)");
+      plog(XLOG_FATAL, "unable to register (AMQ_PROGRAM=%d, AMQ_VERSION, udp)", get_amd_program_number());
       return 4;
     }
 

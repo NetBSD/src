@@ -39,7 +39,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: fsi_lex.l,v 1.5 1997/07/24 23:18:27 christos Exp $
+ * $Id: fsi_lex.l,v 1.6 1997/09/22 22:11:01 christos Exp $
  *
  */
 
@@ -48,25 +48,8 @@
  * TODO: Needs rewriting.
  */
 
-static int xinput();
-static void xunput();
-
 #ifdef FLEX_SCANNER
 static int yylineno;
-/* Flex support with help from Vern Paxson <vern@helios.ee.lbl.gov> */
-# undef YY_INPUT
-# define YY_INPUT(buf,result,max_size)		\
-{						\
-	int i;					\
-	for (i = 0; i < max_size; i++) {	\
-		int ch = xinput(i == 0);	\
-		if (ch == 0)			\
-			break;			\
-		buf[i] = ch;			\
-	}					\
-	result = i;				\
-}
-
 # define INIT_STATE {				\
 		switch ((yy_start - 1) / 2) {	\
 		case 0:				\
@@ -75,17 +58,11 @@ static int yylineno;
 		}				\
 }
 
-
 #else /* not FLEX_SCANNER */
 
 /*
  * Using old lex...
  */
-# undef unput
-# define unput(ch) xunput(ch)
-# undef input
-# define input() xinput(1)
-
 # define	INIT_STATE {			\
 		switch (yybgin - yysvec - 1) {	\
 		case 0:				\
@@ -119,10 +96,7 @@ static char *fsi_filename;
 static char *optr;
 static char ostr[1024];
 static find_resword();
-static unsigned char ibuf[64];
-static unsigned char *iptr = ibuf;
 static int quoted;
-static int lastch, nextch = '\n';
 YYSTYPE yylval;
 
 struct r {
@@ -257,187 +231,4 @@ current_location(void)
   ip->i_line = yylineno;
   ip->i_file = fsi_filename;
   return ip;
-}
-
-
-#ifdef FLEX_SCANNER
-# undef yywrap
-#endif /* FLEX_SCANNER */
-
-int
-yywrap(void)
-{
-  static int first = 1;
-
-  if (first) {
-    char prog[16*1024];
-
-    strcpy(prog, "for file in ");
-    while (*++g_argv) {
-      if (access(*g_argv, 4) < 0) {
-	error("\"%s\": Cannot open for reading", *g_argv);
-	file_io_errors++;
-      } else {
-	strcat(prog, *g_argv);
-	strcat(prog, " ");
-      }
-    }
-
-    strcat(prog, "; do /lib/cpp ");
-    strcat(prog, idvbuf);
-    strcat(prog, " -DHOSTNAME=\'");
-    strcat(prog, hostname);
-    strcat(prog, "\' \"$file\"; done");
-    yyin = popen(prog, "r");
-    if (yyin) {
-      fsi_filename = strdup("unknown");
-      yylineno = 1;
-      first = 0;
-      return 0;
-    } else {
-      perror(prog);
-    }
-  }
-
-  if (!first && yyin && pclose(yyin) != 0)
-    parse_errors++;
-
-  return 1;
-}
-
-
-#define xgetc(fp) ((iptr > ibuf) ? (*--iptr) : (lastch = nextch, nextch = getc(fp), (nextch == EOF ? nextch = lastch, EOF : nextch)))
-
-static int
-xinput(int need)
-{
-  static int c_comment = 0;
-  int ch, ch2;
-
-  do {
-    ch = xgetc(yyin);
-    if (ch == EOF) return 0;
-    if (quoted)
-      return ch;
-
-    if (c_comment) {
-      ch2 = ch;
-      do {
-	if (ch2 == '\n') {
-	  nextch = '\n';
-	  return ch2;
-	}
-
-	/* C style comment */
-	do {
-	  ch2 = getc(yyin);
-	  if (ch2 == '\n') {
-	    nextch = '\n';
-	    return ch2;
-	  }
-	} while (ch2 != '*' && ch2 != EOF);
-
-	while (ch2 == '*')
-	  ch2 = getc(yyin);
-      } while (ch2 != '/' && ch2 != EOF);
-      c_comment = 0;
-      if (ch2 == EOF)
-	break;
-      continue;
-    }
-
-    if (ch == '#') {
-      if (lastch == '\n') {
-	char fname[MAXPATHLEN];
-	char *fptr;
-
-	if (!need) {
-	  xunput('#');
-	  nextch = '\n';
-	  return 0;
-	}
-	fname[0] = '\0';
-
-	/* Skip past space */
-	do {
-	  ch2 = getc(yyin);
-	} while (ch2 != EOF && ch2 != '\n' && !isdigit(ch2));
-	if (isdigit(ch2)) {
-
-	  /* Read in line number */
-	  fptr = fname;
-	  do {
-	    *fptr++ = ch2;
-	    ch2 = getc(yyin);
-	  } while (isdigit(ch2));
-	  *fptr = '\0';
-	  if (fptr != fname)
-	    yylineno = atoi(fname) - 1;
-	}
-
-	/* Skip past space */
-	while (ch2 != EOF && ch2 != '\"' && ch2 != '\n')
-	  ch2 = getc(yyin);
-	if (ch2 == '\"') {
-
-	  /* Read file name */
-	  fptr = fname;
-	  ch2 = getc(yyin);
-	  while (ch2 != '\"' && ch2 != EOF && ch2 != EOF) {
-	    *fptr++ = ch2;
-	    ch2 = getc(yyin);
-	  }
-	  *fptr = '\0';
-	  if (fname[0]) {
-	    log("Setting filename to \"%s\"", fname);
-	    fsi_filename = strdup(fname);
-	  }
-	}
-	while (ch2 != '\n' && ch2 != EOF)
-	  ch2 = getc(yyin);
-      } else do {
-	ch2 = getc(yyin);
-      } while (ch2 != '\n' && ch2 != EOF);
-      if (ch2 == '\n') {
-	nextch = '\n';
-	return ch2;
-      }
-
-    } else if (ch == '/') {
-      ch2 = getc(yyin);
-      if (ch2 == '/') {
-
-	/* C++ style comment */
-	do {
-	  ch2 = getc(yyin);
-	} while (ch2 != '\n' && ch2 != EOF);
-	if (ch2 == '\n') {
-	  nextch = '\n';
-	  return ch2;
-	}
-      } else if (ch2 == '*') {
-	c_comment = 1;
-	continue;
-      } else {
-	xunput(ch2);
-	return ch;
-      }
-    } else {
-      return ch;
-    }
-  } while (ch2 != EOF);
-
-  error("End of file within comment");
-  return 0;
-}
-
-
-static void
-xunput(int c)
-{
-  if (c && c != EOF) {
-    if (iptr == ibuf + sizeof(ibuf) - 1)
-      fatal("Out of space in lexical pushback");
-    *iptr++ = c;
-  }
 }

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_nfs.c,v 1.2 1997/07/24 23:17:01 christos Exp $
+ * $Id: ops_nfs.c,v 1.3 1997/09/22 22:10:38 christos Exp $
  *
  */
 
@@ -228,11 +228,14 @@ static void
 discard_fh(fh_cache *fp)
 {
   rem_que(&fp->fh_q);
+  if (fp->fh_fs) {
 #ifdef DEBUG
-  dlog("Discarding filehandle for %s:%s", fp->fh_fs->fs_host, fp->fh_path);
+    dlog("Discarding filehandle for %s:%s", fp->fh_fs->fs_host, fp->fh_path);
 #endif /* DEBUG */
-  free_srvr(fp->fh_fs);
-  free((voidp) fp->fh_path);
+    free_srvr(fp->fh_fs);
+  }
+  if (fp->fh_path)
+    free((voidp) fp->fh_path);
   free((voidp) fp);
 }
 
@@ -347,6 +350,17 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, voidp w
   fp->fh_cid = timeout(FH_TTL, discard_fh, (voidp) fp);
 
   /*
+   * if fs->fs_ip is null, remote server is probably down.
+   */
+  if (!fs->fs_ip) {
+    /* Mark the fileserver down and invalid again */
+    fs->fs_flags &= ~FSF_VALID;
+    fs->fs_flags |= FSF_DOWN;
+    error = AM_ERRNO_HOST_DOWN;
+    return error;
+  }
+
+  /*
    * If the address has changed then don't try to re-use the
    * port information
    */
@@ -379,11 +393,24 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, voidp w
 int
 make_nfs_auth(void)
 {
+  AUTH_CREATE_GIDLIST_TYPE group_wheel = 0;
+
+  /* Some NFS mounts (particularly cross-domain) require FQDNs to succeed */
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
-  nfs_auth = authsys_create_default();
+  if (gopt.flags & CFM_FULLY_QUALIFIED_HOSTS) {
+    plog(XLOG_INFO, "Using NFS auth for fqhn \"%s\"", hostd);
+    nfs_auth = authsys_create(hostd, 0, 0, 1, &group_wheel);
+  } else {
+    nfs_auth = authsys_create_default();
+  }
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
-  nfs_auth = authunix_create_default();
+  if (gopt.flags & CFM_FULLY_QUALIFIED_HOSTS) {
+    plog(XLOG_INFO, "Using NFS auth for fqhn \"%s\"", hostd);
+    nfs_auth = authunix_create(hostd, 0, 0, 1, &group_wheel);
+  } else {
+    nfs_auth = authunix_create_default();
+  }
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
   if (!nfs_auth)
@@ -546,7 +573,7 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
   struct netbuf nb;	/* automatic space for addr field of nfs_args */
 #endif /* HAVE_TRANSPORT_TYPE_TLI */
 #if defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI)
-  char *nc_protoname;
+  char *nc_protoname = NULL;
 #endif /* defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI) */
 #if defined(MNTTAB_OPT_ACREGMIN) || defined(MNTTAB_OPT_ACTIMEO)
   int acval = 0;
@@ -595,10 +622,10 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
 #endif /* HAVE_FS_NFS3 */
   plog(XLOG_INFO, "mount_nfs_fh: NFS version %d", nfs_version);
 
-#if defined(HAVE_FS_NFS3) && defined(HAVE_TRANSPORT_TYPE_TLI)
+#if defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI)
   nc_protoname = nfs_proto;
   plog(XLOG_INFO, "mount_nfs_fh: using NFS transport %s", nc_protoname);
-#endif /* defined(HAVE_FS_NFS3) && defined(HAVE_TRANSPORT_TYPE_TLI) */
+#endif /* defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI) */
 
 #ifdef MNT2_NFS_OPT_TCP
   if (STREQ(nfs_proto, "tcp"))
@@ -649,7 +676,6 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
   } else
 #endif /* HAVE_FS_NFS3 */
     NFS_FH_DREF(nfs_args.NFS_FH_FIELD, &(fhp->v2.fhs_fh));
-
 
 #ifdef HAVE_FIELD_NFS_ARGS_T_FHSIZE
 # ifdef HAVE_FS_NFS3
@@ -767,10 +793,22 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
     nfs_args.flags |= MNT2_NFS_OPT_COMPRESS;
 #endif /* MNTTAB_OPT_COMPRESS */
 
-#ifdef MNTTAB_OPT_NOCONN
+#ifdef MNT2_NFS_OPT_NOCONN
+  /* check if user specified to use unconnected or connected sockets */
   if (hasmntopt(&mnt, MNTTAB_OPT_NOCONN) != NULL)
     nfs_args.flags |= MNT2_NFS_OPT_NOCONN;
-#endif /* MNTTAB_OPT_NOCONN */
+  else if (hasmntopt(&mnt, MNTTAB_OPT_CONN) != NULL)
+    nfs_args.flags &= ~MNT2_NFS_OPT_NOCONN;
+  else
+    /*
+     * If "noconn" option exists and we're using NFS V.3, then define
+     * it.  Otherwise NFS mounts cause hangs of mounts from
+     * multi-homed hosts when the return route is not the same as the
+     * outgoing route.  This is especially important for some versions
+     * of NetBSD, and even for FreeBSD that does not have NFS V.3.
+     */
+    nfs_args.flags |= MNT2_NFS_OPT_NOCONN;
+#endif /* MNT2_NFS_OPT_NOCONN */
 
 #ifdef MNT2_NFS_OPT_RESVPORT
 # ifdef MNTTAB_OPT_RESVPORT
@@ -888,8 +926,18 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
 # endif /* DG_MOUNT_NFS_VERSION */
 #endif /* HAVE_FIELD_NFS_ARGS_VERSION */
 
-  error = mount_fs(&mnt, flags, (caddr_t) & nfs_args, retry, type,
-		   nfs_version, nfs_proto);
+#if defined(MNT2_GEN_OPT_OVERLAY) && defined(MNTTAB_OPT_OVERLAY)
+  /*
+   * Overlay this nfs mount: a must for autofs to work.
+   */
+  if (hasmntopt(&mnt, MNTTAB_OPT_OVERLAY) != NULL) {
+    flags |= MNT2_GEN_OPT_OVERLAY;
+    plog(XLOG_INFO, "using an overlay nfs mount");
+  }
+#endif /* defined(MNT2_GEN_OPT_OVERLAY) && defined(MNTTAB_OPT_OVERLAY) */
+
+  error = mount_fs(&mnt, flags, (caddr_t) &nfs_args, retry, type,
+		   nfs_version, nfs_proto, mnttab_file_name);
   free(xopts);
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
@@ -915,7 +963,7 @@ mount_nfs(char *dir, char *fs_name, char *opts, mntfs *mf)
 static int
 nfs_fmount(mntfs *mf)
 {
-  int error;
+  int error = 0;
 
   error = mount_nfs(mf->mf_mount, mf->mf_info, mf->mf_mopts, mf);
 
@@ -933,7 +981,7 @@ nfs_fmount(mntfs *mf)
 static int
 nfs_fumount(mntfs *mf)
 {
-  int error = UMOUNT_FS(mf->mf_mount);
+  int error = UMOUNT_FS(mf->mf_mount, mnttab_file_name);
 
   /*
    * Here is some code to unmount 'restarted' file systems.
@@ -962,12 +1010,12 @@ nfs_fumount(mntfs *mf)
 
       if (strncmp(mf->mf_mount, new_mf->mf_mount, len) == 0 &&
 	  new_mf->mf_mount[len] == '/') {
-	UMOUNT_FS(new_mf->mf_mount);
+	UMOUNT_FS(new_mf->mf_mount, mnttab_file_name);
 	didsome = 1;
       }
     }
     if (didsome)
-      error = UMOUNT_FS(mf->mf_mount);
+      error = UMOUNT_FS(mf->mf_mount, mnttab_file_name);
   }
   if (error)
     return error;

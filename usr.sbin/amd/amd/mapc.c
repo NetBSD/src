@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mapc.c,v 1.6 1997/07/24 23:16:40 christos Exp $
+ * $Id: mapc.c,v 1.7 1997/09/22 22:10:23 christos Exp $
  *
  */
 
@@ -85,7 +85,7 @@
 #define	MREC_PART	1
 #define	MREC_NONE	0
 
-#define MAX_CHAIN	256
+#define MAX_CHAIN	1024
 
 static struct opt_tab mapc_opt[] =
 {
@@ -157,11 +157,6 @@ extern int passwd_search(mnt_map *, char *, char *, char **, time_t *);
 #ifdef HAVE_MAP_HESIOD
 extern int amu_hesiod_init(mnt_map *, char *map, time_t *tp);
 extern int hesiod_search(mnt_map *, char *, char *, char **, time_t *);
-# ifdef HAS_HESIOD_RELOAD
-extern int hesiod_reload(mnt_map *, char *, add_fn *);
-# else /* not HAS_HESIOD_RELOAD */
-#  define hesiod_reload error_reload
-# endif /* not HAS_HESIOD_RELOAD */
 #endif /* HAVE_MAP_HESIOD */
 
 /* LDAP MAPS */
@@ -220,7 +215,7 @@ static map_type maptypes[] =
 #endif /* HAVE_MAP_PASSWD */
 
 #ifdef HAVE_MAP_HESIOD
-  {"hesiod", amu_hesiod_init, hesiod_reload, hesiod_search, error_mtime, MAPC_ALL},
+  {"hesiod", amu_hesiod_init, error_reload, hesiod_search, error_mtime, MAPC_ALL},
 #endif /* HAVE_MAP_HESIOD */
 
 #ifdef HAVE_MAP_LDAP
@@ -623,9 +618,8 @@ mapc_free(mnt_map *m)
 
 
 /*
- * Search the map for the key.
- * Put a safe copy in *pval or return
- * an error code
+ * Search the map for the key.  Put a safe (malloc'ed) copy in *pval or
+ * return an error code
  */
 int
 mapc_meta_search(mnt_map *m, char *key, char **pval, int recurse)
@@ -926,12 +920,12 @@ root_keyiter(void (*fn)(char *, voidp), voidp arg)
  * -Erez Zadok <ezk@cs.columbia.edu>
  */
 static int
-key_already_in_chain(char *name, const nfsentry *chain)
+key_already_in_chain(char *keyname, const nfsentry *chain)
 {
   const nfsentry *tmpchain = chain;
 
   while (tmpchain) {
-    if (name && tmpchain->ne_name && STREQ(name, tmpchain->ne_name))
+    if (keyname && tmpchain->ne_name && STREQ(keyname, tmpchain->ne_name))
         return 1;
     tmpchain = tmpchain->ne_nextentry;
   }
@@ -950,7 +944,8 @@ make_entry_chain(am_node *mp, const nfsentry *current_chain)
   static u_int last_cookie = ~(u_int) 0 - 1;
   static nfsentry chain[MAX_CHAIN];
   static int max_entries = MAX_CHAIN;
-  int num_entries = 0, i;
+  char *key;
+  int num_entries = 0, preflen = 0, i;
   nfsentry *retval = (nfsentry *) NULL;
   mntfs *mf;
   mnt_map *mmp;
@@ -972,25 +967,46 @@ make_entry_chain(am_node *mp, const nfsentry *current_chain)
 
   /* iterate over keys */
   for (i = 0; i < NKVHASH; i++) {
-    kv *k = mmp->kvhash[i];
-    while (k) {
+    kv *k;
+    for (k = mmp->kvhash[i]; k ; k = k->next) {
 
       /*
        * Skip unwanted entries which are either not real entries or
        * very difficult to interpret (wildcards...)  This test needs
        * lots of improvement.  Any takers?
        */
-      if (k->key && (strchr(k->key, '*') ||
-		     strchr(k->key, '/') ||
-		     key_already_in_chain(k->key, current_chain))) {
-	k = k->next;
+      key = k->key;
+      if (!key)
 	continue;
+
+      /* Skip '*' */
+      if (strchr(key, '*'))
+	continue;
+
+      /*
+       * If the map has a prefix-string then check if the key starts with
+       * this * string, and if it does, skip over this prefix.
+       */
+      if (preflen) {
+	if (strncmp(key, mp->am_pref, preflen))
+	  continue;
+	key += preflen;
       }
+
+      /*
+       * No more '/' are allowed.
+       */
+      if (strchr(key, '/') || key_already_in_chain(key, current_chain))
+	continue;
 
       /* fill in a cell and link the entry */
       if (num_entries >= max_entries) {
-	/* out of luck. send what you've got */
+	/* out of space */
 	plog(XLOG_DEBUG, "make_entry_chain: no more space in chain");
+	if (num_entries > 0) {
+	  chain[num_entries - 1].ne_nextentry = 0;
+	  retval = &chain[0];
+	}
 	return retval;
       }
 
@@ -999,12 +1015,11 @@ make_entry_chain(am_node *mp, const nfsentry *current_chain)
       chain[num_entries].ne_fileid = (u_int) last_cookie;
       *(u_int *) chain[num_entries].ne_cookie =
 	(u_int) last_cookie;
-      chain[num_entries].ne_name = k->key;
+      chain[num_entries].ne_name = key;
       if (num_entries < max_entries - 1) {	/* link to next one */
 	chain[num_entries].ne_nextentry = &chain[num_entries + 1];
       }
       ++num_entries;
-      k = k->next;
     } /* end of "while (k)" */
   } /* end of "for (i ... NKVHASH ..." */
 
