@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.63 2002/07/29 06:39:41 grant Exp $ */
+/*	$NetBSD: cache.c,v 1.64 2002/12/15 15:01:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -230,7 +230,11 @@ hypersparc_cache_enable()
 	 * Enable instruction cache and, on single-processor machines,
 	 * disable `Unimplemented Flush Traps'.
 	 */
+#if defined(MULTIPROCESSOR)
 	v = HYPERSPARC_ICCR_ICE | (ncpu == 1 ? HYPERSPARC_ICCR_FTD : 0);
+#else
+	v = HYPERSPARC_ICCR_ICE | HYPERSPARC_ICCR_FTD);
+#endif
 	wrasr(v, HYPERSPARC_ASRNUM_ICCR);
 }
 
