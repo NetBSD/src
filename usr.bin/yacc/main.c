@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/06/18 19:08:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.6 1997/06/18 19:08:29 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -316,10 +316,6 @@ create_file_names()
     text_file_name[len + 5] = 't';
     union_file_name[len + 5] = 'u';
 
-    mktemp(action_file_name);
-    mktemp(text_file_name);
-    mktemp(union_file_name);
-
     len = strlen(file_prefix);
 
     output_file_name = MALLOC(len + 7);
@@ -361,6 +357,8 @@ create_file_names()
 
 open_files()
 {
+    int fd;
+
     create_file_names();
 
     if (input_file == 0)
@@ -370,12 +368,12 @@ open_files()
 	    open_error(input_file_name);
     }
 
-    action_file = fopen(action_file_name, "w");
-    if (action_file == 0)
+    if (((fd = mkstemp(action_file_name)) == -1) ||
+	(action_file = fdopen(fd, "w")) == NULL)
 	open_error(action_file_name);
 
-    text_file = fopen(text_file_name, "w");
-    if (text_file == 0)
+    if (((fd = mkstemp(text_file_name)) == -1) ||
+	(text_file = fdopen(fd, "w")) == NULL)
 	open_error(text_file_name);
 
     if (vflag)
@@ -390,8 +388,8 @@ open_files()
 	defines_file = fopen(defines_file_name, "w");
 	if (defines_file == 0)
 	    open_error(defines_file_name);
-	union_file = fopen(union_file_name, "w");
-	if (union_file ==  0)
+	if (((fd = mkstemp(union_file_name)) == -1) ||
+	    (union_file = fdopen(fd, "w")) == NULL)
 	    open_error(union_file_name);
     }
 
