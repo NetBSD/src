@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.120 2004/08/15 21:44:11 mycroft Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.121 2004/08/15 21:53:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.120 2004/08/15 21:44:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.121 2004/08/15 21:53:03 mycroft Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -311,7 +311,7 @@ ufs_getattr(void *v)
 	vap->va_size = vp->v_size;
 	if (ip->i_ump->um_fstype == UFS1) {
 		vap->va_rdev = (dev_t)ufs_rw32(ip->i_ffs1_rdev,
-		    UFS_MPNEEDSWAP(ump));
+		    UFS_MPNEEDSWAP(ip->i_ump));
 		vap->va_atime.tv_sec = ip->i_ffs1_atime;
 		vap->va_atime.tv_nsec = ip->i_ffs1_atimensec;
 		vap->va_mtime.tv_sec = ip->i_ffs1_mtime;
@@ -323,7 +323,7 @@ ufs_getattr(void *v)
 		vap->va_bytes = dbtob((u_quad_t)ip->i_ffs1_blocks);
 	} else {
 		vap->va_rdev = (dev_t)ufs_rw64(ip->i_ffs2_rdev,
-		    UFS_MPNEEDSWAP(ump));
+		    UFS_MPNEEDSWAP(ip->i_ump));
 		vap->va_atime.tv_sec = ip->i_ffs2_atime;
 		vap->va_atime.tv_nsec = ip->i_ffs2_atimensec;
 		vap->va_mtime.tv_sec = ip->i_ffs2_mtime;
