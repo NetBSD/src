@@ -119,7 +119,7 @@ static const char *text[ISC_R_NRESULTS] = {
 
 const char *isc_result_totext (isc_result_t result)
 {
-	int tmp;
+	int tmp; /* XXX used to force a signed comparision below */
 
 	if ((tmp = result) >= ISC_R_SUCCESS && result < ISC_R_NRESULTS)
 		return text [result];
