@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.1.2.1 1997/06/03 06:56:58 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.1.2.2 1997/06/03 23:07:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.1 1997/06/03 06:56:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.2 1997/06/03 23:07:33 thorpej Exp $");
 
 int
 __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
@@ -98,7 +98,8 @@ __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
 	a->apdc_pteidx = pteidx;
 	a->apdc_ptecnt = 0;
 
-	for (; va < endva; va += NBPG, pte++, a->apdc_ptecnt++) {
+	for (; va < endva; va += NBPG, pte += SGMAP_PTE_SPACING,
+	    a->apdc_ptecnt++) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -171,7 +172,7 @@ __C(SGMAP_TYPE,_sgmap_unload)(t, map, sgmap)
 	 * Invalidate the PTEs for the mapping.
 	 */
 	for (ptecnt = a->apdc_ptecnt, pte = &page_table[a->apdc_pteidx];
-	    ptecnt != 0; ptecnt--, pte++)
+	    ptecnt != 0; ptecnt--, pte += SGMAP_PTE_SPACING)
 		*pte = 0;
 
 	/*
