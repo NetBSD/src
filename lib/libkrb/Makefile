@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2002/08/29 01:31:31 itojun Exp $
+# $NetBSD: Makefile,v 1.20 2002/08/29 14:40:00 itojun Exp $
 
 NOLINT=		# defined
 
@@ -117,8 +117,7 @@ INCS=	krb.h					\
 	klog.h					\
 	krb-protos.h				\
 	krb-archaeology.h			\
-	prot.h					\
-	des.h
+	prot.h
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/krb4/lib/krb			\

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.475 2002/08/28 09:38:52 gmcgarry Exp $
+#	$NetBSD: mi,v 1.476 2002/08/29 14:40:00 itojun Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -239,7 +239,6 @@
 ./usr/include/kadm5/kadm5-protos.h	comp-c-include
 ./usr/include/kadm5/kadm5_err.h		comp-c-include
 ./usr/include/kadm5/private.h		comp-c-include
-./usr/include/kerberosIV/des.h		comp-c-include
 ./usr/include/kerberosIV/kadm.h		comp-c-include
 ./usr/include/kerberosIV/kadm_err.h	comp-c-include
 ./usr/include/kerberosIV/kafs.h		comp-c-include
