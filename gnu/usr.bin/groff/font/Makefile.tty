@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.tty,v 1.5 2003/07/06 18:43:36 martin Exp $
+# $NetBSD: Makefile.tty,v 1.6 2003/10/20 00:54:36 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/font/Makefile.tty,v 2.7 2001/04/17 12:36:42 ru Exp $
 
@@ -13,8 +13,9 @@ CPI=10
 LPI=6
 
 $(FONTS): R.proto
-	@${ECHO} Making ${.TARGET}
-	@(charwidth=`expr $(RES) / $(CPI)` ; \
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(charwidth=`expr $(RES) / $(CPI)` ; \
  	 sed -e "s/^name [A-Z]*$$/name ${.TARGET}/" \
 	     -e "s/^\\([^	]*\\)	[0-9]+	/\\1	$$charwidth	/" \
 	     -e "s/^spacewidth [0-9]+$$/spacewidth $$charwidth/" \
@@ -26,8 +27,9 @@ $(FONTS): R.proto
 	     ${.ALLSRC} >$.${.TARGET})
 
 DESC: DESC.proto
-	@${ECHO} Making ${.TARGET}
-	@sed -e "s/^res .*$$/res $(RES)/" \
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	sed -e "s/^res .*$$/res $(RES)/" \
 	    -e "s/^hor .*$$/hor `expr $(RES) / $(CPI)`/" \
 	    -e "s/^vert .*$$/vert `expr $(RES) / $(LPI)`/" \
 	    -e "s/^fonts .*$$/fonts `set $(FONTS); echo $$#` $(FONTS)/" \
