@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
+/*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -295,20 +295,14 @@ vga_copycols(id, row, srccol, dstcol, ncols)
 	int row, srccol, dstcol, ncols;
 {
 	struct vga_config *vc = id;
-	bus_space_tag_t memt = vc->vc_memt;
-	bus_space_handle_t memh = vc->vc_memh;
-	bus_size_t srcoff, srcend, dstoff;
+	bus_size_t srcoff, dstoff;
 
-	/*
-	 * YUCK.  Need bus copy functions.
-	 */
 	srcoff = (row * vc->vc_ncol + srccol) * 2;
-	srcend = srcoff + ncols * 2;
 	dstoff = (row * vc->vc_ncol + dstcol) * 2;
 
-	for (; srcoff < srcend; srcoff += 2, dstoff += 2)
-		bus_space_write_2(memt, memh, dstoff,
-		    bus_space_read_2(memt, memh, srcoff));
+	/* XXX SHOULDN'T USE THIS IF REGIONS OVERLAP... */
+	bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
+	    ncols);
 }
 
 static void
@@ -317,20 +311,15 @@ vga_erasecols(id, row, startcol, ncols)
 	int row, startcol, ncols;
 {
 	struct vga_config *vc = id;
-	bus_space_tag_t memt = vc->vc_memt;
-	bus_space_handle_t memh = vc->vc_memh;
-	bus_size_t off, endoff;
+	bus_size_t off, count;
 	u_int16_t val;
 
-	/*
-	 * YUCK.  Need bus 'set' functions.
-	 */
 	off = (row * vc->vc_ncol + startcol) * 2;
-	endoff = off + ncols * 2;
+	count = ncols * 2;
+
 	val = (vc->vc_at << 8) | ' ';
 
-	for (; off < endoff; off += 2)
-		bus_space_write_2(memt, memh, off, val);
+	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, count, val);
 }
 
 static void
@@ -339,20 +328,14 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 	int srcrow, dstrow, nrows;
 {
 	struct vga_config *vc = id;
-	bus_space_tag_t memt = vc->vc_memt;
-	bus_space_handle_t memh = vc->vc_memh;
-	bus_size_t srcoff, srcend, dstoff;
+	bus_size_t srcoff, dstoff;
 
-	/*
-	 * YUCK.  Need bus copy functions.
-	 */
 	srcoff = (srcrow * vc->vc_ncol + 0) * 2;
-	srcend = srcoff + (nrows * vc->vc_ncol * 2);
 	dstoff = (dstrow * vc->vc_ncol + 0) * 2;
 
-	for (; srcoff < srcend; srcoff += 2, dstoff += 2)
-		bus_space_write_2(memt, memh, dstoff,
-		    bus_space_read_2(memt, memh, srcoff));
+	/* XXX SHOULDN'T USE THIS IF REGIONS OVERLAP... */
+	bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
+	    nrows * vc->vc_ncol);
 }
 
 static void
@@ -361,18 +344,13 @@ vga_eraserows(id, startrow, nrows)
 	int startrow, nrows;
 {
 	struct vga_config *vc = id;
-	bus_space_tag_t memt = vc->vc_memt;
-	bus_space_handle_t memh = vc->vc_memh;
-	bus_size_t off, endoff;
+	bus_size_t off, count;
 	u_int16_t val;
 
-	/*
-	 * YUCK.  Need bus 'set' functions.
-	 */
 	off = (startrow * vc->vc_ncol + 0) * 2;
-	endoff = off + (nrows * vc->vc_ncol) * 2;
+	count = nrows * vc->vc_ncol;
+
 	val = (vc->vc_at << 8) | ' ';
 
-	for (; off < endoff; off += 2)
-		bus_space_write_2(memt, memh, off, val);
+	bus_space_set_region_2(vc->vc_memt,  vc->vc_memh, off, val, count);
 }
