@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.20 1994/10/26 02:57:11 cgd Exp $
+	$NetBSD: syscalls.master,v 1.21 1994/11/14 07:33:50 deraadt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -114,7 +114,7 @@
 69	NOARGS		{ int sbrk(int incr); }
 70	NOARGS		{ int sstk(int incr); }
 71	STD		{ int sunos_mmap(caddr_t addr, int len, int prot, \
-			    int flags, int fd, long pos); }
+			    u_int flags, int fd, long pos); }
 72	NOARGS		{ int ovadvise(int anom); } vadvise
 73	NOARGS		{ int munmap(caddr_t addr, int len); }
 74	NOARGS		{ int mprotect(caddr_t addr, int len, int prot); }
