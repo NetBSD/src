@@ -33,15 +33,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";*/
-static char *rcsid = "$Id: multibyte.c,v 1.3 1993/08/26 00:48:04 jtc Exp $";
+static char *rcsid = "$Id: multibyte.c,v 1.4 1995/03/05 07:41:15 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 
 /*
  * Stub multibyte character functions.
- * These ignore the current fixed ("C") locale and
- * always indicate that no multibyte characters are supported.
+ * This cheezy implementation is fixed to the native single-byte
+ * character set.
  */
 
 int
@@ -49,9 +49,11 @@ mblen(s, n)
 	const char *s;
 	size_t n;
 {
-	if (s && n && *s)
+	if (s == NULL || *s == '\0')
+		return 0;
+	if (n == 0)
 		return -1;
-	return 0;
+	return 1;
 }
 
 /*ARGSUSED*/
@@ -61,9 +63,13 @@ mbtowc(pwc, s, n)
 	const char *s;
 	size_t n;
 {
-	if (s && n && *s)
+	if (s == NULL)
+		return 0;
+	if (n == 0)
 		return -1;
-	return 0;
+	if (pwc)
+		*pwc = (wchar_t) *s;
+	return (*s != '\0');
 }
 
 /*ARGSUSED*/
@@ -76,9 +82,11 @@ wctomb(s, wchar)
 	wchar_t wchar;
 #endif
 {
-	if (s)
-		return -1;
-	return 0;
+	if (s == NULL)
+		return 0;
+
+	*s = (char) wchar;
+	return 1;
 }
 
 /*ARGSUSED*/
@@ -88,9 +96,17 @@ mbstowcs(pwcs, s, n)
 	const char *s;
 	size_t n;
 {
-	if (s && n && *s)
-		return -1;
-	return 0;
+	int count = 0;
+
+	if (n != 0) {
+		do {
+			if ((*pwcs++ = (wchar_t) *s++) == 0)
+				break;
+			count++;
+		} while (--n != 0);
+	}
+	
+	return count;
 }
 
 /*ARGSUSED*/
@@ -100,7 +116,16 @@ wcstombs(s, pwcs, n)
 	const wchar_t *pwcs;
 	size_t n;
 {
-	if (pwcs && n && *pwcs)
-		return -1;
-	return 0;
+	int count = 0;
+
+	if (n != 0) {
+		do {
+			if ((*s++ = (char) *pwcs++) == 0)
+				break;
+			count++;
+		} while (--n != 0);
+	}
+
+	return count;
 }
+
