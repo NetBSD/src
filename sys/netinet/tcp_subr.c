@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.24 1996/09/15 18:11:10 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.25 1996/12/10 18:20:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -297,7 +297,7 @@ tcp_close(tp)
 
 		if ((rt->rt_rmx.rmx_locks & RTV_RTT) == 0) {
 			i = tp->t_srtt *
-			    (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTT_SCALE));
+			    ((RTM_RTTUNIT / PR_SLOWHZ) >> (TCP_RTT_SHIFT + 2));
 			if (rt->rt_rmx.rmx_rtt && i)
 				/*
 				 * filter this update to half the old & half
@@ -312,7 +312,7 @@ tcp_close(tp)
 		}
 		if ((rt->rt_rmx.rmx_locks & RTV_RTTVAR) == 0) {
 			i = tp->t_rttvar *
-			    (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTTVAR_SCALE));
+			    ((RTM_RTTUNIT / PR_SLOWHZ) >> (TCP_RTTVAR_SHIFT + 2));
 			if (rt->rt_rmx.rmx_rttvar && i)
 				rt->rt_rmx.rmx_rttvar =
 				    (rt->rt_rmx.rmx_rttvar + i) / 2;

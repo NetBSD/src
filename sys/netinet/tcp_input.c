@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.26 1996/09/15 18:11:09 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27 1996/12/10 18:20:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -1467,7 +1467,7 @@ tcp_xmit_timer(tp, rtt)
 		 */
 		delta = (rtt << 2) - (tp->t_srtt >> TCP_RTT_SHIFT);
 		if ((tp->t_srtt += delta) <= 0)
-			tp->t_srtt = 1;
+			tp->t_srtt = 1 << 2;
 		/*
 		 * We accumulate a smoothed rtt variance (actually, a
 		 * smoothed mean difference), then set the retransmit
@@ -1482,7 +1482,7 @@ tcp_xmit_timer(tp, rtt)
 			delta = -delta;
 		delta -= (tp->t_rttvar >> TCP_RTTVAR_SHIFT);
 		if ((tp->t_rttvar += delta) <= 0)
-			tp->t_rttvar = 1;
+			tp->t_rttvar = 1 << 2;
 	} else {
 		/* 
 		 * No rtt measurement yet - use the unsmoothed rtt.
@@ -1578,16 +1578,17 @@ tcp_mss(tp, offer)
 		 */
 		if (rt->rt_rmx.rmx_locks & RTV_RTT)
 			tp->t_rttmin = rtt / (RTM_RTTUNIT / PR_SLOWHZ);
-		tp->t_srtt = rtt / (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTT_SCALE));
+		tp->t_srtt = rtt /
+		    ((RTM_RTTUNIT / PR_SLOWHZ) >> (TCP_RTT_SHIFT + 2));
 		if (rt->rt_rmx.rmx_rttvar)
 			tp->t_rttvar = rt->rt_rmx.rmx_rttvar /
-			    (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTTVAR_SCALE));
+			    ((RTM_RTTUNIT / PR_SLOWHZ) >> (TCP_RTTVAR_SHIFT + 2));
 		else
 			/* default variation is +- 1 rtt */
 			tp->t_rttvar =
-			    tp->t_srtt * TCP_RTTVAR_SCALE / TCP_RTT_SCALE;
-		TCPT_RANGESET((long) tp->t_rxtcur,
-		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1,
+			    tp->t_srtt >> (TCP_RTT_SHIFT - TCP_RTTVAR_SHIFT);
+		TCPT_RANGESET(tp->t_rxtcur,
+		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + 2),
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 	}
 	/*
