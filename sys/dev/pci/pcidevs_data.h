@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.198 2000/03/04 13:24:25 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.199 2000/03/06 02:32:32 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.193 2000/03/04 13:23:26 tron Exp 
+ *	NetBSD: pcidevs,v 1.194 2000/03/06 02:31:19 mark Exp 
  */
 
 /*
@@ -3112,6 +3112,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82C101",
 	},
 	{
+	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_83C553,
+	    0,
+	    "Symphony Labs",
+	    "83C553 PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
 	    0,
 	    "Tekram Technology (1st PCI Vendor ID)",
@@ -3791,6 +3797,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	},
 	{
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F,
+	    0,
+	    "Winbond Electronics",
+	    "W89C940F Ethernet",
+	},
+	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F_1,
 	    0,
 	    "Winbond Electronics",
 	    "W89C940F Ethernet",
