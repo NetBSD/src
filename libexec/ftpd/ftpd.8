@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.29 1998/07/13 09:18:14 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.30 1998/09/05 17:33:00 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -165,16 +165,20 @@ specific commands are supported by the SITE request.
 .It UMASK Ta "change umask, e.g. ``SITE UMASK 002''"
 .El
 .Pp
-The remaining ftp requests specified in Internet RFC 959
+The remaining ftp requests specified in
+.Cm RFC 959
 are recognized, but not implemented.
-MDTM and SIZE are not specified in RFC 959, but will appear in the
+MDTM and SIZE are not specified in
+.CM RFC 959 ,
+but will appear in the
 next updated FTP RFC.
 .Pp
 The ftp server will abort an active file transfer only when the
 ABOR
 command is preceded by a Telnet "Interrupt Process" (IP)
 signal and a Telnet "Synch" signal in the command Telnet stream,
-as described in Internet RFC 959.
+as described in Internet
+.Cm RFC 959 .
 If a
 STAT
 command is received during a data transfer, preceded by a Telnet IP
@@ -585,11 +589,13 @@ If it exists, displayed and access is refused.
 .Xr skey 1 ,
 .Xr getusershell 3 ,
 .Xr syslogd 8
-.Sh BUGS
-The server must run as the super-user to create sockets with
-privileged port numbers.
-It maintains an effective user id of the logged in user, reverting
-to the super-user only when binding addresses to sockets.
+.Sh STANDARDS
+.Nm
+recognizes all commands in 
+.Cm RFC 959 ,
+and follows the guidelines in 
+.Cm RFC 1123
+section 4.1.
 .Sh HISTORY
 The
 .Nm
@@ -601,8 +607,13 @@ The
 functionality was implemented in
 .Nx 1.3
 by Luke Mewburn, based on work by Simon Burge.
+.Sh BUGS
+The server must run as the super-user to create sockets with
+privileged port numbers.
+It maintains an effective user id of the logged in user, reverting
+to the super-user only when binding addresses to sockets.
 .Sh SECURITY CONSIDERATIONS
-.Cm RFC-959
+.Cm RFC 959
 provides no restrictions on the PORT command, and this can lead
 to security problems, as
 .Nm
