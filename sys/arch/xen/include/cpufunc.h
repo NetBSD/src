@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4.2.1 2004/12/17 10:31:59 bouyer Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4.2.2 2005/01/18 14:44:59 bouyer Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -263,12 +263,6 @@ static __inline void
 wrmsr(u_int msr, u_int64_t newval)
 {
 	__asm __volatile("wrmsr" : : "A" (newval), "c" (msr));
-}
-
-static __inline void
-wbinvd(void)
-{
-	__asm __volatile("wbinvd");
 }
 
 static __inline u_int64_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.9.2.2 2004/12/17 11:09:46 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.9.2.3 2005/01/18 14:44:59 bouyer Exp $	*/
 
 /*
  *
@@ -105,6 +105,7 @@ void vprintk(const char *, _BSD_VA_LIST_);
 
 /* some function prototypes */
 void trap_init(void);
+void xpq_flush_cache(void);
 
 
 /*
@@ -121,7 +122,7 @@ do {									\
 
 #define __restore_flags(x)						\
 do {									\
-	shared_info_t *_shared = HYPERVISOR_shared_info;		\
+	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
 	__insn_barrier();						\
 	if ((_shared->vcpu_data[0].evtchn_upcall_mask = (x)) == 0) {	\
 		__insn_barrier();					\
@@ -138,7 +139,7 @@ do {									\
 
 #define __sti()								\
 do {									\
-	shared_info_t *_shared = HYPERVISOR_shared_info;		\
+	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
 	__insn_barrier();						\
 	_shared->vcpu_data[0].evtchn_upcall_mask = 0;			\
 	__insn_barrier(); /* unmask then check (avoid races) */		\
@@ -163,7 +164,7 @@ do {									\
 #endif
 
 static __inline__ uint32_t
-x86_atomic_xchg(uint32_t *ptr, unsigned long val)
+x86_atomic_xchg(volatile uint32_t *ptr, unsigned long val)
 {
 	unsigned long result;
 
@@ -242,6 +243,12 @@ x86_atomic_clear_bit(volatile void *ptr, int bitno)
 	    "btrl %1,%0"
 	    :"=m" (*(volatile uint32_t *)(ptr))
 	    :"Ir" (bitno));
+}
+
+static __inline void
+wbinvd(void)
+{
+	xpq_flush_cache();
 }
 
 #endif /* !__ASSEMBLY__ */

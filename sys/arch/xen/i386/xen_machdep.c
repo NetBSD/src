@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.5.6.2 2004/12/17 11:28:38 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.5.6.3 2005/01/18 14:44:59 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.2 2004/12/17 11:28:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.3 2005/01/18 14:44:59 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.2 2004/12/17 11:28:38 bouyer E
 
 #include <machine/gdt.h>
 #include <machine/xenfunc.h>
-#include <machine/xenpmap.h>
 
 /* #define	XENDEBUG */
 /* #define	XENDEBUG_LOW */
@@ -65,7 +64,7 @@ void printk(char *, ...);
 #define	PRINTF(x) printf x
 #define	PRINTK(x) printk x
 
-shared_info_t *HYPERVISOR_shared_info;
+volatile shared_info_t *HYPERVISOR_shared_info;
 union start_info_union start_info_union;
 
 void xen_failsafe_handler(void);
@@ -654,6 +653,18 @@ xpq_queue_tlb_flush()
 	xpq_queue[xpq_idx].pa.val = MMUEXT_TLB_FLUSH;
 	xpq_increment_idx();
 }
+
+void
+xpq_flush_cache()
+{
+
+	XENPRINTK2(("xpq_queue_flush_cache\n"));
+	xpq_queue[xpq_idx].pa.ptr = MMU_EXTENDED_COMMAND;
+	xpq_queue[xpq_idx].pa.val = MMUEXT_FLUSH_CACHE;
+	xpq_increment_idx();
+	xpq_flush_queue();
+}
+
 
 #ifdef XENDEBUG
 void
