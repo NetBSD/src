@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.14 2000/12/19 21:34:24 jdc Exp $	*/
+/*	$NetBSD: scroll.c,v 1.15 2001/04/20 12:56:09 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.14 2000/12/19 21:34:24 jdc Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.15 2001/04/20 12:56:09 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -67,6 +67,16 @@ scrl(int lines)
 	return wscrl(stdscr, lines);
 }
 
+/*
+ * setscrreg --
+ *	Set the top and bottom of the scrolling region for stdscr.
+ */
+int
+setscrreg(int top, int bottom)
+{
+	return wsetscrreg(stdscr, top, bottom);
+}
+
 #endif
 
 /*
@@ -88,7 +98,15 @@ wscrl(WINDOW *win, int lines)
 		return (OK);
 
 	getyx(win, oy, ox);
-	wmove(win, 0, 0);
+#ifdef DEBUG
+	__CTRACE("wscrl: y=%d\n", oy);
+#endif
+	if (oy < win->scr_t || oy > win->scr_b)
+		/* Outside scrolling region */
+		wmove(win, 0, 0);
+	else
+		/* Inside scrolling region */
+		wmove(win, win->scr_t, 0);
 	winsdelln(win, 0 - lines);
 	wmove(win, oy, ox);
 
@@ -101,4 +119,44 @@ wscrl(WINDOW *win, int lines)
 #endif
 	}
 	return (OK);
+}
+
+/*
+ * wsetscrreg --
+ *	Set the top and bottom of the scrolling region for win.
+ */
+int
+wsetscrreg(WINDOW *win, int top, int bottom)
+{
+	if (top < win->begy || bottom >= win->maxy || bottom - top < 1)
+		return (ERR);
+	win->scr_t = top;
+	win->scr_b = bottom;
+	return (OK);
+}
+
+/*
+ * has_ic --
+ *	Does the terminal have insert- and delete-character?
+ */
+bool
+has_ic(void)
+{
+	if (__tc_ic !=NULL && __tc_dc != NULL)
+		return (TRUE);
+	else
+		return (FALSE);
+}
+
+/*
+ * has_ic --
+ *	Does the terminal have insert- and delete-line?
+ */
+bool
+has_il(void)
+{
+	if (__tc_al !=NULL && __tc_dl != NULL)
+		return (TRUE);
+	else
+		return (FALSE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.54 2001/01/05 22:57:56 christos Exp $	*/
+/*	$NetBSD: curses.h,v 1.55 2001/04/20 12:56:08 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -472,6 +472,7 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	move(y, x)			wmove(stdscr, y, x)
 #define	refresh()			wrefresh(stdscr)
 #define	scrl(n)				wscrl(stdscr, n)
+#define	setscrreg(t, b)			wsetscrreg(stdscr, t, b)
 #define	standend()			wstandend(stdscr)
 #define	standout()			wstandout(stdscr)
 #define	timeout(delay)			wtimeout(stdscr, delay)
@@ -558,6 +559,7 @@ int	 instr(char *);
 int	 move(int, int);
 int	 refresh(void);
 int	 scrl(int);
+int	 setscrreg(int, int);
 int	 standend(void);
 int	 standout(void);
 void	 timeout(int);
@@ -635,6 +637,8 @@ int	 getmaxy(WINDOW *);
 int	 getmaxx(WINDOW *);
 int	 gettmode(void);
 bool	 has_colors(void);
+bool	 has_ic(void);
+bool	 has_il(void);
 int	 hline(chtype, int);
 int	 idlok(WINDOW *, bool);
 int	 init_color(short, short, short, short);
@@ -737,6 +741,7 @@ int	 wrefresh(WINDOW *);
 int	 wscanw(WINDOW *, const char *, ...)
 		__attribute__((__format__(__scanf__, 2, 3)));
 int	 wscrl(WINDOW *, int);
+int	 wsetscrreg(WINDOW *, int, int);
 int	 wstandend(WINDOW *);
 int	 wstandout(WINDOW *);
 void	 wtimeout(WINDOW *, int);
