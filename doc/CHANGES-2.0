@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.267 2004/06/14 04:08:48 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.268 2004/06/14 04:14:55 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3688,3 +3688,8 @@ sys/nfs/nfs_syscalls.c				1.76
 
 	nfsrv_zapsock: fix an inverted condition in nfs_syscall.c rev.1.74.
 	[yamt, ticket #466]
+
+sys/arch/sparc64/dev/pci_machdep.c		1.47
+
+	pci_find_ino: support pci-pci bridges.
+	[petrov, ticket #469]
