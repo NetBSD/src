@@ -4,6 +4,16 @@
 # This file contains example settings of Postfix configuration
 # parameters that control compatibility with broken software.
 
+# The broken_sasl_auth_clients controls inter-operability with SMTP
+# clients that do not recognize that Postfix supports RFC 2554 (AUTH
+# command).  Examples of such clients are MicroSoft Outlook Express
+# version 4 and MicroSoft Exchange version 5.0.
+# 
+# Specify broken_sasl_auth_clients=yes to have Postfix advertise 
+# AUTH support in a non-standard way.
+# 
+broken_sasl_auth_clients = no
+
 # The ignore_mx_lookup_error parameter controls what happens when a
 # name server fails to respond to an MX lookup request. By default,
 # Postfix defers delivery and tries again after some delay. Specify

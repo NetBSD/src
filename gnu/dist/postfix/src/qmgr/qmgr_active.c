@@ -149,7 +149,7 @@ static void qmgr_active_defer(const char *queue_name, const char *queue_id,
 
     tbuf.actime = tbuf.modtime = event_time() + delay;
     path = mail_queue_path((VSTRING *) 0, queue_name, queue_id);
-    if (utime(path, &tbuf) < 0)
+    if (utime(path, &tbuf) < 0 && errno != ENOENT)
 	msg_fatal("%s: update %s time stamps: %m", myname, path);
     if (mail_queue_rename(queue_id, queue_name, dest_queue)) {
 	if (errno != ENOENT)

@@ -39,7 +39,10 @@
 #       remove /etc/localtime in case it's a broken symlink
 #       restrict find to maxdepth 1 (faster)
 
-# Log: LINUX2,v
+# $Log: LINUX2,v $
+# Revision 1.1.1.3  2001/04/02 10:55:36  itojun
+# postfix 20010228-pl01
+#
 # Revision 1.4  2001/01/15 09:36:35  emma
 # add note it was successfully tested on Debian sid
 #
