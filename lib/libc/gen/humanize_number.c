@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.5 2003/12/26 11:30:36 simonb Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.6 2004/07/12 09:14:07 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.5 2003/12/26 11:30:36 simonb Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.6 2004/07/12 09:14:07 enami Exp $");
 #endif /* !__lint */
 
 #include <assert.h>
@@ -101,11 +101,6 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 	/* check if enough room for `x y' + suffix + `\0' */
 	if (len < baselen + suffixlen + 1)
 		return (-1);
-
-	if (flags & HN_DIVISOR_1000)
-		divisor = 1000;
-	else
-		divisor = 1024;
 
 	max = 100;
 	for (i = 0;
