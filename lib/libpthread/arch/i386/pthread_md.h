@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.2 2001/07/13 02:42:40 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.3 2001/09/04 21:21:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,5 +50,11 @@ pthread__sp(void)
 }
 
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_UESP])
+
+/*
+ * Usable stack space below the ucontext_t. 
+ * See comment in pthread_switch.S about STACK_SWITCH.
+ */
+#define STACKSPACE	32	/* room for 8 integer values */
 
 #endif /* _LIB_PTHREAD_I386_MD_H */
