@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.10 2003/12/14 07:21:51 sekiya Exp $	*/
+/*	$NetBSD: imc.c,v 1.11 2004/01/10 05:00:50 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.10 2003/12/14 07:21:51 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.11 2004/01/10 05:00:50 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,6 +57,8 @@ static int	imc_match(struct device *, struct cfdata *, void *);
 static void	imc_attach(struct device *, struct device *, void *);
 static int	imc_print(void *, const char *);
 void		imc_bus_reset(void);
+void		imc_bus_error(void);
+void		imc_watchdog_tickle(void);
 
 CFATTACH_DECL(imc, sizeof(struct imc_softc),
     imc_match, imc_attach, NULL, NULL);
@@ -213,6 +215,12 @@ imc_attach(parent, self, aux)
 
 	iaa.iaa_name = "gio";
 	(void)config_found(self, (void*)&iaa, imc_print);
+
+	/* enable watchdog and clear it */
+	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
+	reg |= IMC_CPUCTRL0_WDOG;
+	bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL0, reg);
+	imc_watchdog_tickle();
 }
 
 
@@ -234,4 +242,21 @@ imc_bus_reset(void)
 {
 	bus_space_write_4(isc.iot, isc.ioh, IMC_CPU_ERRSTAT, 0);
 	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO_ERRSTAT, 0);
+}
+
+void
+imc_bus_error(void)
+{
+	printf("bus error: cpu_stat %08x addr %08x, gio_stat %08x addr %08x\n",
+			bus_space_read_4(isc.iot, isc.ioh, IMC_CPU_ERRSTAT),
+			bus_space_read_4(isc.iot, isc.ioh, IMC_CPU_ERRADDR),
+			bus_space_read_4(isc.iot, isc.ioh, IMC_GIO_ERRSTAT),
+			bus_space_read_4(isc.iot, isc.ioh, IMC_GIO_ERRADDR) );
+	imc_bus_reset();
+}
+
+void
+imc_watchdog_tickle(void)
+{
+	bus_space_write_4(isc.iot, isc.ioh, IMC_WDOG, 0);
 }
