@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: isofs_rrip.c,v 1.1 1993/07/19 13:40:06 cgd Exp $
+ *	$Id: isofs_rrip.c,v 1.2 1993/09/03 04:37:55 cgd Exp $
  */
 
 #include "param.h"
@@ -46,6 +46,14 @@
 #include "isofs_rrip.h"
 #include "iso_rrip.h"
 
+#include "dirent.h"
+
+#ifdef ISOFS_DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
+
 /*
  * POSIX file attribute
  */
@@ -53,10 +61,10 @@ static int isofs_rrip_attr( p, ana )
 ISO_RRIP_ATTR	 *p;
 ISO_RRIP_ANALYZE *ana;
 {
-	ana->inode.iso_mode  = isonum_731(p->mode_l);
-	ana->inode.iso_uid   = (uid_t)isonum_731(p->uid_l);
-	ana->inode.iso_gid   = (gid_t)isonum_731(p->gid_l);
-/*	ana->inode.iso_links = isonum_731(p->links_l); */
+	ana->inode.iso_mode  = isonum_733(p->mode_l);
+	ana->inode.iso_uid   = (uid_t)isonum_733(p->uid_l);
+	ana->inode.iso_gid   = (gid_t)isonum_733(p->gid_l);
+/*	ana->inode.iso_links = isonum_733(p->links_l); */
 	return;
 }
 
@@ -86,8 +94,8 @@ ISO_RRIP_ANALYZE *ana;
 	printf("isofs:%s[%d] high=0x%08x, low=0x%08x\n",
 				buf,
 				isonum_711(p->h.length),
-				isonum_731(p->dev_t_high_l),
-				isonum_731(p->dev_t_low_l)
+				isonum_733(p->dev_t_high_l),
+				isonum_733(p->dev_t_low_l)
 					 );
 #endif
 	return;
@@ -394,7 +402,8 @@ static RRIP_TABLE rrip_table [] = {
 	     { 'R', 'R', isofs_rrip_idflag, 0,                    ISO_SUSP_IDFLAG  },
 	     { 'E', 'R', isofs_rrip_exflag, 0,                    ISO_SUSP_EXFLAG  },
 	     { 'S', 'P', isofs_rrip_unknown,0,                    ISO_SUSP_UNKNOWN },
-	     { 'C', 'E', isofs_rrip_unknown,0,                    ISO_SUSP_UNKNOWN }
+	     { 'C', 'E', isofs_rrip_unknown,0,                    ISO_SUSP_UNKNOWN },
+	     { 'A', 'A', isofs_rrip_unknown,0,                    ISO_SUSP_UNKNOWN }
 };
 
 int isofs_rrip_analyze ( isodir, analyze )
@@ -477,7 +486,7 @@ setdefault:
 int	isofs_rrip_getname( isodir, outbuf, outlen )
 struct iso_directory_record 	*isodir;
 char				*outbuf;
-int				*outlen;
+short				*outlen;
 {
 	ISO_SUSP_HEADER  *phead, *pend;
 	ISO_RRIP_ALTNAME *p;
@@ -498,6 +507,7 @@ int				*outlen;
 	if ( pend != phead ) {
 		while ( pend >= phead + 1) {
 			if ( bcmp( phead->type, "NM", 2 ) == 0 ) {
+			        DPRINTF(("isofs_rrip_getname: found NM record\n"));
 				found = 1;
 				break;
 			}
@@ -507,8 +517,14 @@ int				*outlen;
 	if ( found == 1 ) {
 		p = (ISO_RRIP_ALTNAME *)phead;
 		*outlen = isonum_711( p->h.length ) - sizeof( ISO_RRIP_ALTNAME );
+		DPRINTF(("isofs_rrip_getname: len = %d, rlen = %d, name = %*.*s\n",
+			 isonum_711(p->h.length), *outlen,
+			 *outlen, *outlen, &p->flags + 1));
 		bcopy( (char *)( &p->flags + 1 ), outbuf, *outlen );
+		outbuf[*outlen] = 0;
 	} else {
+	        DPRINTF(("no rrip, name = %s (%08x%08x)\n",
+			 isodir->name, *(long *)isodir->name, *(long *)(isodir->name+4)));
 		isofntrans(isodir->name, isonum_711(isodir->name_len), outbuf, outlen );
 		if ( *outlen == 1) {
 			switch ( outbuf[0] ) {
@@ -534,7 +550,7 @@ int	isofs_rrip_getsymname( vp, isodir, outbuf, outlen )
 struct vnode			*vp;
 struct iso_directory_record 	*isodir;
 char				*outbuf;
-int				*outlen;
+short				*outlen;
 {
 	register ISO_RRIP_SLINK_COMPONENT *pcomp;
 	register ISO_SUSP_HEADER  *phead, *pend;
