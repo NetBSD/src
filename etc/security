@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.70 2001/10/15 03:00:22 lukem Exp $
+#	$NetBSD: security,v 1.71 2001/10/18 14:50:17 taca Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -789,7 +789,7 @@ if checkyesno check_pkgs && [ -d $pkgdb_dir ]; then
 		pkg_info | sort
 		echo ""
 		find . \( -name +REQUIRED_BY -o -name +CONTENTS \) -print0 |
-			xargs -0 ls -l | sort -t. +1 | sed -e 's, \./, ,'
+			xargs -0 ls -lT | sort -t. +1 | sed -e 's, \./, ,'
 	 ) > $pkgs
 	echo "$pkgs" > $PKGS
 	CHANGELIST="$PKGS $CHANGELIST"
