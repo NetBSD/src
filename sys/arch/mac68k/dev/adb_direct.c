@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.21.2.3 1999/11/21 15:03:16 he Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.21.2.4 1999/11/29 21:20:37 he Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1163,7 +1163,7 @@ adb_guess_next_device(void)
 						 * device! This can happen if
 						 * there are no devices on the
 						 * bus */
-				dummy = 2;
+				dummy = 1;
 				break;
 			}
 			/* found the next device */
