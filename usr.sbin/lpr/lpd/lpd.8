@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.24 2002/07/31 01:49:48 jschauma Exp $
+.\"	$NetBSD: lpd.8,v 1.25 2002/08/12 18:03:41 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -161,13 +161,21 @@ listens on this port instead of the usual
 port from
 .Pa /etc/services .
 .Pp
-Access control is provided by two means.
-First, all requests must come from one of the machines listed in
+Access control is provided by three means.
+First,
+.Pa /etc/hosts.allow
+and
+.Pa /etc/hosts.deny
+are consulted as described in
+.Xr hosts_access 5
+with daemon name
+.Nm Ns .
+Second, all requests must come from one of the machines listed in
 the file
 .Pa /etc/hosts.equiv
 or
 .Pa /etc/hosts.lpd .
-Second, if the
+Lastly, if the
 .Li rs
 capability is specified in the
 .Xr printcap 5
@@ -175,6 +183,7 @@ entry for the printer being accessed,
 .Em lpr
 requests will only be honored for those users with accounts on the
 machine with the printer.
+Requests must pass all three tests.
 .Pp
 The file
 .Em minfree
@@ -333,6 +342,10 @@ minimum free space to leave
 line printer devices
 .It Pa /var/run/printer
 socket for local requests
+.It Pa /etc/hosts.allow
+explicit remote host access list.
+.It Pa /etc/hosts.deny
+explicit remote host denial of service list.
 .It Pa /etc/hosts.equiv
 lists machine names allowed printer access
 .It Pa /etc/hosts.lpd
@@ -346,6 +359,8 @@ but not under same administrative control.
 .Xr setsockopt 2 ,
 .Xr syslog 3 ,
 .Xr hosts.equiv 5 ,
+.Xr hosts_access 5 ,
+.Xr hosts_options 5 ,
 .Xr printcap 5 ,
 .Xr lpc 8 ,
 .Xr pac 8
