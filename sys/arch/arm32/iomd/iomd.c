@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.2 1998/01/13 02:10:14 thorpej Exp $	*/
+/*	$NetBSD: iomd.c,v 1.3 1998/01/18 03:39:23 mark Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -104,7 +104,7 @@ iomdprint(aux, name)
 	void *aux;
 	const char *name;
 {
-	union iomd_attach_args *ia = aux;
+/*	union iomd_attach_args *ia = aux;*/
 
 	return(QUIET);
 }
@@ -141,7 +141,7 @@ iomdattach(parent, self, aux)
 	void *aux;
 {
 	struct iomd_softc *sc = (struct iomd_softc *)self;
-	struct mainbus_attach_args *mb = aux;
+/*	struct mainbus_attach_args *mb = aux;*/
 	int refresh;
 #if 0
 	int dma_time;
