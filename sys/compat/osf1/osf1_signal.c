@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.5 1998/08/09 20:37:54 perry Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.6 1999/02/09 20:34:17 christos Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -18,19 +18,15 @@
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 
-static void bsd_to_osf1_sigaction __P((const struct sigaction *bsa, 
+static void bsd_to_osf1_sigaction __P((const struct sigaction13 *bsa, 
 				       struct osf1_sigaction *osa));
 static void osf1_to_bsd_sigaction __P((const struct osf1_sigaction *osa,
-				       struct sigaction *bsa));
-
-#define sigemptyset(s)		memset((s), 0, sizeof(*(s)))
-#define sigismember(s, n)	(*(s) & sigmask(n))
-#define sigaddset(s, n)		(*(s) |= sigmask(n))
+				       struct sigaction13 *bsa));
 
 #define	osf1_sigmask(n)		(1 << ((n) - 1))
 #define osf1_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
-#define osf1_sigismember(s, n)	(*(s) & sigmask(n))
-#define osf1_sigaddset(s, n)	(*(s) |= sigmask(n))
+#define osf1_sigismember(s, n)	(*(s) & osf1_sigmask(n))
+#define osf1_sigaddset(s, n)	(*(s) |= osf1_sigmask(n))
 
 int bsd_to_osf1_sig[] = {
 	0,
@@ -226,8 +222,8 @@ osf1_sys_sigaction(p, v, retval)
 		syscallarg(struct osf1_sigaction *) osa;
 	} */ *uap = v;
 	struct osf1_sigaction *nosa, *oosa, tmposa;
-	struct sigaction *nbsa, *obsa, tmpbsa;
-	struct sys_sigaction_args sa;
+	struct sigaction13 *nbsa, *obsa, tmpbsa;
+	struct compat_13_sys_sigaction_args sa;
 	caddr_t sg;
 	int error;
 
@@ -254,7 +250,7 @@ osf1_sys_sigaction(p, v, retval)
 	SCARG(&sa, nsa) = nbsa;
 	SCARG(&sa, osa) = obsa;
 
-	if ((error = sys_sigaction(p, &sa, retval)) != 0)
+	if ((error = compat_13_sys_sigaction(p, &sa, retval)) != 0)
 		return error;
 
 	if (oosa != NULL) {
