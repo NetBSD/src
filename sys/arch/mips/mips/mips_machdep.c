@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.125 2002/03/13 13:18:58 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.126 2002/03/17 20:54:09 manu Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.125 2002/03/13 13:18:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.126 2002/03/17 20:54:09 manu Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -1073,7 +1073,7 @@ setregs(p, pack, stack)
 	f->f_regs[A0] = (int) stack;
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = 0;
-	f->f_regs[A3] = (int)PS_STRINGS;
+	f->f_regs[A3] = (int)p->p_psstr;
 
 	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
 		fpcurproc = (struct proc *)0;
