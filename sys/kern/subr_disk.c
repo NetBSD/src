@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.59 2004/02/28 06:28:48 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.60 2004/03/09 12:23:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.59 2004/02/28 06:28:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.60 2004/03/09 12:23:07 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_bufq.h"
@@ -493,11 +493,13 @@ struct bufq_prio {
 };
 
 
+static __inline int buf_inorder(const struct buf *, const struct buf *, int);
+
 /*
  * Check if two buf's are in ascending order.
  */
 static __inline int
-buf_inorder(struct buf *bp, struct buf *bq, int sortby)
+buf_inorder(const struct buf *bp, const struct buf *bq, int sortby)
 {
 
 	if (bp == NULL || bq == NULL)
