@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaattach.c,v 1.2 2001/12/05 16:11:37 augustss Exp $	*/
+/*	$NetBSD: irdaattach.c,v 1.3 2001/12/14 20:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/ioctl.h>
-#include <dev/irdaio.h>
+#include <dev/ir/irdaio.h>
 
 #include <err.h>
 #include <fcntl.h>
