@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.34 1999/02/14 12:44:31 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.35 1999/04/14 09:50:01 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -401,6 +401,17 @@ sbus_attach_common(sc, busname, busnode, bp, specials)
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
 	sc->sc_burst = getpropint(busnode, "burst-sizes", 0);
+
+
+	if (CPU_ISSUN4M) {
+		/*
+		 * Some models (e.g. SS20) erroneously report 64-bit
+		 * burst capability. We mask it out here for all SUN4Ms,
+		 * since probably no member of that class supports
+		 * 64-bit Sbus bursts.
+		 */
+		sc->sc_burst &= ~SBUS_BURST_64;
+	}
 
 	/* Propagate bootpath */
 	if (bp != NULL && strcmp(bp->name, busname) == 0)
