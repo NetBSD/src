@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.10 2003/03/29 21:42:44 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.11 2003/03/31 18:24:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.10 2003/03/29 21:42:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.11 2003/03/31 18:24:58 jdolecek Exp $");
 
 /*
  * Connection engine.
@@ -258,7 +258,7 @@ smb_co_gone(struct smb_connobj *cp, struct smb_cred *scred)
 		cp->co_gone(cp, scred);
 	parent = cp->co_parent;
 	if (parent) {
-		smb_co_lock(parent, LK_EXCLUSIVE);
+		smb_co_lock(parent, LK_EXCLUSIVE|LK_CANRECURSE);
 		SLIST_REMOVE(&parent->co_children, cp, smb_connobj, co_next);
 		smb_co_put(parent, scred);
 	}
