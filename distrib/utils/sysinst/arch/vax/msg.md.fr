@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.6 2003/06/06 14:31:32 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.7 2003/06/11 21:35:51 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,3 +63,7 @@ fois que vous apportez votre copie de sauvegarde améliorée de système, vous
 pouvez devoir prendre soin de fusionner nouvellement créé / répertoire
 d' /emul/aout avec le vieil.
 }
+
+message set_kernel_1
+{Kernel (GENERIC)}
+

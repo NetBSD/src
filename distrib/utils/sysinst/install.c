@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.31 2003/06/03 11:54:48 dsl Exp $	*/
+/*	$NetBSD: install.c,v 1.32 2003/06/11 21:35:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,6 +61,8 @@ do_install()
 #endif
 	
 	get_ramsize();
+
+	process_menu(MENU_distset, NULL);
 
 	if (find_disks() < 0)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.16 2003/05/30 11:56:26 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.17 2003/06/11 21:35:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -243,29 +243,8 @@ EXTERN struct apple_part_map_entry new_map[]
  */
 
 /* Definition of files to retrieve from ftp. */
-EXTERN distinfo dist_list[]
-#ifdef MAIN
-= {
-    {"kern-GENERIC",	0, "Kernel       : "},
-    {"kern-GENERICSBC",	0, "Kernel (SBC) : "},
-    {"base",		1, "Base         : "},
-    {"etc",		1, "System (/etc): "},
-    {"comp",		1, "Compiler     : "},
-    {"games",		1, "Games        : "},
-    {"man",		1, "Manuals      : "},
-    {"misc",		1, "Miscellaneous: "},
-    {"text",		1, "Text tools   : "},
-
-    {"xbase",		1, "X11 clients  : "},
-    {"xfont",		1, "X11 fonts    : "},
-    {"xserver",		1, "X11 servers  : "},
-    {"xcontrib",	1, "X11 contrib  : "},
-    {"xcomp",		1, "X programming: "},
-    {"xmisc",		1, "X11 Misc.    : "},
-    { NULL,		0, NULL }
-}
-#endif
-;
+#define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_2_NAME	"kern-GENERICSBC"
 
 /*
  * Default fileystem type for floppy disks.

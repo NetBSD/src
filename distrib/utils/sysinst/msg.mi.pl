@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.15 2003/06/11 09:03:33 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.16 2003/06/11 21:35:35 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -47,8 +47,10 @@ message usage
 message newline {\n}
 
 message yes {Tak}
-
 message no {Nie}
+message all {All}	/* XXX translate */
+message some {Some}	/* XXX translate */
+message none {None}	/* XXX translate */
 
 message install
 {zainstalowac}
@@ -794,12 +796,63 @@ message cur_distsets
 }
 
 message cur_distsets_header
-{Pakiet dystryb.   Uzyc?
------------------- ----
+{Pakiet dystryb.       Uzyc?
+---------------------- ----
 }
 
+message set_base	/* XXX translate */
+{Base}
+
+message set_system	/* XXX translate */
+{System (/etc)}
+
+message set_compiler	/* XXX translate */
+{Compiler Tools}
+
+message set_games	/* XXX translate */
+{Games}
+
+message set_man_pages	/* XXX translate */
+{Online Manual Pages}
+
+message set_misc	/* XXX translate */
+{Miscellaneous}
+
+message set_text_tools	/* XXX translate */
+{Text Processing Tools}
+
+message set_X11		/* XXX translate */
+{X11 sets}
+
+message set_X11_base	/* XXX translate */
+{X11 base and clients}
+
+message set_X11_fonts	/* XXX translate */
+{X11 fonts}
+
+message set_X11_servers	/* XXX translate */
+{X11 servers}
+
+message set_X_contrib	/* XXX translate */
+{X contrib clients}
+
+message set_X11_prog	/* XXX translate */
+{X11 programming}
+
+message set_X11_misc	/* XXX translate */
+{X11 Misc.}
+
 message cur_distsets_row
-{%-18s %s\n}
+{%-27s %3s\n}
+
+message select_all	/* XXX translate */
+{Select all the above sets}
+
+message select_none	/* XXX translate */
+{Deselect all the above sets}
+
+message install_selected_sets	/* XXX translate */
+{Install selected sets}
 
 message tarerror
 {Pojawil sie blad w trakcie rozpakowywanie pliku %s. To znaczy, ze

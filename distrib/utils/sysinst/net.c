@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.84 2003/06/03 11:54:49 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.85 2003/06/11 21:35:36 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -695,8 +695,8 @@ get_via_ftp()
 	process_menu(MENU_ftpsource, NULL);
 
 	list = dist_list;
-	while (list->name) {
-		if (!list->getit) {
+	while (list->desc) {
+		if (list->name  == NULL || (sets_selected & list->set) == 0) {
 			list++;
 			continue;
 		}

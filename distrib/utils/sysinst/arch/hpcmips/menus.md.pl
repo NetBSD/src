@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.8 2003/06/10 17:47:19 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.9 2003/06/11 21:35:42 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.8	2002/03/23 03:24:34 shin Exp */
 
@@ -97,20 +97,3 @@ menu cyl1024;
 		c1024_resp = 3;
 	};
 
-menu md_distcustom, x=26, y=5, exit, title "Wybierz";
-	display action { show_cur_distsets (); };
-	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
-	option	"Kernel (TX3912)", action { toggle_getit (1); };
-	option	"Base",			 action { toggle_getit (2); };
-	option	"System (/etc)",	 action { toggle_getit (3); };
-	option  "Compiler Tools", 	 action { toggle_getit (4); };
-	option  "Games", 		 action { toggle_getit (5); };
-	option  "Online manual pages", 	 action { toggle_getit (6); };
-	option  "Miscellaneous", 	 action { toggle_getit (7); };
-	option  "Text Processing Tools", action { toggle_getit (8); };
-	option  "X11 base and clients",	 action { toggle_getit (9); };
-	option  "X11 fonts",		 action { toggle_getit (10); };
-	option  "X11 servers",		 action { toggle_getit (11); };
-	option  "X contrib clients",	 action { toggle_getit (12); };
-	option  "X11 programming",	 action { toggle_getit (13); };
-	option  "X11 Misc.",		 action { toggle_getit (14); };
