@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.46 2004/03/20 18:49:33 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.47 2004/03/22 05:07:56 lukem Exp $
 .\"
-.Dd March 19, 2004
+.Dd March 22, 2004
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -173,6 +173,7 @@ flag.
 This is provided only so scripts or other programs may use
 .Nm
 as part of an automatic installation process.
+.Pp
 Using the
 .Fl f
 flag with
@@ -184,7 +185,7 @@ and
 .Ar sector
 fields.
 They will be automatically computed using the BIOS geometry.
-.br
+.Pp
 If
 .Fl u
 and
@@ -272,7 +273,7 @@ The
 may be specified as
 .Em $
 in which case the partition will extend to the end of the available free space.
-.br
+.Pp
 .Nm
 will not allow you to create partitions which overlap.
 .Pp
@@ -287,13 +288,12 @@ boot code.
 Be more verbose, specifying
 .Fl v
 more than once may increase the amount of output.
-.br
-Specifying
+.Pp
+Using
 .Fl v
 with
 .Fl u
-allows the user to explicitly specify some values for with the default
-ies usually correct.
+allows the user to change more parameters than normally permitted.
 .It Fl w Ar file
 Write the modified partition table to file
 .Ar file
@@ -428,7 +428,7 @@ sector
 .Em "sector"
 .Xc
 are the beginning or ending address of a partition.
-.br
+.Pp
 .Em "Note:"
 these numbers are read from the bootblock, so are the values calculated
 by a previous run of
