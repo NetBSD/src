@@ -1,4 +1,4 @@
-/*	$NetBSD: dayfile.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $	*/
+/*	$NetBSD: dayfile.c,v 1.9 2000/09/08 17:25:32 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dayfile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dayfile.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $");
+__RCSID("$NetBSD: dayfile.c,v 1.9 2000/09/08 17:25:32 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -749,7 +749,7 @@ The road is +.*\n"},
 	{"You are in the living room.",
 		{0, 117, 217, 218, 0, 0, 0, 0},
 	"A decorative entry with fresh flowers and wall to wall carpeting leads into\n\
-the living room here where a couch and two chairs converse with an end table.\n\
+the living room here where a couch and two chairs converge with an end table.\n\
 *The exit is +.* The bedroom is +.\n"},
 	{"You are at the lagoon.",
 		{118, 0, 167, 168, 81, 0, 0, 0},
@@ -855,7 +855,7 @@ from the ground itself.* The canyon continues - and -.\n"},
 	{"You are in the drawing room.",
 		{0, 134, 0, 0, 0, 0, 0, 0},
 	"Exquisitely decorated with plants and antique furniture of superb\n\
-craftsmanship, the parlor reflects its owners impeccable taste.  The tropical\n\
+craftsmanship, the parlor reflects its owner's impeccable taste.  The tropical\n\
 sun is streaming in through open shutters *+.  There doesn't seem \n\
 to be anybody around.  A large immaculate oaken desk is visible in the\n\
 study and it even has a old fashioned telephone to complete the decor.**\n"},
