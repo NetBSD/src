@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.66 2004/07/22 05:26:46 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.67 2004/07/23 09:53:10 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.66 2004/07/22 05:26:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.67 2004/07/23 09:53:10 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -482,6 +482,7 @@ rip6_output(m, va_alist)
 		struct mbuf *n;
 		int off;
 		u_int16_t *sump;
+		u_int16_t sum;
 		int sumoff;
 
 		/* compute checksum */
@@ -502,8 +503,9 @@ rip6_output(m, va_alist)
 			goto bad;
 		}
 		sump = (u_int16_t *)(mtod(n, caddr_t) + sumoff);
-		*sump = 0;
-		*sump = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
+		memset(sump, 0, sizeof(*sump));
+		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
+		memcpy(sump, &sum, sizeof(*sump));
 	}
 
 	flags = 0;
