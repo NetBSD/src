@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.53 1998/05/06 19:59:35 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.54 1998/05/24 19:13:56 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -199,10 +199,8 @@ extern	 char *suboptarg;		/* getsubopt(3) external variable */
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 int	chown __P((const char *, uid_t, gid_t)) __RENAME(__posix_chown);
-int	rename __P((const char *, const char *)) __RENAME(__posix_rename);
 #else
 int	chown __P((const char *, uid_t, gid_t));
-int	rename __P((const char *, const char *));
 #endif /* defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
 
 #if defined(_XOPEN_SOURCE)
@@ -214,6 +212,10 @@ int	fchown __P((int, uid_t, gid_t));
 int	lchown __P((const char *, uid_t, gid_t));
 #endif /* !defined(_POSIX_C_SOURCE) */
 #endif /* defined(_XOPEN_SOURCE) */
+
+#if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE - 0) <= 3
+int	rename __P((const char *, const char *)) __RENAME(__posix_rename);
+#endif
 
 #if (!defined(_POSIX_SOURCE) && !defined(_POSIX_C_SOURCE) && \
      !defined(_XOPEN_SOURCE)) || \
