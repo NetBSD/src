@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.53 1998/09/09 00:07:50 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.54 1998/09/30 23:01:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
  * Atari Modifications: Leo Weppelman
  */
 
+#include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_uvm.h"
 
