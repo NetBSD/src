@@ -1,4 +1,4 @@
-#       $NetBSD: MAKEDEV2manpage.awk,v 1.7 2003/10/24 20:26:57 jdolecek Exp $
+#       $NetBSD: MAKEDEV2manpage.awk,v 1.8 2003/10/24 23:42:25 jdolecek Exp $
 #
 # Copyright (c) 2002
 #	Dieter Baron <dillo@NetBSD.org>.  All rights reserved.
@@ -37,9 +37,9 @@
 #
 ###########################################################################
 #
-# Convert src/etc/etc.${ARCH}/MAKEDEV and
+# Convert src/etc/MAKEDEV.tmpl and
 # src/share/man/man8/MAKEDEV.8.template to
-# src/share/man/man8/man8.${ARCH}/MAKEDEV.8, replacing
+# src/share/man/man8/MAKEDEV.8, replacing
 #  - @@@SPECIAL@@@ with all targets in the first section (all, std, ...)
 #  - @@@DEVICES@@@ with the remaining targets
 #  - @@@ARCH@@@ with the architecture name
@@ -141,15 +141,44 @@ function read1line() {
 
               		# add manpage, if available
 			if (target == "fd#")
-				page = "fdc";
+				page = "fdc"
 			else if (target == "pms#")
-				page = "omps";
+				page = "omps"
+			else if (target == "ed#")
+				page = "edc"
+			else if (target == "ttye#")
+				page = "ite"
+			else if (target == "ttyU#")
+				page = "ucom"
+			else if (target == "fd")
+				page = "-----" # force no .Xr
+			else if (target == "sysmon")
+				page = "envsys"
+			else if (target == "veriexec")
+				page = "verifiedexec"
+			else if (target == "ttyZ#")
+				page = "zstty"
+			else if (target == "ttyCZ?")
+				page = "cz"
+			else if (target == "ttyCY?")
+				page = "cy"
+			else if (target == "ttyB?")
+				page = "scc"
 			else {
 				page=target;
 				sub(/[^a-zA-Z]+/, "", page);
 			}
 
-			if (system("test -f ../man4/" page ".4 -o -f ../man4/man4." ARCH "/" page ".4") == 0) {
+			str = "ls ../man4/" page ".4 ../man4/man4.*/" page ".4 2>/dev/null"
+			while(str | getline) {
+				if (system("test -f " $0) != 0)
+					continue
+
+				# get the manpage including opt. arch name
+				sub(/^\.\.\/man4\//, "")
+				sub(/^man4\./, "")
+				sub(/\.4$/, "")
+
 				sub(/[ \t]*$/, "", line);
 				if (line ~ /see/) {
                       		    # already a manpage there, e.g. scsictl(8)
@@ -157,12 +186,13 @@ function read1line() {
 				}
 				else
 				    line = line ", see ";
-                  		line = line page "(4)";
+                  		line = line $0 "(4)";
 			}
+			close(str)
               		# Add .Xr \&foo 4 - ampersand to work around manpages that are
               		# *roff commands at the same time
 			while (line ~ /[a-zA-Z0-9]+\([0-9]\)/) {
-			    line=gensub(/[ \t]*([a-zA-Z0-9]+)\(([0-9])\)(.*)/, "\n.Xr \\\\\\&\\1 \\2 \\3", "g", line);
+			    line=gensub(/[ \t]*([a-zA-Z0-9\/]+)\(([0-9])\)(.*)/, "\n.Xr \\\\\\&\\1 \\2 \\3", "g", line);
 			}
 			gsub(/[ \t]+$/, "", line);
 			gsub(/[ \t]+/, " ", line);
