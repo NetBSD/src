@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.9 1997/01/23 14:02:15 mrg Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.10 1997/07/13 20:08:16 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_perror.c,v 1.9 1997/01/23 14:02:15 mrg Exp $";
+#if 0
+static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: clnt_perror.c,v 1.10 1997/07/13 20:08:16 christos Exp $");
+#endif
 #endif
 
 /*
@@ -49,10 +53,11 @@ static char *rcsid = "$NetBSD: clnt_perror.c,v 1.9 1997/01/23 14:02:15 mrg Exp $
 #include <rpc/auth.h>
 #include <rpc/clnt.h>
 
-static char *auth_errmsg();
-
 static char *buf;
 static int buflen;
+
+static char *_buf __P((void));
+static char *auth_errmsg __P((enum auth_stat));
 
 static char *
 _buf()
@@ -73,7 +78,6 @@ clnt_sperror(rpch, s)
 	char *s;
 {
 	struct rpc_err e;
-	void clnt_perrno();
 	char *err;
 	char *str = _buf();
 	char *strstart = str;
@@ -118,7 +122,7 @@ clnt_sperror(rpch, s)
 
 	case RPC_VERSMISMATCH:
 		i = snprintf(str, len,
-			"; low version = %lu, high version = %lu", 
+			"; low version = %u, high version = %u", 
 			e.re_vers.low, e.re_vers.high);
 		str += i;
 		len -= i;
@@ -142,7 +146,7 @@ clnt_sperror(rpch, s)
 
 	case RPC_PROGVERSMISMATCH:
 		i = snprintf(str, len,
-			"; low version = %lu, high version = %lu", 
+			"; low version = %u, high version = %u", 
 			e.re_vers.low, e.re_vers.high);
 		str += i;
 		len -= i;
@@ -150,7 +154,7 @@ clnt_sperror(rpch, s)
 
 	default:	/* unknown */
 		i = snprintf(str, len,
-			"; s1 = %lu, s2 = %lu", 
+			"; s1 = %u, s2 = %u", 
 			e.re_lb.s1, e.re_lb.s2);
 		str += i;
 		len -= i;
@@ -196,8 +200,6 @@ char *
 clnt_sperrno(stat)
 	enum clnt_stat stat;
 {
-	int i;
-
 	unsigned int errnum = stat;
 
 	if (errnum < (sizeof(rpc_errlist)/sizeof(rpc_errlist[0])))
@@ -237,6 +239,24 @@ clnt_spcreateerror(s)
 		(void)strncat(str, " - ", len - 1);
 		(void)strncat(str, strerror(rpc_createerr.cf_error.re_errno),
 		    len - 4);
+		break;
+
+	case RPC_CANTSEND:
+	case RPC_CANTDECODERES:
+	case RPC_CANTENCODEARGS:
+	case RPC_SUCCESS:
+	case RPC_UNKNOWNPROTO:
+	case RPC_PROGNOTREGISTERED:
+	case RPC_FAILED:
+	case RPC_UNKNOWNHOST:
+	case RPC_CANTDECODEARGS:
+	case RPC_PROCUNAVAIL:
+	case RPC_PROGVERSMISMATCH:
+	case RPC_PROGUNAVAIL:
+	case RPC_AUTHERROR:
+	case RPC_VERSMISMATCH:
+	case RPC_TIMEDOUT:
+	case RPC_CANTRECV:
 		break;
 	}
 	return (str);
