@@ -81,11 +81,9 @@ int     inet_connect(const char *addr, int block_mode, int timeout)
      * the local host.
      */
     buf = inet_parse(addr, &host, &port);
-    if (*host == 0)
-	host = "localhost";
     memset((char *) &sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = find_inet_addr(host);
+    sin.sin_addr.s_addr = find_inet_addr((*host == 0) ? "localhost" : host);
     sin.sin_port = find_inet_port(port, "tcp");
     myfree(buf);
 

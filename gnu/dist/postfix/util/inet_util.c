@@ -55,7 +55,7 @@ char   *inet_parse(const char *addr, char **hostp, char **portp)
 	*hostp = buf;
     } else {
 	*portp = buf;
-	*hostp = "";
+	*hostp = "";	/* XXX bogus -- string constants not writeable */
     }
     return (buf);
 }
