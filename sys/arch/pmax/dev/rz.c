@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.32 1997/11/09 03:08:23 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.33 1997/11/13 03:56:49 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.32 1997/11/09 03:08:23 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.33 1997/11/13 03:56:49 mhitch Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -509,7 +509,7 @@ rzprobe(xxxsd)
 	printf ("%s\n", 
 	    (sc->sc_flags & RZF_FAKEGEOM) ? "; using fake geometry": "");
 	if (dp->blksize)
-	    printf("\nrz%d: %ldMB, %d cyl, %d head, %d sec, %d bytes/sect x %ld sectors\n",
+	    printf("rz%d: %ldMB, %d cyl, %d head, %d sec, %d bytes/sect x %ld sectors\n",
 		sd->sd_unit,
 		dp->disksize / (1048576 / dp->blksize), dp->cyls,
 		dp->heads, dp->sectors, dp->blksize, dp->disksize);
@@ -1373,6 +1373,7 @@ rz_command (sc, scsi_cmd, cmdlen, data_addr, datalen,
 again:
 	/* copy request into cdb */
 	bcopy(scsi_cmd, &sc->sc_cdb.cdb, cmdlen);
+	sc->sc_cdb.len = cmdlen;
 
 	/* stolen from the old rz get-drive-size code. */
 
