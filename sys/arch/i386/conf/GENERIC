@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.192 1998/10/19 12:06:55 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.193 1998/10/19 12:29:55 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -336,6 +336,7 @@ atapibus* at wdc? channel ?
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
 sd*	at atapibus? drive ?		# ATAPI disk drives
+uk*	at atapibus? drive ?		# ATAPI unknown
 
 
 # Miscellaneous mass storage devices
