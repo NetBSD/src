@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 1997/03/24 22:06:21 christos Exp $
+# $Id: Makefile,v 1.11 1997/04/19 02:59:30 cgd Exp $
 
 # Paths to libraries
 #
@@ -55,6 +55,8 @@ LDADD+=		-ltermcap -lkvm
 DPADD+=		$(LIBTERMCAP) $(LIBKVM)
 
 
+.if exists(arch/$(MACHINE_ARCH)/Makefile.inc)
 .include "arch/$(MACHINE_ARCH)/Makefile.inc"
+.endif
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
