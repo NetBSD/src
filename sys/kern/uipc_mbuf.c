@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.48 2000/08/18 14:12:47 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.49 2000/08/18 14:23:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -406,6 +406,7 @@ m_copym(m, off0, len, wait)
 	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
 }
 
+#if 0	/*not ready yet - makes false assumption on cluster mbuf*/
 struct mbuf *
 m_dup(m, off0, len, wait)
 	struct mbuf *m;
@@ -414,6 +415,7 @@ m_dup(m, off0, len, wait)
 {
 	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
 }
+#endif
 
 static struct mbuf *
 m_copym0(m, off0, len, wait, deep)
@@ -427,6 +429,10 @@ m_copym0(m, off0, len, wait, deep)
 	struct mbuf *top;
 	int copyhdr = 0;
 
+#if 1	/*not ready yet - makes false assumption on cluster mbuf*/
+	if (deep)
+		panic("m_copym0 with deep == 1 is unsupported");
+#endif
 	if (off < 0 || len < 0)
 		panic("m_copym: off %d, len %d", off, len);
 	if (off == 0 && m->m_flags & M_PKTHDR)
