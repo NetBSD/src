@@ -1,4 +1,4 @@
-/*	$NetBSD: methods.c,v 1.4 2001/02/21 13:09:18 minoura Exp $	*/
+/*	$NetBSD: methods.c,v 1.5 2002/06/08 17:24:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -461,8 +461,9 @@ parse_serial (prop, value)
 	const char *p = value;
 	const char *q;
 	int baud, bit, parity, stop, flow;
-	int bauds[] = {75, 150, 300, 600, 1200, 2400, 4800, 9600, 17361, 0};
-	const char parities[] = "noe";
+	static const int bauds[] = {75, 150, 300, 600, 1200, 2400, 4800, 9600,
+	    17361, 0};
+	static const char parities[] = "noe";
 	int i;
 
 	while (*p == ' ' || *p == '\t') p++;
@@ -553,7 +554,7 @@ parse_srammode (prop, value)
 	struct property *prop;
 	const char *value;
 {
-	const char *sramstrs[] = {"unused", "SRAMDISK", "program"};
+	static const char *const sramstrs[] = {"unused", "SRAMDISK", "program"};
 	int i;
 
 	for (i = 0; i <= 2; i++) {
@@ -734,12 +735,12 @@ print_serial (prop, str)
 	unsigned int v;
 	const char *baud, *stop;
 	char bit, parity, flow;
-	const char *bauds[] = {"75", "150", "300", "600", "1200",
+	static const char *const bauds[] = {"75", "150", "300", "600", "1200",
 			       "2400", "4800", "9600", "17361"};
-	const char bits[] = "5678";
-	const char parities[] = "noen";
-	const char *stops[] = {"2", "1", "1.5", "2"};
-	const char flows[] = "-s";
+	static const char bits[] = "5678";
+	static const char parities[] = "noen";
+	static const char *const stops[] = {"2", "1", "1.5", "2"};
+	static const char flows[] = "-s";
 
 	if (prop->modified)
 		v = prop->modified_value.word[0];
@@ -765,7 +766,7 @@ print_srammode (prop, str)
 	char *str;
 {
 	int v;
-	const char *sramstrs[] = {"unused", "SRAMDISK", "program"};
+	static const char *const sramstrs[] = {"unused", "SRAMDISK", "program"};
 
 	if (prop->modified)
 		v = prop->modified_value.byte[0];
