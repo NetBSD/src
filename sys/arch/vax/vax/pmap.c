@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2000/06/10 14:59:38 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.82 2000/06/11 07:50:11 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -283,8 +283,10 @@ pmap_bootstrap()
 	/* cpu_info struct */
 	pcb->SSP = scratch + VAX_NBPG;
 	mtpr(pcb->SSP, PR_SSP);
-	bzero((caddr_t)pcb->SSP, sizeof(struct cpu_info));
+	bzero((caddr_t)pcb->SSP,
+	    sizeof(struct cpu_info) + sizeof(struct device));
 	curcpu()->ci_exit = scratch;
+	curcpu()->ci_dev = (void *)(pcb->SSP + sizeof(struct cpu_info));
 #if defined(MULTIPROCESSOR)
 	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
 #endif

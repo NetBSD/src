@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.1 2000/06/10 14:59:38 ragge Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.2 2000/06/11 07:50:12 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -41,11 +41,14 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/device.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 
 #include <machine/cpu.h>
+
+#include "ioconf.h"
 
 static	void slaverun(void);
 
@@ -115,6 +118,7 @@ cpu_slavesetup(struct device *dev)
 	/* Populate the PCB and the cpu_info struct */
 	ci = (struct cpu_info *)(scratch + VAX_NBPG);
 	memset(ci, 0, sizeof(struct cpu_info));
+	ci->ci_dev = dev;
 	ci->ci_exit = scratch;
 	(u_long)ci->ci_pcb = (u_long)pcb & ~KERNBASE;
 	ci->ci_istack = istackbase + NBPG;
@@ -136,7 +140,10 @@ cpu_slavesetup(struct device *dev)
 void
 slaverun()
 {
-	(volatile)curcpu()->ci_flags |= CI_RUNNING;
+	struct cpu_info *ci = curcpu();
+
+	(volatile)ci->ci_flags |= CI_RUNNING;
+	printf("%s: running\n", ci->ci_dev->dv_xname);
 	for (;;)
 		;
 }
