@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.10 1999/07/04 22:55:48 cgd Exp $
+.\"	$NetBSD: msgc.1,v 1.11 1999/12/31 04:03:19 garbled Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -77,6 +77,20 @@ The standard root name of the files is
 The 
 .Fl o Ar name
 can be used to specify a different root name.
+.Sh ENVIRONMENT
+.Bl -tag -width MSGDEF
+.It Ev MSGDEF
+Can be set to point to a different set of
+definition files for
+.Nm msgc .
+The current location defaults to
+.Pa /usr/share/misc .
+.El
+.Sh FILES
+.Bl -item -width /usr/share/misc/msg_sys.def
+.It
+.Pa /usr/share/misc/msg_sys.def
+.El
 .Sh SOURCE DESCRIPTION
 The format is very simple.  Each message is started with the word
 .Sq message
