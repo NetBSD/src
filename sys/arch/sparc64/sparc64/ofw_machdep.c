@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.5 1998/10/08 02:31:41 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.6 1999/01/09 23:33:29 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -527,7 +527,7 @@ int align;
 	/* Allocate random memory -- page zero avail?*/
 	addr = prom_claim_phys(0x000, len);
 	prom_printf("prom_get_msgbuf: allocated new buf at %08x\r\n", (int)addr); 
-	if( addr != -1 ) {
+	if( addr == -1 ) {
 		prom_printf("prom_get_msgbuf: cannot get allocate physmem\r\n");
 		return -1;
 	}
