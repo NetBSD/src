@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2004/03/13 17:31:33 bjh21 Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 2004/10/24 00:17:20 heinz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2004/03/13 17:31:33 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2004/10/24 00:17:20 heinz Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -187,18 +187,6 @@ initppc(startkernel, endkernel, args, btinfo)
 	boothowto = args;
 
 	/*
-	 * Init the I/O stuff before the console
-	 */
-	bebox_bus_space_init();
-
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
-
-	/*
 	 * Set up initial BAT table
 	 */
 	oea_batinit(
@@ -210,6 +198,18 @@ initppc(startkernel, endkernel, args, btinfo)
 	 * Initialize the vector table and interrupt routine.
 	 */
 	oea_init(ext_intr);
+
+	/*
+	 * Init the I/O stuff before the console
+	 */
+	bebox_bus_space_init();
+
+	/*
+	 * i386 port says, that this shouldn't be here,
+	 * but I really think the console should be initialized
+	 * as early as possible.
+	 */
+	consinit();
 
         /*
 	 * Set the page size.
