@@ -1,9 +1,9 @@
-#	$NetBSD: GENERIC,v 1.21 1997/01/31 02:10:33 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.22 1997/02/04 19:13:16 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
-include		"std.vax"
+include		"arch/vax/conf/std.vax"
 
 # Here are all different supported CPU types listed.
 options         "VAX8600"
@@ -21,7 +21,7 @@ maxusers	8
 # Kernel compiled-in symbolic debugger & system call tracer
 options		DDB
 options		KTRACE
-options		DIAGNOSTIC
+#options		DIAGNOSTIC
 
 # Network support
 #options		GATEWAY
@@ -133,6 +133,7 @@ le0		at vsbus0		# LANCE
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
+dl0		at uba? csr 0176500	# DL-11
 
 pseudo-device   loop	1
 pseudo-device   pty	48

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.27 1997/01/07 11:35:20 mrg Exp $	*/
+/*	$NetBSD: conf.c,v 1.28 1997/02/04 19:13:17 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -329,6 +329,9 @@ cdev_decl(qd);
 #include "ipfilter.h"
 cdev_decl(ipl);
 
+#include "dl.h"
+cdev_decl(dl);
+
 #if defined(INGRES)
 #define NII 1
 #else
@@ -422,6 +425,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 63: SCSI autochanger */
 	cdev_scanner_init(NSS,ss),	/* 64: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
+	cdev_tty_init(NDL,dl),		/* 66: DL11 */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
