@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.99 1996/05/14 00:10:37 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.100 1996/05/14 10:38:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -397,7 +397,7 @@ sdclose(dev, flag, fmt, p)
 
 		scsi_prevent(sd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
-		sd->sc_link->flags &= ~SDEV_OPEN;
+		sd->sc_link->flags &= ~(SDEV_OPEN|SDEV_MEDIA_LOADED);
 	}
 
 	sdunlock(sd);
