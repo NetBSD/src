@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.1 1997/10/04 04:01:24 mhitch Exp $	*/
+/*	$NetBSD: cbsc.c,v 1.2 1997/10/24 01:43:57 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -149,7 +149,7 @@ cbscmatch(parent, cf, aux)
 	volatile u_char *regs;
 
 	zap = aux;
-	if (zap->manid != 0x2140 && zap->prodid != 12)
+	if (zap->manid != 0x2140 || zap->prodid != 12)
 		return(0);
 	regs = &((volatile u_char *)zap->va)[0xf400];
 	if (badaddr((caddr_t)regs))
