@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.h,v 1.12 1997/10/05 18:29:54 thorpej Exp $	*/
+/*	$NetBSD: hpux.h,v 1.13 1997/10/19 19:25:07 carrel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -329,8 +329,14 @@ struct hpux_sigaction {
 #define	HPUXSIG_SETMASK	2	/* set specified signal set */
 
 /* sysconf stuff */
+#define HPUX_SYSCONF_ARGMAX	0	/* max len of arg to exec() */
+#define HPUX_SYSCONF_CHILDMAX	1	/* max # of proc per userid */
 #define HPUX_SYSCONF_CLKTICK	2
+#define HPUX_SYSCONF_NGRPMAX	3	/* max # of supp groups per proc */
 #define HPUX_SYSCONF_OPENMAX	4
+#define HPUX_SYSCONF_JOBCNTRL	5	/* 1 iff Posix job cntrl supported */
+#define HPUX_SYSCONF_SAVEDIDS	6	/* 1 iff Posix saved ids supported */
+#define HPUX_SYSCONF_VERSION	7	/* Posix version date */
 #define HPUX_SYSCONF_CPUTYPE	10001
 #define HPUX_SYSCONF_CPUM020	0x20C
 #define HPUX_SYSCONF_CPUM030	0x20D
