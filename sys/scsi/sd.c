@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.101 1996/06/04 23:12:14 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.102 1996/07/05 16:19:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -97,6 +97,12 @@ struct sd_softc {
 	struct buf buf_queue;
 };
 
+struct scsi_mode_sense_data {
+	struct scsi_mode_header header;
+	struct scsi_blk_desc blk_desc;
+	union disk_pages pages;
+} scsi_sense;
+
 int	sdmatch __P((struct device *, void *, void *));
 void	sdattach __P((struct device *, struct device *, void *));
 int	sdlock __P((struct sd_softc *));
@@ -107,6 +113,8 @@ void	sdstart __P((void *));
 int	sddone __P((struct scsi_xfer *, int));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_get_parms __P((struct sd_softc *, int));
+static int sd_mode_sense __P((struct sd_softc *, struct scsi_mode_sense_data *,
+    int, int));
 
 struct cfattach sd_ca = {
 	sizeof(struct sd_softc), sdmatch, sdattach
@@ -821,6 +829,29 @@ sd_reassign_blocks(sd, blkno)
 	    5000, NULL, SCSI_DATA_OUT);
 }
 
+
+
+static int
+sd_mode_sense(sd, scsi_sense, page, flags)
+	struct sd_softc *sd;
+	struct scsi_mode_sense_data *scsi_sense;
+	int page, flags;
+{
+	struct scsi_mode_sense scsi_cmd;
+
+	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	scsi_cmd.opcode = MODE_SENSE;
+	scsi_cmd.page = page;
+	scsi_cmd.length = 0x20;
+	/*
+	 * If the command worked, use the results to fill out
+	 * the parameter structure
+	 */
+	return scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)scsi_sense, sizeof(*scsi_sense),
+	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT);
+}
+
 /*
  * Get the scsi driver to send a full inquiry to the * device and use the
  * results to fill out the disk parameter structure.
@@ -831,43 +862,12 @@ sd_get_parms(sd, flags)
 	int flags;
 {
 	struct disk_parms *dp = &sd->params;
-	struct scsi_mode_sense scsi_cmd;
-	struct scsi_mode_sense_data {
-		struct scsi_mode_header header;
-		struct scsi_blk_desc blk_desc;
-		union disk_pages pages;
-	} scsi_sense;
+	struct scsi_mode_sense_data scsi_sense;
 	u_long sectors;
+	int page;
+	int error;
 
-	/*
-	 * do a "mode sense page 4"
-	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = MODE_SENSE;
-	scsi_cmd.page = 4;
-	scsi_cmd.length = 0x20;
-	/*
-	 * If the command worked, use the results to fill out
-	 * the parameter structure
-	 */
-	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)&scsi_sense, sizeof(scsi_sense),
-	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN) != 0) {
-		printf("%s: could not mode sense (4)", sd->sc_dev.dv_xname);
-	fake_it:
-		printf("; using fictitious geometry\n");
-		/*
-		 * use adaptec standard fictitious geometry
-		 * this depends on which controller (e.g. 1542C is
-		 * different. but we have to put SOMETHING here..)
-		 */
-		sectors = scsi_size(sd->sc_link, flags);
-		dp->heads = 64;
-		dp->sectors = 32;
-		dp->cyls = sectors / (64 * 32);
-		dp->blksize = 512;
-		dp->disksize = sectors;
-	} else {
+	if ((error = sd_mode_sense(sd, &scsi_sense, page = 4, flags)) == 0) {
 		SC_DEBUG(sd->sc_link, SDEV_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(scsi_sense.pages.rigid_geometry.ncyl),
@@ -886,11 +886,8 @@ sd_get_parms(sd, flags)
 		dp->cyls = _3btol(scsi_sense.pages.rigid_geometry.ncyl);
 		dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
 
-		if (dp->heads == 0 || dp->cyls == 0) {
-			printf("%s: mode sense (4) returned nonsense",
-			    sd->sc_dev.dv_xname);
+		if (dp->heads == 0 || dp->cyls == 0)
 			goto fake_it;
-		}
 
 		if (dp->blksize == 0)
 			dp->blksize = 512;
@@ -899,8 +896,46 @@ sd_get_parms(sd, flags)
 		dp->disksize = sectors;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
+
+		return 0;
 	}
 
+	if ((error = sd_mode_sense(sd, &scsi_sense, page = 5, flags)) == 0) {
+		dp->heads = scsi_sense.pages.flex_geometry.nheads;
+		dp->cyls = _2btol(scsi_sense.pages.flex_geometry.ncyl);
+		dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
+		dp->sectors = scsi_sense.pages.flex_geometry.ph_sec_tr;
+		dp->disksize = dp->heads * dp->cyls * dp->sectors;
+		if (dp->disksize == 0)
+			goto fake_it;
+
+		if (dp->blksize == 0)
+			dp->blksize = 512;
+
+		return 0;
+	}
+
+fake_it:
+	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) == 0) {
+		if (error == 0)
+			printf("%s: mode sense (%d) returned nonsense",
+			    sd->sc_dev.dv_xname, page);
+		else
+			printf("%s: could not mode sense (4/5)",
+			    sd->sc_dev.dv_xname);
+		printf("; using fictitious geometry\n");
+	}
+	/*
+	 * use adaptec standard fictitious geometry
+	 * this depends on which controller (e.g. 1542C is
+	 * different. but we have to put SOMETHING here..)
+	 */
+	sectors = scsi_size(sd->sc_link, flags);
+	dp->heads = 64;
+	dp->sectors = 32;
+	dp->cyls = sectors / (64 * 32);
+	dp->blksize = 512;
+	dp->disksize = sectors;
 	return 0;
 }
 
