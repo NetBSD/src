@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.3.4.6 2001/05/26 17:34:39 he Exp $
+.\"$NetBSD: hardware,v 1.3.4.7 2001/06/18 16:49:21 jhawk Exp $
 .
 Currently,
 .Nx*M
@@ -103,7 +103,7 @@ models with ATI Rage Pro: Desktop, Mini Tower, and All-in-One)
 .It Em "Open Firmware 3"
 .Pp
 .(bullet -compact
-Apple original iBook and iBook SE
+Apple original iBook, iBook SE, and iBook (Dual USB)
 .It
 Apple iMac; Bondi Blue (Rev A and Rev B, 233 MHz),
 5 Flavors (Rev C and Rev D, 266 MHz and 333 MHz), and Slot Loading
