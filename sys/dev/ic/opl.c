@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.9 1999/10/04 19:31:39 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.10 1999/10/05 03:29:22 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -338,6 +338,10 @@ oplsyn_open(ms, flags)
 
 	DPRINTFN(2, ("oplsyn_open: %d\n", flags));
 
+#ifndef AUDIO_NO_POWER_CTL
+	if (sc->powerctl)
+		sc->powerctl(sc->powerarg, 1);
+#endif
 	opl_reset(ms->data);
 	if (sc->spkrctl)
 		sc->spkrctl(sc->spkrarg, 1);
@@ -355,6 +359,10 @@ oplsyn_close(ms)
 	/*opl_reset(ms->data);*/
 	if (sc->spkrctl)
 		sc->spkrctl(sc->spkrarg, 0);
+#ifndef AUDIO_NO_POWER_CTL
+	if (sc->powerctl)
+		sc->powerctl(sc->powerarg, 0);
+#endif
 }
 
 #if 0
