@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)system.c	5.10 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: system.c,v 1.9 1995/02/28 01:46:57 jtc Exp $";
+static char *rcsid = "$Id: system.c,v 1.10 1995/06/14 05:20:01 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,6 +45,7 @@ static char *rcsid = "$Id: system.c,v 1.9 1995/02/28 01:46:57 jtc Exp $";
 
 extern char **environ;
 
+int
 system(command)
 	const char *command;
 {
