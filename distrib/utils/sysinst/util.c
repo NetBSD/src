@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6.2.5 1997/11/11 00:47:38 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.6.2.6 1997/11/13 03:10:25 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -353,10 +353,14 @@ extract_dist (void)
  */
 void get_and_unpack_sets(int success_msg, int failure_msg)
 {
+	/* Ensure mountpoint for distribution files exists in current root. */
+	(void) mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IXOTH|S_IXOTH);
+
 	/* Get the distribution files */
 	process_menu (MENU_distmedium);
 	if (nodist)
 		return;
+
 
 	ask_verbose_dist ();
 
@@ -402,6 +406,9 @@ struct check_table { const char *testarg; const char *path;} checks[] = {
   { "-f", "/etc/fstab" },
   { "-f", "/sbin/init" },
   { "-f", "/bin/sh" },
+  { "-f", "/etc/rc" },
+  { "-f", "/etc/rc.subr" },
+  { "-f", "/etc/rc.conf" },
   { "-d" "/dev" },
   { "-c", "/dev/console" },
 /* XXX check for rootdev in target /dev? */
@@ -411,8 +418,8 @@ struct check_table { const char *testarg; const char *path;} checks[] = {
   { "-f", "/sbin/mount" },
   { "-f", "/sbin/mount_ffs" },
   { "-f", "/sbin/mount_nfs" },
-#if defined(DEBUG) || 1
-  { "-f", "/foo/bar" },		/* XXX */
+#if defined(DEBUG) || defined(DEBUG_CHECK)
+  { "-f", "/foo/bar" },		/* bad entry to exercise warning */
 #endif
   { 0, 0 }
   
