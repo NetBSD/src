@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.4 2001/11/09 07:21:39 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.5 2001/11/23 17:23:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -89,7 +89,6 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
-#include <machine/pte.h>
 #include <machine/undefined.h>
 
 #include <evbarm/integrator/integrator_boot.h>
