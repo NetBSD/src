@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 2001/05/26 21:27:04 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 2001/06/22 09:09:42 chris Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/user.h>
+#include <sys/pool.h>
 
 #include <uvm/uvm.h>
 
@@ -124,6 +125,12 @@ int pmap_debug_level = -2;
 
 struct pmap     kernel_pmap_store;
 pmap_t          kernel_pmap;
+
+/*
+ * pool that pmap structures are allocated from
+ */
+
+struct pool pmap_pmap_pool;
 
 pagehook_t page_hook0;
 pagehook_t page_hook1;
@@ -800,6 +807,13 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	boot_attrs = (char *)uvm_pageboot_alloc(size);
 	bzero(boot_attrs, size);
 
+	/*
+	 * initialize the pmap pool.
+	 */
+
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	
 	cpu_cache_cleanD();
 }
 
@@ -914,8 +928,11 @@ pmap_create()
 {
 	pmap_t pmap;
 
-	/* Allocate memory for pmap structure and zero it */
-	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
+	/*
+	 * Fetch pmap entry from the pool
+	 */
+	
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
 
 	/* Now init the machine part of the pmap */
@@ -1210,7 +1227,7 @@ pmap_destroy(pmap)
 	simple_unlock(&pmap->pm_lock);
 	if (count == 0) {
 		pmap_release(pmap);
-		free((caddr_t)pmap, M_VMPMAP);
+		pool_put(&pmap_pmap_pool, pmap);
 	}
 }
 
