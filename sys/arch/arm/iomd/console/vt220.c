@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.3 2003/07/15 00:24:44 lukem Exp $	*/
+/*	$NetBSD: vt220.c,v 1.4 2004/01/17 22:52:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.3 2003/07/15 00:24:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.4 2004/01/17 22:52:42 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,13 @@ char console_proc[41];	/* Is this debugging ? */
 
 extern struct vconsole *vconsole_master;
 
-extern void sysbeep(int, int);	/* XXX elsewhere ? */
+/*
+ * Hackish support for a bell on the PC Keyboard; when a suitable feeper
+ * is found, it attaches itself into the pckbd driver here.
+ */
+static void	(*vt_bell_fn)(void *, u_int, u_int, u_int, int);
+static void	*vt_bell_fn_arg;
+extern void vt_hookup_bell(void (*)(void *, u_int, u_int, u_int, int), void *);
 
 static int default_beepstate = 0;
 
@@ -159,6 +165,24 @@ void vt_sgr(struct vconsole *);
 void vt_clreos(struct vconsole *);
 void vt_set_ansi(struct vconsole *);
 void vt_reset_ansi(struct vconsole *);
+
+void
+vt_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
+{
+
+	if (vt_bell_fn == NULL) {
+		vt_bell_fn = fn;
+		vt_bell_fn_arg = arg;
+	}
+}
+
+static void
+sysbeep(int pitch, int period)
+{
+
+	if (vt_bell_fn != NULL)
+		(*vt_bell_fn)(vt_bell_fn_arg, pitch, period, 50, FALSE);
+}
 
 void
 clr_params(cdata)

@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.21 2004/01/17 21:49:24 bjh21 Exp $	*/
+/*	$NetBSD: beep.c,v 1.22 2004/01/17 22:52:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.21 2004/01/17 21:49:24 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.22 2004/01/17 22:52:42 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -69,6 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.21 2004/01/17 21:49:24 bjh21 Exp $");
 #include "beep.h"
 #include "locators.h"
 #include "rpckbd.h"
+#include "vt.h"
+
+extern void vt_hookup_bell(void (*)(void *, u_int, u_int, u_int, int), void *);
 
 struct beep_softc {
 	struct device sc_device;
@@ -195,6 +198,9 @@ beepattach(struct device *parent, struct device *self, void *aux)
 	WriteWord(vidc_base, VIDC_SIR7 | SIR_CENTRE);
 #if NRPCKBD > 0
 	rpckbd_hookup_bell(beep_bell, NULL);
+#endif
+#if NVT > 0
+	vt_hookup_bell(beep_bell, NULL);
 #endif
 }
 
