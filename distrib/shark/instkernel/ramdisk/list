@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2002/03/30 00:35:57 lukem Exp $
+#	$NetBSD: list,v 1.3 2002/03/30 18:18:19 thorpej Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -30,9 +30,8 @@ PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
 PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
-PROG	sbin/mount_mfs
 PROG	sbin/mount_nfs
-PROG	sbin/newfs
+PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore
@@ -46,6 +45,7 @@ PROG	usr/bin/ftp
 PROG	usr/bin/gzip	usr/bin/gunzip usr/bin/gzcat
 PROG	usr/bin/less	usr/bin/more
 PROG	usr/bin/sed
+PROG	usr/bin/tset
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
