@@ -1,3 +1,5 @@
+/*	$NetBSD: amq_clnt.c,v 1.5 1997/10/26 00:25:28 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_clnt.c,v 1.4 1997/09/22 22:10:48 christos Exp $
+ * Id: amq_clnt.c,v 5.2.2.1 1992/02/09 15:09:24 jsp beta 
  *
  */
 

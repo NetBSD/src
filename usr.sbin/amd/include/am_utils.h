@@ -1,3 +1,5 @@
+/*	$NetBSD: am_utils.h,v 1.5 1997/10/26 00:25:52 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: am_utils.h,v 1.4 1997/09/26 17:00:40 christos Exp $
+ * Id: am_utils.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
  *
  */
 
@@ -580,6 +582,7 @@ extern int fwd_init(void);
 extern int fwd_packet(int, voidp, int, struct sockaddr_in *, struct sockaddr_in *, voidp, fwd_fun);
 extern int get_amd_program_number(void);
 extern int hasmntval(mntent_t *, char *);
+extern int is_network_member(const char *net);
 extern int islocalnet(u_long);
 extern int make_nfs_auth(void);
 extern int make_rpc_packet(char *, int, u_long, struct rpc_msg *, voidp, XDRPROC_T_TYPE, AUTH *);
@@ -611,6 +614,7 @@ extern void am_mounted(am_node *);
 extern void am_unmounted(am_node *);
 extern void amq_program_1(struct svc_req *rqstp, SVCXPRT * transp);
 extern void amu_get_myaddress(struct in_addr *iap);
+extern void amu_release_controlling_tty(void);
 extern void deslashify(char *);
 extern void discard_mntlist(mntlist *mp);
 extern void do_task_notify(void);
@@ -624,7 +628,7 @@ extern void free_opts(am_opts *);
 extern void free_srvr(fserver *);
 extern void fwd_reply(void);
 extern void get_args(int, char *[]);
-extern void getwire(char **, char **, char **, char **);
+extern void getwire(char **name1, char **number1);
 extern void going_down(int);
 extern void host_normalize(char **);
 extern void init_map(am_node *, char *);
@@ -645,6 +649,7 @@ extern void normalize_slash(char *);
 extern void ops_showamfstypes(char *buf);
 extern void ops_showfstypes(char *outbuf);
 extern void plog(int, char *,...);
+extern void print_wires(char *buf);
 extern void rem_que(qelem *);
 extern void reschedule_timeout_mp(void);
 extern void restart(void);

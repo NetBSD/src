@@ -526,8 +526,14 @@
 /* Has authenticator */
 /* #undef MNT2_NFS_OPT_HASAUTH */
 
+/* provide name of server's fs to system */
+/* #undef MNT2_NFS_OPT_FSNAME */
+
 /* set hostname for error printf */
 /* #undef MNT2_NFS_OPT_HOSTNAME */
+
+/* ignore mount point */
+/* #undef MNT2_NFS_OPT_IGNORE */
 
 /* allow interrupts on hard mount */
 #define MNT2_NFS_OPT_INT 0x40
@@ -839,7 +845,7 @@
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0a12"
+#define VERSION "6.0a13"
 
 /* Define name of host machine's cpu (eg. sparc) */
 #define HOST_CPU MACHINE
@@ -946,6 +952,9 @@
 /* define if have a bad version of memcmp() */
 /* #undef HAVE_BAD_MEMCMP */
 
+/* define if have a bad version of yp_all() */
+/* #undef HAVE_BAD_YP_ALL */
+
 /* Define if you have the __seterr_reply function.  */
 /* #undef HAVE___SETERR_REPLY */
 
@@ -961,11 +970,11 @@
 /* Define if you have the bzero function.  */
 #define HAVE_BZERO 1
 
+/* Define if you have the clnt_create_timed function.  */
+/* #undef HAVE_CLNT_CREATE_TIMED */
+
 /* Define if you have the clnt_sperrno function.  */
 #define HAVE_CLNT_SPERRNO 1
-
-/* Define if you have the clnt_tp_create_timed function.  */
-/* #undef HAVE_CLNT_TP_CREATE_TIMED */
 
 /* Define if you have the cnodeid function.  */
 /* #undef HAVE_CNODEID */
@@ -1081,14 +1090,11 @@
 /* Define if you have the seteuid function.  */
 #define HAVE_SETEUID 1
 
-/* Define if you have the setpgid function.  */
-#define HAVE_SETPGID 1
-
-/* Define if you have the setpgrp function.  */
-#define HAVE_SETPGRP 1
-
 /* Define if you have the setresuid function.  */
 /* #undef HAVE_SETRESUID */
+
+/* Define if you have the setsid function.  */
+#define HAVE_SETSID 1
 
 /* Define if you have the sigaction function.  */
 #define HAVE_SIGACTION 1
@@ -1338,9 +1344,6 @@
 
 /* Define if you have the <isofs/cd9660/cd9660_mount.h> header file.  */
 /* #undef HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
-
-/* Define if you have the <jfs/jfsmount.h> header file.  */
-/* #undef HAVE_JFS_JFSMOUNT_H */
 
 /* Define if you have the <lber.h> header file.  */
 /* #undef HAVE_LBER_H */

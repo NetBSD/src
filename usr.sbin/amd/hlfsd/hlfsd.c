@@ -1,3 +1,5 @@
+/*	$NetBSD: hlfsd.c,v 1.3 1997/10/26 00:25:48 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: hlfsd.c,v 1.2 1997/10/17 00:07:49 lukem Exp $
+ * Id: hlfsd.c,v 1.11 1994/11/06 00:19:52 ezk Exp ezk 
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -82,6 +84,7 @@ SVCXPRT *nfsxprt;
 char *alt_spooldir = ALT_SPOOLDIR;
 char *home_subdir = HOME_SUBDIR;
 char *logfile = DEFAULT_LOGFILE;
+char *passwdfile = NULL;	/* alternate passwd file to use */
 char *progname;
 char *slinkname = 0;
 char hostname[MAXHOSTNAMELEN] = "localhost";
@@ -118,7 +121,7 @@ usage(void)
   fprintf(stderr,
 	  "Usage: %s [-Cfhnpv] [-a altdir] [-c cache-interval] [-g group]\n",
 	  progname);
-  fprintf(stderr, "\t[-i interval] [-l logfile] [-o mntopts]\n");
+  fprintf(stderr, "\t[-i interval] [-l logfile] [-o mntopts] [-P passwdfile]\n");
   show_opts('x', xlog_opt);
 #ifdef DEBUG
   show_opts('D', dbg_opt);
@@ -162,14 +165,6 @@ main(int argc, char *argv[])
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
 
-  /* ensure that only root can run hlfsd */
-  if (geteuid()) {
-    fprintf(stderr, "hlfsd can only be run as root\n");
-    exit(1);
-  }
-  setbuf(stdout, (char *) NULL);
-  umask(0);
-
   /* get program name and truncate so we don't overflow progpid_fs */
 
   if ((progname = strrchr(argv[0], '/')) != NULL)
@@ -179,7 +174,7 @@ main(int argc, char *argv[])
   if ((int) strlen(progname) > PROGNAMESZ) /* truncate to reasonable size */
     progname[PROGNAMESZ] = '\0';
 
-  while ((opt = getopt(argc, argv, "a:c:CD:fg:hi:l:no:px:v")) != -1)
+  while ((opt = getopt(argc, argv, "a:c:CD:fg:hi:l:no:pP:x:v")) != EOF)
     switch (opt) {
 
     case 'a':
@@ -238,6 +233,10 @@ main(int argc, char *argv[])
       printpid++;
       break;
 
+    case 'P':
+      passwdfile = optarg;
+      break;
+
     case 'v':
       fprintf(stderr, "%s\n", HLFSD_VERSION);
       exit(0);
@@ -293,6 +292,14 @@ main(int argc, char *argv[])
 
   if (opterrs)
     usage();
+
+  /* ensure that only root can run hlfsd */
+  if (geteuid()) {
+    fprintf(stderr, "hlfsd can only be run as root\n");
+    exit(1);
+  }
+  setbuf(stdout, (char *) NULL);
+  umask(0);
 
   /* find gid for hlfs_group */
   if ((grp = getgrnam(hlfs_group)) == (struct group *) NULL) {
@@ -716,9 +723,6 @@ hlfsd_init(void)
 #ifdef HAVE_SIGACTION
   struct sigaction sa;
 #endif /* HAVE_SIGACTION */
-#ifndef HAVE_SETPGRP
-  int tty;
-#endif /* not HAVE_SETPGRP */
 
   /*
    * Initialize file handles.
@@ -831,23 +835,10 @@ hlfsd_init(void)
   amuDebug(D_DAEMON) {
 #endif /* DEBUG */
 
-#ifdef HAVE_SETPGID
-    setpgid(getpid(), getpid());
-#else /* not HAVE_SETPGID */
-# ifdef HAVE_SETPGRP
-    setpgrp();
-# else /* not HAVE_SETPGRP */
-    if ((tty = open("/dev/tty", O_RDWR)) < 0) {
-      /* not an error if already no ctty */
-      if (errno != ENXIO)
-	plog(XLOG_WARNING, "Could not open controlling tty: %m");
-    } else {
-      if (ioctl(tty, TIOCNOTTY, 0) < 0  &&  errno != ENOTTY)
-	plog(XLOG_WARNING, "Could not disassociate tty (TIOCNOTTY): %m");
-      close(tty);
-    }
-# endif /* not HAVE_SETPGRP */
-#endif /* not HAVE_SETPGID */
+    /*
+     * Dissociate from the controlling terminal
+     */
+    amu_release_controlling_tty();
 
     /*
      * signal parent we are ready. parent should

@@ -1,3 +1,5 @@
+/*	$NetBSD: amq.c,v 1.9 1997/10/26 00:25:27 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq.c,v 1.8 1997/10/17 00:07:28 lukem Exp $
+ * Id: amq.c,v 5.2.2.1 1992/02/09 15:09:16 jsp beta 
  *
  */
 
@@ -46,6 +48,7 @@
  * Automounter query tool
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 char copyright[] = "\
 @(#)Copyright (c) 1997 Erez Zadok\n\
@@ -53,10 +56,12 @@ char copyright[] = "\
 @(#)Copyright (c) 1990 Imperial College of Science, Technology & Medicine\n\
 @(#)Copyright (c) 1990 The Regents of the University of California.\n\
 @(#)All rights reserved.\n";
-#if __GNUC__ < 2
-static char rcsid[] = "$Id: amq.c,v 1.8 1997/10/17 00:07:28 lukem Exp $";
+#if 0
+static char rcsid[] = "Id: amq.c,v 6.0 1997/01/01 15:09:16 ezk ";
 static char sccsid[] = "%W% (Berkeley) %G%";
-#endif /* __GNUC__ < 2 */
+#else
+__RCSID("$NetBSD: amq.c,v 1.9 1997/10/26 00:25:27 christos Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef HAVE_CONFIG_H
