@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.4 1996/09/27 23:22:53 christos Exp $	*/
+/*	$NetBSD: fat.c,v 1.5 1997/01/03 14:32:49 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fat.c,v 1.4 1996/09/27 23:22:53 christos Exp $";
+static char rcsid[] = "$NetBSD: fat.c,v 1.5 1997/01/03 14:32:49 ws Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -63,6 +63,10 @@ checkclnum(boot, fat, cl, next)
 		*next |= 0xf000;
 	if (*next == CLUST_FREE) {
 		boot->NumFree++;
+		return FSOK;
+	}
+	if (*next == CLUST_BAD) {
+		boot->NumBad++;
 		return FSOK;
 	}
 	if (*next < CLUST_FIRST
@@ -97,7 +101,7 @@ readfat(fs, boot, no, fp)
 	int size;
 	int ret = FSOK;
 
-	boot->NumFree = 0;
+	boot->NumFree = boot->NumBad = 0;
 	fat = malloc(sizeof(struct fatEntry) * boot->NumClusters);
 	buffer = malloc(boot->FATsecs * boot->BytesPerSec);
 	if (fat == NULL || buffer == NULL) {
@@ -321,9 +325,10 @@ checkfat(boot, fat)
 	 * pass 1: figure out the cluster chains.
 	 */
 	for (head = CLUST_FIRST; head < boot->NumClusters; head++) {
-		/* find next untraveled chain */		
+		/* find next untraveled chain */
 		if (fat[head].head != 0		/* cluster already belongs to some chain*/
-		    || fat[head].next == CLUST_FREE)
+		    || fat[head].next == CLUST_FREE
+		    || fat[head].next == CLUST_BAD)
 			continue;		/* skip it. */
 
 		/* follow the chain and mark all clusters on the way */
