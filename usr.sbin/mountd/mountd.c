@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.70.2.5 2000/07/22 01:42:31 enami Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.70.2.6 2001/05/01 12:11:56 he Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.70.2.5 2000/07/22 01:42:31 enami Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.70.2.6 2001/05/01 12:11:56 he Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2151,6 +2151,12 @@ get_net(cp, net, maskflg)
 	} else
 		goto fail;
 
+	/*
+	 * Only allow /pref notation for v6 addresses.
+	 */
+	if (sa->sa_family == AF_INET6 && (!(opt_flags & OP_MASKLEN) || maskflg))
+		return 1;
+
 	ecode = getnameinfo(sa, sa->sa_len, netname, sizeof netname,
 	    NULL, 0, NI_NUMERICHOST);
 	if (ecode != 0)
@@ -2517,8 +2523,8 @@ check_options(line, lineno, dp)
 		return (1);
 	}
 	if ((opt_flags & OP_MASK) && (opt_flags & OP_MASKLEN) != 0) {
-		syslog(LOG_ERR, "\"%s\", line %ld: /pref and -net mutually"
-		    "exclusive",
+		syslog(LOG_ERR, "\"%s\", line %ld: /pref and -mask mutually"
+		    " exclusive",
 		    line, (unsigned long)lineno);
 		return (1);
 	}
