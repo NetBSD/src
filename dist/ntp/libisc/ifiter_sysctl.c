@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_sysctl.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: ifiter_sysctl.c,v 1.3 2004/02/26 18:17:13 drochner Exp $	*/
 
 /*
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -254,6 +254,21 @@ internal_current(isc_interfaceiter_t *iter) {
 		iter->current.af = family;
 
 		get_addr(family, &iter->current.address, addr_sa);
+
+	/*
+	 * If the interface does not have a address ignore it.
+	 */
+	switch (family) {
+	case AF_INET:
+		if (iter->current.address.type.in.s_addr == htonl(INADDR_ANY))
+			return (ISC_R_IGNORE);
+		break;
+	case AF_INET6:
+		if (memcmp(&iter->current.address.type.in6, &in6addr_any,
+			   sizeof(in6addr_any)) == 0)
+			return (ISC_R_IGNORE);
+		break;
+	}
 
 		if (mask_sa != NULL)
 			get_addr(family, &iter->current.netmask, mask_sa);
