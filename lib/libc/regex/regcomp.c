@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.18 2003/08/07 16:43:20 agc Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.19 2004/09/18 11:47:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.18 2003/08/07 16:43:20 agc Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.19 2004/09/18 11:47:37 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -137,7 +137,7 @@ static void p_b_cclass __P((struct parse *p, cset *cs));
 static void p_b_eclass __P((struct parse *p, cset *cs));
 static char p_b_symbol __P((struct parse *p));
 static char p_b_coll_elem __P((struct parse *p, int endc));
-static char othercase __P((int ch));
+static int othercase __P((int ch));
 static void bothcases __P((struct parse *p, int ch));
 static void ordinary __P((struct parse *p, int ch));
 static void nonnewline __P((struct parse *p));
@@ -998,9 +998,9 @@ int endc;			/* name ended by endc,']' */
 
 /*
  - othercase - return the case counterpart of an alphabetic
- == static char othercase(int ch);
+ == static int othercase(int ch);
  */
-static char			/* if no counterpart, return ch */
+static int			/* if no counterpart, return ch */
 othercase(ch)
 int ch;
 {
