@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.44 2000/04/27 00:22:16 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.45 2000/04/27 19:54:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -243,8 +243,8 @@ extern char	 __unctrllen[256];	/* Control strings length. */
 #define __BLANK		0x00400000	/* Added characters are blanked. */
 #define __PROTECT	0x00800000	/* Added characters are protected. */
 #define __ALTCHARSET	0x01000000	/* Added characters are ACS */
-#define __COLOR		0xee000000	/* Color bits */
-#define __ATTRIBUTES	0xefff0000	/* All 8-bit attribute bits */
+#define __COLOR		0x7e000000	/* Color bits */
+#define __ATTRIBUTES	0x7fff0000	/* All 8-bit attribute bits */
 
 typedef struct __ldata __LDATA;
 typedef struct __line  __LINE;
