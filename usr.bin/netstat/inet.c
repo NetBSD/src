@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: inet.c,v 1.10 1994/12/24 17:21:51 cgd Exp $";
+static char *rcsid = "$Id: inet.c,v 1.11 1995/05/14 08:20:16 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -293,6 +293,7 @@ ip_stats(off, name)
 	p(ips_badvers, "\t%u with incorrect version number\n");
 	p(ips_fragments, "\t%u fragment%s received\n");
 	p(ips_fragdropped, "\t%u fragment%s dropped (dup or out of space)\n");
+	p(ips_badfrags, "\t%u malformed fragment%s dropped\n");
 	p(ips_fragtimeout, "\t%u fragment%s dropped after timeout\n");
 	p(ips_reassembled, "\t%u packet%s reassembled ok\n");
 	p(ips_delivered, "\t%u packet%s for this host\n");
