@@ -1,4 +1,4 @@
-/*	$NetBSD: lancevar.h,v 1.3 2000/09/28 10:56:57 tsutsui Exp $	*/
+/*	$NetBSD: lancevar.h,v 1.4 2001/06/18 11:06:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ struct lance_softc {
 
 void lance_config __P((struct lance_softc *));
 void lance_reset __P((struct lance_softc *));
-void lance_init __P((struct lance_softc *));
+int lance_init __P((struct ifnet *));
 int lance_put __P((struct lance_softc *, int, struct mbuf *));
 void lance_read __P((struct lance_softc *, int, int)); 
 void lance_setladrf __P((struct ethercom *, u_int16_t *));
