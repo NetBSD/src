@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.12 1995/03/21 15:40:16 mycroft Exp $	*/
+/*	$NetBSD: error.c,v 1.13 1995/03/23 00:01:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 char sccsid[] = "@(#)error.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: error.c,v 1.12 1995/03/21 15:40:16 mycroft Exp $";
+static char rcsid[] = "$NetBSD: error.c,v 1.13 1995/03/23 00:01:03 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,15 +103,15 @@ exraise(e)
 
 void
 onint() {
-	sigset_t set;
+	sigset_t sigset;
 
 	if (suppressint) {
 		intpending++;
 		return;
 	}
 	intpending = 0;
-	sigemptyset(&set);
-	sigprocmask(SIG_SETMASK, &set);
+	sigemptyset(&sigset);
+	sigprocmask(SIG_SETMASK, &sigset, NULL);
 	if (rootshell && iflag)
 		exraise(EXINT);
 	else
