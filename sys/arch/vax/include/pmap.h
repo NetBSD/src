@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.57 2003/02/26 21:54:38 ragge Exp $	   */
+/*	$NetBSD: pmap.h,v 1.58 2003/03/02 22:19:06 ragge Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -56,11 +56,8 @@
 #define LTOHPS		(PGSHIFT - VAX_PGSHIFT)
 #define LTOHPN		(1 << LTOHPS)
 #if USE_TOPDOWN_VM==0
-#define PROCPTSIZE	((MAXTSIZ + MAXDSIZ + MAXSSIZ) / VAX_NBPG)
-#else
 #define PROCPTSIZE	((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
 #endif
-#define	NPTEPGS		(PROCPTSIZE / (NBPG / (sizeof(struct pte) * LTOHPN)))
 
 /*
  * Link struct if more than one process share pmap (like vfork).
@@ -84,7 +81,6 @@ typedef struct pmap {
 	long		 pm_p0lr;	/* page 0 length register */
 	struct pte	*pm_p1br;	/* page 1 base register */
 	long		 pm_p1lr;	/* page 1 length register */
-	u_char		*pm_pref;	/* pte reference count array */
 	struct simplelock pm_lock;	/* Lock entry in MP environment */
 	struct pmap_statistics	 pm_stats;	/* Some statistics */
 } *pmap_t;
