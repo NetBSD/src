@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.370 1999/12/04 21:20:29 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.371 1999/12/13 16:30:15 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -170,6 +170,7 @@ extern struct proc *npxproc;
 #endif
 
 #include "vga.h"
+#include "ega.h"
 #include "pcdisplay.h"
 #if (NVGA > 0) || (NPCDISPLAY > 0)
 #include <dev/ic/mc6845reg.h>
@@ -177,6 +178,9 @@ extern struct proc *npxproc;
 #if (NVGA > 0)
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
+#endif
+#if (NEGA > 0)
+#include <dev/isa/egavar.h>
 #endif
 #if (NPCDISPLAY > 0)
 #include <dev/isa/pcdisplayvar.h>
@@ -1994,11 +1998,15 @@ consinit()
 #endif
 		consinfo = &default_consinfo;
 
-#if (NPC > 0) || (NVT > 0) || (NVGA > 0) || (NPCDISPLAY > 0)
+#if (NPC > 0) || (NVT > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
 #if (NVGA > 0)
 		if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
 				  -1, 1))
+			goto dokbd;
+#endif
+#if (NEGA > 0)
+		if (!ega_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
 			goto dokbd;
 #endif
 #if (NPCDISPLAY > 0)
