@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.56 2001/11/01 07:17:17 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.57 2001/11/01 07:27:35 lukem Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -11,10 +11,10 @@ CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 CFLAGS+= -Wno-uninitialized
 .endif
 .if ${WARNS} > 1
-CFLAGS+=-Wreturn-type -Wpointer-arith -Wwrite-strings -Wswitch -Wshadow
+CFLAGS+=-Wreturn-type -Wpointer-arith -Wswitch -Wshadow
 .endif
 .if ${WARNS} > 2
-CFLAGS+=-Wcast-qual
+CFLAGS+=-Wcast-qual -Wwrite-strings
 .endif
 .endif
 
