@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.34 2003/04/02 10:39:26 fvdl Exp $	*/
+/*	$NetBSD: pass5.c,v 1.35 2003/04/04 13:45:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.34 2003/04/02 10:39:26 fvdl Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.35 2003/04/04 13:45:21 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,8 @@ __RCSID("$NetBSD: pass5.c,v 1.34 2003/04/02 10:39:26 fvdl Exp $");
 #include "extern.h"
 
 void print_bmap __P((u_char *,u_int32_t));
+static void dumpcg(struct cg *cg);
+static void dumptotal(struct csum_total *cs);
 
 void
 pass5(void)
@@ -247,7 +249,7 @@ pass5(void)
 			newcg->cg_frotor = cg->cg_frotor;
 		else
 			newcg->cg_frotor = 0;
-		if (cg->cg_irotor >= 0 && cg->cg_irotor < newcg->cg_niblk)
+		if (cg->cg_irotor >= 0 && cg->cg_irotor < fs->fs_ipg)
 			newcg->cg_irotor = cg->cg_irotor;
 		else
 			newcg->cg_irotor = 0;
@@ -361,6 +363,8 @@ pass5(void)
 			continue;
 		}
 		if (memcmp(newcg, cg, basesize) != 0) {
+			dumpcg(newcg);
+			dumpcg(cg);
 		 	if (dofix(&idesc[2], "SUMMARY INFORMATION BAD")) {
 				memmove(cg, newcg, (size_t)basesize);
 				cgdirty();
@@ -405,6 +409,8 @@ pass5(void)
                 }
 	}
 	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof cstotal) != 0) {
+		dumptotal(&cstotal);
+		dumptotal(&fs->fs_cstotal);
 		if (dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
 			memmove(&fs->fs_cstotal, &cstotal, sizeof *cs);
 			fs->fs_ronly = 0;
@@ -429,4 +435,50 @@ print_bmap(map, size)
 			printf("%2x ", (u_int)map[i] & 0xff);
 		printf("\n");
 	}
+}
+
+static
+void dumpcg(struct cg *cg)
+{
+	printf("======================================\n");
+	printf("firstfield	%d\n", cg->cg_firstfield);
+	printf("magic		%d\n", cg->cg_magic);
+	printf("old_time	%d\n", cg->cg_old_time);
+	printf("cgx		%d\n", cg->cg_cgx);
+	printf("old_ncyl	%d\n", cg->cg_old_ncyl);
+	printf("old_niblk	%d\n", cg->cg_old_niblk);
+	printf("ndblk		%d\n", cg->cg_ndblk);
+	printf("csum.ndir	%d\n", cg->cg_cs.cs_ndir);
+	printf("csum.nbfree	%d\n", cg->cg_cs.cs_nbfree);
+	printf("csum.nifree	%d\n", cg->cg_cs.cs_nifree);
+	printf("csum.nffree	%d\n", cg->cg_cs.cs_nffree);
+	printf("rotor		%d\n", cg->cg_rotor);
+	printf("frotor		%d\n", cg->cg_frotor);
+	printf("irotor		%d\n", cg->cg_irotor);
+	printf("%d, %d, %d, %d, %d, %d, %d, %d\n",
+	    cg->cg_frsum[0], cg->cg_frsum[1], cg->cg_frsum[2], cg->cg_frsum[3], 
+	    cg->cg_frsum[4], cg->cg_frsum[5], cg->cg_frsum[6], cg->cg_frsum[7]);
+	printf("old_btotoff	%d\n", cg->cg_old_btotoff);
+	printf("old_boff	%d\n", cg->cg_old_boff);
+	printf("iusedoff	%d\n", cg->cg_iusedoff);
+	printf("freeoff		%d\n", cg->cg_freeoff);
+	printf("nextfreeoff	%d\n", cg->cg_nextfreeoff);
+	printf("clustersumoff	%d\n", cg->cg_clustersumoff);
+	printf("clusteroff	%d\n", cg->cg_clusteroff);
+	printf("nclusterblks	%d\n", cg->cg_nclusterblks);
+	printf("niblk		%d\n", cg->cg_niblk);
+	printf("initediblk	%d\n", cg->cg_initediblk);
+
+	printf("time		%lld\n", cg->cg_time);
+}
+
+static
+void dumptotal(struct csum_total *cs)
+{
+	printf("===========================\n");
+	printf("ndir		%lld\n", cs->cs_ndir);
+	printf("nbfree		%lld\n", cs->cs_ndir);
+	printf("nifree		%lld\n", cs->cs_ndir);
+	printf("nffree		%lld\n", cs->cs_ndir);
+	printf("numclusters	%lld\n", cs->cs_ndir);
 }
