@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.15 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.15.10.1 2004/03/12 06:07:37 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -118,6 +118,8 @@ struct platid_data vrc4172pwm_platid_param_table[] = {
 	{ &platid_mask_MACH_NEC_MCR_SIGMARION,	&vrc4172pwm_sigmarion_param},
 	{ &platid_mask_MACH_NEC_MCR_700,	&vrc4172pwm_mcr700_param},
 	{ &platid_mask_MACH_NEC_MCR_700A,	&vrc4172pwm_mcr700_param},
+	{ &platid_mask_MACH_NEC_MCR_730,	&vrc4172pwm_mcr700_param},
+	{ &platid_mask_MACH_NEC_MCR_730A,	&vrc4172pwm_mcr700_param},
 	{ NULL, NULL}
 };
 
