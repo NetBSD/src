@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.35 2001/05/29 07:22:41 scw Exp $
+.\"	$NetBSD: contents,v 1.36 2001/07/24 17:46:07 nra Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -795,7 +795,7 @@ the
 .Nx*M
 partition starts one sector after the
 .Tn GEMDOS
-partition. This is to allow space for the auxilliary root for
+partition. This is to allow space for the auxiliary root for
 the 4th and subsequent partitions.
 .It
 The
