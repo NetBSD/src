@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.4 1995/03/21 09:03:59 cgd Exp $	*/
+/*	$NetBSD: args.c,v 1.5 1995/10/08 23:01:22 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: args.c,v 1.4 1995/03/21 09:03:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: args.c,v 1.5 1995/10/08 23:01:22 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,6 +270,16 @@ f_skip(arg)
 	in.offset = (u_int)get_bsz(arg);
 }
 
+#ifdef	NO_CONV
+/* Build a small version (i.e. for a ramdisk root) */
+static void
+f_conv(arg)
+	char *arg;
+{
+	errx(1, "conv option disabled");
+}
+#else	/* NO_CONV */
+
 static struct conv {
 	char *name;
 	u_int set, noset;
@@ -319,6 +329,8 @@ c_conv(a, b)
 
 	return (strcmp(((struct conv *)a)->name, ((struct conv *)b)->name));
 }
+
+#endif	/* NO_CONV */
 
 /*
  * Convert an expression of the following forms to an unsigned long.
