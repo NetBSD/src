@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.354 2001/08/27 14:10:20 enami Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.355 2001/08/28 23:54:14 tsubai Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.349 2001/08/27 14:04:47 enami Exp 
+ *	NetBSD: pcidevs,v 1.350 2001/08/28 23:53:14 tsubai Exp 
  */
 
 /*
@@ -772,12 +772,14 @@
 #define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* MAC-IO I/O Controller (KeyLargo) */
 #define	PCI_PRODUCT_APPLE_GMAC2	0x0024		/* GMAC Ethernet */
 #define	PCI_PRODUCT_APPLE_PANGEA_MACIO	0x0025		/* MAC-IO I/O Controller (Pangea) */
+#define	PCI_PRODUCT_APPLE_PANGEA_USB	0x0026		/* Pangea USB Controller */
 #define	PCI_PRODUCT_APPLE_PANGEA_AGP	0x0027		/* Pangea AGP Interface */
 #define	PCI_PRODUCT_APPLE_PANGEA_PCI1	0x0028		/* Pangea Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_PANGEA_PCI2	0x0029		/* Pangea Host-PCI Bridge */
-#define	PCI_PRODUCT_APPLE_UNIN_AGP	0x002d		/* Uni-N AGP Interface */
-#define	PCI_PRODUCT_APPLE_UNIN_PCI1	0x002e		/* Uni-N Host-External PCI Bridge */
-#define	PCI_PRODUCT_APPLE_UNIN_PCI2	0x002f		/* Uni-N Host-Internal PCI Bridge */
+#define	PCI_PRODUCT_APPLE_UNINORTH_AGP2	0x002d		/* UniNorth AGP Interface */
+#define	PCI_PRODUCT_APPLE_UNINORTH3	0x002e		/* UniNorth Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_UNINORTH4	0x002f		/* UniNorth Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_PANGEA_FW	0x0030		/* Pangea Firewire */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
