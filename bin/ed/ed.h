@@ -167,17 +167,15 @@ if ((i) > (n)) { \
 /* REQUE: link pred before succ */
 #define REQUE(pred, succ) (pred)->q_forw = (succ), (succ)->q_back = (pred)
 
-#ifdef NEED_INSQUE
-/* insque: insert elem in circular queue after pred */
-#define insque(elem, pred) \
+/* INSQUE: insert elem in circular queue after pred */
+#define INSQUE(elem, pred) \
 { \
 	REQUE((elem), (pred)->q_forw); \
 	REQUE((pred), elem); \
 }
 
 /* remque: remove_lines elem from circular queue */
-#define remque(elem) REQUE((elem)->q_back, (elem)->q_forw);
-#endif /* NEED_INSQUE */
+#define REMQUE(elem) REQUE((elem)->q_back, (elem)->q_forw);
 
 /* NUL_TO_NEWLINE: overwrite ASCII NULs with newlines */
 #define NUL_TO_NEWLINE(s, l) translit_text(s, l, '\0', '\n')

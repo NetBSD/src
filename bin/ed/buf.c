@@ -132,7 +132,7 @@ add_line_node(lp)
 	line_t *cp;
 
 	cp = get_addressed_line_node(current_addr);				/* this get_addressed_line_node last! */
-	insque(lp, cp);
+	INSQUE(lp, cp);
 	addr_last++;
 	current_addr++;
 }
