@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.19 2000/05/20 05:08:53 takemura Exp $	*/
+/*	$NetBSD: platid.def,v 1.20 2000/05/22 15:03:46 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -118,12 +118,14 @@ Sharp {
   }
   Telios {
     HC {
-      CPU=MIPS_TX_3922 HCAJ1
+      CPU=MIPS_TX_3922 HCAJ1 --" HC-AJ1/AJ2"
+      CPU=MIPS_TX_3922 HCVJ1C_JP --" HC-VJ1C (Japanese)"
     }
   }
   Mobilon {
     HC {	
       CPU=MIPS_TX_3912 HC4100
+      CPU=MIPS_TX_3912 HC4500
       CPU=MIPS_TX_3912 HC1200
     }
   }
