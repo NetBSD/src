@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6 2002/11/03 22:36:23 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.7 2003/02/14 04:45:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,6 +56,7 @@
 #define	PSL_IP		0x00000040	/* interrupt prefix */
 #define	PSL_IR		0x00000020	/* instruction address relocation */
 #define	PSL_DR		0x00000010	/* data address relocation */
+#define	PSL_PM		0x00000008	/* Performance monitor marked mode */
 #define	PSL_RI		0x00000002	/* recoverable interrupt */
 #define	PSL_LE		0x00000001	/* endian mode (1 == le) */
 
