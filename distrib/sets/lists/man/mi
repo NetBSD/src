@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.175 1999/11/25 01:23:08 simonb Exp $
+# $NetBSD: mi,v 1.176 1999/11/28 16:13:54 veego Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -86,6 +86,7 @@
 ./usr/share/man/cat1/dig.0
 ./usr/share/man/cat1/dirname.0
 ./usr/share/man/cat1/dirs.0
+./usr/share/man/cat1/dnskeygen.0
 ./usr/share/man/cat1/dnsquery.0
 ./usr/share/man/cat1/domainname.0
 ./usr/share/man/cat1/du.0
@@ -362,6 +363,7 @@
 ./usr/share/man/cat4/boca.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/bt.0
+./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
 ./usr/share/man/cat4/ch.0
@@ -419,8 +421,10 @@
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lxtphy.0
+./usr/share/man/cat4/mbe.0
 ./usr/share/man/cat4/mcd.0
 ./usr/share/man/cat4/md.0
+./usr/share/man/cat4/mhzc.0
 ./usr/share/man/cat4/midi.0
 ./usr/share/man/cat4/mii.0
 ./usr/share/man/cat4/mixer.0
@@ -768,6 +772,7 @@
 ./usr/share/man/cat8/ndc.0
 ./usr/share/man/cat8/ndp.0
 ./usr/share/man/cat8/netgroup_mkdb.0
+./usr/share/man/cat8/newbtconf.0
 ./usr/share/man/cat8/newfs.0
 ./usr/share/man/cat8/newfs_lfs.0
 ./usr/share/man/cat8/newfs_msdos.0
@@ -777,6 +782,7 @@
 ./usr/share/man/cat8/nis.0
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
+./usr/share/man/cat8/nsupdate.0
 ./usr/share/man/cat8/ntpdate.0
 ./usr/share/man/cat8/ntpq.0
 ./usr/share/man/cat8/ntptime.0
@@ -979,6 +985,7 @@
 ./usr/share/man/man1/dig.1
 ./usr/share/man/man1/dirname.1
 ./usr/share/man/man1/dirs.1
+./usr/share/man/man1/dnskeygen.1
 ./usr/share/man/man1/dnsquery.1
 ./usr/share/man/man1/domainname.1
 ./usr/share/man/man1/du.1
@@ -1255,6 +1262,7 @@
 ./usr/share/man/man4/boca.4
 ./usr/share/man/man4/bpf.4
 ./usr/share/man/man4/bt.4
+./usr/share/man/man4/cardbus.4
 ./usr/share/man/man4/ccd.4
 ./usr/share/man/man4/cd.4
 ./usr/share/man/man4/ch.4
@@ -1312,8 +1320,10 @@
 ./usr/share/man/man4/lkm.4
 ./usr/share/man/man4/lo.4
 ./usr/share/man/man4/lxtphy.4
+./usr/share/man/man4/mbe.4
 ./usr/share/man/man4/mcd.4
 ./usr/share/man/man4/md.4
+./usr/share/man/man4/mhzc.4
 ./usr/share/man/man4/midi.4
 ./usr/share/man/man4/mii.4
 ./usr/share/man/man4/mixer.4
@@ -1661,6 +1671,7 @@
 ./usr/share/man/man8/ndc.8
 ./usr/share/man/man8/ndp.8
 ./usr/share/man/man8/netgroup_mkdb.8
+./usr/share/man/man8/newbtconf.8
 ./usr/share/man/man8/newfs.8
 ./usr/share/man/man8/newfs_lfs.8
 ./usr/share/man/man8/newfs_msdos.8
@@ -1670,6 +1681,7 @@
 ./usr/share/man/man8/nis.8
 ./usr/share/man/man8/nologin.8
 ./usr/share/man/man8/nslookup.8
+./usr/share/man/man8/nsupdate.8
 ./usr/share/man/man8/ntpdate.8
 ./usr/share/man/man8/ntpq.8
 ./usr/share/man/man8/ntptime.8
