@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.53 1999/07/01 13:19:20 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.54 1999/07/03 17:31:15 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.53 1999/07/01 13:19:20 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.54 1999/07/03 17:31:15 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,9 @@ __RCSID("$NetBSD: ifconfig.c,v 1.53 1999/07/01 13:19:20 itojun Exp $");
 #include <net/if_media.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#ifdef INET6
 #include <netinet6/nd6.h>
+#endif
 #include <arpa/inet.h>
 
 #include <netatalk/at.h>
@@ -135,13 +137,13 @@ int	clearaddr, s;
 int	newaddr = -1;
 int	nsellength = 1;
 int	af;
-int	Aflag, aflag, dflag, mflag, lflag, uflag;
+int	Aflag, aflag, bflag, dflag, lflag, mflag, sflag, uflag;
 #ifdef INET6
 int	Lflag;
 #endif
 int	reset_if_flags;
 int	explicit_prefix = 0;
-#ifndef INET_ONLY
+#if !defined(INET_ONLY) && defined(INET6)
 char ntop_buf[INET6_ADDRSTRLEN];	/*inet_ntop()*/
 #endif /* INET_ONLY */
 
@@ -254,6 +256,7 @@ struct	cmd {
 
 void 	adjust_nsellength __P((void));
 int	getinfo __P((struct ifreq *));
+int	carrier __P((void));
 void	getsock __P((int));
 void	printall __P((void));
 void	printalias __P((const char *, int));
@@ -336,7 +339,7 @@ main(argc, argv)
 
 	/* Parse command-line options */
 	aflag = mflag = 0;
-	while ((ch = getopt(argc, argv, "Aadlmu"
+	while ((ch = getopt(argc, argv, "Aabdlmsu"
 #ifdef INET6
 					"L"
 #endif
@@ -350,6 +353,10 @@ main(argc, argv)
 			aflag = 1;
 			break;
 
+		case 'b':
+			bflag = 1;
+			break;
+			
 		case 'd':
 			dflag = 1;
 			break;
@@ -368,10 +375,15 @@ main(argc, argv)
 			mflag = 1;
 			break;
 
+		case 's':
+			sflag = 1;
+			break;
+
 		case 'u':
 			uflag = 1;
 			break;
 
+			
 		default:
 			usage();
 			/* NOTREACHED */
@@ -386,8 +398,12 @@ main(argc, argv)
 	 *
 	 * -a means "print status of all interfaces".
 	 */
-	if (lflag && (aflag || mflag || argc))
+	if (lflag && (aflag || mflag || Aflag || argc))
 		usage();
+#ifdef INET6
+	if (lflag && Lflag)
+		usage();
+#endif
 	if (aflag || lflag) {
 		if (argc > 1)
 			usage();
@@ -430,6 +446,13 @@ main(argc, argv)
 	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (getinfo(&ifr) < 0)
 		exit(1);
+
+	if (sflag) {
+		if (argc != 0)
+			usage();
+		else
+			exit(carrier());
+	}
 
 	/* No more arguments means interface status. */
 	if (argc == 0) {
@@ -653,11 +676,15 @@ printall()
 
 		if (getinfo(&ifreq) < 0)
 			continue;
+		if (bflag && (flags & (IFF_POINTOPOINT|IFF_LOOPBACK)))
+			continue;
 		if (dflag && (flags & IFF_UP) != 0)
 			continue;
 		if (uflag && (flags & IFF_UP) == 0)
 			continue;
 
+		if (sflag && carrier())
+			continue;
 		idx++;
 		/*
 		 * Are we just listing the interfaces?
@@ -1153,6 +1180,32 @@ print_media_word(ifmw, print_type, as_syntax)
 	if (IFM_INST(ifmw) != 0)
 		printf(" instance %d", IFM_INST(ifmw));
 }
+
+int carrier()
+{
+	struct ifmediareq ifmr;
+
+	(void) memset(&ifmr, 0, sizeof(ifmr));
+	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+		/*
+		 * Interface doesn't support SIOC{G,S}IFMEDIA;
+		 * assume ok.
+		 */
+		return 0;
+	}
+	if ((ifmr.ifm_status & IFM_AVALID) == 0) {
+		/*
+		 * Interface doesn't report media-valid status.
+		 * assume ok.
+		 */
+		return 0;
+	}
+	/* otherwise, return ok for active, not-ok if not active. */
+	return !(ifmr.ifm_status & IFM_ACTIVE);
+}
+
 
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
