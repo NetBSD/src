@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2001/09/16 17:40:40 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2001/10/27 16:29:23 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -137,6 +137,10 @@
 /*#include "vidcconsole.h"*/
 #ifndef NVIDCCONSOLE
 #define	NVIDCCONSOLE	0
+#endif
+/*#include "plcom.h"*/
+#ifndef NPLCOM
+#define NPLCOM	0
 #endif
 
 /*
@@ -474,6 +478,7 @@ struct cdevsw cdevsw[] = {
 	cdev_altq_init(NALTQ,altq),		/* 90: ALTQ control interface */
 	cdev__oci_init(NMLX,mlx),		/* 91: Mylex DAC960 ctl iface */
 	cdev_disk_init(NLD,ld),			/* 92: Logical disk */
+	cdev_tty_init(NPLCOM,plcom),		/* 93: IFPGA console */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
