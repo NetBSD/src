@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.2 2001/11/04 17:17:22 tsutsui Exp $	*/
+/*	$NetBSD: trm.c,v 1.3 2001/11/11 05:28:55 tsutsui Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -114,7 +114,7 @@ struct trm_nvram {
 	u_int8_t scsi_id;			/* 74 Host Adapter SCSI ID */
 	u_int8_t channel_cfg;			/* 75 Channel configuration */
 #define NAC_SCANLUN		0x20	/* Include LUN as BIOS device */
-#define NAC_DO_PARITY_CHK	0x08    /* Parity check enable */
+#define NAC_DO_PARITY_CHK	0x08    /* Parity check enable        */
 #define NAC_POWERON_SCSI_RESET	0x04	/* Power on reset enable      */
 #define NAC_GREATER_1G		0x02	/* > 1G support enable	      */
 #define NAC_GT2DRIVES		0x01	/* Support more than 2 drives */
@@ -725,6 +725,7 @@ trm_scsipi_request(chan, req, arg)
 				 */
 				srb->next = sc->sc_freesrb;
 				sc->sc_freesrb = srb;
+				splx(s);
 				return;
 			}
 			bus_dmamap_sync(sc->sc_dmat, srb->dmap, 0,
@@ -2775,9 +2776,6 @@ trm_init_sc(sc)
 	 */
 	trm_link_srb(sc);
 	sc->sc_freesrb = sc->sc_srb;
-	/*
-	 * temp SRB for Q tag used or abord command used
-	 */
 	/* allocate DCB array for scan device */
 	for (i = 0; i <= sc->maxid; i++)
 		if (sc->sc_id != i)
