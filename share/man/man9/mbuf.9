@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.28 2003/05/27 13:04:25 yamt Exp $
+.\"	$NetBSD: mbuf.9,v 1.28.2.1 2004/09/11 11:14:42 he Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 27, 2003
+.Dd September 6, 2004
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -47,8 +47,10 @@
 .Nm m_copypacket ,
 .Nm m_copydata ,
 .Nm m_copyback ,
+.Nm m_copyback_cow ,
 .Nm m_cat ,
 .Nm m_dup ,
+.Nm m_makewritable ,
 .Nm m_prepend ,
 .Nm m_pulldown ,
 .Nm m_pullup ,
@@ -92,6 +94,10 @@
 .Fn m_copydata "struct mbuf *m" "int off" "int len" "caddr_t cp"
 .Ft void
 .Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
+.Ft struct mbuf *
+.Fn m_copyback_cow "struct mbuf *m0" "int off" "int len" "caddr_t cp" "int how"
+.Ft int
+.Fn m_makewritable "struct mbuf **mp" "int off" "int len" "int how"
 .Ft void
 .Fn m_cat "struct mbuf *m" "struct mbuf *n"
 .Ft struct mbuf *
@@ -328,6 +334,69 @@ back into the mbuf chain
 starting
 .Fa off
 bytes from the beginning, extending the mbuf chain if necessary.
+Unless attempting to extend the chain,
+.Fn m_copyback
+never fail.
+As extending the chain can fail, caller should check the failure
+by checking the resulted length of the chain in that case.
+It's an error to use
+.Fn m_copyback
+on read-only mbufs.
+.It Fn m_copyback_cow "struct mbuf *m0" "int off" "int len" "caddr_t cp" \
+"int how"
+Copies
+.Fa len
+bytes data from buffer
+.Fa cp
+back into the mbuf chain
+.Fa m0
+as
+.Fn m_copyback
+does.
+Unlike
+.Fn m_copyback ,
+It's safe to use
+.Fn m_copyback_cow
+on read-only mbufs.
+If needed,
+.Fn m_copyback_cow
+automatically allocate new mbufs and adjust chain.
+It returns a pointer to resulted mbuf chain on success.
+Otherwise, it returns NULL.
+In that case, the original mbuf
+.Fa m0
+will be freed.
+The
+.Fa how
+parameter is a choice of
+.Dv M_WAIT / M_DONTWAIT
+from caller.
+Unlike
+.Fn m_copyback ,
+extending the mbuf chain isn't supported.
+It's an error to attempt to extend the mbuf chain using
+.Fn m_copyback_cow .
+.It Fn m_makewritable "struct mbuf **mp" "int off" "int len" "int how"
+Rearranges an mbuf chain so that
+.Fa len
+bytes from offset
+.Fa off
+are writable.
+When it meets read-only mbufs, it allocates new mbufs, adjusts chain as
+.Fn m_copyback_cow
+does, and copies original contents into them.
+The
+.Fa how
+parameter is a choice of
+.Dv M_WAIT / M_DONTWAIT
+from caller.
+.Fn m_makewritable
+preserves the contents of the mbuf chain even in the case of failure.
+It updates a pointer to the mbuf chain pointed by
+.Fa mp .
+It returns 0 on success.
+Otherwise, it returns an error code, typically
+.Dv ENOBUFS .
 .It Fn m_cat "struct mbuf *m" "struct mbuf *n"
 Concatenates mbuf chain
 .Fa n
