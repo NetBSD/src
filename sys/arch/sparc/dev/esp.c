@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.12 1994/11/20 20:52:09 deraadt Exp $ */
+/*	$NetBSD: esp.c,v 1.13 1994/11/21 01:56:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -504,7 +504,7 @@ esp_init(sc, doreset)
 			TAILQ_INSERT_TAIL(&sc->free_list, ecb, chain);
 			ecb++;
 		}
-		bzero(&sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		bzero(sc->sc_tinfo, sizeof(sc->sc_tinfo));
 	} else {
 		sc->sc_state = ESP_IDLE;
 		if (sc->sc_nexus != NULL) {
