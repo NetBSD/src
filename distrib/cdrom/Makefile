@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2003/07/10 10:34:04 lukem Exp $
+# $NetBSD: Makefile,v 1.19 2003/07/10 11:23:53 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -66,6 +66,7 @@ SUBDIR+=	macppc_installboot
 .endif
 
 .include <bsd.obj.mk>
+.include <bsd.own.mk>
 
 ##### Default paths for programs #####
 
