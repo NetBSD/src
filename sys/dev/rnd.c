@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.2 1997/10/10 16:35:00 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.3 1997/10/12 18:49:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ int     rnd_debug = 0;
 /*
  * list devices attached
  */
-#define RND_VERBOSE
+/* #define RND_VERBOSE */
 
 /*
  * Use the extraction time as a somewhat-random source
