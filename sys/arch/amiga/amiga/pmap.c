@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.16 1994/06/04 11:58:54 chopps Exp $
+ *	$Id: pmap.c,v 1.17 1994/06/20 02:30:17 chopps Exp $
  */
 
 /*
@@ -809,24 +809,6 @@ pmap_remove(pmap, sva, eva)
 			free((caddr_t)npv, M_VMPVENT);
 			pv = pa_to_pvh(pa);
 		}
-		/*
-		 * If only one mapping left we no longer need to cache inhibit
-		 */
-		if (pv->pv_pmap &&
-		    pv->pv_next == NULL && (pv->pv_flags & PV_CI)) {
-#ifdef DEBUG
-			if (pmapdebug & PDB_CACHE)
-				printf("remove: clearing CI for pa %x\n", pa);
-#endif
-			pv->pv_flags &= ~PV_CI;
-			pmap_changebit(pa, PG_CI, FALSE);
-#ifdef DEBUG
-			if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
-			    (PDB_CACHE|PDB_PVDUMP))
-				pmap_pvdump(pa);
-#endif
-		}
-
 		/*
 		 * If this was a PT page we must also remove the
 		 * mapping from the associated segment table.
