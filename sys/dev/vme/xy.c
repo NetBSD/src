@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.17 2000/03/23 07:01:47 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.18 2000/04/10 02:16:16 chs Exp $	*/
 
 /*
  *
@@ -1982,7 +1982,7 @@ xyc_error(xycsc, iorq, iopb, comm)
 	int     errno = iorq->errno;
 	int     erract = xyc_entoact(errno);
 	int     oldmode, advance;
-#ifdef sparc
+#ifdef __sparc__
 	int i;
 #endif
 
@@ -2000,7 +2000,7 @@ xyc_error(xycsc, iorq, iopb, comm)
 	    (iorq->mode & XY_MODE_B144) == 0) {
 		advance = iorq->sectcnt - iopb->scnt;
 		XYC_ADVANCE(iorq, advance);
-#ifdef sparc
+#ifdef __sparc__
 		if ((i = isbad(&iorq->xy->dkb, iorq->blockno / iorq->xy->sectpercyl,
 			    (iorq->blockno / iorq->xy->nsect) % iorq->xy->nhead,
 			    iorq->blockno % iorq->xy->nsect)) != -1) {
