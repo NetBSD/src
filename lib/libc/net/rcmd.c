@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.42 2000/05/30 01:07:44 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.42.2.1 2002/04/17 12:04:30 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.42 2000/05/30 01:07:44 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.42.2.1 2002/04/17 12:04:30 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -688,8 +688,8 @@ again:
 		first = 0;
 		if ((pwd = getpwnam(luser)) == NULL)
 			return (-1);
-		(void)strncpy(pbuf, pwd->pw_dir, sizeof(pbuf) - 1);
-		(void)strncat(pbuf, "/.rhosts", sizeof(pbuf) - strlen(pbuf) - 1);
+		(void)strlcpy(pbuf, pwd->pw_dir, sizeof(pbuf));
+		(void)strlcat(pbuf, "/.rhosts", sizeof(pbuf));
 
 		/*
 		 * Change effective uid while opening .rhosts.  If root and
