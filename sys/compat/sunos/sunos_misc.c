@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.91 1998/06/26 10:13:14 hannken Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.92 1998/08/09 20:37:55 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -353,7 +353,7 @@ sunos_sys_mount(p, v, retval)
 		error = copyin(sna.addr, &sain, sizeof sain);
 		if (error)
 			return (error);
-		bcopy(&sain, &sa, sizeof sa);
+		memcpy(&sa, &sain, sizeof sa);
 		sa.sa_len = sizeof(sain);
 		SCARG(uap, data) = stackgap_alloc(&sg, sizeof(na));
 		na.version = NFS_ARGSVERSION;
@@ -724,14 +724,14 @@ sunos_sys_uname(p, v, retval)
 	struct sunos_utsname sut;
 	extern char ostype[], machine[], osrelease[];
 
-	bzero(&sut, sizeof(sut));
+	memset(&sut, 0, sizeof(sut));
 
-	bcopy(ostype, sut.sysname, sizeof(sut.sysname) - 1);
-	bcopy(hostname, sut.nodename, sizeof(sut.nodename));
+	memcpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
+	memcpy(sut.nodename, hostname, sizeof(sut.nodename));
 	sut.nodename[sizeof(sut.nodename)-1] = '\0';
-	bcopy(osrelease, sut.release, sizeof(sut.release) - 1);
-	bcopy("1", sut.version, sizeof(sut.version) - 1);
-	bcopy(machine, sut.machine, sizeof(sut.machine) - 1);
+	memcpy(sut.release, osrelease, sizeof(sut.release) - 1);
+	memcpy(sut.version, "1", sizeof(sut.version) - 1);
+	memcpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
 	return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, name),
 	    sizeof(struct sunos_utsname));
@@ -810,14 +810,14 @@ sunos_sys_nfssvc(p, v, retval)
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	bzero(&outuap, sizeof outuap);
+	memset(&outuap, 0, sizeof outuap);
 	SCARG(&outuap, fd) = SCARG(uap, fd);
 	SCARG(&outuap, mskval) = stackgap_alloc(&sg, sizeof(sa));
 	SCARG(&outuap, msklen) = sizeof(sa);
 	SCARG(&outuap, mtchval) = stackgap_alloc(&sg, sizeof(sa));
 	SCARG(&outuap, mtchlen) = sizeof(sa);
 
-	bzero(&sa, sizeof sa);
+	memset(&sa, 0, sizeof sa);
 	if (error = copyout(&sa, SCARG(&outuap, mskval), SCARG(&outuap, msklen)))
 		return (error);
 	if (error = copyout(&sa, SCARG(&outuap, mtchval), SCARG(&outuap, mtchlen)))
@@ -840,7 +840,7 @@ sunos_sys_ustat(p, v, retval)
 	struct sunos_ustat us;
 	int error;
 
-	bzero(&us, sizeof us);
+	memset(&us, 0, sizeof us);
 
 	/*
 	 * XXX: should set f_tfree and f_tinode at least
@@ -893,7 +893,7 @@ sunstatfs(sp, buf)
 {
 	struct sunos_statfs ssfs;
 
-	bzero(&ssfs, sizeof ssfs);
+	memset(&ssfs, 0, sizeof ssfs);
 	ssfs.f_type = 0;
 	ssfs.f_bsize = sp->f_bsize;
 	ssfs.f_blocks = sp->f_blocks;

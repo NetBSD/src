@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.8 1996/05/03 17:05:27 christos Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.9 1998/08/09 20:37:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -46,12 +46,12 @@
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_util.h>
 
-#define sigemptyset(s)		bzero((s), sizeof(*(s)))
+#define sigemptyset(s)		memset((s), 0, sizeof(*(s)))
 #define sigismember(s, n)	(*(s) & sigmask(n))
 #define sigaddset(s, n)		(*(s) |= sigmask(n))
 
 #define	ibcs2_sigmask(n)	(1 << ((n) - 1))
-#define ibcs2_sigemptyset(s)	bzero((s), sizeof(*(s)))
+#define ibcs2_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
 #define ibcs2_sigismember(s, n)	(*(s) & ibcs2_sigmask(n))
 #define ibcs2_sigaddset(s, n)	(*(s) |= ibcs2_sigmask(n))
 
