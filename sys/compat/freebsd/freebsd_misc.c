@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.10 2000/12/17 16:11:38 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.11 2000/12/18 08:53:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -59,8 +59,10 @@
 #include <compat/freebsd/freebsd_timex.h>
 #include <compat/freebsd/freebsd_signal.h>
 
+#ifdef KTRACE
 void    ktrinitheader(struct ktr_header *, struct proc *, int);
 int	ktrwrite(struct proc *, struct ktr_header *);
+#endif
 
 int
 freebsd_sys_msync(p, v, retval)
@@ -166,11 +168,11 @@ freebsd_sys_utrace(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef KTRACE
 	struct freebsd_sys_utrace_args /* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-#ifdef KTRACE
 	struct ktr_header kth;
 	register caddr_t cp;
 	int error = 0;
