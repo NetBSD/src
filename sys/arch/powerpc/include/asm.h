@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 2002/07/30 06:09:10 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.11 2003/01/18 21:36:44 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,6 +94,7 @@
 
 /* Condition Register Bit Fields */
 
+#if !defined(_NOREGNAMES)
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define cr0     0
 #define cr1     1
@@ -178,5 +179,6 @@
 #define fr30    30
 #define fr31    31
 #endif
+#endif /* !_NOREGNAMES */
 
 #endif /* !_PPC_ASM_H_ */
