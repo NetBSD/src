@@ -36,12 +36,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.3 1993/05/22 08:00:06 cgd Exp $
+ *	$Id: vm_machdep.c,v 1.4 1993/06/18 02:03:46 brezak Exp $
  */
 
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
+
+#include "npx.h"
 
 #include "param.h"
 #include "systm.h"
@@ -136,7 +138,7 @@ cpu_exit(p)
 {
 	static struct pcb nullpcb;	/* pcb to overwrite on last swtch */
 
-#ifdef NPX
+#if NNPX > 0
 	npxexit(p);
 #endif
 
@@ -157,7 +159,7 @@ cpu_exit(p)
 	register struct proc *p;
 {
 	
-#ifdef NPX
+#if NNPX > 0
 	npxexit(p);
 #endif
 	splclock();

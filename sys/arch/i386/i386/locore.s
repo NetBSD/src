@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.17 1993/06/16 22:22:39 jtc Exp $
+ *	$Id: locore.s,v 1.18 1993/06/18 02:03:39 brezak Exp $
  */
 
 
@@ -44,6 +44,7 @@
  *		Written by William F. Jolitz, 386BSD Project
  */
 
+#include "npx.h"
 #include "assym.s"
 #include "machine/psl.h"
 #include "machine/pte.h"
@@ -1371,7 +1372,7 @@ ENTRY(swtch)
 	movl	%esi, PCB_ESI(%ecx)
 	movl	%edi, PCB_EDI(%ecx)
 
-#ifdef NPX
+#if NNPX > 0
 	/* have we used fp, and need a save? */
 	mov	_curproc,%eax
 	cmp	%eax,_npxproc
@@ -1518,7 +1519,7 @@ ENTRY(savectx)
 	movl	%esi, PCB_ESI(%ecx)
 	movl	%edi, PCB_EDI(%ecx)
 
-#ifdef NPX
+#if NNPX > 0
 	/*
 	 * If npxproc == NULL, then the npx h/w state is irrelevant and the
 	 * state had better already be in the pcb.  This is true for forks
@@ -1698,7 +1699,7 @@ IDTVEC(page)
 IDTVEC(rsvd)
 	pushl $0; TRAP(T_RESERVED)
 IDTVEC(fpu)
-#ifdef NPX
+#if NNPX > 0
 	/*
 	 * Handle like an interrupt so that we can call npxintr to clear the
 	 * error.  It would be better to handle npx interrupts as traps but

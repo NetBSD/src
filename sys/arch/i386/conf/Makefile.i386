@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # from @(#)Makefile.i386	7.1 5/10/91
-# $Id: Makefile.i386,v 1.15 1993/06/11 02:59:54 cgd Exp $
+# $Id: Makefile.i386,v 1.16 1993/06/18 02:03:34 brezak Exp $
 #
 # Makefile for NetBSD
 #
@@ -29,7 +29,7 @@ S=	../../../..
 I386=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Di386 -DNPX
+COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Di386
 ASFLAGS=
 CFLAGS=	-O ${COPTS}
 
