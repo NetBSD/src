@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TM_NBSD_H
 
 #include "alpha/tm-alpha.h"
+#ifndef S0_REGNUM
+#define S0_REGNUM (T7_REGNUM+1)
+#endif
 #include "tm-nbsd.h"
 
 #undef START_INFERIOR_TRAPS_EXPECTED
