@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.13 2001/11/25 20:49:10 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.14 2001/12/09 20:08:03 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -689,7 +689,7 @@ sys/arch/sh3/sh3/trap.c				1.28 via patch
 
 bin/sh/parser.c					1.48
 
-  Prevent alias expansion where it is unwanted, as in case labels.
+  Prevent alias expansion in case labels, where it is unwanted.
 
 share/misc/bsd-family-tree			1.10
 
@@ -717,3 +717,188 @@ gnu/usr.bin/send-pr/categories			1.35
 
   Add a new category ``toolchain'' since building of NetBSD-current
   from 1.5.x is supposed to work.
+
+distrib/sets/lists/comp/mi			patch
+
+  Add missing ./usr/includes/dev/i2o directory.
+
+sys/arch/alpha/conf/INSTALL			patch
+
+  Add Mylex DACC960 (mlx), change ca* to ld*.
+
+lib/csu/common_elf/Makefile.inc			1.8-1.9 via patch
+lib/csu/common_elf/crtbegin.c			1.11-1.14
+lib/csu/common_elf/crtend.c			1.7-1.8
+lib/csu/common_elf/dot_init.h			1.1 (new)
+lib/csu/common_elf/dwarf2_eh.h			1.1 (new)
+lib/csu/alpha/Makefile				1.20-1.21
+lib/csu/alpha/dot_init.h			1.1 (new)
+lib/csu/i386_elf/Makefile			1.5-1.6
+lib/csu/i386_elf/dot_init.h			1.1 (new)
+lib/csu/mips/Makefile				1.22-1.23
+lib/csu/mips/dot_init.h				1.1-1.2 (new)
+lib/csu/powerpc/Makefile			1.12
+lib/csu/powerpc/dot_init.h			1.1 (new)
+lib/csu/sparc_elf/Makefile			1.5
+lib/csu/sparc_elf/dot_init.h			1.1 (new)
+libexec/ld.elf_so/load.c			1.12-1.15
+libexec/ld.elf_so/map_object.c			1.12
+libexec/ld.elf_so/paths.c			1.12-1.13,1.15
+libexec/ld.elf_so/reloc.c			1.34,1.41-1.42 via patch
+libexec/ld.elf_so/rtld.c			1.42-1.45
+libexec/ld.elf_so/rtld.h			1.26,1.29
+libexec/ld.elf_so/search.c			1.10
+libexec/ld.elf_so/symbol.c			1.11
+libexec/ld.elf_so/sysident.h			1.6-1.9
+libexec/ld.elf_so/xprintf.c			1.7-1.8
+libexec/ld.elf_so/arch/alpha/rtld_start.S	1.4
+libexec/ld.elf_so/arch/mips/mips_reloc.c	1.4-1.5
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c	1.10
+libexec/ld.elf_so/arch/powerpc/rtld_start.S	1.4
+libexec/ld.elf_so/arch/sparc64/mdreloc.c	1.4
+libexec/ld.elf_so/arch/sparc64/rtld_start.S	1.4-1.5
+usr.bin/ldd/ldd_elf/ldd.c			1.10-1.11
+share/mk/bsd.own.mk				1.153
+regress/lib/Makefile				1.9 via patch
+regress/lib/csu/Makefile			1.1 (new)
+regress/lib/csu/Makefile.inc			1.1 (new)
+regress/lib/csu/initfini/Makefile		1.1-1.4 (new)
+regress/lib/csu/initfini/expected		1.1 (new)
+regress/lib/csu/initfini/initfini.c		1.1 (new)
+regress/lib/csu/initfini/arch/alpha/initfini_asm.S	1.1 (new)
+regress/lib/csu/initfini/arch/i386/initfini_asm.S	1.1 (new)
+regress/lib/csu/initfini/arch/mips/initfini_asm.S	1.1-1.3 (new)
+regress/lib/csu/initfini/arch/powerpc/initfini_asm.S	1.1 (new)
+regress/lib/csu/initfini/arch/sparc/initfini_asm.S	1.1-1.2 (new)
+
+  Add init/fini section support in crtbegin and crtend, and introduce
+  support for DWARF2 exception handling.  Fixes PR#12865, PR#13488,
+  PR#13489, and PR#13491.  Also fix ld.elf_so to deal appropriately.
+
+usr.sbin/mtree/mtree.8				1.13-1.14
+
+  Fix references to strsvis(3).
+
+usr.sbin/mtree/mtree.8				1.15
+usr.sbin/mtree/compare.c			1.26
+usr.sbin/mtree/mtree.c				1.17 via patch
+
+  Add an ``-l'' flag which does ``loose'' permission checks.
+
+etc/security					1.58
+
+  Run mtree on the special file using the new ``-l'' option, so it
+  will not complain about things like files set to 444 instead of
+  644.
+
+gnu/dist/bfd/bfd-in.h				1.7
+gnu/dist/bfd/bfd-in2.h				1.5
+gnu/dist/bfd/elflink.h				1.5
+gnu/dist/bfd/elf-bfd.h				1.2
+gnu/dist/bfd/elf.c				1.4
+gnu/dist/include/elf/common.h			1.4
+gnu/dist/ld/emultempl/elf32.em			1.2
+
+  When linking against libraries with recorded NEEDED/RPATH, no
+  longer require that the location of dependent libraries be supplied
+  using the ``-rpath'' option.  Fixes PR#14583.
+
+lib/libc/stdlib/system.c			1.17
+
+  Don't return if wait()ing for the child is interrupted; fix a
+  race condition for the parent's SIG{INT,QUIT} disposition.
+
+usr.sbin/rpc.statd/statd.c			1.19
+
+  Add a handler for SIGCHLD which collects dead children, so that
+  rpc.statd won't leave zombies around.
+
+sys/net/if_gre.c				1.24-1.25 via patch
+
+  Respect down interfaces, and sanity check the tunnel route after
+  computing it, marking the interface down if there is no route or
+  it loops back to ourselves.  Helps avoid pilot errors which would
+  result in kernel stack overflows.
+
+etc/etc.i386/MAKEDEV				patch
+etc/etc.alpha/MAKEDEV				patch
+
+  Replace ca* with ld*.  Fixes part of PR#14453.
+
+sys/crypto/cast128/cast128.c			1.5
+sys/crypto/cast128/cast128.h			1.4
+sys/netinet6/esp_core.c				1.19
+
+  Fix cast128 with short keys.
+
+usr.sbin/iopctl/Makefile			1.1 (new)
+usr.sbin/iopctl/iopctl.8			1.1-1.6 (new)
+usr.sbin/iopctl/iopctl.c			1.1-1.11 (new) via patch
+usr.sbin/Makefile				patch
+distrib/sets/lists/man/mi			patch
+distrib/sets/lists/base/mi			patch
+
+  Add ``iopctl'', a program to control iop(4) devices.
+
+share/man/man4/ld.4				1.5-1.6
+share/man/man4/mlx.4				1.7-1.8
+share/man/man4/iop.4				1.12,1.14
+share/man/man4/iopsp.4				1.5-1.6
+
+  Sort sections, and mark these with ``First appeared in 1.5.3''.
+
+sys/dev/i2o/iopio.h				1.2
+sys/dev/i2o/iopvar.h				1.9-1.10
+sys/dev/i2o/i2o.h				1.9
+sys/dev/i2o/iop.c				1.17-1.18
+sys/dev/i2o/dptivar.h				1.1-1.2 (new)
+sys/dev/i2o/i2odpt.h				1.1 (new)
+sys/dev/i2o/dpti.c				1.1-1.3 (new) via patch
+sys/dev/i2o/files.i2o				patch
+sys/dev/pci/iop_pci.c				1.6
+share/man/man4/iop.4				1.13
+share/man/man4/dpti.4				1.1 (new)
+share/man/man4/Makefile				patch
+sys/arch/i386/i386/conf.c			patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/INSTALL			patch
+etc/etc.i386/MAKEDEV				patch
+distrib/sets/lists/man/mi			patch
+
+  Add driver for DPT/Adaptec I2O RAID management interface.
+
+share/man/man4/twe.4				patch
+
+  Mark as ``First appeared in 1.5.3''.
+
+usr.bin/getopt/getopt.1				1.10
+
+  Fix syntax error in example.  Fixes PR#10259.
+
+lib/libc/stdio/vfprintf.c			1.40
+
+  Print the sign prefix for -0.0; fixes PR#3137.
+
+usr.sbin/mlxctl/Makefile			1.1 (new)
+usr.sbin/mlxctl/cmds.c				1.1-1.4 (new)
+usr.sbin/mlxctl/config.c			1.1 (new)
+usr.sbin/mlxctl/dklist.c			1.1-1.3 (new)
+usr.sbin/mlxctl/extern.h			1.1-1.2 (new)
+usr.sbin/mlxctl/main.c				1.1-1.3 (new) via patch
+usr.sbin/mlxctl/mlxctl.8			1.1-1.2 (new) via patch
+usr.sbin/mlxctl/util.c				1.1-1.3 (new)
+usr.sbin/Makefile				patch
+distrib/sets/lists/base/mi			patch
+distrib/sets/lists/man/mi			patch
+
+  Add mlxctl(8), a Mylex DAC960 family management utility.
+
+sys/arch/i386/pci/pchb.c			1.23,1.26 via patch
+
+  Some ServerWorks (Pequr) Host-PCI bridges only get their memory
+  space enabled, even though IO space works.  Some drivers only work
+  reliably with IO space (ahc(4) being a notable example), so check
+  for this condition and correct it.
+
+  Also only pay attention to the low byte of configuration register
+  0x44 on ServerWorks chips, and compress some duplicated code.
