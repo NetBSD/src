@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.4 1999/11/11 15:55:53 matt Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.5 1999/11/12 06:15:38 matt Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -311,9 +311,6 @@ pseudo-device	ipfilter
 pnozz0 at sbus? slot ? offset ?
 
 #### Other device configuration
-
-# Tadpole auxilary control register (power down control)
-auxiotwo0 at obio0
 
 # Tadpole microcontroller
 tctrl0 at obio0
