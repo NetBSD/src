@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kgmon.c,v 1.5 1994/06/11 08:04:25 mycroft Exp $";
+static char *rcsid = "$Id: kgmon.c,v 1.6 1994/12/23 16:45:33 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -163,7 +163,8 @@ openfiles(system, kmemf, kvp)
 	char *kmemf;
 	struct kvmvars *kvp;
 {
-	int mib[3], state, size, openmode;
+	int mib[3], state, openmode;
+	size_t size;
 	char errbuf[_POSIX2_LINE_MAX];
 
 	if (!kflag) {
@@ -238,7 +239,8 @@ kern_readonly(mode)
 getprof(kvp)
 	struct kvmvars *kvp;
 {
-	int mib[3], size;
+	int mib[3];
+	size_t size;
 
 	if (kflag) {
 		size = kvm_read(kvp->kd, nl[N_GMONPARAM].n_value, &kvp->gpm,
@@ -268,7 +270,8 @@ setprof(kvp, state)
 	int state;
 {
 	struct gmonparam *p = (struct gmonparam *)nl[N_GMONPARAM].n_value;
-	int mib[3], sz, oldstate;
+	int mib[3], oldstate;
+	size_t sz;
 
 	sz = sizeof(state);
 	if (!kflag) {
@@ -305,7 +308,8 @@ dumpstate(kvp)
 	struct tostruct *tos;
 	u_long frompc, addr;
 	u_short *froms, *tickbuf;
-	int mib[3], i;
+	int mib[3];
+	size_t i;
 	struct gmonhdr h;
 	int fromindex, endfrom, toindex;
 
@@ -430,7 +434,8 @@ int
 getprofhz(kvp)
 	struct kvmvars *kvp;
 {
-	int mib[2], size, profrate;
+	int mib[2], profrate;
+	size_t size;
 	struct clockinfo clockrate;
 
 	if (kflag) {
