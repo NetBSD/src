@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 1996/12/18 22:18:39 cgd Exp $
+#	$NetBSD: Makefile,v 1.65 1996/12/27 10:44:21 pk Exp $
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
 # Missing: mp.h
@@ -11,10 +11,6 @@ FILES=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	setjmp.h sgtty.h signal.h stab.h stddef.h stdio.h stdlib.h string.h \
 	strings.h struct.h sysexits.h tar.h time.h ttyent.h tzfile.h unistd.h \
 	util.h utime.h utmp.h vis.h
-
-.if (${MACHINE_ARCH} != "alpha")
-FILES+=	link.h
-.endif
 
 DIRS=	arpa protocols rpc rpcsvc
 
