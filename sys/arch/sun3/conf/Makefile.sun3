@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.68 1998/04/12 23:47:45 tv Exp $
+# $NetBSD: Makefile.sun3,v 1.69 1998/05/31 23:25:43 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -91,6 +91,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NOPROF_C=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 
 # Do NOT assume the compiler does "-x funny_format" (gcc-specific)
 # This needs an intermediate file.  The original file is always
