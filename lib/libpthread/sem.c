@@ -1,4 +1,4 @@
-/* $NetBSD: sem.c,v 1.1 2003/01/20 20:10:20 christos Exp $ */
+/* $NetBSD: sem.c,v 1.2 2003/01/20 20:52:24 christos Exp $ */
 
 /*
  * Copyright (C) 2000 Jason Evans <jasone@freebsd.org>.
@@ -55,7 +55,7 @@ struct _sem_st {
 #define SEM_USER        (NULL)
         semid_t         semid;  /* semaphore id if kernel (shared) semaphore */
         int             syssem; /* 1 if kernel (shared) semaphore */
-        LIST_ENTRY(sem) entry;
+        LIST_ENTRY(_sem_st) entry;
         struct _sem_st  **backpointer;
 };
 
@@ -70,7 +70,7 @@ struct _sem_st {
 static sem_t sem_alloc(unsigned int value, semid_t semid, int system_sem);
 static void sem_free(sem_t sem);
 
-static LIST_HEAD(, sem) named_sems = LIST_HEAD_INITIALIZER(&named_sems);
+static LIST_HEAD(, _sem_st) named_sems = LIST_HEAD_INITIALIZER(&named_sems);
 static pthread_mutex_t named_sems_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 static void
