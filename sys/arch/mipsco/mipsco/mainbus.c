@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2000/08/12 22:58:54 wdk Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2001/03/30 23:52:05 wdk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -80,6 +80,11 @@ mbattach(parent, self, aux)
 	nca.ca_name = "obio";
 	nca.ca_addr = 0;
 	config_found(self, &nca, NULL);
+
+	nca.ca_name = "isabus";		/* XXX */
+	nca.ca_addr = 0;
+	config_found(self, &nca, NULL);
+
 }
 
 static int
