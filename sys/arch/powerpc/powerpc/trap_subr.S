@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.50 2003/10/09 07:12:24 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.51 2003/10/22 17:27:58 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -555,13 +555,26 @@ _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
 	mtsprg1	%r1			/* save SP */
+	mtsprg2 %r29			/* save r29 */
+	mfcr	%r29			/* save CR in r29 */
+	mfsrr1	%r1
+	mtcr	%r1
 	GET_CPUINFO(%r1)
+	bf	17,1f			/* branch if privileged */
+	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R28)(%r1)	/* free r28 */
+	mfsprg2	%r28
+	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* free r29 */
+	streg	%r30,(CI_TEMPSAVE+CPUSAVE_R30)(%r1)	/* free r30 */
+	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1)	/* free r31 */
+	mflr	%r28			/* save LR */
+	bla	u_trap
+1:
 	streg	%r28,(CI_DDBSAVE+CPUSAVE_R28)(%r1) /* save r28 */
-	streg	%r29,(CI_DDBSAVE+CPUSAVE_R29)(%r1) /* save r29 */
+	mfsprg2	%r28
+	streg	%r28,(CI_DDBSAVE+CPUSAVE_R29)(%r1) /* save r29 */
 	streg	%r30,(CI_DDBSAVE+CPUSAVE_R30)(%r1) /* save r30 */
 	streg	%r31,(CI_DDBSAVE+CPUSAVE_R31)(%r1) /* save r31 */
 	mflr	%r28			/* save LR */
-	mfcr	%r29			/* save CR */
 	lis	%r1,ddbstk+INTSTK@ha	/* get new SP */
 	addi	%r1,%r1,ddbstk+INTSTK@l
 	bla	ddbtrap
@@ -846,6 +859,7 @@ realtrap:
 s_trap:
 	bf	17,k_trap		/* branch if PSL_PR is false */
 	GET_CPUINFO(%r1)		/* get cpu_info for this cpu */
+u_trap:
 	ldptr	%r1,CI_CURPCB(%r1)
 	addi	%r1,%r1,USPACE		/* stack is top of user struct */
 
