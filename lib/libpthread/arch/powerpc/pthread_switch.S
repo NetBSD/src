@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.8 2002/08/08 23:13:13 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.9 2002/11/09 02:26:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -169,11 +169,12 @@ ENTRY(pthread__upcall_switch)
  * %r1@call     caller saved %r1	(          4 bytes)
  *              any padding to make %r1 a multiple of 16 ... *
  *              saved %r31		(          4 bytes) *
+ *              saved %r9		(          4 bytes) *
  *              saved %r5		(          4 bytes) *
  *              saved %r4		(          4 bytes) *
  *              saved %r3		(          4 bytes) *
  *              context			(RND_CTXSIZE bytes) *
- *              padding to 16 bytes	(          8 bytes) *
+ *              padding to 16 bytes	(         20 bytes) *
  *              space for callee ra	(          4 bytes) *
  * low addr     p__l_s saved %r1	(          4 bytes) *
  *
@@ -181,14 +182,26 @@ ENTRY(pthread__upcall_switch)
  * the ucontext on the stack.  i.e., 8, but we want to keep the stack
  * rounded to a multiple of 16, so it's really 16.
  */
+
+	.type locked_return,@function
+	
 ENTRY(pthread__locked_switch)
-	stwu	%r1, -(RND_CTXSIZE + 32)(%r1)	/* alloc stack space */
+#ifdef PIC
+	mflr	%r10
+	bl	_GLOBAL_OFFSET_TABLE_@local-4
+	mflr	%r9
+	mtlr	%r10
+#endif
+	stwu	%r1, -(RND_CTXSIZE + 48)(%r1)	/* alloc stack space */
 	mflr	%r0
-	stw	%r31,(RND_CTXSIZE + 28)(%r1)	/* saved %r31 */
-	stw	%r5, (RND_CTXSIZE + 24)(%r1)	/* lock */
-	stw	%r4, (RND_CTXSIZE + 20)(%r1)	/* next */
-	stw	%r3, (RND_CTXSIZE + 16)(%r1)	/* self */
-	stw	%r0, (RND_CTXSIZE + 36)(%r1)	/* Save return address */
+	stw	%r31,(RND_CTXSIZE + 44)(%r1)	/* saved %r31 */
+#ifdef PIC
+	stw	%r9, (RND_CTXSIZE + 40)(%r1)
+#endif
+	stw	%r5, (RND_CTXSIZE + 36)(%r1)	/* lock */
+	stw	%r4, (RND_CTXSIZE + 32)(%r1)	/* next */
+	stw	%r3, (RND_CTXSIZE + 28)(%r1)	/* self */
+	stw	%r0, (RND_CTXSIZE + 52)(%r1)	/* Save return address */
 	addi	%r31, %r1, 16			/* %r31 = ucontext */
 	
 	/* increment spinlock to make sure that next gets continued */
@@ -200,16 +213,23 @@ ENTRY(pthread__locked_switch)
 	stw	%r31, PT_UC(%r3)
 	mr	%r3, %r31
 	bl	PIC_PLT(_C_LABEL(_getcontext_u))
-	lwz	%r3, (RND_CTXSIZE + 16)(%r1)
-	lwz	%r4, (RND_CTXSIZE + 20)(%r1)
-	lwz	%r5, (RND_CTXSIZE + 24)(%r1)
+	lwz	%r3, (RND_CTXSIZE + 28)(%r1)
+	lwz	%r4, (RND_CTXSIZE + 32)(%r1)
+	lwz	%r5, (RND_CTXSIZE + 36)(%r1)
+#ifdef PIC
+	lwz	%r9, (RND_CTXSIZE + 40)(%r1)
+#endif
 
 	/*
 	 * Exit the context to make it continue at locked_return instead of
 	 * here.
 	 */
+#ifdef PIC
+	lwz	%r6, locked_return@got(%r9)
+#else
 	lis	%r6, locked_return@ha
 	addi	%r6, %r6, locked_return@l
+#endif
 	stw	%r6, (_REG_PC + 16)(%r1)
 
 	STACK_SWITCH(%r4, %r7)
@@ -285,8 +305,8 @@ ENTRY(pthread__locked_switch)
 	NOTREACHED
 
 locked_return:
-	lwz	%r31, (RND_CTXSIZE + 28)(%r1)
-	addi	%r1, %r1, (RND_CTXSIZE + 32)
+	lwz	%r31, (RND_CTXSIZE + 44)(%r1)
+	addi	%r1, %r1, (RND_CTXSIZE + 48)
 	lwz	%r0, 4(%r1)
 	mtlr	%r0
 	blr
