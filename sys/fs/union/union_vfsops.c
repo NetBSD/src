@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.10 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.11 2004/03/24 15:34:52 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.10 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.11 2004/03/24 15:34:52 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,11 +592,13 @@ union_vptofh(vp, fhp)
 SYSCTL_SETUP(sysctl_vfs_union_setup, "sysctl vfs.union subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "union", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 15, CTL_EOL);

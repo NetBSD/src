@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlutil.c,v 1.4 2004/02/19 06:40:14 atatat Exp $ */
+/*	$NetBSD: sysctlutil.c,v 1.5 2004/03/24 15:34:56 atatat Exp $ */
 
 #include <sys/param.h>
 #define __USE_NEW_SYSCTL
@@ -23,7 +23,7 @@ static struct sysctlnode sysctl_mibroot = {
 	 */
 	0
 #else /* !lint */
-	.sysctl_flags = SYSCTL_ROOT|SYSCTL_PERMANENT|SYSCTL_TYPE(CTLTYPE_NODE),
+	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
 	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_name = "(root)",
 #endif /* !lint */
@@ -39,7 +39,7 @@ static void relearnhead(void);
 int sysctlnametomib(const char *, int *, size_t *);
 int sysctlbyname(const char *, void *, size_t *, void *, size_t);
 int sysctlgetmibinfo(const char *, int *, u_int *,
-		     char *, size_t *, struct sysctlnode **);
+		     char *, size_t *, struct sysctlnode **, int);
 
 /*
  * for ordering nodes -- a query may or may not be given them in
@@ -102,7 +102,8 @@ learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 		if (pnode->sysctl_child == NULL)
 			return (-1);
 
-		rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz, NULL, 0);
+		rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz,
+			    NULL, 0);
 		if (rc) {
 			free(pnode->sysctl_child);
 			pnode->sysctl_child = NULL;
@@ -323,7 +324,8 @@ sysctlnametomib(const char *gname, int *iname, size_t *namelenp)
 	int rc;
 
 	unamelen = *namelenp;
-	rc = sysctlgetmibinfo(gname, iname, &unamelen, NULL, NULL, NULL);
+	rc = sysctlgetmibinfo(gname, iname, &unamelen, NULL, NULL, NULL,
+			      SYSCTL_VERSION);
 	*namelenp = unamelen;
 
 	return (rc);
@@ -339,7 +341,8 @@ sysctlbyname(const char *gname, void *oldp, size_t *oldlenp, void *newp,
 	int name[CTL_MAXNAME], rc;
 	u_int namelen;
 
-	rc = sysctlgetmibinfo(gname, &name[0], &namelen, NULL, NULL, NULL);
+	rc = sysctlgetmibinfo(gname, &name[0], &namelen, NULL, NULL, NULL,
+			      SYSCTL_VERSION);
 	if (rc == 0)
 		rc = sysctl(&name[0], namelen, oldp, oldlenp, newp, newlen);
 	return (rc);
@@ -360,20 +363,20 @@ sysctlbyname(const char *gname, void *oldp, size_t *oldlenp, void *newp,
  */
 #ifdef _REENTRANT
 static mutex_t sysctl_mutex = MUTEX_INITIALIZER;
-static int sysctlgetmibinfo_unlocked(const char *, int *, u_int *,
-				     char *, size_t *, struct sysctlnode **);
+static int sysctlgetmibinfo_unlocked(const char *, int *, u_int *, char *,
+				     size_t *, struct sysctlnode **, int);
 #endif /* __REENTRANT */
 
 int
 sysctlgetmibinfo(const char *gname, int *iname, u_int *namelenp,
-		 char *cname, size_t *csz, struct sysctlnode **rnode)
+		 char *cname, size_t *csz, struct sysctlnode **rnode, int v)
 #ifdef _REENTRANT
 {
 	int rc;
 
 	mutex_lock(&sysctl_mutex);
 	rc = sysctlgetmibinfo_unlocked(gname, iname, namelenp, cname, csz,
-				       rnode);
+				       rnode, v);
 	mutex_unlock(&sysctl_mutex);
 
 	return (rc);
@@ -381,7 +384,8 @@ sysctlgetmibinfo(const char *gname, int *iname, u_int *namelenp,
 
 static int
 sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
-			  char *cname, size_t *csz, struct sysctlnode **rnode)
+			  char *cname, size_t *csz, struct sysctlnode **rnode,
+			  int v)
 #endif /* _REENTRANT */
 {
 	struct sysctlnode *pnode, *node;
@@ -394,6 +398,14 @@ sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
 	char *t;
 	size_t l;
 
+	if (rnode != NULL) {
+		if (*rnode == NULL && v != SYSCTL_VERSION)
+			/* XXX later deal with dealing back a sub version */
+			return (EINVAL);
+		if (SYSCTL_VERS((*rnode)->sysctl_flags) != SYSCTL_VERSION)
+			/* XXX later deal with other people's trees */
+			return (EINVAL);
+	}
 	if (rnode == NULL || *rnode == NULL)
 		pnode = &sysctl_mibroot;
 	else
@@ -497,7 +509,7 @@ sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
 		 */
 		for (ni = 0; ni < pnode->sysctl_clen; ni++)
 			if ((haven && ((n == node[ni].sysctl_num) ||
-			    (node[ni].sysctl_flags & SYSCTL_ANYNUMBER))) ||
+			    (node[ni].sysctl_flags & CTLFLAG_ANYNUMBER))) ||
 			    strcmp(token, node[ni].sysctl_name) == 0)
 				break;
 		if (ni >= pnode->sysctl_clen) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.39 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.40 2004/03/24 15:34:54 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.39 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.40 2004/03/24 15:34:54 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -336,11 +336,13 @@ portal_vptofh(vp, fhp)
 SYSCTL_SETUP(sysctl_vfs_portal_setup, "sysctl vfs.portal subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "portal", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 8, CTL_EOL);

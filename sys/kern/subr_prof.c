@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.29 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.30 2004/03/24 15:34:53 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.29 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.30 2004/03/24 15:34:53 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,32 +159,39 @@ sysctl_kern_profiling(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_kern_gprof_setup, "sysctl kern.profiling subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "profiling", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "state", NULL,
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_STATE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "count", NULL,
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_COUNT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "froms", NULL,
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_FROMS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "tos", NULL,
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_TOS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "gmonparam", NULL,
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_GMONPARAM, CTL_EOL);

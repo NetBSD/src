@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.25 2004/01/03 00:09:15 aymeric Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.26 2004/03/24 15:34:51 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.25 2004/01/03 00:09:15 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.26 2004/03/24 15:34:51 atatat Exp $");
 
 #include "opt_altivec.h"
 
@@ -125,7 +125,7 @@ sysctl_machdep_powersave(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 
 	if (powersave < 0)
-		node.sysctl_flags |= ~SYSCTL_READWRITE;
+		node.sysctl_flags |= ~CTLFLAG_READWRITE;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 #endif
@@ -133,45 +133,54 @@ sysctl_machdep_powersave(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
 
 	/* Deprecated */
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "cachelinesize", NULL,
 		       NULL, CACHELINESIZE, NULL, 0,
 		       CTL_MACHDEP, CPU_CACHELINE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "timebase", NULL,
 		       NULL, 0, &cpu_timebase, 0,
 		       CTL_MACHDEP, CPU_TIMEBASE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "printfataltraps", NULL,
 		       NULL, 0, &cpu_printfataltraps, 0,
 		       CTL_MACHDEP, CPU_PRINTFATALTRAPS, CTL_EOL);
 	/* Use this instead of CPU_CACHELINE */
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "cacheinfo", NULL,
 		       sysctl_machdep_cacheinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_CACHEINFO, CTL_EOL);
 #ifdef PPC_OEA
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "powersave", NULL,
 		       sysctl_machdep_powersave, 0, &powersave, 0,
 		       CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "altivec", NULL,
 		       NULL, cpu_altivec, NULL, 0,
 		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
 #else
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "altivec", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
 #endif
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "model", NULL,
 		       NULL, 0, cpu_model, 0,
 		       CTL_MACHDEP, CPU_MODEL, CTL_EOL);

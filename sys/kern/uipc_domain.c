@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.45 2004/03/23 13:22:05 junyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.46 2004/03/24 15:34:53 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.45 2004/03/23 13:22:05 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.46 2004/03/24 15:34:53 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -207,12 +207,14 @@ pffindproto(family, protocol, type)
 
 SYSCTL_SETUP(sysctl_net_setup, "sysctl net subtree setup")
 {
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "local", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_LOCAL, CTL_EOL);
