@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.42 1999/04/26 22:04:28 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.43 1999/08/05 02:24:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -407,12 +407,12 @@ m_copym(m, off0, len, wait)
 	int copyhdr = 0;
 
 	if (off < 0 || len < 0)
-		panic("m_copym");
+		panic("m_copym: off %d, len %d", off, len);
 	if (off == 0 && m->m_flags & M_PKTHDR)
 		copyhdr = 1;
 	while (off > 0) {
 		if (m == 0)
-			panic("m_copym");
+			panic("m_copym: m == 0");
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -423,7 +423,7 @@ m_copym(m, off0, len, wait)
 	while (len > 0) {
 		if (m == 0) {
 			if (len != M_COPYALL)
-				panic("m_copym");
+				panic("m_copym: m == 0 and not COPYALL");
 			break;
 		}
 		MGET(n, wait, m->m_type);
