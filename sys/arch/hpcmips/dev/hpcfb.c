@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.35 2001/01/24 03:50:20 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.36 2001/01/24 03:52:16 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.35 2001/01/24 03:50:20 sato Exp $";
+    "$Id: hpcfb.c,v 1.36 2001/01/24 03:52:16 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,6 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 	
 	case WSDISPLAYIO_SMODE:
 		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){ 
-printf("EMUL %x\n", (int)dc);
 			if (sc->sc_mapping){
 				sc->sc_mapping = 0;
 				if (dc->dc_state&HPCFB_DC_DRAWING)
@@ -632,7 +631,6 @@ printf("EMUL %x\n", (int)dc);
 #endif
 			}
 		} else {
-printf("MAPPED %x\n", (int)dc);
 			if (!sc->sc_mapping) {
 				sc->sc_mapping = 1;
 				dc->dc_state |= HPCFB_DC_ABORT;
@@ -859,7 +857,6 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 #ifdef HPCFB_MULTI
 	odc = sc->sc_dc;
 
-printf("switch request %x %x\n", (int)odc, (int)dc);
 	if (dc == NULL || odc == dc) {
 		hpcfb_refresh_screen(sc);
 		return 0;
@@ -894,7 +891,6 @@ hpcfb_doswitch(sc)
 	odc = sc->sc_dc;
 	dc = sc->sc_wantedscreen;
 
-printf("doswitch %x %x\n",(int)odc, (int)dc);
 	if (!dc) {
 		(*sc->sc_switchcb)(sc->sc_switchcbarg, EIO, 0);
 		return;
