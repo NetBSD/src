@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.36 2004/01/17 20:48:57 dbj Exp $	*/
+/*	$NetBSD: dd.c,v 1.37 2004/01/17 21:00:16 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.36 2004/01/17 20:48:57 dbj Exp $");
+__RCSID("$NetBSD: dd.c,v 1.37 2004/01/17 21:00:16 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -414,6 +414,7 @@ dd_close(void)
 	if ((out.dbcnt == 0) && pending) {
 		memset(out.db, 0, out.dbsz);
 		out.dbcnt = out.dbsz;
+		out.dbp = out.db + out.dbcnt;
 		pending -= out.dbsz;
 	}
 	if (out.dbcnt)
