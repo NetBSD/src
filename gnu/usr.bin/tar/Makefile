@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1995/04/23 07:58:55 cgd Exp $
+#	$NetBSD: Makefile,v 1.13 1995/04/29 05:37:13 cgd Exp $
 
 PROG=	tar
 SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.y \
@@ -10,6 +10,7 @@ CFLAGS+= -DHAVE_LIMITS_H=1 -DHAVE_STRSTR=1 -DHAVE_VALLOC=1 -DHAVE_MKDIR=1
 CFLAGS+= -DHAVE_MKNOD=1 -DHAVE_RENAME=1 -DHAVE_FTRUNCATE=1 -DHAVE_GETCWD=1
 CFLAGS+= -DHAVE_VPRINTF=1 -DNEEDPAD -I${.CURDIR}
 CFLAGS+= -DDEF_AR_FILE=\"/dev/rst0\" -DDEFBLOCKING=20
+CFLAGS+= -DSTDC_HEADERS
 
 LDSTATIC= -static
 LDADD+=	-lgnumalloc
