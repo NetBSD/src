@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.48.4.1 2000/07/13 01:39:02 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.48.4.2 2001/12/24 14:05:28 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -901,9 +901,11 @@ pollscan(p, fds, nfd, retval)
 	int n = 0;
 
 	for (i = 0; i < nfd; i++, fds++) {
-		if ((u_int)fds->fd >= fdp->fd_nfiles) {
+		if (fds->fd >= fdp->fd_nfiles) {
 			fds->revents = POLLNVAL;
 			n++;
+		} else if (fds->fd < 0) {
+			fds->revents = 0;
 		} else {
 			fp = fdp->fd_ofiles[fds->fd];
 			if (fp == NULL ||
