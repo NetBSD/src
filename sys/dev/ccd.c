@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.12 1995/08/21 18:25:52 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.13 1995/08/29 23:13:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -230,7 +230,9 @@ ccdinit(ccd, cpaths, p)
 		printf("ccdinit: unit %d\n", ccd->ccd_unit);
 #endif
 
+#ifdef WORKING_DISK_STATISTICS		/* XXX !! */
 	cs->sc_dk = ccd->ccd_dk;
+#endif
 	cs->sc_size = 0;
 	cs->sc_ileave = ccd->ccd_interleave;
 	cs->sc_nccdisks = ccd->ccd_ndev;
@@ -381,8 +383,10 @@ ccdinit(ccd, cpaths, p)
 	ccg->ccg_nsectors = 1024 * (1024 / ccg->ccg_secsize);
 	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_nsectors;
 
+#ifdef WORKING_DISK_STATISTICS		/* XXX !! */
 	if (ccd->ccd_dk >= 0)
 		dk_wpms[ccd->ccd_dk] = 32 * (60 * DEV_BSIZE / 2);     /* XXX */
+#endif
 
 	cs->sc_flags |= CCDF_INITED;
 	cs->sc_cflags = ccd->ccd_flags;	/* So we can find out later... */
@@ -646,6 +650,7 @@ ccdstart(cs, bp)
 		printf("ccdstart(%x, %x)\n", cs, bp);
 #endif
 
+#ifdef WORKING_DISK_STATISTICS		/* XXX !! */
 	/*
 	 * Instrumentation (not very meaningful)
 	 */
@@ -655,6 +660,7 @@ ccdstart(cs, bp)
 		dk_xfer[cs->sc_dk]++;
 		dk_wds[cs->sc_dk] += bp->b_bcount >> 6;
 	}
+#endif
 
 	/*
 	 * Allocate component buffers and fire off the requests
@@ -786,8 +792,11 @@ ccdintr(cs, bp)
 	if (cs->sc_nactive < 0)
 		panic("ccdintr: ccd%d: sc_nactive < 0", cs->sc_unit);
 #endif
+
+#ifdef WORKING_DISK_STATISTICS		/* XXX !! */
 	if (cs->sc_nactive == 0 && cs->sc_dk >= 0)
 		dk_busy &= ~(1 << cs->sc_dk);
+#endif
 	if (bp->b_flags & B_ERROR)
 		bp->b_resid = bp->b_bcount;
 	biodone(bp);
@@ -916,7 +925,9 @@ ccdioctl(dev, cmd, data, flag, p)
 	struct ccddevice ccd;
 	char **cpp;
 	struct vnode **vpp;
+#ifdef WORKING_DISK_STATISTICS		/* XXX !! */
 	extern int dkn;
+#endif
 
 	if (unit >= numccd)
 		return (ENXIO);
@@ -980,6 +991,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		ccd.ccd_vpp = vpp;
 		ccd.ccd_ndev = ccio->ccio_ndisks;
 
+#ifdef WORKING_DISK_STATISTICS		/* XXX !! */
 		/*
 		 * Assign disk index first so that init routine
 		 * can use it (saves having the driver drag around
@@ -990,13 +1002,16 @@ ccdioctl(dev, cmd, data, flag, p)
 			ccd.ccd_dk = dkn++;
 		else
 			ccd.ccd_dk = -1;
+#endif
 
 		/*
 		 * Initialize the ccd.  Fills in the softc for us.
 		 */
 		if (error = ccdinit(&ccd, cpp, p)) {
+#ifdef WORKING_DISK_STATISTICS		/* XXX !! */
 			if (ccd.ccd_dk >= 0)
 				--dkn;
+#endif
 			for (j = 0; j < lookedup; ++j)
 				(void)vn_close(vpp[i], FREAD|FWRITE,
 				    p->p_ucred, p);
