@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.1 1997/03/24 21:54:18 christos Exp $
+#	$NetBSD: bsd.links.mk,v 1.2 1997/03/28 15:07:28 christos Exp $
 
 .if defined(SYMLINKS) && !empty(SYMLINKS)
 linksinstall::
@@ -16,7 +16,7 @@ linksinstall::
 		echo ".if !defined(UPDATE)"; \
 		echo ".PHONY: $$t"; \
 		echo ".endif"; \
-		echo "$$t: $$l"; \
+		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
 		echo "	@rm -f $$t"; \
 		echo "	@ln -s $$l $$t"; \
