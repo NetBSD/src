@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2004/04/25 19:01:27 cl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2004/04/25 23:46:07 cl Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2004/04/25 19:01:27 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2004/04/25 23:46:07 cl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -392,7 +392,8 @@ i386_proc0_tss_ldt_init()
 	cpu_info_primary.ci_curpcb = pcb = &lwp0.l_addr->u_pcb;
 
 	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16
+		| SEL_KPL;		/* i/o pl */
 
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
@@ -427,7 +428,8 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 	struct pcb *pcb = ci->ci_idle_pcb;
 
 	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16
+		| SEL_KPL;		/* i/o pl */
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
@@ -445,9 +447,19 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 void
 i386_switch_context(struct pcb *new)
 {
+	dom0_op_t op;
+
 	if (new->pcb_cr0 & CR0_TS)
 		HYPERVISOR_fpu_taskswitch();
+
 	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
+
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		op.cmd = DOM0_IOPL;
+		op.u.iopl.domain = xen_start_info.dom_id;
+		op.u.iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
+		HYPERVISOR_dom0_op(&op);
+	}
 }
 
 /*
