@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.497 2003/01/17 00:17:35 jonathan Exp $
+$NetBSD: pcidevs,v 1.498 2003/01/24 03:15:04 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1780,6 +1780,8 @@ product NVIDIA	RIVATNT2	0x0028	RIVA TNT2
 product NVIDIA	RIVATNT2U	0x0029	RIVA TNT2 Ultra
 product NVIDIA	VANTA		0x002c	Vanta
 product NVIDIA	RIVATNT2M64	0x002d	RIVA TNT2 Model 64
+product NVIDIA	NFORCE2_ATA133	0x0065	nForce2 ATA133 IDE
+product NVIDIA	NFORCE2_MCPT_AC	0x006a	nForce2 MCP-T AC-97
 product NVIDIA	ALADDINTNT2	0x00a0	Aladdin TNT2
 product NVIDIA	GEFORCE256	0x0100	GeForce 256
 product NVIDIA	GEFORCEDDR	0x0101	GeForce DDR
@@ -1790,7 +1792,7 @@ product NVIDIA	GEFORCE2DDR	0x0151	GeForce2 GTS (DDR)
 product NVIDIA	GEFORCE2BR	0x0152	GeForce2 GTS
 product NVIDIA	QUADRO2		0x0153	Quadro2
 product NVIDIA	NFORCE_MCP_AC	0x01b1	nForce MCP AC-97
-product NVIDIA	NFORCE2_MCPT_AC	0x006a	nForce2 MCP-T AC-97
+product NVIDIA	NFORCE_ATA100	0x01bc	nForce ATA100 IDE
 
 /* Nvidia Corporation & SGS Thomson Microelectric */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
