@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.33 1997/03/29 05:03:01 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.34 1997/04/06 09:58:30 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -986,8 +986,9 @@ again:
 		/* flush any data in the FIFO */
 		if (fifo) {
 			if (state->flags & DMA_OUT) {
-	printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
-					fifo, len, state->flags);
+				if (fifo != 0x10)
+		 			printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
+					    fifo, len, state->flags);
 				len += fifo;
 			} else if (state->flags & DMA_IN) {
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
