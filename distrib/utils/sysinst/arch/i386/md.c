@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.35 2000/05/11 02:24:36 hubertf Exp $ */
+/*	$NetBSD: md.c,v 1.36 2000/05/12 01:00:08 hubertf Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -474,8 +474,8 @@ md_cleanup_install(void)
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
 	sprintf(sedcmd, "sed "
-			"-e 's/rc_configured=NO/rc_configured=YES/'"
-			"-e 's/wscons=NO/wscons=YES/'"
+			"-e 's/rc_configured=NO/rc_configured=YES/' "
+			"-e 's/wscons=NO/wscons=YES/' "
 			" < %s > %s", realfrom, realto);
 	if (logging)
 		(void)fprintf(log, "%s\n", sedcmd);
