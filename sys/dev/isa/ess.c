@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.13 1998/08/09 04:14:47 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.14 1998/08/09 04:40:55 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1075,10 +1075,10 @@ ess_set_params(addr, setmode, usemode, play, rec)
 		 * the only bit in common is the crystal selection.  However,
 		 * we'll be conservative here.  - mycroft
 		 */
-		if (usemode == AUMODE_PLAY) {
+		if ((usemode | setmode) == AUMODE_PLAY) {
 			rec->sample_rate = play->sample_rate;
 			setmode |= AUMODE_RECORD;
-		} else if (usemode == AUMODE_RECORD) {
+		} else if ((usemode | setmode) == AUMODE_RECORD) {
 			play->sample_rate = rec->sample_rate;
 			setmode |= AUMODE_PLAY;
 		} else
@@ -1990,7 +1990,8 @@ ess_get_props(addr)
 	void *addr;
 {
 	struct ess_softc *sc = addr;
-	return (AUDIO_PROP_MMAP | 
+
+	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
 	       (sc->sc_in.drq != sc->sc_out.drq ? AUDIO_PROP_FULLDUPLEX : 0));
 }
 
