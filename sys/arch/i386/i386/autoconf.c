@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.75.2.1 2004/08/16 17:46:02 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.75.2.1 2004/08/16 17:46:02 jmc Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -183,11 +183,11 @@ matchbiosdisks(void)
 	char mbr[DEV_BSIZE];
 	int  dklist_size;
 	int bmajor;
+	int numbig;
 
 	big = lookup_bootinfo(BTINFO_BIOSGEOM);
 
-	if (big == NULL)
-		return;
+	numbig = big ? big->num : 0;
 
 	/*
 	 * First, count all native disks
@@ -196,22 +196,17 @@ matchbiosdisks(void)
 		if (is_valid_disk(dv))
 			i386_ndisks++;
 
-	if (i386_ndisks == 0)
-		return;
-
 	dklist_size = sizeof (struct disklist) + (i386_ndisks - 1) *
 	    sizeof (struct nativedisk_info);
 
 	/* XXX M_TEMP is wrong */
-	i386_alldisks = malloc(dklist_size, M_TEMP, M_NOWAIT);
+	i386_alldisks = malloc(dklist_size, M_TEMP, M_NOWAIT | M_ZERO);
 	if (i386_alldisks == NULL)
 		return;
 
-	memset(i386_alldisks, 0, dklist_size);
-
 	i386_alldisks->dl_nnativedisks = i386_ndisks;
-	i386_alldisks->dl_nbiosdisks = big->num;
-	for (i = 0; i < big->num; i++) {
+	i386_alldisks->dl_nbiosdisks = numbig;
+	for (i = 0; i < numbig; i++) {
 		i386_alldisks->dl_biosdisks[i].bi_dev = big->disk[i].dev;
 		i386_alldisks->dl_biosdisks[i].bi_sec = big->disk[i].sec;
 		i386_alldisks->dl_biosdisks[i].bi_head = big->disk[i].head;
@@ -270,7 +265,7 @@ matchbiosdisks(void)
 
 			for (ck = i = 0; i < DEV_BSIZE; i++)
 				ck += mbr[i];
-			for (m = i = 0; i < big->num; i++) {
+			for (m = i = 0; i < numbig; i++) {
 				be = &big->disk[i];
 #ifdef GEOM_DEBUG
 				printf("match %s with %d ", dv->dv_xname, i);
