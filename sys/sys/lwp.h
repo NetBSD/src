@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.4 2003/01/30 19:14:18 manu Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.5 2003/02/02 20:34:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,9 +58,9 @@ struct	lwp {
 
 	LIST_ENTRY(lwp) l_sibling;	/* Entry on process's list of LWPs. */
 
-	int		l_flag;
 	struct cpu_info * __volatile l_cpu; /* CPU we're running on if
 					       SONPROC */
+	int	l_flag;
 	int	l_stat;
 	lwpid_t	l_lid;		/* LWP identifier; local to process. */
 
