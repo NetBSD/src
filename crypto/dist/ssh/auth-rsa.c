@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rsa.c,v 1.1.1.10 2002/04/22 07:35:43 itojun Exp $	*/
+/*	$NetBSD: auth-rsa.c,v 1.1.1.10.2.1 2002/06/26 16:52:41 tv Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.55 2002/03/29 19:18:33 stevesk Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.56 2002/06/10 16:53:06 stevesk Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
@@ -82,8 +82,8 @@ auth_rsa_verify_response(Key *key, BIGNUM *challenge, u_char response[16])
 
 	/* don't allow short keys */
 	if (BN_num_bits(key->rsa->n) < SSH_RSA_MINIMUM_MODULUS_SIZE) {
-		error("auth_rsa_verify_response: n too small: %d bits",
-		    BN_num_bits(key->rsa->n));
+		error("auth_rsa_verify_response: RSA modulus too small: %d < minimum %d bits",
+		    BN_num_bits(key->rsa->n), SSH_RSA_MINIMUM_MODULUS_SIZE);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.11 2002/03/08 02:00:52 itojun Exp $	*/
+/*	$NetBSD: canohost.c,v 1.11.2.1 2002/06/26 16:53:03 tv Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: canohost.c,v 1.31 2002/02/27 21:23:13 stevesk Exp $");
+RCSID("$OpenBSD: canohost.c,v 1.32 2002/06/11 08:11:45 itojun Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -43,12 +43,13 @@ get_remote_hostname(int socket, int verify_reverse_mapping)
 		debug("getpeername failed: %.100s", strerror(errno));
 		fatal_cleanup();
 	}
-	if (from.ss_family == AF_INET)
-		check_ip_options(socket, ntop);
 
 	if (getnameinfo((struct sockaddr *)&from, fromlen, ntop, sizeof(ntop),
 	    NULL, 0, NI_NUMERICHOST) != 0)
 		fatal("get_remote_hostname: getnameinfo NI_NUMERICHOST failed");
+
+	if (from.ss_family == AF_INET)
+		check_ip_options(socket, ntop);
 
 	debug3("Trying to reverse map address %.100s.", ntop);
 	/* Map the IP address to a host name. */

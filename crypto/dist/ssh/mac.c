@@ -1,4 +1,4 @@
-/*	$NetBSD: mac.c,v 1.3 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$NetBSD: mac.c,v 1.3.2.1 2002/06/26 16:53:18 tv Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: mac.c,v 1.4 2002/01/25 22:07:40 markus Exp $");
+RCSID("$OpenBSD: mac.c,v 1.5 2002/05/16 22:02:50 markus Exp $");
 
 #include <openssl/hmac.h>
 

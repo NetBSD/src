@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-common.c,v 1.4 2001/12/06 03:54:06 itojun Exp $	*/
+/*	$NetBSD: sftp-common.c,v 1.4.2.1 2002/06/26 16:53:56 tv Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-common.c,v 1.5 2001/12/02 02:08:32 deraadt Exp $");
+RCSID("$OpenBSD: sftp-common.c,v 1.6 2002/06/23 09:30:14 deraadt Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -71,6 +71,7 @@ Attrib *
 decode_attrib(Buffer *b)
 {
 	static Attrib a;
+
 	attrib_clear(&a);
 	a.flags = buffer_get_int(b);
 	if (a.flags & SSH2_FILEXFER_ATTR_SIZE)
@@ -89,6 +90,7 @@ decode_attrib(Buffer *b)
 	if (a.flags & SSH2_FILEXFER_ATTR_EXTENDED) {
 		char *type, *data;
 		int i, count;
+
 		count = buffer_get_int(b);
 		for (i = 0; i < count; i++) {
 			type = buffer_get_string(b, NULL);

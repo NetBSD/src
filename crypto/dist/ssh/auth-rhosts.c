@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.10.2.1 2002/05/28 19:27:14 tv Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.10.2.2 2002/06/26 16:52:40 tv Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland

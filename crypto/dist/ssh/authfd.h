@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.h,v 1.1.1.7 2002/04/22 07:37:18 itojun Exp $	*/
-/*	$OpenBSD: authfd.h,v 1.24 2002/03/21 22:44:05 rees Exp $	*/
+/*	$NetBSD: authfd.h,v 1.1.1.7.2.1 2002/06/26 16:52:57 tv Exp $	*/
+/*	$OpenBSD: authfd.h,v 1.30 2002/06/19 00:27:55 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,33 +41,45 @@
 
 /* smartcard */
 #define SSH_AGENTC_ADD_SMARTCARD_KEY		20
-#define SSH_AGENTC_REMOVE_SMARTCARD_KEY	        21
+#define SSH_AGENTC_REMOVE_SMARTCARD_KEY		21
+
+/* lock/unlock the agent */
+#define SSH_AGENTC_LOCK				22
+#define SSH_AGENTC_UNLOCK			23
+
+/* add key with constraints */
+#define SSH_AGENTC_ADD_RSA_ID_CONSTRAINED	24
+#define SSH2_AGENTC_ADD_ID_CONSTRAINED		25
+
+#define	SSH_AGENT_CONSTRAIN_LIFETIME		1
 
 /* extended failure messages */
 #define SSH2_AGENT_FAILURE			30
 
 /* additional error code for ssh.com's ssh-agent2 */
-#define SSH_COM_AGENT2_FAILURE                  102
+#define SSH_COM_AGENT2_FAILURE			102
 
 #define	SSH_AGENT_OLD_SIGNATURE			0x01
 
 typedef struct {
-	int     fd;
-	Buffer  identities;
-	int     howmany;
-}       AuthenticationConnection;
+	int	fd;
+	Buffer	identities;
+	int	howmany;
+}	AuthenticationConnection;
 
-int      ssh_get_authentication_socket(void);
-void     ssh_close_authentication_socket(int);
+int	ssh_get_authentication_socket(void);
+void	ssh_close_authentication_socket(int);
 
 AuthenticationConnection *ssh_get_authentication_connection(void);
-void     ssh_close_authentication_connection(AuthenticationConnection *);
+void	ssh_close_authentication_connection(AuthenticationConnection *);
 int	 ssh_get_num_identities(AuthenticationConnection *, int);
 Key	*ssh_get_first_identity(AuthenticationConnection *, char **, int);
 Key	*ssh_get_next_identity(AuthenticationConnection *, char **, int);
 int	 ssh_add_identity(AuthenticationConnection *, Key *, const char *);
+int	 ssh_add_identity_constrained(AuthenticationConnection *, Key *, const char *, u_int);
 int	 ssh_remove_identity(AuthenticationConnection *, Key *);
 int	 ssh_remove_all_identities(AuthenticationConnection *, int);
+int	 ssh_lock_agent(AuthenticationConnection *, int, const char *);
 int	 ssh_update_card(AuthenticationConnection *, int, const char *, const char *);
 
 int

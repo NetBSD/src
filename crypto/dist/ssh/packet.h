@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.1.1.11 2002/04/22 07:37:33 itojun Exp $	*/
-/*	$OpenBSD: packet.h,v 1.34 2002/03/18 17:16:38 markus Exp $	*/
+/*	$NetBSD: packet.h,v 1.1.1.11.2.1 2002/06/26 16:53:34 tv Exp $	*/
+/*	$OpenBSD: packet.h,v 1.35 2002/06/19 18:01:00 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -25,6 +25,7 @@ int      packet_get_connection_in(void);
 int      packet_get_connection_out(void);
 void     packet_close(void);
 void	 packet_set_encryption_key(const u_char *, u_int, int);
+u_int	 packet_get_encryption_key(u_char *);
 void     packet_set_protocol_flags(u_int);
 u_int	 packet_get_protocol_flags(void);
 void     packet_start_compression(int);

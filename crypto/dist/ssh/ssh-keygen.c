@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.16 2002/04/22 07:59:45 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.16.2.1 2002/06/26 16:54:10 tv Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.98 2002/03/27 22:21:45 markus Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.101 2002/06/23 09:39:55 deraadt Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -137,7 +137,7 @@ load_identity(char *filename)
 }
 
 #define SSH_COM_PUBLIC_BEGIN		"---- BEGIN SSH2 PUBLIC KEY ----"
-#define SSH_COM_PUBLIC_END  		"---- END SSH2 PUBLIC KEY ----"
+#define SSH_COM_PUBLIC_END		"---- END SSH2 PUBLIC KEY ----"
 #define SSH_COM_PRIVATE_BEGIN		"---- BEGIN SSH2 ENCRYPTED PRIVATE KEY ----"
 #define	SSH_COM_PRIVATE_KEY_MAGIC	0x3f6ff9eb
 
@@ -167,7 +167,7 @@ do_convert_to_ssh2(struct passwd *pw)
 	}
 	fprintf(stdout, "%s\n", SSH_COM_PUBLIC_BEGIN);
 	fprintf(stdout,
-	    "Comment: \"%d-bit %s, converted from OpenSSH by %s@%s\"\n",
+	    "Comment: \"%u-bit %s, converted from OpenSSH by %s@%s\"\n",
 	    key_size(k), key_type(k),
 	    pw->pw_name, hostname);
 	dump_base64(stdout, blob, len);
@@ -413,7 +413,7 @@ do_upload(struct passwd *pw, const char *sc_reader_id)
 	key_free(prv);
 	if (ret < 0)
 		exit(1);
-        log("loading key done");
+	log("loading key done");
 	exit(0);
 }
 
@@ -459,7 +459,7 @@ do_fingerprint(struct passwd *pw)
 	public = key_load_public(identity_file, &comment);
 	if (public != NULL) {
 		fp = key_fingerprint(public, fptype, rep);
-		printf("%d %s %s\n", key_size(public), fp, comment);
+		printf("%u %s %s\n", key_size(public), fp, comment);
 		key_free(public);
 		xfree(comment);
 		xfree(fp);
@@ -493,7 +493,8 @@ do_fingerprint(struct passwd *pw)
 			if (i == 0 || ep == NULL || (*ep != ' ' && *ep != '\t')) {
 				int quoted = 0;
 				comment = cp;
-				for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
+				for (; *cp && (quoted || (*cp != ' ' &&
+				    *cp != '\t')); cp++) {
 					if (*cp == '\\' && cp[1] == '"')
 						cp++;	/* Skip both */
 					else if (*cp == '"')
@@ -516,7 +517,7 @@ do_fingerprint(struct passwd *pw)
 			}
 			comment = *cp ? cp : comment;
 			fp = key_fingerprint(public, fptype, rep);
-			printf("%d %s %s\n", key_size(public), fp,
+			printf("%u %s %s\n", key_size(public), fp,
 			    comment ? comment : "no comment");
 			xfree(fp);
 			key_free(public);

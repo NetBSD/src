@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.h,v 1.1.1.5 2002/03/08 01:21:47 itojun Exp $	*/
-/*	$OpenBSD: xmalloc.h,v 1.8 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: xmalloc.h,v 1.1.1.5.2.1 2002/06/26 16:54:42 tv Exp $	*/
+/*	$OpenBSD: xmalloc.h,v 1.9 2002/06/19 00:27:55 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -23,6 +23,6 @@
 void	*xmalloc(size_t);
 void	*xrealloc(void *, size_t);
 void     xfree(void *);
-char 	*xstrdup(const char *);
+char	*xstrdup(const char *);
 
 #endif				/* XMALLOC_H */

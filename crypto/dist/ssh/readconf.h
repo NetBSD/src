@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.9 2002/03/08 02:00:53 itojun Exp $	*/
-/*	$OpenBSD: readconf.h,v 1.42 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: readconf.h,v 1.9.2.1 2002/06/26 16:53:40 tv Exp $	*/
+/*	$OpenBSD: readconf.h,v 1.43 2002/06/08 05:17:01 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -55,8 +55,6 @@ typedef struct {
 						 * authentication. */
 	int     kbd_interactive_authentication; /* Try keyboard-interactive auth. */
 	char	*kbd_interactive_devices; /* Keyboard-interactive auth devices. */
-	int     fallback_to_rsh;/* Use rsh if cannot connect with ssh. */
-	int     use_rsh;	/* Always use rsh (don\'t try ssh). */
 	int     batch_mode;	/* Batch mode: do not ask for passwords. */
 	int     check_host_ip;	/* Also keep track of keys for IP address */
 	int     strict_host_key_checking;	/* Strict host key checking. */

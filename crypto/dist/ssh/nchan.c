@@ -1,4 +1,4 @@
-/*	$NetBSD: nchan.c,v 1.1.1.11 2002/04/22 07:37:31 itojun Exp $	*/
+/*	$NetBSD: nchan.c,v 1.1.1.11.2.1 2002/06/26 16:53:30 tv Exp $	*/
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: nchan.c,v 1.45 2002/03/25 21:13:51 markus Exp $");
+RCSID("$OpenBSD: nchan.c,v 1.47 2002/06/19 00:27:55 deraadt Exp $");
 
 #include "ssh1.h"
 #include "ssh2.h"
@@ -368,7 +368,7 @@ chan_rcvd_ieof(Channel *c)
 	else
 		chan_rcvd_ieof1(c);
 	if (c->ostate == CHAN_OUTPUT_WAIT_DRAIN &&
-	    buffer_len(&c->output) == 0 && 
+	    buffer_len(&c->output) == 0 &&
 	    !CHANNEL_EFD_OUTPUT_ACTIVE(c))
 		chan_obuf_empty(c);
 }
@@ -412,8 +412,8 @@ chan_is_dead(Channel *c, int send)
 	    c->extended_usage == CHAN_EXTENDED_WRITE &&
 	    c->efd != -1 &&
 	    buffer_len(&c->extended) > 0) {
-                debug2("channel %d: active efd: %d len %d",
-                    c->self, c->efd, buffer_len(&c->extended));
+		debug2("channel %d: active efd: %d len %d",
+		    c->self, c->efd, buffer_len(&c->extended));
 		return 0;
 	}
 	if (!(c->flags & CHAN_CLOSE_SENT)) {

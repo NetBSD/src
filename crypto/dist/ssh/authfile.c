@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.12 2002/03/08 02:00:51 itojun Exp $	*/
+/*	$NetBSD: authfile.c,v 1.12.2.1 2002/06/26 16:52:58 tv Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfile.c,v 1.48 2002/02/28 15:46:33 markus Exp $");
+RCSID("$OpenBSD: authfile.c,v 1.50 2002/06/24 14:55:38 markus Exp $");
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -271,7 +271,7 @@ key_load_public_rsa1(int fd, const char *filename, char **commentp)
 	(void) buffer_get_int(&buffer);		/* reserved */
 
 	/* Read the public key from the buffer. */
-	buffer_get_int(&buffer);
+	(void) buffer_get_int(&buffer);
 	pub = key_new(KEY_RSA1);
 	buffer_get_bignum(&buffer, pub->rsa->n);
 	buffer_get_bignum(&buffer, pub->rsa->e);
@@ -358,7 +358,7 @@ key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
 	(void) buffer_get_int(&buffer);	/* Reserved data. */
 
 	/* Read the public key from the buffer. */
-	buffer_get_int(&buffer);
+	(void) buffer_get_int(&buffer);
 	prv = key_new_private(KEY_RSA1);
 
 	buffer_get_bignum(&buffer, prv->rsa->n);
@@ -422,7 +422,7 @@ fail:
 	return NULL;
 }
 
-static Key *
+Key *
 key_load_private_pem(int fd, int type, const char *passphrase,
     char **commentp)
 {
