@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.45 2001/01/19 01:44:46 manu Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.46 2001/03/15 19:18:20 manu Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -149,6 +149,10 @@ linux_e_proc_exec(p, epp)
 	}
 
 	memset(p->p_emuldata, '\0', sizeof(struct linux_emuldata));
+	
+	/* Set the process idea of the break to the real value */
+	((struct linux_emuldata*)(p->p_emuldata))->p_break = 
+	    p->p_vmspace->vm_daddr + ctob(p->p_vmspace->vm_dsize);
 }
 
 /*
