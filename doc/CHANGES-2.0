@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.257 2004/06/05 20:44:35 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.258 2004/06/06 06:54:28 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3514,4 +3514,26 @@ sys/nfs/nfs_serv.c				1.89
 
 	Fix an LP64 problem for exclusive create in nfsrv_create().
 	[yamt, ticket #445]
+
+share/man/man4/options.4			1.241 via patch
+
+	Add documentation for XSERVER and XSERVER_DDB.  PR#20173.
+	[fair, ticket #385]
+
+sbin/fsck_ffs/fsck_ffs.8			1.38 via patch
+
+	Correct a misnumbering of options.  PR#25784.
+	[fair, ticket #435]
+
+dist/nawk/run.c					1.10
+
+	Fix off-by-one use of gensub() index parameter, and treat negative
+	number to mean 'replace first match'.  The index use is now fully 
+	aligned with GNU awk.  PR#25543.
+	[jdolecek, ticket #446]
+
+usr.bin/awk/awk.1				1.14
+
+	Add history section noting nawk is default since 2.0, and bump date.
+	[jdolecek, ticket #447]
 
