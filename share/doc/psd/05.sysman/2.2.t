@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.2.t,v 1.2 1998/01/09 06:54:48 perry Exp $
+.\"	$NetBSD: 2.2.t,v 1.3 1999/02/12 15:04:01 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -167,7 +167,7 @@ file to be opened.
 The \fIoflag\fP parameter must
 include O_CREAT to cause the file to be created.
 Bits for \fIoflag\fP are
-defined in \fI<sys/fcntl.h>\fP:
+defined in \fI<fcntl.h>\fP:
 .DS
 .TS
 l l.
