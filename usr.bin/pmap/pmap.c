@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2003/01/08 20:25:12 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.11 2003/02/22 17:45:04 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.10 2003/01/08 20:25:12 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.11 2003/02/22 17:45:04 atatat Exp $");
 #endif
 
 #include <string.h>
@@ -151,19 +151,20 @@ dump_vm_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc,
 		printf(" hint_lock = <struct simplelock>,\n");
 		printf("%*s    first_free = %p,", indent(2), "",
 		       D(vm_map, vm_map)->first_free);
-		printf(" flags = %x <%s%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
+		printf(" flags = %x <%s%s%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
 		       D(vm_map, vm_map)->flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_BUSY ? " BUSY" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_WANTLOCK ? " WANTLOCK" : ""
+		       D(vm_map, vm_map)->flags & VM_MAP_WANTLOCK ? " WANTLOCK" : "",
 #ifdef VM_MAP_DYING
-		       , D(vm_map, vm_map)->flags & VM_MAP_DYING ? " DYING" : ""
+		       D(vm_map, vm_map)->flags & VM_MAP_DYING ? " DYING" :
 #endif
+		       "",
 #ifdef VM_MAP_TOPDOWN
-		       , D(vm_map, vm_map)->flags & VM_MAP_TOPDOWN ? " TOPDOWN" : ""
+		       D(vm_map, vm_map)->flags & VM_MAP_TOPDOWN ? " TOPDOWN" :
 #endif
-		       );
+		       "");
 		printf("%*s    flags_lock = <struct simplelock>,", indent(2), "");
 		printf(" timestamp = %u }\n", D(vm_map, vm_map)->timestamp);
 	}
@@ -305,10 +306,10 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 		printf("%*s    offset = %" PRIx64 ",", indent(2), "",
 		       vme->offset);
 		printf(" etype = %x <%s%s%s%s >,", vme->etype,
-		       vme->etype & UVM_ET_OBJ ? " OBJ" : "",
-		       vme->etype & UVM_ET_SUBMAP ? " SUBMAP" : "",
-		       vme->etype & UVM_ET_COPYONWRITE ? " COW" : "",
-		       vme->etype & UVM_ET_NEEDSCOPY ? " NEEDSCOPY" : "");
+		       UVM_ET_ISOBJ(vme) ? " OBJ" : "",
+		       UVM_ET_ISSUBMAP(vme) ? " SUBMAP" : "",
+		       UVM_ET_ISCOPYONWRITE(vme) ? " COW" : "",
+		       UVM_ET_ISNEEDSCOPY(vme) ? " NEEDSCOPY" : "");
 		printf(" protection = %x,\n", vme->protection);
 		printf("%*s    max_protection = %x,", indent(2), "",
 		       vme->max_protection);
@@ -452,9 +453,9 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 		printf("\t%*ssubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
 		       "wc=%d, adv=%d\n",
 		       indent(2), "",
-		       (vme->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
-		       (vme->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
-		       (vme->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
+		       UVM_ET_ISSUBMAP(vme) ? 'T' : 'F',
+		       UVM_ET_ISCOPYONWRITE(vme) ? 'T' : 'F',
+		       UVM_ET_ISNEEDSCOPY(vme) ? 'T' : 'F',
 		       vme->protection, vme->max_protection,
 		       vme->inheritance, vme->wired_count, vme->advice);
 		if (verbose) {
@@ -525,7 +526,7 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 	if ((vme->protection & rwx) == 0)
 		sz = 0;
 
-	if (recurse && (vme->etype & UVM_ET_SUBMAP)) {
+	if (recurse && UVM_ET_ISSUBMAP(vme)) {
 		struct kbit mkbit, *submap;
 
 		recurse++;
