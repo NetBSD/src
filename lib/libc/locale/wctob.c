@@ -1,4 +1,4 @@
-/*	$NetBSD: wctob.c,v 1.2 2003/03/03 08:25:00 tshiozak Exp $	*/
+/*	$NetBSD: wctob.c,v 1.3 2003/03/04 10:35:31 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wctob.c,v 1.2 2003/03/03 08:25:00 tshiozak Exp $");
+__RCSID("$NetBSD: wctob.c,v 1.3 2003/03/04 10:35:31 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: wctob.c,v 1.2 2003/03/03 08:25:00 tshiozak Exp $");
 #include <wchar.h>
 #include <stdio.h>
 #include <limits.h>
+#include <string.h>
 
 /*
  * convert a wide character to a corresponding single byte character.
