@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.20 1996/07/26 07:13:52 mycroft Exp $	*/
+/*	$NetBSD: pci.c,v 1.21 1996/08/27 21:59:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,7 +52,7 @@ struct cfdriver pci_cd = {
 	NULL, "pci", DV_DULL
 };
 
-int	pciprint __P((void *, char *));
+int	pciprint __P((void *, const char *));
 int	pcisubmatch __P((struct device *, void *, void *));
 
 int
@@ -160,7 +160,7 @@ pciattach(parent, self, aux)
 int
 pciprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	register struct pci_attach_args *pa = aux;
 	char devinfo[256];

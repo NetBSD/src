@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.11 1996/06/18 12:55:02 mycroft Exp $	*/
+/*	$NetBSD: bt.c,v 1.12 1996/08/27 21:59:26 cgd Exp $	*/
 
 #undef BTDIAG
 #ifdef DDB
@@ -165,7 +165,7 @@ struct scsi_device bt_dev = {
 
 int	btprobe __P((struct device *, void *, void *));
 void	btattach __P((struct device *, struct device *, void *));
-int	btprint __P((void *, char *));
+int	btprint __P((void *, const char *));
 
 struct cfattach bt_ca = {
 	sizeof(struct bt_softc), btprobe, btattach
@@ -340,7 +340,7 @@ btprobe(parent, match, aux)
 int
 btprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 
 	if (name != NULL)

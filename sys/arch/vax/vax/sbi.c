@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.11 1996/08/20 14:13:50 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.12 1996/08/27 21:58:33 cgd Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,14 +38,14 @@
 #include <machine/cpu.h>
 #include <machine/nexus.h>
 
-static	int sbi_print __P((void *, char *));
+static	int sbi_print __P((void *, const char *));
 static	int sbi_match __P((struct device *, void *, void *));
 static	void sbi_attach __P((struct device *, struct device *, void*));
 
 int
 sbi_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	int unsupp = 0;

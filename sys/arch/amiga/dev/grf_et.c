@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.3 1996/06/09 13:21:10 veego Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.4 1996/08/27 21:54:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -100,7 +100,7 @@ static int et_getDACType __P((struct grf_softc *gp));
 
 int	grfetmatch __P((struct device *, void *, void *));
 void	grfetattach __P((struct device *, struct device *, void *));
-int	grfetprint __P((void *, char *));
+int	grfetprint __P((void *, const char *));
 void	et_memset __P((unsigned char *d, unsigned char c, int l));
 
 /*
@@ -366,7 +366,7 @@ grfetattach(pdp, dp, auxp)
 int
 grfetprint(auxp, pnp)
 	void   *auxp;
-	char   *pnp;
+	const char   *pnp;
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);

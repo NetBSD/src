@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.9 1996/06/19 01:47:28 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.10 1996/08/27 21:56:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -162,7 +162,7 @@ int sbc_options = SBC_PDMA;
 
 static	int	sbc_match __P((struct device *, void *, void *));
 static	void	sbc_attach __P((struct device *, struct device *, void *));
-static	int	sbc_print __P((void *, char *));
+static	int	sbc_print __P((void *, const char *));
 static	void	sbc_minphys __P((struct buf *bp));
 
 static	int	sbc_wait_busy __P((struct ncr5380_softc *));
@@ -352,7 +352,7 @@ sbc_attach(parent, self, args)
 static int
 sbc_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)
 		printf("%s: scsibus ", name);

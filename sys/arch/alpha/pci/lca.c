@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.7 1996/07/11 03:30:14 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.8 1996/08/27 21:53:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -59,7 +59,7 @@ struct cfdriver lca_cd = {
 	NULL, "lca", DV_DULL,
 };
 
-static int	lcaprint __P((void *, char *pnp));
+static int	lcaprint __P((void *, const char *pnp));
 
 /* There can be only one. */
 int lcafound;
@@ -201,7 +201,7 @@ lcaattach(parent, self, aux)
 static int
 lcaprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
         register struct pcibus_attach_args *pba = aux;
 

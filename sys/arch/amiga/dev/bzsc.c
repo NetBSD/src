@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.9 1996/07/01 08:00:02 is Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.10 1996/08/27 21:54:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -57,7 +57,7 @@
 #include <amiga/dev/bzscreg.h>
 #include <amiga/dev/bzscvar.h>
 
-int  bzscprint  __P((void *auxp, char *));
+int  bzscprint  __P((void *auxp, const char *));
 void bzscattach __P((struct device *, struct device *, void *));
 int  bzscmatch  __P((struct device *, void *, void *));
 
@@ -199,7 +199,7 @@ bzscattach(pdp, dp, auxp)
 int
 bzscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

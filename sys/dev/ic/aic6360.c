@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.47 1996/06/18 16:13:05 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.48 1996/08/27 21:59:20 cgd Exp $	*/
 
 #ifdef DDB
 #define	integrate
@@ -585,7 +585,7 @@ int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 
 int	aicprobe	__P((struct device *, void *, void *));
 void	aicattach	__P((struct device *, struct device *, void *));
-int	aicprint	__P((void *, char *));
+int	aicprint	__P((void *, const char *));
 void	aic_minphys	__P((struct buf *));
 int	aicintr		__P((void *));
 void 	aic_init	__P((struct aic_softc *));
@@ -759,7 +759,7 @@ aic_find(sc)
 int
 aicprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)
 		printf("%s: scsibus ", name);

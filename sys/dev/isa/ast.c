@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.28 1996/05/12 23:51:45 mycroft Exp $	*/
+/*	$NetBSD: ast.c,v 1.29 1996/08/27 21:59:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -62,7 +62,7 @@ struct ast_softc {
 int astprobe __P((struct device *, void *, void *));
 void astattach __P((struct device *, struct device *, void *));
 int astintr __P((void *));
-int astprint __P((void *, char *));
+int astprint __P((void *, const char *));
 
 struct cfattach ast_ca = {
 	sizeof(struct ast_softc), astprobe, astattach
@@ -127,7 +127,7 @@ out:
 int
 astprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct commulti_attach_args *ca = aux;
 

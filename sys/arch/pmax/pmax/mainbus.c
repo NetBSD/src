@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 1996/06/16 17:01:46 mhitch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 1996/08/27 21:56:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -54,7 +54,7 @@ struct mainbus_softc {
 /* Definition of the mainbus driver. */
 static int	mbmatch __P((struct device *, void *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbprint __P((void *, char *));
+static int	mbprint __P((void *, const char *));
 
 struct cfattach mainbus_ca = {
 	sizeof (struct mainbus_softc), mbmatch, mbattach
@@ -81,7 +81,7 @@ void	kn01_intr_disestablish __P((struct confargs *));
 static void	kn01_attach __P((struct device *, struct device *, void *));
 
 void	config_tcbus __P((struct device *parent, int cputype,
-	int	(*printfn) __P((void *, char *)) ));
+	int	(*printfn) __P((void *, const char *)) ));
 
 
 static int
@@ -238,7 +238,7 @@ dev slot > number of slots for %s",
 static int
 mbprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 
 	if (pnp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.4 1996/05/08 05:55:06 thorpej Exp $	*/
+/*	$NetBSD: pcc.c,v 1.5 1996/08/27 21:56:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe
@@ -67,7 +67,7 @@ struct pccsoftc {
 
 void	pccattach __P((struct device *, struct device *, void *));
 int	pccmatch __P((struct device *, void *, void *));
-int	pccprint __P((void *, char *));
+int	pccprint __P((void *, const char *));
 
 struct cfattach pcc_ca = {
 	sizeof(struct pccsoftc), pccmatch, pccattach
@@ -193,7 +193,7 @@ pccattach(parent, self, args)
 int
 pccprint(aux, cp)
 	void *aux;
-	char *cp;
+	const char *cp;
 {
 	struct pcc_attach_args *pa = aux;
 

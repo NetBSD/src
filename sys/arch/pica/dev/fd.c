@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 1996/08/11 22:35:51 jonathan Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 1996/08/27 21:56:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -250,7 +250,7 @@ struct fdc_attach_args {
 int
 fdprint(aux, fdc)
 	void *aux;
-	char *fdc;
+	const char *fdc;
 {
 	register struct fdc_attach_args *fa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 1996/06/19 03:21:05 scottr Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 1996/08/27 21:56:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,7 +141,7 @@ bus_scan(parent, child, aux)
 int
 bus_print(args, name)
 	void *args;
-	char *name;
+	const char *name;
 {
 /*	struct confargs *ca = args; */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.20 1996/04/18 08:51:52 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.21 1996/08/27 21:55:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -228,7 +228,7 @@ extern __inline__ u_char read_dmastat(void)
  * Autoconfig stuff....
  */
 static int	fdcmatch __P((struct device *, void *, void *));
-static int	fdcprint __P((void *, char *));
+static int	fdcprint __P((void *, const char *));
 static void	fdcattach __P((struct device *, struct device *, void *));
 
 struct cfattach fdc_ca = {
@@ -304,7 +304,7 @@ void		*auxp;
 static int
 fdcprint(auxp, pnp)
 void	*auxp;
-char	*pnp;
+const char	*pnp;
 {
 	return(UNCONF);
 }

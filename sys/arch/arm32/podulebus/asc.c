@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.8 1996/06/12 20:46:58 mark Exp $ */
+/* $NetBSD: asc.c,v 1.9 1996/08/27 21:55:28 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -58,7 +58,7 @@
 #include <arm32/podulebus/ascreg.h>
 #include <arm32/podulebus/ascvar.h>
 
-int ascprint	__P((void *auxp, char *));
+int ascprint	__P((void *auxp, const char *));
 void ascattach	__P((struct device *, struct device *, void *));
 int ascmatch	__P((struct device *, void *, void *));
 
@@ -217,7 +217,7 @@ ascattach(pdp, dp, auxp)
 int
 ascprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.91 1996/08/27 21:55:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -109,7 +109,7 @@ struct fdc_softc {
 
 /* controller driver configuration */
 int fdcprobe __P((struct device *, void *, void *));
-int fdprint __P((void *, char *));
+int fdprint __P((void *, const char *));
 #ifdef NEWCONFIG
 void fdcforceintr __P((void *));
 #endif
@@ -307,7 +307,7 @@ struct fdc_attach_args {
 int
 fdprint(aux, fdc)
 	void *aux;
-	char *fdc;
+	const char *fdc;
 {
 	register struct fdc_attach_args *fa = aux;
 

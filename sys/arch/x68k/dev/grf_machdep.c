@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.2 1996/05/21 15:32:11 oki Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.3 1996/08/27 21:58:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -60,14 +60,14 @@
  */
 extern int x68k_realconfig;
 
-int grfbusprint __P((void *auxp, char *));
+int grfbusprint __P((void *auxp, const char *));
 int grfbusmatch __P((struct device *, void *, void *));
 void grfbusattach __P((struct device *, struct device *, void *));
 void grfbusscan __P((struct device *, void *));
 
 void grfattach __P((struct device *, struct device *, void *));
 int grfmatch __P((struct device *, void *, void *));
-int grfprint __P((void *, char *));
+int grfprint __P((void *, const char *));
 
 struct cfattach grfbus_ca = {
 	sizeof(struct device), grfbusmatch, grfbusattach
@@ -140,7 +140,7 @@ grfbusscan(dp, auxp)
 int
 grfbusprint(auxp, name)
 	void *auxp;
-	char *name;
+	const char *name;
 {
 	if(name == NULL)
 		return(UNCONF);
@@ -219,7 +219,7 @@ grfattach(parent, dp, aux)
 int
 grfprint(auxp, pnp)
 void *auxp;
-char *pnp;
+const char *pnp;
 {
 	if(pnp)
 		printf("ite at %s", pnp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.1.1.1 1995/03/26 07:12:18 leo Exp $	*/
+/*	$NetBSD: device.h,v 1.2 1996/08/27 21:55:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -41,7 +41,7 @@
  */
 int atari_config_found __P((struct cfdata *, struct device *,
     void *, cfprint_t ));
-int simple_devprint __P((void *, char *));
+int simple_devprint __P((void *, const char *));
 int matchname __P((char *, char *));
 /*
  * false when initing for the console.

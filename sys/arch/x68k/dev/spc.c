@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.3 1996/06/12 12:09:30 oki Exp $	*/
+/*	$NetBSD: spc.c,v 1.4 1996/08/27 21:59:02 cgd Exp $	*/
 
 #define	integrate	static inline
 
@@ -346,7 +346,7 @@ int spc_debug = 0x00; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 
 int	spcmatch	__P((struct device *, void *, void *));
 void	spcattach	__P((struct device *, struct device *, void *));
-int	spcprint	__P((void *, char *));
+int	spcprint	__P((void *, const char *));
 void	spc_minphys	__P((struct buf *));
 int	spcintr		__P((int));
 void 	spc_init	__P((struct spc_softc *));
@@ -445,7 +445,7 @@ spc_find(unit)
 int
 spcprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)
 		printf("%s: scsibus ", name);
