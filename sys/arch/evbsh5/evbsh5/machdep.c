@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2002/09/22 20:52:12 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2002/10/04 09:24:53 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #include "opt_sh5_debug.h"
 #include "opt_sh5_cpu.h"
 #include "dtfcons.h"
+#include "sysfpga.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,6 +366,7 @@ device_register(struct device *dev, void *arg)
 void
 sh5_nmi_clear(void)
 {
-
+#if NSYSFPGA > 0
 	sysfpga_nmi_clear();
+#endif
 }
