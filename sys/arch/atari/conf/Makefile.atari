@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.58 2000/02/01 05:25:28 tsutsui Exp $
+#	$NetBSD: Makefile.atari,v 1.59 2000/05/09 00:32:21 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -42,12 +42,15 @@ S!=	cd ../../../..; pwd
 .endif
 ATARI=	$S/arch/atari
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Datari
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=    -Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 .if empty(IDENT:M-DM68060)
