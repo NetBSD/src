@@ -28,13 +28,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: strncasecmp.c,v 1.4 1997/10/13 11:56:03 lukem Exp $";
+static char *rcsid = "$NetBSD: strncasecmp.c,v 1.5 1998/03/27 01:30:10 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
-#include <string.h>
-#else
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <lib/libkern/libkern.h>
+#else
+#include <string.h>
 #endif
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: iordi3.c,v 1.5 1995/10/07 09:26:28 mycroft Exp $	*/
+/*	$NetBSD: iordi3.c,v 1.6 1998/03/27 01:30:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)iordi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: iordi3.c,v 1.5 1995/10/07 09:26:28 mycroft Exp $";
+__RCSID("$NetBSD: iordi3.c,v 1.6 1998/03/27 01:30:02 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
