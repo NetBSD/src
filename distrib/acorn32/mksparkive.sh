@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/sh -e
+#	$NetBSD: mksparkive.sh,v 1.2.2.7 2004/08/30 08:19:00 tron Exp $
 #
 # Copyright (c) 2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,10 +51,19 @@ then
 	TOOL_SPARKCRC=sparkcrc
 fi
 
+if [ -z "${TOOL_STAT}" ]
+then
+	TOOL_STAT=stat
+fi
+
 # Target byte order is little endian.
 
 print2()
 {
+	if [ -z "$1" ]
+	then
+		exit 1
+	fi
 	lowbyte=`expr $1 % 256 | xargs printf %02x`
 	highbyte=`expr $1 / 256 | xargs printf %02x`
 	printf "\x$lowbyte\x$highbyte"
@@ -61,6 +71,10 @@ print2()
 
 print4()
 {
+	if [ -z "$1" ]
+	then
+		exit 1
+	fi
 	print2 `expr $1 % 65536`
 	print2 `expr $1 / 65536`
 }
@@ -75,7 +89,7 @@ makeheader()
 	# length is only passed to length4, so we don't need to worry about
 	# extracting only the length here.
 	length=`wc -c "$filename"`
-	eval `stat -s "$statfilename"`
+	eval `${TOOL_STAT} -s "$statfilename"`
 	# centiseconds since 1st Jan 1900
 	timestamp=`expr $st_mtime \* 100 + 220898880000`
 	lowtype=`echo "$filetype" | sed s/.//`
@@ -193,12 +207,12 @@ makearchive()
 	printf \\x00
 }
 
+progname=`basename $0`
+
 if [ $# -eq 0 ]
 then
 	echo "Usage: $progname filename"
-	echo "$name: Outputs an uncompressed sparkive to stdout."
+	echo "$progname: Outputs an uncompressed sparkive to stdout."
 fi
-
-progname=`basename $0`
 
 makearchive "$@"
