@@ -1,4 +1,4 @@
-/*	$NetBSD: bzlib.c,v 1.5 1999/07/03 12:30:16 simonb Exp $	*/
+/*	$NetBSD: bzlib.c,v 1.6 1999/08/20 02:21:48 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Library top-level functions.                          ---*/
@@ -365,12 +365,12 @@ Bool handle_compress ( bz_stream* strm )
          progress_in |= copy_input_until_stop ( s );
          if (s->mode != BZ_M_RUNNING && s->avail_in_expect == 0) {
             flush_RL ( s );
-            compressBlock ( s, s->mode == BZ_M_FINISHING );
+            __BZcompressBlock ( s, s->mode == BZ_M_FINISHING );
             s->state = BZ_S_OUTPUT;
          }
          else
          if (s->nblock >= s->nblockMAX) {
-            compressBlock ( s, False );
+            __BZcompressBlock ( s, False );
             s->state = BZ_S_OUTPUT;
          }
          else
@@ -643,7 +643,7 @@ void unRLE_obuf_to_output_FAST ( DState* s )
 
 
 /*---------------------------------------------------*/
-__inline__ Int32 indexIntoF ( Int32 indx, Int32 *cftab )
+__inline__ Int32 __BZindexIntoF ( Int32 indx, Int32 *cftab )
 {
    Int32 nb, na, mid;
    nb = 0;
@@ -784,7 +784,7 @@ int BZ_API(bzDecompress) ( bz_stream *strm )
          }
       }
       if (s->state >= BZ_X_MAGIC_1) {
-         Int32 r = decompress ( s );
+         Int32 r = __BZdecompress ( s );
          if (r == BZ_STREAM_END) {
             if (s->verbosity >= 3)
                VPrintf2 ( "\n    combined CRCs: stored = 0x%x, computed = 0x%x", 

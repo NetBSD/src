@@ -1,4 +1,4 @@
-/*	$NetBSD: decompress.c,v 1.4 1999/07/03 12:30:17 simonb Exp $	*/
+/*	$NetBSD: decompress.c,v 1.5 1999/08/20 02:21:49 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Decompression machinery                               ---*/
@@ -134,7 +134,7 @@ void makeMaps_d ( DState* s )
 
 
 /*---------------------------------------------------*/
-Int32 decompress ( DState* s )
+Int32 __BZdecompress ( DState* s )
 {
    UChar      uc;
    Int32      retVal;
@@ -359,7 +359,7 @@ Int32 decompress ( DState* s )
             if (s->len[t][i] > maxLen) maxLen = s->len[t][i];
             if (s->len[t][i] < minLen) minLen = s->len[t][i];
          }
-         hbCreateDecodeTables ( 
+         __BZhbCreateDecodeTables ( 
             &(s->limit[t][0]), 
             &(s->base[t][0]), 
             &(s->perm[t][0]), 
