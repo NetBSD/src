@@ -3,7 +3,7 @@
  * Dummy driver for a device we can't identify.
  * by Julian Elischer (julian@tfs.com)
  *
- *      $Id: uk.c,v 1.2 1993/12/17 08:51:13 mycroft Exp $
+ *      $Id: uk.c,v 1.3 1994/02/01 20:05:26 mycroft Exp $
  */
 
 
@@ -22,13 +22,13 @@
  */
 struct scsi_device uk_switch =
 {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    "uk",
-    0,
-    0, 0
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"uk",
+	0,
+	0, 0
 };
 
 struct uk_data {
