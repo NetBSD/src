@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.10 1999/10/19 00:03:18 mycroft Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.11 1999/12/06 18:52:23 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -172,6 +172,10 @@ usl_detachproc(cookie, waitok, callback, cbarg)
 	if (!usl_sync_check(sd))
 		return (0);
 
+	/* we really need a callback */
+	if (!callback)
+		return (EINVAL);
+
 	/*
 	 * Normally, this is called from the controlling process.
 	 * Is is supposed to reply with a VT_RELDISP ioctl(), so
@@ -237,6 +241,10 @@ usl_attachproc(cookie, waitok, callback, cbarg)
 
 	if (!usl_sync_check(sd))
 		return (0);
+
+	/* we really need a callback */
+	if (!callback)
+		return (EINVAL);
 
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
