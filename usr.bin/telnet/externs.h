@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.31 2004/03/20 23:26:05 heas Exp $	*/
+/*	$NetBSD: externs.h,v 1.32 2005/02/06 17:51:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -331,7 +331,7 @@ void SetNetTrace(char *);
 void Dump(int, unsigned char *, int);
 void printoption(char *, int, int );
 void optionstatus(void);
-void printsub(int, unsigned char *, int);
+void printsub(char, unsigned char *, int);
 void EmptyTerminal(void);
 void SetForExit(void);
 void Exit(int) __attribute__((__noreturn__));
