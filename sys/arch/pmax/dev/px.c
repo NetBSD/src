@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.35 2001/07/07 14:21:00 simonb Exp $	*/
+/* 	$NetBSD: px.c,v 1.35.2.1 2001/09/09 06:07:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35 2001/07/07 14:21:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35.2.1 2001/09/09 06:07:25 thorpej Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -1872,6 +1872,58 @@ pxpoll(dev, events, p)
 	}
 
 	return (revents);
+}
+
+static void
+filt_pxrdetach(struct knote *kn)
+{
+	struct fbinfo *fi = (void *) kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&fi->fi_selp.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_pxread(struct knote *kn, long hint)
+{
+	struct fbinfo *fi = (void *) kn->kn_hook;
+
+	if (fi->fi_fbu->scrInfo.qe.eHead == fi->fi_fbu->scrInfo.qe.eTail)
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops pxread_filtops =
+	{ 1, NULL, filt_pxrdetach, filt_pxread };
+
+int
+pxkqfilter(dev_t dev, struct knote *kn)
+{
+	struct fbinfo *fi = &px_unit[minor(dev)]->pxi_fbinfo;
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &fi->fi_selp.si_klist;
+		kn->kn_fop = &pxread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) fi;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);;
 }
 
 paddr_t
