@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.57 2003/02/09 21:43:43 mjacob Exp $ */
+/* $NetBSD: if_ti.c,v 1.58 2004/02/24 15:05:55 wiz Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.57 2003/02/09 21:43:43 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.58 2004/02/24 15:05:55 wiz Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1885,7 +1885,7 @@ static void ti_attach(parent, self, aux)
                 /*
                  * Copper cards allow manual 10/100 mode selection,
                  * but not manual 1000baseT mode selection. Why?
-                 * Becuase currently there's no way to specify the
+                 * Because currently there's no way to specify the
                  * master/slave setting through the firmware interface,
                  * so Alteon decided to just bag it and handle it
                  * via autonegotiation.
