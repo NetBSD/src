@@ -1,4 +1,4 @@
-/* $NetBSD: cdefs.h,v 1.4 2004/03/25 19:14:30 atatat Exp $ */
+/* $NetBSD: cdefs.h,v 1.5 2005/03/15 02:14:16 atatat Exp $ */
 /*
  * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -7,7 +7,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: cdefs.h,v 1.15.2.1 2003/12/05 22:44:17 ca Exp
+ *	Id: cdefs.h,v 1.16 2003/12/05 22:45:25 ca Exp
  */
 
 /*

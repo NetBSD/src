@@ -8,8 +8,8 @@
 # the sendmail distribution.
 #
 #
-#	Id: configure.sh,v 8.45.2.1 2003/08/20 18:08:07 gshapiro Exp
-#	$NetBSD: configure.sh,v 1.6 2004/03/25 19:14:30 atatat Exp $
+#	Id: configure.sh,v 8.46 2003/08/20 18:08:35 gshapiro Exp
+#	$NetBSD: configure.sh,v 1.7 2005/03/15 02:14:16 atatat Exp $
 
 #
 #  Special script to autoconfigure for M4 generation of Makefile
