@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.38 2000/01/14 21:41:11 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.39 2000/01/16 04:57:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -920,7 +920,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			lfs_vref(*vpp);
 			if (VOP_ISLOCKED(*vpp)) {
 				printf("lfs_fastvget: ino %d inlocked by pid %d\n",ip->i_number,
-				       vp->v_lock.lk_lockholder);
+				       (*vpp)->v_lock.lk_lockholder);
 				clean_inlocked++;
 #ifdef LFS_EAGAIN_FAIL
 				lfs_vunref(*vpp);
