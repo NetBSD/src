@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.22 2004/11/05 16:31:14 kent Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.22.2.1 2004/12/29 17:53:48 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,10 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.22 2004/11/05 16:31:14 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.22.2.1 2004/12/29 17:53:48 kent Exp $");
 
 #include <sys/types.h>
-#include <sys/audioio.h>
+#include <sys/systm.h>
+#include <dev/auconv.h>
 #include <dev/mulaw.h>
 
 /*
@@ -46,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.22 2004/11/05 16:31:14 kent Exp $");
  * The 16 bits are represented as an array of two bytes for easier access
  * to the individual bytes.
  */
-static const u_char mulawtolin16[256][2] = {
+static const uint8_t mulawtolin16[256][2] = {
 	{0x02,0x84}, {0x06,0x84}, {0x0a,0x84}, {0x0e,0x84},
 	{0x12,0x84}, {0x16,0x84}, {0x1a,0x84}, {0x1e,0x84},
 	{0x22,0x84}, {0x26,0x84}, {0x2a,0x84}, {0x2e,0x84},
@@ -113,7 +114,7 @@ static const u_char mulawtolin16[256][2] = {
 	{0x80,0x18}, {0x80,0x10}, {0x80,0x08}, {0x80,0x00},
 };
 
-static const u_char lintomulaw[256] = {
+static const uint8_t lintomulaw[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01,
 	0x01, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03,
 	0x03, 0x04, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05,
@@ -148,7 +149,7 @@ static const u_char lintomulaw[256] = {
 	0x81, 0x81, 0x81, 0x81, 0x80, 0x80, 0x80, 0x80,
 };
 
-static const u_char alawtolin16[256][2] = {
+static const uint8_t alawtolin16[256][2] = {
 	{0x6a,0x80}, {0x6b,0x80}, {0x68,0x80}, {0x69,0x80},
 	{0x6e,0x80}, {0x6f,0x80}, {0x6c,0x80}, {0x6d,0x80},
 	{0x62,0x80}, {0x63,0x80}, {0x60,0x80}, {0x61,0x80},
@@ -215,7 +216,7 @@ static const u_char alawtolin16[256][2] = {
 	{0x83,0x30}, {0x83,0x10}, {0x83,0x70}, {0x83,0x50},
 };
 
-static const u_char lintoalaw[256] = {
+static const uint8_t lintoalaw[256] = {
 	0x2a, 0x2a, 0x2a, 0x2a, 0x2b, 0x2b, 0x2b, 0x2b,
 	0x28, 0x28, 0x28, 0x28, 0x29, 0x29, 0x29, 0x29,
 	0x2e, 0x2e, 0x2e, 0x2e, 0x2f, 0x2f, 0x2f, 0x2f,
@@ -250,290 +251,436 @@ static const u_char lintoalaw[256] = {
 	0xab, 0xab, 0xab, 0xab, 0xaa, 0xaa, 0xaa, 0xaa,
 };
 
-void
-mulaw_to_ulinear8(void *v, u_char *p, int cc)
+#define DEFINE_FILTER(name)	\
+static int \
+name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int); \
+stream_filter_t * \
+name(struct audio_softc *sc, const audio_params_t *from, \
+     const audio_params_t *to) \
+{ \
+	return auconv_nocontext_filter_factory(name##_fetch_to); \
+} \
+static int \
+name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
+
+DEFINE_FILTER(mulaw_to_linear8)
 {
-	/* Use the 16 bit table for 8 bits too. */
-	while (--cc >= 0) {
-		*p = mulawtolin16[*p][0];
-		++p;
+	stream_filter_t *this;
+	uint8_t *d;
+	const uint8_t *s;
+	int m, err, enc;
+	int used_dst, used_src;
+
+	this = (stream_filter_t *)self;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+		return err;
+	m = dst->end - dst->start;
+	m = min(m, max_used);
+	d = dst->inp;
+	s = this->src->outp;
+	used_dst = audio_stream_get_used(dst);
+	used_src = audio_stream_get_used(this->src);
+	enc = auconv_normalize_encoding(dst->param.encoding,
+					dst->param.precision);
+	if (enc == AUDIO_ENCODING_ULINEAR_LE) {
+		while (used_dst < m && used_src > 0) {
+			*d = mulawtolin16[*s][0];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 1);
+			used_dst++;
+			used_src--;
+		}
+	} else {
+		while (used_dst < m && used_src > 0) {
+			*d = mulawtolin16[*s][0] ^ 0x80;
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 1);
+			used_dst++;
+			used_src--;
+		}
 	}
+	dst->inp = d;
+	this->src->outp = s;
+	return 0;
 }
 
-void
-mulaw_to_slinear8(void *v, u_char *p, int cc)
+DEFINE_FILTER(mulaw_to_linear16)
 {
-	/* Use the 16 bit table for 8 bits too. */
-	while (--cc >= 0) {
-		*p = mulawtolin16[*p][0] ^ 0x80;
-		++p;
+	stream_filter_t *this;
+	uint8_t *d;
+	const uint8_t *s;
+	int m, err, enc;
+	int used_dst, used_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used + 1) & ~1; /* round up to even */
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 2)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used);
+	d = dst->inp;
+	s = this->src->outp;
+	used_dst = audio_stream_get_used(dst);
+	used_src = audio_stream_get_used(this->src);
+	enc = auconv_normalize_encoding(dst->param.encoding,
+					dst->param.precision);
+	switch (enc) {
+	case AUDIO_ENCODING_ULINEAR_LE:
+		while (used_dst < m && used_src >= 1) {
+			d[0] = mulawtolin16[s[0]][1];
+			d[1] = mulawtolin16[s[0]][0];
+			audio_stream_add(dst, d, 2);
+			audio_stream_add(this->src, s, 1);
+			used_dst += 2;
+			used_src -= 1;
+		}
+		break;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		while (used_dst < m && used_src >= 1) {
+			d[0] = mulawtolin16[s[0]][0];
+			d[1] = mulawtolin16[s[0]][1];
+			audio_stream_add(dst, d, 2);
+			audio_stream_add(this->src, s, 1);
+			used_dst += 2;
+			used_src -= 1;
+		}
+		break;
+	case AUDIO_ENCODING_SLINEAR_LE:
+		while (used_dst < m && used_src >= 1) {
+			d[0] = mulawtolin16[s[0]][1];
+			d[1] = mulawtolin16[s[0]][0] ^ 0x80;
+			audio_stream_add(dst, d, 2);
+			audio_stream_add(this->src, s, 1);
+			used_dst += 2;
+			used_src -= 1;
+		}
+		break;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		while (used_dst < m && used_src >= 1) {
+			d[0] = mulawtolin16[s[0]][0] ^ 0x80;
+			d[1] = mulawtolin16[s[0]][1];
+			audio_stream_add(dst, d, 2);
+			audio_stream_add(this->src, s, 1);
+			used_dst += 2;
+			used_src -= 1;
+		}
+		break;
 	}
+	dst->inp = d;
+	this->src->outp = s;
+	return 0;
 }
 
-void
-mulaw_to_ulinear16_le(void *v, u_char *p, int cc)
+DEFINE_FILTER(linear16_to_mulaw)
 {
-	u_char *q = p;
+	stream_filter_t *this;
+	uint8_t *d;
+	const uint8_t *s;
+	int m, err, enc;
+	int used_dst, used_src;
 
-	p += cc;
-	q += cc << 1;
-	while (--cc >= 0) {
-		--p;
-		q -= 2;
-		q[1] = mulawtolin16[*p][0];
-		q[0] = mulawtolin16[*p][1];
+	this = (stream_filter_t *)self;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 2)))
+		return err;
+	m = dst->end - dst->start;
+	m = min(m, max_used);
+	d = dst->inp;
+	s = this->src->outp;
+	used_dst = audio_stream_get_used(dst);
+	used_src = audio_stream_get_used(this->src);
+	enc = auconv_normalize_encoding(this->src->param.encoding,
+					this->src->param.precision);
+	switch (enc) {
+	case AUDIO_ENCODING_SLINEAR_LE:
+		while (used_dst < m && used_src >= 2) {
+			d[0] = lintomulaw[s[1] ^ 0x80];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 2);
+			used_dst += 1;
+			used_src -= 2;
+		}
+		break;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		while (used_dst < m && used_src >= 2) {
+			d[0] = lintomulaw[s[0] ^ 0x80];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 2);
+			used_dst += 1;
+			used_src -= 2;
+		}
+		break;
+	case AUDIO_ENCODING_ULINEAR_LE:
+		while (used_dst < m && used_src >= 2) {
+			d[0] = lintomulaw[s[1]];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 2);
+			used_dst += 1;
+			used_src -= 2;
+		}
+		break;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		while (used_dst < m && used_src >= 2) {
+			d[0] = lintomulaw[s[0]];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 2);
+			used_dst += 1;
+			used_src -= 2;
+		}
+		break;
 	}
+	dst->inp = d;
+	this->src->outp = s;
+	return 0;
 }
 
-void
-mulaw_to_ulinear16_be(void *v, u_char *p, int cc)
+DEFINE_FILTER(linear8_to_mulaw)
 {
-	u_char *q = p;
+	stream_filter_t *this;
+	uint8_t *d;
+	const uint8_t *s;
+	int m, err, enc;
+	int used_dst, used_src;
 
-	p += cc;
-	q += cc << 1;
-	while (--cc >= 0) {
-		--p;
-		q -= 2;
-		q[0] = mulawtolin16[*p][0];
-		q[1] = mulawtolin16[*p][1];
+	this = (stream_filter_t *)self;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+		return err;
+	m = dst->end - dst->start;
+	m = min(m, max_used);
+	d = dst->inp;
+	s = this->src->outp;
+	used_dst = audio_stream_get_used(dst);
+	used_src = audio_stream_get_used(this->src);
+	enc = auconv_normalize_encoding(this->src->param.encoding,
+					this->src->param.precision);
+	if (enc == AUDIO_ENCODING_ULINEAR_LE) {
+		while (used_dst < m && used_src > 0) {
+			*d = lintomulaw[*s];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 1);
+			used_dst++;
+			used_src--;
+		}
+	} else {		/* SLINEAR_LE */
+		while (used_dst < m && used_src > 0) {
+			*d = lintomulaw[*s ^ 0x80];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 1);
+			used_dst++;
+			used_src--;
+		}
 	}
+	dst->inp = d;
+	this->src->outp = s;
+	return 0;
 }
 
-void
-mulaw_to_slinear16_le(void *v, u_char *p, int cc)
+DEFINE_FILTER(alaw_to_linear8)
 {
-	u_char *q = p;
+	stream_filter_t *this;
+	uint8_t *d;
+	const uint8_t *s;
+	int m, err, enc;
+	int used_dst, used_src;
 
-	p += cc;
-	q += cc << 1;
-	while (--cc >= 0) {
-		--p;
-		q -= 2;
-		q[1] = mulawtolin16[*p][0] ^ 0x80;
-		q[0] = mulawtolin16[*p][1];
+	this = (stream_filter_t *)self;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+		return err;
+	m = dst->end - dst->start;
+	m = min(m, max_used);
+	d = dst->inp;
+	s = this->src->outp;
+	used_dst = audio_stream_get_used(dst);
+	used_src = audio_stream_get_used(this->src);
+	enc = auconv_normalize_encoding(dst->param.encoding,
+					dst->param.precision);
+	if (enc == AUDIO_ENCODING_ULINEAR_LE) {
+		while (used_dst < m && used_src > 0) {
+			*d = alawtolin16[*s][0];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 1);
+			used_dst++;
+			used_src--;
+		}
+	} else {		/* SLINEAR */
+		while (used_dst < m && used_src > 0) {
+			*d = alawtolin16[*s][0] ^ 0x80;
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 1);
+			used_dst++;
+			used_src--;
+		}
 	}
+	dst->inp = d;
+	this->src->outp = s;
+	return 0;
 }
 
-void
-mulaw_to_slinear16_be(void *v, u_char *p, int cc)
+DEFINE_FILTER(alaw_to_linear16)
 {
-	u_char *q = p;
+	stream_filter_t *this;
+	uint8_t *d;
+	const uint8_t *s;
+	int m, err, enc;
+	int used_dst, used_src;
 
-	p += cc;
-	q += cc << 1;
-	while (--cc >= 0) {
-		--p;
-		q -= 2;
-		q[0] = mulawtolin16[*p][0] ^ 0x80;
-		q[1] = mulawtolin16[*p][1];
+	this = (stream_filter_t *)self;
+	max_used = (max_used + 1) & ~1; /* round up to even */
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 2)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used);
+	d = dst->inp;
+	s = this->src->outp;
+	used_dst = audio_stream_get_used(dst);
+	used_src = audio_stream_get_used(this->src);
+	enc = auconv_normalize_encoding(dst->param.encoding,
+					dst->param.precision);
+	switch (enc) {
+	case AUDIO_ENCODING_ULINEAR_LE:
+		while (used_dst < m && used_src >= 1) {
+			d[0] = alawtolin16[s[0]][1];
+			d[1] = alawtolin16[s[0]][0];
+			audio_stream_add(dst, d, 2);
+			audio_stream_add(this->src, s, 1);
+			used_dst += 2;
+			used_src -= 1;
+		}
+		break;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		while (used_dst < m && used_src >= 1) {
+			d[0] = alawtolin16[s[0]][0];
+			d[1] = alawtolin16[s[0]][1];
+			audio_stream_add(dst, d, 2);
+			audio_stream_add(this->src, s, 1);
+			used_dst += 2;
+			used_src -= 1;
+		}
+		break;
+	case AUDIO_ENCODING_SLINEAR_LE:
+		while (used_dst < m && used_src >= 1) {
+			d[0] = alawtolin16[s[0]][1];
+			d[1] = alawtolin16[s[0]][0] ^ 0x80;
+			audio_stream_add(dst, d, 2);
+			audio_stream_add(this->src, s, 1);
+			used_dst += 2;
+			used_src -= 1;
+		}
+		break;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		while (used_dst < m && used_src >= 1) {
+			d[0] = alawtolin16[s[0]][0] ^ 0x80;
+			d[1] = alawtolin16[s[0]][1];
+			audio_stream_add(dst, d, 2);
+			audio_stream_add(this->src, s, 1);
+			used_dst += 2;
+			used_src -= 1;
+		}
+		break;
 	}
+	dst->inp = d;
+	this->src->outp = s;
+	return 0;
 }
 
-void
-slinear16_to_mulaw_le(void *v, u_char* p, int cc)
+DEFINE_FILTER(linear8_to_alaw)
 {
-	u_char *q = p + 1;	/* q points higher byte. */
+	stream_filter_t *this;
+	uint8_t *d;
+	const uint8_t *s;
+	int m, err, enc;
+	int used_dst, used_src;
 
-	while (--cc >= 0) {
-		*p++ = lintomulaw[*q ^ 0x80];
-		q +=2 ;
+	this = (stream_filter_t *)self;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+		return err;
+	m = dst->end - dst->start;
+	m = min(m, max_used);
+	d = dst->inp;
+	s = this->src->outp;
+	used_dst = audio_stream_get_used(dst);
+	used_src = audio_stream_get_used(this->src);
+	enc = auconv_normalize_encoding(this->src->param.encoding,
+					this->src->param.precision);
+	if (enc == AUDIO_ENCODING_ULINEAR_LE) {
+		while (used_dst < m && used_src > 0) {
+			*d = lintoalaw[*s];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 1);
+			used_dst++;
+			used_src--;
+		}
+	} else {		/* SLINEAR_LE */
+		while (used_dst < m && used_src > 0) {
+			*d = lintoalaw[*s ^ 0x80];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 1);
+			used_dst++;
+			used_src--;
+		}
 	}
+	dst->inp = d;
+	this->src->outp = s;
+	return 0;
 }
 
-void
-slinear16_to_mulaw_be(void *v, u_char* p, int cc)
+DEFINE_FILTER(linear16_to_alaw)
 {
-	u_char *q = p;		/* q points higher byte. */
+	stream_filter_t *this;
+	uint8_t *d;
+	const uint8_t *s;
+	int m, err, enc;
+	int used_dst, used_src;
 
-	while (--cc >= 0) {
-		*p++ = lintomulaw[*q ^ 0x80];
-		q +=2 ;
+	this = (stream_filter_t *)self;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 2)))
+		return err;
+	m = dst->end - dst->start;
+	m = min(m, max_used);
+	d = dst->inp;
+	s = this->src->outp;
+	used_dst = audio_stream_get_used(dst);
+	used_src = audio_stream_get_used(this->src);
+	enc = auconv_normalize_encoding(this->src->param.encoding,
+					this->src->param.precision);
+	switch (enc) {
+	case AUDIO_ENCODING_SLINEAR_LE:
+		while (used_dst < m && used_src >= 2) {
+			d[0] = lintoalaw[s[1] ^ 0x80];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 2);
+			used_dst += 1;
+			used_src -= 2;
+		}
+		break;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		while (used_dst < m && used_src >= 2) {
+			d[0] = lintoalaw[s[0] ^ 0x80];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 2);
+			used_dst += 1;
+			used_src -= 2;
+		}
+		break;
+	case AUDIO_ENCODING_ULINEAR_LE:
+		while (used_dst < m && used_src >= 2) {
+			d[0] = lintoalaw[s[1]];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 2);
+			used_dst += 1;
+			used_src -= 2;
+		}
+		break;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		while (used_dst < m && used_src >= 2) {
+			d[0] = lintoalaw[s[0]];
+			audio_stream_add(dst, d, 1);
+			audio_stream_add(this->src, s, 2);
+			used_dst += 1;
+			used_src -= 2;
+		}
+		break;
 	}
-}
-
-void
-ulinear16_to_mulaw_le(void *v, u_char* p, int cc)
-{
-	u_char *q = p + 1;	/* q points higher byte. */
-
-	while (--cc >= 0) {
-		*p++ = lintomulaw[*q];
-		q +=2 ;
-	}
-}
-
-void
-ulinear16_to_mulaw_be(void *v, u_char* p, int cc)
-{
-	u_char *q = p;		/* q points higher byte. */
-
-	while (--cc >= 0) {
-		*p++ = lintomulaw[*q];
-		q +=2 ;
-	}
-}
-
-void
-ulinear8_to_mulaw(void *v, u_char *p, int cc)
-{
-	while (--cc >= 0) {
-		*p = lintomulaw[*p];
-		++p;
-	}
-}
-
-void
-slinear8_to_mulaw(void *v, u_char *p, int cc)
-{
-	while (--cc >= 0) {
-		*p = lintomulaw[*p ^ 0x80];
-		++p;
-	}
-}
-
-void
-alaw_to_ulinear8(void *v, u_char *p, int cc)
-{
-	/* Use the 16 bit table for 8 bits too. */
-	while (--cc >= 0) {
-		*p = alawtolin16[*p][0];
-		++p;
-	}
-}
-
-void
-alaw_to_slinear8(void *v, u_char *p, int cc)
-{
-	/* Use the 16 bit table for 8 bits too. */
-	while (--cc >= 0) {
-		*p = alawtolin16[*p][0] ^ 0x80;
-		++p;
-	}
-}
-
-void
-alaw_to_ulinear16_le(void *v, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	p += cc;
-	q += cc << 1;
-	while (--cc >= 0) {
-		--p;
-		q -= 2;
-		q[1] = alawtolin16[*p][0];
-		q[0] = alawtolin16[*p][1];
-	}
-}
-
-void
-alaw_to_ulinear16_be(void *v, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	p += cc;
-	q += cc << 1;
-	while (--cc >= 0) {
-		--p;
-		q -= 2;
-		q[0] = alawtolin16[*p][0];
-		q[1] = alawtolin16[*p][1];
-	}
-}
-
-void
-alaw_to_slinear16_le(void *v, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	p += cc;
-	q += cc << 1;
-	while (--cc >= 0) {
-		--p;
-		q -= 2;
-		q[1] = alawtolin16[*p][0] ^ 0x80;
-		q[0] = alawtolin16[*p][1];
-	}
-}
-
-void
-alaw_to_slinear16_be(void *v, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	p += cc;
-	q += cc << 1;
-	while (--cc >= 0) {
-		--p;
-		q -= 2;
-		q[0] = alawtolin16[*p][0] ^ 0x80;
-		q[1] = alawtolin16[*p][1];
-	}
-}
-
-void
-ulinear8_to_alaw(void *v, u_char *p, int cc)
-{
-	while (--cc >= 0) {
-		*p = lintoalaw[*p];
-		++p;
-	}
-}
-
-void
-slinear8_to_alaw(void *v, u_char *p, int cc)
-{
-	while (--cc >= 0) {
-		*p = lintoalaw[*p ^ 0x80];
-		++p;
-	}
-}
-
-void
-slinear16_to_alaw_le(void *v, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	while (--cc >= 0) {
-		*p = lintoalaw[q[1] ^ 0x80];
-		++p;
-		q += 2;
-	}
-}
-
-void
-slinear16_to_alaw_be(void *v, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	while (--cc >= 0) {
-		*p = lintoalaw[q[0] ^ 0x80];
-		++p;
-		q += 2;
-	}
-}
-
-void
-ulinear16_to_alaw_le(void *v, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	while (--cc >= 0) {
-		*p = lintoalaw[q[1]];
-		++p;
-		q += 2;
-	}
-}
-
-void
-ulinear16_to_alaw_be(void *v, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	while (--cc >= 0) {
-		*p = lintoalaw[q[0]];
-		++p;
-		q += 2;
-	}
+	dst->inp = d;
+	this->src->outp = s;
+	return 0;
 }
