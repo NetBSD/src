@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.25 1999/11/25 22:34:16 mrg Exp $	*/
+/*	$NetBSD: dir.c,v 1.26 2000/04/16 23:24:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.25 1999/11/25 22:34:16 mrg Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.26 2000/04/16 23:24:04 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.25 1999/11/25 22:34:16 mrg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.26 2000/04/16 23:24:04 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: dir.c,v 1.25 1999/11/25 22:34:16 mrg Exp $");
  */
 
 #include <stdio.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -237,6 +238,10 @@ Dir_Init (cdname)
      * do it than when we have to fetch the thing anyway?
      */
     dot = Dir_AddDir (NULL, ".");
+    if (dot == NULL) {
+	Error("Cannot open `.' (%s)", strerror(errno));
+	exit(1);
+    }
 
     /*
      * We always need to have dot around, so we increment its reference count
