@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 1996/04/12 01:36:51 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.5 1996/07/09 00:30:22 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -540,9 +540,10 @@ _name_:;							\
  * are unprivileged.
  */
 
-/* Common PAL codes. */
+/* Common PAL function codes. */
 #define	PAL_halt		0x0000			/* P */
 #define	PAL_draina		0x0002			/* P */
+#define	PAL_cserve		0x0009			/* P */
 #define	PAL_swppal		0x000a			/* P */
 #define	PAL_bpt			0x0080			/* U */
 #define	PAL_bugchk		0x0081			/* U */
@@ -551,7 +552,7 @@ _name_:;							\
 #define	PAL_wrunique		0x009f			/* U */
 #define	PAL_gentrap		0x00aa			/* U */
 
-/* VMS PAL codes. */
+/* VMS PAL function codes. */
 #define	PAL_VMS_ldqp		0x0003			/* P */
 #define	PAL_VMS_stqp		0x0004			/* P */
 #define	PAL_VMS_mtpr_fen	0x000c			/* P */
@@ -574,7 +575,9 @@ _name_:;							\
 #define	PAL_VMS_mfpr_whami	0x003f			/* P */
 #define	PAL_VMS_rei		0x0092			/* U */
 
-/* OSF/1 PAL codes. */
+/* OSF/1 PAL function codes. */
+#define	PAL_OSF1_rdmces		0x0010			/* P */
+#define	PAL_OSF1_wrmces		0x0011			/* P */
 #define	PAL_OSF1_wrfen		0x002b			/* P */
 #define	PAL_OSF1_wrvptptr	0x002d			/* P */
 #define	PAL_OSF1_swpctx		0x0030			/* P */
