@@ -9,7 +9,6 @@ ENTRY(fpgetsticky)
 	subl $4,%esp
 	fnstsw (%esp)
 	movl (%esp),%eax
-	notl %eax
 	andl $63,%eax
 	addl $4,%esp
 	ret

@@ -12,13 +12,12 @@ ENTRY(fpsetsticky)
 	movl 4(%esp),%eax
 	movl %eax,%edx
 
-	notl %eax
 	andl $63,%eax
 
-	orl %eax,%edx
+	subl %eax,%edx
 	movl 32(%esp),%ecx
 	andl $63,%ecx
-	subl %ecx,%edx
+	addl %ecx,%edx
 	movl %edx,4(%esp)
 	fldenv (%esp)
 
