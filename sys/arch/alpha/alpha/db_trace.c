@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.12 2003/10/27 07:07:35 chs Exp $ */
+/* $NetBSD: db_trace.c,v 1.13 2003/10/29 05:32:18 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2003/10/27 07:07:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.13 2003/10/29 05:32:18 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,12 +192,10 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	char c, *cp = modif;
 	struct trapframe *tf;
 	boolean_t ra_from_tf;
-	boolean_t ra_from_pcb;
 	u_long last_ipl = ~0L;
 	struct proc *p = NULL;
 	struct lwp *l = NULL;
 	boolean_t trace_thread = FALSE;
-	boolean_t have_trapframe = FALSE;
 
 	while ((c = *cp++) != 0)
 		trace_thread |= c == 't';
@@ -206,9 +204,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		p = curproc;
 		addr = DDB_REGS->tf_regs[FRAME_SP] - FRAME_SIZE * 8;
 		tf = (struct trapframe *)addr;
-		have_trapframe = 1;
-		callpc = 0;
-		frame = 0;
+		callpc = tf->tf_regs[FRAME_PC];
+		frame = (db_addr_t)tf + FRAME_SIZE * 8;
+		ra_from_tf = TRUE;
 	} else {
 		if (trace_thread) {
 			(*pr)("trace: pid %d ", (int)addr);
@@ -232,16 +230,10 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		}
 		frame = addr;
 		tf = NULL;
+		ra_from_tf = FALSE;
 	}
-	ra_from_tf = FALSE;
 
 	while (count--) {
-		if (have_trapframe) {
-			frame = (db_addr_t)tf + FRAME_SIZE * 8;
-			callpc = tf->tf_regs[FRAME_PC];
-			ra_from_tf = TRUE;
-			have_trapframe = 0;
-		}
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &diff);
 		if (sym == DB_SYM_NULL)
 			break;
@@ -310,7 +302,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				(*pr)("--- user mode ---\n");
 				break;	/* Terminate search.  */
 			}
-			have_trapframe = 1;
+			callpc = tf->tf_regs[FRAME_PC];
+			frame = (db_addr_t)tf + FRAME_SIZE * 8;
+			ra_from_tf = TRUE;
 			continue;
 		}
 
@@ -336,14 +330,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			}
 		} else
 			callpc = *(u_long *)(frame + pi.pi_reg_offset[26]);
-		ra_from_tf = ra_from_pcb = FALSE;
-#if 0
-		/*
-		 * The call was actually made at RA - 4; the PC is
-		 * updated before being stored in RA.
-		 */
-		callpc -= 4;
-#endif
 		frame += pi.pi_frame_size;
+		ra_from_tf = FALSE;
 	}
 }
