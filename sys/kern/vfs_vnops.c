@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.36 1999/03/31 18:30:13 mycroft Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.36.2.1 1999/09/03 08:48:54 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -85,7 +85,8 @@ vn_open(ndp, fmode, cmode)
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
 		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
-		if ((fmode & O_EXCL) == 0)
+		if ((fmode & O_EXCL) == 0 &&
+		    ((fmode & FNOSYMLINK) == 0))
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 		if ((error = namei(ndp)) != 0)
 			return (error);
@@ -112,6 +113,10 @@ vn_open(ndp, fmode, cmode)
 			vp = ndp->ni_vp;
 			if (fmode & O_EXCL) {
 				error = EEXIST;
+				goto bad;
+			}
+			if (ndp->ni_vp->v_type == VLNK) {
+				error = EFTYPE;
 				goto bad;
 			}
 			fmode &= ~O_CREAT;
