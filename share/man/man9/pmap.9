@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.4 2001/04/25 12:38:20 kleink Exp $
+.\"	$NetBSD: pmap.9,v 1.5 2001/07/28 16:24:13 chs Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,15 +96,15 @@
 .Ft void
 .Fn "pmap_copy_page" "paddr_t src" "paddr_t dst"
 .Ft void
-.Fn "pmap_page_protect" "vm_page_t pg" "vm_prot_t prot"
+.Fn "pmap_page_protect" "struct vm_page *pg" "vm_prot_t prot"
 .Ft boolean_t
-.Fn "pmap_clear_modify" "vm_page_t pg"
+.Fn "pmap_clear_modify" "struct vm_page *pg"
 .Ft boolean_t
-.Fn "pmap_clear_reference" "vm_page_t pg"
+.Fn "pmap_clear_reference" "struct vm_page *pg"
 .Ft boolean_t
-.Fn "pmap_is_modified" "vm_page_t pg"
+.Fn "pmap_is_modified" "struct vm_page *pg"
 .Ft boolean_t
-.Fn "pmap_is_referenced" "vm_page_t pg"
+.Fn "pmap_is_referenced" "struct vm_page *pg"
 .Ft paddr_t
 .Fn "pmap_phys_address" "int cookie"
 .Ft vaddr_t
@@ -704,7 +704,7 @@ The same cache considerations that apply to
 .Fn pmap_zero_page
 apply to
 .Fn pmap_copy_page .
-.It void Fn "pmap_page_protect" "vm_page_t pg" "vm_prot_t prot"
+.It void Fn "pmap_page_protect" "struct vm_page *pg" "vm_prot_t prot"
 Lower the permissions for all mappings of the page
 .Fa pg
 to
@@ -717,7 +717,7 @@ no bits set in
 .Fa prot ) Ns .
 Access permissions must never be added to a page as a result of
 this call.
-.It boolean_t Fn "pmap_clear_modify" "vm_page_t pg"
+.It boolean_t Fn "pmap_clear_modify" "struct vm_page *pg"
 Clear the
 .Dq modified
 attribute on the page
@@ -730,7 +730,7 @@ function returns TRUE or FALSE indicating whether or not the
 attribute was set on the page before it was cleared.
 .Pp
 Note that this function may be provided as a C pre-processor macro.
-.It boolean_t Fn "pmap_clear_reference" "vm_page_t pg"
+.It boolean_t Fn "pmap_clear_reference" "struct vm_page *pg"
 Clear the
 .Dq referenced
 attribute on the page
@@ -743,14 +743,14 @@ function returns TRUE or FALSE indicating whether or not the
 attribute was set on the page before it was cleared.
 .Pp
 Note that this function may be provided as a C pre-processor macro.
-.It boolean_t Fn "pmap_is_modified" "vm_page_t pg"
+.It boolean_t Fn "pmap_is_modified" "struct vm_page *pg"
 Test whether or not the
 .Dq modified
 attribute is set on page
 .Fa pg .
 .Pp
 Note that this function may be provided as a C pre-processor macro.
-.It boolean_t Fn "pmap_is_referenced" "vm_page_t pg"
+.It boolean_t Fn "pmap_is_referenced" "struct vm_page *pg"
 Test whether or not the
 .Dq referenced
 attribute is set on page
