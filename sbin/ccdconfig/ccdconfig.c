@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.28 1999/08/11 02:44:35 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.29 2000/02/16 06:52:32 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,8 +41,10 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.28 1999/08/11 02:44:35 thorpej Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.29 2000/02/16 06:52:32 enami Exp $");
 #endif
+
+#define __POOL_EXPOSE			/* dev/ccdvar.h uses struct pool */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -64,7 +66,6 @@ __RCSID("$NetBSD: ccdconfig.c,v 1.28 1999/08/11 02:44:35 thorpej Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#define __POOL_EXPOSE
 #include <dev/ccdvar.h>
 
 #include "pathnames.h"
