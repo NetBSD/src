@@ -1,5 +1,5 @@
-/*	$NetBSD: systrace.c,v 1.4 2002/07/30 16:29:31 itojun Exp $	*/
-/*	$OpenBSD: systrace.c,v 1.30 2002/07/30 05:52:50 itojun Exp $	*/
+/*	$NetBSD: systrace.c,v 1.5 2002/08/28 03:52:47 itojun Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,8 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: systrace.c,v 1.4 2002/07/30 16:29:31 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +70,8 @@ static int requestor_start(char *);
  */
 
 void
-make_output(char *output, size_t outlen, const char *binname, pid_t pid,
+make_output(char *output, size_t outlen, const char *binname,
+    pid_t pid, pid_t ppid,
     int policynr, const char *policy, int nfilters, const char *emulation,
     const char *name, int code, struct intercept_tlq *tls,
     struct intercept_replace *repl)
@@ -82,8 +81,8 @@ make_output(char *output, size_t outlen, const char *binname, pid_t pid,
 	int size;
 
 	snprintf(output, outlen,
-	    "%s, pid: %d(%d), policy: %s, filters: %d, syscall: %s-%s(%d)",
-	    binname, pid, policynr, policy, nfilters,
+	    "%s, pid: %d(%d)[%d], policy: %s, filters: %d, syscall: %s-%s(%d)",
+	    binname, pid, policynr, ppid, policy, nfilters,
 	    emulation, name, code);
 
 	p = output + strlen(output);
@@ -91,6 +90,10 @@ make_output(char *output, size_t outlen, const char *binname, pid_t pid,
 
 	if (repl != NULL)
 		intercept_replace_init(repl);
+
+	if (tls == NULL)
+		return;
+
 	TAILQ_FOREACH(tl, tls, next) {
 		if (!tl->trans_valid)
 			break;
@@ -123,6 +126,8 @@ trans_cb(int fd, pid_t pid, int policynr,
 	struct filterq *pflq = NULL;
 	const char *binname = NULL;
 	char output[_POSIX2_LINE_MAX];
+	pid_t ppid;
+	int log = 0;
 
 	action = ICPOLICY_PERMIT;
 
@@ -136,9 +141,10 @@ trans_cb(int fd, pid_t pid, int policynr,
 	ipid = intercept_getpid(pid);
 	ipid->uflags = 0;
 	binname = ipid->name != NULL ? ipid->name : policy->name;
+	ppid = ipid->ppid;
 
 	/* Required to set up replacements */
-	make_output(output, sizeof(output), binname, pid, policynr,
+	make_output(output, sizeof(output), binname, pid, ppid, policynr,
 	    policy->name, policy->nfilters, emulation, name, code,
 	    tls, &repl);
 
@@ -176,14 +182,14 @@ trans_cb(int fd, pid_t pid, int policynr,
 		if (action != ICPOLICY_ASK)
 			goto replace;
 
-		make_output(output, sizeof(output), binname, pid, policynr,
-		    policy->name, policy->nfilters,
+		make_output(output, sizeof(output), binname, pid, ppid,
+		    policynr, policy->name, policy->nfilters,
 		    alias->aemul, alias->aname, code, tls, NULL);
 	}
 
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
-		syslog(LOG_WARNING, "user: %s, prog: %s", username, output);
+		log = 1;
 		goto out;
 	}
 
@@ -201,12 +207,20 @@ trans_cb(int fd, pid_t pid, int policynr,
 		return (ICPOLICY_NEVER);
 	}
  replace:
+	if (ipid->uflags & SYSCALL_LOG)
+		log = 1;
+
 	if (action < ICPOLICY_NEVER) {
 		/* If we can not rewrite the arguments, system call fails */
 		if (intercept_replace(fd, pid, &repl) == -1)
 			action = ICPOLICY_NEVER;
 	}
  out:
+	if (log)
+		syslog(LOG_WARNING, "%s user: %s, prog: %s",
+		    action < ICPOLICY_NEVER ? "permit" : "deny",
+		    username, output);
+
 	return (action);
 }
 
@@ -219,6 +233,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	struct intercept_pid *ipid;
 	short action = ICPOLICY_PERMIT;
 	short future;
+	int len, off, log = 0;
 
 	if (policynr == -1)
 		goto out;
@@ -229,14 +244,21 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 
 	ipid = intercept_getpid(pid);
 	ipid->uflags = 0;
-	snprintf(output, sizeof(output),
-	    "%s, pid: %d(%d), policy: %s, filters: %d, syscall: %s-%s(%d), args: %d",
-	    ipid->name != NULL ? ipid->name : policy->name, pid, policynr,
-	    policy->name, policy->nfilters, emulation, name, code, argsize);
+
+	make_output(output, sizeof(output),
+	    ipid->name != NULL ? ipid->name : policy->name,
+	    pid, ipid->ppid, policynr,
+	    policy->name, policy->nfilters, emulation, name, code,
+	    NULL, NULL);
+
+	off = strlen(output);
+	len = sizeof(output) - off;
+	if (len > 0)
+		snprintf(output + off, len, ", args: %d", argsize);
 
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
-		syslog(LOG_WARNING, "user: %s, prog: %s", username, output);
+		log = 1;
 		goto out;
 	}
 
@@ -250,9 +272,14 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 			err(1, "intercept_detach");
 	} else if (action == ICPOLICY_KILL) {
 		kill(pid, SIGKILL);
-		action = ICPOLICY_NEVER;
+		return (ICPOLICY_NEVER);
 	}
  out:
+	if (log)
+		syslog(LOG_WARNING, "%s user: %s, prog: %s",
+		    action < ICPOLICY_NEVER ? "permit" : "deny",
+		    username, output);
+
 	return (action);
 }
 
@@ -334,7 +361,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: systrace [-aituU] [-g gui] [-f policy] [-p pid] command ...\n");
+	    "Usage: systrace [-aituU] [-d poldir] [-g gui] [-f policy] [-p pid] command ...\n");
 	exit(1);
 }
 
@@ -391,15 +418,19 @@ main(int argc, char **argv)
 	int i, c;
 	char **args;
 	char *filename = NULL;
+	char *policypath = NULL;
 	char *guipath = _PATH_XSYSTRACE;
 	pid_t pidattach = 0;
 	int usex11 = 1;
 	int background;
 
-	while ((c = getopt(argc, argv, "aAituUg:f:p:")) != -1) {
+	while ((c = getopt(argc, argv, "aAituUd:g:f:p:")) != -1) {
 		switch (c) {
 		case 'a':
 			automatic = 1;
+			break;
+		case 'd':
+			policypath = optarg;
 			break;
 		case 'A':
 			allow = 1;
@@ -448,7 +479,7 @@ main(int argc, char **argv)
 
 	/* Local initalization */
 	systrace_initalias();
-	systrace_initpolicy(filename);
+	systrace_initpolicy(filename, policypath);
 	systrace_initcb();
 
 	if ((trfd = intercept_open()) == -1)

@@ -1,5 +1,5 @@
-/*	$NetBSD: openbsd-syscalls.c,v 1.2 2002/07/30 16:29:30 itojun Exp $	*/
-/*	$OpenBSD: openbsd-syscalls.c,v 1.10 2002/07/30 09:16:19 itojun Exp $	*/
+/*	$NetBSD: openbsd-syscalls.c,v 1.3 2002/08/28 03:52:46 itojun Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.12 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -81,6 +81,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include <err.h>
 
 #include "intercept.h"
@@ -448,8 +449,9 @@ obsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
 	}
 
 	ret = ioctl(fd, STRIOCREPLACE, &replace);
-	if (ret == -1)
+	if (ret == -1 && errno != EBUSY) {
 		warn("%s: ioctl", __func__);
+	}
 
 	free(replace.strr_base);
 	
@@ -460,6 +462,7 @@ static int
 obsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 {
 	struct systrace_io io;
+	extern int ic_abort;
 
 	memset(&io, 0, sizeof(io));
 	io.strio_pid = pid;
@@ -467,8 +470,11 @@ obsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 	io.strio_len = size;
 	io.strio_offs = addr;
 	io.strio_op = (op == INTERCEPT_READ ? SYSTR_READ : SYSTR_WRITE);
-	if (ioctl(fd, STRIOCIO, &io) == -1)
+	if (ioctl(fd, STRIOCIO, &io) == -1) {
+		if (errno == EBUSY)
+			ic_abort = 1;
 		return (-1);
+	}
 
 	return (0);
 }
@@ -482,6 +488,9 @@ obsd_getcwd(int fd, pid_t pid, char *buf, size_t size)
 		return (NULL);
 
 	path = getcwd(buf, size);
+	if (path == NULL)
+		obsd_restcwd(fd);
+
 	return (path);
 }
 
