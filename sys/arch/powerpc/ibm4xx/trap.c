@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 2003/02/07 04:39:09 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -141,7 +141,7 @@ trap(struct trapframe *frame)
 
 	ftype = VM_PROT_READ;
 
-DBPRINTF(TDB_ALL, ("trap(%x) at %x from frame %p &frame %p\n",
+DBPRINTF(TDB_ALL, ("trap(%x) at %lx from frame %p &frame %p\n",
 	type, frame->srr0, frame, &frame));
 
 	switch (type) {
@@ -182,7 +182,7 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 			if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
 				ftype = VM_PROT_WRITE;
 
-DBPRINTF(TDB_ALL, ("trap(EXC_DSI) at %x %s fault on %p esr %x\n",
+DBPRINTF(TDB_ALL, ("trap(EXC_DSI) at %lx %s fault on %p esr %x\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->tf_xtra[TF_ESR]));
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
@@ -211,7 +211,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->tf_xtr
 		if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
 			ftype = VM_PROT_WRITE;
 
-DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %x %s fault on %x %x\n",
+DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %lx %s fault on %lx %x\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->dar, frame->tf_xtra[TF_ESR]));
 KASSERT(l == curlwp && (l->l_stat == LSONPROC));
 		rv = uvm_fault(&p->p_vmspace->vm_map,
@@ -236,7 +236,7 @@ KASSERT(l == curlwp && (l->l_stat == LSONPROC));
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-DBPRINTF(TDB_ALL, ("trap(EXC_ISI|EXC_USER) at %x %s fault on %x tf %p\n",
+DBPRINTF(TDB_ALL, ("trap(EXC_ISI|EXC_USER) at %lx %s fault on %lx tf %p\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0), 0, ftype);
 		if (rv == 0) {
