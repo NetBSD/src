@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.219 2000/05/07 17:00:07 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.220 2000/05/12 17:47:06 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.213 2000/04/30 18:34:53 dante Exp 
+ *	NetBSD: pcidevs,v 1.215 2000/05/12 17:46:47 thorpej Exp 
  */
 
 /*
@@ -146,6 +146,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c980 Server Adapter 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C980CTXM,
+	    0,
+	    "3Com",
+	    "3c980C-TXM 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX97,
