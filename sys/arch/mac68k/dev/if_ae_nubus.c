@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.23 1997/10/17 00:24:47 briggs Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.23.2.1 1997/11/05 18:51:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 
 #include <net/if.h>
+#include <net/if_media.h>
 #include <net/if_ether.h>
 
 #include <machine/bus.h>
@@ -351,7 +352,7 @@ ae_nubus_attach(parent, self, aux)
 
 	printf(": %s, %dKB memory\n", cardtype, sc->mem_size / 1024);
 
-	if (dp8390_config(sc)) {
+	if (dp8390_config(sc, NULL, 0, 0)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
 		return;
 	}
