@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.17 1999/12/26 11:39:17 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.18 1999/12/26 13:02:24 tsutsui Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -58,8 +58,8 @@ ep*	at pci? dev ? function ?	# 3Com 3c59x
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 obio0	at pci? dev ? function ?
 
@@ -84,6 +84,7 @@ scsibus* at adv?
 scsibus* at ahc?
 scsibus* at esp?
 scsibus* at mesh?
+scsibus* at ncr?
 scsibus* at pcscp?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
