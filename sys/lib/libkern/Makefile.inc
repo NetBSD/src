@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.1 1993/10/13 05:55:20 cgd Exp $
+#	$Id: Makefile.inc,v 1.2 1993/10/13 06:17:16 cgd Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -13,12 +13,12 @@ KERNLIBDIR=	$(KERNDIR)
 KERNLIB=	$(KERNLIBDIR)/libkern.a
 KERNLIB_PROF=	$(KERNLIBDIR)/libkern_p.a
 
-$(KERNLIB):		__always_make_kernlib
+$(KERNLIB):		.NOTMAIN __always_make_kernlib
 	@echo making sure the kern library is up to date...
 	@(cd $(KERNDIR) ; make libkern.a)
 
-$(KERNLIB_PROF):	__always_make_kernlib
+$(KERNLIB_PROF):	.NOTMAIN __always_make_kernlib
 	@echo making sure the profiled kern library is up to date...
 	@(cd $(KERNDIR) ; make libkern_p.a)
 
-__always_make_kernlib:
+__always_make_kernlib:	.NOTMAIN
