@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.121 2000/12/10 23:39:36 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.122 2001/01/24 09:04:15 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -3425,7 +3425,10 @@ syn_cache_respond(sc, m)
 		else
 			so = NULL;
 		/* use IPsec policy on listening socket, on SYN ACK */
-		ipsec_setsocket(m, so);
+		if (ipsec_setsocket(m, so) != 0) {
+			m_freem(m);
+			return ENOBUFS;
+		}
 	}
 #endif
 	m->m_pkthdr.rcvif = NULL;

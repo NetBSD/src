@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.62 2000/11/06 00:50:12 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.63 2001/01/24 09:04:16 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1001,7 +1001,11 @@ send:
 	}
 
 #ifdef IPSEC
-	ipsec_setsocket(m, so);
+	if (ipsec_setsocket(m, so) != 0) {
+		m_freem(m);
+		error = ENOBUFS;
+		goto out;
+	}
 #endif /*IPSEC*/
 
 	switch (af) {

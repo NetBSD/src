@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.81 2001/01/13 07:19:33 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.82 2001/01/24 09:04:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -200,7 +200,7 @@ ip_output(m0, va_alist)
 
 #ifdef IPSEC
 	so = ipsec_getsocket(m);
-	ipsec_setsocket(m, NULL);
+	(void)ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 
 #ifdef	DIAGNOSTIC
@@ -430,19 +430,6 @@ sendit:
 	HTONS(ip->ip_len);
 	HTONS(ip->ip_off);
 
-#ifdef PFIL_HOOKS
-	/*
-	 * Run through list of hooks for output packets.
-	 */
-	if ((error = pfil_run_hooks(&inet_pfil_hook, &m, ifp,
-				    PFIL_OUT)) != 0)
-		goto done;
-	if (m == NULL)
-		goto done;
-
-	ip = mtod(m, struct ip *);
-#endif /* PFIL_HOOKS */
-
 #ifdef IPSEC
 	/* get SP for this packet */
 	if (so == NULL)
@@ -562,6 +549,19 @@ sendit:
 skip_ipsec:
 #endif /*IPSEC*/
 
+#ifdef PFIL_HOOKS
+	/*
+	 * Run through list of hooks for output packets.
+	 */
+	if ((error = pfil_run_hooks(&inet_pfil_hook, &m, ifp,
+				    PFIL_OUT)) != 0)
+		goto done;
+	if (m == NULL)
+		goto done;
+
+	ip = mtod(m, struct ip *);
+#endif /* PFIL_HOOKS */
+
 	/*
 	 * If small enough for mtu of path, can just send directly.
 	 */
@@ -577,6 +577,10 @@ skip_ipsec:
 #endif
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
+#ifdef IPSEC
+		/* clean ipsec history once it goes out of the node */
+		ipsec_delaux(m);
+#endif
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}
@@ -703,6 +707,10 @@ sendorfree:
 				ia->ia_ifa.ifa_data.ifad_outbytes +=
 					ntohs(ip->ip_len);
 			}
+#endif
+#ifdef IPSEC
+			/* clean ipsec history once it goes out of the node */
+			ipsec_delaux(m);
 #endif
 			error = (*ifp->if_output)(ifp, m, sintosa(dst),
 			    ro->ro_rt);

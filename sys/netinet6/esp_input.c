@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_input.c,v 1.13 2000/12/09 01:29:50 itojun Exp $	*/
-/*	$KAME: esp_input.c,v 1.37 2000/10/19 00:37:50 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.14 2001/01/24 09:04:16 itojun Exp $	*/
+/*	$KAME: esp_input.c,v 1.50 2001/01/23 08:59:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -382,6 +382,11 @@ noreplaycheck:
 #endif
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 ||
+		    ipsec_addhist(m, IPPROTO_IPV4, 0) != 0) {
+			ipsecstat.in_nomem++;
+			goto bad;
+		}
 
 		s = splimp();
 		if (IF_QFULL(&ipintrq)) {
@@ -419,6 +424,10 @@ noreplaycheck:
 		ip->ip_p = nxt;
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0) {
+			ipsecstat.in_nomem++;
+			goto bad;
+		}
 
 		if (nxt != IPPROTO_DONE)
 			(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
@@ -793,6 +802,11 @@ noreplaycheck:
 #endif
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 || 
+		    ipsec_addhist(m, IPPROTO_IPV6, 0) != 0) {
+			ipsec6stat.in_nomem++;
+			goto bad;
+		}
 
 		s = splimp();
 		if (IF_QFULL(&ip6intrq)) {
@@ -896,6 +910,10 @@ noreplaycheck:
 		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0) {
+			ipsec6stat.in_nomem++;
+			goto bad;
+		}
 	}
 
 	*offp = off;

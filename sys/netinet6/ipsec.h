@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.h,v 1.18 2001/01/04 11:48:44 itojun Exp $	*/
-/*	$KAME: ipsec.h,v 1.40 2001/01/04 11:47:28 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.19 2001/01/24 09:04:17 itojun Exp $	*/
+/*	$KAME: ipsec.h,v 1.41 2001/01/23 04:42:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -261,6 +261,11 @@ struct ipsec_output_state {
 	struct sockaddr *dst;
 };
 
+struct ipsec_history {
+	int ih_proto;
+	u_int32_t ih_spi;
+};
+
 extern int ipsec_debug;
 
 #ifdef INET
@@ -366,8 +371,12 @@ extern int ipsec6_tunnel_validate __P((struct ip6_hdr *, u_int,
 	struct secasvar *));
 #endif
 extern struct mbuf *ipsec_copypkt __P((struct mbuf *));
-extern void ipsec_setsocket __P((struct mbuf *, struct socket *));
+extern void ipsec_delaux __P((struct mbuf *));
+extern int ipsec_setsocket __P((struct mbuf *, struct socket *));
 extern struct socket *ipsec_getsocket __P((struct mbuf *));
+extern int ipsec_addhist __P((struct mbuf *, int, u_int32_t)); 
+extern struct ipsec_history *ipsec_gethist __P((struct mbuf *, int *));
+extern void ipsec_clearhist __P((struct mbuf *));
 
 extern int ipsec_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 extern int ipsec6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
