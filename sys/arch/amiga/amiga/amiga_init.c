@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.41.4.3 1996/07/31 16:13:21 jtc Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.41.4.4 1996/08/03 00:56:12 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -100,7 +100,7 @@ u_int namigahwpg;
 vm_offset_t amigashdwaddr;
 u_int namigashdwpg;
 
-static vm_offset_t z2mem_start;		/* XXX */
+vm_offset_t z2mem_start;		/* XXX */
 static vm_offset_t z2mem_end;		/* XXX */
 int use_z2_mem = 1;			/* XXX */
 
@@ -903,6 +903,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	chipmem_start = CHIPMEMADDR + chipmem_start;
 	chipmem_end   = CHIPMEMADDR + chipmem_end;
 
+	/* XXX is: this MUST NOT BE DONE before the pmap_bootstrap() call */
 	if (z2mem_end) {
 		z2mem_end = ZTWOMEMADDR + NZTWOMEMPG * NBPG;
 		z2mem_start = ZTWOMEMADDR;
