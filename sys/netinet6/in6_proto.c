@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.29 2001/03/21 19:22:28 thorpej Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.30 2001/10/15 09:51:17 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -292,9 +292,7 @@ int	ip6_gif_hlim = 0;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
 				 * walk list every 5 sec.    */
-#ifndef INET6_BINDV6ONLY
-int	ip6_bindv6only = 1;
-#endif
+int	ip6_v6only = 1;
 
 u_int32_t ip6_id = 0UL;
 int	ip6_keepfaith = 0;
