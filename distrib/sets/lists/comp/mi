@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.542 2003/03/05 09:37:21 wiz Exp $
+#	$NetBSD: mi,v 1.543 2003/03/06 04:05:45 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3131,6 +3131,7 @@
 ./usr/share/man/cat3/wcsrtombs.0	comp-c-catman
 ./usr/share/man/cat3/wcsspn.0		comp-c-catman
 ./usr/share/man/cat3/wcsstr.0		comp-c-catman
+./usr/share/man/cat3/wcstok.0		comp-c-catman
 ./usr/share/man/cat3/wcstombs.0	comp-c-catman
 ./usr/share/man/cat3/wctob.0		comp-c-catman
 ./usr/share/man/cat3/wctomb.0	comp-c-catman
@@ -6179,6 +6180,7 @@
 ./usr/share/man/man3/wcsrtombs.3	comp-c-man
 ./usr/share/man/man3/wcsspn.3		comp-c-man
 ./usr/share/man/man3/wcsstr.3		comp-c-man
+./usr/share/man/man3/wcstok.3		comp-c-man
 ./usr/share/man/man3/wcstombs.3	comp-c-man
 ./usr/share/man/man3/wctob.3	comp-c-man
 ./usr/share/man/man3/wctomb.3	comp-c-man
