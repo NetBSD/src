@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.90 1996/03/17 02:06:50 pk Exp $	*/
+/*	$NetBSD: sd.c,v 1.91 1996/03/19 03:05:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -106,7 +106,6 @@ void	sdminphys __P((struct buf *));
 void	sdgetdisklabel __P((struct sd_softc *));
 void	sdstart __P((void *));
 int	sddone __P((struct scsi_xfer *, int));
-u_long	sd_size __P((struct sd_softc *, int));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_get_parms __P((struct sd_softc *, int));
 
@@ -569,9 +568,7 @@ sdstart(v)
 			bzero(&cmd_small, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
 			    READ_COMMAND : WRITE_COMMAND;
-			cmd_small.addr_2 = (blkno >> 16) & 0x1f;
-			cmd_small.addr_1 = (blkno >> 8) & 0xff;
-			cmd_small.addr_0 = blkno & 0xff;
+			_lto3b(blkno, cmd_small.addr);
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsi_generic *)&cmd_small;
@@ -582,12 +579,8 @@ sdstart(v)
 			bzero(&cmd_big, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
 			    READ_BIG : WRITE_BIG;
-			cmd_big.addr_3 = (blkno >> 24) & 0xff;
-			cmd_big.addr_2 = (blkno >> 16) & 0xff;
-			cmd_big.addr_1 = (blkno >> 8) & 0xff;
-			cmd_big.addr_0 = blkno & 0xff;
-			cmd_big.length2 = (nblks >> 8) & 0xff;
-			cmd_big.length1 = nblks & 0xff;
+			_lto4b(blkno, cmd_big.addr);
+			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
 			cmdp = (struct scsi_generic *)&cmd_big;
 		}
@@ -806,46 +799,12 @@ sdgetdisklabel(sd)
 }
 
 /*
- * Find out from the device what it's capacity is
- */
-u_long
-sd_size(sd, flags)
-	struct sd_softc *sd;
-	int flags;
-{
-	struct scsi_read_cap_data rdcap;
-	struct scsi_read_capacity scsi_cmd;
-	u_long size;
-
-	/*
-	 * make up a scsi command and ask the scsi driver to do
-	 * it for you.
-	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = READ_CAPACITY;
-
-	/*
-	 * If the command works, interpret the result as a 4 byte
-	 * number of blocks
-	 */
-	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), SDRETRIES,
-	    2000, NULL, flags | SCSI_DATA_IN) != 0)
-		return 0;
-
-	size = (rdcap.addr_3 << 24) + (rdcap.addr_2 << 16) +
-	    (rdcap.addr_1 << 8) + rdcap.addr_0 + 1;
-
-	return size;
-}
-
-/*
  * Tell the device to map out a defective block
  */
 int
-sd_reassign_blocks(sd, block)
+sd_reassign_blocks(sd, blkno)
 	struct sd_softc *sd;
-	u_long block;
+	u_long blkno;
 {
 	struct scsi_reassign_blocks scsi_cmd;
 	struct scsi_reassign_blocks_data rbdata;
@@ -854,19 +813,13 @@ sd_reassign_blocks(sd, block)
 	bzero(&rbdata, sizeof(rbdata));
 	scsi_cmd.opcode = REASSIGN_BLOCKS;
 
-	rbdata.length_msb = 0;
-	rbdata.length_lsb = sizeof(rbdata.defect_descriptor[0]);
-	rbdata.defect_descriptor[0].dlbaddr_3 = (block >> 24) & 0xff;
-	rbdata.defect_descriptor[0].dlbaddr_2 = (block >> 16) & 0xff;
-	rbdata.defect_descriptor[0].dlbaddr_1 = (block >> 8) & 0xff;
-	rbdata.defect_descriptor[0].dlbaddr_0 = block & 0xff;
+	_lto2b(sizeof(rbdata.defect_descriptor[0]), rbdata.length);
+	_lto4b(blkno, rbdata.defect_descriptor[0].dlbaddr);
 
 	return scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)&rbdata, sizeof(rbdata), SDRETRIES,
 	    5000, NULL, SCSI_DATA_OUT);
 }
-
-#define b2tol(a)	(((unsigned)(a##_1) << 8) + (unsigned)a##_0 )
 
 /*
  * Get the scsi driver to send a full inquiry to the * device and use the
@@ -908,7 +861,7 @@ sd_get_parms(sd, flags)
 		 * this depends on which controller (e.g. 1542C is
 		 * different. but we have to put SOMETHING here..)
 		 */
-		sectors = sd_size(sd, flags);
+		sectors = scsi_size(sd->sc_link, flags);
 		dp->heads = 64;
 		dp->sectors = 32;
 		dp->cyls = sectors / (64 * 32);
@@ -919,9 +872,9 @@ sd_get_parms(sd, flags)
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(&scsi_sense.pages.rigid_geometry.ncyl_2),
 		    scsi_sense.pages.rigid_geometry.nheads,
-		    b2tol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
-		    b2tol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
-		    b2tol(scsi_sense.pages.rigid_geometry.land_zone)));
+		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
+		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
+		    _2btol(scsi_sense.pages.rigid_geometry.land_zone)));
 
 		/*
 		 * KLUDGE!! (for zone recorded disks)
@@ -930,8 +883,7 @@ sd_get_parms(sd, flags)
 		 * can lead to wasted space! THINK ABOUT THIS !
 		 */
 		dp->heads = scsi_sense.pages.rigid_geometry.nheads;
-		dp->cyls =
-		    _3btol(&scsi_sense.pages.rigid_geometry.ncyl_2);
+		dp->cyls = _3btol(scsi_sense.pages.rigid_geometry.ncyl);
 		dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
 
 		if (dp->heads == 0 || dp->cyls == 0) {
@@ -943,7 +895,7 @@ sd_get_parms(sd, flags)
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		sectors = sd_size(sd, flags);
+		sectors = scsi_size(sd->sc_link, flags);
 		dp->disksize = sectors;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
@@ -1047,12 +999,8 @@ sddump(dev, blkno, va, size)
 		 */
 		bzero(&cmd, sizeof(cmd));
 		cmd.opcode = WRITE_BIG;
-		cmd.addr_3 = (blkno >> 24) & 0xff;
-		cmd.addr_2 = (blkno >> 16) & 0xff;
-		cmd.addr_1 = (blkno >> 8) & 0xff;
-		cmd.addr_0 = blkno & 0xff;
-		cmd.length2 = (nwrt >> 8) & 0xff;
-		cmd.length1 = nwrt & 0xff;
+		_lto4b(blkno, cmd.addr);
+		_lto2b(nwrt, cmd.length);
 		/*
 		 * Fill out the scsi_xfer structure
 		 *    Note: we cannot sleep as we may be an interrupt
