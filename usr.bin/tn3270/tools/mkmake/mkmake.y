@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: mkmake.y,v 1.3 1997/01/09 20:22:42 tls Exp $	*/
+/*	$NetBSD: mkmake.y,v 1.4 1998/03/06 18:11:53 christos Exp $	*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmake.y	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: mkmake.y,v 1.3 1997/01/09 20:22:42 tls Exp $";
+static char rcsid[] = "$NetBSD: mkmake.y,v 1.4 1998/03/06 18:11:53 christos Exp $";
 #endif /* not lint */
 
 typedef struct string {
@@ -920,7 +920,7 @@ yylex()
 			}
 #define	save(c)	{ last_char = c; last_saved = 1; }
 #if	defined(YYDEBUG)
-#define	Return(c)	if (yydebug) { \
+#define	Return(y,c)	if (yydebug) { \
 			    printf("[%d]", c); \
 			    fflush(stdout); \
 			} \
