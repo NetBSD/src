@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.23 2004/03/11 06:28:59 rtr Exp $
+# $NetBSD: mi,v 1.23.2.1 2004/04/29 05:45:35 jmc Exp $
 ./etc/mtree/set.xcomp			xcomp-sys-root
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
@@ -330,7 +330,7 @@
 ./usr/X11R6/include/X11/keysym.h
 ./usr/X11R6/include/X11/keysymdef.h
 ./usr/X11R6/include/X11/xpm.h
-./usr/X11R6/include/expat.h			xcomp-obsolete	obsolete
+./usr/X11R6/include/expat.h
 ./usr/X11R6/include/fontconfig/fcfreetype.h
 ./usr/X11R6/include/fontconfig/fcprivate.h
 ./usr/X11R6/include/fontconfig/fontconfig.h
@@ -408,7 +408,8 @@
 ./usr/X11R6/include/freetype2/freetype/ttnameid.h
 ./usr/X11R6/include/freetype2/freetype/tttables.h
 ./usr/X11R6/include/freetype2/freetype/tttags.h
-./usr/X11R6/include/freetype2/ft2build.h
+./usr/X11R6/include/freetype2/ft2build.h	xcomp-obsolete	obsolete
+./usr/X11R6/include/ft2build.h
 ./usr/X11R6/lib/X11/config/Amoeba.cf
 ./usr/X11R6/lib/X11/config/DGUX.cf
 ./usr/X11R6/lib/X11/config/FreeBSD.cf
@@ -654,6 +655,11 @@
 ./usr/X11R6/man/cat3/DoesBackingStore.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/DoesSaveUnders.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/EventMaskOfScreen.0	-unknown-		.cat
+./usr/X11R6/man/cat3/FontCacheChangeCacheSettings.0	-unknown-	.cat
+./usr/X11R6/man/cat3/FontCacheGetCacheSettings.0	-unknown-	.cat
+./usr/X11R6/man/cat3/FontCacheGetCacheStatistics.0	-unknown-	.cat
+./usr/X11R6/man/cat3/FontCacheQueryExtension.0		-unknown-	.cat
+./usr/X11R6/man/cat3/FontCacheQueryVersion.0		-unknown-	.cat
 ./usr/X11R6/man/cat3/GLwCreateMDrawingArea.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/GLwDrawingArea.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/GLwDrawingAreaMakeCurrent.0	-unknown-		.cat
@@ -783,6 +789,25 @@
 ./usr/X11R6/man/cat3/XCreateWindow.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XCreateWindowEvent.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XCrossingEvent.0		-unknown-		.cat
+./usr/X11R6/man/cat3/XDGA.0			-unknown-		.cat
+./usr/X11R6/man/cat3/XDGAChangePixmapMode.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGACloseFramebuffer.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGACopyArea.0		-unknown-		.cat
+./usr/X11R6/man/cat3/XDGACopyTransparentArea.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGACreateColormap.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGAFillRectangle.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGAGetViewportStatus.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGAInstallColormap.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGAKeyEventToXKeyEvent.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGAOpenFramebuffer.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGAQueryExtension.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGAQueryModes.0		-unknown-		.cat
+./usr/X11R6/man/cat3/XDGAQueryVersion.0		-unknown-		.cat
+./usr/X11R6/man/cat3/XDGASelectInput.0		-unknown-		.cat
+./usr/X11R6/man/cat3/XDGASetClientVersion.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XDGASetMode.0		-unknown-		.cat
+./usr/X11R6/man/cat3/XDGASetViewport.0		-unknown-		.cat
+./usr/X11R6/man/cat3/XDGASync.0			-unknown-		.cat
 ./usr/X11R6/man/cat3/XDefaultString.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XDefineCursor.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XDeleteContext.0		-unknown-		.cat
@@ -828,6 +853,7 @@
 ./usr/X11R6/man/cat3/XExposeEvent.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XExtendedMaxRequestSize.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XExtentsOfFontSet.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XF86DGA.0			-unknown-		.cat
 ./usr/X11R6/man/cat3/XFetchBuffer.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XFetchBytes.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XFetchName.0		-unknown-		.cat
@@ -846,6 +872,7 @@
 ./usr/X11R6/man/cat3/XFontsOfFontSet.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XForceScreenSaver.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XFree.0			-unknown-		.cat
+./usr/X11R6/man/cat3/XFree86-DGA.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XFreeColormap.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XFreeColors.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XFreeCursor.0		-unknown-		.cat
@@ -1028,6 +1055,12 @@
 ./usr/X11R6/man/cat3/XRemoveHosts.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XReparentEvent.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XReparentWindow.0		-unknown-		.cat
+./usr/X11R6/man/cat3/XRes.0				-unknown-	.cat
+./usr/X11R6/man/cat3/XResQueryClientPixmapBytes.0	-unknown-	.cat
+./usr/X11R6/man/cat3/XResQueryClientResources.0		-unknown-	.cat
+./usr/X11R6/man/cat3/XResQueryClients.0			-unknown-	.cat
+./usr/X11R6/man/cat3/XResQueryExtension.0		-unknown-	.cat
+./usr/X11R6/man/cat3/XResQueryVersion.0			-unknown-	.cat
 ./usr/X11R6/man/cat3/XResetScreenSaver.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XResizeRequestEvent.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XResizeWindow.0		-unknown-		.cat
@@ -1038,6 +1071,16 @@
 ./usr/X11R6/man/cat3/XSaveContext.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XScreenNumberOfScreen.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XScreenResourceString.0	-unknown-		.cat
+./usr/X11R6/man/cat3/XScreenSaverAllocInfo.0		-unknown-	.cat
+./usr/X11R6/man/cat3/XScreenSaverGetRegistered.0	-unknown-	.cat
+./usr/X11R6/man/cat3/XScreenSaverQueryExtension.0	-unknown-	.cat
+./usr/X11R6/man/cat3/XScreenSaverQueryInfo.0		-unknown-	.cat
+./usr/X11R6/man/cat3/XScreenSaverQueryVersion.0		-unknown-	.cat
+./usr/X11R6/man/cat3/XScreenSaverRegister.0		-unknown-	.cat
+./usr/X11R6/man/cat3/XScreenSaverSelectInput.0		-unknown-	.cat
+./usr/X11R6/man/cat3/XScreenSaverSetAttributes.0	-unknown-	.cat
+./usr/X11R6/man/cat3/XScreenSaverUnregister.0		-unknown-	.cat
+./usr/X11R6/man/cat3/XScreenSaverUnsetAttributes.0	-unknown-	.cat
 ./usr/X11R6/man/cat3/XSegment.0			-unknown-		.cat
 ./usr/X11R6/man/cat3/XSelectExtensionEvent.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XSelectInput.0		-unknown-		.cat
@@ -1248,6 +1291,7 @@
 ./usr/X11R6/man/cat3/XeviGetVisualInfo.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XeviQueryExtension.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XeviQueryVersion.0		-unknown-		.cat
+./usr/X11R6/man/cat3/Xfontcache.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/Xft.0			-unknown-		.cat
 ./usr/X11R6/man/cat3/XmbDrawImageString.0	-unknown-		.cat
 ./usr/X11R6/man/cat3/XmbDrawString.0		-unknown-		.cat
@@ -1304,6 +1348,7 @@
 ./usr/X11R6/man/cat3/XrmUniqueQuark.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XrmValue.0			-unknown-		.cat
 ./usr/X11R6/man/cat3/Xsecurity.0		xcomp-obsolete		obsolete
+./usr/X11R6/man/cat3/Xss.0			-unknown-		.cat
 ./usr/X11R6/man/cat3/XtAddActions.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XtAddCallback.0		-unknown-		.cat
 ./usr/X11R6/man/cat3/XtAddCallbacks.0		-unknown-		.cat
@@ -2177,6 +2222,11 @@
 ./usr/X11R6/man/man3/DoesBackingStore.3		-unknown-		.man
 ./usr/X11R6/man/man3/DoesSaveUnders.3		-unknown-		.man
 ./usr/X11R6/man/man3/EventMaskOfScreen.3	-unknown-		.man
+./usr/X11R6/man/man3/FontCacheChangeCacheSettings.3	-unknown-	.man
+./usr/X11R6/man/man3/FontCacheGetCacheSettings.3	-unknown-	.man
+./usr/X11R6/man/man3/FontCacheGetCacheStatistics.3	-unknown-	.man
+./usr/X11R6/man/man3/FontCacheQueryExtension.3		-unknown-	.man
+./usr/X11R6/man/man3/FontCacheQueryVersion.3		-unknown-	.man
 ./usr/X11R6/man/man3/GLwCreateMDrawingArea.3	-unknown-		.man
 ./usr/X11R6/man/man3/GLwDrawingArea.3		-unknown-		.man
 ./usr/X11R6/man/man3/GLwDrawingAreaMakeCurrent.3	-unknown-		.man
@@ -2306,6 +2356,25 @@
 ./usr/X11R6/man/man3/XCreateWindow.3		-unknown-		.man
 ./usr/X11R6/man/man3/XCreateWindowEvent.3	-unknown-		.man
 ./usr/X11R6/man/man3/XCrossingEvent.3		-unknown-		.man
+./usr/X11R6/man/man3/XDGA.3			-unknown-		.man
+./usr/X11R6/man/man3/XDGAChangePixmapMode.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGACloseFramebuffer.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGACopyArea.3		-unknown-		.man
+./usr/X11R6/man/man3/XDGACopyTransparentArea.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGACreateColormap.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGAFillRectangle.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGAGetViewportStatus.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGAInstallColormap.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGAKeyEventToXKeyEvent.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGAOpenFramebuffer.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGAQueryExtension.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGAQueryModes.3		-unknown-		.man
+./usr/X11R6/man/man3/XDGAQueryVersion.3		-unknown-		.man
+./usr/X11R6/man/man3/XDGASelectInput.3		-unknown-		.man
+./usr/X11R6/man/man3/XDGASetClientVersion.3	-unknown-		.man
+./usr/X11R6/man/man3/XDGASetMode.3		-unknown-		.man
+./usr/X11R6/man/man3/XDGASetViewport.3		-unknown-		.man
+./usr/X11R6/man/man3/XDGASync.3			-unknown-		.man
 ./usr/X11R6/man/man3/XDefaultString.3		-unknown-		.man
 ./usr/X11R6/man/man3/XDefineCursor.3		-unknown-		.man
 ./usr/X11R6/man/man3/XDeleteContext.3		-unknown-		.man
@@ -2351,6 +2420,7 @@
 ./usr/X11R6/man/man3/XExposeEvent.3		-unknown-		.man
 ./usr/X11R6/man/man3/XExtendedMaxRequestSize.3	-unknown-		.man
 ./usr/X11R6/man/man3/XExtentsOfFontSet.3	-unknown-		.man
+./usr/X11R6/man/man3/XF86DGA.3			-unknown-		.man
 ./usr/X11R6/man/man3/XFetchBuffer.3		-unknown-		.man
 ./usr/X11R6/man/man3/XFetchBytes.3		-unknown-		.man
 ./usr/X11R6/man/man3/XFetchName.3		-unknown-		.man
@@ -2369,6 +2439,7 @@
 ./usr/X11R6/man/man3/XFontsOfFontSet.3		-unknown-		.man
 ./usr/X11R6/man/man3/XForceScreenSaver.3	-unknown-		.man
 ./usr/X11R6/man/man3/XFree.3			-unknown-		.man
+./usr/X11R6/man/man3/XFree86-DGA.3		-unknown-		.man
 ./usr/X11R6/man/man3/XFreeColormap.3		-unknown-		.man
 ./usr/X11R6/man/man3/XFreeColors.3		-unknown-		.man
 ./usr/X11R6/man/man3/XFreeCursor.3		-unknown-		.man
@@ -2551,6 +2622,12 @@
 ./usr/X11R6/man/man3/XRemoveHosts.3		-unknown-		.man
 ./usr/X11R6/man/man3/XReparentEvent.3		-unknown-		.man
 ./usr/X11R6/man/man3/XReparentWindow.3		-unknown-		.man
+./usr/X11R6/man/man3/XRes.3				-unknown-	.man
+./usr/X11R6/man/man3/XResQueryClientPixmapBytes.3	-unknown-	.man
+./usr/X11R6/man/man3/XResQueryClientResources.3		-unknown-	.man
+./usr/X11R6/man/man3/XResQueryClients.3			-unknown-	.man
+./usr/X11R6/man/man3/XResQueryExtension.3		-unknown-	.man
+./usr/X11R6/man/man3/XResQueryVersion.3			-unknown-	.man
 ./usr/X11R6/man/man3/XResetScreenSaver.3	-unknown-		.man
 ./usr/X11R6/man/man3/XResizeRequestEvent.3	-unknown-		.man
 ./usr/X11R6/man/man3/XResizeWindow.3		-unknown-		.man
@@ -2561,6 +2638,16 @@
 ./usr/X11R6/man/man3/XSaveContext.3		-unknown-		.man
 ./usr/X11R6/man/man3/XScreenNumberOfScreen.3	-unknown-		.man
 ./usr/X11R6/man/man3/XScreenResourceString.3	-unknown-		.man
+./usr/X11R6/man/man3/XScreenSaverAllocInfo.3		-unknown-	.man
+./usr/X11R6/man/man3/XScreenSaverGetRegistered.3	-unknown-	.man
+./usr/X11R6/man/man3/XScreenSaverQueryExtension.3	-unknown-	.man
+./usr/X11R6/man/man3/XScreenSaverQueryInfo.3		-unknown-	.man
+./usr/X11R6/man/man3/XScreenSaverQueryVersion.3		-unknown-	.man
+./usr/X11R6/man/man3/XScreenSaverRegister.3		-unknown-	.man
+./usr/X11R6/man/man3/XScreenSaverSelectInput.3		-unknown-	.man
+./usr/X11R6/man/man3/XScreenSaverSetAttributes.3	-unknown-	.man
+./usr/X11R6/man/man3/XScreenSaverUnregister.3		-unknown-	.man
+./usr/X11R6/man/man3/XScreenSaverUnsetAttributes.3	-unknown-	.man
 ./usr/X11R6/man/man3/XSegment.3			-unknown-		.man
 ./usr/X11R6/man/man3/XSelectExtensionEvent.3	-unknown-		.man
 ./usr/X11R6/man/man3/XSelectInput.3		-unknown-		.man
@@ -2771,6 +2858,7 @@
 ./usr/X11R6/man/man3/XeviGetVisualInfo.3	-unknown-		.man
 ./usr/X11R6/man/man3/XeviQueryExtension.3	-unknown-		.man
 ./usr/X11R6/man/man3/XeviQueryVersion.3		-unknown-		.man
+./usr/X11R6/man/man3/Xfontcache.3		-unknown-		.man
 ./usr/X11R6/man/man3/Xft.3			-unknown-		.man
 ./usr/X11R6/man/man3/XmbDrawImageString.3	-unknown-		.man
 ./usr/X11R6/man/man3/XmbDrawString.3		-unknown-		.man
@@ -2827,6 +2915,7 @@
 ./usr/X11R6/man/man3/XrmUniqueQuark.3		-unknown-		.man
 ./usr/X11R6/man/man3/XrmValue.3			-unknown-		.man
 ./usr/X11R6/man/man3/Xsecurity.3		xcomp-obsolete		obsolete
+./usr/X11R6/man/man3/Xss.3			-unknown-		.man
 ./usr/X11R6/man/man3/XtAddActions.3		-unknown-		.man
 ./usr/X11R6/man/man3/XtAddCallback.3		-unknown-		.man
 ./usr/X11R6/man/man3/XtAddCallbacks.3		-unknown-		.man
