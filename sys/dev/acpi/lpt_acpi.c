@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.6 2003/11/03 18:07:10 mycroft Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.7 2003/11/03 19:03:54 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.6 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.7 2003/11/03 19:03:54 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,7 @@ CFATTACH_DECL(lpt_acpi, sizeof(struct lpt_acpi_softc), lpt_acpi_match,
  */
 
 static const char * const lpt_acpi_ids[] = {
-	"PNP0400",	/* Standard LPT printer port */
-	"PNP0401",	/* ECP printer port */
+	"PNP04??",	/* Standard LPT printer port */
 	NULL
 };
 
