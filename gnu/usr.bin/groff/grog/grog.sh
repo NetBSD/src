@@ -1,9 +1,9 @@
 #!/bin/sh
 # grog -- guess options for groff command
 # Like doctype in Kernighan & Pike, Unix Programming Environment, pp 306-8.
-# $Id: grog.sh,v 1.2 1995/03/22 17:30:15 glass Exp $
+# $Id: grog.sh,v 1.3 1995/04/12 00:57:54 jtc Exp $
 
-soelim=gsoelim
+soelim=soelim
 
 opts=
 
