@@ -1,4 +1,4 @@
-/*	$NetBSD: chset.c,v 1.4 2000/05/30 12:03:31 sjg Exp $	*/
+/*	$NetBSD: chset.c,v 1.5 2000/10/04 19:33:16 mjl Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -56,7 +56,7 @@
 #if 0
 static char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: chset.c,v 1.4 2000/05/30 12:03:31 sjg Exp $");
+__RCSID("$NetBSD: chset.c,v 1.5 2000/10/04 19:33:16 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,7 +200,7 @@ __RCSID("$NetBSD: chset.c,v 1.4 2000/05/30 12:03:31 sjg Exp $");
 /*
  * This is relatively easy to modify just look:
  */
-char scnkey_lpd[][HEIGHT] =
+const char scnkey_lpd[][HEIGHT] =
 {
 	{ c_______,
 	  c_______,
@@ -1166,7 +1166,7 @@ char scnkey_lpd[][HEIGHT] =
 /*
  * This is the real banner char set
  */
-char scnkey_def[][HEIGHT] =
+const char scnkey_def[][HEIGHT] =
 {
 	{
 		c_______,
