@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.28 1999/11/29 23:12:58 simonb Exp $	*/
+/*	$NetBSD: libkern.h,v 1.29 2000/03/29 03:07:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)libkern.h	8.2 (Berkeley) 8/5/94
  */
+
+#ifndef _LIB_LIBKERN_LIBKERN_H_
+#define _LIB_LIBKERN_LIBKERN_H_
 
 #include <sys/types.h>
 
@@ -177,3 +180,4 @@ int	 strncmp __P((const char *, const char *, size_t));
 char	*strncpy __P((char *, const char *, size_t));
 char	*strrchr __P((const char *, int));
 u_long	 strtoul __P((const char *, char **, int));
+#endif /* !_LIB_LIBKERN_LIBKERN_H_ */
