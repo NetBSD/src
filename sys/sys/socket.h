@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.73 2005/03/09 05:07:19 atatat Exp $	*/
+/*	$NetBSD: socket.h,v 1.74 2005/03/09 18:53:57 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -73,6 +73,7 @@
  * Data types.
  */
 #include <sys/ansi.h>
+#include <sys/types.h>
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
