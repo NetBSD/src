@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.10 2001/10/18 14:10:07 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.11 2001/11/14 01:00:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -307,6 +307,8 @@ void	sa110_setup		__P((char *string));
 #endif	/* CPU_SA110 */
 
 #ifdef CPU_XSCALE
+u_int	xscale_control		__P((u_int clear, u_int bic));
+
 void	xscale_setttb		__P((u_int ttb));
 
 void	xscale_tlb_flushID_SE	__P((u_int va));
