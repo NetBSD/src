@@ -43,7 +43,7 @@ static char copyright[] =
 #ifndef lint
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 /* from static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94"; */
-static char rcsid[] = "$Id: disklabel.c,v 1.19 1994/12/05 20:15:31 cgd Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.20 1995/01/12 12:23:19 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -406,7 +406,7 @@ writelabel(f, boot, lp)
 			if (dosdp) {
 				int first, ch;
 
-				printf("overwrite DOS partition table? [n]: ");
+				printf("Erase the previous contents of the disk? [n]: ");
 				fflush(stdout);
 				first = ch = getchar();
 				while (ch != '\n' && ch != EOF)
