@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.1.2.2 2000/07/18 16:23:16 mrg Exp $
+# 	$NetBSD: GENERIC32,v 1.1.2.3 2000/08/07 01:53:39 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.1.2.2 $"
+#ident 		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	32
 
@@ -133,7 +133,6 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
-#options 	COMPAT_AOUT	# NetBSD/sparc compat support
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 #options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries. -- 64-bit only
@@ -194,11 +193,19 @@ cpu0	at mainbus0
 
 sbus0	at mainbus0				# Ultra 1
 #upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
-psycho*	at mainbus0				# Darwin, Ultra5
+psycho0	at mainbus0				# Darwin, Ultra5	
+psycho*	at mainbus0				# U2P
+pci0	at psycho0
 pci*	at psycho?
 pci*	at simba?
 simba*	at pci? dev ? function ?		# `APB' support.
 ebus*	at pci?					# ebus devices
+
+# Ultra5/10/AXi
+simba0	at pci0 dev 1 function 0
+pci1	at simba0
+simba1	at pci0 dev 1 function 1
+pci2	at simba1
 
 #### Standard system devices -- all required for a given architecture
 
@@ -347,7 +354,8 @@ le*		at lebuffer?				# SBus
 
 ## Happy Meal Ethernet
 hme*		at sbus? slot ? offset ?
-hme*		at pci?					# "hme" compatible
+hme*		at pci?	dev ? function ?		# network "hme" compatible
+hme0		at pci2	dev 1 function 1		# U5/U10 on-board
 
 # MII/PHY support
 # XXX: only nsphy "tested"
