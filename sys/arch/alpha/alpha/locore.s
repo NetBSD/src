@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.33 1997/09/02 13:18:18 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.34 1997/09/02 14:29:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.33 1997/09/02 13:18:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.34 1997/09/02 14:29:00 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -60,6 +60,8 @@ bootstack:
  * Arguments:
  *	a0 is the first free page frame number (PFN)
  *	a1 is the page table base register (PTBR)
+ *	a2 is the bootinfo magic number
+ *	a3 is the pointer to the bootinfo structure
  *
  * All arguments are passed to alpha_init().
  */
@@ -79,7 +81,7 @@ Lstart1: LDGP(pv)
 	/*
 	 * Call alpha_init() to do pre-main initialization.
 	 * alpha_init() gets the arguments we were called with,
-	 * which are already in a0 and a1.
+	 * which are already in a0, a1, a2, and a3.
 	 */
 	CALL(alpha_init)
 
