@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.18 2000/07/11 06:07:27 itohy Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.19 2001/03/11 13:57:45 mjl Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -158,7 +158,6 @@ static int keycrunch_sha1(char *result,		/* SKEY_BINKEY_SIZE result */
 {
 	char *buf;
 	SHA1_CTX sha;
-	u_int32_t results[5];
 	size_t buflen;
 	int i, j;
 
@@ -168,28 +167,26 @@ static int keycrunch_sha1(char *result,		/* SKEY_BINKEY_SIZE result */
 	/* Crunch the key through SHA1 */
 	SHA1Init(&sha);
 	SHA1Update(&sha, (unsigned char *)buf, buflen);
-	SHA1Final((unsigned char *) (void *)results, &sha);
+	SHA1Final(NULL, &sha);
 	free(buf);
 
 	/* Fold 160 to 64 bits */
-	results[0] ^= results[2];
-	results[1] ^= results[3];
-	results[0] ^= results[4];
+	sha.state[0] ^= sha.state[2];
+	sha.state[1] ^= sha.state[3];
+	sha.state[0] ^= sha.state[4];
 
 	/*
-	 * Even though my readings of rfc2289 indicate that this is
-	 * wrong (it converts stuff to big endian), it is needed to
-	 * make the output match up the regression tests in said rfc.
-	 * Something is wrong here? --mjl
+	 * SHA1 is a big endian algorithm but RFC2289 mandates that
+	 * the result be in little endian form, so we copy to the
+	 * result buffer manually.
 	 */
-		
-	for(i=j=0; j<8; i++, j+=4)
-		{
-		result[j+3] = (unsigned char)(results[i] & 0xff);
-		result[j+2] = (unsigned char)((results[i] >> 8) & 0xff);
-		result[j+1] = (unsigned char)((results[i] >> 16) & 0xff);
-		result[j+0] = (unsigned char)((results[i] >> 24) & 0xff);
-		}
+
+	for(i=j=0; j<8; i++, j+=4) {
+		result[j]   = (unsigned char)(sha.state[i] & 0xff);
+		result[j+1] = (unsigned char)((sha.state[i] >> 8) & 0xff);
+		result[j+2] = (unsigned char)((sha.state[i] >> 16) & 0xff);
+		result[j+3] = (unsigned char)((sha.state[i] >> 24) & 0xff);
+	}
 
 	return(0);
 }
@@ -265,25 +262,23 @@ static void f_md5(char *x)
 static void f_sha1(char *x)
 {
 	SHA1_CTX sha;
-	u_int32_t results[5];
 	int i, j;
 	
 	SHA1Init(&sha);
 	SHA1Update(&sha, (unsigned char *)x, SKEY_BINKEY_SIZE);
-	SHA1Final((unsigned char *) (void *)results, &sha);
+	SHA1Final(NULL, &sha);
 
 	/* Fold 160 to 64 bits */
-	results[0] ^= results[2];
-	results[1] ^= results[3];
-	results[0] ^= results[4];
+	sha.state[0] ^= sha.state[2];
+	sha.state[1] ^= sha.state[3];
+	sha.state[0] ^= sha.state[4];
 
-	for(i=j=0; j<8; i++, j+=4)
-		{
-		x[j+3] = (unsigned char)(results[i] & 0xff);
-		x[j+2] = (unsigned char)((results[i] >> 8) & 0xff);
-		x[j+1] = (unsigned char)((results[i] >> 16) & 0xff);
-		x[j+0] = (unsigned char)((results[i] >> 24) & 0xff);
-		}
+	for(i=j=0; j<8; i++, j+=4) {
+		x[j]   = (unsigned char)(sha.state[i] & 0xff);
+		x[j+1] = (unsigned char)((sha.state[i] >> 8) & 0xff);
+		x[j+2] = (unsigned char)((sha.state[i] >> 16) & 0xff);
+		x[j+3] = (unsigned char)((sha.state[i] >> 24) & 0xff);
+	}
 }
 
 #if 0
