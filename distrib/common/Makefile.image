@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.3 2002/02/07 11:39:17 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.4 2002/02/08 02:18:53 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -20,7 +20,6 @@
 #	POPULATEENV	environment variables to pass to the output of
 #			parselist.awk -v mode=populate
 #	WORKDIR		directory to build image in to 
-#
 #
 
 WORKDIR?=	work
