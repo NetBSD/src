@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.88 2000/04/21 17:57:00 bouyer Exp $
+#	$NetBSD: files.pci,v 1.89 2000/04/30 21:59:58 augustss Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -202,6 +202,11 @@ file	dev/pci/sv.c			sv
 
 attach	opl at sv with opl_sv
 file	dev/pci/opl_sv.c		opl_sv
+
+# C-Media CMI8x38 Audio Chip
+device	cmpci { }: audio, auconv
+attach	cmpci at pci
+file	dev/pci/cmpci.c			cmpci
 
 # SMC EPIC/100 Fast Ethernet on PCI
 attach	epic at pci with epic_pci
