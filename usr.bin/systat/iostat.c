@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.8 1997/07/21 07:05:01 mrg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.9 1997/10/19 23:36:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.8 1997/07/21 07:05:01 mrg Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.9 1997/10/19 23:36:24 lukem Exp $");
 #endif not lint
 
 #include <sys/param.h>
@@ -195,7 +195,7 @@ barlabels(row)
 void
 showiostat()
 {
-	register int i, row, col;
+	int i, row, col;
 
 	if (dk_ndrive == 0)
 		return;
@@ -278,7 +278,7 @@ static void
 stat1(row, o)
 	int row, o;
 {
-	register int i;
+	int i;
 	double time;
 
 	time = 0;
@@ -298,8 +298,8 @@ histogram(val, colwidth, scale)
 	double scale;
 {
 	char buf[10];
-	register int k;
-	register int v = (int)(val * scale) + 0.5;
+	int k;
+	int v = (int)(val * scale) + 0.5;
 
 	k = MIN(v, colwidth);
 	if (v > colwidth) {

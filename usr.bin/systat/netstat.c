@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.7 1997/07/21 07:05:06 mrg Exp $	*/
+/*	$NetBSD: netstat.c,v 1.8 1997/10/19 23:36:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.7 1997/07/21 07:05:06 mrg Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.8 1997/10/19 23:36:29 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -126,7 +126,7 @@ void
 closenetstat(w)
 	WINDOW *w;
 {
-	register struct netinfo *p;
+	struct netinfo *p;
 
 	endhostent();
 	endnetent();
@@ -172,8 +172,8 @@ void
 fetchnetstat()
 {
 	struct inpcbtable pcbtable;
-	register struct inpcb *head, *prev, *next;
-	register struct netinfo *p;
+	struct inpcb *head, *prev, *next;
+	struct netinfo *p;
 	struct inpcb inpcb;
 	struct socket sockb;
 	struct tcpcb tcpcb;
@@ -240,7 +240,7 @@ enter(inp, so, state, proto)
 	int state;
 	char *proto;
 {
-	register struct netinfo *p;
+	struct netinfo *p;
 
 	/*
 	 * Only take exact matches, any sockets with
@@ -308,7 +308,7 @@ labelnetstat()
 void
 shownetstat()
 {
-	register struct netinfo *p, *q;
+	struct netinfo *p, *q;
 
 	/*
 	 * First, delete any connections that have gone
@@ -391,7 +391,7 @@ inetprint(in, port, proto)
 	char line[80], *cp;
 
 	sprintf(line, "%.*s.", 16, inetname(*in));
-	cp = index(line, '\0');
+	cp = strchr(line, '\0');
 	if (!nflag && port)
 		sp = getservbyport(port, proto);
 	if (sp || port == 0)
@@ -399,7 +399,7 @@ inetprint(in, port, proto)
 	else
 		sprintf(cp, "%d", ntohs((u_short)port));
 	/* pad to full column to clear any garbage */
-	cp = index(line, '\0');
+	cp = strchr(line, '\0');
 	while (cp - line < 22)
 		*cp++ = ' ';
 	*cp = '\0';
@@ -452,7 +452,7 @@ int
 cmdnetstat(cmd, args)
 	char *cmd, *args;
 {
-	register struct netinfo *p;
+	struct netinfo *p;
 
 	if (prefix(cmd, "all")) {
 		aflag = !aflag;

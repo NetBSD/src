@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.5 1997/07/21 07:04:59 mrg Exp $	*/
+/*	$NetBSD: disks.c,v 1.6 1997/10/19 23:36:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.5 1997/07/21 07:04:59 mrg Exp $");
+__RCSID("$NetBSD: disks.c,v 1.6 1997/10/19 23:36:23 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,7 +66,7 @@ dkcmd(cmd, args)
 		return (1);
 	}
 	if (prefix(cmd, "drives")) {
-		register int i;
+		int i;
 
 		move(CMDLINE, 0); clrtoeol();
 		for (i = 0; i < dk_ndrive; i++)
@@ -81,10 +81,10 @@ dkselect(args, truefalse, selections)
 	char *args;
 	int truefalse, selections[];
 {
-	register char *cp;
-	register int i;
+	char *cp;
+	int i;
 
-	cp = index(args, '\n');
+	cp = strchr(args, '\n');
 	if (cp)
 		*cp = '\0';
 	for (;;) {
