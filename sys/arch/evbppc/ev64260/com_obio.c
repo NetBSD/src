@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.1 2003/03/16 07:07:19 matt Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.2 2003/03/24 17:07:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,9 +138,6 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = &osc->osc_com;
 	struct obio_attach_args *oa = aux;
 
-	/*
-	 * We're living on an obio that looks like an sbus slot.
-	 */
 	sc->sc_iot = oa->oa_memt;
 	sc->sc_iobase = oa->oa_offset;
 	sc->sc_frequency = COM_FREQ*2;
