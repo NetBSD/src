@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.139 2002/05/30 00:24:47 enami Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.140 2002/08/20 13:51:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.139 2002/05/30 00:24:47 enami Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.140 2002/08/20 13:51:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -900,6 +900,69 @@ checkaccess(const char *name)
 	return (checkuser(_PATH_FTPUSERS, name, 1, 0, NULL));
 }
 
+static void
+login_utmp(const char *name, const char *line, const char *host)
+{
+#if defined(SUPPORT_UTMPX) || defined(SUPPORT_UTMP)
+	struct timeval tv;
+	(void)gettimeofday(&tv, NULL);
+#endif
+#ifdef SUPPORT_UTMPX
+	if (doutmp) {
+		(void)memset(&utmpx, 0, sizeof(utmpx));
+		utmpx.ut_tv = tv;
+		utmpx.ut_pid = getpid();
+		utmpx.ut_id[0] = 'f';
+		utmpx.ut_id[1] = 't';
+		utmpx.ut_id[2] = 'p';
+		utmpx.ut_id[3] = '*';
+		utmpx.ut_type = USER_PROCESS;
+		(void)strncpy(utmpx.ut_name, name, sizeof(utmpx.ut_name));
+		(void)strncpy(utmpx.ut_line, line, sizeof(utmpx.ut_line));
+		(void)strncpy(utmpx.ut_host, host, sizeof(utmpx.ut_host));
+		loginx(&utmpx);
+	}
+	if (dowtmp)
+		logwtmpx(line, name, host, 0, USER_PROCESS);
+#endif
+#ifdef SUPPORT_UTMP
+	if (doutmp) {
+		(void)memset(&utmp, 0, sizeof(utmp));
+		(void)time(&utmp.ut_time);
+		(void)strncpy(utmp.ut_name, name, sizeof(utmp.ut_name));
+		(void)strncpy(utmp.ut_line, line, sizeof(utmp.ut_line));
+		(void)strncpy(utmp.ut_host, host, sizeof(utmp.ut_host));
+		login(&utmp);
+	}
+	if (dowtmp)
+		logwtmp(line, name, host);
+#endif
+}
+
+static void
+logout_utmp(void)
+{
+	int okwtmp = dowtmp;
+	if (logged_in) {
+		if (doutmp) {
+#ifdef SUPPORT_UTMPX
+			okwtmp = logoutx(ttyline, 0, DEAD_PROCESS) & dowtmp;
+#endif
+#ifdef SUPPORT_UTMP
+			okwtmp = logout(ttyline) & dowtmp;
+#endif
+		}
+		if (okwtmp) {
+#ifdef SUPPORT_UTMPX
+			logwtmpx(ttyline, "", "", 0, DEAD_PROCESS);
+#endif
+#ifdef SUPPORT_UTMP
+			logwtmp(ttyline, "", "");
+#endif
+		}
+	}
+}
+
 /*
  * Terminate login as previous user (if any), resetting state;
  * used when USER command is given or login fails.
@@ -907,14 +970,7 @@ checkaccess(const char *name)
 static void
 end_login(void)
 {
-
-	if (logged_in) {
-		if (dowtmp)
-			logwtmp(ttyline, "", "");
-		if (doutmp)
-			logout(utmp.ut_line);
-	}
-			/* reset login state */
+	logout_utmp();
 	show_chdir_messages(-1);		/* flush chdir cache */
 	if (pw != NULL && pw->pw_passwd != NULL)
 		memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
@@ -1022,19 +1078,8 @@ pass(const char *passwd)
 			/* cache groups for cmds.c::matchgroup() */
 	gidcount = getgroups(sizeof(gidlist), gidlist);
 
-			/* open wtmp before chroot */
-	if (dowtmp)
-		logwtmp(ttyline, pw->pw_name, remotehost);
-
-			/* open utmp before chroot */
-	if (doutmp) {
-		memset((void *)&utmp, 0, sizeof(utmp));
-		(void)time(&utmp.ut_time);
-		(void)strncpy(utmp.ut_name, pw->pw_name, sizeof(utmp.ut_name));
-		(void)strncpy(utmp.ut_host, remotehost, sizeof(utmp.ut_host));
-		(void)strncpy(utmp.ut_line, ttyline, sizeof(utmp.ut_line));
-		login(&utmp);
-	}
+	/* open utmp/wtmp before chroot */
+	login_utmp(pw->pw_name, remotehost, ttyline);
 
 	logged_in = 1;
 
@@ -2341,12 +2386,8 @@ dologout(int status)
 	* back to the main program loop.
 	*/
 	transflag = 0;
-
+	logout_wtmp();
 	if (logged_in) {
-		if (dowtmp)
-			logwtmp(ttyline, "", "");
-		if (doutmp)
-			logout(utmp.ut_line);
 #ifdef KERBEROS
 		if (!notickets && krbtkfile_env)
 			unlink(krbtkfile_env);
