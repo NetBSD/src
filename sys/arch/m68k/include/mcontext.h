@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.4 2001/12/02 10:35:13 scw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.5 2001/12/28 05:46:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,5 +99,7 @@ typedef struct {
 
 /* Machine-specific uc_flags value */
 #define _UC_M68K_UC_USER 0x40000000
+
+#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_A7])
 
 #endif	/* !_M68K_MCONTEXT_H_ */
