@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.11 2003/04/16 18:30:43 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.12 2003/04/16 18:59:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.11 2003/04/16 18:30:43 nathanw Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.12 2003/04/16 18:59:12 nathanw Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -296,9 +296,6 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		self = pthread__self();
 		if (pthread__id(mutex->ptm_owner) == self) {
 			switch (mp->type) {
-			case PTHREAD_MUTEX_ERRORCHECK:
-				return EDEADLK;
-
 			case PTHREAD_MUTEX_RECURSIVE:
 				if (mp->recursecount == INT_MAX)
 					return EAGAIN;
