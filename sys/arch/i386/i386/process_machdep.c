@@ -1,7 +1,8 @@
-/*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.23 1997/11/13 03:16:50 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1997
+ *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
  * All rights reserved.
@@ -177,17 +178,14 @@ process_write_regs(p, regs)
 	} else
 #endif
 	{
-		extern int gdt_size;
-		extern union descriptor *dynamic_gdt;
-
 #define	verr_ldt(slot)	(slot < pcb->pcb_ldt_len && \
 			 (pcb->pcb_ldt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
 			 pcb->pcb_ldt[slot].sd.sd_dpl == SEL_UPL && \
 			 pcb->pcb_ldt[slot].sd.sd_p == 1)
-#define	verr_gdt(slot)	(slot < gdt_size && \
-			 (dynamic_gdt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
-			 dynamic_gdt[slot].sd.sd_dpl == SEL_UPL && \
-			 dynamic_gdt[slot].sd.sd_p == 1)
+#define	verr_gdt(slot)	(slot < NGDT && \
+			 (gdt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
+			 gdt[slot].sd.sd_dpl == SEL_UPL && \
+			 gdt[slot].sd.sd_p == 1)
 #define	verr(sel)	(ISLDT(sel) ? verr_ldt(IDXSEL(sel)) : \
 				      verr_gdt(IDXSEL(sel)))
 #define	valid_sel(sel)	(ISPL(sel) == SEL_UPL && verr(sel))
