@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.6 2001/02/05 23:59:52 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.7 2001/04/06 04:40:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -95,6 +95,7 @@ form_driver(FORM *form, int c)
 {
 	FIELD *fieldp;
 	int update_page, update_field, old_field, old_page, status;
+	int start_field;
 	unsigned int pos;
 	
 	if (form == NULL)
@@ -110,7 +111,7 @@ form_driver(FORM *form, int c)
 		return E_BAD_STATE;
 
 
-	old_field = form->cur_field;
+	old_field = start_field = form->cur_field;
 	fieldp = form->fields[form->cur_field];
 	update_page = update_field = 0;
 	status = E_OK;
@@ -118,16 +119,12 @@ form_driver(FORM *form, int c)
 	if (c < REQ_MIN_REQUEST) {
 		if (isprint(c)) {
 			do {
-				pos = fieldp->start_char + fieldp->cursor_xpos
-					+ fieldp->hscroll;
+				pos = fieldp->start_char + fieldp->cursor_xpos;
 
-				  /* check if we are allowed to edit this field */
+			      /* check if we are allowed to edit this field */
 				if ((fieldp->opts & O_EDIT) != O_EDIT)
 					return E_REQUEST_DENIED;
 				
-				if (fieldp->start_char > 0)
-					pos--;
-
 				if ((status =
 				     (_formi_add_char(fieldp, pos, c)))
 				    == E_REQUEST_DENIED) {
@@ -149,8 +146,22 @@ form_driver(FORM *form, int c)
 							     REQ_NEXT_FIELD);
 					if (status != E_OK)
 						return status;
+
+					  /*
+					   * check if we have looped
+                                           * around all the fields.
+                                           * This can easily happen if
+                                           * all the fields are full.
+					   */
+					if (start_field == form->cur_field)
+						return E_REQUEST_DENIED;
+					
 					old_field = form->cur_field;
 					fieldp = form->fields[form->cur_field];
+					status = _formi_add_char(fieldp,
+							fieldp->start_char
+							+ fieldp->cursor_xpos,
+							c);
 				} else if (status == E_INVALID_FIELD)
 					  /* char failed validation, just
 					   * return the status.
@@ -303,7 +314,6 @@ form_driver(FORM *form, int c)
 			if ((form->opts & O_BS_OVERLOAD) == O_BS_OVERLOAD) {
 				if ((fieldp->start_char == 0) &&
 				    (fieldp->start_line == 0) &&
-				    (fieldp->hscroll == 0) &&
 				    (fieldp->cursor_xpos == 0)) {
 					update_field =
 						_formi_manipulate_field(form,
@@ -324,7 +334,6 @@ form_driver(FORM *form, int c)
 			if ((form->opts & O_NL_OVERLOAD) == O_NL_OVERLOAD) {
 				if ((fieldp->start_char == 0) &&
 				    (fieldp->start_line == 0) &&
-				    (fieldp->hscroll == 0) &&
 				    (fieldp->cursor_xpos == 0)) {
 					update_field =
 						_formi_manipulate_field(form,
@@ -421,7 +430,6 @@ form_driver(FORM *form, int c)
 		fieldp = form->fields[form->cur_field];
 		fieldp->start_char = 0;
 		fieldp->start_line = 0;
-		fieldp->hscroll = 0;
 		fieldp->cursor_xpos = 0;
 		fieldp->cursor_ypos = 0;
 	}
