@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.10 2000/07/05 18:14:13 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.11 2000/07/05 22:45:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
                          correct value */
 #define LINK_MASK (IFF_LINK0|IFF_LINK1|IFF_LINK2)
 
-LIST_HEAD(, gre_softc) gre_softc_list;
+struct gre_softc_head gre_softc_list;
 
 int	gre_clone_create __P((struct if_clone *, int));
 void	gre_clone_destroy __P((struct ifnet *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.6 2000/07/05 18:14:14 thorpej Exp $ */
+/*	$NetBSD: if_gre.h,v 1.7 2000/07/05 22:45:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,8 @@ struct mobip_h {
 #define GREGPROTO       _IOWR('i', 106, struct ifreq)
 
 #ifdef _KERNEL
-extern	struct gre_softc gre_softc[];
+LIST_HEAD(gre_softc_head, gre_softc);
+extern struct gre_softc_head gre_softc_list;
 
 int     gre_ioctl __P((struct ifnet *, u_long, caddr_t));
 int     gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.10 2000/03/30 13:24:59 augustss Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.11 2000/07/05 22:45:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,10 +303,9 @@ gre_lookup(m, proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct gre_softc *sc;
-	int i;
 
-	for (i = 0; i < NGRE; i++) {
-		sc = &gre_softc[i];
+	for (sc = LIST_FIRST(&gre_softc_list); sc != NULL;
+	     sc = LIST_NEXT(sc, sc_list)) {
 		if ((sc->g_dst.s_addr == ip->ip_src.s_addr) &&
 		    (sc->g_src.s_addr == ip->ip_dst.s_addr) &&
 		    (sc->g_proto == proto) &&
