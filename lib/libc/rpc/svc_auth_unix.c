@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth_unix.c,v 1.5 1997/07/13 20:13:22 christos Exp $	*/
+/*	$NetBSD: svc_auth_unix.c,v 1.6 1997/07/21 14:08:38 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth_unix.c,v 1.5 1997/07/13 20:13:22 christos Exp $");
+__RCSID("$NetBSD: svc_auth_unix.c,v 1.6 1997/07/21 14:08:38 jtc Exp $");
 #endif
 #endif
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: svc_auth_unix.c,v 1.5 1997/07/13 20:13:22 christos Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <string.h>
 #include <rpc/rpc.h>

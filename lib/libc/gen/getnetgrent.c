@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.12 1997/07/13 19:12:06 christos Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.13 1997/07/21 14:07:10 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.12 1997/07/13 19:12:06 christos Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.13 1997/07/21 14:07:10 jtc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,6 +50,13 @@ __RCSID("$NetBSD: getnetgrent.c,v 1.12 1997/07/13 19:12:06 christos Exp $");
 #include <db.h>
 #ifdef YP
 #include <rpcsvc/ypclnt.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(endnetgrent,_endnetgrent);
+__weak_alias(getnetgrent,_getnetgrent);
+__weak_alias(innetgr,_innetgr);
+__weak_alias(setnetgrent,_setnetgrent);
 #endif
 
 #define _NG_STAR(s)	(((s) == NULL || *(s) == '\0') ? _ngstar : s)

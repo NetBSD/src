@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.13 1997/07/13 19:00:13 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.14 1997/07/21 14:07:03 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,12 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.13 1997/07/13 19:00:13 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.14 1997/07/21 14:07:03 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
-
 #include <ctype.h>
 #include <db.h>
 #include <errno.h>	
@@ -56,6 +56,19 @@ __RCSID("$NetBSD: getcap.c,v 1.13 1997/07/13 19:00:13 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(cgetcap,_cgetcap);
+__weak_alias(cgetclose,_cgetclose);
+__weak_alias(cgetent,_cgetent);
+__weak_alias(cgetfirst,_cgetfirst);
+__weak_alias(cgetmatch,_cgetmatch);
+__weak_alias(cgetnext,_cgetnext);
+__weak_alias(cgetnum,_cgetnum);
+__weak_alias(cgetset,_cgetset);
+__weak_alias(cgetstr,_cgetstr);
+__weak_alias(cgetustr,_cgetustr);
+#endif
 
 #define	BFRAG		1024
 #define	BSIZE		1024

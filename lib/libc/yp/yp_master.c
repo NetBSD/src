@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.7 1997/07/13 20:28:13 christos Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.8 1997/07/21 14:09:28 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,9 +33,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_master.c,v 1.7 1997/07/13 20:28:13 christos Exp $");
+__RCSID("$NetBSD: yp_master.c,v 1.8 1997/07/21 14:09:28 jtc Exp $");
 #endif
 
+#include "namespace.h"
 #include <string.h>
 #include <stdlib.h>
 #include <rpc/rpc.h>
@@ -45,6 +46,10 @@ __RCSID("$NetBSD: yp_master.c,v 1.7 1997/07/13 20:28:13 christos Exp $");
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
+
+#ifdef __weak_alias
+__weak_alias(yp_master,_yp_master);
+#endif
 
 int
 yp_master(indomain, inmap, outname)
@@ -92,7 +97,7 @@ again:
 			r = YPERR_RESRC;
 	}
 	xdr_free(xdr_ypresp_master, (char *) &yprm);
-	_yp_unbind(ysd);
+	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outname) {
 			free(*outname);

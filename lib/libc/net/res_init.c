@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.14 1997/07/20 13:33:31 mrg Exp $	*/
+/*	$NetBSD: res_init.c,v 1.15 1997/07/21 14:08:11 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,10 +59,11 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.14 1997/07/20 13:33:31 mrg Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.15 1997/07/21 14:08:11 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: getdtablesize.c,v 1.4 1997/07/13 18:50:08 christos Exp $	*/
+/*	$NetBSD: getdtablesize.c,v 1.5 1997/07/21 14:06:26 jtc Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,9 +7,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getdtablesize.c,v 1.4 1997/07/13 18:50:08 christos Exp $");
+__RCSID("$NetBSD: getdtablesize.c,v 1.5 1997/07/21 14:06:26 jtc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <unistd.h>
 
 int

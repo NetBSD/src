@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_maplist.c,v 1.5 1997/07/13 20:28:12 christos Exp $	 */
+/*	$NetBSD: yp_maplist.c,v 1.6 1997/07/21 14:09:27 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,9 +33,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_maplist.c,v 1.5 1997/07/13 20:28:12 christos Exp $");
+__RCSID("$NetBSD: yp_maplist.c,v 1.6 1997/07/21 14:09:27 jtc Exp $");
 #endif
 
+#include "namespace.h"
 #include <string.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
@@ -44,6 +45,10 @@ __RCSID("$NetBSD: yp_maplist.c,v 1.5 1997/07/13 20:28:12 christos Exp $");
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
+
+#ifdef __weak_alias
+__weak_alias(yp_maplist,_yp_maplist);
+#endif
 
 int
 yp_maplist(indomain, outmaplist)
@@ -75,6 +80,6 @@ again:
 	}
 	*outmaplist = ypml.list;
 	/* NO: xdr_free(xdr_ypresp_maplist, &ypml); */
-	_yp_unbind(ysd);
+	__yp_unbind(ysd);
 	return ypprot_err(ypml.status);
 }

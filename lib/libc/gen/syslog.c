@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.11 1997/07/13 19:34:16 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.12 1997/07/21 14:07:37 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.11 1997/07/13 19:34:16 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.12 1997/07/21 14:07:37 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
@@ -60,6 +61,14 @@ __RCSID("$NetBSD: syslog.c,v 1.11 1997/07/13 19:34:16 christos Exp $");
 #include <stdarg.h>
 #else
 #include <varargs.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(closelog,_closelog);
+__weak_alias(openlog,_openlog);
+__weak_alias(setlogmask,_setlogmask);
+__weak_alias(syslog,_syslog);
+__weak_alias(vsyslog,_vsyslog);
 #endif
 
 static int	LogFile = -1;		/* fd for log */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.10 1997/07/13 20:13:20 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.11 1997/07/21 14:08:37 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.10 1997/07/13 20:13:20 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.11 1997/07/21 14:08:37 jtc Exp $");
 #endif
 #endif
 
@@ -49,12 +49,30 @@ __RCSID("$NetBSD: svc.c,v 1.10 1997/07/13 20:13:20 christos Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
 
 #include <sys/errno.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
+
+#ifdef __weak_alias
+__weak_alias(svc_getreq,_svc_getreq);
+__weak_alias(svc_getreqset,_svc_getreqset);
+__weak_alias(svc_register,_svc_register);
+__weak_alias(svc_sendreply,_svc_sendreply);
+__weak_alias(svc_unregister,_svc_unregister);
+__weak_alias(svcerr_auth,_svcerr_auth);
+__weak_alias(svcerr_decode,_svcerr_decode);
+__weak_alias(svcerr_noproc,_svcerr_noproc);
+__weak_alias(svcerr_noprog,_svcerr_noprog);
+__weak_alias(svcerr_progvers,_svcerr_progvers);
+__weak_alias(svcerr_systemerr,_svcerr_systemerr);
+__weak_alias(svcerr_weakauth,_svcerr_weakauth);
+__weak_alias(xprt_register,_xprt_register);
+__weak_alias(xprt_unregister,_xprt_unregister);
+#endif
 
 static SVCXPRT **xports;
 

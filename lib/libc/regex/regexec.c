@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.8 1997/07/13 20:06:00 christos Exp $	*/
+/*	$NetBSD: regexec.c,v 1.9 1997/07/21 14:08:17 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.8 1997/07/13 20:06:00 christos Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.9 1997/07/21 14:08:17 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: regexec.c,v 1.8 1997/07/13 20:06:00 christos Exp $");
  * macros that code uses.  This lets the same code operate on two different
  * representations for state sets.
  */
+#include "namespace.h"
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,6 +63,10 @@ __RCSID("$NetBSD: regexec.c,v 1.8 1997/07/13 20:06:00 christos Exp $");
 #include <limits.h>
 #include <ctype.h>
 #include <regex.h>
+
+#ifdef __weak_alias
+__weak_alias(regexec,_regexec);
+#endif
 
 #include "utils.h"
 #include "regex2.h"

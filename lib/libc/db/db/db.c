@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.8 1997/07/13 18:52:01 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.9 1997/07/21 14:06:39 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)db.c	8.4 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: db.c,v 1.8 1997/07/13 18:52:01 christos Exp $");
+__RCSID("$NetBSD: db.c,v 1.9 1997/07/21 14:06:39 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <errno.h>
@@ -51,6 +52,10 @@ __RCSID("$NetBSD: db.c,v 1.8 1997/07/13 18:52:01 christos Exp $");
 
 #include <db.h>
 static int __dberr __P((void));
+
+#ifdef __weak_alias
+__weak_alias(dbopen,_dbopen);
+#endif
 
 DB *
 dbopen(fname, flags, mode, type, openinfo)

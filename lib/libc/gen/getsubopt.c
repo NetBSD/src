@@ -1,4 +1,4 @@
-/*	$NetBSD: getsubopt.c,v 1.6 1997/07/13 19:46:00 christos Exp $	*/
+/*	$NetBSD: getsubopt.c,v 1.7 1997/07/21 14:07:15 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,13 +38,18 @@
 #if 0
 static char *sccsid = "@(#)getsubopt.c	5.2 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: getsubopt.c,v 1.6 1997/07/13 19:46:00 christos Exp $");
+__RCSID("$NetBSD: getsubopt.c,v 1.7 1997/07/21 14:07:15 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(getsubopt,_getsubopt);
+#endif
 
 /*
  * The SVID interface to getsubopt provides no way of figuring out which

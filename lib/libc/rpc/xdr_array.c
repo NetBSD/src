@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.5 1997/07/13 20:13:29 christos Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.6 1997/07/21 14:08:43 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.5 1997/07/13 20:13:29 christos Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.6 1997/07/21 14:08:43 jtc Exp $");
 #endif
 #endif
 
@@ -48,13 +48,17 @@ __RCSID("$NetBSD: xdr_array.c,v 1.5 1997/07/13 20:13:29 christos Exp $");
  * arrays.  See xdr.h for more info on the interface to xdr.
  */
 
-
-
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+
+#ifdef __weak_alias
+__weak_alias(xdr_array,_xdr_array);
+__weak_alias(xdr_vector,_xdr_vector);
+#endif
 
 /*
  * XDR an array of arbitrary elements

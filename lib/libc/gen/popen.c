@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.13 1997/07/13 19:16:07 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.14 1997/07/21 14:07:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.13 1997/07/13 19:16:07 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.14 1997/07/21 14:07:23 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/wait.h>
 
@@ -55,6 +56,11 @@ __RCSID("$NetBSD: popen.c,v 1.13 1997/07/13 19:16:07 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+
+#ifdef __weak_alias
+__weak_alias(popen,_popen);
+__weak_alias(pclose,_pclose);
+#endif
 
 static struct pid {
 	struct pid *next;

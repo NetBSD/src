@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.7 1997/07/13 19:43:00 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.8 1997/07/21 14:07:47 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,14 +38,21 @@
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: vis.c,v 1.7 1997/07/13 19:43:00 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.8 1997/07/21 14:07:47 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <limits.h>
 #include <ctype.h>
 #include <vis.h>
+
+#ifdef __weak_alias
+__weak_alias(strvis,_strvis);
+__weak_alias(strvisx,_strvisx);
+__weak_alias(vis,_vis);
+#endif
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
 

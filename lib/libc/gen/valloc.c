@@ -1,4 +1,4 @@
-/*	$NetBSD: valloc.c,v 1.6 1997/07/13 19:46:26 christos Exp $	*/
+/*	$NetBSD: valloc.c,v 1.7 1997/07/21 14:07:47 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,12 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)valloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: valloc.c,v 1.6 1997/07/13 19:46:26 christos Exp $");
+__RCSID("$NetBSD: valloc.c,v 1.7 1997/07/21 14:07:47 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(valloc,_valloc);
+#endif
 
 void *
 valloc(i)

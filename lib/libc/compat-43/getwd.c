@@ -1,4 +1,4 @@
-/*	$NetBSD: getwd.c,v 1.5 1997/07/13 18:49:43 christos Exp $	*/
+/*	$NetBSD: getwd.c,v 1.6 1997/07/21 14:06:27 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,10 +38,11 @@
 #if 0
 static char *sccsid = "@(#)getwd.c	5.1 (Berkeley) 2/20/91";
 #else
-__RCSID("$NetBSD: getwd.c,v 1.5 1997/07/13 18:49:43 christos Exp $");
+__RCSID("$NetBSD: getwd.c,v 1.6 1997/07/21 14:06:27 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <unistd.h>
 #include <errno.h>

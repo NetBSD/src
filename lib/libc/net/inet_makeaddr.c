@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.5 1997/07/13 19:57:45 christos Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.6 1997/07/21 14:08:02 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,13 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)inet_makeaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_makeaddr.c,v 1.5 1997/07/13 19:57:45 christos Exp $");
+__RCSID("$NetBSD: inet_makeaddr.c,v 1.6 1997/07/21 14:08:02 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#ifdef __weak_alias
+__weak_alias(inet_makeaddr,_inet_makeaddr);
+#endif
 
 /*
  * Formulate an Internet address from network + host.  Used in

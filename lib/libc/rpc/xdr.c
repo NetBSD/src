@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.9 1997/07/13 20:13:28 christos Exp $	*/
+/*	$NetBSD: xdr.c,v 1.10 1997/07/21 14:08:43 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.9 1997/07/13 20:13:28 christos Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.10 1997/07/21 14:08:43 jtc Exp $");
 #endif
 #endif
 
@@ -49,12 +49,38 @@ __RCSID("$NetBSD: xdr.c,v 1.9 1997/07/13 20:13:28 christos Exp $");
  * xdr.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+
+#ifdef __weak_alias
+__weak_alias(xdr_bool,_xdr_bool);
+__weak_alias(xdr_bytes,_xdr_bytes);
+__weak_alias(xdr_char,_xdr_char);
+__weak_alias(xdr_enum,_xdr_enum);
+__weak_alias(xdr_free,_xdr_free);
+__weak_alias(xdr_int,_xdr_int);
+__weak_alias(xdr_int16_t,_xdr_int16_t);
+__weak_alias(xdr_int32_t,_xdr_int32_t);
+__weak_alias(xdr_long,_xdr_long);
+__weak_alias(xdr_netobj,_xdr_netobj);
+__weak_alias(xdr_opaque,_xdr_opaque);
+__weak_alias(xdr_short,_xdr_short);
+__weak_alias(xdr_string,_xdr_string);
+__weak_alias(xdr_u_char,_xdr_u_char);
+__weak_alias(xdr_u_int,_xdr_u_int);
+__weak_alias(xdr_u_int16_t,_xdr_u_int16_t);
+__weak_alias(xdr_u_int32_t,_xdr_u_int32_t);
+__weak_alias(xdr_u_long,_xdr_u_long);
+__weak_alias(xdr_u_short,_xdr_u_short);
+__weak_alias(xdr_union,_xdr_union);
+__weak_alias(xdr_void,_xdr_void);
+__weak_alias(xdr_wrapstring,_xdr_wrapstring);
+#endif
 
 /*
  * constants specific to the xdr "protocol"

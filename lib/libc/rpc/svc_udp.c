@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.8 1997/07/13 20:13:26 christos Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.9 1997/07/21 14:08:42 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_udp.c,v 1.8 1997/07/13 20:13:26 christos Exp $");
+__RCSID("$NetBSD: svc_udp.c,v 1.9 1997/07/21 14:08:42 jtc Exp $");
 #endif
 #endif
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: svc_udp.c,v 1.8 1997/07/13 20:13:26 christos Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,6 +56,11 @@ __RCSID("$NetBSD: svc_udp.c,v 1.8 1997/07/13 20:13:26 christos Exp $");
 #include <sys/socket.h>
 #include <errno.h>
 
+#ifdef __weak_alias
+__weak_alias(svcudp_bufcreate,_svcudp_bufcreate);
+__weak_alias(svcudp_create,_svcudp_create);
+__weak_alias(svcudp_enablecache,_svcudp_enablecache);
+#endif
 
 #define rpc_buffer(xprt) ((xprt)->xp_p1)
 #define MAX(a, b)     ((a > b) ? a : b)

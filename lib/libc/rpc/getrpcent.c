@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.7 1997/07/13 20:13:10 christos Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.8 1997/07/21 14:08:28 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: getrpcent.c,v 1.7 1997/07/13 20:13:10 christos Exp $");
+__RCSID("$NetBSD: getrpcent.c,v 1.8 1997/07/21 14:08:28 jtc Exp $");
 #endif
 #endif
 
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: getrpcent.c,v 1.7 1997/07/13 20:13:10 christos Exp $");
  * Copyright (c) 1984 by Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -50,6 +51,14 @@ __RCSID("$NetBSD: getrpcent.c,v 1.7 1997/07/13 20:13:10 christos Exp $");
 #include <rpc/rpc.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+
+#ifdef __weak_alias
+__weak_alias(endrpcent,_endrpcent);
+__weak_alias(getrpcbyname,_getrpcbyname);
+__weak_alias(getrpcbynumber,_getrpcbynumber);
+__weak_alias(getrpcent,_getrpcent);
+__weak_alias(setrpcent,_setrpcent);
+#endif
 
 /*
  * Internet version.
@@ -205,4 +214,3 @@ interpret(val, len)
 	*q = NULL;
 	return (&d->rpc);
 }
-

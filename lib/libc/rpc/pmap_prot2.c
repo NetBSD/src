@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot2.c,v 1.3 1997/07/13 20:13:15 christos Exp $	*/
+/*	$NetBSD: pmap_prot2.c,v 1.4 1997/07/21 14:08:33 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_prot2.c 1.3 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_prot2.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_prot2.c,v 1.3 1997/07/13 20:13:15 christos Exp $");
+__RCSID("$NetBSD: pmap_prot2.c,v 1.4 1997/07/21 14:08:33 jtc Exp $");
 #endif
 #endif
 
@@ -46,10 +46,14 @@ __RCSID("$NetBSD: pmap_prot2.c,v 1.3 1997/07/13 20:13:15 christos Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/pmap_prot.h>
 
+#ifdef __weak_alias
+__weak_alias(xdr_pmaplist,_xdr_pmaplist);
+#endif
 
 /* 
  * What is going on with linked lists? (!)

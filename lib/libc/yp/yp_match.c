@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.8 1997/07/13 20:28:14 christos Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.9 1997/07/21 14:09:29 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,9 +33,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_match.c,v 1.8 1997/07/13 20:28:14 christos Exp $");
+__RCSID("$NetBSD: yp_match.c,v 1.9 1997/07/21 14:09:29 jtc Exp $");
 #endif
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/rpc.h>
@@ -48,6 +49,10 @@ __RCSID("$NetBSD: yp_match.c,v 1.8 1997/07/13 20:28:14 christos Exp $");
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
 extern char _yp_domain[];
+
+#ifdef __weak_alias
+__weak_alias(yp_match,_yp_match);
+#endif
 
 #ifdef YPMATCHCACHE
 int _yplib_cache = 5;
@@ -237,7 +242,7 @@ again:
 #endif
 	}
 	xdr_free(xdr_ypresp_val, (char *) &yprv);
-	_yp_unbind(ysd);
+	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outval) {
 			free(*outval);

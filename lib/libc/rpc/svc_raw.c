@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.4 1997/07/13 20:13:23 christos Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.5 1997/07/21 14:08:39 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_raw.c 1.15 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_raw.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.4 1997/07/13 20:13:23 christos Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.5 1997/07/21 14:08:39 jtc Exp $");
 #endif
 #endif
 
@@ -48,9 +48,13 @@ __RCSID("$NetBSD: svc_raw.c,v 1.4 1997/07/13 20:13:23 christos Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <rpc/rpc.h>
 
+#ifdef __weak_alias
+__weak_alias(svcraw_create,_svcraw_create);
+#endif
 
 /*
  * This is the "network" that we will be moving data over

@@ -1,4 +1,4 @@
-/*	$NetBSD: qabs.c,v 1.3 1997/07/13 20:16:50 christos Exp $	*/
+/*	$NetBSD: qabs.c,v 1.4 1997/07/21 14:08:59 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,11 +38,16 @@
 #if 0
 static char *sccsid = "from: @(#)labs.c	5.2 (Berkeley) 5/17/90";
 #else
-__RCSID("$NetBSD: qabs.c,v 1.3 1997/07/13 20:16:50 christos Exp $");
+__RCSID("$NetBSD: qabs.c,v 1.4 1997/07/21 14:08:59 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdlib.h>
+
+#ifdef __weak_alias
+__weak_alias(qabs,_qabs);
+#endif
 
 quad_t
 qabs(j)

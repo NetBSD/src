@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.16 1997/07/13 20:28:10 christos Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.17 1997/07/21 14:09:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.16 1997/07/13 20:28:10 christos Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.17 1997/07/21 14:09:24 jtc Exp $");
 #endif
 
 /*
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: xdryp.c,v 1.16 1997/07/13 20:28:10 christos Exp $");
  * often inaccurate.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -59,6 +60,31 @@ __RCSID("$NetBSD: xdryp.c,v 1.16 1997/07/13 20:28:10 christos Exp $");
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
+#ifdef __weak_alias
+__weak_alias(xdr_datum,_xdr_datum);
+__weak_alias(xdr_domainname,_xdr_domainname);
+__weak_alias(xdr_mapname,_xdr_mapname);
+__weak_alias(xdr_peername,_xdr_peername);
+__weak_alias(xdr_yp_inaddr,_xdr_yp_inaddr);
+__weak_alias(xdr_ypall,_xdr_ypall);
+__weak_alias(xdr_ypbind_resp,_xdr_ypbind_resp);
+__weak_alias(xdr_ypbind_setdom,_xdr_ypbind_setdom);
+__weak_alias(xdr_ypdomain_wrap_string,_xdr_ypdomain_wrap_string);
+__weak_alias(xdr_ypmap_parms,_xdr_ypmap_parms);
+__weak_alias(xdr_ypmap_wrap_string,_xdr_ypmap_wrap_string);
+__weak_alias(xdr_ypmaplist,_xdr_ypmaplist);
+__weak_alias(xdr_ypowner_wrap_string,_xdr_ypowner_wrap_string);
+__weak_alias(xdr_yppushresp_xfr,_xdr_yppushresp_xfr);
+__weak_alias(xdr_ypreq_key,_xdr_ypreq_key);
+__weak_alias(xdr_ypreq_nokey,_xdr_ypreq_nokey);
+__weak_alias(xdr_ypreq_xfr,_xdr_ypreq_xfr);
+__weak_alias(xdr_ypresp_key_val,_xdr_ypresp_key_val);
+__weak_alias(xdr_ypresp_maplist,_xdr_ypresp_maplist);
+__weak_alias(xdr_ypresp_master,_xdr_ypresp_master);
+__weak_alias(xdr_ypresp_order,_xdr_ypresp_order);
+__weak_alias(xdr_ypresp_val,_xdr_ypresp_val);
+#endif
 
 /*
  * Functions used only within this file.

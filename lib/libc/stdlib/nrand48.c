@@ -11,7 +11,12 @@
  * to anyone/anything when using this software.
  */
 
+#include "namespace.h"
 #include "rand48.h"
+
+#ifdef __weak_alias
+__weak_alias(nrand48,_nrand48);
+#endif
 
 long
 nrand48(unsigned short xseed[3])

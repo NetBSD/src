@@ -17,7 +17,10 @@
 #include <math.h>
 #include <stdlib.h>
 
-void		__dorand48 __P((unsigned short[3]));
+extern void		__dorand48 __P((unsigned short[3]));
+extern unsigned short	__rand48_seed[3];
+extern unsigned short	__rand48_mult[3];
+extern unsigned short	__rand48_add;
 
 #define	RAND48_SEED_0	(0x330e)
 #define	RAND48_SEED_1	(0xabcd)

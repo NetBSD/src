@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.11 1997/07/13 19:46:06 christos Exp $	*/
+/*	$NetBSD: nlist.c,v 1.12 1997/07/21 14:07:21 jtc Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,10 +39,11 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.11 1997/07/13 19:46:06 christos Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.12 1997/07/21 14:07:21 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -53,6 +54,10 @@ __RCSID("$NetBSD: nlist.c,v 1.11 1997/07/13 19:46:06 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <a.out.h>			/* for 'struct nlist' declaration */
+
+#ifdef __weak_alias
+__weak_alias(nlist,_nlist);
+#endif
 
 #include "nlist_private.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.29 1997/07/13 20:28:16 christos Exp $	 */
+/*	$NetBSD: yplib.c,v 1.30 1997/07/21 14:09:32 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,9 +33,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.29 1997/07/13 20:28:16 christos Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.30 1997/07/21 14:09:32 jtc Exp $");
 #endif
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -66,6 +67,12 @@ struct timeval _yplib_timeout = { YPLIB_TIMEOUT, 0 };
 struct timeval _yplib_rpc_timeout = { YPLIB_TIMEOUT / YPLIB_RPC_RETRIES,
 	1000000 * (YPLIB_TIMEOUT % YPLIB_RPC_RETRIES) / YPLIB_RPC_RETRIES };
 int _yplib_nerrs = 5;
+
+#ifdef __weak_alias
+__weak_alias(yp_bind, _yp_bind);
+__weak_alias(yp_unbind, _yp_unbind);
+__weak_alias(yp_get_default_domain, _yp_get_default_domain);
+#endif
 
 int
 _yp_dobind(dom, ypdb)
@@ -247,7 +254,7 @@ gotit:
 }
 
 void
-_yp_unbind(ypb)
+__yp_unbind(ypb)
 	struct dom_binding *ypb;
 {
 	clnt_destroy(ypb->dom_client);

@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.7 1997/07/13 20:16:43 christos Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.8 1997/07/21 14:08:51 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,13 +41,18 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.7 1997/07/13 20:16:43 christos Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.8 1997/07/21 14:08:51 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <errno.h>
 #include <stdlib.h>
+
+#ifdef __weak_alias
+__weak_alias(heapsort,_heapsort);
+#endif
 
 /*
  * Swap two areas of size number of bytes.  Although qsort(3) permits random

@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.11 1997/07/13 20:26:50 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.12 1997/07/21 14:09:20 jtc Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,7 +11,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.61";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.11 1997/07/13 20:26:50 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.12 1997/07/21 14:09:20 jtc Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -24,9 +24,21 @@ __RCSID("$NetBSD: localtime.c,v 1.11 1997/07/13 20:26:50 christos Exp $");
 
 /*LINTLIBRARY*/
 
+#include "namespace.h"
 #include "private.h"
 #include "tzfile.h"
 #include "fcntl.h"
+
+#ifdef __weak_alias
+__weak_alias(offtime,_offtime);
+__weak_alias(posix2time,_posix2time);
+__weak_alias(time2posix,_time2posix);
+__weak_alias(timegm,_timegm);
+__weak_alias(timelocal,_timelocal);
+__weak_alias(timeoff,_timeoff);
+__weak_alias(tzset,_tzset);
+__weak_alias(tzsetwall,_tzsetwall);
+#endif
 
 /*
 ** SunOS 4.1.1 headers lack O_BINARY.

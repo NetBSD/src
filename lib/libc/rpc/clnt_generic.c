@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.7 1997/07/13 20:13:04 christos Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.8 1997/07/21 14:08:22 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,18 +35,23 @@
 static char *sccsid = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
 static char *sccsid = "@(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.7 1997/07/13 20:13:04 christos Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.8 1997/07/21 14:08:22 jtc Exp $");
 #endif
 #endif
 
 /*
  * Copyright (C) 1987, Sun Microsystems, Inc.
  */
+#include "namespace.h"
 #include <string.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <netdb.h>
+
+#ifdef __weak_alias
+__weak_alias(clnt_create,_clnt_create);
+#endif
 
 /*
  * Generic client creation: takes (hostname, program-number, protocol) and
