@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 1998/01/16 04:17:37 sakamoto Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1998/01/19 03:00:59 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,9 +31,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <dev/isa/isareg.h>
+#include <dev/ic/i8253reg.h>
 
-static u_long ns_per_tick = 320;
+#define FIRST_GUESS	0x2000
+
+static u_long ns_per_tick;
 
 static inline u_quad_t
 mftb()
@@ -62,4 +66,42 @@ delay(n)
 	tbl = tb;
 	asm ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw %0,%2; blt 1b; 2:"
 	     :: "r"(scratch), "r"(tbh), "r"(tbl));
+}
+
+int
+findcpuspeed()
+{
+	int i;
+	int ticks_per_sec;
+	u_short remainder;
+	u_quad_t tstart, tend;
+
+	/* Put counter in count down mode */
+	outb(TIMER_MODE, TIMER_SEL0|TIMER_16BIT|TIMER_RATEGEN);
+	outb(TIMER_CNTR0, 0xff);	/* lo */
+	outb(TIMER_CNTR0, 0xff);	/* hi */
+	for (i = FIRST_GUESS; i; i--)
+		;
+	/* Read the value left in the counter */
+	outb(TIMER_MODE, TIMER_SEL0|TIMER_LATCH);
+	remainder = inb(TIMER_CNTR0);
+	remainder += (inb(TIMER_CNTR0) << 8);
+
+	tstart = mftb();
+	for (i = FIRST_GUESS; i; i--)
+		;
+	tend = mftb();
+	if (tend > tstart)
+		tend -= tstart;
+	else
+		tend += UQUAD_MAX - tstart;
+
+	ticks_per_sec = (int)(tend * TIMER_FREQ / (0xffff - remainder));
+	if (ticks_per_sec > 8000000)		/* XXX */
+		ticks_per_sec = 33000000 / 4;
+	else
+		ticks_per_sec = 25000000 / 4;
+	ns_per_tick = 1000000000 / ticks_per_sec;
+
+	return (ticks_per_sec);
 }
