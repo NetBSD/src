@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1999/03/15 20:54:54 is Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/03/04 16:43:11 shiba Exp $
 
-IMAGESIZE?=	5120 # 2.5MB in 512 byte blocks
-VND_GEOM?=	512/32/32/5 # (5) 512KB `cylinders'
+IMAGESIZE?=	8192 # 4.0MB in 512 byte blocks
 NEWFSOPTS?=	-i 8192 -B be
