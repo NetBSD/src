@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 1997/02/19 00:20:52 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.46 1997/03/26 22:39:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,10 +86,6 @@ configure()
 	 */
 	printf("enabling interrupts\n");
 	(void)spl0();
-
-	rootconf();
-	swapconf();
-	dumpconf();
 	cold = 0;
 }
 
@@ -211,8 +207,8 @@ static struct device * find_dev_byname __P((char *));
 /*
  * Choose root and swap devices.
  */
-static void
-rootconf()
+void
+cpu_rootconf()
 {
 	MachMonBootParam *bp;
 	struct prom_n2f *nf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1997/03/20 12:00:30 matthias Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 1997/03/26 22:39:07 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,6 @@ configure()
 {
 	extern int safepri;
 	int i;
-	int booted_partition = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	static const char *ipl_names[] = IPL_NAMES;
 
 	splhigh();
@@ -96,17 +95,16 @@ configure()
 
 	safepri = imask[IPL_ZERO];
 	spl0();
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
+	int booted_partition = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, pc532_nam2blk);
-
-	/*
-	 * Configure swap area and related system
-	 * parameter based on device(s) used.
-	 */
-	swapconf();
-	dumpconf();
-	cold = 0;
 }

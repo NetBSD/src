@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.68 1997/03/12 11:04:35 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.69 1997/03/26 22:39:17 gwr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -784,9 +784,6 @@ configure()
 	struct confargs oca;
 	register int node = 0;
 	register char *cp;
-	struct bootpath *bp;
-	struct device *bootdv;
-	int bootpartition;
 
 	/* build the bootpath */
 	bootpath_build();
@@ -863,20 +860,21 @@ configure()
 #endif
 
 	(void)spl0();
+	cold = 0;
+}
 
-	/*
-	 * Configure swap area and related system
-	 * parameter based on device(s) used.
-	 */
+void
+cpu_rootconf()
+{
+	struct bootpath *bp;
+	struct device *bootdv;
+	int bootpartition;
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	bootdv = bp == NULL ? NULL : bp->dev;
 	bootpartition = bp == NULL ? 0 : bp->val[2];
 
 	setroot(bootdv, bootpartition, sparc_nam2blk);
-	swapconf();
-	dumpconf();
-	cold = 0;
 }
 
 /*

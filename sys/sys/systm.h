@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.64 1997/01/31 03:04:31 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.65 1997/03/26 22:38:40 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -261,6 +261,8 @@ void	longjmp	__P((label_t *));
 void	consinit __P((void));
 
 void	cpu_startup __P((void));
+void	cpu_rootconf __P((void));
+void	cpu_dumpconf __P((void));
 void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 
 

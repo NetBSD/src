@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 1997/03/15 02:59:43 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49 1997/03/26 22:38:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -67,9 +67,8 @@ u_long boot_partition;
 void
 configure()
 {
-	struct device *booted_device;
-	int booted_partition;
 	int s;
+
 	/*
 	 * this is the real thing baby (i.e. not console init)
 	 */
@@ -105,6 +104,14 @@ configure()
 #ifdef DEBUG_KERNEL_START
 	printf("survived interrupt enable\n");
 #endif
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
+	struct device *booted_device;
+	int booted_partition;
 
 	findroot(&booted_device, &booted_partition);
 #ifdef DEBUG_KERNEL_START
@@ -114,14 +121,6 @@ configure()
 #ifdef DEBUG_KERNEL_START
 	printf("survived setroot()\n");
 #endif
-	swapconf();
-	dumpconf();
-	if (dumplo < 0)
-		dumplo = 0;
-#ifdef DEBUG_KERNEL_START
-	printf("survived swap device search\n");
-#endif
-	cold = 0;
 }
 
 /*ARGSUSED*/

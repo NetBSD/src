@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.97 1997/02/02 02:55:06 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.98 1997/03/26 22:38:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -318,6 +318,11 @@ main(framep)
 	/* Kick off timeout driven events by calling first time. */
 	roundrobin(NULL);
 	schedcpu(NULL);
+
+	/* Determine the root/swap/dump devices, etc. */
+	cpu_rootconf();
+	swapconf();
+	cpu_dumpconf();
 
 	/* Mount the root file system. */
 	do {

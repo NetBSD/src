@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1997/02/03 19:46:55 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1997/03/26 22:38:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,14 +89,17 @@ configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
 
 	if (booted_device == NULL)
 		printf("WARNING: can't figure what device matches \"%s\"\n",
 		    boot_dev);
 	setroot(booted_device, booted_partition, alpha_nam2blk);
-	swapconf();
-	dumpconf();
-	cold = 0;
 }
 
 void
