@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.77 2002/05/02 13:13:53 simonb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.78 2002/05/28 21:56:06 bjh21 Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -66,6 +66,7 @@ CKSUM?=		cksum
 CONFIG?=	config
 CRUNCHGEN?=	crunchgen
 ELF2ECOFF?=	elf2ecoff
+FGEN?=		fgen
 GROFF?=		groff
 INSTALLBOOT?=	installboot
 MAKEFS?=	makefs
