@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.86 2004/06/25 15:43:00 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.87 2004/08/03 13:58:59 cube Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.86 2004/06/25 15:43:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.87 2004/08/03 13:58:59 cube Exp $");
 
 #include "opt_ipsec.h"
 
@@ -151,6 +151,8 @@ int	icmpmaskrepl = 0;
 int	icmpprintfs = 0;
 #endif
 int	icmpreturndatabytes = 8;
+
+struct icmpstat	icmpstat;
 
 /*
  * List of callbacks to notify when Path MTU changes are made.
