@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.11 1998/07/16 07:08:26 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.12 1998/07/23 17:56:00 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -166,7 +166,7 @@ write_menu_file (char *initcode)
 		"	char   *opt_name;\n"
 		"	int	opt_menu;\n"
 		"	int	opt_flags;\n"
-		"	void	(*opt_action)(void);\n"
+		"	int	(*opt_action)(void);\n"
 		"} menu_ent ;\n\n"
 		"#define OPT_SUB    1\n"
 		"#define OPT_ENDWIN 2\n"
@@ -273,10 +273,13 @@ write_menu_file (char *initcode)
 		while (toptn != NULL) {
 			if (strlen(toptn->optact.code)) {
 				(void) fprintf (out_file,
-					"void opt_act_%d_%d(void);\n"
-					"void opt_act_%d_%d(void)\n"
-					"{\t%s\n}\n\n",
-					i, j, i, j, toptn->optact.code);
+					"int opt_act_%d_%d(void);\n"
+					"int opt_act_%d_%d(void)\n"
+					"{\t%s\n\treturn %s;\n}\n\n",
+					i, j, i, j, toptn->optact.code,
+					(toptn->doexit ? "1" : "0"));
+						
+				
 			}
 			j++;
 			toptn = toptn->next;
