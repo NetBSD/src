@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.4 2002/02/13 09:46:04 martti Exp $
+#	$NetBSD: ttys,v 1.4.2.1 2002/06/14 17:30:13 lukem Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -10,6 +10,8 @@
 console	"/usr/libexec/getty Pc"		vt220	off secure 
 ttye0	"/usr/libexec/getty Pc"		vt220	on secure 	# ite0 console
 ttye1	"/usr/libexec/getty Pc"		vt220	on secure 	# ite1
+ttyE0	"/usr/libexec/getty Pc"		vt220	on secure 	# wscons
+ttyE1	"/usr/libexec/getty Pc"		vt220	on secure 	#   consoles
 ttyp0	none			network
 ttyp1	none			network
 ttyp2	none			network
