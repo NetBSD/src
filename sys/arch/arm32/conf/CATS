@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.10.2.1 1999/04/20 19:36:24 perry Exp $
+#	$NetBSD: CATS,v 1.10.2.2 2000/03/29 22:45:27 he Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -224,12 +224,14 @@ de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+vr* 	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # MII/PHY support
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs
 #qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
+ukphy* 	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
 
