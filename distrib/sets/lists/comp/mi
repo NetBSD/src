@@ -662,6 +662,8 @@
 ./usr/libexec/lint1
 ./usr/libexec/lint2
 ./usr/sbin/config
+./usr/sbin/gspa
+./usr/sbin/gspahextoc
 ./usr/sbin/kgmon
 ./usr/share/lkm/README
 ./usr/share/lkm/misc/Makefile
