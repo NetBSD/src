@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.1.1.1.2.2 1999/12/04 16:57:57 he Exp $	*/
+/*	$NetBSD: subr.c,v 1.1.1.1.2.3 2001/01/28 17:09:00 he Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989
@@ -55,7 +55,7 @@
 
 #ifndef lint
 static const char sccsid[] = "@(#)subr.c	5.24 (Berkeley) 3/2/91";
-static const char rcsid[] = "Id: subr.c,v 8.13 1999/10/13 16:39:20 vixie Exp";
+static const char rcsid[] = "Id: subr.c,v 8.14 2000/12/23 08:14:48 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -84,6 +84,7 @@ static const char rcsid[] = "Id: subr.c,v 8.13 1999/10/13 16:39:20 vixie Exp";
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
 
+#include <ctype.h>
 #include <netdb.h>
 #include <setjmp.h>
 #include <signal.h>

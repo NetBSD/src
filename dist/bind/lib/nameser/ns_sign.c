@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_sign.c,v 1.1.1.1.2.2 1999/12/04 17:07:09 he Exp $	*/
+/*	$NetBSD: ns_sign.c,v 1.1.1.1.2.3 2001/01/28 17:09:06 he Exp $	*/
 
 /*
  * Copyright (c) 1999 by Internet Software Consortium, Inc.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_sign.c,v 8.8 1999/10/13 16:39:36 vixie Exp";
+static const char rcsid[] = "Id: ns_sign.c,v 8.9 2000/12/23 08:14:57 vixie Exp";
 #endif
 
 /* Import. */
@@ -39,6 +39,7 @@ static const char rcsid[] = "Id: ns_sign.c,v 8.8 1999/10/13 16:39:36 vixie Exp";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <isc/dst.h>

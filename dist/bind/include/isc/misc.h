@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.1.1.1.2.2 1999/12/04 17:09:41 he Exp $	*/
+/*	$NetBSD: misc.h,v 1.1.1.1.2.3 2001/01/28 17:09:00 he Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -18,14 +18,16 @@
  */
 
 /*
- * Id: misc.h,v 8.2 1999/01/08 19:23:10 vixie Exp
+ * Id: misc.h,v 8.4 2000/12/23 08:14:52 vixie Exp
  */
 
 #ifndef _ISC_MISC_H
 #define _ISC_MISC_H
 
 #define	bitncmp		__bitncmp
+/*#define isc_movefile	__isc_movefile */
 
 extern int		bitncmp(const void *l, const void *r, int n);
+extern int		isc_movefile(const char *, const char *);
 
 #endif /*_ISC_MISC_H*/

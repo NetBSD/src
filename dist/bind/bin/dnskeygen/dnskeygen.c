@@ -1,7 +1,7 @@
-/*	$NetBSD: dnskeygen.c,v 1.1.1.1.2.2 1999/12/04 16:52:32 he Exp $	*/
+/*	$NetBSD: dnskeygen.c,v 1.1.1.1.2.3 2001/01/28 17:08:55 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: dnskeygen.c,v 1.9 1999/10/13 16:38:59 vixie Exp";
+static const char rcsid[] = "Id: dnskeygen.c,v 1.11 2000/12/23 08:14:31 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -52,9 +52,8 @@ main(int argc, char **argv) {
 	int	 size = -1, exp = 0;
 	int	 no_auth = 0, no_conf = 0;
 	int	 sign_val = 0, flags = 0, protocol = -1;
-	int      i, err = 0, n;
+	int      i, err = 0;
 	extern char *optarg;
-	char   array[1024];
 
 	dst_init();
 	if ((prog = strrchr(argv[0],'/')) == NULL)
@@ -218,6 +217,8 @@ main(int argc, char **argv) {
 	}
 	else if (size < 0)
 		usage("No size specified", 0);
+	else /* size == 0 */
+		sign_val = 0;
 
 	if (err)
 		usage("errors encountered/unknown flag", 1);
