@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.8 2003/07/15 00:24:51 lukem Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.9 2003/08/08 12:29:23 bsh Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.8 2003/07/15 00:24:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.9 2003/08/08 12:29:23 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,10 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.8 2003/07/15 00:24:51 lukem Exp $"
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
-#ifdef hpcarm
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
-#endif
 
 #include <dev/pcmcia/pcmciachip.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -63,108 +59,37 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.8 2003/07/15 00:24:51 lukem Exp $"
 #include <arm/sa11x0/sa1111_var.h>
 #include <arm/sa11x0/sa11x1_pcicreg.h>
 #include <arm/sa11x0/sa11xx_pcicvar.h>
+#include <arm/sa11x0/sa11x1_pcicvar.h>
 
 #include "sacpcic.h"
 
-static	int	sacpcic_match(struct device *, struct cfdata *, void *);
-static	void	sacpcic_attach(struct device *, struct device *, void *);
-static	int	sacpcic_print(void *, const char *);
-static	int	sacpcic_submatch(struct device *, struct cfdata *, void *);
+static int	sacpcic_print(void *, const char *);
+static int	sacpcic_submatch(struct device *, struct cfdata *, void *);
 
-static	int	sacpcic_read(struct sapcic_socket *, int);
-static	void	sacpcic_write(struct sapcic_socket *, int, int);
-static	void	sacpcic_set_power(struct sapcic_socket *, int);
-static	void	sacpcic_clear_intr(int);
-static	void	*sacpcic_intr_establish(struct sapcic_socket *, int,
-				       int (*)(void *), void *);
-static	void	sacpcic_intr_disestablish(struct sapcic_socket *, void *);
 
-struct sacpcic_softc {
-	struct sapcic_softc sc_pc;
-	bus_space_handle_t sc_ioh;
-	
-	struct sapcic_socket sc_socket[2];
-};
-
-static struct sapcic_tag sacpcic_functions = {
-	sacpcic_read,
-	sacpcic_write,
-	sacpcic_set_power,
-	sacpcic_clear_intr,
-	sacpcic_intr_establish,
-	sacpcic_intr_disestablish
-};
-
-#ifdef hpcarm
-static int j720_power_capability[] = {
-	SAPCIC_POWER_5V | SAPCIC_POWER_3V, SAPCIC_POWER_3V
-};
-
-static struct platid_data sacpcic_platid_table[] = {
-	{ &platid_mask_MACH_HP_JORNADA_720, j720_power_capability },
-	{ &platid_mask_MACH_HP_JORNADA_720JP, j720_power_capability },
-	{ NULL, NULL }
-};
-#endif
-
-CFATTACH_DECL(sacpcic, sizeof(struct sacpcic_softc),
-    sacpcic_match, sacpcic_attach, NULL, NULL);
-
-static int
-sacpcic_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	return (1);
-}
-
-static void
-sacpcic_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+void
+sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
+    void *aux, void (* socket_setup_hook)(struct sapcic_socket *))
 {
 	int i;
-#ifdef hpcarm
-	int *ip;
-#endif
 	struct pcmciabus_attach_args paa;
-	struct sacpcic_softc *sc = (struct sacpcic_softc *)self;
-	struct sacc_softc *psc = (struct sacc_softc *)parent;
-#ifdef hpcarm
-	struct platid_data *p;
-#endif
 
 	printf("\n");
 
 	sc->sc_pc.sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
-#ifdef hpcarm
-	p = platid_search_data(&platid, sacpcic_platid_table);
-#endif
 
 	for(i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;
 		sc->sc_socket[i].socket = i;
 		sc->sc_socket[i].pcictag_cookie = psc;
-		sc->sc_socket[i].pcictag = &sacpcic_functions;
+		sc->sc_socket[i].pcictag = NULL;
 		sc->sc_socket[i].event_thread = NULL;
 		sc->sc_socket[i].event = 0;
 		sc->sc_socket[i].laststatus = SAPCIC_CARD_INVALID;
 		sc->sc_socket[i].shutdown = 0;
 
-#ifdef hpcarm
-		if (p == NULL) {
-			sc->sc_socket[i].power_capability = SAPCIC_POWER_5V;
-		} else {
-			ip = (int *)p->data;
-			sc->sc_socket[i].power_capability = ip[i];
-		}
-#else
-		/* XXX */
-		sc->sc_socket[i].power_capability = SAPCIC_POWER_5V;
-#endif
+		socket_setup_hook(&sc->sc_socket[i]);
 
 		paa.paa_busname = "pcmcia";
 		paa.pct = (pcmcia_chipset_tag_t)&sa11x0_pcmcia_functions;
@@ -191,7 +116,7 @@ sacpcic_attach(parent, self, aux)
 	}
 }
 
-static int
+int
 sacpcic_print(aux, name)
 	void *aux;
 	const char *name;
@@ -199,20 +124,15 @@ sacpcic_print(aux, name)
 	return (UNCONF);
 }
 
-static int
-sacpcic_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+int
+sacpcic_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return config_match(parent, cf, aux);
 }
 
 
-static int
-sacpcic_read(so, reg)
-	struct sapcic_socket *so;
-	int reg;
+int
+sacpcic_read(struct sapcic_socket *so, int reg)
 {
 	int cr, bit;
 	struct sacpcic_softc *sc = (struct sacpcic_softc *)so->sc;
@@ -244,11 +164,8 @@ sacpcic_read(so, reg)
 	}
 }
 
-static void
-sacpcic_write(so, reg, arg)
-	struct sapcic_socket *so;
-	int reg;
-	int arg;
+void
+sacpcic_write(struct sapcic_socket *so, int reg, int arg)
 {
 	int s, oldvalue, newvalue, mask;
 	struct sacpcic_softc *sc = (struct sacpcic_softc *)so->sc;
@@ -299,55 +216,13 @@ sacpcic_write(so, reg, arg)
 	splx(s);
 }
 		
-static void
-sacpcic_set_power(so, arg)
-	struct sapcic_socket *so;
-	int arg;
-{
-	/* XXX this should go to dev/jornada720.c */
-	int newval, oldval, s;
-	struct sacc_softc *sc = so->pcictag_cookie;
-
-	/* XXX this isn't well confirmed. DANGER DANGER */
-	switch (arg) {
-	case SAPCIC_POWER_OFF:
-		newval = 0;
-		break;
-	case SAPCIC_POWER_3V:
-		newval = 2;
-		break;
-	case SAPCIC_POWER_5V:
-		newval = 1;
-		break;
-	default:
-		panic("sacpcic_set_power: bogus arg");
-	}
-
-	s = splbio();
-	oldval = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				  SACCGPIOA_DVR);
-	switch (so->socket) {
-	case 0:
-		newval = newval | (oldval & 0xc);
-		break;
-	case 1:
-		newval = (newval << 2) | (oldval & 3);
-		break;
-	default:
-		splx(s);
-		panic("sacpcic_set_power");
-	}
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCGPIOA_DVR, newval);
-	splx(s);
-}
-
-static void
+void
 sacpcic_clear_intr(arg)
 {
 	/* sacc_intr_dispatch takes care of intr status */
 }
 
-static void *
+void *
 sacpcic_intr_establish(so, level, ih_fun, ih_arg)
 	struct sapcic_socket *so;
 	int level;
@@ -361,7 +236,7 @@ sacpcic_intr_establish(so, level, ih_fun, ih_arg)
 				    IST_EDGE_FALL, level, ih_fun, ih_arg));
 }
 
-static void
+void
 sacpcic_intr_disestablish(so, ih)
 	struct sapcic_socket *so;
 	void *ih;

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.10 2003/07/15 00:24:50 lukem Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.11 2003/08/08 12:29:23 bsh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,12 +38,11 @@
 
 /*
  * TODO:
- *   - separate machine specific attach code
  *   - introduce bus abstraction to support SA1101
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.10 2003/07/15 00:24:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.11 2003/08/08 12:29:23 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,30 +65,18 @@ __KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.10 2003/07/15 00:24:50 lukem Exp $");
 #include <arm/sa11x0/sa1111_reg.h>
 #include <arm/sa11x0/sa1111_var.h>
 
-static	int	sacc_probe(struct device *, struct cfdata *, void *);
-static	void	sacc_attach(struct device *, struct device *, void *);
-static	int	sa1111_search(struct device *, struct cfdata *, void *);
+#include "locators.h"
+
 static	int	sa1111_print(void *, const char *);
 
 static void	sacc_intr_calculatemasks(struct sacc_softc *);
 static void	sacc_intr_setpolarity(sacc_chipset_tag_t *, int , int);
 int		sacc_intr(void *);
 
-#ifndef hpcarm
+#if !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 void *softintr_establish(int, int (*)(void *), void *);
 void softintr_schedule(void *);
 #endif
-
-#ifdef hpcarm
-struct platid_data sacc_platid_table[] = {
-	{ &platid_mask_MACH_HP_JORNADA_720, (void *)1 },
-	{ &platid_mask_MACH_HP_JORNADA_720JP, (void *)1 },
-	{ NULL, NULL }
-};
-#endif
-
-CFATTACH_DECL(sacc, sizeof(struct sacc_softc),
-    sacc_probe, sacc_attach, NULL, NULL);
 
 #ifdef INTR_DEBUG
 #define DPRINTF(arg)	printf arg
@@ -97,7 +84,7 @@ CFATTACH_DECL(sacc, sizeof(struct sacc_softc),
 #define DPRINTF(arg)
 #endif
 
-static int
+int
 sacc_probe(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -119,76 +106,25 @@ sacc_probe(parent, match, aux)
 	return (1);
 }
 
-static void
-sacc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	int i, gpiopin;
-	u_int32_t skid;
-	struct sacc_softc *sc = (struct sacc_softc *)self;
-	struct sa11x0_softc *psc = (struct sa11x0_softc *)parent;
-	struct sa11x0_attach_args *sa = aux;
-#ifdef hpcarm
-	struct platid_data *p;
-#endif
 
-	printf("\n");
-
-	sc->sc_iot = sa->sa_iot;
-	sc->sc_piot = psc->sc_iot;
-	sc->sc_gpioh = psc->sc_gpioh;
-#ifdef hpcarm
-	if ((p = platid_search_data(&platid, sacc_platid_table)) == NULL)
-		return;
-
-	gpiopin = (int) p->data;
-#else
-	gpiopin = sa->sa_gpio;
-#endif
-	sc->sc_gpiomask = 1 << gpiopin;
-
-	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
-			  &sc->sc_ioh)) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	skid = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCSBI_SKID);
-
-	printf("%s: SA1111 rev %d.%d\n", sc->sc_dev.dv_xname,
-	       (skid & 0xf0) >> 3, skid & 0xf);
-
-	for(i = 0; i < SACCIC_LEN; i++)
-		sc->sc_intrhand[i] = NULL;
-
-	/* initialize SA1111 interrupt controller */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTEN0, 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTEN1, 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTTSTSEL, 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  SACCIC_INTSTATCLR0, 0xffffffff);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  SACCIC_INTSTATCLR1, 0xffffffff);
-
-	/* connect to SA1110's GPIO intr */
-	sa11x0_intr_establish(0, gpiopin, 1, IPL_SERIAL, sacc_intr, sc);
-
-	/*
-	 *  Attach each devices
-	 */
-	config_search(sa1111_search, self, NULL);
-}
-
-static int
+int
 sa1111_search(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-        if (config_match(parent, cf, NULL) > 0)
-                config_attach(parent, cf, NULL, sa1111_print);
+	struct sa1111_attach_args aa;
+
+	aa.sa_addr = cf->cf_loc[SACCCF_ADDR];
+	aa.sa_size = cf->cf_loc[SACCCF_SIZE];
+	aa.sa_intr = cf->cf_loc[SACCCF_INTR];
+#if 0
+	aa.sa_membase = cf->cf_loc[SACCCF_MEMBASE];
+	aa.sa_memsize = cf->cf_loc[SACCCF_MEMSIZE];
+#endif
+
+        if (config_match(parent, cf, &aa) > 0)
+                config_attach(parent, cf, &aa, sa1111_print);
 
         return 0;
 }
@@ -201,54 +137,6 @@ sa1111_print(aux, name)
 	return (UNCONF);
 }
 
-int
-sacc_intr(arg)
-	void *arg;
-{
-	int i;
-	u_int32_t mask;
-	struct sacc_intrvec intstat;
-	struct sacc_softc *sc = arg;
-#ifdef hpcarm
-	struct sacc_intrhand *ih;
-#endif
-
-	intstat.lo =
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTSTATCLR0);
-	intstat.hi =
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTSTATCLR1);
-	DPRINTF(("sacc_intr_dispatch: %x %x\n", intstat.lo, intstat.hi));
-
-	/* clear SA1110's GPIO intr status */
-	bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
-			  SAGPIO_EDR, sc->sc_gpiomask);
-
-	for(i = 0, mask = 1; i < 32; i++, mask <<= 1)
-		if (intstat.lo & mask) {
-			/*
-			 * Clear intr status before calling intr handlers.
-			 * This cause stray interrupts, but clearing
-			 * after calling intr handlers cause intr lossage.
-			 */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-					  SACCIC_INTSTATCLR0, 1 << i);
-
-#ifdef hpcarm
-			for(ih = sc->sc_intrhand[i]; ih; ih = ih->ih_next)
-				softintr_schedule(ih->ih_soft);
-#endif
-		}
-	for(i = 0, mask = 1; i < SACCIC_LEN - 32; i++, mask <<= 1)
-		if (intstat.hi & mask) {
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-					  SACCIC_INTSTATCLR1, 1 << i);
-#ifdef hpcarm
-			for(ih = sc->sc_intrhand[i + 32]; ih; ih = ih->ih_next)
-				softintr_schedule(ih->ih_soft);
-#endif
-		}
-	return 1;
-}
 
 void *
 sacc_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
@@ -279,7 +167,17 @@ sacc_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 		panic("sacc_intr_establish: type must be unique");
 
 	/* install intr handler */
-#ifdef hpcarm
+#if defined(__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS) || \
+	!defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
+
+	ih->ih_soft = softintr_establish(level, (void (*)(void *)) ih_fun,
+					 ih_arg);
+#else
+	/* map interrupt level to appropriate softinterrupt level */
+	if (level >= IPL_SOFTSERIAL)
+		level = IPL_SOFTSERIAL;
+	else if(level >= IPL_SOFTNET)
+		level = IPL_SOFTNET;
 	ih->ih_soft = softintr_establish(level, (void (*)(void *)) ih_fun,
 					 ih_arg);
 #endif
