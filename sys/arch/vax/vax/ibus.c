@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.4 2000/02/12 15:58:45 ragge Exp $ */
+/*	$NetBSD: ibus.c,v 1.5 2000/06/04 18:02:35 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,22 +34,21 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/nexus.h>
 #include <machine/cpu.h>
 #include <machine/sid.h>
 
-static	int ibus_print __P((void *, const char *));
-static	int ibus_match __P((struct device *, struct cfdata *, void *));
-static	void ibus_attach __P((struct device *, struct device *, void*));
+static	int ibus_print(void *, const char *);
+static	int ibus_match(struct device *, struct cfdata *, void *);
+static	void ibus_attach(struct device *, struct device *, void*);
 
 struct	cfattach ibus_ca = {
 	sizeof(struct device), ibus_match, ibus_attach
 };
 
 int
-ibus_print(aux, name)
-	void *aux;
-	const char *name;
+ibus_print(void *aux, const char *name)
 {
 	struct bp_conf *bp = aux;
 
@@ -61,10 +60,7 @@ ibus_print(aux, name)
 
 
 int
-ibus_match(parent, cf, aux)
-	struct	device	*parent;
-	struct cfdata *cf;
-	void	*aux;
+ibus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (vax_bustype == VAX_IBUS)
 		return 1;
@@ -76,9 +72,7 @@ ibus_match(parent, cf, aux)
 #define SHACADDR 0x20004200
 
 void
-ibus_attach(parent, self, aux)
-	struct	device	*parent, *self;
-	void	*aux;
+ibus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bp_conf bp;
 	vaddr_t va;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.15 2000/03/28 23:57:30 simonb Exp $ */
+/*	$NetBSD: ka780.c,v 1.16 2000/06/04 18:02:35 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -42,41 +42,47 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/nexus.h>
 #include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/clock.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
-static	void	ka780_memerr __P((void));
-static	int	ka780_mchk __P((caddr_t));
-static	void	ka780_conf __P((void));
-static	int mem_sbi_match __P((struct device *, struct cfdata *, void *));
-static	void mem_sbi_attach __P((struct device *, struct device *, void*));
+static	void ka780_memerr(void);
+static	int ka780_mchk(caddr_t);
+static	void ka780_conf(void);
+static	int mem_sbi_match(struct device *, struct cfdata *, void *);
+static	void mem_sbi_attach(struct device *, struct device *, void *);
+static	int getsort(int type);
 
 struct	cfattach mem_sbi_ca = {
 	sizeof(struct mem_softc), mem_sbi_match, mem_sbi_attach
 };
 
 int	
-mem_sbi_match(parent, cf, aux)
-	struct	device	*parent;
-	struct cfdata *cf;
-	void	*aux;
+mem_sbi_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
-	if (cf->cf_loc[SBICF_TR] != sa->nexnum && cf->cf_loc[SBICF_TR] > -1)
+	if (cf->cf_loc[SBICF_TR] != sa->sa_nexnum &&
+	    cf->cf_loc[SBICF_TR] != SBICF_TR_DEFAULT)
 		return 0;
 
-	switch (sa->type) {
+	return getsort(sa->sa_type);
+}
+
+int
+getsort(int type)
+{
+	switch (type) {
 	case NEX_MEM4:
 	case NEX_MEM4I:
 	case NEX_MEM16:
 	case NEX_MEM16I:
-		sa->nexinfo = M780C;
-		break;
+		return M780C;
 
 	case NEX_MEM64I:
 	case NEX_MEM64L:
@@ -84,20 +90,17 @@ mem_sbi_match(parent, cf, aux)
 	case NEX_MEM256I:
 	case NEX_MEM256L:
 	case NEX_MEM256LI:
-		sa->nexinfo = M780EL;
-		break;
+		return M780EL;
 
 	case NEX_MEM64U:
 	case NEX_MEM64UI:
 	case NEX_MEM256U:
 	case NEX_MEM256UI:
-		sa->nexinfo = M780EU;
-		break;
+		return M780EU;
  
 	default:
-		return 0;
+		return M_NONE;
 	}
-	return 1;
 }
 
 
@@ -164,17 +167,15 @@ struct	mcr780 {
 
 /* enable crd interrrupts */
 void
-mem_sbi_attach(parent, self, aux)
-	struct	device	*parent, *self;
-	void	*aux;
+mem_sbi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	struct	mem_softc *sc = (void *)self;
-	struct mcr780 *mcr = (void *)sa->nexaddr;
+	struct mcr780 *mcr = (void *)sa->sa_ioh; /* XXX */
 
-	sc->sc_memaddr = sa->nexaddr;
-	sc->sc_memtype = sa->nexinfo;
-	sc->sc_memnr = sa->type;
+	sc->sc_memaddr = (void *)sa->sa_ioh; /* XXX */
+	sc->sc_memtype = getsort(sa->sa_type);
+	sc->sc_memnr = sa->sa_type;
 
 	printf(": ");
 	switch (sc->sc_memtype) {
@@ -202,10 +203,9 @@ mem_sbi_attach(parent, self, aux)
 void
 ka780_memerr()
 {
-	extern struct cfdriver mem_cd;
 	struct	mem_softc *sc;
-	register struct mcr780 *mcr;
-	register int m;
+	struct mcr780 *mcr;
+	int m;
 
 	for (m = 0; m < mem_cd.cd_ndevs; m++) {
 		if (mem_cd.cd_devs[m] == 0)
@@ -280,9 +280,8 @@ struct {
 	0xE0,	"U24",	0xE3,	"U27",	0xE5,	"U29",	0xE6,	"U30"
 };
 
-memlog(m, mcr)
-	int m;
-	struct mcr780 *mcr;
+int
+memlog(int m, struct mcr780 *mcr)
 {
 	register i;
 
@@ -321,8 +320,7 @@ struct mc780frame {
 };
 
 int
-ka780_mchk(cmcf)
-	caddr_t cmcf;
+ka780_mchk(caddr_t cmcf)
 {
 	register struct mc780frame *mcf = (struct mc780frame *)cmcf;
 	register int type = mcf->mc8_summary;
