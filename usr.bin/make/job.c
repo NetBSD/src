@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.18 1997/05/06 23:51:30 mycroft Exp $	*/
+/*	$NetBSD: job.c,v 1.19 1997/07/01 21:17:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -38,11 +38,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: job.c,v 1.18 1997/05/06 23:51:30 mycroft Exp $";
+__RCSID("$NetBSD: job.c,v 1.19 1997/07/01 21:17:24 christos Exp $");
 #endif
 #endif /* not lint */
 
