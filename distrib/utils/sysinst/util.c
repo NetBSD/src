@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 1997/10/29 01:07:01 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.8 1997/10/30 00:03:36 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -168,6 +168,7 @@ int get_via_floppy (void)
 	distinfo *list;
 	char post[4];
 	int  mounted = 0;
+	int  first;
 	struct stat sb;
 
 
@@ -179,17 +180,21 @@ int get_via_floppy (void)
 	while (list->name) {
 		strcpy (post, ".aa");
 		snprintf (distname, STRSIZE, list->name, rels, dist_postfix);
-		while (list->getit && strcmp(post,list->fdlast) <= 0) {
+		while (list->getit && strcmp(&post[1],list->fdlast) <= 0) {
 			snprintf (fname, STRSIZE, list->name, rels, post);
 			snprintf (fullname, STRSIZE, "/mnt2/%s", fname);
+			first = 1;
 			while (!mounted || stat(fullname, &sb)) {
- 				if (mounted) {
+ 				if (mounted) 
 					run_prog ("/sbin/umount /mnt2 "
 						  "2>/dev/null");
-					msg_display (MSG_fdnotfound, fname);
-				} else 					
+				if (first)
 					msg_display (MSG_fdmount, fname);
-				process_menu (MENU_ok);
+				else
+					msg_display (MSG_fdnotfound, fname);
+				process_menu (MENU_fdok);
+				if (!yesno)
+					return 0;
 				while (run_prog("/sbin/mount -t %s %s /mnt2",
 						 fdtype, fddev)) {
 					msg_display (MSG_fdremount, fname);
@@ -198,13 +203,13 @@ int get_via_floppy (void)
 						return 0;
 				}
 				mounted = 1;
+				first = 0;
 			}
-			run_prog ("/bin/cat /mnt2/%s >> %s", fullname,
-				  distname);
-			if (post[1] < 'z')
-				post[1]++;
+			run_prog ("/bin/cat %s >> %s", fullname, distname);
+			if (post[2] < 'z')
+				post[2]++;
 			else
-				post[1]='a', post[2]++;
+				post[2]='a', post[1]++;
 		}
 		run_prog ("/sbin/umount /mnt2 2>/dev/null");
 		mounted = 0;
@@ -223,7 +228,7 @@ get_via_cdrom(void)
 	process_menu (MENU_cdromsource);
 
 	/* Mount it */
-	while (!run_prog ("/sbin/mount -rt cd9660 %s /mnt2", cdrom_dev)) {
+	while (run_prog ("/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
 		process_menu (MENU_cdrombadmount);
 		if (!yesno)
 			return 0;
