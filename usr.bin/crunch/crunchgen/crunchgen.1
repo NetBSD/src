@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.6 1998/02/06 06:18:01 perry Exp $
+.\"	$NetBSD: crunchgen.1,v 1.7 1998/12/21 13:41:38 mrg Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -264,6 +264,34 @@ build environment do not by default build the
 intermediate object file for single-source file programs.  The ``make
 objs'' target must then be used to get those object files built, or
 some other arrangements made.
+.Pp
+If a program directory being searched for is found, but contains
+no objects, other directories are not searched.  This causes the
+following directive to fail:
+.Pp
+.nf
+	srcdirs /usr/src/usr.bin /usr/src/usr.bin/less
+	progs less gzip
+.fi
+.Pp
+as the
+.Pa /usr/src/usr.bin/less
+directory will be found with the
+.Pa /usr/src/usr.bin
+.Em srcdirs
+entry, and as it does not contain the require objects,
+.Nm
+fails to find objects for the
+.Em less
+program.  To avoid this problem, list specific srcdirs first, and
+the more general ones later, for eg:
+.Pp
+.nf
+	srcdirs /usr/src/usr.bin/less /usr/src/usr.bin
+	progs less gzip
+.fi
+.Pp
+will not have the above problem.
 .Sh AUTHOR
 .Nm
 was written by James da Silva <jds@cs.umd.edu>.
