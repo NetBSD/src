@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.28 2000/03/19 19:16:13 soren Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.29 2000/03/24 20:48:20 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -640,15 +640,8 @@
 #define MIPS_R31LSI	0x06	/* LSI Logic derivate		ISA I	*/
 #define MIPS_R10010	0x09	/* MIPS R10000/T5 FPU		ISA IV	*/
 #define MIPS_R4210	0x0a	/* NEC VR4210 FPC		ISA III */
-#define MIPS_R4300	0x0b	/* NEC VR4300 FPC		ISA III */
-#define MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
-#define MIPS_R4600	0x20	/* QED R4600 Orion FPU		ISA III */
 #define MIPS_R5010	0x23	/* MIPS R5000 FPU		ISA IV	*/
-#define MIPS_RC32364	0x26	/* IDT RC32364 FPU		ISA II	*/
-#define MIPS_RM5230	0x28	/* QED RM5230 FPU		ISA IV	*/
-#define MIPS_R3SONY	0x21	/* ? Sony R3000 based FPU	ISA I	*/
 #define MIPS_R3TOSH	0x22	/* ? Toshiba R3000 based FPU	ISA I	*/
-#define MIPS_R3NKK	0x23	/* ? NKK R3000 based FPU	ISA I	*/
 
 #ifdef ENABLE_MIPS_TX3900
 #include <mips/r3900regs.h>
