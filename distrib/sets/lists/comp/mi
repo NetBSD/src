@@ -43,6 +43,8 @@
 ./usr/include/ctype.h
 ./usr/include/curses.h
 ./usr/include/db.h
+./usr/include/dev/ata
+./usr/include/dev/ata/wdlink.h
 ./usr/include/dev/auconv.h
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/audiovar.h
@@ -130,6 +132,8 @@
 ./usr/include/dev/ic/tms320av110var.h
 ./usr/include/dev/ic/uhareg.h
 ./usr/include/dev/ic/uhavar.h
+./usr/include/dev/ic/wdcreg.h
+./usr/include/dev/ic/wdcvar.h
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/ic/z8530sc.h
 ./usr/include/dev/isa
@@ -162,10 +166,9 @@
 ./usr/include/dev/isa/sbdspvar.h
 ./usr/include/dev/isa/sbreg.h
 ./usr/include/dev/isa/sbvar.h
-./usr/include/dev/isa/wdlink.h
-./usr/include/dev/isa/wdreg.h
 ./usr/include/dev/isa/wdsreg.h
 ./usr/include/dev/isa/wssreg.h
+./usr/include/dev/isa/wssvar.h
 ./usr/include/dev/isa/wtreg.h
 ./usr/include/dev/isapnp
 ./usr/include/dev/isapnp/if_levar.h
@@ -206,9 +209,11 @@
 ./usr/include/dev/rcons/rcons.h
 ./usr/include/dev/rcons/rcons_subr.h
 ./usr/include/dev/scsipi
+./usr/include/dev/scsipi/atapi_all.h
 ./usr/include/dev/scsipi/atapi_cd.h
+./usr/include/dev/scsipi/atapi_disk.h
 ./usr/include/dev/scsipi/atapiconf.h
-./usr/include/dev/scsipi/cd_link.h
+./usr/include/dev/scsipi/cdvar.h
 ./usr/include/dev/scsipi/scsi_all.h
 ./usr/include/dev/scsipi/scsi_cd.h
 ./usr/include/dev/scsipi/scsi_changer.h
@@ -224,6 +229,7 @@
 ./usr/include/dev/scsipi/scsipi_debug.h
 ./usr/include/dev/scsipi/scsipi_disk.h
 ./usr/include/dev/scsipi/scsipiconf.h
+./usr/include/dev/scsipi/sdvar.h
 ./usr/include/dev/scsipi/ss_mustek.h
 ./usr/include/dev/scsipi/ssvar.h
 ./usr/include/dev/sun
@@ -910,6 +916,7 @@
 ./usr/include/sys/namei.h
 ./usr/include/sys/param.h
 ./usr/include/sys/poll.h
+./usr/include/sys/pool.h
 ./usr/include/sys/proc.h
 ./usr/include/sys/protosw.h
 ./usr/include/sys/ptrace.h
@@ -1665,6 +1672,7 @@
 ./usr/share/man/cat3/list_remove.0
 ./usr/share/man/cat3/localeconv.0
 ./usr/share/man/cat3/localtime.0
+./usr/share/man/cat3/lockf.0
 ./usr/share/man/cat3/log.0
 ./usr/share/man/cat3/log10.0
 ./usr/share/man/cat3/log1p.0
@@ -2629,6 +2637,7 @@
 ./usr/share/man/man3/list_remove.3
 ./usr/share/man/man3/localeconv.3
 ./usr/share/man/man3/localtime.3
+./usr/share/man/man3/lockf.3
 ./usr/share/man/man3/log.3
 ./usr/share/man/man3/log10.3
 ./usr/share/man/man3/log1p.3
