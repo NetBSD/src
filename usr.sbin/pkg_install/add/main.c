@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.15.2.3 2001/03/20 17:55:48 he Exp $	*/
+/*	$NetBSD: main.c,v 1.15.2.4 2001/03/30 22:19:58 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.15.2.3 2001/03/20 17:55:48 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.15.2.4 2001/03/30 22:19:58 he Exp $");
 #endif
 #endif
 
@@ -62,7 +62,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int     ch, error;
+	int     ch, error=0;
 	lpkg_head_t pkgs;
 	lpkg_t *lpp;
 	char   *cp;
@@ -155,11 +155,13 @@ main(int argc, char **argv)
 						    if (!(cp = realpath(tmp, pkgname))) {
 							    lpp = NULL;
 							    warn("realpath failed for '%s'", tmp);
+							    error++;
 						    } else
 							    lpp = alloc_lpkg(cp);
 					    } else {
 						    lpp = NULL;
 						    warnx("can't find package pattern '%s'", *argv);
+						    error++;
 					    }
 				} else {
 					/* Maybe just a pkg name w/o pattern was given */
@@ -179,6 +181,7 @@ main(int argc, char **argv)
 					if (!(cp = realpath(tmp2, pkgname))) {
 						lpp = NULL;
 						warn("realpath failed for '%s'", tmp2);
+						error++;
 					} else
 						lpp = alloc_lpkg(cp);
 				} else {
@@ -187,6 +190,7 @@ main(int argc, char **argv)
 					if (!(cp = fileFindByPath(NULL, *argv))) {
 						lpp = NULL;
 						warnx("can't find package '%s'", *argv);
+						error++;
 					} else
 						lpp = alloc_lpkg(cp);
 					}
@@ -202,7 +206,8 @@ main(int argc, char **argv)
 	else if (ch > 1 && AddMode == MASTER)
 		warnx("only one package name may be specified with master mode"),
 		    usage();
-	if ((error = pkg_perform(&pkgs)) != 0) {
+	error += pkg_perform(&pkgs);
+	if (error  != 0) {
 		if (Verbose)
 			warnx("%d package addition(s) failed", error);
 		exit(1);
