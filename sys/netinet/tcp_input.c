@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.64 1998/09/09 01:32:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.65 1998/09/10 10:46:59 mouse Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1285,8 +1285,9 @@ after_listen:
 				 */
 				if (so->so_state & SS_CANTRCVMORE) {
 					soisdisconnected(so);
-					TCP_TIMER_ARM(tp, TCPT_2MSL,
-					    tcp_maxidle);
+					if (tcp_maxidle > 0)
+						TCP_TIMER_ARM(tp, TCPT_2MSL,
+						    tcp_maxidle);
 				}
 				tp->t_state = TCPS_FIN_WAIT_2;
 			}

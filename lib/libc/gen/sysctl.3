@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.31 1998/08/03 14:38:20 kleink Exp $
+.\"	$NetBSD: sysctl.3,v 1.32 1998/09/10 10:46:03 mouse Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -559,6 +559,10 @@ The currently defined protocols and names are:
 .It tcp	cwm	integer	yes
 .It tcp	cwm_burstsize	integer	yes
 .It tcp	ack_on_push	integer	yes
+.It tcp	keepidle	integer	yes
+.It tcp	keepintvl	integer	yes
+.It tcp keepcnt	integer	yes
+.It tcp	slowhz	integer	no
 .It udp	checksum	integer	yes
 .It udp	sendspace	integer	yes
 .It udp	recvspace	integer	yes
@@ -663,6 +667,20 @@ a packet with PUSH set.  This can avoid losing a round trip time in some
 rare situations, but has the caveat of potentially defeating TCP's delayed
 ACK algorithm.  Use of this option is generally not recommended, but
 the variable exists in case your configuration really needs it.
+.It Li tcp.keepidle
+Time a connection must be idle before keepalives are sent (if keepalives
+are enabled for the connection).  See also tcp.slowhz.
+.It Li tcp.keepintvl
+Time after a keepalive probe is sent until, in the absence of any response,
+another probe is sent.  See also tcp.slowhz.
+.It Li tcp.keepcnt
+Number of keepalive probes sent before declaring a connection dead.  If
+set to zero, there is no limit; keepalives will be sent until some kind of
+response is received from the peer.
+.It Li tcp.slowhz
+The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
+of a clock that ticks tcp.slowhz times per second.  (That is, their values
+must be divided by the tcp.slowhz value to get times in seconds.)
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.

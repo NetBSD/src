@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.9 1998/05/07 01:30:46 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.10 1998/09/10 10:47:00 mouse Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -142,6 +142,7 @@ char *tcptimers[] =
 #ifdef _KERNEL
 extern int tcp_keepidle;		/* time before keepalive probes begin */
 extern int tcp_keepintvl;		/* time between keepalive probes */
+extern int tcp_keepcnt;			/* number of keepalives, 0=infty */
 extern int tcp_maxidle;			/* time to drop after starting probes */
 extern int tcp_ttl;			/* time to live for TCP segs */
 extern int tcp_backoff[];
