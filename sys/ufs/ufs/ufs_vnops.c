@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.21 1996/10/12 21:58:58 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.22 1997/01/30 09:52:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -373,7 +373,8 @@ ufs_setattr(v)
 		    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
-			ip->i_flag |= IN_ACCESS;
+			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
+				ip->i_flag |= IN_ACCESS;
 		if (vap->va_mtime.tv_sec != VNOVAL)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		error = VOP_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 1);

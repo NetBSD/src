@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.4 1996/10/23 22:51:08 cgd Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.5 1997/01/30 09:55:02 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -52,6 +52,7 @@ struct mntopt {
 #define MOPT_UNION		{ "union",	0, MNT_UNION }
 #define MOPT_USERQUOTA		{ "userquota",	0, 0 }
 #define MOPT_GROUPQUOTA		{ "groupquota",	0, 0 }
+#define MOPT_NOATIME		{ "atime",	1, MNT_NOATIME }
 
 /* Control flags. */
 #define MOPT_FORCE		{ "force",	1, MNT_FORCE }

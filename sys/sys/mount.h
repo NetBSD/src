@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.51 1997/01/22 07:09:19 mikel Exp $	*/
+/*	$NetBSD: mount.h,v 1.52 1997/01/30 09:53:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -134,6 +134,7 @@ struct mount {
 #define	MNT_UNION	0x00000020	/* union with underlying filesystem */
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
+#define MNT_NOATIME	0x04000000	/* Never update access times in fs */
 
 /*
  * exported mount flags.
