@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.47 2000/03/22 14:56:56 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.48 2000/03/24 14:37:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -596,7 +596,7 @@ createde(dep, ddep, depp, cnp)
 	struct componentname *cnp;
 {
 	int error, rberror;
-	u_long dirclust, clusoffset, oldlen=0;
+	u_long dirclust, clusoffset;
 	u_long fndoffset, havecnt=0, wcnt=1;
 	struct direntry *ndep;
 	struct msdosfsmount *pmp = ddep->de_pmp;
@@ -621,7 +621,6 @@ createde(dep, ddep, depp, cnp)
 		u_long needlen = ddep->de_fndoffset + sizeof(struct direntry)
 		    - ddep->de_FileSize;
 		dirclust = de_clcount(pmp, needlen);
-		oldlen = ddep->de_FileSize;
 		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0) {
 			(void)detrunc(ddep, ddep->de_FileSize, 0, NOCRED, NULL);
 			goto err_norollback;
@@ -739,7 +738,6 @@ createde(dep, ddep, depp, cnp)
 
 	havecnt = ddep->de_fndcnt + 1;
 	for(i=wcnt; i <= havecnt; i++) {
-		printf("rolling back %d\n", i);
 		/* mark entry as deleted */
 		ndep->deName[0] = SLOT_DELETED;
 
