@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.96 2004/05/14 06:10:14 jdc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.97 2004/05/20 03:44:22 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -732,3 +732,26 @@ sys/dev/ata/wd.c				1.275
 	PR#25366.
 	[bouyer, ticket #1691]
 
+
+usr.sbin/rpc.yppasswdd/yppasswdd_mkpw.c		1.12
+
+	Problem: rpc.yppasswdd didn't work if invoked with the -noshell option.
+
+	Reason: In routine make_passwd() in yppasswdd_mkpw.c, fgets() is used
+	to read master.passwd line-by-line. The lines are then parsed using  
+	pw_scan(), without removing the trailing from the line. pw_scan() 
+	fills in the shell name into pw.pw_shell, including the trailing. 
+	
+	Subsequently, rpc.yppasswdd calls pw_copy(), which copies master.passwd
+	to ptmp, updating the entry for pw.pw_name. pw_copy() terminates the   
+	updated entry with an additonal , so that there is now an empty line 
+	in ptmp.
+	        
+	Finally, rpc.yppasswdd calls pw_mkdb(3), which exec's /usr/sbin/pwd_mkdb
+	to install ptmp to master.passwd (and to create the pwd.db and spwd.db  
+	data bases). pwd_mkdb chokes on the empty ptmp line.
+	
+	Fix: remove the trailing from the buffer fgets() returns. As a side
+	effect, this gets us some additional error checking.
+	
+	[1694, ticket #wennmach]
