@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 2002/07/14 12:20:45 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.8 2002/11/29 22:17:18 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,6 +160,8 @@ define	TF_FS			offsetof(struct trapframe, tf_fs)
 define	TF_GS			offsetof(struct trapframe, tf_gs)
 define	TF_RIP			offsetof(struct trapframe, tf_rip)
 define	TF_RSP			offsetof(struct trapframe, tf_rsp)
+define	TF_RAX			offsetof(struct trapframe, tf_rax)
+define	TF_RDI			offsetof(struct trapframe, tf_rdi)
 define	TF_SS			offsetof(struct trapframe, tf_ss)
 define	TF_ERR			offsetof(struct trapframe, tf_err)
 define	TF_TRAPNO		offsetof(struct trapframe, tf_trapno)
