@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.1 2002/10/19 09:01:45 scw Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.2 2002/10/19 13:17:33 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,8 +117,10 @@ Lcksumdata:
 	 * depending on the buffer alignment, particularly for odd addresses,
 	 * in the same way as we do for the "ldhi.q" in Lend_game.
 	 */
+	pta/u	Lalready_aligned, tr2
 	xori	r4, 0x7, r0
 	andi	r0, 0x7, r0
+	beqi/u	r0, 0x7, tr2		/* Jump if already quad aligned */
 	addi	r0, 1, r0		/* r0 == # bytes to next quad */
 	bgtu/u	r0, r3, tr1		/* Not enough bytes left to make it */
 	ldlo.q	r4, 0, r19		/* Fetch 1 to 4 words */
@@ -131,6 +133,7 @@ Lcksumdata:
 	 * Buffer is now quad-aligned.
 	 * We now need to align it to a 32-byte boundary.
 	 */
+Lalready_aligned:
 	and	r4, r17, r1
 	xor	r1, r17, r0
 	addi	r0, 1, r0		/* r0 == # bytes to 32-byte boundary */
@@ -180,23 +183,33 @@ Lbig_loop:
 Lend_game:
 	beq/u	r3, r63, tr0		/* Exit if all done */
 	add	r3, r4, r0
-	andi	r3, 0x18, r3
-	add	r4, r3, r4
-	xor	r3, r17, r3
-	shlri	r3, 1, r3
-	addi	r3, 6, r3
+	andi	r3, 0x18, r1
+	add	r4, r1, r4
+	xor	r1, r17, r1
+	shlri	r1, 1, r1
+	addi	r1, 6, r1
 	movi	0, r19
 	movi	0, r20
 	movi	0, r21
-	ptrel/l	r3, tr1
+	ptrel/l	r1, tr1
 	blink	tr1, r63
 	ld.q	r4, -24, r19
 	ld.q	r4, -16, r20
 	ld.q	r4, -8, r21
 	ldhi.q	r0, -1, r22		/* The last quad needs special care */
-	xori	r0, 7, r0		/* to deal with mis-alignment, and */
-	addi	r0, 1, r0		/* to ensure we don't include any */
-	andi	r0, 7, r0		/* bytes past the end of the buffer */
+	movi	-1, r1			/* to deal with mis-alignment, and */
+	andi	r3, 7, r3		/* to ensure we don't include any */
+	shlli	r3, 3, r3		/* bytes past the end of the buffer */
+#ifdef __LITTLE_ENDIAN__
+	shlrd	r1, r3, r1
+#else
+	shlld	r1, r3, r1
+#endif
+	cmveq	r3, r3, r1
+	andc	r22, r1, r22
+	xori	r0, 7, r0
+	addi	r0, 1, r0
+	andi	r0, 7, r0
 	cmveq	r0, r0, r22
 	shlli	r0, 3, r0
 #ifdef __LITTLE_ENDIAN__
