@@ -1,5 +1,5 @@
-/*	$NetBSD: route6d.c,v 1.21 2001/01/12 14:55:13 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.40 2001/01/12 14:52:25 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.22 2001/01/12 17:48:37 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.41 2001/01/12 17:48:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.21 2001/01/12 14:55:13 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.22 2001/01/12 17:48:37 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -202,7 +202,7 @@ int logopened = 0;
 
 static	u_long	seq = 0;
 
-int signo;
+volatile int signo;
 
 #define	RRTF_AGGREGATE		0x08000000
 #define	RRTF_NOADVERTISE	0x10000000
