@@ -1,4 +1,4 @@
-/*	$NetBSD: pica.h,v 1.1 2000/12/24 09:25:29 ur Exp $	*/
+/*	$NetBSD: pica.h,v 1.2 2001/06/13 15:11:38 soda Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*
@@ -102,16 +102,6 @@
 #define PVIS PICA_V_INT_SOURCE
 #define	PICA_SYS_LB_IS		(PVIS+0x0000)	/* Local bus int source */
 #define	PICA_SYS_LB_IE		(PVIS+0x0002)	/* Local bus int enables */
-#define PICA_SYS_LB_IE_PAR1	0x0001		/* Parallel port enable */
-#define	PICA_SYS_LB_IE_FLOPPY	0x0002		/* Floppy ctrl enable */
-#define	PICA_SYS_LB_IE_SOUND	0x0004		/* Sound port enable */
-#define	PICA_SYS_LB_IE_VIDEO	0x0008		/* Video int enable */
-#define	PICA_SYS_LB_IE_SONIC	0x0010		/* Ethernet ctrl enable */
-#define	PICA_SYS_LB_IE_SCSI	0x0020		/* Scsi crtl enable */
-#define PICA_SYS_LB_IE_KBD	0x0040		/* Keyboard ctrl enable */
-#define PICA_SYS_LB_IE_MOUSE	0x0080		/* Mouse ctrl enable */
-#define	PICA_SYS_LB_IE_COM1	0x0100		/* Serial port 1 enable */
-#define	PICA_SYS_LB_IE_COM2	0x0200		/* Serial port 2 enable */
 
 #define	PICA_P_LOCAL_VIDEO_CTRL	0x60000000	/* Local video control */
 #define	PICA_V_LOCAL_VIDEO_CTRL	0xe0200000
@@ -140,16 +130,4 @@
 #define PICA_MONO_BUF	(PICA_V_LOCAL_VIDEO + 0xB0000)
 #define PICA_CGA_BASE	(PICA_V_LOCAL_VIDEO_CTRL + 0x3D4)
 #define PICA_CGA_BUF	(PICA_V_LOCAL_VIDEO + 0xB8000)
-
-/*
- *  Interrupt vector descriptor for device on pica bus.
- */
-struct pica_int_desc {
-	int		int_mask;	/* Mask used in PICA_SYS_LB_IE */
-	intr_handler_t	int_hand;	/* Interrupt handler */
-	void		*param;		/* Parameter to send to handler */
-	int		spl_mask;	/* Spl mask for interrupt */
-};
-
-int	pica_intrnull __P((void *));
 #endif	/* _PICA_H_ */

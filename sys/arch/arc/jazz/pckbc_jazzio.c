@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.2 2000/12/24 09:25:29 ur Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.3 2001/06/13 15:11:38 soda Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -51,6 +51,7 @@
 #include <dev/ic/pckbcvar.h>
 #include <arc/jazz/pckbc_jazzioreg.h>
 
+#define PMS_INTR 7	/* XXX - should be obtained from firmware */
 #define PICA_KBCMDP	(PICA_SYS_KBD + JAZZIO_KBCMDP)
 
 int	pckbc_jazzio_match __P((struct device *, struct cfdata *, void *));
@@ -133,7 +134,7 @@ pckbc_jazzio_attach(parent, self, aux)
 	 * XXX handcrafting "aux" slot...
 	 */
 	jsc->sc_intr[PCKBC_KBD_SLOT] = ja->ja_intr;
-	jsc->sc_intr[PCKBC_AUX_SLOT] = 8;		/* XXX */
+	jsc->sc_intr[PCKBC_AUX_SLOT] = PMS_INTR;		/* XXX */
 
 	if (pckbc_is_console(iot, addr)) {
 		t = &pckbc_consdata;
