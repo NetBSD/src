@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.11 1993/12/20 09:12:04 mycroft Exp $
+ *	$Id: npx.c,v 1.12 1994/01/03 16:22:15 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -234,7 +234,7 @@ npxprobe1(dvp)
 	 * Try setting CR0_NE to get correct error reporting on 486DX's.
 	 * Setting it should fail or do nothing on lesser processors.
 	 */
-	load_cr0(rcr0() | CR0_MP | CR0_NE);
+	lcr0(rcr0() | CR0_MP | CR0_NE);
 	/*
 	 * But don't trap while we're probing.
 	 */
