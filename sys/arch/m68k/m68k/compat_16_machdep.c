@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.1 2003/09/22 14:18:39 cl Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.2 2003/09/25 22:04:17 christos Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1 2003/09/22 14:18:39 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/09/25 22:04:17 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -118,7 +118,7 @@ extern int sigpid;
  * Send an interrupt to process.
  */
 void
-sendsig_sigcontext(ksiginfo_t *ksi, sigset_t *mask)
+sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
