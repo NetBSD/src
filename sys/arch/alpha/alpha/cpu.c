@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.31 1998/09/28 22:21:13 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.32 1998/09/29 07:04:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 1998/09/28 22:21:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 1998/09/29 07:04:58 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -95,6 +95,9 @@ struct cpu_softc **cpus;
 
 /* Quick access to the primary CPU. */
 struct cpu_softc *primary_cpu;
+
+/* Bitmask of CPUs currently running. */
+u_long cpus_running;
 #endif /* MULTIPROCESSOR */
 
 /* Definition of the driver for autoconfig. */
@@ -289,7 +292,10 @@ recognized:
 	 * running!
 	 */
 	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
-		sc->sc_flags |= (CPUF_PRIMARY|CPUF_HATCHED);
+		u_long cpumask = (1UL << ma->ma_slot);
+
+		sc->sc_flags |= CPUF_PRIMARY;
+		alpha_atomic_setbits_q(&cpus_running, cpumask);
 		primary_cpu = sc;
 		return;
 	}
@@ -321,6 +327,7 @@ cpu_run_spinup_queue()
 	long timeout;
 	struct pcs *pcsp, *primary_pcsp;
 	struct pcb *pcb;
+	u_long cpumask;
 
 	primary_pcsp = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 
@@ -328,6 +335,7 @@ cpu_run_spinup_queue()
 		TAILQ_REMOVE(&cpu_spinup_queue, sc, sc_q);
 
 		pcsp = LOCATE_PCS(hwrpb, sc->sc_cpuid);
+		cpumask = (1UL << sc->sc_cpuid);
 
 		/* Make sure the processor has valid PALcode. */
 		if ((pcsp->pcs_flags & PCS_PV) == 0) {
@@ -429,7 +437,7 @@ cpu_run_spinup_queue()
 		 */
 		for (timeout = 10000; timeout != 0; timeout--) {
 			alpha_mb();
-			if ((volatile u_long)sc->sc_flags & CPUF_HATCHED)
+			if ((volatile u_long)cpus_running & cpumask)
 				break;
 			delay(1000);
 		}
@@ -440,9 +448,45 @@ cpu_run_spinup_queue()
 }
 
 void
+cpu_halt_secondary(cpu_id)
+	u_long cpu_id;
+{
+	long timeout;
+	u_long cpumask = (1UL << cpu_id);
+	struct cpu_softc *sc;
+
+#ifdef DIAGNOSTIC
+	if (cpu_id >= hwrpb->rpb_pcs_cnt || (sc = cpus[cpu_id]) == NULL)
+		panic("cpu_halt_secondary: bogus cpu_id");
+#endif
+
+	alpha_mb();
+	if (((volatile u_long)cpus_running & cpumask) == 0) {
+		/* Processor not running. */
+		return;
+	}
+
+	/* Send the HALT IPI to the secondary. */
+	alpha_send_ipi(cpu_id, ALPHA_IPI_HALT);
+
+	/* ...and wait for it to shut down. */
+	for (timeout = 10000; timeout != 0; timeout--) {
+		alpha_mb();
+		if (((volatile u_long)cpus_running & cpumask) == 0)
+			return;
+		delay(1000);
+	}
+
+	/* Erk, secondary failed to halt. */
+	printf("WARNING: %s (ID %lu) failed to halt\n",
+	    sc->sc_dev.dv_xname, cpu_id);
+}
+
+void
 cpu_hatch(sc)
 	struct cpu_softc *sc;
 {
+	u_long cpumask = (1UL << sc->sc_cpuid);
 
 	/* Initialize trap vectors for this processor. */
 	trap_init();
@@ -450,7 +494,15 @@ cpu_hatch(sc)
 	/* Yahoo!  We're running kernel code!  Announce it! */
 	printf("%s: processor ID %lu running\n", sc->sc_dev.dv_xname,
 	    alpha_pal_whami());
-	alpha_atomic_setbits_q(&sc->sc_flags, CPUF_HATCHED);
+	alpha_atomic_setbits_q(&cpus_running, cpumask);
+
+	/*
+	 * Lower interrupt level so that we can get IPIs.  Don't use
+	 * spl0() because we don't want to hassle w/ software interrupts
+	 * right now.  Note that interrupt() prevents the secondaries
+	 * from servicing DEVICE and CLOCK interrupts.
+	 */
+	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
 
 	/* Ok, so all we do is spin for now... */
 	for (;;)
