@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.11 1999/09/20 19:26:54 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.12 1999/09/25 00:27:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -201,6 +201,27 @@ struct tulip_21040_21041_sia_media {
 };
 
 /*
+ * Description of 2114x media.
+ */
+struct tulip_2114x_media {
+	int		tm_type;	/* type of media; see tulipreg.h */
+
+	void		(*tm_get) __P((struct tulip_softc *,
+			    struct ifmediareq *));
+	int		(*tm_set) __P((struct tulip_softc *));
+
+	int		tm_phyno;	/* PHY # on MII */
+
+	int		tm_gp_length;	/* MII select sequence length */
+	int		tm_gp_offset;	/* MII select sequence offset */
+
+	int		tm_reset_length;/* MII reset sequence length */
+	int		tm_reset_offset;/* MII reset sequence offset */
+
+	u_int32_t	tm_opmode;	/* OPMODE bits for this media */
+};
+
+/*
  * Software state per device.
  */
 struct tulip_softc {
@@ -239,6 +260,11 @@ struct tulip_softc {
 
 	const struct tulip_txthresh_tab *sc_txth;
 	int		sc_txthresh;	/* current transmit threshold */
+
+	u_int8_t	sc_gp_dir;	/* GPIO pin direction bits */
+
+	/* Reset function. */
+	void		(*sc_reset) __P((struct tulip_softc *));
 
 	/* Pre-init function. */
 	void		(*sc_preinit) __P((struct tulip_softc *));
@@ -388,6 +414,7 @@ extern const struct tulip_mediasw tlp_21040_mediasw;
 extern const struct tulip_mediasw tlp_21040_tp_mediasw;
 extern const struct tulip_mediasw tlp_21040_auibnc_mediasw;
 extern const struct tulip_mediasw tlp_21041_mediasw;
+extern const struct tulip_mediasw tlp_2114x_isv_mediasw;
 extern const struct tulip_mediasw tlp_sio_mii_mediasw;
 extern const struct tulip_mediasw tlp_pnic_mediasw;
 
