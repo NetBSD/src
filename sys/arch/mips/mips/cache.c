@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.4 2001/11/19 01:28:08 thorpej Exp $	*/
+/*	$NetBSD: cache.c,v 1.5 2001/11/23 06:21:50 tsutsui Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -303,6 +303,15 @@ mips_config_cache(void)
 			    r4k_icache_sync_range_index_16;
 			break;
 
+		case 32:
+			mips_cache_ops.mco_icache_sync_all =
+			    r4k_icache_sync_all_32;
+			mips_cache_ops.mco_icache_sync_range =
+			    r4k_icache_sync_range_32;
+			mips_cache_ops.mco_icache_sync_range_index =
+			    r4k_icache_sync_range_index_32;
+			break;
+
 		default:
 			panic("r4k picache line size %d",
 			    mips_picache_line_size);
@@ -320,6 +329,19 @@ mips_config_cache(void)
 			    r4k_pdcache_inv_range_16;
 			mips_cache_ops.mco_pdcache_wb_range =
 			    r4k_pdcache_wb_range_16;
+			break;
+
+		case 32:
+			mips_cache_ops.mco_pdcache_wbinv_all =
+			    r4k_pdcache_wbinv_all_32;
+			mips_cache_ops.mco_pdcache_wbinv_range =
+			    r4k_pdcache_wbinv_range_32;
+			mips_cache_ops.mco_pdcache_wbinv_range_index =
+			    r4k_pdcache_wbinv_range_index_32;
+			mips_cache_ops.mco_pdcache_inv_range =
+			    r4k_pdcache_inv_range_32;
+			mips_cache_ops.mco_pdcache_wb_range =
+			    r4k_pdcache_wb_range_32;
 			break;
 
 		default:
