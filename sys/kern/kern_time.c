@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.69 2003/05/19 03:23:37 dyoung Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.70 2003/05/28 22:27:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.69 2003/05/19 03:23:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.70 2003/05/28 22:27:57 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1209,7 +1209,13 @@ itimerfire(struct ptimer *pt)
 		unsigned int i;
 
 		if (p->p_userret == NULL) {
-			if (sa->sa_idle) {
+			/*
+			 * XXX stop signals can be processed inside tsleep,
+			 * which can be inside sa_yield's inner loop, which
+			 * makes testing for sa_idle alone insuffucent to
+			 * determine if we really should call setrunnable.
+			 */
+		        if ((sa->sa_idle) && (p->p_stat != SSTOP)) {
 				SCHED_LOCK(s);
 				setrunnable(sa->sa_idle);
 				SCHED_UNLOCK(s);
