@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.10 1999/09/20 04:39:04 lukem Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.10.10.1 2002/03/08 21:35:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#include "compat_pwd.h"
+#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.10 1999/09/20 04:39:04 lukem Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.10.10.1 2002/03/08 21:35:14 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -55,6 +59,7 @@ __RCSID("$NetBSD: pw_scan.c,v 1.10 1999/09/20 04:39:04 lukem Exp $");
 #ifdef _LIBC
 #include "pw_private.h"
 #endif
+#endif /* !HAVE_CONFIG_H */
 
 int
 #ifdef _LIBC
@@ -139,6 +144,7 @@ pw_scan(bp, pw, flags)
 	if (!(pw->pw_shell = strsep(&bp, ":")))		/* shell */
 		goto fmt;
 
+#if !HAVE_CONFIG_H
 	p = pw->pw_shell;
 	if (root && *p)					/* empty == /bin/sh */
 		for (setusershell();;) {
@@ -150,6 +156,7 @@ pw_scan(bp, pw, flags)
 			if (!strcmp(p, sh))
 				break;	
 		}
+#endif
 
 	if ((p = strsep(&bp, ":")) != NULL) {			/* too many */
 fmt:		

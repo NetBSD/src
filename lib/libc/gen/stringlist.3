@@ -1,4 +1,4 @@
-.\"	$NetBSD: stringlist.3,v 1.6.6.1 2001/10/08 20:19:28 nathanw Exp $
+.\"	$NetBSD: stringlist.3,v 1.6.6.2 2002/03/08 21:35:16 nathanw Exp $
 .\"
 .\" Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <stringlist.h>
+.Fd #include \*[Lt]stringlist.h\*[Gt]
 .Ft StringList *
 .Fn sl_init
 .Ft int
@@ -97,22 +97,22 @@ in case of failure.
 Releases memory occupied by
 .Ar sl
 and the
-.Ar sl->sl_str
+.Ar sl-\*[Gt]sl_str
 array.
 If
 .Ar freeall
 is non-zero, then each of the items within
-.Ar sl->sl_str
+.Ar sl-\*[Gt]sl_str
 is released as well.
 .It Fn sl_add
 Add
 .Ar item
 to
-.Ar sl->sl_str
+.Ar sl-\*[Gt]sl_str
 at
-.Ar sl->sl_cur ,
+.Ar sl-\*[Gt]sl_cur ,
 extending the size of
-.Ar sl->sl_str .
+.Ar sl-\*[Gt]sl_str .
 Returns zero upon success, -1 upon failure.
 .It Fn sl_find
 Find

@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.32.2.2 2002/01/28 20:50:28 nathanw Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.32.2.3 2002/03/08 21:35:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.32.2.2 2002/01/28 20:50:28 nathanw Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.32.2.3 2002/03/08 21:35:03 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,10 @@ __RCSID("$NetBSD: __fts13.c,v 1.32.2.2 2002/01/28 20:50:28 nathanw Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if !HAVE_CONFIG_H
+#define HAVE_STRUCT_DIRENT_D_NAMLEN 1
+#endif
 
 #ifdef __weak_alias
 #ifdef __LIBC12_SOURCE__
@@ -89,6 +93,7 @@ __warn_references(fts_set,
     " include <fts.h> for correct reference")
 #endif
 
+#if !HAVE_FTS_H
 static FTSENT	*fts_alloc __P((FTS *, const char *, size_t));
 static FTSENT	*fts_build __P((FTS *, int));
 static void	 fts_lfree __P((FTSENT *));
@@ -736,10 +741,10 @@ fts_build(sp, type)
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
-#if defined(__svr4__) || defined(__SVR4) || defined(__linux__)
-		dlen = strlen(dp->d_name);
-#else
+#if HAVE_STRUCT_DIRENT_D_NAMLEN
 		dlen = dp->d_namlen;
+#else
+		dlen = strlen(dp->d_name);
 #endif
 		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
 			goto mem1;
@@ -1001,6 +1006,7 @@ fts_alloc(sp, name, namelen)
 	_DIAGASSERT(sp != NULL);
 	_DIAGASSERT(name != NULL);
 
+#if defined(ALIGNBYTES) && defined(ALIGN)
 	/*
 	 * The file name is a variable length array and no stat structure is
 	 * necessary if the user has set the nostat bit.  Allocate the FTSENT
@@ -1015,12 +1021,23 @@ fts_alloc(sp, name, namelen)
 	if ((p = malloc(len)) == NULL)
 		return (NULL);
 
-	/* Copy the name plus the trailing NULL. */
-	memmove(p->fts_name, name, namelen + 1);
-
 	if (!ISSET(FTS_NOSTAT))
 		p->fts_statp =
 		    (struct STAT *)ALIGN((u_long)(p->fts_name + namelen + 2));
+#else
+	if ((p = malloc(sizeof(FTSENT) + namelen)) == NULL)
+		return (NULL);
+
+	if (!ISSET(FTS_NOSTAT))
+		if ((p->fts_statp = malloc(sizeof(struct STAT))) == NULL) {
+			free(p);
+			return (NULL);
+		}
+#endif
+
+	/* Copy the name plus the trailing NULL. */
+	memmove(p->fts_name, name, namelen + 1);
+
 	p->fts_namelen = namelen;
 	p->fts_path = sp->fts_path;
 	p->fts_errno = 0;
@@ -1042,6 +1059,11 @@ fts_lfree(head)
 	/* Free a linked list of structures. */
 	while ((p = head) != NULL) {
 		head = head->fts_link;
+
+#if !defined(ALIGNBYTES) || !defined(ALIGN)
+		if (p->fts_statp)
+			free(p->fts_statp);
+#endif
 		free(p);
 	}
 }
@@ -1185,3 +1207,4 @@ bail:
 	}
 	return ret;
 }
+#endif /* !HAVE_FTS_H */

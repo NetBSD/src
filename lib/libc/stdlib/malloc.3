@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.3,v 1.12.6.2 2002/01/28 20:51:18 nathanw Exp $
+.\"	$NetBSD: malloc.3,v 1.12.6.3 2002/03/08 21:35:49 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
+.Fd #include \*[Lt]stdlib.h\*[Gt]
 .Ft void *
 .Fn malloc "size_t size"
 .Ft void *
@@ -226,11 +226,11 @@ and
 .Dq R
 options, and then zeros out the bytes that were requested.
 This is intended for debugging and will impact performance negatively.
-.It <
+.It \*[Lt]
 Reduce the size of the cache by a factor of two.
 The default cache size is 16 pages.
 This option can be specified multiple times.
-.It >
+.It \*[Gt]
 Double the size of the cache by a factor of two.
 The default cache size is 16 pages.
 This option can be specified multiple times.
@@ -283,7 +283,7 @@ To set a systemwide reduction of cache size, and to dump core whenever
 a problem occurs:
 .Pp
 .Bd -literal -offset indent
-ln -s 'A<' /etc/malloc.conf
+ln -s 'A\*[Lt]' /etc/malloc.conf
 .Ed
 .Pp
 To specify in the source that a program does no return value checking

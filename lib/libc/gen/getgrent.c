@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.40.2.1 2002/01/28 20:50:32 nathanw Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.40.2.2 2002/03/08 21:35:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.40.2.1 2002/01/28 20:50:32 nathanw Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.40.2.2 2002/03/08 21:35:05 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,8 +88,8 @@ static int		_gr_filesdone;
 
 static void grcleanup(void);
 static int grscan(int, gid_t, const char *);
-static int matchline(int, gid_t, const char *);
-static int start_gr(void);
+static int grstart(void);
+static int grmatchline(int, gid_t, const char *);
 
 #define	MAXGRP		200
 #define	MAXLINELENGTH	1024
@@ -116,7 +116,7 @@ struct group *
 getgrent(void)
 {
 
-	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL))
+	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL))
  		return (NULL);
 	return &_gr_group;
 }
@@ -128,7 +128,7 @@ getgrnam(const char *name)
 
 	_DIAGASSERT(name != NULL);
 
-	if (!start_gr())
+	if (!grstart())
 		return NULL;
 	rval = grscan(1, 0, name);
 	if (!_gr_stayopen)
@@ -141,7 +141,7 @@ getgrgid(gid_t gid)
 {
 	int rval;
 
-	if (!start_gr())
+	if (!grstart())
 		return NULL;
 	rval = grscan(1, gid, NULL);
 	if (!_gr_stayopen)
@@ -169,7 +169,7 @@ grcleanup(void)
 }
 
 static int
-start_gr(void)
+grstart(void)
 {
 
 	grcleanup();
@@ -191,7 +191,7 @@ int
 setgroupent(int stayopen)
 {
 
-	if (!start_gr())
+	if (!grstart())
 		return 0;
 	_gr_stayopen = stayopen;
 	return 1;
@@ -235,7 +235,7 @@ _local_grscan(void *rv, void *cb_data, va_list ap)
 				;
 			continue;
 		}
-		if (matchline(search, gid, name))
+		if (grmatchline(search, gid, name))
 			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
@@ -289,7 +289,7 @@ _dns_grscan(void *rv, void *cb_data, va_list ap)
 		strncpy(line, hp[0], sizeof(line));
 		line[sizeof(line) - 1] = '\0';
 		hesiod_free_list(context, hp);
-		if (matchline(search, gid, name)) {
+		if (grmatchline(search, gid, name)) {
 			r = NS_SUCCESS;
 			break;
 		} else if (search) {
@@ -354,7 +354,7 @@ _nis_grscan(void *rv, void *cb_data, va_list ap)
 		strncpy(line, data, sizeof(line));
 		line[sizeof(line) - 1] = '\0';
 		free(data);
-		if (matchline(search, gid, name))
+		if (grmatchline(search, gid, name))
 			return NS_SUCCESS;
 		else
 			return NS_NOTFOUND;
@@ -404,7 +404,7 @@ _nis_grscan(void *rv, void *cb_data, va_list ap)
 		strncpy(line, data, sizeof(line));
 		line[sizeof(line) - 1] = '\0';
 		free(data);
-		if (matchline(search, gid, name))
+		if (grmatchline(search, gid, name))
 			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
@@ -549,7 +549,7 @@ _compat_grscan(void *rv, void *cb_data, va_list ap)
 			continue;
 		}
 #endif	/* _GROUP_COMPAT */
-		if (matchline(search, gid, name))
+		if (grmatchline(search, gid, name))
 			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
@@ -579,7 +579,7 @@ grscan(int search, gid_t gid, const char *name)
 }
 
 static int
-matchline(int search, gid_t gid, const char *name)
+grmatchline(int search, gid_t gid, const char *name)
 {
 	unsigned long	id;
 	__aconst char	**m;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.11.2.2 2001/11/14 19:32:02 nathanw Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.11.2.3 2002/03/08 21:35:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,17 +38,21 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.11.2.2 2001/11/14 19:32:02 nathanw Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.11.2.3 2002/03/08 21:35:46 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <assert.h>
-#include <errno.h>
 #include <err.h>
+#include <errno.h>
+#include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
+
+#if HAVE_CONFIG_H && !HAVE_GETOPT_LONG && !HAVE_DECL_OPTIND
+#define REPLACE_GETOPT
+#endif
 
 #ifdef REPLACE_GETOPT
 #ifdef __weak_alias
@@ -59,13 +63,15 @@ int	optind = 1;		/* index into parent argv vector */
 int	optopt = '?';		/* character checked for validity */
 int	optreset;		/* reset getopt */
 char    *optarg;		/* argument associated with option */
+#elif HAVE_CONFIG_H && !HAVE_DECL_OPTRESET
+static int optreset;
 #endif
 
 #ifdef __weak_alias
 __weak_alias(getopt_long,_getopt_long)
 #endif
 
-
+#if !HAVE_GETOPT_LONG
 #define IGNORE_FIRST	(*options == '-' || *options == '+')
 #define PRINT_ERROR	((opterr) && ((*options != ':') \
 				      || (IGNORE_FIRST && options[1] != ':')))
@@ -479,3 +485,4 @@ getopt_long(nargc, nargv, options, long_options, idx)
 	}
 	return retval;
 }
+#endif /* !GETOPT_LONG */

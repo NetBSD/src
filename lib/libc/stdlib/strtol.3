@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.12.6.2 2002/01/28 20:51:22 nathanw Exp $
+.\"	$NetBSD: strtol.3,v 1.12.6.3 2002/03/08 21:35:56 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,20 +49,20 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
-.Fd #include <limits.h>
+.Fd #include \*[Lt]stdlib.h\*[Gt]
+.Fd #include \*[Lt]limits.h\*[Gt]
 .Ft long int
 .Fn strtol "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Ft long long int
 .Fn strtoll "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Pp
-.Fd #include <inttypes.h>
+.Fd #include \*[Lt]inttypes.h\*[Gt]
 .Ft intmax_t
 .Fn strtoimax "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Pp
-.Fd #include <sys/types.h>
-.Fd #include <stdlib.h>
-.Fd #include <limits.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]stdlib.h\*[Gt]
+.Fd #include \*[Lt]limits.h\*[Gt]
 .Ft quad_t
 .Fn strtoq "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Sh DESCRIPTION

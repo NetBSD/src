@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.8 2000/01/22 22:19:15 mycroft Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.8.6.1 2002/03/08 21:35:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_makeaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_makeaddr.c,v 1.8 2000/01/22 22:19:15 mycroft Exp $");
+__RCSID("$NetBSD: inet_makeaddr.c,v 1.8.6.1 2002/03/08 21:35:27 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,16 +59,18 @@ struct in_addr
 inet_makeaddr(net, host)
 	u_long net, host;
 {
-	u_long addr;
+	in_addr_t anet = (in_addr_t)net;
+	in_addr_t ahost = (in_addr_t)host;
+	in_addr_t addr;
 
 	if (net < 128)
-		addr = (net << IN_CLASSA_NSHIFT) | (host & IN_CLASSA_HOST);
+		addr = (anet << IN_CLASSA_NSHIFT) | (ahost & IN_CLASSA_HOST);
 	else if (net < 65536)
-		addr = (net << IN_CLASSB_NSHIFT) | (host & IN_CLASSB_HOST);
+		addr = (anet << IN_CLASSB_NSHIFT) | (ahost & IN_CLASSB_HOST);
 	else if (net < 16777216L)
-		addr = (net << IN_CLASSC_NSHIFT) | (host & IN_CLASSC_HOST);
+		addr = (anet << IN_CLASSC_NSHIFT) | (ahost & IN_CLASSC_HOST);
 	else
-		addr = net | host;
+		addr = anet | ahost;
 	addr = htonl((u_int32_t)addr);
 	return (*(struct in_addr *)(void *)&addr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.24.2.3 2001/11/14 19:32:06 nathanw Exp $	*/
+/*	$NetBSD: localtime.c,v 1.24.2.4 2002/03/08 21:36:51 nathanw Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -8,9 +8,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char	elsieid[] = "@(#)localtime.c	7.70";
+static char	elsieid[] = "@(#)localtime.c	7.75";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.24.2.3 2001/11/14 19:32:06 nathanw Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.24.2.4 2002/03/08 21:36:51 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -370,8 +370,8 @@ register struct state * const	sp;
 	{
 		struct tzhead *	tzhp;
 		union {
-		  struct tzhead tzhead;
-		  char		buf[sizeof *sp + sizeof *tzhp];
+			struct tzhead	tzhead;
+			char		buf[sizeof *sp + sizeof *tzhp];
 		} u;
 		int		ttisstdcnt;
 		int		ttisgmtcnt;
@@ -1019,9 +1019,9 @@ tzset_unlocked P((void))
 		return;
 	}
 
-	if (lcl_is_set > 0  &&  strcmp(lcl_TZname, name) == 0)
+	if (lcl_is_set > 0 && strcmp(lcl_TZname, name) == 0)
 		return;
-	lcl_is_set = (strlen(name) < sizeof(lcl_TZname));
+	lcl_is_set = strlen(name) < sizeof lcl_TZname;
 	if (lcl_is_set)
 		(void)strncpy(lcl_TZname, name, sizeof(lcl_TZname) - 1);
 
@@ -1466,7 +1466,9 @@ const int		do_norm_secs;
 	}
 	if (increment_overflow(&yourtm.tm_year, -TM_YEAR_BASE))
 		return WRONG;
-	if (yourtm.tm_year + TM_YEAR_BASE < EPOCH_YEAR) {
+	if (yourtm.tm_sec >= 0 && yourtm.tm_sec < SECSPERMIN)
+		saved_seconds = 0;
+	else if (yourtm.tm_year + TM_YEAR_BASE < EPOCH_YEAR) {
 		/*
 		** We can't set tm_sec to 0, because that might push the
 		** time below the minimum representable time.

@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.19 1999/09/20 04:39:44 lukem Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.19.10.1 2002/03/08 21:35:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.19 1999/09/20 04:39:44 lukem Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.19.10.1 2002/03/08 21:35:58 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,7 @@ __strsignal(num, buf, buflen)
 
 #ifdef NLS
 	nl_catd catd ;
-	catd = catopen("libc", 0);
+	catd = catopen("libc", NL_CAT_LOCALE);
 #endif
 
 	_DIAGASSERT(buf != NULL);

@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_calls 1.4 89/07/20 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_calls.3,v 1.1.6.1 2001/10/08 20:20:36 nathanw Exp $
+.\"	$NetBSD: rpc_clnt_calls.3,v 1.1.6.2 2002/03/08 21:35:31 nathanw Exp $
 .Dd May 7, 1993
 .Dt RPC_CLNT_CALLS 3
 .Os
@@ -22,7 +22,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <rpc/rpc.h>
+.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
 .Ft "enum clnt_stat"
 .Fn clnt_call "CLIENT *clnt" "const rpcproc_t procnum" "const xdrproc_t inproc" "const caddr_t in" "const xdrproc_t outproc" "caddr_t out" "const struct timeval tout"
 .Ft bool_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1.2.2 2002/01/28 20:49:45 nathanw Exp $	*/
+/*	$NetBSD: SYS.h,v 1.1.2.3 2002/03/08 21:34:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,11 +40,12 @@
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
+#include <arm/swi.h>
 
 #ifdef __STDC__
-#define SYSTRAP(x)	swi SYS_ ## x
+#define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_ ## x
 #else
-#define SYSTRAP(x)	swi SYS_/**/x
+#define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_/**/x
 #endif
 
 #ifdef __ELF__

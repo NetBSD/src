@@ -1,4 +1,4 @@
-.\" $NetBSD: err.3,v 1.11.2.1 2001/10/08 20:18:48 nathanw Exp $
+.\" $NetBSD: err.3,v 1.11.2.2 2002/03/08 21:35:04 nathanw Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <err.h>
+.Fd #include \*[Lt]err.h\*[Gt]
 .Ft void
 .Fn err "int status" "const char *fmt" "..."
 .Ft void
@@ -121,7 +121,7 @@ if ((fd = open(file_name, O_RDONLY, 0)) == -1)
 .Pp
 Display an error message and terminate with status indicating failure:
 .Bd -literal -offset indent
-if (tm.tm_hour < START_TIME)
+if (tm.tm_hour \*[Lt] START_TIME)
 	errx(EXIT_FAILURE, "too early, wait until %s",
 	    start_time_string);
 .Ed

@@ -1,11 +1,11 @@
-/*	$NetBSD: strftime.c,v 1.12 2000/12/12 15:35:31 kleink Exp $	*/
+/*	$NetBSD: strftime.c,v 1.12.2.1 2002/03/08 21:36:52 nathanw Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char	elsieid[] = "@(#)strftime.c	7.62";
+static char	elsieid[] = "@(#)strftime.c	7.64";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.12 2000/12/12 15:35:31 kleink Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.12.2.1 2002/03/08 21:36:52 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -469,7 +469,7 @@ label:
 				if (t->tm_isdst == 0)
 #ifdef USG_COMPAT
 					diff = -timezone;
-#else /* defined USG_COMPAT */
+#else /* !defined USG_COMPAT */
 					continue;
 #endif /* !defined USG_COMPAT */
 				else

@@ -1,5 +1,5 @@
-#	$NetBSD: Theory,v 1.5 2000/12/12 15:25:41 kleink Exp $
-@(#)Theory	7.11
+#	$NetBSD: Theory,v 1.5.2.1 2002/03/08 21:36:50 nathanw Exp $
+@(#)Theory	7.13
 
 
 ----- Outline -----
@@ -36,7 +36,7 @@ POSIX.1 has the following properties and limitations.
 		stdoffset[dst[offset],date[/time],date[/time]]
 
 	where:
-	
+
 	std and dst
 		are 3 or more characters specifying the standard
 		and daylight saving time (DST) zone names.
@@ -180,11 +180,34 @@ so much the better.
 
 ----- Names of time zone rule files -----
 
-The names of this package's installed time zone rule files are chosen to
-help minimize possible future incompatibilities due to political events.
-Ordinarily, names of countries are not used, to avoid incompatibilities
-when countries change their name (e.g. Zaire->Congo) or
-when locations change countries (e.g. Hong Kong from UK colony to China).
+The time zone rule file naming conventions attempt to strike a balance
+among the following goals:
+
+ * Uniquely identify every national region where clocks have all
+   agreed since 1970.  This is essential for the intended use: static
+   clocks keeping local civil time.
+
+ * Indicate to humans as to where that region is.  This simplifes use.
+
+ * Be robust in the presence of political changes.  This reduces the
+   number of updates and backward-compatibility hacks.  For example,
+   names of countries are ordinarily not used, to avoid
+   incompatibilities when countries change their name
+   (e.g. Zaire->Congo) or when locations change countries
+   (e.g. Hong Kong from UK colony to China).
+
+ * Be portable to a wide variety of implementations.
+   This promotes use of the technology.
+
+ * Use a consistent naming convention over the entire world.
+   This simplifies both use and maintenance.
+
+This naming convention is not intended for use by inexperienced users
+to select TZ values by themselves (though they can of course examine
+and reuse existing settings).  Distributors should provide
+documentation and/or a simple selection interface that explains the
+names; see the 'tzselect' program supplied with this distribution for
+one example.
 
 Names normally have the form AREA/LOCATION, where AREA is the name
 of a continent or ocean, and LOCATION is the name of a specific
@@ -195,9 +218,13 @@ and `Pacific/Honolulu'.
 Here are the general rules used for choosing location names,
 in decreasing order of importance:
 
-	Use only valid Posix file names.  Use only Ascii letters, digits, `.',
-		`-' and `_'.  Do not exceed 14 characters or start with `-'.
-		E.g. prefer `Brunei' to `Bandar_Seri_Begawan'.
+	Use only valid POSIX file name components (i.e., the parts of
+		names other than `/').  Within a file name component,
+		use only ASCII letters, `.', `-' and `_'.  Do not use
+		digits, as that might create an ambiguity with POSIX
+		TZ strings.  A file name component must not exceed 14
+		characters or start with `-'.  E.g., prefer `Brunei'
+		to `Bandar_Seri_Begawan'.
 	Include at least one location per time zone rule set per country.
 		One such location is enough.  Use ISO 3166 (see the file
 		iso3166.tab) to help decide whether something is a country.
@@ -212,9 +239,9 @@ in decreasing order of importance:
 		or regions, so that any future time zone changes do not split
 		locations into different time zones.  E.g. prefer `Paris'
 		to `France', since France has had multiple time zones.
-	Use traditional English spelling, e.g. prefer `Rome' to `Roma', and
+	Use mainstream English spelling, e.g. prefer `Rome' to `Roma', and
 		prefer `Athens' to the true name (which uses Greek letters).
-		The Posix file name restrictions encourage this rule.
+		The POSIX file name restrictions encourage this rule.
 	Use the most populous among locations in a country's time zone,
 		e.g. prefer `Shanghai' to `Beijing'.  Among locations with
 		similar populations, pick the best-known location,
@@ -254,25 +281,39 @@ like `EST' to be compatible with human tradition and POSIX.1.
 Here are the general rules used for choosing time zone abbreviations,
 in decreasing order of importance:
 
-	Use abbreviations that consist of 3 or more upper-case Ascii letters,
-		except use "___" for locations while uninhabited.
-		Posix.1 requires at least 3 characters, and the restriction to
-		upper-case Ascii letters follows most traditions.
+	Use abbreviations that consist of three or more ASCII letters.
 		Previous editions of this database also used characters like
 		' ' and '?', but these characters have a special meaning to
 		the shell and cause commands like
 			set `date`
-		to have unexpected effects.  In theory, the character set could
-		be !%./@A-Z^_a-z{}, but these tables use only upper-case
-		Ascii letters (and "___").
+		to have unexpected effects.
+		Previous editions of this rule required upper-case letters,
+		but the Congressman who introduced Chamorro Standard Time
+		preferred "ChST", so the rule has been relaxed.
+
+		This rule guarantees that all abbreviations could have
+		been specified by a POSIX.1 TZ string.  POSIX.1
+		requires at least three characters for an
+		abbreviation.  POSIX.1-1996 says that an abbreviation
+		cannot start with ':', and cannot contain ',', '-',
+		'+', NUL, or a digit.  Draft 7 of POSIX 1003.1-200x
+		changes this rule to say that an abbreviation can
+		contain only '-', '+', and alphanumeric characters in
+		the current locale.  To be portable to both sets of
+		rules, an abbreviation must therefore use only ASCII
+		letters, as these are the only letters that are
+		alphabetic in all locales.
+
 	Use abbreviations that are in common use among English-speakers,
 		e.g. `EST' for Eastern Standard Time in North America.
 		We assume that applications translate them to other languages
 		as part of the normal localization process; for example,
 		a French application might translate `EST' to `HNE'.
+
 	For zones whose times are taken from a city's longitude, use the
 		traditional xMT notation, e.g. `PMT' for Paris Mean Time.
 		The only name like this in current use is `GMT'.
+
 	If there is no common English abbreviation, abbreviate the English
 		translation of the usual phrase used by native speakers.
 		If this is not available or is a phrase mentioning the country
@@ -286,6 +327,9 @@ in decreasing order of importance:
 			letters of an English place name identifying each zone
 			and then append `T', `ST', etc. as before;
 			e.g. `VLAST' for VLAdivostok Summer Time.
+
+	Use "zzz" for locations while uninhabited.  The mnemonic is that
+		these locations are, in some sense, asleep.
 
 Application writers should note that these abbreviations are ambiguous
 in practice: e.g. `EST' has a different meaning in Australia than
@@ -377,8 +421,8 @@ Newsgroups: soc.genealogy.german
 Date: Tue, 9 Feb 1999 02:32:48 -800
 Message-ID: <199902091032.CAA09644@netcom10.netcom.com>
 
-The following is a(n incomplete) listing, arranged chronologically, of 
-European states, with the date they converted from the Julian to the 
+The following is a(n incomplete) listing, arranged chronologically, of
+European states, with the date they converted from the Julian to the
 Gregorian calendar:
 
 04/15 Oct 1582 - Italy (with exceptions), Spain, Portugal, Poland (Roman
@@ -455,9 +499,9 @@ Gregorian calendar:
 
 1760-1812      - Graub"unden
 
-The Russian empire (including Finland and the Baltic states) did not 
+The Russian empire (including Finland and the Baltic states) did not
 convert to the Gregorian calendar until the Soviet revolution of 1917.
 
-Source:  H. Grotefend, _Taschenbuch der Zeitrechnung des deutschen 
-Mittelalters und der Neuzeit_, herausgegeben von Dr. O. Grotefend 
+Source:  H. Grotefend, _Taschenbuch der Zeitrechnung des deutschen
+Mittelalters und der Neuzeit_, herausgegeben von Dr. O. Grotefend
 (Hannover:  Hahnsche Buchhandlung, 1941), pp. 26-28.

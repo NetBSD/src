@@ -38,16 +38,16 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)syscall.s	8.2 (Berkeley) 1/21/94" */
-	.asciz "$NetBSD: __syscall.S,v 1.1 2000/12/13 07:34:54 matt Exp $"
+	.asciz "$NetBSD: __syscall.S,v 1.1.2.1 2002/03/08 21:34:59 nathanw Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 ENTRY(__syscall, 0)
-	movl	4(ap),r0	# syscall number
-	addl2	$8,ap		# skip the first argument
-	subl3	$2,-8(ap),(ap)	# two fewer arguments
-	chmk	r0
+	movl	4(%ap),%r0	# syscall number
+	addl2	$8,%ap		# skip the first argument
+	subl3	$2,-8(%ap),(%ap)	# two fewer arguments
+	chmk	%r0
 	jcs	1f
 	ret
 1:

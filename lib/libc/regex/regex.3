@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.10.2.1 2001/10/08 20:20:30 nathanw Exp $
+.\"	$NetBSD: regex.3,v 1.10.2.2 2002/03/08 21:35:29 nathanw Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -50,8 +50,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <regex.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]regex.h\*[Gt]
 .Ft int
 .Fn regcomp "regex_t *preg" "const char *pattern" "int cflags"
 .Ft int
@@ -78,7 +78,7 @@ frees any dynamically-allocated storage used by the internal form
 of an RE.
 .Pp
 The header
-.Em <regex.h>
+.Em \*[Lt]regex.h\*[Gt]
 declares two structure types,
 .Fa regex_t
 and
@@ -307,8 +307,8 @@ Unused entries in the array\(emcorresponding either to subexpressions that
 did not participate in the match at all, or to subexpressions that do not
 exist in the RE (that is,
 .Fa i
->
-.Fa preg->re_nsub )
+\*[Gt]
+.Fa preg-\*[Gt]re_nsub )
 \(emhave both
 .Fa rm_so
 and

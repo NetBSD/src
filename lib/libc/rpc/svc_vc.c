@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.8.2.1 2001/08/08 16:13:45 nathanw Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.8.2.2 2002/03/08 21:35:34 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.8.2.1 2001/08/08 16:13:45 nathanw Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.8.2.2 2002/03/08 21:35:34 nathanw Exp $");
 #endif
 #endif
 
@@ -388,7 +388,7 @@ svc_vc_control(xprt, rq, in)
 }
 
 /*
- * reads data from the tcp conection.
+ * reads data from the tcp connection.
  * any error is fatal and the connection is closed.
  * (And a read of zero bytes is a half closed stream => error.)
  * All read operations timeout after 35 seconds.  A timeout is

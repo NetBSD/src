@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.c,v 1.8.10.1 2001/11/14 19:31:56 nathanw Exp $	*/
+/*	$NetBSD: ieee754_ldexp.c,v 1.1.2.2 2002/03/08 21:35:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp.c,v 1.8.10.1 2001/11/14 19:31:56 nathanw Exp $");
+__RCSID("$NetBSD: ieee754_ldexp.c,v 1.1.2.2 2002/03/08 21:35:09 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,11 +50,9 @@ __RCSID("$NetBSD: ldexp.c,v 1.8.10.1 2001/11/14 19:31:56 nathanw Exp $");
  * Multiply the given value by 2^expon.
  */
 double
-ldexp(val, expon)
-	double val;
-	int expon;
+ldexp(double val, int expon)
 {
-	register int oldexp, newexp;
+	int oldexp, newexp;
 	union {
 		double v;
 		struct ieee_double s;
@@ -122,8 +120,8 @@ ldexp(val, expon)
 		}
 		/*
 		 * Denormalize the result.  We do this with a multiply.  If
-		 * expon is very large, it won't fit in a double, so we have to
-		 * adjust the exponent first.  This is safe because we know
+		 * expon is very large, it won't fit in a double, so we have
+		 * to adjust the exponent first.  This is safe because we know
 		 * that u.v is normal at this point.
 		 */
 		if (expon <= -DBL_EXP_BIAS) {

@@ -1,4 +1,4 @@
-.\" $NetBSD: clock_settime.2,v 1.5.6.3 2002/01/28 20:51:26 nathanw Exp $
+.\" $NetBSD: clock_settime.2,v 1.5.6.4 2002/03/08 21:36:15 nathanw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <time.h>
+.Fd #include \*[Lt]time.h\*[Gt]
 .Ft int
 .Fn clock_settime "clockid_t clock_id" "const struct timespec *tp"
 .Ft int
@@ -95,6 +95,23 @@ and obtained by
 represent the amount of time (in seconds and nanoseconds)
 since 00:00 Universal Coordinated Time, January 1, 1970.
 .Pp
+A
+.Fa clock_id
+of
+.Dv CLOCK_MONOTONIC
+identifies a clock that increases at a steady rate (monotonically).
+This clock
+is not affected by calls to
+.Xr adjtime 2
+and
+.Xr settimeofday 2
+and will
+fail with an
+.Er EINVAL
+error if it the clock specified in a call to
+.Fn clock_settime .
+The origin of the clock is unspecified.
+.Pp
 If the calling user is not the super-user, then the
 .Fn clock_settime
 function in the standard C library will try to use the
@@ -141,6 +158,10 @@ The
 .Fa tp
 argument specified a nanosecond value less than zero of greater than or equal
 1000 million.
+.It Bq Er EINVAL
+The
+.Fa clock_id
+argument is a clock that can not be adjusted.
 .It Bq Er EPERM
 The
 calling process does not have the appropriate privilege to set the specified

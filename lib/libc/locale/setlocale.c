@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.34.2.2 2002/01/28 20:50:41 nathanw Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.34.2.3 2002/03/08 21:35:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.34.2.2 2002/01/28 20:50:41 nathanw Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.34.2.3 2002/03/08 21:35:23 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,9 @@ __RCSID("$NetBSD: setlocale.c,v 1.34.2.2 2002/01/28 20:50:41 nathanw Exp $");
 
 #include "namespace.h"
 #include <sys/localedef.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <assert.h>
 #include <limits.h>
 #include <ctype.h>
 #define __SETLOCALE_SOURCE__
@@ -106,6 +109,7 @@ char *_PathLocale;
 
 static char *currentlocale __P((void));
 static char *loadlocale __P((int));
+static const char *__get_locale_env __P((int));
 
 char *
 __setlocale(category, locale)
@@ -114,7 +118,7 @@ __setlocale(category, locale)
 {
 	int i, loadlocale_success;
 	size_t len;
-	char *env, *r;
+	const char *env, *r;
 
 	if (issetugid() ||
 	    (!_PathLocale && !(_PathLocale = getenv("PATH_LOCALE"))))
@@ -138,27 +142,17 @@ __setlocale(category, locale)
 	 * Now go fill up new_categories from the locale argument
 	 */
 	if (!*locale) {
-		env = getenv(categories[category]);
-
-		if (!env || !*env)
-			env = getenv(categories[0]);
-
-		if (!env || !*env)
-			env = getenv("LANG");
-
-		if (!env || !*env || strchr(env, '/'))
-			env = "C";
-
-		(void)strlcpy(new_categories[category], env,
-		    sizeof(new_categories[category]));
-		if (!category) {
+		if (category == LC_ALL) {
 			for (i = 1; i < _LC_LAST; ++i) {
-				env = getenv(categories[i]);
-				if (!env || !*env || strchr(env, '/'))
-					env = new_categories[0];
+				env = __get_locale_env(i);
 				(void)strlcpy(new_categories[i], env,
 				    sizeof(new_categories[i]));
 			}
+		}
+		else {
+			env = __get_locale_env(category);
+			(void)strlcpy(new_categories[category], env,
+				sizeof(new_categories[category]));
 		}
 	} else if (category) {
 		(void)strlcpy(new_categories[category], locale,
@@ -239,6 +233,8 @@ loadlocale(category)
 {
 	char name[PATH_MAX];
 
+	_DIAGASSERT(0 < category && category < _LC_LAST);
+
 	if (strcmp(new_categories[category], current_categories[category]) == 0)
 		return (current_categories[category]);
 
@@ -275,9 +271,6 @@ loadlocale(category)
 		return current_categories[category];
 	}
 
-	/*
-	 * Some day we will actually look at this file.
-	 */
 	(void)snprintf(name, sizeof(name), "%s/%s/%s",
 	    _PathLocale, new_categories[category], categories[category]);
 
@@ -296,19 +289,61 @@ loadlocale(category)
 		if (!__loadctype(name))
 			return NULL;
 #endif
+		break;
 
-		(void)strlcpy(current_categories[category],
-		    new_categories[category],
-		    sizeof(current_categories[category]));
-		return current_categories[category];
+	case LC_MESSAGES:
+		/*
+		 * XXX we don't have LC_MESSAGES support yet,
+		 * but catopen may use the value of LC_MESSAGES category.
+		 * so return successfully if locale directory is present.
+		 */
+		(void)snprintf(name, sizeof(name), "%s/%s",
+			_PathLocale, new_categories[category]);
+		/* local */
+		{
+			struct stat st;
+			if (stat(name, &st) < 0)
+				return NULL;
+			if (!S_ISDIR(st.st_mode))
+				return NULL;
+		}
+		break;
 
 	case LC_COLLATE:
-	case LC_MESSAGES:
 	case LC_MONETARY:
 	case LC_NUMERIC:
 	case LC_TIME:
 		return NULL;
 	}
 
-	return NULL;
+	(void)strlcpy(current_categories[category],
+		new_categories[category],
+		sizeof(current_categories[category]));
+	return current_categories[category];
+}
+
+static const char *
+__get_locale_env(category)
+	int category;
+{
+	const char *env;
+
+	_DIAGASSERT(category != LC_ALL);
+
+	/* 1. check LC_ALL. */
+	env = getenv(categories[0]);
+
+	/* 2. check LC_* */
+	if (!env || !*env)
+		env = getenv(categories[category]);
+
+	/* 3. check LANG */
+	if (!env || !*env)
+		env = getenv("LANG");
+
+	/* 4. if none is set, fall to "C" */
+	if (!env || !*env || strchr(env, '/'))
+		env = "C";
+
+	return env;
 }

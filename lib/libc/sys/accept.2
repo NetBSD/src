@@ -1,4 +1,4 @@
-.\"	$NetBSD: accept.2,v 1.14.2.2 2001/11/14 19:32:03 nathanw Exp $
+.\"	$NetBSD: accept.2,v 1.14.2.3 2002/03/08 21:36:12 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
 .Ft int
 .Fn accept "int s" "struct sockaddr * restrict addr" "socklen_t * restrict addrlen"
 .Sh DESCRIPTION

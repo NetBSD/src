@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzset.3,v 1.10.4.2 2002/01/28 20:51:33 nathanw Exp $
+.\"	$NetBSD: tzset.3,v 1.10.4.3 2002/03/08 21:36:55 nathanw Exp $
 .Dd April 1, 2001
 .Dt TZSET 3
 .Os
@@ -8,7 +8,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <time.h>
+.Fd #include \*[Lt]time.h\*[Gt]
 .Ft void
 .Fn tzset "void"
 .Sh DESCRIPTION
@@ -149,16 +149,16 @@ is one of the following:
 .It Cm J Ns Ar n
 The Julian day
 .Ar n
-(1 \*(<=
+(1 \*[Le]
 .Ar n
-\*(<= 365).
+\*[Le] 365).
 Leap days are not counted; that is, in all years \(em including leap
 years \(em February 28 is day 59 and March 1 is day 60.  It is
 impossible to explicitly refer to the occasional February 29.
 .It Ar n
-The zero-based Julian day (0\ \(<=
+The zero-based Julian day (0\ \*[Le]
 .Ar n
-\(<=\ 365). Leap days are counted, and it is possible to refer to
+\*[Le]\ 365). Leap days are counted, and it is possible to refer to
 February 29.
 .Sm off
 .It Xo Cm M Ns Ar m
@@ -168,18 +168,18 @@ February 29.
 The
 .Ar d Ns 'th
 day
-(0 \(<=
+(0 \*[Le]
 .Ar d
-\(<=\ 6) of week
+\*[Le]\ 6) of week
 .Ar n
 of month
 .Ar m
 of the year
-(1 \(<=
+(1 \*[Le]
 .Ar n
-\(<=\ 5, 1 \(<=
+\*[Le]\ 5, 1 \*[Le]
 .Ar m
-\(<=\ 12, where week 5 means
+\*[Le]\ 12, where week 5 means
 .Dq the\ last Ar d No day\ in\ month Ar m
 which may occur in either the fourth or the fifth week).  Week 1 is
 the first week in which the

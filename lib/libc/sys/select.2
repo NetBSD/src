@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.12.6.1 2001/10/08 20:22:04 nathanw Exp $
+.\"	$NetBSD: select.2,v 1.12.6.2 2002/03/08 21:36:37 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,15 +42,15 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/time.h>
-.Fd #include <unistd.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/time.h\*[Gt]
+.Fd #include \*[Lt]unistd.h\*[Gt]
 .Ft int
 .Fn select "int nfds" "fd_set *readfds" "fd_set *writefds" "fd_set *exceptfds" "struct timeval *timeout"
-.Fn FD_SET fd &fdset
-.Fn FD_CLR fd &fdset
-.Fn FD_ISSET fd &fdset
-.Fn FD_ZERO &fdset
+.Fn FD_SET fd \*[Am]fdset
+.Fn FD_CLR fd \*[Am]fdset
+.Fn FD_ISSET fd \*[Am]fdset
+.Fn FD_ZERO \*[Am]fdset
 .Sh DESCRIPTION
 .Fn select
 examines the I/O descriptor sets whose addresses are passed in
@@ -77,21 +77,21 @@ returns the total number of ready descriptors in all the sets.
 .Pp
 The descriptor sets are stored as bit fields in arrays of integers.
 The following macros are provided for manipulating such descriptor sets:
-.Fn FD_ZERO &fdset
+.Fn FD_ZERO \*[Am]fdset
 initializes a descriptor set
 .Fa fdset
 to the null set.
-.Fn FD_SET fd &fdset
+.Fn FD_SET fd \*[Am]fdset
 includes a particular descriptor
 .Fa fd
 in
 .Fa fdset .
-.Fn FD_CLR fd &fdset
+.Fn FD_CLR fd \*[Am]fdset
 removes
 .Fa fd
 from
 .Fa fdset .
-.Fn FD_ISSET fd &fdset
+.Fn FD_ISSET fd \*[Am]fdset
 is non-zero if
 .Fa fd
 is a member of

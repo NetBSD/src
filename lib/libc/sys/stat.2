@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.2,v 1.21.2.2 2001/11/14 19:32:05 nathanw Exp $
+.\"	$NetBSD: stat.2,v 1.21.2.3 2002/03/08 21:36:43 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,8 +44,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/stat.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/stat.h\*[Gt]
 .Ft int
 .Fn stat "const char *path" "struct stat *sb"
 .Ft int
@@ -147,6 +147,11 @@ The size-related fields of the
 .Fa struct stat
 are as follows:
 .Bl -tag -width XXXst_blksize
+.It st_size
+The size of the file in bytes.
+A directory will be a multiple of the size of the
+.Xr dirent 5
+structure.
 .It st_blksize
 The optimal I/O block size for the file.
 .It st_blocks
@@ -268,6 +273,7 @@ An I/O error occurred while reading from or writing to the file system.
 .Xr chmod 2 ,
 .Xr chown 2 ,
 .Xr utimes 2 ,
+.Xr dir 5 ,
 .Xr symlink 7
 .Sh STANDARDS
 The

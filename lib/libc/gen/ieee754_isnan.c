@@ -1,4 +1,4 @@
-/*	$NetBSD: frexp.c,v 1.4 1999/08/29 18:39:37 mycroft Exp $	*/
+/*	$NetBSD: ieee754_isnan.c,v 1.1.2.2 2002/03/08 21:35:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,51 +36,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: frexp.c,v 1.1 91/07/07 04:45:01 torek Exp
+ * from: Header: isinf.c,v 1.1 91/07/08 19:03:34 torek Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: frexp.c,v 1.4 1999/08/29 18:39:37 mycroft Exp $");
+__RCSID("$NetBSD: ieee754_isnan.c,v 1.1.2.2 2002/03/08 21:35:09 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <math.h>
 
-/*
- * Split the given value into a fraction in the range [0.5, 1.0) and
- * an exponent, such that frac * (2^exp) == value.  If value is 0,
- * return 0.
- */
-double
-frexp(value, eptr)
-	double value;
-	int *eptr;
+#ifdef __weak_alias
+__weak_alias(isnan,_isnan)
+#endif
+
+int
+isnan(double d)
 {
 	union {
-                double v;
-		struct ieee_double s;
+		double d;
+		struct ieee_double dbl;
 	} u;
 
-	if (value) {
-		/*
-		 * Fractions in [0.5..1.0) have an exponent of 2^-1.
-		 * Leave Inf and NaN alone, however.
-		 * WHAT ABOUT DENORMS?
-		 */
-		u.v = value;
-		if (u.s.dbl_exp != DBL_EXP_INFNAN) {
-			*eptr = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
-			u.s.dbl_exp = DBL_EXP_BIAS - 1;
-		}
-		return (u.v);
-	} else {
-		*eptr = 0;
-		return (0.0);
-	}
+	u.d = d;
+	return (u.dbl.dbl_exp == DBL_EXP_INFNAN &&
+	    (u.dbl.dbl_frach != 0 || u.dbl.dbl_fracl != 0));
 }
