@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.1 1995/06/24 20:16:07 christos Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.2 1995/09/29 05:18:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -81,7 +81,7 @@ int
 compat_43_wait(p, uap, retval)
 	struct proc *p;
 	void *uap;
-	int *retval;
+	register_t *retval;
 {
 	caddr_t sg = stackgap_init(p->p_emul);
 	int error;
