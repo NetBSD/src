@@ -1,8 +1,6 @@
-/*	$NetBSD: param3.h,v 1.47 1997/10/03 02:16:15 gwr Exp $	*/
+/*	$NetBSD: param3.h,v 1.47.4.1 1998/01/27 02:10:26 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Gordon W. Ross
- * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,16 +41,13 @@
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_MACHINE_PARAM_H_
-#define	_MACHINE_PARAM_H_
-
 /*
  * Machine dependent constants for the Sun3 series.
  */
-#define	_MACHINE	sun3
-#define	MACHINE		"sun3"
 
-#define	PGSHIFT		13		/* LOG2(NBPG) */
+#define	KERNBASE	0x0E000000	/* start of kernel virtual */
+#define	KERNTEXTOFF	0x0E004000	/* start of kernel text */
+#define	KERN_END	0x0FE00000	/* end of kernel virtual */
 
 #define SEGSHIFT	17	        /* LOG2(NBSG) */
 #define NBSG		(1 << SEGSHIFT)	/* bytes/segment */
@@ -60,31 +55,5 @@
 
 #define	MAXBSIZE	0x8000		/* max FS block size - XXX */
 
-#define	KERNBASE	0x0E000000	/* start of kernel virtual */
-#define	KERNTEXTOFF	0x0E004000	/* start of kernel text */
-#define	KERN_END	0x0FE00000	/* end of kernel virtual */
-
 #define	UPAGES		2		/* pages of u-area */
 
-#define MSGBUFOFF	0x200
-#define MSGBUFSIZE	(NBPG - MSGBUFOFF)
-
-#include <m68k/param.h>
-
-/*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
- */
-#ifndef NKMEMCLUSTERS
-# define	NKMEMCLUSTERS	(2048 * 1024 / CLBYTES)
-#endif
-
-/* XXX - Does this really belong here? -gwr */
-#include <machine/psl.h>
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-extern void _delay __P((unsigned));
-#define delay(us)	_delay((us)<<8)
-#define	DELAY(n)	delay(n)
-#endif	/* _KERNEL && !_LOCORE */
-
-#endif	/* !_MACHINE_PARAM_H_ */
