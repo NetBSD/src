@@ -616,7 +616,7 @@ char *sirq();
 i386_ioconf()
 {
 	register struct device *dp, *mp, *np;
-	register int uba_n, slave;
+	register int uba_n, slave, first;
 	FILE *fp;
 
 	fp = fopen(path("ioconf.c"), "w");
@@ -648,32 +648,86 @@ i386_ioconf()
 
 		for (dp = dtab; dp != 0; dp = dp->d_next) {
 			mp = dp->d_conn;
-			if (mp == 0 || mp == TO_NEXUS ||
-			    !eq(mp->d_name, "isa"))
+			if (mp == 0 || mp == TO_NEXUS || !eq(mp->d_name, "isa"))
 				continue;
-			fprintf(fp,
-"extern struct isa_driver %sdriver; extern V(%s%d)();\n",
-			    dp->d_name, dp->d_name, dp->d_unit);
+			fprintf(fp, "extern struct isa_driver %sdriver;\n",
+				dp->d_name, dp->d_unit);
+			fprintf(fp, "extern V(%s%d)();\n",
+				dp->d_name, dp->d_unit);
 		}
 		fprintf(fp, "\nstruct isa_device isa_devtab_bio[] = {\n");
 		fprintf(fp, "\
-/* driver 	iobase	irq   drq     maddr    msiz    intr   unit   flags */\n");
+/* driver       iobase    irq drq      maddr   msiz    intr unit flags */\n");
 		for (dp = dtab; dp != 0; dp = dp->d_next) {
 			mp = dp->d_conn;
 			if (dp->d_unit == QUES || mp == 0 ||
 			    mp == TO_NEXUS || !eq(mp->d_name, "isa"))
 				continue;
-			if (!eq(dp->d_mask, "bio")) continue;
+			if (!eq(dp->d_mask, "bio"))
+				continue;
 			if (dp->d_port)
-		 fprintf(fp, "{ &%sdriver,  %8.8s,", dp->d_name, dp->d_port);
+				fprintf(fp, "{ &%sdriver, %8.8s, ",
+					dp->d_name, dp->d_port);
 			else
-	 fprintf(fp, "{ &%sdriver,     0x%03x,", dp->d_name, dp->d_portn);
-		fprintf(fp, " %5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
-			 	sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-			 dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
-			 dp->d_flags);
+				fprintf(fp, "{ &%sdriver,    0x%03x, ",
+					dp->d_name, dp->d_portn);
+			fprintf(fp,
+				"%5.5s, %2d, C 0x%05X, %5d, V(%s%d),  %2d, 0x%02x},\n",
+				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
+				dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
+				dp->d_flags);
 		}
-		fprintf(fp, "0\n};\n");
+		fprintf(fp, "0\n};\n\n");
+
+		first = 1;
+		for (dp = dtab; dp != 0; dp = dp->d_next) {
+			mp = dp->d_conn;
+			if (dp->d_unit == QUES || mp == 0 ||
+			    mp == TO_NEXUS || !eq(mp->d_name, "wdc"))
+				continue;
+			if(first) {
+				first = 0;
+				fprintf(fp, "struct isa_device isa_biotab_wdc[] = {\n");
+				fprintf(fp, "\
+/* driver       iobase    irq drq      maddr   msiz    intr unit flags phys */\n");
+			}
+			if (mp->d_port)
+				fprintf(fp, "{ &%sdriver, %8.8s, ",
+					mp->d_name, mp->d_port);
+			else
+				fprintf(fp, "{ &%sdriver,    0x%03x, ",
+					mp->d_name, mp->d_portn);
+			fprintf(fp,
+				"%5.5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d},\n",
+				"0", 0, 0, 0, 0, dp->d_unit, dp->d_flags, dp->d_drive);	
+		}
+		if(!first)
+			fprintf(fp, "0\n};\n\n");
+
+		first = 1;
+		for (dp = dtab; dp != 0; dp = dp->d_next) {
+			mp = dp->d_conn;
+			if (dp->d_unit == QUES || mp == 0 ||
+			    mp == TO_NEXUS || !eq(mp->d_name, "fdc"))
+				continue;
+			if(first) {
+				first = 0;
+				fprintf(fp, "struct isa_device isa_biotab_fdc[] = {\n");
+				fprintf(fp, "\
+/* driver       iobase    irq drq      maddr   msiz    intr unit flags phys */\n");
+			}
+			if (mp->d_port)
+				fprintf(fp, "{ &%sdriver, %8.8s, ",
+					mp->d_name, mp->d_port);
+			else
+				fprintf(fp, "{ &%sdriver,    0x%03x, ",
+					mp->d_name, mp->d_portn);
+			fprintf(fp,
+				"%5.5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d},\n",
+				"0", 0, 0, 0, 0, dp->d_unit, dp->d_flags, dp->d_drive);
+		}
+		if(!first)
+			fprintf(fp, "0\n};\n\n");
 
 		fprintf(fp, "struct isa_device isa_devtab_tty[] = {\n");
 		fprintf(fp, "\
@@ -683,15 +737,19 @@ i386_ioconf()
 			if (dp->d_unit == QUES || mp == 0 ||
 			    mp == TO_NEXUS || !eq(mp->d_name, "isa"))
 				continue;
-			if (!eq(dp->d_mask, "tty")) continue;
+			if (!eq(dp->d_mask, "tty"))
+				continue;
 			if (dp->d_port)
-		 fprintf(fp, "{ &%sdriver,  %8.8s,", dp->d_name, dp->d_port);
+				fprintf(fp, "{ &%sdriver,  %8.8s, ",
+					dp->d_name, dp->d_port);
 			else
-	 fprintf(fp, "{ &%sdriver,     0x%03x,", dp->d_name, dp->d_portn);
-		fprintf(fp, " %5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
-			 	sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-			 dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
-			 dp->d_flags);
+				fprintf(fp, "{ &%sdriver,     0x%03x, ",
+					dp->d_name, dp->d_portn);
+			fprintf(fp,
+				"%5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
+				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
+				dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
+				dp->d_flags);
 		}
 		fprintf(fp, "0\n};\n\n");
 
@@ -703,15 +761,19 @@ i386_ioconf()
 			if (dp->d_unit == QUES || mp == 0 ||
 			    mp == TO_NEXUS || !eq(mp->d_name, "isa"))
 				continue;
-			if (!eq(dp->d_mask, "net")) continue;
+			if (!eq(dp->d_mask, "net"))
+				continue;
 			if (dp->d_port)
-		 fprintf(fp, "{ &%sdriver,  %8.8s,", dp->d_name, dp->d_port);
+				fprintf(fp, "{ &%sdriver,  %8.8s, ",
+					dp->d_name, dp->d_port);
 			else
-	 fprintf(fp, "{ &%sdriver,     0x%03x,", dp->d_name, dp->d_portn);
-		fprintf(fp, " %5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
-			 	sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-			 dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
-			 dp->d_flags);
+				fprintf(fp, "{ &%sdriver,     0x%03x, ",
+					dp->d_name, dp->d_portn);
+			fprintf(fp,
+				"%5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
+				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
+				dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
+				dp->d_flags);
 		}
 		fprintf(fp, "0\n};\n\n");
 
@@ -723,15 +785,19 @@ i386_ioconf()
 			if (dp->d_unit == QUES || mp == 0 ||
 			    mp == TO_NEXUS || !eq(mp->d_name, "isa"))
 				continue;
-			if (!eq(dp->d_mask, "null")) continue;
+			if (!eq(dp->d_mask, "null"))
+				continue;
 			if (dp->d_port)
-		 fprintf(fp, "{ &%sdriver,  %8.8s,", dp->d_name, dp->d_port);
+				fprintf(fp, "{ &%sdriver,  %8.8s, ",
+					dp->d_name, dp->d_port);
 			else
-	 fprintf(fp, "{ &%sdriver,     0x%03x,", dp->d_name, dp->d_portn);
-		fprintf(fp, " %5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
-			 	sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-			 dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
-			 dp->d_flags);
+				fprintf(fp, "{ &%sdriver,     0x%03x, ",
+					dp->d_name, dp->d_portn);
+			fprintf(fp,
+				"%5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
+				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
+				dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
+				dp->d_flags);
 		}
 		fprintf(fp, "0\n};\n\n");
 	}
