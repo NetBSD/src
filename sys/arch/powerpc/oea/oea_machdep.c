@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.16 2004/04/01 16:58:06 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.17 2004/06/09 23:24:51 kleink Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.16 2004/04/01 16:58:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.17 2004/06/09 23:24:51 kleink Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -256,7 +256,10 @@ oea_init(void (*handler)(void))
 #define	MxSPR_MASK	0x7c1fffff
 #define	MFSPR_MQ	0x7c0002a6
 #define	MTSPR_MQ	0x7c0003a6
+#define	MTSPR_IBAT0L	0x7c1183a6
+#define	MTSPR_IBAT1L	0x7c1383a6
 #define	NOP		0x60000000
+#define	B		0x48000000
 
 #ifdef ALTIVEC
 #define	MFSPR_VRSAVE	0x7c0042a6
@@ -273,8 +276,8 @@ oea_init(void (*handler)(void))
 	    :	"J"(PSL_VEC));
 
 	/*
-	 * If we aren't on an AltiVec capable processor, we to need zap any of
-	 * sequences we save/restore the VRSAVE SPR into NOPs.
+	 * If we aren't on an AltiVec capable processor, we need to zap any of
+	 * the sequences we save/restore the VRSAVE SPR into NOPs.
 	 */
 	if (scratch & PSL_VEC) {
 		cpu_altivec = 1;
@@ -294,8 +297,9 @@ oea_init(void (*handler)(void))
 #endif
 
 	/*
-	 * If we aren't on a MPC601 processor, we to need zap any of
-	 * sequences we save/restore the MQ SPR into NOPs.
+	 * If we aren't on a MPC601 processor, we need to zap any of the
+	 * sequences we save/restore the MQ SPR into NOPs, and skip over the
+	 * sequences where we zap/restore BAT registers on kernel exit/entry.
 	 */
 	if (cpuvers != MPC601) {
 		int *ip = trapstart;
@@ -307,17 +311,20 @@ oea_init(void (*handler)(void))
 			} else if ((ip[0] & MxSPR_MASK) == MTSPR_MQ) {
 				ip[-1] = NOP;	/* lwz */
 				ip[0] = NOP;	/* mtspr */
+			} else if ((ip[0] & MxSPR_MASK) == MTSPR_IBAT0L) {
+				if ((ip[1] & MxSPR_MASK) == MTSPR_IBAT1L)
+					ip[-1] = B | 0x14;	/* li */
+				else
+					ip[-4] = B | 0x24;	/* lis */
 			}
 		}
 	}
 
-	if (!cpu_altivec || cpuvers != MPC601) {
-		/*
-		 * Sync the changed instructions.
-		 */
-		__syncicache((void *) trapstart,
-		    (uintptr_t) trapend - (uintptr_t) trapstart);
-	}
+	/*
+	 * Sync the changed instructions.
+	 */
+	__syncicache((void *) trapstart,
+	    (uintptr_t) trapend - (uintptr_t) trapstart);
 
 	/*
 	 * external interrupt handler install
