@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.10 1995/04/22 19:48:56 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.11 1995/05/16 14:19:08 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -177,7 +177,7 @@ svr4_copyargs(pack, arginfo, stack, argp)
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
-	arginfo->ps_argvstr = dp; /* remember location of argv for later */
+	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 
 	for (; --argc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
@@ -187,7 +187,7 @@ svr4_copyargs(pack, arginfo, stack, argp)
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
 		return NULL;
 
-	arginfo->ps_envstr = dp; /* remember location of envp for later */
+	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
 	for (; --envc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
