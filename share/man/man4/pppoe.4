@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.9.2.4 2003/02/07 20:24:23 tron Exp $
+.\"	$NetBSD: pppoe.4,v 1.9.2.5 2003/02/07 20:26:19 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 15, 2002
+.Dd September 1, 2002
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -235,34 +235,34 @@ A
 .Nm
 enabled kernel will not interfere with other
 .Nm PPPoE
-implementations running on the same machine. Under special circumstances
+implementations running on the same machine.  Under special circumstances
 (details below) this is not desirable, so the
 .Nm
-driver can be told to kill all unknown 
+driver can be told to kill all unknown
 .Nm PPPoE
 sessions received by the ethernet interface used for a configured
 .Nm
-interface. To do this, add
+interface.  To do this, add
 .Pp
 .Nm options
 .Ar PPPOE_TERM_UNKNOWN_SESSIONS
 .Pp
 to your kernel config file.
 .Pp
-Note that this will break all userland 
+Note that this will break all userland
 .Nm PPPoE
 implementations using the same ethernet interface!
 .Pp
 This option is only useful if you have a static IP address assigned and
-your ISP does not use LCP echo requests to monitor the link status. After
+your ISP does not use LCP echo requests to monitor the link status.  After
 a crash or power failure the peer device still tries to send data to the no
 longer active session on your computer, and might refuse to reestablish a
-new connection, because there already is an open session. On receipt of such
+new connection, because there already is an open session.  On receipt of such
 packets the
 .Nm
 driver with this option set will send a
 .Nm PADT
-packet (request to terminate the session). The peer will immediately disconnect
+packet (request to terminate the session).  The peer will immediately disconnect
 the orphaned session and allow a new one to be established.
 .Sh SEE ALSO
 .Xr ifwatchd 8 ,
