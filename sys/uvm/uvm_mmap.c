@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.14 1998/09/30 15:44:10 mrg Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.15 1998/10/11 23:18:20 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -592,7 +592,7 @@ sys_munmap(p, v, retval)
 	/*
 	 * doit!
 	 */
-	(void) uvm_unmap_remove(map, addr, addr + size, 0, &dead_entries);
+	(void) uvm_unmap_remove(map, addr, addr + size, &dead_entries);
 
 	vm_map_unlock(map);	/* and unlock */
 
@@ -844,7 +844,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		if (*addr & PAGE_MASK)
 			return(EINVAL);
 		uvmflag |= UVM_FLAG_FIXED;
-		(void) uvm_unmap(map, *addr, *addr + size, 0);	/* zap! */
+		(void) uvm_unmap(map, *addr, *addr + size);	/* zap! */
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.16 1998/08/28 21:16:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.17 1998/10/11 23:18:20 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -727,7 +727,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		if (pg == NULL) {
 			if (flags & UVM_KMF_NOWAIT) {
 				/* free everything! */
-				uvm_unmap(map, kva, kva + size, 0);
+				uvm_unmap(map, kva, kva + size);
 				return(0);
 			} else {
 				uvm_wait("km_getwait2");	/* sleep here */
@@ -767,7 +767,7 @@ uvm_km_free(map, addr, size)
 	vsize_t size;
 {
 
-	uvm_unmap(map, trunc_page(addr), round_page(addr+size), 1);
+	uvm_unmap(map, trunc_page(addr), round_page(addr+size));
 }
 
 /*
@@ -786,7 +786,7 @@ uvm_km_free_wakeup(map, addr, size)
 	vm_map_entry_t dead_entries;
 
 	vm_map_lock(map);
-	(void)uvm_unmap_remove(map, trunc_page(addr), round_page(addr+size), 1,
+	(void)uvm_unmap_remove(map, trunc_page(addr), round_page(addr+size), 
 			 &dead_entries);
 	thread_wakeup(map);
 	vm_map_unlock(map);
