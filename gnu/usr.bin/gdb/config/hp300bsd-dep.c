@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hp300bsd-dep.c	6.10 (Berkeley) 5/12/91";*/
-static char rcsid[] = "$Id: hp300bsd-dep.c,v 1.2 1993/08/01 18:48:26 mycroft Exp $";
+static char rcsid[] = "$Id: hp300bsd-dep.c,v 1.3 1993/08/10 00:12:42 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -30,9 +30,6 @@ static char rcsid[] = "$Id: hp300bsd-dep.c,v 1.2 1993/08/01 18:48:26 mycroft Exp
  * GDB; see the file COPYING.  If not, write to the Free Software Foundation,
  * 675 Mass Ave, Cambridge, MA 02139, USA.  
  */
-#ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/gnu/usr.bin/gdb/config/Attic/hp300bsd-dep.c,v 1.2 1993/08/01 18:48:26 mycroft Exp $";
-#endif lint
 
 #include <stdio.h>
 #include "defs.h"
@@ -54,7 +51,7 @@ static char rcsid[] = "$Header: /cvsroot/src/gnu/usr.bin/gdb/config/Attic/hp300b
 #endif
 
 #ifdef NEWVM
-#include <hp300/hp300/pte.h>
+#include <machine/pte.h>
 #endif
 
 #include <sys/time.h>
@@ -989,7 +986,8 @@ core_file_command(filename, from_tty)
 		 * I don't know where to find this info. So, for now,
 		 * mark it as not available.  
 		 */
-		N_SET_MAGIC(core_aouthdr, 0);
+	/*	N_SET_MAGIC(core_aouthdr, 0); */
+		bzero ((char *) &core_aouthdr, sizeof core_aouthdr);
 
 		/*
 		 * Read the register values out of the core file and
