@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.21 1998/07/04 22:18:53 jonathan Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.22 1998/07/08 04:28:28 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -3257,7 +3257,7 @@ uvm_page_printit(pg, full, pr)
 
 	/* cross-verify page queue */
 	if (pg->pqflags & PQ_FREE)
-		pgl = &uvm.page_free;
+		pgl = &uvm.page_free[uvm_page_lookup_freelist(pg)];
 	else if (pg->pqflags & PQ_INACTIVE)
 		pgl = (pg->pqflags & PQ_SWAPBACKED) ? 
 		    &uvm.page_inactive_swp : &uvm.page_inactive_obj;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.9 1998/07/04 08:44:04 pk Exp $	*/
+/*	$NetBSD: uvm.h,v 1.10 1998/07/08 04:28:27 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -69,6 +69,11 @@
 #include <uvm/uvm_swap.h>
 
 /*
+ * pull in VM_NFREELIST
+ */
+#include <machine/vmparam.h>
+
+/*
  * uvm structure (vm global state: collected in one structure for ease
  * of reference...)
  */
@@ -76,7 +81,7 @@
 struct uvm {
 	/* vm_page related parameters */
 		/* vm_page queues */
-	struct pglist page_free;	/* unallocated pages */
+	struct pglist page_free[VM_NFREELIST];	/* unallocated pages */
 	struct pglist page_active;	/* allocated pages, in use */
 	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
