@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.179 2000/01/07 22:58:57 kleink Exp $
+# $NetBSD: mi,v 1.180 2000/01/07 23:01:02 kleink Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -2703,7 +2703,6 @@
 ./usr/share/man/cat9/uvmspace_unshare.0
 ./usr/share/man/cat9/uvn_attach.0
 ./usr/share/man/cat9/vprintf.0
-./usr/share/man/cat9/vsunlock.0
 ./usr/share/man/cat9/wakeup.0
 ./usr/share/man/cat9/wdc.0
 ./usr/share/man/cat9/writedisklabel.0
@@ -4177,7 +4176,6 @@
 ./usr/share/man/man9/uvmspace_unshare.9
 ./usr/share/man/man9/uvn_attach.9
 ./usr/share/man/man9/vprintf.9
-./usr/share/man/man9/vsunlock.9
 ./usr/share/man/man9/wakeup.9
 ./usr/share/man/man9/wdc.9
 ./usr/share/man/man9/writedisklabel.9
