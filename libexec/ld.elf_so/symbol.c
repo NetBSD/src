@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.7 1999/11/10 18:48:19 thorpej Exp $	 */
+/*	$NetBSD: symbol.c,v 1.8 2000/07/03 03:33:52 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -163,7 +163,7 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	bool in_plt;
 {
 	Elf_Word symnum = ELF_R_SYM(r_info);
-	const Elf_Sym  *ref;
+	const Elf_Sym  *ref = NULL;
 	const Elf_Sym  *def;
 	const Elf_Sym  *symp;
 	const Obj_Entry *obj;
