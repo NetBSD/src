@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.27 1997/05/06 21:00:56 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.28 1997/05/15 22:53:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -651,36 +651,23 @@ viking_pcache_flush_line(va, pa)
 	 * Flush cache line corresponding to virtual address `va'
 	 * which is mapped at physical address `pa'.
 	 */
-	extern char *etext;
+	extern char etext[];
 	static char *base;
-	static int cmask, cshift;
 	int i;
 	char *v;
 
 	/*
 	 * Construct a virtual address that hits the same cache line
-	 * as VA, then read from 2*ASSOCIATIVITY-1 different physical
+	 * as PA, then read from 2*ASSOCIATIVITY-1 different physical
 	 * locations (all different from PA).
 	 */
 
-	if (CACHEINFO.c_enabled == 0) {
-		/*XXX - consult PROM early in autoconf? */
-		cshift = 5;
-		cmask = (128 << cshift) - 1;
-		v = (char *)roundup((int)etext, NBPG) +
-		    (((va & cmask) >> cshift) << cshift);
-		i = 7;
-		while (i--) {
-			(*(volatile int *)v);
-			v += NBPG;
-		}
-		return;
-	}
-
+#if 0
 	if (base == 0) {
 		cshift = CACHEINFO.ic_l2linesize;
-		cmask = (CACHEINFO.ic_nlines << cshift) - 1;
-		base = (char *)roundup((int)etext, NBPG);
+		csize = CACHEINFO.ic_nlines << cshift;
+		cmask = csize - 1;
+		base = (char *)roundup((int)etext, csize);
 	}
 
 	v = base + (((va & cmask) >> cshift) << cshift);
@@ -688,8 +675,29 @@ viking_pcache_flush_line(va, pa)
 
 	while (i--) {
 		(*(volatile int *)v);
-		v += NBPG;
+		v += csize;
 	}
+#else
+#define cshift	5			/* CACHEINFO.ic_l2linesize */
+#define csize	(128 << cshift)		/* CACHEINFO.ic_nlines << cshift */
+#define cmask	(csize - 1)
+#define cass	4			/* CACHEINFO.dc_associativity */
+
+	if (base == 0)
+		base = (char *)roundup((int)etext, csize);
+
+	v = base + (((pa & cmask) >> cshift) << cshift);
+	i = 2 * cass - 1;
+
+	while (i--) {
+		(*(volatile int *)v);
+		v += csize;
+	}
+#undef cass
+#undef cmask
+#undef csize
+#undef cshift
+#endif
 }
 
 void
