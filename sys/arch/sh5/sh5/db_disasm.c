@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 2002/09/01 09:18:52 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.5 2002/09/01 10:07:25 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1176,7 +1176,7 @@ sh5_fmt_mnd0(opcode_t op, long loc, char *op1, char *op2, char *op3)
 static int
 sh5_fmt_mnd0_decode_op(int fmt, int op, char *ops)
 {
-	char opstr[8];
+	char opstr[16];
 
 	switch (fmt) {
 	case FMT_MND0_OP_NONE:
@@ -1265,7 +1265,7 @@ sh5_fmt_msd6(opcode_t op, long loc, char *op1, char *op2, char *op3)
 static int
 sh5_fmt_msd6_decode_op(int fmt, int op, char *ops)
 {
-	char opstr[8];
+	char opstr[16];
 
 	switch (fmt) {
 	case FMT_MSD6_OP_NONE:
@@ -1336,7 +1336,7 @@ sh5_fmt_msd10(opcode_t op, long loc, char *op1, char *op2, char *op3)
 static int
 sh5_fmt_msd10_decode_op(int fmt, int op, char *ops)
 {
-	char opstr[8];
+	char opstr[16];
 
 	switch (fmt) {
 	case FMT_MSD10_OP_R:
@@ -1402,7 +1402,7 @@ sh5_fmt_xsd16(opcode_t op, long loc, char *op1, char *op2, char *op3)
 static int
 sh5_fmt_xsd16_decode_op(int fmt, int op, long loc, char *ops)
 {
-	char opstr[8];
+	char opstr[16];
 
 	switch (fmt) {
 	case FMT_XSD16_OP_R:
@@ -1410,8 +1410,10 @@ sh5_fmt_xsd16_decode_op(int fmt, int op, long loc, char *ops)
 		break;
 
 	case FMT_XSD16_OP_TRL:
-		if ((op & 0x18) != 0)
+		if ((op & 0x18) != 0) {
+			db_printf("xsd16: bad trl op: 0x%x\n", op);
 			return (-1);
+		}
 		sprintf(opstr, "tr%d", op & 0x7);
 		break;
 
