@@ -1,3 +1,5 @@
+/*	$NetBSD: i386.h,v 1.4 1995/04/19 07:16:05 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)i386.h	8.1 (Berkeley) 6/6/93
- *	$Id: i386.h,v 1.3 1994/05/17 03:36:07 cgd Exp $
+ *	@(#)i386.h	8.1 (Berkeley) 6/6/93
  */
 
     /*

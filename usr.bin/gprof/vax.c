@@ -1,3 +1,5 @@
+/*	$NetBSD: vax.c,v 1.5 1995/04/19 07:16:30 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)vax.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: vax.c,v 1.4 1994/10/06 15:40:16 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)vax.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: vax.c,v 1.5 1995/04/19 07:16:30 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include	"gprof.h"
