@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.5 1999/01/08 04:32:33 abs Exp $
+#	$NetBSD: dot.profile,v 1.6 1999/06/26 06:12:57 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -47,6 +47,7 @@ ROOTDEV=/dev/md0a
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
+	export DONEPROFILE
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
