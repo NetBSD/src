@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.43 2002/07/19 19:04:40 yamt Exp $ */
+/* $NetBSD: lib.h,v 1.44 2002/10/17 03:31:35 christos Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -63,19 +63,21 @@
 #define TAR_CMD	"tar"
 #endif
 
-/* Full path name of TAR_CMD */
-#ifndef TAR_FULLPATHNAME
-#define TAR_FULLPATHNAME	"/usr/bin/tar"
-#endif
-
 /* Define ftp as a string, in case the ftp client is called something else */
 #ifndef FTP_CMD
 #define FTP_CMD "ftp"
 #endif
 
-/* Full path name of FTP_CMD */
-#ifndef FTP_FULLPATHNAME
-#define FTP_FULLPATHNAME       "/usr/bin/ftp"
+#ifndef CHOWN_CMD
+#define CHOWN_CMD "chown"
+#endif
+
+#ifndef CHMOD_CMD
+#define CHMOD_CMD "chmod"
+#endif
+
+#ifndef CHGRP_CMD
+#define CHGRP_CMD "chgrp"
 #endif
 
 /* Where we put logging information by default, else ${PKG_DBDIR} if set */

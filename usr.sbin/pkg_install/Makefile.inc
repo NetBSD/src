@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.21 2002/09/16 00:12:54 thorpej Exp $
+# $NetBSD: Makefile.inc,v 1.22 2002/10/17 03:31:33 christos Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
@@ -8,33 +8,31 @@ CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
 
 # If building for Zoularis on Solaris, some other Makefile should do:
 #LOCALBASE?= /usr/pkg
-#TAR_CMD?= tar
-#FTP_CMD?= ftp
 #ZOULARISBASE?=  ${LOCALBASE}/bsd
-#TAR_FULLPATHNAME?= ${ZOULARISBASE}/bin/${TAR_CMD}
-#FTP_FULLPATHNAME?= ${ZOULARISBASE}/bin/${FTP_CMD}
-#CPPFLAGS+=-DTAR_CMD='"${TAR_CMD}"' -DTAR_FULLPATHNAME='"${TAR_FULLPATHNAME}"'
-#CPPFLAGS+=-DFTP_CMD='"${FTP_CMD}"' -DFTP_FULLPATHNAME='"${FTP_FULLPATHNAME}"'
 #BINDIR=${ZOULARISBASE}/bin
-#CHMOD?= /usr/bin/chmod
-#CHOWN?= /usr/bin/chown
-#CHGRP?= /usr/bin/chgrp
+#TAR_CMD?= ${BINDIR}/tar
+#FTP_CMD?= ${BINDIR}/ftp
+#CPPFLAGS+=-DTAR_CMD='"${TAR_CMD}"' -DFTP_CMD='"${FTP_CMD}"'
+#CHMOD_CMD?= /usr/bin/chmod
+#CHOWN_CMD?= /usr/bin/chown
+#CHGRP_CMD?= /usr/bin/chgrp
 #WARNS=0
 
 # If building for Zoularis on Linux, some other Makefile should do:
-#CHMOD?= /bin/chmod
-#CHOWN?= /bin/chown
-#CHGRP?= /bin/chgrp
+#CHMOD_CMD?= /bin/chmod
+#CHOWN_CMD?= /bin/chown
+#CHGRP_CMD?= /bin/chgrp
 
 # UNDER NO CIRCUMSTANCES SHOULD THIS MAKEFILE TEST THE OUTPUT OF uname!!
 # DOING SO BREAKS CROSS COMPILING.
 
-CHMOD?= /bin/chmod
-CHOWN?= /usr/sbin/chown
-CHGRP?= /usr/bin/chgrp
+#CHMOD_CMD?= /bin/chmod
+#CHOWN_CMD?= /usr/sbin/chown
+#CHGRP_CMD?= /usr/bin/chgrp
 WARNS=2
 
-CPPFLAGS+= -DCHMOD='"${CHMOD}"' -DCHOWN='"${CHOWN}"' -DCHGRP='"${CHGRP}"'
+#CPPFLAGS+= -DCHMOD_CMD='"${CHMOD_CMD}"' -DCHOWN_CMD='"${CHOWN_CMD}"'
+#CPPFLAGS+= -DCHGRP_CMD='"${CHGRP_CMD}"'
 
 DPADD+=	${LIBINSTALL}/libinstall.a
 LDADD+=	-L${LIBINSTALL} -linstall

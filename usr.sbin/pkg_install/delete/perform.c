@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36 2002/06/10 09:14:27 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.37 2002/10/17 03:31:34 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36 2002/06/10 09:14:27 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.37 2002/10/17 03:31:34 christos Exp $");
 #endif
 #endif
 
@@ -588,7 +588,7 @@ pkg_do(char *pkg)
 	if (fexists(REQUIRE_FNAME)) {
 		if (Verbose)
 			printf("Executing 'require' script.\n");
-		vsystem("%s +x %s", CHMOD, REQUIRE_FNAME);	/* be sure */
+		vsystem("%s +x %s", CHMOD_CMD, REQUIRE_FNAME);	/* be sure */
 		if (vsystem("./%s %s DEINSTALL", REQUIRE_FNAME, pkg)) {
 			warnx("package %s fails requirements %s", pkg,
 			    Force ? "" : "- not deleted");
@@ -600,7 +600,7 @@ pkg_do(char *pkg)
 		if (Fake)
 			printf("Would execute de-install script at this point (arg: DEINSTALL).\n");
 		else {
-			vsystem("%s +x %s", CHMOD, DEINSTALL_FNAME);	/* make sure */
+			vsystem("%s +x %s", CHMOD_CMD, DEINSTALL_FNAME);	/* make sure */
 			if (vsystem("./%s %s DEINSTALL", DEINSTALL_FNAME, pkg)) {
 				warnx("deinstall script returned error status");
 				if (!Force)
