@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.6 1993/12/06 14:19:44 mycroft Exp $
+ *	$Id: locore.s,v 1.7 1994/01/13 23:49:13 mycroft Exp $
  */
 
 #include "assym.s"
@@ -733,6 +733,7 @@ _Umap:	.long	0
  * through our table (vectors.s).
  */
 	.comm	_lowram,4
+	.comm	_esym,4
 
 	.text
 	.globl	_edata
