@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.46 2002/03/04 14:02:39 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.47 2002/03/13 01:27:03 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -194,7 +194,7 @@ st*)
 	st*) name=st;	unit=${i#st} blk=5; chr=20;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	case $unit in
 	[0-6])
 		mknod $name$unit	b $blk $(($unit * 16 + 0))
@@ -208,7 +208,7 @@ st*)
 		chgrp operator $name$unit n$name$unit \
 			e$name$unit en$name$unit \
 			r$name$unit nr$name$unit \
-			er$name$unit enr$name$unit 
+			er$name$unit enr$name$unit
 		chmod 660 $name$unit n$name$unit \
 			e$name$unit en$name$unit \
 			r$name$unit nr$name$unit \
@@ -306,12 +306,12 @@ cd*)
 	;;
 
 md*)
-	unit=${i#md}; blk=8; chr=7;
+	unit=${i#md}; blk=8; chr=7
 	rm -f md${unit}? rmd${unit}?
-	mknod md${unit}a  b $blk $(($unit * 8 + 0)) 
-	mknod md${unit}c  b $blk $(($unit * 8 + 2)) 
-#	mknod rmd${unit}a c $chr $(($unit * 8 + 0)) 
-#	mknod rmd${unit}c c $chr $(($unit * 8 + 2)) 
+	mknod md${unit}a  b $blk $(($unit * 8 + 0))
+	mknod md${unit}c  b $blk $(($unit * 8 + 2))
+#	mknod rmd${unit}a c $chr $(($unit * 8 + 0))
+#	mknod rmd${unit}c c $chr $(($unit * 8 + 2))
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
@@ -397,7 +397,7 @@ mouse*)
 	0|1)
 		mknod mouse${unit} c 15 ${unit}; chmod 600 mouse${unit}
 		if [ $unit = 0 ]
-		then 
+		then
 			ln -fs mouse${unit} mouse
 		fi
 		;;
@@ -429,7 +429,7 @@ opty)
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -523,7 +523,7 @@ pow*)
 	0|1)
 		mknod pow${unit} c 32 ${unit}; chmod 644 pow${unit}
 		if [ $unit = 0 ]
-		then 
+		then
 			ln -fs pow${unit} pow
 		fi
 		;;
@@ -548,7 +548,7 @@ random)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 40 $unit
 	chmod 644 scsibus$unit
@@ -567,21 +567,21 @@ i4bctl)
 	;;
 
 i4brbch*)
-	unit=${i#i4brbch};
+	unit=${i#i4brbch}
 	rm -f i4brbch$unit
 	mknod i4brbch$unit c 45 $unit
 	chmod 600 i4brbch$unit
 	;;
 
 i4btel*)
-	unit=${i#i4btel};
+	unit=${i#i4btel}
 	rm -f i4btel$unit
 	mknod i4btel$unit c 47 $unit
 	chmod 600 i4btel$unit
 	;;
 
 i4btrc*)
-	unit=${i#i4btrc};
+	unit=${i#i4btrc}
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 46 $unit
 	chmod 600 i4btrc$unit

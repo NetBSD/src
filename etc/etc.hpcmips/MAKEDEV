@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.31 2002/03/04 14:02:32 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.32 2002/03/13 01:26:57 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -58,7 +58,7 @@
 #
 # Keyboard devices:
 #	wskbd*	wscons keyboard events
-# 
+#
 # Terminal ports:
 #	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
@@ -153,7 +153,7 @@ ramdisk)
 usbs)
 	makedev usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
 	makedev uhid0 uhid1 uhid2 uhid3
-	makedev ulpt0 ulpt1 
+	makedev ulpt0 ulpt1
 	makedev ttyU0 ttyU1
 	makedev urio0
 	makedev uscanner0 uscanner1
@@ -341,7 +341,7 @@ fd)
 	;;
 
 md*)
-	unit=${i#md}; blk=6; chr=12;
+	unit=${i#md}; blk=6; chr=12
 	rm -f md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 8 + 0))
 	mknod md${unit}d  b $blk $(($unit * 8 + 3))
@@ -349,7 +349,7 @@ md*)
 #	mknod rmd${unit}d c $chr $(($unit * 8 + 3))
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
-	;;      
+	;;
 
 ss*)
 	case $i in
@@ -434,7 +434,7 @@ opty)
 		mknod ttyp$j c 7 $jn
 		mknod ptyp$j c 6 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -470,7 +470,7 @@ st*)
 	st*) name=st;	unit=${i#st};	chr=18;	blk=4;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	mknod $name$unit	b $blk $(($unit * 16 + 0))
 	mknod n$name$unit	b $blk $(($unit * 16 + 1))
 	mknod e$name$unit	b $blk $(($unit * 16 + 2))
@@ -480,9 +480,9 @@ st*)
 	mknod er$name$unit	c $chr $(($unit * 16 + 2))
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	;;
 
 ch*|uk*)
@@ -545,7 +545,7 @@ random)
 
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 16 $unit
 	chmod 644 scsibus$unit
@@ -564,21 +564,21 @@ i4bctl)
 	;;
 
 i4brbch*)
-	unit=${i#i4brbch};
+	unit=${i#i4brbch}
 	rm -f i4brbch$unit
 	mknod i4brbch$unit c 43 $unit
 	chmod 600 i4brbch$unit
 	;;
 
 i4btel*)
-	unit=${i#i4btel};
+	unit=${i#i4btel}
 	rm -f i4btel$unit
 	mknod i4btel$unit c 45 $unit
 	chmod 600 i4btel$unit
 	;;
 
 i4btrc*)
-	unit=${i#i4btrc};
+	unit=${i#i4btrc}
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 44 $unit
 	chmod 600 i4btrc$unit

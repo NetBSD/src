@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.27 2002/03/04 14:02:36 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.28 2002/03/13 01:27:00 simonb Exp $
 #
 ###########################################################################
 #
@@ -58,7 +58,7 @@
 #
 # Keyboard devices:
 #	wskbd*	wscons keyboard events
-# 
+#
 # Pseudo terminals:
 #	pty*	set of 62 master and slave pseudo terminals
 #	opty	first 16 ptys, to save inodes on install media
@@ -112,7 +112,7 @@ all)
 	;;
 
 std)
-	rm -f console drum kmem mem reload zero null klog 
+	rm -f console drum kmem mem reload zero null klog
 	mknod console		c 0 0
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
@@ -216,12 +216,12 @@ fd)
 	;;
 
 md*)
-	unit=${i#md}; blk=13; chr=32;
+	unit=${i#md}; blk=13; chr=32
 	rm -f md${unit}? rmd${unit}?
-	mknod md${unit}a  b $blk $(($unit * 8 + 0)) 
-	mknod md${unit}c  b $blk $(($unit * 8 + 2)) 
-#	mknod rmd${unit}a c $chr $(($unit * 8 + 0)) 
-#	mknod rmd${unit}c c $chr $(($unit * 8 + 2)) 
+	mknod md${unit}a  b $blk $(($unit * 8 + 0))
+	mknod md${unit}c  b $blk $(($unit * 8 + 2))
+#	mknod rmd${unit}a c $chr $(($unit * 8 + 0))
+#	mknod rmd${unit}c c $chr $(($unit * 8 + 2))
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
@@ -289,7 +289,7 @@ opty)
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -325,7 +325,7 @@ st*)
 	st*) name=st;	unit=${i#st};	chr=14;	blk=5;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	mknod $name$unit	b $blk $(($unit * 16 + 0))
 	mknod n$name$unit	b $blk $(($unit * 16 + 1))
 	mknod e$name$unit	b $blk $(($unit * 16 + 2))
@@ -335,9 +335,9 @@ st*)
 	mknod er$name$unit	c $chr $(($unit * 16 + 2))
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	;;
 
 ch*|uk*)
@@ -398,7 +398,7 @@ random)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 39 $unit
 	chmod 644 scsibus$unit
