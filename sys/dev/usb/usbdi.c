@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.94 2001/12/30 20:26:59 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.95 2002/02/11 12:42:48 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.94 2001/12/30 20:26:59 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.95 2002/02/11 12:42:48 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1135,7 +1135,7 @@ usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
 		if (tbl->ud_vendor == vendor &&
 		    (tproduct == product || tproduct == USB_PRODUCT_ANY))
 			return (tbl);
-		tbl = (struct usb_devno *)((char *)tbl + sz);
+		tbl = (const struct usb_devno *)((const char *)tbl + sz);
 	}
 	return (NULL);
 }
