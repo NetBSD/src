@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.99 1998/04/15 01:44:23 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.100 1998/05/05 21:41:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -42,11 +42,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmareg.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int isamatch __P((struct device *, void *, void *));
-#else
 int isamatch __P((struct device *, struct cfdata *, void *));
-#endif
 void isaattach __P((struct device *, struct device *, void *));
 int isaprint __P((void *, const char *));
 
@@ -54,29 +50,14 @@ struct cfattach isa_ca = {
 	sizeof(struct isa_softc), isamatch, isaattach
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-void	isascan __P((struct device *, void *));
-#else
 int	isasearch __P((struct device *, struct cfdata *, void *));
-#endif
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-isamatch(parent, match, aux)
-#else
 isamatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 	struct isabus_attach_args *iba = aux;
 
 	if (strcmp(iba->iba_busname, cf->cf_driver->cd_name))
@@ -94,12 +75,6 @@ isaattach(parent, self, aux)
 {
 	struct isa_softc *sc = (struct isa_softc *)self;
 	struct isabus_attach_args *iba = aux;
-
-#ifdef __BROKEN_INDIRECT_CONFIG
-	extern struct cfdriver isa_cd;
-
-	isa_cd.cd_indirect = 1;
-#endif
 
 	isa_attach_hook(parent, self, iba);
 	printf("\n");
@@ -120,11 +95,8 @@ isaattach(parent, self, aux)
 		panic("isaattach: can't map DMA page registers");
 
 	TAILQ_INIT(&sc->sc_subdevs);
-#ifdef __BROKEN_INDIRECT_CONFIG
-	config_scan(isascan, self);
-#else
+
 	config_search(isasearch, self, NULL);
-#endif
 }
 
 int
@@ -151,40 +123,6 @@ isaprint(aux, isa)
 	return (UNCONF);
 }
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-void
-isascan(parent, match)
-	struct device *parent;
-	void *match;
-{
-	struct isa_softc *sc = (struct isa_softc *)parent;
-	struct device *dev = match;
-	struct cfdata *cf = dev->dv_cfdata;
-	struct isa_attach_args ia;
-
-#if defined(__i386__)
-	if (cf->cf_fstate == FSTATE_STAR)
-		panic("clone devices not supported on ISA bus");
-#endif
-
-	ia.ia_iot = sc->sc_iot;
-	ia.ia_memt = sc->sc_memt;
-	ia.ia_dmat = sc->sc_dmat;
-	ia.ia_ic = sc->sc_ic;
-	ia.ia_iobase = cf->cf_iobase;
-	ia.ia_iosize = 0x666;/* cf->cf_iosize; */
-	ia.ia_maddr = cf->cf_maddr;
-	ia.ia_msize = cf->cf_msize;
-	ia.ia_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
-	ia.ia_drq = cf->cf_drq;
-	ia.ia_drq2 = cf->cf_drq2;
-
-	if ((*cf->cf_attach->ca_match)(parent, match, &ia) > 0)
-		config_attach(parent, match, &ia, isaprint);
-	else
-		free(dev, M_DEVBUF);
-}
-#else /* !__BROKEN_INDIRECT_CONFIG */
 int
 isasearch(parent, cf, aux)
 	struct device *parent;
@@ -217,7 +155,6 @@ isasearch(parent, cf, aux)
 
 	return (0);
 }
-#endif /* __BROKEN_INDIRECT_CONFIG */
 
 char *
 isa_intr_typename(type)
