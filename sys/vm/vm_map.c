@@ -228,9 +228,9 @@ vm_map_t vm_map_create(pmap, min, max, pageable)
 
 	if (kmem_map == NULL) {
 		result = kmap_free;
-		kmap_free = (vm_map_t) result->header.next;
 		if (result == NULL)
 			panic("vm_map_create: out of maps");
+		kmap_free = (vm_map_t) result->header.next;
 	} else
 		MALLOC(result, vm_map_t, sizeof(struct vm_map),
 		       M_VMMAP, M_WAITOK);
