@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.40 1995/04/22 19:40:33 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.41 1995/08/13 09:04:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -207,7 +207,7 @@ struct	proc {
 #define	SSTOP	4		/* Process debugging or suspension. */
 #define	SZOMB	5		/* Awaiting collection by parent. */
 
-/* These flags are kept in p_flags. */
+/* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00001	/* Process may hold a POSIX advisory lock. */
 #define	P_CONTROLT	0x00002	/* Has a controlling terminal. */
 #define	P_INMEM		0x00004	/* Loaded into memory. */
@@ -262,6 +262,12 @@ struct	pcred {
 		FREE(s, M_SESSION);					\
 }
 
+#define	PHOLD(p) {							\
+	if ((p)->p_holdcnt++ == 0 && ((p)->p_flag & P_INMEM) == 0)	\
+		swapin(p);						\
+}
+#define	PRELE(p)	(--(p)->p_holdcnt)
+
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
 extern u_long pidhash;
@@ -301,6 +307,7 @@ void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
 void	sleep __P((void *chan, int pri));
+void	swapin __P((struct proc *));
 int	tsleep __P((void *chan, int pri, char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));

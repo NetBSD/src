@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.46 1995/05/05 03:35:39 cgd Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.47 1995/08/13 09:04:47 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -316,6 +316,32 @@ int	swapdebug = 0;
 #endif
 
 /*
+ * Swap in a process's u-area.
+ */
+void
+swapin(p)
+	struct proc *p;
+{
+	vm_offset_t addr;
+	int s;
+
+	addr = (vm_offset_t)p->p_addr;
+	vm_map_pageable(kernel_map, addr, addr + USPACE, FALSE);
+	/*
+	 * Some architectures need to be notified when the
+	 * user area has moved to new physical page(s) (e.g.
+	 * see pmax/pmax/vm_machdep.c).
+	 */
+	cpu_swapin(p);
+	s = splstatclock();
+	if (p->p_stat == SRUN)
+		setrunqueue(p);
+	p->p_flag |= P_INMEM;
+	splx(s);
+	p->p_swtime = 0;
+}
+
+/*
  * Brutally simple:
  *	1. Attempt to swapin every swaped-out, runnable process in
  *	   order of priority.
@@ -329,8 +355,6 @@ scheduler()
 	register int pri;
 	struct proc *pp;
 	int ppri;
-	vm_offset_t addr;
-	vm_size_t size;
 
 loop:
 #ifdef DEBUG
@@ -365,28 +389,14 @@ loop:
 	 * This part is really bogus cuz we could deadlock on memory
 	 * despite our feeble check.
 	 */
-	size = round_page(USPACE);
-	addr = (vm_offset_t) p->p_addr;
-	if (cnt.v_free_count > atop(size)) {
+	if (cnt.v_free_count > atop(USPACE)) {
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPIN)
 			printf("swapin: pid %d(%s)@%x, pri %d free %d\n",
 			       p->p_pid, p->p_comm, p->p_addr,
 			       ppri, cnt.v_free_count);
 #endif
-		vm_map_pageable(kernel_map, addr, addr+size, FALSE);
-		/*
-		 * Some architectures need to be notified when the
-		 * user area has moved to new physical page(s) (e.g.
-		 * see pmax/pmax/vm_machdep.c).
-		 */
-		cpu_swapin(p);
-		(void) splstatclock();
-		if (p->p_stat == SRUN)
-			setrunqueue(p);
-		p->p_flag |= P_INMEM;
-		(void) spl0();
-		p->p_swtime = 0;
+		swapin(p);
 		goto loop;
 	}
 	/*
