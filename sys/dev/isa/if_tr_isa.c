@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.2.2.1 1999/04/29 22:22:55 perry Exp $	*/
 
 #undef TRISADEBUG
 /*
@@ -55,6 +55,7 @@
 #include <dev/ic/tropicreg.h>
 #include <dev/ic/tropicvar.h>
 
+
 int	tr_isa_probe __P((struct device *, struct cfdata *, void *));
 int	trtcm_isa_probe __P((struct device *, struct cfdata *, void *));
 int	tribm_isa_probe __P((struct device *, struct cfdata *, void *));
@@ -72,7 +73,7 @@ void	tr_isa_dumpaip __P((bus_space_tag_t, bus_space_handle_t));
 /*
  * List of manufacturer specific probe routines.  Order is important.
  */
-int	(*tr_isa_probe_list[])(struct device *, struct cfdata*, void *) = {
+int	(*tr_isa_probe_list[])(struct device *, struct cfdata *, void *) = {
 		trtcm_isa_probe,
 		tribm_isa_probe,
 		0
@@ -178,88 +179,36 @@ tr_isa_probe(parent, match, aux)
 	return 1;
 }
 
-/*
- * tr_isa_attach - Make this interface available to the system-network-software.
- */
+int trtcm_setspeed(struct tr_softc *, int);
+
 void
 tr_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void	*aux;
 {
 	struct tr_softc *sc = (void *) self;
-	bus_size_t init_resp;
 	struct isa_attach_args *ia = aux;
-	int i;
 
 	sc->sc_piot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
 	if (tr_isa_map_io(ia, &sc->sc_pioh, &sc->sc_mmioh))
 		panic("tr_isa_attach: IO space vanished\n");
+	if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize, 0,
+	    &sc->sc_sramh))
+		panic("tr_isa_attach: shared ram space vanished\n");
 	/* set ACA offset */
 	sc->sc_aca = TR_ACA_OFFSET;
 	sc->sc_memwinsz = ia->ia_msize;
+	sc->sc_maddr = ia->ia_maddr;
 	/*
 	 * Determine total RAM on adapter and decide how much to use.
 	 * XXX Since we don't use RAM paging, use sc_memwinsz for now.
 	 */
 	sc->sc_memsize = sc->sc_memwinsz;
 	sc->sc_memreserved = 0;
-	/* 
-	 * Reset the card.
-	 */
-	/* latch on an unconditional adapter reset */
-	bus_space_write_1(sc->sc_piot, sc->sc_pioh, TR_RESET, 0);
-	delay(50000); /* delay 50ms */
-	/*
-	 * XXX set paging if we have the right type of card
-	 */
-	/* turn off adapter reset */
-	bus_space_write_1(sc->sc_piot, sc->sc_pioh, TR_RELEASE, 0);
 
-	/* Enable interrupts. */
-
-	ACA_SETB(sc, ACA_ISRP_e, INT_ENABLE);
-
-	/* Wait for an answer from the adapter. */
-
-	for (i = 0; i < 35000; i++) {
-		if (ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT)
-			break;
-		delay(100);
-	}
-
-	if ((ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT) == 0) {
-		printf("\nNo response from adapter after reset\n");
+	if (tr_reset(sc) != 0)
 		return;
-	}
-	ACA_RSTB(sc, ACA_ISRP_o, ~(SRB_RESP_INT));
-
-/*
- * XXX just set it ?
- * XXXchb size mismatch between ia_maddr and MM_INB!
- */
-#if 0
-	if (ia->ia_maddr != MM_INB(sc, TR_ACA_OFFSET))
-		MM_OUTB(sc, TR_ACA_OFFSET, (ia->ia_maddr >> 12));
-#else
-	/* XXXchb must be set after reset */
-	ACA_OUTB(sc, ACA_RRR_e, (ia->ia_maddr >> 12));
-#endif
-	if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize, 0,
-	    &sc->sc_sramh))
-		panic("tr_isa_attach: shared ram space vanished\n");
-	sc->sc_srb = ACA_RDW(sc, ACA_WRBR);
-	init_resp = sc->sc_srb;
-	if (SRB_INB(sc, init_resp, SRB_CMD) != 0x80) {
-		printf("\nInitialization incomplete, status: %02x",
-			SRB_INB(sc, init_resp, SRB_CMD));
-		return;
-	}
-	if (SRB_INB(sc, init_resp, SRB_INIT_BUC) != 0) {
-		printf("\nBring Up Code %02x",
-		    SRB_INB(sc, init_resp, SRB_INIT_BUC));
-		return;
-	}
 
 	if (ia->ia_aux != NULL) {
 		sc->sc_mediastatus = trtcm_isa_mediastatus;
@@ -270,8 +219,9 @@ tr_isa_attach(parent, self, aux)
 		sc->sc_mediachange = NULL;
 	}
 
-	if (tr_config(sc) != 0)
+	if (tr_attach(sc) != 0)
 		return;
+
 /*
  * XXX 3Com 619 can use LEVEL intr
  */

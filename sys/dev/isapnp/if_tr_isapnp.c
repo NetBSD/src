@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isapnp.c,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
+/*	$NetBSD: if_tr_isapnp.c,v 1.2.2.1 1999/04/29 22:23:26 perry Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -114,9 +114,7 @@ tr_isapnp_attach(parent, self, aux)
 {
 	struct tr_softc *sc = (void *)self;
 	struct isapnp_attach_args *ipa = aux;
-	int i;
 	int mmioidx, sramidx;
-	bus_size_t init_resp;
 
 	printf("\n");
 
@@ -151,56 +149,17 @@ tr_isapnp_attach(parent, self, aux)
 	sc->sc_memreserved = 0;
 
 	sc->sc_aca = TR_ACA_OFFSET;
+	sc->sc_maddr = ipa->ipa_mem[sramidx].base;
 	/* 
 	 * Reset the card.
 	 */
-	/* Latch on an unconditional adapter reset. */
-	bus_space_write_1(sc->sc_piot, sc->sc_pioh, TR_RESET, 0);
-	delay(50000); /* delay 50ms */
-	/*
-	 * XXX Set paging if we have the right type of card.
-	 */
-	/* Turn off adapter reset. */
-	bus_space_write_1(sc->sc_piot, sc->sc_pioh, TR_RELEASE, 0);
-
-	/* Enable interrupts. */
-
-	ACA_SETB(sc, ACA_ISRP_e, INT_ENABLE);
-
-	/* Wait for an answer from the adapter. */
-
-	for (i = 0; i < 35000; i++) {
-		if (ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT)
-			break;
-		delay(100);
-	}
-
-	if ((ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT) == 0) {
-		printf("No response from adapter after reset\n");
+	if (tr_reset(sc))
 		return;
-	}
-	ACA_RSTB(sc, ACA_ISRP_o, ~(SRB_RESP_INT));
-
-	/* XXXchb Must be set after reset. */
-	ACA_OUTB(sc, ACA_RRR_e, (ipa->ipa_mem[sramidx].base >> 12));
-
-	sc->sc_srb = ACA_RDW(sc, ACA_WRBR);
-	init_resp = sc->sc_srb;
-	if (SRB_INB(sc, init_resp, SRB_CMD) != 0x80) {
-		printf("\nInitialization incomplete, status: %02x\n",
-			SRB_INB(sc, init_resp, SRB_CMD));
-		return;
-	}
-	if (SRB_INB(sc, init_resp, SRB_INIT_BUC) != 0) {
-		printf("\nBring Up Code %02x\n",
-		    SRB_INB(sc, init_resp, SRB_INIT_BUC));
-		return;
-	}
 
 	sc->sc_mediastatus = NULL;
 	sc->sc_mediachange = NULL;
 
-	if (tr_config(sc))
+	if (tr_attach(sc))
 		return;
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
