@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.18 2003/08/07 16:34:21 agc Exp $	*/
+/*	$NetBSD: ucred.h,v 1.19 2004/05/02 12:36:55 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,8 @@
 #ifndef _SYS_UCRED_H_
 #define	_SYS_UCRED_H_
 
+#include <sys/lock.h>
+
 /*
  * Credentials.
  */
@@ -48,7 +50,9 @@ struct uucred {
 };
 
 struct ucred {
+	struct simplelock cr_lock;		/* mutex for ref count */
 	u_int32_t	cr_ref;			/* reference count */
+#define cr_startcopy	cr_uid			/* for dup & copy */
 	uid_t		cr_uid;			/* effective user id */
 	gid_t		cr_gid;			/* effective group id */
 	u_int32_t	cr_ngroups;		/* number of groups */
@@ -59,7 +63,12 @@ struct ucred {
 #define FSCRED ((struct ucred *)-2)	/* filesystem credential */
 
 #ifdef _KERNEL
-#define	crhold(cr)	(cr)->cr_ref++
+static void __inline__ crhold(struct ucred *cr)
+{
+	simple_lock(&cr->cr_lock);
+	cr->cr_ref++;
+	simple_unlock(&cr->cr_lock);
+}
 
 /* flags that control when do_setres{u,g}id will do anything */
 #define	ID_E_EQ_E	0x001		/* effective equals effective */
