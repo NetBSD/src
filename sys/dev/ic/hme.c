@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.7 2000/02/02 17:09:47 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.8 2000/02/14 17:14:28 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -177,9 +177,13 @@ hme_config(sc)
 	 * eg. use things as `dma_load_mbuf()' on transmit,
 	 *     and a pool of `EXTMEM' mbufs (with buffers DMA-mapped
 	 *     all the time) on the reveiver side.
+	 *
+	 * Note: receive buffers must be 64-byte aligned.
+	 * Also, apparently, the buffers must extend to a DMA burst
+	 * boundary beyond the maximum packet size.
 	 */
 #define _HME_NDESC	32
-#define _HME_BUFSZ	1536
+#define _HME_BUFSZ	1600
 
 	/* Note: the # of descriptors must be a multiple of 16 */
 	sc->sc_rb.rb_ntbuf = _HME_NDESC;
