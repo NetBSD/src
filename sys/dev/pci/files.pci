@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.189 2003/07/06 22:56:09 dyoung Exp $
+#	$NetBSD: files.pci,v 1.190 2003/08/08 20:46:09 jonathan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -540,6 +540,11 @@ file	dev/pci/amdpm.c			amdpm
 device	hifn {}
 attach	hifn at pci
 file	dev/pci/hifn7751.c		hifn
+
+# Bluesteelnet 5501/5601, Broadcom 580x/582x security processor
+device	ubsec: crypto
+attach	ubsec at pci
+file	dev/pci/ubsec.c			ubsec
 
 # Aironet PC4500/PC4800
 attach	an at pci with an_pci
