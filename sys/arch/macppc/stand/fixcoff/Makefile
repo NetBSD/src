@@ -1,5 +1,5 @@
 NOMAN=  1
 HOSTPROG=   fixcoff
-SRC=    fixcoff.c
+SRCS=    fixcoff.c nb_progname.c
 
 .include <bsd.hostprog.mk>
