@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1999/09/14 11:21:27 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1999/09/16 21:23:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -146,21 +146,19 @@ char cpu_model[120];
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
-int	physmem;
-int	dumpmem_low;
-int	dumpmem_high;
-extern int	boothowto;
-int	cpu_class;
-
+int physmem;
+int dumpmem_low;
+int dumpmem_high;
+vaddr_t atdevbase;	/* location of start of iomem in virtual */
 paddr_t msgbuf_paddr;
+struct user *proc0paddr;
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
+extern int boothowto;
 extern paddr_t avail_start, avail_end;
-extern u_long atdevbase;
-extern int etext,_start;
 
 #ifdef	SYSCALL_DEBUG
 #define	SCDEBUG_ALL 0x0004
@@ -186,17 +184,15 @@ struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
 
-void	setup_bootinfo __P((void));
-void	dumpsys __P((void));
-void	identifycpu __P((void));
-void	initSH3 __P((vaddr_t));
-void	InitializeSci  __P((unsigned char));
-void	Send16550 __P((int c));
-void	Init16550 __P((void));
-void	sh3_cache_on __P((void));
-void	LoadAndReset __P((char *osimage));
-void	XLoadAndReset __P((char *osimage));
-void	Sh3Reset __P((void));
+void setup_bootinfo __P((void));
+void dumpsys __P((void));
+void identifycpu __P((void));
+void initSH3 __P((void *));
+void InitializeSci  __P((unsigned char));
+void sh3_cache_on __P((void));
+void LoadAndReset __P((char *));
+void XLoadAndReset __P((char *));
+void Sh3Reset __P((void));
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -206,8 +202,6 @@ void	consinit __P((void));
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
-
-
 
 /*
  * Machine-dependent startup code
@@ -225,7 +219,6 @@ cpu_startup()
 	vsize_t size;
 	struct pcb *pcb;
 	char pbuf[9];
-	/* int x; */
 
 	printf(version);
 
@@ -256,7 +249,6 @@ cpu_startup()
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;
-
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
@@ -264,7 +256,6 @@ cpu_startup()
 
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-
 	for (i = 0; i < nbuf; i++) {
 		vsize_t curbufsize;
 		vaddr_t curbuf;
@@ -280,11 +271,6 @@ cpu_startup()
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			/*
-			 * Attempt to allocate buffers from the first
-			 * 16M of RAM to avoid bouncing file system
-			 * transfers.
-			 */
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
@@ -344,7 +330,7 @@ cpu_startup()
 	scdebug |= SCDEBUG_ALL;
 #endif
 
-#if 0
+#ifdef FORCE_RB_SINGLE
 	boothowto |= RB_SINGLE;
 #endif
 }
@@ -610,7 +596,8 @@ sys___sigreturn14(p, v, retval)
 	return (EJUSTRETURN);
 }
 
-int	waittime = -1;
+int waittime = -1;
+int cold = 1;
 struct pcb dumppcb;
 
 void
@@ -618,7 +605,6 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	extern int cold;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -875,26 +861,133 @@ setregs(p, pack, stack)
 	tf->tf_ssr = PSL_USERSET;
 	tf->tf_r15 = stack;
 #ifdef TODO
-	tf->tf_ebx = (int)PS_STRINGS;
+	tf->tf_r9 = (int)PS_STRINGS;
 #endif
 }
 
 /*
  * Initialize segments and descriptor tables
  */
+#define VBRINIT		((char *)0x8c000000)
+#define Trap100Vec	(VBRINIT + 0x100)
+#define Trap600Vec	(VBRINIT + 0x600)
+#define TLBVECTOR	(VBRINIT + 0x400)
+#define VADDRSTART	VM_MIN_KERNEL_ADDRESS
 
-extern  struct user *proc0paddr;
+extern int nkpde;
+extern char MonTrap100[], MonTrap100_end[];
+extern char MonTrap600[], MonTrap600_end[];
+extern char _start[], etext[], edata[], end[];
+extern char tlbmisshandler_stub[], tlbmisshandler_stub_end[];
 
 void
-initSH3(first_avail)
-	vaddr_t first_avail;
+initSH3(pc)
+	void *pc;	/* XXX return address */
 {
-	unsigned short *p;
-	unsigned short sum;
-	int	size;
-	extern void consinit __P((void));
+	paddr_t avail;
+	pd_entry_t *pagedir;
+	pt_entry_t *pagetab, pte;
+	u_int sp;
+	int x;
+	char *p;
+
+	avail = sh3_round_page(end);
+
+	/*
+	 * clear .bss, .common area, page dir area,
+	 *	process0 stack, page table area
+	 */
+
+	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * 9;
+	bzero(edata, p - edata);
+
+	/*
+	 * install trap handler
+	 */
+	bcopy(MonTrap100, Trap100Vec, MonTrap100_end - MonTrap100);
+	bcopy(MonTrap600, Trap600Vec, MonTrap600_end - MonTrap600);
+	__asm ("ldc %0, vbr" :: "r"(VBRINIT));
+
+/*
+ *                          edata  end
+ *	+-------------+------+-----+----------+-------------+------------+
+ *	| kernel text | data | bss | Page Dir | Proc0 Stack | Page Table |
+ *	+-------------+------+-----+----------+-------------+------------+
+ *                                     NBPG       USPACE        9*NBPG
+ *                                                (= 4*NBPG)
+ *	Build initial page tables
+ */
+	pagedir = (void *)avail;
+	pagetab = (void *)(avail + SYSMAP);
+	nkpde = 8;	/* XXX nkpde = kernel page dir area (32 Mbyte) */
+
+	/*
+	 *	Construct a page table directory
+	 *	In SH3 H/W does not support PTD,
+	 *	these structures are used by S/W.
+	 */
+	pte = (pt_entry_t)pagetab;
+	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
+	pagedir[KERNTEXTOFF >> PDSHIFT] = pte;
+
+	/* make pde for 0xd0000000, 0xd0400000, 0xd0800000,0xd0c00000,
+		0xd1000000, 0xd1400000, 0xd1800000, 0xd1c00000 */
+	pte += NBPG;
+	for (x = 0; x < nkpde; x++) {
+		pagedir[(VADDRSTART >> PDSHIFT) + x] = pte;
+		pte += NBPG;
+	}
+
+	/* Install a PDE recursively mapping page directory as a page table! */
+	pte = (u_int)pagedir;
+	pte |= PG_V | PG_4K | PG_KW | PG_M | PG_N;
+	pagedir[PDSLOT_PTE] = pte;
+
+	/* set PageDirReg */
+	SHREG_TTB = (u_int)pagedir;
+
+	/* Set TLB miss handler */
+	p = tlbmisshandler_stub;
+	x = tlbmisshandler_stub_end - p;
+	bcopy(p, TLBVECTOR, x);
+
+	/*
+	 * Activate MMU
+	 */
+#ifndef ROMIMAGE
+	MMEYE_LED = 1;
+#endif
+
+#define MMUCR_AT	0x0001	/* address traslation enable */
+#define MMUCR_IX	0x0002	/* index mode */
+#define MMUCR_TF	0x0004	/* TLB flush */
+#define MMUCR_SV	0x0100	/* single virtual space mode */
+
+	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV;
+
+	/*
+	 * Now here is virtual address
+	 */
+#ifndef ROMIMAGE
+	MMEYE_LED = 0;
+#endif
+
+	/* Set proc0paddr */
+	proc0paddr = (void *)(avail + NBPG);
+
+	/* Set pcb->PageDirReg of proc0 */
+	proc0paddr->u_pcb.pageDirReg = (int)pagedir;
+
+	/* avail_start is first available physical memory address */
+	avail_start = avail + NBPG + USPACE + NBPG + NBPG * nkpde;
+
+	/* atdevbase is first available logical memory address */
+	atdevbase = VADDRSTART;
 
 	proc0.p_addr = proc0paddr; /* page dir address */
+
+	/* XXX: PMAP_NEW requires valid curpcb.   also init'd in cpu_startup */
+	curpcb = &proc0.p_addr->u_pcb;
 
 	/*
 	 * Initialize the I/O port and I/O mem extent maps.
@@ -911,7 +1004,7 @@ initSH3(first_avail)
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-#if 0	/* XXX (msaitoh) */
+#if 0
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 #endif
 
@@ -920,44 +1013,37 @@ initSH3(first_avail)
 
 	avail_end = sh3_trunc_page(IOM_RAM_END + 1);
 
-#if 0	/* XXX (msaitoh) */
 	printf("initSH3\r\n");
-#endif
 
 	/*
 	 * Calculate check sum
 	 */
-	size = (char *)&etext - (char *)&_start;
-	p = (unsigned short *)&_start;
+    {
+	u_short *p, sum;
+	int size;
+
+	size = etext - _start;
+	p = (u_short *)_start;
 	sum = 0;
 	size >>= 1;
 	while (size--)
 		sum += *p++;
-#if 0
-	printf("Check Sum = 0x%x", sum);
-#endif
-
+	printf("Check Sum = 0x%x\r\n", sum);
+    }
 	/*
 	 * Allocate the physical addresses used by RAM from the iomem
 	 * extent map.  This is done before the addresses are
 	 * page rounded just to make sure we get them all.
 	 */
 	if (extent_alloc_region(iomem_ex, IOM_RAM_BEGIN,
-				IOM_RAM_SIZE,
+				(IOM_RAM_END-IOM_RAM_BEGIN) + 1,
 				EX_NOWAIT)) {
 		/* XXX What should we do? */
-#if 1
 		printf("WARNING: CAN'T ALLOCATE RAM MEMORY FROM IOMEM EXTENT MAP!\n");
-#endif
 	}
 
-#if 0 /* avail_start is set in locore.s to first available page rounded
-	 physical mem */
-	avail_start = IOM_RAM_BEGIN + NBPG;
-#endif
-
 	/* number of pages of physmem addr space */
-	physmem = btoc(IOM_RAM_SIZE);
+	physmem = btoc(IOM_RAM_END - IOM_RAM_BEGIN +1);
 #ifdef	TODO
 	dumpmem = physmem;
 #endif
@@ -976,7 +1062,7 @@ initSH3(first_avail)
 	}
 
 	/* Call pmap initialization to make new kernel address space */
-	pmap_bootstrap((vaddr_t)atdevbase);
+	pmap_bootstrap(atdevbase);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -992,6 +1078,14 @@ initSH3(first_avail)
 	sh3_cache_on();
 #endif
 
+	/* setup proc0 stack */
+	sp = avail + NBPG + USPACE - 16 - sizeof(struct trapframe);
+
+	/*
+	 * XXX We can't return here, because we change stack pointer.
+	 *     So jump to return address directly.
+	 */
+	__asm __volatile ("jmp @%0; mov %1, r15" :: "r"(pc), "r"(sp));
 }
 
 struct queue {
@@ -1262,7 +1356,7 @@ InitializeBsc()
 	 * Area4 = Normal Memory
 	 * Area6 = Normal memory
 	 */
-	SHREG_BSC.BCR1.WORD = BSC_BCR1_VAL;
+	SHREG_BCR1 = BSC_BCR1_VAL;
 
 	/*
 	 * Bus Width
@@ -1271,14 +1365,14 @@ InitializeBsc()
 	 * Area1 = 8bit
 	 * Area2,3: Bus width = 32bit
 	 */
-	 SHREG_BSC.BCR2.WORD = BSC_BCR2_VAL;
+	 SHREG_BCR2 = BSC_BCR2_VAL;
 
 	/*
 	 * Idle cycle number in transition area and read to write
 	 * Area6 = 3, Area5 = 3, Area4 = 3, Area3 = 3, Area2 = 3
 	 * Area1 = 3, Area0 = 3
 	 */
-	SHREG_BSC.WCR1.WORD = BSC_WCR1_VAL;
+	SHREG_WCR1 = BSC_WCR1_VAL;
 
 	/*
 	 * Wait cycle
@@ -1289,10 +1383,10 @@ InitializeBsc()
 	 * Area 2,1 = 3
 	 * Area 0 = 6
 	 */
-	SHREG_BSC.WCR2.WORD = BSC_WCR2_VAL;
+	SHREG_WCR2 = BSC_WCR2_VAL;
 
 #ifdef SH4
-	SHREG_BSC.WCR3.WORD = BSC_WCR3_VAL;
+	SHREG_WCR3 = BSC_WCR3_VAL;
 #endif
 
 	/*
@@ -1302,7 +1396,7 @@ InitializeBsc()
 	 * Disable burst, Bus size=32bit, Column Address=10bit, Refresh ON
 	 * CAS before RAS refresh ON, EDO DRAM
 	 */
-	SHREG_BSC.MCR.WORD = BSC_MCR_VAL;
+	SHREG_MCR = BSC_MCR_VAL;
 
 #ifdef BSC_SDMR_VAL
 #if 1
@@ -1326,7 +1420,7 @@ InitializeBsc()
 	 * OE/WE negate-address delay 3.5 cycle
 	 */
 #ifdef BSC_PCR_VAL
-	SHREG_BSC.PCR.WORD = 0x00ff;
+	SHREG_PCR = 0x00ff;
 #endif
 
 	/*
@@ -1336,21 +1430,21 @@ InitializeBsc()
 	 * In following statement, the reason why high byte = 0xa5(a4 in RFCR)
 	 * is the rule of SH3 in writing these register.
 	 */
-	SHREG_BSC.RTCSR.WORD = BSC_RTCSR_VAL;
+	SHREG_RTCSR = BSC_RTCSR_VAL;
 
 
 	/*
 	 * Refresh Timer Counter
 	 * Initialize to 0
 	 */
-	SHREG_BSC.RTCNT = BSC_RTCNT_VAL;
+	SHREG_RTCNT = BSC_RTCNT_VAL;
 
 	/* set Refresh Time Constant Register */
-	SHREG_BSC.RTCOR = BSC_RTCOR_VAL;
+	SHREG_RTCOR = BSC_RTCOR_VAL;
 
 	/* init Refresh Count Register */
 #ifdef BSC_RFCR_VAL
-	SHREG_BSC.RFCR = BSC_RFCR_VAL;
+	SHREG_RFCR = BSC_RFCR_VAL;
 #endif
 
 	/* Set Clock mode (make internal clock double speed) */
@@ -1376,7 +1470,8 @@ sh3_cache_on(void)
 
 #include <machine/mmeye.h>
 void
-LoadAndReset(char *osimage)
+LoadAndReset(osimage)
+	char *osimage;
 {
 	void *buf_addr;
 	u_long size;
@@ -1389,17 +1484,17 @@ LoadAndReset(char *osimage)
 				       available memory */
 
 
-	printf("LoadAndReset:copy start\n");
+	printf("LoadAndReset: copy start\n");
 	buf_addr = (void *)OSIMAGE_BUF_ADDR;
 
 	size = *(u_long *)osimage;
 	src = (u_long *)osimage;
 	dest = buf_addr;
 
-	size = (size + sizeof(u_long)*2 + 3) >> 2 ;
+	size = (size + sizeof(u_long) * 2 + 3) >> 2;
 	size2 = size;
 
-	while (size--){
+	while (size--) {
 		csum += *src;
 		*dest++ = *src++;
 	}
@@ -1408,7 +1503,7 @@ LoadAndReset(char *osimage)
 	while (size2--)
 		csum2 += *dest++;
 
-	printf("LoadAndReset:copy end[%lx,%lx]\n", csum, csum2);
+	printf("LoadAndReset: copy end[%lx,%lx]\n", csum, csum2);
 	printf("start XLoadAndReset\n");
 
 	/* mask all externel interrupt (XXX) */

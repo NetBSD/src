@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 1999/09/14 11:21:27 tsubai Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 1999/09/16 21:23:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -49,8 +49,13 @@
 #include <machine/cputypes.h>
 #include <machine/param.h>
 #include <machine/pte.h>
-#include <machine/segments.h>
 #include <machine/trap.h>
+
+#define INIT_STACK	0x8c3ff000
+#define SHREG_EXPEVT	0xffffffd4
+#define SHREG_INTEVT	0xffffffd8
+#define SHREG_MMUCR	0xffffffe0
+#define SHREG_TTB	0xfffffff8
 
 /*
  * These are used on interrupt or trap entry or exit.
@@ -195,7 +200,6 @@
 	mov.l	@r15+, r1	; \
 	mov.l	@r15+, r0
 
-
 #define ECLI	\
 	mov.l	r0, @-r15	; \
 	mov.l	r1, @-r15	; \
@@ -243,47 +247,19 @@
  * Initialization
  */
 	.data
-
-	.globl	_cpu,_cpu_id,_cpu_vendor,_cpuid_level,_cpu_feature
-	.globl	_cold,_esym,_boothowto,_bootinfo,_atdevbase
-	.globl	_bootdev
-	.globl	_proc0paddr,_curpcb,_PTDpaddr
-/* 	.globl	_PageDirReg */
-	.globl	_SPTmap, _SAPTmap
-_cpu:		.long	0 /* are we 386, 386sx, or 486, or Pentium, or.. */
-_cpu_id:	.long	0 /* saved from `cpuid' instruction */
-_cpu_feature:	.long	0 /* feature flags from 'cpuid' instruction */
-_cpuid_level:	.long	-1 /* max. level accepted by 'cpuid' instruction */
-_cpu_vendor:	.space	16 /* vendor string returned by `cpuid' instruction */
-_cold:		.long	1 /* cold till we are not */
-_esym:		.long	0 /* ptr to end of syms */
-_atdevbase:	.long	0 /* location of start of iomem in virtual */
-_proc0paddr:	.long	0
-_PTDpaddr:	.long	0 /* paddr of PTD, for libkvm */
-/* _PageDirReg:	.long	0 */
+	.globl	_C_LABEL(curpcb), _C_LABEL(PTDpaddr)
+_C_LABEL(PTDpaddr):
+		.long	0	/* paddr of PTD, for libkvm */
 KernelStack:	.long	0
-_SPTmap:	.long	0
-_SAPTmap:	.long	0
-#if 0
-_PTmap:		.long	0
-_PTD:		.long	0
-_PTDpde:	.long	0
-_Sysmap:	.long	0
-#endif
 KernelSp:	.long	0	/* Cache for kernel stack pointer of
-				current task */
-
-
-
-#define	RELOC(x)	((x) - KERNBASE)
+				   current task */
 
 	.text
-	.globl	_kernel_text
-	.set	_kernel_text,KERNTEXTOFF
+	.globl	_C_LABEL(kernel_text)
+	.globl	start, _C_LABEL(_start)
+	.set	_C_LABEL(kernel_text), KERNTEXTOFF
+	.set	_C_LABEL(_start), start
 
-	.globl	__start
-__start:
-	.globl	start
 start:
 	/* Set SP to initial position */
 	mov.l	XLtmpstk, r15
@@ -293,7 +269,7 @@ start:
 	ldc	r0, sr
 
 	xor	r0, r0
-	mov.l	XXL_MMUCR, r2
+	mov	#SHREG_MMUCR, r2
 	mov.l	r0, @r2		/* MMU OFF */
 
 	bra	start1
@@ -308,13 +284,10 @@ start:
 	ldc	r9, sr		 /* Change Register Bank to 0 */
 #endif
 	.align	2
-SR_init:	.long 0x500000F0
-mmEye_LED:	.long LED_ADDR
-XXL_MMUCR:	.long 0xFFFFFFE0
+SR_init:	.long	0x500000F0
 start1:
 
 #ifdef ROMIMAGE
-
 	/* Initialize BUS State Control Regs. */
 	mov.l	_ROM_START, r3
 	mov.l	_RAM_START, r4
@@ -326,8 +299,8 @@ start1:
 	nop
 
 	/* Move kernel image from ROM area to RAM area */
-	mov.l ___end, r0
-	mov.l ___start, r1
+	mov.l	___end, r0
+	mov.l	___start, r1
 	mov.l	_KERNBASE, r2
 	sub	r2, r0
 	sub	r2, r1
@@ -355,7 +328,7 @@ start1:
 
 	.align	2
 LXstart_in_RAM:
-	.long start_in_RAM
+	.long	start_in_RAM
 #else
 	/* Set Bus State Controler */
 	mov.l	XLInitializeBsc, r0
@@ -364,440 +337,35 @@ LXstart_in_RAM:
 #endif
 
 start_in_RAM:
-	/* Set Trap Vector */
-	mov.l	XLMonTrap100, r0
-	mov.l	XLMonTrap100_end, r1
-	mov.l	XLTrap100Vec, r2
-	sub	r0, r1		/* r1 = bytes to be copied */
-1:	mov.b	@r0+, r3
-	mov.b	r3, @r2
-	add	#1, r2
-	dt	r1
-	bf	1b
-
-	mov.l	XLMonTrap600, r0
-	mov.l	XLMonTrap600_end, r1
-	mov.l	XLTrap600Vec, r2
-	sub	r0, r1		/* r1 = bytes to be copied */
-1:	mov.b	@r0+, r3
-	mov.b	r3, @r2
-	add	#1, r2
-	dt	r1
-	bf	1b
-
-	mov.l	XLVBRINIT, r0
-	ldc	r0, vbr
-
-	/* clear .bss, .common area, page dir area ,
-		process0 stack, page table area */
-	mov.l	XL_bss_start, r0
-	mov.l	___end, r1
-	mov.l	XLTABLESIZE, r2
-	add	r2, r1
-	mov.l	XL_NBPG, r2
-	add	r2, r1
-	shll2	r2
-	shll	r2
-	add	r2, r1	/* for page table area of 0xd0000000..0xd1c00000 */
-	sub	r0, r1
-	shlr	r1
-	shlr	r1	/* r1 = long word count to be cleared */
-	add	#1, r1
-1:	xor	r2, r2
-	mov.l	r2, @r0
-	add	#4, r0
-	dt	r1
-	bf	1b
+	mova	1f, r0
+	mov	r0, r4
+	mov.l	XLinitSH3, r0
+	jsr	@r0		/* call initSH3() */
 	nop
-/*
- * fillkpt
- *	r0 = pte ( physical Address | Control flags )
- *	r1 = page table physical address
- *	r2 = number of pages to map
- */
-#define fillkpt \
-	mov.l	r3, @-r15	; \
-	mov.l	XL_NBPG, r3	; \
-1:	mov.l	r0, @r1		; \
-	add	r3, r0		;  /* increment physical address */ \
-	add	#4, r1		;  /* next pte */ \
-	dt	r2		; \
-	bf	1b		; \
-	nop			; \
-	mov.l	@r15+, r3
+1:
 
-/*
-        +-------------+------+-----+----------+-------------+------------+
-	| kernel text | data | bss | Page Dir | Proc0 Stack | Page Table |
-        +-------------+------+-----+----------+-------------+------------+
-
-		Build initial page tables
-*/
-#define	TABLESIZE	((1+UPAGES) * NBPG) /* + nkpde * NBPG */
-	/* calc page table address */
-	mov.l	___end,	r0
-	mov.l	XL_PGOFSET, r3
-	add	r3, r0
-	mov	r3, r4
-	not	r4, r4
-	and	r4, r0		/* round to a page */
-	mov	r0, r11		/* r11 holds Page Dir Area Address */
-	mov.l	_SYSMAP, r5
-	add	r5, r0
-	mov	r0, r1		/* r1 = page table address */
-	mov	r1, r10		/* save to r10 */
-
-#if 0
-	/* calc page size of Text area */
-	mov.l	___etext, r0
-	add	r3, r0
-	and	r4, r0
-	mov	r0, r7		/* save page rounded _etext address to r7 */
-	mov	#PGSHIFT, r5
-	neg	r5, r5
-	shld	r5, r0
-	mov	r0, r2		/* r2 = (page no of _etext) + 1 */
-	mov.l	XL_KERNTEXTOFF, r0
-	and	r4, r0
-	shld	r5, r0		/* r0 = page no of start */
-	sub	r0, r2		/* r2 = page count of text area */
-
-	/* prepare pte */
-	mov.l	XL_KERNTEXTOFF, r0
-	mov.l	XL_PG_V, r6
-	or	r6, r0
-	mov.l	XL_PG_KR, r6
-	or	r6, r0
-	mov.l	XL_PG_4K, r6
-	or	r6, r0
-
-	fillkpt
-	mov.l	r0, @-r15	/* save pte address */
-
-	/* map the data, BSS, and bootstrap tables read-write */
-
-	/* calc page size */
-	mov.l	___end, r0
-	add	r3, r0
-	and	r4, r0
-	sub	r7, r0
-	mov	#PGSHIFT, r5
-	neg	r5, r5
-	shld	r5, r0
-	mov.l	XLTABLESIZE, r6
-	shld	r5, r6
-	add	r6, r0
-	mov	r0, r2		/* r2 = page size of text */
-
-	mov.l	@r15+, r0	/* restore pte address */
-	mov.l	XL_PG_KW, r3
-	or	r3, r0
-
-	fillkpt			/* make pte of data, BSS, bootstrap tables */
-#endif
-	/*
-	 *	Construct a page table directory
-	 *	In SH3 H/W does not support PTD,
-	 *	these structures are used by S/W.
-	 */
-	/* assume r10 = page table area address, r11 = page dir area address */
-
-	mov.l	XL_KERNTEXTOFF, r1
-	mov	#PDSHIFT, r0
-	neg	r0, r0
-	shld	r0, r1
-	shll2	r1
-	add	r11, r1		/* page dir entry address */
-	mov	#1, r2		/* page dir entry count */
-	mov	r10, r0		/* page dir entry value */
-	mov.l	XL_PG_KW, r3
-	or	r3, r0
-	mov.l	XL_PG_V, r3
-	or	r3, r0
-	mov.l	XL_PG_4K, r3
-	or	r3, r0
-	mov.l	XL_PG_M, r3
-	or	r3, r0
-	mov.l	XL_PG_N, r3
-	or	r3, r0
-
-	fillkpt			/* make pde */
-
-	/* set PDE for after 0xd0000000 */
-	mov.l	XLVADDRSTART, r1
-	mov	#PDSHIFT, r0
-	neg	r0, r0
-	shld	r0, r1
-	shll2	r1
-	add	r11, r1
-	mov.l	XL_NBPG, r4
-	mov	r10, r0
-	add	r4, r0
-	mov	r0, r13		/* r13 = page table area of 0xd0000000 */
-	mov.l	XL_PG_KW, r3
-	or	r3, r0
-	mov.l	XL_PG_V, r3
-	or	r3, r0
-	mov.l	XL_PG_4K, r3
-	or	r3, r0
-	mov.l	XL_PG_M, r3
-	or	r3, r0
-	mov.l	XL_PG_N, r3
-	or	r3, r0
-	mov	#8, r2
-
-	fillkpt	/* make pde for 0xd0000000,0xd0400000,0xd0800000,0xd0c00000
-		 0xd1000000,0xd1400000,0xd1800000,0xd1c00000 */
-
-	/* Install a PDE recursively mapping page directory as a page table! */
-	mov	r11, r0
-	mov.l	XL_PTDPTDI, r2
-	shll2	r2
-	add	r2, r0
-	mov	r11, r1
-	mov.l	XL_PG_V, r2
-	or	r2, r1
-	mov.l	XL_PG_4K, r2
-	or	r2, r1
-	mov.l	XL_PG_KW, r2
-	or	r2, r1
-	mov.l	XL_PG_M, r2
-	or	r2, r1
-	mov.l	XL_PG_N, r2
-	or	r2, r1
-	mov.l	r1, @r0
-
-	/* set PageDirReg */
-	mov.l	XLSHREG_TTB, r0
-	mov.l	r11, @r0
-
-#if 0
-	mov.l	XLVADDRSTART, r0
-	mov	#PGSHIFT, r1
-	neg	r1, r1
-	shld	r1, r0
-	shll2	r0
-	mov	r13, r1		/* r13 = page table area of 0xd0000000 */
-	sub	r0, r1
-	mov.l	XL_PTmap, r2
-	mov.l	r1, @r2
-
-	mov.l	XL_PTD, r0
-	mov.l	r11, @r0
-
-	mov	r11, r0		/* r11 = page dir area address */
-	mov	#PDSHIFT, r1
-	neg	r1, r1
-	shld	r1, r0
-	shll2	r0		/* r0 = pde offset (bytes) */
-	mov	r11, r1
-	add	r0, r1		/* r1 = pde address */
-	mov.l	XL_PTDpde, r2
-	mov.l	r1, @r2
-
-	mov.l	XL_Sysmap, r2
-	mov.l	r10, @r2
-
-	mov.l	XL_SPTmap, r0
-	mov.l	r10, @r0	/* save page table area address to SPTmap */
-#endif
-
-	/* Set TLB miss handler */
-	mov.l	XLtlbmisshandler_stub, r0
-	mov.l	XLtlbmisshandler_stub_end, r1
-	mov.l	XLTLBVECTOR, r2
-	sub	r0, r1		/* r1 = copy byte size */
-1:	mov.b	@r0+, r3
-	mov.b	r3, @r2
-	add	#1, r2
-	dt	r1
-	bf	1b
-	nop
-
-	/*
-	 * Activate MMU
-	 */
-	mov	#1, r0
-	swap.b	r0, r0		/* single virtual address mode */
-	mov	#0x5, r1	/* flush tlb | MMU On */
-	or	r1, r0
-	mov.l	_MMUCR, r2
-	mov.l	r0, @r2		/* MMU ON */
-
-	/*
-	 * Now here is virtual address
-	 */
-
-	/* setup proc0 stack */
-	mov.l	XLUSPACE, r0
-	mov.l	XL_FRAMESIZE, r1
-	sub	r1, r0
-	add	r11, r0
-	mov.l	XL_NBPG, r1
-	add	r1, r0
-	mov	r0, r15
 #if 1
 	mov.l	XLKernelStack, r3
 	mov.l	r15, @r3
 #endif
 
-	/* Set proc0paddr */
-	mov	r11, r2
-	mov.l	XL_NBPG, r1
-	add	r1, r2
-	mov.l	XL_proc0paddr, r3
-	mov.l	r2, @r3
-
-	/* Set pcb->PageDirReg of proc0 */
-	add	#PCB_PAGEDIRREG, r2
-	mov.l	r11, @r2
-
-	/* find empty area */
-	mov	r11, r2		/* r2 = _end */
-	mov.l	XL_NBPG, r1
-	add	r1, r2		/* skip page dir area */
-	mov.l	XLUSPACE, r0
-	add	r0, r2		/* skip proc0 uarea */
-#if 0
-	mov	r2, r3
-	add	#-64, r3
-	mov	r3, r15		/* Set kernel stack */
-	mov.l	XLKernelStack, r3
-	mov.l	r15, @r3
-#endif
-
-	add	r1, r2		/* skip kernel page table area */
-	shll2	r1
-	shll	r1
-	add	r1, r2	/* skip page table area of 0xd0000000..0xd1c00000 */
-
-	mov.l	XL_NKPDE, r0	/* nkpde = kernel page dir area(32 Mbyte) */
-	mov.l	XL_nkpde, r1
-	mov.l	r0, @r1
-
-	/* Set atdevbase */
-	/* atdevbase is first available logical memory address */
-	mov.l	XLatdevbase, r0
-	mov.l	XLVADDRSTART, r1
-	mov.l	r1, @r0
-
-	/* avail_start is first available physical memory address */
-	mov.l	XLavail_start, r0
-	mov.l	r2, @r0
-
-	mov	r2, r4		/* set empty area address to first param(R4) */
-	mov.l	XLinitSH3, r0
-	jsr	@r0		/* call initSH3() */
-	nop
-
 	mov.l	XLmain, r0
 	jsr	@r0		/* call main() */
 	nop
 
-#define INIT_STACK	0x8c3ff000
-#define SHREG_TRA	0xFFFFFFD0
-#define SHREG_EXPEVT	0xFFFFFFD4
-#define SHREG_INTEVT	0xFFFFFFD8
-#define	VBRINIT		0x8c000000
-#define	Trap100Vec	VBRINIT+0x100
-#define	Trap600Vec	VBRINIT+0x600
-#define	TLBVECTOR	VBRINIT+0x400
-#define	VADDRSTART	0xd0000000
-
 		.align	2
 
-XLInitializeBsc:
-		.long	_InitializeBsc
-XLtlbmisshandler_stub:
-		.long	tlbmisshandler_stub
-XLtlbmisshandler_stub_end:
-		.long	tlbmisshandler_stub_end
-XLTLBVECTOR:
-		.long	TLBVECTOR
-XLVBRINIT:
-		.long	VBRINIT
-XLMonTrap100:
-		.long	MonTrap100
-XLMonTrap600:
-		.long	MonTrap600
-XLMonTrap100_end:
-		.long	MonTrap100_end
-XLMonTrap600_end:
-		.long	MonTrap600_end
-XLTrap100Vec:
-		.long	Trap100Vec
-XLTrap600Vec:
-		.long	Trap600Vec
-XL_bss_start:
-		.long	_edata
-___start:
-		.long	start
-___end:
-		.long	_end
-XLtmpstk:
-		.long	INIT_STACK
-_KERNBASE:
-		.long	KERNBASE
-_RAM_START:
-		.long	IOM_RAM_BEGIN
-_ROM_START:
-		.long	IOM_ROM_BEGIN
-XL_PGOFSET:
-		.long	PGOFSET
-_SYSMAP:
-		.long	SYSMAP
-___etext:
-		.long	_etext
-XL_KERNTEXTOFF:
-		.long	KERNTEXTOFF
-XL_PG_V:
-		.long	PG_V
-XL_PG_KR:
-		.long	PG_KR
-XL_PG_4K:
-		.long	PG_4K
-XL_PG_M:
-		.long	PG_M
-XL_PG_N:
-		.long	PG_N
-XL_NBPG:
-		.long	NBPG
-XL_PG_KW:
-		.long	PG_KW
-XL_PTDPTDI:
-		.long	PTDPTDI
-XLSHREG_TTB:
-		.long	0xfffffff8
-_MMUCR:
-		.long	0xffffffe0	/* MMUCR register address */
-XLUSPACE:
-		.long	USPACE
-XL_proc0paddr:
-		.long	_proc0paddr
-XLKernelStack:
-		.long	KernelStack
-XLatdevbase:
-		.long	_atdevbase
-XLVADDRSTART:
-		.long	VADDRSTART
-XLavail_start:
-		.long	_avail_start
-XLinitSH3:
-		.long	_initSH3
-XLmain:
-		.long	_main
-XLTABLESIZE:
-		.long	TABLESIZE
-XL_SPTmap:
-		.long	_SPTmap
-XL_PTmap:	.long	_PTmap
-XL_PTD:		.long	_PTD
-XL_PTDpde:	.long	_PTDpde
-XL_Sysmap:	.long	_Sysmap
-XL_nkpde:	.long	_nkpde
-XL_NKPDE:	.long	8
-XL_FRAMESIZE:	.long	FRAMESIZE
-XL_MMEYE_LED:	.long	LED_ADDR
+XLInitializeBsc:.long	_InitializeBsc
+___start:	.long	start
+___etext:	.long	_etext
+___end:		.long	_end
+XLtmpstk:	.long	INIT_STACK
+_KERNBASE:	.long	KERNBASE
+_RAM_START:	.long	IOM_RAM_BEGIN
+_ROM_START:	.long	IOM_ROM_BEGIN
+XLKernelStack:	.long	KernelStack
+XLinitSH3:	.long	_initSH3
+XLmain:		.long	_main
 
 NENTRY(proc_trampoline)
 	mov	r11, r4
@@ -820,12 +388,12 @@ NENTRY(sigcode)
 	jsr	@r0
 	nop
 
-1:	mov	r15, r0
+	mov	r15, r0
 	add	#SIGF_SC, r0
 	mov.l	r0, @-r15		/* junk to fake return address */
 	mov	r0, r4
 	mov.l	XLSYS___sigreturn14, r0
-	trapa	#0x80		/* enter kernel with args on stack */
+	trapa	#0x80			/* enter kernel with args on stack */
 	mov.l	XLSYS_exit, r0
 	trapa	#0x80			/* exit if sigreturn fails */
 
@@ -1081,7 +649,7 @@ switch_search:
 	 */
 
 	/* Wait for new process. */
-	CLI				# splhigh doesn't do a cli
+	CLI				/* splhigh doesn't do a cli */
 	mov.l	XXXLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
@@ -1358,11 +926,11 @@ switch_exited:
 	nop
 
 	mov.l	@r0, r0
-	mov.l	XLLSHREG_TTB, r2
+	mov	#SHREG_TTB, r2
 	mov.l	r0, @r2
 
 	/* flush TLB */
-	mov.l	XL_MMUCR, r0
+	mov	#SHREG_MMUCR, r0
 	mov	#4, r1
 	mov.l	@r0, r2
 	or	r1, r2
@@ -1441,11 +1009,11 @@ ENTRY(switch_exit)
 	mov	r10, r0
 	add	#PCB_PAGEDIRREG, r0
 	mov.l	@r0, r2
-	mov.l	XLLSHREG_TTB, r1
+	mov	#SHREG_TTB, r1
 	mov.l	r2, @r1
 
 	/* flush TLB */
-	mov.l	XL_MMUCR, r0
+	mov	#SHREG_MMUCR, r0
 	mov	#4, r1
 	mov.l	@r0, r2
 	or	r1, r2
@@ -1480,6 +1048,9 @@ ENTRY(switch_exit)
 XLexit2:
 	.long	_exit2
 
+XXLP_ADDR:
+	.long	P_ADDR
+
 /*
  * savectx(struct pcb *pcb);
  * Update pcb, saving current processor state.
@@ -1496,9 +1067,6 @@ ENTRY(savectx)
 
 	rts
 	nop
-
-	.align	2
-XXLP_ADDR:	.long	P_ADDR
 
 /*****************************************************************************/
 /*
@@ -1532,16 +1100,15 @@ NENTRY(exphandler)
 100:
 #endif
 
-	mov.l	XL_EXPEVTREG, r0
+	mov	#SHREG_EXPEVT, r0
 	mov.l	@r0, r0
-	mov.l	XL_TLBINVALID, r1
-	cmp/eq	r0, r1
+	cmp/eq	#0x40, r0	/* T_TLBINVALIDR */
 	bf	1f
 3:
 	mov.l	XL_tlbmisshandler, r0
 	jmp	@r0
 1:
-	mov.l	XL_TLBINVALIDW, r1
+	cmp/eq	#0x60, r0	/* T_TLBINVALIDW */
 	cmp/eq	r0, r1
 	bt	3b
 
@@ -1550,7 +1117,7 @@ NENTRY(exphandler)
 	bt	3b
 
 	INTRENTRY
-	mov.l	XL_EXPEVTREG, r0
+	mov	#SHREG_EXPEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 	ECLI
@@ -1596,22 +1163,19 @@ NENTRY(exphandler)
 1:	INTRFASTEXIT
 
 	.align	2
-XL_TLBINVALID:
-	.long	0x00000040
-XL_TLBINVALIDW:
-	.long	0x00000060
 XL_TLBPROTWR:
 	.long	0x000000c0
 
-	.align	2
-tlbmisshandler_stub:
+	.globl	_tlbmisshandler_stub, _tlbmisshandler_stub_end
+
+_tlbmisshandler_stub:
 	mov.l	XL_tlbmisshandler, r0
 	jmp	@r0
 	nop
 	.align	2
 XL_tlbmisshandler:
-	.long _tlbmisshandler
-tlbmisshandler_stub_end:
+	.long	_tlbmisshandler
+_tlbmisshandler_stub_end:
 
 	.align	2
 NENTRY(tlbmisshandler)
@@ -1628,7 +1192,7 @@ NENTRY(tlbmisshandler)
 	jmp	@r0
 	nop
 	.align	2
-XL_splimit3:	.long	_end
+XL_splimit3:		.long	_end
 XL_splimit_low3:	.long	0x80000000
 100:
 #endif
@@ -1645,7 +1209,8 @@ XL_splimit_low3:	.long	0x80000000
 	INTRFASTEXIT
 
 	.align	2
-MonTrap100:
+	.globl	_MonTrap100, _MonTrap100_end
+_MonTrap100:
 	mov.l	1f, r0
 	jmp	@r0
 	nop
@@ -1653,10 +1218,11 @@ MonTrap100:
 	.align	2
 1:
 	.long	_exphandler
-MonTrap100_end:
+_MonTrap100_end:
 
 	.align	2
-MonTrap600:
+	.globl	_MonTrap600, _MonTrap600_end
+_MonTrap600:
 	mov.l	1f, r0
 	jmp	@r0
 	nop
@@ -1664,39 +1230,23 @@ MonTrap600:
 	.align	2
 1:
 	.long	_ihandler
-MonTrap600_end:
+_MonTrap600_end:
 
-/***********************************************************************/
-/*	Immediate Data						*/
-/***********************************************************************/
+/************************************************************************/
+/*	Immediate Data							*/
+/************************************************************************/
+
 		.align	2
 
-XLMonTrap100Vec:
-		.long	0xa0000100
-XLMonTrap600Vec:
-		.long	0xa0000600
-
-XLLSHREG_TTB:	.long	0xfffffff8
-XL_MMUCR:	.long	0xffffffe0	/* MMUCR register address */
 XL_curpcb:	.long	_curpcb
-XLLUSPACE:	.long	USPACE
-XLkernel_map:	.long	_kernel_map
-XLLKernelStack:	.long	KernelStack
-_KERNEL_START:	.long	IOM_RAM_BEGIN+0x10000
-_USPACE:	.long	USPACE
-_NBPG:		.long	NBPG
 XLcurproc:	.long	_curproc
 XLcpl:		.long	_cpl
 XLXspllower:	.long	_Xspllower
 XLproc0:	.long	_proc0
 
-XL_EXPEVTREG:	.long	SHREG_EXPEVT
-XL_TRAREG:	.long	SHREG_TRA
 XL_trap:	.long	_trap
 XL_astpending:	.long	_astpending
 XLT_ASTFLT:	.long	T_ASTFLT
-XL_tlbmisshandler_stub:
-		.long	_tlbmisshandler
 XL_tlb_handler:	.long	_tlb_handler
 XLexphandler:	.long	_exphandler
 
@@ -1719,7 +1269,7 @@ ENTRY(ConvVtoP)
 	neg	r1, r1
 	shld	r1, r0
 	shll2	r0
-	mov.l	XXXLSHREG_TTB, r1
+	mov	#SHREG_TTB, r1
 	mov.l	@r1, r1
 	add	r0, r1
 	mov.l	@r1, r2		/* r2 = pde */
@@ -1749,7 +1299,6 @@ ENTRY(ConvVtoP)
 	nop
 
 	.align	2
-XXXLSHREG_TTB:	.long	0xfffffff8
 XL_PT_MASK:	.long	PT_MASK
 XL_PG_FRAME:	.long	PG_FRAME
 XL_CSMASK:	.long	0xc0000000
@@ -1781,7 +1330,7 @@ XL_splimit_low2:	.long	0x80000000
 100:
 #endif
 7:
-	mov.l	XL_INTEVTREG, r0
+	mov	#SHREG_INTEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 6:
@@ -1888,8 +1437,7 @@ ENTRY(cpu_printR15)
 	rts
 	nop
 
-XL_fmt:
-	.asciz	"sp=0x%x\n"
+XL_fmt:	.asciz	"sp=0x%x\n"
 	.align	2
 XL_printf:
 	.long	_printf
@@ -1897,10 +1445,8 @@ XL_printf:
 load_and_reset:
 	mov.l	XL_start_address, r0
 	mov	r0, r8
-	mov.l	@r4, r1		/* r1 = osimage size */
-	add	#4, r4
-	mov.l	@r4, r2		/* r2 = check sum */
-	add	#4, r4
+	mov.l	@r4+, r1	/* r1 = osimage size */
+	mov.l	@r4+, r2	/* r2 = check sum */
 	shlr2	r1		/* r1 = osimage size in dword */
 1:
 	mov.l	@r4+, r3
@@ -1936,11 +1482,11 @@ ENTRY(XLoadAndReset)
 
 	.align	2
 XL_load_trampoline_addr:
-	.long 0x8c008000
+	.long	0x8c008000
 XL_load_and_reset:
-	.long load_and_reset
+	.long	load_and_reset
 XL_load_and_reset_end:
-	.long load_and_reset_end
+	.long	load_and_reset_end
 
 ENTRY(Sh3Reset)
 	mov.l	XL_reset_vector, r8
@@ -1949,7 +1495,7 @@ ENTRY(Sh3Reset)
 
 	.align	2
 XL_reset_vector:
-	.long 0xa0000000
+	.long	0xa0000000
 
 	.globl	_intrcnt, _eintrcnt, _intrnames, _eintrnames
 _intrcnt:
