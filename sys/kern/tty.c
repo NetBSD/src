@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.145 2003/01/18 10:06:36 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.146 2003/01/19 23:07:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.145 2003/01/18 10:06:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.146 2003/01/19 23:07:32 simonb Exp $");
 
 #include "opt_uconsole.h"
 
@@ -114,7 +114,7 @@ const char	ttyout[] = "ttyout";
 #define	TB	TAB
 #define	VT	VTAB
 
-char const char_type[] = {
+unsigned char const char_type[] = {
 	E|CC, O|CC, O|CC, E|CC, O|CC, E|CC, E|CC, O|CC,	/* nul - bel */
 	O|BS, E|TB, E|NL, O|CC, E|VT, O|CR, O|CC, E|CC,	/* bs - si */
 	O|CC, E|CC, E|CC, O|CC, E|CC, O|CC, O|CC, E|CC,	/* dle - etb */
