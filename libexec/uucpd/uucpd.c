@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.20 2003/03/03 19:05:09 dsl Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.21 2003/04/29 17:22:01 agc Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.20 2003/03/03 19:05:09 dsl Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.21 2003/04/29 17:22:01 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: uucpd.c,v 1.20 2003/03/03 19:05:09 dsl Exp $");
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/param.h>
 #include <sys/syslog.h>
 
 #include <netinet/in.h>
