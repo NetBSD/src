@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.52 2004/03/22 19:23:08 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.53 2004/05/22 23:24:23 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.52 2004/03/22 19:23:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.53 2004/05/22 23:24:23 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,7 +496,8 @@ ext2fs_chown(vp, uid, gid, cred, p)
 	 * the caller must be superuser or the call fails.
 	 */
 	if ((cred->cr_uid != ip->i_e2fs_uid || uid != ip->i_e2fs_uid ||
-		(gid != ip->i_e2fs_gid && !groupmember((gid_t)gid, cred))) &&
+		(gid != ip->i_e2fs_gid &&
+		 !(cred->cr_gid == gid || groupmember((gid_t)gid, cred)))) &&
 		(error = suser(cred, &p->p_acflag)))
 		return (error);
 	ogid = ip->i_e2fs_gid;
