@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/11/14 22:13:40 tv Exp $
+#	$NetBSD: Makefile,v 1.5 2001/11/19 04:47:43 perry Exp $
 
 MODULE=		groff
 
@@ -21,17 +21,17 @@ afterinstall:	${TMACDIR}/tmac.${F}
 ${TMACDIR}/tmac.${F}: ${F}
 .if defined(UPDATE)
 	@if ! cmp ${.ALLSRC} ${.TARGET} 2>/dev/null; then \
-		echo ${INSTALL_FILE:N-U:Q} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
-		${INSTALL_FILE:N-U} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
+		echo ${HOST_INSTALL_FILE:Q} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
+		${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
 	fi
 .else
-	${INSTALL_FILE:N-U} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
 .endif
 .endfor
 
 afterinstall: ${TMACDIR}/tmac.an
 ${TMACDIR}/tmac.an: ${TMACDIR}/tmac.andoc
-	${INSTALL_FILE:N-U} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
 
 .for F in eqn groff indxbib pic refer soelim tbl
 afterinstall: ${TOOLDIR}/bin/nb${F}
