@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.15 2002/04/18 12:19:05 martin Exp $ 
+ *	$Id: isac.c,v 1.16 2002/04/29 13:42:42 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.15 2002/04/18 12:19:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.16 2002/04/29 13:42:42 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -553,8 +553,6 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 int
 isic_isac_init(struct isic_softc *sc)
 {
-	u_int8_t v;
-
 	ISAC_IMASK = 0xff;		/* disable all irqs */
 
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
@@ -597,14 +595,6 @@ isic_isac_init(struct isic_softc *sc)
 		 *	STx/SCx = 0
 		 */
 		ISAC_WRITE(I_STCR, ISAC_STCR_TBA2|ISAC_STCR_TBA1|ISAC_STCR_TBA0);
-
-		/* MODE: Mode Register:
-		 *	MDSx - transparent mode 2
-		 *	TMD  - timer mode = external
-		 *	RAC  - Receiver enabled
-		 *	DIMx - digital i/f mode
-		 */
-		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_RAC|ISAC_MODE_DIM0);
 	}
 	else
 	{
@@ -645,16 +635,17 @@ isic_isac_init(struct isic_softc *sc)
 		 *	STx/SCx = 0
 		 */
 		ISAC_WRITE(I_STCR, ISAC_STCR_TBA2|ISAC_STCR_TBA1|ISAC_STCR_TBA0);
-
-		/* MODE: Mode Register:
-		 *	MDSx - transparent mode 2
-		 *	TMD  - timer mode = external
-		 *	RAC  - Receiver enabled
-		 *	DIMx - digital i/f mode
-		 */
-		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_RAC|ISAC_MODE_DIM0);
 	}
 	
+
+	/* MODE: Mode Register:
+	 *	MDSx - transparent mode 2
+	 *	TMD  - timer mode = external
+	 *	RAC  - Receiver enabled
+	 *	DIMx - digital i/f mode
+	 */
+	ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_RAC|ISAC_MODE_DIM0);
+
 	/* enabled interrupts:
 	 * ===================
 	 * RME  - receive message end
@@ -669,24 +660,6 @@ isic_isac_init(struct isic_softc *sc)
 		     ISAC_MASK_SIN;	/* sync xfer irq	*/
 
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
-
-	/*
-	 * Even if interrupts are masked, the EXI bit may get set
-	 * (but does not cause an interrupt).
-	 * Clear the extended interrupts, and reset receiver and
-	 * transmitter.
-	 */
-	if (sc->sc_ipac)
-		IPAC_READ(IPAC_ISTA);
-
-	v = ISAC_READ(I_ISTA);
-	if (v & ISAC_ISTA_EXI)
-		v = ISAC_READ(I_EXIR);
-
-	/* if we've just removed an interrupt status, make sure to cover
-	 * all traces of it */
-	if (sc->clearirq)
-		sc->clearirq(sc);
 
 	ISAC_WRITE(I_CMDR, ISAC_CMDR_RRES|ISAC_CMDR_XRES);
 	ISACCMDRWRDELAY();
