@@ -1,4 +1,4 @@
-/*	$NetBSD: iptest.c,v 1.8 1998/11/22 15:21:56 mrg Exp $	*/
+/*	$NetBSD: iptest.c,v 1.9 1999/09/26 10:31:57 kleink Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1998 Darren Reed
@@ -21,7 +21,7 @@ static const char rcsid[] = "@(#)Id: iptest.c,v 2.0.2.8.2.2 1998/11/22 01:51:17 
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
