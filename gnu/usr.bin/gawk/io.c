@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: io.c,v 1.2 1993/08/02 17:29:52 mycroft Exp $";
+static char rcsid[] = "$Id: io.c,v 1.3 1993/08/10 00:11:29 mycroft Exp $";
 #endif /* not lint */
 
 #include "awk.h"
@@ -710,7 +710,7 @@ char *name, *mode;
 
 	if (name[6] == 'g')
 /* following #if will improve in 2.16 */
-#if defined(__svr4__) || defined(i860) || defined(_AIX) || defined(BSD4_4) || defined(__386BSD__)
+#if defined(__svr4__) || defined(i860) || defined(_AIX) || defined(BSD4_4) || defined(_POSIX_JOB_CONTROL)
 		sprintf(tbuf, "%d\n", getpgrp());
 #else
 		sprintf(tbuf, "%d\n", getpgrp(getpid()));
