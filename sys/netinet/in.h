@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.69 2004/12/15 04:25:19 thorpej Exp $	*/
+/*	$NetBSD: in.h,v 1.70 2005/01/31 23:49:36 kim Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -97,6 +97,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_NONE		59		/* IP6 no next header */
 #define	IPPROTO_DSTOPTS		60		/* IP6 destination option */
 #define	IPPROTO_EON		80		/* ISO cnlp */
+#define	IPPROTO_ETHERIP		97		/* Ethernet-in-IP */
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
 #define	IPPROTO_PIM		103		/* Protocol indep. multicast */
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
