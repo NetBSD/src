@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.25 1997/05/15 17:01:04 kleink Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.26 1997/06/24 19:12:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -391,7 +391,7 @@ unp_detach(unp)
 	soisdisconnected(unp->unp_socket);
 	unp->unp_socket->so_pcb = 0;
 	if (unp->unp_addr)
-		m_freem(dtom(unp->unp_addr));
+		free(unp->unp_addr, M_SONAME);
 	if (unp_rights) {
 		/*
 		 * Normally the receive buffer is flushed later,
@@ -419,6 +419,8 @@ unp_bind(unp, nam, p)
 	int error;
 	struct nameidata nd;
 
+	if (nam->m_len > sizeof(struct sockaddr_un))
+		return (EINVAL);
 	if (unp->unp_vnode != 0)
 		return (EINVAL);
 	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
@@ -451,8 +453,9 @@ unp_bind(unp, nam, p)
 	vp = nd.ni_vp;
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
-	unp->unp_addr =
-	    mtod(m_copy(nam, 0, (int)M_COPYALL), struct sockaddr_un *);
+	unp->unp_addrlen = nam->m_len;
+	unp->unp_addr = malloc(unp->unp_addrlen, M_SONAME, M_WAITOK);
+	m_copydata(nam, 0, unp->unp_addrlen, (caddr_t)unp->unp_addr);
 	VOP_UNLOCK(vp);
 	return (0);
 }
@@ -502,9 +505,13 @@ unp_connect(so, nam, p)
 		}
 		unp2 = sotounpcb(so2);
 		unp3 = sotounpcb(so3);
-		if (unp2->unp_addr)
-			unp3->unp_addr = mtod(m_copy(dtom(unp2->unp_addr), 0,
-			    (int)M_COPYALL), struct sockaddr_un *);
+		if (unp2->unp_addr) {
+			unp3->unp_addr = malloc(unp2->unp_addrlen,
+			    M_SONAME, M_WAITOK);
+			bcopy(unp2->unp_addr, unp3->unp_addr,
+			    unp2->unp_addrlen);
+			unp3->unp_addrlen = unp2->unp_addrlen;
+		}
 		so2 = so3;
 	}
 	error = unp_connect2(so, so2);
@@ -615,7 +622,7 @@ unp_drop(unp, errno)
 		so->so_pcb = 0;
 		sofree(so);
 		if (unp->unp_addr)
-			m_freem(dtom(unp->unp_addr));
+			free(unp->unp_addr, M_SONAME);
 		free(unp, M_PCB);
 	}
 }
