@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.27 1996/11/06 17:59:20 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.28 1996/12/31 17:55:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.27 1996/11/06 17:59:20 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.28 1996/12/31 17:55:28 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -465,7 +465,7 @@ ParseDoOp (gnp, opp)
  *
  *---------------------------------------------------------------------
  */
-int
+static int
 ParseAddDep(pp, sp)
     ClientData pp;
     ClientData sp;
