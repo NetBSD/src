@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.14.4.5 1999/07/31 18:47:38 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.14.4.6 1999/08/06 12:50:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -109,7 +109,9 @@ ffs_balloc(v)
 
 		if (ip->i_ffs_size < off + bsize) {
 			ip->i_ffs_size = off + bsize;
-			uvm_vnp_setsize(vp, ip->i_ffs_size);
+			if (vp->v_uvm.u_size < ip->i_ffs_size) {
+				uvm_vnp_setsize(vp, ip->i_ffs_size);
+			}
 		}
 
 		off += bsize;
