@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2recover.c,v 1.3 2002/03/15 01:44:24 mjl Exp $	*/
+/*	$NetBSD: bzip2recover.c,v 1.4 2002/03/15 01:54:20 mjl Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -100,6 +100,32 @@ Char progName[BZ_MAX_FILENAME];
 MaybeUInt64 bytesOut = 0;
 MaybeUInt64 bytesIn  = 0;
 
+/*---------------------------------------------------*/
+/*--- Bit stream I/O                              ---*/
+/*---------------------------------------------------*/
+
+typedef
+   struct {
+      FILE*  handle;
+      Int32  buffer;
+      Int32  buffLive;
+      Char   mode;
+   }
+   BitStream;
+
+void readError ( void );
+void writeError ( void );
+void mallocFail ( Int32 n );
+BitStream* bsOpenReadStream ( FILE* stream );
+BitStream* bsOpenWriteStream ( FILE* stream );
+void bsPutBit ( BitStream* bs, Int32 bit );
+Int32 bsGetBit ( BitStream* bs );
+void bsClose ( BitStream* bs );
+void bsPutUChar ( BitStream* bs, UChar c );
+void bsPutUInt32 ( BitStream* bs, UInt32 c );
+Bool endsInBz2 ( Char* name );
+void tooManyBlocks ( Int32 max_handled_blocks );
+
 
 /*---------------------------------------------------*/
 /*--- Header bytes                                ---*/
@@ -168,20 +194,6 @@ void tooManyBlocks ( Int32 max_handled_blocks )
    exit ( 1 );
 }
 
-
-
-/*---------------------------------------------------*/
-/*--- Bit stream I/O                              ---*/
-/*---------------------------------------------------*/
-
-typedef
-   struct {
-      FILE*  handle;
-      Int32  buffer;
-      Int32  buffLive;
-      Char   mode;
-   }
-   BitStream;
 
 
 /*---------------------------------------------*/
