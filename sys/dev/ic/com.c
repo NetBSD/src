@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.7 1993/05/18 18:18:59 cgd Exp $
+ *	$Id: com.c,v 1.8 1993/05/26 10:11:01 deraadt Exp $
  */
 
 #include "com.h"
@@ -47,6 +47,7 @@
 #include "tty.h"
 #include "proc.h"
 #include "user.h"
+#include "malloc.h"
 #include "conf.h"
 #include "file.h"
 #include "uio.h"
@@ -78,7 +79,7 @@ int	comconsinit;
 int	comdefaultrate = TTYDEF_SPEED;
 int	commajor;
 short com_addr[NCOM];
-struct	tty com_tty[NCOM];
+struct	tty *com_tty[NCOM];
 
 struct speedtab comspeedtab[] = {
 	0,	0,
@@ -189,7 +190,12 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 	unit = UNIT(dev);
 	if (unit >= NCOM || (com_active & (1 << unit)) == 0)
 		return (ENXIO);
-	tp = &com_tty[unit];
+	if(!com_tty[unit]) {
+		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
+		bzero(tp, sizeof(struct tty));
+		com_tty[minor(dev)] = tp;
+	} else
+		tp = com_tty[unit];
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
 	tp->t_dev = dev;
@@ -236,7 +242,7 @@ comclose(dev, flag, mode, p)
  
 	unit = UNIT(dev);
 	com = com_addr[unit];
-	tp = &com_tty[unit];
+	tp = com_tty[unit];
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	outb(com+com_cfcr, inb(com+com_cfcr) & ~CFCR_SBREAK);
 #ifdef KGDB
@@ -248,6 +254,8 @@ comclose(dev, flag, mode, p)
 	    (tp->t_state&TS_ISOPEN) == 0)
 		(void) commctl(dev, 0, DMSET);
 	ttyclose(tp);
+	FREE(tp, M_TTYS);
+	com_tty[unit] = (struct tty *)NULL;
 	return(0);
 }
  
@@ -255,7 +263,7 @@ comread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &com_tty[UNIT(dev)];
+	register struct tty *tp = com_tty[UNIT(dev)];
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -265,7 +273,7 @@ comwrite(dev, uio, flag)
 	struct uio *uio;
 {
 	int unit = UNIT(dev);
-	register struct tty *tp = &com_tty[unit];
+	register struct tty *tp = com_tty[unit];
  
 	/*
 	 * (XXX) We disallow virtual consoles if the physical console is
@@ -294,7 +302,7 @@ comintr(unit)
 			return (1);
 		case IIR_RXTOUT:
 		case IIR_RXRDY:
-			tp = &com_tty[unit];
+			tp = com_tty[unit];
 /*
  * Process received bytes.  Inline for speed...
  */
@@ -325,7 +333,7 @@ comintr(unit)
 				}
 			break;
 		case IIR_TXRDY:
-			tp = &com_tty[unit];
+			tp = com_tty[unit];
 			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
 			if (tp->t_line)
 				(*linesw[tp->t_line].l_start)(tp);
@@ -355,7 +363,7 @@ comeint(unit, stat, com)
 	register struct tty *tp;
 	register int c;
 
-	tp = &com_tty[unit];
+	tp = com_tty[unit];
 	c = inb(com+com_data);
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
@@ -384,7 +392,7 @@ commint(unit, com)
 	register struct tty *tp;
 	register int stat;
 
-	tp = &com_tty[unit];
+	tp = com_tty[unit];
 	stat = inb(com+com_msr);
 	if ((stat & MSR_DDCD) && (comsoftCAR & (1 << unit)) == 0) {
 		if (stat & MSR_DCD)
@@ -412,7 +420,7 @@ comioctl(dev, cmd, data, flag)
 	register com;
 	register int error;
  
-	tp = &com_tty[unit];
+	tp = com_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
 		return (error);
@@ -617,7 +625,7 @@ comcnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(commajor, unit);
-	cp->cn_tp = &com_tty[unit];
+	cp->cn_tp = com_tty[unit];
 #ifdef	COMCONSOLE
 	cp->cn_pri = CN_REMOTE;		/* Force a serial port console */
 #else
@@ -718,7 +726,7 @@ comselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	register struct tty *tp = &com_tty[UNIT(dev)];
+	register struct tty *tp = com_tty[UNIT(dev)];
 	int nread;
 	int s = spltty();
         struct proc *selp;
