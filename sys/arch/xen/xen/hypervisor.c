@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.4 2004/04/24 21:33:32 cl Exp $ */
+/* $NetBSD: hypervisor.c,v 1.5 2004/04/25 00:24:08 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.4 2004/04/24 21:33:32 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.5 2004/04/25 00:24:08 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,13 +165,13 @@ hypervisor_attach(parent, self, aux)
 }
 
 int
-hypervisor_print(aux, pnp)
+hypervisor_print(aux, parent)
 	void *aux;
-	const char *pnp;
+	const char *parent;
 {
 	union hypervisor_attach_cookie *hac = aux;
 
-	if (pnp)
-		aprint_normal("XXXXXXXXx %s at %s", hac->hac_device, pnp);
+	if (parent)
+		aprint_normal("%s at %s", hac->hac_device, parent);
 	return (UNCONF);
 }
