@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.21 1997/01/22 19:31:37 briggs Exp $
+#	$NetBSD: MAKEDEV,v 1.22 1997/01/26 08:11:21 scottr Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -281,7 +281,7 @@ lkm)
 
 ipl)
 	rm -f ipl
-	mknod ipl c 36 0
+	mknod ipl c 35 0
 	chown root.wheel ipl
 	chmod 600 ipl
 	;;
