@@ -1,4 +1,4 @@
-/*	$NetBSD: iopi2c.c,v 1.1 2003/10/06 16:06:06 thorpej Exp $	*/
+/*	$NetBSD: iopi2c.c,v 1.2 2005/01/06 09:34:02 scw Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.1 2003/10/06 16:06:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.2 2005/01/06 09:34:02 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -151,7 +151,12 @@ iopiic_wait(struct iopiic_softc *sc, int bit, int flags)
 		printf("%s: iopiic_wait, (%08x) error %d: ISR = 0x%08x\n",
 		    sc->sc_dev.dv_xname, bit, error, isr);
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, IIC_ISR, 0);
+	/*
+	 * The IIC_ISR is Read/Clear apart from the bottom 4 bits, which are
+	 * read-only. So simply write back our copy of the ISR to clear any
+	 * latched status.
+	 */
+	bus_space_write_4(sc->sc_st, sc->sc_sh, IIC_ISR, isr);
 
 	return (error);
 }
