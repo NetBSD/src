@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.6 1997/11/01 17:56:51 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.7 1997/12/06 20:29:59 scw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -426,7 +426,7 @@ pmap_bootstrap(nextpa, firstpa)
 
 	/* initial avail_end is end of onboard RAM */
 	RELOC(avail_end, vm_offset_t) =
-		m68k_ptob(RELOC(phys_seg_list[0].ps_end, vm_offset_t));
+		m68k_round_page(RELOC(phys_seg_list[0].ps_end, vm_offset_t));
 
 	RELOC(avail_remaining, vm_size_t) =
 		(RELOC(phys_seg_list[0].ps_end, vm_offset_t) -
@@ -460,10 +460,12 @@ pmap_bootstrap(nextpa, firstpa)
 		RELOC(avail_remaining, vm_size_t) += (len / NBPG);
 		RELOC(physmem, int) += (len / NBPG);
 
-		if ( m68k_ptob(RELOC(phys_seg_list[i].ps_end, vm_offset_t)) >
+		if ( m68k_round_page(RELOC(phys_seg_list[i].ps_end,
+					   vm_offset_t)) >
 			RELOC(avail_end, vm_offset_t) ) {
 			RELOC(avail_end, vm_offset_t) =
-				m68k_ptob(RELOC(phys_seg_list[i].ps_end, vm_offset_t));
+				m68k_round_page(RELOC(phys_seg_list[i].ps_end,
+						      vm_offset_t));
 		}
 	}
 #endif
