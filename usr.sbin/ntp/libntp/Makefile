@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/03/29 13:13:43 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2000/05/11 01:09:27 simonb Exp $
 
 LIB=	ntp
 SRCS=	a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c \
@@ -19,9 +19,5 @@ MKLINKLIB=no
 MKMAN=	no
 MKPIC=	no
 MKLINT=	no	# XXX
-
-.if defined(CRYPTOPATH)
-.sinclude "${CRYPTOPATH}/lib/libntp/Makefile.frag"
-.endif
 
 .include <bsd.lib.mk>
