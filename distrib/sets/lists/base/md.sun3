@@ -5,4 +5,3 @@
 ./usr/mdec/tapeboot
 ./usr/mdec/ufsboot
 ./usr/sbin/eeprom
-./usr/sbin/screenblank

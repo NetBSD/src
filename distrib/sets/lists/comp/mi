@@ -486,6 +486,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/glob.h
 ./usr/include/grp.h
+./usr/include/hesiod.h
 ./usr/include/histedit.h
 ./usr/include/history.h
 ./usr/include/ieeefp.h

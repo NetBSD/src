@@ -20,4 +20,3 @@
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
 ./usr/sbin/eeprom
-./usr/sbin/screenblank
