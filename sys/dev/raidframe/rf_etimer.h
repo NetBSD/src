@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_etimer.h,v 1.7 2001/10/04 17:41:17 oster Exp $	*/
+/*	$NetBSD: rf_etimer.h,v 1.8 2001/10/04 17:42:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,14 +32,13 @@
 #include "rf_utils.h"
 
 #include <sys/time.h>
+#include <sys/kernel.h>
 
 struct RF_Etimer_s {
         struct timeval st;
         struct timeval et;
         struct timeval diff;
 };
-
-#include <sys/kernel.h>
 
 #define RF_ETIMER_START(_t_)                                    \
                 {                                               \
