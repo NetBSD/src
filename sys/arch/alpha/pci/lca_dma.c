@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.5 1998/01/17 21:53:58 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.6 1998/01/17 22:46:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.5 1998/01/17 21:53:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.6 1998/01/17 22:46:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,20 +173,23 @@ lca_dma_init(lcp)
 		 * Set up window 0 as an 8MB SGMAP-mapped window
 		 * starting at 8MB.
 		 */
+		REGVAL64(LCA_IOC_W_BASE0) = LCA_SGMAP_MAPPED_BASE |
+		    IOC_W_BASE_SG | IOC_W_BASE_WEN;
+		alpha_mb();
+
+		REGVAL64(LCA_IOC_W_MASK0) = IOC_W_MASK_8M;
+		alpha_mb();
+
 		if ((lcp->lc_sgmap.aps_ptpa & IOC_W_T_BASE) !=
 		    lcp->lc_sgmap.aps_ptpa)
 			panic("lca_dma_init: bad page table address");
 		REGVAL64(LCA_IOC_W_T_BASE0) = lcp->lc_sgmap.aps_ptpa;
-		REGVAL64(LCA_IOC_W_MASK0) = IOC_W_MASK_8M;
 		alpha_mb();
 
 		/* Enble the scatter/gather TLB. */
 		REGVAL64(LCA_IOC_TB_ENA) = IOC_TB_ENA_TEN;
 		alpha_mb();
 
-		REGVAL64(LCA_IOC_W_BASE0) = LCA_SGMAP_MAPPED_BASE |
-		    IOC_W_BASE_SG | IOC_W_BASE_WEN;
-		alpha_mb();
 
 		LCA_TLB_INVALIDATE();
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_dma.c,v 1.5 1998/01/17 21:53:56 thorpej Exp $ */
+/* $NetBSD: apecs_dma.c,v 1.6 1998/01/17 22:46:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.5 1998/01/17 21:53:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.6 1998/01/17 22:46:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,15 +174,17 @@ apecs_dma_init(acp)
 		 * Set up window 1 as an 8MB SGMAP-mapped window
 		 * starting at 8MB.
 		 */
+		REGVAL(EPIC_PCI_BASE_1) = APECS_SGMAP_MAPPED_BASE |
+		    EPIC_PCI_BASE_SGEN | EPIC_PCI_BASE_WENB;
+		alpha_mb();
+
+		REGVAL(EPIC_PCI_MASK_1) = EPIC_PCI_MASK_8M;
+		alpha_mb();
+
 		tbase = acp->ac_sgmap.aps_ptpa >> EPIC_TBASE_SHIFT;
 		if ((tbase & EPIC_TBASE_T_BASE) != tbase)
 			panic("apecs_dma_init: bad page table address");
 		REGVAL(EPIC_TBASE_1) = tbase;
-		REGVAL(EPIC_PCI_MASK_1) = EPIC_PCI_MASK_8M;
-		alpha_mb();
-
-		REGVAL(EPIC_PCI_BASE_1) = APECS_SGMAP_MAPPED_BASE |
-		    EPIC_PCI_BASE_SGEN | EPIC_PCI_BASE_WENB;
 		alpha_mb();
 
 		APECS_TLB_INVALIDATE();
