@@ -1,4 +1,4 @@
-.\"	$NetBSD: last.1,v 1.10 2003/02/17 15:08:57 christos Exp $
+.\"	$NetBSD: last.1,v 1.11 2003/03/03 07:17:35 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)last.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd February 17, 2003
 .Dt LAST 1
 .Os
 .Sh NAME
@@ -44,11 +44,11 @@
 .Op Fl Ns Ar n
 .Op Fl T
 .Op Fl f Ar file
+.Op Fl H Ar hostsize
 .Op Fl h Ar host
-.Op Fl t Ar tty
 .Op Fl L Ar linesize
 .Op Fl N Ar namesize
-.Op Fl H Ar hostsize
+.Op Fl t Ar tty
 .Op user ...
 .Sh DESCRIPTION
 .Nm
@@ -67,7 +67,11 @@ a crash or shutdown,
 .Nm
 will so indicate.
 .Pp
-.Bl -tag -width indent-two
+.Bl -tag -width xHxhostsizexx
+.It Fl Ar n
+Limits the report to
+.Ar n
+lines.
 .It Fl f Ar file
 .Nm
 reads the file
@@ -76,47 +80,42 @@ instead of the default,
 .Pa /var/log/wtmpx
 or
 .Pa /var/log/wtmp .
-If the file ends with `x', it is treated as a
+If the file ends with
+.Sq x ,
+it is treated as a
 .Xr utmpx 5
 format file, else it is treated as a
 .Xr utmp 5
 format file.
-.It Fl Ar n
-Limits the report to
-.Ar n
-lines.
+.It Fl H Ar hostsize
+Use the provided hostsize as the width to format the host name field.
+.It Fl h Ar host
+.Ar Host
+names may be names or internet numbers.
+.It Fl L Ar linesize
+Use the provided linesize as the width to format the tty field.
+.It Fl N Ar namesize
+Use the provided namesize as the width to format the login name field.
+.It Fl T
+Display better time information, including the year and seconds.
 .It Fl t Ar tty
 Specify the
 .Ar tty .
 Tty names may be given fully or abbreviated, for example,
 .Dq Li "last -t 03"
-is
-equivalent to
+is equivalent to
 .Dq Li "last -t tty03" .
-.It Fl h Ar host
-.Ar Host
-names may be names or internet numbers.
-.It Fl T
-Display better time information, including the year and seconds.
-.It Fl L Ar linesize
-Use the provided linesize as the width to format the tty field.
-.It Fl N Ar namesize
-Use the provided namesize as the width to format the login name field.
-.It Fl H Ar hostsize
-Use the provided hostsize as the width to format the host name field.
 .El
 .Pp
-If
-multiple arguments are given, the information which applies to any of the
+If multiple arguments are given, the information which applies to any of the
 arguments is printed, e.g.,
 .Dq Li "last root -t console"
 would list all of
 .Dq Li root Ns 's
 sessions as well as all sessions on the console terminal.
-If no users, hostnames or terminals are specified,
+If no users, hostnames, or terminals are specified,
 .Nm
-prints a record of
-all logins and logouts.
+prints a record of all logins and logouts.
 .Pp
 The pseudo-user
 .Ar reboot
@@ -126,23 +125,21 @@ will give an indication of mean time between reboot.
 .Pp
 If
 .Nm
-is interrupted, it indicates to what date the search has
-progressed.
+is interrupted, it indicates to what date the search has progressed.
 If interrupted with a quit signal
 .Nm
-indicates how
-far the search has progressed and then continues.
+indicates how far the search has progressed and then continues.
 .Sh FILES
 .Bl -tag -width /var/log/wtmpx -compact
-.It Pa /var/log/wtmpx
-login data base
 .It Pa /var/log/wtmp
+login data base
+.It Pa /var/log/wtmpx
 login data base
 .El
 .Sh SEE ALSO
 .Xr lastcomm 1 ,
-.Xr utmpx 5 ,
 .Xr utmp 5 ,
+.Xr utmpx 5 ,
 .Xr ac 8
 .Sh HISTORY
 .Nm
