@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 1998/07/15 03:11:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1998/07/15 03:14:27 thorpej Exp $
 
 DIR=	papers/bus_dma
 SRCS=	title.me 1.me 2.me 3.me 4.me 5.me about.me
+EXTRA=	figure1.pic figure2.pic figure3.pic
 MACROS=	-me
-DPSRCS=	${SRCS} Makefile figure1.pic figure2.pic figure3.pic
+DPSRCS=	${SRCS} ${EXTRA} Makefile
 
 paper.ps: ${DPSRCS}
 	${SOELIM} ${SRCS} | ${PIC} | ${TBL} | ${ROFF} > ${.TARGET}
