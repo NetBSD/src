@@ -1,4 +1,4 @@
-/*	$NetBSD: msgmain.c,v 1.3 1998/02/03 03:53:39 perry Exp $	*/
+/*	$NetBSD: msgmain.c,v 1.4 2000/07/03 02:51:25 matt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,7 @@
 /* main.c - main program */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define MAIN

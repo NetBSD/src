@@ -1,4 +1,4 @@
-/*	$NetBSD: init_disp.c,v 1.8 1998/12/19 22:36:11 christos Exp $	*/
+/*	$NetBSD: init_disp.c,v 1.9 2000/07/03 02:51:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-__RCSID("$NetBSD: init_disp.c,v 1.8 1998/12/19 22:36:11 christos Exp $");
+__RCSID("$NetBSD: init_disp.c,v 1.9 2000/07/03 02:51:35 matt Exp $");
 #endif /* not lint */
 
 /*
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: init_disp.c,v 1.8 1998/12/19 22:36:11 christos Exp $");
 #include <err.h>
 #include <signal.h>
 #include <termios.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 /* 
