@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.15 2003/05/05 13:56:14 bjh21 Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.16 2003/05/05 19:54:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.15 2003/05/05 13:56:14 bjh21 Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.16 2003/05/05 19:54:59 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,11 +63,11 @@ in_addr_t
 inet_network(cp)
 	register const char *cp;
 {
-	u_long val, base;
+	in_addr_t val;
 	size_t i, n;
 	u_char c;
-	u_long parts[4], *pp = parts;
-	int digit;
+	in_addr_t parts[4], *pp = parts;
+	int digit, base;
 
 	_DIAGASSERT(cp != NULL);
 
