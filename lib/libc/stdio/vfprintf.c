@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.14 1995/01/25 11:20:41 jtc Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.15 1995/02/25 07:06:38 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -472,7 +472,7 @@ reswitch:	switch (ch) {
 			 *	-- ANSI X3J11
 			 */
 			/* NOSTRICT */
-			_uquad = (u_quad_t)va_arg(ap, void *);
+			_uquad = (u_long)va_arg(ap, void *);
 			base = HEX;
 			xdigs = "0123456789abcdef";
 			flags |= HEXPREFIX;
