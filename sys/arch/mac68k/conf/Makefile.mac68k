@@ -41,7 +41,7 @@ LIBKERN=${KERNLIB_PROF}
 ### for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 
-INCLUDES= -nostdinc -I. -I$S/arch -I$S -I$S/sys
+INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -DREFBIT -Dmac68k
 CFLAGS=	-O ${COPTS}
 
