@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139 2000/06/09 04:37:52 soda Exp $	*/
+/*	$NetBSD: trap.c,v 1.140 2000/06/09 05:51:47 soda Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2000/06/09 04:37:52 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2000/06/09 05:51:47 soda Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -446,7 +446,7 @@ trap(status, cause, vaddr, opc, frame)
 			pte->pt_entry = entry;
 			vaddr &= ~PGOFSET;
 			MachTLBUpdate(vaddr, entry);
-			pa = pfn_to_vad(entry);
+			pa = mips_tlbpfn_to_paddr(entry);
 			if (!IS_VM_PHYSADDR(pa)) {
 				printf("ktlbmod: va %x pa %llx\n",
 				    vaddr, (long long)pa);
@@ -481,7 +481,7 @@ trap(status, cause, vaddr, opc, frame)
 		vaddr = (vaddr & ~PGOFSET) |
 			(pmap->pm_asid << MIPS_TLB_PID_SHIFT);
 		MachTLBUpdate(vaddr, entry);
-		pa = pfn_to_vad(entry);
+		pa = mips_tlbpfn_to_paddr(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
 			printf("utlbmod: va %x pa %llx\n",
 			    vaddr, (long long)pa);

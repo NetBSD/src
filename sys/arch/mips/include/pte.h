@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.9 2000/06/09 04:37:51 soda Exp $	*/
+/*	$NetBSD: pte.h,v 1.10 2000/06/09 05:51:43 soda Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,8 +100,8 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 #define	PTE_TO_PADDR(pte)	MIPS1_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS1_PAGE_IS_RDONLY((pte), (va))
 
-#define	pfn_to_vad(x)		mips1_pfn_to_vad((vaddr_t)(x))
-#define	vad_to_pfn(x)		mips1_vad_to_pfn((x))
+#define	mips_tlbpfn_to_paddr(x)		mips1_tlbpfn_to_paddr((vaddr_t)(x))
+#define	mips_paddr_to_tlbpfn(x)		mips1_paddr_to_tlbpfn((x))
 #endif /* mips1 */
 
 
@@ -122,8 +122,8 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 #define	PTE_TO_PADDR(pte)	MIPS3_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS3_PAGE_IS_RDONLY((pte), (va))
 
-#define	pfn_to_vad(x)		mips3_pfn_to_vad((vaddr_t)(x))
-#define	vad_to_pfn(x)		mips3_vad_to_pfn((x))
+#define	mips_tlbpfn_to_paddr(x)		mips3_tlbpfn_to_paddr((vaddr_t)(x))
+#define	mips_paddr_to_tlbpfn(x)		mips3_paddr_to_tlbpfn((x))
 #endif /* mips3 */
 
 /* MIPS1 and MIPS3 */
@@ -143,8 +143,8 @@ static __inline unsigned int
     mips_pg_global_bit(void);
 static __inline paddr_t PTE_TO_PADDR(unsigned int pte);
 
-static __inline paddr_t pfn_to_vad(unsigned int pfn);
-static __inline unsigned int vad_to_pfn(paddr_t pa);
+static __inline paddr_t mips_tlbpfn_to_paddr(unsigned int pfn);
+static __inline unsigned int mips_paddr_to_tlbpfn(paddr_t pa);
 
 
 static __inline int
@@ -250,21 +250,21 @@ PAGE_IS_RDONLY(pte, va)
 }
 
 static __inline paddr_t
-pfn_to_vad(pfn)
+mips_tlbpfn_to_paddr(pfn)
 	unsigned int pfn;
 {
 	if (CPUISMIPS3)
-		return (mips3_pfn_to_vad(pfn));
-	return (mips1_pfn_to_vad(pfn));
+		return (mips3_tlbpfn_to_paddr(pfn));
+	return (mips1_tlbpfn_to_paddr(pfn));
 }
 
 static __inline unsigned int
-vad_to_pfn(pa)
+mips_paddr_to_tlbpfn(pa)
 	paddr_t pa;
 {
 	if (CPUISMIPS3)
-		return (mips3_vad_to_pfn(pa));
-	return (mips1_vad_to_pfn(pa));
+		return (mips3_paddr_to_tlbpfn(pa));
+	return (mips1_paddr_to_tlbpfn(pa));
 }
 #endif
 

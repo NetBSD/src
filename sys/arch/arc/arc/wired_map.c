@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.1 2000/06/09 05:17:26 soda Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.2 2000/06/09 05:51:52 soda Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -90,11 +90,11 @@ arc_enter_wired(va, pa0, pa1, pg_size)
 	if (pa0 == 0)
 		tlb.tlb_lo0 = MIPS3_PG_G;
 	else
-		tlb.tlb_lo0 = mips3_vad_to_pfn(pa0) | MIPS3_PG_IOPAGE;
+		tlb.tlb_lo0 = mips3_paddr_to_tlbpfn(pa0) | MIPS3_PG_IOPAGE;
 	if (pa1 == 0)
 		tlb.tlb_lo1 = MIPS3_PG_G;
 	else
-		tlb.tlb_lo1 = mips3_vad_to_pfn(pa1) | MIPS3_PG_IOPAGE;
+		tlb.tlb_lo1 = mips3_paddr_to_tlbpfn(pa1) | MIPS3_PG_IOPAGE;
 	mips3_TLBWriteIndexedVPS(MIPS3_LOCORE_TLB_WIRED_ENTRIES + nwired,
 	    &tlb);
 
