@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.69 1996/08/26 22:49:43 thorpej Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.70 1996/08/30 23:07:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,6 +102,34 @@
 static int sunstatfs __P((struct statfs *, caddr_t));
 static void sunos_pollscan __P((struct proc *, struct sunos_pollfd *, 
 				int, register_t *));
+
+int
+sunos_sys_stime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos_sys_stime_args *uap = v;
+	struct sys_settimeofday_args ap;
+	caddr_t sg = stackgap_init(p->p_emul);
+	struct timeval tv;
+	int error;
+
+	error = copyin(SCARG(uap, tp), &tv.tv_sec, sizeof(tv.tv_sec));
+	if (error)
+		return error;
+	tv.tv_usec = 0;
+
+	SCARG(&ap, tv) = stackgap_alloc(&sg, sizeof(struct timeval));
+	SCARG(&ap, tzp) = NULL;
+
+	error = copyout(&tv, SCARG(&ap, tv), sizeof(struct timeval));
+	if (error)
+		return error;
+
+	return sys_settimeofday(p, &ap, retval);
+}
+
 int
 sunos_sys_wait4(p, v, retval)
 	struct proc *p;
