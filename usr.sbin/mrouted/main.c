@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2003/09/06 12:45:00 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2004/10/30 09:01:37 dsl Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.20 2003/09/06 12:45:00 itojun Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.21 2004/10/30 09:01:37 dsl Exp $");
 #endif
 
 #include <err.h>
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
     argv++, argc--;
     while (argc > 0 && *argv[0] == '-') {
 	if (strcmp(*argv, "-d") == 0) {
-	    if (argc > 1 && isdigit(*(argv + 1)[0])) {
+	    if (argc > 1 && isdigit((unsigned char)*(argv + 1)[0])) {
 		argv++, argc--;
 		debug = atoi(*argv);
 	    } else
