@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.9 2004/03/03 20:27:53 drochner Exp $	*/
+/*	$NetBSD: fpu.c,v 1.10 2004/03/05 17:20:13 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9 2004/03/03 20:27:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2004/03/05 17:20:13 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -154,6 +154,7 @@ fputrap(frame)
 {
 	register struct lwp *l = curcpu()->ci_fpcurlwp;
 	struct savefpu *sfp = &l->l_addr->u_pcb.pcb_savefpu;
+	u_int32_t mxcsr, statbits;
 	u_int16_t cw;
 	ksiginfo_t ksi;
 
@@ -168,19 +169,24 @@ fputrap(frame)
 
 	fxsave(sfp);
 	if (frame->tf_trapno == T_XMM) {
+		mxcsr = sfp->fp_fxsave.fx_mxcsr;
+		statbits = mxcsr;
+		mxcsr &= ~0x3f;
+		ldmxcsr(&mxcsr);
 	} else {
 		fninit();
 		fwait();
 		cw = sfp->fp_fxsave.fx_fcw;
 		fldcw(&cw);
 		fwait();
+		statbits = sfp->fp_ex_sw;
 	}
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
 	ksi.ksi_addr = (void *)frame->tf_rip;
-	ksi.ksi_code = x86fpflags_to_ksiginfo(sfp->fp_ex_sw);
+	ksi.ksi_code = x86fpflags_to_ksiginfo(statbits);
 	ksi.ksi_trap = (int)sfp->fp_ex_sw;
 	KERNEL_PROC_LOCK(l);
 	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
