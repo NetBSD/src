@@ -1,7 +1,0 @@
-$NetBSD: README,v 1.1 2000/11/29 16:44:14 tv Exp $
-
-This "extra" directory exists to hold files that should be provided on any
-TNF-created (and hopefully, third party created) CD-ROM images, such as
-copyrights, boot instructions, etc.
-
-- tv@netbsd.org

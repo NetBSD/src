@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.10 2001/02/04 21:52:02 christos Exp $	 */
+/* $NetBSD: inode.c,v 1.10.2.1 2001/06/27 03:49:41 perseant Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -65,11 +65,17 @@ int             lfs_maxino(void);
 struct dinode  *
 lfs_difind(struct lfs * fs, ino_t ino, struct dinode * dip)
 {
-	register int    cnt;
+	struct dinode *ldip, *fin;
 
-	for (cnt = 0; cnt < INOPB(fs); cnt++)
-		if (dip[cnt].di_inumber == ino)
-			return &(dip[cnt]);
+	if (fs->lfs_version == 1)
+		fin = dip + INOPB(fs);
+	else
+		fin = dip + INOPS(fs);
+
+	for (ldip = dip; ldip < fin; ++ldip) {
+		if (ldip->di_inumber == ino)
+			return ldip;
+	}
 	/* printf("lfs_difind: dinode %u not found\n", ino); */
 	return NULL;
 }
@@ -228,7 +234,7 @@ gidinode(void)
 struct ifile   *
 lfs_ientry(ino_t ino, struct bufarea ** bpp)
 {
-	struct ifile   *ifp;
+	IFILE *ifp;
 
 	*bpp = getfileblk(&sblock, lfs_ginode(LFS_IFILE_INUM),
 			  ino / sblock.lfs_ifpb + sblock.lfs_cleansz +
@@ -237,8 +243,14 @@ lfs_ientry(ino_t ino, struct bufarea ** bpp)
 		printf("Warning: ino %d ientry in unassigned block\n", ino);
 	}
 	if (*bpp) {
-		ifp = (((struct ifile *)((*bpp)->b_un.b_buf)) +
-		       (ino % sblock.lfs_ifpb));
+		if (sblock.lfs_version > 1) {
+			ifp = (((IFILE *)((*bpp)->b_un.b_buf)) +
+			       (ino % sblock.lfs_ifpb));
+		} else {
+			ifp = (IFILE *)(((IFILE_V1 *)
+					 ((*bpp)->b_un.b_buf)) +
+					(ino % sblock.lfs_ifpb));
+		}
 		return ifp;
 	} else
 		return NULL;
@@ -248,10 +260,15 @@ SEGUSE         *
 lfs_gseguse(int segnum, struct bufarea ** bpp)
 {
 	int             blkno;
+	struct bufarea *bp;
 
-	blkno = segnum / (sblock.lfs_bsize / sizeof(SEGUSE)) + sblock.lfs_cleansz;
-	(*bpp) = getfileblk(&sblock, lfs_ginode(LFS_IFILE_INUM), blkno);
-	return ((SEGUSE *)(*bpp)->b_un.b_buf) + segnum % (sblock.lfs_bsize / sizeof(SEGUSE));
+	blkno = segnum / sblock.lfs_sepb + sblock.lfs_cleansz;
+	(*bpp) = bp = getfileblk(&sblock, lfs_ginode(LFS_IFILE_INUM), blkno);
+	if (sblock.lfs_version == 1)
+		return (SEGUSE *)((SEGUSE_V1 *)(bp->b_un.b_buf) +
+				  segnum % sblock.lfs_sepb);
+	else
+		return (SEGUSE *)(bp->b_un.b_buf) + segnum % sblock.lfs_sepb;
 }
 
 daddr_t

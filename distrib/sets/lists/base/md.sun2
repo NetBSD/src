@@ -1,8 +1,0 @@
-# $NetBSD: md.sun2,v 1.1 2001/05/18 00:16:36 fredette Exp $
-./sbin/edlabel			base-sysutil-bin
-./usr/mdec/bootxx		base-sysutil-bin
-./usr/mdec/bootyy		base-sysutil-bin
-./usr/mdec/installboot		base-sysutil-bin
-./usr/mdec/netboot		base-sysutil-bin
-./usr/mdec/tapeboot		base-sysutil-bin
-./usr/mdec/ufsboot		base-sysutil-bin

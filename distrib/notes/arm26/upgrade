@@ -1,7 +1,0 @@
-.\"	$NetBSD: upgrade,v 1.2 2000/10/10 12:55:17 lukem Exp $
-.
-.\" No machine-dependent upgrade problems yet.
-.
-This is the first release of
-.Nx*M ,
-and as such, there is no ability to upgrade from a prior release.

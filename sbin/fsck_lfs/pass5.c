@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.8 2000/11/21 06:24:26 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.8.2.1 2001/06/27 03:49:41 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ pass5()
 	unsigned long   avail; /* blocks available for writing */
 	unsigned long	dmeta; /* blocks in segsums and inodes */
 	int             nclean; /* clean segments */
+	size_t          labelskew;
 
 	/*
 	 * Check segment holdings against actual holdings.  Check for
@@ -97,15 +98,21 @@ pass5()
 			}
 		}
 		if (su->su_flags & SEGUSE_DIRTY) {
-			bb += btodb(su->su_nbytes) + su->su_nsums;
-			ubb += btodb(su->su_nbytes) + su->su_nsums + fsbtodb(&sblock, su->su_ninos);
-			dmeta += btodb(LFS_SUMMARY_SIZE * su->su_nsums);
-			dmeta += fsbtodb(&sblock, su->su_ninos);
+			bb += btodb(su->su_nbytes +
+				    su->su_nsums * sblock.lfs_sumsize);
+			ubb += btodb(su->su_nbytes +
+				     su->su_nsums * sblock.lfs_sumsize +
+				     su->su_ninos * sblock.lfs_ibsize);
+			dmeta += btodb(sblock.lfs_sumsize * su->su_nsums);
+			dmeta += btodb(sblock.lfs_ibsize * su->su_ninos);
 		} else {
 			nclean++;
-			avail += fsbtodb(&sblock, sblock.lfs_ssize);
+			avail += segtodb(&sblock, 1);
 			if (su->su_flags & SEGUSE_SUPERBLOCK)
 				avail -= btodb(LFS_SBPAD);
+			if (i == 0 && sblock.lfs_version > 1 &&
+			    sblock.lfs_start < btodb(LFS_LABELPAD))
+				avail -= btodb(LFS_LABELPAD) - sblock.lfs_start;
 		}
 		bp->b_flags &= ~B_INUSE;
 	}
@@ -113,8 +120,8 @@ pass5()
 	i = datosn(&sblock, sblock.lfs_offset);
 	avail += sntoda(&sblock, i + 1) - sblock.lfs_offset;
 	/* But do not count minfreesegs */
-	avail -= fsbtodb(&sblock, sblock.lfs_ssize) *
-		(sblock.lfs_minfreeseg - (sblock.lfs_minfreeseg / 2));
+	avail -= segtodb(&sblock, (sblock.lfs_minfreeseg -
+				   (sblock.lfs_minfreeseg / 2)));
 
 	if (dmeta != sblock.lfs_dmeta) { 
 		pwarn("dmeta given as %d, should be %ld\n", sblock.lfs_dmeta, 
@@ -140,13 +147,15 @@ pass5()
 			sbdirty();
 		}
 	}
-	if (sblock.lfs_bfree > sblock.lfs_dsize - bb ||
-	    sblock.lfs_bfree < sblock.lfs_dsize - ubb) {
+	labelskew = (sblock.lfs_version == 1 ? 0 : btodb(LFS_LABELPAD));
+	if (sblock.lfs_bfree > sblock.lfs_dsize - bb - labelskew ||
+	    sblock.lfs_bfree < sblock.lfs_dsize - ubb - labelskew) {
 		pwarn("bfree given as %d, should be between %ld and %ld\n",
-		      sblock.lfs_bfree, sblock.lfs_dsize - ubb,
-		      sblock.lfs_dsize - bb);
+		      sblock.lfs_bfree, sblock.lfs_dsize - ubb - labelskew,
+		      sblock.lfs_dsize - bb - labelskew);
 		if (preen || reply("fix")) {
-			sblock.lfs_bfree = sblock.lfs_dsize - (ubb + bb) / 2;
+			sblock.lfs_bfree = sblock.lfs_dsize - labelskew -
+				(ubb + bb) / 2;
 			sbdirty();
 		}
 	}
