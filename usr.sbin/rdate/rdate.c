@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.12 2001/02/19 23:22:47 cgd Exp $	*/
+/*	$NetBSD: rdate.c,v 1.13 2002/05/16 19:57:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,8 +39,8 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.12 2001/02/19 23:22:47 cgd Exp $");
-#endif/* lint */
+__RCSID("$NetBSD: rdate.c,v 1.13 2002/05/16 19:57:47 wiz Exp $");
+#endif /* lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>

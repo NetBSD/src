@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.29 2001/06/01 15:49:53 itojun Exp $	*/
+/*	$NetBSD: gencode.c,v 1.30 2002/05/16 19:57:22 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.29 2001/06/01 15:49:53 itojun Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.30 2002/05/16 19:57:22 wiz Exp $");
 #endif
 #endif
 
@@ -1488,7 +1488,7 @@ gen_portatom6(off, v)
 {
 	return gen_cmp(off_nl + 40 + off, BPF_H, v);
 }
-#endif/*INET6*/
+#endif /*INET6*/
 
 struct block *
 gen_portop(port, proto, dir)
