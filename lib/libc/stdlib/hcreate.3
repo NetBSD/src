@@ -1,4 +1,4 @@
-.\" 	$NetBSD: hcreate.3,v 1.1 2001/02/14 05:41:01 cgd Exp $
+.\" 	$NetBSD: hcreate.3,v 1.2 2001/02/14 05:59:56 cgd Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 16, 1999
+.Dd February 13, 2001
 .Dt HCREATE 3
 .Os
 .Sh NAME
@@ -112,15 +112,21 @@ argument is of type
 an enumeration type which defines the following values:
 .Bl -tag -compact -offset indent -width ENTERXX
 .It Dv ENTER
-insert
+Insert
 .Fa item
-into the hash table, possibly replacing an existing item.
+into the hash table.
+If an existing item with the same key is found, it is not replaced.
+Note that the
+.Fa key
+and
+.Fa data
+elements of
+.Fa item
+are used directly by the new table entry.  The storage for the
+key must not be modified during the lifetime of the hash table.
 .It Dv FIND
-search the hash table without inserting
+Search the hash table without inserting
 .Fa item .
-Unsuccessful resolution is indicated by the return of a
-.Dv NULL
-pointer.
 .El
 .Pp
 .Sh RETURN VALUES
@@ -137,7 +143,8 @@ returns no value.
 .Pp
 If successful, the
 .Fn hsearch
-function returns a pointer to the item.
+function returns a pointer to hash table entry matching
+the provided key.
 If the action is
 .Dv FIND
 and the item was not found, or if the action is
@@ -147,6 +154,10 @@ and the insertion failed,
 is returned and
 .Va errno
 is set to indicate the error.
+If the action is
+.Dv ENTER
+and an entry already existed in the table matching the given
+key, the existing entry is returned and is not replaced.
 .Sh ERRORS
 The
 .Fn hcreate
@@ -171,12 +182,6 @@ and
 functions conform to
 .St -xpg4.2 .
 .Sh BUGS
-The
-.Fn hsearch
-function currently returns a pointer into a static buffer area; subsequent
-calls to
-.Fn hsearch
-may overwrite this buffer.
 .Pp
 The interface permits the use of only one hash table at a time.
 .Sh HISTORY
