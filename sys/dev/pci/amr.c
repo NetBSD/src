@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.17 2003/10/25 21:30:47 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.18 2003/10/29 02:27:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.17 2003/10/25 21:30:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.18 2003/10/29 02:27:32 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,8 +244,6 @@ amr_match(struct device *parent, struct cfdata *match, void *aux)
 void
 amr_attach(struct device *parent, struct device *self, void *aux)
 {
-	bus_space_tag_t memt, iot;
-	bus_space_handle_t memh, ioh;
 	struct pci_attach_args *pa;
 	struct amr_attach_args amra;
 	const struct amr_pci_type *apt;
@@ -255,7 +253,6 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	pcireg_t reg;
 	int rseg, i, j, size, rv, memreg, ioreg;
-	bus_size_t memsize = 0, iosize = 0;
         struct amr_ccb *ac;
 
 	aprint_naive(": RAID controller\n");
@@ -275,35 +272,22 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 		reg = pci_conf_read(pc, pa->pa_tag, i);
 		switch (PCI_MAPREG_TYPE(reg)) {
 		case PCI_MAPREG_TYPE_MEM:
-			if ((memsize = PCI_MAPREG_MEM_SIZE(reg)) != 0)
-				memreg = i;
+			memreg = i;
 			break;
 		case PCI_MAPREG_TYPE_IO:
-			if ((iosize = PCI_MAPREG_IO_SIZE(reg)) != 0)
-				ioreg = i;
+			ioreg = i;
 			break;
 
 		}
 	}
 
-	if (memreg != 0)
-		if (pci_mapreg_map(pa, memreg, PCI_MAPREG_TYPE_MEM, 0,
-		    &memt, &memh, NULL, NULL))
-			memreg = 0;
-	if (ioreg != 0)
-		if (pci_mapreg_map(pa, ioreg, PCI_MAPREG_TYPE_IO, 0,
-		    &iot, &ioh, NULL, NULL))
-			ioreg = 0;
-
-	if (memreg) {
-		amr->amr_iot = memt;
-		amr->amr_ioh = memh;
-		amr->amr_ios = memsize;
-	} else if (ioreg) {
-		amr->amr_iot = iot;
-		amr->amr_ioh = ioh;
-		amr->amr_ios = iosize;
-	} else {
+	if (memreg && pci_mapreg_map(pa, memreg, PCI_MAPREG_TYPE_MEM, 0,
+	    &amr->amr_iot, &amr->amr_ioh, NULL, &amr->amr_ios) == 0)
+		;
+	else if (ioreg && pci_mapreg_map(pa, ioreg, PCI_MAPREG_TYPE_IO, 0,
+	    &amr->amr_iot, &amr->amr_ioh, NULL, &amr->amr_ios) == 0)
+		;
+	else {
 		aprint_error("can't map control registers\n");
 		amr_teardown(amr);
 		return;
