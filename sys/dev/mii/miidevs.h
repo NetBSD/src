@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.55 2004/11/24 10:15:15 martin Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.56 2004/12/23 06:18:49 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.54 2004/11/24 10:14:41 martin Exp 
+ *	NetBSD: miidevs,v 1.55 2004/12/23 06:13:24 jonathan Exp 
  */
 
 /*-
@@ -71,6 +71,7 @@
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
+#define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
@@ -99,6 +100,8 @@
 /* Don't know what's going on here. */
 #define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
 #define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
+
+#define	MII_OUI_xxREALTEK	0x000732	/* Realtek */
 
 /*
  * List of known models.  Grouped by oui.
@@ -248,6 +251,12 @@
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_xxQUALSEMI_QS6612	0x0000
 #define	MII_STR_xxQUALSEMI_QS6612	"QS6612 10/100 media interface"
+
+/* RealTek PHYs */
+#define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
+#define	MII_STR_xxREALTEK_RTL8169S	"RTL8169S/8110S 1000BASE-T media interface"
+#define	MII_MODEL_REALTEK_RTL8169S	0x0011
+#define	MII_STR_REALTEK_RTL8169S	"RTL8169S/8110S 1000BASE-T media interface"
 
 /* Seeq PHYs */
 #define	MII_MODEL_SEEQ_80220	0x0003
