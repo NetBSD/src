@@ -1,3 +1,5 @@
+/*	$NetBSD: rtsold.c,v 1.2 1999/09/03 05:14:37 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -74,26 +76,15 @@ static int fflag = 0;
 
 /* static variables and functions */
 static int mobile_node = 0;
-static int ifconfig(char *ifname);
-static int make_packet(struct ifinfo *ifinfo);
-static struct timeval *rtsol_check_timer();
-static void TIMEVAL_ADD(struct timeval *a, struct timeval *b,
-			struct timeval *result);
-static void TIMEVAL_SUB(struct timeval *a, struct timeval *b,
-			struct timeval *result);
-static void usage(char *progname);
-
-/* external functions */
-extern int ifinit();
-extern int interface_up(char *name);
-extern int lladdropt_length(struct sockaddr_dl *sdl);
-extern void lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt);
-extern struct sockaddr_dl *if_nametosdl(char *name);
-extern int sockopen();
-extern void rtsol_input(int s);
-extern void sendpacket(struct ifinfo *ifinfo);
-extern int probe_init();
-extern void defrouter_probe(int ifindex);
+int main __P((int argc, char *argv[]));
+static int ifconfig __P((char *ifname));
+static int make_packet __P((struct ifinfo *ifinfo));
+static struct timeval *rtsol_check_timer __P((void));
+static void TIMEVAL_ADD __P((struct timeval *a, struct timeval *b,
+			     struct timeval *result));
+static void TIMEVAL_SUB __P((struct timeval *a, struct timeval *b,
+			     struct timeval *result));
+static void usage __P((char *progname));
 
 int
 main(argc, argv)
@@ -220,6 +211,8 @@ main(argc, argv)
 			rtsol_input(s);
 	}
 	/* NOTREACHED */
+
+	return 0;
 }
 
 static int
