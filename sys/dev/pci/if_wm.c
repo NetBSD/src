@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.4 2002/05/08 17:53:28 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.5 2002/05/08 19:00:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -238,6 +238,10 @@ struct wm_softc {
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
 
+	struct evcnt sc_ev_txctx_init;	/* Tx cksum context cache initialized */
+	struct evcnt sc_ev_txctx_hit;	/* Tx cksum context cache hit */
+	struct evcnt sc_ev_txctx_miss;	/* Tx cksum context cache miss */
+
 	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
 
@@ -253,6 +257,10 @@ struct wm_softc {
 	int	sc_txsfree;		/* number of free Tx jobs */
 	int	sc_txsnext;		/* next free Tx job */
 	int	sc_txsdirty;		/* dirty Tx jobs */
+
+	uint32_t sc_txctx_tcmd;		/* cached Tx cksum cmd */
+	uint32_t sc_txctx_ipcs;		/* cached Tx IP cksum start */
+	uint32_t sc_txctx_tucs;		/* cached Tx TCP/UDP cksum start */
 
 	bus_addr_t sc_rdt_reg;		/* offset of RDT register */
 
@@ -863,6 +871,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
 
+	evcnt_attach_dynamic(&sc->sc_ev_txctx_init, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txctx init");
+	evcnt_attach_dynamic(&sc->sc_ev_txctx_hit, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txctx hit");
+	evcnt_attach_dynamic(&sc->sc_ev_txctx_miss, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txctx miss");
+
 	for (i = 0; i < WM_NTXSEGS; i++)
 		evcnt_attach_dynamic(&sc->sc_ev_txseg[i], EVCNT_TYPE_MISC,
 		    NULL, sc->sc_dev.dv_xname, wm_txseg_evcnt_names[i]);
@@ -980,17 +995,38 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	} else
 		tucs = 0;
 
-	/* Fill in the context descriptor. */
-	t = (struct livengood_tcpip_ctxdesc *) &sc->sc_txdescs[sc->sc_txnext];
-	t->tcpip_ipcs = ipcs;
-	t->tcpip_tucs = tucs;
-	t->tcpip_cmdlen =
-	    htole32(WTX_CMD_DEXT | WTX_CMD_IDE | WTX_DTYP_C) | tcmd;
-	t->tcpip_seg = 0;
-	WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
+	if (sc->sc_txctx_ipcs == ipcs &&
+	    sc->sc_txctx_tucs == tucs &&
+	    sc->sc_txctx_tcmd == tcmd) {
+		/* Cached context is fine. */
+		WM_EVCNT_INCR(&sc->sc_ev_txctx_hit);
+	} else {
+		/* Fill in the context descriptor. */
+#ifdef WM_EVENT_COUNTERS
+		if (sc->sc_txctx_ipcs == 0xffffffff &&
+		    sc->sc_txctx_tucs == 0xffffffff &&
+		    sc->sc_txctx_tcmd == 0xffffffff)
+			WM_EVCNT_INCR(&sc->sc_ev_txctx_init);
+		else
+			WM_EVCNT_INCR(&sc->sc_ev_txctx_miss);
+#endif
+		t = (struct livengood_tcpip_ctxdesc *)
+		    &sc->sc_txdescs[sc->sc_txnext];
+		t->tcpip_ipcs = ipcs;
+		t->tcpip_tucs = tucs;
+		t->tcpip_cmdlen =
+		    htole32(WTX_CMD_DEXT | WTX_CMD_IDE | WTX_DTYP_C) | tcmd;
+		t->tcpip_seg = 0;
+		WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
-	sc->sc_txnext = WM_NEXTTX(sc->sc_txnext);
-	txs->txs_ndesc++;
+		sc->sc_txctx_ipcs = ipcs;
+		sc->sc_txctx_tucs = tucs;
+		sc->sc_txctx_tcmd = tcmd;
+
+		sc->sc_txnext = WM_NEXTTX(sc->sc_txnext);
+		txs->txs_ndesc++;
+		sc->sc_txwin++;
+	}
 
 	*cmdp = WTX_CMD_DEXT | WTC_DTYP_D;
 	*fieldsp = fields;
@@ -1824,6 +1860,10 @@ wm_init(struct ifnet *ifp)
 	sc->sc_txfree = WM_NTXDESC;
 	sc->sc_txnext = 0;
 	sc->sc_txwin = 0;
+
+	sc->sc_txctx_tcmd = 0xffffffff;
+	sc->sc_txctx_ipcs = 0xffffffff;
+	sc->sc_txctx_tucs = 0xffffffff;
 
 	if (sc->sc_type < WM_T_LIVENGOOD) {
 		CSR_WRITE(sc, WMREG_OLD_TBDAH, 0);
