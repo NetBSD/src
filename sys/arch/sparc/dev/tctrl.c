@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.11 2000/07/09 20:57:47 pk Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.12 2000/07/25 09:57:59 toddpw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@ tctrl_intr(arg)
 
     again:
 	/* find out the cause(s) of the interrupt */
-	v = tctrl_read(sc, TS102_REG_UCTRL_STS);
+	v = tctrl_read(sc, TS102_REG_UCTRL_STS) & TS102_UCTRL_STS_MASK;
 
 	/* clear the cause(s) of the interrupt */
 	tctrl_write(sc, TS102_REG_UCTRL_STS, v);
