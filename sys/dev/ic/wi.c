@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.51 2002/03/10 00:16:47 augustss Exp $	*/
+/*	$NetBSD: wi.c,v 1.52 2002/03/10 14:43:38 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.51 2002/03/10 00:16:47 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.52 2002/03/10 14:43:38 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -970,24 +970,21 @@ static int wi_write_record(sc, ltv)
 		case WI_RID_DEFLT_CRYPT_KEYS:
 		    {
 			int error;
+			int keylen;
 			struct wi_ltv_str	ws;
 			struct wi_ltv_keys	*wk = (struct wi_ltv_keys *)ltv;
+
+			keylen = wk->wi_keys[sc->wi_tx_key].wi_keylen;
+
 			for (i = 0; i < 4; i++) {
 				memset(&ws, 0, sizeof(ws));
-				if(wk->wi_keys[i].wi_keylen <= 5) {
-					/* 5 Octets WEP Keys */
-					ws.wi_len = 4;
-					memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 5);
-					ws.wi_str[5] = '\0';
-				} else {
-					/* 13 Octets WEP Keys */
-					ws.wi_len = 8;
-					memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 13);
-					ws.wi_str[13] = '\0';
-				}
+				ws.wi_len = (keylen > 5) ? 8 : 4;
 				ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
-
-				if(wi_write_record(sc, (struct wi_ltv_gen *)&ws))
+				memcpy(ws.wi_str,
+					&wk->wi_keys[i].wi_keydat, keylen);
+				error = wi_write_record(sc,
+					(struct wi_ltv_gen *)&ws);
+				if (error)
 					return error;
 			}
 			return 0;
