@@ -1,4 +1,4 @@
-/*	$NetBSD: ugraphire_rdesc.h,v 1.2 2004/01/04 01:29:11 augustss Exp $	*/
+/*	$NetBSD: ugraphire_rdesc.h,v 1.3 2004/01/04 08:35:52 jdolecek Exp $	*/
 /*
  * Copyright (c) 2000 Nick Hibma <n_hibma@freebsd.org>
  * All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-static uByte uhid_graphire_report_descr[] = {
+static const uByte uhid_graphire_report_descr[] = {
     0x05, 0x0d,                    /*  USAGE_PAGE (Digitizers)		*/
     0x09, 0x01,                    /*  USAGE (Digitizer)		*/
     0xa1, 0x01,                    /*  COLLECTION (Application)		*/
@@ -90,7 +90,7 @@ static uByte uhid_graphire_report_descr[] = {
     0xc0,                          /*  END_COLLECTION			*/
 };
 
-static uByte uhid_graphire3_4x5_report_descr[] = {
+static const uByte uhid_graphire3_4x5_report_descr[] = {
     0x05, 0x01,                    /* USAGE_PAGE (Generic Desktop)	*/
     0x09, 0x02,                    /* USAGE (Mouse)			*/
     0xa1, 0x01,                    /* COLLECTION (Application)		*/
