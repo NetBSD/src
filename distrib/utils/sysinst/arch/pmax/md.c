@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.48 2002/12/05 01:17:28 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.49 2003/05/31 08:10:01 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,6 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-#include "bsddisklabel.c"
 
 /*
  * temporary hack
