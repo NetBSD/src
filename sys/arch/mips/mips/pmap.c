@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1998/11/15 02:34:37 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1998/11/29 03:18:32 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 1998/11/15 02:34:37 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 1998/11/29 03:18:32 jonathan Exp $");
 
 /*
  *	Manages physical address maps.
@@ -728,9 +728,12 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
+
+#ifdef notanymore
 			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
 				*pa_to_attribute(pfn_to_vad(entry)) &=
 				    ~PV_MODIFIED;
+#endif
 
 
 			if (CPUISMIPS3)
@@ -784,9 +787,12 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
+
+#ifdef notanymore
 			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
 				*pa_to_attribute(pfn_to_vad(entry)) &=
 				    ~PV_MODIFIED;
+#endif
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
 			 * Flush the TLB for the given address.
@@ -1649,22 +1655,6 @@ pmap_pageable(pmap, sva, eva, pageable)
 }
 
 /*
- *	Clear the modify bits on the specified physical page.
- */
-void
-pmap_clear_modify(pa)
-	vm_offset_t pa;
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_modify(%lx)\n", pa);
-#endif
-	if (PAGE_IS_MANAGED(pa))
-		*pa_to_attribute(pa) &= ~PV_MODIFIED;
-}
-
-/*
  *	pmap_clear_reference:
  *
  *	Clear the reference bit on the specified physical page.
@@ -1698,6 +1688,22 @@ pmap_is_referenced(pa)
 #else
 	return (FALSE);
 #endif
+}
+
+/*
+ *	Clear the modify bits on the specified physical page.
+ */
+void
+pmap_clear_modify(pa)
+	vm_offset_t pa;
+{
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_clear_modify(%lx)\n", pa);
+#endif
+	if (PAGE_IS_MANAGED(pa))
+		*pa_to_attribute(pa) &= ~PV_MODIFIED;
 }
 
 /*
