@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <sys/ucontext.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 
 pid_t child;
 int code;
@@ -108,6 +109,10 @@ runkill()
 int
 main(void)
 {
+	struct rlimit rlim;
+	(void)getrlimit(RLIMIT_CORE, &rlim);
+	rlim.rlim_cur = rlim.rlim_max;
+	(void)setrlimit(RLIMIT_CORE, &rlim);
 	sethandler(handler);
 	runnormal();
 	rundump();
