@@ -1,9 +1,9 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.1.1.1 1995/12/01 17:59:57 phil Exp $
+#	$NetBSD: Makefile,v 1.2 1996/05/11 11:38:06 mycroft Exp $
 
 PROG=		cpp
 BINDIR=		/usr/libexec
-SRCS=	cccp.c cexp.c obstack.c version.c 
+SRCS=	cccp.c obstack.c cexp.c version.c 
 CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../common -I$(.CURDIR)/../arch \
                 -I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
 		-DGCC_INCLUDE_DIR=\"\" \
@@ -14,6 +14,8 @@ DPADD+=		/usr/lib/libgnumalloc.a
 YFLAGS=
 
 MLINKS=	cpp.1 cccp.1 cpp.1 gcpp.1
+
+CLEANFILES+= cexp.c
 
 .PATH:		$(.CURDIR)/../common
 
