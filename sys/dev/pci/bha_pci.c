@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.16.12.1 2001/01/05 17:36:02 bouyer Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.16.12.2 2001/03/27 13:08:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 

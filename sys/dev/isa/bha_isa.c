@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.15.2.1 2000/11/20 11:41:11 bouyer Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.15.2.2 2001/03/27 13:08:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
@@ -149,7 +148,7 @@ bha_isa_attach(parent, self, aux)
 		 * we can do 32-bit DMA (earlier revisions are buggy
 		 * in this regard).
 		 */
-		bha_inquire_setup_information(sc);
+		(void) bha_info(sc);
 		if (strcmp(sc->sc_firmware, "3.37") < 0)
 		    printf("%s: buggy VLB controller, disabling 32-bit DMA\n",
 		        sc->sc_dev.dv_xname);
