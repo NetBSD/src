@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.20 1998/12/09 12:50:47 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.21 2000/12/18 21:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,7 +50,11 @@
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
 extern __const char *__const *sys_signame __RENAME(__sys_signame14);
+#ifndef __SYS_SIGLIST_DECLARED
+#define __SYS_SIGLIST_DECLARED
+/* also in unistd.h */
 extern __const char *__const *sys_siglist __RENAME(__sys_siglist14);
+#endif /* __SYS_SIGLIST_DECLARED */
 extern __const int sys_nsig __RENAME(__sys_nsig14);
 #endif
 
@@ -90,21 +94,15 @@ int	sigprocmask __P((int, const sigset_t *, sigset_t *)) __RENAME(__sigprocmask1
 int	sigsuspend __P((const sigset_t *)) __RENAME(__sigsuspend14);
 
 #if defined(__GNUC__) && defined(__STDC__)
+#ifndef errno
+int *__errno __P((void));
+#define errno (*__errno())
+#endif
 extern __inline int
 sigaddset(sigset_t *set, int signo)
 {
-#ifdef _REENTRANT
-	extern int *__errno __P((void));
-#else
-	extern int errno;
-#endif
-
 	if (signo <= 0 || signo >= _NSIG) {
-#ifdef _REENTRANT
-		*__errno() = 22;		/* EINVAL */
-#else
 		errno = 22;			/* EINVAL */
-#endif
 		return (-1);
 	}
 	__sigaddset(set, signo);
@@ -114,18 +112,8 @@ sigaddset(sigset_t *set, int signo)
 extern __inline int
 sigdelset(sigset_t *set, int signo)
 {
-#ifdef _REENTRANT
-	extern int *__errno __P((void));
-#else
-	extern int errno;
-#endif
-
 	if (signo <= 0 || signo >= _NSIG) {
-#ifdef _REENTRANT
-		*__errno() = 22;		/* EINVAL */
-#else
 		errno = 22;			/* EINVAL */
-#endif
 		return (-1);
 	}
 	__sigdelset(set, signo);
@@ -135,18 +123,8 @@ sigdelset(sigset_t *set, int signo)
 extern __inline int
 sigismember(const sigset_t *set, int signo)
 {
-#ifdef _REENTRANT
-	extern int *__errno __P((void));
-#else
-	extern int errno;
-#endif
-
 	if (signo <= 0 || signo >= _NSIG) {
-#ifdef _REENTRANT
-		*__errno() = 22;		/* EINVAL */
-#else
 		errno = 22;			/* EINVAL */
-#endif
 		return (-1);
 	}
 	return (__sigismember(set, signo));
@@ -174,7 +152,11 @@ int	sigaltstack __P((const stack_t *, stack_t *)) __RENAME(__sigaltstack14);
 #endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#ifndef __PSIGNAL_DECLARED
+#define __PSIGNAL_DECLARED
+/* also in unistd.h */
 void	psignal __P((unsigned int, const char *));
+#endif /* __PSIGNAL_DECLARED */
 int	sigblock __P((int));
 #ifdef __LIBC12_SOURCE__
 int	sigreturn __P((struct sigcontext13 *));
