@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.255 2002/01/19 13:32:52 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.256 2002/01/25 05:21:40 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -144,6 +144,7 @@ MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/nbmkdep
 MKLOCALE=	${TOOLDIR}/bin/nbmklocale
 MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/nbmsgc
 MTREE=		${TOOLDIR}/bin/nbmtree
+PAX=		${TOOLDIR}/bin/nbpax
 PIC=		${TOOLDIR}/bin/nbpic
 PWD_MKDB=	${TOOLDIR}/bin/nbpwd_mkdb
 REFER=		${TOOLDIR}/bin/nbrefer
