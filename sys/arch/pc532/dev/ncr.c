@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.30 1996/10/15 21:59:03 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.31 1996/11/24 13:32:50 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -175,10 +175,10 @@ ncr_attach(parent, self, aux)
 }
 
 static void
-ncr_intr(p)
-	void *p;
+ncr_intr(arg)
+	void *arg;
 {
-	register struct ncr5380_softc *sc = p;
+	register struct ncr5380_softc *sc = arg;
 	int s;
 
 	if (*sc->sci_csr & SCI_CSR_INT) {
