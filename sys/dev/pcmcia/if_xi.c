@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.43 2004/08/08 07:48:46 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.44 2004/08/09 04:47:40 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.43 2004/08/08 07:48:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.44 2004/08/09 04:47:40 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -767,6 +767,9 @@ xi_stop(sc)
 
 	DPRINTF(XID_CONFIG, ("xi_stop()\n"));
 
+	PAGE(sc, 0x40);
+	bus_space_write_1(bst, bsh, offset + CMD0, DISABLE_RX);
+
 	/* Disable interrupts. */
 	PAGE(sc, 0);
 	bus_space_write_1(bst, bsh, offset + CR, 0);
@@ -816,8 +819,6 @@ xi_init(sc)
 
 	DPRINTF(XID_CONFIG, ("xi_init()\n"));
 
-	xi_set_address(sc);
-
 	/* Setup the ethernet interrupt mask. */
 	PAGE(sc, 1);
 	bus_space_write_1(bst, bsh, offset + IMR0,
@@ -832,6 +833,13 @@ xi_init(sc)
 	/* Enable interrupts. */
 	PAGE(sc, 0);
 	bus_space_write_1(bst, bsh, offset + CR, ENABLE_INT);
+
+	xi_set_address(sc);
+
+	PAGE(sc, 0x40);
+	bus_space_write_1(bst, bsh, offset + CMD0, ENABLE_RX | ONLINE);
+
+	PAGE(sc, 0);
 
 	/* Set current media. */
 	mii_mediachg(&sc->sc_mii);
@@ -1147,14 +1155,14 @@ done:
 
 		PAGE(sc, 0x50 + page);
 		bus_space_write_region_1(bst, bsh, offset + IA,
-		    &indaddr[page * 8], 8);
+		    &indaddr[page * 8], page == 7 ? 4 : 8);
 	}
 
 	PAGE(sc, 0x42);
 	x = SWC1_IND_ADDR;
 	if (ifp->if_flags & IFF_PROMISC)
 		x |= SWC1_PROMISC;
-	if (ifp->if_flags & IFF_ALLMULTI)
+	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC))
 		x |= SWC1_MCAST_PROM;
 	if (!LIST_FIRST(&sc->sc_mii.mii_phys))
 		x |= SWC1_AUTO_MEDIA;
@@ -1281,19 +1289,6 @@ xi_full_reset(sc)
 	if (sc->sc_chipset >= XI_CHIPSET_DINGO)
 		bus_space_write_1(bst, bsh, offset + LED3,
 		    LED_100MB_LINK << LED3_SHIFT);
-
-	/* Enable receiver and go online. */
-	PAGE(sc, 0x40);
-	bus_space_write_1(bst, bsh, offset + CMD0, ENABLE_RX | ONLINE);
-
-#if 0 /*XXXMYC*/
-	/* XXX This is pure magic for me, found in the Linux driver. */
-	if ((sc->sc_flags & (XIFLAGS_DINGO | XIFLAGS_MODEM)) == XIFLAGS_MODEM) {
-		if ((bus_space_read_1(bst, bsh, offset + 0x10) & 0x01) == 0)
-			/* Unmask the master interrupt bit. */
-			bus_space_write_1(bst, bsh, offset + 0x10, 0x11);
-	}
-#endif
 
 	/*
 	 * The Linux driver says this:
