@@ -1,4 +1,5 @@
-/* $NetBSD: mmureg.h,v 1.2 1999/09/16 12:48:35 msaitoh Exp $ */
+/* $Id: mmureg.h,v 1.3 2000/03/20 20:30:33 msaitoh Exp $ */
+/* $NetBSD: mmureg.h,v 1.3 2000/03/20 20:30:33 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -55,6 +56,28 @@
 #define SHREG_MMUCR	(*(volatile unsigned long *)	0xff000010)
 
 #endif
+
+#if !defined(SH4)
+
+/* SH3 definitions */
+#define MMUCR_AT	0x0001	/* address traslation enable */
+#define MMUCR_IX	0x0002	/* index mode */
+#define MMUCR_TF	0x0004	/* TLB flush */
+#define MMUCR_SV	0x0100	/* single virtual space mode */
+
+#else
+
+/* SH4 definitions */
+#define MMUCR_AT	0x0001	/* address traslation enable */
+#define MMUCR_TI	0x0004	/* TLB Invaliate */
+#define MMUCR_SV	0x0100	/* single virtual space mode */
+#define MMUCR_SQMD	0x0200  /* Store Queue mode */
+
+/* alias */
+#define MMUCR_TF	MMUCR_TI
+
+#endif
+
 
 #ifdef _KERNEL
 extern int PageDirReg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2000/02/24 19:42:37 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2000/03/20 20:30:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -580,11 +580,6 @@ initSH3(pc)
 #ifndef ROMIMAGE
 	MMEYE_LED = 1;
 #endif
-
-#define MMUCR_AT	0x0001	/* address traslation enable */
-#define MMUCR_IX	0x0002	/* index mode */
-#define MMUCR_TF	0x0004	/* TLB flush */
-#define MMUCR_SV	0x0100	/* single virtual space mode */
 
 	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV;
 
