@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/02/07 04:19:29 rtr Exp $
+#	$NetBSD: Makefile,v 1.9 2004/02/07 05:47:19 rtr Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -74,7 +74,10 @@ AFLAGS+=	-DUSE_GAS -I. -I${X11SRCDIR.xc}/extras/Mesa/src/SPARC
 GENMATYPESDIR!=	cd ${NETBSDSRCDIR}/x11/tools/gen_matypes && ${PRINTOBJDIR}
 GENMATYPES=	${GENMATYPESDIR}/gen_matypes
 
-matypes.h:
+${GENMATYPES}:
+	(cd ${NETBSDSRCDIR}/x11/tools/gen_matypes && ${MAKE})
+
+matypes.h: ${GENMATYPES}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${GENMATYPES} > ${.TARGET}
