@@ -1,4 +1,4 @@
-/*      $NetBSD: byte_swap.h,v 1.1 2002/08/30 10:50:07 scw Exp $	*/
+/*      $NetBSD: byte_swap.h,v 1.2 2003/03/26 12:00:41 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -47,33 +47,30 @@ static __inline u_int64_t _sh5_bswap64(u_int64_t);
 static __inline u_int16_t
 _sh5_bswap16(u_int16_t x)
 {
-	u_int16_t rval;
 
-	__asm __volatile ("byterev %1,%0; shlri %0, 48, %0" :
-	    "=r"(rval) : "r"(x));
+	__asm __volatile("byterev %0, %0; shlri %0, 32, %0; shlri.l %0, 16, %0"
+	    : "+r"(x));
 
-	return (rval);
+	return (x);
 }
 
 static __inline u_int32_t
 _sh5_bswap32(u_int32_t x)
 {
-	u_int32_t rval;
 
-	__asm __volatile ("byterev %1,%0; shlri %0, 32, %0" :
-	    "=r"(rval) : "r"(x));
+	__asm __volatile("byterev %0, %0; shlri %0, 32, %0; add.l %0, r63, %0"
+	    : "+r"(x));
 
-	return (rval);
+	return (x);
 }
 
 static __inline u_int64_t
 _sh5_bswap64(u_int64_t x)
 {
-	u_int64_t rval;
 
-	__asm __volatile ("byterev %1,%0" : "=r"(rval) : "r"(x));
+	__asm __volatile("byterev %0, %0" : "+r"(x));
 
-	return (rval);
+	return (x);
 }
 
 #endif /* _SH5_BYTESWAP_H_ */
