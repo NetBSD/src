@@ -17,8 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.1 1994/01/28 12:41:54 pk Exp $
+	$Id: tm.h,v 1.2 1994/02/23 04:35:39 chopps Exp $
 */
+#include <machine/vmparam.h>
 
 /* Configuration file for HP9000/300 series machine running BSD,
    including Utah, Mt. Xinu or Berkeley variants.  This is NOT for HP-UX.
@@ -29,13 +30,13 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #define BPT_VECTOR 0x2
 
-#define TARGET_NBPG 4096
+#define TARGET_NBPG NBPG
 
 /* For 4.4 this would be 2, but it is OK for us to detect an area a
    bit bigger than necessary.  This way the same gdb binary can target
    either 4.3 or 4.4.  */
 
-#define TARGET_UPAGES 3
+#define TARGET_UPAGES UPAGES
 
 /* On the HP300, sigtramp is in the u area.  Gak!  User struct is not
    mapped to the same virtual address in user/kernel address space
@@ -51,6 +52,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 /* Address of end of stack space.  */
 
-#define STACK_END_ADDR 0xfff00000
+#define STACK_END_ADDR USRSTACK
 
 #include "tm-m68k.h"
