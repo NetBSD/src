@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.130 1998/09/14 22:45:36 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.131 1998/10/06 19:24:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4085,6 +4085,11 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 			}
 		}
 		nleft--;
+#ifdef DIAGNOSTIC
+		if (nleft < 0)
+			panic("pmap_rmk: too many PTEs in segment; "
+			      "va 0x%lx; endva 0x%lx", va, endva);
+#endif
 		setpte4(va, 0);
 		va += NBPG;
 	}
@@ -4192,9 +4197,14 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 				pv_unlink4m(pv, pm, va);
 			}
 		}
-		nleft--;
 		tlb_flush_page(va);
 		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+		nleft--;
+#ifdef DIAGNOSTIC
+		if (nleft < 0)
+			panic("pmap_rmk: too many PTEs in segment; "
+			      "va 0x%lx; endva 0x%lx", va, endva);
+#endif
 		va += NBPG;
 	}
 
@@ -4285,6 +4295,11 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 					pv_unlink4_4c(pvhead(i), pm, va);
 			}
 			nleft--;
+#ifdef DIAGNOSTIC
+			if (nleft < 0)
+				panic("pmap_rmu: too many PTEs in segment; "
+				      "va 0x%lx; endva 0x%lx", va, endva);
+#endif
 			*pte = 0;
 		}
 		if ((sp->sg_npte = nleft) == 0) {
@@ -4348,6 +4363,11 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 			}
 		}
 		nleft--;
+#ifdef DIAGNOSTIC
+		if (nleft < 0)
+			panic("pmap_rmu: too many PTEs in segment; "
+			     "va 0x%lx; endva 0x%lx; pmeg %d", va, endva, pmeg);
+#endif
 		setpte4(pteva, 0);
 		pte0[VA_VPG(pteva)] = 0;
 	}
@@ -4473,6 +4493,11 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			}
 		}
 		nleft--;
+#ifdef DIAGNOSTIC
+		if (nleft < 0)
+			panic("pmap_rmu: too many PTEs in segment; "
+			      "va 0x%lx; endva 0x%lx", va, endva);
+#endif
 		setpgt4m(&pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
 	}
 
