@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_descrip.c	8.6 (Berkeley) 4/19/94
- *	$Id: kern_descrip.c,v 1.17 1994/05/19 08:13:09 cgd Exp $
+ *	$Id: kern_descrip.c,v 1.18 1994/06/14 05:21:11 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -65,8 +65,10 @@ int nfiles;		/* actual number of open files */
 /*
  * System calls on descriptors.
  */
+
+#ifdef COMPAT_43
 /* ARGSUSED */
-getdtablesize(p, uap, retval)
+ogetdtablesize(p, uap, retval)
 	struct proc *p;
 	void *uap;
 	int *retval;
@@ -75,6 +77,7 @@ getdtablesize(p, uap, retval)
 	*retval = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 	return (0);
 }
+#endif
 
 /*
  * Duplicate a file descriptor.
