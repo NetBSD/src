@@ -1,4 +1,4 @@
-/*	$NetBSD: diovar.h,v 1.3 1997/05/05 21:01:33 thorpej Exp $	*/
+/*	$NetBSD: diovar.h,v 1.4 1997/07/17 01:59:12 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -70,9 +70,10 @@ struct dio_devdesc {
 	const char *dd_desc;		/* description */
 };
 
-#define	diocf_scode		cf_loc[0]
+#include "locators.h"
+#define	diocf_scode		cf_loc[DIOCF_SCODE]
 
-#define	DIO_UNKNOWN_SCODE	-1
+#define	DIO_UNKNOWN_SCODE	DIOCF_SCODE_DEFAULT
 
 #ifdef _KERNEL
 void	*dio_scodetopa __P((int));
