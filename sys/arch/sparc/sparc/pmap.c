@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.237 2003/02/14 22:24:58 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.238 2003/02/15 13:17:41 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -922,7 +922,7 @@ void	pm_check_u __P((char *, struct pmap *));
  * `va2pa_offset' to hold the physical address corresponding to KERNBASE.
  */
 
-static u_long va2pa_offset = KERNBASE;
+static u_long va2pa_offset;
 #define PMAP_BOOTSTRAP_VA2PA(v) ((paddr_t)((u_long)(v) - va2pa_offset))
 
 /*
@@ -991,12 +991,14 @@ pmap_page_upload()
 		end = start + pmemarr[n].len;
 
 		/*
-		 * If the kernel is not load at address 0, upload the
+		 * If the kernel is not loaded at address 0, upload the
 		 * initial segment [0, `loadaddr'].
 		 */
 		if (start < PMAP_BOOTSTRAP_VA2PA(KERNBASE)) {
 			/* `bootstrap gap' */
-printf("bootstrap gap: start %lx, end %lx\n", start, end);
+#ifdef DEBUG
+			printf("bootstrap gap: start %lx, end %lx\n", start, end);
+#endif
 			uvm_page_physload(
 				atop(start),
 				atop(PMAP_BOOTSTRAP_VA2PA(KERNBASE)),
@@ -2868,13 +2870,15 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	int lastpage;
 	vaddr_t va;
 	extern char *kernel_top;
+	extern char kernel_text[];
 
 	/*
-	 * Compute `va2pa_offset', which is set to KERNBASE initially,
-	 * but must be adjusted if the kernel is not loaded at
-	 * physical address 0.
+	 * Compute `va2pa_offset'.
+	 * Use `kernel_text' to probe the MMU translation since
+	 * the pages at KERNBASE might not be mapped.
 	 */
-	va2pa_offset -= (getpte4(KERNBASE) & PG_PFNUM) << PGSHIFT;
+	va2pa_offset = (vaddr_t)kernel_text -
+			((getpte4(KERNBASE) & PG_PFNUM) << PGSHIFT);
 
 	ncontext = nctx;
 
@@ -3249,13 +3253,14 @@ pmap_bootstrap4m(void)
 	extern char *kernel_top;
 	extern char etext[];
 	extern caddr_t reserve_dumppages(caddr_t);
+	extern char kernel_text[];
 
 	/*
-	 * Compute `va2pa_offset', which is set to KERNBASE initially,
-	 * but must be adjusted if the kernel is not loaded at
-	 * physical address 0.
+	 * Compute `va2pa_offset'.
+	 * Use `kernel_text' to probe the MMU translation since
+	 * the pages at KERNBASE might not be mapped.
 	 */
-	va2pa_offset -= VA2PA((caddr_t)KERNBASE);
+	va2pa_offset = (vaddr_t)kernel_text - VA2PA(kernel_text);
 
 	ncontext = cpuinfo.mmu_ncontext;
 
