@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2001/10/18 15:19:58 rearnsha Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2001/11/06 19:59:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -301,7 +301,7 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
-	{ "Xscale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
+	{ "XScale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
 };
 
 /*
