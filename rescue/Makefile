@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/08/22 01:23:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2002/08/23 03:25:21 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -7,7 +7,7 @@ WARNS=		1
 DBG=		-Os
 
 CRUNCHBIN=	rescue
-CRUNCHENV=	# empty - don't want SMALLPROG defined
+CRUNCHENV=	RESCUEDIR=/rescue
 LISTS=		${.CURDIR}/list
 TARGETDIR=	${DESTDIR}/rescue
 PARSELISTENV+=  TARGETDIR=${TARGETDIR:Q}
