@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.3 2003/02/19 12:44:47 martin Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.4 2003/02/19 13:51:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -134,7 +134,7 @@ extern int smbfs_debuglevel;
 /*
  * smb level
  */
-int  smbfs_smb_lock(struct smbnode *np, int op, int id,
+int  smbfs_smb_lock(struct smbnode *np, int op, caddr_t id,
 	off_t start, off_t end,	struct smb_cred *scred);
 int  smbfs_smb_statfs2(struct smb_share *ssp, struct statfs *sbp,
 	struct smb_cred *scred);

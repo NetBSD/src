@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.4 2003/02/19 12:44:47 martin Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.5 2003/02/19 13:51:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1047,8 +1047,6 @@ smbfs_advlock(v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct flock *fl = ap->a_fl;
-	int id = 1 /* ap->a_id */;
-/*	int flags = ap->a_flags;*/
 	struct proc *p = curproc;
 	struct smb_cred scred;
 	u_quad_t size;
@@ -1123,7 +1121,7 @@ smbfs_advlock(v)
 		error = lf_advlock(ap, &np->n_lockf, size);
 		if (error)
 			break;
-		error = smbfs_smb_lock(np, SMB_LOCK_EXCL, id, start, end, &scred);
+		error = smbfs_smb_lock(np, SMB_LOCK_EXCL,  ap->a_id, start, end, &scred);
 		if (error) {
 			ap->a_op = F_UNLCK;
 			lf_advlock(ap, &np->n_lockf, size);
@@ -1131,7 +1129,7 @@ smbfs_advlock(v)
 		break;
 	case F_UNLCK:
 		lf_advlock(ap, &np->n_lockf, size);
-		error = smbfs_smb_lock(np, SMB_LOCK_RELEASE, id, start, end, &scred);
+		error = smbfs_smb_lock(np, SMB_LOCK_RELEASE,  ap->a_id, start, end, &scred);
 		break;
 	case F_GETLK:
 		error = lf_advlock(ap, &np->n_lockf, size);
