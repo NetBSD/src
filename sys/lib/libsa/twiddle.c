@@ -1,4 +1,4 @@
-/*	$NetBSD: twiddle.c,v 1.3 1999/03/23 22:25:31 simonb Exp $	*/
+/*	$NetBSD: twiddle.c,v 1.4 1999/06/22 22:09:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,29 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)printf.c	8.1 (Berkeley) 6/11/93
- */
-
-/*
- * Scaled down version of printf(3).
- *
- * One additional format:
- *
- * The format %b is supported to decode error registers.
- * Its usage is:
- *
- *	printf("reg=%b\n", regval, "<base><arg>*");
- *
- * where <base> is the output base expressed as a control character, e.g.
- * \10 gives octal; \20 gives hex.  Each arg is a sequence of characters,
- * the first of which gives the bit number to be inspected (origin 1), and
- * the next characters (up to a control character, i.e. a character <= 32),
- * give the name of the register.  Thus:
- *
- *	printf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
- *
- * would produce output:
- *
- *	reg=3<BITTWO,BITONE>
  */
 
 #include <sys/cdefs.h>
