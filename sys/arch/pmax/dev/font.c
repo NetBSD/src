@@ -1,4 +1,4 @@
-/*	$NetBSD: font.c,v 1.6 1995/09/24 23:13:00 jonathan Exp $ */
+/*	$NetBSD: font.c,v 1.7 1995/10/05 01:52:44 jonathan Exp $ */
 
 /*
  * Copyright (c) 1991, 1993, 1995
@@ -69,5 +69,5 @@ rcons_font(rc)
 	rc->rc_font = &qvss;
 
 	/* Get distance to top and bottom of font from font origin */
-	rc->rc_font_ascent = -(rc->rc_font->chars)['a'].homey;
+	rc->rc_font->ascent = -(rc->rc_font->chars)['a'].homey;
 }

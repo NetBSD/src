@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.5 1995/09/22 23:48:20 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.6 1995/10/05 01:52:51 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -37,8 +37,8 @@
  *
  */
 
-#include <rcons.h>
-#if NRCONS > 0
+#include <rasterconsole.h>
+#if NRASTERCONSOLE > 0
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,7 +83,7 @@
 
 extern struct tty *constty;	/* virtual console output device */
 struct tty *fbconstty;		/* Frame buffer console tty... */
-struct tty rcons_tty [NRCONS];	/* Console tty struct... */
+struct tty rcons_tty [NRASTERCONSOLE];	/* Console tty struct... */
 extern struct consdev *cn_tab;	/* Console I/O table... */
 
 struct	vnode *cn_in_devvp;	/* vnode for underlying input device. */
@@ -146,11 +146,16 @@ rcons_connect (info)
 	rc.rc_row = &row;
 	rc.rc_col = &col;
 
+	/* Initialize the rastercons font to something suitable for a qvss */
+	rcons_font(&rc);
+
+
 	row = (rc.rc_height / HW_FONT_HEIGHT) - 1;
 	col = 0;
 
-	tem = v_putc;
+	tem = v_putc;	/* rcons putchar signature doesn't match dev/cons */
 	rcons_init (&rc);
+
 
 	rc.rc_xorigin = 0;
 	rc.rc_yorigin = 0;
@@ -188,7 +193,7 @@ rcons_vputc(dev, c)
  * the vnode, clean up pmax console initialization, and set
  * the initial tty size.
 /* ARGSUSED */
-rconsoleattach (n)
+rasterconsoleattach (n)
 	int n;
 {
 	register struct tty *tp = &rcons_tty [0];
@@ -359,7 +364,7 @@ rcons_input (dev, ic)
 {
 	struct tty *tp;
 	int unit = minor (dev);
-	if (unit > NRCONS)
+	if (unit > NRASTERCONSOLE)
 		return;
 	tp = &rcons_tty [unit];
 	if (!(tp -> t_state & TS_ISOPEN)) {
@@ -367,4 +372,4 @@ rcons_input (dev, ic)
 	}
 	(*linesw [tp -> t_line].l_rint)(ic, tp);
 }
-#endif /* NRCONS > 0 */
+#endif /* NRASTERCONSOLE > 0 */

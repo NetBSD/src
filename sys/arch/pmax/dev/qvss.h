@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss.h,v 1.1 1995/04/11 10:25:37 mellon Exp $	*/
+/*	$NetBSD: qvss.h,v 1.2 1995/10/05 01:52:54 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -1867,7 +1867,9 @@ static struct raster qvss_126 = { 8, 15, 1, 1, qvss_126_pixels, 0 };
 #define	null128 null64, null64
 
 struct raster_font qvss = {
-    8, 15, RASFONT_FIXEDWIDTH|RASFONT_NOVERTICALMOVEMENT,
+    8, 15,
+    0, /* ascent */
+    RASFONT_FIXEDWIDTH|RASFONT_NOVERTICALMOVEMENT,
     {
 	null32,
 	{ &qvss_32, 0, -13, 8, 0 },
