@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.15 2002/09/14 17:53:59 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.16 2002/09/19 23:29:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.15 2002/09/14 17:53:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.16 2002/09/19 23:29:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -342,7 +342,7 @@ rf_PrintNodeInfoString(RF_DagNode_t * node)
 	}
 	printf("?\n");
 }
-
+#ifdef DEBUG
 static void 
 rf_RecurPrintDAG(node, depth, unvisited)
 	RF_DagNode_t *node;
@@ -429,6 +429,7 @@ rf_PrintDAG(dag_h)
 			rf_RecurPrintDAG(dag_h->succedents[i], 1, unvisited);
 	}
 }
+#endif
 /* assigns node numbers */
 int 
 rf_AssignNodeNums(RF_DagHeader_t * dag_h)
