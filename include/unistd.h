@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.74 1999/04/20 20:15:48 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.75 1999/07/01 18:15:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -329,6 +329,12 @@ int	 undelete __P((const char *));
 extern __const char *__const *sys_siglist __RENAME(__sys_siglist14);
 extern	 int optreset;		/* getopt(3) external variable */
 extern	 char *suboptarg;	/* getsubopt(3) external variable */
+#endif
+
+#if 1 /*INET6*/
+int	rresvport_af __P((int *, int));
+int	ruserok_af __P((const char *, int, const char *, const char *, int));
+int	iruserok_af __P((const void *, int, const char *, const char *, int));
 #endif
 
 __END_DECLS
