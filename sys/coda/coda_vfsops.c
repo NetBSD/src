@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.34 2004/04/21 01:05:35 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.35 2004/04/21 02:41:52 christos Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.34 2004/04/21 01:05:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.35 2004/04/21 02:41:52 christos Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.34 2004/04/21 01:05:35 christos Ex
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/namei.h>
+#include <sys/dirent.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/select.h>
