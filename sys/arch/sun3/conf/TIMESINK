@@ -21,6 +21,9 @@ options		KTRACE
 options		INET
 options 	NFSSERVER
 options 	NFSCLIENT
+
+include "TIMESINK.nfsdiskless"	#mega sad
+
 config		netbsd swap nfs
 
 le0 at obio? addr ? level 3

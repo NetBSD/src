@@ -1,0 +1,114 @@
+						<$Revision: 1.1 $> 
+
+This is to be a summary of the status of code, its problems,
+and the directions it should and needs to take in the future.
+
+Core code: (i.e sun3/sun3, sun3/include)
+----------
+	
+Random:
+
+	need to compute idprom checksum (was lazy)
+
+	need support for 'eeprom', including a non-sun copyrighted header
+
+	better integration with the eeprom on issues like consoles, and
+	       generic boot support
+
+	all the FPUCOPROC support is untested and from the hp300 port.
+	It needs to be better integrated and triggered by something other
+	than this awful define.  Also need FPU emulation code.
+
+	msgbuf should be allocated later, using the pmap stuff,
+	       same with high_segment crud.  see the dvma_alloc code for
+	       an example of how much cleaner this is.
+
+	ddb support
+
+	kgdb support
+
+pmap: 
+
+      the pmap module is the most complicated piece of code in the
+      port, and it has absolutely no debugging support.  This was a goof.
+
+      pmap module should be 3-level cache, instead of 2.
+
+      fix code so that the early pmap clean stuff isn't necessary.
+
+      better support for running in bootstrap mode,
+	i.e before pv_ tables can be allocated.
+
+Device driver support:
+----------------------
+
+Missing functionality: 
+	OBIO probe support
+	match/probe re-computation of default parameters
+	OBIO space collision avoidance
+
+Missing busses:
+
+VME - absolute no support, i just don't know shit about it.
+
+Missing drivers:
+
+zs - for the Zilog 8530 that run the mouse, keyboard, and serial ports.
+     Sun3s have two 8530s with 2 channels apiece.  Instead of hardwiring
+     the connection between particular chips/channels and function, I'd like
+     the zs driver to be implemented as a bus supporting n-clients.  In this
+     model, the mouse, and keyboard drivers are just optional clients of the
+     zs driver, and can be torched if you want to hack up a quick cable
+     and use them as serial ports.  This is also the right way to deal
+     with the complexities of a zs channel being used for 'kgdb', and
+     for synchronous operation.  This design does make the core zs driver
+     more complicated, but i think it will be worth it.
+
+scsi - I want to use torek's scsi system, if only to find out whether it is
+       any good.  Or we could use Julien's lump of crud.  Either way
+       we need:
+	    support for the ncr 5380, possibly based on the mach3 5380 code.
+	    support for the amd 9516 dma chip
+
+kbd - needs to support sun's kbd interface including support for the
+      3 different keyboard modes, basically whatever is neccessary for X.
+
+mouse - needs to support sun's mouse interface down to the letter so that
+      X works out of the box
+
+bwtwo - this should be minimal, and is needed first
+cg2, cg4, cg6, etc. - unknown complexity
+fb - also minimal.  Basically a virtual driver for reaching the frame buffers.
+     
+fpa - not the 68881, but sun's proprietary thing.  I don't want to
+      support this thing as it requires downloaded microcode which
+      isn't freely available
+
+Problems with existing drivers:
+
+lance - current driver is based on the hp300 code.  Torek's version
+        is also based on the hp300 code but possibly a later revision.
+	Should be analyzed further to determine its quality.  Only known
+	problem with existing code so far is the non-configurable number of
+	receive/send buffers.  This is a result of a hp300 hardware limitation,
+	that does not exist in the sun3 or sun4.
+	
+Boot code:
+----------
+
+Currently requires sun bootblks, secondary boot support, etc.  Needs
+to be replaced with attention paid to NetBSD's as yet un-developed
+NFS diskless architecture.
+
+Some code exists from Sprite for using PROM's exported drivers for
+bootstrapping.  This would have to be re-written and added to some
+small NFS code perhaps from LBL's bootbootp stuff, etc.  Lots of work
+to be done here.
+
+Compatibility:
+--------------
+
+Need to integrate Torek's sunos compatibility code in if possible, and
+remove the HPUX crud.
+
+

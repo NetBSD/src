@@ -59,3 +59,6 @@ void		addpseudo __P((const char *name, int number));
 const char     *ref __P((const char *name));
 const char     *starref __P((const char *name));
 const char     *wildref __P((const char *name));
+
+extern const char *s_generic;
+extern const char *s_nfs;
