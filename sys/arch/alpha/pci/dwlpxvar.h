@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxvar.h,v 1.6 1998/03/23 06:31:54 mjacob Exp $ */
+/* $NetBSD: dwlpxvar.h,v 1.7 1998/04/15 00:49:17 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -83,8 +83,6 @@ void	dwlpx_bus_mem_init __P((bus_space_tag_t, void *));
  * IO Interrupt handler.
  */
 void 	dwlpx_iointr __P((void *, unsigned long));
-
-#define	DWLPX_MAXPCI	1
 
 /*
  * Each DWLPX supports up to 15 devices, 12 of which are PCI slots.
