@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.167 2003/06/23 11:02:14 martin Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.168 2003/06/30 01:21:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.167 2003/06/23 11:02:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.168 2003/06/30 01:21:11 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -591,8 +591,8 @@ ip_input(struct mbuf *m)
 #endif
 	{
 		if (pfil_run_hooks(&inet_pfil_hook, &m, m->m_pkthdr.rcvif,
-				   PFIL_IN) != 0)
-		return;
+		    PFIL_IN) != 0)
+			return;
 		if (m == NULL)
 			return;
 		ip = mtod(m, struct ip *);
