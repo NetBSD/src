@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.4 1993/08/02 17:46:08 mycroft Exp $
+#	$Id: Makefile,v 1.5 1995/03/22 17:32:28 glass Exp $
 
 SUBDIR=		libgroff libdriver libbib\
-		groff troff nroff tbl pic eqn grops grotty grodvi\
+		groff troff nroff tbl pic eqn grog grops grotty grodvi\
 		refer lookbib indxbib lkbib \
 		tfmtodit addftinfo pfbtops psbb \
 		devices tmac mm man
