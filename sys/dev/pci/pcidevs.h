@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.603 2004/01/05 19:31:08 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.604 2004/01/06 19:44:38 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.605 2004/01/05 19:30:51 matt Exp 
+ *	NetBSD: pcidevs,v 1.606 2004/01/06 19:44:17 matt Exp 
  */
 
 /*
@@ -1423,6 +1423,8 @@
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_A4977A	0x1005		/* A4977A Visualize EG */
+#define	PCI_PRODUCT_HP_TACHYON_TL	0x1028		/* Tachyon TL FC controller */
+#define	PCI_PRODUCT_HP_TACHYON_TS	0x102A		/* Tachyon TS FC controller */
 #define	PCI_PRODUCT_HP_TACHYON_XL2	0x1030		/* Tachyon XL2 FC controller */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
 #define	PCI_PRODUCT_HP_J2585B	0x1031		/* J2585B */

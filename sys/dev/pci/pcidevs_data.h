@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.601 2004/01/05 19:31:08 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.602 2004/01/06 19:44:38 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.605 2004/01/05 19:30:51 matt Exp 
+ *	NetBSD: pcidevs,v 1.606 2004/01/06 19:44:17 matt Exp 
  */
 
 /*
@@ -3746,6 +3746,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hewlett-Packard",
 	    "A4977A Visualize EG",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_TL,
+	    0,
+	    "Hewlett-Packard",
+	    "Tachyon TL FC controller",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_TS,
+	    0,
+	    "Hewlett-Packard",
+	    "Tachyon TS FC controller",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_XL2,
