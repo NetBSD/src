@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.2 1993/11/29 00:38:20 briggs Exp $
+ *	$Id: param.h,v 1.3 1993/12/02 18:36:37 briggs Exp $
  */
 
 #ifndef PSL_IPL
@@ -91,7 +91,7 @@
          I've done a little more messing around; I think we're basically
 	 done for now except for tweeking.
  */
-#define	MACHINE "mac"
+#define	MACHINE "mac68k"
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
