@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.27 2004/08/30 09:34:42 drochner Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.28 2004/09/25 03:34:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -40,7 +40,6 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct lock sc_lock;
 	struct bufq_state sc_q;
 	struct callout sc_restart_ch;
 	int sc_quirks;			/* any quirks drive might have */
