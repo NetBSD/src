@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.15 1999/02/16 17:46:18 abs Exp $
+#	$NetBSD: ZHADUM,v 1.16 1999/03/27 07:04:37 explorer Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -507,6 +507,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty		128	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 
-# rnd is EXPERIMENTAL at this point.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+# rnd works; RND_COM does not on port i386 yet.
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

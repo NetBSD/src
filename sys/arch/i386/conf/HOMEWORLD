@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.38 1999/02/16 17:46:17 abs Exp $
+#	$NetBSD: HOMEWORLD,v 1.39 1999/03/27 07:04:36 explorer Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
@@ -602,8 +602,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
-
-# rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
