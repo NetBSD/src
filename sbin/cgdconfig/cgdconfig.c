@@ -1,7 +1,7 @@
-/* $NetBSD: cgdconfig.c,v 1.4 2002/10/28 05:46:01 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.5 2003/03/24 02:02:50 elric Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,15 +39,15 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
-"@(#) Copyright (c) 2002\
+"@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.4 2002/10/28 05:46:01 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.5 2003/03/24 02:02:50 elric Exp $");
 #endif
 
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,20 +60,22 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.4 2002/10/28 05:46:01 elric Exp $");
 
 #include <dev/cgdvar.h>
 
+#include <ufs/ffs/fs.h>
+
 #include "params.h"
 #include "pkcs5_pbkdf2.h"
 #include "utils.h"
 
 #define CGDCONFIG_DIR		"/etc/cgd"
 #define CGDCONFIG_CFILE		CGDCONFIG_DIR "/cgd.conf"
-#define DEFAULT_SALTLEN		128
 
 #define ACTION_CONFIGURE	0x1	/* configure, with paramsfile */
 #define ACTION_UNCONFIGURE	0x2	/* unconfigure */
 #define ACTION_GENERATE		0x3	/* generate a paramsfile */
-#define ACTION_CONFIGALL	0x4	/* configure all from config file */
-#define ACTION_UNCONFIGALL	0x5	/* unconfigure all from config file */
-#define ACTION_CONFIGSTDIN	0x6	/* configure, key from stdin */
+#define ACTION_GENERATE_CONVERT	0x4	/* generate a ``dup'' paramsfile */
+#define ACTION_CONFIGALL	0x5	/* configure all from config file */
+#define ACTION_UNCONFIGALL	0x6	/* unconfigure all from config file */
+#define ACTION_CONFIGSTDIN	0x7	/* configure, key from stdin */
 
 /* if nflag is set, do not configure/unconfigure the cgd's */
 
@@ -82,6 +84,7 @@ int	nflag = 0;
 static int	configure(int, char **, struct params *, int);
 static int	configure_stdin(struct params *, int argc, char **);
 static int	generate(struct params *, int, char **, const char *);
+static int	generate_convert(struct params *, int, char **, const char *);
 static int	unconfigure(int, char **, struct params *, int);
 static int	do_all(const char *, int, char **,
 		       int (*)(int, char **, struct params *, int));
@@ -91,14 +94,15 @@ static int	do_all(const char *, int, char **,
 
 static int	 configure_params(int, const char *, const char *,
 				  struct params *);
-static void	 key_print(FILE *, const u_int8_t *, int);
-static char	*getrandbits(int);
-static int	 getkey(const char *, struct params *);
-static int	 getkeyfrompassphrase(const char *, struct params *);
-static int	 getkeyfromfile(FILE *, struct params *);
+static bits_t	*getkey(const char *, struct keygen *, int);
+static bits_t	*getkey_storedkey(const char *, struct keygen *, int);
+static bits_t	*getkey_randomkey(const char *, struct keygen *, int);
+static bits_t	*getkey_pkcs5_pbkdf2(const char *, struct keygen *, int);
 static int	 opendisk_werror(const char *, char *, int);
 static int	 unconfigure_fd(int);
 static int	 verify(struct params *, int);
+static int	 verify_disklabel(int);
+static int	 verify_ffs(int);
 
 static void	 usage(void);
 
@@ -116,8 +120,10 @@ usage(void)
 	    getprogname());
 	fprintf(stderr, "       %s -C [-nv] [-f configfile]\n", getprogname());
 	fprintf(stderr, "       %s -U [-nv] [-f configfile]\n", getprogname());
+	fprintf(stderr, "       %s -G [-nv] [-i ivmeth] [-k kgmeth] "
+	    "[-o outfile] paramsfile\n", getprogname());
 	fprintf(stderr, "       %s -g [-nv] [-i ivmeth] [-k kgmeth] "
-	    "[-o outfile] [-V vmeth] alg [keylen]\n", getprogname());
+	    "[-o outfile] alg [keylen]\n", getprogname());
 	fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
 	fprintf(stderr, "       %s -u [-nv] cgd\n", getprogname());
@@ -127,21 +133,27 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	struct params cf;
+	struct params *p;
+	struct params *tp;
+	struct keygen *kg;
 	int	action = ACTION_CONFIGURE;
 	int	actions = 0;
 	int	ch;
-	int	ret;
 	char	cfile[FILENAME_MAX] = "";
 	char	outfile[FILENAME_MAX] = "";
 
 	setprogname(*argv);
-	params_init(&cf);
+	p = params_new();
+	kg = NULL;
 
-	while ((ch = getopt(argc, argv, "CUV:b:f:gi:k:no:usv")) != -1)
+	while ((ch = getopt(argc, argv, "CGUV:b:f:gi:k:no:usv")) != -1)
 		switch (ch) {
 		case 'C':
 			action = ACTION_CONFIGALL;
+			actions++;
+			break;
+		case 'G':
+			action = ACTION_GENERATE_CONVERT;
 			actions++;
 			break;
 		case 'U':
@@ -149,14 +161,16 @@ main(int argc, char **argv)
 			actions++;
 			break;
 		case 'V':
-			ret = params_setverify_method_str(&cf, optarg);
-			if (ret)
+			tp = params_verify_method(string_fromcharstar(optarg));
+			if (!tp)
 				usage();
+			p = params_combine(p, tp);
 			break;
 		case 'b':
-			ret = params_setbsize(&cf, atoi(optarg));
-			if (ret)
+			tp = params_bsize(atoi(optarg));
+			if (!tp)
 				usage();
+			p = params_combine(p, tp);
 			break;
 		case 'f':
 			strncpy(cfile, optarg, FILENAME_MAX);
@@ -166,12 +180,14 @@ main(int argc, char **argv)
 			actions++;
 			break;
 		case 'i':
-			params_setivmeth(&cf, optarg);
+			tp = params_ivmeth(string_fromcharstar(optarg));
+			p = params_combine(p, tp);
 			break;
 		case 'k':
-			ret = params_setkeygen_method_str(&cf, optarg);
-			if (ret)
+			kg = keygen_method(string_fromcharstar(optarg));
+			if (!kg)
 				usage();
+			keygen_addlist(&p->keygen, kg);
 			break;
 		case 'n':
 			nflag = 1;
@@ -203,86 +219,103 @@ main(int argc, char **argv)
 
 	if (actions > 1)
 		usage();
-	if (action == ACTION_CONFIGURE && params_changed(&cf))
-		usage();
 
 	switch (action) {
 	case ACTION_CONFIGURE:
-		return configure(argc, argv, &cf, CONFIG_FLAGS_FROMMAIN);
+		return configure(argc, argv, p, CONFIG_FLAGS_FROMMAIN);
 	case ACTION_UNCONFIGURE:
 		return unconfigure(argc, argv, NULL, CONFIG_FLAGS_FROMMAIN);
 	case ACTION_GENERATE:
-		return generate(&cf, argc, argv, outfile);
+		return generate(p, argc, argv, outfile);
+	case ACTION_GENERATE_CONVERT:
+		return generate_convert(p, argc, argv, outfile);
 	case ACTION_CONFIGALL:
 		return do_all(cfile, argc, argv, configure);
 	case ACTION_UNCONFIGALL:
 		return do_all(cfile, argc, argv, unconfigure);
 	case ACTION_CONFIGSTDIN:
-		return configure_stdin(&cf, argc, argv);
+		return configure_stdin(p, argc, argv);
 	default:
-		fprintf(stderr, "undefined action\n");
-		return 1;
+		errx(EXIT_FAILURE, "undefined action");
 	}
 	/* NOTREACHED */
 }
 
-static int
-getkey(const char *target, struct params *p)
+static bits_t *
+getkey(const char *dev, struct keygen *kg, int len)
 {
+	bits_t	*ret = NULL;
+	bits_t	*tmp;
 
-	switch (p->keygen_method) {
-	case KEYGEN_RANDOMKEY:
-		p->key = getrandbits(p->keylen);
-		if (!p->key)
-			return -1;
-		return 0;
-	case KEYGEN_PKCS5_PBKDF2:
-		return getkeyfrompassphrase(target, p);
-	default:
-		fprintf(stderr, "getkey: unknown keygen_method\n");
-		return -1;
+	VPRINTF(3, ("getkey(\"%s\", %p, %d) called\n", dev, kg, len));
+	for (; kg; kg=kg->next) {
+		switch (kg->kg_method) {
+		case KEYGEN_STOREDKEY:
+			tmp = getkey_storedkey(dev, kg, len);
+			break;
+		case KEYGEN_RANDOMKEY:
+			tmp = getkey_randomkey(dev, kg, len);
+			break;
+		case KEYGEN_PKCS5_PBKDF2:
+			tmp = getkey_pkcs5_pbkdf2(dev, kg, len);
+			break;
+		default:
+			warnx("unrecognised keygen method %d in getkey()",
+			    kg->kg_method);
+			if (ret)
+				bits_free(ret);
+			return NULL;
+		}
+
+		if (ret)
+			ret = bits_xor_d(tmp, ret);
+		else
+			ret = tmp;
 	}
-	/* NOTREACHED */
-}
 
-static int
-getkeyfromfile(FILE *f, struct params *p)
-{
-	int	ret;
-
-	/* XXXrcd: data hiding? */
-	p->key = malloc(p->keylen);
-	if (!p->key)
-		return -1;
-	ret = fread(p->key, p->keylen, 1, f);
-	if (ret < 1) {
-		fprintf(stderr, "failed to read key from stdin\n");
-		return -1;
-	}
-	return 0;
-}
-
-static int
-getkeyfrompassphrase(const char *target, struct params *p)
-{
-	int	 ret;
-	char	*passp;
-	char	 buf[1024];
-
-	snprintf(buf, 1024, "%s's passphrase:", target);
-	passp = getpass(buf);
-	/* XXXrcd: data hiding ? we should be allocating the key here. */
-	if (!p->key)
-		free(p->key);
-	ret = pkcs5_pbkdf2(&p->key, BITS2BYTES(p->keylen), passp,
-	    strlen(passp), p->keygen_salt, BITS2BYTES(p->keygen_saltlen),
-	    p->keygen_iterations);
-	if (p->xor_key)
-		memxor(p->key, p->xor_key, BITS2BYTES(p->keylen));
 	return ret;
 }
 
-/* ARGSUSED */
+/*ARGSUSED*/
+static bits_t *
+getkey_storedkey(const char *target, struct keygen *kg, int keylen)
+{
+
+	return bits_dup(kg->kg_key);
+}
+
+/*ARGSUSED*/
+static bits_t *
+getkey_randomkey(const char *target, struct keygen *kg, int keylen)
+{
+
+	return bits_getrandombits(keylen);
+}
+
+/*ARGSUSED*/
+static bits_t *
+getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, int keylen)
+{
+	bits_t		*ret;
+	char		*passp;
+	char		 buf[1024];
+	u_int8_t	*tmp;
+
+	snprintf(buf, sizeof(buf), "%s's passphrase:", target);
+	passp = getpass(buf);
+	if (pkcs5_pbkdf2(&tmp, BITS2BYTES(keylen), passp, strlen(passp),
+	    bits_getbuf(kg->kg_salt), BITS2BYTES(bits_len(kg->kg_salt)),
+	    kg->kg_iterations)) {
+		warnx("failed to generate PKCS#5 PBKDF2 key");
+		return NULL;
+	}
+
+	ret = bits_new(tmp, keylen);
+	free(tmp);
+	return ret;
+}
+
+/*ARGSUSED*/
 static int
 unconfigure(int argc, char **argv, struct params *inparams, int flags)
 {
@@ -300,8 +333,7 @@ unconfigure(int argc, char **argv, struct params *inparams, int flags)
 
 	fd = opendisk(*argv, O_RDWR, buf, sizeof(buf), 1);
 	if (fd == -1) {
-		fprintf(stderr, "can't open cgd \"%s\", \"%s\": %s\n",
-		    *argv, buf, strerror(errno));
+		warn("can't open cgd \"%s\", \"%s\"", *argv, buf);
 
 		/* this isn't fatal with nflag != 0 */
 		if (!nflag)
@@ -333,17 +365,15 @@ unconfigure_fd(int fd)
 	return 0;
 }
 
-/* ARGSUSED */
+/*ARGSUSED*/
 static int
 configure(int argc, char **argv, struct params *inparams, int flags)
 {
-	struct params	params;
-	int		fd;
-	int		ret;
-	char		pfile[FILENAME_MAX];
-	char		cgdname[PATH_MAX];
-
-	params_init(&params);
+	struct params	*p;
+	int		 fd;
+	int		 ret;
+	char		 pfile[FILENAME_MAX];
+	char		 cgdname[PATH_MAX];
 
 	switch (argc) {
 	case 2:
@@ -356,26 +386,34 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		break;
 	default:
 		/* print usage and exit, only if called from main() */
-		if (flags == CONFIG_FLAGS_FROMMAIN)
+		if (flags == CONFIG_FLAGS_FROMMAIN) {
+			warnx("wrong number of args");
 			usage();
+		}
 		return -1;
 		/* NOTREACHED */
 	}
 
-	ret = params_cget(&params, pfile);
-	if (ret)
-		return ret;
-	ret = params_filldefaults(&params);
-	if (ret)
-		return ret;
+	p = params_cget(pfile);
+	if (!p)
+		return -1;
 
 	/*
-	 * over-ride the verify method with that specified on the
-	 * command line
+	 * over-ride with command line specifications and fill in default
+	 * values.
 	 */
 
-	if (inparams && inparams->verify_method != VERIFY_UNKNOWN)
-		params.verify_method = inparams->verify_method;
+	p = params_combine(p, inparams);
+	ret = params_filldefaults(p);
+	if (ret) {
+		params_free(p);
+		return ret;
+	}
+
+	if (!params_verify(p)) {
+		warnx("params invalid");
+		return -1;
+	}
 
 	/*
 	 * loop over configuring the disk and checking to see if it
@@ -389,15 +427,18 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		if (fd == -1)
 			return -1;
 
-		ret = getkey(argv[1], &params);
+		if (p->key)
+			bits_free(p->key);
+
+		p->key = getkey(argv[1], p->keygen, p->keylen);
+		if (!p->key)
+			goto bail_err;
+
+		ret = configure_params(fd, cgdname, argv[1], p);
 		if (ret)
 			goto bail_err;
 
-		ret = configure_params(fd, cgdname, argv[1], &params);
-		if (ret)
-			goto bail_err;
-
-		ret = verify(&params, fd);
+		ret = verify(p, fd);
 		if (ret == -1)
 			goto bail_err;
 		if (!ret)
@@ -410,10 +451,11 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		close(fd);
 	}
 
-	params_free(&params);
+	params_free(p);
 	close(fd);
 	return 0;
 bail_err:
+	params_free(p);
 	close(fd);
 	return -1;
 }
@@ -428,14 +470,9 @@ configure_stdin(struct params *p, int argc, char **argv)
 	if (argc < 3 || argc > 4)
 		usage();
 
-	ret = params_setalgorithm(p, argv[2]);
-	if (ret)
-		return ret;
-	if (argc > 3) {
-		ret = params_setkeylen(p, atoi(argv[3]));
-		if (ret)
-			return ret;
-	}
+	p->algorithm = string_fromcharstar(argv[2]);
+	if (argc > 3)
+		p->keylen = atoi(argv[3]);
 
 	ret = params_filldefaults(p);
 	if (ret)
@@ -445,9 +482,11 @@ configure_stdin(struct params *p, int argc, char **argv)
 	if (fd == -1)
 		return -1;
 
-	ret = getkeyfromfile(stdin, p);
-	if (ret)
+	p->key = bits_fget(stdin, p->keylen);
+	if (!p->key) {
+		warnx("failed to read key from stdin");
 		return -1;
+	}
 
 	return configure_params(fd, cgdname, argv[1], p);
 }
@@ -456,6 +495,8 @@ static int
 opendisk_werror(const char *cgd, char *buf, int buflen)
 {
 	int	fd;
+
+	VPRINTF(3, ("opendisk_werror(%s, %s, %d) called.\n", cgd, buf, buflen));
 
 	/* sanity */
 	if (!cgd || !buf)
@@ -468,8 +509,8 @@ opendisk_werror(const char *cgd, char *buf, int buflen)
 
 	fd = opendisk(cgd, O_RDWR, buf, buflen, 0);
 	if (fd == -1)
-		fprintf(stderr, "can't open cgd \"%s\", \"%s\": %s\n",
-		    cgd, buf, strerror(errno));
+		warnx("can't open cgd \"%s\", \"%s\"", cgd, buf);
+
 	return fd;
 }
 
@@ -485,16 +526,18 @@ configure_params(int fd, const char *cgd, const char *dev, struct params *p)
 
 	memset(&ci, 0x0, sizeof(ci));
 	ci.ci_disk = (char *)dev;
-	ci.ci_alg = p->alg;
-	ci.ci_ivmethod = p->ivmeth;
-	ci.ci_key = p->key;
+	ci.ci_alg = (char *)string_tocharstar(p->algorithm);
+	ci.ci_ivmethod = (char *)string_tocharstar(p->ivmeth);
+	ci.ci_key = (char *)bits_getbuf(p->key);
 	ci.ci_keylen = p->keylen;
 	ci.ci_blocksize = p->bsize;
 
-	VPRINTF(1, ("attaching: %s attach to %s\n", cgd, dev));
 	VPRINTF(1, ("    with alg %s keylen %d blocksize %d ivmethod %s\n",
-	    p->alg, p->keylen, p->bsize, p->ivmeth));
-	VERBOSE(2, key_print(stdout, p->key, p->keylen));
+	    string_tocharstar(p->algorithm), p->keylen, p->bsize,
+	    string_tocharstar(p->ivmeth)));
+	VPRINTF(2, ("key: "));
+	VERBOSE(2, bits_fprint(stdout, p->key));
+	VPRINTF(2, ("\n"));
 
 	if (nflag)
 		return 0;
@@ -517,23 +560,26 @@ configure_params(int fd, const char *cgd, const char *dev, struct params *p)
 static int
 verify(struct params *p, int fd)
 {
-	struct	disklabel l;
-	int	ret;
-	char	buf[SCANSIZE];
 
 	switch (p->verify_method) {
 	case VERIFY_NONE:
 		return 0;
 	case VERIFY_DISKLABEL:
-		/*
-		 * for now this is the only method, so we just perform it
-		 * in this function.
-		 */
-		break;
+		return verify_disklabel(fd);
+	case VERIFY_FFS:
+		return verify_ffs(fd);
 	default:
-		fprintf(stderr, "verify: unimplemented verification method\n");
+		warnx("unimplemented verification method");
 		return -1;
 	}
+}
+
+static int
+verify_disklabel(int fd)
+{
+	struct	disklabel l;
+	int	ret;
+	char	buf[SCANSIZE];
 
 	/*
 	 * we simply scan the first few blocks for a disklabel, ignoring
@@ -544,7 +590,7 @@ verify(struct params *p, int fd)
 
 	ret = pread(fd, buf, 8192, 0);
 	if (ret == -1) {
-		fprintf(stderr, "verify: can't read disklabel area\n");
+		warn("can't read disklabel area");
 		return -1;
 	}
 
@@ -554,54 +600,124 @@ verify(struct params *p, int fd)
 }
 
 static int
+verify_ffs(int fd)
+{
+	struct	fs *fs;
+	int	ret;
+	char	buf[SBSIZE];
+
+	ret = pread(fd, buf, SBSIZE, SBOFF);
+	fs = (struct fs *)buf;
+	if (ret == -1) {
+		warn("pread");
+		return 0;
+	}
+	if (fs->fs_magic == FS_MAGIC)
+		return 0;
+	if (fs->fs_magic == bswap32(FS_MAGIC))
+		return 0;
+	return 1;
+}
+
+static int
 generate(struct params *p, int argc, char **argv, const char *outfile)
 {
-	FILE	*f;
 	int	 ret;
-	char	*tmp;
 
 	if (argc < 1 || argc > 2)
 		usage();
 
-	ret = params_setalgorithm(p, argv[0]);
-	if (ret)
-		return ret;
-	if (argc > 1) {
-		ret = params_setkeylen(p, atoi(argv[1]));
-		if (ret)
-			return ret;
-	}
+	p->algorithm = string_fromcharstar(argv[0]);
+	if (argc > 1)
+		p->keylen = atoi(argv[1]);
 
 	ret = params_filldefaults(p);
 	if (ret)
 		return ret;
 
-	if (p->keygen_method != KEYGEN_RANDOMKEY) {
-		tmp = getrandbits(DEFAULT_SALTLEN);
-		params_setkeygen_salt(p, tmp, DEFAULT_SALTLEN);
-		free(tmp);
-		tmp = getrandbits(p->keylen);
-		params_setxor_key(p, tmp, p->keylen);
-		free(tmp);
-
-		/* XXXrcd: generate key hash, if desired */
-	}
-
-	if (*outfile) {
-		f = fopen(outfile, "w");
-		if (!f) {
-			fprintf(stderr, "could not open outfile \"%s\": %s\n",
-			    outfile, strerror(errno));
-			perror("fopen");
+	if (!p->keygen) {
+		p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2);
+		if (!p->keygen)
 			return -1;
-		}
-	} else {
-		f = stdout;
 	}
 
-	ret = params_fput(p, f);
-	params_free(p);
-	return ret;
+	if (keygen_filldefaults(p->keygen, p->keylen)) {
+		warnx("Failed to generate defaults for keygen");
+		return -1;
+	}
+
+	if (!params_verify(p)) {
+		warnx("invalid parameters generated");
+		return -1;
+	}
+
+	return params_cput(p, outfile);
+}
+
+static int
+generate_convert(struct params *p, int argc, char **argv, const char *outfile)
+{
+	struct params	*oldp;
+	struct keygen	*kg;
+
+	if (argc != 1)
+		usage();
+
+	oldp = params_cget(*argv);
+	if (!oldp)
+		return -1;
+
+	/* for sanity, we ensure that none of the keygens are randomkey */
+	for (kg=p->keygen; kg; kg=kg->next)
+		if (kg->kg_method == KEYGEN_RANDOMKEY)
+			goto bail;
+	for (kg=oldp->keygen; kg; kg=kg->next)
+		if (kg->kg_method == KEYGEN_RANDOMKEY)
+			goto bail;
+
+	if (!params_verify(oldp)) {
+		warnx("invalid old parameters file \"%s\"", *argv);
+		return -1;
+	}
+
+	oldp->key = getkey("old file", oldp->keygen, oldp->keylen);
+
+	/* we copy across the non-keygen info, here. */
+
+	string_free(p->algorithm);
+	string_free(p->ivmeth);
+
+	p->algorithm = string_dup(oldp->algorithm);
+	p->ivmeth = string_dup(oldp->ivmeth);
+	p->keylen = oldp->keylen;
+	p->bsize = oldp->bsize;
+	if (p->verify_method == VERIFY_UNKNOWN)
+		p->verify_method = oldp->verify_method;
+
+	params_free(oldp);
+
+	if (!p->keygen) {
+		p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2);
+		if (!p->keygen)
+			return -1;
+		keygen_filldefaults(p->keygen, p->keylen);
+	}
+	params_filldefaults(p);
+	p->key = getkey("new file", p->keygen, p->keylen);
+
+	kg = keygen_generate(KEYGEN_STOREDKEY);
+	kg->kg_key = bits_xor(p->key, oldp->key);
+	keygen_addlist(&p->keygen, kg);
+
+	if (!params_verify(p)) {
+		warnx("can't generate new parameters file");
+		return -1;
+	}
+
+	return params_cput(p, outfile);
+bail:
+	params_free(oldp);
+	return -1;
 }
 
 static int
@@ -627,15 +743,17 @@ do_all(const char *cfile, int argc, char **argv,
 
 	f = fopen(fn, "r");
 	if (!f) {
-		fprintf(stderr, "could not open config file \"%s\": %s\n",
-		    fn, strerror(errno));
+		warn("could not open config file \"%s\"", fn);
 		return -1;
 	}
+
+	ret = chdir(CGDCONFIG_DIR);
+	if (ret == -1)
+		warn("could not chdir to %s", CGDCONFIG_DIR);
 
 	ret = 0;
 	lineno = 0;
 	for (;;) {
-
 		line = fparseln(f, &len, &lineno, "\\\\#", FPARSELN_UNESCALL);
 		if (!line)
 			break;
@@ -645,57 +763,11 @@ do_all(const char *cfile, int argc, char **argv,
 		my_argv = words(line, &my_argc);
 		ret = conf(my_argc, my_argv, NULL, CONFIG_FLAGS_FROMALL);
 		if (ret) {
-			fprintf(stderr, "on \"%s\" line %lu\n", fn,
+			warnx("action failed on \"%s\" line %lu", fn,
 			    (u_long)lineno);
 			break;
 		}
 		words_free(my_argv, my_argc);
 	}
 	return ret;
-}
-
-/*
- * XXX: key_print doesn't work quite exactly properly if the keylength
- *      is not evenly divisible by 8.  If the key is not divisible by
- *      8 then a few extra bits are printed.
- */
-
-static void
-key_print(FILE *f, const u_int8_t *key, int len)
-{
-	int	i;
-	int	col;
-
-	len = BITS2BYTES(len);
-	fprintf(f, "key: ");
-	for (i=0, col=5; i < len; i++, col+=2) {
-		fprintf(f, "%02x", key[i]);
-		if (col > 70) {
-			col = 5 - 2;
-			fprintf(f, "\n     ");
-		}
-	}
-	fprintf(f, "\n");
-}
-
-static char *
-getrandbits(int len)
-{
-	FILE	*f;
-	int	 ret;
-	char	*res;
-
-	len = (len + 7) / 8;
-	res = malloc(len);
-	if (!res)
-		return NULL;
-	f = fopen("/dev/random", "r");
-	if (!f)
-		return NULL;
-	ret = fread(res, len, 1, f);
-	if (ret != 1) {
-		free(res);
-		return NULL;
-	}
-	return res;
 }

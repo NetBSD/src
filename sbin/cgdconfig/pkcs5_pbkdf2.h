@@ -1,7 +1,7 @@
-/* $NetBSD: pkcs5_pbkdf2.h,v 1.1 2002/10/04 18:37:21 elric Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.h,v 1.2 2003/03/24 02:02:51 elric Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,5 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef PKCS5_PBKDF2_H
+#define PKCS5_PBKDF2_H
+
+__BEGIN_DECLS
 int	pkcs5_pbkdf2(u_int8_t **, int, const u_int8_t *, int,
 		     const u_int8_t *, int, int);
+int	pkcs5_pbkdf2_calibrate(int, int);
+__END_DECLS
+#endif
