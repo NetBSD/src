@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1999/04/20 07:53:02 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2000/06/12 04:43:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 1999/04/20 07:53:02 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2000/06/12 04:43:11 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,6 +212,7 @@ main(argc, argv)
 
 	if (iamremote) {
 		server();
+		unlink(tempfile);
 		exit(nerrs != 0);
 	}
 
@@ -219,13 +220,14 @@ main(argc, argv)
 		docmdargs(argc, argv);
 	else {
 		if (fin == NULL) {
-			if(distfile == NULL) {
-				if((fin = fopen("distfile","r")) == NULL)
+			if (distfile == NULL) {
+				if ((fin = fopen("distfile","r")) == NULL)
 					fin = fopen("Distfile", "r");
 			} else
 				fin = fopen(distfile, "r");
-			if(fin == NULL) {
+			if (fin == NULL) {
 				perror(distfile ? distfile : "distfile");
+				unlink(tempfile);
 				exit(1);
 			}
 		}
@@ -234,6 +236,7 @@ main(argc, argv)
 			docmds(dhosts, argc, argv);
 	}
 
+	unlink(tempfile);
 	exit(nerrs != 0);
 }
 
@@ -282,7 +285,7 @@ docmdargs(nargs, args)
 	tnl.n_name = cp;
 	hosts = expand(&tnl, E_ALL);
 	if (nerrs)
-		exit(1);
+		return;
 
 	if (dest == NULL || *dest == '\0')
 		cmds = NULL;
