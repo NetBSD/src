@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.14 2000/09/23 19:23:58 jsm Exp $	*/
+/*	$NetBSD: globals.c,v 1.15 2000/09/24 09:47:22 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.14 2000/09/23 19:23:58 jsm Exp $");
+__RCSID("$NetBSD: globals.c,v 1.15 2000/09/24 09:47:22 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,7 +50,7 @@ int     CUMBER = MAXCUMBER;
 const char   *const objdes[NUMOFOBJECTS] = {
 	"There is a knife here.",
 	"There are an exquisitely crafted sword and scabbard here.",
-	0,			/* can land from here */
+	NULL,			/* Can land from here. */
 	"There is a fierce woodsman here brandishing a heavy mallet.",
 	"There is an unwieldy two-handed sword here.",
 	"There is a bloody meat cleaver here.",
@@ -62,7 +62,7 @@ const char   *const objdes[NUMOFOBJECTS] = {
 	"There is a Viper ready for launch here.",
 	"A kerosene lantern is burning luridly here.",
 	"An old pair of shoes has been discarded here.",
-	0,			/* cylon */
+	NULL,			/* Cylon. */
 	"There is a pair of pajamas here.",
 	"A kingly robe of royal purple and spun gold is draped here.",
 	"There is a strange golden amulet on the floor here.",
@@ -118,7 +118,7 @@ const char   *const objdes[NUMOFOBJECTS] = {
 const char   *const objsht[NUMOFOBJECTS] = {
 	"knife",
 	"fine sword",
-	0,
+	NULL,			/* Can land from here. */
 	"Woodsman",
 	"two-handed sword",
 	"meat cleaver",
@@ -130,7 +130,7 @@ const char   *const objsht[NUMOFOBJECTS] = {
 	"viper",
 	"lantern",
 	"shoes",
-	0,
+	NULL,			/* Cylon. */
 	"pajamas",
 	"robe",
 	"amulet",
@@ -139,8 +139,8 @@ const char   *const objsht[NUMOFOBJECTS] = {
 	"woodsman's body",
 	"wooden mallet",
 	"laser",
-	0,
-	0,
+	NULL,			/* Bathing goddess. */
+	NULL,			/* Goddess. */
 	"grenade",
 	"chain",
 	"rope",
@@ -149,12 +149,12 @@ const char   *const objsht[NUMOFOBJECTS] = {
 	"shovel",
 	"halberd",
 	"compass",
-	0,
+	NULL,			/* Crash debris. */
 	"Elf",
-	0,
+	NULL,			/* Footsteps. */
 	"coins",
 	"match book",
-	0,
+	NULL,			/* Man and dwarf. */
 	"papayas",
 	"pineapple",
 	"kiwi",
@@ -163,18 +163,18 @@ const char   *const objsht[NUMOFOBJECTS] = {
 	"ring",
 	"potion",
 	"bracelet",
-	0,
-	0,
+	NULL,			/* Swarthy woman. */
+	NULL,			/* Swarthy woman (with message). */
 	"Dark Lord",
-	0,
-	0,
-	0,
-	0,
+	NULL,			/* Old-timer. */
+	NULL,			/* Asteroid field. */
+	NULL,			/* Planet nearby. */
+	NULL,			/* Charred ground. */
 	"warhead",
 	"goddess's body",
 	"old-timer's body",
 	"girl's body",
-	0,
+	NULL,			/* Native girl. */
 	"stallion",
 	"car",
 	"pot of jewels",
