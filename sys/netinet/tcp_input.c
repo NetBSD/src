@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.15 1995/06/11 09:36:28 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.16 1995/06/11 20:39:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -969,7 +969,7 @@ trimthenstep6:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (tp->t_dupacks > tcprexmtthresh &&
+		if (tp->t_dupacks >= tcprexmtthresh &&
 		    tp->snd_cwnd > tp->snd_ssthresh)
 			tp->snd_cwnd = tp->snd_ssthresh;
 		tp->t_dupacks = 0;
@@ -1020,7 +1020,7 @@ trimthenstep6:
 		register u_int incr = tp->t_maxseg;
 
 		if (cw > tp->snd_ssthresh)
-			incr = incr * incr / cw + incr / 8;
+			incr = incr * incr / cw;
 		tp->snd_cwnd = min(cw + incr, TCP_MAXWIN<<tp->snd_scale);
 		}
 		if (acked > so->so_snd.sb_cc) {
@@ -1435,7 +1435,8 @@ tcp_xmit_timer(tp, rtt)
 		 * an alpha of .875 (srtt = rtt/8 + srtt*7/8 in fixed
 		 * point).  Adjust rtt to origin 0.
 		 */
-		delta = rtt - 1 - (tp->t_srtt >> TCP_RTT_SHIFT);
+		--rtt;
+		delta = (rtt << 2) - (tp->t_srtt >> TCP_RTT_SHIFT);
 		if ((tp->t_srtt += delta) <= 0)
 			tp->t_srtt = 1;
 		/*
@@ -1459,8 +1460,8 @@ tcp_xmit_timer(tp, rtt)
 		 * Set the variance to half the rtt (so our first
 		 * retransmit happens at 3*rtt).
 		 */
-		tp->t_srtt = rtt << TCP_RTT_SHIFT;
-		tp->t_rttvar = rtt << (TCP_RTTVAR_SHIFT - 1);
+		tp->t_srtt = rtt << (TCP_RTT_SHIFT + 2);
+		tp->t_rttvar = rtt << (TCP_RTTVAR_SHIFT + 2 - 1);
 	}
 	tp->t_rtt = 0;
 	tp->t_rxtshift = 0;
@@ -1477,7 +1478,7 @@ tcp_xmit_timer(tp, rtt)
 	 * the minimum feasible timer (which is 2 ticks).
 	 */
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
-	    tp->t_rttmin, TCPTV_REXMTMAX);
+	    rtt + 2, TCPTV_REXMTMAX);
 	
 	/*
 	 * We received an ack for a packet that wasn't retransmitted;
