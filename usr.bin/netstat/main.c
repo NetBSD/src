@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2000/04/14 06:11:09 simonb Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2000/07/06 12:40:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2000/04/14 06:11:09 simonb Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2000/07/06 12:40:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -339,6 +339,8 @@ main(argc, argv)
 				af = AF_INET;
 			else if (strcmp(optarg, "inet6") == 0)
 				af = AF_INET6;
+			else if (strcmp(optarg, "pfkey") == 0)
+				af = PF_KEY;
 			else if (strcmp(optarg, "unix") == 0
 			    || strcmp(optarg, "local") == 0)
 				af = AF_LOCAL;

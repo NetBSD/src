@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.43 2000/07/03 05:06:43 enami Exp $	*/
+/*	$NetBSD: if.c,v 1.44 2000/07/06 12:40:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.43 2000/07/03 05:06:43 enami Exp $");
+__RCSID("$NetBSD: if.c,v 1.44 2000/07/06 12:40:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,6 @@ __RCSID("$NetBSD: if.c,v 1.43 2000/07/03 05:06:43 enami Exp $");
 
 static void sidewaysintpr __P((u_int, u_long));
 static void catchalarm __P((int));
-
-#ifdef INET6
-char *netname6 __P((struct sockaddr_in6 *, struct in6_addr *));
-#endif
 
 /*
  * Print a description of the network interfaces.
