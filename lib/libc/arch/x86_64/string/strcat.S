@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcat.S,v 1.3 2004/07/19 20:04:41 drochner Exp $")
+	RCSID("$NetBSD: strcat.S,v 1.4 2004/07/26 18:51:21 drochner Exp $")
 #endif
 
 ENTRY(strcat)
@@ -86,7 +86,7 @@ ENTRY(strcat)
 	 */
 .Lcopy:
 .Lcopy_align:
-	testb	$3,%sil
+	testb	$7,%sil
 	je	.Lcopy_aligned
 	movb	(%rsi),%dl
 	incq	%rsi
