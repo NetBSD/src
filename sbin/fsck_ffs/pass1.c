@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass1.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: pass1.c,v 1.11 1994/09/23 23:49:13 mycroft Exp $";
+static char *rcsid = "$Id: pass1.c,v 1.12 1994/12/05 20:15:53 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -41,15 +41,21 @@ static char *rcsid = "$Id: pass1.c,v 1.11 1994/09/23 23:49:13 mycroft Exp $";
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "fsck.h"
+#include "extern.h"
 
 static daddr_t badblk;
 static daddr_t dupblk;
 int pass1check();
 struct dinode *getnextinode();
+void checkinode __P((ino_t, struct inodesc *));
 
+void
 pass1()
 {
 	ino_t inumber;
@@ -88,6 +94,7 @@ pass1()
 	freeinodebuf();
 }
 
+void
 checkinode(inumber, idesc)
 	ino_t inumber;
 	register struct inodesc *idesc;
@@ -253,6 +260,7 @@ unknown:
 	}
 }
 
+int
 pass1check(idesc)
 	register struct inodesc *idesc;
 {

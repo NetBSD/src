@@ -33,19 +33,22 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass1b.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: pass1b.c,v 1.7 1994/09/23 14:27:15 mycroft Exp $";
+static char *rcsid = "$Id: pass1b.c,v 1.8 1994/12/05 20:15:58 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+
 #include <string.h>
 #include "fsck.h"
+#include "extern.h"
 
 int	pass1bcheck();
 static  struct dups *duphead;
 
+void
 pass1b()
 {
 	register int c, i;
@@ -73,6 +76,7 @@ pass1b()
 	}
 }
 
+int
 pass1bcheck(idesc)
 	register struct inodesc *idesc;
 {
