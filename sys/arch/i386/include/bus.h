@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 1998/02/04 00:34:20 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 1998/02/04 01:57:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -859,16 +859,12 @@ struct mbuf;
 struct uio;
 
 /*
- *	bus_dmasync_op_t
- *
- *	Operations performed by bus_dmamap_sync().
+ * Operations performed by bus_dmamap_sync().
  */
-typedef enum {
-	BUS_DMASYNC_PREREAD,
-	BUS_DMASYNC_POSTREAD,
-	BUS_DMASYNC_PREWRITE,
-	BUS_DMASYNC_POSTWRITE,
-} bus_dmasync_op_t;
+#define	BUS_DMASYNC_PREREAD	0x01	/* pre-read synchronization */
+#define	BUS_DMASYNC_POSTREAD	0x02	/* post-read synchronization */
+#define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
+#define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
 
 typedef struct i386_bus_dma_tag		*bus_dma_tag_t;
 typedef struct i386_bus_dmamap		*bus_dmamap_t;
@@ -911,7 +907,7 @@ struct i386_bus_dma_tag {
 		    bus_dma_segment_t *, int, bus_size_t, int));
 	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
 	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dmasync_op_t));
+		    int));
 
 	/*
 	 * DMA memory utility functions.
@@ -994,7 +990,7 @@ int	_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
 int	_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_dmasync_op_t));
+void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, int));
 
 int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
