@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.45 2004/08/09 05:11:33 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.46 2004/08/09 13:30:16 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.45 2004/08/09 05:11:33 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.46 2004/08/09 13:30:16 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1143,7 +1143,7 @@ done:
 	for (page = 0; page < 8; page++) {
 #ifdef XIDEBUG
 		if (xidebug & XID_MCAST) {
-			printf("page %d:", page);
+			printf("page %d before:", page);
 			for (i = 0; i < 8; i++)
 				printf(" %02x", indaddr[page * 8 + i]);
 			printf("\n");
@@ -1153,6 +1153,24 @@ done:
 		PAGE(sc, 0x50 + page);
 		bus_space_write_region_1(bst, bsh, offset + IA,
 		    &indaddr[page * 8], page == 7 ? 4 : 8);
+		/*
+		 * XXX
+		 * Without this delay, the address registers on my CE2 get
+		 * trashed the first and I have to cycle it.  I have no idea
+		 * why.  - mycroft, 2004/08/09
+		 */
+		DELAY(50);
+
+#ifdef XIDEBUG
+		if (xidebug & XID_MCAST) {
+			bus_space_read_region_1(bst, bsh, offset + IA,
+			    &indaddr[page * 8], page == 7 ? 4 : 8);
+			printf("page %d after: ", page);
+			for (i = 0; i < 8; i++)
+				printf(" %02x", indaddr[page * 8 + i]);
+			printf("\n");
+		}
+#endif
 	}
 
 	PAGE(sc, 0x42);
