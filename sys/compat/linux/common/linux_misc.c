@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.116 2003/01/18 08:02:53 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.117 2003/03/05 18:44:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.116 2003/01/18 08:02:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.117 2003/03/05 18:44:46 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1203,64 +1203,18 @@ linux_sys_setresuid(l, v, retval)
 		syscallarg(uid_t) euid;
 		syscallarg(uid_t) suid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
-	uid_t ruid, euid, suid;
-	int error;
-
-	ruid = SCARG(uap, ruid);
-	euid = SCARG(uap, euid);
-	suid = SCARG(uap, suid);
 
 	/*
 	 * Note: These checks are a little different than the NetBSD
 	 * setreuid(2) call performs.  This precisely follows the
 	 * behavior of the Linux kernel.
 	 */
-	if (ruid != (uid_t)-1 &&
-	    ruid != pc->p_ruid &&
-	    ruid != pc->pc_ucred->cr_uid &&
-	    ruid != pc->p_svuid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
 
-	if (euid != (uid_t)-1 &&
-	    euid != pc->p_ruid &&
-	    euid != pc->pc_ucred->cr_uid &&
-	    euid != pc->p_svuid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-
-	if (suid != (uid_t)-1 &&
-	    suid != pc->p_ruid &&
-	    suid != pc->pc_ucred->cr_uid &&
-	    suid != pc->p_svuid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-
-	/*
-	 * Now assign the new real, effective, and saved UIDs.
-	 * Note that Linux, unlike NetBSD in setreuid(2), does not
-	 * set the saved UID in this call unless the user specifies
-	 * it.
-	 */
-	if (ruid != (uid_t)-1) {
-		(void)chgproccnt(pc->p_ruid, -1);
-		(void)chgproccnt(ruid, 1);
-		pc->p_ruid = ruid;
-	}
-
-	if (euid != (uid_t)-1) {
-		pc->pc_ucred = crcopy(pc->pc_ucred);
-		pc->pc_ucred->cr_uid = euid;
-	}
-
-	if (suid != (uid_t)-1)
-		pc->p_svuid = suid;
-
-	if (ruid != (uid_t)-1 && euid != (uid_t)-1 && suid != (uid_t)-1)
-		p->p_flag |= P_SUGID;
-	return (0);
+	return do_setresuid(l, SCARG(uap, ruid), SCARG(uap, euid),
+			    SCARG(uap, suid),
+			    ID_R_EQ_R | ID_R_EQ_E | ID_R_EQ_S |
+			    ID_E_EQ_R | ID_E_EQ_E | ID_E_EQ_S |
+			    ID_S_EQ_R | ID_S_EQ_E | ID_S_EQ_S );
 }
 
 int
