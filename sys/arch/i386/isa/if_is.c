@@ -11,14 +11,12 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.18 1994/02/15 00:46:16 mycroft Exp $
+ *	$Id: if_is.c,v 1.19 1994/02/15 01:13:17 mycroft Exp $
  */
 
 /* TODO
- * 1) Add working multicast support
- * 2) Use better allocation of memory to card
- * 3) Advertise for more packets until all transmit buffers are full
- * 4) Add more of the timers/counters e.g. arpcom.opackets etc.
+ * 1) Advertise for more packets until all transmit buffers are full
+ * 2) Add more of the timers/counters e.g. arpcom.opackets etc.
  */
 
 #include "is.h"
