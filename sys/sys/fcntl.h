@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.13 1998/01/15 02:33:12 thorpej Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.14 1998/05/10 14:22:02 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -50,10 +50,11 @@
  */
 
 #ifndef _KERNEL
+#include <sys/featuretest.h>
 #include <sys/types.h>
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 #include <sys/stat.h>
-#endif /* !_POSIX_SOURCE */
+#endif /* !_POSIX_C_SOURCE */
 #endif /* !_KERNEL */
 
 /*
@@ -77,7 +78,7 @@
  * FREAD and FWRITE are excluded from the #ifdef _KERNEL so that TIOCFLUSH,
  * which was documented to use FREAD/FWRITE, continues to work.
  */
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	FREAD		0x0001
 #define	FWRITE		0x0002
 #endif
@@ -114,20 +115,18 @@
 #define	FMASK		(FREAD|FWRITE|FAPPEND|FASYNC|FFSYNC|FNONBLOCK)
 /* bits settable by fcntl(F_SETFL, ...) */
 #define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK)
-#endif
+#endif /* _KERNEL */
 
 /*
  * The O_* flags used to have only F* names, which were used in the kernel
  * and by fcntl.  We retain the F* names for the kernel f_flags field
  * and for backward compatibility for fcntl.
  */
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	FAPPEND		O_APPEND	/* kernel/compat */
 #define	FASYNC		O_ASYNC		/* kernel/compat */
 #define	FFSYNC		O_SYNC		/* kernel */
-#ifndef _XOPEN_SOURCE
 #define	O_FSYNC		O_SYNC		/* compat */
-#endif
 #define	FNONBLOCK	O_NONBLOCK	/* kernel */
 #define	FNDELAY		O_NONBLOCK	/* compat */
 #define	O_NDELAY	O_NONBLOCK	/* compat */
@@ -143,7 +142,7 @@
 #define	F_SETFD		2		/* set file descriptor flags */
 #define	F_GETFL		3		/* get file status flags */
 #define	F_SETFL		4		/* set file status flags */
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	F_GETOWN	5		/* get SIGIO/SIGURG proc/pgrp */
 #define F_SETOWN	6		/* set SIGIO/SIGURG proc/pgrp */
 #endif
@@ -177,7 +176,7 @@ struct flock {
 };
 
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /* lock operations for flock(2) */
 #define	LOCK_SH		0x01		/* shared file lock */
 #define	LOCK_EX		0x02		/* exclusive file lock */
@@ -185,6 +184,16 @@ struct flock {
 #define	LOCK_UN		0x08		/* unlock file */
 #endif
 
+/* Always ensure that these are consistent with <stdio.h> and <unistd.h>! */
+#ifndef	SEEK_SET
+#define	SEEK_SET	0	/* set file offset to offset */
+#endif
+#ifndef	SEEK_CUR
+#define	SEEK_CUR	1	/* set file offset to current plus offset */
+#endif
+#ifndef	SEEK_END
+#define	SEEK_END	2	/* set file offset to EOF plus offset */
+#endif
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
@@ -193,10 +202,10 @@ __BEGIN_DECLS
 int	open __P((const char *, int, ...));
 int	creat __P((const char *, mode_t));
 int	fcntl __P((int, int, ...));
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int	flock __P((int, int));
-#endif /* !_POSIX_SOURCE */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 __END_DECLS
-#endif
+#endif /* !_KERNEL */
 
 #endif /* !_SYS_FCNTL_H_ */
