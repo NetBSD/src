@@ -1,14 +1,14 @@
-#	$NetBSD: std.pc532,v 1.1 1996/11/24 13:28:56 matthias Exp $
+#	$NetBSD: std.pc532,v 1.2 1996/12/23 08:36:46 matthias Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
 machine pc532
 
-membus0 	at root
-#clock0 	at membus0
-ncr0		at membus0		# SCSI driver
+mainbus0 	at root
+#clock0 	at mainbus0
+ncr0		at mainbus0		# SCSI driver
 scsibus0	at ncr0 		# SCSI bus
-scn*		at membus0
+scn*		at mainbus0
 
 options 	EXEC_AOUT		# #! scripts
 options 	EXEC_SCRIPT		# a.out executables
