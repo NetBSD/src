@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2003/12/30 12:33:15 pk Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2004/09/22 11:32:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,20 +53,20 @@
 
 #include <sys/device.h>
 #include <sys/lock.h>
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
+#include <sys/cc_microtime.h>
 
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
+	struct cpu_data ci_data;	/* MI per-cpu data */
+	struct cc_microtime_state ci_cc;/* cc_microtime stete */
 	struct cpu_info *ci_next;
 
 	struct lwp *ci_curlwp;
 	struct simplelock ci_slock;
 	u_int ci_cpuid;
 	u_int ci_apicid;
-	u_long ci_spin_locks;
-	u_long ci_simple_locks;
 
 	u_int64_t ci_scratch;
 
@@ -103,11 +103,6 @@ struct cpu_info {
 	struct trapframe *ci_ddb_regs;
 
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
-
-	struct timeval 	ci_cc_time;
-	int64_t		ci_cc_cc;
-	int64_t		ci_cc_ms_delta;
-	int64_t		ci_cc_denom;
 
 	char		*ci_gdt;
 
@@ -260,12 +255,6 @@ extern int cpu_feature;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
-
-/* kern_microtime.c */
-
-extern struct timeval cc_microset_time;
-void	cc_microtime __P((struct timeval *));
-void	cc_microset __P((struct cpu_info *));
 
 /* identcpu.c */
 

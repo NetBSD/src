@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 2004/02/14 08:20:43 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42 2004/09/22 11:32:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,13 +52,9 @@
 #include <machine/psl.h>
 #include <machine/frame.h>
 
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
 struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
+	struct cpu_data ci_data;	/* MI per-cpu data */
 };
 
 extern struct cpu_info cpu_info_store;

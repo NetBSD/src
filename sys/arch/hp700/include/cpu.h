@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2004/07/24 18:59:05 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 2004/09/22 11:32:02 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -188,13 +188,9 @@ struct clockframe {
 #define	need_resched(ci)	(want_resched = 1, setsoftast())
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
 struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
+	struct cpu_data ci_data;	/* MI per-cpu data */
 };
 
 #include <machine/intr.h>
