@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.12 2000/05/08 21:57:58 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.13 2000/05/10 23:57:13 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#define TX3912VIDEO_DEBUG
+#undef TX3912VIDEO_DEBUG
 
 #include "opt_tx39_debug.h"
 #include "hpcfb.h"
@@ -156,18 +156,18 @@ tx3912video_attach(parent, self, aux)
 	/* if serial console, power off video module */
 #ifndef TX3912VIDEO_DEBUG
 	if (!console) {
-		tx_chipset_tag_t tc = ta->ta_tc;
-		txreg_t reg;
 		printf("%s: power off\n", sc->sc_dev.dv_xname);
-		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
-		reg &= ~(TX3912_VIDEOCTRL1_DISPON |
+		val = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
+		val &= ~(TX3912_VIDEOCTRL1_DISPON |
 			 TX3912_VIDEOCTRL1_ENVID);
-		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
+		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, val);
 	}
 #endif /* TX3912VIDEO_DEBUG */
 
+#ifdef TX3912VIDEO_DEBUG
 	/* attach debug draw routine (debugging use) */
 	__tx3912video_attach_drawfunc(sc->sc_chip);
+#endif
 	
 	/* Attach frame buffer device */
 	tx3912video_hpcfbinit(sc);
@@ -195,7 +195,7 @@ tx3912video_hpcfbinit(sc)
 {
 	struct tx3912video_chip *chip = sc->sc_chip;
 	struct hpcfb_fbconf *fb = &sc->sc_fbconf;
-	caddr_t fbcaddr = (caddr_t)MIPS_PHYS_TO_KSEG1(chip->vc_fbaddr);
+	vaddr_t fbvaddr = (vaddr_t)MIPS_PHYS_TO_KSEG1(chip->vc_fbaddr);
 	
 	memset(fb, 0, sizeof(struct hpcfb_fbconf));
 	
@@ -207,8 +207,8 @@ tx3912video_hpcfbinit(sc)
 					/* configuration name		*/
 	fb->hf_height		= chip->vc_fbheight;
 	fb->hf_width		= chip->vc_fbwidth;
-	fb->hf_baseaddr		= mips_ptob(mips_btop(fbcaddr));
-	fb->hf_offset		= (u_long)fbcaddr - fb->hf_baseaddr;
+	fb->hf_baseaddr		= mips_ptob(mips_btop(fbvaddr));
+	fb->hf_offset		= (u_long)fbvaddr - fb->hf_baseaddr;
 					/* frame buffer start offset   	*/
 	fb->hf_bytes_per_line	= (chip->vc_fbwidth * chip->vc_fbdepth)
 		/ NBBY;
@@ -937,7 +937,8 @@ tx3912video_line(x0, y0, x1, y1)
 	int x0, y0, x1, y1;
 {
 	struct tx3912video_chip *vc = &tx3912video_chip;
-	vc->vc_drawline(x0, y0, x1, y1);
+	if (vc->vc_drawline)
+		vc->vc_drawline(x0, y0, x1, y1);
 }
 
 void
@@ -945,5 +946,6 @@ tx3912video_dot(x, y)
 	int x, y;
 {
 	struct tx3912video_chip *vc = &tx3912video_chip;
-	vc->vc_drawdot(x, y);
+	if (vc->vc_drawdot)
+		vc->vc_drawdot(x, y);
 }
