@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/05/02 16:06:46 sjg Exp $
+#	$NetBSD: Makefile,v 1.9 2000/08/30 23:51:48 jhawk Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -31,9 +31,9 @@ all: ${CBIN}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${.CURDIR}/${LISTS}
-	@echo chdir '$${.CURDIR}/../../../notes/alpha; make INSTALL.more'
-	@chdir ${.CURDIR}/../../../notes/alpha; make INSTALL.more
-	cp `chdir ${.CURDIR}/../../../notes/alpha; make echomore`	\
+	@echo chdir '$${.CURDIR}/../../../notes/alpha; ${MAKE} INSTALL.more'
+	@chdir ${.CURDIR}/../../../notes/alpha; ${MAKE} INSTALL.more
+	cp `chdir ${.CURDIR}/../../../notes/alpha; ${MAKE} echomore`	\
 		${MOUNT_POINT}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -50,7 +50,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c

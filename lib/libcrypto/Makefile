@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/07/16 07:16:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2000/08/30 23:51:52 jhawk Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -91,8 +91,8 @@ update_inc:
 	    -name Makefile.ssl | \
 	    perl ${OPENSSLSRC}/extsrcs.pl 2> srcs.inc )
 
-DES_SHLIB_MAJOR != cd ${.CURDIR}/../libdes && make print-shlib-major
-DES_SHLIB_MINOR != cd ${.CURDIR}/../libdes && make print-shlib-minor
+DES_SHLIB_MAJOR != cd ${.CURDIR}/../libdes && ${MAKE} print-shlib-major
+DES_SHLIB_MINOR != cd ${.CURDIR}/../libdes && ${MAKE} print-shlib-minor
 
 LINKS+= ${LIBDIR}/libcrypto.a ${LIBDIR}/libdes.a
 

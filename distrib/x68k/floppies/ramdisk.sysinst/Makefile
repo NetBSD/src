@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/07/05 16:13:28 minoura Exp $
+#	$NetBSD: Makefile,v 1.8 2000/08/30 23:51:52 jhawk Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -61,7 +61,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 # Use size-reduced libhack.
 ${CBIN}: libhack.o

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:46 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/08/30 23:51:53 jhawk Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/kadm5
 
@@ -9,7 +9,7 @@ all: depend
 
 depend: kadm5_err.c kadm5_err.h
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && make print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${MAKE} print-objdir
 
 kadm5_err.c kadm5_err.h: kadm5_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/kadm5/kadm5_err.et
