@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.9 1998/08/10 18:43:06 is Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.10 1998/08/10 20:23:50 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -90,7 +90,6 @@ com_supio_match(parent, match, aux)
 	void *aux;
 {
 	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	int iobase;
 	int rv = 1;
 	struct supio_attach_args *supa = aux;
