@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.79 2002/10/04 18:53:46 elric Exp $
+#	$NetBSD: MAKEDEV,v 1.80 2002/10/21 03:26:39 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -118,31 +118,31 @@ do
 case $i in
 
 all)
-	sh -$- $0 std ttya ttyb ttyc ttyd
-	sh -$- $0 fd sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
-	sh -$- $0 cd0 st0 st1 fd0 md0 md1
-	sh -$- $0 audio0 audio1 audio2 audio3
-	sh -$- $0 pty0 vnd0 vnd1 vnd2 vnd3 audio
-	sh -$- $0 tun0 tun1 tun2 tun3
-	sh -$- $0 ccd0 ccd1 ccd2 ccd3
-	sh -$- $0 cgd0 cgd1 cgd2 cgd3
-	sh -$- $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
-	sh -$- $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh -$- $0 bwtwo0 cgthree0 cgsix0 tcx0
-	sh -$- $0 bwtwo1 cgthree1 cgsix1 tcx1
-	sh -$- $0 cgtwo0 cgfour0 cgeight0
-	sh -$- $0 scsibus0 scsibus1 scsibus2 scsibus3
-	sh -$- $0 lkm random local ipl cfs0 apm apmctl tctrl0
-	sh -$- $0 isdns
-	sh -$- $0 pci0
-	sh -$- $0 clockctl
-	sh -$- $0 systrace
+	makedev std ttya ttyb ttyc ttyd
+	makedev fd sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
+	makedev cd0 st0 st1 fd0 md0 md1
+	makedev audio0 audio1 audio2 audio3
+	makedev pty0 vnd0 vnd1 vnd2 vnd3 audio
+	makedev tun0 tun1 tun2 tun3
+	makedev ccd0 ccd1 ccd2 ccd3
+	makedev cgd0 cgd1 cgd2 cgd3
+	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
+	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	makedev bwtwo0 cgthree0 cgsix0 tcx0
+	makedev bwtwo1 cgthree1 cgsix1 tcx1
+	makedev cgtwo0 cgfour0 cgeight0
+	makedev scsibus0 scsibus1 scsibus2 scsibus3
+	makedev lkm random local ipl cfs0 apm apmctl tctrl0
+	makedev isdns
+	makedev pci0
+	makedev clockctl
+	makedev systrace
 	;;
 
 floppy|ramdisk)
-	sh -$- $0 std ttya ttyb ttyc ttyd opty
-	sh -$- $0 sd0 sd1 sd2 sd3 sd4 sd5 md0
-	sh -$- $0 cd0 cd1 st0 st1 fd0
+	makedev std ttya ttyb ttyc ttyd opty
+	makedev sd0 sd1 sd2 sd3 sd4 sd5 md0
+	makedev cd0 cd1 st0 st1 fd0
 	;;
 
 isdns)
@@ -423,16 +423,15 @@ opty)
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
-		
 pty*)
 	class=${i#pty}
 	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
 	case $name in
 	v)	echo "$0: $i: pty unit conflicts with console ttyv0 device."
-		continue;;
-	?)      ;;
-	*)      echo "$0: $i: pty unit must be between 0 and 15"
-	        continue ;;
+		continue ;;
+	?)	;;
+	*)	echo "$0: $i: pty unit must be between 0 and 15"
+		continue ;;
 	esac
 	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	jn=0
@@ -471,13 +470,13 @@ magma*)
 	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 	do
 		case $j in
-		[0-9])  jn=$j ;;
-		a)      jn=10 ;;
-		b)      jn=11 ;;
-		c)      jn=12 ;;
-		d)      jn=13 ;;
-		e)      jn=14 ;;
-		f)      jn=15 ;;
+		[0-9])	jn=$j ;;
+		a)	jn=10 ;;
+		b)	jn=11 ;;
+		c)	jn=12 ;;
+		d)	jn=13 ;;
+		e)	jn=14 ;;
+		f)	jn=15 ;;
 		esac
 		mknod tty$unit$j c 100 $(($unit * 64 + $jn))
 	done
