@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.32 1999/03/30 02:22:49 abs Exp $
+	$NetBSD: syscalls.master,v 1.32.2.1 2000/01/31 19:15:07 he Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -298,3 +298,8 @@
 183	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 184	UNIMPL		capget
 185	UNIMPL		capset
+186	UNIMPL		sigaltstack
+187	UNIMPL		sendfile
+188	UNIMPL		getpmsg
+189	UNIMPL		putpmsg
+190	NOARGS		{ int sys_vfork(void); }
