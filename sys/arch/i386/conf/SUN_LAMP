@@ -1,7 +1,7 @@
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
-#	$Id: SUN_LAMP,v 1.46 1994/05/30 17:30:25 mycroft Exp $
+#	$Id: SUN_LAMP,v 1.47 1994/06/03 20:28:48 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -22,7 +22,7 @@ options		"COMPAT_09"
 options		"MACHINE_NONCONTIG"
 
 options		DIAGNOSTIC
-options		DDB
+#options	DDB
 
 config		netbsd	root on sd0 swap on sd0 and sd1 and sd2
 
