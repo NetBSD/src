@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.411 2001/12/05 06:57:35 lukem Exp $
+#	$NetBSD: mi,v 1.412 2001/12/05 12:44:24 ad Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -5568,6 +5568,7 @@
 ./usr/share/man/man9/m_pullup.9		comp-sys-man
 ./usr/share/man/man9/m_split.9		comp-sys-man
 ./usr/share/man/man9/malloc.9		comp-sys-man
+./usr/share/man/man9/malloc_roundup.9	comp-sys-man
 ./usr/share/man/man9/mbuf.9		comp-sys-man
 ./usr/share/man/man9/mca.9		comp-sys-man
 ./usr/share/man/man9/mca_conf_read.9		comp-sys-man
