@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.32 1998/05/01 03:21:05 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.32.2.1 1998/08/08 03:07:02 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 #ifndef M_WAITOK
 #include <sys/malloc.h>
 #endif
+#include <sys/pool.h>
 
 /*
  * Mbufs are of a single size, MSIZE (machine/param.h), which
@@ -235,7 +236,7 @@ union mcluster {
  * are guaranteed to return successfully.
  */
 #define	MGET(m, how, type) do { \
-	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
+	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK : 0);); \
 	if (m) { \
 		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
@@ -248,7 +249,7 @@ union mcluster {
 } while (0)
 
 #define	MGETHDR(m, how, type) do { \
-	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
+	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK : 0);); \
 	if (m) { \
 		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
@@ -318,14 +319,8 @@ union mcluster {
  */
 #define	MCLGET(m, how) do { \
 	MBUFLOCK( \
-		if (mclfree == 0) \
-			(void)m_clalloc(1, (how)); \
-		if (((m)->m_ext.ext_buf = (caddr_t)mclfree) != 0) { \
-			MCLBUFREF((m)->m_ext.ext_buf); \
-			mbstat.m_clfree--; \
-			mclfree = \
-			  ((union mcluster *)((m)->m_ext.ext_buf))->mcl_next; \
-		} \
+		(m)->m_ext.ext_buf = \
+		    pool_get(&mclpool, (how) == M_WAIT ? PR_WAITOK : 0); \
 	); \
 	if ((m)->m_ext.ext_buf != NULL) { \
 		(m)->m_data = (m)->m_ext.ext_buf; \
@@ -367,10 +362,7 @@ union mcluster {
 	if (MCLISREFERENCED(m)) { \
 		_MCLDEREFERENCE(m); \
 	} else if ((m)->m_flags & M_CLUSTER) { \
-		char *p = (m)->m_ext.ext_buf; \
-		((union mcluster *)(p))->mcl_next = mclfree; \
-		mclfree = (union mcluster *)(p); \
-		mbstat.m_clfree++; \
+		pool_put(&mclpool, (m)->m_ext.ext_buf); \
 	} else if ((m)->m_ext.ext_free) { \
 		(*((m)->m_ext.ext_free))((m)->m_ext.ext_buf, \
 		    (m)->m_ext.ext_size, (m)->m_ext.ext_arg); \
@@ -396,7 +388,7 @@ union mcluster {
 			_MEXTREMOVE((m)); \
 		} \
 		(n) = (m)->m_next; \
-		FREE((m), mbtypes[(m)->m_type]); \
+		pool_put(&mbpool, (m)); \
 	)
 
 /*
@@ -501,6 +493,8 @@ extern int	max_protohdr;		/* largest protocol header */
 extern int	max_hdr;		/* largest link+protocol header */
 extern int	max_datalen;		/* MHLEN - max_hdr */
 extern int	mbtypes[];		/* XXX */
+extern struct pool mbpool;
+extern struct pool mclpool;
 
 struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
 struct	mbuf *m_copypacket __P((struct mbuf *, int));
@@ -518,11 +512,10 @@ struct	mbuf *m_split __P((struct mbuf *,int,int));
 void	m_adj __P((struct mbuf *, int));
 void	m_cat __P((struct mbuf *,struct mbuf *));
 int	m_mballoc __P((int, int));
-int	m_clalloc __P((int, int));
 void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 void	m_copydata __P((struct mbuf *,int,int,caddr_t));
 void	m_freem __P((struct mbuf *));
-void	m_reclaim __P((void));
+void	m_reclaim __P((int));
 void	mbinit __P((void));
 
 #ifdef MBTYPES

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.18 1998/06/30 05:33:12 thorpej Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.18.2.1 1998/08/08 03:06:57 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -183,7 +183,7 @@ soo_stat(so, ub)
 	register struct stat *ub;
 {
 
-	bzero((caddr_t)ub, sizeof (*ub));
+	bzero((caddr_t)ub, sizeof(*ub));
 	ub->st_mode = S_IFSOCK;
 	return ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
 	    (struct mbuf *)ub, (struct mbuf *)0, (struct mbuf *)0,

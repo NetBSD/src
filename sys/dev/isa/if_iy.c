@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.25 1998/07/28 16:02:34 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.25.2.1 1998/08/08 03:06:47 eeh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -31,6 +31,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ */
+
+/*
+ * Supported hardware:
+ *
+ * - Intel EtherExpress Pro/10.
+ * - possibly other boards using the i82595 chip and no special tweaks.
  */
 
 #include "opt_inet.h"
@@ -119,6 +126,7 @@ struct iy_softc {
 	int tx_start, tx_end, tx_last;
 	int rx_start;
 
+	int doing_mc_setup;
 #ifdef IYDEBUG
 	int sc_debug;
 #endif
@@ -145,16 +153,14 @@ void iy_find_mem_size __P((struct iy_softc *));
 void iyrint __P((struct iy_softc *));
 void iytint __P((struct iy_softc *));
 void iyxmit __P((struct iy_softc *));
+static void iy_mc_setup __P((struct iy_softc *));
+static void iy_mc_reset __P((struct iy_softc *));
 void iyget __P((struct iy_softc *, bus_space_tag_t, bus_space_handle_t, int));
 void iyprobemem __P((struct iy_softc *));
 static __inline void eepromwritebit __P((bus_space_tag_t, bus_space_handle_t,
     int));
 static __inline int eepromreadbit __P((bus_space_tag_t, bus_space_handle_t));
-/*
- * void iymeminit __P((void *, struct iy_softc *));
- * static int iy_mc_setup __P((struct iy_softc *, void *));
- * static void iy_mc_reset __P((struct iy_softc *));
- */
+
 #ifdef IYDEBUGX
 void print_rbd __P((volatile struct iy_recv_buf_desc *));
 
@@ -303,8 +309,10 @@ iyattach(parent, self, aux)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = iystart;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
-					/* XXX todo: | IFF_MULTICAST */
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS
+	    | IFF_MULTICAST;
+
+	sc->doing_mc_setup = 0;
 
 	ifp->if_ioctl = iyioctl;
 	ifp->if_watchdog = iywatchdog;
@@ -450,10 +458,6 @@ struct iy_softc *sc;
 	bus_space_write_1(iot, ioh, REG1,
 	    temp | XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP | RCV_DISCARD_BAD);
 	
-#ifdef IYUSEOLD
-	temp = bus_space_read_1(iot, ioh, RECV_MODES_REG);
-	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp | MATCH_BRDCST);
-#else
 	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
 		temp = MATCH_ALL;
 	} else if (sc->sc_ethercom.ec_multicnt) {
@@ -462,14 +466,15 @@ struct iy_softc *sc;
 		temp = MATCH_ID;
 
 	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp);
-#endif
+
 #ifdef IYDEBUG
-	printf("%s: RECV_MODES were %b set to %b\n",
-	    sc->sc_dev.dv_xname, 
-	    temp, "\020\1PRMSC\2NOBRDST\3SEECRC\4LENGTH\5NOSaIns\6MultiIA",
-	    temp|MATCH_BRDCST,
-	    "\020\1PRMSC\2NOBRDST\3SEECRC\4LENGTH\5NOSaIns\6MultiIA");
+	printf("%s: RECV_MODES set to %b\n", sc->sc_dev.dv_xname, 
+	    temp, "\020\1PRMSC\2NOBRDST\3SEECRC\4LENGTH\5NOSaIns\6MultiIA");
 #endif
+	/* XXX VOODOO */
+	temp = bus_space_read_1(iot, ioh, MEDIA_SELECT);
+	bus_space_write_1(iot, ioh, MEDIA_SELECT, temp);
+	/* XXX END OF VOODOO */
 
 
 	delay(500000); /* for the hardware to test for the connector */
@@ -589,10 +594,11 @@ struct ifnet *ifp;
 #ifdef IYDEBUG
 	printf("iystart called\n");
 #endif
+	sc = ifp->if_softc;
+
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
                 return;
 
-	sc = ifp->if_softc;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -870,13 +876,14 @@ iyintr(arg)
 			printf("\n");
 	}
 #endif
-	if (((status & (RX_INT | TX_INT)) == 0))
+	if ((status & (RX_INT | TX_INT)) == 0)
 		return 0;
 
 	if (status & RX_INT) {
 		iy_intr_rx(sc);
 		bus_space_write_1(iot, ioh, STATUS_REG, RX_INT);
-	} else if (status & TX_INT) {
+	}
+	if (status & TX_INT) {
 		iy_intr_tx(sc);
 		bus_space_write_1(iot, ioh, STATUS_REG, TX_INT);
 	}
@@ -974,6 +981,7 @@ dropped:
 	++ifp->if_ierrors;
 	return;
 }
+
 void
 iy_intr_rx(sc)
 struct iy_softc *sc;
@@ -1150,7 +1158,6 @@ iyioctl(ifp, cmd, data)
 #endif
 		break;
 
-#if 0 /* XXX */
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
@@ -1162,11 +1169,12 @@ iyioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			iy_mc_reset(sc); /* XXX */
+			iyreset(sc); /* XXX can't make it work otherwise */
+			iy_mc_reset(sc);
 			error = 0;
 		}
 		break;
-#endif
+
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->iy_ifmedia, cmd);
@@ -1210,7 +1218,91 @@ iy_mediastatus(ifp, ifmr)
 	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 }
 
-#if 0
+
+static void
+iy_mc_setup(sc)
+	struct iy_softc *sc;
+{
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	struct ethercom *ecp;
+	struct ifnet *ifp;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int avail, last /*, end*/ , len;
+	int timeout;
+	u_int8_t temp;
+	
+
+	ecp = &sc->sc_ethercom;
+	ifp = &ecp->ec_if;
+
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
+
+	len = 6 * ecp->ec_multicnt + 6;
+	
+	avail = sc->tx_start - sc->tx_end;
+	if (avail <= 0)
+		avail += sc->tx_size;
+	printf("iy_mc_setup called, %d addresses, %d/%d bytes needed/avail\n",
+	    ecp->ec_multicnt, len + I595_XMT_HDRLEN, avail);
+
+	last = sc->rx_size;
+
+	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
+	bus_space_write_1(iot, ioh, RECV_MODES_REG, MATCH_MULTI);
+	/* XXX VOODOO */
+	temp = bus_space_read_1(iot, ioh, MEDIA_SELECT);
+	bus_space_write_1(iot, ioh, MEDIA_SELECT, temp);
+	/* XXX END OF VOODOO */
+	bus_space_write_1(iot, ioh, 0, BANK_SEL(0));
+	bus_space_write_2(iot, ioh, HOST_ADDR_REG, last);
+	bus_space_write_2(iot, ioh, MEM_PORT_REG, MC_SETUP_CMD);
+	bus_space_write_2(iot, ioh, MEM_PORT_REG, 0);
+	bus_space_write_2(iot, ioh, MEM_PORT_REG, 0);
+	bus_space_write_2(iot, ioh, MEM_PORT_REG, len);
+	
+	bus_space_write_multi_2(iot, ioh, MEM_PORT_REG,
+	    LLADDR(ifp->if_sadl), 3);
+
+	ETHER_FIRST_MULTI(step, ecp, enm);
+	while(enm) {
+		bus_space_write_multi_2(iot, ioh, MEM_PORT_REG,
+		    enm->enm_addrlo, 3);
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	bus_space_write_2(iot, ioh, XMT_ADDR_REG, last);
+	bus_space_write_1(iot, ioh, 0, MC_SETUP_CMD);
+	
+
+	sc->tx_start =  sc->rx_size;
+	sc->tx_end = sc->rx_size + I595_XMT_HDRLEN + len;
+
+	for (timeout=0; timeout<100; timeout++) {
+		DELAY(2);
+		if ((bus_space_read_1(iot, ioh, STATUS_REG) & EXEC_INT) == 0)
+			continue;
+
+		temp = bus_space_read_1(iot, ioh, 0);
+		bus_space_write_1(iot, ioh, STATUS_REG, EXEC_INT);
+#ifdef DIAGNOSTIC
+		if (temp & 0x20) {
+			printf("%s: mc setup failed, %d usec\n",
+			    sc->sc_dev.dv_xname, timeout * 2);
+		} else if ((temp & 0x0f) == 0x03) {
+				printf("%s: mc setup done, %d usec\n",
+			    sc->sc_dev.dv_xname, timeout * 2);
+		}
+#endif
+		break;
+	}
+	sc->tx_start = sc->tx_end;
+	sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+	
+}
+
 static void
 iy_mc_reset(sc)
 	struct iy_softc *sc;
@@ -1219,45 +1311,62 @@ iy_mc_reset(sc)
 	struct ether_multistep step;
 	struct ethercom *ecp;
 	struct ifnet *ifp;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	u_int16_t temp;
 
 	ecp = &sc->sc_ethercom;
 	ifp = &ecp->ec_if;
 
-	if (ecp->ec_multicnt > 63) {
-		goto needallmulti;
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 
-	} else if (ec->ec_multicnt > 0) {
+	if (ecp->ec_multicnt > 63) {
+		ifp->if_flags |= IFF_ALLMULTI;
+
+	} else if (ecp->ec_multicnt > 0) {
 		/*
 		 * Step through the list of addresses.
 		 */
 		ETHER_FIRST_MULTI(step, ecp, enm);
 		while(enm) {
 			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-				goto needallmulti;
+				ifp->if_flags |= IFF_ALLMULTI;
+				goto setupmulti;
 			}
 			ETHER_NEXT_MULTI(step, enm);
 		} 
 		/* OK, we really need to do it now: */
-		ETHER_FIRST_MULTI(step, ecp, enm);
-		/*
-		 * XXX TBD: find a suitable place in the TX buffer for the
-		 * setup command, and write its header and our unicast address
-		 */
-		while(enm) {
-			/* XXX TBD: write the next multicast address */
-			ETHER_NEXT_MULTI(step, enm);
+#if 0
+		if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE))
+		    != IFF_RUNNING) {
+			ifp->if_flags |= IFF_OACTIVE;
+			sc->want_mc_setup = 1;
+                	return;
 		}
-		/* XXX TBD: write command and wait for the result */
-
+#endif
+		iy_mc_setup(sc);
 	} else {
-		/* XXX TBD: setup for no multicasts */
+		ifp->if_flags &= ~IFF_ALLMULTI;
 	}
-	return;
 
-needallmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
-	iyioctl(ifp, SIOCSIFFLAGS, (void *)0);
-	/* XXX TBD: and setup hardware for all multicasts */
+setupmulti:
+	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
+	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
+		temp = MATCH_ALL;
+	} else if (sc->sc_ethercom.ec_multicnt) {
+		temp = MATCH_MULTI;
+	} else 
+		temp = MATCH_ID;
+
+	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp);
+	/* XXX VOODOO */
+	temp = bus_space_read_1(iot, ioh, MEDIA_SELECT);
+	bus_space_write_1(iot, ioh, MEDIA_SELECT, temp);
+	/* XXX END OF VOODOO */
+
+	/* XXX TBD: setup hardware for all multicasts */
+	bus_space_write_1(iot, ioh, 0, BANK_SEL(0));
 	return;
 }
 
@@ -1272,7 +1381,6 @@ print_rbd(rbd)
 	    rbd->ie_rbd_next, rbd->ie_rbd_buffer, rbd->ie_rbd_length,
 	    rbd->mbz);
 }
-#endif
 #endif
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.10.2.1 1998/08/07 12:39:50 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.10.2.2 1998/08/08 03:06:53 eeh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.10.2.1 1998/08/07 12:39:50 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.10.2.2 1998/08/08 03:06:53 eeh Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -782,7 +782,7 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 	    flag, p));
 }
 
-paddr_t
+int
 wsdisplaymmap(dev, offset, prot)
 	dev_t dev;
 	int offset;		/* XXX */

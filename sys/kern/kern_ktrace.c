@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.30 1998/06/30 05:33:12 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.30.2.1 1998/08/08 03:06:54 eeh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -101,7 +101,7 @@ ktrgetheader(type)
 	struct ktr_header *kth;
 	struct proc *p = curproc;	/* XXX */
 
-	MALLOC(kth, struct ktr_header *, sizeof (struct ktr_header), 
+	MALLOC(kth, struct ktr_header *, sizeof(struct ktr_header), 
 		M_TEMP, M_WAITOK);
 	kth->ktr_type = type;
 	microtime(&kth->ktr_time);
@@ -130,7 +130,7 @@ ktrsyscall(v, code, argsize, args)
 	ktp->ktr_code = code;
 	ktp->ktr_argsize = argsize;
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
-	for (i = 0; i < (argsize / sizeof *argp); i++)
+	for (i = 0; i < (argsize / sizeof(*argp)); i++)
 		*argp++ = args[i];
 	kth->ktr_buf = (caddr_t)ktp;
 	kth->ktr_len = len;
@@ -223,7 +223,7 @@ ktrgenio(v, fd, rw, iov, len, error)
 		M_TEMP, M_WAITOK);
 	ktp->ktr_fd = fd;
 	ktp->ktr_rw = rw;
-	cp = (caddr_t)((char *)ktp + sizeof (struct ktr_genio));
+	cp = (caddr_t)((char *)ktp + sizeof(struct ktr_genio));
 	while (resid > 0) {
 		if ((cnt = iov->iov_len) > resid)
 			cnt = resid;
@@ -234,7 +234,7 @@ ktrgenio(v, fd, rw, iov, len, error)
 		iov++;
 	}
 	kth->ktr_buf = (caddr_t)ktp;
-	kth->ktr_len = sizeof (struct ktr_genio) + len;
+	kth->ktr_len = sizeof(struct ktr_genio) + len;
 
 	ktrwrite(p, v, kth);
 done:
@@ -261,7 +261,7 @@ ktrpsig(v, sig, action, mask, code)
 	kp.mask = mask;
 	kp.code = code;
 	kth->ktr_buf = (caddr_t)&kp;
-	kth->ktr_len = sizeof (struct ktr_psig);
+	kth->ktr_len = sizeof(struct ktr_psig);
 
 	ktrwrite(p, v, kth);
 	FREE(kth, M_TEMP);
@@ -282,7 +282,7 @@ ktrcsw(v, out, user)
 	kc.out = out;
 	kc.user = user;
 	kth->ktr_buf = (caddr_t)&kc;
-	kth->ktr_len = sizeof (struct ktr_csw);
+	kth->ktr_len = sizeof(struct ktr_csw);
 
 	ktrwrite(p, v, kth);
 	FREE(kth, M_TEMP);

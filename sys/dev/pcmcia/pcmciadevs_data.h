@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.4 1998/07/22 11:48:58 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.4.2.1 1998/08/08 03:06:50 eeh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.3 1998/07/22 11:47:13 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.4 1998/07/30 20:44:25 thorpej Exp 
  */
 
 /*
@@ -143,6 +143,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "US Robotics Corporation",
 	    "US Robotics WorldPort 14.4 Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_SIMPLETECH, PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288,
+	    PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288,
+	    0,
+	    "Simple Technology",
+	    "Simple Technology 28.8 Communicator"	},
 	},
 	{
 	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_PAGECARD,
@@ -289,6 +296,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Linksys Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SIMPLETECH, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Simple Technology",
 	    NULL,
 	},
 	{

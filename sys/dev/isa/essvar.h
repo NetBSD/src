@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.1 $ (SHARK) $Date: 1998/06/29 20:56:21 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.1.2.1 $ (SHARK) $Date: 1998/08/08 03:06:47 $
 **
 **++
 **
@@ -92,10 +92,8 @@
 struct ess_audio_channel
 {
 	int	drq;			/* DMA channel */
-	int	mode;			/* DMA mode */
-#define	ESS_MODE_8BIT	0
-#define	ESS_MODE_16BIT	1
 	int	irq;			/* IRQ line for this DMA channel */
+	int	ist;
 	void	*ih;			/* interrupt vectoring */
 	u_long	nintr;			/* number of interrupts taken */
 	void	(*intr)__P((void*));	/* ISR for DMA complete */
@@ -145,4 +143,6 @@ struct ess_softc
 	u_int	sc_version;		/* Legacy ES688/ES1688 ID */
 };
 
+int	essmatch __P((struct ess_softc *));
+void	essattach __P((struct ess_softc *));
 

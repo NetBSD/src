@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.35 1998/06/25 23:41:20 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.35.2.1 1998/08/08 03:06:58 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -842,7 +842,7 @@ sorflush(so)
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;
-	bzero((caddr_t)sb, sizeof (*sb));
+	bzero((caddr_t)sb, sizeof(*sb));
 	splx(s);
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(asb.sb_mb);
@@ -867,7 +867,7 @@ sosetopt(so, level, optname, m0)
 		switch (optname) {
 
 		case SO_LINGER:
-			if (m == NULL || m->m_len != sizeof (struct linger)) {
+			if (m == NULL || m->m_len != sizeof(struct linger)) {
 				error = EINVAL;
 				goto bad;
 			}
@@ -883,7 +883,7 @@ sosetopt(so, level, optname, m0)
 		case SO_REUSEPORT:
 		case SO_OOBINLINE:
 		case SO_TIMESTAMP:
-			if (m == NULL || m->m_len < sizeof (int)) {
+			if (m == NULL || m->m_len < sizeof(int)) {
 				error = EINVAL;
 				goto bad;
 			}
@@ -900,7 +900,7 @@ sosetopt(so, level, optname, m0)
 		    {
 			int optval;
 
-			if (m == NULL || m->m_len < sizeof (int)) {
+			if (m == NULL || m->m_len < sizeof(int)) {
 				error = EINVAL;
 				goto bad;
 			}
@@ -951,7 +951,7 @@ sosetopt(so, level, optname, m0)
 			struct timeval *tv;
 			short val;
 
-			if (m == NULL || m->m_len < sizeof (*tv)) {
+			if (m == NULL || m->m_len < sizeof(*tv)) {
 				error = EINVAL;
 				goto bad;
 			}
@@ -1006,12 +1006,12 @@ sogetopt(so, level, optname, mp)
 			return (ENOPROTOOPT);
 	} else {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		m->m_len = sizeof (int);
+		m->m_len = sizeof(int);
 
 		switch (optname) {
 
 		case SO_LINGER:
-			m->m_len = sizeof (struct linger);
+			m->m_len = sizeof(struct linger);
 			mtod(m, struct linger *)->l_onoff =
 				so->so_options & SO_LINGER;
 			mtod(m, struct linger *)->l_linger = so->so_linger;

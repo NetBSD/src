@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.1.1.1.2.1 1998/08/02 00:06:47 eeh Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.1.1.1.2.2 1998/08/08 03:06:43 eeh Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -569,7 +569,7 @@ cgfourteenunblank(dev)
  * tell the chip to ignore the X channel. XXX where does it get the X value
  * to use?
  */
-paddr_t
+int
 cgfourteenmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;

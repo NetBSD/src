@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.20 1998/07/23 19:30:45 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.20.2.1 1998/08/08 03:06:48 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -70,10 +70,21 @@ static int isapnp_submatch __P((struct device *, struct cfdata *, void *));
 static int isapnp_find __P((struct isapnp_softc *, int));
 static int isapnp_match __P((struct device *, struct cfdata *, void *));
 static void isapnp_attach __P((struct device *, struct device *, void *));
+static void isapnp_callback __P((struct device *));
 
 struct cfattach isapnp_ca = {
 	sizeof(struct isapnp_softc), isapnp_match, isapnp_attach
 };
+
+/*
+ * This keeps track if which ISA's we have been probed on.
+ */
+struct isapnp_probe_cookie {
+	LIST_ENTRY(isapnp_probe_cookie)	ipc_link;
+	struct device *ipc_parent;
+};
+LIST_HEAD(, isapnp_probe_cookie) isapnp_probes =
+    LIST_HEAD_INITIALIZER(isapnp_probes);
 
 /* isapnp_init():
  *	Write the PNP initiation key to wake up the cards...
@@ -571,6 +582,7 @@ isapnp_submatch(parent, match, aux)
 	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
+
 /* isapnp_devmatch():
  *	Match a probed device with the information from the driver
  */
@@ -590,6 +602,35 @@ isapnp_devmatch(ipa, dinfo)
 			return 1;
 
 	return 0;
+}
+
+
+/* isapnp_isa_attach_hook():
+ *	This routine is called from the isa attach code and
+ *	is a kludge; we are resetting all the cards here in order
+ *	to undo any card configuration that the bios did for us, in order
+ *	to avoid having the PnP devices match an isa probe. The correct
+ *	way of doing this is to read the PnP BIOS and find the card settings
+ *	from there. Unfortunately it is not as easy as it sounds.
+ */
+void
+isapnp_isa_attach_hook(isa_sc)
+	struct isa_softc *isa_sc;
+{
+	struct isapnp_softc sc;
+	
+	sc.sc_iot = isa_sc->sc_iot;
+	sc.sc_ncards = 0;
+
+	if (isapnp_map(&sc))
+		return;
+
+	isapnp_init(&sc);
+
+	isapnp_write_reg(&sc, ISAPNP_CONFIG_CONTROL, ISAPNP_CC_RESET_DRV);
+	DELAY(2000);
+
+	isapnp_unmap(&sc);
 }
 #endif
 
@@ -783,31 +824,47 @@ isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	int rv;
 	struct isapnp_softc sc;
 	struct isa_attach_args *ia = aux;
+	struct isapnp_probe_cookie *ipc;
+
+	/*
+	 * Ensure we only probe ISA PnP once; we don't actually consume
+	 * bus resources, so we have to prevent being cloned forever.
+	 */
+	for (ipc = LIST_FIRST(&isapnp_probes); ipc != NULL;
+	     ipc = LIST_NEXT(ipc, ipc_link))
+		if (ipc->ipc_parent == parent)
+			return (0);
+
+	ipc = malloc(sizeof(*ipc), M_DEVBUF, M_NOWAIT);
+	if (ipc == NULL)
+		panic("isapnp_match: can't allocate probe cookie");
+
+	ipc->ipc_parent = parent;
+	LIST_INSERT_HEAD(&isapnp_probes, ipc, ipc_link);
 
 	sc.sc_iot = ia->ia_iot;
-	sc.sc_ncards = 0;
 	(void) strcpy(sc.sc_dev.dv_xname, "(isapnp probe)");
 
 	if (isapnp_map(&sc))
 		return 0;
 
-	rv = isapnp_find(&sc, 0);
+	isapnp_unmap(&sc);
+
+	/*
+	 * We always match.  We must let all legacy ISA devices map
+	 * their address spaces before we look for a read port.
+	 */
 	ia->ia_iobase = ISAPNP_ADDR;
 	ia->ia_iosize = 1;
 
-	isapnp_unmap(&sc);
-	if (rv)
-		isapnp_unmap_readport(&sc);
-
-	return (rv);
+	return (1);
 }
 
 
 /* isapnp_attach
- *	Find and attach PnP cards.
+ *	Attach the PnP `bus'.
  */
 static void
 isapnp_attach(parent, self, aux)
@@ -816,24 +873,58 @@ isapnp_attach(parent, self, aux)
 {
 	struct isapnp_softc *sc = (struct isapnp_softc *) self;
 	struct isa_attach_args *ia = aux;
-	int c, d;
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
 	sc->sc_ic = ia->ia_ic;
+	sc->sc_dmat = ia->ia_dmat;
 	sc->sc_ncards = 0;
 
-	if (isapnp_map(sc))
-		panic("%s: bus map failed\n", sc->sc_dev.dv_xname);
+	printf(": ISA Plug 'n Play device support\n");
 
-	if (!isapnp_find(sc, 1))
-		panic("%s: no cards found\n", sc->sc_dev.dv_xname);
+	if (isapnp_map(sc)) {
+		printf("%s: unable to map PnP register\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
-	printf(": read port 0x%x\n", sc->sc_read_port);
+#ifdef _KERNEL
+	/*
+	 * Defer configuration until the rest of the ISA devices have
+	 * attached themselves.
+	 */
+	config_defer(self, isapnp_callback);
+#else
+	isapnp_callback(self);
+#endif
+}
 
+/* isapnp_callback
+ *	Find and attach PnP cards.
+ */
+void
+isapnp_callback(self)
+	struct device *self;
+{
+	struct isapnp_softc *sc = (struct isapnp_softc *)self;
+	struct isapnp_attach_args *ipa, *lpa;
+	int c, d;
+
+	/*
+	 * Look for cards.  If none are found, we say so and just return.
+	 */
+	if (isapnp_find(sc, 1) == 0) {
+		printf("%s: no ISA Plug 'n Play devices found\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	printf("%s: read port 0x%x\n", sc->sc_dev.dv_xname, sc->sc_read_port);
+
+	/*
+	 * Now configure all of the cards.
+	 */
 	for (c = 0; c < sc->sc_ncards; c++) {
-		struct isapnp_attach_args *ipa, *lpa;
-
 		/* Good morning card c */
 		isapnp_write_reg(sc, ISAPNP_WAKE, c + 1);
 
@@ -868,10 +959,10 @@ isapnp_attach(parent, self, aux)
 				continue;
 			}
 
-			lpa->ipa_ic = ia->ia_ic;
-			lpa->ipa_iot = ia->ia_iot;
-			lpa->ipa_memt = ia->ia_memt;
-			lpa->ipa_dmat = ia->ia_dmat;
+			lpa->ipa_ic = sc->sc_ic;
+			lpa->ipa_iot = sc->sc_iot;
+			lpa->ipa_memt = sc->sc_memt;
+			lpa->ipa_dmat = sc->sc_dmat;
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.7 1998/04/07 20:21:55 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.7.2.1 1998/08/08 03:06:41 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 struct vmebus_softc { 
 	struct device	 sc_dev;	/* base device */
 	bus_space_tag_t	 sc_bustag;
+	bus_dma_tag_t	 sc_dmatag;
 	struct vmebusreg *sc_reg; 	/* VME control registers */
 	struct vmebusvec *sc_vec;	/* VME interrupt vector */
 	struct rom_range *sc_range;	/* ROM range property */
@@ -146,10 +147,10 @@ static void	sparc_vme4m_dmamem_free __P((bus_dma_tag_t,
 		    bus_dma_segment_t *, int));
 #endif
 
-#if 0
-static void	sparc_vme_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
 static int	sparc_vme_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
+#if 0
+static void	sparc_vme_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
 static void	sparc_vme_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
 static int	sparc_vme_dmamem_mmap __P((bus_dma_tag_t,
 		    bus_dma_segment_t *, int, int, int, int));
@@ -211,7 +212,7 @@ struct sparc_bus_dma_tag sparc_vme4_dma_tag = {
 
 	sparc_vme4_dmamem_alloc,
 	sparc_vme4_dmamem_free,
-	_bus_dmamem_map,
+	sparc_vme_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap
 };
@@ -231,7 +232,7 @@ struct sparc_bus_dma_tag sparc_vme4m_dma_tag = {
 
 	sparc_vme4m_dmamem_alloc,
 	sparc_vme4m_dmamem_free,
-	_bus_dmamem_map,
+	sparc_vme_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap
 };
@@ -304,6 +305,7 @@ vmeattach_mainbus(parent, self, aux)
 	}
 
 	sc->sc_bustag = ma->ma_bustag;
+	sc->sc_dmatag = ma->ma_dmatag;
 
 	if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, "vme") == 0) {
 		sc->sc_bp = ma->ma_bp + 1;
@@ -355,6 +357,7 @@ vmeattach_iommu(parent, self, aux)
 	}
 
 	sc->sc_bustag = ia->iom_bustag;
+	sc->sc_dmatag = ia->iom_dmatag;
 
 	/* VME interrupt entry point */
 	sc->sc_vmeintr = vmeintr4m;
@@ -784,9 +787,10 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
 	int error;
 
-	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
+	error = bus_dmamap_load(sc->sc_dmatag, map, buf, buflen, p, flags);
 	if (error != 0)
 		return (error);
 
@@ -800,8 +804,10 @@ sparc_vme4_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+
 	map->dm_segs[0].ds_addr += DVMA_BASE;
-	_bus_dmamap_unload(t, map);
+	bus_dmamap_unload(sc->sc_dmatag, map);
 }
 
 int
@@ -813,9 +819,10 @@ sparc_vme4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
 	int error;
 
-	error = _bus_dmamem_alloc(t, size, alignment, boundary,
+	error = bus_dmamem_alloc(sc->sc_dmatag, size, alignment, boundary,
 				  segs, nsegs, rsegs, flags);
 	if (error != 0)
 		return (error);
@@ -830,8 +837,10 @@ sparc_vme4_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+
 	segs[0].ds_addr += DVMA_BASE;
-	_bus_dmamem_free(t, segs, nsegs);
+	bus_dmamem_free(sc->sc_dmatag, segs, nsegs);
 }
 
 void
@@ -860,6 +869,7 @@ sparc_vme4m_dmamap_create (t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	int flags;
 	bus_dmamap_t *dmamp;
 {
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
 	int align;
 
 	/* VME DVMA addresses must always be 8K aligned */
@@ -867,7 +877,7 @@ sparc_vme4m_dmamap_create (t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 
 	/* XXX - todo: allocate DVMA addresses from assigned ranges:
 		 upper 8MB for A32 space; upper 1MB for A24 space */
-	return (_bus_dmamap_create(t, size, nsegments, maxsegsz,
+	return (bus_dmamap_create(sc->sc_dmatag, size, nsegments, maxsegsz,
 				    boundary, /*align,*/ flags, dmamp));
 }
 
@@ -885,7 +895,7 @@ sparc_vme4m_dmamap_load(t, map, buf, buflen, p, flags)
 	int			error;
 
 	buflen = (buflen + VME_IOC_PAGESZ - 1) & ~(VME_IOC_PAGESZ - 1);
-	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
+	error = bus_dmamap_load(sc->sc_dmatag, map, buf, buflen, p, flags);
 	if (error != 0)
 		return (error);
 
@@ -920,7 +930,7 @@ sparc_vme4m_dmamap_unload(t, map)
 	/* Read a tag to synchronize the IOC flushes */
 	(*sc->sc_ioctags);
 
-	_bus_dmamap_unload(t, map);
+	bus_dmamap_unload(sc->sc_dmatag, map);
 }
 
 int
@@ -932,9 +942,10 @@ sparc_vme4m_dmamem_alloc(t, size, alignmnt, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
 	int error;
 
-	error = _bus_dmamem_alloc(t, size, alignmnt, boundary,
+	error = bus_dmamem_alloc(sc->sc_dmatag, size, alignmnt, boundary,
 				  segs, nsegs, rsegs, flags);
 	if (error != 0)
 		return (error);
@@ -948,7 +959,23 @@ sparc_vme4m_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	_bus_dmamem_free(t, segs, nsegs);
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+
+	bus_dmamem_free(sc->sc_dmatag, segs, nsegs);
+}
+
+int
+sparc_vme_dmamem_map(t, segs, nsegs, size, kvap, flags)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	size_t size;
+	caddr_t *kvap;
+	int flags;
+{
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+
+	return (bus_dmamem_map(sc->sc_dmatag, segs, nsegs, size, kvap, flags));
 }
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.9 1998/07/27 01:44:20 thorpej Exp $
+#	$NetBSD: SHARK,v 1.9.2.1 1998/08/08 03:06:36 eeh Exp $
 #
 #	SHARK
 #
@@ -174,9 +174,8 @@ ofisascr*	at ofisa?
 scr*		at ofisascr?
 
 # ESS Sound@OFW
-#ofisaess*	at ofisa?
-#ess*		at ofisaess?
-#audio*		at ess?
+ess*		at ofisa?
+audio*		at ess?
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter

@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.6.2.1 1998/08/07 12:39:49 drochner Exp $ */
+/* $NetBSD: tga.c,v 1.6.2.2 1998/08/08 03:06:50 eeh Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -99,7 +99,7 @@ struct wsscreen_list tga_screenlist = {
 };
 
 int	tga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-paddr_t	tga_mmap __P((void *, off_t, int));
+int	tga_mmap __P((void *, off_t, int));
 static int	tga_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	tga_free_screen __P((void *, void *));
@@ -412,7 +412,7 @@ tga_ioctl(v, cmd, data, flag, p)
 	return (-1);
 }
 
-paddr_t
+int
 tga_mmap(v, offset, prot)
 	void *v;
 	off_t offset;

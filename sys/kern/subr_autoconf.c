@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.29 1998/06/09 18:46:12 thorpej Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.29.2.1 1998/08/08 03:06:56 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -444,8 +444,8 @@ config_make_softc(parent, cf)
 
 	/* compute length of name and decimal expansion of unit number */
 	lname = strlen(cd->cd_name);
-	xunit = number(&num[sizeof num], cf->cf_unit);
-	lunit = &num[sizeof num] - xunit;
+	xunit = number(&num[sizeof(num)], cf->cf_unit);
+	lunit = &num[sizeof(num)] - xunit;
 	if (lname + lunit >= sizeof(dev->dv_xname))
 		panic("config_attach: device name too long");
 
@@ -522,8 +522,8 @@ config_attach(parent, cf, aux, print)
 
 	/* compute length of name and decimal expansion of unit number */
 	lname = strlen(cd->cd_name);
-	xunit = number(&num[sizeof num], myunit);
-	lunit = &num[sizeof num] - xunit;
+	xunit = number(&num[sizeof(num)], myunit);
+	lunit = &num[sizeof(num)] - xunit;
 	if (lname + lunit >= sizeof(dev->dv_xname))
 		panic("config_attach: device name too long");
 

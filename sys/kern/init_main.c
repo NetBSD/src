@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.123.2.1 1998/07/30 14:04:03 eeh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.123.2.2 1998/08/08 03:06:53 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -201,6 +201,13 @@ main()
 	vm_page_physrehash();
 #endif
 #endif /* UVM */
+
+	/*
+	 * Initialize mbuf's.  Do this now because we might attempt to
+	 * allocate mbufs or mbuf clusters during autoconfiguration.
+	 */
+	mbinit();
+
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty list */
 #if NRND > 0
@@ -232,7 +239,7 @@ main()
 	p->p_stat = SRUN;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
-	bcopy("swapper", p->p_comm, sizeof ("swapper"));
+	bcopy("swapper", p->p_comm, sizeof("swapper"));
 
 	/* Create credentials. */
 	cred0.p_refcnt = 1;
@@ -306,9 +313,6 @@ main()
 
 	/* Start real time and statistics clocks. */
 	initclocks();
-
-	/* Initialize mbuf's. */
-	mbinit();
 
 #ifdef REAL_CLISTS
 	/* Initialize clists. */
@@ -578,7 +582,7 @@ start_pagedaemon(p)
 	 * Now in process 2.
 	 */
 	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
-	bcopy("pagedaemon", curproc->p_comm, sizeof ("pagedaemon"));
+	bcopy("pagedaemon", curproc->p_comm, sizeof("pagedaemon"));
 #if defined(UVM)
 	uvm_pageout();
 #else

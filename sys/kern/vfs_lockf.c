@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.12 1998/03/01 02:22:35 fvdl Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.12.2.1 1998/08/08 03:06:59 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -118,7 +118,7 @@ lf_advlock(head, size, id, op, fl, flags)
 	/*
 	 * Create the lockf structure.
 	 */
-	MALLOC(lock, struct lockf *, sizeof *lock, M_LOCKF, M_WAITOK);
+	MALLOC(lock, struct lockf *, sizeof(*lock), M_LOCKF, M_WAITOK);
 	lock->lf_start = start;
 	lock->lf_end = end;
 	lock->lf_id = id;
@@ -670,8 +670,8 @@ lf_split(lock1, lock2)
 	 * Make a new lock consisting of the last part of
 	 * the encompassing lock
 	 */
-	MALLOC(splitlock, struct lockf *, sizeof *splitlock, M_LOCKF, M_WAITOK);
-	bcopy((caddr_t)lock1, (caddr_t)splitlock, sizeof *splitlock);
+	MALLOC(splitlock, struct lockf *, sizeof(*splitlock), M_LOCKF, M_WAITOK);
+	bcopy((caddr_t)lock1, (caddr_t)splitlock, sizeof(*splitlock));
 	splitlock->lf_start = lock2->lf_end + 1;
 	TAILQ_INIT(&splitlock->lf_blkhd);
 	lock1->lf_end = lock2->lf_start - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.8.2.1 1998/07/30 14:04:09 eeh Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.8.2.2 1998/08/08 03:07:02 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -142,7 +142,7 @@ udv_attach(arg, accessprot)
 {
 	dev_t device = *((dev_t *) arg);
 	struct uvm_device *udv, *lcv;
-	paddr_t (*mapfn) __P((dev_t, int, int));
+	int (*mapfn) __P((dev_t, int, int));
 	UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(device=0x%x)", device,0,0,0);
@@ -153,8 +153,8 @@ udv_attach(arg, accessprot)
 
 	mapfn = cdevsw[major(device)].d_mmap;
 	if (mapfn == NULL ||
-			mapfn == (paddr_t (*) __P((dev_t, int, int))) enodev ||
-			mapfn == (paddr_t (*) __P((dev_t, int, int))) nullop)
+			mapfn == (int (*) __P((dev_t, int, int))) enodev ||
+			mapfn == (int (*) __P((dev_t, int, int))) nullop)
 		return(NULL);
 
 	/*
@@ -404,7 +404,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	paddr_t paddr;
 	int lcv, retval;
 	dev_t device;
-	paddr_t (*mapfn) __P((dev_t, int, int));
+	int (*mapfn) __P((dev_t, int, int));
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
 
@@ -462,12 +462,10 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 
 		paddr = pmap_phys_address((*mapfn)(device, (int)curr_offset,
 		    access_type));
-
 		if (paddr == -1) {
 			retval = VM_PAGER_ERROR;
 			break;
 		}
-
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
 		    ufi->orig_map->pmap, curr_va, (int)paddr, access_type);

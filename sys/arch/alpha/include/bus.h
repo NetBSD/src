@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.24 1998/06/08 03:42:19 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.24.2.1 1998/08/08 03:06:34 eeh Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,9 +119,9 @@ struct alpha_bus_space {
 
 	/* mapping/unmapping */
 	int		(*abs_map) __P((void *, bus_addr_t, bus_size_t,
-			    int, bus_space_handle_t *));
+			    int, bus_space_handle_t *, int));
 	void		(*abs_unmap) __P((void *, bus_space_handle_t,
-			    bus_size_t));
+			    bus_size_t, int));
 	int		(*abs_subregion) __P((void *, bus_space_handle_t,
 			    bus_size_t, bus_size_t, bus_space_handle_t *));
 
@@ -269,9 +269,13 @@ do {									\
  * Mapping and unmapping operations.
  */
 #define	bus_space_map(t, a, s, f, hp)					\
-	(*(t)->abs_map)((t)->abs_cookie, (a), (s), (f), (hp))
+	(*(t)->abs_map)((t)->abs_cookie, (a), (s), (f), (hp), 1)
+#define	alpha_bus_space_map_noacct(t, a, s, f, hp)			\
+	(*(t)->abs_map)((t)->abs_cookie, (a), (s), (f), (hp), 0)
 #define	bus_space_unmap(t, h, s)					\
-	(*(t)->abs_unmap)((t)->abs_cookie, (h), (s))
+	(*(t)->abs_unmap)((t)->abs_cookie, (h), (s), 1)
+#define	alpha_bus_space_unmap_noacct(t, h, s)				\
+	(*(t)->abs_unmap)((t)->abs_cookie, (h), (s), 0)
 #define	bus_space_subregion(t, h, o, s, hp)				\
 	(*(t)->abs_subregion)((t)->abs_cookie, (h), (o), (s), (hp))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.107 1998/03/22 00:55:38 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.107.2.1 1998/08/08 03:06:57 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1001,7 +1001,7 @@ ttioctl(tp, cmd, data, flag, p)
 		break;
 	case TIOCSWINSZ:		/* set window size */
 		if (bcmp((caddr_t)&tp->t_winsize, data,
-		    sizeof (struct winsize))) {
+		    sizeof(struct winsize))) {
 			tp->t_winsize = *(struct winsize *)data;
 			pgsignal(tp->t_pgrp, SIGWINCH, 1);
 		}
@@ -2195,7 +2195,7 @@ ttymalloc()
 	struct tty *tp;
 
 	MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-	bzero(tp, sizeof *tp);
+	bzero(tp, sizeof(*tp));
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);

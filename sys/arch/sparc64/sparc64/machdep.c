@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.2.2 1998/08/02 00:06:49 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.3.2.3 1998/08/08 03:06:44 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1742,7 +1742,12 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		panic("_bus_dmamem_map: nsegs = %d", nsegs);
 
 	cbit = PMAP_NC;
+#if 0
+	/* This went away with dvma_mapin.  We may need it later */
 	align = dvma_cachealign ? dvma_cachealign : PAGE_SIZE;
+#else
+	align = PAGE_SIZE;
+#endif
 
 	size = round_page(size);
 
@@ -1960,17 +1965,12 @@ sparc_bus_mmap(t, iospace, paddr, flags, hp)
 	int		flags;
 	bus_space_handle_t *hp;
 {
-	paddr_t pflags = 0;
-
-	/*
-	 * We need to do some magic involving flags and bus_type_t values to
-	 * determine exactly how this should be mapped.  But since pmap
-	 * doesn't support anything fancy, and we know that everything's in
-	 * I/O space, this mapped the same way, we'll fake it.
-	 */
-
-	 pflags = PMAP_NC;
-	*hp = (bus_space_handle_t)(paddr|pflags);
+	*hp = (bus_space_handle_t)(paddr>>PGSHIFT);
+#if 0
+	printf("sparc_bus_mmap: encoding pa %x:%x as %x:%x becomes %x:%x\n",
+	       (int)(paddr>>32), (int)(paddr), (int)((*hp)>>32), (int)*hp, 
+	       (int)(pmap_phys_address(*hp)>>32), (int)(pmap_phys_address(*hp)));
+#endif
 	return (0);
 }
 
@@ -2013,7 +2013,6 @@ sparc_mainbus_intr_establish(t, level, flags, handler, arg)
 {
 	struct intrhand *ih;
 
-printf("Warning: direct call to sparc_mainbus_intr_establish for level %x\n", level);
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)

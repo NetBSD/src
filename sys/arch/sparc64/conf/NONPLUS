@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.4 1998/07/28 04:48:04 eeh Exp $
+# 	$NetBSD: NONPLUS,v 1.4.2.1 1998/08/08 03:06:42 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -94,7 +94,7 @@ options 	DEBUG
 
 ## Enable printing of spl() transisions -- really slow
 ##
-options		SPLDEBUG
+#options		SPLDEBUG
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE

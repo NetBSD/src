@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.4.2.1 1998/07/30 14:04:05 eeh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.4.2.2 1998/08/08 03:06:56 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 /* List of all pools */
-static TAILQ_HEAD(,pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
+TAILQ_HEAD(,pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
 static struct pool phpool;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.65 1998/07/27 01:22:41 thorpej Exp $
+#	$NetBSD: files.isa,v 1.65.2.1 1998/08/08 03:06:47 eeh Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -303,6 +303,10 @@ device	aria: audio, mulaw, auconv
 attach	aria at isa
 file	dev/isa/aria.c			aria needs-flag
 
+# ESS Technology ES1887/ES888
+device	ess: audio, isadma, mulaw, auconv
+file	dev/isa/ess.c			ess needs-flag
+
 #
 # PlanetConnect satellite receiver driver.
 #
@@ -333,3 +337,10 @@ file	dev/isa/pcppi.c	pcppi	needs-flag
 device spkr
 attach spkr at pcppi
 file	dev/isa/spkr.c		spkr	needs-flag
+
+#
+# ISA Plug 'n Play autoconfiguration glue.
+# THIS MUST COME AFTER ALL MI ISA DEVICES ARE DEFINED.  This is because
+# ISA PnP devices often use `device' declarations listed in this file.
+#
+include "dev/isapnp/files.isapnp"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.39 1998/05/08 18:18:59 kleink Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.39.2.1 1998/08/08 03:06:55 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ shutdownhook_establish(fn, arg)
 	struct shutdownhook_desc *ndp;
 
 	ndp = (struct shutdownhook_desc *)
-	    malloc(sizeof (*ndp), M_DEVBUF, M_NOWAIT);
+	    malloc(sizeof(*ndp), M_DEVBUF, M_NOWAIT);
 	if (ndp == NULL)
 		return NULL;
 

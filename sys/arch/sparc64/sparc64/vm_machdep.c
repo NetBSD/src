@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3.2.1 1998/07/30 14:03:57 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.3.2.2 1998/08/08 03:06:45 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -108,6 +108,8 @@ pagemove(from, to, size)
 #endif
 }
 
+/* Prove that these functions are deprecated completely */
+#if 0
 /*
  * Wrapper for dvma_mapin() in kernel space,
  * so drivers need not include VM goo to get at kernel_map.
@@ -287,6 +289,7 @@ dvma_mapout(kva, va, len)
 
 	cache_flush((caddr_t)va, len);
 }
+#endif
 
 /*
  * Map an IO request into kernel virtual address space.

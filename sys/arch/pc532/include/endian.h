@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.10 1997/10/09 15:42:25 bouyer Exp $	*/
+/*	$NetBSD: endian.h,v 1.10.4.1 1998/08/08 03:06:40 eeh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -123,10 +123,10 @@ __END_DECLS
 /*
  * Macros for network/external number representation conversion.
  */
-#define	NTOHL(x)	(x) = ntohl((in_addr_t)x)
-#define	NTOHS(x)	(x) = ntohs((in_port_t)x)
-#define	HTONL(x)	(x) = htonl((in_addr_t)x)
-#define	HTONS(x)	(x) = htons((in_port_t)x)
+#define	NTOHL(x)	(x) = ntohl((in_addr_t)(x))
+#define	NTOHS(x)	(x) = ntohs((in_port_t)(x))
+#define	HTONL(x)	(x) = htonl((in_addr_t)(x))
+#define	HTONS(x)	(x) = htons((in_port_t)(x))
 
 #endif /* _POSIX_SOURCE */
 

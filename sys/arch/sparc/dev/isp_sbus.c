@@ -1,5 +1,5 @@
-/* $NetBSD: isp_sbus.c,v 1.13 1998/07/29 18:44:23 pk Exp $ */
-/* $Id: isp_sbus.c,v 1.13 1998/07/29 18:44:23 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.13.2.1 1998/08/08 03:06:40 eeh Exp $ */
+/* $Id: isp_sbus.c,v 1.13.2.1 1998/08/08 03:06:40 eeh Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -80,11 +80,12 @@ struct isp_sbussoftc {
 	struct ispsoftc	sbus_isp;
 	sdparam		sbus_dev;
 	bus_space_tag_t	sbus_bustag;
+	bus_dma_tag_t	sbus_dmatag;
 	volatile u_char	*sbus_reg;
 	int		sbus_node;
 	int		sbus_pri;
 	struct ispmdvec	sbus_mdvec;
-	vm_offset_t	sbus_kdma_allocs[MAXISPREQUEST];
+	bus_dmamap_t	sbus_dmamap[MAXISPREQUEST];
 };
 
 
@@ -128,7 +129,7 @@ isp_sbus_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	int freq;
+	int i, freq;
 	struct sbus_attach_args *sa = aux;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
 	struct ispsoftc *isp = &sbc->sbus_isp;
@@ -137,6 +138,7 @@ isp_sbus_attach(parent, self, aux)
 	printf(" for %s\n", sa->sa_name);
 
 	sbc->sbus_bustag = sa->sa_bustag;
+	sbc->sbus_dmatag = sa->sa_dmatag;
 	sbc->sbus_pri = sa->sa_pri;
 	sbc->sbus_mdvec = mdvec;
 
@@ -194,6 +196,23 @@ isp_sbus_attach(parent, self, aux)
 		isp_uninit(isp);
 		ISP_UNLOCK(isp);
 		return;
+	}
+
+	for (i = 0; i < MAXISPREQUEST; i++) {
+
+		/* Allocate a DMA handle */
+		if (bus_dmamap_create(
+				sbc->sbus_dmatag,
+				MAXPHYS,	/* size */
+				1,		/* nsegments */
+				MAXPHYS,	/* maxsegsz */
+				0,		/* boundary */
+				BUS_DMA_NOWAIT,
+				&sbc->sbus_dmamap[i]) != 0) {
+			printf("%s: DMA map create error\n",
+				self->dv_xname);
+			return;
+		}
 	}
 
 	/* Establish interrupt channel */
@@ -265,7 +284,9 @@ static int
 isp_sbus_mbxdma(isp)
 	struct ispsoftc *isp;
 {
-	size_t len;
+	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	bus_dma_segment_t seg;
+	size_t len, rseg;
 
 	/*
 	 * NOTE: Since most Sun machines aren't I/O coherent,
@@ -277,25 +298,29 @@ isp_sbus_mbxdma(isp)
 	 * Allocate and map the request queue.
 	 */
 	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
-	isp->isp_rquest = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
-	if (isp->isp_rquest == 0)
+	if (bus_dmamem_alloc(sbc->sbus_dmatag, len, NBPG, 0,
+			     &seg, 1, &rseg, BUS_DMA_NOWAIT) != 0)
 		return (1);
-	isp->isp_rquest_dma = (u_int32_t)kdvma_mapin((caddr_t)isp->isp_rquest,
-	    len, 0);
-	if (isp->isp_rquest_dma == 0)
+
+	if (bus_dmamem_map(sbc->sbus_dmatag, &seg, rseg, len,
+			   (caddr_t *)&isp->isp_rquest,
+			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0)
 		return (1);
+	isp->isp_rquest_dma = seg.ds_addr;
 
 	/*
 	 * Allocate and map the result queue.
 	 */
 	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
-	isp->isp_result = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
-	if (isp->isp_result == 0)
+	if (bus_dmamem_alloc(sbc->sbus_dmatag, len, NBPG, 0,
+			     &seg, 1, &rseg, BUS_DMA_NOWAIT) != 0)
 		return (1);
-	isp->isp_result_dma = (u_int32_t)kdvma_mapin((caddr_t)isp->isp_result,
-	    len, 0);
-	if (isp->isp_result_dma == 0)
+
+	if (bus_dmamem_map(sbc->sbus_dmatag, &seg, rseg, len,
+			   (caddr_t *)&isp->isp_result,
+			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0)
 		return (1);
+	isp->isp_result_dma = seg.ds_addr;
 
 	return (0);
 }
@@ -313,7 +338,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	u_int8_t optr;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	vm_offset_t kdvma;
+	bus_dmamap_t dmamap;
 	int dosleep = (xs->flags & SCSI_NOSLEEP) != 0;
 
 	if (xs->datalen == 0) {
@@ -326,29 +351,31 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 			isp->isp_name, rq->req_handle);
 		/* NOTREACHED */
 	}
-	if (CPU_ISSUN4M) {
-		kdvma = (vm_offset_t)
-			kdvma_mapin((caddr_t)xs->data, xs->datalen, dosleep);
-		if (kdvma == (vm_offset_t) 0) {
-			XS_SETERR(xs, HBA_BOTCH);
-			return (1);
-		}
-	} else {
-		kdvma = (vm_offset_t) xs->data;
-	}
 
-	if (sbc->sbus_kdma_allocs[rq->req_handle - 1] != (vm_offset_t) 0) {
-		panic("%s: kdma handle already allocated\n", isp->isp_name);
+	dmamap = sbc->sbus_dmamap[rq->req_handle - 1];
+	if (dmamap->dm_nsegs != 0) {
+		panic("%s: dma map already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	sbc->sbus_kdma_allocs[rq->req_handle - 1] = kdvma;
+	if (bus_dmamap_load(sbc->sbus_dmatag, dmamap,
+			    xs->data, xs->datalen, NULL,
+			    dosleep ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
+		XS_SETERR(xs, HBA_BOTCH);
+		return (1);
+	}
+	bus_dmamap_sync(sbc->sbus_dmatag, dmamap,
+			dmamap->dm_segs[0].ds_addr, xs->datalen,
+			(xs->flags & SCSI_DATA_IN)
+				? BUS_DMASYNC_PREREAD
+				: BUS_DMASYNC_PREWRITE);
+
 	if (xs->flags & SCSI_DATA_IN) {
 		rq->req_flags |= REQFLAG_DATA_IN;
 	} else {
 		rq->req_flags |= REQFLAG_DATA_OUT;
 	}
 	rq->req_dataseg[0].ds_count = xs->datalen;
-	rq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
+	rq->req_dataseg[0].ds_base =  dmamap->dm_segs[0].ds_addr;
 	rq->req_seg_count = 1;
 	return (0);
 }
@@ -360,7 +387,7 @@ isp_sbus_dmateardown(isp, xs, handle)
 	u_int32_t handle;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	vm_offset_t kdvma;
+	bus_dmamap_t dmamap;
 
 	if (xs->flags & SCSI_DATA_IN) {
 		cpuinfo.cache_flush(xs->data, xs->datalen - xs->resid);
@@ -371,13 +398,16 @@ isp_sbus_dmateardown(isp, xs, handle)
 			isp->isp_name, handle);
 		/* NOTREACHED */
 	}
-	if (sbc->sbus_kdma_allocs[handle] == (vm_offset_t) 0) {
-		panic("%s: kdma handle not already allocated\n", isp->isp_name);
+
+	dmamap = sbc->sbus_dmamap[handle];
+	if (dmamap->dm_nsegs == 0) {
+		panic("%s: dma map not already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	kdvma = sbc->sbus_kdma_allocs[handle];
-	sbc->sbus_kdma_allocs[handle] = (vm_offset_t) 0;
-	if (CPU_ISSUN4M) {
-		dvma_mapout(kdvma, (vm_offset_t) xs->data, xs->datalen);
-	}
+	bus_dmamap_sync(sbc->sbus_dmatag, dmamap,
+			dmamap->dm_segs[0].ds_addr, xs->datalen,
+			(xs->flags & SCSI_DATA_IN)
+				? BUS_DMASYNC_POSTREAD
+				: BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sbc->sbus_dmatag, dmamap);
 }

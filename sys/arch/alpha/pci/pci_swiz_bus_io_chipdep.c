@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.25 1998/06/07 00:29:29 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.25.2.1 1998/08/08 03:06:35 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,9 +89,9 @@
 
 /* mapping/unmapping */
 int		__C(CHIP,_io_map) __P((void *, bus_addr_t, bus_size_t, int,
-		    bus_space_handle_t *));
+		    bus_space_handle_t *, int));
 void		__C(CHIP,_io_unmap) __P((void *, bus_space_handle_t,
-		    bus_size_t));
+		    bus_size_t, int));
 int		__C(CHIP,_io_subregion) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, bus_space_handle_t *));
 
@@ -355,12 +355,13 @@ __C(CHIP,_io_mapit)(v, ioaddr, iohp)
 }
 
 int
-__C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp)
+__C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	void *v;
 	bus_addr_t ioaddr;
 	bus_size_t iosize;
 	int flags;
 	bus_space_handle_t *iohp;
+	int acct;
 {
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	int error;
@@ -370,6 +371,17 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp)
 	 */
 	if (linear)
 		return (EOPNOTSUPP);
+
+	if (acct == 0) {
+		/*
+		 * XXX We should ensure that the region is actually
+		 * XXX mappable, but nothing should really be using
+		 * XXX this interface (only ISA PnP does, and only
+		 * XXX via a machine-dependent hook), so we don't
+		 * XXX bother.
+		 */
+		goto mapit;
+	}
 
 #ifdef EXTENT_DEBUG
 	printf("io: allocating 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
@@ -384,19 +396,24 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp)
 		return (error);
 	}
 
+ mapit:
 	__C(CHIP,_io_mapit)(v, ioaddr, iohp);
 
 	return (0);
 }
 
 void
-__C(CHIP,_io_unmap)(v, ioh, iosize)
+__C(CHIP,_io_unmap)(v, ioh, iosize, acct)
 	void *v;
 	bus_space_handle_t ioh;
 	bus_size_t iosize;
+	int acct;
 {
 	bus_addr_t ioaddr;
 	int error;
+
+	if (acct == 0)
+		return;
 
 #ifdef EXTENT_DEBUG
 	printf("io: freeing handle 0x%lx for 0x%lx\n", ioh, iosize);
@@ -515,7 +532,7 @@ __C(CHIP,_io_free)(v, bsh, size)
 {
 
 	/* Unmap does all we need to do. */
-	__C(CHIP,_io_unmap)(v, bsh, size);
+	__C(CHIP,_io_unmap)(v, bsh, size, 1);
 }
 
 inline void

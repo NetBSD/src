@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.1.1.1.2.1 1998/08/02 00:06:47 eeh Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.1.1.1.2.2 1998/08/08 03:06:43 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -394,7 +394,7 @@ cgfourpoll(dev, events, p)
  * As well, mapping at an offset of 0x04000000 causes the cg4 to map
  * only it's colour plane, at 0.
  */
-paddr_t
+int
 cgfourmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;

@@ -54,6 +54,7 @@
 #define TRAPSTATS
 #undef TRAPS_USE_IG
 #undef LOCKED_PCB
+#define HWREF
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -732,7 +733,11 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 	inc	%g6					! DEBUG
 	stw	%g6, [%g7]				! DEBUG
 0:							! DEBUG
+#ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
+#else
+	ba,a,pt	%xcc, winfault
+#endif
 	nop
 	TA32
 	UTRAP(0x070)			! Implementation dependent traps
@@ -971,7 +976,11 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	inc	%g6					! DEBUG
 	stw	%g6, [%g7]				! DEBUG
 0:							! DEBUG
+#ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
+#else
+	ba,a,pt	%xcc, winfault
+#endif
 	nop
 	TA32
 	UTRAP(0x070)			! Implementation dependent traps
@@ -1253,7 +1262,7 @@ traceit:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
@@ -1911,18 +1920,12 @@ dmmu_write_fault:
 	bz,pn	%xcc, winfix				! No -- really fault
 	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g4	! Update the modified bit
 
-#if __notyet
 	/* Need to check for and handle large pages. */
 	srlx	%g4, 61, %g5				! Isolate the size bits
-	and	%g5, 0x3, %g5				! (Really needed?)
-	sllx	%g5, 1, %g1				! Calculate page size = 1 << (13 + (3 * size))
-	add	%g1, %g5, %g5				! %g5 = 3 * size
-	mov	1, %g1
-	add	%g5, 13, %g5				! %g5 = 13 + (3 * size)
-	sllx	%g1, %g5, %g5				! %g5 = 1 << (13 + (3 * size))
-#endif
+	andcc	%g5, 0x3, %g5				! 8K?
+	bnz,pn	%icc, winfix				! We punt to the pmap code since we can't handle policy
 	
-	ldxa	[%g0] ASI_DMMU_8KPTR, %g2		! Load DMMU 8K TSB pointer
+	 ldxa	[%g0] ASI_DMMU_8KPTR, %g2		! Load DMMU 8K TSB pointer
 	ldxa	[%g0] ASI_DMMU, %g1			! Hard coded for unified 8K TSB		Load DMMU tag target register
 	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and write it out
 	stx	%g1, [%g2]				! Update TSB entry tag
@@ -2227,7 +2230,7 @@ winfixspill:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:	
 	movnz	%icc, %g0, %g3
 	
@@ -2546,7 +2549,7 @@ winfixsave:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:	
 	movnz	%icc, %g0, %g3
 	
@@ -4245,7 +4248,7 @@ rft_kernel:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:	
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
@@ -4348,12 +4351,11 @@ rft_user:
 2:
 #endif
 
-
 #ifdef TRAPWIN
 	/*
 	 * First: blast away our caches
 	 */
-	call	_C_LABEL(blast_vcache)
+!	call	_C_LABEL(blast_vcache)		! Clear any possible cache conflict
 	/*
 	 * NB: only need to do this after a cache miss
 	 */
@@ -4589,7 +4591,7 @@ badregs:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:	
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
@@ -5370,8 +5372,8 @@ _C_LABEL(openfirmware):
 	ld	[%l7+%lo(romp)], %o4		! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
 	rdpr	%pil, %i2
-	wrpr	%g0, 12, %pil
-#if 1
+	wrpr	%g0, PIL_IMP, %pil
+#if 0
 !!!
 !!! Since prom addresses overlap user addresses
 !!! we need to clear out the dcache on the way
@@ -5400,7 +5402,7 @@ _C_LABEL(openfirmware):
 	mov	%l5, %g5
 	mov	%l6, %g6
 	mov	%l7, %g7
-#if 1
+#if 0
 !!!
 !!! Since prom addresses overlap user addresses
 !!! we need to clear out the dcache on the way
@@ -5422,7 +5424,7 @@ _C_LABEL(openfirmware):
 	mov	%o5, %o7
 #endif
 	save	%sp, -CC64FSZ, %sp			! Get a new 64-bit stack frame
-#if 1
+#if 0
 	call	_C_LABEL(blast_vcache)
 	 nop
 #endif
@@ -5436,7 +5438,7 @@ _C_LABEL(openfirmware):
 	mov	%g1, %l1
 	mov	%g2, %l2
 	mov	%g3, %l3
-	wrpr	%g0, 12, %pil
+	wrpr	%g0, PIL_IMP, %pil
 	mov	%g4, %l4
 	mov	%g5, %l5
 	mov	%g6, %l6
@@ -5445,7 +5447,7 @@ _C_LABEL(openfirmware):
 	 wrpr	%g0, PSTATE_PROM|PSTATE_IE, %pstate	! Enable 64-bit addresses for the prom
 	wrpr	%l0, 0, %pstate
 	wrpr	%i2, 0, %pil
-#if 1
+#if 0
 	call	_C_LABEL(blast_vcache)
 	 nop
 #endif
@@ -7196,7 +7198,7 @@ Lsw_havectx:
 	mov	%g0, %o5
 	brz,pn	%o0, 2f
 	 andncc	%o3, (TRACESIZ-1), %g0
-	ldsw	[%o0+P_PID], %o5
+!	ldsw	[%o0+P_PID], %o5	!  Load PID
 2:	
 	movnz	%icc, %g0, %o3
 	

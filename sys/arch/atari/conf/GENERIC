@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.43 1998/06/26 01:53:52 lukem Exp $
+#	$NetBSD: GENERIC,v 1.43.2.1 1998/08/08 03:06:37 eeh Exp $
 #
 # Generic atari
 #
@@ -18,6 +18,7 @@ maxusers	16
 #
 options 	M68030		# support for 030
 #options 	M68040		# support for 040
+#options 	M68060		# support for 060
 
 options 	HZ=64		# Set the clock-rate (48/64/96)
 
@@ -25,6 +26,10 @@ options 	HZ=64		# Set the clock-rate (48/64/96)
 # X11R6 related options
 #
 options 	UCONSOLE	# Allow xconsole to work
+
+# Standard system options
+options 	INSECURE	# disable kernel security levels
+#options 	NTP		# NTP phase/frequency locked loop
 
 #
 # Floating-point options
@@ -35,12 +40,26 @@ options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #
 # Networking options
 #
-options 	INET		# Basic networking support
+#options 	GATEWAY         # packet forwarding
+options 	INET            # IP + ICMP + TCP + UDP
+#options 	MROUTING        # IP multicast routing
+options 	NS              # XNS
+#options 	NSIP            # XNS tunneling over IP
+options 	ISO,TPIP        # OSI
+options 	EON             # OSI tunneling over IP
+options 	CCITT,LLC,HDLC  # X.25
+options 	NETATALK        # AppleTalk networking protocols
+#options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE     # Deflate compression support for PPP
+#options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
+#options 	PFIL_HOOKS      # pfil(9) packet filter hooks
+#options 	IPFILTER_LOG    # ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 # File systems
 file-system 	FFS		# Berkeley fast file system
 file-system 	MFS		# Memory based filesystem
-file-system	NFS		# Network File System client side code
+file-system 	NFS		# Network File System client side code
 file-system 	PROCFS		# Process filesystem
 file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	FDESC		# /dev/fd
@@ -50,11 +69,15 @@ file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 file-system 	UNION		# union file system
 file-system 	UMAPFS		# null file system (with uid & gid remapping)
 file-system 	PORTAL		# portal file system
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
 
 # File system options
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER	# Network File System server side code
+#options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
+				# immutable) behave as system flags.
 
 #
 # Misc. debugging options
@@ -62,6 +85,7 @@ options 	NFSSERVER	# Network File System server side code
 options 	PANICWAIT	# Require keystroke to dump/reboot
 options 	DDB		# Kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	DEBUG		# expensive debugging checks/support
 
 #
 # Compatability options for various existing systems
@@ -88,7 +112,11 @@ options 	SYSVSEM			# System V semaphores
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
 options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
-#options 	SCSIVERBOSE		# Verbose SCSI errors
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options 	PCIVERBOSE		# verbose PCI device autoconfig messages
+options 	SCSIVERBOSE		# human readable SCSI error messages
 
 #
 # Atari specific options
@@ -104,6 +132,7 @@ options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 options 	SERCONSOLE		# modem1 console support
+options 	KERNEL_RELOC		# TT/Falcon: relocate kernel to TT-RAM
 options 	UVM			# New UVM VM system
 
 # Try linked commands on all targets
@@ -132,21 +161,34 @@ pseudo-device	ipfilter		# IP filtering device
 #
 # The following sections describe various hardware options.
 #
-vmebus0 at mainbus0		# VME bus
+fd0	at fdc0 unit 0			# builtin floppy drive
+fd1	at fdc0 unit 1			# external floppy drive
+ser0	at mainbus0			# Serial support through 68901 (modem1)
+zs0	at mainbus0			# Serial support through 8530
+nvr0	at mainbus0			# nvram driver
+lp0	at mainbus0			# centronics printer
+
+# SCSI devices
+sd* 	at scsibus? target ? lun ?	# SCSI disk drives
+st* 	at scsibus? target ? lun ?	# SCSI tape drives
+cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch* 	at scsibus? target ? lun ?	# SCSI autochangers
+ss* 	at scsibus? target ? lun ?	# SCSI scanners
+se* 	at scsibus? target ? lun ?	# SCSI ethernet
+uk* 	at scsibus? target ? lun ?	# SCSI unknown
+
+pcibus0	at mainbus0			# PCI-bus
+pci0	at pcibus0
+ahc*	at pci? dev ? function ?        # Adaptec [23]94x, aic78x0 SCSI
+vmebus0	at mainbus0			# VME bus
 vme0	at vmebus0
-le0	at vme0	irq 5		# Lance ethernet (Riebl/PAM).
-et0	at vme0			# Crazy Dots II
+le0	at vme0	irq 5			# Lance ethernet (Riebl/PAM).
+et0	at vme0				# Crazy Dots II
 
-fd0	at fdc0 unit 0		# builtin floppy drive
-fd1	at fdc0 unit 1		# external floppy drive
-ser0	at mainbus0		# Serial support through 68901 (modem1)
-zs0	at mainbus0		# Serial support through 8530
-nvr0	at mainbus0		# nvram driver
-lp0	at mainbus0		# centronics printer
-
-ch*	at scsibus? target ? lun ?	# SCSI changer
-ss*	at scsibus? target ? lun ?	# SCSI scanner
-uk*	at scsibus? target ? lun ?	# SCSI unknown
-
-idec0	at mainbus0			# IDE bus
-ide*	at idec? drive ?		# ... and drives
+isabus0	at mainbus0			# ISA-bus
+isa0	at isabus0
+wdc0	at mainbus0			# IDE-bus
+wd*	at wdc? drive ?			#    ... and drives
+atapibus* at wdc? channel ?		# ATAPI-bus
+cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
+sd*	at atapibus? drive ?		# ATAPI disk drives

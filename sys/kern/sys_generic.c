@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.40 1998/07/28 17:58:29 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.40.2.1 1998/08/08 03:06:57 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -199,16 +199,18 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #endif
 
 	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = iovcnt * sizeof (struct iovec);
+	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
 		if ((u_int)iovcnt > UIO_MAXIOV)
 			return (EINVAL);
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
-	} else {
+	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
 		needfree = NULL;
-	}
+	} else
+		return (EINVAL);
+
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
@@ -398,16 +400,18 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #endif
 
 	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = iovcnt * sizeof (struct iovec);
+	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
 		if ((u_int)iovcnt > UIO_MAXIOV)
 			return (EINVAL);
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
-	} else {
+	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
 		needfree = NULL;
-	}
+	} else
+		return (EINVAL);
+
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
@@ -514,7 +518,7 @@ sys_ioctl(p, v, retval)
 	if (size > IOCPARM_MAX)
 		return (ENOTTY);
 	memp = NULL;
-	if (size > sizeof (stkbuf)) {
+	if (size > sizeof(stkbuf)) {
 		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		data = memp;
 	} else
@@ -652,7 +656,7 @@ sys_select(p, v, retval)
 
 	if (SCARG(uap, tv)) {
 		error = copyin(SCARG(uap, tv), (caddr_t)&atv,
-			sizeof (atv));
+			sizeof(atv));
 		if (error)
 			goto done;
 		if (itimerfix(&atv)) {

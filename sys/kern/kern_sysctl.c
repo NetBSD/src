@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.38 1998/07/04 22:18:51 jonathan Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.38.2.1 1998/08/08 03:06:56 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -683,7 +683,7 @@ sysctl_file(where, sizep)
 			*sizep = where - start;
 			return (ENOMEM);
 		}
-		error = copyout((caddr_t)fp, where, sizeof (struct file));
+		error = copyout((caddr_t)fp, where, sizeof(struct file));
 		if (error)
 			return (error);
 		buflen -= sizeof(struct file);
@@ -696,7 +696,7 @@ sysctl_file(where, sizep)
 /*
  * try over estimating by 5 procs
  */
-#define KERN_PROCSLOP	(5 * sizeof (struct kinfo_proc))
+#define KERN_PROCSLOP	(5 * sizeof(struct kinfo_proc))
 
 int
 sysctl_doproc(name, namelen, where, sizep)
