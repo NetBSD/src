@@ -1,4 +1,4 @@
-/*	$Id: aed.c,v 1.1 1998/10/23 01:16:23 ender Exp $	*/
+/*	$Id: aed.c,v 1.2 1998/10/26 19:20:00 ender Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -201,7 +201,7 @@ aed_emulate_mouse(event)
 			aed_handoff(&new_event);
 			break;
 		case ADBK_KEYUP(ADBK_1):
-			aed_c->sc_buttons &= ~1;	/* left up */
+			aed_sc->sc_buttons &= ~1;	/* left up */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
 			new_event.u.m.dx = new_event.u.m.dy = 0;
