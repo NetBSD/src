@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.40 1999/01/24 02:39:30 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.41 1999/02/19 16:29:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.40 1999/01/24 02:39:30 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.41 1999/02/19 16:29:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1426,7 +1426,13 @@ proxtrans(cmd, local, remote)
 	if (setjmp(ptabort))
 		goto abort;
 	oldintr = signal(SIGINT, abortpt);
-	if (command("%s %s", cmd, remote) != PRELIM) {
+	if ((restart_point &&
+#ifndef NO_QUAD
+	    (command("REST %qd", (long long) restart_point) != CONTINUE)
+#else
+	    (command("REST %ld", (long) restart_point) != CONTINUE)
+#endif
+	    ) || (command("%s %s", cmd, remote) != PRELIM)) {
 		(void)signal(SIGINT, oldintr);
 		pswitch(1);
 		return;
@@ -1434,7 +1440,13 @@ proxtrans(cmd, local, remote)
 	sleep(2);
 	pswitch(1);
 	secndflag++;
-	if (command("%s %s", cmd2, local) != PRELIM)
+	if ((restart_point &&
+#ifndef NO_QUAD
+	    (command("REST %qd", (long long) restart_point) != CONTINUE)
+#else
+	    (command("REST %ld", (long) restart_point) != CONTINUE)
+#endif
+	    ) || (command("%s %s", cmd2, local) != PRELIM))
 		goto abort;
 	ptflag++;
 	(void)getreply(0);
