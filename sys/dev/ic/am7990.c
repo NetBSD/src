@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.12 1996/03/16 23:19:14 christos Exp $	*/
+/*	$NetBSD: am7990.c,v 1.13 1996/03/26 14:54:56 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -73,6 +73,10 @@ void xmit_print __P((struct le_softc *, int));
 
 #define	ifp	(&sc->sc_arpcom.ac_if)
 
+#ifndef	ETHER_CMP
+#define	ETHER_CMP(a, b) bcmp((a), (b), ETHER_ADDR_LEN)
+#endif
+
 void
 leconfig(sc)
 	struct le_softc *sc;
@@ -122,8 +126,8 @@ leconfig(sc)
 		panic("leconfig: weird memory size");
 	}
 
-	printf(": address %s\n%s: %d receive buffers, %d transmit buffers\n",
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
+	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("%s: %d receive buffers, %d transmit buffers\n",
 	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
 
 	mem = 0;
@@ -419,8 +423,8 @@ leread(sc, boff, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
+		    ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
+		{
 			m_freem(m);
 			return;
 		}
@@ -429,10 +433,16 @@ leread(sc, boff, len)
 #endif
 
 #ifdef LANCE_REVC_BUG
-	if (bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-		    sizeof(eh->ether_dhost)) != 0 &&
-	    bcmp(eh->ether_dhost, etherbroadcastaddr,
-		    sizeof(eh->ether_dhost)) != 0) {
+	/*
+	 * The old LANCE (Rev. C) chips have a bug which causes
+	 * garbage to be inserted in front of the received packet.
+	 * The work-around is to ignore packets with an invalid
+	 * destination address (garbage will usually not match).
+	 * Of course, this precludes multicast support...
+	 */
+	if (ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr) &&
+	    ETHER_CMP(eh->ether_dhost, etherbroadcastaddr) )
+	{
 		m_freem(m);
 		return;
 	}
@@ -937,8 +947,7 @@ lesetladrf(ac, af)
 	af[0] = af[1] = af[2] = af[3] = 0x0000;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    sizeof(enm->enm_addrlo)) != 0) {
+		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
