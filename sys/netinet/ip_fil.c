@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.25 1997/10/30 16:08:58 mrg Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.26 1997/11/14 12:46:52 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,17 +9,17 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.0.2.44 1997/10/29 12:14:09 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.0.2.44.2.2 1997/11/12 10:49:25 darrenr Exp ";
 #endif
 
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
 
+#if defined(KERNEL) && !defined(_KERNEL)
+# define	_KERNEL
+#endif
 #ifdef	__FreeBSD__
-# if defined(KERNEL) && !defined(_KERNEL)
-#  define	_KERNEL
-# endif
 # if defined(_KERNEL) && !defined(IPFILTER_LKM)
 #  include <sys/osreldate.h>
 # else
@@ -126,20 +126,14 @@ u_long	ipl_frouteok[2] = {0, 0};
 
 static	void	fixskip __P((frentry_t **, frentry_t *, int));
 static	void	frzerostats __P((caddr_t));
-static	int	frflushlist __P((int, int, int *, frentry_t *, frentry_t **));
-static	void	frflush __P((int, caddr_t));
 static	void	frsync __P((void));
-static	void	fr_delgroup __P((u_short, u_32_t, int, int));
-static	frgroup_t *fr_addgroup __P((u_short, frentry_t *, int, int));
-static	frgroup_t *fr_findgroup __P((u_short, u_32_t, int, int, frgroup_t ***));
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 static	int	frrequest __P((int, u_long, caddr_t, int));
 #else
 static	int	frrequest __P((int, int, caddr_t, int));
 #endif
 #ifdef	_KERNEL
-static	int	(*fr_savep) __P((struct ip *, int, void *,
-				 int, struct mbuf **));
+static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
 #else
 int	ipllog __P((void));
 void	init_ifp __P((void));
@@ -262,7 +256,13 @@ int iplattach()
 	else
 		defpass = "no-match -> block";
 
-	printf("IP Filter: initialized.  Default = %s all\n", defpass);
+	printf("IP Filter: initialized.  Default = %s all, Logging = %s\n",
+		defpass,
+# ifdef	IPFILTER_LOG
+		"enabled");
+# else
+		"disabled");
+# endif
 	return 0;
 }
 
@@ -331,72 +331,6 @@ caddr_t	data;
 	fio.f_froute[1] = ipl_frouteok[1];
 	IWCOPY((caddr_t)&fio, data, sizeof(fio));
 	bzero((char *)frstats, sizeof(*frstats) * 2);
-}
-
-
-/*
- * recursively flush rules from the list, descending groups as they are
- * encountered.  if a rule is the head of a group and it has lost all its
- * group members, then also delete the group reference.
- */
-static int frflushlist(set, unit, nfreedp, list, listp)
-int set, unit, *nfreedp;
-frentry_t *list, **listp;
-{
-	register frentry_t *fp = list, *fpn;
-	register int freed = 0;
-
-	while (fp) {
-		fpn = fp->fr_next;
-		if (fp->fr_grp) {
-			fp->fr_ref -= frflushlist(set, unit, nfreedp,
-						  fp->fr_grp, &fp->fr_grp);
-		}
-
-		if (fp->fr_ref == 1) {
-			if (fp->fr_grhead)
-				fr_delgroup(fp->fr_grhead, fp->fr_flags, unit,
-					    set);
-			KFREE(fp);
-			*listp = fpn;
-			freed++;
-		}
-		fp = fpn;
-	}
-	*nfreedp += freed;
-	return freed;
-}
-
-
-static void frflush(unit, data)
-int unit;
-caddr_t data;
-{
-	int flags = *(int *)data, flushed = 0, set = fr_active;
-
-	bzero((char *)frcache, sizeof(frcache[0]) * 2);
-
-	if (flags & FR_INACTIVE)
-		set = 1 - set;
-
-	if (unit == IPL_LOGIPF) {
-		if (flags & FR_OUTQUE) {
-			(void) frflushlist(set, unit, &flushed,
-					   ipfilter[1][set],
-					   &ipfilter[1][set]);
-			(void) frflushlist(set, unit, &flushed,
-					   ipacct[1][set], &ipacct[1][set]);
-		}
-		if (flags & FR_INQUE) {
-			(void) frflushlist(set, unit, &flushed,
-					   ipfilter[0][set],
-					   &ipfilter[0][set]);
-			(void) frflushlist(set, unit, &flushed,
-					   ipacct[0][set], &ipacct[0][set]);
-		}
-	}
-
-	*(int *)data = flushed;
 }
 
 
@@ -620,83 +554,6 @@ int addremove;
 	for (fp = *listp; fp && (fp != rp); fp = fp->fr_next, rn++)
 		if (fp->fr_skip && (rn + fp->fr_skip >= rules))
 			fp->fr_skip += addremove;
-}
-
-
-#ifdef __STDC__
-static frgroup_t *fr_findgroup(u_short num, u_32_t flags, int which, int set, frgroup_t ***fgpp)
-#else
-static frgroup_t *fr_findgroup(num, flags, which, set, fgpp)
-u_short num;
-u_32_t flags;
-int which, set;
-frgroup_t ***fgpp;
-#endif
-{
-	frgroup_t *fg, **fgp;
-
-	if (which == IPL_LOGAUTH)
-		fgp = &ipfgroups[2][set];
-	else if (flags & FR_ACCOUNT)
-		fgp = &ipfgroups[1][set];
-	else if (flags & (FR_OUTQUE|FR_INQUE))
-		fgp = &ipfgroups[0][set];
-	else
-		return NULL;
-
-	while ((fg = *fgp))
-		if (fg->fg_num == num)
-			break;
-		else
-			fgp = &fg->fg_next;
-	if (fgpp)
-		*fgpp = fgp;
-	return fg;
-}
-
-
-#ifdef __STDC__
-static frgroup_t *fr_addgroup(u_short num, frentry_t *fp, int which, int set)
-#else
-static frgroup_t *fr_addgroup(num, fp, which, set)
-u_short num;
-frentry_t *fp;
-int which, set;
-#endif
-{
-	frgroup_t *fg, **fgp;
-
-	if ((fg = fr_findgroup(num, fp->fr_flags, which, set, &fgp)))
-		return fg;
-
-	KMALLOC(fg, frgroup_t *, sizeof(*fg));
-	if (fg) {
-		fg->fg_num = num;
-		fg->fg_next = *fgp;
-		fg->fg_head = fp;
-		fg->fg_start = &fp->fr_grp;
-		*fgp = fg;
-	}
-	return fg;
-}
-
-
-#ifdef __STDC__
-static void fr_delgroup(u_short num, u_32_t flags, int which, int set)
-#else
-static void fr_delgroup(num, flags, which, set)
-u_short num;
-u_32_t flags;
-int which, set;
-#endif
-{
-	frgroup_t *fg, **fgp;
-
-	if (!(fg = fr_findgroup(num, flags, which, set, &fgp)))
-		return;
-
-	*fgp = fg->fg_next;
-	KFREE(fg);
 }
 
 
@@ -948,10 +805,10 @@ int send_reset(ti)
 struct tcpiphdr *ti;
 {
 	struct tcpiphdr *tp;
-	struct ip *ip;
 	struct tcphdr *tcp;
 	struct mbuf *m;
 	int tlen = 0;
+	ip_t *ip;
 # if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
 	struct route ro;
 # endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.10 1997/10/30 16:09:00 mrg Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.11 1997/11/14 12:47:00 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.0.2.19 1997/10/23 15:18:48 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.0.2.19.2.1 1997/11/12 10:50:21 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -28,13 +28,17 @@ static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.0.2.19 1997/10/23 15:18:48 da
 #include <sys/ioctl.h>
 #endif
 #include <sys/uio.h>
+#ifndef linux
 #include <sys/protosw.h>
+#endif
 #include <sys/socket.h>
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(linux)
 # include <sys/systm.h>
 #endif
 #if !defined(__SVR4) && !defined(__svr4__)
-# include <sys/mbuf.h>
+# ifndef linux
+#  include <sys/mbuf.h>
+# endif
 #else
 # include <sys/byteorder.h>
 # include <sys/dditypes.h>
@@ -50,12 +54,14 @@ static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.0.2.19 1997/10/23 15:18:48 da
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#ifndef linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-#include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 #include "netinet/ip_compat.h"
+#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_proxy.h"
 #include "netinet/ip_nat.h"
@@ -443,7 +449,9 @@ int ipfr_slowtimer()
 # if	SOLARIS
 	ipfr_timer_id = timeout(ipfr_slowtimer, NULL, drv_usectohz(500000));
 # else
+#  ifndef linux
 	ip_slowtimo();
+#  endif
 #  if (BSD < 199306) && !defined(__sgi)
 	return 0;
 #  endif
