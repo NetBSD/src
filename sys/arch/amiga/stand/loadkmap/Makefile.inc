@@ -1,10 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.2 1996/06/21 21:55:53 is Exp $
+# $NetBSD: Makefile.inc,v 1.3 1997/01/29 17:12:51 is Exp $
 
 BINDIR=$(DESTDIR)/usr/share/keymaps/amiga
 NOMAN=
 
 realinstall: ${PROG}
-.if !.exists(${BINDIR}(
+.if !.exists(${BINDIR})
 	mkdir -p ${BINDIR}
 .endif
 	./${PROG} > ${BINDIR}/${MAP}
