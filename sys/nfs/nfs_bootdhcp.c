@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.25 2004/04/21 18:40:41 itojun Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.26 2004/05/06 12:32:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.25 2004/04/21 18:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.26 2004/05/06 12:32:59 drochner Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -625,12 +625,6 @@ bootpc_call(nd, procp)
 		bootp->bp_vend[20] = 4;
 		leasetime = htonl(300);
 		memcpy(&bootp->bp_vend[21], &leasetime, 4);
-		/*
-		 * Insert a NetBSD Vendor Class Identifier option.
-		 */
-		snprintf(vci, sizeof(vci), "%s:%s:kernel:%s", ostype, MACHINE,
-		    osrelease);
-		vcilen = strlen(vci);
 		bootp->bp_vend[25] = TAG_CLASSID;
 		bootp->bp_vend[26] = vcilen;
 		memcpy(&bootp->bp_vend[27], vci, vcilen);
