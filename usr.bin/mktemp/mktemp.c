@@ -1,4 +1,4 @@
-/* $NetBSD: mktemp.c,v 1.4 2002/04/01 13:54:01 bjh21 Exp $ */
+/* $NetBSD: mktemp.c,v 1.5 2002/09/14 04:26:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
@@ -36,7 +36,11 @@
  * more like the OpenBSD version - which was first to publish the interface.
  */
 
-#include <sys/cdefs.h>
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/types.h>
 #include <err.h>
 #include <paths.h>
 #include <stdio.h>
@@ -44,14 +48,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifndef lint
-#if 0
-static const char rcsid[] =
-	"$FreeBSD: src/usr.bin/mktemp/mktemp.c,v 1.2 1998/05/05 06:13:47 charnier Exp $";
-#else
-__RCSID("$NetBSD: mktemp.c,v 1.4 2002/04/01 13:54:01 bjh21 Exp $");
-#endif
-#endif /* not lint */
+#if defined(__RCSID) && !defined(__lint)
+__RCSID("$NetBSD: mktemp.c,v 1.5 2002/09/14 04:26:23 thorpej Exp $");
+#endif /* !__lint */
 
 static void usage __P((void));
 
