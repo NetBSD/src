@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.47 2004/08/10 19:08:37 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.48 2004/08/10 19:23:21 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.47 2004/08/10 19:08:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.48 2004/08/10 19:23:21 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,11 +207,8 @@ com_pcmcia_attach(parent, self, aux)
 	sc->sc_ioh = cfe->iospace[0].handle.ioh;
 
 	error = com_pcmcia_enable(sc);
-	if (error) {
-		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
-		    error);
+	if (error)
 		goto fail;
-	}
 
 	sc->enabled = 1;
 
