@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.8 2000/01/21 12:28:28 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.8.4.1 2000/07/19 14:02:27 mrg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -49,6 +49,7 @@
 #	st*	SCSI tape
 # Disks:
 #	sd*	SCSI disks
+#	wd*	IDE disks
 #	cd*	SCSI cdrom drives
 #	ch*	SCSI changer
 #	xy*	Xylogic 450/451 disks
@@ -91,7 +92,7 @@ case $i in
 all)
 	sh -$- $0 std ttya ttyb ttyc ttyd
 	sh -$- $0 fd sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
-	sh -$- $0 cd0 st0 st1 fd0
+	sh -$- $0 wd0 wd1 wd2 wd3 cd0 st0 st1 fd0
 	sh -$- audio0 audio1 audio2 audio3
 	sh -$- $0 pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh -$- $0 ccd0 ccd1 ccd2 ccd3 raid0 raid1 raid2 raid3
@@ -104,7 +105,7 @@ all)
 floppy)
 	sh -$- $0 std ttya ttyb ttyc ttyd pty0
 	sh -$- $0 sd0 sd1 sd2 sd3 sd4 sd5 md0
-	sh -$- $0 cd0 cd1 st0 st1 fd0
+	sh -$- $0 wd0 wd1 cd0 cd1 st0 st1 fd0
 	;;
 std)
 	rm -f console tty kmem mem null zero eeprom openprom drum klog \
@@ -241,10 +242,11 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
-ccd*|fd*|sd*|xd*|xy*|cd*|vnd*|raid*)
+ccd*|fd*|wd*|sd*|xd*|xy*|cd*|vnd*|raid*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=9;	chr=23;;
 	fd*)	name=fd;	unit=${i#fd};	blk=16;	chr=54;;
+	wd*)	name=wd;	unit=${i#wd};	blk=12;	chr=26;;
 	sd*)	name=sd;	unit=${i#sd};	blk=7;	chr=17;;
 	xd*)	name=xd;	unit=${i#xd};	blk=10;	chr=42;;
 	xy*)	name=xy;	unit=${i#xy};	blk=3;	chr=9;;
