@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.1 2001/05/04 07:48:57 bouyer Exp $ */
+/*	$NetBSD: stvar.h,v 1.2 2001/06/18 09:05:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,12 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#define	ST_IO_TIME	(3 * 60 * 1000)		/* 3 minutes */
+#define	ST_CTL_TIME	(30 * 1000)		/* 30 seconds */
+#define	ST_SPC_TIME	(4 * 60 * 60 * 1000)	/* 4 hours */
+
+#define	ST_RETRIES	4	/* only on non IO commands */
+
 struct modes {
 	u_int quirks;			/* same definitions as in quirkdata */
 	int blksize;
@@ -91,6 +97,13 @@ struct st_quirk_inquiry_pattern {
 
 struct st_softc {
 	struct device sc_dev;
+/*--------------------callback to bus-specific code--------------------------*/
+	int (*ops) __P((struct st_softc *, int, int));
+#define ST_OPS_RBL		0x00	/* read block limit */
+#define ST_OPS_MODESENSE	0x01	/* mode sense */
+#define ST_OPS_MODESELECT	0x02	/* mode select */
+#define ST_OPS_CMPRSS_ON 	0x03	/* turn on compression */
+#define ST_OPS_CMPRSS_OFF 	0x04	/* turn off compression */
 /*--------------------present operating parameters, flags etc.---------------*/
 	int flags;		/* see below                         */
 	u_int quirks;		/* quirks for the open mode          */
@@ -134,7 +147,32 @@ struct st_softc {
 #endif
 };
 
+#define	ST_INFO_VALID	0x0001
+#define	ST_BLOCK_SET	0x0002	/* block size, mode set by ioctl      */
+#define	ST_WRITTEN	0x0004	/* data has been written, EOD needed */
+#define	ST_FIXEDBLOCKS	0x0008
+#define	ST_AT_FILEMARK	0x0010
+#define	ST_EIO_PENDING	0x0020	/* error reporting deferred until next op */
+#define	ST_NEW_MOUNT	0x0040	/* still need to decide mode             */
+#define	ST_READONLY	0x0080	/* st_mode_sense says write protected */
+#define	ST_FM_WRITTEN	0x0100	/*
+				 * EOF file mark written  -- used with
+				 * ~ST_WRITTEN to indicate that multiple file
+				 * marks have been written
+				 */
+#define	ST_BLANK_READ	0x0200	/* BLANK CHECK encountered already */
+#define	ST_2FM_AT_EOD	0x0400	/* write 2 file marks at EOD */
+#define	ST_MOUNTED	0x0800	/* Device is presently mounted */
+#define	ST_DONTBUFFER	0x1000	/* Disable buffering/caching */
+#define	ST_EARLYWARN	0x2000	/* Do (deferred) EOM for variable mode */
+#define	ST_EOM_PENDING	0x4000	/* EOM reporting deferred until next op */
 
-void	stattach __P((struct device *, struct device *, void *));
+#define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_EOM_PENDING | \
+			 ST_BLANK_READ)
+#define	ST_PER_MOUNT	(ST_INFO_VALID | ST_BLOCK_SET | ST_WRITTEN |	\
+			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN |	\
+			 ST_2FM_AT_EOD | ST_PER_ACTION)
+
+void	stattach __P((struct device *, struct st_softc *, void *));
 
 extern struct cfdriver st_cd;
