@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1.2.1 2000/11/20 20:14:50 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.1.2.2 2001/01/05 17:34:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,10 +50,12 @@
 #endif
 #endif
 
+#define	_MACHINE_ARCH	sh3eb
+#define	MACHINE_ARCH	"sh3eb"
+
 #define	_MACHINE	mmeye
 #define	MACHINE		"mmeye"
-#define	_MACHINE_ARCH	sh3
-#define	MACHINE_ARCH	"sh3"
+
 #define	MID_MACHINE	MID_SH3
 
 /*

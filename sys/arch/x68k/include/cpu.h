@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20.2.1 2000/11/20 20:30:04 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.2.2 2001/01/05 17:35:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -190,9 +190,6 @@ int	dma_cachectl __P((caddr_t, int));
 void	physaccess __P((caddr_t, caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 int	kvtop __P((caddr_t));
-
-/* trap.c functions */
-void	child_return __P((void *));
 
 #endif
 

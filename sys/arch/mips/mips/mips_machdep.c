@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.57.2.3 2000/12/08 09:28:22 bouyer Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.57.2.4 2001/01/05 17:34:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.57.2.3 2000/12/08 09:28:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.57.2.4 2001/01/05 17:34:44 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -264,6 +264,9 @@ mips3_vector_init(mips3_csizebase)
 	extern char mips3_TLBMiss[], mips3_TLBMissEnd[];
 	extern char mips3_XTLBMiss[], mips3_XTLBMissEnd[];
 
+	/* Cache error handler */
+	extern char mips3_cache[], mips3_cacheEnd[];
+
 	/*
 	 * Copy down exception vector code.
 	 */
@@ -273,6 +276,9 @@ mips3_vector_init(mips3_csizebase)
 	if (mips3_XTLBMissEnd - mips3_XTLBMiss > 0x80)
 		panic("startup: XTLB code too large");
 
+	if (mips3_cacheEnd - mips3_cache > 0x80)
+		panic("startup: Cache error code too large");
+
 	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_TLBMiss,
 	      mips3_TLBMissEnd - mips3_TLBMiss);
 
@@ -281,6 +287,9 @@ mips3_vector_init(mips3_csizebase)
 
 	memcpy((void *)MIPS3_GEN_EXC_VEC, mips3_exception,
 	      mips3_exceptionEnd - mips3_exception);
+
+	memcpy((void *)MIPS3_CACHE_ERR_EXC_VEC, mips3_cache,
+	      mips3_cacheEnd - mips3_cache);
 
 	/*
 	 * Copy locore-function vector.
@@ -757,7 +766,6 @@ sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct sigframe *fp;
 	struct frame *f;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	struct sigcontext ksc;
 
@@ -765,13 +773,13 @@ sendsig(catcher, sig, mask, code)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
+		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
 		fp = (struct sigframe *)(u_int32_t)f->f_regs[SP];
@@ -795,6 +803,7 @@ sendsig(catcher, sig, mask, code)
 	    sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
 
 	/* Save the floating-pointstate, if necessary, then copy it. */
+#ifndef SOFTFLOAT
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
@@ -802,9 +811,12 @@ sendsig(catcher, sig, mask, code)
 			savefpregs(p);
 		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
+#else
+	*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
+#endif
 
 	/* Save signal stack. */
-	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	ksc.sc_mask = *mask;
@@ -845,11 +857,11 @@ sendsig(catcher, sig, mask, code)
 	f->f_regs[SP] = (int)fp;
 
 	/* Signal trampoline code is at base of user stack. */
-	f->f_regs[RA] = (int)psp->ps_sigcode;
+	f->f_regs[RA] = (int)p->p_sigctx.ps_sigcode;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
@@ -899,21 +911,31 @@ sys___sigreturn14(p, v, retval)
 	if ((int) ksc.sc_regs[ZERO] != 0xACEDBADE)	/* magic number */
 		return (EINVAL);
 
-	/* Resture the register context. */
+	/* Restore the register context. */
 	f = (struct frame *)p->p_md.md_regs;
 	f->f_regs[PC] = ksc.sc_pc;
 	f->f_regs[MULLO] = ksc.mullo;
 	f->f_regs[MULHI] = ksc.mulhi;
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
-	if (scp->sc_fpused)
+#ifndef	SOFTFLOAT
+	if (scp->sc_fpused) {
+		/* Disable the FPU to fault in FP registers. */
+		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
+		if (p == fpcurproc) {
+			fpcurproc = (struct proc *)0;
+		}
 		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+	}
+#else
+	p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+#endif
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);

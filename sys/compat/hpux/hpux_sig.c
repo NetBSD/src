@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.18.12.1 2000/11/20 18:08:12 bouyer Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.18.12.2 2001/01/05 17:35:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,11 +144,11 @@ hpux_sys_sigblock(p, v, retval)
 
 	(void) splsched();
 
-	bsdtohpuxmask(&p->p_sigmask, (int *)retval);
+	bsdtohpuxmask(&p->p_sigctx.ps_sigmask, (int *)retval);
 	hpuxtobsdmask(SCARG(uap, mask), &nmask);
 
-	sigplusset(&nmask, &p->p_sigmask);
-	sigminusset(&sigcantmask, &p->p_sigmask);
+	sigplusset(&nmask, &p->p_sigctx.ps_sigmask);
+	sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
 
 	(void) spl0();
 	return (0);
@@ -164,10 +164,10 @@ hpux_sys_sigsetmask(p, v, retval)
 
 	(void) splsched();
 
-	bsdtohpuxmask(&p->p_sigmask, (int *)retval);
-	hpuxtobsdmask(SCARG(uap, mask), &p->p_sigmask);
+	bsdtohpuxmask(&p->p_sigctx.ps_sigmask, (int *)retval);
+	hpuxtobsdmask(SCARG(uap, mask), &p->p_sigctx.ps_sigmask);
 
-	sigminusset(&sigcantmask, &p->p_sigmask);
+	sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
 
 	(void) spl0();
 	return (0);
@@ -234,7 +234,7 @@ hpux_sys_sigprocmask(p, v, retval)
 	 */
 	if (SCARG(uap, oset)) {
 		memset((caddr_t)&sigset, 0, sizeof(sigset));
-		bsdtohpuxmask(&p->p_sigmask, &sigset.sigset[0]);
+		bsdtohpuxmask(&p->p_sigctx.ps_sigmask, &sigset.sigset[0]);
 		error = copyout(&sigset, SCARG(uap, oset), sizeof(sigset));
 		if (error)
 			return (error);
@@ -247,15 +247,15 @@ hpux_sys_sigprocmask(p, v, retval)
 		(void) splsched();
 		switch (SCARG(uap, how)) {
 		case HPUXSIG_BLOCK:
-			sigplusset(&mask, &p->p_sigmask);
-			sigminusset(&sigcantmask, &p->p_sigmask);
+			sigplusset(&mask, &p->p_sigctx.ps_sigmask);
+			sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
 			break;
 		case HPUXSIG_UNBLOCK:
-			sigminusset(&mask, &p->p_sigmask);
+			sigminusset(&mask, &p->p_sigctx.ps_sigmask);
 			break;
 		case HPUXSIG_SETMASK:
-			p->p_sigmask = mask;
-			sigminusset(&sigcantmask, &p->p_sigmask);
+			p->p_sigctx.ps_sigmask = mask;
+			sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
 			break;
 		default:
 			error = EINVAL;
@@ -275,7 +275,7 @@ hpux_sys_sigpending(p, v, retval)
 	struct hpux_sys_sigpending_args *uap = v;
 	hpux_sigset_t sigset;
 
-	bsdtohpuxmask(&p->p_siglist, &sigset.sigset[0]);
+	bsdtohpuxmask(&p->p_sigctx.ps_siglist, &sigset.sigset[0]);
 	return (copyout(&sigset, SCARG(uap, set), sizeof(sigset)));
 }
 
@@ -306,7 +306,6 @@ hpux_sys_sigaction(p, v, retval)
 {
 	struct hpux_sys_sigaction_args *uap = v;
 	struct hpux_sigaction action;
-	struct sigacts *ps = p->p_sigacts;
 	struct hpux_sigaction *sa;
 	struct sigaction *bsa;
 	int sig, error;
@@ -315,7 +314,7 @@ hpux_sys_sigaction(p, v, retval)
 	if (sig <= 0 || sig >= NSIG || sig == SIGKILL || sig == SIGSTOP)
 		return (EINVAL);
 
-	bsa = &ps->ps_sigact[sig];
+	bsa = &SIGACTION(p, sig); 
 
 	sa = &action;
 	if (SCARG(uap, osa)) {
@@ -391,7 +390,7 @@ hpux_sys_ssig_6x(p, v, retval)
 		return (EINVAL);
 	sigemptyset(&sa->sa_mask);
 	sa->sa_flags = 0;
-	*retval = (register_t)p->p_sigacts->ps_sigact[a].sa_handler;
+	*retval = (register_t)SIGACTION(p, a).sa_handler;
 	sigaction1(p, a, sa, NULL);
 #if 0
 	p->p_flag |= SOUSIG;		/* mark as simulating old stuff */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.93.2.3 2000/12/08 09:18:42 bouyer Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.93.2.4 2001/01/05 17:36:55 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -319,8 +319,8 @@ ip_init()
 
 #ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
-	inet_pfil_hook.ph_key = (void *)(u_long) AF_INET;
-	inet_pfil_hook.ph_dlt = DLT_RAW;
+	inet_pfil_hook.ph_type = PFIL_TYPE_AF;
+	inet_pfil_hook.ph_af   = AF_INET;
 	i = pfil_head_register(&inet_pfil_hook);
 	if (i != 0)
 		printf("ip_init: WARNING: unable to register pfil hook, "
@@ -478,6 +478,14 @@ ip_input(struct mbuf *m)
 		return;
 	ip = mtod(m, struct ip *);
 #endif /* PFIL_HOOKS */
+
+#ifdef ALTQ
+	/* XXX Temporary until ALTQ is changed to use a pfil hook */
+	if (altq_input != NULL && (*altq_input)(m, AF_INET) == 0) {
+		/* packet dropped by traffic conditioner */
+		return;
+	}
+#endif
 
 	/*
 	 * Convert fields to host representation.

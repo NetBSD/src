@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.1 1999/01/15 13:31:30 bouyer Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.1.8.1 2001/01/05 17:36:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,12 +40,13 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: byte_swap_2.S,v 1.1 1999/01/15 13:31:30 bouyer Exp $")
+	RCSID("$NetBSD: byte_swap_2.S,v 1.1.8.1 2001/01/05 17:36:44 bouyer Exp $")
 #endif
 
-ENTRY(bswap16)
-ALTENTRY(ntohs)
-ALTENTRY(htons)
+_ENTRY(_C_LABEL(bswap16))
+_ENTRY(_C_LABEL(ntohs))
+_ENTRY(_C_LABEL(htons))
+_PROF_PROLOGUE
 	movzwl	4(%esp),%eax
 	rorw	$8,%ax
 	ret

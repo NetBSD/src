@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.45.2.3 2000/12/08 09:08:13 bouyer Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.45.2.4 2001/01/05 17:35:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1330,5 +1330,5 @@ hpux_sys_pause_6x(p, v, retval)
 	register_t *retval;
 {
 
-	return (sigsuspend1(p, &p->p_sigmask));
+	return (sigsuspend1(p, &p->p_sigctx.ps_sigmask));
 }

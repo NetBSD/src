@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.12.2.1 2000/11/20 19:57:15 bouyer Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.12.2.2 2001/01/05 17:33:48 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.12.2.1 2000/11/20 19:57:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.12.2.2 2001/01/05 17:33:48 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.12.2.1 2000/11/20 19:57:15 bouyer Ex
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_kn300_intr_map __P((void *, pcitag_t, int, int,
+int	dec_kn300_intr_map __P((struct pci_attach_args *,
 	    pci_intr_handle_t *));
 const char *dec_kn300_intr_string __P((void *, pci_intr_handle_t));
 const struct evcnt *dec_kn300_intr_evcnt __P((void *, pci_intr_handle_t));
@@ -127,14 +127,14 @@ pci_kn300_pickintr(ccp, first)
 }
 
 int     
-dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
-	void *ccv;
-	pcitag_t bustag; 
-	int buspin, line;
+dec_kn300_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
-	struct mcpcia_config *ccp = ccv;
-	pci_chipset_tag_t pc = &ccp->cc_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	struct mcpcia_config *ccp = (struct mcpcia_config *)pc->pc_intr_v;
 	int device;
 	int mcpcia_irq;
 

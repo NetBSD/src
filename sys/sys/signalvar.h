@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.22.2.2 2000/11/22 16:06:41 bouyer Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.22.2.3 2001/01/05 17:36:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -44,18 +44,33 @@
  */
 
 /*
- * Process signal actions and state, needed only within the process
- * (not necessarily resident).
+ * Process signal actions, possibly shared between threads.
  */
-struct	sigacts {
-	struct	sigaction ps_sigact[NSIG];	/* disposition of signals */
+struct sigacts {
+	struct sigaction sa_sigact[NSIG];      /* disposition of signals */
+
+	int	sa_refcnt;		/* reference count */
+};
+
+/*
+ * Process signal state.
+ */
+struct	sigctx {
+	/* This needs to be zeroed on fork */
+	sigset_t ps_siglist;		/* Signals arrived but not delivered. */
+	char	ps_sigcheck;		/* May have deliverable signals. */
+
+	/* This should be copied on fork */
+#define	ps_startcopy	ps_sigstk
 	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	sigset_t ps_oldmask;		/* saved mask from before sigpause */
 	int	ps_flags;		/* signal flags, below */
 	int	ps_sig;			/* for core dump/debugger XXX */
 	long	ps_code;		/* for core dump/debugger XXX */
 	void	*ps_sigcode;		/* address of signal trampoline */
-	int	ps_refcnt;		/* reference count */
+	sigset_t ps_sigmask;		/* Current signal mask. */
+	sigset_t ps_sigignore;		/* Signals being ignored. */
+	sigset_t ps_sigcatch;		/* Signals being caught by user. */
 };
 
 /* signal flags */
@@ -68,20 +83,20 @@ struct	sigacts {
 /*
  * get signal action for process and signal; currently only for current process
  */
-#define SIGACTION(p, sig)	(p->p_sigacts->ps_sigact[(sig)])
-#define	SIGACTION_PS(ps, sig)	(ps->ps_sigact[(sig)])
+#define SIGACTION(p, sig)	(p->p_sigacts->sa_sigact[(sig)])
+#define	SIGACTION_PS(ps, sig)	(ps->sa_sigact[(sig)])
 
 /*
  * Determine signal that should be delivered to process p, the current
  * process, 0 if none.  If there is a pending stop signal with default
  * action, the process stops in issignal().
  */
-#define	CURSIG(p)	(p->p_sigcheck ? issignal(p) : 0)
+#define	CURSIG(p)	(p->p_sigctx.ps_sigcheck ? issignal(p) : 0)
 
 /*
  * Clear a pending signal from a process.
  */
-#define	CLRSIG(p, sig)	sigdelset(&p->p_siglist, sig)
+#define	CLRSIG(p, sig)	sigdelset(&p->p_sigctx.ps_siglist, sig)
 
 /*
  * Signal properties and actions.
@@ -169,8 +184,7 @@ int	sigismasked __P((struct proc *, int));
 
 void	signal_init __P((void));
 
-struct sigacts *sigactsinit __P((struct proc *));
-void	sigactsshare __P((struct proc *, struct proc *));
+void	sigactsinit __P((struct proc *, struct proc *, int));
 void	sigactsunshare __P((struct proc *));
 void	sigactsfree __P((struct proc *));
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.23 1999/03/22 22:33:36 bad Exp $
+#	$NetBSD: files.isapnp,v 1.23.8.1 2001/01/05 17:35:53 bouyer Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -29,6 +29,10 @@ file	dev/isapnp/if_ne_isapnp.c		ne_isapnp
 # TROPIC based Token-Ring (IBM/3COM)
 attach	tr at isapnp with tr_isapnp
 file  dev/isapnp/if_tr_isapnp.c			tr_isapnp
+
+# Aironet 802.11 ISA
+attach	an at isapnp with an_isapnp
+file	dev/isapnp/if_an_isapnp.c		an_isapnp
 
 # serial ports/modems
 attach	com at isapnp with com_isapnp
@@ -78,3 +82,20 @@ file	dev/isapnp/aha_isapnp.c			aha_isapnp
 # Adaptec AHA-1520B
 attach	aic at isapnp with aic_isapnp
 file	dev/isapnp/aic_isapnp.c			aic_isapnp
+
+# ISDN devices
+attach isic at isapnp with isapnp_isic
+file dev/isapnp/isapnp_isic.c        isapnp_isic
+
+defopt	opt_isicpnp.h	ISICPNP_TEL_S0_16_3_P ISICPNP_CRTX_S0_P ISICPNP_DRN_NGO
+			ISICPNP_ELSA_QS1ISA ISICPNP_ELSA_PCC16
+			ISICPNP_SEDLBAUER ISICPNP_DYNALINK
+			ISICPNP_SIEMENS_ISURF2
+
+file dev/isapnp/i4b_tel_s0P.c        isapnp_isic
+file dev/isapnp/i4b_ctx_s0P.c        isapnp_isic
+file dev/isapnp/i4b_drn_ngo.c        isapnp_isic
+file dev/isapnp/i4b_elsa_qs1i.c      isapnp_isic
+file dev/isapnp/i4b_sws.c            isapnp_isic
+file dev/isapnp/i4b_dynalink.c       isapnp_isic
+file dev/isapnp/i4b_siemens_isurf.c  isapnp_isic

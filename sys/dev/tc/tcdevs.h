@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.14.2.1 2000/11/20 11:43:16 bouyer Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.14.2.2 2001/01/05 17:36:28 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.16 2000/07/20 06:38:39 tsutsui Exp 
+ *	NetBSD: tcdevs,v 1.17 2000/12/17 13:56:05 ad Exp 
  */
 
 /*
@@ -72,13 +72,22 @@
 #define	TC_DESCRIPTION_PMAG_BA	"Color Frame Buffer"
 
 #define	TC_DEVICE_PMAG_CA	"px"
-#define	TC_DESCRIPTION_PMAG_CA	"2D Graphics"
+#define	TC_DESCRIPTION_PMAG_CA	"2D Graphics (PX 2DA)"
 
-#define	TC_DEVICE_PMAG_DA	"px"
-#define	TC_DESCRIPTION_PMAG_DA	"3D Graphics (low/mid end)"
+#define	TC_DEVICE_PMAG_DA	"pxg"
+#define	TC_DESCRIPTION_PMAG_DA	"3D Graphics (PXG LM-3DA)"
 
-#define	TC_DEVICE_PMAG_FA	"px"
-#define	TC_DESCRIPTION_PMAG_FA	"3D Graphics (high end)"
+#define	TC_DEVICE_PMAG_FA	"pxg"
+#define	TC_DESCRIPTION_PMAG_FA	"3D Graphics (PXG HE-3DA)"
+
+#define	TC_DEVICE_PMAG_FB	"pxg"
+#define	TC_DESCRIPTION_PMAG_FB	"3D Graphics (PXG HE+3DA)"
+
+#define	TC_DEVICE_PMAGB_FA	"pxg"
+#define	TC_DESCRIPTION_PMAGB_FA	"3D Graphics (PXG HE+3DA)"
+
+#define	TC_DEVICE_PMAGB_FB	"pxg"
+#define	TC_DESCRIPTION_PMAGB_FB	"3D Graphics (PXG HE+3DA)"
 
 #define	TC_DEVICE_PMAG_DV	"xcfb"
 #define	TC_DESCRIPTION_PMAG_DV	"Maxine Color Frame Buffer"

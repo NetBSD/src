@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.1.2.2 2000/12/08 09:26:23 bouyer Exp $ */
+/* $NetBSD: if_eh.c,v 1.1.2.3 2001/01/05 17:34:03 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.1.2.2 2000/12/08 09:26:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.1.2.3 2001/01/05 17:34:03 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -91,15 +91,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.1.2.2 2000/12/08 09:26:23 bouyer Exp $")
 #include <machine/bswap.h>
 #endif
 
+#define EH_MEDIA_2	0
+#define EH_MEDIA_T	1
+#define EH_MEDIA_2_T	2
+#define EH_MEDIA_FL_T	3
+
 struct eh_softc {
 	struct	dp8390_softc sc_dp;
 	bus_space_tag_t		sc_datat;
 	bus_space_handle_t	sc_datah;
 	bus_space_tag_t		sc_ctlt;
 	bus_space_handle_t	sc_ctlh;
+	bus_space_tag_t		sc_ctl2t;
+	bus_space_handle_t	sc_ctl2h;
 	struct		irq_handler *sc_ih;
 	int			sc_flags;
 #define EHF_16BIT	0x01
+#define EHF_MAU		0x02
 	int			sc_type;
 	u_int8_t		sc_ctrl; /* Current control reg state */
 };
@@ -112,6 +120,8 @@ int	eh_test_mem(struct dp8390_softc *);
 void	eh_writemem(struct eh_softc *, u_int8_t *, int, size_t);
 void	eh_readmem(struct eh_softc *, int, u_int8_t *, size_t);
 static void eh_init_card(struct dp8390_softc *);
+static int eh_availmedia(struct eh_softc *);
+/*static*/ int eh_identifymau(struct eh_softc *);
 
 /* if_media glue */
 static int eh_mediachange(struct dp8390_softc *);
@@ -142,8 +152,19 @@ eh_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 0;
 }
 
-static const u_int8_t demo_addr_100[] = { 0x00, 0xc0, 0x32, 0x00, 0x84, 0x57 };
-static const u_int8_t demo_addr_200[] = { 0x00, 0xc0, 0x32, 0x00, 0x17, 0xbf };
+/* XXX 10baseFL on E513 */
+static int media_only2[] = { IFM_ETHER | IFM_10_2 };
+static int media_onlyt[] = { IFM_ETHER | IFM_10_T };
+static int media_2andt[] =
+    { IFM_ETHER | IFM_AUTO, IFM_ETHER | IFM_10_2, IFM_ETHER | IFM_10_T };
+static const struct {
+	int nmedia;
+	int *media;
+} media_switch[] = {
+	{ 1, media_only2 },
+	{ 1, media_onlyt },
+	{ 3, media_2andt }
+};
 
 static void
 eh_attach(struct device *parent, struct device *self, void *aux)
@@ -151,13 +172,11 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	struct podulebus_attach_args *pa = aux;
 	struct eh_softc *sc = (struct eh_softc *)self;
 	struct dp8390_softc *dsc = &sc->sc_dp;
-	/* XXX Not all cards really support all media */
-	/* XXX 10baseFL on E513 */
-	int media[] =
-	    { IFM_ETHER | IFM_AUTO,
-	      IFM_ETHER | IFM_10_2,
-	      IFM_ETHER | IFM_10_T};
+	int *media;
+	int mediaset, mautype, nmedia;
 	int i;
+	char *ptr;
+	u_int8_t *myaddr;
 
 	/* Canonicalise card type. */
 	switch (pa->pa_product) {
@@ -178,13 +197,15 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	/* Memory size and width varies. */
 	dsc->mem_start = 0;
 	switch (sc->sc_type) {
-	case PODULE_ICUBED_ETHERLAN100:
 	case PODULE_ICUBED_ETHERLAN200:
-		printf(": 8-bit, 32 KB RAM\n");
+		sc->sc_flags |= EHF_MAU;
+		/* FALLTHROUGH */
+	case PODULE_ICUBED_ETHERLAN100:
+		printf(": 8-bit, 32 KB RAM");
 		dsc->mem_size  = 0x8000;
 		break;
 	case PODULE_ICUBED_ETHERLAN500:
-		printf(": 16-bit, 64 KB RAM\n");
+		printf(": 16-bit, 64 KB RAM");
 		sc->sc_flags |= EHF_16BIT;
 		dsc->mem_size = 0x10000;
 		break;
@@ -199,7 +220,10 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_datah);
 	sc->sc_ctlt = pa->pa_fast_t;
 	bus_space_subregion(sc->sc_ctlt, pa->pa_fast_h, EH_CTRL, 1,
-	    &sc->sc_ctlt);
+	    &sc->sc_ctlh);
+	sc->sc_ctl2t = pa->pa_fast_t;
+	bus_space_subregion(sc->sc_ctl2t, pa->pa_fast_h, EH_CTRL2, 1,
+	    &sc->sc_ctl2h);
 
 	/* dsc->cr_proto? */
 	/* dsc->rcr_proto? */
@@ -224,43 +248,71 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < 16; i++)
 		dsc->sc_reg_map[i] = i;
 
-	sc->sc_ctrl = 0xff;
+	sc->sc_ctrl = 0x00;
 
-	/* XXX XXX XXX Ethernet address */
-	switch (sc->sc_type) {
-	case PODULE_ICUBED_ETHERLAN100:
-		memcpy(dsc->sc_enaddr, demo_addr_100, ETHER_ADDR_LEN);
-		break;
-	case PODULE_ICUBED_ETHERLAN200:
-		memcpy(dsc->sc_enaddr, demo_addr_200, ETHER_ADDR_LEN);
-		break;
+	if (sc->sc_flags & EHF_MAU) {
+		mautype = eh_identifymau(sc);
+		switch (mautype) {
+		case EH200_MAUID_10_2:
+			printf(", 10base2 MAU");
+			mediaset = EH_MEDIA_2;
+			break;
+		case EH200_MAUID_10_T:
+			printf(", 10baseT MAU");
+			mediaset = EH_MEDIA_T;
+			break;
+		default:
+			printf(", unknown MAU id %d", mautype);
+			mediaset = EH_MEDIA_2; /* XXX */
+			break;
+		}
+	} else {
+		mediaset = eh_availmedia(sc);
+		switch (mediaset) {
+		case EH_MEDIA_2:
+			printf(", 10base2 only");
+			break;
+		case EH_MEDIA_T:
+			printf(", 10baseT only");
+			break;
+		case EH_MEDIA_2_T:
+			printf(", combo 10base2/T");
+			break;
+		}
 	}
-	printf("%s: rigged demo mode\n", self->dv_xname);
+	media = media_switch[mediaset].media;
+	nmedia = media_switch[mediaset].nmedia;
+	printf("\n");
 
-	dp8390_config(dsc, media, sizeof(media) / sizeof(media[0]),
-	    IFM_ETHER | IFM_AUTO);
+	/* i-cubed put everything behind the loader. */
+	podulebus_initloader(pa);
+
+	/*
+	 * Get the Ethernet address from the device description string.
+	 * This code is stolen from if_ea.c.  It should be shared.
+	 */
+	myaddr = dsc->sc_enaddr;
+	if (pa->pa_descr == NULL) {
+		printf(": No description for Ethernet address\n");
+		return;
+	}
+	ptr = strchr(pa->pa_descr, '(');
+	if (ptr == NULL) {
+		printf(": Ethernet address not found in description\n");
+		return;
+	}
+	ptr++;
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		myaddr[i] = strtoul(ptr, &ptr, 16);
+		if (*ptr++ != (i == ETHER_ADDR_LEN - 1 ? ')' : ':')) {
+			printf(": Bad Ethernet address found in "
+			       "description\n");
+			return;
+		}
+	}
+
+	dp8390_config(dsc, media, nmedia, media[0]);
 	dp8390_stop(dsc);
-
-#if 0
-	printf("%s: CR=%02x CLDA0=%02x CLDA1=%02x BNRY=%02x TSR=%02x "
-	    "NCR=%02x FIFO=%02x ISR=%02x\n", self->dv_xname,
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CR),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CLDA0),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CLDA1),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_BNRY),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_TSR),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_NCR),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_FIFO),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_ISR));
-	printf("%s: CRDA0=%02x CRDA1=%02x RSR=%02x CNTR0=%02x CNTR1=%02x "
-	    "CNTR2=%02x\n", self->dv_xname,
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CRDA0),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CRDA1),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_RSR),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CNTR0),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CNTR1),
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CNTR2));
-#endif
 
 	sc->sc_ih = podulebus_irq_establish(self->dv_parent, pa->pa_slotnum,
 					    IPL_NET, dp8390_intr, self);
@@ -644,6 +696,79 @@ eh_writemem(struct eh_softc *sc, u_int8_t *src, int dst, size_t len)
 }
 
 /*
+ * Work out the media types available on the current card.
+ *
+ * We try to switch to each of 10base2 and 10baseT in turn.  If the card
+ * only supports one type, the media select line will be tied to select
+ * that, so it won't move when we push it.
+ *
+ * The media select jumpers (at least on the EtherLan 100) have the same
+ * effect.
+ */
+
+int
+eh_availmedia(struct eh_softc *sc)
+{
+
+	/* Set the card to use AUI (10b2 or 10bFL) */
+	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0,
+	    sc->sc_ctrl & ~EH_CTRL_MEDIA);
+	/* Check whether that worked */
+	if ((bus_space_read_1(sc->sc_ctl2t, sc->sc_ctl2h, 0) &
+	    EH_CTRL2_10B2) == 0) {
+		bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
+		return EH_MEDIA_T;
+	}
+
+	/* Try 10bT and see if that works */
+	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0,
+	    sc->sc_ctrl | EH_CTRL_MEDIA);
+	if ((bus_space_read_1(sc->sc_ctl2t, sc->sc_ctl2h, 0) &
+	    EH_CTRL2_10B2)) {
+		bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
+		return EH_MEDIA_2;
+	}
+
+	/* If both of them worked, this is a combo card. */
+	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
+	return EH_MEDIA_2_T;
+}
+
+/*
+ * Identify the MAU attached to an EtherLan 200-series network slot card.
+ *
+ * Follows the protocol described at the back of the Acorn A3020 and A4000
+ * Network Interface Specification.
+ */
+int
+eh_identifymau(struct eh_softc *sc)
+{
+	int id;
+	bus_space_tag_t ctlt;
+	bus_space_handle_t ctlh;
+
+	ctlt = sc->sc_ctlt;
+	ctlh = sc->sc_ctlh;
+	/* Reset: Output 1 for 100us. */
+	bus_space_write_1(ctlt, ctlh, 0, EH200_CTRL_MAU);
+	DELAY(100);
+	for (id = 0; id < 128; id++) {
+		/* Output 0 for 10us. */
+		/* XXX For some reason, a read is necessary between writes. */
+		bus_space_read_1(ctlt, ctlh, 0);
+		bus_space_write_1(ctlt, ctlh, 0, 0);
+		DELAY(10);
+		/* Read state. */
+		if (bus_space_read_1(ctlt, ctlh, 0) & EH200_CTRL_MAU)
+			break;
+		/* Output 1 for 10us. */
+		bus_space_write_1(ctlt, ctlh, 0, EH200_CTRL_MAU);
+		DELAY(10);
+	}
+	return id;
+}
+
+/*
  * Medium selection has changed.
  */
 int
@@ -657,9 +782,9 @@ eh_mediachange(struct dp8390_softc *dsc)
 		/* Auto-media logic from Linux */
 		sc->sc_ctrl |= EH_CTRL_MEDIA;
 		bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
-		DELAY(1000); /* XXX tsleep? */
-		if (bus_space_read_1(sc->sc_ctlt, sc->sc_ctlh, 0) &
-		    EH_CTRL_LINK)
+		DELAY(1000); /* XXX Long enough for hub to respond? */
+		if ((bus_space_read_1(sc->sc_ctlt, sc->sc_ctlh, 0) &
+		    EH_CTRL_NOLINK) == 0)
 			break;
 		/* FALLTHROUGH */
 	case IFM_10_2:
@@ -685,14 +810,18 @@ void
 eh_mediastatus(struct dp8390_softc *dsc, struct ifmediareq *ifmr)
 {
 	struct eh_softc *sc = (struct eh_softc *)dsc;
+	int ctrl2;
 
 	/* XXX 10baseFL on E513? */
-	if (sc->sc_ctrl & EH_CTRL_MEDIA) {
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_AVALID;
-		if (bus_space_read_1(sc->sc_ctlt, sc->sc_ctlh, 0) &
-		    EH_CTRL_LINK)
-			ifmr->ifm_active |= IFM_ACTIVE;
-	} else
+	/* Read the actual medium currently in use. */
+	ctrl2 = bus_space_read_1(sc->sc_ctl2t, sc->sc_ctl2h, 0);
+	if (ctrl2 & EH_CTRL2_10B2) {
 		ifmr->ifm_active = IFM_ETHER | IFM_10_2;
+	} else {
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_AVALID;
+		if ((bus_space_read_1(sc->sc_ctlt, sc->sc_ctlh, 0) &
+		    EH_CTRL_NOLINK) == 0)
+			ifmr->ifm_active |= IFM_ACTIVE;
+	}
 
 }

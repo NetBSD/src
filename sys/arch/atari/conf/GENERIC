@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.55.2.1 2000/11/20 20:05:24 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.55.2.2 2001/01/05 17:34:07 bouyer Exp $
 #
 # Generic atari
 #
@@ -8,7 +8,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident 		"GENERIC-$Revision: 1.55.2.1 $"
+#ident 		"GENERIC-$Revision: 1.55.2.2 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -168,12 +168,12 @@ pseudo-device	tun		2	# network tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	ccd		4	# concatenating disk driver
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		2	# Boot memory disk
 pseudo-device	ipfilter		# IP filtering device
-# rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 #

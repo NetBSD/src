@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.6.2.2 2000/11/22 16:04:46 bouyer Exp $	*/
+/*	$NetBSD: be.c,v 1.6.2.3 2001/01/05 17:36:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -470,6 +470,7 @@ beattach(parent, self, aux)
 	ifp->if_watchdog = bewatchdog;
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -631,7 +632,7 @@ bestart(ifp)
 	bix = sc->sc_rb.rb_tdhead;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.8.2.2 2000/11/20 20:15:23 bouyer Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.8.2.3 2001/01/05 17:34:49 bouyer Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.2 2000/11/20 20:15:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.3 2001/01/05 17:34:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 			}
 #endif
 
-			while((p<e)&&(!p%NBPG)) {
+			while((p<e)&&(p%NBPG)) {
 				DCFL_40(p);	/* flush cache line (060 too) */
 				p += 16;
 			}
@@ -515,7 +515,7 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 			}
 #endif
 
-			while((p<e)&&(!p%NBPG)) {
+			while((p<e)&&(p%NBPG)) {
 				DCPL_40(p);	/* purge cache line */
 				p += 16;
 			}

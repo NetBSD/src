@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51.2.2 2000/12/08 09:30:41 bouyer Exp $ */
+/*	$NetBSD: machdep.c,v 1.51.2.3 2001/01/05 17:35:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/extent.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
@@ -506,7 +507,6 @@ sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	struct proc *p = curproc;
-	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe64 *tf;
 	vaddr_t addr; 
@@ -525,12 +525,12 @@ sendsig(catcher, sig, mask, code)
 	 * one signal frame, and align.
 	 */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
-		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
+		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)oldsp;
 	/* Allocate an aligned sigframe */
@@ -562,7 +562,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	sf.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 	sf.sf_sc.sc_mask = *mask;
 #ifdef COMPAT_13
 	/*
@@ -630,7 +630,7 @@ sendsig(catcher, sig, mask, code)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (vaddr_t)psp->ps_sigcode;
+	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
 	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
@@ -638,7 +638,7 @@ sendsig(catcher, sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
@@ -753,9 +753,9 @@ printf("sigreturn14: pid %d nsaved %d\n",
 
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
@@ -1597,6 +1597,7 @@ static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 
 
 vaddr_t iobase = IODEV_BASE;
+struct extent *io_space = NULL;
 
 int
 sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
@@ -1615,6 +1616,14 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	t->type = iospace;
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
+	if (io_space == NULL)
+		/*
+		 * And set up IOSPACE extents.
+		 */
+		io_space = extent_create("IOSPACE",
+					 (u_long)IODEV_BASE, (u_long)IODEV_END,
+					 M_DEVBUF, 0, 0, EX_NOWAIT);
+
 
 	size = round_page(size);
 	if (size == 0) {
@@ -1650,10 +1659,11 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	if (vaddr)
 		v = trunc_page(vaddr);
 	else {
-		v = iobase;
-		iobase += size;
-		if (iobase > IODEV_END)	/* unlikely */
-			panic("sparc_bus_map: iobase=0x%lx", iobase);
+		int err;
+		if ((err = extent_alloc(io_space, size, NBPG,
+					0, EX_NOWAIT|EX_BOUNDZERO, 
+					(u_long *)&v)))
+			panic("sparc_bus_map: cannot allocate io_space: %d\n", err);
 	}
 
 	/* note: preserve page offset */
@@ -1689,6 +1699,9 @@ sparc_bus_unmap(t, bh, size)
 	vaddr_t va = trunc_page((vaddr_t)bh);
 	vaddr_t endva = va + round_page(size);
 
+	int error = extent_free(io_space, va, size, EX_NOWAIT);
+	if (error) printf("sparc_bus_unmap: extent free sez %d\n", error);
+
 	pmap_remove(pmap_kernel(), va, endva);
 	return (0);
 }
@@ -1723,7 +1736,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	paddr_t tmp;
 	int result;
 
-	if (bus_space_map2(tag, btype, paddr, size, flags, TMPMAP_VA, &bh) != 0)
+	if (bus_space_map2(tag, btype, paddr, size, flags, NULL, &bh) != 0)
 		return (0);
 
 	tmp = (paddr_t)bh;

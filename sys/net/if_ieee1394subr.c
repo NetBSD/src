@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.3.2.3 2000/12/13 15:50:31 bouyer Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.3.2.4 2001/01/05 17:36:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,6 +94,10 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef INET
 	struct ieee1394_arphdr *ah;
 #endif /* INET */
+
+	/*
+	 * XXX ALTQ
+	 */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -635,6 +639,7 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	ifp->if_type = IFT_IEEE1394;
 	ifp->if_addrlen = sizeof(struct ieee1394_hwaddr);
 	ifp->if_hdrlen = sizeof(struct ieee1394_header);
+	ifp->if_dlt = DLT_EN10MB;	/* XXX */
 	ifp->if_mtu = IEEE1394MTU;
 	ifp->if_output = ieee1394_output;
 	ifp->if_input = ieee1394_input;

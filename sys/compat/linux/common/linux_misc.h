@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.3 1999/05/13 00:31:57 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.3.2.1 2001/01/05 17:35:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,24 @@
 #define	LINUX_WAIT4_WNOHANG	0x00000001
 #define	LINUX_WAIT4_WUNTRACED	0x00000002
 #define	LINUX_WAIT4_WCLONE	0x80000000
+
+/* This looks very unportable to me, but this is how Linux defines it. */
+struct linux_sysinfo {
+	long uptime;
+	unsigned long loads[3];
+#define LINUX_SYSINFO_LOADS_SCALE 65536
+	unsigned long totalram;
+	unsigned long freeram;
+	unsigned long sharedram;
+	unsigned long bufferram;
+	unsigned long totalswap;
+	unsigned long freeswap;
+	unsigned short procs;
+	unsigned long totalbig;
+	unsigned long freebig;
+	unsigned int mem_unit;
+	char _f[20-2*sizeof(long)-sizeof(int)];
+};
 
 #ifdef _KERNEL
 __BEGIN_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.25.2.1 2000/11/20 18:11:30 bouyer Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.25.2.2 2001/01/05 17:36:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -557,30 +557,27 @@ typedef struct {
 	Elf64_Half n_type;
 } Elf64_Nhdr;
 
-#define	ELF_NOTE_TYPE_OSVERSION		1
+#define	ELF_NOTE_TYPE_ABI_TAG		1
 
-/* NetBSD-specific note type: OS Version.  desc is 4-byte NetBSD integer. */
-#define	ELF_NOTE_NETBSD_TYPE_OSVERSION	ELF_NOTE_TYPE_OSVERSION
+/* GNU-specific note name and description sizes */
+#define	ELF_NOTE_ABI_NAMESZ		4
+#define	ELF_NOTE_ABI_DESCSZ		16
+/* GNU-specific note name */
+#define	ELF_NOTE_ABI_NAME		"GNU\0"
+
+/* GNU-specific OS/version value stuff */
+#define	ELF_NOTE_ABI_OS_LINUX		0
+#define	ELF_NOTE_ABI_OS_HURD		1
+#define	ELF_NOTE_ABI_OS_SOLARIS		2
 
 /* NetBSD-specific note type: Emulation name.  desc is emul name string. */
-#define	ELF_NOTE_NETBSD_TYPE_EMULNAME	2
+#define	ELF_NOTE_TYPE_NETBSD_TAG	1
 
 /* NetBSD-specific note name and description sizes */
 #define	ELF_NOTE_NETBSD_NAMESZ		7
 #define	ELF_NOTE_NETBSD_DESCSZ		4
 /* NetBSD-specific note name */
 #define	ELF_NOTE_NETBSD_NAME		"NetBSD\0\0"
-
-/* GNU-specific note name and description sizes */
-#define	ELF_NOTE_GNU_NAMESZ		4
-#define	ELF_NOTE_GNU_DESCSZ		4
-/* GNU-specific note name */
-#define	ELF_NOTE_GNU_NAME		"GNU\0"
-
-/* GNU-specific OS/version value stuff */
-#define	ELF_NOTE_GNU_OSMASK		(__uint32_t)0xff000000
-#define	ELF_NOTE_GNU_OSLINUX		(__uint32_t)0x01000000
-#define	ELF_NOTE_GNU_OSMACH		(__uint32_t)0x00000000
 
 #if defined(ELFSIZE)
 #define	CONCAT(x,y)	__CONCAT(x,y)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.7.2.3 2000/11/22 16:04:44 bouyer Exp $	*/
+/*	$NetBSD: if_de.c,v 1.7.2.4 2001/01/05 17:36:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -289,6 +289,8 @@ deattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI;
 	ifp->if_ioctl = deioctl;
 	ifp->if_start = destart;
+	IFQ_SET_READY(&ifp->if_snd);
+
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
 
@@ -428,7 +430,7 @@ destart(struct ifnet *ifp)
 		return;
 	dc = sc->sc_dedata;
 	for (nxmit = sc->sc_nxmit; nxmit < NXMT; nxmit++) {
-		IF_DEQUEUE(&sc->sc_if.if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 		rp = &dc->dc_xrent[sc->sc_xfree];

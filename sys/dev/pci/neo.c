@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.4.2.3 2000/12/08 09:12:32 bouyer Exp $	*/
+/*	$NetBSD: neo.c,v 1.4.2.4 2001/01/05 17:36:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -565,8 +565,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->dev.dv_xname);
 		return;
 	}

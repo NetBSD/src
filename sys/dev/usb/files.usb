@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.12.2.1 2000/11/20 11:43:19 bouyer Exp $
+#	$NetBSD: files.usb,v 1.12.2.2 2001/01/05 17:36:29 bouyer Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -26,6 +26,10 @@ attach	uhub at uhub with uhub_uhub
 
 # Modem and com serial port "bus"
 define	ucombus {[ portno = -1 ]}
+
+# EZ-USB firmware loader
+define	ezload
+file	dev/usb/ezload.c		ezload
 
 # Audio devices
 device	uaudio: audio, auconv, mulaw
@@ -114,3 +118,8 @@ file	dev/usb/uftdi.c			uftdi
 device	uscanner
 attach	uscanner at uhub
 file	dev/usb/uscanner.c		uscanner	needs-flag
+
+# YAP phone firmware loader
+device	uyap: ezload
+attach	uyap at uhub
+file	dev/usb/uyap.c			uyap

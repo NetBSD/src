@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.9.2.1 2000/11/20 11:42:19 bouyer Exp $	*/
+/*	$NetBSD: eso.c,v 1.9.2.2 2001/01/05 17:36:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -308,8 +308,7 @@ eso_attach(parent, self, aux)
 	eso_set_recsrc(sc, ESO_MIXREG_ERS_MIC);
 	
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

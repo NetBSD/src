@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.26.2.3 2000/12/08 09:12:25 bouyer Exp $	*/
+/*	$NetBSD: tulip.c,v 1.26.2.4 2001/01/05 17:35:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -503,6 +503,7 @@ tlp_attach(sc, enaddr)
 	ifp->if_watchdog = tlp_watchdog;
 	ifp->if_init = tlp_init;
 	ifp->if_stop = tlp_stop;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -730,9 +731,10 @@ tlp_start(ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
+		m = NULL;
 
 		dmamap = txs->txs_dmamap;
 
@@ -755,7 +757,6 @@ tlp_start(ifp)
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
@@ -764,20 +765,16 @@ tlp_start(ifp)
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m);
-					IF_PREPEND(&ifp->if_snd, m0);
 					break;
 				}
 			}
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			m_freem(m0);
-			m0 = m;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m0, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 		}
@@ -799,8 +796,15 @@ tlp_start(ifp)
 			 */
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			IF_PREPEND(&ifp->if_snd, m0);
+			if (m != NULL)
+				m_freem(m);
 			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m != NULL) {
+			m_freem(m0);
+			m0 = m;
 		}
 
 		/*

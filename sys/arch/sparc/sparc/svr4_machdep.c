@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.34.2.1 2000/11/20 20:25:47 bouyer Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.34.2.2 2001/01/05 17:35:02 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -455,7 +455,6 @@ svr4_sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack, oldsp, newsp, addr;
 
 	tf = (struct trapframe *)p->p_md.md_tf;
@@ -463,15 +462,15 @@ svr4_sendsig(catcher, sig, mask, code)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		                                       psp->ps_sigstk.ss_size);
+		fp = (struct svr4_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct svr4_sigframe *)oldsp;
 	fp = (struct svr4_sigframe *) ((int) (fp - 1) & ~7);
@@ -516,7 +515,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	addr = (int)psp->ps_sigcode;
+	addr = (int)p->p_sigctx.ps_sigcode;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_global[1] = (int)catcher;
@@ -524,7 +523,7 @@ svr4_sendsig(catcher, sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 

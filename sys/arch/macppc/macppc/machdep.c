@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57.2.2 2000/11/22 16:00:41 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.2.3 2001/01/05 17:34:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,7 +88,6 @@ extern struct user *proc0paddr;
 extern int ofmsr;
 
 struct bat battable[16];
-int astpending;
 char bootpath[256];
 paddr_t msgbuf_paddr;
 static int chosen;
@@ -546,7 +545,6 @@ setregs(p, pack, stack)
 {
 	struct trapframe *tf = trapframe(p);
 	struct ps_strings arginfo;
-	paddr_t pa;
 
 	bzero(tf, sizeof *tf);
 	tf->fixreg[1] = -roundup(-stack + 8, 16);

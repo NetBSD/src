@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.52.2.3 2000/12/13 15:50:12 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.52.2.4 2001/01/05 17:36:23 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.103 2000/12/08 18:37:24 drochner Exp 
+ *	NetBSD: pcmciadevs,v 1.107 2000/12/20 06:05:13 haya Exp 
  */
 
 /*-
@@ -538,6 +538,9 @@
 #define	PCMCIA_CIS_IODATA_PCLAT	{ "I-O DATA", "PCLA", "ETHERNET", NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLAT	-1
 #define	PCMCIA_STR_IODATA_PCLAT	"IO-DATA PCLA/T"
+#define	PCMCIA_CIS_IODATA_CBIDE2	{ "IO DATA", "CBIDE2      ", NULL, NULL }
+#define	PCMCIA_PRODUCT_IODATA_CBIDE2	-1
+#define	PCMCIA_STR_IODATA_CBIDE2	"IO-DATA CBIDE2/16-bit mode"
 #define	PCMCIA_CIS_EPSON_EEN10B	{ "Seiko Epson Corp.", "Ethernet", "P/N: EEN10B Rev. 00", NULL }
 #define	PCMCIA_PRODUCT_EPSON_EEN10B	-1
 #define	PCMCIA_STR_EPSON_EEN10B	"Epson EEN10B"
@@ -559,9 +562,12 @@
 #define	PCMCIA_CIS_NDC_ND5100_E	{ "NDC", "Ethernet", "A", NULL }
 #define	PCMCIA_PRODUCT_NDC_ND5100_E	-1
 #define	PCMCIA_STR_NDC_ND5100_E	"Sohoware ND5100E NE2000 Compatible Card"
-#define	PCMCIA_CIS_INTERSIL_PRISM2	{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL}
+#define	PCMCIA_CIS_INTERSIL_PRISM2	{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_INTERSIL_PRISM2	-1
 #define	PCMCIA_STR_INTERSIL_PRISM2	"Intersil Prism II"
 #define	PCMCIA_CIS_MELCO_LPC2_TX	{ "MELCO", "LPC2-TX", NULL, NULL }
 #define	PCMCIA_PRODUCT_MELCO_LPC2_TX	-1
 #define	PCMCIA_STR_MELCO_LPC2_TX	"Melco LPC2-TX"
+#define	PCMCIA_CIS_SMC_2632W	{ "SMC", "SMC2632W", "Version 01.02", NULL }
+#define	PCMCIA_PRODUCT_SMC_2632W	-1
+#define	PCMCIA_STR_SMC_2632W	"SMC 2632 EZ Connect Wireless PC Card"

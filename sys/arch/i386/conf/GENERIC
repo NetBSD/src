@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.264.2.5 2000/12/13 15:49:24 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.264.2.6 2001/01/05 17:34:28 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.264.2.5 $"
+#ident 		"GENERIC-$Revision: 1.264.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -542,6 +542,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -574,6 +575,7 @@ fea*	at eisa? slot ?			# DEC DEFEA FDDI
 tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 
 # ISA Plug-and-Play network interfaces
+an*	at isapnp?			# Aironet 802.11
 ep*	at isapnp?			# 3Com 3c509 Ethernet
 ne*	at isapnp?			# NE2000-compatible Ethernet
 tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
@@ -866,6 +868,7 @@ pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83.2.2 2000/11/22 16:00:23 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.83.2.3 2001/01/05 17:34:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -334,7 +334,7 @@ pagemove(from, to, size)
 	}
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 #endif
 }
 

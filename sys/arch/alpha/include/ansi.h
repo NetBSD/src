@@ -1,4 +1,4 @@
-/* $NetBSD: ansi.h,v 1.10.14.1 2000/11/20 19:56:47 bouyer Exp $ */
+/* $NetBSD: ansi.h,v 1.10.14.2 2001/01/05 17:33:44 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,6 +40,8 @@
 
 #include <sys/cdefs.h>
 
+#include <machine/int_types.h>
+
 /*
  * Types which are fundamental to the implementation and may appear in
  * more than one standard header are defined here.  Standard headers
@@ -70,6 +72,9 @@ typedef struct {
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
 
 /*
+ * NOTE: rune_t is not covered by ANSI nor other standards, and should not
+ * be instantiated outside of lib/libc/locale.  use wchar_t.
+ *
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural
  * ``unsigned long'' or ``long''.  Two things are happening here.  It is not
  * unsigned so that EOF (-1) can be naturally assigned to it and used.  Also,
@@ -86,5 +91,15 @@ typedef struct {
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
 #define _BSD_WINT_T_	int			/* wint_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
+
+/*
+ * mbstate_t is an opaque object to keep conversion state, during multibyte
+ * stream conversions.  The content must not be referenced by user programs.
+ */
+typedef union {
+	char __mbstate8[128];
+	__int64_t __mbstateL;	/* for alignment */
+} __mbstate_t;
+#define	_BSD_MBSTATE_T_	__mbstate_t		/* mbstate_t */
 
 #endif	/* _ANSI_H_ */

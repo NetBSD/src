@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.2.2.2 2000/11/20 11:42:30 bouyer Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.2.2.3 2001/01/05 17:36:12 bouyer Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -120,9 +120,7 @@ struct pccbb_softc {
 	struct callout sc_insert_ch;
 
 	void *sc_ih;			/* interrupt handler */
-	int sc_intrline;		/* interrupt line */
-	pcitag_t sc_intrtag;		/* copy of pa->pa_intrtag */
-	pci_intr_pin_t sc_intrpin;	/* copy of pa->pa_intrpin */
+	struct pci_attach_args sc_pa;	/* copy of our attach args */
 	int sc_function;
 	u_int32_t sc_flags;
 #define	CBB_CARDEXIST	0x01

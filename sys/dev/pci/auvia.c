@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.7.2.4 2000/12/13 15:50:08 bouyer Exp $	*/
+/*	$NetBSD: auvia.c,v 1.7.2.5 2001/01/05 17:36:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
+#include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
 #include <dev/pci/auviavar.h>
@@ -152,14 +153,6 @@ struct cfattach auvia_ca = {
 
 #define TIMEOUT	50
 
-#define	AC97_REG_EXT_AUDIO_ID		0x28
-#define		AC97_CODEC_DOES_VRA		0x0001
-#define	AC97_REG_EXT_AUDIO_STAT		0x2A
-#define		AC97_ENAB_VRA			0x0001
-#define		AC97_ENAB_MICVRA		0x0004
-#define	AC97_REG_EXT_DAC_RATE		0x2C
-#define	AC97_REG_EXT_ADC_RATE		0x32
-
 struct audio_hw_if auvia_hw_if = {
 	auvia_open,
 	auvia_close,
@@ -238,8 +231,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	printf(": VIA VT82C686A AC'97 Audio (rev %s)\n",
 		sc->sc_revision);
 
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-			&ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -295,14 +287,14 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	 * Print a warning if the codec doesn't support hardware variable
 	 * rate audio.
 	 */
-	if (auvia_read_codec(sc, AC97_REG_EXT_AUDIO_ID, &v)
+	if (auvia_read_codec(sc, AC97_REG_EXTENDED_ID, &v)
 		|| !(v & AC97_CODEC_DOES_VRA)) {
 		printf("%s: warning: codec doesn't support hardware AC'97 2.0 Variable Rate Audio\n",
 			sc->sc_dev.dv_xname);
-		sc->sc_fixed_rate = AUVIA_FIXED_RATE;
+		sc->sc_fixed_rate = AUVIA_FIXED_RATE; /* XXX wrong value */
 	} else {
 		/* enable VRA */
-		auvia_write_codec(sc, AC97_REG_EXT_AUDIO_STAT,
+		auvia_write_codec(sc, AC97_REG_EXTENDED_STATUS,
 			AC97_ENAB_VRA | AC97_ENAB_MICVRA);
 		sc->sc_fixed_rate = 0;
 	}
@@ -551,7 +543,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 			return (EINVAL);
 
 		reg = mode == AUMODE_PLAY ?
-			AC97_REG_EXT_DAC_RATE : AC97_REG_EXT_ADC_RATE;
+			AC97_REG_PCM_FRONT_DAC_RATE : AC97_REG_PCM_LR_ADC_RATE;
 
 		if (!sc->sc_fixed_rate) {
 			auvia_write_codec(sc, reg, (u_int16_t) p->sample_rate);

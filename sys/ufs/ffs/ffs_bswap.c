@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.6.2.1 2000/11/20 18:11:44 bouyer Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.6.2.2 2001/01/05 17:37:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
@@ -51,15 +52,18 @@ ffs_sb_swap(o, n, ns)
 	int i;
 	u_int32_t *o32, *n32;
 	u_int16_t *o16, *n16;
+	u_int32_t postbloff = ufs_rw32(o->fs_postbloff, ns);
+	u_int32_t postblfmt = ufs_rw32(o->fs_postblformat, ns);
 	
-	/* in order to avoid a lot of lines, as the first 52 fields of
+	/*
+	 * In order to avoid a lot of lines, as the first 52 fields of
 	 * the superblock are u_int32_t, we loop here to convert it.
 	 */
 	o32 = (u_int32_t *)o;
 	n32 = (u_int32_t *)n;
-	for (i=0; i< 52; i++)
+	for (i = 0; i < 52; i++)
 		n32[i] = bswap32(o32[i]);
-   
+
 	n->fs_cpc = bswap32(o->fs_cpc);
 	n->fs_fscktime = bswap32(o->fs_fscktime);
 	n->fs_contigsumsize = bswap32(o->fs_contigsumsize);
@@ -75,17 +79,13 @@ ffs_sb_swap(o, n, ns)
 	n->fs_rotbloff = bswap32(o->fs_rotbloff);
 	n->fs_magic = bswap32(o->fs_magic);
 	/* byteswap the postbl */
-	o16 = (ufs_rw32(o->fs_postblformat, ns) == FS_42POSTBLFMT)
-	    ? o->fs_opostbl[0]
-	    : (int16_t *)((u_int8_t *)o + ufs_rw32(o->fs_postbloff, ns));
-	n16 = (ufs_rw32(o->fs_postblformat, ns) == FS_42POSTBLFMT)
-	    ? n->fs_opostbl[0]
-	    : (int16_t *)((u_int8_t *)n + ufs_rw32(n->fs_postbloff, ns));
-	for (i = 0; i < (
-	         (ufs_rw32(o->fs_postblformat, ns) == FS_42POSTBLFMT) ?
-	         168 : /* fs_opostbl[16][8] */
-	         ufs_rw32(o->fs_cpc, ns) * ufs_rw32(o->fs_nrpos, ns));
-	     i++)
+	o16 = (postblfmt == FS_42POSTBLFMT) ? o->fs_opostbl[0] :
+	    (int16_t *)((u_int8_t *)o + postbloff);
+	n16 = (postblfmt == FS_42POSTBLFMT) ? n->fs_opostbl[0] :
+	    (int16_t *)((u_int8_t *)n + postbloff);
+	for (i = 0; i < (postblfmt == FS_42POSTBLFMT ?
+	    128 /* fs_opostbl[16][8] */ :
+	    ufs_rw32(o->fs_cpc, ns) * ufs_rw32(o->fs_nrpos, ns)); i++)
 		n16[i] = bswap16(o16[i]);
 }
 
@@ -93,6 +93,7 @@ void
 ffs_dinode_swap(o, n)
 	struct dinode *o, *n;
 {
+
 	n->di_mode = bswap16(o->di_mode);
 	n->di_nlink = bswap16(o->di_nlink);
 	n->di_u.oldids[0] = bswap16(o->di_u.oldids[0]);

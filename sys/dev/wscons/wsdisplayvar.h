@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.12.2.2 2000/11/20 11:43:36 bouyer Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.12.2.3 2001/01/05 17:36:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -110,6 +110,7 @@ struct wsdisplay_accessops {
 	int	(*show_screen) __P((void *, void *, int,
 				    void (*) (void *, int, int), void *));
 	int	(*load_font) __P((void *, void *, struct wsdisplay_font *));
+	void	(*pollc) __P((void *, int));
 };
 
 /*

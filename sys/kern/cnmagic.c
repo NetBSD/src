@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.1.2.2 2000/11/22 16:05:14 bouyer Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.1.2.3 2001/01/05 17:36:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 
 #define ENCODE_STATE(c, n) (short)(((c)&0x1ff)|(((n)&0x7f)<<9))
 
@@ -103,7 +104,8 @@ cn_set_magic(char *magic)
 		default:
 			/* Transition to the next state. */
 #ifdef DEBUG
-			printf("mag %d %x:%x\n", i, c, n);
+			if (!cold)
+				printf("mag %d %x:%x\n", i, c, n);
 #endif
 			m[i] = ENCODE_STATE(c, n);
 			break;

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.20.2.2 2000/12/13 15:50:29 bouyer Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.20.2.3 2001/01/05 17:36:49 bouyer Exp $       */
 
 /*
  *
@@ -102,17 +102,25 @@ atm_output(ifp, m0, dst, rt0)
 	struct rtentry *rt0;
 {
 	u_int16_t etype = 0;			/* if using LLC/SNAP */
-	int s, error = 0, sz;
+	int s, error = 0, sz, len;
 	struct atm_pseudohdr atmdst, *ad;
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct atmllc *atmllc;
 	struct atmllc *llc_hdr = NULL;
 	u_int32_t atm_flags;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 	ifp->if_lastchange = time;
+
+	/*
+	 * If the queueing discipline needs packet classification,
+	 * do it before prepending link headers.
+	 */
+	IFQ_CLASSIFY(&ifp->if_snd, m,
+	     (dst != NULL ? dst->sa_family : AF_UNSPEC), &pktattr);
 
 	/*
 	 * check route
@@ -220,14 +228,14 @@ atm_output(ifp, m0, dst, rt0)
 	 * not yet active.
 	 */
 
+	len = m->m_pkthdr.len;
 	s = splimp();
-	if (IF_QFULL(&ifp->if_snd)) {
-		IF_DROP(&ifp->if_snd);
+	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	if (error) {
 		splx(s);
-		senderr(ENOBUFS);
+		return (error);
 	}
-	ifp->if_obytes += m->m_pkthdr.len;
-	IF_ENQUEUE(&ifp->if_snd, m);
+	ifp->if_obytes += len;
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
@@ -344,6 +352,7 @@ atm_ifattach(ifp)
 	ifp->if_type = IFT_ATM;
 	ifp->if_addrlen = 0;
 	ifp->if_hdrlen = 0;
+	ifp->if_dlt = DLT_ATM_RFC1483;
 	ifp->if_mtu = ATMMTU;
 	ifp->if_output = atm_output;
 #if 0 /* XXX XXX XXX */

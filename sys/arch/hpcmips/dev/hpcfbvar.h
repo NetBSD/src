@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbvar.h,v 1.5.2.2 2000/11/20 20:45:54 bouyer Exp $	*/
+/*	$NetBSD: hpcfbvar.h,v 1.5.2.3 2001/01/05 17:34:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -48,6 +48,8 @@ struct hpcfb_accessops {
 	void	(*putchar) __P((void *, int, int, struct wsdisplay_font *,
 				int, int, u_int, int));
 	void	(*setclut) __P((void *, struct rasops_info *));
+	void	(*font) __P((void *, struct wsdisplay_font *));	/* load fonts */
+	void	(*iodone) __P((void *));	/* wait i/o done */
 };
 
 /*

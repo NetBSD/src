@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.4.2.4 2000/12/13 15:49:19 bouyer Exp $ */
+/* $NetBSD: start.c,v 1.4.2.5 2001/01/05 17:34:01 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4.2.4 2000/12/13 15:49:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4.2.5 2001/01/05 17:34:01 bouyer Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -82,7 +82,6 @@ void
 start(initbootconfig)
 	struct bootconfig *initbootconfig;
 {
-	extern char page0[], page0_end[];
 	size_t size;
 	caddr_t v;
 	char pbuf[9];
@@ -132,33 +131,6 @@ start(initbootconfig)
 	 * everything should be loaded.
 	 */
 
-#ifndef __ELF__ /* BBBB doesn't set everything for ELF */
-	if (&_stext_ != (MEMC_PHYS_BASE + bootconfig.txtbase) ||
-	    &_etext - &_stext_ != bootconfig.txtsize ||
-	    &_sdata_ != (MEMC_PHYS_BASE + bootconfig.database)
-#if 0 /* BBBB gets this wrong, but that's because the a.out header is wrong */
-	    ||
-	    &_edata - &_sdata_ != bootconfig.datasize ||
-	    &_bss_start != (MEMC_PHYS_BASE + bootconfig.bssbase) ||
-	    &_end - &_bss_start != bootconfig.bsssize
-#endif
-	    ) {
-		printf("text: %p + %08x vs %p + %08x\n",
-		       &_stext_, &_etext - &_stext_,
-		       MEMC_PHYS_BASE + bootconfig.txtbase,
-		       bootconfig.txtsize);
-		printf("data: %p + %08x vs %p + %08x\n",
-		       &_sdata_, &_edata - &_sdata_,
-		       MEMC_PHYS_BASE + bootconfig.database,
-		       bootconfig.datasize);
-		printf("bss:  %p + %08x vs %p + %08x\n",
-		       &_bss_start, &_end - &_bss_start,
-		       MEMC_PHYS_BASE + bootconfig.bssbase,
-		       bootconfig.bsssize);
-		panic("bootloader disagreement");
-	}
-#endif
-	
 	if (boot_sanity != BOOT_SANITY)
 		panic("Bootloader mislaid the data segment");
 #endif
@@ -201,7 +173,12 @@ start(initbootconfig)
 	 * Normal memory -- we expect the bootloader to tell us where
          * the kernel ends.
 	 */
-	uvm_page_physload(atop(MEMC_DMA_MAX), bootconfig.npages,
+	/* Old zero page is unused. */
+	uvm_page_physload(atop(MEMC_DMA_MAX), atop(MEMC_DMA_MAX) + 1,
+			  atop(MEMC_DMA_MAX), atop(MEMC_DMA_MAX) + 1,
+			  VM_FREELIST_DEFAULT);
+	/* Stack, msgbuf, kernel image are used, space above it is unused. */
+	uvm_page_physload(atop(MEMC_DMA_MAX) + 1, bootconfig.npages,
 			  atop(round_page(bootconfig.freebase)),
 			  bootconfig.npages,
 			  VM_FREELIST_DEFAULT);

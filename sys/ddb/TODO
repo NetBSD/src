@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.6.2.2 2000/11/20 18:08:46 bouyer Exp $
+$NetBSD: TODO,v 1.6.2.3 2001/01/05 17:35:30 bouyer Exp $
 
 In rough order.
 
@@ -8,12 +8,12 @@ done	command history sometimes gets slightly confused
 
 2.	uvm_fault()s can loop infinitely (kern/10016)
 
-3.	examine /m (hex + character dump) doesn't work.
+done	examine /m (hex + character dump) doesn't work.
 
 4.	"dot", "next", and "last" are not set properly and are usually
 	the same.
 
-5.	The vax port supporst decimal pids in "kill", etc. This should be
+5.	The vax port supports decimal pids in "kill", etc. This should be
 	MI or not exist at all.
 
 6.	double-quote delimitted strings don't work in "print", nor do

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.9.2.1 2000/11/20 18:10:48 bouyer Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.9.2.2 2001/01/05 17:36:56 bouyer Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.64 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -537,11 +537,14 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 			 * XXX: we assume in6_rtchange does not free the PCB.
 			 */
 			if (IN6_ARE_ADDR_EQUAL(&in6p->in6p_route.ro_dst.sin6_addr,
-					       &faddr6))
+			    &faddr6)) {
 				in6_rtchange(in6p, errno);
 
-			if (notify == in6_rtchange)
-				continue; /* there's nothing to do any more */
+				if (notify == in6_rtchange) {
+					/* there's nothing to do any more */
+					continue;
+				}
+			}
 		}
 
 		/* at this point, we can assume that NOTIFY is not NULL. */

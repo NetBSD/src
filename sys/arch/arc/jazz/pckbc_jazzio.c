@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.1.6.2 2000/11/20 20:00:40 bouyer Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.1.6.3 2001/01/05 17:33:59 bouyer Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -44,7 +44,8 @@
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <arc/pica/pica.h>
+#include <arc/jazz/pica.h>
+#include <arc/jazz/jazziovar.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
@@ -59,7 +60,7 @@ void	pckbc_jazzio_intr_establish __P((struct pckbc_softc *, pckbc_slot_t));
 struct pckbc_jazzio_softc {
 	struct pckbc_softc sc_pckbc;
 
-	struct confargs *sc_ca[PCKBC_NSLOTS];
+	int sc_intr[PCKBC_NSLOTS];
 };
 
 struct cfattach pckbc_jazzio_ca = {
@@ -67,24 +68,21 @@ struct cfattach pckbc_jazzio_ca = {
 	pckbc_jazzio_match, pckbc_jazzio_attach,
 };
 
-extern struct arc_bus_space pica_bus; /* XXX */
-
 int
 pckbc_jazzio_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	bus_space_tag_t iot = &pica_bus;
+	struct jazzio_attach_args *ja = aux;
+	bus_space_tag_t iot = ja->ja_bust;
 	bus_space_handle_t ioh_d, ioh_c;
-	bus_addr_t addr;
+	bus_addr_t addr = ja->ja_addr;
 	int res, ok = 1;
 
-	if(!BUS_MATCHNAME(ca, "pckbd"))
+	if (strcmp(ja->ja_name, "pckbd") != 0)
 		return(0);
 
-	addr = (bus_addr_t)BUS_CVTADDR(ca);
 	if (pckbc_is_console(iot, addr) == 0) {
 		if (bus_space_map(iot, addr + KBDATAP, 1, 0, &ioh_d))
 			return (0);
@@ -119,14 +117,13 @@ pckbc_jazzio_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct jazzio_attach_args *ja = aux;
 	struct pckbc_jazzio_softc *jsc = (void *)self;
 	struct pckbc_softc *sc = &jsc->sc_pckbc;
 	struct pckbc_internal *t;
-	bus_space_tag_t iot = &pica_bus;
+	bus_space_tag_t iot = ja->ja_bust;
 	bus_space_handle_t ioh_d, ioh_c;
-	bus_addr_t addr;
-	static struct confargs pms_ca = { "pms", 8, NULL, }; /* XXX */
+	bus_addr_t addr = ja->ja_addr;
 
 	sc->intr_establish = pckbc_jazzio_intr_establish;
 
@@ -135,11 +132,9 @@ pckbc_jazzio_attach(parent, self, aux)
 	 *
 	 * XXX handcrafting "aux" slot...
 	 */
-	pms_ca.ca_bus = ca->ca_bus;
-	jsc->sc_ca[PCKBC_KBD_SLOT] = ca;
-	jsc->sc_ca[PCKBC_AUX_SLOT] = &pms_ca;
+	jsc->sc_intr[PCKBC_KBD_SLOT] = ja->ja_intr;
+	jsc->sc_intr[PCKBC_AUX_SLOT] = 8;		/* XXX */
 
-	addr = (bus_addr_t)BUS_CVTADDR(ca);
 	if (pckbc_is_console(iot, addr)) {
 		t = &pckbc_consdata;
 		ioh_d = t->t_ioh_d;
@@ -177,5 +172,5 @@ pckbc_jazzio_intr_establish(sc, slot)
 {
 	struct pckbc_jazzio_softc *jsc = (void *) sc;
 
-	BUS_INTR_ESTABLISH(jsc->sc_ca[slot], pckbcintr, sc);
+	jazzio_intr_establish(jsc->sc_intr[slot], pckbcintr, sc);
 }

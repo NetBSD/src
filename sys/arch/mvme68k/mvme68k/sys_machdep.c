@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.18.2.2 2000/11/22 16:01:00 bouyer Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.18.2.3 2001/01/05 17:34:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,7 +46,6 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
-#include <sys/trace.h>
 #include <sys/mount.h>
 
 #include <uvm/uvm_extern.h>
@@ -55,64 +54,6 @@
 
 #include <machine/cpu.h>
 #include <m68k/cacheops.h>
-
-#ifdef TRACE
-int	nvualarm;
-
-vtrace(p, v, retval)
-	struct proc *p;
-	void *v;
-	int *retval;
-{
-	struct vtrace_args /* {
-		syscallarg(int) request;
-		syscallarg(int) value;
-	} */ *uap = v;
-	int vdoualarm();
-
-	switch (SCARG(uap, request)) {
-
-	case VTR_DISABLE:		/* disable a trace point */
-	case VTR_ENABLE:		/* enable a trace point */
-		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[SCARG(uap, value)];
-		traceflags[SCARG(uap, value)] = SCARG(uap, request);
-		break;
-
-	case VTR_VALUE:		/* return a trace point setting */
-		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[SCARG(uap, value)];
-		break;
-
-	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
-		    nvualarm > 5)
-			return (EINVAL);
-		nvualarm++;
-		timeout(vdoualarm, (void *)p->p_pid, SCARG(uap, value));
-		break;
-
-	case VTR_STAMP:
-		trace(TR_STAMP, SCARG(uap, value), p->p_pid);
-		break;
-	}
-	return (0);
-}
-
-vdoualarm(arg)
-	void *arg;
-{
-	int pid = (int)arg;
-	struct proc *p;
-
-	p = pfind(pid);
-	if (p)
-		psignal(p, 16);
-	nvualarm--;
-}
-#endif
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1
@@ -142,7 +83,10 @@ cachectl1(req, addr, len, p)
 	int error = 0;
 
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+	{
 		int inc = 0;
 		int doall = 0;
 		paddr_t pa = 0;
@@ -266,7 +210,10 @@ dma_cachectl(addr, len)
 	int len;
 {
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+	{
 		register int inc = 0;
 		int pa = 0;
 		caddr_t end;
@@ -287,11 +234,11 @@ dma_cachectl(addr, len)
 				pa = kvtop (addr);
 			}
 			if (inc == 16) {
-				DCFL(pa);
-				ICPL(pa);
+				DCFL_40(pa);	/* 040 versions work for 060 */
+				ICPL_40(pa);
 			} else {
-				DCFP(pa);
-				ICPP(pa);
+				DCFP_40(pa);	/* 040 versions work for 060 */
+				ICPP_40(pa);
 			}
 			pa += inc;
 			addr += inc;

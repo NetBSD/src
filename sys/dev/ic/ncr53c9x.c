@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.10 2000/12/19 21:59:08 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.11 2001/01/05 17:35:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -657,21 +657,23 @@ ncr53c9x_select(sc, ecb)
 	}
 
 	if (tiflags & T_NEGOTIATE) selandstop = 1;
-	if (ecb->tag[0]) {
-		/* We'll use tags */
-		ecb->cmd.msg[0] = MSG_IDENTIFY(lun, 1);
-		ecb->cmd.msg[1] = ecb->tag[0];
-		ecb->cmd.msg[2] = ecb->tag[1];
-		cmd = (u_char *)&ecb->cmd.msg[0];
-		clen = ecb->clen + 3;
+	cmd = (u_char *)&ecb->cmd.cmd;
 
-		if (!selatn3)
-			selandstop = 1;
+	if (ecb->tag[0] && !selatn3)
+		selandstop = 1;
+
+	if (ecb->tag[0] && selatn3 && !selandstop) {
+		/* We'll use tags */
+		clen = ecb->clen + 3;
+		cmd -= 3;
+		cmd[0] = MSG_IDENTIFY(lun, 1);	/* msg[0] */
+		cmd[1] = ecb->tag[0];		/* msg[1] */
+		cmd[2] = ecb->tag[1];		/* msg[2] */
 	} else {
-		ecb->cmd.msg[2] = 
-			MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
-		cmd = (u_char *)&ecb->cmd.msg[2];
+		selatn3 = 0;	/* Do not use selatn3 even if we have it */
 		clen = ecb->clen + 1;
+		cmd -= 1;
+		cmd[0] = MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
 	}
 
 	if (ncr53c9x_dmaselect && !selandstop) {
@@ -693,9 +695,11 @@ ncr53c9x_select(sc, ecb)
 		NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
 
 		/* And get the targets attention */
-		if (ecb->tag[0])
+		if (selatn3) {
+			sc->sc_msgout = SEND_TAG;
+			sc->sc_flags |= NCR_ATN;
 			NCRCMD(sc, NCRCMD_SELATN3 | NCRCMD_DMA);
-		else
+		} else
 			NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
 		NCRDMA_GO(sc);
 		return;
@@ -727,9 +731,11 @@ ncr53c9x_select(sc, ecb)
 		NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
 
 	/* And get the targets attention */
-	if (ecb->tag[0])
+	if (selatn3) {
+		sc->sc_msgout = SEND_TAG;
+		sc->sc_flags |= NCR_ATN;
 		NCRCMD(sc, NCRCMD_SELATN3);
-	else
+	} else
 		NCRCMD(sc, NCRCMD_SELATN);
 }
 
@@ -1438,6 +1444,8 @@ gotit:
 	switch (sc->sc_state) {
 		struct ncr53c9x_ecb *ecb;
 		struct ncr53c9x_tinfo *ti;
+		struct ncr53c9x_linfo *li;
+		int lun;
 
 	case NCR_CONNECTED:
 		ecb = sc->sc_nexus;
@@ -1463,6 +1471,29 @@ gotit:
 		case MSG_MESSAGE_REJECT:
 			NCR_MSGS(("msg reject (msgout=%x) ", sc->sc_msgout));
 			switch (sc->sc_msgout) {
+			case SEND_TAG:
+				/*
+				 * Target does not like tagged queuing.
+				 *  - Flush the command queue
+				 *  - Disable tagged queuing for the target
+				 *  - Dequeue ecb from the queued array.
+				 */
+				NCR_MSGS(("(rejected sent tag)"));
+				NCRCMD(sc, NCRCMD_FLUSH);
+				DELAY(1);
+				ti->flags |= T_TAGOFF;
+				lun = ecb->xs->sc_link->scsipi_scsi.lun;
+				li = TINFO_LUN(ti, lun);
+				if (ecb->tag[0] &&
+				    li->queued[ecb->tag[1]] != NULL) {
+					li->queued[ecb->tag[1]] = NULL;
+					li->used --;
+				}
+				ecb->tag[0] = ecb->tag[1] = 0;
+				li->untagged = ecb;
+				li->busy = 1;
+				break;
+
 			case SEND_SDTR:
 				sc->sc_flags &= ~NCR_SYNCHNEGO;
 				ti->flags &= ~(T_NEGOTIATE | T_SYNCMODE);
@@ -1470,6 +1501,7 @@ gotit:
 				ncr53c9x_update_xfer_mode(sc,
 				    ecb->xs->xs_periph->periph_target);
 				break;
+
 			case SEND_INIT_DET_ERR:
 				goto abort;
 			}
@@ -1639,6 +1671,9 @@ gotit:
 		break;
 	}
 
+	/* if we have more messages to send set ATN */
+	if (sc->sc_msgpriq) NCRCMD(sc, NCRCMD_SETATN);
+
 	/* Ack last message byte */
 	NCRCMD(sc, NCRCMD_MSGOK);
 
@@ -1673,7 +1708,7 @@ ncr53c9x_msgout(sc)
 		if (sc->sc_prevphase != MESSAGE_OUT_PHASE) {
 		new:
 			NCRCMD(sc, NCRCMD_FLUSH);
-			DELAY(1);
+/*			DELAY(1); */
 			sc->sc_msgoutq = 0;
 			sc->sc_omlen = 0;
 		}
@@ -2003,7 +2038,7 @@ again:
 			sc->sc_espintr,sc->sc_espstat,sc->sc_espstep));
 		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
 			NCRCMD(sc, NCRCMD_FLUSH);
-			DELAY(1);
+/*			DELAY(1); */
 		}
 		/*
 		 * This command must (apparently) be issued within
@@ -2140,10 +2175,10 @@ printf("<<RESELECT CONT'd>>");
 
 	case NCR_IDLE:
 	case NCR_SELECTING:
-		sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
-		sc->sc_flags = 0;
 		ecb = sc->sc_nexus;
 		if (sc->sc_espintr & NCRINTR_RESEL) {
+			sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
+			sc->sc_flags = 0;
 			/*
 			 * If we're trying to select a
 			 * target ourselves, push our command
@@ -2451,7 +2486,7 @@ msgin:
 			ecb->cmd.cmd.opcode, ecb->clen));
 		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
 			NCRCMD(sc, NCRCMD_FLUSH);
-			DELAY(1);
+/*			DELAY(1);*/
 		}
 		if (ncr53c9x_dmaselect) {
 			size_t size;
@@ -2570,9 +2605,22 @@ shortcut:
 	 * The delay is a heuristic. It is 2 when at 20Mhz, 2 at 25Mhz and 1
 	 * at 40Mhz. This needs testing.
 	 */
-	DELAY(50/sc->sc_freq);
-	if (NCRDMA_ISINTR(sc))
-		goto again;
+	{ 
+		struct timeval wait, cur;
+
+		microtime(&wait);
+		wait.tv_usec += 50/sc->sc_freq;
+		if (wait.tv_usec > 1000000) {
+			wait.tv_sec++;
+			wait.tv_usec -= 1000000;
+		}
+		do {
+			if (NCRDMA_ISINTR(sc))
+				goto again;
+			microtime(&cur);
+		} while (cur.tv_sec <= wait.tv_sec && 
+			 cur.tv_usec <= wait.tv_usec);
+	}
 	goto out;
 }
 

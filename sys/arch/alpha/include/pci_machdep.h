@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.3.8.1 2000/11/20 19:56:53 bouyer Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.3.8.2 2001/01/05 17:33:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -57,7 +57,7 @@ struct alpha_pci_chipset {
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
 	void		*pc_intr_v;
-	int		(*pc_intr_map)(void *, pcitag_t, int, int,
+	int		(*pc_intr_map)(struct pci_attach_args *, 
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
 	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
@@ -86,8 +86,8 @@ struct alpha_pci_chipset {
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
     (*(c)->pc_conf_write)((c)->pc_conf_v, (t), (r), (v))
-#define	pci_intr_map(c, it, ip, il, ihp)				\
-    (*(c)->pc_intr_map)((c)->pc_intr_v, (it), (ip), (il), (ihp))
+#define	pci_intr_map(pa, ihp)						\
+    (*(pa)->pa_pc->pc_intr_map)((pa), (ihp))
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
 #define	pci_intr_evcnt(c, ih)						\

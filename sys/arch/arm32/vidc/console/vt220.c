@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.13 1999/01/01 12:45:12 mark Exp $	*/
+/*	$NetBSD: vt220.c,v 1.13.8.1 2001/01/05 17:34:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -247,7 +247,7 @@ respond(vc)
 	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
         while (*cdata->report_chars && cdata->report_count > 0) {
-                (*linesw[vc->tp->t_line].l_rint)
+                (*vc->tp->t_linesw->l_rint)
                         (*cdata->report_chars++ & 0xff, vc->tp);
                 cdata->report_count--;
         }

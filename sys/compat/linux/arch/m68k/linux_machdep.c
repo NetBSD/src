@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.4 1999/04/19 20:58:38 kleink Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.4.2.1 2001/01/05 17:35:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ extern int sigpid;
 void setup_linux_sigframe __P((struct frame *frame, int sig, sigset_t *mask,
 				caddr_t usp));
 void setup_linux_rt_sigframe __P((struct frame *frame, int sig, sigset_t *mask,
-				caddr_t usp, struct sigacts *psp));
+				caddr_t usp, struct proc *p));
 
 /*
  * Deal with some m68k-specific things in the Linux emulation code.
@@ -187,13 +187,13 @@ setup_linux_sigframe(frame, sig, mask, usp)
 			: : "memory");
 		if (((struct fpframe060 *)&kf.sf_c.c_sc.sc_ss.ss_fpstate.FPF_u1)
 					->fpf6_frmfmt != FPF6_FMT_NULL) {
-			asm("fmovem fp0-fp1,%0" :
+			asm("fmovem %%fp0-%%fp1,%0" :
 				"=m" (*kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_regs));
 			/*
 			 * On 060,  "fmovem fpcr/fpsr/fpi,<ea>"  is
 			 * emulated by software and slow.
 			 */
-			asm("fmovem fpcr,%0; fmovem fpsr,%1; fmovem fpi,%2" :
+			asm("fmovem %%fpcr,%0; fmovem %%fpsr,%1; fmovem %%fpi,%2" :
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_fpcr),
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_fpsr),
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_fpiar));
@@ -204,7 +204,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 		asm("fsave %0" : "=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.FPF_u1)
 			: : "memory");
 		if (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_version) {
-			asm("fmovem fp0-fp1,%0; fmovem fpcr/fpsr/fpi,%1" :
+			asm("fmovem %%fp0-%%fp1,%0; fmovem %%fpcr/%%fpsr/%%fpi,%1" :
 				"=m" (*kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_regs),
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_fpcr)
 				: : "memory");
@@ -264,14 +264,13 @@ setup_linux_sigframe(frame, sig, mask, usp)
  * Setup signal frame for new RT signal interface.
  */
 void
-setup_linux_rt_sigframe(frame, sig, mask, usp, psp)
+setup_linux_rt_sigframe(frame, sig, mask, usp, p)
 	struct frame *frame;
 	int sig;
 	sigset_t *mask;
 	caddr_t usp;
-	struct sigacts *psp;
+	struct proc *p;
 {
-	struct proc *p = curproc;
 	struct linux_rt_sigframe *fp, kf;
 	short ft;
 
@@ -351,13 +350,13 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, psp)
 				/* See note below. */
 		if (((struct fpframe060 *) &kf.sf_uc.uc_ss.ss_fpstate.FPF_u1)
 					->fpf6_frmfmt != FPF6_FMT_NULL) {
-			asm("fmovem fp0-fp7,%0" :
+			asm("fmovem %%fp0-%%fp7,%0" :
 				"=m" (*kf.sf_uc.uc_mc.mc_fpregs.fpr_regs));
 			/*
 			 * On 060,  "fmovem fpcr/fpsr/fpi,<ea>"  is
 			 * emulated by software and slow.
 			 */
-			asm("fmovem fpcr,%0; fmovem fpsr,%1; fmovem fpi,%2" :
+			asm("fmovem %%fpcr,%0; fmovem %%fpsr,%1; fmovem %%fpi,%2" :
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_fpcr),
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_fpsr),
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_fpiar));
@@ -376,7 +375,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, psp)
 		 */
 		asm("fsave %0" : "=m" (kf.sf_uc.uc_ss.ss_fpstate));
 		if (kf.sf_uc.uc_ss.ss_fpstate.fpf_version) {
-			asm("fmovem fp0-fp7,%0; fmovem fpcr/fpsr/fpi,%1" :
+			asm("fmovem %%fp0-%%fp7,%0; fmovem %%fpcr/%%fpsr/%%fpi,%1" :
 				"=m" (*kf.sf_uc.uc_mc.mc_fpregs.fpr_regs),
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_fpcr)
 				: : "memory");
@@ -404,11 +403,11 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, psp)
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(mask, &kf.sf_uc.uc_sigmask);
-	kf.sf_uc.uc_stack.ss_sp = psp->ps_sigstk.ss_sp;
+	kf.sf_uc.uc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
 	kf.sf_uc.uc_stack.ss_flags =
-		(psp->ps_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
-		(psp->ps_sigstk.ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
-	kf.sf_uc.uc_stack.ss_size = psp->ps_sigstk.ss_size;
+		(p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
+		(p->p_sigctx.ps_sigstk.ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
+	kf.sf_uc.uc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
 
 	if (copyout(&kf, fp, sizeof(struct linux_rt_sigframe))) {
 #ifdef DEBUG
@@ -454,25 +453,25 @@ linux_sendsig(catcher, sig, mask, code)
 {
 	struct proc *p = curproc;
 	struct frame *frame;
-	struct sigacts *psp = p->p_sigacts;
 	caddr_t usp;		/* user stack for signal context */
 	int onstack;
 
 	frame = (struct frame *)p->p_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	onstack = (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-		  (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	onstack = (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+		  (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Determine user stack for the signal handler context. */
 	if (onstack)
-		usp = (caddr_t)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size;
+		usp = (caddr_t)p->p_sigctx.ps_sigstk.ss_sp
+				+ p->p_sigctx.ps_sigstk.ss_size;
 	else
 		usp = (caddr_t)frame->f_regs[SP];
 
 	/* Setup the signal frame (and part of the trapframe). */
-	if (p->p_sigacts->ps_sigact[sig].sa_flags & SA_SIGINFO)
-		setup_linux_rt_sigframe(frame, sig, mask, usp, psp);
+	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO)
+		setup_linux_rt_sigframe(frame, sig, mask, usp, p);
 	else
 		setup_linux_sigframe(frame, sig, mask, usp);
 
@@ -481,7 +480,7 @@ linux_sendsig(catcher, sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -563,7 +562,7 @@ bad:		sigexit(p, SIGSEGV);
 #endif
 
 	/* Restore signal stack. */
-	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 #if LINUX__NSIG_WORDS > 1
@@ -623,11 +622,11 @@ bad:		sigexit(p, SIGSEGV);
 			 * On 060,  "fmovem <ea>,fpcr/fpsr/fpi"  is
 			 * emulated by software and slow.
 			 */
-			asm("fmovem %0,fpcr; fmovem %1,fpsr; fmovem %2,fpi" : :
+			asm("fmovem %0,%%fpcr; fmovem %1,%%fpsr; fmovem %2,%%fpi"::
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpcr),
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpsr),
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpiar));
-			asm("fmovem %0,fp0-fp1" : :
+			asm("fmovem %0,%%fp0-%%fp1" : :
 				"m" (*scp->sc_ss.ss_fpstate.fpf_regs));
 		}
 		asm("frestore %0" : : "m" (scp->sc_ss.ss_fpstate.FPF_u1));
@@ -635,7 +634,7 @@ bad:		sigexit(p, SIGSEGV);
 #endif
 	default:
 		if (scp->sc_ss.ss_fpstate.fpf_version) {
-			asm("fmovem %0,fpcr/fpsr/fpi; fmovem %1,fp0-fp1" : :
+			asm("fmovem %0,%%fpcr/%%fpsr/%%fpi; fmovem %1,%%fp0-%%fp1"::
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpcr),
 				"m" (*scp->sc_ss.ss_fpstate.fpf_regs));
 		}
@@ -667,7 +666,6 @@ linux_sys_rt_sigreturn(p, v, retval)
 	struct linux_ucontext *ucp;	/* ucontext in user space */
 	struct linux_ucontext tuc;	/* copy of *ucp */
 	sigset_t mask;
-	struct sigacts *psp;
 	int sz = 0;			/* extra frame size */
 
 	/*
@@ -715,9 +713,8 @@ bad:		sigexit(p, SIGSEGV);
 		goto bad;
 
 	/* Restore signal stack. */
-	psp = p->p_sigacts;
-	psp->ps_sigstk.ss_flags =
-		(psp->ps_sigstk.ss_flags & ~SS_ONSTACK) |
+	p->p_sigctx.ps_sigstk.ss_flags =
+		(p->p_sigctx.ps_sigstk.ss_flags & ~SS_ONSTACK) |
 		(tuc.uc_stack.ss_flags & LINUX_SS_ONSTACK ? SS_ONSTACK : 0);
 
 	/* Restore signal mask. */
@@ -765,11 +762,11 @@ bad:		sigexit(p, SIGSEGV);
 			 * On 060,  "fmovem <ea>,fpcr/fpsr/fpi"  is
 			 * emulated by software and slow.
 			 */
-			asm("fmovem %0,fpcr; fmovem %1,fpsr; fmovem %2,fpi" : :
+			asm("fmovem %0,%%fpcr; fmovem %1,%%fpsr; fmovem %2,%%fpi"::
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpcr),
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpsr),
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpiar));
-			asm("fmovem %0,fp0-fp1" : :
+			asm("fmovem %0,%%fp0-%%fp1" : :
 				"m" (*tuc.uc_mc.mc_fpregs.fpr_regs));
 		}
 		asm("frestore %0" : : "m" (tuc.uc_ss.ss_fpstate.FPF_u1));
@@ -777,7 +774,7 @@ bad:		sigexit(p, SIGSEGV);
 #endif
 	default:
 		if (tuc.uc_ss.ss_fpstate.fpf_version) {
-			asm("fmovem %0,fpcr/fpsr/fpi; fmovem %1,fp0-fp1" : :
+			asm("fmovem %0,%%fpcr/%%fpsr/%%fpi; fmovem %1,%%fp0-%%fp1"::
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpcr),
 				"m" (*tuc.uc_mc.mc_fpregs.fpr_regs));
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.18.2.1 2000/11/20 18:11:31 bouyer Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.18.2.2 2001/01/05 17:36:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -141,6 +141,18 @@ struct ktr_csw {
 	/* record contains emulation name */
 
 /*
+ * KTR_USER - user record
+ */
+#define	KTR_USER	8
+#define KTR_USER_MAXIDLEN	20
+struct ktr_user {
+	char 	ktr_id[KTR_USER_MAXIDLEN];	/* string id of caller */
+	/*
+	 * Followed by ktr_len - sizeof(struct ktr_user) of user data.
+	 */
+};
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -151,6 +163,7 @@ struct ktr_csw {
 #define	KTRFAC_PSIG	(1<<KTR_PSIG)
 #define KTRFAC_CSW	(1<<KTR_CSW)
 #define KTRFAC_EMUL	(1<<KTR_EMUL)
+#define	KTRFAC_USER	(1<<KTR_USER)
 /*
  * trace flags (also in p_traceflags)
  */
@@ -165,6 +178,7 @@ struct ktr_csw {
 __BEGIN_DECLS
 int	ktrace __P((const char *, int, int, pid_t));
 int	fktrace __P((int, int, int, pid_t));
+int	utrace __P((const char *, void *, size_t));
 __END_DECLS
 
 #else
@@ -176,6 +190,7 @@ void ktrnamei __P((struct proc *, char *));
 void ktrpsig __P((struct proc *, int, sig_t, sigset_t *, int));
 void ktrsyscall __P((struct proc *, register_t, size_t, register_t []));
 void ktrsysret __P((struct proc *, register_t, int, register_t));
+void ktruser __P((struct proc *, const char *, void *, size_t, int));
 void ktrderef __P((struct proc *));
 void ktradref __P((struct proc *));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.5.2.2 2000/12/13 15:49:18 bouyer Exp $ */
+/* $NetBSD: proc.h,v 1.5.2.3 2001/01/05 17:33:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,10 +27,12 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/frame.h>
+
 /*
  * Machine-dependent part of the proc struct for the Alpha.
  */
-
+struct proc;
 struct mdproc {
 	u_long	md_flags;
 	struct	trapframe *md_tf;	/* trap/syscall registers */

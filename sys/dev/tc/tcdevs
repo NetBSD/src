@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.12.2.1 2000/11/20 11:43:16 bouyer Exp $
+$NetBSD: tcdevs,v 1.12.2.2 2001/01/05 17:36:28 bouyer Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -42,9 +42,12 @@ device	PMAF-AA		fza	DEC FDDIcontroller 700 (DEFZA; fiber optic)
 device	PMAF-FA		fta	DEFTA FDDI
 device	PMAG-AA		mfb	Monochrome Frame Buffer
 device	PMAG-BA		cfb	Color Frame Buffer
-device	PMAG-CA		px	2D Graphics
-device	PMAG-DA		px	3D Graphics (low/mid end)
-device	PMAG-FA		px	3D Graphics (high end)
+device	PMAG-CA		px	2D Graphics (PX 2DA)
+device	PMAG-DA		pxg	3D Graphics (PXG LM-3DA)
+device	PMAG-FA		pxg	3D Graphics (PXG HE-3DA)
+device	PMAG-FB		pxg	3D Graphics (PXG HE+3DA)
+device	PMAGB-FA	pxg	3D Graphics (PXG HE+3DA)
+device	PMAGB-FB	pxg	3D Graphics (PXG HE+3DA)
 # the following entry may be incorrect
 device	PMAG-DV		xcfb	Maxine Color Frame Buffer
 device	PMAG-JA		???	24-plane True Color Frame Buffer (TX)
@@ -76,10 +79,5 @@ device	KWS_TD		???	Kubota Denali
 #device	PMAGB-BC	???	8-plane Color/Grayscale 2D SFB (HX)
 #define	PMAGB-BD	???	8-plane Color/Grayscale 2D SFB (HX)
 #define	PMAGB-BE	???	8-plane Color/Grayscale 2D SFB (HX)
-#device	PMAGB-DB	???	8-plane 3D Graphics (PXG+)
-#device	PMAGB-DD	???	8-plane 3D Graphics (PXG+)
-#device	PMAGB-EB	???	24-plane 3D Graphics with Z-Buffer (PXG+)
-#device	PMAGB-ED	???	24-plane 3D Graphics (with Z-Buffer?) (PXG+)
-#device	PMAGB-FB	???	96-plane 3D Graphics (PXG+ Turbo)
 #device	PMAGB-JB	???	24-plane True Color Frame Buffer (TX)
 #device	PMAZ-AB		asc	53c94 SCSI

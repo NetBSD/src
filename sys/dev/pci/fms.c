@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.7.2.4 2000/12/08 09:12:31 bouyer Exp $	*/
+/*	$NetBSD: fms.c,v 1.7.2.5 2001/01/05 17:36:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -250,8 +250,7 @@ fms_attach(parent, self, aux)
 	
 	printf(": Forte Media FM-801\n");
 	
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-			 &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

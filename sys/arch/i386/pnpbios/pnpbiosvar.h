@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbiosvar.h,v 1.4.8.2 2000/11/20 20:09:37 bouyer Exp $ */
+/* $NetBSD: pnpbiosvar.h,v 1.4.8.3 2001/01/05 17:34:34 bouyer Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -94,6 +94,7 @@ void *pnpbios_intr_establish __P((pnpbios_tag_t, struct pnpresources *, int,
 
 int pnpbios_getiobase __P((pnpbios_tag_t, struct pnpresources *, int,
 			   bus_space_tag_t *, int *));
+int pnpbios_getiosize __P((pnpbios_tag_t, struct pnpresources *, int, int *));
 int pnpbios_getirqnum __P((pnpbios_tag_t, struct pnpresources *, int, int *,
 			   int *));
 int pnpbios_getdmachan __P((pnpbios_tag_t, struct pnpresources *, int, int *));

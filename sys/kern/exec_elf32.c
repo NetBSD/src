@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.45.2.4 2000/12/13 15:50:18 bouyer Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.45.2.5 2001/01/05 17:36:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -179,20 +179,24 @@ ELFNAME(check_header)(Elf_Ehdr *eh, int type)
 
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0 ||
 	    eh->e_ident[EI_CLASS] != ELFCLASS)
-		return ENOEXEC;
+		return (ENOEXEC);
 
 	switch (eh->e_machine) {
 
 	ELFDEFNNAME(MACHDEP_ID_CASES)
 
 	default:
-		return ENOEXEC;
+		return (ENOEXEC);
 	}
 
 	if (eh->e_type != type)
-		return ENOEXEC;
+		return (ENOEXEC);
 
-	return 0;
+	if (eh->e_shnum > 128 ||
+	    eh->e_phnum > 128)
+		return (ENOEXEC);
+
+	return (0);
 }
 
 /*
@@ -638,57 +642,53 @@ int
 ELFNAME2(netbsd,signature)(struct proc *p, struct exec_package *epp,
     Elf_Ehdr *eh)
 {
-	Elf_Phdr *hph, *ph;
-	Elf_Nhdr *np = NULL;
+	size_t i;
+	Elf_Phdr *ph;
 	size_t phsize;
 	int error;
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
-	hph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
-	    (caddr_t)hph, phsize)) != 0)
-		goto out1;
+	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)ph,
+	    phsize);
+	if (error)
+		goto out;
 
-	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
-		if (ph->p_type != PT_NOTE ||
-		    ph->p_filesz < sizeof(Elf_Nhdr) + ELF_NOTE_NETBSD_NAMESZ)
+	for (i = 0; i < eh->e_phnum; i++) {
+		Elf_Phdr *ephp = &ph[i];
+		Elf_Nhdr *np;
+
+		if (ephp->p_type != PT_NOTE ||
+		    ephp->p_filesz > 1024 ||
+		    ephp->p_filesz < sizeof(Elf_Nhdr) + ELF_NOTE_NETBSD_NAMESZ)
 			continue;
 
-		np = (Elf_Nhdr *)malloc(ph->p_filesz, M_TEMP, M_WAITOK);
-		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ph->p_offset,
-		    (caddr_t)np, ph->p_filesz)) != 0)
-			goto out2;
+		np = (Elf_Nhdr *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
+		error = ELFNAME(read_from)(p, epp->ep_vp, ephp->p_offset,
+		    (caddr_t)np, ephp->p_filesz);
+		if (error)
+			goto next;
 
-		if (np->n_type != ELF_NOTE_TYPE_OSVERSION) {
-			free(np, M_TEMP);
-			np = NULL;
-			continue;
-		}
-
-		/* Check the name and description sizes. */
-		if (np->n_namesz != ELF_NOTE_NETBSD_NAMESZ ||
-		    np->n_descsz != ELF_NOTE_NETBSD_DESCSZ)
-			goto out3;
-
-		/* Is the name "NetBSD\0\0"? */
-		if (memcmp((np + 1), ELF_NOTE_NETBSD_NAME,
+		if (np->n_type != ELF_NOTE_TYPE_NETBSD_TAG ||
+		    np->n_namesz != ELF_NOTE_NETBSD_NAMESZ ||
+		    np->n_descsz != ELF_NOTE_NETBSD_DESCSZ ||
+		    memcmp((caddr_t)(np + 1), ELF_NOTE_NETBSD_NAME,
 		    ELF_NOTE_NETBSD_NAMESZ))
-			goto out3;
+			goto next;
 
-		/* XXX: We could check for the specific emulation here */
-		/* All checks succeeded. */
 		error = 0;
-		goto out2;
+		free(np, M_TEMP);
+		goto out;
+
+	next:
+		free(np, M_TEMP);
+		continue;
 	}
 
-out3:
 	error = ENOEXEC;
-out2:
-	if (np)
-		free(np, M_TEMP);
-out1:
-	free(hph, M_TEMP);
-	return error;
+out:
+	free(ph, M_TEMP);
+	return (error);
 }
 
 int

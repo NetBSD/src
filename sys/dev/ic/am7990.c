@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.54.12.1 2000/11/20 11:40:21 bouyer Exp $	*/
+/*	$NetBSD: am7990.c,v 1.54.12.2 2001/01/05 17:35:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -517,7 +517,7 @@ am7990_start(ifp)
 			    sc->sc_no_td, sc->sc_last_td);
 		}
 
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 

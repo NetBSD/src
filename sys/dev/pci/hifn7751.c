@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.1.2.2 2000/11/20 11:42:20 bouyer Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.1.2.3 2001/01/05 17:36:04 bouyer Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -250,8 +250,7 @@ hifn_attach(parent, self, aux)
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
 
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail_mem;
 	}

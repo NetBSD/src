@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8.8.1 2000/11/20 20:13:01 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.8.2 2001/01/05 17:34:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,8 +47,16 @@
  */
 static u_long ticks_per_sec = 50*1000*1000/4;
 static u_long ns_per_tick = 80;
-static long ticks_per_intr;
+long ticks_per_intr;
+static int clockinitted;
+
+#ifdef MULTIPROCESSOR
+#define lasttb (curcpu()->ci_lasttb)
+#define tickspending (curcpu()->ci_tickspending)
+#else
 static volatile u_long lasttb;
+volatile int tickspending;
+#endif
 
 #ifdef TIMEBASE_FREQ
 u_int timebase_freq = TIMEBASE_FREQ;
@@ -63,8 +71,6 @@ u_int timebase_freq = 0;
 extern int adb_read_date_time __P((int *));
 extern int adb_set_date_time __P((int));
 #endif
-
-static int clockinitted = 0;
 
 void
 inittodr(base)

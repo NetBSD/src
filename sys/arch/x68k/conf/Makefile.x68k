@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.38.2.2 2000/11/22 16:02:18 bouyer Exp $
+#	$NetBSD: Makefile.x68k,v 1.38.2.3 2001/01/05 17:35:18 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/x68k/conf/Makefile.x68k
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 .include <bsd.own.mk>
 
@@ -47,19 +41,7 @@ X68K=	$S/arch/x68k
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dx68k
-
-M68060!=	( echo '\#include "opt_m680x0.h"';	\
-		  echo '\#ifdef M68060';		\
-		  echo '1';				\
-		  echo '\#else';			\
-		  echo '0';				\
-		  echo '\#endif' )			\
-			| ${CPP} | grep -v '^\#'
-.if ${M68060}
-CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-m68851
-.else
-CMACHFLAGS=	-m68030
-.endif
+CMACHFLAGS?=	-m68020-60 -Wa,-m68030 -Wa,-m68851
 CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't

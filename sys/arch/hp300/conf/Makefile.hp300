@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.70.2.1 2000/11/20 20:08:03 bouyer Exp $
+#	$NetBSD: Makefile.hp300,v 1.70.2.2 2001/01/05 17:34:12 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/hp300/conf/Makefile.hp300
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.

@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.3.8.1 2000/11/20 11:42:36 bouyer Exp $	*/
+/*	$NetBSD: puc.c,v 1.3.8.2 2001/01/05 17:36:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -233,8 +233,7 @@ puc_attach(parent, self, aux)
 	}
 
 	/* Map interrupt. */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle)) {
+	if (pci_intr_map(pa, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -271,6 +270,7 @@ puc_attach(parent, self, aux)
 		/* set up to configure the child device */
 		paa.port = i;
 		paa.type = sc->sc_desc->ports[i].type;
+		paa.flags = sc->sc_desc->ports[i].flags;
 		paa.pc = pa->pa_pc;
 		paa.intrhandle = intrhandle;
 		paa.a = sc->sc_bar_mappings[barindex].a;

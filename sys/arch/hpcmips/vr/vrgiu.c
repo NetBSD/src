@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.1.1.1.2.1 2000/11/20 20:47:56 bouyer Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.1.1.1.2.2 2001/01/05 17:34:27 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -599,6 +599,8 @@ vrgiu_intr(arg)
 	struct vrgiu_softc *sc = arg;
 	int i;
 	u_int32_t reg;
+	int ledvalue = CONFIG_HOOK_LED_FLASH;
+
 	/* Get Level 2 interrupt status */
 	vrip_intr_get_status2 (sc->sc_vc, sc->sc_ih, &reg);
 #ifdef DUMP_GIU_LEVEL2_INTR
@@ -634,9 +636,9 @@ vrgiu_intr(arg)
 		}
 	}
 
-	if (vrgiu_intr_led)
-		config_hook_call(CONFIG_HOOK_POWERCONTROL,
-				 CONFIG_HOOK_POWERCONTROL_LED,
-				PWCTL_LED_FLASH);
+	if (vrgiu_intr_led) 
+		config_hook_call(CONFIG_HOOK_SET,
+				 CONFIG_HOOK_LED,
+				(void *)&ledvalue);
 	return 0;
 }

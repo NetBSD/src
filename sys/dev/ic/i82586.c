@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.25.2.2 2000/11/22 16:03:20 bouyer Exp $	*/
+/*	$NetBSD: i82586.c,v 1.25.2.3 2001/01/05 17:35:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Mode of operation:
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.25.2.2 2000/11/22 16:03:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.25.2.3 2001/01/05 17:35:39 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -261,6 +261,7 @@ i82586_attach(sc, name, etheraddr, media, nmedia, defmedia)
 	ifp->if_watchdog = i82586_watchdog;
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
         /* Initialize media goo. */
         ifmedia_init(&sc->sc_media, 0, i82586_mediachange, i82586_mediastatus);
@@ -1183,7 +1184,7 @@ i82586_start(ifp)
 		head = sc->xchead;
 		xbase = sc->xbds;
 
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0)
 			break;
 

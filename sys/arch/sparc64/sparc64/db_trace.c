@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9.2.2 2000/12/08 09:30:36 bouyer Exp $ */
+/*	$NetBSD: db_trace.c,v 1.9.2.3 2001/01/05 17:35:05 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -50,8 +50,9 @@ void db_print_window __P((u_int64_t));
 #define INKERNEL(va)	1	/* Everything's in the kernel now. 8^) */
 #endif
 
-#define	KLOAD(x)	probeget((paddr_t)(long)&(x), ASI_PRIMARY, sizeof(x))	
-#define ULOAD(x)	probeget((paddr_t)(long)&(x), ASI_AIUS, sizeof(x))	
+#define	KLOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_PRIMARY, sizeof(x))	
+#define ULOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_AIUS, sizeof(x))	
+
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
@@ -95,65 +96,68 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			frame = (vaddr_t)addr;
 		}
 	}
-	while (count--) {
-			int		i;
-			db_expr_t	offset;
-			char		*name;
-			db_addr_t	pc;
-			struct frame64	*f64;
-			struct frame32  *f32;
 
-			if (frame & 1) {
-				f64 = (struct frame64 *)(frame + BIAS);
-				pc = KLOAD(f64->fr_pc);
-				if (pc == -1)
-					break;
-			
-				/*
-				 * Switch to frame that contains arguments
-				 */
-				frame = KLOAD(f64->fr_fp);
-			} else {
-				f32 = (struct frame32 *)(frame);
-				pc = KLOAD(f32->fr_pc);
-			
-				/*
-				 * Switch to frame that contains arguments
-				 */
-				frame = (long)KLOAD(f32->fr_fp);
-			}
-			if (!INKERNEL(frame))
-				break;
-			
-			db_find_sym_and_offset(pc, &name, &offset);
-			if (name == NULL)
-				name = "?";
-			
-			(*pr)("%s(", name);
-			
-			if (frame & 1) {
-				f64 = (struct frame64 *)(frame + BIAS);
-				/*
-				 * Print %i0..%i5, hope these still reflect the
-				 * actual arguments somewhat...
-				 */
-				for (i=0; i < 5; i++)
-					(*pr)("%lx, ", 
-						(long)KLOAD(f64->fr_arg[i]));
-				(*pr)("%lx) at ", (long)KLOAD(f64->fr_arg[i]));
-			} else {
-				f32 = (struct frame32 *)(frame);
-				/*
-				 * Print %i0..%i5, hope these still reflect the
-				 * actual arguments somewhat...
-				 */
-				for (i=0; i < 5; i++)
-					(*pr)("%x, ", KLOAD(f32->fr_arg[i]));
-				(*pr)("%x) at ", KLOAD(f32->fr_arg[i]));
-			}
-			db_printsym(pc, DB_STGY_PROC, pr);
-			(*pr)("\n");
+	while (count--) {
+		int		i;
+		db_expr_t	offset;
+		char		*name;
+		db_addr_t	pc;
+		struct frame64	*f64;
+		struct frame32  *f32;
+
+		/*
+		 * Switch to frame that contains arguments
+		 */
+		if (frame & 1) {
+			f64 = (struct frame64 *)(frame + BIAS);
+			pc = (db_addr_t)KLOAD(f64->fr_pc);
+		
+			frame = KLOAD(f64->fr_fp);
+		} else {
+			f32 = (struct frame32 *)(frame);
+			pc = (db_addr_t)KLOAD(f32->fr_pc);
+		
+			frame = (long)KLOAD(f32->fr_fp);
 		}
+
+		if (kernel_only) {
+			if (pc < KERNBASE || pc >= KERNEND)
+				break;
+			if (frame < KERNBASE || frame >= EINTSTACK)
+				break;
+		} else {
+			if (frame == 0 || frame == (vaddr_t)-1)
+				break;
+		}
+#if 0
+		if (!INKERNEL(frame))
+			break;
+#endif
+		
+		db_find_sym_and_offset(pc, &name, &offset);
+		if (name == NULL)
+			name = "?";
+		
+		(*pr)("%s(", name);
+		
+		/*
+		 * Print %i0..%i5; hope these still reflect the
+		 * actual arguments somewhat...
+		 */
+		if (frame & 1) {
+			f64 = (struct frame64 *)(frame + BIAS);
+			for (i = 0; i < 5; i++)
+				(*pr)("%lx, ", (long)KLOAD(f64->fr_arg[i]));
+			(*pr)("%lx) at ", (long)KLOAD(f64->fr_arg[i]));
+		} else {
+			f32 = (struct frame32 *)(frame);
+			for (i = 0; i < 5; i++)
+				(*pr)("%x, ", (u_int)KLOAD(f32->fr_arg[i]));
+			(*pr)("%x) at ", (u_int)KLOAD(f32->fr_arg[i]));
+		}
+		db_printsym(pc, DB_STGY_PROC, pr);
+		(*pr)("\n");
+	}
 }
 
 

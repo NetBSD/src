@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13.2.2 2000/11/20 20:02:37 bouyer Exp $
+# $NetBSD: GENERIC,v 1.13.2.3 2001/01/05 17:34:02 bouyer Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -50,7 +50,6 @@ options 	FFS_EI		# FFS endianness-independence support
 options 	SOFTDEP		# FFS soft updates support.
 
 # Executable format options
-#options 	EXEC_AOUT
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 
@@ -130,10 +129,11 @@ wsmouse0	at arcwsmouse0
 ioeb0		at ioc0 bank 5		# I/O Extension Block (A5000)
 
 podulebus0	at ioc0 bank 4		# Expansion card bus
-unixbp0		at ioc0 bank 6		# Unix Backplane (interrupt routing)
+unixbp0 	at ioc0 bank 6		# Unix Backplane (interrupt routing)
 
 ei*		at podulebus0 slot ?	# Acorn AKA25 (Ether1)
-ea*		at podulebus0 slot ?	# Acorn/Atomwide Ether3
+ea*		at podulebus0 slot ?	# Atomwide Ether3
+eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
 #dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
 #wd*		at dtide? channel ? drive ?
@@ -171,9 +171,8 @@ pseudo-device	vnd		4
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	wsmux		2	# keyboard/mouse multiplexor
-
-# rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator
 

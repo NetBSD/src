@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.21.2.1 2000/11/20 20:19:21 bouyer Exp $	*/
+/*	$NetBSD: psl.h,v 1.21.2.2 2001/01/05 17:34:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -201,8 +201,8 @@ splx(ncpl)
  * Miscellaneous
  */
 #define	splhigh()	splraise(imask[IPL_HIGH])
-#defien	splsched()	splhigh()
-#defien	spllock()	splhigh()
+#define	splsched()	splhigh()
+#define	spllock()	splhigh()
 #define	spl0()		splx(imask[IPL_ZERO])
 #define splnone()	spl0()
 

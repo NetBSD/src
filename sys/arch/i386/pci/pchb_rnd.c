@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.5.4.2 2000/11/22 16:00:29 bouyer Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.5.4.3 2001/01/05 17:34:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -101,9 +101,7 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 				delay(10);
 			}
 
-			if ((reg8 & I82802_RNG_RNGST_DATAV) == 0 ||
-			    (reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
-			     I82802_RNG_DATA)) == 0) {
+			if ((reg8 & I82802_RNG_RNGST_DATAV) == 0) {
 				printf("%s: unable to read from random "
 				    "number generator.\n",
 				    sc->sc_dev.dv_xname);
@@ -158,14 +156,12 @@ void
 pchb_rnd_callout(void *v)
 {
 	struct pchb_softc *sc = v;
-	u_int8_t reg8;
 
 	if ((bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_RNGST) &
 	     I82802_RNG_RNGST_DATAV) != 0) {
-		reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_DATA);
-		if (sc->sc_rnd_i--)
-			sc->sc_rnd_ax = (sc->sc_rnd_ax << 8) | reg8;
-		else {
+		sc->sc_rnd_ax = (sc->sc_rnd_ax << 8) |
+		    bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_DATA);
+		if (--sc->sc_rnd_i == 0) {
 			sc->sc_rnd_i = 4;
 			rnd_add_uint32(&sc->sc_rnd_source, sc->sc_rnd_ax);
 		}

@@ -1,4 +1,6 @@
-/*	$NetBSD: if_tl.c,v 1.24.2.2 2000/11/22 16:04:07 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.24.2.3 2001/01/05 17:36:09 bouyer Exp $	*/
+
+/* XXX ALTQ XXX */
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -388,8 +390,7 @@ tl_pci_attach(parent, self, aux)
 	    ether_sprintf(sc->tl_enaddr));
 
 	/* Map and establish interrupts */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle)) {
+	if (pci_intr_map(pa, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

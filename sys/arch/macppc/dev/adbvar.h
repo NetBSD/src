@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.2.12.1 2000/11/20 20:12:55 bouyer Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.2.12.2 2001/01/05 17:34:39 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -83,28 +83,6 @@ struct adb_softc {
 	char *sc_regbase;
 };
 
-
-/* adb.c */
-void	adb_enqevent __P((adb_event_t *event));
-void	adb_handoff __P((adb_event_t *event));
-void	adb_autorepeat __P((void *keyp));
-void	adb_dokeyupdown __P((adb_event_t *event));
-void	adb_keymaybemouse __P((adb_event_t *event));
-void	adb_processevent __P((adb_event_t *event));
-int	adbopen __P((dev_t dev, int flag, int mode, struct proc *p));
-int	adbclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int	adbread __P((dev_t dev, struct uio *uio, int flag));
-int	adbwrite __P((dev_t dev, struct uio *uio, int flag));
-int	adbioctl __P((dev_t , int , caddr_t , int , struct proc *));
-int	adbpoll __P((dev_t dev, int events, struct proc *p));
-
-/* adbsys.c */
-void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	adb_msa3_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	adb_mm_nonemp_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	extdms_init __P((int));
-void	extdms_complete __P((caddr_t, caddr_t, int));
-
 /* types of adb hardware that we (will eventually) support */
 #define ADB_HW_UNKNOWN		0x01	/* don't know */
 #define ADB_HW_II		0x02	/* Mac II series */
@@ -117,7 +95,6 @@ void	extdms_complete __P((caddr_t, caddr_t, int));
 #define ADBLISTEN(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x08 | (reg))
 #define ADBTALK(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x0c | (reg))
 
-/* adb_direct.c */
 int	adb_poweroff __P((void));
 int	CountADBs __P((void));
 void	ADBReInit __P((void));
@@ -127,3 +104,6 @@ int	SetADBInfo __P((ADBSetInfoBlock * info, int adbAddr));
 int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
 int	adb_read_date_time __P((unsigned long *t));
 int	adb_set_date_time __P((unsigned long t));
+
+int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
+void	adb_op_comprout __P((caddr_t, caddr_t, int));

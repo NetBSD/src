@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.12.2.2 2000/12/08 09:30:34 bouyer Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.12.2.3 2001/01/05 17:35:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -988,26 +988,32 @@ casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 	_oval_hi = ((u_int64_t)oldvalue)>>32;
 	_loc_hi = (((u_int64_t)(u_long)loc)>>32);
 
+#ifdef __notyet
+/*
+ * gcc cannot handle this since it thinks it has >10 asm operands.
+ */
 	if (PHYS_ASI(asi)) {
-		__asm __volatile("wr %7,%%g0,%%asi; sllx %1,32,%1; sllx %5,32,%0; "
-" sllx %3,32,%3; or %1,%2,%1; rdpr %%pstate,%2; or %0,%4,%0; or %3,%6,%3; "
+		__asm __volatile("wr %6,%%g0,%%asi; sllx %1,32,%1; sllx %0,32,%0; "
+" sllx %3,32,%3; or %1,%2,%1; rdpr %%pstate,%2; or %0,%4,%0; or %3,%5,%3; "
 " wrpr %2,8,%%pstate; casxa [%0]%%asi,%3,%1; wrpr %2,0,%%pstate; " 
-" andn %0,0x1f,%3;  membar #Sync; stxa %%g0,[%3] %8; membar #Sync; "
+" andn %0,0x1f,%3;  membar #Sync; stxa %%g0,[%3] %7; membar #Sync; "
 " sll %1,0,%2; srax %1,32,%1 " :
-			"=&r" (_loc_hi), "+r" (_casxa_hi),
+			"+r" (_loc_hi), "+r" (_casxa_hi),
 			"+r" (_casxa_lo), "+r" (_oval_hi) :
-			"r" ((unsigned long)(loc)), "r" (_loc_hi),
-			"r" ((unsigned int)(oval))
-			"r" (asi), "n" (ASI_DCACHE_TAG) : "memory");
+			"r" ((unsigned long)(loc)),
+			"r" ((unsigned int)(oldvalue)),
+			"r" (asi), "n" (ASI_DCACHE_TAG));
 	} else {
 		__asm __volatile("wr %7,%%g0,%%asi; sllx %1,32,%1; sllx %5,32,%0; "
 " or %1,%2,%1; sllx %3,32,%2; or %0,%4,%0; or %2,%4,%2; "
 " casxa [%0]%%asi,%2,%1; sll %1,0,%2; srax %o1,32,%o1 " :
 			"=&r" (_loc_hi), "+r" (_casxa_hi), "+r" (_casxa_lo) :
-			"r" ((int)(_oval_hi)), "r" ((int)(oval)),
+			"r" ((int)(_oval_hi)), "r" ((int)(oldvalue)),
 			"r" ((unsigned long)(loc)), "r" (_loc_hi),
 			"r" (asi) : "memory");
 	}
+#endif
+	return (((u_int64_t)_casxa_hi<<32)|(u_int64_t)_casxa_lo);
 }
 #endif
 #endif /* 0 */
@@ -1516,8 +1522,8 @@ casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 #else
 /* read 64-bit %tick register on 32-bit system */
 #define	tick() ({ \
-	register int _tick_hi = 0, _tick_lo = 0; \
-	__asm __volatile("rdpr %%tick, %1; srlx %0,32,%2; srl %0,0,%0 " \
+	register u_int _tick_hi = 0, _tick_lo = 0; \
+	__asm __volatile("rdpr %%tick, %0; srl %0,0,%1; srlx %0,32,%0 " \
 		: "=r" (_tick_hi), "=r" (_tick_lo) : ); \
 	(((u_int64_t)_tick_hi)<<32)|((u_int64_t)_tick_lo); \
 })

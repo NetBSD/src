@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2.22.1 2000/12/13 15:50:25 bouyer Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2.22.2 2001/01/05 17:36:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ int compat_freebsd_lkmentry __P((struct lkm_table *, int, int));
 /*
  * declare the emulation
  */
-MOD_COMPAT("freebsd", -1, &emul_freebsd);
+MOD_COMPAT("compat_freebsd", -1, &emul_freebsd);
 
 /*
  * entry point

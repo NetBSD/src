@@ -1,18 +1,17 @@
-/* $NetBSD: ispvar.h,v 1.25.2.2 2000/12/13 15:50:03 bouyer Exp $ */
+/* $NetBSD: ispvar.h,v 1.25.2.3 2001/01/05 17:35:42 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
  *	sys/dev/ic/isp.c
- *	sys/dev/ic/ic/isp.c
- *	sys/dev/ic/ic/isp_inline.h
- *	sys/dev/ic/ic/isp_netbsd.c
- *	sys/dev/ic/ic/isp_netbsd.h
- *	sys/dev/ic/ic/isp_target.c
- *	sys/dev/ic/ic/isp_target.h
- *	sys/dev/ic/ic/isp_tpublic.h
- *	sys/dev/ic/ic/ispmbox.h
- *	sys/dev/ic/ic/ispreg.h
- *	sys/dev/ic/ic/ispvar.h
+ *	sys/dev/ic/isp_inline.h
+ *	sys/dev/ic/isp_netbsd.c
+ *	sys/dev/ic/isp_netbsd.h
+ *	sys/dev/ic/isp_target.c
+ *	sys/dev/ic/isp_target.h
+ *	sys/dev/ic/isp_tpublic.h
+ *	sys/dev/ic/ispmbox.h
+ *	sys/dev/ic/ispreg.h
+ *	sys/dev/ic/ispvar.h
  *	sys/microcode/isp/asm_sbus.h
  *	sys/microcode/isp/asm_1040.h
  *	sys/microcode/isp/asm_1080.h
@@ -421,6 +420,7 @@ typedef struct ispsoftc {
  */
 #define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
 #define	ISP_CFG_NONVRAM		0x40	/* ignore NVRAM */
+#define	ISP_CFG_NOINIT		0x20	/* just set defaults- don't init */
 #define	ISP_CFG_FULL_DUPLEX	0x01	/* Full Duplex (Fibre Channel only) */
 #define	ISP_CFG_OWNWWN		0x02	/* override NVRAM wwn */
 #define	ISP_CFG_PORT_PREF	0x0C	/* Mask for Port Prefs (2200 only) */
@@ -565,7 +565,13 @@ int isp_async __P((struct ispsoftc *, ispasync_t, void *));
 /*
  * Platform Dependent Error and Debug Printout
  */
+#ifdef	__GNUC__
+void isp_prt __P((struct ispsoftc *, int level, const char *, ...))
+	__attribute__((__format__(__printf__,3,4)));
+#else
 void isp_prt __P((struct ispsoftc *, int level, const char *, ...));
+#endif
+
 #define	ISP_LOGALL	0x0	/* log always */
 #define	ISP_LOGCONFIG	0x1	/* log configuration messages */
 #define	ISP_LOGINFO	0x2	/* log informational messages */

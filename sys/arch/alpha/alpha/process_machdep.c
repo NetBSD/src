@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.13.2.2 2000/12/08 09:23:27 bouyer Exp $ */
+/* $NetBSD: process_machdep.c,v 1.13.2.3 2001/01/05 17:33:41 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13.2.2 2000/12/08 09:23:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13.2.3 2001/01/05 17:33:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13.2.2 2000/12/08 09:23:27 bou
 #define	process_fpframe(p)	(&(process_pcb(p)->pcb_fp))
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 
 	frametoreg(process_frame(p), regs);
@@ -86,9 +84,7 @@ process_read_regs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 
 	regtoframe(regs, process_frame(p));
@@ -98,9 +94,7 @@ process_write_regs(p, regs)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
+process_sstep(struct proc *p, int sstep)
 {
 
 	if (sstep)
@@ -110,9 +104,7 @@ process_sstep(p, sstep)
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	struct trapframe *frame = process_frame(p);
 
@@ -121,9 +113,7 @@ process_set_pc(p, addr)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
 
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
@@ -134,9 +124,7 @@ process_read_fpregs(p, regs)
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_write_fpregs(struct proc *p, struct fpreg *regs)
 {
 
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)

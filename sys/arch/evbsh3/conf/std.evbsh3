@@ -1,7 +1,0 @@
-# $NetBSD: std.evbsh3,v 1.1.2.1 2000/11/20 20:07:35 bouyer Exp $
-#
-# standard, required NetBSD/evbsh3 'options'
- 
-machine evbsh3 sh3
-
-options	EXEC_SCRIPT	# exec #! scripts

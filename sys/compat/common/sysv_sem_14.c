@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.1.2.1 2000/11/20 18:08:08 bouyer Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.1.2.2 2001/01/05 17:35:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
 #include <sys/mount.h>
 #include <sys/sem.h>
 
+#ifndef SYSVSEM
 #define	SYSVSEM
+#endif
 
 #include <sys/syscallargs.h>
 

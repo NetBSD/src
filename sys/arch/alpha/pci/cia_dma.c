@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.13.12.1 2000/11/20 19:57:07 bouyer Exp $ */
+/* $NetBSD: cia_dma.c,v 1.13.12.2 2001/01/05 17:33:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.13.12.1 2000/11/20 19:57:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.13.12.2 2001/01/05 17:33:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,11 +61,6 @@ bus_dma_tag_t cia_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
 
 int	cia_bus_dmamap_create_direct __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-
-int	cia_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-
-void	cia_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 int	cia_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
@@ -148,8 +143,8 @@ cia_dma_init(ccp)
 	t->_boundary = 0;
 	t->_sgmap = &ccp->cc_sgmap;
 	t->_get_tag = cia_dma_get_tag;
-	t->_dmamap_create = cia_bus_dmamap_create_sgmap;
-	t->_dmamap_destroy = cia_bus_dmamap_destroy_sgmap;
+	t->_dmamap_create = alpha_sgmap_dmamap_create;
+	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
 	t->_dmamap_load = cia_bus_dmamap_load_sgmap;
 	t->_dmamap_load_mbuf = cia_bus_dmamap_load_mbuf_sgmap;
 	t->_dmamap_load_uio = cia_bus_dmamap_load_uio_sgmap;
@@ -330,55 +325,6 @@ cia_bus_dmamap_create_direct(t, size, nsegments, maxsegsz, boundary,
 	}
 
 	return (0);
-}
-
-/*
- * Create a CIA SGMAP-mapped DMA map.
- */
-int
-cia_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;  
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags; 
-	bus_dmamap_t *dmamp;
-{
-	bus_dmamap_t map;
-	int error;
-
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
-	    boundary, flags, dmamp);
-	if (error)
-		return (error);
-
-	map = *dmamp;
-
-	if (flags & BUS_DMA_ALLOCNOW) {
-		error = alpha_sgmap_alloc(map, round_page(size),
-		    t->_sgmap, flags);
-		if (error)
-			cia_bus_dmamap_destroy_sgmap(t, map);
-	}
-
-	return (error);
-}
-
-/*
- * Destroy a CIA SGMAP-mapped DMA map.
- */
-void
-cia_bus_dmamap_destroy_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-{
-
-	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		alpha_sgmap_free(map, t->_sgmap);
-
-	_bus_dmamap_destroy(t, map);
 }
 
 /*

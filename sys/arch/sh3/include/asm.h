@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1.2.1 2000/11/20 20:24:29 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.1.2.2 2001/01/05 17:35:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,8 +84,8 @@
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
-	.weak alias;							\
-	alias = sym
+	.weak _C_LABEL(alias);						\
+	_C_LABEL(alias) = _C_LABEL(sym)
 #endif
 
 #ifdef __STDC__

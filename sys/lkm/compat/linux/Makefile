@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.8.1 2000/12/13 15:50:25 bouyer Exp $
+#	$NetBSD: Makefile,v 1.6.8.2 2001/01/05 17:36:46 bouyer Exp $
 
 .include "../Makefile.inc"
 
@@ -56,7 +56,7 @@ SRCS+=	linux_sig_machdep.S
 
 .if ${MACHINE_ARCH} == "alpha"
 CPPFLAGS+=	-Dalpha
-SRCS+=	linux_olduname.c
+SRCS+=	linux_olduname.c linux_syscall.c
 SRCS+=	linux_sigcode.s
 .endif
 

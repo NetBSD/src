@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.27.2.2 2000/12/08 09:12:45 bouyer Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.27.2.3 2001/01/05 17:36:32 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 /*
- * Printer Class spec: http://www.usb.org/developers/data/usbprn10.pdf
+ * Printer Class spec: http://www.usb.org/developers/data/devclass/usbprint109.PDF
  */
 
 #include <sys/param.h>

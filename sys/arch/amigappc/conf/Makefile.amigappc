@@ -13,12 +13,6 @@ MACHINE=amigappc
 # Machine generic makefile changes should be made in
 #	/sys/arch/amiga/conf/Makefile.amiga
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.

@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.9.2.2 2000/11/20 20:02:37 bouyer Exp $
+# $NetBSD: FOURMEG,v 1.9.2.3 2001/01/05 17:34:02 bouyer Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -51,7 +51,6 @@ options 	FFS_EI		# FFS endianness-independence support
 options 	NFS_V2_ONLY	# Make a smaller NFS
 
 # Executable format options
-#options 	EXEC_AOUT
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 
@@ -133,10 +132,11 @@ wsmouse0	at arcwsmouse0
 ioeb0		at ioc0 bank 5		# I/O Extension Block (A5000)
 
 podulebus0	at ioc0 bank 4		# Expansion card bus
-unixbp0		at ioc0 bank 6		# Unix Backplane (interrupt routing)
+unixbp0 	at ioc0 bank 6		# Unix Backplane (interrupt routing)
 
 ei*		at podulebus0 slot ?	# Acorn AKA25 (Ether1)
-ea*		at podulebus0 slot ?	# Acorn/Atomwide Ether3
+ea*		at podulebus0 slot ?	# Atomwide Ether3
+eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
 #dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
 #wd*		at dtide? channel ? drive ?
@@ -147,7 +147,7 @@ ea*		at podulebus0 slot ?	# Acorn/Atomwide Ether3
 upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 #com0		at upc0			# Serial port
 #lpt0		at upc0			# Parallel port
-wdc0            at upc0                 # IDE controller
+wdc0		at upc0			# IDE controller
 
 wd*		at wdc? drive ?		# IDE hard discs
 #atapibus*	at wdc?			# ATAPI devices

@@ -1,18 +1,17 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.8 2000/12/13 15:50:03 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.9 2001/01/05 17:35:41 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
  *	sys/dev/ic/isp.c
- *	sys/dev/ic/ic/isp.c
- *	sys/dev/ic/ic/isp_inline.h
- *	sys/dev/ic/ic/isp_netbsd.c
- *	sys/dev/ic/ic/isp_netbsd.h
- *	sys/dev/ic/ic/isp_target.c
- *	sys/dev/ic/ic/isp_target.h
- *	sys/dev/ic/ic/isp_tpublic.h
- *	sys/dev/ic/ic/ispmbox.h
- *	sys/dev/ic/ic/ispreg.h
- *	sys/dev/ic/ic/ispvar.h
+ *	sys/dev/ic/isp_inline.h
+ *	sys/dev/ic/isp_netbsd.c
+ *	sys/dev/ic/isp_netbsd.h
+ *	sys/dev/ic/isp_target.c
+ *	sys/dev/ic/isp_target.h
+ *	sys/dev/ic/isp_tpublic.h
+ *	sys/dev/ic/ispmbox.h
+ *	sys/dev/ic/ispreg.h
+ *	sys/dev/ic/ispvar.h
  *	sys/microcode/isp/asm_sbus.h
  *	sys/microcode/isp/asm_1040.h
  *	sys/microcode/isp/asm_1080.h
@@ -99,7 +98,6 @@ void
 isp_attach(isp)
 	struct ispsoftc *isp;
 {
-	int maxluns;
 	isp->isp_osinfo._adapter.scsipi_minphys = ispminphys;
 	isp->isp_osinfo._adapter.scsipi_ioctl = ispioctl;
 	isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
@@ -111,7 +109,6 @@ isp_attach(isp)
 	isp->isp_osinfo._link.device = &isp_dev;
 	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
 	isp->isp_osinfo._link.openings = isp->isp_maxcmds;
-	isp->isp_osinfo._link.scsipi_scsi.max_lun = maxluns;
 	/*
 	 * Until the midlayer is fixed to use REPORT LUNS, limit to 8 luns.
 	 */
@@ -545,7 +542,7 @@ isp_command_requeue(arg)
 {
 	struct scsipi_xfer *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
-	ISP_LOCK(isp);
+	ISP_ILOCK(isp);
 	switch (ispcmd(xs)) {
 	case SUCCESSFULLY_QUEUED:
 		isp_prt(isp, ISP_LOGINFO,
@@ -569,7 +566,7 @@ isp_command_requeue(arg)
 		scsipi_done(xs);
 		break;
 	}
-	ISP_UNLOCK(isp);
+	ISP_IUNLOCK(isp);
 }
 
 /*
@@ -583,7 +580,7 @@ isp_internal_restart(arg)
 	struct ispsoftc *isp = arg;
 	int result, nrestarted = 0;
 
-	ISP_LOCK(isp);
+	ISP_ILOCK(isp);
 	if (isp->isp_osinfo.blocked == 0) {
 		struct scsipi_xfer *xs;
 		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
@@ -606,7 +603,7 @@ isp_internal_restart(arg)
 		isp_prt(isp, ISP_LOGINFO,
 		    "isp_restart requeued %d commands", nrestarted);
 	}
-	ISP_UNLOCK(isp);
+	ISP_IUNLOCK(isp);
 }
 
 int
@@ -711,7 +708,7 @@ isp_async(isp, cmd, arg)
 		break;
 	case ISPASYNC_PDB_CHANGED:
 	if (IS_FC(isp) && isp->isp_dblev) {
-		const char *fmt = "Target %d (Loop 0x%x) Port ID 0x%x "
+		const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
 		const static char *roles[4] = {
 		    "No", "Target", "Initiator", "Target/Initiator"

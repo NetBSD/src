@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.26.12.2 2000/11/22 16:04:04 bouyer Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.26.12.3 2001/01/05 17:36:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -377,8 +377,7 @@ le_pci_attach(parent, self, aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

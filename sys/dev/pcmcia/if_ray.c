@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.23.2.4 2000/12/13 15:50:11 bouyer Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.23.2.5 2001/01/05 17:36:22 bouyer Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -635,6 +635,8 @@ ray_attach(parent, self, aux)
 	ifp->if_ioctl = ray_ioctl;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
+
 	if_attach(ifp);
 	ether_ifattach(ifp, ep->e_station_addr);
 	/* need enough space for ieee80211_header + (snap or e2) */
@@ -1192,16 +1194,15 @@ ray_intr_start(sc)
 
 	ifp = &sc->sc_if;
 
-	RAY_DPRINTF(("%s: start free %d qlen %d qmax %d\n",
-	    ifp->if_xname, sc->sc_txfree, ifp->if_snd.ifq_len,
-	    ifp->if_snd.ifq_maxlen));
+	RAY_DPRINTF(("%s: start free %d\n",
+	    ifp->if_xname, sc->sc_txfree));
 
 	ray_cmd_cancel(sc, SCP_IFSTART);
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0 || !sc->sc_havenet)
 		return;
 
-	if (ifp->if_snd.ifq_len == 0)
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
 	firsti = i = previ = RAY_CCS_LINK_NULL;
@@ -1233,7 +1234,7 @@ ray_intr_start(sc)
 			}
 		}
 
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (!m0) {
 			RAY_DPRINTF(("%s: dry queue.\n", ifp->if_xname));
 			break;

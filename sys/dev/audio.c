@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.117.2.1 2000/11/20 11:39:45 bouyer Exp $	*/
+/*	$NetBSD: audio.c,v 1.117.2.2 2001/01/05 17:35:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -290,12 +290,12 @@ audioattach(parent, self, aux)
 
 	iclass = oclass = -1;
 	sc->sc_inports.index = -1;
-	sc->sc_inports.master = -1;
+	sc->sc_inports.master = 0;
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
 	sc->sc_inports.allports = 0;
 	sc->sc_outports.index = -1;
-	sc->sc_outports.master = -1;
+	sc->sc_outports.master = 0;
 	sc->sc_outports.nports = 0;
 	sc->sc_outports.isenum = 0;
 	sc->sc_outports.allports = 0;
@@ -2991,6 +2991,7 @@ mixer_ioctl(sc, cmd, addr, flag, p)
 		
 	case AUDIO_MIXER_DEVINFO:
 		DPRINTF(("AUDIO_MIXER_DEVINFO\n"));
+		((mixer_devinfo_t *)addr)->un.v.delta = 0; /* default */
 		error = hw->query_devinfo(sc->hw_hdl, (mixer_devinfo_t *)addr);
 		break;
 

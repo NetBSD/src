@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.2.3 2000/12/08 09:26:21 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.2.4 2001/01/05 17:33:53 bouyer Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -97,8 +97,8 @@
 #include <arc/arc/arctype.h>
 #include <arc/arc/arcbios.h>
 #include <arc/arc/wired_map.h>
-#include <arc/pica/pica.h>
-#include <arc/pica/rd94.h>
+#include <arc/jazz/pica.h>
+#include <arc/jazz/rd94.h>
 #include <arc/dti/desktech.h>
 #include <arc/algor/algor.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3.4.2 2000/11/20 20:23:00 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3.4.3 2001/01/05 17:34:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,6 +35,11 @@
  */
 
 /*
+ * Forward declarations.
+ */
+struct pci_attach_args;
+
+/*
  * be-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  *
@@ -64,8 +69,7 @@ void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
 		    int *, int *, int *);
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-int		pci_intr_map(pci_chipset_tag_t, pcitag_t, int, int,
-		    pci_intr_handle_t *);
+int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,

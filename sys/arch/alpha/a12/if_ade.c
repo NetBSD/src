@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.3.2.2 2000/11/22 15:59:39 bouyer Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.3.2.3 2001/01/05 17:33:38 bouyer Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -5280,8 +5280,7 @@ tulip_pci_attach(
 	    pci_intr_handle_t intrhandle;
 	    const char *intrstr;
 
-	    if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			     pa->pa_intrline, &intrhandle)) {
+	    if (pci_intr_map(pa, &intrhandle)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	    }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.2.2.1 2000/11/20 11:42:22 bouyer Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.2.2.2 2001/01/05 17:36:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -328,8 +328,7 @@ lmc_pci_attach(struct device * const parent,
 	       (sc->lmc_revinfo & 0xF0) >> 4, sc->lmc_revinfo & 0x0F,
 	       LMC_EADDR_ARGS(sc->lmc_enaddr));
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &intrhandle)) {
+	if (pci_intr_map(pa, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n",
 		       sc->lmc_dev.dv_xname);
 		return;

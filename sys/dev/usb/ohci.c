@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.52.2.3 2000/12/13 15:50:14 bouyer Exp $	*/
+/*	$NetBSD: ohci.c,v 1.52.2.4 2001/01/05 17:36:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,8 +41,8 @@
 /*
  * USB Open Host Controller driver.
  *
- * OHCI spec: ftp://ftp.compaq.com/pub/supportinformation/papers/hcir1_0a.exe
- * USB spec: http://www.usb.org/developers/data/usb11.pdf
+ * OHCI spec: http://www.compaq.com/productinfo/development/openhci.html
+ * USB spec: http://www.usb.org/developers/data/usbspec.zip
  */
 
 #include <sys/param.h>
@@ -940,6 +940,7 @@ void
 ohci_power(int why, void *v)
 {
 	ohci_softc_t *sc = v;
+	u_int32_t ctl;
 	int s;
 
 #ifdef OHCI_DEBUG
@@ -951,10 +952,23 @@ ohci_power(int why, void *v)
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_SUSPEND);
+		sc->sc_bus.use_polling++;
+		ctl = OREAD4(sc, OHCI_CONTROL);
+		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_SUSPEND;
+		OWRITE4(sc, OHCI_CONTROL, ctl);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+		sc->sc_bus.use_polling--;
 		break;
 	case PWR_RESUME:
-		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESUME);
+		sc->sc_bus.use_polling++;
+		ctl = OREAD4(sc, OHCI_CONTROL);
+		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_RESUME;
+		OWRITE4(sc, OHCI_CONTROL, ctl);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
+		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_OPERATIONAL;
+		OWRITE4(sc, OHCI_CONTROL, ctl);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
+		sc->sc_bus.use_polling--;
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2.22.1 2000/12/13 15:50:25 bouyer Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2.22.2 2001/01/05 17:36:47 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ int compat_svr4_lkmentry __P((struct lkm_table *, int, int));
 /*
  * declare the emulation
  */
-MOD_COMPAT("svr4", -1, &emul_svr4);
+MOD_COMPAT("compat_svr4", -1, &emul_svr4);
 
 /*
  * entry point

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1.2.1 2000/11/20 20:07:37 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.1.2.2 2001/01/05 17:34:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,17 +53,19 @@
 #endif
 #endif
 
+/* XXX relying upon gcc symbol here... */
+#ifdef __LITTLE_ENDIAN__
+#define	_MACHINE_ARCH	sh3el
+#define	MACHINE_ARCH	"sh3el"
+#else
+#define	_MACHINE_ARCH	sh3eb
+#define	MACHINE_ARCH	"sh3eb"
+#endif
+
 #define	_MACHINE	evbsh3
 #define	MACHINE		"evbsh3"
 
-
-#if 1
-#define	_MACHINE_ARCH	sh3
-#define	MACHINE_ARCH	"sh3"
 #define	MID_MACHINE	MID_SH3
-#else		/* XXX (msaioth) */
-#include <sh3/param.h>
-#endif
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

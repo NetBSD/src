@@ -1,4 +1,4 @@
-/* $Id: platid_name.c,v 1.10.2.2 2000/11/20 20:46:41 bouyer Exp $ */
+/* $Id: platid_name.c,v 1.10.2.3 2001/01/05 17:34:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000

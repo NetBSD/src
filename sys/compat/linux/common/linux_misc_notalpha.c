@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.52.2.2 2000/12/08 09:08:30 bouyer Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.52.2.3 2001/01/05 17:35:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ linux_sys_waitpid(p, v, retval)
 	if ((error = sys_wait4(p, &w4a, retval)))
 		return error;
 
-	sigdelset(&p->p_siglist, SIGCHLD);
+	sigdelset(&p->p_sigctx.ps_siglist, SIGCHLD);
 
 	if (status != NULL) {
 		if ((error = copyin(status, &tstat, sizeof tstat)))

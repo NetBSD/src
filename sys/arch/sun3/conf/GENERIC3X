@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.26.2.2 2000/11/22 16:01:58 bouyer Exp $
+# $NetBSD: GENERIC3X,v 1.26.2.3 2001/01/05 17:35:12 bouyer Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -215,7 +215,7 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
-# rnd is EXPERIMENTAL
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.13.2.2 2000/11/20 20:00:39 bouyer Exp $	*/
+/*	$NetBSD: isabus.c,v 1.13.2.3 2001/01/05 17:33:56 bouyer Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -106,8 +106,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/intr.h>
 
 #include <arc/arc/arctype.h>
-#include <arc/pica/pica.h>
-#include <arc/pica/rd94.h>
+#include <arc/jazz/pica.h>
+#include <arc/jazz/rd94.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

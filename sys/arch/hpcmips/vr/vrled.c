@@ -1,4 +1,4 @@
-/*	$NetBSD: vrled.c,v 1.1.2.2 2000/11/20 20:48:03 bouyer Exp $	*/
+/*	$NetBSD: vrled.c,v 1.1.2.3 2001/01/05 17:34:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi. All rights reserved.
@@ -134,8 +134,8 @@ vrledattach(parent, self, aux)
 	vrled_write(sc, LEDCNT_REG_W, LEDCNT_AUTOSTOP);	
 	vrled_stop(sc);
 
-	sc->sc_hook = config_hook(CONFIG_HOOK_POWERCONTROL,
-					CONFIG_HOOK_POWERCONTROL_LED,
+	sc->sc_hook = config_hook(CONFIG_HOOK_SET,
+					CONFIG_HOOK_LED,
 					CONFIG_HOOK_SHARE,
 					vrled_event, sc);
 	this_led = sc;
@@ -377,32 +377,34 @@ vrled_event(ctx, type, id, msg)
         void *msg;
 {
 	struct vrled_softc *sc = (struct vrled_softc *)ctx;
-        int why =(int)msg;
+        int why =*(int *)msg;
 
-	if (type != CONFIG_HOOK_POWERCONTROL 
-		|| id != CONFIG_HOOK_POWERCONTROL_LED)
+	if (type != CONFIG_HOOK_SET 
+		|| id != CONFIG_HOOK_LED)
 		return 1;
+	if (msg == NULL)
+		return 1; 
 		
         switch (why) {
-        case PWCTL_LED_OFF:
+        case CONFIG_HOOK_LED_OFF:
 		vrled_set_state(sc, LEDOFF);
                 break;
-        case PWCTL_LED_ON:
+        case CONFIG_HOOK_LED_ON:
 		vrled_set_state(sc, LEDON);
                 break;
-        case PWCTL_LED_FLASH:
+        case CONFIG_HOOK_LED_FLASH:
 		vrled_set_state(sc, LED8DIVF);
                 break;
-        case PWCTL_LED_FLASH2:
+        case CONFIG_HOOK_LED_FLASH2:
 		vrled_set_state(sc, LED4DIVF);
                 break;
-        case PWCTL_LED_FLASH5:
+        case CONFIG_HOOK_LED_FLASH5:
 		vrled_set_state(sc, LED2DIVF);
                 break;
-        case PWCTL_LED_BLINK:
+        case CONFIG_HOOK_LED_BLINK:
 		vrled_set_state(sc, LED1SB);
                 break;
-        case PWCTL_LED_BLINK2:
+        case CONFIG_HOOK_LED_BLINK2:
 		vrled_set_state(sc, LED2SB);
                 break;
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.3.2.1 2000/11/20 20:26:56 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.3.2.2 2001/01/05 17:35:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -131,7 +131,6 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	register struct proc *p = curproc;
-	register struct sigacts *psp = p->p_sigacts;
 	register struct sparc32_sigframe *fp;
 	register struct trapframe64 *tf;
 	register int addr, onstack; 
@@ -145,12 +144,12 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	oldsp = (struct rwindow32 *)(u_long)(u_int)tf->tf_out[6];
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (onstack) {
-		fp = (struct sparc32_sigframe *)((char *)psp->ps_sigstk.ss_sp +
-					 psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		fp = (struct sparc32_sigframe *)((char *)p->p_sigctx.ps_sigstk.ss_sp +
+					p->p_sigctx.ps_sigstk.ss_size);
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sparc32_sigframe *)oldsp;
 	fp = (struct sparc32_sigframe *)((long)(fp - 1) & ~7);
@@ -239,7 +238,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
@@ -328,9 +327,9 @@ compat_13_netbsd32_sigreturn(p, v, retval)
 	}
 #endif
 	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
@@ -422,9 +421,9 @@ netbsd32___sigreturn14(p, v, retval)
 
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12.2.3 2000/12/13 15:49:21 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.12.2.4 2001/01/05 17:34:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -87,11 +87,13 @@
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
 
-#define	ALTENTRY(name)	.globl _C_LABEL(name); _C_LABEL(name):
-
 #define	ASMSTR		.asciz
 
+#ifdef __ELF__
+#define RCSID(x)	.section ".ident"; .asciz x
+#else
 #define RCSID(x)	.text; .asciz x
+#endif
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.19.2.1 2000/11/20 11:42:14 bouyer Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.19.2.2 2001/01/05 17:36:01 bouyer Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -731,8 +731,7 @@ ahc_pci_attach(parent, self, aux)
 					  |TARGCRCENDEN|TARGCRCCNTEN);
 	}
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", ahc->sc_dev.dv_xname);
 		ahc_free(ahc);
 		return;

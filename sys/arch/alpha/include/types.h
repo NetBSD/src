@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.12.12.3 2000/12/13 15:49:18 bouyer Exp $ */
+/* $NetBSD: types.h,v 1.12.12.4 2001/01/05 17:33:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,6 +39,7 @@
 #define	_MACHTYPES_H_
 
 #include <sys/cdefs.h>
+#include <machine/int_types.h>
 
 #if defined(_KERNEL)
 typedef struct label_t {
@@ -59,14 +60,14 @@ typedef unsigned long	vsize_t;
  * not possible for a machine/compiler combination.
  */
 #define __BIT_TYPES_DEFINED__
-typedef	__signed char		   int8_t;
-typedef	unsigned char		 u_int8_t;
-typedef	short			  int16_t;
-typedef	unsigned short		u_int16_t;
-typedef	int			  int32_t;
-typedef	unsigned int		u_int32_t;
-typedef	long			  int64_t;
-typedef	unsigned long		u_int64_t;
+typedef	__int8_t		   int8_t;
+typedef	__uint8_t		 u_int8_t;
+typedef	__int16_t		  int16_t;
+typedef	__uint16_t		u_int16_t;
+typedef	__int32_t		  int32_t;
+typedef	__uint32_t		u_int32_t;
+typedef	__int64_t		  int64_t;
+typedef	__uint64_t		u_int64_t;
 
 typedef int64_t			register_t;
 

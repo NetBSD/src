@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.2.2.2 2000/12/13 14:49:09 bouyer Exp $ */
+/* $NetBSD: syscall.c,v 1.2.2.3 2001/01/05 17:33:42 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2.2.2 2000/12/13 14:49:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2.2.3 2001/01/05 17:33:42 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,15 +116,14 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2.2.2 2000/12/13 14:49:09 bouyer Exp $
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
+#include <machine/userret.h>
 
-void	userret __P((struct proc *));
-void	syscall_intern __P((struct proc *));
-void	syscall_plain __P((struct proc *, u_int64_t, struct trapframe *));
-void	syscall_fancy __P((struct proc *, u_int64_t, struct trapframe *));
+void	syscall_intern(struct proc *);
+void	syscall_plain(struct proc *, u_int64_t, struct trapframe *);
+void	syscall_fancy(struct proc *, u_int64_t, struct trapframe *);
 
 void
-syscall_intern(p)
-	struct proc *p;
+syscall_intern(struct proc *p)
 {
 
 #ifdef KTRACE
@@ -149,10 +148,7 @@ syscall_intern(p)
  * a3, and v0 from the frame before returning to the user process.
  */
 void
-syscall_plain(p, code, framep)
-	struct proc *p;
-	u_int64_t code;
-	struct trapframe *framep;
+syscall_plain(struct proc *p, u_int64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
@@ -246,10 +242,7 @@ syscall_plain(p, code, framep)
 }
 
 void
-syscall_fancy(p, code, framep)
-	struct proc *p;
-	u_int64_t code;
-	struct trapframe *framep;
+syscall_fancy(struct proc *p, u_int64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
@@ -357,8 +350,7 @@ syscall_fancy(p, code, framep)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct proc *p = arg;
 

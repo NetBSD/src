@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.7.2.2 2000/12/13 15:50:34 bouyer Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.7.2.3 2001/01/05 17:36:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
  */
 
 #include "opt_inet.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +69,10 @@
 #include <netinet/ip_encap.h>
 #else
 #error IPIP without INET?
+#endif
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
 #endif
 
 #include <machine/stdarg.h>
@@ -198,6 +203,7 @@ ipipattach(count)
 
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_type = IFT_OTHER;
+		sc->sc_if.if_dlt = DLT_NULL;
 		sc->sc_if.if_addrlen = sizeof(struct in_addr);
 		sc->sc_if.if_hdrlen = sizeof(struct ip);
 		sc->sc_if.if_mtu = 0;	/* filled in later */

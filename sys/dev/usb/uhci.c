@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.61.2.3 2000/12/08 09:12:44 bouyer Exp $	*/
+/*	$NetBSD: uhci.c,v 1.61.2.4 2001/01/05 17:36:31 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,8 +42,8 @@
  * USB Universal Host Controller driver.
  * Handles e.g. PIIX3 and PIIX4.
  *
- * UHCI spec: http://www.intel.com/design/usb/uhci11d.pdf
- * USB spec: http://www.usb.org/developers/data/usb11.pdf
+ * UHCI spec: http://developer.intel.com/design/USB/UHCI11D.htm
+ * USB spec: http://www.usb.org/developers/data/usbspec.zip
  * PIIXn spec: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
  *             ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  */
@@ -1197,8 +1197,9 @@ uhci_intr(void *arg)
 	}
 	if (status & UHCI_STS_HCH) {
 		/* no acknowledge needed */
-		printf("%s: host controller halted\n", 
-		       USBDEVNAME(sc->sc_bus.bdev));
+		if (!sc->sc_dying)
+			printf("%s: host controller halted\n", 
+			    USBDEVNAME(sc->sc_bus.bdev));
 		sc->sc_dying = 1;
 #ifdef UHCI_DEBUG
 		uhci_dump_all(sc);
@@ -2370,7 +2371,7 @@ uhci_device_isoc_abort(usbd_xfer_handle xfer)
 	for (i = 0; i < nframes; i++) {
 		std = stds[n];
 		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));
-		len = UHCI_TD_GET_MAXLEN(std->td.td_token);
+		len = UHCI_TD_GET_MAXLEN(le32toh(std->td.td_token));
 		if (len > maxlen)
 			maxlen = len;
 		if (++n >= UHCI_VFRAMELIST_COUNT)

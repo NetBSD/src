@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.3.22.1 2000/11/20 20:08:10 bouyer Exp $	*/
+/*	$NetBSD: uboot.c,v 1.3.22.2 2001/01/05 17:34:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,6 +41,7 @@
 #include <a.out.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include <hp300/stand/common/samachdep.h>
 
@@ -71,6 +72,11 @@ char *names[] = {
 
 static int bdev, badapt, bctlr, bunit, bpart;
 
+void main __P((void));
+void getbootdev __P((int *));
+void exec_hp300 __P((char *, u_long, int));
+
+void
 main()
 {
 	int currname = 0;
@@ -97,12 +103,12 @@ main()
 			getbootdev(&howto);
 		} else
 			printf(": %s\n", name);
-
-		exec(name, lowram, howto);
+		exec_hp300(name, (u_long)lowram, howto);
 		printf("boot: %s\n", strerror(errno));
 	}
 }
 
+void
 getbootdev(howto)
 	int *howto;
 {
@@ -117,7 +123,7 @@ getbootdev(howto)
 			printf("panic: can't reboot, halting\n");
 			asm("stop #0x2700");
 		}
-		while (c = *ptr) {
+		while ((c = *ptr) != '\0') {
 			while (c == ' ')
 				c = *++ptr;
 			if (!c)
@@ -134,4 +140,30 @@ getbootdev(howto)
 		}
 	} else
 		printf("\n");
+}
+
+#define	round_to_size(x) \
+	(((x) + sizeof(u_long) - 1) & ~(sizeof(u_long) - 1))
+
+void
+exec_hp300(file, loadaddr, howto)
+	char *file;
+	u_long loadaddr;
+	int howto;
+{
+	u_long marks[MARK_MAX];
+	int fd;
+
+	marks[MARK_START] = loadaddr;
+	if ((fd = loadfile(name, marks, LOAD_KERNEL)) == -1)
+		return;
+
+	marks[MARK_END] = round_to_size(marks[MARK_END] - loadaddr);
+	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n",
+	    marks[MARK_ENTRY], marks[MARK_NSYM],
+	    marks[MARK_SYM], marks[MARK_END]);
+
+	machdep_start((char *)marks[MARK_ENTRY], howto,
+	    (char *)loadaddr, (char *)marks[MARK_SYM],
+	    (char *)marks[MARK_END]);
 }

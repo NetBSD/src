@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43.2.2 2000/12/08 09:30:51 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.43.2.3 2001/01/05 17:35:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -156,6 +156,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include <dev/cons.h>
 
 #include "wskbd.h"
+#if NSMG > 0
 #if NWSKBD > 0
 #define smgcngetc wskbd_cngetc
 #else
@@ -168,6 +169,7 @@ smgcngetc(dev_t dev)
 
 #define smgcnputc wsdisplay_cnputc
 #define	smgcnpollc nullcnpollc
+#endif
 
 cons_decl(gen);
 cons_decl(dz);

@@ -1,18 +1,17 @@
-/* $NetBSD: isp_target.h,v 1.8.2.2 2000/11/20 11:40:40 bouyer Exp $ */
+/* $NetBSD: isp_target.h,v 1.8.2.3 2001/01/05 17:35:41 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
  *	sys/dev/ic/isp.c
- *	sys/dev/ic/ic/isp.c
- *	sys/dev/ic/ic/isp_inline.h
- *	sys/dev/ic/ic/isp_netbsd.c
- *	sys/dev/ic/ic/isp_netbsd.h
- *	sys/dev/ic/ic/isp_target.c
- *	sys/dev/ic/ic/isp_target.h
- *	sys/dev/ic/ic/isp_tpublic.h
- *	sys/dev/ic/ic/ispmbox.h
- *	sys/dev/ic/ic/ispreg.h
- *	sys/dev/ic/ic/ispvar.h
+ *	sys/dev/ic/isp_inline.h
+ *	sys/dev/ic/isp_netbsd.c
+ *	sys/dev/ic/isp_netbsd.h
+ *	sys/dev/ic/isp_target.c
+ *	sys/dev/ic/isp_target.h
+ *	sys/dev/ic/isp_tpublic.h
+ *	sys/dev/ic/ispmbox.h
+ *	sys/dev/ic/ispreg.h
+ *	sys/dev/ic/ispvar.h
  *	sys/microcode/isp/asm_sbus.h
  *	sys/microcode/isp/asm_1040.h
  *	sys/microcode/isp/asm_1080.h
@@ -298,6 +297,9 @@ typedef struct {
 	u_int16_t	at_scsi_status;
 	u_int8_t	at_sense[QLTM_SENSELEN];
 } at2_entry_t;
+
+#define	ATIO2_WWPN_OFFSET	0x2A
+#define	ATIO2_OXID_OFFSET	0x3E
 
 #define	ATIO2_TC_ATTR_MASK	0x7
 #define	ATIO2_TC_ATTR_SIMPLEQ	0

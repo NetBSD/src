@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.23.2.2 2000/11/20 20:00:25 bouyer Exp $
+#	$NetBSD: PICA,v 1.23.2.3 2001/01/05 17:33:54 bouyer Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -116,26 +116,26 @@ config		netbsd	root on ? type ?
 mainbus0	at root
 cpu*		at mainbus0
 
-#### Pica bus devices
+#### Jazz-Internal bus devices
 
-pica*		at mainbus0	# ACER Pica systems local bus.
-aclock0 	at pica?
-#pc0		at pica?
-#opms0		at pica?
-vga0		at pica?	# Jazz localbus VGA
-pckbc0		at pica?	# PC keyboard controller
-com0		at pica?
-com1		at pica?
-lpt0		at pica?
-sn0		at pica?
+jazzio*		at mainbus0	# Jazz-Internal bus.
+aclock0 	at jazzio?
+#pc0		at jazzio?
+#opms0		at jazzio?
+vga0		at jazzio?	# Jazz localbus VGA
+pckbc0		at jazzio?	# PC keyboard controller
+com0		at jazzio?
+com1		at jazzio?
+lpt0		at jazzio?
+sn0		at jazzio?
 
-fdc0		at pica?
+fdc0		at jazzio?
 fd*		at fdc? drive ?
 
-asc0		at pica?
+asc0		at jazzio?
 scsibus* 	at asc?
 
-#siop0		at pica?
+#siop0		at jazzio?
 #scsibus* 	at siop?
 
 #### ISA bus devices

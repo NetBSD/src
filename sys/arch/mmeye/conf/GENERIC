@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.3.2.1 2000/11/20 20:14:46 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.3.2.2 2001/01/05 17:34:48 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.3.2.1 $"
+#ident 		"GENERIC-$Revision: 1.3.2.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -120,7 +120,7 @@ mainbus0 at root
 shb*	at mainbus?
 
 # WatchDog Timer
-wdog0 at shb? port 0xffffff84
+#wdog0 at shb? port 0xffffff84
 
 com0	at shb? port 0xa4000000 irq 11
 com1	at shb? port 0xa4000008 irq 12
@@ -159,6 +159,7 @@ pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

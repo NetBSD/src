@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32.2.2 2000/11/22 16:00:25 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32.2.3 2001/01/05 17:34:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,7 +88,7 @@
  * Size of shared memory map
  */
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	1024
+#define SHMMAXPGS	2048
 #endif
 
 /*

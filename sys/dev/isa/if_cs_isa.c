@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.2 1998/07/27 18:27:36 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.2.14.1 2001/01/05 17:35:51 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -37,6 +37,11 @@
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>

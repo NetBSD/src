@@ -1,18 +1,17 @@
-/* $NetBSD: isp_pci.c,v 1.45.2.5 2000/12/13 15:50:09 bouyer Exp $ */
+/* $NetBSD: isp_pci.c,v 1.45.2.6 2001/01/05 17:36:09 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
  *	sys/dev/ic/isp.c
- *	sys/dev/ic/ic/isp.c
- *	sys/dev/ic/ic/isp_inline.h
- *	sys/dev/ic/ic/isp_netbsd.c
- *	sys/dev/ic/ic/isp_netbsd.h
- *	sys/dev/ic/ic/isp_target.c
- *	sys/dev/ic/ic/isp_target.h
- *	sys/dev/ic/ic/isp_tpublic.h
- *	sys/dev/ic/ic/ispmbox.h
- *	sys/dev/ic/ic/ispreg.h
- *	sys/dev/ic/ic/ispvar.h
+ *	sys/dev/ic/isp_inline.h
+ *	sys/dev/ic/isp_netbsd.c
+ *	sys/dev/ic/isp_netbsd.h
+ *	sys/dev/ic/isp_target.c
+ *	sys/dev/ic/isp_target.h
+ *	sys/dev/ic/isp_tpublic.h
+ *	sys/dev/ic/ispmbox.h
+ *	sys/dev/ic/ispreg.h
+ *	sys/dev/ic/ispvar.h
  *	sys/microcode/isp/asm_sbus.h
  *	sys/microcode/isp/asm_1040.h
  *	sys/microcode/isp/asm_1080.h
@@ -64,6 +63,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <uvm/uvm_extern.h>
+#include <sys/reboot.h>
 
 static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
@@ -271,7 +271,7 @@ struct cfattach isp_pci_ca = {
 };
 
 #ifdef	DEBUG
-static char *vstring = 
+const char vstring[] = 
     "Qlogic ISP Driver, NetBSD (pci) Platform Version %d.%d Core Version %d.%d";
 #endif
 
@@ -319,7 +319,7 @@ isp_pci_attach(parent, self, aux)
 #ifdef	DEBUG
 	static char oneshot = 1;
 #endif
-	static char *nomem = "%s: no mem for sdparam table\n";
+	static const char nomem[] = "%s: no mem for sdparam table\n";
 	u_int32_t data, rev, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
@@ -336,7 +336,6 @@ isp_pci_attach(parent, self, aux)
 	memh_valid = (pci_mapreg_map(pa, MEM_MAP_REG,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &memt, &memh, NULL, NULL) == 0);
-
 	if (memh_valid) {
 		st = memt;
 		sh = memh;
@@ -472,12 +471,14 @@ isp_pci_attach(parent, self, aux)
 #ifdef	ISP_LOGDEFAULT
 	isp->isp_dblev = ISP_LOGDEFAULT;
 #else
-	isp->isp_dblev = ISP_LOGCONFIG|ISP_LOGWARN|ISP_LOGERR;
+	isp->isp_dblev = ISP_LOGWARN|ISP_LOGERR;
+	if (bootverbose)
+		isp->isp_dblev |= ISP_LOGCONFIG|ISP_LOGINFO;
 #ifdef	SCSIDEBUG
 	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
 #endif
 #ifdef	DEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGINFO;
+	isp->isp_dblev |= ISP_LOGDEBUG0;
 #endif
 #endif
 
@@ -520,8 +521,7 @@ isp_pci_attach(parent, self, aux)
 	data &= ~1;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCIR_ROMADDR, data);
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", isp->isp_name);
 		free(isp->isp_param, M_DEVBUF);
 		return;
@@ -915,9 +915,9 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 			    dmap->dm_segs[seg].ds_addr;
 #endif
 		}
-		isp_prt(isp, ISP_LOGDEBUG2, "seg0.[%d]={0x%x,%d}",
-		    rq->req_seg_count, dmap->dm_segs[seg].ds_addr,
-		    dmap->dm_segs[seg].ds_len);
+		isp_prt(isp, ISP_LOGDEBUG2, "seg0.[%d]={0x%lx,%lu}",
+		    rq->req_seg_count, (long) dmap->dm_segs[seg].ds_addr,
+		    (unsigned long) dmap->dm_segs[seg].ds_len);
 	}
 
 	if (seg == segcnt)
@@ -950,10 +950,10 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 			crq->req_dataseg[ovseg].ds_base =
 			    dmap->dm_segs[seg].ds_addr;
 #endif
-			isp_prt(isp, ISP_LOGDEBUG2, "seg%d.[%d]={0x%x,%d}",
+			isp_prt(isp, ISP_LOGDEBUG2, "seg%d.[%d]={0x%lx,%lu}",
 			    rq->req_header.rqs_entry_count - 1,
-			    rq->req_seg_count, dmap->dm_segs[seg].ds_addr,
-			    dmap->dm_segs[seg].ds_len);
+			    rq->req_seg_count, (long)dmap->dm_segs[seg].ds_addr,
+			    (unsigned long) dmap->dm_segs[seg].ds_len);
 		}
 	} while (seg < segcnt);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10.2.1 2000/11/20 20:13:36 bouyer Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10.2.2 2001/01/05 17:34:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10.2.1 2000/11/20 20:13:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10.2.2 2001/01/05 17:34:46 bouyer Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -88,10 +88,13 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	struct frame *f;
+	mips_reg_t sr;
+
+	f = (struct frame *) p->p_md.md_regs;
+	sr = f->f_regs[SR];
 	memcpy(p->p_md.md_regs, regs, sizeof(struct reg));
-	/*
-	 * XXX: is it safe to let users set system CP0 status reg?
-	 */
+	f->f_regs[SR] = sr;
 	return 0;
 }
 

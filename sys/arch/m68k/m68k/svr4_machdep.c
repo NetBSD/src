@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.2.2.1 2000/11/20 20:11:41 bouyer Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.2.2.2 2001/01/05 17:34:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -253,19 +253,18 @@ svr4_sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct frame *frame;
 	struct svr4_sigframe *sfp, sf;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 
 	frame = (struct frame *)p->p_md.md_regs;
 
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sfp = (struct svr4_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size);
+		sfp = (struct svr4_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+		    p->p_sigctx.ps_sigstk.ss_size);
 	else
 		sfp = (struct svr4_sigframe *)frame->f_regs[SP];
 	sfp--;
@@ -296,10 +295,10 @@ svr4_sendsig(catcher, sig, mask, code)
 
 	/* Set up the registers to return to sigcode. */
 	frame->f_regs[SP] = (int)sfp;
-	frame->f_pc = (int)psp->ps_sigcode;
+	frame->f_pc = (int)p->p_sigctx.ps_sigcode;
 
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.39.2.1 2000/11/20 18:11:39 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.39.2.2 2001/01/05 17:37:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -125,6 +125,8 @@ union __semun {
  * include that header or explicitly cast them to off_t.
  */
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#ifndef __OFF_T_SYSCALLS_DECLARED
+#define __OFF_T_SYSCALLS_DECLARED
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 __BEGIN_DECLS
@@ -133,6 +135,7 @@ int	 ftruncate __P((int, off_t));
 int	 truncate __P((const char *, off_t));
 __END_DECLS
 #endif /* !_KERNEL */
+#endif /* __OFF_T_SYSCALLS_DECLARED */
 #endif /* !defined(_POSIX_SOURCE) ... */
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)

@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.38.2.1 2000/11/20 19:56:37 bouyer Exp $ */
+/* $NetBSD: prom.c,v 1.38.2.2 2001/01/05 17:33:41 bouyer Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.38.2.1 2000/11/20 19:56:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.38.2.2 2001/01/05 17:33:41 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,10 +62,9 @@ struct simplelock prom_slock;
 int		prom_mapped = 1;	/* Is PROM still mapped? */
 
 pt_entry_t	prom_pte, saved_pte[1];	/* XXX */
-static pt_entry_t *prom_lev1map __P((void));
 
 static pt_entry_t *
-prom_lev1map()
+prom_lev1map(void)
 {
 	struct alpha_pcb *apcb;
 
@@ -79,8 +78,7 @@ prom_lev1map()
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
 void
-init_prom_interface(rpb)
-	struct rpb *rpb;
+init_prom_interface(struct rpb *rpb)
 {
 	struct crb *c;
 
@@ -93,7 +91,7 @@ init_prom_interface(rpb)
 }
 
 void
-init_bootstrap_console()
+init_bootstrap_console(void)
 {
 	char buf[4];
 
@@ -107,11 +105,11 @@ init_bootstrap_console()
 }
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
-static void prom_cache_sync __P((void));
+static void prom_cache_sync(void);
 #endif
 
 int
-prom_enter()
+prom_enter(void)
 {
 	int s;
 
@@ -141,8 +139,7 @@ prom_enter()
 }
 
 void
-prom_leave(s)
-	int s;
+prom_leave(int s)
 {
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
@@ -167,7 +164,7 @@ prom_leave(s)
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 static void
-prom_cache_sync __P((void))
+prom_cache_sync(void)
 {
 	ALPHA_TBIA();
 	alpha_pal_imb();
@@ -185,9 +182,7 @@ prom_cache_sync __P((void))
  * of the console area.
  */
 void
-promcnputc(dev, c)
-	dev_t dev;
-	int c;
+promcnputc(dev_t dev, int c)
 {
         prom_return_t ret;
 	unsigned char *to = (unsigned char *)0x20000000;
@@ -209,8 +204,7 @@ promcnputc(dev, c)
  * Wait for the prom to get a real char and pass it back.
  */
 int
-promcngetc(dev)
-	dev_t dev;
+promcngetc(dev_t dev)
 {
         prom_return_t ret;
 	int s;
@@ -230,9 +224,7 @@ promcngetc(dev)
  * See if prom has a real char and pass it back.
  */
 int
-promcnlookc(dev, cp)
-	dev_t dev;
-	char *cp;
+promcnlookc(dev_t dev, char *cp)
 {
         prom_return_t ret;
 	int s;
@@ -248,9 +240,7 @@ promcnlookc(dev, cp)
 }
 
 int
-prom_getenv(id, buf, len)
-	int id, len;
-	char *buf;
+prom_getenv(int id, char *buf, int len)
 {
 	unsigned char *to = (unsigned char *)0x20000000;
 	prom_return_t ret;
@@ -269,8 +259,7 @@ prom_getenv(id, buf, len)
 }
 
 void
-prom_halt(halt)
-	int halt;
+prom_halt(int halt)
 {
 	struct pcs *p;
 
@@ -297,7 +286,7 @@ prom_halt(halt)
 }
 
 u_int64_t
-hwrpb_checksum()
+hwrpb_checksum(void)
 {
 	u_int64_t *p, sum;
 	int i;
@@ -311,7 +300,7 @@ hwrpb_checksum()
 }
 
 void
-hwrpb_primary_init()
+hwrpb_primary_init(void)
 {
 	struct pcs *p;
 
@@ -326,7 +315,7 @@ hwrpb_primary_init()
 }
 
 void
-hwrpb_restart_setup()
+hwrpb_restart_setup(void)
 {
 	struct pcs *p;
 
@@ -344,8 +333,7 @@ hwrpb_restart_setup()
 }
 
 u_int64_t
-console_restart(framep)
-	struct trapframe *framep;
+console_restart(struct trapframe *framep)
 {
 	struct pcs *p;
 

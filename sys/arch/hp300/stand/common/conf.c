@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3.20.1 2000/11/20 20:08:09 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.20.2 2001/01/05 17:34:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -146,7 +146,7 @@ punitzero(ctlr, slave, punit)
 
 #define	xxpunit		punitzero
 #ifdef SUPPORT_TAPE
-extern int ctpunit __P((int, int, int *));
+int ctpunit __P((int, int, int *));
 #else
 #define	ctpunit		xxpunit
 #endif

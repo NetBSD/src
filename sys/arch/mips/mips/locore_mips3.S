@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.10.2.3 2000/12/08 09:28:21 bouyer Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.10.2.4 2001/01/05 17:34:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -260,6 +260,20 @@ VECTOR(mips3_XTLBMiss, unknown)
 5:	j	mips3_SlowFault		    #1e: no page table present
 	nop				    #1f: branch delay slot
 VECTOR_END(mips3_XTLBMiss)
+
+/*
+ * Vector to real handler in KSEG1.
+ */
+VECTOR(mips3_cache, unknown)
+	la	k0, _C_LABEL(mips3_cacheException)
+	li	k1, MIPS_PHYS_MASK
+	and	k0, k1
+	li	k1, MIPS_KSEG1_START
+	or	k0, k1
+	j	k0
+	nop
+VECTOR_END(mips3_cache)
+
 	.set	at
 
 
@@ -595,7 +609,7 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK(k0,ra)		# machine dependent masking
+	DYNAMIC_STATUS_MASK_TOUSER(k0,ra)	# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	s8, FRAME_S8(k1)
@@ -730,7 +744,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK(k0,ra)		# machine dependent masking
+	DYNAMIC_STATUS_MASK_TOUSER(k0,ra)	# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	s8, FRAME_S8(k1)
@@ -742,6 +756,34 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	eret					# return to syscall point
 	.set	at
 END(mips3_SystemCall)
+
+/*
+ * Panic on cache errors.  A lot more could be done to recover
+ * from some types of errors but it is tricky.
+ */
+NESTED_NOPROFILE(mips3_cacheException, KERNFRAME_SIZ, ra)
+	.set	noat
+	.mask	0x80000000, -4
+	la	k0, panic			# return to panic
+	la	a0, 9f				# panicstr
+	dmfc0	a1, MIPS_COP_0_ERROR_PC
+	mfc0	a2, MIPS_COP_0_CACHE_ERR	# 3rd arg cache error
+
+	dmtc0	k0, MIPS_COP_0_ERROR_PC		# set return address
+
+	mfc0	k0, MIPS_COP_0_STATUS		# restore status
+	li	k1, MIPS3_SR_DIAG_PE		# ignore further errors
+	or	k0, k1
+	mtc0	k0, MIPS_COP_0_STATUS		# restore status
+	nop
+	nop
+	nop
+
+	eret
+
+	MSG("cache error @ EPC 0x%x CachErr 0x%x");
+	.set	at
+END(mips3_cacheException)
 
 /*
  * mips3_KernIntr
@@ -1012,7 +1054,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK(k0,ra)		# machine dependent masking
+	DYNAMIC_STATUS_MASK_TOUSER(k0,ra)	# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	ra, FRAME_RA(k1)

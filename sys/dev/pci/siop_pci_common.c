@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.3.2.3 2000/12/08 09:12:38 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.3.2.4 2001/01/05 17:36:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -263,8 +263,7 @@ siop_pci_attach_common(sc, pa)
 		}
 	}
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle) != 0) {
+	if (pci_intr_map(pa, &intrhandle) != 0) {
 		printf("%s: couldn't map interrupt\n",
 		    sc->siop.sc_dev.dv_xname);
 		return 0;

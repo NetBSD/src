@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.3 2000/12/08 09:28:20 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.4 2001/01/05 17:34:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,15 +54,20 @@
 /*
  * Get varios per-cpu values.
  */
+#ifdef notyet
+#define GET_CPUINFO(r)	\
+	mfsprg	r,0
+#else
 #define	GET_CPUINFO(r)						\
 	mfspr	r,1023;			/* r = cpu_number() */	\
 	mulli	r,r,CI_SIZE;					\
 	addis	r,r,_C_LABEL(cpu_info)@ha;			\
 	addi	r,r,_C_LABEL(cpu_info)@l;
 #endif
+#endif
 
-#define	INTSTK	(8*1024)	/* 8K interrupt stack */
-#define	SPILLSTK 1024		/* 1K spill stack */
+#define	INTSTK   8192			/* 8K interrupt stack */
+#define	SPILLSTK 4096			/* 4K spill stack */
 
 /*
  * Globals
@@ -173,6 +178,10 @@ __start:
 #if defined(MULTIPROCESSOR)
 	lis	9,_C_LABEL(cpu_info)@ha
 	addi	9,9,_C_LABEL(cpu_info)@l
+	addi	8,8,INTSTK
+	stw	8,CI_INTSTK(9)
+	addi	8,8,SPILLSTK
+	stw	8,CI_SPILLSTK(9)
 	stw	8,CI_IDLE_PCB(9)
 #else
 	lis	9,idle_u@ha
@@ -216,11 +225,6 @@ ENTRY(openfirmware)
 	mtibatu	2,0
 	mtibatu	3,0
 
-	lis	4,ofmsr@ha		/* Open Firmware msr */
-	lwz	4,ofmsr@l(4)
-	mtmsr	4
-	isync
-
 	lis	4,srsave@ha		/* save old SR */
 	addi	4,4,srsave@l
 	li	5,0
@@ -244,6 +248,11 @@ ENTRY(openfirmware)
 	cmpwi	5,0
 	bne	1b
 2:
+	lis	4,ofmsr@ha		/* Open Firmware msr */
+	lwz	4,ofmsr@l(4)
+	mtmsr	4
+	isync
+
 	blrl				/* call Open Firmware */
 
 	lis	4,srsave@ha		/* restore saved SR */
@@ -349,7 +358,7 @@ ASENTRY(Idle)
 	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
 	or.	9,9,9
-	bne-	.Lsw1			/* at least one queue non-empty */
+	bne+	.Lsw1			/* at least one queue non-empty */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
@@ -424,10 +433,29 @@ ENTRY(cpu_switch)
 
 	mr	30,3
 #if defined(MULTIPROCESSOR)
-	GET_CPUINFO(3)
+	/* Switch to the idle PCB unless we're already running on it. */
+	GET_CPUINFO(7)
+	cmpwi	30,0			/* old process was exiting? */
+	beq	1f
+
+	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
+	mfcr	11			/* save cr */
+	mr	12,2			/* save r2 */
+	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
+	stmw	10,8(1)
+	lwz	3,P_ADDR(30)
+	stw	1,PCB_SP(3)		/* save SP */
+
+	lwz	6,CI_IDLE_PCB(7)
+	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+
+1:
 	xor	31,31,31
-	stw	31,CI_CURPROC(3)	/* Zero to not accumulate cpu time */
-	lwz	31,CI_CURPCB(3)
+	stw	31,CI_CURPROC(7)	/* Zero to not accumulate cpu time */
+	lwz	31,CI_CURPCB(7)
+
+	lwz	3,CI_CPL(7)
+	stw	3,PCB_SPL(31)		/* save spl */
 #else
 	lis	3,_C_LABEL(curproc)@ha
 	xor	31,31,31
@@ -443,7 +471,9 @@ ENTRY(cpu_switch)
 
 	xor	3,3,3
 	bl	_C_LABEL(lcsplx)
+#if !defined(MULTIPROCESSOR)
 	stw	3,PCB_SPL(31)		/* save spl */
+#endif
 
 /* Lock the scheduler. */
 	mfmsr	3
@@ -484,8 +514,13 @@ ENTRY(cpu_switch)
 1:
 	/* just did this resched thing */
 	xor	3,3,3
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(4)
+	stw	3,CI_WANT_RESCHED(4)
+#else
 	lis	4,_C_LABEL(want_resched)@ha
 	stw	3,_C_LABEL(want_resched)@l(4)
+#endif
 
 	stw	3,P_BACK(31)		/* probably superfluous */
 
@@ -515,6 +550,7 @@ ENTRY(cpu_switch)
 	ori	3,3,PSL_EE@l		/* Now we can interrupt again */
 	mtmsr	3
 
+#if !defined(MULTIPROCESSOR)		/* XXX */
 	cmpl	0,31,30			/* is it the same process? */
 	beq	switch_return
 
@@ -528,6 +564,7 @@ ENTRY(cpu_switch)
 	stmw	10,8(1)
 	lwz	3,P_ADDR(30)
 	stw	1,PCB_SP(3)		/* save SP */
+#endif
 
 switch_exited:
 	mfmsr	3

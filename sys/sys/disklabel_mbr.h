@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_mbr.h,v 1.5 1999/09/23 15:21:12 ws Exp $	*/
+/*	$NetBSD: disklabel_mbr.h,v 1.5.2.1 2001/01/05 17:36:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Christopher G. Demetriou
@@ -82,5 +82,9 @@ struct mbr_partition {
 /* Isolate the relevant bits to get sector and cylinder. */
 #define	MBR_PSECT(s)	((s) & 0x3f)
 #define	MBR_PCYL(c, s)	((c) + (((s) & 0xc0) << 2))
+
+#define MBR_IS_EXTENDED(x)	((x) == MBR_PTYPE_EXT || \
+				 (x) == MBR_PTYPE_EXT_LBA || \
+				 (x) == MBR_PTYPE_EXT_LNX)
 
 #endif /* _SYS_DISKLABEL_MBR_H_ */

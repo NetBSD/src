@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.2.2.4 2000/12/13 15:49:20 bouyer Exp $ */
+/* $NetBSD: podulebus.c,v 1.2.2.5 2001/01/05 17:34:04 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.2.2.4 2000/12/13 15:49:20 bouyer Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.2.2.5 2001/01/05 17:34:04 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: podulebus.c,v 1.2.2.4 2000/12/13 15:49:20 bouyer Exp $");
 
 #include "locators.h"
 
+#include "podloader.h"
 #include "unixbp.h"
 
 #if NUNIXBP > 0
@@ -59,9 +60,14 @@ static void podulebus_attach(struct device *, struct device *, void *);
 static void podulebus_probe_podule(struct device *, int);
 static int podulebus_print(void *, char const *);
 static int podulebus_submatch(struct device *, struct cfdata *, void *);
-static void podulebus_read_chunks(struct device *,
-				  struct podulebus_attach_args *);
+static void podulebus_read_chunks(struct podulebus_attach_args *, int);
 static u_int8_t *podulebus_get_chunk(struct podulebus_attach_args *pa, int type);
+#if NPODLOADER > 0
+void podloader_read_region(struct podulebus_attach_args *pa, u_int src,
+    u_int8_t *dest, size_t length);
+extern register_t podloader_call(register_t, register_t, register_t,
+    void *, int);
+#endif
 
 struct podulebus_softc {
 	struct	device sc_dev;
@@ -104,7 +110,7 @@ podulebus_probe_podule(struct device *self, int slotnum)
 	struct podulebus_softc *sc = (struct podulebus_softc *)self;
 	bus_space_tag_t id_bst;
 	bus_space_handle_t id_bsh;
-	int ecid;
+	int ecid, w;
 	u_int8_t extecid[EXTECID_SIZE];
 	struct podulebus_attach_args pa;
 
@@ -148,9 +154,17 @@ podulebus_probe_podule(struct device *self, int slotnum)
 				 extecid[EXTECID_PHI] << 8);
 		pa.pa_slotnum = slotnum;
 		if (pa.pa_flags1 & EXTECID_F1_CD) {
-			podulebus_read_chunks(self, &pa);
-			pa.pa_descr = podulebus_get_chunk(&pa,
+			w = pa.pa_flags1 & EXTECID_F1_W_MASK;
+			if (w != EXTECID_F1_W_8BIT) {
+				/* RISC OS 3 can't handle this either. */
+				printf("%s:%d: ROM is not 8 bits wide; "
+				    "ignoring it\n",
+				    self->dv_xname, pa.pa_slotnum);
+			} else {
+				podulebus_read_chunks(&pa, 0);
+				pa.pa_descr = podulebus_get_chunk(&pa,
 							  CHUNK_DEV_DESCR);
+			}
 		}
 		config_found_sm(self, &pa,
 				podulebus_print, podulebus_submatch);
@@ -158,28 +172,31 @@ podulebus_probe_podule(struct device *self, int slotnum)
 			FREE(pa.pa_chunks, M_DEVBUF);
 		if (pa.pa_descr)
 			FREE(pa.pa_descr, M_DEVBUF);
+		if (pa.pa_loader)
+			FREE(pa.pa_loader, M_DEVBUF);
 	} else
 		printf("%s:%d: non-extended podule ignored.\n",
 		       self->dv_xname, slotnum);
 }
 
 static void
-podulebus_read_chunks(struct device *self, struct podulebus_attach_args *pa)
+podulebus_read_chunks(struct podulebus_attach_args *pa, int useloader)
 {
 	u_int8_t chunk[8];
-	u_int ptr, w, nchunks, type, length, offset;
+	u_int ptr, nchunks, type, length, offset;
 
-	nchunks = 0;
-	ptr = EXTECID_SIZE + IRQPTR_SIZE;
-	w = pa->pa_flags1 & EXTECID_F1_W_MASK;
-	if (w != EXTECID_F1_W_8BIT) {
-		/* RISC OS 3 can't handle this either. */
-		printf("%s:%d: ROM is not 8 bits wide; ignoring it\n",
-		       self->dv_xname, pa->pa_slotnum);
-		return;
-	}
+	nchunks = pa->pa_nchunks;
+	if (useloader)
+		ptr = 0;
+	else
+		ptr = EXTECID_SIZE + IRQPTR_SIZE;
 	for (;;) {
-		bus_space_read_region_1(pa->pa_sync_t, pa->pa_sync_h,
+#if NPODLOADER > 0
+		if (useloader)
+			podloader_read_region(pa, ptr, chunk, 8);
+		else
+#endif
+			bus_space_read_region_1(pa->pa_sync_t, pa->pa_sync_h,
 					ptr, chunk, 8);
 		ptr += 8;
 		type = chunk[0];
@@ -197,6 +214,7 @@ podulebus_read_chunks(struct device *self, struct podulebus_attach_args *pa)
 		pa->pa_chunks[nchunks-1].pc_type = type;
 		pa->pa_chunks[nchunks-1].pc_length = length;
 		pa->pa_chunks[nchunks-1].pc_offset = offset;
+		pa->pa_chunks[nchunks-1].pc_useloader = useloader;
 	}
 	pa->pa_nchunks = nchunks;
 }
@@ -205,32 +223,98 @@ static u_int8_t *
 podulebus_get_chunk(struct podulebus_attach_args *pa, int type)
 {
 	int i;
+	struct podulebus_chunk *pc;
 	u_int8_t *chunk;
 
-	for (i = 0; i < pa->pa_nchunks; i++)
-		if (pa->pa_chunks[i].pc_type == type) {
-			MALLOC(chunk, u_int8_t *,
-			       pa->pa_chunks[i].pc_length + 1,
-			       M_DEVBUF, M_WAITOK);
-			bus_space_read_region_1(pa->pa_sync_t, pa->pa_sync_h,
-						pa->pa_chunks[i].pc_offset,
-						chunk,
-						pa->pa_chunks[i].pc_length);
-			chunk[pa->pa_chunks[i].pc_length] = 0;
+	for (i = 0; i < pa->pa_nchunks; i++) {
+		pc = &pa->pa_chunks[i];
+		if (pc->pc_type == type) {
+			chunk = malloc( pc->pc_length + 1, M_DEVBUF, M_WAITOK);
+#if NPODLOADER > 0
+			if (pc->pc_useloader)
+				podloader_read_region(pa, pc->pc_offset, chunk,
+				    pc->pc_length);
+			else
+#endif
+				bus_space_read_region_1(pa->pa_sync_t,
+				    pa->pa_sync_h, pc->pc_offset, chunk,
+				    pc->pc_length);
+			chunk[pc->pc_length] = 0;
 			return chunk;
 		}
+	}
 	return NULL;
 }
+
+#if NPODLOADER > 0
+int
+podulebus_initloader(struct podulebus_attach_args *pa)
+{
+
+	pa->pa_loader = podulebus_get_chunk(pa, CHUNK_RISCOS_LOADER);
+	if (pa->pa_loader == NULL)
+		return -1;
+	podulebus_read_chunks(pa, 1);
+	if (pa->pa_descr)
+		FREE(pa->pa_descr, M_DEVBUF);
+	pa->pa_descr = podulebus_get_chunk(pa, CHUNK_DEV_DESCR);
+	return 0;
+}
+
+int
+podloader_readbyte(struct podulebus_attach_args *pa, u_int addr)
+{
+
+	return podloader_call(0, addr, pa->pa_sync_h, pa->pa_loader, 0);
+}
+
+void
+podloader_writebyte(struct podulebus_attach_args *pa, u_int addr, int val)
+{
+
+	podloader_call(val, addr, pa->pa_sync_h, pa->pa_loader, 1);
+}
+
+void
+podloader_reset(struct podulebus_attach_args *pa)
+{
+
+	podloader_call(0, 0, pa->pa_sync_h, pa->pa_loader, 2);
+}
+
+int
+podloader_callloader(struct podulebus_attach_args *pa, u_int r0, u_int r1)
+{
+
+	return podloader_call(r0, r1, pa->pa_sync_h, pa->pa_loader, 3);
+}
+
+void
+podloader_read_region(struct podulebus_attach_args *pa, u_int src,
+    u_int8_t *dest, size_t length)
+{
+
+	while (length--)
+		*dest++ = podloader_readbyte(pa, src++);
+	podloader_reset(pa);
+}
+#endif
 
 static int
 podulebus_print(void *aux, char const *pnp)
 {
 	struct podulebus_attach_args *pa = aux;
+	char *p, *q;
 
 	if (pnp) {
-		if (pa->pa_descr)
+		if (pa->pa_descr) {
+			/* Restrict description to ASCII graphic characters. */
+			for (p = q = pa->pa_descr; *p != '\0'; p++)
+				if (*p >= 32 && *p < 126)
+					*q++ = *p;
+			*q++ = 0;
 			printf("%s", pa->pa_descr);
-		else
+		} else
 			printf("podule");
 		printf(" <%04x:%04x> at %s",
 		       pa->pa_manufacturer, pa->pa_product, pnp);

@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.29.2.3 2000/11/22 16:00:10 bouyer Exp $
+#	$NetBSD: TX3922,v 1.29.2.4 2001/01/05 17:34:17 bouyer Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -117,12 +117,12 @@ txcsbus2	at tx39biu? platform VICTOR_INTERLINK
 #	(3) ITE IO notyet
 #	(4) Plum2 IO (EXTPW[0:2]) notyet
 txioman1 at txsim? platform SHARP_TELIOS_HCAJ1
-txin*	at txioman1 id BTN_APP0		group 1 port 7 edge 1 # IE button 
-txin*	at txioman1 id BTN_APP1		group 1 port 8 edge 1 # Mail button 
-txin*	at txioman1 id PME_AC		group 1 port 6 edge 1 # AC-power
-txin*	at txioman1 id COM0_CTS		group 0 port 27 edge 3
-txin*	at txioman1 id COM0_DCD		group 0 port 29 edge 3
-txout*	at txioman1 id PWCTL_LED	group 1 port 4  flags 3 #(blink)
+txin*	at txioman1 id BTN_APP0		evtype BUTTON group 1 port 7 edge 1 # IE button 
+txin*	at txioman1 id BTN_APP1		evtype BUTTON group 1 port 8 edge 1 # Mail button 
+txin*	at txioman1 id PME_AC		evtype PMEVENT group 1 port 6 edge 1# AC-power
+txin*	at txioman1 id COM0_CTS		evtype EVENT group 0 port 27 edge 3
+txin*	at txioman1 id COM0_DCD		evtype EVENT group 0 port 29 edge 3
+txout*	at txioman1 id PWCTL_LED	evtype POWER group 1 port 4  flags 3 #(blink)
 
 txioman2 at txsim? platform SHARP_TELIOS_HCVJ1C_JP
 txin*	at txioman2 id BTN_APP0		evtype BUTTON group 1 port 7 edge 1 # IE button 

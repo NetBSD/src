@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.8.2.2 2000/12/08 09:30:43 bouyer Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.8.2.3 2001/01/05 17:35:10 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _LKM
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,7 +465,6 @@ svr4_sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct trapframe64 *tf;
 	struct svr4_sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	vaddr_t oldsp, newsp, addr;
 
@@ -472,15 +473,15 @@ svr4_sendsig(catcher, sig, mask, code)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						       psp->ps_sigstk.ss_size);
+		fp = (struct svr4_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct svr4_sigframe *)oldsp;
 	fp = (struct svr4_sigframe *) ((long) (fp - 1) & ~7);
@@ -550,7 +551,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	addr = (vaddr_t)psp->ps_sigcode;
+	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_global[1] = (vaddr_t)catcher;
@@ -558,7 +559,7 @@ svr4_sendsig(catcher, sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("svr4_sendsig: about to return to catcher %p thru %p\n", 

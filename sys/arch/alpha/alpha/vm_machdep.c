@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.50.2.2 2000/12/08 09:23:28 bouyer Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.50.2.3 2001/01/05 17:33:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50.2.2 2000/12/08 09:23:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50.2.3 2001/01/05 17:33:42 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,16 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50.2.2 2000/12/08 09:23:28 bouyer E
 #include <machine/pmap.h>
 #include <machine/reg.h>
 
-
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	int error;
 	struct md_coredump cpustate;
@@ -104,8 +100,7 @@ cpu_coredump(p, vp, cred, chdr)
  * as if it were switching from proc0.
  */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(struct proc *p)
 {
 
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
@@ -142,12 +137,8 @@ cpu_exit(p)
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	register struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct user *up = p2->p_addr;
 
@@ -236,8 +227,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
  * swap context to it easily.
  */
 void
-cpu_swapin(p)
-	register struct proc *p;
+cpu_swapin(struct proc *p)
 {
 	struct user *up = p->p_addr;
 
@@ -252,8 +242,7 @@ cpu_swapin(p)
  * saved, so that it goes out with the pcb, which is in the user area.
  */
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_swapout(struct proc *p)
 {
 
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
@@ -269,9 +258,7 @@ cpu_swapout(p)
  * and mapped in, we can use the Virtual Page Table.
  */
 void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	long fidx, tidx;
 	ssize_t todo;
@@ -305,9 +292,7 @@ pagemove(from, to, size)
  * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
@@ -337,9 +322,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 

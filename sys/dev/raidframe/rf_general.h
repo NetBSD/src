@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.3.8.1 2000/11/20 11:42:54 bouyer Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.3.8.2 2001/01/05 17:36:25 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -46,8 +46,11 @@
 #define RF_ERRORMSG2(s,a,b)       printf((s),(a),(b))
 #define RF_ERRORMSG3(s,a,b,c)     printf((s),(a),(b),(c))
 
+void rf_print_panic_message(int, char *);
+void rf_print_assert_panic_message(int, char *, char *);
+
 extern char rf_panicbuf[];
-#define RF_PANIC() {sprintf(rf_panicbuf,"raidframe error at line %d file %s",__LINE__,__FILE__); panic(rf_panicbuf);}
+#define RF_PANIC() {rf_print_panic_message(__LINE__,__FILE__); panic(rf_panicbuf);}
 
 #ifdef _KERNEL
 #ifdef RF_ASSERT
@@ -56,9 +59,7 @@ extern char rf_panicbuf[];
 #ifndef NOASSERT
 #define RF_ASSERT(_x_) { \
   if (!(_x_)) { \
-    sprintf(rf_panicbuf, \
-        "raidframe error at line %d file %s (failed asserting %s)\n", \
-        __LINE__, __FILE__, #_x_); \
+    rf_print_assert_panic_message(__LINE__, __FILE__, #_x_); \
     panic(rf_panicbuf); \
   } \
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.10.2.1 2000/11/20 19:56:38 bouyer Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.10.2.2 2001/01/05 17:33:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10.2.1 2000/11/20 19:56:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10.2.2 2001/01/05 17:33:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,16 +80,13 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10.2.1 2000/11/20 19:56:38 bouyer 
 
 u_int	alpha_bus_window_count[ALPHA_BUS_TYPE_MAX + 1];
 
-int	(*alpha_bus_get_window) __P((int, int,
-	    struct alpha_bus_space_translation *));
+int	(*alpha_bus_get_window)(int, int,
+	    struct alpha_bus_space_translation *);
 
 struct alpha_pci_chipset *alpha_pci_chipset;
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;

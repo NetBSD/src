@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.2.4.2 2000/12/13 15:50:01 bouyer Exp $	*/
+/*	$NetBSD: anvar.h,v 1.2.4.3 2001/01/05 17:35:34 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -62,6 +62,10 @@
 
 #define AN_DEFAULT_IBSS		"NetBSD IBSS"
 
+/* The interrupts we will handle */
+#define AN_INTRS	\
+	(AN_EV_RX|AN_EV_TX|AN_EV_TX_EXC|AN_EV_ALLOC|AN_EV_LINKSTAT)
+
 /*
  * register space access macros
  */
@@ -98,10 +102,8 @@ struct an_req {
  */
 #define AN_RID_IFACE_STATS	0x0100
 #define AN_RID_MGMT_XMIT	0x0200
-#ifdef ANCACHE
 #define AN_RID_ZERO_CACHE	0x0300
 #define AN_RID_READ_CACHE	0x0400
-#endif
 #define AN_RID_TX_SPEED		0x1234
 
 /* 
@@ -113,7 +115,6 @@ struct an_req {
  *
  * Each entry in the wi_sigcache has a unique macsrc.
  */
-#ifdef ANCACHE
 #define MAXANCACHE      10
 
 struct an_sigcache {
@@ -123,7 +124,6 @@ struct an_sigcache {
 	int	noise;		/* noise value */
 	int	quality;	/* quality of the packet */
 };
-#endif
 
 #define AN_TXGAP_80211		0
 #define AN_TXGAP_8023		0
@@ -144,9 +144,8 @@ struct an_softc	{
 	int			(*sc_enable) __P((struct an_softc *));
 	void			(*sc_disable) __P((struct an_softc *));
 	int			sc_enabled;
+	int			sc_invalid;
 	struct ifmedia		sc_media;
-
-	void*	irq_handle;	/* handle for irq handler */
 
 	bus_space_handle_t	an_bhandle;
 	bus_space_tag_t		an_btag;
@@ -164,23 +163,17 @@ struct an_softc	{
 	struct an_ltv_stats	an_stats;
 	struct an_ltv_status	an_status;
 	u_int8_t		an_associated;
-#ifdef ANCACHE
 	int			an_sigitems;
 	struct an_sigcache	an_sigcache[MAXANCACHE];
 	int			an_nextitem;
-#endif
 	struct callout		an_stat_ch;
 };
 
-void	an_release_resources	__P((struct device *));
-int	an_alloc_port		__P((struct device *, int, int));
-int	an_alloc_memory		__P((struct device *, int, int));
-int	an_alloc_irq		__P((struct device *, int, int));
-int	an_probe	        __P((struct an_softc *));
-void	an_shutdown	        __P((struct device *));
 int	an_attach		__P((struct an_softc *));
 int	an_detach		__P((struct an_softc *));
-int	an_intr			__P((void *));
 int	an_activate		__P((struct device *, enum devact));
+void	an_power	        __P((int, void *));
+void	an_shutdown	        __P((void *));
+int	an_intr			__P((void *));
 
 #endif	/* _DEV_IC_ANVAR_H */

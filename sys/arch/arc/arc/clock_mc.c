@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.9.2.2 2000/11/20 20:00:20 bouyer Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.9.2.3 2001/01/05 17:33:53 bouyer Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -58,8 +58,8 @@
 
 #include <arc/arc/clockvar.h>
 #include <arc/arc/arctype.h>
-#include <arc/pica/pica.h>
-#include <arc/pica/rd94.h>
+#include <arc/jazz/pica.h>
+#include <arc/jazz/rd94.h>
 #include <arc/algor/algor.h>
 #include <machine/isa_machdep.h>
 #include <arc/isa/timerreg.h>

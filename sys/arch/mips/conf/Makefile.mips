@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.8.2.3 2000/12/13 15:49:33 bouyer Exp $
+#	$NetBSD: Makefile.mips,v 1.8.2.4 2001/01/05 17:34:42 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/mips/conf/Makefile.mips
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
@@ -34,7 +28,8 @@ SIZE?=		${CROSSDIR}size
 STRIP?=		${CROSSDIR}strip
 TSORT?=		${CROSSDIR}tsort -q
 
-COPTS?=		-O2
+DEFCOPTS?=	-O2
+COPTS?=		${DEFCOPTS}
 
 DEFGP?=		-G 0
 TEXTADDR?=	${DEFTEXTADDR}

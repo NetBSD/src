@@ -1,4 +1,4 @@
-# $NetBSD: std.mmeye,v 1.2.2.1 2000/11/20 20:14:48 bouyer Exp $
+# $NetBSD: std.mmeye,v 1.2.2.2 2001/01/05 17:34:48 bouyer Exp $
 #
 # standard, required NetBSD/mmeye 'options'
 
@@ -10,3 +10,6 @@ options		IOM_RAM_BEGIN=0x8c000000
 options		IOM_ROM_SIZE=0x00200000	#  2MB
 
 options EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	ENDIAN="-EB"
+makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian

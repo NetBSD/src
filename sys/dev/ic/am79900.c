@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.3.12.1 2000/11/20 11:40:21 bouyer Exp $	*/
+/*	$NetBSD: am79900.c,v 1.3.12.2 2001/01/05 17:35:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998
@@ -467,7 +467,7 @@ am79900_start(ifp)
 			    sc->sc_no_td, sc->sc_last_td);
 		}
 
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 

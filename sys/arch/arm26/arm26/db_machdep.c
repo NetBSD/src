@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.2.6.2 2000/11/20 20:02:25 bouyer Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2.6.3 2001/01/05 17:34:00 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,159 +29,15 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
-/*
- * Print out a description of a vnode.
- * Some parts borrowed from kern/vfs_subr.c
- */
- 
-static char *typename[] =
-   { "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD" };
-
-void
-db_show_vnode_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-	char buf[64];
-	struct vnode *vp;
-
-	if (!have_addr) {
-		db_printf("vnode address must be specified\n");
-		return;
-	}
-
-	vp = (struct vnode *)addr;
-
-/* Decode the one argument */
-
-	db_printf("vp : %08x\n", (u_int)vp);
-	db_printf("vp->v_type = %d\n", vp->v_type);
-	db_printf("vp->v_flag = %ld\n", vp->v_flag);
-	db_printf("vp->v_numoutput = %ld\n", vp->v_numoutput);
-
-	db_printf("type %s, usecount %ld, writecount %ld, refcount %ld,",
-		typename[vp->v_type], vp->v_usecount, vp->v_writecount,
-		vp->v_holdcnt);
-	buf[0] = '\0';
-	if (vp->v_flag & VROOT)
-		strcat(buf, "|VROOT");
-	if (vp->v_flag & VTEXT)
-		strcat(buf, "|VTEXT");
-	if (vp->v_flag & VSYSTEM)
-		strcat(buf, "|VSYSTEM");
-	if (vp->v_flag & VXLOCK)
-		strcat(buf, "|VXLOCK");
-	if (vp->v_flag & VXWANT)
-		strcat(buf, "|VXWANT");
-	if (vp->v_flag & VBWAIT)
-		strcat(buf, "|VBWAIT");
-	if (vp->v_flag & VALIASED)
-		strcat(buf, "|VALIASED");
-	if (buf[0] != '\0')
-		db_printf(" flags (%s)", &buf[1]);
-		db_printf("\n");
-	if (vp->v_data != NULL) {
-		db_printf("data=%08x\n", (u_int)vp->v_data);
-	}
-}
-
-void
-db_show_vmstat_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-
-	db_printf("Current UVM status:\n");
-	db_printf("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d\n",
-	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
-	    uvmexp.pageshift);
-	db_printf("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
-	    uvmexp.npages, uvmexp.active, uvmexp.inactive, uvmexp.wired,
-	    uvmexp.free);
-	db_printf("  freemin=%d, free-target=%d, inactive-target=%d, "
-	    "wired-max=%d\n", uvmexp.freemin, uvmexp.freetarg, uvmexp.inactarg,
-	    uvmexp.wiredmax);
-	db_printf("  faults=%d, traps=%d, intrs=%d, ctxswitch=%d\n",
-	    uvmexp.faults, uvmexp.traps, uvmexp.intrs, uvmexp.swtch);
-	db_printf("  softint=%d, syscalls=%d, swapins=%d, swapouts=%d\n",
-	    uvmexp.softs, uvmexp.syscalls, uvmexp.swapins, uvmexp.swapouts);
-
-	db_printf("  fault counts:\n");
-	db_printf("    noram=%d, noanon=%d, pgwait=%d, pgrele=%d\n",
-	    uvmexp.fltnoram, uvmexp.fltnoanon, uvmexp.fltpgwait,
-	    uvmexp.fltpgrele);
-	db_printf("    ok relocks(total)=%d(%d), anget(retrys)=%d(%d), "
-	    "amapcopy=%d\n", uvmexp.fltrelckok, uvmexp.fltrelck,
-	    uvmexp.fltanget, uvmexp.fltanretry, uvmexp.fltamcopy);
-	db_printf("    neighbor anon/obj pg=%d/%d, gets(lock/unlock)=%d/%d\n",
-	    uvmexp.fltnamap, uvmexp.fltnomap, uvmexp.fltlget, uvmexp.fltget);
-	db_printf("    cases: anon=%d, anoncow=%d, obj=%d, prcopy=%d, przero=%d\n",
-	    uvmexp.flt_anon, uvmexp.flt_acow, uvmexp.flt_obj, uvmexp.flt_prcopy,
-	    uvmexp.flt_przero);
-
-	db_printf("  daemon and swap counts:\n");
-	db_printf("    woke=%d, revs=%d, scans=%d, swout=%d\n", uvmexp.pdwoke,
-	    uvmexp.pdrevs, uvmexp.pdscans, uvmexp.pdswout);
-	db_printf("    busy=%d, freed=%d, reactivate=%d, deactivate=%d\n",
-	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
-	db_printf("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,
-	    uvmexp.pdpending, uvmexp.nswget);
-	db_printf("    nswapdev=%d, nanon=%d, nfreeanon=%d\n", uvmexp.nswapdev,
-	    uvmexp.nanon, uvmexp.nfreeanon);
-
-	db_printf("  kernel pointers:\n");
-	db_printf("    objs(kmem/mb)=%p/%p\n", uvmexp.kmem_object,
-	    uvmexp.mb_object);
-}
-
-#if 0
-void
-db_show_intrchain_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-	int loop;
-	irqhandler_t *ptr;
-	char *name;
-	db_expr_t offset;
-
-	for (loop = 0; loop < NIRQS; ++loop) {
-		ptr = irqhandlers[loop];
-		if (ptr) {
-			db_printf("IRQ %d\n", loop);
-
-			while (ptr) {
-				db_printf("  %-13s %d ", ptr->ih_name, ptr->ih_level);
-				db_find_sym_and_offset((u_int)ptr->ih_func, &name, &offset);
-				if (name == NULL)
-					name = "?";
-
-				db_printf("%s(", name);
-				db_printsym((u_int)ptr->ih_func, DB_STGY_PROC,
-				    db_printf);
-				db_printf(") %08x\n", (u_int)ptr->ih_arg);
-				ptr = ptr->ih_next;
-			}
-		}
-	}
-}
-#endif
 
 void
 db_show_panic_cmd(addr, have_addr, count, modif)
@@ -226,3 +82,33 @@ db_show_frame_cmd(addr, have_addr, count, modif)
 	db_printf("r12=%08x r13=%08x r14=%08x r15=%08x\n",
 	    frame->tf_r12, frame->tf_r13, frame->tf_r14, frame->tf_r15);
 }
+
+
+void
+db_bus_write_cmd(addr, have_addr, count, modif)
+	db_expr_t       addr;
+	int             have_addr;
+	db_expr_t       count;
+	char            *modif;
+{
+	db_expr_t datum;
+
+	if (!have_addr)
+		db_error("target address must be specified");
+
+	while (db_expression(&datum)) {
+		switch (*modif) {
+		case 'b':
+			bus_space_write_1(2, addr, 0, datum);
+			break;
+		case '\0':
+		case 'h':
+			bus_space_write_2(2, addr, 0, datum);
+			break;
+		default:
+			db_error("bad modifier");
+		}
+	}
+	db_skip_to_eol();
+}
+

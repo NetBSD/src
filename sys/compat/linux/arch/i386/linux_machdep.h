@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.10.2.3 2000/12/13 15:49:46 bouyer Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.10.2.4 2001/01/05 17:35:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ __END_DECLS
 #define LINUX_KDSKBMODE   0x4b45
 #define LINUX_KDMKTONE    0x4b30
 #define LINUX_KDSETMODE   0x4b3a
+#define LINUX_KDGETMODE   0x4b3b
 #define LINUX_KDENABIO    0x4b36
 #define LINUX_KDDISABIO   0x4b37
 #define LINUX_KDGETLED    0x4b31
@@ -140,6 +141,10 @@ __END_DECLS
 #define LINUX_IOCTL_MIN_PASS	LINUX_VMWARE_NONE
 #define LINUX_IOCTL_MAX_PASS	(LINUX_VMWARE_LAST+8)
 
+#ifdef _KERNEL
+__BEGIN_DECLS
 void linux_syscall_intern __P((struct proc *));
+__END_DECLS
+#endif /* !_KERNEL */
 
 #endif /* _I386_LINUX_MACHDEP_H */

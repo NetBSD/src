@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.30.2.4 2000/12/08 09:12:47 bouyer Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.30.2.5 2001/01/05 17:36:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.30.2.4 2000/12/08 09:12:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.30.2.5 2001/01/05 17:36:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -690,12 +690,11 @@ wsdisplayopen(dev, flag, mode, p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit, newopen, error;
+	int newopen, error;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	if (unit >= wsdisplay_cd.cd_ndevs ||	/* make sure it was attached */
-	    (sc = wsdisplay_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
+	if (sc == NULL)			/* make sure it was attached */
 		return (ENXIO);
 
 	if (ISWSDISPLAYCTL(dev))
@@ -753,11 +752,9 @@ wsdisplayclose(dev, flag, mode, p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
@@ -812,11 +809,9 @@ wsdisplayread(dev, uio, flag)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
@@ -838,11 +833,9 @@ wsdisplaywrite(dev, uio, flag)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
@@ -861,11 +854,9 @@ wsdisplaytty(dev)
 	dev_t dev;
 {
 	struct wsdisplay_softc *sc;
-	int unit;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYCTL(dev))
 		panic("wsdisplaytty() on ctl device");
@@ -885,11 +876,10 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit, error;
+	int error;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 #ifdef WSDISPLAY_COMPAT_USL
 	error = wsdisplay_usl_ioctl1(sc, cmd, data, flag, p);
@@ -988,6 +978,10 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 			    scr->scr_flags |= SCR_GRAPHICS;
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
+
+	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
+		    flag, p);
+
 	    return (0);
 #undef d
 
@@ -1135,7 +1129,8 @@ wsdisplaymmap(dev, offset, prot)
 	off_t offset;
 	int prot;
 {
-	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];
+	struct wsdisplay_softc *sc =
+	    device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 	struct wsscreen *scr;
 
 	if (ISWSDISPLAYCTL(dev))
@@ -1156,7 +1151,8 @@ wsdisplaypoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];
+	struct wsdisplay_softc *sc =
+	    device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 	struct wsscreen *scr;
 
 	if (ISWSDISPLAYCTL(dev))
@@ -1184,7 +1180,7 @@ wsdisplaystart(tp)
 		splx(s);
 		return;
 	}
-	sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(tp->t_dev)];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(tp->t_dev));
 	scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)];
 	if (scr->scr_hold_screen) {
 		tp->t_state |= TS_TIMEOUT;
@@ -1783,9 +1779,17 @@ wsdisplay_pollc(dev, on)
 	dev_t dev;
 	int on;
 {
+	struct wsdisplay_softc *sc;
+
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	wsdisplay_cons_pollmode = on;
 
+	/* notify to fb drivers */
+	if (sc != NULL && sc->sc_accessops->pollc != NULL)
+		(*sc->sc_accessops->pollc)(sc->sc_accesscookie, on);
+
+	/* notify to kbd drivers */
 	if (wsdisplay_cons_kbd_pollc)
 		(*wsdisplay_cons_kbd_pollc)(dev, on);
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164.2.3 2000/12/08 09:12:35 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164.2.4 2001/01/05 17:36:14 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.275 2000/12/05 18:10:19 drochner Exp 
+ *	NetBSD: pcidevs,v 1.283 2001/01/03 23:14:39 mycroft Exp 
  */
 
 /*
@@ -290,6 +290,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ACC Microelectronics",
 	    "2051 PCI Single Chip Solution (ISA bridge)",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP850U,
+	    0,
+	    "Acard",
+	    "ATP850U/UF UDMA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860,
+	    0,
+	    "Acard",
+	    "ATP860 UDMA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860R,
+	    0,
+	    "Acard",
+	    "ATP860R UDMA IDE Controller",
 	},
 	{
 	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710,
@@ -620,6 +638,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced System Products",
 	    "ASB-3940U3W",
+	},
+	{
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4xxx,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet PC4500/PC4800 Wireless LAN Adapter",
+	},
+	{
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet PC4500 Wireless LAN Adapter",
+	},
+	{
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4800,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet PC4800 Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
@@ -1388,6 +1424,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Chips and Technologies",
 	    "65554",
+	},
+	{
+	    PCI_VENDOR_CHRYSALIS, PCI_PRODUCT_CHRYSALIS_LUNAVPN,
+	    0,
+	    "Chrysalis-ITS",
+	    "LunaVPN",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7548,
@@ -3262,10 +3304,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MPC106 \"Grackle\" Host Bridge",
 	},
 	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,
 	    0,
 	    "Mylex",
-	    "DAC960P RAID controller",
+	    "DAC960 RAID (v2 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V3,
+	    0,
+	    "Mylex",
+	    "DAC960 RAID (v3 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V4,
+	    0,
+	    "Mylex",
+	    "DAC960 RAID (v4 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V5,
+	    0,
+	    "Mylex",
+	    "DAC960 RAID (v5 interface)",
 	},
 	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
@@ -3572,6 +3632,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia Corporation",
 	    "Quadro",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce2 MX [NV11]",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2,
@@ -4348,6 +4414,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Simba PCI bridge",
 	},
 	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_PSYCHO,
+	    0,
+	    "Sun Microsystems",
+	    "psycho PCI controller",
+	},
+	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_MS_IIep,
 	    0,
 	    "Sun Microsystems",
@@ -4888,6 +4960,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "V96DPC i960 (Dual) Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
+	    0,
+	    "VIA Technologies",
+	    "VT8363 KT133 System Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
 	    0,
 	    "VIA Technologies",
@@ -5054,6 +5132,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB,
+	    0,
+	    "VIA Technologies",
+	    "VT8363 KT133 PCI to AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
@@ -8404,6 +8488,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_AIRONET, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Aironet Wireless Communications",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_INVERTEX, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Invertex",
@@ -8575,6 +8665,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ATRONICS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Atronics",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CHRYSALIS, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Chrysalis-ITS",
 	    NULL,
 	},
 	{

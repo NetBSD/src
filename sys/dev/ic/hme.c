@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.1.4.2 2000/11/22 16:03:18 bouyer Exp $	*/
+/*	$NetBSD: hme.c,v 1.1.4.3 2001/01/05 17:35:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -250,6 +250,7 @@ hme_config(sc)
 	ifp->if_watchdog = hme_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures and MII info */
 	mii->mii_ifp = ifp;
@@ -809,7 +810,7 @@ hme_start(ifp)
 	ri = sc->sc_rb.rb_tdhead;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 

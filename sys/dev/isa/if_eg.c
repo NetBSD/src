@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.48.2.2 2000/11/22 16:03:45 bouyer Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.48.2.3 2001/01/05 17:35:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -480,7 +480,8 @@ egattach(parent, self, aux)
 	ifp->if_ioctl = egioctl;
 	ifp->if_watchdog = egwatchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
-	
+	IFQ_SET_READY(&ifp->if_snd);
+
 	/* Now we can attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
@@ -598,7 +599,7 @@ egstart(ifp)
 
 loop:
 	/* Dequeue the next datagram. */
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
 	

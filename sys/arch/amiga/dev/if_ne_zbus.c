@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.1.10.1 2000/11/20 19:58:36 bouyer Exp $	*/
+/*	$NetBSD: if_ne_zbus.c,v 1.1.10.2 2001/01/05 17:33:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ ne_zbus_match(parent, cf, aux)
 	if (zap->manid == 2167 && zap->prodid == 202)
 		return (1);
 
-	/* X-serv ethernet card */
+	/* X-surf ethernet card */
 	if (zap->manid == 4626 && zap->prodid == 23)
 		return (1);
 

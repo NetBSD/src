@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.27.2.2 2000/11/22 16:03:16 bouyer Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.27.2.3 2001/01/05 17:35:35 bouyer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -132,6 +132,7 @@ dp8390_config(sc, media, nmedia, defmedia)
 		ifp->if_watchdog = dp8390_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize media goo. */
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
@@ -478,7 +479,7 @@ outloop:
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.2.2.2 2000/11/22 16:04:05 bouyer Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.2.2.3 2001/01/05 17:36:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -453,8 +453,7 @@ sip_attach(parent, self, aux)
 	/*
 	 * Map and establish our interrupt.
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -582,6 +581,7 @@ sip_attach(parent, self, aux)
 	ifp->if_watchdog = sip_watchdog;
 	ifp->if_init = sip_init;
 	ifp->if_stop = sip_stop;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Attach the interface.
@@ -681,9 +681,10 @@ sip_start(ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
+		m = NULL;
 
 		dmamap = txs->txs_dmamap;
 
@@ -699,7 +700,6 @@ sip_start(ifp)
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
@@ -708,20 +708,16 @@ sip_start(ifp)
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m);
-					IF_PREPEND(&ifp->if_snd, m0);
 					break;
 				}
 			}
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			m_freem(m0);
-			m0 = m;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m0, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 		}
@@ -743,8 +739,15 @@ sip_start(ifp)
 			 */
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			IF_PREPEND(&ifp->if_snd, m0);
+			if (m != NULL)
+				m_freem(m);
 			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m != NULL) {
+			m_freem(m0);
+			m0 = m;
 		}
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.22.2.1 2000/11/20 20:13:30 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.22.2.2 2001/01/05 17:34:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -310,8 +310,13 @@ _C_LABEL(x):
 #define DYNAMIC_STATUS_MASK(sr,scratch)	\
 	lw	scratch, mips_dynamic_status_mask; \
 	and	sr, sr, scratch
+
+#define DYNAMIC_STATUS_MASK_TOUSER(sr,scratch1)		\
+	ori	sr, (MIPS_INT_MASK | MIPS_SR_INT_IE);	\
+	DYNAMIC_STATUS_MASK(sr,scratch1)
 #else
 #define DYNAMIC_STATUS_MASK(sr,scratch)
+#define DYNAMIC_STATUS_MASK_TOUSER(sr,scratch1)
 #endif
 
 #endif /* _MIPS_ASM_H */

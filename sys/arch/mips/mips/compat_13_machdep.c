@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.7 1999/04/24 08:10:38 simonb Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.7.2.1 2001/01/05 17:34:43 bouyer Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7 1999/04/24 08:10:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7.2.1 2001/01/05 17:34:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,9 @@ compat_13_sys_sigreturn(p, v, retval)
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&ksc.sc_mask, &mask);

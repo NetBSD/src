@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3.2.2 2000/11/20 20:22:57 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3.2.3 2001/01/05 17:34:58 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -60,6 +60,8 @@ extern struct cpu_info cpu_info_store;
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth > 0)
+
+#define	PROC_PC(p)		(trapframe(p)->srr0)
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)

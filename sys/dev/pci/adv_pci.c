@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.7 1999/06/12 12:09:58 dante Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.7.2.1 2001/01/05 17:36:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -232,8 +232,7 @@ adv_pci_attach(parent, self, aux)
 	/*
 	 * Map Interrupt line
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

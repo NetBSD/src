@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.h,v 1.5.2.1 2000/11/20 18:10:56 bouyer Exp $	*/
-/*	$KAME: ipsec.h,v 1.36 2000/08/02 17:58:25 sakane Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.5.2.2 2001/01/05 17:36:57 bouyer Exp $	*/
+/*	$KAME: ipsec.h,v 1.40 2001/01/04 11:47:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -141,9 +141,9 @@ struct secspacq {
 
 /* Policy level */
 /*
- * IPSEC, ENTRUST and BYPASS are allowd for setsockopt() in PCB,
- * DISCARD, IPSEC and NONE are allowd for setkey() in SPD.
- * DISCARD and NONE are allowd for system default.
+ * IPSEC, ENTRUST and BYPASS are allowed for setsockopt() in PCB,
+ * DISCARD, IPSEC and NONE are allowed for setkey() in SPD.
+ * DISCARD and NONE are allowed for system default.
  */
 #define IPSEC_POLICY_DISCARD	0	/* discarding packet */
 #define IPSEC_POLICY_NONE	1	/* through IPsec engine */

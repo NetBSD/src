@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.47.2.1 2000/11/20 11:41:20 bouyer Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.47.2.2 2001/01/05 17:35:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -106,6 +106,9 @@ struct sbdsp_softc {
 	bus_size_t sc_drq8_maxsize;
 	int	sc_drq16;		/* DMA (16-bit) */
 	bus_size_t sc_drq16_maxsize;
+
+	u_int	sc_quirks;		/* minor variations */
+#define SB_QUIRK_NO_INIT_DRQ	0x01
 
 	int	sc_open;		/* reference count of open calls */
 #define SB_CLOSED 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.40.2.1 2000/11/20 18:09:57 bouyer Exp $	*/
+/*	$NetBSD: if.h,v 1.40.2.2 2001/01/05 17:36:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,6 +77,15 @@
 #if !defined(_XOPEN_SOURCE)
 
 #include <sys/queue.h>
+#include <net/dlt.h>
+
+/*
+ * Always include ALTQ glue here -- we use the ALTQ interface queue
+ * structure even when ALTQ is not configured into the kernel so that
+ * the size of struct ifnet does not changed based on the option.  The
+ * ALTQ queue structure is API-compatible with the legacy ifqueue.
+ */
+#include <altq/if_altq.h>
 
 /*
  * Structures defining a network interface, providing a packet
@@ -210,6 +219,17 @@ struct if_data14 {
 
 /*
  * Structure defining a queue for a network interface.
+ */
+struct ifqueue {
+	struct	mbuf *ifq_head;
+	struct	mbuf *ifq_tail;
+	int	ifq_len;
+	int	ifq_maxlen;
+	int	ifq_drops;
+};
+
+/*
+ * Structure defining a queue for a network interface.
  *
  * (Would like to call this struct ``if'', but C isn't PL/1.)
  */
@@ -248,16 +268,12 @@ struct ifnet {				/* and the entries */
 		__P((struct ifnet *));
 	void	(*if_drain)		/* routine to release resources */
 		__P((struct ifnet *));
-	struct	ifqueue {
-		struct	mbuf *ifq_head;
-		struct	mbuf *ifq_tail;
-		int	ifq_len;
-		int	ifq_maxlen;
-		int	ifq_drops;
-	} if_snd;			/* output queue */
+	struct ifaltq if_snd;		/* output queue (includes altq) */
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
+	void	*if_bridge;		/* bridge glue */
+	int	if_dlt;			/* data link type (<net/dlt.h>) */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -342,6 +358,20 @@ struct ifnet {				/* and the entries */
 		(ifq)->ifq_len--; \
 	} \
 }
+#define	IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
+#define	IF_PURGE(ifq)							\
+do {									\
+	struct mbuf *__m0;						\
+									\
+	for (;;) {							\
+		IF_DEQUEUE((ifq), __m0);				\
+		if (__m0 == NULL)					\
+			break;						\
+		else							\
+			m_freem(__m0);					\
+	}								\
+} while (0)
+#define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
 #define	IFQ_MAXLEN	50
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
@@ -462,6 +492,7 @@ struct	ifreq {
 		short	ifru_flags;
 		int	ifru_metric;
 		int	ifru_mtu;
+		int	ifru_dlt;
 		u_int	ifru_value;
 		caddr_t	ifru_data;
 	} ifr_ifru;
@@ -471,6 +502,7 @@ struct	ifreq {
 #define	ifr_flags	ifr_ifru.ifru_flags	/* flags */
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
 #define	ifr_mtu		ifr_ifru.ifru_mtu	/* mtu */
+#define	ifr_dlt		ifr_ifru.ifru_dlt	/* data link type (DLT_*) */
 #define	ifr_value	ifr_ifru.ifru_value	/* generic value */
 #define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
@@ -574,6 +606,103 @@ do {									\
 #endif /* DIAGNOSTIC */
 #endif /* IFAREF_DEBUG */
 
+#ifdef ALTQ
+#define	ALTQ_DECL(x)		x
+
+#define IFQ_ENQUEUE(ifq, m, pattr, err)					\
+do {									\
+	if (ALTQ_IS_ENABLED((ifq)))					\
+		ALTQ_ENQUEUE((ifq), (m), (pattr), (err));		\
+	else {								\
+		if (IF_QFULL((ifq))) {					\
+			m_freem((m));					\
+			(err) = ENOBUFS;				\
+		} else {						\
+			IF_ENQUEUE((ifq), (m));				\
+			(err) = 0;					\
+		}							\
+	}								\
+	if ((err))							\
+		(ifq)->ifq_drops++;					\
+} while (0)
+
+#define IFQ_DEQUEUE(ifq, m)						\
+do {									\
+	if (TBR_IS_ENABLED((ifq)))					\
+		(m) = tbr_dequeue((ifq), ALTDQ_REMOVE);			\
+	else if (ALTQ_IS_ENABLED((ifq)))				\
+		ALTQ_DEQUEUE((ifq), (m));				\
+	else								\
+		IF_DEQUEUE((ifq), (m));					\
+} while (0)
+
+#define	IFQ_POLL(ifq, m)						\
+do {									\
+	if (TBR_IS_ENABLED((ifq)))					\
+		(m) = tbr_dequeue((ifq), ALTDQ_POLL);			\
+	else if (ALTQ_IS_ENABLED((ifq)))				\
+		ALTQ_POLL((ifq), (m));					\
+	else								\
+		IF_POLL((ifq), (m));					\
+} while (0)
+
+#define	IFQ_PURGE(ifq)							\
+do {									\
+	if (ALTQ_IS_ENABLED((ifq)))					\
+		ALTQ_PURGE((ifq));					\
+	else								\
+		IF_PURGE((ifq));					\
+} while (0)
+
+#define	IFQ_SET_READY(ifq)						\
+do {									\
+	(ifq)->altq_flags |= ALTQF_READY;				\
+} while (0)
+
+#define	IFQ_CLASSIFY(ifq, m, af, pa)					\
+do {									\
+	if (ALTQ_IS_ENABLED((ifq))) {					\
+		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
+			(pa)->pattr_class = (*(ifq)->altq_classify)	\
+				((ifq)->altq_clfier, (m), (af));	\
+		(pa)->pattr_af = (af);					\
+		(pa)->pattr_hdr = mtod((m), caddr_t);			\
+	}								\
+} while (0)
+#else /* ! ALTQ */
+#define	ALTQ_DECL(x)		/* nothing */
+
+#define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
+do {									\
+	if (IF_QFULL((ifq))) {						\
+		m_freem((m));						\
+		(err) = ENOBUFS;					\
+	} else {							\
+		IF_ENQUEUE((ifq), (m));					\
+		(err) = 0;						\
+	}								\
+	if ((err))							\
+		(ifq)->ifq_drops++;					\
+} while (0)
+
+#define	IFQ_DEQUEUE(ifq, m)	IF_DEQUEUE((ifq), (m))
+
+#define	IFQ_POLL(ifq, m)	IF_POLL((ifq), (m))
+
+#define	IFQ_PURGE(ifq)		IF_PURGE((ifq))
+
+#define	IFQ_SET_READY(ifq)	/* nothing */
+
+#define	IFQ_CLASSIFY(ifq, m, af, pa) /* nothing */
+
+#endif /* ALTQ */
+
+#define	IFQ_IS_EMPTY(ifq)		IF_IS_EMPTY((ifq))
+#define	IFQ_INC_LEN(ifq)		((ifq)->ifq_len++)
+#define	IFQ_DEC_LEN(ifq)		(--(ifq)->ifq_len)
+#define	IFQ_INC_DROPS(ifq)		((ifq)->ifq_drops++)
+#define	IFQ_SET_MAXLEN(ifq, len)	((ifq)->ifq_maxlen = (len))
+
 struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
 #if 0
@@ -589,7 +718,6 @@ void	if_attach __P((struct ifnet *));
 void	if_deactivate __P((struct ifnet *));
 void	if_detach __P((struct ifnet *));
 void	if_down __P((struct ifnet *));
-void	if_qflush __P((struct ifqueue *));
 void	if_slowtimo __P((void *));
 void	if_up __P((struct ifnet *));
 int	ifconf __P((u_long, caddr_t));

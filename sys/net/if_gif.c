@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.2.4.3 2000/12/13 15:50:30 bouyer Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.2.4.4 2001/01/05 17:36:50 bouyer Exp $	*/
 /*	$KAME: if_gif.c,v 1.34 2000/10/07 03:58:53 itojun Exp $	*/
 
 /*
@@ -167,6 +167,7 @@ gif_clone_create(ifc, unit)
 	sc->gif_if.if_ioctl  = gif_ioctl;
 	sc->gif_if.if_output = gif_output;
 	sc->gif_if.if_type   = IFT_GIF;
+	sc->gif_if.if_dlt    = DLT_NULL;
 	if_attach(&sc->gif_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->gif_if, DLT_NULL, sizeof(u_int));

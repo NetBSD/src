@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.84.2.4 2000/12/13 15:50:40 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.84.2.5 2001/01/05 17:36:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -54,6 +54,7 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/signalvar.h>
 
 /*
  * One structure allocated per session.
@@ -85,7 +86,7 @@ struct exec_package;
 struct ps_strings;
 
 struct	emul {
-	char	e_name[8];		/* Symbolic name */
+	const char *e_name;		/* Symbolic name */
 	const char *e_path;		/* Extra emulation path (NULL if none)*/
 #ifndef __HAVE_MINIMAL_EMUL
 	int	e_flags;		/* Miscellaneous flags */
@@ -138,7 +139,7 @@ struct	proc {
 	struct	pstats *p_stats;	/* Accounting/statistics (PROC ONLY). */
 	struct	plimit *p_limit;	/* Process limits. */
 	struct	vmspace *p_vmspace;	/* Address space. */
-	struct	sigacts *p_sigacts;	/* Signal actions, state (PROC ONLY). */
+	struct	sigacts *p_sigacts;	/* Process sigactions (state is below)*/
 
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
@@ -147,9 +148,8 @@ struct	proc {
 	int	p_flag;			/* P_* flags. */
 	struct cpu_info * __volatile p_cpu; /* CPU we're running on if
 					       SONPROC */
-	u_char	p_unused;		/* XXX: used to be emulation flag */
 	char	p_stat;			/* S* process status. */
-	char	p_pad1[2];
+	char	p_pad1[3];
 
 	pid_t	p_pid;			/* Process identifier. */
 	LIST_ENTRY(proc) p_hash;	/* Hash chain. */
@@ -184,9 +184,6 @@ struct	proc {
 	int	p_traceflag;		/* Kernel trace points. */
 	struct 	file *p_tracep;		/* Trace to file */
 
-	sigset_t p_siglist;		/* Signals arrived but not delivered. */
-	char	p_sigcheck;		/* May have deliverable signals. */
-
 	struct	vnode *p_textvp;	/* Vnode of executable. */
 
 	int	p_locks;		/* DEBUG: lockmgr count of held locks */
@@ -200,11 +197,9 @@ struct	proc {
 #define	p_endzero	p_startcopy
 
 /* The following fields are all copied upon creation in fork. */
-#define	p_startcopy	p_sigmask
+#define	p_startcopy	p_sigctx.ps_startcopy
 
-	sigset_t p_sigmask;	/* Current signal mask. */
-	sigset_t p_sigignore;	/* Signals being ignored. */
-	sigset_t p_sigcatch;	/* Signals being caught by user. */
+	struct	sigctx p_sigctx;	/* Signal state. */
 
 	u_char	p_priority;	/* Process priority. */
 	u_char	p_usrpri;	/* User-priority based on p_cpu and p_nice. */

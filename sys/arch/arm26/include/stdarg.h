@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.1.6.2 2000/11/20 20:02:46 bouyer Exp $ */
+/*	$NetBSD: stdarg.h,v 1.1.6.3 2001/01/05 17:34:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -35,16 +35,22 @@
  *	from: @(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _STDARG_H_
-#define	_STDARG_H_
+#ifndef _ARM32_STDARG_H_
+#define	_ARM32_STDARG_H_
 
-typedef char *va_list;
+#include <machine/ansi.h>
+#include <sys/featuretest.h>
 
-#define	__va_promote(type) \
-	(((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+typedef _BSD_VA_LIST_	va_list;
+#ifdef __lint__
+#define __builtin_next_arg(t) ((t) ? 0 : 0)
+#endif
+
+#define	__va_size(type) \
+	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
 #define	va_start(ap, last) \
-	(ap = ((char *)&(last) + __va_promote(last)))
+	((ap) = (va_list)__builtin_next_arg(last))
 
 #ifdef _KERNEL
 #define	va_arg(ap, type) \
@@ -55,6 +61,13 @@ typedef char *va_list;
 		(abort(), 0) : sizeof(type)))[-1]
 #endif
 
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#define	va_copy(dest, src) \
+	((dest) = (src))
+#endif
+
 #define	va_end(ap)
 
-#endif /* !_STDARG_H_ */
+#endif /* !_ARM32_STDARG_H_ */

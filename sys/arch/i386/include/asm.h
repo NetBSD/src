@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15.2.1 2000/11/20 20:09:25 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.15.2.2 2001/01/05 17:34:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -107,8 +107,6 @@
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
-
-#define	ALTENTRY(name)	.globl _C_LABEL(name); _C_LABEL(name):
 
 #define	ASMSTR		.asciz
 

@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.33.2.1 2000/11/20 20:08:02 bouyer Exp $
+#	$NetBSD: BASALT,v 1.33.2.2 2001/01/05 17:34:11 bouyer Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 workstation.
 #
@@ -58,7 +58,6 @@ options 	COMPAT_HPUX	# HP-UX binary compatibility
 options 	COMPAT_M68K4K	# m68k4k executables
 options 	COMPAT_LINUX	# Linux/m68k compatibility
 options 	COMPAT_SVR4	# SVR4/m68k compatibility
-options 	EXEC_ELF32	# ELF binaries
 
 # Debugging options
 options 	DIAGNOSTIC	# Kernel sanity checks

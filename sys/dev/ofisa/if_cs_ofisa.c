@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.3 1998/08/17 20:34:19 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.3.12.1 2001/01/05 17:35:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,11 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>

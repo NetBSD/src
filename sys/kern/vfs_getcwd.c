@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.10.2.1 2000/11/20 18:09:16 bouyer Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.10.2.2 2001/01/05 17:36:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -253,7 +253,8 @@ unionread:
 				}
 				cpos += reclen;
 			}
-		}
+		} else
+			goto out;
 	} while (!eofflag);
 #if 0
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.52.2.2 2000/12/13 15:50:28 bouyer Exp $	*/
+/*	$NetBSD: if.c,v 1.52.2.3 2001/01/05 17:36:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -907,7 +907,7 @@ if_down(ifp)
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
-	if_qflush(&ifp->if_snd);
+	IFQ_PURGE(&ifp->if_snd);
 	rt_ifmsg(ifp);
 }
 
@@ -935,25 +935,6 @@ if_up(ifp)
 #ifdef INET6
 	in6_if_up(ifp);
 #endif
-}
-
-/*
- * Flush an interface queue.
- */
-void
-if_qflush(ifq)
-	struct ifqueue *ifq;
-{
-	struct mbuf *m, *n;
-
-	n = ifq->ifq_head;
-	while ((m = n) != NULL) {
-		n = m->m_act;
-		m_freem(m);
-	}
-	ifq->ifq_head = 0;
-	ifq->ifq_tail = 0;
-	ifq->ifq_len = 0;
 }
 
 /*
@@ -1104,6 +1085,10 @@ ifioctl(so, cmd, data, p)
 
 	case SIOCGIFMTU:
 		ifr->ifr_mtu = ifp->if_mtu;
+		break;
+
+	case SIOCGIFDLT:
+		ifr->ifr_dlt = ifp->if_dlt;
 		break;
 
 	case SIOCSIFFLAGS:

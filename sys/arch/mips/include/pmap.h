@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27.2.1 2000/11/20 20:13:32 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27.2.2 2001/01/05 17:34:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -148,14 +148,6 @@ void	pmap_prefer __P((vaddr_t, vaddr_t *));
  */
 boolean_t pmap_zero_page_uncached __P((paddr_t));
 #define PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
-
-/*
- * Kernel cache operations for the user-space API
- */
-int mips_user_cacheflush __P((struct proc *p, vaddr_t va, int nbytes,
-	int whichcache));
-int mips_user_cachectl   __P((struct proc *p, vaddr_t va, int nbytes,
-	int ctl));
 
 #endif	/* _KERNEL */
 #endif	/* _PMAP_MACHINE_ */

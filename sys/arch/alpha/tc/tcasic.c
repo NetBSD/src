@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.27.2.1 2000/11/20 19:57:30 bouyer Exp $ */
+/* $NetBSD: tcasic.c,v 1.27.2.2 2001/01/05 17:33:50 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.27.2.1 2000/11/20 19:57:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.27.2.2 2001/01/05 17:33:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,10 +173,40 @@ tcasicprint(aux, pnp)
 
 #include "cfb.h"
 #include "sfb.h"
+#ifdef notyet
+#include "px.h"
+#include "pxg.h"
+#endif
 
-extern int	sfb_cnattach __P((tc_addr_t));
-extern int	cfb_cnattach __P((tc_addr_t));
+extern void	sfb_cnattach __P((tc_addr_t));
+extern void	cfb_cnattach __P((tc_addr_t));
+extern void	px_cnattach __P((tc_addr_t));
+extern void	pxg_cnattach __P((tc_addr_t));
 extern int	tc_checkslot __P((tc_addr_t, char *));
+
+struct cnboards {
+	const char	*cb_tcname;
+	void	(*cb_cnattach)(tc_addr_t);
+} static cnboards[] = {
+#if NSFB > 0
+	{ "PMAGB-BA", sfb_cnattach },
+#endif
+#if NCFB > 0
+	{ "PMAG-BA ", cfb_cnattach },
+#endif
+#ifdef notyet
+#if NPX > 0
+	{ "PMAG-CA ", px_cnattach },
+#endif
+#if NPXG > 0
+	{ "PMAG-DA ", pxg_cnattach },
+	{ "PMAG-FA ", pxg_cnattach },
+	{ "PMAG-FB ", pxg_cnattach },
+	{ "PMAGB-FA", pxg_cnattach },
+	{ "PMAGB-FB", pxg_cnattach },
+#endif
+#endif
+};
 
 /*
  * tc_fb_cnattach --
@@ -188,23 +218,19 @@ tc_fb_cnattach(tcaddr)
 	tc_addr_t tcaddr;
 {
 	char tcname[TC_ROM_LLEN];
+	int i;
 
-	if (tc_badaddr(tcaddr) || (tc_checkslot(tcaddr, tcname) == 0)) {
-		return EINVAL;
-	}
+	if (tc_badaddr(tcaddr) || (tc_checkslot(tcaddr, tcname) == 0))
+		return (EINVAL);
 
-#if NSFB > 0
-	if (strncmp("PMAGB-BA", tcname, TC_ROM_LLEN) == 0) {
-		sfb_cnattach(tcaddr);
-		return 0;
-	}
-#endif
-#if NCFB > 0
-	if (strncmp("PMAG-BA ", tcname, TC_ROM_LLEN) == 0) {
-		cfb_cnattach(tcaddr);
-		return 0;
-	}
-#endif
-	return ENXIO;
+	for (i = 0; i < sizeof(cnboards) / sizeof(cnboards[0]); i++)
+		if (strncmp(tcname, cnboards[i].cb_tcname, TC_ROM_LLEN) == 0)
+			break;
+
+	if (i == sizeof(cnboards) / sizeof(cnboards[0]))
+		return (ENXIO);
+
+	(cnboards[i].cb_cnattach)(tcaddr);
+	return (0);
 }
 #endif /* if NWSDISPLAY > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.3.6.2 2000/11/20 20:31:17 bouyer Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.3.6.3 2001/01/05 17:34:57 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,20 +53,19 @@ sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 
 	tf = trapframe(p);
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
+		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->fixreg[1];
 	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
@@ -79,7 +78,7 @@ sendsig(catcher, sig, mask, code)
 	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -111,11 +110,11 @@ sendsig(catcher, sig, mask, code)
 	tf->fixreg[3] = (int)sig;
 	tf->fixreg[4] = (int)code;
 	tf->fixreg[5] = (int)&fp->sf_sc;
-	tf->srr0 = (int)psp->ps_sigcode;
+	tf->srr0 = (int)p->p_sigctx.ps_sigcode;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -150,9 +149,9 @@ sys___sigreturn14(p, v, retval)
 
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);

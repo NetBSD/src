@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.4.2.2 2000/11/20 11:42:15 bouyer Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.4.2.3 2001/01/05 17:36:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -345,8 +345,7 @@ cmpci_attach(parent, self, aux)
 	}
 
 	/* interrupt */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-                pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: failed to map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

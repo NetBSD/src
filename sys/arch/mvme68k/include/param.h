@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17.2.3 2000/12/08 09:28:36 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.17.2.4 2001/01/05 17:34:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,8 @@
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 #if defined(M68030) && !defined(M68040) && !defined(M68060)
 #define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
+#elif (defined(M68040) || defined(M68060)) && !defined(M68030)
+#define	NBSEG		((32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
 #else
 #define	NBSEG		((mmutype == MMU_68040) ? \
 				(32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
