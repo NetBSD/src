@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.4 2000/06/12 17:43:26 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.5 2000/06/12 18:57:43 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -644,7 +644,7 @@ void parse_interface_declaration (cfile, outer_config, name)
 	}
 
 	if (!interface_or_dummy (&ip, val))
-		log_fatal ("Can't allocate interface %s.");
+		log_fatal ("Can't allocate interface %s.", val);
 
 	/* If we were given a name, this is a pseudo-interface. */
 	if (name) {
