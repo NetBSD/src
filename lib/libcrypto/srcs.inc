@@ -7,7 +7,11 @@
 .include "cast.inc"
 .include "comp.inc"
 .include "conf.inc"
+
 .include "des.inc"
+# NetBSD local addition to des library.
+SRCS+=	rnd_keys.c
+
 .include "dh.inc"
 .include "dsa.inc"
 .include "err.inc"
