@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.79 1998/07/01 14:49:07 scottr Exp $
+#	$NetBSD: GENERIC,v 1.80 1998/10/23 01:16:22 ender Exp $
 #
 # GENERIC
 
@@ -133,7 +133,10 @@ nubus0 at mainbus?
 # Console Devices
 
 # Apple Desktop Bus interface
-adb0	at obio?			# ADB event device
+adb0	at obio?
+aed*	at adb?				# ADB event device
+kbd*	at adb?				# ADB keyboard
+ms*	at adb?				# ADB mouse
 
 # Basic frame buffer support
 intvid0	at obio?			# Internal video hardware
