@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.25.4.1 1996/12/11 10:02:54 mycroft Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.25.4.2 1997/03/04 18:06:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2540,8 +2540,8 @@ again:
 	dp = (struct dirent *)cpos;
 	cookiep = cookies;
 
-	while ((dp->d_fileno == 0 || dp->d_type == DT_WHT) &&
-	       cpos < cend && ncookies > 0) {
+	while (cpos < cend && ncookies > 0 &&
+		(dp->d_fileno == 0 || dp->d_type == DT_WHT)) {
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
 		cookiep++;
@@ -2804,8 +2804,8 @@ again:
 	dp = (struct dirent *)cpos;
 	cookiep = cookies;
 
-	while ((dp->d_fileno == 0 || dp->d_type == DT_WHT)
-	       && cpos < cend && ncookies > 0) {
+	while (cpos < cend && ncookies > 0 &&
+		(dp->d_fileno == 0 || dp->d_type == DT_WHT)) {
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
 		cookiep++;
