@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.12 1997/08/12 17:25:45 drochner Exp $	*/
+/*	$NetBSD: comvar.h,v 1.13 1997/08/14 16:15:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,10 +31,14 @@
  */
 
 extern int comconsaddr;
-extern int comconsattached;
 extern bus_space_tag_t comconstag;
 extern bus_space_handle_t comconsioh;
+extern int comconsrate;
 extern tcflag_t comconscflag;
+int comcngetc __P((dev_t));
+void comcnputc __P((dev_t, int));
+void comcnpollc __P((dev_t, int));
+extern int comconsattached;
 
 #ifdef KGDB
 extern int com_kgdb_addr;
