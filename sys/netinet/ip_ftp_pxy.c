@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.23 2002/05/02 17:12:04 martti Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.24 2002/05/02 17:13:29 martti Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.23 2002/05/02 17:12:04 martti Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.24 2002/05/02 17:13:29 martti Exp $");
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -43,6 +43,10 @@ extern	kmutex_t	ipf_rw;
 #define	FTPXY_USOK_2	13
 #define	FTPXY_PASS_2	14
 #define	FTPXY_PAOK_2	15
+
+#ifndef	_KERNEL
+extern int mbuflen(mb_t *);
+#endif
 
 int ippr_ftp_client __P((fr_info_t *, ip_t *, nat_t *, ftpinfo_t *, int));
 int ippr_ftp_complete __P((char *, size_t));
