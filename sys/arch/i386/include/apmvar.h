@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.1 1996/08/25 23:39:50 jtk Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.2 1996/08/30 02:36:00 jtk Exp $	*/
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -36,16 +36,15 @@
 #define APM_BIOS_FNCODE	(0x53)
 #define APM_SYSTEM_BIOS	(0x15)
 #define APM_BIOS_FN(x)	((APM_BIOS_FNCODE<<8)|(x))
+
 /*
- * APM info word from boot loader
+ * APM info bits from BIOS
  */
-#define	APM_MAJOR_VERS(info) (((info)&0xff00)>>8)
-#define	APM_MINOR_VERS(info) ((info)&0xff)
-#define APM_16BIT_SUPPORTED	0x00010000
-#define APM_32BIT_SUPPORTED	0x00020000
-#define APM_IDLE_SLOWS		0x00040000
-#define APM_BIOS_PM_DISABLED	0x00080000
-#define APM_BIOS_PM_DISENGAGED	0x00100000
+#define APM_16BIT_SUPPORT	0x01
+#define APM_32BIT_SUPPORT	0x02
+#define APM_CPUIDLE_SLOW	0x04
+#define APM_DISABLED		0x08
+#define APM_DISENGAGED		0x10
 
 #define	APM_ERR_CODE(regs)	(((regs)->ax & 0xff00) >> 8)
 #define	APM_ERR_PM_DISABLED	0x01
@@ -104,26 +103,31 @@
 #define		APM_AC_ON		0x01
 #define		APM_AC_BACKUP		0x02
 #define		APM_AC_UNKNOWN		0xff
+/* the first set of battery constants is 1.0 style values;
+   the second set is 1.1 style bit definitions */
 #define		APM_BATT_HIGH		0x00
 #define		APM_BATT_LOW		0x01
 #define		APM_BATT_CRITICAL	0x02
 #define		APM_BATT_CHARGING	0x03
+#define		APM_BATT_ABSENT		0x04 /* Software only--not in spec! */
 #define		APM_BATT_UNKNOWN	0xff
+
 #define		APM_BATT_FLAG_HIGH	0x01
 #define		APM_BATT_FLAG_LOW	0x02
 #define		APM_BATT_FLAG_CRITICAL	0x04
 #define		APM_BATT_FLAG_CHARGING	0x08
 #define		APM_BATT_FLAG_NOBATTERY	0x80
+
 #define		APM_BATT_LIFE_UNKNOWN	0xff
-#define		BATT_STATE(regp) ((regp)->bx & 0xff)
-#define		BATT_FLAGS(regp) (((regp)->cx & 0xff00) >> 8)
-#define		AC_STATE(regp) (((regp)->bx & 0xff00) >> 8)
-#define		BATT_LIFE(regp) ((regp)->cx & 0xff) /* in % */
+#define		APM_BATT_STATE(regp) ((regp)->bx & 0xff)
+#define		APM_BATT_FLAGS(regp) (((regp)->cx & 0xff00) >> 8)
+#define		APM_AC_STATE(regp) (((regp)->bx & 0xff00) >> 8)
+#define		APM_BATT_LIFE(regp) ((regp)->cx & 0xff) /* in % */
 /* BATT_REMAINING returns minutes remaining */
-#define		BATT_REMAINING(regp) (((regp)->dx & 0x8000) ? \
-				      ((regp)->dx & 0x7fff) : \
-				      ((regp)->dx & 0x7fff)/60)
-#define		BATT_REM_VALID(regp) (((regp)->dx & 0xffff) != 0xffff)
+#define		APM_BATT_REMAINING(regp) (((regp)->dx & 0x8000) ? \
+					  ((regp)->dx & 0x7fff) : \
+					  ((regp)->dx & 0x7fff)/60)
+#define		APM_BATT_REM_VALID(regp) (((regp)->dx & 0xffff) != 0xffff)
 #define	APM_GET_PM_EVENT	0x0b
 #define		APM_STANDBY_REQ		0x0001 /* %bx on return */
 #define		APM_SUSPEND_REQ		0x0002
@@ -156,7 +160,19 @@
 
 #define APM_OEM			0x80
 
-#ifdef _LOCORE
+/*
+ * APM info word from the real-mode handler is adjusted to put
+ * major/minor version in low half and support bits in upper half.
+ */
+#define	APM_MAJOR_VERS(info) (((info)&0xff00)>>8)
+#define	APM_MINOR_VERS(info) ((info)&0xff)
+
+#define APM_16BIT_SUPPORTED	(APM_16BIT_SUPPORT << 16)
+#define APM_32BIT_SUPPORTED	(APM_32BIT_SUPPORT << 16)
+#define APM_IDLE_SLOWS		(APM_CPUIDLE_SLOW << 16)
+#define APM_BIOS_PM_DISABLED	(APM_DISABLED << 16)
+#define APM_BIOS_PM_DISENGAGED	(APM_DISENGAGED << 16)
+
 /*
  * LP (Laptop Package)
  *
@@ -173,25 +189,29 @@
  */
 
 /* Error code of APM initializer */
-#define APMINI_CANTFIND		0xffffffff
-#define APMINI_NOT32BIT		0xfffffffe
-#define APMINI_CONNECTERR	0xfffffffd
+#define APM_INI_CANTFIND	0xffffffff
+#define APM_INI_NOT32BIT	0xfffffffe
+#define APM_INI_CONNECTERR	0xfffffffd
+#define APM_INI_BADVER		0xfffffffc
 
-#define	SIZEOF_GDTE		8
-#define BOOTSTRAP_GDT_NUM	9	/* see i386/boot/table.c */
+#ifdef _LOCORE
 
-#define APM_INIT_CS_INDEX	(BOOTSTRAP_GDT_NUM - 3)
-#define APM_INIT_DS_INDEX	(BOOTSTRAP_GDT_NUM - 2)
-#define APM_INIT_CS16_INDEX	(BOOTSTRAP_GDT_NUM - 1)
+
+#define	APM_SIZEOF_GDTE		8
+#define APM_BOOTSTRAP_GDT_NUM	9	/* see i386/boot/table.c */
+
+#define APM_INIT_CS_INDEX	(APM_BOOTSTRAP_GDT_NUM - 3)
+#define APM_INIT_DS_INDEX	(APM_BOOTSTRAP_GDT_NUM - 2)
+#define APM_INIT_CS16_INDEX	(APM_BOOTSTRAP_GDT_NUM - 1)
 #define APM_INIT_CS_SEL		(APM_INIT_CS_INDEX << 3)
 #define APM_INIT_DS_SEL		(APM_INIT_DS_INDEX << 3)
 #define APM_INIT_CS16_SEL	(APM_INIT_CS16_INDEX << 3)
 
-#define CS32_ATTRIB		0xCF9e
-#define CS16_ATTRIB		0x0F9e
-#define DS32_ATTRIB		0xCF92
+#define APM_CS32_ATTRIB		0xCF9e
+#define APM_CS16_ATTRIB		0x0F9e
+#define APM_DS32_ATTRIB		0xCF92
 
-#define BOOTSTRAP_DS_SEL	0x10
+#define APM_BOOTSTRAP_DS_SEL	0x10
 /* APM initializer physical address */
 #define APM_OURADDR		0x00080000
 #define APM_RELOC(x)	((x) - _apm_init_image)
@@ -223,8 +243,6 @@ struct apm_event_info {
 	u_int index;
 	u_int spare[8];
 };
-
-#define APM_BATTERY_ABSENT 4
 
 struct apm_power_info {
 	u_char battery_state;
