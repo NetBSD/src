@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.2 1999/08/19 17:31:08 itojun Exp $	*/
+/*	$NetBSD: trace.c,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -64,7 +64,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: trace.c,v 1.2 1999/08/17 10:47:27 itojun Exp
+ *  KAME Id: trace.c,v 1.3 1999/08/31 12:30:53 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -156,7 +156,7 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
 		(IN6_IS_ADDR_LINKLOCAL(&qry->tr_src)
 		 || IN6_IS_ADDR_MC_LINKLOCAL(&qry->tr_src)) ? ifindex : 0;
 	dst_sa6.sin6_addr = qry->tr_dst;
-	src_sa6.sin6_scope_id =
+	dst_sa6.sin6_scope_id =
 		(IN6_IS_ADDR_LINKLOCAL(&qry->tr_dst)
 		 || IN6_IS_ADDR_MC_LINKLOCAL(&qry->tr_dst)) ? ifindex : 0;
 	grp_sa6.sin6_addr = *group;

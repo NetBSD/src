@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_proto.c,v 1.2 1999/08/19 17:31:07 itojun Exp $	*/
+/*	$NetBSD: pim6_proto.c,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -63,7 +63,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: pim6_proto.c,v 1.2 1999/08/13 06:24:06 jinmei Exp
+ *  KAME Id: pim6_proto.c,v 1.3 1999/08/24 10:04:56 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -241,7 +241,8 @@ receive_pim6_hello(src, pim_message, datalen)
 					change_interfaces(mrtentry_ptr,
 							  srcentry_ptr->incoming,
 							  &mrtentry_ptr->pruned_oifs,
-							  &mrtentry_ptr->leaves);
+							  &mrtentry_ptr->leaves,
+							  &mrtentry_ptr->asserted_oifs);
 				if(state_change == 1)
 					trigger_join_alert(mrtentry_ptr);
 			}
@@ -333,7 +334,8 @@ delete_pim6_nbr(nbr_delete)
 				change_interfaces(mrtentry_ptr,
 						  srcentry_ptr->incoming,
 						  &mrtentry_ptr->pruned_oifs,
-						  &mrtentry_ptr->leaves);
+						  &mrtentry_ptr->leaves,
+						  &mrtentry_ptr->asserted_oifs);
 			if(state_change == -1) {
 				trigger_prune_alert(mrtentry_ptr);
 			} else if(state_change == 1) {
@@ -546,7 +548,8 @@ delayed_prune_job(arg)
 			change_interfaces(mrtentry_ptr,
 					  mrtentry_ptr->incoming,
 					  &new_pruned_oifs,
-					  &mrtentry_ptr->leaves);
+					  &mrtentry_ptr->leaves,
+					  &mrtentry_ptr->asserted_oifs);
 
 		/* Handle transition to negative cache */
 		if(state_change == -1)
@@ -857,7 +860,8 @@ receive_pim6_join_prune(src, pim_message, datalen)
 							change_interfaces(mrtentry_ptr,
 									  mrtentry_ptr->incoming,
 									  &new_pruned_oifs,
-									  &mrtentry_ptr->leaves);
+									  &mrtentry_ptr->leaves,
+									  &mrtentry_ptr->asserted_oifs);
 			
 						/* Handle transition to negative cache */
 						if(state_change == -1)
@@ -1148,6 +1152,7 @@ receive_pim6_assert(src, pim_message, datalen)
 
 			IF_COPY(&mrtentry_ptr->pruned_oifs, &new_pruned_oifs);
 			IF_SET(mifi, &new_pruned_oifs);
+			IF_SET(mifi, &mrtentry_ptr->asserted_oifs);
 			SET_TIMER(mrtentry_ptr->prune_timers[mifi], 
 				  PIM_JOIN_PRUNE_HOLDTIME);
 
@@ -1155,7 +1160,8 @@ receive_pim6_assert(src, pim_message, datalen)
 				change_interfaces(mrtentry_ptr,
 						  mrtentry_ptr->incoming,
 						  &new_pruned_oifs,
-						  &mrtentry_ptr->leaves);
+						  &mrtentry_ptr->leaves,
+						  &mrtentry_ptr->asserted_oifs);
 
 			/* Handle transition to negative cache */
 			if(state_change == -1)
@@ -1494,12 +1500,14 @@ receive_pim6_graft(src, pim_message, datalen, pimtype)
 				/* Add to oiflist (unprune) */
 				if (IF_ISSET(mifi, &mrtentry_ptr->pruned_oifs)) {
 					IF_CLR(mifi, &mrtentry_ptr->pruned_oifs);
+					IF_CLR(mifi, &mrtentry_ptr->asserted_oifs);
 					SET_TIMER(mrtentry_ptr->prune_timers[mifi], 0);
 					state_change = 
 						change_interfaces(mrtentry_ptr,
 								  mrtentry_ptr->incoming,
 								  &mrtentry_ptr->pruned_oifs,
-								  &mrtentry_ptr->leaves);
+								  &mrtentry_ptr->leaves,
+								  &mrtentry_ptr->asserted_oifs);
 					if(state_change == 1)
 						trigger_join_alert(mrtentry_ptr);
 				}
