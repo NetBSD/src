@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_prot.c,v 1.2 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: rpcb_prot.c,v 1.3 2000/07/14 08:40:42 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -276,9 +276,9 @@ xdr_rpcb_rmtcallargs(xdrs, p)
 			return (FALSE);
 		}
 	} else {
-		IXDR_PUT_U_LONG(buf, objp->prog);
-		IXDR_PUT_U_LONG(buf, objp->vers);
-		IXDR_PUT_U_LONG(buf, objp->proc);
+		IXDR_PUT_U_INT32(buf, objp->prog);
+		IXDR_PUT_U_INT32(buf, objp->vers);
+		IXDR_PUT_U_INT32(buf, objp->proc);
 	}
 
 	/*
