@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.7 1999/02/04 14:54:00 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.8 1999/03/29 12:12:03 tsubai Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -186,6 +186,12 @@ config_slot(node, pc, irq)
 	int sz;
 	u_int reg[40], *rp;
 	char name[16];
+	struct {
+		u_int device;
+		u_int junk[3];
+		u_int intrnode;
+		u_int interrupt;
+	} imap[16];
 
 	bzero(name, sizeof(name));
 	OF_getprop(node, "name", name, sizeof(name));
@@ -241,9 +247,21 @@ config_slot(node, pc, irq)
 	    OF_getprop(node, "interrupts", &irq, sizeof(irq)) == -1)
 		return;
 
-	/* XXX USB on iMac */
-	if (bus == 0 && dev == 20 && func == 0 && irq == 1)
-		irq = 28;
+	if (irq == 1) {		/* XXX */
+		sz = OF_getprop(OF_parent(node), "interrupt-map",
+				imap, sizeof(imap));
+		if (sz != -1) {
+			int i;
+
+			for (i = 0; i < sz / sizeof(*imap); i++) {
+				/* XXX should use interrupt-map-mask */
+				if (((imap[i].device >> 11) & 0x1f) == dev) {
+					irq = imap[i].interrupt;
+					break;
+				}
+			}
+		}
+	}
 
 	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 	intr = (intr & 0xffffff00) | (irq & 0xff);
