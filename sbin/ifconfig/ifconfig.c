@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ifconfig.c	5.1 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: ifconfig.c,v 1.10 1993/12/10 11:24:07 cgd Exp $";
+static char rcsid[] = "$Id: ifconfig.c,v 1.11 1993/12/10 11:29:42 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -463,9 +463,7 @@ setsnpaoffset(val)
 }
 
 #define	IFFBITS \
-"\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
-\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\
-"
+"\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 /*
  * Print the status of the interface.  If an address family was
