@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.33 2000/06/01 14:37:51 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.34 2000/08/24 14:13:38 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include "opt_usbverbose.h"
 
 #ifdef USB_DEBUG
+#define UKBD_DEBUG 1
 #define UHID_DEBUG 1
 #define OHCI_DEBUG 1
 #define UGEN_DEBUG 1
@@ -175,6 +176,7 @@ __CONCAT(dname,_detach)(self, flags) \
  * OpenBSD
  */
 #ifdef USB_DEBUG
+#define UKBD_DEBUG 1
 #define UHID_DEBUG 1
 #define OHCI_DEBUG 1
 #define UGEN_DEBUG 1
