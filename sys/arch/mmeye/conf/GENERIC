@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.52.2.1 2004/06/30 21:15:11 jdc Exp $
+# $NetBSD: GENERIC,v 1.52.2.2 2004/07/02 17:39:57 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52.2.1 $"
+#ident 		"GENERIC-$Revision: 1.52.2.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -51,6 +51,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	LKM		# loadable kernel modules
 
