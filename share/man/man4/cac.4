@@ -1,10 +1,10 @@
-.\"	$NetBSD: cac.4,v 1.3 2000/06/12 11:14:31 ad Exp $
+.\"	$NetBSD: cac.4,v 1.4 2000/09/01 12:17:55 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Andy Doran.
+.\" by Andrew Doran.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -42,6 +42,7 @@
 .Nd
 .Tn Compaq array controller driver
 .Sh SYNOPSIS
+.Cd "cac* at eisa? slot ?"
 .Cd "cac* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
@@ -57,15 +58,21 @@ driver provides support for the following controllers:
 .Pp
 .Bl -tag -width -offset indent -compact
 .It Tn Compaq Integrated Array
-.It Tn Compaq SMART-2/E
-.It Tn Compaq SMART-2/P
-.It Tn Compaq SMART-2DH
-.It Tn Compaq SMART-2SL
+.It Tn Compaq IAES
+.It Tn Compaq IDA
+.It Tn Compaq IDA-2
+.It Tn Compaq RAID LC2
 .It Tn Compaq Smart Array 221
 .It Tn Compaq Smart Array 3100ES
 .It Tn Compaq Smart Array 3200
 .It Tn Compaq Smart Array 4200
 .It Tn Compaq Smart Array 4250ES
+.It Tn Compaq Smart Array 431
+.It Tn Compaq SMART
+.It Tn Compaq SMART-2/E
+.It Tn Compaq SMART-2/P
+.It Tn Compaq SMART-2DH
+.It Tn Compaq SMART-2SL
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
@@ -73,15 +80,10 @@ driver provides support for the following controllers:
 .Sh AUTHOR
 The
 .Nm
-driver was written by Andy Doran
+driver was written by Andrew Doran
 .Aq ad@netbsd.org .
 .Sh HISTORY
 The
 .Nm cac
 driver first appeared in
 .Nx 1.5 .
-.Sh BUGS
-A command pass-through interface and user space control tool are needed.
-.Pp
-ISA and EISA front-ends are needed.
-.Pp
