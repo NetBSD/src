@@ -1,4 +1,4 @@
-/*	$NetBSD: romcalls.S,v 1.1 1999/12/09 14:53:24 tsutsui Exp $	*/
+/*	$NetBSD: romcalls.S,v 1.1.6.1 2000/12/24 07:48:51 jhawk Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -32,7 +32,7 @@
 	.text
 	.align	4
 
-ASENTRY_NOPROFILE(halt)
+ENTRY_NOPROFILE(rom_halt)
 	moveq	#8, %d7		| RB_HALT
 	trap	#15
 
