@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.5 2003/09/08 22:37:01 kleink Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.6 2003/12/11 23:52:25 scw Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -683,7 +683,7 @@ ENTRY_NOPROFILE(bswr2rb)
 	slwi	7,7,1		/* len *= 2 */
 	add	7,7,6		/* len += src */
 	addi	6,6,-2		/* pre-decrement */
-1:	lbzu	0,2(6)		/* load and increment */
+1:	lhzu	0,2(6)		/* load and increment */
 	sthbrx	0,0,3		/* store (reversed)
 	add	3,3,8		/* dst += distance */
 	cmpl	0,6,7		/* at the end? */
