@@ -1,11 +1,11 @@
-/* $NetBSD: stubs.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $ */
+/* $NetBSD: stubs.c,v 1.2 2000/05/13 17:57:15 bjh21 Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.2 2000/05/13 17:57:15 bjh21 Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -119,22 +119,6 @@ cpu_sysctl(name, namelen, oldval, oldlenp, newval, newlen, p)
 	struct proc *p;
 {
 	panic("cpu_sysctl not implemented");
-}
-
-void
-vmapbuf(buf, len)
-	struct buf *buf;
-	vsize_t len;
-{
-	panic("vmapbuf not implemented");
-}
-
-void 
-vunmapbuf(buf, len)
-	struct buf *buf;
-	vsize_t len;
-{
-	panic("vunmapbuf not implemented");
 }
 
 void

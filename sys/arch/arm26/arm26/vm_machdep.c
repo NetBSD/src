@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.2 2000/05/13 17:57:14 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -35,12 +35,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+/* Following is for vmapbuf/vunmapbuf */
+/*
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
+ * All rights reserved.
+ *
+ * Author: Chris G. Demetriou
+ * 
+ * Permission to use, copy, modify and distribute this software and
+ * its documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ */
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.2 2000/05/13 17:57:14 bjh21 Exp $");
 
+#include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
 #include <sys/proc.h>
@@ -52,6 +80,8 @@ __RCSID("$NetBSD: vm_machdep.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $");
 #include <machine/armreg.h>
 #include <machine/frame.h>
 #include <machine/machdep.h>
+
+extern vm_map_t phys_map; /* XXX where? */
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -328,3 +358,78 @@ cpu_swapout(struct proc *p)
 	/* ... or here, for that matter. */
 }
 
+/*
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().
+ */
+/* This code was originally stolen from the alpha port. */
+/*
+ * This needs some care, since the user mapping of the buffer is (sometimes?)
+ * wired, so we have to unwire it, and put it all back when we've finished.
+ */
+void
+vmapbuf(bp, len)
+	struct buf *bp;
+	vsize_t len;
+{
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
+	struct proc *p;
+
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vmapbuf");
+	p = bp->b_proc;
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
+	off = (vaddr_t)bp->b_data - faddr;
+	len = round_page(off + len);
+	taddr = uvm_km_valloc_wait(phys_map, len);
+	bp->b_data = (caddr_t)(taddr + off);
+	len = atop(len);
+	while (len--) {
+		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
+		    &pa) == FALSE)
+			panic("vmapbuf: null page frame");
+		/* XXX is this allowed? */
+		pmap_unwire(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
+		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
+	}
+}
+
+/*
+ * Unmap a previously-mapped user I/O request.  Put it back in user memory.
+ */
+void
+vunmapbuf(bp, len)
+	struct buf *bp;
+	vsize_t len;
+{
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
+	struct proc *p;
+
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vunmapbuf");
+	p = bp->b_proc;
+	faddr = trunc_page((vaddr_t)bp->b_data);
+	taddr = trunc_page((vaddr_t)bp->b_saveaddr);
+	off = (vaddr_t)bp->b_data - faddr;
+	len = round_page(off + len);
+	/* XXX Re-map buffer into user space? */
+	len = atop(len);
+	while (len--) {
+		if (pmap_extract(vm_map_pmap(phys_map), faddr, &pa) == FALSE)
+			panic("vmapbuf: null page frame");
+		pmap_unwire(vm_map_pmap(phys_map), faddr);
+		pmap_enter(vm_map_pmap(&p->p_vmspace->vm_map), taddr,
+		    trunc_page(pa), VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
+	}
+	uvm_km_free_wakeup(phys_map, faddr, ptoa(len));
+	bp->b_data = bp->b_saveaddr;
+	bp->b_saveaddr = NULL;
+}
