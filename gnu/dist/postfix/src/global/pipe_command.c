@@ -381,11 +381,16 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
      * 
      * Turn on non-blocking writes to the child process so that we can enforce
      * timeouts after partial writes.
+     * 
+     * XXX Too much trouble with different systems returning weird write()
+     * results when a pipe is writable.
      */
     if (pipe(cmd_in_pipe) < 0 || pipe(cmd_out_pipe) < 0)
 	msg_fatal("%s: pipe: %m", myname);
     non_blocking(cmd_out_pipe[1], NON_BLOCKING);
+#if 0
     non_blocking(cmd_in_pipe[1], NON_BLOCKING);
+#endif
 
     /*
      * Spawn off a child process and irrevocably change privilege to the

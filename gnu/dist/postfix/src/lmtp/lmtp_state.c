@@ -80,7 +80,6 @@ LMTP_STATE *lmtp_state_alloc(void)
     lmtp_sasl_connect(state);
 #endif
     state->sndbufsize = 0;
-    state->sndbuffree = 0;
     state->reuse = 0;
     return (state);
 }

@@ -379,6 +379,13 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
     buf = vstring_alloc(100);
 
     /*
+     * Stop run-away process accidents by limiting the queue file size. This
+     * is not a defense against DOS attack.
+     */
+    if (var_message_limit > 0 && get_file_limit() > var_message_limit)
+	set_file_limit((off_t) var_message_limit);
+
+    /*
      * The sender name is provided by the user. In principle, the mail pickup
      * service could deduce the sender name from queue file ownership, but:
      * pickup would not be able to run chrooted, and it may not be desirable
@@ -428,7 +435,6 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
      * 
      * XXX Should limit the size of envelope records.
      */
-    rec_fprintf(dst, REC_TYPE_TIME, "%ld", (long) time((time_t *) 0));
     if (full_name || (full_name = fullname()) != 0)
 	rec_fputs(dst, REC_TYPE_FULL, full_name);
     rec_fputs(dst, REC_TYPE_FROM, saved_sender);
@@ -548,6 +554,7 @@ int     main(int argc, char **argv)
     int     flags = SM_FLAG_DEFAULT;
     char   *site_to_flush = 0;
     char   *encoding = 0;
+    char   *qtime = 0;
 
     /*
      * Be consistent with file permissions.
@@ -611,13 +618,6 @@ int     main(int argc, char **argv)
     mail_conf_read();
     if (chdir(var_queue_dir))
 	msg_fatal_status(EX_UNAVAILABLE, "chdir %s: %m", var_queue_dir);
-
-    /*
-     * Stop run-away process accidents by limiting the queue file size. This
-     * is not a defense against DOS attack.
-     */
-    if (var_message_limit > 0 && get_file_limit() > var_message_limit)
-	set_file_limit((off_t) var_message_limit);
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -751,11 +751,7 @@ int     main(int argc, char **argv)
 	    break;
 	case 'q':
 	    if (ISDIGIT(optarg[0])) {
-		if (mode == SM_MODE_DAEMON) {
-		    if (msg_verbose)
-			msg_info("-%c%s option ignored", c, optarg);
-
-		}
+		qtime = optarg;
 	    } else if (optarg[0] == 'R') {
 		site_to_flush = optarg + 1;
 		if (*site_to_flush == 0)
@@ -799,6 +795,8 @@ int     main(int argc, char **argv)
     /*
      * Start processing. Everything is delegated to external commands.
      */
+    if (qtime && mode != SM_MODE_DAEMON)
+	exit(0);
     switch (mode) {
     default:
 	msg_panic("unknown operation mode: %d", mode);

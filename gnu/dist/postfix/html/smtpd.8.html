@@ -62,28 +62,29 @@ SMTPD(8)                                                 SMTPD(8)
               with comments that Sendmail allows.
 
        <b>broken</b><i>_</i><b>sasl</b><i>_</i><b>auth</b><i>_</i><b>clients</b>
-              Support older Microsoft clients that  mis-implement
-              the AUTH protocol, and that expect an EHLO response
-              of "250 AUTH=list" instead of "250 AUTH list".
+              Support Microsoft clients that implement  an  older
+              version  of  the  AUTH protocol, and that expect an
+              EHLO response of "250 AUTH=list"  instead  of  "250
+              AUTH list".
 
        <b>smtpd</b><i>_</i><b>noop</b><i>_</i><b>commands</b>
               List of commands that are treated as NOOP (no oper-
-              ation)   commands,  without  any  parameter  syntax
-              checking and without any state change.   This  list
+              ation)  commands,  without  any  parameter   syntax
+              checking  and  without any state change.  This list
               overrides built-in command definitions.
 
 <b>Content</b> <b>inspection</b> <b>controls</b>
        <b>content</b><i>_</i><b>filter</b>
-              The  name of a mail delivery transport that filters
+              The name of a mail delivery transport that  filters
               mail and that either bounces mail or re-injects the
-              result  back into Postfix.  This parameter uses the
-              same syntax as the right-hand  side  of  a  Postfix
+              result back into Postfix.  This parameter uses  the
+              same  syntax  as  the  right-hand side of a Postfix
               transport table.
 
 <b>Authentication</b> <b>controls</b>
-       <b>enable</b><i>_</i><b>sasl</b><i>_</i><b>authentication</b>
-              Enable  per-session  authentication as per <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC 2554</a>
-              (SASL).  This functionality is available only  when
+       <b>smtpd</b><i>_</i><b>sasl</b><i>_</i><b>auth</b><i>_</i><b>enable</b>
+              Enable per-session authentication as per  <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC  2554</a>
+              (SASL).   This functionality is available only when
               explicitly  selected  at  program  build  time  and
               explicitly enabled at runtime.
 
@@ -109,14 +110,14 @@ SMTPD(8)                                                 SMTPD(8)
                      Disallow anonymous logins.
 
        <b>smtpd</b><i>_</i><b>sender</b><i>_</i><b>login</b><i>_</i><b>maps</b>
-              Maps that specify the SASL login name that  owns  a
-              MAIL    FROM    sender   address.   Used   by   the
+              Maps  that  specify the SASL login name that owns a
+              MAIL   FROM   sender   address.   Used    by    the
               <b>reject</b><i>_</i><b>sender</b><i>_</i><b>login</b><i>_</i><b>mismatch</b>  sender  anti-spoofing
               restriction.
 
 <b>Miscellaneous</b>
        <b>always</b><i>_</i><b>bcc</b>
-              Address  to send a copy of each message that enters
+              Address to send a copy of each message that  enters
               the system.
 
        <b>authorized</b><i>_</i><b>verp</b><i>_</i><b>clients</b>
@@ -124,23 +125,23 @@ SMTPD(8)                                                 SMTPD(8)
               that are authorized to use the XVERP extension.
 
        <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b>
-              Increment  in  verbose  logging level when a remote
+              Increment in verbose logging level  when  a  remote
               host  matches  a  pattern  in  the  <b>debug</b><i>_</i><b>peer</b><i>_</i><b>list</b>
               parameter.
 
        <b>debug</b><i>_</i><b>peer</b><i>_</i><b>list</b>
-              List  of  domain or network patterns. When a remote
-              host matches a pattern, increase the  verbose  log-
-              ging   level   by   the  amount  specified  in  the
+              List of domain or network patterns. When  a  remote
+              host  matches  a pattern, increase the verbose log-
+              ging  level  by  the  amount   specified   in   the
               <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b> parameter.
 
        <b>default</b><i>_</i><b>verp</b><i>_</i><b>delimiters</b>
               The default VERP delimiter characters that are used
-              when   the   XVERP  command  is  specified  without
+              when  the  XVERP  command  is   specified   without
               explicit delimiters.
 
        <b>error</b><i>_</i><b>notice</b><i>_</i><b>recipient</b>
-              Recipient   of    protocol/policy/resource/software
+              Recipient    of   protocol/policy/resource/software
               error notices.
 
        <b>hopcount</b><i>_</i><b>limit</b>
@@ -149,18 +150,18 @@ SMTPD(8)                                                 SMTPD(8)
        <b>notify</b><i>_</i><b>classes</b>
               List of error classes. Of special interest are:
 
-              <b>policy</b> When  a  client  violates any policy, mail a
+              <b>policy</b> When a client violates any  policy,  mail  a
                      transcript of the entire SMTP session to the
                      postmaster.
 
               <b>protocol</b>
-                     When  a client violates the SMTP protocol or
+                     When a client violates the SMTP protocol  or
                      issues  an  unimplemented  command,  mail  a
                      transcript of the entire SMTP session to the
                      postmaster.
 
        <b>smtpd</b><i>_</i><b>banner</b>
-              Text that follows the <b>220</b> status code in  the  SMTP
+              Text  that  follows the <b>220</b> status code in the SMTP
               greeting banner.
 
        <b>smtpd</b><i>_</i><b>expansion</b><i>_</i><b>filter</b>
@@ -168,57 +169,57 @@ SMTPD(8)                                                 SMTPD(8)
               expansion of rbl template responses and other text.
 
        <b>smtpd</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
-              Restrict  the  number  of  recipients that the SMTP
+              Restrict the number of  recipients  that  the  SMTP
               server accepts per message delivery.
 
        <b>smtpd</b><i>_</i><b>timeout</b>
-              Limit the time to send a  server  response  and  to
+              Limit  the  time  to  send a server response and to
               receive a client request.
 
        <b>soft</b><i>_</i><b>bounce</b>
-              Change  hard (5xx) reject responses into soft (4xx)
-              reject responses.  This can be useful  for  testing
+              Change hard (5xx) reject responses into soft  (4xx)
+              reject  responses.   This can be useful for testing
               purposes.
 
        <b>verp</b><i>_</i><b>delimiter</b><i>_</i><b>filter</b>
-              The  characters that Postfix accepts as VERP delim-
+              The characters that Postfix accepts as VERP  delim-
               iter characters.
 
 <b>Known</b> <b>versus</b> <b>unknown</b> <b>recipients</b>
        <b>show</b><i>_</i><b>user</b><i>_</i><b>unknown</b><i>_</i><b>table</b><i>_</i><b>name</b>
-              Whether or not to reveal  the  table  name  in  the
-              "User  unknown"  responses.  The extra detail makes
-              trouble shooting easier but also  reveals  informa-
+              Whether  or  not  to  reveal  the table name in the
+              "User unknown" responses. The  extra  detail  makes
+              trouble  shooting  easier but also reveals informa-
               tion that is nobody elses business.
 
        <b>unknown</b><i>_</i><b>local</b><i>_</i><b>recipient</b><i>_</i><b>reject</b><i>_</i><b>code</b>
               The response code when a client specifies a recipi-
-              ent  whose   domain   matches   <b>$mydestination</b>   or
+              ent   whose   domain   matches   <b>$mydestination</b>  or
               <b>$inet</b><i>_</i><b>interfaces</b>,  while  <b>$local</b><i>_</i><b>recipient</b><i>_</i><b>maps</b>  is
-              non-empty and does not list the  recipient  address
+              non-empty  and  does not list the recipient address
               or address local-part.
 
        <b>unknown</b><i>_</i><b>relay</b><i>_</i><b>recipient</b><i>_</i><b>reject</b><i>_</i><b>code</b>
               The response code when a client specifies a recipi-
               ent  whose  domain  matches  <b>$relay</b><i>_</i><b>domains</b>,  while
-              <b>$relay</b><i>_</i><b>recipient</b><i>_</i><b>maps</b>  is  non-empty  and  does not
+              <b>$relay</b><i>_</i><b>recipient</b><i>_</i><b>maps</b> is  non-empty  and  does  not
               list the recipient address.
 
        <b>unknown</b><i>_</i><b>virtual</b><i>_</i><b>alias</b><i>_</i><b>reject</b><i>_</i><b>code</b>
               The response code when a client specifies a recipi-
-              ent  whose  domain  matches <b>$virtual</b><i>_</i><b>alias</b><i>_</i><b>domains</b>,
-              while  the  recipient  is  not  listed   in   <b>$vir-</b>
+              ent whose  domain  matches  <b>$virtual</b><i>_</i><b>alias</b><i>_</i><b>domains</b>,
+              while   the   recipient  is  not  listed  in  <b>$vir-</b>
               <b>tual</b><i>_</i><b>alias</b><i>_</i><b>maps</b>.
 
        <b>unknown</b><i>_</i><b>virtual</b><i>_</i><b>mailbox</b><i>_</i><b>reject</b><i>_</i><b>code</b>
               The response code when a client specifies a recipi-
-              ent whose domain matches  <b>$virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>,
+              ent  whose domain matches <b>$virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>,
               while the recipient is not listed in <b>$virtual</b><i>_</i><b>mail-</b>
               <b>box</b><i>_</i><b>maps</b>.
 
 <b>Resource</b> <b>controls</b>
        <b>line</b><i>_</i><b>length</b><i>_</i><b>limit</b>
-              Limit the amount of memory in bytes  used  for  the
+              Limit  the  amount  of memory in bytes used for the
               handling of partial input lines.
 
        <b>message</b><i>_</i><b>size</b><i>_</i><b>limit</b>
@@ -226,8 +227,8 @@ SMTPD(8)                                                 SMTPD(8)
               ing on-disk storage for envelope information.
 
        <b>queue</b><i>_</i><b>minfree</b>
-              Minimal amount of free space in bytes in the  queue
-              file  system for the SMTP server to accept any mail
+              Minimal  amount of free space in bytes in the queue
+              file system for the SMTP server to accept any  mail
               at all.
 
        <b>smtpd</b><i>_</i><b>history</b><i>_</i><b>flush</b><i>_</i><b>threshold</b>
@@ -242,23 +243,23 @@ SMTPD(8)                                                 SMTPD(8)
 
        <b>smtpd</b><i>_</i><b>soft</b><i>_</i><b>error</b><i>_</i><b>limit</b>
               When an SMTP client has made this number of errors,
-              wait <i>error_count</i> seconds before responding  to  any
+              wait  <i>error_count</i>  seconds before responding to any
               client request.
 
        <b>smtpd</b><i>_</i><b>hard</b><i>_</i><b>error</b><i>_</i><b>limit</b>
-              Disconnect  after  a client has made this number of
+              Disconnect after a client has made this  number  of
               errors.
 
        <b>smtpd</b><i>_</i><b>junk</b><i>_</i><b>command</b><i>_</i><b>limit</b>
               Limit the number of times a client can issue a junk
-              command  such  as  NOOP,  VRFY, ETRN or RSET in one
-              SMTP session before it  is  penalized  with  tarpit
+              command such as NOOP, VRFY, ETRN  or  RSET  in  one
+              SMTP  session  before  it  is penalized with tarpit
               delays.
 
 <b>UCE</b> <b>control</b> <b>restrictions</b>
        <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>
-              List  of  Postfix features that use <i>domain.tld</i> pat-
-              terns  to  match  <i>sub.domain.tld</i>  (as  opposed   to
+              List of Postfix features that use  <i>domain.tld</i>  pat-
+              terns   to  match  <i>sub.domain.tld</i>  (as  opposed  to
               requiring <i>.domain.tld</i> patterns).
 
        <b>smtpd</b><i>_</i><b>client</b><i>_</i><b>restrictions</b>
@@ -266,19 +267,19 @@ SMTPD(8)                                                 SMTPD(8)
               tem.
 
        <b>smtpd</b><i>_</i><b>helo</b><i>_</i><b>required</b>
-              Require that clients introduce  themselves  at  the
+              Require  that  clients  introduce themselves at the
               beginning of an SMTP session.
 
        <b>smtpd</b><i>_</i><b>helo</b><i>_</i><b>restrictions</b>
-              Restrict  what client hostnames are allowed in <b>HELO</b>
+              Restrict what client hostnames are allowed in  <b>HELO</b>
               and <b>EHLO</b> commands.
 
        <b>smtpd</b><i>_</i><b>sender</b><i>_</i><b>restrictions</b>
-              Restrict what sender addresses are allowed in  <b>MAIL</b>
+              Restrict  what sender addresses are allowed in <b>MAIL</b>
               <b>FROM</b> commands.
 
        <b>smtpd</b><i>_</i><b>recipient</b><i>_</i><b>restrictions</b>
-              Restrict  what  recipient  addresses are allowed in
+              Restrict what recipient addresses  are  allowed  in
               <b>RCPT</b> <b>TO</b> commands.
 
        <b>smtpd</b><i>_</i><b>etrn</b><i>_</i><b>restrictions</b>
@@ -286,73 +287,73 @@ SMTPD(8)                                                 SMTPD(8)
               mands, and what clients may issue <b>ETRN</b> commands.
 
        <b>smtpd</b><i>_</i><b>data</b><i>_</i><b>restrictions</b>
-              Restrictions  on  the  <b>DATA</b> command. Currently, the
-              only  restriction  that   makes   sense   here   is
+              Restrictions on the <b>DATA</b>  command.  Currently,  the
+              only   restriction   that   makes   sense  here  is
               <b>reject</b><i>_</i><b>unauth</b><i>_</i><b>pipelining</b>.
 
        <b>allow</b><i>_</i><b>untrusted</b><i>_</i><b>routing</b>
-              Allow  untrusted  clients to specify addresses with
-              sender-specified routing.  Enabling this  opens  up
-              nasty  relay  loopholes involving trusted backup MX
+              Allow untrusted clients to specify  addresses  with
+              sender-specified  routing.   Enabling this opens up
+              nasty relay loopholes involving trusted  backup  MX
               hosts.
 
        <b>smtpd</b><i>_</i><b>restriction</b><i>_</i><b>classes</b>
-              Declares the name of zero or more  parameters  that
-              contain  a  list  of UCE restrictions. The names of
-              these parameters can then be used  instead  of  the
+              Declares  the  name of zero or more parameters that
+              contain a list of UCE restrictions.  The  names  of
+              these  parameters  can  then be used instead of the
               restriction lists that they represent.
 
        <b>smtpd</b><i>_</i><b>null</b><i>_</i><b>access</b><i>_</i><b>lookup</b><i>_</i><b>key</b>
-              The  lookup  key  to be used in SMTPD access tables
-              instead of the null sender address. A  null  sender
+              The lookup key to be used in  SMTPD  access  tables
+              instead  of  the null sender address. A null sender
               address cannot be looked up.
 
        <b>maps</b><i>_</i><b>rbl</b><i>_</i><b>domains</b> (deprecated)
-              List  of  DNS domains that publish the addresses of
+              List of DNS domains that publish the  addresses  of
               blacklisted hosts. This is used with the deprecated
               <b>reject</b><i>_</i><b>maps</b><i>_</i><b>rbl</b> restriction.
 
        <b>permit</b><i>_</i><b>mx</b><i>_</i><b>backup</b><i>_</i><b>networks</b>
-              Only  domains  whose  primary  MX  hosts  match the
-              listed  networks  are   eligible   for   the   <b>per-</b>
+              Only domains  whose  primary  MX  hosts  match  the
+              listed   networks   are   eligible   for  the  <b>per-</b>
               <b>mit</b><i>_</i><b>mx</b><i>_</i><b>backup</b> feature.
 
        <b>relay</b><i>_</i><b>domains</b>
-              Restrict  what  domains this mail system will relay
-              mail to. The domains are  routed  to  the  delivery
+              Restrict what domains this mail system  will  relay
+              mail  to.  The  domains  are routed to the delivery
               agent specified with the <b>relay</b><i>_</i><b>transport</b> setting.
 
 <b>UCE</b> <b>control</b> <b>responses</b>
        <b>access</b><i>_</i><b>map</b><i>_</i><b>reject</b><i>_</i><b>code</b>
-              Response  code  when  a  client  violates an access
+              Response code when  a  client  violates  an  access
               database restriction.
 
        <b>default</b><i>_</i><b>rbl</b><i>_</i><b>reply</b>
               Default template reply when a request is RBL black-
-              listed.   This template is used by the <b>reject</b><i>_</i><b>rbl</b><i>_</i><b>*</b>
-              and   <b>reject</b><i>_</i><b>rhsbl</b><i>_</i><b>*</b>   restrictions.   See    also:
+              listed.  This template is used by the  <b>reject</b><i>_</i><b>rbl</b><i>_</i><b>*</b>
+              and    <b>reject</b><i>_</i><b>rhsbl</b><i>_</i><b>*</b>   restrictions.   See   also:
               <b>rbl</b><i>_</i><b>reply</b><i>_</i><b>maps</b> and <b>smtpd</b><i>_</i><b>expansion</b><i>_</i><b>filter</b>.
 
        <b>defer</b><i>_</i><b>code</b>
-              Response  code when a client request is rejected by
+              Response code when a client request is rejected  by
               the <b>defer</b> restriction.
 
        <b>invalid</b><i>_</i><b>hostname</b><i>_</i><b>reject</b><i>_</i><b>code</b>
-              Response  code   when   a   client   violates   the
+              Response   code   when   a   client   violates  the
               <b>reject</b><i>_</i><b>invalid</b><i>_</i><b>hostname</b> restriction.
 
        <b>maps</b><i>_</i><b>rbl</b><i>_</i><b>reject</b><i>_</i><b>code</b>
               Response code when a request is RBL blacklisted.
 
        <b>rbl</b><i>_</i><b>reply</b><i>_</i><b>maps</b>
-              Table  with  template responses for RBL blacklisted
-              requests, indexed by RBL domain  name.  These  tem-
+              Table with template responses for  RBL  blacklisted
+              requests,  indexed  by  RBL domain name. These tem-
               plates   are   used   by   the   <b>reject</b><i>_</i><b>rbl</b><i>_</i><b>*</b>   and
-              <b>reject</b><i>_</i><b>rhsbl</b><i>_</i><b>*</b>     restrictions.     See      also:
+              <b>reject</b><i>_</i><b>rhsbl</b><i>_</i><b>*</b>      restrictions.     See     also:
               <b>default</b><i>_</i><b>rbl</b><i>_</i><b>reply</b> and <b>smtpd</b><i>_</i><b>expansion</b><i>_</i><b>filter</b>.
 
        <b>reject</b><i>_</i><b>code</b>
-              Response  code  when  the  client  matches a <b>reject</b>
+              Response code when  the  client  matches  a  <b>reject</b>
               restriction.
 
        <b>relay</b><i>_</i><b>domains</b><i>_</i><b>reject</b><i>_</i><b>code</b>
@@ -360,7 +361,7 @@ SMTPD(8)                                                 SMTPD(8)
               mail relay policy.
 
        <b>unknown</b><i>_</i><b>address</b><i>_</i><b>reject</b><i>_</i><b>code</b>
-              Response   code   when   a   client   violates  the
+              Response  code   when   a   client   violates   the
               <b>reject</b><i>_</i><b>unknown</b><i>_</i><b>address</b> restriction.
 
        <b>unknown</b><i>_</i><b>client</b><i>_</i><b>reject</b><i>_</i><b>code</b>
@@ -369,7 +370,7 @@ SMTPD(8)                                                 SMTPD(8)
               tion.
 
        <b>unknown</b><i>_</i><b>hostname</b><i>_</i><b>reject</b><i>_</i><b>code</b>
-              Response  code   when   a   client   violates   the
+              Response   code   when   a   client   violates  the
               <b>reject</b><i>_</i><b>unknown</b><i>_</i><b>hostname</b> restriction.
 
 <b>SEE</b> <b>ALSO</b>
@@ -379,7 +380,7 @@ SMTPD(8)                                                 SMTPD(8)
        syslogd(8) system logging
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

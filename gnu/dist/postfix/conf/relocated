@@ -30,28 +30,28 @@
 #        Table lookups are case insensitive.
 # 
 # TABLE FORMAT
-#        The format of the table is as follows:
+#        The input format for the postmap(1) command is as follows:
 # 
 #        o      An entry has one of the following form:
-#                    key  new_location
-#               Where  new_location  specifies  contact information
-#               such as an  email  address,  or  perhaps  a  street
+#                    pattern      new_location
+#               Where new_location  specifies  contact  information
+#               such  as  an  email  address,  or  perhaps a street
 #               address or telephone number.
 # 
-#        o      Empty  lines and whitespace-only lines are ignored,
-#               as are lines whose first  non-whitespace  character
+#        o      Empty lines and whitespace-only lines are  ignored,
+#               as  are  lines whose first non-whitespace character
 #               is a `#'.
 # 
-#        o      A  logical  line starts with non-whitespace text. A
-#               line that starts with whitespace continues a  logi-
+#        o      A logical line starts with non-whitespace  text.  A
+#               line  that starts with whitespace continues a logi-
 #               cal line.
 # 
 #        With lookups from indexed files such as DB or DBM, or from
-#        networked tables such as NIS, LDAP or SQL, the  key  field
-#        is one of the following:
+#        networked  tables  such  as NIS, LDAP or SQL, patterns are
+#        tried in the order as listed below:
 # 
 #        user@domain
-#               Matches  user@domain. This form has precedence over
+#               Matches user@domain. This form has precedence  over
 #               all other forms.
 # 
 #        user   Matches user@site when site is $myorigin, when site
@@ -59,42 +59,42 @@
 #               in $inet_interfaces.
 # 
 #        @domain
-#               Matches every address in domain. This form has  the
+#               Matches  every address in domain. This form has the
 #               lowest precedence.
 # 
 # ADDRESS EXTENSION
 #        When a mail address localpart contains the optional recip-
-#        ient delimiter (e.g., user+foo@domain), the  lookup  order
+#        ient  delimiter  (e.g., user+foo@domain), the lookup order
 #        becomes: user+foo@domain, user@domain, user+foo, user, and
 #        @domain.
 # 
 # REGULAR EXPRESSION TABLES
-#        This section describes how the table lookups  change  when
+#        This  section  describes how the table lookups change when
 #        the table is given in the form of regular expressions. For
-#        a description of regular expression lookup  table  syntax,
+#        a  description  of regular expression lookup table syntax,
 #        see regexp_table(5) or pcre_table(5).
 # 
-#        Each  pattern  is  a regular expression that is applied to
+#        Each pattern is a regular expression that  is  applied  to
 #        the entire address being looked up. Thus, user@domain mail
-#        addresses  are  not  broken up into their user and @domain
+#        addresses are not broken up into their  user  and  @domain
 #        constituent parts, nor is user+foo broken up into user and
 #        foo.
 # 
-#        Patterns  are  applied  in  the  order as specified in the
-#        table, until a pattern is found that  matches  the  search
+#        Patterns are applied in the  order  as  specified  in  the
+#        table,  until  a  pattern is found that matches the search
 #        string.
 # 
-#        Results  are  the  same as with indexed file lookups, with
-#        the additional feature that parenthesized substrings  from
+#        Results are the same as with indexed  file  lookups,  with
+#        the  additional feature that parenthesized substrings from
 #        the pattern can be interpolated as $1, $2 and so on.
 # 
 # BUGS
-#        The  table format does not understand quoting conventions.
+#        The table format does not understand quoting  conventions.
 # 
 # CONFIGURATION PARAMETERS
-#        The following main.cf parameters are  especially  relevant
-#        to  this  topic.  See  the Postfix main.cf file for syntax
-#        details and for default values.  Use  the  postfix  reload
+#        The  following  main.cf parameters are especially relevant
+#        to this topic. See the Postfix  main.cf  file  for  syntax
+#        details  and  for  default  values. Use the postfix reload
 #        command after a configuration change.
 # 
 #        relocated_maps
@@ -103,12 +103,12 @@
 #        Other parameters of interest:
 # 
 #        inet_interfaces
-#               The network interface addresses  that  this  system
+#               The  network  interface  addresses that this system
 #               receives mail on.  You need to stop and start Post-
 #               fix when this parameter changes.
 # 
 #        mydestination
-#               List of domains that  this  mail  system  considers
+#               List  of  domains  that  this mail system considers
 #               local.
 # 
 #        myorigin
@@ -120,7 +120,7 @@
 #        regexp_table(5) format of POSIX regular expression tables
 # 
 # LICENSE
-#        The Secure Mailer license must be  distributed  with  this
+#        The  Secure  Mailer  license must be distributed with this
 #        software.
 # 
 # AUTHOR(S)

@@ -27,6 +27,7 @@ typedef int (*MAIL_STREAM_CLOSE_FN) (VSTREAM *);
 
 struct MAIL_STREAM {
     VSTREAM *stream;			/* file or pipe or socket */
+    char   *queue;			/* (initial) queue name */
     char   *id;				/* queue id */
     MAIL_STREAM_FINISH_FN finish;	/* finish code */
     MAIL_STREAM_CLOSE_FN close;		/* close stream */

@@ -39,9 +39,12 @@ A logical line starts with non-whitespace text. A line that
 starts with whitespace continues a logical line.
 .IP "\fBif /\fIpattern\fB/\fIflags\fR"
 .IP "\fBendif\fR"
-Examine the lines between \fBif\fR..\fBendif\fR only if
-\fIpattern\fR matches. The \fBif\fR..\fBendif\fR can nest.
-Do not prepend whitespace to patterns inside \fBif\fR..\fBendif\fR.
+Match the search string against the patterns between \fBif\fR
+and \fBendif\fR, if and only if the search string matches
+\fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
+.sp
+Note: do not prepend whitespace to patterns inside
+\fBif\fR..\fBendif\fR.
 .PP
 Each pattern is a perl-like regular expression. The expression
 delimiter can be any character, except whitespace or characters
@@ -119,7 +122,7 @@ or $(n) if they aren't followed by whitespace.
 .na
 .nf
 # Protect your outgoing majordomo exploders
-/^(?!owner-)(.*)-outgoing@/     550 Use ${1}@${2} instead
+/^(?!owner-)(.*)-outgoing@(.*)/ 550 Use ${1}@${2} instead
 
 # Bounce friend@whatever, except when whatever is our domain (you would
 # be better just bouncing all friend@ mail - this is just an example).

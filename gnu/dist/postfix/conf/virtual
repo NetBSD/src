@@ -53,8 +53,7 @@
 #        different way as described below.
 # 
 # TABLE FORMAT
-#        The  format  of  the virtual table is as follows, mappings
-#        being tried in the order as listed in this manual page:
+#        The input format for the postmap(1) command is as follows:
 # 
 #        pattern result
 #               When pattern matches a mail address, replace it  by

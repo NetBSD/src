@@ -225,6 +225,7 @@ int     lmtp_lhlo(LMTP_STATE *state)
      * LMTP server. Otherwise, we might do the wrong thing when the server
      * advertises a really huge message size limit.
      */
+    state->features = 0;
     lines = resp->str;
     (void) mystrtok(&lines, "\n");
     while ((words = mystrtok(&lines, "\n")) != 0) {
@@ -243,11 +244,6 @@ int     lmtp_lhlo(LMTP_STATE *state)
     }
     if (msg_verbose)
 	msg_info("server features: 0x%x", state->features);
-
-#ifdef USE_SASL_AUTH
-    if (var_lmtp_sasl_enable && (state->features & LMTP_FEATURE_AUTH))
-	return (lmtp_sasl_helo_login(state));
-#endif
 
     /*
      * We use LMTP command pipelining if the server said it supported it.
@@ -273,6 +269,11 @@ int     lmtp_lhlo(LMTP_STATE *state)
 		     state->sndbufsize);
     } else
 	state->sndbufsize = 0;
+
+#ifdef USE_SASL_AUTH
+    if (var_lmtp_sasl_enable && (state->features & LMTP_FEATURE_AUTH))
+	return (lmtp_sasl_helo_login(state));
+#endif
 
     return (0);
 }
@@ -703,8 +704,8 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 	/*
 	 * Copy the next command to the buffer and update the sender state.
 	 */
-	if (state->sndbuffree > 0)
-	    state->sndbuffree -= VSTRING_LEN(next_command) + 2;
+	if (sndbuffree > 0)
+	    sndbuffree -= VSTRING_LEN(next_command) + 2;
 	lmtp_chat_cmd(state, "%s", vstring_str(next_command));
 	send_state = next_state;
 	send_rcpt = next_rcpt;

@@ -50,7 +50,8 @@ UCE restriction.
 
 SASL authentication information is not passed on via message headers
 or via SMTP.  It is no-one's business what username and authentication
-method the poster was using in order to access the mail server.
+method the poster was using in order to access the mail server. The
+people who need to know can find the information in the maillog file.
 
 When sending mail, Postfix looks up the server hostname or destination
 domain (the address remote part) in a table, and if a username/password
@@ -226,6 +227,19 @@ can use one of the following commands:
 
 mmencode is part of the metamail software.
 MIME::Base64 is available from www.cpan.org.
+
+Trouble shooting the SASL internals
+===================================
+
+[based on text by Liviu Daia]
+
+In the Cyrus SASL sources you'll find a subdirectory named "sample".
+Run make there, then run the resulting sample server and client in
+separate terminals.  Strace / ktrace / truss the server to see what
+makes it unhappy, fix the problem, then write the authors thanking
+them for providing such useful logging.  Repeat the previous step
+until you can successfully authenticate with the sample client.
+Only then get back to Postfix.
 
 Enabling SASL authentication in the Postfix SMTP client
 =======================================================
