@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.32 2000/12/04 11:05:32 fvdl Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.33 2000/12/09 08:06:32 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -99,6 +99,7 @@ void
 isp_attach(isp)
 	struct ispsoftc *isp;
 {
+	int maxluns;
 	isp->isp_osinfo._adapter.scsipi_minphys = ispminphys;
 	isp->isp_osinfo._adapter.scsipi_ioctl = ispioctl;
 	isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
@@ -110,6 +111,7 @@ isp_attach(isp)
 	isp->isp_osinfo._link.device = &isp_dev;
 	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
 	isp->isp_osinfo._link.openings = isp->isp_maxcmds;
+	isp->isp_osinfo._link.scsipi_scsi.max_lun = maxluns;
 	/*
 	 * Until the midlayer is fixed to use REPORT LUNS, limit to 8 luns.
 	 */
@@ -497,7 +499,7 @@ isp_dog(arg)
 			XS_CMD_C_WDOG(xs);
 			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
 			if (isp_getrqentry(isp, &iptr, &optr, (void **) &mp)) {
-				ISP_IUNLOCK(isp);
+				ISP_UNLOCK(isp);
 				return;
 			}
 			XS_CMD_S_GRACE(xs);
@@ -543,7 +545,7 @@ isp_command_requeue(arg)
 {
 	struct scsipi_xfer *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
-	ISP_ILOCK(isp);
+	ISP_LOCK(isp);
 	switch (ispcmd(xs)) {
 	case SUCCESSFULLY_QUEUED:
 		isp_prt(isp, ISP_LOGINFO,
@@ -567,7 +569,7 @@ isp_command_requeue(arg)
 		scsipi_done(xs);
 		break;
 	}
-	ISP_IUNLOCK(isp);
+	ISP_UNLOCK(isp);
 }
 
 /*
@@ -581,7 +583,7 @@ isp_internal_restart(arg)
 	struct ispsoftc *isp = arg;
 	int result, nrestarted = 0;
 
-	ISP_ILOCK(isp);
+	ISP_LOCK(isp);
 	if (isp->isp_osinfo.blocked == 0) {
 		struct scsipi_xfer *xs;
 		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
@@ -604,7 +606,7 @@ isp_internal_restart(arg)
 		isp_prt(isp, ISP_LOGINFO,
 		    "isp_restart requeued %d commands", nrestarted);
 	}
-	ISP_IUNLOCK(isp);
+	ISP_UNLOCK(isp);
 }
 
 int

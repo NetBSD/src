@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.62 2000/10/16 05:15:05 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.63 2000/12/09 08:06:32 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -118,7 +118,7 @@ static char *ldumped =
     "Target %d (Loop ID 0x%x) Port 0x%x dumped after login info mismatch";
 #endif
 static char *notresp =
-  "Not RESPONSE in RESPONSE Queue (type 0x%x) @ idx %d (next %d)";
+  "Not RESPONSE in RESPONSE Queue (type 0x%x) @ idx %d (next %d) nlooked %d";
 static char *xact1 =
     "HBA attempted queued transaction with disconnect not set for %d.%d.%d";
 static char *xact2 =
@@ -405,6 +405,11 @@ isp_reset(isp)
 	}
 
 	/*
+	 * Clear instrumentation
+	 */
+	isp->isp_intcnt = isp->isp_intbogus = 0;
+
+	/*
 	 * Do MD specific pre initialization
 	 */
 	ISP_RESET0(isp);
@@ -638,7 +643,7 @@ again:
 	mbs.param[1] = ISP_CODE_ORG;
 	isp_mboxcmd(isp, &mbs, MBLOGNONE);
 	/* give it a chance to start */
-	USEC_DELAY(500);
+	USEC_SLEEP(isp, 500);
 
 	if (IS_SCSI(isp)) {
 		/*
@@ -1107,10 +1112,20 @@ isp_fibre_init(isp)
 		/*
 		 * Prefer or force Point-To-Point instead Loop?
 		 */
-		if (isp->isp_confopts & ISP_CFG_NPORT)
+		switch(isp->isp_confopts & ISP_CFG_PORT_PREF) {
+		case ISP_CFG_NPORT:
 			icbp->icb_xfwoptions = ICBXOPT_PTP_2_LOOP;
-		else
+			break;
+		case ISP_CFG_NPORT_ONLY:
+			icbp->icb_xfwoptions = ICBXOPT_PTP_ONLY;
+			break;
+		case ISP_CFG_LPORT_ONLY:
+			icbp->icb_xfwoptions = ICBXOPT_LOOP_ONLY;
+			break;
+		default:
 			icbp->icb_xfwoptions = ICBXOPT_LOOP_2_PTP;
+			break;
+		}
 	}
 	icbp->icb_logintime = 60;	/* 60 second login timeout */
 
@@ -1320,11 +1335,11 @@ isp_fclink_test(isp, usdelay)
 			count += 1000;
 			enano = (1000 * 1000) - enano;
 			while (enano > (u_int64_t) 4000000000U) {
-				USEC_DELAY(4000000);
+				USEC_SLEEP(isp, 4000000);
 				enano -= (u_int64_t) 4000000000U;
 			}
 			wrk = enano;
-			USEC_DELAY(wrk/1000);
+			USEC_SLEEP(isp, wrk/1000);
 		} else {
 			while (enano > (u_int64_t) 4000000000U) {
 				count += 4000000;
@@ -2516,7 +2531,9 @@ isp_intr(arg)
 	isp_prt(isp, ISP_LOGDEBUG3, "isp_intr isr %x sem %x", isr, sema);
 	isr &= INT_PENDING_MASK(isp);
 	sema &= BIU_SEMA_LOCK;
+	isp->isp_intcnt++;
 	if (isr == 0 && sema == 0) {
+		isp->isp_intbogus++;
 		return (0);
 	}
 
@@ -2651,7 +2668,12 @@ isp_intr(arg)
 			 */
 			if (sp->req_header.rqs_entry_type != RQSTYPE_REQUEST) {
 				isp_prt(isp, ISP_LOGERR, notresp,
-				    sp->req_header.rqs_entry_type, oop, optr);
+				    sp->req_header.rqs_entry_type, oop, optr,
+				    nlooked);
+				if (isp->isp_dblev & ISP_LOGDEBUG0) {
+					isp_print_bytes(isp, "Queue Entry",
+					    QENTRY_LEN, sp);
+				}
 				MEMZERO(sp, sizeof (isphdr_t));
 				continue;
 			}
@@ -2879,6 +2901,9 @@ isp_parse_async(isp, mbox)
 		isp_prt(isp, ISP_LOGERR,
 		    "Internal FW Error @ RISC Addr 0x%x", mbox);
 		isp_reinit(isp);
+#ifdef	ISP_TARGET_MODE
+		isp_target_async(isp, bus, mbox);
+#endif
 		/* no point continuing after this */
 		return (-1);
 
@@ -3083,6 +3108,9 @@ isp_parse_async(isp, mbox)
 		case ISP_CONN_FATAL:
 			isp_prt(isp, ISP_LOGERR, "FATAL CONNECTION ERROR");
 			isp_reinit(isp);
+#ifdef	ISP_TARGET_MODE
+			isp_target_async(isp, bus, ASYNC_SYSTEM_ERROR);
+#endif
 			/* no point continuing after this */
 			return (-1);
 
@@ -3156,7 +3184,7 @@ isp_parse_status(isp, sp, xs)
 		if ((sp->req_state_flags & RQSF_GOT_TARGET) == 0) {
 			isp_prt(isp, ISP_LOGDEBUG1,
 			    "Selection Timeout for %d.%d.%d",
-			    XS_TGT(xs), XS_LUN(xs), XS_CHANNEL(xs));
+			    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 			if (XS_NOERR(xs)) {
 				XS_SETERR(xs, HBA_SELTIMEOUT);
 			}
@@ -4023,12 +4051,6 @@ isp_mboxcmd(isp, mbp, logmask)
 	 * Set Host Interrupt condition so that RISC will pick up mailbox regs.
 	 */
 	ISP_WRITE(isp, HCCR, HCCR_CMD_SET_HOST_INT);
-
-	/*
-	 * Give the f/w a chance to pick this up.
-	 */
-	USEC_DELAY(250);
-
 
 	/*
 	 * While we haven't finished the command, spin our wheels here.

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.31 2000/11/14 18:35:10 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.32 2000/12/09 08:06:33 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -73,7 +73,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -109,6 +108,8 @@ struct isposinfo {
 	TAILQ_HEAD(, scsipi_xfer) waitq; 
 	struct callout _restart;
 };
+#define	ISP_MUSTPOLL(isp)	\
+	(isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints)
 
 /*
  * Required Macros/Defines
@@ -124,6 +125,12 @@ struct isposinfo {
 #define	SNPRINTF		snprintf
 #define	STRNCAT			strncat
 #define	USEC_DELAY		DELAY
+#define	USEC_SLEEP(isp, x)		\
+	if (!ISP_MUSTPOLL(isp))		\
+		ISP_UNLOCK(isp);	\
+	DELAY(x);			\
+	if (!ISP_MUSTPOLL(isp))		\
+		ISP_LOCK(isp)
 
 #define	NANOTIME_T		struct timeval
 #define	GET_NANOTIME		microtime
@@ -215,29 +222,22 @@ struct isposinfo {
 #define	ISP_NODEWWN(isp)	FCPARAM(isp)->isp_nodewwn
 #define	ISP_PORTWWN(isp)	FCPARAM(isp)->isp_portwwn
 
-#define	ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
-	if((void *)src != (void *)dest) bcopy(src, dest, sizeof (isp_pdb_t))
-#define	ISP_SWIZZLE_ICB(a, b)
-#ifdef	__sparc__
-#define ISP_SWIZZLE_REQUEST(a, b)			\
-	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header);	\
-        ISP_SBUSIFY_ISPREQ(a, b)
-#define ISP_UNSWIZZLE_RESPONSE(a, b, c)			\
-	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
+#if	_BYTE_ORDER == _BIG_ENDIAN
+#define	ISP_SWIZZLE_REQUEST		isp_swizzle_request
+#define	ISP_UNSWIZZLE_RESPONSE		isp_unswizzle_response
+#define	ISP_SWIZZLE_ICB			isp_swizzle_icb
+#define	ISP_UNSWIZZLE_AND_COPY_PDBP	isp_unswizzle_and_copy_pdbp
+#define	ISP_SWIZZLE_SNS_REQ		isp_swizzle_sns_req
+#define	ISP_UNSWIZZLE_SNS_RSP		isp_unswizzle_sns_rsp
+#define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)	*rp = bswap16(*rp)
 #else
 #define	ISP_SWIZZLE_REQUEST(a, b)
 #define	ISP_UNSWIZZLE_RESPONSE(a, b, c)
-#endif
+#define	ISP_SWIZZLE_ICB(a, b)
+#define	ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
+	if((void *)src != (void *)dest) bcopy(src, dest, sizeof (isp_pdb_t))
 #define	ISP_SWIZZLE_SNS_REQ(a, b)
 #define	ISP_UNSWIZZLE_SNS_RSP(a, b, c)
-#ifdef	__sparc__
-#define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)	\
-	{								\
-		u_int16_t tmp = *rp >> 8;				\
-		tmp |= ((*rp & 0xff) << 8);				\
-		*rp = tmp;						\
-	}
-#else
 #define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)
 #endif
 
@@ -267,6 +267,15 @@ static inline char *strncat __P((char *, const char *, size_t));
 static inline u_int64_t
 isp_microtime_sub __P((struct timeval *, struct timeval *));
 static void isp_wait_complete __P((struct ispsoftc *));
+#if	_BYTE_ORDER == _BIG_ENDIAN
+static inline void isp_swizzle_request(struct ispsoftc *, ispreq_t *);
+static inline void isp_unswizzle_response(struct ispsoftc *, void *, u_int16_t);
+static inline void isp_swizzle_icb(struct ispsoftc *, isp_icb_t *);
+static inline void
+isp_unswizzle_and_copy_pdbp(struct ispsoftc *, isp_pdb_t *, void *);
+static inline void isp_swizzle_sns_req(struct ispsoftc *, sns_screq_t *);
+static inline void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
+#endif
 
 /*
  * Driver wide data...
@@ -401,6 +410,175 @@ isp_wait_complete(isp)
 		}
 	}
 }
+
+#if	_BYTE_ORDER == _BIG_ENDIAN
+static inline void
+isp_swizzle_request(struct ispsoftc *isp, ispreq_t *rq)
+{
+	if (IS_FC(isp)) {
+		ispreqt2_t *tq = (ispreqt2_t *) rq;
+		tq->req_handle = bswap32(tq->req_handle);
+		tq->req_scclun = bswap16(tq->req_scclun);
+		tq->req_flags = bswap16(tq->req_flags);
+		tq->req_time = bswap16(tq->req_time);
+		tq->req_totalcnt = bswap32(tq->req_totalcnt);
+	} else if (isp->isp_bustype == ISP_BT_SBUS) {
+		_ISP_SWAP8(rq->req_header.rqs_entry_count,
+		    rq->req_header.rqs_entry_type);
+		_ISP_SWAP8(rq->req_header.rqs_flags, rq->req_header.rqs_seqno);
+		_ISP_SWAP8(rq->req_target, rq->req_lun_trn);
+	} else {
+		rq->req_handle = bswap32(rq->req_handle);
+		rq->req_cdblen = bswap16(rq->req_cdblen);
+		rq->req_flags = bswap16(rq->req_flags);
+		rq->req_time = bswap16(rq->req_time);
+	}
+}
+
+static inline void
+isp_unswizzle_response(struct ispsoftc *isp, void *rp, u_int16_t optr)
+{
+	ispstatusreq_t *sp = rp;
+	MEMORYBARRIER(isp, SYNC_RESPONSE, optr * QENTRY_LEN, QENTRY_LEN);
+	if (isp->isp_bustype == ISP_BT_SBUS) {
+		_ISP_SWAP8(sp->req_header.rqs_entry_count,
+		    sp->req_header.rqs_entry_type);
+		_ISP_SWAP8(sp->req_header.rqs_flags, sp->req_header.rqs_seqno);
+	} else switch (sp->req_header.rqs_entry_type) {
+	case RQSTYPE_RESPONSE:
+		sp->req_handle = bswap32(sp->req_handle);
+		sp->req_scsi_status = bswap16(sp->req_scsi_status);
+		sp->req_completion_status = bswap16(sp->req_completion_status);
+		sp->req_state_flags = bswap16(sp->req_state_flags);
+		sp->req_status_flags = bswap16(sp->req_status_flags);
+		sp->req_time = bswap16(sp->req_time);
+		sp->req_sense_len = bswap16(sp->req_sense_len);
+		sp->req_resid = bswap32(sp->req_resid);
+		break;
+	default:
+		break;
+	}
+}
+
+static inline void
+isp_swizzle_icb(struct ispsoftc *isp, isp_icb_t *icbp)
+{
+	_ISP_SWAP8(icbp->icb_version, icbp->_reserved0);
+	_ISP_SWAP8(icbp->icb_retry_count, icbp->icb_retry_delay);
+	_ISP_SWAP8(icbp->icb_iqdevtype, icbp->icb_logintime);
+	_ISP_SWAP8(icbp->icb_ccnt, icbp->icb_icnt);
+	_ISP_SWAP8(icbp->icb_racctimer, icbp->icb_idelaytimer);
+	icbp->icb_fwoptions = bswap16(icbp->icb_fwoptions);
+	icbp->icb_maxfrmlen = bswap16(icbp->icb_maxfrmlen);
+	icbp->icb_maxalloc = bswap16(icbp->icb_maxalloc);
+	icbp->icb_execthrottle = bswap16(icbp->icb_execthrottle);
+	icbp->icb_hardaddr = bswap16(icbp->icb_hardaddr);
+	icbp->icb_rqstout = bswap16(icbp->icb_rqstout);
+	icbp->icb_rspnsin = bswap16(icbp->icb_rspnsin);
+	icbp->icb_rqstqlen = bswap16(icbp->icb_rqstqlen);
+	icbp->icb_rsltqlen = bswap16(icbp->icb_rsltqlen);
+	icbp->icb_lunenables = bswap16(icbp->icb_lunenables);
+	icbp->icb_lunetimeout = bswap16(icbp->icb_lunetimeout);
+	icbp->icb_xfwoptions = bswap16(icbp->icb_xfwoptions);
+	icbp->icb_zfwoptions = bswap16(icbp->icb_zfwoptions);
+	icbp->icb_rqstaddr[0] = bswap16(icbp->icb_rqstaddr[0]);
+	icbp->icb_rqstaddr[1] = bswap16(icbp->icb_rqstaddr[1]);
+	icbp->icb_rqstaddr[2] = bswap16(icbp->icb_rqstaddr[2]);
+	icbp->icb_rqstaddr[3] = bswap16(icbp->icb_rqstaddr[3]);
+	icbp->icb_respaddr[0] = bswap16(icbp->icb_respaddr[0]);
+	icbp->icb_respaddr[1] = bswap16(icbp->icb_respaddr[1]);
+	icbp->icb_respaddr[2] = bswap16(icbp->icb_respaddr[2]);
+	icbp->icb_respaddr[3] = bswap16(icbp->icb_respaddr[3]);
+}
+
+static inline void
+isp_unswizzle_and_copy_pdbp(struct ispsoftc *isp, isp_pdb_t *dst, void *src)
+{
+	isp_pdb_t *pdbp = src;
+	dst->pdb_options = bswap16(pdbp->pdb_options);
+	dst->pdb_mstate = pdbp->pdb_sstate;
+	dst->pdb_sstate = pdbp->pdb_mstate;
+	dst->pdb_hardaddr_bits[0] = pdbp->pdb_hardaddr_bits[0];
+	dst->pdb_hardaddr_bits[1] = pdbp->pdb_hardaddr_bits[1];
+	dst->pdb_hardaddr_bits[2] = pdbp->pdb_hardaddr_bits[2];
+	dst->pdb_hardaddr_bits[3] = pdbp->pdb_hardaddr_bits[3];
+	dst->pdb_portid_bits[0] = pdbp->pdb_portid_bits[0];
+	dst->pdb_portid_bits[1] = pdbp->pdb_portid_bits[1];
+	dst->pdb_portid_bits[2] = pdbp->pdb_portid_bits[2];
+	dst->pdb_portid_bits[3] = pdbp->pdb_portid_bits[3];
+	dst->pdb_nodename[0] = pdbp->pdb_nodename[0];
+	dst->pdb_nodename[1] = pdbp->pdb_nodename[1];
+	dst->pdb_nodename[2] = pdbp->pdb_nodename[2];
+	dst->pdb_nodename[3] = pdbp->pdb_nodename[3];
+	dst->pdb_nodename[4] = pdbp->pdb_nodename[4];
+	dst->pdb_nodename[5] = pdbp->pdb_nodename[5];
+	dst->pdb_nodename[6] = pdbp->pdb_nodename[6];
+	dst->pdb_nodename[7] = pdbp->pdb_nodename[7];
+	dst->pdb_portname[0] = pdbp->pdb_portname[0];
+	dst->pdb_portname[1] = pdbp->pdb_portname[1];
+	dst->pdb_portname[2] = pdbp->pdb_portname[2];
+	dst->pdb_portname[3] = pdbp->pdb_portname[3];
+	dst->pdb_portname[4] = pdbp->pdb_portname[4];
+	dst->pdb_portname[5] = pdbp->pdb_portname[5];
+	dst->pdb_portname[6] = pdbp->pdb_portname[6];
+	dst->pdb_portname[7] = pdbp->pdb_portname[7];
+	dst->pdb_execthrottle = bswap16(pdbp->pdb_execthrottle);
+	dst->pdb_exec_count = bswap16(pdbp->pdb_exec_count);
+	dst->pdb_resalloc = bswap16(pdbp->pdb_resalloc);
+	dst->pdb_curalloc = bswap16(pdbp->pdb_curalloc);
+	dst->pdb_qhead = bswap16(pdbp->pdb_qhead);
+	dst->pdb_qtail = bswap16(pdbp->pdb_qtail);
+	dst->pdb_tl_next = bswap16(pdbp->pdb_tl_next);
+	dst->pdb_tl_last = bswap16(pdbp->pdb_tl_last);
+	dst->pdb_features = bswap16(pdbp->pdb_features);
+	dst->pdb_pconcurrnt = bswap16(pdbp->pdb_pconcurrnt);
+	dst->pdb_roi = bswap16(pdbp->pdb_roi);
+	dst->pdb_rdsiz = bswap16(pdbp->pdb_rdsiz);
+	dst->pdb_ncseq = bswap16(pdbp->pdb_ncseq);
+	dst->pdb_noseq = bswap16(pdbp->pdb_noseq);
+	dst->pdb_labrtflg = bswap16(pdbp->pdb_labrtflg);
+	dst->pdb_lstopflg = bswap16(pdbp->pdb_lstopflg);
+	dst->pdb_sqhead = bswap16(pdbp->pdb_sqhead);
+	dst->pdb_sqtail = bswap16(pdbp->pdb_sqtail);
+	dst->pdb_ptimer = bswap16(pdbp->pdb_ptimer);
+	dst->pdb_nxt_seqid = bswap16(pdbp->pdb_nxt_seqid);
+	dst->pdb_fcount = bswap16(pdbp->pdb_fcount);
+	dst->pdb_prli_len = bswap16(pdbp->pdb_prli_len);
+	dst->pdb_prli_svc0 = bswap16(pdbp->pdb_prli_svc0);
+	dst->pdb_prli_svc3 = bswap16(pdbp->pdb_prli_svc3);
+	dst->pdb_loopid = bswap16(pdbp->pdb_loopid);
+	dst->pdb_il_ptr = bswap16(pdbp->pdb_il_ptr);
+	dst->pdb_sl_ptr = bswap16(pdbp->pdb_sl_ptr);
+	dst->pdb_retry_count = pdbp->pdb_retry_delay;
+	dst->pdb_retry_delay = pdbp->pdb_retry_count;
+	dst->pdb_target = pdbp->pdb_initiator;
+	dst->pdb_initiator = pdbp->pdb_target;
+}
+
+static inline void
+isp_swizzle_sns_req(struct ispsoftc *isp, sns_screq_t *reqp)
+{
+	u_int16_t index, nwords = reqp->snscb_sblen;
+	reqp->snscb_rblen = bswap16(reqp->snscb_rblen);
+	reqp->snscb_addr[0] = bswap16(reqp->snscb_addr[0]);
+	reqp->snscb_addr[1] = bswap16(reqp->snscb_addr[1]);
+	reqp->snscb_addr[2] = bswap16(reqp->snscb_addr[2]);
+	reqp->snscb_addr[3] = bswap16(reqp->snscb_addr[3]);
+	reqp->snscb_sblen = bswap16(reqp->snscb_sblen);
+	for (index = 0; index < nwords; index++) {
+		reqp->snscb_data[index] = bswap16(reqp->snscb_data[index]);
+	}
+}
+
+static inline void
+isp_unswizzle_sns_rsp(struct ispsoftc *isp, sns_scrsp_t *resp, int nwords)
+{
+	int index;
+	for (index = 0; index < nwords; index++) {
+		resp->snscb_data[index] = bswap16(resp->snscb_data[index]);
+	}
+}
+#endif
 
 /*
  * Common inline functions
