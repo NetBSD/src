@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.16 2003/08/07 16:33:40 agc Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.17 2003/09/30 00:01:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.16 2003/08/07 16:33:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.17 2003/09/30 00:01:18 christos Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -661,7 +661,7 @@ tpclnp_ctlinput(cmd, saddr, dummy)
 	}
 #endif
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	if (siso->siso_family != AF_ISO)
 		return NULL;
