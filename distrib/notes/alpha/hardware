@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.7 1999/01/13 07:30:02 ross Exp $	
+.\"	$NetBSD: hardware,v 1.8 1999/02/19 16:41:57 tron Exp $	
 .Pp
 NetBSD/alpha \*V runs on most of the
 .Tn DEC
@@ -87,7 +87,7 @@ Intel EtherExpress Pro 10/100B PCI Ethernet (fxp, UNTESTED)
 SCSI Controllers
 .Bl -hyphen -compact
 .It
-Adaptec 294x, 394x, and aic78x0 SCSI (ahc)
+Adaptec 294x, 394x, AIC-7850, AIC-7860, AIC-7870 and AIC-7880 SCSI (ahc)
 .It
 BusLogic 9xx SCSI (bha, Works on Alpha PC164)
 .It
