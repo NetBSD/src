@@ -1,3 +1,5 @@
+$NetBSD: README.port,v 1.2 1997/06/26 07:21:44 thorpej Exp $
+
 What to Look for when Porting the IPKDB Interface
 ===============================================
 

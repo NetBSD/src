@@ -1,3 +1,5 @@
+/*	$NetBSD: ipkdb_slip.c,v 1.3 1997/06/26 07:21:48 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
