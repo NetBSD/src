@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.14 2004/07/24 23:53:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -283,7 +283,6 @@ struct atw_softc {
 	uint8_t		sc_rf3000_options1;
 	uint8_t		sc_rf3000_options2;
 
-	struct timeval	sc_last_beacon;
 	struct callout	sc_scan_ch;
 	union {
 		struct atw_rx_radiotap_header	tap;

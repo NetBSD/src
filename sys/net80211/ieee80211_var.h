@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.15 2004/07/23 10:15:13 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.16 2004/07/24 23:53:49 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -120,6 +120,9 @@ struct ieee80211com {
 	struct arpcom		ic_ac;
 #endif
 	LIST_ENTRY(ieee80211com) ic_list;	/* chain of all ieee80211com */
+	void			(*ic_change_ibss)(struct ieee80211com *);
+	void			(*ic_get_tsft)(struct ieee80211com *,
+				    uint32_t *, uint32_t *);
 	void			(*ic_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
 				    int, int, u_int32_t);
@@ -189,6 +192,9 @@ struct ieee80211com {
 	void			*ic_wep_ctx;	/* wep crypt context */
 	u_int32_t		ic_iv;		/* initial vector for wep */
 	struct ieee80211_stats	ic_stats;	/* statistics */
+	struct timeval		ic_last_merge_print;	/* for rate-limiting
+							 * IBSS merge print-outs
+							 */
 };
 #ifdef __NetBSD__
 #define	ic_if		ic_ec.ec_if

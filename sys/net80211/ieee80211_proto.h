@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.4 2004/07/24 23:53:49 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -76,6 +76,10 @@ extern	u_int8_t *ieee80211_add_xrates(u_int8_t *frm,
 		const struct ieee80211_rateset *);
 extern	void ieee80211_print_essid(u_int8_t *, int);
 extern	void ieee80211_dump_pkt(u_int8_t *, int, int, int);
+extern	void ieee80211_ibss_merge(struct ieee80211com *,
+		void (*)(struct ieee80211com *, struct mbuf *,
+			struct ieee80211_node *, int, int, u_int32_t),
+		struct mbuf *, struct ieee80211_node *, int, int, u_int32_t);
 
 extern	const char *ieee80211_state_name[IEEE80211_S_MAX];
 #endif /* _NET80211_IEEE80211_PROTO_H_ */

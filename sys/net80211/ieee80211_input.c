@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.30 2004/07/23 10:15:13 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.31 2004/07/24 23:53:49 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.30 2004/07/23 10:15:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.31 2004/07/24 23:53:49 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.30 2004/07/23 10:15:13 mycroft
 #include <net/if_ether.h>
 #endif
 #endif
+
+const struct timeval ieee80211_merge_print_intvl = {.tv_sec = 1, .tv_usec = 0};
 
 static void ieee80211_recv_pspoll(struct ieee80211com *,
     struct mbuf *, int, u_int32_t);
@@ -1583,6 +1585,127 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 
 	IF_ENQUEUE(&ic->ic_pwrsaveq, m);
 	(*ifp->if_start)(ifp);
+}
+
+static int
+do_slow_print(struct ieee80211com *ic, int *did_print)
+{
+	if ((ic->ic_if.if_flags & IFF_LINK0) == 0)
+		return 0;
+	if (!*did_print && (ic->ic_if.if_flags & IFF_DEBUG) == 0 &&
+	    !ratecheck(&ic->ic_last_merge_print, &ieee80211_merge_print_intvl))
+		return 0;
+
+	*did_print = 1;
+	return 1;
+}
+
+/* ieee80211_ibss_merge helps merge 802.11 ad hoc networks.  The
+ * convention, set by the Wireless Ethernet Compatibility Alliance
+ * (WECA), is that an 802.11 station will change its BSSID to match
+ * the "oldest" 802.11 ad hoc network, on the same channel, that
+ * has the station's desired SSID.  The "oldest" 802.11 network
+ * sends beacons with the greatest TSF timestamp.
+ *
+ * XXX Perhaps we should compensate for the time that elapses
+ * between the MAC receiving the beacon and the host processing it
+ * in ieee80211_ibss_merge.
+ */
+void
+ieee80211_ibss_merge(struct ieee80211com *ic,
+    void (*recv_mgmt)(struct ieee80211com *, struct mbuf *,
+        struct ieee80211_node *, int, int, u_int32_t),
+    struct mbuf *m0,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct ieee80211_frame *wh;
+	uint32_t tsftl, tsfth;
+	uint32_t bcn_tsftl, bcn_tsfth;
+	int did_print = 0, sign;
+	union {
+		uint32_t	words[2];
+		uint8_t		tstamp[8];
+	} u;
+
+	KASSERT(ic->ic_get_tsft != NULL && ic->ic_change_ibss != NULL);
+
+	(*recv_mgmt)(ic, m0, ni, subtype, rssi, rstamp);
+
+	(*ic->ic_get_tsft)(ic, &tsfth, &tsftl);
+
+	(void)memcpy(&u, &ni->ni_tstamp[0], sizeof(u));
+	bcn_tsftl = le32toh(u.words[0]);
+	bcn_tsfth = le32toh(u.words[1]);
+
+	/* we are faster, let the other guy catch up */
+	if (bcn_tsfth < tsfth)
+		sign = -1;
+	else if (bcn_tsfth == tsfth && bcn_tsftl < tsftl)
+		sign = -1;
+	else
+		sign = 1;
+
+	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid,
+	    IEEE80211_ADDR_LEN) == 0) {
+		if (!do_slow_print(ic, &did_print))
+			return;
+		printf("%s: tsft offset %s%" PRIu64 "\n", ic->ic_if.if_xname,
+		    (sign < 0) ? "-" : "",
+		    (sign < 0)
+			? ((((uint64_t)tsfth << 32) | tsftl) -
+			   (((uint64_t)bcn_tsfth << 32) | bcn_tsftl))
+			: ((((uint64_t)bcn_tsfth << 32) | bcn_tsftl) -
+			   (((uint64_t)tsfth << 32) | tsftl)));
+		return;
+	}
+
+	if (sign < 0)
+		return;
+
+	if (ieee80211_match_bss(ic, ni) != 0)
+		return;
+
+	if (do_slow_print(ic, &did_print)) {
+		printf("%s: atw_recv_beacon: bssid mismatch %s\n",
+		    ic->ic_if.if_xname, ether_sprintf(ni->ni_bssid));
+	}
+
+	if (do_slow_print(ic, &did_print)) {
+		printf("%s: my tsft %" PRIu64 " beacon tsft %" PRIu64 "\n",
+		    ic->ic_if.if_xname, ((uint64_t)tsfth << 32) | tsftl,
+		    ((uint64_t)bcn_tsfth << 32) | bcn_tsftl);
+	}
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (do_slow_print(ic, &did_print)) {
+		printf("%s: sync TSF with %s\n",
+		    ic->ic_if.if_xname, ether_sprintf(wh->i_addr2));
+	}
+
+	ic->ic_flags &= ~IEEE80211_F_SIBSS;
+
+	/* negotiate rates with new IBSS */
+	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOFRATE |
+	    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
+	if (ni->ni_rates.rs_nrates == 0) {
+		if (do_slow_print(ic, &did_print)) {
+			printf("%s: rates mismatch, BSSID %s\n",
+			    ic->ic_if.if_xname, ether_sprintf(ni->ni_bssid));
+		}
+		return;
+	}
+
+	if (do_slow_print(ic, &did_print)) {
+		printf("%s: sync BSSID %s -> ",
+		    ic->ic_if.if_xname, ether_sprintf(ic->ic_bss->ni_bssid));
+		printf("%s ", ether_sprintf(ni->ni_bssid));
+		printf("(from %s)\n", ether_sprintf(wh->i_addr2));
+	}
+
+	(*ic->ic_node_copy)(ic, ic->ic_bss, ni);
+
+	(*ic->ic_change_ibss)(ic);
 }
 #undef IEEE80211_VERIFY_LENGTH
 #undef IEEE80211_VERIFY_ELEMENT
