@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 2003/10/08 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.68 2003/10/31 16:44:35 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2003/10/08 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2003/10/31 16:44:35 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2003/10/08 00:28:42 thorpej Exp $");
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
+#include <sys/userret.h>
 
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -235,17 +236,8 @@ userret(l, fp, oticks, faultaddr, fromtrap)
 
 again:
 #endif
-	/* take pending signals */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
