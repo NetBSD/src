@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.5.4.13 2002/01/05 18:30:08 he Exp $
+.\"	$NetBSD: sysinst,v 1.5.4.14 2002/02/23 21:02:06 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,6 +44,7 @@
 .
 .Ss2 Running the sysinst installation program
 .(enum
+.To 2 Introduction
 .Em Introduction
 .Pp
 Using
@@ -59,6 +60,7 @@ to use.
 .
 .if !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
 .It
+.To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
 .Pp
 Machines with
@@ -246,6 +248,7 @@ release.
 .\} \" r_i386
 .\} \" ! \n[macppc]:\[news68k]:\n[pmax]:\n[x68k]
 .It
+.To 2 General
 .Em General
 .Pp
 The following is a walk-through of the steps you will take while
@@ -265,6 +268,7 @@ process again from scratch, by running the
 .Pa /sysinst
 program from the command prompt, you do not need to reboot.
 .It
+.To 2 "Quick install"
 .Em Quick install
 .Pp
 First, let's describe a quick install. The other sections of
@@ -466,6 +470,7 @@ Further information can be found on
 .bullet)
 .bullet)
 .It
+.To 2 "Booting NetBSD"
 .Em Booting NetBSD
 .
 .
@@ -591,6 +596,7 @@ has booted and printed all the boot messages,
 you will be presented with a welcome message and a main menu.
 It will also include instructions for using the menus.
 .It
+.To 2 "Network configuration"
 .Em Network configuration
 .if !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
@@ -746,6 +752,7 @@ Clean up and return to
 .Dl # Ic exit
 .\}
 .It
+.To 2 "Installation drive selection and parameters"
 .Em Installation drive selection and parameters
 .Pp
 To start the
@@ -833,6 +840,7 @@ the FAQ entry
 .\}
 .\}
 .It
+.To 2 "Partitioning the disk"
 .Em Partitioning the disk
 .if r_macppc \{\
 .Pp
@@ -1015,6 +1023,7 @@ need to remember this name.
 .bullet)
 .Pp
 .It
+.To 2 "Preparing your hard disk"
 .Em Preparing your hard disk
 .Pp
 .Em "You are now at the point of no return".
@@ -1065,6 +1074,7 @@ on an HFS or HFS+ partition.
 .Note)
 .\}
 .It
+.To 2 "Getting the distribution sets"
 .Em Getting the distribution sets
 .if r_i386 \{\
 .(pcmcia
@@ -1125,6 +1135,7 @@ reading the one about the method you will be using, you
 can continue to section labeled
 .Sq Extracting the distribution sets .
 .It
+.To 2 "Installation using ftp"
 .Em Installation using ftp
 .Pp
 To be able to install using ftp, you first need to configure
@@ -1150,6 +1161,7 @@ server.
 will proceed to transfer all the default set files
 from the remote site to your hard disk.
 .It
+.To 2 "Installation using NFS"
 .Em Installation using NFS
 .Pp
 To be able to install using NFS, you first need to configure
@@ -1173,6 +1185,7 @@ If you did not set up DNS when answering the questions to
 configure networking, you will need to specify an IP address
 instead of a hostname for the NFS server.
 .It
+.To 2 "Installation from CD-ROM"
 .Em Installation from CD-ROM
 .Pp
 When installing from a CD-ROM, you will be asked to specify
@@ -1186,6 +1199,7 @@ in the specified location, and proceed to the actual
 extraction of the sets.
 .if r_i386 \{\
 .It
+.To 2 "Installation from a floppy set"
 .Em Installation from a floppy set
 .Pp
 Because the installation sets are too big to fit on one floppy,
@@ -1198,6 +1212,7 @@ the floppies containing the split sets. This process
 will continue until all the sets have been loaded from floppy.
 .\}
 .It
+.To 2 "Installation from an unmounted file system"
 .Em Installation from an unmounted file system
 .Pp
 In order to install from a local file system, you will
@@ -1216,6 +1231,7 @@ Remember,
 doesn't grok HFS or HFS+ partitions
 .\}
 .It
+.To 2 "Installation from a local directory"
 .Em Installation from a local directory
 .Pp
 This option assumes that you have already done some preparation
@@ -1225,6 +1241,7 @@ file system that is already accessible.
 will ask you
 for the name of this directory.
 .It
+.To 2 "Extracting the distribution sets"
 .Em Extracting the distribution sets
 .Pp
 After the install sets containing the
@@ -1253,6 +1270,7 @@ to make sure your clock has the right offset from UTC.
 Finally you can set a password for the "root" account, to prevent 
 the machine coming up without access restrictions.  
 .It
+.To 2 "Finalizing your installation"
 .Em Finalizing your installation
 .Pp
 Congratulations, you have successfully installed
