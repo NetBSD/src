@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.53 2000/07/03 01:45:52 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.54 2000/07/03 08:20:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -792,7 +792,7 @@ lfs_writeinode(fs, sp, ip)
 		for (daddrp = cdp->di_db; daddrp < cdp->di_ib + NIADDR;
 		     daddrp++) {
 			if (*daddrp == UNWRITTEN) {
-#ifdef DEBUG
+#ifdef DEBUG_LFS
 				printf("lfs_writeinode: wiping UNWRITTEN\n");
 #endif
 				*daddrp = 0;
@@ -1373,10 +1373,12 @@ lfs_writeseg(fs, sp)
 		if(bp->b_lblkno < 0 && bp->b_vp != devvp && bp->b_vp &&
 		   VTOI(bp->b_vp)->i_ffs_blocks !=
 		   VTOI(bp->b_vp)->i_lfs_effnblks) {
+#ifdef DEBUG_LFS
 			printf("lfs_writeseg: cleansing ino %d (%d != %d)\n",
 			       VTOI(bp->b_vp)->i_number,
 			       VTOI(bp->b_vp)->i_lfs_effnblks,
 			       VTOI(bp->b_vp)->i_ffs_blocks);
+#endif
 			/* Make a copy we'll make changes to */
 			newbp = lfs_newbuf(bp->b_vp, bp->b_lblkno,
 					   bp->b_bcount);
@@ -1402,8 +1404,8 @@ lfs_writeseg(fs, sp)
 			     daddrp < (daddr_t *)(newbp->b_data +
 						  newbp->b_bcount); daddrp++) {
 				if (*daddrp == UNWRITTEN) {
-#ifdef DEBUG
-					printf("lfs_segwrite: replacing UNWRITTEN\n");
+#ifdef DEBUG_LFS
+					printf("lfs_writeseg: replacing UNWRITTEN\n");
 #endif
 					*daddrp = 0;
 				}

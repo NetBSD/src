@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.21 2000/07/03 01:45:48 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.22 2000/07/03 08:20:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -389,6 +389,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 
 	fs->lfs_bfree -= bb;
 	ip->i_ffs_blocks += bb;
+	ip->i_lfs_effnblks += bb;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if((*bpp)->b_flags & B_LOCKED)
 		locked_queue_bytes += (nsize - osize);
