@@ -37,7 +37,7 @@
 #endif
 
 __RCSID("$Heimdal: kadm_conn.c,v 1.13 2001/05/16 22:06:44 assar Exp $"
-        "$NetBSD: kadm_conn.c,v 1.8 2002/09/12 13:18:59 joda Exp $");
+        "$NetBSD: kadm_conn.c,v 1.9 2002/09/20 22:16:02 mycroft Exp $");
 
 struct kadm_port {
     char *port;
@@ -171,6 +171,15 @@ wait_for_connection(krb5_context context,
 		    int *socks, int num_socks)
 {
     int i, e;
+#ifdef HAVE_POLL
+    struct pollfd *set;
+
+    set = alloca(num_socks * sizeof(*set));
+    for(i = 0; i < num_socks; i++) {
+	set[i].fd = socks[i];
+	set[i].events = POLLIN;
+    }
+#else
     fd_set orig_read_set, read_set;
     int max_fd = -1;
     
@@ -182,6 +191,7 @@ wait_for_connection(krb5_context context,
 	FD_SET(socks[i], &orig_read_set);
 	max_fd = max(max_fd, socks[i]);
     }
+#endif
     
     pgrp = getpid();
 
@@ -193,8 +203,12 @@ wait_for_connection(krb5_context context,
     signal(SIGCHLD, sigchld);
 
     while (term_flag == 0) {
+#ifdef HAVE_POLL
+	e = poll(set, num_socks, INFTIM);
+#else
 	read_set = orig_read_set;
 	e = select(max_fd + 1, &read_set, NULL, NULL, NULL);
+#endif
 	if(e < 0) {
 	    if(errno != EINTR)
 		krb5_warn(context, errno, "select");
@@ -202,7 +216,11 @@ wait_for_connection(krb5_context context,
 	    krb5_warnx(context, "select returned 0");
 	else {
 	    for(i = 0; i < num_socks; i++) {
+#ifdef HAVE_POLL
+		if(set[i].revents & POLLIN)
+#else
 		if(FD_ISSET(socks[i], &read_set))
+#endif
 		    if(spawn_child(context, socks, num_socks, i) == 0)
 			return 0;
 	    }
