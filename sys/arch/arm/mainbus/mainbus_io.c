@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.7 2002/03/23 19:38:31 thorpej Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.8 2002/03/24 03:37:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -44,8 +44,6 @@
 
 #include <machine/bus.h>
 #include <machine/pmap.h>
-
-pt_entry_t *pmap_pte(pmap_t, vm_offset_t);
 
 /* Proto types for all the bus_space structure functions */
 
@@ -163,7 +161,7 @@ mainbus_bs_map(t, bpa, size, cacheable, bshp)
 
 	for(pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		pte = pmap_pte(pmap_kernel(), va);
+		pte = vtopte(va);
 		if (cacheable)
 			*pte |= PT_CACHEABLE;
 		else
@@ -234,7 +232,7 @@ mainbus_bs_mmap(t, paddr, offset, prot, flags)
 	/*
 	 * mmap from address `paddr+offset' for one page
 	 */
-	 return (arm_byte_to_page((paddr + offset)));
+	 return (arm_btop((paddr + offset)));
 }
 
 void
