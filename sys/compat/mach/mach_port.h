@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.4 2002/12/07 21:23:04 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.5 2002/12/10 21:36:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -103,6 +103,64 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_type_reply_t;  
 
+/* port_get_attributes */
+
+typedef int mach_port_flavor_t;
+typedef mach_natural_t mach_port_seqno_t; 
+typedef mach_natural_t mach_port_mscount_t;
+typedef mach_natural_t mach_port_msgcount_t;
+typedef mach_natural_t mach_port_rights_t;
+#define MACH_PORT_LIMITS_INFO 1
+typedef struct mach_port_status {
+	mach_port_name_t	mps_pset;
+	mach_port_seqno_t	mps_seqno;
+	mach_port_mscount_t	mps_mscount;
+	mach_port_msgcount_t	mps_qlimit;
+	mach_port_msgcount_t	mps_msgcount;
+	mach_port_rights_t	mps_sorights;
+	mach_boolean_t		mps_srights;
+	mach_boolean_t		mps_pdrequest;
+	mach_boolean_t		mps_nsrequest;
+	unsigned int		mps_flags;
+} mach_port_status_t;
+#define MACH_PORT_RECEIVE_STATUS 2
+typedef struct mach_port_limits {
+	mach_port_msgcount_t	mpl_qlimit;
+} mach_port_limits_t;
+#define MACH_PORT_DNREQUESTS_SIZE 3
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+	mach_port_flavor_t req_flavor;
+	mach_msg_type_number_t req_count;
+	mach_integer_t req_port_info[10];
+} mach_port_set_attributes_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_port_set_attributes_reply_t;
+	
+/* port_insert_member */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+	mach_port_name_t req_pset;
+} mach_port_insert_member_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_port_insert_member_reply_t;
+
 int mach_port_deallocate(struct proc *, mach_msg_header_t *, 
     size_t,  mach_msg_header_t *);
 int mach_port_allocate(struct proc *, mach_msg_header_t *,
@@ -110,6 +168,10 @@ int mach_port_allocate(struct proc *, mach_msg_header_t *,
 int mach_port_insert_right(struct proc *, mach_msg_header_t *,
     size_t,  mach_msg_header_t *);
 int mach_port_type(struct proc *, mach_msg_header_t *,
+    size_t,  mach_msg_header_t *);
+int mach_port_set_attributes(struct proc *, mach_msg_header_t *,
+    size_t,  mach_msg_header_t *);
+int mach_port_insert_member(struct proc *, mach_msg_header_t *,
     size_t,  mach_msg_header_t *);
 
 #endif /* _MACH_PORT_H_ */
