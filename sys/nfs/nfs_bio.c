@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.48 2000/03/30 12:51:13 augustss Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.49 2000/05/18 08:34:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1080,7 +1080,7 @@ nfs_doio(bp, cr, p)
 		iomode = NFSV3WRITE_FILESYNC;
 	    bp->b_flags |= B_WRITEINPROG;
 #ifdef fvdl_debug
-	    printf("nfs_doio(%x): bp %x doff %d dend %d\n", 
+	    printf("nfs_doio(%p): bp %p doff %d dend %d\n", 
 		vp, bp, bp->b_dirtyoff, bp->b_dirtyend);
 #endif
 	    error = nfs_writerpc(vp, uiop, cr, &iomode, &must_commit);
