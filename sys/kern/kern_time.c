@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.74 2003/09/09 15:16:30 cl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.75 2003/09/13 22:39:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.74 2003/09/09 15:16:30 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.75 2003/09/13 22:39:18 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1217,9 +1217,14 @@ itimerfire(struct ptimer *pt)
 		if (sigismember(&p->p_sigctx.ps_siglist, pt->pt_ev.sigev_signo))
 			pt->pt_overruns++;
 		else {
+			ksiginfo_t ksi;
+			(void)memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = pt->pt_ev.sigev_signo;
+			ksi.ksi_code = SI_TIMER;
+			ksi.ksi_sigval = pt->pt_ev.sigev_value;
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
-			psignal(p, pt->pt_ev.sigev_signo);
+			kpsignal(p, &ksi, NULL);
 		}
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
