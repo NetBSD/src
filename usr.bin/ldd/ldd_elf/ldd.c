@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.12 2002/09/13 08:40:05 tron Exp $	*/
+/*	$NetBSD: ldd.c,v 1.13 2002/09/24 09:58:03 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,9 +94,7 @@ Obj_Entry *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry **_rtld_objtail = &_rtld_objlist;
 				/* Link field of last object in list */
 Obj_Entry *_rtld_objmain;	/* The main program shared object */
-#ifdef  VARPSZ
-int _rtld_pagesz = 8192;	/* XXX fake variable page size */
-#endif
+int _rtld_pagesz;
 
 Search_Path *_rtld_default_paths;
 Search_Path *_rtld_paths;
@@ -115,9 +113,9 @@ main(
 #endif
     _rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
+    _rtld_pagesz = sysconf(_SC_PAGESIZE);
 
     _rtld_trust = geteuid() == getuid() && getegid() == getgid();
-
     if (_rtld_trust) {
 	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
     }
