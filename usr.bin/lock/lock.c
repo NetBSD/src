@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.22 2004/03/17 17:01:31 christos Exp $	*/
+/*	$NetBSD: lock.c,v 1.23 2004/03/17 17:54:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.22 2004/03/17 17:01:31 christos Exp $");
+__RCSID("$NetBSD: lock.c,v 1.23 2004/03/17 17:54:25 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -74,39 +74,41 @@ __RCSID("$NetBSD: lock.c,v 1.22 2004/03/17 17:01:31 christos Exp $");
 
 #define	TIMEOUT	15
 
-void	bye __P((int));
-void	hi __P((int));
 int	main __P((int, char **));
-void	quit __P((int));
+
+static void	bye(int) __attribute__((__noreturn__));
+static void	hi(int);
+static void	quit(int) __attribute__((__noreturn__));
 #ifdef SKEY
-int	skey_auth __P((const char *));
+static int	skey_auth(const char *);
 #endif
 
-struct timeval	timeout;
-struct timeval	zerotime;
-struct termios	tty, ntty;
-int	notimeout;			/* no timeout at all */
-long	nexttime;			/* keep the timeout time */
+static struct timeval	timeout;
+static struct timeval	zerotime;
+static struct termios	tty, ntty;
+static int	notimeout;			/* no timeout at all */
+static long	nexttime;			/* keep the timeout time */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct passwd *pw;
 	struct timeval timval;
 	struct itimerval ntimer, otimer;
 	struct tm *timp;
 	time_t curtime;
-	int ch, sectimeout, usemine;
+	int ch, usemine;
+	long sectimeout;
 	char *ap, *mypw, *ttynam;
 	const char *tzn;
+	uid_t uid = getuid();
 	char hostname[MAXHOSTNAMELEN + 1], s[BUFSIZ], s1[BUFSIZ];
 
-	if (!(pw = getpwuid(getuid())))
-		errx(1, "unknown uid %ld.", (u_long) getuid());
+	if ((pw = getpwuid(getuid())) == NULL)
+		errx(1, "unknown uid %lu.", (u_long)uid);
 
-	setuid(getuid());		/* discard privs */
+	if (setuid(uid) == -1)	/* discard privs */
+		err(1, "setuid failed");
 
 	notimeout = 0;
 	sectimeout = TIMEOUT;
@@ -119,8 +121,15 @@ main(argc, argv)
 			notimeout = 1;
 			break;
 		case 't':
-			if ((sectimeout = atoi(optarg)) <= 0)
+			if (((sectimeout = strtol(optarg, &ap, 0)) == LONG_MAX
+			    || sectimeout == LONG_MIN)
+			    && errno == ERANGE)
+				err(1, "illegal timeout value: %s", optarg);
+			if (optarg == ap || *ap || sectimeout <= 0)
 				errx(1, "illegal timeout value: %s", optarg);
+			if (sectimeout >= INT_MAX / 60)
+				errx(1, "too large timeout value: %ld",
+				    sectimeout);
 			break;
 		case 'p':
 			usemine = 1;
@@ -131,21 +140,21 @@ main(argc, argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: lock [-p] [-t timeout]\n");
+			    "Usage: %s [-p] [-t timeout]\n", getprogname());
 			exit(1);
 		}
-	timeout.tv_sec = sectimeout * 60;
+	timeout.tv_sec = (int)sectimeout * 60;
 
-	if (tcgetattr(0, &tty) < 0)	/* get information for header */
-		exit(1);
+	if (tcgetattr(STDIN_FILENO, &tty) < 0)	/* get information for header */
+		err(1, "tcgetattr failed");
 	gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
-	if (!(ttynam = ttyname(0)))
-		errx(1, "not a terminal?");
-	if (gettimeofday(&timval, (struct timezone *)NULL))
-		err(1, "gettimeofday");
+	if (!(ttynam = ttyname(STDIN_FILENO)))
+		err(1, "ttyname failed");
+	if (gettimeofday(&timval, NULL) == -1)
+		err(1, "gettimeofday failed");
 	curtime = timval.tv_sec;
-	nexttime = timval.tv_sec + (sectimeout * 60);
+	nexttime = timval.tv_sec + ((int)sectimeout * 60);
 	timp = localtime(&curtime);
 	ap = asctime(timp);
 #ifdef __SVR4
@@ -154,10 +163,13 @@ main(argc, argv)
 	tzn = timp->tm_zone;
 #endif
 
-	(void)signal(SIGINT, quit);
-	(void)signal(SIGQUIT, quit);
+	if (signal(SIGINT, quit) == SIG_ERR)
+		err(1, "signal failed");
+	if (signal(SIGQUIT, quit) == SIG_ERR)
+		err(1, "signal failed");
 	ntty = tty; ntty.c_lflag &= ~ECHO;
-	(void)tcsetattr(0, TCSADRAIN, &ntty);
+	if (tcsetattr(STDIN_FILENO, TCSADRAIN, &ntty) == -1)
+		err(1, "tcsetattr");
 
 	if (!mypw) {
 		/* get key and check again */
@@ -173,7 +185,7 @@ main(argc, argv)
 		(void)putchar('\n');
 		if (strcmp(s1, s)) {
 			(void)printf("\alock: passwords didn't match.\n");
-			(void)tcsetattr(0, TCSADRAIN, &tty);
+			(void)tcsetattr(STDIN_FILENO, TCSADRAIN, &tty);
 			exit(1);
 		}
 		s[0] = '\0';
@@ -181,25 +193,33 @@ main(argc, argv)
 	}
 
 	/* set signal handlers */
-	(void)signal(SIGINT, hi);
-	(void)signal(SIGQUIT, hi);
-	(void)signal(SIGTSTP, hi);
+	if (signal(SIGINT, hi) == SIG_ERR)
+		err(1, "signal failed");
+	if (signal(SIGQUIT, hi) == SIG_ERR)
+		err(1, "signal failed");
+	if (signal(SIGTSTP, hi) == SIG_ERR)
+		err(1, "signal failed");
 
 	if (notimeout) {
-		(void)signal(SIGALRM, hi);
-	(void)printf("lock: %s on %s.  no timeout.\ntime now is %.20s%s%s",
+		if (signal(SIGALRM, hi) == SIG_ERR)
+			err(1, "signal failed");
+		(void)printf("lock: %s on %s.  no timeout.\n"
+		    "time now is %.20s%s%s",
 		    ttynam, hostname, ap, tzn, ap + 19);
 	}
 	else {
-		(void)signal(SIGALRM, bye);
+		if (signal(SIGALRM, bye) == SIG_ERR)
+			err(1, "signal failed");
 
 		ntimer.it_interval = zerotime;
 		ntimer.it_value = timeout;
-		setitimer(ITIMER_REAL, &ntimer, &otimer);
+		if (setitimer(ITIMER_REAL, &ntimer, &otimer) == -1)
+			err(1, "setitimer failed");
 
 		/* header info */
-(void)printf("lock: %s on %s. timeout in %d minutes\ntime now is %.20s%s%s",
-	    ttynam, hostname, sectimeout, ap, tzn, ap + 19);
+		(void)printf("lock: %s on %s. timeout in %ld minutes\n"
+		    "time now is %.20s%s%s",
+		    ttynam, hostname, sectimeout, ap, tzn, ap + 19);
 	}
 
 	for (;;) {
@@ -224,12 +244,13 @@ main(argc, argv)
 			break;
 		(void)printf("\a\n");
 tryagain:
-		if (tcsetattr(0, TCSADRAIN, &ntty) == -1 && errno != EINTR)
-			exit(1);
+		if (tcsetattr(STDIN_FILENO, TCSADRAIN, &ntty) == -1
+		    && errno != EINTR)
+			err(1, "tcsetattr failed");
 	}
 	quit(0);
 	/* NOTREACHED */
-	return (0);
+	return 0;
 }
 
 #ifdef SKEY
@@ -238,16 +259,15 @@ tryagain:
  * handles signals in a way that's inappropriate
  * for our needs. Instead we roll our own.
  */
-int
-skey_auth(user)
-	const char *user;
+static int
+skey_auth(const char *user)
 {
 	char s[128];
 	const char *ask;
 	int ret = 0;
 
 	if (!skey_haskey(user) && (ask = skey_keyinfo(user))) {
-		printf("\n[%s]\nResponse: ", ask);
+		(void)printf("\n[%s]\nResponse: ", ask);
 		if (!fgets(s, sizeof(s), stdin) || *s == '\n')
 			clearerr(stdin);
 		else {
@@ -256,12 +276,12 @@ skey_auth(user)
 				ret = 1;
 		}
 	} else
-		printf("Sorry, you have no s/key.\n");
+		(void)printf("Sorry, you have no s/key.\n");
 	return ret;
 }
 #endif
 
-void
+static void
 hi(dummy)
 	int dummy;
 {
@@ -269,25 +289,28 @@ hi(dummy)
 
 	if (notimeout)
 		(void)printf("lock: type in the unlock key.\n");
-	else if (!gettimeofday(&timval, (struct timezone *)NULL))
-(void)printf("lock: type in the unlock key. timeout in %ld:%ld minutes\n",
-	    (nexttime - timval.tv_sec) / 60, (nexttime - timval.tv_sec) % 60);
+	else {
+		if (gettimeofday(&timval, NULL) == -1)
+			err(1, "gettimeofday failed");
+		(void)printf("lock: type in the unlock key. "
+		    "timeout in %ld:%ld minutes\n",
+		    (nexttime - timval.tv_sec) / 60,
+		    (nexttime - timval.tv_sec) % 60);
+	}
 }
 
-void
-quit(dummy)
-	int dummy;
+static void
+quit(int dummy)
 {
 	(void)putchar('\n');
-	(void)tcsetattr(0, TCSADRAIN, &tty);
+	(void)tcsetattr(STDIN_FILENO, TCSADRAIN, &tty);
 	exit(0);
 }
 
-void
-bye(dummy)
-	int dummy;
+static void
+bye(int dummy)
 {
-	(void)tcsetattr(0, TCSADRAIN, &tty);
+	(void)tcsetattr(STDIN_FILENO, TCSADRAIN, &tty);
 	(void)printf("lock: timeout\n");
 	exit(1);
 }
