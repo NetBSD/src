@@ -1,5 +1,6 @@
 #!/bin/sh -
 #
+#	$NetBSD: monthly,v 1.4 1996/05/08 17:19:39 thorpej Exp $
 #	@(#)monthly	5.5 (Berkeley) 6/17/91
 #
 
