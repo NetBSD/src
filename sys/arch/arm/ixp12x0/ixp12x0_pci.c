@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.2 2002/10/09 00:11:15 thorpej Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.3 2002/12/08 13:21:44 ichiro Exp $ */
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -65,7 +65,17 @@ void ixp12x0_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t ixp12x0_pci_conf_read(void *, pcitag_t, int);
 void ixp12x0_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 
-#define	MAX_PCI_DEVICES	21
+#define	MAX_PCI_DEVICES	4
+
+/*
+ * IXM1200 PCI configuration Cycles
+ *  Device               Address
+ * -------------------------------------
+ *   0    IXP1200        0x0800 - 0x08FF
+ *   1    i21555         0x1000 - 0x10FF
+ *   2    i82559         0x2000 - 0x20FF
+ *   3    PMC expansion  0x4000 - 0x40FF
+ */
 
 void
 ixp12x0_pci_init(pc, cookie)
@@ -115,6 +125,10 @@ ixp12x0_pci_make_tag(v, bus, device, function)
 	printf("ixp12x0_pci_make_tag(v=%p, bus=%d, device=%d, function=%d)\n",
 		v, bus, device, function);
 #endif
+#ifdef PCI_DEBUG2
+	printf("ixp12x0_pci_make_tag return = 0x%x\n", 
+		((bus << 16) | (device << 11) | (function << 8)));
+#endif
 	return ((bus << 16) | (device << 11) | (function << 8));
 }
 
@@ -149,19 +163,18 @@ ixp12x0_pci_conf_read(v, tag, offset)
 
 	ixp12x0_pci_decompose_tag(v, tag, &bus, &device, &function);
 
-        if (bus != 0)
-		address = IXP12X0_PCI_TYPE1_VBASE | ((bus & 0xff) << 16) |
-			  ((device & 0x1F) << 8) | (offset & 0xff);
-	else /* bus == 0 */
-		address = IXP12X0_PCI_TYPE0_VBASE | 0xc00000 | 
-			  ((device &0x1f) << 3 | (function & 0x7)) << 8 |
-			  (offset & 0xff);
+	/* bus == 0 */
+	address = IXP12X0_PCI_TYPE0_VBASE |
+		  ((0x1) << (device)) << 11 | (offset & 0xff); /* XXX */
 
 	val = *((unsigned int *)address);
 
 #ifdef PCI_DEBUG
 	printf("ixp12x0_pci_conf_read(addr=%08x)(v=%p tag=0x%08lx offset=0x%02x)=0x%08x\n",
 		address, v, tag, offset, val);
+#endif
+#ifdef PCI_DEBUG2
+	printf("ixp12x0_pci_conf_read(addr=%08x)(bus=0x%08x device=0x%08x function=0x%08x offset=0x%02x)\n", address, bus, device, function, offset);
 #endif
 	return(val);
 }
@@ -178,13 +191,10 @@ ixp12x0_pci_conf_write(v, tag, offset, val)
 
 	ixp12x0_pci_decompose_tag(v, tag, &bus, &device, &function);
 
-        if (bus != 0)
-		address = IXP12X0_PCI_TYPE1_VBASE | ((bus & 0xff) << 16) |
-			  ((device & 0x1F) << 8) | (offset & 0xff);
-	else /* bus == 0 */
-		address = IXP12X0_PCI_TYPE0_VBASE | 0xc00000 | 
-			  ((device &0x1f) << 3 | (function & 0x7)) << 8 |
-			  (offset & 0xff);
+	/* bus == 0 */
+	address = IXP12X0_PCI_TYPE0_VBASE |
+		  ((0x1) << (device)) << 11 | (offset & 0xff); /* XXX */
+
 
 #ifdef PCI_DEBUG
 	printf("ixp12x0_pci_conf_write(addr=%08x)(v=%p tag=0x%08lx offset=0x%02x)=0x%08x\n",
