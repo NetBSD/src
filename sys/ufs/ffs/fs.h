@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.41 2004/03/20 15:37:12 dsl Exp $	*/
+/*	$NetBSD: fs.h,v 1.42 2004/03/20 17:26:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -88,8 +88,9 @@
 #define SBLOCK_PIGGY  262144
 #define SBLOCKSIZE      8192
 /*
- * NB ensure you check fs->fs_sblockloc == SBLOCKSEARCH[i] before assuming
- * that the superblock is valid.
+ * NB: Do not, under any circumstances, look for an ffsv1 filesystem at
+ * SBLOCK_UFS2.  Doing so will find the wrong superblock for filesystems
+ * with a 64k block size.
  */
 #define SBLOCKSEARCH \
 	{ SBLOCK_UFS2, SBLOCK_UFS1, SBLOCK_FLOPPY, SBLOCK_PIGGY, -1 }
@@ -141,6 +142,7 @@
 /*
  * The volume name for this filesystem is maintained in fs_volname.
  * MAXVOLLEN defines the length of the buffer allocated.
+ * This space used to be part of of fs_fsmnt.
  */
 #define MAXVOLLEN	32
 
@@ -300,6 +302,7 @@ struct fs {
 	int32_t	*fs_maxcluster;		/* max cluster in each cyl group */
 	u_int	*fs_active;		/* used by snapshots to track fs */
 	int32_t	 fs_old_cpc;		/* cyl per cycle in postbl */
+/* this area is otherwise allocated in filesystems created before ffsv2 */
 	int32_t	 fs_maxbsize;		/* maximum blocking factor permitted */
 	int64_t	 fs_sparecon64[17];	/* old rotation block list head */
 	int64_t	 fs_sblockloc;		/* byte offset of standard superblock */
@@ -311,11 +314,13 @@ struct fs {
 	int64_t	 fs_pendingblocks;	/* blocks in process of being freed */
 	int32_t	 fs_pendinginodes;	/* inodes in process of being freed */
 	int32_t	 fs_snapinum[FSMAXSNAP];/* list of snapshot inode numbers */
+/* back to stuff that has been around a while */
 	int32_t	 fs_avgfilesize;	/* expected average file size */
 	int32_t	 fs_avgfpdir;		/* expected # of files per directory */
 	int32_t	 fs_save_cgsize;	/* save real cg size to use fs_bsize */
 	int32_t	 fs_sparecon32[26];	/* reserved for future constants */
 	uint32_t fs_flags;		/* see FS_ flags below */
+/* back to stuff that has been around a while (again) */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_old_inodefmt;	/* format of on-disk inodes */
