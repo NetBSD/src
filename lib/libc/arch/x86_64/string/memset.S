@@ -7,11 +7,12 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.2 2003/07/26 19:24:39 salo Exp $")
+	RCSID("$NetBSD: memset.S,v 1.3 2004/02/26 20:50:06 drochner Exp $")
 #endif
 
 ENTRY(memset)
 	movq	%rsi,%rax
+	andq	$0xff,%rax
 	movq	%rdx,%rcx
 	movq	%rdi,%r11
 
