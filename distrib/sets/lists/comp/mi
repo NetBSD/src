@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.373 2001/09/13 23:15:07 thorpej Exp $
+#	$NetBSD: mi,v 1.374 2001/09/15 20:41:59 chs Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -437,6 +437,7 @@
 ./usr/include/miscfs/fifofs/fifo.h	comp-c-include
 ./usr/include/miscfs/genfs		comp-c-include
 ./usr/include/miscfs/genfs/genfs.h	comp-c-include
+./usr/include/miscfs/genfs/genfs_node.h	comp-c-include
 ./usr/include/miscfs/genfs/layer.h	comp-c-include
 ./usr/include/miscfs/kernfs		comp-c-include
 ./usr/include/miscfs/kernfs/kernfs.h	comp-c-include
@@ -998,7 +999,6 @@
 ./usr/include/uvm/uvm_prot.h		comp-c-include
 ./usr/include/uvm/uvm_stat.h		comp-c-include
 ./usr/include/uvm/uvm_swap.h		comp-c-include
-./usr/include/uvm/uvm_vnode.h		comp-c-include
 ./usr/include/varargs.h			comp-c-include
 ./usr/include/vis.h			comp-c-include
 ./usr/include/wchar.h			comp-c-include
