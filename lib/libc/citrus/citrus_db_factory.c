@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_factory.c,v 1.3 2003/06/27 08:56:07 itojun Exp $	*/
+/*	$NetBSD: citrus_db_factory.c,v 1.4 2003/06/27 08:58:18 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db_factory.c,v 1.3 2003/06/27 08:56:07 itojun Exp $");
+__RCSID("$NetBSD: citrus_db_factory.c,v 1.4 2003/06/27 08:58:18 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -283,9 +283,8 @@ _citrus_db_factory_serialize(struct _citrus_db_factory *df, const char *magic,
 	depp = malloc(sizeof(*depp) * df->df_num_entries);
 	if (depp == NULL)
 		return -1;
-	memset(depp, 0, sizeof(*depp) * df->df_num_entries);
 	for (i = 0; i < df->df_num_entries; i++)
-		*depp = NULL;
+		depp[i] = NULL;
 
 	/* step1: store the entries which are not conflicting */
 	SIMPLEQ_FOREACH(de, &df->df_entries, de_entry) {
