@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.15 2003/08/07 11:16:46 agc Exp $	*/
+/*	$NetBSD: tput.c,v 1.16 2004/07/23 13:33:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.15 2003/08/07 11:16:46 agc Exp $");
+__RCSID("$NetBSD: tput.c,v 1.16 2004/07/23 13:33:22 wiz Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -229,6 +229,8 @@ outc(c)
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: tput [-T term] attribute ...\n");
+	(void)fprintf(stderr,
+	    "usage: %s [-T term] attribute [attribute-args] ...\n",
+	    getprogname());
 	exit(1);
 }
