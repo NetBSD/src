@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.3 1996/03/14 19:44:38 christos Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.4 1996/03/16 23:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -59,6 +59,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
