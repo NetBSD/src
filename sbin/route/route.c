@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.46 2001/07/16 17:22:07 bad Exp $	*/
+/*	$NetBSD: route.c,v 1.47 2001/07/20 08:28:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.46 2001/07/16 17:22:07 bad Exp $");
+__RCSID("$NetBSD: route.c,v 1.47 2001/07/20 08:28:25 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,9 +92,7 @@ static void inet6_makenetandmask __P((struct sockaddr_in6 *));
 static int getaddr __P((int, char *, struct hostent **));
 static void flushroutes __P((int, char *[]));
 #ifndef SMALL
-#ifdef INET6
 static int prefixlen __P((char *));
-#endif
 static int x25_makemask __P((void));
 static void interfaces __P((void));
 static void monitor __P((void));
@@ -793,7 +791,6 @@ newroute(argc, argv)
 			case K_NET:
 				forcenet++;
 				break;
-#ifdef INET6
 			case K_PREFIXLEN:
 				argc--;
 				if (prefixlen(*++argv) == 128) {
@@ -804,7 +801,6 @@ newroute(argc, argv)
 					ishost = 0;
 				}
 				break;
-#endif
 			case K_MTU:
 			case K_HOPCOUNT:
 			case K_EXPIRE:
@@ -1165,32 +1161,59 @@ netdone:
 	errx(1, "bad value: %s", s);
 }
 
-#ifdef INET6
 int
 prefixlen(s)
 	char *s;
 {
 	int len = atoi(s), q, r;
+	int max;
+
+	switch (af) {
+	case AF_INET:
+		max = sizeof(struct in_addr) * 8;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		max = sizeof(struct in6_addr) * 8;
+		break;
+#endif
+	default:
+		(void) fprintf(stderr,
+		    "prefixlen is not supported with af %d\n", af);
+		exit(1);
+	}
 
 	rtm_addrs |= RTA_NETMASK;	
-	if (len < -1 || len > 129) {
+	if (len < -1 || len > max + 1) {
 		(void) fprintf(stderr, "%s: bad value\n", s);
 		exit(1);
 	}
 	
 	q = len >> 3;
 	r = len & 7;
-	so_mask.sin6.sin6_family = AF_INET6;
-	so_mask.sin6.sin6_len = sizeof(struct sockaddr_in6);
-	memset((void *)&so_mask.sin6.sin6_addr, 0,
-		sizeof(so_mask.sin6.sin6_addr));
-	if (q > 0)
-		memset((void *)&so_mask.sin6.sin6_addr, 0xff, q);
-	if (r > 0)
-		*((u_char *)&so_mask.sin6.sin6_addr + q) = (0xff00 >> r) & 0xff;
+	switch (af) {
+	case AF_INET:
+		memset(&so_mask, 0, sizeof(so_mask));
+		so_mask.sin.sin_family = AF_INET;
+		so_mask.sin.sin_len = sizeof(struct sockaddr_in);
+		so_mask.sin.sin_addr.s_addr = htonl(0xffffffff << (32 - len));
+		break;
+#ifdef INET6
+	case AF_INET6:
+		so_mask.sin6.sin6_family = AF_INET6;
+		so_mask.sin6.sin6_len = sizeof(struct sockaddr_in6);
+		memset((void *)&so_mask.sin6.sin6_addr, 0,
+			sizeof(so_mask.sin6.sin6_addr));
+		if (q > 0)
+			memset((void *)&so_mask.sin6.sin6_addr, 0xff, q);
+		if (r > 0)
+			*((u_char *)&so_mask.sin6.sin6_addr + q) =
+			    (0xff00 >> r) & 0xff;
+		break;
+#endif
+	}
 	return(len);
 }
-#endif
 
 #ifndef SMALL
 int
