@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.57 2003/09/17 13:27:42 agc Exp $ */
+/* $NetBSD: lib.h,v 1.58 2003/09/23 06:19:45 grant Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -87,6 +87,14 @@
 
 #ifndef CHGRP_CMD
 #define CHGRP_CMD "chgrp"
+#endif
+
+#ifndef MTREE_CMD
+# ifdef BINDIR
+#  define MTREE_CMD BINDIR "/mtree"
+# else
+#  define MTREE_CMD "mtree"
+# endif
 #endif
 
 /* The names of our "special" files */
