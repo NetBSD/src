@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1997/03/26 22:39:07 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1999/06/07 20:16:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,14 +63,6 @@ extern int cold;		/* cold start flag initialized in locore.s */
 u_long bootdev = 0;		/* should be dev_t, but not until 32 bits */
 struct device *booted_device;	/* boot device, set by dk_establish */
 
-struct devnametobdevmaj pc532_nam2blk[] = {
-	{ "sd",		0 },
-	{ "st",		2 },
-	{ "md",		3 },
-	{ "cd",		4 },
-	{ NULL,		0 },
-};
-
 /*
  * Determine i/o configuration for a machine.
  */
@@ -106,5 +98,5 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, pc532_nam2blk);
+	setroot(booted_device, booted_partition);
 }

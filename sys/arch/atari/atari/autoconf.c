@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1998/09/02 11:24:16 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1999/06/07 20:16:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -51,15 +51,6 @@ extern int cold;	/* 1 if still booting (locore.s) */
 int atari_realconfig;
 #include <sys/kernel.h>
 
-struct devnametobdevmaj atari_nam2blk[] = {
-	{ "md",		1 },
-	{ "fd",		2 },
-	{ "sd",		4 },
-	{ "cd",		6 },
-	{ "wd",		14 },
-	{ NULL,		0 },
-};
-
 /*
  * called at boot time, configure all devices on system
  */
@@ -83,7 +74,7 @@ cpu_rootconf()
 	int booted_partition;
 
 	findroot(&booted_device, &booted_partition);
-	setroot(booted_device, booted_partition, atari_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 /*ARGSUSED*/

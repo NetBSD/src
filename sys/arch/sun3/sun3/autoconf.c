@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 1998/02/08 05:02:51 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.52 1999/06/07 20:16:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -162,19 +162,6 @@ bus_print(args, name)
 
 /****************************************************************/
 
-/*
- * Support code to find the boot device.
- */
-
-static struct devnametobdevmaj nam2blk[] = {
-	{ "xy",		3 },
-	{ "sd",		7 },
-	{ "xd",		10 },
-	{ "md",		13 },
-	{ "cd",		18 },
-	{ NULL,		0 },
-};
-
 /* This takes the args: name, ctlr, unit */
 typedef struct device * (*findfunc_t) __P((char *, int, int));
 
@@ -248,7 +235,7 @@ cpu_rootconf()
 	}
 
 	printf("boot device: %s%s\n", devname, partname);
-	setroot(boot_device, boot_partition, nam2blk);
+	setroot(boot_device, boot_partition);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1999/03/30 04:25:36 minoura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1999/06/07 20:16:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -63,11 +63,6 @@ extern int cold;	/* 1 if still booting (locore.s) */
 int x68k_realconfig;
 #include <sys/kernel.h>
 
-struct devnametobdevmaj x68k_nam2blk[] = {
-	X68K_BOOT_DEV_LIST,
-	{ NULL,		0 },
-};
-
 /*
  * called at boot time, configure all devices on system
  */
@@ -98,7 +93,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, x68k_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 /*ARGSUSED*/
@@ -194,16 +189,16 @@ findroot(devpp, partp)
 			*partp = B_X68K_SCSI_PART(bootdev);
 		return;
 	}
-	for (i = 0; x68k_nam2blk[i].d_name != NULL; i++)
-		if (majdev == x68k_nam2blk[i].d_maj)
+	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
+		if (majdev == dev_name2blk[i].d_maj)
 			break;
-	if (x68k_nam2blk[i].d_name == NULL)
+	if (dev_name2blk[i].d_name == NULL)
 		return;
 
 	part = B_PARTITION(bootdev);
 	unit = B_UNIT(bootdev);
 
-	sprintf(buf, "%s%d", x68k_nam2blk[i].d_name, unit);
+	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
 
 	if ((*devpp = find_dev_byname(buf)) != NULL)
 		*partp = part;

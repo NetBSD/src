@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 1997/06/16 07:35:46 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 1999/06/07 20:16:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,18 +73,6 @@ void	findroot __P((struct device **devpp, int *partp));
 int	getpno __P((char **cp));
 
 
-struct devnametobdevmaj pica_nam2blk[] = {
-	{ "sd",		0 },
-	{ "cd",		3 },
-	{ "fd",		7 },
-#ifdef notyet
-	{ "md",		XXX },
-#endif
-	{ NULL,		0 },
-};
-
-
-
 /*
  *  Configure all devices found that we know about.
  *  This is done at boot time.
@@ -111,7 +99,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, pica_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 u_long	bootdev;		/* should be dev_t, but not until 32 bits */
@@ -144,16 +132,16 @@ findroot(devpp, partp)
 		return;
 
 	majdev = B_TYPE(bootdev);
-	for (i = 0; pica_nam2blk[i].d_name != NULL; i++)
-		if (majdev == pica_nam2blk[i].d_maj)
+	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
+		if (majdev == dev_name2blk[i].d_maj)
 			break;
-	if (pica_nam2blk[i].d_name == NULL)
+	if (dev_name2blk[i].d_name == NULL)
 		return;
 
 	part = B_PARTITION(bootdev);
 	unit = B_UNIT(bootdev);
 
-	sprintf(buf, "%s%d", pica_nam2blk[i].d_name, unit);
+	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
@@ -185,9 +173,9 @@ makebootdev(cp)
 		dv[1] = *cp;
 		unit = getpno(&cp);
 
-		for (majdev = 0; majdev < sizeof(pica_nam2blk)/sizeof(pica_nam2blk[0]); majdev++)
-			if (dv[0] == pica_nam2blk[majdev].d_name[0] &&
-			    dv[1] == pica_nam2blk[majdev].d_name[1] &&
+		for (majdev = 0; majdev < sizeof(dev_name2blk)/sizeof(dev_name2blk[0]); majdev++)
+			if (dv[0] == dev_name2blk[majdev].d_name[0] &&
+			    dv[1] == dev_name2blk[majdev].d_name[1] &&
 			    cp[0] == ')')
 				bootdev = MAKEBOOTDEV(majdev, 0, ctrl, unit,0);
 	}

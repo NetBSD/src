@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.119 1999/05/27 14:20:10 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.120 1999/06/07 20:16:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -856,7 +856,7 @@ cpu_rootconf()
 		printf("\n");
 		cnpollc(0);
 	}
-	setroot(bootdv, bootpartition, dev_name2blk);
+	setroot(bootdv, bootpartition);
 }
 
 /*

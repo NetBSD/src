@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1999/05/01 10:37:57 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1999/06/07 20:16:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -117,7 +117,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, dev_name2blk);
+	setroot(booted_device, booted_partition);
 }
 
 /*
