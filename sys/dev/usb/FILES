@@ -35,7 +35,7 @@ ukbd.c			USB keyboard driver
 ukbdmap.c		wscons key mapping for ukbd
 ukbdvar.h		API for ukbd.c
 ulpt.c			USB printer class driver
-umass.c			USB mass storage driver (bulk only for now)
+umass.c			USB mass storage driver
 umodem.c		USB modem (CDC ACM) driver
 ums.c			USB mouse driver
 urio.c			USB Diamond Rio500 driver
@@ -57,5 +57,6 @@ usbdi.h			API for usbdi.c
 usbdi_util.c		utilities built on top of usbdi.h
 usbdi_util.h		API for usbdi_util.c
 usbdivar.h		internal defines and structures for usbdi.c
+uscanner.c		minimal USB scanner driver
 usbhid.h		USB HID class definitions
 uvisor.c		USB Handsping Visor driver
