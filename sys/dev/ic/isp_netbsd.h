@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.36 2001/02/12 23:32:11 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.37 2001/02/28 05:53:59 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -84,7 +84,7 @@
 
 
 #define	ISP_PLATFORM_VERSION_MAJOR	1
-#define	ISP_PLATFORM_VERSION_MINOR	0
+#define	ISP_PLATFORM_VERSION_MINOR	1
 
 struct isposinfo {
 	struct device		_dev;
