@@ -1,4 +1,4 @@
-/* $NetBSD: ti_fw.h,v 1.4 2001/03/28 17:08:29 msaitoh Exp $ */
+/* $NetBSD: ti_fw.h,v 1.1 2001/06/30 04:33:15 thorpej Exp $ */
 
 /*
  * Firmware for Alteon Tigon 1 chip.
