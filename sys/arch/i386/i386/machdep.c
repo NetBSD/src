@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.17 2002/04/01 07:40:39 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.18 2002/04/01 21:53:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.17 2002/04/01 07:40:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.18 2002/04/01 21:53:39 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2558,7 +2558,7 @@ setregs(l, pack, stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)p->p_psstr;
+	tf->tf_ebx = (int)l->l_proc->p_psstr;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;
