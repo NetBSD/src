@@ -1,6 +1,6 @@
-/*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+/*-
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,17 +29,29 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)cat.c	7.5 (Berkeley) 6/28/90
- *	$Id: cat.c,v 1.2 1993/05/20 03:53:56 cgd Exp $
+ * 
+ *	$Id $
  */
+
+#ifndef lint
+static char copyright[] =
+"@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
+#ifndef lint
+/*From: */
+/*	static char sccsid[] = "@(#)cat.c	8.1 (Berkeley) 6/11/93";*/
+static char rcsid[] = "$Id: cat.c,v 1.3 1994/01/26 03:21:41 cgd Exp $";
+#endif /* not lint */
 
 main()
 {
-	register int c, fd;
+	register int fd;
+	char c;
 
 	fd = getfile("File", 0);
-	while ((c = getc(fd)) >= 0)
+	while (read(fd, &c, 1) == 1)
 		putchar(c);
 	exit(0);
 }
