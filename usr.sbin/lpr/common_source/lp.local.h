@@ -46,9 +46,6 @@
 #include <ar.h>
 
 #ifndef A_MAGIC1	/* must be a VM/UNIX system */
-#	define A_MAGIC1	OMAGIC
-#	define A_MAGIC2	NMAGIC
-#	define A_MAGIC3	ZMAGIC
 #	undef ARMAG
 #	define ARMAG	0177545
 #endif
