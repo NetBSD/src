@@ -12,8 +12,13 @@
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
 ./usr/mdec/boot
-./usr/mdec/bootxx
+./usr/mdec/bootxx.old
+./usr/mdec/bootxx_cd9660
+./usr/mdec/bootxx_ffs
 ./usr/mdec/installboot
+./usr/mdec/installboot.old
+./usr/mdec/mkbootimage
 ./usr/mdec/netboot
 ./usr/mdec/setnetbootinfo
+./usr/mdec/ustarboot
 ./usr/sbin/bad144

@@ -226,7 +226,12 @@
 ./usr/share/man/cat4/x68k/neptune.0
 ./usr/share/man/cat4/x68k/pow.0
 ./usr/share/man/cat5/i386/keycap.0
+./usr/share/man/cat8/alpha/MAKEDEV.0
+./usr/share/man/cat8/alpha/boot.0
 ./usr/share/man/cat8/alpha/installboot.0
+./usr/share/man/cat8/alpha/installboot.old.0
+./usr/share/man/cat8/alpha/makedev.0
+./usr/share/man/cat8/alpha/mkbootimage.0
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/binpatch.0
@@ -528,7 +533,12 @@
 ./usr/share/man/man4/x68k/neptune.4
 ./usr/share/man/man4/x68k/pow.4
 ./usr/share/man/man5/i386/keycap.5
+./usr/share/man/man8/alpha/MAKEDEV.8
+./usr/share/man/man8/alpha/boot.8
 ./usr/share/man/man8/alpha/installboot.8
+./usr/share/man/man8/alpha/installboot.old.8
+./usr/share/man/man8/alpha/makedev.8
+./usr/share/man/man8/alpha/mkbootimage.8
 ./usr/share/man/man8/alpha/setnetbootinfo.8
 ./usr/share/man/man8/amiga/MAKEDEV.8
 ./usr/share/man/man8/amiga/binpatch.8
