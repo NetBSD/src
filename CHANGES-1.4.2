@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.86 1999/12/04 20:37:14 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.87 1999/12/17 00:01:28 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1744,3 +1744,79 @@ sys/dev/tc/asc_ioasic.c				1.18
 
   Fix IOASIC DMA alignment problems.  This should fix the problems
   with dump(8) failing randomly on DECstations.
+
+sys/nfs/nfs_serv.c				1.52
+
+  Correct length check in readdirplus, making 32k readdir sizes
+  work.
+
+sys/arch/atari/dev/hdfd.c			1.15
+sys/arch/atari/dev/atari5380.c			1.30
+sys/arch/atari/dev/clock.c			1.20
+sys/arch/atari/dev/fd.c				1.29
+
+  Change the way that bits are cleared in the InterruptPending
+  register of the 68901, avoiding a read-modify-write cycle.
+  Solves a "hanging keyboard" problem.
+
+share/man/man7/packages.7			1.16-1.25
+
+  Update to current state of package documentation.
+
+sys/dev/raidframe/rf_dagutils.c			1.6
+
+  Trust only the data disk if the mirror is not known to
+  be up-to-date.
+
+sys/arch/mac68k/dev/adb_direct.c		1.35
+
+  Make adbInCount volatile to fix problems uncovered by aggressive
+  optimization.
+
+sys/arch/vax/vax/machdep.c			patch
+
+  In process_write_regs(), no checks were made to which bits in
+  the PSL that was altered. This means that the traced process
+  could gain any hardware privileges.
+
+sys/arch/mac68k/mac68k/sys_machdep.c		patch
+
+  Correct minor problem in previous change, preventing compilation
+  of the kernel.
+
+sys/ufs/ufs/ufs_vnops.c				1.61
+
+  Fix PR#8491: two simultaneous and identical renames would cause
+  a kernel panic.
+
+sys/arch/alpha/mcbus/mcbus.c			1.7
+sys/arch/alpha/mcbus/mcbusreg.h			1.3
+sys/arch/alpha/pci/mcpcia.c			1.7
+
+  Force probing of MCPCIAs such that if they are not there we can
+  still boot.  Not all Alpha 4100 / Rawhide systems have the full
+  four MCPCIAs.
+
+usr.bin/rpcgen/rpc_parse.c			1.10
+
+  Avoid rpcgen coredumps with a structure argument bigger than 8.
+
+sys/ufs/lfs/lfs_segment.c			1.36
+
+  Fix spllevel problem with superblock exclusion and with write
+  throttle.  Addressess PR#8383.
+
+libexec/lfs_cleanerd/clean.h			1.9
+libexec/lfs_cleanerd/cleanerd.c			1.17
+
+  If the cleaner is being respawned and dies repeatedly, avoid
+  looping.
+
+sbin/mount_lfs/mount_lfs.c			1.9
+
+  Read-only mounts no longer start useless cleanerd processes.
+
+usr.bin/quota/quota.c				1.22
+usr.sbin/edquota/edquota.c			1.19
+
+  Allow use of quotas bigger than 4GB by avoiding integer overflow.
