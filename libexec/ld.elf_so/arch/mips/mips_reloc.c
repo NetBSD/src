@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.37 2002/10/05 11:59:05 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.38 2003/07/17 13:56:33 skrll Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -196,7 +196,7 @@ _rtld_relocate_nonplt_objects(obj)
 			 * to 0 if there are non-PLT references, but older
 			 * versions of GNU ld do not do this.
 			 */
-			def = _rtld_find_symdef(i, obj, &defobj, true);
+			def = _rtld_find_symdef(i, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 			*got = def->st_value + (Elf_Addr)defobj->relocbase;
@@ -216,7 +216,7 @@ _rtld_relocate_nonplt_objects(obj)
 				*got = sym->st_value +
 				    (Elf_Addr)obj->relocbase;
 		} else {
-			def = _rtld_find_symdef(i, obj, &defobj, true);
+			def = _rtld_find_symdef(i, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 			*got = def->st_value + (Elf_Addr)defobj->relocbase;

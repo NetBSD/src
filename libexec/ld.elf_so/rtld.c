@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.95 2003/06/30 00:49:25 marcus Exp $	 */
+/*	$NetBSD: rtld.c,v 1.96 2003/07/17 13:56:32 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -722,7 +722,7 @@ _rtld_dlsym(handle, name)
 
 		case (intptr_t)RTLD_DEFAULT:
 			def = _rtld_symlook_default(name, hash, obj, &defobj,
-			    true);
+			    false);
 			break;
 
 		default:
