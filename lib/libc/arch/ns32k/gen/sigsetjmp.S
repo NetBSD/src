@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.3 1997/05/08 13:38:41 matthias Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.4 2004/12/14 11:14:45 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -28,7 +28,7 @@
 #include <machine/jmpbuf.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsetjmp.S,v 1.3 1997/05/08 13:38:41 matthias Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.4 2004/12/14 11:14:45 simonb Exp $")
 #endif
 
 ENTRY(sigsetjmp)
@@ -83,4 +83,3 @@ ENTRY(siglongjmp)
 	bne	2f
 	movqd	1,r0
 2:	ret	0
-
