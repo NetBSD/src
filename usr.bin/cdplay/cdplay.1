@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.10 2001/07/01 05:04:26 gmcgarry Exp $
+.\"	$NetBSD: cdplay.1,v 1.11 2001/08/20 09:50:10 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" from FreeBSD: cdcontrol.1,v 1.16.2.2 1999/01/31 15:36:01 billf Exp
 .\"
-.Dd September 18, 2000
+.Dd August 20, 2001
 .Dt CDPLAY 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Op Ar command ...
 .Sh DESCRIPTION
 .Nm
-is a program to control audio features of a CD drive.
+is a program to control the audio features of a CD-ROM drive.
 .Pp
 If no command is given, then
 .Nm
@@ -47,7 +47,7 @@ enters interactive mode, reading commands from the standard input.
 The following options are available:
 .Bl -tag -width indent
 .It Fl f Ar device
-Specify the control device.  Both absolute paths and paths relative to
+Specify the control device to use.  Both absolute paths and paths relative to
 .Pa /dev
 are accepted.  The suffix `c' (or 'd' on some architectures, see
 .Xr disklabel 8
@@ -134,18 +134,7 @@ Play the right subtrack on both left and right channels.
 .It Cm info
 Print the table of contents.
 .It Cm status
-.Op audio | media | volume
-
-Print the information about the disc:
-
-.Nm audio
-the current playing status and position,
-
-.Nm media
-the current media catalog status,
-
-.Nm volume
-the current values of the volume for left and right channels.
+Display the current audio, media and volume status.
 .It Cm help
 Print the list of available commands.
 .It Cm reset
@@ -168,7 +157,8 @@ Quit the program.
 .An Jean-Marc Zucconi ,
 .An Andrey A.\ Chernov ,
 .An Serge V.\ Vakulenko ,
-.An Andy Doran
+.An Andrew Doran,
+.An Sergey Svishchev .
 .Sh HISTORY
 The
 .Nm
