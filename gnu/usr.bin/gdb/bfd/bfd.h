@@ -22,7 +22,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: bfd.h,v 1.1 1994/01/28 12:37:40 pk Exp $
+	$Id: bfd.h,v 1.2 1994/04/28 17:10:42 phil Exp $
 */
 
 /* bfd.h -- The only header file required by users of the bfd library 
@@ -856,6 +856,7 @@ enum bfd_architecture
   bfd_arch_h8500,      /* Hitachi H8/500 */
   bfd_arch_sh,         /* Hitachi SH */
   bfd_arch_alpha,      /* Dec Alpha */
+  bfd_arch_ns32k,      /* National Semiconductor Series 32000 */
   bfd_arch_last
   };
 
