@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1998/05/22 03:26:28 tv Exp $
+#	$NetBSD: Makefile,v 1.12 1998/07/27 01:03:48 tv Exp $
 
 LIB=	bfd
 
@@ -25,8 +25,9 @@ CPPFLAGS+= -I$(dist)/include
 .PATH: $(dist)/opcodes
 .PATH: $(dist)/libiberty
 
-.if exists(_${MACHINE_ARCH}.mk)
-.include  "_${MACHINE_ARCH}.mk"
+# XXX temporary change mips -> mipsel
+.if exists(_${MACHINE_ARCH:S/^mips$/mipsel/}.mk)
+.include  "_${MACHINE_ARCH:S/^mips$/mipsel/}.mk"
 .endif
 
 # From $(dist)/bfd: BFD_LIBS, BFD_BACKENDS, BFD_MACHINES, ...
