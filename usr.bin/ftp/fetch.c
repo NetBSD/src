@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.140 2003/03/07 08:13:48 grant Exp $	*/
+/*	$NetBSD: fetch.c,v 1.141 2003/05/14 14:31:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.140 2003/03/07 08:13:48 grant Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.141 2003/05/14 14:31:00 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -260,12 +260,12 @@ url_decode(char *url)
  * XXX: this is not totally RFC 1738 compliant; <path> will have the
  * leading `/' unless it's an ftp:// URL, as this makes things easier
  * for file:// and http:// URLs. ftp:// URLs have the `/' between the
- * host and the url-path removed, but any additional leading slashes
- * in the url-path are retained (because they imply that we should
+ * host and the URL-path removed, but any additional leading slashes
+ * in the URL-path are retained (because they imply that we should
  * later do "CWD" with a null argument).
  *
  * Examples:
- *	 input url			 output path
+ *	 input URL			 output path
  *	 ---------			 -----------
  *	"ftp://host"			NULL
  *	"http://host/"			NULL
@@ -1767,7 +1767,7 @@ auto_put(int argc, char **argv, const char *uploadserver)
 		}
 	}
 	if (debug)
-		fprintf(ttyout, "auto_put: url `%s' argv[2] `%s'\n",
+		fprintf(ttyout, "auto_put: URL `%s' argv[2] `%s'\n",
 		    path, uargv[2] ? uargv[2] : "<null>");
 		
 			/* connect and cwd */		 

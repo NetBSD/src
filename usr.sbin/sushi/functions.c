@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.5 2003/01/20 05:30:14 simonb Exp $       */
+/*      $NetBSD: functions.c,v 1.6 2003/05/14 14:31:01 wiz Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ script_do(char *what)
 }
 
 /*
- *   Return list of packages available at the given url
+ *   Return list of packages available at the given URL
  *   or NULL on error. Returned pointer can be free(3)d
  *   later.
  */
@@ -237,7 +237,7 @@ ftp_pkglist(char *subdir)
 }
 
 /*
- *   Return list of package categories available at the given url
+ *   Return list of package categories available at the given URL
  *   or NULL on error. Returned pointer can be free(3)d
  *   later.
  */
