@@ -1,4 +1,4 @@
-.\"  $NetBSD: od.1,v 1.19 2003/01/06 12:43:08 wiz Exp $
+.\"  $NetBSD: od.1,v 1.20 2003/01/12 21:13:23 mjl Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,7 +90,7 @@ Display the input offset in octal, followed by sixteen
 space-separated, three column, space-filled, characters of input data
 per line.
 Control characters are printed as their names instead of as
-c style escapes.
+C-style escapes.
 .It Fl B
 Same as
 .Fl o .
@@ -106,8 +106,8 @@ selected.
 Display the input offset in octal, followed by sixteen
 space-separated, three column, space-filled, characters of input data
 per line.
-Control characters are printed as c style escapes, or as
-three octal digits, if no c escape exists for the character.
+Control characters are printed at C-style escapes, or as
+three octal digits, if no C escape exists for the character.
 .It Fl d
 .Em Two-byte decimal display .
 Display the input offset in octal, followed by eight
@@ -206,7 +206,7 @@ The string must consist of the type specification characters:
 .Pp
 .Cm a
 selects US-ASCII output, with control characters replaced with their
-names instead of as c escape sequences.
+names instead of as C escape sequences.
 See also the
 .Cm _u
 conversion provided by hexdump(1).
