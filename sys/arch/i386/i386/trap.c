@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85 1995/10/10 01:26:46 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.86 1995/10/10 04:45:44 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -184,7 +184,7 @@ trap(frame)
 	}
 #endif
 
-	if (ISPL(frame.tf_cs) != SEL_KPL) {
+	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = &frame;
@@ -251,7 +251,7 @@ trap(frame)
 		default:
 			goto we_re_toast;
 		}
-		if (ISPL(vframe->tf_cs) == SEL_KPL)
+		if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
 			goto we_re_toast;
 
 		frame.tf_eip = resume;
@@ -507,7 +507,7 @@ syscall(frame)
 #endif
 
 	cnt.v_syscall++;
-	if (ISPL(frame.tf_cs) != SEL_UPL)
+	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
 		panic("syscall");
 	p = curproc;
 	sticks = p->p_sticks;

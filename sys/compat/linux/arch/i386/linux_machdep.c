@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.21 1995/10/08 22:45:20 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.22 1995/10/10 04:45:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -217,7 +217,7 @@ linux_sys_sigreturn(p, v, retval)
 	 * Check for security violations.
 	 */
 	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    ISPL(context.sc_cs) != SEL_UPL)
+	    !USERMODE(context.sc_cs, context.sc_eflags))
 		return (EINVAL);
 
 	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;

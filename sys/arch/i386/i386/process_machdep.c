@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.17 1995/08/13 09:05:56 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18 1995/10/10 04:45:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -151,7 +151,7 @@ process_write_regs(p, regs)
 	 * Check for security violations.
 	 */
 	if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    ISPL(regs->r_cs) != SEL_UPL)
+	    !USERMODE(regs->r_cs, regs->r_eflags))
 		return (EINVAL);
 
 	tf->tf_es     = regs->r_es;
