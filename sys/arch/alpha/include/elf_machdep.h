@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.3 1997/04/06 08:47:24 cgd Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.4 1998/10/03 18:17:14 christos Exp $ */
 
 #define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -7,6 +7,7 @@
 #define	ELF64_MACHDEP_ENDIANNESS	Elf_ed_2lsb
 #define	ELF64_MACHDEP_ID_CASES						\
 		case Elf_em_alpha:					\
+		case Elf_em_alpha_exp:					\
 			break;
 
 /*
