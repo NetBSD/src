@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.27 1995/05/16 22:25:21 jtc Exp $	*/
+/*	$NetBSD: genassym.c,v 1.28 1995/05/24 21:02:53 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -45,6 +45,7 @@
 #include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
+#include <sys/syscall.h>
 
 #include <vm/vm.h>
 
@@ -83,6 +84,7 @@ main()
 	struct vmspace *vms = (struct vmspace *) 0;
 	struct intersil7170 *intersil_addr = (struct intersil7170 *) 0;
 	struct frame *fp = (struct frame *) 0;
+	struct fpframe *fpf = (struct fpframe *) 0;
 
 	/* intersil clock internals */
 	def("IREG_CLOCK_ENAB_5", IREG_CLOCK_ENAB_5);
@@ -118,11 +120,13 @@ main()
 	def1(MONSTART);
 	def1(PROM_BASE);
 	def1(USRSTACK);
-	def1(UADDR);
 
 	/* kernel-isms */
 	def1(KERNBASE);
-	def1(UPAGES);
+	def1(USPACE);
+
+	/* system calls */
+	def1(SYS_sigreturn);
 
 	/* errno-isms */
 	def1(EFAULT);
@@ -144,7 +148,9 @@ main()
 	def("P_WCHAN", &p->p_wchan);
 	def("P_FLAG", &p->p_flag);
 	def("P_MDFLAG", &p->p_md.md_flags);
+	def("P_MDREGS", &p->p_md.md_regs);
 	def1(SRUN);
+
 	/* HP-UX trace bit */
 	def("MDP_TRCB", ffs(MDP_HPUXTRACE) - 1);
 
@@ -164,6 +170,10 @@ main()
 	def("FR_SP", &fp->f_regs[15]);
 	def("FR_HW", &fp->f_sr);
 	def("FR_ADJ", &fp->f_stackadj);
+
+	/* FP frame offsets */
+	def("FPF_REGS", &fpf->fpf_regs[0]);
+	def("FPF_FPCR", &fpf->fpf_fpcr);
 
 	exit(0);
 }
