@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.11 2000/02/06 12:49:44 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.12 2000/02/07 06:15:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -119,7 +119,7 @@ in6_gif_output(ifp, family, m, rt)
 	    }
 #endif
 	default:
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		printf("in6_gif_output: warning: unknown family %d passed\n",
 			family);
 #endif
