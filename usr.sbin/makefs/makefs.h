@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.2 2001/11/02 03:12:48 lukem Exp $	*/
+/*	$NetBSD: makefs.h,v 1.3 2001/11/25 11:22:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -151,12 +151,11 @@ void		ffs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
 
 
 
-extern	int		debug;
+extern	u_int		debug;
 extern	struct timespec	start_time;
 
 #define	DEBUG_TIME			0x00000001
-		/* debug bits 1..2 reserved at this time */
-#define	DEBUG_STRSUFTOLL		0x00000008
+		/* debug bits 1..3 unused at this time */
 #define	DEBUG_WALK_DIR			0x00000010
 #define	DEBUG_WALK_DIR_NODE		0x00000020
 #define	DEBUG_WALK_DIR_LINKCHECK	0x00000040
