@@ -50,6 +50,11 @@ Boston, MA 02111-1307, USA.  */
 #include <stdio.h>	/* May get P_tmpdir.  */
 #endif /* IN_GCC */
 
+#ifdef __NetBSD__
+#undef P_tmpdir
+#define P_tmpdir "/tmp/"
+#endif
+
 #ifdef IN_GCC
 #include "gansidecl.h"
 extern char *xmalloc ();
