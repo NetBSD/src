@@ -62,6 +62,7 @@ options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 
 # Options specific to this host.
 options 	DDB		# Kernel Dynamic Debugger
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	DEBUG		# extra kernel debugging support
 #options 	DIAGNOSTIC	# extra kernel debugging checks
 options 	KTRACE		# system call tracing support

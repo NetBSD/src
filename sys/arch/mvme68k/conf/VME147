@@ -1,13 +1,13 @@
-#	$NetBSD: VME147,v 1.17 1997/09/12 08:14:06 mycroft Exp $
+#	$NetBSD: VME147,v 1.18 1997/11/17 01:58:04 lukem Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
 # Boards this kernel supports; need at lest the correct one
-options		MVME147
+options 	MVME147
 
 maxusers	2
 
-options		DIAGNOSTIC, DEBUG
+options 	DIAGNOSTIC, DEBUG
 
 #options 	SYSVSHM
 options 	KTRACE
@@ -19,19 +19,19 @@ file-system 	NFS
 #file-system	MSDOSFS
 #file-system	UNION
 
-#options	NFSSERVER
+#options 	NFSSERVER
 options 	FIFO
 
 # Networking options
-options		INET
-options		TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
+options 	INET
+options 	TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 #options        GATEWAY         # IP packet forwarding
 #options        ISO             # OSI networking
 #options        TPIP
 #options        EON
 
-options		COMPAT_09, COMPAT_10, COMPAT_11, COMPAT_12
-options		COMPAT_SUNOS
+options 	COMPAT_09, COMPAT_10, COMPAT_11, COMPAT_12
+options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 
 ## force NFS root and swap

@@ -2,6 +2,6 @@
 
 machine	arm32
 
-options		MACHINE_NONCONTIG
-options		EXEC_AOUT
-options		EXEC_SCRIPT
+options 	MACHINE_NONCONTIG
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT

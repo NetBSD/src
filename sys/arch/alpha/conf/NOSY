@@ -1,4 +1,4 @@
-# $NetBSD: NOSY,v 1.18 1997/09/06 02:03:32 thorpej Exp $
+# $NetBSD: NOSY,v 1.19 1997/11/17 01:57:25 lukem Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -18,6 +18,7 @@ options 	NTP			# NTP PLL
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DEBUG			# Expensive debugging checks/support
 options 	DDB			# Kernel dynamic debugger
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 
 # File systems
 file-system	FFS		# Fast file system
