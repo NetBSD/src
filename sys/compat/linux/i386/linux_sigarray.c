@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.12 1998/09/11 12:50:09 mycroft Exp $	*/
+/*	$NetBSD: linux_sigarray.c,v 1.13 1998/09/29 14:15:49 tv Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -189,10 +189,12 @@ linux_to_native_sigaction(lsa, bsa)
 		bsa->sa_flags |= SA_RESETHAND;
 	if ((lsa->sa_flags & LINUX_SA_NOMASK) != 0)
 		bsa->sa_flags |= SA_NODEFER;
+#ifdef DEBUG
 	if ((lsa->sa_flags & ~LINUX_SA_ALLBITS) != 0)
 /*XXX*/		printf("linux_to_native_sigaction: extra bits ignored\n");
 	if (lsa->sa_restorer != 0)
 /*XXX*/		printf("linux_to_native_sigaction: sa_restorer ignored\n");
+#endif
 }
 
 void
