@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 1994/12/30 17:17:55 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.23 1995/01/18 17:13:57 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -74,29 +74,27 @@ volatile char *clock_va;
 	(run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
 	 INTERSIL_CMD_NORMAL_MODE)
 
-#define intersil_disable() \
-	intersil_clock->clk_cmd_reg = \
-	intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE)
-
-#define intersil_enable() \
-	intersil_clock->clk_cmd_reg = \
-	intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE)
-
-#define intersil_clear() intersil_clock->clk_intr_reg
+#define intersil_clear() (void)intersil_clock->clk_intr_reg
 
 int clockmatch __P((struct device *, void *vcf, void *args));
 void clockattach __P((struct device *, struct device *, void *));
 
-struct cfdriver clockcd = 
-{ NULL, "clock", clockmatch, clockattach, DV_DULL,
-	sizeof(struct device), 0};
+struct cfdriver clockcd = {
+	NULL, "clock", clockmatch, clockattach,
+	DV_DULL, sizeof(struct device), 0 };
 
-/* Called very earyl by internal_configure. */
+/* Called very early by internal_configure. */
 void clock_init()
 {
 	clock_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
 	if (!clock_va)
-		mon_panic("clock VA not found\n");
+		mon_panic("clock_init: clock_va\n");
+	if (!interrupt_reg)
+		mon_panic("clock_init: interrupt_reg\n");
+	/* Turn off clock interrupts until cpu_initclocks() */
+	intersil_clock->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+	intersil_clear();
 }
 
 int clockmatch(parent, vcf, args)
@@ -108,8 +106,6 @@ int clockmatch(parent, vcf, args)
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
-		return (0);
-	if (clock_va == NULL)
 		return (0);
 	if (ca->ca_paddr == -1)
 		ca->ca_paddr = OBIO_CLOCK;
@@ -130,10 +126,7 @@ void clockattach(parent, self, args)
 	if (ca->ca_intpri != 5)
 		panic("clock: level != 5");
 
-	/* Initialize, connect ISR. */
-	intersil_disable();
-	set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
-	isr_add_custom(ca->ca_intpri, level5intr_clock);	/* XXX */
+	isr_add_custom(5, level5intr_clock);
 	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 0);
 }
 
@@ -146,7 +139,11 @@ set_clk_mode(on, off, enable)
 	u_char on, off;
 	int enable;
 {
-	register u_char interreg, dummy;
+	register u_char interreg;
+
+	if (!intersil_clock)
+		panic("set_clk_mode");
+
 	/*
 	 * make sure that we are only playing w/ 
 	 * clock interrupt register bits
@@ -170,7 +167,7 @@ set_clk_mode(on, off, enable)
 	*interrupt_reg &= ~(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	dummy = intersil_clock->clk_intr_reg;	/* clear clock */
+	intersil_clear();
 
 	/*
 	 * Now we set all the desired bits
@@ -195,16 +192,11 @@ void
 cpu_initclocks(void)
 {
 	struct timer_softc *clock;
-	unsigned char dummy;
 
-	if (clockcd.cd_ndevs < 1 ||
-		!(clock = clockcd.cd_devs[0]))
-		panic("cpu_initclocks: no timer");
+	if (!intersil_clock)
+		panic("cpu_initclocks");
 
-	/* make sure irq5/7 stuff is resolved :) */
-
-	dummy = intersil_clear();
-
+	intersil_clear();
 	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
@@ -222,35 +214,10 @@ setstatclockrate(newhz)
 }
 
 /*
- * Startrtclock restarts the real-time clock, which provides
- * hardclock interrupts to kern_clock.c.
+ * This is is called by the "custom" interrupt handler
+ * after it has reset the pending bit in the clock.
  */
-void startrtclock()
-{
-	char dummy;
-  
-	if (!intersil_clock)
-		panic("clock: not initialized");
-
-	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	dummy = intersil_clear();
-}
-
-void enablertclock()
-{
-	unsigned char dummy;
-	/* make sure irq5/7 stuff is resolved :) */
-
-	dummy = intersil_clear();
-	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
-}
-
 int clock_count = 0;
-
 void clock_intr(frame)
 	struct clockframe *frame;
 {
