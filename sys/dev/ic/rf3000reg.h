@@ -35,7 +35,14 @@
 #define	_DEV_IC_RF3000REG_H_
 
 /*
- * Registers for RF Microdevices RF3000 spread-spectrum baseband modem.
+ * Serial bus format for RF Microdevices RF3000 spread-spectrum
+ * baseband modem.
+ */
+#define	RF3000_TWI_DATA_MASK	0xff
+#define	RF3000_TWI_ADDR_MASK	0x7f
+
+/*
+ * Registers for RFMD RF3000.
  */
 #define RF3000_CTL		0x01		/* modem control */
 #define RF3000_RXSTAT		RF3000_CTL	/* RX status */
