@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.12 1998/12/27 21:13:43 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.13 1999/03/31 01:14:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,11 +66,16 @@ typedef struct pool {
 	unsigned int	pr_pageshift;	/* shift corr. to above */
 	unsigned int	pr_itemsperpage;/* # items that fit in a page */
 	unsigned int	pr_slack;	/* unused space in a page */
+	unsigned int	pr_nitems;	/* number of available items in pool */
+	unsigned int	pr_nout;	/* # items currently allocated */
+	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
+					   items */
 	void		*(*pr_alloc) __P((unsigned long, int, int));
 	void		(*pr_free) __P((void *, unsigned long, int));
 	int		pr_mtype;	/* memory allocator tag */
 	char		*pr_wchan;	/* tsleep(9) identifier */
-	unsigned int	pr_flags;
+	unsigned int	pr_flags;	/* r/w flags */
+	unsigned int	pr_roflags;	/* r/o flags */
 #define PR_MALLOCOK	1
 #define	PR_NOWAIT	0		/* for symmetry */
 #define PR_WAITOK	2
@@ -97,6 +102,14 @@ typedef struct pool {
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
 	int		pr_phoffset;	/* Offset in page of page header */
+
+	/*
+	 * Warning message to be issued, and a per-time-delta rate cap,
+	 * if the hard limit is reached.
+	 */
+	const char	*pr_hardlimit_warning;
+	int		pr_hardlimit_ratecap;		/* in seconds */
+	struct timeval	pr_hardlimit_warning_last;
 
 	/*
 	 * Instrumentation
@@ -139,6 +152,7 @@ void		pool_put __P((pool_handle_t, void *));
 int		pool_prime __P((pool_handle_t, int, caddr_t));
 void		pool_setlowat __P((pool_handle_t, int));
 void		pool_sethiwat __P((pool_handle_t, int));
+void		pool_sethardlimit __P((pool_handle_t, int, const char *, int));
 void		pool_print __P((pool_handle_t, char *));
 void		pool_reclaim __P((pool_handle_t));
 void		pool_drain __P((void *));
