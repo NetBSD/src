@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.6 1996/02/27 07:07:26 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.7 1996/02/27 21:48:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -135,15 +135,9 @@ tcattach(parent, self, aux)
 		sc->sc_slots[builtin->tcb_slot].tcs_used = 1;
 
 		/*
-		 * Find and attach the device.
-		 * XXX a close relative of config_found()
+		 * Attach the device.
 		 */
-		if ((match = config_search(tcsubmatch, self, &ta)) != NULL)
-	                config_attach(self, match, &ta, tcprint);
-		else {
-			tcprint(&ta, self->dv_xname);
-			printf(" not configured\n");
-		}
+		config_found_sm(self, &ta, tcprint, tcsubmatch);
 	}
 
 	/*
@@ -179,15 +173,9 @@ tcattach(parent, self, aux)
 		slot->tcs_used = 1;
 
 		/*
-		 * Find and attach the device.
-		 * XXX a close relative of config_found()
+		 * Attach the device.
 		 */
-		if ((match = config_search(tcsubmatch, self, &ta)) != NULL)
-	                config_attach(self, match, &ta, tcprint);
-		else {
-			tcprint(&ta, self->dv_xname);
-			printf(" not configured\n");
-		}
+		config_found_sm(self, &ta, tcprint, tcsubmatch);
 	}
 }
 

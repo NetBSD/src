@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.1 1996/02/27 00:21:00 cgd Exp $	*/
+/*	$NetBSD: eisa.c,v 1.2 1996/02/27 21:51:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -80,12 +80,17 @@ eisamatch(parent, match, aux)
 }
 
 int
-eisaprint(aux, eisa)
+eisaprint(aux, pnp)
 	void *aux;
-	char *eisa;
+	char *pnp;
 {
 	register struct eisa_attach_args *ea = aux;
+	char devinfo[256]; 
 
+	if (pnp) {
+		eisa_devinfo(ea->ea_idstring, devinfo);
+		printf("%s at %s", devinfo, pnp);
+	}
 	printf(" slot %d", ea->ea_slot);
 	return (UNCONF);
 }
@@ -169,16 +174,8 @@ eisaattach(parent, self, aux)
 		ea.ea_idstring[6] = EISA_PRODID_3(ea.ea_pid);
 		ea.ea_idstring[7] = '\0';		/* sanity */
 
-		/* Go hunt for devices that match. */
-		if ((cf = config_search(eisasubmatch, self, &ea)) != NULL)
-			config_attach(self, cf, &ea, eisaprint);
-		else {
-			char devinfo[256];
-
-                        eisa_devinfo(ea.ea_idstring, devinfo);
-                        printf("%s slot %d: %s not configured\n",
-                            self->dv_xname, slot, devinfo);
-		}
+		/* Attach matching device. */
+		config_found_sm(self, &ea, eisaprint, eisasubmatch);
 	}
 }
 
