@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.5.2.1 1997/08/23 07:08:36 thorpej Exp $	*/
+/*	$NetBSD: wd.c,v 1.5.2.2 1997/10/14 08:46:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -207,6 +207,7 @@ struct cfdriver wd_cd = {
 	NULL, "wd", DV_DISK
 };
 
+void	wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *lp));
 void	wdgetdisklabel	__P((struct wd_softc *));
 int	wd_get_parms	__P((struct wd_softc *));
 void	wdstrategy	__P((struct buf *));
@@ -1191,15 +1192,11 @@ wdclose(dev, flag, fmt, p)
 	return 0;
 }
 
-/*
- * Fabricate a default disk label, and try to read the correct one.
- */
 void
-wdgetdisklabel(wd)
+wdgetdefaultlabel(wd, lp)
 	struct wd_softc *wd;
+	struct disklabel *lp;
 {
-	struct disklabel *lp = wd->sc_dk.dk_label;
-	char *errstring;
 	int	type;
 
 	/*
@@ -1208,7 +1205,6 @@ wdgetdisklabel(wd)
 	type = lp->d_type;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = wd->sc_params.wdp_heads;
@@ -1241,6 +1237,21 @@ wdgetdisklabel(wd)
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+}
+
+/*
+ * Fabricate a default disk label, and try to read the correct one.
+ */
+void
+wdgetdisklabel(wd)
+	struct wd_softc *wd;
+{
+	struct disklabel *lp = wd->sc_dk.dk_label;
+	char *errstring;
+
+	bzero(wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+
+	wdgetdefaultlabel(wd, lp);
 
 	wd->sc_badsect[0] = -1;
 
@@ -1597,7 +1608,11 @@ wdioctl(dev, cmd, addr, flag, p)
 		else
 			wd->sc_flags &= ~WDF_WLABEL;
 		return 0;
-	
+
+	case DIOCGDEFLABEL:
+		wdgetdefaultlabel(wd, (struct disklabel *)addr);
+		return 0;
+
 #ifdef notyet
 	case DIOCWFORMAT:
 		if ((flag & FWRITE) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25 1996/12/28 23:26:36 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.25.10.1 1997/10/14 08:46:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -202,6 +202,8 @@ static int	fd_xfer_ok __P((struct fd_softc *));
 static void	fdmotoroff __P((struct fd_softc *));
 static void	fdminphys __P((struct buf *));
 static void	fdtestdrv __P((struct fd_softc *));
+static void	fdgetdefaultlabel __P((struct fd_softc *, struct disklabel *,
+		    int));
 static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
 static int	fdselect __P((int, int, int));
 static void	fddeselect __P((void));
@@ -393,7 +395,12 @@ struct proc	*p;
 		case DIOCSDINFO:
 		case DIOCWDINFO:
 		case DIOCWLABEL:
+			break;
 #endif /* notyet */
+		case DIOCGDEFLABEL:
+			fdgetdefaultlabel(sc, (struct disklabel *)addr,
+			    RAW_PART);
+			return(0);
 	}
 	return(ENOTTY);
 }
@@ -1264,6 +1271,38 @@ struct fd_softc	*fdsoftc;
 	fddeselect();
 }
 
+static void
+fdgetdefaultlabel(sc, lp, part)
+	struct fd_softc *sc;
+	struct disklabel *lp;
+	int part;
+{
+
+	bzero(lp, sizeof(struct disklabel));
+
+	lp->d_secsize     = SECTOR_SIZE;
+	lp->d_ntracks     = sc->nheads;
+	lp->d_nsectors    = sc->nsectors;
+	lp->d_secpercyl   = lp->d_ntracks * lp->d_nsectors;
+	lp->d_ncylinders  = sc->nblocks / lp->d_secpercyl;
+	lp->d_secperunit  = sc->nblocks;
+
+	lp->d_type        = DTYPE_FLOPPY;
+	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
+	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
+	lp->d_bbsize      = 0;
+	lp->d_sbsize      = 0;
+	lp->d_npartitions = part + 1;
+	lp->d_trkseek     = STEP_DELAY;
+	lp->d_magic       = DISKMAGIC;
+	lp->d_magic2      = DISKMAGIC;
+	lp->d_checksum    = dkcksum(lp);
+	lp->d_partitions[part].p_size   = lp->d_secperunit;
+	lp->d_partitions[part].p_fstype = FS_UNUSED;
+	lp->d_partitions[part].p_fsize  = 1024;
+	lp->d_partitions[part].p_frag   = 8;
+}
+
 /*
  * Build disk label. For now we only create a label from what we know
  * from 'sc'.
@@ -1288,29 +1327,7 @@ dev_t			dev;
 
 	part = RAW_PART;
 	lp   = sc->dkdev.dk_label;
-	bzero(lp, sizeof(struct disklabel));
-
-	lp->d_secsize     = SECTOR_SIZE;
-	lp->d_ntracks     = sc->nheads;
-	lp->d_nsectors    = sc->nsectors;
-	lp->d_secpercyl   = lp->d_ntracks * lp->d_nsectors;
-	lp->d_ncylinders  = sc->nblocks / lp->d_secpercyl;
-	lp->d_secperunit  = sc->nblocks;
-
-	lp->d_type        = DTYPE_FLOPPY;
-	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
-	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
-	lp->d_bbsize      = 0;
-	lp->d_sbsize      = 0;
-	lp->d_npartitions = part + 1;
-	lp->d_trkseek     = STEP_DELAY;
-	lp->d_magic       = DISKMAGIC;
-	lp->d_magic2      = DISKMAGIC;
-	lp->d_checksum    = dkcksum(lp);
-	lp->d_partitions[part].p_size   = lp->d_secperunit;
-	lp->d_partitions[part].p_fstype = FS_UNUSED;
-	lp->d_partitions[part].p_fsize  = 1024;
-	lp->d_partitions[part].p_frag   = 8;
+	fdgetdefaultlabel(sc, lp, part);
 	sc->flags        |= FLPF_HAVELAB;
 
 	return(0);
