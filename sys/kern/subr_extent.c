@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.36 2000/07/07 14:10:48 mrg Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.37 2000/08/12 16:29:36 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -468,10 +468,9 @@ extent_alloc_region(ex, start, size, flags)
 			 */
 			if (flags & EX_WAITSPACE) {
 				ex->ex_flags |= EXF_WANTED;
-				simple_unlock(&ex->ex_slock);
-				error = tsleep(ex,
-				    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
-				    "extnt", 0);
+				error = ltsleep(ex,
+				    PNORELOCK | PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
+				    "extnt", 0, &ex->ex_slock);
 				if (error)
 					return (error);
 				goto alloc_start;
@@ -843,9 +842,9 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	 */
 	if (flags & EX_WAITSPACE) {
 		ex->ex_flags |= EXF_WANTED;
-		simple_unlock(&ex->ex_slock);
-		error = tsleep(ex,
-		    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0), "extnt", 0);
+		error = ltsleep(ex,
+		    PNORELOCK | PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
+		    "extnt", 0, &ex->ex_slock);
 		if (error)
 			return (error);
 		goto alloc_start;
@@ -1072,10 +1071,9 @@ extent_alloc_region_descriptor(ex, flags)
 				return (NULL);
 			}
 			ex->ex_flags |= EXF_FLWANTED;
-			simple_unlock(&ex->ex_slock);
-			if (tsleep(&fex->fex_freelist,
-			    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
-			    "extnt", 0))
+			if (ltsleep(&fex->fex_freelist,
+			    PNORELOCK| PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
+			    "extnt", 0, &ex->ex_slock))
 				return (NULL);
 		}
 	}
