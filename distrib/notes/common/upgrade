@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.2.8.4 2001/05/06 21:50:31 he Exp $
+.\"	$NetBSD: upgrade,v 1.2.8.5 2001/05/26 22:27:22 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,6 +106,13 @@ whether on the
 partition or on
 another operating system's partition, before beginning the upgrade
 process.
+.if r_macppc \{\
+Since installation of the bootloader will prevent
+.Tn MacOS
+from using the disk and will prevent Open Firmware 3 machines from
+booting, there is an option to bypass this step.  Make sure you know
+whether or not to install the bootloader.
+.\}
 .Pp
 The upgrade procedure using the
 .Ic sysinst
