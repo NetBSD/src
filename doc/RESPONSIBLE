@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.15 2003/04/02 05:03:50 perry Exp $
+#	$NetBSD: RESPONSIBLE,v 1.16 2003/04/02 14:06:03 bouyer Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -87,6 +87,18 @@ scsi		bouyer, thorpej
 raid(hard)	ad
 raidframe	oster
 usb		augustss
+
+device drivers:
+
+network:
+
+tl		bouyer
+ti		bouyer
+
+scsi:
+
+siop		bouyer
+esiop		bouyer
 
 file systems:
 
