@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.18 1999/01/13 07:30:08 ross Exp $	
+.\"	$NetBSD: install,v 1.19 1999/05/04 03:39:32 simonb Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,25 +32,99 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-.(tag Reminder:
-Always back up files before installing or upgrading.
-If installing from source, always install and boot a new kernel
-before installing a new userland!
-.tag)
+.(Note
+There may be updates to this procedure available from the NetBSD/pmax
+web page, at
+.Lk http://www.netbsd.org/Ports/pmax .
+.Note)
 .Pp
-If at all possible, you should consult the
-.Em Installation Guide
-document on the NetBSD/pmax web page, at
-.Lk http://www.netbsd.org/Ports/pmax
-It has not been possible to reproduce the pmax installation Web page
-in fixed-font hardcopy format for the \*V release. You must either visit
-the URL above, or request a rendered version (e.g., PostScript).
+To install or upgrade NetBSD, you need to first boot an installation
+program and then interact with the screen-menu program
+.Ic sysinst .
+The installation program actually consists of the NetBSD kernel plus
+an in-memory file system of utility programs.
 .Pp
-Please check the NetBSD/pmax \*V installation instructions at
-.Lk http://www.netbsd.org/Ports/pmax/pmax-install.html
-now, and return to this document when you used those instructions to
-install a diskimage, and used sysinst to label a disk and extract the
-NetBSD/pmax _VER installation tar sets.
+From most convenient to least convenient, the installation methods
+are:
+.Bl -enum
+.It
+Installation from an existing NetBSD or Ultrix system by booting the
+install kernel from an existing root filesystem.  See the
+.Sx Installing from an existing system
+section later in these INSTALL notes.
+.It
+Copying a bootable diskimage onto the beginning of a disk and installing
+onto that disk.  See the
+.Sx Install via diskimage
+section later in these INSTALL notes.
+.It
+Booting the install kernel over the network and installing onto a local
+disk.  See the
+.Sx Install via netboot install kernel
+section later in these INSTALL notes.
+.It
+Using a helper machine with a SCSI controller to copy the bootable
+diskimage onto the beginning of a disk, and moving the disk to the
+target machine.  See the
+.Sx Install via diskimage
+section later in these INSTALL notes.
+.It
+For machines with some PROMs that cannot netboot standard kernels, you
+will need to set up an NFS server with a diskless root filesystem for
+trimmed-down network install kernel and run the installation system from
+the NFS root filesystem. See the
+.Sx Install via diskless boot
+section later in these INSTALL notes.
+.El
+.Pp
+You should familiarize yourself with the console PROM environment
+and the hardware configuration. The PROMs on the older DECstation
+2100 and 3100 use one syntax. The PROMs on the TurboChannel machines
+use a completely different syntax.  Be sure you know how to print
+the configuration of your machine, and how to boot from disk or
+network, as appropriate.
+.Pp
+On the 2100/3100, that's
+.Bd -literal -offset indent
+boot -f rz(0,N,0)netbsd (boot from rzN)
+boot -f tftp()          (boot diskless via TFTP)
+boot -f mop()           (boot via MOP from an Ultrix server)
+.Ed
+On the 5000/200, the equivalent is
+.Bd -literal -offset indent
+boot 5/rzN/netbsd
+boot 6/tftp
+boot 6/mop
+.Ed
+And on other  5000 series machines,
+.Bd -literal -offset indent
+boot 3/rzN/netbsd
+boot 3/tftp
+boot 3/mop
+.Ed
+You will also need to know the total size (in sectors) and the
+approximate geometry of the disks you are installing onto, so that you
+can label your disks for the BSD fast filesystem (FFS).  For most SCSI
+drives (including all SCSI-2 drives), the kernel will correctly detect
+the disk geometry. The
+.Ic sysinst
+tool will suggest these as the default.
+.Pp
+If you're installing NetBSD/pmax for the first time it's a very
+good idea to pre-plan partition sizes for the disks on which you're
+installing NetBSD.  Changing the size of partitions after you've
+installed is difficult.  If you do not have a spare bootable disk, it
+may be simpler to re-install NetBSD again from scratch.
+.Pp
+Assuming a classic partition scheme with separate root (`/') and /usr
+filesystems, a comfortable size for the NetBSD root filesystem partition
+is about 32M.  A good initial size for the swap partition is twice the
+amount of physical memory in your machine (though, unlike Ultrix, there
+are no restrictions on the size of the swap partition that would render
+part of your memory unusable).  The default swap size is 64Mbytes, which
+is adequate for doing a full system build.  A full binary installation,
+with X11R6.3, takes about 150MB in `/usr' - a 200MB `/usr' should be
+ample.
 .
 .Ss2 Install\ via\ a\ NetBSD\ CDROM
 .
@@ -65,53 +139,65 @@ and from an Ultrix host
 .No where Ar X
 is the SCSI id of the CDROM.
 .(Note
-Ultrix does not have Rock Ridge extensions so leave out
-everything between the first and last . in the paths on the CD.
-For example, the path
+Ultrix does not have Rock Ridge extensions so leave out everything
+between the first and last period (.) in the paths on the CD.  For
+example, the path
 .Pa NetBSD-1.3.2
 would show up as
 .Pa NetBSD-1.2 .
 .Note)
 .Pp
-The diskimage file can be found on the CDROM at the following
-location (relative to the mount point of the CD)
-.Dl NetBSD-\*V/pmax/installation/diskimage/diskimage.gz
+The diskimage file can be found on the CDROM at the following location
+(relative to the mount point of the CD)
+.Dl pmax/installation/diskimage/diskimage.gz
 and the diskless boot tar file can be found at
-.Dl NetBSD-\*V/pmax/installation/netboot/diskimage.tgz
+.Dl pmax/installation/netboot/diskimage.tgz
 Once you have located these files, continue on to either
+.Sx Install via netboot install kernel ,
 .Sx Install via diskless boot ,
 .Sx Install via diskimage
 or
-.Sx Installing from Ultrix
+.Sx Installing from an existing system
 section later in the INSTALL notes.
 .
-.Ss2 Install\ via\ diskless\ boot
+.Ss2 Installing from an existing system
 .
-The preferred path is to upgrade or install by diskless-booting a
-minimal system via NFS, and using that to upgrade or install.  The file
-.Dl installation/netboot/diskimage.tar.gz
-contains a suitable set of files. (It is a tar copy of the contents of
-a root filesystem diskimage.) You will need to find an NFS server,
-unpack the tarfile, and setup BOOTP/dhcp service for your pmax.
-Complete instructions are in the installation notes or the pmax web
-page.
+.(Note
+If you are installing NetBSD using an existing NetBSD system that
+is older than NetBSD-1.4, you will need to install new bootblocks
+before installing NetBSD-\*V.  New bootblocks are in the
+tar file:
+.Dl pmax/installation/misc/bootblocks.tgz
+in the NetBSD-\*V distribution.  To install the new bootblocks,
+use the following commands:
+.D1 # Ic "cd /
+.D1 # Ic "tar xvpfz .../pmax/installation/misc/bootblocks.tgz
+.D1 # Ic "disklabel -B rzX
+where X is your boot disk SCSI ID.
+.Note)
 .Pp
-Since the system install utility, sysinst, requires a read/write root,
-netbooting is only feasible if your NFS server exports the diskless
-root read-write.  If this is not possible, you should install via
-diskimage.
+With new NetBSD bootblocks or using the Ultrix bootloader,
+you can boot the kernel located in:
+.Dl pmax/binary/kernel/install.gz
+On Ultrix systems you will need to gunzip this kernel before booting it.
+A copy of the gunzip binary for Ultrix systems is located in:
+.Dl pmax/installation/misc/gunzip.ultrix
+.Pp
+Then boot using:
+.D1 >> Ic "boot -f rz(0,X,0)install
+.D1 >> Ic "boot 5/rzX/install
+or
+.D1 >> Ic "boot 3/rzX/install
+where X is your boot disk SCSI ID, and continue to the
+.Sx Once you've booted the diskimage
+section
 .
 .Ss2 Install via diskimage
 .
-If netbooting with a
-.Em writable
-.Tn NFS
-root is not possible, the
-recommended installation is to unpack and copy a diskimage onto the
-raw partition of a disk. The diskimage file is in
-.Dl installation/diskimage/diskimage.gz
-It is shipped compressed and is around 8020 kBytes, uncompressing to
-exactly 32Mbytes.
+The diskimage file is in
+.Dl pmax/installation/diskimage/diskimage.gz .
+It is shipped compressed and is around 1150 kbytes, uncompressing to
+exactly 2 Mbytes.
 .Pp
 To install the diskimage onto disk rzX on a NetBSD/pmax system, do:
 .D1 Ic disklabel -W /dev/rrzXc
@@ -135,110 +221,139 @@ On NetBSD, be sure to use
 .Ic disklabel -W
 to enable writing to the label
 area of the disk. If you forget this and/or use the `block' device,
-the dd command will silently fail.
+the dd command may silently fail.
+.Pp
+On Ultrix systems, do:
+.D1 Ic gunzip -c diskimage.gz\ |\ dd of=/dev/rrzXc bs=10240
+A copy of the gunzip program is located in
+.Dl pmax/installation/misc/gunzip.ultrix
+if you do not already have it.
 .Pp
 On MS-DOS, use an unzip utlility, then use rawrite.
 .Pp
-Then, boot using, e.g,
+Then boot using:
+.D1 >> Ic "boot -f rz(0,X,0)install
+.D1 >> Ic "boot 5/rzX/install
+or
+.D1 >> Ic "boot 3/rzX/install
+where X is your boot disk SCSI ID, and continue to the
+.Sx Once you've booted the diskimage
+section.
+.
+.Ss2 Install via netboot install kernel
+.
+Booting NetBSD/pmax \*V install kernel over a network requires a BOOTP
+or DHCP server and a TFTP server.  (These are usually all run on the
+same machine.)  There are two basic stages to the boot:
+.Pp
+.
+.Bl -bullet
+.It
+The pmax PROM software sends a BOOTP request to get its own address, the
+address of the TFTP server and the file to download.
+.It
+It downloads the file name obtained from BOOTP, which is the install
+kernel, via TFTP and then executes it.
+.El
+.
+.Pp
+You will need to set up servers for BOOTP and TFTP.
+.Pp
+For the BOOTP server you need to specify the:
+.Pp
+.
+.Bl -bullet -compact
+.It
+hardware type (Ethernet)
+.It
+hardware address (Ethernet MAC address)
+.It
+IP address of the client
+.It
+subnet mask of the client
+.It
+address of the TFTP server
+.It
+name of the kernel loaded via TFTP
+.El
+.
+.Pp
+Here's an example for a Unix system running bootpd:
 .Bd -literal -offset indent
-\*>\*> boot -f rz(0,X,0)netbsd		# 3100
-\*>\*> boot 5/rzX/netbsd 			# 5000/200
-\*>\*> boot 3/rzX/netbsd			# other machines
+myhost.mydom.com:\e
+	 :ht=ethernet:ha=08002b123456:\e
+	 :ip=192.168.1.2:sm=255.255.255.0:\e
+	 :sa=192.168.1.1:bf=install:
 .Ed
-.(Note
-replace the X with the unit number of your disk:
-boot 3/rz2/netbsd to boot drive 2 on a 5000/xxx.
-.Note)
+And here's an example for a Unix system running the ISC dhcpd:
+.Bd -literal -offset indent
+host pmax {
+	hardware ethernet 08:0:2b:12:34:56;
+	fixed-address 192.168.1.2;
+	option host-name "myhost.mydom.com";
+	filename "install";
+	option domain-name-servers 192.168.1.1;
+	option broadcast-address 255.255.255.0;
+	option domain-name "my.domain";
+}
+.Ed
 .Pp
-then continue from ``Once you've booted the diskimage''.
+For the TFTP server, You will need to copy the
+.Ic install
+kernel to the directory used by the TFTP server.  This file must be
+gunziped.
+.Pp
+Then boot using:
+.D1 >> Ic "boot -f tftp()
+.D1 >> Ic "boot 6/tftp
+or
+.D1 >> Ic "boot 3/tftp
+.Pp
+and continue to the
+.Sx Once you've booted the diskimage
+section.
 .
-.Ss2 Installing from Ultrix
+.Ss2 Install via diskless boot
 .
-The Ultrix bootloader can boot ECOFF-format NetBSD kernels.
-So the technique of dd'ing a disk image into swap, copying
-a kernel to the root, and then booting via the "n" argument
-should work with Ultrix too.  Since Ultrix cannot mount
-4.4BSD format FFS filesystems, just dd the diskimage into
-your swap partition, copy a netbsd.ecoff kernel from the FTP site,
-and proceed from step #5 of the `Upgrade via diskimage' above.
+The file
+.Dl pmax/installation/netboot/diskimage.tar.gz
+contains a suitable set of files for installing on an NFS server to set
+up a diskless root filesytem.  (It is a tar copy of the contents of an
+installation ramdisk filesystem contained in the install kernel.)  You
+will need to find an NFS server, unpack the tarfile, and setup
+BOOTP/dhcp service for your pmax.  Instructions for setting up
+an NFS server and diskless booting are on the NetBSD/pmax netboot
+webpage at
+.Lk http://www.netbsd.org/Ports/pmax/netboot.html
 .Pp
-You should do this from single-user mode, to ensure that swapping is
-not enabled when you copy the diskimage into the swap partition.
+Since the system install utility, sysinst, requires a read/write root,
+installing via diskless boot is only feasible if your NFS server exports
+the diskless root read-write.  If this is not possible, you should
+install via other of the other installation procedures.
 .Pp
-On Ultrix, use the 
-.Ic chpt -q /dev/rz?c
-command to be sure your swap
-partition (typically "b") is big enough to hold the diskimage (32Mbytes
-or more).
-.Pp
-Again, be sure to specify the partition where you dd'ed the NetBSD
-diskimage as your root device in step #7!
-.Pp
-Details of dd'ing a disk image into the swap partition are covered in the
-.Pa QUICK.INSTALL
-file, which should be in the same directory where
-these install notes are located.
+Once you have booted the kernel, continue to the
+.Sx Once you've booted the diskimage
+section.
 .
 .Ss2 Once you've booted the diskimage
 .
-Once you'e booted a diskimage and pointed the kernel at the approriate
-devices to use for root, and dump, NetBSD kernel will prompt you for
-a single-user shell
-.Dl Enter pathname of shell or RETURN for sh: 
-At this point, press the RETURN key.  When you get a standalone root
-prompt, set your terminal type
-.D1 Ic TERM=pmax; export TERM;
-for a framebuffer console, or
-.D1 Ic TERM=vt100; export TERM
+Once you'e booted the installation kernel you will need to
+select your terminal type.  Use
+.Ic pmax
+for a framebuffer console,
+.Ic vt100
+for a serial console with a vt100-compatible terminal, or
+.Ic xterm
+or
+.Ic xterms
+for a 
+.Xr tip 1
+or
+.Xr cu 1
+connection running in an
+.Xr xterm 1 .
 .Pp
-if using a serial console with a vt100-compatible terminal.
-Pp
-Next, you need to ensure that the root filesystem is writable so that
-sysinst can create temporary files, temporary disklabels, etc.
-If you booted via NFS, the diskless root should already be writable.
-If you booted from disk, type
-.D1 Ic mount /dev/rzXY /
-where X is the disk unit you booted from, and Y is either a or b,
-(e.g., use /dev/rz2a for drive 2 with diskimage in the 'a' partition,
-and rz2b for diskimage in swap.)
-.Em CD-ROM installation note:
-If you are installing from a CD-ROM, sysinst
-will offer you a default choice of "cd0" for the CD-ROM device.  Unlike
-other NetBSD ports, NetBSD/pmax currently uses the same device driver
-for both hard disks and CD-ROMs.  You will need to specify "rzX" (where
-X is the SCSI id of the CD-ROM) as the CD-ROM device.  Also note that
-sysinst doesn't expect a partition - just the base device.  If you still
-have problems, you can try issuing the following command before starting
-sysinst
-.Dl Ic mount -r -t cd9660 /dev/rzXc /mnt2
-where X is the SCSI id of the CD-ROM.  You can then ignore any errors
-trying to mount the CD-ROM from within sysinst.
-.Pp
-Then, start sysinst
-.D1 Ic sysinst
-Then, choose 'install' or 'upgrade'.
-.Pp
-When you've finished the install/upgrade, be sure to edit /etc/rc.conf
-and set "rc_configured" to YES when you are done.  If you're doing an
-upgrade, merge your old etc from /etc.old into /etc.
-.Pp
-You're then ready to reboot!
-.
-.Ss2 Post-Installation Notes
-.
-Some of the files in the NetBSD \*V distribution might need to be
-tailored for your site.  In particular, the /etc/sendmail.cf file will
-almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified.  If you are unfamiliar with UN*X-like
-system administration, it's recommended that you buy a book that
-discusses it.
-.Pp
-NetBSD/pmax \*V uses an X11R5 X server. These servers cannot read the
-compressed fonts which are shipped with standard X11R6 configurations.
-.Pp
-If you installed X11 and want to run a local Xserver, you must take
-post-installation steps to make the X11R5 server work that are
-standard for X11R6.3. The distribution file /usr/X11R6/bin/README.pmax
-contains information on how to choose an Xserver and how to access
-compressed fonts via a font server or to decompress the X fonts
-after installation.  Please follow the directions there.
+The system will then start the
+.Ic sysinst
+program.
+.so ../common/sysinst
