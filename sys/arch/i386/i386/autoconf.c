@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 2000/06/01 04:16:37 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.50 2000/06/01 15:38:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 static void matchbiosdisks __P((void));
-void findroot __P((struct device **, int *));
+static void findroot __P((void));
 
 extern struct disklist *i386_alldisks;
 extern int i386_ndisks;
@@ -125,7 +125,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	findroot(&booted_device, &booted_partition);
+	findroot();
 	matchbiosdisks();
 
 	printf("boot device: %s\n",
@@ -345,9 +345,7 @@ closeout:
  * change rootdev to correspond to the load device.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	struct btinfo_bootdisk *bid;
 	struct device *dv;
@@ -356,18 +354,9 @@ findroot(devpp, partp)
 	char buf[32];
 #endif
 
-#if 0
-	/*
-	 * Default to "not found."
-	 */
-	*devpp = NULL;
-	*partp = 0;
-#endif
-
-	if (booted_device) {
-		*devpp = booted_device;
+	if (booted_device)
 		return;
-	}
+
 	if (lookup_bootinfo(BTINFO_NETIF)) {
 		/*
 		 * We got netboot interface information, but
@@ -432,11 +421,11 @@ found:
 				    dv->dv_xname);
 				continue;
 			}
-			*devpp = dv;
-			*partp = bid->partition;
+			booted_device = dv;
+			booted_partition = bid->partition;
 		}
 
-		if (*devpp)
+		if (booted_device)
 			return;
 	}
 
