@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.6 1997/10/19 18:08:10 soda Exp $
+.\"	$NetBSD: ahc.4,v 1.7 1998/02/06 06:06:44 perry Exp $
 .\"
 .\" Copyright (c) 1995, 1996 
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -135,7 +135,9 @@ utility
 will allow normal function.
 .if 1 \{
 .Pp
-SCSI residual handling is not complete on NetBSD version of this driver.
+SCSI residual handling is not complete on
+.Nx
+version of this driver.
 \}
 .Sh SEE ALSO
 .Xr aha 4 ,
@@ -153,16 +155,13 @@ driver was written by Justin Gibbs.  The
 .Tn AIC7xxx
 sequencer-code assembler was
 written by John Aycock.
-.if 1 \{NetBSD porting is done by Stefan Grefen, Charles M. Hannum,
+.Nx 
+porting is done by Stefan Grefen, Charles M. Hannum,
 Michael Graff, Jason R. Thorpe, Pete Bentley and Noriyuki Soda.
-\}
 .Sh HISTORY
 The
 .Nm
 driver appeared in
-.Tn FreeBSD
-2.1
-.if 1 \{and 
-.Tn NetBSD
-1.1.
-\}
+.Fx 2.1
+and 
+.Nx 1.1 .

@@ -1,4 +1,4 @@
-.\" $NetBSD: setnetbootinfo.8,v 1.3 1997/11/24 06:29:19 lukem Exp $
+.\" $NetBSD: setnetbootinfo.8,v 1.4 1998/02/06 06:14:54 perry Exp $
 .\"
 .\" Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
 .\"
@@ -48,15 +48,20 @@
 .Sh DESCRIPTION
 The
 .Nm setnetbootinfo
-utility configures the NetBSD/alpha network bootstrap program so
+utility configures the
+.Nx Ns Tn /alpha
+network bootstrap program so
 that it can be used to bootstrap systems with old firmware revisions.
 .Pp
-The NetBSD/alpha network bootstrap program needs to have the ethernet
+The
+.Nx Ns Tn /alpha
+network bootstrap program needs to have the ethernet
 address of the interface being used to boot the system available when
 querying other hosts on the network for bootstrapping information.
 Alpha systems with old firmware revisions provide no way for
 network bootstrap programs to determine the ethernet address of
-the interface that they are booting from, and so the NetBSD/alpha
+the interface that they are booting from, and so the
+.Nx Ns Tn /alpha
 network bootstrap program must find that information in another way.
 (Newer firmware revisions include the ethernet address in the name of
 the device that is being booted from.)
@@ -121,7 +126,8 @@ Verbose mode.
 .Sh "SEE ALSO"
 .Xr bootpd 8
 .Sh HISTORY
-The NetBSD/alpha
+The
+.Nx Ns Tn /alpha
 .Nm
 command first appeared in
 .Nx 1.3 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: edahdi.1,v 1.1.1.1 1996/05/16 19:53:00 leo Exp $
+.\"	$NetBSD: edahdi.1,v 1.2 1998/02/06 06:03:42 perry Exp $
 .\"
 .\" Copyright (c) 1996 Leo Weppelman
 .\" All rights reserved.
@@ -41,9 +41,11 @@
 .Nm edahdi
 Allows you to modify the partition identifiers on a disk partitioned with
 AHDI or an AHDI compatible formatter. An AHDI partition format is usually
-only present on disks shared between NetBSD and some other OS. The partition
-identifiers are used by NetBSD as a guideline to emulate a disklabel on such
-a disk.
+only present on disks shared between
+.Nx
+and some other OS. The partition identifiers are used by
+.Nx
+as a guideline to emulate a disklabel on such a disk.
 .Pp
 .Nm edahdi
 supports the following options:
@@ -53,14 +55,19 @@ supports the following options:
 The name of the raw device you want to edit.
 .El
 .Pp
-The following partition identifiers are recognized by NetBSD:
+The following partition identifiers are recognized by
+.Nx :
 .Pp
 .Bl -tag -width "GEM or BGM" -compact
 .It NBD
-Partition is reserved for NetBSD. This can be either a root or an user
-partition. The first NBD partition on a disk will be mapped to partition
+Partition is reserved for
+.Nx .
+This can be either a root or an user partition. The first NBD
+partition on a disk will be mapped to partition
 .Em a
-in NetBSD. The following NBD partitions will be mapped from 
+in
+.Nx .
+The following NBD partitions will be mapped from 
 .Em d
 up.
 The filesystem type is ffs by default.
@@ -72,11 +79,14 @@ These partitions are mapped from
 .Em d
 up. The filesystem type is msdos.
 .It NBR
-NetBSD root partition (depricated).
+.Nx
+root partition (depricated).
 .It NBU
-NetBSD user partition (depricated).
+.Nx
+user partition (depricated).
 .It NBS
-NetBSD swap partition (depricated).
+.Nx
+swap partition (depricated).
 .El
 .Sh EXAMPLES
 Say, you have a disk with that is partitioned like:
@@ -89,7 +99,9 @@ Say, you have a disk with that is partitioned like:
   4     GEM
 .El
 .Pp
-This partitioning will show up in NetBSD as (Number refers to the first table):
+This partitioning will show up in
+.Nx
+as (Number refers to the first table):
 .Pp
 .Bl -column header "Partition        Fstype  Number"
 .Sy "Partition        Fstype  Number"
@@ -100,7 +112,8 @@ This partitioning will show up in NetBSD as (Number refers to the first table):
  g (user part)   MSDOS     4
 .El
 .Pp
-Now you decide to change the id of partition 2 and 3 to NBD. Now NetBSD
+Now you decide to change the id of partition 2 and 3 to NBD. Now
+.Nx
 will show the partitioning as (Number refers to the first table):
 .Pp
 .Bl -column header "Partition        Fstype  Number"
@@ -113,8 +126,9 @@ will show the partitioning as (Number refers to the first table):
 .El
 .Pp
 You will notice that the order of the partitions has changed! You will have
-to watchout for this. It is a consequence of NetBSD habit of assigning a
-predefined meaning to the partitions
+to watchout for this. It is a consequence of
+.Nx
+habit of assigning a predefined meaning to the partitions
 .Em a/b
 and
 .Em c .
@@ -137,4 +151,5 @@ write disklabels and install bootstraps.
 .Sh HISTORY
 The
 .Nm edahdi
-command first appeared in NetBSD 1.1B
+command first appeared in
+.Nx 1.2 .
