@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.29 1995/09/26 20:16:29 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.29.2.1 1995/10/17 00:19:05 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -275,7 +275,7 @@ ENTRY(low_level_reboot)
 xxxlow:
 	lmr	mcr, 0 			/* Turn off mapping. */
 	lprd	sp, __save_sp(pc)  	/* get monitor's sp. */
-	jump	0x10000000		/* Jump to the ROM! */
+	jump	0x10000032		/* Jump to the ROM! */
 
 
 /* To get back to the rom monitor .... */
