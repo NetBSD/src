@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.8 1998/08/15 18:56:16 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.9 1998/08/15 18:58:32 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.7 1998/08/15 18:55:25 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.8 1998/08/15 18:58:05 thorpej Exp 
  */
 
 /*
@@ -110,6 +110,9 @@
 #define	PCMCIA_CIS_LINKSYS_COMBO_ECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD	0xc1ab
 #define	PCMCIA_STR_LINKSYS_COMBO_ECARD	"Linksys Combo EthernetCard"
+#define	PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD	0x021b
+#define	PCMCIA_STR_LINKSYS_TRUST_COMBO_ECARD	"Trust (Linksys) Combo EthernetCard"
 
 /* Megahertz Products */
 #define	PCMCIA_CIS_MEGAHERTZ_XJ4288	{ NULL, NULL, NULL, NULL }
