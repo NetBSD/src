@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.44 2000/03/18 16:13:24 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.45 2000/03/25 15:27:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -135,6 +135,8 @@ ncr_attach(parent, self, aux)
 	sc->sci_r5 = NCR5380 + 5;
 	sc->sci_r6 = NCR5380 + 6;
 	sc->sci_r7 = NCR5380 + 7;
+
+	sc->sc_rev = NCR_VARIANT_DP8490;
 
 	/*
 	 * We only have to set the sc_pio_in and sc_pio_out

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.34 2000/03/23 07:01:32 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.35 2000/03/25 15:27:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -1072,7 +1072,7 @@ ncr5380_reselect(sc)
 	struct sci_req *sr;
 	int target, lun, phase, timo;
 	int target_mask;
-	u_char bus, data, icmd, msg;
+	u_char bus, data, icmd, mode, msg;
 
 #ifdef	DIAGNOSTIC
 	/*
@@ -1238,10 +1238,14 @@ ncr5380_reselect(sc)
 		/* XXX: Restore the normal mode register. */
 		/* If this target's bit is set, do NOT check parity. */
 		if (sc->sc_parity_disable & target_mask)
-			NCR5380_WRITE(sc, sci_mode, SCI_MODE_MONBSY);
+			mode = SCI_MODE_MONBSY;
 		else
-			NCR5380_WRITE(sc, sci_mode,
-			    (SCI_MODE_MONBSY | SCI_MODE_PAR_CHK));
+			mode = SCI_MODE_MONBSY | SCI_MODE_PAR_CHK;
+		/* XXX CXD1180 asserts MONBSY before disconnect */
+		if (sc->sc_rev == NCR_VARIANT_CXD1180)
+			mode &= ~SCI_MODE_MONBSY;
+
+		NCR5380_WRITE(sc, sci_mode, mode);
 
 		/*
 		 * Another hack for the Sun3 "si", which needs
@@ -1306,7 +1310,7 @@ ncr5380_select(sc, sr)
 	struct sci_req *sr;
 {
 	int timo, s, target_mask;
-	u_char data, icmd;
+	u_char data, icmd, mode;
 
 	/* Check for reselect */
 	ncr5380_reselect(sc);
@@ -1405,7 +1409,9 @@ ncr5380_select(sc, sr)
 	 * there can be a higher selection ID than ours.
 	 * Keep this code for reference anyway...
 	 */
-	if (NCR5380_READ(sc, sci_icmd) & SCI_ICMD_LST) {
+	/* XXX CXD1180 asserts LST here */
+	if ((sc->sc_rev != NCR_VARIANT_CXD1180) &&
+		(NCR5380_READ(sc, sci_icmd) & SCI_ICMD_LST)) {
 		/* Some other target asserted SEL. */
 		NCR_TRACE("select: lost two, rc=%d\n", XS_BUSY);
 
@@ -1493,10 +1499,14 @@ success:
 
 	/* If this target's bit is set, do NOT check parity. */
 	if (sc->sc_parity_disable & target_mask)
-		NCR5380_WRITE(sc, sci_mode, SCI_MODE_MONBSY);
+		mode = SCI_MODE_MONBSY;
 	else
-		NCR5380_WRITE(sc, sci_mode,
-		    (SCI_MODE_MONBSY | SCI_MODE_PAR_CHK));
+		mode = SCI_MODE_MONBSY | SCI_MODE_PAR_CHK;
+	/* XXX CXD1180 asserts MONBSY before disconnect */
+	if (sc->sc_rev == NCR_VARIANT_CXD1180)
+		mode &= ~SCI_MODE_MONBSY;
+
+	NCR5380_WRITE(sc, sci_mode, mode);
 
 	return XS_NOERROR;
 }
