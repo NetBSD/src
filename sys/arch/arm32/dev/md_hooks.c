@@ -1,4 +1,4 @@
-/* $NetBSD: md_hooks.c,v 1.6 1996/04/26 21:00:31 mark Exp $ */
+/* $NetBSD: md_hooks.c,v 1.7 1997/01/01 23:31:50 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -36,23 +36,23 @@
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 
-#include <dev/ramdisk.h>
+#include <dev/md.h>
 
-#ifndef RAMDISK_SIZE
-#define RAMDISK_SIZE 0
+#ifndef MEMORY_DISK_SIZE
+#define MEMORY_DISK_SIZE 0
 #endif
 
 /*extern int boothowto;*/
-extern u_int ramdisc_size;
-struct rd_conf *bootrd = NULL;
+extern u_int memory_disc_size;
+struct md_conf *bootmd = NULL;
 
-int load_ramdisc_from_floppy __P((struct rd_conf *rd, dev_t dev));
+int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
 
 /*
  * This is called during autoconfig.
  */
 int
-rd_match_hook(parent, self, aux)
+md_match_hook(parent, self, aux)
 	struct device	*parent;
 	void	*self;
 	void	*aux;
@@ -61,22 +61,22 @@ rd_match_hook(parent, self, aux)
 }
 
 void
-rd_attach_hook(unit, rd)
+md_attach_hook(unit, md)
 	int unit;
-	struct rd_conf *rd;
+	struct md_conf *md;
 {
 	if (unit == 0) {
-		if (ramdisc_size == 0 && RAMDISK_SIZE)
-			ramdisc_size = (RAMDISK_SIZE * 1024);
+		if (memory_disc_size == 0 && MEMORY_DISK_SIZE)
+			memory_disc_size = (MEMORY_DISK_SIZE * 1024);
 
-		if (ramdisc_size != 0) {
-			rd->rd_size = round_page(ramdisc_size);
-			rd->rd_addr = (caddr_t)kmem_alloc(kernel_map, ramdisc_size);
-			rd->rd_type = RD_KMEM_FIXED;
-			bootrd = rd;
+		if (memory_disc_size != 0) {
+			md->md_size = round_page(memory_disc_size);
+			md->md_addr = (caddr_t)kmem_alloc(kernel_map, memory_disc_size);
+			md->md_type = MD_KMEM_FIXED;
+			bootmd = md;
 		}
 	}
-	printf("rd%d: allocated %dK (%d blocks)\n", unit, rd->rd_size / 1024, rd->rd_size / DEV_BSIZE);
+	printf("md%d: allocated %dK (%d blocks)\n", unit, md->md_size / 1024, md->md_size / DEV_BSIZE);
 }
 
 
@@ -85,14 +85,14 @@ rd_attach_hook(unit, rd)
  */
 
 void
-rd_open_hook(unit, rd)
+md_open_hook(unit, md)
 	int unit;
-	struct rd_conf *rd;
+	struct md_conf *md;
 {
 /* I use the ramdisc for other testing ... */
 #if 0
 	if (unit == 0) {
-		/* The root ramdisk only works single-user. */
+		/* The root memory disk only works single-user. */
 		boothowto |= RB_SINGLE;
 	}
 #endif

@@ -86,8 +86,8 @@ options		SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
-options		RAMDISK_HOOKS	# boottime setup of ramdisk
-options		RAMDISK_SIZE=0	# Size in KBytes
+options		MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+options		MEMORY_DISK_SIZE=0	# Size in KBytes
 options		PLIP		# Build plip device into lpt driver
 
 # Miscellaneous kernel options
@@ -217,7 +217,7 @@ pseudo-device	tb	1		# tablet line discipline
 pseudo-device   vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
 
-pseudo-device	rd	1		# Ramdisk driver
+pseudo-device	md	1		# Ramdisk driver
 
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"

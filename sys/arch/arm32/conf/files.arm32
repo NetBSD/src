@@ -39,11 +39,11 @@ attach	fd at fdc
 file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
-# RAM disk driver
-pseudo-device	rd
-file	dev/ramdisk.c				rd needs-count
-file	arch/arm32/dev/rd_hooks.c		rd | ramdisk_hooks
-major   {rd = 18}
+# Memory disk driver
+pseudo-device	md
+file	dev/md.c				md needs-count
+file	arch/arm32/dev/md_hooks.c		md | memory_disk_hooks
+major   {md = 18}
 
 # Standard parallal driver
 device  lpt: tty, ether, ifnet
