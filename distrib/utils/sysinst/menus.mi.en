@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.62 2002/10/16 08:04:26 itojun Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.63 2003/01/22 05:59:07 jhawk Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -462,3 +462,8 @@ menu rootsh, title "Root shell";
 	option "/bin/csh", exit, action {shellpath = "/bin/csh";};
 	option "/bin/ksh", exit, action {shellpath = "/bin/ksh";};
 	option "/bin/sh",  exit, action {shellpath = "/bin/sh";}; 
+
+menu extract, title "Select set extraction verbosity";
+	option "Progress bar (recommended)", exit, action  { yesno = 1; };
+	option "Silent", exit, action  { yesno = 0; };
+	option "Verbose file name listing (slow)", exit, action { yesno = 2; };
