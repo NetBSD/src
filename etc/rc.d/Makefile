@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.47 2004/04/18 04:02:27 dbj Exp $
+# $NetBSD: Makefile,v 1.48 2004/05/16 09:53:10 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,8 @@
 #	src/etc/mtree/special
 #	src/distrib/sets/lists/etc/mi
 
-FILES=	DAEMON LOGIN NETWORKING SERVERS \
+CONFIGFILES=\
+	DAEMON LOGIN NETWORKING SERVERS \
 	accounting altqd amd apmd \
 	bootparams bootconf.sh ccd cgd cleartmp cron \
 	dhclient dhcpd dhcrelay dmesg downinterfaces fixsb fsck \
