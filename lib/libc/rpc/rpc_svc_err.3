@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_err 1.4 89/06/28 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_err.3,v 1.1 2000/06/02 23:11:14 fvdl Exp $
+.\"	$NetBSD: rpc_svc_err.3,v 1.2 2001/09/16 02:17:41 wiz Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_ERR 3
 .Os
@@ -14,7 +14,7 @@
 .Nm svcerr_noprog,
 .Nm svcerr_progvers,
 .Nm svcerr_systemerr,
-.Nm svcerr_weakauth 
+.Nm svcerr_weakauth
 .Nd library routines for server side remote procedure call errors
 .Sh LIBRARY
 .Lb libc
@@ -57,7 +57,7 @@ a remote procedure call due to an authentication error.
 .Fn svcerr_decode
 Called by a service dispatch routine that cannot successfully
 decode the remote parameters
-(see 
+(see
 .Fn svc_getargs
 in
 .Xr rpc_svc_reg 3 ).
@@ -76,7 +76,7 @@ Called when the desired version of a program is not registered with the
 RPC package.
 .Fa low_vers
 is the lowest version number,
-and 
+and
 .Fa high_vers
 is the highest version number.
 Service implementors usually do not need this routine.
