@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.21 1996/08/21 16:25:05 cgd Exp $
+#	$NetBSD: ALPHA,v 1.22 1996/09/16 16:30:40 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -81,8 +81,11 @@ options		LKM
 #options	INSECURE
 
 # Misc. options
-options		PCIVERBOSE		# recognize "unknown" PCI devices
+options		EISAVERBOSE		# recognize "unknown" EISA devices
 options		FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
+options		PCIVERBOSE		# recognize "unknown" PCI devices
+options		TCVERBOSE		# recognize "unknown" TC devices
+options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		netbsd	swap generic
 #config		netbsd	root on sd0 swap on sd0

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.PROF,v 1.2 1996/08/21 16:25:09 cgd Exp $
+#	$NetBSD: GENERIC.PROF,v 1.3 1996/09/16 16:30:44 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -56,7 +56,10 @@ options		LKM
 #options	INSECURE
 
 # Misc. options
-options		PCIVERBOSE	# recognize "unknown" PCI devices
+options		EISAVERBOSE		# recognize "unknown" EISA devices
+options		PCIVERBOSE		# recognize "unknown" PCI devices
+options		TCVERBOSE		# recognize "unknown" TC devices
+options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		netbsd	swap generic
 #config		netbsd	root on sd0 swap on sd0
