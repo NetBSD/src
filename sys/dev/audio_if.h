@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.7 2004/12/28 14:54:19 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.8 2004/12/29 15:02:28 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -61,7 +61,8 @@ struct audio_softc;
 typedef struct audio_params {
 	u_int	sample_rate;	/* sample rate */
 	u_int	encoding;	/* e.g. mu-law, linear, etc */
-	u_int	precision;	/* bits/sample */
+	u_int	precision;	/* bits/subframe */
+	u_int	validbits;	/* valid bits in a subframe */
 	u_int	channels;	/* mono(1), stereo(2) */
 } audio_params_t;
 
