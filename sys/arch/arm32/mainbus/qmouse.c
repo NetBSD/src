@@ -1,4 +1,4 @@
-/* $NetBSD: qmouse.c,v 1.4 1996/03/27 22:14:45 mark Exp $ */
+/* $NetBSD: qmouse.c,v 1.5 1996/03/28 21:56:40 mark Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -304,13 +304,13 @@ quadmouseioctl(dev, cmd, data, flag, p)
 	struct quadmouse_softc *sc = quadmouse_cd.cd_devs[minor(dev)];
 
 	switch (cmd) {
-	case QUADMOUSE_WRITEX:
+	case MOUSEIOC_WRITEX:
 		WriteWord(IOMD_MOUSEX, *(int *)data+sc->origx);
 		return 0;
-	case QUADMOUSE_WRITEY:
+	case MOUSEIOC_WRITEY:
 		WriteWord(IOMD_MOUSEY, *(int *)data+sc->origy);
 		return 0;
-	case QUADMOUSE_SETSTATE:
+	case MOUSEIOC_SETSTATE:
 	{
 		register struct mouse_state *co = (void *)data;
 		WriteWord(IOMD_MOUSEX, co->x);
@@ -324,14 +324,14 @@ quadmouseioctl(dev, cmd, data, flag, p)
 /*		WriteWord ( IO_MOUSE_BUTTONS, co->buttons );*/
 		return 0;
 	}
-	case QUADMOUSE_SETBOUNDS:
+	case MOUSEIOC_SETBOUNDS:
 	{
 		register struct mouse_boundingbox *bo = (void *)data;
 		sc->boundx = bo->x; sc->boundy = bo->y;
 		sc->bounda = bo->a; sc->boundb = bo->b;
 		return 0;
 	}
-	case QUADMOUSE_SETORIGIN:
+	case MOUSEIOC_SETORIGIN:
 	{
 		register struct mouse_origin *oo = (void *)data;
 /*		int oldx, oldy;*/
@@ -340,7 +340,7 @@ quadmouseioctl(dev, cmd, data, flag, p)
 		sc->origy = oo->y;
 		return 0;
 	}
-	case QUADMOUSE_GETSTATE:
+	case MOUSEIOC_GETSTATE:
 	{
 		register struct mouse_state *co = (void *)data;
 		FMT_START
@@ -350,14 +350,14 @@ quadmouseioctl(dev, cmd, data, flag, p)
 		FMT_END
 		return 0;
 	}
-	case QUADMOUSE_GETBOUNDS:
+	case MOUSEIOC_GETBOUNDS:
 	{
 		register struct mouse_boundingbox *bo = (void *)data;
 		bo->x = sc->boundx; bo->y = sc->boundy;
 		bo->a = sc->bounda; bo->b = sc->boundb;
 		return 0;
 	}
-	case QUADMOUSE_GETORIGIN:
+	case MOUSEIOC_GETORIGIN:
 	{
 		register struct mouse_origin *oo = (void *)data;
 		oo->x = sc->origx;
