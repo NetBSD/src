@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.55 2000/03/10 21:21:48 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.56 2000/04/01 14:32:23 bouyer Exp $	*/
 
 
 /*
@@ -188,7 +188,7 @@ int  pdc202xx_pci_intr __P((void *));
 void pciide_channel_dma_setup __P((struct pciide_channel *));
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
 int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
-void pciide_dma_start __P((void*, int, int, int));
+void pciide_dma_start __P((void*, int, int));
 int  pciide_dma_finish __P((void*, int, int, int));
 void pciide_print_modes __P((struct pciide_channel *));
 
@@ -865,13 +865,15 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 	    IDEDMA_CMD + IDEDMA_SCH_OFFSET * channel,
 	    (flags & WDC_DMA_READ) ? IDEDMA_CMD_WRITE: 0);
+	/* remember flags */
+	dma_maps->dma_flags = flags;
 	return 0;
 }
 
 void
-pciide_dma_start(v, channel, drive, flags)
+pciide_dma_start(v, channel, drive)
 	void *v;
-	int channel, drive, flags;
+	int channel, drive;
 {
 	struct pciide_softc *sc = v;
 
@@ -883,27 +885,24 @@ pciide_dma_start(v, channel, drive, flags)
 }
 
 int
-pciide_dma_finish(v, channel, drive, flags)
+pciide_dma_finish(v, channel, drive, force)
 	void *v;
 	int channel, drive;
-	int flags;
+	int force;
 {
 	struct pciide_softc *sc = v;
 	u_int8_t status;
+	int error = 0;
 	struct pciide_dma_maps *dma_maps =
 	    &sc->pciide_channels[channel].dma_maps[drive];
-
-	/* Unload the map of the data buffer */
-	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 0,
-	    dma_maps->dmamap_xfer->dm_mapsize,
-	    (flags & WDC_DMA_READ) ?
-	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sc->sc_dmat, dma_maps->dmamap_xfer);
 
 	status = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 	    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel);
 	WDCDEBUG_PRINT(("pciide_dma_finish: status 0x%x\n", status),
 	    DEBUG_XFERS);
+
+	if (force == 0 && (status & IDEDMA_CTL_INTR) == 0)
+		return WDC_DMAST_NOIRQ;
 
 	/* stop DMA channel */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
@@ -916,24 +915,31 @@ pciide_dma_finish(v, channel, drive, flags)
 	    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel,
 	    status);
 
+	/* Unload the map of the data buffer */
+	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 0,
+	    dma_maps->dmamap_xfer->dm_mapsize,
+	    (dma_maps->dma_flags & WDC_DMA_READ) ?
+	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, dma_maps->dmamap_xfer);
+
 	if ((status & IDEDMA_CTL_ERR) != 0) {
 		printf("%s:%d:%d: bus-master DMA error: status=0x%x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, channel, drive, status);
-		return -1;
+		error |= WDC_DMAST_ERR;
 	}
 
-	if ((flags & WDC_DMA_POLL) == 0 && (status & IDEDMA_CTL_INTR) == 0) {
+	if ((status & IDEDMA_CTL_INTR) == 0) {
 		printf("%s:%d:%d: bus-master DMA error: missing interrupt, "
 		    "status=0x%x\n", sc->sc_wdcdev.sc_dev.dv_xname, channel,
 		    drive, status);
-		return -1;
+		error |= WDC_DMAST_NOIRQ;
 	}
 
 	if ((status & IDEDMA_CTL_ACT) != 0) {
 		/* data underrun, may be a valid condition for ATAPI */
-		return 1;
+		error |= WDC_DMAST_UNDER;
 	}
-	return 0;
+	return error;
 }
 
 /* some common code used by several chip_map */

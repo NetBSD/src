@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.3 1999/11/13 13:40:29 soren Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.4 2000/04/01 14:32:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -67,6 +67,7 @@ struct pciide_softc {
 			bus_dmamap_t    dmamap_table;
 			struct idedma_table *dma_table;
 			bus_dmamap_t    dmamap_xfer;
+			int dma_flags;
 		} dma_maps[2];
 	} pciide_channels[PCIIDE_NUM_CHANNELS];
 };
