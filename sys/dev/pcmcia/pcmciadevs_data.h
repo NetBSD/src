@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.192 2003/12/25 17:33:23 nonaka Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.193 2003/12/28 06:47:23 itohy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.189 2003/12/07 10:37:11 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.191 2003/12/28 06:46:23 itohy Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -855,13 +855,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Quatech Dual Serial Port",	}
 	,
 	{
-	    PCMCIA_VENDOR_RATOC, PCMCIA_PRODUCT_RATOC_REX_R280,
-	    PCMCIA_CIS_RATOC_REX_R280,
-	    0,
-	    "RATOC System Inc.",
-	    "RATOC REX-R280",	}
-	,
-	{
 	    PCMCIA_VENDOR_RAYTHEON, PCMCIA_PRODUCT_RAYTHEON_WLAN,
 	    PCMCIA_CIS_RAYTHEON_WLAN,
 	    0,
@@ -1462,6 +1455,27 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Planex Communications Inc",
 	    "PLANEX GW-NS11H Wireless LAN PC Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RATOC_REX_9530,
+	    PCMCIA_CIS_RATOC_REX_9530,
+	    0,
+	    "RATOC System Inc.",
+	    "RATOC REX-9530",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RATOC_REX_CFU1,
+	    PCMCIA_CIS_RATOC_REX_CFU1,
+	    0,
+	    "RATOC System Inc.",
+	    "RATOC REX-CFU1",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RATOC_REX_R280,
+	    PCMCIA_CIS_RATOC_REX_R280,
+	    0,
+	    "RATOC System Inc.",
+	    "RATOC REX-R280",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RPTI_EP400,
