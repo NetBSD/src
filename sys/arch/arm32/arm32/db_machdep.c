@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.4 1996/06/12 19:57:06 mark Exp $ */
+/* $NetBSD: db_machdep.c,v 1.5 1996/08/29 22:21:06 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -198,3 +198,22 @@ db_show_intrchain_cmd(addr, have_addr, count, modif)
 		}
 	}
 }
+
+
+void
+db_show_panic_cmd(addr, have_addr, count, modif)
+	db_expr_t       addr;
+	int             have_addr;
+	db_expr_t       count;
+	char            *modif;
+{
+	int s;
+	
+	s = splhigh();
+
+	db_printf("Panic string: %s\n", panicstr);
+
+	(void)splx(s);
+}
+
+
