@@ -1,15 +1,43 @@
-This is the README for GNU awk 3.0 under OS/2 and DOS.
+This is the README for GNU awk 3.1 under Windows32, OS/2, and DOS.
 
-    Gawk has been compiled and tested under OS/2, DOS, and Win32 using
-the GNU development tools from DJ Delorie (DJGPP; DOS with special support
-for long filenames under Win95) and Eberhard Mattes (EMX; OS/2, DOS, and
-Win32 with rsxnt).  Microsoft Visual C/C++ can be used to build a Win32
-version for Windows 95/NT, and MSC can be used to build 16-bit versions
-for DOS and OS/2.
+    Gawk has been compiled and tested under OS/2, DOS, and Windows32 using
+the GNU development tools from DJ Delorie (DJGPP; DOS with special
+support for long filenames under Win95), Eberhard Mattes (EMX; OS/2,
+DOS, and Windows32 with rsxnt), and Jan-Jaap van der Heijden and Mumit Khan
+(Mingw32; Windows32).  Microsoft Visual C/C++ can be used to build a Windows32
+version for Windows 9x/NT, and MSC can be used to build 16-bit versions
+for DOS and OS/2. (As of 3.1.2, the MSC version doesn't work, but the
+maintainer for it is working on fixing it.)
 
+    The cygwin environment (http://www.cygwin.com) may also be used
+to compile and run gawk under Windows.  For cygwin, building and
+installation is the same as under Unix:
+
+	tar -xvpzf gawk-3.1.x.tar.gz
+	cd gawk-3.1.x
+	./configure && make
+
+The `configure' step takes a long time, but works otherwise.
+
+******************************** N O T E **********************************
+* The `|&' operator only works when gawk is compiled for cygwin.  Neither *
+* socket support nor two-way pipes work in any other Windows environment! *
+***************************************************************************
 
 Building gawk
 -------------
+
+Building on DOS or Windows environments can be troublesome, in part due
+to shell limitations, the long filename issue, and various Windows32 pipe
+considerations.  The situation is somewhat better on OS/2.  The general
+recommendation is to use tools (especially make) which are compatible
+or built with the compiler to be used on gawk.
+
+Building versions which do not understand long filenames on systems
+that offer long names is a special case.  The maintainers unpack the
+distribution and process using utilities (unzip, make, cmp) which do not
+use long filenames.  (For example, the djgpp tools will work if LFN=n is
+set in the environment.)
 
 Copy the files in the `pc' directory (EXCEPT for `ChangeLog') to the
 directory with the rest of the gawk sources.  (The subdirectories of 
@@ -45,6 +73,13 @@ used to modify test/Makefile for your platform.  In addition, some
 files in the test directory may need to have their end-of-line markers
 converted, as described in Makefile.tst.
 
+As with building gawk, the OS, shell, and long filename issues come into
+play when testing, too.  If you are testing gawk on a LFN aware system with
+some LFN aware tools, you may have problems if the shell that you specify in
+test/Makefile is not LFN aware.  This problem will apply whether or not
+you are building a LFN aware gawk.  See the comments in pc/Makefile.tst
+for more information on this.
+
 It is routine to install by hand, but note that the install target also
 builds igawk.bat and igawk.cmd, which are used to add an include
 facility to gawk (and which require sh).
@@ -59,16 +94,12 @@ djgpp collection.
 
 The GNUish Project was designed to bring GNU-like programs to small
 systems running OS/2 and DOS.  Binary distributions of gawk are
-maintained in GNUish, and include 16bit OS/2 and DOS versions and a
-djgpp-compiled version.  Information on GNUish is available via
+maintained in GNUish, and include 16bit OS/2 and DOS, 32bit djgpp,
+and Windows32 versions.  Information on GNUish is available via
 
   http://www.simtel.net/simtel.net/
-  http://www.leo.org/pub/comp/platforms/pc/gnuish
-  http://wuarchive.wustl.edu/systems/msdos/gnuish/
 or
   ftp://ftp.simtel.net/simtelnet/gnu/gnuish
-  ftp://oak.oakland.edu/pub/simtelnet/gnu/gnuish
-  ftp://wuarchive.wustl.edu/systems/msdos/gnuish/
 
 Documentation appears in gnuish.htm (html) or gnuish.inf (info).
 
@@ -76,7 +107,7 @@ Kai Uwe Rommel <rommel@leo.org> maintains a (mostly OS/2) collection at
   
    http://www.leo.org/archiv/os2  or  ftp://ftp.leo.org
 
-It contains emx-compiled (32bit) versions of gawk for OS/2, DOS, and Win32,
+It contains emx-compiled (32bit) versions of gawk for OS/2, DOS, and Windows32,
 along with many OS/2 utilities.
 
 The djgpp collection at 
@@ -87,24 +118,33 @@ The djgpp collection at
 contains a djgpp-compiled (32bit) version of gawk, along with many
 djgpp-compiled utilities.
 
+The Mingw32 collection at http://www.mingw.org contains links to ported
+software.  The site by Jan-Jaap van der Heijden
+
+  http://agnes.dida.physik.uni-essen.de/~janjaap/
+
+is apparently no longer maintained, but it was accessible as of Jan 2001
+and may contain files of interest.
+
 
 2. The following table illustrates some of the differences among the various
 compiled versions of gawk.  For example, the djgpp version runs on all the
 systems, but with differing capabilities: it supports long filenames under
-Win-95 but not under NT, and it runs as a DPMI application under OS/2 (which
+Win-9x but not under NT, and it runs as a DPMI application under OS/2 (which
 translates into "works in the DOS-box under OS/2, but not as a true OS/2
 application").
 
-              DOS        Win/WfW  Win95       NT          OS/2 
+              DOS        Win/WfW  Win9x       NT          OS/2 
 	     -------------------------------------------------------
   djgpp     | DPMI       DPMI     DPMI        DPMI,NoLFN  DPMI 
   emx(1)    | N          N        N           N           OS2
   emxbnd(2) | VCPI,DPMI  DPMI     DPMI,NoLFN  DPMI,NoLFN  DPMI,OS2
-  emxnt(3)  | N          N        Win32       Win32       N    
-  msc       | 16         16       16,NoLFN    16,NoLFN    16,DOS  
+  emxnt(3)  | N          N        Windows32   Windows32   N    
+  msc(4)    | 16         16       16,NoLFN    16,NoLFN    16,DOS  
   msc6bnd   | 16         16       16,NoLFN    16,NoLFN    16,DOS,OS2   
   msc6os2   | N          N        N           N           16,OS2
-  vcWin32   | N          N        Win32       Win32       N    
+  vcWin32   | N          N        Windows32   Windows32   N    
+  mingw32   | N          N        Windows32   Windows32   N
 
     (1)  Requires emxrt.
 
@@ -113,6 +153,10 @@ application").
          requires rsxnt, and VCPI or use as an OS/2 app requires emxrt.
 
     (3)  Requires rsxnt. 
+
+    (4)  When compiling, MSC 8, when run in Windows 9x, will require that if
+         files are listed in #include statements with LFNs
+         (eg. <patchlevel.h>), that the file be named with the LFN.
 
      16  16bit; limited capacity, especially under DOS.
 
@@ -130,22 +174,24 @@ application").
 
     OS2  Runs as an OS/2 application.
 
-  rsxnt  Runtimes for use with DPMI or Win32.
+  rsxnt  Runtimes for use with DPMI or Windows32.
 
    VCPI  Virtual Control Program Interface; program runs as a DOS app.
          Memory managers (such as emm386) may need adjustment.  VCPI cannot
          be used under OS/2, Win/WfW, Win-95, or NT.  See also DPMI.
 
-  Win32  Uses/supports Win32 features (such as long filenames).
+Windows32  Uses/supports Windows32 features (such as long filenames).
 
-Reportedly, NTEmacs (another Win32 program) can run programs such as
-Win32-gawk asynchronously.  Currently, NTEmacs supports async subprocesses
-only if the child is a Win32 app.  Similarly, like native OS/2 versions are
-a plus under OS/2 even for command-line programs, native Win32 versions are
-nice to have under NT and Win95.
+Reportedly, NTEmacs (another Windows32 program) can run programs such as
+Windows32-gawk asynchronously.  Similarly, as native OS/2 versions are a
+plus under OS/2 even for command-line programs, native Windows32 versions
+may be desired under NT and Win95.
 
-Users interested in Win32 applications may also wish to examine the Cygnus
-GNU-Win32 Project at http://www.cygnus.com.
+Users interested in Windows32 applications may also wish to examine the
+Cygnus cygwin project at http://sources.redhat.com/cygwin/ or the
+Mingw32 work at http://www.mingw.org.  Windows32 gawk will often require
+that utilities run from within gawk be Windows32 (e.g., the tests place this
+requirement on the cat utility).
 
 
 3.  An sh-like shell may be useful for awk programming (and is essential
@@ -169,11 +215,10 @@ for other other utilities (such as sed and wc) may need to be edited
 in order to match your specific collection of programs.
 
 Daisuke Aoyama <jack@st.rim.or.jp> has ported Bash 1.14.7 to djgpp.
-This version worked flawlessly in tests with djgpp gawk and make.  It
-is now part of the djgpp collection and also from
+This version worked flawlessly in tests with djgpp gawk and make.  bash
+is now part of the djgpp collection; the older port may be found on
 
-   http://www.st.rim.or.jp/~jack/alpha/
-   http://www.neongenesis.com/~jack/djgpp-work/alpha/
+   http://www.neongenesis.com/~jack/djgpp-work/beta/index.html
 
 Under OS/2, bash should be a good choice; however, there has been some
 trouble getting a solid version.  As of Feb-95, there are two bash ports,
@@ -192,9 +237,15 @@ continues to be a problem.  Stewartson's shell may be the best choice
 for emx-compiled programs (although djgpp-bash almost works with 
 emx on DOS).  GNU make is recommended if using djgpp-bash.
 
+Beginning with 3.0.4, the MSC (DOS/Windows32) and Mingw32 versions write
+pipe and system() commands to a temporary file, and then execute
+with SHELL or COMSPEC.  The current mechanism defaults to dos-style
+shell conventions unless the shell is one of sh, bash, csh, tcsh, sh32,
+sh16, or ksh.
 
-4. GNU make is available at LEO for OS/2 and in the djgpp collection
-for DOS.
+
+4. GNU make is available at LEO for OS/2, in the djgpp collection
+for DOS, and in the Mingw32 collection for Windows32.
 
 dmake is by Dennis Vadura (dvadura@watdragon.uwaterloo.ca), CS
 Dept., University of Waterloo.  OS/2 and DOS versions can be found as
@@ -266,7 +317,7 @@ found in /usr/share/zoneinfo/*.  The setting of the TZ environment variable
 3. The 16-bit DOS version can exhaust memory on scripts such as Henry
 Spencer's "awf".  Use GNU C versions if possible. 
 
-4. builtin.c of gawk-3.0.[1-3] triggers a bug in MSC 6.00A.  The makefile
+4. builtin.c of gawk-3.0.[1-6] triggers a bug in MSC 6.00A.  The makefile
 works around the bug by compiling builtin.c without optimizations (-Od).
 In limited testing, it appears that inserting some dummy code in 
 builtin.c can provide a better solution than disabling optimizations.
@@ -284,18 +335,30 @@ surprising to many.
 7. MSC 6 fails the strftlng test.  The funstack test exhausts memory
 on the 16bit DOS versions.
 
+8. Eli Zaretskii writes: "Make can crash with SIGFPE after finishing all
+the tests.  This happens on Windows 95 only, and Gawk 3.0.3 does that as
+well (as do older versions of Make).  The cause for this is the log(-1)
+call in the last test.  Based on some limited testing, I'd say that the
+problem is in sloppy Windows handling of the  FPU: it doesn't clean up the
+FPU after a program exits, so if Make has SIGFPE unmasked, it crashes."
 
-Gawk-3.0.3 thanks
------------------
+9. gawk built from the mingw32 and vcWin32 targets continues to have
+problems with pipes; in particular, the pipeio1 test fails.
+
+10. As mentioned above, `|&' only works with cygwin.
+
+
+Gawk thanks
+-----------
 
 The DOS maintainers wish to express their thanks to Eli Zaretskii 
 <eliz@is.elta.co.il> for his work and for the many conversations
-concerning gawk-3.0, make, and djgpp.  His FAQ for djgpp is essential
+concerning gawk, make, and djgpp.  His FAQ for djgpp is essential
 reading, and he was always willing to answer our questions (even when
 we didn't read the relevant portions of the FAQ :).
 
-We are indebted to Juan Grigera <j-grigera@usa.net> for the
-Visual C++ target, and for additional help on changes for Win32.
+We are indebted to Juan Grigera <juan@biophnet.unlp.edu.ar> for the
+Visual C++ target, and for additional help on changes for Windows32.
 
 
 ----
@@ -304,13 +367,13 @@ please send bug reports (along with the version and compiler used) to
 
    Scott Deifik, scottd@amgen.com (DOS versions)
 or
-   Kai Uwe Rommel, rommel@ars.de  (OS/2 or bound versions)
+   gawk-maintainer@unixos2.org (OS/2 version)
    Darrel Hankerson, hankedr@mail.auburn.edu
 
-Support for Win32 started in gawk-3.0.3.  Reports concerning the emx 
-version using rsxnt (emxnt) should go to Kai Uwe Rommel.  Reports on
+Support for Windows32 started in gawk-3.0.3.   Reports on
 the Visual C++ version (vcWin32) may be sent to
 
-   Juan Grigera, j-grigera@usa.net (Visual C++ version)
+   Juan Grigera, juan@biophnet.unlp.edu.ar (Visual C++ version)
 
-with a copy to Scott Deifik.
+with a copy to Scott Deifik.  Other Windows32 reports may go to Darrel
+Hankerson.
