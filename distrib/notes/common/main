@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.129 2001/06/18 20:52:34 nra Exp $
+.\"	$NetBSD: main,v 1.130 2001/06/23 23:36:47 gehenna Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1359,6 +1359,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Federico Lupi Ta Mt federico@netbsd.org
 .It Ta Brett Lymn Ta Mt blymn@netbsd.org
 .It Ta Paul Mackerras Ta Mt paulus@netbsd.org
+.It Ta MAEKAWA Masahide Ta Mt gehenna@netbsd.org
 .It Ta David Maxwell Ta Mt david@netbsd.org
 .It Ta Dan McMahill Ta Mt dmcmahill@netbsd.org
 .It Ta Gregory McGarry Ta Mt gmcgarry@netbsd.org
