@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26 2000/12/09 12:23:35 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.27 2000/12/11 04:54:13 mycroft Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -108,7 +108,7 @@
 18	UNIMPL
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS		{ pid_t sys_getpid_with_ppid(void); }
 21	NODEF		{ int osf1_sys_mount(int type, const char *path, \
 			    int flags, caddr_t data); }
 22	UNIMPL		umount
