@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.29 2001/07/04 20:34:03 wiz Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.30 2002/01/16 02:11:21 ichiro Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -522,6 +522,8 @@ struct ahc_softc {
 	u_int8_t		inited_targets[16];
 	u_int8_t		inited_channels[2];
 
+	struct device		*child;
+
 	/*
 	 * SCBs that have been send to the controller
 	 */
@@ -659,6 +661,8 @@ void	ahc_free(struct ahc_softc *);
 int	ahc_probe_scbs(struct ahc_softc *);
 int	ahc_init(struct ahc_softc *);
 int	ahc_attach(struct ahc_softc *);
+int	ahc_detach(struct ahc_softc *, int);
+int	ahc_activate(struct device *, enum devact);
 int	ahc_intr(void *arg);
 
 /*
