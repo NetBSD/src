@@ -363,9 +363,13 @@ unique to a given host system and
 NetBSD
 source tree.  (However, multiple targets may share the same
 <b></b><b>TOOLDIR</b>;
-the target-dependent files have unique names.)  Must be set if USETOOLS
-is
-``yes''.
+the target-dependent files have unique names.)  If unset, a default based
+on the
+<code>uname(1)</code>
+information of the host platform will be created in the
+<b></b><b>.OBJDIR</b>
+of
+<b></b><b>src/tools</b>.
      <p>
 <em></em><em>Default</em>:
 Unset.
@@ -418,14 +422,6 @@ otherwise (to preserve traditional semantics of the
 &lt;bsd.*.mk&gt;
 <code>make(1)</code>
 include files).
-     <p>
-<em></em><em>Note</em>:
-Currently, the
-``no''
-option functions similarly to the
-``never''
-option.  Proper checks will be added in the near future to add the
-described functionality for version-specific tool components.
 </dl>
      <h4>
         <a name="&quot;make&quot; variables for full builds">
@@ -471,7 +467,7 @@ source tree build method, but is not typically required for host tools.
 </dl>
      <p>
 <em></em><em>Default</em>:
-``no''
+``yes''
 <p><dt><b></b><b>NBUILDJOBS</b><dd>
 If set, specifies the number of parallel
 <code>make(1)</code>
@@ -711,29 +707,10 @@ When compiling the entire system via
 many
 <code>make(1)</code>
 variables are set for you in order to help encapsulate the build
-process.  In particular, both
-<b></b><b>USETOOLS</b>
-and
-<b></b><b>MKTOOLS</b>
-are set to
-``yes'',
-and
-<b></b><b>MACHINE_ARCH</b>
-(if unset) is deduced from the value of
-<b></b><b>MACHINE</b>.
-     <p>
-The variables
-<b></b><b>DESTDIR</b>,<b> MACHINE</b>,<b> MACHINE_ARCH</b>,
-and
-<b></b><b>TOOLDIR</b>
-are required in order for
+process.  In the list of options below, variables that are automatically
+set by
 <b></b><b>build.sh</b>
-to function, and thus they cannot be set in the configuration file
-specified by
-<b></b><b>MAKECONF</b>.
-They may be set either in the process environment, or via command line
-options to
-<b></b><b>build.sh</b>.
+are noted where applicable.
      <p>
 The following are available command line options that may be supplied to
 <b></b><b>build.sh</b>:
@@ -743,11 +720,12 @@ Set the value of
 <b></b><b>MACHINE_ARCH</b>
 to
 <em></em><em>arch</em>.
-<p><dt><b></b><b>-D</b><em></em><em> dest</em><dd>
-Set the value of
-<b></b><b>DESTDIR</b>
-to
-<em></em><em>dest</em>.
+<p><dt><b></b><b>-b</b><dd>
+Bootstrap
+``make''
+and create a
+<b></b><b>nbmake-MACHINE</b>
+script (see below).
 <p><dt><b></b><b>-j</b><em></em><em> njob</em><dd>
 Set the value of
 <b></b><b>NBUILDJOBS</b>
@@ -768,29 +746,77 @@ in the process environment with a value deduced from
 <em></em><em>mach</em>,
 unless
 <b></b><b>-a</b>
-is specified.
-<p><dt><b></b><b>-R</b><em></em><em> rel</em><dd>
+is specified.  All cross builds require
+<b></b><b>-m</b>,
+but if unset on a NetBSD host, the host's value of MACHINE will be
+detected and used automatically.
+<p><dt><b></b><b>-n</b><dd>
+Show the commands that would be executed by
+<b></b><b>build.sh</b>,
+but do not make any changes.  This is similar in concept to
+``make -n''.
+<p><dt><b></b><b>-o</b><dd>
 Set the value of
-<b></b><b>RELEASEDIR</b>
+<b></b><b>MKOBJDIRS</b>
 to
-<em></em><em>rel</em>.
-Setting this option will make
-<b></b><b>build.sh</b>
-run
-``make release''
-instead of
-``make build''.
+``no''.
 <p><dt><b></b><b>-r</b><dd>
 Remove the contents of
 <b></b><b>DESTDIR</b>
 and
 <b></b><b>TOOLDIR</b>
-before building (provides a clean starting point).
+before building (provides a clean starting point).  This will skip deleting
+<b></b><b>DESTDIR</b>
+if building on a native system to the root directory.
+<p><dt><b></b><b>-u</b><dd>
+Set the
+<b></b><b>UPDATE</b>
+variable.
+<p><dt><b></b><b>-w</b><em></em><em> wrapper</em><dd>
+Create the nbmake wrapper script (see below) in a custom location,
+specified by
+<em></em><em>wrapper</em>.
+This allows, for instance, to place the wrapper in
+<b></b><b>PATH</b>
+automatically.  Note that
+<em></em><em>wrapper</em>
+is the full name of the file, not just a directory name.
+<p><dt><b></b><b>-D</b><em></em><em> dest</em><dd>
+Set the value of
+<b></b><b>DESTDIR</b>
+to
+<em></em><em>dest</em>.
+<p><dt><b></b><b>-O</b><em></em><em> obj</em><dd>
+Create an appropriate transform macro for
+<b></b><b>MAKEOBJDIR</b>
+that will place the built object files under
+<em></em><em>obj</em>.
+For instance, a setting of
+<b></b><b>/usr/obj</b>
+will place build-time files files under
+<b></b><b>/usr/obj/bin</b>,<b> /usr/obj/lib</b>,
+and so forth.
+<p><dt><b></b><b>-R</b><em></em><em> rel</em><dd>
+Set the value of
+<b></b><b>RELEASEDIR</b>
+to
+<em></em><em>rel</em>.
+Setting this option will cause
+<b></b><b>build.sh</b>
+to run
+``make release''
+instead of
+``make build''.
 <p><dt><b></b><b>-T</b><em></em><em> tools</em><dd>
 Set the value of
 <b></b><b>TOOLDIR</b>
 to
 <em></em><em>tools</em>.
+If set, the bootstrap
+``make''
+will only be rebuilt as needed (when the source files for
+<code>make(1)</code>
+change).
 </dl>
      <h4>
         <a name="The &quot;nbmake-MACHINE&quot; wrapper script">
@@ -847,6 +873,4 @@ Many platforms are not yet using the
 system.
 </font></body>
 </html>
-
-
 
