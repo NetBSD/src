@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.112 1998/02/10 14:11:43 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.113 1998/02/14 09:28:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5901,24 +5901,33 @@ pmap_extract4m(pm, va)
 		return (0);
 	}
 
-	rm = &pm->pm_regmap[VA_VREG(va)];
-	if (rm == NULL) {
+	if ((rm = pm->pm_regmap) == NULL) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: no regmap entry");
 #endif
 		return (0);
 	}
-	sm = &rm->rg_segmap[VA_VSEG(va)];
-	if (sm == NULL) {
+
+	rm += VA_VREG(va);
+	if ((sm = rm->rg_segmap) == NULL) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
 			panic("pmap_extract: no segmap");
 #endif
 		return (0);
 	}
-	pte = sm->sg_pte[VA_SUN4M_VPG(va)];
 
+	sm += VA_VSEG(va);
+	if (sm->sg_pte == NULL) {
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			panic("pmap_extract: no ptes");
+#endif
+		return (0);
+	}
+
+	pte = sm->sg_pte[VA_SUN4M_VPG(va)];
 	if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
