@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntptime.8,v 1.4 2001/04/27 00:10:07 wiz Exp $
+.\"	$NetBSD: ntptime.8,v 1.5 2002/01/19 11:44:58 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -17,15 +17,15 @@
 .Op Fl s Ar status
 .Op Fl t Ar time_constant
 .Sh DESCRIPTION
-This program is useful only with special kernels described in the 
+This program is useful only with special kernels described in the
 .%T "A Kernel Model for Precision Timekeeping"
 page in
 .Pa /usr/share/doc/html/ntp/kern.htm .
 It reads and displays
-time-related kernel variables using the 
+time-related kernel variables using the
 .Pa ntp_gettime()
 system call.
-A similar display can be obtained using the 
+A similar display can be obtained using the
 .Nm ntpdc
 program and
 .Pa kerninfo
@@ -33,7 +33,7 @@ command.
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl c
-Display the execution time of 
+Display the execution time of
 .Nm
 itself.
 .It Fl e Ar est_error

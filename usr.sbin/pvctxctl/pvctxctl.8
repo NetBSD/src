@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $NetBSD: pvctxctl.8,v 1.3 2000/08/25 07:15:02 reide Exp $
+.\" $NetBSD: pvctxctl.8,v 1.4 2002/01/19 11:44:59 wiz Exp $
 .\"
 .Dd December 29, 1997
 .Dt PVCTXCTL 8
@@ -39,7 +39,7 @@
 .Oc
 .Nm pvctxctl
 .Ar interface
-.Op vpi: 
+.Op vpi:
 .Ar vci
 .Op Fl p Ar pcr
 .Op Fl b Ar max-bandwidth
@@ -50,25 +50,25 @@
 .Oc
 .Op Fl n
 .Sh DESCRIPTION
-.Nm 
+.Nm
 displays or controls the shaper parameters of an ATM VC.
-When a shaper value is specified, 
+When a shaper value is specified,
 .Nm
 sets a shaper to an ATM VC.
-.Nm 
-works for a PVC sub interface 
+.Nm
+works for a PVC sub interface
 .Xr pvc 4
 as well as a real ATM interface
 .Xr en 4 .
 .Pp
-For a real ATM interface, the specified VC should be assigned 
-beforehand by 
+For a real ATM interface, the specified VC should be assigned
+beforehand by
 .Xr route 8 .
 .Pp
-For a sub interface, 
+For a sub interface,
 .Nm
-assigns the specified VC to the sub interface.  If another VC is 
-already assigned to the sub interface, the old VC is invalidated.  
+assigns the specified VC to the sub interface.  If another VC is
+already assigned to the sub interface, the old VC is invalidated.
 .Pp
 Availability of shapers, the number of hardware shaper channels,
 and accuracy of shaping are all device dependent.
@@ -83,44 +83,44 @@ The
 parameter is a string of the form
 .Dq name unit ,
 for example,
-.Dq en0 
+.Dq en0
 .It Op vpi: Ar vci
 The VC number to which the shaper is assigned.
-When the VPI number is omitted, VPI number 0 is 
+When the VPI number is omitted, VPI number 0 is
 assumed.
 For example, to assign a shaper to VPI=0 and
-VCI=201, the following forms can be used: 
+VCI=201, the following forms can be used:
 "201", "0xc9", "0:201", "0:0xc9".
 .It Fl p Ar pcr
 The PCR (Peak Cell Rate) parameter specifies the peak cell rate in
 "cells per second".
 If PCR value "0" is specified,
-no shaper is assigned, which means cells are sent at 
+no shaper is assigned, which means cells are sent at
 full-speed of the link.
-If PCR value 
+If PCR value
 .Dq -1
 is specified, the corresponding VC
 is invalidated.
 .It Fl b Ar max-bandwidth
-The PCR parameter can be specified also in 
+The PCR parameter can be specified also in
 .Dq bits per second .
-The rate is the rate of AAL5 frame and 
+The rate is the rate of AAL5 frame and
 the PCR is calculated by the following form:
 .Pp
 .Dl PCR = max-bandwidth / 8 / 48
 .Pp
 .Dq K
-and 
+and
 .Dq M
 can be used as a short hand of
 .Dq 000
-and 
+and
 .Dq 000000
 respectively.  For example,
 .Dq 45M
-means 
-.Dq 45Mbps 
-or PCR value 
+means
+.Dq 45Mbps
+or PCR value
 .Dq 117187 .
 .It [-j [vpi:]vci]
 The join parameter is intended for VP shaping.
@@ -155,7 +155,7 @@ For a shadow interface,
 .Dl # pvctxctl pvc0 201 -b 45M
 
 .Sh SEE ALSO
-.Xr ifconfig 8 , 
-.Xr route 8 , 
-.Xr en 4 , 
+.Xr ifconfig 8 ,
+.Xr route 8 ,
+.Xr en 4 ,
 .Xr pvcsif 8

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypxfr.8,v 1.5 1999/03/07 11:58:27 mycroft Exp $
+.\"	$NetBSD: ypxfr.8,v 1.6 2002/01/19 11:45:06 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -74,7 +74,7 @@ Don't send a "Clear current map" to local
 .Nm ypserv
 process. Useful if
 .Nm ypserv
-isn't running locally to avoid timeout message. 
+isn't running locally to avoid timeout message.
 .It Fl C Ar tid prog ipadd port
 This option is only used by
 .Nm ypserv .
@@ -83,7 +83,7 @@ This is to open communication with
 on another host.
 .It Fl d Ar domain
 Don't use default domain, use the specified domain.
-.It Fl f 
+.It Fl f
 Force map transfer, even if the master's version is older than the local copy.
 .It Fl h Ar host
 Get map from host insteed of the maps master host.
@@ -93,6 +93,6 @@ Specify a source domain other than the target domain.
 .Sh SEE ALSO
 .Xr yp 8 ,
 .Xr yppush 8 ,
-.Xr ypserv 8 
+.Xr ypserv 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>

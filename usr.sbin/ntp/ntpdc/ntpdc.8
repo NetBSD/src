@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdc.8,v 1.5 2001/06/11 01:50:58 wiz Exp $
+.\"	$NetBSD: ntpdc.8,v 1.6 2002/01/19 11:44:58 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -15,16 +15,16 @@
 .Op Fl ...
 .Sh DESCRIPTION
 .Nm
-is used to query the 
+is used to query the
 .Pa ntpd
 daemon about its current
 state and to request changes in that state. The program may be run either
 in interactive mode or controlled using command line arguments. Extensive
-state and statistics information is available through the 
+state and statistics information is available through the
 .Nm
 interface. In addition, nearly all the configuration options which can
 be specified at start up using ntpd's configuration file may also be specified
-at run time using 
+at run time using
 .Nm
 .
 .Pp
@@ -32,11 +32,11 @@ If one or more request options is included on the command line when
 .Nm
 is executed, each of the requests will be sent to the NTP
 servers running on each of the hosts given as command line arguments, or
-on localhost by default. If no request options are given, 
+on localhost by default. If no request options are given,
 .Nm
 will attempt to read commands from the standard input and execute these
 on the NTP server running on the first host given on the command line,
-again defaulting to localhost when no other host is specified. 
+again defaulting to localhost when no other host is specified.
 .Nm
 will prompt for commands if the standard input is a terminal device.
 .Pp
@@ -45,16 +45,16 @@ uses NTP mode 7 packets to communicate with the NTP server,
 and hence can be used to query any compatible server on the network which
 permits it. Note that since NTP is a UDP protocol this communication will
 be somewhat unreliable, especially over large distances in terms of network
-topology. 
+topology.
 .Nm
 makes no attempt to retransmit requests, and will
 time requests out if the remote host is not heard from within a suitable
 timeout time.
 .Pp
-The operation of 
+The operation of
 .Nm
 are specific to the particular implementation
-of the 
+of the
 .Pa ntpd
 daemon and can be expected to work only with this
 and maybe some previous versions of the daemon. Requests from a remote
@@ -63,12 +63,12 @@ program which affect the state of the local server must
 be authenticated, which requires both the remote program and local server
 share a common key and key identifier.
 .Sh COMMAND LINE OPTIONS
-Specifying a command line option other than 
+Specifying a command line option other than
 .Fl i
-or 
+or
 .Fl n
 will cause the specified query (queries) to be sent to the indicated host(s)
-immediately. Otherwise, 
+immediately. Otherwise,
 .Nm
 will attempt to read interactive
 format commands from the standard input.
@@ -78,13 +78,13 @@ The following argument is interpreted as an interactive format command
 and is added to the list of commands to be executed on the specified host(s).
 Multiple -c options may be given.
 .It Fl i
-Force 
+Force
 .Nm
 to operate in interactive mode. Prompts will be written
 to the standard output and commands read from the standard input.
 .It Fl l
 Obtain a list of peers which are known to the server(s). This switch is
-equivalent to 
+equivalent to
 .Fl c listpeers
 .
 .It Fl n
@@ -92,13 +92,13 @@ Output all host addresses in dotted-quad numeric format rather than converting
 to the canonical host names.
 .It Fl p
 Print a list of the peers known to the server as well as a summary of their
-state. This is equivalent to 
+state. This is equivalent to
 .Fl c peers
 .
 .It Fl s
 Print a list of the peers known to the server as well as a summary of their
 state, but in a slightly different format than the -p switch. This is equivalent
-to 
+to
 .Fl c dmpeers
 .
 .El
@@ -107,29 +107,29 @@ Interactive format commands consist of a keyword followed by zero to four
 arguments. Only enough characters of the full keyword to uniquely identify
 the command need be typed. The output of a command is normally sent to
 the standard output, but optionally the output of individual commands may
-be sent to a file by appending a 
+be sent to a file by appending a
 .Pa < ,
 followed by a file name,
 to the command line.
 .Pp
 A number of interactive format commands are executed entirely within
-the 
+the
 .Nm
 program itself and do not result in NTP mode 7 requests
 being sent to a server. These are described following.
 .Bl -tag -width indent
 .It Ar ? [ command_keyword ]
 .It Ar helpl [ command_keyword ]
-A 
+A
 .Pa ?
 by itself will print a list of all the command keywords known
-to this incarnation of 
+to this incarnation of
 .Pa ntpq .
-A 
+A
 .Pa ?
 followed by a command
 keyword will print funcation and usage information about the command. This
-command is probably a better source of information about 
+command is probably a better source of information about
 .Pa ntpq
 than this manual page.
 .It Ar delay milliseconds
@@ -142,15 +142,15 @@ in authenticated requests, so this command may be obsolete.
 Set the host to which future queries will be sent. Hostname may be either
 a host name or a numeric address.
 .It Ar hostnames [ yes | no ]
-If 
+If
 .Pa yes
 is specified, host names are printed in information displays.
-If 
+If
 .Pa no
 is specified, numeric addresses are printed instead. The
 default is
 .Em yes ,
-unless modified using the command line 
+unless modified using the command line
 .Fl n
 switch.
 .It Ar keyid keyid
@@ -158,7 +158,7 @@ This command allows the specification of a key number to be used to authenticate
 configuration requests. This must correspond to a key number the server
 has been configured to use for this purpose.
 .It Ar quit
-Exit 
+Exit
 .Nm
 .
 .It Ar passwd
@@ -168,7 +168,7 @@ must correspond to the key configured for use by the NTP server for this
 purpose if such requests are to be successful.
 .It Ar timeout millseconds
 Specify a timeout period for responses to server queries. The default is
-about 8000 milliseconds. Note that since 
+about 8000 milliseconds. Note that since
 .Nm
 retries each query
 once after a timeout, the total waiting time for a timeout will be twice
@@ -195,19 +195,19 @@ delay, offset and dispersion of the peer, all in seconds. In addition,
 the character in the left margin indicates the mode this peer entry is
 operating in. A
 .Pa +
-denotes symmetric active, a 
+denotes symmetric active, a
 .Pa ^
 indicates
-symmetric passive, a 
+symmetric passive, a
 .Pa =
 means the remote server is being polled
-in client mode, a 
+in client mode, a
 .Pa ^
 indicates that the server is broadcasting
-to this address, a 
+to this address, a
 .Pa ~
 denotes that the remote peer is sending broadcasts
-and a 
+and a
 .Pa *
 marks the peer the server is currently synchonizing to.
 .Pp
@@ -216,7 +216,7 @@ host name, an IP address, a reference clock implementation name with its
 parameter or REFCLK(
 .Ar implementation number ,
 .Ar parameter ).
-On 
+On
 .Pa "hostnames no"
 only IP-addresses will be displayed.
 .It Ar dmpeers
@@ -224,13 +224,13 @@ A slightly different peer summary list. Identical to the output of the
 .Pa peers
 command, except for the character in the leftmost column.
 Characters only appear beside peers which were included in the final stage
-of the clock selection algorithm. A 
+of the clock selection algorithm. A
 .Pa .
 indicates that this peer
-was cast off in the falseticker detection, while a 
+was cast off in the falseticker detection, while a
 .Pa +
 indicates
-that the peer made it through. A 
+that the peer made it through. A
 .Pa *
 denotes the peer the server
 is currently synchronizing with.
@@ -252,23 +252,23 @@ Print the values of selected loop filter variables. The loop filter is
 the part of NTP which deals with adjusting the local system clock. The
 .Pa offset
 is the last offset given to the loop filter by the packet
-processing code. The 
+processing code. The
 .Pa frequency
 is the frequency error of the local
-clock in parts-per-million (ppm). The 
+clock in parts-per-million (ppm). The
 .Pa time_const
 controls the
 stiffness of the phase-lock loop and thus the speed at which it can adapt
-to oscillator drift. The 
+to oscillator drift. The
 .Pa watchdog timer
 value is the number of
 seconds which have elapsed since the last sample offset was given to the
-loop filter. The 
+loop filter. The
 .Pa oneline
-and 
+and
 .Pa multiline
 options specify
-the format in which this information is to be printed, with 
+the format in which this information is to be printed, with
 .Pa multiline
 as the default.
 .It Ar sysinfo
@@ -276,59 +276,59 @@ Print a variety of system state variables, i.e., state related to the local
 server. All except the last four lines are described in the NTP Version
 3 specification, RFC-1305.
 .Bl -tag -width indent
-The 
+The
 .Pa system flags
 show various system flags, some of which can
-be set and cleared by the 
+be set and cleared by the
 .Pa enable
-and 
+and
 .Pa disable
 configuration
-commands, respectively. These are the 
+commands, respectively. These are the
 .Pa auth ,
 
 .Pa bclient
 ,
 .Pa monitor
-, 
+,
 .Pa pll ,
 
 .Pa pps
-and 
+and
 .Pa stats
 flags.
-See the 
+See the
 .Pa ntpd
 documentation for the meaning of these flags. There
-are two additional flags which are read only, the 
+are two additional flags which are read only, the
 .Pa kernel_pll
 and
 .Pa kernel_pps
 . These flags indicate the synchronization status when
-the precision time kernel modifications are in use. The 
+the precision time kernel modifications are in use. The
 .Pa kernel_pll
 indicates that the local clock is being disciplined by the kernel, while
 the kernel_pps indicates the kernel discipline is provided by the PPS signal.
-The 
+The
 .Pa stability
 is the residual frequency error remaining after
 the system frequency correction is applied and is intended for maintenance
 and debugging. In most architectures, this value will initially decrease
 from as high as 500 ppm to a nominal value in the range .01 to 0.1 ppm.
 If it remains high for some time after starting the daemon, something may
-be wrong with the local clock, or the value of the kernel variable 
+be wrong with the local clock, or the value of the kernel variable
 .Pa tick
 may be incorrect.
-The 
+The
 .Pa broadcastdelay
 shows the default broadcast delay, as set by
-the 
+the
 .Pa broadcastdelay
 configuration command.
-The 
+The
 .Pa authdelay
 shows the default authentication delay, as set by
-the 
+the
 .Pa authdelay
 configuration command.
 .El
@@ -386,13 +386,13 @@ The following commands all make authenticated requests.
 Add a configured peer association at the given address and operating in
 symmetric active mode. Note that an existing association with the same
 peer may be deleted when this command is executed, or may simply be converted
-to conform to the new configuration, as appropriate. If the optional 
+to conform to the new configuration, as appropriate. If the optional
 .Pa keyid
 is a nonzero integer, all outgoing packets to the remote server will have
 an authentication field attached encrypted with this key. If the value
-is 0 (or not given) no authentication will be done. The 
+is 0 (or not given) no authentication will be done. The
 .Pa version#
-can be 1, 2 or 3 and defaults to 3. The 
+can be 1, 2 or 3 and defaults to 3. The
 .Pa prefer
 keyword indicates
 a preferred peer (and thus will be used primarily for clock synchronisation
@@ -403,7 +403,7 @@ PPS signal.
 Identical to the addpeer command, except that the operating mode is client.
 .It Ar broadcast peer_address [ keyid ] [ version ] [ prefer ]
 Identical to the addpeer command, except that the operating mode is broadcast.
-In this case a valid key identifier and key are required. The 
+In this case a valid key identifier and key are required. The
 .Pa peer_address
 parameter can be the broadcast address of the local network or a multicast
 group address assigned to NTP. If a multicast address, a multicast-capable
@@ -418,14 +418,14 @@ This command provides a way to set certain data for a reference clock.
 See the source listing for further information.
 .It Ar enable [ flag ] [ ... ]
 .It Ar disable [ flag ] [ ... ]
-These commands operate in the same way as the 
+These commands operate in the same way as the
 .Pa enable
-and 
+and
 .Pa disable
-configuration file commands of 
+configuration file commands of
 .Pa ntpd .
 Following is a description
-of the flags. Note that only the 
+of the flags. Note that only the
 .Pa auth ,
 
 .Pa bclient ,
@@ -433,16 +433,16 @@ of the flags. Note that only the
 .Pa monitor
 ,
 .Pa pll
-, 
+,
 .Pa pps
-and 
+and
 .Pa stats
-flags can be set by 
+flags can be set by
 .Nm
 ;
-the 
+the
 .Pa pll_kernel
-and 
+and
 .Pa pps_kernel
 flags are read-only.
 .Bl -tag -width indent
@@ -452,12 +452,12 @@ has been correctly authenticated using a trusted key and key identifier.
 The default for this flag is enable.
 .It Ar bclient
 Enables the server to listen for a message from a broadcast or multicast
-server, as in the 
+server, as in the
 .Pa multicastclient
 command with default address.
 The default for this flag is disable.
 .It Ar monitor
-Enables the monitoring facility. See the 
+Enables the monitoring facility. See the
 .Nm
 program and the
 .Pa monlist
@@ -468,7 +468,7 @@ Enables the server to adjust its local clock by means of NTP. If disabled,
 the local clock free-runs at its intrinsic time and frequency offset. This
 flag is useful in case the local clock is controlled by some other device
 or protocol and NTP is used only to provide synchronization to other clients.
-In this case, the local clock driver is used. See the 
+In this case, the local clock driver is used. See the
 .%T "Reference Clock Drivers"
 page in
 .Pa /usr/share/doc/html/ntp/refclock.htm
@@ -476,14 +476,14 @@ for further information. The default for this flag
 is enable.
 .It Ar pps
 Enables the pulse-per-second (PPS) signal when frequency and time is disciplined
-by the precision time kernel modifications. See the 
+by the precision time kernel modifications. See the
 .%T "A Kernel Model for Precision Timekeeping"
 page in
 .Pa /usr/share/doc/html/ntp/kern.htm
 for further information.
 The default for this flag is disable.
 .It Ar stats
-Enables the statistics facility. See the 
+Enables the statistics facility. See the
 .%T "Monitoring Options"
 page in
 .Pa /usr/share/doc/html/ntp/monopt.htm
@@ -497,15 +497,15 @@ the clock discipline.
 When the precision time kernel modifications are installed and a pulse-per-second
 (PPS) signal is available, this indicates the PPS signal controls the clock
 discipline; otherwise, the daemon or kernel controls the clock discipline,
-as indicated by the 
+as indicated by the
 .Pa pll_kernel
 flag.
 .El
 .It Ar restrict address mask flag [ flag ]
-This command operates in the same way as the 
+This command operates in the same way as the
 .Pa restrict
 configuration
-file commands of 
+file commands of
 .Pa ntpd
 .
 .It Ar unrestrict address mask flag [ flag ]
@@ -515,17 +515,17 @@ Delete the matching entry from the restrict list.
 .It Ar readkeys
 Causes the current set of authentication keys to be purged and a new set
 to be obtained by rereading the keys file (which must have been specified
-in the 
+in the
 .Pa ntpd
 configuration file). This allows encryption keys to
 be changed without restarting the server.
 .It Ar trustkey keyid [...]
 .It Ar untrustkey keyid [...]
-These commands operate in the same way as the 
+These commands operate in the same way as the
 .Pa trustedkey
-and 
+and
 .Pa untrustkey
-configuration file commands of 
+configuration file commands of
 .Pa ntpd
 .
 .It Ar authinfo
@@ -550,6 +550,6 @@ is a crude hack. Much of the information it shows is deadly
 boring and could only be loved by its implementer. The program was designed
 so that new (and temporary) features were easy to hack in, at great expense
 to the program's ease of use. Despite this, the program is occasionally
-useful. 
+useful.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)

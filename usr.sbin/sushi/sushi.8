@@ -1,4 +1,4 @@
-.\" $NetBSD: sushi.8,v 1.9 2001/12/15 21:21:00 jhawk Exp $
+.\" $NetBSD: sushi.8,v 1.10 2002/01/19 11:45:07 wiz Exp $
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -45,19 +45,19 @@
 .Sh DESCRIPTION
 The
 .Nm
-tool gives the user a menu of various system administration tasks that 
-may be performed on the system.  It is designed to be simple enough for a 
-novice to use, and quick enough to help seasoned users perform more 
+tool gives the user a menu of various system administration tasks that
+may be performed on the system.  It is designed to be simple enough for a
+novice to use, and quick enough to help seasoned users perform more
 complex tasks with ease.
 .Pp
-It is also designed to be easily extended and customizable by the user or 
-administrator.  The menus themselves consist of a number of flat ascii 
+It is also designed to be easily extended and customizable by the user or
+administrator.  The menus themselves consist of a number of flat ascii
 files which are parsed by the
 .Nm
-engine when run.  Commands are actually scripts written by the 
-administrator, and executed from the menu hierarchy.  It is possible to 
-have multiple hierarchies, and even ones private to a particular user on 
-the machine.  These hierarchies are all merged for the user at run-time 
+engine when run.  Commands are actually scripts written by the
+administrator, and executed from the menu hierarchy.  It is possible to
+have multiple hierarchies, and even ones private to a particular user on
+the machine.  These hierarchies are all merged for the user at run-time
 into a single menu system.
 .Pp
 The following option is available:
@@ -76,20 +76,20 @@ The following environment variables are utilized by
 .It Ev LANG
 Determines the user's current language setting.
 .It Ev PKG_PATH
-This is the default URL for binary packages used when fetching lists 
-of packages available to download.  It is also used when actually 
+This is the default URL for binary packages used when fetching lists
+of packages available to download.  It is also used when actually
 downloading those packages.  It defaults to:
 ftp://ftp.netbsd.org/pub/NetBSD/packages
 .El
 .Pp
 There may be other environment variables utilized by various scripts in the
 .Nm
-menu hierarchy.  This manual page cannot account for those environment 
+menu hierarchy.  This manual page cannot account for those environment
 variables, however they should be detailed in the help files for each menu.
 .Sh FILES
 .Bl -tag -width "sushi"
 .It Pa /etc/sushi.conf
-This file is used by sushi to override the default locations searched for 
+This file is used by sushi to override the default locations searched for
 menu hierarchies.  It consists of a keyword, followed by instructions.
 To override the default searchpaths in
 .Nm
@@ -100,7 +100,7 @@ for menu hierarchies.  Each directory name must be preceded by the
 .Sq searchpath
 keyword. It is not an error to have a non-existent directory listed in
 this file, as they will simply be skipped over.  The default list of
-directories searched is printed below, in order: 
+directories searched is printed below, in order:
 .Pp
 .Bd -unfilled
 .Pa /usr/share/sushi
@@ -112,12 +112,12 @@ directories searched is printed below, in order:
 .Pp
 The
 .Pa $HOME/sushi
-path, is always searched, and does not need to appear in 
+path, is always searched, and does not need to appear in
 the
 .Pa /etc/sushi.conf
 file.  The
 .Pa /etc/sushi.conf
-file will not be parsed for environment variables such as $HOME, so it 
+file will not be parsed for environment variables such as $HOME, so it
 would likely be an error to include it there.
 .Pp
 The
@@ -148,10 +148,10 @@ Most of the actual usage of
 .Nm
 is documented in the internal help files, such as commands, and keystrokes
 that are used to navigate the menus.  There is also full documentation in
-the help pages on writing your own menus.  In order to access help, you 
-may hit the F1 key at any time, and if help is available for the current 
-menu, it will be displayed.  It is advised that the user read the help 
-file from the main menu, as it contains most of the navigation, and basic 
+the help pages on writing your own menus.  In order to access help, you
+may hit the F1 key at any time, and if help is available for the current
+menu, it will be displayed.  It is advised that the user read the help
+file from the main menu, as it contains most of the navigation, and basic
 concepts of the
 .Nm
 engine.
@@ -159,8 +159,8 @@ engine.
 .Xr rc.conf 5 ,
 .Xr intro 8
 .Sh BUGS
-At the time of this writing, there are a number of display glitches 
-which are currently being worked on.  In addition there are some failure 
+At the time of this writing, there are a number of display glitches
+which are currently being worked on.  In addition there are some failure
 modes that
 .Nm
 does not handle well, such as not recieving output from an escript field.

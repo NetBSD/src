@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpd.8,v 1.7 2001/12/26 15:13:57 wiz Exp $
+.\"	$NetBSD: ntpd.8,v 1.8 2002/01/19 11:44:57 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -30,7 +30,7 @@ system time-of-day in synchronism with Internet standard time servers.
 is a complete implementation of the Network Time Protocol
 (NTP) version 4, but also retains compatibility with version 3, as
 defined by RFC-1305, and version 1 and 2, as defined by RFC-1059 and
-RFC-1119, respectively. 
+RFC-1119, respectively.
 .Nm
 does most computations in 64-bit
 floating point arithmetic and does relatively clumsy 64-bit fixed point
@@ -47,9 +47,9 @@ itself automatically. This makes it possible to deploy a fleet of
 workstations without specifying configuration details specific to the
 local environment.
 .Pp
-Ordinarily, 
+Ordinarily,
 .Nm
-reads the 
+reads the
 .Pa ntp.conf
 configuration
 file at startup time in order to determine the synchronization sources
@@ -60,32 +60,32 @@ local host is to be configured as a broadcast/multicast client or
 manycast client, with all peers being determined by listening to
 broadcasts at run time.
 .Pp
-If NetInfo support is built into 
+If NetInfo support is built into
 .Nm "" ,
-then 
+then
 .Nm
 will attempt to read its configuration from the NetInfo if the default
-ntp.conf file cannot be read and no file is specified by the 
+ntp.conf file cannot be read and no file is specified by the
 .Fl c
 option.
 .Pp
-Various internal 
+Various internal
 .Nm
 variables can be displayed and
 configuration options altered while the daemon is running using the
 .Xr ntpq 8
-and 
+and
 .Xr ntpdc 8
 utility programs.
 .Pp
-When 
+When
 .Nm
-starts it looks at the value of 
+starts it looks at the value of
 .Pa umask
 ,
-and if it's zero 
+and if it's zero
 .Nm
-will set the 
+will set the
 .Pa umask
 to
 .Pa 022
@@ -146,18 +146,18 @@ second of adjustment requires an amortization interval of 2000 s. Thus,
 an adjustment of many seconds can take hours or days to amortize.
 .El
 .Sh THE CONFIGURATION FILE
-The 
+The
 .Nm
 configuration file is read at initial startup in order
 to specify the synchronization sources, modes and other related
-information. Usually, it is installed in the 
+information. Usually, it is installed in the
 .Pa /etc
 directory,
-but could be installed elsewhere (see the 
-.Fl c 
+but could be installed elsewhere (see the
+.Fl c
 .Ar conffile
 command line option). The file format is similar to other Unix
-configuration files - comments begin with a 
+configuration files - comments begin with a
 .Pa #
 character and
 extend to the end of the line; blank lines are ignored. Configuration
@@ -166,28 +166,28 @@ some of which may be optional, separated by whitespace. Commands may not
 be continued over multiple lines. Arguments may be host names, host
 addresses written in numeric, dotted-quad form, integers, floating
 point numbers (when specifying times in seconds) and text strings.
-Optional arguments are delimited by 
+Optional arguments are delimited by
 .Pa [ ]
 in the following
-descriptions, while alternatives are separated by 
+descriptions, while alternatives are separated by
 .Pa | .
 The
-notation 
+notation
 .Pa [ ... ]
 means an optional, indefinite repetition of
-the last item before the 
+the last item before the
 .Pa [ ... ]
 .
 .Pp
 See the following pages for configuration and control options. While
 there is a rich set of options available, the only required option is
-one or more 
+one or more
 .Pa server, peer,
 .Pa broadcast
 or
-.Pa manycastclient 
+.Pa manycastclient
 commands described in the Configuration Options
-page. The 
+page. The
 .%T "Notes on Configuring NTP and Setting up a NTP Subnet"
 page in
 .Pa /usr/share/doc/html/ntp/notes.htm
@@ -239,4 +239,4 @@ on a workstation, particularly since many of the fancy features which
 consume the space were designed more with a busy primary server, rather
 than a high stratum workstation, in mind.
 .Sh AUTHOR
-David L. Mills <mills@udel.edu> 
+David L. Mills <mills@udel.edu>

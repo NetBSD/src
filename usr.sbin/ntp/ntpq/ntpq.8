@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpq.8,v 1.6 2001/06/11 01:50:59 wiz Exp $
+.\"	$NetBSD: ntpq.8,v 1.7 2002/01/19 11:44:58 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -26,11 +26,11 @@ If one or more request options is included on the command line when
 .Pa ntpq
 is executed, each of the requests will be sent to the NTP
 servers running on each of the hosts given as command line arguments, or
-on localhost by default. If no request options are given, 
+on localhost by default. If no request options are given,
 .Pa ntpq
 will attempt to read commands from the standard input and execute these
 on the NTP server running on the first host given on the command line,
-again defaulting to localhost when no other host is specified. 
+again defaulting to localhost when no other host is specified.
 .Pa ntpq
 will prompt for commands if the standard input is a terminal device.
 .Pp
@@ -39,7 +39,7 @@ uses NTP mode 6 packets to communicate with the NTP server,
 and hence can be used to query any compatible server on the network which
 permits it. Note that since NTP is a UDP protocol this communication will
 be somewhat unreliable, especially over large distances in terms of network
-topology. 
+topology.
 .Pa ntpq
 makes one attempt to retransmit requests, and will
 time requests out if the remote host is not heard from within a suitable
@@ -47,7 +47,7 @@ timeout time.
 .Pp
 Command line options are described following. Specifying a command line
 option other than -i or -n will cause the specified query (queries) to
-be sent to the indicated host(s) immediately. Otherwise, 
+be sent to the indicated host(s) immediately. Otherwise,
 .Pa ntpq
 will attempt to read interactive format commands from the standard input.
 .Bl -tag -width indent
@@ -56,7 +56,7 @@ The following argument is interpreted as an interactive format command
 and is added to the list of commands to be executed on the specified host(s).
 Multiple -c options may be given.
 .It Fl i
-Force 
+Force
 .Pa ntpq
 to operate in interactive mode. Prompts will be written
 to the standard output and commands read from the standard input.
@@ -65,7 +65,7 @@ Output all host addresses in dotted-quad numeric format rather than converting
 to the canonical host names.
 .It Fl p
 Print a list of the peers known to the server as well as a summary of their
-state. This is equivalent to the 
+state. This is equivalent to the
 .Pa peers
 interactive command.
 .El
@@ -76,19 +76,19 @@ the command need be typed. The output of a command is normally sent to
 the standard output, but optionally the output of individual commands may
 be sent to a file by appending a "<", followed by a file name, to the
 command line. A number of interactive format commands are executed entirely
-within the 
+within the
 .Pa ntpq
 program itself and do not result in NTP mode 6
 requests being sent to a server. These are described following.
 .Bl -tag -width indent
 .It Ar ? [ command_keyword ]
 .It Ar helpl [ command_keyword ]
-A 
+A
 .Pa "?"
 by itself will print a list of all the command keywords
-known to this incarnation of 
+known to this incarnation of
 .Pa ntpq .
-A 
+A
 .Pa "?"
 followed by
 a command keyword will print funcation and usage information about the
@@ -101,12 +101,12 @@ than this manual page.
 The data carried by NTP mode 6 messages consists of a list of items of
 the form
 .Ar variable_name
-= 
+=
 .Ar value ,
 where the " =
 .Ar value
 " is ignored, and can be omitted, in requests to the
-server to read variables. 
+server to read variables.
 .Pa ntpq
 maintains an internal list in which
 data to be included in control messages can be assembled, and sent using
@@ -117,24 +117,24 @@ and not contain white space. The rmvars command can be used to remove individual
 variables from the list, while the clearlist command removes all variables
 from the list.
 .It Ar authenticate yes | no
-Normally 
+Normally
 .Pa ntpq
 does not authenticate requests unless they are write
-requests. The command authenticate yes causes 
+requests. The command authenticate yes causes
 .Pa ntpq
 to send authentication
 with all requests it makes. Authenticated requests causes some servers
 to handle requests slightly differently, and can occasionally melt the
 CPU in fuzzballs if you turn authentication on before doing a peer display.
 .It Ar cooked
-Causes output from query commands to be 
+Causes output from query commands to be
 .Pa "cooked" .
 Variables which
 are recognized by the server will have their values reformatted for human
-consumption. Variables which 
+consumption. Variables which
 .Pa ntpq
 thinks should have a decodeable
-value but didn't are marked with a trailing 
+value but didn't are marked with a trailing
 .Pa "?"
 .
 .It Ar debug more | less | off
@@ -149,15 +149,15 @@ in authenticated requests, so this command may be obsolete.
 Set the host to which future queries will be sent. Hostname may be either
 a host name or a numeric address.
 .It Ar hostnames [yes | no]
-If 
+If
 .Pa "yes"
 is specified, host names are printed in information displays.
-If 
+If
 .Pa "no"
 is specified, numeric addresses are printed instead. The
 default is
 .Em yes ,
-unless modified using the command line 
+unless modified using the command line
 .Fl n
 switch.
 .It Ar keyid keyid
@@ -165,14 +165,14 @@ This command allows the specification of a key number to be used to authenticate
 configuration requests. This must correspond to a key number the server
 has been configured to use for this purpose.
 .It Ar ntpversion 1 | 2 | 3 | 4
-Sets the NTP version number which 
+Sets the NTP version number which
 .Pa ntpq
 claims in packets. Defaults
 to 3, Note that mode 6 control messages (and modes, for that matter) didn't
 exist in NTP version 1. There appear to be no servers left which demand
 version 1.
 .It Ar quit
-Exit 
+Exit
 .Pa ntpq
 .
 .It Ar passwd
@@ -186,7 +186,7 @@ server. The only formating/intepretation done on the data is to transform
 nonascii data into a printable (but barely understandable) form.
 .It Ar timeout millseconds
 Specify a timeout period for responses to server queries. The default is
-about 5000 milliseconds. Note that since 
+about 5000 milliseconds. Note that since
 .Pa ntpq
 retries each query
 once after a timeout, the total waiting time for a timeout will be twice
@@ -214,12 +214,12 @@ The first of these is an index numbering the associations from 1 for internal
 use, the second the actual association identifier returned by the server
 and the third the status word for the peer. This is followed by a number
 of columns containing data decoded from the status word See the peers command
-for a decode of the 
+for a decode of the
 .Pa condition
 field. Note that the data returned
-by the 
+by the
 .Pa "associations"
-command is cached internally in 
+command is cached internally in
 .Pa ntpq
 .
 The index is then of use when dealing with stupid servers which use association
@@ -231,7 +231,7 @@ and index may be used as an alternative.
 Requests that a list of the server's clock variables be sent. Servers which
 have a radio clock or other external synchronization will respond positively
 to this. If the association identifier is omitted or zero the request is
-for the variables of the 
+for the variables of the
 .Pa "system clock"
 and will generally get
 a positive response from all servers with a clock. If the server treats
@@ -242,13 +242,13 @@ cause the server to return a default variable display.
 .It Ar lassocations
 Obtains and prints a list of association identifiers and peer statuses
 for all associations for which the server is maintaining state. This command
-differs from the 
+differs from the
 .Pa "associations"
 command only for servers which
 retain state for out-of-spec client associations (i.e., fuzzballs). Such
-associations are normally omitted from the display when the 
+associations are normally omitted from the display when the
 .Pa "associations"
-command is used, but are included in the output of 
+command is used, but are included in the output of
 .Pa "lassociations"
 .
 .It Ar lpassociations
@@ -262,30 +262,30 @@ is maintaining state is printed. This can produce a much longer list of
 peers from fuzzball servers.
 .It Ar mreadlist assocID assocID
 .It Ar mrl assocID assocID
-Like the 
+Like the
 .Pa readlist
 command, except the query is done for each of
 a range of (nonzero) association IDs. This range is determined from the
-association list cached by the most recent 
+association list cached by the most recent
 .Pa associations
 command.
 .It Ar mreadvar assocID assocID [ variable_name [ = value [ ... ]
 .It Ar mrv assocID assocID [ variable_name [ = [ ... ]
-Like the 
+Like the
 .Pa readvar
 command, except the query is done for each of
 a range of (nonzero) association IDs. This range is determined from the
-association list cached by the most recent 
+association list cached by the most recent
 .Pa associations
 command.
 .It Ar opeers
-An old form of the 
+An old form of the
 .Pa peers
 command with the reference ID replaced
 by the local interface address.
 .It Ar passociations
 Prints association data concerning in-spec peers from the internally cached
-list of associations. This command performs identically to the 
+list of associations. This command performs identically to the
 .Pa "associations"
 except that it displays the internally stored data rather than making a
 new query.
@@ -299,7 +299,7 @@ register, in octal, and the current estimated delay, offset and dispersion
 of the peer, all in milliseconds.
 The character in the left margin indicates the fate of this peer in the
 clock selection process. Folowing is a list of these characters, the pidgeon
-used in the 
+used in the
 .Pa rv
 command, and a short explanation of the condition
 revealed.
@@ -330,19 +330,19 @@ from a pulse-per-second (PPS) signal, either indirectly via the PPS reference
 clock driver or directly via kernel interface.
 .El
 .Pp
-The 
+The
 .Pa flash
 variable is not defined in the NTP specification, but
 is included as a valuable debugging aid. It displays the results of the
-packet sanity checks defined in the NTP specification 
+packet sanity checks defined in the NTP specification
 .Pa TEST1
 through
 .Pa TEST9 .
 The bits for each test read in increasing sequency from
 the least significant bit and are defined as follows.
-The following 
+The following
 .Pa TEST1
-through 
+through
 .Pa TEST4
 enumerate procedure
 errors. The packet timestamps may or may not be believed, but the remaining
@@ -361,9 +361,9 @@ Either peer delay or peer dispersion is greater than one second. Ya gotta
 be kidding.
 .El
 .Pp
-The following 
+The following
 .Pa TEST5
-through 
+through
 .Pa TEST10
 ennumerate errors
 in the packet header. The packet is discarded without inspecting its contents.
@@ -426,6 +426,6 @@ error messages about invalid associations occurring and terminating the
 command. The timeout time is a fixed constant, which means you wait a long
 time for timeouts since it assumes sort of a worst case. The program should
 improve the timeout estimate as it sends queries to a particular host,
-but doesn't. 
+but doesn't.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)

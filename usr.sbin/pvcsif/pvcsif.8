@@ -1,5 +1,5 @@
 .\"
-.\" $NetBSD: pvcsif.8,v 1.2 1999/07/11 17:35:07 itojun Exp $
+.\" $NetBSD: pvcsif.8,v 1.3 2002/01/19 11:44:59 wiz Exp $
 .\"
 .Dd December 29, 1997
 .Dt PVCSIF 8
@@ -16,19 +16,19 @@
 .Sh DESCRIPTION
 .Nm
 creates a sub interface for an ATM PVC.
-A sub interface 
+A sub interface
 .Xr pvc 4
 is dynamically created.
-The created interface is bound to 
+The created interface is bound to
 .Ar interface
-but at this point no VC is assigned.  To assign a VC, 
+but at this point no VC is assigned.  To assign a VC,
 .Xr pvctxctl 8
-should be used later. 
+should be used later.
 .Pp
 A PVC sub interface is intended to use an ATM PVC as an alternative
 serial connection, and to be allocated per PVC basis.
 A PVC sub interface looks as a point-to-point interface
-and is multicast capable, as opposed to the NBMA 
+and is multicast capable, as opposed to the NBMA
 (NonBroadcast Multiple Access) model that requires a MARS server.
 A point-to-point interface is useful to run MBone or protocols
 requiring multicast, such as RSVP and IPv6, over a PVC WAN
@@ -48,6 +48,6 @@ Lists the existing sub interfaces.
 Currently,  there is no way to remove a sub interface.
 
 .Sh SEE ALSO
-.Xr pvctxctl 8 , 
-.Xr ifconfig 8 , 
+.Xr pvctxctl 8 ,
+.Xr ifconfig 8 ,
 .Xr en 4

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mknetid.8,v 1.5 1999/03/07 11:58:26 mycroft Exp $
+.\"	$NetBSD: mknetid.8,v 1.6 2002/01/19 11:45:05 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 .Dd January 13, 1996
 .Dt MKNETID 8
-.Os 
+.Os
 .Sh NAME
 .Nm mknetid
 .Nd a YP filter program
@@ -55,13 +55,13 @@
 .Ek
 .Sh DESCRIPTION
 .Nm
-is used to create a map named 
+is used to create a map named
 .Pa netid.byname .
 The map consists of information from
 .Xr passwd 5 ,
 .Xr group 5
 and
-.Xr hosts 5 
+.Xr hosts 5
 eventually concatenated with a
 .Xr netid 5
 file.
@@ -85,7 +85,7 @@ Default is
 .Pa /etc/hosts .
 .It Fl m Ar netidfile
 Alternate
-.Xr netid 5 
+.Xr netid 5
 file.
 Default is
 .Pa /etc/netid .
