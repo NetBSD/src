@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 2004/10/16 13:20:11 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.18 2004/11/11 00:19:48 he Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -148,9 +148,8 @@ md_post_newfs(void)
 
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
-	cp_to_target("/usr/mdec/boot", "/boot");
 	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
-	    "/usr/mdec/installboot /usr/mdec/uboot.lif /dev/r%sa",
+	    "/usr/mdec/installboot /usr/mdec/uboot.lif /dev/r%sc",
 	    diskdev))
 		process_menu(MENU_ok,
 			 deconst("Warning: disk is probably not bootable"));
