@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.58 2002/11/25 01:44:56 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.59 2003/03/21 18:05:16 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.58 2002/11/25 01:44:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.59 2003/03/21 18:05:16 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -130,6 +130,7 @@ isp_attach(struct ispsoftc *isp)
 	isp->isp_osinfo._chan.chan_nluns = min(isp->isp_maxluns, 8);
 
 	if (IS_FC(isp)) {
+        	isp->isp_osinfo._chan.chan_flags = SCSIPI_CHAN_NOSETTLE;
 		isp->isp_osinfo._chan.chan_ntargets = MAX_FC_TARG;
 		isp->isp_osinfo._chan.chan_id = MAX_FC_TARG;
 		isp->isp_osinfo.threadwork = 1;
