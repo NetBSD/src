@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.25 1999/04/27 18:09:00 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.26 1999/04/27 21:32:05 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.25 1999/04/27 18:08:35 augustss Exp 
+ *	NetBSD: usbdevs,v 1.26 1999/04/27 21:30:53 augustss Exp 
  */
 
 /*
@@ -49,44 +49,42 @@
  */
 
 #define	USB_VENDOR_NEC	0x0409		/* NEC */
-#define	USB_VENDOR_KODAK	0x040a		/* Eastman Kodak */
-/* Computer Access Technology Corporation */
-#define	USB_VENDOR_CATC	0x0423		/* CATC */
-#define	USB_VENDOR_GRAVIS	0x0428		/* Gravis */
-#define	USB_VENDOR_NANAO	0x0440		/* Nanao */
-#define	USB_VENDOR_UNIXTAR	0x0451		/* Unixtar */
-#define	USB_VENDOR_GENIUS	0x0458		/* Genius */
+#define	USB_VENDOR_KODAK	0x040a		/* Eastman Kodak co. */
+#define	USB_VENDOR_CATC	0x0423		/* Computer Access Technology Corp. */
+#define	USB_VENDOR_GRAVIS	0x0428		/* Advanced Gravis Computer Tech. Ltd. */
+#define	USB_VENDOR_NANAO	0x0440		/* NANAO Corporation */
+#define	USB_VENDOR_UNIXTAR	0x0451		/* Texas Instruments */
+#define	USB_VENDOR_GENIUS	0x0458		/* KYE Systems Corp. */
 #define	USB_VENDOR_MICROSOFT	0x045e		/* Microsoft */
-#define	USB_VENDOR_KENSINGTON	0x0461		/* Kensington */
-#define	USB_VENDOR_CHERRY	0x046a		/* Cherry */
-/* Behavior Technology Corporation */
-#define	USB_VENDOR_BTC	0x046e		/* BTC */
+#define	USB_VENDOR_KENSINGTON	0x0461		/* Primax Electronics */
+#define	USB_VENDOR_CHERRY	0x046a		/* Cherry Mikroschalter GMBH */
+#define	USB_VENDOR_BTC	0x046e		/* Behavior Tech. Computer */
 #define	USB_VENDOR_PHILIPS	0x0471		/* Philips */
-#define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix */
-#define	USB_VENDOR_ACER	0x04a5		/* Acer Peripherals */
+#define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix Corp. */
+#define	USB_VENDOR_ACER	0x04a5		/* Acer Peripheral Inc. */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
-#define	USB_VENDOR_EPSON	0x04b8		/* Epson */
-#define	USB_VENDOR_3COM	0x04c1		/* 3Com */
+#define	USB_VENDOR_EPSON	0x04b8		/* Seiko Epson Corp. */
+#define	USB_VENDOR_3COM	0x04c1		/* U.S. Robotics */
 #define	USB_VENDOR_KONICA	0x04c8		/* Konica Corporation */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
-#define	USB_VENDOR_JAZZ	0x04fa		/* Jazz */
-#define	USB_VENDOR_AKS	0x0529		/* Aladdin Knowledge Systems */
-#define	USB_VENDOR_VISION	0x0533		/* Vision */
-#define	USB_VENDOR_ATEN	0x0557		/* ATen */
-#define	USB_VENDOR_PERACOM	0x0565		/* Peracom */
-#define	USB_VENDOR_WACOM	0x056a		/* Wacom */
+#define	USB_VENDOR_JAZZ	0x04fa		/* Dallas Semiconductor */
+#define	USB_VENDOR_AKS	0x0529		/* Fast Security AG */
+#define	USB_VENDOR_VISION	0x0533		/* Alcatel Mobile Phones */
+#define	USB_VENDOR_ATEN	0x0557		/* ATEN International Co. ltd. */
+#define	USB_VENDOR_PERACOM	0x0565		/* Peracom Networks, Inc. */
+#define	USB_VENDOR_WACOM	0x056a		/* WACOM Co. Ltd. */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
-#define	USB_VENDOR_AGILER	0x056e		/* Agiler */
-#define	USB_VENDOR_IOMEGA	0x059b		/* Iomega */
-#define	USB_VENDOR_BELKIN	0x05ab		/* Belkin */
-#define	USB_VENDOR_LOGITECH	0x05ac		/* Logitech */
+#define	USB_VENDOR_AGILER	0x056e		/* Elecom Co., Ltd. */
+#define	USB_VENDOR_IOMEGA	0x059b		/* Iomega Corporation */
+#define	USB_VENDOR_BELKIN	0x05ab		/* In-System Design */
+#define	USB_VENDOR_LOGITECH	0x05ac		/* Apple Computer */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
-#define	USB_VENDOR_ENTREGA	0x1645		/* Entrega */
 #define	USB_VENDOR_INSIDEOUT	0x1608		/* Inside Out Networks */
+#define	USB_VENDOR_ENTREGA	0x1645		/* Entrega */
 #define	USB_VENDOR_INTEL	0x8086		/* Intel */
 
 /*
