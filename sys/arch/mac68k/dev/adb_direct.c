@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.40 2000/03/18 08:07:50 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.41 2000/03/19 07:37:58 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -810,7 +810,7 @@ switch_start:
 			}
 #endif
 
-			adbLastDevice = (adbInputBuffer[1] & 0xf0) >> 4;
+			adbLastDevice = ADB_CMDADDR(adbInputBuffer[1]);
 			
 			if (adbInputBuffer[0] == 1 && !adbWaiting) {	/* SRQ!!!*/
 #ifdef ADB_DEBUG
@@ -824,8 +824,7 @@ switch_start:
 					    adbLastDevice);
 #endif
 				adbOutputBuffer[0] = 1;
-				adbOutputBuffer[1] =
-				    ((adbLastDevice & 0x0f) << 4) | 0x0c;
+				adbOutputBuffer[1] = ADBTALK(adbLastDevice, 0);
 			
 				adbSentChars = 0;	/* nothing sent yet */
 				adbActionState = ADB_ACTION_POLLING;	/* set next state */
@@ -997,7 +996,8 @@ switch_start:
 			} else {
 				/* send talk to last device instead */
 				adbOutputBuffer[0] = 1;
-				adbOutputBuffer[1] = (adbOutputBuffer[1] & 0xf0) | 0x0c;
+				adbOutputBuffer[1] =
+				    ADBTALK(ADB_CMDADDR(adbOutputBuffer[1]), 0);
 			
 				adbSentChars = 0;	/* nothing sent yet */
 				adbActionState = ADB_ACTION_IDLE;	/* set next state */
@@ -1670,7 +1670,7 @@ adb_pass_up(struct adbCommand *in)
 			if (adbStarting)
 				return;
 			/* get device's comp. routine and data area */
-			if (-1 == get_adb_info(&block, ((cmd & 0xf0) >> 4)))
+			if (-1 == get_adb_info(&block, ADB_CMDADDR(cmd)))
 				return;
 		}
 	}
@@ -2148,11 +2148,10 @@ adb_reinit(void)
 
 	/* initial scan through the devices */
 	for (i = 1; i < 16; i++) {
-		command = ((int)(i & 0xf) << 4) | 0xf;	/* talk R3 */
+		command = ADBTALK(i, 3);
 		result = adb_op_sync((Ptr)send_string, (Ptr)0,
 		    (Ptr)0, (short)command);
 
-		/* anything come back? */
 		if (send_string[0] != 0) {
 			/* check for valid device handler */
 			switch (send_string[2]) {
@@ -2201,12 +2200,12 @@ adb_reinit(void)
 #endif
 
 			/* send TALK R3 to address */
-			command = ((int)(device & 0xf) << 4) | 0xf;
+			command = ADBTALK(device, 3);
 			adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
 
 			/* move device to higher address */
-			command = ((int)(device & 0xf) << 4) | 0xb;
+			command = ADBLISTEN(device, 3);
 			send_string[0] = 2;
 			send_string[1] = (u_char)(saveptr | 0x60);
 			send_string[2] = 0xfe;
@@ -2215,7 +2214,7 @@ adb_reinit(void)
 			delay(500);
 
 			/* send TALK R3 - anthing at new address? */
-			command = ((int)(saveptr & 0xf) << 4) | 0xf;
+			command = ADBTALK(saveptr, 3);
 			adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
 			delay(500);
@@ -2229,7 +2228,7 @@ adb_reinit(void)
 			}
 
 			/* send TALK R3 - anything at old address? */
-			command = ((int)(device & 0xf) << 4) | 0xf;
+			command = ADBTALK(device, 3);
 			result = adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
 			if (send_string[0] != 0) {
@@ -2291,7 +2290,7 @@ adb_reinit(void)
 					printf_intr("moving back...\n");
 #endif
 				/* move old device back */
-				command = ((int)(saveptr & 0xf) << 4) | 0xb;
+				command = ADBLISTEN(saveptr, 3);
 				send_string[0] = 2;
 				send_string[1] = (u_char)(device | 0x60);
 				send_string[2] = 0xfe;
