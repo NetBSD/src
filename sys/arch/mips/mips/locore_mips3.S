@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.19 2000/04/10 04:59:47 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.20 2000/04/11 02:30:17 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -753,7 +753,7 @@ END(mips3_SystemCall)
  *
  * Handle an interrupt from kernel mode.
  * Build intrframe on stack to hold interrupted kernel context, then
- * call interrupt() to process it.
+ * call cpu_intr() to process it.
  *
  */
 NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
@@ -789,6 +789,7 @@ NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
 	REG_S	ra, TF_BASE+TF_REG_RA(sp)
 	REG_S	a0, TF_BASE+TF_REG_SR(sp)
+	and	a3, a0, a1			# 4th is STATUS & CAUSE
 	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
 	REG_S	a2, TF_BASE+TF_REG_EPC(sp)
@@ -800,7 +801,7 @@ NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
 	sw	ra, KERNFRAME_RA(sp)		# for debugging
 #endif
 	mtc0	zero, MIPS_COP_0_STATUS		# Reset exl, trap possible.
-	jal	_C_LABEL(interrupt)
+	jal	_C_LABEL(cpu_intr)
 	nop
 /*
  * Restore registers and return from the interrupt.
@@ -850,7 +851,7 @@ END(mips3_KernIntr)
  *	kernel stack since there has to be a u page if we came from user mode.
  *	If there is a pending software interrupt, then save the remaining state
  *	and call softintr(). This is all because if we call switch() inside
- *	interrupt(), not all the user registers have been saved in u.u_pcb.
+ *	cpu_intr(), not all the user registers have been saved in u.u_pcb.
  *
  * Results:
  * 	None.
@@ -898,6 +899,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	REG_S	a0, FRAME_SR(k1)
 	REG_S	v0, FRAME_MULLO(k1)
 	REG_S	v1, FRAME_MULHI(k1)
+	and	a3, a0, a1			# 4th is STATUS & CAUSE
 	REG_S	a2, FRAME_EPC(k1)
 	addiu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
@@ -917,7 +919,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
  * Call the interrupt handler.
  */
 	mtc0	t0, MIPS_COP_0_STATUS
-	jal	_C_LABEL(interrupt)
+	jal	_C_LABEL(cpu_intr)
 	nop
 /*
  * Restore registers and return from the interrupt.
