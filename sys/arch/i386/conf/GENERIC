@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.395 2001/01/23 01:44:38 augustss Exp $
+#	$NetBSD: GENERIC,v 1.396 2001/01/28 00:50:23 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.395 $"
+#ident 		"GENERIC-$Revision: 1.396 $"
 
 maxusers	32		# estimated number of users
 
@@ -222,6 +222,8 @@ mainbus0 at root
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide*	at pnpbios? index ?
+
+#joy*		at pnpbios? index ?	# Game port
 
 # PCI bus support
 pci*	at mainbus? bus ?
