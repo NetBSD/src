@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.13 1993/08/01 18:00:13 mycroft Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.14 1993/08/03 00:02:01 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -278,6 +278,8 @@ do_objs(fp)
 	for (tp = ftab; tp != 0; tp = tp->f_next) {
 		if (tp->f_type == INVISIBLE)
 			continue;
+		if (tp->f_type == PROFILING && !profiling)
+			continue;
 		sp = tail(tp->f_fn);
 		for (fl = conf_list; fl; fl = fl->f_next) {
 			if (fl->f_type != SWAPSPEC)
@@ -312,18 +314,21 @@ do_cfiles(fp)
 
 	fputs("CFILES=", fp);
 	lpos = 8;
-	for (tp = ftab; tp; tp = tp->f_next)
-		if (tp->f_type != INVISIBLE) {
-			len = strlen(tp->f_fn);
-			if (tp->f_fn[len - 1] != 'c')
-				continue;
-			if ((len = 3 + len) + lpos > 72) {
-				lpos = 8;
-				fputs("\\\n\t", fp);
-			}
-			fprintf(fp, "$S/%s ", tp->f_fn);
-			lpos += len + 1;
+	for (tp = ftab; tp; tp = tp->f_next) {
+		if (tp->f_type == INVISIBLE)
+			continue;
+		if (tp->f_type == PROFILING && !profiling)
+			continue;
+		len = strlen(tp->f_fn);
+		if (tp->f_fn[len - 1] != 'c')
+			continue;
+		if ((len = 3 + len) + lpos > 72) {
+			lpos = 8;
+			fputs("\\\n\t", fp);
 		}
+		fprintf(fp, "$S/%s ", tp->f_fn);
+		lpos += len + 1;
+	}
 	for (fl = conf_list; fl; fl = fl->f_next)
 		if (fl->f_type == SYSTEMSPEC) {
 			(void) sprintf(swapname, "swap%s.c", fl->f_fn);
@@ -373,6 +378,8 @@ do_rules(f)
 	for (ftp = ftab; ftp != 0; ftp = ftp->f_next) {
 		if (ftp->f_type == INVISIBLE)
 			continue;
+		if (ftp->f_type == PROFILING && !profiling)
+			continue;
 		cp = (np = ftp->f_fn) + strlen(ftp->f_fn) - 1;
 		och = *cp;
 		*cp = '\0';
@@ -398,8 +405,6 @@ do_rules(f)
 				break;
 
 			case PROFILING:
-				if (!profiling)
-					continue;
 				ftype = "PROFILE";
 				break;
 
