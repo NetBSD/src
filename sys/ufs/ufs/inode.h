@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.29 2002/07/06 01:30:16 perseant Exp $	*/
+/*	$NetBSD: inode.h,v 1.30 2002/11/26 01:23:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -100,7 +100,6 @@ struct inode {
 	doff_t	  i_endoff;	/* End of useful stuff in directory. */
 	doff_t	  i_diroff;	/* Offset in dir, where we found last entry. */
 	doff_t	  i_offset;	/* Offset of free space in directory. */
-	ino_t	  i_ino;	/* Inode number of found directory. */
 	u_int32_t i_reclen;	/* Size of found directory entry. */
 	int       i_ffs_effnlink;  /* i_nlink when I/O completes */
 	/*
