@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.56 2003/08/06 13:55:11 martin Exp $
+#	$NetBSD: bsd.dep.mk,v 1.57 2003/08/11 09:59:43 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -32,7 +32,7 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 	@rm -f .depend
 	cat ${__DPSRCS.d} /dev/null > .depend
 
-.SUFFIXES: .d .c .m .s .S .C .cc .cpp .cxx
+.SUFFIXES: .d .s .S .c .C .cc .cpp .cxx .m
 
 .c.d:
 	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${CPPFLAGS} \
