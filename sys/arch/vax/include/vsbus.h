@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.2 1998/05/22 09:49:08 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.3 1998/06/07 18:34:09 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -91,6 +91,12 @@ struct	vsbus_attach_args {
 #define VS_REGS         0x20080000      /* Misc cpu internal regs */
 
 /*
+ * Small monochrome graphics framebuffer, present on all machines.
+ */
+#define	SMADDR		0x30000000
+#define	SMSIZE		0x20000		/* Actually 256k, only 128k used */
+
+/*
  * interrupt vector numbers
  */
 #define IVEC_BASE       0x20040020
@@ -116,6 +122,7 @@ caddr_t	le_iomem;       /* base addr of RAM -- CPU's view */
 short   *lance_csr;     /* LANCE CSR virtual address */
 int     *lance_addr;    /* Ethernet address */
 struct  vs_cpu *vs_cpu; /* Common CPU registers */
+caddr_t	sm_addr;	/* virtual address of graphic space */
 
 void vsbus_intr_enable __P((int));
 void vsbus_intr_disable  __P((int));
