@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.22 2002/12/29 20:49:17 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.23 2003/01/03 17:07:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.22 2002/12/29 20:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.23 2003/01/03 17:07:43 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -549,6 +549,8 @@ wi_init(struct ifnet *ifp)
 	case IEEE80211_M_IBSS:
 		wi_write_val(sc, WI_RID_PORTTYPE, sc->sc_ibss_port);
 		ic->ic_flags |= IEEE80211_F_IBSSON;
+		sc->sc_syn_timer = 5;
+		ifp->if_timer = 1;
 		break;
 	case IEEE80211_M_AHDEMO:
 		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_ADHOC);
@@ -699,6 +701,8 @@ wi_stop(struct ifnet *ifp, int disable)
 
 	sc->sc_tx_timer = 0;
 	sc->sc_scan_timer = 0;
+	sc->sc_syn_timer = 0;
+	sc->sc_false_syns = 0;
 	sc->sc_naps = 0;
 	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
 	ifp->if_timer = 0;
@@ -878,6 +882,17 @@ wi_watchdog(struct ifnet *ifp)
 		}
 		if (sc->sc_scan_timer)
 			ifp->if_timer = 1;
+	}
+
+	if (sc->sc_syn_timer) {
+		if (--sc->sc_syn_timer == 0) {
+			DPRINTF2(("%s: %d false syns\n",
+			    sc->sc_dev.dv_xname, sc->sc_false_syns));
+			sc->sc_false_syns = 0;
+			ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
+			sc->sc_syn_timer = 5;
+		}
+		ifp->if_timer = 1;
 	}
 
 	/* TODO: rate control */
@@ -1075,6 +1090,31 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 static void
+wi_sync_bssid(struct wi_softc *sc, u_int8_t new_bssid[IEEE80211_ADDR_LEN])
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = &ic->ic_bss;
+	struct ifnet *ifp = &ic->ic_if;
+
+	if (IEEE80211_ADDR_EQ(new_bssid, ni->ni_bssid))
+		return;
+
+	DPRINTF(("%s: bssid %s -> ", sc->sc_dev.dv_xname,
+	    ether_sprintf(ni->ni_bssid)));
+	DPRINTF(("%s ?\n", ether_sprintf(new_bssid)));
+
+	/* In promiscuous mode, the BSSID field is not a reliable
+	 * indicator of the firmware's BSSID. Damp spurious
+	 * change-of-BSSID indications.
+	 */
+	if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+	    sc->sc_false_syns >= WI_MAX_FALSE_SYNS)
+		return;
+
+	ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
+}
+
+static void
 wi_rx_intr(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1083,6 +1123,7 @@ wi_rx_intr(struct wi_softc *sc)
 	struct mbuf *m;
 	struct ieee80211_frame *wh;
 	int fid, len, off, rssi;
+	u_int8_t dir;
 	u_int16_t status;
 	u_int32_t rstamp;
 
@@ -1160,6 +1201,12 @@ wi_rx_intr(struct wi_softc *sc)
 		 */
 		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 	}
+
+	/* synchronize driver's BSSID with firmware's BSSID */
+	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
+	if (ic->ic_opmode == IEEE80211_M_IBSS && dir == IEEE80211_FC1_DIR_NODS)
+		wi_sync_bssid(sc, wh->i_addr3);
+
 	ieee80211_input(ifp, m, rssi, rstamp);
 }
 
@@ -2064,6 +2111,7 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 	int i, buflen;
 	u_int16_t val;
 	struct wi_ssid ssid;
+	u_int8_t old_bssid[IEEE80211_ADDR_LEN];
 	enum ieee80211_state ostate;
 #ifdef WI_DEBUG
 	static const char *stname[] =
@@ -2083,11 +2131,17 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 	case IEEE80211_S_RUN:
 		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 		buflen = IEEE80211_ADDR_LEN;
+		IEEE80211_ADDR_COPY(old_bssid, ni->ni_bssid);
 		wi_read_rid(sc, WI_RID_CURRENT_BSSID, ni->ni_bssid, &buflen);
 		IEEE80211_ADDR_COPY(ni->ni_macaddr, ni->ni_bssid);
 		buflen = sizeof(val);
 		wi_read_rid(sc, WI_RID_CURRENT_CHAN, &val, &buflen);
 		ni->ni_chan = le16toh(val);
+
+		if (IEEE80211_ADDR_EQ(old_bssid, ni->ni_bssid))
+			sc->sc_false_syns++;
+		else
+			sc->sc_false_syns = 0;
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			ni->ni_esslen = ic->ic_des_esslen;

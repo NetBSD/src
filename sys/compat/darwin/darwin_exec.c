@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.1.2.3 2002/12/29 19:43:44 thorpej Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.1.2.4 2003/01/03 16:59:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.1.2.3 2002/12/29 19:43:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.1.2.4 2003/01/03 16:59:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.1.2.3 2002/12/29 19:43:44 thorpej 
 #include <uvm/uvm_param.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
 #include <compat/mach/mach_exec.h>
+#include <compat/mach/mach_port.h>
 
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_signal.h>
@@ -264,8 +267,19 @@ static void
 darwin_e_proc_exit(p)
 	struct proc *p;
 {
-	free(p->p_emuldata, M_EMULDATA);
-	p->p_emuldata = NULL;
+	struct darwin_emuldata *ded;
+
+	ded = p->p_emuldata;
+
+	/*
+	 * mach_init is setting the bootstrap port for other processes.
+	 * If mach_init dies, we want to restore the original bootstrap 
+	 * port.
+	 */
+	if (ded->ded_fakepid == 2)
+		mach_bootstrap_port = mach_saved_bootstrap_port;
+
+	mach_e_proc_exit(p);
 
 	return;
 }

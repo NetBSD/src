@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.148.2.20 2002/12/29 20:49:32 thorpej Exp $
+$NetBSD: usbdevs,v 1.148.2.21 2003/01/03 17:08:23 thorpej Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ vendor MEGATRENDS	0x046b	American Megatrends
 vendor LOGITECH		0x046d	Logitech
 vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
+vendor SANYO		0x0474	Sanyo Electric
 vendor CONNECTIX	0x0478	Connectix
 vendor KENSINGTON	0x047d	Kensington
 vendor LUCENT		0x047e	Lucent
@@ -203,6 +204,7 @@ vendor MACALLY		0x0618	Macally
 vendor ACTLABS		0x061c	Act Labs
 vendor ALARIS		0x0620	Alaris
 vendor APEX		0x0624	Apex
+vendor VIVITAR		0x0636	Vivitar
 vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
 vendor SGI		0x065e	Silicon Graphics
@@ -716,6 +718,7 @@ product HP S20b			0x0202	PhotoSmart S20
 product HP 815C			0x0204	DeskJet 815C
 product HP 3300C		0x0205	ScanJet 3300C
 product HP CDW8200		0x0207	CD-Writer Plus 8200e
+product HP 1220C		0x0212	DeskJet 1220C
 product HP 810C			0x0304	DeskJet 810C/812C
 product HP 4300C		0x0305	Scanjet 4300C
 product HP CD4E			0x0307	CD-Writer+ CD-4e
@@ -1171,6 +1174,9 @@ product SANDISK SDDR09		0x0200	ImageMate SDDR-09
 /* Sanwa Supply products */
 product SANWASUPPLY JYDV9USB	0x9806	JY-DV9USB gamepad
 
+/* Sanyo Electric products */
+product SANYO SCP4900 		0x0701	Sanyo SCP-4900 USB Phone
+
 /* ScanLogic products */
 product SCANLOGIC SL11R		0x0002	SL11R-IDE
 product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
@@ -1326,6 +1332,9 @@ product VISIONEER 6200		0x0311	OneTouch 6200
 product VISIONEER 8100		0x0321	OneTouch 8100
 product VISIONEER 8600		0x0331	OneTouch 8600
 								       
+/* Vivitar products */
+product VIVITAR DSC350		0x0003	DSC350 Camera
+
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire

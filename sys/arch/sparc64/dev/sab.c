@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.1.2.6 2002/12/11 06:12:24 thorpej Exp $	*/
+/*	$NetBSD: sab.c,v 1.1.2.7 2003/01/03 16:57:12 thorpej Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -302,8 +302,8 @@ sab_print(args, name)
 	struct sabtty_attach_args *sa = args;
 
 	if (name)
-		printf("sabtty at %s", name);
-	printf(" port %d", sa->sbt_portno);
+		aprint_normal("sabtty at %s", name);
+	aprint_normal(" port %d", sa->sbt_portno);
 	return (UNCONF);
 }
 

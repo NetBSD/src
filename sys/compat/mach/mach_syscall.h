@@ -1,4 +1,4 @@
-/* $NetBSD: mach_syscall.h,v 1.2.4.7 2002/12/29 19:53:19 thorpej Exp $ */
+/* $NetBSD: mach_syscall.h,v 1.2.4.8 2003/01/03 16:59:06 thorpej Exp $ */
 
 /*
  * System call numbers.

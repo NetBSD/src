@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.1.2.3 2002/08/01 02:46:01 nathanw Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.1.2.4 2003/01/03 17:08:20 thorpej Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.1.2.3 2002/08/01 02:46:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.1.2.4 2003/01/03 17:08:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,9 +568,9 @@ uwdprint(void *aux, const char *pnp)
 {
 	//struct ata_device *adev = aux;
 	if (pnp)
-		printf("wd at %s", pnp);
+		aprint_normal("wd at %s", pnp);
 #if 0
-	printf(" channel %d drive %d", adev->adev_channel,
+	aprint_normal(" channel %d drive %d", adev->adev_channel,
 	    adev->adev_drv_data->drive);
 #endif
 	return (UNCONF);

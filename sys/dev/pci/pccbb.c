@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61.2.14 2002/12/29 20:49:25 thorpej Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.15 2003/01/03 17:07:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.14 2002/12/29 20:49:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.15 2003/01/03 17:07:56 thorpej Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1542,7 +1542,7 @@ cbbprint(aux, pcic)
   struct cbslot_attach_args *cba = aux;
 
   if (cba->cba_slot >= 0) {
-    printf(" slot %d", cba->cba_slot);
+    aprint_normal(" slot %d", cba->cba_slot);
   }
 */
 	return UNCONF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.1.4.4 2002/10/18 02:41:29 nathanw Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.1.4.5 2003/01/03 17:01:11 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.1.4.4 2002/10/18 02:41:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.1.4.5 2003/01/03 17:01:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,11 +50,27 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.1.4.4 2002/10/18 02:41:29 nathanw Ex
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
+#include <dev/sysmon/sysmonvar.h>
+
+#define ACPIACAD_NSENSORS	2
+
+/* sensor indexes */
+#define ACPIACAD_CONNECTED	0
+#define ACPIACAD_DISCONNECTED	1
+
 struct acpiacad_softc {
 	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
 	int sc_flags;			/* see below */
 	int sc_status;			/* power status */
+	struct sysmon_envsys sc_sysmon;
+	struct envsys_basic_info sc_info[ACPIACAD_NSENSORS];
+	struct envsys_tre_data sc_data[ACPIACAD_NSENSORS];
+};
+
+const struct envsys_range acpiacad_range[] = {
+	{ 0, 2,		ENVSYS_INDICATOR },
+	{ 1, 0, 	-1},
 };
 
 #define	AACAD_F_VERBOSE		0x01	/* verbose events */
@@ -67,6 +83,9 @@ CFATTACH_DECL(acpiacad, sizeof(struct acpiacad_softc),
 
 void	acpiacad_get_status(void *);
 void	acpiacad_notify_handler(ACPI_HANDLE, UINT32, void *context);
+static void acpiacad_init_envsys(struct acpiacad_softc *sc);
+static int acpiacad_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
+static int acpiacad_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
 
 /*
  * acpiacad_match:
@@ -123,10 +142,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	/* Display the current state. */
 	sc->sc_flags = AACAD_F_VERBOSE;
 	acpiacad_get_status(sc);
-
-	/*
-	 * XXX Hook into sysmon here.
-	 */
+	acpiacad_init_envsys(sc);
 }
 
 /*
@@ -142,6 +158,9 @@ acpiacad_get_status(void *arg)
 	if (acpi_eval_integer(sc->sc_node->ad_handle, "_PSR",
 	    &sc->sc_status) != AE_OK)
 		return;
+
+	sc->sc_data[ACPIACAD_CONNECTED].cur.data_s = !!(sc->sc_status);
+	sc->sc_data[ACPIACAD_DISCONNECTED].cur.data_s = !(sc->sc_status);
 
 	if (sc->sc_flags & AACAD_F_VERBOSE)
 		printf("%s: AC adapter %sconnected\n",
@@ -182,4 +201,64 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		printf("%s: received unknown notify message: 0x%x\n",
 		    sc->sc_dev.dv_xname, notify);
 	}
+}
+
+static void
+acpiacad_init_envsys(struct acpiacad_softc *sc)
+{
+	int i;
+
+	sc->sc_sysmon.sme_ranges = acpiacad_range;
+
+	for (i=0; i<ACPIACAD_NSENSORS; i++) {
+		sc->sc_data[i].sensor = sc->sc_info[i].sensor = i;
+		sc->sc_data[i].validflags |= (ENVSYS_FVALID | ENVSYS_FCURVALID);
+		sc->sc_info[i].validflags = ENVSYS_FVALID;
+		sc->sc_data[i].warnflags = 0;
+	}
+
+#define INITDATA(index, unit, string) \
+	sc->sc_data[index].units = unit;     				\
+	sc->sc_info[index].units = unit;     				\
+	snprintf(sc->sc_info[index].desc, sizeof(sc->sc_info->desc),	\
+	    "%s %s", sc->sc_dev.dv_xname, string);			\
+
+	INITDATA(ACPIACAD_CONNECTED, ENVSYS_INDICATOR, "connected");
+	INITDATA(ACPIACAD_DISCONNECTED, ENVSYS_INDICATOR, "disconnected");
+
+	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
+	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
+	sc->sc_sysmon.sme_cookie = sc;
+	sc->sc_sysmon.sme_gtredata = acpiacad_gtredata;
+	sc->sc_sysmon.sme_streinfo = acpiacad_streinfo;
+	sc->sc_sysmon.sme_nsensors = ACPIACAD_NSENSORS;
+	sc->sc_sysmon.sme_envsys_version = 1000;
+
+	if (sysmon_envsys_register(&sc->sc_sysmon))
+		printf("%s: unable to register with sysmon\n",
+		    sc->sc_dev.dv_xname);
+}
+
+
+int
+acpiacad_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
+{
+	struct acpiacad_softc *sc = sme->sme_cookie;
+
+	/* XXX locking */
+	*tred = sc->sc_data[tred->sensor];
+	/* XXX locking */
+
+	return (0);
+}
+
+
+int
+acpiacad_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
+{
+
+	/* XXX Not implemented */
+	binfo->validflags = 0;
+
+	return (0);
 }

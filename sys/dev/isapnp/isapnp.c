@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.34.14.4 2002/10/18 02:42:43 nathanw Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.34.14.5 2003/01/03 17:07:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.34.14.4 2002/10/18 02:42:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.34.14.5 2003/01/03 17:07:50 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -538,13 +538,13 @@ isapnp_print_region(str, r, n)
 	if (n == 0)
 		return;
 
-	printf(" %s ", str);
+	aprint_normal(" %s ", str);
 	for (i = 0; i < n; i++, r++) {
-		printf("0x%x", r->base);
+		aprint_normal("0x%x", r->base);
 		if (r->length)
-			printf("/%d", r->length);
+			aprint_normal("/%d", r->length);
 		if (i != n - 1)
-			printf(",");
+			aprint_normal(",");
 	}
 }
 
@@ -583,7 +583,7 @@ isapnp_print(aux, str)
 	struct isapnp_attach_args *ipa = aux;
 
 	if (str != NULL)
-		printf("%s: <%s, %s, %s, %s>",
+		aprint_normal("%s: <%s, %s, %s, %s>",
 		    str, ipa->ipa_devident, ipa->ipa_devlogic,
 		    ipa->ipa_devcompat, ipa->ipa_devclass);
 

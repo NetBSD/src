@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.2.8.3 2002/10/18 02:43:23 nathanw Exp $	*/
+/*	$NetBSD: viapm.c,v 1.2.8.4 2003/01/03 17:08:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.2.8.3 2002/10/18 02:43:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.2.8.4 2003/01/03 17:08:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ viapm_print(void *aux, const char *pnp)
 	struct viapm_attach_args *vaa = aux;
 
 	if (pnp)
-		printf("%s at %s", viapm_device_name(vaa->va_type), pnp);
+		aprint_normal("%s at %s", viapm_device_name(vaa->va_type), pnp);
 	return UNCONF;
 }
 

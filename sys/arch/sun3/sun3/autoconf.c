@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56.6.3 2002/10/18 02:40:22 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.6.4 2003/01/03 16:57:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -147,14 +147,14 @@ bus_print(args, name)
 	struct confargs *ca = args;
 
 	if (name)
-		printf("%s:", name);
+		aprint_normal("%s:", name);
 
 	if (ca->ca_paddr != -1)
-		printf(" addr 0x%x", ca->ca_paddr);
+		aprint_normal(" addr 0x%x", ca->ca_paddr);
 	if (ca->ca_intpri != -1)
-		printf(" ipl %d", ca->ca_intpri);
+		aprint_normal(" ipl %d", ca->ca_intpri);
 	if (ca->ca_intvec != -1)
-		printf(" vect 0x%x", ca->ca_intvec);
+		aprint_normal(" vect 0x%x", ca->ca_intvec);
 
 	return(UNCONF);
 }

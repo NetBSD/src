@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.6.8.2 2002/11/11 22:05:18 nathanw Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.6.8.3 2003/01/03 16:57:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ sebuf_print(aux, name)
 {
 
 	if (name != NULL)
-		printf("%s: ", name);
+		aprint_normal("%s: ", name);
 
 	return UNCONF;
 }

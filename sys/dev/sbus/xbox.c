@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.4.2.3 2002/10/18 02:44:12 nathanw Exp $ */
+/*	$NetBSD: xbox.c,v 1.4.2.4 2003/01/03 17:08:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.4.2.3 2002/10/18 02:44:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.4.2.4 2003/01/03 17:08:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -113,7 +113,7 @@ xbox_print(args, busname)
 	struct xbox_attach_args *xa = args;
 
 	if (busname)
-		printf("%s at %s", xa->xa_name, busname);
+		aprint_normal("%s at %s", xa->xa_name, busname);
 	return (UNCONF);
 }
 

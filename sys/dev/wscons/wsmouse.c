@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.13.2.7 2002/11/11 22:13:21 nathanw Exp $ */
+/* $NetBSD: wsmouse.c,v 1.13.2.8 2003/01/03 17:08:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.2.7 2002/11/11 22:13:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.2.8 2003/01/03 17:08:30 thorpej Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -186,7 +186,7 @@ wsmousedevprint(void *aux, const char *pnp)
 {
 
 	if (pnp)
-		printf("wsmouse at %s", pnp);
+		aprint_normal("wsmouse at %s", pnp);
 	return (UNCONF);
 }
 

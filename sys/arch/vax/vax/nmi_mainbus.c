@@ -1,4 +1,4 @@
-/*	$NetBSD: nmi_mainbus.c,v 1.1.10.1 2002/10/18 02:40:35 nathanw Exp $	   */
+/*	$NetBSD: nmi_mainbus.c,v 1.1.10.2 2003/01/03 16:57:16 thorpej Exp $	   */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -59,11 +59,11 @@ nmi_mainbus_print(void *aux, const char *name)
 			c = "mem";
 		else
 			c = "cpu";
-		printf("%s at %s", c, name);
+		aprint_normal("%s at %s", c, name);
 		if (na->slot < 10)
-			printf(" slot %d", na->slot);
+			aprint_normal(" slot %d", na->slot);
 		if (vax_boardtype == VAX_BTYP_8800 && na->slot > 20)
-			printf(" (%s)", ka88_confdata & KA88_LEFTPRIM ?
+			aprint_normal(" (%s)", ka88_confdata & KA88_LEFTPRIM ?
 			    "right" : "left");
 	}
 	return UNCONF;

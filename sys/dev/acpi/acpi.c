@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.4.4.9 2002/12/29 20:45:30 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.4.4.10 2003/01/03 17:01:10 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.9 2002/12/29 20:45:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.10 2003/01/03 17:01:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,6 +453,8 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO *di)
 	rv = acpi_allocate_resources(handle);
 	if (ACPI_FAILURE(rv)) {
 		printf("acpi: activate failed for %s\n", di->HardwareId);
+	} else {
+		printf("acpi: activated %s\n", di->HardwareId);
 	}
 
 	(void)AcpiGetObjectInfo(handle, di);
@@ -473,7 +475,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
     void **status)
 {
 	struct acpi_make_devnode_state *state = context;
-#ifdef ACPI_DEBUG
+#if defined(ACPI_DEBUG) || defined(ACPI_EXTRA_DEBUG)
 	struct acpi_softc *sc = state->softc;
 #endif
 	struct acpi_scope *as = state->scope;
@@ -553,20 +555,31 @@ int
 acpi_print(void *aux, const char *pnp)
 {
 	struct acpi_attach_args *aa = aux;
+	char *uid;
 #if 0
 	char *str;
 #endif
 
 	if (pnp) {
-		printf("%s ", aa->aa_node->ad_devinfo.HardwareId);
+		aprint_normal("%s ", aa->aa_node->ad_devinfo.HardwareId);
 #if 0 /* Not until we fix acpi_eval_string */
 		if (acpi_eval_string(aa->aa_node->ad_handle,
 		    "_STR", &str) == AE_OK) {
-			printf("[%s] ", str);
+			aprint_normal("[%s] ", str);
 			AcpiOsFree(str);
 		}
 #endif
-		printf("at %s", pnp);
+		aprint_normal("at %s", pnp);
+	} else {
+		aprint_normal(" (%s", aa->aa_node->ad_devinfo.HardwareId);
+		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_UID) {
+			if (aa->aa_node->ad_devinfo.UniqueId[0] == '\0')
+				uid = "<null>";
+			else
+				uid = aa->aa_node->ad_devinfo.UniqueId;
+			aprint_normal("-%s", uid);
+		}
+		aprint_normal(")");
 	}
 
 	return (UNCONF);
@@ -1001,7 +1014,8 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 		return (AE_OK);
 
 #ifdef ACPI_DEBUG
-	printf("%s: fixing up PCI\n", sc->sc_dev.dv_xname);
+	printf("%s: fixing up PCI bus %d\n", sc->sc_dev.dv_xname,
+	    sc->sc_pci_bus);
 #endif
 
         for (Buffer = buf.Pointer; ; Buffer += PrtElement->Length) {
@@ -1017,8 +1031,8 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 		line = acpi_get_intr(link);
 		if (line == -1) {
 #ifdef ACPI_DEBUG
-			printf("%s: fixing up link %s\n", sc->sc_dev.dv_xname,
-			    PrtElement->Source);
+			printf("%s: fixing up intr link %s\n",
+			    sc->sc_dev.dv_xname, PrtElement->Source);
 #endif
 			rv = acpi_allocate_resources(link);
 			if (ACPI_FAILURE(rv)) {
@@ -1100,7 +1114,8 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 		resc = ACPI_NEXT_RESOURCE(resc);
 		resn = ACPI_NEXT_RESOURCE(resn);
 		delta = (UINT8 *)resn - (UINT8 *)bufn.Pointer;
-		if (delta >= bufn.Length-ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_DATA)) {
+		if (delta >= 
+		    bufn.Length-ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_DATA)) {
 			bufn.Length *= 2;
 			bufn.Pointer = realloc(bufn.Pointer, bufn.Length,
 					       M_DEVBUF, M_WAITOK);

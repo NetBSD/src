@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.36.2.11 2002/12/11 06:38:51 thorpej Exp $	*/
+/*	$NetBSD: ucom.c,v 1.36.2.12 2003/01/03 17:08:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.36.2.11 2002/12/11 06:38:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.36.2.12 2003/01/03 17:08:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1130,9 +1130,9 @@ ucomprint(void *aux, const char *pnp)
 	struct ucom_attach_args *uca = aux;
 
 	if (pnp)
-		printf("ucom at %s", pnp);
+		aprint_normal("ucom at %s", pnp);
 	if (uca->portno != UCOM_UNK_PORTNO)
-		printf(" portno %d", uca->portno);
+		aprint_normal(" portno %d", uca->portno);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.28.2.7 2002/10/18 02:41:33 nathanw Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.28.2.8 2003/01/03 17:07:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.28.2.7 2002/10/18 02:41:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.28.2.8 2003/01/03 17:07:34 thorpej Exp $");
 
 #include "opt_cardbus.h"
 
@@ -596,18 +596,15 @@ cardbusprint(void *aux, const char *pnp)
 			if (ca->ca_cis.cis1_info[i] == NULL)
 				break;
 			if (i)
-				printf(", ");
-			printf("%s", ca->ca_cis.cis1_info[i]);
+				aprint_normal(", ");
+			aprint_normal("%s", ca->ca_cis.cis1_info[i]);
 		}
-		if (bootverbose) {
-			if (i)
-				printf(" ");
-			printf("(manufacturer 0x%x, product 0x%x)",
-			       ca->ca_cis.manufacturer, ca->ca_cis.product);
-		}
-		printf(" %s at %s", devinfo, pnp);
+		aprint_verbose("%s(manufacturer 0x%x, product 0x%x)",
+		       i ? " " : "",
+		       ca->ca_cis.manufacturer, ca->ca_cis.product);
+		aprint_normal(" %s at %s", devinfo, pnp);
 	}
-	printf(" dev %d function %d", ca->ca_device, ca->ca_function);
+	aprint_normal(" dev %d function %d", ca->ca_device, ca->ca_function);
 
 	return (UNCONF);
 }

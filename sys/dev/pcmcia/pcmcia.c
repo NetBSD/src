@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.23.2.5 2002/10/18 02:43:34 nathanw Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.23.2.6 2003/01/03 17:08:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.23.2.5 2002/10/18 02:43:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.23.2.6 2003/01/03 17:08:04 thorpej Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -291,9 +291,9 @@ pcmcia_print(arg, pnp)
 
 	if (pnp) {
 		pcmcia_devinfo(card, 1, devinfo, sizeof devinfo);
-		printf("%s at %s, ", devinfo, pnp);
+		aprint_normal("%s at %s, ", devinfo, pnp);
 	}
-	printf(" function %d", pa->pf->number);
+	aprint_normal(" function %d", pa->pf->number);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.3.14.2 2002/10/18 02:44:43 nathanw Exp $ */
+/* $NetBSD: vme.c,v 1.3.14.3 2003/01/03 17:08:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.3.14.2 2002/10/18 02:44:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.3.14.3 2003/01/03 17:08:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,16 +93,16 @@ vmeprint(v, dummy)
 	int i;
 
 	for (i = 0; i < v->numcfranges; i++) {
-		printf(" addr %x", v->r[i].offset);
+		aprint_normal(" addr %x", v->r[i].offset);
 		if (v->r[i].size != -1)
-			printf("-%x", v->r[i].offset + v->r[i].size - 1);
+			aprint_normal("-%x", v->r[i].offset + v->r[i].size - 1);
 		if (v->r[i].am != -1)
-			printf(" am %02x", v->r[i].am);
+			aprint_normal(" am %02x", v->r[i].am);
 	}
 	if (v->ilevel != -1) {
-		printf(" irq %d", v->ilevel);
+		aprint_normal(" irq %d", v->ilevel);
 		if (v->ivector != -1)
-			printf(" vector %x", v->ivector);
+			aprint_normal(" vector %x", v->ivector);
 	}
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.20.2.5 2002/10/18 02:43:01 nathanw Exp $	*/
+/*	$NetBSD: eso.c,v 1.20.2.6 2003/01/03 17:07:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.20.2.5 2002/10/18 02:43:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.20.2.6 2003/01/03 17:07:55 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -427,7 +427,7 @@ eso_print(aux, pnp)
 
 	/* Only joys can attach via this; easy. */
 	if (pnp)
-		printf("joy at %s:", pnp);
+		aprint_normal("joy at %s:", pnp);
 
 	return (UNCONF);
 }

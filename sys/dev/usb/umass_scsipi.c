@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.4.2.4 2002/10/18 02:44:35 nathanw Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.4.2.5 2003/01/03 17:08:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.4.2.4 2002/10/18 02:44:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.4.2.5 2003/01/03 17:08:21 thorpej Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -212,7 +212,7 @@ scsipiprint(void *aux, const char *pnp)
 		return (scsiprint(aux, pnp));
 #else
 		if (pnp)
-			printf("scsibus at %s", pnp);
+			aprint_normal("scsibus at %s", pnp);
 		return (UNCONF);
 #endif
 	} else {
@@ -220,7 +220,7 @@ scsipiprint(void *aux, const char *pnp)
 		return (atapiprint(aux, pnp));
 #else
 		if (pnp)
-			printf("atapibus at %s", pnp);
+			aprint_normal("atapibus at %s", pnp);
 		return (UNCONF);
 #endif
 	}

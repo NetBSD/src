@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.2.4.7 2002/12/29 19:53:16 thorpej Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.2.4.8 2003/01/03 16:59:05 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ struct mach_emuldata {
 	 * lock protects the per processes lists.
 	 */
 	LIST_HEAD(med_right, mach_right) med_right;
+	mach_port_t med_nextright;	/* next unused right */
 
 	struct mach_port *med_bootstrap;/* task bootstrap port */
 	struct mach_port *med_kernel;	/* task kernel port */
@@ -63,6 +64,7 @@ int exec_mach_copyargs(struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *);
 int exec_mach_probe(char **);
 void mach_e_proc_init(struct proc *, struct vmspace *);
+void mach_e_proc_exit(struct proc *);
 
 extern const struct emul emul_mach;
 

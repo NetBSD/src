@@ -1,6 +1,9 @@
-/*      $NetBSD: esm.c,v 1.7.2.7 2002/12/29 20:49:22 thorpej Exp $      */
+/*      $NetBSD: esm.c,v 1.7.2.8 2003/01/03 17:07:54 thorpej Exp $      */
 
 /*-
+ * Copyright (c) 2002, 2003 Matt Fredette
+ * All rights reserved.
+ *
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
  * All rights reserved.
  *
@@ -35,7 +38,7 @@
 /*
  * TODO:
  *	- hardware volume support
- *	- recording
+ *	- fix 16-bit stereo recording, add 8-bit recording
  *	- MIDI support
  *	- joystick support
  *
@@ -63,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.7.2.7 2002/12/29 20:49:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.7.2.8 2003/01/03 17:07:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +143,8 @@ static void		set_timer(struct esm_softc *);
 
 static void		esmch_set_format(struct esm_chinfo *,
 			    struct audio_params *p);
+static void		esmch_combine_input(struct esm_softc *,
+			    struct esm_chinfo *ch);
 
 /* Power Management */
 void esm_powerhook(int, void *);
@@ -156,7 +161,7 @@ struct audio_hw_if esm_hw_if = {
 	esm_round_blocksize,
 	NULL,				/* commit_settings */
 	esm_init_output,
-	NULL,				/* init_input */
+	esm_init_input,
 	NULL,				/* start_output */
 	NULL,				/* start_input */
 	esm_halt_output,
@@ -625,7 +630,14 @@ esm_init(struct esm_softc *ess)
 	bus_space_write_4(ess->st, ess->sh, PORT_RINGBUS_CTRL,
 	    RINGBUS_CTRL_RINGBUS_ENABLED | RINGBUS_CTRL_ACLINK_ENABLED);
 
-	wp_wrreg(ess, WPREG_BASE, 0x8500);	/* Parallel I/O */
+	/* Undocumented registers from the Linux driver. */
+	wp_wrreg(ess, 0x8, 0xB004);
+	wp_wrreg(ess, 0x9, 0x001B);
+	wp_wrreg(ess, 0xA, 0x8000);
+	wp_wrreg(ess, 0xB, 0x3F37);
+	wp_wrreg(ess, 0xD, 0x7632);
+
+	wp_wrreg(ess, WPREG_BASE, 0x8598);	/* Parallel I/O */
 	ringbus_setdest(ess, RINGBUS_SRC_ADC,
 	    RINGBUS_DEST_STEREO | RINGBUS_DEST_DSOUND_IN);
 	ringbus_setdest(ess, RINGBUS_SRC_DSOUND,
@@ -661,28 +673,49 @@ esm_init_output (void *sc, void *start, int size)
 {
 	struct esm_softc *ess = sc;
 	struct esm_dma *p;
-	u_int32_t data;
 
-	for (p = ess->sc_dmas; p && KERNADDR(p) != start; p = p->next)
-		;
-	if (!p) {
+	p = &ess->sc_dma;
+	if ((caddr_t)start != p->addr + MAESTRO_PLAYBUF_OFF) {
 		printf("%s: esm_init_output: bad addr %p\n",
 		    ess->sc_dev.dv_xname, start);
 		return EINVAL;
 	}
 
-	ess->pch.base = DMAADDR(p) & ~0xFFF;
+	ess->pch.base = DMAADDR(p) + MAESTRO_PLAYBUF_OFF;
 
 	DPRINTF(ESM_DEBUG_DMA, ("%s: pch.base = 0x%x\n",
 		ess->sc_dev.dv_xname, ess->pch.base));
 
-	/* set DMA base address */
-	for (data = WAVCACHE_PCMBAR; data < WAVCACHE_PCMBAR + 4; data++)
-		wc_wrreg(ess, data, ess->pch.base >> WAVCACHE_BASEADDR_SHIFT);
-
 	return 0;
 }
 
+int
+esm_init_input (void *sc, void *start, int size)
+{
+	struct esm_softc *ess = sc;
+	struct esm_dma *p;
+
+	p = &ess->sc_dma;
+	if ((caddr_t)start != p->addr + MAESTRO_RECBUF_OFF) {
+		printf("%s: esm_init_input: bad addr %p\n",
+		    ess->sc_dev.dv_xname, start);
+		return EINVAL;
+	}
+
+	switch (ess->rch.aputype) {
+	case APUTYPE_16BITSTEREO:
+		ess->rch.base = DMAADDR(p) + MAESTRO_RECBUF_L_OFF;
+		break;
+	default:
+		ess->rch.base = DMAADDR(p) + MAESTRO_RECBUF_OFF;
+		break;
+	}
+
+	DPRINTF(ESM_DEBUG_DMA, ("%s: rch.base = 0x%x\n",
+		ess->sc_dev.dv_xname, ess->rch.base));
+
+	return 0;
+}
 
 int
 esm_trigger_output(void *sc, void *start, void *end, int blksize,
@@ -711,9 +744,8 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 
 	ess->sc_pintr = intr;
 	ess->sc_parg = arg;
-	for (p = ess->sc_dmas; p && KERNADDR(p) != start; p = p->next)
-		;
-	if (!p) {
+	p = &ess->sc_dma;
+	if ((caddr_t)start != p->addr + MAESTRO_PLAYBUF_OFF) {
 		printf("%s: esm_trigger_output: bad addr %p\n",
 		    ess->sc_dev.dv_xname, start);
 		return EINVAL;
@@ -724,9 +756,9 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 	ess->pactive = 1;
 
 	size = (size_t)(((caddr_t)end - (caddr_t)start) >> 1);
-	choffset = DMAADDR(p) - ess->pch.base;
+	choffset = MAESTRO_PLAYBUF_OFF;
 	offset = choffset >> 1;
-	wpwa = APU_USE_SYSMEM | (offset >> 9);
+	wpwa = APU_USE_SYSMEM | ((offset >> 8) & APU_64KPAGE_MASK);
 
 	DPRINTF(ESM_DEBUG_DMA,
 	    ("choffs=0x%x, wpwa=0x%x, size=0x%x words\n",
@@ -752,6 +784,7 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 		break;
 	}
 
+	ess->pch.apubase = offset;
 	ess->pch.apubuf = size;
 	ess->pch.nextirq = ess->pch.apublk;
 
@@ -797,6 +830,162 @@ int
 esm_trigger_input(void *sc, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, struct audio_params *param)
 {
+	struct esm_softc *ess = sc;
+	struct esm_chinfo *ch = &ess->rch;
+	struct esm_dma *p;
+	u_int32_t chctl, choffset;
+	int i, nch = 1;
+	u_int32_t speed = ch->sample_rate, offset, wpwa, dv;
+	size_t size;
+	u_int16_t apuch = ch->num << 1;
+	u_int32_t mixoffset, mixdv;
+	size_t mixsize;
+	u_int16_t reg;
+
+	DPRINTF(ESM_DEBUG_DMA,
+	    ("esm_trigger_input(%p, %p, %p, 0x%x, %p, %p, %p)\n",
+	    sc, start, end, blksize, intr, arg, param));
+
+#ifdef DIAGNOSTIC
+	if (ess->ractive) {
+		printf("%s: esm_trigger_input: already running",
+		    ess->sc_dev.dv_xname);
+		return EINVAL;
+	}
+#endif
+
+	ess->sc_rintr = intr;
+	ess->sc_rarg = arg;
+	p = &ess->sc_dma;
+	if ((caddr_t)start != p->addr + MAESTRO_RECBUF_OFF) {
+		printf("%s: esm_trigger_input: bad addr %p\n",
+		    ess->sc_dev.dv_xname, start);
+		return EINVAL;
+	}
+
+	ess->rch.buffer = (caddr_t)start;
+	ess->rch.offset = 0;
+	ess->rch.blocksize = blksize;
+	ess->rch.bufsize = ((caddr_t)end - (caddr_t)start);
+	ess->rch.apublk = blksize >> 1;
+	ess->ractive = 1;
+
+	size = (size_t)(((caddr_t)end - (caddr_t)start) >> 1);
+	choffset = MAESTRO_RECBUF_OFF;
+	switch (ch->aputype) {
+	case APUTYPE_16BITSTEREO:
+		size >>= 1;
+		choffset = MAESTRO_RECBUF_L_OFF;
+		ess->rch.apublk >>= 1;
+		nch++;
+		break;
+	case APUTYPE_16BITLINEAR:
+		break;
+	default:
+		ess->ractive = 0;
+		return EINVAL;
+	}
+
+	mixsize = (MAESTRO_MIXBUF_SZ >> 1) >> 1;
+	mixoffset = MAESTRO_MIXBUF_OFF;
+
+	ess->rch.apubase = (choffset >> 1);
+	ess->rch.apubuf = size;
+	ess->rch.nextirq = ess->rch.apublk;
+
+	set_timer(ess);
+	wp_starttimer(ess);
+
+	if (speed > 47999) speed = 47999;
+	if (speed < 4000) speed = 4000;
+	dv = (((speed % 48000) << 16) + 24000) / 48000
+	    + ((speed / 48000) << 16);
+	mixdv = 65536;	/* 48KHz */
+
+	for (i = 0; i < nch; i++) {
+
+		/* Clear all rate conversion WP channel registers first. */
+		for (reg = 0; reg < 15; reg++)
+			wp_wrapu(ess, apuch + i, reg, 0);
+
+		/* Program the WaveCache for the rate conversion WP channel. */
+		chctl = (DMAADDR(p) + choffset - 0x10) &
+		    WAVCACHE_CHCTL_ADDRTAG_MASK;
+		wc_wrchctl(ess, apuch + i, chctl);
+
+		/* Program the rate conversion WP channel. */
+		wp_wrapu(ess, apuch + i, APUREG_FREQ_LOBYTE, APU_plus6dB
+		    | ((dv & 0xff) << APU_FREQ_LOBYTE_SHIFT) | 0x08);
+		wp_wrapu(ess, apuch + i, APUREG_FREQ_HIWORD, dv >> 8);
+		offset = choffset >> 1;
+		wpwa = APU_USE_SYSMEM | ((offset >> 8) & APU_64KPAGE_MASK);
+		wp_wrapu(ess, apuch + i, APUREG_WAVESPACE, wpwa);
+		wp_wrapu(ess, apuch + i, APUREG_CURPTR, offset);
+		wp_wrapu(ess, apuch + i, APUREG_ENDPTR, offset + size);
+		wp_wrapu(ess, apuch + i, APUREG_LOOPLEN, size - 1);
+		wp_wrapu(ess, apuch + i, APUREG_EFFECTS_ENV, 0x00f0);
+		wp_wrapu(ess, apuch + i, APUREG_AMPLITUDE, 0xe800);
+		wp_wrapu(ess, apuch + i, APUREG_POSITION, 0x8f00
+		    | (RADIUS_CENTERCIRCLE << APU_RADIUS_SHIFT)
+		    | (PAN_FRONT << APU_PAN_SHIFT));
+		wp_wrapu(ess, apuch + i, APUREG_ROUTE, apuch + 2 + i);
+
+		DPRINTF(ESM_DEBUG_DMA,
+		    ("choffs=0x%x, wpwa=0x%x, offset=0x%x words, size=0x%x words\n",
+		    choffset, wpwa, offset, size));
+
+		/* Clear all mixer WP channel registers first. */
+		for (reg = 0; reg < 15; reg++)
+			wp_wrapu(ess, apuch + 2 + i, reg, 0);
+
+		/* Program the WaveCache for the mixer WP channel. */
+		chctl = (ess->rch.base + mixoffset - 0x10) &
+		    WAVCACHE_CHCTL_ADDRTAG_MASK;
+		wc_wrchctl(ess, apuch + 2 + i, chctl);
+
+		/* Program the mixer WP channel. */
+		wp_wrapu(ess, apuch + 2 + i, APUREG_FREQ_LOBYTE, APU_plus6dB
+		    | ((mixdv & 0xff) << APU_FREQ_LOBYTE_SHIFT) | 0x08);
+		wp_wrapu(ess, apuch + 2 + i, APUREG_FREQ_HIWORD, mixdv >> 8);
+		offset = mixoffset >> 1;
+		wpwa = APU_USE_SYSMEM | ((offset >> 8) & APU_64KPAGE_MASK);
+		wp_wrapu(ess, apuch + 2 + i, APUREG_WAVESPACE, wpwa);
+		wp_wrapu(ess, apuch + 2 + i, APUREG_CURPTR, offset);
+		wp_wrapu(ess, apuch + 2 + i, APUREG_ENDPTR, 
+		    offset + mixsize);
+		wp_wrapu(ess, apuch + 2 + i, APUREG_LOOPLEN, mixsize);
+		wp_wrapu(ess, apuch + 2 + i, APUREG_EFFECTS_ENV, 0x00f0);
+		wp_wrapu(ess, apuch + 2 + i, APUREG_AMPLITUDE, 0xe800);
+		wp_wrapu(ess, apuch + 2 + i, APUREG_POSITION, 0x8f00
+		    | (RADIUS_CENTERCIRCLE << APU_RADIUS_SHIFT)
+		    | (PAN_FRONT << APU_PAN_SHIFT));
+		wp_wrapu(ess, apuch + 2 + i, APUREG_ROUTE,
+		    ROUTE_PARALLEL + i);
+
+		DPRINTF(ESM_DEBUG_DMA,
+		    ("mixoffs=0x%x, wpwa=0x%x, offset=0x%x words, size=0x%x words\n",
+		    mixoffset, wpwa, offset, mixsize));
+
+		/* Assume we're going to loop to do the right channel. */
+		choffset += MAESTRO_RECBUF_L_SZ;
+		mixoffset += MAESTRO_MIXBUF_SZ >> 1;
+	}
+
+	wp_wrapu(ess, apuch, APUREG_APUTYPE,
+	    (APUTYPE_RATECONV << APU_APUTYPE_SHIFT) |
+	    APU_DMA_ENABLED | 0xf);
+	if (nch > 1)
+		wp_wrapu(ess, apuch + 1, APUREG_APUTYPE,
+		    (APUTYPE_RATECONV << APU_APUTYPE_SHIFT) |
+		    APU_DMA_ENABLED | 0xf);
+	wp_wrapu(ess, apuch + 2, APUREG_APUTYPE,
+	    (APUTYPE_INPUTMIXER << APU_APUTYPE_SHIFT) |
+	    APU_DMA_ENABLED | 0xf);
+	if (nch > 1)
+		wp_wrapu(ess, apuch + 3, APUREG_APUTYPE,
+		    (APUTYPE_RATECONV << APU_APUTYPE_SHIFT) |
+		    APU_DMA_ENABLED | 0xf);
+
 	return 0;
 }
 
@@ -825,6 +1014,24 @@ esm_halt_output(void *sc)
 int
 esm_halt_input(void *sc)
 {
+	struct esm_softc *ess = sc;
+	struct esm_chinfo *ch = &ess->rch;
+
+	DPRINTF(ESM_DEBUG_PARAM, ("esm_halt_input(%p)\n", sc));
+
+	wp_wrapu(ess, (ch->num << 1), APUREG_APUTYPE,
+	    APUTYPE_INACTIVE << APU_APUTYPE_SHIFT);
+	wp_wrapu(ess, (ch->num << 1) + 1, APUREG_APUTYPE,
+	    APUTYPE_INACTIVE << APU_APUTYPE_SHIFT);
+	wp_wrapu(ess, (ch->num << 1) + 2, APUREG_APUTYPE,
+	    APUTYPE_INACTIVE << APU_APUTYPE_SHIFT);
+	wp_wrapu(ess, (ch->num << 1) + 3, APUREG_APUTYPE,
+	    APUTYPE_INACTIVE << APU_APUTYPE_SHIFT);
+
+	ess->ractive = 0;
+	if (!ess->pactive)
+		wp_stoptimer(ess);
+
 	return 0;
 }
 
@@ -853,9 +1060,11 @@ set_timer(struct esm_softc *ess)
 
 	if (ess->ractive) {
 		freq2 = calc_timer_freq(&ess->rch);
-		if (freq2 < freq)
+		if (freq2 > freq)
 			freq = freq2;
 	}
+
+	KASSERT(freq != 0);
 
 	for (; freq < MAESTRO_MINFREQ; freq <<= 1)
 		;
@@ -890,6 +1099,68 @@ esmch_set_format(struct esm_chinfo *ch, struct audio_params *p)
 	    p->sample_rate));
 }
 
+/*
+ * Since we can't record in true stereo, this function combines
+ * the separately recorded left and right channels into the final 
+ * buffer for the upper layer.
+ */
+static void
+esmch_combine_input(struct esm_softc *ess, struct esm_chinfo *ch)
+{
+	u_int32_t *dst32s;
+	size_t offset, resid, count;
+	const u_int32_t *left32s, *right32s;
+	u_int32_t left32, right32;
+
+	/* The current offset into the upper layer buffer. */
+	offset = ch->offset;
+
+	/* The number of bytes left to combine. */
+	resid = ch->blocksize;
+
+	while (resid > 0) {
+
+		/* The 32-bit words for the left channel. */
+		left32s = (const u_int32_t *)(ess->sc_dma.addr +
+		    MAESTRO_RECBUF_L_OFF + offset / 2);
+
+		/* The 32-bit words for the right channel. */
+		right32s = (const u_int32_t *)(ess->sc_dma.addr +
+		    MAESTRO_RECBUF_R_OFF + offset / 2);
+
+		/* The pointer to the 32-bit words we will write. */
+		dst32s = (u_int32_t *)(ch->buffer + offset);
+
+		/* Get the number of bytes we will combine now. */
+		count = ch->bufsize - offset;
+		if (count > resid)
+			count = resid;
+		resid -= count;
+		offset += count;
+		if (offset == ch->bufsize)
+			offset = 0;
+
+		/* Combine, writing two 32-bit words at a time. */
+		KASSERT((count & (sizeof(uint32_t) * 2 - 1)) == 0);
+		count /= (sizeof(u_int32_t) * 2);
+		while (count > 0) {
+			left32 = *(left32s++);
+			right32 = *(right32s++);
+			/* XXX this endian handling is half-baked at best */
+#if BYTE_ORDER == LITTLE_ENDIAN
+			*(dst32s++) = (left32 & 0xFFFF) | (right32 << 16);
+			*(dst32s++) = (left32 >> 16) | (right32 & 0xFFFF0000);
+#else  /* BYTE_ORDER == BIG_ENDIAN */
+			*(dst32s++) = (left32 & 0xFFFF0000) | (right32 >> 16);
+			*(dst32s++) = (left32 << 16) | (right32 & 0xFFFF);
+#endif /* BYTE_ORDER == BIG_ENDIAN */
+			count--;
+		}
+	}
+
+	/* Update the offset. */
+	ch->offset = offset;
+}
 
 /*
  * Audio interface glue functions
@@ -1056,29 +1327,31 @@ void *
 esm_malloc(void *sc, int direction, size_t size, int pool, int flags)
 {
 	struct esm_softc *ess = sc;
-	struct esm_dma *p;
-	int error;
+	int off;
 
 	DPRINTF(ESM_DEBUG_DMA,
 	    ("esm_malloc(%p, %d, 0x%x, 0x%x, 0x%x)",
 	    sc, direction, size, pool, flags));
 
-	p = malloc(sizeof(*p), pool, flags);
-	if (!p)
-		return 0;
-	error = esm_allocmem(ess, size, 16, p);
-	if (error) {
-		free(p, pool);
+	/*
+	 * Each buffer can only be allocated once.
+	 */
+	if (ess->rings_alloced & direction) {
 		DPRINTF(ESM_DEBUG_DMA, (" = 0 (ENOMEM)\n"));
 		return 0;
 	}
-	p->next = ess->sc_dmas;
-	ess->sc_dmas = p;
 
-	DPRINTF(ESM_DEBUG_DMA,
-	    (": KERNADDR(%p) = %p (DMAADDR 0x%x)\n", p, KERNADDR(p), (int)DMAADDR(p)));
-
-	return KERNADDR(p);
+	/*
+	 * Mark this buffer as allocated and return its
+	 * kernel virtual address.
+	 */
+	ess->rings_alloced |= direction;
+	off = (direction == AUMODE_PLAY ?
+		MAESTRO_PLAYBUF_OFF : MAESTRO_RECBUF_OFF);
+	DPRINTF(ESM_DEBUG_DMA, (" = %p (DMAADDR 0x%x)\n",
+				ess->sc_dma.addr + off,
+				(int)DMAADDR(&ess->sc_dma) + off));
+	return (ess->sc_dma.addr + off);
 }
 
 
@@ -1086,26 +1359,25 @@ void
 esm_free(void *sc, void *ptr, int pool)
 {
 	struct esm_softc *ess = sc;
-	struct esm_dma *p, **pp;
 
 	DPRINTF(ESM_DEBUG_DMA,
 	    ("esm_free(%p, %p, 0x%x)\n",
 	    sc, ptr, pool));
 
-	for (pp = &ess->sc_dmas; (p = *pp) != NULL; pp = &p->next) {
-		if (KERNADDR(p) == ptr) {
-			esm_freemem(ess, p);
-			*pp = p->next;
-			free(p, pool);
-			return;
-		}
-	}
+	if ((caddr_t)ptr == ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
+		ess->rings_alloced &= ~AUMODE_PLAY;
+	else if ((caddr_t)ptr == ess->sc_dma.addr + MAESTRO_RECBUF_OFF)
+		ess->rings_alloced &= ~AUMODE_RECORD;
 }
 
 
 size_t
 esm_round_buffersize(void *sc, int direction, size_t size)
 {
+	if (size > MAESTRO_PLAYBUF_SZ)
+		size = MAESTRO_PLAYBUF_SZ;
+	if (size > MAESTRO_RECBUF_SZ)
+		size = MAESTRO_RECBUF_SZ;
 	return size;
 }
 
@@ -1114,7 +1386,6 @@ paddr_t
 esm_mappage(void *sc, void *mem, off_t off, int prot)
 {
 	struct esm_softc *ess = sc;
-	struct esm_dma *p;
 
 	DPRINTF(ESM_DEBUG_DMA,
 	    ("esm_mappage(%p, %p, 0x%lx, 0x%x)\n",
@@ -1123,12 +1394,14 @@ esm_mappage(void *sc, void *mem, off_t off, int prot)
 	if (off < 0)
 		return (-1);
 
-	for (p = ess->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
-		;
-	if (!p)
-		return (-1);
-	return bus_dmamem_mmap(ess->dmat, p->segs, p->nsegs, off,
-	    prot, BUS_DMA_WAITOK);
+	if ((caddr_t)mem == ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
+		off += MAESTRO_PLAYBUF_OFF;
+	else if ((caddr_t)mem == ess->sc_dma.addr + MAESTRO_RECBUF_OFF)
+		off += MAESTRO_RECBUF_OFF;
+	else
+		return -1;
+	return bus_dmamem_mmap(ess->dmat, ess->sc_dma.segs, ess->sc_dma.nsegs,
+	    off, prot, BUS_DMA_WAITOK);
 }
 
 
@@ -1185,6 +1458,7 @@ esm_intr(void *sc)
 		DPRINTF(ESM_DEBUG_IRQ, (" %4.4x/%4.4x ", pos,
 		    wp_rdapu(ess, (ess->pch.num<<1)+1, APUREG_CURPTR)));
 
+		pos -= ess->pch.apubase;
 		if (pos >= ess->pch.nextirq &&
 		    pos - ess->pch.nextirq < ess->pch.apubuf / 2) {
 			ess->pch.nextirq += ess->pch.apublk;
@@ -1207,6 +1481,7 @@ esm_intr(void *sc)
 		DPRINTF(ESM_DEBUG_IRQ, (" %4.4x/%4.4x ", pos,
 		    wp_rdapu(ess, (ess->rch.num<<1)+1, APUREG_CURPTR)));
 
+		pos -= ess->rch.apubase;
 		if (pos >= ess->rch.nextirq &&
 		    pos - ess->rch.nextirq < ess->rch.apubuf / 2) {
 			ess->rch.nextirq += ess->rch.apublk;
@@ -1216,7 +1491,12 @@ esm_intr(void *sc)
 
 			if (ess->sc_rintr) {
 				DPRINTF(ESM_DEBUG_IRQ, ("R\n"));
-				ess->sc_rintr(ess->sc_parg);
+				switch(ess->rch.aputype) {
+				case APUTYPE_16BITSTEREO:
+					esmch_combine_input(ess, &ess->rch);
+					break;
+				}
+				ess->sc_rintr(ess->sc_rarg);
 			}
 
 		}
@@ -1269,17 +1549,6 @@ esm_allocmem(struct esm_softc *sc, size_t size, size_t align,
 
 
 int
-esm_freemem(struct esm_softc *sc, struct esm_dma *p)
-{
-	bus_dmamap_unload(sc->dmat, p->map);
-	bus_dmamap_destroy(sc->dmat, p->map);
-	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
-	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
-	return 0;
-}
-
-
-int
 esm_match(struct device *dev, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -1312,6 +1581,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr, data;
 	u_int16_t codec_data;
+	u_int16_t pcmbar;
 	const char *intrstr;
 	int revision;
 	char devinfo[256];
@@ -1334,7 +1604,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Initialize softc */
 	ess->pch.num = 0;
-	ess->rch.num = 2;
+	ess->rch.num = 1;
 	ess->dmat = pa->pa_dmat;
 	ess->tag = tag;
 	ess->pc = pc;
@@ -1412,6 +1682,19 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ac97_attach(&ess->host_if) != 0)
 		return;
+
+	/* allocate our DMA region */
+	if (esm_allocmem(ess, MAESTRO_DMA_SZ, MAESTRO_DMA_ALIGN,
+		&ess->sc_dma)) {
+		printf("%s: couldn't allocate memory!\n", ess->sc_dev.dv_xname);
+		return;
+	}
+	ess->rings_alloced = 0;
+
+	/* set DMA base address */
+	for (pcmbar = WAVCACHE_PCMBAR; pcmbar < WAVCACHE_PCMBAR + 4; pcmbar++)
+		wc_wrreg(ess, pcmbar,
+		    DMAADDR(&ess->sc_dma) >> WAVCACHE_BASEADDR_SHIFT);
 
 	audio_attach_mi(&esm_hw_if, self, &ess->sc_dev);
 

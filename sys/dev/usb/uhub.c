@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.49.2.5 2002/10/18 02:44:33 nathanw Exp $	*/
+/*	$NetBSD: uhub.c,v 1.49.2.6 2003/01/03 17:08:17 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.49.2.5 2002/10/18 02:44:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.49.2.6 2003/01/03 17:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.49.2.5 2002/10/18 02:44:33 nathanw Exp $"
 #ifdef UHUB_DEBUG
 #define DPRINTF(x)	if (uhubdebug) logprintf x
 #define DPRINTFN(n,x)	if (uhubdebug>(n)) logprintf x
-int	uhubdebug;
+int	uhubdebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)

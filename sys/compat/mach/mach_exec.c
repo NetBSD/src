@@ -1,11 +1,11 @@
-/*	$NetBSD: mach_exec.c,v 1.2.4.10 2002/12/29 19:53:15 thorpej Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.2.4.11 2003/01/03 16:59:05 thorpej Exp $	 */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.4.10 2002/12/29 19:53:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.4.11 2003/01/03 16:59:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ static int mach_cold = 1; /* Have we initialized COMPAT_MACH structures? */
 
 static void mach_e_proc_exec(struct proc *, struct exec_package *);
 static void mach_e_proc_fork(struct proc *, struct proc *);
-static void mach_e_proc_exit(struct proc *);
 static void mach_init(void);
 
 extern char sigcode[], esigcode[];
@@ -123,30 +122,27 @@ exec_mach_copyargs(p, pack, arginfo, stackp, argp)
 	void *argp;
 {
 	struct exec_macho_emul_arg *emea;
+	struct exec_macho_object_header *macho_hdr;
 	size_t len;
 	size_t zero = 0;
-	int pagelen = PAGE_SIZE;
 	int error;
 	
-	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
-	
-	*stackp -= 16;
+	*stackp = (char *)(((unsigned long)*stackp - 1) & ~0xfUL);
 
-	if ((error = copyout(&pagelen, *stackp, sizeof(pagelen))) != 0) {
-		DPRINTF(("mach: copyout pagelen failed\n"));
+	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
+	macho_hdr = (struct exec_macho_object_header *)emea->macho_hdr;
+	if ((error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr))) != 0) 
 		return error;
-	}
-	*stackp += sizeof(pagelen);
+	
+	*stackp += sizeof(macho_hdr);
 
 	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0) {
 		DPRINTF(("mach: copyargs failed\n"));
 		return error;
 	}
 
-	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) {
-		DPRINTF(("mach: copyout first zero failed\n"));
+	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0)
 		return error;
-	}
 	*stackp += sizeof(zero);
 
 	if ((error = copyoutstr(emea->filename, 
@@ -162,17 +158,13 @@ exec_mach_copyargs(p, pack, arginfo, stackp, argp)
 
 	len = len % sizeof(zero);
 	if (len) {
-		if ((error = copyout(&zero, *stackp, len)) != 0) {
-			DPRINTF(("mach: zero align %d failed\n", len));
+		if ((error = copyout(&zero, *stackp, len)) != 0) 
 			return error;
-		}
 		*stackp += len;
 	}
 
-	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) {
-		DPRINTF(("mach: copyout second zero failed\n"));
+	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) 
 		return error;
-	}
 	*stackp += sizeof(zero);
 
 	return 0;
@@ -239,6 +231,13 @@ mach_e_proc_init(p, vmspace)
 	med->med_p = 0;
 
 	LIST_INIT(&med->med_right);
+	/* 
+	 * For debugging purpose, it's convenient to have each process 
+	 * using distinct port names, so we prefix the first port name
+	 * by the PID. Darwin does not do that, but we can remove it 
+	 * when we want, it will not hurt.
+	 */
+	med->med_nextright = p->p_pid << 16;
 
 	med->med_kernel = mach_port_get();
 	med->med_host = mach_port_get();
@@ -255,7 +254,7 @@ mach_e_proc_init(p, vmspace)
 	return;
 }
 
-static void 
+void 
 mach_e_proc_exit(p)
 	struct proc *p;
 {
@@ -268,7 +267,7 @@ mach_e_proc_exit(p)
 
 	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
 	while ((mr = LIST_FIRST(&med->med_right)) != NULL)
-		mach_right_put_exclocked(mr);
+		mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
 	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
 
 	if (--med->med_bootstrap->mp_refcount == 0)

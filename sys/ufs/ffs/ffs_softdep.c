@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13.2.13 2002/12/11 06:51:41 thorpej Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13.2.14 2003/01/03 17:10:43 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.13 2002/12/11 06:51:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.14 2003/01/03 17:10:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -182,7 +182,7 @@ void softdep_pageiodone1 __P((struct buf *));
 #endif
 void softdep_pageiodone __P((struct buf *));
 void softdep_flush_vnode __P((struct vnode *, ufs_lbn_t));
-static void softdep_flush_indir __P((struct vnode *));
+static void softdep_trackbufs(int, boolean_t);
 
 /*
  * Exported softdep operations.
@@ -1386,6 +1386,20 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	if (newblk_lookup(ip->i_fs, newblkno, 0, &newblk) == 0)
 		panic("softdep_setup_allocdirect: lost block");
 
+	/*
+	 * If we were not passed a bp to attach the dep to,
+	 * then this must be for a regular file.
+	 * Allocate a buffer to represent the page cache pages
+	 * that are the real dependency.  The pages themselves
+	 * cannot refer to the dependency since we don't want to
+	 * add a field to struct vm_page for this.
+	 */
+
+	if (bp == NULL) {
+		bp = softdep_setup_pagecache(ip, lbn, newsize);
+		UVMHIST_LOG(ubchist, "bp = %p, size = %d -> %d",
+		    bp, (int)oldsize, (int)newsize, 0);
+	}
 	ACQUIRE_LOCK(&lk);
 	(void) inodedep_lookup(ip->i_fs, ip->i_number, DEPALLOC, &inodedep);
 	adp->ad_inodedep = inodedep;
@@ -1401,21 +1415,6 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	}
 	LIST_REMOVE(newblk, nb_hash);
 	pool_put(&newblk_pool, newblk);
-
-	/*
-	 * If we were not passed a bp to attach the dep to,
-	 * then this must be for a regular file.
-	 * Allocate a buffer to represent the page cache pages
-	 * that are the real dependency.  The pages themselves
-	 * cannot refer to the dependency since we don't want to
-	 * add a field to struct vm_page for this.
-	 */
-
-	if (bp == NULL) {
-		bp = softdep_setup_pagecache(ip, lbn, newsize);
-		UVMHIST_LOG(ubchist, "bp = %p, size = %d -> %d",
-		    bp, (int)oldsize, (int)newsize, 0);
-	}
 	WORKLIST_INSERT(&bp->b_dep, &adp->ad_list);
 	if (lbn >= NDADDR) {
 		/* allocating an indirect block */
@@ -1652,20 +1651,12 @@ softdep_setup_allocindir_page(ip, lbn, bp, ptrno, newblkno, oldblkno, nbp)
 	struct allocindir *aip;
 	struct pagedep *pagedep;
 
-	/*
-	 * If we are already holding "many" buffers busy (as the safe copies
-	 * of indirect blocks) flush the dependency for one of those before
-	 * potentially tying up more.  otherwise we could fill the
-	 * buffer cache with busy buffers and deadlock.
-	 * XXXUBC I'm sure there's a better way to deal with this.
-	 */
-
-	while (softdep_lockedbufs > nbuf >> 2) {
-		softdep_flush_indir(ITOV(ip));
-	}
-
 	aip = newallocindir(ip, ptrno, newblkno, oldblkno);
+	if (nbp == NULL) {
+		nbp = softdep_setup_pagecache(ip, lbn, ip->i_fs->fs_bsize);
+	}
 	ACQUIRE_LOCK(&lk);
+
 	/*
 	 * If we are allocating a directory page, then we must
 	 * allocate an associated pagedep to track additions and
@@ -1674,9 +1665,6 @@ softdep_setup_allocindir_page(ip, lbn, bp, ptrno, newblkno, oldblkno, nbp)
 	if ((ip->i_ffs_mode & IFMT) == IFDIR &&
 	    pagedep_lookup(ip, lbn, DEPALLOC, &pagedep) == 0)
 		WORKLIST_INSERT(&nbp->b_dep, &pagedep->pd_list);
-	if (nbp == NULL) {
-		nbp = softdep_setup_pagecache(ip, lbn, ip->i_fs->fs_bsize);
-	}
 	WORKLIST_INSERT(&nbp->b_dep, &aip->ai_list);
 	FREE_LOCK(&lk);
 	setup_allocindir_phase2(bp, ip, aip);
@@ -1787,8 +1775,7 @@ setup_allocindir_phase2(bp, ip, aip)
 		if (newindirdep) {
 			if (indirdep->ir_savebp != NULL) {
 				brelse(newindirdep->ir_savebp);
-				KDASSERT(softdep_lockedbufs != 0);
-				softdep_lockedbufs--;
+				softdep_trackbufs(-1, FALSE);
 			}
 			WORKITEM_FREE(newindirdep, D_INDIRDEP);
 		}
@@ -1803,9 +1790,9 @@ setup_allocindir_phase2(bp, ip, aip)
 			VOP_BMAP(bp->b_vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		}
+		softdep_trackbufs(1, TRUE);
 		newindirdep->ir_savebp =
 		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
-		softdep_lockedbufs++;
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
 		bcopy(bp->b_data, newindirdep->ir_savebp->b_data, bp->b_bcount);
 	}
@@ -2422,11 +2409,12 @@ indir_trunc(ip, dbn, level, lbn, countp)
 		FREE_LOCK(&lk);
 	} else {
 		FREE_LOCK(&lk);
+		softdep_trackbufs(1, FALSE);
 		error = bread(ip->i_devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
 		if (error)
 			return (error);
-		softdep_lockedbufs++;
 	}
+
 	/*
 	 * Recursively free indirect blocks.
 	 */
@@ -2446,8 +2434,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	}
 	bp->b_flags |= B_INVAL | B_NOCACHE;
 	brelse(bp);
-	KDASSERT(softdep_lockedbufs != 0);
-	softdep_lockedbufs--;
+	softdep_trackbufs(-1, FALSE);
 	return (allerror);
 }
 
@@ -3281,8 +3268,7 @@ softdep_disk_io_initiation(bp)
 			if (LIST_FIRST(&indirdep->ir_deplisthd) == NULL) {
 				indirdep->ir_savebp->b_flags |= B_INVAL | B_NOCACHE;
 				brelse(indirdep->ir_savebp);
-				KDASSERT(softdep_lockedbufs != 0);
-				softdep_lockedbufs--;
+				softdep_trackbufs(-1, FALSE);
 
 				/* inline expand WORKLIST_REMOVE(wk); */
 				wk->wk_state &= ~ONWORKLIST;
@@ -4453,7 +4439,7 @@ loop:
 		switch (wk->wk_type) {
 
 		case D_ALLOCDIRECT:
-			KASSERT(vp->v_type != VREG);
+			KASSERT(vp->v_type != VREG || bp->b_lblkno < 0);
 			adp = WK_ALLOCDIRECT(wk);
 			if (adp->ad_state & DEPCOMPLETE)
 				break;
@@ -5280,7 +5266,6 @@ softdep_setup_pagecache(ip, lbn, size)
 {
 	struct vnode *vp = ITOV(ip);
 	struct buf *bp;
-	int s;
 	UVMHIST_FUNC("softdep_setup_pagecache"); UVMHIST_CALLED(ubchist);
 
 	/*
@@ -5291,10 +5276,7 @@ softdep_setup_pagecache(ip, lbn, size)
 
 	bp = softdep_lookup_pcbp(vp, lbn);
 	if (bp == NULL) {
-		s = splbio();
 		bp = pool_get(&sdpcpool, PR_WAITOK);
-		splx(s);
-
 		bp->b_vp = vp;
 		bp->b_lblkno = lbn;
 		LIST_INIT(&bp->b_dep);
@@ -5356,35 +5338,25 @@ softdep_lookupvp(fs, ino)
 	return (NULL);
 }
 
-/*
- * Flush some dependent page cache data for any vnode *except*
- * the one specified.
- * XXXUBC this is a horrible hack and it's probably not too hard to deadlock
- * even with this, but it's better than nothing.
- */
-
 static void
-softdep_flush_indir(vp)
-	struct vnode *vp;
+softdep_trackbufs(int delta, boolean_t throttle)
 {
-	struct buf *bp;
-	int i;
 
-	for (i = 0; i < PCBPHASHSIZE; i++) {
-		LIST_FOREACH(bp, &pcbphashhead[i], b_hash) {
-			if (bp->b_vp == vp ||
-			    LIST_FIRST(&bp->b_dep)->wk_type != D_ALLOCINDIR) {
-				continue;
-			}
-
-			VOP_FSYNC(bp->b_vp, curproc->p_ucred, FSYNC_WAIT, 0, 0,
-				  curproc);
-			return;
+	if (delta < 0) {
+		if (softdep_lockedbufs < nbuf >> 2) {
+			wakeup(&softdep_lockedbufs);
 		}
+		KASSERT(softdep_lockedbufs >= -delta);
+		softdep_lockedbufs += delta;
+		return;
 	}
-	printf("softdep_flush_indir: nothing to flush?\n");
-}
 
+	while (throttle && softdep_lockedbufs >= nbuf >> 2) {
+		speedup_syncer();
+		tsleep(&softdep_lockedbufs, PRIBIO, "softdbufs", 0);
+	}
+	softdep_lockedbufs += delta;
+}
 
 static struct buf *
 softdep_lookup_pcbp(vp, lbn)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13.2.11 2002/11/11 22:10:19 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.13.2.12 2003/01/03 17:07:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.13.2.11 2002/11/11 22:10:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.13.2.12 2003/01/03 17:07:48 thorpej Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -335,7 +335,7 @@ fdprint(aux, fdc)
 	register struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
-		printf(" drive %d", fa->fa_drive);
+		aprint_normal(" drive %d", fa->fa_drive);
 	return QUIET;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.2.2.3 2002/10/18 02:44:24 nathanw Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.2.2.4 2003/01/03 17:08:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.2.2.3 2002/10/18 02:44:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.2.2.4 2003/01/03 17:08:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -82,9 +82,6 @@ void	sysmon_wdog_release(struct sysmon_wdog *);
 int	sysmon_wdog_setmode(struct sysmon_wdog *, int, u_int);
 void	sysmon_wdog_ktickle(void *);
 void	sysmon_wdog_shutdown(void *);
-
-#define	SYSMON_MINOR_ENVSYS	0
-#define	SYSMON_MINOR_WDOG	1
 
 /*
  * sysmonopen_wdog:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.6.26.4 2002/10/18 02:42:51 nathanw Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.6.26.5 2003/01/03 17:07:52 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.6.26.4 2002/10/18 02:42:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.6.26.5 2003/01/03 17:07:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,9 @@ ofisaprint(aux, pnp)
 
 	(void)of_packagename(oba->oba_phandle, name, sizeof name);
 	if (pnp)
-		printf("%s at %s", name, pnp);
+		aprint_normal("%s at %s", name, pnp);
 	else
-		printf(" (%s)", name);
+		aprint_normal(" (%s)", name);
 	return UNCONF;
 }
 

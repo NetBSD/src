@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.3.2.7 2002/12/29 20:49:21 thorpej Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.3.2.8 2003/01/03 17:07:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.3.2.7 2002/12/29 20:49:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.3.2.8 2003/01/03 17:07:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1457,7 +1457,7 @@ emuxki_resched_timer(struct emuxki_softc *sc)
 
 	if (timerate & ~EMU_TIMER_RATE_MASK)
 		timerate = 0;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_TIMER, timerate);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EMU_TIMER, timerate);
 	if (!active && (sc->timerstate & EMU_TIMER_STATE_ENABLED)) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_INTE,
 			bus_space_read_4(sc->sc_iot, sc->sc_ioh, EMU_INTE) &

@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.11.2.2 2002/10/18 02:43:19 nathanw Exp $	*/
+/*	$NetBSD: puc.c,v 1.11.2.3 2003/01/03 17:08:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.11.2.2 2002/10/18 02:43:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.11.2.3 2003/01/03 17:08:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,8 +321,8 @@ puc_print(aux, pnp)
 	struct puc_attach_args *paa = aux;
         
 	if (pnp)
-		printf("%s at %s", puc_port_type_name(paa->type), pnp);
-	printf(" port %d", paa->port);
+		aprint_normal("%s at %s", puc_port_type_name(paa->type), pnp);
+	aprint_normal(" port %d", paa->port);
 	return (UNCONF);
 }
 

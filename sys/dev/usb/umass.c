@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.52.2.11 2002/12/19 00:48:19 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.52.2.12 2003/01/03 17:08:18 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.11 2002/12/19 00:48:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.12 2003/01/03 17:08:18 thorpej Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -684,8 +684,10 @@ umass_disco(struct umass_softc *sc)
 
 	/* Remove all the pipes. */
 	for (i = 0 ; i < UMASS_NEP ; i++) {
-		if (sc->sc_pipe[i] != NULL)
+		if (sc->sc_pipe[i] != NULL) {
 			usbd_close_pipe(sc->sc_pipe[i]);
+			sc->sc_pipe[i] = NULL;
+		}
 	}
 }
 
