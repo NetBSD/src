@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.4 2001/11/25 19:05:23 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.5 2001/11/25 19:15:47 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -93,7 +93,8 @@ typedef struct {
 /* Command Status Wrapper */
 typedef struct {
 	uDWord		dCSWSignature;
-#define CSWSIGNATURE	0x53425355
+#define CSWSIGNATURE		0x53425355
+#define CSWSIGNATURE_OLYMPUS_C1	0x55425355
 	uDWord		dCSWTag;
 	uDWord		dCSWDataResidue;
 	uByte		bCSWStatus;
@@ -178,6 +179,9 @@ struct umass_softc {
 	 * Yano ATAPI-USB
 	 */
 #define FORCE_SHORT_INQUIRY      0x08
+
+	/* The device uses a weird CSWSIGNATURE. */
+#define WRONG_CSWSIG		0x10
 
 	u_int8_t	wire_proto;		/* USB wire protocol */
 #define WPROTO_BBB	1

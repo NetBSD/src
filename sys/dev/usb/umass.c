@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.67 2001/11/25 19:05:22 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.68 2001/11/25 19:15:46 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.67 2001/11/25 19:05:22 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.68 2001/11/25 19:15:46 augustss Exp $");
 
 #include "atapibus.h"
 
@@ -340,6 +340,15 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		sc->drive = ZIP_100;
 		sc->transfer_speed = UMASS_ZIP100_TRANSFER_SPEED;
 		sc->quirks |= NO_TEST_UNIT_READY;
+	}
+
+	if (UGETW(dd->idVendor) == USB_VENDOR_OLYMPUS &&
+	    UGETW(dd->idProduct) == USB_PRODUCT_OLYMPUS_C1) {
+		/*
+		 * The Olympus C-1 camera uses a different command-status
+		 * signature.
+		 */
+		sc->quirks |= WRONG_CSWSIG;
 	}
 
 	id = usbd_get_interface_descriptor(iface);
@@ -1204,6 +1213,11 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		}
 
 		DIF(UDMASS_BBB, umass_bbb_dump_csw(sc, &sc->csw));
+
+		/* Translate weird command-status signatures. */
+		if ((sc->quirks & WRONG_CSWSIG) &&
+		    UGETDW(sc->csw.dCSWSignature) == CSWSIGNATURE_OLYMPUS_C1)
+			USETDW(sc->csw.dCSWSignature, CSWSIGNATURE);
 
 		/* Check CSW and handle any error */
 		if (UGETDW(sc->csw.dCSWSignature) != CSWSIGNATURE) {
