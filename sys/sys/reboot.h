@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.16 1998/06/06 20:24:18 thorpej Exp $	*/
+/*	$NetBSD: reboot.h,v 1.17 2000/07/29 20:06:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -49,7 +49,7 @@
 #define	RB_NOSYNC	0x004	/* dont sync before reboot */
 #define	RB_HALT		0x008	/* don't reboot, just halt */
 #define	RB_INITNAME	0x010	/* name given for /etc/init (unused) */
-#define	RB_DFLTROOT	0x020	/* use compiled-in rootdev */
+#define	__RB_UNUSED1	0x020	/* was RB_DFLTROOT, obsolete */
 #define	RB_KDB		0x040	/* give control to kernel debugger */
 #define	RB_RDONLY	0x080	/* mount root fs read-only */
 #define	RB_DUMP		0x100	/* dump kernel memory before reboot */

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2000/02/29 15:21:48 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2000/07/29 20:06:29 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -185,8 +185,6 @@ ret:
 					howto |= RB_HALT;
 				else if (c == 'd')
 					howto |= RB_KDB;
-				else if (c == 'r')
-					howto |= RB_DFLTROOT;
 				else if (c == 's')
 					howto |= RB_SINGLE;
 			}
