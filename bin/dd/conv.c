@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.15 2003/08/04 22:31:23 jschauma Exp $	*/
+/*	$NetBSD: conv.c,v 1.16 2003/08/05 14:55:03 erh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: conv.c,v 1.15 2003/08/04 22:31:23 jschauma Exp $");
+__RCSID("$NetBSD: conv.c,v 1.16 2003/08/05 14:55:03 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: conv.c,v 1.15 2003/08/04 22:31:23 jschauma Exp $");
 
 #include <err.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "dd.h"
 #include "extern.h"
