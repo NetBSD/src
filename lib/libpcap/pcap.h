@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.9 2001/01/06 02:11:18 christos Exp $	*/
+/*	$NetBSD: pcap.h,v 1.10 2002/09/22 16:13:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -123,6 +123,8 @@ int	pcap_compile_nopcap(int, int, struct bpf_program *, char *,
 /* XXX */
 int	pcap_freecode(pcap_t *, struct bpf_program *);
 int	pcap_datalink(pcap_t *);
+int	pcap_list_datalinks(pcap_t *, int **);
+int	pcap_set_datalink(pcap_t *, int);
 int	pcap_snapshot(pcap_t *);
 int	pcap_is_swapped(pcap_t *);
 int	pcap_major_version(pcap_t *);
