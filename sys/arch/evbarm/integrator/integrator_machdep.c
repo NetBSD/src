@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.48 2003/09/06 11:33:23 rearnsha Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.49 2003/09/06 12:58:48 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.48 2003/09/06 11:33:23 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.49 2003/09/06 12:58:48 rearnsha Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.48 2003/09/06 11:33:23 rear
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
-#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
