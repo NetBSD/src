@@ -1,4 +1,8 @@
-# $NetBSD: Makefile,v 1.4 2002/09/18 05:41:58 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2003/07/26 15:25:52 mrg Exp $
+
+.include <bsd.own.mk>
+# XXX
+.if ${USE_TOOLS_TOOLCHAIN} == "yes"
 
 NOPROFILE=	yes
 
@@ -21,7 +25,9 @@ all realall:
 
 ${TESTLIB}: lib${LIB}.so.1.0
 	cp lib${LIB}.so.1.0 ${TESTLIB}
+.endif
 
 regress:
 
 .include <bsd.lib.mk>
+
