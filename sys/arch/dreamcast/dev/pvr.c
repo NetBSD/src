@@ -1,4 +1,4 @@
-/* $NetBSD: pvr.c,v 1.1 2001/01/16 00:33:20 marcus Exp $ */
+/* $NetBSD: pvr.c,v 1.2 2001/01/21 05:26:10 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Marcus Comstedt
@@ -104,10 +104,10 @@ const struct wsscreen_list pvr_screenlist = {
 static int	pvr_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static paddr_t	pvr_mmap __P((void *, off_t, int));
 static int	pvr_alloc_screen __P((void *, const struct wsscreen_descr *,
-		    void **, int *, int *, long *));
+    void **, int *, int *, long *));
 static void	pvr_free_screen __P((void *, void *));
 static int	pvr_show_screen __P((void *, void *, int,
-		    void (*)(void *, int, int), void *));
+    void (*)(void *, int, int), void *));
 
 static void	pvr_check_cable __P((int *, int *));
 static void	pvr_init_dpy_hardware __P((void));
@@ -138,10 +138,10 @@ pvr_check_cable(vgamode_p, rgbmode_p)
 	v = ((*(volatile u_int16_t *)(porta+1))>>8)&3;
 
 	if (! (v&2) )
-	  *vgamode_p = *rgbmode_p = 1;
+		*vgamode_p = *rgbmode_p = 1;
 	else {
-	  *vgamode_p = 0;
-	  *rgbmode_p = (v&1)? 0 : 1;
+		*vgamode_p = 0;
+		*rgbmode_p = (v&1)? 0 : 1;
 	}
 }
 
@@ -159,15 +159,15 @@ pvr_init_dpy_hardware()
 	pvr[0x40/4] = 0; /* black border */
 
 	if(vgamode) {
-	  pvr[0x44/4] = 0x800004; /* 31kHz, RGB565 */
-	  pvr[0xd0/4] = 0x100;	  /* video output */
-	  display_lines_per_field = 480;
-	  voffset = 36;
+		pvr[0x44/4] = 0x800004; /* 31kHz, RGB565 */
+		pvr[0xd0/4] = 0x100;	  /* video output */
+		display_lines_per_field = 480;
+		voffset = 36;
 	} else {
-	  pvr[0x44/4] = 0x000004; /* 15kHz, RGB565 */
-	  pvr[0xd0/4] = 0x110;	  /* video output, NTSC, interlace */
-	  modulo += 640*2/4;	  /* interlace -> skip every other line */
-	  voffset = 18;
+		pvr[0x44/4] = 0x000004; /* 15kHz, RGB565 */
+		pvr[0xd0/4] = 0x110;	/* video output, NTSC, interlace */
+		modulo += 640*2/4;	/* interlace -> skip every other line */
+		voffset = 18;
 	}
 
 	pvr[0x50/4]=0;          /* video base address, long field */
@@ -268,7 +268,7 @@ pvr_match(parent, match, aux)
   	struct shb_attach_args *sa = aux;
 
 	if(strcmp("pvr", match->cf_driver->cd_name))
-	  return 0;
+		return 0;
 
 	sa->ia_iosize = 0 /* 0x1400 */;
 	return (1);
