@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.179 1995/10/11 19:32:37 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.180 1995/10/12 17:56:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -147,6 +147,8 @@ cpu_startup()
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
+	struct pcb *pcb;
+	int x;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -251,10 +253,24 @@ cpu_startup()
 	configure();
 
 	/*
-	 * After configuring npx, etc., save the value of cr0 so it can
-	 * be reloaded quickly.
+	 * Set up proc0's TSS and LDT.
 	 */
-	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
+	curpcb = pcb = &proc0.p_addr->u_pcb;
+	pcb->pcb_flags = 0;
+	pcb->pcb_tss.tss_ioopt =
+	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
+		pcb->pcb_iomap[x] = 0xffffffff;
+
+	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pcb->pcb_cr0 = rcr0();
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
+	tss_alloc(pcb);
+	ltr(pcb->pcb_tss_sel);
+
+	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+
 }
 
 /*
@@ -1000,7 +1016,6 @@ void
 init386(first_avail)
 	vm_offset_t first_avail;
 {
-	struct pcb *pcb;
 	int x;
 	unsigned biosbasemem, biosextmem;
 	struct region_descriptor region;
@@ -1009,21 +1024,18 @@ init386(first_avail)
 	extern void lgdt();
 
 	proc0.p_addr = proc0paddr;
-	curpcb = pcb = &proc0.p_addr->u_pcb;
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 	/* make gdt gates and memory segments */
 	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GPROC0TSS_SEL].sd, &pcb->pcb_tss, sizeof(struct pcb) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT, SEL_KPL,
+	    0, 0);
 	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GPROC0LDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT, SEL_KPL,
-	    0, 0);
 
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
@@ -1058,21 +1070,6 @@ init386(first_avail)
 	lgdt(&region);
 	setregion(&region, idt, sizeof(idt) - 1);
 	lidt(&region);
-
-	/* Set up proc 0's PCB and TSS. */
-	pcb->pcb_flags = 0;
-	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
-	pcb->pcb_tss_sel = GSEL(GPROC0TSS_SEL, SEL_KPL);
-	ltr(pcb->pcb_tss_sel);
-	pcb->pcb_ldt_sel = GSEL(GPROC0LDT_SEL, SEL_KPL);
-	lldt(pcb->pcb_ldt_sel);
-
-	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 
 #if NISA > 0
 	isa_defaultirq();

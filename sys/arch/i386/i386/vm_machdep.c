@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53 1995/10/11 19:32:49 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54 1995/10/12 17:56:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -109,7 +109,7 @@ cpu_fork(p1, p2)
 	 * the allocations below.
 	 */
 	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
-	pcb->pcb_ldt_sel = GSEL(GPROC0LDT_SEL, SEL_KPL);
+	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 
 	/* Fix up the TSS, etc. */
 	pcb->pcb_cr0 |= CR0_TS;
