@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 1995/05/08 17:56:49 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.46 1995/07/05 16:35:42 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -3765,6 +3765,27 @@ kvm_uncache(va, npages)
 	}
 }
 
+/*
+ * Turn on IO cache for a given (va, number of pages).
+ *
+ * We just assert PG_NC for each PTE; the addresses must reside
+ * in locked kernel space.  A cache flush is also done.
+ */
+kvm_iocache(va, npages)
+	register caddr_t va;
+	register int npages;
+{
+	register int pte;
+
+	for (; --npages >= 0; va += NBPG) {
+		pte = getpte(va);
+		if ((pte & PG_V) == 0)
+			panic("kvm_iocache !pg_v");
+		pte |= PG_IOC;
+		setpte(va, pte);
+	}
+}
+
 int
 pmap_count_ptes(pm)
 	register struct pmap *pm;
@@ -3924,3 +3945,106 @@ pm_check_k(s, pm)
 	return 0;
 }
 #endif
+
+/*
+ * Return the number bytes that pmap_dumpmmu() will dump.
+ * For each pmeg in the MMU, we'll write NPTESG PTEs.
+ * The last page or two contains stuff so libkvm can bootstrap.
+ */
+int
+pmap_dumpsize()
+{
+	return btoc(((seginval + 1) * NPTESG * sizeof(int)) +
+		    sizeof(seginval) +
+		    sizeof(pmemarr) +
+		    sizeof(kernel_segmap_store));
+}
+
+/*
+ * Write the mmu contents to the dump device.
+ * This gets appended to the end of a crash dump since
+ * there is no in-core copy of kernel memory mappings.
+ */
+int
+pmap_dumpmmu(dump, blkno)
+	register daddr_t blkno;
+	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+{
+	register int pmeg;
+	register int addr;	/* unused kernel virtual address */
+	register int i;
+	register int *pte, *ptend;
+	register int error;
+	register int *kp;
+	int buffer[dbtob(1) / sizeof(int)];
+
+	/*
+	 * dump page table entries
+	 *
+	 * We dump each pmeg in order (by segment number).  Since the MMU
+	 * automatically maps the given virtual segment to a pmeg we must
+	 * iterate over the segments by incrementing an unused segment slot
+	 * in the MMU.  This fixed segment number is used in the virtual
+	 * address argument to getpte().
+	 */
+	setcontext(0);
+
+	/*
+	 * Go through the pmegs and dump each one.
+	 */
+	pte = buffer;
+	ptend = &buffer[sizeof(buffer) / sizeof(buffer[0])];
+	for (pmeg = 0; pmeg <= seginval; ++pmeg) {
+		register int va = 0;
+
+		setsegmap(va, pmeg);
+		i = NPTESG;
+		do {
+			*pte++ = getpte(va);
+			if (pte >= ptend) {
+				/*
+				 * Note that we'll dump the last block
+				 * the last time through the loops because
+				 * all the PMEGs occupy 32KB which is 
+				 * a multiple of the block size.
+				 */
+				error = (*dump)(dumpdev, blkno,
+						(caddr_t)buffer,
+						dbtob(1));
+				if (error != 0)
+					return (error);
+				++blkno;
+				pte = buffer;
+			}
+			va += NBPG;
+		} while (--i > 0);
+	}
+	setsegmap(0, seginval);
+
+	/*
+	 * Next, dump # of pmegs, the physical memory table and the
+	 * kernel's segment map.
+	 */
+	pte = buffer;
+	*pte++ = seginval;
+	*pte++ = npmemarr;
+	bcopy((char *)pmemarr, (char *)pte, sizeof(pmemarr));
+	pte = (int *)((int)pte + sizeof(pmemarr));
+	kp = (int *)kernel_segmap_store;
+	i = sizeof(kernel_segmap_store) / sizeof(int);
+	do {
+		*pte++ = *kp++;
+		if (pte >= ptend) {
+			error = (*dump)(dumpdev, blkno, (caddr_t)buffer,
+					dbtob(1));
+			if (error != 0)
+				return (error);
+			++blkno;
+			pte = buffer;
+		}
+	} while (--i > 0);
+	if (pte != buffer)
+		error = (*dump)(dumpdev, blkno++, (caddr_t)buffer, dbtob(1));
+
+	return (error);
+}
