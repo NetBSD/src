@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.5 1994/10/26 07:25:26 cgd Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.6 2001/10/11 15:02:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,36 +95,3 @@ struct clkreg {
 #ifdef NOTDEF
 #define CLK_INTERVAL	5000	/* 20msec interval at 250Khz */
 #endif
-
-/*
- * HP300 battery-backed clock
- */
-
-struct bbc_tm {
-	int	tm_sec;
-	int	tm_min;
-	int	tm_hour;
-	int	tm_mday;
-	int	tm_mon;
-	int	tm_year;
-};
-
-#define FEBRUARY	2
-#define	STARTOFTIME	1970
-#define SECDAY		86400L
-#define SECYR		(SECDAY * 365)
-
-#define BBC_SET_REG 	0xe0
-#define BBC_WRITE_REG	0xc2
-#define BBC_READ_REG	0xc3
-#define NUM_BBC_REGS	12
-
-#define	leapyear(year)		((year) % 4 == 0)
-#define	range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return(0)
-#define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
-#define	days_in_month(a) 	(month_days[(a) - 1])
-#define	bbc_to_decimal(a,b) 	(bbc_registers[a] * 10 + bbc_registers[b])
-#define	decimal_to_bbc(a,b,n) 	{ \
-	bbc_registers[a] = (n) % 10; \
-	bbc_registers[b] = (n) / 10; \
-}
