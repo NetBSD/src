@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.67 2003/02/26 06:31:15 matt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.68 2003/05/27 22:36:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.67 2003/02/26 06:31:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.68 2003/05/27 22:36:38 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -332,7 +332,9 @@ rip_output(m, va_alist)
 			m_freem(m);
 			return (EMSGSIZE);
 		}
-		M_PREPEND(m, sizeof(struct ip), M_WAIT);
+		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
+		if (!m)
+			return (ENOBUFS);
 		ip = mtod(m, struct ip *);
 		ip->ip_tos = 0;
 		ip->ip_off = htons(0);
