@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/02/23 23:23:10 simonb Exp $
+#	$NetBSD: Makefile,v 1.15 2003/03/30 07:58:03 isaki Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -22,7 +22,7 @@ SRCS+=		ashldi3.c ashrdi3.c divdi3.c moddi3.c qdivrem.c
 SRCS+=		strcat.c strchr.c strcmp.c strcpy.c strerror.c strlen.c
 SRCS+=		strncmp.c strrchr.c
 
-SRCS+=		adler32.c crc32.c infblock.c infcodes.c inffast.c
+SRCS+=		crc32.c infblock.c infcodes.c inffast.c
 SRCS+=		inflate.c inftrees.c infutil.c uncompr.c
 
 SRCS+=		consio.c devopen.c parseutils.c sdcd.c fd.c fdsub.S chdsk.c
