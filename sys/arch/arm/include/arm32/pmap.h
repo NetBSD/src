@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33 2002/03/23 02:22:57 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34 2002/03/23 19:21:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -107,17 +107,6 @@ struct pmap {
 typedef struct pmap *pmap_t;
 
 /*
- * Page hooks. I'll eliminate these sometime soon :-)
- *
- * For speed we store the both the virtual address and the page table
- * entry address for each page hook.
- */
-typedef struct {
-	vaddr_t va;
-	pt_entry_t *pte;
-} pagehook_t;
-
-/*
  * Physical / virtual address structure. In a number of places (particularly
  * during bootstrapping) we need to keep track of the physical and virtual
  * addresses of various pages
@@ -216,7 +205,7 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
-	(PD_SIZE - (KERNEL_SPACE_START >> PDSHIFT) * sizeof(pd_entry_t))
+	(PD_SIZE - (KERNEL_BASE >> PDSHIFT) * sizeof(pd_entry_t))
 
 /*
  * tell MI code that the cache is virtually-indexed *and* virtually-tagged.
