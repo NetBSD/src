@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.8 1996/05/17 15:33:52 thorpej Exp $
+|	$NetBSD: vectors.s,v 1.9 1996/05/18 00:52:53 thorpej Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 |	@(#)vectors.s	8.2 (Berkeley) 1/21/94
 |
 
-	.data
+	.text
 	.globl	_buserr,_addrerr
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
 	.globl	_badtrap
