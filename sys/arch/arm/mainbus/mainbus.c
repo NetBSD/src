@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.1 2001/02/24 19:38:02 reinoud Exp $ */
+/* $NetBSD: mainbus.c,v 1.2 2001/06/11 17:44:38 matt Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -48,7 +48,9 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/io.h>
+#if defined(arm32)		/* XXX */
+#include <machine/bus.h>
+#endif
 #include <machine/bus.h>
 #include <arm/mainbus/mainbus.h>
 #include "locators.h"
@@ -137,7 +139,10 @@ mainbussearch(parent, cf, aux)
 			mb.mb_drq = MAINBUSCF_DACK_DEFAULT;
 			mb.mb_irq = MAINBUSCF_IRQ_DEFAULT;
 		} else {    
-			mb.mb_iobase = cf->cf_loc[MAINBUSCF_BASE] + IO_CONF_BASE;
+			mb.mb_iobase = cf->cf_loc[MAINBUSCF_BASE];
+#if defined(arm32) /* XXX */
+			mb.mb_iobase += IO_CONF_BASE;
+#endif
 			mb.mb_iosize = 0;
 			mb.mb_drq = cf->cf_loc[MAINBUSCF_DACK];
 			mb.mb_irq = cf->cf_loc[MAINBUSCF_IRQ];
