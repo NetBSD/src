@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.13 2004/12/13 19:26:34 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.14 2004/12/13 19:40:56 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -729,7 +729,7 @@ ethfoo_clone_creator(int unit)
 	cf->cf_name = ethfoo_cd.cd_name;
 	cf->cf_atname = ethfoo_ca.ca_name;
 	cf->cf_unit = unit;
-	cf->cf_fstate = FSTATE_NOTFOUND;
+	cf->cf_fstate = FSTATE_STAR;
 
 	return (struct ethfoo_softc *)config_attach_pseudo(cf);
 }
