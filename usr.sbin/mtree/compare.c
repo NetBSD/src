@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.10 1996/02/01 00:04:52 jtc Exp $	*/
+/*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: compare.c,v 1.10 1996/02/01 00:04:52 jtc Exp $";
+static char rcsid[] = "$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: compare.c,v 1.10 1996/02/01 00:04:52 jtc Exp $";
 #include "mtree.h"
 #include "extern.h"
 
-extern int uflag;
+extern int tflag, uflag;
 
 static char *ftype __P((u_int));
 
@@ -75,7 +75,6 @@ compare(name, s, p)
 	register NODE *s;
 	register FTSENT *p;
 {
-	extern int uflag;
 	u_long len, val;
 	int fd, label;
 	char *cp, *tab;
@@ -173,17 +172,35 @@ typeerr:		LABEL;
 	}
 	/*
 	 * XXX
-	 * Catches nano-second differences, but doesn't display them.
+	 * Since utimes(2) only takes a timeval, there's no point in
+	 * comparing the low bits of the timespec nanosecond field.  This
+	 * will only result in mismatches that we can never fix.
+	 *
+	 * Doesn't display microsecond differences.
 	 */
-	if (s->flags & F_TIME &&
-	    (s->st_mtimespec.tv_sec != p->fts_statp->st_mtimespec.tv_sec ||
-	    s->st_mtimespec.tv_nsec != p->fts_statp->st_mtimespec.tv_nsec)) {
-		LABEL;
-		(void)printf("%smodification time (%.24s, ",
-		    tab, ctime(&s->st_mtimespec.tv_sec));
-		(void)printf("%.24s)\n",
-		    ctime(&p->fts_statp->st_mtimespec.tv_sec));
-		tab = "\t";
+	if (s->flags & F_TIME) {
+		struct timeval tv[2];
+
+		TIMESPEC_TO_TIMEVAL(&tv[0], &s->st_mtimespec);
+		TIMESPEC_TO_TIMEVAL(&tv[1], &p->fts_statp->st_mtimespec);
+		if (tv[0].tv_sec != tv[1].tv_sec ||
+		    tv[0].tv_usec != tv[1].tv_usec) {
+			LABEL;
+			(void)printf("%smodification time (%.24s, ",
+			    tab, ctime(&s->st_mtimespec.tv_sec));
+			(void)printf("%.24s",
+			    ctime(&p->fts_statp->st_mtimespec.tv_sec));
+			if (tflag) {
+				tv[1] = tv[0];
+				if (utimes(p->fts_accpath, tv))
+					(void)printf(", not modified: %s)\n",
+					    strerror(errno));
+				else
+					(void)printf(", modified)\n");
+			} else
+				(void)printf(")\n");
+			tab = "\t";
+		}
 	}
 	if (s->flags & F_CKSUM)
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0) {
