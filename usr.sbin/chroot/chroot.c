@@ -1,4 +1,4 @@
-/*	$NetBSD: chroot.c,v 1.10 2001/04/06 02:24:14 lukem Exp $	*/
+/*	$NetBSD: chroot.c,v 1.11 2001/04/06 02:34:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.10 2001/04/06 02:24:14 lukem Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.11 2001/04/06 02:34:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	for (gids = 0; (p = strsep(&grouplist, ",")) != NULL; ) {
+	for (gids = 0;
+	    (p = strsep(&grouplist, ",")) != NULL && gids < NGROUPS_MAX; ) {
 		if (*p == '\0')
 			continue;
 
@@ -139,6 +140,8 @@ main(int argc, char *argv[])
 		}
 		gids++;
 	}
+	if (p != NULL && gids == NGROUPS_MAX)
+		errx(1, "too many supplementary groups provided");
 
 	if (user != NULL) {
 		if (isdigit(*user)) {
