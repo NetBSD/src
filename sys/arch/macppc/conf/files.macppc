@@ -51,6 +51,9 @@ file arch/macppc/macppc/cpu.c
 
 include "dev/pci/files.pci"
 
+# network devices MII bus
+include "dev/mii/files.mii"
+
 file arch/macppc/pci/pci_machdep.c		pci
 file arch/macppc/pci/bandit.c			pci
 
