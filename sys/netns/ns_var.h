@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_var.h,v 1.9 2000/02/02 08:06:49 thorpej Exp $	*/
+/*	$NetBSD: ns_var.h,v 1.10 2000/02/02 08:14:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ extern	u_char nsctlerrmap[];
 
 struct socket;
 struct nspcb;
+struct ifaddr;
 struct ifnet;
 struct ns_ifaddr;
 struct sockaddr_ns;
