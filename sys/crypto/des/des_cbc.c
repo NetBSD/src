@@ -56,7 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: des_cbc.c,v 1.5 2001/11/13 01:40:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: des_cbc.c,v 1.6 2002/09/08 07:41:01 elric Exp $");
+
+#include <sys/types.h>
 
 #include <crypto/des/des_locl.h>
 
