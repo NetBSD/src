@@ -1,7 +1,7 @@
-/*	$NetBSD: vm_machdep_arm.c,v 1.4.10.1 2001/11/15 06:39:21 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.3.6.2 2001/11/15 06:39:22 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1994-1998 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -34,69 +34,81 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.4.10.1 2001/11/15 06:39:21 thorpej Exp $");
-
-#include <sys/core.h>
-#include <sys/exec.h>
-#include <sys/ptrace.h>
-#include <sys/signalvar.h>
-#include <sys/systm.h>
-#include <sys/uio.h>
-#include <sys/vnode.h>
-
-#include <machine/reg.h>
-
-
 /*
- * Dump the machine specific segment at the start of a core dump.
+ * arm/frame.h - Stack frames structures common to arm26 and arm32
  */
 
-int
-cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
-    struct core *chdr)
-{
-	struct proc *p = l->l_proc;
-	int error;
-	struct {
-		struct reg regs;
-		struct fpreg fpregs;
-	} cpustate;
-	struct coreseg cseg;
+#ifndef _ARM_FRAME_H_
+#define _ARM_FRAME_H_
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(cpustate);
+#ifndef _LOCORE
 
-	/* Save integer registers. */
-	error = process_read_regs(l, &cpustate.regs);
-	if (error)
-		return error;
-	/* Save floating point registers. */
-	error = process_read_fpregs(l, &cpustate.fpregs);
-	if (error)
-		return error;
+#include <sys/signal.h>
+#include <sys/sa.h>
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
+/*
+ * Trap frame.  Pushed onto the kernel stack on a trap (synchronous exception).
+ */
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
+typedef struct trapframe {
+	register_t tf_spsr; /* Zero on arm26 */
+	register_t tf_r0;
+	register_t tf_r1;
+	register_t tf_r2;
+	register_t tf_r3;
+	register_t tf_r4;
+	register_t tf_r5;
+	register_t tf_r6;
+	register_t tf_r7;
+	register_t tf_r8;
+	register_t tf_r9;
+	register_t tf_r10;
+	register_t tf_r11;
+	register_t tf_r12;
+	register_t tf_usr_sp;
+	register_t tf_usr_lr;
+	register_t tf_svc_sp; /* Not used on arm26 */
+	register_t tf_svc_lr; /* Not used on arm26 */
+	register_t tf_pc;
+} trapframe_t;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
+/* Register numbers */
+#define tf_r13 tf_usr_sp
+#define tf_r14 tf_usr_lr
+#define tf_r15 tf_pc
 
-	chdr->c_nseg++;
+/*
+ * Signal frame.  Pushed onto user stack before calling sigcode.
+ */
 
-	return error;
-}
+struct sigframe {
+	int	sf_signum;
+	int	sf_code;
+	struct	sigcontext *sf_scp;
+	sig_t	sf_handler;
+	struct	sigcontext sf_sc;
+};
+
+/*
+ * Scheduler activations upcall frame.  Pushed onto user stack before
+ * calling an SA upcall.
+ */
+
+struct saframe {
+#if 0 /* in registers on entry to upcallcode */
+	int		sa_type;
+	struct sa_t **	sa_sas;
+	int		sa_events;
+	int		sa_interrupted;
+#endif
+	int		sa_sig;
+	int		sa_code;
+	void *		sa_arg;
+	sa_upcall_t	sa_upcall;
+};
+
+#endif /* _LOCORE */
+
+#endif /* _ARM_FRAME_H_ */
+  
+/* End of frame.h */

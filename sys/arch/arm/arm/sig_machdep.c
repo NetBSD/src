@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.7.6.2 2001/11/14 20:53:08 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7.6.3 2001/11/15 06:39:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.2 2001/11/14 20:53:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.3 2001/11/15 06:39:21 thorpej Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -53,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.2 2001/11/14 20:53:08 thorpej 
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/lwp.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <arm/armreg.h>
 
@@ -64,10 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.2 2001/11/14 20:53:08 thorpej 
 #endif
 
 static __inline struct trapframe *
-process_frame(struct proc *p)
+process_frame(struct lwp *l)
 {
 
-	return p->p_addr->u_pcb.pcb_tf;
+	return l->l_addr->u_pcb.pcb_tf;
 }
 
 /*
@@ -82,12 +85,22 @@ process_frame(struct proc *p)
 void
 sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
 
-	tf = process_frame(p);
+	if (p->p_flag & P_SA) {
+		if (code)
+			sa_upcall(l, SA_UPCALL_SIGNAL, l, NULL, sig, code,
+			    NULL);
+		else
+			sa_upcall(l, SA_UPCALL_SIGNAL, NULL, l, sig, 0, NULL);
+		return;
+	}
+
+	tf = process_frame(l);
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -150,7 +163,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -164,7 +177,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	tf->tf_usr_sp = (int)fp;
 	tf->tf_pc = (int)p->p_sigctx.ps_sigcode;
 #ifndef arm26
-	cpu_cache_syncI();
+	cpu_cache_syncI();	/* XXX really necessary? */
 #endif
 
 	/* Remember that we're now on the signal stack. */
@@ -184,11 +197,12 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
  * a machine fault.
  */
 int
-sys___sigreturn14(struct proc *p, void *v, register_t *retval)
+sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
 
@@ -216,7 +230,7 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 #endif
 
 	/* Restore register context. */
-	tf = process_frame(p);
+	tf = process_frame(l);
 	tf->tf_r0    = context.sc_r0;
 	tf->tf_r1    = context.sc_r1;
 	tf->tf_r2    = context.sc_r2;
@@ -249,12 +263,12 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 }
 
 void
-cpu_getmcontext(p, mcp, flags)
-	struct proc *p;
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
 	mcontext_t *mcp;
 	unsigned int *flags;
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = process_frame(l);
 	__greg_t *gr = mcp->__gregs;
 	
 	/* Save General Register context. */
@@ -285,24 +299,24 @@ cpu_getmcontext(p, mcp, flags)
 }
 
 int
-cpu_setmcontext(p, mcp, flags)
-	struct proc *p;
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
 	const mcontext_t *mcp;
 	unsigned int flags;
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = process_frame(l);
 	__greg_t *gr = mcp->__gregs;
 
 	if ((flags & _UC_CPU) != 0) {
 		/* Restore General Register context. */
 		/* Make sure the processor mode has not been tampered with. */
 #ifdef PROG32
-		if ((gr[_REG_CPSR] & PSR_MODE) != PSR_USR32_MODE) ||
-		    (gr[_REG_CPSR] & (I32_bit | F32_bit) != 0)
+		if ((gr[_REG_CPSR] & PSR_MODE) != PSR_USR32_MODE ||
+		    (gr[_REG_CPSR] & (I32_bit | F32_bit)) != 0)
 			return (EINVAL);
 #else /* PROG26 */
-		if ((gr[_REG_PC] & R15_MODE) != R15_MODE_USR) ||
-		    (gr[_REG_PC] & (R15_IRQ_DISABLE | R15_FIQ_DISABLE) != 0)
+		if ((gr[_REG_PC] & R15_MODE) != R15_MODE_USR ||
+		    (gr[_REG_PC] & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 			return (EINVAL);
 #endif
 

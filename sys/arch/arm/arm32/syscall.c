@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2001/03/04 05:08:43 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.10.1 2001/11/15 06:39:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ syscall(frame, code)
 {
 	caddr_t stackargs;
 	const struct sysent *callp;
+	struct lwp *l;
 	struct proc *p;
 	int error;
 	u_int argsize;
@@ -131,8 +132,10 @@ syscall(frame, code)
 #endif	/* DEBUG */
 
 	uvmexp.syscalls++;
-	p = curproc;
-	p->p_addr->u_pcb.pcb_tf = frame;
+	l = curproc;
+	p = l->l_proc;
+
+	l->l_addr->u_pcb.pcb_tf = frame;
 
 #ifdef CPU_ARM7
 	/*
@@ -154,7 +157,7 @@ syscall(frame, code)
 	if ((ReadWord(frame->tf_pc - INSN_SIZE) & 0x0f000000) != 0x0f000000) {
 		frame->tf_pc -= INSN_SIZE;
 		++arm700bugcount;
-		userret(p);
+		userret(l);
 		return;
 	}
 #endif	/* CPU_ARM7 */
@@ -177,11 +180,11 @@ syscall(frame, code)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			trapsignal(p, SIGILL, ReadWord(frame->tf_pc - INSN_SIZE));
+			trapsignal(l, SIGILL, ReadWord(frame->tf_pc - INSN_SIZE));
 			break;
 		}
 
-		userret(p);
+		userret(l);
 		return;
 	}
 
@@ -238,7 +241,7 @@ syscall(frame, code)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -268,7 +271,7 @@ syscall(frame, code)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
-	userret(p);
+	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
@@ -279,16 +282,16 @@ void
 child_return(arg)
 	void *arg;
 {
-	struct proc *p = arg;
-	struct trapframe *frame = p->p_addr->u_pcb.pcb_tf;
+	struct lwp *l = arg;
+	struct trapframe *frame = l->l_addr->u_pcb.pcb_tf;
 
 	frame->tf_r0 = 0;
 	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */	
 
-	userret(p);
+	userret(l);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+	if (KTRPOINT(l->l_proc, KTR_SYSRET))
+		ktrsysret(l->l_proc, SYS_fork, 0, 0);
 #endif
 }
 

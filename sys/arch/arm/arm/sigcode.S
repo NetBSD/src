@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.1 2001/01/13 00:06:50 bjh21 Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.1.10.1 2001/11/15 06:39:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sigcode.S,v 1.1 2001/01/13 00:06:50 bjh21 Exp $")
+RCSID("$NetBSD: sigcode.S,v 1.1.10.1 2001/11/15 06:39:21 thorpej Exp $")
 
 #include "assym.h"
 #include <sys/syscall.h>
@@ -60,6 +60,22 @@ ENTRY_NP(sigcode)
 
 /* Well if that failed we better exit quick ! */
 
+	swi	SYS_exit
+	b	. - 8
+
+/*
+ * Scheduler activations upcall trampoline.
+ *
+ * r0-r3 are the first 4 upcall arguments.  The rest of the arguments
+ * are on the stack in the right places.  Pointer to the upcall routine
+ * follows args.
+ */
+ENTRY_NP(upcallcode)
+	add	lr, pc, #0			/* Set return address */
+	ldr	pc, [sp, #(SAF_UPCALL)]		/* Call the upcall */
+
+	/* Returned?!  Die! */
+	mov	r0, #101
 	swi	SYS_exit
 	b	. - 8
 
