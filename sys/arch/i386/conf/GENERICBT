@@ -1,7 +1,7 @@
 #
 # GENERICBT -- Generic machine w/bt driver -- distribution floppy
 #
-#	$Id: GENERICBT,v 1.12.2.2 1994/07/28 05:20:48 cgd Exp $
+#	$Id: GENERICBT,v 1.12.2.3 1994/08/09 22:32:45 mycroft Exp $
 #
 
 machine		"i386"
@@ -25,7 +25,8 @@ options		"COMPAT_NOMID"
 options		"COMPAT_09"
 options		"MACHINE_NONCONTIG"
 
-config		netbsd	root on wd0 swap on wd0 and sd0
+config		netbsd	swap generic
+options		GENERIC
 
 controller	isa0
 
@@ -91,6 +92,19 @@ tape		st0	at scsibus3 slave ?
 tape		st1	at scsibus3 slave ?
 disk		cd0	at scsibus3 slave ?
 disk		cd1	at scsibus3 slave ?
+
+master          pci0    at isa?
+
+controller	ncr0	at pci0 slave ?
+master		scsibus4 at ncr0
+disk		sd0	at scsibus4 slave ?
+disk		sd1	at scsibus4 slave ?
+disk		sd2	at scsibus4 slave ?
+disk		sd3	at scsibus4 slave ?
+tape		st0	at scsibus4 slave ?
+tape		st1	at scsibus4 slave ?
+disk		cd0	at scsibus4 slave ?
+disk		cd1	at scsibus4 slave ?
 
 device ed0 at isa? port 0x280 irq 9 iomem 0xd0000
 device ed1 at isa? port 0x250 irq 9 iomem 0xd8000
