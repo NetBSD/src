@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.6 1996/07/09 00:54:54 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.7 1996/07/14 04:08:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,6 +37,8 @@
 #include <sys/syslog.h>
 
 #include <vm/vm.h>
+
+#include <machine/autoconf.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -82,7 +84,7 @@ struct evcnt kn20aa_intr_evcnt;
 #endif
 
 void	kn20aa_pci_strayintr __P((int irq));
-void	kn20aa_iointr __P((void *framep, int vec));
+void	kn20aa_iointr __P((void *framep, unsigned long vec));
 void	kn20aa_enable_intr __P((int irq));
 struct kn20aa_intrhand *kn20aa_attach_intr __P((struct kn20aa_intrchain *,
 			    int, int (*) (void *), void *));
@@ -241,7 +243,7 @@ kn20aa_pci_strayintr(irq)
 void
 kn20aa_iointr(framep, vec)
 	void *framep;
-	int vec;
+	unsigned long vec;
 {
 	struct kn20aa_intrhand *ih;
 	int irq, handled;
