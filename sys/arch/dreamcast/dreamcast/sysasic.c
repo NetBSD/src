@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasic.c,v 1.5 2003/07/15 01:31:41 lukem Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.6 2004/05/07 15:21:04 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.5 2003/07/15 01:31:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.6 2004/05/07 15:21:04 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.5 2003/07/15 01:31:41 lukem Exp $");
 /* per-irq */
 struct sysasic_intrhand {
 	/* for quick check on interrupt */
-	unsigned	syh_events[(SYSASIC_EVENT_MAX + 1 + (32 - 1)) / 32];
 #define SYSASIC_EVENT_NMAP	((SYSASIC_EVENT_MAX + 1 + (32 - 1)) / 32)
+	unsigned	syh_events[SYSASIC_EVENT_NMAP];
 #define SYSASIC_EVENT_INTR_MAP(ev)	((ev) >> 5)
 #define SYSASIC_EVENT_INTR_BIT(ev)	((unsigned) 1 << ((ev) & 31))
 
@@ -122,7 +122,8 @@ sysasic_intr_establish(int event, int ipl, int (*ih_fun)(void *), void *ih_arg)
 	 * Dreamcast use SH4 INTC as IRL mode.  If IRQ is specified,
 	 * its priority level is fixed.
 	 *
-	 * We use IPL to specify the IRQ to trap programming errors. :D
+	 * We use IPL to specify the IRQ for clearness, that is, we use
+	 * a splxxx() and IPL_XXX pair in a device driver.
 	 */
 	switch (ipl) {
 	default:
@@ -153,7 +154,7 @@ sysasic_intr_establish(int event, int ipl, int (*ih_fun)(void *), void *ih_arg)
 	for (i = 0; i <= SYSASIC_IRQ_LEVEL_MAX; i++)
 		if ((sysasic_intrhand[i].syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
 		    SYSASIC_EVENT_INTR_BIT(event)) != 0)
-			panic("sysasic_intr_establish: event %d already insatlled irq %d",
+			panic("sysasic_intr_establish: event %d already installed irq %d",
 			    event, SYSASIC_IRQ_INDEX_TO_IRQ(i));
 #endif
 
@@ -181,7 +182,7 @@ sysasic_intr_disestablish(void *arg)
 	KDASSERT(event >= 0 && event <= SYSASIC_EVENT_MAX);
 	syh = hnd->hnd_syh;
 
-#ifdef DISAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
 	    SYSASIC_EVENT_INTR_BIT(event)) == 0)
 		panic("sysasic_intr_disestablish: event %d not installed for irq %d",
@@ -215,7 +216,7 @@ sysasic_intr_enable(void *arg, int on)
 	KDASSERT(event >= 0 && event <= SYSASIC_EVENT_MAX);
 	syh = hnd->hnd_syh;
 
-#ifdef DISAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
 	    SYSASIC_EVENT_INTR_BIT(event)) == 0)
 		panic("sysasic_intr_enable: event %d not installed for irq %d",
