@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.26 1996/10/13 03:06:40 christos Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.27 1997/01/26 22:58:32 rat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -55,6 +55,7 @@
 #if NCD > 0
 #include <sys/mount.h>
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 #endif
 #include <ufs/ffs/ffs_extern.h>
 int (*mountroot) __P((void)) = ffs_mountroot;
