@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_refresh.3,v 1.7 2003/02/14 16:29:12 grant Exp $
+.\"	$NetBSD: curses_refresh.3,v 1.8 2003/03/29 21:43:23 jdc Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd December 4, 2002
+.Dd March 26, 2003
 .Dt CURSES_REFRESH 3
 .Os
 .Sh NAME
@@ -67,7 +67,9 @@ The
 .Fn refresh
 function causes curses to propagate changes made to
 .Dv stdscr
-to the terminal display.
+to the terminal display.  Any changes made to subwindows of
+.Dv stdscr
+are also propagated.
 .Pp
 The
 .Fn wrefresh
@@ -140,6 +142,10 @@ An error occurred in the function.
 .Xr curses_getch 3 ,
 .Xr curses_pad 3 ,
 .Xr curses_touch 3
+.Sh NOTES
+Calling
+.Fn wrefresh
+on a new, unchanged window has no effect.
 .Sh STANDARDS
 The
 .Nx
