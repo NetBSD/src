@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.7 2002/06/22 19:09:38 bjh21 Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.8 2002/07/04 17:33:19 junyoung Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,7 +188,7 @@ child device.  It has the following members:
 	void	(*copyrows)(void *c, int srcrow, int dstrow,
 			int nrows);
 	void	(*eraserows)(void *c, int row, int nrows, long);
-	int	(*alloc_attr)(void *c, int fg, int bg, int flags,
+	int	(*allocattr)(void *c, int fg, int bg, int flags,
 			long *);
 .Ed
 .Pp
