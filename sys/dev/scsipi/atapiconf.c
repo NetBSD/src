@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.19 1998/12/21 21:40:12 leo Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.20 1999/01/19 09:31:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -91,11 +91,13 @@ struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "NEC                 CD-ROM DRIVE:273", "", "4.21"}, ADEV_NOTUR},
 	{{T_CDROM, T_REMOV,
-	 "MATSHITA CR-574", "", "1.06"},          ADEV_NOCAPACITY},
+	 "MATSHITA CR-574", "", "1.06"},	ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
-	 "MATSHITA CR-574", "", "1.02"},          ADEV_NOCAPACITY},
+	 "MATSHITA CR-574", "", "1.02"},	ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
-	 "FX320S", "", "q01"},          	ADEV_NOSENSE},
+	 "FX320S", "", "q01"},			ADEV_NOSENSE},
+	{{T_CDROM, T_REMOV,
+	 "Memorex CRW-2642", "", "1.0g"},	ADEV_NOSENSE},
 };
 
 int
