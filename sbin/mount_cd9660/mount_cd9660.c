@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.4 1997/09/15 04:27:38 lukem Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.5 1997/09/16 12:25:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -36,6 +36,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *      @(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95
  */
 
 #include <sys/cdefs.h>
@@ -46,14 +48,13 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
+static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.4 1997/09/15 04:27:38 lukem Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.5 1997/09/16 12:25:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#define CD9660
 #include <sys/mount.h>
 
 #include <err.h>
@@ -92,7 +93,7 @@ main(argc, argv)
 			opts |= ISOFSMNT_GENS;
 			break;
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags);
+			getmntopts(optarg, mopts, &mntflags, 0);
 			break;
 		case 'r':
 			opts |= ISOFSMNT_NORRIP;
@@ -111,13 +112,13 @@ main(argc, argv)
 	dir = argv[1];
 
 #define DEFAULT_ROOTUID	-2
+	/*
+	 * ISO 9660 filesystems are not writeable.
+	 */
+	mntflags |= MNT_RDONLY;
+	args.export.ex_flags = MNT_EXRDONLY;
 	args.fspec = dev;
 	args.export.ex_root = DEFAULT_ROOTUID;
-
-	if (mntflags & MNT_RDONLY)
-		args.export.ex_flags = MNT_EXRDONLY;
-	else
-		args.export.ex_flags = 0;
 	args.flags = opts;
 
 	if (mount(MOUNT_CD9660, dir, mntflags, &args) < 0)
