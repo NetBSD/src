@@ -1,7 +1,7 @@
-/*	$NetBSD: ieee80211_node.c,v 1.21 2004/07/23 08:31:39 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.22 2004/07/23 09:22:15 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.21 2004/07/23 08:31:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.22 2004/07/23 09:22:15 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -113,6 +113,19 @@ ieee80211_node_attach(struct ifnet *ifp)
 	ic->ic_node_copy = ieee80211_node_copy;
 	ic->ic_node_getrssi = ieee80211_node_getrssi;
 	ic->ic_scangen = 1;
+
+	if (ic->ic_max_aid == 0)
+		ic->ic_max_aid = IEEE80211_AID_DEF;
+	else if (ic->ic_max_aid > IEEE80211_AID_MAX)
+		ic->ic_max_aid = IEEE80211_AID_MAX;
+	MALLOC(ic->ic_aid_bitmap, u_int32_t *,
+		howmany(ic->ic_max_aid, 32) * sizeof(u_int32_t),
+		M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (ic->ic_aid_bitmap == NULL) {
+		/* XXX no way to recover */
+		printf("%s: no memory for AID bitmap!\n", __func__);
+		ic->ic_max_aid = 0;
+	}
 }
 
 void
@@ -139,6 +152,8 @@ ieee80211_node_detach(struct ifnet *ifp)
 #ifdef __FreeBSD__
 	IEEE80211_NODE_LOCK_DESTROY(ic);
 #endif
+        if (ic->ic_aid_bitmap != NULL)
+                FREE(ic->ic_aid_bitmap, M_DEVBUF);
 }
 
 /*
@@ -469,12 +484,19 @@ ieee80211_node_alloc(struct ieee80211com *ic)
 }
 
 static void
+node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+
+        if (ni->ni_challenge != NULL) {
+                FREE(ni->ni_challenge, M_DEVBUF);
+                ni->ni_challenge = NULL;
+        }
+}
+
+static void
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	if (ni->ni_challenge != NULL) {
-		FREE(ni->ni_challenge, M_DEVBUF);
-		ni->ni_challenge = NULL;
-	}
+	node_cleanup(ic, ni);
 	FREE(ni, M_80211_NODE);
 }
 
@@ -482,6 +504,7 @@ static void
 ieee80211_node_copy(struct ieee80211com *ic,
 	struct ieee80211_node *dst, const struct ieee80211_node *src)
 {
+	node_cleanup(ic, dst);
 	*dst = *src;
 	dst->ni_challenge = NULL;
 }
@@ -766,13 +789,15 @@ _ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	IASSERT(ni != ic->ic_bss, ("freeing bss node"));
 
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
+		("%s %s\n", __func__, ether_sprintf(ni->ni_macaddr)));
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 	TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
 	LIST_REMOVE(ni, ni_hash);
 	if (!IF_IS_EMPTY(&ni->ni_savedq)) {
 		IF_PURGE(&ni->ni_savedq); 
 		if (ic->ic_set_tim)
-			ic->ic_set_tim(ic, ni->ni_associd, 0);
+			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 	}
 	if (TAILQ_EMPTY(&ic->ic_node))
 		ic->ic_inact_timer = 0;
@@ -799,10 +824,14 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
 	struct ieee80211_node *ni;
 	ieee80211_node_critsec_decl(s);
 
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE, ("free all nodes\n"));
 	ieee80211_node_critsec_begin(ic, s);
 	while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
 		_ieee80211_free_node(ic, ni);  
 	ieee80211_node_critsec_end(ic, s);
+
+	if (ic->ic_bss != NULL)
+		node_cleanup(ic, ic->ic_bss);	/* for station mode */
 }
 
 /*
@@ -844,7 +873,7 @@ restart:
 			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH,
 			    IEEE80211_REASON_AUTH_EXPIRE);
-			ieee80211_free_node(ic, ni);
+			ieee80211_node_leave(ic, ni);
 			ic->ic_stats.is_node_timeout++;
 			goto restart;
 		}
@@ -864,4 +893,70 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f, void *a
 	TAILQ_FOREACH(ni, &ic->ic_node, ni_list)
 		(*f)(arg, ni);
 	ieee80211_node_critsec_end(ic, s);
+}
+
+void
+ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni, int resp)
+{
+	int newassoc;
+
+	if (ni->ni_associd == 0) {
+		u_int16_t aid;
+
+		/*
+		 * It would be clever to search the bitmap
+		 * more efficiently, but this will do for now.
+		 */
+		for (aid = 1; aid < ic->ic_max_aid; aid++) {
+			if (!IEEE80211_AID_ISSET(aid,
+			    ic->ic_aid_bitmap))
+				break;
+		}
+		if (aid >= ic->ic_max_aid) {
+			IEEE80211_SEND_MGMT(ic, ni, resp,
+			    IEEE80211_REASON_ASSOC_TOOMANY);
+			ieee80211_node_leave(ic, ni);
+			return;
+		}
+		ni->ni_associd = aid | 0xc000;
+		IEEE80211_AID_SET(ni->ni_associd, ic->ic_aid_bitmap);
+		newassoc = 1;
+		/* XXX for 11g must turn off short slot time if long
+		   slot time sta associates */
+	} else
+		newassoc = 0;
+
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC | IEEE80211_MSG_DEBUG,
+		("station %s %s associated at aid %d\n",
+		ether_sprintf(ni->ni_macaddr),
+		(newassoc ? "newly" : "already"),
+		ni->ni_associd & ~0xc000));
+
+	/* give driver a chance to setup state like ni_txrate */
+	if (ic->ic_newassoc)
+		(*ic->ic_newassoc)(ic, ni, newassoc);
+	IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_SUCCESS);
+}
+
+/*
+ * Handle bookkeeping for station deauthentication/disassociation
+ * when operating as an ap.
+ */
+void
+ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+
+	IASSERT(ic->ic_opmode == IEEE80211_M_HOSTAP,
+		("not in ap mode, mode %u", ic->ic_opmode));
+	/*
+	 * If node wasn't previously associated all
+	 * we need to do is reclaim the reference.
+	 */
+	if (ni->ni_associd == 0)
+		goto done;
+	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
+	ni->ni_associd = 0;
+
+done:
+	ieee80211_free_node(ic, ni);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.10 2004/07/22 17:04:38 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.11 2004/07/23 09:22:15 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -179,6 +179,8 @@ extern	void ieee80211_node_detach(struct ifnet *);
 
 extern	void ieee80211_begin_scan(struct ifnet *);
 extern	void ieee80211_next_scan(struct ifnet *);
+extern	void ieee80211_create_ibss(struct ieee80211com* ,
+		struct ieee80211_channel *);
 extern	void ieee80211_end_scan(struct ifnet *);
 extern	struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *,
 		u_int8_t *);
@@ -195,14 +197,17 @@ extern	struct ieee80211_node * ieee80211_lookup_node(struct ieee80211com *,
 extern	void ieee80211_free_node(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	void ieee80211_free_allnodes(struct ieee80211com *);
+
 typedef void ieee80211_iter_func(void *, struct ieee80211_node *);
 extern	void ieee80211_iterate_nodes(struct ieee80211com *ic,
 		ieee80211_iter_func *, void *);
 extern	void ieee80211_timeout_nodes(struct ieee80211com *);
 
-extern	int ieee80211_match_bss(struct ieee80211com *,
+extern	void ieee80211_node_join(struct ieee80211com *,
+		struct ieee80211_node *, int);
+extern	void ieee80211_node_leave(struct ieee80211com *,
 		struct ieee80211_node *);
-extern	void ieee80211_create_ibss(struct ieee80211com* ,
-		struct ieee80211_channel *);
+
+extern	int ieee80211_match_bss(struct ieee80211com *, struct ieee80211_node *);
 #endif /* _KERNEL */
 #endif /* _NET80211_IEEE80211_NODE_H_ */
