@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)reverse.c	5.3 (Berkeley) 2/12/92";*/
-static char rcsid[] = "$Id: reverse.c,v 1.3 1994/03/28 02:22:35 cgd Exp $";
+static char rcsid[] = "$Id: reverse.c,v 1.4 1994/04/24 20:19:18 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ r_reg(fp, style, off, sbp)
 	long off;
 	struct stat *sbp;
 {
-	register off_t size;
+	register int size;
 	register int llen;
 	register char *p;
 	int fd;
