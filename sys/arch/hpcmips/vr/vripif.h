@@ -1,4 +1,4 @@
-/*	$NetBSD: vripif.h,v 1.1 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: vripif.h,v 1.2 2002/02/11 04:33:24 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -34,6 +34,8 @@
 #define _VRIPIF_H_
 
 #include <hpcmips/vr/cmuvar.h>
+#include <hpcmips/vr/vrdmaauvar.h>
+#include <hpcmips/vr/vrdcuvar.h>
 #include <dev/hpc/hpciovar.h>
 
 /* Vrip GPIO chip IDs */
@@ -51,6 +53,8 @@ typedef void *vrip_intr_handle_t;
 struct vrip_chipset_tag {
 	void *vc_sc;
 	vrcmu_chipset_tag_t vc_cc;
+	vrdmaau_chipset_tag_t vc_ac;
+	vrdcu_chipset_tag_t vc_dc;
 	int (*vc_power)(vrip_chipset_tag_t, int, int);
 	vrip_intr_handle_t (*vc_intr_establish)(vrip_chipset_tag_t, int, int, 
 	    int, int(*)(void*), void*);
@@ -62,6 +66,8 @@ struct vrip_chipset_tag {
 	    u_int32_t*);
 	void (*vc_register_cmu)(vrip_chipset_tag_t, vrcmu_chipset_tag_t);
 	void (*vc_register_gpio)(vrip_chipset_tag_t, hpcio_chip_t);
+	void (*vc_register_dmaau)(vrip_chipset_tag_t, vrdmaau_chipset_tag_t);
+	void (*vc_register_dcu)(vrip_chipset_tag_t, vrdcu_chipset_tag_t);
 };
 
 /* 
@@ -76,6 +82,9 @@ struct vrip_attach_args {
 	bus_addr_t	va_addr2;	/* i/o address 2	*/
 	bus_size_t	va_size2;
 	hpcio_chip_t*	va_gpio_chips;
+	vrcmu_chipset_tag_t	va_cc;
+	vrdmaau_chipset_tag_t	va_ac;
+	vrdcu_chipset_tag_t	va_dc;
 #ifdef HPCMIPS_NOT_YET
 	bus_dma_tag_t va_dmat;	/* DMA tag */
 #endif
@@ -100,5 +109,9 @@ struct vrip_attach_args {
 		((*(vc)->vc_register_cmu)((vc), (cmu)))
 #define vrip_register_gpio(vc, gpio)				\
 		((*(vc)->vc_register_gpio)((vc), (gpio)))
+#define vrip_register_dmaau(vc, dmaau)					\
+		((*(vc)->vc_register_dmaau)((vc), (dmaau)))
+#define vrip_register_dcu(vc, dcu)					\
+		((*(vc)->vc_register_dcu)((vc), (dcu)))
 
 #endif /* !_VRIPIF_H_ */

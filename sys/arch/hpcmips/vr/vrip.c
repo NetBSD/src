@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.16 2002/01/29 18:53:22 uch Exp $	*/
+/*	$NetBSD: vrip.c,v 1.17 2002/02/11 04:33:24 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -106,6 +106,8 @@ void __vrip_intr_getstatus2(vrip_chipset_tag_t, vrip_intr_handle_t,
     u_int32_t*);
 void __vrip_register_cmu(vrip_chipset_tag_t, vrcmu_chipset_tag_t);
 void __vrip_register_gpio(vrip_chipset_tag_t, hpcio_chip_t);
+void __vrip_register_dmaau(vrip_chipset_tag_t, vrdmaau_chipset_tag_t);
+void __vrip_register_dcu(vrip_chipset_tag_t, vrdcu_chipset_tag_t);
 void __vrip_dump_level2mask(vrip_chipset_tag_t, void *);
 
 struct cfattach vrip_ca = {
@@ -123,6 +125,8 @@ static const struct vrip_chipset_tag vrip_chipset_methods = {
 	.vc_intr_getstatus2	= __vrip_intr_getstatus2,
 	.vc_register_cmu	= __vrip_register_cmu,
 	.vc_register_gpio	= __vrip_register_gpio,
+	.vc_register_dmaau	= __vrip_register_dmaau,
+	.vc_register_dcu	= __vrip_register_dcu,
 };
 
 static const struct vrip_unit vrip_units[] = {
@@ -174,7 +178,7 @@ static const struct vrip_unit vrip_units[] = {
 	[VRIP_UNIT_BCU] = { "bcu",
 			    { VRIP_INTR_BCU,	},
 			    0,
-			    BCUINT_REG_W,	MBCUINT_REG_W	}
+			    BCUINT_REG_W,	MBCUINT_REG_W	},
 };
 
 int
@@ -239,8 +243,8 @@ vripattach_common(struct device *parent, struct device *self, void *aux)
 	the_vrip_sc = sc;
 	/*
 	 *  Attach each devices
-	 *	GIU CMU interface interface is used by other system device.
-	 *	so attach first
+	 *	GIU CMU DMAAU DCU interface interface is used by other system
+	 *	device. so attach first
 	 */
 	sc->sc_pri = 2;
 	config_search(vrip_search, self, vrip_print);
@@ -276,6 +280,9 @@ vrip_search(struct device *parent, struct cfdata *cf, void *aux)
 	va.va_addr2 = cf->cf_loc[VRIPIFCF_ADDR2];
 	va.va_size2 = cf->cf_loc[VRIPIFCF_SIZE2];
 	va.va_gpio_chips = sc->sc_gpio_chips;
+	va.va_cc = sc->sc_chipset.vc_cc;
+	va.va_ac = sc->sc_chipset.vc_ac;
+	va.va_dc = sc->sc_chipset.vc_dc;
 	if (((*cf->cf_attach->ca_match)(parent, cf, &va) == sc->sc_pri))
 		config_attach(parent, cf, &va, vrip_print);
 
@@ -511,4 +518,20 @@ __vrip_register_gpio(vrip_chipset_tag_t vc, hpcio_chip_t chip)
 		panic("%s: '%s' has unknown id, %d", __FUNCTION__,
 		    chip->hc_name, chip->hc_chipid);
 	sc->sc_gpio_chips[chip->hc_chipid] = chip;
+}
+
+void
+__vrip_register_dmaau(vrip_chipset_tag_t vc, vrdmaau_chipset_tag_t dmaau)
+{
+	struct vrip_softc *sc = vc->vc_sc;
+
+	sc->sc_chipset.vc_ac = dmaau;
+}
+
+void
+__vrip_register_dcu(vrip_chipset_tag_t vc, vrdcu_chipset_tag_t dcu)
+{
+	struct vrip_softc *sc = vc->vc_sc;
+
+	sc->sc_chipset.vc_dc = dcu;
 }

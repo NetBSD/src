@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.70 2002/02/10 15:17:21 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.71 2002/02/11 04:33:22 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -411,3 +411,13 @@ file dev/md_root.c				memory_disk_hooks
 major	{md = 6}
 
 include "dev/usb/files.usb"
+
+# DMA Address Unit
+device vrdmaau
+attach vrdmaau at vripif
+file arch/hpcmips/vr/vrdmaau.c	vrdmaau
+
+# DMA Controll Unit
+device vrdcu
+attach vrdcu at vripif
+file arch/hpcmips/vr/vrdcu.c	vrdcu
