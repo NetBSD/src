@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.25 2002/11/11 22:13:41 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.26 2002/11/25 21:42:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.25 2002/11/11 22:13:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.26 2002/11/25 21:42:40 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -475,7 +475,7 @@ exit_lwps(struct lwp *l)
 static void
 lwp_exit_hook(struct lwp *l, void *arg)
 {
-
+	KERNEL_PROC_LOCK(l);
 	lwp_exit(l);
 }
 
