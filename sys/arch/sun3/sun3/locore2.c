@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore2.c,v 1.18 1994/04/17 06:31:30 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore2.c,v 1.19 1994/04/18 06:10:12 glass Exp $
  */
 
 #include <sys/systm.h>
@@ -191,8 +191,6 @@ void sun3_vm_init()
     if (romp->romvecVersion >=1)
 	monitor_memory = *romp->memorySize - *romp->memoryAvail;
 
-    mon_printf("%x bytes stolen by monitor\n", monitor_memory);
-    
     avail_start = sun3_round_page(end) - KERNBASE; /* XXX */
     avail_end = sun3_trunc_page(*romp->memoryAvail);
 
@@ -425,7 +423,6 @@ void sun3_verify_hardware()
     }
     if (!cpu_match)
 	mon_panic("kernel not configured for the Sun 3 model\n");
-    mon_printf("configured for Sun 3/%s\n", cpu_string);
 }
 
 /*
@@ -575,7 +572,6 @@ void sun3_bootstrap()
      */
 
     cold = 1;
-    mon_printf("\nPROM Version: %x\n", romp->romvecVersion);
 
     sun3_monitor_hooks();
 
@@ -585,7 +581,7 @@ void sun3_bootstrap()
 
     sun3_vm_init();		/* handle kernel mapping problems, etc */
 
-    pmap_bootstrap();		/*  */
+    pmap_bootstrap();		/* bootstrap pmap module */
 
     internal_configure();	/* stuff that can't wait for configure() */
     
