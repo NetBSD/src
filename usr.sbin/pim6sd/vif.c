@@ -1,4 +1,5 @@
-/*	$NetBSD: vif.c,v 1.2 2000/05/19 10:43:51 itojun Exp $	*/
+/*	$NetBSD: vif.c,v 1.3 2000/12/04 07:09:37 itojun Exp $	*/
+/*	$KAME: vif.c,v 1.15 2000/12/04 06:45:32 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -58,13 +59,23 @@
  *
  */
 
+#include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
+#include <netinet6/ip6_mroute.h>
 #include <errno.h>
 #include <syslog.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include "defs.h"
 #include "vif.h"
 #include "mld6.h"
+#include "mrt.h"
 #include "pim6.h"
 #include "pimd.h"
 #include "route.h"
@@ -133,8 +144,6 @@ void init_vifs()
 	IF_DEBUG(DEBUG_IF)
 		log(LOG_DEBUG,0,"Getting vifs from kernel");
 	config_vifs_from_kernel();
-	if (max_global_address() == NULL)
-		log(LOG_ERR, 0, "There's no global address");
 	IF_DEBUG(DEBUG_IF)
 		log(LOG_DEBUG,0,"Getting vifs from %s",configfilename);
 

@@ -1,4 +1,5 @@
-/*	$NetBSD: debug.c,v 1.6 2000/10/12 06:33:23 augustss Exp $	*/
+/*	$NetBSD: debug.c,v 1.7 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: debug.c,v 1.44 2000/12/04 06:45:29 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -58,21 +59,22 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <syslog.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <errno.h>
+#include <net/if.h>
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/icmp6.h>
+#include <netinet6/ip6_mroute.h>
 #include <netinet6/pim6.h>
-#include "pathnames.h"
+#include <stdio.h>
+#include <syslog.h>
+#include <errno.h>
 #include "defs.h"
+#include "pathnames.h"
 #include "pimd.h"
 #include "debug.h"
 #include "mrt.h"
@@ -512,6 +514,7 @@ dump_nbrs(fp)
 	struct uvif *v;
 	vifi_t vifi;
 	pim_nbr_entry_t *n;
+	struct phaddr *pa;
 
 	fprintf(fp, "PIM Neighbor List\n");
 	fprintf(fp, " %-3s %6s %-40s %-5s\n",
@@ -530,8 +533,12 @@ dump_nbrs(fp)
 				else
 					fprintf(fp, " %3s %6s", "", "");
 				fprintf(fp, " %-40s %-5u\n",
-					inet6_fmt(&n->address.sin6_addr),
-					n->timer);
+					sa6_fmt(&n->address), n->timer);
+
+				for (pa = n->aux_addrs; pa; pa = pa->pa_next) {
+				    fprintf(fp, "%16s%s\n", "",
+					    sa6_fmt(&pa->pa_addr));
+				}
 			}
 		}
 	}
@@ -960,16 +967,20 @@ dump_rp_set(fp)
     cand_rp_t      *rp;
     rp_grp_entry_t *rp_grp_entry;
     grp_mask_t     *grp_mask;
+    int print_upstream;
 
     fprintf(fp, "---------------------------RP-Set----------------------------\n");
     fprintf(fp, "Current BSR address: %s Prio: %d Timeout: %d\n",
 	    inet6_fmt(&curr_bsr_address.sin6_addr), curr_bsr_priority,
 	    pim_bootstrap_timer);
     fprintf(fp, "%-40s %-3s Group prefix     Prio Hold Age\n",
-	    "RP-address", "IN");
+	    "RP-address/Upstream", "IN");
 
     for (rp = cand_rp_list; rp != (cand_rp_t *) NULL; rp = rp->next)
     {
+	char *upstream_str;
+
+	print_upstream = 0;
 
 	fprintf(fp, "%-40s %-3d ",
 		inet6_fmt(&rp->rpentry->address.sin6_addr),
@@ -983,17 +994,31 @@ dump_rp_set(fp)
 		    rp_grp_entry->priority, rp_grp_entry->advholdtime,
 		    rp_grp_entry->holdtime);
 
+	    if (rp->rpentry->upstream != NULL)
+		upstream_str = sa6_fmt(&rp->rpentry->upstream->address);
+	    else
+		upstream_str = "(none)";
+
 	    for (rp_grp_entry = rp_grp_entry->rp_grp_next;
 		 rp_grp_entry != (rp_grp_entry_t *) NULL;
 		 rp_grp_entry = rp_grp_entry->rp_grp_next)
 	    {
 		grp_mask = rp_grp_entry->group;
-		fprintf(fp, "%59.16s %-4u %-4u %-3u\n",	/* XXX: hardcoding */
+		/* XXX: hardcoding */
+		if (print_upstream == 0) {
+		    fprintf(fp, "  %-38s", upstream_str);
+		    print_upstream = 1;
+		}
+		else
+		    fprintf(fp, "  %38s", "");
+		fprintf(fp, "%4s %-16.16s %-4u %-4u %-3u\n", "",
 			net6name(&grp_mask->group_addr.sin6_addr,
 				 &grp_mask->group_mask),
 			rp_grp_entry->priority,
 			rp_grp_entry->advholdtime, rp_grp_entry->holdtime);
 	    }
+	    if (print_upstream == 0)
+		fprintf(fp, "  %-38s\n", upstream_str);
 	}
     }
     return (TRUE);

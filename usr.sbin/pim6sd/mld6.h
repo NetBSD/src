@@ -1,4 +1,5 @@
-/*	$NetBSD: mld6.h,v 1.2 2000/05/19 10:43:48 itojun Exp $	*/
+/*	$NetBSD: mld6.h,v 1.3 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: mld6.h,v 1.8 2000/12/04 06:45:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -48,11 +49,6 @@
 
 #ifndef MLD6_H
 #define MLD6_H
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
 
 #define RECV_BUF_SIZE			64*1024
 #define SO_RECV_BUF_SIZE_MAX	256*1024

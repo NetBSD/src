@@ -1,4 +1,5 @@
-/*	$NetBSD: pim6.c,v 1.2 2000/02/28 07:14:05 itojun Exp $	*/
+/*	$NetBSD: pim6.c,v 1.3 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: pim6.c,v 1.14 2000/12/04 06:45:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -77,18 +78,24 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
-#include <errno.h>
+#include <net/if.h>
+#include <net/route.h>
 #include <netinet/in.h>
-#include <string.h>
+#include <netinet/ip_mroute.h>
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/pim6.h>
 #include <netinet/ip6.h>
 #include <arpa/inet.h>
+#include <string.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <syslog.h>
 #include <signal.h>
-#include "mld6.h"
+#include <stdio.h>
 #include "defs.h"
+#include "vif.h"
+#include "mrt.h"
+#include "mld6.h"
 #include "kern.h"
 #include "pim6.h"
 #include "pimd.h"

@@ -1,4 +1,5 @@
-/*	$NetBSD: vmbuf.h,v 1.1 2000/01/28 19:32:53 itojun Exp $	*/
+/*	$NetBSD: vmbuf.h,v 1.2 2000/12/04 07:09:37 itojun Exp $	*/
+/*	$KAME: vmbuf.h,v 1.2 2000/07/24 01:00:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* YIPS Id: vmbuf.h,v 1.1 1999/10/29 09:04:55 jinmei Exp */
 
 typedef struct _vchar_ {
 	u_int32_t t;	/* type of the value */
@@ -46,3 +46,4 @@ extern vchar_t *vdup(vchar_t *);
 extern int pvdump(vchar_t *);
 
 #define VREALLOC(ptr, size) ((ptr) = vrealloc((ptr), (size)))
+

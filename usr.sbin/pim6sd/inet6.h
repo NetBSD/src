@@ -1,4 +1,5 @@
-/*	$NetBSD: inet6.h,v 1.2 2000/05/19 10:43:48 itojun Exp $	*/
+/*	$NetBSD: inet6.h,v 1.3 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: inet6.h,v 1.6 2000/12/04 06:45:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -48,7 +49,6 @@
 
 #ifndef INET6_H
 #define INET6_H
-#include "vif.h"
 
 extern int numerichost;
 

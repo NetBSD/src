@@ -1,4 +1,5 @@
-/*	$NetBSD: timer.c,v 1.2 2000/05/19 10:43:51 itojun Exp $	*/
+/*	$NetBSD: timer.c,v 1.3 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: timer.c,v 1.13 2000/12/04 06:45:32 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -49,12 +50,22 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
+#include <netinet6/ip6_mroute.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <stdio.h>
+#include <string.h>
+#include "defs.h"
 #include "pimd.h"
 #include "mrt.h"
 #include "vif.h"
-#include <netinet6/ip6_mroute.h>
 #include "timer.h"
 #include "debug.h"
 #include "rp.h"
@@ -556,7 +567,7 @@ age_routes()
 			    < kernel_cache_ptr->sg_count.bytecnt))
 		    {
 			if (mrtentry_rp->incoming == reg_vif_num)
-
+			{
 #ifdef KERNEL_MFC_WC_G
 // TODO (one day :))
 			    if (kernel_cache_ptr->source == IN6ADDR_ANY_N)
@@ -567,9 +578,10 @@ age_routes()
 				continue;
 			    }
 #endif				/* KERNEL_MFC_WC_G */
-			pim6dstat.pim6_trans_spt_rp++;
-			switch_shortest_path(&kernel_cache_ptr->source,
-					     &kernel_cache_ptr->group);
+			    pim6dstat.pim6_trans_spt_rp++;
+			    switch_shortest_path(&kernel_cache_ptr->source,
+						 &kernel_cache_ptr->group);
+			}		    
 		    }
 		}
 	    }
@@ -746,6 +758,7 @@ age_routes()
 				    < kernel_cache_ptr->sg_count.bytecnt))
 			    {
 				if (mrtentry_grp->incoming == reg_vif_num)
+				{
 #ifdef KERNEL_MFC_WC_G
 // TODO
 				    if (kernel_cache_ptr->source
@@ -757,9 +770,10 @@ age_routes()
 					continue;
 				    }
 #endif				/* KERNEL_MFC_WC_G */
-				pim6dstat.pim6_trans_spt_rp++;
-				switch_shortest_path(&kernel_cache_ptr->source,
-						   &kernel_cache_ptr->group);
+				    pim6dstat.pim6_trans_spt_rp++;
+				    switch_shortest_path(&kernel_cache_ptr->source,
+							 &kernel_cache_ptr->group);
+				}
 			    }
 			}
 		    }
