@@ -1,4 +1,4 @@
-.\" $NetBSD: xcu5,v 1.4 1999/06/01 16:51:44 jwise Exp $
+.\" $NetBSD: xcu5,v 1.5 1999/06/01 18:24:10 ross Exp $
 .\"
 .\" Copyright (c) 1999 Jim Wise
 .\" All rights reserved.
@@ -12,7 +12,7 @@
 .\" express or implied warranty.
 .\"
 .de xopen
-.Tn X/Open
+X/Open
 ..
 .de gnu
 .Tn GNU
