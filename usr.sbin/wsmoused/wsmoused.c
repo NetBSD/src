@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.8 2003/03/04 19:43:09 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.9 2003/03/04 22:31:15 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.8 2003/03/04 19:43:09 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.9 2003/03/04 22:31:15 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: wsmoused.c,v 1.8 2003/03/04 19:43:09 jmmv Exp $");
 #include <stdlib.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "pathnames.h"
 #include "wsmoused.h"
@@ -62,6 +63,7 @@ __RCSID("$NetBSD: wsmoused.c,v 1.8 2003/03/04 19:43:09 jmmv Exp $");
 			       ((type) == WSCONS_EVENT_MOUSE_DOWN))
 
 static struct mouse mouse;
+static char *PidFile = NULL;
 int XConsole = -1;
 
 /*
@@ -362,8 +364,16 @@ main(int argc, char **argv)
 	(void)signal(SIGQUIT, signal_terminate);
 	(void)signal(SIGTERM, signal_terminate);
 
-	if (!nodaemon)
-		daemon(0, 0);
+	if (!nodaemon) {
+		/* Become a daemon */
+		if (daemon(0, 0) == -1)
+			err(EXIT_FAILURE, "failed to become a daemon");
+
+		/* Create the pidfile, if wanted */
+		PidFile = block_get_propval(mode, "pidfile", NULL);
+		if (pidfile(PidFile) == -1)
+			warn("pidfile %s", PidFile);
+	}
 	event_loop();
 
 	/* NOTREACHED */
