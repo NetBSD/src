@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2002/09/18 14:00:35 lukem Exp $
+# $NetBSD: Makefile,v 1.13 2002/10/23 01:25:35 itojun Exp $
 
 NOLINT= # defined
 
@@ -24,9 +24,8 @@ CPPFLAGS+= -I.					\
 .ifndef HOSTPROG
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD=	-L${VERS} -lvers \
-	-lroken \
-	-lcrypt
+LDADD+=	-L${VERS} -lvers -lroken -lcrypt
+DPADD+=	${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT}
 .endif
 
 MAN=	compile_et.1
