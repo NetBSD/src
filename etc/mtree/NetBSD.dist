@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: NetBSD.dist,v 1.6 1994/07/21 01:48:53 cgd Exp $
+#	$Id: NetBSD.dist,v 1.7 1995/01/07 15:03:38 pk Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -617,6 +617,11 @@ usd
 # ./usr/share/doc/usd/12.vi
 12.vi
 # ./usr/share/doc/usd/12.vi
+..
+
+# ./usr/share/doc/usd/13.viref
+13.viref
+# ./usr/share/doc/usd/13.viref
 ..
 
 # ./usr/share/doc/usd/13.ex
