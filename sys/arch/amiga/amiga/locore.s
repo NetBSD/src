@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.18 1994/05/13 06:07:02 chopps Exp $
+ *	$Id: locore.s,v 1.19 1994/05/18 16:05:04 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -573,7 +573,7 @@ _lev6intr:
 Lnobomb:
 	cmpl	#_kstack+NBPG,sp	| are we still in stack pages?
 	jcc	Lstackok		| yes, continue normally
-	tstl	_curproc		| if !curproc could have swtch_exit'ed,
+	tstl	_curproc		| if !curproc could have switch_exit'ed,
 	jeq	Lstackok		|     might be on tmpstk
 	tstl	_panicstr		| have we paniced?
 	jne	Lstackok		| yes, do not re-panic
@@ -1155,7 +1155,7 @@ Lrem2:
 Lrem3:
 	.asciz	"remrq"
 Lsw0:
-	.asciz	"swtch"
+	.asciz	"cpu_switch"
 	.even
 
 	.globl	_curpcb
@@ -1171,15 +1171,15 @@ pcbflag:
 	.text
 
 /*
- * At exit of a process, do a swtch for the last time.
+ * At exit of a process, do a cpu_switch for the last time.
  * The mapping of the pcb at p->p_addr has already been deleted,
  * and the memory for the pcb+stack has been freed.
  * The ipl is high enough to prevent the memory from being reallocated.
  */
-ENTRY(swtch_exit)
+ENTRY(switch_exit)
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
 	lea	tmpstk,sp		| goto a tmp stack
-	jra	_swtch
+	jra	_cpu_switch
 
 /*
  * When no processes are on the runq, Swtch branches to idle
@@ -1202,7 +1202,7 @@ Lbadsw:
 	/*NOTREACHED*/
 
 /*
- * Swtch()
+ * Cpu_switch()
  *
  * NOTE: On the mc68851 (318/319/330) we attempt to avoid flushing the
  * entire ATC.  The effort involved in selective flushing may not be
@@ -1212,7 +1212,7 @@ Lbadsw:
  * user's PTEs have been changed (formerly denoted by the SPTECHG p_flag
  * bit).  For now, we just always flush the full ATC.
  */
-ENTRY(swtch)
+ENTRY(cpu_switch)
 	movl	_curpcb,a0		| current pcb
 	movw	sr,a0@(PCB_PS)		| save sr before changing ipl
 #ifdef notyet
@@ -1417,7 +1417,7 @@ Lresfprest:
 /*
  * savectx(pcb, altreturn)
  * Update pcb, saving current processor state and arranging
- * for alternate return ala longjmp in swtch if altreturn is true.
+ * for alternate return ala longjmp in cpu_switch() if altreturn is true.
  */
 ENTRY(savectx)
 	movl	sp@(4),a1
