@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 1998/02/19 00:32:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 1998/02/19 23:14:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,7 @@
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/kcore.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -140,6 +141,9 @@ int	ncpu = 1;		/* At least one cpu in the system */
 int	isa_io_base;		/* Base address of ISA io port space */
 int	isa_mem_base;		/* Base address of ISA memory space */
 
+phys_ram_seg_t mem_clusters[1];	/* XXX VM_PHYSSEG_MAX */
+int mem_cluster_cnt;
+
 /*
  * Interrupt-blocking functions defined in locore. These names aren't used
  * directly except here and in interrupt handlers.
@@ -165,9 +169,6 @@ int	(*Mach_spltty)__P((void)) = splhigh;
 int	(*Mach_splimp)__P((void)) = splhigh;
 int	(*Mach_splclock)__P((void)) = splhigh;
 int	(*Mach_splstatclock)__P((void)) = splhigh;
-
-void	dumpsys __P((void));			/* do a dump */
-int	savectx __P((struct user *up));		/* XXX save state b4 crash*/
 
 /* initialize bss, etc. from kernel start, before main() is called. */
 extern	void
@@ -477,6 +478,14 @@ mach_init(argc, argv, code)
 	maxmem = physmem;
 
 	/*
+	 * Now that we know how much memory we have, initialize the
+	 * mem cluster array.
+	 */
+	mem_clusters[0].start = 0;		/* XXX is this correct? */
+	mem_clusters[0].size  = ctob(physmem);
+	mem_cluster_cnt = 1;
+
+	/*
 	 * Initialize error message buffer (at end of core).
 	 */
 	maxmem -= btoc(MSGBUFSIZE);
@@ -744,99 +753,6 @@ cpu_reboot(howto, bootstr)
 	}
 	while(1); /* Forever */
 	/*NOTREACHED*/
-}
-
-
-/*
- * These variables are needed by /sbin/savecore
- */
-int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
-long	dumplo = 0;
-
-void
-cpu_dumpconf()
-{
-	int nblks;
-
-	dumpsize = physmem;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
-	}
-	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
-	 * in case the dump device includes a disk label.
-	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
-}
-
-/*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
- */
-void
-dumpsys()
-{
-	int error;
-
-	/* Save registers. */
-	savectx(&dumppcb);
-
-	msgbufmapped = 0;
-	if (dumpdev == NODEV)
-		return;
-	/*
-	 * For dumps during autoconfiguration,
-	 * if dump device has already configured...
-	 */
-	if (dumpsize == 0)
-		cpu_dumpconf();
-	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
-		return;
-	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
-	printf("dump ");
-
-	/*
-	 * XXX
-	 * All but first arguments to  dump() bogus.
-	 * What should blkno, va, size be?
-	 */
-	error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, 0, 0, 0);
-	switch (error) {
-
-	case ENXIO:
-		printf("device bad\n");
-		break;
-
-	case EFAULT:
-		printf("device not ready\n");
-		break;
-
-	case EINVAL:
-		printf("area improper\n");
-		break;
-
-	case EIO:
-		printf("i/o error\n");
-		break;
-
-	default:
-		printf("error %d\n", error);
-		break;
-
-	case 0:
-		printf("succeeded\n");
-	}
 }
 
 /*
