@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.5 2000/05/15 08:51:55 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.6 2000/07/24 00:23:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,10 @@
 #include <sys/systm.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
+
+#if !defined(_KERNEL)
+#include <string.h>
+#endif
 
 /* These functions are only needed if native byte order is not big endian */
 #if BYTE_ORDER == BIG_ENDIAN
