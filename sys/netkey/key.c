@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.60 2002/03/21 02:27:50 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.61 2002/05/19 07:54:05 itojun Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -35,14 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.60 2002/03/21 02:27:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.61 2002/05/19 07:54:05 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
-
-/* this is for backward compatibility. we should not touch those. */
-#define ss_len		__ss_len
-#define ss_family	__ss_family
 
 #include <sys/param.h>
 #include <sys/systm.h>
