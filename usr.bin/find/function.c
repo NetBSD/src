@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.26 1998/11/06 23:21:01 christos Exp $	*/
+/*	$NetBSD: function.c,v 1.27 1999/01/03 14:54:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.26 1998/11/06 23:21:01 christos Exp $");
+__RCSID("$NetBSD: function.c,v 1.27 1999/01/03 14:54:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: function.c,v 1.26 1998/11/06 23:21:01 christos Exp $");
 #include <unistd.h>
 
 #include "find.h"
+#include "stat_flags.h"
 
 #define	COMPARE(a, b) {							\
 	switch (plan->flags) {						\
@@ -82,6 +83,7 @@ static	long	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_atime __P((PLAN *, FTSENT *));
 	int	f_ctime __P((PLAN *, FTSENT *));
 	int	f_exec __P((PLAN *, FTSENT *));
+	int	f_flags __P((PLAN *, FTSENT *));
 	int	f_fstype __P((PLAN *, FTSENT *));
 	int	f_group __P((PLAN *, FTSENT *));
 	int	f_inum __P((PLAN *, FTSENT *));
@@ -353,6 +355,52 @@ c_exec(argvp, isok)
 	*argvp = argv + 1;
 	return (new);
 }
+ 
+/*
+ * -flags [-]flags functions --
+ */
+int
+f_flags(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	u_int32_t flags;
+
+	flags = entry->fts_statp->st_flags;
+	if (plan->flags == F_ATLEAST)
+		return ((plan->f_data | flags) == flags);
+	else
+		return (flags == plan->f_data);
+	/* NOTREACHED */
+}
+ 
+PLAN *
+c_flags(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	char *flags = **argvp;
+	PLAN *new;
+	u_long flagset;
+
+	(*argvp)++;
+	ftsoptions &= ~FTS_NOSTAT;
+
+	new = palloc(N_FLAGS, f_flags);
+
+	if (*flags == '-') {
+		new->flags = F_ATLEAST;
+		++flags;
+	}
+
+	flagset = 0;
+	if ((strcmp(flags, "none") != 0) &&
+	    (string_to_flags(&flags, &flagset, NULL) != 0))
+		errx(1, "-flags: %s: illegal flags string", flags);
+	new->f_data = flagset;
+	return (new);
+}
+
  
 /*
  * -follow functions --
