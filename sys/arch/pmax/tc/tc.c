@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.1 1995/08/07 07:07:49 jonathan Exp $	*/
+/*	$NetBSD: tc.c,v 1.2 1995/08/10 04:31:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -148,23 +148,21 @@ cpu_tcdesc(cpu)
  /*XXX*/
 #ifdef	pmax
 	if (cputype == DS_3MAXPLUS) {
-		DPRINTF(("tcattach: 3MAXPLUS turbochannel\n"));
 		tc_enable_interrupt = kn03_enable_intr;
 		return &kn03_tc_desc;
 	} else if (cputype == DS_3MAX) {
-		DPRINTF(("tcattach: 3MAX turbochannel\n"));
 		tc_enable_interrupt = kn02_enable_intr;
 		return &kn02_tc_desc;
 	} else if (cputype == DS_3MIN) {
-		DPRINTF(("tcattach: 3MIN Turbochannel\n"));
+		DPRINTF(("tcattach: 3MIN Turbochannel (UNTESTED)\n"));
 		tc_enable_interrupt = kmin_enable_intr;
 		return &kmin_tc_desc;
 	} else if (cputype == DS_MAXINE) {
-		DPRINTF(("MAXINE turbochannel\n"));
+		DPRINTF(("MAXINE turbochannel (UNTESTED)\n"));
 		tc_enable_interrupt = xine_enable_intr;
 		return &xine_tc_desc;
 	} else if (cputype == DS_PMAX) {
-		DPRINTF(("tcattach: PMAX (no tc, but configured as one)\n"));
+		DPRINTF(("tcattach: PMAX, no turbochannel\n"));
 		return NULL;
 	} else {
 		panic("tcattach: Unrecognized bus type 0x%x\n", cputype);
@@ -414,10 +412,12 @@ tc_ds_ioasic_intr_establish(ca, handler, val)
 		 return;
 	 }
 
-    	printf("tc_enable %s%d slot %d\n",
-	       ca->ca_name, (int)unit, ca->ca_slotpri);
+	/* Never tested on these processors */
+	if (cputype == DS_3MIN || cputype == DS_MAXINE)
+	    printf("tc_enable %s%d slot %d\n",
+		   ca->ca_name, (int)unit, ca->ca_slotpri);
 
-#ifdef 1 /*DIAGNOSTIC*/ /*XXX*/
+#ifdef DIAGNOSTIC
 	if (tc_enable_interrupt == NULL)
 	    panic("tc_intr_establish: tc_enable not set\n");
 #endif
