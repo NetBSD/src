@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.1 2000/11/05 04:06:13 thorpej Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.1.8.1 2001/09/18 19:13:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -68,8 +68,8 @@ struct simplelock sysmon_envsys_initialized_slock = SIMPLELOCK_INITIALIZER;
 
 void	sysmon_envsys_init(void);
 
-int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct proc *);
-int	sysmonioctl_wdog(dev_t, u_long, caddr_t, int, struct proc *);
+int	sysmonioctl_envsys(struct vnode *, u_long, caddr_t, int, struct proc *);
+int	sysmonioctl_wdog(struct vnode *, u_long, caddr_t, int, struct proc *);
 
 struct sysmon_envsys *sysmon_envsys_find(u_int);
 void	sysmon_envsys_release(struct sysmon_envsys *);
@@ -93,7 +93,7 @@ sysmon_envsys_init(void)
  *	Open the system monitor device.
  */
 int
-sysmonopen_envsys(dev_t dev, int flag, int mode, struct proc *p)
+sysmonopen_envsys(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	int error = 0;
 
@@ -115,7 +115,7 @@ sysmonopen_envsys(dev_t dev, int flag, int mode, struct proc *p)
  *	Close the system monitor device.
  */
 int
-sysmonclose_envsys(dev_t dev, int flag, int mode, struct proc *p)
+sysmonclose_envsys(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 
 	(void) lockmgr(&sysmon_envsys_lock, LK_RELEASE, NULL);
@@ -128,7 +128,7 @@ sysmonclose_envsys(dev_t dev, int flag, int mode, struct proc *p)
  *	Perform an envsys control request.
  */
 int
-sysmonioctl_envsys(dev_t dev, u_long cmd, caddr_t data, int flag,
+sysmonioctl_envsys(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
 	struct sysmon_envsys *sme;

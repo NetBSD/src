@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.66 2001/07/13 20:30:25 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.66.2.1 2001/09/18 19:14:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -781,7 +781,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
+	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p, NULL);
 	if (error)
 		return (error);
 	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)

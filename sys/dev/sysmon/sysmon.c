@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.4 2000/11/05 04:06:13 thorpej Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.4.8.1 2001/09/18 19:13:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -47,6 +47,9 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmonconf.h>
@@ -59,19 +62,19 @@ cdev_decl(sysmon);
  *	Open the system monitor device.
  */
 int
-sysmonopen(dev_t dev, int flag, int mode, struct proc *p)
+sysmonopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	int error;
 
-	switch (minor(dev)) {
+	switch (minor(devvp->v_rdev)) {
 #if NSYSMON_ENVSYS > 0
 	case SYSMON_MINOR_ENVSYS:
-		error = sysmonopen_envsys(dev, flag, mode, p);
+		error = sysmonopen_envsys(devvp, flag, mode, p);
 		break;
 #endif
 #if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
-		error = sysmonopen_wdog(dev, flag, mode, p);
+		error = sysmonopen_wdog(devvp, flag, mode, p);
 		break;
 #endif
 	default:
@@ -87,19 +90,19 @@ sysmonopen(dev_t dev, int flag, int mode, struct proc *p)
  *	Close the system monitor device.
  */
 int
-sysmonclose(dev_t dev, int flag, int mode, struct proc *p)
+sysmonclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	int error;
 
-	switch (minor(dev)) {
+	switch (minor(devvp->v_rdev)) {
 #if NSYSMON_ENVSYS > 0
 	case SYSMON_MINOR_ENVSYS:
-		error = sysmonclose_envsys(dev, flag, mode, p);
+		error = sysmonclose_envsys(devvp, flag, mode, p);
 		break;
 #endif
 #if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
-		error = sysmonclose_wdog(dev, flag, mode, p);
+		error = sysmonclose_wdog(devvp, flag, mode, p);
 		break;
 #endif
 	default:
@@ -115,19 +118,20 @@ sysmonclose(dev_t dev, int flag, int mode, struct proc *p)
  *	Perform a control request.
  */
 int
-sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+sysmonioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	    struct proc *p)
 {
 	int error;
 
-	switch (minor(dev)) {
+	switch (minor(devvp->v_rdev)) {
 #if NSYSMON_ENVSYS > 0
 	case SYSMON_MINOR_ENVSYS:
-		error = sysmonioctl_envsys(dev, cmd, data, flag, p);
+		error = sysmonioctl_envsys(devvp, cmd, data, flag, p);
 		break;
 #endif
 #if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
-		error = sysmonioctl_wdog(dev, cmd, data, flag, p);
+		error = sysmonioctl_wdog(devvp, cmd, data, flag, p);
 		break;
 #endif
 	default:

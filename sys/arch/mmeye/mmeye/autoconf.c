@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2001/02/06 16:45:21 uch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.4.1 2001/09/18 19:13:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@ match_harddisk(dv, bid)
 	 */
 	if (bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit, bid->partition), &tmpvn))
 		panic("findroot can't alloc vnode");
-	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
+	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0, NULL);
 	if (error) {
 #ifndef DEBUG
 		/*

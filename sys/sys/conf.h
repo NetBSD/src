@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88.4.1 2001/09/07 04:45:44 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.4.2 2001/09/18 19:14:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -60,6 +60,11 @@ struct vnode;
 #define	D_DISK	2
 #define	D_TTY	3
 
+/*
+ * Values for d_flags;
+ */
+#define DF_CLONING	0x0001
+
 #ifdef _KERNEL
 
 #define	dev_type_open(n) \
@@ -94,6 +99,7 @@ struct bdevsw {
 				    size_t size));
 	int	(*d_psize)	__P((dev_t dev));
 	int	d_type;
+	int	d_flags;
 };
 
 #ifdef _KERNEL
@@ -163,11 +169,13 @@ struct cdevsw {
 				     struct proc *p));
 	paddr_t	(*d_mmap)	__P((struct vnode *, off_t, int));
 	int	d_type;
+	int	d_flags;
 };
 
 #ifdef _KERNEL
 
 extern struct cdevsw cdevsw[];
+
 
 /* cdevsw-specific types */
 #define	dev_type_read(n)	int n __P((struct vnode *, struct uio *, int))
@@ -614,6 +622,16 @@ extern	struct devnametobdevmaj dev_name2blk[];
 struct	device;
 void	setroot __P((struct device *, int));
 void	swapconf __P((void));
+
+/*
+ * Macros, to make life easier and to hide bdevsw and cdevsw.
+ */
+#define iscloningbdev(dev)	(bdevsw[major(dev)].d_flags & DF_CLONING)
+#define iscloningcdev(dev)	(cdevsw[major(dev)].d_flags & DF_CLONING)
+#define iscloningvnode(vp) \
+	(((vp)->v_type == VCHR && iscloningcdev((vp)->v_rdev)) || \
+	  ((vp)->v_type == VBLK && iscloningbdev((vp)->v_rdev)))
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_CONF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.63 2001/08/06 07:59:39 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.63.2.1 2001/09/18 19:13:46 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1538,13 +1541,13 @@ apm_thread(arg)
 }
 
 int
-apmopen(dev, flag, mode, p)
-	dev_t dev;
+apmopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = APMUNIT(dev);
-	int ctl = APMDEV(dev);
+	int unit = APMUNIT(devvp->v_rdev);
+	int ctl = APMDEV(devvp->v_rdev);
 	int error = 0;
 	struct apm_softc *sc;
 
@@ -1590,13 +1593,13 @@ apmopen(dev, flag, mode, p)
 }
 
 int
-apmclose(dev, flag, mode, p)
-	dev_t dev;
+apmclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
-	int ctl = APMDEV(dev);
+	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(devvp->v_rdev)];
+	int ctl = APMDEV(devvp->v_rdev);
 
 	DPRINTF(APMDEBUG_DEVICE,
 	    ("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
@@ -1619,14 +1622,14 @@ apmclose(dev, flag, mode, p)
 }
 
 int
-apmioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+apmioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(devvp->v_rdev)];
 	struct apm_power_info *powerp;
 	struct apm_event_info *evp;
 	struct bioscallregs regs;
@@ -1740,12 +1743,12 @@ apmioctl(dev, cmd, data, flag, p)
 }
 
 int
-apmpoll(dev, events, p)
-	dev_t dev;
+apmpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(devvp->v_rdev)];
 	int revents = 0;
 
 	APM_LOCK(sc);

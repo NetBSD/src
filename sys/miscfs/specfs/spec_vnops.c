@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.56.2.1 2001/09/07 04:45:40 thorpej Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.56.2.2 2001/09/18 19:13:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,6 +50,7 @@
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
+#include <sys/conf.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -156,9 +157,10 @@ spec_open(v)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode *a_vpp;
 	} */ *ap = v;
 	struct proc *p = ap->a_p;
-	struct vnode *bvp, *vp = ap->a_vp;
+	struct vnode *bvp, *vp = ap->a_vp, **vpp = ap->a_vpp;
 	dev_t bdev, dev = (dev_t)vp->v_rdev;
 	int maj = major(dev);
 	int error;
@@ -169,6 +171,9 @@ spec_open(v)
 	 */
 	if (vp->v_mount && (vp->v_mount->mnt_flag & MNT_NODEV))
 		return (ENXIO);
+
+	if (vp->v_specinfo == NULL)
+		panic("spec_open: NULL specinfo");
 
 	switch (vp->v_type) {
 
@@ -199,7 +204,21 @@ spec_open(v)
 		}
 		if (cdevsw[maj].d_type == D_TTY)
 			vp->v_flag |= VISTTY;
+		/*
+		 * XXXXXfvdl why is the vnode unlocked for
+		 * a character device open but not for a block device??
+		 * This can't be right.
+		 */
 		VOP_UNLOCK(vp, 0);
+		if (iscloningcdev(dev) && vpp != NULL) {
+			error = cdevvp(dev, vpp);
+			if (error != 0) {
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+				return error;
+			}
+			vp = *vpp;
+			VOP_UNLOCK(vp, 0);
+		}
 		error = (*cdevsw[maj].d_open)(vp, ap->a_mode, S_IFCHR, p);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
@@ -220,6 +239,19 @@ spec_open(v)
 		 */
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
+		/*
+		 * XXXXXfvdl why is the vnode returned unlocked for
+		 * a character device open but not for a block device??
+		 * This can't be right.
+		 */
+		if (iscloningbdev(dev) && vpp != NULL) {
+			VOP_UNLOCK(vp, 0);
+			error = bdevvp(dev, vpp);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			if (error != 0)
+				return error;
+			vp = *vpp;
+		}
 		error = (*bdevsw[maj].d_open)(vp, ap->a_mode, S_IFBLK, p);
 		if (error) {
 			return error;
@@ -602,6 +634,8 @@ spec_close(v)
 		 * if the reference count is 2 (this last descriptor
 		 * plus the session), release the reference from the session.
 		 */
+
+		/* XXXDEVVP */
 		if (count == 2 && ap->a_p &&
 		    vp == ap->a_p->p_session->s_ttyvp) {
 			vrele(vp);
@@ -613,7 +647,8 @@ spec_close(v)
 		 * of forcably closing the device, otherwise we only
 		 * close on last reference.
 		 */
-		if (count > 1 && (flags & VXLOCK) == 0)
+		if (count > 1 && (flags & VXLOCK) == 0 &&
+		    !iscloningcdev(dev))
 			return (0);
 		devclose = cdevsw[major(dev)].d_close;
 		mode = S_IFCHR;
@@ -637,7 +672,8 @@ spec_close(v)
 		 * sum of the reference counts on all the aliased
 		 * vnodes descends to one, we are on last close.
 		 */
-		if (count > 1 && (flags & VXLOCK) == 0)
+		if (count > 1 && (flags & VXLOCK) == 0 && 
+		    !iscloningbdev(dev))
 			return (0);
 		devclose = bdevsw[major(dev)].d_close;
 		mode = S_IFBLK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.30 2001/02/27 19:52:21 lukem Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.30.6.1 2001/09/18 19:13:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -145,6 +145,7 @@ fifo_open(void *v)
 		int		a_mode;
 		struct ucred	*a_cred;
 		struct proc	*a_p;
+		struct vnode	*a_vpp;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;
