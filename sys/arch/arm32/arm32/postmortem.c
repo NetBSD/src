@@ -1,4 +1,4 @@
-/*	$NetBSD: postmortem.c,v 1.13 1998/06/04 17:44:18 mark Exp $	*/
+/*	$NetBSD: postmortem.c,v 1.14 1998/06/17 19:29:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -57,7 +57,9 @@ typedef struct {
 } pv_addr_t;
 
 #ifdef ROTTEN_INARDS
+#ifndef	OFWGENCFG
 extern pv_addr_t irqstack;
+#endif
 extern pv_addr_t undstack;
 extern pv_addr_t abtstack;
 #endif
@@ -235,7 +237,9 @@ postmortem(frame)
 		printf("CPSR=%08x ", GetCPSR());
 	}
 
+#ifndef	OFWGENCFG
 	pm_dumpw(irqstack.virtual + NBPG - 0x100, 0x100);
+#endif
 	pm_dumpw(undstack.virtual + NBPG - 0x20, 0x20);
 	pm_dumpw(abtstack.virtual + NBPG - 0x20, 0x20);
 
