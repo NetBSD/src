@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.4 1999/12/08 15:57:12 uch Exp $ */
+/* $NetBSD: clock.c,v 1.5 1999/12/22 15:35:33 uch Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,10 +41,11 @@
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
+#include "opt_tx39xx.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 1999/12/08 15:57:12 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 1999/12/22 15:35:33 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -127,7 +128,7 @@ cpu_initclocks()
 {
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
-
+#ifndef TX39XX /* TX3912/22 periodic timer is not 256Hz */
 	hz = CLOCK_RATE;	/* 256 Hz clock */
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
 	tickfix = 1000000 - (hz * tick);
@@ -138,7 +139,7 @@ cpu_initclocks()
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
         }
-
+#endif /* !TX39XX */
 #ifdef alpha
 	/*
 	 * Establish the clock interrupt; it's a special case.
