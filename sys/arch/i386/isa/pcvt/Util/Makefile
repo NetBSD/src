@@ -1,5 +1,5 @@
 SUBDIR= 	keycap cursor fontedit fonts kcon loadfont scon \
-		userkeys vttest ispcvt mcon pcvtdoc
+		userkeys vttest ispcvt mcon
 
 .if make(clean) || make(cleandir) || make(obj)
 SUBDIR+=	vgaio kbdio set2061
