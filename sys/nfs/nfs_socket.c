@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.102 2004/03/17 10:40:34 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.102.2.1 2004/07/10 12:56:04 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102 2004/03/17 10:40:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102.2.1 2004/07/10 12:56:04 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -268,7 +268,11 @@ nfs_connect(nmp, rep)
 		so->so_rcv.sb_timeo = (5 * hz);
 		so->so_snd.sb_timeo = (5 * hz);
 	} else {
-		so->so_rcv.sb_timeo = 0;
+		/*
+		 * enable receive timeout to detect server crash and reconnect.
+		 * otherwise, we can be stuck in soreceive forever.
+		 */
+		so->so_rcv.sb_timeo = (5 * hz);
 		so->so_snd.sb_timeo = 0;
 	}
 	if (nmp->nm_sotype == SOCK_DGRAM) {
@@ -351,8 +355,10 @@ nfs_reconnect(rep)
 	 * on old socket.
 	 */
 	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
-		if (rp->r_nmp == nmp)
+		if (rp->r_nmp == nmp) {
 			rp->r_flags |= R_MUSTRESEND;
+			rp->r_rexmit = 0;
+		}
 	}
 	return (0);
 }
@@ -574,6 +580,8 @@ tryagain:
 		while (rep->r_flags & R_MUSTRESEND) {
 			m = m_copym(rep->r_mreq, 0, M_COPYALL, M_WAIT);
 			nfsstats.rpcretries++;
+			rep->r_rtt = 0;
+			rep->r_flags &= ~R_TIMING;
 			error = nfs_send(so, rep->r_nmp->nm_nam, m, rep);
 			if (error) {
 				if (error == EINTR || error == ERESTART ||
@@ -602,6 +610,15 @@ tryagain:
 			   if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
 					return (EINTR);
+				/*
+				 * if it seems that the server died after it
+				 * received our request, set EPIPE so that
+				 * we'll reconnect and retransmit requests.
+				 */
+				if (rep->r_rexmit >= rep->r_nmp->nm_retry) {
+					nfsstats.rpctimeouts++;
+					error = EPIPE;
+				}
 			   }
 			} while (error == EWOULDBLOCK);
 			if (!error && auio.uio_resid > 0) {
