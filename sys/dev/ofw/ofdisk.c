@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.11 1998/02/24 07:10:39 mycroft Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.12 1998/03/21 02:04:55 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -137,7 +137,6 @@ ofdisk_open(dev, flags, fmt, p)
 	int unit = DISKUNIT(dev);
 	struct ofdisk_softc *of;
 	char path[256];
-	struct disklabel *lp;
 	int l;
 	
 	if (unit >= ofdisk_cd.cd_ndevs)
@@ -459,6 +458,6 @@ ofdisk_getdisklabel(dev)
 		    unit, RAW_PART), ofdisk_strategy, lp,
 		    of->sc_dk.dk_cpulabel);
 		if (errmes != NULL)
-			printf("%s: %s\n", errmes);
+			printf("%s: %s\n", of->sc_dev.dv_xname, errmes);
 	}
 }
