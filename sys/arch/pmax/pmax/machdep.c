@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1995/01/03 22:37:41 hpeyerl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1995/01/18 06:49:12 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,6 +78,9 @@
 #include <machine/dc7085cons.h>
 
 #include <sys/exec_ecoff.h>
+#ifdef COMPAT_09
+#include <machine/bsd-aout.h>
+#endif
 
 #include <pmax/stand/dec_prom.h>
 
@@ -339,11 +342,11 @@ mach_init(argc, argv, code, cv)
 	 */
 	if (code == DEC_PROM_MAGIC) {
 		callv = cv;
-		i = (*cv->getsysid)();
+		i = (*cv->_getsysid)();
 		cp = "";
 	} else {
 		callv = &callvec;
-		if (cp = (*callv->getenv)("systype"))
+		if (cp = (*callv->_getenv)("systype"))
 			i = atoi(cp);
 		else {
 			cp = "";
@@ -618,7 +621,7 @@ mach_init(argc, argv, code, cv)
 	 * Determine how many buffers to allocate.
 	 * We allocate more buffer space than the BSD standard of
 	 * using 10% of memory for the first 2 Meg, 5% of remaining.
-	 * We just allocate a flat 10%.  Insure a minimum of 16 buffers.
+	 * We just allocate a flat 10%.  Ensure a minimum of 16 buffers.
 	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
@@ -660,7 +663,7 @@ consinit()
 	/*
 	 * First get the "osconsole" environment variable.
 	 */
-	oscon = (*callv->getenv)("osconsole");
+	oscon = (*callv->_getenv)("osconsole");
 	crt = kbd = -1;
 	if (oscon && *oscon >= '0' && *oscon <= '9') {
 		kbd = *oscon - '0';
@@ -764,6 +767,13 @@ consinit()
 			return;
 		}
 #endif /* NMFB */
+#if NSFB > 0
+		if (strcmp(tc_slot_info[crt].driver_name, "sfb") == 0 &&
+		    sfbinit(tc_slot_info[crt].k1seg_address)) {
+			cn_tab.cn_disabled = 0;
+			return;
+		}
+#endif /* NSFB */
 #if NCFB > 0
 		if (strcmp(tc_slot_info[crt].driver_name, "cfb") == 0 &&
 		    cfbinit(tc_slot_info[crt].k1seg_address)) {
@@ -1044,6 +1054,8 @@ sendsig(catcher, sig, mask, code)
 	ksc.sc_onstack = oonstack;
 	ksc.sc_mask = mask;
 	ksc.sc_pc = regs[PC];
+	ksc.mullo = regs [MULLO];
+	ksc.mulhi = regs [MULHI];
 	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
 	bcopy((caddr_t)&regs[1], (caddr_t)&ksc.sc_regs[1],
 		sizeof(ksc.sc_regs) - sizeof(int));
@@ -1148,6 +1160,8 @@ sigreturn(p, uap, retval)
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	regs[PC] = scp->sc_pc;
+	regs[MULLO] = scp->mullo;
+	regs[MULHI] = scp->mulhi;
 	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs[1],
 		sizeof(scp->sc_regs) - sizeof(int));
 	if (scp->sc_fpused)
@@ -1215,11 +1229,11 @@ boot(howto)
 	(void) splhigh();		/* extreme priority */
 	if (callv != &callvec) {
 		if (howto & RB_HALT)
-			(*callv->rex)('h');
+			(*callv->_rex)('h');
 		else {
 			if (howto & RB_DUMP)
 				dumpsys();
-			(*callv->rex)('b');
+			(*callv->_rex)('b');
 		}
 	} else if (howto & RB_HALT) {
 		volatile void (*f)() = (volatile void (*)())DEC_PROM_REINIT;
@@ -1493,6 +1507,7 @@ struct drivers_map {
 	{ "PMAZ-AA ",	"asc"},		/* SCSI */
 	{ "PMAG-AA ",	"mfb"},		/* Mono Frame Buffer */
 	{ "PMAG-BA ",	"cfb"},		/* Color Frame Buffer */
+	{ "PMAGB-BA",	"sfb"},		/* Smart Frame Buffer */
 	{ "PMAG-CA ",	"ga"},		/* 2D graphic board */
 	{ "PMAG-DA ",	"gq"},		/* 3D graphic board (LM) */
 	{ "PMAG-FA ",	"gq"},		/* 3D graphic board (HE) */
@@ -2138,7 +2153,29 @@ cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	return ENOEXEC;
+  /* If COMPAT_09 is defined, allow loading of old-style 4.4bsd a.out
+     executables. */
+#ifdef COMPAT_09
+  struct bsd_aouthdr *hdr = (struct bsd_aouthdr *)epp -> ep_hdr;
+
+  /* Only handle paged files (laziness). */
+  if (hdr -> a_magic != BSD_ZMAGIC)
+#endif
+  /* If it's not a.out, maybe it's ELF.   (This wants to be moved up to
+     the machine independent code as soon as possible.)   XXX */
+    return pmax_elf_makecmds (p, epp);
+
+#ifdef COMPAT_09
+  epp -> ep_taddr = 0x1000;
+  epp -> ep_entry = hdr -> a_entry;
+  epp -> ep_tsize = hdr -> a_text;
+  epp -> ep_daddr = epp -> ep_taddr + hdr -> a_text;
+  epp -> ep_dsize = hdr -> a_data + hdr -> a_bss;
+
+  /* Use the stock NetBSD a.out ZMAGIC code from here... */
+  return exec_aout_map_zmagic (p, epp, hdr -> a_text,
+			       hdr -> a_data, hdr -> a_bss); 
+#endif
 }
 
 #ifdef COMPAT_ULTRIX
