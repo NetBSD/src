@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.7 2000/01/14 13:20:17 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.8 2000/03/20 05:48:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -238,6 +238,7 @@ pcscp_attach(parent, self, aux)
 	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB;
 	sc->sc_cfg2 = NCRCFG2_SCSI2 | NCRCFG2_FE;
 	sc->sc_cfg3 = NCRAMDCFG3_IDM | NCRAMDCFG3_FCLK;
+	sc->sc_cfg4 = NCRAMDCFG4_GE12NS | NCRAMDCFG4_RADE;
 	sc->sc_rev = NCR_VARIANT_AM53C974;
 	sc->sc_features = NCR_F_FASTSCSI;
 	sc->sc_cfg3_fscsi = NCRAMDCFG3_FSCSI;
