@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: host-mkdep.in,v 1.1 2002/01/03 22:45:24 tv Exp $
+#	$NetBSD: host-mkdep.in,v 1.2 2002/01/04 13:35:23 tv Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -95,6 +95,7 @@ for f in $SRCS; do
 			sub(/ [ 0-9]*$/, "")
 
 			if ($0 in seenfiles) next
+			if ($0 ~ /y.tab.c/) next
 
 			seenfiles[$0] = 1
 			print objfile ": " $0
