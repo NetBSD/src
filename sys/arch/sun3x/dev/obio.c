@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1.1.1 1997/01/14 20:57:03 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.2 1997/01/25 21:48:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <machine/pte.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
+
+#include <sun3/sun3/sunmon.h>
 
 short *enable_reg;
 
@@ -288,9 +290,9 @@ make_required_mappings __P((void))
 			 * "required" mappings we need, (smile)
 			 * but this makes sure that is true.
 			 */
-			mon_printf("obio: no mapping for 0x%x\n",
+			mon_printf("obio: no mapping for pa=0x%x\n",
 			    prom_mappings[i].pa);
-			mon_panic("obio: Ancient PROM?\n");
+			sunmon_abort();  /* Ancient PROM? */
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.5 1997/01/23 22:27:29 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.6 1997/01/25 21:47:44 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -228,34 +228,32 @@ static void
 _verify_hardware()
 {
 	unsigned char machtype;
-	int cpu_match = 0;
 
 	machtype = identity_prom.idp_machtype;
-	if ((machtype & CPU_ARCH_MASK) != SUN3X_ARCH)
-		mon_panic("not a sun3x?\n");
+	if ((machtype & CPU_ARCH_MASK) != SUN3X_ARCH) {
+		mon_printf("not a sun3x?\n");
+		sunmon_abort();
+	}
 
 	cpu_machine_id = machtype & SUN3X_IMPL_MASK;
 	switch (cpu_machine_id) {
 
 	case SUN3X_MACH_80 :
-		cpu_match++;
 		cpu_string = "80";
 		delay_divisor = 102;	/* 20 MHz ? XXX */
 		cpu_has_vme = FALSE;
 		break;
 
 	case SUN3X_MACH_470:
-		cpu_match++;
 		cpu_string = "470";
 		delay_divisor = 82; 	/* 25 MHz ? XXX */
 		cpu_has_vme = TRUE;
 		break;
 
 	default:
-		mon_panic("unknown sun3x model\n");
+		mon_printf("unknown sun3x model\n");
+		sunmon_abort();
 	}
-	if (!cpu_match)
-		mon_panic("kernel not configured for the Sun 3 model\n");
 }
 
 
