@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.54 2001/05/02 10:32:12 scw Exp $ */
+/* $NetBSD: scc.c,v 1.55 2001/08/26 16:39:56 simonb Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,15 +64,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54 2001/05/02 10:32:12 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.55 2001/08/26 16:39:56 simonb Exp $");
 
 #include "opt_ddb.h"
 #ifdef alpha
 #include "opt_dec_3000_300.h"
 #endif
 
-#include "scc.h"
-#if NSCC > 0
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
  * Personal DECstation 5000/xx and DECstation 5000/1xx, plus the keyboard
@@ -96,16 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54 2001/05/02 10:32:12 scw Exp $");
 
 #include <dev/cons.h>
 
-#include <pmax/include/pmioctl.h>
-
-#include <pmax/dev/device.h>
-#include <pmax/dev/pdma.h>
 #include <dev/ic/z8530reg.h>
 #include <alpha/tc/sccreg.h>
 #include <alpha/tc/sccvar.h>
-#if 0
-#include <pmax/dev/fbreg.h>
-#endif
 
 #include <machine/rpb.h>
 #include <machine/conf.h>
@@ -1515,4 +1506,3 @@ rr(msg, regs)
 	    r0, r1, r2, r10, r15);
 }
 #endif /* SCC_DEBUG */
-#endif /* NSCC */
