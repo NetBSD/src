@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/05/28 21:56:06 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/08 20:20:00 thorpej Exp $
 
-HOSTPROGNAME=	nbfgen
+HOSTPROGNAME=	${_TOOL_PREFIX}fgen
 HOST_SRCDIR=	usr.bin/fgen
 
 .include "${.CURDIR}/../Makefile.host"

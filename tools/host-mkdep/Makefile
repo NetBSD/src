@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2002/04/03 15:56:32 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/12/08 20:20:01 thorpej Exp $
 
-TIMESTAMP=	${TOOLDIR}/bin/nbhost-mkdep
+TIMESTAMP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 
 CLEANFILES+=	config.cache config.log config.status host-mkdep
 
@@ -21,4 +21,4 @@ ${TIMESTAMP}: host-mkdep
 
 # Run by hand, then "configure" script committed:
 regen:
-	cd ${.CURDIR} && ${TOOLDIR}/bin/nbautoconf
+	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoconf

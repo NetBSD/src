@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2001/11/14 22:13:40 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/12/08 20:20:01 thorpej Exp $
 
-HOSTPROGNAME=	nblex
+HOSTPROGNAME=	${_TOOL_PREFIX}lex
 HOST_SRCDIR=	usr.bin/lex
 
 .include "${.CURDIR}/../Makefile.host"

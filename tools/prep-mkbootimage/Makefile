@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/05/03 20:33:53 kleink Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/08 20:20:04 thorpej Exp $
 
-HOSTPROGNAME=	nbprep-mkbootimage
+HOSTPROGNAME=	${_TOOL_PREFIX}prep-mkbootimage
 HOST_SRCDIR=	sys/arch/prep/stand/mkbootimage
 
 HOST_CPPFLAGS+= -I${.CURDIR}

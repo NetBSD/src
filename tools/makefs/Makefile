@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2002/05/31 05:50:03 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2002/12/08 20:20:02 thorpej Exp $
 
-HOSTPROGNAME=	nbmakefs
+HOSTPROGNAME=	${_TOOL_PREFIX}makefs
 HOST_SRCDIR=	usr.sbin/makefs
 
 DPSRCS+=	ufs.stamp

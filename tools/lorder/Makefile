@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2002/09/15 17:05:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2002/12/08 20:20:01 thorpej Exp $
 
 .include <bsd.own.mk>
 
 COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
 .-include	"${COMPATOBJ}/defs.mk"
 
-TIMESTAMP=	${TOOLDIR}/bin/nblorder
+TIMESTAMP=	${TOOLDIR}/bin/${_TOOL_PREFIX}lorder
 
 CLEANFILES+=	lorder
 

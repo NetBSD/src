@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:50:20 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/12/08 20:20:02 thorpej Exp $
 
-HOSTPROGNAME=	nbmenuc
+HOSTPROGNAME=	${_TOOL_PREFIX}menuc
 HOST_SRCDIR=	usr.bin/menuc
 HOSTFILES=	menu_sys.def
 HOST_FILESDIR=	${TOOLDIR}/share/misc

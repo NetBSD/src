@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2002/09/14 04:26:03 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2002/12/08 20:20:03 thorpej Exp $
 
-HOSTPROGNAME=	nbmktemp
+HOSTPROGNAME=	${_TOOL_PREFIX}mktemp
 HOST_SRCDIR=	usr.bin/mktemp
 
 .include "${.CURDIR}/../Makefile.host"

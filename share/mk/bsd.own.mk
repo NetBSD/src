@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.319 2002/11/26 23:15:53 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.320 2002/12/08 20:19:56 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -108,6 +108,9 @@ TOOLDIR:=	${_TOOLOBJ}/tools.${HOST_OSTYPE}
 .MAKEOVERRIDES+= TOOLDIR
 .endif
 
+# This is the prefix used for the NetBSD-sourced tools.
+_TOOL_PREFIX?=	nb
+
 # If an external toolchain base is specified, use it.
 .if defined(EXTERNAL_TOOLCHAIN)
 AR=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-ar
@@ -148,53 +151,53 @@ OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 .endif
 .endif	# EXTERNAL_TOOLCHAIN
 
-ASN1_COMPILE=	${TOOLDIR}/bin/nbasn1_compile
-CAP_MKDB=	${TOOLDIR}/bin/nbcap_mkdb
-CAT=		${TOOLDIR}/bin/nbcat
-CKSUM=		${TOOLDIR}/bin/nbcksum
-COMPILE_ET=	${TOOLDIR}/bin/nbcompile_et
-CONFIG=		${TOOLDIR}/bin/nbconfig
-CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/nbcrunchgen
-CTAGS=		${TOOLDIR}/bin/nbctags
+ASN1_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}asn1_compile
+CAP_MKDB=	${TOOLDIR}/bin/${_TOOL_PREFIX}cap_mkdb
+CAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}cat
+CKSUM=		${TOOLDIR}/bin/${_TOOL_PREFIX}cksum
+COMPILE_ET=	${TOOLDIR}/bin/${_TOOL_PREFIX}compile_et
+CONFIG=		${TOOLDIR}/bin/${_TOOL_PREFIX}config
+CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}crunchgen
+CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
-ELF2ECOFF=	${TOOLDIR}/bin/nbmips-elf2ecoff
-EQN=		${TOOLDIR}/bin/nbeqn
-FGEN=		${TOOLDIR}/bin/nbfgen
-GENCAT=		${TOOLDIR}/bin/nbgencat
-#GRIND=		${TOOLDIR}/bin/nbvgrind -f
-GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/nbgroff
-HOST_MKDEP=	${TOOLDIR}/bin/nbhost-mkdep
-INDXBIB=	${TOOLDIR}/bin/nbindxbib
-INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/nbinstall
-INSTALLBOOT=	${TOOLDIR}/bin/nbinstallboot
-INSTALL_INFO=	${TOOLDIR}/bin/nbinstall-info
-LEX=		${TOOLDIR}/bin/nblex
+ELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
+EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
+FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
+GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
+#GRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
+GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
+HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
+INDXBIB=	${TOOLDIR}/bin/${_TOOL_PREFIX}indxbib
+INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}install
+INSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}installboot
+INSTALL_INFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}install-info
+LEX=		${TOOLDIR}/bin/${_TOOL_PREFIX}lex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
-LORDER=		NM=${NM:Q} MKTEMP=${MKTEMP:Q} ${TOOLDIR}/bin/nblorder
-M4=		${TOOLDIR}/bin/nbm4
-MAKEFS=		${TOOLDIR}/bin/nbmakefs
-MAKEINFO=	${TOOLDIR}/bin/nbmakeinfo
-MAKEWHATIS=	${TOOLDIR}/bin/nbmakewhatis
+LORDER=		NM=${NM:Q} MKTEMP=${MKTEMP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}lorder
+M4=		${TOOLDIR}/bin/${_TOOL_PREFIX}m4
+MAKEFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makefs
+MAKEINFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}makeinfo
+MAKEWHATIS=	${TOOLDIR}/bin/${_TOOL_PREFIX}makewhatis
 MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
-MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/nbmenuc
-MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/nbmkdep
-MKLOCALE=	${TOOLDIR}/bin/nbmklocale
-MKTEMP=		${TOOLDIR}/bin/nbmktemp
-MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/nbmsgc
-MTREE=		${TOOLDIR}/bin/nbmtree
-PAX=		${TOOLDIR}/bin/nbpax
-PIC=		${TOOLDIR}/bin/nbpic
-PREPMKBOOTIMAGE=${TOOLDIR}/bin/nbprep-mkbootimage
-PWD_MKDB=	${TOOLDIR}/bin/nbpwd_mkdb
-REFER=		${TOOLDIR}/bin/nbrefer
-RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/nbrpcgen
-SOELIM=		${TOOLDIR}/bin/nbsoelim
-SUNLABEL=	${TOOLDIR}/bin/nbsunlabel
-TBL=		${TOOLDIR}/bin/nbtbl
-TSORT=		${TOOLDIR}/bin/nbtsort -q
-UUDECODE=	${TOOLDIR}/bin/nbuudecode
-YACC=		${TOOLDIR}/bin/nbyacc
-ZIC=		${TOOLDIR}/bin/nbzic
+MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}menuc
+MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
+MKLOCALE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
+MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
+MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
+MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
+PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
+PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
+PREPMKBOOTIMAGE=${TOOLDIR}/bin/${_TOOL_PREFIX}prep-mkbootimage
+PWD_MKDB=	${TOOLDIR}/bin/${_TOOL_PREFIX}pwd_mkdb
+REFER=		${TOOLDIR}/bin/${_TOOL_PREFIX}refer
+RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
+SOELIM=		${TOOLDIR}/bin/${_TOOL_PREFIX}soelim
+SUNLABEL=	${TOOLDIR}/bin/${_TOOL_PREFIX}sunlabel
+TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
+TSORT=		${TOOLDIR}/bin/${_TOOL_PREFIX}tsort -q
+UUDECODE=	${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
+YACC=		${TOOLDIR}/bin/${_TOOL_PREFIX}yacc
+ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
 
 .endif	# USETOOLS == yes						# }
 

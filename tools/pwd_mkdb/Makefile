@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2001/12/07 02:28:54 jmc Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/08 20:20:04 thorpej Exp $
 
-HOSTPROGNAME=	nbpwd_mkdb
+HOSTPROGNAME=	${_TOOL_PREFIX}pwd_mkdb
 HOST_SRCDIR=	usr.sbin/pwd_mkdb
 
 .include "${.CURDIR}/../Makefile.host"

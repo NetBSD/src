@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:50:20 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/12/08 20:20:03 thorpej Exp $
 
-HOSTPROGNAME=	nbmsgc
+HOSTPROGNAME=	${_TOOL_PREFIX}msgc
 HOST_SRCDIR=	usr.bin/msgc
 HOSTFILES=	msg_sys.def
 HOST_FILESDIR=	${TOOLDIR}/share/misc

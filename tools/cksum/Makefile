@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/31 14:33:55 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/08 20:19:58 thorpej Exp $
 
-HOSTPROGNAME=	nbcksum
+HOSTPROGNAME=	${_TOOL_PREFIX}cksum
 HOST_SRCDIR=	usr.bin/cksum
 
 .include "${.CURDIR}/../Makefile.host"

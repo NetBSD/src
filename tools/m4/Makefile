@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2001/11/14 22:13:41 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2002/12/08 20:20:01 thorpej Exp $
 
-HOSTPROGNAME=	nbm4
+HOSTPROGNAME=	${_TOOL_PREFIX}m4
 HOST_SRCDIR=	usr.bin/m4
 
 .include "${.CURDIR}/../Makefile.host"
