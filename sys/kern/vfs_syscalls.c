@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.37 1994/11/14 06:01:22 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.38 1994/11/17 20:27:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -983,7 +983,7 @@ lseek(p, uap, retval)
 	return (0);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4)
 /*
  * Reposition read/write file offset.
  */
