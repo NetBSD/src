@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.67 2002/02/11 15:11:49 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.68 2002/02/20 20:30:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.67 2002/02/11 15:11:49 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.68 2002/02/20 20:30:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,11 +478,11 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 	case USB_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)data;
-		int len = UGETW(ur->request.wLength);
+		int len = UGETW(ur->ucr_request.wLength);
 		struct iovec iov;
 		struct uio uio;
 		void *ptr = 0;
-		int addr = ur->addr;
+		int addr = ur->ucr_addr;
 		usbd_status err;
 		int error = 0;
 
@@ -493,7 +493,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 		    sc->sc_bus->devices[addr] == 0)
 			return (EINVAL);
 		if (len != 0) {
-			iov.iov_base = (caddr_t)ur->data;
+			iov.iov_base = (caddr_t)ur->ucr_data;
 			iov.iov_len = len;
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
@@ -501,7 +501,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 			uio.uio_offset = 0;
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw =
-				ur->request.bmRequestType & UT_READ ?
+				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
 			uio.uio_procp = p;
 			ptr = malloc(len, M_TEMP, M_WAITOK);
@@ -512,7 +512,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 			}
 		}
 		err = usbd_do_request_flags(sc->sc_bus->devices[addr],
-			  &ur->request, ptr, ur->flags, &ur->actlen,
+			  &ur->ucr_request, ptr, ur->ucr_flags, &ur->ucr_actlen,
 			  USBD_DEFAULT_TIMEOUT);
 		if (err) {
 			error = EIO;
@@ -534,7 +534,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 	case USB_DEVICEINFO:
 	{
 		struct usb_device_info *di = (void *)data;
-		int addr = di->addr;
+		int addr = di->udi_addr;
 		usbd_device_handle dev;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)

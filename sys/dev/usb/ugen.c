@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.57 2002/02/11 15:11:49 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.58 2002/02/20 20:30:12 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.57 2002/02/11 15:11:49 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.58 2002/02/20 20:30:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1078,37 +1078,39 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	case USB_GET_ALTINTERFACE:
 		ai = (struct usb_alt_interface *)addr;
 		err = usbd_device2interface_handle(sc->sc_udev,
-			  ai->interface_index, &iface);
+			  ai->uai_interface_index, &iface);
 		if (err)
 			return (EINVAL);
 		idesc = usbd_get_interface_descriptor(iface);
 		if (idesc == NULL)
 			return (EIO);
-		ai->alt_no = idesc->bAlternateSetting;
+		ai->uai_alt_no = idesc->bAlternateSetting;
 		break;
 	case USB_SET_ALTINTERFACE:
 		if (!(flag & FWRITE))
 			return (EPERM);
 		ai = (struct usb_alt_interface *)addr;
 		err = usbd_device2interface_handle(sc->sc_udev,
-			  ai->interface_index, &iface);
+			  ai->uai_interface_index, &iface);
 		if (err)
 			return (EINVAL);
-		err = ugen_set_interface(sc, ai->interface_index, ai->alt_no);
+		err = ugen_set_interface(sc, ai->uai_interface_index,
+		    ai->uai_alt_no);
 		if (err)
 			return (EINVAL);
 		break;
 	case USB_GET_NO_ALT:
 		ai = (struct usb_alt_interface *)addr;
-		cdesc = ugen_get_cdesc(sc, ai->config_index, 0);
+		cdesc = ugen_get_cdesc(sc, ai->uai_config_index, 0);
 		if (cdesc == NULL)
 			return (EINVAL);
-		idesc = usbd_find_idesc(cdesc, ai->interface_index, 0);
+		idesc = usbd_find_idesc(cdesc, ai->uai_interface_index, 0);
 		if (idesc == NULL) {
 			free(cdesc, M_TEMP);
 			return (EINVAL);
 		}
-		ai->alt_no = usbd_get_no_alts(cdesc, idesc->bInterfaceNumber);
+		ai->uai_alt_no = usbd_get_no_alts(cdesc,
+		    idesc->bInterfaceNumber);
 		free(cdesc, M_TEMP);
 		break;
 	case USB_GET_DEVICE_DESC:
@@ -1117,47 +1119,47 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		break;
 	case USB_GET_CONFIG_DESC:
 		cd = (struct usb_config_desc *)addr;
-		cdesc = ugen_get_cdesc(sc, cd->config_index, 0);
+		cdesc = ugen_get_cdesc(sc, cd->ucd_config_index, 0);
 		if (cdesc == NULL)
 			return (EINVAL);
-		cd->desc = *cdesc;
+		cd->ucd_desc = *cdesc;
 		free(cdesc, M_TEMP);
 		break;
 	case USB_GET_INTERFACE_DESC:
 		id = (struct usb_interface_desc *)addr;
-		cdesc = ugen_get_cdesc(sc, id->config_index, 0);
+		cdesc = ugen_get_cdesc(sc, id->uid_config_index, 0);
 		if (cdesc == NULL)
 			return (EINVAL);
-		if (id->config_index == USB_CURRENT_CONFIG_INDEX &&
-		    id->alt_index == USB_CURRENT_ALT_INDEX)
-			alt = ugen_get_alt_index(sc, id->interface_index);
+		if (id->uid_config_index == USB_CURRENT_CONFIG_INDEX &&
+		    id->uid_alt_index == USB_CURRENT_ALT_INDEX)
+			alt = ugen_get_alt_index(sc, id->uid_interface_index);
 		else
-			alt = id->alt_index;
-		idesc = usbd_find_idesc(cdesc, id->interface_index, alt);
+			alt = id->uid_alt_index;
+		idesc = usbd_find_idesc(cdesc, id->uid_interface_index, alt);
 		if (idesc == NULL) {
 			free(cdesc, M_TEMP);
 			return (EINVAL);
 		}
-		id->desc = *idesc;
+		id->uid_desc = *idesc;
 		free(cdesc, M_TEMP);
 		break;
 	case USB_GET_ENDPOINT_DESC:
 		ed = (struct usb_endpoint_desc *)addr;
-		cdesc = ugen_get_cdesc(sc, ed->config_index, 0);
+		cdesc = ugen_get_cdesc(sc, ed->ued_config_index, 0);
 		if (cdesc == NULL)
 			return (EINVAL);
-		if (ed->config_index == USB_CURRENT_CONFIG_INDEX &&
-		    ed->alt_index == USB_CURRENT_ALT_INDEX)
-			alt = ugen_get_alt_index(sc, ed->interface_index);
+		if (ed->ued_config_index == USB_CURRENT_CONFIG_INDEX &&
+		    ed->ued_alt_index == USB_CURRENT_ALT_INDEX)
+			alt = ugen_get_alt_index(sc, ed->ued_interface_index);
 		else
-			alt = ed->alt_index;
-		edesc = usbd_find_edesc(cdesc, ed->interface_index,
-					alt, ed->endpoint_index);
+			alt = ed->ued_alt_index;
+		edesc = usbd_find_edesc(cdesc, ed->ued_interface_index,
+					alt, ed->ued_endpoint_index);
 		if (edesc == NULL) {
 			free(cdesc, M_TEMP);
 			return (EINVAL);
 		}
-		ed->desc = *edesc;
+		ed->ued_desc = *edesc;
 		free(cdesc, M_TEMP);
 		break;
 	case USB_GET_FULL_DESC:
@@ -1168,10 +1170,10 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		struct usb_full_desc *fd = (struct usb_full_desc *)addr;
 		int error;
 
-		cdesc = ugen_get_cdesc(sc, fd->config_index, &len);
-		if (len > fd->size)
-			len = fd->size;
-		iov.iov_base = (caddr_t)fd->data;
+		cdesc = ugen_get_cdesc(sc, fd->ufd_config_index, &len);
+		if (len > fd->ufd_size)
+			len = fd->ufd_size;
+		iov.iov_base = (caddr_t)fd->ufd_data;
 		iov.iov_len = len;
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
@@ -1186,15 +1188,15 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	}
 	case USB_GET_STRING_DESC:
 		si = (struct usb_string_desc *)addr;
-		err = usbd_get_string_desc(sc->sc_udev, si->string_index,
-			  si->language_id, &si->desc);
+		err = usbd_get_string_desc(sc->sc_udev, si->usd_string_index,
+			  si->usd_language_id, &si->usd_desc);
 		if (err)
 			return (EINVAL);
 		break;
 	case USB_DO_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)addr;
-		int len = UGETW(ur->request.wLength);
+		int len = UGETW(ur->ucr_request.wLength);
 		struct iovec iov;
 		struct uio uio;
 		void *ptr = 0;
@@ -1204,18 +1206,18 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		if (!(flag & FWRITE))
 			return (EPERM);
 		/* Avoid requests that would damage the bus integrity. */
-		if ((ur->request.bmRequestType == UT_WRITE_DEVICE &&
-		     ur->request.bRequest == UR_SET_ADDRESS) ||
-		    (ur->request.bmRequestType == UT_WRITE_DEVICE &&
-		     ur->request.bRequest == UR_SET_CONFIG) ||
-		    (ur->request.bmRequestType == UT_WRITE_INTERFACE &&
-		     ur->request.bRequest == UR_SET_INTERFACE))
+		if ((ur->ucr_request.bmRequestType == UT_WRITE_DEVICE &&
+		     ur->ucr_request.bRequest == UR_SET_ADDRESS) ||
+		    (ur->ucr_request.bmRequestType == UT_WRITE_DEVICE &&
+		     ur->ucr_request.bRequest == UR_SET_CONFIG) ||
+		    (ur->ucr_request.bmRequestType == UT_WRITE_INTERFACE &&
+		     ur->ucr_request.bRequest == UR_SET_INTERFACE))
 			return (EINVAL);
 
 		if (len < 0 || len > 32767)
 			return (EINVAL);
 		if (len != 0) {
-			iov.iov_base = (caddr_t)ur->data;
+			iov.iov_base = (caddr_t)ur->ucr_data;
 			iov.iov_len = len;
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
@@ -1223,7 +1225,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			uio.uio_offset = 0;
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw =
-				ur->request.bmRequestType & UT_READ ?
+				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
 			uio.uio_procp = p;
 			ptr = malloc(len, M_TEMP, M_WAITOK);
@@ -1234,8 +1236,8 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			}
 		}
 		sce = &sc->sc_endpoints[endpt][IN];
-		err = usbd_do_request_flags(sc->sc_udev, &ur->request,
-			  ptr, ur->flags, &ur->actlen, sce->timeout);
+		err = usbd_do_request_flags(sc->sc_udev, &ur->ucr_request,
+			  ptr, ur->ucr_flags, &ur->ucr_actlen, sce->timeout);
 		if (err) {
 			error = EIO;
 			goto ret;

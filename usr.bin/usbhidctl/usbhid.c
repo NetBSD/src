@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhid.c,v 1.21 2001/12/29 21:23:24 augustss Exp $ */
+/*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -405,7 +405,7 @@ allocreport(struct Sreport *report, report_desc_t rd, int repindex)
 		 * report in the variable-sized data field.
 		 */
 		report->buffer = malloc(sizeof(*report->buffer) -
-					sizeof(report->buffer->data) +
+					sizeof(report->buffer->ucr_data) +
 					report->size);
 		if (report->buffer == NULL)
 			err(1, NULL);
@@ -431,7 +431,7 @@ getreport(struct Sreport *report, int hidfd, report_desc_t rd, int repindex)
 		if (report->size == 0)
 			return;
 
-		report->buffer->report = reptoparam[repindex].uhid_report;
+		report->buffer->ucr_report = reptoparam[repindex].uhid_report;
 		if (ioctl(hidfd, USB_GET_REPORT, report->buffer) < 0)
 			err(1, "USB_GET_REPORT (probably not supported by "
 			    "device)");
@@ -442,7 +442,7 @@ static void
 setreport(struct Sreport *report, int hidfd, int repindex)
 {
 	if (report->status == srs_dirty) {
-		report->buffer->report = reptoparam[repindex].uhid_report;
+		report->buffer->ucr_report = reptoparam[repindex].uhid_report;
 
 		if (ioctl(hidfd, USB_SET_REPORT, report->buffer) < 0)
 			err(1, "USB_SET_REPORT(%s)",
@@ -597,7 +597,7 @@ devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 		errx(1, "Input report descriptor invalid length");
 
 	dlen = inreport.size;
-	dbuf = inreport.buffer->data;
+	dbuf = inreport.buffer->ucr_data;
 
 	for (;;) {
 		ssize_t readlen;
@@ -644,7 +644,7 @@ devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 			if (matchvar != NULL)
 				matchvar->opfunc(&hitem, matchvar,
 						 colls, collind,
-						 inreport.buffer->data);
+						 inreport.buffer->ucr_data);
 		}
 		hid_end_parse(hdata);
 		printf("\n");
@@ -725,7 +725,7 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 				getreport(repptr, hidfd, rd, repindex);
 
 			bufdata = (repptr == NULL || repptr->buffer == NULL) ?
-				NULL : repptr->buffer->data;
+				NULL : repptr->buffer->ucr_data;
 
 			if (matchvar->opfunc(&hitem, matchvar, colls, collind,
 					     bufdata))
