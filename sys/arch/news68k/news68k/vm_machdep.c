@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 2000/06/29 08:02:52 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 2001/02/17 18:29:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -282,8 +282,6 @@ kvtop(addr)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }
-
-extern vm_map_t phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.
