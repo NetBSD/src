@@ -1,4 +1,4 @@
-/*	$NetBSD: less.h,v 1.1.1.3 1997/09/21 12:23:16 mrg Exp $	*/
+/*	$NetBSD: less.h,v 1.2 1999/02/04 17:05:35 kleink Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -140,7 +140,7 @@ void free();
 /*
  * Special types and constants.
  */
-typedef long		POSITION;
+typedef off_t		POSITION;
 /*
  * {{ Warning: if POSITION is changed to other than "long",
  *    you may have to change some of the printfs which use "%ld"
