@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.11 2002/04/01 07:39:05 nathanw Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.12 2002/04/11 06:34:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.11 2002/04/01 07:39:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.12 2002/04/11 06:34:36 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -86,8 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.11 2002/04/01 07:39:05 nathanw
 #include <sys/ucontext.h>
 #include <sys/savar.h>
 
+#include <arm/cpufunc.h>
+
 #include <machine/pcb.h>
-#include <machine/cpufunc.h>
 #include <machine/vmparam.h>
 
 static __inline struct trapframe *
@@ -109,7 +110,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf = l->l_addr->u_pcb.pcb_tf;
 
 	memset(tf, 0, sizeof(*tf));
-	tf->tf_r0 = (u_int)p->p_psstr;
+	tf->tf_r0 = (u_int)l->l_proc->p_psstr;
 #ifdef COMPAT_13
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
 #endif
@@ -197,6 +198,6 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	tf->tf_pc = (int) ((caddr_t)p->p_sigctx.ps_sigcode + (
 	    (caddr_t)upcallcode - (caddr_t)sigcode));
 #ifndef arm26
-	cpu_cache_syncI();	/* XXX really necessary? */
+	cpu_icache_sync_all();	/* XXX really necessary? */
 #endif
 }
