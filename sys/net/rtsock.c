@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.72 2004/10/23 19:13:22 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.73 2005/01/23 18:41:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.72 2004/10/23 19:13:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.73 2005/01/23 18:41:57 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.72 2004/10/23 19:13:22 christos Exp $")
 
 #include <machine/stdarg.h>
 
-extern	struct domain routedomain;		/* or at least forward */
+DOMAIN_DEFINE(routedomain);	/* forward declare and add to link set */
 
 struct	sockaddr route_dst = { 2, PF_ROUTE, };
 struct	sockaddr route_src = { 2, PF_ROUTE, };
