@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.18 2001/04/13 23:30:20 thorpej Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.19 2001/11/13 00:12:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -42,6 +42,9 @@
  *
  *	@(#)pk_input.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.19 2001/11/13 00:12:58 lukem Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"
