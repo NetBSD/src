@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.17 2002/12/06 02:18:38 thorpej Exp $	*/
+/*	$NetBSD: table.c,v 1.18 2003/04/15 07:37:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.17 2002/12/06 02:18:38 thorpej Exp $");
+__RCSID("$NetBSD: table.c,v 1.18 2003/04/15 07:37:34 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -1819,8 +1819,7 @@ rtswitch(struct rt_entry *rt,
 	 struct rt_spare *rts)
 {
 	struct rt_spare swap;
-	char label[10];
-
+	char label[20];
 
 	/* Do not change permanent routes */
 	if (0 != (rt->rt_state & (RS_MHOME | RS_STATIC | RS_RDISC
