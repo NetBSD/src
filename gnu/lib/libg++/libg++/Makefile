@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.16 1993/11/17 20:57:58 jtc Exp $
+#	$Id: Makefile,v 1.17 1993/11/17 21:22:34 jtc Exp $
 
 LIB=	g++
 NOPIC=
@@ -21,8 +21,8 @@ SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../g++-include \
 		-I$(.CURDIR)/../iostream
-CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libiberty
+CFLAGS+=	-I$(.CURDIR)
 NOMAN=		noman
-.PATH:		$(.CURDIR)/../iostream $(.CURDIR)/../libiberty
+.PATH:		$(.CURDIR)/../iostream 
 
 .include <bsd.lib.mk>
