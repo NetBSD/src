@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.28 1998/02/05 07:59:51 mrg Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.29 1998/02/07 02:40:36 chs Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -301,10 +301,20 @@ malloc(size, type, flags)
 	freep = (struct freelist *)va;
 	savedtype = (unsigned)freep->type < M_LAST ?
 		memname[freep->type] : "???";
-	if (kbp->kb_next &&
 #if defined(UVM)
-	    !uvm_kernacc(kbp->kb_next, sizeof(struct freelist), 0)) 
+	if (kbp->kb_next) {
+		int rv;
+		vm_offset_t addr = (vm_offset_t)kbp->kb_next;
+
+		vm_map_lock_read(kmem_map);
+		rv = uvm_map_checkprot(kmem_map, addr,
+				       addr + sizeof(struct freelist),
+				       VM_PROT_WRITE);
+		vm_map_unlock_read(kmem_map);
+
+		if (!rv)
 #else
+	if (kbp->kb_next &&
 	    !kernacc(kbp->kb_next, sizeof(struct freelist), 0)) 
 #endif
 								{
@@ -317,6 +327,9 @@ malloc(size, type, flags)
 		hitmlog(va);
 #endif
 		kbp->kb_next = NULL;
+#if defined(UVM)
+		}
+#endif
 	}
 
 	/* Fill the fields that we've used with WEIRD_ADDR */
