@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.4 2001/11/08 20:06:22 manu Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.5 2003/07/16 12:22:58 cb Exp $	*/
 
 /*
  * ntp_config.c - read and apply configuration information
@@ -2405,11 +2405,11 @@ save_resolve(
 	}
 #endif
 
-	(void)fprintf(res_fp, "%s %d %d %d %d %d %d %08x %s\n", name,
+	(void)fprintf(res_fp, "%s %d %d %d %d %d %d %u %s\n", name,
 	    mode, version, minpoll, maxpoll, flags, ttl, keyid, keystr);
 #ifdef DEBUG
 	if (debug > 1)
-		printf("config: %s %d %d %d %d %d %d %08x %s\n", name, mode,
+		printf("config: %s %d %d %d %d %d %d %u %s\n", name, mode,
 		    version, minpoll, maxpoll, flags, ttl, keyid, keystr);
 #endif
 
