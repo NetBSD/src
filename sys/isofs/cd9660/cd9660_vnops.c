@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.5.2.1 1994/07/18 20:18:05 cgd Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.5.2.2 1994/07/20 03:17:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -287,8 +287,8 @@ cd9660_read(ap)
 	ip->i_flag |= IN_ACCESS;
 	imp = ip->i_mnt;
 	do {
-		lbn = iso_lblkno(imp, uio->uio_offset);
-		on = iso_blkoff(imp, uio->uio_offset);
+		lbn = lblkno(imp, uio->uio_offset);
+		on = blkoff(imp, uio->uio_offset);
 		n = min((u_int)(imp->logical_block_size - on),
 			uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
@@ -296,18 +296,18 @@ cd9660_read(ap)
 			return (0);
 		if (diff < n)
 			n = diff;
-		size = iso_blksize(imp, ip, lbn);
+		size = blksize(imp, ip, lbn);
 		rablock = lbn + 1;
 		if (doclusterread) {
-			if (iso_lblktosize(imp, rablock) <= ip->i_size)
+			if (lblktosize(imp, rablock) <= ip->i_size)
 				error = cluster_read(vp, (off_t)ip->i_size,
 						     lbn, size, NOCRED, &bp);
 			else
 				error = bread(vp, lbn, size, NOCRED, &bp);
 		} else {
 			if (vp->v_lastr + 1 == lbn &&
-			    iso_lblktosize(imp, rablock) < ip->i_size) {
-				rasize = iso_blksize(imp, ip, rablock);
+			    lblktosize(imp, rablock) < ip->i_size) {
+				rasize = blksize(imp, ip, rablock);
 				error = breadn(vp, lbn, size, &rablock,
 					       &rasize, 1, NOCRED, &bp);
 			} else
@@ -515,18 +515,21 @@ cd9660_readdir(ap)
 {
 	register struct uio *uio = ap->a_uio;
 	struct isoreaddir *idp;
-	int entryoffsetinblock;
-	int error = 0;
-	int endsearch;
-	struct iso_directory_record *ep;
-	u_short elen;
-	int reclen;
+	struct vnode *vdp = ap->a_vp;
+	struct iso_node *dp;
 	struct iso_mnt *imp;
-	struct iso_node *ip;
 	struct buf *bp = NULL;
+	struct iso_directory_record *ep;
+	int entryoffsetinblock;
+	doff_t endsearch;
+	u_long bmask;
+	int error = 0;
+	int reclen;
+	u_short namelen;
 
-	ip = VTOI(ap->a_vp);
-	imp = ip->i_mnt;
+	dp = VTOI(vdp);
+	imp = dp->i_mnt;
+	bmask = imp->im_bmask;
 
 	MALLOC(idp, struct isoreaddir *, sizeof(*idp), M_TEMP, M_WAITOK);
 	idp->saveent.d_namlen = idp->assocent.d_namlen = 0;
@@ -542,14 +545,12 @@ cd9660_readdir(ap)
 	idp->ncookies = ap->a_ncookies;
 	idp->curroff = uio->uio_offset;
 
-	entryoffsetinblock = iso_blkoff(imp, idp->curroff);
-	if (entryoffsetinblock != 0) {
-		if (error = iso_blkatoff(ip, idp->curroff, &bp)) {
-			FREE(idp,M_TEMP);
-			return (error);
-		}
+	if ((entryoffsetinblock = idp->curroff & bmask) &&
+	    (error = VOP_BLKATOFF(vdp, (off_t)idp->curroff, NULL, &bp))) {
+		FREE(idp, M_TEMP);
+		return (error);
 	}
-	endsearch = roundup(ip->i_size, imp->logical_block_size);
+	endsearch = dp->i_size;
 
 	while (idp->curroff < endsearch) {
 		/*
@@ -557,10 +558,11 @@ cd9660_readdir(ap)
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-		if (iso_blkoff(imp, idp->curroff) == 0) {
+		if ((idp->curroff & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			if (error = iso_blkatoff(ip, idp->curroff, &bp))
+			if (error =
+			    VOP_BLKATOFF(vdp, (off_t)idp->curroff, NULL, &bp))
 				break;
 			entryoffsetinblock = 0;
 		}
@@ -568,13 +570,12 @@ cd9660_readdir(ap)
 		 * Get pointer to next entry.
 		 */
 		ep = (struct iso_directory_record *)
-			(bp->b_data + entryoffsetinblock);
+			((char *)bp->b_data + entryoffsetinblock);
 
-		reclen = isonum_711 (ep->length);
+		reclen = isonum_711(ep->length);
 		if (reclen == 0) {
 			/* skip to next block, if any */
-			idp->curroff =
-				roundup(idp->curroff, imp->logical_block_size);
+			idp->curroff = (idp->curroff + bmask) & ~bmask;
 			continue;
 		}
 
@@ -599,7 +600,7 @@ cd9660_readdir(ap)
 		}
 
 		if (isonum_711(ep->flags)&2)
-			isodirino(&idp->current.d_fileno,ep,imp);
+			idp->current.d_fileno = isodirino(ep, imp);
 		else
 			idp->current.d_fileno = dbtob(bp->b_blkno) +
 				entryoffsetinblock;
@@ -608,9 +609,9 @@ cd9660_readdir(ap)
 
 		switch (imp->iso_ftype) {
 		case ISO_FTYPE_RRIP:
-			cd9660_rrip_getname(ep,idp->current.d_name, &elen,
+			cd9660_rrip_getname(ep,idp->current.d_name, &namelen,
 					   &idp->current.d_fileno,imp);
-			idp->current.d_namlen = (u_char)elen;
+			idp->current.d_namlen = (u_char)namelen;
 			if (idp->current.d_namlen)
 				error = iso_uiodir(idp,&idp->current,idp->curroff);
 			break;
@@ -627,10 +628,10 @@ cd9660_readdir(ap)
 				break;
 			default:
 				isofntrans(ep->name,idp->current.d_namlen,
-					   idp->current.d_name, &elen,
+					   idp->current.d_name, &namelen,
 					   imp->iso_ftype == ISO_FTYPE_9660,
 					   isonum_711(ep->flags)&4);
-				idp->current.d_namlen = (u_char)elen;
+				idp->current.d_namlen = (u_char)namelen;
 				if (imp->iso_ftype == ISO_FTYPE_DEFAULT)
 					error = iso_shipdir(idp);
 				else
@@ -657,7 +658,7 @@ cd9660_readdir(ap)
 	uio->uio_offset = idp->uio_off;
 	*ap->a_eofflag = idp->eofflag;
 
-	FREE(idp,M_TEMP);
+	FREE(idp, M_TEMP);
 
 	return (error);
 }
@@ -698,10 +699,9 @@ cd9660_readlink(ap)
 	 * Get parents directory record block that this inode included.
 	 */
 	error = bread(imp->im_devvp,
-		      (daddr_t)((ip->i_number&~imp->im_bmask) / DEV_BSIZE),
-		      imp->logical_block_size,
-		      NOCRED,
-		      &bp);
+		      (ip->i_number >> imp->im_bshift) <<
+		      (imp->im_bshift - DEV_BSHIFT),
+		      imp->logical_block_size, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (EINVAL);
@@ -858,21 +858,6 @@ cd9660_unlock(ap)
 }
 
 /*
- * Check for a locked inode.
- */
-int
-cd9660_islocked(ap)
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
-{
-
-	if (VTOI(ap->a_vp)->i_flag & IN_LOCKED)
-		return (1);
-	return (0);
-}
-
-/*
  * Calculate the logical to physical mapping if not done already,
  * then call the device strategy routine.
  */
@@ -920,8 +905,64 @@ cd9660_print(ap)
 		struct vnode *a_vp;
 	} */ *ap;
 {
+
 	printf("tag VT_ISOFS, isofs vnode\n");
 	return (0);
+}
+
+/*
+ * Check for a locked inode.
+ */
+int
+cd9660_islocked(ap)
+	struct vop_islocked_args /* {
+		struct vnode *a_vp;
+	} */ *ap;
+{
+
+	if (VTOI(ap->a_vp)->i_flag & IN_LOCKED)
+		return (1);
+	return (0);
+}
+
+/*
+ * Return POSIX pathconf information applicable to cd9660 filesystems.
+ */
+int
+cd9660_pathconf(ap)
+	struct vop_pathconf_args /* {
+		struct vnode *a_vp;
+		int a_name;
+		int *a_retval;
+	} */ *ap;
+{
+
+	switch (ap->a_name) {
+	case _PC_LINK_MAX:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_NAME_MAX:
+		if (VTOI(ap->a_vp)->i_mnt->iso_ftype == ISO_FTYPE_RRIP)
+			*ap->a_retval = NAME_MAX;
+		else
+			*ap->a_retval = 23;	/* XXX 8.8;5 */
+		return (0);
+	case _PC_PATH_MAX:
+		*ap->a_retval = PATH_MAX;
+		return (0);
+	case _PC_PIPE_BUF:
+		*ap->a_retval = PIPE_BUF;
+		return (0);
+	case _PC_CHOWN_RESTRICTED:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_NO_TRUNC:
+		*ap->a_retval = 1;
+		return (0);
+	default:
+		return (EINVAL);
+	}
+	/* NOTREACHED */
 }
 
 /*
@@ -953,12 +994,8 @@ cd9660_enotsupp()
 #define cd9660_rmdir ((int (*) __P((struct  vop_rmdir_args *)))cd9660_enotsupp)
 #define cd9660_symlink \
 	((int (*) __P((struct vop_symlink_args *)))cd9660_enotsupp)
-#define cd9660_pathconf \
-	((int (*) __P((struct vop_pathconf_args *)))cd9660_enotsupp)
 #define cd9660_advlock \
 	((int (*) __P((struct vop_advlock_args *)))cd9660_enotsupp)
-#define cd9660_blkatoff \
-	((int (*) __P((struct  vop_blkatoff_args *)))cd9660_enotsupp)
 #define cd9660_valloc ((int(*) __P(( \
 		struct vnode *pvp, \
 		int mode, \

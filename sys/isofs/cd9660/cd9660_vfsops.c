@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.4.2.1 1994/07/18 20:17:59 cgd Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.4.2.2 1994/07/20 03:17:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -261,8 +261,8 @@ static iso_mountfs(devvp, mp, p, argp)
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 	
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
-		if (error = bread (devvp, btodb(iso_blknum * iso_bsize),
-				   iso_bsize, NOCRED, &bp))
+		if (error = bread(devvp, iso_blknum * btodb(iso_bsize),
+				  iso_bsize, NOCRED, &bp))
 			goto out;
 		
 		vdp = (struct iso_volume_descriptor *)bp->b_data;
@@ -328,10 +328,10 @@ static iso_mountfs(devvp, mp, p, argp)
 	
 	/* Check the Rock Ridge Extention support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
-		if (error = bread (isomp->im_devvp,
-				   (isomp->root_extent + isonum_711(rootp->ext_attr_length))
-				   * isomp->logical_block_size / DEV_BSIZE,
-				   isomp->logical_block_size,NOCRED,&bp))
+		if (error = bread(isomp->im_devvp,
+				  (isomp->root_extent + isonum_711(rootp->ext_attr_length)) <<
+				  (isomp->im_bshift - DEV_BSHIFT),
+				  isomp->logical_block_size, NOCRED, &bp))
 		    goto out;
 		
 		rootp = (struct iso_directory_record *)bp->b_data;
@@ -442,9 +442,7 @@ cd9660_root(mp, vpp)
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 	struct iso_directory_record *dp =
 	    (struct iso_directory_record *)imp->root;
-	ino_t ino;
-	
-	isodirino(&ino, dp, imp);
+	ino_t ino = isodirino(dp, imp);
 	
 	/*
 	 * With RRIP we must use the `.' entry of the root directory.
@@ -647,14 +645,14 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	if (isodir == 0) {
 		int lbn, off;
 
-		lbn = iso_lblkno(imp, ino);
+		lbn = lblkno(imp, ino);
 		if (lbn >= imp->volume_space_size) {
 			vput(vp);
 			printf("fhtovp: lbn exceed volume space %d\n", lbn);
 			return (ESTALE);
 		}
 	
-		off = iso_blkoff(imp, ino);
+		off = blkoff(imp, ino);
 		if (off + ISO_DIRECTORY_RECORD_SIZE > imp->logical_block_size) {
 			vput(vp);
 			printf("fhtovp: crosses block boundary %d\n",
@@ -663,7 +661,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		}
 	
 		error = bread(imp->im_devvp,
-			      btodb(lbn * imp->logical_block_size),
+			      lbn << (imp->im_bshift - DEV_BSHIFT),
 			      imp->logical_block_size, NOCRED, &bp);
 		if (error) {
 			vput(vp);
@@ -710,7 +708,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		ip->iso_start = ino >> imp->im_bshift;
 		if (bp != 0)
 			brelse(bp);
-		if (error = iso_blkatoff(ip, 0, &bp)) {
+		if (error = VOP_BLKATOFF(vp, (off_t)0, NULL, &bp)) {
 			vput(vp);
 			return (error);
 		}
@@ -729,13 +727,17 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	default:	/* ISO_FTYPE_9660 */
 	    {
 		struct buf *bp2;
+		int off;
 		if ((imp->im_flags & ISOFSMNT_EXTATT)
-		    && isonum_711(isodir->ext_attr_length))
-			iso_blkatoff(ip, -isonum_711(isodir->ext_attr_length),
+		    && (off = isonum_711(isodir->ext_attr_length)))
+			VOP_BLKATOFF(vp, (off_t)-(off << imp->im_bshift), NULL,
 				     &bp2);
+		else
+			bp2 = NULL;
 		cd9660_defattr(isodir, ip, bp2);
 		cd9660_deftstamp(isodir, ip, bp2);
-		brelse(bp2);
+		if (bp2)
+			brelse(bp2);
 		break;
 	    }
 	case ISO_FTYPE_RRIP:
