@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.84 2001/12/23 14:00:21 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.85 2001/12/23 16:16:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.84 2001/12/23 14:00:21 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.85 2001/12/23 16:16:59 fvdl Exp $");
 
 #include "opt_quota.h"
 #include "fs_lfs.h"
@@ -1233,7 +1233,7 @@ ufs_mkdir(void *v)
 	dp->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(dvp))
 		softdep_change_linkcnt(dp);
-	if ((error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
+	if ((error = VOP_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 
 	/*
