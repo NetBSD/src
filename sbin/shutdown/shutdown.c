@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.16 1997/10/01 02:24:29 enami Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.17 1998/01/20 20:55:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.16 1997/10/01 02:24:29 enami Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.17 1998/01/20 20:55:23 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -420,6 +420,8 @@ getoffset(timearg)
 	switch(strlen(timearg)) {
 	case 10:
 		lt->tm_year = ATOI2(timearg);
+		if ((lt->tm_year >= 0) || (lt->tm_year <= 68))
+			lt->tm_year += 100;
 		/* FALLTHROUGH */
 	case 8:
 		lt->tm_mon = ATOI2(timearg);
