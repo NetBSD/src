@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.33 1996/06/14 09:27:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -505,8 +505,7 @@ fdesc_getattr(v)
 	case Fdevfd:
 	case Flink:
 	case Fctty:
-		bzero((caddr_t) vap, sizeof(*vap));
-		vattr_null(vap);
+		VATTR_NULL(vap);
 		vap->va_fileid = VTOFDESC(vp)->fd_ix;
 
 #define R_ALL (S_IRUSR|S_IRGRP|S_IROTH)
