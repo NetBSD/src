@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.51 2001/05/06 13:36:51 simonb Exp $	*/
+/*	$NetBSD: savecore.c,v 1.52 2001/06/13 23:16:27 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.51 2001/05/06 13:36:51 simonb Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.52 2001/06/13 23:16:27 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: savecore.c,v 1.51 2001/05/06 13:36:51 simonb Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <util.h>
 #include <limits.h>
 #include <kvm.h>
 
@@ -118,7 +119,7 @@ long	dumplo;				/* where dump starts on dumpdev */
 int	dumpmag;			/* magic number in dump */
 int	dumpsize;			/* amount of memory dumped */
 
-char	*kernel;			/* name of used kernel */
+const char	*kernel;		/* name of used kernel */
 char	*dirname;			/* directory to save dumps in */
 char	*ddname;			/* name of dump device */
 dev_t	dumpdev;			/* dump device */
@@ -142,7 +143,7 @@ void	kmem_setup(void);
 void	log(int, char *, ...);
 void	Lseek(int, off_t, int);
 int	main(int, char *[]);
-int	Open(char *, int rw);
+int	Open(const char *, int rw);
 char	*rawname(char *s);
 void	save_core(void);
 void	usage(void);
@@ -190,7 +191,7 @@ main(int argc, char *argv[])
 		dirname = argv[0];
 
 	if (kernel == NULL) {
-		kernel = _PATH_UNIX;
+		kernel = getbootfile();
 	}
 
 	(void)time(&now);
@@ -333,7 +334,7 @@ check_kmem(void)
 	    sizeof(core_vers));
 	core_vers[sizeof(core_vers) - 1] = '\0';
 
-	if (strcmp(vers, core_vers) && kernel == 0)
+	if (strcmp(vers, core_vers) != 0)
 		syslog(LOG_WARNING,
 		    "warning: %s version mismatch:\n\t%s\nand\t%s\n",
 		    kernel, vers, core_vers);
@@ -556,7 +557,7 @@ err2:			syslog(LOG_WARNING,
 	(void)fclose(fp);
 
 	/* Copy the kernel. */
-	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
+	ifd = Open(kernel, O_RDONLY);
 	(void)snprintf(path, sizeof(path), "%s/netbsd.%d%s",
 	    dirname, bounds, compress ? ".gz" : "");
 	if (compress) {
@@ -582,7 +583,7 @@ err2:			syslog(LOG_WARNING,
 		}
 	}
 	if (nr < 0) {
-		syslog(LOG_ERR, "%s: %m", kernel ? kernel : _PATH_UNIX);
+		syslog(LOG_ERR, "%s: %m", kernel);
 		syslog(LOG_WARNING, "WARNING: kernel may be incomplete");
 		exit(1);
 	}
@@ -723,7 +724,7 @@ check_space(void)
 }
 
 int
-Open(char *name, int rw)
+Open(const char *name, int rw)
 {
 	int fd;
 
