@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.6 1996/12/28 23:13:35 pk Exp $	*/
+/*	$NetBSD: md_root.c,v 1.7 1996/12/28 23:50:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
-#include <dev/ramdisk.h>
+#include <dev/md.h>
 
 extern int boothowto;
 
