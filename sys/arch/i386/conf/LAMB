@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.34 2003/09/09 07:14:01 itojun Exp $
+#	$NetBSD: LAMB,v 1.35 2004/02/16 17:11:27 wiz Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -21,8 +21,6 @@ options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
-# eliminate delay no-ops in I/O; recommended on all but very old machines
-#options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support
