@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: nm.h,v 1.1 1994/01/28 12:41:36 pk Exp $
+	$Id: nm.h,v 1.2 1994/03/09 16:15:45 pk Exp $
 */
 
 #ifndef NM_I386BSD_H
@@ -38,5 +38,7 @@ extern int
 i386_register_u_addr PARAMS ((int, int));
 
 #define PTRACE_ARG3_TYPE char*
+
+#define ATTACH_DETACH
 
 #endif /* NM_I386BSD_H */
