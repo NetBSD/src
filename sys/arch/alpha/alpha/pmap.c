@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.89 1999/04/09 00:38:10 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.90 1999/04/10 01:21:37 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 1999/04/09 00:38:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 1999/04/10 01:21:37 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -959,7 +959,6 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 int
 pmap_uses_prom_console()
 {
-	extern int cputype;
 
 #if defined(NEW_SCC_DRIVER)
 	return (cputype == ST_DEC_21000 || cputype == ST_DEC_4100);

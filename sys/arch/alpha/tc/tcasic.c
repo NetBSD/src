@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.25 1998/11/19 02:53:47 ross Exp $ */
+/* $NetBSD: tcasic.c,v 1.26 1999/04/10 01:21:38 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.25 1998/11/19 02:53:47 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.26 1999/04/10 01:21:38 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,6 @@ struct cfattach tcasic_ca = {
 extern struct cfdriver tcasic_cd;
 
 int	tcasicprint __P((void *, const char *));
-
-extern int cputype;
 
 /* There can be only one. */
 int	tcasicfound;

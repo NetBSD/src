@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.1 1998/09/24 05:36:05 ross Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.2 1999/04/10 01:21:36 cgd Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -207,8 +207,6 @@ tulip_softc_t * debug_sc;	/* XXX */
  *	the DEC 21041 PCI Ethernet Controller.
  *	the DEC 21140 PCI Fast Ethernet Controller.
  */
-
-extern int cputype;	/* lcldma on a12 */
 
 static void tulip_mii_autonegotiate(tulip_softc_t * const sc, const unsigned phyaddr);
 static tulip_intrfunc_t tulip_intr_shared(void *arg);

@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.17 1999/02/23 03:20:04 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.18 1999/04/10 01:21:38 cgd Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.17 1999/02/23 03:20:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.18 1999/04/10 01:21:38 cgd Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.17 1999/02/23 03:20:04 thorpej Exp $");
 #include <alpha/tlsb/tlsbvar.h>
 
 #include "locators.h"
-
-extern int	cputype;
 
 #define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
 

@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.8 1998/05/13 22:13:35 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.9 1999/04/10 01:21:38 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.8 1998/05/13 22:13:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.9 1999/04/10 01:21:38 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.8 1998/05/13 22:13:35 thorpej Exp $");
 #include <alpha/tlsb/tlsbvar.h>
 
 #include "locators.h"
-
-extern int	cputype;
 
 #define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
 

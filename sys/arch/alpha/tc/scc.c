@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.43 1999/04/06 20:09:18 pk Exp $ */
+/* $NetBSD: scc.c,v 1.44 1999/04/10 01:21:38 cgd Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.43 1999/04/06 20:09:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.44 1999/04/10 01:21:38 cgd Exp $");
 
 #include "opt_ddb.h"
 #ifdef alpha
@@ -421,7 +421,6 @@ sccattach(parent, self, aux)
 	struct termios cterm;
 	struct tty ctty;
 	int s;
-	extern int cputype;
 	int unit;
 
 	unit = sc->sc_dv.dv_unit;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.166 1999/04/01 00:17:45 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.167 1999/04/10 01:21:37 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 1999/04/01 00:17:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 1999/04/10 01:21:37 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,6 +425,14 @@ nobootinfo:
 	 * Find out what hardware we're on, and do basic initialization.
 	 */
 	cputype = hwrpb->rpb_type;
+	if (cputype < 0) {
+		/*
+		 * At least some white-box systems have SRM which
+		 * reports a systype that's the negative of their
+		 * blue-box counterpart.
+		 */
+		cputype = -cputype;
+	}
 	if (cputype >= ncpuinit) {
 		platform_not_supported();
 		/* NOTREACHED */

@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.32 1998/06/27 10:10:52 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.33 1999/04/10 01:21:38 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.32 1998/06/27 10:10:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.33 1999/04/10 01:21:38 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ lcaattach(parent, self, aux)
 
 	lca_dma_init(lcp);
 
-	switch (hwrpb->rpb_type) {
+	switch (cputype) {
 #ifdef DEC_AXPPCI_33
 	case ST_DEC_AXPPCI_33:
 		pci_axppci_33_pickintr(lcp);
