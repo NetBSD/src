@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_irq.S,v 1.3 2002/10/14 22:32:53 bjh21 Exp $
+/*	$NetBSD: ifpga_irq.S,v 1.4 2003/01/02 23:54:43 thorpej Exp $
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -91,7 +91,6 @@ Lcurrent_spl_level:
 
 Lcurrent_intr_depth:
 	.word	_C_LABEL(current_intr_depth)
-	.word	_C_LABEL(prev_intr_depth)
 
 Lspl_masks:
 	.word	_C_LABEL(spl_masks)
@@ -122,9 +121,7 @@ ASENTRY_NP(irq_entry)
 	 * each time the interrupt handler is nested.
 	 */
 	ldr	r0, Lcurrent_intr_depth
-	ldr	r2, Lcurrent_intr_depth+4
 	ldr	r1, [r0]
-	str	r1, [r2]
 	add	r1, r1, #1
 	str	r1, [r0]
 
@@ -336,9 +333,7 @@ exitirq:
 irq_unknown:
 	/* Decrement the nest count */
 	ldr	r0, Lcurrent_intr_depth
-	ldr	r2, Lcurrent_intr_depth+4
 	ldr	r1, [r0]
-	str	r1, [r2]
 	sub	r1, r1, #1
 	str	r1, [r0]
 
@@ -365,9 +360,7 @@ irqast:
 
 	/* Decrement the nest count */
 	ldr	r0, Lcurrent_intr_depth
-	ldr	r4, Lcurrent_intr_depth+4
 	ldr	r1, [r0]
-	str	r1, [r4]
 	sub	r1, r1, #1
 	str	r1, [r0]
 
@@ -443,12 +436,6 @@ ENTRY(irq_setmasks_nointr)
 	mvn	r1, r1
 	str	r1, [r0, #(IFPGA_INTR_ENABLECLR)]
 	mov	pc, lr
-
-	.data
-	.align 0
-	.global _C_LABEL(prev_intr_depth)
-_C_LABEL(prev_intr_depth):
-	.word	0
 
 #ifdef IRQSTATS
 	/* These symbols are used by vmstat */
