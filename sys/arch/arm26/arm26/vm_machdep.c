@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.19.4.2 2001/11/15 08:16:30 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.19.4.3 2001/11/27 00:19:18 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.19.4.2 2001/11/15 08:16:30 thorpej Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.19.4.3 2001/11/27 00:19:18 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
@@ -151,8 +151,12 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct trapframe *tf = pcb->pcb_tf;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
+	/* Fabricate a new switchframe */
+	bzero(sf, sizeof(*sf));
 	sf->sf_r4 = (register_t)func;
 	sf->sf_r5 = (register_t)arg;
+	sf->sf_r13 = (register_t)tf; /* Initial stack pointer */
+	sf->sf_r14 = (register_t)proc_trampoline | R15_MODE_SVC;
 	pcb->pcb_sf = sf;
 }
 
