@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.44 1994/05/22 10:17:31 deraadt Exp $
+ *	$Id: trap.c,v 1.45 1994/05/23 02:28:21 cgd Exp $
  */
 
 /*
@@ -158,7 +158,7 @@ trap(frame)
 
 	cnt.v_trap++;
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(notdef)
 	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 	    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
 	    frame.tf_eflags, rcr2(), cpl);
