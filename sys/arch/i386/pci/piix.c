@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.7 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: piix.c,v 1.8 2004/05/01 06:35:10 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.7 2004/04/11 06:00:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.8 2004/05/01 06:35:10 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ int	piix_get_intr(pciintr_icu_handle_t, int, int *);
 int	piix_set_intr(pciintr_icu_handle_t, int, int);
 #ifdef PIIX_DEBUG
 void	piix_pir_dump(struct piix_handle *);
+void	ich_pir_dump(struct piix_handle *);
 #endif
 
 const struct pciintr_icu piix_pci_icu = {
@@ -162,6 +163,10 @@ ich_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 	if (rv == 0) {
 		piix_max_link = 7;
 		*ptagp = &ich_pci_icu;
+
+#ifdef PIIX_DEBUG
+		ich_pir_dump(*phandp);
+#endif	
 	}
 
 	return (rv);
@@ -208,6 +213,7 @@ ich_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 	 */
 	if (link >= 0x68 && link <= 0x6b) {
 		*clinkp = link - 0x68 + 4;
+		DPRINTF(("PIIX link value 0x%x: ", link));
 		DPRINTF(("PIRQ %d (register offset)\n", *clinkp));
 		return (0);
 	}
@@ -334,5 +340,20 @@ piix_pir_dump(struct piix_handle *ph)
 		printf("  %c", (elcr[(i & 8) ? 1 : 0] & (1 << (i & 7))) ?
 		       'L' : 'E');
 	printf("\n");
+}
+
+void
+ich_pir_dump(struct piix_handle *ph)
+{
+	int i, irq;
+	pcireg_t irqs = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ2);
+
+	for (i = 0; i < 4; i++) {
+		irq = PIIX_PIRQ(irqs, i);
+		if (irq & PIIX_CFG_PIRQ_NONE)
+			printf("PIIX PIRQ %d: irq none (0x%x)\n", i+4, irq);
+		else
+			printf("PIIX PIRQ %d: irq %d\n", i+4, irq);
+	}
 }
 #endif /* PIIX_DEBUG */
