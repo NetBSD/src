@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.146 2003/11/01 19:56:09 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.147 2003/11/02 07:58:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.146 2003/11/01 19:56:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.147 2003/11/02 07:58:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1255,7 +1255,7 @@ got:
 failed:
 	SAVE_HINT(map, map->hint, *entry);
 	UVMHIST_LOG(maphist,"<- failed!",0,0,0,0);
-	KDASSERT((*entry)->end <= address);
+	KDASSERT((*entry) == &map->header || (*entry)->end <= address);
 	KDASSERT((*entry)->next == &map->header ||
 	    address < (*entry)->next->start);
 	return (FALSE);
