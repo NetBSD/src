@@ -20,6 +20,9 @@
 
 #include "defs.h"
 #include "symtab.h"
+#include "gdbcore.h"
+#include "frame.h"
+#include "value.h"
 #include "opcode/vax.h"
 
 /* Vax instructions are never longer than this.  */
@@ -287,7 +290,7 @@ print_insn_arg (d, p, addr, info)
       case 14:			/* Long displacement */
 	if (regnum == PC_REGNUM)
 	  {
-	    info->target = addr + *(short *) p + 5;
+	    info->target = addr + *(long *) p + 5;
 	    (*info->print_address_func) (info->target, info);
 	  }
 	else
