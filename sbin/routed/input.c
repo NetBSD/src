@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.21 1997/09/15 11:51:56 lukem Exp $	*/
+/*	$NetBSD: input.c,v 1.21.2.1 1998/10/25 22:59:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: input.c,v 1.21 1997/09/15 11:51:56 lukem Exp $");
+__RCSID("$NetBSD: input.c,v 1.21.2.1 1998/10/25 22:59:04 cgd Exp $");
 #endif
 
 #include "defs.h"
@@ -432,11 +432,22 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 		}
 		if (rip->rip_cmd == RIPCMD_TRACEON) {
 			rip->rip_tracefile[cc-4] = '\0';
+#if 0
 			set_tracefile((char*)rip->rip_tracefile,
 				      "trace command: %s\n", 0);
+#else
+			msglog("RIP_TRACEON for `%s' from %s ignored",
+			    (char *) rip->rip_tracefile,
+			    naddr_ntoa(FROM_NADDR));
+#endif
 		} else {
+#if 0
 			trace_off("tracing turned off by %s",
 				  naddr_ntoa(FROM_NADDR));
+#else
+			msglog("RIP_TRACEOFF from %s ignored",
+			    naddr_ntoa(FROM_NADDR));
+#endif
 		}
 		return;
 
