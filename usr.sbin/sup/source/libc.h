@@ -1,4 +1,4 @@
-/*	$NetBSD: libc.h,v 1.4 1998/02/03 05:11:06 perry Exp $	*/
+/*	$NetBSD: libc.h,v 1.5 1998/07/26 15:52:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -168,11 +168,11 @@ extern char *concat();
 #if defined(__STDC__)
 extern char *getname(int);
 extern char *pathof(char *);
-extern char *errmsg(int);
+extern const char *errmsg(int);
 #else	/* __STDC__ */
 extern char *getname();
 extern char *pathof();
-extern char *errmsg();
+extern const char *errmsg();
 #endif	/* __STDC__ */
 
 /*  CMU time additions */
