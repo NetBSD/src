@@ -97,7 +97,6 @@ options		POSTMORTEM	# perform postmortem on panic
 #options	ROTTEN_INNARDS	# show the gory bit of the postmortem
 #options	BLOCK_IRQS	# Block IRQ's during faults, syscalls and
 				# undefined instructions
-options		PROFILE_ASM	# profile asm functions were possible
 options		KSHELL		# kernel developemnt shell (debug)
 #options	DEBUGTERM	# create a debug console
 #options	IPKDB		# remote kernel debugging
