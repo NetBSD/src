@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.55 2002/10/05 22:34:05 chs Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.56 2002/10/14 04:18:57 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.55 2002/10/05 22:34:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.56 2002/10/14 04:18:57 gmcgarry Exp $");
 
 #include "fs_union.h"
 
@@ -65,7 +65,15 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.55 2002/10/05 22:34:05 chs Exp $");
 #include <miscfs/union/union.h>
 #endif
 
-static int  vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));
+static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags);
+static int vn_write(struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags);
+static int vn_closefile(struct file *fp, struct proc *p);
+static int vn_poll(struct file *fp, int events, struct proc *p);
+static int vn_fcntl(struct file *fp, u_int com, caddr_t data, struct proc *p);
+static int vn_statfile(struct file *fp, struct stat *sb, struct proc *p);
+static int vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p);
 
 struct 	fileops vnops = {
 	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
@@ -392,7 +400,7 @@ unionread:
 /*
  * File table vnode read routine.
  */
-int
+static int
 vn_read(fp, offset, uio, cred, flags)
 	struct file *fp;
 	off_t *offset;
@@ -423,7 +431,7 @@ vn_read(fp, offset, uio, cred, flags)
 /*
  * File table vnode write routine.
  */
-int
+static int
 vn_write(fp, offset, uio, cred, flags)
 	struct file *fp;
 	off_t *offset;
@@ -475,12 +483,11 @@ vn_statfile(fp, sb, p)
 }
 
 int
-vn_stat(fdata, sb, p)
-	void *fdata;
+vn_stat(vp, sb, p)
+	struct vnode *vp;
 	struct stat *sb;
 	struct proc *p;
 {
-	struct vnode *vp = fdata;
 	struct vattr va;
 	int error;
 	mode_t mode;
@@ -538,7 +545,7 @@ vn_stat(fdata, sb, p)
 /*
  * File table vnode fcntl routine.
  */
-int
+static int
 vn_fcntl(fp, com, data, p)
 	struct file *fp;
 	u_int com;
@@ -557,7 +564,7 @@ vn_fcntl(fp, com, data, p)
 /*
  * File table vnode ioctl routine.
  */
-int
+static int
 vn_ioctl(fp, com, data, p)
 	struct file *fp;
 	u_long com;
@@ -603,7 +610,7 @@ vn_ioctl(fp, com, data, p)
 /*
  * File table vnode poll routine.
  */
-int
+static int
 vn_poll(fp, events, p)
 	struct file *fp;
 	int events;
@@ -649,7 +656,7 @@ vn_lock(vp, flags)
 /*
  * File table vnode close routine.
  */
-int
+static int
 vn_closefile(fp, p)
 	struct file *fp;
 	struct proc *p;
