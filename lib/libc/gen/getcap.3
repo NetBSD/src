@@ -1,4 +1,4 @@
-.\"	$NetBSD: getcap.3,v 1.15 2003/04/16 13:34:36 wiz Exp $
+.\"	$NetBSD: getcap.3,v 1.16 2003/05/03 19:43:00 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -289,7 +289,7 @@ database begins:
 giving four names that can be used to access the record.
 .Pp
 The remaining non-empty capabilities describe a set of (name, value)
-bindings, consisting of a names optionally followed by a typed values:
+bindings, consisting of a name optionally followed by a typed value:
 .Bl -column "nameTvalue"
 .It name Ta "typeless [boolean] capability"
 .Em name No "is present [true]"
@@ -501,7 +501,7 @@ of escape sequences:
 \e\|\fInnn\fP	(ASCII octal \fInnn\fP)
 .El
 .Pp
-A `\|\e' may be followed by up to three octal digits directly specifies
+A `\|\e' followed by up to three octal digits directly specifies
 the numeric code for a character.
 The use of
 .Tn ASCII
