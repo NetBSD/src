@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.21 2001/05/03 20:53:44 fredette Exp $	*/
+/*	$NetBSD: asm.h,v 1.22 2001/05/12 22:27:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -180,6 +180,8 @@
 	9:	.asciz	x			;	\
 		.even
 
+#endif /* _KERNEL */
+
 /*
  * Shorthand for defining vectors for the vector table.
  */
@@ -191,8 +193,6 @@
 
 #define	VECTOR_UNUSED					\
 	.long	0
-
-#endif /* _KERNEL */
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
