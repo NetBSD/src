@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.39 2002/11/09 02:30:06 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.40 2002/11/25 21:44:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.1.2.39 2002/11/09 02:30:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.1.2.40 2002/11/25 21:44:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,6 +629,7 @@ sa_switchcall(void *arg)
 	p = l->l_proc;
 	sa = p->p_sa;
 	sa->sa_vp = l;
+
 	DPRINTFN(6,("sa_switchcall(%d.%d)\n", p->p_pid, l->l_lid));
 
 	if (LIST_EMPTY(&sa->sa_lwpcache)) {
@@ -748,6 +749,8 @@ sa_upcall_userret(struct lwp *l)
 	void *stack, *ap;
 	ucontext_t u, *up;
 	int i, nsas, nint, nevents, type;
+
+	KERNEL_PROC_LOCK(l);
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -934,6 +937,7 @@ sa_upcall_userret(struct lwp *l)
 	    l->l_lid, type));
 
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
+	KERNEL_PROC_UNLOCK(l);
 }
 
 static struct lwp *
