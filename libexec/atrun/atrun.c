@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.10 2002/07/29 00:35:49 christos Exp $	*/
+/*	$NetBSD: atrun.c,v 1.11 2002/07/29 00:36:44 christos Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -57,7 +57,7 @@ static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.10 2002/07/29 00:35:49 christos Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.11 2002/07/29 00:36:44 christos Exp $");
 #endif
 
 static int debug = 0;
@@ -76,7 +76,7 @@ perr(a)
 	const char *a;
 {
 	if (debug)
-		warn(a);
+		warn("%s", a);
 	else
 		syslog(LOG_ERR, "%s: %m", a);
 
