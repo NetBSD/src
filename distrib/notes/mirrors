@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of May 14, 1998.
+The following sites mirror NetBSD as of May 30, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -86,6 +86,11 @@ USA
 
 	AFS mirrors
 	-----------
+
+Sweden
+
+* ftp.stacken.kth.se
+  AFS path: /afs/stacken.kth.se/ftp/pub/OS/NetBSD
 
 USA
 
