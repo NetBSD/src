@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 1997/06/10 07:51:43 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,9 +37,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: machparam.h 1.11 89/08/14$
+ * from: Utah $Hdr: machparam.h 1.16 92/12/20$
  *
- *	@(#)param.h	7.8 (Berkeley) 6/28/91
+ *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 #ifndef _M68K_PARAM_H_
 #define _M68K_PARAM_H_
@@ -132,5 +132,15 @@
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
+
+/*
+ * Mach derived conversion macros
+ */
+#define	m68k_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
+#define	m68k_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
+#define	m68k_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define	m68k_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+#define	m68k_btop(x)		((unsigned)(x) >> PGSHIFT)
+#define	m68k_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 #endif	/* !_M68K_PARAM_H_ */
