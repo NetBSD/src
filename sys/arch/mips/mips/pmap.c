@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1997/08/09 03:41:08 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 1997/10/17 05:57:20 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -38,6 +38,10 @@
  *
  *	@(#)pmap.c	8.4 (Berkeley) 1/26/94
  */
+
+#include <sys/cdefs.h>
+
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 1997/10/17 05:57:20 jonathan Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1278,7 +1282,12 @@ pmap_zero_page(phys)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
 #endif
-#ifdef MIPS3
+#if defined(DIAGNOSTIC) || defined(DEBUG)
+	if (! (phys < MIPS_MAX_MEM_ADDR))
+		printf("pmap_zero_page(%lx) nonphys\n", phys);
+#endif
+	
+#if defined(MIPS3) && defined(MIPS3_FLUSH)
 	if (CPUISMIPS3) {
 		/*XXX FIXME Not very sophisticated */
 		/*	MachFlushCache();*/
@@ -1310,7 +1319,7 @@ pmap_zero_page(phys)
 		p[15] = 0;
 		p += 16;
 	} while (p != end);
-#ifdef MIPS3
+#if defined(MIPS3) && defined(MIPS3_FLUSH)
 	/* 
 	 * If  we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
@@ -1344,7 +1353,14 @@ pmap_copy_page(src, dst)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-#ifdef MIPS3
+#if defined(DIAGNOSTIC) || defined(DEBUG)
+	if (! (src < MIPS_MAX_MEM_ADDR))
+		printf("pmap_copy_page(%lx) src nonphys\n", src);
+	if (! (dst < MIPS_MAX_MEM_ADDR))
+		printf("pmap_copy_page(%lx) dst nonphys\n", dst);
+#endif
+
+#if defined(MIPS3) && defined(MIPS3_FLUSH)
 	/* 
 	 * If  we have a virtually-indexed, physically-tagged cache,
 	 * and no L2 cache to warn of aliased mappings,  we must force an
@@ -1404,7 +1420,7 @@ pmap_copy_page(src, dst)
 		s += 16;
 		d += 16;
 	} while (s != end);
-#ifdef MIPS3
+#if defined(MIPS3) && defined(MIPS3_FLUSH)
 	/* 
 	 * If  we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
