@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.64 1999/08/05 04:36:56 sommerfeld Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.65 1999/08/21 03:46:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,6 +112,10 @@
 #include <netinet/if_inarp.h>
 
 #include "loop.h"
+#include "fddi.h"
+#if NFDDI > 0
+#include <net/if_fddi.h>
+#endif
 #include "token.h"
 
 #define SIN(s) ((struct sockaddr_in *)s)
@@ -399,6 +403,14 @@ arp_rtrequest(req, rt, sa)
 			 * from it do not need their expiration time set.
 			 */
 			rt->rt_expire = time.tv_sec;
+#if NFDDI > 0
+			if (rt->rt_ifp->if_type == IFT_FDDI
+			    && (rt->rt_rmx.rmx_mtu > FDDIIPMTU
+				|| (rt->rt_rmx.rmx_mtu == 0
+				    && rt->rt_ifp->if_mtu > FDDIIPMTU))) {
+				rt->rt_rmx.rmx_mtu = FDDIIPMTU;
+			}
+#endif
 			break;
 		}
 		/* Announce a new entry if requested. */
