@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.47 2000/10/02 19:25:32 simonb Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.48 2000/10/03 03:22:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.47 2000/10/02 19:25:32 simonb Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.48 2000/10/03 03:22:26 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1191,6 +1191,7 @@ __hashpw(key)
 		if ((buf = realloc(buf, max)) == NULL) {
 			if (oldbuf != NULL)
 				free(oldbuf);
+			max = 0;
 			return NS_UNAVAIL;
 		}
 	}
