@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.2 1997/10/16 01:55:34 sakamoto Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.3 1997/11/27 10:19:16 sakamoto Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -68,10 +68,42 @@
 #endif
 
 #if bebox
+#undef bus_space_read_multi_1(t, h, o, a, c)
+#define	bus_space_read_multi_1(t, h, o, a, c) do {			\
+	int i;								\
+	for (i = 0; i < c; i++) {					\
+		*((u_int8_t *)a + i) = bus_space_read_1(t, h, o);	\
+	}								\
+} while (0)
+
+#undef bus_space_write_multi_1(t, h, o, a, c)
+#define	bus_space_write_multi_1(t, h, o, a, c) do {			\
+	int i;								\
+	for (i = 0; i < c; i++) {					\
+		bus_space_write_1(t, h, o, *((u_int8_t *)a + i));	\
+	}								\
+} while (0)
+
+#undef bus_space_read_multi_2(t, h, o, a, c)
+#define	bus_space_read_multi_2(t, h, o, a, c) do {			\
+	int i;								\
+	for (i = 0; i < c; i++) {					\
+		*((u_int16_t *)a + i) = bus_space_read_2(t, h, o);	\
+	}								\
+} while (0)
+
+#undef bus_space_write_multi_2(t, h, o, a, c)
+#define bus_space_write_multi_2(t, h, o, a, c) do {			\
+	int i;								\
+	for (i = 0; i < c; i++) {					\
+		bus_space_write_2(t, h, o, *((u_int16_t *)a + i));	\
+	}								\
+} while (0)
+
 #define	bus_space_read_2(tag, bsh, offset) \
-	(*(u_int16_t *)(tag + bsh + offset))
+	(*(u_int16_t *)(bsh + offset))
 #define	bus_space_write_2(tag, bsh, offset, value) \
-	*(u_int16_t *)(tag + bsh + offset) = (u_int16_t)value
+	*(u_int16_t *)(bsh + offset) = (u_int16_t)value
 #endif
 
 /*
@@ -447,7 +479,7 @@ ed_find_WD80x3(sc, cf, ia)
 	    sc->type, sc->type_str ?: "unknown", isa16bit, memsize,
 	    ia->ia_msize);
 	for (i = 0; i < 8; i++)
-		printf("%x -> %x\n", i, inb(asicbase + i));
+		printf("%x -> %x\n", i, isa_inb(asicbase + i));
 #endif
 	/* Allow the user to override the autoconfiguration. */
 	if (ia->ia_msize)

@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.1 1997/10/14 06:49:03 sakamoto Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.2 1997/11/27 10:19:35 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -97,7 +97,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
-#include <machine/cpufunc.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -134,8 +133,8 @@ mc146818_read(sc, reg)
 	u_int reg;
 {
 
-	outb(IO_RTC, (u_char)reg);
-	return (inb(IO_RTC+1));
+	isa_outb(IO_RTC, (u_char)reg);
+	return (isa_inb(IO_RTC+1));
 }
 
 __inline void
@@ -144,8 +143,8 @@ mc146818_write(sc, reg, datum)
 	u_int reg, datum;
 {
 
-	outb(IO_RTC, reg);
-	outb(IO_RTC+1, datum);
+	isa_outb(IO_RTC, reg);
+	isa_outb(IO_RTC+1, datum);
 }
 
 #if 0
@@ -245,11 +244,11 @@ startrtclock()
 	}
 
 	/* initialize 8253 clock */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+	isa_outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
 	/* Correct rounding will buy us a better precision in timekeeping */
-	outb(IO_TIMER1, isa_timer_count % 256);
-	outb(IO_TIMER1, isa_timer_count / 256);
+	isa_outb(IO_TIMER1, isa_timer_count % 256);
+	isa_outb(IO_TIMER1, isa_timer_count / 256);
 
 	/* Check diagnostic status */
 	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0) { /* XXX softc */
@@ -278,9 +277,9 @@ gettick()
 	/* Don't want someone screwing with the counter while we're here. */
 	disable_intr();
 	/* Select counter 0 and latch it. */
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	lo = inb(TIMER_CNTR0);
-	hi = inb(TIMER_CNTR0);
+	isa_outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+	lo = isa_inb(TIMER_CNTR0);
+	hi = isa_inb(TIMER_CNTR0);
 	enable_intr();
 	return ((hi << 8) | lo);
 }
@@ -360,7 +359,7 @@ sysbeepstop(arg)
 
 	/* disable counter 2 */
 	disable_intr();
-	outb(PITAUX_PORT, inb(PITAUX_PORT) & ~PIT_SPKR);
+	isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) & ~PIT_SPKR);
 	enable_intr();
 	beeping = 0;
 }
@@ -380,10 +379,10 @@ sysbeep(pitch, period)
 	}
 	if (!beeping || last_pitch != pitch) {
 		disable_intr();
-		outb(TIMER_MODE, TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch) % 256);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch) / 256);
-		outb(PITAUX_PORT, inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
+		isa_outb(TIMER_MODE, TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
+		isa_outb(TIMER_CNTR2, TIMER_DIV(pitch) % 256);
+		isa_outb(TIMER_CNTR2, TIMER_DIV(pitch) / 256);
+		isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
 		enable_intr();
 	}
 	last_pitch = pitch;
@@ -398,14 +397,14 @@ findcpuspeed()
 	volatile short remainder;
 
 	/* Put counter in count down mode */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_16BIT|TIMER_RATEGEN);
-	outb(TIMER_CNTR0, i);		/* lo */
-	outb(TIMER_CNTR0, i >> 8);	/* hi */
+	isa_outb(TIMER_MODE, TIMER_SEL0|TIMER_16BIT|TIMER_RATEGEN);
+	isa_outb(TIMER_CNTR0, i);		/* lo */
+	isa_outb(TIMER_CNTR0, i >> 8);	/* hi */
 	do {
 		/* Read the value left in the counter */
-		outb(TIMER_MODE, TIMER_SEL0|TIMER_LATCH);
-		remainder = inb(TIMER_CNTR0);
-		remainder += (inb(TIMER_CNTR0) << 8);
+		isa_outb(TIMER_MODE, TIMER_SEL0|TIMER_LATCH);
+		remainder = isa_inb(TIMER_CNTR0);
+		remainder += (isa_inb(TIMER_CNTR0) << 8);
 	} while (remainder > 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1997/11/05 00:38:37 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 1997/11/27 10:18:43 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -34,44 +34,7 @@
 #define	_MACHINE_CPU_H_
 
 #include <machine/frame.h>
-
-struct machvec {
-	int (*splhigh) __P((void));
-	int (*spl0) __P((void));
-	int (*splbio) __P((void));
-	int (*splnet) __P((void));
-	int (*spltty) __P((void));
-	int (*splimp) __P((void));
-	int (*splclock) __P((void));
-	int (*splsoftclock) __P((void));
-	int (*splsoftnet) __P((void));
-	int (*splx) __P((int));
-	void (*setsoftclock) __P((void));
-	void (*setsoftnet) __P((void));
-	void (*clock_return) __P((struct clockframe *, int));
-	void (*irq_establish) __P((int, int, void (*)(void *), void *));
-};
-extern struct machvec machine_interface;
-
 #include <machine/psl.h>
-
-#define	splhigh()	((*machine_interface.splhigh)())
-#define	spl0()		((*machine_interface.spl0)())
-#define	splbio()	((*machine_interface.splbio)())
-#define	splnet()	((*machine_interface.splnet)())
-#define	spltty()	((*machine_interface.spltty)())
-#define	splimp()	((*machine_interface.splimp)())
-#define	splclock()	((*machine_interface.splclock)())
-#define	splsoftclock()	((*machine_interface.splsoftclock)())
-#define	splstatclock()	splclock()
-#define	splsoftnet()	((*machine_interface.splsoftnet)())
-#define	splx(new)	((*machine_interface.splx)(new))
-#define	setsoftclock()	((*machine_interface.setsoftclock)())
-#define	setsoftnet()	((*machine_interface.setsoftnet)())
-#define	clock_return(frame, level)		\
-	((*machine_interface.clock_return)((frame), (level)))
-#define	irq_establish(irq, level, handler, arg)	\
-	((*machine_interface.irq_establish)((irq), (level), (handler), (arg)))
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)

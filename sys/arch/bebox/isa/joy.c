@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.1 1997/10/14 06:49:06 sakamoto Exp $	*/
+/*	$NetBSD: joy.c,v 1.2 1997/11/27 10:19:43 sakamoto Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -46,7 +46,6 @@
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
-#include <machine/cpufunc.h>
 #include <machine/joystick.h>
 #include <machine/conf.h>
 
@@ -229,9 +228,9 @@ get_tick()
 {
 	int low, high;
 
-	outb(TIMER_MODE, TIMER_SEL0);
-	low = inb(TIMER_CNTR0);
-	high = inb(TIMER_CNTR0);
+	isa_outb(TIMER_MODE, TIMER_SEL0);
+	low = isa_inb(TIMER_CNTR0);
+	high = isa_inb(TIMER_CNTR0);
 
 	return (high << 8) | low;
 }
