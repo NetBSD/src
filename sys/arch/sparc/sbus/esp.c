@@ -42,7 +42,7 @@
  *	@(#)esp.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: esp.c,v 1.28 93/04/27 14:40:44 torek Exp  (LBL)
- * $Id: esp.c,v 1.2 1993/10/27 18:14:16 deraadt Exp $
+ * $Id: esp.c,v 1.3 1993/11/05 12:41:54 deraadt Exp $
  *
  * Loosely derived from Mary Baker's devSCSIC90.c from the Berkeley
  * Sprite project, which is:
@@ -164,7 +164,6 @@ struct esp_softc {
 	int	sc_clockfreq;		/* clock frequency */
 	u_char	sc_sel_timeout;		/* select timeout */
 	u_char	sc_id;			/* initiator ID (default = 7) */
-	u_char	sc_needclear;		/* uncleared targets (1 bit each) */
 	u_char	sc_esptype;		/* 100, 100A, 2xx (see below) */
 	u_char	sc_ccf;			/* clock conversion factor */
 	u_char	sc_conf1;		/* value for config reg 1 */
@@ -180,7 +179,6 @@ struct esp_softc {
 	 * since we do message-in simply by allowing the fifo to fill.
 	 */
 	char	sc_probing;		/* used during autoconf; see below */
-	char	sc_clearing;		/* true => cmd is just to clear targ */
 	char	sc_state;		/* SCSI protocol state; see below */
 	char	sc_sentcmd;		/* set once we get cmd out */
 	char	sc_dmaactive;		/* true => doing dma */
@@ -474,16 +472,13 @@ espdoattach(unit)
 		if (targ == sc->sc_id)
 			continue;
 		sc->sc_probing = PROBE_TESTING;
-		sc->sc_clearing = 1;
 		(void) scsi_test_unit_ready(&sc->sc_hba, targ, 0);
 		if (sc->sc_probing != PROBE_NO_TARGET) {
 			sc->sc_probing = 0;
-			sc->sc_clearing = 0;
 			SCSI_FOUNDTARGET(&sc->sc_hba, targ);
 		}
 	}
 	sc->sc_probing = 0;
-	sc->sc_clearing = 0;
 
 	if ((bp = sc->sc_bp) == NULL || (u_int)(targ = bp->val[0]) >= 8 ||
 	    (u_int)(u = bp->val[1]) >= 8)
@@ -548,8 +543,6 @@ espreset(sc)
 	esp->esp_ccf = sc->sc_ccf;
 	esp->esp_timeout = sc->sc_sel_timeout;
 	/* We set synch offset later. */
-
-	sc->sc_needclear = 0xff;
 }
 
 /*
@@ -577,8 +570,6 @@ esphbareset(hba, resetunits)
 	DELAY(200);
 	esp->esp_conf1 = sc->sc_conf1;
 	/* END ??? */
-
-	sc->sc_needclear = 0xff;
 
 	if (resetunits)
 		scsi_reset_units(&sc->sc_hba);
@@ -741,12 +732,10 @@ esperror(sc, "DIAGNOSTIC: esp step 2");
 			/*
 			 * Device entered command phase and then exited it
 			 * before we finished handing out the command.
-			 * Let this happen iff we are trying to clear the
-			 * target state.
+			 * Let's see what happens if we pretend things
+			 * are normal.
 			 */
 esperror(sc, "DIAGNOSTIC: esp step 3");
-			if (!sc->sc_clearing)
-				return (ACT_RESET);
 		} else {
 			printf("%s: mysterious esp step %d\n",
 			    xname, sc->sc_espstep);
@@ -786,6 +775,7 @@ printf("\tfifo count = %x\n", reg);
 		 * handle as for data out.
 		 */
 		dma->dma_csr |= DMA_DRAIN;
+		DELAY(1);
 		reg = 0;		/* FIFO auto flushed? */
 		goto dma_data_done;
 
@@ -1071,6 +1061,7 @@ espixfer_in(sc, esp, dma, buf, len)
 			sc->sc_espstep = esp->esp_step & ESPSTEP_MASK;
 			sc->sc_espintr = esp->esp_intr;
 			dma->dma_csr |= DMA_DRAIN;
+			DELAY(1);
 			sc->sc_dmacsr = n;
 			n = esp->esp_tcl | (esp->esp_tch << 8);
 			if (n == 0 && (sc->sc_espstat & ESPSTAT_TC) == 0)
@@ -1082,23 +1073,6 @@ espixfer_in(sc, esp, dma, buf, len)
 		DELAY(1);
 	}
 	return (-1);
-}
-
-/*
- * Clear out target state by doing a special TEST UNIT READY.
- * Note that this calls espicmd (possibly recursively).
- */
-void
-espclear(sc, targ)
-	register struct esp_softc *sc;
-	register int targ;
-{
-
-	/* turn off needclear immediately since this calls espicmd() again */
-	sc->sc_needclear &= ~(1 << targ);
-	sc->sc_clearing = 1;
-	(void) scsi_test_unit_ready(&sc->sc_hba, targ, 0);
-	sc->sc_clearing = 0;
 }
 
 /*
@@ -1124,12 +1098,6 @@ espicmd(hba, targ, cdb, buf, len, rw)
 		printf("%s: bad length %d\n", sc->sc_hba.hba_dev.dv_xname, len);
 		panic("espicmd");
 	}
-
-	/*
-	 * Clear the target if necessary.
-	 */
-	if (sc->sc_needclear & (1 << targ) && !sc->sc_probing)
-		espclear(sc, targ);
 
 	/*
 	 * Disable hardware interrupts, start select sequence.
@@ -1220,6 +1188,9 @@ err:
 	printf("%s: target %d: %s (phase = %s)\n",
 	    sc->sc_hba.hba_dev.dv_xname, targ, msg,
 	    espphases[sc->sc_espstat & ESPSTAT_PHASE]);
+	printf("reset %s", sc->sc_hba.hba_dev.dv_xname);
+	esphbareset(&sc->sc_hba, 1);	/* ??? */
+	return (-1);
 reset:
 	espreset(sc);		/* ??? */
 	return (-1);
@@ -1302,9 +1273,6 @@ espgo(self, targ, intr, dev, bp, pad)
 		    len < 0 ? "negative length" : "transfer too big");
 		return (1);
 	}
-
-	if (sc->sc_needclear & (1 << targ))
-		espclear(sc, targ);
 
 	/*
 	 * Set dma registers later, on data transfer,
