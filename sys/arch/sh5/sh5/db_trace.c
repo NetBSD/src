@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 2002/09/19 11:25:13 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4 2002/09/19 13:04:02 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -228,7 +228,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 * Pointer value and a disassembly of the prologue to
 		 * figure out what's what anyway.
 		 */
-		(*pr)("%s(fp=0x%lx) at ", symp, fp);
+		(*pr)("0x%lx: %s() at ", fp, symp);
 		db_printsym(pc, DB_STGY_PROC, pr);
 		(*pr)("\n");
 
@@ -252,6 +252,12 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			pc = (db_addr_t) tf->tf_state.sf_spc & ~1;
 			fp = (db_addr_t) tf->tf_caller.r14;
 			cur_intrframe = &tf->tf_ifr;
+			(*pr)("\tTrap Type: %s\n",
+			    trap_type((int)tf->tf_state.sf_expevt));
+			(*pr)("\tSSR=0x%lx, TEA=0x%lx, TRA=0x%lx\n",
+			    (long)tf->tf_state.sf_ssr,
+			    (long)tf->tf_state.sf_tea,
+			    (long)tf->tf_state.sf_tra);
 		} else
 		if (strcmp(symp, "Lsh5_event_interrupt") == 0 ||
 		    strcmp(symp, "Lintrexit") == 0) {
@@ -265,6 +271,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			pc = (db_addr_t) tf->if_state.sf_spc & ~1;
 			fp = (db_addr_t) tf->if_caller.r14;
 			cur_intrframe = tf;
+			(*pr)("\tSSR=0x%lx, INTEVT=0x%lx\n",
+			    (long)tf->if_state.sf_ssr,
+			    (long)tf->if_state.sf_intevt);
 		} else
 		if (prev_frame(fp, pc, &nextfp, &nextpc) == 0) {
 			(*pr)("Can't find caller's stack frame.\n");
