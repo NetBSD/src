@@ -1,5 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.10.2.2 2004/12/17 11:24:51 bouyer Exp $	*/
-/*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
+/*	$NetBSD: machdep.c,v 1.10.2.3 2004/12/17 16:58:43 bouyer Exp $	*/
+/*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.2.2 2004/12/17 11:24:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.2.3 2004/12/17 16:58:43 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -546,10 +546,12 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
+	if (!x86_alldisks)
+		return(EOPNOTSUPP);
 	node.sysctl_data = x86_alldisks;
 	node.sysctl_size = sizeof(struct disklist) +
 	    (x86_ndisks - 1) * sizeof(struct nativedisk_info);
-        return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
 /*
@@ -1035,7 +1037,7 @@ reserve_dumppages(vaddr_t p)
 void
 dumpsys()
 {
-	u_long totalbytesleft, bytes, i, n, memseg;
+	u_long totalbytesleft, bytes, i, n, m, memseg;
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
@@ -1101,8 +1103,9 @@ dumpsys()
 			if (n > BYTES_PER_DUMP)
 				n = BYTES_PER_DUMP;
 
-			(void) pmap_map(dumpspace, maddr, maddr + n,
-			    VM_PROT_READ);
+			for (m = 0; m < n; m += NBPG)
+				pmap_kenter_pa(dumpspace + m, maddr + m,
+				    VM_PROT_READ);
 
 			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
 			if (error)
