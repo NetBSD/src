@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.77 2003/06/18 04:19:49 atatat Exp $	*/
+/*	$NetBSD: main.c,v 1.78 2003/06/25 06:42:40 heas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@ static	void	stop(void);
 static	int	do_option(struct hashtab *, struct nvlist ***,
 		    const char *, const char *, const char *);
 static	int	undo_option(struct hashtab *, struct nvlist **,
-		    const char *, const char *);
+		    struct nvlist ***, const char *, const char *);
 static	int	crosscheck(void);
 static	int	badstar(void);
 	int	main(int, char **);
@@ -796,9 +796,9 @@ void
 deloption(const char *name)
 {
 
-	if (undo_option(opttab, &options, name, "options"))
+	if (undo_option(opttab, &options, &nextopt, name, "options"))
 		return;
-	if (undo_option(selecttab, NULL, strtolower(name), "options"))
+	if (undo_option(selecttab, NULL, NULL, strtolower(name), "options"))
 		return;
 }
 
@@ -850,11 +850,11 @@ delfsoption(const char *name)
 	const char *n;
 
 	n = strtolower(name);
-	if (undo_option(fsopttab, &fsoptions, name, "file-system"))
+	if (undo_option(fsopttab, &fsoptions, &nextfsopt, name, "file-system"))
 		return;
-	if (undo_option(fsopttab, NULL, n, "file-system"))
+	if (undo_option(fsopttab, NULL, NULL, n, "file-system"))
 		return;
-	if (undo_option(selecttab, NULL, n, "file-system"))
+	if (undo_option(selecttab, NULL, NULL, n, "file-system"))
 		return;
 }
 
@@ -872,7 +872,7 @@ void
 delmkoption(const char *name)
 {
 
-	(void)undo_option(mkopttab, &mkoptions, name, "mkoptions");
+	(void)undo_option(mkopttab, &mkoptions, &nextmkopt, name, "mkoptions");
 }
 
 /*
@@ -918,7 +918,7 @@ do_option(struct hashtab *ht, struct nvlist ***nppp, const char *name,
  */
 static int
 undo_option(struct hashtab *ht, struct nvlist **npp,
-    const char *name, const char *type)
+    struct nvlist ***next, const char *name, const char *type)
 {
 	struct nvlist *nv;
 	
@@ -932,6 +932,8 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 	for ( ; *npp != NULL; npp = &(*npp)->nv_next) {
 		if ((*npp)->nv_name != name)
 			continue;
+		if (next != NULL && *next == (struct nvlist **) *npp)
+			*next = npp;
 		nv = (*npp)->nv_next;
 		nvfree(*npp);
 		*npp = nv;
