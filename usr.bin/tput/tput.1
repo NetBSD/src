@@ -1,4 +1,4 @@
-.\"	$NetBSD: tput.1,v 1.8 1999/03/22 18:16:45 garbled Exp $
+.\"	$NetBSD: tput.1,v 1.8.10.1 2001/04/26 13:09:43 he Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,8 +54,11 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl T
 The terminal name as specified in the
-.Xr termcap
-database, for example, ``vt100'' or ``xterm''.
+.Xr termcap 5
+database, for example,
+.Dq vt100
+or
+.Dq xterm .
 If not specified,
 .Nm
 retrieves the
@@ -84,18 +87,21 @@ The following special attributes are available:
 .Bl -tag -width Ar
 .It clear
 Clear the screen (the
-.Xr termcap
-``cl'' sequence).
+.Xr termcap 5
+.Dq cl
+sequence).
 .It init
 Initialize the terminal (the
-.Xr termcap
-``is'' sequence).
+.Xr termcap 5
+.Dq is
+sequence).
 .It longname
 Print the descriptive name of the user's terminal type.
 .It reset
 Reset the terminal (the
-.Xr termcap
-``rs'' sequence).
+.Xr termcap 5
+.Dq rs
+sequence).
 .El
 .Sh DIAGNOSTICS
 The exit value of
