@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.50 2002/09/17 07:29:47 junyoung Exp $	 */
+/*	$NetBSD: rtld.h,v 1.51 2002/09/18 07:35:40 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -266,6 +266,7 @@ int _rtld_relocate_plt_lazy __P((const Obj_Entry *));
 int _rtld_relocate_plt_object __P((const Obj_Entry *, const Elf_Rela *,
     caddr_t *));
 int _rtld_relocate_plt_objects __P((const Obj_Entry *));
+void _rtld_setup_pltgot __P((const Obj_Entry *));
 
 /* search.c */
 char *_rtld_find_library __P((const char *, const Obj_Entry *));
@@ -290,8 +291,6 @@ Elf_Addr _rtld_function_descriptor_alloc __P((const Obj_Entry *,
     const Elf_Sym *, Elf_Addr));
 const void *_rtld_function_descriptor_function __P((const void *));
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
-
-void	_rtld_setup_pltgot __P((const Obj_Entry *));
 
 #endif /* _RTLD_SOURCE */
 
