@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.2 1993/11/29 00:38:13 briggs Exp $
+ *	$Id: limits.h,v 1.3 1993/12/02 07:40:14 briggs Exp $
  */
 
 #define	CHAR_BIT	8		/* number of bits in a char */
-#define	CLK_TCK		60		/* ticks per second */
 #define	MB_LEN_MAX	1		/* no multibyte characters */
 
 #define SCHAR_MIN	(-0x7f-1)	/* max value for a signed char */
