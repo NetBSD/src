@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.123 2005/03/16 00:39:57 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.124 2005/03/29 20:10:16 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -727,8 +727,6 @@ extern	int tcp_syn_cache_size;
 extern	struct syn_cache_head tcp_syn_cache[];
 extern	u_long syn_cache_count;
 
-extern	struct pool tcpipqent_pool;
-
 #ifdef MBUFTRACE
 extern	struct mowner tcp_rx_mowner;
 extern	struct mowner tcp_tx_mowner;
@@ -821,6 +819,10 @@ void	 tcp_quench(struct inpcb *, int);
 #ifdef INET6
 void	 tcp6_quench(struct in6pcb *, int);
 #endif
+
+struct ipqent *tcpipqent_alloc(void);
+void	 tcpipqent_free(struct ipqent *);
+
 int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
 int	 tcp_respond(struct tcpcb *, struct mbuf *, struct mbuf *,
 	    struct tcphdr *, tcp_seq, tcp_seq, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.224 2005/03/16 00:39:56 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.225 2005/03/29 20:10:16 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.224 2005/03/16 00:39:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.225 2005/03/29 20:10:16 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -350,6 +350,29 @@ static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 
 POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl", NULL);
 
+struct ipqent *
+tcpipqent_alloc()
+{
+	struct ipqent *ipqe;
+	int s;
+
+	s = splvm();
+	ipqe = pool_get(&tcpipqent_pool, PR_NOWAIT);
+	splx(s);
+
+	return ipqe;
+}
+
+void
+tcpipqent_free(struct ipqent *ipqe)
+{
+	int s;
+
+	s = splvm();
+	pool_put(&tcpipqent_pool, ipqe);
+	splx(s);
+}
+
 int
 tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 {
@@ -497,8 +520,9 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 			tcpstat.tcps_rcvdupbyte += pkt_len;
 			tcp_new_dsack(tp, pkt_seq, pkt_len);
 			m_freem(m);
-			if (tiqe != NULL)
-				pool_put(&tcpipqent_pool, tiqe);
+			if (tiqe != NULL) {
+				tcpipqent_free(tiqe);
+			}
 			TCP_REASS_COUNTER_INCR(&tcp_reass_segdup);
 			return (0);
 		}
@@ -580,10 +604,11 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 			KASSERT(tp->t_segqlen != 0 ||
 			    (TAILQ_EMPTY(&tp->segq) &&
 			    TAILQ_EMPTY(&tp->timeq)));
-			if (tiqe == NULL)
+			if (tiqe == NULL) {
 				tiqe = q;
-			else
-				pool_put(&tcpipqent_pool, q);
+			} else {
+				tcpipqent_free(q);
+			}
 			TCP_REASS_COUNTER_INCR(&tcp_reass_prepend);
 			break;
 		}
@@ -609,10 +634,11 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 		KASSERT(tp->t_segqlen >= 0);
 		KASSERT(tp->t_segqlen != 0 ||
 		    (TAILQ_EMPTY(&tp->segq) && TAILQ_EMPTY(&tp->timeq)));
-		if (tiqe == NULL)
+		if (tiqe == NULL) {
 			tiqe = q;
-		else
-			pool_put(&tcpipqent_pool, q);
+		} else {
+			tcpipqent_free(q);
+		}
 	}
 
 #ifdef TCP_REASS_COUNTERS
@@ -632,7 +658,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 	 * XXX If we can't, just drop the packet.  XXX
 	 */
 	if (tiqe == NULL) {
-		tiqe = pool_get(&tcpipqent_pool, PR_NOWAIT);
+		tiqe = tcpipqent_alloc();
 		if (tiqe == NULL) {
 			tcpstat.tcps_rcvmemdrop++;
 			m_freem(m);
@@ -706,7 +732,7 @@ present:
 		m_freem(q->ipqe_m);
 	else
 		sbappendstream(&so->so_rcv, q->ipqe_m);
-	pool_put(&tcpipqent_pool, q);
+	tcpipqent_free(q);
 	sorwakeup(so);
 	return (pkt_flags);
 }
