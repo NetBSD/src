@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.5 2000/01/08 23:45:05 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.6 2000/12/04 11:35:46 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -567,12 +567,14 @@ AddToWaitersQueue(
     RF_StripeLockDesc_t * lockDesc,
     RF_LockReqDesc_t * lockReqDesc)
 {
+#if 0 /* XXX fvdl -- unitialized use of 'tid' */
 	int     tid;
 
 	if (rf_stripeLockDebug) {
 		Dprintf3("[%d] Waiting on lock for stripe %ld table 0x%lx\n", tid, lockDesc->stripeID, (unsigned long) lockTable);
 		FLUSH;
 	}
+#endif
 	if (!lockDesc->waitersH) {
 		lockDesc->waitersH = lockDesc->waitersT = lockReqDesc;
 	} else {
