@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.7 2001/12/21 02:50:02 itojun Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.8 2003/05/14 22:45:02 itojun Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -287,29 +287,10 @@
 #define __NET_NET_OSDEP_H_DEFINED_
 #ifdef _KERNEL
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define if_name(ifp)	((ifp)->if_xname)
-#else
-struct ifnet;
-extern char *if_name __P((struct ifnet *));
-#endif
-
-#ifdef __FreeBSD__
-#define HAVE_OLD_BPF
-#endif
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#define ifa_list	ifa_link
-#define if_addrlist	if_addrhead
-#define if_list		if_link
-#endif
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104000000
 #define ovbcopy(src, dst, len)	memmove((dst), (src), (len))
-#endif
-
-#if defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-#define HAVE_NRL_INPCB
 #endif
 
 #endif /*_KERNEL*/

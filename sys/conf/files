@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.611 2003/05/13 15:42:33 thorpej Exp $
+#	$NetBSD: files,v 1.612 2003/05/14 22:45:03 itojun Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1179,7 +1179,6 @@ file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
-#file	net/net_osdep.c
 file	net/pfil.c			pfil_hooks | ipfilter
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp
