@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.6 2003/01/11 06:16:05 dsainty Exp $	*/
+/*	$NetBSD: ubt.c,v 1.7 2003/01/20 21:14:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.6 2003/01/11 06:16:05 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.7 2003/01/20 21:14:57 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.6 2003/01/11 06:16:05 dsainty Exp $");
 #ifdef UBT_DEBUG
 #define DPRINTF(x)	if (ubtdebug) logprintf x
 #define DPRINTFN(n,x)	if (ubtdebug>(n)) logprintf x
-int	ubtdebug = 99;
+int	ubtdebug = 49;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
