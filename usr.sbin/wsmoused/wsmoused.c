@@ -1,7 +1,7 @@
-/* $NetBSD: wsmoused.c,v 1.6 2002/12/25 19:13:53 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.7 2003/03/04 14:33:55 jmmv Exp $ */
 
 /*
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.6 2002/12/25 19:13:53 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.7 2003/03/04 14:33:55 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -63,7 +63,6 @@ __RCSID("$NetBSD: wsmoused.c,v 1.6 2002/12/25 19:13:53 jmmv Exp $");
 
 static struct mouse mouse;
 int XConsole = -1;
-int NoDaemon = 0;
 
 /*
  * Show program usage information
@@ -72,8 +71,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-d device] [-f fifo] [-ln] [-X number] [-x number] "
-	    "[-y number]\n",
+	    "Usage: %s [-d device] [-f config_file] [-n]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -85,6 +83,7 @@ static void
 signal_terminate(int sig)
 {
 	mouse_cursor_hide(&mouse);
+	config_free();
 	exit(EXIT_SUCCESS);
 }
 
@@ -104,8 +103,7 @@ mouse_open_device(struct mouse *m, int secs)
 	m->fd = open(m->device_name,
 	             O_RDONLY | O_NONBLOCK, 0);
 	if (m->fd == -1) {
-		err(EXIT_FAILURE, "cannot open '%s'",
-		    m->device_name);
+		err(EXIT_FAILURE, "cannot open %s", m->device_name);
 	}
 }
 
@@ -118,7 +116,7 @@ open_files(void)
 	/* Open wsdisplay status device */
 	mouse.stat_fd = open(_PATH_TTYSTAT, O_RDONLY | O_NONBLOCK, 0);
 	if (mouse.stat_fd == -1)
-		err(EXIT_FAILURE, "Cannot open `%s'", _PATH_TTYSTAT);
+		err(EXIT_FAILURE, "cannot open %s", mouse.tstat_name);
 
 	mouse.fd = -1;
 	mouse_open_device(&mouse, 0);
@@ -127,7 +125,7 @@ open_files(void)
 	if (mouse.fifo_name != NULL) {
 		mouse.fifo_fd = open(mouse.fifo_name, O_RDWR | O_NONBLOCK, 0);
 		if (mouse.fifo_fd == -1)
-			err(EXIT_FAILURE, "Cannot open `%s'", mouse.fifo_name);
+			err(EXIT_FAILURE, "cannot open %s", mouse.fifo_name);
 	}
 }
 
@@ -197,7 +195,7 @@ mouse_init(void)
 
 	/* Get terminal size */
 	if (ioctl(0, TIOCGWINSZ, &ws) < 0)
-		err(EXIT_FAILURE, "Cannot get terminal size");
+		err(EXIT_FAILURE, "cannot get terminal size");
 
 	/* Open current tty */
 	ioctl(mouse.stat_fd, WSDISPLAYIO_GETACTIVESCREEN, &i);
@@ -264,7 +262,7 @@ mouse_open_tty(struct mouse *m, int ttyno)
 	(void)snprintf(buf, sizeof(buf), _PATH_TTYPREFIX "%d", ttyno);
 	m->tty_fd = open(buf, O_RDONLY | O_NONBLOCK);
 	if (m->tty_fd < 0)
-		errx(EXIT_FAILURE, "Cannot open `%s'", buf);
+		errx(EXIT_FAILURE, "cannot open %s", buf);
 	m->disabled = 0;
 }
 
@@ -299,54 +297,58 @@ char_invert(struct mouse *m, size_t row, size_t col)
 int
 main(int argc, char **argv)
 {
-	int opt;
+	int opt, nodaemon = -1;
+	int needconf = 0;
+	char *conffile;
+	struct block *mode;
 
 	setprogname(argv[0]);
 
-	/* Setup mouse default data */
 	memset(&mouse, 0, sizeof(struct mouse));
-	mouse.fifo_fd = -1;
-	mouse.device_name = _PATH_DEFAULT_MOUSE;
-	mouse.fifo_name = NULL;
-
-	/* Defaults that can be overriden by options. If you change
-	 * these, update wsmoused.8 accordingly. */
-	mouse.slowdown_x = 0;
-	mouse.slowdown_y = 3;
-
-	/* Right handed by default */
-	mouse.but_select = 0;
-	mouse.but_paste = 2;
+	conffile = _PATH_CONF;
 
 	/* Parse command line options */
-	while ((opt = getopt(argc, argv, "d:f:lny:X:x:")) != -1) {
+	while ((opt = getopt(argc, argv, "d:f:n")) != -1) {
 		switch (opt) {
 		case 'd': /* Mouse device name */
-			mouse.device_name = strdup(optarg);
+			mouse.device_name = optarg;
 			break;
-		case 'f': /* FIFO file name */
-			mouse.fifo_name = strdup(optarg);
-			break;
-		case 'l': /* Left handed */
-			mouse.but_select = 2;
-			mouse.but_paste = 0;
+		case 'f': /* Configuration file name */
+			needconf = 1;
+			conffile = optarg;
 			break;
 		case 'n': /* No daemon */
-			NoDaemon = 1;
-			break;
-		case 'X': /* X console number */
-			XConsole = atoi(optarg);
-			break;
-		case 'x': /* x slowdown */
-			mouse.slowdown_x = atoi(optarg);
-			break;
-		case 'y': /* y slowdown */
-			mouse.slowdown_y = atoi(optarg);
+			nodaemon = 1;
 			break;
 		default:
 			usage();
 			/* NOTREACHED */
 		}
+	}
+
+	/* Read the configuration file and get our mode configuration */
+	config_read(conffile, needconf);
+	mode = config_get_mode("sel");
+
+	/* Set values according to the configuration file */
+	if (mouse.device_name == NULL)
+		mouse.device_name = block_get_propval(mode, "device",
+		    _PATH_DEFAULT_MOUSE);
+
+	if (nodaemon == -1)
+		nodaemon = block_get_propval_int(mode, "nodaemon", 0);
+
+	mouse.slowdown_x = block_get_propval_int(mode, "slowdown_x", 0);
+	mouse.slowdown_y = block_get_propval_int(mode, "slowdown_y", 3);
+	mouse.tstat_name = block_get_propval(mode, "ttystat", _PATH_TTYSTAT);
+	XConsole = block_get_propval_int(mode, "xconsole", -1);
+
+	if (block_get_propval_int(mode, "lefthanded", 0)) {
+		mouse.but_select = 2;
+		mouse.but_paste = 0;
+	} else {
+		mouse.but_select = 0;
+		mouse.but_paste = 2;
 	}
 
 	open_files();
@@ -359,8 +361,10 @@ main(int argc, char **argv)
 	(void)signal(SIGQUIT, signal_terminate);
 	(void)signal(SIGTERM, signal_terminate);
 
-	if (!NoDaemon) daemon(0, 0);
+	if (!nodaemon)
+		daemon(0, 0);
 	event_loop();
 
+	/* NOTREACHED */
 	return EXIT_SUCCESS;
 }
