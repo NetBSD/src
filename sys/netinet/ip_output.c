@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.65 1999/12/20 05:46:33 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.66 2000/01/31 14:18:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -434,9 +434,9 @@ sendit:
 #ifdef IPSEC
 	/* get SP for this packet */
 	if (so == NULL)
-		sp = ipsec4_getpolicybyaddr(m, flags, &error);
+		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, flags, &error);
 	else
-		sp = ipsec4_getpolicybysock(m, so, &error);
+		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
 
 	if (sp == NULL) {
 		ipsecstat.out_inval++;
@@ -939,10 +939,11 @@ ip_ctloutput(op, so, level, optname, mp)
 
 #ifdef IPSEC
 		case IP_IPSEC_POLICY:
-		    {
+		{
 			caddr_t req = NULL;
-			int len = 0;
+			size_t len = 0;
 			int priv = 0;
+
 #ifdef __NetBSD__
 			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
 				priv = 0;
@@ -951,12 +952,11 @@ ip_ctloutput(op, so, level, optname, mp)
 #else
 			priv = (in6p->in6p_socket->so_state & SS_PRIV);
 #endif
-			if (m != 0) {
+			if (m) {
 				req = mtod(m, caddr_t);
 				len = m->m_len;
 			}
-			error = ipsec_set_policy(&inp->inp_sp,
-			                         optname, req, len, priv);
+			error = ipsec4_set_policy(inp, optname, req, len, priv);
 			break;
 		    }
 #endif /*IPSEC*/
@@ -1028,8 +1028,17 @@ ip_ctloutput(op, so, level, optname, mp)
 
 #ifdef IPSEC
 		case IP_IPSEC_POLICY:
-			error = ipsec_get_policy(inp->inp_sp, mp);
+		{
+			caddr_t req = NULL;
+			size_t len;
+
+			if (m) {
+				req = mtod(m, caddr_t);
+				len = m->m_len;
+			}
+			error = ipsec4_get_policy(inp, req, len, mp);
 			break;
+		}
 #endif /*IPSEC*/
 
 		case IP_MULTICAST_IF:

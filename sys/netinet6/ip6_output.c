@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.12 2000/01/26 17:06:37 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.13 2000/01/31 14:19:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -191,9 +191,9 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 #ifdef IPSEC
 	/* get a security policy for this packet */
 	if (so == NULL)
-		sp = ipsec6_getpolicybyaddr(m, 0, &error);
+		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, 0, &error);
 	else
-		sp = ipsec6_getpolicybysock(m, so, &error);
+		sp = ipsec6_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
 
 	if (sp == NULL) {
 		ipsec6stat.out_inval++;
@@ -1295,19 +1295,19 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_IPSEC_POLICY:
 			    {
 				caddr_t req = NULL;
-				int len = 0;
+				size_t len = 0;
+
 				int priv = 0;
 				if (p == 0 || suser(p->p_ucred, &p->p_acflag))
 					priv = 0;
 				else
 					priv = 1;
-				if (m != 0) {
+				if (m) {
 					req = mtod(m, caddr_t);
 					len = m->m_len;
 				}
-				error = ipsec_set_policy(&in6p->in6p_sp,
-				                   optname, req, len,
-				                   priv);
+				error = ipsec6_set_policy(in6p,
+				                   optname, req, len, priv);
 			    }
 				break;
 #endif /* IPSEC */
@@ -1452,8 +1452,17 @@ ip6_ctloutput(op, so, level, optname, mp)
 
 #ifdef IPSEC
 			case IPV6_IPSEC_POLICY:
-				error = ipsec_get_policy(in6p->in6p_sp, mp);
+			{
+				caddr_t req = NULL;
+				size_t len = 0;
+
+				if (m) {
+					req = mtod(m, caddr_t);
+					len = m->m_len;
+				}
+				error = ipsec6_get_policy(in6p, req, len, mp);
 				break;
+			}
 #endif /* IPSEC */
 
 			default:

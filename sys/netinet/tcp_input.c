@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.101 1999/12/22 04:03:02 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.102 2000/01/31 14:18:56 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -2890,27 +2890,22 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #endif
 
 #ifdef IPSEC
-    {
-	struct secpolicy *sp;
+	/*
+	 * we make a copy of policy, instead of sharing the policy,
+	 * for better behavior in terms of SA lookup and dead SA removal.
+	 */
 	if (inp) {
-		sp = ipsec_copy_policy(sotoinpcb(oso)->inp_sp);
-		if (sp) {
-			key_freesp(inp->inp_sp);
-			inp->inp_sp = sp;
-		} else
+		/* copy old policy into new socket's */
+		if (ipsec_copy_policy(sotoinpcb(oso)->inp_sp, inp->inp_sp))
 			printf("tcp_input: could not copy policy\n");
 	}
 #ifdef INET6
 	else if (in6p) {
-		sp = ipsec_copy_policy(sotoin6pcb(oso)->in6p_sp);
-		if (sp) {
-			key_freesp(in6p->in6p_sp);
-			in6p->in6p_sp = sp;
-		} else
+		/* copy old policy into new socket's */
+		if (ipsec_copy_policy(sotoin6pcb(oso)->in6p_sp, in6p->in6p_sp))
 			printf("tcp_input: could not copy policy\n");
 	}
 #endif
-    }
 #endif
 
 	/*
