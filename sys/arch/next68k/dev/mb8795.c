@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.20 2001/01/14 17:33:48 thorpej Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.21 2001/04/02 05:29:43 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -112,15 +112,7 @@ int xe_debug = 0;
  * and the Fujitsu Manchester Encoder/Decoder (MB502).
  */
 
-int debugipkt = 0;
-
-
 void mb8795_shutdown __P((void *));
-
-#if 0
-int mb8795_mediachange __P((struct ifnet *));
-void mb8795_mediastatus __P((struct ifnet *, struct ifmediareq *));
-#endif
 
 struct mbuf * mb8795_rxdmamap_load __P((struct mb8795_softc *,
 		bus_dmamap_t map));
@@ -149,21 +141,6 @@ mb8795_config(sc)
   ifp->if_watchdog = mb8795_watchdog;
   ifp->if_flags =
     IFF_BROADCAST | IFF_NOTRAILERS;
-
-#if 0
-  /* Initialize ifmedia structures. */
-  ifmedia_init(&sc->sc_media, 0, mb8795_mediachange, mb8795_mediastatus);
-  if (sc->sc_supmedia != NULL) {
-    int i;
-    for (i = 0; i < sc->sc_nsupmedia; i++)
-      ifmedia_add(&sc->sc_media, sc->sc_supmedia[i],
-                  0, NULL);
-    ifmedia_set(&sc->sc_media, sc->sc_defaultmedia);
-  } else {
-    ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-    ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
-  }
-#endif
 
   /* Attach the interface. */
   if_attach(ifp);
@@ -235,26 +212,32 @@ mb8795_config(sc)
 
 
 /****************************************************************/
-#if 0
+#ifdef XE_DEBUG
 #define XCHR(x) "0123456789abcdef"[(x) & 0xf]
 static void
-hex_dump(unsigned char *pkt, size_t len)
+xe_hex_dump(unsigned char *pkt, size_t len)
 {
 	size_t i, j;
 
-	printf("0000: ");
+	printf("00000000  ");
 	for(i=0; i<len; i++) {
 		printf("%c%c ", XCHR(pkt[i]>>4), XCHR(pkt[i]));
+		if ((i+1) % 16 == 8) {
+			printf(" ");
+		}
 		if ((i+1) % 16 == 0) {
-			printf("  %c", '"');
-			for(j=0; j<16; j++)
+			printf(" %c", '|');
+			for(j=0; j<16; j++) {
 				printf("%c", pkt[i-15+j]>=32 && pkt[i-15+j]<127?pkt[i-15+j]:'.');
-			printf("%c\n%c%c%c%c: ", '"', XCHR((i+1)>>12),
-				XCHR((i+1)>>8), XCHR((i+1)>>4), XCHR(i+1));
+			}
+			printf("%c\n%c%c%c%c%c%c%c%c  ", '|', 
+					XCHR((i+1)>>28),XCHR((i+1)>>24),XCHR((i+1)>>20),XCHR((i+1)>>16),
+					XCHR((i+1)>>12), XCHR((i+1)>>8), XCHR((i+1)>>4), XCHR(i+1));
 		}
 	}
 	printf("\n");
 }
+#undef XCHR
 #endif
 
 /*
@@ -287,17 +270,23 @@ mb8795_rint(sc)
 	if (rxstat & XE_RXSTAT_ALIGNERR) {
 		DPRINTF(("%s: rx alignment error\n",
 				sc->sc_dev.dv_xname));
+#if 0
 		error++;
+#endif
 	}
 	if (rxstat & XE_RXSTAT_CRCERR) {
 		DPRINTF(("%s: rx CRC error\n",
 				sc->sc_dev.dv_xname));
+#if 0
 		error++;
+#endif
 	}
 	if (rxstat & XE_RXSTAT_OVERFLOW) {
 		DPRINTF(("%s: rx overflow error\n",
 				sc->sc_dev.dv_xname));
+#if 0
 		error++;
+#endif
 	}
 
 	if (error) {
@@ -326,20 +315,27 @@ mb8795_rint(sc)
 			bus_dmamap_sync(sc->sc_rx_dmat, map,
 					0, map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-				
-			/* Find receive length and chop off CRC */
-			/* @@@ assumes packet is all in first segment
-			 */
-			m->m_pkthdr.len = map->dm_segs[0].ds_xfer_len-4;
-			m->m_len = map->dm_segs[0].ds_xfer_len-4;
-			m->m_pkthdr.rcvif = ifp;
-
 			bus_dmamap_unload(sc->sc_rx_dmat, map);
 
 			/* Install a fresh mbuf for next packet */
 			
 			sc->sc_rx_mb_head[sc->sc_rx_handled_idx] = 
 					mb8795_rxdmamap_load(sc,map);
+
+			/* Punt runt packets, these may be caused by dma restarts */
+			/* @@@ assumes packet is all in first segment */
+			if (map->dm_segs[0].ds_xfer_len < ETHER_MIN_LEN) {
+				m_freem(m);
+				continue;
+			}
+
+			/* Find receive length and chop off CRC */
+			/* @@@ assumes packet is all in first segment
+			 */
+			m->m_pkthdr.len = map->dm_segs[0].ds_xfer_len-4;
+			m->m_len = map->dm_segs[0].ds_xfer_len-4;
+
+			m->m_pkthdr.rcvif = ifp;
 
 			/* enable interrupts while we process the packet */
 			splx(s);
@@ -348,14 +344,15 @@ mb8795_rint(sc)
 			/* Peek at the packet */
 			DPRINTF(("%s: received packet, at VA 0x%08x-0x%08x,len %d\n",
 					sc->sc_dev.dv_xname,mtod(m,u_char *),mtod(m,u_char *)+m->m_len,m->m_len));
-#if 0
-			hex_dump(mtod(m,u_char *), m->m_pkthdr.len < 255 ? m->m_pkthdr.len : 128 );
-#endif
+			if (xe_debug > 3) {
+				xe_hex_dump(mtod(m,u_char *), m->m_pkthdr.len);
+			} else if (xe_debug > 2) {
+				xe_hex_dump(mtod(m,u_char *), m->m_pkthdr.len < 255 ? m->m_pkthdr.len : 128 );
+			}
 #endif
 		
 			{
 				ifp->if_ipackets++;
-				debugipkt++;
 
 				/* Pass the packet up. */
 				(*ifp->if_input)(ifp, m);
@@ -518,9 +515,14 @@ mb8795_init(sc)
 
   bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXMODE, XE_RXMODE_NORMAL);
 
+#if 0
   bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK,
 			XE_RXMASK_OKIE | XE_RXMASK_RESETIE | XE_RXMASK_SHORTIE	|
 			XE_RXMASK_ALIGNERRIE	|  XE_RXMASK_CRCERRIE | XE_RXMASK_OVERFLOWIE);
+#else
+  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK,
+			XE_RXMASK_OKIE | XE_RXMASK_RESETIE | XE_RXMASK_SHORTIE);
+#endif
 
   bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXSTAT, XE_RXSTAT_CLEAR);
 
@@ -929,7 +931,14 @@ mb8795_rxdma_shutdown(arg)
 {
 	struct mb8795_softc *sc = arg;
 
-	panic("%s: mb8795_rxdma_shutdown() unexpected", sc->sc_dev.dv_xname);
+  DPRINTF(("%s: mb8795_rxdma_shutdown(), restarting.\n",sc->sc_dev.dv_xname));
+
+#if 0
+	/* Back up the dma pointers to only those that are completed */
+	sc->sc_rx_loaded_idx = sc->sc_rx_completed_idx;
+#endif
+
+	nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
 }
 
 
@@ -1055,36 +1064,4 @@ mb8795_txdma_continue(arg)
 	return(map);
 }
 
-
-/****************************************************************/
-#if 0
-int
-mb8795_mediachange(ifp)
-	struct ifnet *ifp;
-{
-	struct mb8795_softc *sc = ifp->if_softc;
-
-	if (sc->sc_mediachange)
-		return ((*sc->sc_mediachange)(sc));
-	return (0);
-}
-
-void
-mb8795_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	struct mb8795_softc *sc = ifp->if_softc;
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return;
-
-	ifmr->ifm_status = IFM_AVALID;
-	if (sc->sc_havecarrier)
-		ifmr->ifm_status |= IFM_ACTIVE;
-
-	if (sc->sc_mediastatus)
-		(*sc->sc_mediastatus)(sc, ifmr);
-}
-#endif
 /****************************************************************/
