@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22_cache.S,v 1.3 2002/03/13 13:12:29 simonb Exp $	*/
+/*	$NetBSD: ip22_cache.S,v 1.4 2004/02/22 03:23:54 sekiya Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,8 +36,7 @@
  */
 
 /*
- * Code to manipulate the L2 SysAD cache on some (R4600/R5000-based)
- * SGI IP-22 (Indy) systems.
+ * Code to manipulate the L2 SysAD cache on R4600-based SGI IP22/24 systems.
  */
 
 #include <mips/asm.h>
