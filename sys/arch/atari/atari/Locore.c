@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1.1.1 1995/03/26 07:12:17 leo Exp $	*/
+/*	$NetBSD: Locore.c,v 1.2 1995/05/14 15:20:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -220,7 +220,7 @@ copyout(kaddr, udaddr, n) caddr_t kaddr, udaddr; u_int n; { return (0); }
 longjmp(lp) label_t *lp; { /*NOTREACHED*/ }
 
 /*ARGSUSED*/
-savectx(pcbp, ar) struct pcb *pcbp; { return (0); }
+savectx(pcbp) struct pcb *pcbp; { return (0); }
 
 /*ARGSUSED*/
 setrunqueue(p) struct proc *p; { }

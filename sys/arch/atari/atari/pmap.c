@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 1995/04/10 12:41:47 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 1995/05/14 15:20:27 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -351,7 +351,6 @@ void
 pmap_init(phys_start, phys_end)
 	vm_offset_t	phys_start, phys_end;
 {
-	extern char kstack[];
 	vm_offset_t	addr, addr2;
 	vm_size_t	npg, s;
 	int		rv;
@@ -370,16 +369,7 @@ pmap_init(phys_start, phys_end)
 	 * page table map.   Need to adjust pmap_size() in atari_init.c.
 	 */
 	if (addr != (vm_offset_t)Sysmap)
-		goto bogons;
-
-	addr = (vm_offset_t) kstack;
-	vm_object_reference(kernel_object);
-	(void) vm_map_find(kernel_map, kernel_object, addr,
-			   &addr, atari_ptob(UPAGES), FALSE);
-	if (addr != (vm_offset_t)kstack)
-bogons:
 		panic("pmap_init: bogons in the VM system!\n");
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %x, Sysmap %x, Sysptmap %x\n",
