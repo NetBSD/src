@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 1997/01/14 21:01:33 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 1997/01/16 22:12:50 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -143,17 +143,12 @@ extern char *esym;	/* DDB */
 
 /*
  * I think it might be cleaner to have one of these in each of
- * the a_tmgr_t structures, but it's late at night... -gwr
- *
+ * the a_tmgr_t structures... -gwr
  */
-struct rootptr {
-	u_long limit; /* and type */
-	u_long paddr;
-};
-struct rootptr proc0crp;
+struct mmu_rootptr proc0crp;
 
 /* This is set by locore.s with the monitor's root ptr. */
-extern struct rootptr mon_crp;
+extern struct mmu_rootptr mon_crp;
 
 /*** Management Structure - Memory Layout
  * For every MMU table in the sun3x pmap system there must be a way to
@@ -814,7 +809,7 @@ pmap_takeover_mmu()
 	curpcb->pcb_mmuctx = (int) &proc0crp;
 
 	mon_printf("pmap_takeover_mmu: loadcrp...\n");
-	loadcrp((vm_offset_t) &proc0crp);
+	loadcrp(curpcb->pcb_mmuctx);
 	mon_printf("pmap_takeover_mmu: survived!\n");
 }
 
