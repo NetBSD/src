@@ -167,7 +167,6 @@ fetch_inferior_registers (regno)
 	      for (i = L0_REGNUM; i <= I7_REGNUM; i++) {
 		      *(long *)&registers[REGISTER_BYTE (i)] =
 			      (long)tmp[i];
-		      printf_unfiltered("register %d valid is now %lx from %x\n", i, tmp[i], registers[REGISTER_BYTE (i)]);
 		      register_valid[i] = 1;
 	      }
       }
@@ -178,8 +177,6 @@ fetch_inferior_registers (regno)
       if (sp & 0x1) {
 	      sp += BIAS;
 	      i = REGISTER_BYTE (regno);
-	      if (register_valid[regno])
-		      printf_unfiltered("register %d valid and read\n", regno);
 	      target_read_memory (sp + i - REGISTER_BYTE (L0_REGNUM),
 				  &registers[i], REGISTER_RAW_SIZE (regno));
 	      register_valid[regno] = 1;
@@ -188,13 +185,9 @@ fetch_inferior_registers (regno)
 
 	      sp &= 0x0ffffffffL;
 	      i = REGISTER_BYTE (regno);
-	      if (register_valid[regno])
-		      printf_unfiltered("register %d valid and read\n", regno);
 	      target_read_memory (sp + sizeof(tmp) * (regno - L0_REGNUM),
 				  (void *)&tmp, sizeof(tmp));
 	      *(long *)&registers[i] = (long)tmp;
-	      printf_unfiltered("register %d valid is now %lx from %x\n", i, tmp, *(long *)&registers[i]);
-      
 	      register_valid[regno] = 1;
       }
     }
