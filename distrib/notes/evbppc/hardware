@@ -1,9 +1,16 @@
-.\"	$NetBSD: hardware,v 1.2 2002/06/30 13:04:32 lukem Exp $
+.\"	$NetBSD: hardware,v 1.1 2002/12/09 14:03:55 scw Exp $
 .
 .Nx*M
 is a port of
 .Nx
-to the IBM PowerPC 405GP based walnut evaluation board.
+to PowerPC based evaluation board.
+At the present time, the IBM PowerPC 405GP based walnut evaluation board
+is the only board supported by this port.
+As a result, this documentation is specific to installing
+.Nx*M
+on that particular piece of hardware.
+More evaluation boards will be added in due course, and this documentation
+will be updated accordingly.
 .
 .Ss2 Supported devices
 .(bullet -offset indent

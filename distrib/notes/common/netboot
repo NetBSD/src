@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.13 2002/11/18 12:39:49 lukem Exp $
+.\"	$NetBSD: netboot,v 1.14 2002/12/09 14:03:54 scw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@ You may either netboot the installer so you can install onto a locally
 attached disk, or you may run your system entirely over the network.
 .\}
 .Pp
-.ie !\n[walnut] \{\
+.ie !\n[evbppc] \{\
 Briefly, the netboot
 process involves discovery, bootstrap, kernel and file system stages.
 In the first stage, the client discovers information
@@ -89,7 +89,7 @@ All supported \*M systems use HP's proprietary RMP (the
 daemon) for the first discovery stage and bootstrap download stages.
 The bootstrap program uses DHCP for its discovery stage.
 .\}
-.if \n[macppc]:\n[next68k]:\n[walnut] \{\
+.if \n[evbppc]:\n[macppc]:\n[next68k] \{\
 All \*M systems use BOOTP for the discovery stage.
 .\}
 .if \n[sparc] \{\
@@ -112,7 +112,7 @@ the bootstrap program,
 which has been linked to a file name appropriate to the client's
 architecture and IP address as described in the TFTP section below.
 .\}
-.if \n[walnut] \{\
+.if \n[evbppc] \{\
 the kernel via the on-board Ethernet card by the firmware.
 Thus,
 .Nx
@@ -125,10 +125,10 @@ supported by
 .Nx "" .
 .\}
 .\} \" ! !\n[hp300]
-.if !\n[walnut] \{\
+.if !\n[evbppc] \{\
 NFS is used in both the kernel and file system stages to download the
 kernel, and to access files on the file server.
-.\} \" !\n[walnut]
+.\} \" !\n[evbppc]
 .Pp
 We will use
 .Sq Li "CC:CC:CC:CC:CC:CC"
@@ -189,7 +189,7 @@ or later, you can achieve this with:
 .Pp
 .It
 .\} \" ! \n[hp300]
-.if \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc]:\n[walnut] \{\
+.if \n[evbppc]:\n[hp300]:\n[macppc]:\n[next68k]:\n[sparc] \{\
 .ie !\n[hp300] \{\
 .Xr dhcpd 8
 in
@@ -244,14 +244,14 @@ group {
                 #
                 option host-name        "client";
 .if !\n[hp300] \{\
-.ie \n[walnut] \{\
+.ie \n[evbppc] \{\
 
                 #
                 # Name of the kernel image to download via tftp.
                 # Note: Plain (ELF) kernels won't work, you
                 # have to use the corresponding *.img file.
                 #
-                filename                "netbsd-INSTALL.img"
+                filename                "netbsd-INSTALL_WALNUT.img"
 .\}
 .el .if !\n[sparc] \{\
 
@@ -303,7 +303,7 @@ or later, you can achieve this with:
 .No # Ic "/etc/rc.d/dhcpd restart"
 .disp)
 .Pp
-.\} \" ! \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc]:\n[walnut]
+.\} \" ! \n[evbppc]:\n[hp300]:\n[macppc]:\n[next68k]:\n[sparc]
 .if \n[sparc] \{\
 .Pp
 .It
@@ -370,7 +370,7 @@ or later, you can achieve this with:
 .No # Ic "/etc/rc.d/inetd restart"
 .disp)
 .Pp
-.ie \n[walnut] Now, you need to copy the kernel for your \*M machine to
+.ie \n[evbppc] Now, you need to copy the kernel for your \*M machine to
 .el Now, you need to copy the bootloader for your \*M machine to
 .Pa /tftpboot .
 .if \n[macppc] \{\
@@ -463,7 +463,7 @@ ethernet address to its IP address:
 .Xr mountd 8 ,
 and
 .Xr rpcbind 8
-.ie !\n[walnut] \{\
+.ie !\n[evbppc] \{\
 .Pp
 Now your system should be able to load the bootstrap program and start
 looking for the kernel.
@@ -511,13 +511,13 @@ or later, you can achieve this with:
 kernel
 .if !\n[next68k] and installation tools
 .Pp
-.if !\n[walnut] \{\
+.if !\n[evbppc] \{\
 Now, if you place a kernel named
 .Pa netbsd
 in
 .Pa /export/client/root
 your client should boot the kernel.
-.\} \" !\n[walnut]
+.\} \" !\n[evbppc]
 .if \n[hp300] \{\
 If you are netbooting the installer, you can use either
 the traditional miniroot-based installer
@@ -603,9 +603,9 @@ the client's root directory and extract the tools from
 .No # Ic "tar -xpzf rootfs.tgz"
 .disp)
 .\}
-.if \n[walnut] \{\
+.if \n[evbppc] \{\
 If you are netbooting the installer, use
-.Pa binary/kernel/netbsd-INSTALL.img.gz
+.Pa binary/kernel/netbsd-INSTALL_WALNUT.img.gz
 (this has the installation tools in a RAM disk).
 Also, copy the distribution files to the client's root directory.
 .Pp
