@@ -1,4 +1,4 @@
-/*	$NetBSD: obiovar.h,v 1.5 2002/04/10 05:13:10 briggs Exp $	*/
+/*	$NetBSD: obiovar.h,v 1.6 2004/12/14 02:32:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,8 +46,6 @@
  */
 struct obio_attach_args {
 	int oa_addr;			/* physical address */
-	int oa_drq;			/* SCSI DRQ physical address */
-	int oa_hsk;			/* SCSI HSK physical address */
 	bus_space_tag_t oa_tag;		/* bus space tag */
 	bus_dma_tag_t oa_dmat;		/* bus dma tag */
 };
