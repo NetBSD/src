@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.260 2000/10/04 06:52:11 itojun Exp $
+#	$NetBSD: mi,v 1.261 2000/10/04 07:15:08 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2563,6 +2563,7 @@
 ./usr/share/man/cat3/srand48.0	comp-c-catman
 ./usr/share/man/cat3/srandom.0	comp-c-catman
 ./usr/share/man/cat3/sscanf.0	comp-c-catman
+./usr/share/man/cat3/ssl.0		comp-c-man
 ./usr/share/man/cat3/stdarg.0	comp-c-catman
 ./usr/share/man/cat3/stdio.0	comp-c-catman
 ./usr/share/man/cat3/strcasecmp.0	comp-c-catman
@@ -4313,6 +4314,7 @@
 ./usr/share/man/man3/srand48.3		comp-c-man
 ./usr/share/man/man3/srandom.3		comp-c-man
 ./usr/share/man/man3/sscanf.3		comp-c-man
+./usr/share/man/man3/ssl.3		comp-c-man
 ./usr/share/man/man3/stdarg.3		comp-c-man
 ./usr/share/man/man3/stdio.3		comp-c-man
 ./usr/share/man/man3/strcasecmp.3		comp-c-man
