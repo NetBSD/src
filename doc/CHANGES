@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.364 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.365 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -117,3 +117,8 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	kernel: Add IPv4 PIM support from Pavlin Radoslavov and Hitoshi 
 		Asaeda. Part of this work has been supported by the XORP 
 		project http://www.xorp.org [manu 20040905]
+	libc: Add UUID manipulation routines, adapted from FreeBSD.
+		[thorpej 20040913]
+	uuidgen: Add a UUID generation tool, adapted from FreeBSD,
+		extended slightly with some additional DCE-compatible
+		options.  [thorpej 20040913]
