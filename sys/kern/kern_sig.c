@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.189.2.1 2004/04/01 23:28:33 jmc Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.189.2.2 2004/04/05 20:32:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189.2.1 2004/04/01 23:28:33 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189.2.2 2004/04/05 20:32:29 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -742,7 +742,7 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 	pc = cp->p_cred;
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);
-	memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT(&ksi);
 	ksi.ksi_signo = SCARG(uap, signum);
 	ksi.ksi_code = SI_USER;
 	ksi.ksi_pid = cp->p_pid;
@@ -827,7 +827,7 @@ void
 gsignal(int pgid, int signum)
 {
 	ksiginfo_t ksi;
-	memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT(&ksi);
 	ksi.ksi_signo = signum;
 	kgsignal(pgid, &ksi, NULL);
 }
@@ -849,7 +849,7 @@ void
 pgsignal(struct pgrp *pgrp, int sig, int checkctty)
 {
 	ksiginfo_t ksi;
-	memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT(&ksi);
 	ksi.ksi_signo = sig;
 	kpgsignal(pgrp, &ksi, NULL, checkctty);
 }
@@ -918,7 +918,7 @@ child_psignal(struct proc *p, int dolock)
 {
 	ksiginfo_t ksi;
 
-	(void)memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT(&ksi);
 	ksi.ksi_signo = SIGCHLD;
 	ksi.ksi_code = p->p_xstat == SIGCONT ? CLD_CONTINUED : CLD_STOPPED;
 	ksi.ksi_pid = p->p_pid;
@@ -949,7 +949,7 @@ psignal1(struct proc *p, int signum, int dolock)
 {
 	ksiginfo_t ksi;
 
-	memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT(&ksi);
 	ksi.ksi_signo = signum;
 	kpsignal2(p, &ksi, dolock);
 }
@@ -1861,7 +1861,7 @@ postsig(int signum)
 			 * because the signal was not caught, or because the
 			 * user did not request SA_SIGINFO
 			 */
-			(void)memset(&ksi1, 0, sizeof(ksi1));
+			KSI_INIT(&ksi1);
 			ksi1.ksi_signo = signum;
 			kpsendsig(l, &ksi1, returnmask);
 		} else {
