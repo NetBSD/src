@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.2 1996/05/07 23:22:25 christos Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.3 1996/05/12 02:30:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -79,6 +79,12 @@ struct cfattach le_pci_ca = {
 hide void le_pci_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t le_pci_rdcsr __P((struct am7990_softc *, u_int16_t));
 
+/*
+ * PCI constants.
+ * XXX These should be in a common file!
+ */
+#define PCI_CBIO	0x10		/* Configuration Base IO Address */
+
 extern vm_offset_t kvtop __P((caddr_t));	/* XXX */
 
 hide void
@@ -86,9 +92,12 @@ le_pci_wrcsr(sc, port, val)
 	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
+	struct le_softc *lesc = (struct le_softc *)sc;
+	bus_chipset_tag_t bc = lesc->sc_bc;
+	bus_io_handle_t ioh = lesc->sc_ioh;
 
-	outw(((struct le_softc *)sc)->sc_rap, port);
-	outw(((struct le_softc *)sc)->sc_rdp, val);
+	bus_io_write_2(bc, ioh, lesc->sc_rap, port);
+	bus_io_write_2(bc, ioh, lesc->sc_rdp, val);
 }
 
 hide u_int16_t
@@ -96,10 +105,13 @@ le_pci_rdcsr(sc, port)
 	struct am7990_softc *sc;
 	u_int16_t port;
 {
+	struct le_softc *lesc = (struct le_softc *)sc;
+	bus_chipset_tag_t bc = lesc->sc_bc;
+	bus_io_handle_t ioh = lesc->sc_ioh;
 	u_int16_t val;
 
-	outw(((struct le_softc *)sc)->sc_rap, port);
-	val = inw(((struct le_softc *)sc)->sc_rdp);
+	bus_io_write_2(bc, ioh, lesc->sc_rap, port);
+	val = bus_io_read_2(bc, ioh, lesc->sc_rdp);
 	return (val);
 }
 
@@ -129,27 +141,38 @@ le_pci_attach(parent, self, aux)
 	struct le_softc *lesc = (void *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct pci_attach_args *pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
+	bus_io_addr_t iobase;
+	bus_io_size_t iosize;
+	bus_chipset_tag_t bc = pa->pa_bc;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
-	int iobase, i;
+	int i;
 	const char *model, *intrstr;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCNET_PCI:
 		model = "PCnet-PCI Ethernet";
-		lesc->sc_rap = iobase + PCNET_PCI_RAP;
-		lesc->sc_rdp = iobase + PCNET_PCI_RDP;
+		lesc->sc_rap = PCNET_PCI_RAP;
+		lesc->sc_rdp = PCNET_PCI_RDP;
 		break;
 
 	default:
 		model = "unknown model!";
 	}
 
-	printf("%s: %s\n", sc->sc_dev.dv_xname, model);
+	printf(": %s\n", model);
 
-	if (pci_map_io(pa->pa_tag, 0x10, &iobase))
+	lesc->sc_bc = bc;
+
+	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
+		printf("%s: can't find I/O base\n", sc->sc_dev.dv_xname);
 		return;
+	}
+	if (bus_io_map(bc, iobase, iosize, &lesc->sc_ioh)) {
+		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	/*
 	 * Extract the physical MAC address from the ROM.
@@ -182,9 +205,9 @@ le_pci_attach(parent, self, aux)
 	am7990_config(sc);
 
 	/* Enable the card. */
-	csr = pci_conf_read(pa->pa_bc, pa->pa_tag,
+	csr = pci_conf_read(pc, pa->pa_tag,
 	    PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_bc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
