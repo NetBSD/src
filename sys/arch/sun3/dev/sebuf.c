@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.2 1997/10/25 18:20:09 gwr Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.3 1997/12/08 19:19:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -132,6 +132,8 @@ sebuf_attach(parent, self, args)
 	struct confargs *ca = args;
 	struct sebuf_attach_args aa;
 	struct sebuf_regs *regs;
+
+	printf("\n");
 
 	if (ca->ca_intpri != 2)
 		panic("sebuf: bad level");
