@@ -147,12 +147,13 @@ FreeBSD 4.0  |      |  |  |  | NetBSD 1.4.2    |             |
  |      |             |      |    |            |
  |   FreeBSD 4.4      |      | NetBSD 1.5.2    |
  |      |             |      |    |            |
- |      |             |      |    v        OpenBSD 3.0
- |   FreeBSD 4.5      |      |                 |
- |      |             |      |                 |
- |   FreeBSD 4.6      |      |                 |
- |      |             |      |                 |
- |      v             |      |                 |
+ |      |             |      |    |        OpenBSD 3.0
+ |   FreeBSD 4.5      |      |    |            |
+ |      |             |      |    |            |
+ |   FreeBSD 4.6      |      |    v            |
+ |      |             |      | NetBSD 1.5.3    |
+ |      v             |      |    |            |
+ |                    |      |    v            |
  |                    |      |                 |
 FreeBSD 5.0-current   |   NetBSD -current  OpenBSD -current
  |                    |      |                 |
