@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.8 2003/01/19 19:25:05 thorpej Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.9 2003/07/18 21:51:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -97,8 +97,8 @@
 
 #include <threadlib.h>
 
-#define	FLOCKFILE(fp)		flockfile(fp)
-#define	FUNLOCKFILE(fp)		funlockfile(fp)
+#define	FLOCKFILE(fp)		__flockfile_internal(fp, 1)
+#define	FUNLOCKFILE(fp)		__funlockfile_internal(fp, 1)
 
 #else /* _REENTRANT */
 
