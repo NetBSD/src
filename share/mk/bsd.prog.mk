@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.108 2000/01/23 19:38:53 eeh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.109 2000/02/05 20:54:12 jdc Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -29,6 +29,7 @@ LIBCRTEND?=
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 
+LIBAHDI?=	${DESTDIR}/usr/lib/libahdi.a
 LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
 LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
