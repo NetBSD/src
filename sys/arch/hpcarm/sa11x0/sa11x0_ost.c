@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.3 2001/03/09 18:55:29 toshii Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.4 2001/04/15 17:19:32 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -56,7 +56,8 @@ static int	saost_match(struct device *, struct cfdata *, void *);
 static void	saost_attach(struct device *, struct device *, void *);
 
 int		gettick(void);
-int		clockintr(void *);
+static int	clockintr(void *);
+static int	statintr(void *);
 void		rtcinit(void);
 
 struct saost_softc {
@@ -66,9 +67,8 @@ struct saost_softc {
 	bus_space_handle_t	sc_ioh;
 
 	u_int32_t	sc_clock_count;
-	void		*sc_clockintr;
 	u_int32_t	sc_statclock_count;
-	void		*sc_statclockintr;
+	u_int32_t	sc_statclock_step;
 };
 
 static struct saost_softc *saost_sc = NULL;
@@ -76,6 +76,9 @@ static struct saost_softc *saost_sc = NULL;
 #define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
 #define TICKS_PER_MICROSECOND   (TIMER_FREQUENCY/1000000)
 
+#ifndef STATHZ
+#define STATHZ	128
+#endif
 
 struct cfattach saost_ca = {
 	sizeof(struct saost_softc), saost_match, saost_attach
@@ -108,10 +111,14 @@ saost_attach(parent, self, aux)
 			&sc->sc_ioh))
 		panic("%s: Cannot map registers\n", self->dv_xname);
 
+	/* disable all channel and clear interrupt status */
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 0);
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_SR, 0xf);
+
 	printf("%s: SA-11x0 OS Timer\n",  sc->sc_dev.dv_xname);
 }
 
-int
+static int
 clockintr(arg)
 	void *arg;
 {
@@ -145,40 +152,78 @@ clockintr(arg)
 	return(-1);
 }
 
+static int
+statintr(arg)
+	void *arg;
+{
+	struct clockframe *frame = arg;
+	u_int32_t oscr, nextmatch, oldmatch;
+
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
+			SAOST_SR, 2);
+
+	statclock(frame);
+
+	/* schedule next clock intr */
+	oldmatch = saost_sc->sc_statclock_count;
+	nextmatch = oldmatch + saost_sc->sc_statclock_step;
+	oscr = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
+				SAOST_CR);
+	/* XXX it will take some time to return from intr */
+	oscr += 100;
+	if ((nextmatch > oldmatch &&
+	     (oscr > nextmatch || oscr < oldmatch)) ||
+	    (nextmatch < oldmatch && oscr > nextmatch && oscr < oldmatch)) {
+		/*
+		 * XXX silently drop timed out statclock() calls,
+		 * XXX but we should compensate them.
+		 */
+		nextmatch = oscr + saost_sc->sc_statclock_step;
+	}
+	saost_sc->sc_clock_count = nextmatch;
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR1,
+			  nextmatch);
+	return(-1);
+}
+
 
 void
 setstatclockrate(hz)
 	int hz;
 {
-	int timer_count, enable;
-	timer_count = TIMER_FREQUENCY / hz;
-	enable = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-				SAOST_IR);
-	enable |= 2;
+	u_int32_t count;
+
+	saost_sc->sc_statclock_step = TIMER_FREQUENCY / hz;
+	count = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR);
+	count += saost_sc->sc_statclock_step;
+	saost_sc->sc_statclock_count = count;
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-			SAOST_IR, enable);
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-			SAOST_MR1, timer_count);
-	saost_sc->sc_statclock_count = timer_count;
+			SAOST_MR1, count);
 }
 
 void
 cpu_initclocks()
 {
-	/* initialize saost and setup irq */
+	stathz = STATHZ;
+	profhz = stathz;
+	saost_sc->sc_statclock_step = TIMER_FREQUENCY / stathz;
 
-	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
+	printf("clock: hz=%d stathz = %d\n", hz, stathz);
 
-	/* Disable reset on timer 3 match */
+	/* Zero the counter value */
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR, 0);
-	/* Setup timer 1 and claim interrupt */
 
+	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
 	saost_sc->sc_clock_count = TIMER_FREQUENCY / hz;
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 1);
+	saost_sc->sc_statclock_count = TIMER_FREQUENCY / stathz;
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 3);
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR0,
 			  saost_sc->sc_clock_count);
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR1,
+			  saost_sc->sc_statclock_count);
 
 	sa11x0_intr_establish(0, 26, 1, IPL_CLOCK, clockintr, 0);
+	sa11x0_intr_establish(0, 27, 1, IPL_CLOCK, statintr, 0);
 }
 
 int
