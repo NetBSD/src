@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.183 1998/02/24 05:59:34 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.184 1998/02/24 07:00:14 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1990,6 +1990,35 @@ static romvec_t romvecs[] =
 		(caddr_t)0x4081c406,	/* FixDiv */
 		(caddr_t)0x4081c312,	/* FixMul */
 	},
+	/*
+	 * Vectors verified for the Performa 588 (and 580?)
+	 */
+	{			/* 19 */
+		"Performa 580 ROMs",
+		(caddr_t) 0x4089a8be,	/* ADB interrupt */
+		(caddr_t) 0x0,		/* PM ADB interrupt */
+		(caddr_t) 0x408b2f94,	/* ADBBase + 130 interupt */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x408b3bf4,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408a99c0,	/* Egret */
+		(caddr_t) 0x408147c8,	/* InitEgret */
+		(caddr_t) 0x408a7f74,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
+	},
 	/* Please fill these in! -BG */
 };
 
@@ -2050,6 +2079,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
 	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[14]},
 	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[11]},
+	{MACH_MACP580, "Performa", " 580 ", MACH_CLASSQ2, &romvecs[19]},
 	{MACH_MACTV,   "TV ",      "",      MACH_CLASSLC, &romvecs[12]},
 
 /* The LCs... */
@@ -2092,6 +2122,7 @@ struct {
 	{ MACH_MACLC575,	(caddr_t)0xf9000000,	1024 * 1024 },
 	{ MACH_MACC610,		(caddr_t)0xf9000000,	1024 * 1024 },
 	{ MACH_MACC650,		(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACP580,		(caddr_t)0xf9000000,	1024 * 1024 },
 	{ MACH_MACQ605,		(caddr_t)0xf9000000,	1024 * 1024 },
 	{ MACH_MACQ605_33,	(caddr_t)0xf9000000,	1024 * 1024 },
 	{ MACH_MACQ610,		(caddr_t)0xf9000000,	1024 * 1024 },
@@ -2252,6 +2283,7 @@ setmachdep()
 	case MACH_CLASSQ2:
 		mac68k_machine.sonic = 1;
 	case MACH_CLASSAV:
+	case MACH_CLASSP580:
 		VIA2 = 1;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
@@ -2382,6 +2414,15 @@ mac68k_set_io_offsets(base)
 		Via1Base = (volatile u_char *)base;
 		sccA = (volatile u_char *)base + 0xc020;
 		SCSIBase = base + 0x10000;
+		break;
+	case MACH_CLASSP580:
+		/*
+		 * Here's a queer bird... it seems to be a cross between
+		 * the two different Quadra classes.
+		 */
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0xc020;
+		SCSIBase = base;
 		break;
 	case MACH_CLASSAV:
 		Via1Base = (volatile u_char *)base;
