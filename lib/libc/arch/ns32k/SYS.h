@@ -35,7 +35,7 @@
  *
  *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  *
- *	$Id: SYS.h,v 1.5 1996/10/18 00:49:03 jtc Exp $
+ *	$Id: SYS.h,v 1.6 1996/11/07 07:42:38 matthias Exp $
  *
  *  Modified for the ns532 by Phil Nelson, 12/1/92
  *
@@ -48,21 +48,20 @@
 	movd CAT(SYS_,x),r0; \
 	SVC
 
-#define	SYSCALL(x) \
-	ENTRY(x); \
-	SYSTRAP(x); \
-	bcs cerror
-
-#define	RSYSCALL(x) \
-	SYSCALL(x); \
-	ret 0
-
 #define SYSCALL_NOERROR(x) \
 	ENTRY(x); \
 	SYSTRAP(x); 
 
 #define RSYSCALL_NOERROR(x) \
 	SYSCALL_NOERROR(x); \
+	ret 0
+
+#define	SYSCALL(x) \
+	SYSCALL_NOERROR(x); \
+	bcs cerror
+
+#define	RSYSCALL(x) \
+	SYSCALL(x); \
 	ret 0
 
 #define	PSEUDO(x,y) \
