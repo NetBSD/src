@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.225 2003/11/20 15:07:07 wiz Exp $
+.\"	$NetBSD: options.4,v 1.226 2004/01/12 20:03:39 is Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -971,6 +971,11 @@ See also
 .Xr sysctl 8
 and
 .Xr sysctl 3 .
+.It Cd options MEMORY_DISK_DYNAMIC
+This options makes the
+.Xr md 4 
+.Tn RAM
+disk size dynamically sized.
 .It Cd options MEMORY_DISK_HOOKS
 This option allows for some machine dependent functions to be called when
 the
@@ -993,6 +998,10 @@ Allocates the given number of 512 byte blocks as memory for the
 .Tn RAM
 disk, to be populated with
 .Xr mdsetimage 8 .
+.It Cd options MEMORY_DISK_SERVER=0
+Do not include the interface to a userland memory disk server process.
+Per default, this options is set to 1, including the support code. 
+Useful for install media kernels.
 .It Cd options VNODE_OP_NOINLINE
 Do not inline the
 .Fn VOP_*
