@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.47 2003/07/11 15:28:58 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.48 2003/07/14 09:59:00 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -120,17 +120,22 @@ set_bios_geom(int cyl, int head, int sec)
 	char res[80];
 
 	msg_display_add(MSG_setbiosgeom);
-	snprintf(res, 80, "%d", cyl);
-	msg_prompt_add(MSG_cylinders, res, res, 80);
-	bcyl = atoi(res);
 
-	snprintf(res, 80, "%d", head);
-	msg_prompt_add(MSG_heads, res, res, 80);
-	bhead = atoi(res);
+	do {
+		snprintf(res, 80, "%d", sec);
+		msg_prompt_add(MSG_sectors, res, res, 80);
+		bsec = atoi(res);
+	} while (bsec <= 0 || bsec > 63);
 
-	snprintf(res, 80, "%d", sec);
-	msg_prompt_add(MSG_sectors, res, res, 80);
-	bsec = atoi(res);
+	do {
+		snprintf(res, 80, "%d", head);
+		msg_prompt_add(MSG_heads, res, res, 80);
+		bhead = atoi(res);
+	} while (bhead <= 0 || bhead > 256);
+
+	bcyl = dlsize / bsec / bhead;
+	if (dlsize != bcyl * bsec * bhead)
+		bcyl++;
 }
 
 #ifdef notdef
@@ -1387,7 +1392,7 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 		mbr = &ext->mbr;
 #ifdef BOOTSEL
 		if (netbsd_bootcode) {
-			mbri->mbr.mbr_bootsel.mbrb_magic = htole16(MBR_MAGIC);
+			mbr->mbr_bootsel.mbrb_magic = htole16(MBR_MAGIC);
 			memcpy(&mbr->mbr_bootsel.mbrb_nametab, &ext->nametab,
 			    sizeof mbr->mbr_bootsel.mbrb_nametab);
 		}
@@ -1425,6 +1430,10 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 		}
 
 		mbr->mbr_signature = htole16(MBR_MAGIC);
+		/*
+		 * Sector zero is written outside the loop after we have
+		 * set mbrb_defkey.
+		 */
 		if (ext->sector != 0 && pwrite(fd, mbr, sizeof *mbr,
 		    ext->sector * (off_t)MBR_SECSIZE) < 0)
 			ret = -1;
@@ -1544,17 +1553,22 @@ guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, int *sec)
 	 * XXX relies on get_disks having been called.
 	 */
 	xcylinders = dlsize / xheads / xsectors;
+	if (dlsize != xcylinders * xheads * xsectors)
+		xcylinders++;
 
-	/* Now verify consistency with each of the partition table entries.
+	/*
+	 * Now verify consistency with each of the partition table entries.
 	 * Be willing to shove cylinders up a little bit to make things work,
-	 * but translation mismatches are fatal. */
+	 * but translation mismatches are fatal.
+	 */
 	for (i = 0; i < NMBRPART * 2; i++) {
 		if (get_mapping(parts, i, &c1, &h1, &s1, &a1) < 0)
 			continue;
+		if (c1 >= MAXCYL - 1)
+			/* Ignore anything that is near the CHS limit */
+			continue;
 		if (xsectors * (c1 * xheads + h1) + s1 != a1)
 			return -1;
-		if (c1 >= xcylinders)
-			xcylinders = c1 + 1;
 	}
 
 	/*

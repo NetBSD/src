@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.8 2003/07/07 21:26:32 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.9 2003/07/14 09:59:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,17 +79,17 @@ message noactivepart
 {Nie zaznaczyles aktywnej partycji. Moze to spowodowac, ze twoj system nie
 uruchomi sie prawidlowo. Czy partycja NetBSD ma zostac zaznaczona jako aktynwa?}
 
-message setbiosgeom
+message setbiosgeom	/* XXX translate */
 {
-Zostaniesz poproszony o podanie geometrii. Podaj wartosci jakie chcesz.
-Ilosc cylindrow powinna byc <= 1024 a ilosc sektorow <= 63. Jesli twoj
-BIOS jest ustawiony aby obslugiwac > 1024 cylindry po prostu zmniejsz
-tutaj ta ilosc do 1024; NetBSD rozpozna reszte cylindrow.
+Zostaniesz poproszony o podanie geometrii. 
+Please enter the number of sectors per track (maximum 63)
+and number of heads (maximum 256) that the BIOS uses to access the disk.
+The number of cylinders will be calculated from the disk size.
 
 }
 
 message nobiosgeom
-{Sysinst nie mogl automatycznie rozpoznac geometrii dysku z BIOS.
+{Sysinst nie mogl automatycznie rozpoznac geometrii dysku z BIOS. 
 Fizyczna geometria to %d cylindrow %d sektorow %d glowic\n}
 
 message biosguess

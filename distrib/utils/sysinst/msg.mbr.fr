@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.9 2003/07/07 21:26:32 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.10 2003/07/14 09:59:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,19 +82,18 @@ message noactivepart
 Cela peut empêcher votre système de démarrer correctement.
 Dois-je marquer la partition NetBSD active?}
 
-message setbiosgeom
+message setbiosgeom	/* XXX translate */
 {
-On va vous demander la géométrie. SVP entrer les valeur que vous désirez.
-Rappelez vous que le nombre de cylindre doit être <= 1024 et que le nombre
-de secteur doit être <=63. Si votre BIOS est configuré avec plus de 1024
-cylindre, tronquez ce nombre à 1024 ici, NetBSD saura utiliser les cylindres
-restant.
+On va vous demander la géométrie.
+Please enter the number of sectors per track (maximum 63)
+and number of heads (maximum 256) that the BIOS uses to access the disk.
+The number of cylinders will be calculated from the disk size.
 
 }
 
 message nobiosgeom
 {Sysinst n'a pas pu déterminer automatiquement la géométrie utilisée par le
-BIOS pour votre disque.
+BIOS pour votre disque. 
 La géométrie physique est %d cylindres %d secteurs %d têtes\n}
 
 message biosguess
