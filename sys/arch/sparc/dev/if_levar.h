@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.7 1997/04/04 20:29:23 pk Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.8 1998/03/21 20:25:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -50,6 +50,8 @@ struct	le_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
 
 	struct	sbusdev sc_sd;		/* sbus device */
+	bus_space_tag_t	sc_bustag;
+	bus_dma_tag_t	sc_dmatag;
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 	struct	dma_softc *sc_dma;	/* pointer to my dma */
