@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/04/09 01:32:08 tv Exp $
+#	$NetBSD: Makefile,v 1.5 1998/04/12 14:18:41 tv Exp $
 
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -45,6 +45,10 @@ NOLINT=		nolint (c++)
 LDADD=	${DESTDIR}/usr/lib/c++rt0.o
 DPADD=	${DESTDIR}/usr/lib/c++rt0.o
 .endif
+
+# XXX Workaround the .cc -> (NULL) extension rule
+.cc:
+	@true
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>

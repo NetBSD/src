@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/04/08 23:39:05 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1998/04/12 14:18:42 tv Exp $
 
 NOPROG=	yes
 INCS=	algorithm deque functional hash_map hash_set iterator list map \
@@ -18,5 +18,9 @@ INCS+=	algo.h algobase.h alloc.h bvector.h defalloc.h deque.h function.h \
 INCSDIR=/usr/include/g++
 
 .PATH: $(.CURDIR)/../../../dist/libstdc++/stl
+
+# XXX Workaround the .cc -> (NULL) extension rule
+.cc:
+	@true
 
 .include <bsd.prog.mk>
