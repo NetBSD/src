@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.7 2002/03/11 16:00:55 pk Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.8 2002/03/20 17:34:23 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.7 2002/03/11 16:00:55 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.8 2002/03/20 17:34:23 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map brooktree registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_bt = (struct bt_regs *)(u_long)bh;
+	sc->sc_bt = (struct bt_regs *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
@@ -152,7 +152,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map FHC registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_fhc = (int *)(u_long)bh;
+	sc->sc_fhc = (int *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
@@ -162,7 +162,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map THC registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_thc = (struct cg6_thc *)(u_long)bh;
+	sc->sc_thc = (struct cg6_thc *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
@@ -172,7 +172,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map TEC registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_tec = (struct cg6_tec_xxx *)(u_long)bh;
+	sc->sc_tec = (struct cg6_tec_xxx *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
@@ -182,7 +182,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map FBC registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_fbc = (struct cg6_fbc *)(u_long)bh;
+	sc->sc_fbc = (struct cg6_fbc *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	sbus_establish(sd, &sc->sc_dev);
 	name = PROM_getpropstring(node, "model");
@@ -198,7 +198,8 @@ cgsixattach(parent, self, aux)
 			printf("%s: cannot map pixels\n", self->dv_xname);
 			return;
 		}
-		sc->sc_fb.fb_pixels = (caddr_t)(u_long)bh;
+		sc->sc_fb.fb_pixels = (caddr_t)bus_space_vaddr(sa->sa_bustag, 
+			bh);
 	}
 
 	cg6attach(sc, name, isconsole);
