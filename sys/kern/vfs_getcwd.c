@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.11 1999/12/15 08:36:44 jdolecek Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.12 1999/12/30 16:01:34 eeh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ getcwd_scandir __P((struct vnode **, struct vnode **,
 static int
 getcwd_getcache __P((struct vnode **, struct vnode **,
     char **, char *));
-static int
+int
 getcwd_common __P((struct vnode *, struct vnode *,
 		   char **, char *, int, int, struct proc *));
 
@@ -368,7 +368,7 @@ getcwd_getcache(lvpp, uvpp, bpp, bufp)
 
 #define GETCWD_CHECK_ACCESS 0x0001
 
-static int
+int 
 getcwd_common (lvp, rvp, bpp, bufp, limit, flags, p)
 	struct vnode *lvp;
 	struct vnode *rvp;
