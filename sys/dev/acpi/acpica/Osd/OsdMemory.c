@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMemory.c,v 1.6 2003/11/02 18:29:46 matt Exp $	*/
+/*	$NetBSD: OsdMemory.c,v 1.7 2004/04/11 06:52:38 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.6 2003/11/02 18:29:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.7 2004/04/11 06:52:38 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -63,7 +63,7 @@ AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, ACPI_SIZE Length,
     void **LogicalAddress)
 {
 
-	return (acpi_md_OsMapMemory(PhysicalAddress, Length, LogicalAddress));
+	return acpi_md_OsMapMemory(PhysicalAddress, Length, LogicalAddress);
 }
 
 /*
@@ -88,7 +88,7 @@ AcpiOsGetPhysicalAddress(void *LogicalAddress,
     ACPI_PHYSICAL_ADDRESS *PhysicalAddress)
 {
 
-	return (acpi_md_OsGetPhysicalAddress(LogicalAddress, PhysicalAddress));
+	return acpi_md_OsGetPhysicalAddress(LogicalAddress, PhysicalAddress);
 }
 
 /*
@@ -100,7 +100,7 @@ void *
 AcpiOsAllocate(ACPI_SIZE Size)
 {
 
-	return (malloc(Size, M_ACPI, M_NOWAIT));
+	return malloc(Size, M_ACPI, M_NOWAIT);
 }
 
 /*
@@ -125,7 +125,7 @@ BOOLEAN
 AcpiOsReadable(void *Pointer, ACPI_SIZE Length)
 {
 
-	return (acpi_md_OsReadable(Pointer, Length));
+	return acpi_md_OsReadable(Pointer, Length);
 }
 
 /*
@@ -137,5 +137,5 @@ BOOLEAN
 AcpiOsWritable(void *Pointer, ACPI_SIZE Length)
 {
 
-	return (acpi_md_OsWritable(Pointer, Length));
+	return acpi_md_OsWritable(Pointer, Length);
 }

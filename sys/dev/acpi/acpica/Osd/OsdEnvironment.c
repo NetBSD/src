@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdEnvironment.c,v 1.3 2002/06/15 18:02:43 thorpej Exp $	*/
+/*	$NetBSD: OsdEnvironment.c,v 1.4 2004/04/11 06:52:38 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.3 2002/06/15 18:02:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.4 2004/04/11 06:52:38 kochi Exp $");
 
 #include <sys/types.h>
 
@@ -112,5 +112,5 @@ AcpiOsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
 	 * ways to do it.
 	 */
 
-	return (acpi_md_OsGetRootPointer(Flags, PhysicalAddress));
+	return acpi_md_OsGetRootPointer(Flags, PhysicalAddress);
 }
