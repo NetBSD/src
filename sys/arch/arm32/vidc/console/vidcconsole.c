@@ -1,6 +1,7 @@
-/* $NetBSD: vidcconsole.c,v 1.11 1996/06/12 19:12:57 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.12 1996/10/15 01:15:24 mark Exp $ */
 
 /*
+ * Copyright (c) 1996 Mark Brinicombe
  * Copyright (c) 1996 Robert Black
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
  * Copyright (c) 1994-1995 RiscBSD kernel team
@@ -60,6 +61,7 @@
 #include <sys/syslog.h>
 #include <sys/resourcevar.h>
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
 #include <machine/param.h>
@@ -76,24 +78,21 @@
 #include <arm32/dev/console/fonts/font_bold.h>
 #include <arm32/dev/console/fonts/font_italic.h>
 
-
 #define BCOPY bcopy
 
 #ifndef DEBUGTERM
 #define dprintf(x)	;
 #endif
 
-/* Options ************************************/
+/* Options */
 #define ACTIVITY_WARNING
 #define SCREENBLANKER
 #undef INVERSE_CONSOLE
-/**********************************************/
 
-/* Internal defines only **********************/
+/* Internal defines only */
 #define DEVLOPING
 #undef SELFTEST
 #undef SILLIES
-/**********************************************/
 
 #ifdef SILLIES
 #define PRETTYCURSOR
@@ -141,7 +140,7 @@ int p_cursor_transparent;
 /* Local function prototypes */
 static void	vidcconsole_cls		__P(( struct vconsole */*vc*/ ));
 static int	vidc_cursor_init	__P(( struct vconsole */*vc*/ ));
-static int	vidcconsole_cursorintr	__P(( struct vconsole */*vc*/ ));
+int		vidcconsole_cursorintr	__P(( struct vconsole */*vc*/ ));
 int		vidcconsole_flashintr	__P(( struct vconsole */*vc*/ ));
 static int	vidcconsole_textpalette	__P(( struct vconsole */*vc*/ ));
 static void	vidcconsole_render	__P(( struct vconsole */*vc*/, char /*c*/ ));
@@ -153,8 +152,6 @@ int		vidcconsole_blank	__P(( struct vconsole */*vc*/, int /*type*/ ));
 void 		vidcconsole_putchar	__P(( dev_t dev, char c, struct vconsole *vc));
 extern int	vidcconsolemc_cls	__P(( unsigned char *, unsigned char *, int ));
 
-void		(*line_cpfunc) 		__P(( char *, char * ));
-
 struct vconsole *vconsole_spawn_re	__P((dev_t dev, struct vconsole *vc));
 
 /*
@@ -164,7 +161,6 @@ struct vconsole *vconsole_spawn_re	__P((dev_t dev, struct vconsole *vc));
 
 static irqhandler_t cursor_ih;
 irqhandler_t flash_ih;
-
 
 #ifndef HARDCODEDMODES
 /* The table of modes is separately compiled */
@@ -233,11 +229,15 @@ static struct fsyn fsyn_pref[] = {
 };
 #endif /* RC7500 */
 
+/*#define mod(x)	(((x) > 0) ? (x) : (-x))*/
+
 static inline int
-mod ( int n )
+mod(int n)
 {
-	if (n<0) return (-n);
-	else     return n;
+	if (n < 0)
+		return(-n);
+	else
+		return(n);
 }
 
 static int
@@ -247,37 +247,29 @@ vidcconsole_coldinit(vc)
 	int found;
 	int loop;
 
-	line_cpfunc = NULL;
+	/* Blank out the cursor */
 
-	/* Do this first so it dont look messy */
+	vidc_write(VIDC_CP1, 0x0);
+	vidc_write(VIDC_CP2, 0x0);
+	vidc_write(VIDC_CP3, 0x0);
 
-	vidc_write ( VIDC_CP1, 0x0 );
-	vidc_write ( VIDC_CP2, 0x0 );
-	vidc_write ( VIDC_CP3, 0x0 );
-
-    /* Try to determine the current mode */
+	/* Try to determine the current mode */
 	vidc_initialmode.hder = bootconfig.width+1;
 	vidc_initialmode.vder = bootconfig.height+1;
-/*
-	vidc_initialmode.hder = 1024;
-	vidc_initialmode.vder = 768;
-*/
 	vidc_initialmode.bitsperpixel = 1 << bootconfig.bitsperpixel;
 
-/* Nut - should be using videomemory.vidm_vbase - mark */
-
-	dispbase = vmem_base = dispstart = bootconfig.display_start;
+	dispbase = vmem_base = dispstart = videomemory.vidm_vbase;
 	phys_base = videomemory.vidm_pbase;
 
 /* Nut - should be using videomemory.vidm_size - mark */
 
-#ifdef RC7500
-	dispsize = videomemory.vidm_size;
-	transfersize = 16;
-#else /* RC7500 */
-	dispsize = bootconfig.vram[0].pages * NBPG;
-	transfersize = dispsize >> 10;
-#endif /* RC7500 */
+	if (videomemory.vidm_type == VIDEOMEM_TYPE_DRAM) {
+		dispsize = videomemory.vidm_size;
+		transfersize = 16;
+	} else {
+		dispsize = bootconfig.vram[0].pages * NBPG;
+		transfersize = dispsize >> 10;
+	}
     
 	ptov = dispbase - phys_base;
 
@@ -312,17 +304,18 @@ vidcconsole_coldinit(vc)
  		}
 	}
 
-	/* vidc_currentmode = &vidcmodes[0];*/
+	/* vidc_currentmode = &vidcmodes[0]; */
 	vidc_currentmode->bitsperpixel = 1 << bootconfig.bitsperpixel;
 
-	R_DATA->flash = R_DATA->cursor_flash = 0;
+	if (vc)
+		R_DATA->flash = R_DATA->cursor_flash = 0;
 
 	dispstart = dispbase;
 	dispend = dispstart+dispsize;
     
-	WriteWord ( IOMD_VIDINIT, dispstart-ptov );
-	WriteWord ( IOMD_VIDSTART, dispstart-ptov );
-	WriteWord ( IOMD_VIDEND, (dispend-transfersize)-ptov );
+	WriteWord(IOMD_VIDINIT, dispstart-ptov);
+	WriteWord(IOMD_VIDSTART, dispstart-ptov);
+	WriteWord(IOMD_VIDEND, (dispend-transfersize)-ptov);
 	return 0;
 }
 
@@ -399,7 +392,7 @@ vidcconsole_mode(vc, mode)
 #else /* RC7500 */
     /* Program the VCO Look up a preferred value before choosing one */
 	{
-		int least_error = mod (fsyn_pref[0].f - vidc_currentmode->pixel_rate);
+		int least_error = mod(fsyn_pref[0].f - vidc_currentmode->pixel_rate);
 		int counter;
 		best_r = fsyn_pref[0].r;
 		best_match = fsyn_pref[0].f;
@@ -409,34 +402,34 @@ vidcconsole_mode(vc, mode)
         
 		counter=0;
         
-		while ( fsyn_pref[counter].r != 0 ) {
-			if (least_error > mod (fsyn_pref[counter].f - vidc_currentmode->pixel_rate)) {
+		while (fsyn_pref[counter].r != 0) {
+			if (least_error > mod(fsyn_pref[counter].f - vidc_currentmode->pixel_rate)) {
 				best_match = fsyn_pref[counter].f;
-				least_error = mod (fsyn_pref[counter].f - vidc_currentmode->pixel_rate);
+				least_error = mod(fsyn_pref[counter].f - vidc_currentmode->pixel_rate);
 				best_r = fsyn_pref[counter].r;
 				best_v = fsyn_pref[counter].v;
 			}
 			counter++;
 		}
 
-		if ( least_error > 0) { /* Accuracy of 1000Hz */
+		if (least_error > 0) { /* Accuracy of 1000Hz */
 			int r, v, f;
-			for ( v=63; v>0; v-- )
-				for ( r=63; r>0; r-- ) {
+			for (v = 63; v > 0; v--)
+				for (r = 63; r > 0; r--) {
 					f = (v * VIDC_FREF/1000) / r;
-					if (least_error >= mod (f - vidc_currentmode->pixel_rate)) {
+					if (least_error >= mod(f - vidc_currentmode->pixel_rate)) {
 						best_match = f;
-						least_error = mod (f - vidc_currentmode->pixel_rate);
+						least_error = mod(f - vidc_currentmode->pixel_rate);
 						best_r = r;
 						best_v = v;
 					}
 				}
 		}
     
-		if ( best_r>63 ) best_r=63;
-		if ( best_v>63 ) best_v=63;
-		if ( best_r<1 )  best_r= 1;
-		if ( best_v<1 )  best_v= 1;
+		if (best_r > 63) best_r=63;
+		if (best_v > 63) best_v=63;
+		if (best_r < 1)  best_r= 1;
+		if (best_v < 1)  best_v= 1;
     
 	}
 /*
@@ -450,13 +443,13 @@ vidcconsole_mode(vc, mode)
 		/*
 		 * Need to program the control register first.
 		 */
-		if ( dispsize>1024*1024 ) {
-			if ( vidc_currentmode->hder>=800 )
-				vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
+		if (dispsize>1024*1024) {
+			if (vidc_currentmode->hder>=800)
+				vidc_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
 			else
-				vidc_write ( VIDC_CONREG, 6<<8 | bpp_mask<<5);
+				vidc_write(VIDC_CONREG, 6<<8 | bpp_mask<<5);
 		} else {
-			vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
+			vidc_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
 		}
 
 		/*
@@ -464,23 +457,23 @@ vidcconsole_mode(vc, mode)
 		 */
 		vidc_write(VIDC_FSYNREG, 0x2020);
 #else /* RC7500 */
-		vidc_write ( VIDC_FSYNREG, (best_v-1)<<8 | (best_r-1)<<0 );
+		vidc_write(VIDC_FSYNREG, (best_v-1)<<8 | (best_r-1)<<0);
 #endif /* RC7500 */
 		acc=0;
-		acc+=vidc_currentmode->hswr;vidc_write(VIDC_HSWR,(acc  - 8  )& (~1)	);
-		acc+=vidc_currentmode->hbsr;vidc_write(VIDC_HBSR,(acc  - 12 )& (~1)	);
-		acc+=vidc_currentmode->hdsr;vidc_write(VIDC_HDSR,(acc  - 18 )& (~1)	);
-		acc+=vidc_currentmode->hder;vidc_write(VIDC_HDER,(acc  - 18 )& (~1)	);
-		acc+=vidc_currentmode->hber;vidc_write(VIDC_HBER,(acc  - 12 )& (~1)	);
-		acc+=vidc_currentmode->hcr ;vidc_write(VIDC_HCR ,(acc  - 8)&(~3));
+		acc+=vidc_currentmode->hswr;	vidc_write(VIDC_HSWR, (acc - 8 ) & (~1));
+		acc+=vidc_currentmode->hbsr;	vidc_write(VIDC_HBSR, (acc - 12) & (~1));
+		acc+=vidc_currentmode->hdsr;	vidc_write(VIDC_HDSR, (acc - 18) & (~1));
+		acc+=vidc_currentmode->hder;	vidc_write(VIDC_HDER, (acc - 18) & (~1));
+		acc+=vidc_currentmode->hber;	vidc_write(VIDC_HBER, (acc - 12) & (~1));
+		acc+=vidc_currentmode->hcr;	vidc_write(VIDC_HCR,  (acc - 8 ) & (~3));
 
 		acc=0;
-		acc+=vidc_currentmode->vswr;	vidc_write(VIDC_VSWR,(acc  - 1 ));
-		acc+=vidc_currentmode->vbsr;	vidc_write(VIDC_VBSR,(acc  - 1 ));
-		acc+=vidc_currentmode->vdsr;	vidc_write(VIDC_VDSR,(acc  - 1 ));
-		acc+=vidc_currentmode->vder;	vidc_write(VIDC_VDER,(acc  - 1 ));
-		acc+=vidc_currentmode->vber;	vidc_write(VIDC_VBER,(acc  - 1 ));
-		acc+=vidc_currentmode->vcr;		vidc_write(VIDC_VCR ,(acc  - 1 ));
+		acc+=vidc_currentmode->vswr;	vidc_write(VIDC_VSWR, (acc - 1));
+		acc+=vidc_currentmode->vbsr;	vidc_write(VIDC_VBSR, (acc - 1));
+		acc+=vidc_currentmode->vdsr;	vidc_write(VIDC_VDSR, (acc - 1));
+		acc+=vidc_currentmode->vder;	vidc_write(VIDC_VDER, (acc - 1));
+		acc+=vidc_currentmode->vber;	vidc_write(VIDC_VBER, (acc - 1));
+		acc+=vidc_currentmode->vcr;	vidc_write(VIDC_VCR,  (acc - 1));
 
 #ifdef RC7500
 		vidc_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
@@ -494,7 +487,7 @@ vidcconsole_mode(vc, mode)
 		    + vidc_currentmode->vber
 		    + vidc_currentmode->vbsr - 1);
 
-		if (dispsize == 1024*1024)
+		if (dispsize <= 1024*1024)
 			vidc_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
 		else
 			vidc_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 3<<16 | 1<<12);
@@ -551,23 +544,23 @@ vidcconsole_init(vc)
 	struct vidc_info *new;
 	int loop;
 
-	if ( cold_init==0 ) {
-		vidcconsole_coldinit ( vc );
+	if (cold_init == 0) {
+		vidcconsole_coldinit(vc);
 	} else {
-		if ( cursor_init == 0 )
-			vidcconsole_flash_go ( vc );
+		if (cursor_init == 0)
+			vidcconsole_flash_go(vc);
 	}
 
-    /*
-     * If vc->r_data is initialised then this means that the previous
-     * render engine on this vconsole was not freed properly.  I should
-     * not try to clear it up, since I could panic the kernel.  Instead
-     * I forget about its memory, which could cause a memory leak, but
-     * this would be easily detectable and fixable
-     */
+	/*
+	 * If vc->r_data is initialised then this means that the previous
+	 * render engine on this vconsole was not freed properly.  I should
+	 * not try to clear it up, since I could panic the kernel.  Instead
+	 * I forget about its memory, which could cause a memory leak, but
+	 * this would be easily detectable and fixable
+	 */
      
 #ifdef SELFTEST
-	if ( vc->r_data != 0 ) {
+	if (vc->r_data != 0) {
 		printf( "*********************************************************\n" );
 		printf( "You have configured SELFTEST mode in the console driver\n" );
 		printf( "vc->rdata non zero.  This could mean a new console\n"      );
@@ -578,28 +571,28 @@ vidcconsole_init(vc)
     	}
 #endif
 
-	if ( vc==vconsole_master ) {
+	if (vc == vconsole_master) {
 		vc->r_data = (char *)&masterinfo;
 	} else {
-		MALLOC ( (vc->r_data), char *, sizeof(struct vidc_info),
-		    M_DEVBUF, M_NOWAIT );
+		MALLOC((vc->r_data), char *, sizeof(struct vidc_info),
+		    M_DEVBUF, M_NOWAIT);
 	}
     
 	if (vc->r_data==0)
-		panic ( "render engine initialisation failed.  CLEAN THIS UP!" );
+		panic("render engine initialisation failed. CLEAN THIS UP!");
 
 	R_DATA->normalfont = &font_normal;
 	R_DATA->italicfont = &font_italic;
 	R_DATA->boldfont   = &font_bold;
 	R_DATA->font = R_DATA->normalfont;
 
-	vidcconsole_mode ( vc, vidc_currentmode );
+	vidcconsole_mode(vc, vidc_currentmode);
 	R_DATA->scrollback_end = dispstart;
     
 	new = (struct vidc_info *)vc->r_data;
 
 	R_DATA->text_colours = 1 << R_DATA->BITSPERPIXEL;
-	if ( R_DATA->text_colours > 8 ) R_DATA->text_colours = 8;
+	if (R_DATA->text_colours > 8) R_DATA->text_colours = 8;
     
 #ifdef INVERSE_CONSOLE
 	R_DATA->n_backcolour = R_DATA->text_colours - 1;
@@ -627,20 +620,28 @@ vidcconsole_init(vc)
 
 	R_DATA->fast_render = R_DATA->forecolour | (R_DATA->backcolour<<8) | (R_DATA->font->pixel_height<<16);
 	R_DATA->blanked=0;
-	vc->BLANK ( vc, BLANK_NONE );
+	vc->BLANK(vc, BLANK_NONE);
     
-	if ( vc == vconsole_current )
-		vidcconsole_textpalette ( vc );
+	if (vc == vconsole_current)
+		vidcconsole_textpalette(vc);
 
-	vidc_cursor_init ( vc ) ;
 
-	if ( cold_init == 0 ) {
-		vidc_write ( VIDC_CP1, 0x0 );
-		vidc_write ( VIDC_CP2, 0x0 );
-		vidc_write ( VIDC_CP3, 0x0 );
-	}
+	if (cold_init == 0) {
+		vidc_write(VIDC_CP1, 0x0);
+		vidc_write(VIDC_CP2, 0x0);
+		vidc_write(VIDC_CP3, 0x0);
+	} else
+		vidc_cursor_init(vc) ;
+
 	cold_init=1;
 	return 0;
+}
+
+void
+vidcconsole_reinit()
+{
+	vidcconsole_coldinit(vconsole_current);
+	vidcconsole_mode(vconsole_current, vidc_currentmode);
 }
 
 void
@@ -649,7 +650,7 @@ vidcconsole_putchar(dev, c, vc)
 	char c;
 	struct vconsole *vc;
 {
-	vc->PUTSTRING ( &c, 1, vc );
+	vc->PUTSTRING(&c, 1, vc);
 }
 
 int
@@ -693,7 +694,7 @@ vidcconsole_redraw(vc, x, y, a, b)
 
 	vc->xcur = 0;
 	vc->ycur = 0;
- 	if ( (vc->flags&LOSSY) == 0 )
+ 	if ((vc->flags&LOSSY) == 0)
 	{
                 register int c;
                 /* This has *GOT* to be turboed */
@@ -706,11 +707,10 @@ vidcconsole_redraw(vc, x, y, a, b)
 					R_DATA->font = R_DATA->boldfont;
 				else	
 					R_DATA->font = R_DATA->normalfont;
-R_DATA->fast_render = ((c>>8)&0x7)|(((c>>11)&0x7)<<8)| (R_DATA->font->pixel_height<<16);
-if ( c & BLINKING )
- c+=1<<8 | 1;
-				if ((c&BLINKING)!=0)
-				{
+				R_DATA->fast_render = ((c>>8)&0x7)|(((c>>11)&0x7)<<8)| (R_DATA->font->pixel_height<<16);
+				if ( c & BLINKING )
+					 c+=1<<8 | 1;
+				if ((c&BLINKING)!=0) {
 				    R_DATA->forecolour+=16;
 				    R_DATA->backcolour+=16;
 				}
@@ -771,9 +771,9 @@ vidcconsole_swapin(vc)
     				R_DATA->forecolour = ((c>>8)&0x7);
  				R_DATA->backcolour = ((c>>11)&0x7);
 */
-R_DATA->fast_render = ((c>>8)&0x7)|(((c>>11)&0x7)<<8)| (R_DATA->font->pixel_height<<16);
-if ( c & BLINKING )
- c+=1<<8 | 1;
+				R_DATA->fast_render = ((c>>8)&0x7)|(((c>>11)&0x7)<<8)| (R_DATA->font->pixel_height<<16);
+				if ( c & BLINKING )
+					c+=1<<8 | 1;
 				if ((c&BLINKING)!=0)
 				{
 				    R_DATA->forecolour+=16;
@@ -1221,7 +1221,7 @@ static int pretty=0xff;
 
 static int cursor_col = 0x0;
 
-static int
+int
 vidcconsole_cursorintr(vc)
 	struct vconsole *vc;
 {
@@ -1232,9 +1232,10 @@ vidcconsole_cursorintr(vc)
 	 * We don't need this.
 	 */
 #ifndef RC7500
-	vconsole_blankcounter--;
+	if (vconsole_blankcounter >= 0)
+		vconsole_blankcounter--;
 
-	if ( vconsole_blankcounter<0 ) {
+	if (vconsole_blankcounter == 0) {
 		vconsole_blankcounter=vconsole_blankinit;
 		vidcconsole_blank ( vc, BLANK_OFF );
 	}
@@ -1319,9 +1320,19 @@ static int
 vidc_cursor_init(vc)
 	struct vconsole *vc;
 {
-	extern char *cursor_data;
+	static char *cursor_data = NULL;
 	int counter;
 	int line;
+
+	if (!cursor_data) {
+		/* Allocate cursor memory first time round */
+
+		cursor_data = (char *)kmem_alloc(kernel_map, NBPG);
+		if (!cursor_data)
+			panic("Cannot allocate memory for hardware cursor\n");
+		WriteWord(IOMD_CURSINIT, pmap_extract(kernel_pmap,
+		    (vm_offset_t)cursor_data));
+	}
 
 	/* Blank the cursor while initialising it's sprite */
 
@@ -1568,7 +1579,7 @@ int vidcconsole_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 	{
 		case CONSOLE_MODE:
     			tp = find_tp(dev);
-			printf ( "mode ioctl called\n" );
+/*			printf ( "mode ioctl called\n" );*/
 			vidcconsole_mode ( vc, (struct vidc_mode *)data );
     			vc->MODECHANGE ( vc );
 			ws.ws_row=vc->ychars;
@@ -1716,9 +1727,6 @@ struct render_engine vidcconsole = {
 
 
 
-
-
-
 struct vidcvideo_softc {
 	struct device device;
 	int sc_opened;
@@ -1730,11 +1738,6 @@ vidcvideo_probe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-/*
-	struct vidcvideo_softc *vidcvideosoftc = (void *)match;
-	struct mainbus_attach_args *mb = aux;
-*/
-
 	return 1;
 }
 
@@ -1747,7 +1750,9 @@ vidcvideo_attach(parent, self, aux)
 	struct vidcvideo_softc *vidcvideosoftc = (void *)self;
 	vidcvideosoftc->sc_opened=0;
 
-	printf ( ": vidc 20\n" );
+	printf(": vidc20 refclk=%dMHz %dKB %s\n", (VIDC_FREF / 1000000),
+	    videomemory.vidm_size / 1024,
+	    (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM) ? "VRAM" : "DRAM");
 }
 
 struct cfattach vidcvideo_ca = {
@@ -1770,7 +1775,7 @@ vidcvideoopen(dev, flags, fmt, p)
 	int unit = minor(dev);
 	int s;
 
-	if ( unit >= vidcvideo_cd.cd_ndevs )
+	if (unit >= vidcvideo_cd.cd_ndevs)
 		return ENXIO;
 	sc = vidcvideo_cd.cd_devs[unit];
 	if (!sc)
