@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.3 2002/06/18 01:37:12 thorpej Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.4 2002/06/18 02:49:09 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.3 2002/06/18 01:37:12 thorpej Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.4 2002/06/18 02:49:09 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,7 +104,7 @@ __RCSID("$NetBSD: netbsd-syscalls.c,v 1.3 2002/06/18 01:37:12 thorpej Exp $");
 #include "intercept.h"
 
 struct emulation {
-	char *name;			/* Emulation name */
+	const char *name;		/* Emulation name */
 	const char * const *sysnames;	/* Array of system call names */
 	int  nsysnames;			/* Number of */
 };
@@ -198,7 +198,7 @@ nbsd_detach(int fd, pid_t pid)
 static int
 nbsd_open(void)
 {
-	char *path = "/dev/systrace";
+	const char * const path = "/dev/systrace";
 	int fd;
 
 	fd = open(path, O_RDONLY, 0);
