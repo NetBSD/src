@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.16.4.1 1999/04/12 21:27:10 pk Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.16.4.2 2000/01/23 12:04:02 he Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -256,7 +256,6 @@
 #define MSGFILE
 #include "supmsg.h"
 
-extern int errno;
 int maxchildren;
 
 /*
