@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -33,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)parser.h	5.1 (Berkeley) 3/7/91
- *	$Id: parser.h,v 1.4 1993/08/01 18:58:37 mycroft Exp $
+ *	@(#)parser.h	8.1 (Berkeley) 5/31/93
  */
 
 /* control characters in argument strings */
@@ -43,6 +42,9 @@
 #define CTLENDVAR '\203'
 #define CTLBACKQ '\204'
 #define CTLQUOTE 01		/* ored with CTLBACKQ code if in quotes */
+/*	CTLBACKQ | CTLQUOTE == '\205' */
+#define	CTLARI	'\206'
+#define	CTLENDARI '\207'
 
 /* variable substitution byte (follows CTLVAR) */
 #define VSTYPE 07		/* type of variable substitution */
@@ -64,12 +66,15 @@
  */
 extern int tokpushback;
 #define NEOF ((union node *)&tokpushback)
+extern int whichprompt;		/* 1 == PS1, 2 == PS2 */
 
 
 #ifdef __STDC__
 union node *parsecmd(int);
 int goodname(char *);
+char *getprompt(void *);
 #else
 union node *parsecmd();
 int goodname();
+char *getprompt();
 #endif

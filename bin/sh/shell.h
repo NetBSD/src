@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -33,17 +33,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)shell.h	5.4 (Berkeley) 4/12/91
- *	$Id: shell.h,v 1.4 1993/08/01 18:58:35 mycroft Exp $
+ *	@(#)shell.h	8.1 (Berkeley) 5/31/93
  */
 
 /*
  * The follow should be set to reflect the type of system you have:
  *	JOBS -> 1 if you have Berkeley job control, 0 otherwise.
  *	SYMLINKS -> 1 if your system includes symbolic links, 0 otherwise.
- *	DIRENT -> 1 if your system has the SVR3 directory(3X) routines.
- *	UDIR -> 1 if you want the shell to simulate the /u directory.
- *	ATTY -> 1 to include code for atty(1).
  *	SHORTNAMES -> 1 if your linker cannot handle long names.
  *	define BSD if you are running 4.2 BSD or later.
  *	define SYSV if you are running under System V.
@@ -57,10 +53,9 @@
 
 #define JOBS 1
 #define SYMLINKS 1
-#define DIRENT 1
-#define UDIR 0
-#define ATTY 0
-#define BSD
+#ifndef BSD
+#define BSD 1
+#endif
 #define DEBUG 1
 
 #ifdef __STDC__
