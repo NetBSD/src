@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.6 2001/09/30 05:31:20 simonb Exp $	*/
+/*	$NetBSD: timex.h,v 1.7 2002/03/17 11:14:04 simonb Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -292,8 +292,8 @@ struct timex {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern int ntp_gettime        __P((struct ntptimeval *));
-extern int ntp_adjtime        __P((struct timex *));
+int ntp_gettime        __P((struct ntptimeval *));
+int ntp_adjtime        __P((struct timex *));
 __END_DECLS
 
 #endif /* not _KERNEL */
@@ -303,8 +303,8 @@ __END_DECLS
 #ifdef __NetBSD__
 #ifdef _KERNEL
 __BEGIN_DECLS
-int   ntp_settime1 __P((struct timex *, register_t *));
-int   ntp_adjtime1 __P((struct timex *, void *, register_t *));
+int   ntp_settime1(struct timex *, register_t *);
+int   ntp_adjtime1(struct timex *, void *, register_t *);
 __END_DECLS
 #endif /* _KERNEL */
 #endif /* __NetBSD__ */
