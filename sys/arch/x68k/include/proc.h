@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: proc.h,v 1.1.1.1.16.1 1997/12/25 07:38:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -44,6 +44,9 @@ struct mdproc {
 };
 
 /* md_flags */
+#define	MDP_STACKADJ	0x0002	/* frame SP adjusted, might have to
+				   undo when system call returns
+				   ERESTART. */
 #define	MDP_HPUXTRACE	0x0004	/* being traced by HP-UX process */
 #define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
 #define MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
