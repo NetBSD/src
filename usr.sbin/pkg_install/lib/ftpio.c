@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.58 2003/10/03 15:40:27 wiz Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.59 2003/10/03 19:55:34 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.58 2003/10/03 15:40:27 wiz Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.59 2003/10/03 19:55:34 wiz Exp $");
 #endif
 
 /*-
@@ -138,126 +138,126 @@ static void URL_decode(char *);
 static int
 expect(int fd, const char *str, int *ftprc)
 {
-    int rc;
-    char buf[90];  
+	int rc;
+	char buf[90];  
 #if EXPECT_DEBUG
-    char *vstr;
+	char *vstr;
 #endif /* EXPECT_DEBUG */
-    regex_t rstr;
-    int done;
-    struct pollfd set[1];
-    int retval;
-    regmatch_t match;
-    int verbose_expect=0;
+	regex_t rstr;
+	int done;
+	struct pollfd set[1];
+	int retval;
+	regmatch_t match;
+	int verbose_expect=0;
 
 #if EXPECT_DEBUG
-    vstr=malloc(2*sizeof(buf));
-    if (vstr == NULL)
-	err(EXIT_FAILURE, "expect: malloc() failed");
-    strvis(vstr, str, VIS_NL|VIS_SAFE|VIS_CSTYLE);
+	vstr=malloc(2*sizeof(buf));
+	if (vstr == NULL)
+		err(EXIT_FAILURE, "expect: malloc() failed");
+	strvis(vstr, str, VIS_NL|VIS_SAFE|VIS_CSTYLE);
 #endif /* EXPECT_DEBUG */
 	    
-    if (regcomp(&rstr, str, REG_EXTENDED) != 0)
-	err(EXIT_FAILURE, "expect: regcomp() failed");
+	if (regcomp(&rstr, str, REG_EXTENDED) != 0)
+		err(EXIT_FAILURE, "expect: regcomp() failed");
 
 #if EXPECT_DEBUG
-    if (expect_debug)
-	printf("expecting \"%s\" on fd %d ...\n", vstr, fd);
+	if (expect_debug)
+		printf("expecting \"%s\" on fd %d ...\n", vstr, fd);
 #endif /* EXPECT_DEBUG */
 
-    if(0) setbuf(stdout, NULL);
+	if(0) setbuf(stdout, NULL);
 
-    memset(buf, '\n', sizeof(buf));
+	memset(buf, '\n', sizeof(buf));
 
-    done=0;
-    retval=0;
-    set[0].fd = fd;
-    set[0].events = POLLIN;
-    while(!done) {
-	rc = poll(set, 1, 10*60*1000);    /* seconds until next message from tar */
-	switch (rc) {
-	case -1:
-	    if (errno == EINTR)
-		break;
-	    warn("expect: poll() failed (probably ftp died because of bad args)");
-	    done = 1;
-	    retval = -1;
-	    break;
-	case 0:
-	    warnx("expect: poll() timeout");
-	    /* need to send ftp coprocess SIGINT to make it stop
-	     * downloading into dir that we'll blow away in a second */
-	    kill(ftp_pid, SIGINT);
+	done=0;
+	retval=0;
+	set[0].fd = fd;
+	set[0].events = POLLIN;
+	while(!done) {
+		rc = poll(set, 1, 10*60*1000);    /* seconds until next message from tar */
+		switch (rc) {
+		case -1:
+			if (errno == EINTR)
+				break;
+			warn("expect: poll() failed (probably ftp died because of bad args)");
+			done = 1;
+			retval = -1;
+			break;
+		case 0:
+			warnx("expect: poll() timeout");
+			/* need to send ftp coprocess SIGINT to make it stop
+			 * downloading into dir that we'll blow away in a second */
+			kill(ftp_pid, SIGINT);
 
-	    /* Wait until ftp coprocess is responsive again 
-	     * XXX Entering recursion here!
-	     */
-	    rc = ftp_cmd("cd .\n", "\n(550|250).*\n");
-	    if (rc != 250) {
-		    /* now we have a really good reason to bail out ;) */
-	    }
-	    /* ftp is at command prompt again, and will wait for our
-	     * next command. If we were downloading, we can now safely
-	     * continue and remove the dir that the tar command was
-	     * expanding to */
+			/* Wait until ftp coprocess is responsive again 
+			 * XXX Entering recursion here!
+			 */
+			rc = ftp_cmd("cd .\n", "\n(550|250).*\n");
+			if (rc != 250) {
+				/* now we have a really good reason to bail out ;) */
+			}
+			/* ftp is at command prompt again, and will wait for our
+			 * next command. If we were downloading, we can now safely
+			 * continue and remove the dir that the tar command was
+			 * expanding to */
 		    
-	    done = 1;	/* hope that's ok */
-	    retval = -1;
-	    break;
-	default:
-	    if (set[0].revents & POLLHUP) {
-		done = 1;
-		retval = -1;
-		break;
-	    }
+			done = 1;	/* hope that's ok */
+			retval = -1;
+			break;
+		default:
+			if (set[0].revents & POLLHUP) {
+				done = 1;
+				retval = -1;
+				break;
+			}
 
-	    rc = read(fd, &buf[sizeof(buf) - 1], 1);
-	    if (rc <= 0) {
-		done = 1;
-		retval = -1;
-		break;
-	    }
+			rc = read(fd, &buf[sizeof(buf) - 1], 1);
+			if (rc <= 0) {
+				done = 1;
+				retval = -1;
+				break;
+			}
 
-	    if (verbose_expect)
-		putchar(buf[sizeof(buf)-1]);
+			if (verbose_expect)
+				putchar(buf[sizeof(buf)-1]);
 
 #if EXPECT_DEBUG
-	    {
-		    char *v=malloc(2*sizeof(buf));
-		    strvis(v, buf, VIS_NL|VIS_SAFE|VIS_CSTYLE);
-		    if (expect_debug)
-			    printf("expect=<%s>, buf=<%*s>\n", vstr, strlen(v), v);
-		    free(v);
-	    }
+			{
+				char *v=malloc(2*sizeof(buf));
+				strvis(v, buf, VIS_NL|VIS_SAFE|VIS_CSTYLE);
+				if (expect_debug)
+					printf("expect=<%s>, buf=<%*s>\n", vstr, strlen(v), v);
+				free(v);
+			}
 #endif /* EXPECT_DEBUG */
 
-	    if (regexec(&rstr, buf, 1, &match, 0) == 0) {
+			if (regexec(&rstr, buf, 1, &match, 0) == 0) {
 #if EXPECT_DEBUG
-		if (expect_debug)
-		    printf("Gotcha -> %s!\n", buf+match.rm_so+1);
-		fflush(stdout);
+				if (expect_debug)
+					printf("Gotcha -> %s!\n", buf+match.rm_so+1);
+				fflush(stdout);
 #endif /* EXPECT_DEBUG */
 
-		if (ftprc && isdigit(buf[match.rm_so+1])) 
-		    *ftprc = atoi(buf+match.rm_so+1);
+				if (ftprc && isdigit(buf[match.rm_so+1])) 
+					*ftprc = atoi(buf+match.rm_so+1);
 
-		done=1;
-		retval=0;
-	    }
+				done=1;
+				retval=0;
+			}
 	    
-	    memmove(buf, buf+1, sizeof(buf)-1); /* yes, this is non-performant */
-	    break;
+			memmove(buf, buf+1, sizeof(buf)-1); /* yes, this is non-performant */
+			break;
+		}
 	}
-    }
 
 #if EXPECT_DEBUG
-    printf("done.\n");
+	printf("done.\n");
 
-    if (str)
-	free(vstr);
+	if (str)
+		free(vstr);
 #endif /* EXPECT_DEBUG */
 
-    return retval;
+	return retval;
 }
 
 /*
@@ -268,29 +268,29 @@ expect(int fd, const char *str, int *ftprc)
 int
 ftp_cmd(const char *cmd, const char *expectstr)
 {
-    int rc=0, verbose_ftp=0;
-    int len;
+	int rc=0, verbose_ftp=0;
+	int len;
 
-    if (Verbose)
-	    verbose_ftp=1;
+	if (Verbose)
+		verbose_ftp=1;
     
-    if (verbose_ftp)
-	    fprintf(stderr, "\n%sftp> %s%s", bold_on, cmd, bold_off);
+	if (verbose_ftp)
+		fprintf(stderr, "\n%sftp> %s%s", bold_on, cmd, bold_off);
     
-    fflush(stdout);
-    len = write(ftpio.command, cmd, strlen(cmd));
-    if (len == strlen(cmd)) {
-	    if (expectstr) {
-		    /* set "rc" to the FTP error code: */
-		    if (expect(ftpio.answer, expectstr, &rc) == -1)
-			    rc = -1;	/* some error occurred */
-	    }
-    } else {	
-	    if (Verbose)
-		    warn("short write");
-    }
+	fflush(stdout);
+	len = write(ftpio.command, cmd, strlen(cmd));
+	if (len == strlen(cmd)) {
+		if (expectstr) {
+			/* set "rc" to the FTP error code: */
+			if (expect(ftpio.answer, expectstr, &rc) == -1)
+				rc = -1;	/* some error occurred */
+		}
+	} else {	
+		if (Verbose)
+			warn("short write");
+	}
 
-    return rc;
+	return rc;
 }
 
 
@@ -300,85 +300,85 @@ ftp_cmd(const char *cmd, const char *expectstr)
 static int
 setupCoproc(const char *base)
 {
-    int command_pipe[2];
-    int answer_pipe[2];
-    int rc1, rc2;
-    char buf[20];
-    char *argv0 = strrchr(FTP_CMD, '/');
-    if (argv0 == NULL)
-	argv0 = FTP_CMD;
-    else
-	argv0++;
+	int command_pipe[2];
+	int answer_pipe[2];
+	int rc1, rc2;
+	char buf[20];
+	char *argv0 = strrchr(FTP_CMD, '/');
+	if (argv0 == NULL)
+		argv0 = FTP_CMD;
+	else
+		argv0++;
 
-    rc1 = pipe(command_pipe);
-    rc2 = pipe(answer_pipe);
+	rc1 = pipe(command_pipe);
+	rc2 = pipe(answer_pipe);
 
-    if(rc1==-1 || rc2==-1) {
-	warn("setupCoproc: pipe() failed");
-	return -1;
-    }
+	if(rc1==-1 || rc2==-1) {
+		warn("setupCoproc: pipe() failed");
+		return -1;
+	}
 
-    if (command_pipe[0] == -1 || command_pipe[1] == -1 ||
-	answer_pipe[0] == -1  || answer_pipe[1] == -1 ) {
-	warn("setupCoproc: pipe() returned bogus descriptor");
-	return -1;
-    }
+	if (command_pipe[0] == -1 || command_pipe[1] == -1 ||
+	    answer_pipe[0] == -1  || answer_pipe[1] == -1 ) {
+		warn("setupCoproc: pipe() returned bogus descriptor");
+		return -1;
+	}
 
-    rc1 = fork();
-    switch (rc1) {
-    case -1:
-	    /* Error */
+	rc1 = fork();
+	switch (rc1) {
+	case -1:
+		/* Error */
 	    
-	    warn("setupCoproc: fork() failed");
-	    return -1;
-	    break;
+		warn("setupCoproc: fork() failed");
+		return -1;
+		break;
 
-    case 0:
-	    /* Child */
+	case 0:
+		/* Child */
 	    
-	    (void) close(command_pipe[1]);
-	    rc1 = dup2(command_pipe[0], 0);
-            if (rc1 == -1) {
-                    err(EXIT_FAILURE, "setupCoproc: dup2 failed (command_pipe[0])");
-            }
-	    (void) close(command_pipe[0]);
+		(void) close(command_pipe[1]);
+		rc1 = dup2(command_pipe[0], 0);
+		if (rc1 == -1) {
+			err(EXIT_FAILURE, "setupCoproc: dup2 failed (command_pipe[0])");
+		}
+		(void) close(command_pipe[0]);
 	    
-	    (void) close(answer_pipe[0]);
-	    rc1 = dup2(answer_pipe[1], 1);
-            if (rc1 == -1) {
-                    err(EXIT_FAILURE, "setupCoproc: dup2 failed (answer_pipe[1])");
-            }
-	    (void) close(answer_pipe[1]);
+		(void) close(answer_pipe[0]);
+		rc1 = dup2(answer_pipe[1], 1);
+		if (rc1 == -1) {
+			err(EXIT_FAILURE, "setupCoproc: dup2 failed (answer_pipe[1])");
+		}
+		(void) close(answer_pipe[1]);
 	    
-	    setbuf(stdout, NULL);
+		setbuf(stdout, NULL);
 	    
-	    if (Verbose)
-		    fprintf(stderr, "%sftp -detv %s%s\n", bold_on, base, bold_off);
-	    rc1 = execlp(FTP_CMD, argv0, "-detv", base, NULL);
-	    warn("setupCoproc: execlp() failed");
-	    exit(1);
-	    break;
-    default: 
-	    /* Parent */
-	    (void) close(command_pipe[0]);
-	    (void) close(answer_pipe[1]);
+		if (Verbose)
+			fprintf(stderr, "%sftp -detv %s%s\n", bold_on, base, bold_off);
+		rc1 = execlp(FTP_CMD, argv0, "-detv", base, NULL);
+		warn("setupCoproc: execlp() failed");
+		exit(1);
+		break;
+	default: 
+		/* Parent */
+		(void) close(command_pipe[0]);
+		(void) close(answer_pipe[1]);
 	    
-	    (void) snprintf(buf, sizeof(buf), "%d", command_pipe[1]);
-	    setenv(PKG_FTPIO_COMMAND, buf, 1);
-	    (void) snprintf(buf, sizeof(buf), "%d", answer_pipe[0]);
-	    setenv(PKG_FTPIO_ANSWER, buf, 1);
+		(void) snprintf(buf, sizeof(buf), "%d", command_pipe[1]);
+		setenv(PKG_FTPIO_COMMAND, buf, 1);
+		(void) snprintf(buf, sizeof(buf), "%d", answer_pipe[0]);
+		setenv(PKG_FTPIO_ANSWER, buf, 1);
 	    
-	    ftpio.command = command_pipe[1];
-	    ftpio.answer  = answer_pipe[0];
-	    ftp_pid = rc1;			/* to ^C transfers */
+		ftpio.command = command_pipe[1];
+		ftpio.answer  = answer_pipe[0];
+		ftp_pid = rc1;			/* to ^C transfers */
 	    
-	    fcntl(ftpio.command, F_SETFL, O_NONBLOCK);
-	    fcntl(ftpio.answer , F_SETFL, O_NONBLOCK);
+		fcntl(ftpio.command, F_SETFL, O_NONBLOCK);
+		fcntl(ftpio.answer , F_SETFL, O_NONBLOCK);
 	    
-	    break;
-    }
+		break;
+	}
 
-    return 0;
+	return 0;
 }
 
 
@@ -401,10 +401,10 @@ sigchld_handler (int n)
 static void
 sigpipe_handler(int n)
 {
-    /* aparently our ftp companion died */
-    if (Verbose)
-	    fprintf(stderr, "SIGPIPE!\n");
-    needclose = 0;
+	/* aparently our ftp companion died */
+	if (Verbose)
+		fprintf(stderr, "SIGPIPE!\n");
+	needclose = 0;
 }
 
 
@@ -1196,187 +1196,65 @@ unpackURL(const char *url, const char *dir)
 }
 
 
-#if 0
-/*
- * Some misc stuff not needed yet, but maybe later
- */
-int
-miscstuff(const char *url)
-{
-    char *pkg;
-    int rc;
-    char base[FILENAME_MAX];
-
-    pkg=strrchr(url, '/');
-    if (pkg == NULL){
-	warnx("miscstuff: no '/' in URL %s?!", url);
-	return -1;
-    }
-    (void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-url), (int)(pkg-url),
-             url);
-    pkg++;
-
-    rc = ftp_start(base);
-    if (rc == -1) {
-	    warnx("ftp_start() failed");
-	    return -1; /* error */
-    }
-
-    /* basic operation */
-    if (0) {
-	    rc = ftp_cmd("cd ../All\n", "\n(550|250).*\n");
-	    if (rc != 250) {
-		    warnx("chdir failed!");
-		    return -1;
-	    }
-    }
-
-    /* get and extract a file to tmpdir */
-    if (0) {
-	char cmd[256];
-	char tmpdir[256];
-
-	(void) snprintf(tmpdir, sizeof(tmpdir), "/var/tmp/dir%s",
-		 (getenv(PKG_FTPIO_CNT))?getenv(PKG_FTPIO_CNT):"");
-
-	mkdir(tmpdir, 0755);
-
-	/* yes, this is gross, but needed for borken ftp(1) */
-	(void) snprintf(cmd, sizeof(cmd), "get xpmroot-1.01.tgz \"| ( cd %s ; gunzip 2>/dev/null | tar -vvx -f - )\"\n", tmpdir);
-	rc = ftp_cmd(cmd, "\n(226|550).*\n");
-	if (rc != 226) {
-	    warnx("Cannot fetch file (%d != 226)!", rc);
-	    return -1;
-	}
-    }
-    
-    /* check if one more file(s) exist */
-    if (0) {
-	char buf[FILENAME_MAX];
-	(void) snprintf(buf, sizeof(buf), "nlist %s /var/tmp/xxx\n", pkg);
-	rc = ftp_cmd(buf, "\n(226|550).*\n"); /* catch errors */
-	if (rc != 226) {
-	    if (Verbose)
-		warnx("nlist failed!");
-	    return -1;
-	}
-
-	/* Sync - don't remove */
-	rc = ftp_cmd("cd .\n", "\n(550|250).*\n");
-	if (rc != 250) {
-	    warnx("chdir failed!");
-	    return -1;
-	}
-	
-	if (access("/var/tmp/xxx", R_OK)==0) {
-	    fexec("cat", "/var/tmp/xxx", NULL);
-	    
-	    {
-		/* count lines - >0 -> fexists() == true */
-		int len, count;
-		FILE *f;
-		
-		f=fopen("/var/tmp/xxx", "r");
-		if (f == NULL) {
-		    warn("fopen");
-		    return -1;
-		}
-		count=0;
-		while (fgetln(f, &len))
-		    count++;
-		(void) fclose(f);
-		
-		printf("#lines = %d\n", count);
-	    }
-	} else
-	    printf("NO MATCH\n");
-	
-	unlink("/var/tmp/xxx");
-    }
-
-    /* for a given wildcard URL, find the best matching pkg */
-    /* spawn child - like pkg_add'ing another package */
-    /* Here's where the connection caching kicks in */
-#if 0
-    if (0) {
-	char *s, buf[FILENAME_MAX];
-
-	if ((s=getenv(PKG_FTPIO_CNT)) && atoi(s)>0){
-	    (void) snprintf(buf, sizeof(buf),"%d", atoi(s)-1);
-	    setenv(PKG_FTPIO_CNT, buf, 1);
-
-	    (void) snprintf(buf, sizeof(buf), "%s/%s", url, pkg);
-	    printf("%s>>> %s %s\n", s, argv0, buf);
-	    fexec(argv0, buf, NULL);
-	}
-    }
-#endif 
-
-    return 0;
-
-}
-#endif
-
-
 #ifdef STANDALONE
 static void
 usage(void)
 {
-  errx(EXIT_FAILURE, "Usage: foo [-v] ftp://-pattern");
+	errx(EXIT_FAILURE, "Usage: foo [-v] ftp://-pattern");
 }
 
 
 int
 main(int argc, char *argv[])
 {
-    int rc, ch;
-    char *argv0 = argv[0];
+	int rc, ch;
+	char *argv0 = argv[0];
 
-    while ((ch = getopt(argc, argv, "v")) != -1) {
-      switch (ch) {
-      case 'v':
-	Verbose=1;
-	break;
-      default:
-	usage();
-      }
-    }
-    argc -= optind;
-    argv += optind;
+	while ((ch = getopt(argc, argv, "v")) != -1) {
+		switch (ch) {
+		case 'v':
+			Verbose=1;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
-    if (argc<1)
-	usage();
+	if (argc<1)
+		usage();
 
-    while(argv[0] != NULL) {
-	    char newurl[FILENAME_MAX];
+	while(argv[0] != NULL) {
+		char newurl[FILENAME_MAX];
 	    
-	    printf("Expand %s:\n", argv[0]);
-	    rc = expandURL(newurl, argv[0]);
-	    if (rc==-1)
-		    warnx("Cannot expand %s", argv[0]);
-	    else
-		    printf("Expanded URL: %s\n", newurl);
+		printf("Expand %s:\n", argv[0]);
+		rc = expandURL(newurl, argv[0]);
+		if (rc==-1)
+			warnx("Cannot expand %s", argv[0]);
+		else
+			printf("Expanded URL: %s\n", newurl);
 
-	    /* test out connection caching */
-	    if (1) {
-		    char *s, buf[FILENAME_MAX];
+		/* test out connection caching */
+		if (1) {
+			char *s, buf[FILENAME_MAX];
 		    
-		    if ((s=getenv(PKG_FTPIO_CNT)) && atoi(s)>0){
-			    (void) snprintf(buf, sizeof(buf),"%d", atoi(s)-1);
-			    setenv(PKG_FTPIO_CNT, buf, 1);
+			if ((s=getenv(PKG_FTPIO_CNT)) && atoi(s)>0){
+				(void) snprintf(buf, sizeof(buf),"%d", atoi(s)-1);
+				setenv(PKG_FTPIO_CNT, buf, 1);
 			    
-			    printf("%s>>> %s -v %s\n", s, argv0, argv[0]);
-			    fexec(argv0, "-v", argv[0], NULL);
-		    }
-	    }
+				printf("%s>>> %s -v %s\n", s, argv0, argv[0]);
+				fexec(argv0, "-v", argv[0], NULL);
+			}
+		}
 	    
-	    printf("\n\n\n");
-	    argv++;
-    }
+		printf("\n\n\n");
+		argv++;
+	}
 
-    ftp_stop();
+	ftp_stop();
 
-    return 0;
+	return 0;
 }
 
 void
