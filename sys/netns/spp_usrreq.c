@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.15 1996/10/13 01:59:58 christos Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.16 1997/03/29 17:01:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -742,10 +742,10 @@ spp_output(m0, va_alist)
 #endif
 {
 	register struct sppcb *cb = NULL;
-	struct socket *so = cb->s_nspcb->nsp_socket;
+	struct socket *so;
 	register struct mbuf *m;
 	register struct spidp *si = (struct spidp *) 0;
-	register struct sockbuf *sb = &so->so_snd;
+	register struct sockbuf *sb;
 	int len = 0, win, rcv_win;
 	short span, off, recordp = 0;
 	u_short alo;
@@ -761,6 +761,8 @@ spp_output(m0, va_alist)
 	cb = va_arg(ap, struct sppcb *);
 	va_end(ap);
 
+	so = cb->s_nspcb->nsp_socket;
+	sb = &so->so_snd;
 
 	if (m0) {
 		int mtu = cb->s_mtu;
