@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.11 1999/04/06 01:58:18 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.12 1999/04/06 02:35:21 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.11 1999/04/06 01:58:18 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.12 1999/04/06 02:35:21 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,7 +701,7 @@ pcc_load_curshape(sc)
 	pcc->pcc_cmdr = sc->sc_pcccmdr | PCC_LODSA;
 	kn01_wbflush();
 	bp = sc->sc_cursor.cc_image;
-	for (i = 0; i < sizeof(sc->sc_cursor.cc_image); i += sizeof(u_int32_t) {
+	for (i = 0; i < sizeof(sc->sc_cursor.cc_image); i+=sizeof(u_int32_t)) {
 		pcc->pcc_memory = (u_int16_t)*bp++;
 		kn01_wbflush();
 	}
