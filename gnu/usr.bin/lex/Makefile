@@ -19,6 +19,7 @@ SRCS=	ccl.c dfa.c ecs.c gen.c main.c misc.c nfa.c parse.c sym.c tblcmp.c \
 OBJS+=	scan.o
 SUBDIR=	lib
 CLEANFILES+=parse.c parse.h scan.c y.tab.h
+MAN1 = lex.0 flexdoc.0
 
 parse.h parse.c:
 	${YACC} -d ${.IMPSRC}
