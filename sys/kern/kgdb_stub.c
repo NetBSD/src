@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7.2.7 2002/02/28 04:14:45 nathanw Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7.2.8 2002/11/23 08:05:42 wdk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.7.2.7 2002/02/28 04:14:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.7.2.8 2002/11/23 08:05:42 wdk Exp $");
 
 #include "opt_kgdb.h"
 
@@ -354,8 +354,6 @@ kgdb_trap(type, regs)
 	vaddr_t addr;
 	size_t len;
 	u_char *p;
-
-	printf("kgdb_trap 1\n");
 
 	if (kgdb_dev < 0 || kgdb_getc == NULL) {
 		/* not debugging */
