@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 1996/02/16 22:13:34 pk Exp $ */
+/*	$NetBSD: param.h,v 1.21 1996/02/22 21:59:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,8 +52,20 @@
 #define	MID_MACHINE	MID_SPARC
 
 #ifdef _KERNEL				/* XXX */
+#ifndef _LOCORE				/* XXX */
 #include <machine/cpu.h>		/* XXX */
 #endif					/* XXX */
+#endif					/* XXX */
+
+#if defined(SUN4M)
+/* 
+ * The sun4m supports multiple CPUs. Currently, we only support uniprocessor
+ * operations, but we map in the interrupt registers for everybody just for
+ * kicks. This constant affects the `fixed' virtual device addresses
+ * defined in <sparc/vaddrs.h>.
+ */
+#define NCPU_MAX	4	/* XXX: are there 4m's with > 4 CPUs? */
+#endif 
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for
@@ -172,7 +184,6 @@ extern int nbpg, pgofset, pgshift;
 extern vm_offset_t	dvma_base;
 extern vm_offset_t	dvma_end;
 extern struct map	*dvmamap;
-#endif
 /*
  * The dvma resource map is defined in page units, which are numbered 1 to N.
  * Use these macros to convert to/from virtual addresses.
@@ -183,22 +194,16 @@ extern struct map	*dvmamap;
 extern caddr_t	kdvma_mapin __P((caddr_t, int, int));
 extern caddr_t	dvma_malloc __P((size_t, void *, int));
 extern void	dvma_free __P((caddr_t, size_t, void *));
-#endif
 
 
-#ifdef _KERNEL
-#ifndef _LOCORE
 extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
-#endif
-#endif
 
-#ifdef _KERNEL
-#ifndef _LOCORE
 extern int cputyp;
 extern int cpumod;
-#endif
-#endif
+#endif /* _LOCORE */
+#endif /* _KERNEL */
+
 /*
  * Values for the cputyp variable.
  */
@@ -212,3 +217,57 @@ extern int cpumod;
 #define SUN4_200	0x21
 #define SUN4_300	0x23
 #define SUN4_400	0x24
+
+/*
+ * Shorthand CPU-type macros. Enumerate all eight cases.
+ * Let compiler optimize away code conditionals on constants.
+ */
+#if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
+#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
+#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+#elif defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
+#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4	(0)
+#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+#elif defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
+#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#	define CPU_ISSUN4C	(0)
+#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
+#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
+#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
+#elif defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
+#	define CPU_ISSUN4M	(1)
+#	define CPU_ISSUN4C	(0)
+#	define CPU_ISSUN4	(0)
+#	define CPU_ISSUN4OR4C	(0)
+#	define CPU_ISSUN4COR4M	(1)
+#elif !defined(SUN4M) && defined(SUN4C) && defined(SUN4)
+#	define CPU_ISSUN4M	(0)
+#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
+#	define CPU_ISSUN4OR4C	(1)
+#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
+#elif !defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
+#	define CPU_ISSUN4M	(0)
+#	define CPU_ISSUN4C	(1)
+#	define CPU_ISSUN4	(0)
+#	define CPU_ISSUN4OR4C	(1)
+#	define CPU_ISSUN4COR4M	(1)
+#elif !defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
+#	define CPU_ISSUN4M	(0)
+#	define CPU_ISSUN4C	(0)
+#	define CPU_ISSUN4	(1)
+#	define CPU_ISSUN4OR4C	(1)
+#	define CPU_ISSUN4COR4M	(0)
+#elif !defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
+#	define CPU_ISSUN4M	(0)
+#	define CPU_ISSUN4C	(0)
+#	define CPU_ISSUN4	(0)
+#	define CPU_ISSUN4OR4C	(0)
+#	define CPU_ISSUN4COR4M	(0)
+#endif
