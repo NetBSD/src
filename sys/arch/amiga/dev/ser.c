@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.39 1996/12/23 09:10:29 veego Exp $	*/
+/*	$NetBSD: ser.c,v 1.40 1997/09/18 03:53:12 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -440,15 +440,15 @@ ser_fastint()
 	if (ints == 0)
 		return;
 
-	/* 
-	 * clear interrupt 
-	 */
-	custom.intreq = ints;
-
 	/*
 	 * this register contains both data and status bits!
 	 */
 	code = custom.serdatr;
+
+	/* 
+	 * clear interrupt 
+	 */
+	custom.intreq = ints;
 
 	/*
 	 * check for buffer overflow.
