@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.23 1998/07/06 02:40:43 mark Exp $	*/
+/*	$NetBSD: kbd.c,v 1.24 1999/02/02 04:02:26 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -332,11 +332,12 @@ kbdpoll(dev, events, p)
 	if (KBDFLAG(dev) == KBDFLAG_CONUNIT)
 		return(ENXIO);
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &sc->sc_rsel);
+	}
 
 	splx(s);
 	return (revents);
