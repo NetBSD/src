@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.9 1998/03/27 12:17:58 agc Exp $	*/
+/*	$NetBSD: file.c,v 1.10 1998/04/23 10:40:04 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.9 1998/03/27 12:17:58 agc Exp $");
+__RCSID("$NetBSD: file.c,v 1.10 1998/04/23 10:40:04 agc Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ isdir(char *fname)
 {
     struct stat sb;
 
-    if (stat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
+    if (lstat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
 	return TRUE;
     else
 	return FALSE;
