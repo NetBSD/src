@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.12 1997/05/08 14:33:11 kleink Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.13 1998/01/22 16:33:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -298,71 +298,72 @@ linux_semctl(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	caddr_t sg, unptr, dsp, ldsp;
-	int error, cmd;
-	struct sys___semctl_args bsa;
+	caddr_t sg;
+	struct sys___semctl_args nua;
+	struct semid_ds *bmp, bm;
 	struct linux_semid_ds lm;
-	struct semid_ds bm;
+	union semun *bup;
+	union linux_semun lu;
+	int error;
 
-	SCARG(&bsa, semid) = SCARG(uap, a1);
-	SCARG(&bsa, semnum) = SCARG(uap, a2);
-	SCARG(&bsa, cmd) = SCARG(uap, a3);
-	SCARG(&bsa, arg) = (union semun *)SCARG(uap, ptr);
-	switch(SCARG(uap, a3)) {
-	case LINUX_GETVAL:
-		cmd = GETVAL;
-		break;
-	case LINUX_GETPID:
-		cmd = GETPID;
-		break;
-	case LINUX_GETNCNT:
-		cmd = GETNCNT;
-		break;
-	case LINUX_GETZCNT:
-		cmd = GETZCNT;
-		break;
-	case LINUX_SETVAL:
-		cmd = SETVAL;
-		break;
-	case LINUX_IPC_RMID:
-		cmd = IPC_RMID;
-		break;
-	case LINUX_IPC_SET:
-		if ((error = copyin(SCARG(uap, ptr), &ldsp, sizeof ldsp)))
+	SCARG(&nua, semid) = SCARG(uap, a1);
+	SCARG(&nua, semnum) = SCARG(uap, a2);
+	SCARG(&nua, arg) = (union semun *)SCARG(uap, ptr);
+	switch (SCARG(uap, a3)) {
+	case LINUX_IPC_STAT:
+		sg = stackgap_init(p->p_emul);
+		bup = stackgap_alloc(&sg, sizeof (union semun));
+		bmp = stackgap_alloc(&sg, sizeof (struct semid_ds));
+		if ((error = copyout(&bmp, bup, sizeof bmp)))
 			return error;
-		if ((error = copyin(ldsp, (caddr_t)&lm, sizeof lm)))
+		SCARG(&nua, cmd) = IPC_STAT;
+		SCARG(&nua, arg) = bup;
+		if ((error = sys___semctl(p, &nua, retval)))
+			return error;
+		if ((error = copyin(bmp, &bm, sizeof bm)))
+			return error;
+		bsd_to_linux_semid_ds(&bm, &lm);
+		if ((error = copyin(SCARG(uap, ptr), &lu, sizeof lu)))
+			return error;
+		return copyout(&lm, lu.l_buf, sizeof lm);
+	case LINUX_IPC_SET:
+		if ((error = copyin(SCARG(uap, ptr), &lu, sizeof lu)))
+			return error;
+		if ((error = copyin(lu.l_buf, &lm, sizeof lm)))
 			return error;
 		linux_to_bsd_semid_ds(&lm, &bm);
 		sg = stackgap_init(p->p_emul);
-		unptr = stackgap_alloc(&sg, sizeof (union semun));
-		dsp = stackgap_alloc(&sg, sizeof (struct semid_ds));
-		if ((error = copyout((caddr_t)&bm, dsp, sizeof bm)))
+		bup = stackgap_alloc(&sg, sizeof (union semun));
+		bmp = stackgap_alloc(&sg, sizeof (struct semid_ds));
+		if ((error = copyout(&bm, bmp, sizeof bm)))
 			return error;
-		if ((error = copyout((caddr_t)&dsp, unptr, sizeof dsp)))
+		if ((error = copyout(&bmp, bup, sizeof bmp)))
 			return error;
-		SCARG(&bsa, arg) = (union semun *)unptr;
-		return sys___semctl(p, &bsa, retval);
-	case LINUX_IPC_STAT:
-		sg = stackgap_init(p->p_emul);
-		unptr = stackgap_alloc(&sg, sizeof (union semun *));
-		dsp = stackgap_alloc(&sg, sizeof (struct semid_ds));
-		if ((error = copyout((caddr_t)&dsp, unptr, sizeof dsp)))
-			return error;
-		SCARG(&bsa, arg) = (union semun *)unptr;
-		if ((error = sys___semctl(p, &bsa, retval)))
-			return error;
-		if ((error = copyin(dsp, (caddr_t)&bm, sizeof bm)))
-			return error;
-		bsd_to_linux_semid_ds(&bm, &lm);
-		if ((error = copyin(SCARG(uap, ptr), &ldsp, sizeof ldsp)))
-			return error;
-		return copyout((caddr_t)&lm, ldsp, sizeof lm);
+		SCARG(&nua, cmd) = IPC_SET;
+		SCARG(&nua, arg) = bup;
+		return sys___semctl(p, &nua, retval);
+	case LINUX_IPC_RMID:
+		SCARG(&nua, cmd) = IPC_RMID;
+		break;
+	case LINUX_GETVAL:
+		SCARG(&nua, cmd) = GETVAL;
+		break;
+	case LINUX_GETPID:
+		SCARG(&nua, cmd) = GETPID;
+		break;
+	case LINUX_GETNCNT:
+		SCARG(&nua, cmd) = GETNCNT;
+		break;
+	case LINUX_GETZCNT:
+		SCARG(&nua, cmd) = GETZCNT;
+		break;
+	case LINUX_SETVAL:
+		SCARG(&nua, cmd) = SETVAL;
+		break;
 	default:
 		return EINVAL;
 	}
-	SCARG(&bsa, cmd) = cmd;
-
-	return sys___semctl(p, &bsa, retval);
+	return sys___semctl(p, &nua, retval);
 }
 #endif /* SYSVSEM */
 
@@ -488,39 +489,44 @@ linux_msgctl(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	struct sys_msgctl_args bma;
-	caddr_t umsgptr, sg;
+	caddr_t sg;
+	struct sys_msgctl_args nua;
+	struct msqid_ds *bmp, bm;
 	struct linux_msqid_ds lm;
-	struct msqid_ds bm;
 	int error;
 
-	SCARG(&bma, msqid) = SCARG(uap, a1);
-	SCARG(&bma, cmd) = SCARG(uap, a2);
+	SCARG(&nua, msqid) = SCARG(uap, a1);
 	switch (SCARG(uap, a2)) {
-	case LINUX_IPC_RMID:
-		return sys_msgctl(p, &bma, retval);
+	case LINUX_IPC_STAT:
+		sg = stackgap_init(p->p_emul);
+		bmp = stackgap_alloc(&sg, sizeof (struct msqid_ds));
+		SCARG(&nua, cmd) = IPC_STAT;
+		SCARG(&nua, buf) = bmp;
+		if ((error = sys_msgctl(p, &nua, retval)))
+			return error;
+		if ((error = copyin(bmp, &bm, sizeof bm)))
+			return error;
+		bsd_to_linux_msqid_ds(&bm, &lm);
+		return copyout(&lm, SCARG(uap, ptr), sizeof lm);
 	case LINUX_IPC_SET:
-		if ((error = copyin(SCARG(uap, ptr), (caddr_t)&lm, sizeof lm)))
+		if ((error = copyin(SCARG(uap, ptr), &lm, sizeof lm)))
 			return error;
 		linux_to_bsd_msqid_ds(&lm, &bm);
 		sg = stackgap_init(p->p_emul);
-		umsgptr = stackgap_alloc(&sg, sizeof bm);
-		if ((error = copyout((caddr_t)&bm, umsgptr, sizeof bm)))
+		bmp = stackgap_alloc(&sg, sizeof bm);
+		if ((error = copyout(&bm, bmp, sizeof bm)))
 			return error;
-		SCARG(&bma, buf) = (struct msqid_ds *)umsgptr;
-		return sys_msgctl(p, &bma, retval);
-	case LINUX_IPC_STAT:
-		sg = stackgap_init(p->p_emul);
-		umsgptr = stackgap_alloc(&sg, sizeof (struct msqid_ds));
-		SCARG(&bma, buf) = (struct msqid_ds *)umsgptr;
-		if ((error = sys_msgctl(p, &bma, retval)))
-			return error;
-		if ((error = copyin(umsgptr, (caddr_t)&bm, sizeof bm)))
-			return error;
-		bsd_to_linux_msqid_ds(&bm, &lm);
-		return copyout((caddr_t)&lm, SCARG(uap, ptr), sizeof lm);
+		SCARG(&nua, cmd) = IPC_SET;
+		SCARG(&nua, buf) = bmp;
+		return sys_msgctl(p, &nua, retval);
+	case LINUX_IPC_RMID:
+		SCARG(&nua, cmd) = IPC_RMID;
+		SCARG(&nua, buf) = NULL;
+		break;
+	default:
+		return EINVAL;
 	}
-	return EINVAL;
+	return sys_msgctl(p, &nua, retval);
 }
 #endif /* SYSVMSG */
 
@@ -668,60 +674,54 @@ linux_shmctl(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	int error;
 	caddr_t sg;
-	struct sys_shmctl_args bsa;
+	struct sys_shmctl_args nua;
 	struct shmid_ds *bsp, bs;
-	struct linux_shmid_ds lseg;
+	struct linux_shmid_ds ls;
+	int error;
 
+	SCARG(&nua, shmid) = SCARG(uap, a1);
 	switch (SCARG(uap, a2)) {
 	case LINUX_IPC_STAT:
 		sg = stackgap_init(p->p_emul);
 		bsp = stackgap_alloc(&sg, sizeof (struct shmid_ds));
-		SCARG(&bsa, shmid) = SCARG(uap, a1);
-		SCARG(&bsa, cmd) = IPC_STAT;
-		SCARG(&bsa, buf) = bsp;
-		if ((error = sys_shmctl(p, &bsa, retval)))
+		SCARG(&nua, cmd) = IPC_STAT;
+		SCARG(&nua, buf) = bsp;
+		if ((error = sys_shmctl(p, &nua, retval)))
 			return error;
-		if ((error = copyin((caddr_t) bsp, (caddr_t) &bs, sizeof bs)))
+		if ((error = copyin(bsp, &bs, sizeof bs)))
 			return error;
-		bsd_to_linux_shmid_ds(&bs, &lseg);
-		return copyout((caddr_t) &lseg, SCARG(uap, ptr), sizeof lseg);
+		bsd_to_linux_shmid_ds(&bs, &ls);
+		return copyout(&ls, SCARG(uap, ptr), sizeof ls);
 	case LINUX_IPC_SET:
-		if ((error = copyin(SCARG(uap, ptr), (caddr_t) &lseg,
-		     sizeof lseg)))
+		if ((error = copyin(SCARG(uap, ptr), &ls, sizeof ls)))
 			return error;
-		linux_to_bsd_shmid_ds(&lseg, &bs);
+		linux_to_bsd_shmid_ds(&ls, &bs);
 		sg = stackgap_init(p->p_emul);
-		bsp = stackgap_alloc(&sg, sizeof (struct shmid_ds));
-		if ((error = copyout((caddr_t) &bs, (caddr_t) bsp, sizeof bs)))
+		bsp = stackgap_alloc(&sg, sizeof bs);
+		if ((error = copyout(&bs, bsp, sizeof bs)))
 			return error;
-		SCARG(&bsa, shmid) = SCARG(uap, a1);
-		SCARG(&bsa, cmd) = IPC_SET;
-		SCARG(&bsa, buf) = bsp;
-		return sys_shmctl(p, &bsa, retval);
+		SCARG(&nua, cmd) = IPC_SET;
+		SCARG(&nua, buf) = bsp;
+		return sys_shmctl(p, &nua, retval);
 	case LINUX_IPC_RMID:
+		SCARG(&nua, cmd) = IPC_RMID;
+		SCARG(&nua, buf) = NULL;
+		break;
 	case LINUX_SHM_LOCK:
+		SCARG(&nua, cmd) = SHM_LOCK;
+		SCARG(&nua, buf) = NULL;
+		break;
 	case LINUX_SHM_UNLOCK:
-		SCARG(&bsa, shmid) = SCARG(uap, a1);
-		switch (SCARG(uap, a2)) {
-		case LINUX_IPC_RMID:
-			SCARG(&bsa, cmd) = IPC_RMID;
-			break;
-		case LINUX_SHM_LOCK:
-			SCARG(&bsa, cmd) = SHM_LOCK;
-			break;
-		case LINUX_SHM_UNLOCK:
-			SCARG(&bsa, cmd) = SHM_UNLOCK;
-			break;
-		}
-		SCARG(&bsa, buf) = NULL;
-		return sys_shmctl(p, &bsa, retval);
+		SCARG(&nua, cmd) = SHM_UNLOCK;
+		SCARG(&nua, buf) = NULL;
+		break;
 	case LINUX_IPC_INFO:
 	case LINUX_SHM_STAT:
 	case LINUX_SHM_INFO:
 	default:
 		return EINVAL;
 	}
+	return sys_shmctl(p, &nua, retval);
 }
 #endif /* SYSVSHM */
