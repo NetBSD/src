@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.69 2004/01/10 14:39:50 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.70 2004/01/10 14:49:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ struct bufq_state {
 #define BUFQ_FCFS		0x0010	/* First-come first-serve */
 #define BUFQ_DISKSORT		0x0020	/* Min seek sort */
 #define BUFQ_READ_PRIO		0x0030	/* Min seek and read priority */
+#define BUFQ_PRIOCSCAN		0x0040	/* Per-priority CSCAN */
 
 #define BUFQ_SORT_MASK		0x000f
 #define BUFQ_METHOD_MASK	0x00f0
