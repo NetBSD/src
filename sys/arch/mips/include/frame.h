@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1.2.2 2001/11/29 11:08:37 wdk Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.2.3 2002/08/02 20:47:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,15 +46,8 @@
 
 /*
  * Signal frame
- *
- * WARNING: code in mips/locore.S assumes the layout shown for sf_signum
- * thru sf_handler so... don't screw with them!
  */
 struct sigframe {
-	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
-	struct	sigcontext *sf_scp;	/* context ptr for handler */
-	sig_t	sf_handler;		/* handler addr for u_sigc */
 	struct	sigcontext sf_sc;	/* actual context */
 };
 
