@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.45 1998/03/21 04:29:29 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.46 1998/03/21 04:31:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -389,6 +389,7 @@ void
 zs_shutdown(zst)
 	struct zstty_softc *zst;
 {
+	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
 	int s;
 
@@ -577,7 +578,6 @@ zsclose(dev, flags, mode, p)
 	struct proc *p;
 {
 	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
-	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
 
 	/* XXX This is for cons.c. */
