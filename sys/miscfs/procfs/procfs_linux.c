@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.13 2003/08/09 16:28:49 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.14 2003/08/21 23:00:07 he Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.13 2003/08/09 16:28:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.14 2003/08/21 23:00:07 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,10 +145,10 @@ procfs_do_pid_stat(struct proc *p, struct lwp *l, struct pfsnode *pfs,
 #ifdef LINUX_USRSTACK
 	if (strcmp(p->p_emul->e_name, "linux") == 0 &&
 	    LINUX_USRSTACK < USRSTACK)
-		sstack = LINUX_USRSTACK;
+		sstack = (unsigned long) LINUX_USRSTACK;
 	else
 #endif
-		sstack = USRSTACK;
+		sstack = (unsigned long) USRSTACK;
 
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_unlock_read(map);
