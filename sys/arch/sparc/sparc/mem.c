@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 1995/04/10 16:48:57 mycroft Exp $ */
+/*	$NetBSD: mem.c,v 1.10 1995/04/13 14:31:39 pk Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,6 +91,7 @@ mmrw(dev, uio, flags)
 	register struct iovec *iov;
 	int error = 0;
 	static int physlock;
+	extern caddr_t vmmap;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
