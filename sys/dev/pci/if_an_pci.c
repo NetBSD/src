@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.11 2003/10/13 06:45:32 dyoung Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.12 2004/01/28 15:07:52 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.11 2003/10/13 06:45:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.12 2004/01/28 15:07:52 onoe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -135,7 +135,7 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 
         /* Map I/O registers */
         if (pci_mapreg_map(pa, AN_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->an_btag, &sc->an_bhandle, NULL, NULL) != 0) {
+	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL) != 0) {
                 aprint_error("%s: unable to map registers\n", self->dv_xname);
                 return;
         }
@@ -167,6 +167,6 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: failed to attach controller\n",
 		    self->dv_xname);
 		pci_intr_disestablish(pa->pa_pc, psc->sc_ih);
-		bus_space_unmap(sc->an_btag, sc->an_bhandle, AN_IOSIZ);
+		bus_space_unmap(sc->sc_ioh, sc->sc_ioh, AN_IOSIZ);
 	}
 }
