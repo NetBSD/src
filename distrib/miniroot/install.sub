@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.19 1997/09/08 23:22:44 pk Exp $
+#	$NetBSD: install.sub,v 1.20 1997/09/09 23:02:05 is Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -681,6 +681,19 @@ install_from_mounted_fs() {
 
 	_dirname=$1
 	_sets=""
+
+	echo ""
+	echo "The directory at the mount point, \"${_dirname}\", contains: "
+	echo ""
+	ls -F ${_dirname}
+	echo ""
+	echo    "Enter the subdirectory relative to the mountpoint, that"
+	echo -n "contains the savesets: [try this directory] "
+	getresp ""
+	if [ "X${resp}" != "X" ]; then
+		_dirname=${_dirname}/$resp
+	fi
+
 	while ! dir_has_sets ${_dirname} $THESETS; do
 		echo ""
 		echo -n "There are no NetBSD install sets available in "
@@ -847,25 +860,7 @@ __install_cdrom_2
 		return
 	fi
 
-	# Get the directory where the file lives
-	_directory="."
-	resp = "."	# force one iteration
-	while [ "X${resp}" != X"" ]; do
-		echo ""
-		echo "The current directory, ${_directory}, contains:" 
-		echo ""
-		(cd /mnt2/$_directory; ls -F)
-		cat << \__install_cdrom_3
-
-Enter the directory relative to this point that contains the files, or
-nothing to install from here.
-
-__install_cdrom_3
-		getresp ""
-		_directory=${_directory}/$resp
-	done
-
-	install_from_mounted_fs /mnt2/${_directory}
+	install_from_mounted_fs /mnt2
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -980,16 +975,7 @@ __install_disk_1
 		return
 	fi
 
-	# Get the directory where the file lives
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo "Enter the directory relative to the mount point that"
-		echo -n "contains the file. [${_directory}] "
-		getresp "${_directory}"
-	done
-	_directory=$resp
-
-	install_from_mounted_fs /mnt2/${_directory}
+	install_from_mounted_fs /mnt2
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -1031,16 +1017,7 @@ install_nfs() {
 		return
 	fi
 
-	# Get the directory where the file lives
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo "Enter the directory relative to the mount point that"
-		echo -n "contains the file. [${_nfs_directory}] "
-		getresp "${_nfs_directory}"
-	done
-	_nfs_directory=$resp
-
-	install_from_mounted_fs /mnt2/${_nfs_directory}
+	install_from_mounted_fs /mnt2
 	umount -f /mnt2 > /dev/null 2>&1
 }
 

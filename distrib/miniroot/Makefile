@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/07/15 08:16:36 pk Exp $
+#	$NetBSD: Makefile,v 1.15 1997/09/09 23:02:04 is Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ VND_RDEV=	/dev/r${VND}
 IMAGE?=		miniroot-${REV}.fs
 IMAGESIZE?=	12288 # 6Mb in 512 byte blocks
 NEWFSOPTS?=
+BOOTINSTALL?=	true
 
 .ifdef DISKTYPE
 DISKTYPEARG=	-t ${DISKTYPE}
@@ -36,11 +37,13 @@ all:
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE}
-	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
+	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
+	${BOOTINSTALL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${LISTS}
+	    TARGDIR=${MOUNT_POINT} VND_RDEV=${VND_RDEV} \
+	    sh ${.CURDIR}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
