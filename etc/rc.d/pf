@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# $NetBSD: pf,v 1.1 2004/06/29 04:48:28 itojun Exp $
+#
+
+# PROVIDE: pf
+# REQUIRE: NETWORKING
+# BEFORE: SERVERS
+
+. /etc/rc.subr
+
+name="pf"
+rcvar=$name
+start_cmd="pf_start"
+stop_cmd="pf_stop"
+reload_cmd="pf_reload"
+status_cmd="pf_status"
+extra_commands="reload status"
+
+pf_start()
+{
+	echo "Enabling pf firewall."
+	/sbin/pfctl -q -e 
+	if [ -f /etc/pf.conf ]; then
+		/sbin/pfctl -q -f /etc/pf.conf
+	else
+		warn "pf.conf not found; no pf rules loaded."
+	fi
+}
+
+pf_stop()
+{
+	echo "Disabling pf firewall."
+	/sbin/pfctl -q -d
+}
+
+pf_reload()
+{
+	echo "Reloading pf rules."
+	if [ -f /etc/pf.conf ]; then
+		/sbin/pfctl -q -f /etc/pf.conf
+	else
+		warn "pf.conf not found; no pf rules loaded."
+	fi
+}
+
+pf_status()
+{
+	/sbin/pfctl -s info
+}
+
+load_rc_config $name
+run_rc_command "$1"
