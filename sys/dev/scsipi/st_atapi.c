@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.12 2003/10/05 17:48:49 bouyer Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.13 2004/08/21 22:16:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.12 2003/10/05 17:48:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.13 2004/08/21 22:16:07 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -46,26 +46,22 @@ __KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.12 2003/10/05 17:48:49 bouyer Exp $")
 #include <dev/scsipi/stvar.h>
 #include <dev/scsipi/atapi_tape.h>
 
-int	st_atapibus_match __P((struct device *, struct cfdata *, void *));
-void	st_atapibus_attach __P((struct device *, struct device *, void *));
-int	st_atapibus_ops __P((struct st_softc *, int, int));
-int	st_atapibus_mode_sense __P((struct st_softc *, int));
-int	st_atapibus_mode_select __P((struct st_softc *, int));
-int	st_atapibus_do_ms __P((struct st_softc *, int, void *, int, int));
+static int	st_atapibus_match(struct device *, struct cfdata *, void *);
+static void	st_atapibus_attach(struct device *, struct device *, void *);
+static int	st_atapibus_ops(struct st_softc *, int, int);
+static int	st_atapibus_mode_sense(struct st_softc *, int);
+static int	st_atapibus_mode_select(struct st_softc *, int);
 
 CFATTACH_DECL(st_atapibus, sizeof(struct st_softc),
     st_atapibus_match, st_atapibus_attach, stdetach, stactivate);
 
-const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
+static const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
 	 "",	 "",		 ""},
 };
 
-int
-st_atapibus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+st_atapibus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -80,10 +76,8 @@ st_atapibus_match(parent, match, aux)
 	return (priority);
 }
 
-void
-st_atapibus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+st_atapibus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct st_softc *st = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
@@ -116,11 +110,8 @@ st_atapibus_attach(parent, self, aux)
 	stattach(parent, st, aux);
 }
 
-int
-st_atapibus_ops(st, op, flags)
-	struct st_softc *st;
-	int op;
-	int flags;
+static int
+st_atapibus_ops(struct st_softc *st, int op, int flags)
 {
 	switch(op) {
 	case ST_OPS_RBL:
@@ -139,10 +130,8 @@ st_atapibus_ops(st, op, flags)
 	}
 }
 
-int
-st_atapibus_mode_sense(st, flags)
-	struct st_softc *st;
-	int flags;
+static int
+st_atapibus_mode_sense(struct st_softc *st, int flags)
 {
 	int count, error;
 	struct atapi_cappage cappage;
@@ -186,10 +175,8 @@ st_atapibus_mode_sense(st, flags)
 	return error;
 }
 
-int
-st_atapibus_mode_select(st, flags)
-	struct st_softc *st;
-	int flags;
+static int
+st_atapibus_mode_select(struct st_softc *st, int flags)
 {
 	return ENODEV; /* for now ... */
 }
