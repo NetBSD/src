@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.25 2003/12/13 01:33:41 sekiya Exp $
+# 	$NetBSD: MPC303,v 1.25.2.1 2004/04/18 02:19:27 jmc Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,13 +9,14 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.25.2.1 $"
 
 maxusers	16
 
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 # Support for specific models of H/PC MIPS
+makeoptions	CPUFLAGS="-mips3"	# CPU codegen options
 options 	MIPS3_4100		# VR4100 core
 options 	VR41XX			# NEC VR41xx series
 options 	VR4122			# NEC VR4122
