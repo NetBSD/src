@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.6 2004/03/29 19:31:29 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.7 2004/03/30 05:58:55 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -70,3 +70,7 @@ gnu/lib/libgcc3/Makefile.inc			1.7
 	in "cleandir" target.
 	[tron, ticket #10]
 
+distrib/utils/sysinst/msg.mi.fr			1.75
+
+	Some minor fixes in text.
+	[bouyer, ticket #12]
