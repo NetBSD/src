@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.7.2.2 2001/11/16 01:33:22 thorpej Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.7.2.3 2001/12/18 22:32:38 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -176,7 +176,7 @@ clnt_dg_create(fd, svcaddr, program, version, sendsz, recvsz)
 	mutex_lock(&clnt_fd_lock);
 	if (dg_fd_locks == (int *) NULL) {
 #ifdef _REENTRANT
-		int cv_allocsz;
+		size_t cv_allocsz;
 #endif
 		size_t fd_allocsz;
 		int dtbsize = __rpc_dtbsize();
