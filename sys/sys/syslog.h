@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.21 1999/08/27 01:14:16 thorpej Exp $	*/
+/*	$NetBSD: syslog.h,v 1.22 2000/07/08 17:36:01 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -189,7 +189,8 @@ int	setlogmask __P((int));
 void	syslog __P((int, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
 #if !defined(_XOPEN_SOURCE)
-void	vsyslog __P((int, const char *, _BSD_VA_LIST_));
+void	vsyslog __P((int, const char *, _BSD_VA_LIST_))
+    __attribute__((__format__(__printf__,2,0)));
 #endif
 __END_DECLS
 
@@ -198,7 +199,8 @@ __END_DECLS
 void	logpri __P((int));
 void	log __P((int, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
-void	vlog __P((int, const char *, _BSD_VA_LIST_));
+void	vlog __P((int, const char *, _BSD_VA_LIST_))
+    __kprintf_attribute__((__format__(__kprintf__,2,0)));
 void	addlog __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	logwakeup __P((void));
