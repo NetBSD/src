@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,25 +32,26 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)getstr.c	5.4 (Berkeley) 6/1/90";
-#endif /* not lint */
+static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include "curses.h"
 
 /*
- *	This routine gets a string starting at (_cury,_curx)
- *
+ * wgetstr --
+ *	Get a string starting at (cury, curx).
  */
-wgetstr(win,str)
-reg WINDOW	*win; 
-reg char	*str; {
-
+int
+wgetstr(win, str)
+	register WINDOW *win;
+	register char *str;
+{
 	while ((*str = wgetch(win)) != ERR && *str != '\n')
 		str++;
 	if (*str == ERR) {
 		*str = '\0';
-		return ERR;
+		return (ERR);
 	}
 	*str = '\0';
-	return OK;
+	return (OK);
 }
