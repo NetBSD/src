@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.4 1997/10/12 11:45:28 lukem Exp $	*/
+/*	$NetBSD: monster.c,v 1.5 1998/07/21 07:01:55 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.4 1997/10/12 11:45:28 lukem Exp $");
+__RCSID("$NetBSD: monster.c,v 1.5 1998/07/21 07:01:55 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ gr_monster(monster, mn)
 void
 mv_mons()
 {
-	object *monster, *next_monster;
+	object *monster, *next_monster, *test_mons;
 	boolean flew;
 
 	if (haste_self % 2) {
@@ -213,7 +213,17 @@ mv_mons()
 		if (!(flew && mon_can_go(monster, rogue.row, rogue.col))) {
 			mv_1_monster(monster, rogue.row, rogue.col);
 		}
-NM:		monster = next_monster;
+NM:		test_mons = level_monsters.next_monster;
+		monster = NULL;
+		while (test_mons)
+		{
+			if (next_monster == test_mons)
+			{
+				monster = next_monster;
+				break;
+			}
+			test_mons = test_mons -> next_monster;
+		}
 	}
 }
 
