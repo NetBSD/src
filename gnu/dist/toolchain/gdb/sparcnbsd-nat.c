@@ -340,3 +340,61 @@ _initialize_sparcnbsd_nat ()
   add_core_fns (&sparcnbsd_core_fns);
   add_core_fns (&sparcnbsd_elfcore_fns);
 }
+
+
+/*
+ * kernel_u_size() is not helpful on NetBSD because
+ * the "u" struct is NOT in the core dump file.
+ */
+
+#ifdef	FETCH_KCORE_REGISTERS
+/*
+ * Get registers from a kernel crash dump or live kernel.
+ * Called by kcore-nbsd.c:get_kcore_registers().
+ */
+void
+fetch_kcore_registers (pcb)
+     struct pcb *pcb;
+{
+  struct rwindow win;
+  int i;
+  u_long sp;
+
+  /* We only do integer registers */
+  sp = pcb->pcb_sp;
+
+  supply_register(SP_REGNUM, (char *)&pcb->pcb_sp);
+  supply_register(PC_REGNUM, (char *)&pcb->pcb_pc);
+  supply_register(O7_REGNUM, (char *)&pcb->pcb_pc);
+  supply_register(PS_REGNUM, (char *)&pcb->pcb_psr);
+  supply_register(WIM_REGNUM, (char *)&pcb->pcb_wim);
+  /*
+   * Read last register window saved on stack.
+   */
+  if (target_read_memory(sp, (char *)&win, sizeof win)) {
+    printf("cannot read register window at sp=%x\n", pcb->pcb_sp);
+    bzero((char *)&win, sizeof win);
+  }
+  for (i = 0; i < sizeof(win.rw_local); ++i)
+    supply_register(i + L0_REGNUM, (char *)&win.rw_local[i]);
+  for (i = 0; i < sizeof(win.rw_in); ++i)
+    supply_register(i + I0_REGNUM, (char *)&win.rw_in[i]);
+  /*
+   * read the globals & outs saved on the stack (for a trap frame).
+   */
+  sp += 92 + 12; /* XXX - MINFRAME + R_Y */
+  for (i = 1; i < 14; ++i) {
+    u_long val;
+    
+    if (target_read_memory(sp + i*4, (char *)&val, sizeof val) == 0)
+      supply_register(i, (char *)&val);
+  }
+#if 0
+  if (kvread(pcb.pcb_cpctxp, &cps) == 0)
+    supply_register(CPS_REGNUM, (char *)&cps);
+#endif
+
+  /* The kernel does not use the FPU, so ignore it. */
+  registers_fetched ();
+}
+#endif	/* FETCH_KCORE_REGISTERS */
