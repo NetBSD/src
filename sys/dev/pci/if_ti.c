@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.60 2004/03/18 23:20:32 bouyer Exp $ */
+/* $NetBSD: if_ti.c,v 1.61 2004/07/27 07:59:51 he Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.60 2004/03/18 23:20:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.61 2004/07/27 07:59:51 he Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -983,7 +983,7 @@ static int ti_init_rx_ring_jumbo(sc)
 	int		i;
 	struct ti_cmd_desc	cmd;
 
-	for (i = 0; i < (TI_JSLOTS - 20); i++) {
+	for (i = 0; i < TI_JUMBO_RX_RING_CNT; i++) {
 		if (ti_newbuf_jumbo(sc, i, NULL) == ENOBUFS)
 			return(ENOBUFS);
 	};
