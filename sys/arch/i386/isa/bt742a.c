@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.19 1994/03/12 04:10:18 mycroft Exp $
+ *	$Id: bt742a.c,v 1.20 1994/03/25 07:40:55 mycroft Exp $
  */
 
 /*
@@ -274,7 +274,6 @@ struct isa_device *btinfo[NBT];
 struct bt_ccb *bt_get_ccb();
 int     bt_int[NBT];
 int     bt_dma[NBT];
-int     bt_scsi_dev[NBT];
 int     bt_initialized[NBT];
 
 /* we'll malloc memory for these in bt_init() */
@@ -516,8 +515,8 @@ btattach(dev)
 			bt_switch[masunit].printed[r] = 0;
 		}
 	}
-	r = scsi_attach(masunit, bt_scsi_dev[masunit], &bt_switch[masunit],
-	    &dev->id_physid, &dev->id_unit, dev->id_flags);
+	r = scsi_attach(masunit, &bt_switch[masunit], &dev->id_physid,
+	    &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
 	if (firsttime == 0) {
@@ -904,7 +903,7 @@ bt_init(unit)
 		return (EIO);
 	}
 	/* who are we on the scsi bus */
-	bt_scsi_dev[unit] = conf.scsi_dev;
+	bt_switch[unit].scsi_dev = conf.scsi_dev;
 
 	printf("bt%d: mbx (%d@) %d, ccb %d * %d, xs %d, bt %d bytes\n", unit,
 	    BT_MBX_SIZE, sizeof(struct bt_mbx),

@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: scsiconf.h,v 1.4 1993/05/20 03:46:39 cgd Exp $
+ *	$Id: scsiconf.h,v 1.5 1994/03/25 07:38:52 mycroft Exp $
  */
 
 /*
@@ -25,10 +25,10 @@ struct scsi_switch {
 	char *name;
 	int (*scsi_cmd)();
 	void (*scsi_minphys)();
+	int scsi_dev;
 	int (*open_target_lu)();
 	int (*close_target_lu)();
 	long int (*adapter_info)(); /* see definitions below */
-	u_long	spare[3];
 	u_char	empty[8], used[8], printed[8];
 };
 #define	AD_INF_MAX_CMDS		0x000000FF /* maximum number of entries
@@ -122,8 +122,8 @@ struct scsidevs {
 
 int scsi_inquire(int, int, int,	struct scsi_switch *, u_char *, int);
 int scsi_ready(int, int, int, struct scsi_switch *, int);
-int scsi_attach(int, int, struct scsi_switch *, int *, int *, int);
-void scsi_warn(int, int, struct scsi_switch *);
+int scsi_attach(int, struct scsi_switch *, int *, int *, int);
+void scsi_warn(int, struct scsi_switch *);
 struct scsidevs *scsi_probe(int, struct scsi_switch *, int, int, int);
 struct scsidevs *selectdev(int, int, int, struct scsi_switch *,
 	int, int, int, char *, char *, char *, int);
