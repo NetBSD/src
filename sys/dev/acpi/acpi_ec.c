@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.22 2004/03/24 14:47:19 kanaoka Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.23 2004/03/30 15:18:56 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,11 +172,12 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.22 2004/03/24 14:47:19 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.23 2004/03/30 15:18:56 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 
@@ -187,12 +188,14 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.22 2004/03/24 14:47:19 kanaoka Exp $")
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_ecreg.h>
 
+MALLOC_DECLARE(M_ACPI);
+
 #define _COMPONENT	ACPI_EC_COMPONENT
 ACPI_MODULE_NAME("EC")
 
 struct acpi_ec_softc {
 	struct device	sc_dev;		/* base device glue */
-	struct acpi_devnode *sc_node;	/* our ACPI devnode */
+	ACPI_HANDLE sc_handle;		/* ACPI handle */
 
 	struct acpi_resources sc_res;	/* our bus resources */
 
@@ -207,12 +210,13 @@ struct acpi_ec_softc {
 	int		sc_flags;	/* see below */
 
 	uint32_t	sc_csrvalue;	/* saved control register */
+	uint32_t	sc_uid;		/* _UID in namespace (ECDT only) */
 
 	struct lock	sc_lock;	/* serialize operations to this EC */
 	struct simplelock sc_slock;	/* protect against interrupts */
 	UINT32		sc_glkhandle;	/* global lock handle */
 	UINT32		sc_glk;		/* need global lock? */
-} *acpiec_ecdt_softc;
+};
 
 static const char * const ec_hid[] = {
 	"PNP0C09",
@@ -271,6 +275,8 @@ void	acpiec_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpiec, sizeof(struct acpi_ec_softc),
     acpiec_match, acpiec_attach, NULL, NULL);
+
+static struct acpi_ec_softc *ecdt_sc;
 
 static __inline int
 EcIsLocked(struct acpi_ec_softc *sc)
@@ -360,33 +366,107 @@ acpiec_match(struct device *parent, struct cfdata *match, void *aux)
 	return (acpi_match_hid(aa->aa_node->ad_devinfo, ec_hid));
 }
 
-#if 0
 void
 acpiec_early_attach(struct device *parent)
 {
+	struct acpi_softc *sc = (struct acpi_softc *)parent;
 	EC_BOOT_RESOURCES *ep;
 	ACPI_HANDLE handle;
+	ACPI_STATUS rv;
+	ACPI_INTEGER tmp;
 
-	status = AcpiGetFirmwareTable("ECDT", 1, ACPI_LOGICAL_ADDRESSING,
-	    (ACPI_TABLE_HEADER **)&ep;
-	if (ACPI_FAILURE(status))
+	rv = AcpiGetFirmwareTable("ECDT", 1, ACPI_LOGICAL_ADDRESSING,
+	    (void *)&ep);
+	if (ACPI_FAILURE(rv))
 		return;
 
 	if (ep->EcControl.RegisterBitWidth != 8 ||
 	    ep->EcData.RegisterBitWidth != 8) {
 		printf("%s: ECDT data is invalid, RegisterBitWidth=%d/%d\n",
+		    parent->dv_xname,
 		    ep->EcControl.RegisterBitWidth, ep->EcData.RegisterBitWidth);
 		return;
 	}
 
-	status = AcpiGetHandle(ACPI_ROOT_OBJECT, ep->EcId, &handle);
-	if (ACPI_FAILURE(status)) {
-		printf("%s: failed to look up EC object %s: %s\n", ep->EcId,
-		    AcpiFormatExeception(status));
-		return (status);
+	rv = AcpiGetHandle(ACPI_ROOT_OBJECT, ep->EcId, &handle);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: failed to look up EC object %s: %s\n",
+		    parent->dv_xname,
+		    ep->EcId, AcpiFormatException(rv));
+		return;
 	}
+
+	ecdt_sc = malloc(sizeof(*ecdt_sc), M_ACPI, M_ZERO);
+
+	strcpy(ecdt_sc->sc_dev.dv_xname, "acpiecdt0"); /* XXX */
+	ecdt_sc->sc_handle = handle;
+
+	ecdt_sc->sc_gpebit = ep->GpeBit;
+	ecdt_sc->sc_uid = ep->Uid;
+
+	ecdt_sc->sc_data_st = sc->sc_iot;
+	if (bus_space_map(ecdt_sc->sc_data_st,
+		(bus_addr_t)(ep->EcData.Address), 1, 0,
+		&ecdt_sc->sc_data_sh) != 0) {
+		printf("%s: bus_space_map failed for EC data.\n",
+		    parent->dv_xname);
+		goto out1;
+	}
+
+	ecdt_sc->sc_csr_st = sc->sc_iot;
+	if (bus_space_map(ecdt_sc->sc_csr_st,
+		(bus_addr_t)(ep->EcControl.Address), 1, 0,
+		&ecdt_sc->sc_csr_sh) != 0) {
+		printf("%s: bus_space_map failed for EC control.\n",
+		    parent->dv_xname);
+		goto out2;
+	}
+
+	rv = acpi_eval_integer(handle, "_GLK", &tmp);
+	if (ACPI_SUCCESS(rv) && tmp == 1)
+		ecdt_sc->sc_glk = 1;
+
+	rv = AcpiInstallGpeHandler(NULL, ecdt_sc->sc_gpebit,
+	    ACPI_EVENT_EDGE_TRIGGERED, EcGpeHandler, ecdt_sc);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: unable to install GPE handler: %s\n",
+		    parent->dv_xname,
+		    AcpiFormatException(rv));
+		goto out3;
+	}
+
+	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
+	    ACPI_ADR_SPACE_EC, EcSpaceHandler, EcSpaceSetup, ecdt_sc);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: unable to install address space handler: %s\n",
+		    parent->dv_xname,
+		    AcpiFormatException(rv));
+		goto out4;
+	}
+
+	printf("%s: found ECDT, GPE %d\n", parent->dv_xname,
+	    ecdt_sc->sc_gpebit);
+
+	lockinit(&ecdt_sc->sc_lock, PWAIT, "eclock", 0, 0);
+	simple_lock_init(&ecdt_sc->sc_slock);
+
+	AcpiOsUnmapMemory(ep, ep->Length);
+	return;
+
+ out4:
+	AcpiRemoveGpeHandler(NULL, ecdt_sc->sc_gpebit, EcGpeHandler);
+ out3:
+	bus_space_unmap(ecdt_sc->sc_csr_st, ecdt_sc->sc_csr_sh, 1);
+ out2:
+	bus_space_unmap(ecdt_sc->sc_data_st, ecdt_sc->sc_data_sh, 1);
+ out1:
+	free(ecdt_sc, M_ACPI);
+	ecdt_sc = NULL;
+
+	AcpiOsUnmapMemory(ep, ep->Length);
+
+	return;
 }
-#endif
 
 /*
  * acpiec_attach:
@@ -409,14 +489,40 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	lockinit(&sc->sc_lock, PWAIT, "eclock", 0, 0);
 	simple_lock_init(&sc->sc_slock);
 
-	sc->sc_node = aa->aa_node;
+	sc->sc_handle = aa->aa_node->ad_handle;
 
 	/* Parse our resources. */
 	ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, "parsing EC resources\n"));
-	rv = acpi_resource_parse(&sc->sc_dev, sc->sc_node, &sc->sc_res,
+	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &sc->sc_res,
 	    &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
+
+	rv = acpi_eval_integer(aa->aa_node->ad_handle, "_UID", &v);
+
+	/* check if we already attached EC via ECDT */
+	if (ACPI_SUCCESS(rv) && ecdt_sc && ecdt_sc->sc_uid == v) {
+
+		/* detach all ECDT handles */
+		rv = AcpiRemoveAddressSpaceHandler(ACPI_ROOT_OBJECT,
+		    ACPI_ADR_SPACE_EC, EcSpaceHandler);
+		if (ACPI_FAILURE(rv))
+			printf("ERROR: RemoveAddressSpaceHandler: %s\n",
+			    AcpiFormatException(rv));
+		rv = AcpiRemoveGpeHandler(NULL, ecdt_sc->sc_gpebit,
+		    EcGpeHandler);
+		if (ACPI_FAILURE(rv))
+			printf("ERROR: RemoveAddressSpaceHandler: %s\n",
+			    AcpiFormatException(rv));
+
+		bus_space_unmap(ecdt_sc->sc_csr_st,
+		    ecdt_sc->sc_csr_sh, 1);
+		bus_space_unmap(ecdt_sc->sc_data_st,
+		    ecdt_sc->sc_data_sh, 1);
+
+		free(ecdt_sc, M_ACPI);
+		ecdt_sc = NULL;
+	}
 
 	sc->sc_data_st = aa->aa_iot;
 	io0 = acpi_res_io(&sc->sc_res, 0);
@@ -447,12 +553,26 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
+	 * evaluate _GLK to see if we should acquire global lock
+	 * when accessing the EC.
+	 */
+	rv = acpi_eval_integer(sc->sc_handle, "_GLK", &v);
+	if (ACPI_FAILURE(rv)) {
+		if (rv != AE_NOT_FOUND)
+			printf("%s: unable to evaluate _GLK: %s\n",
+			       sc->sc_dev.dv_xname,
+			       AcpiFormatException(rv));
+		sc->sc_glk = 0;
+	} else
+		sc->sc_glk = v;
+
+	/*
 	 * Install GPE handler.
 	 *
 	 * We evaluate the _GPE method to find the GPE bit used by the
 	 * Embedded Controller to signal status (SCI).
 	 */
-	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GPE", &v);
+	rv = acpi_eval_integer(sc->sc_handle, "_GPE", &v);
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to evaluate _GPE: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
@@ -460,18 +580,6 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_gpebit = v;
 
-	/*
-	 * evaluate _GLK to see if we should acquire global lock
-	 * when accessing the EC.
-	 */
-	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GLK", &v);
-	if (ACPI_FAILURE(rv)) {
-		if (rv != AE_NOT_FOUND)
-			printf("%s: unable to evaluate _GLK: %s\n",
-			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		sc->sc_glk = 0;
-	} else
-		sc->sc_glk = v;
 	/*
 	 * Install a handler for this EC's GPE bit.  Note that EC SCIs are 
 	 * treated as both edge- and level-triggered interrupts; in other words
@@ -489,11 +597,13 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Install address space handler. */
-	rv = AcpiInstallAddressSpaceHandler(sc->sc_node->ad_handle,
+	rv = AcpiInstallAddressSpaceHandler(sc->sc_handle,
 	     ACPI_ADR_SPACE_EC, EcSpaceHandler, EcSpaceSetup, sc);
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to install address space handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
+		(void)AcpiRemoveGpeHandler(NULL, sc->sc_gpebit,
+		    EcGpeHandler);
 		return;
 	}
 
@@ -548,7 +658,7 @@ EcGpeQueryHandler(void *Context)
 		 * Evaluate _Qxx to respond to the controller.
 		 */
 		sprintf(qxx, "_Q%02X", Data);
-		Status = AcpiEvaluateObject(sc->sc_node->ad_handle, qxx,
+		Status = AcpiEvaluateObject(sc->sc_handle, qxx,
 		    NULL, NULL);
 
 		/*
@@ -615,7 +725,10 @@ EcSpaceSetup(ACPI_HANDLE Region, UINT32 Function, void *Context,
 	/*
 	 * Just pass the context through, there's nothing to do here.
 	 */
-	*RegionContext = Context;
+	if (Function == ACPI_REGION_DEACTIVATE)
+		*RegionContext = NULL;
+	else
+		*RegionContext = Context;
 
 	return_ACPI_STATUS(AE_OK);
 }
