@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.2.4.4 1996/08/26 15:45:22 gwr Exp $
+#	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,6 +64,9 @@ MODE="upgrade"
 
 # include common subroutines
 . install.sub
+
+# which sets?
+THESETS="$UPGRSETS"
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -226,7 +229,6 @@ check_fs /tmp/fstab.shadow
 # Mount filesystems.
 mount_fs /tmp/fstab.shadow
 
-THESETS="$UPGRSETS"
 echo -n	"Are the upgrade sets on one of your normally mounted (local) filesystems? [y] "
 getresp "y"
 case "$resp" in

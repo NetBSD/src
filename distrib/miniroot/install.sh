@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.5.2.7 1996/08/26 15:45:18 gwr Exp $
+#	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,6 +69,9 @@ MODE="install"
 
 # include common subroutines
 . install.sub
+
+# which sets?
+THESETS="$ALLSETS"
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
