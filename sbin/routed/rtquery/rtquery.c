@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.5 1997/09/15 10:38:24 lukem Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.6 1998/03/30 02:15:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -41,7 +41,7 @@ char copyright[] =
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rtquery.c,v 1.5 1997/09/15 10:38:24 lukem Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.6 1998/03/30 02:15:16 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -112,14 +112,14 @@ struct timeval sent;			/* when query sent */
 
 static void rip_input(struct sockaddr_in*, int);
 static int out(char *);
-static void trace_loop(char *argv[]);
-static void query_loop(char *argv[], int);
+static void trace_loop(char *argv[]) __attribute((__noreturn__));
+static void query_loop(char *argv[], int) __attribute((__noreturn__));
 static int getnet(char *, struct netinfo *);
 static u_int std_mask(u_int);
 static int parse_quote(char **, char *, char *, char *, int);
 
 
-void
+int
 main(int argc,
      char *argv[])
 {
