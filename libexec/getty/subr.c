@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.9 1994/08/17 20:10:40 pk Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.10 1994/08/17 20:28:00 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -245,9 +245,13 @@ setflags(n)
 	} else if (OP && !EP) {
 		BIS(iflag, ISTRIP|INPCK|IGNPAR);
 		BICS(cflag, CSIZE, PARENB|PARODD|CS7);
+		if (AP)
+			BIC(iflag, INPCK);
 	} else if (EP && !OP) {
 		BIS(iflag, ISTRIP|INPCK|IGNPAR);
 		BICS(cflag, CSIZE|PARODD, PARENB|CS7);
+		if (AP)
+			BIC(iflag, INPCK);
 	} else if (AP || EP && OP) {
 		BICS(iflag, INPCK|IGNPAR, ISTRIP);
 		BICS(cflag, CSIZE|PARODD, PARENB|CS7);
