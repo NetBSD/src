@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.4 1998/07/26 19:05:07 mycroft Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.5 1998/10/13 20:32:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,11 +35,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.4 1998/07/26 19:05:07 mycroft Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.5 1998/10/13 20:32:10 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
-
 #include <err.h>
 #include <limits.h>
 #include <pwd.h>
