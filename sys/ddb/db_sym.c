@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.33 2002/11/10 03:22:28 thorpej Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.34 2003/04/16 09:00:29 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.33 2002/11/10 03:22:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.34 2003/04/16 09:00:29 jdolecek Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -175,7 +175,7 @@ db_add_symbol_table(char *start, char *end, const char *name, char *ref)
  * Delete a symbol table. Caller is responsible for freeing storage.
  */
 void
-db_del_symbol_table(char *name)
+db_del_symbol_table(const char *name)
 {
 	int slot;
 
