@@ -1911,7 +1911,7 @@ line_t	*mark[MAXMARK];			/* line markers */
 int markno;				/* line marker count */
 
 /* getmark: return address of a marked line */
-int
+long
 getmark(n)
 	int n;
 { 	
