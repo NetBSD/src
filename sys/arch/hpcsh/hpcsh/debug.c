@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.6 2002/02/17 21:02:16 uch Exp $	*/
+/*	$NetBSD: debug.c,v 1.7 2002/03/28 15:24:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,13 +36,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "debug_hpc.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <machine/debug.h>
 #include <machine/bootinfo.h>
 
-#ifdef INTERRUPT_MONITOR
+#ifdef HPC_DEBUG_INTERRUPT_MONITOR
 static struct intr_state_rgb16 {
 	int cnt;
 	int phase;
@@ -80,4 +82,4 @@ __dbg_heart_beat(enum heart_beat cause) /* 16bpp R:G:B = 5:6:5 only */
 	    intr_state_rgb16->phase ? ~color : color;
 #undef LINE_STEP
 }
-#endif /* INTERRUPT_MONITOR */
+#endif /* HPC_DEBUG_INTERRUPT_MONITOR */
