@@ -42,13 +42,14 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.7 1998/05/18 06:54:01 mellon Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.2 1999/01/19 07:05:59 cgd Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
 #endif
 
 static char copyright[] =
 "Copyright 1995, 1996 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCPD $Name:  $";
+static char message [] = "Internet Software Consortium DHCPD";
+static char os_version [] = OS_VERSION;
 
 #include "dhcpd.h"
 
@@ -170,7 +171,7 @@ int main (argc, argv, envp)
 	}
 
 	if (!quiet) {
-		note (message);
+		note ("%s (%s)", message, os_version);
 		note (copyright);
 		note (arr);
 	}
