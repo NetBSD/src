@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.5 1997/09/09 02:40:43 mrg Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.6 1997/09/09 05:38:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static char const copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: fingerd.c,v 1.5 1997/09/09 02:40:43 mrg Exp $";
+static char const rcsid[] = "$NetBSD: fingerd.c,v 1.6 1997/09/09 05:38:26 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$NetBSD: fingerd.c,v 1.5 1997/09/09 02:40:43 mrg Exp $";
 #include "pathnames.h"
 
 void err __P((const char *, ...));
+int main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -70,15 +71,15 @@ main(argc, argv)
 {
 	register FILE *fp;
 	register int ch, ac = 2;
-	register char *lp;
+	register char *lp = NULL /* XXX gcc */;
 	struct hostent *hp;
 	struct sockaddr_in sin;
-	int p[2], logging, secure, user_required, short_list, sval;
+	int p[2], logging, no_forward, user_required, short_list, sval;
 #define	ENTRIES	50
-	char **ap, *av[ENTRIES + 1], **comp, line[1024], *prog;
+	char **ap, *av[ENTRIES + 1], **comp, line[1024], *prog, *s;
 
 	prog = _PATH_FINGER;
-	logging = secure = user_required = short_list = 0;
+	logging = no_forward = user_required = short_list = 0;
 	openlog("fingerd", LOG_PID | LOG_CONS, LOG_DAEMON);
 	opterr = 0;
 	while ((ch = getopt(argc, argv, "gsluSmpP:")) != EOF)
@@ -90,7 +91,7 @@ main(argc, argv)
 			prog = optarg;
 			break;
 		case 's':
-			secure = 1;
+			no_forward = 1;
 			break;
 		case 'u':
 			user_required = 1;
@@ -113,6 +114,7 @@ main(argc, argv)
 			err("illegal option -- %c", ch);
 		}
 
+
 	if (logging) {
 		sval = sizeof(sin);
 		if (getpeername(0, (struct sockaddr *)&sin, &sval) < 0)
@@ -122,19 +124,31 @@ main(argc, argv)
 			lp = hp->h_name;
 		else
 			lp = inet_ntoa(sin.sin_addr);
-		syslog(LOG_NOTICE, "query from %s", lp);
+	}
+	
+	if (!fgets(line, sizeof(line), stdin)) {
+		if (logging)
+			syslog(LOG_NOTICE, "query from %s", lp);
+		exit(1);
+	}
+	while ((s = strrchr(line, '\n')) != NULL ||
+	    (s = strrchr(line, '\r')) != NULL)
+		*s = '\0';
+
+	if (logging) {
+		if (*line == '\0')
+			syslog(LOG_NOTICE, "query from %s", lp);
+		else
+			syslog(LOG_NOTICE, "query from %s: %s", lp, line);
 	}
 
-	if (!fgets(line, sizeof(line), stdin))
-		exit(1);
-	
 	av[ac++] = "--";
 	comp = &av[1];
 	for (lp = line, ap = &av[ac]; ac < ENTRIES;) {
 		if ((*ap = strtok(lp, " \t\r\n")) == NULL)
 			break;
 		lp = NULL;
-		if (secure && strchr(*ap, '@')) {
+		if (no_forward && strchr(*ap, '@')) {
 			(void) puts("fowarding service denied\r\n");
 			exit(1);
 		}
@@ -174,7 +188,7 @@ main(argc, argv)
 	if (pipe(p) < 0)
 		err("pipe: %s", strerror(errno));
 
-	switch(vfork()) {
+	switch(fork()) {
 	case 0:
 		(void) close(p[0]);
 		if (p[1] != 1) {
