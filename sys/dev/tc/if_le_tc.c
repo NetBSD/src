@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.4 1997/03/15 18:12:06 is Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.5 1997/03/15 21:06:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -39,6 +39,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>

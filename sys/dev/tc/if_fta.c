@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.9 1997/03/15 18:12:03 is Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.10 1997/03/15 21:06:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -52,10 +52,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__NetBSD__)
 #include <netinet/if_inarp.h>
-#else
-#include <netinet/if_ether.h>
 #endif
 #include <net/if_fddi.h>
 
@@ -116,9 +113,6 @@ pdq_tc_attach(
 	printf("%s: initialization failed\n", sc->sc_dev.dv_xname);
 	return;
     }
-#if !defined(__NetBSD__)
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
-#endif
 
     pdq_ifattach(sc, NULL);
 

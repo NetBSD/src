@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.4 1997/03/15 18:12:05 is Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.5 1997/03/15 21:06:11 cgd Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -27,6 +27,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
