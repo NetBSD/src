@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.101 1998/09/26 20:15:59 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.102 1998/10/06 18:58:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -63,6 +63,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
+#include <sys/user.h>
 
 #include <net/if.h>
 
@@ -763,6 +764,7 @@ st_crazymap(n)
 void
 configure()
 {
+	extern struct user *proc0paddr;	/* XXX see below */
 
 	/* build the bootpath */
 	bootpath_build();
@@ -807,6 +809,13 @@ configure()
 	if (CPU_ISSUN4OR4C)
 		ienab_bis(IE_ALLIE);
 #endif
+
+	/*
+	 * XXX Re-zero proc0's user area, to nullify the effect of the
+	 * XXX stack running into it during auto-configuration.
+	 * XXX - should fix stack usage.
+	 */
+	bzero(proc0paddr, sizeof(struct user));
 
 	(void)spl0();
 	cold = 0;

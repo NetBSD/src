@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.131 1998/09/30 18:38:57 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.132 1998/10/06 18:58:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -214,7 +214,6 @@ cpu_startup()
 #endif
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	extern struct user *proc0paddr;
 
 #ifdef DEBUG
 	pmapdebug = 0;
@@ -396,14 +395,6 @@ cpu_startup()
 	 * Configure the system.  The cpu code will turn on the cache.
 	 */
 	configure();
-
-	/*
-	 * Re-zero proc0's user area, to nullify the effect of the
-	 * stack running into it during auto-configuration.
-	 * XXX - should fix stack usage.
-	 * XXX - there's a race here, as interrupts are enabled
-	 */
-	bzero(proc0paddr, sizeof(struct user));
 
 	pmap_redzone();
 }
