@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.61 2001/11/25 06:42:47 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.62 2001/12/14 04:21:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.61 2001/11/25 06:42:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.62 2001/12/14 04:21:22 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,17 +158,16 @@ sys_mincore(p, v, retval)
 	if (end <= start)
 		return (EINVAL);
 
-	npgs = len >> PAGE_SHIFT;
-
-	if (uvm_useracc(vec, npgs, B_WRITE) == FALSE)
-		return (EFAULT);
-
 	/*
 	 * Lock down vec, so our returned status isn't outdated by
 	 * storing the status byte for a page.
 	 */
 
-	uvm_vslock(p, vec, npgs, VM_PROT_WRITE);
+	npgs = len >> PAGE_SHIFT;
+	error = uvm_vslock(p, vec, npgs, VM_PROT_WRITE);
+	if (error) {
+		return error;
+	}
 	vm_map_lock_read(map);
 
 	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
