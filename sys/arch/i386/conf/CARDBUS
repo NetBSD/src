@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.14.2.8 2001/05/06 14:32:52 he Exp $
+#	$NetBSD: CARDBUS,v 1.14.2.9 2001/05/06 14:44:49 he Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -701,6 +701,7 @@ cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
+neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -744,6 +745,7 @@ audio*	at ess?
 audio*	at fms?
 audio*	at gus?
 audio*	at guspnp?
+audio*	at neo?
 audio*	at pas?
 audio*	at sb?
 audio*	at sp?
