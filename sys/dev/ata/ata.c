@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.10 1999/11/26 12:39:43 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -88,14 +88,21 @@ ata_get_params(drvp, flags, prms)
 		wdc_c.r_st_pmask = WDCS_DRQ;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: no disks\n"),
+		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
 	wdc_c.flags = AT_READ | flags;
 	wdc_c.data = tb;
 	wdc_c.bcount = DEV_BSIZE;
-	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
+	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_exec_command failed\n"),
+		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
+	}
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_c.flags=0x%x\n",
+		    wdc_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
 		/* Read in parameter block. */
