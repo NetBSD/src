@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.17 1996/02/21 02:27:57 cgd Exp $	*/
+/*	$NetBSD: pstat.c,v 1.18 1996/04/30 00:41:51 pk Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.17 1996/02/21 02:27:57 cgd Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.18 1996/04/30 00:41:51 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -614,6 +614,11 @@ mount_print(mp)
 			flags &= ~MNT_QUOTA;
 			comma = ",";
 		}
+		if (flags & MNT_ROOTFS) {
+			(void)printf("%srootfs", comma);
+			flags &= ~MNT_ROOTFS;
+			comma = ",";
+		}
 		/* filesystem control flags */
 		if (flags & MNT_UPDATE) {
 			(void)printf("%supdate", comma);
@@ -704,10 +709,10 @@ kinfo_vnodes(avnodes)
 	bp = vbuf;
 	evbuf = vbuf + (numvnodes + 20) * (VPTRSZ + VNODESZ);
 	KGET(V_MOUNTLIST, mountlist);
-	for (num = 0, mp = mountlist.cqh_first; ; mp = mp->mnt_list.cqe_next) {
+	for (num = 0, mp = mountlist.cqh_first; ; mp = mount.mnt_list.cqe_next) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		for (vp = mount.mnt_vnodelist.lh_first;
-		    vp != NULL; vp = vp->v_mntvnodes.le_next) {
+		    vp != NULL; vp = vnode.v_mntvnodes.le_next) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
 			if ((bp + VPTRSZ + VNODESZ) > evbuf)
 				/* XXX - should realloc */
