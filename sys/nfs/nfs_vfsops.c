@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.56 1997/01/31 03:00:31 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.57 1997/02/04 21:33:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -446,6 +446,9 @@ nfs_decode_args(nmp, argp)
 	/* Re-bind if rsrvd port requested and wasn't on one */
 	adjsock = !(nmp->nm_flag & NFSMNT_RESVPORT)
 		  && (argp->flags & NFSMNT_RESVPORT);
+	/* Also re-bind if we're switching to/from a connected UDP socket */
+	adjsock |= ((nmp->nm_flag & NFSMNT_NOCONN) !=
+		    (argp->flags & NFSMNT_NOCONN));
 
 	/* Update flags atomically.  Don't change the lock bits. */
 	nmp->nm_flag =
