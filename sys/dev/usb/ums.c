@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.41 2000/02/29 21:37:01 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.42 2000/03/27 12:33:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,12 +118,12 @@ struct ums_softc {
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
 #define MOUSE_FLAGS (HIO_RELATIVE)
 
-static void ums_intr __P((usbd_xfer_handle, usbd_private_handle,
+Static void ums_intr __P((usbd_xfer_handle, usbd_private_handle,
 			  usbd_status));
 
-static int	ums_enable __P((void *));
-static void	ums_disable __P((void *));
-static int	ums_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+Static int	ums_enable __P((void *));
+Static void	ums_disable __P((void *));
+Static int	ums_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
 const struct wsmouse_accessops ums_accessops = {
 	ums_enable,
@@ -409,7 +409,7 @@ ums_intr(xfer, addr, status)
 	}
 }
 
-static int
+Static int
 ums_enable(v)
 	void *v;
 {
@@ -441,7 +441,7 @@ ums_enable(v)
 	return (0);
 }
 
-static void
+Static void
 ums_disable(v)
 	void *v;
 {
@@ -462,7 +462,7 @@ ums_disable(v)
 	sc->sc_enabled = 0;
 }
 
-static int
+Static int
 ums_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
