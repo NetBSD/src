@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.15 2001/10/26 16:03:24 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.16 2002/01/29 10:20:29 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.15 2001/10/26 16:03:24 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.16 2002/01/29 10:20:29 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,11 +92,14 @@ __RCSID("$NetBSD: ftree.c,v 1.15 2001/10/26 16:03:24 lukem Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <fts.h>
 #include "pax.h"
 #include "ftree.h"
 #include "extern.h"
 #include "mtree.h"
+
+#if HAVE_FTS_H
+#include <fts.h>
+#endif
 
 /*
  * routines to interface with the fts library function.
@@ -487,10 +490,16 @@ next_file(ARCHD *arcn)
 			statbuf.st_gid = ftnode->st_gid;
 		if (ftnode->flags & (F_UID | F_UNAME))
 			statbuf.st_uid = ftnode->st_uid;
+#if HAVE_STRUCT_STAT_ST_FLAGS
 		if (ftnode->flags & F_FLAGS)
 			statbuf.st_flags = ftnode->st_flags;
+#endif
 		if (ftnode->flags & F_TIME)
+#ifdef BSD4_4
 			statbuf.st_mtimespec = ftnode->st_mtimespec;
+#else
+			statbuf.st_mtime = ftnode->st_mtimespec.tv_sec;
+#endif
 		if (ftnode->flags & F_DEV)
 			statbuf.st_rdev = ftnode->st_rdev;
 		if (ftnode->flags & F_SLINK)

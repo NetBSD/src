@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.10 2001/07/01 02:46:47 gmcgarry Exp $	*/
+/*	$NetBSD: pack.c,v 1.11 2002/01/29 10:20:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "defs.h"
 
 /*
  * Packing.  We have three separate kinds of packing here.

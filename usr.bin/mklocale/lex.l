@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.3 2000/12/22 06:04:21 itojun Exp $	*/
+/*	$NetBSD: lex.l,v 1.4 2002/01/29 10:20:35 tv Exp $	*/
 
 %{
 /*-
@@ -37,12 +37,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lex.l,v 1.3 2000/12/22 06:04:21 itojun Exp $");
+__RCSID("$NetBSD: lex.l,v 1.4 2002/01/29 10:20:35 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,11 +61,7 @@ __RCSID("$NetBSD: lex.l,v 1.3 2000/12/22 06:04:21 itojun Exp $");
 #include <stdlib.h>
 
 #include "ldef.h"
-#ifdef __NetBSD__
 #include "yacc.h"
-#else
-#include "y.tab.h"
-#endif
 
 int yylex __P((void));
 %}

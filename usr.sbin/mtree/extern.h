@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2002/01/29 00:07:27 tv Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 2002/01/29 10:20:38 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,6 +43,7 @@
 #define HAVE_ERR_H 1
 #define HAVE_FTS_H 1
 #define HAVE_VIS_H 1
+#define HAVE_UTIL_H 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif
  

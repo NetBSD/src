@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.20 2001/03/21 05:52:11 mycroft Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.21 2002/01/29 10:20:36 tv Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.20 2001/03/21 05:52:11 mycroft Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.21 2002/01/29 10:20:36 tv Exp $");
 #endif
 #endif
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: rpc_main.c,v 1.20 2001/03/21 05:52:11 mycroft Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <err.h>
 #include <sys/types.h>
 #ifdef __TURBOC__
 #define	MAXPATHLEN	80
@@ -64,6 +63,10 @@ __RCSID("$NetBSD: rpc_main.c,v 1.20 2001/03/21 05:52:11 mycroft Exp $");
 #include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
 
 #define EXTEND	1		/* alias for TRUE */
 #define DONT_EXTEND	0	/* alias for FALSE */
@@ -90,7 +93,7 @@ struct commandline {
 static char *cmdname;
 
 static char *svcclosetime = "120";
-static char *CPP = "/usr/bin/cpp";
+static char *CPP;
 static char CPPFLAGS[] = "-C";
 static char pathbuf[MAXPATHLEN + 1];
 static char *allv[] = {
@@ -172,6 +175,8 @@ main(argc, argv)
 	struct commandline cmd;
 
 	setprogname(argv[0]);
+	if (!(CPP = getenv("CPP")))
+		CPP = "/usr/bin/cpp";
 
 	(void) memset((char *) &cmd, 0, sizeof(struct commandline));
 	clear_args();

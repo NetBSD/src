@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.65 2002/01/19 17:07:51 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.66 2002/01/29 10:20:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,15 +60,20 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
-#include "config.h"
+#include "defs.h"
 #include "sem.h"
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
+#if HAVE_VIS_H
+#include <vis.h>
+#endif
 
 int	vflag;				/* verbose output */
 int	Pflag;				/* pack locators */
@@ -105,7 +110,7 @@ void	defopt(struct hashtab *ht, const char *fname,
 static	void	logconfig_start(void);
 static	void	logconfig_end(void);
 static	FILE	*cfg;
-static	struct timespec cfgtime;
+static	time_t	cfgtime;
 
 int badfilename(const char *fname);
 
@@ -1012,7 +1017,7 @@ logconfig_start(void)
 
 	if (yyin == NULL || fstat(fileno(yyin), &st) == -1)
 		return;
-	cfgtime = st.st_mtimespec;
+	cfgtime = st.st_mtime;
 
 	tmpdir = getenv("TMPDIR");
 	if (tmpdir == NULL)
@@ -1081,10 +1086,8 @@ logconfig_include(FILE *cf, const char *filename)
 
 	if (fstat(fileno(cf), &st) == -1)
 		return;
-	if (cfgtime.tv_sec < st.st_mtimespec.tv_sec ||
-	    (cfgtime.tv_sec == st.st_mtimespec.tv_sec &&
-	    cfgtime.tv_nsec < st.st_mtimespec.tv_nsec))
-		cfgtime = st.st_mtimespec;
+	if (cfgtime < st.st_mtime)
+		cfgtime = st.st_mtime;
 
 	if (filename)
 		(void)fprintf(cfg,
@@ -1133,9 +1136,7 @@ logconfig_end(void)
 	rewind(cfg);
 
 	if (stat("config_file.h", &st) != -1) {
-		if (cfgtime.tv_sec < st.st_mtimespec.tv_sec ||
-		    (cfgtime.tv_sec == st.st_mtimespec.tv_sec &&
-		    cfgtime.tv_nsec < st.st_mtimespec.tv_nsec)) {
+		if (cfgtime < st.st_mtime) {
 			fclose(cfg);
 			return;
 		}

@@ -33,7 +33,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-  /* $NetBSD: parse.y,v 1.9 1998/01/05 05:15:57 perry Exp $ */
+  /* $NetBSD: parse.y,v 1.10 2002/01/29 10:20:34 tv Exp $ */
 
 
 /* Some versions of bison are broken in that they use alloca() but don't
@@ -291,7 +291,7 @@ flexrule	:  '^' rule
 						scon_stk[++scon_stk_ptr] = i;
 
 				if ( scon_stk_ptr == 0 )
-					warn(
+					lwarn(
 			"all start conditions already have <<EOF>> rules" );
 
 				else
@@ -386,7 +386,7 @@ rule		:  re2 re
 				 * erroneously.
 				 */
 				if ( ! varlength || headcnt != 0 )
-					warn(
+					lwarn(
 		"trailing context made variable due to preceding '|' action" );
 
 				/* Mark as variable. */
@@ -440,7 +440,7 @@ rule		:  re2 re
 				/* See the comment in the rule for "re2 re"
 				 * above.
 				 */
-				warn(
+				lwarn(
 		"trailing context made variable due to preceding '|' action" );
 
 				varlength = true;
@@ -842,13 +842,13 @@ char msg[], arg[];
 	char warn_msg[MAXLINE];
 
 	(void) sprintf( warn_msg, msg, arg );
-	warn( warn_msg );
+	lwarn( warn_msg );
 	}
 
 
-/* warn - report a warning, unless -w was given */
+/* lwarn - report a warning, unless -w was given */
 
-void warn( str )
+void lwarn( str )
 char str[];
 	{
 	line_warning( str, linenum );
