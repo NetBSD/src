@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.371 2001/06/19 23:59:20 thorpej Exp $
+# $NetBSD: mi,v 1.372 2001/06/21 02:34:50 assar Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1342,6 +1342,7 @@
 ./usr/share/man/cat8/ndbootd.0			man-bootserver-catman
 ./usr/share/man/cat8/ndc.0			man-bind-catman
 ./usr/share/man/cat8/ndp.0			man-netutil-catman
+./usr/share/man/cat8/netbsd32.0			man-sys-catman
 ./usr/share/man/cat8/netgroup_mkdb.0		man-nis-catman
 ./usr/share/man/cat8/newbtconf.0		man-sysutil-catman
 ./usr/share/man/cat8/newfs.0			man-sysutil-catman
@@ -2880,6 +2881,7 @@
 ./usr/share/man/man8/ndbootd.8			man-bootserver-man
 ./usr/share/man/man8/ndc.8			man-bind-man
 ./usr/share/man/man8/ndp.8			man-netutil-man
+./usr/share/man/man8/netbsd32.8			man-sys-man
 ./usr/share/man/man8/netgroup_mkdb.8		man-nis-man
 ./usr/share/man/man8/newbtconf.8		man-sysutil-man
 ./usr/share/man/man8/newfs.8			man-sysutil-man
