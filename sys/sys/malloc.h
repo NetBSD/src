@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.52 2000/06/24 22:24:15 pk Exp $	*/
+/*	$NetBSD: malloc.h,v 1.53 2000/06/24 23:52:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -41,6 +41,7 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_kmemstats.h"
 #include "opt_malloclog.h"
+#include "opt_lockdebug.h"
 #endif
 
 /*
