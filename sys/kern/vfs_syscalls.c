@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.214 2005/01/02 16:08:29 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.215 2005/01/24 21:27:02 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.214 2005/01/02 16:08:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.215 2005/01/24 21:27:02 dbj Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -402,6 +402,8 @@ checkdirs(olddp)
 	proclist_lock_read();
 	PROCLIST_FOREACH(p, &allproc) {
 		cwdi = p->p_cwdi;
+		if (!cwdi)
+			continue;
 		if (cwdi->cwdi_cdir == olddp) {
 			vrele(cwdi->cwdi_cdir);
 			VREF(newdp);
