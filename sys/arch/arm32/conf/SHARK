@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.24 1999/07/29 10:37:15 augustss Exp $
+#	$NetBSD: SHARK,v 1.25 1999/09/16 16:49:49 matt Exp $
 # From:  NetBSD: GENERIC,v 1.55 1999/03/27 07:11:36 explorer Exp
 #
 #	SHARK
@@ -27,6 +27,7 @@ options 	CPU_SA110	# Support the SA110 core
 options 	OFW		# Enable common Open Firmware bits
 options 	SHARK		# We are a Shark
 options 	NSIO		# We are using the National Semi SuperIO
+makeoptions	COPTS="-O2 -march=strongarm -mtune=strongarm"
 
 # compatibility with old version of OFW, which may have incorrect
 # properties and/or may set up devices incorrectly.
