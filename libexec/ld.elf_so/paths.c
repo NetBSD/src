@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.17 2002/09/12 22:56:28 mycroft Exp $	 */
+/*	$NetBSD: paths.c,v 1.18 2002/09/28 05:00:27 junyoung Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -85,7 +85,7 @@ _rtld_append_path(head_p, path_p, bp, ep)
 	if (_rtld_find_path(*head_p, bp, ep - bp) != NULL)
 		return path_p;
 
-	path = CNEW(Search_Path);
+	path = NEW(Search_Path);
 	path->sp_pathlen = ep - bp;
 	cp = xmalloc(path->sp_pathlen + 1);
 	strncpy(cp, bp, path->sp_pathlen);
