@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.3 1996/09/02 17:35:52 mhitch Exp $	*/
+/*	$NetBSD: ims332.c,v 1.4 1996/10/13 13:13:57 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -48,7 +48,6 @@
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
-#include <machine/machConst.h>
 #include <pmax/dev/ims332.h>
 
 static u_int ims332_read_register (struct fbinfo *, int);

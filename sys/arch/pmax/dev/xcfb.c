@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.18 1996/10/13 03:39:43 christos Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.19 1996/10/13 13:14:04 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -105,9 +105,9 @@ xcfb needs dtop device
 #include <sys/device.h>
 #include <dev/tc/tcvar.h>
 #include <machine/autoconf.h>
-#include <machine/machConst.h>
-#include <machine/pmioctl.h>
+#include <mips/cpuregs.h>		/* mips cached->uncached */
 
+#include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 

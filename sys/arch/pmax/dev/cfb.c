@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.23 1996/10/13 03:39:27 christos Exp $	*/
+/*	$NetBSD: cfb.c,v 1.24 1996/10/13 13:13:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
 #include <sys/device.h>
 #include <dev/tc/tcvar.h>
 
-#include <machine/machConst.h>
+#include <mips/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>

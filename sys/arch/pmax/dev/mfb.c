@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.19 1996/10/13 03:39:34 christos Exp $	*/
+/*	$NetBSD: mfb.c,v 1.20 1996/10/13 13:13:59 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@
 #include <dev/tc/tcvar.h>
 #include <machine/autoconf.h>
 
-#include <machine/machConst.h>
+#include <mips/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>

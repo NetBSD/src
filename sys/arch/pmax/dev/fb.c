@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.16 1996/10/13 12:47:55 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.17 1996/10/13 13:13:56 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
 #include <sys/conf.h>
 #include <machine/conf.h>
 
-#include <machine/machConst.h>
+#include <mips/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>
