@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.6 2001/01/08 18:00:31 jdolecek Exp $	*/
+/*	$NetBSD: sort.h,v 1.7 2001/01/08 18:35:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -133,7 +133,7 @@ struct field {
 
 union f_handle {
 	int top;
-	char **names;
+	const char * const * names;
 };
 extern int PANIC;	/* maximum depth of fsort before fmerge is called */
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
