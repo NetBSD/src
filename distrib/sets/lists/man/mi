@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.215 2000/03/14 09:06:52 shin Exp $
+# $NetBSD: mi,v 1.216 2000/03/16 15:35:29 ad Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -1316,6 +1316,8 @@
 ./usr/share/man/man4/boca.4
 ./usr/share/man/man4/bpf.4
 ./usr/share/man/man4/bt.4
+./usr/share/man/man4/ca.4
+./usr/share/man/man4/cac.4
 ./usr/share/man/man4/cardbus.4
 ./usr/share/man/man4/cbb.4
 ./usr/share/man/man4/ccd.4
