@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.14 1997/06/14 08:43:30 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.15 1997/09/21 22:59:03 cjs Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -200,6 +200,9 @@ The login name must be allowed based on the information in
 .It
 The user must have a standard shell returned by
 .Xr getusershell 3 .
+(If the user's shell field in the password database is empty, the
+shell is assumed to be
+.Pa /bin/sh . )
 .It
 If the user name appears in the file
 .Pa /etc/ftpchroot
