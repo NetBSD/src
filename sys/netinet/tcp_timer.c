@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_timer.c,v 1.21.2.1 1997/11/08 06:31:34 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.21.2.2 1998/01/29 10:27:45 mellon Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_timer.c	8.1 (Berkeley) 6/10/93
+ *	@(#)tcp_timer.c	8.2 (Berkeley) 5/24/95
  */
 
 #ifndef TUBA_INCLUDE
@@ -62,30 +62,36 @@
 
 int	tcp_keepidle = TCPTV_KEEP_IDLE;
 int	tcp_keepintvl = TCPTV_KEEPINTVL;
+int	tcp_keepcnt = TCPTV_KEEPCNT;		/* max idle probes */
+int	tcp_maxpersistidle = TCPTV_KEEP_IDLE;	/* max idle time in persist */
 int	tcp_maxidle;
+#else /* TUBA_INCLUDE */
+
+extern	int tcp_keepcnt;
+extern	int tcp_maxpersistidle;
 #endif /* TUBA_INCLUDE */
+
+struct tcp_delack_head tcp_delacks;
+
 /*
  * Fast timeout routine for processing delayed acks
  */
 void
 tcp_fasttimo()
 {
-	register struct inpcb *inp;
-	register struct tcpcb *tp;
+	register struct tcpcb *tp, *ntp;
 	int s;
 
 	s = splsoftnet();
-	inp = tcbtable.inpt_queue.cqh_first;
-	if (inp)						/* XXX */
-	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
-	    inp = inp->inp_queue.cqe_next) {
-		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
-		    (tp->t_flags & TF_DELACK)) {
-			tp->t_flags &= ~TF_DELACK;
-			tp->t_flags |= TF_ACKNOW;
-			tcpstat.tcps_delack++;
-			(void) tcp_output(tp);
-		}
+	for (tp = tcp_delacks.lh_first; tp != NULL; tp = ntp) {
+		/*
+		 * If tcp_output() can't transmit the ACK for whatever
+		 * reason, it will remain on the queue for the next
+		 * time the heartbeat ticks.
+		 */
+		ntp = tp->t_delack.le_next;
+		tp->t_flags |= TF_ACKNOW;
+		(void) tcp_output(tp);
 	}
 	splx(s);
 }
@@ -105,7 +111,7 @@ tcp_slowtimo()
 	static int syn_cache_last = 0;
 
 	s = splsoftnet();
-	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
+	tcp_maxidle = tcp_keepcnt * tcp_keepintvl;
 	/*
 	 * Search through tcb's and update active timers.
 	 */
@@ -117,7 +123,7 @@ tcp_slowtimo()
 	for (; inp != (struct inpcb *)&tcbtable.inpt_queue; inp = ninp) {
 		ninp = inp->inp_queue.cqe_next;
 		tp = intotcpcb(inp);
-		if (tp == 0)
+		if (tp == 0 || tp->t_state == TCPS_LISTEN)
 			continue;
 		for (i = 0; i < TCPT_NTIMERS; i++) {
 			if (tp->t_timer[i] && --tp->t_timer[i] == 0) {
@@ -169,6 +175,8 @@ tcp_canceltimers(tp)
 
 int	tcp_backoff[TCP_MAXRXTSHIFT + 1] =
     { 1, 2, 4, 8, 16, 32, 64, 64, 64, 64, 64, 64, 64 };
+
+int	tcp_totbackoff = 511;	/* sum of tcp_backoff[] */
 
 /*
  * TCP timer processing.
@@ -232,7 +240,7 @@ tcp_timers(tp, timer)
 		 */
 		tp->t_rtt = 0;
 		/*
-		 * Close the congestion window down to one segment
+		 * Close the congestion window down to the initial window
 		 * (we'll open it by one segment for each ack we get).
 		 * Since we probably have a window's worth of unacked
 		 * data accumulated, this "slow start" keeps us from
@@ -259,7 +267,7 @@ tcp_timers(tp, timer)
 		u_int win = min(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_segsz;
 		if (win < 2)
 			win = 2;
-		tp->snd_cwnd = tp->t_segsz;
+		tp->snd_cwnd = TCP_INITIAL_WINDOW(tp->t_segsz);
 		tp->snd_ssthresh = win * tp->t_segsz;
 		tp->t_dupacks = 0;
 		}
@@ -271,6 +279,20 @@ tcp_timers(tp, timer)
 	 * Force a byte to be output, if possible.
 	 */
 	case TCPT_PERSIST:
+		/*
+		 * Hack: if the peer is dead/unreachable, we do not
+		 * time out if the window is closed.  After a full
+		 * backoff, drop the connection if the idle time
+		 * (no responses to probes) reaches the maximum
+		 * backoff that we would use if retransmitting.
+		 */
+		if (tp->t_rxtshift == TCP_MAXRXTSHIFT &&
+		    (tp->t_idle >= tcp_maxpersistidle ||
+		    tp->t_idle >= TCP_REXMTVAL(tp) * tcp_totbackoff)) {
+			tcpstat.tcps_persistdrops++;
+			tp = tcp_drop(tp, ETIMEDOUT);
+			break;
+		}
 		tcpstat.tcps_persisttimeo++;
 		tcp_setpersist(tp);
 		tp->t_force = 1;
