@@ -1,6 +1,7 @@
-# $NetBSD: sshd,v 1.4 2005/02/27 03:40:14 thorpej Exp $
+# $NetBSD: display_manager,v 1.1 2005/02/27 03:40:14 thorpej Exp $
 #
-# PAM configuration for the "sshd" service
+# PAM configuration for the display manager services.  Specific display
+# manager service configurations can include this one.
 #
 
 # auth
@@ -11,13 +12,9 @@ auth		required	pam_unix.so		no_warn try_first_pass
 
 # account
 account 	required	pam_krb5.so
-account		required	pam_login_access.so
 account		required	pam_unix.so
 
 # session
+# XXX pam_lastlog.so?
 session 	optional	pam_ssh.so
 session		required	pam_permit.so
-
-# password
-password	sufficient	pam_krb5.so		no_warn try_first_pass
-password	required	pam_unix.so		no_warn try_first_pass
