@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2001/01/14 03:23:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2001/02/03 12:57:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -142,9 +142,6 @@
 /* XXX - What headers declare these? */
 extern struct pcb *curpcb;
 extern int physmem;
-
-extern void copypage __P((const void*, void*));
-extern void zeropage __P((void*));
 
 /* Defined in locore.s */
 extern char kernel_text[];
