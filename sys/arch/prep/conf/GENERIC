@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.79 2004/06/26 21:51:04 kleink Exp $
+# $NetBSD: GENERIC,v 1.80 2004/06/28 21:07:49 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.79 $"
+#ident		"GENERIC-$Revision: 1.80 $"
 
 maxusers	32
 
@@ -54,6 +54,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
 
