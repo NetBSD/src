@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.21 1997/10/13 00:48:16 explorer Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.21.2.1 1997/11/08 06:31:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -256,11 +256,11 @@ tcp_timers(tp, timer)
 		 * to go below this.)
 		 */
 		{
-		u_int win = min(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_maxseg;
+		u_int win = min(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_segsz;
 		if (win < 2)
 			win = 2;
-		tp->snd_cwnd = tp->t_maxseg;
-		tp->snd_ssthresh = win * tp->t_maxseg;
+		tp->snd_cwnd = tp->t_segsz;
+		tp->snd_ssthresh = win * tp->t_segsz;
 		tp->t_dupacks = 0;
 		}
 		(void) tcp_output(tp);
