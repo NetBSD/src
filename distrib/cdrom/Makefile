@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2002/12/09 14:20:52 scw Exp $
+# $NetBSD: Makefile,v 1.16 2003/02/13 23:55:12 jmc Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -302,7 +302,8 @@ USE-FILE: .USE
 			cp `pwd -P`/${>:S/,link$//} $@;; \
 		*.tgz,*) \
 			echo "Extracting: $> --> $@..."; \
-			tar --fast-read -xzOf ${>:C/,.*$//} ${>:C/^.*,//} >$@;; \
+			tar --fast-read -xzf ${>:C/,.*$//} ${>:C/^.*,//} ; \
+			cp ${>:C/^.*,//} $@; rm -rf ${>:C/^.*,//} ;; \
 		*.gz) echo "gunzip -c <$> >$@"; gunzip -c <$> >$@;; \
 		*) echo "Unknown archive method for $@"; false;; \
 	esac; else true; fi
