@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.16 1998/07/05 06:49:03 jonathan Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.17 1999/03/25 23:10:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -118,9 +118,6 @@
 #include <amiga/dev/if_qnreg.h>
 
 
-#define ETHER_MIN_LEN	60
-#define ETHER_MAX_LEN	1514
-#define ETHER_HDR_SIZE	14
 #define	NIC_R_MASK	(R_INT_PKT_RDY | R_INT_ALG_ERR |\
 			 R_INT_CRC_ERR | R_INT_OVR_FLO)
 #define	MAX_PACKETS	30 /* max number of packets read per interrupt */
@@ -539,14 +536,15 @@ qn_put(addr, m)
 		*addr = *((u_short *)savebyte);
 	}
 
-	if(totlen < ETHER_MIN_LEN) {
+	if(totlen < (ETHER_MIN_LEN - ETHER_CRC_LEN)) {
 		/*
 		 * Fill the rest of the packet with zeros.
 		 * N.B.: This is required! Otherwise MB86950 fails.
 		 */
-		for(len = totlen + 1; len < ETHER_MIN_LEN; len += 2)
+		for(len = totlen + 1; len < (ETHER_MIN_LEN - ETHER_CRC_LEN);
+		    len += 2)
 	  		*addr = (u_short)0x0000;
-		totlen = ETHER_MIN_LEN;
+		totlen = (ETHER_MIN_LEN - ETHER_CRC_LEN);
 	}
 
 	return (totlen);
@@ -737,17 +735,18 @@ qn_rint(sc, rstat)
 		len = ((len << 8) & 0xff00) | ((len >> 8) & 0x00ff);
 
 #ifdef QN_CHECKS
-		if (len > ETHER_MAX_LEN || len < ETHER_HDR_SIZE) {
+		if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN) ||
+		    len < ETHER_HDR_LEN) {
 			log(LOG_WARNING,
 			    "%s: received a %s packet? (%u bytes)\n",
 			    sc->sc_dev.dv_xname,
-			    len < ETHER_HDR_SIZE ? "partial" : "big", len);
+			    len < ETHER_HDR_LEN ? "partial" : "big", len);
 			++sc->sc_ethercom.ec_if.if_ierrors;
 			continue;
 		}
 #endif
 #ifdef QN_CHECKS
-		if (len < ETHER_MIN_LEN)
+		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
 			log(LOG_WARNING,
 			    "%s: received a short packet? (%u bytes)\n",
 			    sc->sc_dev.dv_xname, len);
