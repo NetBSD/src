@@ -1,8 +1,9 @@
-# $NetBSD: master,v 1.2 1998/01/26 07:56:13 hubertf Exp $
+# $NetBSD: master,v 1.3 1998/06/17 07:46:29 tron Exp $
 #
 # ** BE SURE TO REMOVE ANY COMMENT-LINES FROM THIS FILE BEFORE USING IT! **
 #
 # Main config file, see amd(8).
 #
 -w 900
+/mnt		/etc/amd/mnt
 /net		/etc/amd/net
