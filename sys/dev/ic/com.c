@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.43 1995/01/03 01:30:28 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.44 1995/01/04 00:47:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -164,7 +164,6 @@ comprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct com_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	int iobase = ia->ia_iobase;
 

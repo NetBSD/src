@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.15 1995/01/03 22:38:54 mycroft Exp $	*/
+/*	$NetBSD: ast.c,v 1.16 1995/01/04 00:47:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -82,10 +82,9 @@ astsubmatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct ast_softc *sc = (void *)parent;
-	struct device *self = match;
+	struct cfdata *cf = match;
 	struct isa_attach_args *ia = aux;
 	struct ast_attach_args *aa = ia->ia_aux;
-	struct cfdata *cf = self->dv_cfdata;
 
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != aa->aa_slave)
 		return (0);
