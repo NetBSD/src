@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.198 2004/07/24 12:04:32 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.199 2004/10/25 10:42:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -9068,7 +9068,9 @@ ENTRY(pseg_get)
 	 nop
 #endif
 1:
+#ifndef _LP64
 	clr	%o1
+#endif
 	retl
 	 clr	%o0
 
