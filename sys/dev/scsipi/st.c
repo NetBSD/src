@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.156 2002/07/22 14:59:45 hannken Exp $ */
+/*	$NetBSD: st.c,v 1.157 2002/09/06 13:18:43 gehenna Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.156 2002/07/22 14:59:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.157 2002/09/06 13:18:43 gehenna Exp $");
 
 #include "opt_scsi.h"
 
@@ -98,6 +98,23 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.156 2002/07/22 14:59:45 hannken Exp $");
 #ifndef		ST_MOUNT_DELAY
 #define		ST_MOUNT_DELAY		0
 #endif
+
+dev_type_open(stopen);
+dev_type_close(stclose);
+dev_type_read(stread);
+dev_type_write(stwrite);
+dev_type_ioctl(stioctl);
+dev_type_strategy(ststrategy);
+dev_type_dump(stdump);
+
+const struct bdevsw st_bdevsw = {
+	stopen, stclose, ststrategy, stioctl, stdump, nosize, D_TAPE
+};
+
+const struct cdevsw st_cdevsw = {
+	stopen, stclose, stread, stwrite, stioctl,
+	nostop, notty, nopoll, nommap, D_TAPE
+};
 
 /*
  * Define various devices that we know mis-behave in some way,
@@ -417,12 +434,8 @@ stdetach(self, flags)
 	int s, bmaj, cmaj, mn;
 
 	/* locate the major number */
-	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == stopen)
-			break;
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == stopen)
-			break;
+	bmaj = bdevsw_lookup_major(&st_bdevsw);
+	cmaj = cdevsw_lookup_major(&st_cdevsw);
 
 	s = splbio();
 

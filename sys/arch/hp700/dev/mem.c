@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 2002/06/06 19:48:04 fredette Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -116,9 +116,14 @@ struct cfattach mem_ca = {
 
 extern struct cfdriver mem_cd;
 
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
+
+const struct cdevsw mem_cdevsw {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap,
+};
 
 static caddr_t zeropage;
 
@@ -219,26 +224,6 @@ viper_eisa_en()
 	if (sc->sc_vp)
 		((struct vi_ctrl *)&VI_CTRL)->eisa_den = 0;
 	hp700_pagezero_unmap(pagezero_cookie);
-}
-
-int
-mmopen(dev, flag, ioflag, p)
-	dev_t dev;
-	int flag;
-	int ioflag;
-	struct proc *p;
-{
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;  
-	int flag, mode;
-	struct proc *p;
-{
-	return (0);
 }
 
 int
