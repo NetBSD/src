@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.94 1998/09/08 20:02:52 rvb Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.95 1998/09/13 22:28:16 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -404,6 +404,29 @@ async_daemon(p, v, retval)
 }
 #endif /* NFS */
 
+void	native_to_sunos_sigset __P((const sigset_t *, int *));
+void	sunos_to_native_sigset __P((const int, sigset_t *));
+
+__inline__ void
+native_to_sunos_sigset(ss, mask)
+	const sigset_t *ss;
+	int *mask;
+{
+	*mask = ss->__bits[0];
+}
+
+__inline__ void
+sunos_to_native_sigset(mask, ss)
+	const int mask;
+	sigset_t *ss;
+{
+
+	ss->__bits[0] = mask;
+	ss->__bits[1] = 0;
+	ss->__bits[2] = 0;
+	ss->__bits[3] = 0;
+}
+
 int
 sunos_sys_sigpending(p, v, retval)
 	struct proc *p;
@@ -411,9 +434,30 @@ sunos_sys_sigpending(p, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_sigpending_args *uap = v;
-	int mask = p->p_siglist & p->p_sigmask;
+	sigset_t ss;
+	int mask;
+
+	sigpending1(p, &ss);
+	native_to_sunos_sigset(&ss, &mask);
 
 	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
+}
+
+int     
+sunos_sys_sigsuspend(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos_sys_sigsuspend_args /* {
+		syscallarg(int) mask;
+	} */ *uap = v;
+	int mask;
+	sigset_t ss;
+        
+	mask = SCARG(uap, mask);
+	sunos_to_native_sigset(mask, &ss);
+	return (sigsuspend1(p, &ss));
 }
 
 /*
@@ -1205,57 +1249,50 @@ sunos_sys_sigvec(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_sigvec_args /* {
+	struct sunos_sys_sigvec_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct sigvec *) nsv;
 		syscallarg(struct sigvec *) osv;
 	} */ *uap = v;
-	struct sigvec vec;
-	register struct sigacts *ps = p->p_sigacts;
-	register struct sigvec *sv;
-	register int signum;
-	int bit, error;
+	struct sigvec nsv, osv;
+	struct sigaction nsa, osa;
+	int error;
+/*XXX*/extern	void compat_43_sigvec_to_sigaction
+		__P((const struct sigvec *, struct sigaction *));
+/*XXX*/extern	void compat_43_sigaction_to_sigvec
+		__P((const struct sigaction *, struct sigvec *));
 
-	signum = SCARG(uap, signum);
-	if (signum <= 0 || signum >= NSIG ||
-	    signum == SIGKILL || signum == SIGSTOP)
-		return (EINVAL);
-	sv = &vec;
-	if (SCARG(uap, osv)) {
-		*(sig_t *)&sv->sv_handler = ps->ps_sigact[signum];
-		sv->sv_mask = ps->ps_catchmask[signum];
-		bit = sigmask(signum);
-		sv->sv_flags = 0;
-		if ((ps->ps_sigonstack & bit) != 0)
-			sv->sv_flags |= SV_ONSTACK;
-		if ((ps->ps_sigintr & bit) != 0)
-			sv->sv_flags |= SV_INTERRUPT;
-		if ((ps->ps_sigreset & bit) != 0)
-			sv->sv_flags |= SA_RESETHAND;
-		sv->sv_mask &= ~bit;
-		error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
-		    sizeof (vec));
-		if (error)
-			return (error);
-	}
 	if (SCARG(uap, nsv)) {
-		error = copyin((caddr_t)SCARG(uap, nsv), (caddr_t)sv,
-		    sizeof (vec));
-		if (error)
+		error = copyin(SCARG(uap, nsv), &nsv, sizeof(nsv));
+		if (error != 0)
 			return (error);
+
 		/*
 		 * SunOS uses the mask 0x0004 as SV_RESETHAND
 		 * meaning: `reset to SIG_DFL on delivery'.
 		 * We support only the bits in: 0xF
 		 * (those bits are the same as ours)
 		 */
-		if (sv->sv_flags & ~0xF)
+		if (nsv.sv_flags & ~0xF)
 			return (EINVAL);
+
+		compat_43_sigvec_to_sigaction(&nsv, &nsa);
+
 		/* SunOS binaries have a user-mode trampoline. */
-		sv->sv_flags |= SA_USERTRAMP;
-		/* Convert sigvec:SV_INTERRUPT to sigaction:SA_RESTART */
-		sv->sv_flags ^= SA_RESTART;	/* same bit, inverted */
-		setsigvec(p, signum, (struct sigaction *)sv);
+		nsa.sa_flags |= SA_USERTRAMP;
 	}
+	error = sigaction1(p, SCARG(uap, signum),
+			   SCARG(uap, nsv) ? &nsa : 0,
+			   SCARG(uap, osv) ? &osa : 0);
+	if (error != 0)
+		return (error);
+
+	if (SCARG(uap, osv)) {
+		compat_43_sigaction_to_sigvec(&osa, &osv);
+		error = copyout(SCARG(uap, osv), &osv, sizeof(osv));
+		if (error != 0)
+			return (error);
+	}
+
 	return (0);
 }
