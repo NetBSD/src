@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.36 1995/01/09 19:54:28 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.37 1995/01/15 09:23:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -94,7 +94,7 @@ vntblinit()
 {
 
 	TAILQ_INIT(&vnode_free_list);
-	CIRCLEQ_INIT(&mountlist);
+	TAILQ_INIT(&mountlist);
 }
 
 /*
@@ -175,8 +175,7 @@ getvfs(fsid)
 {
 	register struct mount *mp;
 
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
-	     mp = mp->mnt_list.cqe_next)
+	for (mp = mountlist.tqh_first; mp != NULL; mp = mp->mnt_list.tqe_next)
 		if (mp->mnt_stat.f_fsid.val[0] == fsid->val[0] &&
 		    mp->mnt_stat.f_fsid.val[1] == fsid->val[1])
 			return (mp);
@@ -201,7 +200,7 @@ getnewfsid(mp, mtype)
 		++xxxfs_mntid;
 	tfsid.val[0] = makedev((nblkdev + mtype) & 0xff, xxxfs_mntid);
 	tfsid.val[1] = mtype;
-	if (mountlist.cqh_first != (void *)&mountlist) {
+	if (mountlist.tqh_first != NULL) {
 		while (getvfs(&tfsid)) {
 			tfsid.val[0]++;
 			xxxfs_mntid++;
@@ -1162,8 +1161,7 @@ printlockedvnodes()
 	register struct vnode *vp;
 
 	printf("Locked vnodes\n");
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
-	     mp = mp->mnt_list.cqe_next) {
+	for (mp = mountlist.tqh_first; mp != NULL; mp = mp->mnt_list.tqe_next) {
 		for (vp = mp->mnt_vnodelist.lh_first;
 		     vp != NULL;
 		     vp = vp->v_mntvnodes.le_next)
@@ -1199,8 +1197,8 @@ sysctl_vnode(where, sizep)
 	}
 	ewhere = where + *sizep;
 		
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
-		nmp = mp->mnt_list.cqe_next;
+	for (mp = mountlist.tqh_first; mp != NULL; mp = nmp) {
+		nmp = mp->mnt_list.tqe_next;
 		if (vfs_busy(mp))
 			continue;
 		savebp = bp;
@@ -1473,20 +1471,4 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	if (acc_mode & VWRITE)
 		mask |= S_IWOTH;
 	return (file_mode & mask) == mask ? 0 : EACCES;
-}
-
-/*
- * Unmount all file systems.
- * We traverse the list in reverse order under the assumption that doing so
- * will avoid needing to worry about dependencies.
- */
-void
-vfs_unmountall()
-{
-	register struct mount *mp, *nmp;
-
-	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
-		nmp = mp->mnt_list.cqe_prev;
-		(void) dounmount(mp, MNT_FORCE, &proc0);
-	}
 }
