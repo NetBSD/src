@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_tuner.h,v 1.3 2003/03/11 23:11:28 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_tuner.h,v 1.1.1.2 2003/03/12 00:02:40 wiz Exp $	*/
+/*	$NetBSD: bktr_tuner.h,v 1.2 2003/03/12 00:14:41 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.h,v 1.1 1999/09/26 22:06:20 roger Exp$ */
 
 /*
