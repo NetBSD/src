@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.116 2001/11/21 08:18:40 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.117 2001/12/27 11:27:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.116 2001/11/21 08:18:40 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.117 2001/12/27 11:27:11 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1279,9 +1279,11 @@ ohci_softintr(void *v)
 		DPRINTFN(10, ("ohci_process_done: std=%p xfer=%p hcpriv=%p\n",
 				std, xfer, xfer ? xfer->hcpriv : 0));
 		if (xfer == NULL) {
-			/* xfer == NULL: There seems to be no xfer associated
+			/*
+			 * xfer == NULL: There seems to be no xfer associated
 			 * with this TD. It is tailp that happened to end up on
 			 * the done queue.
+			 * Shouldn't happen, but some chips are broken(?).
 			 */
 			continue;
 		}
