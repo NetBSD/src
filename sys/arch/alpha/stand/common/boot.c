@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.10 1998/08/14 16:50:04 thorpej Exp $ */
+/* $NetBSD: boot.c,v 1.11 1998/10/15 01:00:07 ross Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
 #include <machine/pte.h>
 
 #include "common.h"
+#include "stand/boot/disk.h"
 
 int loadfile __P((char *, u_int64_t *));
 
@@ -77,7 +78,8 @@ char *kernelnames[] = {
 };
 
 void
-main()
+main(fd)
+	int	fd;
 {
 	char *name, **namep;
 	u_int64_t entry;
@@ -86,11 +88,14 @@ main()
 	/* Init prom callback vector. */
 	init_prom_calls();
 
+
 	/* print a banner */
 	printf("\n");
 	printf("%s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
+
+	booted_dev_fd = fd;
 
 	/* switch to OSF pal code. */
 	OSFpal();
