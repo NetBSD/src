@@ -1,4 +1,4 @@
-.\"     $NetBSD: m_tag.9,v 1.2 2004/09/06 21:53:25 yamt Exp $
+.\"     $NetBSD: m_tag.9,v 1.3 2004/09/07 13:55:22 wiz Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -77,20 +77,22 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is used to "tag" mbufs.
+interface is used to
+.Dq tag
+mbufs.
 .\" XXX PACKET_TAG_*
 .\" ------------------------------------------------------------
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_get "type" "len" "wait"
-Allocate a mbuf tag.
+Allocate an mbuf tag.
 .Fa type
 is one of the
 .Dv PACKET_TAG_
 macros.
 .Fa len
-is size of data associated to the tag, in bytes.
+is the size of the data associated with the tag, in bytes.
 .Fa wait
 is either
 .Dv M_WAITOK
@@ -123,7 +125,7 @@ followed by
 .Fn m_tag_free .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_delete_chain "m" "t"
-Unlink and free mbuf tags beginning from the mbuf tag
+Unlink and free mbuf tags beginning with the mbuf tag
 .Fa t
 from the mbuf
 .Fa m .
@@ -132,38 +134,38 @@ If
 is
 .Dv NULL ,
 .Fn m_tag_delete_chain
-unlinks and frees all mbuf tags associated to the mbuf
+unlinks and frees all mbuf tags associated with the mbuf
 .Fa m .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_delete_nonpersistent "m"
-Unlink and free all non persistent tags associated to the mbuf
+Unlink and free all non persistent tags associated with the mbuf
 .Fa m .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_find "m" "type" "t"
-Find a mbuf tag with type
+Find an mbuf tag with type
 .Fa type
 after the mbuf tag
 .Fa t
-in the tag chain associated to the mbuf
+in the tag chain associated with the mbuf
 .Fa m .
 If
 .Fa t
 is
 .Dv NULL ,
 search from the first mbuf tag.
-If a mbuf tag is found, return a pointer to it.
+If an mbuf tag is found, return a pointer to it.
 Otherwise return
 .Dv NULL .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_copy "t"
-Copy a mbuf tag
+Copy an mbuf tag
 .Fa t .
 Return a new mbuf tag on success.
 Otherwise return
 .Dv NULL .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_copy_chain "to" "from"
-Copy all mbuf tags associated to the mbuf
+Copy all mbuf tags associated with the mbuf
 .Fa from
 to the mbuf
 .Fa to .
@@ -178,7 +180,7 @@ Initialize mbuf tag chain of the mbuf
 .Fa m .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_first "m"
-Return the first mbuf tag associated to the mbuf
+Return the first mbuf tag associated with the mbuf
 .Fa m .
 Return
 .Dv NULL
@@ -187,7 +189,7 @@ if no mbuf tags are found.
 .It Fn m_tag_next "m" "t"
 Return the next mbuf tag after
 .Fa t
-associated to the mbuf
+associated with the mbuf
 .Fa m .
 Return
 .Dv NULL
@@ -208,13 +210,14 @@ All pathnames are relative to
 The mbuf tagging interfaces are implemented within the file
 .Pa sys/kern/uipc_mbuf2.c .
 .Pp
+The
 .Dv PACKET_TAG_
 macros are defined in the file
 .Pa sys/sys/mbuf.h .
 .Sh SEE ALSO
 .Xr intro 9 ,
-.Xr mbuf 9 ,
-.Xr malloc 9
+.Xr malloc 9 ,
+.Xr mbuf 9
 .\" ------------------------------------------------------------
 .Sh BUGS
-the semantics of the term "persisitent tag" is vague.
+The semantics of the term "persistent tag" are vague.
