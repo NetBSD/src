@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.34 2003/05/31 19:37:15 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.35 2003/07/06 07:18:38 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.34 2003/05/31 19:37:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.35 2003/07/06 07:18:38 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -337,7 +337,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: power save mode off for %s\n",
-			    ifp->if_xname, ether_sprintf(wh->i_addr1));
+			    ifp->if_xname, ether_sprintf(wh->i_addr2));
 
 		while (!IF_IS_EMPTY(&ni->ni_savedq)) {
 			struct mbuf *m;
