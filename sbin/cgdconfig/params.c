@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.10 2004/08/13 15:03:57 tv Exp $ */
+/* $NetBSD: params.c,v 1.11 2005/01/04 04:50:26 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.10 2004/08/13 15:03:57 tv Exp $");
+__RCSID("$NetBSD: params.c,v 1.11 2005/01/04 04:50:26 elric Exp $");
 #endif
 
 #include <sys/types.h>
@@ -414,8 +414,8 @@ keygen_filldefaults(struct keygen *kg, int keylen)
 	case KEYGEN_PKCS5_PBKDF2_OLD:
 	case KEYGEN_PKCS5_PBKDF2_SHA1:
 		kg->kg_salt = bits_getrandombits(DEFAULT_SALTLEN, 1);
-		kg->kg_iterations =
-		    pkcs5_pbkdf2_calibrate(keylen, DEFAULT_ITERATION_TIME);
+		kg->kg_iterations = pkcs5_pbkdf2_calibrate(BITS2BYTES(keylen),
+		    DEFAULT_ITERATION_TIME);
 		if (kg->kg_iterations < 1) {
 			fprintf(stderr, "%s: could not calibrate "
 			    "pkcs5_pbkdf2\n", getprogname());
