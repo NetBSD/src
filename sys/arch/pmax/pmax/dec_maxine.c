@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.36 2001/04/12 19:24:06 thorpej Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.37 2001/08/22 06:59:41 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.36 2001/04/12 19:24:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.37 2001/08/22 06:59:41 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ dec_maxine_intr(status, cause, pc, ipending)
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
-		intrcnt[HARDCLOCK]++;
+		pmax_clock_evcnt.ev_count++;
 		/* keep clock interrupts enabled when we return */
 		cause &= ~MIPS_INT_MASK_1;
 	}
@@ -332,14 +332,6 @@ dec_maxine_intr(status, cause, pc, ipending)
  
 #define ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
 #define PTRLOAD (IOASIC_INTR_ISDN_TXLOAD|IOASIC_INTR_ISDN_RXLOAD|IOASIC_INTR_SCSI_PTR_LOAD)
- 
-#if 0	
-	if (can_serve & IOASIC_INTR_SCSI_PTR_LOAD) {
-		extern void asc_ptr_load __P((void *));
-		ifound = 1;
-		asc_ptr_load(intrtab[SYS_DEV_SCSI].ih_arg);
-	}
-#endif	
  
 	/* 
 	 * XXX future project is here XXX

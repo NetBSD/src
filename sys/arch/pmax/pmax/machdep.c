@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 2001/06/02 18:09:19 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193 2001/08/22 06:59:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2001/06/02 18:09:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2001/08/22 06:59:42 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -722,69 +722,6 @@ nullwork()
 {
 
 	return (0);
-}
-
-/*
- * pmax uses standard mips1 convention, wiring FPU to hard interupt 5.
- */
-#define INT_MASK_FPU	MIPS_INT_MASK_5
-#define	INT_MASK_DEV	(MIPS_HARD_INT_MASK &~ MIPS_INT_MASK_5)
-
-void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
-{
-	extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
-
-	uvmexp.intrs++;
-
-	/* device interrupts */
-	if (ipending & INT_MASK_DEV) {
-		(*platform.iointr)(status, cause, pc, ipending);
-	}
-	/* FPU nofiticaition */
-	if (ipending & INT_MASK_FPU) {
-		if (!USERMODE(status))
-			goto kerneltouchedFPU;
-		intrcnt[FPU_INTR]++;
-		/* dealfpu(status, cause, pc); */
-		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
-	}
-
-	/* software simulated interrupt */
-	if ((ipending & MIPS_SOFT_INT_MASK_1)
-		    || (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
-
-#define DO_SIR(bit, fn)						\
-	do {							\
-		if (n & (bit)) {				\
-			uvmexp.softs++;				\
-			fn;					\
-		}						\
-	} while (0)
-
-		unsigned n;
-		n = ssir; ssir = 0;
-		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
-
-		DO_SIR(SIR_NET, netintr());
-#undef DO_SIR
-	}
-
-	/* 'softclock' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
-		uvmexp.softs++;
-		intrcnt[SOFTCLOCK_INTR]++;
-		softclock(NULL);
-	}
-	return;
-
-kerneltouchedFPU:
-	panic("kernel used FPU: PC %x, CR %x, SR %x", pc, cause, status);
 }
 
 /*

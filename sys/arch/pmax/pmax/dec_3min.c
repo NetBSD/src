@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.45 2001/04/12 19:24:06 thorpej Exp $ */
+/* $NetBSD: dec_3min.c,v 1.46 2001/08/22 06:59:40 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.45 2001/04/12 19:24:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.46 2001/08/22 06:59:40 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +378,7 @@ dec_3min_intr(status, cause, pc, ipending)
 			cf.pc = pc;
 			cf.sr = status;
 			hardclock(&cf);
-			intrcnt[HARDCLOCK]++;
+			pmax_clock_evcnt.ev_count++;
 		}
 
 		/* If clock interrups were enabled, re-enable them ASAP. */
