@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.20 1999/03/25 22:38:28 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.21 1999/03/29 21:51:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -237,8 +237,10 @@ lfs_vflush(vp)
 	}
 
 #ifdef DIAGNOSTIC
+	/* XXX KS This actually can happen right now, though it shouldn't(?) */
 	if(vp->v_flag & VDIROP) {
-		panic("VDIROP being freed...this can\'t happen");
+		printf("lfs_vflush: flushing VDIROP, this shouldn\'t be\n");
+		/* panic("VDIROP being flushed...this can\'t happen"); */
 	}
 	if(vp->v_usecount<0) {
 		printf("usecount=%d\n",vp->v_usecount);
