@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.10 1997/02/03 19:56:07 cgd Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.11 1997/02/04 00:33:32 cgd Exp $	*/
 
 /* 
  * Mach Operating System
@@ -55,15 +55,37 @@ extern int	db_max_width;
 extern int	db_tab_stop_width;
 extern int	db_max_line;
 
+static int	db_rw_internal_variable __P((struct db_variable *, db_expr_t *,
+		    int));
+
+/* XXX must all be ints for sysctl. */
 struct db_variable db_vars[] = {
-	{ "radix",	&db_radix, FCN_NULL },
-	{ "maxoff",	&db_maxoff, FCN_NULL },
-	{ "maxwidth",	&db_max_width, FCN_NULL },
-	{ "tabstops",	&db_tab_stop_width, FCN_NULL },
-	{ "lines",	&db_max_line, FCN_NULL },
-	{ "onpanic",	&db_onpanic, FCN_NULL },
+	{ "radix",	(long *)&db_radix,	db_rw_internal_variable },
+	{ "maxoff",	(long *)&db_maxoff,	db_rw_internal_variable },
+	{ "maxwidth",	(long *)&db_max_width,	db_rw_internal_variable },
+	{ "tabstops",	(long *)&db_tab_stop_width, db_rw_internal_variable },
+	{ "lines",	(long *)&db_max_line,	db_rw_internal_variable },
+	{ "onpanic",	(long *)&db_onpanic,	db_rw_internal_variable },
 };
 struct db_variable *db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
+
+/*
+ * ddb command line access to the DDB variables defined above.
+ */
+static int
+db_rw_internal_variable(vp, valp, rw)
+	struct db_variable *vp;
+	db_expr_t *valp;
+	int rw;
+{
+
+	if (rw == DB_VAR_GET) {
+		*valp = *(int *)vp->valuep;
+	} else {
+		*(int *)vp->valuep = *valp;
+	}
+	return (0);
+}
 
 /*
  * sysctl(3) access to the DDB variables defined above.
