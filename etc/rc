@@ -61,10 +61,6 @@ umount -a >/dev/null 2>&1
 mount -a -t nonfs
 rm -f /fastboot		# XXX (root now writeable)
 
-echo 'runtime link editor directory cache'
-rm -f /var/run/ld.so.hints
-ldconfig
-
 # set hostname, turn on network
 echo 'starting network'
 . /etc/netstart
@@ -76,6 +72,10 @@ rm -f /etc/nologin
 rm -f /var/spool/uucp/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; cp /dev/null utmp; chmod 644 utmp; })
+
+echo 'runtime link editor directory cache'
+rm -f /var/run/ld.so.hints
+ldconfig
 
 echo -n 'starting system logger'
 rm -f /dev/log
