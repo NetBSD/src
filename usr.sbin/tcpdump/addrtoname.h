@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.h,v 1.4 1997/10/03 19:54:16 christos Exp $	*/
+/*	$NetBSD: addrtoname.h,v 1.5 1998/02/01 13:48:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,6 +24,14 @@
  */
 
 /* Name to address translation routines. */
+#ifdef __NetBSD__
+# ifndef BYTE_ORDER
+	#error "No byte order defined"
+# endif
+# if BYTE_ORDER == BIG_ENDIAN
+#  define WORDS_BIGENDIAN
+# endif
+#endif
 
 extern char *linkaddr_string(const u_char *, const int);
 extern char *etheraddr_string(const u_char *);
