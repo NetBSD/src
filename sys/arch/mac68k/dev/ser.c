@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.33 1996/01/11 15:23:01 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.34 1996/01/12 04:16:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -120,8 +120,6 @@
 #define zsstart serstart
 #define zsstop serstop
 #define zstty sertty
-#define DEBUG
-#undef DEBUG
 
 #define ZSMAJOR 12              /* XXX */
 
