@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.68 2002/02/11 00:25:19 thorpej Exp $
+#	$NetBSD: Makefile.vax,v 1.69 2002/02/23 23:48:00 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -47,12 +47,12 @@ KERN_AS=	obj
 ##
 MD_OBJS=	intvec.o subr.o
 MD_CFILES=
-MD_SFILES=	${VAX}/vax/intvec.s ${VAX}/vax/subr.s
+MD_SFILES=	${VAX}/vax/intvec.S ${VAX}/vax/subr.S
 
-intvec.o: ${VAX}/vax/intvec.s assym.h
+intvec.o: ${VAX}/vax/intvec.S assym.h
 	${NORMAL_S}
 
-subr.o: ${VAX}/vax/subr.s assym.h
+subr.o: ${VAX}/vax/subr.S assym.h
 	${NORMAL_S}
 
 ##

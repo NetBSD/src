@@ -1,4 +1,4 @@
-/*	$NetBSD: udiv.s,v 1.4 2000/07/19 18:15:03 matt Exp $	*/
+/*	$NetBSD: udiv.S,v 1.1 2002/02/23 23:48:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
