@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19 2000/06/29 08:28:25 mrg Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.20 2001/01/07 21:17:32 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -70,11 +70,24 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
+	static int	nmatched = 0;
+
+	if (strcmp((char *)auxp, "isabus"))
+		return (0); /* Wrong number... */
+
 	if(atari_realconfig == 0)
 		return (0);
-	if (strcmp((char *)auxp, "isabus") || cfp->cf_unit != 0)
-		return(0);
-	return(machineid & ATARI_HADES ? 1 : 0);
+
+	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
+		/*
+		 * The Hades and Milan have only one pci bus
+		 */
+		if (nmatched)
+			return (0);
+		nmatched++;
+		return (1);
+	}
+	return(0);
 }
 
 void
