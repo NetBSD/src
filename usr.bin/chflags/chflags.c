@@ -1,3 +1,5 @@
+/*	$NetBSD: chflags.c,v 1.2 1994/11/14 20:27:23 jtc Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +40,10 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)chflags.c	8.5 (Berkeley) 4/1/94";
+#endif
+static char rcsid[] = "$NetBSD: chflags.c,v 1.2 1994/11/14 20:27:23 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
