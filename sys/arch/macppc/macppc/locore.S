@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 1999/02/02 16:47:09 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.12 1999/02/08 14:32:00 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -211,8 +211,8 @@ ENTRY(openfirmware)
 	lis	4,srsave@ha		/* restore saved SR */
 	addi	4,4,srsave@l
 	li	5,0
-1:	mfsrin	0,5
-	stw	0,0(4)
+1:	lwz	0,0(4)
+	mtsrin	0,5
 	addi	4,4,4
 	addis	5,5,0x10000000@h
 	cmpwi	5,0
