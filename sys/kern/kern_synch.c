@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.91 2000/08/31 14:36:21 bouyer Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.92 2000/09/01 17:14:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -583,7 +583,7 @@ awaken(struct proc *p)
 			KASSERT(p->p_cpu != NULL);
 			need_resched(p->p_cpu);
 		} else
-			wakeup(&proc0);
+			sched_wakeup(&proc0);
 	} else {
 		p->p_stat = SSUSPEND;
 	}
