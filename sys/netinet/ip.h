@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.13 1996/09/14 14:40:24 mrg Exp $	*/
+/*	$NetBSD: ip.h,v 1.14 1996/09/21 19:44:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -61,6 +61,7 @@ struct ip {
 	int16_t	  ip_len;		/* total length */
 	u_int16_t ip_id;		/* identification */
 	int16_t	  ip_off;		/* fragment offset field */
+#define IP_RF 0x8000			/* reserved flag (must be zero) */
 #define	IP_DF 0x4000			/* dont fragment flag */
 #define	IP_MF 0x2000			/* more fragments flag */
 #define	IP_OFFMASK 0x1fff		/* mask for fragmenting bits */
