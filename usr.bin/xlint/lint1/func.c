@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.17 2002/01/31 19:36:54 tv Exp $	*/
+/*	$NetBSD: func.c,v 1.18 2002/09/13 14:59:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.17 2002/01/31 19:36:54 tv Exp $");
+__RCSID("$NetBSD: func.c,v 1.18 2002/09/13 14:59:24 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -165,7 +165,7 @@ popctrl(int env)
 	clst_t	*cl;
 
 	if (cstk == NULL || cstk->c_env != env)
-		lerror("popctrl() 1");
+		LERROR("popctrl()");
 
 	cstk = (ci = cstk)->c_nxt;
 
@@ -218,7 +218,7 @@ funcdef(sym_t *fsym)
 	for (sym = dcs->d_fpsyms; sym != NULL; sym = sym->s_dlnxt) {
 		if (sym->s_blklev != -1) {
 			if (sym->s_blklev != 1)
-				lerror("funcdef() 1");
+				LERROR("funcdef()");
 			inssym(1, sym);
 		}
 	}
@@ -262,12 +262,12 @@ funcdef(sym_t *fsym)
 	for (arg = fsym->s_type->t_args; arg != NULL; arg = arg->s_nxt) {
 		if (arg->s_scl == ABSTRACT) {
 			if (arg->s_name != unnamed)
-				lerror("funcdef() 2");
+				LERROR("funcdef()");
 			/* formal parameter lacks name: param #%d */
 			error(59, n);
 		} else {
 			if (arg->s_name == unnamed)
-				lerror("funcdef() 3");
+				LERROR("funcdef()");
 		}
 		n++;
 	}
@@ -387,7 +387,7 @@ funcend(void)
 	 * the symbol table
 	 */
 	if (dcs->d_nxt != NULL || dcs->d_ctx != EXTERN)
-		lerror("funcend() 1");
+		LERROR("funcend()");
 	rmsyms(dcs->d_fpsyms);
 
 	/* must be set on level 0 */
@@ -444,7 +444,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 		if (tn != NULL) {
 
 			if (ci->c_swtype == NULL)
-				lerror("label() 1");
+				LERROR("label()");
 
 			if (reached && !ftflg) {
 				if (hflag)
@@ -624,7 +624,7 @@ switch2(void)
 	clst_t	*cl;
 
 	if (cstk->c_swtype == NULL)
-		lerror("switch2() 1");
+		LERROR("switch2()");
 
 	/*
 	 * If the switch expression was of type enumeration, count the case
@@ -634,7 +634,7 @@ switch2(void)
 	if (cstk->c_swtype->t_isenum) {
 		nenum = nclab = 0;
 		if (cstk->c_swtype->t_enum == NULL)
-			lerror("switch2() 2");
+			LERROR("switch2()");
 		for (esym = cstk->c_swtype->t_enum->elem;
 		     esym != NULL; esym = esym->s_nxt) {
 			nenum++;

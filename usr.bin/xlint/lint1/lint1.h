@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.13 2002/02/05 03:04:29 thorpej Exp $ */
+/* $NetBSD: lint1.h,v 1.14 2002/09/13 14:59:25 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -410,5 +410,7 @@ typedef	struct err_set {
 #define	ERR_ISSET(n, p)	\
     ((p)->errs_bits[(n)/__NERRBITS] & (1 << ((n) % __NERRBITS)))
 #define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
+
+#define LERROR(a)	lerror(__FILE__, __LINE__, a)
 
 extern err_set	msgset;

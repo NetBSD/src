@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.12 2002/02/05 03:04:27 thorpej Exp $ */
+/* $NetBSD: emit1.c,v 1.13 2002/09/13 14:59:24 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.12 2002/02/05 03:04:27 thorpej Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.13 2002/09/13 14:59:24 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -116,7 +116,7 @@ outtype(type_t *tp)
 		case STRUCT:	t = 'T';	s = 's';	break;
 		case UNION:	t = 'T';	s = 'u';	break;
 		default:
-			lerror("outtyp() 1");
+			LERROR("outtyp()");
 		}
 		if (tp->t_const)
 			outchar('c');
@@ -256,7 +256,7 @@ outsym(sym_t *sym, scl_t sc, def_t def)
 		outchar('e');
 		break;
 	default:
-		lerror("outsym() 2");
+		LERROR("outsym()");
 	}
 	if (llibflg && def != DECL) {
 		/*
@@ -484,7 +484,7 @@ outfstrg(strg_t *strg)
 	u_char	*cp;
 
 	if (strg->st_tspec != CHAR)
-		lerror("outfstrg() 1");
+		LERROR("outfstrg()");
 
 	cp = strg->st_cp;
 
