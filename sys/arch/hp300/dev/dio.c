@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.8 1997/07/18 03:38:33 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ diosubmatch(parent, cf, aux)
 {
 	struct dio_attach_args *da = aux;
 
-	if (cf->diocf_scode != DIO_UNKNOWN_SCODE &&
+	if (cf->diocf_scode != DIOCF_SCODE_DEFAULT &&
 	    cf->diocf_scode != da->da_scode)
 		return (0);
 
