@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.42 1997/11/28 18:23:38 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.43 1998/01/12 09:51:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -411,12 +411,6 @@ static void asc_reset __P((asc_softc_t asc, asc_regmap_t *regs));
 static void asc_startcmd __P((asc_softc_t asc, int target));
 static void asc_timeout __P((void *arg));
 
-extern struct cfdriver asc_cd;
-struct cfdriver asc_cd = {
-	NULL, "asc", DV_DULL
-};
-
-
 #ifdef USE_NEW_SCSI
 /* Glue to the machine-independent scsi */
 struct scsipi_adapter asc_switch = {
@@ -445,6 +439,7 @@ struct	pmax_driver ascdriver = {
 
 void asc_minphys __P((struct buf *bp));
 
+extern struct cfdriver asc_cd;
 
 /*
  * bus-parent shared attach function

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.11 1997/07/28 19:39:25 mhitch Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.12 1998/01/12 09:51:30 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -48,6 +48,10 @@ void asc_ioasic_attach __P((struct device *, struct device *, void *));
 struct cfattach asc_ioasic_ca = {
 	sizeof(struct asc_softc), asc_ioasic_match, asc_ioasic_attach
 };
+
+#ifdef notdef
+extern struct cfdriver asc_cd;
+#endif
 
 /*
  * DMA callback declarations

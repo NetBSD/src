@@ -1,4 +1,4 @@
-/*	$NetBSD: px.c,v 1.1 1997/11/08 07:27:49 jonathan Exp $	*/
+/*	$NetBSD: px.c,v 1.2 1998/01/12 09:51:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.1 1997/11/08 07:27:49 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.2 1998/01/12 09:51:33 thorpej Exp $");
 
 /*
  * px.c: placebo driver for the DEC TURBOchannel 2-d and 3-d
@@ -79,10 +79,6 @@ void	px_unblank __P((struct  px_softc *sc));
 
 struct cfattach px_ca = {
 	sizeof (struct px_softc), px_match, px_attach,
-};
-
-struct cfdriver px_cd = {
-	NULL, "px", DV_DULL
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.7 1997/07/21 05:39:06 jonathan Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.8 1998/01/12 09:51:32 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -44,8 +44,6 @@
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn01var.h>
 
-extern struct cfdriver mainbus_cd;	/* should be in header but where? */
-
 extern void le_dec_copytobuf_gap2 __P((struct am7990_softc *, void *,
 	    int, int));
 extern void le_dec_copyfrombuf_gap2 __P((struct am7990_softc *, void *,
@@ -61,13 +59,14 @@ struct cfattach le_pmax_ca = {
 	sizeof(struct le_softc), le_pmax_match, le_pmax_attach
 };
 
-
 int
 le_pmax_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
+	extern struct cfdriver mainbus_cd;
+
 	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
 	  	struct confargs *d = aux;
 		if (strcmp("lance", d->ca_name) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.23 1997/09/13 08:52:24 enami Exp $	*/
+/*	$NetBSD: tc.c,v 1.24 1998/01/12 09:51:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -55,10 +55,6 @@ void	tcattach __P((struct device *, struct device *, void *));
 
 struct cfattach tc_ca = {
 	sizeof(struct tc_softc), tcmatch, tcattach
-};
-
-struct cfdriver tc_cd = {
-	NULL, "tc", DV_DULL
 };
 
 int	tcprint __P((void *, const char *));

@@ -1,16 +1,16 @@
-#	$NetBSD: files.tc,v 1.10 1997/11/08 07:27:52 jonathan Exp $
+#	$NetBSD: files.tc,v 1.11 1998/01/12 09:51:30 thorpej Exp $
 #
 # Config file and device description for machine-independent
 # TurboChannel code.  Included by ports that need it.
 
 defopt	TCVERBOSE
 
-device	tc {[slot = -1], [offset = -1]}
+device	tc class dull {[slot = -1], [offset = -1]}
 #attach	tc at tcbus
 file	dev/tc/tc.c			tc	needs-flag
 
 # The TurboChannel IOCTL ASIC
-device	ioasic { offset = -1 }
+device	ioasic class dull { offset = -1 }
 attach	ioasic at tc
 
 # LANCE attachments.
@@ -25,7 +25,7 @@ file	dev/tc/if_le_tc.c		le_tc
 
 
 # DEC DEFTA TC FDDI Controller
-device	fta: pdq, fddi, ifnet, arp
+device	fta class ifnet: pdq, fddi, ifnet, arp
 attach	fta at tc
 file	dev/tc/if_fta.c			fta
 
@@ -34,11 +34,11 @@ define stic
 file	dev/tc/stic.c		stic
 
 # DEC PMAG-C 2-D pixelstamp graphics board
-device	px
+device	px class dull
 attach	px at tc:		stic
 file	dev/tc/px.c		px
 
 # DEC PMAG-D/E/F    3-D pixelstamp+i860 8,24-plane,z-buffer graphics board
-device	pxg:			stic
+device	pxg class dull:		stic
 attach	pxg at tc
 

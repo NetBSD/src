@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.12 1997/07/22 03:44:29 jonathan Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.13 1998/01/12 09:51:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -120,4 +120,3 @@ pdq_tc_attach(
 }
 
 struct cfattach fta_ca = { sizeof(pdq_softc_t), pdq_tc_match, pdq_tc_attach };
-struct cfdriver fta_cd = { 0, "fta", DV_IFNET };
