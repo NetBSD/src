@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.22 1996/02/10 22:55:16 pk Exp $ */
+/*	$NetBSD: nfs_boot.c,v 1.23 1996/02/13 17:53:33 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -240,27 +240,29 @@ nfs_boot_init(nd, procp)
 	}
 #endif
 
-	get_path_and_handle(&bp_sin, "root", &nd->nd_root);
-	get_path_and_handle(&bp_sin, "swap", &nd->nd_swap);
+	bcopy(&bp_sin, &nd->nd_boot, sizeof(bp_sin));
 
 	return (0);
 }
 
-static void
-get_path_and_handle(bpsin, key, ndmntp)
+void
+nfs_boot_getfh(bpsin, key, ndmntp)
 	struct sockaddr_in *bpsin;	/* bootparam server */
 	char *key;			/* root or swap */
 	struct nfs_dlmount *ndmntp;	/* output */
 {
 	char pathname[MAXPATHLEN];
 	char *sp, *dp, *endp;
+	struct sockaddr_in *sin;
 	int error;
+
+	sin = &ndmntp->ndm_saddr;
 
 	/*
 	 * Get server:pathname for "key" (root or swap)
 	 * using RPC to bootparam/getfile
 	 */
-	error = bp_getfile(bpsin, key, &ndmntp->ndm_saddr,
+	error = bp_getfile(bpsin, key, sin,
 	    ndmntp->ndm_host, pathname);
 	if (error)
 		panic("nfs_boot: bootparam get %s: %d", key, error);
@@ -269,9 +271,15 @@ get_path_and_handle(bpsin, key, ndmntp)
 	 * Get file handle for "key" (root or swap)
 	 * using RPC to mountd/mount
 	 */
-	error = md_mount(&ndmntp->ndm_saddr, pathname, ndmntp->ndm_fh);
+	error = md_mount(sin, pathname, ndmntp->ndm_fh);
 	if (error)
 		panic("nfs_boot: mountd %s, error=%d", key, error);
+
+	/* Set port number for NFS use. */
+	/* XXX: NFS port is always 2049, right? */
+	error = krpc_portmap(sin, NFS_PROG, NFS_VER2, &sin->sin_port);
+	if (error)
+		panic("nfs_boot: portmap NFS/v2, error=%d", error);
 
 	/* Construct remote path (for getmntinfo(3)) */
 	dp = ndmntp->ndm_host;
@@ -516,20 +524,23 @@ md_mount(mdsin, path, fhp)
 	if (error)
 		return error;	/* message already freed */
 
-	if (m->m_len < sizeof(*rdata)) {
-		m = m_pullup(m, sizeof(*rdata));
-		if (m == NULL)
-			goto bad;
-	}
+	/* The reply might have only the errno. */
+	if (m->m_len < 4)
+		goto bad;
+	/* Have at least errno, so check that. */
 	rdata = mtod(m, struct rdata *);
 	error = fxdr_unsigned(u_int32_t, rdata->errno);
 	if (error)
 		goto out;
-	bcopy(rdata->fh, fhp, NFS_FHSIZE);
 
-	/* Set port number for NFS use. */
-	error = krpc_portmap(mdsin, NFS_PROG, NFS_VER2,
-						 &mdsin->sin_port);
+	/* Have errno==0, so the fh must be there. */
+	if (m->m_len < sizeof(*rdata)) {
+		m = m_pullup(m, sizeof(*rdata));
+		if (m == NULL)
+			goto bad;
+		rdata = mtod(m, struct rdata *);
+	}
+	bcopy(rdata->fh, fhp, NFS_FHSIZE);
 	goto out;
 
 bad:
