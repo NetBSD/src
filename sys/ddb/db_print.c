@@ -24,9 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
+ * $Id: db_print.c,v 1.2 1993/05/20 03:39:25 cgd Exp $
+ *
  * HISTORY
  * $Log: db_print.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/05/20 03:39:25  cgd
+ * add explicit rcs id
+ *
+ * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 1.1  1992/03/25  21:45:22  pace
