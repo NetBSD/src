@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.127 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.128 2004/01/26 10:39:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.127 2004/01/25 18:06:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.128 2004/01/26 10:39:30 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1025,6 +1025,7 @@ int
 lfs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf	*bp;
@@ -1035,7 +1036,7 @@ lfs_strategy(void *v)
 	int		i, sn, error, slept;
 
 	bp = ap->a_bp;
-	vp = bp->b_vp;
+	vp = ap->a_vp;
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 

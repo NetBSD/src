@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.29 2003/10/25 08:42:08 christos Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.30 2004/01/26 10:39:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.29 2003/10/25 08:42:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.30 2004/01/26 10:39:30 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -956,9 +956,10 @@ smbfs_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args /* {
-	struct buf *a_bp
+		struct vnode *a_vp;
+		struct buf *a_bp;
 	} */ *ap = v;
-	struct buf *bp=ap->a_bp;
+	struct buf *bp = ap->a_bp;
 	struct ucred *cr;
 	struct proc *p;
 	int error = 0;
