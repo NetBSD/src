@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.4 2002/03/20 20:39:15 eeh Exp $	*/
+/*	$NetBSD: sio16.c,v 1.4.4.1 2002/05/16 11:45:23 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.4 2002/03/20 20:39:15 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.4.4.1 2002/05/16 11:45:23 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.4 2002/03/20 20:39:15 eeh Exp $");
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/ic/cd18xxvar.h>
 #include <dev/ic/cd18xxreg.h>
