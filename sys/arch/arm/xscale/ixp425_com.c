@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.4 2003/05/31 11:27:01 ichiro Exp $ */
+/*	$NetBSD: ixp425_com.c,v 1.5 2003/05/31 23:57:45 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.4 2003/05/31 11:27:01 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.5 2003/05/31 23:57:45 ichiro Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -131,6 +131,7 @@ static struct ixp4xx_com_cons_softc {
 	int			sc_ospeed;
 	tcflag_t		sc_cflag;
 	int			sc_attached;
+	char			*sc_name;
 } ixp4xx_comcn_sc;
 
 static struct cnm_state ixp4xx_com_cnm_state;
@@ -228,6 +229,7 @@ ixp4xx_com_attach_subr(struct ixp4xx_com_softc *sc)
 	struct tty *tp;
 
 	ixp4xx_com_sc = sc;
+
 #if 0
 	callout_init(&sc->sc_diag_callout);
 #endif
@@ -252,7 +254,6 @@ ixp4xx_com_attach_subr(struct ixp4xx_com_softc *sc)
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
 	}
-
 
 #ifdef KGDB
 	if (ISSET(sc->sc_hwflags, COM_HW_KGDB)) {
@@ -287,7 +288,8 @@ ixp4xx_com_attach_subr(struct ixp4xx_com_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&ixpcom_cdevsw);
 		tp->t_dev = cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
-		printf("%s: console (major=%d)\n", sc->sc_dev.dv_xname, maj);
+		printf("%s: %s (major=%d)\n", sc->sc_dev.dv_xname,
+			ixp4xx_comcn_sc.sc_name, maj);
 	}
 
 	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, ixp4xxcomsoft, sc);
@@ -670,7 +672,7 @@ ixp4xx_comopen(dev, flag, mode, p)
 			sc->enabled = 1;
 		}
 		/* Turn on interrupts. */
-#if 0
+#if 1
 		sc->sc_mcr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IXP425_UART_MCR);
 		SET(sc->sc_mcr, MCR_IENABLE);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXP425_UART_MCR, sc->sc_mcr);
@@ -1369,7 +1371,7 @@ struct consdev ixp4xx_comcons = {
 
 int
 ixp4xx_comcnattach(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t ioh,
-	int rate, int frequency, tcflag_t cflag)
+	int rate, int frequency, tcflag_t cflag, char *name)
 {
 	int res;
 
@@ -1389,7 +1391,7 @@ ixp4xx_comcnattach(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t io
 	ixp4xx_comcn_sc.sc_baseaddr = iobase;
 	ixp4xx_comcn_sc.sc_ospeed = rate;
 	ixp4xx_comcn_sc.sc_cflag = cflag;
-
+	ixp4xx_comcn_sc.sc_name = name;
 	return (0);
 }
 
