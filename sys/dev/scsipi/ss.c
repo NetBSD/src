@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.25.2.1 2000/01/17 18:22:14 he Exp $	*/
+/*	$NetBSD: ss.c,v 1.25.2.2 2000/01/20 20:49:43 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -140,6 +140,8 @@ ssattach(parent, self, aux)
 	sc_link->device = &ss_switch;
 	sc_link->device_softc = ss;
 	sc_link->openings = 1;
+
+	printf("\n");
 
 	/*
 	 * look for non-standard scanners with help of the quirk table
