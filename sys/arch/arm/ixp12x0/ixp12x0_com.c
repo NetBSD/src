@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.14 2003/03/06 06:17:43 igy Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.15 2003/03/06 07:39:34 igy Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -164,7 +164,7 @@ const struct cdevsw ixpcom_cdevsw = {
 
 struct consdev ixpcomcons = {
 	NULL, NULL, ixpcomcngetc, ixpcomcnputc, ixpcomcnpollc, NULL,
-	NODEV, CN_NORMAL
+	NULL, NULL, NODEV, CN_NORMAL
 };
 
 #ifndef DEFAULT_COMSPEED
