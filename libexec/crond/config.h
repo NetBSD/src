@@ -1,6 +1,6 @@
 /* config.h - configurables for Vixie Cron
  *
- * $Header: /cvsroot/src/libexec/crond/Attic/config.h,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
+ * $Header: /cvsroot/src/libexec/crond/Attic/config.h,v 1.2 1993/05/11 08:16:02 glass Exp $
  */
 
 /* Copyright 1988,1990 by Paul Vixie
@@ -92,7 +92,7 @@
 			 * tell /etc/syslog.conf to send cron's logging to
 			 * a separate file.
 			 */
-/*#define SYSLOG	 			/*-*/
+#define SYSLOG	 			/*-*/
 
 			/* this is the name of the environment variable
 			 * that contains the user name.  it isn't read by
