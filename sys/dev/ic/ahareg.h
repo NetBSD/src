@@ -1,7 +1,7 @@
-/*	$NetBSD: ahareg.h,v 1.6 1997/09/09 18:56:15 mycroft Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.7 1998/02/09 10:53:11 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -211,17 +211,6 @@ struct aha_ccb {
 #define	CCB_SENDING	0x04
 #endif
 	int timeout;
-
-	/*
-	 * DMA maps used by the CCB.  These maps are created
-	 * in aha_init_ccb().
-	 */
-
-	/*
-	 * This DMA map maps an individual CCB.  This map is permanently
-	 * loaded in aha_init_ccb().
-	 */
-	bus_dmamap_t	dmamap_self;
 
 	/*
 	 * This DMA map maps the buffer involved in the transfer.
