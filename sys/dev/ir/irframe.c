@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.16 2002/01/12 16:59:17 tsutsui Exp $	*/
+/*	$NetBSD: irframe.c,v 1.16.8.1 2002/05/16 12:13:01 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,17 @@ int irframedebug = 0;
 #define Static static
 #endif
 
-cdev_decl(irframe);
+dev_type_open(irframeopen);
+dev_type_close(irframeclose);
+dev_type_read(irframeread);
+dev_type_write(irframewrite);
+dev_type_ioctl(irframeioctl);
+dev_type_poll(irframepoll);
+
+const struct cdevsw irframe_cdevsw = {
+	irframeopen, irframeclose, irframeread, irframewrite, irframeioctl,
+	nostop, notty, irframepoll, nommap,
+};
 
 int irframe_match(struct device *parent, struct cfdata *match, void *aux);
 void irframe_attach(struct device *parent, struct device *self, void *aux);
@@ -165,9 +175,7 @@ irframe_detach(struct device *self, int flags)
 	/* XXX needs reference count */
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == irframeopen)
-			break;
+	maj = cdevsw_lookup_major(&irframe_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
