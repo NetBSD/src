@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 1998/01/05 22:00:49 cgd Exp $	*/
+/*	$NetBSD: md.h,v 1.3 1998/08/18 18:46:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -96,19 +96,25 @@
 #define GOT_ENTRY_SIZE	4
 typedef long	got_t;
 
+/*
+ *	.word	^M<reg-mask>
+ *	pushl	#reloc_index
+ *	jmp	L^addr
+ */
 typedef struct jmpslot {
+	u_short mask;
 	u_short	opcode;
 	u_short	addr[2];
-	u_short	reloc_index;
 #define JMPSLOT_RELOC_MASK		0xffff
+	u_short	reloc_index;
 } jmpslot_t;
 
 /*
  * following defines are untested since VAX doesn't support PIC (yet?)
  */
-#define JMPABS	0x8F17		/* JMP + immediate mode for address */
-#define JMPREL	0x8F11		/* BRB + immediate mode for displacement */
-#define TRAP	0x00BC		/* how to trap ??? CHMK ??? */
+#define JSB_PCREL	0x8F16	/* JSB + immediate mode for displacement */
+#define JMP_PCREL	0x8F17	/* JMP + immediate mode for displacement */
+#define TRAP		0x00BC	/* how to trap ??? CHMK ??? */
 
 /*
  * Byte swap defs for cross linking
