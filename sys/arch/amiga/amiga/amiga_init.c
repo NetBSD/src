@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.34 1995/11/30 00:56:34 jtc Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.35 1996/02/24 07:43:14 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -725,7 +725,8 @@ kernel_reload_write(uio)
 		/*
 		 * Pull in the exec header and check it.
 		 */
-		if (error = uiomove(&kernel_exec, sizeof(kernel_exec), uio))
+		if (error = uiomove((caddr_t)&kernel_exec, sizeof(kernel_exec),
+		    uio))
 			return(error);
 		printf("loading kernel %d+%d+%d+%d\n", kernel_exec.a_text,
 			kernel_exec.a_data, kernel_exec.a_bss,
