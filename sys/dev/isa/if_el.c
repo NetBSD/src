@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.35 1996/03/17 00:53:24 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.36 1996/04/11 22:29:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -208,8 +208,8 @@ elattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, elintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, elintr, sc);
 
 	dprintf(("elattach() finished.\n"));
 }

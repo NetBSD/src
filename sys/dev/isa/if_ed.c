@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.92 1996/04/09 00:46:15 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.93 1996/04/11 22:28:55 cgd Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1271,8 +1271,8 @@ edattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, edintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, edintr, sc);
 }
 
 /*

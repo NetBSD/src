@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.24 1996/04/04 07:08:10 cgd Exp $	*/
+/*	$NetBSD: ast.c,v 1.25 1996/04/11 22:28:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,6 +36,11 @@
 #include <sys/param.h>
 #include <sys/device.h>
 
+#ifdef i386							/* XXX */
+#include <machine/cpu.h>					/* XXX */
+#else								/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -171,8 +176,8 @@ astattach(parent, self, aux)
 			sc->sc_alive |= 1 << i;
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, astintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, astintr, sc);
 }
 
 int
