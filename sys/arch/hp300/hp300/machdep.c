@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.26 1994/01/30 18:21:47 mycroft Exp $
+ *	$Id: machdep.c,v 1.27 1994/01/31 17:09:33 mycroft Exp $
  */
 
 #include "param.h"
@@ -149,6 +149,12 @@ consinit()
 	 * Initialize the console before we print anything out.
 	 */
 	cninit();
+
+#ifdef DDB
+	ddb_init();
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
 }
 
 /*
