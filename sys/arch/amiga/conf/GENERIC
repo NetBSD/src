@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2002/04/25 15:06:22 atatat Exp $
+# $NetBSD: GENERIC,v 1.179.4.1 2002/05/30 21:17:19 tv Exp $
 #
 # GENERIC machine description file
 #
@@ -36,7 +36,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.179 $"
+#ident 		"GENERIC-$Revision: 1.179.4.1 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -203,7 +203,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #
 # Amiga specific options
