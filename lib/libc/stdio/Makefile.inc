@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.14 1998/07/27 16:05:07 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.15 1998/07/27 16:13:01 mycroft Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -10,7 +10,7 @@ SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c fgetln.c \
 	fgetpos.c fgets.c fileno.c findfp.c flags.c fopen.c fprintf.c \
 	fpurge.c fputc.c fputs.c fread.c freopen.c fscanf.c fseek.c fsetpos.c \
 	ftell.c funopen.c fvwrite.c fwalk.c fwrite.c getc.c getchar.c \
-	gettemp.c getw.c makebuf.c mkstemp.c mktempdir.c perror.c \
+	gettemp.c getw.c makebuf.c mkdtemp.c mkstemp.c perror.c \
 	printf.c putc.c putchar.c puts.c putw.c refill.c remove.c rewind.c \
 	rget.c scanf.c setbuf.c setbuffer.c setvbuf.c snprintf.c sscanf.c \
 	stdio.c tmpfile.c ungetc.c vfprintf.c vfscanf.c vprintf.c vscanf.c \
