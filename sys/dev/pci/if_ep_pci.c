@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.22 1997/04/13 19:47:08 cgd Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.23 1997/04/13 20:14:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -141,7 +141,7 @@ ep_pci_attach(parent, self, aux)
 	char *model;
 	const char *intrstr = NULL;
 
-	if (pci_map_register(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
 		printf(": can't map i/o space\n");
 		return;

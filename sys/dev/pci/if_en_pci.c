@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.8 1997/04/13 19:47:07 cgd Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.9 1997/04/13 20:14:28 cgd Exp $	*/
 
 /*
  *
@@ -233,9 +233,9 @@ void *aux;
    * memory map
    */
 
-  retval = pci_map_register(pa, PCI_CBMA,
-			   PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-			   &sc->en_memt, &sc->en_base, NULL, &sc->en_obmemsz);
+  retval = pci_mapreg_map(pa, PCI_CBMA,
+			  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+			  &sc->en_memt, &sc->en_base, NULL, &sc->en_obmemsz);
   if (retval) {
     printf("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
     return;

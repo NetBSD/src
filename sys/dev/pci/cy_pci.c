@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.5 1997/04/13 19:55:09 cgd Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.6 1997/04/13 20:14:23 cgd Exp $	*/
 
 /*
  * cy_pci.c
@@ -49,10 +49,10 @@ cy_map_pci(pap, iotp, iohp, iosizep, memtp, memhp, memsizep)
 {
 	int ioh_valid, memh_valid;
 
-	ioh_valid = (pci_map_register(pap, 0x14,
+	ioh_valid = (pci_mapreg_map(pap, 0x14,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    iotp, iohp, NULL, iosizep) == 0);
-	memh_valid = (pci_map_register(pap, 0x18,
+	memh_valid = (pci_mapreg_map(pap, 0x18,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    memtp, memhp, NULL, memsizep) == 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.13 1997/04/13 19:48:16 cgd Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.14 1997/04/13 20:14:20 cgd Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -341,10 +341,10 @@ ahc_pci_attach(parent, self, aux)
 	 */
 	io_port &= 0xfffffffe;
 #elif defined(__NetBSD__)
-	ioh_valid = (pci_map_register(pa, PCI_BASEADR_IO,
+	ioh_valid = (pci_mapreg_map(pa, PCI_BASEADR_IO,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
-	memh_valid = (pci_map_register(pa, PCI_BASEADR_MEM,
+	memh_valid = (pci_mapreg_map(pa, PCI_BASEADR_MEM,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &memt, &memh, NULL, NULL) == 0);
 

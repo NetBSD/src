@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.17 1997/04/13 19:47:09 cgd Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.18 1997/04/13 20:14:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -182,7 +182,7 @@ le_pci_attach(parent, self, aux)
 
 	printf(": %s\n", model);
 
-	if (pci_map_register(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL)) {
 		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
 		return;

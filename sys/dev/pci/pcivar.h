@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.20 1997/04/13 19:46:01 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.21 1997/04/13 20:14:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -139,7 +139,7 @@ struct pci_attach_args {
  * Configuration space access and utility functions.  (Note that most,
  * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
  */
-int	pci_map_register __P((struct pci_attach_args *, int, pcireg_t, int,
+int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,
 	    bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.11 1997/04/13 19:48:18 cgd Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.12 1997/04/13 20:14:32 cgd Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -144,10 +144,10 @@ isp_pci_attach(parent, self, aux)
 	const char *intrstr;
 	int ioh_valid, memh_valid;
 
-	ioh_valid = (pci_map_register(pa, IO_MAP_REG,
+	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
-	memh_valid = (pci_map_register(pa, MEM_MAP_REG,
+	memh_valid = (pci_mapreg_map(pa, MEM_MAP_REG,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &memt, &memh, NULL, NULL) == 0);
 
