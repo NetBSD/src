@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.119 2000/10/07 20:26:36 deberg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.120 2000/10/31 10:49:02 itojun Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -44,6 +44,7 @@ LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
 LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
 LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
+LIBINTL?=	${DESTDIR}/usr/lib/libintl.a
 LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
 LIBKADM?=	${DESTDIR}/usr/lib/libkadm.a
 LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
