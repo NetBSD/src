@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.31 2001/06/13 10:46:03 wiz Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.32 2001/06/25 04:46:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -316,6 +316,8 @@ typedef struct _pdq_os_ctx_t {
 #if defined(IFM_FDDI)
     struct ifmedia sc_ifmedia;
 #endif
+    int sc_flags;
+#define	PDQIF_DOWNCALL		0x0001	/* active calling from if to pdq */
     pdq_t *sc_pdq;
 #if defined(__alpha__) || defined(__i386__)
     pdq_bus_ioport_t sc_iobase;
