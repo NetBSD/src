@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.7 1993/10/09 08:43:43 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.8 1993/10/09 09:45:30 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -340,7 +340,7 @@ void
 spinwait(int millisecs)
 {
 	/* XXXX */
-	DELAY(1000 * millisecs);
+	delay(1000 * millisecs);
 }
 
 /*

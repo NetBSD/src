@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.3 1993/10/06 12:13:48 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.4 1993/10/09 09:45:37 mycroft Exp $
  */
 
 #include "npx.h"
@@ -594,7 +594,7 @@ boot(howto)
 			if (nbusy == 0)
 				break;
 			printf("%d ", nbusy);
-			DELAY(40000 * iter);
+			delay(40000 * iter);
 		}
 		if (nbusy)
 			printf("giving up\n");
