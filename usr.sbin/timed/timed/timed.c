@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.16 2002/07/10 22:44:23 wiz Exp $	*/
+/*	$NetBSD: timed.c,v 1.17 2003/05/16 18:28:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.16 2002/07/10 22:44:23 wiz Exp $");
+__RCSID("$NetBSD: timed.c,v 1.17 2003/05/16 18:28:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -487,7 +487,7 @@ suppress(struct sockaddr_in *addr, char *name, struct netinfo *net)
 	if (trace)
 		fprintf(fd, "suppress: %s\n", name);
 	tgt = *addr;
-	(void)strcpy(tname, name);
+	(void)strlcpy(tname, name, sizeof(tname));
 
 	while (0 != readmsg(TSP_ANY, ANYADDR, &wait, net)) {
 		if (trace)
@@ -497,7 +497,7 @@ suppress(struct sockaddr_in *addr, char *name, struct netinfo *net)
 
 	syslog(LOG_NOTICE, "suppressing false master %s", tname);
 	msg.tsp_type = TSP_QUIT;
-	(void)strcpy(msg.tsp_name, hostname);
+	(void)strlcpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
 	(void)acksend(&msg, &tgt, tname, TSP_ACK, 0, 1);
 }
 
@@ -514,7 +514,7 @@ lookformaster(struct netinfo *ntp)
 
 	/* look for master */
 	resp.tsp_type = TSP_MASTERREQ;
-	(void)strcpy(resp.tsp_name, hostname);
+	(void)strlcpy(resp.tsp_name, hostname, sizeof(resp.tsp_name));
 	answer = acksend(&resp, &ntp->dest_addr, ANYADDR,
 			 TSP_MASTERACK, ntp, 0);
 	if (answer != 0 && !good_host_name(answer->tsp_name)) {
@@ -569,7 +569,7 @@ lookformaster(struct netinfo *ntp)
 	}
 
 	ntp->status = SLAVE;
-	(void)strcpy(mastername, answer->tsp_name);
+	(void)strlcpy(mastername, answer->tsp_name, sizeof(mastername));
 	masteraddr = from;
 
 	/*
@@ -587,7 +587,8 @@ lookformaster(struct netinfo *ntp)
 	if (answer != NULL &&
 	    strcmp(answer->tsp_name, mastername) != 0) {
 		conflict.tsp_type = TSP_CONFLICT;
-		(void)strcpy(conflict.tsp_name, hostname);
+		(void)strlcpy(conflict.tsp_name, hostname,
+			      sizeof(conflict.tsp_name));
 		if (!acksend(&conflict, &masteraddr, mastername,
 			     TSP_ACK, 0, 0)) {
 			syslog(LOG_ERR,
