@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.4 2000/02/15 16:15:07 pk Exp $
+#	$NetBSD: binstall.sh,v 1.5 2000/08/10 13:27:47 mrg Exp $
 #
 
 vecho () {
@@ -24,6 +24,7 @@ Help () {
 	echo "the appropriate filesystem partition."
 	echo "Options:"
 	echo "	-h		- display this message"
+	echo "	-u		- install sparc64 (UltraSPARC) boot block"
 	echo "	-b<bootprog>	- second-stage boot program to install"
 	echo "	-m<path>	- Look for boot programs in <path> (default: /usr/mdec)"
 	echo "	-v		- verbose mode"
@@ -40,6 +41,12 @@ Secure () {
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 MDEC=${MDEC:-/usr/mdec}
 BOOTPROG=${BOOTPROG:-boot}
+OFWBOOT=${OFWBOOTBLK:-ofwboot.sparc64}
+if [ "`uname -m`" = sparc64 ]; then
+	ULTRASPARC=1
+else
+	ULTRASPARC=0
+fi
 
 if [ "`sysctl -n kern.securelevel`" -gt 0 ]; then
 	Secure
@@ -54,8 +61,10 @@ for a in $*
 do
 	case $1 in
 	-h) Help; shift ;;
-	-b) BOOTPROG=$2; shift 2 ;;
+	-u) ULTRASPARC=1; shift ;;
+	-b) BOOTPROG=$2; OFWBOOT=$2; shift 2 ;;
 	-m) MDEC=$2; shift 2 ;;
+	-o) OFWBOOT=$2; shift 2 ;;
 	-t) TEST=1; VERBOSE=1; shift ;;
 	-v) VERBOSE=1; shift ;;
 	--) shift; break ;;
@@ -76,8 +85,18 @@ if [ ! -d $DEST ]; then
 	Usage
 fi
 
-
 SKIP=0
+
+if [ "$ULTRASPARC" = "1" ]; then
+	targ=ofwboot
+	netboot=ofwboot.net.sparc64
+	nettarg=boot.sparc.netbsd
+	BOOTPROG=$OFWBOOT
+else
+	targ=boot
+	netboot=boot.net
+	nettarg=boot.sparc64.netbsd
+fi
 
 case $WHAT in
 "ffs")
@@ -100,19 +119,24 @@ case $WHAT in
 		echo "Cannot find \"$DEST\" in mount table"
 		exit 1
 	fi
-	TARGET=$DEST/boot
+	TARGET=$DEST/$targ
 	vecho Boot device: $DEV
 	vecho Target: $TARGET
 	$DOIT dd if=${MDEC}/${BOOTPROG} of=$TARGET bs=32 skip=$SKIP
 	sync; sync; sync
-	vecho ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
-	$DOIT ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
+	if [ "$ULTRASPARC" = "1" ]; then
+		vecho ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk.sparc64 $DEV
+		$DOIT ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk.sparc64 $DEV
+	else
+		vecho ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
+		$DOIT ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
+	fi
 	;;
 
 "net")
-	TARGET=$DEST/boot.sparc.netbsd
+	TARGET=$DEST/$nettarg
 	vecho Target: $TARGET
-	cp -f ${MDEC}/boot.net $TARGET
+	$DOIT cp -f ${MDEC}/$netboot $TARGET
 	;;
 
 *)
