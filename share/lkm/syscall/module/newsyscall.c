@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: newsyscall.c,v 1.2 1994/07/24 02:43:10 mycroft Exp $
+ *	$Id: newsyscall.c,v 1.3 1994/12/24 13:26:51 cgd Exp $
  */
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,7 +54,7 @@ extern int	mycall();
  * have 0 arguments to our system call.
  */
 static struct sysent newent = {
-	0,	mycall			/* # of args, function pointer*/
+	0, 0,	mycall			/* # of args, args size, fn. pointer */
 };
 
 MOD_SYSCALL( "newsyscall", -1, &newent)
@@ -62,7 +62,7 @@ MOD_SYSCALL( "newsyscall", -1, &newent)
 
 /*
  * This function is called each time the module is loaded.   Technically,
- * we could have made this "nosys" in the "DISPATCH" in "newsyscall()",
+ * we could have made this "lkm_nofunc" in the "DISPATCH" in "newsyscall()",
  * but it's a convenient place to kick a copyright out to the console.
  */
 static int
@@ -85,10 +85,10 @@ int			cmd;
  * External entry point; should generally match name of .o file.  The
  * arguments are always the same for all loaded modules.  The "load",
  * "unload", and "stat" functions in "DISPATCH" will be called under
- * their respective circumstances unless their value is "nosys".  If
- * called, they are called with the same arguments (cmd is included to
- * allow the use of a single function, ver is included for version
- * matching between modules and the kernel loader for the modules).
+ * their respective circumstances.  If no function is desired, lkm_nofunc()
+ * should be supplied.  They are called with the same arguments (cmd is
+ * included to allow the use of a single function, ver is included for
+ * version matching between modules and the kernel loader for the modules).
  *
  * Since we expect to link in the kernel and add external symbols to
  * the kernel symbol name space in a future version, generally all
@@ -105,7 +105,7 @@ struct lkm_table	*lkmtp;
 int			cmd;
 int			ver;
 {
-	DISPATCH(lkmtp,cmd,ver,newsyscall_load,nosys,nosys)
+	DISPATCH(lkmtp,cmd,ver,newsyscall_load,lkm_nofunc,lkm_nofunc)
 }
 
 
