@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.2 2002/07/04 20:22:50 thorpej Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3 2003/01/18 23:46:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,9 +31,16 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _NOREGNAMES
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#ifndef SIGCODE_NAME
+#define	SIGCODE_NAME	sigcode
+#define	ESIGCODE_NAME	esigcode
+#define	SIGRETURN_NAME	SYS___sigreturn14
+#define	EXIT_NAME	SYS_exit
+#endif
 /*
  * The following code gets copied to the top of the user stack on process
  * execution.  It does signal trampolining on signal delivery.
@@ -41,13 +48,13 @@
  * On entry r1 points to a struct sigframe at bottom of current stack.
  * All other registers are unchanged.
  */
-	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
-_C_LABEL(sigcode):
-	addi	1,1,-16			/* reserved space for callee */
+	.globl	_C_LABEL(SIGCODE_NAME),_C_LABEL(ESIGCODE_NAME)
+_C_LABEL(SIGCODE_NAME):
+	addi	%r1,%r1,-16		/* reserved space for callee */
 	blrl
-	addi	3,1,16			/* compute &sf_sc */
-	li	0,SYS___sigreturn14
+	addi	%r3,%r1,16		/* compute &sf_sc */
+	li	%r0,SIGRETURN_NAME
 	sc				/* sigreturn(scp) */
-	li	0,SYS_exit
+	li	%r0,EXIT_NAME
 	sc				/* exit(errno) */
-_C_LABEL(esigcode):
+_C_LABEL(ESIGCODE_NAME):
