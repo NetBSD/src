@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.43 2002/09/27 20:29:56 thorpej Exp $ */
+/*	$NetBSD: grf.c,v 1.44 2002/10/02 04:55:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.43 2002/09/27 20:29:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.44 2002/10/02 04:55:49 thorpej Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -96,9 +96,8 @@ int grfprint(void *, const char *);
  */
 struct grf_softc *grfsp[NGRF];
 
-const struct cfattach grf_ca = {
-	sizeof(struct device), grfmatch, grfattach
-};
+CFATTACH_DECL(grf, sizeof(struct device),
+    grfmatch, grfattach, NULL, NULL);
 
 dev_type_open(grfopen);
 dev_type_close(grfclose);

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.24 2002/09/27 20:31:02 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.25 2002/10/02 05:04:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -74,9 +74,8 @@ struct isabus_softc {
 	struct atari_isa_chipset sc_chipset;
 };
 
-const struct cfattach isabus_ca = {
-	sizeof(struct isabus_softc), isabusmatch, isabusattach
-};
+CFATTACH_DECL(isabus, sizeof(struct isabus_softc),
+    isabusmatch, isabusattach, NULL, NULL);
 
 /*
  * We need some static storage to attach a console keyboard on the Milan

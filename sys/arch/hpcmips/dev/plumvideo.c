@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.30 2002/09/27 20:32:14 thorpej Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.31 2002/10/02 05:26:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -116,9 +116,8 @@ void	plumvideo_attach(struct device*, struct device*, void*);
 int	plumvideo_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	plumvideo_mmap(void *, off_t, int);
 
-const struct cfattach plumvideo_ca = {
-	sizeof(struct plumvideo_softc), plumvideo_match, plumvideo_attach
-};
+CFATTACH_DECL(plumvideo, sizeof(struct plumvideo_softc),
+    plumvideo_match, plumvideo_attach, NULL, NULL);
 
 struct hpcfb_accessops plumvideo_ha = {
 	plumvideo_ioctl, plumvideo_mmap

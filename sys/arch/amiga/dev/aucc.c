@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.31 2002/09/27 20:29:48 thorpej Exp $ */
+/*	$NetBSD: aucc.c,v 1.32 2002/10/02 04:55:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.31 2002/09/27 20:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.32 2002/10/02 04:55:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,11 +136,8 @@ static u_int pertofreq(u_int);
 void	auccattach(struct device *, struct device *, void *);
 int	auccmatch(struct device *, struct cfdata *, void *);
 
-const struct cfattach aucc_ca = {
-	sizeof(struct aucc_softc),
-	auccmatch,
-	auccattach
-};
+CFATTACH_DECL(aucc, sizeof(struct aucc_softc),
+    auccmatch, auccattach, NULL, NULL);
 
 struct audio_device aucc_device = {
 	"Amiga-audio",

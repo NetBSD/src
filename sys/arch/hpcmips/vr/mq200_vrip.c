@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_vrip.c,v 1.9 2002/09/27 20:32:32 thorpej Exp $	*/
+/*	$NetBSD: mq200_vrip.c,v 1.10 2002/10/02 05:26:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -55,9 +55,8 @@ struct mq200_vrip_softc {
 static int	mq200_vrip_probe(struct device *, struct cfdata *, void *);
 static void	mq200_vrip_attach(struct device *, struct device *, void *);
 
-const struct cfattach mqvideo_vrip_ca = {
-	sizeof(struct mq200_vrip_softc), mq200_vrip_probe, mq200_vrip_attach
-};
+CFATTACH_DECL(mqvideo_vrip, sizeof(struct mq200_vrip_softc),
+    mq200_vrip_probe, mq200_vrip_attach, NULL, NULL);
 
 static int
 mq200_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)

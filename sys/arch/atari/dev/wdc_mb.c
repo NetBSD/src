@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.10 2002/09/27 20:31:00 thorpej Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.11 2002/10/02 05:04:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,9 +77,8 @@ struct wdc_mb_softc {
 int	wdc_mb_probe	__P((struct device *, struct cfdata *, void *));
 void	wdc_mb_attach	__P((struct device *, struct device *, void *));
 
-const struct cfattach wdc_mb_ca = {
-	sizeof(struct wdc_mb_softc), wdc_mb_probe, wdc_mb_attach
-};
+CFATTACH_DECL(wdc_mb, sizeof(struct wdc_mb_softc),
+    wdc_mb_probe, wdc_mb_attach, NULL, NULL);
 
 int
 wdc_mb_probe(parent, cfp, aux)

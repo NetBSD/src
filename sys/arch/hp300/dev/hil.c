@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.50 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: hil.c,v 1.51 2002/10/02 05:15:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.50 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.51 2002/10/02 05:15:51 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -79,9 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.50 2002/09/06 13:18:43 gehenna Exp $");
 int	hilmatch __P((struct device *, struct cfdata *, void *));
 void	hilattach __P((struct device *, struct device *, void *));
 
-const struct cfattach hil_ca = {
-	sizeof(struct hil_softc), hilmatch, hilattach,
-};
+CFATTACH_DECL(hil, sizeof(struct hil_softc),
+    hilmatch, hilattach, NULL, NULL);
 
 struct	_hilbell default_bell = { BELLDUR, BELLFREQ };
 

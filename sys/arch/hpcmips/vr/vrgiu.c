@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.37 2002/09/27 20:32:36 thorpej Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.38 2002/10/02 05:26:55 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -172,9 +172,8 @@ static struct hpcio_chip vrgiu_iochip = {
 	.hc_dump =		vrgiu_dump,
 };
 
-const struct cfattach vrgiu_ca = {
-	sizeof(struct vrgiu_softc), vrgiu_match, vrgiu_attach
-};
+CFATTACH_DECL(vrgiu, sizeof(struct vrgiu_softc),
+    vrgiu_match, vrgiu_attach, NULL, NULL);
 
 struct vrgiu_softc *this_giu;
 

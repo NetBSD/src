@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_68k.c,v 1.4 2002/09/27 20:34:01 thorpej Exp $	*/
+/*	$NetBSD: vme_two_68k.c,v 1.5 2002/10/02 05:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -71,9 +71,8 @@ static struct evcnt *vmetwoisrevcnt(void *, int);
 int vmetwo_match __P((struct device *, struct cfdata *, void *));
 void vmetwo_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach vmetwo_ca = {
-	sizeof(struct vmetwo_softc), vmetwo_match, vmetwo_attach
-};
+CFATTACH_DECL(vmetwo, sizeof(struct vmetwo_softc),
+    vmetwo_match, vmetwo_attach, NULL, NULL);
 extern struct cfdriver vmetwo_cd;
 
 

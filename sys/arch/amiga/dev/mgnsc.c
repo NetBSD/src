@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.34 2002/09/27 20:30:15 thorpej Exp $ */
+/*	$NetBSD: mgnsc.c,v 1.35 2002/10/02 04:55:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.34 2002/09/27 20:30:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.35 2002/10/02 04:55:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,8 @@ void mgnsc_dump(void);
 #ifdef DEBUG
 #endif
 
-const struct cfattach mgnsc_ca = {
-	sizeof(struct siop_softc), mgnscmatch, mgnscattach
-};
+CFATTACH_DECL(mgnsc, sizeof(struct siop_softc),
+    mgnscmatch, mgnscattach, NULL, NULL);
 
 /*
  * if we are a CSA Magnum 40 SCSI

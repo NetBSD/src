@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.26 2002/09/27 20:33:56 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.27 2002/10/02 05:28:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,9 +112,8 @@
 int le_pcc_match __P((struct device *, struct cfdata *, void *));
 void le_pcc_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach le_pcc_ca = {
-	sizeof(struct le_softc), le_pcc_match, le_pcc_attach
-};
+CFATTACH_DECL(le_pcc, sizeof(struct le_softc),
+    le_pcc_match, le_pcc_attach, NULL, NULL);
 
 extern struct cfdriver le_cd;
 

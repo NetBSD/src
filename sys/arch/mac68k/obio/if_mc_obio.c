@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.8 2002/09/27 20:33:27 thorpej Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.9 2002/10/02 05:36:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -70,9 +70,8 @@ hide int	mc_obio_getaddr __P((struct mc_softc *, u_int8_t *));
 
 extern int	kvtop __P((register caddr_t addr));
 
-const struct cfattach mc_obio_ca = {
-	sizeof(struct mc_softc), mc_obio_match, mc_obio_attach
-};
+CFATTACH_DECL(mc_obio, sizeof(struct mc_softc),
+    mc_obio_match, mc_obio_attach, NULL, NULL);
 
 hide int
 mc_obio_match(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.13 2002/09/27 20:33:33 thorpej Exp $	*/
+/*	$NetBSD: awacs.c,v 1.14 2002/10/02 05:30:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -114,9 +114,8 @@ int awacs_set_rate(struct awacs_softc *, int);
 static void mono16_to_stereo16(void *, u_char *, int);
 static void swap_bytes_mono16_to_stereo16(void *, u_char *, int);
 
-const struct cfattach awacs_ca = {
-	sizeof(struct awacs_softc), awacs_match, awacs_attach
-};
+CFATTACH_DECL(awacs, sizeof(struct awacs_softc),
+    awacs_match, awacs_attach, NULL, NULL);
 
 struct audio_hw_if awacs_hw_if = {
 	awacs_open,

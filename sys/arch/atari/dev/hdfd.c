@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.32 2002/09/27 20:30:55 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.33 2002/10/02 05:04:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -171,9 +171,8 @@ int	fdcprobe __P((struct device *, struct cfdata *, void *));
 int	fdprint __P((void *, const char *));
 void	fdcattach __P((struct device *, struct device *, void *));
 
-const struct cfattach fdc_ca = {
-	sizeof(struct fdc_softc), fdcprobe, fdcattach
-};
+CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
+    fdcprobe, fdcattach, NULL, NULL);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -248,9 +247,8 @@ struct fd_softc {
 int	fdprobe __P((struct device *, struct cfdata *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
-const struct cfattach hdfd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
-};
+CFATTACH_DECL(hdfd, sizeof(struct fd_softc),
+    fdprobe, fdattach, NULL, NULL);
 
 extern struct cfdriver hdfd_cd;
 
