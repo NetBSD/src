@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.18 2001/04/12 17:53:48 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.19 2001/05/10 01:04:08 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,9 +116,6 @@ struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
 void gre_compute_route(struct gre_softc *sc);
-#ifdef DIAGNOSTIC
-void gre_inet_ntoa(struct in_addr in);
-#endif
 
 void	greattach __P((int));
 
@@ -534,8 +531,8 @@ gre_compute_route(struct gre_softc *sc)
 	}
 
 #ifdef DIAGNOSTIC
-	printf("%s: searching a route to ", sc->sc_if.if_xname);
-	gre_inet_ntoa(((struct sockaddr_in *)&ro->ro_dst)->sin_addr);
+	printf("%s: searching a route to %s", sc->sc_if.if_xname,
+	    inet_ntoa(((struct sockaddr_in *)&ro->ro_dst)->sin_addr));
 #endif
 
 	rtalloc(ro);
@@ -548,8 +545,8 @@ gre_compute_route(struct gre_softc *sc)
 		((struct sockaddr_in *)&ro->ro_dst)->sin_addr = sc->g_dst;
 
 #ifdef DIAGNOSTIC
-	printf(", choosing %s with gateway ",ro->ro_rt->rt_ifp->if_xname);
-	gre_inet_ntoa(((struct sockaddr_in *)(ro->ro_rt->rt_gateway))->sin_addr);
+	printf(", choosing %s with gateway %s", ro->ro_rt->rt_ifp->if_xname,
+	    inet_ntoa(((struct sockaddr_in *)(ro->ro_rt->rt_gateway))->sin_addr));
 	printf("\n");
 #endif
 }
@@ -583,20 +580,4 @@ gre_in_cksum(u_short *p, u_int len)
 		sum += (sum >> 16);
 		return (~sum);
 }
-
-
-/* while testing ... */
-#ifdef DIAGNOSTIC
-void
-gre_inet_ntoa(struct in_addr in)
-{
-	char *p;
-
-	p = (char *)&in;
-#define UC(b)   (((int)b)&0xff)
-	printf("%d.%d.%d.%d", UC(p[0]), UC(p[1]), UC(p[2]), UC(p[3]));
-}
-
 #endif
-#endif
-
