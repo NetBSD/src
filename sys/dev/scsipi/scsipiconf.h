@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipiconf.h,v 1.87 2004/09/09 19:35:32 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.88 2004/09/17 23:10:50 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -171,7 +171,7 @@ struct scsipi_periphsw {
 	void	(*psw_start)(struct scsipi_periph *);
 	int	(*psw_async)(struct scsipi_periph *,
 		    scsipi_async_event_t, void *);
-	void	(*psw_done)(struct scsipi_xfer *);
+	void	(*psw_done)(struct scsipi_xfer *, int);
 };
 
 struct disk_parms;
