@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.2 2000/07/07 15:54:19 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.3 2000/08/26 10:40:03 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.27 2000/06/21 08:07:13 itojun Exp $	*/
 
 /*
@@ -345,8 +345,10 @@ in6_pcbsetport(laddr, in6p)
 		wild = IN6PLOOKUP_WILDCARD;
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
+#ifndef IPNOPRIVPORTS
 		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
 			return (EACCES);
+#endif
 		min = IPV6PORT_RESERVEDMIN;
 		max = IPV6PORT_RESERVEDMAX;
 	} else {
