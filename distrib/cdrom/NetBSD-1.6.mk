@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-1.6.mk,v 1.4 2002/10/08 14:18:17 lukem Exp $
+# $NetBSD: NetBSD-1.6.mk,v 1.5 2002/10/09 11:57:14 lukem Exp $
 #
 # Configuration file for the NetBSD 1.6 binary release.
 
@@ -35,6 +35,10 @@ EXTFILES.sparc=		sparc-boot.fs:sparc/installation/bootfs/boot.fs.gz
 INTFILES.sparc=		installation/bootfs/instfs.tgz:sparc/installation/bootfs/instfs.tgz,link
 INTDIRS.sparc=		installation/bootfs
 MKISOFS_ARGS.sparc=	-hide-hfs ./installation -hide-joliet ./installation
+
+# BOOTFILE.sparc64 is absolute
+BOOTFILE.sparc64=	${EXTFILEDIR}/sparc64-boot.fs
+EXTFILES.sparc64=	sparc64-boot.fs:sparc64/installation/misc/boot.fs.gz
 
 # BOOTFILE.vax is absolute
 BOOTFILE.vax=		${EXTFILEDIR}/vax.xxboot
