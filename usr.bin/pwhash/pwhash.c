@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.10 2005/01/11 22:56:19 christos Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.11 2005/01/12 03:35:34 christos Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.10 2005/01/11 22:56:19 christos Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.11 2005/01/12 03:35:34 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -40,9 +40,9 @@ __RCSID("$NetBSD: pwhash.c,v 1.10 2005/01/11 22:56:19 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <login_cap.h>
-
-#include <crypt.h>
+#include <util.h>
 
 /*
  * Very simple little program, for encrypting passwords from the command
@@ -83,11 +83,12 @@ trim(char *line)
 }
 
 static void
-print_passwd(char *string, int operation, void *extra)
+print_passwd(char *string, int operation, const char *extra)
 {
-	char msalt[3], *salt;
-	struct passwd pwd;
+	char msalt[3];
+	const char *salt;
 	char buf[_PASSWORD_LEN];
+	char option[LINE_MAX], *key, *opt;
 	int error;
 
 	salt = buf;
@@ -107,15 +108,18 @@ print_passwd(char *string, int operation, void *extra)
 		break;
 
 	case DO_MD5:
-		error = __gensalt_md5(buf, sizeof(buf), *(int *)extra);
+		error = pw_gensalt(buf, _PASSWORD_LEN, "md5", NULL);
+		salt = buf;
 		break;
 
 	case DO_SHA1:
-		error = __gensalt_sha1(buf, sizeof(buf), *(int *)extra);
+		error = pw_gensalt(buf, _PASSWORD_LEN, "sha1", NULL);
+		salt = buf;
 		break;
 
 	case DO_BLF:
-		error = __gensalt_blowfish(buf, sizeof(buf), *(int *)extra);
+		error = pw_gensalt(buf, _PASSWORD_LEN, "blowfish", NULL);
+		salt = buf;
 		break;
 
 	case DO_DES:
@@ -124,8 +128,10 @@ print_passwd(char *string, int operation, void *extra)
 		break;
 
 	default:
-		pwd.pw_name = "default";
-		error = pw_gensalt(buf, _PASSWORD_LEN, &pwd, 'l');
+		pw_getconf(option, sizeof(option), "default", "localcipher");
+		opt = option;
+		key = strsep(&opt, ",");
+		error = pw_gensalt(buf, _PASSWORD_LEN, key, opt);
 		salt = buf;
 		break;
 	}
@@ -142,8 +148,7 @@ main(int argc, char **argv)
 	int opt;
 	int operation = -1;
 	int prompt = 0;
-	int rounds;
-	void *extra;                       /* Store salt or number of rounds */
+	char *extra;                       /* Store salt or number of rounds */
 
 	setprogname(argv[0]);
 
@@ -162,6 +167,7 @@ main(int argc, char **argv)
 			if (operation != -1)
 				usage();
 			operation = DO_MD5;
+			extra = NULL;
 			break;
 
 		case 'p':
@@ -174,8 +180,7 @@ main(int argc, char **argv)
 			if (operation != -1)
 				usage();
 			operation = DO_SHA1;
-			rounds = atoi(optarg);
-			extra = &rounds;
+			extra = optarg;
 			break;
 
 		case 's':                       /* Unix crypt (DES) */
@@ -189,8 +194,7 @@ main(int argc, char **argv)
 			if (operation != -1)
 				usage();
 			operation = DO_BLF;
-			rounds = atoi(optarg);
-			extra = &rounds;
+			extra = optarg;
 			break;
 
 		default:
