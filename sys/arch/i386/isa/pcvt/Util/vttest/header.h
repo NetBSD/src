@@ -27,17 +27,24 @@
 
 
 #ifdef UNIX
-#include <ctype.h>
-#include <sgtty.h>
-#include <signal.h>
-#include <setjmp.h>
+# include <sys/param.h>
+# include <ctype.h>
+# ifndef BSD4_4
+#  include <sgtty.h>
+struct sgttyb ttyOrg, ttyNew;
+# else
+#  include <termios.h>
+#  include <sys/ioctl.h>
+struct termios ttyOrg, ttyNew;
+# endif
+# include <signal.h>
+# include <setjmp.h>
 jmp_buf intrenv;
-struct sgttyb sgttyOrg, sgttyNew;
 char stdioBuf[BUFSIZ];
 int brkrd, reading;
 extern onterm(), onbrk();
-#ifdef SIII
-#include <fcntl.h>
-#endif
+# ifdef SIII
+#  include <fcntl.h>
+# endif
 #endif
 int ttymode;
