@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2002/09/13 19:07:01 thorpej Exp $
+$NetBSD: README,v 1.5 2002/09/13 23:35:32 thorpej Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -42,6 +42,7 @@ SOLARIS:
 
 * Needs the following paths, in this order, in $PATH:
 
+      /usr/xpg4/bin
       /usr/ccs/bin
       <path to host C and C++ compilers>
       /usr/bin
@@ -49,9 +50,3 @@ SOLARIS:
   /usr/ucb may optionally be placed before /usr/bin, per your preference,
   but /usr/ucb *MUST NOT* be before /usr/ccs/bin or before the path to
   the host C and C++ compilers.
-
-  Also note that /usr/xpg4/bin *MUST NOT* be in the path before /usr/bin.
-  /usr/xpg4/bin/sh is a symbolic link to /usr/bin/ksh, which has different
-  semantics for "pwd" than /usr/bin/sh.  Since nbmake uses /bin/sh (which
-  is a symbolic link to /usr/bin/sh), the different semantics break obj
-  directories in the presence of symbolic links, especially if using NFS.
