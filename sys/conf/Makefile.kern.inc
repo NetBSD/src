@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.41 2003/10/29 21:29:27 mycroft Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.42 2003/11/06 08:23:22 jdolecek Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -59,6 +59,13 @@ CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
 .endif
+
+# Disable unitialized warnings with 2.95 - it gets it wrong way too often
+_ISGCC295!=		${CC} --version 2>/dev/null | grep 2.95 2>/dev/null || echo 0
+.if ${_ISGCC295}
+CWARNFLAGS+=	-Wno-uninitialized
+.endif
+
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
 CFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CFLAGS+=	${CPUFLAGS} -ffreestanding ${DEBUG} ${COPTS} ${CWARNFLAGS}
