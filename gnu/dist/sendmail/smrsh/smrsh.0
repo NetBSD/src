@@ -20,16 +20,16 @@ DDEESSCCRRIIPPTTIIOONN
        without going through an alias or forward file, _s_m_r_s_h lim-
        its the set of programs that he or she can execute.
 
-       Briefly, _s_m_r_s_h limits programs  to  be  in  the  directory
-       /usr/adm/sm.bin,  allowing  the  system  administrator  to
-       choose the set of acceptable commands, and  to  the  shell
-       builtin  commands  ``exec'',  ``exit'',  and ``echo''.  It
-       also rejects any commands with the  characters  ``',  `<',
-       `>',  `;',  `$', `(', `)', `\r' (carriage return), or `\n'
-       (newline) on the  command  line  to  prevent  ``end  run''
-       attacks.   It  allows ``||'' and ``&&'' to enable commands
-       like: ``"|exec /usr/local/bin/procmail -f-  /etc/procmail-
-       rcs/user || exit 75"''
+       Briefly, _s_m_r_s_h limits programs to be in  a  single  direc-
+       tory,  by  default  /usr/adm/sm.bin,  allowing  the system
+       administrator to choose the set  of  acceptable  commands,
+       and  to the shell builtin commands ``exec'', ``exit'', and
+       ``echo''.  It also rejects any commands with  the  charac-
+       ters  ``',  `<',  `>',  `;', `$', `(', `)', `\r' (carriage
+       return), or `\n' (newline) on the command line to  prevent
+       ``end  run''  attacks.   It  allows  ``||''  and ``&&'' to
+       enable commands like: ``"|exec /usr/local/bin/procmail -f-
+       /etc/procmailrcs/user || exit 75"''
 
        Initial  pathnames on programs are stripped, so forwarding
        to      ``/usr/ucb/vacation'',      ``/usr/bin/vacation'',
@@ -37,11 +37,11 @@ DDEESSCCRRIIPPTTIIOONN
        actually forward to ``/usr/adm/sm.bin/vacation''.
 
        System administrators should be conservative  about  popu-
-       lating  /usr/adm/sm.bin.   Reasonable  additions are _v_a_c_a_-
-       _t_i_o_n(1), _p_r_o_c_m_a_i_l(1), and the like.  No matter  how  brow-
-       beaten  you  may be, never include any shell or shell-like
-       program (such as _p_e_r_l(1)) in the sm.bin  directory.   Note
-       that  this  does  not  restrict  the  use of shell or perl
+       lating  the  sm.bin  directory.   Reasonable additions are
+       _v_a_c_a_t_i_o_n(1), _p_r_o_c_m_a_i_l(1), and the  like.   No  matter  how
+       brow-beaten  you may be, never include any shell or shell-
+       like program (such as _p_e_r_l(1)) in  the  sm.bin  directory.
+       Note  that this does not restrict the use of shell or perl
        scripts in the sm.bin directory (using the ``#!'' syntax);
        it simply disallows execution of arbitrary programs.
 
@@ -61,6 +61,6 @@ SSEEEE AALLSSOO
 
 
 
-                             11/02/93                           1
+                   Date: 2000/12/15 19:50:46                 1
 
 
