@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.11.28.1 2001/03/30 21:48:56 he Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.11.28.2 2002/01/14 10:55:34 he Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -63,7 +63,7 @@ procfs_doregs(curp, p, pfs, uio)
 	int kl;
 
 	if ((error = procfs_checkioperm(curp, p)) != 0)
-		return (EPERM);
+		return error;
 
 	kl = sizeof(r);
 	kv = (char *) &r;
