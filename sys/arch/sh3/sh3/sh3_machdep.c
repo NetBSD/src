@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.42 2002/06/23 18:35:07 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.43 2002/06/23 18:49:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -432,13 +432,14 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.
 	 */
 	tf->tf_r4 = sig;
 	tf->tf_r5 = code;
 	tf->tf_r6 = (int)&fp->sf_sc;
-	tf->tf_r7 = (int)catcher;
-	tf->tf_spc = (int)p->p_sigctx.ps_sigcode;
+	tf->tf_spc = (int)catcher;
+	tf->tf_pr = (int)p->p_sigctx.ps_sigcode;
 	tf->tf_r15 = (int)fp;
 
 	/* Remember that we're now on the signal stack. */
