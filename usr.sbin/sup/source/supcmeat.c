@@ -32,6 +32,11 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmeat.c,v $
+ * Revision 1.5  1995/06/24 16:21:48  christos
+ * - Don't use system(3) to fork processes. It is a big security hole.
+ * - Encode the filenames in the scan files using strvis(3), so filenames
+ *   that contain newlines or other weird characters don't break the scanner.
+ *
  * Revision 1.4  1995/06/03 21:21:56  christos
  * Changes to write ascii timestamps in the when files.
  * Looked into making it 64 bit clean, but it is hopeless.
@@ -1081,7 +1086,6 @@ char *from;		/* 0 if reading from network */
 	register int fromf,tof,istemp,x;
 	char dpart[STRINGLENGTH],fpart[STRINGLENGTH];
 	char tname[STRINGLENGTH];
-	char sys_com[STRINGLENGTH];
 	struct stat sbuf;
 
 	static int thispid = 0;		/* process id # */
@@ -1217,9 +1221,13 @@ char *from;		/* 0 if reading from network */
 	}
 	/* uncompress it first */
 	if (docompress) {
-		sprintf(sys_com, "gunzip < %s > %s\n", tname, to);
-		/* Uncompress it onto the destination */
-		if (system(sys_com) < 0) {
+		char *av[4];
+		int   ac = 0;
+		av[ac++] = "gzip";
+		av[ac++] = "-d";
+		av[ac++] = NULL;
+		if (runio(av, tname, to, NULL) < 0) {
+			/* Uncompress it onto the destination */
 			notify ("SUP: Error in uncompressing file %s\n",
 				to);
 			(void) unlink (tname);

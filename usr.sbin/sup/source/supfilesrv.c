@@ -42,6 +42,11 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.7  1995/06/24 16:21:55  christos
+ * - Don't use system(3) to fork processes. It is a big security hole.
+ * - Encode the filenames in the scan files using strvis(3), so filenames
+ *   that contain newlines or other weird characters don't break the scanner.
+ *
  * Revision 1.6  1995/06/03 21:22:00  christos
  * Changes to write ascii timestamps in the when files.
  * Looked into making it 64 bit clean, but it is hopeless.
@@ -1141,18 +1146,19 @@ TREE *t;
 {
 	register int x,fd;
 	register int fdtmp;
-	char sys_com[STRINGLENGTH], temp_file[STRINGLENGTH], rcs_file[STRINGLENGTH];
+	char temp_file[STRINGLENGTH], rcs_file[STRINGLENGTH];
         union wait status;
 	char *uconvert(),*gconvert();
 	int sendfile ();
+	int ac;
+	char *av[50];	/* More than enough */
 
 	if ((t->Tflags&FNEEDED) == 0)	/* only send needed files */
 		return (SCMOK);
 	if ((t->Tmode&S_IFMT) == S_IFDIR) /* send no directories this pass */
 		return (SCMOK);
 	x = msgsend ();
-	if (x != SCMOK)  goaway ("Error reading receive file request from clien
-t");
+	if (x != SCMOK)  goaway ("Error reading receive file request from client");
 	upgradeT = t;			/* upgrade file pointer */
 	fd = -1;			/* no open file */
 	if ((t->Tmode&S_IFMT) == S_IFREG) {
@@ -1164,42 +1170,60 @@ t");
 				tmpnam(rcs_file);
                                 if (strcmp(&t->Tname[strlen(t->Tname)-2], ",v") == 0) {
                                         t->Tname[strlen(t->Tname)-2] = '\0';
-                                        if (rcs_branch != NULL)
+					ac = 0;
 #ifdef CVS
-                                                sprintf(rcs_release, "-r %s", rcs_branch);
+					av[ac++] = "cvs";
+					av[ac++] = "-d";
+					av[ac++] = cvs_root;
+					av[ac++] = "-r";
+					av[ac++] = "-l";
+					av[ac++] = "-Q";
+					av[ac++] = "co";
+					av[ac++] = "-p";
+					if (rcs_branch != NULL) {
+						av[ac++] = "-r";
+						av[ac++] = rcs_branch;
+					}
 #else
-                                                sprintf(rcs_release, "-r%s", rcs_branch);
+					av[ac++] = "co";
+					av[ac++] = "-q";
+					av[ac++] = "-p";
+					if (rcs_branch != NULL) {
+						sprintf(rcs_release, "-r%s",
+							rcs_branch);
+						av[ac++] = rcs_release;
+					}
 #endif
-                                        else
-                                                rcs_release[0] = '\0';
-#ifdef CVS
-                                        sprintf(sys_com, "cvs -d %s -r -l -Q co -p %s %s > %s\n", cvs_root, rcs_release, t->Tname, rcs_file);
-#else
-                                        sprintf(sys_com, "co -q -p %s %s > %s 2> /dev/null\n", rcs_release, t->Tname, rcs_file);
-#endif
-                                        /*loginfo("using rcs mode \"%s\"\n", sys_com);*/
-                                        status.w_status = system(sys_com);
+					av[ac++] = t->Tname;
+					av[ac++] = NULL;
+					status.w_status = runio(av,
+							        NULL,
+							        rcs_file,
+							        "/dev/null");
+                                        /*loginfo("using rcs mode \n");*/
                                         if (status.w_status < 0 || status.w_retcode) {
                                                 /* Just in case */
                                                 unlink(rcs_file);
                                                 if (status.w_status < 0) {
-                                                        goaway ("We died trying to \"%s\"", sys_com);
+                                                        goaway ("We died trying to run cvs or rcs");
                                                         t->Tmode = 0;
                                                 }
                                                 else {
-                                                        /*logerr("rcs command failed \"%s\" = %d\n",
-                                                               sys_com, status.w_retcode);*/
+                                                        /*logerr("rcs command failed = %d\n",
+                                                               status.w_retcode);*/
                                                         t->Tflags |= FUPDATE;
                                                 }
                                         }
                                         else if (docompress) {
                                                 tmpnam(temp_file);
-                                                sprintf(sys_com, "gzip -c < %s > %s\n", rcs_file, temp_file);
-                                                if (system(sys_com) < 0) {
+						av[0] = "gzip";
+						av[1] = "-c";
+						av[2] = NULL;
+						if (runio(av, rcs_file, temp_file, NULL) < 0) {
                                                         /* Just in case */
                                                         unlink(temp_file);
                                                         unlink(rcs_file);
-                                                        goaway ("We died trying to \"%s\"", sys_com);
+                                                        goaway ("We died trying to gzip a file");
                                                         t->Tmode = 0;
                                                 }
                                                 fd = open (temp_file,O_RDONLY,0);
@@ -1212,11 +1236,13 @@ t");
                         if (fd == -1) {
                                 if (docompress) {
                                         tmpnam(temp_file);
-                                        sprintf(sys_com, "gzip -c < %s > %s\n", t->Tname, temp_file);
-                                        if (system(sys_com) < 0) {
+					av[0] = "gzip";
+					av[1] = "-c";
+					av[2] = NULL;
+					if (runio(av, t->Tname, temp_file, NULL) < 0) {
                                                 /* Just in case */
                                                 unlink(temp_file);
-                                                goaway ("We died trying to \"%s\"", sys_com);
+                                                goaway ("We died trying to run gzip");
                                                 t->Tmode = 0;
                                         }
                                         fd = open (temp_file,O_RDONLY,0);
