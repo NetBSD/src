@@ -77,7 +77,7 @@ case $i in
 
 all)
 	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
-	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 vnd2 vnd3 lpa0 lpa1
+	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1
 	sh MAKEDEV lpt0 lpt1 lpt2 vga bpf0 bpf1 bpf2 bpf3 speaker lkm
 	sh MAKEDEV mms0 lms0 pms0 audio local
 # MISSING:
@@ -116,11 +116,12 @@ wt*)
 	umask 77
 	;;
 
-fd*|wd*|sd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+fd*|sd*|vnd*|wd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
 	fd*) name=fd; blk=2; chr=9;;
 	sd*) name=sd; blk=4; chr=13;;
+	vnd*) name=vnd; blk=14; chr=41;;
 	wd*) name=wd; blk=0; chr=3;;
 	esac
 	rm -f $name$unit? r$name$unit?
@@ -256,16 +257,6 @@ cd*|mcd*)
 		;;
 	esac
 	umask 77
-	;;
-
-vnd*)
-	unit=`expr $i : '...\(.*\)'`
-	name=vnd; blk=14; chr=41
-	rm -f ${name}${unit}c r${name}${unit}c
-	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-	chgrp operator ${name}${unit}c r${name}${unit}c
-	chmod 640 ${name}${unit}c r${name}${unit}c
 	;;
 
 lpa*)
