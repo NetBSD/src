@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.95 2004/05/20 05:08:29 atatat Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.96 2004/06/20 18:19:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.95 2004/05/20 05:08:29 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.96 2004/06/20 18:19:27 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -975,8 +975,7 @@ pool_do_put(struct pool *pp, void *v)
 	 * If this page is now empty, do one of two things:
 	 *
 	 *	(1) If we have more pages than the page high water mark,
-	 *	    or if we are flagged as immediately freeing back idle
-	 *	    pages, free the page back to the system.  ONLY CONSIDER
+	 *	    free the page back to the system.  ONLY CONSIDER
 	 *	    FREEING BACK A PAGE IF WE HAVE MORE THAN OUR MINIMUM PAGE
 	 *	    CLAIM.
 	 *
@@ -989,7 +988,6 @@ pool_do_put(struct pool *pp, void *v)
 		pp->pr_nidle++;
 		if (pp->pr_npages > pp->pr_minpages &&
 		    (pp->pr_npages > pp->pr_maxpages ||
-		     (pp->pr_roflags & PR_IMMEDRELEASE) != 0 ||
 		     (pp->pr_alloc->pa_flags & PA_WANT) != 0)) {
 			simple_unlock(&pp->pr_slock);
 			pr_rmpage(pp, ph, NULL);
