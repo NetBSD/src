@@ -1,5 +1,5 @@
 /*
- * Written by Charles M. Hannum, Apr 9, 1995
+ * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.
  */
 
