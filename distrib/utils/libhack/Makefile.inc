@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 1999/06/30 22:21:57 fvdl Exp $
+# $NetBSD: Makefile.inc,v 1.10 2000/08/22 14:06:37 abs Exp $
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
 # objects you get (and not the ones in libc.a)
@@ -12,6 +12,8 @@ HACKOBJS+= opendir.o
 
 libhack.o : $(HACKOBJS)
 	$(LD) -r -o $@ $(HACKOBJS)
+
+CFLAGS+= -Os
 
 # XXX .PATH won't work here, because of crunchgen used in the i386 build
 
