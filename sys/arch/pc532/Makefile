@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/11 08:42:08 mycroft Exp $
-
-NOOBJ=
+#	$NetBSD: Makefile,v 1.5 1997/10/11 08:44:47 mycroft Exp $
 
 # Makefile for pc532 tags file
 

@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.8 1997/10/11 08:42:02 mycroft Exp $
-
-NOOBJ=
+# $NetBSD: Makefile,v 1.9 1997/10/11 08:44:42 mycroft Exp $
 
 # Makefile for alpha tags file and boot blocks
 

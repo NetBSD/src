@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/11 08:42:11 mycroft Exp $
-
-NOOBJ=
+#	$NetBSD: Makefile,v 1.4 1997/10/11 08:44:50 mycroft Exp $
 
 # Makefile for x68k tags file and boot blocks
 
