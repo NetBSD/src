@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.1 2002/01/29 18:47:26 uch Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.2 2002/02/11 17:13:28 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -35,18 +35,21 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
 #include <mips/cache.h>
+
+#include <machine/sysconf.h>
 #include <machine/kloader.h>
 
 void kloader_mips_jump(kloader_bootfunc_t *, vaddr_t,
     struct kloader_bootinfo *, struct kloader_page_tag *);
+void kloader_mips_reset(void);
 extern kloader_bootfunc_t kloader_vr_boot;
 extern kloader_bootfunc_t kloader_tx_boot;
 
 struct kloader_ops kloader_mips_ops = {
 	.jump = kloader_mips_jump,
-	.boot = 0
+	.boot = 0,
+	.reset = kloader_mips_reset
 };
 
 void
@@ -67,4 +70,11 @@ kloader_mips_jump(kloader_bootfunc_t func, vaddr_t sp,
 
 	(*func)(info, tag);	/* 2nd-bootloader don't use stack */
 	/* NOTREACHED */
+}
+
+void
+kloader_mips_reset()
+{
+
+	(*platform.reboot)(0, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.1 2002/01/29 18:44:26 uch Exp $	*/
+/*	$NetBSD: kloader.h,v 1.2 2002/02/11 17:13:28 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ struct kloader_ops {
 	void (*jump)(kloader_bootfunc_t *, vaddr_t, struct kloader_bootinfo *,
 	    struct kloader_page_tag *);
 	kloader_bootfunc_t *boot;
+	void (*reset)(void);
 };
 
 struct kloader_page_tag {
