@@ -14,7 +14,7 @@
  * I would appreciate (though I do not require) receiving a copy of any
  * improvements you might make to this program.
  *
- *	$Id: units.c,v 1.3 1994/12/21 07:22:00 jtc Exp $
+ *	$Id: units.c,v 1.4 1996/03/21 18:06:48 jtc Exp $
  */
 
 #include <ctype.h>
@@ -625,7 +625,7 @@ usage()
 }
 
 
-void 
+int
 main(int argc, char **argv)
 {
 
