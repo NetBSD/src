@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 1996/01/06 20:11:06 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 1996/02/11 12:42:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -383,6 +383,10 @@ gettod()
 	MC146818_GETTOD(RTC, &clkregs);
 	splx(sps);
 
+	if(range_test(clkregs[MC_SEC], 0, 59))
+		return(0);
+	if(range_test(clkregs[MC_MIN], 0, 59))
+		return(0);
 	if(range_test(clkregs[MC_HOUR], 0, 23))
 		return(0);
 	if(range_test(clkregs[MC_DOM], 1, 31))
