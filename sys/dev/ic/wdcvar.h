@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.14 1998/12/16 12:46:47 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.15 1999/02/08 15:22:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -180,12 +180,10 @@ void	wdc_delref __P((struct channel_softc *));
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
  * command is aborted.
  */   
-#define wait_for_drq(chp, timeout) wdcwait((chp), \
-	WDCS_DRDY | WDCS_DSC | WDCS_DRQ, \
-	WDCS_DRDY | WDCS_DSC | WDCS_DRQ, (timeout))
+#define wait_for_drq(chp, timeout) wdcwait((chp), WDCS_DRQ, WDCS_DRQ, (timeout))
 #define wait_for_unbusy(chp, timeout)	wdcwait((chp), 0, 0, (timeout))
-#define wait_for_ready(chp, timeout) wdcwait((chp), WDCS_DRDY | WDCS_DSC, \
-	WDCS_DRDY | WDCS_DSC, (timeout))
+#define wait_for_ready(chp, timeout) wdcwait((chp), WDCS_DRDY, \
+	WDCS_DRDY, (timeout))
 /* ATA/ATAPI specs says a device can take 31s to reset */
 #define WDC_RESET_WAIT 31000
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.4 1999/01/18 20:06:24 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.5 1999/02/08 15:22:28 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -77,8 +77,8 @@ ata_get_params(drvp, flags, prms)
 
 	if (drvp->drive_flags & DRIVE_ATA) {
 		wdc_c.r_command = WDCC_IDENTIFY;
-		wdc_c.r_st_bmask = WDCS_DRDY | WDCS_DSC;
-		wdc_c.r_st_pmask = WDCS_DRDY | WDCS_DSC | WDCS_DRQ;
+		wdc_c.r_st_bmask = WDCS_DRDY;
+		wdc_c.r_st_pmask = WDCS_DRQ;
 	} else {
 		wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
 		wdc_c.r_st_bmask = 0;
