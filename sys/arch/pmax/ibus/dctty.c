@@ -1,4 +1,4 @@
-/*	$NetBSD: dctty.c,v 1.1.2.2 1999/10/29 16:44:57 drochner Exp $ */
+/* $NetBSD: dctty.c,v 1.1.2.3 1999/11/19 09:39:37 nisimura Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -14,7 +14,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Tohru Nishimura
- *	for the NetBSD Project.
+ *      for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -38,12 +38,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.2 1999/10/29 16:44:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.3 1999/11/19 09:39:37 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
@@ -52,11 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.2 1999/10/29 16:44:57 drochner Exp $
 #include <sys/time.h>
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
 #include <machine/bus.h>
-
 #include <pmax/ibus/ibusvar.h>
-#include <pmax/ibus/dc7085reg.h> /* XXX XXX XXX */
+#include <pmax/ibus/dc7085reg.h>
 #include <pmax/ibus/dc7085var.h>
 
 #include "locators.h"
@@ -84,7 +82,7 @@ dctty_match(parent, cf, aux)
 {
 	struct dc_attach_args *args = aux;
 
-	if (strcmp(CFNAME(parent), "dc") != 0)
+	if (parent->dv_cfdata->cf_driver != &dc_cd)
 		return 0;
 
 	/* Exact match is better than wildcard. */
@@ -227,7 +225,7 @@ dcread(dev, uio, flag)
 	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	tp = sc->sc_line[DCLINE(dev)].a;
+	tp = sc->sc_tty[DCLINE(dev)];
 
 #ifdef HW_FLOW_CONTROL			/* XXX t_hwiflow() routine XXX */
 	if ((tp->t_cflag & CRTSCTS) && (tp->t_state & TS_TBLOCK) &&
@@ -249,18 +247,18 @@ dcwrite(dev, uio, flag)
 	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	tp = sc->sc_line[DCLINE(dev)].a;
+	tp = sc->sc_tty[DCLINE(dev)];
 	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
 }
 
 struct tty *
 dctty(dev)
-        dev_t dev;
+	dev_t dev;
 {
 	struct dc_softc *sc;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
-        return sc->sc_line[DCLINE(dev)].a;
+	return sc->sc_tty[DCLINE(dev)];
 }
 
 int
@@ -313,9 +311,9 @@ dcioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-                error = suser(p->p_ucred, &p->p_acflag);
-                if (error)
-                        return error;
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			return error;
 		sc->dc_flags[line] |= *(int *)data & 07;
 		break;
 
@@ -338,13 +336,13 @@ dcstart(tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup(&tp->t_outq);
 			if (tp->t_outq.c_cc == 0)
 				goto out;
 		}
 		selwakeup(&tp->t_wsel);
 	}
-  	cc = ndqb(&tp->t_outq, 0);
+	cc = ndqb(&tp->t_outq, 0);
 	if (cc == 0)
 		goto out;
 
@@ -409,7 +407,7 @@ dcparam(tp, t)
 	if (sc->dc_flags[line] & TIOCFLAG_CRTSCTS)
 		t->c_cflag |= CRTSCTS;
 	/*
-	 * If there were no changes, don't do anything.  This avoids dropping
+	 * If there were no changes, don't do anything.	 This avoids dropping
 	 * input and improves performance when all we did was frob things like
 	 * VMIN and VTIME.
 	 */
@@ -499,7 +497,7 @@ dcmctl(sc, line, bits, how)
 		mbits |= bits;	break;
 
 	case DMBIC:
-		mbits &= ~bits;	break;
+		mbits &= ~bits; break;
 
 	case DMGET:
 	default:
@@ -547,7 +545,7 @@ dcmctl(sc, line, bits, how)
 /*
  * Raise or lower modem control (DTR/RTS) signals.
  *			pmax		3max			mipsmate
- * line.2 detects 	only DSR	DSR/CTS/DCD/RI		DSR/CTS/DCD/RI
+ * line.2 detects	only DSR	DSR/CTS/DCD/RI		DSR/CTS/DCD/RI
  * line.3 detects	only DSR	DSR/CTS/DCD/RI		-???-
  *
  * line.2 sets		only DTR	only DTR		SS/DTR/RTS

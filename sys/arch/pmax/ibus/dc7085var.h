@@ -1,7 +1,7 @@
-/*	$NetBSD: dc7085var.h,v 1.1.2.3 1999/04/17 13:45:53 nisimura Exp $ */
+/* $NetBSD: dc7085var.h,v 1.1.2.4 1999/11/19 09:39:37 nisimura Exp $ */
 
 /*
- * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
+ * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,48 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PMAX_DC7085REG_H
-#define	_PMAX_DC7085REG_H
+#ifndef _PMAX_DC7085VAR_H_
+#define	_PMAX_DC7085VAR_H_
+
+#define DCUNIT(dev) (minor(dev) >> 2)
+#define DCLINE(dev) (minor(dev) & 3)
+#define	DCMINOR(u,l) ((u)<<2 | (l))
+
+#define	LKKBD 0
+#define	VSMSE 1
+#define	DCCOM 2
+#define	DCPRT 3
+
+struct dc_softc {
+	struct device sc_dv;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	int sc_unit;
+	int sc_chip38400;
+
+	struct tty *sc_tty[4];			/* possible all of 4 */
+	void (*sc_wscons[4]) __P((int));	/* expected line 0/1 only */
+
+#define	DC_CHIP_BREAK	0x010
+	int dc_flags[4];
+
+	struct {
+		u_char *p, *e;
+	} sc_xmit[4];
+};
+
+struct dc_attach_args {
+	int line;
+};
+
+/*
+ * XXX XXX XXX
+ *
+ * Following is specific to PMAX register layout, should be conditionalized
+ * by target port designs.
+ *
+ * XXX XXX XXX
+ */
 
 struct dc7085reg {	
 	u_int16_t	dz_csr;	/* control and status */
@@ -44,6 +84,7 @@ struct dc7085reg {
 	unsigned :16; unsigned :8;
 	u_int8_t	dz_brk;
 };
+
 #define DCCSR	offsetof(struct dc7085reg, dz_csr)
 #define DCRBUF	offsetof(struct dc7085reg, dz_xxx)
 #define DCLPR	offsetof(struct dc7085reg, dz_xxx)
@@ -51,52 +92,13 @@ struct dc7085reg {
 #define DCTBUF	offsetof(struct dc7085reg, dz_yyy)
 #define DCMSR	offsetof(struct dc7085reg, dz_yyy)
 #define DCBRK	offsetof(struct dc7085reg, dz_brk)
-#define	dccsr	dz_csr
-#define	dcrbuf	dz_xxx
-#define	dclpr	dz_xxx
-#define	dctcr	dz_tcr
-#define	dctbuf	dz_yyy
-#define	dcmsr	dz_yyy
-#define	dcbrk	dz_brk
 
-#define DCUNIT(dev) (minor(dev) >> 2)
-#define DCLINE(dev) (minor(dev) & 3)
-
-#define	LKKBD 0
-#define	VSMSE 1
-#define	DCCOM 2
-#define	DCPRT 3
-#define	DCMINOR(u,l) ((u)<<2 | (l))
-
-struct dc_softc {
-	struct device sc_dv;
-	bus_space_tag_t sc_bst;
-	bus_space_handle_t sc_bsh;
-	int sc_unit;
-	int sc_chip38400;
-
-	struct tty *sc_tty[4];
-#define	DC_CHIP_BREAK	0x010
-	int dc_flags[4];
-
-	/* XXX XXX XXX */
-	u_int16_t dc_rbuf[256];
-#define	DC_RX_RING_MASK 255
-	int dc_rbget, dc_rbput;
-	struct {
-		void (*f) __P((void *, int));
-		void *a;
-	} sc_line[4];
-	struct {
-		u_char *p, *e;
-	} sc_xmit[4];
-	/* XXX XXX XXX */
-};
-
-struct dc_attach_args {
-	int line;
-};
-
-#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
+#define	dc_csr	dz_csr
+#define	dc_rbuf	dz_xxx
+#define	dc_lpr	dz_xxx
+#define	dc_tcr	dz_tcr
+#define	dc_tbuf	dz_yyy
+#define	dc_msr	dz_yyy
+#define	dc_brk	dz_brk
 
 #endif
