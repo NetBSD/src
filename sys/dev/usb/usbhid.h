@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.9 2000/09/03 19:09:14 augustss Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.10 2001/12/27 11:25:47 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
 /*
@@ -169,6 +169,10 @@ typedef struct usb_hid_descriptor {
 #define UHID_INPUT_REPORT 0x01
 #define UHID_OUTPUT_REPORT 0x02
 #define UHID_FEATURE_REPORT 0x03
+
+#define HCOLL_PHYSICAL		0
+#define HCOLL_APPLICATION	1
+#define HCOLL_LOGICAL		2
 
 /* Bits in the input/output/feature items */
 #define HIO_CONST	0x001
