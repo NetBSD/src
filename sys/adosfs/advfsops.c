@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.21 1996/10/10 17:47:31 christos Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.22 1996/10/12 05:28:14 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -580,7 +580,7 @@ adosfs_loadbitmap(amp)
 			break;
 		if (adoscksum(mapbp, amp->nwords)) {
 #ifdef DIAGNOSTIC
-			kprintf("adosfs: loadbitmap - cksum of blk %ld failed\n",
+			kprintf("adosfs: loadbitmap - cksum of blk %d failed\n",
 			    adoswordn(bp, blkix));
 #endif
 			/* XXX Force read-only?  Set free space 0? */
