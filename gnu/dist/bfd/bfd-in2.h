@@ -246,6 +246,9 @@ typedef enum bfd_format {
 /* This flag indicates that the BFD contents are actually cached in
    memory.  If this is set, iostream points to a bfd_in_memory struct.  */
 #define BFD_IN_MEMORY 0x800
+
+/* BFD is a position independent object. */
+#define BFD_PIC 0x1000
 
 /* symbols and relocation */
 
@@ -1789,6 +1792,10 @@ not stored in the instruction. */
   BFD_RELOC_ARM_THUMB_IMM,
   BFD_RELOC_ARM_THUMB_SHIFT,
   BFD_RELOC_ARM_THUMB_OFFSET,
+  BFD_RELOC_ARM_GOTPC,
+  BFD_RELOC_ARM_GOT12,
+  BFD_RELOC_ARM_GOT32,
+  BFD_RELOC_ARM_JMPSLOT,
 
 /* Hitachi SH relocs.  Not all of these appear in object files. */
   BFD_RELOC_SH_PCDISP8BY2,
