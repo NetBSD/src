@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.29 1998/01/12 10:39:57 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.30 1998/02/23 00:47:31 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -130,6 +130,8 @@ kbdattach(pdp, dp, auxp)
 void
 kbdenable()
 {
+	static int kbd_inited = 0;
+
 	int s;
 
 #ifdef DRACO
@@ -139,7 +141,12 @@ kbdenable()
 	 * collides with external ints from SCSI, watch out for this when
 	 * enabling/disabling interrupts there !!
 	 */
-	s = spltty();
+	s = splhigh();	/* don't lower; might be called from early ddb */
+	if (kbd_inited) {
+		splx(s);
+		return;
+	}
+	kbd_inited = 1;
 #ifdef DRACO
 	switch (is_draco()) {
 		case 0:
@@ -194,6 +201,7 @@ kbdopen(dev, flags, mode, p)
 	struct proc *p;
 {
 
+	kbdenable();
 	if (kbd_softc.k_events.ev_io)
 		return EBUSY;
 
