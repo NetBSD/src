@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2001/11/06 19:59:43 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 2001/11/06 20:02:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -280,7 +280,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110" },
 	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100" },
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110" },
-	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"80200" },
+	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200" },
 	{ 0, CPU_CLASS_NONE, NULL }
 };
 
