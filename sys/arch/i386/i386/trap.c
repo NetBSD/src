@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 1994/11/07 05:26:17 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.62 1994/11/14 05:53:51 christos Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -460,6 +460,7 @@ syscall(frame)
 #ifdef COMPAT_SVR4
 	extern int nsvr4_sysent;
 	extern struct sysent svr4_sysent[];
+	extern int svr4_error[];
 #endif
 #ifdef COMPAT_IBCS2
 	extern int nibcs2_sysent;
@@ -580,6 +581,11 @@ syscall(frame)
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
+
+#ifdef COMPAT_SVR4
+	if (p->p_emul == EMUL_IBCS2_ELF)
+		error = svr4_error[error];
+#endif
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval[0]);
