@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1997/09/28 13:17:41 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 1997/10/07 09:54:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,6 +63,7 @@
 #include <machine/cpu.h>
 #include <machine/bootinfo.h>
 
+static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 void findroot __P((struct device **, int *));
 
 /*
@@ -102,6 +103,11 @@ configure()
 	cold = 0;
 }
 
+/* XXX should be passed by bootcode */
+#if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
+int nfs_boot_rfc951 = 1;
+#endif
+
 void
 cpu_rootconf()
 {
@@ -118,6 +124,79 @@ cpu_rootconf()
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 struct device *booted_device;
+
+/*
+ * helper function for "findroot()":
+ * return nonzero if disk device matches bootinfo
+ */
+static int match_harddisk(dv, bid)
+	struct device *dv;
+	struct btinfo_bootdisk *bid;
+{
+	struct devnametobdevmaj *i;
+	struct vnode *tmpvn;
+	int error;
+	struct disklabel label;
+	int found = 0;
+
+	/*
+	 * A disklabel is required here.  The
+	 * bootblocks don't refuse to boot from
+	 * a disk without a label, but this is
+	 * normally not wanted.
+	 */
+	if (bid->labelsector == -1)
+		return(0);
+
+	/*
+	 * lookup major number for disk block device
+	 */
+	i = i386_nam2blk;
+	while (i->d_name &&
+	       strcmp(i->d_name, dv->dv_cfdata->cf_driver->cd_name))
+		i++;
+	if (i->d_name == NULL)
+		return(0); /* XXX panic() ??? */
+
+	/*
+	 * Fake a temporary vnode for the disk, open
+	 * it, and read the disklabel for comparison.
+	 */
+	if (bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit, bid->partition), &tmpvn))
+		panic("findroot can't alloc vnode");
+	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
+	if (error) {
+#ifndef DEBUG
+		if (error != ENXIO) /* ENXIO is "normal" */
+#endif
+			printf("findroot: can't open dev %s%c (%d)\n",
+			       dv->dv_xname, 'a' + bid->partition, error);
+		vrele(tmpvn);
+		return(0);
+	}
+	error = VOP_IOCTL(tmpvn, DIOCGDINFO, (caddr_t)&label, FREAD, NOCRED, 0);
+	if (error) {
+		/*
+		 * XXX can't happen - open() would
+		 * have errored out (or faked up one)
+		 */
+		printf("can't get label for dev %s%c (%d)\n",
+		       dv->dv_xname, 'a' + bid->partition, error);
+		goto closeout;
+	}
+
+	/* compare with our data */
+	if (label.d_type == bid->label.type &&
+	    label.d_checksum == bid->label.checksum &&
+	    !strncmp(label.d_packname, bid->label.packname, 16))
+		found = 1;
+
+closeout:
+	VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
+	vrele(tmpvn);
+
+	return(found);
+}
 
 /*
  * Attempt to find the device from which we were booted.
@@ -166,7 +245,7 @@ findroot(devpp, partp)
 		 */
 		for (dv = alldevs.tqh_first; dv != NULL;
 		dv = dv->dv_list.tqe_next) {
-			if(dv->dv_class != DV_DISK)
+			if (dv->dv_class != DV_DISK)
 				continue;
 
 			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "fd")) {
@@ -183,73 +262,18 @@ findroot(devpp, partp)
 				goto found;
 			}
 
-			if(!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-			   !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
-				struct devnametobdevmaj *i;
-				struct vnode *tmpvn;
-				int error;
-				struct disklabel label;
-				int found = 0;
-
+			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+				/*
+				 * Don't trust BIOS device numbers, try
+				 * to match the information passed by the
+				 * bootloader instead.
+				 */
 				if ((bid->biosdev & 0x80) == 0 ||
-				    bid->labelsector == -1)
+				    !match_harddisk(dv, bid))
 					continue;
-				/*
-				 * A disklabel is required here.  The
-				 * bootblocks don't refuse to boot from
-				 * a disk without a label, but this is
-				 * normally not wanted.
-				 */
-				i = i386_nam2blk;
-				while (i->d_name &&
-				    strcmp(i->d_name,
-				    dv->dv_cfdata->cf_driver->cd_name))
-					i++;
-				if (i->d_name == NULL)
-					continue; /* XXX panic() ??? */
 
-				/*
-				 * Fake a temporary vnode for the disk, open
-				 * it, and read the disklabel for comparison.
-				 */
-				if (bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit,
-				    bid->partition), &tmpvn))
-					panic("findroot can't alloc vnode");
-				error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
-				if (error) {
-					printf("findroot: can't open dev "
-					    "%s%c (%d)\n", dv->dv_xname,
-					       'a' + bid->partition, error);
-					vrele(tmpvn);
-					continue;
-				}
-				error = VOP_IOCTL(tmpvn, DIOCGDINFO,
-				    (caddr_t)&label, FREAD, NOCRED, 0);
-				if (error) {
-					/*
-					 * XXX can't happen - open() would
-					 * have errored out (or faked up one)
-					 */
-					printf("can't get label for dev "
-					    "%s%c (%d)\n", dv->dv_xname,
-					       'a' + bid->partition, error);
-					goto closeout;
-				}
-
-				/* compare with our data */
-				if (label.d_type == bid->label.type &&
-				    label.d_checksum == bid->label.checksum &&
-				    !strncmp(label.d_packname,
-				             bid->label.packname, 16))
-					found = 1;
-
-closeout:
-				VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
-				vrele(tmpvn);
-
-				if (found)
-					goto found;
-				continue;
+				goto found;
 			}
 
 			/* no "fd", "wd" or "sd" */
