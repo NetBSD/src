@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.4 2000/09/28 07:01:41 enami Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.5 2000/09/28 07:20:56 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,9 @@ static int	vlan_clone_create(struct if_clone *, int);
 static void	vlan_clone_destroy(struct ifnet *);
 static int	vlan_config(struct ifvlan *, struct ifnet *);
 static int	vlan_ioctl(struct ifnet *, u_long, caddr_t);
-static int	vlan_setmulti(struct ifnet *);
+static int	vlan_addmulti(struct ifvlan *, struct ifreq *);
+static int	vlan_delmulti(struct ifvlan *, struct ifreq *);
+static void	vlan_purgemulti(struct ifvlan *);
 static void	vlan_start(struct ifnet *);
 static int	vlan_unconfig(struct ifnet *);
 void	vlanattach(int);
@@ -147,7 +149,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAIT);
 	memset(ifv, 0, sizeof(struct ifvlan));
 	ifp = &ifv->ifv_ec.ec_if;
-	SLIST_INIT(&ifv->ifv_mc_listhead);
+	LIST_INIT(&ifv->ifv_mc_listhead);
 	LIST_INSERT_HEAD(&ifv_list, ifv, ifv_list);
 
 	sprintf(ifp->if_xname, "%s%d", ifc->ifc_name, unit);
@@ -228,35 +230,18 @@ vlan_unconfig(struct ifnet *ifp)
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 	struct ifvlan *ifv;
-	struct ifnet *p;
-	struct ifreq *ifr, *ifr_p;
-	struct vlan_mc_entry *mc;
-	int error, s;
+	int s;
 
 	s = splsoftnet();
 
 	ifv = ifp->if_softc;
-	p = ifv->ifv_p;
-	ifr = (struct ifreq *)&ifp->if_data;
-	ifr_p = (struct ifreq *)&ifv->ifv_p->if_data;
 
 	/*
  	 * Since the interface is being unconfigured, we need to empty the
 	 * list of multicast groups that we may have joined while we were
 	 * alive and remove them from the parent's list also.
 	 */
-	while ((mc = SLIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
-		if ((error = ether_delmulti(ifr_p, &ifv->ifv_ec)) != 0) {
-			splx(s);
-			return (error);
-		}
-		if ((ether_delmulti(ifr, &ifv->ifv_ec)) != 0) {
-			splx(s);
-			return(error);
-		}
-		SLIST_REMOVE_HEAD(&ifv->ifv_mc_listhead, mc_entries);
-		free(mc, M_DEVBUF);
-	}
+	vlan_purgemulti(ifv);
 
 	/* Disconnect from parent. */
 	ifv->ifv_p = NULL;
@@ -371,7 +356,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = vlan_setmulti(ifp);
+		if (cmd == SIOCADDMULTI)
+			error = vlan_addmulti(ifv, ifr);
+		else
+			error = vlan_delmulti(ifv, ifr);
 		break;
 
 	default:
@@ -381,49 +369,123 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-/*
- * Program our multicast filter.  What we're actually doing is programming
- * the multicast filter of the parent.  This has the side effect of causing
- * the parent interface to receive multicast traffic that it doesn't really
- * want, which ends up being discarded later by the upper protocol layers.
- * Unfortunately, there's no way to avoid this: there really is only one
- * physical interface.
- */
 static int
-vlan_setmulti(struct ifnet *ifp)
+vlan_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 {
-	struct ifreq *ifr_p;
-	struct ether_multi *enm;
-	struct ether_multistep step;
-	struct ifvlan *ifv;
 	struct vlan_mc_entry *mc;
+	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
 	int error;
 
-	/* Find the parent. */
-	mc = NULL;
-	ifv = ifp->if_softc;
-	ifr_p = (struct ifreq *)&ifv->ifv_p->if_data;
+	if (ifr->ifr_addr.sa_len > sizeof(struct sockaddr_storage))
+		return (EINVAL);
 
-	/* First, remove any existing filter entries. */
-	while ((mc = SLIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
-		if ((error = ether_delmulti(ifr_p, &ifv->ifv_ec)) != 0)
-			return(error);
-		SLIST_REMOVE_HEAD(&ifv->ifv_mc_listhead, mc_entries);
-		free(mc, M_DEVBUF);
+	error = ether_addmulti(ifr, &ifv->ifv_ec);
+	if (error != ENETRESET)
+		return (error);
+
+	/*
+	 * This is new multicast address.  We have to tell parent
+	 * about it.  Also, remember this multicast address so that
+	 * we can delete them on unconfigure.
+	 */
+	MALLOC(mc, struct vlan_mc_entry *, sizeof(struct vlan_mc_entry),
+	    M_DEVBUF, M_NOWAIT);
+	if (mc == NULL) {
+		error = ENOMEM;
+		goto alloc_failed;
 	}
 
-	/* Now program new ones. */
-	ETHER_FIRST_MULTI(step, &ifv->ifv_ec, enm);
-	while (enm != NULL) {
-		mc = malloc(sizeof(struct vlan_mc_entry), M_DEVBUF, M_NOWAIT);
-		memcpy(&mc->mc_addr, enm->enm_addrlo, ETHER_ADDR_LEN);
-		SLIST_INSERT_HEAD(&ifv->ifv_mc_listhead, mc, mc_entries);
-		if ((error = ether_addmulti(ifr_p, &ifv->ifv_ec)) != 0)
-			return(error);
-		ETHER_NEXT_MULTI(step, enm);
+	/*
+	 * As ether_addmulti() returns ENETRESET, following two
+	 * statement shouldn't fail.
+	 */
+	(void)ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ec, mc->mc_enm);
+	memcpy(&mc->mc_addr, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
+	LIST_INSERT_HEAD(&ifv->ifv_mc_listhead, mc, mc_entries);
+
+	error = (*ifv->ifv_p->if_ioctl)(ifv->ifv_p, SIOCADDMULTI,
+	    (caddr_t)ifr);
+	if (error != 0)
+		goto ioctl_failed;
+	return (error);
+
+ ioctl_failed:
+	LIST_REMOVE(mc, mc_entries);
+	FREE(mc, M_DEVBUF);
+ alloc_failed:
+	(void)ether_delmulti(ifr, &ifv->ifv_ec);
+	return (error);
+}
+
+static int
+vlan_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
+{
+	struct ether_multi *enm;
+	struct vlan_mc_entry *mc;
+	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
+	int error;
+
+	/*
+	 * Find a key to lookup vlan_mc_entry.  We have to do this
+	 * before calling ether_delmulti for obvious reason.
+	 */
+	if ((error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi)) != 0)
+		return (error);
+	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ec, enm);
+
+	error = ether_delmulti(ifr, &ifv->ifv_ec);
+	if (error != ENETRESET)
+		return (error);
+
+	/* We no longer use this multicast address.  Tell parent so. */
+	error = (*ifv->ifv_p->if_ioctl)(ifv->ifv_p, SIOCDELMULTI,
+	    (caddr_t)ifr);
+	if (error == 0) {
+		/* And forget about this address. */
+		for (mc = LIST_FIRST(&ifv->ifv_mc_listhead); mc != NULL;
+		    mc = LIST_NEXT(mc, mc_entries)) {
+			if (mc->mc_enm == enm) {
+				LIST_REMOVE(mc, mc_entries);
+				FREE(mc, M_DEVBUF);
+				break;
+			}
+		}
+		KASSERT(mc != NULL);
+	} else
+		(void)ether_addmulti(ifr, &ifv->ifv_ec);
+	return (error);
+}
+
+/*
+ * Delete any multicast address we have asked to add form parent
+ * interface.  Called when the vlan is being unconfigured.
+ */
+static void
+vlan_purgemulti(struct ifvlan *ifv)
+{
+	struct ifnet *ifp = ifv->ifv_p;		/* Parent. */
+	struct vlan_mc_entry *mc;
+	union {
+		struct ifreq ifreq;
+		struct {
+			char ifr_name[IFNAMSIZ];
+			struct sockaddr_storage;
+		} ifreq_storage;
+	} ifreq;
+	struct ifreq *ifr = &ifreq.ifreq;
+
+	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
+	while ((mc = LIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
+		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
+		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
+		LIST_REMOVE(mc->mc_enm, enm_list);
+		free(mc->mc_enm, M_IFMADDR);
+		LIST_REMOVE(mc, mc_entries);
+		FREE(mc, M_DEVBUF);
 	}
 
-	return(0);
+	KASSERT(LIST_FIRST(&ifv->ifv_ec.ec_multiaddrs) == NULL);
 }
 
 static void
