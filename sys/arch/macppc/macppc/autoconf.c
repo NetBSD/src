@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1998/12/10 20:49:17 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1998/12/22 19:35:49 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,13 +53,17 @@
 extern int cold;
 
 void findroot __P((void));
+int OF_interpret __P((char *cmd, int nreturns, ...));
 
 struct device *booted_device;	/* boot device */
 int booted_partition;		/* ...and partition on that device */
 
 #define INT_ENABLE_REG (interrupt_reg + 0x24)
 #define INT_CLEAR_REG  (interrupt_reg + 0x28)
-extern u_char *interrupt_reg;
+u_char *interrupt_reg;
+
+#define HEATHROW_FCR_OFFSET 0x38
+u_int *heathrow_FCR = NULL;
 
 /*
  * Determine device configuration for a machine.
@@ -67,7 +71,16 @@ extern u_char *interrupt_reg;
 void
 configure()
 {
-	interrupt_reg = mapiodev(0xf3000000, NBPG);
+	int node, reg[5];
+
+	node = OF_finddevice("/pci/mac-io");
+	if (node != -1 &&
+	    OF_getprop(node, "assigned-addresses", reg, sizeof(reg)) != -1) {
+		interrupt_reg = mapiodev(reg[2], NBPG);
+		heathrow_FCR = mapiodev(reg[2] + HEATHROW_FCR_OFFSET, 4);
+	} else
+		interrupt_reg = mapiodev(0xf3000000, NBPG);
+
 	out32rb(INT_ENABLE_REG, 0);		/* disable all intr. */
 	out32rb(INT_CLEAR_REG, 0xffffffff);	/* clear pending intr. */
 
@@ -218,15 +231,16 @@ OF_interpret(cmd, nreturns, va_alist)
  * Find OF-device corresponding to the PCI device.
  */
 int
-pcidev_to_ofdev(pa)
-	struct pci_attach_args *pa;
+pcidev_to_ofdev(pc, tag)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
 {
 	int bus, dev, func;
 	u_int reg[5];
 	int p, q;
 	int l, b, d, f;
 
-	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &dev, &func);
+	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 	for (q = OF_peer(0); q; q = p) {
 		l = OF_getprop(q, "assigned-addresses", reg, sizeof(reg));
