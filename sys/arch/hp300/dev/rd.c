@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.39 2000/02/07 20:16:50 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.40 2000/02/11 23:00:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -819,7 +819,7 @@ again:
 	 */
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR)
-		printf("%s: rdstart: cmd %x adr %lx blk %d len %d ecnt %ld\n",
+		printf("%s: rdstart: cmd %x adr %lx blk %d len %d ecnt %d\n",
 		       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 		       bp->b_blkno, rs->sc_resid, rs->sc_errcnt);
 	rs->sc_stats.rdretries++;
