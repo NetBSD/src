@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.122 2004/07/23 14:24:13 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.123 2004/07/23 14:35:52 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1227,4 +1227,33 @@ libexec/ld.elf_so/reloc.c			1.84
 	misaligned access. It needs to be done differently if needed at all.
 	Fix PR port-sparc64/20907.
 	[skrll, ticket #1726]
+
+gnu/dist/gettext/config.guess			patch
+gnu/dist/gettext/config.sub			patch
+gnu/dist/toolchain/gcc/config/x-darwin		new file
+gnu/dist/toolchain/gcc/configure		patch
+gnu/dist/toolchain/gcc/configure.in		patch
+gnu/dist/toolchain/gdb/config/powerpc/darwin.mh	new file
+gnu/dist/toolchain/gdb/configure.host		patch
+gnu/dist/toolchain/libiberty/strerror.c		patch
+lib/libc/gen/pwcache.c				patch
+lib/libc/locale/rune.h				patch
+lib/libc/locale/runeglue.c			patch
+lib/libc/locale/runetype.h			patch
+lib/libc/locale/setlocale1.c			patch
+lib/libc/locale/setlocale32.c			patch
+tools/compat/compat_defs.h			patch
+tools/compat/config.h.in			patch
+tools/compat/configure				patch
+tools/compat/configure.ac			patch
+usr.bin/mklocale/Makefile			patch
+usr.bin/mklocale/ldef.h				patch
+usr.bin/mklocale/lex.l				patch
+usr.bin/mklocale/yacc.y				patch
+usr.bin/xinstall/xinstall.c			patch
+usr.sbin/makefs/walk.c				patch
+usr.sbin/sunlabel/Makefile			patch
+
+	Fix building the netbsd-1-6 branch under Darwin/MacOS.
+	[dbj, ticket #1723]
 
