@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 1999/03/23 21:29:05 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 1999/04/14 23:14:46 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1059,13 +1059,13 @@ int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
 
-int	_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t,
+int	_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t,
 	    void *, bus_size_t, struct proc *, int));
-int	_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t,
+int	_bus_dmamap_load_mbuf __P((bus_dma_tag_t,
 	    bus_dmamap_t, struct mbuf *, int));
-int	_bus_dmamap_load_uio_direct __P((bus_dma_tag_t,
+int	_bus_dmamap_load_uio __P((bus_dma_tag_t,
 	    bus_dmamap_t, struct uio *, int));
-int	_bus_dmamap_load_raw_direct __P((bus_dma_tag_t,
+int	_bus_dmamap_load_raw __P((bus_dma_tag_t,
 	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
 
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
