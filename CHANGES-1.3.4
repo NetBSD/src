@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.3.4,v 1.1.2.17 1999/02/05 07:04:02 cgd Exp $
+#	$NetBSD: CHANGES-1.3.4,v 1.1.2.18 1999/02/06 21:30:53 cgd Exp $
 
 Changes from NetBSD 1.3.3 to NetBSD 1.3.4:
 
@@ -114,13 +114,6 @@ sys/arch/pmax/dev/rz.c				1.41
   Fixes RZ25 spinup failure: it seems to need a short delay after the
   start command completes.  RZ25 drives would spin up, but would not
   be recognized by the driver during that probe.  (mhitch)
-
-usr.sbin/portmap/Makefile			1.9
-usr.sbin/portmap/portmap.c			1.13-1.18
-usr.sbin/portmap/portmap.8			1.5
-
-  Fixes possible denial of service attacks from forged SET and UNSET
-  calls, and adds logging features.  (mycroft and drochner)
 
 sys/kern/uipc_socket.c				patch
 sys/kern/uipc_socket2.c				patch
