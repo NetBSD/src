@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.2 1997/08/02 21:30:18 perry Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.3 1997/08/12 06:07:23 mikel Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -32,13 +32,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_ecoff.c,v 1.2 1997/08/02 21:30:18 perry Exp $");
+__RCSID("$NetBSD: exec_ecoff.c,v 1.3 1997/08/12 06:07:23 mikel Exp $");
 #endif
  
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 #if defined(NLIST_ECOFF)
@@ -52,7 +55,7 @@ check_ecoff(int fd, const char *filename)
 	struct stat sb;
 
 	/*
-	 * Check the header to maek sure it's an ECOFF file (of the
+	 * Check the header to make sure it's an ECOFF file (of the
 	 * appropriate size).
 	 */
 	if (fstat(fd, &sb) == -1)
