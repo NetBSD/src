@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.31 1998/01/06 07:16:08 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32 1998/01/13 12:52:28 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -158,7 +158,6 @@ struct pv_page {
 #ifdef	_KERNEL
 extern int		nkpde;		/* number of kernel page dir. ents */
 extern struct pmap	kernel_pmap_store;
-struct pv_entry		*pv_table;	/* array of entries, one per page */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
