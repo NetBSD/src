@@ -1,6 +1,9 @@
-#	$NetBSD: bsd.sys.mk,v 1.63 2001/11/17 22:48:48 thorpej Exp $
+#	$NetBSD: bsd.sys.mk,v 1.64 2001/11/17 22:55:24 thorpej Exp $
 #
 # Build definitions used for NetBSD source tree builds.
+
+.if !target(__bsd_sys_mk__)
+__bsd_sys_mk__:
 
 .if defined(WARNS)
 .if ${WARNS} > 0
@@ -102,3 +105,5 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 .ifdef YHEADER
 .y.h: ${.TARGET:.h=.c}
 .endif
+
+.endif	# __bsd_sys_mk__
