@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.458 2004/09/21 15:15:16 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.459 2004/09/22 20:53:34 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7400,6 +7400,59 @@ sys/dev/ic/wdc.c				patch
 	  - making sure that xfers gets removed from the queue
 	[bouyer, ticket #854]
 
+crypto/dist/heimdal/ChangeLog			patch
+crypto/dist/heimdal/NEWS			patch
+crypto/dist/heimdal/aclocal.m4			patch
+crypto/dist/heimdal/compile			patch
+crypto/dist/heimdal/configure.in		patch
+crypto/dist/heimdal/heimdal2netbsd		patch
+crypto/dist/heimdal/install-sh			patch
+crypto/dist/heimdal/libtool			patch
+crypto/dist/heimdal/missing			patch
+crypto/dist/heimdal/mkinstalldirs		patch
+crypto/dist/heimdal/admin/get.c			patch
+crypto/dist/heimdal/appl/ftp/ChangeLog		patch
+crypto/dist/heimdal/appl/ftp/ftp/ftp.c		patch
+crypto/dist/heimdal/appl/ftp/ftpd/extern.h	patch
+crypto/dist/heimdal/appl/ftp/ftpd/ftpcmd.y	patch
+crypto/dist/heimdal/appl/ftp/ftpd/ftpd.8	patch
+crypto/dist/heimdal/appl/ftp/ftpd/ftpd.c	patch
+crypto/dist/heimdal/appl/ftp/ftpd/ftpd_locl.h	patch
+crypto/dist/heimdal/appl/login/ChangeLog	patch
+crypto/dist/heimdal/appl/login/login.c		patch
+crypto/dist/heimdal/appl/push/ChangeLog		patch
+crypto/dist/heimdal/appl/push/push.c		patch
+crypto/dist/heimdal/appl/telnet/ChangeLog	patch
+crypto/dist/heimdal/appl/telnet/libtelnet/kerberos5.c	patch
+crypto/dist/heimdal/appl/telnet/telnet/network.c	patch
+crypto/dist/heimdal/appl/telnet/telnetd/state.c	patch
+crypto/dist/heimdal/appl/xnlock/ChangeLog	patch
+crypto/dist/heimdal/appl/xnlock/xnlock.c	patch
+crypto/dist/heimdal/doc/heimdal.info-1		patch
+crypto/dist/heimdal/doc/heimdal.info-2		patch
+crypto/dist/heimdal/include/config.h		patch
+crypto/dist/heimdal/include/version.h		patch
+crypto/dist/heimdal/include/version.h.in	patch
+crypto/dist/heimdal/kdc/kerberos5.c		patch
+crypto/dist/heimdal/kuser/kinit.c		patch
+crypto/dist/heimdal/lib/asn1/Makefile.am	patch
+crypto/dist/heimdal/lib/asn1/k5.asn1		patch
+crypto/dist/heimdal/lib/auth/ChangeLog		patch
+crypto/dist/heimdal/lib/auth/afskauthlib/verify.c	patch
+crypto/dist/heimdal/lib/kafs/ChangeLog		patch
+crypto/dist/heimdal/lib/kafs/afssys.c		patch
+crypto/dist/heimdal/lib/krb5/Makefile.am	patch
+crypto/dist/heimdal/lib/krb5/changepw.c		patch
+crypto/dist/heimdal/lib/krb5/context.c		patch
+crypto/dist/heimdal/lib/krb5/init_creds_pw.c	patch
+crypto/dist/heimdal/lib/krb5/krb5-protos.h	patch
+crypto/dist/heimdal/lib/krb5/krb5.h		patch
+include/heimdal/config.h			patch
+include/heimdal/version.h			patch
+
+	Bring up 0.6.3 - security fixes
+	[lha, ticket #849]
+
 sys/dev/vinum/vinumioctl.c			1.2-1.3
 
 	Refuse unknown ioctls, rather than pretending success.
@@ -7500,4 +7553,3 @@ etc/rc.d/ipfilter				1.12
 	rules, rather than relying upon running "ipf -Fa" beforehand (which
 	only flushes IPv4). Should fix PR 26885 and PR 26857.
 	[martti, ticket #866]
-
