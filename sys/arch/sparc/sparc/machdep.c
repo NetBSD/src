@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 1997/11/04 10:37:37 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.92 1997/11/23 16:31:28 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,8 +117,8 @@
 
 #include <sys/sysctl.h>
 
-#include <machine/autoconf.h>
 #define _SPARC_BUS_DMA_PRIVATE
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
@@ -1138,8 +1138,50 @@ wcopy(vb1, vb2, l)
 		*b2 = *b1e;
 }
 
+static bus_addr_t dvmamap_alloc __P((int, int));
 
+static __inline__ bus_addr_t
+dvmamap_alloc(size, flags)
+	int size;
+	int flags;
+{
+	int s, pn, npf;
 
+	npf = btoc(size);
+	s = splimp();
+	for (;;) {
+		pn = rmalloc(dvmamap, npf);
+		if (pn != 0)
+			break;
+
+		if (flags & BUS_DMA_WAITOK) {
+			(void)tsleep(dvmamap, PRIBIO+1, "dvma", 0);
+			continue;
+		}
+		splx(s); 
+		return ((bus_addr_t)-1); 
+	}
+	splx(s);
+
+	return ((bus_addr_t)rctov(pn));
+}
+
+static void dvmamap_free __P((bus_addr_t, bus_size_t));
+
+static __inline__ void
+dvmamap_free (addr, size)
+	bus_addr_t addr;
+	bus_size_t size;
+{
+	int s, pn, npf;
+
+	npf = btoc(size);
+	pn = vtorc(addr);
+	s = splimp();
+	rmfree(dvmamap, npf, pn);
+	wakeup(dvmamap); 
+	splx(s);
+}
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -1217,11 +1259,9 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	int flags;
 {
 	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr;
+	bus_addr_t dvmaddr, curaddr;
 	caddr_t vaddr = buf;
-	int first, seg, s;
 	pmap_t pmap;
-	vm_offset_t dvmaddr;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -1231,37 +1271,30 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
-	map->_dm_npf = btoc(round_page(buflen + ((int)vaddr & PGOFSET)));
+	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
 
 	/*
 	 * XXX Need to implement "don't dma across this boundry".
 	 */
-	s = splimp();
-	for (;;) {
-		map->_dm_pn = rmalloc(dvmamap, map->_dm_npf);
-		if (map->_dm_pn != 0)
-			break;
+	dvmaddr = dvmamap_alloc(sgsize, flags);
+	if (dvmaddr != 0)
+		return (ENOMEM);
 
-		if (flags & BUS_DMA_WAITOK) {
-			(void)tsleep(dvmamap, PRIBIO+1, "dvma", 0);
-			continue;
-		}
-		splx(s); 
-		return (ENOMEM); 
-	}
-	splx(s);        
- 
-	dvmaddr = rctov(map->_dm_pn);
+	/*
+	 * We always use just one segment.
+	 */
+	map->dm_nsegs = 1;
+	map->dm_segs[0].ds_addr = dvmaddr;
+	map->dm_segs[0].ds_len = buflen;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
 	else
 		pmap = pmap_kernel();
 
-	lastaddr = ~0;		/* XXX gcc */
-	for (first = 1, seg = 0; buflen > 0 && seg < map->_dm_segcnt; ) {
+	for (; buflen > 0; ) {
 		/*
-		 * Get the physical address for this segment.
+		 * Get the physical address for this page.
 		 */
 		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
 
@@ -1271,26 +1304,6 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
-
-		/*
-		 * Insert chunk into a segment, coalescing with
-		 * previous segment if possible.
-		 */
-		if (first) {
-			map->dm_segs[seg].ds_addr = curaddr;
-			map->dm_segs[seg].ds_len = sgsize;
-			first = 0;
-		} else {
-			if (curaddr == lastaddr &&
-			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz)
-				map->dm_segs[seg].ds_len += sgsize;
-			else {
-				seg++;
-				map->dm_segs[seg].ds_addr = curaddr;
-				map->dm_segs[seg].ds_len = sgsize;
-			}
-		}
 
 #if defined(SUN4M) 
 		if (CPU_ISSUN4M) {
@@ -1309,19 +1322,10 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 				   VM_PROT_READ|VM_PROT_WRITE, 1);
 		}
 
-		dvmaddr += NBPG;
-		lastaddr = curaddr + sgsize;
+		dvmaddr += PAGE_SIZE;
 		vaddr += sgsize;
 		buflen -= sgsize;
 	}
-
-	/*
-	 * Did we fit?
-	 */
-	if (buflen != 0)
-		return (EFBIG);		/* XXX better return value here? */
-
-	map->dm_nsegs = seg + 1;
 	return (0);
 }
 
@@ -1379,23 +1383,23 @@ _bus_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	int len, s;
-	vm_offset_t kva;
+	bus_addr_t addr;
+	bus_size_t len;
 
-	kva = rctov(map->_dm_pn);
-	len = ctob(map->_dm_npf);
+	if (map->dm_nsegs != 1)
+		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
+
+	addr = map->dm_segs[0].ds_addr;
+	len = map->dm_segs[0].ds_len;
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M)
-		iommu_remove(kva, len);
+		iommu_remove(addr, len);
 	else
 #endif          
-		pmap_remove(pmap_kernel(), kva, kva + len);
+		pmap_remove(pmap_kernel(), addr, addr + len);
 
-	s = splimp();
-	rmfree(dvmamap, map->_dm_npf, map->_dm_pn);
-	wakeup(dvmamap); 
-	splx(s);
+	dvmamap_free(addr, len);
 
 	/* Mark the mappings as invalid. */
 	map->dm_nsegs = 0;
@@ -1428,56 +1432,74 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t curaddr, lastaddr;
+	vm_offset_t curaddr;
 	vm_offset_t low, high;
+	bus_addr_t dvmaddr;
 	vm_page_t m;
-	struct pglist mlist;
-	int curseg, error;
+	struct pglist *mlist;
+	int error;
 
 	/* Always round the size. */
 	size = round_page(size);
 	low = vm_first_phys;
 	high = vm_first_phys + vm_num_phys - PAGE_SIZE;
 
+	if ((mlist = malloc(sizeof(*mlist), M_DEVBUF,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+		return (ENOMEM);
+
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	TAILQ_INIT(&mlist);
+	TAILQ_INIT(mlist);
 	error = vm_page_alloc_memory(size, low, high,
-	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	    alignment, boundary, mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
+
+	dvmaddr = dvmamap_alloc(size, flags);
+	if (dvmaddr == (bus_addr_t)-1)
+		return (ENOMEM);
 
 	/*
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	m = mlist.tqh_first;
-	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
-	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
+	segs[0].ds_addr = dvmaddr;
+	segs[0].ds_len = size;
+	*rsegs = 1;
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	/*
+	 * Simply keep a pointer around to the linked list, so
+	 * bus_dmamap_free() can return it.
+	 *
+	 * NOBODY SHOULD TOUCH THE pageq FIELDS WHILE THESE PAGES
+	 * ARE IN OUR CUSTODY.
+	 */
+	segs[0]._ds_mlist = mlist;
+
+	/* Map memory into DVMA space */
+	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
-#ifdef DIAGNOSTIC
-		if (curaddr < low || curaddr >= high) {
-			printf("vm_page_alloc_memory returned non-sensical"
-			    " address 0x%lx\n", curaddr);
-			panic("_bus_dmamem_alloc_range");
-		}
-#endif
-		if (curaddr == (lastaddr + PAGE_SIZE))
-			segs[curseg].ds_len += PAGE_SIZE;
-		else {
-			curseg++;
-			segs[curseg].ds_addr = curaddr;
-			segs[curseg].ds_len = PAGE_SIZE;
-		}
-		lastaddr = curaddr;
-	}
 
-	*rsegs = curseg + 1;
+#if defined(SUN4M) 
+		if (CPU_ISSUN4M) {
+			iommu_enter(dvmaddr, curaddr);
+		} else
+#endif
+		{
+#ifdef notyet
+#if defined(SUN4)
+			if (have_iocache)
+				curaddr |= PG_IOC;
+#endif
+#endif
+			pmap_enter(pmap_kernel(), dvmaddr,
+				   curaddr | PMAP_NC,
+				   VM_PROT_READ|VM_PROT_WRITE, 1);
+		}
+		dvmaddr += PAGE_SIZE;
+	}
 
 	return (0);
 }
@@ -1492,25 +1514,30 @@ _bus_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	vm_page_t m;
 	bus_addr_t addr;
-	struct pglist mlist;
-	int curseg;
+	bus_size_t len;
+
+	if (nsegs != 1)
+		panic("bus_dmamem_free: nsegs = %d", nsegs);
+
+
+	addr = segs[0].ds_addr;
+	len = segs[0].ds_len;
+
+	dvmamap_free(addr, len);
+
+#if defined(SUN4M)
+	if (CPU_ISSUN4M)
+		iommu_remove(addr, len);
+	else
+#endif          
+		pmap_remove(pmap_kernel(), addr, addr + len);
 
 	/*
-	 * Build a list of pages to free back to the VM system.
+	 * Return the list of pages back to the VM system.
 	 */
-	TAILQ_INIT(&mlist);
-	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += PAGE_SIZE) {
-			m = PHYS_TO_VM_PAGE(addr);
-			TAILQ_INSERT_TAIL(&mlist, m, pageq);
-		}
-	}
-
-	vm_page_free_memory(&mlist);
+	vm_page_free_memory(segs[0]._ds_mlist);
+	free(segs[0]._ds_mlist, M_DEVBUF);
 }
 
 /*
@@ -1526,30 +1553,63 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_offset_t va;
+	vm_page_t m;
+	vm_offset_t va, sva;
 	bus_addr_t addr;
-	int curseg;
+	struct pglist *mlist;
+	int r, cbit;
+	size_t oversize;
+	u_long align;
+#if defined(SUN4M)
+	extern int has_iocache;
+#endif
+	extern u_long dvma_cachealign;
+
+	if (nsegs != 1)
+		panic("_bus_dmamem_map: nsegs = %d", nsegs);
+
+	cbit = (CPU_ISSUN4M && has_iocache) ? 0 : PMAP_NC;
+	align = dvma_cachealign ? dvma_cachealign : PAGE_SIZE;
 
 	size = round_page(size);
-	va = kmem_alloc_pageable(kmem_map, size);
-	if (va == 0)
+
+	/*
+	 * Find a region of kernel virtual addresses that can accomodate
+	 * our aligment requirements.
+	 */
+	oversize = size + align - PAGE_SIZE;
+	r = vm_map_find(kmem_map, NULL, (vm_offset_t)0, &sva, oversize, TRUE);
+	if (r != KERN_SUCCESS)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	/* Compute start of aligned region */
+	va = sva;
+	va += ((segs[0].ds_addr & (align - 1)) + align - va) & (align - 1);
 
-	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
-			if (size == 0)
-				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+	/* Return excess virtual addresses */
+	if (va != sva)
+		vm_map_remove(kmem_map, sva, va);
+	if (va + size != sva + oversize)
+		vm_map_remove(kmem_map, va + size, sva + oversize);
+
+
+	*kvap = (caddr_t)va;
+	mlist = segs[0]._ds_mlist;
+
+	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
+
+		if (size == 0)
+			panic("_bus_dmamem_map: size botch");
+
+		addr = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, addr | cbit,
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE);
 #if 0
 			if (flags & BUS_DMAMEM_NOSYNC)
 				/* XXX */;
 #endif
-		}
+		va += PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
 
 	return (0);
@@ -1572,7 +1632,10 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
+	vm_map_remove(kmem_map, (vm_offset_t)kva, (vm_offset_t)kva + size);
+#if 0
 	kmem_free(kmem_map, (vm_offset_t)kva, size);
+#endif
 }
 
 /*
@@ -1588,3 +1651,22 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 
 	panic("_bus_dmamem_mmap: not implemented");
 }
+
+
+struct sparc_bus_dma_tag mainbus_dma_tag = {
+	NULL,
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	_bus_dmamap_sync,
+
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap
+};
