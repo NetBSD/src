@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.3 1996/10/13 03:39:30 christos Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.4 1996/10/14 17:28:46 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -46,12 +46,13 @@ int
 dc_ds_consinit(dev)
 	dev_t dev;
 {
-#if defined(DEBUG) || 1			/* XXX untested */
+#if defined(DEBUG) && 1			/* XXX untested */
 	printf("dc_ds(%d,%d): serial console at 0x%x\n",
 	       minor(dev) >> 2, minor(dev) & 03,
 	       MACH_PHYS_TO_UNCACHED(KN01_SYS_DZ));
-	DELAY(100000);
 #endif
+	/* let any  pending PROM output from boot drain */
+	DELAY(100000);
 	dc_consinit(dev, (void *)MACH_PHYS_TO_UNCACHED(KN01_SYS_DZ));
 	return (1);
 }
@@ -79,6 +80,7 @@ dc_ds_match(parent, match, aux)
 	return (1);
 }
 
+
 void
 dc_ds_attach(parent, self, aux)
 	struct device *parent;
@@ -86,42 +88,19 @@ dc_ds_attach(parent, self, aux)
 	void *aux;
 {
 	register struct confargs *ca = aux;
-#if NTC > 0
-	struct ioasicdev_attach_args *d = aux;
-#endif /* NTC */
 	caddr_t dcaddr;
 	struct dc_softc *sc = (void*) self;
 
 
-#if NTC > 0
-	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
-		dcaddr = (caddr_t)d->iada_addr;
-		(void) dcattach(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
-	/* dtr/dsr mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
-#ifdef HW_FLOW_CONTROL
-	/* rts/cts mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
-#else
-				  0,
-#endif
-				  1, 3);
-		/* tie pseudo-slot to device */
-		ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
-			     dcintr, self);
-	}
-	else
-#endif /* NTC */
-	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
-		dcaddr = (caddr_t)ca->ca_addr;
-		DELAY(1000000); /* let PROM console  output complete */
+	dcaddr = (caddr_t)ca->ca_addr;
+	(void) dcattach(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+			/* dtr/dsr mask: comm port only */
+			1 << DCCOMM_PORT,
+			/* rts/cts mask: none */
+			0x0,
+			0, DCCOMM_PORT);
 
-		(void) dcattach(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
-				  1 << DCCOMM_PORT, 0x0, 0, DCCOMM_PORT);
-
-		/* tie pseudo-slot to device */
-		BUS_INTR_ESTABLISH(ca, dcintr, self);
-	}
+	/* tie pseudo-slot to device */
+	BUS_INTR_ESTABLISH(ca, dcintr, self);
 	printf("\n");
 }
-
-
-/*XXX*/
