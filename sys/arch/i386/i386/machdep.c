@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.184 1996/01/08 13:51:34 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185 1996/01/08 20:12:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -587,14 +587,16 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_esp = (int)fp;
+	__asm("movl %w0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
+	__asm("movl %w0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 #ifdef VM86
 	tf->tf_eflags &= ~PSL_VM;
 #endif
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
