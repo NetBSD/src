@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.78 2004/08/20 22:02:40 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.79 2004/08/21 01:51:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -127,17 +127,11 @@ int	wdcintr(void *);
 
 void	wdcrestart(void*);
 
-int	wdcreset(struct ata_channel *, int);
-#define RESET_POLL 1 
-#define RESET_SLEEP 0 /* wdcreset will use tsleep() */
-
 int	wdcwait(struct ata_channel *, int, int, int, int);
 #define WDCWAIT_OK	0  /* we have what we asked */
 #define WDCWAIT_TOUT	-1 /* timed out */
 #define WDCWAIT_THR	1  /* return, the kernel thread has been awakened */
 
-void	wdc_datain_pio(struct ata_channel *, int, void *, size_t);
-void	wdc_dataout_pio(struct ata_channel *, int, void *, size_t);
 void	wdcbit_bucket(struct ata_channel *, int);
 
 int	wdc_dmawait(struct ata_channel *, struct ata_xfer *, int);

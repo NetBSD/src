@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.212 2004/08/21 00:28:34 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.213 2004/08/21 01:51:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.212 2004/08/21 00:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.213 2004/08/21 01:51:46 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -136,8 +136,13 @@ const struct ata_bustype wdc_ata_bustype = {
 };
 #endif
 
-static int	wdcprobe1(struct ata_channel*, int);
-static void	__wdcerror(struct ata_channel*, char *);
+/* Flags to wdcreset(). */
+#define	RESET_POLL	1
+#define	RESET_SLEEP	0	/* wdcreset() will use tsleep() */
+
+static int	wdcprobe1(struct ata_channel *, int);
+static int	wdcreset(struct ata_channel *, int);
+static void	__wdcerror(struct ata_channel *, char *);
 static int	__wdcwait_reset(struct ata_channel *, int, int);
 static void	__wdccommand_done(struct ata_channel *, struct ata_xfer *);
 static void	__wdccommand_done_end(struct ata_channel *, struct ata_xfer *);
@@ -146,6 +151,9 @@ static void	__wdccommand_kill_xfer(struct ata_channel *,
 static void	__wdccommand_start(struct ata_channel *, struct ata_xfer *);
 static int	__wdccommand_intr(struct ata_channel *, struct ata_xfer *, int);
 static int	__wdcwait(struct ata_channel *, int, int, int);
+
+static void	wdc_datain_pio(struct ata_channel *, int, void *, size_t);
+static void	wdc_dataout_pio(struct ata_channel *, int, void *, size_t);
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -916,7 +924,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	}
 }
 
-int
+static int
 wdcreset(struct ata_channel *chp, int poll)
 {
 	struct atac_softc *atac = chp->ch_atac;
@@ -1668,7 +1676,7 @@ wdcbit_bucket(struct ata_channel *chp, int size)
 		(void)bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_data], 0);
 }
 
-void
+static void
 wdc_datain_pio(struct ata_channel *chp, int flags, void *buf, size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
@@ -1698,7 +1706,7 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *buf, size_t len)
 	}
 }
 
-void
+static void
 wdc_dataout_pio(struct ata_channel *chp, int flags, void *buf, size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
