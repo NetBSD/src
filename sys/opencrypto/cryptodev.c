@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.9 2003/11/19 03:18:33 jonathan Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.10 2003/11/19 04:14:07 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.9 2003/11/19 03:18:33 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10 2003/11/19 04:14:07 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,8 +275,9 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 		error = crypto_newsession(&sid, (txform ? &crie : &cria),
 			    crypto_devallowsoft);
 		if (error) {
-			/* this is an auditable security event? */
+#ifdef CRYPTO_DEBUG
 		  	printf("SIOCSESSION violates kernel parameters\n");
+#endif
 			goto bail;
 		}
 
