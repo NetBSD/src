@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.3 1996/10/13 01:37:20 christos Exp $	*/
+/*	$NetBSD: bha.c,v 1.4 1996/10/21 22:34:11 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -82,8 +82,8 @@
 int     bha_debug = 0;
 #endif /* BHADEBUG */
 
-int bha_cmd __P((bus_chipset_tag_t, bus_io_handle_t, struct bha_softc *, int,
-    u_char *, int, u_char *));
+int bha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
+	         int, u_char *, int, u_char *));
 integrate void bha_finish_ccbs __P((struct bha_softc *));
 integrate void bha_reset_ccb __P((struct bha_softc *, struct bha_ccb *));
 void bha_free_ccb __P((struct bha_softc *, struct bha_ccb *));
@@ -124,7 +124,7 @@ struct cfdriver bha_cd = {
 #define	BHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 /*
- * bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
+ * bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
  *
  * Activate Adapter command
  *    icnt:   number of args (outbound bytes including opcode)
@@ -138,9 +138,9 @@ struct cfdriver bha_cd = {
  * tells it to read in a scsi command.
  */
 int
-bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct bha_softc *sc;
 	int icnt, ocnt;
 	u_char *ibuf, *obuf;
@@ -174,7 +174,7 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	if (opcode != BHA_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
-			sts = bus_io_read_1(bc, ioh, BHA_STAT_PORT);
+			sts = bus_space_read_1(iot, ioh, BHA_STAT_PORT);
 			if (sts & BHA_STAT_IDLE)
 				break;
 			delay(50);
@@ -190,8 +190,9 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 * queue feeding to us.
 	 */
 	if (ocnt) {
-		while ((bus_io_read_1(bc, ioh, BHA_STAT_PORT)) & BHA_STAT_DF)
-			bus_io_read_1(bc, ioh, BHA_DATA_PORT);
+		while ((bus_space_read_1(iot, ioh, BHA_STAT_PORT)) &
+		    BHA_STAT_DF)
+			bus_space_read_1(iot, ioh, BHA_DATA_PORT);
 	}
 	/*
 	 * Output the command and the number of arguments given
@@ -199,18 +200,20 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	while (icnt--) {
 		for (i = wait; i; i--) {
-			sts = bus_io_read_1(bc, ioh, BHA_STAT_PORT);
+			sts = bus_space_read_1(iot, ioh, BHA_STAT_PORT);
 			if (!(sts & BHA_STAT_CDF))
 				break;
 			delay(50);
 		}
 		if (!i) {
 			if (opcode != BHA_INQUIRE_REVISION)
-				printf("%s: bha_cmd, cmd/data port full\n", name);
-			bus_io_write_1(bc, ioh, BHA_CTRL_PORT, BHA_CTRL_SRST);
+				printf("%s: bha_cmd, cmd/data port full\n",
+				    name);
+			bus_space_write_1(iot, ioh, BHA_CTRL_PORT,
+			    BHA_CTRL_SRST);
 			return (1);
 		}
-		bus_io_write_1(bc, ioh, BHA_CMD_PORT, *ibuf++);
+		bus_space_write_1(iot, ioh, BHA_CMD_PORT, *ibuf++);
 	}
 	/*
 	 * If we expect input, loop that many times, each time,
@@ -218,7 +221,7 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	while (ocnt--) {
 		for (i = wait; i; i--) {
-			sts = bus_io_read_1(bc, ioh, BHA_STAT_PORT);
+			sts = bus_space_read_1(iot, ioh, BHA_STAT_PORT);
 			if (sts & BHA_STAT_DF)
 				break;
 			delay(50);
@@ -227,10 +230,11 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 			if (opcode != BHA_INQUIRE_REVISION)
 				printf("%s: bha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
-			bus_io_write_1(bc, ioh, BHA_CTRL_PORT, BHA_CTRL_SRST);
+			bus_space_write_1(iot, ioh, BHA_CTRL_PORT,
+			    BHA_CTRL_SRST);
 			return (1);
 		}
-		*obuf++ = bus_io_read_1(bc, ioh, BHA_DATA_PORT);
+		*obuf++ = bus_space_read_1(iot, ioh, BHA_DATA_PORT);
 	}
 	/*
 	 * Wait for the board to report a finished instruction.
@@ -239,7 +243,7 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	if (opcode != BHA_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
-			sts = bus_io_read_1(bc, ioh, BHA_INTR_PORT);
+			sts = bus_space_read_1(iot, ioh, BHA_INTR_PORT);
 			/* XXX Need to save this in the interrupt handler? */
 			if (sts & BHA_INTR_HACC)
 				break;
@@ -251,7 +255,7 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 			return (1);
 		}
 	}
-	bus_io_write_1(bc, ioh, BHA_CTRL_PORT, BHA_CTRL_IRST);
+	bus_space_write_1(iot, ioh, BHA_CTRL_PORT, BHA_CTRL_IRST);
 	return (0);
 }
 
@@ -379,8 +383,8 @@ bha_intr(arg)
 	void *arg;
 {
 	struct bha_softc *sc = arg;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char sts;
 
 #ifdef BHADEBUG
@@ -391,10 +395,10 @@ bha_intr(arg)
 	 * First acknowlege the interrupt, Then if it's not telling about
 	 * a completed operation just return.
 	 */
-	sts = bus_io_read_1(bc, ioh, BHA_INTR_PORT);
+	sts = bus_space_read_1(iot, ioh, BHA_INTR_PORT);
 	if ((sts & BHA_INTR_ANYINTR) == 0)
 		return (0);
-	bus_io_write_1(bc, ioh, BHA_CTRL_PORT, BHA_CTRL_IRST);
+	bus_space_write_1(iot, ioh, BHA_CTRL_PORT, BHA_CTRL_IRST);
 
 #ifdef BHADIAG
 	/* Make sure we clear CCB_SENDING before finishing a CCB. */
@@ -407,7 +411,7 @@ bha_intr(arg)
 
 		toggle.cmd.opcode = BHA_MBO_INTR_EN;
 		toggle.cmd.enable = 0;
-		bha_cmd(bc, ioh, sc,
+		bha_cmd(iot, ioh, sc,
 		    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 		    0, (u_char *)0);
 		bha_start_ccbs(sc);
@@ -592,8 +596,8 @@ void
 bha_start_ccbs(sc)
 	struct bha_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct bha_mbx_out *wmbo;	/* Mail Box Out pointer */
 	struct bha_ccb *ccb;
 
@@ -607,7 +611,7 @@ bha_start_ccbs(sc)
 
 				toggle.cmd.opcode = BHA_MBO_INTR_EN;
 				toggle.cmd.enable = 1;
-				bha_cmd(bc, ioh, sc,
+				bha_cmd(iot, ioh, sc,
 				    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 				    0, (u_char *)0);
 				break;
@@ -627,7 +631,7 @@ bha_start_ccbs(sc)
 			wmbo->cmd = BHA_MBO_START;
 
 		/* Tell the card to poll immediately. */
-		bus_io_write_1(bc, ioh, BHA_CMD_PORT, BHA_START_SCSI);
+		bus_space_write_1(iot, ioh, BHA_CMD_PORT, BHA_START_SCSI);
 
 		if ((ccb->xs->flags & SCSI_POLL) == 0)
 			timeout(bha_timeout, ccb, (ccb->timeout * hz) / 1000);
@@ -659,13 +663,15 @@ bha_done(sc, ccb)
 	 */
 #ifdef BHADIAG
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: exiting ccb still in transit!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ccb still in transit!\n",
+		    sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
 #endif
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ccb not allocated!\n",
+		    sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
@@ -710,9 +716,9 @@ bha_done(sc, ccb)
  * Find the board and find it's irq/drq
  */
 int
-bha_find(bc, ioh, sc)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+bha_find(iot, ioh, sc)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct bha_softc *sc;
 {
 	int i;
@@ -726,11 +732,12 @@ bha_find(bc, ioh, sc)
 	 * that it's not there.. good for the probe
 	 */
 
-	bus_io_write_1(bc, ioh, BHA_CTRL_PORT, BHA_CTRL_HRST | BHA_CTRL_SRST);
+	bus_space_write_1(iot, ioh, BHA_CTRL_PORT,
+	    BHA_CTRL_HRST | BHA_CTRL_SRST);
 
 	delay(100);
 	for (i = BHA_RESET_TIMEOUT; i; i--) {
-		sts = bus_io_read_1(bc, ioh, BHA_STAT_PORT);
+		sts = bus_space_read_1(iot, ioh, BHA_STAT_PORT);
 		if (sts == (BHA_STAT_IDLE | BHA_STAT_INIT))
 			break;
 		delay(1000);
@@ -749,7 +756,7 @@ bha_find(bc, ioh, sc)
 	delay(1000);
 	inquire.cmd.opcode = BHA_INQUIRE_EXTENDED;
 	inquire.cmd.len = sizeof(inquire.reply);
-	bha_cmd(bc, ioh, sc,
+	bha_cmd(iot, ioh, sc,
 	    sizeof(inquire.cmd), (u_char *)&inquire.cmd,
 	    sizeof(inquire.reply), (u_char *)&inquire.reply);
 	switch (inquire.reply.bus_type) {
@@ -761,7 +768,8 @@ bha_find(bc, ioh, sc)
 		/* We don't grok MicroChannel (yet). */
 		return (0);
 	default:
-		printf("bha_find: illegal bus type %c\n", inquire.reply.bus_type);
+		printf("bha_find: illegal bus type %c\n",
+		    inquire.reply.bus_type);
 		return (0);
 	}
 
@@ -771,7 +779,7 @@ bha_find(bc, ioh, sc)
 	 */
 	delay(1000);
 	config.cmd.opcode = BHA_INQUIRE_CONFIG;
-	bha_cmd(bc, ioh, sc,
+	bha_cmd(iot, ioh, sc,
 	    sizeof(config.cmd), (u_char *)&config.cmd,
 	    sizeof(config.reply), (u_char *)&config.reply);
 	switch (config.reply.chan) {
@@ -791,7 +799,8 @@ bha_find(bc, ioh, sc)
 		drq = 7;
 		break;
 	default:
-		printf("bha_find: illegal drq setting %x\n", config.reply.chan);
+		printf("bha_find: illegal drq setting %x\n",
+		    config.reply.chan);
 		return (0);
 	}
 
@@ -815,7 +824,8 @@ bha_find(bc, ioh, sc)
 		irq = 15;
 		break;
 	default:
-		printf("bha_find: illegal irq setting %x\n", config.reply.intr);
+		printf("bha_find: illegal irq setting %x\n",
+		    config.reply.intr);
 		return (0);
 	}
 
@@ -836,8 +846,8 @@ void
 bha_init(sc)
 	struct bha_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct bha_devices devices;
 	struct bha_setup setup;
 	struct bha_mailbox mailbox;
@@ -850,21 +860,21 @@ bha_init(sc)
 
 		toggle.cmd.opcode = BHA_ROUND_ROBIN;
 		toggle.cmd.enable = 1;
-		bha_cmd(bc, ioh, sc,
+		bha_cmd(iot, ioh, sc,
 		    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 		    0, (u_char *)0);
 	}
 
 	/* Inquire Installed Devices (to force synchronous negotiation). */
 	devices.cmd.opcode = BHA_INQUIRE_DEVICES;
-	bha_cmd(bc, ioh, sc,
+	bha_cmd(iot, ioh, sc,
 	    sizeof(devices.cmd), (u_char *)&devices.cmd,
 	    sizeof(devices.reply), (u_char *)&devices.reply);
 
 	/* Obtain setup information from. */
 	setup.cmd.opcode = BHA_INQUIRE_SETUP;
 	setup.cmd.len = sizeof(setup.reply);
-	bha_cmd(bc, ioh, sc,
+	bha_cmd(iot, ioh, sc,
 	    sizeof(setup.cmd), (u_char *)&setup.cmd,
 	    sizeof(setup.reply), (u_char *)&setup.reply);
 
@@ -879,14 +889,15 @@ bha_init(sc)
 	if (sc->sc_firmware[0] >= '3') {
 		period.cmd.opcode = BHA_INQUIRE_PERIOD;
 		period.cmd.len = sizeof(period.reply);
-		bha_cmd(bc, ioh, sc,
+		bha_cmd(iot, ioh, sc,
 		    sizeof(period.cmd), (u_char *)&period.cmd,
 		    sizeof(period.reply), (u_char *)&period.reply);
 	}
 
 	for (i = 0; i < 8; i++) {
 		if (!setup.reply.sync[i].valid ||
-		    (!setup.reply.sync[i].offset && !setup.reply.sync[i].period))
+		    (!setup.reply.sync[i].offset &&
+		     !setup.reply.sync[i].period))
 			continue;
 		printf("%s targ %d: sync, offset %d, period %dnsec\n",
 		    sc->sc_dev.dv_xname, i,
@@ -908,7 +919,7 @@ bha_init(sc)
 	mailbox.cmd.opcode = BHA_MBX_INIT_EXTENDED;
 	mailbox.cmd.nmbx = BHA_MBX_SIZE;
 	ltophys(KVTOPHYS(wmbx), mailbox.cmd.addr);
-	bha_cmd(bc, ioh, sc,
+	bha_cmd(iot, ioh, sc,
 	    sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
 }
@@ -917,8 +928,8 @@ void
 bha_inquire_setup_information(sc)
 	struct bha_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct bha_model model;
 	struct bha_revision revision;
 	struct bha_digit digit;
@@ -929,21 +940,22 @@ bha_inquire_setup_information(sc)
 	 */
 	p = sc->sc_firmware;
 	revision.cmd.opcode = BHA_INQUIRE_REVISION;
-	bha_cmd(bc, ioh, sc,
+	bha_cmd(iot, ioh, sc,
 	    sizeof(revision.cmd), (u_char *)&revision.cmd,
 	    sizeof(revision.reply), (u_char *)&revision.reply);
 	*p++ = revision.reply.firm_revision;
 	*p++ = '.';
 	*p++ = revision.reply.firm_version;
 	digit.cmd.opcode = BHA_INQUIRE_REVISION_3;
-	bha_cmd(sc, ioh, sc,
+	bha_cmd(iot, ioh, sc,
 	    sizeof(digit.cmd), (u_char *)&digit.cmd,
 	    sizeof(digit.reply), (u_char *)&digit.reply);
 	*p++ = digit.reply.digit;
 	if (revision.reply.firm_revision >= '3' ||
-	    (revision.reply.firm_revision == '3' && revision.reply.firm_version >= '3')) {
+	    (revision.reply.firm_revision == '3' &&
+	     revision.reply.firm_version >= '3')) {
 		digit.cmd.opcode = BHA_INQUIRE_REVISION_4;
-		bha_cmd(sc, ioh, sc,
+		bha_cmd(iot, ioh, sc,
 		    sizeof(digit.cmd), (u_char *)&digit.cmd,
 		    sizeof(digit.reply), (u_char *)&digit.reply);
 		*p++ = digit.reply.digit;
@@ -959,7 +971,7 @@ bha_inquire_setup_information(sc)
 		p = sc->sc_model;
 		model.cmd.opcode = BHA_INQUIRE_MODEL;
 		model.cmd.len = sizeof(model.reply);
-		bha_cmd(sc, ioh, sc,
+		bha_cmd(iot, ioh, sc,
 		    sizeof(model.cmd), (u_char *)&model.cmd,
 		    sizeof(model.reply), (u_char *)&model.reply);
 		*p++ = model.reply.id[0];
@@ -1076,7 +1088,8 @@ bha_scsi_cmd(xs)
 				/* put in the base address */
 				ltophys(thisphys, sg->seg_addr);
 
-				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
+				SC_DEBUGN(sc_link, SDEV_DB4,
+				    ("0x%x", thisphys));
 
 				/* do it at least once */
 				nextphys = thisphys;
@@ -1087,7 +1100,8 @@ bha_scsi_cmd(xs)
 					 * length
 					 */
 					/* how far to the end of the page */
-					nextphys = (thisphys & ~PGOFSET) + NBPG;
+					nextphys =
+					    (thisphys & ~PGOFSET) + NBPG;
 					bytes_this_page = nextphys - thisphys;
 					/**** or the data ****/
 					bytes_this_page = min(bytes_this_page,
@@ -1174,8 +1188,8 @@ bha_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1183,7 +1197,8 @@ bha_poll(sc, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_io_read_1(bc, ioh, BHA_INTR_PORT) & BHA_INTR_ANYINTR)
+		if (bus_space_read_1(iot, ioh, BHA_INTR_PORT) &
+		    BHA_INTR_ANYINTR)
 			bha_intr(sc);
 		if (xs->flags & ITSDONE)
 			return (0);

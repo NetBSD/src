@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.2 1996/09/01 00:54:38 mycroft Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.3 1996/10/21 22:34:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -56,9 +56,9 @@ struct bha_mbx {
 
 struct bha_softc {
 	struct device sc_dev;
-	bus_chipset_tag_t sc_bc;
+	bus_space_tag_t sc_iot;
 
-	bus_io_handle_t sc_ioh;
+	bus_space_handle_t sc_ioh;
 	int sc_irq, sc_drq;
 	void *sc_ih;
 
@@ -74,6 +74,7 @@ struct bha_softc {
 	struct scsi_link sc_link;	/* prototype for devs */
 };
 
-int	bha_find __P((bus_chipset_tag_t, bus_io_handle_t, struct bha_softc *));
+int	bha_find __P((bus_space_tag_t, bus_space_handle_t,
+	    struct bha_softc *));
 void	bha_attach __P((struct bha_softc *));
 int	bha_intr __P((void *));

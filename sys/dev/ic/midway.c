@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.17 1996/10/13 01:37:24 christos Exp $	*/
+/*	$NetBSD: midway.c,v 1.18 1996/10/21 22:34:27 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.62)	*/
 
 /*
@@ -123,7 +123,7 @@
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
-#define	vtophys(va)	__alpha_bus_XXX_dmamap(sc->en_bc, (void *)(va))
+#define	vtophys(va)	__alpha_bus_XXX_dmamap(sc->en_memt, (void *)(va))
 #endif
 #elif defined(__FreeBSD__)
 #include <machine/cpufunc.h>            /* for rdtsc proto for clock.h below */
@@ -241,7 +241,7 @@ u_int32_t r;
     printf("en_read out of range, r=0x%x\n", r);
     panic("en_read");
   }
-  return(bus_mem_read_4(sc->en_bc, sc->en_base, r));
+  return(bus_space_read_4(sc->en_memt, sc->en_base, r));
 }
 #define EN_READ(SC,R) ntohl(en_read(SC,R))
 #define EN_READDAT(SC,R) en_read(SC,R)
@@ -256,20 +256,20 @@ u_int32_t r, v;
     printf("en_write out of range, r=0x%x\n", r);
     panic("en_write");
   }
-  bus_mem_write_4(sc->en_bc, sc->en_base, r, v);
+  bus_space_write_4(sc->en_memt, sc->en_base, r, v);
 }
 #define EN_WRITE(SC,R,V) en_write(SC,R, htonl(V))
 #define EN_WRITEDAT(SC,R,V) en_write(SC,R,V)
 
 #else /* EN_DEBUG_RANGE */
 
-#define EN_READ(SC,R) ntohl(bus_mem_read_4((SC)->en_bc, (SC)->en_base, (R)))
+#define EN_READ(SC,R) ntohl(bus_space_read_4((SC)->en_memt, (SC)->en_base, (R)))
 #define EN_WRITE(SC,R,V) \
-	bus_mem_write_4((SC)->en_bc, (SC)->en_base, (R), htonl((V)))
+	bus_space_write_4((SC)->en_memt, (SC)->en_base, (R), htonl((V)))
 
-#define EN_READDAT(SC,R) bus_mem_read_4((SC)->en_bc, (SC)->en_base, (R))
+#define EN_READDAT(SC,R) bus_space_read_4((SC)->en_memt, (SC)->en_base, (R))
 #define EN_WRITEDAT(SC,R,V) \
-	bus_mem_write_4((SC)->en_bc, (SC)->en_base, (R), (V))
+	bus_space_write_4((SC)->en_memt, (SC)->en_base, (R), (V))
 
 #define EN_WRAPADD(START,STOP,CUR,VAL) { \
 	(CUR) = (CUR) + (VAL); \

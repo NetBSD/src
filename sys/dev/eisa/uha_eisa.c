@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.4 1996/10/13 01:37:15 christos Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -61,7 +61,7 @@ struct cfattach uha_eisa_ca = {
 
 #define KVTOPHYS(x)	vtophys(x)
 
-int u24_find __P((bus_chipset_tag_t, bus_io_handle_t, struct uha_softc *));
+int u24_find __P((bus_space_tag_t, bus_space_handle_t, struct uha_softc *));
 void u24_start_mbox __P((struct uha_softc *, struct uha_mscp *));
 int u24_poll __P((struct uha_softc *, struct scsi_xfer *, int));
 int u24_intr __P((void *));
@@ -78,21 +78,21 @@ uha_eisa_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct eisa_attach_args *ea = aux;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	int rv;
 
 	/* must match one of our known ID strings */
 	if (strncmp(ea->ea_idstring, "USC024", 6))
 		return (0);
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + UHA_EISA_SLOT_OFFSET,
-	    UHA_EISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
+	    UHA_EISA_SLOT_OFFSET, UHA_EISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	rv = u24_find(bc, ioh, NULL);
+	rv = u24_find(iot, ioh, NULL);
 
-	bus_io_unmap(bc, ioh, UHA_EISA_IOSIZE);
+	bus_space_unmap(iot, ioh, UHA_EISA_IOSIZE);
 
 	return (rv);
 }
@@ -107,8 +107,8 @@ uha_eisa_attach(parent, self, aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct uha_softc *sc = (void *)self;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
@@ -119,13 +119,13 @@ uha_eisa_attach(parent, self, aux)
 		model = "unknown model!";
 	printf(": %s\n", model);
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + UHA_EISA_SLOT_OFFSET,
-	    UHA_EISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
+	    UHA_EISA_SLOT_OFFSET, UHA_EISA_IOSIZE, 0, &ioh))
 		panic("uha_attach: could not map I/O addresses");
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!u24_find(bc, ioh, sc))
+	if (!u24_find(iot, ioh, sc))
 		panic("uha_attach: u24_find failed!");
 
 	if (eisa_intr_map(ec, sc->sc_irq, &ih)) {
@@ -155,18 +155,18 @@ uha_eisa_attach(parent, self, aux)
 }
 
 int
-u24_find(bc, ioh, sc)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+u24_find(iot, ioh, sc)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct uha_softc *sc;
 {
 	u_int8_t config0, config1, config2;
 	int irq, drq;
 	int resetcount = 4000;	/* 4 secs? */
 
-	config0 = bus_io_read_1(bc, ioh, U24_CONFIG + 0);
-	config1 = bus_io_read_1(bc, ioh, U24_CONFIG + 1);
-	config2 = bus_io_read_1(bc, ioh, U24_CONFIG + 2);
+	config0 = bus_space_read_1(iot, ioh, U24_CONFIG + 0);
+	config1 = bus_space_read_1(iot, ioh, U24_CONFIG + 1);
+	config2 = bus_space_read_1(iot, ioh, U24_CONFIG + 2);
 	if ((config0 & U24_MAGIC1) == 0 ||
 	    (config1 & U24_MAGIC2) == 0)
 		return (0);
@@ -192,10 +192,10 @@ u24_find(bc, ioh, sc)
 		return (0);
 	}
 
-	bus_io_write_1(bc, ioh, U24_LINT, UHA_ASRST);
+	bus_space_write_1(iot, ioh, U24_LINT, UHA_ASRST);
 
 	while (--resetcount) {
-		if (bus_io_read_1(bc, ioh, U24_LINT))
+		if (bus_space_read_1(iot, ioh, U24_LINT))
 			break;
 		delay(1000);	/* 1 mSec per loop */
 	}
@@ -219,12 +219,12 @@ u24_start_mbox(sc, mscp)
 	struct uha_softc *sc;
 	struct uha_mscp *mscp;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int spincount = 100000;	/* 1s should be enough */
 
 	while (--spincount) {
-		if ((bus_io_read_1(bc, ioh, U24_LINT) & U24_LDIP) == 0)
+		if ((bus_space_read_1(iot, ioh, U24_LINT) & U24_LDIP) == 0)
 			break;
 		delay(100);
 	}
@@ -234,12 +234,12 @@ u24_start_mbox(sc, mscp)
 		Debugger();
 	}
 
-	bus_io_write_4(bc, ioh, U24_OGMPTR, KVTOPHYS(mscp));
+	bus_space_write_4(iot, ioh, U24_OGMPTR, KVTOPHYS(mscp));
 	if (mscp->flags & MSCP_ABORT)
-		bus_io_write_1(bc, ioh, U24_OGMCMD, 0x80);
+		bus_space_write_1(iot, ioh, U24_OGMCMD, 0x80);
 	else
-		bus_io_write_1(bc, ioh, U24_OGMCMD, 0x01);
-	bus_io_write_1(bc, ioh, U24_LINT, U24_OGMFULL);
+		bus_space_write_1(iot, ioh, U24_OGMCMD, 0x01);
+	bus_space_write_1(iot, ioh, U24_LINT, U24_OGMFULL);
 
 	if ((mscp->xs->flags & SCSI_POLL) == 0)
 		timeout(uha_timeout, mscp, (mscp->timeout * hz) / 1000);
@@ -251,15 +251,15 @@ u24_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	while (count) {
 		/*
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_io_read_1(bc, ioh, U24_SINT) & U24_SDIP)
+		if (bus_space_read_1(iot, ioh, U24_SINT) & U24_SDIP)
 			u24_intr(sc);
 		if (xs->flags & ITSDONE)
 			return (0);
@@ -274,8 +274,8 @@ u24_intr(arg)
 	void *arg;
 {
 	struct uha_softc *sc = arg;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct uha_mscp *mscp;
 	u_char uhastat;
 	u_long mboxval;
@@ -284,7 +284,7 @@ u24_intr(arg)
 	printf("%s: uhaintr ", sc->sc_dev.dv_xname);
 #endif /*UHADEBUG */
 
-	if ((bus_io_read_1(bc, ioh, U24_SINT) & U24_SDIP) == 0)
+	if ((bus_space_read_1(iot, ioh, U24_SINT) & U24_SDIP) == 0)
 		return (0);
 
 	for (;;) {
@@ -292,10 +292,10 @@ u24_intr(arg)
 		 * First get all the information and then
 		 * acknowledge the interrupt
 		 */
-		uhastat = bus_io_read_1(bc, ioh, U24_SINT);
-		mboxval = bus_io_read_4(bc, ioh, U24_ICMPTR);
-		bus_io_write_1(bc, ioh, U24_SINT, U24_ICM_ACK);
-		bus_io_write_1(bc, ioh, U24_ICMCMD, 0);
+		uhastat = bus_space_read_1(iot, ioh, U24_SINT);
+		mboxval = bus_space_read_4(iot, ioh, U24_ICMPTR);
+		bus_space_write_1(iot, ioh, U24_SINT, U24_ICM_ACK);
+		bus_space_write_1(iot, ioh, U24_ICMCMD, 0);
 
 #ifdef	UHADEBUG
 		printf("status = 0x%x ", uhastat);
@@ -313,7 +313,7 @@ u24_intr(arg)
 		untimeout(uha_timeout, mscp);
 		uha_done(sc, mscp);
 
-		if ((bus_io_read_1(bc, ioh, U24_SINT) & U24_SDIP) == 0)
+		if ((bus_space_read_1(iot, ioh, U24_SINT) & U24_SDIP) == 0)
 			return (1);
 	}
 }
@@ -322,18 +322,18 @@ void
 u24_init(sc)
 	struct uha_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/* free OGM and ICM */
-	bus_io_write_1(bc, ioh, U24_OGMCMD, 0);
-	bus_io_write_1(bc, ioh, U24_ICMCMD, 0);
+	bus_space_write_1(iot, ioh, U24_OGMCMD, 0);
+	bus_space_write_1(iot, ioh, U24_ICMCMD, 0);
 	/* make sure interrupts are enabled */
 #ifdef UHADEBUG
 	printf("u24_init: lmask=%02x, smask=%02x\n",
-	    bus_io_read_1(bc, ioh, U24_LMASK),
-	    bus_io_read_1(bc, ioh, U24_SMASK));
+	    bus_space_read_1(iot, ioh, U24_LMASK),
+	    bus_space_read_1(iot, ioh, U24_SMASK));
 #endif
-	bus_io_write_1(bc, ioh, U24_LMASK, 0xd2);	/* XXX */
-	bus_io_write_1(bc, ioh, U24_SMASK, 0x92);	/* XXX */
+	bus_space_write_1(iot, ioh, U24_LMASK, 0xd2);	/* XXX */
+	bus_space_write_1(iot, ioh, U24_SMASK, 0x92);	/* XXX */
 }
