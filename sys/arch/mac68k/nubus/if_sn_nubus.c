@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.4 1997/04/10 03:22:47 briggs Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.5 1997/04/13 14:21:10 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -59,8 +59,6 @@
 static int	sn_nubus_match __P((struct device *, struct cfdata *, void *));
 static void	sn_nubus_attach __P((struct device *, struct device *, void *));
 static int	sn_nb_card_vendor __P((struct nubus_attach_args *));
-static int	sn_nb_get_enaddr __P((struct nubus_attach_args *,
-					u_int8_t *, int));
 
 struct cfattach sn_nubus_ca = {
 	sizeof(struct sn_softc), sn_nubus_match, sn_nubus_attach
@@ -148,16 +146,9 @@ sn_nubus_attach(parent, self, aux)
 			break;
 		}
 
-		/*
-		 * Copy out the ethernet address from the card's ROM
-		 *
-		 * See if_sn_obio.c for a discussion of bit reversal
-		 * in Apple's MAC address PROMs. As far as I can tell
-		 * Dayna stores their Mac address in ethernet format,
-		 * not Token Ring.
-		 */
-		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			myaddr[i] = bus_space_read_1(bst, tmp_bsh, i);
+		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
+
+		bus_space_unmap(bst, tmp_bsh, ETHER_ADDR_LEN);
 
 		success = 1;
                 break;
@@ -167,15 +158,23 @@ sn_nubus_attach(parent, self, aux)
 			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
 
-		if (bus_space_subregion(bst, bsh, 0x00180000, SN_REGSIZE,
+		if (bus_space_subregion(bst, bsh, 0x0, SN_REGSIZE,
 					&sc->sc_regh)) {
 			printf(": failed to map register space.\n");
 			break;
 		}
 
-		if (sn_nb_get_enaddr(na, myaddr, 0x8) == 0)
-			success = 1;
+		if (bus_space_subregion(bst, bsh, 0x40000, ETHER_ADDR_LEN,
+					&tmp_bsh)) {
+			printf(": failed to map ROM space.\n");
+			break;
+		}
 
+		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
+
+		bus_space_unmap(bst, tmp_bsh, ETHER_ADDR_LEN);
+
+		success = 1;
                 break;
 
         default:
@@ -269,25 +268,3 @@ sn_nb_card_vendor(na)
 	}
 	return vendor;
 }
-
-static int
-sn_nb_get_enaddr(na, ep, rsrc1)
-	struct nubus_attach_args *na;
-	u_int8_t *ep;
-	int	rsrc1;
-{
-	nubus_dir dir;
-	nubus_dirent dirent;
-
-	nubus_get_main_dir(na->fmt, &dir);
-	if (nubus_find_rsrc(na->fmt, &dir, na->rsrcid, &dirent) <= 0)
-		return 1;
-	nubus_get_dir_from_rsrc(na->fmt, &dirent, &dir);
-	if (nubus_find_rsrc(na->fmt, &dir, rsrc1, &dirent) <= 0)
-		return 1;
-	if (nubus_get_ind_data(na->fmt, &dirent, ep, ETHER_ADDR_LEN) <= 0)
-		return 1;
-
-	return 0;
-}
-
