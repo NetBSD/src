@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.7 2001/11/23 17:23:44 thorpej Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.8 2002/03/23 02:54:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -147,7 +147,7 @@ sa11x0_bs_map(t, bpa, size, cacheable, bshp)
 	vaddr_t va;
 	pt_entry_t *pte;
 
-	if ((u_long)bpa > (u_long)KERNEL_SPACE_START) {
+	if ((u_long)bpa > (u_long)KERNEL_BASE) {
 		/* XXX This is a temporary hack to aid transition. */
 		*bshp = bpa;
 		return(0);
