@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.12 1999/07/14 22:52:07 hubertf Exp $	*/
+/*	$NetBSD: dm.c,v 1.13 1999/09/19 18:13:41 jsm Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.12 1999/07/14 22:52:07 hubertf Exp $");
+__RCSID("$NetBSD: dm.c,v 1.13 1999/09/19 18:13:41 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,9 +185,13 @@ c_day(s_day, s_start, s_stop)
 		return;
 	start = atoi(s_start);
 	stop = atoi(s_stop);
-	if (ct->tm_hour >= start && ct->tm_hour < stop)
-		errx(0, "Sorry, games are not available from %s to %s today.",
-		    hour(start), hour(stop));
+	if (ct->tm_hour >= start && ct->tm_hour < stop) {
+		if (start == 0 && stop == 24)
+			errx(0, "Sorry, games are not available today.");
+		else
+			errx(0, "Sorry, games are not available from %s to %s today.",
+			     hour(start), hour(stop));
+	}
 }
 
 /*
@@ -295,9 +299,9 @@ hour(h)
 	    "midnight", "1am", "2am", "3am", "4am", "5am",
 	    "6am", "7am", "8am", "9am", "10am", "11am",
 	    "noon", "1pm", "2pm", "3pm", "4pm", "5pm",
-	    "6pm", "7pm", "8pm", "9pm", "10pm", "11pm" };
+	    "6pm", "7pm", "8pm", "9pm", "10pm", "11pm", "midnight" };
 
-	if (h < 0 || h > 23)
+	if (h < 0 || h > 24)
 		return ("BAD TIME");
 	else
 		return (hours[h]);
