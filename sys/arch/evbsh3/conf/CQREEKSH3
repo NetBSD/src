@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.20 2002/04/25 15:06:26 atatat Exp $
+#	$NetBSD: CQREEKSH3,v 1.21 2002/05/09 12:34:20 uch Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -26,7 +26,7 @@ options 	SH7708		# 100MHz
 options 	PCLOCK=15000000		# 15.000MHz
 options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_ROM_SIZE=0x00200000	# 2MB
-options 	IOM_RAM_BEGIN=0x8c000000
+options 	IOM_RAM_BEGIN=0x0c000000
 options 	IOM_RAM_SIZE=0x00400000	# 4MB
 options 	LED_ADDR=0xa8000000
 
