@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.33 1997/02/04 21:33:19 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.34 1997/02/09 21:19:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -1213,7 +1213,8 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 			*tl = 0;
 		}
 	}
-	*mrq = mreq;
+	if (mrq != NULL)
+		*mrq = mreq;
 	*mbp = mb;
 	*bposp = bpos;
 	if (err != 0 && err != NFSERR_RETVOID)
