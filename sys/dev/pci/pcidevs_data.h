@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.286 2001/01/03 23:15:15 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.287 2001/01/08 09:53:41 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.283 2001/01/03 23:14:39 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.284 2001/01/08 09:52:22 rh Exp 
  */
 
 /*
@@ -3482,6 +3482,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NEC",
 	    "uPD72871 IEEE 1394 OHCI Host Controller",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D,
+	    0,
+	    "NEC",
+	    "NEC Versa Pro LX VA26D",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX,
+	    0,
+	    "NEC",
+	    "NEC Versa LX",
 	},
 	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2070,
