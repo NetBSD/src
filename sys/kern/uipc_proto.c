@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.9 1998/01/07 22:50:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -54,12 +54,12 @@ extern	struct domain unixdomain;		/* or at least forward */
 
 struct protosw unixsw[] = {
 { SOCK_STREAM,	&unixdomain,	0,	PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS,
-  0,		0,		0,		0,
+  0,		0,		0,		uipc_ctloutput,
   uipc_usrreq,
   0,		0,		0,		0,
 },
 { SOCK_DGRAM,	&unixdomain,	0,		PR_ATOMIC|PR_ADDR|PR_RIGHTS,
-  0,		0,		0,		0,
+  0,		0,		0,		uipc_ctloutput,
   uipc_usrreq,
   0,		0,		0,		0,
 },
