@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.17 1999/04/19 03:11:31 simonb Exp $
+# $NetBSD: md.alpha,v 1.18 1999/05/12 12:06:23 tron Exp $
 ./usr/bin/fdformat
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
@@ -9,6 +9,7 @@
 ./usr/lkm/mfs.o
 ./usr/lkm/msdosfs.o
 ./usr/lkm/nullfs.o
+./usr/lkm/ntfs.o
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
