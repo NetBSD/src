@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.22 2005/01/21 20:23:44 dsl Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.23 2005/01/23 06:19:03 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.22 2005/01/21 20:23:44 dsl Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.23 2005/01/23 06:19:03 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -653,38 +653,6 @@ mod_name(ARCHD *arcn)
 {
 	int res = 0;
 
-	/*
-	 * Strip off leading '/' if appropriate.
-	 * Currently, this option is only set for the tar format.
-	 */
-	if (rmleadslash && arcn->name[0] == '/') {
-		if (arcn->name[1] == '\0') {
-			arcn->name[0] = '.';
-		} else {
-			(void)memmove(arcn->name, &arcn->name[1],
-			    strlen(arcn->name));
-			arcn->nlen--;
-		}
-		if (rmleadslash < 2) {
-			rmleadslash = 2;
-			tty_warn(0, "Removing leading / from absolute path names in the archive");
-		}
-	}
-	if (rmleadslash && arcn->ln_name[0] == '/' &&
-	    (arcn->type == PAX_HLK || arcn->type == PAX_HRG)) {
-		if (arcn->ln_name[1] == '\0') {
-			arcn->ln_name[0] = '.';
-		} else {
-			(void)memmove(arcn->ln_name, &arcn->ln_name[1],
-			    strlen(arcn->ln_name));
-			arcn->ln_nlen--;
-		}
-		if (rmleadslash < 2) {
-			rmleadslash = 2;
-			tty_warn(0, "Removing leading / from absolute path names in the archive");
-		}
-	}
-
 	if (secure) {
 		if (checkdotdot(arcn->name)) {
 			tty_warn(0, "Ignoring file containing `..' (%s)",
@@ -745,6 +713,39 @@ mod_name(ARCHD *arcn)
 		    (arcn->type == PAX_HRG))
 			sub_name(arcn->ln_name, &(arcn->ln_nlen), sizeof(arcn->ln_name));
 	}
+
+	/*
+	 * Strip off leading '/' if appropriate.
+	 * Currently, this option is only set for the tar format.
+	 */
+	if (rmleadslash && arcn->name[0] == '/') {
+		if (arcn->name[1] == '\0') {
+			arcn->name[0] = '.';
+		} else {
+			(void)memmove(arcn->name, &arcn->name[1],
+			    strlen(arcn->name));
+			arcn->nlen--;
+		}
+		if (rmleadslash < 2) {
+			rmleadslash = 2;
+			tty_warn(0, "Removing leading / from absolute path names in the archive");
+		}
+	}
+	if (rmleadslash && arcn->ln_name[0] == '/' &&
+	    (arcn->type == PAX_HLK || arcn->type == PAX_HRG)) {
+		if (arcn->ln_name[1] == '\0') {
+			arcn->ln_name[0] = '.';
+		} else {
+			(void)memmove(arcn->ln_name, &arcn->ln_name[1],
+			    strlen(arcn->ln_name));
+			arcn->ln_nlen--;
+		}
+		if (rmleadslash < 2) {
+			rmleadslash = 2;
+			tty_warn(0, "Removing leading / from absolute path names in the archive");
+		}
+	}
+
 	return(res);
 }
 

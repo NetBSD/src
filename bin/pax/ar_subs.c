@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.34 2004/10/22 21:00:18 jmc Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.35 2005/01/23 06:19:03 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.34 2004/10/22 21:00:18 jmc Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.35 2005/01/23 06:19:03 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,9 +118,6 @@ list(void)
 			continue;
 		}
 
-		if (arcn->name[0] == '/' && !check_Aflag()) {
-			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
-		}
 		/*
 		 * check for pattern, and user specified options match.
 		 * When all patterns are matched we are done.
@@ -141,8 +138,13 @@ list(void)
 			 */
 			if ((res = mod_name(arcn)) < 0)
 				break;
-			if (res == 0)
+			if (res == 0) {
+				if (arcn->name[0] == '/' && !check_Aflag()) {
+					memmove(arcn->name, arcn->name + 1, 
+					    strlen(arcn->name));
+				}
 				ls_list(arcn, now, stdout);
+			}
 			/*
 			 * if there's an error writing to stdout then we must
 			 * stop now -- we're probably writing to a pipe that
@@ -229,9 +231,6 @@ extract(void)
 			continue;
 		}
 
-		if (arcn->name[0] == '/' && !check_Aflag()) {
-			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
-		}
 		/*
 		 * check for pattern, and user specified options match. When
 		 * all the patterns are matched we are done
@@ -291,6 +290,9 @@ extract(void)
 			continue;
 		}
 
+		if (arcn->name[0] == '/' && !check_Aflag()) {
+			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
+		}
 		/*
 		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip; ignore this for GNU long links.
@@ -497,9 +499,6 @@ wr_archive(ARCHD *arcn, int is_app)
 			}
 		}
 
-		if (arcn->name[0] == '/' && !check_Aflag()) {
-			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
-		}
 		/*
 		 * Now modify the name as requested by the user
 		 */
@@ -511,6 +510,10 @@ wr_archive(ARCHD *arcn, int is_app)
 			rdfile_close(arcn, &fd);
 			purg_lnk(arcn);
 			break;
+		}
+
+		if (arcn->name[0] == '/' && !check_Aflag()) {
+			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
 		}
 
 		if ((res > 0) || (docrc && (set_crc(arcn, fd) < 0))) {
