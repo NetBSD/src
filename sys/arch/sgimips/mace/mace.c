@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.3 2004/07/10 08:44:42 tsutsui Exp $	*/
+/*	$NetBSD: mace.c,v 1.4 2004/07/10 08:47:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.3 2004/07/10 08:44:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.4 2004/07/10 08:47:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,8 @@ struct {
 	unsigned int	intrmask;
 	int	(*func)(void *);
 	void	*arg;
+	struct evcnt evcnt;
+	char	evname[32];
 } maceintrtab[MACE_NINTR];
 
 struct mace_softc {
@@ -274,6 +276,12 @@ mace_intr_establish(int intr, int level, int (*func)(void *), void *arg)
 		        maceintrtab[i].arg = arg;
 			maceintrtab[i].irq = (1 << intr);
 			maceintrtab[i].intrmask = level;
+			snprintf(maceintrtab[i].evname,
+			    sizeof(maceintrtab[i].evname),
+			    "intr %d level 0x%x", intr, level);
+			evcnt_attach_dynamic(&maceintrtab[i].evcnt,
+			    EVCNT_TYPE_INTR, NULL,
+			    "mace", maceintrtab[i].evname);
 			break;
 		}
 
@@ -299,6 +307,7 @@ mace_intr(int irqs)
 			if ((maceintrtab[i].irq == (1 << 4)) &&
 			    (isa_irq & maceintrtab[i].intrmask)) {
 		  		(maceintrtab[i].func)(maceintrtab[i].arg);
+				maceintrtab[i].evcnt.ev_count++;
 	        	}
 		}
 #if 0
@@ -309,8 +318,10 @@ mace_intr(int irqs)
 	}
 
 	for (i = 0; i < MACE_NINTR; i++)
-		if ((irqs & maceintrtab[i].irq))
+		if ((irqs & maceintrtab[i].irq)) {
 		  	(maceintrtab[i].func)(maceintrtab[i].arg);
+			maceintrtab[i].evcnt.ev_count++;
+		}
 }
 
 #if defined(BLINK)
