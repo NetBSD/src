@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.98 2002/09/22 19:05:11 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.99 2002/09/24 13:29:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.98 2002/09/22 19:05:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.99 2002/09/24 13:29:44 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,11 @@ ncr53c9x_attach(sc)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
+#if 0 /* XXX */
 	chan->chan_ntargets = (sc->sc_rev == NCR_VARIANT_FAS366) ? 16 : 8;
+#else
+	chan->chan_ntargets = 8;
+#endif
 	chan->chan_nluns = 8;
 	chan->chan_id = sc->sc_id;
 
