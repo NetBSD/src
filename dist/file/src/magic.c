@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.1.1.3 2003/09/25 17:59:05 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -43,20 +43,21 @@
 #ifdef QUICK
 #include <sys/mman.h>
 #endif
-#ifdef RESTORE_TIME
-# if (__COHERENT__ >= 0x420)
+
+#if defined(HAVE_UTIME)
+# if defined(HAVE_SYS_UTIME_H)
 #  include <sys/utime.h>
-# else
-#  ifdef USE_UTIMES
-#   include <sys/time.h>
-#  else
-#   include <utime.h>
-#  endif
+# elif defined(HAVE_UTIME_H)
+#  include <utime.h>
 # endif
+#elif defined(HAVE_UTIMES)
+# include <sys/time.h>
 #endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>	/* for read() */
 #endif
+
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif
@@ -67,9 +68,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: magic.c,v 1.7 2003/05/23 21:31:58 christos Exp")
+FILE_RCSID("@(#)Id: magic.c,v 1.10 2003/07/10 21:07:14 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.1.1.3 2003/09/25 17:59:05 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -84,6 +85,8 @@ protected int file_os2_apptype(struct magic_set *ms, const char *fn,
 #endif
 
 private void free_mlist(struct mlist *);
+private void close_and_restore(const struct magic_set *, const char *, int,
+    const struct stat *);
 
 public struct magic_set *
 magic_open(int flags)
@@ -92,6 +95,13 @@ magic_open(int flags)
 
 	if ((ms = malloc(sizeof(struct magic_set))) == NULL)
 		return NULL;
+
+	if (magic_setflags(ms, flags) == -1) {
+		free(ms);
+		errno = EINVAL;
+		return NULL;
+	}
+
 	ms->o.ptr = ms->o.buf = malloc(ms->o.size = 1024);
 	ms->o.len = 0;
 	if (ms->o.buf == NULL) {
@@ -104,8 +114,8 @@ magic_open(int flags)
 		free(ms);
 		return NULL;
 	}
-	ms->flags = flags;
 	ms->haderr = 0;
+	ms->mlist = NULL;
 	return ms;
 }
 
@@ -123,6 +133,7 @@ magic_load(struct magic_set *ms, const char *magicfile)
 	ml = file_apprentice(ms, magicfile, 0);
 	if (ml == NULL) 
 		return -1;
+	free_mlist(ms->mlist);
 	ms->mlist = ml;
 	return 0;
 }
@@ -187,6 +198,34 @@ magic_check(struct magic_set *ms, const char *magicfile)
 	return ml ? 0 : -1;
 }
 
+private void
+close_and_restore(const struct magic_set *ms, const char *name, int fd,
+    const struct stat *sb)
+{
+	(void) close(fd);
+	if (fd != STDIN_FILENO && (ms->flags & MAGIC_PRESERVE_ATIME) != 0) {
+		/*
+		 * Try to restore access, modification times if read it.
+		 * This is really *bad* because it will modify the status
+		 * time of the file... And of course this will affect
+		 * backup programs
+		 */
+#ifdef HAVE_UTIMES
+		struct timeval  utsbuf[2];
+		utsbuf[0].tv_sec = sb->st_atime;
+		utsbuf[1].tv_sec = sb->st_mtime;
+
+		(void) utimes(name, utsbuf); /* don't care if loses */
+#elif defined(HAVE_UTIME_H) || defined(HAVE_SYS_UTIME_H)
+		struct utimbuf  utbuf;
+
+		utbuf.actime = sb->st_atime;
+		utbuf.modtime = sb->st_mtime;
+		(void) utime(name, &utbuf); /* don't care if loses */
+#endif
+	}
+}
+
 /*
  * find type of named file
  */
@@ -231,33 +270,29 @@ magic_file(struct magic_set *ms, const char *inname)
 	 */
 	if ((nbytes = read(fd, (char *)buf, HOWMANY)) == -1) {
 		file_error(ms, "Cannot read `%s' %s", inname, strerror(errno));
-		(void)close(fd);
-		return NULL;
+		goto done;
 	}
 
 	if (nbytes == 0) {
 		if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
 		    "application/x-empty" : "empty") == -1) {
 			(void)close(fd);
-			return NULL;
+		    goto done;
 		}
 	} else {
 		buf[nbytes++] = '\0';	/* null-terminate it */
 #ifdef __EMX__
 		switch (file_os2_apptype(ms, inname, buf, nbytes)) {
 		case -1:
-			(void)close(fd);
-			return NULL;
+			goto done;
 		case 0:
 			break;
 		default:
 			return ms->o.buf;
 		}
 #endif
-		if (file_buffer(ms, buf, (size_t)nbytes) == -1) {
-			(void)close(fd);
-			return NULL;
-		}
+		if (file_buffer(ms, buf, (size_t)nbytes) == -1)
+			goto done;
 #ifdef BUILTIN_ELF
 		if (nbytes > 5) {
 			/*
@@ -273,8 +308,11 @@ magic_file(struct magic_set *ms, const char *inname)
 #endif
 	}
 
-	close(fd);
+	close_and_restore(ms, inname, fd, &sb);
 	return ms->haderr ? NULL : ms->o.buf;
+done:
+	close_and_restore(ms, inname, fd, &sb);
+	return NULL;
 }
 
 
@@ -299,8 +337,13 @@ magic_error(struct magic_set *ms)
 	return ms->haderr ? ms->o.buf : NULL;
 }
 
-public void
+public int
 magic_setflags(struct magic_set *ms, int flags)
 {
+#if !defined(HAVE_UTIME) && !defined(HAVE_UTIMES)
+	if (flags & MAGIC_PRESERVE_ATIME)
+		return -1;
+#endif
 	ms->flags = flags;
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1.1.2 2003/05/25 21:28:10 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.3 2003/09/25 17:59:06 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -49,9 +49,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.43 2003/03/26 15:35:30 christos Exp")
+FILE_RCSID("@(#)Id: print.c,v 1.44 2003/09/12 19:39:44 christos Exp")
 #else
-__RCSID("$NetBSD: print.c,v 1.1.1.2 2003/05/25 21:28:10 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.1.1.3 2003/09/25 17:59:06 pooka Exp $");
 #endif
 #endif  /* lint */
 
@@ -156,6 +156,7 @@ file_magwarn(const char *f, ...)
 	/* cuz we use stdout for most, stderr here */
 	(void) fflush(stdout); 
 
+	(void) fprintf(stderr, "WARNING: ");
 	(void) vfprintf(stderr, f, va);
 	va_end(va);
 	fputc('\n', stderr);

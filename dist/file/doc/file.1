@@ -1,14 +1,14 @@
-.\"	$NetBSD: file.1,v 1.1.1.2 2003/05/25 21:27:32 pooka Exp $
+.\"	$NetBSD: file.1,v 1.1.1.3 2003/09/25 17:58:57 pooka Exp $
 .\"
 .TH FILE 1 "Copyright but distributable"
-.\" Id: file.man,v 1.49 2003/05/23 21:31:57 christos Exp
+.\" Id: file.man,v 1.50 2003/07/10 17:51:09 christos Exp
 .SH NAME
 file
 \- determine file type
 .SH SYNOPSIS
 .B file
 [
-.B \-bcikLnNsvz
+.B \-bcikLnNpsvz
 ]
 [
 .B \-f
@@ -31,7 +31,7 @@ file
 .B \-m 
 magicfile ]
 .SH DESCRIPTION
-This manual page documents version 4.03 of the
+This manual page documents version 4.04 of the
 .B file
 command.
 .PP
@@ -214,6 +214,15 @@ It is intended to be used by programs that want filetype output from a pipe.
 .TP 8
 .B "\-N, \-\-no\-pad"
 Don't pad filenames so that they align in the output.
+.TP 8
+.B "\-p, \-\-preserve\-date"
+On systems that support
+.BR utime (2)
+or,
+.BR utimes(2)
+attempt to preserve the access time of files analyzed, to pretend that
+.BR file (2)
+never read them.
 .TP 8
 .B "\-s, \-\-special\-files"
 Normally,
