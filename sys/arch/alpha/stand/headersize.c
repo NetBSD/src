@@ -1,4 +1,4 @@
-/*	$NetBSD: headersize.c,v 1.1 1995/11/23 02:38:59 cgd Exp $	*/
+/*	$NetBSD: headersize.c,v 1.2 1996/05/09 23:54:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -29,19 +29,20 @@
 
 #include <sys/types.h>
 #include <sys/exec.h>
-#include <machine/coff.h>
+#include <sys/exec_ecoff.h>
 
 #define	HDR_BUFSIZE	512
 
 main()
 {
 	char buf[HDR_BUFSIZE];
+	struct ecoff_exechdr *execp;
 
 	if (read(0, &buf, HDR_BUFSIZE) < HDR_BUFSIZE) {
 		perror("read");
 		exit(1);
 	}
+	execp = (struct ecoff_exechdr *)buf;
 
-	printf("%d\n", N_COFFTXTOFF(*((struct filehdr *)buf),
-	    *((struct aouthdr *)(buf + sizeof(struct filehdr)))) );
+	printf("%d\n", ECOFF_TXTOFF(&execp->f, &execp->a));
 }
