@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.11 2003/08/07 16:27:14 agc Exp $	*/
+/*	$NetBSD: locore.s,v 1.12 2004/03/04 19:53:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -383,17 +383,6 @@ Lnocache0:
 Lmainreturned:
 	.asciz	"main() returned"
 	.even
-
-GLOBAL(proc_trampoline)
-	movl	%a3,%sp@-
-	jbsr	%a2@
-	addql	#4,%sp
-	movl	%sp@(FR_SP),%a0		| grab and load
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| restore most user regs
-	addql	#8,%sp			| toss SP and stack adjust
-	jra	_ASM_LABEL(rei)		| and return
-
 
 /*
  * Trap/interrupt vector routines

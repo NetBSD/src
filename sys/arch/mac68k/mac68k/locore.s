@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.143 2003/08/07 16:28:22 agc Exp $	*/
+/*	$NetBSD: locore.s,v 1.144 2004/03/04 19:53:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -382,20 +382,6 @@ Lnocache0:
 	jra	_C_LABEL(main)		| main()
 	PANIC("main() returned")
 	/* NOTREACHED */
-
-/*
- * proc_trampoline
- *	Call function in register %a2 with %a3 as an arg and then rei.
- */
-GLOBAL(proc_trampoline)
-	movl	%a3,%sp@-		| push function arg
-	jbsr	%a2@			| call function
-	addql	#4,%sp			| pop arg
-	movl	%sp@(FR_SP),%a0		| %usp to %a0
-	movl	%a0,%usp		| setup user's stack pointer
-	movml	%sp@+,#0x7fff		| restore all but %sp
-	addql	#8,%sp			| pop %sp and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trap/interrupt vector routines

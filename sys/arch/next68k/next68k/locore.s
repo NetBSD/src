@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 2003/08/07 16:28:56 agc Exp $	*/
+/*	$NetBSD: locore.s,v 1.43 2004/03/04 19:53:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -504,21 +504,6 @@ Lenab3:
 	jra	_C_LABEL(main)		| main()
 	PANIC("main() returned")
 	/* NOTREACHED */
-
-/*
- * proc_trampoline: call function in register %a2 with %a3 as an arg
- * and then rei.
- */
-GLOBAL(proc_trampoline)
-	movl	%a3,%sp@-		| push function arg
-	jbsr	%a2@			| call function
-	addql	#4,%sp			| pop arg
-	movl	%sp@(FR_SP),%a0		| grab and load
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| restore most user regs
-	addql	#8,%sp			| toss SP and stack adjust
-	jra	_ASM_LABEL(rei)		| and return
-
 
 /*
  * Trap/interrupt vector routines
