@@ -1,3 +1,5 @@
+/*	$NetBSD: net.c,v 1.3 1994/10/26 05:44:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from @(#) Header: net.c,v 1.9 93/08/06 19:32:15 leres Exp  (LBL)
+ * @(#) Header: net.c,v 1.9 93/08/06 19:32:15 leres Exp  (LBL)
  */
 
 #include <sys/param.h>

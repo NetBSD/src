@@ -1,3 +1,5 @@
+/*	$NetBSD: gets.c,v 1.5 1994/10/26 05:44:46 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)gets.c	8.1 (Berkeley) 6/11/93
- *	     $Id: gets.c,v 1.4 1994/08/22 21:56:07 brezak Exp $
+ *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
 
 #include "stand.h"
