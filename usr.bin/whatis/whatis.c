@@ -1,3 +1,5 @@
+/*	$NetBSD: whatis.c,v 1.3 1997/01/09 12:03:22 tls Exp $	*/
+
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 11/26/93";
+#if 0
+static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
+#else
+static char rcsid[] = "$NetBSD: whatis.c,v 1.3 1997/01/09 12:03:22 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
