@@ -1,3 +1,6 @@
-.\"	$NetBSD: install,v 1.1 2000/02/20 15:45:34 jun Exp $
+.\"	$NetBSD: install,v 1.2 2000/02/22 05:01:41 jun Exp $
 .
+boot with `pbdboot.exe' and `netbsd' in `installation' directory.
+`sysinst' will automatically starts.  
+
 .so ../common/sysinst

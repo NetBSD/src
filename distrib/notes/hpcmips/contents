@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.1 2000/02/20 15:45:33 jun Exp $
+.\"	$NetBSD: contents,v 1.2 2000/02/22 05:01:40 jun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -479,3 +479,21 @@ the sources for these utilities are in the
 .
 .
 .
+.Pp
+notes on 
+.Pa hpcmips/misc/
+subdirectory of the
+.Nx \*V
+distribution tree. The important files in this directory are as
+follows:
+.Bl -tag -width bin-sbin-dynamic-link.tgz
+.It Pa bin-sbin-dynamic-link.tgz
+
+Dynamically linked binaries in `/bin' and `/sbin'. USE AT YOUR OWN RISK.
+You can save 10MB of disk space with these binaries.
+.El
+
+.Bl -tag -width miniroot.fs.gz
+.It Pa  miniroot.fs.gz
+miniroot which contains sysinst.
+.El
