@@ -1561,15 +1561,6 @@ ENTRY(swtch)
 	movl	%ebp,PCB_EBP(%ecx)
 	movl	%esi,PCB_ESI(%ecx)
 	movl	%edi,PCB_EDI(%ecx)
-#ifdef	USER_LDT
-	xorl	%eax,%eax
-	movw	%es,%ax
-	movl	%eax,PCB_ES(%ecx)
-	movw	%fs,%ax
-	movl	%eax,PCB_FS(%ecx)
-	movw	%gs,%ax
-	movl	%eax,PCB_GS(%ecx)
-#endif
 
 #if NNPX > 0
 	/* have we used fp, and need a save? */
@@ -1652,14 +1643,6 @@ swfnd:
 	movl	PCB_EBP(%edx),%ebp
 	movl	PCB_ESI(%edx),%esi
 	movl	PCB_EDI(%edx),%edi
-#ifdef	USER_LDT
-	movl	PCB_ES(%edx),%eax
-	movw	%ax,%es
-	movl	PCB_FS(%edx),%eax
-	movw	%ax,%fs
-	movl	PCB_GS(%edx),%eax
-	movw	%ax,%gs
-#endif
 	movl	PCB_EIP(%edx),%eax
 	movl	%eax,(%esp)
 
@@ -1732,15 +1715,6 @@ ENTRY(savectx)
 	movl	%ebp,PCB_EBP(%ecx)
 	movl	%esi,PCB_ESI(%ecx)
 	movl	%edi,PCB_EDI(%ecx)
-#ifdef	USER_LDT
-	xorl	%eax,%eax
-	movw	%es,%ax
-	movl	%eax,PCB_ES(%ecx)
-	movw	%fs,%ax
-	movl	%eax,PCB_FS(%ecx)
-	movw	%gs,%ax
-	movl	%eax,PCB_GS(%ecx)
-#endif
 
 #if NNPX > 0
 	/*
