@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.67 2000/05/30 15:22:12 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.68 2000/05/30 17:40:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -912,9 +912,9 @@ abortit:
 	 */
 	ip->i_ffs_effnlink++;
 	ip->i_ffs_nlink++;
+	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(fvp))
 		softdep_change_linkcnt(ip);
-	ip->i_flag |= IN_CHANGE;
 	if ((error = VOP_UPDATE(fvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		VOP_UNLOCK(fvp, 0);
 		goto bad;
@@ -1130,7 +1130,6 @@ abortit:
 		}
 		error = ufs_dirremove(fdvp, xp, fcnp->cn_flags, 0);
 		xp->i_flag &= ~IN_RENAME;
-		xp->i_flag |= IN_CHANGE;
 	}
 	if (dp)
 		vput(fdvp);
