@@ -1,4 +1,4 @@
-.\"     $NetBSD: dnsquery.1,v 1.1.1.1 1999/11/20 18:53:57 veego Exp $
+.\"     $NetBSD: dnsquery.1,v 1.2 2000/06/14 05:54:30 itojun Exp $
 .\"
 .\" Id: dnsquery.1,v 8.3 1999/01/08 18:54:21 vixie Exp
 .\"
@@ -178,3 +178,10 @@ option is a valid Internet address.  Unfortunately,
 .Fn inet_addr 
 seems to cause a segmentation fault with some (bad)
 IP addresses (e.g., 1.2.3.4.5).
+.Pp
+.Nm
+does not support DNS queries/replies over IPv6 transport, and ignores
+IPv6 address on
+.Dq nameserver
+line in
+.Xr resolv.conf 5 .
