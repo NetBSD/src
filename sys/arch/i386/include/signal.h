@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.22 2003/09/11 20:48:35 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.23 2003/09/12 01:13:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -81,7 +81,6 @@ struct sigcontext13 {
 };
 #endif
 
-#if defined(COMPAT_16) || defined(COMPAT_IBCS2) || !defined(_KERNEL)
 /*
  * We expose this to userland for legacy interfaces, but only use
  * it in the kernel for compat code.
@@ -164,7 +163,6 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_TRAPNO] = (sc)->sc_trapno;	\
 	(uc)->uc_mcontext.__gregs[_REG_ERR] = (sc)->sc_err;		\
 } while (/*CONSTCOND*/0)
-#endif
 
 #define sc_sp sc_esp
 #define sc_fp sc_ebp
