@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.2 1996/12/08 13:28:21 mycroft Exp $";
+static char rcsid[] = "$Id: cron.c,v 1.3 1996/12/14 12:06:48 fvdl Exp $";
 #endif
 
 
@@ -91,7 +91,7 @@ main(argc, argv)
 # endif
 		(void) fprintf(stderr, "[%d] cron started\n", getpid());
 	} else {
-		if (daemon(0, 0)) {
+		if (daemon(1, 0)) {
 			log_it("CRON",getpid(),"DEATH","can't fork");
 			exit(1);
 		}
