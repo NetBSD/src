@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2004/03/12 19:13:38 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.43 2004/04/09 04:01:42 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -91,6 +91,7 @@ vers.c: version
 all realall: ${PROG} ${PROG}.xcf ${PROG}.elf
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} 
+	${_MKTARGET_LINK}
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -o ${PROG}.el1 \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O binary ${PROG}.el1 ${PROG}
@@ -98,10 +99,12 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 .include <bsd.prog.mk>
 
 ${PROG}.elf: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -o ${PROG}.elf \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 ${PROG}.xcf: ${OBJS} ${XCOFFXTRAOBJ} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -s -N -T ${.CURDIR}/../fixcoff/elf32_powerpc_merge.x -e _entry \
 	    -Ttext ${RELOC} -Bstatic -o ${PROG}.mrg  ${XCOFFXTRAOBJ} \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
