@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.25 2000/11/14 22:23:06 thorpej Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.26 2000/11/30 20:56:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 
 #include <uvm/uvm_extern.h>
 
-int doreallocblks = 0;
+int doreallocblks = 1;
 
 #ifdef DEBUG
 #include <sys/sysctl.h>
