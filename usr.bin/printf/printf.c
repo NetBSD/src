@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: printf.c,v 1.7 1993/11/19 21:05:37 jtc Exp $";
+static char rcsid[] = "$Id: printf.c,v 1.8 1993/11/19 21:08:17 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -224,7 +224,6 @@ main(argc, argv)
 					char *f = mklong(start, convch);
 					long p = getlong();
 					PF(f, p);
-					free(f);
 					break;
 				}
 				case 'e':
