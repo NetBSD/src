@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.4 1997/08/16 08:33:11 drochner Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.5 1997/08/23 14:03:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -91,11 +91,7 @@ com_isa_probe(parent, match, aux)
 	iobase = ia->ia_iobase;
 
 	/* if it's in use as console, it's there. */
-	if ((iobase != comconsaddr || comconsattached)
-#ifdef KGDB
-	    && iobase != com_kgdb_addr
-#endif
-	    ) {
+	if (!com_is_console(iot, iobase, 0)) {
 		if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 			return 0;
 		}
@@ -125,14 +121,8 @@ com_isa_attach(parent, self, aux)
 	 */
 	iobase = sc->sc_iobase = ia->ia_iobase;
 	iot = sc->sc_iot = ia->ia_iot;
-	if (iobase == comconsaddr)
-		sc->sc_ioh = comconsioh;
-#ifdef KGDB
-	else if (iobase == com_kgdb_addr)
-		sc->sc_ioh = com_kgdb_ioh;
-#endif
-	else
-		if (bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh))
+	if(!com_is_console(iot, iobase, &sc->sc_ioh)
+		&& bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh))
 			panic("comattach: io mapping failed");
 	irq = ia->ia_irq;
 
