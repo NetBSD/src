@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.13 1996/02/02 18:08:38 mycroft Exp $      */
+/*      $NetBSD: uba.c,v 1.14 1996/02/02 18:59:34 mycroft Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -63,8 +63,8 @@
 #include <machine/trap.h>
 #include <machine/frame.h>
 
-#include "ubareg.h"
-#include "ubavar.h"
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 extern int cold;
 

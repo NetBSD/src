@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.8 1996/02/02 18:08:33 mycroft Exp $ */
+/*	$NetBSD: tmscp.c,v 1.9 1996/02/02 18:59:31 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -177,6 +177,7 @@
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
 #include <machine/sid.h>
+
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
@@ -188,7 +189,7 @@
 #define NRSP    (1<<NRSPL2)
 #define NCMD    (1<<NCMDL2)
 
-#include "tmscpreg.h"
+#include <vax/uba/tmscpreg.h>
 #include <vax/vax/tmscpinf.h>
 #include <vax/vax/mscpvar.h>
 
