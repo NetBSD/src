@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.58 2002/04/25 15:06:28 atatat Exp $
+#	$NetBSD: CARDBUS,v 1.58.4.1 2002/06/10 17:13:45 tv Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.58 $"
+#ident		"CARDBUS-$Revision: 1.58.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -28,6 +28,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
+options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
