@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.5 2000/03/13 21:04:07 itojun Exp $
+# $NetBSD: Makefile,v 1.6 2000/06/12 10:40:50 itojun Exp $
 
 PROG=	setkey
 SRCS=	setkey.c parse.y token.l
 
 CFLAGS+=-g
+CPPFLAGS+=-I${.CURDIR}/../../lib/libipsec
 LDADD+=	-ll -ly
 DPADD+=	${LIBL} ${LIBY}
 CLEANFILES+=	y.tab.c y.tab.h key_test.o keytest

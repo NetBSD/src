@@ -1,4 +1,5 @@
-/*	$NetBSD: policy_parse.y,v 1.2 2000/03/13 21:23:56 itojun Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.3 2000/06/12 10:40:52 itojun Exp $	*/
+/*	$KAME: policy_parse.y,v 1.10 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -28,7 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: policy_parse.y,v 1.7 2000/01/27 17:59:13 itojun Exp */
 
 /*
  * IN/OUT bound policy configuration take place such below:
@@ -116,6 +116,14 @@ policy_spec
 				return -1;
 		}
 		rules
+	|	DIR
+		{
+			p_dir = $1;
+			p_type = 0;	/* ignored it by kernel */
+
+			if (init_x_policy())
+				return -1;
+		}
 	;
 
 rules

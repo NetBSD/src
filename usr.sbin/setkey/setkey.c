@@ -1,9 +1,10 @@
-/*	$NetBSD: setkey.c,v 1.6 2000/04/16 16:15:59 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.7 2000/06/12 10:40:50 itojun Exp $	*/
+/*	$KAME: setkey.c,v 1.14 2000/06/10 06:47:09 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: setkey.c,v 1.11 2000/04/16 16:14:09 itojun Exp */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <netdb.h>
+
+#include "libpfkey.h"
 
 void Usage __P((void));
 int main __P((int, char **));
@@ -219,12 +221,9 @@ sendkeyshort(type)
 	m_msg->sadb_msg_errno = 0;
 	m_msg->sadb_msg_satype = SADB_SATYPE_UNSPEC;
 	m_msg->sadb_msg_len = PFKEY_UNIT64(m_len);
-	m_msg->sadb_msg_mode = IPSEC_MODE_ANY;
-	m_msg->sadb_msg_reserved1 = 0;
+	m_msg->sadb_msg_reserved = 0;
 	m_msg->sadb_msg_seq = 0;
 	m_msg->sadb_msg_pid = getpid();
-	m_msg->sadb_msg_reqid = 0;
-	m_msg->sadb_msg_reserved2 = 0;
 
 	sendkeymsg();
 
@@ -245,12 +244,9 @@ promisc()
 	m_msg->sadb_msg_errno = 0;
 	m_msg->sadb_msg_satype = 1;
 	m_msg->sadb_msg_len = PFKEY_UNIT64(m_len);
-	m_msg->sadb_msg_mode = IPSEC_MODE_ANY;
-	m_msg->sadb_msg_reserved1 = 0;
+	m_msg->sadb_msg_reserved = 0;
 	m_msg->sadb_msg_seq = 0;
 	m_msg->sadb_msg_pid = getpid();
-	m_msg->sadb_msg_reqid = 0;
-	m_msg->sadb_msg_reserved2 = 0;
 
 	if ((so = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) < 0) {
 		err(1, "socket(PF_KEY)");
