@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.183 2004/11/16 16:45:51 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.184 2004/11/16 16:52:30 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.183 2004/11/16 16:45:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.184 2004/11/16 16:52:30 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2544,6 +2544,7 @@ rf_RewriteParityThread(RF_Raid_t *raidPtr)
 	int retcode;
 	int s;
 
+	raidPtr->parity_rewrite_stripes_done = 0;
 	raidPtr->parity_rewrite_in_progress = 1;
 	s = splbio();
 	retcode = rf_RewriteParity(raidPtr);
