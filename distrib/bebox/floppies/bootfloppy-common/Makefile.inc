@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/03/05 20:01:34 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/03/05 21:23:29 thorpej Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
 COMMONDIR=	${TOP}/bootfloppy-common
 
 .include <bsd.kernobj.mk>
+.include <bsd.own.mk>
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -63,6 +64,5 @@ netbsd.ram.gz: ${KERN} ${RAMDISK}
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
 
-.include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
