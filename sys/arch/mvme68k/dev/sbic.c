@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.24 2003/08/07 16:28:40 agc Exp $	*/
+/*	$NetBSD: sbic.c,v 1.25 2003/11/01 20:04:57 scw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.24 2003/08/07 16:28:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.25 2003/11/01 20:04:57 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -1737,7 +1737,7 @@ sbicpoll(dev)
 {
     sbic_regmap_p       regs = dev->sc_sbicp;
     u_char              asr,
-                        csr;
+                        csr = SBIC_CSR_RESET;	/* XXX: Quell un-init warning */
     int                 i;
 
     /*
