@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.20 2003/12/16 16:13:59 manu Exp $
+	$NetBSD: syscalls.master,v 1.21 2003/12/31 02:55:04 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -404,7 +404,9 @@
 217	UNIMPL
 218	UNIMPL
 219	UNIMPL
-220	UNIMPL		getattrlist
+220	STD		{ int darwin_sys_getattrlist(const char *path, \
+			    struct darwin_attrlist *alist, void * attributes, \
+			    size_t buflen, unsigned long options); }
 221	UNIMPL		setattrlist
 222	UNIMPL		getdirentriesattr
 223	UNIMPL		exchangedata
