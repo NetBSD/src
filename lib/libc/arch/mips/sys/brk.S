@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include "SYS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: brk.S,v 1.4 1995/03/20 14:02:03 mycroft Exp $")
+	ASMSTR("$Id: brk.S,v 1.5 1995/09/25 19:21:41 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
-
-#include "SYS.h"
 
 	.globl	minbrk
 	.globl	curbrk
