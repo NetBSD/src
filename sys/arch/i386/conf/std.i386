@@ -1,4 +1,4 @@
-# $NetBSD: std.i386,v 1.19 2000/06/22 20:27:53 fvdl Exp $
+# $NetBSD: std.i386,v 1.20 2001/05/26 17:46:12 sommerfeld Exp $
 #
 # standard, required NetBSD/i386 'options'
 
@@ -7,3 +7,5 @@ machine i386
 options 	EXEC_AOUT	# exec a.out binaries
 options		EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
+
+options		INET6_MD_CKSUM	# machine-dependant code for in6_cksum
