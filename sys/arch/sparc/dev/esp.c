@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.59 1996/10/13 02:59:48 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.60 1996/11/12 21:06:21 cgd Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -160,8 +160,8 @@ espmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	struct cfdata *cf = vcf;
 #ifdef SPARC_DRIVER
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -227,7 +227,7 @@ espattach(parent, self, aux)
 	sc->sc_cookie = tcdsdev->tcdsda_cookie;
 	sc->sc_dma = tcdsdev->tcdsda_sc;
 
-	printf(": address %x", sc->sc_reg);
+	printf(": address %p", sc->sc_reg);
 	tcds_intr_establish(parent, sc->sc_cookie, TC_IPL_BIO,
 	    (int (*)(void *))espintr, sc);
 #endif
@@ -1118,7 +1118,7 @@ esp_msgin(sc)
 {
 	register int v;
 
-	ESP_TRACE(("[esp_msgin(curmsglen:%d)] ", sc->sc_imlen));
+	ESP_TRACE(("[esp_msgin(curmsglen:%ld)] ", sc->sc_imlen));
 
 	if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) == 0) {
 		printf("%s: msgin: no msg byte available\n",
@@ -1209,7 +1209,7 @@ gotit:
 			ESP_MSGS(("cmdcomplete "));
 			if (sc->sc_dleft < 0) {
 				struct scsi_link *sc_link = ecb->xs->sc_link;
-				printf("%s: %d extra bytes from %d:%d\n",
+				printf("%s: %ld extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
 				    sc_link->target, sc_link->lun);
 				sc->sc_dleft = 0;
@@ -1994,7 +1994,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 			}
 			break;
 		case DATA_OUT_PHASE:
-			ESP_PHASE(("DATA_OUT_PHASE [%d] ",  sc->sc_dleft));
+			ESP_PHASE(("DATA_OUT_PHASE [%ld] ",  sc->sc_dleft));
 			ESPCMD(sc, ESPCMD_FLUSH);
 			size = min(sc->sc_dleft, sc->sc_maxxfer);
 			DMA_SETUP(sc->sc_dma, &sc->sc_dp, &sc->sc_dleft,
@@ -2101,7 +2101,7 @@ esp_timeout(arg)
 
 	sc_print_addr(sc_link);
 	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
-	       "<state %d, nexus %p, phase(c %x, p %x), resid %x, msg(q %x,o %x) %s>",
+	       "<state %d, nexus %p, phase(c %x, p %x), resid %lx, msg(q %x,o %x) %s>",
 		sc->sc_dev.dv_xname,
 		ecb, ecb->flags, ecb->dleft, ecb->stat,
 		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
