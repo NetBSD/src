@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.65 2000/07/13 21:58:39 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.66 2000/07/14 08:49:41 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -124,7 +124,7 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_map_checkprot.9 uvm.9 uvm_map_protect.9 \
 	uvm.9 uvm_deallocate.9 uvm.9 uvmspace_alloc.9 uvm.9 uvmspace_exec.9 \
 	uvm.9 uvmspace_fork.9 uvm.9 uvmspace_free.9 uvm.9 uvmspace_share.9 \
-	uvm.9 uvmspace_unshare.9 uvm.9 uvm_fault.9 uvm.9 uvm_attach.9 \
+	uvm.9 uvmspace_unshare.9 uvm.9 uvm_fault.9 uvm.9 uvn_attach.9 \
 	uvm.9 uvm_vnp_setsize.9 uvm.9 uvm_vnp_sync.9 uvm.9 uvm_vnp_terminate.9 \
 	uvm.9 uvm_io.9 uvm.9 uvm_km_alloc.9 uvm.9 uvm_km_zalloc.9 \
 	uvm.9 uvm_km_alloc1.9 uvm.9 uvm_km_kmemalloc.9 uvm.9 uvm_km_valloc.9 \
