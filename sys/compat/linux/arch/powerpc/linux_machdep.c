@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.8 2001/04/11 19:41:03 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.9 2001/05/27 21:11:53 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	if (copyout(&frame, (caddr_t)fp, sizeof (frame) - LINUX_ABIGAP) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
-		 * instructoin to halt it in its tracks.
+		 * instruction to halt it in its tracks.
 		 */
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
@@ -228,7 +228,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	if (copyout(&sc, (caddr_t)fp, sizeof (struct linux_sigcontext)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
-		 * instructoin to halt it in its tracks.
+		 * instruction to halt it in its tracks.
 		 */
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
