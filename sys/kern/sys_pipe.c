@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.31 2002/11/26 18:44:35 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.32 2002/12/05 16:30:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.31 2002/11/26 18:44:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.32 2002/12/05 16:30:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1696,7 +1696,7 @@ pipe_stat(fp, ub, td)
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
 	memset((caddr_t)ub, 0, sizeof(*ub));
-	ub->st_mode = S_IFIFO;
+	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	ub->st_blksize = pipe->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size) ? 1 : 0;
