@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.22 2002/12/06 22:43:35 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.23 2003/02/25 23:12:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -214,12 +214,13 @@
 /*
  * Define command macros for fs-specific commands.
  */
-#define	_FCN_FSPRIV(inout, num, len) \
-	(F_FSCTL | F_FSPRIV | inout | ((len & F_PARAM_MASK) << 16) | (num))
-#define	_FCNO_FSPRIV(c)		_FCN_FSPRIV(F_FSVOID,	(c), 0)
-#define	_FCNR_FSPRIV(c, t)	_FCN_FSPRIV(F_FSIN,	(c), (int)sizeof(t))
-#define	_FCNW_FSPRIV(c, t)	_FCN_FSPRIV(F_FSOUT,	(c), (int)sizeof(t))
-#define	_FCNRW_FSPRIV(c, t)	_FCN_FSPRIV(F_FSINOUT,	(c), (int)sizeof(t))
+#define	_FCN_FSPRIV(inout, fs, num, len) \
+	(F_FSCTL | F_FSPRIV | inout | ((len & F_PARAM_MASK) << 16) |	\
+	 (fs) << 8 | (num))
+#define	_FCNO_FSPRIV(f, c)	_FCN_FSPRIV(F_FSVOID,  (f), (c), 0)
+#define	_FCNR_FSPRIV(f, c, t)	_FCN_FSPRIV(F_FSIN,    (f), (c), (int)sizeof(t))
+#define	_FCNW_FSPRIV(f, c, t)	_FCN_FSPRIV(F_FSOUT,   (f), (c), (int)sizeof(t))
+#define	_FCNRW_FSPRIV(f, c, t)	_FCN_FSPRIV(F_FSINOUT, (f), (c), (int)sizeof(t))
 
 #endif /* neither POSIX nor _XOPEN_SOURCE */
 
