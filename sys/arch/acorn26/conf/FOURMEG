@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.7 2002/06/17 05:14:02 lukem Exp $
+# $NetBSD: FOURMEG,v 1.8 2002/07/05 13:06:45 abs Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -104,7 +104,8 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	INSECURE
 
 # Reduce kernel size a little
-options 	VNODE_OP_NOINLINE
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # NFS boot options
 options 	NFS_BOOT_DHCP		# superset of BOOTP
