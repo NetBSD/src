@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.2 1994/06/29 06:46:58 cgd Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.3 1994/08/21 03:15:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -688,7 +688,7 @@ lfs_initseg(fs)
 	ssp->ss_nfinfo = ssp->ss_ninos = 0;
 
 	/* Set pointer to first FINFO, initialize it. */
-	sp->fip = (struct finfo *)(sp->segsum + sizeof(SEGSUM));
+	sp->fip = (struct finfo *)((caddr_t)sp->segsum + sizeof(SEGSUM));
 	sp->fip->fi_nblocks = 0;
 	sp->start_lbp = &sp->fip->fi_blocks[0];
 
