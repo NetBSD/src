@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 1998/05/25 09:08:27 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 1998/12/01 15:32:28 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -301,7 +301,7 @@ struct atari_bus_space {
 #define	__abs_set(type, sz, t, h, o, v, c)				\
 	(*(t)->__abs_opname(type,sz))(t, h, o, v, c)
 #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)				\
-	(*(t)->__abs_opname(c,sz))(h1, o1, h2, o2, cnt)
+	(*(t)->__abs_opname(c,sz))(t, h1, o1, h2, o2, cnt)
 
 /*
  * Check accesibility of the location for various sized bus accesses
