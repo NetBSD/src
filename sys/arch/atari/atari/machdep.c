@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1997/06/08 23:54:22 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 1997/06/10 18:43:46 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -342,10 +342,10 @@ again:
 	 * Tell the VM system that writing to kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
 	 *
-	 * XXX Should be atari_trunc_page(&kernel_text) instead
+	 * XXX Should be m68k_trunc_page(&kernel_text) instead
 	 * XXX of NBPG.
 	 */
-	if (vm_map_protect(kernel_map, NBPG, atari_round_page(&etext),
+	if (vm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
 	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
 
@@ -1072,8 +1072,8 @@ bus_space_handle_t	*mhp;
 	vm_offset_t	va;
 	u_long		pa, endpa;
 
-	pa    = atari_trunc_page(bpa + t);
-	endpa = atari_round_page((bpa + t + size) - 1);
+	pa    = m68k_trunc_page(bpa + t);
+	endpa = m68k_round_page((bpa + t + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
@@ -1102,8 +1102,8 @@ bus_size_t		size;
 {
 	vm_offset_t	va, endva;
 
-	va = atari_trunc_page(memh);
-	endva = atari_round_page((memh + size) - 1);
+	va = m68k_trunc_page(memh);
+	endva = m68k_round_page((memh + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endva < va)
