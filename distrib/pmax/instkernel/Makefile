@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2002/05/03 15:22:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.33 2002/05/08 21:44:58 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,19 +11,19 @@ LISTS=		${.CURDIR}/list
 MTREECONF=	${DISTRIBDIR}/common/mtree.dot
 IMAGEENDIAN=	le
 PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx_ffs
-IMAGEDEPENDS=	install.gz ${DESTDIR}/usr/mdec/boot.pmax ${PRIMARYBOOT}
+IMAGEDEPENDS=	netbsd-INSTALL.gz ${DESTDIR}/usr/mdec/boot.pmax ${PRIMARYBOOT}
 IMAGEPOSTBUILD=	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${PRIMARYBOOT}
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
-MDSETTARGETS=	RAMDISK ${RAMDISK} install
 
+MDSETTARGETS=		RAMDISK ${RAMDISK} netbsd-INSTALL
 MDSET_RELEASEDIR=	binary/kernel
-IMAGE_RELEASEDIR=	installation/diskimage
 
-MDSET.install.suffixes=	ecoff
-MDSET.install.post=	${ELF2ECOFF} ${.TARGET:R} ${.TARGET:R}.ecoff && \
-			gzip -9f ${.TARGET:R}.ecoff
+MDSET_SUFFIXES.netbsd-INSTALL=	ecoff create-ecoff
+create-ecoff=			${ELF2ECOFF} ${.TARGET:R} ${.TARGET}
+
+IMAGE_RELEASEDIR=	installation/diskimage
 
 .include "${DISTRIBDIR}/common/Makefile.image"
 .include "${DISTRIBDIR}/common/Makefile.mdset"
