@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.6 1996/02/25 21:53:55 pk Exp $ */
+/*	$NetBSD: ms.c,v 1.7 1996/03/14 19:45:10 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,16 +49,19 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/signalvar.h>
 
 #include <machine/vuid_event.h>
+#include <machine/cpu.h>
+#include <machine/kbd.h>
 #include <sparc/dev/event_var.h>
+#include <sparc/dev/dev_conf.h>
 
 /*
  * Mouse state.  A Mouse Systems mouse is a fairly simple device,
@@ -92,7 +95,8 @@ struct ms_softc {
 void
 ms_serial(tp, iopen, iclose)
 	struct tty *tp;
-	void (*iopen)(), (*iclose)();
+	void (*iopen) __P((struct tty *));
+	void (*iclose) __P((struct tty *));
 {
 
 	ms_softc.ms_mouse = tp;
@@ -242,7 +246,6 @@ msopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int s, error;
 
 	if (ms_softc.ms_events.ev_io)
 		return (EBUSY);
@@ -303,8 +306,6 @@ msioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int s;
-
 	switch (cmd) {
 
 	case FIONBIO:		/* we will remove this someday (soon???) */

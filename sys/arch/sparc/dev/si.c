@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.18 1996/03/01 07:44:43 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.19 1996/03/14 19:45:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -201,6 +201,7 @@ static void	si_attach __P((struct device *, struct device *, void *));
 static int	si_intr __P((void *));
 static void	si_reset_adapter __P((struct ncr5380_softc *));
 static void	si_minphys __P((struct buf *));
+static int	si_print __P((void *, char *));
 
 void si_dma_alloc __P((struct ncr5380_softc *));
 void si_dma_free __P((struct ncr5380_softc *));
@@ -459,13 +460,14 @@ si_attach(parent, self, args)
 		break;
 	}
 	printf(" pri %d\n", ra->ra_intr[0].int_pri);
-	if (sc->sc_options)
-		printf("%s: options=%b\n", ncr_sc->sc_dev.dv_xname,
+	if (sc->sc_options) {
+		static const char fmt1[] = "%s: options=%b\n";
+		printf(fmt1, ncr_sc->sc_dev.dv_xname,
 		    sc->sc_options, SI_OPTIONS_BITS);
-
+	}
 #ifdef	DEBUG
 	if (si_debug)
-		printf("si: Set TheSoftC=%x TheRegs=%x\n", sc, regs);
+		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
@@ -694,7 +696,7 @@ found:
 	dh->dh_dvma = (long)kdvma_mapin((caddr_t)addr, xlen, 0);
 	if (dh->dh_dvma == 0) {
 		/* Can't remap segment */
-		printf("si_dma_alloc: can't remap %x/%x, doing PIO\n",
+		printf("si_dma_alloc: can't remap %p/%x, doing PIO\n",
 			dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;
@@ -748,7 +750,6 @@ si_dma_poll(ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	struct si_dma_handle *dh = sr->sr_dma_hand;
 	volatile struct si_regs *si = sc->sc_regs;
 	int tmo, csr_mask, csr;
 
@@ -879,14 +880,14 @@ si_vme_dma_start(ncr_sc)
 	 */
 	data_pa = (u_long)(dh->dh_dvma - DVMA_BASE);
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=0x%x", data_pa);
+		panic("si_dma_start: bad pa=%p", data_pa);
 	xlen = ncr_sc->sc_datalen;
 	xlen &= ~1;
 	sc->sc_xlen = xlen;	/* XXX: or less... */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_start: dh=%p, pa=0x%x, xlen=%d\n",
 			   dh, data_pa, xlen);
 	}
 #endif
@@ -1180,14 +1181,14 @@ si_obio_dma_start(ncr_sc)
 	 */
 	data_pa = (u_long)(dh->dh_dvma - DVMA_BASE);
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=0x%x", data_pa);
+		panic("si_dma_start: bad pa=%p", data_pa);
 	xlen = ncr_sc->sc_datalen;
 	xlen &= ~1;
 	sc->sc_xlen = xlen;	/* XXX: or less... */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_start: dh=%p, pa=0x%x, xlen=%d\n",
 		    dh, data_pa, xlen);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.23 1996/02/25 21:45:56 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.24 1996/03/14 19:45:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -43,7 +43,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
@@ -55,12 +54,16 @@
 #include <sys/stat.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/cpu.h>
+
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <sparc/sparc/auxreg.h>
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
+#include <sparc/dev/dev_conf.h>
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
@@ -128,9 +131,12 @@ extern	struct fdcio	*fdciop;
 int	fdcmatch __P((struct device *, void *, void *));
 void	fdcattach __P((struct device *, struct device *, void *));
 
+
 struct cfdriver fdccd = {
 	NULL, "fdc", fdcmatch, fdcattach, DV_DULL, sizeof(struct fdc_softc)
 };
+
+__inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -203,6 +209,7 @@ void fdgetdisklabel __P((dev_t));
 int fd_get_parms __P((struct fd_softc *));
 void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
+int fdprint __P((void *, char *));
 
 struct dkdriver fddkdriver = { fdstrategy };
 
@@ -227,6 +234,7 @@ void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
 void	fd_do_eject __P((void));
 void	fd_mountroot_hook __P((struct device *));
+static void fdconf __P((struct fdc_softc *));
 
 #if PIL_FDSOFT == 4
 #define IE_FDSOFT	IE_L4
@@ -236,12 +244,14 @@ void	fd_mountroot_hook __P((struct device *));
 
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
 
+static const char fmt1[] = " (st0 %b cyl %d)\n";
+static const char fmt2[] = " (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n";
+
 int
 fdcmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -336,7 +346,7 @@ fdcattach(parent, self, aux)
 	struct fdc_softc *fdc = (void *)self;
 	struct fdc_attach_args fa;
 	struct bootpath *bp;
-	int n, pri;
+	int pri;
 	char code;
 
 	if (ca->ca_ra.ra_vaddr)
@@ -466,7 +476,6 @@ fdmatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
-	struct cfdata *cf = match;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
 	int n;
@@ -580,7 +589,7 @@ fdattach(parent, self, aux)
 	dk_establish(&fd->sc_dk, &fd->sc_dv);
 }
 
-inline struct fd_type *
+__inline struct fd_type *
 fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;
@@ -739,7 +748,7 @@ fd_set_motor(fdc)
 
 	if (fdc->sc_flags & FDC_82077) {
 		status = FDO_FRST | FDO_FDMAEN;
-		if (fd = fdc->sc_drives.tqh_first)
+		if ((fd = fdc->sc_drives.tqh_first) != NULL)
 			status |= fd->sc_drive;
 
 		for (n = 0; n < 4; n++)
@@ -828,7 +837,7 @@ out_fdc(fdc, x)
 }
 
 int
-Fdopen(dev, flags, fmt, p)
+fdopen(dev, flags, fmt, p)
 	dev_t dev;
 	int flags, fmt;
 	struct proc *p;
@@ -905,18 +914,20 @@ fdclose(dev, flags, fmt, p)
 }
 
 int
-fdread(dev, uio)
+fdread(dev, uio, flag)
         dev_t dev;
         struct uio *uio;
+	int flag;
 {
 
         return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio)
+fdwrite(dev, uio, flag)
         dev_t dev;
         struct uio *uio;
+	int flag;
 {
 
         return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -945,7 +956,6 @@ fdcstatus(dv, n, s)
 	char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
-
 #if 0
 	/*
 	 * A 82072 seems to return <invalid command> on
@@ -968,12 +978,12 @@ fdcstatus(dv, n, s)
 		printf("\n");
 		break;
 	case 2:
-		printf(" (st0 %b cyl %d)\n",
+		printf(fmt1,
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1]);
 		break;
 	case 7:
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		printf(fmt2,
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -1111,7 +1121,7 @@ fdcswintr(fdc)
 
 	struct fd_softc *fd;
 	struct buf *bp;
-	int read, head, trac, sec, i, s, nblks;
+	int read, head, sec, nblks;
 	struct fd_type *type;
 
 
@@ -1471,7 +1481,8 @@ fdcretry(fdc)
 	default:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+
+		printf(fmt2,
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -1494,7 +1505,11 @@ fdsize(dev)
 }
 
 int
-fddump()
+fddump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 
 	/* Not implemented. */
@@ -1502,14 +1517,14 @@ fddump()
 }
 
 int
-fdioctl(dev, cmd, addr, flag)
+fdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
-	struct disklabel buffer;
 	int error;
 
 	switch (cmd) {
@@ -1569,7 +1584,7 @@ fdioctl(dev, cmd, addr, flag)
 			~CFG_THRHLD_MASK;
 		((struct fdc_softc *)fd->sc_dv.dv_parent)->sc_cfg |=
 			(*(int *)addr & CFG_THRHLD_MASK);
-		fdconf(fd->sc_dv.dv_parent);
+		fdconf((struct fdc_softc *) fd->sc_dv.dv_parent);
 		return 0;
 	case _IO('f', 102):
 		{
