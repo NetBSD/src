@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.28 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.29 2000/02/23 02:04:21 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -519,6 +519,14 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	raidPtr->copyback_in_progress = 0;
 	raidPtr->parity_rewrite_in_progress = 0;
 	raidPtr->recon_in_progress = 0;
+	raidPtr->maxOutstanding = cfgPtr->maxOutstandingDiskReqs;
+
+	/* autoconfigure and root_partition will actually get filled in 
+	   after the config is done */
+	raidPtr->autoconfigure = 0;
+	raidPtr->root_partition = 0;
+	raidPtr->last_unit = raidPtr->raidid;
+	raidPtr->config_order = 0;
 
 	if (rf_keepAccTotals) {
 		raidPtr->keep_acc_totals = 1;
