@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.174 2000/07/17 16:49:30 eeh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.175 2000/07/19 14:16:22 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -116,14 +116,8 @@ AS+=	-KPIC
 # On the VAX, all object are PIC by default, not just sharedlibs.
 MKPICLIB= no
 
-.elif ${MACHINE_ARCH} == "sparc" && ${OBJECT_FMT} == "ELF"
-
-CPICFLAGS ?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC 
-CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
-APICFLAGS ?= -KPIC
-
-.elif ${MACHINE_ARCH} == "sparc64" && ${OBJECT_FMT} == "ELF"
+.elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") && \
+       ${OBJECT_FMT} == "ELF"
 
 CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
