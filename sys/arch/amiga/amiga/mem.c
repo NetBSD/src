@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.27 2000/06/26 04:55:23 simonb Exp $	*/
+/*	$NetBSD: mem.c,v 1.28 2000/06/29 01:55:57 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,10 @@
 #include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
+
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
 extern int kernel_reload_write(struct uio *uio);
 extern u_int lowram;
