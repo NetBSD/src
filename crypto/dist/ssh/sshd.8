@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.26 2002/05/13 02:58:19 itojun Exp $
+.\"	$NetBSD: sshd.8,v 1.27 2002/06/13 00:15:09 wiz Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -117,14 +117,14 @@ Rhosts authentication is normally disabled
 because it is fundamentally insecure, but can be enabled in the server
 configuration file if desired.
 System security is not improved unless
-.Nm rshd ,
-.Nm rlogind ,
+.Xr rshd 8 ,
+.Xr rlogind 8 ,
 and
-.Xr rexecd
+.Xr rexecd 8
 are disabled (thus completely disabling
-.Xr rlogin
+.Xr rlogin 1
 and
-.Xr rsh
+.Xr rsh 1
 into the machine).
 .Pp
 .Ss SSH protocol version 2
