@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.7 1997/01/21 09:51:51 thorpej Exp $
+#	$NetBSD: files.x68k,v 1.8 1997/01/26 12:13:46 oki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -105,8 +105,7 @@ file	arch/x68k/dev/grf_gv.c		grf|ite
 device	ite
 attach	ite at grf
 file	arch/x68k/dev/ite.c		ite needs-flag
-file	arch/x68k/dev/ite_in.c		grf|ite
-file	arch/x68k/dev/kernel_font.c	ite
+file	arch/x68k/dev/ite_tv.c		grf|ite
 file	arch/x68k/dev/kbdmap.c		ite
 
 pseudo-device bell
