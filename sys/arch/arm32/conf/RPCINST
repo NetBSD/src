@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.20 1998/10/12 16:13:04 bouyer Exp $
+#	$NetBSD: RPCINST,v 1.21 1999/01/23 22:18:42 sommerfe Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -139,7 +139,7 @@ kbd*	at iomd?
 qms*	at iomd?
 
 # PS2 mouse via IOMD
-pms*	at iomd?
+opms*	at iomd?
 
 # IIC bus device
 iic*	at iomd?

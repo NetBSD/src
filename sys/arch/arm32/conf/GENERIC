@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.52 1998/11/25 20:30:45 hwr Exp $
+#	$NetBSD: GENERIC,v 1.53 1999/01/23 22:18:42 sommerfe Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -141,7 +141,7 @@ kbd*	at iomd?
 qms*	at iomd?
 
 # PS2 mouse via IOMD
-pms*	at iomd?
+opms*	at iomd?
 
 # IIC bus device
 iic*	at iomd?

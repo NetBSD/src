@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.37 1998/12/08 15:52:31 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.38 1999/01/23 22:18:41 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -158,7 +158,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ss.h"
 #include "tun.h"
 #include "qms.h"
-#include "pms.h"
+#include "opms.h"
 #include "beep.h"
 #include "kbd.h"
 #include "audio.h"
@@ -240,7 +240,7 @@ struct cdevsw cdevsw[] = {
 	cdev_vidcvid_init(NVIDCVIDEO,vidcvideo),	/* 37: vidcvideo device */
 	cdev_cpu_init(NCPU,cpu),	/* 38: cpu device */
 	cdev_lkm_dummy(),		/* 39: reserved */
-	cdev_mouse_init(NPMS,pms),      /* 40: PS2 mouse driver */
+	cdev_mouse_init(NOPMS,pms),     /* 40: PS2 mouse driver */
 	cdev_lkm_dummy(),		/* 41: reserved */
 	cdev_iic_init(NIIC, iic),	/* 42: IIC bus driver */
 	cdev_rtc_init(NRTC, rtc),	/* 43: RTC driver */

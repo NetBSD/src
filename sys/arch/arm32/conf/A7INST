@@ -1,4 +1,4 @@
-#	$NetBSD: A7INST,v 1.21 1998/10/12 16:13:03 bouyer Exp $
+#	$NetBSD: A7INST,v 1.22 1999/01/23 22:18:42 sommerfe Exp $
 #
 #	A7INST - A7000 install configuration
 #
@@ -139,7 +139,7 @@ kbd*	at iomd?
 #qms*	at iomd?
 
 # PS2 mouse via IOMD
-pms*	at iomd?
+opms*	at iomd?
 
 # IIC bus device
 iic*	at iomd?

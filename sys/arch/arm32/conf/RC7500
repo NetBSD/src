@@ -1,4 +1,4 @@
-#	$NetBSD: RC7500,v 1.26 1998/10/12 16:13:03 bouyer Exp $
+#	$NetBSD: RC7500,v 1.27 1999/01/23 22:18:42 sommerfe Exp $
 #
 #	RC7500 - Config for the VLSI RC7500 board
 #
@@ -163,7 +163,7 @@ vt5     at vidc?
 kbd*	at iomd?
 
 # pms mouse
-pms*	at iomd?
+opms*	at iomd?
 
 # quadrature mouse
 #qms*	at iomd?

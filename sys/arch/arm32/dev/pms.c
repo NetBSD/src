@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.17 1998/08/15 03:02:33 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.18 1999/01/23 22:18:43 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -83,7 +83,7 @@ static void pmsputbuffer __P((struct pms_softc *sc, struct mousebufrec *buf));
 #endif
 static __inline void pms_flush __P((struct pms_softc *sc));
 
-extern struct cfdriver pms_cd;
+extern struct cfdriver opms_cd;
 
 /* pms device driver structure */
 
@@ -267,9 +267,9 @@ pmsopen(dev, flag, mode, p)
 	struct pms_softc *sc;
 
 	/* validate the unit and the softc */
-	if (unit >= pms_cd.cd_ndevs)
+	if (unit >= opms_cd.cd_ndevs)
 		return ENXIO;
-	sc = pms_cd.cd_devs[unit];
+	sc = opms_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -310,7 +310,7 @@ pmsclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
 	/* remove the timeout */
 	untimeout(pmswatchdog, (void *) sc);
@@ -334,7 +334,7 @@ pmsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int s;
 	int error = 0;
 	size_t length;
@@ -383,7 +383,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
 	int s;
 	int error = 0;
@@ -631,7 +631,7 @@ pmspoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int revents = 0;
 	int s = spltty();
 
