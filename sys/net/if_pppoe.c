@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.3.2.6 2002/01/08 00:33:52 nathanw Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.3.2.7 2002/01/09 02:54:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.6 2002/01/08 00:33:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.7 2002/01/09 02:54:45 nathanw Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.6 2002/01/08 00:33:52 nathanw Exp
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -617,7 +618,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 static int
 pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	struct pppoe_softc *sc = (struct pppoe_softc*)ifp;
 	int error = 0;
 
