@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.95 2003/04/18 15:19:02 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.96 2003/05/03 16:28:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.95 2003/04/18 15:19:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.96 2003/05/03 16:28:57 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -524,7 +524,7 @@ nfs_write(v)
 	void *win;
 	voff_t oldoff, origoff;
 	vsize_t bytelen;
-	int error = 0, iomode, stalewriteverf;
+	int error = 0;
 	int extended = 0, wrotedta = 0;
 
 #ifdef DIAGNOSTIC
@@ -586,8 +586,12 @@ nfs_write(v)
 	crhold(cred);
 
 	if ((np->n_flag & NQNFSNONCACHE) && uio->uio_iovcnt == 1) {
-		iomode = NFSV3WRITE_FILESYNC;
+		int iomode = NFSV3WRITE_FILESYNC;
+		boolean_t stalewriteverf = FALSE;
+
+		lockmgr(&nmp->nm_writeverflock, LK_SHARED, NULL);
 		error = nfs_writerpc(vp, uio, &iomode, &stalewriteverf);
+		lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
 		if (stalewriteverf)
 			nfs_clearcommit(vp->v_mount);
 		return (error);
@@ -960,8 +964,9 @@ nfs_doio_write(bp, uiop)
 {
 	struct vnode *vp = bp->b_vp;
 	struct nfsnode *np = VTONFS(vp);
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int iomode;
-	int stalewriteverf = 0;
+	boolean_t stalewriteverf = FALSE;
 	int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	struct vm_page *pgs[npages];
 	boolean_t needcommit = TRUE;
@@ -974,6 +979,9 @@ nfs_doio_write(bp, uiop)
 	} else {
 		iomode = NFSV3WRITE_FILESYNC;
 	}
+
+again:
+	lockmgr(&nmp->nm_writeverflock, LK_SHARED, NULL);
 
 	for (i = 0; i < npages; i++) {
 		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
@@ -1035,6 +1043,7 @@ nfs_doio_write(bp, uiop)
 			error = 0;
 		}
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+		lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
 		if (!error) {
 			uiop->uio_resid = 0;
 			simple_lock(&uobj->vmobjlock);
@@ -1044,8 +1053,15 @@ nfs_doio_write(bp, uiop)
 			simple_unlock(&uobj->vmobjlock);
 			return 0;
 		} else if (error == NFSERR_STALEWRITEVERF) {
-			nfs_clearcommit(bp->b_vp->v_mount);
+			nfs_clearcommit(vp->v_mount);
+			goto again;
 		}
+		if (error) {
+			bp->b_flags |= B_ERROR;
+			bp->b_error = np->n_error = error;
+			np->n_flag |= NWRITEERR;
+		}
+		return error;
 	}
 	off = uiop->uio_offset;
 	cnt = bp->b_bcount;
@@ -1070,6 +1086,10 @@ nfs_doio_write(bp, uiop)
 			}
 		}
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+		if (error == NFSERR_STALEWRITEVERF) {
+			stalewriteverf = TRUE;
+			error = 0;
+		}
 	} else if (!error && needcommit) {
 		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
 		nfs_del_committed_range(vp, off, cnt);
@@ -1086,7 +1106,10 @@ nfs_doio_write(bp, uiop)
 			np->n_flag |= NWRITEERR;
 		}
 	}
-	if (stalewriteverf || (error == NFSERR_STALEWRITEVERF)) {
+
+	lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
+
+	if (stalewriteverf) {
 		nfs_clearcommit(vp->v_mount);
 	}
 	return error;
@@ -1110,11 +1133,14 @@ nfs_doio_phys(bp, uiop)
 		error = nfs_readrpc(vp, uiop);
 	} else {
 		int iomode = NFSV3WRITE_DATASYNC;
-		int stalewriteverf;
+		boolean_t stalewriteverf;
+		struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 		uiop->uio_rw = UIO_WRITE;
 		nfsstats.write_physios++;
+		lockmgr(&nmp->nm_writeverflock, LK_SHARED, NULL);
 		error = nfs_writerpc(vp, uiop, &iomode, &stalewriteverf);
+		lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
 		if (stalewriteverf) {
 			nfs_clearcommit(bp->b_vp->v_mount);
 		}

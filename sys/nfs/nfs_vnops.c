@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.165 2003/04/24 21:21:06 drochner Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.166 2003/05/03 16:28:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.165 2003/04/24 21:21:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.166 2003/05/03 16:28:59 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1203,7 +1203,8 @@ int
 nfs_writerpc(vp, uiop, iomode, stalewriteverf)
 	struct vnode *vp;
 	struct uio *uiop;
-	int *iomode, *stalewriteverf;
+	int *iomode;
+	boolean_t *stalewriteverf;
 {
 	u_int32_t *tl;
 	caddr_t cp;
@@ -1224,7 +1225,6 @@ nfs_writerpc(vp, uiop, iomode, stalewriteverf)
 	if (uiop->uio_iovcnt != 1)
 		panic("nfs: writerpc iovcnt > 1");
 #endif
-	*stalewriteverf = 0;
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
@@ -1289,16 +1289,21 @@ nfs_writerpc(vp, uiop, iomode, stalewriteverf)
 				else if (committed == NFSV3WRITE_DATASYNC &&
 					commit == NFSV3WRITE_UNSTABLE)
 					committed = commit;
+				simple_lock(&nmp->nm_slock);
 				if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0){
-				    memcpy((caddr_t)nmp->nm_writeverf, (caddr_t)tl,
-					NFSX_V3WRITEVERF);
-				    nmp->nm_iflag |= NFSMNT_HASWRITEVERF;
-				} else if (memcmp((caddr_t)tl,
-				    (caddr_t)nmp->nm_writeverf, NFSX_V3WRITEVERF)) {
-				    *stalewriteverf = 1;
-				    memcpy((caddr_t)nmp->nm_writeverf, (caddr_t)tl,
-					NFSX_V3WRITEVERF);
+					memcpy(nmp->nm_writeverf, tl,
+					    NFSX_V3WRITEVERF);
+					nmp->nm_iflag |= NFSMNT_HASWRITEVERF;
+				} else if ((nmp->nm_iflag &
+				    NFSMNT_STALEWRITEVERF) ||
+				    memcmp(tl, nmp->nm_writeverf,
+				    NFSX_V3WRITEVERF)) {
+					*stalewriteverf = TRUE;
+					memcpy(nmp->nm_writeverf, tl,
+					    NFSX_V3WRITEVERF);
+					nmp->nm_iflag |= NFSMNT_STALEWRITEVERF;
 				}
+				simple_unlock(&nmp->nm_slock);
 			}
 		} else
 		    nfsm_loadattr(vp, (struct vattr *)0, NAC_NOTRUNC);
@@ -2783,13 +2788,19 @@ nfs_commit(vp, offset, cnt, procp)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsnode *np;
 
+	KASSERT(NFS_ISV3(vp));
+
 #ifdef NFS_DEBUG_COMMIT
 	printf("commit %lu - %lu\n", (unsigned long)offset,
 	    (unsigned long)(offset + cnt));
 #endif
 	
-	if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0)
+	simple_lock(&nmp->nm_slock);
+	if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0) {
+		simple_unlock(&nmp->nm_slock);
 		return (0);
+	}
+	simple_unlock(&nmp->nm_slock);
 	nfsstats.rpccnt[NFSPROC_COMMIT]++;
 	np = VTONFS(vp);
 	nfsm_reqhead(np, NFSPROC_COMMIT, NFSX_FH(1));
@@ -2802,12 +2813,14 @@ nfs_commit(vp, offset, cnt, procp)
 	nfsm_wcc_data(vp, wccflag, 0);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
-		if (memcmp((caddr_t)nmp->nm_writeverf, (caddr_t)tl,
-			NFSX_V3WRITEVERF)) {
-			memcpy((caddr_t)nmp->nm_writeverf, (caddr_t)tl,
-				NFSX_V3WRITEVERF);
+		simple_lock(&nmp->nm_slock);
+		if ((nmp->nm_iflag & NFSMNT_STALEWRITEVERF) ||
+		    memcmp(nmp->nm_writeverf, tl, NFSX_V3WRITEVERF)) {
+			memcpy(nmp->nm_writeverf, tl, NFSX_V3WRITEVERF);
 			error = NFSERR_STALEWRITEVERF;
+			nmp->nm_iflag |= NFSMNT_STALEWRITEVERF;
 		}
+		simple_unlock(&nmp->nm_slock);
 	}
 	nfsm_reqdone;
 	return (error);
