@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.14 1998/03/01 02:24:13 fvdl Exp $	*/
+/*	$NetBSD: namei.h,v 1.15 1999/03/22 17:01:55 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -163,6 +163,7 @@ struct nameidata {
 struct	namecache {
 	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
 	TAILQ_ENTRY(namecache) nc_lru;	/* LRU chain */
+	LIST_ENTRY(namecache) nc_vhash;	/* directory hash chain */
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
 	u_long	nc_dvpid;		/* capability number of nc_dvp */
 	struct	vnode *nc_vp;		/* vnode the name refers to */
@@ -179,6 +180,7 @@ int	relookup __P((struct vnode *dvp, struct vnode **vpp,
 		      struct componentname *cnp));
 void cache_purge __P((struct vnode *));
 int cache_lookup __P((struct vnode *, struct vnode **, struct componentname *));
+int cache_revlookup __P((struct vnode *, struct vnode **, char **, char *));
 void cache_enter __P((struct vnode *, struct vnode *, struct componentname *));
 void nchinit __P((void));
 struct mount;
@@ -198,5 +200,7 @@ struct	nchstats {
 	long	ncs_long;		/* long names that ignore cache */
 	long	ncs_pass2;		/* names found with passes == 2 */
 	long	ncs_2passes;		/* number of times we attempt it */
+	long	ncs_revhits;		/* reverse-cache hits */
+	long	ncs_revmiss;		/* reverse-cache misses */
 };
 #endif /* !_SYS_NAMEI_H_ */

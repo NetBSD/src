@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.88 1999/02/10 18:02:28 kleink Exp $
+	$NetBSD: syscalls.master,v 1.89 1999/03/22 17:01:55 sommerfe Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -564,3 +564,5 @@
 			    sigset_t *oset); }
 294	STD		{ int sys___sigsuspend14(const sigset_t *set); }
 295	STD		{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
+296	STD		{ int sys___getcwd(char *bufp, size_t length); }
+297	STD		{ int sys_fchroot(int fd); }
