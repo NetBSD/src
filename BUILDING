@@ -485,6 +485,9 @@ BUILDING
 
      tools         Build and install the host tools from src/tools.
 
+     install=idir  Install the contents of DESTDIR to idir, using ``make
+                   installworld''.
+
      kernel=kconf  Build a new kernel.  The kconf argument is the name of a
                    configuration file suitable for use by config(8).  If kconf
                    does not contain any `/' characters, the configuration file
@@ -496,8 +499,11 @@ BUILDING
                    date tools, it is strongly recommended that the tools be
                    rebuilt (using the tools operation).
 
-     install=idir  Install the contents of DESTDIR to idir, using ``make
-                   installworld''.
+     releasekernel=kconf
+                   Install a gzip(1)ed copy of the kernel built by
+                   kernel=kconf into RELEASEDIR/MACHINE/binary/kernel, usually
+                   as netbsd-kconf.gz, although the ``netbsd'' prefix is de-
+                   termined from the ``config'' directives in kconf.
 
      sets          Perform ``make sets''.
 
@@ -644,4 +650,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                           May 18, 2003                               10
+NetBSD                           May 25, 2003                               10
