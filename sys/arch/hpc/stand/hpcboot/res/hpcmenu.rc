@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcmenu.rc,v 1.6 2002/03/25 17:23:20 uch Exp $	*/
+/*	$NetBSD: hpcmenu.rc,v 1.7 2003/12/16 18:23:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define APSTUDIO_HIDDEN_SYMBOLS
 #include <windows.h>
 #undef APSTUDIO_HIDDEN_SYMBOLS
-#include <res/resource.h>
+#include "resource.h"
 #undef APSTUDIO_READONLY_SYMBOLS
 
 STRINGTABLE DISCARDABLE
@@ -60,10 +60,10 @@ STRINGTABLE DISCARDABLE
 	IDS_DIR_USER_DEFINED		"user defined"
 }
 
-IDI_ICON		ICON			"res\\hpcboot.ico"
-IDI_HPCMENU_MAIN	BITMAP	DISCARDABLE	"res\\kernel.bmp"
-IDI_HPCMENU_OPTION	BITMAP	DISCARDABLE	"res\\option.bmp"
-IDI_HPCMENU_CONSOLE	BITMAP	DISCARDABLE	"res\\console.bmp"
+IDI_ICON		ICON			"hpcboot.ico"
+IDI_HPCMENU_MAIN	BITMAP	DISCARDABLE	"kernel.bmp"
+IDI_HPCMENU_OPTION	BITMAP	DISCARDABLE	"option.bmp"
+IDI_HPCMENU_CONSOLE	BITMAP	DISCARDABLE	"console.bmp"
 
 WMain DIALOG DISCARDABLE 0, 0, 0, 0
 STYLE WS_CHILD
