@@ -1,6 +1,6 @@
-.\"	$NetBSD: dpt.4,v 1.18 2002/02/07 03:15:08 ross Exp $
+.\"	$NetBSD: dpt.4,v 1.19 2002/12/07 20:01:03 ad Exp $
 .\"
-.\" Copyright (c) 1999, 2000 Andy Doran <ad@NetBSD.org>
+.\" Copyright (c) 1999, 2000, 2002 Andrew Doran <ad@netbsd.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 28, 1999
+.Dd December 7, 2002
 .Dt DPT 4
 .Os
 .Sh NAME
@@ -82,14 +82,25 @@ A spurious interrupt was received from the HBA.
 .br
 A corrupt or incomplete status packet was received from the HBA.
 .El
+.Sh FILES
+.Bl -tag -width /dev/dptn -compact
+.It Pa /dev/dpt Ns Ar u
+control device for unit
+.Ar u
+.El
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr dpti 4 ,
 .Xr intro 4 ,
 .Xr iop 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4
+.Pp
+The
+.Pa sysutils/raidutil
+package.
 .Pp
 CAM committee standard CAM/89-004 - the EATA (Enhanced AT Bus Attachment)
 protocol.
@@ -113,12 +124,7 @@ EATA adapters other than listed may function correctly with the
 .Nm
 driver, however a definitive list is not available.
 .Pp
-Older firmware may prove problematic.  It is recommended that the latest
-available firmware be used.  Contact DPT for a firmware update.
-.Pp
 Older boards that do not support scatter-gather I/O or DMA are not supported.
-.Pp
-The number of queued commands available on ISA devices is clamped.
 .Pp
 ECC formatted disk and arrays (i.e. with a sector size of 528 bytes) do not
 work correctly with the PM2041 and certain firmware revisions of the PM3334.
