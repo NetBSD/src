@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.6 2002/10/02 15:52:25 thorpej Exp $ */
+/* $NetBSD: sbobio.c,v 1.7 2002/11/08 19:53:29 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -37,7 +37,9 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <machine/locore.h>
 #include <mips/sibyte/include/sb1250_regs.h>
+#include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/include/zbbusvar.h>
 #include <mips/sibyte/dev/sbobiovar.h>
 
@@ -53,7 +55,7 @@ static int	sbobio_print(void *, const char *);
 static int	sbobio_submatch(struct device *, struct cfdata *, void *);
 static const char *sbobio_device_type_name(enum sbobio_device_type type);
 
-static const struct sbobio_attach_locs sb1250_sbobio_devs[] = {
+static const struct sbobio_attach_locs sb1250_rev1_sbobio_devs[] = {
 	{ 0x0000, {6,-1},	SBOBIO_DEVTYPE_SMBUS		},
 	{ 0x0008, {7,-1},	SBOBIO_DEVTYPE_SMBUS		},
 	{ 0x0100, {8,9},	SBOBIO_DEVTYPE_DUART		},
@@ -66,16 +68,60 @@ static const struct sbobio_attach_locs sb1250_sbobio_devs[] = {
 	{ 0x5000, {20,-1},	SBOBIO_DEVTYPE_MAC,		},
 	{ 0x6000, {21,-1},	SBOBIO_DEVTYPE_MAC,		},
 };
+static const int sb1250_rev1_sbobio_dev_count =
+    sizeof sb1250_rev1_sbobio_devs / sizeof sb1250_rev1_sbobio_devs[0];
+
+static const struct sbobio_attach_locs sb1250_sbobio_devs[] = {
+	{ 0x0000, {6,-1},	SBOBIO_DEVTYPE_SMBUS		},
+	{ 0x0008, {7,-1},	SBOBIO_DEVTYPE_SMBUS		},
+	{ 0x0100, {8,9},	SBOBIO_DEVTYPE_DUART		},
+	{ 0x0400, {10,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
+	{ 0x0800, {11,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
+#if 0
+	{ 0x1000, {-1,-1},	SBOBIO_DEVTYPE_GBUS,		}, /* XXXCGD ??? */
+#endif
+	{ 0x4000, {19,61},	SBOBIO_DEVTYPE_MAC,		},
+	{ 0x5000, {20,62},	SBOBIO_DEVTYPE_MAC,		},
+	{ 0x6000, {21,63},	SBOBIO_DEVTYPE_MAC,		},
+};
 static const int sb1250_sbobio_dev_count =
     sizeof sb1250_sbobio_devs / sizeof sb1250_sbobio_devs[0];
+
+static const struct sbobio_attach_locs sb112x_sbobio_devs[] = {
+	{ 0x0000, {6,-1},	SBOBIO_DEVTYPE_SMBUS		},
+	{ 0x0008, {7,-1},	SBOBIO_DEVTYPE_SMBUS		},
+	{ 0x0100, {8,9},	SBOBIO_DEVTYPE_DUART		},
+	{ 0x0400, {10,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
+	{ 0x0800, {11,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
+#if 0
+	{ 0x1000, {-1,-1},	SBOBIO_DEVTYPE_GBUS,		}, /* XXXCGD ??? */
+#endif
+	{ 0x4000, {19,61},	SBOBIO_DEVTYPE_MAC,		},
+	{ 0x5000, {20,62},	SBOBIO_DEVTYPE_MAC,		},
+};
+static const int sb112x_sbobio_dev_count =
+    sizeof sb112x_sbobio_devs / sizeof sb112x_sbobio_devs[0];
 
 static int
 sbobio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct zbbus_attach_args *zap = aux;
+	uint64_t sysrev;
 
 	if (zap->za_locs.za_type != ZBBUS_ENTTYPE_OBIO)
 		return (0);
+
+	sysrev = mips3_ld((u_int64_t *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_REVISION));
+	switch (SYS_SOC_TYPE(sysrev)) {
+	case K_SYS_SOC_TYPE_BCM1120:
+	case K_SYS_SOC_TYPE_BCM1125:
+	case K_SYS_SOC_TYPE_BCM1125H:
+	case K_SYS_SOC_TYPE_BCM1250:
+		break;
+
+	default:
+		return 0;
+	}
 
 	return 1;
 }
@@ -84,14 +130,45 @@ static void
 sbobio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbobio_attach_args sa;
-	int i;
+	const char *dscr;
+	const struct sbobio_attach_locs *devs;
+	uint64_t sysrev;
+	int i, devcount;
 
-	printf("\n");
+	sysrev = mips3_ld((u_int64_t *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_REVISION));
+	switch (SYS_SOC_TYPE(sysrev)) {
+	case K_SYS_SOC_TYPE_BCM1120:
+	case K_SYS_SOC_TYPE_BCM1125:
+	case K_SYS_SOC_TYPE_BCM1125H:
+		dscr = "BCM112x";
+		devs = sb112x_sbobio_devs;
+		devcount = sb112x_sbobio_dev_count;
+		break;
 
-	for (i = 0; i < sb1250_sbobio_dev_count; i++) {
+	case K_SYS_SOC_TYPE_BCM1250:
+		if (G_SYS_REVISION(sysrev) >= K_SYS_REVISION_BCM1250_PASS2) {
+			dscr = "BCM1250 (rev2 and later)";
+			devs = sb1250_sbobio_devs;
+			devcount = sb1250_sbobio_dev_count;
+		} else {
+			dscr = "BCM1250 rev1";
+			devs = sb1250_rev1_sbobio_devs;
+			devcount = sb1250_rev1_sbobio_dev_count;
+		}
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		panic("un-matched in sbobio_attach");
+		break;
+#endif
+	}
+
+	printf(": %s peripherals\n", dscr);
+
+	for (i = 0; i < devcount; i++) {
 		memset(&sa, 0, sizeof sa);
 		sa.sa_base = A_PHYS_IO_SYSTEM;
-		sa.sa_locs = sb1250_sbobio_devs[i];
+		sa.sa_locs = devs[i];
 		config_found_sm(self, &sa, sbobio_print, sbobio_submatch);
 	}
 	return;
