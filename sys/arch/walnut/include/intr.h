@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2001/11/06 01:26:47 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2001/11/08 23:28:14 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,18 +157,25 @@ set_sint(pending)
 
 #define	ICU_LEN		32
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN)
+#define	IRQ_TO_MASK(x)	(0x80000000UL >> (x))
 
-#define	SINT_NET	0x20000000
-#define	SINT_CLOCK	0x40000000
-#define	SINT_SERIAL	0x80000000
-#define	SPL_CLOCK	0x00000001
+/*
+ * Interrupts 19-24 are not used by hardware and therefore useable
+ * by us for softints.
+ */
+#define	HWINT_MASK	~0x1fc0
+
+#define	CNT_SINT_NET	19
+#define	CNT_SINT_CLOCK	20
+#define	CNT_SINT_SERIAL	21
+#define	CNT_CLOCK	22
+#define	CNT_STATCLOCK	23
+
+#define	SINT_NET	IRQ_TO_MASK(CNT_SINT_NET)
+#define	SINT_CLOCK	IRQ_TO_MASK(CNT_SINT_CLOCK)
+#define	SINT_SERIAL	IRQ_TO_MASK(CNT_SINT_SERIAL)
+#define	SPL_CLOCK	IRQ_TO_MASK(CNT_CLOCK)
 #define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_SERIAL)
-
-#define	CNT_SINT_NET	29
-#define	CNT_SINT_CLOCK	30
-#define	CNT_SINT_SERIAL	31
-#define	CNT_CLOCK	0
-#define	CNT_STATCLOCK	32	/* note: make sure locore.S has enough space for it */
 
 #define splbio()	splraise(imask[IPL_BIO])
 #define splnet()	splraise(imask[IPL_NET])

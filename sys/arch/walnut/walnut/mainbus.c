@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2001/10/29 01:37:29 simonb Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2001/11/08 23:28:15 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -94,14 +94,14 @@ const struct ppc405gp_dev {
 	bus_addr_t addr;
 	int irq;
 } ppc405gp_devs [] = {
-	{ "com",	UART0_BASE,	 5 },
-	{ "com",	UART1_BASE,	 6 },
+	{ "com",	UART0_BASE,	 0 },
+	{ "com",	UART1_BASE,	 1 },
 	{ "dsrtc",	NVRAM_BASE,	-1 },
-	{ "emac",	EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
+	{ "emac",	EMAC0_BASE,	15 }, /* XXX: really irq 9..15 */
 	{ "gpio",	GPIO0_BASE,	-1 },
 	{ "i2c",	IIC0_BASE,	-1 },
 	{ "wdog",	-1,        	-1 },
-	{ "pckbc",	KEY_MOUSE_BASE,	16 }, /* XXX: really irq x..x+1 */
+	{ "pckbc",	KEY_MOUSE_BASE,	10 }, /* XXX: really irq x..x+1 */
 	{ NULL }
 };
 

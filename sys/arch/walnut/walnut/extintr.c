@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.3 2001/11/06 01:26:48 simonb Exp $	*/
+/*	$NetBSD: extintr.c,v 1.4 2001/11/08 23:28:15 eeh Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*
@@ -87,48 +87,6 @@
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dcr.h>
 
-
-#define	GALAXY_INTR(x)		(0x80000000U >> x)
-
-/*
- * Galaxy interrupt list
- */
-#define	GALAXY_INTR_UART0	GALAXY_INTR(0)
-#define	GALAXY_INTR_UART1	GALAXY_INTR(1)
-#define	GALAXY_INTR_IIC		GALAXY_INTR(2)
-#define	GALAXY_INTR_EMI		GALAXY_INTR(3)
-#define	GALAXY_INTR_PCI		GALAXY_INTR(4)
-#define	GALAXY_INTR_DMA0	GALAXY_INTR(5)
-#define	GALAXY_INTR_DMA1	GALAXY_INTR(6)
-#define	GALAXY_INTR_DMA2	GALAXY_INTR(7)
-#define	GALAXY_INTR_DMA3	GALAXY_INTR(8)
-#define	GALAXY_INTR_EWOL	GALAXY_INTR(9)
-#define	GALAXY_INTR_MSERR	GALAXY_INTR(10)
-#define GALAXY_INTR_MTXE	GALAXY_INTR(11)
-#define GALAXY_INTR_MRXE	GALAXY_INTR(12)
-#define GALAXY_INTR_MTXD	GALAXY_INTR(13)
-#define GALAXY_INTR_MRXD	GALAXY_INTR(14)
-#define GALAXY_INTR_ETH		GALAXY_INTR(15)
-#define GALAXY_INTR_PCISERR	GALAXY_INTR(16)
-#define GALAXY_INTR_ECC		GALAXY_INTR(17)
-#define GALAXY_INTR_PCIPM	GALAXY_INTR(18)
-
-#define GALAXY_INTR_IRQ0	GALAXY_INTR(25)
-#define GALAXY_INTR_IRQ1	GALAXY_INTR(26)
-#define GALAXY_INTR_IRQ2	GALAXY_INTR(27)
-#define GALAXY_INTR_IRQ3	GALAXY_INTR(28)
-#define GALAXY_INTR_IRQ4	GALAXY_INTR(29)
-#define GALAXY_INTR_IRQ5	GALAXY_INTR(30)
-#define GALAXY_INTR_IRQ6	GALAXY_INTR(31)
-
-#define WALNUT_INTR_FPGA	GALAXY_INTR_IRQ0
-#define WALNUT_INTR_SMI		GALAXY_INTR_IRQ1
-#define WALNUT_INTR_PCI_S3	GALAXY_INTR_IRQ3	
-#define WALNUT_INTR_PCI_S2	GALAXY_INTR_IRQ4	
-#define WALNUT_INTR_PCI_S1	GALAXY_INTR_IRQ5	
-#define WALNUT_INTR_PCI_S0	GALAXY_INTR_IRQ6	
-
-
 static inline void galaxy_disable_irq(int irq);
 static inline void galaxy_enable_irq(int irq);
 static void intr_calculatemasks(void);
@@ -144,31 +102,6 @@ u_long imask[NIPL];
 static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 static struct intrhand *intrhand[ICU_LEN];
 
-/* SW irq# -> hw interrupt bitmask */
-static unsigned int galaxy_intr_map[] = {
-	~0U,			/* Reserved for clock interrupts */
-	WALNUT_INTR_PCI_S0,	/* PCI dev 1 irq1 */
-	WALNUT_INTR_PCI_S1,	/* PCI dev 2 irq2 */
-	WALNUT_INTR_PCI_S2,	/* PCI dev 3 irq3 */
-	WALNUT_INTR_PCI_S3,	/* PCI dev 4 irq4 */
-	GALAXY_INTR_UART0,	/* com0 irq5 */
-	GALAXY_INTR_UART1,	/* com1 irq6 */
-	GALAXY_INTR_IIC,	/* iic irq7 */
-	~0U,			/* irq8 - unused */
-	GALAXY_INTR_EWOL,	/* emac irq9 .. 15 */
-	GALAXY_INTR_MSERR,
-	GALAXY_INTR_MTXE,
-	GALAXY_INTR_MRXE,
-	GALAXY_INTR_MTXD,
-	GALAXY_INTR_MRXD,
-	GALAXY_INTR_ETH,
-	WALNUT_INTR_FPGA,	/* keyboard irq16 */
-	WALNUT_INTR_SMI		/* mouse irq17 */
-};
-#define	GALAXY_INTR_SIZE	(sizeof (galaxy_intr_map) / sizeof (galaxy_intr_map[0]))
-
-static uint32_t hwirq_mask;	/* Mask sw interrupts in use */
-static int hw2swirq[32];	/* map MSR bit into sw irq#. */
 
 
 static inline int
@@ -193,18 +126,7 @@ fakeintr(void *arg)
 void
 intr_init(void)
 {
-	int i;
 
-	hwirq_mask = 0;
-	for (i = 0; i < 32; i++)
-		hw2swirq[i] = -1;
-
-	for (i = 0; i < GALAXY_INTR_SIZE; i++) {
-		if (galaxy_intr_map[i] == ~0U)
-			continue;
-		hwirq_mask |= (1 << i);
-		hw2swirq[31 - cntlzw(galaxy_intr_map[i])] = i;
-	}
 }
 
 /*
@@ -213,7 +135,7 @@ intr_init(void)
 void
 ext_intr(void)
 {
-	int i, irq, bits_to_clear;
+	int i, bits_to_clear;
 	int r_imen, msr;
 	int pcpl;
 	struct intrhand *ih;
@@ -226,25 +148,19 @@ ext_intr(void)
 	bits_to_clear = int_state;
 
 	while (int_state) {
-		i = 31 - cntlzw(int_state);
-		int_state &= ~(1 << i);
+		i = cntlzw(int_state);
+		int_state &= ~IRQ_TO_MASK(i);
 
-		irq = hw2swirq[i];
-		if (irq == -1) {
-			printf("Unexpected interrupt %d\n",i);
-			continue;
-		}
-
-		r_imen = 1 << irq;
+		r_imen = IRQ_TO_MASK(i);
 
 		if ((pcpl & r_imen) != 0) {
 			ipending |= r_imen;	/* Masked! Mark this as pending */
-			galaxy_disable_irq(irq);
+			galaxy_disable_irq(i);
  		} else {
-			splraise(intrmask[irq]);
+			splraise(intrmask[i]);
 			asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-			ih = intrhand[irq];
+			ih = intrhand[i];
 			while (ih) {
 				(*ih->ih_fun)(ih->ih_arg);
 				ih = ih->ih_next;
@@ -253,7 +169,7 @@ ext_intr(void)
 			asm volatile ("mtmsr %0" :: "r"(msr));
 			cpl = pcpl;
 			uvmexp.intrs++;
-			intrcnt[irq]++;
+			intrcnt[i]++;
 		}
 	}
 	mtdcr(DCR_UIC0_SR, bits_to_clear);	/* Acknowledge all pending interrupts */
@@ -268,13 +184,8 @@ galaxy_disable_irq(int irq)
 {
 	int mask, omask;
 
-	if (irq >= GALAXY_INTR_SIZE)
-		return;
-	if (galaxy_intr_map[irq] == ~0U)
-		return;
-
 	mask = omask = mfdcr(DCR_UIC0_ER);
-	mask &= ~galaxy_intr_map[irq];
+	mask &= ~IRQ_TO_MASK(irq);
 	if (mask == omask)
 		return;
 	mtdcr(DCR_UIC0_ER, mask);
@@ -288,13 +199,8 @@ galaxy_enable_irq(int irq)
 {
 	int mask, omask;
 
-	if (irq >= GALAXY_INTR_SIZE)
-		return;
-	if (galaxy_intr_map[irq] == ~0U)
-		return;
-	
 	mask = omask = mfdcr(DCR_UIC0_ER);
-	mask |= galaxy_intr_map[irq];
+	mask |= IRQ_TO_MASK(irq);
 	if (mask == omask)
 		return;
 	mtdcr(DCR_UIC0_ER, mask);
@@ -380,7 +286,7 @@ intr_establish(int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg
 	ih->ih_irq = irq;
 	*p = ih;
 #ifdef IRQ_DEBUG
-	printf("intr_establish: irq%d h=%p arg=%p\n",irq, ih_fun, ih_arg);
+	printf("***** intr_establish: irq%d h=%p arg=%p\n",irq, ih_fun, ih_arg);
 #endif
 	return (ih);
 }
@@ -441,7 +347,7 @@ intr_calculatemasks(void)
 		register int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
+				irqs |= IRQ_TO_MASK(irq);
 		imask[level] = irqs | SINT_MASK;
 	}
 	
@@ -502,7 +408,7 @@ intr_calculatemasks(void)
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int irqs = 1 << irq;
+		register int irqs = IRQ_TO_MASK(irq);
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
 		intrmask[irq] = irqs;
@@ -535,11 +441,11 @@ do_pending_int(void)
 
 	pcpl = cpl;		/* Turn off all */
   again:	
-	while ((hwpend = ipending & ~pcpl & hwirq_mask)) {
-		irq = 31 - cntlzw(hwpend);
+	while ((hwpend = ipending & ~pcpl & HWINT_MASK)) {
+		irq = cntlzw(hwpend);
 		galaxy_enable_irq(irq);
 
-		ipending &= ~(1 << irq);
+		ipending &= ~IRQ_TO_MASK(irq);
 
 		splraise(intrmask[irq]);
 		asm volatile("mtmsr %0" :: "r"(emsr));
