@@ -1,4 +1,4 @@
-/*	$NetBSD: wmemchr.c,v 1.4 2000/12/21 05:12:20 itojun Exp $	*/
+/*	$NetBSD: wcsstr.c,v 1.2 2000/12/21 05:12:19 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,30 +25,48 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wmemchr.c,v 1.2 2000/12/20 14:08:31 itojun Exp
+ *	citrus Id: wcsstr.c,v 1.2 2000/12/21 05:07:25 itojun Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wmemchr.c,v 1.4 2000/12/21 05:12:20 itojun Exp $");
+__RCSID("$NetBSD: wcsstr.c,v 1.2 2000/12/21 05:12:19 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
-wchar_t	*
-wmemchr(s, c, n)
-	const wchar_t *s;
-	wchar_t c;
-	size_t n;
+wchar_t *
+wcsstr(big, little)
+	const wchar_t *big;
+	const wchar_t *little;
 {
-	size_t i;
+	const wchar_t *p;
+	const wchar_t *q;
+	const wchar_t *r;
 
-	for (i = 0; i < n; i++) {
-		if (*s == c) {
-			/* LINTED const castaway */
-			return (wchar_t *)s;
+	if (!*little) {
+		/* LINTED interface specification */
+		return (wchar_t *)big;
+	}
+	if (wcslen(big) < wcslen(little))
+		return NULL;
+
+	p = big;
+	q = little;
+	while (*p) {
+		q = little;
+		r = p;
+		while (*q) {
+			if (*r != *q)
+				break;
+			q++;
+			r++;
 		}
-		s++;
+		if (!*q) {
+			/* LINTED interface specification */
+			return (wchar_t *)p;
+		}
+		p++;
 	}
 	return NULL;
 }

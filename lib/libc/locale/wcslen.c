@@ -1,4 +1,4 @@
-/*	$NetBSD: wmemchr.c,v 1.4 2000/12/21 05:12:20 itojun Exp $	*/
+/*	$NetBSD: wcslen.c,v 1.2 2000/12/21 05:12:19 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,30 +25,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wmemchr.c,v 1.2 2000/12/20 14:08:31 itojun Exp
+ *	citrus Id: wcslen.c,v 1.1 1999/12/29 21:47:45 tshiozak Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wmemchr.c,v 1.4 2000/12/21 05:12:20 itojun Exp $");
+__RCSID("$NetBSD: wcslen.c,v 1.2 2000/12/21 05:12:19 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
-wchar_t	*
-wmemchr(s, c, n)
+size_t
+wcslen(s)
 	const wchar_t *s;
-	wchar_t c;
-	size_t n;
 {
-	size_t i;
+	const wchar_t *p;
 
-	for (i = 0; i < n; i++) {
-		if (*s == c) {
-			/* LINTED const castaway */
-			return (wchar_t *)s;
-		}
-		s++;
-	}
-	return NULL;
+	p = s;
+	while (*p)
+		p++;
+
+	return p - s;
 }
