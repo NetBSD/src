@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.46 2000/10/12 22:51:20 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.47 2000/10/24 14:53:59 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -754,7 +754,7 @@ USB_ATTACH(aue)
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->aue_dev), devinfo);
 
-	err = usbd_set_config_no(dev, AUE_CONFIG_NO, 0);
+	err = usbd_set_config_no(dev, AUE_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->aue_dev));
