@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.1.2.7 2001/05/27 14:19:11 sommerfeld Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.1.2.8 2001/09/06 03:41:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -462,6 +462,29 @@ i386_memio_subregion(t, bsh, offset, size, nbshp)
 
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+paddr_t
+i386_memio_mmap(t, addr, off, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	/* Can't mmap I/O space. */
+	if (t == I386_BUS_SPACE_IO)
+		return (EOPNOTSUPP);
+
+	/*
+	 * "addr" is the base address of the device we're mapping.
+	 * "off" is the offset into that device.
+	 *
+	 * Note we are called for each "page" in the device that
+	 * the upper layers want to map.
+	 */
+	return (i386_btop(addr + off));
 }
 
 /*
