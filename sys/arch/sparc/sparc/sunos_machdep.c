@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.6 1998/09/13 20:07:54 pk Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.7 1998/09/17 02:30:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -73,12 +73,12 @@ sunos_sendsig(catcher, sig, mask, code)
 	struct sigacts *psp = p->p_sigacts;
 	struct sunos_sigframe *fp;
 	struct trapframe *tf;
-	int addr, oonstack, onstack, oldsp, newsp;
+	int addr, onstack, oldsp, newsp;
 	struct sunos_sigframe sf;
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
@@ -87,12 +87,12 @@ sunos_sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
 
-	if (onstack) {
+	if (onstack)
 		fp = (struct sunos_sigframe *)
 		     ((caddr_t)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
+	else
 		fp = (struct sunos_sigframe *)oldsp;
+
 	fp = (struct sunos_sigframe *)((int)(fp - 1) & ~7);
 
 #ifdef DEBUG
@@ -113,7 +113,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = oonstack;
+	sf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	native_sigset_to_sigset13(mask, &sf.sf_sc.sc_mask);
 	sf.sf_sc.sc_sp = oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
@@ -159,6 +159,11 @@ sunos_sendsig(catcher, sig, mask, code)
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = newsp;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+
 #ifdef DEBUG
 	if ((sunos_sigdebug & SDB_KSTACK) && p->p_pid == sunos_sigpid)
 		printf("sendsig: about to return to catcher\n");
@@ -176,4 +181,3 @@ sunos_sys_sigreturn(p, v, retval)
 	return (compat_13_sys_sigreturn(p,
 			(struct compat_13_sys_sigreturn_args *)uap, retval));
 }
-
