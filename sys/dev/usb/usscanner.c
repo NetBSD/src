@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.1 2001/01/11 06:00:31 augustss Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.2 2001/01/11 06:20:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This driver is partly based on information taken from the Linux driver
+ * by John Fremlin, Oliver Neukum, and Jeremy Hall.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -59,7 +64,7 @@
 #ifdef USSCANNER_DEBUG
 #define DPRINTF(x)	if (usscannerdebug) logprintf x
 #define DPRINTFN(n,x)	if (usscannerdebug>(n)) logprintf x
-int	usscannerdebug = 15;
+int	usscannerdebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
