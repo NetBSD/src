@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 1995/05/04 19:48:41 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 1995/05/05 06:48:14 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1854,6 +1854,7 @@ xine_enable_intr(slotno, on)
 		xine_tc3_imask |= mask;
 	else
 		xine_tc3_imask &= ~mask;
+	*(u_int *)ASIC_REG_IMSK(asic_base) = xine_tc3_imask;
 }
 
 #ifdef DS5000_240
