@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.9 1995/03/27 02:24:17 glass Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.9 1995/03/27 02:24:17 glass Exp $";
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,6 @@ main(argc, argv)
 	struct protoent *pe;
 	struct sockaddr_in from, to;
 	int ch, i, lsrr, on, probe, seq, tos, ttl;
-	u_long gw;
 	struct ip *ip;
 
 	lsrr = 0;
@@ -319,15 +318,13 @@ main(argc, argv)
 		case 'g':
 			if (lsrr >= MAX_LSRR)
 				errx(1, "too many gateways; max %d", MAX_LSRR);
-			gw = inet_addr(optarg);
-			if (gw == -1) {
+			if (inet_aton(optarg, &gateway[lsrr]) == 0) {
 				hp = gethostbyname(optarg);
 				if (hp == 0)
 					errx(1, "unknown host %s", optarg);
-				memcpy(&gw, hp->h_addr, 4);
+				memcpy(&gateway[lsrr], hp->h_addr, hp->h_length);
 			}
-			gateway[lsrr++].s_addr = gw;
-			if (lsrr == 1)
+			if (++lsrr == 1)
 				lsrrlen = 4;
 			lsrrlen += 4;
 			break;
@@ -385,8 +382,7 @@ main(argc, argv)
 
 	(void) memset(&to, 0, sizeof(struct sockaddr));
 	to.sin_family = AF_INET;
-	to.sin_addr.s_addr = inet_addr(*argv);
-	if (to.sin_addr.s_addr != -1)
+	if (inet_aton(*argv, &to.sin_addr) != 0)
 		hostname = *argv;
 	else {
 		hp = gethostbyname(*argv);
@@ -466,8 +462,7 @@ main(argc, argv)
 	if (source) {
 		(void) memset(&from, 0, sizeof(struct sockaddr));
 		from.sin_family = AF_INET;
-		from.sin_addr.s_addr = inet_addr(source);
-		if (from.sin_addr.s_addr == -1)
+		if (inet_aton(source, &from.sin_addr) != 0)
 			errx(1, "unknown host %s", source);
 		ip->ip_src = from.sin_addr;
 #ifndef IP_HDRINCL

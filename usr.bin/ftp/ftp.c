@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftp.c	8.4 (Berkeley) 4/6/94";*/
-static char *rcsid = "$Id: ftp.c,v 1.10 1995/03/21 14:16:23 mycroft Exp $";
+static char *rcsid = "$Id: ftp.c,v 1.11 1995/05/21 16:49:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,8 +90,7 @@ hookup(host, port)
 	static char hostnamebuf[80];
 
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
-	hisctladdr.sin_addr.s_addr = inet_addr(host);
-	if (hisctladdr.sin_addr.s_addr != -1) {
+	if (inet_aton(host, &hisctladdr.sin_addr) != 0) {
 		hisctladdr.sin_family = AF_INET;
 		(void) strncpy(hostnamebuf, host, sizeof(hostnamebuf));
 	} else {
@@ -102,8 +101,7 @@ hookup(host, port)
 			return ((char *) 0);
 		}
 		hisctladdr.sin_family = hp->h_addrtype;
-		memmove((caddr_t)&hisctladdr.sin_addr,
-				hp->h_addr_list[0], hp->h_length);
+		memcpy(&hisctladdr.sin_addr, hp->h_addr, hp->h_length);
 		(void) strncpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf));
 	}
 	hostname = hostnamebuf;
