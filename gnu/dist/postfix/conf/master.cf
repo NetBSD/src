@@ -1,12 +1,12 @@
-#	$NetBSD: master.cf,v 1.7 2004/03/27 16:31:19 heas Exp $
+#	$NetBSD: master.cf,v 1.8 2004/04/27 05:07:46 heas Exp $
 #
 #
-# Postfix master process configuration file.  Each logical line
-# describes how a Postfix daemon program should be run.
+# Postfix master process configuration file.  Each logical line 
+# describes how a Postfix daemon program should be run. 
 #
-# A logical line starts with non-whitespace, non-comment text. 
-# Empty lines and whitespace-only lines are ignored, as are comment
-# lines whose first non-whitespace character is a `#'.
+# A logical line starts with non-whitespace, non-comment text.
+# Empty lines and whitespace-only lines are ignored, as are comment 
+# lines whose first non-whitespace character is a `#'.  
 # A line that starts with whitespace continues a logical line.
 #
 # The fields that make up each line are described below. A "-" field
@@ -58,6 +58,12 @@
 # in the main.cf configuration file). See individual command man pages
 # for specific command-line options, if any.
 #
+# General main.cf options can be overridden for specific services.
+# To override one or more main.cf options, specify them as arguments
+# below, preceding each option by "-o".  There must be no whitespace
+# in the option itself (separate multiple values for an option by
+# commas).
+#
 # In order to use the "uucp" message tranport below, set up entries
 # in the transport table.
 #
@@ -73,15 +79,19 @@
 # service type  private unpriv  chroot  wakeup  maxproc command + args
 #               (yes)   (yes)   (yes)   (never) (100)
 # ==========================================================================
-#smtp     inet  n       -       n       -       -       smtpd
+#smtp      inet  n       -       n       -       -       smtpd
+#submission inet n      -       n       -       -       smtpd
+#	-o smtpd_etrn_restrictions=reject
 #628      inet  n       -       n       -       -       qmqpd
 pickup    fifo  n       -       n       60      1       pickup
 cleanup   unix  n       -       n       -       0       cleanup
 qmgr      fifo  n       -       n       300     1       qmgr
-#qmgr     fifo  n       -       n       300     1       nqmgr
+#qmgr     fifo  n       -       n       300     1       oqmgr
 rewrite   unix  -       -       n       -       -       trivial-rewrite
 bounce    unix  -       -       n       -       0       bounce
 defer     unix  -       -       n       -       0       bounce
+trace     unix  -       -       n       -       0       bounce
+verify    unix  -       -       n       -       1       verify
 flush     unix  n       -       n       1000?   0       flush
 proxymap  unix  -       -       n       -       -       proxymap
 smtp      unix  -       -       n       -       -       smtp
@@ -92,6 +102,7 @@ error     unix  -       -       n       -       -       error
 local     unix  -       n       n       -       -       local
 virtual   unix  -       n       n       -       -       virtual
 lmtp      unix  -       -       n       -       -       lmtp
+#anvil     unix  -       -       n       -       1       anvil
 #
 # Interfaces to non-Postfix software. Be sure to examine the manual
 # pages of the non-Postfix software to find out what options it wants.
@@ -106,6 +117,7 @@ maildrop  unix  -       n       n       -       -       pipe
 old-cyrus unix  -       n       n       -       -       pipe
   flags=R user=cyrus argv=/cyrus/bin/deliver -e -m ${extension} ${user}
 # Cyrus 2.1.5 (Amos Gouaux)
+# Also specify in main.cf: cyrus_destination_recipient_limit=1
 cyrus     unix  -       n       n       -       -       pipe
   user=cyrus argv=/cyrus/bin/deliver -e -r ${sender} -m ${extension} ${user}
 uucp      unix  -       n       n       -       -       pipe
