@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.4 1996/10/13 03:31:20 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.4.10.1 1997/10/15 22:55:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -101,12 +101,12 @@ void compoll __P((void *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
 
-struct cfattach com_ca = {
+struct cfattach pcom_ca = {
 	sizeof(struct com_softc), commatch, comattach
 };
 
-struct cfdriver com_cd = {
-	NULL, "com", DV_TTY
+struct cfdriver pcom_cd = {
+	NULL, "pcom", DV_TTY
 };
 
 int	comdefaultrate = TTYDEF_SPEED;
