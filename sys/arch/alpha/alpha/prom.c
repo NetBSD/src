@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.5 1996/04/29 16:09:28 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.6 1996/06/12 21:59:52 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995 Carnegie Mellon University
@@ -207,6 +207,11 @@ prom_getenv(id, buf, len)
 		TBIA();						/* XXX */
 	}							/* XXX */
 	splx(s);
+
+	if (ret.u.status & 0x4)
+		ret.u.retval = 0;
+	buf[ret.u.retval] = '\0';
+
 	return (ret.bits);
 }
 
