@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.40.2.3 2002/06/24 22:11:21 nathanw Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.40.2.4 2002/07/15 20:26:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.40.2.3 2002/06/24 22:11:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.40.2.4 2002/07/15 20:26:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,9 +401,8 @@ loop:
 #ifdef DIAGNOSTIC
 			if ((un->un_flags & UN_LOCKED) == 0)
 				panic("union: . not locked");
-			else if (curlwp && 
-			    un->un_pid != curproc->p_pid &&
-			    un->un_pid > -1 && curproc->p_pid > -1)
+			else if (curproc && un->un_pid != curproc->p_pid &&
+				    un->un_pid > -1 && curproc->p_pid > -1)
 				panic("union: allocvp not lock owner");
 #endif
 		} else {
@@ -417,7 +416,7 @@ loop:
 			un->un_flags |= UN_LOCKED;
 
 #ifdef DIAGNOSTIC
-			if (curlwp)
+			if (curproc)
 				un->un_pid = curproc->p_pid;
 			else
 				un->un_pid = -1;
@@ -518,7 +517,7 @@ loop:
 	if (un->un_uppervp)
 		un->un_flags |= UN_ULOCK;
 #ifdef DIAGNOSTIC
-	if (curlwp)
+	if (curproc)
 		un->un_pid = curproc->p_pid;
 	else
 		un->un_pid = -1;

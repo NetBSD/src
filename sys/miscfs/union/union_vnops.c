@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.50.2.7 2002/06/24 22:11:21 nathanw Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.50.2.8 2002/07/15 20:28:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.50.2.7 2002/06/24 22:11:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.50.2.8 2002/07/15 20:28:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1760,7 +1760,7 @@ start:
 	/* XXX ignores LK_NOWAIT */
 	if (un->un_flags & UN_LOCKED) {
 #ifdef DIAGNOSTIC
-		if (curlwp && un->un_pid == curproc->p_pid &&
+		if (curproc && un->un_pid == curproc->p_pid &&
 			    un->un_pid > -1 && curproc->p_pid > -1)
 			panic("union: locking against myself");
 #endif
@@ -1770,7 +1770,7 @@ start:
 	}
 
 #ifdef DIAGNOSTIC
-	if (curlwp)
+	if (curproc)
 		un->un_pid = curproc->p_pid;
 	else
 		un->un_pid = -1;
@@ -1806,7 +1806,7 @@ union_unlock(v)
 #ifdef DIAGNOSTIC
 	if ((un->un_flags & UN_LOCKED) == 0)
 		panic("union: unlock unlocked node");
-	if (curlwp && un->un_pid != curproc->p_pid &&
+	if (curproc && un->un_pid != curproc->p_pid &&
 			curproc->p_pid > -1 && un->un_pid > -1)
 		panic("union: unlocking other process's union node");
 	if (un->un_flags & UN_DRAINED)
