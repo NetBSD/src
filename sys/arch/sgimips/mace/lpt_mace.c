@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mace.c,v 1.3 2004/03/25 00:53:58 sekiya Exp $	*/
+/*	$NetBSD: lpt_mace.c,v 1.4 2004/07/12 13:45:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.3 2004/03/25 00:53:58 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.4 2004/07/12 13:45:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ lpt_mace_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	/* Not A Real Driver(tm) */
-	return 0;
+
+	return 1;
 }
 
 static void
