@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.210 2004/12/15 04:25:19 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.211 2004/12/18 07:30:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.210 2004/12/15 04:25:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.211 2004/12/18 07:30:17 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1154,8 +1154,11 @@ findpcb:
 
 #ifdef INET6
 	case AF_INET6:
-		if (in6_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
-			goto badcsum;
+		if (__predict_true((m->m_flags & M_LOOP) == 0 ||
+		    tcp_do_loopback_cksum)) {
+			if (in6_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
+				goto badcsum;
+		}
 		break;
 #endif /* INET6 */
 	}
