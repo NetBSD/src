@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.88 2003/11/17 10:07:58 keihan Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.89 2004/02/17 05:03:16 rtr Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.88 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.89 2004/02/17 05:03:16 rtr Exp $");
 
 #include "opt_ddb.h"
 
@@ -169,9 +169,6 @@ static int config_finalize_done;
 
 /* list of all devices */
 struct devicelist alldevs;
-
-/* list of all events */
-struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
 
 __volatile int config_pending;		/* semaphore for mountroot */
 
@@ -1252,95 +1249,3 @@ config_finalize(void)
 	}
 }
 
-/*
- * We need a dummy object to stuff into the evcnt link set to
- * ensure that there always is at least one object in the set.
- */
-static struct evcnt dummy_static_evcnt;
-__link_set_add_bss(evcnts, dummy_static_evcnt);
-
-/*
- * Initialize event counters.  This does the attach procedure for
- * each of the static event counters in the "evcnts" link set.
- */
-void
-evcnt_init(void)
-{
-	__link_set_decl(evcnts, struct evcnt);
-	struct evcnt * const *evp;
-
-	__link_set_foreach(evp, evcnts) {
-		if (*evp == &dummy_static_evcnt)
-			continue;
-		evcnt_attach_static(*evp);
-	}
-}
-
-/*
- * Attach a statically-initialized event.  The type and string pointers
- * are already set up.
- */
-void
-evcnt_attach_static(struct evcnt *ev)
-{
-	int len;
-
-	len = strlen(ev->ev_group);
-#ifdef DIAGNOSTIC
-	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
-		panic("evcnt_attach_static: group length (%s)", ev->ev_group);
-#endif
-	ev->ev_grouplen = len;
-
-	len = strlen(ev->ev_name);
-#ifdef DIAGNOSTIC
-	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
-		panic("evcnt_attach_static: name length (%s)", ev->ev_name);
-#endif
-	ev->ev_namelen = len;
-
-	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
-}
-
-/*
- * Attach a dynamically-initialized event.  Zero it, set up the type
- * and string pointers and then act like it was statically initialized.
- */
-void
-evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
-    const char *group, const char *name)
-{
-
-	memset(ev, 0, sizeof *ev);
-	ev->ev_type = type;
-	ev->ev_parent = parent;
-	ev->ev_group = group;
-	ev->ev_name = name;
-	evcnt_attach_static(ev);
-}
-
-/*
- * Detach an event.
- */
-void
-evcnt_detach(struct evcnt *ev)
-{
-
-	TAILQ_REMOVE(&allevents, ev, ev_list);
-}
-
-#ifdef DDB
-void
-event_print(int full, void (*pr)(const char *, ...))
-{
-	struct evcnt *evp;
-
-	TAILQ_FOREACH(evp, &allevents, ev_list) {
-		if (evp->ev_count == 0 && !full)
-			continue;
-
-		(*pr)("evcnt type %d: %s %s = %lld\n", evp->ev_type,
-		    evp->ev_group, evp->ev_name, evp->ev_count);
-	}
-}
-#endif /* DDB */
