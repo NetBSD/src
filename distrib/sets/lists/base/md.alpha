@@ -1,5 +1,6 @@
-# $NetBSD: md.alpha,v 1.32 2004/01/11 10:24:58 lukem Exp $
+# $NetBSD: md.alpha,v 1.33 2004/08/12 16:07:07 lukem Exp $
 ./usr/bin/fdformat				base-util-bin
+./usr/lib/libalpha.so				base-sys-shlib
 ./usr/lib/libalpha.so.0				base-sys-shlib
 ./usr/lib/libalpha.so.0.0			base-sys-shlib
 ./usr/mdec/boot					base-sysutil-bin
