@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.17 2002/09/10 03:29:02 kim Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.18 2002/09/10 04:06:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fingerd.c,v 1.17 2002/09/10 03:29:02 kim Exp $");
+__RCSID("$NetBSD: fingerd.c,v 1.18 2002/09/10 04:06:26 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,13 +100,13 @@ main(argc, argv)
 			break;
 		case 'i':
 			/*
-                         * This is a hack to enable single-byte 8-bit
-                         * characters in the output of the default
-                         * finger program.  The character set is not
-                         * communicated to the network client, and the
-                         * exact value does not matter much as long
-                         * as it enables as many 8-bit characters as
-                         * possible.
+			 * This is a hack to enable single-byte 8-bit
+			 * characters in the output of the default
+			 * finger program.  The character set is not
+			 * communicated to the network client, and the
+			 * exact value does not matter much as long
+			 * as it enables as many 8-bit characters as
+			 * possible.
 			 */
 			(void) putenv("LC_CTYPE=en_US.ISO8859-15");
 			break;
