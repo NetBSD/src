@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.16 1994/06/29 06:36:01 cgd Exp $	*/
+/*	$NetBSD: if.c,v 1.17 1994/07/26 18:56:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -68,22 +68,6 @@ ifinit()
 			ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	if_slowtimo(NULL);
 }
-
-#ifdef vax
-/*
- * Call each interface on a Unibus reset.
- */
-void
-ifubareset(uban)
-	int uban;
-{
-	register struct ifnet *ifp;
-
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-		if (ifp->if_reset)
-			(*ifp->if_reset)(ifp->if_unit, uban);
-}
-#endif
 
 int if_index = 0;
 struct ifaddr **ifnet_addrs;
