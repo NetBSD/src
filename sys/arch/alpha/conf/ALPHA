@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.96 1999/04/30 23:33:41 cgd Exp $
+# $NetBSD: ALPHA,v 1.97 1999/06/29 07:04:15 ross Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -24,6 +24,7 @@ options 	DEC_1000	# Mikasa etc:	Digital AlphaServer 1000
 options 	DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
 options 	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 options 	DEC_EB66	# EB66:		21066 Evaluation Board
+options 	DEC_6600	# EV6:		264DP OEM Board
 
 # Standard system options
 options 	KTRACE			# System call tracing support
@@ -144,6 +145,10 @@ mcmem*	at	mcbus? mid ?
 
 #i2c	at	mcbus?
 
+#EV6 Tsunami Core Logic
+
+tsc*	at	mainbus0
+
 # TurboChannel host bus adapter support
 tcasic*	at	mainbus0
 
@@ -169,6 +174,7 @@ cia*	at	mainbus?
 lca*	at	mainbus?
 dwlpx*	at	kft?
 mcpcia*	at	mcbus? mid ?
+tsp*	at	tsc?
 
 # PCI bus support
 pci*	at	apecs?
@@ -177,6 +183,7 @@ pci*	at	lca?
 pci*	at	ppb?
 pci*	at	dwlpx?
 pci*	at	mcpcia?
+pci*	at	tsp?
 
 # PCI devices
 #adv*	at	pci? dev ? function ?		# AdvanSys SCSI
